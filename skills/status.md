@@ -1,0 +1,403 @@
+---
+name: status
+description: 使用 OpenSpec 工作流状态管理工具，检查 worktree 与 change 状态，检测同步问题并修复，支持 merge → archive → cleanup 完整归档流程
+license: MIT
+compatibility: Requires openspec CLI
+metadata:
+  author: sisyphus
+  version: "2.2"  # P2: 明确 Mode C 与 guide 的 status_archive 职责边界
+  generatedBy: "1.3.1"
+---
+
+# OpenSpec 工作流 — Status
+
+提供三种工作模式：状态概览、检测与修复、归档完成。
+
+## 工作流位置
+
+```
+Mode A: 全局概览 — 无需参数，列出所有 change + worktree
+Mode B: 检测修复 — 检查具体 change 的完成状态和同步问题
+Mode C: 归档完成 — change 完成后 merge → archive → cleanup
+```
+
+## 输入
+
+- 无参数 → Mode A（全局概览）
+- change name → Mode B（单 change 详情 + 同步检测）
+- change name + 明确要求归档 → Mode C（归档流程）
+
+## 工作目录检测（所有模式通用）
+
+```bash
+# 自动检测项目根目录（用于全局安装的技能）
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+# 确定当前 git 上下文
+CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "unknown")
+
+# 获取 worktree 列表
+WORKTREE_LIST=$(git worktree list)
+echo "当前分支: $CURRENT_BRANCH"
+echo "Worktree 列表:"
+echo "$WORKTREE_LIST"
+
+# 判断是否在 worktree 内
+IN_WORKTREE=false
+WORKTREE_PATH=""
+if echo "$CURRENT_BRANCH" | grep -q '^openspec/'; then
+    IN_WORKTREE=true
+    WORKTREE_PATH=$(pwd)
+    CHANGE_NAME=$(echo "$CURRENT_BRANCH" | sed 's/^openspec\///')
+fi
+```
+
+---
+
+## 模式 A：状态概览
+
+### Step 1：获取 worktree 列表
+
+```bash
+git worktree list
+```
+
+输出示例：
+```
+/path/to/CppHDL                          main
+/path/to/CppHDL/.zcf/add-uart-wt         openspec/add-uart
+/path/to/CppHDL/.zcf/fix-spi-wt          openspec/fix-spi
+```
+
+### Step 2：获取 openspec 列表
+
+```bash
+openspec list
+```
+
+提取 active changes 及其进度。
+
+### Step 3：获取每个 active change 的进度
+
+```bash
+for each active_change:
+    openspec instructions apply --change "<name>" --json
+    # 解析 progress.complete, progress.total, state
+```
+
+对比 worktree 分支名与 change 名称，建立映射。
+
+### Step 4：输出概览表格
+
+```
+OpenSpec 工作流状态概览
+=======================
+（若无 worktree → 显示 "当前无活跃 worktree"）
+
+Change          │ Worktree              │ 进度        │ 状态
+──────────────────────────────────────────────────────────────
+add-uart        │ .zcf/add-uart-wt      │ 3/7  (43%)  │ 🔄 执行中
+fix-spi         │ .zcf/fix-spi-wt       │ 6/6  (100%) │ ✅ 可归档
+pending-change  │ （无 worktree）        │ 2/5  (40%)  │ ⏸ 暂停
+──────────────────────────────────────────────────────────────
+
+请选择要执行的操作（输入编号）：
+  1. 查看 add-uart 详情（检测同步问题）
+  2. 查看 fix-spi 详情（检测同步问题）
+  3. 归档 fix-spi（已完成）
+  4. ↩️ 返回 Execute 阶段
+  i. 其他输入
+```
+
+**Mode A 职责说明**：此模式仅做状态概览，不执行问题检测。问题检测由 Mode B 专门负责。
+
+---
+
+## 模式 B：检测与修复
+
+### Step 1：获取基本信息
+
+```bash
+# 阶段检测：先检查是否已 plan
+PLAN_FILE=".sisyphus/plans/<name>.md"
+if [ ! -f "$PLAN_FILE" ]; then
+    echo "⏳ Change <name> 已 propose 但尚未 plan"
+    echo "   请先执行: skill_use(\"spec-workflow-plan <name>\")"
+    exit 0
+fi
+
+# 获取 change 状态
+APPLY=$(openspec instructions apply --change "<name>" --json)
+STATE=$(echo "$APPLY" | jq -r '.state')
+COMPLETE=$(echo "$APPLY" | jq '.progress.complete')
+TOTAL=$(echo "$APPLY" | jq '.progress.total')
+REMAINING=$((TOTAL - COMPLETE))
+
+# 通过 git worktree list 动态查找 worktree 路径（不硬编码 $PROJECT_ROOT/.zcf/<name>-wt）
+WORKTREE_PATH=$(git worktree list | awk '$2=="openspec/<name>" {print $1}')
+HAS_WORKTREE=false
+if [ -n "$WORKTREE_PATH" ] && [ -d "$WORKTREE_PATH" ]; then
+    HAS_WORKTREE=true
+    # 使用 subshell 获取 worktree 内状态，不改变当前目录
+    WT_BRANCH=$(cd "$WORKTREE_PATH" && git branch --show-current)
+    WT_DIRTY=$(cd "$WORKTREE_PATH" && git status --porcelain | wc -l)
+fi
+```
+
+### Step 2：三类问题检测
+
+#### 问题类型一：不同步（tasks.md 与实际完成状态不一致）
+
+```bash
+# 方法：对比 openspec CLI progress 与计划文件中的实际完成标记
+# CLI progress 来源于 tasks.md 的 [x] 计数
+# .sisyphus/plans/ 中的 [x] 标记是 Prometheus 执行的实际完成状态
+
+PLAN_FILE=".sisyphus/plans/<name>.md"
+TASKS_FILE="$PROJECT_ROOT/openspec/changes/<name>/tasks.md"
+
+# 如果 plan 文件存在，检查其 [x] 计数
+PLAN_DONE=0
+if [ -f "$PLAN_FILE" ]; then
+    PLAN_DONE=$(grep -c "\- \[x\]" "$PLAN_FILE" 2>/dev/null || echo 0)
+fi
+
+# tasks.md 的 [x] 计数
+TASKS_DONE=$(grep -c "\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo 0)
+
+if [ "$PLAN_DONE" -gt "$TASKS_DONE" ]; then
+    echo "⚠️ 不同步: Prometheus 已完成 $PLAN_DONE 个单元，但 tasks.md 只标记了 $TASKS_DONE 个"
+    echo "修复: 同步 tasks.md 以匹配实际完成状态"
+fi
+```
+
+#### 问题类型二：worktree 有未提交更改
+
+```bash
+if [ "$HAS_WORKTREE" = true ] && [ "$WT_DIRTY" -gt 0 ]; then
+    echo "⚠️ Worktree 有 $WT_DIRTY 个未提交文件"
+    git status --short
+fi
+```
+
+#### 问题类型三：worktree 分支落后于默认分支
+
+```bash
+if [ "$HAS_WORKTREE" = true ]; then
+    # 动态检测默认分支（不硬编码 main/master）
+    DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@.*/@@' || echo "main")
+    MERGE_BASE=$(git merge-base "openspec/<name>" "$DEFAULT_BRANCH" 2>/dev/null)
+    MAIN_TIP=$(git rev-parse "$DEFAULT_BRANCH" 2>/dev/null)
+    if [ "$MERGE_BASE" != "$MAIN_TIP" ]; then
+        echo "⚠️ Worktree 分支落后于 $DEFAULT_BRANCH（创建后有新 commit 进入默认分支）"
+    fi
+fi
+```
+
+### Step 3：不同步修复
+
+**核心原则**：不同步修复通过 `sed` 直接修改 tasks.md，**不重新执行 plan**。
+
+```bash
+# 场景 A：Prometheus 已完成但 tasks.md 未标记
+# 使用 awk index() 进行字面量匹配（避免正则元字符风险）
+TASK_DESC="具体任务描述"
+TMPFILE=$(mktemp /tmp/status_tasks_XXXXXX.md)
+awk -v desc="- [ ] $TASK_DESC" -v repl="- [x] $TASK_DESC" '
+  index($0, desc) { sub(desc, repl); changed=1 }
+  { print }
+  END { exit (changed ? 0 : 1) }
+' $PROJECT_ROOT/openspec/changes/<name>/tasks.md > "$TMPFILE" && \
+  mv "$TMPFILE" $PROJECT_ROOT/openspec/changes/<name>/tasks.md || {
+    echo "⚠️  未找到匹配的任务描述: $TASK_DESC"
+    rm -f "$TMPFILE"
+  }
+
+# 场景 B：tasks.md 标记完成但实际代码未提交
+# 提示先 git commit
+echo "⚠️ tasks.md 标记完成但 worktree 有未提交代码"
+echo "请先提交代码更改，或确认更改是否完整"
+```
+
+### Step 4：输出检测报告
+
+```
+Change: <name>
+───────────────
+进度: 3/7 (43%)
+状态: 执行中
+Worktree: .zcf/<name>-wt
+
+问题:
+  ⚠️ tasks.md 不同步 — Prometheus 已完成 5 个单元，tasks.md 只标记了 3 个
+  修复: sed -i 's/- \[ \] 任务描述/- [x] 任务描述/' tasks.md
+
+建议:
+  - skill_use("spec-workflow-execute") 继续执行
+  - 或修复同步后归档
+```
+
+### Step 5：完成判定
+
+如果所有 tasks.md 的 `[ ]` 都已标记为 `[x]`，且 `openspec status` 显示 `state=all_done`：
+
+```
+✅ Change <name> 全部完成！
+
+建议立即归档:
+  skill_use("spec-workflow-status <name> --archive")
+```
+
+---
+
+## 模式 C：归档完成
+
+### 前置条件：确认全部完成
+
+```bash
+APPLY=$(openspec instructions apply --change "<name>" --json)
+STATE=$(echo "$APPLY" | jq -r '.state')
+COMPLETE=$(echo "$APPLY" | jq '.progress.complete')
+TOTAL=$(echo "$APPLY" | jq '.progress.total')
+
+if [ "$COMPLETE" -ne "$TOTAL" ]; then
+    echo "❌ 未全部完成 ($COMPLETE/$TOTAL)，不能归档"
+    echo "请先执行剩余的 Work Unit"
+    exit 1
+fi
+```
+
+### Step 1：确认 worktree 位置
+
+```bash
+# 通过 git worktree list 动态查找（不硬编码路径）
+WORKTREE_PATH=$(git worktree list | awk '$2=="openspec/<name>" {print $1}')
+if [ -n "$WORKTREE_PATH" ] && [ -d "$WORKTREE_PATH" ]; then
+    IN_WORKTREE=true
+else
+    IN_WORKTREE=false
+fi
+```
+
+### Step 2：检查未提交更改
+
+```bash
+if [ "$IN_WORKTREE" = true ]; then
+    # 使用 subshell 不改变当前目录
+    DIRTY=$(cd "$WORKTREE_PATH" && git status --porcelain | wc -l)
+    if [ "$DIRTY" -gt 0 ]; then
+        echo "⚠️ Worktree $WORKTREE_PATH 有 $DIRTY 个未提交文件"
+        echo "  1) 提交并继续"
+        echo "  2) 暂存更改"
+        echo "  请先处理未提交的更改"
+        exit 1
+    fi
+fi
+```
+
+### Step 3：merge worktree 分支到默认分支
+
+```bash
+if [ "$IN_WORKTREE" = true ]; then
+    MAIN_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "/workspace/project/CppHDL")
+    cd "$MAIN_ROOT"
+    
+    # 动态检测默认分支（适用于 main/master/develop 等）
+    DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@.*/@@' || git rev-parse --abbrev-ref HEAD)
+    git checkout "$DEFAULT_BRANCH" 2>/dev/null || {
+        echo "❌ 无法切换到默认分支 $DEFAULT_BRANCH"
+        exit 1
+    }
+    
+    # 检查 divergence
+    MERGE_BASE=$(git merge-base "openspec/<name>" "$DEFAULT_BRANCH" 2>/dev/null)
+    MAIN_TIP=$(git rev-parse "$DEFAULT_BRANCH" 2>/dev/null)
+    
+    if [ "$MERGE_BASE" = "$MAIN_TIP" ]; then
+        # 无 divergence，fast-forward merge
+        git merge --ff-only "openspec/<name>"
+        echo "✅ Fast-forward merge 到 $DEFAULT_BRANCH 完成"
+    else
+        # 有 divergence，需要 --no-ff merge
+        echo "⚠️ Worktree 分支已落后于 $DEFAULT_BRANCH，创建 merge commit"
+        git merge --no-ff "openspec/<name>" -m "merge: <name> change"
+    fi
+fi
+```
+
+### Step 4：openspec archive
+
+```bash
+openspec archive <name> --yes
+```
+
+确认归档成功：
+
+```bash
+# 验证 change 已移入 archive
+ls $PROJECT_ROOT/openspec/changes/archive/ | grep <name>
+echo "✅ Change <name> 已归档"
+```
+
+### Step 5：清理 worktree + 分支
+
+```bash
+if [ "$IN_WORKTREE" = true ] && [ -n "$WORKTREE_PATH" ]; then
+    # 使用 Step 1 中动态获取的 WORKTREE_PATH，而非硬编码路径
+    git worktree remove "$WORKTREE_PATH"
+    echo "✅ Worktree 已删除: $WORKTREE_PATH"
+    
+    # 删除分支
+    git branch -d "openspec/<name>"
+    echo "✅ Branch 已删除: openspec/<name>"
+fi
+```
+
+### Step 6：输出归档报告 + 循环检查
+
+```
+🎉 Change <name> 归档完成
+
+已完成:
+  ✅ Merge: openspec/<name> → main
+  ✅ Archive: openspec/changes/archive/<date>-<name>/
+  ✅ Cleanup: worktree + branch 已删除
+
+过程:
+  - ccache 加速构建
+  - 所有 Work Unit 完成
+  - merge 方式: fast-forward / merge commit
+```
+
+**归档后循环检查**（与 guide 的 status_archive 阶段保持一致）：
+
+```bash
+# 检查是否还有其他 worktree（使用 awk 检查分支名而非路径）
+REMAINING_WT=$(git worktree list | awk '$2 ~ /^openspec\// {print $1}' | wc -l)
+if [ "$REMAINING_WT" -gt 0 ]; then
+    echo ""
+    echo "📋 还有 $REMAINING_WT 个 worktree 正在进行"
+    echo "请选择:"
+    echo "1. 继续处理其他 worktree"
+    echo "2. 返回 guide: skill_use(\"spec-workflow-guide\")"
+else
+    # 检查 proposal-suggestions.md
+    if [ -f "proposal-suggestions.md" ]; then
+        REMAINING=$(grep -c "status: 待创建" "proposal-suggestions.md" 2>/dev/null || echo "0")
+        if [ "$REMAINING" -gt 0 ]; then
+            echo ""
+            echo "📋 proposal-suggestions.md 中还有 $REMAINING 个未创建的 change"
+            echo "建议运行: skill_use(\"spec-workflow-guide\") 回到 propose 阶段"
+        fi
+    fi
+fi
+```
+
+---
+
+## 关键约束
+
+1. **归档前必须先 merge**：确保代码变更已合入 main 分支
+2. **不同步用 sed 修复**：**不重跑 plan**（会覆盖 `.sisyphus/plans/` 中的任务分解细节）
+3. **所有操作可从 main TUI session 完成**：通过 `workdir` 参数在 worktree 内执行
+4. **归档不可逆**：确认全部完成后再执行模式 C
