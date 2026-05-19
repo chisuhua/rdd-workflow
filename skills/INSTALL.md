@@ -10,6 +10,40 @@ author: sisyphus
 
 本技能将 Spec Workflow 的子技能安装到当前项目目录。
 
+## 前置条件检查
+
+```bash
+# 检查 openspec CLI 是否已安装
+if command -v openspec &> /dev/null; then
+    OPENSPEC_VERSION=$(openspec --version 2>/dev/null || echo "unknown")
+    echo "✅ openspec CLI 已安装: v$OPENSPEC_VERSION"
+elif command -v npx &> /dev/null && npx openspec --version &> /dev/null; then
+    OPENSPEC_VERSION=$(npx openspec --version 2>/dev/null || echo "unknown")
+    echo "✅ openspec CLI 已安装 (via npx): v$OPENSPEC_VERSION"
+else
+    echo ""
+    echo "❌ openspec CLI 未安装"
+    echo ""
+    echo "请选择安装方式："
+    echo ""
+    echo "  方式 1 - npm 全局安装（推荐）："
+    echo "    npm install -g openspec-cli"
+    echo ""
+    echo "  方式 2 - npx 临时运行："
+    echo "    npx openspec <command>"
+    echo ""
+    echo "  方式 3 - npm 本地安装："
+    echo "    npm install openspec-cli"
+    echo ""
+    read -p "按回车键退出，或输入 'y' 继续安装（不推荐）: " confirm
+    if [ "$confirm" != "y" ]; then
+        echo "已退出。请先安装 openspec CLI。"
+        exit 0
+    fi
+    echo "⚠️  继续安装但 openspec 可能不可用..."
+fi
+```
+
 ## 安装步骤
 
 ### 步骤 1：检测环境

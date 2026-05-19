@@ -10,6 +10,8 @@ OpenSpec 工作流技能包 - manage changes via propose → plan → execute �
 npx skills add sisyphus/spec-workflow -g -y
 ```
 
+安装后只显示 `INSTALL` 技能。执行 `INSTALL` 后，子技能才会出现在项目中。
+
 ### 手动安装
 
 ```bash

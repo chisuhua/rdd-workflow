@@ -15,5 +15,5 @@
     "git": ">=2.25.0",
     "cmake": ">=3.16.0"
   },
-  "skills": ["INSTALL", "guide", "propose", "plan", "execute", "status"]
+  "skills": ["INSTALL"]
 }
