@@ -1,0 +1,496 @@
+---
+name: deps
+description: 分析多个 OpenSpec change 之间的依赖关系，输出依赖图、冲突检测和推荐执行顺序。
+license: MIT
+compatibility: Requires openspec CLI v1.3.1+. Reads proposal.md/design.md/specs/*.md from openspec/changes/.
+metadata:
+  author: sisyphus
+  version: "1.1"  # P4: 修复 Mermaid 语法，独立 change 不画箭头
+  generatedBy: "1.3.1"
+  hook: "guide 阶段 2.5（propose → plan 之间自动调用）"
+---
+
+# OpenSpec 工作流 — 依赖分析 (Deps)
+
+分析多个候选 change 之间的依赖关系，辅助 plan 阶段的选择决策。
+
+## 工作流位置
+
+```
+propose → deps（本技能）→ plan Phase 1（携带依赖信息选择 change）
+                              ↓
+            worktree execute → merge → archive
+```
+
+## 输入
+
+来自 plan Phase 0 的候选 change name 列表，以及每个 change 的 artifacts：
+
+```
+openspec/changes/<name>/
+├── proposal.md          → 提取 In Scope 文件路径、ADR 引用
+├── design.md            → 提取接口定义和接口使用
+└── specs/*.md           → 提取规范引用
+```
+
+## 输出
+
+```
+┌─────────────────────────────────────────┐
+│ 依赖图（Mermaid flowchart）              │
+│ Change 状态表（ready/blocked/prereq）     │
+│ 推荐执行顺序                              │
+│ 冲突警告（同一文件的多 change 修改）      │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## 流程
+
+### Step 0：读取候选列表（来自 plan 的共享文件）
+
+从 plan Phase 0.5 写入的 `.zcf/.deps-candidates.json` 文件读取候选 change name 列表。
+
+```bash
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+DEPS_INPUT="$PROJECT_ROOT/.zcf/.deps-candidates.json"
+DEPS_OUTPUT="$PROJECT_ROOT/.zcf/.deps-output.md"
+
+if [ ! -f "$DEPS_INPUT" ]; then
+  echo "❌ 找不到候选列表文件: $DEPS_INPUT"
+  echo "请先运行 plan Phase 0.5 的 Step 1 生成该文件"
+  exit 1
+fi
+
+# 从 JSON 读取候选 change name 列表
+mapfile -t CANDIDATES < <(python3 -c "
+import json, sys
+with open('$DEPS_INPUT') as f:
+    data = json.load(f)
+for name in data.get('candidates', []):
+    print(name)
+")
+
+echo "📋 读取到 ${#CANDIDATES[@]} 个候选 change："
+for name in "${CANDIDATES[@]}"; do
+  echo "  - $name"
+  # 验证 change 目录存在
+  if [ ! -d "$PROJECT_ROOT/openspec/changes/$name/" ]; then
+    echo "    ❌ Change '$name' 目录不存在，跳过"
+  fi
+done
+```
+
+---
+
+### Step 1：读取每个 change 的 artifact
+
+对每个候选 change，提取三组关键信息。
+
+#### 1a. 从 proposal.md 提取 In Scope 文件路径
+
+```bash
+SCOPE_FILES=$(grep -E '^[ \t]*-[ \t]*(修改文件|文件|路径)：?' "$PROJECT_ROOT/openspec/changes/<name>/proposal.md" 2>/dev/null \
+  | sed 's/.*：//; s/.*://; s/^[ \t]*-[ \t]*//' \
+  | tr ',' '\n' \
+  | sed 's/^[ \t]*//' \
+  | grep -v '^$')
+```
+
+#### 1b. 从 proposal.md 提取 ADR 引用
+
+```bash
+ADR_REFS=$(grep -oE 'ADR-[0-9]+' "$PROJECT_ROOT/openspec/changes/<name>/proposal.md" 2>/dev/null | sort -u)
+```
+
+#### 1c. 从 design.md 提取接口定义和接口使用
+
+```bash
+# 接口定义：查找函数/类声明模式
+IFACE_DEF=$(grep -E '^[ \t]*(定义|接口|提供)：' "$PROJECT_ROOT/openspec/changes/<name>/design.md" 2>/dev/null \
+  | sed 's/.*：//; s/.*://')
+
+# 接口使用：查找依赖的外部接口
+IFACE_USE=$(grep -E '^[ \t]*(使用|调用|依赖)：' "$PROJECT_ROOT/openspec/changes/<name>/design.md" 2>/dev/null \
+  | sed 's/.*：//; s/.*://')
+```
+
+#### 1d. 汇总每个 change 的结构化数据
+
+```yaml
+# 用于后续分析的内部数据结构
+<name>:
+  files_in_scope: ["include/chlib/stream_operators.h", ...]
+  adr_refs: ["ADR-022", "ADR-019"]
+  interfaces_def: ["Stream::setBufferSize"]
+  interfaces_use: ["MemoryPool::allocate"]
+```
+
+---
+
+### Step 2：三轴依赖检测
+
+#### 轴 1：文件冲突检测
+
+对每对 change A 和 B，检查其 scope 文件列表是否有交集：
+
+```bash
+for a in $CANDIDATES; do
+  for b in $CANDIDATES; do
+    [ "$a" = "$b" ] && continue
+    # 取交集（使用 bash 间接变量展开 ${!var} 获取各 change 的文件列表）
+    files_var_a="FILES_$a"
+    files_var_b="FILES_$b"
+    COMMON=$(comm -12 <(echo "${!files_var_a}" | sort) <(echo "${!files_var_b}" | sort))
+    if [ -n "$COMMON" ]; then
+      echo "⚠️  $a ←→ $b: 文件冲突 ($COMMON)"
+    fi
+  done
+done
+```
+
+**判定规则**：
+
+| 交集情况 | 判定 |
+|----------|------|
+| 无交集 | 无冲突，可并行 |
+| 交集 ≠ ∅，且均为同一类型的"实现文件"（src/ 下） | 冲突，不能并行，建议合并或顺序执行 |
+| 交集 ≠ ∅，一方是"头文件"（include/），另一方是"实现文件"（src/） | 依赖关系（头文件提供者优先） |
+
+#### 轴 2：ADR 依赖链检测
+
+ADR（Architecture Decision Record）是 change 之间的间接依赖纽带：
+
+```bash
+# 构建 ADR → Change 的映射（使用间接变量展开）
+for name in $CANDIDATES; do
+  adr_var="ADR_REFS_$name"
+  for adr in ${!adr_var}; do
+    echo "$adr ← $name"
+  done
+done
+```
+
+**判定规则**：
+
+| ADR 引用情况 | 判定 |
+|-------------|------|
+| A 和 B 引用同一个 ADR | 共享同一架构决策，建议顺序执行（A→B 或 B→A 均可） |
+| A 引用 ADR-N，B 的 scope 包含"实现 ADR-N" | B 是 A 的前置 |
+| A 的 scope 包含"实现 ADR-N"，B 引用 ADR-N | B 依赖 A |
+
+#### 轴 3：接口依赖检测
+
+```bash
+# 检查 A 定义了接口 X，B 使用了接口 X（使用间接变量展开）
+for a in $CANDIDATES; do
+  for b in $CANDIDATES; do
+    [ "$a" = "$b" ] && continue
+    iface_var_a="IFACE_DEF_$a"
+    iface_use_var_b="IFACE_USE_$b"
+    for iface in ${!iface_var_a}; do
+      if echo "${!iface_use_var_b}" | grep -q "$iface"; then
+        echo "📦 $b 依赖 $a (接口: $iface)"
+      fi
+    done
+  done
+done
+```
+
+**判定规则**：
+
+| 接口关系 | 判定 |
+|---------|------|
+| A 定义 X，B 使用 X | B 依赖 A（B → A） |
+| A 和 B 都定义 X | 可能重复，建议合并 |
+| A 和 B 都使用 X（第三方） | 无关，可并行 |
+
+---
+
+### Step 3：调用子代理进行语义级依赖分析
+
+#### 3a. 为什么要子代理
+
+静态三轴分析（Step 2）基于 grep 模式匹配，能捕捉**显式依赖**（如 ADR 编号、文件路径），但无法识别**隐式依赖**：
+
+| 依赖类型 | 静态分析 | 子代理分析 |
+|---------|---------|-----------|
+| 文件路径交集 | ✅ 可检测 | ✅ 可检测 |
+| ADR 编号引用 | ✅ 可检测 | ✅ 可检测 + 理解语义 |
+| 接口定义/使用 | ⚠️ 需设计.md 格式化 | ✅ 自然语言理解 |
+| 语义重叠（如 A 的"数据流"和 B 的"数据管道"实为同一概念） | ❌ 无法检测 | ✅ 可识别 |
+| change 粒度过大/过小 | ❌ 无法判断 | ✅ 可给出拆分/合并建议 |
+| 缺失前置 change | ❌ 未记录的依赖 | ✅ 可基于领域知识推断 |
+
+#### 3b. 子代理输入
+
+为子代理准备以下上下文：
+
+```markdown
+---
+## 当前项目上下文
+- 项目类型: C++ 硬件描述语言 / Chisel / Verilog 生成
+- 待分析的 change 列表: [refactor-stream-base, add-m2sPipe, fix-ns-pollution]
+
+## 每个 change 的 artifacts
+
+### refactor-stream-base
+proposal.md 摘要:
+  - 架构依据: ADR-022 §3.2, ADR-019 §4.1
+  - In Scope: include/chlib/stream.h, src/chlib/stream.cpp
+  - 关键场景: 重构 Stream 基类，添加虚接口
+design.md 摘要:
+  - 接口定义: Stream::setBufferSize(), Stream::getBufferSize()
+  - 依赖: MemoryPool
+
+### add-m2sPipe
+proposal.md 摘要:
+  - 架构依据: ADR-022 §3.2
+  - In Scope: include/chlib/stream_operators.h
+  - 关键场景: 实现 m2sPipe 操作符
+design.md 摘要:
+  - 接口使用: Stream::setBufferSize()
+  - 依赖: Stream 基类
+
+### fix-ns-pollution
+proposal.md 摘要:
+  - 架构依据: ADR-015
+  - In Scope: include/utils/namespaces.h, src/utils/namespaces.cpp
+  - 关键场景: 修复命名空间污染
+
+---
+## 静态分析结果（供参考）
+- add-m2sPipe 引用 ADR-022，refactor-stream-base 也引用 ADR-022
+- refactor-stream-base 和 add-m2sPipe 均涉及 Stream 相关文件
+- fix-ns-pollution 涉及独立的命名空间模块
+```
+
+#### 3c. 子代理任务定义
+
+```markdown
+## 任务：分析这些 change 之间的依赖关系
+
+请完成以下分析：
+
+1. **依赖关系**：列出每对 change 之间的依赖方向（A 依赖 B / B 依赖 A / 无关）
+   - 对每条依赖给出理由（引用 artifact 原文）
+   - 置信度：高/中/低
+
+2. **阻塞关系**：哪些 change 必须在前置完成后才能开始？
+   - 直接阻塞（A 用了 B 的接口）
+   - 间接阻塞（A 和 B 共享同一核心数据结构的修改）
+
+3. **粒度评估**：每个 change 的范围是否合理？
+   - 过大（应该拆分为多个子 change）
+   - 过小（可以合并到其他 change）
+   - 跨模块（核心逻辑 + 测试可以拆分）
+
+4. **重组建议**：如果发现有粒度问题，给出具体建议
+   - 拆分：X change 可以拆分为 [X-core, X-adapters, X-tests]
+   - 合并：[X, Y] 可以合并为一个 change（因为 X 和 Y 改同一核心）
+
+5. **推荐执行顺序**：考虑依赖和冲突后的最优执行路径
+   - 串行依赖链
+   - 可并行部分
+```
+
+#### 3d. 子代理输出格式
+
+```markdown
+## 依赖分析报告
+
+### 识别到的依赖
+| Change A | Change B | 关系 | 理由 | 置信度 |
+|----------|----------|------|------|--------|
+| refactor-stream-base | add-m2sPipe | B 依赖 A | add-m2sPipe 使用了 Stream 基类接口（design.md: "依赖: Stream 基类"） | 高 |
+| add-m2sPipe | add-s2mPipe | 冲突 | 修改同一文件 stream_operators.h，且一个的 output 是另一个的 input | 高 |
+| fix-ns-pollution | (其他) | 无关 | 涉及 namespace 模块，与其他 change 无交互 | 高 |
+
+### 粒度评估
+- refactor-stream-base: ✅ 合理
+- add-m2sPipe: ✅ 合理
+- fix-ns-pollution: ✅ 合理
+
+### 建议
+- 建议先执行 refactor-stream-base，再执行 add-m2sPipe
+- fix-ns-pollution 可与其他 change 并行
+```
+
+#### 3e. 子代理调用方式
+
+```bash
+# 伪代码：将子代理返回的结果合并到依赖分析中
+echo "🤖 正在调用子代理进行语义级依赖分析..."
+echo "   传递 $CANDIDATES_COUNT 个 change 的 artifacts 摘要"
+echo "   等待子代理分析完成..."
+
+# 子代理返回：
+# - DEP_AI: AI 识别到的依赖关系列表
+# - SUGGESTIONS: 重组建议
+# - ORDER: AI 推荐的执行顺序
+```
+
+---
+
+### Step 4：综合分类标记（融合静态 + AI 结果）
+
+融合 Step 2 的静态三轴分析 + Step 3 的子代理分析结果，为每个 change 打最终标记。
+
+**融合策略**：
+
+| 场景 | 静态分析判定 | AI 分析判定 | 最终判定 |
+|------|-------------|------------|---------|
+| 一致 | A 阻塞 B | A 阻塞 B | ✅ 采用，置信度叠加 |
+| AI 补充 | 无依赖 | A 隐式依赖 B | ⚠️ 采用 AI 结果，标记为 low_conf |
+| 静态补充 | A 依赖 B（文件交集） | 无依赖 | ✅ 采用静态结果（显式证据更可靠） |
+| 冲突 | A 依赖 B | B 依赖 A | 🔴 标记为 cycle，提示人工排查 |
+| AI 新发现 | — | 粒度建议（拆分/合并） | 📝 加入建议列表 |
+
+```python
+# 融合判定逻辑
+for each change:
+  # 基础分类（来自静态分析）
+  status = initial_status_from_static
+  blocks = []       
+  blocked_by = []   
+  conflicts = []    
+
+  # 叠加 AI 结果
+  if AI says "A blocks B":
+    add_to_blocked(B, A)
+  if AI says "粒度过大":
+    add_suggestion("拆分")
+  if AI signals "隐式依赖":
+    mark_as_low_conf(dep)
+  
+  # 冲突处理
+  if static_dep and ai_dep disagree:
+    mark_as_cycle()
+```
+
+**输出标记**：
+
+| 标记 | 含义 | 颜色 |
+|------|------|------|
+| ✅ `ready` | 无前置依赖，可直接 plan | 绿色 |
+| 🥇 `prerequisite` | 是多个其他 change 的前置，建议优先 | 蓝色 |
+| ⚠️ `blocked_by` | 被其他 change 阻塞 | 黄色 |
+| 🔴 `conflict` | 与另一 change 有文件冲突 | 红色 |
+
+---
+
+### Step 5：生成输出并写入文件
+
+将 5a-5e 的内容写入 `.zcf/.deps-output.md`，供 plan Phase 1 消费。
+
+```bash
+mkdir -p "$PROJECT_ROOT/.zcf/"
+cat > "$DEPS_OUTPUT" << 'DEPS_EOF'
+# 依赖分析报告
+（5a-5e 的全部内容写入此文件，格式见下文）
+DEPS_EOF
+echo "✅ 依赖分析报告已写入: $DEPS_OUTPUT"
+```
+
+**输出文件格式**（`.zcf/.deps-output.md` 包含以下 5 个章节，所有示例值为运行时注入的模板）：
+
+#### 5a. 依赖图（Mermaid 格式）
+
+<!-- TEMPLATE: 以下为示例，实际值由运行时分析结果注入 -->
+
+**独立 Change（无依赖）正确画法**：
+```mermaid
+flowchart TB
+    subgraph independent["独立 Change（可并行）"]
+        A[$CHANGE_A]
+        B[$CHANGE_B]
+    end
+```
+
+**有依赖关系的 Change 画法**：
+```mermaid
+flowchart LR
+  $PREREQ_1 --> $DEPENDENT_1_1
+  $PREREQ_1 --> $DEPENDENT_1_2
+  $CHANGE_A -.->|冲突| $CHANGE_B
+```
+
+**【重要】Mermaid 语法规范**：
+- 独立 change **不要画箭头**，使用 `subgraph` 分组或 `&` 连接并行节点
+- 有依赖的 change 用 `-->` 箭头表示
+- 冲突用 `-.->|冲突|` 表示
+
+#### 5b. Change 状态表
+
+<!-- TEMPLATE: 以下为示例，实际值由运行时分析结果注入 -->
+| Change | 状态 | 阻塞于 | 阻塞了谁 | 冲突 | 置信度 | 推荐 |
+|--------|------|--------|---------|------|--------|------|
+| change-A | 🥇 prerequisite | — | change-B | — | 高 | 第 1 优先 |
+| change-C | ✅ ready | — | — | — | 高 | 第 2 |
+| change-B | ⚠️ blocked_by | change-A | — | — | 高 | 等 A 完成后 |
+
+（置信度列标注了静态/AI 混合分析的可信程度）
+
+#### 5c. 推荐执行顺序
+
+<!-- TEMPLATE: 以下为示例，实际值由运行时分析结果注入 -->
+```
+1. `change-A`              ← 所有 change 的前置
+2. `change-C`              ← 与 1 无冲突，可并行
+3. `change-B`              ← 阻塞于 change-A
+```
+
+#### 5d. 冲突警告摘要
+
+<!-- TEMPLATE: 以下为示例，实际值由运行时分析结果注入 -->
+```
+🔴 文件冲突:
+  change-B ←→ change-D: path/to/conflict_file.h
+  建议：合并为一个 change，或顺序执行后人工解决冲突
+```
+
+#### 5e. 🧠 AI 分析建议（来自子代理）
+
+<!-- TEMPLATE: 以下为示例，实际值由运行时分析结果注入 -->
+```
+📋 语义依赖分析:
+  - change-A → change-B: （依赖理由）
+
+📐 粒度评估:
+  - change-A: ✅ 合理 / ⚠️ 建议拆分
+
+💡 重组建议:
+  - （如无建议则显示 "无"）
+
+⚠️ 风险提示:
+  - （如无风险则显示 "无"）
+```
+
+---
+
+## 输出格式（消费方指南）
+
+本技能的全部输出写入 `.zcf/.deps-output.md`，由 plan Phase 1 读取消费。
+
+输出文件包含以下数据：
+
+1. **依赖图**（5a）：Mermaid flowchart，用于可视化展示 change 间关系
+2. **Change 状态表**（5b）：用于在用户选择时标记每个 change 的状态（ready/prerequisite/blocked_by）
+   - `置信度` 列可用来决定是否强制建议（高置信度 → 强推荐，低置信度 → 仅提示）
+3. **推荐执行顺序**（5c）：用于对候选列表重新排序（prerequisite 置顶）
+4. **冲突警告**（5d）：用于在用户选择冲突的 change 时给出提示
+5. **AI 分析建议**（5e）：
+   - `语义依赖分析`：子代理识别到的隐式依赖
+   - `粒度评估`：每个 change 的范围是否合理
+   - `重组建议`：拆分/合并建议（触发 plan Phase 1 中的 🔀/🔄 操作选项）
+   - `风险提示`：需要人工关注的潜在问题
+
+---
+
+
+## 关键约束
+
+1. **不修改文件**：本技能是只读分析，不修改任何文件
+2. **分析粒度**：目前仅分析 proposal.md 和 design.md 中的显式引用，不分析代码级依赖
+3. **ADR 是关键线索**：建议在 propose 阶段写入完整的 ADR 引用链，以便依赖分析更准确

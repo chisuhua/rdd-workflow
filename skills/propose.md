@@ -1,18 +1,24 @@
 ---
 name: propose
-description: 分析项目文档与代码的差距，生成 propose 建议列表，用户选择后调用 openspec-propose 创建 artifacts。可多次调用生成多个 propose。
+description: 分析项目文档与代码的差距，生成 propose 建议列表，用户选择后执行 openspec-propose 命令序列创建 artifacts。可多次调用生成多个 propose。
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+. Reads docs/adr/, docs/architecture/, docs/developer_guide/.
 metadata:
   author: sisyphus
-  version: "1.3"  # P0: Phase 5 后添加继续创建循环，自动检查剩余建议
+  version: "1.4"  # P2: 添加自动 git commit 功能，Propose 完成时自动提交 artifacts
   generatedBy: "1.3.1"
   replaces-step: "step1-manual"  # 替代原工作流 Step 1 的手动 openspec new/propose 操作
 ---
 
 # OpenSpec 工作流 — Propose
 
-分析项目文档与代码之间的对齐情况，生成 propose 建议，用户选择后串行执行 openspec-propose 创建 artifacts。
+分析项目文档与代码之间的对齐情况，生成 propose 建议，用户选择后执行 openspec-propose 命令序列创建 artifacts。
+
+**openspec-propose 命令序列**（等同于 Phase 4 的全部步骤）：
+1. `openspec new change "<name>"` — 创建 change 目录
+2. `openspec status --change "<name>" --json` — 获取所有 artifact 及其依赖关系
+3. 循环 `openspec instructions "<artifact>" --change "<name>" --json` — 获取每个 artifact 的模板、上下文、输出路径
+4. 按依赖顺序创建 artifact 文件（proposal.md → design.md → tasks.md 等）
 
 `proposal-suggestions.md` 是持久化文件（随 git 版本控制），每次执行时更新：新增扫描发现的建议，移除已创建的 propose。
 
@@ -63,16 +69,17 @@ try:
     if current_entry:
         entries.append('\n'.join(current_entry))
     
-    # 过滤：移除 name 对应的 change 目录已存在的条目
+# 过滤：移除 name 对应的 change 目录已存在的条目
+    project_root = os.environ.get('PROJECT_ROOT', '')
     kept = []
     removed = []
     for entry in entries:
         name = None
         for line in entry.split('\n'):
             if line.strip().startswith('- name:'):
-                name = line.split(':', 1)[1].strip().strip('\"').strip(\"'\")
+                name = line.split(':', 1)[1].strip().strip('\"').strip("'")
                 break
-        if name and os.path.isdir(f'$PROJECT_ROOT/openspec/changes/{name}/'):
+        if name and os.path.isdir(f'{project_root}/openspec/changes/{name}/'):
             removed.append(name)
         else:
             kept.append(entry)
@@ -84,7 +91,7 @@ try:
             f.write('\n')
     
     if removed:
-        print(f'  已从建议列表移除: {', '.join(removed)}')
+        print(f'  已从建议列表移除: {", ".join(removed)}')
     print(f'  剩余 {len(kept)} 个建议')
     
 except Exception as e:
@@ -142,7 +149,7 @@ ls docs/developer_guide/patterns/
 ```bash
 # 搜索关键目录的 TODO/FIXME/HACK 标记
 # 限制文件类型，先收集再 head，避免跳过 archive/ 后不足 30 条
-grep -rn "TODO\|FIXME\|HACK\|WORKAROUND" include/ src/ \
+grep -rnE "TODO|FIXME|HACK|WORKAROUND" include/ src/ \
   --include="*.h" --include="*.hpp" --include="*.cpp" --include="*.cu" \
   | grep -v "archive/" > /tmp/todo_raw.txt
 head -30 /tmp/todo_raw.txt
@@ -154,8 +161,10 @@ head -30 /tmp/todo_raw.txt
 
 ```bash
 # 自动发现 include/ 下所有子目录（无需硬编码列表）
-for subdir in $(ls -d include/*/ 2>/dev/null | xargs -n1 basename); do
-    ls include/$subdir/ 2>/dev/null | sed 's/\..*$//' | sort > /tmp/headers_$subdir.txt
+for subdir in include/*/; do
+    [ -d "$subdir" ] || continue
+    subdir_name=$(basename "$subdir")
+    ls "$subdir" 2>/dev/null | sed 's/\..*$//' | sort > "/tmp/headers_$subdir_name.txt"
 done
 cat /tmp/headers_*.txt | sort -u > /tmp/all_headers.txt
 
@@ -375,9 +384,14 @@ for each selected propose <name>:
     # ## 验收标准
     #   量化指标和测试要求（定义"完成"的标准）
     #
-    # 这五个板块直接嵌入 proposal.md 的需求背景部分，作为 openspec CLI
-    # 生成 artifacts 时的上下文。遵循 openspec-propose SKILL.md 中的
-    # artifact creation 流程，将 description 内容填入对应的 template 字段。
+    # 这五个板块直接嵌入 proposal.md 的需求背景部分，作为
+    # openspec-propose 命令序列生成 artifacts 时的上下文。
+    # 
+    # openspec-propose 命令序列等同于 Phase 4 的全部步骤：
+    #   Step 4a: openspec new change "<name>"
+    #   Step 4b: openspec status --change "<name>" --json
+    #   Step 4c: openspec instructions "<artifact>" --change "<name>" --json（循环）
+    #   Step 4d: 按 /opsx:propose 格式生成 proposal.md 内容
     
 # 所有 propose 创建完成
 ```
@@ -390,7 +404,9 @@ for each selected propose <name>:
 
 从 proposal-suggestions.md 中删除已成功创建的条目（按 name 匹配）。保留未选中和跳过的条目供下次使用。
 
-**5b. 汇总输出**
+**5b. 汇总输出 + 自动提交**
+
+Propose 创建完成后，自动检测未提交的 artifacts 并执行提交：
 
 ```
 ✅ Propose 阶段完成
@@ -403,16 +419,40 @@ for each selected propose <name>:
   - add-cdc-support (P1)
   - refactor-sim-eval (P2)
 
-下一步：
-  1. ⚠️ 必须提交 artifact（否则 plan 阶段的 COMMIT GATE 会拒绝）：
-     git add openspec/changes/fix-ns-pollution/ openspec/changes/add-stream-pipe-ops/
-     git add proposal-suggestions.md
-     git commit -m "feat: propose fix-ns-pollution + add-stream-pipe-ops"
-     （注意: 每个 change 应独立提交，或按批次提交。不 commit 就无法创建 worktree！）
-
-  2. 对每个 change 执行 plan：
-     skill_use("spec-workflow-plan add-stream-pipe-ops")
+【自动提交】检测到未提交的 artifacts，正在提交...
 ```
+
+**自动提交脚本**（Phase 5 后执行）：
+
+```bash
+# 检测未提交的 artifacts
+UNCOMMITTED=$(git status --porcelain openspec/changes/ 2>/dev/null | wc -l)
+if [ "$UNCOMMITTED" -gt 0 ]; then
+    echo "📦 检测到 $UNCOMMITTED 个未提交的 artifacts，正在自动提交..."
+
+    # 收集所有新建/修改的 change 目录
+    CHANGES=$(git status --porcelain openspec/changes/ | awk '{print $2}' | xargs -I{} dirname {} | sort -u)
+
+    # 添加到暂存区
+    git add openspec/changes/*/
+    git add proposal-suggestions.md
+
+    # 生成提交信息
+    CHANGE_NAMES=$(echo "$CHANGES" | xargs -I{} basename {} | tr '\n' ' ')
+    git commit -m "feat: propose $CHANGE_NAMES"
+
+    echo "✅ 已提交: $CHANGE_NAMES"
+else
+    echo "✅ 所有 artifacts 已提交"
+fi
+```
+
+**【重要】自动提交触发条件**：
+- 检测到 `openspec/changes/<name>/` 目录有新建或修改的文件
+- 检测到 `proposal-suggestions.md` 有更新
+- 只在用户选择「完成 Propose 阶段」时触发，不是每次创建 change 都触发
+
+---
 
 **5c. 用户未选择任何 propose 时的输出**
 

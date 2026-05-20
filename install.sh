@@ -3,7 +3,7 @@
 # 用法: bash install.sh [项目目录]
 # 不带参数时安装到当前目录
 
-set -e
+set -euo pipefail
 
 # 配置
 PACKAGE_DIR="${PACKAGE_DIR:-$HOME/.agents/skills/spec-workflow}"

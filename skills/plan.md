@@ -1,19 +1,8 @@
 ---
 name: plan
-description: 发现所有已创建但未建立 branch/worktree 的 OpenSpec change，用户选择后创建 worktree 并生成 Prometheus 实施计划。
+description: 发现所有已创建但未建立 branch/worktree 的 OpenSpec change，用户选择后执行 openspec-plan 命令序列创建 worktree 并生成 Prometheus 实施计划。命令序列定义见正文。
 license: MIT
-compatibility: Requires openspec CLI v1.3.1+.
-metadata:
-  author: sisyphus
-  version: "3.3"  # P1: Step 7 后添加检查其他未计划 change 的循环
-  generatedBy: "1.3.1"
 ---
-
-# OpenSpec 工作流 — Plan
-
-发现所有已创建但未建立 branch/worktree 的 change，用户选择后创建 worktree 并生成 Prometheus 实施计划。
-
-## 工作流位置
 
 ```
 main: propose → commit artifacts
@@ -53,8 +42,8 @@ ls -d $PROJECT_ROOT/openspec/changes/*/ 2>/dev/null | sed 's#$PROJECT_ROOT/opens
 对每个 change，判断是否已有 worktree：
 
 ```bash
-# 检查已有 worktree 分支（使用 --format 避免 git 版本兼容问题）
-EXISTING_BRANCHES=$(git branch --list 'openspec/*' --format='%(refname:short)' | sed 's/^openspec\///')
+# 检查已有 worktree 分支（兼容旧版 git）
+EXISTING_BRANCHES=$(git branch --list 'openspec/*' | sed 's/^[* ]*//; s/^openspec\///')
 
 # 检查已有 worktree
 EXISTING_WTS=$(git worktree list | awk '$2 ~ /^openspec\// {print $2}' | sed 's/^openspec\///')
@@ -79,8 +68,18 @@ EXISTING_WTS=$(git worktree list | awk '$2 ~ /^openspec\// {print $2}' | sed 's/
 STATE=$(openspec status --change "<name>" --json | jq -r '.state')
 PROGRESS=$(openspec status --change "<name>" --json | jq -r '.progress')
 
-# 获取目录修改时间（反映创建时间）
-MTIME=$(stat -c %Y "$PROJECT_ROOT/openspec/changes/<name>/" 2>/dev/null || echo 0)
+# 获取目录修改时间（反映创建时间，macOS/BSD 兼容）
+get_mtime() {
+    local dir="$1"
+    if command -v stat >/dev/null 2>&1; then
+        # Linux
+        stat -c %Y "$dir" 2>/dev/null || echo 0
+    else
+        # macOS/BSD
+        stat -f %m "$dir" 2>/dev/null || echo 0
+    fi
+}
+MTIME=$(get_mtime "$PROJECT_ROOT/openspec/changes/<name>/")
 
 # 读取 tasks 数量
 TASKS_COUNT=$(grep -c "\- \[ \]" "$PROJECT_ROOT/openspec/changes/<name>/tasks.md" 2>/dev/null || echo "?")
@@ -149,33 +148,132 @@ echo "   准备创建 worktree..."
 
 ---
 
-## Phase 1：与用户交互选择
+## Phase 0.5：Change 间依赖分析
 
-当提供 change name 时：
-- 仍然执行 Phase 0 发现阶段（用于验证提供的 name 是否有效）
-- 验证通过后，直接进入 Phase 2
-- 验证失败（change 不存在、已 plan、已归档）→ 报错退出
+本阶段复用 Phase 0 的候选 change 列表，调用 `spec-workflow-deps` 进行依赖分析，结果用于 Phase 1 的用户选择。
 
-当未提供 change name 时：展示发现结果，让用户选择。
+### Step 1：复用 Phase 0 的候选列表
 
-**两种展示模式**：
+Phase 0 已完成候选 change 的发现和验证。本步骤直接获取其结果，不重新扫描：
 
-### 模式 A：发现候选 changes
-
+```bash
+# Phase 0 已产出候选列表（变量名：CANDIDATES，来自 Phase 0 Step 0a-0d）
+# 使用 "${CANDIDATES[@]}" 展开所有元素
+echo "📋 候选 change 列表（来自 Phase 0）："
+for name in "${CANDIDATES[@]}"; do
+  echo "  - $name"
+done
 ```
-📋 发现 <N> 个待计划的 change：
 
-### 🥇 ready — 可立即处理（按等待时间排序）
-1. fix-ns-pollution ─ artifacts ready，创建于 5天前，4个任务
-2. add-stream-pipe-ops ─ artifacts ready，创建于 2天前，3个任务
+### Step 2：将候选列表写入共享文件（供 deps 技能读取）
 
-### ❌ blocked — artifacts 不完整（需先补全）
-3. add-cdc-support ─ 缺少 design.md
+```bash
+# 将候选列表写入 JSON 文件，作为 plan → deps 的数据交换契约
+DEPS_INPUT="$PROJECT_ROOT/.zcf/.deps-candidates.json"
+mkdir -p "$PROJECT_ROOT/.zcf/"
+
+# 构建候选列表的 JSON
+echo '{' > "$DEPS_INPUT"
+echo '  "project_root": "'"$PROJECT_ROOT"'",' >> "$DEPS_INPUT"
+echo '  "candidates": [' >> "$DEPS_INPUT"
+first=true
+for name in "${CANDIDATES[@]}"; do
+  $first || echo ',' >> "$DEPS_INPUT"
+  echo -n '    "'"$name"'"' >> "$DEPS_INPUT"
+  first=false
+done
+echo '' >> "$DEPS_INPUT"
+echo '  ]' >> "$DEPS_INPUT"
+echo '}' >> "$DEPS_INPUT"
+
+echo "✅ 候选列表已写入 $DEPS_INPUT"
+```
+
+### Step 3：调用依赖分析技能
+
+将候选列表传递给 `spec-workflow-deps` 技能。deps 技能从 `.zcf/.deps-candidates.json` 读取候选列表，并将分析结果写入 `.zcf/.deps-output.md`：
+
+```bash
+echo "🔍 正在分析 ${#CANDIDATES[@]} 个 change 间的依赖关系..."
+skill_use("spec-workflow-deps")
+```
+
+`spec-workflow-deps` 的输入输出契约：
+
+| 方向 | 文件 | 格式 | 
+|------|------|------|
+| **plan → deps** | `.zcf/.deps-candidates.json` | `{ "candidates": ["name1", "name2"], ... }` |
+| **deps → plan** | `.zcf/.deps-output.md` | Markdown 依赖分析报告（含 5 个章节） |
+
+### Step 4：读取 deps 输出并解析
+
+```bash
+DEPS_OUTPUT="$PROJECT_ROOT/.zcf/.deps-output.md"
+if [ -f "$DEPS_OUTPUT" ]; then
+  echo "✅ 依赖分析结果已就绪: $DEPS_OUTPUT"
+else
+  echo "⚠️  依赖分析未产生输出，将使用无依赖信息的即席模式"
+fi
+```
+
+`spec-workflow-deps` 的输出（`.zcf/.deps-output.md`）包含以下章节，供 Phase 1 消费：
+
+```markdown
+## 依赖图
+flowchart LR
+  PREREQ --> DEPENDENT_1
+  PREREQ --> DEPENDENT_2
+
+## Change 状态表
+| Change | 状态 | 阻塞于 | 冲突 | 置信度 |
+|--------|------|--------|------|--------|
+
+## 推荐执行顺序
+1. PREREQ ...
+2. ...
+
+## 冲突警告
+🔴 文件冲突...
+
+## AI 分析建议
+🧠 语义依赖 / 粒度评估 / 重组建议 / 风险提示
+```
 
 ---
 
-推荐：fix-ns-pollution（等待最久，可最快上手）
-请选择要执行 plan 的 change：
+## Phase 1：与用户交互选择（含依赖信息）
+
+当提供 change name 时：
+- 仍然执行 Phase 0 发现阶段（用于验证提供的 name 是否有效）
+- 验证通过后，执行 Phase 0.5 依赖分析（检查该 change 是否有未满足的前置依赖）
+- 若其有未满足的前置依赖（blocked_by），提示用户并建议先处理前置 change
+- 用户确认后仍可继续进入 Phase 2
+
+当未提供 change name 时：展示加入依赖分析的发现结果，让用户选择。
+
+**两种展示模式**：
+
+### 模式 A：发现候选 changes（含依赖信息）
+
+```
+📋 发现 <N> 个待计划的 change（含依赖分析）：
+
+### 🥇 prerequisite — 其他 change 的前置，建议优先
+1. refactor-stream-base ─ ready，阻塞: add-m2sPipe, add-s2mPipe
+
+### ✅ ready — 无前置依赖
+2. fix-ns-pollution ─ artifacts ready，5天前，4个任务
+
+### ⚠️ blocked_by — 被其他 change 阻塞
+3. add-m2sPipe ─ 阻塞于: refactor-stream-base，冲突: add-s2mPipe
+4. add-s2mPipe ─ 阻塞于: refactor-stream-base，冲突: add-m2sPipe
+
+### ❌ artifacts 不完整
+5. add-cdc-support ─ 缺少 design.md
+
+---
+
+推荐：第 1 个 change 按依赖顺序执行
 ```
 
 AI 构建 Question 工具选项：
@@ -183,12 +281,16 @@ AI 构建 Question 工具选项：
 ```javascript
 {
     header: "选择 change 执行 plan",
-    question: "请选择要创建 worktree + plan 的 change（单选）",
-    multiple: false,
+    question: "请选择要创建 worktree + plan 的 change（可多选，系统按依赖顺序执行）",
+    multiple: true,
     options: [
-        { label: "fix-ns-pollution (推荐)",  description: "ready, 创建于5天前, 4个任务" },
-        { label: "add-stream-pipe-ops",       description: "ready, 创建于2天前, 3个任务" },
-        // blocked 的 change 显示但不可选
+        { label: "refactor-stream-base (prerequisite)", description: "阻塞: add-m2sPipe, add-s2mPipe, 建议优先" },
+        { label: "fix-ns-pollution",                      description: "ready, 5天前, 4个任务" },
+        // blocked_by 的 change 灰显提示
+        { label: "add-m2sPipe (被阻塞)",                   description: "先完成 refactor-stream-base" },
+        // 新增操作选项（始终可选）
+        { label: "🔀 合并冲突 change",                     description: "合并有文件冲突的多个 change 为一个" },
+        { label: "🔄 为前置依赖创建新 change",             description: "发现新的前置依赖，调用 propose 创建" },
     ]
 }
 ```
@@ -209,8 +311,25 @@ AI 构建 Question 工具选项：
 
 | 用户选择 | 行为 |
 |----------|------|
-| 选择一个 change | 记录 `<name>`，进入 Phase 2 |
+| 选择一个 ready/prerequisite change | 记录 `<name>`，进入 Phase 2 |
+| 选择一个 blocked_by change（带警告） | 用户确认后仍允许进入 Phase 2（可能需要在 plan 中标注缺失的前置） |
+| 选择多个 ready change | 按依赖图拓扑顺序逐个进入 Phase 2（无冲突的可并行创建 worktree） |
+| 🔀 合并冲突 change（带用户输入） | ① 用户指定要合并的多个 change name<br>② AI 读取各 change 的 proposal.md，生成合并后的 proposal 描述<br>③ 调用 propose 技能创建新 change（使用合并后的需求描述）<br>④ 原 change 标记为 superseded（在 `proposal-suggestions.md` 中删除） |
+| 🔄 为前置依赖创建新 change（带用户输入） | ① 用户描述前置任务内容<br>② AI 生成 proposal 格式的需求描述（包含 In Scope / ADR 引用）<br>③ 调用 propose 技能创建新 change<br>④ 回到 Phase 1 重新选择（新 change 加入候选列表） |
 | 取消/跳过 | 终止，不做任何操作 |
+
+---
+
+## openspec-plan 命令序列
+
+**openspec-plan 命令序列**（等同于 Phase 2 的全部步骤）：
+1. `openspec status --change "<name>" --json` — 验证 change 状态是否为 ready
+2. COMMIT GATE — 检查 artifacts 是否已 git commit（worktree 只能看到已 commit 的文件）
+3. `git branch openspec/<name> HEAD` — 创建基于 HEAD 的分支
+4. `git worktree add .zcf/<name>-wt openspec/<name>` — 创建 worktree 隔离环境
+5. `openspec instructions apply --change "<name>" --json` — 获取 tasks 和 contextFiles
+6. 调用 Prometheus agent 生成 `.sisyphus/plans/<name>.md` 实施计划
+7. `git add .sisyphus/plans/<name>.md && git commit` — 提交 plan 到 worktree 分支
 
 ---
 
@@ -220,7 +339,9 @@ AI 构建 Question 工具选项：
 
 ### Step 1：验证前置条件
 
-**1a. 验证 change 存在**
+**1a. 验证 change 存在（防御性检查）**
+
+> 注：Phase 0 和 Phase 0e 已验证过 change 存在。此处为防御性重复检查，覆盖"Phase 1 用户选择到 Phase 2 执行之间有人为删除了 change 目录"的边界情况。
 
 ```bash
 openspec status --change "<name>" --json

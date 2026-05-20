@@ -99,7 +99,8 @@ else
     fi
     
     # 有 worktree 存在，显示选择菜单
-    echo "📋 发现 $(echo "$WT_INFO" | wc -l) 个已创建的 worktree："
+    WT_COUNT=$(echo "$WT_INFO" | grep -c .)
+    echo "📋 发现 $WT_COUNT 个已创建的 worktree："
     echo ""
     WORKTREE_COUNT=0
     while read -r wt_path wt_branch; do
@@ -176,7 +177,19 @@ if [ ! -d "build" ]; then
     cmake -B build
 fi
 
-cmake --build build -j$(nproc) 2>&1 | tail -5
+# 获取 CPU 核心数（跨平台兼容）
+get_nproc() {
+    if command -v nproc >/dev/null 2>&1; then
+        nproc
+    elif command -v sysctl >/dev/null 2>&1; then
+        # macOS/BSD
+        sysctl -n hw.ncpu 2>/dev/null || echo 4
+    else
+        echo 4
+    fi
+}
+
+cmake --build build -j$(get_nproc) 2>&1 | tail -5
 # ccache 如果已安装会自动生效（通过 CMake 预设或环境变量）
 # 冷构建约 30s，后续增量 <5s
 ```

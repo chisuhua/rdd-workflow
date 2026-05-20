@@ -1,6 +1,6 @@
 # OpenSpec 工作流技能使用指南
 
-> 基于 `openspec-workflow-guide` 交互式向导，覆盖从提案到归档的完整生命周期。
+> 基于 `spec-workflow-guide` 交互式向导，覆盖从提案到归档的完整生命周期。
 > 支持多 change 并行执行，可分离到不同终端同时运行。
 
 ---

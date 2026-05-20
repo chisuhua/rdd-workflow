@@ -131,7 +131,12 @@ APPLY=$(openspec instructions apply --change "<name>" --json)
 STATE=$(echo "$APPLY" | jq -r '.state')
 COMPLETE=$(echo "$APPLY" | jq '.progress.complete')
 TOTAL=$(echo "$APPLY" | jq '.progress.total')
-REMAINING=$((TOTAL - COMPLETE))
+# 验证数字有效性后再进行算术运算
+if [[ "$COMPLETE" =~ ^[0-9]+$ ]] && [[ "$TOTAL" =~ ^[0-9]+$ ]] && [ "$TOTAL" -gt 0 ]; then
+    REMAINING=$((TOTAL - COMPLETE))
+else
+    REMAINING=0
+fi
 
 # 通过 git worktree list 动态查找 worktree 路径（不硬编码 $PROJECT_ROOT/.zcf/<name>-wt）
 WORKTREE_PATH=$(git worktree list | awk '$2=="openspec/<name>" {print $1}')
@@ -342,7 +347,7 @@ echo "✅ Change <name> 已归档"
 ### Step 5：清理 worktree + 分支
 
 ```bash
-if [ "$IN_WORKTREE" = true ] && [ -n "$WORKTREE_PATH" ]; then
+if [ "$IN_WORKTREE" = true ] && [ -n "$WORKTREE_PATH" ] && [ "$WORKTREE_PATH" != "/" ]; then
     # 使用 Step 1 中动态获取的 WORKTREE_PATH，而非硬编码路径
     git worktree remove "$WORKTREE_PATH"
     echo "✅ Worktree 已删除: $WORKTREE_PATH"
@@ -373,7 +378,7 @@ fi
 
 ```bash
 # 检查是否还有其他 worktree（使用 awk 检查分支名而非路径）
-REMAINING_WT=$(git worktree list | awk '$2 ~ /^openspec\// {print $1}' | wc -l)
+REMAINING_WT=$(git worktree list | awk '$2 ~ /^openspec\// {print $1}' | grep -c .)
 if [ "$REMAINING_WT" -gt 0 ]; then
     echo ""
     echo "📋 还有 $REMAINING_WT 个 worktree 正在进行"

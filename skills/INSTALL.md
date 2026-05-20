@@ -14,10 +14,10 @@ author: sisyphus
 
 ```bash
 # 检查 openspec CLI 是否已安装
-if command -v openspec &> /dev/null; then
+if command -v openspec >/dev/null 2>&1; then
     OPENSPEC_VERSION=$(openspec --version 2>/dev/null || echo "unknown")
     echo "✅ openspec CLI 已安装: v$OPENSPEC_VERSION"
-elif command -v npx &> /dev/null && npx openspec --version &> /dev/null; then
+elif command -v npx >/dev/null 2>&1 && npx openspec --version >/dev/null 2>&1; then
     OPENSPEC_VERSION=$(npx openspec --version 2>/dev/null || echo "unknown")
     echo "✅ openspec CLI 已安装 (via npx): v$OPENSPEC_VERSION"
 else
@@ -35,7 +35,8 @@ else
     echo "  方式 3 - npm 本地安装："
     echo "    npm install openspec-cli"
     echo ""
-    read -p "按回车键退出，或输入 'y' 继续安装（不推荐）: " confirm
+    printf '%s' "按回车键退出，或输入 'y' 继续安装（不推荐）: "
+read -r confirm
     if [ "$confirm" != "y" ]; then
         echo "已退出。请先安装 openspec CLI。"
         exit 0
@@ -79,8 +80,8 @@ echo "✅ 技能目录已创建: $SKILLS_DIR"
 ### 步骤 3：复制子技能
 
 ```bash
-# 获取技能包位置
-PACKAGE_DIR=$(dirname "$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$HOME/.agents/skills/spec-workflow")"))
+# 获取技能包位置（兼容 macOS/BSD）
+PACKAGE_DIR=$(dirname "$(dirname "$(realpath "$0" 2>/dev/null || echo "$HOME/.agents/skills/spec-workflow")")")
 
 # 检查技能包是否存在
 if [ ! -d "$PACKAGE_DIR/skills" ]; then

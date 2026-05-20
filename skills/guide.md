@@ -1,11 +1,11 @@
 ---
 name: guide
-description: 交互式工作流向导——检查环境、追踪进度、引导用户完成 openspec-workflow 全流程（propose→plan→execute→status/archive）。基于 Markdown 状态文件跨 session 恢复。
+description: 交互式工作流向导——检查环境、追踪进度、引导用户完成 openspec-workflow 全流程（propose→deps→plan→execute→status/archive）。基于 Markdown 状态文件跨 session 恢复。
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+, git 2.25+, CMake
 metadata:
   author: sisyphus
-  version: "2.3"  # P0: 添加归档后循环检查机制 (fix-ns-pollution 遗留问题)
+  version: "2.5"  # P0: 修复 propose→plan 过渡时自动调用 deps.md（P1 改进）
   generatedBy: "1.3.1"
   user-invocable: true
 ---
@@ -118,11 +118,52 @@ skill_use("spec-workflow-guide")   # 无参数版本
 
 每次调用 `skill_use("spec-workflow-guide")` 时：
 
-### 步骤 0：检查状态文件
+### 步骤 0：检查状态文件 + Git 仓库验证
 
 ```bash
-# 自动检测项目根目录（用于全局安装的技能）
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+# ============================================================
+# P0 FIX: 约束在当前工作目录，不向上遍历到父目录
+# 使用 pwd 作为项目根目录，然后验证当前目录是否为 git 仓库
+# ============================================================
+PROJECT_ROOT=$(pwd)
+
+# 验证当前目录是 git 仓库（防止向上遍历到父目录的仓库）
+if ! git rev-parse --git-dir > /dev/null 2>&1; then
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "❌ 错误：当前目录不是 git 仓库"
+    echo ""
+    echo "   当前目录: $PROJECT_ROOT"
+    echo ""
+    echo "   OpenSpec 工作流只能在 git 仓库内运行。"
+    echo "   请切换到正确的项目目录后重试。"
+    echo ""
+    echo "   示例："
+    echo "   cd /path/to/your/project"
+    echo "   skill_use(\"spec-workflow-guide\")"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    exit 1
+fi
+
+# 额外安全检查：确保 .git 目录在 PROJECT_ROOT 内（防止跨文件系统误匹配）
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
+case "$GIT_DIR" in
+    /*) ABS_GIT_DIR="$GIT_DIR" ;;
+    *)  ABS_GIT_DIR="$PROJECT_ROOT/$GIT_DIR" ;;
+esac
+
+if [ ! -d "$ABS_GIT_DIR" ] || ! echo "$ABS_GIT_DIR" | grep -qF "$PROJECT_ROOT"; then
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "⚠️  警告：git 仓库根目录与当前目录不一致"
+    echo ""
+    echo "   当前目录:   $PROJECT_ROOT"
+    echo "   Git 仓库:   $(dirname "$ABS_GIT_DIR")"
+    echo ""
+    echo "   为防止误操作，工作流仅在 git 仓库根目录运行。"
+    echo "   请切换到正确的项目目录后重试。"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    exit 1
+fi
+
 STATE_FILE="$PROJECT_ROOT/workflow-state.md"
 PROGRESS_FILE="$PROJECT_ROOT/workflow-progress.md"
 
@@ -224,7 +265,7 @@ i. 其他输入
 
 ```bash
 # 检查是否有已创建的 worktree
-WORKTREE_COUNT=$(git worktree list | grep "openspec/" | wc -l)
+WORKTREE_COUNT=$(git worktree list | grep "openspec/" | grep -c .)
 
 if [ "$WORKTREE_COUNT" -gt 0 ]; then
     echo ""
@@ -314,9 +355,13 @@ guide 负责显示扫描结果和接收用户选择，但创建操作通过调�
 ```bash
 # 展示当前活跃 changes
 echo "📋 当前已创建的 Changes:"
-ls -d $PROJECT_ROOT/openspec/changes/*/ 2>/dev/null | grep -v archive/ | while read dir; do
+ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | while read -r dir; do
     name=$(basename "$dir")
-    committed=$(git show HEAD:"$PROJECT_ROOT/openspec/changes/$name/.openspec.yaml" > /dev/null 2>&1 && echo "✅" || echo "⏳")
+    if git rev-parse --verify HEAD >/dev/null 2>&1; then
+        committed=$(git show HEAD:"$PROJECT_ROOT/openspec/changes/$name/.openspec.yaml" > /dev/null 2>&1 && echo "✅" || echo "⏳")
+    else
+        committed="⏳"
+    fi
     echo "  - $name  [Artifacts: $committed]"
 done
 
@@ -375,13 +420,117 @@ i. 手动输入 change 名称
 
 **Propose 阶段完成条件**：
 
-用户选择「4. 完成 Propose 阶段」后，验证至少有一个 change 的 artifacts 已提交，然后推进到 plan。
+用户选择「4. 完成 Propose 阶段」后，验证至少有一个 change 的 artifacts 已提交，然后推进到 **deps 阶段**（依赖分析），最后才进入 plan。
+
+**Propose → Deps → Plan 流程**：
+
+```
+用户选择「完成 Propose」
+    ↓
+验证 artifacts 已提交
+    ↓
+【自动执行】调用 deps.md 分析候选 change 依赖
+    ↓
+展示依赖图和推荐执行顺序
+    ↓
+推进到 plan 阶段
+```
+
+---
+
+### 阶段 2.5：`deps` — 依赖分析（自动执行）
+
+**入口条件**：propose 阶段完成，用户选择「完成 Propose 阶段」后自动触发。
+
+**前置说明**：
+本阶段自动执行，不需要用户交互。所有结果通过 deps.md 生成。
+
+**行为**：
+
+1. **生成候选列表**：读取所有已提交的 change，生成 `.zcf/.deps-candidates.json`
+2. **执行依赖分析**：调用 deps.md 分析 change 间依赖
+3. **输出依赖图**：生成 `.zcf/.deps-output.md`，包含 Mermaid 依赖图和推荐执行顺序
+4. **展示结果**：展示依赖图、冲突检测、推荐顺序
+
+**自动执行内容**：
+
+```bash
+# Step 1: 生成候选列表
+mkdir -p "$PROJECT_ROOT/.zcf"
+python3 -c "
+import json, os
+
+# 读取所有已提交的 change
+changes_dir = '$PROJECT_ROOT/openspec/changes'
+candidates = []
+if os.path.isdir(changes_dir):
+    for name in sorted(os.listdir(changes_dir)):
+        change_path = os.path.join(changes_dir, name)
+        openspec_yaml = os.path.join(change_path, '.openspec.yaml')
+        # 检查 change 是否已提交（.openspec.yaml 在 HEAD 中存在）
+        if os.path.isfile(openspec_yaml):
+            candidates.append(name)
+
+data = {'candidates': candidates}
+with open('$PROJECT_ROOT/.zcf/.deps-candidates.json', 'w') as f:
+    json.dump(data, f, indent=2)
+print(f'生成候选列表: {candidates}')
+"
+
+# Step 2: 调用 deps.md 分析（内联执行）
+# 读取每个 change 的 proposal.md 和 design.md
+# 分析文件路径、ADR 引用、接口定义
+# 生成依赖图和冲突检测
+# 输出到 .zcf/.deps-output.md
+
+# Step 3: 展示结果
+echo "📊 依赖分析完成"
+cat "$PROJECT_ROOT/.zcf/.deps-output.md"
+```
+
+**依赖图生成逻辑**：
+
+```bash
+# 从 proposal.md 提取 Impact 中的文件路径
+SCOPE_FILES=$(grep -E '^[ \t]*-[ \t]*('src/|file:)' "$proposal_path" 2>/dev/null | ...)
+
+# 检测文件路径冲突
+CONFLICTS=$(find "$PROJECT_ROOT/openspec/changes/" -name "proposal.md" -exec grep ... {} \;)
+
+# 生成 Mermaid 图
+if [ "$独立" = true ]; then
+    echo "flowchart LR"
+    echo "    $(echo $CHANGES | tr ' ' '\n' | sed 's/^/    A[ /; s/$/ ]/')"
+else
+    echo "flowchart LR"
+    for dep in $DEPENDENCIES; do
+        echo "    $dep"
+    done
+fi
+```
+
+**Mermaid 独立 change 正确画法**：
+
+```mermaid
+flowchart TB
+    subgraph independent["独立 Change（可并行）"]
+        A[adr-20260517-001-ptx-breakpoint-design]
+        B[add-dbug-print]
+    end
+```
+
+**【重要】Mermaid 语法修复**：
+- 独立 change **不要画箭头**
+- 使用 `&` 连接并行节点：`A[change1] & B[change2]`
+- 或使用 subgraph 分组
+
+**无用户交互**：本阶段自动完成，直接推进到 plan。
 
 ---
 
 ### 阶段 3：`plan` — Commit + Worktree + 计划
 
-**入口条件**：propose 已完成，且当前阶段为 plan。
+**入口条件**：deps 阶段完成（依赖分析已输出到 `.zcf/.deps-output.md`）。
 
 **前置说明**：
 
@@ -486,9 +635,9 @@ i. 其他输入
 **选项 1（阻塞执行）执行内容**：
 
 ```bash
-cd "$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
+cd "$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt" || exit 1
 skill_use("spec-workflow-execute")
-cd /workspace/project/CppHDL
+cd "$PROJECT_ROOT" || exit 1
 # execute 会阻塞直到所有任务完成
 # 更新 state
 ```
@@ -683,9 +832,12 @@ i. 其他输入
 CHANGE_NAME="fix-ns-pollution"
 
 # 1. merge worktree → main
-cd "$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
-git checkout main
-git merge --ff-only "openspec/$CHANGE_NAME"
+cd "$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt" || exit 1
+git checkout main || { echo "❌ 切换 main 分支失败"; exit 1; }
+if ! git merge --ff-only "openspec/$CHANGE_NAME" 2>/dev/null; then
+    echo "⚠️ ff-only merge 失败，尝试普通 merge..."
+    git merge "openspec/$CHANGE_NAME" || { echo "❌ merge 失败"; exit 1; }
+fi
 
 # 2. archive
 openspec archive "$CHANGE_NAME" --yes
@@ -694,7 +846,7 @@ openspec archive "$CHANGE_NAME" --yes
 git worktree remove "$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
 git branch -d "openspec/$CHANGE_NAME"
 
-cd /workspace/project/CppHDL
+cd "$PROJECT_ROOT" || exit 1
 
 echo "✅ $CHANGE_NAME 已归档"
 
@@ -916,7 +1068,7 @@ echo "✅ 所有 worktree 和 openspec/* branches 已清理"
 | 阶段完成条件 | 推进到 |
 |-------------|-------|
 | 环境检测完成（openspec 可用 + build 存在） | propose |
-| 用户明确选择「完成 Propose 阶段」 | plan |
+| 用户明确选择「完成 Propose 阶段」 | **deps**（自动执行依赖分析）→ plan |
 | 为焦点变更创建了 worktree + 计划文件 | execute |
 | **任何时候都可以返回 plan** 添加更多 worktree | plan |
 | 焦点变更的所有任务完成（tasks 全部 [x]） | status_archive |
