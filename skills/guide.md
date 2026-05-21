@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires openspec CLI v1.3.1+, git 2.25+, CMake
 metadata:
   author: sisyphus
-  version: "2.5"  # P0: 修复 propose→plan 过渡时自动调用 deps.md（P1 改进）
+  version: "2.8"  # P0: 修复 tasks.md 进度读取 / P1: 保存并退出选项 / P2: Plan Deps 确认 / P3: 增强恢复机制（版本2）
   generatedBy: "1.3.1"
   user-invocable: true
 ---
@@ -62,14 +62,23 @@ skill_use("spec-workflow-guide")   # 无参数版本
 ## 当前状态
 
 - **当前阶段**: propose
-- **当前步骤**: select_change
+- **当前恢复点**: propose.scan_done
 
 ### Changes（支持多 change 并行）
 
-| 变更名称 | Worktree | Artifacts状态 | 进度 |
-|----------|----------|--------------|------|
-| fix-ns-pollution | .zcf/fix-ns-pollution-wt | ✅ 已提交 | 0/3 |
-| add-stream-pipes | — | ⏳ 未提交 | — |
+| 变更名称 | Worktree | Artifacts | 执行状态 | 当前操作 |
+|----------|----------|-----------|---------|---------|
+| fix-ns-pollution | .zcf/fix-ns-pollution-wt | ✅ 已提交 | ⏳ 等待 | — |
+| add-stream-pipes | — | ⏳ 未提交 | ⏳ 等待 | — |
+
+### 恢复上下文
+
+- **恢复点**: propose.scan_done
+- **最后操作**: 扫描建议完成，等待用户选择
+- **验证建议**:
+  - [x] openspec CLI 可用
+  - [x] git 工作区正常
+  - [ ] propose artifacts 已创建（如需要）
 
 - **活跃 Changes**: [fix-ns-pollution, add-stream-pipes]
 - **当前焦点变更**: fix-ns-pollution
@@ -111,6 +120,31 @@ skill_use("spec-workflow-guide")   # 无参数版本
 
 **下一步**: 决定是否为这些 change 创建 worktree（进入 Plan 阶段）
 ```
+
+---
+
+### 恢复点定义
+
+恢复点使用 `{phase}.{state}` 格式，每个阶段定义 2-3 个状态：
+
+| 阶段 | 恢复点 | 说明 | 验证项 |
+|------|--------|------|--------|
+| **setup** | `setup.env_check` | 环境检查完成 | openspec CLI 可用 |
+| **propose** | `propose.scan_done` | 扫描建议完成 | proposal-suggestions.md 存在 |
+| **propose** | `propose.change_selected` | change 已选择待创建 | change 目录存在 |
+| **propose** | `propose.commit_pending` | 待提交 artifacts | — |
+| **deps** | `deps.analysis_done` | 依赖分析完成 | .zcf/.deps-output.md 存在 |
+| **plan** | `plan.worktree_ready` | worktree 创建完成 | worktree 目录存在 |
+| **plan** | `plan.deps_review` | 等待 Deps 重组确认 | deps 输出存在 |
+| **execute** | `execute.pending` | 等待选择执行方式 | worktree 存在 |
+| **execute** | `execute.active` | 有 change 正在执行 | — |
+| **status_archive** | `status.pending` | 等待归档 | worktree 存在 |
+| **cleanup** | `cleanup.start` | 清理开始 | — |
+
+**恢复点命名原则**：
+- 使用**状态描述**而非操作名称（`pending` 而非 `select_target`）
+- 同一阶段内状态数控制在 2-3 个
+- 使用通用词汇（pending/active/done）便于扩展
 
 ---
 
@@ -168,20 +202,41 @@ STATE_FILE="$PROJECT_ROOT/workflow-state.md"
 PROGRESS_FILE="$PROJECT_ROOT/workflow-progress.md"
 
 if [ -f "$STATE_FILE" ]; then
-    # 读取并展示当前状态
+    # 读取并展示当前状态（版本2格式）
     echo "📂 发现已保存的进度"
     CURRENT_PHASE=$(awk '/\*\*当前阶段\*\*/{getline; gsub(/^\*\*|\*\*$/,""); print}' "$STATE_FILE")
-    CHANGE=$(awk '/\*\*变更名称\*\*/{getline; gsub(/^\*\*|\*\*$/,""); print}' "$STATE_FILE")
+    RECOVERY_POINT=$(awk '/\*\*当前恢复点\*\*/{getline; gsub(/^\*\*|\*\*$/,""); print}' "$STATE_FILE")
+    LAST_OPERATION=$(awk '/\*\*最后操作\*\*/{getline; gsub(/^\*\*|\*\*$/,""); print}' "$STATE_FILE")
+    
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🔄 从中断处恢复"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "   当前阶段: $CURRENT_PHASE"
-    echo "   变更: ${CHANGE:-（无）}"
+    echo "   恢复点: $RECOVERY_POINT"
+    echo "   最后操作: ${LAST_OPERATION:-（无）}"
     echo ""
     # 展示阶段完成情况
     echo "已完成阶段:"
-    grep "✅" "$STATE_FILE" | head -5
+    grep "✅" "$STATE_FILE" | grep -oP '\| \K[^|]+' | head -5
     echo ""
+    
+    # 读取并显示 Changes 状态
+    echo "📋 当前 Changes 状态:"
+    awk '/^\| 变更名称/,/^[^|]/' "$STATE_FILE" | grep "^|" | grep -v "^| 变更名称" | while read line; do
+        echo "   $line"
+    done
+    echo ""
+    
+    # 恢复确认
+    echo "请选择:"
+    echo "1. ✅ 继续恢复（跳转到恢复点）"
+    echo "2. 🔄 重新开始（放弃当前进度）"
+    echo "i. 其他输入（AI 解释）"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 else
     echo "🆕 未发现已保存的进度，开始全新流程。"
     CURRENT_PHASE="setup"
+    RECOVERY_POINT="setup.env_check"
 fi
 ```
 
@@ -252,6 +307,7 @@ echo "📋 活跃 changes: $ACTIVE"
 1. 继续 → 进入 Propose 阶段（扫描建议）
 2. 修复 PATH（显示如何添加 openspec 到 PATH）
 3. 重新检查（刷新环境状态）
+0. 💾 保存并退出（下次 skill_use("spec-workflow-guide") 恢复）
 i. 其他输入
 ```
 
@@ -411,6 +467,7 @@ fi
 3. 创建 add-cdc-support
 4. ✅ 完成 Propose 阶段 → 进入 Plan 阶段
 5. 📋 查看所有已创建的 change 详情
+0. 💾 保存并退出（下次 skill_use("spec-workflow-guide") 恢复）
 i. 手动输入 change 名称
 ```
 
@@ -499,8 +556,13 @@ CONFLICTS=$(find "$PROJECT_ROOT/openspec/changes/" -name "proposal.md" -exec gre
 
 # 生成 Mermaid 图
 if [ "$独立" = true ]; then
-    echo "flowchart LR"
-    echo "    $(echo $CHANGES | tr ' ' '\n' | sed 's/^/    A[ /; s/$/ ]/')"
+    # P4 FIX: 独立 change 不画箭头，使用 subgraph 分组
+    echo "flowchart TB"
+    echo "    subgraph independent[\"独立 Change（可并行）\"]"
+    for change in $CHANGES; do
+        echo "        $(echo $change | sed 's/^/        A[/; s/$/ ]/')"
+    done
+    echo "    end"
 else
     echo "flowchart LR"
     for dep in $DEPENDENCIES; do
@@ -561,6 +623,69 @@ for name in $ACTIVE_CHANGES; do
 done
 ```
 
+**步骤 0：展示 Deps 分析结果 + 重组确认**：
+
+```bash
+# 检查是否有 Deps 分析结果
+if [ -f "$PROJECT_ROOT/.zcf/.deps-output.md" ]; then
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "📊 Deps 阶段分析结果"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    # 提取关键信息展示
+    echo ""
+    echo "【依赖图】（见下方 Mermaid）"
+    
+    # 提取重组建议（如果存在）
+    if grep -q "💡 重组建议" "$PROJECT_ROOT/.zcf/.deps-output.md"; then
+        echo ""
+        echo "【重组建议】"
+        # 提取建议部分（带格式框）
+        awk '/💡 重组建议/,/⚠️ 注意：以上建议仅供参考/' "$PROJECT_ROOT/.zcf/.deps-output.md" | head -30
+    fi
+    
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "请选择："
+    echo "1. ✅ 采纳重组建议（自动重排/合并/拆分）"
+    echo "2. ❌ 拒绝，使用原始 change 列表"
+    echo "3. 📋 查看详细分析（查看完整 .deps-output.md）"
+    echo ""
+    echo "注意：重组建议仅作参考，是否执行由您决定"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+fi
+```
+
+**Deps 重组确认的用户交互流程**：
+
+```
+用户选择「1. 采纳重组建议」
+    ↓
+读取 .zcf/.deps-output.md 中的重组建议
+    ↓
+执行重组操作：
+    - 合并：重命名/合并 change 目录，更新 proposal-suggestions.md
+    - 拆分：创建新的 change 目录，拆分 tasks.md
+    - 重排：更新候选列表顺序
+    ↓
+更新 .zcf/.deps-candidates.json
+    ↓
+继续展示重排后的 change 列表
+
+用户选择「2. 拒绝」
+    ↓
+使用原始 change 列表
+    ↓
+继续展示原始 change 列表
+
+用户选择「3. 查看详细分析」
+    ↓
+使用 less 或 cat 展示完整 .deps-output.md
+    ↓
+返回选择菜单
+```
+
 **选择要处理的 change**：
 
 ```
@@ -578,6 +703,26 @@ Plan 阶段
 3. 批量处理：全部为已提交的变化创建 worktree
 4. 🔄 切换当前焦点变更（选择另一个变更作为焦点）
 5. ↩️ 返回 Propose 阶段（创建更多 change）
+0. 💾 保存并退出（下次 skill_use("spec-workflow-guide") 恢复）
+i. 其他输入
+```
+
+**重构确认后的 change 选择菜单**（当用户选择"采纳重组建议"后）：
+
+```
+Plan 阶段（已采纳重组建议）
+
+📋 重组后 Changes:
+| 变更 | 状态 | 说明 |
+|-----|------|------|
+| add-stream (新) | ✅ 已合并 | add-stream-pipes + add-stream-base |
+| fix-ns-pollution | ✅ | 无变化 |
+
+请选择:
+1. 为 add-stream 创建 worktree + 生成计划
+2. 为 fix-ns-pollution 创建 worktree + 生成计划
+3. 批量处理：全部为已提交的变化创建 worktree
+0. 💾 保存并退出（下次 skill_use("spec-workflow-guide") 恢复）
 i. 其他输入
 ```
 
@@ -623,12 +768,13 @@ ${CHANGE_NAME} worktree 已就绪，请选择执行方式：
 
 📋 ${CHANGE_NAME} 状态:
   Worktree: .zcf/${CHANGE_NAME}-wt
-  计划文件: .sisyphus/plans/${CHANGE_NAME}.md ✅
-  任务数: 3
+  计划文件: .sisyphus/plans/${CHANGE_NAME}.md
+  任务数: $(grep -c '^- \[' "$wt/openspec/changes/$name/tasks.md" 2>/dev/null || echo '?')
 
 请选择执行方式:
 1. 🔒 在此 session 执行（阻塞）— 等待任务完成后返回
 2. 🔓 分离执行（新终端）— 给出操作指引，立即返回
+0. 💾 保存并退出（下次 skill_use("spec-workflow-guide") 恢复）
 i. 其他输入
 ```
 
@@ -696,16 +842,17 @@ LAST_CHECK=$(date "+%Y-%m-%d %H:%M:%S")
 for wt in $(git worktree list | grep "openspec/" | awk '{print $1}'); do
     branch=$(git worktree list | grep "$wt" | awk '{print $3}')
     name=$(echo "$branch" | sed 's|openspec/||')
-    tasks_file="$wt/$PROJECT_ROOT/openspec/changes/$name/tasks.md"
+    # P0 FIX: tasks.md 在 worktree 内的 openspec/changes/<name>/ 目录下
+    # wt 已经是完整路径，不需要再拼接 PROJECT_ROOT
+    tasks_file="$wt/openspec/changes/$name/tasks.md"
 
     if [ -f "$tasks_file" ]; then
-        total=$(grep -c "^- \[" "$tasks_file" 2>/dev/null || echo 0)
-        done=$(grep -c "^- \[x\]" "$tasks_file" 2>/dev/null || echo 0)
+        # P1 FIX: 正确统计 tasks.md 中所有 - [ ] 任务项（不分章节）
+        total=$(grep -c '^- \[' "$tasks_file" 2>/dev/null || echo 0)
+        done=$(grep -c '^- \[x\]' "$tasks_file" 2>/dev/null || echo 0)
         progress="${done}/${total}"
-        # 读取 tasks.md 中是否有正在执行的任务（[~] 标记）
-        running=$(grep "^- \[~\]" "$tasks_file" 2>/dev/null | wc -l)
     else
-        progress="?"
+        progress="? (文件不存在)"
     fi
     echo "  $name → $progress"
 done
@@ -736,6 +883,7 @@ Execute 阶段（监控模式）
 6. 🔧 运行构建验证（指定变更）
 7. 🔄 刷新进度（重新读取所有 tasks.md）
 8. ↩️ 返回 Plan 阶段（创建更多 worktree）
+0. 💾 保存并退出（下次 skill_use("spec-workflow-guide") 恢复）
 i. 其他输入
 ```
 
@@ -953,13 +1101,13 @@ echo "✅ 所有 worktree 和 openspec/* branches 已清理"
 
 ### workflow-state.md 更新
 
-每次操作后，更新 `workflow-state.md`。重点是 Changes 表格：
+每次操作后，更新 `workflow-state.md`。重点是 Changes 表格和恢复点：
 
 ```markdown
 # OpenSpec 工作流状态
 
 ## 元信息
-- **版本**: 1
+- **版本**: 2
 - **创建时间**: 2026-05-18T10:00:00+08:00
 - **最后更新**: 2026-05-18T10:30:00+08:00
 
@@ -979,35 +1127,34 @@ echo "✅ 所有 worktree 和 openspec/* branches 已清理"
 ## 当前状态
 
 - **当前阶段**: plan
-- **当前步骤**: worktree_created
+- **当前恢复点**: plan.deps_review
+- **最后操作**: 等待用户确认 Deps 重组建议
 
 ### Changes（支持多 change 并行）
 
-| 变更名称 | Worktree | Artifacts状态 | 进度 | 执行状态 |
-|----------|----------|--------------|------|---------|
-| fix-ns-pollution | .zcf/fix-ns-pollution-wt ✅ | ✅ 已提交 | 0/3 | ⏳ 等待执行 |
-| add-stream-pipes | .zcf/add-stream-pipes-wt ✅ | ✅ 已提交 | 0/5 | ⏳ 等待执行 |
+| 变更名称 | Worktree | Artifacts | 执行状态 | 当前操作 |
+|----------|----------|-----------|---------|---------|
+| fix-ns-pollution | .zcf/fix-ns-pollution-wt ✅ | ✅ 已提交 | ⏳ 等待 | — |
+| add-stream-pipes | .zcf/add-stream-pipes-wt ✅ | ✅ 已提交 | ⏳ 等待 | — |
 
-- **活跃 Changes**: [fix-ns-pollution, add-stream-pipes]
-- **当前焦点变更**: fix-ns-pollution
-- **Worktree 映射**:
-  - fix-ns-pollution → .zcf/fix-ns-pollution-wt (openspec/fix-ns-pollution)
-  - add-stream-pipes → .zcf/add-stream-pipes-wt (openspec/add-stream-pipes)
-- **执行状态**:
-  - 🔒 执行中 — 在此 session 阻塞执行
-  - 🔓 分离执行 — 在新终端执行，不阻塞
-  - ⏳ 等待执行 — 未开始
-  - ✅ 完成 — 所有任务完成
-- **每个变更独立推进**：每个 change 各自经历 plan→execute→archive，可并行进行
+### 恢复上下文
+
+- **恢复点**: plan.deps_review
+- **最后操作**: Deps 分析完成，等待用户确认重组建议
+- **验证建议**:
+  - [x] setup 完成
+  - [x] propose 完成
+  - [x] deps 完成
+  - [ ] plan 完成
 ```
 
-### workflow-state.md 更新示例
+### workflow-state.md 更新示例（版本2）
 
 ```markdown
 # OpenSpec 工作流状态
 
 ## 元信息
-- **版本**: 1
+- **版本**: 2
 - **创建时间**: 2026-05-18T10:00:00+08:00
 - **最后更新**: 2026-05-18T10:35:00+08:00
 
@@ -1019,7 +1166,7 @@ echo "✅ 所有 worktree 和 openspec/* branches 已清理"
 |------|------|---------|
 | setup | ✅ 完成 | 2026-05-18T10:00:00+08:00 |
 | propose | ✅ 完成 | 2026-05-18T10:10:00+08:00 |
-| plan | 🔄 进行中 | — |
+| plan | ✅ 完成 | 2026-05-18T10:20:00+08:00 |
 | execute | 🔄 进行中 | — |
 | status_archive | ⏳ 未开始 | — |
 | cleanup | ⏳ 未开始 | — |
@@ -1027,20 +1174,27 @@ echo "✅ 所有 worktree 和 openspec/* branches 已清理"
 ## 当前状态
 
 - **当前阶段**: execute
-- **当前步骤**: monitoring
+- **当前恢复点**: execute.active
+- **最后操作**: 为 adr-20260517-001-ptx-breakpoint-design 创建 worktree 完成
 
 ### Changes（支持多 change 并行）
 
-| 变更名称 | Worktree | Artifacts状态 | 进度 | 执行状态 |
-|----------|----------|--------------|------|---------|
-| fix-ns-pollution | .zcf/fix-ns-pollution-wt ✅ | ✅ 已提交 | 1/3 | 🔒 执行中 |
-| add-stream-pipes | .zcf/add-stream-pipes-wt ✅ | ✅ 已提交 | 0/5 | 🔓 等待分离执行 |
+| 变更名称 | Worktree | Artifacts | 执行状态 | 当前操作 |
+|----------|----------|-----------|---------|---------|
+| adr-20260517-001-ptx-breakpoint-design | .zcf/adr-20260517-001-ptx-breakpoint-design-wt ✅ | ✅ 已提交 | 🔒 执行中 | 阻塞执行 |
+| add-dbug-print | .zcf/add-dbug-print-wt ✅ | ✅ 已提交 | ⏳ 等待 | — |
 
-- **活跃 Changes**: [fix-ns-pollution, add-stream-pipes]
-- **当前焦点变更**: fix-ns-pollution
-- **Worktree 映射**:
-  - fix-ns-pollution → .zcf/fix-ns-pollution-wt (openspec/fix-ns-pollution)
-  - add-stream-pipes → .zcf/add-stream-pipes-wt (openspec/add-stream-pipes)
+### 恢复上下文
+
+- **恢复点**: execute.active
+- **最后操作**: 为 adr-20260517-001-ptx-breakpoint-design 创建 worktree 完成
+- **验证建议**:
+  - [x] setup 完成
+  - [x] propose 完成
+  - [x] deps 完成
+  - [x] plan 完成（worktree 已创建）
+  - [ ] execute 完成
+
 - **执行状态**:
   - 🔒 执行中 — 在此 session 阻塞执行
   - 🔓 分离执行 — 在新终端执行，不阻塞

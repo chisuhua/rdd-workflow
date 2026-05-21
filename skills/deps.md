@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires openspec CLI v1.3.1+. Reads proposal.md/design.md/specs/*.md from openspec/changes/.
 metadata:
   author: sisyphus
-  version: "1.1"  # P4: 修复 Mermaid 语法，独立 change 不画箭头
+  version: "1.3"  # P4: 增强 Step 5e 重组建议格式，明确标注"仅建议不执行"
   generatedBy: "1.3.1"
   hook: "guide 阶段 2.5（propose → plan 之间自动调用）"
 ---
@@ -459,12 +459,28 @@ flowchart LR
 
 📐 粒度评估:
   - change-A: ✅ 合理 / ⚠️ 建议拆分
+  - change-B: ✅ 合理
 
-💡 重组建议:
-  - （如无建议则显示 "无"）
+💡 重组建议（供 Plan 阶段用户决策，不自动执行）:
+  ┌─────────────────────────────────────────────────────────────┐
+  │ 建议合并：                                                   │
+  │   add-stream-pipes + add-stream-base → add-stream           │
+  │   理由：两个 change 修改高度重叠的文件（stream*.h/cpp）      │
+  │   执行方式：在 Plan 阶段选择"合并后重新生成 artifacts"       │
+  ├─────────────────────────────────────────────────────────────┤
+  │ 建议拆分：                                                   │
+  │   adr-large-change（20+ 任务）→ 拆分为：                     │
+  │     - adr-large-change-core（核心功能）                      │
+  │     - adr-large-change-test（测试）                          │
+  │   理由：任务数过多，建议按关注点拆分                         │
+  ├─────────────────────────────────────────────────────────────┤
+  │ 建议重排：                                                   │
+  │   原顺序: A → B → C                                         │
+  │   建议: A 与 C 可并行（无依赖），B 在 A 后                   │
+  └─────────────────────────────────────────────────────────────┘
 
-⚠️ 风险提示:
-  - （如无风险则显示 "无"）
+⚠️ 注意：以上建议仅供参考，是否采纳由用户在 Plan 阶段决定。
+   Deps 阶段仅分析，不修改任何 artifacts。
 ```
 
 ---
