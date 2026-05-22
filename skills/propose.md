@@ -1,12 +1,12 @@
 ---
 name: propose
-description: 分析项目文档与代码的差距，生成 propose 建议列表，用户选择后执行 openspec-propose 命令序列创建 artifacts。可多次调用生成多个 propose。
+description: 分析项目文档与代码的差距，生成 propose 建议列表，用户选择后执行 openspec-propose 命令序列创建 artifacts。支持 roadmap 驱动的分阶段 change 生成，可多次调用生成多个 propose。
 license: MIT
-compatibility: Requires openspec CLI v1.3.1+. Reads docs/adr/, docs/architecture/, docs/developer_guide/.
+compatibility: Requires openspec CLI v1.3.1+. Reads docs/adr/, docs/architecture/, docs/developer_guide/, roadmap.md.
 metadata:
   author: sisyphus
-  version: "1.4"  # P2: 添加自动 git commit 功能，Propose 完成时自动提交 artifacts
-  generatedBy: "1.3.1"
+  version: "2.0"  # P0: Roadmap 驱动，支持分阶段 change 生成
+  generatedBy: "2.0"
   replaces-step: "step1-manual"  # 替代原工作流 Step 1 的手动 openspec new/propose 操作
 ---
 
@@ -25,14 +25,76 @@ metadata:
 ## 工作流位置
 
 ```
-本技能：扫描文档/代码 → 合并现有建议 → 用户选择 → 串行创建 propose → 更新 proposal-suggestions.md
-                                                                              ↓
+本技能：扫描文档/代码 → 读取 roadmap → 合并现有建议 → 分类验证 → 用户选择 → 串行创建 propose → 更新 proposal-suggestions.md
+                                                                                                                  ↓
 spec-workflow-plan: COMMIT GATE → 创建 worktree → 生成 Prometheus 计划
 ```
+
+**Roadmap 驱动特性**：
+- 读取 `roadmap.md` 获取当前阶段和任务分类
+- 生成的 change 自动分配阶段和分类
+- 验证 change 是否匹配当前阶段分类
+- 不匹配时提示重新定义分类或移到未来阶段
 
 ---
 
 ## 流程
+
+### Phase -1：Roadmap 检测（前置）
+
+检查项目是否存在 `roadmap.md`，确定工作模式：
+
+```bash
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
+STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json"
+
+ROADMAP_MODE=false
+CURRENT_PHASE="default"
+VALID_CATEGORIES=""
+
+if [ -f "$ROADMAP_FILE" ]; then
+    echo "📂 检测到路线图: $ROADMAP_FILE"
+    ROADMAP_MODE=true
+    
+    # 读取当前阶段
+    CURRENT_PHASE=$(python3 -c "
+import re
+with open('$ROADMAP_FILE') as f:
+    content = f.read()
+phase_match = re.search(r'\*\*当前阶段\*\*:\s*(\S+)', content)
+print(phase_match.group(1) if phase_match else 'unknown')
+")
+    
+    # 读取当前阶段的任务分类
+    VALID_CATEGORIES=$(python3 -c "
+import re
+with open('$ROADMAP_FILE') as f:
+    content = f.read()
+
+# 找到当前阶段部分
+phase_sections = re.findall(r'### Phase \d+:.*?\n#### 任务分类\n\n\| 分类ID \| 名称 \|.*?\n((?:\|.*?\|\n)+)', content, re.DOTALL)
+if phase_sections:
+    # 提取第一个匹配的分类表格（当前阶段）
+    table = phase_sections[0]
+    cats = re.findall(r'\|\s*(\S+)\s*\|\s*([^|]+)\|', table)
+    for cat_id, cat_name in cats:
+        print(f'{cat_id}:{cat_name.strip()}')
+")
+    
+    echo "   当前阶段: $CURRENT_PHASE"
+    echo "   有效分类:"
+    echo "$VALID_CATEGORIES" | while IFS=: read -r id name; do
+        echo "     - $id: $name"
+    done
+else
+    echo "⚠️  未检测到 roadmap.md，使用兼容模式"
+    echo "   所有 change 将归为 'default' 阶段和 'general' 分类"
+    echo "   建议初始化路线图: skill_use(\"spec-workflow-roadmap\", \"init\")"
+fi
+```
+
+---
 
 ### Phase 0：加载现有建议列表
 
@@ -176,9 +238,9 @@ comm -23 /tmp/all_headers.txt /tmp/all_tests.txt
 
 ---
 
-### Phase 2：合并并写入建议列表
+### Phase 2：合并、分类并写入建议列表
 
-将 Phase 1 新发现的建议与 Phase 0 加载的现有建议合并：
+将 Phase 1 新发现的建议与 Phase 0 加载的现有建议合并，并分配阶段和分类：
 
 ```
 合并规则：
@@ -186,7 +248,50 @@ comm -23 /tmp/all_headers.txt /tmp/all_tests.txt
 - 新增的建议追加到末尾
 ```
 
-**建议条目格式**（含结构化需求描述）：
+**分类分配逻辑**：
+
+```bash
+# 为每个新发现的建议自动分配阶段和分类
+assign_phase_category() {
+    local name=$1
+    local source=$2
+    local description=$3
+    
+    if [ "$ROADMAP_MODE" = false ]; then
+        # 兼容模式
+        echo "phase: \"default\""
+        echo "category: \"general\""
+        return
+    fi
+    
+    # Roadmap 模式：基于内容推断分类
+    python3 -c "
+import re
+
+name = '$name'
+source = '$source'
+desc = '''$description'''
+
+# 分类推断规则
+category = 'general'
+
+# 基于关键词推断
+if any(k in desc.lower() for k in ['接口', '架构', '设计', 'api', 'interface']):
+    category = 'arch-design'
+elif any(k in desc.lower() for k in ['构建', 'ci', 'cd', '工具链', 'cmake', 'infra']):
+    category = 'infra-setup'
+elif any(k in desc.lower() for k in ['测试', 'test', '验证', 'coverage']):
+    category = 'core-test'
+elif any(k in desc.lower() for k in ['实现', 'impl', '功能', 'feature']):
+    category = 'core-impl'
+
+print(f'phase: \"$CURRENT_PHASE\"')
+print(f'category: \"{category}\"')
+"
+}
+```
+
+**建议条目格式**（含结构化需求描述 + 路线图元数据）：
 
 每条建议包含以下字段。其中 `description` 字段使用 `/opsx:propose` 格式，这是后续传递给 openspec-propose 的完整需求描述：
 
@@ -195,6 +300,8 @@ comm -23 /tmp/all_headers.txt /tmp/all_tests.txt
   priority: "P0"                          # P0/P1/P2
   source: "ADR-022 §已采纳 §未实现"        # 来源文档
   status: "待创建"                         # 状态：待创建 / 进行中 / 已完成
+  phase: "phase-1"                        # 所属阶段（roadmap 驱动）
+  category: "core-impl"                   # 任务分类（roadmap 驱动）
   description: |                           # 以下为 /opsx:propose 格式的需求描述
     ## 架构依据
     - ADR-022 §3.2: Stream 管道操作符设计决策（已采纳，代码未实现）
@@ -362,7 +469,82 @@ for each selected propose <name>:
     echo "✅ propose <name> 所有 artifacts 已就绪"
     
     # ---------------------------------------------------------------
-    # Step 4d: 用结构化需求描述作为 openspec-propose 的输入
+    # Step 4d: 创建 roadmap-meta.yaml（roadmap 驱动）
+    # ---------------------------------------------------------------
+    if [ "$ROADMAP_MODE" = true ]; then
+        # 从建议条目读取 phase 和 category
+        CHANGE_PHASE=$(python3 -c "
+import yaml
+with open('proposal-suggestions.md') as f:
+    content = f.read()
+entries = yaml.safe_load(content)
+for entry in entries:
+    if entry.get('name') == '<name>':
+        print(entry.get('phase', '$CURRENT_PHASE'))
+        break
+")
+        
+        CHANGE_CATEGORY=$(python3 -c "
+import yaml
+with open('proposal-suggestions.md') as f:
+    content = f.read()
+entries = yaml.safe_load(content)
+for entry in entries:
+    if entry.get('name') == '<name>':
+        print(entry.get('category', 'general'))
+        break
+")
+        
+        # 验证分类是否在当前阶段的有效分类中
+        VALID_CAT_LIST=$(echo "$VALID_CATEGORIES" | cut -d: -f1 | tr '\n' ' ')
+        if ! echo "$VALID_CAT_LIST" | grep -qw "$CHANGE_CATEGORY"; then
+            echo "⚠️  Change '<name>' 的分类 '$CHANGE_CATEGORY' 不在当前阶段 '$CURRENT_PHASE' 的有效分类中"
+            echo "   有效分类: $VALID_CAT_LIST"
+            echo ""
+            echo "请选择:"
+            echo "1. 使用 'general' 分类"
+            echo "2. 选择其他有效分类"
+            echo "3. 编辑 roadmap.md 添加此分类"
+            # 根据用户选择处理
+            CHANGE_CATEGORY="general"
+        fi
+        
+        # 创建 roadmap-meta.yaml
+        cat > "$PROJECT_ROOT/openspec/changes/<name>/roadmap-meta.yaml" << EOF
+roadmap:
+  phase: "$CHANGE_PHASE"
+  category: "$CHANGE_CATEGORY"
+  priority: "$PRIORITY"
+  gate_checklist: []
+  cross_phase_deps: []
+  category_validation:
+    valid: true
+    reason: ""
+EOF
+        echo "  已创建: roadmap-meta.yaml (phase: $CHANGE_PHASE, category: $CHANGE_CATEGORY)"
+        
+        # 更新 .roadmap-state.json
+        if [ -f "$STATE_FILE" ]; then
+            python3 -c "
+import json
+with open('$STATE_FILE') as f:
+    state = json.load(f)
+
+if '$CHANGE_PHASE' in state['phases'] and '$CHANGE_CATEGORY' in state['phases']['$CHANGE_PHASE']['categories']:
+    cat_data = state['phases']['$CHANGE_PHASE']['categories']['$CHANGE_CATEGORY']
+    if '<name>' not in cat_data['changes']:
+        cat_data['changes'].append('<name>')
+        cat_data['total_changes'] = len(cat_data['changes'])
+    
+    with open('$STATE_FILE', 'w') as f:
+        json.dump(state, f, indent=2)
+    print('  已更新: .roadmap-state.json')
+"
+        fi
+    fi
+    
+    # ---------------------------------------------------------------
+    # Step 4e: 用结构化需求描述作为 openspec-propose 的输入
     # ---------------------------------------------------------------
     # 创建 artifact（尤其是 proposal.md）时，使用 Phase 2 中 description 字段的
     # /opsx:propose 格式作为完整需求描述。该格式包含五大板块：
@@ -507,3 +689,5 @@ fi
 3. **建议 vs 决定**：建议列表只是参考，用户决定最终创建哪些
 4. **proposal-suggestions.md 是持久化文件**：随 git 版本控制，每次执行时增量更新
 5. **错误容错**：单个 propose 创建失败不影响后续（skip 继续）
+6. **Roadmap 兼容**：无 roadmap.md 时以兼容模式运行（所有 change 归为 default 阶段）
+7. **分类验证**：roadmap 模式下，change 的分类必须在当前阶段的有效分类中
