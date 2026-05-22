@@ -1,17 +1,17 @@
 ---
 name: status
-description: 使用 OpenSpec 工作流状态管理工具，检查 worktree 与 change 状态，检测同步问题并修复，支持 merge → archive → cleanup 完整归档流程
+description: 使用 OpenSpec 工作流状态管理工具，检查 worktree 与 change 状态，检测同步问题并修复，支持 merge → archive → cleanup 完整归档流程。支持路线图状态查看和阶段门控报告。
 license: MIT
 compatibility: Requires openspec CLI
 metadata:
   author: sisyphus
-  version: "2.2"  # P2: 明确 Mode C 与 guide 的 status_archive 职责边界
-  generatedBy: "1.3.1"
+  version: "2.3"  # P0: 新增路线图状态模式（Mode D）和阶段门控报告
+  generatedBy: "2.0"
 ---
 
 # OpenSpec 工作流 — Status
 
-提供三种工作模式：状态概览、检测与修复、归档完成。
+提供四种工作模式：状态概览、检测与修复、归档完成、路线图状态。
 
 ## 工作流位置
 
@@ -19,6 +19,7 @@ metadata:
 Mode A: 全局概览 — 无需参数，列出所有 change + worktree
 Mode B: 检测修复 — 检查具体 change 的完成状态和同步问题
 Mode C: 归档完成 — change 完成后 merge → archive → cleanup
+Mode D: 路线图状态 — 查看 roadmap 阶段进度和阶段门控
 ```
 
 ## 输入
@@ -26,6 +27,7 @@ Mode C: 归档完成 — change 完成后 merge → archive → cleanup
 - 无参数 → Mode A（全局概览）
 - change name → Mode B（单 change 详情 + 同步检测）
 - change name + 明确要求归档 → Mode C（归档流程）
+- `--roadmap` 或 `roadmap` → Mode D（路线图状态）
 
 ## 工作目录检测（所有模式通用）
 
@@ -400,9 +402,84 @@ fi
 
 ---
 
+## Mode D：路线图状态
+
+### 入口条件
+
+用户传入 `--roadmap` 或 `roadmap` 参数，或无参数但项目存在 `roadmap.md`。
+
+### 展示内容
+
+```bash
+if [ "$MODE" = "roadmap" ] || ([ -z "$MODE" ] && [ -f "$PROJECT_ROOT/roadmap.md" ]); then
+    echo "📊 路线图状态"
+    echo "=============="
+    
+    # 读取 roadmap
+    if [ -f "$PROJECT_ROOT/roadmap.md" ]; then
+        CURRENT_PHASE=$(python3 -c "
+import re
+with open('$PROJECT_ROOT/roadmap.md') as f:
+    content = f.read()
+phase_match = re.search(r'\*\*当前阶段\*\*:\s*(\S+)', content)
+print(phase_match.group(1) if phase_match else 'unknown')
+")
+        echo "当前阶段: $CURRENT_PHASE"
+    fi
+    
+    # 读取状态
+    if [ -f "$PROJECT_ROOT/.zcf/.roadmap-state.json" ]; then
+        python3 -c "
+import json
+with open('$PROJECT_ROOT/.zcf/.roadmap-state.json') as f:
+    state = json.load(f)
+
+print('')
+print('阶段进度:')
+for phase_id, phase_data in state.get('phases', {}).items():
+    status = phase_data.get('status', 'unknown')
+    status_icon = {'completed': '✅', 'in_progress': '🔄', 'pending': '⏳'}.get(status, '❓')
+    
+    total = sum(len(c.get('changes', [])) for c in phase_data.get('categories', {}).values())
+    completed = sum(len(c.get('completed_changes', [])) for c in phase_data.get('categories', {}).values())
+    
+    print(f'{status_icon} {phase_id}: {completed}/{total} change 完成')
+    
+    # 分类详情
+    for cat_id, cat_data in phase_data.get('categories', {}).items():
+        cat_total = len(cat_data.get('changes', []))
+        cat_completed = len(cat_data.get('completed_changes', []))
+        if cat_total > 0:
+            print(f'   - {cat_id}: {cat_completed}/{cat_total}')
+
+# 当前阶段门控
+if 'current_phase' in state:
+    phase = state['current_phase']
+    if phase in state.get('phases', {}):
+        gate = state['phases'][phase].get('gate_status', {})
+        print('')
+        print('阶段门控:')
+        print(f'  所有 change 完成: {\"✅\" if gate.get(\"all_changes_complete\") else \"❌\"}')
+        for check, checked in gate.get('checklist', {}).items():
+            print(f'  {check}: {\"✅\" if checked else \"❌\"}')
+"
+    fi
+    
+    echo ""
+    echo "操作选项:"
+    echo "1. 生成阶段门控报告"
+    echo "2. 推进到下一阶段（如满足条件）"
+    echo "3. 查看详细 change 列表"
+    echo "i. 其他输入"
+fi
+```
+
+---
+
 ## 关键约束
 
 1. **归档前必须先 merge**：确保代码变更已合入 main 分支
 2. **不同步用 sed 修复**：**不重跑 plan**（会覆盖 `.sisyphus/plans/` 中的任务分解细节）
 3. **所有操作可从 main TUI session 完成**：通过 `workdir` 参数在 worktree 内执行
 4. **归档不可逆**：确认全部完成后再执行模式 C
+5. **Roadmap 状态自动更新**：execute 完成后自动更新 .roadmap-state.json

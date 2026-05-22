@@ -1,12 +1,12 @@
 ---
 name: execute
-description: 在 worktree 隔离环境执行 OpenSpec change 的实施计划。基于 Prometheus 生成的 .sisyphus/plans/ 执行，执行后回写 tasks.md 以同步 openspec CLI 状态。
+description: 在 worktree 隔离环境执行 OpenSpec change 的实施计划。基于 Prometheus 生成的 .sisyphus/plans/ 执行，执行后回写 tasks.md 以同步 openspec CLI 状态。支持 roadmap 进度更新和阶段门控检查。
 license: MIT
 compatibility: Requires openspec CLI and git worktree.
 metadata:
   author: sisyphus
-  version: "2.4"  # P0: 添加执行完毕后自动检查其他 worktree 的循环机制
-  generatedBy: "1.3.1"
+  version: "2.5"  # P0: Roadmap 进度更新和阶段门控检查
+  generatedBy: "2.0"
 ---
 
 # OpenSpec 工作流 — Execute
@@ -293,6 +293,57 @@ if [ "$OTHER_WTS" -gt 0 ]; then
     echo "1. 切换到另一个 worktree 继续执行"
     echo "2. 返回主 session（skill_use(\"spec-workflow-guide\"))"
     echo "i. 其他输入"
+fi
+
+# ============================================================
+# P0: Roadmap 进度更新
+# ============================================================
+STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json"
+if [ -f "$STATE_FILE" ] && [ -f "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/roadmap-meta.yaml" ]; then
+    echo ""
+    echo "📊 更新路线图进度..."
+    
+    python3 -c "
+import json
+import yaml
+
+with open('$STATE_FILE') as f:
+    state = json.load(f)
+
+with open('$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/roadmap-meta.yaml') as f:
+    meta = yaml.safe_load(f)
+
+change_phase = meta.get('roadmap', {}).get('phase')
+change_category = meta.get('roadmap', {}).get('category')
+
+if change_phase and change_category:
+    if change_phase in state['phases'] and change_category in state['phases'][change_phase]['categories']:
+        cat_data = state['phases'][change_phase]['categories'][change_category]
+        
+        # 标记 change 完成
+        if '$CHANGE_NAME' not in cat_data.get('completed_changes', []):
+            cat_data.setdefault('completed_changes', []).append('$CHANGE_NAME')
+        
+        # 检查阶段是否完成
+        all_complete = True
+        for cat_id, cat_info in state['phases'][change_phase]['categories'].items():
+            total = len(cat_info.get('changes', []))
+            completed = len(cat_info.get('completed_changes', []))
+            if completed < total:
+                all_complete = False
+                break
+        
+        state['phases'][change_phase]['gate_status']['all_changes_complete'] = all_complete
+        
+        with open('$STATE_FILE', 'w') as f:
+            json.dump(state, f, indent=2)
+        
+        print(f'✅ 路线图进度已更新')
+        if all_complete:
+            print(f'🎉 阶段 {change_phase} 的所有 change 已完成！')
+            print(f'   请检查阶段门控条件，准备进入下一阶段')
+            print(f'   运行: skill_use(\"spec-workflow-roadmap\", \"gate-report\")')
+"
 fi
 ```
 

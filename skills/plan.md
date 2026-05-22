@@ -1,16 +1,25 @@
 ---
 name: plan
-description: 发现所有已创建但未建立 branch/worktree 的 OpenSpec change，用户选择后执行 openspec-plan 命令序列创建 worktree 并生成 Prometheus 实施计划。命令序列定义见正文。
+description: 发现所有已创建但未建立 branch/worktree 的 OpenSpec change，按 roadmap 阶段过滤，用户选择后执行 openspec-plan 命令序列创建 worktree 并生成 Prometheus 实施计划。支持阶段门控检查。
 license: MIT
+metadata:
+  author: sisyphus
+  version: "2.0"  # P0: Roadmap 驱动，支持阶段过滤和门控
+  generatedBy: "2.0"
 ---
 
 ```
 main: propose → commit artifacts
                         ↓
-             本技能：发现候选 changes → 用户选择 → 创建 worktree → 生成 plan
+             本技能：发现候选 changes → 按阶段过滤 → 阶段门控 → 用户选择 → 创建 worktree → 生成 plan
                     ↓
 worktree: execute (基于 .sisyphus/plans/) → merge → archive
 ```
+
+**Roadmap 驱动特性**：
+- 按 roadmap 当前阶段过滤候选 change
+- 阶段门控检查（当前阶段未完成时提示）
+- 支持跨阶段依赖分析
 
 ## 输入
 
@@ -85,7 +94,53 @@ MTIME=$(get_mtime "$PROJECT_ROOT/openspec/changes/<name>/")
 TASKS_COUNT=$(grep -c "\- \[ \]" "$PROJECT_ROOT/openspec/changes/<name>/tasks.md" 2>/dev/null || echo "?")
 ```
 
-### Step 0d：排序候选
+### Step 0d：按 Roadmap 阶段过滤
+
+如果项目存在 `roadmap.md`，按当前阶段过滤候选 change：
+
+```bash
+ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
+STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json"
+
+if [ -f "$ROADMAP_FILE" ]; then
+    echo "📍 Roadmap 模式：按当前阶段过滤"
+    
+    # 读取当前阶段
+    CURRENT_PHASE=$(python3 -c "
+import re
+with open('$ROADMAP_FILE') as f:
+    content = f.read()
+phase_match = re.search(r'\*\*当前阶段\*\*:\s*(\S+)', content)
+print(phase_match.group(1) if phase_match else 'unknown')
+")
+    
+    # 过滤候选列表
+    FILTERED_CANDIDATES=()
+    for name in "${CANDIDATES[@]}"; do
+        META_FILE="$PROJECT_ROOT/openspec/changes/$name/roadmap-meta.yaml"
+        if [ -f "$META_FILE" ]; then
+            CHANGE_PHASE=$(python3 -c "
+import yaml
+with open('$META_FILE') as f:
+    data = yaml.safe_load(f)
+print(data.get('roadmap', {}).get('phase', 'unknown'))
+")
+            if [ "$CHANGE_PHASE" = "$CURRENT_PHASE" ]; then
+                FILTERED_CANDIDATES+=("$name")
+            fi
+        else
+            # 无 roadmap-meta.yaml 的 change（兼容模式）
+            FILTERED_CANDIDATES+=("$name")
+        fi
+    done
+    
+    CANDIDATES=("${FILTERED_CANDIDATES[@]}")
+    echo "   当前阶段: $CURRENT_PHASE"
+    echo "   过滤后候选数: ${#CANDIDATES[@]}"
+fi
+```
+
+### Step 0e：排序候选
 
 按以下优先级排序（供 AI 推荐参考）：
 
@@ -140,6 +195,25 @@ if [ "$STATE" = "all_done" ]; then
     echo "❌ Change '<name>' 状态为 all_done（已全部完成）"
     echo "请直接归档: skill_use(\"spec-workflow-status <name> --archive\")"
     exit 1
+fi
+
+# 检查 6：Roadmap 阶段匹配（roadmap 模式下）
+if [ "$ROADMAP_MODE" = true ] && [ -f "$PROJECT_ROOT/openspec/changes/<name>/roadmap-meta.yaml" ]; then
+    CHANGE_PHASE=$(python3 -c "
+import yaml
+with open('$PROJECT_ROOT/openspec/changes/<name>/roadmap-meta.yaml') as f:
+    data = yaml.safe_load(f)
+print(data.get('roadmap', {}).get('phase', 'unknown'))
+")
+    if [ "$CHANGE_PHASE" != "$CURRENT_PHASE" ]; then
+        echo "⚠️  Change '<name>' 属于阶段 '$CHANGE_PHASE'，不是当前阶段 '$CURRENT_PHASE'"
+        echo ""
+        echo "请选择:"
+        echo "1. 仍为此 change 创建 worktree"
+        echo "2. 切换到阶段 '$CHANGE_PHASE'"
+        echo "3. 取消"
+        # 根据用户选择处理
+    fi
 fi
 
 echo "✅ Change '<name>' 验证通过（state: $STATE）"
@@ -253,7 +327,7 @@ flowchart LR
 
 **两种展示模式**：
 
-### 模式 A：发现候选 changes（含依赖信息）
+### 模式 A：发现候选 changes（含依赖信息和阶段过滤）
 
 ```
 📋 发现 <N> 个待计划的 change（含依赖分析）：
@@ -266,10 +340,16 @@ flowchart LR
 
 ### ⚠️ blocked_by — 被其他 change 阻塞
 3. add-m2sPipe ─ 阻塞于: refactor-stream-base，冲突: add-s2mPipe
-4. add-s2mPipe ─ 阻塞于: refactor-stream-base，冲突: add-m2sPipe
+4. add-s2mPipe ─ 阻塞于: refactor-stream-base，冲突: add-s2mPipe
 
 ### ❌ artifacts 不完整
 5. add-cdc-support ─ 缺少 design.md
+
+### 📍 阶段过滤（Roadmap 模式）
+当前阶段: phase-1 (基础架构)
+已过滤掉 <M> 个非当前阶段的 change:
+  - add-advanced-feature (phase-3)
+  - optimize-performance (phase-3)
 
 ---
 
@@ -316,6 +396,7 @@ AI 构建 Question 工具选项：
 | 选择多个 ready change | 按依赖图拓扑顺序逐个进入 Phase 2（无冲突的可并行创建 worktree） |
 | 🔀 合并冲突 change（带用户输入） | ① 用户指定要合并的多个 change name<br>② AI 读取各 change 的 proposal.md，生成合并后的 proposal 描述<br>③ 调用 propose 技能创建新 change（使用合并后的需求描述）<br>④ 原 change 标记为 superseded（在 `proposal-suggestions.md` 中删除） |
 | 🔄 为前置依赖创建新 change（带用户输入） | ① 用户描述前置任务内容<br>② AI 生成 proposal 格式的需求描述（包含 In Scope / ADR 引用）<br>③ 调用 propose 技能创建新 change<br>④ 回到 Phase 1 重新选择（新 change 加入候选列表） |
+| 📍 查看/切换阶段（Roadmap 模式） | 展示当前阶段状态，允许切换到其他阶段 |
 | 取消/跳过 | 终止，不做任何操作 |
 
 ---
@@ -573,3 +654,5 @@ fi
 3. **tasks.md 是薄层**：Prometheus 有自己详细的 `.sisyphus/plans/`，tasks.md 仅用于 openspec CLI 进度检测
 4. **Worktree 构建目录**：`.zcf/<name>-wt/build/`（独立构建，ccache 加速）
 5. **发现阶段只扫描 active 目录**：不扫描 `openspec/changes/archive/` 中的已归档 change
+6. **Roadmap 阶段过滤**：roadmap 模式下，只显示当前阶段的 change（除非用户明确要求查看其他阶段）
+7. **阶段门控提示**：当前阶段有未完成的 change 时，提示用户优先完成当前阶段

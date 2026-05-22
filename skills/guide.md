@@ -1,12 +1,12 @@
 ---
 name: guide
-description: 交互式工作流向导——检查环境、追踪进度、引导用户完成 openspec-workflow 全流程（propose→deps→plan→execute→status/archive）。基于 Markdown 状态文件跨 session 恢复。
+description: 交互式工作流向导——检查环境、追踪进度、引导用户完成 openspec-workflow 全流程（roadmap→propose→deps→plan→execute→status/archive）。支持 roadmap 驱动的分阶段 change 生成，基于 Markdown 状态文件跨 session 恢复。
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+, git 2.25+, CMake
 metadata:
   author: sisyphus
-  version: "2.8"  # P0: 修复 tasks.md 进度读取 / P1: 保存并退出选项 / P2: Plan Deps 确认 / P3: 增强恢复机制（版本2）
-  generatedBy: "1.3.1"
+  version: "3.0"  # P0: Roadmap 驱动，支持分阶段 change 生成
+  generatedBy: "2.0"
   user-invocable: true
 ---
 
@@ -386,6 +386,41 @@ i. 其他操作
 
 ---
 
+### 阶段 1.5：`roadmap` — 路线图初始化/查看
+
+**入口条件**：setup 已完成，且当前阶段为 roadmap 或 roadmap.md 需要初始化。
+
+**行为**：
+
+1. 检查是否存在 `roadmap.md`
+2. 如果不存在，提示用户创建初始路线图
+3. 如果存在，展示当前阶段和进度
+
+**菜单示例**：
+
+```
+路线图状态
+
+当前阶段: phase-1 (基础架构)
+进度:
+  - arch-design: 1/2 ✅
+  - infra-setup: 0/1 ⏳
+  - core-impl: 0/0
+
+请选择:
+1. ✅ 继续 → 进入 Propose 阶段（按当前阶段生成 change）
+2. 📝 编辑路线图（修改阶段或任务分类）
+3. 📊 查看阶段门控报告
+4. ⏭️  强制进入下一阶段（如当前阶段已完成）
+0. 💾 保存并退出
+```
+
+**与 propose 的衔接**：
+
+用户选择「继续」后，guide 进入 propose 阶段。propose 技能会自动读取 roadmap.md，只生成当前阶段的 change。
+
+---
+
 ### 阶段 2：`propose` — 扫描并创建 Change
 
 **入口条件**：setup 已完成，且当前阶段为 propose。
@@ -399,6 +434,8 @@ guide 作为交互式向导，展示提议技能的结果，让用户选择，�
 
 1. **扫描阶段**：调用 `spec-workflow-propose` 执行扫描，生成/更新 `proposal-suggestions.md`
 2. **选择阶段**：展示扫描结果（从 `proposal-suggestions.md` 读取），让用户选择
+   - Roadmap 模式下，只展示当前阶段的 change
+   - 非当前阶段的 change 可折叠或标记为「未来阶段」
 3. **创建阶段**：用户选择后，调用 `spec-workflow-propose --create <name>` 执行创建
 4. **循环**：创建后重新展示，用户可继续选或选「完成 Propose 阶段」
 
@@ -1217,15 +1254,17 @@ echo "✅ 所有 worktree 和 openspec/* branches 已清理"
 
 ## 状态推进规则
 
-**重要说明**：阶段（propose/plan/execute/status_archive）是**全局阶段**，表示整体向导进度。但每个 change 独立经历各自的 plan→execute→archive 流程。「当前焦点变更」表示用户当前正在操作的变更。
+**重要说明**：阶段（roadmap/propose/plan/execute/status_archive）是**全局阶段**，表示整体向导进度。但每个 change 独立经历各自的 plan→execute→archive 流程。「当前焦点变更」表示用户当前正在操作的变更。
 
 | 阶段完成条件 | 推进到 |
 |-------------|-------|
-| 环境检测完成（openspec 可用 + build 存在） | propose |
+| 环境检测完成（openspec 可用 + build 存在） | roadmap（如 roadmap.md 不存在则 propose） |
+| roadmap 已定义且当前阶段已选择 | propose |
 | 用户明确选择「完成 Propose 阶段」 | **deps**（自动执行依赖分析）→ plan |
 | 为焦点变更创建了 worktree + 计划文件 | execute |
 | **任何时候都可以返回 plan** 添加更多 worktree | plan |
 | 焦点变更的所有任务完成（tasks 全部 [x]） | status_archive |
+| 当前阶段所有 change 完成且门控通过 | 提示进入下一阶段（roadmap） |
 | 所有活跃 changes 均完成或归档 | propose 或 cleanup |
 
 ---
@@ -1259,6 +1298,9 @@ i. 其他输入（AI 会解释收到输入后如何处理）
 | worktree 目录冲突 | 提示目录已存在，提供「清理后重试」选项 |
 | 构建失败 | 记录到 progress.md，提供「查看错误详情」选项 |
 | plan 文件不存在 | 提示先生成计划，提供相应选项 |
+| roadmap.md 不存在 | 提示初始化路线图，提供「创建默认路线图」选项 |
+| change 分类不匹配 | 提示重新定义分类或移到其他阶段 |
+| 阶段门控未通过 | 展示未完成的 change 和检查项，提供「继续执行」选项 |
 
 ---
 
