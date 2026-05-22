@@ -1,0 +1,27 @@
+{
+  "name": "spec-workflow",
+  "displayName": "Spec Workflow",
+  "version": "1.0.0",
+  "description": "OpenSpec 工作流技能包 - manage changes via propose → plan → execute → status → archive lifecycle with roadmap phase management",
+  "author": {
+    "name": "sisyphus",
+    "email": "sisyphus@example.com",
+    "url": "https://github.com/chisuhua/spec-workflow"
+  },
+  "homepage": "https://github.com/chisuhua/spec-workflow",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chisuhua/spec-workflow.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "spec",
+    "workflow",
+    "openspec",
+    "change-management",
+    "cli",
+    "project-management"
+  ],
+  "skills": "./skills",
+  "categories": ["development", "project-management"]
+}

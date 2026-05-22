@@ -1,0 +1,33 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "spec-workflow-marketplace",
+  "owner": {
+    "name": "sisyphus",
+    "email": "sisyphus@example.com"
+  },
+  "version": "1.0.0",
+  "plugins": [
+    {
+      "name": "spec-workflow",
+      "displayName": "Spec Workflow",
+      "description": "OpenSpec 工作流技能包 - manage changes via propose → plan → execute → status → archive lifecycle with roadmap phase management",
+      "author": {
+        "name": "sisyphus",
+        "email": "sisyphus@example.com",
+        "url": "https://github.com/chisuhua/spec-workflow"
+      },
+      "category": "development",
+      "tags": ["spec", "workflow", "openspec", "change-management", "cli", "project-management"],
+      "source": "./",
+      "homepage": "https://github.com/chisuhua/spec-workflow",
+      "keywords": [
+        "spec",
+        "workflow",
+        "openspec",
+        "change-management",
+        "cli",
+        "project-management"
+      ]
+    }
+  ]
+}
