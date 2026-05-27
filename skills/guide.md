@@ -795,7 +795,52 @@ else
     git worktree add "$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt" "openspec/$CHANGE_NAME"
 fi
 
-echo "✅ Worktree 已创建: $PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
+# ============================================================
+# WORKTREE VERIFICATION GATE (P0 FIX)
+# 验证 worktree 是否正确关联到分支，防止 detached HEAD 问题
+# ============================================================
+WT_PATH="$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
+WT_BRANCH=$(git worktree list --porcelain | awk -v path="$WT_PATH" '
+    $1 == "worktree" && $2 == path { found=1; next }
+    found && $1 == "branch" { print $2; exit }
+    found && $1 == "detached" { print "DETACHED"; exit }
+')
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🔍 Worktree 验证"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  Worktree 路径: $WT_PATH"
+echo "  分支状态: ${WT_BRANCH:-未找到}"
+
+if [ "$WT_BRANCH" = "DETACHED" ]; then
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "❌ 错误：Worktree 处于 detached HEAD 状态！"
+    echo ""
+    echo "  这通常意味着 worktree 分支创建失败。"
+    echo "  新提交的代码将无法被 main 分支 merge。"
+    echo ""
+    echo "  请执行以下命令修复："
+    echo "    cd $WT_PATH"
+    echo "    git checkout openspec/$CHANGE_NAME"
+    echo ""
+    echo "  或删除 worktree 重新创建："
+    echo "    git worktree remove $WT_PATH"
+    echo "    git branch -D openspec/$CHANGE_NAME"
+    echo "    skill_use(\"spec-workflow-guide\")  # 重新进入 Plan 阶段"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    exit 1
+elif [ -z "$WT_BRANCH" ]; then
+    echo "⚠️  警告：无法确定 worktree 分支状态"
+fi
+
+# 验证 worktree 分支是否指向 change 分支
+EXPECTED_BRANCH="refs/heads/openspec/$CHANGE_NAME"
+if [ "$WT_BRANCH" != "$EXPECTED_BRANCH" ] && [ "$WT_BRANCH" != "openspec/$CHANGE_NAME" ]; then
+    echo "⚠️  警告：Worktree 分支 $WT_BRANCH 与预期不符"
+fi
+
+echo "✅ Worktree 验证通过"
 ```
 
 **Worktree 创建完成 → 进入执行模式选择**：
@@ -1015,13 +1060,71 @@ i. 其他输入
 ```bash
 # 对选定的 change 执行归档
 CHANGE_NAME="fix-ns-pollution"
+WT_PATH="$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
+
+# ============================================================
+# MERGE VERIFICATION GATE (P0 FIX)
+# 在 merge 前验证 worktree 分支是否包含新提交
+# ============================================================
+echo "🔍 验证 worktree 分支状态..."
+
+# 检查 worktree 是否关联到正确分支（防止 detached HEAD）
+WT_BRANCH=$(git worktree list --porcelain | awk -v path="$WT_PATH" '
+    $1 == "worktree" && $2 == path { found=1; next }
+    found && $1 == "branch" { print $2; exit }
+    found && $1 == "detached" { print "DETACHED"; exit }
+')
+
+if [ "$WT_BRANCH" = "DETACHED" ]; then
+    echo "❌ 错误：Worktree 处于 detached HEAD，无法 merge"
+    echo "   请先切换到正确分支："
+    echo "   cd $WT_PATH && git checkout openspec/$CHANGE_NAME"
+    exit 1
+fi
+
+# 获取 merge 前 main 的最新 commit
+BEFORE_MERGE=$(git rev-parse HEAD)
 
 # 1. merge worktree → main
-cd "$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt" || exit 1
+cd "$WT_PATH" || exit 1
 git checkout main || { echo "❌ 切换 main 分支失败"; exit 1; }
+
 if ! git merge --ff-only "openspec/$CHANGE_NAME" 2>/dev/null; then
     echo "⚠️ ff-only merge 失败，尝试普通 merge..."
     git merge "openspec/$CHANGE_NAME" || { echo "❌ merge 失败"; exit 1; }
+fi
+
+cd "$PROJECT_ROOT" || exit 1
+
+# ============================================================
+# POST-MERGE VERIFICATION GATE (P0 FIX)
+# 验证 merge 是否真正产生了变更
+# ============================================================
+AFTER_MERGE=$(git rev-parse HEAD)
+
+if [ "$BEFORE_MERGE" = "$AFTER_MERGE" ]; then
+    # 进一步检查：分支是否包含 main 没有的提交
+    if git merge-base --is-ancestor "openspec/$CHANGE_NAME" HEAD; then
+        echo "⚠️  merge 完成但无新 commit（change 分支已是 HEAD 的祖先）"
+    else
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "❌ Merge 验证失败！"
+        echo ""
+        echo "  可能原因："
+        echo "  1. worktree 分支没有新提交"
+        echo "  2. 新提交没有在预期文件中"
+        echo ""
+        echo "  请检查："
+        echo "  - worktree 分支历史："
+        echo "    git log openspec/$CHANGE_NAME --oneline -5"
+        echo "  - worktree 新文件是否在分支上："
+        echo "    git ls-tree --name-only openspec/$CHANGE_NAME | grep -E 'topology|parser'"
+        echo ""
+        echo "  诊断："
+        echo "    git log openspec/$CHANGE_NAME --stat --name-only | head -30"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        exit 1
+    fi
 fi
 
 # 2. archive

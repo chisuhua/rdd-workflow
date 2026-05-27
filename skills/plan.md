@@ -536,6 +536,41 @@ else
     echo "✅ Worktree 已创建: $PROJECT_ROOT/.zcf/<name>-wt"
     echo "   Branch: openspec/<name>"
 fi
+
+# ============================================================
+# WORKTREE VERIFICATION GATE (P0 FIX)
+# 验证 worktree 是否正确关联到分支，防止 detached HEAD 问题
+# ============================================================
+WT_PATH="$PROJECT_ROOT/.zcf/<name>-wt"
+WT_BRANCH=$(git worktree list --porcelain | awk -v path="$WT_PATH" '
+    $1 == "worktree" && $2 == path { found=1; next }
+    found && $1 == "branch" { print $2; exit }
+    found && $1 == "detached" { print "DETACHED"; exit }
+')
+
+if [ "$WT_BRANCH" = "DETACHED" ]; then
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "❌ 错误：Worktree 处于 detached HEAD 状态！"
+    echo ""
+    echo "  这意味着 branch 创建失败或 worktree 指向了错误的 commit。"
+    echo "  新提交的代码将无法被 main 分支 merge。"
+    echo ""
+    echo "  修复步骤："
+    echo "  1. cd $WT_PATH"
+    echo "  2. git checkout openspec/<name>  # 切换回正确分支"
+    echo "  3. cd $PROJECT_ROOT && skill_use(\"spec-workflow-plan <name>\")  # 重新进入 Plan"
+    echo ""
+    echo "  或完全重建："
+    echo "  1. git worktree remove $WT_PATH"
+    echo "  2. git branch -D openspec/<name>"
+    echo "  3. skill_use(\"spec-workflow-plan <name>\")"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    exit 1
+elif [ -z "$WT_BRANCH" ]; then
+    echo "⚠️  警告：无法确定 worktree 分支状态"
+else
+    echo "✅ Worktree 分支验证通过: $WT_BRANCH"
+fi
 ```
 
 ### Step 4：切换到 worktree 并读取 artifacts
