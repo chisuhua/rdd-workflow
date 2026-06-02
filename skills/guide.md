@@ -368,6 +368,29 @@ ACTIVE_CHANGES=$(ls -d $PROJECT_ROOT/openspec/changes/*/ 2>/dev/null | grep -v a
 
 **菜单选项**：
 
+```bash
+# ============================================================
+# ROADMAP CHECK (P0 FIX)
+# Setup 完成后检查 roadmap.md 是否存在
+# ============================================================
+ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
+
+if [ ! -f "$ROADMAP_FILE" ]; then
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "⚠️  未发现 roadmap.md"
+    echo ""
+    echo "   路线图用于管理项目阶段和 change 分类。"
+    echo "   如果没有路线图，所有 change 将被标记为'未分类'。"
+    echo ""
+    echo "请选择:"
+    echo "1. ✅ 创建路线图（进入 roadmap 阶段）"
+    echo "2. ⏭️  跳过（直接进入 propose 阶段 - 自由模式）"
+    echo "i. 其他输入"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+fi
+```
+
 ```
 环境检查完成。检测到：
 
