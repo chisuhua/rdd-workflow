@@ -474,7 +474,11 @@ echo "📋 当前已创建的 Changes:"
 ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | while read -r dir; do
     name=$(basename "$dir")
     if git rev-parse --verify HEAD >/dev/null 2>&1; then
+    if git rev-parse --verify HEAD >/dev/null 2>&1; then
         committed=$(git show HEAD:"$PROJECT_ROOT/openspec/changes/$name/.openspec.yaml" > /dev/null 2>&1 && echo "✅" || echo "⏳")
+    else
+        committed="⏳"
+    fi
     else
         committed="⏳"
     fi
@@ -797,9 +801,15 @@ if [ -n "$(git status --porcelain "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/"
 fi
 
 # COMMIT GATE - 是否已 commit
-if ! git show HEAD:"$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/.openspec.yaml" > /dev/null 2>&1; then
-    echo "❌ Artifacts 尚未提交，请先提交"
-    # 回到菜单
+if git rev-parse --verify HEAD >/dev/null 2>&1; then
+    if ! git show HEAD:"$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/.openspec.yaml" > /dev/null 2>&1; then
+        echo "❌ Artifacts 尚未提交，请先提交"
+        # 回到菜单
+    fi
+else
+    echo "❌ 当前仓库没有任何提交（HEAD 不存在）"
+    echo "请先 git commit 一些文件后再执行 plan"
+    exit 1
 fi
 
 # 创建 branch（如不存在）

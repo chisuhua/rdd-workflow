@@ -463,30 +463,36 @@ if [ -n "$(git status --porcelain $PROJECT_ROOT/openspec/changes/<name>/)" ]; th
 fi
 
 # 再检查 artifacts 是否在 HEAD 的提交记录中
-git show HEAD:$PROJECT_ROOT/openspec/changes/<name>/.openspec.yaml > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    echo "❌ Artifacts 尚未提交，无法创建 worktree"
-    echo ""
-    echo "原因: git worktree 只能检出已 commit 的快照"
-    echo "      当前 artifacts 尚未进入分支历史"
-    echo ""
-    echo "请选择处理方式："
-    echo "  1. 自动执行：git add + git commit（推荐）"
-    echo "  2. 手动处理：先退出，执行手动命令后再重新调用 plan"
-    echo ""
-    read -p "选择 [1=自动/2=手动]: " retry_choice
-    
-    if [ "$retry_choice" = "1" ]; then
-        git add "$PROJECT_ROOT/openspec/changes/<name>/"
-        git commit -m "feat: <name> change artifacts"
-        echo "✅ 已自动提交，继续执行 plan..."
-    else
-        echo "已取消，请先手动提交："
-        echo "  git add $PROJECT_ROOT/openspec/changes/<name>/"
-        echo '  git commit -m "feat: <name> change artifacts"'
-        echo "  skill_use(\"spec-workflow-plan <name>\")"
-        exit 1
+if git rev-parse --verify HEAD >/dev/null 2>&1; then
+    git show HEAD:"$PROJECT_ROOT/openspec/changes/<name>/.openspec.yaml" > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "❌ Artifacts 尚未提交，无法创建 worktree"
+        echo ""
+        echo "原因: git worktree 只能检出已 commit 的快照"
+        echo "      当前 artifacts 尚未进入分支历史"
+        echo ""
+        echo "请选择处理方式："
+        echo "  1. 自动执行：git add + git commit（推荐）"
+        echo "  2. 手动处理：先退出，执行手动命令后再重新调用 plan"
+        echo ""
+        read -p "选择 [1=自动/2=手动]: " retry_choice
+        
+        if [ "$retry_choice" = "1" ]; then
+            git add "$PROJECT_ROOT/openspec/changes/<name>/"
+            git commit -m "feat: <name> change artifacts"
+            echo "✅ 已自动提交，继续执行 plan..."
+        else
+            echo "已取消，请先手动提交："
+            echo "  git add $PROJECT_ROOT/openspec/changes/<name>/"
+            echo '  git commit -m "feat: <name> change artifacts"'
+            echo "  skill_use(\"spec-workflow-plan <name>\")"
+            exit 1
+        fi
     fi
+else
+    echo "❌ 当前仓库没有任何提交（HEAD 不存在）"
+    echo "请先 git commit 一些文件后再执行 plan"
+    exit 1
 fi
 ```
 
