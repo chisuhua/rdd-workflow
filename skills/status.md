@@ -209,7 +209,7 @@ fi
 # 场景 A：Prometheus 已完成但 tasks.md 未标记
 # 使用 awk index() 进行字面量匹配（避免正则元字符风险）
 TASK_DESC="具体任务描述"
-TMPFILE=$(mktemp /tmp/status_tasks_XXXXXX.md)
+TMPFILE=$(mktemp -t status_tasks_XXXXXX.md)
 awk -v desc="- [ ] $TASK_DESC" -v repl="- [x] $TASK_DESC" '
   index($0, desc) { sub(desc, repl); changed=1 }
   { print }

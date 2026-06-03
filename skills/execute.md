@@ -373,7 +373,7 @@ TASK_DESC="实现UART寄存器配置"
 
 # 使用 index() 精确查找，只在匹配时替换
 # index() 返回子串位置（1-based），0 表示不匹配
-TMPFILE=$(mktemp /tmp/tasks_XXXXXX.md)
+TMPFILE=$(mktemp -t tasks_XXXXXX.md)
 awk -v desc="- [ ] $TASK_DESC" -v repl="- [x] $TASK_DESC" '
   index($0, desc) { sub(desc, repl); changed=1 }
   { print }
