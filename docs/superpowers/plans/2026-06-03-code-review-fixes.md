@@ -32,13 +32,13 @@
 
 | CODE_REVIEW # | Bug | Files |
 |---|---|---|
-| #3 | `wc -l` on potentially empty input returns 1, not 0 | guide.md, execute.md, status.md |
+| #3 | `wc -l` on potentially empty input returns 1, not 0 | guide.md, execute.md, status.md, plan.md, propose.md |
 | #5 | `$PROJECT_ROOT` unquoted in path expansions | guide.md |
 | #11 | `for wt in $(... | awk '{print $1}')` word-splits on whitespace | guide.md |
 | #34 | `git branch -d` fails on unmerged commits (no `-D` fallback) | guide.md |
 | #32 (guide.md portion) | `git merge` after `--ff-only` failure lacks `-m "..."` (pattern mismatch with status.md) | guide.md |
 | #25 | `mktemp /tmp/...` hardcodes `/tmp` | execute.md, status.md |
-| #28 | Hardcoded fallback `"/workspace/project/CppHDL"` | status.md |
+| #28 | Hardcoded fallback `"/workspace/project/CppHDL"` | status.md, execute.md, guide.md |
 
 ---
 
@@ -184,6 +184,117 @@ Lines fixed: 263, 286, 366, 919, 1168.
 Lines 286 and 366 also now quote \$PROJECT_ROOT (CODE_REVIEW #5).
 
 Closes CODE_REVIEW.md issue #3 in skills/guide.md."
+```
+
+---
+
+## Task 1b: Fix `wc -l` on empty input in `execute.md`, `status.md`, `plan.md`, `propose.md` (5 more sites)
+
+> **Why a separate task:** Task 1 covered only `guide.md` per the original plan. Baseline verification (Task 0) revealed 5 more `wc -l` sites in 4 other files. Bundling them into the Task 1 commit would mix concerns and bloat a single commit; a separate atomic commit keeps each fix independently revertable.
+
+**Files:**
+- Modify: `skills/execute.md:283`
+- Modify: `skills/status.md:150, 294`
+- Modify: `skills/plan.md:664`
+- Modify: `skills/propose.md:611`
+
+- [ ] **Step 1: Replace `execute.md:283` (`OTHER_WTS`)**
+
+Old:
+```bash
+OTHER_WTS=$(git worktree list | awk '$2 ~ /^openspec\// && $2 != "openspec/'"$CHANGE_NAME"'" {print $1}' | wc -l)
+```
+
+New:
+```bash
+OTHER_WTS=$(git worktree list | awk '$2 ~ /^openspec\// && $2 != "openspec/'"$CHANGE_NAME"'" {print $1}' | grep -c . || true)
+```
+
+- [ ] **Step 2: Replace `status.md:150` (`WT_DIRTY`)**
+
+Old:
+```bash
+    WT_DIRTY=$(cd "$WORKTREE_PATH" && git status --porcelain | wc -l)
+```
+
+New:
+```bash
+    WT_DIRTY=$(cd "$WORKTREE_PATH" && git status --porcelain | grep -c . || true)
+```
+
+- [ ] **Step 3: Replace `status.md:294` (`DIRTY`)**
+
+Old:
+```bash
+    DIRTY=$(cd "$WORKTREE_PATH" && git status --porcelain | wc -l)
+```
+
+New:
+```bash
+    DIRTY=$(cd "$WORKTREE_PATH" && git status --porcelain | grep -c . || true)
+```
+
+- [ ] **Step 4: Replace `plan.md:664` (`UNPLANNED` count)**
+
+Old:
+```bash
+done | wc -l)
+```
+
+New:
+```bash
+done | grep -c . || true)
+```
+
+- [ ] **Step 5: Replace `propose.md:611` (`UNCOMMITTED`)**
+
+Old:
+```bash
+UNCOMMITTED=$(git status --porcelain openspec/changes/ 2>/dev/null | wc -l)
+```
+
+New:
+```bash
+UNCOMMITTED=$(git status --porcelain openspec/changes/ 2>/dev/null | grep -c . || true)
+```
+
+- [ ] **Step 6: Verify no `wc -l` in path-counting contexts remains in those files**
+
+```bash
+git grep -nE 'wc -l' skills/execute.md skills/status.md skills/plan.md skills/propose.md
+```
+
+Expected: zero matches.
+
+- [ ] **Step 7: Verify bash syntax of modified blocks**
+
+```bash
+for f in skills/execute.md skills/status.md skills/plan.md skills/propose.md; do
+    echo "=== $f ==="
+    awk '/^```bash$/,/^```$/' "$f" > /tmp/check.sh
+    bash -n /tmp/check.sh && echo "  OK"
+done
+```
+
+Expected: every file reports "OK".
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add skills/execute.md skills/status.md skills/plan.md skills/propose.md
+git commit -m "fix(execute,status,plan,propose): replace wc -l with grep -c on empty input (CODE_REVIEW #3)
+
+Five more sites outside guide.md counted lines of possibly-empty
+output with 'wc -l' (returns 1 for empty input). Replaced with
+'grep -c .' which returns 0 for empty input.
+
+Files fixed:
+- skills/execute.md:283 (OTHER_WTS)
+- skills/status.md:150 (WT_DIRTY), :294 (DIRTY)
+- skills/plan.md:664 (UNPLANNED count)
+- skills/propose.md:611 (UNCOMMITTED)
+
+Closes CODE_REVIEW.md issue #3 in remaining files."
 ```
 
 ---
@@ -583,6 +694,57 @@ Closes CODE_REVIEW.md issue #25."
 
 ---
 
+## Task 6b: Fix additional `mktemp /tmp/...` site in `execute.md` (line 392)
+
+> **Why a separate task:** Task 6 covered only `execute.md:376` and `status.md:212`. Baseline verification (Task 0) found one more `mktemp /tmp/...` in `execute.md:392` (the batch-update path in the same file). Separate atomic commit, same rationale as Task 1b.
+
+**Files:**
+- Modify: `skills/execute.md:392`
+
+- [ ] **Step 1: Replace `execute.md:392`**
+
+Old:
+```bash
+TMPFILE=$(mktemp /tmp/tasks_XXXXXX.md)
+```
+
+New:
+```bash
+TMPFILE=$(mktemp -t tasks_XXXXXX.md)
+```
+
+- [ ] **Step 2: Verify no `mktemp /tmp/...` remains**
+
+```bash
+git grep -nE 'mktemp /tmp/' skills/ install.sh
+```
+
+Expected: zero matches.
+
+- [ ] **Step 3: Verify bash syntax of modified block**
+
+```bash
+awk '/^```bash$/,/^```$/' skills/execute.md > /tmp/exec_blocks.sh
+bash -n /tmp/exec_blocks.sh
+```
+
+Expected: no syntax error.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add skills/execute.md
+git commit -m "fix(execute): use mktemp -t for the batch-update TMPFILE (CODE_REVIEW #25)
+
+The second mktemp call in execute.md (line 392, the awk batch-update
+path) was missed by Task 6. Same fix: 'mktemp -t' uses the system
+temp dir (TMPDIR or /tmp fallback) instead of hardcoding /tmp.
+
+Closes CODE_REVIEW.md issue #25 in skills/execute.md:392."
+```
+
+---
+
 ## Task 7: Remove hardcoded `/workspace/project/CppHDL` fallback in `status.md`
 
 **Files:**
@@ -646,6 +808,81 @@ Closes CODE_REVIEW.md issue #28 in skills/status.md."
 
 ---
 
+## Task 7b: Remove hardcoded `/workspace/project/CppHDL` in `execute.md` and `guide.md` (2 more sites)
+
+> **Why a separate task:** Task 7 covered only `status.md:309`. Baseline verification (Task 0) found two more hardcoded paths: `execute.md:271` (inside the execute script's user-facing output) and `guide.md:1014` (inside a markdown code block showing what the execute session does).
+
+**Files:**
+- Modify: `skills/execute.md:271`
+- Modify: `skills/guide.md:1014`
+
+- [ ] **Step 1: Replace `execute.md:271` (echo in user-facing output)**
+
+Old:
+```bash
+echo "   cd /workspace/project/CppHDL"
+```
+
+New (use the already-defined `$PROJECT_ROOT`):
+```bash
+echo "   cd \"$PROJECT_ROOT\""
+```
+
+- [ ] **Step 2: Replace `guide.md:1014` (in a documentation code block)**
+
+Old:
+```bash
+cd /workspace/project/CppHDL
+```
+
+New (compute the project root dynamically — works for any user, any project path):
+```bash
+cd "$(git rev-parse --show-toplevel)"
+```
+
+> The original hardcoded path assumed every user works at `/workspace/project/CppHDL`. The replacement resolves the project root via git, so the instruction works regardless of where the project lives.
+
+- [ ] **Step 3: Verify no hardcoded `/workspace/project/CppHDL` remains**
+
+```bash
+git grep -nE '/workspace/project/CppHDL' skills/ install.sh
+```
+
+Expected: zero matches.
+
+- [ ] **Step 4: Verify bash syntax of modified blocks**
+
+```bash
+for f in skills/execute.md skills/guide.md; do
+    echo "=== $f ==="
+    awk '/^```bash$/,/^```$/' "$f" > /tmp/check.sh
+    bash -n /tmp/check.sh && echo "  OK"
+done
+```
+
+Expected: every file reports "OK".
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add skills/execute.md skills/guide.md
+git commit -m "fix(execute,guide): replace hardcoded /workspace/project/CppHDL path (CODE_REVIEW #28)
+
+Two more sites had the hardcoded path that Task 7 missed:
+
+- skills/execute.md:271 — user-facing output telling the user to
+  'cd' to the project root for archiving. Now uses the in-script
+  \$PROJECT_ROOT variable.
+- skills/guide.md:1014 — markdown code block showing what the
+  execute session does (return to project root). Now uses
+  'git rev-parse --show-toplevel' to resolve the project root
+  dynamically, working for any user.
+
+Closes CODE_REVIEW.md issue #28 in remaining files."
+```
+
+---
+
 ## Task 8: Final Validation
 
 - [ ] **Step 1: Re-run negative regression grep (after-state)**
@@ -660,7 +897,7 @@ Expected: zero matches across all four patterns.
 - [ ] **Step 2: Verify all modified files pass `bash -n`**
 
 ```bash
-for f in skills/guide.md skills/execute.md skills/status.md; do
+for f in skills/guide.md skills/execute.md skills/status.md skills/plan.md skills/propose.md; do
     echo "=== $f ==="
     awk '/^```bash$/,/^```$/' "$f" > /tmp/check.sh
     bash -n /tmp/check.sh && echo "  OK"
@@ -669,13 +906,13 @@ done
 
 Expected: every file reports "OK".
 
-- [ ] **Step 3: Confirm 7 commits on top of the spec**
+- [ ] **Step 3: Confirm 9 commits on top of the spec**
 
 ```bash
 git log --oneline 50c4bbb..HEAD
 ```
 
-Expected: 7 commits, each starting with `fix(`, referencing a CODE_REVIEW number.
+Expected: 9 commits, each starting with `fix(`, referencing a CODE_REVIEW number.
 
 - [ ] **Step 4: Confirm no other files were modified**
 
@@ -683,15 +920,15 @@ Expected: 7 commits, each starting with `fix(`, referencing a CODE_REVIEW number
 git diff --stat 50c4bbb..HEAD
 ```
 
-Expected: only `skills/guide.md`, `skills/execute.md`, `skills/status.md` show changes. Total: 3 files.
+Expected: only `skills/guide.md`, `skills/execute.md`, `skills/status.md`, `skills/plan.md`, `skills/propose.md` show changes. Total: 5 files.
 
 - [ ] **Step 5: Show the commit log**
 
 ```bash
-git log --oneline -10
+git log --oneline -15
 ```
 
-Expected: spec commit `50c4bbb` + 7 fix commits.
+Expected: spec commit `50c4bbb` + plan commit `d29049c` + 9 fix commits.
 
 ---
 
