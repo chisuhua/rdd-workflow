@@ -613,7 +613,8 @@ cat "$PROJECT_ROOT/.zcf/.deps-output.md"
 
 ```bash
 # 从 proposal.md 提取 Impact 中的文件路径
-SCOPE_FILES=$(grep -E '^[ \t]*-[ \t]*('src/|file:)' "$proposal_path" 2>/dev/null | ...)
+scope_pattern='^[ \t]*-[ \t]*(src/|file:)'
+SCOPE_FILES=$(grep -E "$scope_pattern" "$proposal_path" 2>/dev/null | ...)
 
 # 检测文件路径冲突
 CONFLICTS=$(find "$PROJECT_ROOT/openspec/changes/" -name "proposal.md" -exec grep ... {} \;)
