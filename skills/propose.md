@@ -608,7 +608,7 @@ Propose 创建完成后，自动检测未提交的 artifacts 并执行提交：
 
 ```bash
 # 检测未提交的 artifacts
-UNCOMMITTED=$(git status --porcelain openspec/changes/ 2>/dev/null | wc -l)
+UNCOMMITTED=$(git status --porcelain openspec/changes/ 2>/dev/null | grep -c . || true)
 if [ "$UNCOMMITTED" -gt 0 ]; then
     echo "📦 检测到 $UNCOMMITTED 个未提交的 artifacts，正在自动提交..."
 

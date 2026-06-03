@@ -147,7 +147,7 @@ if [ -n "$WORKTREE_PATH" ] && [ -d "$WORKTREE_PATH" ]; then
     HAS_WORKTREE=true
     # 使用 subshell 获取 worktree 内状态，不改变当前目录
     WT_BRANCH=$(cd "$WORKTREE_PATH" && git branch --show-current)
-    WT_DIRTY=$(cd "$WORKTREE_PATH" && git status --porcelain | wc -l)
+    WT_DIRTY=$(cd "$WORKTREE_PATH" && git status --porcelain | grep -c . || true)
 fi
 ```
 
@@ -291,7 +291,7 @@ fi
 ```bash
 if [ "$IN_WORKTREE" = true ]; then
     # 使用 subshell 不改变当前目录
-    DIRTY=$(cd "$WORKTREE_PATH" && git status --porcelain | wc -l)
+    DIRTY=$(cd "$WORKTREE_PATH" && git status --porcelain | grep -c . || true)
     if [ "$DIRTY" -gt 0 ]; then
         echo "⚠️ Worktree $WORKTREE_PATH 有 $DIRTY 个未提交文件"
         echo "  1) 提交并继续"

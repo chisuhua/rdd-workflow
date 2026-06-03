@@ -280,7 +280,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 # P0 FIX: 执行完毕后自动检查是否还有其他 worktree 需要处理
 # ============================================================
 # 使用 awk 检查分支名（第二列）而非路径，避免路径含 openspec/ 的误匹配
-OTHER_WTS=$(git worktree list | awk '$2 ~ /^openspec\// && $2 != "openspec/'"$CHANGE_NAME"'" {print $1}' | wc -l)
+OTHER_WTS=$(git worktree list | awk '$2 ~ /^openspec\// && $2 != "openspec/'"$CHANGE_NAME"'" {print $1}' | grep -c . || true)
 if [ "$OTHER_WTS" -gt 0 ]; then
     echo ""
     echo "📋 发现其他 $OTHER_WTS 个 worktree:"

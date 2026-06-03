@@ -661,7 +661,7 @@ UNPLANNED=$(ls -d $PROJECT_ROOT/openspec/changes/*/ 2>/dev/null | grep -v archiv
     if ! git worktree list | awk '{print $2}' | grep -q "^openspec/$name$"; then
         echo "$name"
     fi
-done | wc -l)
+done | grep -c . || true)
 
 if [ "$UNPLANNED" -gt 0 ]; then
     echo ""
