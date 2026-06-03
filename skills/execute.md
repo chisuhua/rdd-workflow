@@ -389,7 +389,7 @@ else
 fi
 
 # 方法 B：批量标记所有未完成任务（仅当全部完成时使用）
-TMPFILE=$(mktemp /tmp/tasks_XXXXXX.md)
+TMPFILE=$(mktemp -t tasks_XXXXXX.md)
 awk '{gsub(/- \[ \] /,"- [x] ")}1' \
   $PROJECT_ROOT/openspec/changes/<name>/tasks.md > "$TMPFILE" && \
   mv "$TMPFILE" $PROJECT_ROOT/openspec/changes/<name>/tasks.md
