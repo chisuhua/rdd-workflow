@@ -172,7 +172,10 @@ echo "下一步: 重新加载 session 或执行 skill_use(\"spec-workflow-guide\
 cp -r ~/.agents/skills/spec-workflow/skills /your/project/.opencode/skills/spec-workflow/
 
 # 方式 2: 使用安装脚本
-curl -sL <raw-url>/install-spec-workflow.sh | bash
+curl -sL -o /tmp/install-spec-workflow.sh <raw-url>/install-spec-workflow.sh
+# Optional: verify SHA256 checksum here (security)
+bash /tmp/install-spec-workflow.sh
+rm -f /tmp/install-spec-workflow.sh
 
 # 方式 3: Git 克隆
 git clone <repo-url> /path/to/spec-workflow && cp -r spec-workflow/skills /your/project/.opencode/skills/
