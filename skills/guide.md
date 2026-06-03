@@ -1020,7 +1020,7 @@ LAST_CHECK=$(date "+%Y-%m-%d %H:%M:%S")
 CHANGE_NAME="fix-ns-pollution"
 WORKTREE_PATH="$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
 
-cd "$WORKTREE_PATH"
+cd "$WORKTREE_PATH" || { echo "❌ 无法进入 worktree 目录: $WORKTREE_PATH"; exit 1; }
 skill_use("spec-workflow-execute")
 # 阻塞等待所有任务完成
 cd "$(git rev-parse --show-toplevel)"
