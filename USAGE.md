@@ -387,37 +387,69 @@ skill_use("spec-workflow-guide")
 ## 元信息
 - **版本**: 1
 - **创建时间**: 2026-05-18T10:00:00+08:00
-- **最后更新**: 2026-05-18T10:35:00+08:00
+- **最后更新**: 2026-05-18T10:30:00+08:00
+
+## 工作流进度
+
+### 阶段完成情况
+
+| 阶段 | 状态 | 完成时间 |
+|------|------|---------|
+| setup | ✅ 完成 | 2026-05-18T10:00:00+08:00 |
+| propose | 🔄 进行中 | 2026-05-18T10:15:00+08:00 |
+| plan | ⏳ 未开始 | — |
+| execute | ⏳ 未开始 | — |
+| status_archive | ⏳ 未开始 | — |
+| cleanup | ⏳ 未开始 | — |
 
 ## 当前状态
 
+- **当前阶段**: propose
+- **当前恢复点**: propose.scan_done
+
 ### Changes（支持多 change 并行）
 
-| 变更名称 | Worktree | Artifacts状态 | 进度 | 执行状态 |
-|----------|----------|--------------|------|---------|
-| fix-ns-pollution | .zcf/fix-ns-pollution-wt ✅ | ✅ 已提交 | 1/3 | 🔒 执行中 |
-| add-stream-pipes | .zcf/add-stream-pipes-wt ✅ | ✅ 已提交 | 0/5 | 🔓 等待分离执行 |
+| 变更名称 | Worktree | Artifacts | 执行状态 | 当前操作 |
+|----------|----------|-----------|---------|---------|
+| fix-ns-pollution | .zcf/fix-ns-pollution-wt | ✅ 已提交 | ⏳ 等待 | — |
+| add-stream-pipes | — | ⏳ 未提交 | ⏳ 等待 | — |
+
+### 恢复上下文
+
+- **恢复点**: propose.scan_done
+- **最后操作**: 扫描建议完成，等待用户选择
+- **验证建议**:
+  - [x] openspec CLI 可用
+  - [x] git 工作区正常
+  - [ ] propose artifacts 已创建（如需要）
 
 - **活跃 Changes**: [fix-ns-pollution, add-stream-pipes]
 - **当前焦点变更**: fix-ns-pollution
+- **Worktree 映射**:
+  - fix-ns-pollution → .zcf/fix-ns-pollution-wt (openspec/fix-ns-pollution)
+  - add-stream-pipes → (未创建)
+
+## 操作历史
+
+| 时间 | 阶段 | 操作 | 结果 |
+|------|------|------|------|
+| 2026-05-18T10:00:00+08:00 | setup | env_check | ok |
+| 2026-05-18T10:15:00+08:00 | propose | select_change | fix-ns-pollution |
 ```
 
-### workflow-progress.md
+---
+
+### workflow-progress.md 格式
 
 ```markdown
 # OpenSpec 工作流进度日志
 
-### 2026-05-18T10:30:00+08:00 [plan / create_worktree]
-**动作**: 为 fix-ns-pollution 创建 worktree
-**结果**: ✅ .zcf/fix-ns-pollution-wt 已创建
+## Session 信息
+- **开始时间**: 2026-05-18T10:00:00+08:00
+- **结束时间**: —
+- **活跃 Changes**: fix-ns-pollution, add-stream-pipes
 
-**下一步**: 选择执行模式
-
-### 2026-05-18T10:35:00+08:00 [execute / separate_spawn]
-**动作**: 为 add-stream-pipes 启动分离执行
-**结果**: 🔓 分离执行指引已输出
-
-**下一步**: 继续监控或返回 Plan 创建更多 worktree
+## 操作日志
 ```
 
 ---
