@@ -38,7 +38,7 @@
 ### 启动交互式向导
 
 ```
-用户: skill_use("openspec-workflow-guide")
+用户: skill_use("spec-workflow-guide")
 ```
 
 向导会自动检查状态并给出当前合适的选项菜单。无需指定参数。
@@ -172,7 +172,7 @@ i. 其他输入
 
 1. 在新终端中执行：
    cd /workspace/project/CppHDL/.zcf/fix-ns-pollution-wt
-   skill_use("openspec-workflow-execute")
+   skill_use("spec-workflow-execute")
 
 2. execute 结果会自动写入 tasks.md
 
@@ -336,7 +336,7 @@ cd /workspace/project/CppHDL
 **Terminal A（主控 session）**：
 
 ```
-skill_use("openspec-workflow-guide")
+skill_use("spec-workflow-guide")
 → Plan 阶段 → 创建 fix-ns-pollution worktree
 → 选择 🔓 分离执行
 → 切换 add-stream-pipes → 创建 worktree
@@ -350,7 +350,7 @@ skill_use("openspec-workflow-guide")
 
 ```
 cd /workspace/project/CppHDL/.zcf/fix-ns-pollution-wt
-skill_use("openspec-workflow-execute")
+skill_use("spec-workflow-execute")
 → 阻塞执行所有任务
 → 更新 tasks.md
 → 返回
@@ -360,7 +360,7 @@ skill_use("openspec-workflow-execute")
 
 ```
 cd /workspace/project/CppHDL/.zcf/add-stream-pipes-wt
-skill_use("openspec-workflow-execute")
+skill_use("spec-workflow-execute")
 → 阻塞执行所有任务
 → 更新 tasks.md
 → 返回
@@ -369,7 +369,7 @@ skill_use("openspec-workflow-execute")
 **回到 Terminal A**：
 
 ```
-skill_use("openspec-workflow-guide")
+skill_use("spec-workflow-guide")
 → Execute 监控模式检测到 tasks.md 进度已更新
 → 显示最新进度
 → 可选择归档或继续监控
@@ -440,11 +440,11 @@ skill_use("openspec-workflow-guide")
 
 | Skill | 用途 | 触发方式 |
 |-------|------|---------|
-| `openspec-workflow-guide` | 交互式工作流向导（推荐入口） | `skill_use("openspec-workflow-guide")` |
-| `openspec-workflow-propose` | 扫描 ADR/代码生成建议列表 | 被 guide 调用，或单独使用 |
-| `openspec-workflow-plan` | 为单个 change 创建 worktree + 计划 | 被 guide 调用，或单独使用 |
-| `openspec-workflow-execute` | 在 worktree 内执行任务 | 在 worktree 内单独使用 |
-| `openspec-workflow-status` | 状态查看/归档 | 被 guide 调用，或单独使用 |
+| `spec-workflow-guide` | 交互式工作流向导（推荐入口） | `skill_use("spec-workflow-guide")` |
+| `spec-workflow-propose` | 扫描 ADR/代码生成建议列表 | 被 guide 调用，或单独使用 |
+| `spec-workflow-plan` | 为单个 change 创建 worktree + 计划 | 被 guide 调用，或单独使用 |
+| `spec-workflow-execute` | 在 worktree 内执行任务 | 在 worktree 内单独使用 |
+| `spec-workflow-status` | 状态查看/归档 | 被 guide 调用，或单独使用 |
 
 ---
 
