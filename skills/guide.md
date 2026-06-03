@@ -944,8 +944,9 @@ echo "📋 所有 Worktrees 实际进度:"
 
 LAST_CHECK=$(date "+%Y-%m-%d %H:%M:%S")
 
-for wt in $(git worktree list | grep "openspec/" | awk '{print $1}'); do
-    branch=$(git worktree list | grep "$wt" | awk '{print $3}')
+mapfile -t wt_list < <(git worktree list --porcelain | awk '/^worktree / {path=$2} /^branch refs\/heads\/openspec\// {print path}')
+for wt in "${wt_list[@]}"; do
+    branch=$(git worktree list | grep -F "$wt" | awk '{print $3}')
     name=$(echo "$branch" | sed 's|openspec/||')
     # P0 FIX: tasks.md 在 worktree 内的 openspec/changes/<name>/ 目录下
     # wt 已经是完整路径，不需要再拼接 PROJECT_ROOT
@@ -1241,7 +1242,8 @@ i. 其他输入
 
 ```bash
 # 清理所有 worktree
-for wt in $(git worktree list | grep "openspec/" | awk '{print $1}'); do
+mapfile -t wt_list < <(git worktree list --porcelain | awk '/^worktree / {path=$2} /^branch refs\/heads\/openspec\// {print path}')
+for wt in "${wt_list[@]}"; do
     git worktree remove "$wt" 2>/dev/null || true
 done
 
