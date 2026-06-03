@@ -260,7 +260,7 @@ else
 fi
 
 # 2. git 状态
-GIT_CLEAN=$(git status --porcelain | wc -l)
+GIT_CLEAN=$(git status --porcelain | grep -c . || true)
 if [ "$GIT_CLEAN" -eq 0 ]; then
     echo "✅ git 工作区干净"
 else
@@ -283,7 +283,7 @@ else
 fi
 
 # 6. 已有 change
-ACTIVE=$(ls -d $PROJECT_ROOT/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l)
+ACTIVE=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | grep -c . || true)
 echo "📋 活跃 changes: $ACTIVE"
 ```
 
@@ -363,7 +363,7 @@ WORKTREE_LIST=$(git worktree list)
 BUILD_EXISTS=$([ -d "build" ] && echo "yes" || echo "no")
 
 # 活跃 changes
-ACTIVE_CHANGES=$(ls -d $PROJECT_ROOT/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l)
+ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | grep -c . || true)
 ```
 
 **菜单选项**：
@@ -916,7 +916,7 @@ echo "当前状态：${CHANGE_NAME} 等待分离执行"
 
 ```bash
 # 检查所有已创建 worktree 的数量
-WORKTREE_COUNT=$(git worktree list | grep "openspec/" | wc -l)
+WORKTREE_COUNT=$(git worktree list | grep -c "openspec/" || true)
 
 if [ "$WORKTREE_COUNT" -gt 0 ]; then
     echo ""
@@ -1165,7 +1165,7 @@ echo "✅ $CHANGE_NAME 已归档"
 # P0 FIX: 归档后检查是否还有其他 change 需要处理
 # ============================================================
 # 使用 awk 检查分支名（第二列）而非路径，避免路径含 openspec/ 的误匹配
-REMAINING_WT=$(git worktree list | awk '$2 ~ /^openspec\// {print $1}' | wc -l)
+REMAINING_WT=$(git worktree list | awk '$2 ~ /^openspec\// {print $1}' | grep -c . || true)
 if [ "$REMAINING_WT" -gt 0 ]; then
     echo ""
     echo "📋 还有 $REMAINING_WT 个 worktree 正在进行"
