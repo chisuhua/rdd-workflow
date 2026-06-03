@@ -1156,7 +1156,12 @@ openspec archive "$CHANGE_NAME" --yes
 
 # 3. cleanup
 git worktree remove "$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
-git branch -d "openspec/$CHANGE_NAME"
+if git branch -d "openspec/$CHANGE_NAME" 2>/dev/null; then
+    echo "✅ Branch 已删除: openspec/$CHANGE_NAME"
+else
+    echo "⚠️  Branch 有未合并的提交，强制删除"
+    git branch -D "openspec/$CHANGE_NAME"
+fi
 
 cd "$PROJECT_ROOT" || exit 1
 
@@ -1249,7 +1254,12 @@ done
 
 # 清理所有 openspec/* branches
 git branch | grep "openspec/" | while read branch; do
-    git branch -d "$branch" 2>/dev/null || true
+    if git branch -d "$branch" 2>/dev/null; then
+        :
+    else
+        echo "⚠️  Branch $branch 有未合并的提交，强制删除"
+        git branch -D "$branch" 2>/dev/null || true
+    fi
 done
 
 # 清理状态文件
