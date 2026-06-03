@@ -43,7 +43,7 @@ worktree: execute (基于 .sisyphus/plans/) → merge → archive
 # 自动检测项目根目录（用于全局安装的技能）
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 # 列出 $PROJECT_ROOT/openspec/changes/ 下所有 change 目录（排除 archive/）
-ls -d $PROJECT_ROOT/openspec/changes/*/ 2>/dev/null | sed 's#$PROJECT_ROOT/openspec/changes/##; s#/##'
+ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | awk -F/ -v root="$PROJECT_ROOT" '{sub(root "/openspec/changes/", ""); sub(/\/$/, ""); print}'
 ```
 
 ### Step 0b：检查已有 worktree 和分支
