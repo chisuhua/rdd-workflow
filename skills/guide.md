@@ -812,7 +812,7 @@ if [ -d "$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt" ]; then
     if git worktree list | grep -q "$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"; then
         echo "⚠️  Worktree 已存在"
     else
-        echo "❌ 目录冲突，请先清理: rm -rf $PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
+        echo "❌ 目录冲突，请先清理: rm -rf \"$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt\""
     fi
 else
     git worktree add "$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt" "openspec/$CHANGE_NAME"
@@ -902,7 +902,7 @@ echo ""
 echo "为 ${CHANGE_NAME} 启动分离执行："
 echo ""
 echo "1. 在新终端中执行："
-echo "   cd $(pwd)/$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
+echo "   cd $(pwd)/\"$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt\""
 echo "   skill_use(\"spec-workflow-execute\")"
 echo ""
 echo "2. execute 结果会自动写入 tasks.md"
@@ -1026,7 +1026,7 @@ echo ""
 echo "为 ${CHANGE_NAME} 启动分离执行："
 echo ""
 echo "1. 在新终端中执行："
-echo "   cd $(pwd)/$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
+echo "   cd $(pwd)/\"$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt\""
 echo "   skill_use(\"spec-workflow-execute\")"
 echo ""
 echo "2. execute 结果会自动写入 tasks.md"
@@ -1251,7 +1251,7 @@ git branch | grep "openspec/" | while read branch; do
 done
 
 # 清理状态文件
-rm -f $PROJECT_ROOT/workflow-state.md $PROJECT_ROOT/workflow-progress.md
+rm -f "$PROJECT_ROOT/workflow-state.md" "$PROJECT_ROOT/workflow-progress.md"
 
 echo "✅ 所有 worktree 和 openspec/* branches 已清理"
 ```
