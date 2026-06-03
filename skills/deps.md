@@ -101,7 +101,7 @@ SCOPE_FILES=$(grep -E '^[ \t]*-[ \t]*(修改文件|文件|路径)：?' "$PROJECT
 #### 1b. 从 proposal.md 提取 ADR 引用
 
 ```bash
-ADR_REFS=$(grep -oE 'ADR-[0-9]+' "$PROJECT_ROOT/openspec/changes/<name>/proposal.md" 2>/dev/null | sort -u)
+ADR_REFS=$(grep -E 'ADR-[0-9]+' "$PROJECT_ROOT/openspec/changes/<name>/proposal.md" 2>/dev/null | grep -o 'ADR-[0-9]*' | sort -u)
 ```
 
 #### 1c. 从 design.md 提取接口定义和接口使用
