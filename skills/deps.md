@@ -139,10 +139,10 @@ IFACE_USE=$(grep -E '^[ \t]*(使用|调用|依赖)：' "$PROJECT_ROOT/openspec/c
 for a in $CANDIDATES; do
   for b in $CANDIDATES; do
     [ "$a" = "$b" ] && continue
-    # 取交集（使用 bash 间接变量展开 ${!var} 获取各 change 的文件列表）
+    # 取交集（用 eval 实现间接变量展开，兼容 bash 3.x / POSIX sh）
     files_var_a="FILES_$a"
     files_var_b="FILES_$b"
-    COMMON=$(comm -12 <(echo "${!files_var_a}" | sort) <(echo "${!files_var_b}" | sort))
+    COMMON=$(comm -12 <(eval "echo \"\${$files_var_a}\"" | sort) <(eval "echo \"\${$files_var_b}\"" | sort))
     if [ -n "$COMMON" ]; then
       echo "⚠️  $a ←→ $b: 文件冲突 ($COMMON)"
     fi
@@ -166,7 +166,7 @@ ADR（Architecture Decision Record）是 change 之间的间接依赖纽带：
 # 构建 ADR → Change 的映射（使用间接变量展开）
 for name in $CANDIDATES; do
   adr_var="ADR_REFS_$name"
-  for adr in ${!adr_var}; do
+  for adr in $(eval "echo \${$adr_var}"); do
     echo "$adr ← $name"
   done
 done
@@ -189,8 +189,8 @@ for a in $CANDIDATES; do
     [ "$a" = "$b" ] && continue
     iface_var_a="IFACE_DEF_$a"
     iface_use_var_b="IFACE_USE_$b"
-    for iface in ${!iface_var_a}; do
-      if echo "${!iface_use_var_b}" | grep -q "$iface"; then
+    for iface in $(eval "echo \${$iface_var_a}"); do
+      if eval "echo \${$iface_use_var_b}" | grep -q "$iface"; then
         echo "📦 $b 依赖 $a (接口: $iface)"
       fi
     done
