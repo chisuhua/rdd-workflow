@@ -474,11 +474,7 @@ echo "📋 当前已创建的 Changes:"
 ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | while read -r dir; do
     name=$(basename "$dir")
     if git rev-parse --verify HEAD >/dev/null 2>&1; then
-    if git rev-parse --verify HEAD >/dev/null 2>&1; then
         committed=$(git show HEAD:"$PROJECT_ROOT/openspec/changes/$name/.openspec.yaml" > /dev/null 2>&1 && echo "✅" || echo "⏳")
-    else
-        committed="⏳"
-    fi
     else
         committed="⏳"
     fi
