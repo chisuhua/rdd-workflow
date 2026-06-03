@@ -654,7 +654,7 @@ fi
 ```bash
 # 检查是否还有剩余建议
 if [ -f "proposal-suggestions.md" ]; then
-    REMAINING=$(grep -c "status: 待创建" "proposal-suggestions.md" 2>/dev/null || echo "0")
+    REMAINING=$(grep -ciE "status\s*[:=]\s*待创建" "proposal-suggestions.md" 2>/dev/null || echo "0")
     if [ "$REMAINING" -gt 0 ]; then
         echo ""
         echo "📋 proposal-suggestions.md 中还有 $REMAINING 个未创建的 change"

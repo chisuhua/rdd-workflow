@@ -1201,7 +1201,7 @@ else
     echo ""
     echo "📋 所有 worktree 已处理完毕"
     if [ -f "proposal-suggestions.md" ]; then
-        REMAINING_SUGGESTIONS=$(grep -c "status: 待创建" "proposal-suggestions.md" 2>/dev/null || echo "0")
+        REMAINING_SUGGESTIONS=$(grep -ciE "status\s*[:=]\s*待创建" "proposal-suggestions.md" 2>/dev/null || echo "0")
         if [ "$REMAINING_SUGGESTIONS" -gt 0 ]; then
             echo "⚠️  proposal-suggestions.md 中还有 $REMAINING_SUGGESTIONS 个未创建的 change"
             echo ""
