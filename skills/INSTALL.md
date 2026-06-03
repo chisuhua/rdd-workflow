@@ -57,7 +57,7 @@ PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 if [ ! -d "$PROJECT_ROOT/.git" ]; then
     echo "⚠️  当前目录不是 git 仓库"
     echo "   建议在项目根目录执行本技能"
-    PROJECT_ROOT=$(pwd)
+    PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 fi
 
 echo "📁 项目根目录: $PROJECT_ROOT"

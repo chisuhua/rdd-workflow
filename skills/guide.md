@@ -156,10 +156,11 @@ skill_use("spec-workflow-guide")   # 无参数版本
 
 ```bash
 # ============================================================
-# P0 FIX: 约束在当前工作目录，不向上遍历到父目录
-# 使用 pwd 作为项目根目录，然后验证当前目录是否为 git 仓库
+# 项目根检测：git rev-parse 找到顶级 git 目录，pwd 作为回退
+# 注：这会向上遍历到父目录的 git 仓库（如当前目录是子模块）
+# 后续用 git rev-parse --git-dir 验证当前目录确实在 git 仓库内
 # ============================================================
-PROJECT_ROOT=$(pwd)
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 
 # 验证当前目录是 git 仓库（防止向上遍历到父目录的仓库）
 if ! git rev-parse --git-dir > /dev/null 2>&1; then
