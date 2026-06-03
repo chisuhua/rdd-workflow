@@ -306,7 +306,11 @@ fi
 
 ```bash
 if [ "$IN_WORKTREE" = true ]; then
-    MAIN_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "/workspace/project/CppHDL")
+    MAIN_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [ -z "$MAIN_ROOT" ]; then
+        echo "❌ 无法确定项目根目录（不在 git 仓库内？）"
+        exit 1
+    fi
     cd "$MAIN_ROOT"
     
     # 动态检测默认分支（适用于 main/master/develop 等）
