@@ -1113,9 +1113,14 @@ BEFORE_MERGE=$(git rev-parse HEAD)
 cd "$WT_PATH" || exit 1
 git checkout main || { echo "❌ 切换 main 分支失败"; exit 1; }
 
-if ! git merge --ff-only "openspec/$CHANGE_NAME" 2>/dev/null; then
-    echo "⚠️ ff-only merge 失败，尝试普通 merge..."
-    git merge "openspec/$CHANGE_NAME" || { echo "❌ merge 失败"; exit 1; }
+DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@.*/@@' || git rev-parse --abbrev-ref HEAD)
+MERGE_BASE=$(git merge-base "openspec/$CHANGE_NAME" "$DEFAULT_BRANCH" 2>/dev/null)
+MAIN_TIP=$(git rev-parse "$DEFAULT_BRANCH" 2>/dev/null)
+if [ "$MERGE_BASE" = "$MAIN_TIP" ]; then
+    git merge --ff-only "openspec/$CHANGE_NAME" || { echo "❌ merge 失败"; exit 1; }
+else
+    echo "⚠️ Worktree 分支已落后于 $DEFAULT_BRANCH，创建 merge commit"
+    git merge --no-ff "openspec/$CHANGE_NAME" -m "merge: $CHANGE_NAME change" || { echo "❌ merge 失败"; exit 1; }
 fi
 
 cd "$PROJECT_ROOT" || exit 1
