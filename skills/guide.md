@@ -1012,7 +1012,7 @@ WORKTREE_PATH="$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
 cd "$WORKTREE_PATH"
 skill_use("spec-workflow-execute")
 # 阻塞等待所有任务完成
-cd /workspace/project/CppHDL
+cd "$(git rev-parse --show-toplevel)"
 
 # 更新 state 进度
 # （execute 已更新 tasks.md，这里读取同步到 state）
