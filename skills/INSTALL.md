@@ -108,7 +108,7 @@ if [ ! -f "$SKILLS_DIR/package.json" ]; then
   "version": "1.0",
   "description": "Spec Workflow - OpenSpec 工作流技能包",
   "author": "sisyphus",
-  "skills": ["guide", "guide-spec", "guide-ship", "propose", "execute", "status"]
+  "skills": ["INSTALL", "guide", "guide-spec", "guide-ship", "propose", "execute", "status", "roadmap", "deps"]
 }
 EOF
     echo "✅ package.json 已创建"
