@@ -160,7 +160,7 @@ echo ""
 echo "已安装的子技能:"
 ls -1 "$SKILLS_DIR/skills/"
 echo ""
-echo "下一步: 重新加载 session 或执行 skill_use(\"spec-workflow-guide\")"
+echo "下一步: 重新加载 session 或执行 skill_use(\"guide\")"
 ```
 
 ## 安装脚本用法（其他 AI 助手）
