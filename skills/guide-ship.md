@@ -53,13 +53,15 @@ echo "📋 所有活跃 Changes:"
 echo ""
 echo "| 变更 | Artifacts | Worktree | 计划文件 |"
 echo "|-----|-----------|----------|---------|"
-for name in $ACTIVE_CHANGES; do
-    committed=$(git show HEAD:"$PROJECT_ROOT/openspec/changes/$name/.openspec.yaml" > /dev/null 2>&1 && echo "✅" || echo "⏳")
+# git show HEAD:<path> 要求相对于 repo root 的相对路径。
+# 把整个表格生成放在 (cd ... && ...) 子 shell 里,这样 git show 可以用相对路径。
+(cd "$PROJECT_ROOT" 2>/dev/null && for name in $ACTIVE_CHANGES; do
+    committed=$(git show HEAD:"openspec/changes/$name/.openspec.yaml" > /dev/null 2>&1 && echo "✅" || echo "⏳")
     wt_path="$PROJECT_ROOT/.zcf/${name}-wt"
     wt_exists=$([ -d "$wt_path" ] && git worktree list | grep -q "$wt_path" && echo "✅" || echo "❌")
     plan_exists=$([ -f "$wt_path/.sisyphus/plans/$name.md" ] 2>/dev/null && echo "✅" || echo "❌")
     echo "| $name | $committed | $wt_exists | $plan_exists |"
-done
+done)
 ```
 
 **选择要处理的 change**：
@@ -94,7 +96,8 @@ fi
 
 # COMMIT GATE - 是否已 commit
 if git rev-parse --verify HEAD >/dev/null 2>&1; then
-    if ! git show HEAD:"$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/.openspec.yaml" > /dev/null 2>&1; then
+    # git show HEAD:<path> 要求相对于 repo root 的相对路径,所以包一层 (cd ... && ...)。
+    if ! (cd "$PROJECT_ROOT" 2>/dev/null && git show HEAD:"openspec/changes/$CHANGE_NAME/.openspec.yaml" > /dev/null 2>&1); then
         echo "❌ Artifacts 尚未提交，请先提交"
         # 回到菜单
     fi

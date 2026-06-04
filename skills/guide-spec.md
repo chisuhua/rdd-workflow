@@ -284,15 +284,17 @@ guide-spec 负责显示扫描结果和接收用户选择，但创建操作通过
 ```bash
 # 展示当前活跃 changes
 echo "📋 当前已创建的 Changes:"
-ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | while read -r dir; do
+# git show HEAD:<path> 要求相对于 repo root 的相对路径。
+# 先 cd 进 PROJECT_ROOT,然后用相对 glob 枚举 changes。
+(cd "$PROJECT_ROOT" 2>/dev/null && ls -d openspec/changes/*/ 2>/dev/null | grep -v archive/ | while read -r dir; do
     name=$(basename "$dir")
     if git rev-parse --verify HEAD >/dev/null 2>&1; then
-        committed=$(git show HEAD:"$PROJECT_ROOT/openspec/changes/$name/.openspec.yaml" > /dev/null 2>&1 && echo "✅" || echo "⏳")
+        committed=$(git show HEAD:"openspec/changes/$name/.openspec.yaml" > /dev/null 2>&1 && echo "✅" || echo "⏳")
     else
         committed="⏳"
     fi
     echo "  - $name  [Artifacts: $committed]"
-done
+done)
 
 # 检查建议列表
 if [ -f "proposal-suggestions.md" ]; then
