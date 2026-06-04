@@ -370,7 +370,7 @@ guide-spec 阶段完成（spec-done）
 **自动执行内容**：
 
 ```bash
-# Step 1: 生成候选列表
+# Step 1: 生成候选列表（guide-spec 负责此步骤）
 mkdir -p "$PROJECT_ROOT/.zcf"
 python3 -c "
 import json, os
@@ -392,58 +392,27 @@ with open('$PROJECT_ROOT/.zcf/.deps-candidates.json', 'w') as f:
 print(f'生成候选列表: {candidates}')
 "
 
-# Step 2: 调用 deps.md 分析（内联执行）
-# 读取每个 change 的 proposal.md 和 design.md
-# 分析文件路径、ADR 引用、接口定义
-# 生成依赖图和冲突检测
-# 输出到 .zcf/.deps-output.md
+# Step 2: 调用 deps.md 技能（静态三轴分析 + 子代理语义分析占位）
+# deps.md 读取 .zcf/.deps-candidates.json，输出 .zcf/.deps-output.md
+# 详细实现见 skills/deps.md
+skill_use("deps")
 
 # Step 3: 展示结果
 echo "📊 依赖分析完成"
 cat "$PROJECT_ROOT/.zcf/.deps-output.md"
 ```
 
-**依赖图生成逻辑**：
+**详细分析逻辑**（已迁移到 `skills/deps.md`）：
 
-```bash
-# 从 proposal.md 提取 Impact 中的文件路径
-scope_pattern='^[ \t]*-[ \t]*(src/|file:)'
-SCOPE_FILES=$(grep -E "$scope_pattern" "$proposal_path" 2>/dev/null | ...)
+- **静态三轴分析**（文件冲突、ADR 引用、接口依赖）：见 `skills/deps.md` Step 2
+- **Mermaid 图生成**（独立 change 用 subgraph、依赖用 `-->`、冲突用 `-.->|冲突|`）：见 `skills/deps.md` Step 5a
+- **子代理语义分析**：见 `skills/deps.md` Step 3（占位符，后续独立 change 实现）
+- **重组建议格式**（拆分/合并/重排）：见 `skills/deps.md` Step 5e
 
-# 检测文件路径冲突
-CONFLICTS=$(find "$PROJECT_ROOT/openspec/changes/" -name "proposal.md" -exec grep ... {} \;)
-
-# 生成 Mermaid 图
-if [ "$独立" = true ]; then
-    # P4 FIX: 独立 change 不画箭头，使用 subgraph 分组
-    echo "flowchart TB"
-    echo "    subgraph independent[\"独立 Change（可并行）\"]"
-    for change in $CHANGES; do
-        echo "        $(echo $change | sed 's/^/        A[/; s/$/ ]/')"
-    done
-    echo "    end"
-else
-    echo "flowchart LR"
-    for dep in $DEPENDENCIES; do
-        echo "    $dep"
-    done
-fi
-```
-
-**Mermaid 独立 change 正确画法**：
-
-```mermaid
-flowchart TB
-    subgraph independent["独立 Change（可并行）"]
-        A[adr-20260517-001-ptx-breakpoint-design]
-        B[add-dbug-print]
-    end
-```
-
-**【重要】Mermaid 语法修复**：
-- 独立 change **不要画箭头**
-- 使用 `&` 连接并行节点：`A[change1] & B[change2]`
-- 或使用 subgraph 分组
+**契约**：
+- **输入**: `.zcf/.deps-candidates.json`（Step 1 生成）
+- **输出**: `.zcf/.deps-output.md`（由 deps.md 写入，由 Step 3 cat 展示）
+- **错误处理**: 若 `.deps-candidates.json` 缺失，deps.md Step 0 退出 1，guide-spec 需在 Step 1 确保生成
 
 **无用户交互**：本阶段自动完成。guide-spec 全部工作完成，输出 spec-done 退出信号。
 
