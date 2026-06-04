@@ -22,11 +22,12 @@ git clone https://github.com/chisuhua/spec-workflow.git ~/.agents/skills/spec-wo
 
 1. **安装到项目**：执行 `skill_use("INSTALL")` 将技能复制到项目目录
 2. **使用子技能**：
-   - `skill_use("guide")` - 交互式向导
-   - `skill_use("propose")` - 生成提案
-   - `skill_use("plan")` - 创建实施计划
-   - `skill_use("execute")` - 执行实施
-   - `skill_use("status")` - 查看状态
+   - `skill_use("guide")` - 推荐器入口(扫描状态,建议调 spec 或 ship)
+   - `skill_use("guide-spec")` - Spec 端状态机(setup → roadmap → propose → deps)
+   - `skill_use("guide-ship")` - Ship 端状态机(discover → worktree → plan → execute → archive)
+   - `skill_use("propose")` - 子技能(被 guide-spec 调用)
+   - `skill_use("execute")` - 子技能(被 guide-ship 调用)
+   - `skill_use("status")` - 子技能(被 guide-ship 调用或独立使用)
 
 ## 目录结构
 
@@ -34,14 +35,18 @@ git clone https://github.com/chisuhua/spec-workflow.git ~/.agents/skills/spec-wo
 spec-workflow/
 ├── package.json
 ├── README.md
+├── USAGE.md
 ├── install.sh           # 手动安装脚本
 └── skills/
     ├── INSTALL.md       # 安装程序（第一入口）
-    ├── guide.md         # 交互式向导
-    ├── propose.md       # 提案生成
-    ├── plan.md          # 实施计划
-    ├── execute.md       # 执行实施
-    └── status.md        # 状态查看
+    ├── guide.md         # 推荐器入口
+    ├── guide-spec.md    # Spec 端状态机
+    ├── guide-ship.md    # Ship 端状态机
+    ├── propose.md       # 子技能(被 guide-spec 调用)
+    ├── execute.md       # 子技能(被 guide-ship 调用)
+    ├── roadmap.md       # 子技能(被 guide-spec 调用)
+    ├── deps.md          # 子技能(被 guide-spec 调用)
+    └── status.md        # 子技能(被 guide-ship 调用)
 ```
 
 ## 工作原理

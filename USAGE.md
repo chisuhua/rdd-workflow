@@ -1,6 +1,6 @@
 # OpenSpec 工作流技能使用指南
 
-> 基于 `spec-workflow-guide` 交互式向导，覆盖从提案到归档的完整生命周期。
+> 基于 `spec-workflow-guide` 推荐器（spec-side 调 `spec-workflow-guide-spec`，ship-side 调 `spec-workflow-guide-ship`），覆盖从提案到归档的完整生命周期。
 > 支持多 change 并行执行，可分离到不同终端同时运行。
 
 ---
@@ -336,7 +336,7 @@ cd /workspace/project/CppHDL
 **Terminal A（主控 session）**：
 
 ```
-skill_use("spec-workflow-guide")
+skill_use("spec-workflow-guide-ship")
 → Plan 阶段 → 创建 fix-ns-pollution worktree
 → 选择 🔓 分离执行
 → 切换 add-stream-pipes → 创建 worktree
@@ -369,7 +369,7 @@ skill_use("spec-workflow-execute")
 **回到 Terminal A**：
 
 ```
-skill_use("spec-workflow-guide")
+skill_use("spec-workflow-guide-ship")
 → Execute 监控模式检测到 tasks.md 进度已更新
 → 显示最新进度
 → 可选择归档或继续监控
@@ -472,11 +472,12 @@ skill_use("spec-workflow-guide")
 
 | Skill | 用途 | 触发方式 |
 |-------|------|---------|
-| `spec-workflow-guide` | 交互式工作流向导（推荐入口） | `skill_use("spec-workflow-guide")` |
-| `spec-workflow-propose` | 扫描 ADR/代码生成建议列表 | 被 guide 调用，或单独使用 |
-| `spec-workflow-plan` | 为单个 change 创建 worktree + 计划 | 被 guide 调用，或单独使用 |
-| `spec-workflow-execute` | 在 worktree 内执行任务 | 在 worktree 内单独使用 |
-| `spec-workflow-status` | 状态查看/归档 | 被 guide 调用，或单独使用 |
+| `spec-workflow-guide` | 推荐器入口（扫描状态，建议调 spec 或 ship） | `skill_use("spec-workflow-guide")` |
+| `spec-workflow-guide-spec` | Spec 端状态机（setup → roadmap → propose → deps） | `skill_use("spec-workflow-guide-spec")` |
+| `spec-workflow-guide-ship` | Ship 端状态机（discover → worktree → plan → execute → archive） | `skill_use("spec-workflow-guide-ship")` |
+| `spec-workflow-propose` | 扫描 ADR/代码生成建议列表 | 被 guide-spec 调用，或单独使用 |
+| `spec-workflow-execute` | 在 worktree 内执行任务 | 被 guide-ship 调用，或在 worktree 内单独使用 |
+| `spec-workflow-status` | 状态查看/归档 | 被 guide-ship 调用，或单独使用 |
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: INSTALL
-description: 安装 Spec Workflow 技能到项目目录。执行后会将子技能（guide/propose/plan/execute/status）复制到项目的 .opencode/skills/ 目录。
+description: 安装 Spec Workflow 技能到项目目录。执行后会将子技能（guide/guide-spec/guide-ship/propose/execute/status）复制到项目的 .opencode/skills/ 目录。
 alias: install
 version: "1.0"
 author: sisyphus
@@ -108,7 +108,7 @@ if [ ! -f "$SKILLS_DIR/package.json" ]; then
   "version": "1.0",
   "description": "Spec Workflow - OpenSpec 工作流技能包",
   "author": "sisyphus",
-  "skills": ["guide", "propose", "plan", "execute", "status"]
+  "skills": ["guide", "guide-spec", "guide-ship", "propose", "execute", "status"]
 }
 EOF
     echo "✅ package.json 已创建"
