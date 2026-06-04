@@ -1,6 +1,6 @@
 ---
 name: propose
-description: 分析项目文档与代码的差距，生成 propose 建议列表，用户选择后执行 openspec-propose 命令序列创建 artifacts。支持 roadmap 驱动的分阶段 change 生成，可多次调用生成多个 propose。
+description: 分析项目文档与代码的差距，生成 propose 建议列表，用户选择后执行 openspec-propose 命令序列创建 artifacts。被 guide-spec 调用（不在 archive/ 阶段直接调用）。
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+. Reads docs/adr/, docs/architecture/, docs/developer_guide/, roadmap.md.
 metadata:

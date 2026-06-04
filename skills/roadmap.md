@@ -1,6 +1,6 @@
 ---
 name: roadmap
-description: 路线图管理技能——初始化、编辑、验证项目路线图，管理阶段和任务分类，支持阶段门控检查。
+description: 路线图管理技能——初始化、编辑、验证项目路线图。被 guide-spec 调用执行 init/status/edit/validate/advance/gate-report 命令。
 license: MIT
 compatibility: Requires spec-workflow v2.0+
 metadata:

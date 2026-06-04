@@ -1,6 +1,6 @@
 ---
 name: status
-description: 使用 OpenSpec 工作流状态管理工具，检查 worktree 与 change 状态，检测同步问题并修复，支持 merge → archive → cleanup 完整归档流程。支持路线图状态查看和阶段门控报告。
+description: 查看 OpenSpec change 状态、归档已完成的 change、清理 worktree 和 branch。可被 guide-ship 调用（archive 阶段），也可独立调用查看状态。
 license: MIT
 compatibility: Requires openspec CLI
 metadata:

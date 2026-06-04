@@ -1,6 +1,6 @@
 ---
 name: execute
-description: 在 worktree 隔离环境执行 OpenSpec change 的实施计划。基于 Prometheus 生成的 .sisyphus/plans/ 执行，执行后回写 tasks.md 以同步 openspec CLI 状态。支持 roadmap 进度更新和阶段门控检查。
+description: 在 worktree 隔离环境执行 OpenSpec change 的实施计划。基于 Prometheus 生成的 .sisyphus/plans/ 执行。被 guide-ship 在 plan 阶段后调用。
 license: MIT
 compatibility: Requires openspec CLI and git worktree.
 metadata:
