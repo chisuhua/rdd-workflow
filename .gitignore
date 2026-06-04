@@ -4,3 +4,10 @@
 .sisyphus/
 .omo/
 .opencode/
+
+# zcf (spec-workflow state) directory
+# Contains ephemeral roadmap/propose state files. Only index.md is documentation
+# and is tracked; all other state files are runtime-only.
+.zcf/*
+!.zcf/index.md
+!.zcf/.gitkeep

@@ -390,7 +390,7 @@ if [ "$REMAINING_WT" -gt 0 ]; then
     echo "📋 还有 $REMAINING_WT 个 worktree 正在进行"
     echo "请选择:"
     echo "1. 继续处理其他 worktree"
-    echo "2. 返回 guide: skill_use(\"spec-workflow-guide\")"
+    echo "2. 返回 guide: skill_use(\"guide\")"
 else
     # 检查 proposal-suggestions.md
     if [ -f "proposal-suggestions.md" ]; then
@@ -398,7 +398,7 @@ else
         if [ "$REMAINING" -gt 0 ]; then
             echo ""
             echo "📋 proposal-suggestions.md 中还有 $REMAINING 个未创建的 change"
-            echo "建议运行: skill_use(\"spec-workflow-guide\") 回到 propose 阶段"
+            echo "建议运行: skill_use(\"guide\") 回到 propose 阶段"
         fi
     fi
 fi

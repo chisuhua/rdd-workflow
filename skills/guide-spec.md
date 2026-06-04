@@ -241,23 +241,23 @@ i. 其他操作
 
 **行为**：
 
-本阶段所有扫描和创建逻辑委托给 `spec-workflow-propose` 技能。
+本阶段所有扫描和创建逻辑委托给 `propose` 技能。
 guide-spec 作为交互式向导，展示提议技能的结果，让用户选择，然后调用提议技能的创建逻辑。
 
 **交互流程**：
 
-1. **扫描阶段**：调用 `spec-workflow-propose` 执行扫描，生成/更新 `proposal-suggestions.md`
+1. **扫描阶段**：调用 `propose` 执行扫描，生成/更新 `proposal-suggestions.md`
 2. **选择阶段**：展示扫描结果（从 `proposal-suggestions.md` 读取），让用户选择
    - Roadmap 模式下，只展示当前阶段的 change
    - 非当前阶段的 change 可折叠或标记为「未来阶段」
-3. **创建阶段**：用户选择后，调用 `spec-workflow-propose --create <name>` 执行创建
+3. **创建阶段**：用户选择后，调用 `propose --create <name>` 执行创建
 4. **循环**：创建后重新展示，用户可继续选或选「完成 Propose 阶段」
 
-**注意**：guide-spec 不直接调用 `openspec new`/`openspec propose` 命令。所有创建逻辑由 `spec-workflow-propose` 技能处理。
+**注意**：guide-spec 不直接调用 `openspec new`/`openspec propose` 命令。所有创建逻辑由 `propose` 技能处理。
 
 **显示与执行分离**：
 
-guide-spec 负责显示扫描结果和接收用户选择，但创建操作通过调用 `spec-workflow-propose` 技能完成。
+guide-spec 负责显示扫描结果和接收用户选择，但创建操作通过调用 `propose` 技能完成。
 
 ```bash
 # 展示当前活跃 changes
@@ -289,7 +289,7 @@ fi
 
 **用户选择后的处理**：
 
-当用户选择某个建议进行创建时，guide-spec 调用 `spec-workflow-propose` 执行创建：
+当用户选择某个建议进行创建时，guide-spec 调用 `propose` 执行创建：
 
 ```bash
 if [ "$choice" = "1" ]; then

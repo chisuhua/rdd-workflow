@@ -144,7 +144,7 @@ else
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "💡 提示：下次可直接使用以下命令进入此 worktree"
     echo "   cd $target_path"
-    echo "   skill_use(\"spec-workflow-execute\")"
+    echo "   skill_use(\"execute\")"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 fi
@@ -264,12 +264,12 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "📋 下一步操作："
 echo ""
 echo "1. 在主 session 查看最新进度："
-echo "   skill_use(\"spec-workflow-guide\")"
+echo "   skill_use(\"guide\")"
 echo "   → 进入 Execute 监控模式"
 echo ""
 echo "2. 直接归档（如果已完成所有任务）："
 echo "   cd \"$PROJECT_ROOT\""
-echo "   skill_use(\"spec-workflow-status $CHANGE_NAME --archive\")"
+echo "   skill_use(\"status $CHANGE_NAME --archive\")"
 echo ""
 echo "3. 继续处理其他 worktree："
 echo "   skill_use(\"guide-ship\")   # 内部选择 change"
@@ -291,7 +291,7 @@ if [ "$OTHER_WTS" -gt 0 ]; then
     echo ""
     echo "请选择:"
     echo "1. 切换到另一个 worktree 继续执行"
-    echo "2. 返回主 session（skill_use(\"spec-workflow-guide\"))"
+    echo "2. 返回主 session（skill_use(\"guide\"))"
     echo "i. 其他输入"
 fi
 
@@ -342,7 +342,7 @@ if change_phase and change_category:
         if all_complete:
             print(f'🎉 阶段 {change_phase} 的所有 change 已完成！')
             print(f'   请检查阶段门控条件，准备进入下一阶段')
-            print(f'   运行: skill_use(\"spec-workflow-roadmap\", \"gate-report\")')
+            print(f'   运行: skill_use(\"roadmap\", \"gate-report\")')
 "
 fi
 ```

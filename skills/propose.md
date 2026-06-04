@@ -90,7 +90,7 @@ if phase_sections:
 else
     echo "⚠️  未检测到 roadmap.md，使用兼容模式"
     echo "   所有 change 将归为 'default' 阶段和 'general' 分类"
-    echo "   建议初始化路线图: skill_use(\"spec-workflow-roadmap\", \"init\")"
+    echo "   建议初始化路线图: skill_use(\"roadmap\", \"init\")"
 fi
 ```
 

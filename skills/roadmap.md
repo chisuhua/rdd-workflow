@@ -229,7 +229,7 @@ print('✅ 路线图状态文件已创建: $STATE_FILE')
 ```bash
 if [ ! -f "$ROADMAP_FILE" ]; then
     echo "❌ roadmap.md 不存在"
-    echo "请先初始化: skill_use(\"spec-workflow-roadmap\", \"init\")"
+    echo "请先初始化: skill_use(\"roadmap\", \"init\")"
     exit 1
 fi
 
@@ -372,7 +372,7 @@ CHANGE_NAME=$1
 
 if [ -z "$CHANGE_NAME" ]; then
     echo "❌ 请提供 change 名称"
-    echo "用法: skill_use(\"spec-workflow-roadmap\", \"validate\", \"change-name\")"
+    echo "用法: skill_use(\"roadmap\", \"validate\", \"change-name\")"
     exit 1
 fi
 
@@ -463,7 +463,7 @@ if not all_complete:
     print('')
     print('当前阶段未完成，无法推进')
     print('请完成所有 change 和门控条件后重试')
-    print('或使用: skill_use(\"spec-workflow-roadmap\", \"gate-report\") 查看详情')
+    print('或使用: skill_use(\"roadmap\", \"gate-report\") 查看详情')
     exit(1)
 
 print(f'✅ 阶段 {current} 已完成，可以推进')
