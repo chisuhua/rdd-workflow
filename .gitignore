@@ -1,5 +1,6 @@
-# AI agent framework state directories (sisyphus / omo)
+# AI agent framework state directories (sisyphus / omo / opencode)
 # These contain ephemeral session state, plans, and run-continuation data
 # that should not be version-controlled.
 .sisyphus/
 .omo/
+.opencode/
