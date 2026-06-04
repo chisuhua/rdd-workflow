@@ -215,7 +215,7 @@ i. 其他输入
 
 ```bash
 cd "$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt" || exit 1
-skill_use("spec-workflow-execute")
+skill_use("execute")
 cd "$PROJECT_ROOT" || exit 1
 # execute 会阻塞直到所有任务完成
 ```
@@ -337,7 +337,7 @@ CHANGE_NAME="fix-ns-pollution"
 WORKTREE_PATH="$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
 
 cd "$WORKTREE_PATH" || { echo "❌ 无法进入 worktree 目录: $WORKTREE_PATH"; exit 1; }
-skill_use("spec-workflow-execute")
+skill_use("execute")
 # 阻塞等待所有任务完成
 cd "$(git rev-parse --show-toplevel)"
 ```

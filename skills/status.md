@@ -240,7 +240,7 @@ Worktree: .zcf/<name>-wt
   修复: sed -i 's/- \[ \] 任务描述/- [x] 任务描述/' tasks.md
 
 建议:
-  - skill_use("spec-workflow-execute") 继续执行
+  - skill_use("execute") 继续执行
   - 或修复同步后归档
 ```
 
@@ -252,7 +252,7 @@ Worktree: .zcf/<name>-wt
 ✅ Change <name> 全部完成！
 
 建议立即归档:
-  skill_use("spec-workflow-status <name> --archive")
+  skill_use("status <name> --archive")
 ```
 
 ---

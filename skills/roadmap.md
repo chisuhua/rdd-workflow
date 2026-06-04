@@ -217,7 +217,7 @@ print('✅ 路线图状态文件已创建: $STATE_FILE')
   - core-test: 核心测试
 
 下一步:
-  skill_use("spec-workflow-guide")  # 进入工作流向导
+  skill_use("guide")  # 进入工作流向导
 ```
 
 ---

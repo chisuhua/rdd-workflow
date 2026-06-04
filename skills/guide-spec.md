@@ -305,7 +305,7 @@ else
     echo ""
     echo "🆕 开始扫描..."
     # Sub-skill: propose (called from guide-spec.Phase 2)
-    skill_use("spec-workflow-propose")
+    skill_use("propose")
 fi
 ```
 
@@ -317,11 +317,11 @@ fi
 if [ "$choice" = "1" ]; then
     # 创建 fix-ns-pollution
     # Sub-skill: propose (called from guide-spec.Phase 2)
-    skill_use("spec-workflow-propose", "--create", "fix-ns-pollution")
+    skill_use("propose", "--create", "fix-ns-pollution")
 elif [ "$choice" = "2" ]; then
     # 创建 add-stream-pipes
     # Sub-skill: propose (called from guide-spec.Phase 2)
-    skill_use("spec-workflow-propose", "--create", "add-stream-pipes")
+    skill_use("propose", "--create", "add-stream-pipes")
 fi
 ```
 
