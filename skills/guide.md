@@ -64,7 +64,14 @@ elif [ ! -f "$PROJECT_ROOT/roadmap.md" ]; then
 elif [ -z "$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/)" ]; then
     RECOMMEND="guide-spec"; REASON="无 change → 进入 propose 阶段"
 else
-    RECOMMEND="guide-spec"; REASON="有 change 待 commit → 继续 propose"
+    # 6. 读取 proposal-suggestions.md 判断
+    if grep -q 'status: 待创建' proposal-suggestions.md 2>/dev/null; then
+      RECOMMEND="guide-spec"
+      REASON="有 change 待创建 → 继续 propose"
+    else
+      RECOMMEND="guide-ship"
+      REASON="无待创建 change → 准备 ship"
+    fi
 fi
 ```
 
