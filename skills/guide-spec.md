@@ -138,28 +138,7 @@ i. 其他输入
 
 根据当前阶段跳转到对应入口。
 
-<!-- The following block was lifted from guide.md:315-338 (worktree recovery menu).
-     Content is preserved for audit trail but is no longer reachable from the
-     spec-side state machine. guide-ship now owns worktree recovery. -->
-
-```bash
-# (Content intentionally stripped during spec-side split — see guide-ship.worktree phase for worktree recovery.)
-# 检查是否有已创建的 worktree
-# 原命令: <worktree-list-cmd> | filter "<openspec-prefix>/" | count
-WORKTREE_COUNT=$(<worktree-list-cmd>)
-
-if [ "$WORKTREE_COUNT" -gt 0 ]; then
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "📋 发现 $WORKTREE_COUNT 个 worktree 已就绪"
-    echo ""
-    echo "请选择:"
-    echo "1. ✅ 进入 Execute 监控模式（监控所有 worktree 进度）"
-    echo "2. 🔄 返回 Plan 阶段（查看或创建更多 worktree）"
-    echo "3. ↩️ 返回 Propose 阶段（创建更多 change）"
-    echo "i. 其他输入"
-fi
-```
+<!-- Worktree recovery logic moved to guide-ship.md Phase 1 -->
 
 ---
 
@@ -170,7 +149,7 @@ fi
 **行为**：
 
 1. 检查是否存在 `roadmap.md`
-2. 如果不存在，提示用户创建初始路线图
+2. 如果不存在，**自动调用** `skill_use("roadmap", "init")` 引导用户通过 4 个模板创建初始路线图
 3. 如果存在，展示当前阶段和进度
 
 **环境检测命令**（已与 setup 共享）：
@@ -198,6 +177,7 @@ ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v
 # ============================================================
 # ROADMAP CHECK (P0 FIX)
 # Setup 完成后检查 roadmap.md 是否存在
+# 不存在则自动调用 skill_use("roadmap", "init") 引导创建
 # ============================================================
 ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
 
@@ -209,11 +189,9 @@ if [ ! -f "$ROADMAP_FILE" ]; then
     echo "   路线图用于管理项目阶段和 change 分类。"
     echo "   如果没有路线图，所有 change 将被标记为'未分类'。"
     echo ""
-    echo "请选择:"
-    echo "1. ✅ 创建路线图（进入 roadmap 阶段）"
-    echo "2. ⏭️  跳过（直接进入 propose 阶段 - 自由模式）"
-    echo "i. 其他输入"
+    echo "→ 自动调用 skill_use(\"roadmap\", \"init\") 进入模板选择..."
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    skill_use("roadmap", "init")
 fi
 ```
 
