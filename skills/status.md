@@ -124,7 +124,7 @@ pending-change  │ （无 worktree）        │ 2/5  (40%)  │ ⏸ 暂停
 PLAN_FILE=".sisyphus/plans/<name>.md"
 if [ ! -f "$PLAN_FILE" ]; then
     echo "⏳ Change <name> 已 propose 但尚未 plan"
-    echo "   请先执行: skill_use(\"spec-workflow-plan <name>\")"
+    echo "   请先执行: skill_use(\"guide-ship\")   # 内部选择 <name>"
     exit 0
 fi
 

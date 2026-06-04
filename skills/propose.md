@@ -27,7 +27,7 @@ metadata:
 ```
 本技能：扫描文档/代码 → 读取 roadmap → 合并现有建议 → 分类验证 → 用户选择 → 串行创建 propose → 更新 proposal-suggestions.md
                                                                                                                   ↓
-spec-workflow-plan: COMMIT GATE → 创建 worktree → 生成 Prometheus 计划
+guide-ship.worktree: COMMIT GATE → 创建 worktree → 生成 Prometheus 计划
 ```
 
 **Roadmap 驱动特性**：

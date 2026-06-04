@@ -87,8 +87,8 @@ else
     if [ -z "$WT_INFO" ]; then
         echo "❌ 无已创建的 worktree"
         echo ""
-        echo "请先执行 plan 技能创建 worktree："
-        echo "  skill_use(\"spec-workflow-plan <change-name>\")"
+        echo "请先执行 guide-ship 技能创建 worktree："
+        echo "  skill_use(\"guide-ship\")   # 内部选择 change"
         echo ""
         echo "可用 change 列表："
         ls -d $PROJECT_ROOT/openspec/changes/*/ 2>/dev/null | grep -v archive/ | while read dir; do
@@ -272,7 +272,7 @@ echo "   cd \"$PROJECT_ROOT\""
 echo "   skill_use(\"spec-workflow-status $CHANGE_NAME --archive\")"
 echo ""
 echo "3. 继续处理其他 worktree："
-echo "   skill_use(\"spec-workflow-plan\")"
+echo "   skill_use(\"guide-ship\")   # 内部选择 change"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 

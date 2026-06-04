@@ -1,3 +1,13 @@
+> ⚠️ **Pre-refactor migration note** (added 2026-06-04)
+>
+> This file still contains references to the old monolithic `spec-workflow-guide` / `spec-workflow-plan` / `spec-workflow-deps` workflow.
+> The new entry points are:
+> - `skill_use("guide")` — recommender (scans state, suggests which to use)
+> - `skill_use("guide-spec")` — spec-side state machine (setup → roadmap → propose → deps)
+> - `skill_use("guide-ship")` — ship-side state machine (discover → worktree → plan → execute → archive)
+>
+> Body content is being incrementally updated. If you see `spec-workflow-*` references below, treat them as legacy aliases.
+
 # OpenSpec 工作流技能使用指南
 
 > 基于 `spec-workflow-guide` 推荐器（spec-side 调 `spec-workflow-guide-spec`，ship-side 调 `spec-workflow-guide-ship`），覆盖从提案到归档的完整生命周期。
