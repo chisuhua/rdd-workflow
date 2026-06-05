@@ -7,6 +7,9 @@
   "license": "MIT",
   "alias": ["workflow", "install"],
   "keywords": ["spec", "workflow", "openspec", "change-management", "cli"],
+  "scripts": {
+    "test": "bats tests/"
+  },
   "engines": {
     "opencode": ">=1.0.0",
     "git": ">=2.25.0"

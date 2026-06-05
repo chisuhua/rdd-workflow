@@ -11,3 +11,6 @@
 .zcf/*
 !.zcf/index.md
 !.zcf/.gitkeep
+
+# bats test temp directories (auto-created by bats, not for commit)
+.bats-tmp/
