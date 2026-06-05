@@ -4,7 +4,7 @@
 > The new entry points are:
 > - `skill_use("guide")` — recommender (scans state, suggests which to use)
 > - `skill_use("guide-spec")` — spec-side state machine (setup → roadmap → propose → deps)
-> - `skill_use("guide-ship")` — ship-side state machine (discover → worktree → plan → execute → archive)
+> - `skill_use("guide-ship")` — ship-side state machine (plan → execute → archive → cleanup)
 >
 > Body content is being incrementally updated. If you see `spec-workflow-*` references below, treat them as legacy aliases.
 
@@ -484,7 +484,7 @@ skill_use("guide-ship")
 |-------|------|---------|
 | `guide` | 推荐器入口（扫描状态，建议调 spec 或 ship） | `skill_use("guide")` |
 | `guide-spec` | Spec 端状态机（setup → roadmap → propose → deps） | `skill_use("guide-spec")` |
-| `guide-ship` | Ship 端状态机（discover → worktree → plan → execute → archive） | `skill_use("guide-ship")` |
+| `guide-ship` | Ship 端状态机（plan → execute → archive → cleanup） | `skill_use("guide-ship")` |
 | `propose` | 扫描 ADR/代码生成建议列表 | 被 guide-spec 调用，或单独使用 |
 | `execute` | 在 worktree 内执行任务 | 被 guide-ship 调用，或在 worktree 内单独使用 |
 | `status` | 状态查看/归档 | 被 guide-ship 调用，或单独使用 |

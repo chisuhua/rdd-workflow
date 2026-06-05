@@ -24,7 +24,7 @@ git clone https://github.com/chisuhua/spec-workflow.git ~/.agents/skills/spec-wo
 2. **使用子技能**：
    - `skill_use("guide")` - 推荐器入口(扫描状态,建议调 spec 或 ship)
    - `skill_use("guide-spec")` - Spec 端状态机(setup → roadmap → propose → deps)
-   - `skill_use("guide-ship")` - Ship 端状态机(discover → worktree → plan → execute → archive)
+   - `skill_use("guide-ship")` - Ship 端状态机(plan → execute → archive → cleanup)
    - `skill_use("propose")` - 子技能(被 guide-spec 调用)
    - `skill_use("execute")` - 子技能(被 guide-ship 调用)
    - `skill_use("status")` - 子技能(被 guide-ship 调用或独立使用)
