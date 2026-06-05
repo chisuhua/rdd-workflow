@@ -77,7 +77,15 @@ echo "🔍 环境检查..."
 echo ""
 
 # 1. openspec CLI
-OPENSPEC_PATH=$(command -v openspec 2>/dev/null || echo "/home/ubuntu/.npm-global/bin/openspec")
+OPENSPEC_PATH=""
+for p in $(command -v openspec 2>/dev/null) /home/ubuntu/.npm-global/bin/openspec /usr/local/bin/openspec /opt/homebrew/bin/openspec; do
+  [ -x "$p" ] && OPENSPEC_PATH="$p" && break
+done
+if [ -z "$OPENSPEC_PATH" ]; then
+    echo "❌ openspec CLI 未找到"
+    echo "   请安装: npm install -g openspec-cli"
+    exit 1
+fi
 if [ -x "$OPENSPEC_PATH" ]; then
     OPENSPEC_VER=$("$OPENSPEC_PATH" --version 2>/dev/null || echo "?")
     echo "✅ openspec CLI: $OPENSPEC_VER"
@@ -156,7 +164,15 @@ i. 其他输入
 
 ```bash
 # openspec CLI 检测
-OPENSPEC_PATH=$(command -v openspec 2>/dev/null || echo "/home/ubuntu/.npm-global/bin/openspec")
+OPENSPEC_PATH=""
+for p in $(command -v openspec 2>/dev/null) /home/ubuntu/.npm-global/bin/openspec /usr/local/bin/openspec /opt/homebrew/bin/openspec; do
+  [ -x "$p" ] && OPENSPEC_PATH="$p" && break
+done
+if [ -z "$OPENSPEC_PATH" ]; then
+    echo "❌ openspec CLI 未找到"
+    echo "   请安装: npm install -g openspec-cli"
+    exit 1
+fi
 
 # git 状态
 GIT_STATUS=$(git status --porcelain)
