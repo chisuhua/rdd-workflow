@@ -141,7 +141,14 @@ else
 fi
 
 # 通过 git worktree list 动态查找 worktree 路径（不硬编码 $PROJECT_ROOT/.zcf/<name>-wt）
-WORKTREE_PATH=$(git worktree list | awk '$2=="openspec/<name>" {print $1}')
+# Inline wt_path_for_branch (replaces P0-7 $2 BUG; $2 is commit hash, $3 is "[branch]")
+# Note: `git worktree list` wraps branch in [brackets], so compare to "[openspec/X]"
+wt_path_for_branch_inline() {
+  local branch="${1:-}"
+  [[ -z "$branch" ]] && return 1
+  git worktree list 2>/dev/null | awk -v br="[openspec/$branch]" '$3 == br {print $1; exit}'
+}
+WORKTREE_PATH=$(wt_path_for_branch_inline "<name>")
 HAS_WORKTREE=false
 if [ -n "$WORKTREE_PATH" ] && [ -d "$WORKTREE_PATH" ]; then
     HAS_WORKTREE=true
@@ -278,7 +285,14 @@ fi
 
 ```bash
 # 通过 git worktree list 动态查找（不硬编码路径）
-WORKTREE_PATH=$(git worktree list | awk '$2=="openspec/<name>" {print $1}')
+# Inline wt_path_for_branch (replaces P0-7 $2 BUG; $2 is commit hash, $3 is "[branch]")
+# Note: `git worktree list` wraps branch in [brackets], so compare to "[openspec/X]"
+wt_path_for_branch_inline() {
+  local branch="${1:-}"
+  [[ -z "$branch" ]] && return 1
+  git worktree list 2>/dev/null | awk -v br="[openspec/$branch]" '$3 == br {print $1; exit}'
+}
+WORKTREE_PATH=$(wt_path_for_branch_inline "<name>")
 if [ -n "$WORKTREE_PATH" ] && [ -d "$WORKTREE_PATH" ]; then
     IN_WORKTREE=true
 else
@@ -383,8 +397,8 @@ fi
 **归档后循环检查**（与 guide 的 status_archive 阶段保持一致）：
 
 ```bash
-# 检查是否还有其他 worktree（使用 awk 检查分支名而非路径）
-REMAINING_WT=$(git worktree list | awk '$2 ~ /^openspec\// {print $1}' | grep -c .)
+# 检查是否还有其他 worktree（$2 是 commit hash, $3 是 "[branch]"; regex 需含前导 `[`）
+REMAINING_WT=$(git worktree list 2>/dev/null | awk '$3 ~ /^\[openspec\// {print $1}' | grep -c . || true)
 if [ "$REMAINING_WT" -gt 0 ]; then
     echo ""
     echo "📋 还有 $REMAINING_WT 个 worktree 正在进行"
