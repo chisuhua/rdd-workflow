@@ -119,11 +119,12 @@ fi
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 if [ -f "proposal-suggestions.md" ]; then
     echo "📂 加载已有的 proposal-suggestions.md"
-    # 使用 Python 读取 YAML 列表，移除已创建为 change 的条目后写回
-    # P0-4: 用 subprocess 调用 git rev-parse 探测根目录（不再依赖 PROJECT_ROOT env var）
-    # P0-4: 显式捕获 FileNotFoundError + yaml.YAMLError 避免崩溃
+    # P1-7: 文件格式已规范化为 JSON 列表
+    #       用 skills/_lib/state.sh::read_suggestions 读取
+    #       用源生的 json.load / json.dump 替代 yaml.safe_load
+    #       移除已创建为 change 的条目后用 write_suggestions 写回
     python3 -c "
-import yaml, os, sys, re, subprocess
+import json, os, sys, subprocess
 
 project_root = subprocess.check_output(
     ['git', 'rev-parse', '--show-toplevel'], text=True
@@ -131,52 +132,33 @@ project_root = subprocess.check_output(
 
 try:
     with open('proposal-suggestions.md') as f:
-        # 读取纯 YAML 列表（格式：以 '- name:' 开头行列表）
-        content = f.read()
+        entries = json.load(f)
 
-    # 去掉 markdown 分隔符（---），避免 yaml.safe_load 误判为文档边界
-    content = re.sub(r'^---\$', '', content, flags=re.M)
+    if not isinstance(entries, list):
+        print('⚠️  proposal-suggestions.md 顶层不是 JSON 数组，跳过加载', file=sys.stderr)
+        sys.exit(0)
 
-    # 用行级解析：按 '- name:' 分割成条目块
-    # 每个条目块从 '- name:' 开始到下一个 '- name:' 或文件结束
-    lines = content.split('\n')
-    entries = []
-    current_entry = []
-    for line in lines:
-        if line.strip().startswith('- name:'):
-            if current_entry:
-                entries.append('\n'.join(current_entry))
-            current_entry = [line]
-        elif current_entry:
-            current_entry.append(line)
-    if current_entry:
-        entries.append('\n'.join(current_entry))
-
-# 过滤：移除 name 对应的 change 目录已存在的条目
     kept = []
     removed = []
     for entry in entries:
-        name = None
-        for line in entry.split('\n'):
-            if line.strip().startswith('- name:'):
-                name = line.split(':', 1)[1].strip().strip('\"').strip(\"'\")
-                break
+        if not isinstance(entry, dict):
+            continue
+        name = entry.get('name')
         if name and os.path.isdir(f'{project_root}/openspec/changes/{name}/'):
             removed.append(name)
         else:
             kept.append(entry)
 
-    # 写回过滤后的内容
+    # 写回过滤后的内容（使用 ensure_ascii=False 保留中文）
     with open('proposal-suggestions.md', 'w') as f:
-        f.write('\n'.join(kept))
-        if kept:
-            f.write('\n')
+        json.dump(kept, f, ensure_ascii=False, indent=2)
+        f.write('\n')
 
     if removed:
         print(f'  已从建议列表移除: {\", \".join(removed)}')
     print(f'  剩余 {len(kept)} 个建议')
 
-except (FileNotFoundError, yaml.YAMLError) as e:
+except (FileNotFoundError, json.JSONDecodeError) as e:
     print(f'⚠️  proposal-suggestions.md 解析失败: {e}', file=sys.stderr)
     print('  保留原文件，继续执行扫描阶段')
 " || echo "⚠️ Python 执行失败，跳过加载"
@@ -315,42 +297,22 @@ print(f'category: \"{category}\"')
 
 每条建议包含以下字段。其中 `description` 字段使用 `/opsx:propose` 格式，这是后续传递给 openspec-propose 的完整需求描述：
 
-```yaml
-- name: "add-stream-pipe-ops"            # kebab-case 名称
-  priority: "P0"                          # P0/P1/P2
-  source: "ADR-022 §已采纳 §未实现"        # 来源文档
-  status: "待创建"                         # 状态：待创建 / 进行中 / 已完成
-  phase: "phase-1"                        # 所属阶段（roadmap 驱动）
-  category: "core-impl"                   # 任务分类（roadmap 驱动）
-  description: |                           # 以下为 /opsx:propose 格式的需求描述
-    ## 架构依据
-    - ADR-022 §3.2: Stream 管道操作符设计决策（已采纳，代码未实现）
-    - ADR-019 §4.1: Verilog 代码生成完整性要求（影响 codegen 适配）
+**P1-7 容器格式**：建议以 JSON 数组形式写入 `proposal-suggestions.md`（替换旧的 YAML+Markdown 混合格式）。完整 schema 见 `docs/proposal-suggestions-format.md`。
 
-    ## 范围
-    - **In Scope**:
-      - 实现 Stream 管道操作符 m2sPipe/s2mPipe/halfPipe
-      - 修改文件：include/chlib/stream_operators.h
-      - 配套单元测试
-    - **Out Scope**:
-      - 不修改现有 FIFO/Arbiter/Fork 实现
-      - 不涉及跨时钟域适配
-
-    ## 关键场景
-    - GIVEN 一个 ch_stream<T> 实例, WHEN 调用 .m2sPipe(), THEN 返回带一级流水寄存器的新 Stream
-    - GIVEN 两个 Stream 通过 s2mPipe 连接, WHEN 反压, THEN 寄存器缓存一拍数据
-
-    ## 技术约束
-    - MUST 保持与 SpinalHDL m2sPipe/s2mPipe/halfPipe 语义一致
-    - MUST NOT 引入新的模板特化
-    - SHOULD 覆盖 pipeline 延迟场景测试
-
-    ## 验收标准
-    - 3 个操作符编译通过
-    - 4 个 Catch2 测试覆盖正常/反压/复位场景
-    - 现有 stream 测试全部通过
-  effort: "2-3天"
+```json
+{
+  "name": "add-stream-pipe-ops",            // kebab-case 名称
+  "priority": "P0",                          // P0/P1/P2
+  "source": "ADR-022 §已采纳 §未实现",        // 来源文档
+  "status": "待创建",                         // 状态：待创建 / 进行中 / 已完成
+  "phase": "phase-1",                        // 所属阶段（roadmap 驱动）
+  "category": "core-impl",                   // 任务分类（roadmap 驱动）
+  "description": "## 架构依据\n- ADR-022 §3.2: Stream 管道操作符设计决策（已采纳，代码未实现）\n- ADR-019 §4.1: Verilog 代码生成完整性要求（影响 codegen 适配）\n\n## 范围\n- **In Scope**:\n  - 实现 Stream 管道操作符 m2sPipe/s2mPipe/halfPipe\n  - 修改文件：include/chlib/stream_operators.h\n  - 配套单元测试\n- **Out Scope**:\n  - 不修改现有 FIFO/Arbiter/Fork 实现\n  - 不涉及跨时钟域适配\n\n## 关键场景\n- GIVEN 一个 ch_stream<T> 实例, WHEN 调用 .m2sPipe(), THEN 返回带一级流水寄存器的新 Stream\n- GIVEN 两个 Stream 通过 s2mPipe 连接, WHEN 反压, THEN 寄存器缓存一拍数据\n\n## 技术约束\n- MUST 保持与 SpinalHDL m2sPipe/s2mPipe/halfPipe 语义一致\n- MUST NOT 引入新的模板特化\n- SHOULD 覆盖 pipeline 延迟场景测试\n\n## 验收标准\n- 3 个操作符编译通过\n- 4 个 Catch2 测试覆盖正常/反压/复位场景\n- 现有 stream 测试全部通过",
+  "effort": "2-3天"
+}
 ```
+
+> 上面的 `description` 是一个 JSON 字符串字段（用 `\n` 表示换行）。`propose.md` 和 4 个其他 consumer（`guide-spec.md`、`guide.md`、`status.md`、`deps.md`）都通过 `skills/_lib/state.sh::read_suggestions` / `write_suggestions` 读写。
 
 **优先级归类**：
 
@@ -366,8 +328,9 @@ print(f'category: \"{category}\"')
 
 ```bash
 # 写入 proposal-suggestions.md（覆盖写入）
-# 格式为 YAML 列表，每行清晰可读
+# 格式为 JSON 数组（P1-7 规范）
 # 此文件将随 git 版本控制
+# 实际写入委托给 skills/_lib/state.sh::write_suggestions
 ```
 
 ---
@@ -499,36 +462,43 @@ for each selected propose <name>:
     # ---------------------------------------------------------------
     if [ "$ROADMAP_MODE" = true ]; then
         # 从建议条目读取 phase 和 category
-        # P0-4: 显式 try/except 捕获 FileNotFoundError + yaml.YAMLError
-        #        去掉 markdown 分隔符；空文件/缺失时退化到默认值
+        # P1-7: 文件格式已规范化为 JSON 列表
+        #       用 json.load 替代 yaml.safe_load（避免依赖 PyYAML）
+        #       用 try/except 捕获 FileNotFoundError + json.JSONDecodeError
         CHANGE_PHASE=$(python3 -c "
-import yaml, re, sys
+import json, sys
 try:
     with open('proposal-suggestions.md') as f:
-        content = f.read()
-    content = re.sub(r'^---\$', '', content, flags=re.M)
-    entries = yaml.safe_load(content) or []
+        entries = json.load(f)
+    if not isinstance(entries, list):
+        print('$CURRENT_PHASE')
+        sys.exit(0)
     for entry in entries:
-        if entry.get('name') == '<name>':
+        if isinstance(entry, dict) and entry.get('name') == '<name>':
             print(entry.get('phase', '$CURRENT_PHASE'))
             break
-except (FileNotFoundError, yaml.YAMLError) as e:
+    else:
+        print('$CURRENT_PHASE')
+except (FileNotFoundError, json.JSONDecodeError) as e:
     print(f'⚠️ lookup phase 失败: {e}', file=sys.stderr)
     print('$CURRENT_PHASE')
 " 2>/dev/null)
 
         CHANGE_CATEGORY=$(python3 -c "
-import yaml, re, sys
+import json, sys
 try:
     with open('proposal-suggestions.md') as f:
-        content = f.read()
-    content = re.sub(r'^---\$', '', content, flags=re.M)
-    entries = yaml.safe_load(content) or []
+        entries = json.load(f)
+    if not isinstance(entries, list):
+        print('general')
+        sys.exit(0)
     for entry in entries:
-        if entry.get('name') == '<name>':
+        if isinstance(entry, dict) and entry.get('name') == '<name>':
             print(entry.get('category', 'general'))
             break
-except (FileNotFoundError, yaml.YAMLError) as e:
+    else:
+        print('general')
+except (FileNotFoundError, json.JSONDecodeError) as e:
     print(f'⚠️ lookup category 失败: {e}', file=sys.stderr)
     print('general')
 " 2>/dev/null)
@@ -691,7 +661,23 @@ fi
 ```bash
 # 检查是否还有剩余建议
 if [ -f "proposal-suggestions.md" ]; then
-    REMAINING=$(grep -ciE "status\s*[:=]\s*待创建" "proposal-suggestions.md" 2>/dev/null || echo "0")
+    # P1-7: 文件格式已规范化为 JSON 列表
+    #       用 json.load 解析后筛选 status == "待创建" 的条目
+    #       旧实现的 grep 在 JSON 字符串中会误匹配 description 字段里的"待创建"字面量
+    REMAINING=$(python3 -c "
+import json, sys
+try:
+    with open('proposal-suggestions.md') as f:
+        entries = json.load(f)
+    if not isinstance(entries, list):
+        print(0)
+        sys.exit(0)
+    count = sum(1 for e in entries if isinstance(e, dict) and e.get('status') == '待创建')
+    print(count)
+except (FileNotFoundError, json.JSONDecodeError):
+    print(0)
+" 2>/dev/null)
+    REMAINING=${REMAINING:-0}
     if [ "$REMAINING" -gt 0 ]; then
         echo ""
         echo "📋 proposal-suggestions.md 中还有 $REMAINING 个未创建的 change"

@@ -307,7 +307,30 @@ done)
 if [ -f "proposal-suggestions.md" ]; then
     echo ""
     echo "📂 已有的建议列表 (proposal-suggestions.md)"
-    cat proposal-suggestions.md
+    # P1-7: 文件格式已规范化为 JSON 列表
+    #       用 python 解析后格式化输出（而不是 cat 原始 JSON）
+    #       这样 description 字段的多行内容能正确显示
+    python3 -c "
+import json, sys
+try:
+    with open('proposal-suggestions.md') as f:
+        entries = json.load(f)
+    if not isinstance(entries, list):
+        print('⚠️  proposal-suggestions.md 顶层不是 JSON 数组', file=sys.stderr)
+        sys.exit(0)
+    for i, e in enumerate(entries, 1):
+        if not isinstance(e, dict):
+            continue
+        name = e.get('name', '?')
+        priority = e.get('priority', '?')
+        source = e.get('source', '?')
+        status = e.get('status', '?')
+        effort = e.get('effort', '')
+        effort_str = f' ({effort})' if effort else ''
+        print(f'  {i}. [{priority}] {name} — {source} [{status}]{effort_str}')
+except (FileNotFoundError, json.JSONDecodeError) as e:
+    print(f'⚠️  读取失败: {e}', file=sys.stderr)
+" 2>/dev/null || cat proposal-suggestions.md
 else
     echo ""
     echo "🆕 开始扫描..."

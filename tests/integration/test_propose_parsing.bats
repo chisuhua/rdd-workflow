@@ -3,6 +3,7 @@
 #
 # T9 — propose.md auto-commit + parsing rewrite (P0-3, P0-4)
 # HIGH-RISK: touches the critical propose flow.
+# T18 — P1-7: container format migrated from YAML+Markdown to pure JSON.
 #
 # Tests verify:
 #   - P0-3: dangerous `git add openspec/changes/*/` glob is GONE
@@ -10,8 +11,9 @@
 #   - P0-3: commit uses precise per-name add (for-loop), not awk pipe
 #   - P0-4: parsing no longer depends on PROJECT_ROOT env var
 #   - P0-4: uses `git rev-parse --show-toplevel` subprocess
-#   - P0-4: yaml.safe_load is wrapped in try/except (FileNotFoundError + YAMLError)
-#   - Runtime: PROJECT_ROOT env var unset still allows parsing to succeed
+#   - P0-4 / P1-7: json.load is wrapped in try/except (FileNotFoundError + JSONDecodeError)
+#   - P1-7: yaml.safe_load and `re.sub '^---'` are GONE (format migrated to JSON)
+#   - Runtime: PROJECT_ROOT env var unset still allows parsing to succeed (with JSON input)
 #
 # These are mostly STATIC tests against the markdown source, plus 1 runtime test
 # that exercises the actual Python parsing logic with PROJECT_ROOT unset.
@@ -71,17 +73,32 @@ PROPOSE_MD="$REPO_ROOT/skills/propose.md"
   grep -qE "git.*rev-parse.*--show-toplevel" "$PROPOSE_MD"
 }
 
-@test "propose.md wraps yaml.safe_load in try/except FileNotFoundError + YAMLError (P0-4)" {
-  # Both parse sites (Phase 0 and Step 4d) must use explicit exception handling
+@test "propose.md wraps json.load in try/except FileNotFoundError + JSONDecodeError (P0-4 / P1-7)" {
+  # P1-7: format migrated from YAML to JSON. Both parse sites (Phase 0 and
+  # Step 4d) must use explicit exception handling with the new exception type.
   local count
-  count=$(grep -cE 'except \(FileNotFoundError, yaml\.YAMLError\)' "$PROPOSE_MD")
+  count=$(grep -cE 'except \(FileNotFoundError, json\.JSONDecodeError\)' "$PROPOSE_MD")
   [ "$count" -ge 2 ]
 }
 
-@test "propose.md strips markdown '---' separators before yaml parsing (P0-4)" {
-  # Defensive: --- is a YAML document boundary, must be removed from content first.
-  # Use grep -F (fixed-string) to avoid regex-escaping hell with backslashes.
-  grep -qF "re.sub(r'^---\\$'" "$PROPOSE_MD"
+@test "propose.md uses json.load (P1-7 format migration)" {
+  # P1-7: format migrated to JSON. Both Phase 0 and Step 4d must use json.load.
+  local count
+  count=$(grep -cE 'json\.load\(' "$PROPOSE_MD")
+  [ "$count" -ge 2 ]
+}
+
+@test "propose.md no longer uses yaml.safe_load (P1-7 format migration)" {
+  # P1-7: YAML is gone. Reject any remaining yaml.safe_load call in executable code.
+  local non_comment
+  non_comment=$(grep -vE '^\s*#' "$PROPOSE_MD" | grep -v '^\s*$')
+  ! echo "$non_comment" | grep -qE 'yaml\.safe_load\('
+}
+
+@test "propose.md no longer strips '---' markdown separators (P1-7 format migration)" {
+  # P1-7: '---' stripping was needed for YAML to avoid document-boundary confusion.
+  # With JSON, the separator is irrelevant — the entire file is one JSON document.
+  ! grep -qF "re.sub(r'^---\\$'" "$PROPOSE_MD"
 }
 
 @test "propose.md auto-commit triggers only when array is non-empty (P0-3)" {
@@ -89,11 +106,11 @@ PROPOSE_MD="$REPO_ROOT/skills/propose.md"
   grep -qE 'if \[ \$\{#THIS_SESSION_CREATED\[@\]\} -gt 0 \]' "$PROPOSE_MD"
 }
 
-@test "runtime: PROJECT_ROOT env var unset still lets parsing succeed" {
-  # This is the runtime regression test that proves the fix actually works.
-  # Builds a temp git repo with proposal-suggestions.md + a change directory,
-  # then runs the EXACT Python parsing block from propose.md with PROJECT_ROOT
-  # unset. Expects: the script reports "剩余 0 个建议" without crashing.
+@test "runtime: PROJECT_ROOT env var unset still lets JSON parsing succeed" {
+  # P1-7 / P0-4: build a temp git repo with proposal-suggestions.md in the
+  # NEW JSON format, then run the EXACT Python parsing block from propose.md
+  # Phase 0 with PROJECT_ROOT unset. Expects: the script reports
+  # "剩余 0 个建议" without crashing.
   local test_repo
   test_repo=$(mktemp -d)
   cd "$test_repo" || return 1
@@ -102,16 +119,19 @@ PROPOSE_MD="$REPO_ROOT/skills/propose.md"
   git config user.name "test"
   echo "x" > a && git add a && git commit -q -m init
   mkdir -p openspec/changes
-  cat > proposal-suggestions.md <<'YAML'
-- name: "fix-ns-pollution"
-  priority: "P0"
-  source: "ADR-033"
-  status: "待创建"
-  phase: "phase-1"
-  category: "core-impl"
-  description: |
-    test
-YAML
+  cat > proposal-suggestions.md <<'JSON'
+[
+  {
+    "name": "fix-ns-pollution",
+    "priority": "P0",
+    "source": "ADR-033",
+    "status": "待创建",
+    "phase": "phase-1",
+    "category": "core-impl",
+    "description": "test"
+  }
+]
+JSON
   git add proposal-suggestions.md && git commit -q -m add_suggestions
 
   # Create a matching change directory so the filter will REMOVE the entry
@@ -123,7 +143,7 @@ YAML
   unset PROJECT_ROOT
   local output
   output=$(python3 -c "
-import yaml, os, sys, re, subprocess
+import json, os, sys, subprocess
 
 project_root = subprocess.check_output(
     ['git', 'rev-parse', '--show-toplevel'], text=True
@@ -131,36 +151,27 @@ project_root = subprocess.check_output(
 
 try:
     with open('proposal-suggestions.md') as f:
-        content = f.read()
-    content = re.sub(r'^---\$', '', content, flags=re.M)
-    lines = content.split('\n')
-    entries = []
-    current_entry = []
-    for line in lines:
-        if line.strip().startswith('- name:'):
-            if current_entry:
-                entries.append('\n'.join(current_entry))
-            current_entry = [line]
-        elif current_entry:
-            current_entry.append(line)
-    if current_entry:
-        entries.append('\n'.join(current_entry))
+        entries = json.load(f)
+
+    if not isinstance(entries, list):
+        print('TYPE_ERROR', file=sys.stderr)
+        sys.exit(1)
+
     kept = []
     removed = []
     for entry in entries:
-        name = None
-        for line in entry.split('\n'):
-            if line.strip().startswith('- name:'):
-                name = line.split(':', 1)[1].strip().strip('\"').strip(\"'\")
-                break
+        if not isinstance(entry, dict):
+            continue
+        name = entry.get('name')
         if name and os.path.isdir(f'{project_root}/openspec/changes/{name}/'):
             removed.append(name)
         else:
             kept.append(entry)
+
     if removed:
         print(f'  已从建议列表移除: {\", \".join(removed)}')
     print(f'  剩余 {len(kept)} 个建议')
-except (FileNotFoundError, yaml.YAMLError) as e:
+except (FileNotFoundError, json.JSONDecodeError) as e:
     print(f'PARSE_ERROR: {e}', file=sys.stderr)
     sys.exit(1)
 " 2>&1)

@@ -281,102 +281,27 @@ if [ "$COMPLETE" -ne "$TOTAL" ]; then
 fi
 ```
 
-### Step 1：确认 worktree 位置
+### Step 1-5：执行归档（提取到 `_lib/archive.sh`，P1-14 去重）
 
 ```bash
-# 通过 git worktree list 动态查找（不硬编码路径）
-# Inline wt_path_for_branch (replaces P0-7 $2 BUG; $2 is commit hash, $3 is "[branch]")
-# Note: `git worktree list` wraps branch in [brackets], so compare to "[openspec/X]"
-wt_path_for_branch_inline() {
-  local branch="${1:-}"
-  [[ -z "$branch" ]] && return 1
-  git worktree list 2>/dev/null | awk -v br="[openspec/$branch]" '$3 == br {print $1; exit}'
-}
-WORKTREE_PATH=$(wt_path_for_branch_inline "<name>")
-if [ -n "$WORKTREE_PATH" ] && [ -d "$WORKTREE_PATH" ]; then
-    IN_WORKTREE=true
-else
-    IN_WORKTREE=false
+# P1-14: archive 流程（worktree 查找 → 脏检查 → merge → archive → cleanup）
+# 提取到 skills/_lib/archive.sh,与 guide-ship.md Phase 3 共享同一份实现。
+# 源文件: skills/_lib/archive.sh::archive_change
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+if [ -f "$SCRIPT_DIR/_lib/archive.sh" ]; then
+  source "$SCRIPT_DIR/_lib/archive.sh"
 fi
+
+archive_change "<name>"
 ```
 
-### Step 2：检查未提交更改
-
-```bash
-if [ "$IN_WORKTREE" = true ]; then
-    # 使用 subshell 不改变当前目录
-    DIRTY=$(cd "$WORKTREE_PATH" && git status --porcelain | grep -c . || true)
-    if [ "$DIRTY" -gt 0 ]; then
-        echo "⚠️ Worktree $WORKTREE_PATH 有 $DIRTY 个未提交文件"
-        echo "  1) 提交并继续"
-        echo "  2) 暂存更改"
-        echo "  请先处理未提交的更改"
-        exit 1
-    fi
-fi
-```
-
-### Step 3：merge worktree 分支到默认分支
-
-```bash
-if [ "$IN_WORKTREE" = true ]; then
-    MAIN_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-    if [ -z "$MAIN_ROOT" ]; then
-        echo "❌ 无法确定项目根目录（不在 git 仓库内？）"
-        exit 1
-    fi
-    cd "$MAIN_ROOT"
-    
-    # 动态检测默认分支（适用于 main/master/develop 等）
-    DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@.*/@@' || git rev-parse --abbrev-ref HEAD)
-    git checkout "$DEFAULT_BRANCH" 2>/dev/null || {
-        echo "❌ 无法切换到默认分支 $DEFAULT_BRANCH"
-        exit 1
-    }
-    
-    # 检查 divergence
-    MERGE_BASE=$(git merge-base "openspec/<name>" "$DEFAULT_BRANCH" 2>/dev/null)
-    MAIN_TIP=$(git rev-parse "$DEFAULT_BRANCH" 2>/dev/null)
-    
-    if [ "$MERGE_BASE" = "$MAIN_TIP" ]; then
-        # 无 divergence，fast-forward merge
-        git merge --ff-only "openspec/<name>"
-        echo "✅ Fast-forward merge 到 $DEFAULT_BRANCH 完成"
-    else
-        # 有 divergence，需要 --no-ff merge
-        echo "⚠️ Worktree 分支已落后于 $DEFAULT_BRANCH，创建 merge commit"
-        git merge --no-ff "openspec/<name>" -m "merge: <name> change"
-    fi
-fi
-```
-
-### Step 4：openspec archive
-
-```bash
-openspec archive <name> --yes
-```
-
-确认归档成功：
-
-```bash
-# 验证 change 已移入 archive
-ls $PROJECT_ROOT/openspec/changes/archive/ | grep <name>
-echo "✅ Change <name> 已归档"
-```
-
-### Step 5：清理 worktree + 分支
-
-```bash
-if [ "$IN_WORKTREE" = true ] && [ -n "$WORKTREE_PATH" ] && [ "$WORKTREE_PATH" != "/" ]; then
-    # 使用 Step 1 中动态获取的 WORKTREE_PATH，而非硬编码路径
-    git worktree remove "$WORKTREE_PATH"
-    echo "✅ Worktree 已删除: $WORKTREE_PATH"
-    
-    # 删除分支
-    git branch -d "openspec/<name>"
-    echo "✅ Branch 已删除: openspec/<name>"
-fi
-```
+> **重构说明（P1-14）**：
+> - 旧的 Step 1-5（worktree 定位、脏检查、merge、archive、cleanup）已合并为单次 `archive_change` 调用。
+> - 共享 helper 包含 3 个原子函数：`check_worktree_commits`（T20 pre-merge check）、
+>   `verify_merge_result`（post-merge 校验）、`archive_change`（端到端编排）。
+> - 当 `archive_change` 内部已经走完 dirty-check + pre-merge check + merge + verify +
+>   `openspec archive` + worktree/branch cleanup，调用方不再需要重复这些步骤。
+> - 详细语义见 `skills/_lib/archive.sh` 顶部注释。
 
 ### Step 6：输出归档报告 + 循环检查
 
@@ -407,8 +332,23 @@ if [ "$REMAINING_WT" -gt 0 ]; then
     echo "2. 返回 guide: skill_use(\"guide\")"
 else
     # 检查 proposal-suggestions.md
+    # P1-7: 文件格式已规范化为 JSON 列表
+    #       用 json.load 解析后统计 status == "待创建" 的条目数
     if [ -f "proposal-suggestions.md" ]; then
-        REMAINING=$(grep -ciE "status\s*[:=]\s*待创建" "proposal-suggestions.md" 2>/dev/null || echo "0")
+        REMAINING=$(python3 -c "
+import json, sys
+try:
+    with open('proposal-suggestions.md') as f:
+        entries = json.load(f)
+    if not isinstance(entries, list):
+        print(0)
+        sys.exit(0)
+    count = sum(1 for e in entries if isinstance(e, dict) and e.get('status') == '待创建')
+    print(count)
+except (FileNotFoundError, json.JSONDecodeError):
+    print(0)
+" 2>/dev/null)
+        REMAINING=${REMAINING:-0}
         if [ "$REMAINING" -gt 0 ]; then
             echo ""
             echo "📋 proposal-suggestions.md 中还有 $REMAINING 个未创建的 change"

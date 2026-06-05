@@ -72,7 +72,23 @@ elif [ -z "$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v arc
     RECOMMEND="guide-spec"; REASON="无 change → 进入 propose 阶段"
 else
     # 6. 读取 proposal-suggestions.md 判断
-    if grep -q 'status: 待创建' proposal-suggestions.md 2>/dev/null; then
+    # P1-7: 文件格式已规范化为 JSON 列表
+    #       用 json.load 解析后判断是否有 status == "待创建" 的条目
+    #       旧实现用 grep -q 'status: 待创建'，但 description 字段可能也含"待创建"字面量
+    HAS_PENDING=$(python3 -c "
+import json, sys
+try:
+    with open('proposal-suggestions.md') as f:
+        entries = json.load(f)
+    if not isinstance(entries, list):
+        print('no')
+        sys.exit(0)
+    pending = any(isinstance(e, dict) and e.get('status') == '待创建' for e in entries)
+    print('yes' if pending else 'no')
+except (FileNotFoundError, json.JSONDecodeError):
+    print('no')
+" 2>/dev/null)
+    if [ "$HAS_PENDING" = "yes" ]; then
       RECOMMEND="guide-spec"
       REASON="有 change 待创建 → 继续 propose"
     else
