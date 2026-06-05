@@ -13,36 +13,42 @@ author: sisyphus
 ## 前置条件检查
 
 ```bash
-# 检查 openspec CLI 是否已安装
-if command -v openspec >/dev/null 2>&1; then
-    OPENSPEC_VERSION=$(openspec --version 2>/dev/null || echo "unknown")
-    echo "✅ openspec CLI 已安装: v$OPENSPEC_VERSION"
+# 检查 openspec CLI 是否已安装（非交互式，AI 环境友好）
+# 设置 SKIP_OPENSPEC_PROMPT=yes 可跳过此检查（已知风险）
+if [ "${SKIP_OPENSPEC_PROMPT:-no}" = "yes" ]; then
+  echo "⚠️  跳过 openspec 检查（SKIP_OPENSPEC_PROMPT=yes）"
+elif command -v openspec >/dev/null 2>&1; then
+  OPENSPEC_VERSION=$(openspec --version 2>/dev/null || echo "unknown")
+  echo "✅ openspec CLI 已安装: v$OPENSPEC_VERSION"
 elif command -v npx >/dev/null 2>&1 && npx openspec --version >/dev/null 2>&1; then
-    OPENSPEC_VERSION=$(npx openspec --version 2>/dev/null || echo "unknown")
-    echo "✅ openspec CLI 已安装 (via npx): v$OPENSPEC_VERSION"
+  OPENSPEC_VERSION=$(npx openspec --version 2>/dev/null || echo "unknown")
+  echo "✅ openspec CLI 已安装 (via npx): v$OPENSPEC_VERSION"
 else
-    echo ""
-    echo "❌ openspec CLI 未安装"
-    echo ""
-    echo "请选择安装方式："
-    echo ""
-    echo "  方式 1 - npm 全局安装（推荐）："
-    echo "    npm install -g openspec-cli"
-    echo ""
-    echo "  方式 2 - npx 临时运行："
-    echo "    npx openspec <command>"
-    echo ""
-    echo "  方式 3 - npm 本地安装："
-    echo "    npm install openspec-cli"
-    echo ""
-    printf '%s' "按回车键退出，或输入 'y' 继续安装（不推荐）: "
-read -r confirm
-    if [ "$confirm" != "y" ]; then
-        echo "已退出。请先安装 openspec CLI。"
-        exit 0
-    fi
-    echo "⚠️  继续安装但 openspec 可能不可用..."
+  echo ""
+  echo "❌ openspec CLI 未安装"
+  echo ""
+  echo "请选择安装方式："
+  echo ""
+  echo "  方式 1 - npm 全局安装（推荐）："
+  echo "    npm install -g openspec-cli"
+  echo ""
+  echo "  方式 2 - npx 临时运行："
+  echo "    npx openspec <command>"
+  echo ""
+  echo "  方式 3 - 跳过此检查（已知风险）："
+  echo "    export SKIP_OPENSPEC_PROMPT=yes 后重试"
+  echo ""
+  exit 1
 fi
+
+# 检查其他常用依赖（仅警告，不阻塞安装）
+for cmd in python3 jq git cmake; do
+  if command -v "$cmd" >/dev/null 2>&1; then
+    echo "✅ $cmd: $(command -v $cmd)"
+  else
+    echo "⚠️  缺失依赖: $cmd （某些功能将不可用）"
+  fi
+done
 ```
 
 ## 安装步骤

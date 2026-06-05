@@ -6,7 +6,12 @@
 set -euo pipefail
 
 # 配置
+# PACKAGE_DIR 推断顺序（与 skills/INSTALL.md 保持一致）：
+#   1) 显式环境变量 PACKAGE_DIR
+#   2) 标准全局安装路径 ~/.agents/skills/spec-workflow
+#   3) 脚本自身位置（realpath 向上两级）— 兼容本地/便携式部署
 PACKAGE_DIR="${PACKAGE_DIR:-$HOME/.agents/skills/spec-workflow}"
+PACKAGE_DIR="${PACKAGE_DIR:-$(dirname "$(dirname "$(realpath "$0" 2>/dev/null)")")}"
 TARGET_DIR="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
 echo "📦 安装 Spec Workflow 技能"
