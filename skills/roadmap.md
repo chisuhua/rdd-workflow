@@ -39,6 +39,13 @@ guide → roadmap（本技能）→ propose → deps → plan → execute → st
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
 STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json"
+
+# 加载 state.sh 辅助函数（safe_python_json, safe_python_yaml）
+# P2-3: 所有 json.load(open(...)) 一行式调用改为 safe_python_json
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+if [ -f "$SCRIPT_DIR/_lib/state.sh" ]; then
+  source "$SCRIPT_DIR/_lib/state.sh"
+fi
 ```
 
 ---
@@ -652,7 +659,9 @@ print('✅ roadmap.md 已更新')
 ## 命令：gate-report — 生成阶段门控报告
 
 ```bash
-PHASE=${1:-$(python3 -c "import json; print(json.load(open('$STATE_FILE')).get('current_phase', 'unknown'))")}
+# P2-3: 用 safe_python_json 替代 json.load(open(...)) 一行式
+# safe_python_json 内置 try/except,文件缺失/JSON 损坏都返回 "unknown"
+PHASE=${1:-$(safe_python_json "$STATE_FILE" "current_phase")}
 
 REPORT_FILE="$PROJECT_ROOT/.zcf/.phase-gate-report.md"
 
@@ -717,11 +726,9 @@ print(report)
 
 ```bash
 get_current_phase() {
-    if [ -f "$STATE_FILE" ]; then
-        python3 -c "import json; print(json.load(open('$STATE_FILE')).get('current_phase', 'unknown'))"
-    else
-        echo "unknown"
-    fi
+    # P2-3: 用 safe_python_json 替代内联 python — 缺失/损坏 JSON 不再崩溃
+    # safe_python_json 已检查文件存在性,无需 if [ -f ... ] 外层判断
+    safe_python_json "$STATE_FILE" "current_phase"
 }
 ```
 

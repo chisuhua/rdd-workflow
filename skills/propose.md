@@ -49,6 +49,13 @@ PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
 STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json"
 
+# 加载 state.sh 辅助函数（safe_python_json, safe_python_yaml）
+# P2-3: state.json 读取改为防御式 (read+write 路径使用 safe_python_json 预检)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+if [ -f "$SCRIPT_DIR/_lib/state.sh" ]; then
+  source "$SCRIPT_DIR/_lib/state.sh"
+fi
+
 ROADMAP_MODE=false
 CURRENT_PHASE="default"
 VALID_CATEGORIES=""
@@ -532,21 +539,27 @@ EOF
         echo "  已创建: roadmap-meta.yaml (phase: $CHANGE_PHASE, category: $CHANGE_CATEGORY)"
         
         # 更新 .roadmap-state.json
-        if [ -f "$STATE_FILE" ]; then
+        # P2-3: 用 safe_python_json 预检文件可解析性 + 内部 try/except 双保险
+        # 写回路径需要完整对象,不能直接用 safe_python_json 替代读路径
+        if [ -f "$STATE_FILE" ] && safe_python_json "$STATE_FILE" "current_phase" >/dev/null 2>&1; then
             python3 -c "
-import json
-with open('$STATE_FILE') as f:
-    state = json.load(f)
+import json, sys
+try:
+    with open('$STATE_FILE') as f:
+        state = json.load(f)
 
-if '$CHANGE_PHASE' in state['phases'] and '$CHANGE_CATEGORY' in state['phases']['$CHANGE_PHASE']['categories']:
-    cat_data = state['phases']['$CHANGE_PHASE']['categories']['$CHANGE_CATEGORY']
-    if '<name>' not in cat_data['changes']:
-        cat_data['changes'].append('<name>')
-        cat_data['total_changes'] = len(cat_data['changes'])
-    
-    with open('$STATE_FILE', 'w') as f:
-        json.dump(state, f, indent=2)
-    print('  已更新: .roadmap-state.json')
+    if '$CHANGE_PHASE' in state['phases'] and '$CHANGE_CATEGORY' in state['phases']['$CHANGE_PHASE']['categories']:
+        cat_data = state['phases']['$CHANGE_PHASE']['categories']['$CHANGE_CATEGORY']
+        if '<name>' not in cat_data['changes']:
+            cat_data['changes'].append('<name>')
+            cat_data['total_changes'] = len(cat_data['changes'])
+
+        with open('$STATE_FILE', 'w') as f:
+            json.dump(state, f, indent=2)
+        print('  已更新: .roadmap-state.json')
+except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+    print(f'⚠️  更新 .roadmap-state.json 失败: {e}', file=sys.stderr)
+    sys.exit(0)  # graceful exit, 不中断 propose 流程
 "
         fi
     fi
