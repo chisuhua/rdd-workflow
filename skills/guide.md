@@ -47,7 +47,14 @@ done
 
 if [ -n "$WORKTREE_IN_PROGRESS" ]; then
     RECOMMEND="guide-ship"; REASON="worktree 存在,任务未完成 → 继续执行"
-elif git worktree list 2>/dev/null | grep -q "openspec/"; then
+# P1-3: phase gate report takes priority — must review before proceeding
+# P1-3: detached worktrees (other sessions) may be running, surface them
+elif [ -f "$PROJECT_ROOT/.zcf/.phase-gate-report.md" ]; then
+    RECOMMEND="status --roadmap"; REASON="阶段门控报告待 review"
+elif DETACHED=$(git worktree list 2>/dev/null | awk '$3 ~ /^openspec\//' | wc -l)
+     [ "$DETACHED" -gt 0 ]; then
+    RECOMMEND="guide-ship"; REASON="$DETACHED 个 worktree 在跑（可能在分离终端）"
+elif git worktree list 2>/dev/null | awk '$3 ~ /^openspec\//' | grep -q .; then
     RECOMMEND="guide-ship"; REASON="worktree 存在,任务已完成 → 进入 archive"
 # git show HEAD:<path> 要求相对于 repo root 的相对路径。
 # 所以先 cd 进 PROJECT_ROOT,再用相对 globs 枚举 changes。
