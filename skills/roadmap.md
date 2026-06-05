@@ -65,12 +65,23 @@ fi
 ```bash
 echo "选择路线图模板:"
 echo "1. C++ 库项目（基础 → 核心 → 高级）"
-echo "2. Web 应用（MVP → 功能 → 优化）"
+echo "2. Web 应用（MVP → 功能 → 优化）（即将推出）"
 echo "3. 空白模板（自定义）"
 echo "4. 基于现有 ADR 生成"
 ```
 
 ### 步骤 3：生成路线图文件
+
+**模板分发**（按 `TEMPLATE` 变量选择）：
+
+```bash
+# 1 = C++ (上面的 heredoc)
+# 2 = Web (即将推出,被忽略)
+# 3 = 空白 (基于 ROADMAP_PHASE_COUNT)
+# 4 = 基于现有 ADR
+# 默认 = 1 (C++)
+TEMPLATE="${TEMPLATE:-1}"
+```
 
 **模板 1：C++ 库项目**
 
@@ -129,6 +140,92 @@ cat > "$ROADMAP_FILE" << 'EOF'
 | advanced | 高级功能 | 高级业务功能 | P0 |
 | optimization | 系统优化 | 整体优化 | P1 |
 EOF
+```
+
+**模板 3：空白模板（自定义）**
+
+> 使用 `ROADMAP_PHASE_COUNT` 环境变量指定阶段数量(默认 1,AI 环境不会因 stdin 阻塞)。生成一个最小骨架,用户可手动编辑添加更多 phase。
+
+```bash
+# Template 3 (Blank): Interactive Q&A via env var (no stdin blocking)
+if [ "$TEMPLATE" = "3" ]; then
+  echo "📝 创建空白路线图(交互式)"
+  PHASE_COUNT="${ROADMAP_PHASE_COUNT:-3}"
+
+  cat > "$ROADMAP_FILE" << EOF
+# 项目路线图
+
+## 元信息
+- **版本**: 1
+- **创建时间**: $(date -Iseconds)
+- **最后更新**: $(date -Iseconds)
+- **当前阶段**: phase-1
+
+## 阶段定义
+
+### Phase 1: 阶段 1 (phase-1)
+**目标**: 用户自定义
+**状态**: 🔄 进行中
+**完成条件**:
+  - [ ] 所有分类的 change 完成
+
+#### 任务分类
+| 分类ID | 名称 | 描述 | 优先级 |
+|--------|------|------|--------|
+| general | 通用 | 用户自定义分类 | P0 |
+EOF
+  echo "✅ 空白路线图已创建(包含 1 个示例 phase,可手动编辑添加更多)"
+  echo "   ROADMAP_PHASE_COUNT=$PHASE_COUNT(可手动编辑 $ROADMAP_FILE 添加更多 phase)"
+fi
+```
+
+**模板 4：基于现有 ADR 生成**
+
+> 扫描 `docs/adr/ADR-*.md` 文件,统计数量并按状态分组生成路线图。
+
+```bash
+# Template 4 (ADR-based): Scan docs/adr/
+if [ "$TEMPLATE" = "4" ]; then
+  echo "📋 从 docs/adr/ 生成路线图"
+  if [ ! -d "docs/adr" ]; then
+    echo "❌ docs/adr 目录不存在"
+    exit 1
+  fi
+
+  ADR_COUNT=$(ls docs/adr/ADR-*.md 2>/dev/null | wc -l)
+  if [ "$ADR_COUNT" -eq 0 ]; then
+    echo "❌ docs/adr/ 中未发现 ADR 文件"
+    exit 1
+  fi
+
+  echo "📊 扫描到 $ADR_COUNT 个 ADR,生成阶段..."
+
+  # Group ADRs by status (extracted from "**状态**:" line)
+  # For simplicity, all "已采纳" ADRs go to phase-1, others to phase-2
+  cat > "$ROADMAP_FILE" << EOF
+# 项目路线图
+
+## 元信息
+- **版本**: 1
+- **创建时间**: $(date -Iseconds)
+- **最后更新**: $(date -Iseconds)
+- **当前阶段**: phase-1
+
+## 阶段定义
+
+### Phase 1: 已采纳 ADR (phase-1)
+**目标**: 实现已采纳的 ADR
+**状态**: 🔄 进行中
+**来源**: $ADR_COUNT 个 ADR 扫描
+
+#### 任务分类
+| 分类ID | 名称 | 描述 | 优先级 |
+|--------|------|------|--------|
+| adr-impl | ADR 实现 | 来自 docs/adr/ | P0 |
+
+EOF
+  echo "✅ 从 $ADR_COUNT 个 ADR 生成路线图"
+fi
 ```
 
 ### 步骤 4：初始化状态文件
