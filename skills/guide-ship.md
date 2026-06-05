@@ -418,19 +418,24 @@ i. 其他输入
 CHANGE_NAME="fix-ns-pollution"
 WT_PATH="$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
 
-# 加载 worktree 辅助函数 (P1-13 引入 find_default_branch)
+# 加载 worktree + archive 辅助函数
+# worktree.sh: P1-13 引入 find_default_branch
+# archive.sh:  P1-14 共享 archive_change（含 pre-merge / post-merge 校验）
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
 if [ -f "$SCRIPT_DIR/_lib/worktree.sh" ]; then
   source "$SCRIPT_DIR/_lib/worktree.sh"
 fi
+if [ -f "$SCRIPT_DIR/_lib/archive.sh" ]; then
+  source "$SCRIPT_DIR/_lib/archive.sh"
+fi
 
 # ============================================================
-# MERGE VERIFICATION GATE (P0 FIX)
-# 在 merge 前验证 worktree 分支是否包含新提交
+# MERGE VERIFICATION GATE (P0 FIX, 仅 guide-ship 保留)
+# 检查 worktree 是否关联到正确分支（防止 detached HEAD）。
+# status.md 不做此检查,故保留在调用方而非 archive_change 内部。
 # ============================================================
 echo "🔍 验证 worktree 分支状态..."
 
-# 检查 worktree 是否关联到正确分支（防止 detached HEAD）
 WT_BRANCH=$(git worktree list --porcelain | awk -v path="$WT_PATH" '
     $1 == "worktree" && $2 == path { found=1; next }
     found && $1 == "branch" { print $2; exit }
@@ -445,81 +450,15 @@ if [ "$WT_BRANCH" = "DETACHED" ]; then
 fi
 
 # ============================================================
-# PRE-MERGE COMMIT CHECK (P1-13)
-# 在 merge 前验证 worktree 分支是否包含新提交，
-# 避免空 merge（execute 未运行或无代码变更时直接报错）
+# 1. merge + archive + cleanup（P1-14 提取到 _lib/archive.sh）
+#    archive_change 内部完成: pre-merge commit check → checkout default
+#    branch → --ff-only/--no-ff merge → post-merge verify →
+#    openspec archive → worktree/branch cleanup。
 # ============================================================
-WORKTREE_TIP=$(git rev-parse "openspec/$CHANGE_NAME")
-DEFAULT_BRANCH=$(find_default_branch)
-WORKTREE_NEW_COMMITS=$(git rev-list --count "$DEFAULT_BRANCH..openspec/$CHANGE_NAME" 2>/dev/null || echo 0)
-if [ "$WORKTREE_NEW_COMMITS" -eq 0 ]; then
-  echo "❌ worktree 分支无新提交,无需 merge"
-  echo "   可能 execute 未运行或无代码变更"
-  exit 1
-fi
+archive_change "$CHANGE_NAME"
 
-# 获取 merge 前 main 的最新 commit
-BEFORE_MERGE=$(git rev-parse HEAD)
-
-# 1. merge worktree → main
-cd "$WT_PATH" || exit 1
-git checkout main || { echo "❌ 切换 main 分支失败"; exit 1; }
-
-DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@.*/@@' || git rev-parse --abbrev-ref HEAD)
-MERGE_BASE=$(git merge-base "openspec/$CHANGE_NAME" "$DEFAULT_BRANCH" 2>/dev/null)
-MAIN_TIP=$(git rev-parse "$DEFAULT_BRANCH" 2>/dev/null)
-if [ "$MERGE_BASE" = "$MAIN_TIP" ]; then
-    git merge --ff-only "openspec/$CHANGE_NAME" || { echo "❌ merge 失败"; exit 1; }
-else
-    echo "⚠️ Worktree 分支已落后于 $DEFAULT_BRANCH，创建 merge commit"
-    git merge --no-ff "openspec/$CHANGE_NAME" -m "merge: $CHANGE_NAME change" || { echo "❌ merge 失败"; exit 1; }
-fi
-
-cd "$PROJECT_ROOT" || exit 1
-
-# ============================================================
-# POST-MERGE VERIFICATION GATE (P0 FIX)
-# 验证 merge 是否真正产生了变更
-# ============================================================
-AFTER_MERGE=$(git rev-parse HEAD)
-
-if [ "$BEFORE_MERGE" = "$AFTER_MERGE" ]; then
-    # 进一步检查：分支是否包含 main 没有的提交
-    if git merge-base --is-ancestor "openspec/$CHANGE_NAME" HEAD; then
-        echo "⚠️  merge 完成但无新 commit（change 分支已是 HEAD 的祖先）"
-    else
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "❌ Merge 验证失败！"
-        echo ""
-        echo "  可能原因："
-        echo "  1. worktree 分支没有新提交"
-        echo "  2. 新提交没有在预期文件中"
-        echo ""
-        echo "  请检查："
-        echo "  - worktree 分支历史："
-        echo "    git log openspec/$CHANGE_NAME --oneline -5"
-        echo "  - worktree 新文件是否在分支上："
-        echo "    git ls-tree --name-only openspec/$CHANGE_NAME | grep -E 'topology|parser'"
-        echo ""
-        echo "  诊断："
-        echo "    git log openspec/$CHANGE_NAME --stat --name-only | head -30"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        exit 1
-    fi
-fi
-
-# 2. archive
-openspec archive "$CHANGE_NAME" --yes
-
-# 3. cleanup
-git worktree remove "$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
-if git branch -d "openspec/$CHANGE_NAME" 2>/dev/null; then
-    echo "✅ Branch 已删除: openspec/$CHANGE_NAME"
-else
-    echo "⚠️  Branch 有未合并的提交，强制删除"
-    git branch -D "openspec/$CHANGE_NAME"
-fi
-
+# archive_change 用 subshell 隔离，不会改变当前工作目录。
+# 显式 cd 回主仓库,保持后续步骤（loop check 等）路径正确。
 cd "$PROJECT_ROOT" || exit 1
 
 echo "✅ $CHANGE_NAME 已归档"

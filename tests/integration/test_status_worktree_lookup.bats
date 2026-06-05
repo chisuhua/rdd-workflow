@@ -23,16 +23,19 @@ load ../test_helper
   ! grep -nE '\$2 ~ /openspec\\//' "$REPO_ROOT/skills/status.md"
 }
 
-@test "status.md inline helper exists in both required WORKTREE_PATH sites" {
+@test "status.md inline helper exists at Mode B (status query) site" {
   [ -f "$REPO_ROOT/skills/status.md" ]
-  # The fix inlines a wt_path_for_branch helper. It must appear at the two
-  # formerly-buggy WORKTREE_PATH sites (not just once).
+  # P1-14 (T21) refactored Mode C archive flow to use the centralized
+  # _lib/archive.sh::archive_change helper, so the inline helper is no
+  # longer needed in Mode C. It must still exist for the Mode B status
+  # query (line ~146) where the caller needs the raw worktree path
+  # before running the Mode B detection logic.
   local helper_defs
   helper_defs=$(grep -cE '^wt_path_for_branch_inline\(\) \{$' "$REPO_ROOT/skills/status.md")
-  [ "$helper_defs" -ge 2 ]
+  [ "$helper_defs" -ge 1 ]
   local helper_calls
   helper_calls=$(grep -cE 'WORKTREE_PATH=\$\(wt_path_for_branch_inline' "$REPO_ROOT/skills/status.md")
-  [ "$helper_calls" -ge 2 ]
+  [ "$helper_calls" -ge 1 ]
 }
 
 @test "status.md inline helper compares to bracketed branch column" {
