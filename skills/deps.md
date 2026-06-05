@@ -127,6 +127,32 @@ IFACE_USE=$(grep -E '^[ \t]*(使用|调用|依赖)：' "$PROJECT_ROOT/openspec/c
   interfaces_use: ["MemoryPool::allocate"]
 ```
 
+#### 1e. 读取 `roadmap-meta.yaml`（P1-9：阶段预检数据源）
+
+> **为什么需要这一步**：`propose` 阶段会为每个新 change 写入
+> `openspec/changes/<name>/roadmap-meta.yaml`，记录该 change 的
+> `phase`（所属阶段）和 `category`（类型）。`deps` 必须读取它，
+> 以便 Step 5 输出"阶段预检"表，提示用户该 change 是否在当前阶段内。
+> 对于尚未生成 `roadmap-meta.yaml` 的旧 change，使用"compat 模式"
+> 优雅降级（输出 `⚠️ 无 roadmap-meta`），不破坏现有流程。
+
+```bash
+# 1e. Read roadmap-meta.yaml for each candidate (if exists)
+for name in "${CANDIDATES[@]}"; do
+  meta_file="$PROJECT_ROOT/openspec/changes/$name/roadmap-meta.yaml"
+  if [ -f "$meta_file" ]; then
+    PHASE=$(grep -E "^\s*phase:" "$meta_file" | awk '{print $2}' | tr -d '"' | head -1)
+    CATEGORY=$(grep -E "^\s*category:" "$meta_file" | awk '{print $2}' | tr -d '"' | head -1)
+    # 保存为间接变量（兼容 bash 3.x / POSIX sh）
+    eval "PHASE_$name=\"\$PHASE\""
+    eval "CATEGORY_$name=\"\$CATEGORY\""
+    echo "  $name → phase=$PHASE, category=$CATEGORY"
+  else
+    echo "  $name → (no roadmap-meta, compat mode)"
+  fi
+done
+```
+
 ---
 
 ### Step 2：三轴依赖检测
@@ -416,6 +442,38 @@ done
 cat >> "$DEPS_OUTPUT" << EOF
 \`\`\`
 
+EOF
+
+# === P1-9: 阶段预检 ===
+# 基于每个 change 的 roadmap-meta.yaml 输出"该 change 是否在当前阶段内"的提示。
+# 缺失 roadmap-meta.yaml 的 change 走 compat 模式，标注 ⚠️，不破坏现有流程。
+cat >> "$DEPS_OUTPUT" << EOF
+## 阶段预检
+
+基于每 change 的 \`roadmap-meta.yaml\`：
+
+| Change | Phase | Category | 状态 |
+|--------|-------|----------|------|
+EOF
+
+for name in "${CANDIDATES[@]}"; do
+  meta_file="$PROJECT_ROOT/openspec/changes/$name/roadmap-meta.yaml"
+  if [ -f "$meta_file" ]; then
+    PHASE=$(grep -E "^\s*phase:" "$meta_file" | awk '{print $2}' | tr -d '"' | head -1)
+    CATEGORY=$(grep -E "^\s*category:" "$meta_file" | awk '{print $2}' | tr -d '"' | head -1)
+    # 阶段内判定: 当前 roadmap 阶段由 ROADMAP_CURRENT_PHASE 注入,未设置时一律视为"在阶段内"
+    if [ -n "${ROADMAP_CURRENT_PHASE:-}" ] && [ -n "$PHASE" ] && [ "$PHASE" != "$ROADMAP_CURRENT_PHASE" ]; then
+      echo "| $name | $PHASE | $CATEGORY | ⚠️ 不在当前阶段 ($ROADMAP_CURRENT_PHASE) |" >> "$DEPS_OUTPUT"
+    else
+      echo "| $name | $PHASE | $CATEGORY | ✅ 在阶段内 |" >> "$DEPS_OUTPUT"
+    fi
+  else
+    echo "| $name | (compat) | (compat) | ⚠️ 无 roadmap-meta |" >> "$DEPS_OUTPUT"
+  fi
+done
+
+cat >> "$DEPS_OUTPUT" << EOF
+
 ## Change 状态表
 
 | Change | 状态 | 推荐 |
@@ -546,11 +604,15 @@ flowchart LR
 输出文件包含以下数据：
 
 1. **依赖图**（5a）：Mermaid flowchart，用于可视化展示 change 间关系
-2. **Change 状态表**（5b）：用于在用户选择时标记每个 change 的状态（ready/prerequisite/blocked_by）
+2. **阶段预检**（P1-9 新增）：基于 `roadmap-meta.yaml` 判断每个 change 是否在当前阶段内
+   - 缺失 `roadmap-meta.yaml` 的 change 走 compat 模式，标注 ⚠️，不阻塞流程
+   - 命中当前阶段（由环境变量 `ROADMAP_CURRENT_PHASE` 注入）→ ✅ 在阶段内
+   - 未命中 → ⚠️ 不在当前阶段
+3. **Change 状态表**（5b）：用于在用户选择时标记每个 change 的状态（ready/prerequisite/blocked_by）
    - `置信度` 列可用来决定是否强制建议（高置信度 → 强推荐，低置信度 → 仅提示）
-3. **推荐执行顺序**（5c）：用于对候选列表重新排序（prerequisite 置顶）
-4. **冲突警告**（5d）：用于在用户选择冲突的 change 时给出提示
-5. **AI 分析建议**（5e）：
+4. **推荐执行顺序**（5c）：用于对候选列表重新排序（prerequisite 置顶）
+5. **冲突警告**（5d）：用于在用户选择冲突的 change 时给出提示
+6. **AI 分析建议**（5e）：
    - `语义依赖分析`：子代理识别到的隐式依赖
    - `粒度评估`：每个 change 的范围是否合理
    - `重组建议`：拆分/合并建议（触发 plan Phase 1 中的 🔀/🔄 操作选项）
