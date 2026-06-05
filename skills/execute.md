@@ -119,14 +119,21 @@ else
         echo ""
     done <<< "$WT_INFO"
     
-    echo "请选择要进入的 worktree（输入编号），或按 Ctrl+C 取消："
-    read -p "编号: " choice
-    
-    # 解析选择 - 动态处理多个 worktree
+    # P0-9 修复：用 EXECUTE_CHOICE 环境变量取代 read -p
+    # 原因：read -p 在 AI/CI 等非交互环境会从 stdin 读取，永远阻塞直到输入
+    # 新行为：
+    #   - 默认选择 1（最常见：进入主 worktree）
+    #   - 可通过 EXECUTE_CHOICE=N 覆盖选择 N
+    #   - 多 worktree 场景下提示用户可通过环境变量覆盖
+    WT_COUNT=$(echo "$WT_INFO" | grep -c .)
+    choice="${EXECUTE_CHOICE:-1}"
+    if [ -z "${EXECUTE_CHOICE:-}" ] && [ "$WT_COUNT" -gt 1 ]; then
+        echo "ℹ️  多个 worktree 检测到，默认选择 1（可通过 EXECUTE_CHOICE=N 覆盖）"
+    fi
     selected_line=$(echo "$WT_INFO" | sed -n "${choice}p")
     
     if [ -z "$selected_line" ]; then
-        echo "❌ 无效选择，请输入 1 到 $WORKTREE_COUNT 之间的编号"
+        echo "❌ 无效选择，请设置 EXECUTE_CHOICE=1..$WT_COUNT"
         exit 1
     fi
     
@@ -279,14 +286,39 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 # ============================================================
 # P0 FIX: 执行完毕后自动检查是否还有其他 worktree 需要处理
 # ============================================================
-# 使用 awk 检查分支名（第二列）而非路径，避免路径含 openspec/ 的误匹配
-OTHER_WTS=$(git worktree list | awk '$2 ~ /^openspec\// && $2 != "openspec/'"$CHANGE_NAME"'" {print $1}' | grep -c . || true)
+# 使用 awk 检查分支名（第三列）而非路径，避免路径含 openspec/ 的误匹配
+# P0-7 修复：`git worktree list` 默认输出字段为
+#   $1=path  $2=<sha>  $3=[branch]
+# 因此分支在 $3，旧 awk '$2 ~ /^openspec\//' 永远匹配不到。
+# 内联 wt_path_for_branch_inline() 是为了避免 markdown bash 块对 _lib 函数的
+# 隐式 source 依赖——每个块都自包含，跨 skill 直接复制也能工作。
+# 注意：`git worktree list` 默认格式把分支名包在方括号里（[branch]），
+# 所以比较时要把 br 也包成 "[openspec/$branch]"，否则 $3 == br 永远不成立。
+wt_path_for_branch_inline() {
+  local branch="${1:-}"
+  [[ -z "$branch" ]] && return 1
+  git worktree list 2>/dev/null | awk -v br="[openspec/$branch]" '$3 == br {print $1; exit}'
+}
+OTHER_WTS=""
+CURRENT_WT=$(wt_path_for_branch_inline "$CHANGE_NAME")
+for wt in $(git worktree list 2>/dev/null | awk '$3 ~ /^\[openspec\// {print $1}'); do
+  if [ "$wt" != "$CURRENT_WT" ]; then
+    OTHER_WTS="$OTHER_WTS $wt"
+  fi
+done
+OTHER_WTS=$(echo $OTHER_WTS | wc -w)
 if [ "$OTHER_WTS" -gt 0 ]; then
     echo ""
     echo "📋 发现其他 $OTHER_WTS 个 worktree:"
-    git worktree list | awk '$2 ~ /^openspec\// && $2 != "openspec/'"$CHANGE_NAME"'" {print $1, $2}' | while read path branch; do
-        name=$(echo "$branch" | sed 's|openspec/||')
-        echo "   - $name → $path"
+    # 输出 $1 (path) 和 $3 ([branch])，read 拆为 path + branch
+    # $3 在 `git worktree list` 默认格式里是 "[branch]"，要去掉方括号才能跟 openspec/$CHANGE_NAME 比较
+    git worktree list | awk '$3 ~ /^\[openspec\// {print $1, $3}' | while read -r path branch; do
+        # branch 形如 "[openspec/xxx]"，去括号得 "openspec/xxx"
+        branch_clean="${branch#[}"; branch_clean="${branch_clean%]}"
+        if [ -n "$branch_clean" ] && [ "$branch_clean" != "openspec/$CHANGE_NAME" ]; then
+            name=$(echo "$branch_clean" | sed 's|openspec/||')
+            echo "   - $name → $path"
+        fi
     done
     echo ""
     echo "请选择:"
@@ -408,4 +440,4 @@ awk '{gsub(/- \[ \] /,"- [x] ")}1' \
 | change 不存在 | `openspec status` 失败 | 提示先 propose |
 | worktree 不存在 | `test -d .zcf/<name>-wt` | 提示先执行 plan skill（含 worktree 创建） |
  | 构建失败 | `cmake --build` 非零退出 | 分析错误，修复后重试当前 Work Unit |
-| worktree 路径查找 | `test -d .zcf/<name>-wt` 不可靠 | 用 `git worktree list \| awk '$2=="openspec/<name>" {print $1}'` 动态获取 |
+| worktree 路径查找 | `test -d .zcf/<name>-wt` 不可靠 | 用 `git worktree list \| awk '$3=="openspec/<name>" {print $1}'` 动态获取 |
