@@ -196,6 +196,7 @@ ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v
 # 不存在则自动调用 skill_use("roadmap", "init") 引导创建
 # ============================================================
 ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
+STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json"
 
 if [ ! -f "$ROADMAP_FILE" ]; then
     echo ""
@@ -208,6 +209,18 @@ if [ ! -f "$ROADMAP_FILE" ]; then
     echo "→ 自动调用 skill_use(\"roadmap\", \"init\") 进入模板选择..."
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     skill_use("roadmap", "init")
+fi
+# P1-6: 检测兼容模式 + 残留状态文件
+# 当 roadmap.md 不存在但 .zcf/.roadmap-state.json 仍存在,说明:
+#   - 之前启用过 roadmap,后来切换到兼容模式
+#   - 或 roadmap.md 被误删/未提交
+# 此时不自动恢复,只提示用户,避免误覆盖用户数据
+if [ ! -f "$ROADMAP_FILE" ] && [ -f "$STATE_FILE" ]; then
+    echo ""
+    echo "⚠️  roadmap.md 已不存在，但 .zcf/.roadmap-state.json 存在"
+    echo "   推测：roadmap 模式已切换为兼容模式"
+    echo "   已有的 roadmap-meta.yaml 不会自动更新 .roadmap-state.json"
+    echo "   如需重新启用 roadmap，请运行：skill_use(\"roadmap\", \"init\")"
 fi
 ```
 
@@ -389,18 +402,24 @@ guide-spec 阶段完成（spec-done）
 # Step 1: 生成候选列表（guide-spec 负责此步骤）
 mkdir -p "$PROJECT_ROOT/.zcf"
 python3 -c "
-import json, os
+import json, os, sys, subprocess
 
 # 读取所有已提交的 change
 changes_dir = '$PROJECT_ROOT/openspec/changes'
 candidates = []
 if os.path.isdir(changes_dir):
     for name in sorted(os.listdir(changes_dir)):
-        change_path = os.path.join(changes_dir, name)
-        openspec_yaml = os.path.join(change_path, '.openspec.yaml')
         # 检查 change 是否已提交（.openspec.yaml 在 HEAD 中存在）
-        if os.path.isfile(openspec_yaml):
-            candidates.append(name)
+        # 用 git show HEAD: 比对文件系统更准确：未提交的本地草稿不应被视作候选
+        try:
+            result = subprocess.run(
+                ['git', 'show', f'HEAD:openspec/changes/{name}/.openspec.yaml'],
+                capture_output=True, text=True
+            )
+            if result.returncode == 0:
+                candidates.append(name)
+        except (FileNotFoundError, subprocess.SubprocessError) as e:
+            print(f'⚠️ git show failed for {name}: {e}', file=sys.stderr)
 
 data = {'candidates': candidates}
 with open('$PROJECT_ROOT/.zcf/.deps-candidates.json', 'w') as f:
@@ -437,6 +456,19 @@ cat "$PROJECT_ROOT/.zcf/.deps-output.md"
 ## Phase 3: spec-done (Exit)
 
 Triggered when all committed changes have all three artifacts (`proposal.md`, `design.md`, `tasks.md`) reachable via `git show HEAD:...`.
+
+**Zero-change guard (P1-10):**
+
+```bash
+# P1-10: guard against zero active changes
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+CHANGE_COUNT=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l)
+if [ "$CHANGE_COUNT" -eq 0 ]; then
+  echo "❌ 没有 active change,无法退出 spec-side"
+  echo "   请回到 Propose 阶段至少创建一个 change"
+  exit 1
+fi
+```
 
 **Exit guard check:**
 
