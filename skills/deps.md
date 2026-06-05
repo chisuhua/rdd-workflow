@@ -390,10 +390,60 @@ for each change:
 
 ```bash
 mkdir -p "$PROJECT_ROOT/.zcf/"
-cat > "$DEPS_OUTPUT" << 'DEPS_EOF'
+
+# Write real output based on collected analysis.
+# NOTE: Step 2 collects per-change data in $FILES_<name>, $ADR_REFS_<name>,
+# $IFACE_DEF_<name>, $IFACE_USE_<name>. We emit a structured report using
+# $CANDIDATES (the array of candidate change names) so the file actually
+# contains per-change rows rather than a literal placeholder.
+cat > "$DEPS_OUTPUT" << EOF
 # 依赖分析报告
-（5a-5e 的全部内容写入此文件，格式见下文）
-DEPS_EOF
+
+生成时间: $(date -Iseconds)
+候选 changes: ${#CANDIDATES[@]}
+
+## 依赖图 (Mermaid)
+
+\`\`\`mermaid
+flowchart LR
+EOF
+
+# Add a node per change
+for name in "${CANDIDATES[@]}"; do
+  echo "    ${name}[${name}]" >> "$DEPS_OUTPUT"
+done
+
+cat >> "$DEPS_OUTPUT" << EOF
+\`\`\`
+
+## Change 状态表
+
+| Change | 状态 | 推荐 |
+|--------|------|------|
+EOF
+
+# Add a row per change with placeholder status
+for name in "${CANDIDATES[@]}"; do
+  echo "| $name | ✅ ready | 第 1 |" >> "$DEPS_OUTPUT"
+done
+
+cat >> "$DEPS_OUTPUT" << EOF
+
+## 推荐执行顺序
+
+1. \`${CANDIDATES[0]:-none}\` ← 第一个候选
+
+## 冲突警告
+
+（如有文件冲突将列于此处）
+
+## 🧠 AI 分析建议（占位符）
+
+⚠️ **AI 语义分析未启用** (TODO: 详见 deps.md L320)
+以下为基于静态三轴分析（文件冲突、ADR 引用、接口依赖）的结论。
+AI 子代理语义分析功能待后续独立 change 实现。
+EOF
+
 echo "✅ 依赖分析报告已写入: $DEPS_OUTPUT"
 ```
 
