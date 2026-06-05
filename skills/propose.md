@@ -91,6 +91,18 @@ else
     echo "⚠️  未检测到 roadmap.md，使用兼容模式"
     echo "   所有 change 将归为 'default' 阶段和 'general' 分类"
     echo "   建议初始化路线图: skill_use(\"roadmap\", \"init\")"
+    # P1-6: 检测兼容模式 + 残留状态文件
+    # 当 roadmap.md 不存在但 .zcf/.roadmap-state.json 仍存在,说明:
+    #   - 之前启用过 roadmap,后来切换到兼容模式
+    #   - 或 roadmap.md 被误删/未提交
+    # 此时不自动恢复,只提示用户,避免误覆盖用户数据
+    if [ -f "$STATE_FILE" ]; then
+        echo ""
+        echo "⚠️  roadmap.md 已不存在，但 .zcf/.roadmap-state.json 存在"
+        echo "   推测：roadmap 模式已切换为兼容模式"
+        echo "   已有的 roadmap-meta.yaml 不会自动更新 .roadmap-state.json"
+        echo "   如需重新启用 roadmap，请运行：skill_use(\"roadmap\", \"init\")"
+    fi
 fi
 ```
 
