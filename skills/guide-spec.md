@@ -6,7 +6,7 @@ compatibility: Requires openspec CLI v1.3.1+, git 2.25+
 metadata:
   author: sisyphus
   version: "1.0"  # P0: Spec-side state machine, split from guide
-  generatedBy: "3.0"
+  evolved-from: "split from guide.md v3.0"
   user-invocable: true
 ---
 
@@ -531,6 +531,32 @@ done); then
     echo "✅ All changes have committed artifacts. Spec side complete."
 else
     exit 1
+fi
+```
+
+**Handoff state write (P2-5):**
+
+spec-side → ship-side 交接通过 `.zcf/.handoff.json` 软状态文件传递。spec-done 验证通过后立即写入,记录 spec_complete_at、ship_started_at (初值 null)、current_change (第一个 active change 名称)。ship 端 Phase 1 入口读取并回填 ship_started_at。文件不被 git 跟踪(.gitignore 排除),缺失时 ship 端静默回退到旧行为。
+
+```bash
+# P2-5: 写入 handoff 状态,作为 spec→ship 的软交接信号
+# 缺失 .zcf 目录时静默创建 (mkdir -p),写失败不阻塞 spec-done 输出
+HANDOFF_FILE="$PROJECT_ROOT/.zcf/.handoff.json"
+# 取第一个 active change 名作为 current_change;若没有则用空字符串
+CURRENT_CHANGE=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | head -1 | xargs -n1 basename 2>/dev/null)
+CURRENT_CHANGE="${CURRENT_CHANGE:-}"
+mkdir -p "$PROJECT_ROOT/.zcf"
+cat > "$HANDOFF_FILE" << EOF
+{
+  "spec_complete_at": "$(date -Iseconds)",
+  "ship_started_at": null,
+  "current_change": "$CURRENT_CHANGE"
+}
+EOF
+if [ -f "$HANDOFF_FILE" ]; then
+    echo "✅ Handoff state written: .zcf/.handoff.json (current_change=$CURRENT_CHANGE)"
+else
+    echo "⚠️  Handoff state write failed, ship 端将使用旧行为"
 fi
 ```
 

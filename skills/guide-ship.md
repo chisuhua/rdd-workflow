@@ -6,7 +6,7 @@ compatibility: Requires openspec CLI v1.3.1+, git 2.25+, Prometheus start_work s
 metadata:
   author: sisyphus
   version: "1.0"  # P0: Ship-side state machine, split from guide + plan
-  generatedBy: "3.0"
+  evolved-from: "split from guide.md v3.0"
   user-invocable: true
 ---
 
@@ -105,6 +105,32 @@ else
     echo "❌ 当前仓库没有任何提交（HEAD 不存在）"
     echo "请先 git commit 一些文件后再执行 plan"
     exit 1
+fi
+
+# ============================================================
+# HANDOFF STATE READ (P2-5)
+# 读取 spec 端写入的 .zcf/.handoff.json,展示给用户,并回填 ship_started_at。
+# 文件不存在/解析失败时静默回退到旧行为 (跳过本块,继续 worktree 创建)。
+# ============================================================
+HANDOFF_FILE="$PROJECT_ROOT/.zcf/.handoff.json"
+if [ -f "$HANDOFF_FILE" ]; then
+    echo "📋 Reading handoff state from spec-side..."
+    cat "$HANDOFF_FILE"
+    echo ""
+    # 用 python3 原子更新 ship_started_at;失败时不阻塞流程
+    python3 -c "
+import json, datetime, sys
+try:
+    with open('$HANDOFF_FILE') as f:
+        data = json.load(f)
+    data['ship_started_at'] = datetime.datetime.now().isoformat()
+    with open('$HANDOFF_FILE', 'w') as f:
+        json.dump(data, f, indent=2)
+    print('✅ Handoff state updated: ship_started_at set')
+except (FileNotFoundError, json.JSONDecodeError) as e:
+    print(f'⚠️  Failed to update handoff: {e}', file=sys.stderr)
+    sys.exit(0)  # 静默回退,继续 worktree 创建
+" 2>/dev/null
 fi
 
 # 创建 branch（如不存在）
@@ -208,9 +234,9 @@ fi
 ${CHANGE_NAME} worktree 已就绪，请选择执行方式：
 
 📋 ${CHANGE_NAME} 状态:
-  Worktree: .zcf/${CHANGE_NAME}-wt
+  Worktree: $WT_PATH
   计划文件: .sisyphus/plans/${CHANGE_NAME}.md
-  任务数: $(grep -c '^- \[' "$wt/openspec/changes/$name/tasks.md" 2>/dev/null || echo '?')
+  任务数: $(grep -c '^- \[' "$WT_PATH/openspec/changes/${CHANGE_NAME}/tasks.md" 2>/dev/null || echo '?')
 
 请选择执行方式:
 1. 🔒 在此 session 执行（阻塞）— 等待任务完成后返回
@@ -246,6 +272,8 @@ echo "3. 完成后，在此 session 运行 guide-ship 查看最新进度"
 echo ""
 echo "当前状态：${CHANGE_NAME} 等待分离执行"
 ```
+
+## Phase 1.5: Worktree 验证 + 监控选择
 
 **返回 Plan 前的检查 — 是否进入监控**：
 

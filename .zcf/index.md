@@ -32,6 +32,13 @@
 - **格式**: Markdown
 - **Git 跟踪**: 否
 
+### `.handoff.json`
+- **角色**: 记录 spec 端到 ship 端的交接状态（spec→ship handoff）
+- **写入者**: `guide-spec.md` Phase 3 (spec-done exit, 写入 spec_complete_at + current_change)
+- **读取者**: `guide-ship.md` Phase 1 (entry, 回填 ship_started_at)
+- **格式**: JSON, `{spec_complete_at, ship_started_at, current_change}`
+- **Git 跟踪**: 否 (.zcf/* 已被 .gitignore 排除)
+
 ## 生命周期
 
 - `.zcf/` 在项目第一次执行 roadmap init 时创建
