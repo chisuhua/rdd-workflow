@@ -49,3 +49,25 @@ find_default_branch() {
     git rev-parse --abbrev-ref HEAD 2>/dev/null
   fi
 }
+
+# main_repo_root
+#   Returns absolute path of the MAIN repository root (NOT the worktree root).
+#   When called from main repo: returns the main repo path.
+#   When called from a worktree: returns the main repo path.
+#   Falls back to pwd if git is not available.
+#   Uses `git rev-parse --git-common-dir` (shared .git dir across worktrees),
+#   which is the canonical worktree-safe replacement for `--show-toplevel`.
+#   P0-8: ensures STATE_FILE writes to main repo's .zcf/, not worktree's.
+main_repo_root() {
+  local common_dir
+  common_dir=$(git rev-parse --git-common-dir 2>/dev/null) || { pwd; return; }
+  case "$common_dir" in
+    /*) ;;
+    *) common_dir="$(pwd)/$common_dir" ;;
+  esac
+  case "$common_dir" in
+    */.git) dirname "$common_dir" ;;
+    */.git/worktrees/*) dirname "$(dirname "$common_dir")" ;;
+    *) dirname "$common_dir" ;;
+  esac
+}

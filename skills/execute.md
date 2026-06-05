@@ -51,8 +51,17 @@ worktree (openspec/<name>): 本技能在此执行
 ### 模式自动识别
 
 ```bash
+# Source helper (worktree-aware functions)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+if [ -f "$SCRIPT_DIR/_lib/worktree.sh" ]; then
+  source "$SCRIPT_DIR/_lib/worktree.sh"
+fi
+
 # 自动检测项目根目录（用于全局安装的技能）
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+# P0-8: use main_repo_root (works in both main repo and worktrees)
+PROJECT_ROOT=$(main_repo_root)
+[ -d "$PROJECT_ROOT" ] || PROJECT_ROOT=$(pwd)
+export PROJECT_ROOT
 # 检测当前 git 上下文
 CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "unknown")

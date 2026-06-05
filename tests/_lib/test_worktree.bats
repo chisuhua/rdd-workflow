@@ -63,3 +63,27 @@ teardown() {
   result=$(find_default_branch)
   [[ "$result" == "main" ]] || [[ "$result" == "master" ]]
 }
+
+@test "main_repo_root returns main repo path from worktree" {
+  # From inside a worktree, must return the MAIN repo (not the worktree)
+  cd "$TEST_REPO/.zcf/test-1-wt"
+  result=$(main_repo_root)
+  [ "$result" = "$TEST_REPO" ]
+}
+
+@test "main_repo_root returns main repo path from main repo" {
+  # From the main repo, must return the main repo path
+  cd "$TEST_REPO"
+  result=$(main_repo_root)
+  [ "$result" = "$TEST_REPO" ]
+}
+
+@test "main_repo_root returns main repo from external worktree" {
+  # Create a worktree outside the main repo's tree
+  ext_wt=$(mktemp -d)
+  git -C "$TEST_REPO" worktree add -b openspec/external "$ext_wt" HEAD >/dev/null 2>&1
+  cd "$ext_wt"
+  result=$(main_repo_root)
+  [ "$result" = "$TEST_REPO" ]
+  rm -rf "$ext_wt"
+}
