@@ -108,14 +108,23 @@ PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 if [ -f "proposal-suggestions.md" ]; then
     echo "📂 加载已有的 proposal-suggestions.md"
     # 使用 Python 读取 YAML 列表，移除已创建为 change 的条目后写回
+    # P0-4: 用 subprocess 调用 git rev-parse 探测根目录（不再依赖 PROJECT_ROOT env var）
+    # P0-4: 显式捕获 FileNotFoundError + yaml.YAMLError 避免崩溃
     python3 -c "
-import yaml, os, sys
+import yaml, os, sys, re, subprocess
+
+project_root = subprocess.check_output(
+    ['git', 'rev-parse', '--show-toplevel'], text=True
+).strip()
 
 try:
     with open('proposal-suggestions.md') as f:
         # 读取纯 YAML 列表（格式：以 '- name:' 开头行列表）
         content = f.read()
-    
+
+    # 去掉 markdown 分隔符（---），避免 yaml.safe_load 误判为文档边界
+    content = re.sub(r'^---\$', '', content, flags=re.M)
+
     # 用行级解析：按 '- name:' 分割成条目块
     # 每个条目块从 '- name:' 开始到下一个 '- name:' 或文件结束
     lines = content.split('\n')
@@ -130,34 +139,33 @@ try:
             current_entry.append(line)
     if current_entry:
         entries.append('\n'.join(current_entry))
-    
+
 # 过滤：移除 name 对应的 change 目录已存在的条目
-    project_root = os.environ.get('PROJECT_ROOT', '')
     kept = []
     removed = []
     for entry in entries:
         name = None
         for line in entry.split('\n'):
             if line.strip().startswith('- name:'):
-                name = line.split(':', 1)[1].strip().strip('\"').strip("'")
+                name = line.split(':', 1)[1].strip().strip('\"').strip(\"'\")
                 break
         if name and os.path.isdir(f'{project_root}/openspec/changes/{name}/'):
             removed.append(name)
         else:
             kept.append(entry)
-    
+
     # 写回过滤后的内容
     with open('proposal-suggestions.md', 'w') as f:
         f.write('\n'.join(kept))
         if kept:
             f.write('\n')
-    
+
     if removed:
-        print(f'  已从建议列表移除: {", ".join(removed)}')
+        print(f'  已从建议列表移除: {\", \".join(removed)}')
     print(f'  剩余 {len(kept)} 个建议')
-    
-except Exception as e:
-    print(f'⚠️  proposal-suggestions.md 解析失败: {e}')
+
+except (FileNotFoundError, yaml.YAMLError) as e:
+    print(f'⚠️  proposal-suggestions.md 解析失败: {e}', file=sys.stderr)
     print('  保留原文件，继续执行扫描阶段')
 " || echo "⚠️ Python 执行失败，跳过加载"
 fi
@@ -413,6 +421,9 @@ print(f'category: \"{category}\"')
 对每个选中的 propose，按以下步骤串行创建（每次成功后继续下一个）：
 
 ```bash
+# P0-3: 精确跟踪本次会话成功创建的 change 名称（避免危险的 `git add openspec/changes/*/` glob）
+THIS_SESSION_CREATED=()
+
 for each selected propose <name>:
     # ---------------------------------------------------------------
     # Step 4a: Guardrail — 检查 change 是否已存在
@@ -421,7 +432,7 @@ for each selected propose <name>:
         echo "⚠️ Change <name> 已存在，跳过"
         continue
     fi
-    
+
     # ---------------------------------------------------------------
     # Step 4b: 创建 change 目录
     # ---------------------------------------------------------------
@@ -430,6 +441,9 @@ for each selected propose <name>:
         echo "❌ 创建 change <name> 失败，跳过"
         continue
     fi
+
+    # P0-3: 记录成功创建的 change 名（仅本次会话、仅 openspec new 成功后的）
+    THIS_SESSION_CREATED+=("<name>")
     
     # ---------------------------------------------------------------
     # Step 4c: 获取 artifact 构建顺序，循环创建
@@ -473,27 +487,39 @@ for each selected propose <name>:
     # ---------------------------------------------------------------
     if [ "$ROADMAP_MODE" = true ]; then
         # 从建议条目读取 phase 和 category
+        # P0-4: 显式 try/except 捕获 FileNotFoundError + yaml.YAMLError
+        #        去掉 markdown 分隔符；空文件/缺失时退化到默认值
         CHANGE_PHASE=$(python3 -c "
-import yaml
-with open('proposal-suggestions.md') as f:
-    content = f.read()
-entries = yaml.safe_load(content)
-for entry in entries:
-    if entry.get('name') == '<name>':
-        print(entry.get('phase', '$CURRENT_PHASE'))
-        break
-")
-        
+import yaml, re, sys
+try:
+    with open('proposal-suggestions.md') as f:
+        content = f.read()
+    content = re.sub(r'^---\$', '', content, flags=re.M)
+    entries = yaml.safe_load(content) or []
+    for entry in entries:
+        if entry.get('name') == '<name>':
+            print(entry.get('phase', '$CURRENT_PHASE'))
+            break
+except (FileNotFoundError, yaml.YAMLError) as e:
+    print(f'⚠️ lookup phase 失败: {e}', file=sys.stderr)
+    print('$CURRENT_PHASE')
+" 2>/dev/null)
+
         CHANGE_CATEGORY=$(python3 -c "
-import yaml
-with open('proposal-suggestions.md') as f:
-    content = f.read()
-entries = yaml.safe_load(content)
-for entry in entries:
-    if entry.get('name') == '<name>':
-        print(entry.get('category', 'general'))
-        break
-")
+import yaml, re, sys
+try:
+    with open('proposal-suggestions.md') as f:
+        content = f.read()
+    content = re.sub(r'^---\$', '', content, flags=re.M)
+    entries = yaml.safe_load(content) or []
+    for entry in entries:
+        if entry.get('name') == '<name>':
+            print(entry.get('category', 'general'))
+            break
+except (FileNotFoundError, yaml.YAMLError) as e:
+    print(f'⚠️ lookup category 失败: {e}', file=sys.stderr)
+    print('general')
+" 2>/dev/null)
         
         # 验证分类是否在当前阶段的有效分类中
         VALID_CAT_LIST=$(echo "$VALID_CATEGORIES" | cut -d: -f1 | tr '\n' ' ')
@@ -607,25 +633,24 @@ Propose 创建完成后，自动检测未提交的 artifacts 并执行提交：
 **自动提交脚本**（Phase 5 后执行）：
 
 ```bash
-# 检测未提交的 artifacts
-UNCOMMITTED=$(git status --porcelain openspec/changes/ 2>/dev/null | grep -c . || true)
-if [ "$UNCOMMITTED" -gt 0 ]; then
-    echo "📦 检测到 $UNCOMMITTED 个未提交的 artifacts，正在自动提交..."
+# P0-3: 仅精确添加本次会话实际创建的 change（不再使用 `git add openspec/changes/*/` 通配符）
+#       - 危险点：`*/` 会把 archive/、其它未相关 change 一并加入暂存区
+#       - 新方案：依赖 Phase 4 中 THIS_SESSION_CREATED 数组（按 name 逐个 git add）
+if [ ${#THIS_SESSION_CREATED[@]} -gt 0 ]; then
+    echo "📦 提交本次创建的 ${#THIS_SESSION_CREATED[@]} 个 changes..."
 
-    # 收集所有新建/修改的 change 目录
-    CHANGES=$(git status --porcelain openspec/changes/ | awk '{print $2}' | xargs -I{} dirname {} | sort -u)
-
-    # 添加到暂存区
-    git add openspec/changes/*/
+    # 逐个精确 git add（避免把 archive/ 或其它无关 change 误加进来）
+    for name in "${THIS_SESSION_CREATED[@]}"; do
+        git add "openspec/changes/$name/"
+    done
     git add proposal-suggestions.md
 
-    # 生成提交信息
-    CHANGE_NAMES=$(echo "$CHANGES" | xargs -I{} basename {} | tr '\n' ' ')
-    git commit -m "feat: propose $CHANGE_NAMES"
+    # 提交信息使用数组中实际创建的名称
+    git commit -m "feat: propose ${THIS_SESSION_CREATED[*]}"
 
-    echo "✅ 已提交: $CHANGE_NAMES"
+    echo "✅ 已提交: ${THIS_SESSION_CREATED[*]}"
 else
-    echo "✅ 所有 artifacts 已提交"
+    echo "✅ 本次未创建任何 change，无需提交"
 fi
 ```
 
