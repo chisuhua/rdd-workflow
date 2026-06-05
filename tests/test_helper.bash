@@ -4,7 +4,8 @@
 # Sourced automatically by bats before each test file. Provides:
 #   - $REPO_ROOT: absolute path to the spec-workflow repo root
 #   - $BATS_TMPDIR: per-test scratch directory (auto-cleaned by bats)
-#   - load_lib(name): source files from tests/_lib/<name>.bash
+#   - load_lib(name): source files from tests/_lib/<name>.bash OR
+#                     skills/_lib/<name>.sh OR tests/_lib/<name>.sh
 #   - common assertion helpers
 
 # Resolve repo root (directory above tests/)
@@ -14,16 +15,25 @@ export REPO_ROOT
 # Project-under-test working dir, if needed
 export PROJECT_ROOT="${PROJECT_ROOT:-$REPO_ROOT}"
 
-# Load helper libraries
+# Load helper libraries. Resolution order (first match wins):
+#   1. tests/_lib/<name>.bash   (test fixtures, original behavior)
+#   2. skills/_lib/<name>.sh    (production libs, primary use case)
+#   3. tests/_lib/<name>.sh     (alternative test fixture extension)
 load_lib() {
   local name="$1"
-  local path="$REPO_ROOT/tests/_lib/${name}.bash"
-  if [[ ! -f "$path" ]]; then
-    echo "load_lib: file not found: $path" >&2
-    return 1
-  fi
-  # shellcheck source=/dev/null
-  source "$path"
+  local path
+  for path in \
+    "$REPO_ROOT/tests/_lib/${name}.bash" \
+    "$REPO_ROOT/skills/_lib/${name}.sh" \
+    "$REPO_ROOT/tests/_lib/${name}.sh"; do
+    if [[ -f "$path" ]]; then
+      # shellcheck source=/dev/null
+      source "$path"
+      return 0
+    fi
+  done
+  echo "load_lib: file not found: ${name} (looked in tests/_lib/${name}.bash, skills/_lib/${name}.sh, tests/_lib/${name}.sh)" >&2
+  return 1
 }
 
 # Verify a file exists and is non-empty
