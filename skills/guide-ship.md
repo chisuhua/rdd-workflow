@@ -418,6 +418,12 @@ i. 其他输入
 CHANGE_NAME="fix-ns-pollution"
 WT_PATH="$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
 
+# 加载 worktree 辅助函数 (P1-13 引入 find_default_branch)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+if [ -f "$SCRIPT_DIR/_lib/worktree.sh" ]; then
+  source "$SCRIPT_DIR/_lib/worktree.sh"
+fi
+
 # ============================================================
 # MERGE VERIFICATION GATE (P0 FIX)
 # 在 merge 前验证 worktree 分支是否包含新提交
@@ -436,6 +442,20 @@ if [ "$WT_BRANCH" = "DETACHED" ]; then
     echo "   请先切换到正确分支："
     echo "   cd $WT_PATH && git checkout openspec/$CHANGE_NAME"
     exit 1
+fi
+
+# ============================================================
+# PRE-MERGE COMMIT CHECK (P1-13)
+# 在 merge 前验证 worktree 分支是否包含新提交，
+# 避免空 merge（execute 未运行或无代码变更时直接报错）
+# ============================================================
+WORKTREE_TIP=$(git rev-parse "openspec/$CHANGE_NAME")
+DEFAULT_BRANCH=$(find_default_branch)
+WORKTREE_NEW_COMMITS=$(git rev-list --count "$DEFAULT_BRANCH..openspec/$CHANGE_NAME" 2>/dev/null || echo 0)
+if [ "$WORKTREE_NEW_COMMITS" -eq 0 ]; then
+  echo "❌ worktree 分支无新提交,无需 merge"
+  echo "   可能 execute 未运行或无代码变更"
+  exit 1
 fi
 
 # 获取 merge 前 main 的最新 commit
