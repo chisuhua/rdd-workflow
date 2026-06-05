@@ -1,13 +1,3 @@
-> ⚠️ **Pre-refactor migration note** (added 2026-06-04)
->
-> This file was migrated from the old monolithic workflow to the new entry points below.
-> The new entry points are:
-> - `skill_use("guide")` — recommender (scans state, suggests which to use)
-> - `skill_use("guide-spec")` — spec-side state machine (setup → roadmap → propose → deps)
-> - `skill_use("guide-ship")` — ship-side state machine (plan → execute → archive → cleanup)
->
-> Body content is being incrementally updated. If you see `spec-workflow-*` references below, treat them as legacy aliases.
-
 # OpenSpec 工作流技能使用指南
 
 > 基于 `guide` 推荐器（spec-side 调 `guide-spec`，ship-side 调 `guide-ship`），覆盖从提案到归档的完整生命周期。
@@ -28,9 +18,8 @@
 
 | 文件 | 位置 | 用途 |
 |------|------|------|
-| `workflow-state.md` | 项目根目录 | 当前进度、变更列表、执行状态 |
-| `workflow-progress.md` | 项目根目录 | 操作日志、每步记录 |
 | `proposal-suggestions.md` | 项目根目录 | 扫描出的建议列表，随 git 版本控制 |
+| `openspec/changes/<name>/tasks.md` | change 目录 | Execute 阶段任务清单（唯一权威进度来源） |
 
 ### 执行状态
 
@@ -47,11 +36,20 @@
 
 ### 启动交互式向导
 
+根据当前需求选择入口：
+
 ```
+# 推荐器入口（不知道调谁时用）
 用户: skill_use("guide")
+
+# Spec 端（创建新 change：setup → roadmap → propose → deps）
+用户: skill_use("guide-spec")
+
+# Ship 端（已提交的 change：plan → execute → archive → cleanup）
+用户: skill_use("guide-ship")
 ```
 
-向导会自动检查状态并给出当前合适的选项菜单。无需指定参数。
+`guide` 推荐器会自动检查状态并给出当前合适的选项菜单；如已明确 spec 侧或 ship 侧，可直接调对应状态机跳过推荐步骤。
 
 ---
 
@@ -383,83 +381,6 @@ skill_use("guide-ship")
 → Execute 监控模式检测到 tasks.md 进度已更新
 → 显示最新进度
 → 可选择归档或继续监控
-```
-
----
-
-## 状态文件格式
-
-### workflow-state.md
-
-```markdown
-# OpenSpec 工作流状态
-
-## 元信息
-- **版本**: 1
-- **创建时间**: 2026-05-18T10:00:00+08:00
-- **最后更新**: 2026-05-18T10:30:00+08:00
-
-## 工作流进度
-
-### 阶段完成情况
-
-| 阶段 | 状态 | 完成时间 |
-|------|------|---------|
-| setup | ✅ 完成 | 2026-05-18T10:00:00+08:00 |
-| propose | 🔄 进行中 | 2026-05-18T10:15:00+08:00 |
-| plan | ⏳ 未开始 | — |
-| execute | ⏳ 未开始 | — |
-| status_archive | ⏳ 未开始 | — |
-| cleanup | ⏳ 未开始 | — |
-
-## 当前状态
-
-- **当前阶段**: propose
-- **当前恢复点**: propose.scan_done
-
-### Changes（支持多 change 并行）
-
-| 变更名称 | Worktree | Artifacts | 执行状态 | 当前操作 |
-|----------|----------|-----------|---------|---------|
-| fix-ns-pollution | .zcf/fix-ns-pollution-wt | ✅ 已提交 | ⏳ 等待 | — |
-| add-stream-pipes | — | ⏳ 未提交 | ⏳ 等待 | — |
-
-### 恢复上下文
-
-- **恢复点**: propose.scan_done
-- **最后操作**: 扫描建议完成，等待用户选择
-- **验证建议**:
-  - [x] openspec CLI 可用
-  - [x] git 工作区正常
-  - [ ] propose artifacts 已创建（如需要）
-
-- **活跃 Changes**: [fix-ns-pollution, add-stream-pipes]
-- **当前焦点变更**: fix-ns-pollution
-- **Worktree 映射**:
-  - fix-ns-pollution → .zcf/fix-ns-pollution-wt (openspec/fix-ns-pollution)
-  - add-stream-pipes → (未创建)
-
-## 操作历史
-
-| 时间 | 阶段 | 操作 | 结果 |
-|------|------|------|------|
-| 2026-05-18T10:00:00+08:00 | setup | env_check | ok |
-| 2026-05-18T10:15:00+08:00 | propose | select_change | fix-ns-pollution |
-```
-
----
-
-### workflow-progress.md 格式
-
-```markdown
-# OpenSpec 工作流进度日志
-
-## Session 信息
-- **开始时间**: 2026-05-18T10:00:00+08:00
-- **结束时间**: —
-- **活跃 Changes**: fix-ns-pollution, add-stream-pipes
-
-## 操作日志
 ```
 
 ---
