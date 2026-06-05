@@ -176,6 +176,14 @@ echo "✅ Worktree 验证通过"
 # Generate detailed implementation plan via Prometheus
 cd "$WT_PATH" || { echo "❌ 进入 worktree 失败: $WT_PATH"; exit 1; }
 
+# Early check for prometheus-start-work (P0-6)
+if ! skill_use("prometheus-start-work") --help 2>/dev/null; then
+  echo "❌ 必需依赖缺失: prometheus-start-work 技能未安装"
+  echo "   请先安装: npx skills add chisuhua/prometheus-start-work -g -y"
+  echo "   参考 README.md '前置条件' 节"
+  exit 1
+fi
+
 if skill_use("prometheus-start-work") 2>/dev/null; then
     if [ ! -f ".sisyphus/plans/$CHANGE_NAME.md" ]; then
         echo "❌ Prometheus start_work 未生成计划文件"

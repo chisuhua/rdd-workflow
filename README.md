@@ -72,3 +72,6 @@ cp -r ~/.agents/skills/spec-workflow/skills /path/to/project/.opencode/skills/sp
 - `openspec` CLI v1.3.1+
 - `git` 2.25+
 - `cmake` 3.16+
+- **`prometheus-start-work` skill** (必需,ship 端唯一实施计划生成器)
+  - 安装: `npx skills add chisuhua/prometheus-start-work -g -y`
+- **bats-core 1.10+** (测试基础设施,可选用 `bats tests/`)
