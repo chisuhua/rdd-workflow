@@ -107,11 +107,28 @@ fi
 CURRENT_BRANCH=$(git branch --show-current)
 echo "📌 当前分支: $CURRENT_BRANCH"
 
-# 4. 构建目录
-if [ -d "build" ]; then
-    echo "✅ 构建目录存在 (build/)"
+# 4. 构建目录（按项目类型检测）
+if [ -f "Cargo.toml" ]; then
+  BUILD_DIR="target"
+  PROJECT_TYPE="Rust"
+elif [ -f "package.json" ]; then
+  BUILD_DIR="node_modules"
+  PROJECT_TYPE="Node.js"
+elif [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
+  BUILD_DIR="venv"
+  PROJECT_TYPE="Python"
+elif [ -f "CMakeLists.txt" ] || [ -f "Makefile" ]; then
+  BUILD_DIR="build"
+  PROJECT_TYPE="C++/Make"
 else
-    echo "⚠️  构建目录不存在"
+  BUILD_DIR="build"
+  PROJECT_TYPE="Unknown"
+fi
+
+if [ -d "$BUILD_DIR" ]; then
+    echo "✅ 构建目录存在 ($BUILD_DIR/, $PROJECT_TYPE)"
+else
+    echo "⚠️  构建目录不存在 ($BUILD_DIR/, $PROJECT_TYPE)"
 fi
 
 # 5. 已有 change
