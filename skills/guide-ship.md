@@ -556,12 +556,20 @@ for wt in "${wt_list[@]}"; do
 done
 
 # 清理所有 openspec/* branches
+# 策略 (P2-9): 默认 -d 安全删除；显示最后提交供人审查；未合并时需显式 FORCE_BRANCH_DELETE=yes 才允许 -D
 git branch | grep "openspec/" | while read branch; do
+    LAST_COMMIT=$(git log -1 --format="%h %s" "$branch" 2>/dev/null)
     if git branch -d "$branch" 2>/dev/null; then
-        :
+        echo "✅ $branch deleted (last: $LAST_COMMIT)"
     else
-        echo "⚠️  Branch $branch 有未合并的提交，强制删除"
-        git branch -D "$branch" 2>/dev/null || true
+        echo "⚠️  $branch 有未合并的提交"
+        echo "   最后提交: $LAST_COMMIT"
+        if [ "${FORCE_BRANCH_DELETE:-no}" = "yes" ]; then
+            git branch -D "$branch" 2>/dev/null || true
+            echo "   强制删除(因 FORCE_BRANCH_DELETE=yes)"
+        else
+            echo "   跳过(设置 FORCE_BRANCH_DELETE=yes 强制删除)"
+        fi
     fi
 done
 
