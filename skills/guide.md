@@ -5,8 +5,8 @@ license: MIT
 compatibility: Requires git 2.25+
 metadata:
   author: sisyphus
-  version: "4.0"  # P0: 缩减为无状态推荐器
-  generatedBy: "3.0"
+  version: "1.0"  # P0: 缩减为无状态推荐器
+  evolved-from: "split from guide.md v3.0"
   user-invocable: true
 ---
 

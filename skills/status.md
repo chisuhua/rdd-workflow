@@ -5,8 +5,7 @@ license: MIT
 compatibility: Requires openspec CLI
 metadata:
   author: sisyphus
-  version: "2.3"  # P0: 新增路线图状态模式（Mode D）和阶段门控报告
-  generatedBy: "2.0"
+  version: "2.0"  # P0: 新增路线图状态模式（Mode D）和阶段门控报告
 ---
 
 # OpenSpec 工作流 — Status

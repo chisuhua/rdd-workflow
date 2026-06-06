@@ -5,8 +5,7 @@ license: MIT
 compatibility: Requires openspec CLI and git worktree.
 metadata:
   author: sisyphus
-  version: "2.5"  # P0: Roadmap 进度更新和阶段门控检查
-  generatedBy: "2.0"
+  version: "2.0"  # P0: Roadmap 进度更新和阶段门控检查
 ---
 
 # OpenSpec 工作流 — Execute
