@@ -334,6 +334,20 @@ if [ "$OTHER_WTS" -gt 0 ]; then
     echo "2. 返回主 session（skill_use(\"guide\"))"
     echo "i. 其他输入"
 fi
+```
+
+**用户输入处理（case handler）**：
+
+当用户输入不在上述有效选项内时，按以下 case 分支处理：
+
+```bash
+case "$choice" in
+  q|quit|exit) exit 0 ;;
+  r|refresh) continue ;;  # 重新展示菜单
+  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
+  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
+esac
+```
 
 # ============================================================
 # P0: Roadmap 进度更新

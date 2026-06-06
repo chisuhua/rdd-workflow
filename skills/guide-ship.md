@@ -84,6 +84,19 @@ Plan 阶段
 i. 其他输入
 ```
 
+**用户输入处理（case handler）**：
+
+当用户输入不在上述有效选项内时，按以下 case 分支处理：
+
+```bash
+case "$choice" in
+  q|quit|exit) exit 0 ;;
+  r|refresh) continue ;;  # 重新展示菜单
+  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
+  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
+esac
+```
+
 **选项 1/2 执行内容**（以 fix-ns-pollution 为例）：
 
 ```bash
@@ -245,6 +258,19 @@ ${CHANGE_NAME} worktree 已就绪，请选择执行方式：
 i. 其他输入
 ```
 
+**用户输入处理（case handler）**：
+
+当用户输入不在上述有效选项内时，按以下 case 分支处理：
+
+```bash
+case "$choice" in
+  q|quit|exit) exit 0 ;;
+  r|refresh) continue ;;  # 重新展示菜单
+  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
+  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
+esac
+```
+
 **选项 1（阻塞执行）执行内容**：
 
 ```bash
@@ -291,6 +317,19 @@ if [ "$WORKTREE_COUNT" -gt 0 ]; then
     echo "2. 🔄 继续返回 Plan 阶段（创建更多 worktree 或处理其他 change）"
     echo "i. 其他输入"
 fi
+```
+
+**用户输入处理（case handler）**：
+
+当用户输入不在上述有效选项内时，按以下 case 分支处理：
+
+```bash
+case "$choice" in
+  q|quit|exit) exit 0 ;;
+  r|refresh) continue ;;  # 重新展示菜单
+  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
+  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
+esac
 ```
 
 ---
@@ -354,6 +393,19 @@ Execute 阶段（监控模式）
 8. ↩️ 返回 Plan 阶段（创建更多 worktree）
 0. 退出（下次 skill_use("guide-ship") 继续）
 i. 其他输入
+```
+
+**用户输入处理（case handler）**：
+
+当用户输入不在上述有效选项内时，按以下 case 分支处理：
+
+```bash
+case "$choice" in
+  q|quit|exit) exit 0 ;;
+  r|refresh) continue ;;  # 重新展示菜单
+  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
+  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
+esac
 ```
 
 **选项 7（刷新进度）执行内容**：
@@ -439,6 +491,19 @@ Status 阶段
 i. 其他输入
 ```
 
+**用户输入处理（case handler）**：
+
+当用户输入不在上述有效选项内时，按以下 case 分支处理：
+
+```bash
+case "$choice" in
+  q|quit|exit) exit 0 ;;
+  r|refresh) continue ;;  # 重新展示菜单
+  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
+  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
+esac
+```
+
 **归档流程（选项 1/2）**：
 
 ```bash
@@ -501,19 +566,33 @@ if [ "$REMAINING_WT" -gt 0 ]; then
     echo "📋 还有 $REMAINING_WT 个 worktree 正在进行"
     echo ""
     echo "请选择:"
-    echo "1. 继续处理其他 worktree（进入 Execute 阶段）"
-    echo "2. 返回 Plan 阶段（为其他 change 创建 worktree）"
-    echo "i. 其他输入"
-else
-    # 没有更多 worktree,本批次 ship 端工作完成
-    echo ""
-    echo "📋 所有 worktree 已处理完毕"
-    echo ""
-    echo "请选择:"
-    echo "1. 进入 cleanup 阶段"
-    echo "2. 完成 workflow（进入 ship-done）"
-    echo "i. 其他输入"
+        echo "1. 继续处理其他 worktree（进入 Execute 阶段）"
+        echo "2. 返回 Plan 阶段（为其他 change 创建 worktree）"
+        echo "i. 其他输入"
+    else
+        # 没有更多 worktree,本批次 ship 端工作完成
+        echo ""
+        echo "📋 所有 worktree 已处理完毕"
+        echo ""
+        echo "请选择:"
+        echo "1. 进入 cleanup 阶段"
+        echo "2. 完成 workflow（进入 ship-done）"
+        echo "i. 其他输入"
+    fi
 fi
+```
+
+**用户输入处理（case handler）**：
+
+当用户输入不在上述有效选项内时，按以下 case 分支处理：
+
+```bash
+case "$choice" in
+  q|quit|exit) exit 0 ;;
+  r|refresh) continue ;;  # 重新展示菜单
+  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
+  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
+esac
 ```
 
 ---
@@ -536,6 +615,19 @@ fi
 3. 📝 输出测试总结报告（所有 changes 的执行记录）
 4. ↩️ 返回上一阶段
 i. 其他输入
+```
+
+**用户输入处理（case handler）**：
+
+当用户输入不在上述有效选项内时，按以下 case 分支处理：
+
+```bash
+case "$choice" in
+  q|quit|exit) exit 0 ;;
+  r|refresh) continue ;;  # 重新展示菜单
+  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
+  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
+esac
 ```
 
 **选项 1 执行**：
@@ -610,4 +702,17 @@ else
     echo "4. 项目完成 — 不再做任何 change(此项目归档)"
     echo "i. 其他输入"
 fi
+```
+
+**用户输入处理（case handler）**：
+
+当用户输入不在上述有效选项内时，按以下 case 分支处理：
+
+```bash
+case "$choice" in
+  q|quit|exit) exit 0 ;;
+  r|refresh) continue ;;  # 重新展示菜单
+  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
+  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
+esac
 ```

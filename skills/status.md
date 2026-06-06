@@ -110,6 +110,19 @@ pending-change  │ （无 worktree）        │ 2/5  (40%)  │ ⏸ 暂停
   i. 其他输入
 ```
 
+**用户输入处理（case handler）**：
+
+当用户输入不在上述有效选项内时，按以下 case 分支处理：
+
+```bash
+case "$choice" in
+  q|quit|exit) exit 0 ;;
+  r|refresh) continue ;;  # 重新展示菜单
+  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
+  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
+esac
+```
+
 **Mode A 职责说明**：此模式仅做状态概览，不执行问题检测。问题检测由 Mode B 专门负责。
 
 ---
@@ -426,9 +439,22 @@ if 'current_phase' in state:
     echo "操作选项:"
     echo "1. 生成阶段门控报告"
     echo "2. 推进到下一阶段（如满足条件）"
-    echo "3. 查看详细 change 列表"
-    echo "i. 其他输入"
+        echo "3. 查看详细 change 列表"
+        echo "i. 其他输入"
 fi
+```
+
+**用户输入处理（case handler）**：
+
+当用户输入不在上述有效选项内时，按以下 case 分支处理：
+
+```bash
+case "$choice" in
+  q|quit|exit) exit 0 ;;
+  r|refresh) continue ;;  # 重新展示菜单
+  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
+  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
+esac
 ```
 
 ---
