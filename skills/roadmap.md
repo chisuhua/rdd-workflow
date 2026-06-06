@@ -6,7 +6,7 @@ compatibility: Requires spec-workflow v2.0+
 metadata:
   author: sisyphus
   version: "1.0"
-  generatedBy: "2.0"
+  evolved-from: "iterate of v1.0"
 ---
 
 # OpenSpec 工作流 — Roadmap 管理
