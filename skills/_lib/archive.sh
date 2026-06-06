@@ -213,11 +213,13 @@ archive_change() {
   if (cd "$main_root" && git branch -d "$branch" 2>/dev/null); then
     echo "✅ Branch 已删除: $branch"
   else
+    echo "⚠️  Branch 有未合并的提交: $branch"
     if [ "${FORCE_BRANCH_DELETE:-no}" = "yes" ]; then
       (cd "$main_root" && git branch -D "$branch" 2>/dev/null) || true
-      echo "⚠️  Branch 强制删除"
+      echo "⚠️  Branch 强制删除(因 FORCE_BRANCH_DELETE=yes)"
     else
-      echo "⚠️  Branch 删除失败,需要 FORCE_BRANCH_DELETE=yes"
+      echo "❌ Branch 删除取消。设置 FORCE_BRANCH_DELETE=yes 重试"
+      return 1
     fi
   fi
 
