@@ -26,11 +26,12 @@
 - **Git 跟踪**: 否
 
 ### `.phase-gate-report.md`
-- **角色**: 阶段门控报告,说明当前 phase 是否满足进入下一 phase 的条件
+- **角色**: 阶段门控报告
 - **写入者**: `roadmap.md` (gate-report 命令)
-- **读取者**: 用户 (手动 review), `roadmap.md` (advance 命令)
-- **格式**: Markdown
+- **读取者**: `guide.md` 扫描 → 推荐 `status --roadmap` 复核
+- **格式**: Markdown, 包含阶段完成情况 + 门控检查项 + 总结
 - **Git 跟踪**: 否
+- **关系**: 由 T12 (P1-3) 连接到 `guide.md` 推荐逻辑
 
 ### `.handoff.json`
 - **角色**: 记录 spec 端到 ship 端的交接状态（spec→ship handoff）
