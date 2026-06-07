@@ -28,6 +28,7 @@ git clone https://github.com/chisuhua/spec-workflow.git ~/.agents/skills/spec-wo
    - `skill_use("propose")` - 子技能(被 guide-spec 调用)
    - `skill_use("execute")` - 子技能(被 guide-ship 调用)
    - `skill_use("status")` - 子技能(被 guide-ship 调用或独立使用)
+   - `skill_use("prometheus-planning")` - 实施计划生成器(被 guide-ship 调用,带三级回退链)
 
 ## 目录结构
 
@@ -38,15 +39,16 @@ spec-workflow/
 ├── USAGE.md
 ├── install.sh           # 手动安装脚本
 └── skills/
-    ├── INSTALL.md       # 安装程序（第一入口）
-    ├── guide.md         # 推荐器入口
-    ├── guide-spec.md    # Spec 端状态机
-    ├── guide-ship.md    # Ship 端状态机
-    ├── propose.md       # 子技能(被 guide-spec 调用)
-    ├── execute.md       # 子技能(被 guide-ship 调用)
-    ├── roadmap.md       # 子技能(被 guide-spec 调用)
-    ├── deps.md          # 子技能(被 guide-spec 调用)
-    └── status.md        # 子技能(被 guide-ship 调用)
+    ├── INSTALL.md             # 安装程序（第一入口）
+    ├── guide.md               # 推荐器入口
+    ├── guide-spec.md          # Spec 端状态机
+    ├── guide-ship.md          # Ship 端状态机
+    ├── propose.md             # 子技能(被 guide-spec 调用)
+    ├── execute.md             # 子技能(被 guide-ship 调用)
+    ├── roadmap.md             # 子技能(被 guide-spec 调用)
+    ├── deps.md                # 子技能(被 guide-spec 调用)
+    ├── status.md              # 子技能(被 guide-ship 调用或独立使用)
+    └── prometheus-planning.md # 实施计划生成器(v1.1+,取代 prometheus-start-work)
 ```
 
 ## 工作原理
@@ -69,12 +71,35 @@ cp -r ~/.agents/skills/spec-workflow/skills /path/to/project/.opencode/skills/sp
 
 ## 前置条件
 
+### 必需
+
 - `openspec` CLI v1.3.1+
 - `git` 2.25+
 - `cmake` 3.16+
-- **`prometheus-start-work` skill** (必需,ship 端唯一实施计划生成器)
-  - 安装: `npx skills add chisuhua/prometheus-start-work -g -y`
 - **bats-core 1.10+** (测试基础设施,可选用 `bats tests/`)
+
+### 实施计划生成器(`prometheus-planning` 的三级回退链)
+
+`guide-ship` Phase 1 通过 `prometheus-planning` 技能生成 `.sisyphus/plans/<name>.md`。
+`prometheus-planning` 按以下优先级自动选择可用源,**无需用户介入**:
+
+| 优先级 | 来源 | 用途 | 安装 |
+|---|---|---|---|
+| 1️⃣ (推荐) | `oh-my-opencode` 内置 Prometheus (plan) 子代理 | 通过 `task(subagent_type="plan", ...)` 直接调用,零依赖,prompt 透明可审计 | `npm install -g oh-my-opencode` |
+| 2️⃣ (回退) | `superpowers/writing-plans` 技能 | opencode 内置 superpowers 套件成员,plan 阶段专业技能 | 检查 `~/.config/opencode/opencode.json` 是否含 superpowers 插件 |
+| 3️⃣ (最后回退,已弃用) | `prometheus-start-work` (外部 GitHub 技能) | 兼容 v1.0 用户,标记为 deprecated | `npx skills add chisuhua/prometheus-start-work -g -y` |
+| ❌ | 全部不可用 | 报错并退出,提示安装 1️⃣ 或 2️⃣ | — |
+
+**跳过后备** (不推荐,仅紧急时使用):
+```bash
+export SKIP_PROMETHEUS_PLANNING=yes  # 跳过计划生成,execute.md 阶段将无详细计划
+```
+
+**架构变更说明** (v1.0 → v1.1):
+- 解决了 P0-6 缺陷(`docs/audit/2026-06-05-workflow-audit.md:568`):`prometheus-start-work` 不再是隐式黑盒依赖
+- 新技能 `skills/prometheus-planning.md` 自带检测 + 三级回退 + 契约验证
+- 配置文件探测 + 试调双重验证,避免假阳性
+- 失败时给出可执行的修复命令,不再"请确认已安装"
 
 ## Skill 版本语义
 
