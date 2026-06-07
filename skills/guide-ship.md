@@ -2,7 +2,7 @@
 name: guide-ship
 description: Ship-side state machine for OpenSpec workflow — guides user from committed changes through worktree creation, Prometheus plan generation, execution, archive, and cleanup. Owns git worktrees and tasks.md progress. Called by user when starting work on a committed change.
 license: MIT
-compatibility: Requires openspec CLI v1.3.1+, git 2.25+, Prometheus start_work skill
+compatibility: Requires openspec CLI v1.3.1+, git 2.25+. Plan generation delegated to prometheus-planning (builtin Prometheus → superpowers/writing-plans → error).
 metadata:
   author: sisyphus
   version: "1.0"  # P0: Ship-side state machine, split from guide + plan
@@ -211,21 +211,29 @@ echo "✅ Worktree 验证通过"
 ```
 
 ```bash
-# === Prometheus start_work invocation ===
-# Generate detailed implementation plan via Prometheus
+# === Implementation plan generation ===
+# Delegate to prometheus-planning (replaces P0-6 undeclared prometheus-start-work dep).
+# Detection order: builtin Prometheus (oh-my-opencode) → superpowers/writing-plans → error.
 cd "$WT_PATH" || { echo "❌ 进入 worktree 失败: $WT_PATH"; exit 1; }
 
-# Early check for prometheus-start-work (P0-6)
-if ! skill_use("prometheus-start-work") --help 2>/dev/null; then
-  echo "❌ 必需依赖缺失: prometheus-start-work 技能未安装"
-  echo "   请先安装: npx skills add chisuhua/prometheus-start-work -g -y"
-  echo "   参考 README.md '前置条件' 节"
-  exit 1
-fi
+# Skill-level bypass for users who intentionally skip plan generation (known risk).
+if [ "${SKIP_PROMETHEUS_PLANNING:-no}" = "yes" ]; then
+    echo "⚠️  跳过实施计划生成 (SKIP_PROMETHEUS_PLANNING=yes)"
+    echo "   execute.md 阶段将无 .sisyphus/plans/<name>.md 可读"
+    touch ".sisyphus/plans/$CHANGE_NAME.md"  # 占位,避免下游契约检查失败
+    echo "- [ ] (占位任务) 手工填充 .sisyphus/plans/$CHANGE_NAME.md" >> ".sisyphus/plans/$CHANGE_NAME.md"
+else
+    # 委托给 prometheus-planning 技能,自带三级回退链 + 契约验证
+    if ! skill_use("prometheus-planning") 2>/dev/null; then
+        echo "❌ 实施计划生成失败 (所有回退路径均不可用)"
+        echo "   详情见 prometheus-planning 技能的错误输出"
+        echo "   参考 README.md '前置条件' 小节安装 oh-my-opencode 或 superpowers 套件"
+        exit 1
+    fi
 
-if skill_use("prometheus-start-work") 2>/dev/null; then
+    # 契约验证 (prometheus-planning 已自带,此处为双重保险)
     if [ ! -f ".sisyphus/plans/$CHANGE_NAME.md" ]; then
-        echo "❌ Prometheus start_work 未生成计划文件"
+        echo "❌ 计划文件缺失: .sisyphus/plans/$CHANGE_NAME.md"
         exit 1
     fi
     PLAN_TASK_COUNT=$(grep -c '^- \[' ".sisyphus/plans/$CHANGE_NAME.md" 2>/dev/null || echo 0)
@@ -234,10 +242,6 @@ if skill_use("prometheus-start-work") 2>/dev/null; then
         exit 1
     fi
     echo "✅ Prometheus 计划已生成: $PLAN_TASK_COUNT 任务"
-else
-    echo "❌ Prometheus start_work 调用失败"
-    echo "   请确认 prometheus-start-work 技能已安装"
-    exit 1
 fi
 ```
 

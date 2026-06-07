@@ -1,0 +1,7 @@
+change:
+  name: init-adr-directory
+  schema: spec-driven
+roadmap:
+  phase: "phase-1"
+  category: "general"
+  priority: "P2"

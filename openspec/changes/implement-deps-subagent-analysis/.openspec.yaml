@@ -1,0 +1,7 @@
+change:
+  name: implement-deps-subagent-analysis
+  schema: spec-driven
+roadmap:
+  phase: "phase-1"
+  category: "general"
+  priority: "P1"
