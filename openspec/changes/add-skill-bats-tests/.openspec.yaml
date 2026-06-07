@@ -1,0 +1,7 @@
+change:
+  name: add-skill-bats-tests
+  schema: spec-driven
+roadmap:
+  phase: "phase-1"
+  category: "general"
+  priority: "P0"
