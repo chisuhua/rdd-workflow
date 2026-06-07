@@ -1,0 +1,9 @@
+roadmap:
+  phase: "phase-1"
+  category: "general"
+  priority: "P1"
+  gate_checklist: []
+  cross_phase_deps: []
+  category_validation:
+    valid: true
+    reason: ""
