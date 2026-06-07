@@ -10,9 +10,14 @@ tests/
 ├── test_helper.bash   # common setup/teardown + assertion helpers
 ├── smoke.bats         # basic infrastructure sanity checks
 ├── _lib/              # bash helpers loaded via `load_lib <name>` in test files
-│                       # (populated in T2 with extracted lib functions)
+│   ├── test_state.bats          # unit tests for skills/_lib/state.sh
+│   ├── test_worktree.bats       # unit tests for skills/_lib/worktree.sh
+│   ├── test_skill.bats          # unit tests for tests/_lib/skill.bash helper
+│   └── skill.bash               # NEW: shared frontmatter/metadata/commands/section parsers
 └── integration/       # cross-component / CLI integration tests
-                        # (populated in T2/T3+ with .bats files)
+    ├── test_<issue-id>.bats     # regression locks for P0/P1/P2/P3 fixes
+    ├── test_*_skill.bats        # NEW: structural / metadata coverage per skill (9 files)
+    └── test_skill_metadata_consistency.bats  # NEW: package.json ↔ skills/ ↔ smoke.bats agreement
 ```
 
 ## Running
@@ -36,6 +41,9 @@ npm test
   - `setup()` / `teardown()` stubs
   - `load_lib <name>` to source `tests/_lib/<name>.bash`
   - `assert_file_exists`, `assert_file_contains`, `assert_cmd_succeeds`
+- Skill metadata tests use the `load_lib skill` helper, which provides
+  `skill_field`, `skill_meta_field`, `skill_commands`, `skill_has_section`,
+  and `skill_frontmatter_block` for parsing skill Markdown files.
 - Test data files belong in `tests/_lib/` (versioned) or `$BATS_TMPDIR` (auto-cleaned, ephemeral).
 - Use bash builtins; **do not add** mocking/coverage frameworks.
 - Tests must be runnable from repo root: `bats tests/`.
@@ -45,3 +53,27 @@ npm test
 - T2: extract pure functions from guide-spec / guide-ship into `lib/` and add `tests/_lib/` unit tests.
 - T3: add prometheus declaration round-trip tests under `tests/integration/`.
 - Future audit fixes: add `tests/integration/test_<issue-id>.bats` for each P0/P1 fix.
+
+## Skill coverage map
+
+Each skill has a dedicated integration test file that locks its
+frontmatter, dependency declarations, and command/section surface.
+Together with the cross-skill consistency check, these guard against
+metadata drift between `package.json`, `skills/*.md`, and `smoke.bats`.
+
+| Skill            | Test file                                                  |
+|------------------|------------------------------------------------------------|
+| INSTALL          | `tests/integration/test_install_skill.bats`                |
+| guide            | `tests/integration/test_guide_skill.bats`                  |
+| guide-spec       | `tests/integration/test_guide_spec_skill.bats`             |
+| guide-ship       | `tests/integration/test_guide_ship_skill.bats`             |
+| propose          | `tests/integration/test_propose_skill.bats`                |
+| execute          | `tests/integration/test_execute_skill.bats`                |
+| status           | `tests/integration/test_status_skill.bats`                 |
+| roadmap          | `tests/integration/test_roadmap_skill.bats`                |
+| deps             | `tests/integration/test_deps_skill.bats`                   |
+| (cross-skill)    | `tests/integration/test_skill_metadata_consistency.bats`   |
+| (helper)         | `tests/_lib/test_skill.bats` (8 cases for `skill.bash`)    |
+
+> `prometheus-planning.md` is intentionally excluded — it is
+> invoked by `guide-ship` rather than tested in isolation.
