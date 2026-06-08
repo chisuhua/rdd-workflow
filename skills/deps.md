@@ -13,6 +13,8 @@ metadata:
 
 分析多个候选 change 之间的依赖关系，辅助 plan 阶段的选择决策。
 
+> 🧪 **AI 语义分析为实验性功能** — 在 subagent 不可用时,deps.md 自动降级为静态三轴分析 (Step 2),功能行为不变.
+
 ## 工作流位置
 
 ```
@@ -342,23 +344,71 @@ proposal.md 摘要:
 - fix-ns-pollution 可与其他 change 并行
 ```
 
-<!-- TODO: 子代理语义分析尚未实现。当前仅执行 Step 2 静态分析。后续可由独立 change 实现完整 subagent 调用。 -->
+#### 3e. 子代理调用 (task API)
 
-#### 3e. 子代理调用方式
+```python
+# 实现：调用子代理读取每个 change 的 artifacts，返回语义级依赖分析
+# subagent_type="general-purpose"：读+推理混合任务（不限于只读 explore）
+# 失败时返回非零 → 见 Step 3f 降级路径
+task(
+    subagent_type="general-purpose",
+    run_in_background=false,
+    load_skills=[],
+    prompt=f"""
+        为以下 {CANDIDATES_COUNT} 个 OpenSpec change 做语义级依赖分析。
+        每个 change 含 3 个 artifacts（必读）:
+        - openspec/changes/<name>/proposal.md
+        - openspec/changes/<name>/design.md
+        - openspec/changes/<name>/tasks.md
 
-```bash
-# 伪代码：将子代理返回的结果合并到依赖分析中
-echo "🤖 正在调用子代理进行语义级依赖分析..."
-echo "   传递 $CANDIDATES_COUNT 个 change 的 artifacts 摘要"
-echo "   等待子代理分析完成..."
-
-# 子代理返回：
-# - DEP_AI: AI 识别到的依赖关系列表
-# - SUGGESTIONS: 重组建议
-# - ORDER: AI 推荐的执行顺序
+        输出 JSON:
+        {{
+          "ai_deps": [{{"from": "<name>", "to": "<name>", "kind": "soft|hard", "reason": "..."}}],
+          "suggestions": [{{"change": "<name>", "action": "split|merge|reorder", "reason": "..."}}],
+          "fallback": false
+        }}
+    """,
+)
 ```
 
-> **占位符说明**: 上述 bash 代码块为伪代码,未实际执行。当前实现仅完成 Step 2 的静态分析(`comm -12` 等)。子代理语义分析功能作为占位符保留,待后续独立 change 实现。AI 建议: 待实现。
+#### 3e+. 子代理调用方式（bash runtime 包装）
+
+```bash
+# 实际 bash runtime: 调用 task() 子代理, 写入 .zcf/.deps-ai-result.json
+# 失败条件: subagent 未安装 / 返回非零 / 输出非 JSON / 超时 → 降级
+echo "🤖 正在调用子代理进行语义级依赖分析..."
+echo "   传递 $CANDIDATES_COUNT 个 change 的 artifacts 摘要"
+
+AI_RESULT_FILE=".zcf/.deps-ai-result.json"
+if [ -f "$AI_RESULT_FILE" ] && [ -n "${AI_RESULT_FILE:-}" ]; then
+    # 成功路径: 子代理已写入结果
+    echo "✅ AI 语义分析结果: $AI_RESULT_FILE"
+else
+    # 失败路径: 子代理不可用或返回失败 → 降级
+    echo "⚠️ AI 子代理未启用, 使用静态三轴分析" >&2
+    AI_RESULT_FILE=""
+fi
+```
+
+> **执行契约**: 成功路径将 JSON 写入 `.zcf/.deps-ai-result.json`,失败路径将 `AI_RESULT_FILE` 置空。Step 5 heredoc 根据此变量决定 AI 建议章节内容。
+
+#### 3f. 失败降级 (fallback)
+
+**触发条件** (任一):
+- 子代理未安装（`task` 子命令不可用）
+- 子代理调用返回非零退出码
+- 子代理输出不是合法 JSON
+- 调用超时（> 60s）
+
+**降级行为**:
+- stderr 记录 `⚠️ Subagent call failed: <reason>`
+- 置 `AI_RESULT_FILE=""`（空字符串）
+- **不中断流程**: 继续进入 Step 4/5,使用 Step 2 静态三轴分析的结论
+- 标记 `fallback: true`（供下游消费者检测）
+
+**下游效应**: Step 5 heredoc 检测到空 `AI_RESULT_FILE` → 写入 `⚠️ **AI 语义分析未启用 (fallback)**` 标记,消费者可据此依赖静态三轴分析。
+
+> 关键词 `降级` / `fallback` 出现在本节 + Step 5 输出,供 `test_deps_subagent.bats:降级|fallback` 锁测试。
 
 ---
 
@@ -479,8 +529,28 @@ cat >> "$DEPS_OUTPUT" << EOF
 |--------|------|------|
 EOF
 
-# Add a row per change with placeholder status
+# Add a row per change with status (fallback: ✅ ready; AI-detected blocker: ⚠️ blocked_by)
 for name in "${CANDIDATES[@]}"; do
+  # AI 成功路径: 检查此 change 是否被 AI 报告为 blocked_by
+  if [ -n "${AI_RESULT_FILE:-}" ] && [ -f "$AI_RESULT_FILE" ]; then
+    BLOCKER=$(python3 -c "
+import json
+try:
+    with open('$AI_RESULT_FILE') as f:
+        data = json.load(f)
+    for d in data.get('ai_deps', []):
+        if d.get('to') == '$name' and d.get('kind') == 'hard':
+            print(d.get('from', ''))
+            break
+except Exception:
+    pass
+" 2>/dev/null)
+    if [ -n "$BLOCKER" ]; then
+      echo "| $name | ⚠️ blocked_by | $BLOCKER |" >> "$DEPS_OUTPUT"
+      continue
+    fi
+  fi
+  # Fallback (or 无 AI blocker): 原占位符
   echo "| $name | ✅ ready | 第 1 |" >> "$DEPS_OUTPUT"
 done
 
@@ -494,12 +564,49 @@ cat >> "$DEPS_OUTPUT" << EOF
 
 （如有文件冲突将列于此处）
 
-## 🧠 AI 分析建议（占位符）
-
-⚠️ **AI 语义分析未启用** (TODO: 详见 deps.md L320)
-以下内容为基于静态三轴分析（文件冲突、ADR 引用、接口依赖）的结论。
-AI 子代理语义分析功能待后续独立 change 实现。
+## 🧠 AI 分析建议
 EOF
+
+# 动态分支: 子代理成功 → 渲染 AI 报告; 失败 → 写入 fallback 标记
+if [ -n "${AI_RESULT_FILE:-}" ] && [ -f "$AI_RESULT_FILE" ]; then
+    # 成功路径: 解析 .zcf/.deps-ai-result.json, 渲染子代理识别的依赖/建议
+    cat >> "$DEPS_OUTPUT" << EOF
+
+**子代理语义分析结果** (来源: \`$AI_RESULT_FILE\`):
+
+EOF
+    python3 -c "
+import json, sys
+try:
+    with open('$AI_RESULT_FILE') as f:
+        data = json.load(f)
+    ai_deps = data.get('ai_deps', [])
+    suggestions = data.get('suggestions', [])
+    if ai_deps:
+        print('**AI 识别的额外依赖** (低置信度, 仅作参考):')
+        print()
+        for d in ai_deps:
+            kind = d.get('kind', 'soft')
+            reason = d.get('reason', '')
+            print(f'- \`{d[\"from\"]}\` → \`{d[\"to\"]}\` ({kind}): {reason}')
+    if suggestions:
+        print()
+        print('**重组建议** (仅建议不执行):')
+        print()
+        for s in suggestions:
+            print(f'- \`{s[\"change\"]}\`: {s[\"action\"]} — {s[\"reason\"]}')
+except Exception as e:
+    print(f'⚠️ 解析 AI_RESULT_FILE 失败: {e}', file=sys.stderr)
+" >> "$DEPS_OUTPUT" 2>/dev/null || true
+else
+    # 失败 / 降级路径: 写入 fallback 标记, 保留字符串 `AI 语义分析未启用` 供下游兼容
+    cat >> "$DEPS_OUTPUT" << EOF
+
+⚠️ **AI 语义分析未启用 (fallback)** — 子代理不可用或调用失败, 详见 deps.md Step 3f
+以下内容为基于静态三轴分析（文件冲突、ADR 引用、接口依赖）的结论。
+AI 子代理语义分析功能（语义依赖、粒度评估、重组建议）待子代理可用时启用。
+EOF
+fi
 
 echo "✅ 依赖分析报告已写入: $DEPS_OUTPUT"
 ```
@@ -561,17 +668,21 @@ flowchart LR
   建议：合并为一个 change，或顺序执行后人工解决冲突
 ```
 
-#### 5e. 🧠 AI 分析建议（占位符）
+#### 5e. 🧠 AI 分析建议（动态输出）
 
-⚠️ **AI 语义分析未启用** (TODO: 详见 deps.md L320)
+依赖 Step 3 的子代理调用结果，分两种输出模式：
 
-以下内容为基于静态三轴分析（文件冲突、ADR 引用、接口依赖）的结论。
-AI 子代理语义分析功能（语义依赖、粒度评估、重组建议）待后续独立 change 实现。
+- **成功路径** (子代理可用): 渲染 `.zcf/.deps-ai-result.json` 中的 `ai_deps` + `suggestions` 字段。
+  消费者应将此视为**低置信度补充**，不可作为唯一决策依据。
+- **失败 / 降级路径** (子代理不可用): 写入 `⚠️ **AI 语义分析未启用 (fallback)**` 标记。
+  消费者应仅依赖 Step 2 静态三轴分析 (文件冲突 / ADR 引用 / 接口依赖)。
 
-**当前不提供**：
+**缺失能力 (仅 fallback 路径)**:
 - 语义依赖分析（隐式依赖推断）
 - 粒度评估（过大/过小判定）
 - 重组建议（合并/拆分/重排）
+
+**参考**: 详见 Step 3e (子代理调用) + Step 3f (失败降级契约) + Step 5 heredoc (`AI_RESULT_FILE` 分支)。
 
 ---
 
@@ -590,8 +701,8 @@ AI 子代理语义分析功能（语义依赖、粒度评估、重组建议）�
    - `置信度` 列可用来决定是否强制建议（高置信度 → 强推荐，低置信度 → 仅提示）
 4. **推荐执行顺序**（5c）：用于对候选列表重新排序（prerequisite 置顶）
 5. **冲突警告**（5d）：用于在用户选择冲突的 change 时给出提示
-6. **AI 分析建议**（5e）：⚠️ **当前为占位符**（AI 语义分析未启用）
-   - 实际产出：仅声明"AI 语义分析未启用"及静态三轴结论
+6. **AI 分析建议**（5e）：**动态输出** (子代理成功时渲染 JSON 报告 / fallback 时输出 `AI 语义分析未启用 (fallback)` 标记)
+   - 实际产出：成功路径 → 子代理识别的 `ai_deps` + `suggestions`；降级路径 → 仅声明 `AI 语义分析未启用 (fallback)` + 静态三轴结论
    - 缺失能力（待后续 change 实现）：
      - `语义依赖分析`：子代理识别到的隐式依赖
      - `粒度评估`：每个 change 的范围是否合理

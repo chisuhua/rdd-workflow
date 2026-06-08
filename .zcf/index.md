@@ -25,6 +25,14 @@
 - **格式**: Markdown, 5 章节 (依赖图 / 状态表 / 推荐顺序 / 冲突警告 / AI 建议)
 - **Git 跟踪**: 否
 
+### `.deps-ai-result.json`
+- **角色**: subagent 语义分析的输出 (Step 3 成功路径), 包含 AI 识别的隐式依赖 + 重组建议
+- **写入者**: `deps.md` Step 3 (3e/3e+) — 由 subagent 调用写入
+- **读取者**: `deps.md` Step 5 (5a/5e) — 解析后渲染到 `.deps-output.md` 的 AI 章节
+- **格式**: JSON, `{ai_deps: [...], suggestions: [...], fallback: bool}`
+- **Git 跟踪**: 否
+- **关系**: 缺失或 `fallback: true` 时, Step 5 写入 `AI 语义分析未启用 (fallback)` 标记
+
 ### `.phase-gate-report.md`
 - **角色**: 阶段门控报告
 - **写入者**: `roadmap.md` (gate-report 命令)
