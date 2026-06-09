@@ -5,8 +5,8 @@
 # Usage:
 #   source skills/_lib/worktree.sh
 #   path=$(wt_path_for_branch "test-change")
-#   if is_change_committed "my-change"; then ...; fi
 #   default=$(find_default_branch)
+#   main=$(main_repo_root)
 
 # wt_path_for_branch <branch>
 #   Returns absolute path of worktree for given branch, or empty string if not found
@@ -23,31 +23,37 @@ wt_path_for_branch() {
     '
 }
 
-# is_change_committed <name>
-#   Returns 0 if openspec/changes/<name>/.openspec.yaml is reachable via HEAD, 1 otherwise
-#   Uses subshell + git show (handles non-HEAD cases correctly).
-#   Resolves PROJECT_ROOT from env, then falls back to git toplevel, then pwd.
-#   Exit code is normalized to 0/1 (git show returns 128 on missing path).
-is_change_committed() {
-  local name="${1:-}"
-  [[ -z "$name" ]] && return 1
-  (cd "${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}" 2>/dev/null && \
-    git show "HEAD:openspec/changes/$name/.openspec.yaml" >/dev/null 2>&1) && return 0
-  return 1
-}
-
 # find_default_branch
 #   Returns the default branch name (main, master, develop, etc.)
-#   Reads from refs/remotes/origin/HEAD if available, falls back to current branch.
+#   Reads from refs/remotes/origin/HEAD if available, falls back to probing
+#   well-known default branch names in the MAIN repo (not the worktree).
+#   Never returns the worktree's own openspec/<name> branch.
 #   Used by archive/cleanup helpers that need a base ref.
+#   P0-fix (general-harden-doc-consistency): previous fallback `git rev-parse
+#   --abbrev-ref HEAD` returned the worktree branch when called from inside
+#   a worktree, causing archive_change to self-merge.
 find_default_branch() {
   local branch
   branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@.*/@@')
   if [[ -n "$branch" ]]; then
     echo "$branch"
-  else
-    git rev-parse --abbrev-ref HEAD 2>/dev/null
+    return
   fi
+
+  # Fallback: probe well-known default branch names in the MAIN repo.
+  # `main_repo_root` is defined later in this file; bash resolves at call time.
+  local main_root
+  main_root=$(main_repo_root)
+  for candidate in main master develop trunk; do
+    if git -C "$main_root" rev-parse --verify --quiet "refs/heads/$candidate" >/dev/null 2>&1; then
+      echo "$candidate"
+      return
+    fi
+  done
+
+  # Last resort: init.defaultBranch config, or current branch in main repo.
+  branch=$(git config --get init.defaultBranch 2>/dev/null || git -C "$main_root" rev-parse --abbrev-ref HEAD 2>/dev/null)
+  echo "$branch"
 }
 
 # main_repo_root

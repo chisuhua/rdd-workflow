@@ -2,8 +2,8 @@
 # tests/_lib/test_worktree.bats
 # Unit tests for skills/_lib/worktree.sh helpers:
 #   - wt_path_for_branch
-#   - is_change_committed
 #   - find_default_branch
+#   - main_repo_root
 #
 # Run: bats tests/_lib/test_worktree.bats
 
@@ -13,10 +13,8 @@ load_lib worktree
 setup() {
   TEST_REPO=$(mktemp -d)
   cd "$TEST_REPO"
-  # Override PROJECT_ROOT so is_change_committed resolves to this scratch repo
-  # (the function takes PROJECT_ROOT over the current directory's git toplevel)
   export PROJECT_ROOT="$TEST_REPO"
-  git init -q
+  git init -q -b master
   git config user.email "test@test"
   git config user.name "test"
   echo "initial" > README.md
@@ -42,44 +40,30 @@ teardown() {
   [[ -z "$result" ]]
 }
 
-@test "is_change_committed returns 0 for committed file" {
-  mkdir -p openspec/changes/real
-  touch openspec/changes/real/.openspec.yaml
-  git add openspec/changes/real/.openspec.yaml
-  git commit -q -m "add change"
-  run is_change_committed "real"
-  [ "$status" -eq 0 ]
-}
-
-@test "is_change_committed returns 1 for uncommitted" {
-  mkdir -p openspec/changes/fake
-  touch openspec/changes/fake/.openspec.yaml
-  # NOT committing
-  run is_change_committed "fake"
-  [ "$status" -eq 1 ]
-}
-
-@test "find_default_branch returns 'main' or current" {
+@test "find_default_branch returns 'master' or 'main'" {
   result=$(find_default_branch)
-  [[ "$result" == "main" ]] || [[ "$result" == "master" ]]
+  [[ "$result" == "master" ]] || [[ "$result" == "main" ]]
+}
+
+@test "find_default_branch does not return openspec branch from worktree" {
+  cd "$TEST_REPO/.zcf/test-1-wt"
+  result=$(find_default_branch)
+  [[ "$result" != openspec/* ]]
 }
 
 @test "main_repo_root returns main repo path from worktree" {
-  # From inside a worktree, must return the MAIN repo (not the worktree)
   cd "$TEST_REPO/.zcf/test-1-wt"
   result=$(main_repo_root)
   [ "$result" = "$TEST_REPO" ]
 }
 
 @test "main_repo_root returns main repo path from main repo" {
-  # From the main repo, must return the main repo path
   cd "$TEST_REPO"
   result=$(main_repo_root)
   [ "$result" = "$TEST_REPO" ]
 }
 
 @test "main_repo_root returns main repo from external worktree" {
-  # Create a worktree outside the main repo's tree
   ext_wt=$(mktemp -d)
   git -C "$TEST_REPO" worktree add -b openspec/external "$ext_wt" HEAD >/dev/null 2>&1
   cd "$ext_wt"
