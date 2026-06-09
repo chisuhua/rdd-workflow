@@ -68,3 +68,13 @@
 
 > Tasks marked (✅ done) were completed in the pre-change audit phase.
 > Tasks 2.1-2.6 and 7.6 are the NEW execution work for this change.
+
+## Notes (pre-existing issues to address in v1.2)
+
+- [ ] 9.0 **Ghost change cleanup** (deferred to v1.2): Master currently tracks
+      `openspec/changes/{add-skill-bats-tests,implement-deps-subagent-analysis,init-adr-directory}/`
+      AND has untracked copies at `openspec/changes/archive/<date>-<name>/`. The prior
+      `archive_change` calls created archive copies but did NOT remove the originals from
+      master's tracked tree. This is a pre-existing bug, NOT caused by harden-doc-consistency.
+      Fix in v1.2: `git rm -r openspec/changes/{add-skill-bats-tests,implement-deps-subagent-analysis,init-adr-directory}/`
+      then commit.
