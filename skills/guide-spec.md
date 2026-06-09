@@ -145,7 +145,7 @@ echo "📋 活跃 changes: $ACTIVE"
 
 ✅ openspec CLI: 1.3.1 (/home/ubuntu/.npm-global/bin/openspec)
 ✅ git 工作区干净
-📌 当前分支: main
+📌 当前分支: master
 ✅ 构建目录存在
 📋 活跃 changes: 0
 
@@ -259,7 +259,7 @@ fi
 
   openspec CLI: ✅ 1.3.1
   git 工作区:  ✅ 干净
-  当前分支:    main
+  当前分支:    master
   构建目录:    ✅ 存在
   活跃 changes: 0
 

@@ -185,7 +185,7 @@ if [ "$WT_BRANCH" = "DETACHED" ]; then
     echo "❌ 错误：Worktree 处于 detached HEAD 状态！"
     echo ""
     echo "  这通常意味着 worktree 分支创建失败。"
-    echo "  新提交的代码将无法被 main 分支 merge。"
+    echo "  新提交的代码将无法被 ${DEFAULT_BRANCH:-master} 分支 merge。"
     echo ""
     echo "  请执行以下命令修复："
     echo "    cd $WT_PATH"

@@ -31,6 +31,14 @@ Mode D: 路线图状态 — 查看 roadmap 阶段进度和阶段门控
 ## 工作目录检测（所有模式通用）
 
 ```bash
+# Source helper (worktree-aware functions)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+if [ -f "$SCRIPT_DIR/_lib/worktree.sh" ]; then
+  source "$SCRIPT_DIR/_lib/worktree.sh"
+fi
+```
+
+```bash
 # 自动检测项目根目录（用于全局安装的技能）
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 # 确定当前 git 上下文
@@ -65,9 +73,9 @@ git worktree list
 
 输出示例：
 ```
-/path/to/CppHDL                          main
-/path/to/CppHDL/.zcf/add-uart-wt         openspec/add-uart
-/path/to/CppHDL/.zcf/fix-spi-wt          openspec/fix-spi
+/path/to/PROJECT_ROOT                    master
+/path/to/PROJECT_ROOT/.zcf/add-uart-wt   openspec/add-uart
+/path/to/PROJECT_ROOT/.zcf/fix-spi-wt    openspec/fix-spi
 ```
 
 ### Step 2：获取 openspec 列表
@@ -153,14 +161,8 @@ else
 fi
 
 # 通过 git worktree list 动态查找 worktree 路径（不硬编码 $PROJECT_ROOT/.zcf/<name>-wt）
-# Inline wt_path_for_branch (replaces P0-7 $2 BUG; $2 is commit hash, $3 is "[branch]")
-# Note: `git worktree list` wraps branch in [brackets], so compare to "[openspec/X]"
-wt_path_for_branch_inline() {
-  local branch="${1:-}"
-  [[ -z "$branch" ]] && return 1
-  git worktree list 2>/dev/null | awk -v br="[openspec/$branch]" '$3 == br {print $1; exit}'
-}
-WORKTREE_PATH=$(wt_path_for_branch_inline "<name>")
+# 使用 _lib/worktree.sh 提供的 helper（该文件在前面已 source）
+WORKTREE_PATH=$(wt_path_for_branch "<name>")
 HAS_WORKTREE=false
 if [ -n "$WORKTREE_PATH" ] && [ -d "$WORKTREE_PATH" ]; then
     HAS_WORKTREE=true
@@ -321,7 +323,7 @@ archive_change "<name>"
 🎉 Change <name> 归档完成
 
 已完成:
-  ✅ Merge: openspec/<name> → main
+  ✅ Merge: openspec/<name> → ${DEFAULT_BRANCH:-master}
   ✅ Archive: openspec/changes/archive/<date>-<name>/
   ✅ Cleanup: worktree + branch 已删除
 
@@ -461,8 +463,8 @@ esac
 
 ## 关键约束
 
-1. **归档前必须先 merge**：确保代码变更已合入 main 分支
+1. **归档前必须先 merge**：确保代码变更已合入 default branch（`master`/`main`/`develop`，由 `find_default_branch` 动态检测）
 2. **不同步用 sed 修复**：**不重跑 plan**（会覆盖 `.sisyphus/plans/` 中的任务分解细节）
-3. **所有操作可从 main TUI session 完成**：通过 `workdir` 参数在 worktree 内执行
+3. **所有操作可从主仓库 TUI session 完成**：通过 `workdir` 参数在 worktree 内执行
 4. **归档不可逆**：确认全部完成后再执行模式 C
 5. **Roadmap 状态自动更新**：execute 完成后自动更新 .roadmap-state.json

@@ -4,7 +4,7 @@
 
 This document is the single source of truth for how the
 `proposal-suggestions.md` file is structured, read, and written by the
-spec-workflow skills (`propose`, `guide-spec`, `guide`, `status`).
+spec-workflow skills (`propose`, `guide-spec`, `guide`, `status`, `deps`).
 
 ---
 
@@ -105,6 +105,7 @@ All five skills that touch `proposal-suggestions.md` MUST read it as JSON:
 | `guide-spec.md` | Phase 2 display (`cat proposal-suggestions.md`)                |
 | `guide.md`      | Priority 6 (recommend `guide-spec` if any `待创建` exists)      |
 | `status.md`     | Mode C post-archive loop check                                  |
+| `deps.md`       | Step 1b (lookup suggestion metadata for change candidates)     |
 
 The helpers in `skills/_lib/state.sh` (`read_suggestions`,
 `write_suggestions`) centralize the read/write logic so consumers don't

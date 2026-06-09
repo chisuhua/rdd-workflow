@@ -54,6 +54,6 @@ ADR-NNNN-<slug>.md
 
 | 编号 | 标题 | 状态 | 日期 |
 |------|------|------|------|
-| [0001](./ADR-0001-propose-plan-execute-state-machine.md) | spec-workflow 状态机分相（propose → plan → execute → status → archive） | 已采纳 | 2026-06-08 |
+| [0001](./ADR-0001-propose-plan-execute-state-machine.md) | spec-workflow 状态机分相（spec 端 / ship 端状态机分离） | 已采纳 | 2026-06-08 |
 
 > 该表由 `propose.md` Phase 1a 自动扫描 ADR 文件头生成（无需手工维护）。

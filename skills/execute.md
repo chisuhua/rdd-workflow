@@ -166,7 +166,7 @@ fi
 ```
 
 > **为什么必须在 worktree 内执行？**
-> - 避免对 main 分支的直接修改
+> - 避免对 default branch（`master`/`main`/`develop`，由 `find_default_branch` 检测）的直接修改
 > - 独立构建目录（`.zcf/<name>-wt/build/`）互不干扰
 > - 支持并行执行多个 change（每个 worktree 独立）
 > - 隔离 git 操作，merge 时无冲突
@@ -298,17 +298,9 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 # P0-7 修复：`git worktree list` 默认输出字段为
 #   $1=path  $2=<sha>  $3=[branch]
 # 因此分支在 $3，旧 awk '$2 ~ /^openspec\//' 永远匹配不到。
-# 内联 wt_path_for_branch_inline() 是为了避免 markdown bash 块对 _lib 函数的
-# 隐式 source 依赖——每个块都自包含，跨 skill 直接复制也能工作。
-# 注意：`git worktree list` 默认格式把分支名包在方括号里（[branch]），
-# 所以比较时要把 br 也包成 "[openspec/$branch]"，否则 $3 == br 永远不成立。
-wt_path_for_branch_inline() {
-  local branch="${1:-}"
-  [[ -z "$branch" ]] && return 1
-  git worktree list 2>/dev/null | awk -v br="[openspec/$branch]" '$3 == br {print $1; exit}'
-}
+# 使用 _lib/worktree.sh::wt_path_for_branch（该文件已 source），统一走 --porcelain 解析
 OTHER_WTS=""
-CURRENT_WT=$(wt_path_for_branch_inline "$CHANGE_NAME")
+CURRENT_WT=$(wt_path_for_branch "$CHANGE_NAME")
 for wt in $(git worktree list 2>/dev/null | awk '$3 ~ /^\[openspec\// {print $1}'); do
   if [ "$wt" != "$CURRENT_WT" ]; then
     OTHER_WTS="$OTHER_WTS $wt"

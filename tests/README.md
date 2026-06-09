@@ -7,17 +7,18 @@ Bats-core test infrastructure for the spec-workflow skill pack.
 ```
 tests/
 ├── README.md          # this file
-├── test_helper.bash   # common setup/teardown + assertion helpers
-├── smoke.bats         # basic infrastructure sanity checks
-├── _lib/              # bash helpers loaded via `load_lib <name>` in test files
-│   ├── test_state.bats          # unit tests for skills/_lib/state.sh
-│   ├── test_worktree.bats       # unit tests for skills/_lib/worktree.sh
-│   ├── test_skill.bats          # unit tests for tests/_lib/skill.bash helper
-│   └── skill.bash               # NEW: shared frontmatter/metadata/commands/section parsers
+├── test_helper.bash   # common setup/teardown + assertion helpers (load_lib resolver)
+├── smoke.bats         # basic infrastructure sanity checks (7 cases)
+├── _lib/              # bash helpers + per-helper unit tests
+│   ├── skill.bash              # shared frontmatter/metadata/commands/section parsers
+│   ├── deps-subagent.bash      # deps subagent step-3 validation
+│   ├── test_skill.bats         # unit tests for skill.bash (8 cases)
+│   └── test_worktree.bats      # unit tests for skills/_lib/worktree.sh
 └── integration/       # cross-component / CLI integration tests
-    ├── test_<issue-id>.bats     # regression locks for P0/P1/P2/P3 fixes
-    ├── test_*_skill.bats        # NEW: structural / metadata coverage per skill (9 files)
-    └── test_skill_metadata_consistency.bats  # NEW: package.json ↔ skills/ ↔ smoke.bats agreement
+    ├── test_<issue-id>.bats    # regression locks for P0/P1/P2/P3 fixes
+    ├── test_*_skill.bats       # structural / metadata coverage per skill (9 files)
+    ├── test_*_subagent.bats    # subagent integration tests
+    └── test_skill_metadata_consistency.bats  # package.json ↔ skills/ ↔ smoke.bats agreement
 ```
 
 ## Running
