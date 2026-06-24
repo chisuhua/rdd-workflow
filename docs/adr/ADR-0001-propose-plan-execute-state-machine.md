@@ -1,8 +1,9 @@
 # ADR-0001: spec-workflow 状态机分相（spec 端 / ship 端状态机分离）
 
-> **状态**: 已采纳
+> **状态**: 已替代为 ADR-0002 + ADR-0003（**v2.0 未实施** — 草案）
 > **日期**: 2026-06-08
 > **决策者**: sisyphus
+> **实施状态**: 当前 v1.x 代码（`skills/guide-spec.md` + `skills/guide-ship.md`）仍遵循本 ADR 描述的双阶段架构。ADR-0002 / ADR-0003 是 v2.0 的设计草案，**尚未实施**。本 ADR 状态在 v2.0 实际发布前应理解为"被新决策覆盖，但当前生效的代码仍是 v1.x 实现"。
 
 ## Context
 
@@ -101,3 +102,4 @@ spec-workflow 是一个面向 OpenSpec 变更管理的工作流技能包。在 s
 - `tests/integration/test_guide_skill.bats` — 推荐器单元测试
 - `tests/integration/test_guide_spec_skill.bats` — spec 状态机单元测试
 - `tests/integration/test_guide_ship_skill.bats` — ship 状态机单元测试
+
