@@ -49,7 +49,7 @@
 
 ## 6. Integration & Documentation
 
-- [ ] 6.1 Update `docs/v2-api-reference.md` with new public APIs
-- [ ] 6.2 Update `docs/v2-config-schema.md` with `.spec-workflow.json` schema
+- [x] 6.1 Update `docs/v2-api-reference.md` with new public APIs
+- [x] 6.2 Update `docs/v2-config-schema.md` with `.spec-workflow.json` schema
 - [ ] 6.3 Run full test suite: `pytest tests/unit/`
 - [ ] 6.4 Verify zero regressions in v1.x skills (run `tests/integration/`)
