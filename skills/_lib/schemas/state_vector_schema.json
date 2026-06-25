@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://spec-workflow.dev/schemas/state_vector_schema.json",
+  "title": "Spec Workflow v2 State Vector",
+  "description": "Unified workflow state. Single source of truth; replaces 13 v1.x state files.",
+  "type": "object",
+  "required": ["version", "goal", "arch_side", "plan_side", "ship_side", "loop_state", "memory", "metadata"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "2.0",
+      "description": "Schema version. Must be \"2.0\"."
+    },
+    "goal": {
+      "type": ["string", "null"],
+      "description": "User's high-level goal string. May be null before setup completes."
+    },
+    "arch_side": {
+      "type": "object",
+      "description": "Spec-side state (setup → roadmap → propose → deps).",
+      "required": ["phase", "current_change"],
+      "additionalProperties": false,
+      "properties": {
+        "phase": {
+          "type": "string",
+          "enum": ["setup", "roadmap", "propose", "deps", "done", "idle"]
+        },
+        "current_change": { "type": ["string", "null"] },
+        "completed_changes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "plan_side": {
+      "type": "object",
+      "description": "Plan-side state (planning artifacts for the active change).",
+      "required": ["active_change", "plan_file"],
+      "additionalProperties": false,
+      "properties": {
+        "active_change": { "type": ["string", "null"] },
+        "plan_file": { "type": ["string", "null"] },
+        "worktree_path": { "type": ["string", "null"] }
+      }
+    },
+    "ship_side": {
+      "type": "object",
+      "description": "Ship-side state (execute, status, archive).",
+      "required": ["current_phase", "progress"],
+      "additionalProperties": false,
+      "properties": {
+        "current_phase": {
+          "type": "string",
+          "enum": ["idle", "execute", "verify", "archive", "done"]
+        },
+        "progress": {
+          "type": "object",
+          "required": ["complete", "total"],
+          "properties": {
+            "complete": { "type": "integer", "minimum": 0 },
+            "total": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "loop_state": {
+      "type": "object",
+      "description": "Loop engine state (v2-loop-engine).",
+      "required": ["mode", "iteration"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "type": "string", "enum": ["idle", "loop", "menu", "hybrid"] },
+        "iteration": { "type": "integer", "minimum": 0 },
+        "last_action": { "type": ["string", "null"] },
+        "last_action_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "description": "Persistent memory across iterations (v2-memory-system).",
+      "required": ["notes", "learnings"],
+      "additionalProperties": false,
+      "properties": {
+        "notes": { "type": "string" },
+        "learnings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["text", "created_at"],
+            "properties": {
+              "text": { "type": "string" },
+              "created_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Operational metadata for debugging and audit.",
+      "required": ["spec_workflow_version", "created_at", "updated_at"],
+      "additionalProperties": false,
+      "properties": {
+        "spec_workflow_version": { "type": "string" },
+        "git_commit": { "type": ["string", "null"] },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "checksum": { "type": "string", "description": "SHA-256 of canonical JSON, for corruption detection." }
+      }
+    }
+  }
+}

@@ -837,3 +837,84 @@ spec-workflow config validate --file .spec-workflow/loops/complete-changes.yaml
 **最后更新**: 2026-06-22  
 **下次审查**: v2.0 发布后
 
+
+---
+
+## v2.0 Config Schema (Phase 1)
+
+The v2 configuration system reads from up to five sources, merged in strict
+priority order (highest to lowest):
+
+1. **Runtime overrides** — passed to `ConfigParser.parse(runtime_overrides=...)`
+2. **`loop.yaml`** (project root)
+3. **`.spec-workflow.json`** (project root)
+4. **Environment variables** (`SPEC_WORKFLOW_*`)
+5. **Built-in defaults** (from `skills/_lib/defaults.py`)
+
+### `.spec-workflow.json` Schema
+
+```json
+{
+  "version": "2.0",
+  "interaction": {
+    "mode": "hybrid",
+    "menu_items": ["propose", "execute", "status", "archive"]
+  },
+  "loop": {
+    "max_iterations": 100,
+    "max_retries": 3,
+    "retry_backoff_seconds": 5
+  },
+  "state": {
+    "path": ".spec-workflow/state-vector.json",
+    "lock_timeout_seconds": 10.0
+  },
+  "event_log": {
+    "path": ".spec-workflow/event-log.jsonl",
+    "max_size_mb": 50
+  },
+  "gate": {
+    "load_defaults": true,
+    "auto_allow_warnings": true
+  },
+  "sync": {
+    "v1x_enabled": true,
+    "conflict_resolution": "state_vector_wins"
+  }
+}
+```
+
+### Field Reference
+
+| Path | Type | Default | Description |
+|---|---|---|---|
+| `version` | string | `"2.0"` | Schema version (required) |
+| `interaction.mode` | enum | `"hybrid"` | One of `loop`, `menu`, `hybrid` |
+| `interaction.menu_items` | array | `["propose","execute","status","archive"]` | Items shown in menu mode |
+| `loop.max_iterations` | int > 0 | `100` | Hard cap on loop iterations |
+| `loop.max_retries` | int ≥ 0 | `3` | Retries on transient failure |
+| `loop.retry_backoff_seconds` | float ≥ 0 | `5` | Wait between retries |
+| `state.path` | string | `".spec-workflow/state-vector.json"` | State vector location |
+| `state.lock_timeout_seconds` | float > 0 | `10.0` | File lock timeout |
+| `event_log.path` | string | `".spec-workflow/event-log.jsonl"` | Event log location |
+| `event_log.max_size_mb` | int > 0 | `50` | Soft cap (for future rotation) |
+| `gate.load_defaults` | bool | `true` | Include default gate checks |
+| `gate.auto_allow_warnings` | bool | `true` | Proceed past warning-severity gate checks |
+| `sync.v1x_enabled` | bool | `true` | Master switch for v1.x compatibility layer |
+| `sync.conflict_resolution` | enum | `"state_vector_wins"` | The only supported value |
+
+### Environment Variables
+
+| Variable | Mapped To | Coerced Type |
+|---|---|---|
+| `SPEC_WORKFLOW_MODE` | `interaction.mode` | string |
+| `SPEC_WORKFLOW_MAX_ITERATIONS` | `loop.max_iterations` | int |
+| `SPEC_WORKFLOW_MAX_RETRIES` | `loop.max_retries` | int |
+| `SPEC_WORKFLOW_STATE_PATH` | `state.path` | string |
+| `SPEC_WORKFLOW_SYNC_DISABLED` | (disables sync layer) | bool |
+
+### `loop.yaml` (alternative config)
+
+A YAML file with the same structure as `.spec-workflow.json`. `loop.yaml` takes
+precedence over `.spec-workflow.json` when both exist. Useful for separating
+"project defaults" (in JSON) from "operator overrides" (in YAML).
