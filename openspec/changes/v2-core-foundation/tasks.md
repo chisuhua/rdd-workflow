@@ -40,12 +40,12 @@
 
 ## 5. v1.x Sync Layer (P1-T5)
 
-- [ ] 5.1 Create `skills/_lib/sync_state.py` with `sync_state_vector_to_legacy()` and `sync_legacy_to_state_vector()`
-- [ ] 5.2 Sync targets: `.zcf/.roadmap-state.json`, `proposal-suggestions.md`, `openspec/changes/<name>/.openspec.yaml`
-- [ ] 5.3 Implement conflict detection via mtime; state vector wins on conflict
-- [ ] 5.4 Log conflicts to event log
-- [ ] 5.5 Write unit tests: state vector update triggers v1.x sync, v1.x change triggers state update, latency < 50ms, conflict resolution correct
-- [ ] 5.6 Verify sync layer can be disabled via env var (escape hatch)
+- [x] 5.1 Create `skills/_lib/sync_state.py` with `sync_state_vector_to_legacy()` and `sync_legacy_to_state_vector()`
+- [x] 5.2 Sync targets: `.zcf/.roadmap-state.json`, `proposal-suggestions.md`, `openspec/changes/<name>/.openspec.yaml`
+- [x] 5.3 Implement conflict detection via mtime; state vector wins on conflict
+- [x] 5.4 Log conflicts to event log
+- [x] 5.5 Write unit tests: state vector update triggers v1.x sync, v1.x change triggers state update, latency < 50ms, conflict resolution correct
+- [x] 5.6 Verify sync layer can be disabled via env var (escape hatch)
 
 ## 6. Integration & Documentation
 
