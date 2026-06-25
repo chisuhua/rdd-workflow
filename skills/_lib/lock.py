@@ -86,12 +86,14 @@ class FileLock:
         """Release the lock. Idempotent — safe to call when not held."""
         if not self._held:
             return
+        assert self._fd is not None  # invariant: _held ⇒ _fd is set
+        fd = self._fd
+        self._fd = None
+        self._held = False
         try:
-            fcntl.flock(self._fd, fcntl.LOCK_UN)
+            fcntl.flock(fd, fcntl.LOCK_UN)
         finally:
-            os.close(self._fd)
-            self._fd = None
-            self._held = False
+            os.close(fd)
 
     def __enter__(self) -> "FileLock":
         self.acquire()
