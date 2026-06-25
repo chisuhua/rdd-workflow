@@ -783,3 +783,137 @@ memory.record_execution({
 **最后更新**: 2026-06-22  
 **下次审查**: v2.0 发布后
 
+
+---
+
+## v2.0 Core Foundation APIs (Phase 1)
+
+The following public APIs are added in `v2-core-foundation` and serve as the
+foundation for higher-level v2 subsystems (loop engine, advanced features).
+
+### `skills/_lib/lock.py` — `FileLock`
+
+```python
+from skills._lib.lock import FileLock, LockTimeout
+
+with FileLock("/path/to/state.lock", timeout=10.0) as lock:
+    # ... critical section ...
+    pass
+# Lock is released automatically, even on exception.
+```
+
+- `path` (str): Path to the lock file. Created on first acquire.
+- `timeout` (float, default 10.0): Seconds to wait. `0.0` for non-blocking.
+- `exclusive` (bool, default True): Exclusive (writer) vs shared (reader).
+
+Raises `LockTimeout` if the lock cannot be acquired within the timeout.
+
+### `skills/_lib/state_vector.py` — `StateVector`
+
+```python
+from skills._lib.state_vector import StateVector
+
+# Create a default state
+sv = StateVector.create_default()
+sv.update_field("goal", "ship v2.0")
+sv.update_field("loop_state.iteration", 1)
+
+# Persist atomically
+sv.save(".spec-workflow/state-vector.json")
+
+# Load (returns default if file missing)
+sv = StateVector.load(".spec-workflow/state-vector.json")
+print(sv.get_field("goal"))  # "ship v2.0"
+print(sv.get_field("loop_state.iteration"))  # 1
+```
+
+- All writes are protected by `FileLock` (10s timeout).
+- All writes are JSON-Schema validated against `state_vector_schema.json`.
+- All writes compute a SHA-256 checksum of the canonical JSON for corruption detection.
+- `update_field(dotted_path, value)` supports nested fields.
+
+### `skills/_lib/event_log.py` — `EventLog`
+
+```python
+from skills._lib.event_log import EventLog
+from skills._lib.event_types import EventType, Severity
+
+log = EventLog(".spec-workflow/event-log.jsonl")
+log.record(EventType.LOOP_STARTED, Severity.INFO, "loop started")
+
+# Query
+events = log.query(event_type=EventType.LOOP_STARTED)
+recent = log.query(since="2026-06-25T00:00:00Z")
+
+# Aggregate
+report = log.get_progress_report()
+print(report)  # {iterations_completed: 5, units_completed: 12, errors: 0, ...}
+```
+
+- Append-only JSONL format. One event per line.
+- 17 `EventType` values; 4 `Severity` levels (debug/info/warn/error).
+- Query is < 100ms for 10K events (linear scan over JSONL).
+- Event IDs: `evt_YYYYMMDD_HHMMSS_NNN` (per-process sequence for uniqueness).
+
+### `skills/_lib/gate.py` — `GateMechanism`
+
+```python
+from skills._lib.gate import GateMechanism, Check
+
+gate = GateMechanism(
+    state_path=".spec-workflow/state-vector.json",
+    event_log_path=".spec-workflow/event-log.jsonl",
+)
+gate.register(Check(
+    name="my_check",
+    condition=lambda ctx: (True, None),
+    message="ok",
+    suggestion="",
+))
+
+result = gate.verify_transition("arch_done", {})
+if not result.passed:
+    print(result.suggestion)  # aggregated fix suggestions
+else:
+    gate.force_transition("arch_done", {}, reason="user override")
+```
+
+- Three phase transitions: `arch_done`, `plan_done`, `ship_done`.
+- Each has a default checklist; plugins can register more via `register_gate_check()`.
+- Two severity levels: `error` (blocks) and `warning` (allows with notice).
+- Every verification records a `GATE_TRANSITION`, `GATE_FAILED`, or `GATE_FORCED` event.
+
+### `skills/_lib/config.py` — `ConfigParser`
+
+```python
+from skills._lib.config import ConfigParser
+
+parser = ConfigParser(project_root=".")
+config = parser.parse(runtime_overrides={"interaction.mode": "loop"})
+print(config["loop"]["max_iterations"])  # 100 (from defaults)
+```
+
+- Priority order: `runtime_overrides > loop.yaml > .spec-workflow.json > env > defaults`.
+- Strict order (not deep merge) — see `design.md` Decision 5.
+- Type coercion for env vars (e.g., `SPEC_WORKFLOW_MAX_ITERATIONS=200` → int).
+- Validates enum values and numeric ranges; raises `ConfigError` with clear messages.
+
+### `skills/_lib/sync_state.py` — Sync Functions
+
+```python
+from skills._lib.sync_state import (
+    sync_state_vector_to_legacy,
+    sync_legacy_to_state_vector,
+    is_sync_enabled,
+)
+
+if is_sync_enabled():
+    sync_state_vector_to_legacy(".")
+    sync_legacy_to_state_vector(".")
+```
+
+- Bidirectional sync between v2 state vector and v1.x legacy files.
+- State vector is always authoritative (wins on conflict).
+- Conflict detection via mtime comparison.
+- Disable via env var: `SPEC_WORKFLOW_SYNC_DISABLED=1`.
+- Propagation latency: < 50ms.
