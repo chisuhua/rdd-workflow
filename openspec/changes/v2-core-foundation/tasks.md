@@ -1,7 +1,7 @@
 ## 1. State Vector Foundation (P1-T1)
 
 - [ ] 1.1 Create `skills/_lib/state_vector.py` with `StateVector` class (load/save/update_field/validate/create_default/reset)
-- [ ] 1.2 Create `skills/_lib/lock.py` with `FileLock` class (fcntl-based, 10s timeout, context manager)
+- [x] 1.2 Create `skills/_lib/lock.py` with `FileLock` class (fcntl-based, 10s timeout, context manager)
 - [ ] 1.3 Create `skills/_lib/schemas/state_vector_schema.json` with fields: goal, arch_side, plan_side, ship_side, loop_state, memory, metadata
 - [ ] 1.4 Add checksum field to state vector for corruption detection
 - [ ] 1.5 Add `version: "2.0"` and `metadata.spec_workflow_version` + `metadata.git_commit` fields
