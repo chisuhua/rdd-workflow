@@ -32,7 +32,7 @@
 
 - [ ] 4.1 Create `skills/_lib/config.py` with `ConfigParser` class (parse `.spec-workflow.json` and `loop.yaml`)
 - [ ] 4.2 Implement priority-merge: runtime params > loop.yaml > .spec-workflow.json > env vars > defaults
-- [ ] 4.3 Create `skills/_lib/defaults.py` with default values (mode=hybrid, max_iterations=100, max_retries=3)
+- [x] 4.3 Create `skills/_lib/defaults.py` with default values (mode=hybrid, max_iterations=100, max_retries=3)
 - [ ] 4.4 Read env vars: `SPEC_WORKFLOW_MODE`, `SPEC_WORKFLOW_MAX_ITERATIONS` with type conversion
 - [ ] 4.5 Validate required fields, enum values (mode in loop/menu/hybrid), numeric ranges (max_iterations > 0)
 - [ ] 4.6 Add `PyYAML` to package.json dependencies
