@@ -26,7 +26,7 @@
 - [x] 3.5 Define default plan_done checks: changes_committed (error), artifacts_complete (error), deps_analyzed (warning)
 - [x] 3.6 Define default ship_done checks: worktrees_empty (error), archive_empty (error), tests_pass (error)
 - [x] 3.7 Write unit tests: error blocks, warning allows-with-notice, force_transition records to event log, plugin works, suggestions actionable
-- [ ] 3.8 Create `skills/_lib/plugins/README.md` with plugin development guide
+- [x] 3.8 Create `skills/_lib/plugins/README.md` with plugin development guide
 
 ## 4. Configuration Parser (P1-T4)
 
