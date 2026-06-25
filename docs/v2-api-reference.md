@@ -917,3 +917,112 @@ if is_sync_enabled():
 - Conflict detection via mtime comparison.
 - Disable via env var: `SPEC_WORKFLOW_SYNC_DISABLED=1`.
 - Propagation latency: < 50ms.
+
+---
+
+## v2 Loop Engine APIs (Phase 2)
+
+### `skills/loop-engine.py` — `LoopEngine`
+
+```python
+from skills.loop_engine import LoopEngine, LoopStatus
+from skills._lib.state_vector import StateVector
+from skills._lib.event_log import EventLog
+
+engine = LoopEngine(
+    state=StateVector.load(".spec-workflow/state-vector.json"),
+    event_log=EventLog(".spec-workflow/event-log.jsonl"),
+)
+status = engine.run(goal_predicate="plan_side['active_change'] is None")
+```
+
+#### `LoopEngine(state, event_log, config=None, mode=None)`
+- `state`: `StateVector` instance (use `StateVector.load(path)`)
+- `event_log`: `EventLog` instance
+- `config`: optional `ConfigParser` (defaults to reading loop.yaml + defaults)
+- `mode`: optional `InteractionMode` (overrides config)
+
+#### `engine.run(goal_predicate, max_iterations=None) -> LoopStatus`
+- `goal_predicate`: dotted-path Python expression evaluated against `state.to_dict()`. Example: `"plan_side['active_change'] is None"`
+- `max_iterations`: cap; default 100 (configurable)
+- Returns `LoopStatus` enum: `SUCCESS`, `MAX_ITERATIONS_EXCEEDED`, `MAX_RETRIES_EXCEEDED`, `OSCILLATION_DETECTED`, `CIRCUIT_BROKEN`, `ERROR`
+
+#### Safety Mechanisms
+| Mechanism | Default | Trigger | Exit Status |
+|---|---|---|---|
+| `max_iterations` | 100 | iteration count ≥ cap | `MAX_ITERATIONS_EXCEEDED` |
+| `max_retries` | 3 | same action retried 3× | `MAX_RETRIES_EXCEEDED` |
+| Oscillation detection | 5 iters, ≤2 distinct | window match | `OSCILLATION_DETECTED` |
+| Circuit breaker | 3 consecutive failures | count ≥ 3 | `CIRCUIT_BROKEN` |
+| Action timeout | 30 min | wall-clock | `ActionResult(success=False, error="timeout")` |
+
+### `skills/_lib/detectors.py` — Detectors
+
+```python
+from skills._lib.detectors import (
+    Detector, DetectionResult, BUILTIN_DETECTORS,
+    load_plugin_detectors, all_detectors,
+)
+
+# 8 built-in: detect_worktrees, detect_pending_changes, detect_archived_changes,
+# detect_roadmap_state, detect_adr_status, detect_health_issues,
+# detect_test_gaps, detect_stale_branches
+# Performance: all 8 in < 500ms
+
+# Custom plugin: drop a .py file in .spec-workflow/detectors/ subclassing Detector
+```
+
+### `skills/_lib/actions.py` — Actions
+
+```python
+from skills._lib.actions import (
+    Action, ActionResult, run_subprocess,
+    BUILTIN_ACTIONS, load_plugin_actions, all_actions,
+)
+
+# 7 built-in: action_create_worktree, action_generate_plan, action_execute_worktree,
+# action_archive_change, action_cleanup_stale, action_update_roadmap, action_create_adr
+
+# Subprocess wrapper with 30-min timeout
+result = run_subprocess(["git", "status"], timeout_seconds=10)
+```
+
+### `skills/_lib/interaction_modes.py` + `human_nodes.py`
+
+```python
+from skills._lib.interaction_modes import make_mode, LoopMode, MenuMode, HybridMode
+from skills._lib.human_nodes import (
+    HumanNodeRegistry, NodeTrigger, VerificationMode, MultiModelUnavailableError,
+)
+
+registry = HumanNodeRegistry()
+mode = make_mode("hybrid", registry, human_nodes={"arch.adr_create"})
+
+# 7 human-in-loop nodes: arch.adr_create, arch.roadmap_define, plan.change_select,
+# plan.propose_confirm, ship.archive_confirm, ship.cleanup_confirm, ship.execute_error
+# 3 verification modes: human, multi_model (raises until v2-advanced-features), script
+```
+
+### `skills/_lib/design_phase.py` — Pre-Loop Design
+
+```python
+from skills._lib.design_phase import DesignPhase, DesignResult
+
+dp = DesignPhase(state=sv, event_log=el)
+result = DesignResult(
+    goal={"deliverables": ["x"], "completion_criteria": "x == done"},
+    verification={"executor": "deep", "reviewer": "oracle"},
+    control={"max_iterations": 50, "max_retries": 2, "oscillation_threshold": 3},
+)
+dp.apply(result)  # persists to state.loop_state.design
+```
+
+### `skills/_lib/flowchart.py` — ASCII Real-Time Flowchart
+
+```python
+from skills._lib.flowchart import FlowchartGenerator
+
+fc = FlowchartGenerator(state=sv, event_log=el)
+print(fc.render())  # < 100ms, shows phase/iteration/errors/warnings
+```
+

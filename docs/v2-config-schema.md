@@ -601,6 +601,42 @@ phases:
       - "archive_empty"
 ```
 
+### loop.yaml — v2 Loop Engine Extensions
+
+```yaml
+interaction:
+  mode: hybrid  # loop | menu | hybrid (default: hybrid)
+  human_nodes:
+    - arch.adr_create
+    - ship.archive_confirm
+
+loop:
+  max_iterations: 100
+  max_retries: 3
+  oscillation_window: 5
+  oscillation_distinct_threshold: 2
+  circuit_breaker_threshold: 3
+  action_timeout_seconds: 1800
+
+plugins:
+  detectors_dir: .spec-workflow/detectors
+  actions_dir: .spec-workflow/actions
+```
+
+**Runtime override**:
+- CLI flag: `--mode loop`
+- Env var: `SPEC_WORKFLOW_MODE=menu`, `SPEC_WORKFLOW_MAX_ITERATIONS=200`, `SPEC_WORKFLOW_MAX_RETRIES=5`
+
+**Safety defaults** (when not specified in config):
+| Field | Default | Source |
+|---|---|---|
+| `max_iterations` | 100 | `defaults.py` (overridable) |
+| `max_retries` | 3 | `defaults.py` (overridable) |
+| `oscillation_window` | 5 | `LoopEngine.SAFETY_DEFAULTS` |
+| `oscillation_distinct_threshold` | 2 | `LoopEngine.SAFETY_DEFAULTS` |
+| `circuit_breaker_threshold` | 3 | `LoopEngine.SAFETY_DEFAULTS` |
+| `action_timeout_seconds` | 1800 (30 min) | `LoopEngine.SAFETY_DEFAULTS` |
+
 ---
 
 ## 配置示例库

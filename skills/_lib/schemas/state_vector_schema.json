@@ -73,7 +73,21 @@
         "mode": { "type": "string", "enum": ["idle", "loop", "menu", "hybrid"] },
         "iteration": { "type": "integer", "minimum": 0 },
         "last_action": { "type": ["string", "null"] },
-        "last_action_at": { "type": ["string", "null"], "format": "date-time" }
+        "last_action_at": { "type": ["string", "null"], "format": "date-time" },
+        "current_phase": {
+          "type": ["string", "null"],
+          "enum": ["verify_goal", "scan_state", "generate_plan", "execute_plan", "verify_results", "adapt", null],
+          "description": "Current phase of the loop engine cycle (v2-loop-engine)."
+        },
+        "design": {
+          "type": ["object", "null"],
+          "description": "Pre-loop design result (Goal/Verification/Control) (v2-loop-engine).",
+          "properties": {
+            "goal": { "type": "object" },
+            "verification": { "type": "object" },
+            "control": { "type": "object" }
+          }
+        }
       }
     },
     "memory": {
