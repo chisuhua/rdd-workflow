@@ -188,29 +188,104 @@ class LoopEngine:
             )
             raise _CircuitBroken()
 
-    # ─────────────────────────────────────────────────────────────────────
-    # 5 building blocks (stub implementations — wired in §7)
-    # ─────────────────────────────────────────────────────────────────────
-
     def scan_state(self) -> None:
-        """Run all detectors and populate loop_state.detections."""
-        # Wired in §7 — falls through silently in §1 skeleton
-        pass
+        """Run all detectors and populate loop_state.detections as plain dicts."""
+        from skills._lib.detectors import all_detectors
+        detectors = all_detectors()
+        results = [d.detect(self.state.to_dict()) for d in detectors]
+        self.loop_state.detections = [
+            r.to_dict() if hasattr(r, "to_dict") else
+            ({"type": getattr(r, "type", ""),
+              "data": getattr(r, "data", {}),
+              "message": getattr(r, "message", ""),
+              "severity": getattr(r, "severity", "info")}
+             if not isinstance(r, dict) else r)
+            for r in results
+        ]
+        try:
+            self.state.update_field("loop_state.current_phase", "scan_state")
+            self.state.update_field("loop_state.iteration", self.loop_state.iteration)
+        except Exception:
+            pass
+        self.event_log.record(
+            EventType.SCAN_COMPLETED, Severity.INFO,
+            f"scanned {len(results)} detectors",
+            context={"count": len(results)},
+        )
 
     def generate_plan(self) -> None:
-        """Match detectors → actions, build execution plan."""
-        # Wired in §7
-        pass
+        """Match detectors → actions. 1:1 mapping via `action_<detector_type>`."""
+        from skills._lib.actions import all_actions
+        action_objs = all_actions()
+        action_map = {a.name: a for a in action_objs}
+        plan = []
+        for det in self.loop_state.detections:
+            if isinstance(det, dict):
+                det_type = det.get("type")
+                det_data = det.get("data", {})
+            else:
+                det_type = getattr(det, "type", None)
+                det_data = getattr(det, "data", {})
+            if not det_type:
+                continue
+            action_name = f"action_{det_type}"
+            if action_name in action_map:
+                plan.append((action_map[action_name], det_data))
+        self.loop_state.plan = plan
+        try:
+            self.state.update_field("loop_state.current_phase", "generate_plan")
+        except Exception:
+            pass
 
     def execute_plan(self) -> None:
-        """Execute each action in plan."""
-        # Wired in §7
-        pass
+        """Execute each action with retry-on-failure up to max_retries."""
+        executed = []
+        for action, params in self.loop_state.plan:
+            result = None
+            for attempt in range(self.safety["max_retries"]):
+                try:
+                    result = action.execute(params, self.event_log)
+                except Exception as exc:
+                    result = None
+                    self.loop_state.errors.append(f"action raised: {exc}")
+                    self.loop_state.consecutive_failures += 1
+                    continue
+                if result and getattr(result, "success", False):
+                    break
+                self.loop_state.consecutive_failures += 1
+            else:
+                if result is not None and getattr(result, "error", None):
+                    self.loop_state.errors.append(result.error)
+            executed.append(result)
+            if result and getattr(result, "success", False):
+                self.loop_state.consecutive_failures = 0
+
+        self.loop_state.executed = [
+            (r.to_dict() if hasattr(r, "to_dict") else
+             {"success": getattr(r, "success", False),
+              "data": getattr(r, "data", {}),
+              "error": getattr(r, "error", None)}
+             if r is not None else {"success": False, "error": "no result"})
+            for r in executed
+        ]
+        try:
+            self.state.update_field("loop_state.current_phase", "execute_plan")
+        except Exception:
+            pass
 
     def verify_results(self) -> bool:
-        """Verify execution results meet goal. Stub returns False."""
-        return False
+        """Return True iff all executed actions succeeded and at least one ran."""
+        if not self.loop_state.executed:
+            return False
+        successes = sum(
+            1 for r in self.loop_state.executed
+            if (r.get("success") if isinstance(r, dict) else getattr(r, "success", False))
+        )
+        return successes == len(self.loop_state.executed) and successes > 0
 
     def adapt(self) -> None:
-        """Adapt strategy based on results. Stub does nothing."""
-        pass
+        """Update phase marker to 'adapt' on the state vector."""
+        try:
+            self.state.update_field("loop_state.current_phase", "adapt")
+        except Exception:
+            pass
