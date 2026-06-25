@@ -10,12 +10,12 @@
 
 ## 2. Event Log (P1-T2)
 
-- [ ] 2.1 Create `skills/_lib/event_log.py` with `EventLog` class (record/query/get_progress_report/generate_id)
+- [x] 2.1 Create `skills/_lib/event_log.py` with `EventLog` class (record/query/get_progress_report/generate_id)
 - [x] 2.2 Create `skills/_lib/event_types.py` with 17 event types (loop_started, scan_completed, plan_generated, ...) and severity enum (debug/info/warn/error)
 - [x] 2.3 Create `skills/_lib/event_context.py` reading current context from state vector
-- [ ] 2.4 Event ID format: `evt_YYYYMMDD_HHMMSS_NNN` (unique within same second)
-- [ ] 2.5 Write unit tests: write→query consistency, query 10K events < 100ms, unique IDs
-- [ ] 2.6 Verify progress report stats accuracy (iterations, completed units, error count)
+- [x] 2.4 Event ID format: `evt_YYYYMMDD_HHMMSS_NNN` (unique within same second)
+- [x] 2.5 Write unit tests: write→query consistency, query 10K events < 100ms, unique IDs
+- [x] 2.6 Verify progress report stats accuracy (iterations, completed units, error count)
 
 ## 3. Gate Mechanism (P1-T3)
 
