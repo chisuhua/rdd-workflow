@@ -1,14 +1,24 @@
 {
   "name": "spec-workflow",
   "version": "1.1.0",
-  "description": "Spec Workflow - OpenSpec 工作流技能包（propose→plan→execute→status→archive）",
+  "description": "Spec Workflow - OpenSpec \u5de5\u4f5c\u6d41\u6280\u80fd\u5305\uff08propose\u2192plan\u2192execute\u2192status\u2192archive\uff09",
   "main": "skills/INSTALL.md",
   "author": "sisyphus",
   "license": "MIT",
-  "alias": ["workflow", "install"],
-  "keywords": ["spec", "workflow", "openspec", "change-management", "cli"],
+  "alias": [
+    "workflow",
+    "install"
+  ],
+  "keywords": [
+    "spec",
+    "workflow",
+    "openspec",
+    "change-management",
+    "cli"
+  ],
   "scripts": {
-    "test": "bats tests/"
+    "test": "bats tests/",
+    "install-python-deps": "pip install -r requirements.txt"
   },
   "engines": {
     "opencode": ">=1.0.0",

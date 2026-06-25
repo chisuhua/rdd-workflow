@@ -30,13 +30,13 @@
 
 ## 4. Configuration Parser (P1-T4)
 
-- [ ] 4.1 Create `skills/_lib/config.py` with `ConfigParser` class (parse `.spec-workflow.json` and `loop.yaml`)
-- [ ] 4.2 Implement priority-merge: runtime params > loop.yaml > .spec-workflow.json > env vars > defaults
+- [x] 4.1 Create `skills/_lib/config.py` with `ConfigParser` class (parse `.spec-workflow.json` and `loop.yaml`)
+- [x] 4.2 Implement priority-merge: runtime params > loop.yaml > .spec-workflow.json > env vars > defaults
 - [x] 4.3 Create `skills/_lib/defaults.py` with default values (mode=hybrid, max_iterations=100, max_retries=3)
-- [ ] 4.4 Read env vars: `SPEC_WORKFLOW_MODE`, `SPEC_WORKFLOW_MAX_ITERATIONS` with type conversion
-- [ ] 4.5 Validate required fields, enum values (mode in loop/menu/hybrid), numeric ranges (max_iterations > 0)
-- [ ] 4.6 Add `PyYAML` to package.json dependencies
-- [ ] 4.7 Write unit tests: minimal config parses, priority order correct, invalid config rejected with clear message, env vars override file config
+- [x] 4.4 Read env vars: `SPEC_WORKFLOW_MODE`, `SPEC_WORKFLOW_MAX_ITERATIONS` with type conversion
+- [x] 4.5 Validate required fields, enum values (mode in loop/menu/hybrid), numeric ranges (max_iterations > 0)
+- [x] 4.6 Add `PyYAML` to package.json dependencies
+- [x] 4.7 Write unit tests: minimal config parses, priority order correct, invalid config rejected with clear message, env vars override file config
 
 ## 5. v1.x Sync Layer (P1-T5)
 
