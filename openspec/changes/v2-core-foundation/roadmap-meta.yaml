@@ -1,0 +1,14 @@
+roadmap:
+  phase: "phase-2"
+  category: "state-management"
+  priority: "P0"
+  cross_phase_deps:
+    - "v2-loop-engine"
+    - "v2-advanced-features"
+  gate_checklist:
+    - "tests_pass"
+    - "schemas_validated"
+    - "sync_layer_no_conflicts"
+  category_validation:
+    valid: true
+    reason: "Foundation infrastructure for v2.0; no category conflicts"
