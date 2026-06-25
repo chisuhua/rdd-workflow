@@ -1,0 +1,15 @@
+roadmap:
+  phase: "phase-2"
+  category: "loop-engine"
+  priority: "P0"
+  cross_phase_deps:
+    - "v2-core-foundation"
+  blocked_by:
+    - "v2-core-foundation"
+  gate_checklist:
+    - "tests_pass"
+    - "loop_safety_validated"
+    - "modes_configurable"
+  category_validation:
+    valid: true
+    reason: "Loop engine requires state vector and gate from v2-core-foundation"
