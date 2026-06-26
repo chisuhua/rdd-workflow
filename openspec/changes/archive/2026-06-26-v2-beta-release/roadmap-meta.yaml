@@ -1,0 +1,18 @@
+roadmap:
+  phase: "phase-2"
+  category: "general"
+  priority: "P0"
+  cross_phase_deps:
+    - "v2-migration-and-tests"
+  blocked_by:
+    - "v2-core-foundation"
+    - "v2-loop-engine"
+    - "v2-advanced-features"
+    - "v2-migration-and-tests"
+  gate_checklist:
+    - "beta_published"
+    - "changelog_complete"
+    - "feedback_channel_active"
+  category_validation:
+    valid: true
+    reason: "Release phase requires all prior phases complete"
