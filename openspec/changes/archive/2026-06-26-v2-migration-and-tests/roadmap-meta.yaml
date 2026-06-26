@@ -1,0 +1,20 @@
+roadmap:
+  phase: "phase-2"
+  category: "general"
+  priority: "P0"
+  cross_phase_deps:
+    - "v2-core-foundation"
+    - "v2-loop-engine"
+    - "v2-advanced-features"
+  blocked_by:
+    - "v2-core-foundation"
+    - "v2-loop-engine"
+    - "v2-advanced-features"
+  gate_checklist:
+    - "tests_pass"
+    - "coverage_80_percent"
+    - "guide_spec_alias_works"
+    - "migration_guide_reviewed"
+  category_validation:
+    valid: true
+    reason: "Migration phase requires all prior phases complete"
