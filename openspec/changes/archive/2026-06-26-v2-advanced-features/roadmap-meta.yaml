@@ -1,0 +1,16 @@
+roadmap:
+  phase: "phase-2"
+  category: "tribunal"
+  priority: "P1"
+  cross_phase_deps:
+    - "v2-loop-engine"
+  blocked_by:
+    - "v2-core-foundation"
+    - "v2-loop-engine"
+  gate_checklist:
+    - "tests_pass"
+    - "tribunal_graceful_degradation"
+    - "memory_no_unbounded_growth"
+  category_validation:
+    valid: true
+    reason: "Advanced features require loop engine and state vector"
