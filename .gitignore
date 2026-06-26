@@ -14,3 +14,6 @@
 
 # bats test temp directories (auto-created by bats, not for commit)
 .bats-tmp/
+
+# Python __pycache__ directories
+__pycache__/
