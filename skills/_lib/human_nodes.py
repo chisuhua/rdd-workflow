@@ -7,8 +7,10 @@ Seven built-in node types cover v2.0 workflow decision points:
 
 Each node is verified via one of three modes:
 - `HUMAN`       — caller is expected to display UI/menu and collect input.
-- `MULTI_MODEL` — Tribunal (v2-advanced-features). Not yet implemented;
-                  invocation raises `MultiModelUnavailableError`.
+- `MULTI_MODEL` — Tribunal (v2-advanced-features). When a ``Tribunal``
+                  instance is injected via the ``tribunal`` constructor
+                  parameter, verification is delegated to it. Without
+                  injection, raises ``MultiModelUnavailableError``.
 - `SCRIPT`      — runs an external command and treats exit code as pass/fail.
 
 The script-mode dependency on `skills._lib.actions.run_subprocess` is
@@ -30,7 +32,7 @@ class VerificationMode(str, Enum):
 
 
 class MultiModelUnavailableError(NotImplementedError):
-    """Raised when multi_model verification is requested before v2-advanced-features ships.
+    """Raised when multi_model verification is requested without a Tribunal.
 
     Inherits from `NotImplementedError` so callers catching either class work,
     but the specific subclass lets callers distinguish "multi_model not yet
@@ -82,15 +84,19 @@ class HumanNodeRegistry:
     """
 
     _MULTI_MODEL_MESSAGE = (
-        "multi_model verification requires v2-advanced-features (Tribunal). "
-        "Not yet implemented."
+        "multi_model verification requires v2-advanced-features Tribunal. "
+        "Pass tribunal= to HumanNodeRegistry or set mode to HUMAN/SCRIPT."
     )
 
-    def __init__(self, nodes: Optional[Dict[str, VerificationMode]] = None):
-        # Allow injection (used by tests / future plugin loaders); default to built-ins.
+    def __init__(
+        self,
+        nodes: Optional[Dict[str, VerificationMode]] = None,
+        tribunal: Any = None,
+    ):
         if nodes is None:
             nodes = {name: mode for name, mode in BUILTIN_NODE_DEFS}
         self._nodes: Dict[str, VerificationMode] = dict(nodes)
+        self._tribunal: Any = tribunal
 
     # ── Introspection ────────────────────────────────────────────────────
 
@@ -107,7 +113,8 @@ class HumanNodeRegistry:
     def verify(self, trigger: NodeTrigger) -> VerificationResult:
         """Dispatch verification according to `trigger.mode`.
 
-        - `MULTI_MODEL`: raises `MultiModelUnavailableError` (Tribunal not yet shipped).
+        - `MULTI_MODEL`: delegates to the injected Tribunal (if set);
+                         raises `MultiModelUnavailableError` otherwise.
         - `SCRIPT`: runs `trigger.params["command"]` and uses exit code.
         - `HUMAN`: returns a sentinel success result — caller renders UI.
 
@@ -115,7 +122,7 @@ class HumanNodeRegistry:
         is importable before that module exists.
         """
         if trigger.mode == VerificationMode.MULTI_MODEL:
-            raise MultiModelUnavailableError(self._MULTI_MODEL_MESSAGE)
+            return self._verify_multi_model(trigger)
 
         if trigger.mode == VerificationMode.SCRIPT:
             return self._verify_script(trigger)
@@ -128,6 +135,32 @@ class HumanNodeRegistry:
         )
 
     # ── Internals ────────────────────────────────────────────────────────
+
+    def _verify_multi_model(self, trigger: NodeTrigger) -> VerificationResult:
+        """Delegate verification to the injected Tribunal, or raise if none.
+
+        The Tribunal's ``verify(change_name, criteria, context)`` method
+        returns a ``TribunalResult`` with a ``passed`` boolean. We map
+        that to a ``VerificationResult`` so the caller sees a uniform
+        interface regardless of verification mode.
+        """
+        if self._tribunal is None:
+            raise MultiModelUnavailableError(self._MULTI_MODEL_MESSAGE)
+
+        change_name = trigger.params.get("change_name", trigger.name)
+        criteria = trigger.params.get("criteria", "")
+        context = trigger.params.get("context", {})
+        result = self._tribunal.verify(change_name, criteria, context)
+        return VerificationResult(
+            success=result.passed,
+            data={
+                "exec_score": result.exec_score,
+                "review_score": result.review_score,
+                "final_score": result.final_score,
+                "conflict": result.conflict,
+            },
+            message=f"tribunal: passed={result.passed}, final={result.final_score:.3f}",
+        )
 
     def _verify_script(self, trigger: NodeTrigger) -> VerificationResult:
         """Execute the configured command and treat exit code as pass/fail."""

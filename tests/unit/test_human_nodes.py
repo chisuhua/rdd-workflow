@@ -82,8 +82,8 @@ def test_verification_modes_enum():
     assert VerificationMode.SCRIPT.value == "script"
 
 
-def test_multi_model_raises_not_implemented():
-    """multi_model verification raises NotImplementedError until v2-advanced-features."""
+def test_multi_model_without_tribunal_raises_unavailable():
+    """multi_model verification raises when no Tribunal is injected."""
     from skills._lib.human_nodes import (
         HumanNodeRegistry,
         NodeTrigger,
@@ -97,12 +97,50 @@ def test_multi_model_raises_not_implemented():
         mode=VerificationMode.MULTI_MODEL,
         params={},
     )
-    # MultiModelUnavailableError is a NotImplementedError subclass, so both match.
-    with pytest.raises(NotImplementedError, match="v2-advanced-features"):
+    with pytest.raises(MultiModelUnavailableError, match="v2-advanced-features"):
         reg.verify(trigger)
-    # And specifically MultiModelUnavailableError (not just any NotImplementedError).
-    with pytest.raises(MultiModelUnavailableError, match="Tribunal"):
-        reg.verify(trigger)
+
+
+def test_multi_model_delegates_to_injected_tribunal():
+    """multi_model verification maps TribunalResult into VerificationResult."""
+    from dataclasses import dataclass
+    from skills._lib.human_nodes import HumanNodeRegistry, NodeTrigger, VerificationMode
+
+    @dataclass
+    class _Result:
+        passed: bool = True
+        exec_score: float = 0.9
+        review_score: float = 0.95
+        final_score: float = 0.93
+        conflict: float = 0.05
+
+    class _Tribunal:
+        def __init__(self):
+            self.calls = []
+
+        def verify(self, change_name, criteria, context):
+            self.calls.append((change_name, criteria, context))
+            return _Result()
+
+    tribunal = _Tribunal()
+    reg = HumanNodeRegistry(tribunal=tribunal)
+    trigger = NodeTrigger(
+        name="plan.propose_confirm",
+        mode=VerificationMode.MULTI_MODEL,
+        params={
+            "change_name": "v2-advanced-features",
+            "criteria": "all tests pass",
+            "context": {"tests": "green"},
+        },
+    )
+
+    result = reg.verify(trigger)
+
+    assert result.success is True
+    assert result.data["final_score"] == 0.93
+    assert tribunal.calls == [
+        ("v2-advanced-features", "all tests pass", {"tests": "green"})
+    ]
 
 
 def test_script_verification_runs_command(fake_actions_module):
