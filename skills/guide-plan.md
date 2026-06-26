@@ -605,7 +605,7 @@ grep "\.deps-candidates.json" skills/guide-plan.md
 grep -E "skill_use\(\"(propose|deps|guide-arch|guide-ship)\"\)" skills/guide-plan.md
 ```
 
-详细单元测试见 `tests/integration/test_guide_plan_skill.bats`（与本技能配套）。
+<!-- 详细单元测试见 `tests/integration/test_guide_plan_skill.bats`（与本技能配套,待后续创建）。 -->
 
 ---
 

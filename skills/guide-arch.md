@@ -146,10 +146,12 @@ PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 ADR_COUNT=$(ls -d "$PROJECT_ROOT/docs/adr/ADR-0"*.md 2>/dev/null | wc -l)
 ROADMAP_EXISTS=$([ -f "$PROJECT_ROOT/roadmap.md" ] && echo "yes" || echo "no")
 GAP_COUNT=$(ls "$PROJECT_ROOT/docs/architecture/"*-gap-analysis.md 2>/dev/null | wc -l)
+ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l)
 
 echo "📋 现有 ADR: $ADR_COUNT"
 echo "📋 Roadmap: $ROADMAP_EXISTS"
 echo "📋 架构差距分析: $GAP_COUNT"
+echo "📋 活动 changes: $ACTIVE_CHANGES"
 ```
 
 **展示环境状态 + 选项**：
@@ -164,6 +166,7 @@ echo "📋 架构差距分析: $GAP_COUNT"
 📋 现有 ADR: 3
 📋 Roadmap: 已定义
 📋 架构差距分析: 0
+📋 活动 changes: 2
 
 当前状态: arch 阶段初始化完成
 
@@ -784,7 +787,7 @@ ls docs/adr/ADR-0000-template.md
 ls roadmap.md
 ```
 
-详细单元测试见 `tests/unit/test_guide_arch.py`（与本技能配套）。
+<!-- 详细单元测试见 `tests/unit/test_guide_arch.py`（与本技能配套,待后续创建）。 -->
 
 ---
 
