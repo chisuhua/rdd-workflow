@@ -1,6 +1,6 @@
 {
   "name": "spec-workflow",
-  "version": "1.1.0",
+  "version": "2.0.0-beta",
   "description": "Spec Workflow - OpenSpec \u5de5\u4f5c\u6d41\u6280\u80fd\u5305\uff08propose\u2192plan\u2192execute\u2192status\u2192archive\uff09",
   "main": "skills/INSTALL.md",
   "author": "sisyphus",

@@ -1,5 +1,17 @@
 # Spec Workflow
 
+[![npm version](https://img.shields.io/npm/v/spec-workflow.svg)](https://www.npmjs.com/package/spec-workflow)
+
+## Install
+
+```bash
+# Latest stable (v1.x)
+npm install spec-workflow
+
+# v2.0 beta
+npm install spec-workflow@2.0.0-beta
+```
+
 OpenSpec 工作流技能包 - manage changes via propose → plan → execute → status → archive lifecycle.
 
 ## 安装
