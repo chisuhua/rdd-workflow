@@ -72,20 +72,51 @@
 
 `guide` 推荐器会自动检查状态并给出当前合适的选项菜单；如已明确 spec 侧或 ship 侧，可直接调对应状态机跳过推荐步骤。
 
-### 完整 skill 列表（v1.1 共 10 个）
+### 完整 skill 列表 (v2.0 共 12 个)
 
 | Skill | 用途 | 触发方式 |
 |-------|------|---------|
 | `INSTALL` | 首次安装（将技能复制到项目的 `.opencode/skills/`） | 用户显式调用 |
-| `guide` | 推荐器入口（扫描状态，建议调 spec 或 ship） | `skill_use("guide")` |
-| `guide-spec` | Spec 端状态机（5 阶段） | `skill_use("guide-spec")` |
-| `guide-ship` | Ship 端状态机（5 阶段：plan → worktree verify → execute → archive → cleanup + ship-done exit） | `skill_use("guide-ship")` |
-| `propose` | 扫描 ADR/代码生成建议列表 | `guide-spec` 内部 / 单独使用 |
-| `roadmap` | 路线图管理（phase/category 结构） | `guide-spec` 内部 / 单独使用 |
-| `deps` | 依赖分析（含 subagent Step 3） | `guide-spec` 内部 / 单独使用 |
+| `guide` | 推荐器入口（扫描状态，建议调 guide-arch、guide-plan 或 guide-ship） | `skill_use("guide")` |
+| `guide-arch` | **新** 架构定义阶段（5 子阶段：setup → adr-create → architecture → roadmap-define → arch-done） | `skill_use("guide-arch")` |
+| `guide-plan` | **新** 变更生成阶段（4 子阶段：scan → propose → deps → plan-done） | `skill_use("guide-plan")` |
+| `guide-ship` | Ship 端状态机（5 阶段） | `skill_use("guide-ship")` |
+| `guide-spec` | **别名** spec 端状态机（自动调用 guide-arch → guide-plan，v3.0 移除） | `skill_use("guide-spec")` |
+| `propose` | 扫描 ADR/代码生成建议列表 | `guide-plan` 内部 / 单独使用 |
+| `roadmap` | 路线图管理（phase/category 结构） | `guide-arch` 内部 / 单独使用 |
+| `deps` | 依赖分析（含 subagent Step 3） | `guide-plan` 内部 / 单独使用 |
 | `execute` | 在 worktree 内执行任务 | `guide-ship` 内部 / worktree 内单独使用 |
 | `status` | 状态查看 | `guide-ship` 内部 / 单独使用 |
 | `prometheus-planning` | 实施计划生成器（带三级回退链） | `guide-ship` Phase 1 内部 |
+
+### 使用 Loop 引擎（v2.0）
+
+```bash
+# Loop 模式 — 自动扫描、执行、验证
+skill_use("loop", {
+  "goal": "complete all pending changes",
+  "mode": "loop"
+})
+```
+
+### 配置示例（v2.0）
+
+```json
+{
+  "version": "2.0",
+  "interaction": {
+    "mode": "hybrid",
+    "human_in_loop_nodes": [
+      "arch.adr_create",
+      "ship.archive_confirm"
+    ]
+  },
+  "loop": {
+    "max_iterations": 100,
+    "max_retries": 3
+  }
+}
+```
 
 ---
 

@@ -7,6 +7,30 @@
 
 ---
 
+## 🚀 Quick Start for v1.x Users
+
+v1.x 用户升级到 v2.0 最快只需两步：
+
+```bash
+# 1. 更新到最新版本
+npm update spec-workflow
+
+# 2. 运行迁移检查（可选）
+spec-workflow migrate --check
+```
+
+**无需修改现有技能文件**。`guide-spec` 调用将自动变更为 `guide-arch` → `guide-plan`。所有现有 worktree 和变化不受影响。
+
+### 变更要点一览
+
+| v1.x | v2.0 | 备注 |
+|------|------|------|
+| `skill_use("guide-spec")` | → `guide-arch` → `guide-plan` (自动) | 无需更改代码 |
+| `skill_use("guide-ship")` | 不变 | 保持不变 |
+| 双阶段 spec/ship | 三阶段 arch/plan/ship | 职责更清晰 |
+
+---
+
 ## 📋 目录
 
 - [概述](#概述)
@@ -97,6 +121,39 @@ v1.x 用户
 - [ ] 运行测试（`bats tests/`）
 - [ ] 创建 `.spec-workflow.json`（可选）
 - [ ] 尝试 loop 模式（可选）
+
+---
+
+## 💡 Conceptual Changes
+
+### 从"双阶段"到"三阶段"
+
+v1.x 的 spec 端将"架构定义"（ADR、roadmap）和"变更生成"（propose、deps）混合在一起。
+v2.0 将它们拆分为独立阶段：
+
+```
+v1.x spec 端:          v2.0 三阶段:
+setup                  guide-arch (架构定义)
+  ↓                       ↓  arch-done gate
+roadmap               guide-plan (变更生成)
+  ↓                       ↓  plan-done gate
+propose               guide-ship (变更执行，不变)
+  ↓
+deps
+  ↓  spec-done
+guide-ship
+```
+
+### 架构治理前置
+
+v2.0 要求**先定义架构，再生成变更**。这意味着：
+- 新项目必须先创建 ADR 和 roadmap（arch 阶段）
+- 现有项目已有 roadmap 的可直接进入 plan 阶段
+- `guide` 推荐器会自动检测当前阶段
+
+### 向后兼容机制
+
+`guide-spec.md` 保留为别名，内部调用 `guide-arch` → `guide-plan`。三个阶段之间的交接通过 `.zcf/.arch-handoff.json` 和 `.zcf/.plan-handoff.json` 实现。
 
 ---
 
@@ -574,6 +631,30 @@ npm install spec-workflow@1.x
 2. **查看配置 Schema**: [v2-config-schema.md](v2-config-schema.md)
 3. **尝试 loop 模式**: `skill_use("loop", {goal: "complete all changes"})`
 4. **查看 ADR 总结**: [v2-adr-summary.md](v2-adr-summary.md)
+
+---
+
+## ❓ 常见问题
+
+### Q: 升级后我还能用 `skill_use("guide-spec")` 吗？
+
+**可以。** `guide-spec` 保留了别名行为，自动调用 `guide-arch` → `guide-plan`。
+
+### Q: 我只有简单的项目，不需要架构定义，可以跳过 arch 阶段吗？
+
+**可以。** 如果项目已有 `roadmap.md`，`guide` 推荐器会直接建议进入 plan 阶段。
+
+### Q: 升级会影响正在执行的 worktree 吗？
+
+**不会。** `guide-ship` 技能保持不变。正在执行的 worktree 完全不受影响。
+
+### Q: 需要更新我之前的 change 吗？
+
+**不需要。** 已提交的 change artifacts 格式不变。新的 `guide-plan` 技能会识别它们。
+
+### Q: 如何回滚到 v1.x 行为？
+
+如果新三阶段流程不适合你的工作流，可以使用 `guide-spec` 别名（保留原始语义）。
 
 ---
 

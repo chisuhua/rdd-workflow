@@ -30,6 +30,33 @@ git clone https://github.com/chisuhua/spec-workflow.git ~/.agents/skills/spec-wo
    - `skill_use("status")` - 子技能(被 guide-ship 调用或独立使用)
    - `skill_use("prometheus-planning")` - 实施计划生成器(被 guide-ship 调用,带三级回退链)
 
+## v2.0 新特性
+
+### 三阶段架构 (arch → plan → ship)
+
+| 阶段 | 技能 | 职责 | 人工介入 |
+|------|------|------|---------|
+| **Arch** | `guide-arch` | 架构定义（ADR、roadmap、差距分析） | 高 |
+| **Plan** | `guide-plan` | 变更生成（scan、propose、deps） | 中 |
+| **Ship** | `guide-ship` | 变更执行（worktree、execute、archive） | 低 |
+
+> **向后兼容**: `guide-spec` 保留为别名，自动调用 arch → plan。现有工作流完全不受影响。
+
+### 推荐器升级
+
+`guide` 推荐器现在支持三阶段扫描：
+
+```
+💡 Recommended: skill_use("guide-plan")
+   Reason: 架构定义已完成 → 进入变更生成
+```
+
+### 测试基础设施
+
+- **18 个 Python 单元测试**：覆盖状态向量、事件日志、门控机制、Loop 引擎等
+- **3 个 Python 集成测试**：覆盖 Loop 流程、门控切换、阶段切换
+- **测试框架**：pytest (Python) + bats (shell)
+
 ## 目录结构
 
 ```
