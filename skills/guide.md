@@ -1,6 +1,6 @@
 ---
 name: guide
-description: 无状态推荐器——扫描项目当前状态（roadmap、changes、worktrees、tasks），建议用户调 guide-spec 或 guide-ship。不持有任何状态，不调用 openspec CLI，不修改任何文件。
+description: 无状态推荐器——扫描项目当前状态（roadmap、arch-handoff、plan-handoff、active changes、worktrees），建议用户调 guide-arch、guide-plan 或 guide-ship。不持有任何状态，不调用 openspec CLI，不修改任何文件。
 license: MIT
 compatibility: Requires git 2.25+
 metadata:
@@ -14,7 +14,7 @@ metadata:
 
 ## 用途
 
-`guide` 是一个**无状态推荐器**。它只读不写——扫描项目当前状态，给出一行建议，告诉用户应该调 `guide-spec` 还是 `guide-ship`。
+`guide` 是一个**无状态推荐器**。它只读不写——扫描项目当前状态，给出一行建议，告诉用户应该调 `guide-arch`、`guide-plan` 还是 `guide-ship`（三阶段架构 ADR-0003：arch → plan → ship）。
 
 不持久化任何状态,不调用 openspec CLI,不修改任何文件。
 
@@ -22,6 +22,13 @@ metadata:
 
 ```bash
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+
+# 0. 三阶段交接状态检测 (arch → plan → ship) — 优先级最高
+#    通过 .zcf/.arch-handoff.json / .zcf/.plan-handoff.json 软状态文件判断当前阶段。
+#    arch-done 后但 plan 未开始 → 引导进入 plan
+#    plan-done 后 → 引导进入 ship
+ARCH_HANDOFF="$PROJECT_ROOT/.zcf/.arch-handoff.json"
+PLAN_HANDOFF="$PROJECT_ROOT/.zcf/.plan-handoff.json"
 
 # 1. 有 worktree 且 tasks 未全部 [x] → 继续 ship
 # 注意:awk 的 system() 只返回状态码,不输出字符串,所以不能用 awk + system() 收集结果。
@@ -41,11 +48,15 @@ done
 
 # 2. 有 worktree 且 tasks 全 [x] → ship 进入 archive
 # 3. 有 committed change 但无 worktree → ship 开始新 change
-# 4. 无 roadmap.md → spec 初始化
-# 5. 无 committed change → spec 继续 propose
-# 6. 默认 → spec
+# 4. 无 roadmap.md → arch 初始化
+# 5. 无 committed change → plan 继续 propose
+# 6. 默认 → plan
 
-if [ -n "$WORKTREE_IN_PROGRESS" ]; then
+if [ -f "$ARCH_HANDOFF" ] && [ ! -f "$PLAN_HANDOFF" ]; then
+    RECOMMEND="guide-plan"; REASON="架构定义已完成 → 进入变更生成"
+elif [ -f "$PLAN_HANDOFF" ]; then
+    RECOMMEND="guide-ship"; REASON="变更生成已完成 → 进入变更执行"
+elif [ -n "$WORKTREE_IN_PROGRESS" ]; then
     RECOMMEND="guide-ship"; REASON="worktree 存在,任务未完成 → 继续执行"
 # P1-3: phase gate report takes priority — must review before proceeding
 # P1-3: detached worktrees (other sessions) may be running, surface them
@@ -67,9 +78,9 @@ elif (cd "$PROJECT_ROOT" 2>/dev/null && for d in openspec/changes/*/; do
 done; exit 1); then
     RECOMMEND="guide-ship"; REASON="有已 commit 的 change 待建 worktree"
 elif [ ! -f "$PROJECT_ROOT/roadmap.md" ]; then
-    RECOMMEND="guide-spec"; REASON="无 roadmap.md → 初始化"
+    RECOMMEND="guide-arch"; REASON="无 roadmap.md → 进入架构定义"
 elif [ -z "$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/)" ]; then
-    RECOMMEND="guide-spec"; REASON="无 change → 进入 propose 阶段"
+    RECOMMEND="guide-plan"; REASON="无 change → 进入变更生成"
 else
     # 6. 读取 proposal-suggestions.md 判断
     # P1-7: 文件格式已规范化为 JSON 列表
@@ -89,7 +100,7 @@ except (FileNotFoundError, json.JSONDecodeError):
     print('no')
 " 2>/dev/null)
     if [ "$HAS_PENDING" = "yes" ]; then
-      RECOMMEND="guide-spec"
+      RECOMMEND="guide-plan"
       REASON="有 change 待创建 → 继续 propose"
     else
       RECOMMEND="guide-ship"
@@ -103,6 +114,8 @@ fi
 ```
 🔍 Project state scan:
    - roadmap.md: [✅ exists / ❌ missing]
+   - .zcf/.arch-handoff.json: [✅ exists / ❌ missing]
+   - .zcf/.plan-handoff.json: [✅ exists / ❌ missing]
    - committed changes: [N]
    - worktrees: [N, with status]
 
