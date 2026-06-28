@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-06-27
+goal: Bring documentation and test infrastructure in line with v2.0 code reality
+  after beta release audit
