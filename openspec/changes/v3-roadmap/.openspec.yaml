@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-06-28
+goal: Create a roadmap and implementation plan for the 4 unimplemented v2.0
+  ADRs, deciding which go to v2.1 vs v3.0, and creating placeholder changes for
+  each
