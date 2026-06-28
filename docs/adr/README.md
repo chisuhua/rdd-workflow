@@ -4,22 +4,23 @@
 
 > ## 📊 v2.0 ADR 实施状态（2026-06-28）
 >
-> | ADR | 标题 | 实施状态 |
-> |-----|------|---------|
-> | [ADR-0001](ADR-0001-propose-plan-execute-state-machine.md) | 双阶段状态机分离 (spec/ship) | ✅ 已实施（v1.x） |
-> | [ADR-0002](ADR-0002-goal-driven-interaction-modes.md) | 目标驱动接口与交互模式 | ✅ 已实施 |
-> | [ADR-0003](ADR-0003-three-phase-architecture.md) | 三阶段架构重构 (arch → plan → ship) | ✅ 已实施 |
-> | [ADR-0004](ADR-0004-loop-engine-core-design.md) | Loop 引擎核心设计 | ✅ 已实施 |
-> | [ADR-0005](ADR-0005-human-in-loop-nodes.md) | Human-in-Loop 节点 | ✅ 已实施 |
-> | [ADR-0006](ADR-0006-state-vector-event-log.md) | 状态向量与事件流 | ✅ 已实施 |
-> | [ADR-0007](ADR-0007-gate-mechanism.md) | 门控机制 | ✅ 已实施 |
-> | [ADR-0008](ADR-0008-tribunal-committee.md) | 审判委员会 | ✅ 已实施 |
-> | [ADR-0009](ADR-0009-scheduled-triggers.md) | 定时循环与事件触发 | ❌ 未实施（v2.1 候选） |
-> | [ADR-0010](ADR-0010-multi-session-management.md) | 多会话管理 | ⚠️ 部分实施（v2.0 轻量级） |
-> | [ADR-0011](ADR-0011-phase-step-pipeline-model.md) | 阶段步骤化执行模型 | ❌ 未实施（设计已采纳） |
-> | [ADR-0012](ADR-0012-flow-customization-layer.md) | 流程定制层 | ❌ 未实施（设计已采纳） |
+> | ADR | 标题 | 实施状态 | 目标版本 |
+> |-----|------|---------|---------|
+> | [ADR-0001](ADR-0001-propose-plan-execute-state-machine.md) | 双阶段状态机分离 (spec/ship) | ✅ 已实施（v1.x） | 已完成（v1.x） |
+> | [ADR-0002](ADR-0002-goal-driven-interaction-modes.md) | 目标驱动接口与交互模式 | ✅ 已实施 | 已完成（v2.0） |
+> | [ADR-0003](ADR-0003-three-phase-architecture.md) | 三阶段架构重构 (arch → plan → ship) | ✅ 已实施 | 已完成（v2.0） |
+> | [ADR-0004](ADR-0004-loop-engine-core-design.md) | Loop 引擎核心设计 | ✅ 已实施 | 已完成（v2.0） |
+> | [ADR-0005](ADR-0005-human-in-loop-nodes.md) | Human-in-Loop 节点 | ✅ 已实施 | 已完成（v2.0） |
+> | [ADR-0006](ADR-0006-state-vector-event-log.md) | 状态向量与事件流 | ✅ 已实施 | 已完成（v2.0） |
+> | [ADR-0007](ADR-0007-gate-mechanism.md) | 门控机制 | ✅ 已实施 | 已完成（v2.0） |
+> | [ADR-0008](ADR-0008-tribunal-committee.md) | 审判委员会 | ✅ 已实施 | 已完成（v2.0） |
+> | [ADR-0009](ADR-0009-scheduled-triggers.md) | 定时循环与事件触发 | ❌ 未实施（v2.1 候选） | **v3.0** |
+> | [ADR-0010](ADR-0010-multi-session-management.md) | 多会话管理 | ⚠️ 部分实施（v2.0 轻量级） | **v2.1（完整版）** |
+> | [ADR-0011](ADR-0011-phase-step-pipeline-model.md) | 阶段步骤化执行模型 | ❌ 未实施（设计已采纳） | **v3.0** |
+> | [ADR-0012](ADR-0012-flow-customization-layer.md) | 流程定制层 | ❌ 未实施（设计已采纳） | **v3.0** |
 >
 > **图例**：✅ 已实施 | ⚠️ 部分实施 | ❌ 未实施
+> **目标版本**：未来 ADR 的实施版本；已完成 ADR 显示实际发布的版本。
 
 ## ADR 列表
 
