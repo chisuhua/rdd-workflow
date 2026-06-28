@@ -80,14 +80,18 @@ spec-workflow/
 └── skills/
     ├── INSTALL.md             # 安装程序（第一入口）
     ├── guide.md               # 推荐器入口
-    ├── guide-spec.md          # Spec 端状态机
+    ├── guide-arch.md          # Arch 阶段状态机(v2.0+)
+    ├── guide-plan.md          # Plan 阶段状态机(v2.0+)
+    ├── guide-spec.md          # Spec 端状态机(别名,自动调用 arch→plan)
     ├── guide-ship.md          # Ship 端状态机
-    ├── propose.md             # 子技能(被 guide-spec 调用)
+    ├── propose.md             # 子技能(被 guide-plan 调用)
     ├── execute.md             # 子技能(被 guide-ship 调用)
-    ├── roadmap.md             # 子技能(被 guide-spec 调用)
-    ├── deps.md                # 子技能(被 guide-spec 调用)
+    ├── roadmap.md             # 子技能(被 guide-arch 调用)
+    ├── deps.md                # 子技能(被 guide-plan 调用)
     ├── status.md              # 子技能(被 guide-ship 调用或独立使用)
-    └── prometheus-planning.md # 实施计划生成器(v1.1+,取代 prometheus-start-work)
+    ├── prometheus-planning.md # 实施计划生成器(v1.1+,取代 prometheus-start-work)
+    ├── loop_engine.py         # v2.0 Loop 引擎(state vector + event log)
+    └── _lib/                  # v2.0 共享辅助函数库(state.sh, worktree.sh, archive.sh, deps.sh)
 ```
 
 ## 工作原理

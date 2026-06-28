@@ -2,7 +2,7 @@
 
 > **版本**: 2.0.0
 > **日期**: 2026-06-25
-> **对应代码**: `skills/loop-engine.py` + `skills/_lib/{detectors,actions,interaction_modes,human_nodes,design_phase,flowchart}.py`
+> **对应代码**: `skills/loop_engine.py` + `skills/_lib/{detectors,actions,interaction_modes,human_nodes,design_phase,flowchart}.py`
 
 ---
 

@@ -15,8 +15,8 @@ v1.x 用户升级到 v2.0 最快只需两步：
 # 1. 更新到最新版本
 npm update spec-workflow
 
-# 2. 运行迁移检查（可选）
-spec-workflow migrate --check
+# 2. 手动验证 v1.x 状态文件存在（可选；CLI `spec-workflow migrate` 规划中，v2.1 实现）
+ls -la .zcf/ .openspec/ proposal-suggestions.md
 ```
 
 **无需修改现有技能文件**。`guide-spec` 调用将自动变更为 `guide-arch` → `guide-plan`。所有现有 worktree 和变化不受影响。
@@ -114,10 +114,10 @@ v1.x 用户
 
 - [ ] 备份现有项目（`git commit` 或 `git tag v1-backup`）
 - [ ] 安装 spec-workflow v2.0
-- [ ] 运行 `spec-workflow migrate --check`（检查迁移就绪状态）
-- [ ] 运行 `spec-workflow migrate --dry-run`（预览迁移）
-- [ ] 运行 `spec-workflow migrate --apply`（执行迁移）
-- [ ] 验证状态向量（`cat .zcf/state-vector.json`）
+- [ ] 手动验证 v1.x 状态文件存在（`ls -la .zcf/ .openspec/ proposal-suggestions.md`；CLI `migrate --check` 规划中，v2.1 实现）
+- [ ] 手动预览迁移范围（`git diff --stat v1-backup -- .zcf/ .openspec/ .sisyphus/`；CLI `migrate --dry-run` 规划中，v2.1 实现）
+- [ ] 手动执行迁移（参见下方『手动迁移』章节；CLI `migrate --apply` 规划中，v2.1 实现）
+- [ ] 验证状态向量（`cat .zcf/state-vector.json`；当前版本未使用此路径，状态存储于 Python 库层）
 - [ ] 运行测试（`bats tests/`）
 - [ ] 创建 `.spec-workflow.json`（可选）
 - [ ] 尝试 loop 模式（可选）
@@ -314,6 +314,11 @@ skill_use("loop", {
 
 ## 状态文件迁移
 
+> **⚠️ 当前版本（v2.0）实现状态**
+> - `.zcf/state-vector.json` 和 `.zcf/event-log.jsonl` **当前版本未使用此路径，状态存储于 Python 库层**（`skills/_lib/state_vector.py`、`skills/_lib/event_log.py`，内存中维护）
+> - 本节中 `cat .zcf/state-vector.json`、`tail -f .zcf/event-log.jsonl` 等命令展示的是 v2.0 完整设计下的预期行为；当前请使用下方表格中映射的源文件（`.zcf/.roadmap-state.json`、`proposal-suggestions.md`、`openspec/changes/*/ .openspec.yaml`、`.sisyphus/plans/*.md`）作为状态查询入口
+> - 统一 CLI 工具 `spec-workflow migrate / sync / report` 规划中，v2.1 实现
+
 ### 自动迁移
 
 首次运行 v2.0 时，会自动执行迁移：
@@ -322,31 +327,50 @@ skill_use("loop", {
 $ skill_use("guide-spec")
 
 🔄 检测到 v1.x 状态文件，开始迁移...
-✅ 迁移 .zcf/.roadmap-state.json → state-vector.json
-✅ 迁移 proposal-suggestions.md → state-vector.json
-✅ 迁移 openspec/changes/*/ .openspec.yaml → state-vector.json
-✅ 迁移 .sisyphus/plans/*.md → state-vector.json
-✅ 创建 .zcf/event-log.jsonl
+✅ 迁移 .zcf/.roadmap-state.json → 状态向量（Python 库层）
+✅ 迁移 proposal-suggestions.md → 状态向量（Python 库层）
+✅ 迁移 openspec/changes/*/ .openspec.yaml → 状态向量（Python 库层）
+✅ 迁移 .sisyphus/plans/*.md → 状态向量（Python 库层）
+✅ 初始化事件流（内存中维护，event-log.py 写入时点：loop 启动/节点完成/门控切换）
 
 迁移完成！状态向量已生成。
 ```
 
 ### 手动迁移
 
-如果需要手动迁移：
+如果需要手动迁移（CLI `spec-workflow migrate --apply` 规划中，v2.1 实现）：
 
 ```bash
-spec-workflow migrate --apply
+# 1. 备份 v1.x 状态文件
+git tag v1-backup
+
+# 2. 验证源文件完整（手动迁移的"就绪检查"）
+ls -la .zcf/.roadmap-state.json
+ls -la proposal-suggestions.md
+ls openspec/changes/
+ls .sisyphus/plans/
+
+# 3. 触发自动迁移（首次调用 guide-spec 时自动完成）
+skill_use("guide-spec")
+# → 输出参见上方『自动迁移』章节
+
+# 4. 验证（参见下方『验证迁移结果』）
 ```
 
 ### 验证迁移结果
 
 ```bash
-# 检查状态向量
+# 检查状态向量（当前版本未使用此路径，状态存储于 Python 库层；下方命令为 v2.0 完整设计演示）
 cat .zcf/state-vector.json | jq '.version'  # 应该输出 "2.0"
 
-# 检查事件流
+# 检查事件流（同上）
 wc -l .zcf/event-log.jsonl  # 应该有迁移事件
+
+# 当前可用的状态查询入口（手动读取源文件）
+cat .zcf/.roadmap-state.json | jq '.'
+cat proposal-suggestions.md
+ls openspec/changes/ | wc -l
+ls .sisyphus/plans/ | wc -l
 
 # 检查向后兼容文件
 ls -la .zcf/.roadmap-state.json  # 应该仍然存在（同步层维护）
@@ -373,10 +397,10 @@ ls -la proposal-suggestions.md   # 应该仍然存在（同步层维护）
 |------|------|------|
 | `skills/guide-arch.md` | 架构定义阶段 | ✅ 是 |
 | `skills/guide-plan.md` | 变更生成阶段（原 guide-spec） | ✅ 是 |
-| `skills/loop.md` | Loop 引擎入口 | ✅ 是 |
+| `skills/loop_engine.py` | Loop 引擎入口 | ✅ 是 |
 | `skills/_lib/state_vector.py` | 状态向量操作 | ✅ 是 |
 | `skills/_lib/event_log.py` | 事件流操作 | ✅ 是 |
-| `skills/_lib/session_v20.py` | 轻量级会话协调器 | ✅ 是 |
+| `skills/_lib/session.py` | 轻量级会话协调器 | ✅ 是 |
 
 ### 保留技能文件
 
@@ -459,14 +483,16 @@ skill_use("status")
 # 方式 1: 传统方式（向后兼容）
 skill_use("status")
 
-# 方式 2: 查看状态向量
+# 方式 2: 查看状态向量（当前版本未使用此路径，状态存储于 Python 库层；下方命令为 v2.0 完整设计演示）
 cat .zcf/state-vector.json | jq '.'
 
-# 方式 3: 查看事件流
+# 方式 3: 查看事件流（同上）
 tail -f .zcf/event-log.jsonl | jq '.'
 
-# 方式 4: 生成进度报告
-spec-workflow report
+# 方式 4: 生成进度报告（CLI `spec-workflow report` 规划中，v2.1 实现）
+# 当前手动生成报告：组合方式 1-3 的输出，或：
+cat .zcf/.roadmap-state.json proposal-suggestions.md  # 综合源文件
+ls openspec/changes/ .sisyphus/plans/                  # 列出活跃工作
 ```
 
 ### 场景 4: 中断后恢复
@@ -498,38 +524,45 @@ skill_use("loop", {
 
 ### 问题 1: 迁移失败
 
-**症状**: `spec-workflow migrate --apply` 报错
+**症状**: 手动迁移步骤报错（CLI `spec-workflow migrate --apply` 规划中，v2.1 实现）
 
 **解决**:
 ```bash
-# 1. 检查错误日志
-cat .zcf/migration-error.log
+# 1. 检查错误日志（如有）
+cat .zcf/migration-error.log 2>/dev/null || echo "无错误日志文件（v2.0 当前不生成此文件）"
 
-# 2. 检查 v1.x 状态文件完整性
-spec-workflow migrate --check
+# 2. 检查 v1.x 状态文件完整性（手动就绪检查；CLI `migrate --check` 规划中，v2.1 实现）
+ls -la .zcf/.roadmap-state.json
+ls -la proposal-suggestions.md
+ls openspec/changes/
+ls .sisyphus/plans/
 
 # 3. 手动修复缺失文件
 # 如果 .zcf/.roadmap-state.json 缺失
 echo '{"current_phase": "core", "completion": 0.0}' > .zcf/.roadmap-state.json
 
-# 4. 重试迁移
-spec-workflow migrate --apply
+# 4. 重新触发自动迁移（CLI `migrate --apply` 规划中，v2.1 实现）
+skill_use("guide-spec")  # 首次调用时自动完成迁移
 ```
 
 ### 问题 2: 状态向量与现有文件不一致
 
 **症状**: 状态向量显示 change 已完成，但 `proposal-suggestions.md` 显示未完成
 
+> **⚠️ 当前版本（v2.0）说明**：CLI `spec-workflow sync` 规划中，v2.1 实现。当前状态数据存储于 Python 库层（`skills/_lib/sync_state.py`），在内存中维护双向一致性。下方命令展示的是 v2.0 完整设计演示。
+
 **解决**:
 ```bash
-# 1. 检查同步层状态
-spec-workflow sync --check
+# 1. 检查同步层状态（CLI `sync --check` 规划中，v2.1 实现；当前手动检查）
+git status .zcf/ proposal-suggestions.md openspec/ .sisyphus/
 
-# 2. 强制同步（状态向量 → 现有文件）
-spec-workflow sync --from state-vector
+# 2. 强制同步（状态向量 → 现有文件；CLI `sync --from state-vector` 规划中，v2.1 实现）
+# 当前手动操作：调用 skill_use("guide-spec") 触发 sync_state.py 的协调逻辑
+skill_use("guide-spec")
 
-# 3. 强制同步（现有文件 → 状态向量）
-spec-workflow sync --from legacy
+# 3. 强制同步（现有文件 → 状态向量；CLI `sync --from legacy` 规划中，v2.1 实现）
+# 当前手动操作：直接编辑源文件（.zcf/.roadmap-state.json / proposal-suggestions.md）
+# Loop 下次启动时 sync_state.py 会自动读取并同步
 ```
 
 ### 问题 3: Loop 引擎不启动

@@ -3,27 +3,31 @@
 > **生成日期**: 2026-06-22  
 > **决策者**: sisyphus  
 > **调研来源**: Looper、Anthropic Agents、Claude Code /loop、OpenHands、SWE-Agent、Requesty  
-> **ADR 总数**: 9 个（8 个已采纳 + 1 个 v2.1 候选）
+> **ADR 总数**: 12 个（10 个已采纳 + 1 个 v2.1 候选 + 1 个分阶段实施）
 
-> ## ⚠️ DRAFT — ADRs 已采纳但功能未实施
+> ## 📊 v2.0 ADR 实施状态（2026-06-28）
 >
-> 本总结报告基于的 8 个 v2.0 ADRs（ADR-0002 ~ ADR-0008、0010、0011、0012）**已采纳**为设计决策，但**相关功能尚未实施**。
+> | ADR | 实施状态 |
+> |-----|---------|
+> | ADR-0001 | ✅ 已实施（v1.x） |
+> | ADR-0002 ~ ADR-0008 | ✅ 已实施（v2.0.0-beta） |
+> | ADR-0009 | ❌ 未实施（v2.1 候选占位） |
+> | ADR-0010 | ⚠️ 部分实施（v2.0 轻量级） |
+> | ADR-0011 | ❌ 未实施（设计已采纳） |
+> | ADR-0012 | ❌ 未实施（设计已采纳） |
 >
-> **状态说明**：
-> - "已采纳" = 设计决策已确定
-> - "未实施" = 对应的代码改动尚未开始
->
-> 实施进度见 `docs/v2-implementation-plan.md`。
+> **图例**：✅ 已实施 | ⚠️ 部分实施 | ❌ 未实施
 
 ---
 
 ## 📋 执行摘要
 
-spec-workflow v2.0 完成了从**状态机驱动**到 **Loop 驱动**的架构级重构。通过业界调研，提取了 8 个核心设计模式，形成了完整的 ADR 体系：
+spec-workflow v2.0 完成了从**状态机驱动**到 **Loop 驱动**的架构级重构。通过业界调研，提取了 12 个核心设计模式，形成了完整的 ADR 体系：
 
-- **修订 ADR**: 4 个（ADR-0002、0004、0005、0006）
-- **新增 ADR**: 2 个（ADR-0007、0008）
+- **修订 ADR**: 5 个（ADR-0002、0003、0004、0005、0006）
+- **新增 ADR**: 3 个（ADR-0007、0008、0010）
 - **v2.1 候选**: 1 个（定时循环，原 ADR-0009）
+- **v2.0 待实施**: 2 个（ADR-0011、0012）
 
 **核心升级**:
 1. ✅ 三阶段架构（arch → plan → ship）
@@ -47,24 +51,36 @@ spec-workflow v2.0 完成了从**状态机驱动**到 **Loop 驱动**的架构�
 
 ---
 
-### v2.0 修订 ADR（4 个）
+### v2.0 修订 ADR（5 个）
 
 | ADR | 标题 | 状态 | 主要修订内容 | 调研来源 |
 |-----|------|------|------------|---------|
 | [ADR-0002](adr/ADR-0002-goal-driven-interaction-modes.md) | 目标驱动接口与交互模式配置 | 已采纳（修订） | ✅ 增加设计先行阶段（目标/验证/控制）<br>✅ 增加便携规范支持（loop.yaml）<br>✅ 三种交互模式（loop/menu/hybrid） | Looper<br>便携规范 |
+| [ADR-0003](adr/ADR-0003-three-phase-architecture.md) | 三阶段架构重构 (arch → plan → ship) | 已采纳（实施） | ✅ 按人工介入程度切分三阶段（arch 高 / plan 中 / ship 低）<br>✅ guide-spec 拆分为 guide-arch + guide-plan<br>✅ 向后兼容（guide-spec 保留为别名，自动调用 arch → plan）<br>✅ 推荐器升级（guide 三阶段扫描） | ADR-0001<br>状态机 |
 | [ADR-0004](adr/ADR-0004-loop-engine-core-design.md) | Loop 引擎核心设计 | 已采纳（修订） | ✅ 重构为 5 大构建块（Goal/Plan/Execute/Verify/Adapt）<br>✅ 增加多 Agent 协作（Planner/Executor/Verifier）<br>✅ 增加可视化流程图生成 | Requesty<br>OpenHands |
 | [ADR-0005](adr/ADR-0005-human-in-loop-nodes.md) | Human-in-Loop 节点定义 | 已采纳（修订） | ✅ 扩展为三种验证模式（human/multi_model/script）<br>✅ 增加节点策略（fixed/configurable）<br>✅ 集成审判委员会（ADR-0008） | Looper |
 | [ADR-0006](adr/ADR-0006-state-vector-event-log.md) | 状态向量与事件流设计 | 已采纳（修订） | ✅ 增加记忆系统字段（executions/insights/configs）<br>✅ 支持中断恢复（显示历史上下文）<br>✅ 支持重复失败警告<br>✅ 支持配置推荐 | OpenHands<br>Anthropic |
 
 ---
 
-### v2.0 新增 ADR（2 个）
+### v2.0 新增 ADR（3 个）
 
 | ADR | 标题 | 状态 | 核心设计 | 调研来源 |
 |-----|------|------|---------|---------|
 | [ADR-0007](adr/ADR-0007-gate-mechanism.md) | 门控机制设计 | 已采纳 | ✅ error/warning 两级严重度<br>✅ 阶段切换前必须通过检查清单<br>✅ 支持强制切换（需确认并记录）<br>✅ 支持插件扩展 | Requesty<br>5 大构建块 |
 | [ADR-0008](adr/ADR-0008-tribunal-committee.md) | 审判委员会设计 | 已采纳 | ✅ 基于 oh-my-opencode 的多 agent 调用<br>✅ 强制不同 agent（警告但允许同 agent）<br>✅ 数据脱敏（跨模型传输）<br>✅ 综合判定算法（权重 0.4/0.6） | Looper<br>审判委员会 |
 | [ADR-0010](adr/ADR-0010-multi-session-management.md) | 多会话管理与并行执行 | 已采纳（分阶段） | ✅ v2.0: 轻量级会话管理<br>✅ v2.1: 完整会话管理系统<br>✅ 状态向量扩展（session_info）<br>✅ 基本的父子会话协作 | OpenHands<br>Anthropic |
+
+---
+
+### v2.0 待实施 ADR（2 个）
+
+> 设计已采纳但代码尚未实施。v2.0.0-beta 之后的迭代中实施。
+
+| ADR | 标题 | 状态 | 核心设计 | 调研来源 |
+|-----|------|------|---------|---------|
+| [ADR-0011](adr/ADR-0011-phase-step-pipeline-model.md) | 阶段步骤化执行模型 | 已采纳（待实施） | ✅ 阶段模板（按 phase 拆解步骤）<br>✅ 触发器条件驱动步骤执行<br>✅ 步骤引擎（执行单元）<br>✅ 中断恢复（步骤级粒度） | 阶段步骤化<br>中断恢复 |
+| [ADR-0012](adr/ADR-0012-flow-customization-layer.md) | 流程定制层 | 已采纳（待实施） | ✅ 增量覆盖（基于基础流程的扩展）<br>✅ 条件触发（基于上下文激活）<br>✅ 自定义技能注册<br>✅ 多项目复用 | 流程定制<br>复用机制 |
 
 ---
 

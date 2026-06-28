@@ -14,9 +14,14 @@ def lock_path(tmp_path):
 
 def test_context_manager_acquires_and_releases(lock_path):
     """Lock is held inside `with` block, released on exit."""
-    with FileLock(lock_path, timeout=2.0) as lock:
+    lock = FileLock(lock_path, timeout=2.0)
+    with lock:
         assert lock.is_held is True
-    assert not os.path.exists(lock_path) or True  # lock file may or may not exist after release
+    # release() unlocks the fcntl advisory lock but does NOT unlink the file —
+    # verify the lock is no longer held, and that re-acquire succeeds instantly.
+    assert lock.is_held is False
+    with FileLock(lock_path, timeout=0.1) as re_acquired:
+        assert re_acquired.is_held is True
 
 
 def test_exclusive_lock_blocks_second_acquire(lock_path):

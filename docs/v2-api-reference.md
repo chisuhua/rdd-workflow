@@ -11,7 +11,7 @@
 - [state_vector.py](#state_vectorpy)
 - [event_log.py](#event_logpy)
 - [loop_engine.py](#loop_enginepy)
-- [session_v20.py](#session_v20py)
+- [session.py](#sessionpy)
 - [gate.py](#gatepy)
 - [tribunal.py](#tribunalpy)
 - [memory.py](#memorypy)
@@ -453,7 +453,7 @@ print(status["progress"])
 
 ---
 
-## session_v20.py
+## session.py
 
 轻量级会话协调器（v2.0）。
 
@@ -922,7 +922,7 @@ if is_sync_enabled():
 
 ## v2 Loop Engine APIs (Phase 2)
 
-### `skills/loop-engine.py` — `LoopEngine`
+### `skills/loop_engine.py` — `LoopEngine`
 
 ```python
 from skills.loop_engine import LoopEngine, LoopStatus

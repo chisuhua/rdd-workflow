@@ -2,7 +2,7 @@
 
 > 基于 `guide` 推荐器（spec-side 调 `guide-spec`，ship-side 调 `guide-ship`），覆盖从提案到归档的完整生命周期。
 > 支持多 change 并行执行，可分离到不同终端同时运行。
-> 当前版本: **v1.1**（拆分为 spec 端 5 阶段 / ship 端 5 阶段 + `prometheus-planning` 三级回退链）
+> 当前版本: **v2.0.0-beta**（三阶段架构 arch → plan → ship + Loop 引擎 + `prometheus-planning` 三级回退链）
 
 ---
 
@@ -30,15 +30,17 @@
 
 | 文件 | 位置 | 用途 | 写入方 |
 |------|------|------|--------|
-| `proposal-suggestions.md` | 项目根目录 | 扫描出的建议列表，随 git 版本控制 | `propose` / `roadmap` / `status` / `guide-spec` |
-| `openspec/changes/<name>/tasks.md` | change 目录 | Execute 阶段任务清单（权威进度来源） | `execute` / `guide-ship` / `guide-spec` / `prometheus-planning` |
+| `proposal-suggestions.md` | 项目根目录 | 扫描出的建议列表，随 git 版本控制 | `propose` / `roadmap` / `status` / `guide-arch` / `guide-plan` |
+| `openspec/changes/<name>/tasks.md` | change 目录 | Execute 阶段任务清单（权威进度来源） | `execute` / `guide-ship` / `prometheus-planning` |
 | `docs/adr/ADR-*.md` | 项目根目录 | 架构决策记录（propose 扫描 + 引用源） | 用户手工编写（待 propose 扫描拾取） |
 | `.sisyphus/plans/<name>.md` | worktree 内 | Prometheus 计划文件（ship 端产物） | `prometheus-planning` / `guide-ship` |
-| `.zcf/.handoff.json` | 项目根目录 | spec → ship 软交接状态（spec_complete_at / ship_started_at / current_change） | `guide-spec`（spec-done 写入）/ `guide-ship`（ship-started 读取+更新） |
-| `.zcf/.roadmap-state.json` | 项目根目录 | 路线图执行状态（completed_changes / gate_status） | `roadmap` / `execute`（roadmap 模式） |
-| `.zcf/.deps-candidates.json` | 项目根目录 | deps 阶段候选 change 列表 | `guide-spec`（deps 阶段） |
-| `.zcf/.deps-output.md` | 项目根目录 | deps 阶段依赖图 + 推荐执行顺序 | `guide-spec`（deps 阶段） |
-| `.zcf/index.md` | 项目根目录 | change 索引（自动维护） | `guide-spec` / `roadmap` |
+| `.zcf/.handoff.json` | 项目根目录 | spec → ship 软交接状态（spec_complete_at / ship_started_at / current_change） | `guide-plan`（plan-done 写入）/ `guide-ship`（ship-started 读取+更新） |
+| `.zcf/.arch-handoff.json` | 项目根目录 | arch → plan 阶段交接状态（arch_complete_at / arch_artifacts） | `guide-arch`（arch-done 写入）/ `guide-plan`（plan-start 读取+更新） |
+| `.zcf/.plan-handoff.json` | 项目根目录 | plan → ship 阶段交接状态（plan_complete_at / committed_changes） | `guide-plan`（plan-done 写入）/ `guide-ship`（ship-start 读取） |
+| `.zcf/.deps-analysis.json` | 项目根目录 | deps 阶段结构化分析结果（依赖图 + 执行顺序） | `deps` / `guide-plan`（deps 阶段） |
+| `.zcf/.deps-candidates.json` | 项目根目录 | deps 阶段候选 change 列表 | `guide-plan`（deps 阶段） |
+| `.zcf/.deps-output.md` | 项目根目录 | deps 阶段依赖图 + 推荐执行顺序 | `guide-plan`（deps 阶段） |
+| `.zcf/index.md` | 项目根目录 | change 索引（自动维护） | `guide-arch` / `guide-plan` |
 
 > 重要：`.zcf/` 目录已被 `.gitignore` 排除，不进 git 仓库。
 
@@ -284,8 +286,6 @@ i. 手动输入 change 名称
 - 检测到 worktree 已就绪 → 提示「进入 Execute 监控模式」或「继续返回 Plan 阶段」
 - 用户选择后继续
 
-### Phase 2 — Execute（监控与执行）
-
 **`prometheus-planning` 三级回退链**（v1.1 新增）：
 
 | 优先级 | 来源 | 备注 |
@@ -428,7 +428,7 @@ i. 其他输入
 - 进度来自 `tasks.md` 实际读取，每次入口自动刷新
 - 「🔄 刷新进度」可手动重新读取所有 `tasks.md`
 - 「上次检测」时间戳让用户知道状态是实时的
-- **Execute 主要写 `tasks.md`**：在 roadmap 模式下，额外更新 `.zcf/.roadmap-state.json`（详见下方「状态文件」章节）
+- **Execute 主要写 `tasks.md`**：在 roadmap 模式下，额外更新 `.zcf/.deps-analysis.json`（结构化依赖图，详见上方「状态文件」章节）
 
 ---
 
@@ -735,7 +735,8 @@ docs/adr/
 
 | 版本 | 关键变更 |
 |------|---------|
-| **v1.1** (current) | 拆分 `guide` 为 `guide-spec` (5 阶段) + `guide-ship` (4 阶段)；新增 `roadmap`/`deps`/`prometheus-planning` 技能；建立 `docs/adr/` 目录（ADR-0001 记录拆分决策）；加入 bats-core 测试基础设施；`prometheus-start-work` 降级为 deprecated |
+| **v2.0.0-beta** (current) | 三阶段架构 `arch` → `plan` → `ship`（新增 `guide-arch`/`guide-plan`，`guide-spec` 保留为兼容别名）；Loop 引擎 `loop_engine.py` + `skills/_lib/`；新增 `prometheus-planning` 三级回退链；保留 v1.x 全部分阶段逻辑 |
+| v1.1 | 拆分 `guide` 为 `guide-spec` (5 阶段) + `guide-ship` (4 阶段)；新增 `roadmap`/`deps`/`prometheus-planning` 技能；建立 `docs/adr/` 目录（ADR-0001 记录拆分决策）；加入 bats-core 测试基础设施；`prometheus-start-work` 降级为 deprecated |
 | v1.0 | 单一 `guide` 技能驱动全流程；`prometheus-start-work` 作为默认计划生成器 |
 | 2026-06-04 之前 | 使用 `generatedBy: X.Y` 元数据，已重命名为 `evolved-from` |
 
