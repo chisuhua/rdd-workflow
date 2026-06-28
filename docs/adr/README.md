@@ -15,7 +15,7 @@
 > | [ADR-0007](ADR-0007-gate-mechanism.md) | 门控机制 | ✅ 已实施 | 已完成（v2.0） |
 > | [ADR-0008](ADR-0008-tribunal-committee.md) | 审判委员会 | ✅ 已实施 | 已完成（v2.0） |
 > | [ADR-0009](ADR-0009-scheduled-triggers.md) | 定时循环与事件触发 | ❌ 未实施（v2.1 候选） | **v3.0** |
-> | [ADR-0010](ADR-0010-multi-session-management.md) | 多会话管理 | ⚠️ 部分实施（v2.0 轻量级） | **v2.1（完整版）** |
+> | [ADR-0010](ADR-0010-multi-session-management.md) | 多会话管理 | ✅ 已实施（v2.0+v2.1） | **v2.1（完整版）** |
 > | [ADR-0011](ADR-0011-phase-step-pipeline-model.md) | 阶段步骤化执行模型 | ❌ 未实施（设计已采纳） | **v3.0** |
 > | [ADR-0012](ADR-0012-flow-customization-layer.md) | 流程定制层 | ❌ 未实施（设计已采纳） | **v3.0** |
 >
