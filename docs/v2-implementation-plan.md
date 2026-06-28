@@ -1,22 +1,31 @@
 # spec-workflow v2.0 实施计划
 
-> **版本**: 2.0.0  
-> **日期**: 2026-06-24  
-> **状态**: 待审批  
+> **版本**: 2.0.0-beta  
+> **日期**: 2026-06-24（更新: 2026-06-28）  
+> **状态**: ✅ 已完成（v2.0.0-beta 已于 2026-06-26 发布）  
 > **决策者**: sisyphus  
-> **基于**: ADR-0001 ~ ADR-0010, v2-architecture-refactor-plan.md
+> **基于**: ADR-0001 ~ ADR-0012, v2-architecture-refactor-plan.md
 
-> ## ⚠️ DRAFT — v2.0 未实施
+> ## ✅ v2.0.0-beta 实施完成
 >
-> 本文档描述 v2.0 的**设计计划**。所有标记为 P0/P1/P2 的任务**尚未开始**。
+> 本文档最初为 v2.0 的**设计计划**。以下 5 个 Phase 已全部实施并归档：
 >
-> **当前 v1.x 实现状态**（2026-06-24）：
-> - ✅ `skills/guide-spec.md` + `skills/guide-ship.md` 仍按 ADR-0001 的双阶段架构运行
-> - ❌ `skills/guide-arch.md` / `skills/guide-plan.md` / `skills/loop-engine.py` **不存在**
-> - ❌ 状态向量 (`skills/_lib/state_vector.py`)、事件流 (`event_log.py`)、门控 (`gate.py`)、审判委员会 (`tribunal.py`) **未实现**
-> - ❌ ADR-0002 ~ ADR-0012 描述的功能**未实施**
+> | Phase | 对应 Change | 状态 |
+> |------|------------|------|
+> | Phase 1: 核心基础 | `v2-core-foundation` | ✅ 完成（2026-06-25） |
+> | Phase 2: Loop 引擎 | `v2-loop-engine` | ✅ 完成（2026-06-25） |
+> | Phase 3: 高级特性 | `v2-advanced-features` | ✅ 完成（2026-06-26） |
+> | Phase 4: 迁移与测试 | `v2-migration-and-tests` | ✅ 完成（2026-06-26） |
+> | Phase 5: Beta 发布 | `v2-beta-release` | ✅ 完成（2026-06-26） |
 >
-> **本文档作为后续 OpenSpec change 的路线图**。不应将其视为 v2.0 已完成的实现。
+> **当前实现状态**（2026-06-28）：
+> - ✅ `skills/guide-arch.md` / `guide-plan.md` / `guide-ship.md` — 三阶段架构已实施
+> - ✅ `skills/loop_engine.py` — Loop 引擎已实施（含 8 个探测器、7 个动作）
+> - ✅ `skills/_lib/state_vector.py` / `event_log.py` / `gate.py` / `tribunal.py` 等 22 个 Python 模块已实现
+> - ✅ 145 个 Python 测试 + 257 个 bats 测试通过
+> - ✅ ADR-0002 ~ ADR-0008 已实施；ADR-0009~0012 为 v3.0 候选
+>
+> **本文档保留为历史设计记录**。后续开发见 `roadmap.md` 或新的 openspec change。
 
 ---
 
@@ -93,7 +102,7 @@ Week 1-2    Week 3-4    Week 5-7    Week 8-9    Week 10
 
 ---
 
-## 📦 Phase 1: 核心基础（2 周，8-10 人天）
+## ✅ Phase 1: 核心基础 ✅已实施
 
 **目标**: 实现核心基础设施，向后兼容 v1.x
 
@@ -337,7 +346,7 @@ skills/_lib/
 
 ---
 
-## 🔄 Phase 2: Loop 引擎核心（3 周，12-15 人天）
+## ✅ Phase 2: Loop 引擎核心 ✅已实施
 
 **目标**: 实现 Loop 引擎 5 大构建块 + 三种交互模式
 
@@ -617,7 +626,7 @@ skills/_lib/
 
 ---
 
-## 🧠 Phase 3: 高级特性（2-3 周，10-12 人天）
+## ✅ Phase 3: 高级特性 ✅已实施
 
 **目标**: 实现审判委员会、记忆系统、会话管理
 
@@ -868,7 +877,7 @@ skills/_lib/
 
 ---
 
-## 🧪 Phase 4: 迁移与测试（2 周，8-10 人天）
+## ✅ Phase 4: 迁移与测试 ✅已实施
 
 **目标**: 三阶段拆分、v1.x 迁移、测试套件
 
@@ -1086,7 +1095,7 @@ docs/
 
 ---
 
-## 🚀 Phase 5: Beta 发布（1 周，3-4 人天）
+## ✅ Phase 5: Beta 发布 ✅已实施
 
 **目标**: Beta 发布，收集反馈，修复关键问题
 
@@ -1436,7 +1445,7 @@ spec-workflow/
 ---
 
 **文档维护者**: sisyphus  
-**最后更新**: 2026-06-24  
-**下次审查**: Phase 1 完成后  
-**审批状态**: 待审批
+**最后更新**: 2026-06-28  
+**下次审查**: 无（v2.0 已完成）  
+**审批状态**: ✅ 完成 — v2.0.0-beta 已于 2026-06-26 发布
 
