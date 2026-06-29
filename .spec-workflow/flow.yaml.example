@@ -1,0 +1,29 @@
+# .spec-workflow/flow.yaml — 流程定制配置（示例）
+# 复制此文件到 .spec-workflow/flow.yaml 并编辑
+# 不配置此文件 = 使用默认阶段模板（向后兼容）
+version: "2.0"
+
+customizations:
+  plan:
+    - insert_after: "generate_proposal"
+      step:
+        id: "compliance_review"
+        type: "custom"
+        skill: "compliance-review"
+        trigger: "always"
+        verification_mode: "human"
+
+    - replace: "generate_proposal"
+      overrides:
+        skill: "custom-planner"
+        params:
+          template: "detailed"
+
+  ship:
+    - insert_before: "merge_to_main"
+      step:
+        id: "security_audit"
+        type: "custom"
+        skill: "security-review"
+        trigger: "changes.any(has_security_impact)"
+        on_failure: "back_to:execute_units"
