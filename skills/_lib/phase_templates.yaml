@@ -1,0 +1,192 @@
+# Phase templates for v3 step pipeline
+# Each template defines a named sequence of steps for a pipeline phase.
+
+templates:
+  arch:
+    description: >
+      Architecture phase — scan the existing codebase architecture, identify
+      gaps, record decisions as ADRs, define a roadmap, and output docs.
+    steps:
+      - name: scan_architecture
+        description: Recursively scan the codebase to produce an architecture inventory
+        agent: librarian
+        prompt: >
+          Scan the codebase at {{worktree_root}} recursively and produce a
+          structured architecture inventory including: directory tree (top 3
+          levels), key modules, entry points, data flow boundaries, and
+          dependency direction. Output as a Markdown list with file paths.
+        output: architecture_inventory.md
+      - name: identify_gaps
+        description: Compare current architecture against target requirements to find gaps
+        agent: oracle
+        prompt: >
+          Given the architecture inventory at architecture_inventory.md and the
+          target requirements from {{requirements_file}}, identify specific
+          gaps: missing modules, misaligned data flows, inadequate abstraction
+          layers, or missing extensibility points. Rate each gap
+          critical/major/minor.
+        output: gap_analysis.md
+      - name: create_adr
+        description: Write an Architecture Decision Record for each significant design choice
+        agent: oracle
+        prompt: >
+          Based on gap_analysis.md, create one or more ADRs under
+          docs/adr/. Each ADR must follow the format:
+          # ADR-{N}: {title}
+          ## Status
+          ## Context
+          ## Decision
+          ## Consequences
+          Use numeric index starting from the next available ADR number.
+        output: docs/adr/ADR-*.md
+      - name: define_roadmap
+        description: Produce a sequenced implementation roadmap from the gap analysis
+        agent: oracle
+        prompt: >
+          From gap_analysis.md, produce a roadmap.md file that sequences the
+          work into phases. Each phase must declare: goal, affected modules,
+          estimated effort (S/M/L), and dependencies on prior phases.
+        output: roadmap.md
+      - name: output_docs
+        description: Gather all produced documents into a summary artifact
+        agent: build
+        prompt: >
+          Collect architecture_inventory.md, gap_analysis.md, all ADRs, and
+          roadmap.md into a single ARCHITECTURE_SUMMARY.md with a table of
+          contents. Place it at {{worktree_root}}/ARCHITECTURE_SUMMARY.md.
+        output: ARCHITECTURE_SUMMARY.md
+
+  plan:
+    description: >
+      Planning phase — evaluate change candidates, select a scope, generate a
+      proposal, design, task breakdown, dependency analysis, and commit.
+    steps:
+      - name: scan_candidates
+        description: Gather all open issues, feature requests, and known problems
+        agent: librarian
+        prompt: >
+          Scan {{worktree_root}} for all open GitHub Issues (using gh CLI:
+          gh issue list --state open --limit 50), outstanding change requests.
+          List each as a candidate with ID, title, labels, and priority if
+          available.
+        output: candidates.md
+      - name: select_changes
+        description: Choose which candidate(s) to implement in this planning cycle
+        agent: human
+        prompt: >
+          From candidates.md, select one or more candidates for this cycle.
+          Decision factors: alignment with roadmap, dependencies, effort,
+          priority. Record the selection and rationale.
+        output: selection.md
+      - name: generate_proposal
+        description: Write a structured change proposal for the selected candidates
+        agent: oracle
+        prompt: >
+          From selection.md, write a change proposal that includes: problem
+          statement, proposed solution, success criteria, and out-of-scope
+          items. Target audience: maintainers and reviewers.
+        output: proposal.md
+      - name: generate_design
+        description: Produce a technical design document for the proposal
+        agent: oracle
+        prompt: |
+          From proposal.md and the architecture inventory, write a technical
+          design document covering:
+          - Data model changes (if any)
+          - API / interface changes
+          - Module boundaries and new files
+          - Testing strategy
+          - Rollout / migration plan
+          - Risks and mitigations
+        output: design.md
+      - name: generate_tasks
+        description: Break the design into atomic implementation tasks
+        agent: oracle
+        prompt: >
+          From design.md, produce a flat list of implementation tasks. Each
+          task must be: single file or single concern, independently testable,
+          no more than 1-2 hours of work. Use format:
+          - [ ] T{id}: {verb} {file/path} — {expected outcome}
+        output: tasks.md
+      - name: analyze_deps
+        description: Analyze task dependencies and produce an execution order
+        agent: dependency_scheduler
+        prompt: >
+          From tasks.md, analyze logical and file-level dependencies between
+          tasks. Produce an ordered execution plan with parallelization
+          opportunities noted. Output as a numbered list.
+        output: execution_order.md
+      - name: commit_change
+        description: Commit the planning artifacts to a proposal branch
+        agent: build
+        prompt: >
+          Stage and commit all planning artifacts (candidates.md, selection.md,
+          proposal.md, design.md, tasks.md, execution_order.md) into a branch
+          named plan/{timestamp}. Commit message: "plan: {summary of selected
+          changes}".
+        output: git branch name
+
+  ship:
+    description: >
+      Shipping phase — execute one planned change end-to-end: create a
+      worktree, generate an execution plan, run units, test, merge, archive.
+    steps:
+      - name: select_change
+        description: Pick the next unexecuted task from the execution plan
+        agent: human
+        prompt: >
+          From the execution_order.md (or from a prior phase's task list),
+          select the next change to ship. Record the selection.
+        output: active_change.md
+      - name: create_worktree
+        description: Create an isolated git worktree for the change
+        agent: worktree
+        prompt: >
+          Create a fresh git worktree at .wt/{change-id} from a clean base
+          branch. Push to the worktree.ps1 or worktree.sh helper at
+          {{skills_lib_dir}}/worktree.sh if it exists.
+        output: worktree path
+      - name: generate_plan
+        description: Produce an atomic plan for the change
+        agent: oracle
+        prompt: |
+          From active_change.md and design.md (or proposal.md), generate a
+          step-by-step implementation plan. Each step must be:
+          1. Verifiable (has a clear pass/fail criterion)
+          2. Self-contained (no external dependencies beyond prior steps)
+          3. Small (1-3 file edits, < 50 LOC changed)
+        output: implementation_plan.md
+      - name: execute_units
+        description: Execute each step from the implementation plan
+        agent: build
+        prompt: >
+          Follow implementation_plan.md step by step. After each step run
+          verification (tests, lint, type-check). If a step fails, try once to
+          fix, then escalate to {{escalation_channel}}.
+        output: execution_log.md
+      - name: run_tests
+        description: Run full test suite and quality gates
+        agent: build
+        prompt: >
+          From the worktree at {{worktree_path}}, run the full test suite:
+          pytest, linting, type checking. Record pass/fail per suite. For any
+          failure, collect the output for triage.
+        output: test_report.md
+      - name: merge_to_main
+        description: Merge the worktree change back to the main branch
+        agent: build
+        prompt: >
+          From {{worktree_path}}, commit all changes (if not already
+          committed), push, and merge to the main branch via squash merge.
+          Delete the worktree branch after merge. Apply the commit message:
+          "{change_title} ({change_id})".
+        output: merge commit SHA
+      - name: archive_change
+        description: Archive the change record and clean up worktree
+        agent: build
+        prompt: >
+          Move all change artifacts (active_change.md,
+          implementation_plan.md, execution_log.md, test_report.md) into an
+          archive directory: .archive/{change_id}/. Remove the worktree
+          directory. Update the change tracking log.
+        output: .archive/{change_id}/done.md
