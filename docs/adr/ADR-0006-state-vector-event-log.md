@@ -7,10 +7,10 @@
 
 ## Context
 
-spec-workflow v1.x 使用 **13 个分散的状态文件**（`.zcf/` 目录 + git 跟踪文件），存在以下问题：
+spec-workflow v1.x 使用 **13 个分散的状态文件**（`.rddf/state/` 目录 + git 跟踪文件），存在以下问题：
 
-1. **状态不一致**: 多个文件存储相同信息（如 change 状态在 `proposal-suggestions.md`、`.zcf/.roadmap-state.json`、`openspec/changes/<name>/.openspec.yaml` 中重复）
-2. **死代码风险**: `.zcf/.phase-gate-report.md` 写但从不读（审计 P3-5）
+1. **状态不一致**: 多个文件存储相同信息（如 change 状态在 `proposal-suggestions.md`、`.rddf/state/roadmap-state.json`、`openspec/changes/<name>/.openspec.yaml` 中重复）
+2. **死代码风险**: `.rddf/state/phase-gate-report.md` 写但从不读（审计 P3-5）
 3. **难以观测**: 没有统一的状态快照，调试时需要手动检查多个文件
 4. **缺乏历史**: 状态文件只反映当前状态，无法追溯状态变更历史
 5. **Loop 引擎需求**: ADR-0004 的 Loop 引擎需要统一的状态向量作为输入/输出
@@ -30,8 +30,8 @@ spec-workflow v1.x 使用 **13 个分散的状态文件**（`.zcf/` 目录 + git
 #### 文件位置
 
 ```
-.zcf/state-vector.json  (主状态向量)
-.zcf/state-vector.lock  (并发控制)
+.rddf/state/state-vector.json  (主状态向量)
+.rddf/state/state-vector.lock  (并发控制)
 ```
 
 #### Schema 定义
@@ -131,7 +131,7 @@ spec-workflow v1.x 使用 **13 个分散的状态文件**（`.zcf/` 目录 + git
     "worktrees": [
       {
         "name": "add-auth",
-        "path": "/path/to/project/.zcf/add-auth-wt",
+        "path": "/path/to/project/.rddf/state/add-auth-wt",
         "branch": "openspec/add-auth",
         "created_at": "2026-06-22T10:05:00Z",
         "status": "executing",
@@ -142,7 +142,7 @@ spec-workflow v1.x 使用 **13 个分散的状态文件**（`.zcf/` 目录 + git
           "completion": 0.67
         },
         "plan": {
-          "file": ".sisyphus/plans/add-auth.md",
+          "file": ".rddf/plans/add-auth.md",
           "generated_at": "2026-06-22T10:06:00Z",
           "source": "oh-my-opencode"
         },
@@ -308,7 +308,7 @@ class StateVector:
 #### 文件位置
 
 ```
-.zcf/event-log.jsonl  (事件流，每行一个 JSON 对象)
+.rddf/state/event-log.jsonl  (事件流，每行一个 JSON 对象)
 ```
 
 #### 事件 Schema
@@ -324,7 +324,7 @@ class StateVector:
   "phase": "ship",
   "data": {
     "change_name": "add-auth",
-    "worktree_path": "/path/to/.zcf/add-auth-wt",
+    "worktree_path": "/path/to/.rddf/state/add-auth-wt",
     "branch": "openspec/add-auth"
   },
   "context": {
@@ -597,9 +597,9 @@ def suggest_config(self, goal: str) -> LoopConfig:
 ```
 状态向量 (主) ←→ 现有状态文件 (兼容层)
 
-.zcf/state-vector.json  (v2.x 主状态)
+.rddf/state/state-vector.json  (v2.x 主状态)
     ↓ 同步写入
-.zcf/.roadmap-state.json  (v1.x 兼容)
+.rddf/state/roadmap-state.json  (v1.x 兼容)
 proposal-suggestions.md  (v1.x 兼容)
 openspec/changes/<name>/.openspec.yaml  (v1.x 兼容)
 ```
@@ -610,14 +610,14 @@ openspec/changes/<name>/.openspec.yaml  (v1.x 兼容)
 # skills/_lib/sync_state.sh
 
 sync_state_vector_to_legacy() {
-    local state_vector=".zcf/state-vector.json"
+    local state_vector=".rddf/state/state-vector.json"
     
     # 同步 roadmap 状态
     jq -r '.arch_side.roadmap' "$state_vector" | \
         python3 -c "
 import json, sys
 roadmap = json.load(sys.stdin)
-with open('.zcf/.roadmap-state.json', 'w') as f:
+with open('.rddf/state/roadmap-state.json', 'w') as f:
     json.dump({
         'current_phase': roadmap['current_phase'],
         'completion': roadmap['completion']
@@ -679,8 +679,8 @@ class FileLock:
 ### 影响范围
 
 - **In Scope**:
-  - 新增 `.zcf/state-vector.json` (状态向量)
-  - 新增 `.zcf/event-log.jsonl` (事件流)
+  - 新增 `.rddf/state/state-vector.json` (状态向量)
+  - 新增 `.rddf/state/event-log.jsonl` (事件流)
   - 新增 `skills/_lib/state_vector.py` (状态向量操作)
   - 新增 `skills/_lib/event_log.py` (事件流操作)
   - 新增 `skills/_lib/sync_state.sh` (与现有文件同步)
@@ -732,7 +732,7 @@ class FileLock:
 
 - ADR-0004 — Loop 引擎核心设计
 - `docs/audit/2026-06-05-workflow-audit.md` §15.4 — 状态文件分散问题
-- `.zcf/.roadmap-state.json` — 现有 roadmap 状态文件
+- `.rddf/state/roadmap-state.json` — 现有 roadmap 状态文件
 - `proposal-suggestions.md` — 现有 proposal 状态文件
 - OpenHands — 事件流设计参考
 - Cursor Agent — 状态管理参考

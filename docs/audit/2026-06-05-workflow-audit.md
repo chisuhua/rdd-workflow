@@ -25,11 +25,11 @@
 
 ### 0.2 三大最严重问题(速览)
 
-1. **`prometheus-start-work` 是未声明的必需依赖** — 整个 ship 端唯一能生成实施计划文件 `.sisyphus/plans/<name>.md` 的途径;失败时 `guide-ship` 直接 `exit 1`;`package.json:17`、README、USAGE、INSTALL 全部未提及。
+1. **`prometheus-start-work` 是未声明的必需依赖** — 整个 ship 端唯一能生成实施计划文件 `.rddf/plans/<name>.md` 的途径;失败时 `guide-ship` 直接 `exit 1`;`package.json:17`、README、USAGE、INSTALL 全部未提及。
 
 2. **`git worktree list` 字段索引 BUG 横跨 2 个 skill** — `status.md` 三处、`execute.md` 三处把 `$2`(commit hash)当作 branch 字段,导致 worktree 永远找不到;`execute.md:411` 文档表把错误模式列为"推荐解"。
 
-3. **分离执行(🔓 detached)模式下 roadmap 进度永远不更新** — `execute.md` 在 worktree 内执行时,`PROJECT_ROOT=$(git rev-parse --show-toplevel)` 返回 worktree 自己的根,`.zcf/.roadmap-state.json` 被写入 worktree 内 `.zcf/`,主 session 完全看不到。
+3. **分离执行(🔓 detached)模式下 roadmap 进度永远不更新** — `execute.md` 在 worktree 内执行时,`PROJECT_ROOT=$(git rev-parse --show-toplevel)` 返回 worktree 自己的根,`.rddf/state/roadmap-state.json` 被写入 worktree 内 `.rddf/state/`,主 session 完全看不到。
 
 ### 0.3 修复工作量估算
 
@@ -75,8 +75,8 @@
 | 概念 | 说明 | 当前实现 |
 |------|------|---------|
 | Spec/Ship 切分点 | `git commit artifacts` | 清晰,以 `.openspec.yaml` 在 HEAD 中存在为探针 |
-| 状态持久化 | 文件分层 | `proposal-suggestions.md` (git) + `.zcf/*` (gitignore) |
-| 执行隔离 | `git worktree` | `.zcf/<name>-wt/` |
+| 状态持久化 | 文件分层 | `proposal-suggestions.md` (git) + `.rddf/state/*` (gitignore) |
+| 执行隔离 | `git worktree` | `.rddf/wt/<name>/` |
 | 进度同步 | tasks.md 单一事实源 | `grep -c "^- \[x\]"` 实时读取 |
 | 并行执行 | 🔒 阻塞 vs 🔓 分离 | 灵活但有状态分歧(见 10.2) |
 | Roadmap 模式 | vs 兼容模式 | `roadmap.md` 存在时启用,缺失则降级 |
@@ -189,7 +189,7 @@ done
 - 行为:只读扫描项目状态,输出"建议调用 X"一行,不修改任何文件
 - 6 级优先级扫描(worktree 状态 → committed changes → roadmap → changes → suggestions)
 
-### 3.2 🟡 P1-3:`guide.md` 扫描盲区 — 不查 `.zcf/.roadmap-state.json`
+### 3.2 🟡 P1-3:`guide.md` 扫描盲区 — 不查 `.rddf/state/roadmap-state.json`
 
 **证据** (`guide.md:22-76`): 6 个检测项
 
@@ -202,15 +202,15 @@ done
 
 **未检测**:
 
-- `.zcf/.roadmap-state.json` 当前阶段状态(roadmap 模式 vs 兼容模式)
-- `.zcf/.phase-gate-report.md` 存在(可能刚生成,需要查看)
+- `.rddf/state/roadmap-state.json` 当前阶段状态(roadmap 模式 vs 兼容模式)
+- `.rddf/state/phase-gate-report.md` 存在(可能刚生成,需要查看)
 - worktree 的实际执行状态(🔒 阻塞 vs 🔓 分离)— 假设分离执行后用 `guide` 会扫到 worktree 在跑,但不区分
 
 **修复建议**:增加扫描:
 
 ```bash
 # 优先检查:门控报告 + 阶段门控
-[ -f "$PROJECT_ROOT/.zcf/.phase-gate-report.md" ] && \
+[ -f "$PROJECT_ROOT/.rddf/state/phase-gate-report.md" ] && \
   RECOMMEND="status --roadmap"; REASON="阶段门控报告待 review"
 
 # 次优先:分离执行中(主 session 不在 worktree)
@@ -224,7 +224,7 @@ fi
 
 **证据** (`guide.md:50`): `git worktree list 2>/dev/null | grep -q "openspec/"`
 
-**问题**:如果 worktree 路径含 `openspec/` 字符(虽然设计上是 `.zcf/<name>-wt`,但用户可能改名),会误匹配。建议用 `awk '$3 ~ /^openspec\//'` 显式匹配分支名。
+**问题**:如果 worktree 路径含 `openspec/` 字符(虽然设计上是 `.rddf/wt/<name>`,但用户可能改名),会误匹配。建议用 `awk '$3 ~ /^openspec\//'` 显式匹配分支名。
 
 ---
 
@@ -322,7 +322,7 @@ fi
 python3 -c "import json; print(json.load(open('$STATE_FILE')).get('current_phase', 'unknown'))"
 ```
 
-**问题**:`.zcf/.roadmap-state.json` 缺失或损坏时直接 `FileNotFoundError` / `JSONDecodeError`,命令整体失败。
+**问题**:`.rddf/state/roadmap-state.json` 缺失或损坏时直接 `FileNotFoundError` / `JSONDecodeError`,命令整体失败。
 
 **修复建议**:
 
@@ -440,17 +440,17 @@ if result.returncode == 0:
 ### 7.1 流程描述
 
 - 自动触发(无菜单)
-- Step 1:生成 `.zcf/.deps-candidates.json`
+- Step 1:生成 `.rddf/state/deps-candidates.json`
 - Step 2-4:静态三轴分析(文件冲突、ADR 引用、接口依赖)
 - Step 3:子代理语义分析(**占位符**)
-- Step 5:写入 `.zcf/.deps-output.md`
+- Step 5:写入 `.rddf/state/deps-output.md`
 
 ### 7.2 🔴 P0-5:`deps.md` Step 5 实际不写文件(heredoc 是占位符)
 
 **证据** (`deps.md:391-398`):
 
 ```bash
-mkdir -p "$PROJECT_ROOT/.zcf/"
+mkdir -p "$PROJECT_ROOT/.rddf/state/"
 cat > "$DEPS_OUTPUT" << 'DEPS_EOF'
 # 依赖分析报告
 (5a-5e 的全部内容写入此文件,格式见下文)
@@ -463,7 +463,7 @@ echo "✅ 依赖分析报告已写入: $DEPS_OUTPUT"
 1. heredoc 内的内容是**注释字符串**,不是实际生成逻辑
 2. 5a-5e 是 `<!-- TEMPLATE: ... -->` 注释(line 404, 430, 442, 450, 458)
 3. 真正的静态分析结果(Step 2 的 `comm -12` 输出)未在任何代码路径中收集和写入
-4. `guide-spec.md:402` 的 `cat "$PROJECT_ROOT/.zcf/.deps-output.md"` 会显示**空文件**
+4. `guide-spec.md:402` 的 `cat "$PROJECT_ROOT/.rddf/state/deps-output.md"` 会显示**空文件**
 
 **修复建议**:
 
@@ -553,7 +553,7 @@ fi
 3. 两条路径都通,但无显式交接文档/状态
 4. 用户可能调用 `guide` 或 `guide-spec` 多次,guide 的推荐基于"当前扫描状态",可能反复推荐相同 action
 
-**修复建议**:定义一个轻量级交接状态文件(`.zcf/.handoff.json`)记录"spec 端已交付,等待 ship 端开始"。
+**修复建议**:定义一个轻量级交接状态文件(`.rddf/state/handoff.json`)记录"spec 端已交付,等待 ship 端开始"。
 
 ---
 
@@ -571,11 +571,11 @@ fi
 
 ```bash
 if skill_use("prometheus-start-work") 2>/dev/null; then
-    if [ ! -f ".sisyphus/plans/$CHANGE_NAME.md" ]; then
+    if [ ! -f ".rddf/plans/$CHANGE_NAME.md" ]; then
         echo "❌ Prometheus start_work 未生成计划文件"
         exit 1
     fi
-    PLAN_TASK_COUNT=$(grep -c '^- \[' ".sisyphus/plans/$CHANGE_NAME.md" 2>/dev/null || echo 0)
+    PLAN_TASK_COUNT=$(grep -c '^- \[' ".rddf/plans/$CHANGE_NAME.md" 2>/dev/null || echo 0)
     if [ "$PLAN_TASK_COUNT" -eq 0 ]; then
         echo "❌ 计划文件存在但无任务项"
         exit 1
@@ -594,7 +594,7 @@ fi
 2. `skills/` 目录下无对应 `.md` 文件
 3. README/USAGE/INSTALL 全部未提及此依赖
 4. `package.json:11-15` 的 `engines.dependencies` 只声明 `openspec-cli`
-5. **`.sisyphus/plans/<name>.md` 的唯一生成途径就是它**(execute.md:200、status.md:124 都依赖此文件)
+5. **`.rddf/plans/<name>.md` 的唯一生成途径就是它**(execute.md:200、status.md:124 都依赖此文件)
 6. 失败时无清晰用户引导(只说"请确认")
 
 **修复建议**:
@@ -679,16 +679,16 @@ WT_PATH=$(wt_path_for_branch "$CHANGE_NAME")
 
 **证据**:
 
-- `execute.md:55`: `PROJECT_ROOT=$(git rev-parse --show-toplevel)` — 在 worktree 内执行时,返回**worktree 自己的根** (e.g., `.zcf/<name>-wt/`),不是主 repo 根
-- `execute.md:301`: `STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json"`
-- **实际路径**:`.zcf/<name>-wt/.zcf/.roadmap-state.json` (worktree 内)
-- **期望路径**:`$PROJECT_ROOT/.zcf/.roadmap-state.json` (主 repo 根)
+- `execute.md:55`: `PROJECT_ROOT=$(git rev-parse --show-toplevel)` — 在 worktree 内执行时,返回**worktree 自己的根** (e.g., `.rddf/wt/<name>/`),不是主 repo 根
+- `execute.md:301`: `STATE_FILE="$PROJECT_ROOT/.rddf/state/roadmap-state.json"`
+- **实际路径**:`.rddf/wt/<name>/.rddf/state/roadmap-state.json` (worktree 内)
+- **期望路径**:`$PROJECT_ROOT/.rddf/state/roadmap-state.json` (主 repo 根)
 
 **问题**:
 
 1. 分离执行时,`execute` 在新终端的 worktree 内运行
 2. `git rev-parse --show-toplevel` 返回 worktree 根
-3. `.zcf/.roadmap-state.json` 被写入 **worktree 内的 `.zcf/`**(新建,因为不存在)
+3. `.rddf/state/roadmap-state.json` 被写入 **worktree 内的 `.rddf/state/`**(新建,因为不存在)
 4. 主 session 完全看不到这个更新
 5. 阻塞执行(🔒)也受影响(虽然工作目录回到主 session,但 execute 调用时 cwd 已在 worktree)
 6. `roadmap-state.json` 的 `completed_changes` 永远不增长
@@ -736,9 +736,9 @@ fi
 
 **与 P0-8 相关但独立**:
 
-- 🔒 阻塞执行:`guide-ship` 内调 `execute` → execute 在 worktree 内 → 仍写入 worktree 内的 `.zcf/`
+- 🔒 阻塞执行:`guide-ship` 内调 `execute` → execute 在 worktree 内 → 仍写入 worktree 内的 `.rddf/state/`
 - 🔓 分离执行:新终端调 `execute` → 同上
-- **两种路径都不更新主 repo 根的 `.zcf/.roadmap-state.json`**
+- **两种路径都不更新主 repo 根的 `.rddf/state/roadmap-state.json`**
 
 **修复建议**:见 P0-8。
 
@@ -907,24 +907,24 @@ fi
 | `openspec/changes/<n>/tasks.md` | ✅ | propose.md, execute.md | guide.md, guide-ship.md, status.md |
 | `openspec/changes/<n>/.openspec.yaml` | ✅ | openspec new | guide-spec.md, guide-ship.md (commit probe) |
 | `openspec/changes/<n>/roadmap-meta.yaml` | ✅ | propose.md | roadmap.md, execute.md |
-| `.zcf/.roadmap-state.json` | ❌ | roadmap.md, propose.md, execute.md | roadmap.md, status.md, execute.md |
-| `.zcf/.deps-candidates.json` | ❌ | guide-spec.md | deps.md |
-| `.zcf/.deps-output.md` | ❌ | deps.md (P0-5 实际未写) | guide-spec.md |
-| `.zcf/.phase-gate-report.md` | ❌ | roadmap.md | **无人读** (死代码风险) |
-| `.sisyphus/plans/<n>.md` | ❌ | Prometheus (外部) | execute.md, status.md |
+| `.rddf/state/roadmap-state.json` | ❌ | roadmap.md, propose.md, execute.md | roadmap.md, status.md, execute.md |
+| `.rddf/state/deps-candidates.json` | ❌ | guide-spec.md | deps.md |
+| `.rddf/state/deps-output.md` | ❌ | deps.md (P0-5 实际未写) | guide-spec.md |
+| `.rddf/state/phase-gate-report.md` | ❌ | roadmap.md | **无人读** (死代码风险) |
+| `.rddf/plans/<n>.md` | ❌ | Prometheus (外部) | execute.md, status.md |
 
 **问题**:
 
 - 13 个状态文件,跨 4 个不同所有者(persist/ephemeral × user/cli)
-- `.zcf/.phase-gate-report.md` 写但从不读(roadmap.md:562-612 写,grep 全仓 0 读)
-- `.zcf/.deps-output.md` 写但 P0-5 实际不写内容
+- `.rddf/state/phase-gate-report.md` 写但从不读(roadmap.md:562-612 写,grep 全仓 0 读)
+- `.rddf/state/deps-output.md` 写但 P0-5 实际不写内容
 - `proposal-suggestions.md` 跨 5 个文件读写,但格式不规范(见 P1-7)
 
 **修复建议**:
 
 - 写一个 `skills/_lib/state.sh` 统一管理 13 个状态文件路径
-- 删 `.zcf/.phase-gate-report.md` 或加 reader
-- 修 `.zcf/.deps-output.md` 写入逻辑(见 P0-5)
+- 删 `.rddf/state/phase-gate-report.md` 或加 reader
+- 修 `.rddf/state/deps-output.md` 写入逻辑(见 P0-5)
 
 ### 15.5 `git show HEAD:"openspec/changes/$name/.openspec.yaml"` 在 5 个文件重复
 
@@ -1015,7 +1015,7 @@ fi
 | P3-2 | `USAGE.md` 顶部 migration warning 已过时 |
 | P3-3 | 17 处 "i. 其他输入" 无 case 处理(已在 15.3 提及) |
 | P3-4 | 跨技能版本号混乱(已在 P2-1 提及) |
-| P3-5 | `.zcf/.phase-gate-report.md` 写但从不读(死代码) |
+| P3-5 | `.rddf/state/phase-gate-report.md` 写但从不读(死代码) |
 
 ---
 
@@ -1053,7 +1053,7 @@ fi
 - **9 个 skill**:`/home/ubuntu/.agents/skills/spec-workflow/skills/`
 - **元数据**:`/home/ubuntu/.agents/skills/spec-workflow/{README.md, USAGE.md, package.json, install.sh}`
 - **AI 编程助手配置**:`/home/ubuntu/.agents/skills/spec-workflow/.claude-plugin/`
-- **状态文档**:`/home/ubuntu/.agents/skills/spec-workflow/.zcf/index.md`
+- **状态文档**:`/home/ubuntu/.agents/skills/spec-workflow/.rddf/state/index.md`
 - **审计文档**:`/home/ubuntu/.agents/skills/spec-workflow/docs/audit/`(本文件位置)
 
 ---

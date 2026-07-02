@@ -316,24 +316,24 @@ Expected: 4 lines, each containing unquoted `$PROJECT_ROOT`.
 
 Old:
 ```bash
-echo "❌ 目录冲突，请先清理: rm -rf $PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
+echo "❌ 目录冲突，请先清理: rm -rf $PROJECT_ROOT/.rddf/wt/${CHANGE_NAME}"
 ```
 
 New:
 ```bash
-echo "❌ 目录冲突，请先清理: rm -rf \"$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt\""
+echo "❌ 目录冲突，请先清理: rm -rf \"$PROJECT_ROOT/.rddf/wt/${CHANGE_NAME}\""
 ```
 
 - [ ] **Step 3: Replace lines 905 AND 1029 (identical content — use `replaceAll`)**
 
 Old (appears on both lines):
 ```bash
-echo "   cd $(pwd)/$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt"
+echo "   cd $(pwd)/$PROJECT_ROOT/.rddf/wt/${CHANGE_NAME}"
 ```
 
 New (appears on both lines):
 ```bash
-echo "   cd $(pwd)/\"$PROJECT_ROOT/.zcf/${CHANGE_NAME}-wt\""
+echo "   cd $(pwd)/\"$PROJECT_ROOT/.rddf/wt/${CHANGE_NAME}\""
 ```
 
 Use the `edit` tool with `replaceAll: true` so both occurrences are updated in a single call.

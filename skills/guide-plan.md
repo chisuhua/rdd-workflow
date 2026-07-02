@@ -17,7 +17,7 @@ metadata:
 **职责边界**：
 - **拥有**：`openspec/changes/<name>/{proposal,design,tasks}.md`（change artifacts）、`proposal-suggestions.md`（候选列表）
 - **不拥有**：`docs/adr/ADR-*.md`（属于 `guide-arch`）、git worktree + Prometheus 计划（属于 `guide-ship`）
-- **状态持久化**：plan-done 时写入 `.zcf/.plan-handoff.json`（不被 git 跟踪，缺失时 ship 端静默回退）
+- **状态持久化**：plan-done 时写入 `.spec-workflow/.plan-handoff.json`（不被 git 跟踪，缺失时 ship 端静默回退）
 - **人工介入程度**：**中** —— plan 阶段 AI 辅助生成 change 提案，用户主要做决策（选择候选、确认依赖关系）
 
 **调用方式**：
@@ -45,9 +45,9 @@ skill_use("guide-plan")   # 无参数版本
 ```
 [guide-arch]  --(arch-done: ADR ≥ 1 + roadmap.md)-->  [guide-plan]  --(plan-done: ≥1 change + all artifacts committed)-->  [guide-ship]
     arch 端                                                 plan 端                                                ship 端
-    owns: docs/adr/ADR-*.md, roadmap.md,                  owns: openspec/changes/<name>/                        owns: worktree, .sisyphus/plans/,
+    owns: docs/adr/ADR-*.md, roadmap.md,                  owns: openspec/changes/<name>/                        owns: worktree, .rddf/plans/,
           docs/architecture/*-gap-analysis.md                    {proposal,design,tasks}.md                              execute, archive
-    exits: .zcf/.arch-handoff.json                     exits: .zcf/.plan-handoff.json                     exits: 归档的 change 目录
+    exits: .spec-workflow/.arch-handoff.json                     exits: .spec-workflow/.plan-handoff.json                     exits: 归档的 change 目录
 ```
 
 **为什么这样切**（节选自 ADR-0003）：
@@ -69,8 +69,8 @@ skill_use("guide-plan")   # 无参数版本
 
 - 通过 scan 阶段生成/更新 `proposal-suggestions.md`（plan 端唯一持久化候选列表）
 - 通过 propose 阶段创建 `openspec/changes/<name>/{proposal.md, design.md, tasks.md, .openspec.yaml}`
-- 通过 deps 阶段生成 `.zcf/.deps-candidates.json`（输入契约）和 `.zcf/.deps-output.md`（分析输出）
-- plan-done 时写入 `.zcf/.plan-handoff.json`（plan → ship 的软交接信号）
+- 通过 deps 阶段生成 `.spec-workflow/.deps-candidates.json`（输入契约）和 `.spec-workflow/.deps-output.md`（分析输出）
+- plan-done 时写入 `.spec-workflow/.plan-handoff.json`（plan → ship 的软交接信号）
 
 ---
 
@@ -117,7 +117,7 @@ CURRENT_BRANCH=$(git branch --show-current)
 echo "📌 当前分支: $CURRENT_BRANCH"
 
 # 4. arch 端交付物检查（plan 端的前置条件）
-ARCH_HANDOFF="$PROJECT_ROOT/.zcf/.arch-handoff.json"
+ARCH_HANDOFF="$PROJECT_ROOT/.spec-workflow/.arch-handoff.json"
 ROADMAP_EXISTS=$([ -f "$PROJECT_ROOT/roadmap.md" ] && echo "yes" || echo "no")
 ADR_COUNT=$(ls -d "$PROJECT_ROOT/docs/adr/ADR-0"*.md 2>/dev/null | grep -v "ADR-0000-template" | wc -l)
 echo "📋 ADR 数量: $ADR_COUNT"
@@ -131,7 +131,7 @@ echo "📋 当前活跃 changes: $ACTIVE_CHANGES"
 if [ -f "$ARCH_HANDOFF" ]; then
     echo "✅ 检测到 arch-done handoff（arch → plan 软交接信号）"
 else
-    echo "⚠️  未检测到 .zcf/.arch-handoff.json"
+    echo "⚠️  未检测到 .spec-workflow/.arch-handoff.json"
     echo "   说明: 之前未运行 guide-arch,或 arch 阶段未完成"
     echo "   影响: propose 将无法按当前阶段分类生成 change"
 fi
@@ -346,16 +346,16 @@ guide-plan 阶段完成（plan-done）
 
 **行为**：
 
-1. **生成候选列表**：读取所有已提交的 change，生成 `.zcf/.deps-candidates.json`
+1. **生成候选列表**：读取所有已提交的 change，生成 `.spec-workflow/.deps-candidates.json`
 2. **执行依赖分析**：调用 deps.md 分析 change 间依赖
-3. **输出依赖图**：生成 `.zcf/.deps-output.md`，包含 Mermaid 依赖图和推荐执行顺序
+3. **输出依赖图**：生成 `.spec-workflow/.deps-output.md`，包含 Mermaid 依赖图和推荐执行顺序
 4. **展示结果**：展示依赖图、冲突检测、推荐顺序
 
 **自动执行内容**：
 
 ```bash
 # Step 1: 生成候选列表（guide-plan 负责此步骤）
-mkdir -p "$PROJECT_ROOT/.zcf"
+mkdir -p "$PROJECT_ROOT/.spec-workflow"
 python3 -c "
 import json, os, sys, subprocess
 
@@ -377,19 +377,19 @@ if os.path.isdir(changes_dir):
             print(f'⚠️ git show failed for {name}: {e}', file=sys.stderr)
 
 data = {'candidates': candidates}
-with open('$PROJECT_ROOT/.zcf/.deps-candidates.json', 'w') as f:
+with open('$PROJECT_ROOT/.spec-workflow/.deps-candidates.json', 'w') as f:
     json.dump(data, f, indent=2)
 print(f'生成候选列表: {candidates}')
 "
 
 # Step 2: 调用 deps.md 技能（静态三轴分析 + 子代理语义分析占位）
-# deps.md 读取 .zcf/.deps-candidates.json，输出 .zcf/.deps-output.md
+# deps.md 读取 .spec-workflow/.deps-candidates.json，输出 .spec-workflow/.deps-output.md
 # 详细实现见 skills/deps.md
 skill_use("deps")
 
 # Step 3: 展示结果
 echo "📊 依赖分析完成"
-cat "$PROJECT_ROOT/.zcf/.deps-output.md"
+cat "$PROJECT_ROOT/.spec-workflow/.deps-output.md"
 ```
 
 **详细分析逻辑**（已迁移到 `skills/deps.md`）：
@@ -401,8 +401,8 @@ cat "$PROJECT_ROOT/.zcf/.deps-output.md"
 
 **契约**：
 
-- **输入**: `.zcf/.deps-candidates.json`（Step 1 生成）
-- **输出**: `.zcf/.deps-output.md`（由 deps.md 写入，由 Step 3 cat 展示）
+- **输入**: `.spec-workflow/.deps-candidates.json`（Step 1 生成）
+- **输出**: `.spec-workflow/.deps-output.md`（由 deps.md 写入，由 Step 3 cat 展示）
 - **错误处理**: 若 `.deps-candidates.json` 缺失，deps.md Step 0 退出 1，guide-plan 需在 Step 1 确保生成
 
 **无用户交互**：本阶段自动完成。guide-plan 全部工作完成，输出 plan-done 退出信号。
@@ -465,13 +465,13 @@ echo ""
 
 **写入 handoff 状态**：
 
-plan → ship 交接通过 `.zcf/.plan-handoff.json` 软状态文件传递。plan-done 验证通过后立即写入，记录 plan_complete_at、active_changes、all_artifacts_committed、ship_started_at（初值 null）、current_change（第一个 active change 名）。文件不被 git 跟踪（`.gitignore` 排除 `.zcf/`），缺失时 ship 端静默回退到旧行为。
+plan → ship 交接通过 `.spec-workflow/.plan-handoff.json` 软状态文件传递。plan-done 验证通过后立即写入，记录 plan_complete_at、active_changes、all_artifacts_committed、ship_started_at（初值 null）、current_change（第一个 active change 名）。文件不被 git 跟踪（`.gitignore` 已排除 `.spec-workflow/`），缺失时 ship 端静默回退到旧行为。
 
 ```bash
 # 写入 handoff 状态,作为 plan→ship 的软交接信号
-# 缺失 .zcf 目录时静默创建 (mkdir -p),写失败不阻塞 plan-done 输出
-HANDOFF_FILE="$PROJECT_ROOT/.zcf/.plan-handoff.json"
-mkdir -p "$PROJECT_ROOT/.zcf"
+# 缺失 .spec-workflow 目录时静默创建 (mkdir -p),写失败不阻塞 plan-done 输出
+HANDOFF_FILE="$PROJECT_ROOT/.spec-workflow/.plan-handoff.json"
+mkdir -p "$PROJECT_ROOT/.spec-workflow"
 
 # 重新获取 change 数量（确保与门控检查一致）
 CHANGE_COUNT=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l)
@@ -491,7 +491,7 @@ cat > "$HANDOFF_FILE" << EOF
 EOF
 
 if [ -f "$HANDOFF_FILE" ]; then
-    echo "✅ Handoff state written: .zcf/.plan-handoff.json (active_changes=$CHANGE_COUNT, current_change=$CURRENT_CHANGE)"
+    echo "✅ Handoff state written: .spec-workflow/.plan-handoff.json (active_changes=$CHANGE_COUNT, current_change=$CURRENT_CHANGE)"
 else
     echo "⚠️  Handoff state write failed, ship 端将使用旧行为"
 fi
@@ -505,7 +505,7 @@ fi
 📋 变更生成交付物:
   - Active Changes: N 个
   - Artifacts: 全部已提交
-  - 依赖分析: .zcf/.deps-output.md
+  - 依赖分析: .spec-workflow/.deps-output.md
 
 💡 Next: skill_use("guide-ship")
    This will scan your committed changes and start worktree creation + execution.

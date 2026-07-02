@@ -14,7 +14,7 @@ setup() {
   git config user.email "test@test"
   git config user.name "test"
   echo "x" > a && git add a && git commit -q -m init
-  git worktree add -b openspec/test-1 .zcf/test-1-wt HEAD
+  git worktree add -b openspec/test-1 .rddf/wt/test-1 HEAD
 }
 
 teardown() {

@@ -1,11 +1,11 @@
 #!/usr/bin/env bats
 # tests/integration/test_deps_output_format.bats
 #
-# Locks the .zcf/.deps-output.md output format produced by skills/deps.md
+# Locks the .rddf/state/.deps-output.md output format produced by skills/deps.md
 # Step 5. Independent of the subagent call — guards against Step 5 heredoc
 # regressions in the Mermaid / 5-section structure.
 #
-# The 5 sections of .zcf/.deps-output.md:
+# The 5 sections of .rddf/state/.deps-output.md:
 #   1. 依赖图 (Mermaid)
 #   2. 阶段预检 (roadmap-meta.yaml)
 #   3. 状态表 (per-change ready/blocked)
@@ -42,8 +42,8 @@ setup() {
   [ -n "$body" ]
 }
 
-@test "deps.md Step 5 writes to .zcf/.deps-output.md" {
-  grep -q '\.zcf/\.deps-output\.md' "$f"
+@test "deps.md Step 5 writes to .rddf/state/.deps-output.md" {
+  grep -q '\.rddf/state/\.deps-output\.md' "$f"
   grep -qE 'cat >? "?\$DEPS_OUTPUT"?(>>)? ' "$f" \
     || grep -qE 'cat >>? "?\$DEPS_OUTPUT"? ?<<' "$f" \
     || grep -qE 'cat > "?\$DEPS_OUTPUT"?' "$f"

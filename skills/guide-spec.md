@@ -30,7 +30,7 @@ metadata:
 **向后兼容保证**:
 - `skill_use("guide-spec")` 行为与 v1.x 完全一致（只是内部实现改为两步调用）
 - 所有已提交的 change 和进行中的 worktree 不受影响
-- 状态文件（.zcf/）格式向后兼容
+- 状态文件（.rddf/state/）格式向后兼容
 
 ## Step 1: 架构定义 (Architecture Definition)
 

@@ -80,7 +80,7 @@ load ../test_helper
   # Build a scratch git repo with an openspec/ worktree
   local tmp wt_dir
   tmp=$(mktemp -d)
-  wt_dir="$tmp/.zcf/test-wt"
+  wt_dir="$tmp/.rddf/wt/test"
   ( cd "$tmp" \
     && git init -q \
     && git config user.email "t@t" \

@@ -145,8 +145,8 @@ def detect_archived_changes(state: dict) -> DetectionResult:
 
 
 def detect_roadmap_state(state: dict) -> DetectionResult:
-    """Detect current phase + category from `.zcf/.roadmap-state.json`."""
-    roadmap_file = Path(".zcf/.roadmap-state.json")
+    """Detect current phase + category from `.rddf/state/roadmap-state.json`."""
+    roadmap_file = Path(".rddf/state/roadmap-state.json")
     if not roadmap_file.exists():
         return DetectionResult(
             type="roadmap_state",

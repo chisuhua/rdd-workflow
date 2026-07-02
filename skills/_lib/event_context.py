@@ -4,11 +4,13 @@ Provides a single helper `current_context()` used by EventLog.record() to attach
 the active goal, change, and loop iteration to every event.
 """
 from __future__ import annotations
+import logging
 import os
 from typing import Any
 
 from skills._lib.state_vector import StateVector
 
+logger = logging.getLogger(__name__)
 
 DEFAULT_STATE_PATH = ".spec-workflow/state-vector.json"
 
@@ -32,4 +34,5 @@ def current_context(state_path: str = DEFAULT_STATE_PATH) -> dict:
             "loop_iteration": data.get("loop_state", {}).get("iteration", 0),
         }
     except Exception:
+        logger.warning("EventContext: state vector load failed, returning empty context")
         return {}

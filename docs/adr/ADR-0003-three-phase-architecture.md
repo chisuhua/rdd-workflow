@@ -70,7 +70,7 @@ guide → guide-arch (架构定义阶段)
 | 2 | adr-create | 创建/更新 ADR 文档 | `docs/adr/ADR-*.md` |
 | 3 | architecture | 生成架构差距分析文档 | `docs/architecture/*-gap-analysis.md` |
 | 4 | roadmap-define | 定义/更新路线图 | `roadmap.md` + `roadmap-meta.yaml` |
-| 5 | arch-done | 验证架构文档完整性，交接 plan 阶段 | `.zcf/.arch-handoff.json` |
+| 5 | arch-done | 验证架构文档完整性，交接 plan 阶段 | `.rddf/state/arch-handoff.json` |
 
 **菜单示例**:
 ```
@@ -106,8 +106,8 @@ guide → guide-arch (架构定义阶段)
 |---|--------|------|------|
 | 1 | scan | 扫描 ADR 未实现、TODO/FIXME、测试缺口 | 候选 change 列表 |
 | 2 | propose | 创建 OpenSpec change artifacts | `openspec/changes/<name>/{proposal,design,tasks}.md` |
-| 3 | deps | 依赖分析（冲突、ADR 引用、接口依赖） | `.zcf/.deps-output.md` |
-| 4 | plan-done | 验证 artifacts 完整性，交接 ship 阶段 | `.zcf/.plan-handoff.json` |
+| 3 | deps | 依赖分析（冲突、ADR 引用、接口依赖） | `.rddf/state/deps-output.md` |
+| 4 | plan-done | 验证 artifacts 完整性，交接 ship 阶段 | `.rddf/state/plan-handoff.json` |
 
 **菜单示例**:
 ```
@@ -142,7 +142,7 @@ guide → guide-arch (架构定义阶段)
 **职责**:
 | # | 子阶段 | 职责 | 输出 |
 |---|--------|------|------|
-| 1 | plan | 选择 change → 创建 worktree → 生成 Prometheus 计划 | `.sisyphus/plans/<name>.md` |
+| 1 | plan | 选择 change → 创建 worktree → 生成 Prometheus 计划 | `.rddf/plans/<name>.md` |
 | 2 | execute | 监控/执行 work units | 代码变更、测试通过 |
 | 3 | archive | merge → openspec archive → cleanup | archived change |
 | 4 | cleanup | 清理残留 worktrees/branches | 清理报告 |
@@ -202,12 +202,12 @@ guide → guide-arch (架构定义阶段)
   - 拆分 `skills/guide-spec.md` → `guide-plan.md` (只保留 propose + deps)
   - 保留 `skills/guide-ship.md` (职责不变)
   - 更新 `skills/guide.md` (推荐器扫描 3 个阶段)
-  - 新增阶段间交接文件 (`.zcf/.arch-handoff.json`, `.zcf/.plan-handoff.json`)
+  - 新增阶段间交接文件 (`.rddf/state/arch-handoff.json`, `.rddf/state/plan-handoff.json`)
   
 - **Out Scope**:
   - 不改变子技能接口 (propose/execute/status/roadmap/deps 保持独立)
   - 不改变 openspec CLI 接口
-  - 不改变状态文件格式 (`.zcf/` 目录结构保持)
+  - 不改变状态文件格式 (`.rddf/state/` 目录结构保持)
 
 ### 备选方案
 

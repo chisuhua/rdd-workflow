@@ -10,6 +10,7 @@ import copy
 import datetime
 import hashlib
 import json
+import logging
 import os
 import tempfile
 from pathlib import Path
@@ -18,6 +19,8 @@ from typing import Any, Optional
 import jsonschema
 
 from skills._lib.lock import FileLock, LockTimeout
+
+logger = logging.getLogger(__name__)
 
 
 SCHEMA_PATH = os.path.join(
@@ -99,6 +102,16 @@ class StateVector:
                 "iteration": 0,
                 "last_action": None,
                 "last_action_at": None,
+            },
+            "session_management": {
+                "current_session": None,
+                "active_sessions": [],
+                "session_statistics": {"total": 0, "active": 0, "completed": 0, "failed": 0},
+            },
+            "dependency_graph": {
+                "nodes": [],
+                "edges": [],
+                "execution_order": [],
             },
             "memory": {"notes": "", "learnings": []},
             "metadata": {

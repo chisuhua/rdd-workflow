@@ -381,7 +381,7 @@ def generate_flowchart(goal: str, config: LoopConfig) -> str:
         "trigger": "git_commits",
         "time_range": "last_24h",
         "review_model": "gpt-4o",
-        "output": ".zcf/code-reports/daily-review.md"
+        "output": ".rddf/state/code-reports/daily-review.md"
       }
     },
     {

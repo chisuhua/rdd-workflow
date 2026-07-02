@@ -24,7 +24,7 @@
 
 ### 类: `StateVector`
 
-#### `__init__(path: str = ".zcf/state-vector.json")`
+#### `__init__(path: str = ".rddf/state/state-vector.json")`
 
 初始化状态向量。
 
@@ -35,7 +35,7 @@
 ```python
 from state_vector import StateVector
 
-sv = StateVector(".zcf/state-vector.json")
+sv = StateVector(".rddf/state/state-vector.json")
 ```
 
 ---
@@ -192,7 +192,7 @@ sv.reset()
 
 ### 类: `EventLog`
 
-#### `__init__(path: str = ".zcf/event-log.jsonl")`
+#### `__init__(path: str = ".rddf/state/event-log.jsonl")`
 
 初始化事件流。
 
@@ -214,7 +214,7 @@ sv.reset()
 ```python
 from event_log import EventLog
 
-el = EventLog(".zcf/event-log.jsonl")
+el = EventLog(".rddf/state/event-log.jsonl")
 
 el.append("state_updated", {
     "field": "arch_side.adr",

@@ -2,7 +2,7 @@
 
 > 基于 `guide` 推荐器（spec-side 调 `guide-spec`，ship-side 调 `guide-ship`），覆盖从提案到归档的完整生命周期。
 > 支持多 change 并行执行，可分离到不同终端同时运行。
-> 当前版本: **v2.0.0-beta**（三阶段架构 arch → plan → ship + Loop 引擎 + `prometheus-planning` 三级回退链）
+> 当前版本: **v2.0.0-beta**（三阶段架构 arch → plan → ship + Loop 引擎 + `spec-workflow/writing-plans` 自包含计划生成器）
 
 ---
 
@@ -15,7 +15,7 @@
 | 端 | 职责 | 关键产物 |
 |----|------|---------|
 | **spec 端** (`guide-spec`) | 环境检查 → 路线图 → 扫描/创建 change → 依赖分析 | `openspec/changes/<name>/{proposal,design,tasks}.md` 已提交 |
-| **ship 端** (`guide-ship`) | worktree → Prometheus 计划 → 实施执行 → 归档 → 清理 | worktree 目录、`.sisyphus/plans/<name>.md`、归档记录 |
+| **ship 端** (`guide-ship`) | worktree → Prometheus 计划 → 实施执行 → 归档 → 清理 | worktree 目录、`.rddf/plans/<name>.md`、归档记录 |
 
 详细架构决策见 [ADR-0001](./docs/adr/ADR-0001-propose-plan-execute-state-machine.md)。
 
@@ -31,18 +31,18 @@
 | 文件 | 位置 | 用途 | 写入方 |
 |------|------|------|--------|
 | `proposal-suggestions.md` | 项目根目录 | 扫描出的建议列表，随 git 版本控制 | `propose` / `roadmap` / `status` / `guide-arch` / `guide-plan` |
-| `openspec/changes/<name>/tasks.md` | change 目录 | Execute 阶段任务清单（权威进度来源） | `execute` / `guide-ship` / `prometheus-planning` |
+| `openspec/changes/<name>/tasks.md` | change 目录 | Execute 阶段任务清单（权威进度来源） | \`execute\` / \`guide-ship\` |
 | `docs/adr/ADR-*.md` | 项目根目录 | 架构决策记录（propose 扫描 + 引用源） | 用户手工编写（待 propose 扫描拾取） |
-| `.sisyphus/plans/<name>.md` | worktree 内 | Prometheus 计划文件（ship 端产物） | `prometheus-planning` / `guide-ship` |
-| `.zcf/.handoff.json` | 项目根目录 | spec → ship 软交接状态（spec_complete_at / ship_started_at / current_change） | `guide-plan`（plan-done 写入）/ `guide-ship`（ship-started 读取+更新） |
-| `.zcf/.arch-handoff.json` | 项目根目录 | arch → plan 阶段交接状态（arch_complete_at / arch_artifacts） | `guide-arch`（arch-done 写入）/ `guide-plan`（plan-start 读取+更新） |
-| `.zcf/.plan-handoff.json` | 项目根目录 | plan → ship 阶段交接状态（plan_complete_at / committed_changes） | `guide-plan`（plan-done 写入）/ `guide-ship`（ship-start 读取） |
-| `.zcf/.deps-analysis.json` | 项目根目录 | deps 阶段结构化分析结果（依赖图 + 执行顺序） | `deps` / `guide-plan`（deps 阶段） |
-| `.zcf/.deps-candidates.json` | 项目根目录 | deps 阶段候选 change 列表 | `guide-plan`（deps 阶段） |
-| `.zcf/.deps-output.md` | 项目根目录 | deps 阶段依赖图 + 推荐执行顺序 | `guide-plan`（deps 阶段） |
-| `.zcf/index.md` | 项目根目录 | change 索引（自动维护） | `guide-arch` / `guide-plan` |
+| `.rddf/plans/<name>.md` | worktree 内 | Prometheus 计划文件（ship 端产物） | \`spec-workflow/writing-plans\` / \`guide-ship\` |
+| `.rddf/state/handoff.json` | 项目根目录 | spec → ship 软交接状态（spec_complete_at / ship_started_at / current_change） | `guide-plan`（plan-done 写入）/ `guide-ship`（ship-started 读取+更新） |
+| `.rddf/state/arch-handoff.json` | 项目根目录 | arch → plan 阶段交接状态（arch_complete_at / arch_artifacts） | `guide-arch`（arch-done 写入）/ `guide-plan`（plan-start 读取+更新） |
+| `.rddf/state/plan-handoff.json` | 项目根目录 | plan → ship 阶段交接状态（plan_complete_at / committed_changes） | `guide-plan`（plan-done 写入）/ `guide-ship`（ship-start 读取） |
+| `.rddf/state/deps-analysis.json` | 项目根目录 | deps 阶段结构化分析结果（依赖图 + 执行顺序） | `deps` / `guide-plan`（deps 阶段） |
+| `.rddf/state/deps-candidates.json` | 项目根目录 | deps 阶段候选 change 列表 | `guide-plan`（deps 阶段） |
+| `.rddf/state/deps-output.md` | 项目根目录 | deps 阶段依赖图 + 推荐执行顺序 | `guide-plan`（deps 阶段） |
+| `.rddf/state/index.md` | 项目根目录 | change 索引（自动维护） | `guide-arch` / `guide-plan` |
 
-> 重要：`.zcf/` 目录已被 `.gitignore` 排除，不进 git 仓库。
+> 重要：`.rddf/state/` 目录已被 `.gitignore` 排除，不进 git 仓库。
 
 ### 执行状态
 
@@ -89,7 +89,7 @@
 | `deps` | 依赖分析（含 subagent Step 3） | `guide-plan` 内部 / 单独使用 |
 | `execute` | 在 worktree 内执行任务 | `guide-ship` 内部 / worktree 内单独使用 |
 | `status` | 状态查看 | `guide-ship` 内部 / 单独使用 |
-| `prometheus-planning` | 实施计划生成器（带三级回退链） | `guide-ship` Phase 1 内部 |
+| `spec-workflow/writing-plans` | 实施计划生成器（TDD 5 步结构，自包含） | `guide-ship` Phase 1 内部 |
 
 ### 使用 Loop 引擎（v2.0）
 
@@ -227,7 +227,7 @@ i. 手动输入 change 名称
 **职责**：
 - 检测 candidate change 之间的代码依赖（`docs/proposal-suggestions-format.md` 规则）
 - 运行 `deps` 技能（含 subagent Step 3 语义分析 + fallback）
-- 输出 `.zcf/.deps-candidates.json`（机器可读）+ `.zcf/.deps-output.md`（人类可读）
+- 输出 `.rddf/state/deps-candidates.json`（机器可读）+ `.rddf/state/deps-output.md`（人类可读）
 - 标注"可并行"vs"需串行"vs"被阻塞"
 
 **行为**：
@@ -266,7 +266,7 @@ i. 手动输入 change 名称
 
 ### Phase 1 — Plan（Worktree + 计划生成）
 
-为已提交的 change 创建 worktree 并生成 Prometheus 计划。
+为已提交的 change 创建 worktree 并生成 spec-workflow 计划。
 
 **入口条件**：`openspec/changes/<name>/{proposal,design,tasks}.md` 已 git 提交（`git show HEAD:<path>` 验证）。
 
@@ -274,28 +274,12 @@ i. 手动输入 change 名称
 1. 展示所有活跃 changes 的状态表
 2. 用户选择要处理的 change
 3. 执行 COMMIT GATE（脏检测 + 已提交验证）
-4. 创建 branch + worktree（路径: `.zcf/<name>-wt`）
-5. 在 worktree 内生成 Prometheus 计划（**自动通过 `prometheus-planning` 三级回退链**）
+4. 创建 branch + worktree（路径: `.rddf/wt/<name>`）
+5. 在 worktree 内通过内置 skill 生成计划:
+   - `spec-workflow/writing-plans` — 直接生成 `.rddf/plans/<CHANGE_NAME>.md`
+   - 计划包含 TDD 5 步结构：Write failing test → Verify fail → Implement → Verify pass → Commit
+   - 零外部依赖，零路径桥接，任何 AI 编程助手通用
 6. **立即选择执行模式**（🔒 阻塞 / 🔓 分离）
-
-### Phase 1.5 — Worktree 验证 + 监控选择（子菜单）
-
-`guide-ship.md` 内部的子菜单，提示用户是进入 Execute 监控模式还是返回 Plan 阶段。
-
-**行为**：
-- 检测到 worktree 已就绪 → 提示「进入 Execute 监控模式」或「继续返回 Plan 阶段」
-- 用户选择后继续
-
-**`prometheus-planning` 三级回退链**（v1.1 新增）：
-
-| 优先级 | 来源 | 备注 |
-|---|---|---|
-| 1️⃣ (推荐) | `oh-my-opencode` 内置 Prometheus (plan) 子代理 | 零依赖，prompt 透明可审计 |
-| 2️⃣ (回退) | `superpowers/writing-plans` 技能 | opencode 内置 superpowers 套件 |
-| 3️⃣ (已弃用) | `prometheus-start-work` 外部 GitHub 技能 | 兼容 v1.0 用户 |
-| ❌ | 全部不可用 | 报错并提示安装 |
-
-详见 [README.md 三级回退链说明](./README.md#实施计划生成器prometheus-planning-的三级回退链)。
 
 **菜单示例**：
 
@@ -323,8 +307,8 @@ i. 其他输入
 fix-ns-pollution worktree 已就绪，请选择执行方式：
 
 📋 fix-ns-pollution 状态:
-  Worktree: .zcf/fix-ns-pollution-wt
-  计划文件: .sisyphus/plans/fix-ns-pollution.md ✅
+  Worktree: .rddf/wt/fix-ns-pollution
+  计划文件: .rddf/plans/fix-ns-pollution.md ✅
   任务数: 3
 
 请选择执行方式:
@@ -341,7 +325,7 @@ i. 其他输入
 为 fix-ns-pollution 启动分离执行：
 
 1. 在新终端中执行：
-   cd "$PROJECT_ROOT/.zcf/fix-ns-pollution-wt"
+   cd "$PROJECT_ROOT/.rddf/wt/fix-ns-pollution"
    skill_use("execute")
 
 2. execute 结果会自动写入 tasks.md
@@ -406,8 +390,8 @@ Execute 阶段（监控模式）
 📋 所有 Worktrees 状态:（实时读取 tasks.md）
 | 变更 | Worktree | 进度 | 执行状态 |
 |-----|----------|------|---------|
-| fix-ns-pollution | .zcf/fix-ns-pollution-wt | 1/3 | 🔒 执行中 |
-| add-stream-pipes | .zcf/add-stream-pipes-wt | 2/5 | 🔓 分离执行 |
+| fix-ns-pollution | .rddf/wt/fix-ns-pollution | 1/3 | 🔒 执行中 |
+| add-stream-pipes | .rddf/wt/add-stream-pipes | 2/5 | 🔓 分离执行 |
 
 上次检测: 2026-05-18 10:35:00
 
@@ -428,7 +412,7 @@ i. 其他输入
 - 进度来自 `tasks.md` 实际读取，每次入口自动刷新
 - 「🔄 刷新进度」可手动重新读取所有 `tasks.md`
 - 「上次检测」时间戳让用户知道状态是实时的
-- **Execute 主要写 `tasks.md`**：在 roadmap 模式下，额外更新 `.zcf/.deps-analysis.json`（结构化依赖图，详见上方「状态文件」章节）
+- **Execute 主要写 `tasks.md`**：在 roadmap 模式下，额外更新 `.rddf/state/deps-analysis.json`（结构化依赖图，详见上方「状态文件」章节）
 
 ---
 
@@ -450,8 +434,8 @@ Status 阶段
 📋 所有 Changes 状态:
 | 变更 | Worktree | 任务进度 | 状态 |
 |-----|----------|---------|------|
-| fix-ns-pollution | .zcf/fix-ns-pollution-wt | 3/3 ✅ | 可归档 |
-| add-stream-pipes | .zcf/add-stream-pipes-wt | 2/5 🔄 | 进行中 |
+| fix-ns-pollution | .rddf/wt/fix-ns-pollution | 3/3 ✅ | 可归档 |
+| add-stream-pipes | .rddf/wt/add-stream-pipes | 2/5 🔄 | 进行中 |
 
 请选择:
 1. 归档 fix-ns-pollution（merge → archive）
@@ -489,7 +473,7 @@ git merge --ff-only "openspec/${CHANGE_NAME}"
 openspec archive "${CHANGE_NAME}" --yes
 
 # 3. Cleanup
-git worktree remove ".zcf/${CHANGE_NAME}-wt"
+git worktree remove ".rddf/wt/${CHANGE_NAME}"
 git branch -d "openspec/${CHANGE_NAME}"
 ```
 
@@ -563,7 +547,7 @@ skill_use("guide-ship")
 **Terminal B（fix-ns-pollution 执行）**：
 
 ```
-cd "$PROJECT_ROOT/.zcf/fix-ns-pollution-wt"
+cd "$PROJECT_ROOT/.rddf/wt/fix-ns-pollution"
 skill_use("execute")
 → 阻塞执行所有任务
 → 更新 tasks.md
@@ -573,7 +557,7 @@ skill_use("execute")
 **Terminal C（add-stream-pipes 执行）**：
 
 ```
-cd "$PROJECT_ROOT/.zcf/add-stream-pipes-wt"
+cd "$PROJECT_ROOT/.rddf/wt/add-stream-pipes"
 skill_use("execute")
 → 阻塞执行所有任务
 → 更新 tasks.md
@@ -707,12 +691,12 @@ docs/adr/
 |----------|----------|----------|
 | 未 commit 就 plan | `git status --porcelain` + `git show HEAD:<path>` 失败 | 提示先 commit artifacts |
 | artifacts 有未提交修改 | `git status --porcelain openspec/changes/<name>/` 非空 | 提示先 commit 再 plan |
-| worktree 目录冲突 | `-d .zcf/<name>-wt` 但 `git worktree list` 未注册 | 提示 `rm -rf .zcf/<name>-wt` |
+| worktree 目录冲突 | `-d .rddf/wt/<name>` 但 `git worktree list` 未注册 | 提示 `rm -rf .rddf/wt/<name>` |
 | tasks.md 不同步 | tasks.md 进度与 state 不一致 | Guide 入口时自动从 tasks.md 同步 |
 | worktree 分支冲突 | `git worktree add` 失败 | 提供 `git worktree list` 查看现有 |
-| 未 plan 就 status | `.sisyphus/plans/<name>.md` 不存在 | 提示先执行 plan |
+| 未 plan 就 status | `.rddf/plans/<name>.md` 不存在 | 提示先执行 plan |
 | execute 不在 worktree 内 | `git branch --show-current` 非 `openspec/` | 提示先进入 worktree 或使用分离执行 |
-| prometheus-planning 全部回退失败 | 三级回退链全部 ❌ | 提示安装 oh-my-opencode 或 superpowers |
+| spec-workflow/writing-plans 生成失败 | `.rddf/plans/<name>.md` 未生成 | 检查 worktree 内 skills 是否完整安装；手动触发 `skill_use("spec-workflow/writing-plans")` |
 | bats-core 缺失 | `bats --version` 失败 | 提示安装 bats-core 1.10+ |
 | ADR 引用格式错误 | `grep -E "ADR-[0-9]+ §[0-9]+" proposal.md` 无匹配 | 提示按 ADR-NNN §N.M 格式补充 |
 
@@ -722,7 +706,7 @@ docs/adr/
 
 1. **COMMIT GATE**：worktree 创建前必须 commit，否则 `git worktree add` 看不到 artifacts
 2. **Branch 检查**：`git branch --show-current` 必须是 `master` 才能创建 worktree（本项目默认分支）
-3. **不同步处理**：用 `awk index()` 直接修改 `tasks.md`，不重新 run plan（会覆盖 `.sisyphus/plans/`）
+3. **不同步处理**：用 `awk index()` 直接修改 `tasks.md`，不重新 run plan（会覆盖 `.rddf/plans/`）
 4. **Execute 只写 `tasks.md`**：不写 state 文件，由 guide 从 `tasks.md` 同步进度
 5. **任何时候可返回 Plan**：Execute 菜单有「返回 Plan 阶段」选项，可添加更多 worktree
 6. **ADR 是契约**：`docs/adr/ADR-*.md` 一旦 `已采纳 (Accepted)`，必须由 `propose` 阶段的扫描器拾取并转化为 change
@@ -735,9 +719,9 @@ docs/adr/
 
 | 版本 | 关键变更 |
 |------|---------|
-| **v2.0.0-beta** (current) | 三阶段架构 `arch` → `plan` → `ship`（新增 `guide-arch`/`guide-plan`，`guide-spec` 保留为兼容别名）；Loop 引擎 `loop_engine.py` + `skills/_lib/`；新增 `prometheus-planning` 三级回退链；保留 v1.x 全部分阶段逻辑 |
-| v1.1 | 拆分 `guide` 为 `guide-spec` (5 阶段) + `guide-ship` (4 阶段)；新增 `roadmap`/`deps`/`prometheus-planning` 技能；建立 `docs/adr/` 目录（ADR-0001 记录拆分决策）；加入 bats-core 测试基础设施；`prometheus-start-work` 降级为 deprecated |
-| v1.0 | 单一 `guide` 技能驱动全流程；`prometheus-start-work` 作为默认计划生成器 |
+| **v2.0.0-beta** (current) | 三阶段架构 `arch` → `plan` → `ship`（新增 `guide-arch`/`guide-plan`，`guide-spec` 保留为兼容别名）；Loop 引擎 `loop_engine.py` + `skills/_lib/`；计划生成器重构: 删除 prometheus-planning(481 行间接层), 替换为 self-contained spec-workflow/writing-plans(~250 行)；保留 v1.x 全部分阶段逻辑 |
+| v1.1 | 拆分 `guide` 为 `guide-spec` (5 阶段) + `guide-ship` (4 阶段)；新增 `roadmap`/`deps` 技能; `prometheus-planning` 作为 v2.0 过渡方案引入；建立 `docs/adr/` 目录（ADR-0001 记录拆分决策）；加入 bats-core 测试基础设施；`prometheus-start-work` 降级为 deprecated |
+| v1.0 | 单一 `guide` 技能驱动全流程；`prometheus-start-work` 作为外部计划生成器（v2.0 已替换为自包含方案） |
 | 2026-06-04 之前 | 使用 `generatedBy: X.Y` 元数据，已重命名为 `evolved-from` |
 
 详见 [ADR-0001](./docs/adr/ADR-0001-propose-plan-execute-state-machine.md)。

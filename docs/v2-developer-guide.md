@@ -754,8 +754,8 @@ class TestLoopEngineIntegration(unittest.TestCase):
     
     def setUp(self):
         """测试前准备"""
-        self.sv = StateVector(".zcf/test-state-vector.json")
-        self.el = EventLog(".zcf/test-event-log.jsonl")
+        self.sv = StateVector(".rddf/state/test-state-vector.json")
+        self.el = EventLog(".rddf/state/test-event-log.jsonl")
         
         # 初始化状态
         self.sv.reset()
@@ -764,10 +764,10 @@ class TestLoopEngineIntegration(unittest.TestCase):
     def tearDown(self):
         """测试后清理"""
         import os
-        if os.path.exists(".zcf/test-state-vector.json"):
-            os.remove(".zcf/test-state-vector.json")
-        if os.path.exists(".zcf/test-event-log.jsonl"):
-            os.remove(".zcf/test-event-log.jsonl")
+        if os.path.exists(".rddf/state/test-state-vector.json"):
+            os.remove(".rddf/state/test-state-vector.json")
+        if os.path.exists(".rddf/state/test-event-log.jsonl"):
+            os.remove(".rddf/state/test-event-log.jsonl")
     
     def test_complete_loop(self):
         """测试完整 Loop 流程"""

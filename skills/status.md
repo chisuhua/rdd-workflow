@@ -74,8 +74,8 @@ git worktree list
 输出示例：
 ```
 /path/to/PROJECT_ROOT                    master
-/path/to/PROJECT_ROOT/.zcf/add-uart-wt   openspec/add-uart
-/path/to/PROJECT_ROOT/.zcf/fix-spi-wt    openspec/fix-spi
+/path/to/PROJECT_ROOT/.rddf/wt/add-uart   openspec/add-uart
+/path/to/PROJECT_ROOT/.rddf/wt/fix-spi    openspec/fix-spi
 ```
 
 ### Step 2：获取 openspec 列表
@@ -105,8 +105,8 @@ OpenSpec 工作流状态概览
 
 Change          │ Worktree              │ 进度        │ 状态
 ──────────────────────────────────────────────────────────────
-add-uart        │ .zcf/add-uart-wt      │ 3/7  (43%)  │ 🔄 执行中
-fix-spi         │ .zcf/fix-spi-wt       │ 6/6  (100%) │ ✅ 可归档
+add-uart        │ .rddf/wt/add-uart      │ 3/7  (43%)  │ 🔄 执行中
+fix-spi         │ .rddf/wt/fix-spi       │ 6/6  (100%) │ ✅ 可归档
 pending-change  │ （无 worktree）        │ 2/5  (40%)  │ ⏸ 暂停
 ──────────────────────────────────────────────────────────────
 
@@ -141,7 +141,7 @@ esac
 
 ```bash
 # 阶段检测：先检查是否已 plan
-PLAN_FILE=".sisyphus/plans/<name>.md"
+PLAN_FILE=".rddf/plans/<name>.md"
 if [ ! -f "$PLAN_FILE" ]; then
     echo "⏳ Change <name> 已 propose 但尚未 plan"
     echo "   请先执行: skill_use(\"guide-ship\")   # 内部选择 <name>"
@@ -160,7 +160,7 @@ else
     REMAINING=0
 fi
 
-# 通过 git worktree list 动态查找 worktree 路径（不硬编码 $PROJECT_ROOT/.zcf/<name>-wt）
+# 通过 git worktree list 动态查找 worktree 路径（不硬编码 $PROJECT_ROOT/.rddf/wt/<name>）
 # 使用 _lib/worktree.sh 提供的 helper（该文件在前面已 source）
 WORKTREE_PATH=$(wt_path_for_branch "<name>")
 HAS_WORKTREE=false
@@ -179,9 +179,9 @@ fi
 ```bash
 # 方法：对比 openspec CLI progress 与计划文件中的实际完成标记
 # CLI progress 来源于 tasks.md 的 [x] 计数
-# .sisyphus/plans/ 中的 [x] 标记是 Prometheus 执行的实际完成状态
+# .rddf/plans/ 中的 [x] 标记是 Prometheus 执行的实际完成状态
 
-PLAN_FILE=".sisyphus/plans/<name>.md"
+PLAN_FILE=".rddf/plans/<name>.md"
 TASKS_FILE="$PROJECT_ROOT/openspec/changes/<name>/tasks.md"
 
 # 如果 plan 文件存在，检查其 [x] 计数
@@ -254,7 +254,7 @@ Change: <name>
 ───────────────
 进度: 3/7 (43%)
 状态: 执行中
-Worktree: .zcf/<name>-wt
+Worktree: .rddf/wt/<name>
 
 问题:
   ⚠️ tasks.md 不同步 — Prometheus 已完成 5 个单元，tasks.md 只标记了 3 个
@@ -400,10 +400,10 @@ print(phase_match.group(1) if phase_match else 'unknown')
     fi
     
     # 读取状态
-    if [ -f "$PROJECT_ROOT/.zcf/.roadmap-state.json" ]; then
+    if [ -f "$PROJECT_ROOT/.rddf/state/roadmap-state.json" ]; then
         python3 -c "
 import json
-with open('$PROJECT_ROOT/.zcf/.roadmap-state.json') as f:
+with open('$PROJECT_ROOT/.rddf/state/roadmap-state.json') as f:
     state = json.load(f)
 
 print('')
@@ -464,7 +464,7 @@ esac
 ## 关键约束
 
 1. **归档前必须先 merge**：确保代码变更已合入 default branch（`master`/`main`/`develop`，由 `find_default_branch` 动态检测）
-2. **不同步用 sed 修复**：**不重跑 plan**（会覆盖 `.sisyphus/plans/` 中的任务分解细节）
+2. **不同步用 sed 修复**：**不重跑 plan**（会覆盖 `.rddf/plans/` 中的任务分解细节）
 3. **所有操作可从主仓库 TUI session 完成**：通过 `workdir` 参数在 worktree 内执行
 4. **归档不可逆**：确认全部完成后再执行模式 C
 5. **Roadmap 状态自动更新**：execute 完成后自动更新 .roadmap-state.json

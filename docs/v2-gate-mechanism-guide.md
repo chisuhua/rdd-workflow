@@ -560,7 +560,7 @@ spec-workflow gates stats
 cat .spec-workflow.json | jq '.gates.arch_done'
 
 # 2. 查看当前状态
-cat .zcf/state-vector.json | jq '.arch_side'
+cat .rddf/state/state-vector.json | jq '.arch_side'
 
 # 3. 手动验证条件
 # 例如：检查 ADR 数量
@@ -579,7 +579,7 @@ cat .spec-workflow/gates/arch_done.py
 **解决**:
 ```bash
 # 1. 查看错误日志
-cat .zcf/event-log.jsonl | jq 'select(.type == "gate_error")'
+cat .rddf/state/event-log.jsonl | jq 'select(.type == "gate_error")'
 
 # 2. 检查 Python 依赖
 python3 -c "import state_vector; print('OK')"
@@ -591,7 +591,7 @@ python3 -m py_compile .spec-workflow/gates/arch_done.py
 python3 -c "
 from gates.arch_done import check
 import json
-state = json.load(open('.zcf/state-vector.json'))
+state = json.load(open('.rddf/state/state-vector.json'))
 result = check(state)
 print(json.dumps(result, indent=2))
 "
@@ -606,7 +606,7 @@ print(json.dumps(result, indent=2))
 **解决**:
 ```bash
 # 1. 查看强制切换记录
-cat .zcf/event-log.jsonl | jq 'select(.type == "gate_forced")'
+cat .rddf/state/event-log.jsonl | jq 'select(.type == "gate_forced")'
 
 # 2. 返回上一阶段修复
 skill_use("guide-arch")  # 返回 Arch 阶段

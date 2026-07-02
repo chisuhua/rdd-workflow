@@ -21,8 +21,8 @@ setup() {
   git add README.md
   git commit -q -m "initial"
   # Create 2 worktrees
-  git worktree add -b openspec/test-1 .zcf/test-1-wt HEAD
-  git worktree add -b openspec/test-2 .zcf/test-2-wt HEAD
+  git worktree add -b openspec/test-1 .rddf/wt/test-1 HEAD
+  git worktree add -b openspec/test-2 .rddf/wt/test-2 HEAD
 }
 
 teardown() {
@@ -32,7 +32,7 @@ teardown() {
 
 @test "wt_path_for_branch returns correct path" {
   result=$(wt_path_for_branch "test-1")
-  [[ "$result" == *"test-1-wt"* ]]
+  [[ "$result" == *"rddf/wt/test-1"* ]]
 }
 
 @test "wt_path_for_branch returns empty for nonexistent" {
@@ -46,13 +46,13 @@ teardown() {
 }
 
 @test "find_default_branch does not return openspec branch from worktree" {
-  cd "$TEST_REPO/.zcf/test-1-wt"
+  cd "$TEST_REPO/.rddf/wt/test-1"
   result=$(find_default_branch)
   [[ "$result" != openspec/* ]]
 }
 
 @test "main_repo_root returns main repo path from worktree" {
-  cd "$TEST_REPO/.zcf/test-1-wt"
+  cd "$TEST_REPO/.rddf/wt/test-1"
   result=$(main_repo_root)
   [ "$result" = "$TEST_REPO" ]
 }

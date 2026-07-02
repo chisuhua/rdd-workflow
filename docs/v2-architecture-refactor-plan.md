@@ -122,8 +122,8 @@ Planner Agent → Executor Agent → Verifier Agent
 
 **决策**: 统一状态向量 + JSONL 事件流 + 记忆系统
 
-- **状态向量**: `.zcf/state-vector.json` (单一权威来源)
-- **事件流**: `.zcf/event-log.jsonl` (完整审计追踪)
+- **状态向量**: `.rddf/state/state-vector.json` (单一权威来源)
+- **事件流**: `.rddf/state/event-log.jsonl` (完整审计追踪)
 - **记忆系统**: 执行痕迹、失败学习、配置推荐、中断恢复
 - **同步层**: 与 v1.x 状态文件双向兼容
 
@@ -362,7 +362,7 @@ skill_use("guide-ship")   # 变更执行
 | `skill_use("guide-ship")` | 保持不变 | 长期支持 |
 | `skill_use("propose")` | 保持不变 | 长期支持 |
 | `skill_use("execute")` | 保持不变 | 长期支持 |
-| `.zcf/.roadmap-state.json` | 通过同步层更新 | v3.0 移除 |
+| `.rddf/state/roadmap-state.json` | 通过同步层更新 | v3.0 移除 |
 
 ### 迁移路径
 
@@ -415,7 +415,7 @@ v1.x 用户
 ```
 状态向量 (主) ←→ 同步脚本 ←→ 现有状态文件 (兼容)
 ```
-- 状态向量更新时，自动同步到 `.zcf/.roadmap-state.json` 等
+- 状态向量更新时，自动同步到 `.rddf/state/roadmap-state.json` 等
 - 现有文件变更时，自动更新状态向量
 - v3.x 移除现有文件，只保留状态向量
 

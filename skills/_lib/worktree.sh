@@ -10,7 +10,7 @@
 
 # wt_path_for_branch <branch>
 #   Returns absolute path of worktree for given branch, or empty string if not found
-#   Example: wt_path_for_branch "test-change" -> "/abs/path/.zcf/test-change-wt"
+#   Example: wt_path_for_branch "test-change" -> "/abs/path/.rddf/wt/test-change"
 #   Uses `git worktree list --porcelain` (one record per worktree, key/value pairs)
 #   to avoid fragile whitespace parsing of the human-readable default format.
 wt_path_for_branch() {
@@ -63,7 +63,7 @@ find_default_branch() {
 #   Falls back to pwd if git is not available.
 #   Uses `git rev-parse --git-common-dir` (shared .git dir across worktrees),
 #   which is the canonical worktree-safe replacement for `--show-toplevel`.
-#   P0-8: ensures STATE_FILE writes to main repo's .zcf/, not worktree's.
+#   P0-8: ensures STATE_FILE writes to main repo's .rddf/state/, not worktree's.
 main_repo_root() {
   local common_dir
   common_dir=$(git rev-parse --git-common-dir 2>/dev/null) || { pwd; return; }

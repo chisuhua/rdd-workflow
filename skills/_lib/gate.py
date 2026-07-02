@@ -12,6 +12,7 @@ suggestion string.
 Plugins can register additional checks via `register_gate_check()`.
 """
 from __future__ import annotations
+import logging
 import os
 from collections import namedtuple
 from dataclasses import dataclass, field
@@ -20,6 +21,8 @@ from typing import Callable, Optional
 from skills._lib.event_log import EventLog
 from skills._lib.event_types import EventType, Severity
 from skills._lib.state_vector import StateVector
+
+logger = logging.getLogger(__name__)
 
 
 Check = namedtuple("Check", ["name", "condition", "message", "suggestion", "severity"], defaults=[None])
@@ -117,7 +120,7 @@ _DEFAULT_CHECKS = {
         Check("deps_analyzed", _check_deps_analyzed, "Dependencies not analyzed", "Run: openspec deps <name>", "warning"),
     ],
     "ship_done": [
-        Check("worktrees_empty", _check_worktrees_empty, "Active worktrees remain", "git worktree remove .zcf/<name>-wt", "error"),
+        Check("worktrees_empty", _check_worktrees_empty, "Active worktrees remain", "git worktree remove .rddf/wt/<name>", "error"),
         Check("archive_empty", _check_archive_empty, "Archive not empty", "Verify archive/", "error"),
         Check("tests_pass", _check_tests_pass, "Tests failing", "Run: pytest tests/ -v", "error"),
     ],
@@ -175,7 +178,7 @@ class GateMechanism:
             sv = StateVector.load(self.state_path, verify_checksum=False)
             context = {**context, "state_vector": sv}
         except Exception:
-            pass
+            logger.warning("Gate: state vector load failed")
 
         failed = []
         warnings = []
@@ -222,7 +225,7 @@ class GateMechanism:
                     context={"transition": transition, "failed_checks": failed},
                 )
         except Exception:
-            pass  # event log is best-effort
+            logger.warning("Gate: event log record failed")
 
         return result
 
@@ -236,7 +239,7 @@ class GateMechanism:
                 context={"transition": transition, "reason": reason},
             )
         except Exception:
-            pass
+            logger.warning("Gate: force_transition event log failed")
         return True
 
     def get_suggestion(self, transition: str) -> Optional[str]:

@@ -28,7 +28,7 @@
 #       produce. Used by tests that exercise the success path.
 #
 #   deps_subagent_simulate_failure [path]
-#       Touch a sentinel file (default `.zcf/.deps-subagent-fail-test`)
+#       Touch a sentinel file (default `.rddf/state/.deps-subagent-fail-test`)
 #       that the runtime fallback test reads to trigger degradation.
 #       Returns 0 always (idempotent).
 #
@@ -117,7 +117,7 @@ JSON
 # deps_subagent_simulate_failure [path]
 #   Touch a sentinel file. Idempotent.
 deps_subagent_simulate_failure() {
-  local p="${1:-.zcf/.deps-subagent-fail-test}"
+  local p="${1:-.rddf/state/.deps-subagent-fail-test}"
   mkdir -p "$(dirname "$p")" 2>/dev/null || true
   : > "$p"
   return 0

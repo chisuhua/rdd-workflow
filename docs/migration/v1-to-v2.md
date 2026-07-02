@@ -16,7 +16,7 @@ v1.x 用户升级到 v2.0 最快只需两步：
 npm update spec-workflow
 
 # 2. 手动验证 v1.x 状态文件存在（可选；CLI `spec-workflow migrate` 规划中，v2.1 实现）
-ls -la .zcf/ .openspec/ proposal-suggestions.md
+ls -la .rddf/state/ .openspec/ proposal-suggestions.md
 ```
 
 **无需修改现有技能文件**。`guide-spec` 调用将自动变更为 `guide-arch` → `guide-plan`。所有现有 worktree 和变化不受影响。
@@ -77,9 +77,9 @@ spec-workflow v2.0 是一次**重大架构升级**，从状态机驱动升级到
 
 | v1.x 接口 | v2.0 行为 | 说明 |
 |-----------|----------|------|
-| `.zcf/.roadmap-state.json` | 通过同步层自动更新 | v3.0 移除 |
+| `.rddf/state/roadmap-state.json` | 通过同步层自动更新 | v3.0 移除 |
 | `proposal-suggestions.md` | 通过同步层自动更新 | v3.0 移除 |
-| `.sisyphus/plans/*.md` | 保持不变 | 长期支持 |
+| `.rddf/plans/*.md` | 保持不变 | 长期支持 |
 
 ### ❌ 不兼容（需要迁移）
 
@@ -114,10 +114,10 @@ v1.x 用户
 
 - [ ] 备份现有项目（`git commit` 或 `git tag v1-backup`）
 - [ ] 安装 spec-workflow v2.0
-- [ ] 手动验证 v1.x 状态文件存在（`ls -la .zcf/ .openspec/ proposal-suggestions.md`；CLI `migrate --check` 规划中，v2.1 实现）
-- [ ] 手动预览迁移范围（`git diff --stat v1-backup -- .zcf/ .openspec/ .sisyphus/`；CLI `migrate --dry-run` 规划中，v2.1 实现）
+- [ ] 手动验证 v1.x 状态文件存在（`ls -la .rddf/state/ .openspec/ proposal-suggestions.md`；CLI `migrate --check` 规划中，v2.1 实现）
+- [ ] 手动预览迁移范围（`git diff --stat v1-backup -- .rddf/state/ .openspec/ .rddf/`；CLI `migrate --dry-run` 规划中，v2.1 实现）
 - [ ] 手动执行迁移（参见下方『手动迁移』章节；CLI `migrate --apply` 规划中，v2.1 实现）
-- [ ] 验证状态向量（`cat .zcf/state-vector.json`；当前版本未使用此路径，状态存储于 Python 库层）
+- [ ] 验证状态向量（`cat .rddf/state/state-vector.json`；当前版本未使用此路径，状态存储于 Python 库层）
 - [ ] 运行测试（`bats tests/`）
 - [ ] 创建 `.spec-workflow.json`（可选）
 - [ ] 尝试 loop 模式（可选）
@@ -153,7 +153,7 @@ v2.0 要求**先定义架构，再生成变更**。这意味着：
 
 ### 向后兼容机制
 
-`guide-spec.md` 保留为别名，内部调用 `guide-arch` → `guide-plan`。三个阶段之间的交接通过 `.zcf/.arch-handoff.json` 和 `.zcf/.plan-handoff.json` 实现。
+`guide-spec.md` 保留为别名，内部调用 `guide-arch` → `guide-plan`。三个阶段之间的交接通过 `.rddf/state/arch-handoff.json` 和 `.rddf/state/plan-handoff.json` 实现。
 
 ---
 
@@ -315,8 +315,8 @@ skill_use("loop", {
 ## 状态文件迁移
 
 > **⚠️ 当前版本（v2.0）实现状态**
-> - `.zcf/state-vector.json` 和 `.zcf/event-log.jsonl` **当前版本未使用此路径，状态存储于 Python 库层**（`skills/_lib/state_vector.py`、`skills/_lib/event_log.py`，内存中维护）
-> - 本节中 `cat .zcf/state-vector.json`、`tail -f .zcf/event-log.jsonl` 等命令展示的是 v2.0 完整设计下的预期行为；当前请使用下方表格中映射的源文件（`.zcf/.roadmap-state.json`、`proposal-suggestions.md`、`openspec/changes/*/ .openspec.yaml`、`.sisyphus/plans/*.md`）作为状态查询入口
+> - `.rddf/state/state-vector.json` 和 `.rddf/state/event-log.jsonl` **当前版本未使用此路径，状态存储于 Python 库层**（`skills/_lib/state_vector.py`、`skills/_lib/event_log.py`，内存中维护）
+> - 本节中 `cat .rddf/state/state-vector.json`、`tail -f .rddf/state/event-log.jsonl` 等命令展示的是 v2.0 完整设计下的预期行为；当前请使用下方表格中映射的源文件（`.rddf/state/roadmap-state.json`、`proposal-suggestions.md`、`openspec/changes/*/ .openspec.yaml`、`.rddf/plans/*.md`）作为状态查询入口
 > - 统一 CLI 工具 `spec-workflow migrate / sync / report` 规划中，v2.1 实现
 
 ### 自动迁移
@@ -327,10 +327,10 @@ skill_use("loop", {
 $ skill_use("guide-spec")
 
 🔄 检测到 v1.x 状态文件，开始迁移...
-✅ 迁移 .zcf/.roadmap-state.json → 状态向量（Python 库层）
+✅ 迁移 .rddf/state/roadmap-state.json → 状态向量（Python 库层）
 ✅ 迁移 proposal-suggestions.md → 状态向量（Python 库层）
 ✅ 迁移 openspec/changes/*/ .openspec.yaml → 状态向量（Python 库层）
-✅ 迁移 .sisyphus/plans/*.md → 状态向量（Python 库层）
+✅ 迁移 .rddf/plans/*.md → 状态向量（Python 库层）
 ✅ 初始化事件流（内存中维护，event-log.py 写入时点：loop 启动/节点完成/门控切换）
 
 迁移完成！状态向量已生成。
@@ -345,10 +345,10 @@ $ skill_use("guide-spec")
 git tag v1-backup
 
 # 2. 验证源文件完整（手动迁移的"就绪检查"）
-ls -la .zcf/.roadmap-state.json
+ls -la .rddf/state/roadmap-state.json
 ls -la proposal-suggestions.md
 ls openspec/changes/
-ls .sisyphus/plans/
+ls .rddf/plans/
 
 # 3. 触发自动迁移（首次调用 guide-spec 时自动完成）
 skill_use("guide-spec")
@@ -361,19 +361,19 @@ skill_use("guide-spec")
 
 ```bash
 # 检查状态向量（当前版本未使用此路径，状态存储于 Python 库层；下方命令为 v2.0 完整设计演示）
-cat .zcf/state-vector.json | jq '.version'  # 应该输出 "2.0"
+cat .rddf/state/state-vector.json | jq '.version'  # 应该输出 "2.0"
 
 # 检查事件流（同上）
-wc -l .zcf/event-log.jsonl  # 应该有迁移事件
+wc -l .rddf/state/event-log.jsonl  # 应该有迁移事件
 
 # 当前可用的状态查询入口（手动读取源文件）
-cat .zcf/.roadmap-state.json | jq '.'
+cat .rddf/state/roadmap-state.json | jq '.'
 cat proposal-suggestions.md
 ls openspec/changes/ | wc -l
-ls .sisyphus/plans/ | wc -l
+ls .rddf/plans/ | wc -l
 
 # 检查向后兼容文件
-ls -la .zcf/.roadmap-state.json  # 应该仍然存在（同步层维护）
+ls -la .rddf/state/roadmap-state.json  # 应该仍然存在（同步层维护）
 ls -la proposal-suggestions.md   # 应该仍然存在（同步层维护）
 ```
 
@@ -381,10 +381,10 @@ ls -la proposal-suggestions.md   # 应该仍然存在（同步层维护）
 
 | v1.x 文件 | v2.0 状态向量字段 | 同步层 |
 |----------|------------------|--------|
-| `.zcf/.roadmap-state.json` | `arch_side.roadmap` | ✅ 双向同步 |
+| `.rddf/state/roadmap-state.json` | `arch_side.roadmap` | ✅ 双向同步 |
 | `proposal-suggestions.md` | `plan_side.active_changes` | ✅ 双向同步 |
 | `openspec/changes/*/ .openspec.yaml` | `plan_side.active_changes[].artifacts` | ✅ 单向读取 |
-| `.sisyphus/plans/*.md` | `ship_side.worktrees[].plan` | ✅ 单向读取 |
+| `.rddf/plans/*.md` | `ship_side.worktrees[].plan` | ✅ 单向读取 |
 | `git worktree list` | `ship_side.worktrees` | ✅ 实时扫描 |
 
 ---
@@ -484,15 +484,15 @@ skill_use("status")
 skill_use("status")
 
 # 方式 2: 查看状态向量（当前版本未使用此路径，状态存储于 Python 库层；下方命令为 v2.0 完整设计演示）
-cat .zcf/state-vector.json | jq '.'
+cat .rddf/state/state-vector.json | jq '.'
 
 # 方式 3: 查看事件流（同上）
-tail -f .zcf/event-log.jsonl | jq '.'
+tail -f .rddf/state/event-log.jsonl | jq '.'
 
 # 方式 4: 生成进度报告（CLI `spec-workflow report` 规划中，v2.1 实现）
 # 当前手动生成报告：组合方式 1-3 的输出，或：
-cat .zcf/.roadmap-state.json proposal-suggestions.md  # 综合源文件
-ls openspec/changes/ .sisyphus/plans/                  # 列出活跃工作
+cat .rddf/state/roadmap-state.json proposal-suggestions.md  # 综合源文件
+ls openspec/changes/ .rddf/plans/                  # 列出活跃工作
 ```
 
 ### 场景 4: 中断后恢复
@@ -529,17 +529,17 @@ skill_use("loop", {
 **解决**:
 ```bash
 # 1. 检查错误日志（如有）
-cat .zcf/migration-error.log 2>/dev/null || echo "无错误日志文件（v2.0 当前不生成此文件）"
+cat .rddf/state/migration-error.log 2>/dev/null || echo "无错误日志文件（v2.0 当前不生成此文件）"
 
 # 2. 检查 v1.x 状态文件完整性（手动就绪检查；CLI `migrate --check` 规划中，v2.1 实现）
-ls -la .zcf/.roadmap-state.json
+ls -la .rddf/state/roadmap-state.json
 ls -la proposal-suggestions.md
 ls openspec/changes/
-ls .sisyphus/plans/
+ls .rddf/plans/
 
 # 3. 手动修复缺失文件
-# 如果 .zcf/.roadmap-state.json 缺失
-echo '{"current_phase": "core", "completion": 0.0}' > .zcf/.roadmap-state.json
+# 如果 .rddf/state/roadmap-state.json 缺失
+echo '{"current_phase": "core", "completion": 0.0}' > .rddf/state/roadmap-state.json
 
 # 4. 重新触发自动迁移（CLI `migrate --apply` 规划中，v2.1 实现）
 skill_use("guide-spec")  # 首次调用时自动完成迁移
@@ -554,14 +554,14 @@ skill_use("guide-spec")  # 首次调用时自动完成迁移
 **解决**:
 ```bash
 # 1. 检查同步层状态（CLI `sync --check` 规划中，v2.1 实现；当前手动检查）
-git status .zcf/ proposal-suggestions.md openspec/ .sisyphus/
+git status .rddf/state/ proposal-suggestions.md openspec/ .rddf/
 
 # 2. 强制同步（状态向量 → 现有文件；CLI `sync --from state-vector` 规划中，v2.1 实现）
 # 当前手动操作：调用 skill_use("guide-spec") 触发 sync_state.py 的协调逻辑
 skill_use("guide-spec")
 
 # 3. 强制同步（现有文件 → 状态向量；CLI `sync --from legacy` 规划中，v2.1 实现）
-# 当前手动操作：直接编辑源文件（.zcf/.roadmap-state.json / proposal-suggestions.md）
+# 当前手动操作：直接编辑源文件（.rddf/state/roadmap-state.json / proposal-suggestions.md）
 # Loop 下次启动时 sync_state.py 会自动读取并同步
 ```
 
@@ -575,13 +575,13 @@ skill_use("guide-spec")
 python3 -c "import json, subprocess; print('OK')"
 
 # 2. 检查状态向量
-cat .zcf/state-vector.json | jq '.version'  # 应该是 "2.0"
+cat .rddf/state/state-vector.json | jq '.version'  # 应该是 "2.0"
 
 # 3. 检查配置文件
 cat .spec-workflow.json | jq '.'  # 应该是有效 JSON
 
 # 4. 查看事件流
-tail .zcf/event-log.jsonl | jq '.type'  # 查看最后的事件类型
+tail .rddf/state/event-log.jsonl | jq '.type'  # 查看最后的事件类型
 
 # 5. 回退到菜单模式
 skill_use("guide-plan")  # 使用 v1.x 兼容模式
@@ -594,7 +594,7 @@ skill_use("guide-plan")  # 使用 v1.x 兼容模式
 **解决**:
 ```bash
 # 1. 查看门控失败详情
-cat .zcf/event-log.jsonl | jq 'select(.type == "gate_failed")'
+cat .rddf/state/event-log.jsonl | jq 'select(.type == "gate_failed")'
 
 # 2. 检查缺失的检查项
 # 例如：arch_done 门控失败
@@ -643,8 +643,8 @@ git checkout v1.x-branch
 
 ```bash
 # 1. 删除 v2.0 新增文件
-rm .zcf/state-vector.json
-rm .zcf/event-log.jsonl
+rm .rddf/state/state-vector.json
+rm .rddf/state/event-log.jsonl
 rm .spec-workflow.json
 
 # 2. 恢复 v1.x 技能文件
@@ -697,6 +697,83 @@ npm install spec-workflow@1.x
 - **ADR**: `docs/adr/` 目录
 - **问题反馈**: GitHub Issues
 - **社区讨论**: GitHub Discussions
+
+---
+
+## 📋 v2.0 → v2.0.1 微迁移（`prometheus-planning` v1.1 → v1.2）
+
+> **版本**: prometheus-planning v1.1 → v1.2  
+> **日期**: 2026-06-29  
+> **影响范围**: 使用 `guide-ship` Phase 1 计划生成的 v2.0 用户  
+> **预计迁移时间**: 0 分钟（完全向后兼容）
+
+### 概述
+
+`prometheus-planning` 从 v1.1（三级回退）升级到 v1.2（二级回退 + 路径独占 + 混合 TDD）。用户**无需任何手动操作**——所有现有 `.rddf/plans/<name>.md` 文件继续工作,所有现有 worktree 不受影响。
+
+### 变更点
+
+| 维度 | v1.1 | v1.2 |
+|---|---|---|
+| 回退链深度 | 三级 (oh-my-opencode → superpowers → prometheus-start-work) | **二级** (oh-my-opencode → superpowers,**`prometheus-start-work` 已彻底删除**) |
+| Skills 隔离 | 分支 A 同时加载 Prometheus + superpowers/writing-plans | **分支 A 仅加载 Prometheus,分支 B 仅加载 superpowers** |
+| 路径策略 | 单一 `.rddf/plans/<name>.md` | **分支 A 写 `.rddf/` + 软链接 `docs/superpowers/plans/YYYY-MM-DD-<name>.md`**<br>**分支 B 写 superpowers 原生路径 + cp 桥接到 `.rddf/`** |
+| TDD 纪律 | prompt 建议遵循 superpowers 格式 | **混合 TDD:大任务 (>50 行 OR >3 文件 OR 架构改动) 强制 5 步,小任务 (≤50 行 AND ≤3 文件) 紧凑 2-3 步** |
+| `_lib/actions.py:action_generate_plan` | Stub (注释说"完整实现位于 prometheus-planning skill") | **真实实现**: 分发到 prometheus-planning skill,通过 `SKIP_PROMETHEUS_PLANNING` env var 显式控制,失败时返回明确错误 |
+| `package.json:optionalEngines.prometheus-start-work` | 存在,标记 deprecated | **删除** |
+
+### 迁移步骤
+
+**无需操作**。直接 `npm update spec-workflow` 即可。
+
+如果你使用了 `prometheus-start-work` 作为唯一回退路径:
+1. **影响**: v1.2 检测链不再查找 `prometheus-start-work`。如果你的环境中只有它(没有 oh-my-opencode 或 superpowers),`prometheus-planning` 会报错。
+2. **修复**: 安装 `oh-my-opencode` 或 superpowers 套件(任选一)。详见 README.md "实施计划生成器" 表格。
+
+### 路径行为变化
+
+**之前 (v1.1)**:
+- 所有 `.rddf/plans/<name>.md` 由 prometheus-planning 一处生成
+- `docs/superpowers/plans/` 目录仅由 superpowers/writing-plans 在外部触发时写入
+
+**现在 (v1.2)**:
+- 分支 A: prometheus-planning 写 `.rddf/plans/<name>.md`,**自动软链接**到 `docs/superpowers/plans/YYYY-MM-DD-<name>.md` (symlink `→ ../../.rddf/plans/<name>.md`)
+- 分支 B: superpowers/writing-plans 写 `docs/superpowers/plans/YYYY-MM-DD-<name>.md`,**自动复制**到 `.rddf/plans/<name>.md` + 反向软链接
+- 两边内容始终一致,通过 `readlink docs/superpowers/plans/YYYY-MM-DD-<name>.md` 可验证
+
+### 混合 TDD 实际效果
+
+**v2-core-foundation plan** (现有 superpowers plan 文件): 严格 TDD 5 步
+```
+### Task 3: Implement FileLock class
+- [ ] **Step 1: Write the failing test**
+- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 3: Write minimal implementation**
+- [ ] **Step 4: Run test to verify it passes**
+- [ ] **Step 5: Commit**
+```
+
+**小型 fix plan** (假设的紧凑格式):
+```
+### Task 1: Fix typo in error message
+- [ ] **Step 1: 写测试** (if applicable)
+- [ ] **Step 2: 实现 + 验证**
+- [ ] **Step 3: Commit**
+```
+
+两种格式共存于同一 plan 中是合法且推荐的——大任务 5 步,小任务 2-3 步。
+
+### 测试覆盖
+
+- 新增: `tests/integration/test_writing_plans_integration.bats` — 覆盖分支 A/B 路径契约、软链接创建、TDD 模式识别
+- 保留: `tests/integration/test_prometheus_planning.bats` — 验证三级回退的 v1.0 行为(兼容模式)
+- 保留: `tests/integration/test_prometheus_check.bats` — 检查 prometheus 相关引用一致性
+
+### 升级触发条件（何时重新评估）
+
+- superpowers/writing-plans 引入破坏性变更(任务模板或契约路径) → 重新审视路径桥接逻辑
+- oh-my-opencode 引入 `prometheus-plan` v2 API → 重新设计分支 A prompt
+- `_lib/actions.py` 的 `action_generate_plan` 被 `loop_engine.py` 频繁调用(目前 stub 够用) → 引入完整的 plan 内容生成器
 
 ---
 

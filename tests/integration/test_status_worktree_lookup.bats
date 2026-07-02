@@ -64,7 +64,7 @@ load ../test_helper
   echo "initial" > README.md
   git add . && git commit -q -m "initial"
 
-  WT_DIR="$TEST_REPO/.zcf/test-1-wt"
+  WT_DIR="$TEST_REPO/.rddf/wt/test-1"
   git worktree add -b openspec/test-1 "$WT_DIR" HEAD
 
   # Verbatim copy of the helper from status.md (with brackets around the branch):
@@ -99,7 +99,7 @@ load ../test_helper
   echo "initial" > README.md
   git add . && git commit -q -m "initial"
 
-  WT_DIR="$TEST_REPO/.zcf/proof-wt"
+  WT_DIR="$TEST_REPO/.rddf/wt/proof"
   git worktree add -b openspec/proof "$WT_DIR" HEAD
 
   # Old buggy pattern (kept for documentation; would always be empty):
@@ -124,9 +124,9 @@ load ../test_helper
   echo "initial" > README.md
   git add . && git commit -q -m "initial"
 
-  git worktree add -b openspec/alpha    "$TEST_REPO/.zcf/alpha-wt"    HEAD
-  git worktree add -b openspec/beta     "$TEST_REPO/.zcf/beta-wt"     HEAD
-  git worktree add -b feature/non-spec  "$TEST_REPO/.zcf/non-spec-wt" HEAD
+  git worktree add -b openspec/alpha    "$TEST_REPO/.rddf/wt/alpha"    HEAD
+  git worktree add -b openspec/beta     "$TEST_REPO/.rddf/wt/beta"     HEAD
+  git worktree add -b feature/non-spec  "$TEST_REPO/.rddf/wt/non-spec" HEAD
 
   # Old buggy pattern: would always be 0 (commit hash is never openspec/...).
   # `|| true` guards against grep's exit-1 on zero matches (bats runs with set -e).
@@ -138,7 +138,7 @@ load ../test_helper
   FIXED=$(git worktree list 2>/dev/null | awk '$3 ~ /^\[openspec\// {print $1}' | grep -c . || true)
   [ "$FIXED" = "2" ]
 
-  for wt in "$TEST_REPO/.zcf/alpha-wt" "$TEST_REPO/.zcf/beta-wt" "$TEST_REPO/.zcf/non-spec-wt"; do
+  for wt in "$TEST_REPO/.rddf/wt/alpha" "$TEST_REPO/.rddf/wt/beta" "$TEST_REPO/.rddf/wt/non-spec"; do
     git worktree remove --force "$wt" 2>/dev/null || true
   done
   cd /

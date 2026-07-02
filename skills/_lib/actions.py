@@ -116,24 +116,86 @@ def action_create_worktree(params: dict, event_log: EventLog) -> ActionResult:
 def action_generate_plan(params: dict, event_log: EventLog) -> ActionResult:
     """Generate an implementation plan. params: {change: str, output: str}.
 
-    Minimal stub — full implementation lives in prometheus-planning skill.
-    Writes a one-section Markdown file at the requested output path."""
+    v2.0 contract: dispatches to the spec-workflow/writing-plans skill (no
+    external dependency, no detection chain). When called from an AI session,
+    the caller is expected to follow up with
+    skill_use("spec-workflow/writing-plans") to fill in the real plan
+    content; this action emits a clear marker so downstream consumers
+    (execute.md, status.md) can detect the pending state.
+
+    Returns ActionResult(success, data={"path", "mode", "status"}, error).
+    """
     change = params.get("change", "")
-    output = params.get("output", ".sisyphus/plans/auto-generated.md")
-    try:
-        out_path = Path(output)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(
-            f"# Auto-generated plan for {change}\n\n"
-            f"Generated at {datetime.datetime.now().isoformat()}\n"
+    output = params.get(
+        "output",
+        f".rddf/plans/{change}.md" if change else ".rddf/plans/auto-generated.md",
+    )
+
+    if not change:
+        result = ActionResult(success=False, error="change parameter required")
+        event_log.record(
+            EventType.EXECUTION_UNIT_COMPLETED,
+            Severity.ERROR,
+            "plan generation failed: missing change",
+            context=result.to_dict(),
         )
-        result = ActionResult(success=True, data={"path": str(out_path)})
-    except Exception as e:
-        result = ActionResult(success=False, data={"exception": str(e)}, error=str(e))
+        return result
+
+    out_path = Path(output)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if os.environ.get("SKIP_PROMETHEUS_PLANNING", "no").lower() == "yes":
+        out_path.write_text(
+            f"# Placeholder plan for {change}\n\n"
+            f"Generated at {datetime.datetime.now().isoformat()}\n"
+            f"Source: SKIP_PROMETHEUS_PLANNING=yes — no real plan content.\n"
+        )
+        result = ActionResult(success=True, data={"path": str(out_path), "mode": "skip"})
+        event_log.record(
+            EventType.EXECUTION_UNIT_COMPLETED,
+            Severity.INFO,
+            f"plan generated (skip mode): {change}",
+            context=result.to_dict(),
+        )
+        return result
+
+    writing_plans_script = Path(__file__).parent.parent / "spec-workflow-writing-plans.md"
+    if not writing_plans_script.exists():
+        result = ActionResult(
+            success=False,
+            data={"path": str(out_path), "mode": "missing-skill"},
+            error=f"spec-workflow/writing-plans skill not found at {writing_plans_script}",
+        )
+        event_log.record(
+            EventType.EXECUTION_UNIT_COMPLETED,
+            Severity.ERROR,
+            f"plan generation failed: missing spec-workflow/writing-plans skill",
+            context=result.to_dict(),
+        )
+        return result
+
+    marker = (
+        f"# Plan generation requested for {change}\n\n"
+        f"**Status**: pending — awaiting spec-workflow/writing-plans skill invocation\n"
+        f"**Output path**: {out_path}\n"
+        f"**Generated at**: {datetime.datetime.now().isoformat()}\n\n"
+        f"## Next step\n\n"
+        f"Run `skill_use(\"spec-workflow/writing-plans\")` from the AI session, then re-invoke "
+        f"this action. The skill will populate this file with the real plan content.\n"
+    )
+    out_path.write_text(marker)
+    result = ActionResult(
+        success=True,
+        data={
+            "path": str(out_path),
+            "mode": "self-contained",
+            "status": "pending-ai-invocation",
+        },
+    )
     event_log.record(
         EventType.EXECUTION_UNIT_COMPLETED,
-        Severity.INFO if result.success else Severity.ERROR,
-        f"plan generated: {output}",
+        Severity.INFO,
+        f"plan generation marker created: {change} (mode: self-contained)",
         context=result.to_dict(),
     )
     return result
@@ -239,7 +301,7 @@ def action_cleanup_stale(params: dict, event_log: EventLog) -> ActionResult:
 def action_update_roadmap(params: dict, event_log: EventLog) -> ActionResult:
     """Update roadmap state. params: {phase: str, category: str}
 
-    Writes a JSON document to `.zcf/.roadmap-state.json` containing
+    Writes a JSON document to `.rddf/state/roadmap-state.json` containing
     `phase`, `category`, and `updated_at` (ISO 8601 UTC)."""
     phase = params.get("phase")
     category = params.get("category")
@@ -247,7 +309,7 @@ def action_update_roadmap(params: dict, event_log: EventLog) -> ActionResult:
         result = ActionResult(success=False, error="phase and category required")
     else:
         try:
-            roadmap_file = Path(".zcf/.roadmap-state.json")
+            roadmap_file = Path(".rddf/state/roadmap-state.json")
             roadmap_file.parent.mkdir(parents=True, exist_ok=True)
             data = {
                 "phase": phase,

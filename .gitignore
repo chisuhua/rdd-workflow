@@ -5,15 +5,22 @@
 .omo/
 .opencode/
 
-# zcf (spec-workflow state) directory
-# Contains ephemeral roadmap/propose state files. Only index.md is documentation
-# and is tracked; all other state files are runtime-only.
-.zcf/*
-!.zcf/index.md
-!.zcf/.gitkeep
+# spec-workflow runtime state and worktree directories
+# .rddf/plans/ is tracked; .rddf/state/ and .rddf/wt/ are runtime-only
+.rddf/state/
+.rddf/wt/
+
+# .spec-workflow/ runtime state files (handoff, deps, state-vector, event-log)
+# Created by guide-arch, guide-plan, guide-ship during normal operation
+.spec-workflow/
+
+# Legacy .zcf/ (migrated to .rddf/ in v2.0)
+.zcf/
 
 # bats test temp directories (auto-created by bats, not for commit)
 .bats-tmp/
 
 # Python __pycache__ directories
 __pycache__/
+# understand-anything tool cache
+.understand-anything/

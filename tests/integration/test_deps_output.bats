@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 # T8 (P0-5): deps.md Step 5 must write real content (not a placeholder heredoc)
-# to .zcf/.deps-output.md. These are static tests against the markdown source —
+# to .rddf/state/.deps-output.md. These are static tests against the markdown source —
 # functional execution requires the openspec CLI which is not present in CI.
 # The tests guard against regression of the placeholder text and verify that
 # the heredoc references real variables from Step 2.

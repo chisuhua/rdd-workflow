@@ -257,7 +257,7 @@ interaction:
   
 - **Out Scope**:
   - 不改变现有 phase 逻辑（setup/propose/deps/plan/execute/archive）
-  - 不改变状态文件格式（`.zcf/` 目录结构保持）
+  - 不改变状态文件格式（`.rddf/state/` 目录结构保持）
   - 不改变子技能接口（propose/execute/status 保持独立）
 
 ### 备选方案

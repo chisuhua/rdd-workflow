@@ -383,7 +383,7 @@ spec-workflow memory archive
 #   归档执行记录: 20 条 (> 90 天)
 #   归档失败模式: 1 条 (> 90 天)
 #   
-#   归档文件: .zcf/memory-archive-2026-06-22.json
+#   归档文件: .rddf/state/memory-archive-2026-06-22.json
 #   当前记忆: 30 条执行记录, 2 条失败模式
 
 # 自定义归档时间
@@ -621,10 +621,10 @@ spec-workflow memory quality-report
 cat .spec-workflow.json | jq '.memory.enabled'  # 应该是 true
 
 # 2. 检查状态向量
-cat .zcf/state-vector.json | jq '.memory'
+cat .rddf/state/state-vector.json | jq '.memory'
 
 # 3. 检查执行记录
-cat .zcf/state-vector.json | jq '.memory.executions'
+cat .rddf/state/state-vector.json | jq '.memory.executions'
 
 # 4. 手动恢复
 spec-workflow memory list-sessions --status interrupted
@@ -670,7 +670,7 @@ spec-workflow memory show-recommendations --goal "complete changes"
 **解决**:
 ```bash
 # 1. 查看记忆大小
-du -h .zcf/state-vector.json
+du -h .rddf/state/state-vector.json
 
 # 2. 归档过期记忆
 spec-workflow memory archive --retention-days 30

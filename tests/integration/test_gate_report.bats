@@ -8,10 +8,10 @@
 #       no documented reader. T12 (P1-3) wired it into guide.md's scan
 #       loop so that presence of the file triggers a `status --roadmap`
 #       recommendation. T33 documents the writer/reader relationship in
-#       .zcf/index.md and locks it in with these tests.
+#       .rddf/state/index.md and locks it in with these tests.
 #
 # All tests are static-grep assertions on skills/guide.md and
-# .zcf/index.md; no temp git repo is needed (matches the convention
+# .rddf/state/index.md; no temp git repo is needed (matches the convention
 # established by test_guide_scan.bats in Wave 3).
 
 load ../test_helper
@@ -36,15 +36,15 @@ load ../test_helper
 
 # Index documentation (T33) -----------------------------------------------
 
-@test "P3-5: .zcf/index.md documents guide.md as gate report reader" {
-  [ -f ".zcf/index.md" ]
-  grep -q "phase-gate-report.md" .zcf/index.md
+@test "P3-5: .rddf/state/index.md documents guide.md as gate report reader" {
+  [ -f ".rddf/state/index.md" ]
+  grep -q "phase-gate-report.md" .rddf/state/index.md
   # The phase-gate-report entry should now reference guide.md as a reader
   # (not only manual user review). Accept the spec's bilingual wording.
-  grep -qE "guide\.md.*扫|guide\.md.*scan|guide\.md.*读取" .zcf/index.md
+  grep -qE "guide\.md.*扫|guide\.md.*scan|guide\.md.*读取" .rddf/state/index.md
 }
 
-@test "P3-5: .zcf/index.md links gate report to T12 (P1-3)" {
-  [ -f ".zcf/index.md" ]
-  grep -qE "T12.*P1-3|P1-3.*T12" .zcf/index.md
+@test "P3-5: .rddf/state/index.md links gate report to T12 (P1-3)" {
+  [ -f ".rddf/state/index.md" ]
+  grep -qE "T12.*P1-3|P1-3.*T12" .rddf/state/index.md
 }

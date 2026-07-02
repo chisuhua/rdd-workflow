@@ -112,10 +112,10 @@ Total: 1 deleted, 2 created, 1 rewritten, 8 edited.
 | `setup` | No `roadmap.md` or first invocation | Check openspec CLI, git, ADR directories | Tools available |
 | `roadmap` | `setup` done | Init/read/edit `roadmap.md`, set current phase | `roadmap.md` exists with current phase |
 | `propose` | `roadmap` phase set | Scan ADR + code TODOs → `proposal-suggestions.md`; user picks → `openspec new` + `openspec instructions` → git commit artifacts | ≥1 change has all three artifacts (proposal, design, tasks) committed |
-| `deps` | `propose` done | Read all committed changes → generate `.zcf/.deps-output.md` (Mermaid dep graph + recommended execution order) | User confirms (or skips) |
+| `deps` | `propose` done | Read all committed changes → generate `.rddf/state/deps-output.md` (Mermaid dep graph + recommended execution order) | User confirms (or skips) |
 | `spec-done` | `deps` confirmed | Print "run `guide-ship` to proceed"; do NOT auto-invoke | Recommendation printed |
 
-**Files managed (writes):** `openspec/changes/<name>/{proposal,design,tasks}.md`, `proposal-suggestions.md`, `.zcf/.deps-output.md`, git commits on main.
+**Files managed (writes):** `openspec/changes/<name>/{proposal,design,tasks}.md`, `proposal-suggestions.md`, `.rddf/state/deps-output.md`, git commits on main.
 
 **Files read:** `roadmap.md`, `docs/adr/*`, `docs/architecture/*`, `docs/developer_guide/*`.
 
@@ -135,7 +135,7 @@ Total: 1 deleted, 2 created, 1 rewritten, 8 edited.
 | Phase | Entry condition | Action | Exit condition |
 |---|---|---|---|
 | `discover` | Invocation or returning from `ship-done` with more changes | Scan `openspec/changes/` (excluding `archive/`) for committed changes; if focus provided, validate; else show list to user. "Batch mode" = user picks option "all" → iterate over every committed change with no worktree, creating one worktree per change in turn | User-selected focus change (single or batch "all") |
-| `worktree` | Focus change chosen | COMMIT GATE (`git show HEAD:.../proposal.md` must succeed); create branch `openspec/<name>`; create worktree at `.zcf/<name>-wt/`; verify branch is attached (no detached HEAD) | Worktree verified, branch attached |
+| `worktree` | Focus change chosen | COMMIT GATE (`git show HEAD:.../proposal.md` must succeed); create branch `openspec/<name>`; create worktree at `.rddf/wt/<name>/`; verify branch is attached (no detached HEAD) | Worktree verified, branch attached |
 | `plan` | Worktree ready | `cd` into worktree; invoke Prometheus `start_work` skill to generate `.sisyphus/plans/<name>.md` | Plan file exists, task count > 0 |
 | `execute` | Plan file exists | Call `execute` skill (existing, unchanged behavior) — delegates per-Work-Unit to deep/unspecified-high agents, runs `cmake --build` + ctest, sed-updates `tasks.md` to `[x]` | `tasks.md` has all tasks `[x]` |
 | `archive` | All tasks `[x]` | MERGE VERIFICATION GATE → `git checkout main` → `git merge --no-ff openspec/<name>` (or `--ff-only` if no divergence) → POST-MERGE VERIFICATION GATE → `openspec archive <name> --yes` → `git worktree remove` → `git branch -d openspec/<name>` | Archive successful, worktree + branch removed |
@@ -229,7 +229,7 @@ User → guide-spec
   │              → git add + git commit
   │
   └─[deps]──→  reads:  openspec/changes/*/{proposal,design}.md
-              writes: .zcf/.deps-output.md (Mermaid)
+              writes: .rddf/state/deps-output.md (Mermaid)
               user confirms
               → print "run guide-ship"
 ```
@@ -244,26 +244,26 @@ User → guide-ship
   │                user picks focus change
   │
   ├─[worktree]──→  git branch openspec/<name> HEAD
-  │                git worktree add .zcf/<name>-wt/ openspec/<name>
+  │                git worktree add .rddf/wt/<name>/ openspec/<name>
   │                worktree verification (no detached HEAD)
   │
-  ├─[plan]──→  cd .zcf/<name>-wt/
+  ├─[plan]──→  cd .rddf/wt/<name>/
   │            → calls Prometheus start_work skill
   │            ← .sisyphus/plans/<name>.md
   │
-  ├─[execute]──→  cd .zcf/<name>-wt/
+  ├─[execute]──→  cd .rddf/wt/<name>/
   │              → calls `execute` skill
   │              execute loops Work Units:
   │                delegate to deep/unspecified-high
   │                cmake --build + ctest
   │                sed tasks.md ([ ] → [x])
   │
-  └─[archive]──→  cd .zcf/<name>-wt/
+  └─[archive]──→  cd .rddf/wt/<name>/
                   git checkout main
                   git merge --no-ff openspec/<name>
                   merge verification
                   openspec archive <name> --yes
-                  git worktree remove .zcf/<name>-wt/
+                  git worktree remove .rddf/wt/<name>/
                   git branch -d openspec/<name>
                   → if more changes: print "run guide-ship again"
 ```
@@ -292,7 +292,7 @@ This makes git the immutable boundary. No shared state file, no race condition, 
 |---|---|---|
 | User invokes wrong skill for current state | (N/A — assumes user chose deliberately) | Same |
 | `workflow-state.md` exists (pre-refactor) | Print warning, continue | Same |
-| worktree directory conflict (`.zcf/<name>-wt` exists but not in worktree list) | N/A | Refuse; print `rm -rf .zcf/<name>-wt` command |
+| worktree directory conflict (`.rddf/wt/<name>` exists but not in worktree list) | N/A | Refuse; print `rm -rf .rddf/wt/<name>` command |
 | Change artifacts incomplete (e.g. proposal exists but tasks.md missing) | Refuse to enter `spec-done`; print "complete propose first" | Refuse to enter `discover`; print "finish via guide-spec" |
 | `git show HEAD:` fails (no commits yet) | Refuse; print "make an initial commit first" | Same |
 | Multiple independent changes for parallel execution | N/A (spec-side doesn't care) | User picks "batch" in `discover`; each gets its own worktree |

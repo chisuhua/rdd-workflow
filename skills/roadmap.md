@@ -38,7 +38,7 @@ guide → roadmap（本技能）→ propose → deps → plan → execute → st
 ```bash
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
-STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json"
+STATE_FILE="$PROJECT_ROOT/.rddf/state/roadmap-state.json"
 
 # 加载 state.sh 辅助函数（safe_python_json, safe_python_yaml）
 # P2-3: 所有 json.load(open(...)) 一行式调用改为 safe_python_json
@@ -311,7 +311,7 @@ print('✅ 路线图状态文件已创建: $STATE_FILE')
 
 文件:
   - roadmap.md          # 路线图定义
-  - .zcf/.roadmap-state.json  # 状态追踪
+  - .rddf/state/roadmap-state.json  # 状态追踪
 
 当前阶段: phase-1 (基础架构)
 任务分类:
@@ -663,7 +663,7 @@ print('✅ roadmap.md 已更新')
 # safe_python_json 内置 try/except,文件缺失/JSON 损坏都返回 "unknown"
 PHASE=${1:-$(safe_python_json "$STATE_FILE" "current_phase")}
 
-REPORT_FILE="$PROJECT_ROOT/.zcf/.phase-gate-report.md"
+REPORT_FILE="$PROJECT_ROOT/.rddf/state/phase-gate-report.md"
 
 python3 -c "
 import json

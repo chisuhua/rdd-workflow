@@ -1,11 +1,13 @@
 ---
 name: execute
-description: 在 worktree 隔离环境执行 OpenSpec change 的实施计划。基于 Prometheus 生成的 .sisyphus/plans/ 执行。被 guide-ship 在 plan 阶段后调用。
+description: 在 worktree 隔离环境执行 OpenSpec change 的实施计划。基于 .rddf/plans/ 执行,强制 TDD 5 步结构(Write failing test → Verify fail → Implement → Verify pass → Commit)。被 guide-ship 在 plan 阶段后调用。v2.0 整合原 spec-workflow/executing-plans 的 TDD 纪律。
 license: MIT
 compatibility: Requires openspec CLI and git worktree.
 metadata:
   author: sisyphus
-  version: "2.0"  # P0: Roadmap 进度更新和阶段门控检查
+  version: "2.0"  # v2.0: 嵌入 TDD 5 步纪律 (合并自 spec-workflow/executing-plans)
+  evolved-from: "v1.0 P0 roadmap + v2.0 嵌入 TDD 5 步纪律,取代 spec-workflow/executing-plans"
+  user-invocable: true
 ---
 
 # OpenSpec 工作流 — Execute
@@ -17,7 +19,7 @@ metadata:
 ```
 worktree (openspec/<name>): 本技能在此执行
     │
-    ├── 读取 .sisyphus/plans/<name>.md（Prometheus 详细计划）
+    ├── 读取 .rddf/plans/<name>.md（Prometheus 详细计划）
     ├── 循环执行每个 Work Unit
     │     ├── 委托 deep/unspecified-high 代理实现
     │     ├── cmake --build + ctest 验证
@@ -32,8 +34,8 @@ worktree (openspec/<name>): 本技能在此执行
 
 | 维度 | openspec-apply-change | 本技能 |
 |------|----------------------|--------|
-| 任务来源 | `openspec instructions apply --json`（tasks.md） | `.sisyphus/plans/<name>.md`（Prometheus 分解） |
-| 执行环境 | 当前目录 | worktree 隔离（`.zcf/<name>-wt/`） |
+| 任务来源 | `openspec instructions apply --json`（tasks.md） | `.rddf/plans/<name>.md`（Prometheus 分解） |
+| 执行环境 | 当前目录 | worktree 隔离（`.rddf/wt/<name>/`） |
 | 进度反馈 | 无自动回写 | 每个 Work Unit 完成后 `sed` 更新 tasks.md |
 
 ## 输入
@@ -44,7 +46,7 @@ worktree (openspec/<name>): 本技能在此执行
 
 ```
 此技能始终在 git worktree 隔离环境中执行。
-所有代码修改和构建都在独立的 .zcf/<name>-wt/ 目录中进行。
+所有代码修改和构建都在独立的 .rddf/wt/<name>/ 目录中进行。
 ```
 
 ### 模式自动识别
@@ -114,7 +116,7 @@ else
     while read -r wt_path wt_branch; do
         WORKTREE_COUNT=$((WORKTREE_COUNT + 1))
         name=$(echo "$wt_branch" | sed 's|^openspec/||')
-        plan_file="$wt_path/.sisyphus/plans/$name.md"
+        plan_file="$wt_path/.rddf/plans/$name.md"
         if [ -f "$plan_file" ]; then
             status="✅ 有计划文件"
         else
@@ -167,7 +169,7 @@ fi
 
 > **为什么必须在 worktree 内执行？**
 > - 避免对 default branch（`master`/`main`/`develop`，由 `find_default_branch` 检测）的直接修改
-> - 独立构建目录（`.zcf/<name>-wt/build/`）互不干扰
+> - 独立构建目录（`.rddf/wt/<name>/build/`）互不干扰
 > - 支持并行执行多个 change（每个 worktree 独立）
 > - 隔离 git 操作，merge 时无冲突
 
@@ -209,53 +211,83 @@ cmake --build build -j$(get_nproc) 2>&1 | tail -5
 # 冷构建约 30s，后续增量 <5s
 ```
 
-### Step 3：读取 Prometheus 计划
+### Step 3：Review 计划 (Critique)
+
+读取 plan 文件并进行批判性 review：
 
 ```bash
-PLAN_FILE=".sisyphus/plans/$CHANGE_NAME.md"
+PLAN_FILE=".rddf/plans/$CHANGE_NAME.md"
 test -f "$PLAN_FILE" || { echo "❌ 计划文件不存在"; exit 1; }
 ```
 
-解析计划中的 Work Units：
-- 标记依赖关系
-- 识别可并行执行的独立单元
-- 识别串行依赖链
+**Review checklist**（逐项检查）:
+1. **Spec 覆盖**：plan 的每个 Task 是否对应 proposal/design 中的需求？标记空缺。
+2. **占位符扫描**：检查是否有 `TBD`、`TODO`、`Similar to Task N` 等占位符。
+3. **类型一致性**：后序 Task 中使用的类型/函数名是否与前面定义的一致？
+4. **文件路径**：每个 `**Files:**` 中的路径是否合理？（不要求文件已存在，但路径要有意义）
 
-### Step 4：并行执行
+**发现问题** → STOP，回到 guide-ship 重新 `skill_use("spec-workflow/writing-plans")`。
 
-```bash
-# 对可并行执行的 Work Units，同时委托多个子代理
-for each parallel_group in plan.parallel_groups:
-    # 同组内 Work Units 无依赖关系
-    for each work_unit in parallel_group:
-        task(
-            category="deep",
-            load_skills=[],
-            run_in_background=true,
-            prompt="
-                WORKTREE: $PROJECT_ROOT/.zcf/<CHANGE_NAME>-wt（在此目录下工作）
-                目标：实现 Work Unit: <description>
-                参考计划文件：.sisyphus/plans/<CHANGE_NAME>.md
-                完成后：
-                  1. 使用 awk 更新 $PROJECT_ROOT/openspec/changes/<CHANGE_NAME>/tasks.md 标记 [x]
-                  2. cmake --build $PROJECT_ROOT/.zcf/<CHANGE_NAME>-wt/build -j$(nproc) 验证
-            "
-        )
-    
-    # 等待所有并行任务完成
-    wait_for_all()
-    
-    # 执行串行依赖链中的下一个 Work Unit
-```
+**无问题** → 继续 Step 4。
 
-### Step 5：串行依赖链执行
+### Step 4：执行 Work Units (TDD 5 步)
 
-对存在依赖的 Work Units，按序执行：
+每个 Work Unit（对应 plan 中的一个 `### Task N:`）按 **TDD 5 步结构** 执行：
 
 ```bash
-for each work_unit in plan.serial_chain:
-    委托 single deep 代理 → 验证 → 更新 tasks.md
+# 对每个 Work Unit:
+for each work_unit in plan.tasks (按依赖顺序):
+    # 必须是 TDD 5 步，不允许跳过或合并
+    #
+    # Step 1: Write the failing test
+    # Step 2: Run test to verify it fails
+    # Step 3: Write minimal implementation
+    # Step 4: Run test to verify it passes
+    # Step 5: Commit
+    #
+    task(
+        category="deep",
+        load_skills=[],
+        run_in_background=false,
+        prompt="
+            WORKTREE: $(pwd)（在此目录下工作）
+            目标：实现以下 Work Unit 的 5 个 TDD Step:
+
+            <work_unit description>
+
+            强制 TDD 5 步结构（禁止简化为“纯实现”或“仅写代码”）:
+
+            Step 1 — 先写测试：
+              根据 proposal/design 的描述，写出覆盖本 Task 需求的测试代码。
+              测试文件: <task_files_test_path>
+
+            Step 2 — 运行验证失败：
+              执行测试命令，确认测试因功能不存在而失败。
+              Run: pytest <test_path> -v
+
+            Step 3 — 写最小实现：
+              写刚好能让测试通过的最小实现代码。
+              生产文件: <task_files_create_or_modify_path>
+
+            Step 4 — 运行验证通过：
+              重新执行测试命令，确认通过。
+              Run: pytest <test_path> -v
+
+            Step 5 — Commit：
+              git add <test_files> <implementation_files>
+              git commit -m \"<commit message>\"
+
+            完成后：
+              用 sed -i 's/- \\[ \\]/- [x]/' openspec/changes/<CHANGE_NAME>/tasks.md 标记完成
+        "
+    )
 ```
+
+**立即停止的情况**（不要强行执行，问人）：
+- 测试在 Step 2 中不失败（测试有误，没有真的测试新功能）
+- 测试在 Step 4 中仍失败（实现不对，或测试本身有 bug）
+- 同一 Step 连续失败 2 次以上
+- 计划中的文件路径不存在或明显不合理
 
 ### Step 6：全部完成后输出报告
 
@@ -344,7 +376,7 @@ esac
 # ============================================================
 # P0: Roadmap 进度更新
 # ============================================================
-STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json"
+STATE_FILE="$PROJECT_ROOT/.rddf/state/roadmap-state.json"
 if [ -f "$STATE_FILE" ] && [ -f "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/roadmap-meta.yaml" ]; then
     echo ""
     echo "📊 更新路线图进度..."
@@ -450,8 +482,8 @@ awk '{gsub(/- \[ \] /,"- [x] ")}1' \
 
 | 问题 | 检测 | 处理 |
 |------|------|------|
-| plan 文件不存在 | `test -f .sisyphus/plans/<name>.md` | 提示先执行 plan skill |
+| plan 文件不存在 | `test -f .rddf/plans/<name>.md` | 提示先执行 plan skill |
 | change 不存在 | `openspec status` 失败 | 提示先 propose |
-| worktree 不存在 | `test -d .zcf/<name>-wt` | 提示先执行 plan skill（含 worktree 创建） |
+| worktree 不存在 | `test -d .rddf/wt/<name>` | 提示先执行 plan skill（含 worktree 创建） |
  | 构建失败 | `cmake --build` 非零退出 | 分析错误，修复后重试当前 Work Unit |
-| worktree 路径查找 | `test -d .zcf/<name>-wt` 不可靠 | 用 `git worktree list \| awk '$3=="openspec/<name>" {print $1}'` 动态获取 |
+| worktree 路径查找 | `test -d .rddf/wt/<name>` 不可靠 | 用 `git worktree list \| awk '$3=="openspec/<name>" {print $1}'` 动态获取 |

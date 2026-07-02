@@ -67,12 +67,12 @@ print('\n'.join(sorted(target & all_skills)))
   fi
 }
 
-@test "prometheus-planning.md is excluded from the 9-skill test surface" {
-  # File exists
-  [ -f skills/prometheus-planning.md ]
-  # But no test_<name>_skill.bats file references it
+@test "prometheus-planning.md no longer exists (v2.0 self-contained)" {
+  # v2.0 removed prometheus-planning.md entirely (replaced by spec-workflow/* skills)
+  ! [ -f skills/prometheus-planning.md ]
+  # No test_<name>_skill.bats file references it
   ! ls tests/integration/test_prometheus_planning_skill.bats 2>/dev/null
-  # Verify the 10 new test files only cover the 9 target skills
+  # Verify the 9+ test files cover the target skills
   count=$(ls tests/integration/test_*_skill.bats 2>/dev/null | wc -l)
   [ "$count" -ge 9 ]
 }

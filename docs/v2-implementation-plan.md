@@ -310,7 +310,7 @@ skills/_lib/
    - 实现双向同步（检测冲突，优先状态向量）
 
 2. **同步目标文件**
-   - `.zcf/.roadmap-state.json` (roadmap 状态)
+   - `.rddf/state/roadmap-state.json` (roadmap 状态)
    - `proposal-suggestions.md` (proposal 建议)
    - `openspec/changes/<name>/.openspec.yaml` (change 状态)
 
@@ -897,13 +897,13 @@ skills/_lib/
 1. **创建 `skills/guide-arch.md`** (架构定义阶段)
    - 实现 5 个子阶段：setup, adr-create, architecture, roadmap-define, arch-done
    - 集成门控机制（arch_done 检查）
-   - 生成交接文件（`.zcf/.arch-handoff.json`）
+   - 生成交接文件（`.rddf/state/arch-handoff.json`）
 
 2. **创建 `skills/guide-plan.md`** (变更生成阶段)
    - 从 `guide-spec.md` 拆分（移除 roadmap 相关逻辑）
    - 实现 4 个子阶段：scan, propose, deps, plan-done
    - 集成门控机制（plan_done 检查）
-   - 生成交接文件（`.zcf/.plan-handoff.json`）
+   - 生成交接文件（`.rddf/state/plan-handoff.json`）
 
 3. **更新 `skills/guide.md`** (推荐器)
    - 支持三阶段扫描（arch, plan, ship）
@@ -911,8 +911,8 @@ skills/_lib/
    - 显示阶段间切换建议
 
 4. **实现阶段间交接文件**
-   - `.zcf/.arch-handoff.json`: ADR 数量、roadmap 状态、差距分析
-   - `.zcf/.plan-handoff.json`: active changes、artifacts 状态、依赖分析
+   - `.rddf/state/arch-handoff.json`: ADR 数量、roadmap 状态、差距分析
+   - `.rddf/state/plan-handoff.json`: active changes、artifacts 状态、依赖分析
 
 **验收标准**:
 

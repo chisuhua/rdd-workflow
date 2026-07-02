@@ -121,8 +121,8 @@ Expected: One new commit on `master`. Verify with `git log --oneline -1`.
 cd /workspace/project/spec-workflow
 DEFAULT_BRANCH=$(git symbolic-ref --short HEAD)
 git branch openspec/v2-core-foundation "$DEFAULT_BRANCH"
-git worktree add .zcf/v2-core-foundation-wt -b openspec/v2-core-foundation "$DEFAULT_BRANCH"
-cd .zcf/v2-core-foundation-wt
+git worktree add .rddf/state/v2-core-foundation-wt -b openspec/v2-core-foundation "$DEFAULT_BRANCH"
+cd .rddf/state/v2-core-foundation-wt
 git branch --show-current  # should print: openspec/v2-core-foundation
 ```
 
@@ -131,7 +131,7 @@ Expected: `git branch --show-current` prints `openspec/v2-core-foundation`. **Al
 - [ ] **Step 4: Save this plan inside the worktree**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 mkdir -p docs/superpowers/plans
 cp /workspace/project/spec-workflow/docs/superpowers/plans/2026-06-25-v2-core-foundation.md \
    docs/superpowers/plans/2026-06-25-v2-core-foundation.md
@@ -250,7 +250,7 @@ def test_lock_timeout_raises_locktimeout(lock_path):
 - [ ] **Step 1.2: Run test to verify it fails**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_lock.py -v
 ```
 
@@ -367,7 +367,7 @@ class FileLock:
 - [ ] **Step 1.4: Run tests to verify they pass**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_lock.py -v
 ```
 
@@ -376,7 +376,7 @@ Expected: All 6 tests pass. **Do not proceed if any fail.**
 - [ ] **Step 1.5: Update tasks.md and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 sed -i 's/- \[ \] 1.2 Create `skills/_lib/lock.py`/- [x] 1.2 Create `skills/_lib/lock.py`/' openspec/changes/v2-core-foundation/tasks.md
 git add skills/_lib/lock.py tests/unit/test_lock.py openspec/changes/v2-core-foundation/tasks.md
 git commit -m "feat(_lib): add FileLock (fcntl-based, 10s timeout, context manager) — closes 1.2"
@@ -396,7 +396,7 @@ Expected: 1 new commit. `tasks.md` now shows `[x]` for item 1.2.
 - [ ] **Step 2.1: Create the schema file**
 
 ```bash
-mkdir -p /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt/skills/_lib/schemas
+mkdir -p /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt/skills/_lib/schemas
 ```
 
 Create `skills/_lib/schemas/state_vector_schema.json`:
@@ -520,7 +520,7 @@ Create `skills/_lib/schemas/state_vector_schema.json`:
 - [ ] **Step 2.2: Validate the schema**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -c "
 import json, jsonschema
 with open('skills/_lib/schemas/state_vector_schema.json') as f:
@@ -535,7 +535,7 @@ Expected: `Schema is valid JSON Schema draft-07`.
 - [ ] **Step 2.3: Update tasks.md and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 sed -i 's/- \[ \] 1.3 Create `skills/_lib\/schemas\/state_vector_schema.json`/- [x] 1.3 Create `skills/_lib\/schemas\/state_vector_schema.json`/' openspec/changes/v2-core-foundation/tasks.md
 git add skills/_lib/schemas/state_vector_schema.json openspec/changes/v2-core-foundation/tasks.md
 git commit -m "feat(_lib): add state_vector_schema.json (JSON Schema draft-07) — closes 1.3"
@@ -682,7 +682,7 @@ for i in range(50):
 - [ ] **Step 3.2: Run test to verify it fails**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_state_vector.py -v 2>&1 | head -30
 ```
 
@@ -886,7 +886,7 @@ class StateVector:
 - [ ] **Step 3.4: Run tests to verify they pass**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_state_vector.py -v
 ```
 
@@ -895,7 +895,7 @@ Expected: All 9 tests pass.
 - [ ] **Step 3.5: Update tasks.md (1.1, 1.4, 1.5, 1.6, 1.7) and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 1.1 Create `skills/_lib\/state_vector.py`/- [x] 1.1 Create `skills/_lib\/state_vector.py`/' \
   -e 's/- \[ \] 1.4 Add checksum field to state vector for corruption detection/- [x] 1.4 Add checksum field to state vector for corruption detection/' \
@@ -1002,7 +1002,7 @@ class Event:
 - [ ] **Step 4.2: Verify import works**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -c "
 from skills._lib.event_types import EventType, Severity, Event
 print(f'EventType count: {len(list(EventType))}')
@@ -1016,7 +1016,7 @@ Expected: `EventType count: 17` and `Severity count: 4`.
 - [ ] **Step 4.3: Update tasks.md and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 sed -i 's/- \[ \] 2.2 Create `skills/_lib\/event_types.py`/- [x] 2.2 Create `skills/_lib\/event_types.py`/' openspec/changes/v2-core-foundation/tasks.md
 git add skills/_lib/event_types.py openspec/changes/v2-core-foundation/tasks.md
 git commit -m "feat(_lib): add event_types.py (17 EventType, Severity, Event dataclass) — closes 2.2"
@@ -1078,11 +1078,11 @@ def current_context(state_path: str = DEFAULT_STATE_PATH) -> dict:
 - [ ] **Step 5.2: Verify import and behavior**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 cd /tmp && rm -rf sw-test && mkdir sw-test && cd sw-test && git init -q
 mkdir -p .spec-workflow .opencode/skills
 python3 -c "
-import sys; sys.path.insert(0, '/workspace/project/spec-workflow/.zcf/v2-core-foundation-wt')
+import sys; sys.path.insert(0, '/workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt')
 from skills._lib.event_context import current_context
 ctx = current_context('/tmp/sw-test/.spec-workflow/state-vector.json')
 print('context:', ctx)
@@ -1095,7 +1095,7 @@ Expected: `context: {'goal': None, 'active_change': None, ...}`.
 - [ ] **Step 5.3: Update tasks.md and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 sed -i 's/- \[ \] 2.3 Create `skills/_lib\/event_context.py` reading current context from state vector/- [x] 2.3 Create `skills/_lib\/event_context.py` reading current context from state vector/' openspec/changes/v2-core-foundation/tasks.md
 git add skills/_lib/event_context.py openspec/changes/v2-core-foundation/tasks.md
 git commit -m "feat(_lib): add event_context.py (snapshot of state for event context) — closes 2.3"
@@ -1236,7 +1236,7 @@ def test_survives_corrupt_line(log_path):
 - [ ] **Step 6.2: Run test to verify it fails**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_event_log.py -v 2>&1 | head -10
 ```
 
@@ -1400,7 +1400,7 @@ class EventLog:
 - [ ] **Step 6.4: Run tests to verify they pass**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_event_log.py -v
 ```
 
@@ -1409,7 +1409,7 @@ Expected: All 8 tests pass.
 - [ ] **Step 6.5: Update tasks.md (2.1, 2.4, 2.5, 2.6) and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 2.1 Create `skills/_lib\/event_log.py`/- [x] 2.1 Create `skills/_lib\/event_log.py`/' \
   -e 's/- \[ \] 2.4 Event ID format: `evt_YYYYMMDD_HHMMSS_NNN` (unique within same second)/- [x] 2.4 Event ID format: `evt_YYYYMMDD_HHMMSS_NNN` (unique within same second)/' \
@@ -1594,7 +1594,7 @@ def test_get_suggestion_returns_aggregated_text(state_path, log_path):
 - [ ] **Step 7.2: Run test to verify it fails**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_gate.py -v 2>&1 | head -10
 ```
 
@@ -1724,7 +1724,7 @@ _DEFAULT_CHECKS = {
         Check("deps_analyzed", _check_deps_analyzed, "Dependencies not analyzed", "Run: openspec deps <name>", "warning"),
     ],
     "ship_done": [
-        Check("worktrees_empty", _check_worktrees_empty, "Active worktrees remain", "git worktree remove .zcf/<name>-wt", "error"),
+        Check("worktrees_empty", _check_worktrees_empty, "Active worktrees remain", "git worktree remove .rddf/wt/<name>", "error"),
         Check("archive_empty", _check_archive_empty, "Archive not empty", "Verify archive/", "error"),
         Check("tests_pass", _check_tests_pass, "Tests failing", "Run: pytest tests/ -v", "error"),
     ],
@@ -1856,7 +1856,7 @@ GateError = GateResult  # backward compat alias
 - [ ] **Step 7.4: Run tests to verify they pass**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_gate.py -v
 ```
 
@@ -1865,7 +1865,7 @@ Expected: All 9 tests pass.
 - [ ] **Step 7.5: Update tasks.md (3.1-3.7) and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 3.1 Create `skills/_lib\/gate.py`/- [x] 3.1 Create `skills/_lib\/gate.py`/' \
   -e 's/- \[ \] 3.2 Define `Check` namedtuple: name, condition (lambda), message, severity/- [x] 3.2 Define `Check` namedtuple: name, condition (lambda), message, severity/' \
@@ -1891,7 +1891,7 @@ Expected: 1 new commit.
 - [ ] **Step 8.1: Create the plugin directory and README**
 
 ```bash
-mkdir -p /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt/skills/_lib/plugins
+mkdir -p /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt/skills/_lib/plugins
 ```
 
 Create `skills/_lib/plugins/README.md`:
@@ -1976,7 +1976,7 @@ The `condition` callable receives a `context` dict containing:
 - [ ] **Step 8.2: Update tasks.md and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 sed -i 's|- \[ \] 3.8 Create `skills/_lib\/plugins\/README.md` with plugin development guide|- [x] 3.8 Create `skills/_lib\/plugins\/README.md` with plugin development guide|' openspec/changes/v2-core-foundation/tasks.md
 git add skills/_lib/plugins/README.md openspec/changes/v2-core-foundation/tasks.md
 git commit -m "docs(_lib): add plugins/README.md (gate check plugin guide) — closes 3.8"
@@ -2046,7 +2046,7 @@ def get_defaults() -> dict:
 - [ ] **Step 9.2: Verify import**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -c "
 from skills._lib.defaults import DEFAULTS, get_defaults
 assert DEFAULTS['interaction']['mode'] == 'hybrid'
@@ -2061,7 +2061,7 @@ Expected: `defaults OK`.
 - [ ] **Step 9.3: Update tasks.md and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 sed -i 's/- \[ \] 4.3 Create `skills/_lib\/defaults.py`/- [x] 4.3 Create `skills/_lib\/defaults.py`/' openspec/changes/v2-core-foundation/tasks.md
 git add skills/_lib/defaults.py openspec/changes/v2-core-foundation/tasks.md
 git commit -m "feat(_lib): add defaults.py (built-in config defaults) — closes 4.3"
@@ -2167,7 +2167,7 @@ def test_type_coercion_for_env_vars(tmp_path, clean_env):
 - [ ] **Step 10.2: Run test to verify it fails**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_config.py -v 2>&1 | head -10
 ```
 
@@ -2330,7 +2330,7 @@ class ConfigParser:
 Read the current `package.json`, then edit it to add `pyyaml` to the dependencies (or note it in a `requirements.txt` if `package.json` is for npm). The repo already has a `package.json`, so we add a comment block referring to Python deps:
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 cat package.json
 ```
 
@@ -2345,7 +2345,7 @@ pytest>=7.0
 Create `requirements.txt` at the repo root:
 
 ```bash
-cat > /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt/requirements.txt <<'EOF'
+cat > /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt/requirements.txt <<'EOF'
 # Python dependencies for spec-workflow v2.0
 # Install: pip install -r requirements.txt
 PyYAML>=6.0
@@ -2357,7 +2357,7 @@ EOF
 Add a top-level comment to `package.json` (read first, then edit):
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 # Read existing package.json to add a comment about Python deps
 python3 -c "
 import json
@@ -2375,7 +2375,7 @@ Expected: `package.json` now has a `scripts.install-python-deps` entry.
 - [ ] **Step 10.5: Install PyYAML and run tests**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 pip install pyyaml jsonschema pytest 2>&1 | tail -5
 python3 -m pytest tests/unit/test_config.py -v
 ```
@@ -2385,7 +2385,7 @@ Expected: All 7 tests pass.
 - [ ] **Step 10.6: Update tasks.md (4.1, 4.2, 4.4-4.7) and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 4.1 Create `skills/_lib\/config.py`/- [x] 4.1 Create `skills/_lib\/config.py`/' \
   -e 's/- \[ \] 4.2 Implement priority-merge: runtime params > loop.yaml > .spec-workflow.json > env vars > defaults/- [x] 4.2 Implement priority-merge: runtime params > loop.yaml > .spec-workflow.json > env vars > defaults/' \
@@ -2430,7 +2430,7 @@ from skills._lib.sync_state import (
 
 @pytest.fixture
 def project_root(tmp_path, monkeypatch):
-    """A clean project root with .zcf/ and openspec/changes/."""
+    """A clean project root with .rddf/state/ and openspec/changes/."""
     monkeypatch.chdir(tmp_path)
     (tmp_path / ".zcf").mkdir()
     (tmp_path / "openspec" / "changes" / "test-change").mkdir(parents=True)
@@ -2438,7 +2438,7 @@ def project_root(tmp_path, monkeypatch):
 
 
 def test_state_to_legacy_updates_roadmap_state(project_root):
-    """sync_state_vector_to_legacy writes .zcf/.roadmap-state.json from state vector."""
+    """sync_state_vector_to_legacy writes .rddf/state/roadmap-state.json from state vector."""
     sv = StateVector.create_default()
     sv.update_field("arch_side.phase", "propose")
     sv.update_field("arch_side.current_change", "test-change")
@@ -2455,7 +2455,7 @@ def test_state_to_legacy_updates_roadmap_state(project_root):
 
 
 def test_legacy_to_state_updates_state_vector(project_root):
-    """sync_legacy_to_state_vector reads .zcf/.roadmap-state.json into state vector."""
+    """sync_legacy_to_state_vector reads .rddf/state/roadmap-state.json into state vector."""
     legacy_path = project_root / ".zcf" / ".roadmap-state.json"
     legacy_path.write_text(json.dumps({
         "phase": "plan",
@@ -2547,7 +2547,7 @@ def test_conflict_logged_to_event_log(project_root):
 - [ ] **Step 11.2: Run test to verify it fails**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_sync_state.py -v 2>&1 | head -10
 ```
 
@@ -2561,7 +2561,7 @@ Create `skills/_lib/sync_state.py`:
 """Bidirectional sync between v2 state vector and v1.x legacy state files.
 
 Sync targets (v1.x files):
-- .zcf/.roadmap-state.json — roadmap state cache
+- .rddf/state/roadmap-state.json — roadmap state cache
 - proposal-suggestions.md — proposal suggestions
 - openspec/changes/<name>/.openspec.yaml — per-change metadata
 
@@ -2584,7 +2584,7 @@ from skills._lib.state_vector import StateVector
 
 
 STATE_VECTOR_PATH = ".spec-workflow/state-vector.json"
-LEGACY_ROADMAP_STATE = ".zcf/.roadmap-state.json"
+LEGACY_ROADMAP_STATE = ".rddf/state/roadmap-state.json"
 
 
 def is_sync_enabled() -> bool:
@@ -2612,7 +2612,7 @@ def sync_state_vector_to_legacy(project_root: str = ".") -> bool:
     """Read state vector and write to v1.x legacy files. Returns True on success.
 
     Writes:
-    - .zcf/.roadmap-state.json
+    - .rddf/state/roadmap-state.json
     - proposal-suggestions.md (header only, if not present)
     - openspec/changes/<active>/.openspec.yaml (updates phase field)
     """
@@ -2641,7 +2641,7 @@ def sync_state_vector_to_legacy(project_root: str = ".") -> bool:
         "_synced_from": "v2-state-vector",
     }
 
-    # Write .zcf/.roadmap-state.json
+    # Write .rddf/state/roadmap-state.json
     legacy_path = Path(project_root) / LEGACY_ROADMAP_STATE.lstrip("./")
     legacy_path.parent.mkdir(parents=True, exist_ok=True)
     with open(legacy_path, "w") as f:
@@ -2743,7 +2743,7 @@ def sync_legacy_to_state_vector(project_root: str = ".") -> bool:
 - [ ] **Step 11.4: Run tests to verify they pass**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_sync_state.py -v
 ```
 
@@ -2752,7 +2752,7 @@ Expected: All 6 tests pass.
 - [ ] **Step 11.5: Update tasks.md (5.1-5.6) and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 5.1 Create `skills/_lib\/sync_state.py`/- [x] 5.1 Create `skills/_lib\/sync_state.py`/' \
   -e 's/- \[ \] 5.2 Sync targets: `.zcf\/.roadmap-state.json`, `proposal-suggestions.md`, `openspec\/changes\/<name>\/.openspec.yaml`/- [x] 5.2 Sync targets: `.zcf\/.roadmap-state.json`, `proposal-suggestions.md`, `openspec\/changes\/<name>\/.openspec.yaml`/' \
@@ -2780,7 +2780,7 @@ Expected: 1 new commit. Core implementation complete.
 First read the existing file, then append a new section:
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 # Find the end of the file (last section)
 tail -5 docs/v2-api-reference.md
 ```
@@ -2935,7 +2935,7 @@ Expected: 1 new commit.
 Read the existing file, then append a new section:
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 tail -3 docs/v2-config-schema.md
 ```
 
@@ -3034,7 +3034,7 @@ Expected: 1 new commit. Documentation complete.
 - [ ] **Step 12.3: Update tasks.md (6.1, 6.2)**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 6.1 Update `docs\/v2-api-reference.md` with new public APIs/- [x] 6.1 Update `docs\/v2-api-reference.md` with new public APIs/' \
   -e 's/- \[ \] 6.2 Update `docs\/v2-config-schema.md` with `.spec-workflow.json` schema/- [x] 6.2 Update `docs\/v2-config-schema.md` with `.spec-workflow.json` schema/' \
@@ -3056,7 +3056,7 @@ Expected: 1 new commit.
 - [ ] **Step 13.1: Run full unit test suite**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/ -v
 ```
 
@@ -3065,7 +3065,7 @@ Expected: All tests pass (count should be ≥ 37 across `test_lock.py`, `test_st
 - [ ] **Step 13.2: Run v1.x integration tests for regression**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 ls tests/integration/ 2>/dev/null
 if [ -d tests/integration ] && [ -n "$(ls tests/integration/*.bats 2>/dev/null)" ]; then
     which bats && bats tests/integration/ || echo "bats not installed; skipping"
@@ -3079,7 +3079,7 @@ Expected: Either `bats` runs and passes, or a skip message is printed.
 - [ ] **Step 13.3: Verify zero regressions in v1.x skills**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 # Confirm all v1.x skill files are untouched
 git diff master -- skills/INSTALL.md skills/guide.md skills/propose.md skills/execute.md \
   skills/guide-spec.md skills/guide-ship.md skills/roadmap.md skills/deps.md skills/status.md \
@@ -3091,7 +3091,7 @@ Expected: Empty output (no changes to v1.x skill files).
 - [ ] **Step 13.4: Update tasks.md (6.3, 6.4) and final commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.zcf/v2-core-foundation-wt
+cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 6.3 Run full test suite: `pytest tests\/unit\/`/- [x] 6.3 Run full test suite: `pytest tests\/unit\/`/' \
   -e 's/- \[ \] 6.4 Verify zero regressions in v1.x skills (run `tests\/integration\/`)/- [x] 6.4 Verify zero regressions in v1.x skills (run `tests\/integration\/`)/' \
@@ -3146,7 +3146,7 @@ echo "gate-mechanism: $(grep -c 'Requirement:' openspec/changes/v2-core-foundati
 echo "configuration: $(grep -c 'Requirement:' openspec/changes/v2-core-foundation/specs/configuration/spec.md) requirements"
 echo ""
 echo "=== Implementation files ==="
-ls -la .zcf/v2-core-foundation-wt/skills/_lib/*.py | wc -l
+ls -la .rddf/state/v2-core-foundation-wt/skills/_lib/*.py | wc -l
 echo "Python modules in skills/_lib/"
 ```
 
@@ -3171,7 +3171,7 @@ Expected: Print "ready for archive".
 **Files:**
 - Merge `openspec/v2-core-foundation` → `master` (or default branch)
 - `openspec archive v2-core-foundation --yes` (writes to `openspec/changes/archive/`)
-- `git worktree remove .zcf/v2-core-foundation-wt`
+- `git worktree remove .rddf/state/v2-core-foundation-wt`
 - `git branch -d openspec/v2-core-foundation`
 
 - [ ] **Step 15.1: Pre-merge commit check (T20)**
@@ -3209,7 +3209,7 @@ Expected: Prints "Change v2-core-foundation archived successfully" and moves the
 
 ```bash
 cd /workspace/project/spec-workflow
-git worktree remove .zcf/v2-core-foundation-wt
+git worktree remove .rddf/state/v2-core-foundation-wt
 git branch -d openspec/v2-core-foundation
 git worktree list
 ```

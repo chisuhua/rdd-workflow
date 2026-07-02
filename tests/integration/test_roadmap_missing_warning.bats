@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_roadmap_missing_warning.bats
 #
-# T16 — P1-6: warn when roadmap.md missing but .zcf/.roadmap-state.json exists
+# T16 — P1-6: warn when roadmap.md missing but .rddf/state/roadmap-state.json exists
 #
 # Addresses propose.md:65 and guide-spec.md:182 (audit findings).
 # When compat mode is active (roadmap.md absent) but the state file still
@@ -26,7 +26,7 @@ GUIDE_SPEC_MD="$REPO_ROOT/skills/guide-spec.md"
 @test "propose.md warns when roadmap.md missing but state file exists" {
   [ -f "$PROPOSE_MD" ]
   grep -q "roadmap.md 已不存在" "$PROPOSE_MD"
-  grep -q ".zcf/.roadmap-state.json 存在" "$PROPOSE_MD"
+  grep -q ".rddf/state/roadmap-state.json 存在" "$PROPOSE_MD"
 }
 
 @test "propose.md warning mentions how to re-enable roadmap" {
@@ -50,7 +50,7 @@ GUIDE_SPEC_MD="$REPO_ROOT/skills/guide-spec.md"
   # `if [ ! -f ROADMAP_FILE ] && [ -f STATE_FILE ]` check.
   [ -f "$GUIDE_SPEC_MD" ]
   grep -q 'STATE_FILE=' "$GUIDE_SPEC_MD"
-  grep -q '.zcf/.roadmap-state.json' "$GUIDE_SPEC_MD"
+  grep -q '.rddf/state/roadmap-state.json' "$GUIDE_SPEC_MD"
 }
 
 # ============================================================
@@ -67,14 +67,14 @@ GUIDE_SPEC_MD="$REPO_ROOT/skills/guide-spec.md"
   echo "x" > a && git add a && git commit -q -m init
 
   # State file exists, but roadmap.md is missing
-  mkdir -p .zcf
-  echo '{"phase":"phase-1","category":"core-impl"}' > .zcf/.roadmap-state.json
+mkdir -p .rddf/state
+   echo '{"phase":"phase-1","category":"core-impl"}' > .rddf/state/roadmap-state.json
 
   local output
   output=$(bash -c '
     PROJECT_ROOT="$(pwd)"
     ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
-    STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json"
+    STATE_FILE="$PROJECT_ROOT/.rddf/state/roadmap-state.json"
 
     ROADMAP_MODE=false
     if [ -f "$ROADMAP_FILE" ]; then
@@ -83,9 +83,9 @@ GUIDE_SPEC_MD="$REPO_ROOT/skills/guide-spec.md"
       echo "⚠️  未检测到 roadmap.md，使用兼容模式"
       if [ -f "$STATE_FILE" ]; then
         echo ""
-        echo "⚠️  roadmap.md 已不存在，但 .zcf/.roadmap-state.json 存在"
+        echo "⚠️  roadmap.md 已不存在，但 .rddf/state/roadmap-state.json 存在"
         echo "   推测：roadmap 模式已切换为兼容模式"
-        echo "   已有的 roadmap-meta.yaml 不会自动更新 .roadmap-state.json"
+        echo "   已有的 roadmap-meta.yaml 不会自动更新 .rddf/state/roadmap-state.json"
         echo "   如需重新启用 roadmap，请运行：skill_use(\"roadmap\", \"init\")"
       fi
     fi
@@ -96,7 +96,7 @@ GUIDE_SPEC_MD="$REPO_ROOT/skills/guide-spec.md"
 
   [ "$rc" -eq 0 ] || { echo "Script exited with $rc: $output" >&2; return 1; }
   echo "$output" | grep -q "roadmap.md 已不存在"
-  echo "$output" | grep -q ".zcf/.roadmap-state.json 存在"
+  echo "$output" | grep -q ".rddf/state/roadmap-state.json 存在"
   echo "$output" | grep -q "roadmap 模式已切换为兼容模式"
   echo "$output" | grep -q "skill_use(\"roadmap\", \"init\")"
 }
@@ -118,7 +118,7 @@ GUIDE_SPEC_MD="$REPO_ROOT/skills/guide-spec.md"
   output=$(bash -c '
     PROJECT_ROOT="$(pwd)"
     ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
-    STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json"
+    STATE_FILE="$PROJECT_ROOT/.rddf/state/roadmap-state.json"
 
     if [ -f "$ROADMAP_FILE" ]; then
       echo "ROADMAP_PRESENT"
@@ -155,14 +155,14 @@ GUIDE_SPEC_MD="$REPO_ROOT/skills/guide-spec.md"
 
   # roadmap.md present, state file also present (normal mode)
   echo "# Roadmap" > roadmap.md
-  mkdir -p .zcf
-  echo '{"phase":"phase-1"}' > .zcf/.roadmap-state.json
+  mkdir -p .rddf/state
+   echo '{"phase":"phase-1"}' > .rddf/state/roadmap-state.json
 
   local output
   output=$(bash -c '
     PROJECT_ROOT="$(pwd)"
     ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
-    STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json"
+    STATE_FILE="$PROJECT_ROOT/.rddf/state/roadmap-state.json"
 
     if [ -f "$ROADMAP_FILE" ]; then
       echo "ROADMAP_MODE_ACTIVE"

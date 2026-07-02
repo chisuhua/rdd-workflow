@@ -32,12 +32,15 @@ from __future__ import annotations
 
 import datetime
 import enum
+import logging
 import threading
 import uuid
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from skills._lib.event_types import EventType, Severity
+
+logger = logging.getLogger(__name__)
 
 
 class SessionState(str, enum.Enum):
@@ -262,5 +265,4 @@ class SessionCoordinator:
                 message=message,
             )
         except Exception:
-            # Event-log failures must not break session coordination.
-            pass
+            self._event_log.record(EventType.ERROR_OCCURRED, Severity.WARN, "Session: event log emit failed")

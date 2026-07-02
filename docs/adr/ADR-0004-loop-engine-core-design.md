@@ -122,7 +122,7 @@ def detect_health_issues(state: StateVector) -> DetectionResult:
     # 检查 openspec CLI 是否可用
     if not shutil.which("openspec"):
         issues.append({"severity": "error", "message": "openspec CLI not found"})
-    # 检查 .zcf/ 状态文件一致性
+    # 检查 .rddf/state/ 状态文件一致性
     # ... 更多检查 ...
     return DetectionResult(type="health", data={"issues": issues})
 ```
@@ -212,7 +212,7 @@ def action_archive_change(change_name: str, config: LoopConfig) -> ActionResult:
 ### 状态向量设计
 
 ```json
-// .zcf/state-vector.json
+// .rddf/state/state-vector.json
 {
   "version": "2.0",
   "timestamp": "2026-06-22T10:30:00Z",
@@ -266,7 +266,7 @@ def action_archive_change(change_name: str, config: LoopConfig) -> ActionResult:
 ### 事件流设计
 
 ```jsonl
-// .zcf/event-log.jsonl (每行一个事件)
+// .rddf/state/event-log.jsonl (每行一个事件)
 {"ts": "2026-06-22T10:00:00Z", "type": "loop_started", "goal": "complete all changes"}
 {"ts": "2026-06-22T10:00:01Z", "type": "scan_completed", "detectors": 8, "duration_ms": 150}
 {"ts": "2026-06-22T10:00:02Z", "type": "plan_generated", "actions": 3, "mode": "hybrid"}
@@ -410,13 +410,13 @@ class LoopEngine:
   - 新增 `skills/loop-engine.py` (Loop 引擎核心)
   - 新增 `skills/_lib/detectors.py` (状态检测器)
   - 新增 `skills/_lib/actions.py` (执行动作)
-  - 新增 `.zcf/state-vector.json` (状态向量)
-  - 新增 `.zcf/event-log.jsonl` (事件流)
+  - 新增 `.rddf/state/state-vector.json` (状态向量)
+  - 新增 `.rddf/state/event-log.jsonl` (事件流)
   
 - **Out Scope**:
   - 不改变现有 skill 文件内部逻辑（只通过 subprocess 调用）
   - 不改变 openspec CLI 接口
-  - 不改变 `.zcf/` 目录结构（只新增文件）
+  - 不改变 `.rddf/state/` 目录结构（只新增文件）
 
 ### 备选方案
 

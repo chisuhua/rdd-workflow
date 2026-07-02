@@ -6,6 +6,8 @@ execute_plan → verify_results → adapt. Safety mechanisms enforced at engine 
 from __future__ import annotations
 from enum import Enum
 from typing import Any, Optional
+import ast
+import operator
 from skills._lib.state_vector import StateVector
 from skills._lib.event_log import EventLog
 from skills._lib.event_types import EventType, Severity, Event
@@ -31,6 +33,62 @@ class _OscillationDetected(Exception):
 class _CircuitBroken(Exception):
     """Internal signal to break out of run() when circuit breaker trips."""
     pass
+
+
+_SAFE_NODES = frozenset({
+    ast.Expression, ast.Compare, ast.BoolOp, ast.BinOp,
+    ast.Name, ast.Attribute, ast.Subscript, ast.Index,
+    ast.Load, ast.Store, ast.Del, ast.AugLoad, ast.AugStore,
+    ast.Str, ast.Num, ast.NameConstant, ast.Constant,
+    ast.Tuple, ast.List, ast.Dict, ast.Set, ast.UnaryOp,
+    ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE,
+    ast.Is, ast.IsNot, ast.In, ast.NotIn,
+    ast.And, ast.Or, ast.Not,
+    ast.UAdd, ast.USub, ast.Not,
+    ast.Slice, ast.ExtSlice, ast.Index,
+    ast.keyword,
+    ast.Pass, ast.Break, ast.Continue,
+})
+
+_SAFE_OPS = {
+    ast.Eq: operator.eq, ast.NotEq: operator.ne,
+    ast.Lt: operator.lt, ast.LtE: operator.le,
+    ast.Gt: operator.gt, ast.GtE: operator.ge,
+    ast.Is: operator.is_, ast.IsNot: operator.is_not,
+    ast.In: lambda a, b: a in b, ast.NotIn: lambda a, b: a not in b,
+    ast.And: lambda a, b: a and b, ast.Or: lambda a, b: a or b,
+    ast.Not: operator.not_,
+    ast.Add: operator.add, ast.Sub: operator.sub,
+    ast.UAdd: operator.pos, ast.USub: operator.neg,
+}
+
+
+def _safe_eval_goal(expression: str, context: dict) -> bool:
+    """Evaluate a goal predicate using AST node whitelist.
+
+    Supports patterns used by LoopEngine:
+      - ``plan_side['active_change'] is None``
+      - ``state.iteration < 100``
+      - ``detectors[0].result == 'pass'``
+
+    Returns False for any unparseable, unwhitelisted, or runtime-errored expression.
+    """
+    try:
+        tree = ast.parse(expression, mode='eval')
+    except SyntaxError:
+        return False
+
+    # Validate every node against the whitelist
+    for node in ast.walk(tree):
+        if not isinstance(node, tuple(_SAFE_NODES)):
+            return False
+
+    try:
+        code = compile(tree, '<safe_eval>', 'eval')
+        result = eval(code, {"__builtins__": {}}, context)
+        return bool(result)
+    except Exception:
+        return False
 
 
 class LoopEngine:
@@ -105,7 +163,7 @@ class LoopEngine:
         """
         state_dict = self.state.to_dict()
         try:
-            return bool(eval(goal_predicate, {"__builtins__": {}}, state_dict))
+            return _safe_eval_goal(goal_predicate, state_dict)
         except Exception as e:
             self.event_log.record(
                 EventType.ERROR_OCCURRED,

@@ -17,7 +17,7 @@
 ### Breaking Changes
 
 - **v1.x compatibility maintained**: `guide-spec` remains as a backward-compatible alias that internally calls `guide-arch` → `guide-plan`. No user skill code changes required.
-- **State file format unchanged**: All `.zcf/` state files maintain v1.x format. No migration needed.
+- **State file format unchanged**: All `.rddf/state/` state files maintain v1.x format. No migration needed.
 - **npm package rename**: None — package remains `spec-workflow`.
 
 ### Performance Targets (Verified)

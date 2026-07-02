@@ -50,7 +50,7 @@ spec-workflow 是一个面向 OpenSpec 变更管理的工作流技能包。在 s
 | 1.5 | roadmap | 路线图管理（`roadmap.md` + `roadmap-meta.yaml`） |
 | 2 | propose | 扫描 ADR/TODO → 创建 OpenSpec change artifacts |
 | 2.5 | deps | 依赖分析（subagent Step 3 语义分析） |
-| 3 | spec-done | 验证 3 artifact 已 commit + 写 `.zcf/.handoff.json` |
+| 3 | spec-done | 验证 3 artifact 已 commit + 写 `.rddf/state/handoff.json` |
 
 **ship 端 5 阶段 + 1 退出** (`guide-ship.md`):
 
@@ -65,7 +65,7 @@ spec-workflow 是一个面向 OpenSpec 变更管理的工作流技能包。在 s
 
 **职责分层原则**:
 - **推荐器 (guide)**: 无状态、只读、返回单行建议 `skill_use("guide-spec")` 或 `skill_use("guide-ship")`
-- **状态机 (guide-spec / guide-ship)**: 拥有 `.zcf/.handoff.json`、调用子技能、phase 计数
+- **状态机 (guide-spec / guide-ship)**: 拥有 `.rddf/state/handoff.json`、调用子技能、phase 计数
 - **子技能**: 单一职责（只做一件事），可独立测试
 
 ## Consequences
@@ -75,13 +75,13 @@ spec-workflow 是一个面向 OpenSpec 变更管理的工作流技能包。在 s
 - **可测试性**: 每个 skill 独立 bats 测试（`test_*_skill.bats`），覆盖率从 0% 提升到 ≥ 3 cases/skill
 - **状态隔离**: spec 端与 ship 端的 phase 计数互不干扰
 - **推荐器可缓存**: `guide` 是纯函数，可未来加入 `caching` 优化而不破坏状态机
-- **可观测性**: 每个 phase 的输入/输出可被 `.sisyphus/plans/` 与 tasks.md 独立追踪
+- **可观测性**: 每个 phase 的输入/输出可被 `.rddf/plans/` 与 tasks.md 独立追踪
 - **审计友好**: 6 处 P0/P1 缺陷可独立 fix（如 P0-7 只影响 ship 端）
 
 ### 负面 / 风险
 
 - **入口分裂**: 用户从 1 个 `guide.md` 变成先看到 `guide`，再选 spec/ship。增加一次跳转（但提升 90% 用例的清晰度）
-- **跨 phase 数据传递**: 需要 `.zcf/.handoff.json`（spec-done 写入 → ship-started 读取）—— 引入了一个新的 state 文件
+- **跨 phase 数据传递**: 需要 `.rddf/state/handoff.json`（spec-done 写入 → ship-started 读取）—— 引入了一个新的 state 文件
 - **文档同步**: README.md / USAGE.md 需要重写工作流图（已在 v1.1 完成）
 
 ### 后续待办

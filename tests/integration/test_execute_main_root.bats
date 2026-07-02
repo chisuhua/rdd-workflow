@@ -6,9 +6,9 @@
 #
 # P0-8: `git rev-parse --show-toplevel` returns the WORKTREE root when called
 #       from inside a worktree. execute.md uses PROJECT_ROOT to construct
-#       STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json" (line 301). When
+#       STATE_FILE="$PROJECT_ROOT/.rddf/state/.roadmap-state.json" (line 301). When
 #       run from a worktree, this would write the state to the worktree's
-#       .zcf/, not the main repo's — breaking the global state file.
+#       .rddf/state/, not the main repo's — breaking the global state file.
 #       Fix: use `git rev-parse --git-common-dir` (identical for main repo
 #       and all linked worktrees) to derive the main repo root. Encapsulated
 #       in `main_repo_root()` helper in skills/_lib/worktree.sh.
@@ -56,9 +56,9 @@ load ../test_helper
     && git config user.email "t@t" \
     && git config user.name "t" \
     && echo x > a && git add a && git commit -q -m init \
-    && git worktree add -b openspec/test-1 .zcf/test-1-wt HEAD >/dev/null 2>&1
+    && git worktree add -b openspec/test-1 .rddf/wt/test-1 HEAD >/dev/null 2>&1
   )
-  cd "$tmp/.zcf/test-1-wt"
+  cd "$tmp/.rddf/wt/test-1"
   result=$(main_repo_root)
   [ "$result" = "$tmp" ]
   rm -rf "$tmp"
@@ -82,11 +82,11 @@ load ../test_helper
 
 @test "P0-8: STATE_FILE points to main repo .zcf (not worktree)" {
   # Simulate execute.md's fix: from worktree, PROJECT_ROOT is main repo,
-  # so STATE_FILE goes to main repo's .zcf/, not the worktree's.
+  # so STATE_FILE goes to main repo's .rddf/state/, not the worktree's.
   source "$REPO_ROOT/skills/_lib/worktree.sh"
   local tmp wt_dir
   tmp=$(mktemp -d)
-  wt_dir="$tmp/.zcf/test-1-wt"
+  wt_dir="$tmp/.rddf/wt/test-1"
   ( cd "$tmp" \
     && git init -q \
     && git config user.email "t@t" \
@@ -96,10 +96,10 @@ load ../test_helper
   )
   cd "$wt_dir"
   PROJECT_ROOT=$(main_repo_root)
-  STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json"
+  STATE_FILE="$PROJECT_ROOT/.rddf/state/.roadmap-state.json"
   # Must NOT contain the worktree path
-  [[ "$STATE_FILE" != *".zcf/test-1-wt"* ]]
+  [[ "$STATE_FILE" != *".rddf/wt/test-1"* ]]
   # Must contain the main repo path
-  [[ "$STATE_FILE" == *"$tmp/.zcf/.roadmap-state.json"* ]]
+  [[ "$STATE_FILE" == *"$tmp/.rddf/state/.roadmap-state.json"* ]]
   rm -rf "$tmp"
 }

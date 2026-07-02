@@ -24,11 +24,11 @@ metadata:
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 
 # 0. 三阶段交接状态检测 (arch → plan → ship) — 优先级最高
-#    通过 .zcf/.arch-handoff.json / .zcf/.plan-handoff.json 软状态文件判断当前阶段。
+#    通过 .spec-workflow/.arch-handoff.json / .spec-workflow/.plan-handoff.json 软状态文件判断当前阶段。
 #    arch-done 后但 plan 未开始 → 引导进入 plan
 #    plan-done 后 → 引导进入 ship
-ARCH_HANDOFF="$PROJECT_ROOT/.zcf/.arch-handoff.json"
-PLAN_HANDOFF="$PROJECT_ROOT/.zcf/.plan-handoff.json"
+ARCH_HANDOFF="$PROJECT_ROOT/.spec-workflow/.arch-handoff.json"
+PLAN_HANDOFF="$PROJECT_ROOT/.spec-workflow/.plan-handoff.json"
 
 # 1. 有 worktree 且 tasks 未全部 [x] → 继续 ship
 # 注意:awk 的 system() 只返回状态码,不输出字符串,所以不能用 awk + system() 收集结果。
@@ -60,7 +60,7 @@ elif [ -n "$WORKTREE_IN_PROGRESS" ]; then
     RECOMMEND="guide-ship"; REASON="worktree 存在,任务未完成 → 继续执行"
 # P1-3: phase gate report takes priority — must review before proceeding
 # P1-3: detached worktrees (other sessions) may be running, surface them
-elif [ -f "$PROJECT_ROOT/.zcf/.phase-gate-report.md" ]; then
+elif [ -f "$PROJECT_ROOT/.spec-workflow/.phase-gate-report.md" ]; then
     RECOMMEND="status --roadmap"; REASON="阶段门控报告待 review"
 elif DETACHED=$(git worktree list 2>/dev/null | awk '$3 ~ /^openspec\//' | wc -l)
      [ "$DETACHED" -gt 0 ]; then
@@ -114,8 +114,8 @@ fi
 ```
 🔍 Project state scan:
    - roadmap.md: [✅ exists / ❌ missing]
-   - .zcf/.arch-handoff.json: [✅ exists / ❌ missing]
-   - .zcf/.plan-handoff.json: [✅ exists / ❌ missing]
+- .spec-workflow/.arch-handoff.json: [✅ exists / ❌ missing]
+- .spec-workflow/.plan-handoff.json: [✅ exists / ❌ missing]
    - committed changes: [N]
    - worktrees: [N, with status]
 

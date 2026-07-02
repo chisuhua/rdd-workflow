@@ -56,7 +56,7 @@ All user-facing documentation in `USAGE.md`, `README.md`, `docs/adr/*.md`, `skil
 
 #### Scenario: USAGE.md state-file table
 - **WHEN** `USAGE.md` is read
-- **THEN** the state-file table SHALL include `proposal-suggestions.md`, `tasks.md`, `docs/adr/ADR-*.md`, `.sisyphus/plans/<name>.md`, `.zcf/.handoff.json`, `.zcf/.roadmap-state.json`, `.zcf/.deps-candidates.json`, `.zcf/.deps-output.md`, and `.zcf/index.md`
+- **THEN** the state-file table SHALL include `proposal-suggestions.md`, `tasks.md`, `docs/adr/ADR-*.md`, `.sisyphus/plans/<name>.md`, `.rddf/state/handoff.json`, `.rddf/state/roadmap-state.json`, `.rddf/state/deps-candidates.json`, `.rddf/state/deps-output.md`, and `.rddf/state/index.md`
 
 #### Scenario: skill files do not hardcode main branch
 - **WHEN** `skills/*.md` is searched for the literal word "main 分支" or "main branch" in user-facing output

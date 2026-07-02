@@ -17,6 +17,7 @@ State storage:
 """
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
@@ -26,6 +27,8 @@ import yaml
 from skills._lib.state_vector import StateVector
 from skills._lib.event_log import EventLog
 from skills._lib.event_types import EventType, Severity
+
+logger = logging.getLogger(__name__)
 
 
 # Key under which the pipeline sub-state would live on the StateVector
@@ -143,8 +146,8 @@ class StepPipeline:
             sv_state = self.state_vector.to_dict().get(PIPELINE_STATE_KEY)
             if isinstance(sv_state, dict) and sv_state:
                 return sv_state
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("StepPipeline: _get_state failed: %s", e)
         return self._local_state
 
     def _save_state(self, state: Dict[str, Any]) -> None:
@@ -157,11 +160,11 @@ class StepPipeline:
         self._local_state = dict(state)
         try:
             self.state_vector.update_field(PIPELINE_STATE_KEY, dict(state))
-        except Exception:
+        except Exception as e:
+            logger.warning("StepPipeline: _save_state failed: %s", e)
             # StateVector schema currently does not accept the step_pipeline
             # top-level key. Persistence is advisory; the in-memory mirror
             # is authoritative for the lifetime of this pipeline instance.
-            pass
 
     def _emit(self, step_id: str, status: str, message: str) -> None:
         """Append a completion event to the optional EventLog."""
@@ -173,6 +176,5 @@ class StepPipeline:
                 severity=Severity.INFO,
                 message=message,
             )
-        except Exception:
-            # EventLog failures must never break the pipeline
-            pass
+        except Exception as e:
+            logger.warning("StepPipeline: event log emit failed: %s", e)

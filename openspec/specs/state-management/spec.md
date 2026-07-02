@@ -48,7 +48,7 @@ State vector SHALL be the authoritative source. On conflict, state vector wins. 
 
 #### Scenario: State vector update propagates to v1.x
 - **WHEN** state vector is updated
-- **THEN** corresponding v1.x files (`.zcf/.roadmap-state.json`, `proposal-suggestions.md`, `openspec/changes/<name>/.openspec.yaml`) are updated within 50ms
+- **THEN** corresponding v1.x files (`.rddf/state/roadmap-state.json`, `proposal-suggestions.md`, `openspec/changes/<name>/.openspec.yaml`) are updated within 50ms
 
 #### Scenario: v1.x file change propagates to state vector
 - **WHEN** a v1.x file is modified

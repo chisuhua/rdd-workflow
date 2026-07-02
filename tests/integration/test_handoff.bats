@@ -3,7 +3,7 @@
 # T26 (P2-5): handoff state file for spec→ship coordination
 #
 # This file locks three properties into the source:
-#   1. `.zcf/index.md` documents `.handoff.json` as a tracked state file
+#   1. `.rddf/state/handoff.json` documents `.handoff.json` as a tracked state file
 #   2. `skills/guide-spec.md` writes `.handoff.json` at Phase 3 (spec-done exit)
 #   3. `skills/guide-ship.md` reads `.handoff.json` at Phase 1 (entry)
 #
@@ -14,16 +14,16 @@
 
 load ../test_helper
 
-@test ".zcf/index.md documents handoff.json" {
-  [ -f "$REPO_ROOT/.zcf/index.md" ]
+@test ".rddf/state/index.md documents handoff.json" {
+  [ -f "$REPO_ROOT/.rddf/state/index.md" ]
   # 1. The filename is mentioned
-  grep -q ".handoff.json" "$REPO_ROOT/.zcf/index.md"
+  grep -q ".handoff.json" "$REPO_ROOT/.rddf/state/index.md"
   # 2. The handoff role is described (Chinese or English token)
-  grep -qE "handoff|交接" "$REPO_ROOT/.zcf/index.md"
+  grep -qE "handoff|交接" "$REPO_ROOT/.rddf/state/index.md"
   # 3. spec side is named as writer
-  grep -q "guide-spec.md" "$REPO_ROOT/.zcf/index.md"
+  grep -q "guide-spec.md" "$REPO_ROOT/.rddf/state/index.md"
   # 4. ship side is named as reader
-  grep -q "guide-ship.md" "$REPO_ROOT/.zcf/index.md"
+  grep -q "guide-ship.md" "$REPO_ROOT/.rddf/state/index.md"
 }
 
 @test "guide-spec.md writes handoff.json at Phase 3 (spec-done exit)" {

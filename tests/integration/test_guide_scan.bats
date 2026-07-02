@@ -4,7 +4,7 @@
 # See plan checkbox:
 #   - [ ] 12. guide.md scan improvements (P1-3 + P1-4)
 #
-# P1-3: scan must check .zcf/.phase-gate-report.md existence and surface
+# P1-3: scan must check .rddf/state/phase-gate-report.md existence and surface
 #       detached worktrees (count via awk $3 ~ /^openspec\//, not grep path).
 # P1-4: replace dangerous `grep -q "openspec/"` (matches on path string,
 #       false-positive on any openspec/ folder) with strict $3 column match.

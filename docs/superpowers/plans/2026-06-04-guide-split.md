@@ -114,7 +114,7 @@ Same for `skill_use("spec-workflow-roadmap")` and `skill_use("spec-workflow-deps
 
 - [ ] **Step 10: Apply light edit #4 — strip worktree-creation code**
 
-Search for any worktree creation logic (commands like `git worktree add`, `.zcf/<name>-wt`, branch creation with `openspec/<name>` prefix). These belong to `guide-ship`, not here. Remove them.
+Search for any worktree creation logic (commands like `git worktree add`, `.rddf/wt/<name>`, branch creation with `openspec/<name>` prefix). These belong to `guide-ship`, not here. Remove them.
 
 - [ ] **Step 11: Add the `spec-done` exit phase**
 
@@ -693,7 +693,7 @@ git add openspec/changes/test-change/ && git commit -m "add change"
 ```bash
 cd /tmp/test-guide-split/empty
 git branch openspec/test-change HEAD
-git worktree add .zcf/test-change-wt openspec/test-change
+git worktree add .rddf/wt/test-change openspec/test-change
 # Invoke guide and verify
 # Expected: "Recommended: skill_use('guide-ship'), Reason: worktree 存在,任务未完成 → 继续执行"
 ```

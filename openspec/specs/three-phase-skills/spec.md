@@ -8,7 +8,7 @@ The skill SHALL implement 5 sub-phases: setup, adr-create, architecture, roadmap
 #### Scenario: arch phase complete
 - **WHEN** user completes all 5 sub-phases
 - **THEN** arch_done gate check runs (from v2-core-foundation)
-- **AND** `.zcf/.arch-handoff.json` is written with: ADR count, roadmap state, gap analysis
+- **AND** `.rddf/state/arch-handoff.json` is written with: ADR count, roadmap state, gap analysis
 
 #### Scenario: adr-create required
 - **WHEN** user reaches `adr-create` sub-phase
@@ -23,7 +23,7 @@ Forked from `guide-spec.md` with roadmap-related logic removed. Implements 4 sub
 #### Scenario: plan phase complete
 - **WHEN** user completes all 4 sub-phases
 - **THEN** plan_done gate check runs
-- **AND** `.zcf/.plan-handoff.json` is written with: active changes, artifacts state, deps analysis
+- **AND** `.rddf/state/plan-handoff.json` is written with: active changes, artifacts state, deps analysis
 
 ### Requirement: guide-spec-alias
 The system SHALL provide `skills/guide-spec.md` as a backward-compatible alias that internally invokes `guide-arch.md` then `guide-plan.md`.

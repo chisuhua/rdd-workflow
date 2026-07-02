@@ -714,7 +714,7 @@ oh-my-opencode test reviewer
 **解决**:
 ```bash
 # 1. 查看详细报告
-cat .zcf/event-log.jsonl | jq 'select(.type == "verification_completed")'
+cat .rddf/state/event-log.jsonl | jq 'select(.type == "verification_completed")'
 
 # 2. 分析分歧原因
 # Executor: 0.90, Reviewer: 0.50 → 分歧 0.40

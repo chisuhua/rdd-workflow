@@ -4,8 +4,10 @@ ProcessPoolExecutor for true parallelism, multiprocessing.Queue for IPC,
 state-vector persistence. Backward compatible with v2.0 SessionCoordinator.
 """
 from __future__ import annotations
+
 import datetime
 import enum
+import logging
 import threading
 import uuid
 from concurrent.futures import ProcessPoolExecutor
@@ -18,14 +20,24 @@ from skills._lib.event_log import EventLog
 from skills._lib.event_types import EventType, Severity
 from skills._lib.state_vector import StateVector
 
+logger = logging.getLogger(__name__)
 
 class SessionState(str, enum.Enum):
+    """Session lifecycle states (ADR-0010 v2.1).
+
+    Transitions:
+    ACTIVE → PAUSED | COMPLETED | FAILED
+    PAUSED → ACTIVE | COMPLETED | FAILED
+    COMPLETED / FAILED → (terminal)
+    """
+
     ACTIVE = "active"
     PAUSED = "paused"
     COMPLETED = "completed"
     FAILED = "failed"
 
-
+# Maps each state to valid transition targets
+# Maps each state to valid transition targets
 _ALLOWED_TRANSITIONS = {
     SessionState.ACTIVE: {SessionState.PAUSED, SessionState.COMPLETED, SessionState.FAILED},
     SessionState.PAUSED: {SessionState.ACTIVE, SessionState.COMPLETED},
@@ -36,6 +48,18 @@ _ALLOWED_TRANSITIONS = {
 
 @dataclass
 class Session:
+    """A tracked session unit with lifecycle and change assignments.
+
+    Attributes:
+        session_id: Unique ID (``sess_<12 hex chars>``).
+        parent_session_id: Parent session ID, empty for root sessions.
+        goal: Human-readable goal description.
+        state: Current SessionState.
+        started_at: ISO-8601 creation timestamp.
+        updated_at: ISO-8601 last-update timestamp.
+        assigned_changes: Change names assigned to this session.
+    """
+
     session_id: str
     parent_session_id: Optional[str]
     goal: str
@@ -45,20 +69,25 @@ class Session:
     updated_at: str
 
 
+@staticmethod
 def _new_id() -> str:
-    return f"sess_{uuid.uuid4().hex[:12]}"
+        """Generate a unique session ID (``sess_<12 hex chars>``)."""
+        return f"sess_{uuid.uuid4().hex[:12]}"
 
 
+@staticmethod
 def _now() -> str:
-    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+        """Return current UTC time as ISO-8601 string."""
+        return datetime.datetime.now(datetime.timezone.utc).isoformat()
+        return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
 
 class SessionManagerError(Exception):
-    pass
+    """Generic runtime error from SessionManager operations."""
 
 
 class InvalidTransitionError(SessionManagerError):
-    pass
+    """Raised when a SessionState transition violates _ALLOWED_TRANSITIONS."""
 
 
 class SessionManager:
@@ -74,6 +103,14 @@ class SessionManager:
         event_log: Optional[EventLog] = None,
         mode: str = "sequential",
     ):
+        """Initialize SessionManager with persistence and parallel infrastructure.
+
+        Args:
+            state_vector: Shared StateVector instance for session persistence.
+            event_log: Shared EventLog instance for audit trail.
+            max_workers: ProcessPoolExecutor worker count (default 4).
+            dependencies: Optional DependencyScheduler for change ordering.
+        """
         self.state_vector = state_vector
         self._event_log = event_log
         self._lock = threading.Lock()
@@ -89,6 +126,16 @@ class SessionManager:
         parent_session: Optional[str] = None,
         assigned_changes: Optional[List[str]] = None,
     ) -> str:
+        """Create and persist a new session.
+
+        Args:
+            goal: Human-readable goal.
+            parent_session: Optional parent session ID.
+            assigned_changes: Change names to assign.
+
+        Returns:
+            Session ID of newly created session.
+        """
         sid = _new_id()
         now = _now()
         session = Session(
@@ -107,12 +154,31 @@ class SessionManager:
         return sid
 
     def find_session(self, session_id: str) -> Optional[Session]:
+        """Look up a session by ID.
+
+        Returns:
+            Session if found, None otherwise.
+        """
         return self._sessions.get(session_id)
 
     def list_sessions(self) -> List[Session]:
+        """Return all sessions.
+
+        Returns:
+            List of all Session objects.
+        """
         return list(self._sessions.values())
 
     def update_session_status(self, session_id: str, new_state: str) -> None:
+        """Transition a session to a new state.
+
+        Args:
+            session_id: Target session ID.
+            new_state: Desired target state (string value of SessionState).
+
+        Raises:
+            InvalidTransitionError: If the transition is not allowed.
+        """
         with self._lock:
             session = self._sessions.get(session_id)
             if session is None:
@@ -129,6 +195,7 @@ class SessionManager:
         self._sync_to_state_vector()
 
     def _sync_to_state_vector(self) -> None:
+        """Persist session data to StateVector. Best-effort (logs on failure)."""
         try:
             active = [s for s in self._sessions.values() if s.state == SessionState.ACTIVE]
             stats = {
@@ -142,10 +209,11 @@ class SessionManager:
                 "active_sessions": [s.__dict__ for s in active],
                 "session_statistics": stats,
             })
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("SessionManager: sync to state vector failed: %s", e)
 
     def _emit(self, event_type: EventType, message: str) -> None:
+        """Record event to EventLog. Best-effort (logs on failure)."""
         if self._event_log:
             try:
                 self._event_log.record(
@@ -153,5 +221,5 @@ class SessionManager:
                     severity=Severity.INFO,
                     message=message,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("SessionManager: event log emit failed: %s", e)

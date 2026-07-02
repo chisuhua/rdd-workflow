@@ -9,7 +9,7 @@
 #
 # Compatibility:
 #   - test_deps_skill.bats (structural coverage of skills/deps.md)
-#   - test_deps_output.bats (output format of .zcf/.deps-output.md)
+#   - test_deps_output.bats (output format of .rddf/state/.deps-output.md)
 #   - test_ai_disclaimer.bats (fallback marker string)
 #
 # Run: bats tests/integration/test_deps_subagent.bats

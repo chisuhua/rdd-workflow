@@ -162,7 +162,7 @@ Change "add-auth" 已完成 (15/15 work units):
 即将执行的操作:
   1. Merge openspec/add-auth → main (fast-forward)
   2. openspec archive add-auth
-  3. 删除 worktree (.zcf/add-auth-wt/)
+  3. 删除 worktree (.rddf/state/add-auth-wt/)
   4. 删除分支 (openspec/add-auth)
 
 验证:
@@ -243,7 +243,7 @@ can_skip_node() {
         return 0
     elif [ "$skip_config" = "no_errors" ]; then
         # 检查是否有错误
-        if jq -e '.arch_side.health.errors | length == 0' .zcf/state-vector.json >/dev/null 2>&1; then
+        if jq -e '.arch_side.health.errors | length == 0' .rddf/state/state-vector.json >/dev/null 2>&1; then
             return 0
         fi
     fi

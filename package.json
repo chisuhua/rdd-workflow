@@ -1,7 +1,7 @@
 {
   "name": "spec-workflow",
-  "version": "2.0.0-beta",
-  "description": "Spec Workflow - OpenSpec \u5de5\u4f5c\u6d41\u6280\u80fd\u5305\uff08propose\u2192plan\u2192execute\u2192status\u2192archive\uff09",
+  "version": "2.0.0",
+  "description": "Spec Workflow - OpenSpec \u5de5\u4f5c\u6d41\u6280\u80fd\u5305\uff08propose\u2192plan\u2192execute\u2192status\u2192archive\uff09\u3002v2.0 \u81ea\u5305\u542b TDD \u8ba1\u5212\u751f\u6210\u4e0e\u6267\u884c\uff0c\u65e0\u5916\u90e8 skill \u4f9d\u8d56\u3002",
   "main": "skills/INSTALL.md",
   "author": "sisyphus",
   "license": "MIT",
@@ -14,28 +14,16 @@
     "workflow",
     "openspec",
     "change-management",
-    "cli"
+    "cli",
+    "tdd"
   ],
   "scripts": {
     "test": "bats tests/",
     "install-python-deps": "pip install -r requirements.txt"
   },
   "engines": {
-    "opencode": ">=1.0.0",
     "git": ">=2.25.0",
-    "oh-my-opencode": ">=1.0.0"
-  },
-  "optionalEngines": {
-    "prometheus-start-work": ">=1.0.0 (deprecated, retained as last-resort fallback)"
-  },
-  "dependencies": {
     "openspec-cli": ">=1.3.1"
-  },
-  "peerDependenciesMeta": {
-    "superpowers": {
-      "optional": true,
-      "reason": "superpowers/writing-plans is the second-tier fallback when oh-my-opencode is unavailable"
-    }
   },
   "skills": [
     "INSTALL",
@@ -49,6 +37,6 @@
     "status",
     "roadmap",
     "deps",
-    "prometheus-planning"
+    "spec-workflow-writing-plans"
   ]
 }

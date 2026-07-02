@@ -277,7 +277,7 @@ spec-workflow session show sess_20260622_001
 watch -n 2 'spec-workflow session list'
 
 # 或使用事件流
-tail -f .zcf/event-log.jsonl | jq 'select(.type == "session_progress")'
+tail -f .rddf/state/event-log.jsonl | jq 'select(.type == "session_progress")'
 ```
 
 ### 会话报告
@@ -350,7 +350,7 @@ spec-workflow session show sess_20260622_002
 # 错误: test_failure on unit 12
 
 # 2. 查看事件流
-cat .zcf/event-log.jsonl | jq 'select(.data.session_id == "sess_20260622_002" and .type == "error")'
+cat .rddf/state/event-log.jsonl | jq 'select(.data.session_id == "sess_20260622_002" and .type == "error")'
 
 # 3. 选项:
 # - 修复后重启
@@ -370,7 +370,7 @@ spec-workflow session restart sess_20260622_002
 **解决**:
 ```bash
 # 1. 检查进度计算逻辑
-cat .zcf/state-vector.json | jq '.sub_sessions[] | {session_id, progress, assigned_changes}'
+cat .rddf/state/state-vector.json | jq '.sub_sessions[] | {session_id, progress, assigned_changes}'
 
 # 2. 手动计算
 # 例如：

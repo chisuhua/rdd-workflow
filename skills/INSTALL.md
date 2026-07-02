@@ -1,6 +1,6 @@
 ---
 name: INSTALL
-description: 安装 Spec Workflow 技能到项目目录。执行后会将全部 12 个子技能（INSTALL/guide/guide-arch/guide-plan/guide-spec/guide-ship/propose/roadmap/deps/execute/status/prometheus-planning）复制到项目的 .opencode/skills/ 目录。
+description: 安装 Spec Workflow 技能到项目目录。执行后会将全部 13 个子技能（INSTALL/guide/guide-arch/guide-plan/guide-spec/guide-ship/propose/roadmap/deps/execute/status/spec-workflow-writing-plans）复制到项目的 .opencode/skills/ 目录。
 alias: install
 version: "1.1.0"
 author: sisyphus
@@ -112,10 +112,10 @@ if [ ! -f "$SKILLS_DIR/package.json" ]; then
     if command -v python3 >/dev/null 2>&1 && [ -f "$PACKAGE_DIR/package.json" ]; then
         # 使用 python3 安全地提取 version 与 skills 数组(避免 jq 依赖)
         PKG_VERSION=$(python3 -c "import json,sys;print(json.load(open('$PACKAGE_DIR/package.json'))['version'])" 2>/dev/null || echo "2.0.0-beta")
-        PKG_SKILLS=$(python3 -c "import json,sys;print(','.join(['\"'+s+'\"' for s in json.load(open('$PACKAGE_DIR/package.json'))['skills']]))" 2>/dev/null || echo '"INSTALL","guide","guide-arch","guide-plan","guide-spec","guide-ship","propose","execute","status","roadmap","deps","prometheus-planning"')
+        PKG_SKILLS=$(python3 -c "import json,sys;print(','.join(['\"'+s+'\"' for s in json.load(open('$PACKAGE_DIR/package.json'))['skills']]))" 2>/dev/null || echo '"INSTALL","guide","guide-arch","guide-plan","guide-spec","guide-ship","propose","execute","status","roadmap","deps","spec-workflow-writing-plans"')
     else
         PKG_VERSION="2.0.0-beta"
-        PKG_SKILLS='"INSTALL","guide","guide-arch","guide-plan","guide-spec","guide-ship","propose","execute","status","roadmap","deps","prometheus-planning"'
+        PKG_SKILLS='"INSTALL","guide","guide-arch","guide-plan","guide-spec","guide-ship","propose","execute","status","roadmap","deps","spec-workflow-writing-plans"'
     fi
     cat > "$SKILLS_DIR/package.json" << EOF
 {

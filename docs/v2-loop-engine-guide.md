@@ -733,10 +733,10 @@ Loop 引擎从历史执行中学习：
 cat .spec-workflow.json | jq '.'
 
 # 2. 检查状态向量
-cat .zcf/state-vector.json | jq '.version'  # 应该是 "2.0"
+cat .rddf/state/state-vector.json | jq '.version'  # 应该是 "2.0"
 
 # 3. 查看事件流
-tail .zcf/event-log.jsonl | jq '.'
+tail .rddf/state/event-log.jsonl | jq '.'
 ```
 
 ---
@@ -748,7 +748,7 @@ tail .zcf/event-log.jsonl | jq '.'
 **解决**:
 ```bash
 # 1. 查看失败详情
-cat .zcf/event-log.jsonl | jq 'select(.type == "gate_failed")'
+cat .rddf/state/event-log.jsonl | jq 'select(.type == "gate_failed")'
 
 # 2. 检查缺失项
 # 例如：arch_done 失败
@@ -767,7 +767,7 @@ cat roadmap.md  # 检查 roadmap
 **解决**:
 ```bash
 # 1. 查看验证结果
-cat .zcf/event-log.jsonl | jq 'select(.type == "verification_completed")'
+cat .rddf/state/event-log.jsonl | jq 'select(.type == "verification_completed")'
 
 # 2. 检查分歧原因
 # Executor score: 0.9, Reviewer score: 0.5 → 分歧 0.4
@@ -790,10 +790,10 @@ cat .zcf/event-log.jsonl | jq 'select(.type == "verification_completed")'
 cat .spec-workflow.json | jq '.memory.enabled'  # 应该是 true
 
 # 2. 检查状态向量中的记忆字段
-cat .zcf/state-vector.json | jq '.memory'
+cat .rddf/state/state-vector.json | jq '.memory'
 
 # 3. 检查执行记录
-cat .zcf/state-vector.json | jq '.memory.executions'
+cat .rddf/state/state-vector.json | jq '.memory.executions'
 ```
 
 ---
@@ -861,10 +861,10 @@ goal:
 
 ```bash
 # 实时监控
-tail -f .zcf/event-log.jsonl | jq '.'
+tail -f .rddf/state/event-log.jsonl | jq '.'
 
 # 查询特定事件
-cat .zcf/event-log.jsonl | jq 'select(.type == "gate_failed")'
+cat .rddf/state/event-log.jsonl | jq 'select(.type == "gate_failed")'
 
 # 生成进度报告
 spec-workflow report

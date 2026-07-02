@@ -21,7 +21,7 @@ setup() {
   git add README.md
   git commit -q -m "initial"
   export PROJECT_ROOT="$TEST_REPO"
-  git worktree add -b openspec/test-wt .zcf/test-wt HEAD
+  git worktree add -b openspec/test-wt .rddf/wt/test HEAD
 }
 
 teardown() {
@@ -30,19 +30,19 @@ teardown() {
 }
 
 @test "find_default_branch returns default branch from inside worktree" {
-  cd "$TEST_REPO/.zcf/test-wt"
+  cd "$TEST_REPO/.rddf/wt/test"
   result=$(find_default_branch)
   [[ "$result" == "master" ]] || [[ "$result" == "main" ]] || [[ "$result" == "develop" ]]
 }
 
 @test "find_default_branch does not return openspec branch" {
-  cd "$TEST_REPO/.zcf/test-wt"
+  cd "$TEST_REPO/.rddf/wt/test"
   result=$(find_default_branch)
   [[ "$result" != openspec/* ]]
 }
 
 @test "find_default_branch returns same value from main repo and worktree" {
   from_main=$(cd "$TEST_REPO" && find_default_branch)
-  from_wt=$(cd "$TEST_REPO/.zcf/test-wt" && find_default_branch)
+  from_wt=$(cd "$TEST_REPO/.rddf/wt/test" && find_default_branch)
   [ "$from_main" = "$from_wt" ]
 }

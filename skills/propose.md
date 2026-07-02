@@ -47,7 +47,7 @@ guide-ship.worktree: COMMIT GATE → 创建 worktree → 生成 Prometheus 计�
 ```bash
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
-STATE_FILE="$PROJECT_ROOT/.zcf/.roadmap-state.json"
+STATE_FILE="$PROJECT_ROOT/.rddf/state/roadmap-state.json"
 
 # 加载 state.sh 辅助函数（safe_python_json, safe_python_yaml）
 # P2-3: state.json 读取改为防御式 (read+write 路径使用 safe_python_json 预检)
@@ -99,13 +99,13 @@ else
     echo "   所有 change 将归为 'default' 阶段和 'general' 分类"
     echo "   建议初始化路线图: skill_use(\"roadmap\", \"init\")"
     # P1-6: 检测兼容模式 + 残留状态文件
-    # 当 roadmap.md 不存在但 .zcf/.roadmap-state.json 仍存在,说明:
+    # 当 roadmap.md 不存在但 .rddf/state/roadmap-state.json 仍存在,说明:
     #   - 之前启用过 roadmap,后来切换到兼容模式
     #   - 或 roadmap.md 被误删/未提交
     # 此时不自动恢复,只提示用户,避免误覆盖用户数据
     if [ -f "$STATE_FILE" ]; then
         echo ""
-        echo "⚠️  roadmap.md 已不存在，但 .zcf/.roadmap-state.json 存在"
+        echo "⚠️  roadmap.md 已不存在，但 .rddf/state/roadmap-state.json 存在"
         echo "   推测：roadmap 模式已切换为兼容模式"
         echo "   已有的 roadmap-meta.yaml 不会自动更新 .roadmap-state.json"
         echo "   如需重新启用 roadmap，请运行：skill_use(\"roadmap\", \"init\")"

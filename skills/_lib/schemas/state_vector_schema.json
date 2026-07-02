@@ -4,7 +4,7 @@
   "title": "Spec Workflow v2 State Vector",
   "description": "Unified workflow state. Single source of truth; replaces 13 v1.x state files.",
   "type": "object",
-  "required": ["version", "goal", "arch_side", "plan_side", "ship_side", "loop_state", "memory", "metadata"],
+  "required": ["version", "goal", "arch_side", "plan_side", "ship_side", "loop_state", "session_management", "dependency_graph", "memory", "metadata"],
   "additionalProperties": false,
   "properties": {
     "version": {
@@ -87,6 +87,105 @@
             "verification": { "type": "object" },
             "control": { "type": "object" }
           }
+        }
+      }
+    },
+    "session_management": {
+      "type": "object",
+      "description": "Multi-session management state (ADR-0010 v2.1).",
+      "required": ["current_session", "active_sessions", "session_statistics"],
+      "additionalProperties": false,
+      "properties": {
+        "current_session": {
+          "type": ["string", "null"],
+          "description": "ID of the currently active session."
+        },
+        "active_sessions": {
+          "type": "array",
+          "description": "List of all known sessions across the workflow.",
+          "items": {
+            "type": "object",
+            "required": ["id", "created_at", "updated_at", "status"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "created_at": { "type": "string", "format": "date-time" },
+              "updated_at": { "type": "string", "format": "date-time" },
+              "status": {
+                "type": "string",
+                "enum": ["active", "paused", "completed", "failed", "archived"]
+              },
+              "label": { "type": "string", "description": "Optional human-readable label for this session." }
+            }
+          }
+        },
+        "session_statistics": {
+          "type": "object",
+          "description": "Aggregate session counters.",
+          "required": ["total", "active", "completed", "failed"],
+          "additionalProperties": false,
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "active": { "type": "integer", "minimum": 0 },
+            "completed": { "type": "integer", "minimum": 0 },
+            "failed": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "dependency_graph": {
+      "type": "object",
+      "description": "Inter-session dependency graph (ADR-0010 v2.1).",
+      "required": ["nodes", "edges", "execution_order"],
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "description": "Nodes in the dependency graph (one per session or change).",
+          "items": {
+            "type": "object",
+            "required": ["id", "type", "status"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": ["session", "change", "checkpoint", "milestone"]
+              },
+              "status": {
+                "type": "string",
+                "enum": ["pending", "in_progress", "completed", "blocked", "skipped"]
+              },
+              "depends_on": {
+                "type": "array",
+                "description": "IDs of nodes this node depends on.",
+                "items": { "type": "string" }
+              },
+              "label": { "type": "string", "description": "Optional human-readable label." }
+            }
+          }
+        },
+        "edges": {
+          "type": "array",
+          "description": "Directed edges describing dependency relationships.",
+          "items": {
+            "type": "object",
+            "required": ["from", "to", "type"],
+            "additionalProperties": false,
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": ["depends_on", "blocks", "triggers", "continues_from"]
+              }
+            }
+          }
+        },
+        "execution_order": {
+          "type": "array",
+          "description": "Topologically sorted list of node IDs indicating execution priority.",
+          "items": { "type": "string" }
         }
       }
     },

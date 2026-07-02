@@ -26,7 +26,7 @@ def temp_dir():
 
 
 def _write_handoff(root: str, filename: str, payload: dict) -> str:
-    """Write a handoff JSON under `<root>/.zcf/`. Returns the file path."""
+    """Write a handoff JSON under `<root>/.rddf/state/`. Returns the file path."""
     zcf_dir = os.path.join(root, ".zcf")
     os.makedirs(zcf_dir, exist_ok=True)
     path = os.path.join(zcf_dir, filename)
