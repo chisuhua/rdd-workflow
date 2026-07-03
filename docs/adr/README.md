@@ -6,21 +6,18 @@
 >
 > | ADR | 标题 | 实施状态 | 目标版本 |
 > |-----|------|---------|---------|
-> | [ADR-0001](ADR-0001-propose-plan-execute-state-machine.md) | 双阶段状态机分离 (spec/ship) | ✅ 已实施（v1.x） | 已完成（v1.x） |
-> | [ADR-0002](ADR-0002-goal-driven-interaction-modes.md) | 目标驱动接口与交互模式 | ✅ 已实施 | 已完成（v2.0） |
-> | [ADR-0003](ADR-0003-three-phase-architecture.md) | 三阶段架构重构 (arch → plan → ship) | ✅ 已实施 | 已完成（v2.0） |
-> | [ADR-0004](ADR-0004-loop-engine-core-design.md) | Loop 引擎核心设计 | ✅ 已实施 | 已完成（v2.0） |
-> | [ADR-0005](ADR-0005-human-in-loop-nodes.md) | Human-in-Loop 节点 | ✅ 已实施 | 已完成（v2.0） |
-> | [ADR-0006](ADR-0006-state-vector-event-log.md) | 状态向量与事件流 | ✅ 已实施 | 已完成（v2.0） |
-> | [ADR-0007](ADR-0007-gate-mechanism.md) | 门控机制 | ✅ 已实施 | 已完成（v2.0） |
-> | [ADR-0008](ADR-0008-tribunal-committee.md) | 审判委员会 | ✅ 已实施 | 已完成（v2.0） |
-> | [ADR-0009](ADR-0009-scheduled-triggers.md) | 定时循环与事件触发 | ❌ 未实施（v2.1 候选） | **v3.0** |
-> | [ADR-0010](ADR-0010-multi-session-management.md) | 多会话管理 | ✅ 已实施（v2.0+v2.1） | **v2.1（完整版）** |
-> | [ADR-0011](ADR-0011-phase-step-pipeline-model.md) | 阶段步骤化执行模型 | ✅ 已实施 | **v3.0** |
-> | [ADR-0012](ADR-0012-flow-customization-layer.md) | 流程定制层 | ✅ 已实施 | **v3.0** |
->
-> **图例**：✅ 已实施 | ⚠️ 部分实施 | ❌ 未实施
-> **目标版本**：未来 ADR 的实施版本；已完成 ADR 显示实际发布的版本。
+> | [ADR-0001](ADR-0001-propose-plan-execute-state-machine.md) | 双阶段状态机分离 (spec/ship) | 已替代为 ADR-0002+0003（已实施） | 已完成（v1.x+v2.x） |
+> | [ADR-0002](ADR-0002-goal-driven-interaction-modes.md) | 目标驱动接口与交互模式 | 已采纳 | 已完成（v2.0） |
+> | [ADR-0003](ADR-0003-three-phase-architecture.md) | 三阶段架构重构 (arch → plan → ship) | 已采纳 | 已完成（v2.0） |
+> | [ADR-0004](ADR-0004-loop-engine-core-design.md) | Loop 引擎核心设计 | 已采纳 | 已完成（v2.0） |
+> | [ADR-0005](ADR-0005-human-in-loop-nodes.md) | Human-in-Loop 节点 | 已采纳 | 已完成（v2.0） |
+> | [ADR-0006](ADR-0006-state-vector-event-log.md) | 状态向量与事件流 | 已采纳 | 已完成（v2.0） |
+> | [ADR-0007](ADR-0007-gate-mechanism.md) | 门控机制 | 已采纳 | 已完成（v2.0） |
+> | [ADR-0008](ADR-0008-tribunal-committee.md) | 审判委员会 | 已采纳 | 已完成（v2.0） |
+> | [ADR-0009](ADR-0009-scheduled-triggers.md) | 定时循环与事件触发 | 模板（v2.1 候选占位） | **v3.0** |
+> | [ADR-0010](ADR-0010-multi-session-management.md) | 多会话管理 | 已采纳（分阶段） | **v2.1（完整版）** |
+> | [ADR-0011](ADR-0011-phase-step-pipeline-model.md) | 阶段步骤化执行模型 | 已采纳 | **v3.0** |
+> | [ADR-0012](ADR-0012-flow-customization-layer.md) | 流程定制层 | 已采纳 | **v3.0** |
 
 ## ADR 列表
 
@@ -35,7 +32,7 @@
 | [ADR-0006](ADR-0006-state-vector-event-log.md) | 状态向量与事件流设计 | 已采纳 (修订) | 2026-06-22 | 统一状态向量 + 记忆系统 |
 | [ADR-0007](ADR-0007-gate-mechanism.md) | 门控机制设计 | 已采纳 | 2026-06-22 | error/warning 两级 + 插件扩展 |
 | [ADR-0008](ADR-0008-tribunal-committee.md) | 审判委员会设计 | 已采纳 | 2026-06-22 | 多 agent 交叉验证 + 数据脱敏 |
-| [ADR-0009](ADR-0009-scheduled-triggers.md) | 定时循环与事件触发（占位） | 待定（v2.1 候选） | 2026-06-22 | 编号占位，v2.1 候选 |
+| [ADR-0009](ADR-0009-scheduled-triggers.md) | 定时循环与事件触发（占位） | 模板（v2.1 候选占位） | 2026-06-22 | 编号占位，v2.1 候选 |
 | [ADR-0010](ADR-0010-multi-session-management.md) | 多会话管理与并行执行 | 已采纳（分阶段） | 2026-06-22 | v2.0 轻量级 + v2.1 完整实现 |
 | [ADR-0011](ADR-0011-phase-step-pipeline-model.md) | 阶段步骤化执行模型 | 已采纳 | 2026-06-22 | 模板+触发器 + 步骤引擎 + 中断恢复 |
 | [ADR-0012](ADR-0012-flow-customization-layer.md) | 流程定制层 | 已采纳 | 2026-06-22 | 增量覆盖 + 条件触发 + 自定义技能 |

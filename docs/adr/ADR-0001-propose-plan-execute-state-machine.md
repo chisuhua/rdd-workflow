@@ -1,9 +1,9 @@
 # ADR-0001: spec-workflow 状态机分相（spec 端 / ship 端状态机分离）
 
-> **状态**: 已替代为 ADR-0002 + ADR-0003（**v2.0 未实施** — 草案）
+> **状态**: 已替代为 ADR-0002 + ADR-0003（已实施）
 > **日期**: 2026-06-08
 > **决策者**: sisyphus
-> **实施状态**: 当前 v1.x 代码（`skills/guide-spec.md` + `skills/guide-ship.md`）仍遵循本 ADR 描述的双阶段架构。ADR-0002 / ADR-0003 是 v2.0 的设计草案，**尚未实施**。本 ADR 状态在 v2.0 实际发布前应理解为"被新决策覆盖，但当前生效的代码仍是 v1.x 实现"。
+> **实施状态**: v2.0 已发布，三阶段架构（ADR-0003）已替代本 ADR 的双阶段设计。当前生效的 `guide-spec` 保留为向后兼容别名，内部调用 `guide-arch` + `guide-plan`。
 
 ## Context
 

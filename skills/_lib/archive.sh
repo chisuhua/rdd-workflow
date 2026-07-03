@@ -15,6 +15,23 @@
 #       Post-merge check: if HEAD did not change but branch is not an
 #       ancestor of HEAD, raise an error (silent no-op merge bug).
 #
+#   - switch_to_default_branch <main_root> <default_branch>
+#       cd to main_root and checkout default_branch. Returns 0 on
+#       success, 1 on failure with an error message.
+#
+#   - merge_feature_branch <main_root> <branch> <default_branch> <name>
+#       Merge <branch> into <default_branch> at <main_root>. Uses
+#       --ff-only when the feature branch has not diverged from
+#       default, --no-ff when it has (creates a merge commit).
+#       Returns 0 on success, 1 on any merge failure.
+#
+#   - cleanup_worktree_and_branch <name> <main_root> <wt_path> <branch>
+#       Remove the worktree at <wt_path> and delete the feature
+#       <branch>. Honors FORCE_BRANCH_DELETE=yes for `git branch -D`
+#       fallback when -d fails (worktree branch not fully merged).
+#       Returns 0 on success, 1 when -d fails and FORCE_BRANCH_DELETE
+#       is not 'yes'.
+#
 #   - archive_change <name>
 #       Full archive flow: pre-check → merge (ff-only or no-ff) → verify
 #       → openspec archive → worktree/branch cleanup. The openspec CLI
@@ -24,6 +41,7 @@
 # Helpers required (provided by skills/_lib/worktree.sh):
 #   - wt_path_for_branch <name>
 #   - find_default_branch
+#   - main_repo_root
 
 # Source worktree.sh for wt_path_for_branch + find_default_branch.
 # Use a self-discovery approach so this file is testable from any cwd.
@@ -116,60 +134,40 @@ verify_merge_result() {
   return 1
 }
 
-# archive_change <name>
-#   Full archive flow used by status.md Mode C and guide-ship.md Phase 3.
-#   Steps:
-#     1. Resolve worktree path + default branch
-#     2. Pre-merge commit check (check_worktree_commits)
-#     3. Switch to main repo, checkout default branch
-#     4. Merge worktree branch (--ff-only or --no-ff)
-#     5. Post-merge verification (verify_merge_result)
-#     6. openspec archive <name> --yes
-#     7. git worktree remove + git branch -d (or -D via FORCE_BRANCH_DELETE)
-#   Returns 0 on success, 1 on any failure.
+# switch_to_default_branch <main_root> <default_branch>
+#   cd to main_root and git checkout default_branch. Returns 0 on
+#   success, 1 on failure with an error message echoing the bad
+#   branch name. Caller is expected to have validated that
+#   <main_root> is an existing directory.
 #
-#   Environment:
-#     FORCE_BRANCH_DELETE=yes  — fall back to `git branch -D` if `-d`
-#                                fails (worktree branch not fully merged)
-#     PROJECT_ROOT             — main repo path; defaults to
-#                                `git rev-parse --show-toplevel`
-archive_change() {
-  local name="${1:-}"
-  [[ -z "$name" ]] && { echo "❌ 需要 change 名称"; return 1; }
+#   Origin: archive.sh step 3 — main_repo checkout, originally
+#   inline in archive_change. Promoted to a shared helper so the
+#   switch step can be exercised in isolation from the full
+#   archive flow.
+switch_to_default_branch() {
+  local main_root="${1:-}" default_branch="${2:-}"
+  [[ -z "$main_root" || -z "$default_branch" ]] && return 1
 
-  local wt_path branch default_branch
-  wt_path=$(wt_path_for_branch "$name" 2>/dev/null || true)
-  branch="openspec/$name"
-  default_branch=$(find_default_branch)
-
-  if [ -z "$wt_path" ]; then
-    echo "❌ 找不到 worktree for $branch"
-    return 1
-  fi
-
-  # 2. Pre-merge commit check (T20)
-  if ! check_worktree_commits "$name" >/dev/null; then
-    # check_worktree_commits already printed a clear error
-    return 1
-  fi
-
-  # 3. Switch to main repo and checkout default branch
-  local main_root
-  main_root="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  if [ -z "$main_root" ] || [ ! -d "$main_root" ]; then
-    echo "❌ 无法确定项目根目录（不在 git 仓库内？）"
-    return 1
-  fi
   (cd "$main_root" && git checkout "$default_branch" 2>/dev/null) || {
     echo "❌ 无法切换到默认分支 $default_branch"
     return 1
   }
+}
 
-  # Capture HEAD before merge for post-merge verification
-  local before_merge after_merge
-  before_merge=$(git rev-parse HEAD)
+# merge_feature_branch <main_root> <branch> <default_branch> <name>
+#   Merge <branch> into <default_branch> at <main_root>. Uses
+#   --ff-only when the feature branch has not diverged from default
+#   (merge_base == main_tip), --no-ff when it has (creates a merge
+#   commit tagged with the change name). Returns 0 on success, 1 on
+#   any merge failure.
+#
+#   Origin: archive.sh step 4 — divergence probe plus ff-only/no-ff
+#   branch, originally inline in archive_change. Promoted to a
+#   shared helper.
+merge_feature_branch() {
+  local main_root="${1:-}" branch="${2:-}" default_branch="${3:-}" name="${4:-}"
+  [[ -z "$main_root" || -z "$branch" || -z "$default_branch" || -z "$name" ]] && return 1
 
-  # 4. Merge (--ff-only if no divergence, --no-ff if diverged)
   (cd "$main_root" && {
     local merge_base main_tip
     merge_base=$(git merge-base "$branch" "$default_branch" 2>/dev/null)
@@ -188,21 +186,23 @@ archive_change() {
       }
     fi
   }) || return 1
+}
 
-  after_merge=$(git rev-parse HEAD)
+# cleanup_worktree_and_branch <name> <main_root> <wt_path> <branch>
+#   Remove the worktree at <wt_path> and delete the feature
+#   <branch> in <main_root>. Honors FORCE_BRANCH_DELETE=yes for the
+#   `git branch -D` fallback when -d fails (worktree branch not
+#   fully merged). Skips the worktree remove when <wt_path> is
+#   empty or "/". Returns 0 on success, 1 when -d fails and
+#   FORCE_BRANCH_DELETE is not 'yes'.
+#
+#   Origin: archive.sh step 7 — worktree remove plus branch -d
+#   (with FORCE_BRANCH_DELETE=yes -D fallback), originally inline
+#   in archive_change. Promoted to a shared helper.
+cleanup_worktree_and_branch() {
+  local name="${1:-}" main_root="${2:-}" wt_path="${3:-}" branch="${4:-}"
+  [[ -z "$main_root" || -z "$branch" ]] && return 1
 
-  # 5. Post-merge verification
-  if ! verify_merge_result "$before_merge" "$after_merge" "$name"; then
-    return 1
-  fi
-
-  # 6. openspec archive (CLI, not a helper)
-  if ! openspec archive "$name" --yes; then
-    echo "❌ openspec archive 失败"
-    return 1
-  fi
-
-  # 7. Cleanup: worktree + branch
   if [ -n "$wt_path" ] && [ "$wt_path" != "/" ]; then
     (cd "$main_root" && git worktree remove "$wt_path" 2>/dev/null) || {
       echo "⚠️  worktree remove 失败: $wt_path"
@@ -222,6 +222,65 @@ archive_change() {
       return 1
     fi
   fi
+}
+
+# archive_change <name>
+#   Full archive flow used by status.md Mode C and guide-ship.md Phase 3.
+#   Steps:
+#     1. Resolve worktree path, default branch, and main repo root
+#     2. Pre-merge commit check (check_worktree_commits)
+#     3. Switch to main repo, checkout default branch
+#        (switch_to_default_branch)
+#     4. Merge worktree branch, --ff-only or --no-ff
+#        (merge_feature_branch)
+#     5. Post-merge verification (verify_merge_result)
+#     6. openspec archive <name> --yes (kept inline — CLI, not lib)
+#     7. git worktree remove + git branch -d (or -D via FORCE_BRANCH_DELETE)
+#        (cleanup_worktree_and_branch)
+#   Returns 0 on success, 1 on any failure.
+#
+#   Environment:
+#     FORCE_BRANCH_DELETE=yes  — fall back to `git branch -D` if `-d`
+#                                fails (worktree branch not fully merged)
+archive_change() {
+  local name="${1:-}" wt_path branch default_branch main_root
+  [[ -z "$name" ]] && { echo "❌ 需要 change 名称"; return 1; }
+
+  wt_path=$(wt_path_for_branch "$name" 2>/dev/null || true)
+  branch="openspec/$name"
+  default_branch=$(find_default_branch)
+  main_root=$(main_repo_root)
+
+  if [ -z "$wt_path" ]; then
+    echo "❌ 找不到 worktree for $branch"
+    return 1
+  fi
+  if [ -z "$main_root" ] || [ ! -d "$main_root" ]; then
+    echo "❌ 无法确定项目根目录（不在 git 仓库内？）"
+    return 1
+  fi
+
+  # 2. Pre-merge commit check (T20)
+  check_worktree_commits "$name" >/dev/null || return 1
+
+  # 3. Switch to default branch in main repo
+  switch_to_default_branch "$main_root" "$default_branch" || return 1
+
+  # Capture HEAD before/after merge for post-merge verification
+  local before_merge after_merge
+  before_merge=$(git rev-parse HEAD)
+  merge_feature_branch "$main_root" "$branch" "$default_branch" "$name" || return 1
+  after_merge=$(git rev-parse HEAD)
+
+  # 5-6. Verify merge + openspec archive (CLI call kept inline)
+  verify_merge_result "$before_merge" "$after_merge" "$name" || return 1
+  if ! openspec archive "$name" --yes; then
+    echo "❌ openspec archive 失败"
+    return 1
+  fi
+
+  # 7. Cleanup worktree + branch
+  cleanup_worktree_and_branch "$name" "$main_root" "$wt_path" "$branch" || return 1
 
   echo "✅ $name 已归档"
   return 0
