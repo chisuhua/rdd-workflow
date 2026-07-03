@@ -30,75 +30,29 @@ State machine
 """
 from __future__ import annotations
 
-import datetime
-import enum
 import logging
 import threading
-import uuid
-from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from skills._lib.event_types import EventType, Severity
+from skills._lib.event_log import EventLog
+from skills._lib.session_base import (
+    InvalidTransitionError,
+    Session,
+    SessionError,
+    SessionState,
+    UnknownSessionError,
+    _ALLOWED_TRANSITIONS,
+    _new_id,
+    _now,
+)
+from skills._lib.state_vector import StateVector
 
 logger = logging.getLogger(__name__)
 
 
-class SessionState(str, enum.Enum):
-    """Lifecycle states of a workflow session."""
-
-    ACTIVE = "active"
-    PAUSED = "paused"
-    COMPLETED = "completed"
-    FAILED = "failed"
-
-
-# Allowed transitions per source state. Terminal states map to an empty set.
-_ALLOWED_TRANSITIONS: Dict[SessionState, frozenset[SessionState]] = {
-    SessionState.ACTIVE: frozenset(
-        {SessionState.PAUSED, SessionState.COMPLETED, SessionState.FAILED}
-    ),
-    SessionState.PAUSED: frozenset({SessionState.ACTIVE, SessionState.COMPLETED}),
-    SessionState.COMPLETED: frozenset(),
-    SessionState.FAILED: frozenset(),
-}
-
-
-@dataclass
-class Session:
-    """A single workflow session — identified by ``session_id``, optionally
-    linked to a ``parent_session_id``, holding a free-form ``goal`` string,
-    and tracked through its lifecycle via :class:`SessionState`."""
-
-    session_id: str
-    parent_session_id: Optional[str]
-    goal: str
-    state: SessionState
-    started_at: str
-    updated_at: str
-
-
-class SessionCoordinatorError(Exception):
+class SessionCoordinatorError(SessionError):
     """Base error for session coordination failures."""
-
-
-class InvalidTransitionError(SessionCoordinatorError):
-    """Raised when ``update_session_status`` is called with a transition that
-    the state machine does not permit."""
-
-
-class UnknownSessionError(SessionCoordinatorError):
-    """Raised when an operation references a ``session_id`` that the
-    coordinator does not know about."""
-
-
-def _now_iso() -> str:
-    """Return current UTC time as an ISO 8601 string (with timezone)."""
-    return datetime.datetime.now(datetime.timezone.utc).isoformat()
-
-
-def _new_session_id() -> str:
-    """Generate a unique session id of the form ``sess_<12 hex chars>``."""
-    return f"sess_{uuid.uuid4().hex[:12]}"
 
 
 class SessionCoordinator:
@@ -110,19 +64,23 @@ class SessionCoordinator:
     the loop engine and the agents module cannot race.
     """
 
-    def __init__(self, state_vector, event_log=None):
+    def __init__(
+        self,
+        state_vector: StateVector,
+        event_log: Optional[EventLog] = None,
+    ) -> None:
         # `state_vector` is held for context (read the user's goal, surface
         # the active session in the loop-state view). v2.0 does not write
         # session data through it; see module docstring.
-        self._state_vector = state_vector
-        self._event_log = event_log
-        self._lock = threading.Lock()
+        self._state_vector: StateVector = state_vector
+        self._event_log: Optional[EventLog] = event_log
+        self._lock: threading.Lock = threading.Lock()
         self._sessions: Dict[str, Session] = {}
 
     # ----- Read helpers -------------------------------------------------
 
     @property
-    def state_vector(self):
+    def state_vector(self) -> StateVector:
         """Return the state vector the coordinator is bound to."""
         return self._state_vector
 
@@ -151,9 +109,9 @@ class SessionCoordinator:
             raise SessionCoordinatorError(
                 f"goal must be str, got {type(goal).__name__}"
             )
-        now = _now_iso()
-        session = Session(
-            session_id=_new_session_id(),
+        now: str = _now()
+        session: Session = Session(
+            session_id=_new_id(),
             parent_session_id=parent_session_id,
             goal=goal,
             state=SessionState.ACTIVE,
@@ -204,19 +162,19 @@ class SessionCoordinator:
         if isinstance(new_state, str):
             new_state = SessionState(new_state)
         with self._lock:
-            session = self._sessions.get(session_id)
+            session: Optional[Session] = self._sessions.get(session_id)
             if session is None:
                 raise UnknownSessionError(
                     f"session_id {session_id!r} is not known to this coordinator"
                 )
-            allowed = _ALLOWED_TRANSITIONS[session.state]
+            allowed: frozenset[SessionState] = _ALLOWED_TRANSITIONS[session.state]
             if new_state not in allowed:
                 raise InvalidTransitionError(
                     f"cannot transition session {session_id!r} "
                     f"from {session.state.value!r} to {new_state.value!r}"
                 )
             session.state = new_state
-            session.updated_at = _now_iso()
+            session.updated_at = _now()
         self._emit(
             EventType.STATE_UPDATED,
             f"session {session_id} → {new_state.value}",
@@ -234,9 +192,9 @@ class SessionCoordinator:
         """
         with self._lock:
             if parent_session_id is None:
-                snapshot = list(self._sessions.values())
+                snapshot: List[Session] = list(self._sessions.values())
             else:
-                snapshot = [
+                snapshot: List[Session] = [
                     s for s in self._sessions.values()
                     if s.parent_session_id == parent_session_id
                 ]

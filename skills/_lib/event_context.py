@@ -9,10 +9,11 @@ import os
 from typing import Any
 
 from skills._lib.state_vector import StateVector
+from skills._lib.defaults import STATE_VECTOR_PATH
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_STATE_PATH = ".spec-workflow/state-vector.json"
+DEFAULT_STATE_PATH = STATE_VECTOR_PATH
 
 
 def current_context(state_path: str = DEFAULT_STATE_PATH) -> dict:

@@ -22,11 +22,11 @@ from typing import Optional
 from skills._lib.event_log import EventLog
 from skills._lib.event_types import EventType, Severity
 from skills._lib.state_vector import StateVector
+from skills._lib.defaults import STATE_VECTOR_PATH, EVENT_LOG_PATH
 
 logger = logging.getLogger(__name__)
 
 
-STATE_VECTOR_PATH = ".spec-workflow/state-vector.json"
 LEGACY_ROADMAP_STATE = ".rddf/state/roadmap-state.json"
 
 
@@ -45,7 +45,7 @@ def _state_vector_mtime(path: str) -> float:
 def _record_event(project_root: str, event_type: EventType, severity: Severity, message: str, context: dict) -> None:
     """Record an event to the event log. Best-effort; failures are silently ignored."""
     try:
-        log = EventLog(os.path.join(project_root, ".spec-workflow", "event-log.jsonl"))
+        log = EventLog(os.path.join(project_root, EVENT_LOG_PATH))
         log.record(event_type, severity, message, context=context)
     except Exception:
         logger.warning("SyncState: record event failed")

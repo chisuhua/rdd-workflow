@@ -40,6 +40,18 @@ DEFAULTS = {
 }
 
 
+# Module-level path constants — exported for use as default argument values
+# in other modules' function signatures. These mirror the corresponding
+# entries in DEFAULTS above (state.path, event_log.path, etc.) but are
+# immutable module-level strings, while DEFAULTS holds configurable values
+# that can be overridden via `.spec-workflow.json` or environment variables.
+STATE_VECTOR_PATH = ".spec-workflow/state-vector.json"
+EVENT_LOG_PATH = ".spec-workflow/event-log.jsonl"
+MEMORY_PATH = ".spec-workflow/memory.jsonl"
+DETECTOR_PLUGIN_DIR = ".spec-workflow/detectors"
+ACTION_PLUGIN_DIR = ".spec-workflow/actions"
+
+
 def get_defaults() -> dict:
     """Return a deep copy of the defaults dict (safe to mutate)."""
     return copy.deepcopy(DEFAULTS)

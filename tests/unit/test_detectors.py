@@ -9,6 +9,7 @@ Covers:
 - Performance: all 8 detectors run sequentially in < 500ms
 """
 import os
+import subprocess
 import time
 import pytest
 
@@ -30,10 +31,10 @@ def test_detect_worktrees_runs_against_real_git_repo(tmp_path, monkeypatch):
     repo.mkdir()
     monkeypatch.chdir(repo)
     # Create a real git repo with one commit so git worktree list works
-    os.system("git init -q")
-    os.system("git config user.email test@test.com")
-    os.system("git config user.name test")
-    os.system("git commit --allow-empty -m init -q")
+    subprocess.run(["git", "init", "-q"], capture_output=True, check=False)
+    subprocess.run(["git", "config", "user.email", "test@test.com"], capture_output=True, check=False)
+    subprocess.run(["git", "config", "user.name", "test"], capture_output=True, check=False)
+    subprocess.run(["git", "commit", "--allow-empty", "-m", "init", "-q"], capture_output=True, check=False)
 
     from skills._lib.detectors import detect_worktrees
 

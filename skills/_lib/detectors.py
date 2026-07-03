@@ -29,6 +29,9 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+from skills._lib.defaults import DETECTOR_PLUGIN_DIR
+from skills._lib.plugin_loader import PluginLoader
+
 
 # Severity constants — kept module-level so plugins can reuse them.
 SEVERITY_INFO = "info"
@@ -312,7 +315,10 @@ BUILTIN_DETECTORS: list[Detector] = [
 ]
 
 
-def load_plugin_detectors(plugin_dir: str = ".spec-workflow/detectors") -> list[Detector]:
+_detector_plugin_loader = PluginLoader(Detector, DETECTOR_PLUGIN_DIR)
+
+
+def load_plugin_detectors(plugin_dir: str = DETECTOR_PLUGIN_DIR) -> list[Detector]:
     """Load custom `Detector` subclasses from a directory of `.py` files.
 
     Behavior:
@@ -322,35 +328,10 @@ def load_plugin_detectors(plugin_dir: str = ".spec-workflow/detectors") -> list[
           swallowed exception — plugins must be self-contained).
         - Returns each discovered `Detector` subclass as an instance.
     """
-    pdir = Path(plugin_dir)
-    if not pdir.exists():
-        return []
-
-    plugins: list[Detector] = []
-    for py_file in sorted(pdir.glob("*.py")):
-        if py_file.name.startswith("_"):
-            continue
-        spec = importlib.util.spec_from_file_location(py_file.stem, py_file)
-        if spec is None or spec.loader is None:
-            # Could not build a spec for this file — skip silently.
-            continue
-        module = importlib.util.module_from_spec(spec)
-        try:
-            spec.loader.exec_module(module)
-        except Exception:  # noqa: BLE001 — plugin import failures are non-fatal
-            continue
-        for attr_name in dir(module):
-            attr = getattr(module, attr_name)
-            if (
-                isinstance(attr, type)
-                and issubclass(attr, Detector)
-                and attr is not Detector
-            ):
-                plugins.append(attr())
-    return plugins
+    return _detector_plugin_loader.load_plugins(plugin_dir)
 
 
-def all_detectors(plugin_dir: str = ".spec-workflow/detectors") -> list[Detector]:
+def all_detectors(plugin_dir: str = DETECTOR_PLUGIN_DIR) -> list[Detector]:
     """Return built-in + plugin detectors in scan order.
 
     Built-ins come first (deterministic order), followed by any plugins
@@ -358,9 +339,7 @@ def all_detectors(plugin_dir: str = ".spec-workflow/detectors") -> list[Detector
     (matching a built-in) will be appended after the built-in — callers
     can de-duplicate by `.name` if they need a single-instance registry.
     """
-    builtin: list[Detector] = list(BUILTIN_DETECTORS)
-    plugins = load_plugin_detectors(plugin_dir)
-    return builtin + plugins
+    return _detector_plugin_loader.all_plugins(BUILTIN_DETECTORS, plugin_dir)
 
 
 __all__ = [

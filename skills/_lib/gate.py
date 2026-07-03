@@ -21,6 +21,7 @@ from typing import Callable, Optional
 from skills._lib.event_log import EventLog
 from skills._lib.event_types import EventType, Severity
 from skills._lib.state_vector import StateVector
+from skills._lib.defaults import STATE_VECTOR_PATH, EVENT_LOG_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -132,8 +133,8 @@ class GateMechanism:
 
     def __init__(
         self,
-        state_path: str = ".spec-workflow/state-vector.json",
-        event_log_path: str = ".spec-workflow/event-log.jsonl",
+        state_path: str = STATE_VECTOR_PATH,
+        event_log_path: str = EVENT_LOG_PATH,
         load_defaults: bool = True,
     ):
         self.state_path = state_path

@@ -5,11 +5,8 @@ state-vector persistence. Backward compatible with v2.0 SessionCoordinator.
 """
 from __future__ import annotations
 
-import datetime
-import enum
 import logging
 import threading
-import uuid
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from multiprocessing import Queue as MPQueue
@@ -18,76 +15,28 @@ from typing import Dict, List, Optional
 from skills._lib.dependency_scheduler import DependencyScheduler
 from skills._lib.event_log import EventLog
 from skills._lib.event_types import EventType, Severity
+from skills._lib.session_base import (
+    InvalidTransitionError,
+    Session,
+    SessionError,
+    SessionState,
+    _ALLOWED_TRANSITIONS,
+    _new_id,
+    _now,
+)
 from skills._lib.state_vector import StateVector
 
 logger = logging.getLogger(__name__)
 
-class SessionState(str, enum.Enum):
-    """Session lifecycle states (ADR-0010 v2.1).
 
-    Transitions:
-    ACTIVE → PAUSED | COMPLETED | FAILED
-    PAUSED → ACTIVE | COMPLETED | FAILED
-    COMPLETED / FAILED → (terminal)
-    """
-
-    ACTIVE = "active"
-    PAUSED = "paused"
-    COMPLETED = "completed"
-    FAILED = "failed"
-
-# Maps each state to valid transition targets
-# Maps each state to valid transition targets
-_ALLOWED_TRANSITIONS = {
-    SessionState.ACTIVE: {SessionState.PAUSED, SessionState.COMPLETED, SessionState.FAILED},
-    SessionState.PAUSED: {SessionState.ACTIVE, SessionState.COMPLETED},
-    SessionState.COMPLETED: set(),
-    SessionState.FAILED: set(),
-}
-
-
-@dataclass
-class Session:
-    """A tracked session unit with lifecycle and change assignments.
-
-    Attributes:
-        session_id: Unique ID (``sess_<12 hex chars>``).
-        parent_session_id: Parent session ID, empty for root sessions.
-        goal: Human-readable goal description.
-        state: Current SessionState.
-        started_at: ISO-8601 creation timestamp.
-        updated_at: ISO-8601 last-update timestamp.
-        assigned_changes: Change names assigned to this session.
-    """
-
-    session_id: str
-    parent_session_id: Optional[str]
-    goal: str
-    state: SessionState
-    assigned_changes: List[str]
-    started_at: str
-    updated_at: str
-
-
-@staticmethod
-def _new_id() -> str:
-        """Generate a unique session ID (``sess_<12 hex chars>``)."""
-        return f"sess_{uuid.uuid4().hex[:12]}"
-
-
-@staticmethod
-def _now() -> str:
-        """Return current UTC time as ISO-8601 string."""
-        return datetime.datetime.now(datetime.timezone.utc).isoformat()
-        return datetime.datetime.now(datetime.timezone.utc).isoformat()
-
-
-class SessionManagerError(Exception):
+class SessionManagerError(SessionError):
     """Generic runtime error from SessionManager operations."""
 
 
-class InvalidTransitionError(SessionManagerError):
-    """Raised when a SessionState transition violates _ALLOWED_TRANSITIONS."""
+@dataclass
+class ManagedSession(Session):
+ """Session with change assignments (v2.1 extension)."""
+ assigned_changes: List[str]
 
 
 class SessionManager:
@@ -114,7 +63,7 @@ class SessionManager:
         self.state_vector = state_vector
         self._event_log = event_log
         self._lock = threading.Lock()
-        self._sessions: Dict[str, Session] = {}
+        self._sessions: Dict[str, ManagedSession] = {}
         self._queue: MPQueue = MPQueue()
         self.mode = mode
         self.process_pool = ProcessPoolExecutor(max_workers=4) if mode == "parallel" else None
@@ -138,7 +87,7 @@ class SessionManager:
         """
         sid = _new_id()
         now = _now()
-        session = Session(
+        session = ManagedSession(
             session_id=sid,
             parent_session_id=parent_session,
             goal=goal,

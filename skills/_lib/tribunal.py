@@ -123,13 +123,13 @@ class Tribunal:
         reviewer: Verifier,
         sanitizer: Optional[ContextSanitizer] = None,
         event_log: Optional["EventLog"] = None,
-    ):
+    ) -> None:
         if not callable(executor):
             raise TypeError("executor must be a callable (change_name, criteria, context) -> float")
         if not callable(reviewer):
             raise TypeError("reviewer must be a callable (change_name, criteria, context) -> float")
-        self.executor = executor
-        self.reviewer = reviewer
+        self.executor: Verifier = executor
+        self.reviewer: Verifier = reviewer
         # If no sanitizer is provided we use the project-wide one, which
         # redacts API keys, passwords, and sensitive paths in every string
         # value of the input context. The hook is injectable for tests and
@@ -172,25 +172,27 @@ class Tribunal:
             )
 
         # Step 2 — sanitize the context before any cross-model boundary.
-        sanitized_context = self.sanitizer(context)
+        sanitized_context: Dict[str, Any] = self.sanitizer(context)
 
         # Step 3 — invoke both agents with graceful degradation.
         # change_name and criteria are routing metadata, not payload, so
         # they bypass sanitization (only context values are redacted).
-        exec_score = self._invoke_agent(
+        exec_score: float = self._invoke_agent(
             self.executor, "executor", change_name, criteria, sanitized_context, warnings,
         )
-        review_score = self._invoke_agent(
+        review_score: float = self._invoke_agent(
             self.reviewer, "reviewer", change_name, criteria, sanitized_context, warnings,
         )
 
         # Step 4 — compute the weighted judgment.
+        final_score: float
+        conflict: float
         final_score, conflict = self._judge(exec_score, review_score)
 
         # Step 5 — decide pass/fail. The per-agent floor (PASS_MIN_AGENT_SCORE)
         # is the *formal* reason for a low single-agent score; the
         # final_score check is what catches the borderline-weighted case.
-        passed = (
+        passed: bool = (
             final_score >= PASS_FINAL_THRESHOLD
             and exec_score >= PASS_MIN_AGENT_SCORE
             and review_score >= PASS_MIN_AGENT_SCORE

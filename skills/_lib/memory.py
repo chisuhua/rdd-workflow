@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from skills._lib.lock import FileLock
+from skills._lib.defaults import MEMORY_PATH
 
 
 # Threshold above which a past goal is considered similar enough to recommend.
@@ -88,7 +89,7 @@ class LoopMemory:
             the count exceeds this number.
     """
 
-    DEFAULT_PATH = ".spec-workflow/memory.jsonl"
+    DEFAULT_PATH = MEMORY_PATH
     MAX_RECORDS = 10000
 
     def __init__(self, path: Optional[str] = None):

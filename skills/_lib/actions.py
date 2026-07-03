@@ -21,6 +21,8 @@ from typing import Optional
 
 from skills._lib.event_log import EventLog
 from skills._lib.event_types import EventType, Severity
+from skills._lib.plugin_loader import PluginLoader
+from skills._lib.defaults import ACTION_PLUGIN_DIR
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -405,42 +407,17 @@ class _FunctionAction:
         return self.fn(params, event_log)
 
 
-def load_plugin_actions(plugin_dir: str = ".spec-workflow/actions") -> list:
-    """Load custom `Action` subclasses from `plugin_dir`.
+_action_plugin_loader = PluginLoader(Action, ACTION_PLUGIN_DIR)
 
-    Skips files whose names start with `_`. Silently skips files that fail
-    to import (so a broken plugin cannot break the whole engine)."""
-    pdir = Path(plugin_dir)
-    if not pdir.exists():
-        return []
-    plugins = []
-    for py_file in pdir.glob("*.py"):
-        if py_file.name.startswith("_"):
-            continue
-        spec = importlib.util.spec_from_file_location(py_file.stem, py_file)
-        if spec is None or spec.loader is None:
-            continue
-        mod = importlib.util.module_from_spec(spec)
-        try:
-            spec.loader.exec_module(mod)
-        except Exception:
-            continue
-        for attr_name in dir(mod):
-            attr = getattr(mod, attr_name)
-            if (
-                isinstance(attr, type)
-                and issubclass(attr, Action)
-                and attr is not Action
-            ):
-                try:
-                    plugins.append(attr())
-                except Exception:
-                    continue
-    return plugins
+
+def load_plugin_actions(plugin_dir: str = ACTION_PLUGIN_DIR) -> list:
+ """Load custom `Action` subclasses from `plugin_dir`.
+
+ Skips files whose names start with `_`. Silently skips files that fail
+ to import (so a broken plugin cannot break the whole engine)."""
+ return _action_plugin_loader.load_plugins(plugin_dir)
 
 
 def all_actions() -> list:
-    """Return built-in + plugin actions in a uniform wrapper shape."""
-    builtin = [_FunctionAction(fn) for fn in BUILTIN_ACTIONS]
-    plugins = load_plugin_actions()
-    return builtin + plugins
+ """Return built-in + plugin actions in a uniform wrapper shape."""
+ return _action_plugin_loader.all_plugins([_FunctionAction(fn) for fn in BUILTIN_ACTIONS])
