@@ -1,6 +1,6 @@
 ---
 name: deps
-description: 分析 OpenSpec change 之间的依赖关系，生成 Mermaid 依赖图和推荐执行顺序。被 guide-spec 在 propose 完成后自动调用。
+description: 分析 OpenSpec change 之间的依赖关系，生成 Mermaid 依赖图和推荐执行顺序。被 guide-plan 在 propose 完成后自动调用。
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+. Reads proposal.md/design.md/specs/*.md from openspec/changes/.
 metadata:

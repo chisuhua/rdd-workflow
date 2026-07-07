@@ -37,7 +37,6 @@ skill_use("guide-plan")   # 无参数版本
 | `guide-arch`（前序） | arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-done | **高** |
 | `guide-plan`（本技能） | plan | 变更生成：scan → propose → deps → plan-done | **中** |
 | `guide-ship`（后续） | ship | 变更执行：plan → execute → archive → cleanup → ship-done | **低** |
-| `guide-spec`（v2.x 兼容） | 整体 | v1.x 双阶段别名，按序调用 `guide-arch` → `guide-plan` | — |
 | `guide`（无状态推荐器） | — | 扫描三阶段状态，推荐下一步 | — |
 
 **核心边界（arch-done 即切换点）**：

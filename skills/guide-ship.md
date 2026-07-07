@@ -12,11 +12,11 @@ metadata:
 
 # OpenSpec 工作流 — Ship-Side Guide
 
-本技能是 OpenSpec 工作流的 **ship 端状态机**：负责在 git 提交 OpenSpec change artifacts 之后的所有工作——为已提交的 change 创建 worktree、生成实施计划、监控执行、归档清理。spec 端（`guide-spec`）在 artifacts 提交后发出 "ready for guide-ship" 交接信号，本技能接管从 worktree 到归档的全流程。
+本技能是 OpenSpec 工作流的 **ship 端状态机**：负责在 git 提交 OpenSpec change artifacts 之后的所有工作——为已提交的 change 创建 worktree、生成实施计划、监控执行、归档清理。spec 端（`guide-arch` / `guide-plan`）在 artifacts 提交后发出 "ready for guide-ship" 交接信号，本技能接管从 worktree 到归档的全流程。
 
 **职责边界**：
 - **拥有**：git worktree、`.rddf/plans/<name>.md`、归档（merge → archive → cleanup）
-- **不拥有**：`openspec/changes/<name>/{proposal,design,tasks}.md` 的创建与提交（这些由 `guide-spec` 处理）
+- **不拥有**：`openspec/changes/<name>/{proposal,design,tasks}.md` 的创建与提交（这些由 `guide-arch` / `guide-plan` 处理）
 - **状态持久化**：不写状态文件；ship 端状态由 git worktree 列表和 `tasks.md` 进度反映（on-the-fly 读取）
 
 **v2.0 简化**：v2.0 起,本技能直接调用内置的 `spec-workflow/writing-plans` 技能生成计划(无中间检测层)。原 `prometheus-planning` 间接层已删除。
@@ -857,7 +857,7 @@ if [ "$REMAINING_WT" -gt 0 ] || [ "$REMAINING" -gt 0 ]; then
     echo ""
     echo "请选择:"
     echo "1. 继续处理 (skill_use(\"guide-ship\")) — 还有 worktree 要处理"
-    echo "2. 回到 spec 端 (skill_use(\"guide-spec\")) — 创建更多 changes"
+    echo "2. 回到 spec 端 (skill_use(\"guide-arch\") 或 skill_use(\"guide-plan\")) — 创建更多 changes"
     echo "3. 本次 session 结束 — 退出 ship-done,稍后继续"
     echo "4. 项目完成 — 不再做任何 change(此项目归档)"
     echo "i. 其他输入"
@@ -866,7 +866,7 @@ else
     echo ""
     echo "请选择:"
     echo "1. 继续处理 (skill_use(\"guide-ship\")) — 还有 worktree 要处理"
-    echo "2. 回到 spec 端 (skill_use(\"guide-spec\")) — 创建更多 changes"
+    echo "2. 回到 spec 端 (skill_use(\"guide-arch\") 或 skill_use(\"guide-plan\")) — 创建更多 changes"
     echo "3. 本次 session 结束 — 退出 ship-done,稍后继续"
     echo "4. 项目完成 — 不再做任何 change(此项目归档)"
     echo "i. 其他输入"
