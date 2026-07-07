@@ -25,10 +25,12 @@ setup() {
   grep -q '只读不写' "$f"
 }
 
-@test "guide_skill scan covers all 6 priorities (RECOMMEND branches)" {
-  # Each scan branch assigns RECOMMEND=...
-  rec_count=$(grep -cE '^[[:space:]]*RECOMMEND=' "$f")
-  [ "$rec_count" -ge 6 ]
+@test "guide_skill scan covers all 11 priorities (RECOMMEND branches)" {
+  # Each scan branch assigns RECOMMEND=...  v2.0.1+: scan logic lives in
+  # skills/_lib/scan-state.sh (extracted from guide.md). The 11-branch
+  # priority chain emits 11 RECOMMEND= assignments; count them there.
+  rec_count=$(grep -cE '^[[:space:]]*RECOMMEND=' "$REPO_ROOT/skills/_lib/scan-state.sh")
+  [ "$rec_count" -ge 11 ]
 }
 
 @test "guide_skill delegates only to guide-spec / guide-ship / status --roadmap" {
