@@ -8,9 +8,9 @@
 
 ## 核心概念
 
-### Spec 端 vs Ship 端（v1.1 拆分，v2.0 细化为 arch → plan → ship）
+### Arch / Plan / Ship 三阶段
 
-`git commit artifacts` 是 spec → ship 的**工作产物切换点**；形式化的交接由 `.rddf/state/arch-handoff.json` / `plan-handoff.json` / `handoff.json` 三个 JSON 文件记录，分布在 arch→plan、plan→ship 边界。
+`git commit artifacts` 是 plan → ship 的**工作产物切换点**；形式化的交接由 `.rddf/state/arch-handoff.json` / `plan-handoff.json` 分布在 arch→plan、plan→ship 边界。
 
 | 端 | 职责 | 关键产物 |
 |----|------|---------|
@@ -35,7 +35,6 @@
 | `openspec/changes/<name>/tasks.md` | change 目录 | Execute 阶段任务清单（权威进度来源） | \`execute\` / \`guide-ship\` |
 | `docs/adr/ADR-*.md` | 项目根目录 | 架构决策记录（propose 扫描 + 引用源） | 用户手工编写（待 propose 扫描拾取） |
 | `.rddf/plans/<name>.md` | worktree 内 | Prometheus 计划文件（ship 端产物） | \`spec-workflow/writing-plans\` / \`guide-ship\` |
-| `.rddf/state/handoff.json` | 项目根目录 | spec → ship 软交接状态（spec_complete_at / ship_started_at / current_change） | `guide-plan`（plan-done 写入）/ `guide-ship`（ship-started 读取+更新） |
 | `.rddf/state/arch-handoff.json` | 项目根目录 | arch → plan 阶段交接状态（arch_complete_at / arch_artifacts） | `guide-arch`（arch-done 写入）/ `guide-plan`（plan-start 读取+更新） |
 | `.rddf/state/plan-handoff.json` | 项目根目录 | plan → ship 阶段交接状态（plan_complete_at / committed_changes） | `guide-plan`（plan-done 写入）/ `guide-ship`（ship-start 读取） |
 | `.rddf/state/deps-analysis.json` | 项目根目录 | deps 阶段结构化分析结果（依赖图 + 执行顺序） | `deps` / `guide-plan`（deps 阶段） |
@@ -241,7 +240,7 @@ i. 手动输入 change 名称
 1. 扫描 `openspec/changes/*/specs/` 中的依赖声明
 2. Step 1: 静态分析（语法级）
 3. Step 2: 跨 change 重叠检测
-4. Step 3: **subagent 语义分析**（v1.1 新增）——使用 subagent 理解"change A 是否逻辑上依赖 change B"
+4. Step 3: **subagent 语义分析**——使用 subagent 理解"change A 是否逻辑上依赖 change B"
 5. Step 4: 汇总报告 + roadmap phase 整合
 
 **何时跳过**：单 change 项目，或所有 change 明确无依赖。
@@ -584,7 +583,7 @@ skill_use("guide-ship")
 
 ## 测试基础设施
 
-> 适用于 v1.1+ 项目的 spec-workflow 验证。
+> spec-workflow 验证的测试组织与运行约定。
 
 ### 工具链
 
@@ -653,7 +652,7 @@ pip install -r requirements.txt   # PyYAML, jsonschema, pytest
 
 ## ADR 生命周期
 
-> v1.1+：`init-adr-directory` 已建立 `docs/adr/` 目录，所有架构决策应记录为 ADR。
+> 所有架构决策应记录为 ADR，按 `docs/adr/` 目录下的命名约定演进。
 
 ### 文件结构
 
@@ -684,7 +683,7 @@ docs/adr/
 ### 何时写 ADR
 
 - ✅ 引入新 phase/category（roadmap 变更）
-- ✅ 拆分/合并技能（如 v1.0 → v1.1 的 `guide` 拆分为 `guide-spec` + `guide-ship`）
+- ✅ 拆分/合并技能（如 v2.0 重构 spec 端为 `guide-arch` + `guide-plan`）
 - ✅ 添加新测试基础设施（如 `init-adr-directory` 的 bats 设计）
 - ✅ 修改核心工作流契约（如 phase 边界、git commit 切换点）
 - ❌ 单个 bug 修复（用 commits + PR 描述）
@@ -729,14 +728,6 @@ docs/adr/
 
 ---
 
-## 版本演进
+## 架构参考
 
-| 版本 | 关键变更 |
-|------|---------|
-| **v2.0.0** (current) | 三阶段架构 `arch` → `plan` → `ship`（新增 `guide-arch`/`guide-plan`，`guide-spec` 别名已移除）；Loop 引擎 `skills/loop_engine.py` + `skills/_lib/` (34 个文件, 8 检测器/7 动作)；计划生成器重构: 删除 prometheus-planning(481 行间接层), 替换为 self-contained `spec-workflow/writing-plans`(~250 行)；新增三组 handoff JSON (`arch-handoff`/`plan-handoff`/`handoff`)；CI 增强: 断言质量门控 + Python integration 拆分；保留 v1.x 全部分阶段逻辑 |
-| v2.0.0-beta (2026-06-26) | 三阶段架构 + Loop 引擎首版；测试基础设施迁移到 `tests/unit/` (Python) + `tests/integration/` (混合) |
-| v1.1 | 拆分 `guide` 为 `guide-spec` (5 阶段) + `guide-ship` (4 阶段)（v2.0 中 guide-spec 已被 guide-arch + guide-plan 替代并移除）；新增 `roadmap`/`deps` 技能; `prometheus-planning` 作为 v2.0 过渡方案引入；建立 `docs/adr/` 目录（ADR-0001 记录拆分决策）；加入 bats-core 测试基础设施；`prometheus-start-work` 降级为 deprecated |
-| v1.0 | 单一 `guide` 技能驱动全流程；`prometheus-start-work` 作为外部计划生成器（v2.0 已替换为自包含方案） |
-| 2026-06-04 之前 | 使用 `generatedBy: X.Y` 元数据，已重命名为 `evolved-from` |
-
-详见 [ADR-0001](./docs/adr/ADR-0001-propose-plan-execute-state-machine.md) / [ADR-0003](./docs/adr/ADR-0003-three-phase-architecture.md)。
+最新架构决策详见 [ADR-0003](./docs/adr/ADR-0003-three-phase-architecture.md)。历史演进记录见 `docs/adr/` 与 `CHANGELOG.md`。
