@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://spec-workflow.dev/schemas/iteration_schema.json",
+  "title": "Spec Workflow Iteration (Current Sprint) State",
+  "description": "Persistent view of the current iteration/sprint: which OpenSpec changes are proposed/in-worktree/completed/archived, their blocker relationships, and current task progress. Stored at .rddf/state/iteration.json.",
+  "type": "object",
+  "required": ["version", "updated_at", "current_phase", "changes"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. Currently 1."
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of last write."
+    },
+    "current_phase": {
+      "type": "string",
+      "description": "Current roadmap phase (e.g. 'v2.1'). May be 'default' or 'unknown' in compat mode."
+    },
+    "changes": {
+      "type": "array",
+      "description": "One entry per OpenSpec change ever observed in the current iteration. Archived changes are kept (not deleted) for history.",
+      "items": {
+        "type": "object",
+        "required": ["name", "status", "added_at"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "OpenSpec change name (directory name under openspec/changes/)."
+          },
+          "phase": {
+            "type": ["string", "null"],
+            "description": "Roadmap phase this change belongs to. From roadmap-meta.yaml."
+          },
+          "category": {
+            "type": ["string", "null"],
+            "description": "Roadmap category within the phase. From roadmap-meta.yaml."
+          },
+          "priority": {
+            "type": ["string", "null"],
+            "description": "P0/P1/P2 priority from roadmap-meta.yaml."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["proposed", "in_worktree", "completed", "archived"],
+            "description": "Lifecycle status. Updated by propose/guide-ship/execute/archive hooks."
+          },
+          "added_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the change was first added to iteration."
+          },
+          "worktree_path": {
+            "type": ["string", "null"],
+            "description": "Path to worktree (e.g. '.rddf/wt/<name>'). Set when status transitions to in_worktree."
+          },
+          "plan_path": {
+            "type": ["string", "null"],
+            "description": "Path to Prometheus plan (e.g. '.rddf/plans/<name>.md'). Set when plan is generated."
+          },
+          "tasks_done": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of completed tasks in tasks.md. Updated by execute hook."
+          },
+          "tasks_total": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total number of tasks. Snapshot at plan generation; not auto-updated when tasks.md is edited."
+          },
+          "blocker": {
+            "type": ["string", "null"],
+            "description": "Name of the change that hard-blocks this one (from deps). Null if ready or no deps run yet."
+          },
+          "parallel_group": {
+            "type": ["integer", "null"],
+            "description": "Topological layer from deps. Changes in the same group can run in parallel."
+          },
+          "conflicts": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Change names with file-level conflicts. Empty array if no deps run yet."
+          },
+          "last_deps_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of last deps run that updated blocker/group/conflicts."
+          },
+          "archived_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when status transitioned to archived."
+          }
+        }
+      }
+    }
+  }
+}
