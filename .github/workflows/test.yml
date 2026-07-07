@@ -55,7 +55,8 @@ jobs:
                tests/integration/test_menu_case.bats \
                tests/integration/test_handoff.bats \
                tests/integration/test_deps_output.bats \
-               tests/integration/test_deps_candidate_check.bats
+               tests/integration/test_deps_candidate_check.bats \
+               tests/integration/scan_state.bats
 
       - name: Bats integration tests (git worktree)
         run: |
