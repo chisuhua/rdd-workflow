@@ -35,16 +35,18 @@
 
 # scan_state
 #   Mutates caller-namespace globals RECOMMEND and REASON.
-#   Priority order (highest first), taken from skills/guide.md:55-109:
-#     1. arch-handoff present, plan-handoff absent → "guide-plan"
-#     2. plan-handoff present                       → "guide-ship"
-#     3. worktree with incomplete tasks             → "guide-ship"
+#   Priority order (highest first):
+#     1.  arch-handoff present, plan-handoff absent → "guide-plan"
+#     1.5 arch-handoff present, ADR < 1           → "guide-arch (recover)"
+#     2.  plan-handoff present                     → "guide-ship"
+#     2.5 plan-handoff present, active_changes = 0  → "guide-ship (cleanup)"
+#     3.  worktree with incomplete tasks           → "guide-ship"
 #     4. .phase-gate-report.md present              → "status --roadmap"
 #     5. detached worktrees (count > 0)             → "guide-ship"
 #     6. worktree tasks all completed               → "guide-ship"
-#     7. committed change in HEAD (no worktree)     → "guide-ship"
-#     8. no roadmap.md                              → "guide-arch"
-#     9. no openspec/changes/                       → "guide-plan"
+#     7.  committed change in HEAD (no worktree)   → "guide-ship"
+#     8.  no roadmap.md                            → "guide-arch"
+#     9.  no openspec/changes/                     → "guide-plan"
 #    10. proposal-suggestions.md has pending entry  → "guide-plan"
 #    11. default                                    → "guide-ship"
 scan_state() {
@@ -57,15 +59,35 @@ scan_state() {
   ARCH_HANDOFF="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
   PLAN_HANDOFF="$PROJECT_ROOT/.rddf/state/.plan-handoff.json"
 
-  # 1. arch-done but plan not started → guide-plan
+  # 1. arch-handoff present, plan-handoff absent → guide-plan
   if [ -f "$ARCH_HANDOFF" ] && [ ! -f "$PLAN_HANDOFF" ]; then
+    # 1.5: arch-done incomplete — arch-handoff exists but ADR missing
+    local ADR_COUNT=0
+    if command -v python3 >/dev/null 2>&1 && [ -f "$ARCH_HANDOFF" ]; then
+      ADR_COUNT=$(python3 -c "import json; d=json.load(open('$ARCH_HANDOFF')); print(d.get('adr_count',0))" 2>/dev/null || echo 0)
+    fi
+    if [ "$ADR_COUNT" -lt 1 ]; then
+      RECOMMEND="guide-arch"
+      REASON="arch-done 未完成 (ADR 数量不足 → 回到 adr-create 阶段)"
+      return 0
+    fi
     RECOMMEND="guide-plan"
     REASON="架构定义已完成 → 进入变更生成"
     return 0
   fi
 
-  # 2. plan-done → guide-ship
+  # 2. plan-handoff present → guide-ship
   if [ -f "$PLAN_HANDOFF" ]; then
+    # 2.5: ghost plan-handoff — file exists but no active changes
+    local ACTIVE_COUNT=0
+    if command -v python3 >/dev/null 2>&1 && [ -f "$PLAN_HANDOFF" ]; then
+      ACTIVE_COUNT=$(python3 -c "import json; d=json.load(open('$PLAN_HANDOFF')); print(d.get('active_changes',0))" 2>/dev/null || echo 0)
+    fi
+    if [ "$ACTIVE_COUNT" -eq 0 ]; then
+      RECOMMEND="guide-ship"
+      REASON="plan-handoff 残留 (无活跃 change → 进入 ship 清理/归档)"
+      return 0
+    fi
     RECOMMEND="guide-ship"
     REASON="变更生成已完成 → 进入变更执行"
     return 0
