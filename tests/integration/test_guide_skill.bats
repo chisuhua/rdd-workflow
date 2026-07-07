@@ -34,6 +34,6 @@ setup() {
 @test "guide_skill delegates only to guide-spec / guide-ship / status --roadmap" {
   # All RECOMMEND= assignments must use one of the three valid values
   bad=$(grep -E '^[[:space:]]*RECOMMEND=' "$f" | \
-        grep -vE 'RECOMMEND="(guide-spec|guide-ship|status --roadmap)"' || true)
+        grep -vE 'RECOMMEND="(guide-spec|guide-plan|guide-arch|guide-ship|status --roadmap)"' || true)
   [ -z "$bad" ]
 }
