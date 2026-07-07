@@ -35,7 +35,7 @@ CI 在 `.github/workflows/test.yml`, 按序执行: 安装 deps → **断言质�
 - 无其他 worktree **且** 仅此一个 change → ⚡ **轻量模式** (创建 branch, 直接在主仓库执行, 跳过 worktree)
 - 有活跃 worktree **或** 多个 change → 🔀 **worktree 模式** (创建隔离 worktree)
 
-`guide-spec` 是向后兼容别名, 内部自动调用 `guide-arch` → `guide-plan` (v3.0 会移除).
+`guide-spec` 已在 v2.0 移除（原为 60 行别名，内部按序调用 `guide-arch` → `guide-plan`）。请直接使用 `guide-arch` 和 `guide-plan`。
 `guide` 是无状态推荐器, 扫描项目状态推荐下一步, 不写文件, 不调 openspec CLI.
 
 ## 关键目录
@@ -46,7 +46,6 @@ skills/                       # Markdown skills (12 .md) + loop_engine.py 在根
   guide.md                    # 推荐器
   guide-arch.md               # arch 阶段 (v1.0)
   guide-plan.md               # plan 阶段 (v1.0)
-  guide-spec.md               # 别名 (v1.0)
   guide-ship.md               # ship 阶段 (v2.0) - 包含 v2.0.1 iteration.json hook (创建 worktree 后切 status=in_worktree)
   propose.md / execute.md / status.md / roadmap.md / deps.md
   spec-workflow-writing-plans.md  # 内置 TDD 5 步 plan 生成器 (v1.0, 自包含)
@@ -75,7 +74,6 @@ openspec/                     # OpenSpec CLI 数据 (随项目走)
   guide.md                    # 推荐器
   guide-arch.md               # arch 阶段 (v1.0)
   guide-plan.md               # plan 阶段 (v1.0)
-  guide-spec.md               # 别名 (v1.0)
   guide-ship.md               # ship 阶段 (v2.0)
   propose.md / execute.md / status.md / roadmap.md / deps.md
   spec-workflow-writing-plans.md  # 内置 TDD 5 步 plan 生成器 (v1.0, 自包含)
@@ -199,7 +197,7 @@ openspec/                     # OpenSpec CLI 数据 (随项目走)
 5. **Execute 只写 `tasks.md`** — 不写 state 文件, guide 从 tasks.md 同步进度
 6. **execute 阶段不 commit/push** — commit 留到 archive 阶段
 7. **`guide-arch` 不调用 `guide-plan`** — arch-done 后用户必须手动切换
-8. **`guide-spec` 是别名** — 内部按序调用 `guide-arch` → `guide-plan`, v3.0 会移除
+8. **`guide-spec` 已移除** — v2.0 中删除（原为 60 行别名），请直接使用 `guide-arch` → `guide-plan`
 9. **Loop 引擎 max_iterations: 100, max_retries: 3** — 配置在 `interaction` 模式配置中
 10. **proposal-suggestions.md 格式为 JSON** — 用 `json.load()` 解析, 不用 grep (避免 description 字段误匹配)
 11. **`npm test` 不跑 Python** — 改完 Python 必须手动 `pytest tests/`, CI 才会捕获

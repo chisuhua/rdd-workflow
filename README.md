@@ -34,10 +34,11 @@ git clone https://github.com/chisuhua/spec-workflow.git ~/.agents/skills/spec-wo
 
 1. **安装到项目**：执行 `skill_use("INSTALL")` 将技能复制到项目目录
 2. **使用子技能**：
-   - `skill_use("guide")` - 推荐器入口(扫描状态,建议调 spec 或 ship)
-   - `skill_use("guide-spec")` - Spec 端状态机(setup → roadmap → propose → deps)
+   - `skill_use("guide")` - 推荐器入口(扫描状态,建议调 arch、plan 或 ship)
+   - `skill_use("guide-arch")` - Arch 端状态机(setup → roadmap → arch-done)
+   - `skill_use("guide-plan")` - Plan 端状态机(scan → propose → deps → plan-done)
    - `skill_use("guide-ship")` - Ship 端状态机(plan → execute → archive → cleanup)
-   - `skill_use("propose")` - 子技能(被 guide-spec 调用)
+   - `skill_use("propose")` - 子技能(被 guide-plan 调用)
    - `skill_use("execute")` - 子技能(被 guide-ship 调用)
    - `skill_use("status")` - 子技能(被 guide-ship 调用或独立使用)
    - `skill_use("spec-workflow/writing-plans")` - 实施计划生成器(被 guide-ship 调用,v2.0 自包含 TDD 5 步结构)
@@ -52,7 +53,7 @@ git clone https://github.com/chisuhua/spec-workflow.git ~/.agents/skills/spec-wo
 | **Plan** | `guide-plan` | 变更生成（scan、propose、deps） | 中 |
 | **Ship** | `guide-ship` | 变更执行（worktree、execute、archive） | 低 |
 
-> **向后兼容**: `guide-spec` 保留为别名，自动调用 arch → plan。现有工作流完全不受影响。
+> **v2.0+ 变更**: `guide-spec` 别名已在 v2.0 移除（原为 60 行别名，自动调用 arch → plan）。请直接使用 `guide-arch` 和 `guide-plan`。
 
 ### 推荐器升级
 
@@ -82,7 +83,6 @@ spec-workflow/
     ├── guide.md               # 推荐器入口
     ├── guide-arch.md          # Arch 阶段状态机(v2.0+)
     ├── guide-plan.md          # Plan 阶段状态机(v2.0+)
-    ├── guide-spec.md          # Spec 端状态机(别名,自动调用 arch→plan)
     ├── guide-ship.md          # Ship 端状态机
     ├── propose.md             # 子技能(被 guide-plan 调用)
     ├── execute.md             # 子技能(被 guide-ship 调用)

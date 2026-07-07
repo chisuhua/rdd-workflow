@@ -1,6 +1,6 @@
 # OpenSpec 工作流技能使用指南
 
-> 基于 `guide` 推荐器（spec-side 调 `guide-spec`，ship-side 调 `guide-ship`），覆盖从提案到归档的完整生命周期。
+> 基于 `guide` 推荐器（arch-side 调 `guide-arch`，plan-side 调 `guide-plan`，ship-side 调 `guide-ship`），覆盖从提案到归档的完整生命周期。
 > 支持多 change 并行执行，可分离到不同终端同时运行。
 > 当前版本: **v2.0.0**（三阶段架构 arch → plan → ship + Loop 引擎 + `spec-workflow/writing-plans` 自包含计划生成器）
 
@@ -14,8 +14,9 @@
 
 | 端 | 职责 | 关键产物 |
 |----|------|---------|
-| **spec 端** (`guide-spec`) | 环境检查 → 路线图 → 扫描/创建 change → 依赖分析 | `openspec/changes/<name>/{proposal,design,tasks}.md` 已提交 |
-| **ship 端** (`guide-ship`) | worktree → Prometheus 计划 → 实施执行 → 归档 → 清理 | worktree 目录、`.rddf/plans/<name>.md`、归档记录 |
+| **arch 端** (`guide-arch`) | 环境检查 → 路线图 → 架构定义 | `roadmap.md`、`docs/adr/` |
+| **plan 端** (`guide-plan`) | 扫描/创建 change → 依赖分析 | `openspec/changes/<name>/{proposal,design,tasks}.md` 已提交 |
+| **ship 端** (`guide-ship`) | worktree → 计划 → 实施执行 → 归档 → 清理 | worktree 目录、`.rddf/plans/<name>.md`、归档记录 |
 
 详细架构决策见 [ADR-0001](./docs/adr/ADR-0001-propose-plan-execute-state-machine.md)。
 
@@ -65,14 +66,17 @@
 # 推荐器入口（不知道调谁时用）
 用户: skill_use("guide")
 
-# Spec 端（创建新 change：setup → roadmap → propose → deps）
-用户: skill_use("guide-spec")
+# Arch 端（创建新 change：setup → roadmap → arch-done）
+用户: skill_use("guide-arch")
+
+# Plan 端（已有架构：scan → propose → deps → plan-done）
+用户: skill_use("guide-plan")
 
 # Ship 端（已提交的 change：plan → execute → archive → cleanup）
 用户: skill_use("guide-ship")
 ```
 
-`guide` 推荐器会自动检查状态并给出当前合适的选项菜单；如已明确 spec 侧或 ship 侧，可直接调对应状态机跳过推荐步骤。
+`guide` 推荐器会自动检查状态并给出当前合适的选项菜单；如已明确 arch/plan/ship 侧，可直接调对应状态机跳过推荐步骤。
 
 ### 完整 skill 列表 (v2.0 共 12 个)
 
@@ -83,7 +87,6 @@
 | `guide-arch` | **新** 架构定义阶段（5 子阶段：setup → adr-create → architecture → roadmap-define → arch-done） | `skill_use("guide-arch")` |
 | `guide-plan` | **新** 变更生成阶段（4 子阶段：scan → propose → deps → plan-done） | `skill_use("guide-plan")` |
 | `guide-ship` | Ship 端状态机（5 阶段） | `skill_use("guide-ship")` |
-| `guide-spec` | **别名** spec 端状态机（自动调用 guide-arch → guide-plan，v3.0 移除） | `skill_use("guide-spec")` |
 | `propose` | 扫描 ADR/代码生成建议列表 | `guide-plan` 内部 / 单独使用 |
 | `roadmap` | 路线图管理（phase/category 结构） | `guide-arch` 内部 / 单独使用 |
 | `deps` | 依赖分析（含 subagent Step 3） | `guide-plan` 内部 / 单独使用 |
@@ -126,7 +129,7 @@ from skills import loop_engine
 
 ---
 
-## 完整流程：Spec 端（5 阶段）
+## 完整流程：Arch + Plan 端（8 阶段）
 
 ### Phase 1 — Setup（环境检查）
 
@@ -247,7 +250,7 @@ i. 手动输入 change 名称
 
 ### Phase 5 — Handoff（交接给 Ship 端）
 
-`guide-spec` 的最后阶段：检查所有 `openspec/changes/<name>/{proposal,design,tasks}.md` 是否已 git 提交。
+`guide-plan` 的最后阶段：检查所有 `openspec/changes/<name>/{proposal,design,tasks}.md` 是否已 git 提交。
 
 ```
 ✅ Spec 端完成
@@ -523,7 +526,7 @@ fi
 ```
 请选择:
 1. 继续处理 (skill_use("guide-ship")) — 还有 worktree 要处理
-2. 回到 spec 端 (skill_use("guide-spec")) — 创建更多 changes
+2. 回到 plan 端 (skill_use("guide-plan")) — 创建更多 changes
 3. 本次 session 结束 — 退出 ship-done，稍后继续
 4. 项目完成 — 不再做任何 change（此项目归档）
 i. 其他输入
@@ -730,9 +733,9 @@ docs/adr/
 
 | 版本 | 关键变更 |
 |------|---------|
-| **v2.0.0** (current) | 三阶段架构 `arch` → `plan` → `ship`（新增 `guide-arch`/`guide-plan`，`guide-spec` 保留为兼容别名，v3.0 移除）；Loop 引擎 `skills/loop_engine.py` + `skills/_lib/` (34 个文件, 8 检测器/7 动作)；计划生成器重构: 删除 prometheus-planning(481 行间接层), 替换为 self-contained `spec-workflow/writing-plans`(~250 行)；新增三组 handoff JSON (`arch-handoff`/`plan-handoff`/`handoff`)；CI 增强: 断言质量门控 + Python integration 拆分；保留 v1.x 全部分阶段逻辑 |
+| **v2.0.0** (current) | 三阶段架构 `arch` → `plan` → `ship`（新增 `guide-arch`/`guide-plan`，`guide-spec` 别名已移除）；Loop 引擎 `skills/loop_engine.py` + `skills/_lib/` (34 个文件, 8 检测器/7 动作)；计划生成器重构: 删除 prometheus-planning(481 行间接层), 替换为 self-contained `spec-workflow/writing-plans`(~250 行)；新增三组 handoff JSON (`arch-handoff`/`plan-handoff`/`handoff`)；CI 增强: 断言质量门控 + Python integration 拆分；保留 v1.x 全部分阶段逻辑 |
 | v2.0.0-beta (2026-06-26) | 三阶段架构 + Loop 引擎首版；测试基础设施迁移到 `tests/unit/` (Python) + `tests/integration/` (混合) |
-| v1.1 | 拆分 `guide` 为 `guide-spec` (5 阶段) + `guide-ship` (4 阶段)；新增 `roadmap`/`deps` 技能; `prometheus-planning` 作为 v2.0 过渡方案引入；建立 `docs/adr/` 目录（ADR-0001 记录拆分决策）；加入 bats-core 测试基础设施；`prometheus-start-work` 降级为 deprecated |
+| v1.1 | 拆分 `guide` 为 `guide-spec` (5 阶段) + `guide-ship` (4 阶段)（v2.0 中 guide-spec 已被 guide-arch + guide-plan 替代并移除）；新增 `roadmap`/`deps` 技能; `prometheus-planning` 作为 v2.0 过渡方案引入；建立 `docs/adr/` 目录（ADR-0001 记录拆分决策）；加入 bats-core 测试基础设施；`prometheus-start-work` 降级为 deprecated |
 | v1.0 | 单一 `guide` 技能驱动全流程；`prometheus-start-work` 作为外部计划生成器（v2.0 已替换为自包含方案） |
 | 2026-06-04 之前 | 使用 `generatedBy: X.Y` 元数据，已重命名为 `evolved-from` |
 

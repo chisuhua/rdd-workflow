@@ -86,7 +86,6 @@ spec-workflow/
 | `skills/guide-arch.md` | Arch 端 — 5 阶段：setup → adr-create → architecture → roadmap → arch-done |
 | `skills/guide-plan.md` | Plan 端 — 4 阶段：scan → propose → deps → plan-done |
 | `skills/guide-ship.md` | Ship 端 — 5 阶段：plan → execute → archive → cleanup → ship-done |
-| `skills/guide-spec.md` | 向后兼容别名，自动调用 arch→plan |
 
 **状态机调用链：**
 ```
@@ -213,7 +212,7 @@ skill_use("spec-workflow/writing-plans")
 | **2** | USAGE.md — 完整使用指南与核心概念 | `USAGE.md` |
 | **3** | INSTALL.md + install.sh — 技能如何进入项目 | `INSTALL.md`, `install.sh`, `package.json` |
 | **4** | guide.md — 工作流推荐器 | `guide.md` |
-| **5** | 三阶段状态机总览 | `guide-arch.md`, `guide-plan.md`, `guide-ship.md`, `guide-spec.md` |
+| **5** | 三阶段状态机总览 | `guide-arch.md`, `guide-plan.md`, `guide-ship.md` |
 | **6** | Arch 与 Plan 子技能 | `propose.md`, `roadmap.md`, `deps.md` |
 | **7** | Ship 端子技能 + 计划生成 | `execute.md`, `status.md`, `spec-workflow-writing-plans.md` |
 | **8** | loop_engine.py — 闭环自动化核心引擎 | `loop_engine.py` |
@@ -313,7 +312,6 @@ skills/guide.md                     — 推荐器入口
 skills/guide-arch.md                — Arch 端状态机（805行）
 skills/guide-plan.md                — Plan 端状态机（622行）
 skills/guide-ship.md                — Ship 端状态机（722行）
-skills/guide-spec.md                — 向后兼容别名
 skills/INSTALL.md                   — 安装程序文档
 skills/propose.md                   — 变更提议（742行）
 skills/roadmap.md                   — 路线图管理
@@ -362,7 +360,7 @@ skills/_lib/trigger_engine.py       — 触发引擎
 新增 `.md` 文件到 `skills/` 目录，然后在 `package.json` 的 `skills` 数组中注册。如果新技能需要被状态机调用，更新对应的 `guide-*.md` 文件添加引用。
 
 ### Q: 如何处理 v1.x 到 v2.0 的迁移？
-v2.0 保持向后兼容。`guide-spec.md` 作为别名自动调用 arch→plan。详细迁移指南见 `docs/migration/v1-to-v2.md`。
+v2.0 使用三阶段架构 arch → plan → ship。原来的 `guide-spec` 已被 `guide-arch` + `guide-plan` 替代（`guide-spec` 是 60 行别名，v2.0 已删除）。详细迁移指南见 `docs/migration/v1-to-v2.md`。
 
 ### Q: 测试策略是什么？
 - **Python 测试**（pytest）：覆盖状态向量、事件日志、门控机制、Loop 引擎
