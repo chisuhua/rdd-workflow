@@ -1,9 +1,9 @@
 """Built-in defaults for spec-workflow v2 configuration.
 
 The `DEFAULTS` dict is the lowest-priority source in the config merge order:
-runtime params > loop.yaml > .spec-workflow.json > env vars > DEFAULTS.
+runtime params > loop.yaml > .rddf.json > env vars > DEFAULTS.
 
-Override any value via `.spec-workflow.json` or environment variables
+Override any value via `.rddf.json` or environment variables
 (see `skills/_lib/config.py`).
 """
 from __future__ import annotations
@@ -22,11 +22,11 @@ DEFAULTS = {
         "retry_backoff_seconds": 5,
     },
     "state": {
-        "path": ".spec-workflow/state-vector.json",
+        "path": ".rddf/state/state-vector.json",
         "lock_timeout_seconds": 10.0,
     },
     "event_log": {
-        "path": ".spec-workflow/event-log.jsonl",
+        "path": ".rddf/state/event-log.jsonl",
         "max_size_mb": 50,
     },
     "gate": {
@@ -44,12 +44,12 @@ DEFAULTS = {
 # in other modules' function signatures. These mirror the corresponding
 # entries in DEFAULTS above (state.path, event_log.path, etc.) but are
 # immutable module-level strings, while DEFAULTS holds configurable values
-# that can be overridden via `.spec-workflow.json` or environment variables.
-STATE_VECTOR_PATH = ".spec-workflow/state-vector.json"
-EVENT_LOG_PATH = ".spec-workflow/event-log.jsonl"
-MEMORY_PATH = ".spec-workflow/memory.jsonl"
-DETECTOR_PLUGIN_DIR = ".spec-workflow/detectors"
-ACTION_PLUGIN_DIR = ".spec-workflow/actions"
+# that can be overridden via `.rddf.json` or environment variables.
+STATE_VECTOR_PATH = ".rddf/state/state-vector.json"
+EVENT_LOG_PATH = ".rddf/state/event-log.jsonl"
+MEMORY_PATH = ".rddf/state/memory.jsonl"
+DETECTOR_PLUGIN_DIR = ".rddf/detectors"
+ACTION_PLUGIN_DIR = ".rddf/actions"
 
 
 def get_defaults() -> dict:

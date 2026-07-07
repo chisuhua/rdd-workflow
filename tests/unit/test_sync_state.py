@@ -26,7 +26,7 @@ def test_state_to_legacy_updates_roadmap_state(project_root):
     sv.update_field("arch_side.phase", "propose")
     sv.update_field("arch_side.current_change", "test-change")
     sv.update_field("arch_side.completed_changes", ["init"])
-    sv_path = project_root / ".spec-workflow" / "state-vector.json"
+    sv_path = project_root / ".rddf" / "state" / "state-vector.json"
     sv_path.parent.mkdir(parents=True, exist_ok=True)
     sv.save(str(sv_path))
 
@@ -48,7 +48,7 @@ def test_legacy_to_state_updates_state_vector(project_root):
 
     sync_legacy_to_state_vector(str(project_root))
 
-    sv = StateVector.load(str(project_root / ".spec-workflow" / "state-vector.json"))
+    sv = StateVector.load(str(project_root / ".rddf" / "state" / "state-vector.json"))
     assert sv.get_field("arch_side.phase") == "propose"
     assert sv.get_field("arch_side.current_change") == "legacy-change"
 
@@ -57,7 +57,7 @@ def test_state_vector_wins_on_conflict(project_root):
     """When both have changes, state vector's value is authoritative."""
     sv = StateVector.create_default()
     sv.update_field("arch_side.current_change", "from-state")
-    sv_path = project_root / ".spec-workflow" / "state-vector.json"
+    sv_path = project_root / ".rddf" / "state" / "state-vector.json"
     sv_path.parent.mkdir(parents=True, exist_ok=True)
     sv.save(str(sv_path))
 
@@ -89,7 +89,7 @@ def test_state_to_legacy_propagation_under_50ms(project_root):
     """State vector change should propagate to legacy files within 50ms."""
     sv = StateVector.create_default()
     sv.update_field("arch_side.phase", "propose")
-    sv_path = project_root / ".spec-workflow" / "state-vector.json"
+    sv_path = project_root / ".rddf" / "state" / "state-vector.json"
     sv_path.parent.mkdir(parents=True, exist_ok=True)
     sv.save(str(sv_path))
 
@@ -105,7 +105,7 @@ def test_conflict_logged_to_event_log(project_root):
     """When sync direction conflicts, an event is recorded."""
     sv = StateVector.create_default()
     sv.update_field("arch_side.current_change", "from-state")
-    sv_path = project_root / ".spec-workflow" / "state-vector.json"
+    sv_path = project_root / ".rddf" / "state" / "state-vector.json"
     sv_path.parent.mkdir(parents=True, exist_ok=True)
     sv.save(str(sv_path))
 
@@ -117,7 +117,7 @@ def test_conflict_logged_to_event_log(project_root):
     # Force a conflict scenario
     sync_legacy_to_state_vector(str(project_root))
 
-    log_path = project_root / ".spec-workflow" / "event-log.jsonl"
+    log_path = project_root / ".rddf" / "state" / "event-log.jsonl"
     if log_path.is_file():
         events = [json.loads(line) for line in log_path.read_text().splitlines() if line]
         # Either there's a conflict event, or sync completed without one (no false positives)

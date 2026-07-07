@@ -1,7 +1,7 @@
 """Loop execution memory — history, interruption recovery, and config suggestion.
 
 Per ADR-0006, ``LoopMemory`` records each loop execution to a JSONL file at
-``.spec-workflow/memory.jsonl``. The module supports:
+``.rddf/state/memory.jsonl``. The module supports:
 
 - **Execution history** — append-only JSONL writes serialized via :class:`FileLock`
   (consistent with :class:`EventLog`).

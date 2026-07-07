@@ -38,6 +38,12 @@
 #       call is kept inline (not a helper) because it is CLI, not
 #       library code.
 #
+#   - mark_iteration_archived <name> <main_root>
+#       Update .rddf/state/iteration.json to mark <name> as archived.
+#       Best-effort: failure does NOT propagate (we don't want a stale
+#       iteration file to break an otherwise successful archive).
+#       Returns 0 always.
+#
 # Helpers required (provided by skills/_lib/worktree.sh):
 #   - wt_path_for_branch <name>
 #   - find_default_branch
@@ -50,7 +56,6 @@ if [ -f "$_LIB_DIR/worktree.sh" ]; then
   # shellcheck source=/dev/null
   source "$_LIB_DIR/worktree.sh"
 fi
-unset _LIB_DIR
 
 # check_worktree_commits <name>
 #   Returns 0 if the worktree branch has new commits vs the default branch.
@@ -282,6 +287,69 @@ archive_change() {
   # 7. Cleanup worktree + branch
   cleanup_worktree_and_branch "$name" "$main_root" "$wt_path" "$branch" || return 1
 
+  # 8. Update iteration.json (current sprint tracker). Best-effort.
+  mark_iteration_archived "$name" "$main_root"
+
   echo "✅ $name 已归档"
+  return 0
+}
+
+# mark_iteration_archived <name> <main_root>
+#   Best-effort update of .rddf/state/iteration.json: mark the change
+#   as archived with a timestamp. Never returns non-zero (callers should
+#   not treat iteration tracking failure as archive failure).
+#
+#   Implementation: invokes the Python `skills._lib.iteration` module
+#   via a here-string. If the module is missing (older spec-workflow
+#   version) or the file is unreadable, logs a warning and returns 0.
+#
+#   Path resolution: `skills/_lib/iteration.py` is a sibling of this
+#   script, so the parent of $_LIB_DIR is the directory that contains
+#   the `skills/` package. We insert that parent on sys.path.
+mark_iteration_archived() {
+  local name="${1:-}" main_root="${2:-}"
+  [[ -z "$name" || -z "$main_root" ]] && return 0
+
+  local iter_file="$main_root/.rddf/state/iteration.json"
+  if [ ! -f "$iter_file" ]; then
+    # No iteration state yet — nothing to update. This is normal for
+    # projects that predate v2.0 or never ran propose with roadmap.
+    return 0
+  fi
+
+  # _LIB_DIR is set at source time to skills/_lib/. For
+  # `from skills._lib import iteration` to work, sys.path needs the
+  # PARENT of the `skills/` package, which is two levels up from
+  # _LIB_DIR (skills/_lib/ → skills/ → .).
+  local skills_parent
+  skills_parent="$(cd "$_LIB_DIR/../.." 2>/dev/null && pwd)"
+
+  # v2.0.2 安全修复: bash 变量通过环境变量传递 (os.environ),
+  # 不用 '$VAR' 直接拼到 Python 源码. 避免单引号路径/注入风险.
+  if ! SKILLS_PARENT="$skills_parent" \
+        MAIN_ROOT="$main_root" \
+        CHANGE_NAME="$name" \
+        python3 -c '
+import os, sys
+sys.path.insert(0, os.environ["SKILLS_PARENT"])
+try:
+    from skills._lib import iteration as it_mod
+except ImportError as e:
+    print(f"⚠️  iteration module unavailable: {e}", file=sys.stderr)
+    sys.exit(0)
+try:
+    main_root = os.environ["MAIN_ROOT"]
+    change_name = os.environ["CHANGE_NAME"]
+    data = it_mod.load(main_root)
+    data = it_mod.mark_archived(data, change_name)
+    it_mod.save(main_root, data)
+    print(f"✅ iteration.json: marked {change_name} as archived")
+except Exception as e:
+    print(f"⚠️  iteration.json update failed (archive still succeeded): {e}", file=sys.stderr)
+    sys.exit(0)
+'; then
+    # python3 itself failed (not installed) — silently skip
+    :
+  fi
   return 0
 }

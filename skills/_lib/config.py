@@ -3,8 +3,8 @@
 Priority (highest to lowest):
     1. Runtime overrides (passed to `parse()`)
     2. loop.yaml (project-level)
-    3. .spec-workflow.json (project-level)
-    4. Environment variables (SPEC_WORKFLOW_*)
+    3. .rddf.json (project-level)
+    4. Environment variables (RDDF_*)
     5. Built-in defaults (skills/_lib/defaults.py)
 
 A higher-priority source COMPLETELY replaces the lower-priority value
@@ -28,10 +28,10 @@ class ConfigError(Exception):
 
 # Mapping from env var name to dotted config path
 _ENV_VAR_MAP = {
-    "SPEC_WORKFLOW_MODE": "interaction.mode",
-    "SPEC_WORKFLOW_MAX_ITERATIONS": "loop.max_iterations",
-    "SPEC_WORKFLOW_MAX_RETRIES": "loop.max_retries",
-    "SPEC_WORKFLOW_STATE_PATH": "state.path",
+    "RDDF_MODE": "interaction.mode",
+    "RDDF_MAX_ITERATIONS": "loop.max_iterations",
+    "RDDF_MAX_RETRIES": "loop.max_retries",
+    "RDDF_STATE_PATH": "state.path",
 }
 
 
@@ -97,7 +97,7 @@ class ConfigParser:
 
     def __init__(self, project_root: str = "."):
         self.project_root = Path(project_root)
-        self.spec_workflow_json = self.project_root / ".spec-workflow.json"
+        self.rddf_json = self.project_root / ".rddf.json"
         self.loop_yaml = self.project_root / "loop.yaml"
 
     def parse(self, runtime_overrides: Optional[dict] = None) -> dict:
@@ -107,24 +107,24 @@ class ConfigParser:
             runtime_overrides: Dict of dotted-path → value. Highest priority.
 
         Merge order (lowest → highest priority, last write wins):
-            defaults < .spec-workflow.json < env vars < loop.yaml < runtime overrides
+            defaults < .rddf.json < env vars < loop.yaml < runtime overrides
         This ordering reflects the contract tested in tests/unit/test_config.py:
-        env vars override .spec-workflow.json (test_env_var_overrides_file_config),
-        loop.yaml overrides .spec-workflow.json (test_priority_loop_yaml_over_spec_workflow_json),
+        env vars override .rddf.json (test_env_var_overrides_file_config),
+        loop.yaml overrides .rddf.json (test_priority_loop_yaml_over_rddf_json),
         runtime overrides override loop.yaml (test_priority_runtime_over_loop_yaml).
         """
         config = get_defaults()
 
-        # Lowest: .spec-workflow.json (project-level base)
-        if self.spec_workflow_json.is_file():
+        # Lowest: .rddf.json (project-level base)
+        if self.rddf_json.is_file():
             try:
-                with open(self.spec_workflow_json) as f:
+                with open(self.rddf_json) as f:
                     file_cfg = json.load(f)
             except json.JSONDecodeError as e:
-                raise ConfigError(f"{self.spec_workflow_json} is not valid JSON: {e}") from e
+                raise ConfigError(f"{self.rddf_json} is not valid JSON: {e}") from e
             config = _deep_merge(config, file_cfg)
 
-        # Env vars override .spec-workflow.json
+        # Env vars override .rddf.json
         env_overlay: dict = {}
         for env_name, dotted_path in _ENV_VAR_MAP.items():
             if env_name in os.environ:

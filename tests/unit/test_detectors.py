@@ -69,7 +69,7 @@ def test_eight_builtin_detectors_registered():
 
 
 def test_load_plugin_detectors_empty_when_dir_missing(tmp_path, monkeypatch):
-    """load_plugin_detectors returns [] when .spec-workflow/detectors/ doesn't exist (no exception)."""
+    """load_plugin_detectors returns [] when .rddf/detectors/ doesn't exist (no exception)."""
     monkeypatch.chdir(tmp_path)
     from skills._lib.detectors import load_plugin_detectors
 
@@ -79,7 +79,7 @@ def test_load_plugin_detectors_empty_when_dir_missing(tmp_path, monkeypatch):
 
 def test_load_plugin_detectors_skips_underscore_files_and_broken_imports(tmp_path, monkeypatch):
     """Plugin loader: skip files starting with `_`, skip files that fail to import."""
-    plugin_dir = tmp_path / ".spec-workflow" / "detectors"
+    plugin_dir = tmp_path / ".rddf" / "detectors"
     plugin_dir.mkdir(parents=True)
 
     # Valid plugin: a Detector subclass

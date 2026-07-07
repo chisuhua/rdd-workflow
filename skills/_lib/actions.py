@@ -1,11 +1,11 @@
 """Built-in actions + subprocess wrapper for the loop engine (v2.0).
 
 7 built-in actions cover v1.x workflow operations. Custom actions can be added
-by dropping Python files in `.spec-workflow/actions/` that subclass `Action`.
+by dropping Python files in `.rddf/actions/` that subclass `Action`.
 
 Per the v2-loop-engine spec (detectors-actions/spec.md):
 - actions-builtin-set: 7 built-ins returning `ActionResult(success, data, error)`
-- actions-plugin-extension: load `Action` subclasses from `.spec-workflow/actions/`
+- actions-plugin-extension: load `Action` subclasses from `.rddf/actions/`
 - Action execution: subprocess with stdout/stderr captured + result recorded
 - Action timeout: 30-minute wall-clock cap
 """

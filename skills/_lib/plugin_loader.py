@@ -28,7 +28,7 @@ class PluginLoader(Generic[T]):
     files that fail to import or whose subclasses fail to instantiate.
 
     Usage:
-        loader = PluginLoader(Detector, ".spec-workflow/detectors")
+        loader = PluginLoader(Detector, ".rddf/detectors")
         plugins = loader.load_plugins()                # plugins only
         all_of_them = loader.all_plugins(builtins)     # builtins + plugins
     """

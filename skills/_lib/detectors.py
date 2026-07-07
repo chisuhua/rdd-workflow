@@ -2,7 +2,7 @@
 
 Provides 8 built-in detectors that scan v1.x + v2.0 workflow state, plus a
 plugin loader so users can register additional `Detector` subclasses by
-dropping Python files into `.spec-workflow/detectors/`.
+dropping Python files into `.rddf/detectors/`.
 
 Public surface:
 - `Detector`              — base class for all detectors

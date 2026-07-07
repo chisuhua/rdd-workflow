@@ -1,6 +1,6 @@
 """Append-only JSONL event log with query API and progress reports.
 
-Stored at `.spec-workflow/event-log.jsonl`. Each line is one event. Writes
+Stored at `.rddf/state/event-log.jsonl`. Each line is one event. Writes
 are protected by a file lock for safety. The log is read on every query;
 for 10K+ events the read is < 100ms (see test_query_10k_events_under_100ms).
 

@@ -8,16 +8,16 @@ from skills._lib.config import ConfigParser, ConfigError
 
 @pytest.fixture
 def clean_env(monkeypatch):
-    """Remove all SPEC_WORKFLOW_* env vars for the test."""
+    """Remove all RDDF_* env vars for the test."""
     for k in list(os.environ):
-        if k.startswith("SPEC_WORKFLOW_"):
+        if k.startswith("RDDF_"):
             monkeypatch.delenv(k, raising=False)
     return monkeypatch
 
 
 def test_minimal_config_parses(tmp_path, clean_env):
     """A config with only `version` and `interaction.mode` should fill defaults for the rest."""
-    cfg_file = tmp_path / ".spec-workflow.json"
+    cfg_file = tmp_path / ".rddf.json"
     cfg_file.write_text(json.dumps({"version": "2.0", "interaction": {"mode": "hybrid"}}))
     parser = ConfigParser(project_root=str(tmp_path))
     config = parser.parse()
@@ -34,9 +34,9 @@ def test_priority_runtime_over_loop_yaml(tmp_path, clean_env):
     assert config["interaction"]["mode"] == "loop"
 
 
-def test_priority_loop_yaml_over_spec_workflow_json(tmp_path, clean_env):
-    """loop.yaml overrides .spec-workflow.json."""
-    (tmp_path / ".spec-workflow.json").write_text(json.dumps({"interaction": {"mode": "menu"}}))
+def test_priority_loop_yaml_over_rddf_json(tmp_path, clean_env):
+    """loop.yaml overrides .rddf.json."""
+    (tmp_path / ".rddf.json").write_text(json.dumps({"interaction": {"mode": "menu"}}))
     (tmp_path / "loop.yaml").write_text(yaml.dump({"interaction": {"mode": "loop"}}))
     parser = ConfigParser(project_root=str(tmp_path))
     config = parser.parse()
@@ -44,9 +44,9 @@ def test_priority_loop_yaml_over_spec_workflow_json(tmp_path, clean_env):
 
 
 def test_env_var_overrides_file_config(tmp_path, clean_env):
-    """SPEC_WORKFLOW_MODE env var overrides .spec-workflow.json."""
-    (tmp_path / ".spec-workflow.json").write_text(json.dumps({"interaction": {"mode": "menu"}}))
-    clean_env.setenv("SPEC_WORKFLOW_MODE", "loop")
+    """RDDF_MODE env var overrides .rddf.json."""
+    (tmp_path / ".rddf.json").write_text(json.dumps({"interaction": {"mode": "menu"}}))
+    clean_env.setenv("RDDF_MODE", "loop")
     parser = ConfigParser(project_root=str(tmp_path))
     config = parser.parse()
     assert config["interaction"]["mode"] == "loop"
@@ -54,7 +54,7 @@ def test_env_var_overrides_file_config(tmp_path, clean_env):
 
 def test_invalid_mode_rejected(tmp_path, clean_env):
     """An invalid mode value produces ConfigError with clear message."""
-    (tmp_path / ".spec-workflow.json").write_text(json.dumps({"interaction": {"mode": "invalid_mode"}}))
+    (tmp_path / ".rddf.json").write_text(json.dumps({"interaction": {"mode": "invalid_mode"}}))
     parser = ConfigParser(project_root=str(tmp_path))
     with pytest.raises(ConfigError, match="invalid_mode"):
         parser.parse()
@@ -62,15 +62,15 @@ def test_invalid_mode_rejected(tmp_path, clean_env):
 
 def test_negative_max_iterations_rejected(tmp_path, clean_env):
     """max_iterations must be > 0."""
-    (tmp_path / ".spec-workflow.json").write_text(json.dumps({"loop": {"max_iterations": -1}}))
+    (tmp_path / ".rddf.json").write_text(json.dumps({"loop": {"max_iterations": -1}}))
     parser = ConfigParser(project_root=str(tmp_path))
     with pytest.raises(ConfigError, match="max_iterations"):
         parser.parse()
 
 
 def test_type_coercion_for_env_vars(tmp_path, clean_env):
-    """Env var SPEC_WORKFLOW_MAX_ITERATIONS=200 is parsed as int."""
-    clean_env.setenv("SPEC_WORKFLOW_MAX_ITERATIONS", "200")
+    """Env var RDDF_MAX_ITERATIONS=200 is parsed as int."""
+    clean_env.setenv("RDDF_MAX_ITERATIONS", "200")
     parser = ConfigParser(project_root=str(tmp_path))
     config = parser.parse()
     assert config["loop"]["max_iterations"] == 200

@@ -62,7 +62,7 @@ def test_seven_builtin_actions_registered():
 
 
 def test_load_plugin_actions_empty_when_dir_missing(tmp_path, monkeypatch):
-    """No error when .spec-workflow/actions/ doesn't exist."""
+    """No error when .rddf/actions/ doesn't exist."""
     monkeypatch.chdir(tmp_path)
     from skills._lib.actions import load_plugin_actions
 

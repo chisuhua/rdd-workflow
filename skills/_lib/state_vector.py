@@ -1,6 +1,6 @@
 """Unified state vector — single source of truth for spec-workflow v2.
 
-Stored as JSON at `.spec-workflow/state-vector.json`. All writes are atomic
+Stored as JSON at `.rddf/state/state-vector.json`. All writes are atomic
 (write-temp-then-rename) and protected by a `FileLock` (10s timeout). All
 writes are schema-validated (JSON Schema draft-07) and checksummed
 (SHA-256 of canonical JSON) for corruption detection.
