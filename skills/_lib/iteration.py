@@ -43,7 +43,7 @@ SCHEMA_PATH = os.path.join(
     os.path.dirname(__file__), "schemas", "iteration_schema.json"
 )
 _DEFAULT_PHASE = "default"
-_VALID_STATUSES = ("proposed", "in_worktree", "completed", "archived")
+_VALID_STATUSES = ("proposed", "in_worktree", "review", "completed", "archived")
 
 # Sentinel for distinguishing "argument not passed" from "argument passed
 # as None". Used by set_deps_info so callers can explicitly clear a
@@ -177,7 +177,7 @@ def _merge_by_name(existing: dict, incoming: dict) -> dict:
 def create_empty(current_phase: str = _DEFAULT_PHASE) -> dict:
     """Return a fresh empty iteration state. Useful for `skill_use("status", "iteration", "init")`."""
     return {
-        "version": 1,
+        "version": 2,
         "updated_at": _now_iso(),
         "current_phase": current_phase,
         "changes": [],

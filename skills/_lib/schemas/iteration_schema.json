@@ -9,8 +9,8 @@
   "properties": {
     "version": {
       "type": "integer",
-      "const": 1,
-      "description": "Schema version. Currently 1."
+      "const": 2,
+      "description": "Schema version. v2: added 'review' status to changes."
     },
     "updated_at": {
       "type": "string",
@@ -47,7 +47,7 @@
           },
           "status": {
             "type": "string",
-            "enum": ["proposed", "in_worktree", "completed", "archived"],
+            "enum": ["proposed", "in_worktree", "review", "completed", "archived"],
             "description": "Lifecycle status. Updated by propose/guide-ship/execute/archive hooks."
           },
           "added_at": {

@@ -109,6 +109,32 @@ def _check_tests_pass(ctx: dict) -> tuple[bool, Optional[str]]:
     return (result.returncode == 0, None)
 
 
+def _check_review_debt_recorded(ctx: dict) -> tuple[bool, Optional[str]]:
+    import json, os, subprocess
+    try:
+        result = subprocess.run(
+            ["git", "diff", "HEAD", "--", "*.cpp", "*.h", "*.py", "*.ts"],
+            capture_output=True, text=True, timeout=10,
+        )
+        new_todos = [
+            l for l in result.stdout.split('\n')
+            if l.startswith('+') and any(t in l for t in ('TODO', 'FIXME', 'HACK'))
+        ]
+        if not new_todos:
+            return (True, None)
+        if not os.path.isfile("proposal-suggestions.md"):
+            return (False, "warning")
+        with open("proposal-suggestions.md") as f:
+            entries = json.load(f)
+        debt_names = {
+            e['name'] for e in entries
+            if isinstance(e, dict) and e.get('type') == 'debt'
+        }
+        return (True, None) if debt_names else (False, "warning")
+    except Exception:
+        return (True, None)
+
+
 _DEFAULT_CHECKS = {
     "arch_done": [
         Check("adr_exists", _check_adr_exists, "ADR directory missing or empty", "Create ADRs: mkdir -p docs/adr && touch docs/adr/ADR-0001.md", "error"),
@@ -124,6 +150,9 @@ _DEFAULT_CHECKS = {
         Check("worktrees_empty", _check_worktrees_empty, "Active worktrees remain", "git worktree remove .rddf/wt/<name>", "error"),
         Check("archive_empty", _check_archive_empty, "Archive not empty", "Verify archive/", "error"),
         Check("tests_pass", _check_tests_pass, "Tests failing", "Run: pytest tests/ -v", "error"),
+        Check("review_debt_recorded", _check_review_debt_recorded,
+              "execute 后债务未在 proposal-suggestions.md 中记录",
+              "运行 Phase 2.5 review 或选择跳过 (debt 可 deferred)", "warning"),
     ],
 }
 

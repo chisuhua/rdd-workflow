@@ -298,6 +298,28 @@ print(f'phase: \"$CURRENT_PHASE\"')
 print(f'category: \"{category}\"')
 "
 }
+
+# 推断 change 工作类型：functional / debt / refactor
+infer_type() {
+    local source=$1
+    local description=$2
+    local priority=$3
+    
+    python3 -c "
+source = '$source'
+desc = '''$description'''
+priority = '$priority'
+
+# 基于来源和描述推断类型
+combined = (source + desc).lower()
+if any(k in combined for k in ['debt', '债务', '清理遗留', 'cleanup-legacy', 'tech-debt']):
+    print('debt')
+elif any(k in desc.lower() for k in ['重构', 'refactor', '重写', 'rewrite']):
+    print('refactor')
+else:
+    print('functional')
+"
+}
 ```
 
 **建议条目格式**（含结构化需求描述 + 路线图元数据）：

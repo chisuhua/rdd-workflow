@@ -25,7 +25,8 @@ element of the array is a suggestion object.
     "phase": "phase-1",
     "category": "arch-design",
     "description": "## 架构依据\n- ADR-033 §3.2: ...\n## 范围\n- In Scope: ...\n- Out Scope: ...",
-    "effort": "2-3天"
+    "effort": "2-3天",
+    "type": "functional"
   }
 ]
 ```
@@ -42,6 +43,7 @@ element of the array is a suggestion object.
 | `category`    | string | yes      | Task category id (e.g. `arch-design`, `infra-setup`, `core-test`, `core-impl`) or `general`.      |
 | `description` | string | yes      | Multi-line Markdown with `##` headers (5 sections — see below). `\\n` separates lines in JSON.   |
 | `effort`      | string | no       | Free-form effort estimate (e.g. `2-3天`, `1w`). Optional but recommended.                         |
+| `type`        | string | no       | One of `"functional"` (default), `"debt"`, or `"refactor"`. Reviews and sprint planning filter on this field. |
 
 ### 5-section description contract
 
@@ -143,6 +145,7 @@ entry = {
         "- Out Scope: archive/ 目录\n"
     ),
     "effort": "2-3天",
+    "type": "functional",
 }
 
 with open("proposal-suggestions.md", "w") as f:
