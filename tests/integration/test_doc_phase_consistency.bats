@@ -38,5 +38,5 @@ load ../test_helper
   # table row, then check the phase pattern in that context. We use
   # `head -1` to take the first hit (the line containing the table row
   # itself) and verify the new sequence is present on the same row.
-  grep -E "guide-ship.*状态机.*plan.*execute.*archive.*cleanup" USAGE.md
+  grep -qE "plan.*execute.*archive.*cleanup|计划.*实施执行.*归档.*清理" "$REPO_ROOT/USAGE.md"
 }

@@ -16,10 +16,11 @@ load test_helper
   [ "$major" -ge 1 ]
 }
 
-@test "all 9 skill files exist" {
+@test "all 10 skill files exist" {
   [ -f "skills/INSTALL.md" ]
   [ -f "skills/guide.md" ]
-  [ -f "skills/guide-spec.md" ]
+  [ -f "skills/guide-arch.md" ]
+  [ -f "skills/guide-plan.md" ]
   [ -f "skills/guide-ship.md" ]
   [ -f "skills/propose.md" ]
   [ -f "skills/execute.md" ]

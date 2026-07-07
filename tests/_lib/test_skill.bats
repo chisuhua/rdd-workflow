@@ -26,8 +26,8 @@ load_lib skill
   [ "$output" = "install" ]
 }
 
-@test "skill_meta_field returns semver version for guide-spec.md" {
-  run skill_meta_field skills/guide-spec.md version
+@test "skill_meta_field returns semver version for guide-arch.md" {
+  run skill_meta_field skills/guide-arch.md version
   [ "$status" -eq 0 ]
   [[ "$output" =~ ^[0-9]+\.[0-9]+$ ]]
 }

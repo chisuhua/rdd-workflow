@@ -7,7 +7,7 @@
 # Locks three properties after unifying skill frontmatter version semantics:
 #   1. All skill files have version: X.Y (semver-like major.minor) format.
 #   2. README.md documents the new version + evolved-from semantics.
-#   3. guide-spec, guide-ship, propose all carry evolved-from annotations
+#   3. guide-arch, guide-plan, guide-ship, propose all carry evolved-from annotations
 #      documenting their split / iteration lineage.
 #
 # Replaces the legacy `generatedBy: X.Y` (pre 2026-06-04) with the new
@@ -39,8 +39,8 @@ load ../test_helper
 # 3. Skills with evolved-from have it documented
 # -----------------------------------------------------------------------
 @test "Skills with evolved-from have it documented" {
-  # guide-spec, guide-ship, propose should have evolved-from
-  for f in skills/guide-spec.md skills/guide-ship.md skills/propose.md; do
+  # guide-arch, guide-plan, guide-ship, propose should have evolved-from
+  for f in skills/guide-arch.md skills/guide-plan.md skills/guide-ship.md skills/propose.md; do
     grep -qE "^[[:space:]]*evolved-from:" "$f" || { echo "FAIL: $f missing evolved-from"; return 1; }
   done
 }

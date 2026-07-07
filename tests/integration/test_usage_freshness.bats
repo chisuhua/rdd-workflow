@@ -2,7 +2,7 @@
 
 load ../test_helper
 
-# P3-1 + P3-2: USAGE.md must reflect the new entry points (guide / guide-spec /
+# P3-1 + P3-2: USAGE.md must reflect the new entry points (guide / guide-arch / guide-plan /
 # guide-ship) and must NOT contain stale references to the pre-refactor
 # migration note or the deprecated workflow-state.md / workflow-progress.md
 # state files. These tests lock the documentation against future regression
@@ -23,9 +23,10 @@ load ../test_helper
   ! grep -q "workflow-progress\.md" USAGE.md
 }
 
-@test "USAGE.md example shows new entry points (guide / guide-spec / guide-ship)" {
+@test "USAGE.md example shows new entry points (guide / guide-arch / guide-plan / guide-ship)" {
   [ -f "USAGE.md" ]
-  grep -qE 'skill_use\("guide-spec"\)' USAGE.md
+  grep -qE 'skill_use\("guide-arch"\)' USAGE.md
+  grep -qE 'skill_use\("guide-plan"\)' USAGE.md
   grep -qE 'skill_use\("guide-ship"\)' USAGE.md
   grep -qE 'skill_use\("guide"\)' USAGE.md
 }

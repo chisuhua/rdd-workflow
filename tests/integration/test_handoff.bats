@@ -4,7 +4,7 @@
 #
 # This file locks three properties into the source:
 #   1. `.rddf/state/handoff.json` documents `.handoff.json` as a tracked state file
-#   2. `skills/guide-spec.md` writes `.handoff.json` at Phase 3 (spec-done exit)
+#   2. `skills/guide-plan.md` writes `.handoff.json` at plan-done exit
 #   3. `skills/guide-ship.md` reads `.handoff.json` at Phase 1 (entry)
 #
 # All three are static grep tests against the markdown source — full
@@ -20,22 +20,22 @@ load ../test_helper
   grep -q ".handoff.json" "$REPO_ROOT/.rddf/state/index.md"
   # 2. The handoff role is described (Chinese or English token)
   grep -qE "handoff|交接" "$REPO_ROOT/.rddf/state/index.md"
-  # 3. spec side is named as writer
-  grep -q "guide-spec.md" "$REPO_ROOT/.rddf/state/index.md"
+  # 3. plan side is named as writer
+  grep -q "guide-plan.md" "$REPO_ROOT/.rddf/state/index.md"
   # 4. ship side is named as reader
   grep -q "guide-ship.md" "$REPO_ROOT/.rddf/state/index.md"
 }
 
-@test "guide-spec.md writes handoff.json at Phase 3 (spec-done exit)" {
-  [ -f "$REPO_ROOT/skills/guide-spec.md" ]
+@test "guide-plan.md writes handoff.json at plan-done exit" {
+  [ -f "$REPO_ROOT/skills/guide-plan.md" ]
   # 1. handoff.json is mentioned in the doc
-  grep -q "handoff.json" "$REPO_ROOT/skills/guide-spec.md"
-  # 2. spec_complete_at field is written
-  grep -q "spec_complete_at" "$REPO_ROOT/skills/guide-spec.md"
-  # 3. The write happens after the exit guard (lines mention "Handoff state write" section)
-  grep -q "Handoff state write" "$REPO_ROOT/skills/guide-spec.md"
+  grep -q "handoff.json" "$REPO_ROOT/skills/guide-plan.md"
+  # 2. plan_complete_at field is written
+  grep -q "plan_complete_at" "$REPO_ROOT/skills/guide-plan.md"
+  # 3. The write happens after the exit guard
+  grep -q "Handoff state write" "$REPO_ROOT/skills/guide-plan.md"
   # 4. current_change field is recorded
-  grep -q "current_change" "$REPO_ROOT/skills/guide-spec.md"
+  grep -q "current_change" "$REPO_ROOT/skills/guide-plan.md"
 }
 
 @test "guide-ship.md reads handoff.json at Phase 1 (entry)" {

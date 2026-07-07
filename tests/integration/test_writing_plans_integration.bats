@@ -174,9 +174,9 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 
 # === 6. INSTALL.md 注册新 skills ===
 
-@test "INSTALL.md registers 13 skills including spec-workflow-writing-plans" {
+@test "INSTALL.md registers 12 skills including spec-workflow-writing-plans" {
     local f="$REPO_ROOT_ORIGIN/skills/INSTALL.md"
-    grep -qE '全部 13 个子技能' "$f"
+    grep -qE '全部 12 个子技能' "$f"
     grep -qE 'spec-workflow-writing-plans' "$f"
     ! grep -qE 'spec-workflow-executing-plans' "$f"
     ! grep -qE 'prometheus-planning' "$f"
