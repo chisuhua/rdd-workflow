@@ -16,7 +16,7 @@
 
 **约束**:
 - **菜单不能完全移除**: 是 human-in-loop 的核心机制
-- **必须可配置**: 用户可通过 `.spec-workflow.json` 自定义关键节点列表
+- **必须可配置**: 用户可通过 `.rddf.json` 自定义关键节点列表
 - **AI 助手兼容**: 菜单必须支持环境变量或非阻塞输入
 
 **设计原则**:
@@ -220,7 +220,7 @@ show_menu() {
     echo "$menu_content"
     
     # 非阻塞读取 (支持环境变量覆盖)
-    local choice="${SPEC_WORKFLOW_MENU_CHOICE:-}"
+    local choice="${RDDF_MENU_CHOICE:-}"
     if [ -z "$choice" ]; then
         # interactive 模式：读取用户输入
         read -r choice
@@ -237,7 +237,7 @@ can_skip_node() {
     local node_id="$1"
     
     # 检查配置
-    local skip_config=$(jq -r ".interaction.menu.human_in_loop_nodes[] | select(. == \"$node_id\") | .skip_if" .spec-workflow.json 2>/dev/null)
+    local skip_config=$(jq -r ".interaction.menu.human_in_loop_nodes[] | select(. == \"$node_id\") | .skip_if" .rddf.json 2>/dev/null)
     
     if [ "$skip_config" = "always" ]; then
         return 0
@@ -256,10 +256,10 @@ can_skip_node() {
 
 | 环境变量 | 用途 | 示例 |
 |---------|------|------|
-| `SPEC_WORKFLOW_MENU_CHOICE` | 预设菜单选择（AI 助手用） | `SPEC_WORKFLOW_MENU_CHOICE=1 skill_use("loop")` |
-| `SPEC_WORKFLOW_INTERACTION_MODE` | 交互模式 | `loop`, `menu`, `hybrid` |
-| `SPEC_WORKFLOW_SKIP_NODES` | 跳过节点列表（逗号分隔） | `plan.change_select,ship.archive_confirm` |
-| `SPEC_WORKFLOW_TIMEOUT` | 菜单超时（秒） | `30` (超时使用默认值) |
+| `RDDF_MENU_CHOICE` | 预设菜单选择（AI 助手用） | `RDDF_MENU_CHOICE=1 skill_use("loop")` |
+| `RDDF_INTERACTION_MODE` | 交互模式 | `loop`, `menu`, `hybrid` |
+| `RDDF_SKIP_NODES` | 跳过节点列表（逗号分隔） | `plan.change_select,ship.archive_confirm` |
+| `RDDF_TIMEOUT` | 菜单超时（秒） | `30` (超时使用默认值) |
 
 ### 配置文件扩展
 
@@ -298,7 +298,7 @@ can_skip_node() {
 - **In Scope**:
   - 新增 `skills/_lib/interaction.sh` (菜单系统实现)
   - 修改 `skills/guide-arch.md`、`skills/guide-plan.md`、`skills/guide-ship.md` (插入关键节点)
-  - 更新 `.spec-workflow.json` Schema (human_in_loop_nodes 配置)
+  - 更新 `.rddf.json` Schema (human_in_loop_nodes 配置)
   - 新增菜单单元测试
   
 - **Out Scope**:
@@ -339,7 +339,7 @@ can_skip_node() {
 - [ ] 添加菜单单元测试（非阻塞、环境变量、超时）
 - [ ] 添加集成测试（hybrid 模式 × 关键节点）
 - [ ] 编写菜单系统文档和配置示例
-- [ ] 提供默认 `.spec-workflow.json` 模板
+- [ ] 提供默认 `.rddf.json` 模板
 
 ## References
 

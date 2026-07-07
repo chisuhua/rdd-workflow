@@ -31,9 +31,9 @@ spec-workflow v1.x 采用**菜单驱动**的用户交互模式：用户在每个
 
 ```bash
 # 配置方式 1: 环境变量
-export SPEC_WORKFLOW_INTERACTION_MODE="loop|menu|hybrid"
+export RDDF_INTERACTION_MODE="loop|menu|hybrid"
 
-# 配置方式 2: 项目级配置 (.spec-workflow.json)
+# 配置方式 2: 项目级配置 (.rddf.json)
 {
   "interaction": {
     "mode": "hybrid",
@@ -205,7 +205,7 @@ interaction:
 |--------|---------|------|---------|
 | 1 (最高) | 命令行参数 | `skill_use("loop", {goal: "..."})` | 临时覆盖 |
 | 2 | loop.yaml | `.spec-workflow/loops/complete-all-changes.yaml` | 项目级便携规范 |
-| 3 | .spec-workflow.json | `/path/to/project/.spec-workflow.json` | 项目级配置 |
+| 3 | .rddf.json | `/path/to/project/.rddf.json` | 项目级配置 |
 | 4 | 用户级配置 | `~/.spec-workflow/config.json` | 用户全局默认 |
 | 5 (最低) | 内置默认值 | Loop 引擎硬编码 | 无配置时回退 |
 
@@ -251,7 +251,7 @@ interaction:
 
 - **In Scope**: 
   - 新增 `skills/loop-engine.md` (Loop 引擎)
-  - 新增 `.spec-workflow.json` 配置文件支持
+  - 新增 `.rddf.json` 配置文件支持
   - 修改 `skills/guide-spec.md`、`skills/guide-ship.md` 支持三种模式
   - 新增 `skills/_lib/interaction.sh` (交互模式管理)
   
@@ -281,7 +281,7 @@ interaction:
 
 ### 负面 / 风险
 
-- **配置复杂度**: 新增配置文件，用户需要学习 `.spec-workflow.json` 格式
+- **配置复杂度**: 新增配置文件，用户需要学习 `.rddf.json` 格式
   - **缓解**: 提供 `spec-workflow init` 命令生成默认配置
 - **模式切换成本**: 在不同模式间切换可能需要重新理解工作流
   - **缓解**: 提供 `spec-workflow status` 显示当前模式和可用操作
@@ -290,7 +290,7 @@ interaction:
 
 ### 后续待办
 
-- [ ] 实现 `.spec-workflow.json` 配置解析器 (`skills/_lib/config.sh`)
+- [ ] 实现 `.rddf.json` 配置解析器 (`skills/_lib/config.sh`)
 - [ ] 实现 `skills/loop-engine.md` (Loop 引擎核心)
 - [ ] 实现 `skills/_lib/interaction.sh` (交互模式管理)
 - [ ] 更新 `guide-spec.md` 和 `guide-ship.md` 支持三种模式

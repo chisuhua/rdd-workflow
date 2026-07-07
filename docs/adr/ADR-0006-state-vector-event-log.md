@@ -47,7 +47,7 @@ spec-workflow v1.x 使用 **13 个分散的状态文件**（`.rddf/state/` 目�
     "description": "complete all pending changes",
     "mode": "hybrid",
     "started_at": "2026-06-22T10:00:00Z",
-    "config_file": ".spec-workflow.json"
+    "config_file": ".rddf.json"
   },
   
   "arch_side": {
