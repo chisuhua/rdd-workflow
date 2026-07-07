@@ -659,7 +659,7 @@ echo ""
 
 **写入 handoff 状态**：
 
-arch → plan 交接通过 `.rddf/state/.arch-handoff.json` 软状态文件传递。arch-done 验证通过后立即写入，记录 arch_complete_at、adr_count、roadmap_exists、plan_started_at（初值 null）。文件不被 git 跟踪（`.gitignore` 已排除 `.rddf/state/`），缺失时 plan 端静默回退到旧行为。
+arch → plan 交接通过 `.rddf/state/.arch-handoff.json` 软状态文件传递。arch-done 验证通过后立即写入，记录 arch_complete_at、adr_count、completed_adr_ids（所有已创建的 ADR 编号列表）、current_phase（当前 roadmap 阶段）、plan_started_at（初值 null）。文件不被 git 跟踪（`.gitignore` 已排除 `.rddf/state/`），缺失时 plan 端硬阻断。
 
 ```bash
 # P2-5 模式: 写入 handoff 状态,作为 arch→plan 的软交接信号
@@ -670,19 +670,33 @@ mkdir -p "$PROJECT_ROOT/.rddf/state"
 # 重新获取 ADR 数量（确保与门控检查一致）
 ADR_COUNT=$(ls -d "$PROJECT_ROOT/docs/adr/ADR-0"*.md 2>/dev/null | grep -v "ADR-0000-template" | wc -l)
 
+# 收集所有已创建的 ADR 编号（供 plan 端读取，避免重复扫描源文件）
+ADR_IDS=$(ls -d "$PROJECT_ROOT/docs/adr/ADR-0"*.md 2>/dev/null \
+  | grep -v "ADR-0000-template" \
+  | sed 's|.*/ADR-||;s|\.md$||' \
+  | sort -n | paste -sd ',' - || echo "")
+ADR_IDS_JSON=$(echo "$ADR_IDS" | sed 's/,/","/g')
+[ -n "$ADR_IDS_JSON" ] && ADR_IDS_JSON="\"$ADR_IDS_JSON\""
+
+# 读取当前 roadmap 阶段
+CURRENT_PHASE=$(grep -m1 '\*\*当前阶段\*\*' "$PROJECT_ROOT/roadmap.md" 2>/dev/null \
+  | sed 's/.*\*\*当前阶段\*\*:\s*//' | tr -d '[:space:]' || echo "default")
+
 cat > "$HANDOFF_FILE" << EOF
 {
   "arch_complete_at": "$(date -Iseconds)",
   "adr_count": $ADR_COUNT,
+  "completed_adr_ids": [$ADR_IDS_JSON],
   "roadmap_exists": true,
+  "current_phase": "$CURRENT_PHASE",
   "plan_started_at": null
 }
 EOF
 
 if [ -f "$HANDOFF_FILE" ]; then
-    echo "✅ Handoff state written: .rddf/state/.arch-handoff.json (adr_count=$ADR_COUNT, roadmap_exists=true)"
+    echo "✅ Handoff state written: .rddf/state/.arch-handoff.json (adr_count=$ADR_COUNT, phase=$CURRENT_PHASE)"
 else
-    echo "⚠️  Handoff state write failed, plan 端将使用旧行为"
+    echo "⚠️  Handoff state write failed, plan 端将硬阻断"
 fi
 ```
 
