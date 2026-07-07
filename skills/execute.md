@@ -300,6 +300,30 @@ for each work_unit in plan.tasks (按依赖顺序):
 COMPLETE=$(grep -c '^- \[x\]' "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/tasks.md")
 TOTAL=$(grep -c '^- \[' "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/tasks.md")
 
+# 同步 iteration.json (current sprint tracker). 失败 graceful 退出.
+# v2.0.2 安全修复: bash 变量通过环境变量传递 (os.environ),
+# 不用 '$VAR' 直接拼到 Python 源码. 避免单引号路径/注入风险.
+PROJECT_ROOT="$PROJECT_ROOT" \
+CHANGE_NAME="$CHANGE_NAME" \
+COMPLETE="$COMPLETE" \
+TOTAL="$TOTAL" \
+python3 -c '
+import os, sys
+try:
+    from skills._lib import iteration as it_mod
+    data = it_mod.load(os.environ["PROJECT_ROOT"])
+    data = it_mod.set_tasks_done(
+        data,
+        os.environ["CHANGE_NAME"],
+        done=int(os.environ.get("COMPLETE", "0") or 0),
+        total=int(os.environ.get("TOTAL", "0") or 0),
+    )
+    it_mod.save(os.environ["PROJECT_ROOT"], data)
+except Exception as e:
+    print(f"⚠️  iteration.json 同步失败: {e}", file=sys.stderr)
+    sys.exit(0)
+' 2>&1 | grep -v "^$" || true
+
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "✅ 执行完成"

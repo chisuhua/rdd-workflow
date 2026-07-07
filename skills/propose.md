@@ -562,6 +562,55 @@ except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
     sys.exit(0)  # graceful exit, 不中断 propose 流程
 "
         fi
+
+        # ---------------------------------------------------------------
+        # Step 4d+: 更新 iteration.json (current sprint tracker)
+        # v2.0 新增: 持久化当前迭代视图, 供 status Mode E 和 roadmap.md
+        # AUTO-SPRINT 段读取. 失败 graceful exit (不影响 propose 主流程).
+        #
+        # v2.0.2 安全修复: bash 变量通过环境变量传递 (os.environ),
+        # 不再用 '$VAR' 直接拼到 Python 源码. 避免:
+        #   - 路径含单引号 (e.g. /home/o'reilly/) 引发 SyntaxError
+        #   - 注入向量 (change name 含 ') os.system(...) 执行任意代码)
+        # ---------------------------------------------------------------
+        # 兼容老调用方: 若上游未设 $CHANGE_NAME (e.g. 早期手抄文档),
+        # 回退到 <name> 占位符, 由 agent 手动替换.
+        CHANGE_NAME="${CHANGE_NAME:-<name>}"
+        PROJECT_ROOT="$PROJECT_ROOT" \
+        CHANGE_NAME="$CHANGE_NAME" \
+        CHANGE_PHASE="$CHANGE_PHASE" \
+        CHANGE_CATEGORY="$CHANGE_CATEGORY" \
+        PRIORITY="$PRIORITY" \
+        python3 -c '
+import os, sys
+try:
+    from skills._lib import iteration as it_mod
+except ImportError as e:
+    print(f"⚠️  iteration 模块不可用, 跳过: {e}", file=sys.stderr)
+    sys.exit(0)
+try:
+    data = it_mod.load(os.environ["PROJECT_ROOT"])
+    data = it_mod.add_or_update_change(
+        data,
+        name=os.environ["CHANGE_NAME"],
+        status="proposed",
+        phase=os.environ.get("CHANGE_PHASE"),
+        category=os.environ.get("CHANGE_CATEGORY"),
+        priority=os.environ.get("PRIORITY"),
+    )
+    it_mod.save(os.environ["PROJECT_ROOT"], data)
+    print("  已更新: iteration.json (status=proposed)")
+except (ImportError, FileNotFoundError) as e:
+    print(f"⚠️  iteration 模块不可用, 跳过: {e}", file=sys.stderr)
+    sys.exit(0)
+except Exception as e:
+    print(f"⚠️  更新 iteration.json 失败: {e}", file=sys.stderr)
+    sys.exit(0)
+'
+except Exception as e:
+    print(f'⚠️  更新 iteration.json 失败: {e}', file=sys.stderr)
+    sys.exit(0)  # graceful exit
+" 2>&1 | grep -v "^$" | sed 's/^/  /' || true
     fi
     
     # ---------------------------------------------------------------

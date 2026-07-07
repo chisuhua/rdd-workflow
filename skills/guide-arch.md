@@ -17,7 +17,7 @@ metadata:
 **职责边界**：
 - **拥有**：`docs/adr/ADR-*.md`（架构决策记录）、`roadmap.md` + `roadmap-meta.yaml`（路线图）、`docs/architecture/*-gap-analysis.md`（架构差距分析）
 - **不拥有**：`openspec/changes/<name>/{proposal,design,tasks}.md`（属于 `guide-plan`）、git worktree（属于 `guide-ship`）
-- **状态持久化**：arch-done 时写入 `.spec-workflow/.arch-handoff.json`（不被 git 跟踪，缺失时 plan 端静默回退）
+- **状态持久化**：arch-done 时写入 `.rddf/state/.arch-handoff.json`（不被 git 跟踪，缺失时 plan 端静默回退）
 - **人工介入程度**：**高** —— arch 阶段是三阶段中人工介入最多的，需要架构师思考、审查、决策
 
 **调用方式**：
@@ -47,7 +47,7 @@ skill_use("guide-arch")   # 无参数版本
    arch 端                                              plan 端
    owns: docs/adr/ADR-*.md, roadmap.md,                owns: openspec/changes/<name>/
          docs/architecture/*-gap-analysis.md                  {proposal,design,tasks}.md
-   exits: .spec-workflow/.arch-handoff.json                     exits: .spec-workflow/.plan-handoff.json
+   exits: .rddf/state/.arch-handoff.json                     exits: .rddf/state/.plan-handoff.json
 ```
 
 **为什么这样切**（节选自 ADR-0003）：
@@ -70,7 +70,7 @@ skill_use("guide-arch")   # 无参数版本
 - 通过 adr-create 阶段生成/更新 `docs/adr/ADR-*.md`
 - 通过 architecture 阶段生成/更新 `docs/architecture/*-gap-analysis.md`
 - 通过 roadmap-define 阶段生成/更新 `roadmap.md` + `roadmap-meta.yaml`（委托给 `roadmap` 技能）
-- arch-done 时写入 `.spec-workflow/.arch-handoff.json`
+- arch-done 时写入 `.rddf/state/.arch-handoff.json`
 
 ---
 
@@ -505,7 +505,7 @@ cat "$SELECTED"
 ```bash
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
-STATE_FILE="$PROJECT_ROOT/.spec-workflow/.roadmap-state.json"
+STATE_FILE="$PROJECT_ROOT/.rddf/state/.roadmap-state.json"
 
 echo "=== 路线图定义 ==="
 echo ""
@@ -527,12 +527,12 @@ else
     skill_use("roadmap", "init")
 fi
 
-# P1-6 兼容模式检测：当 roadmap.md 不存在但 .spec-workflow/.roadmap-state.json 仍存在
+# P1-6 兼容模式检测：当 roadmap.md 不存在但 .rddf/state/.roadmap-state.json 仍存在
 # 说明: 之前启用过 roadmap,后来切换到兼容模式;或 roadmap.md 被误删/未提交
 # 此时不自动恢复,只提示用户,避免误覆盖用户数据
 if [ ! -f "$ROADMAP_FILE" ] && [ -f "$STATE_FILE" ]; then
     echo ""
-    echo "⚠️  roadmap.md 已不存在，但 .spec-workflow/.roadmap-state.json 存在"
+    echo "⚠️  roadmap.md 已不存在，但 .rddf/state/.roadmap-state.json 存在"
     echo "   推测：roadmap 模式已切换为兼容模式"
     echo "   已有的 roadmap-meta.yaml 不会自动更新 .roadmap-state.json"
     echo "   如需重新启用 roadmap，请运行：skill_use(\"roadmap\", \"init\")"
@@ -660,13 +660,13 @@ echo ""
 
 **写入 handoff 状态**：
 
-arch → plan 交接通过 `.spec-workflow/.arch-handoff.json` 软状态文件传递。arch-done 验证通过后立即写入，记录 arch_complete_at、adr_count、roadmap_exists、plan_started_at（初值 null）。文件不被 git 跟踪（`.gitignore` 已排除 `.spec-workflow/`），缺失时 plan 端静默回退到旧行为。
+arch → plan 交接通过 `.rddf/state/.arch-handoff.json` 软状态文件传递。arch-done 验证通过后立即写入，记录 arch_complete_at、adr_count、roadmap_exists、plan_started_at（初值 null）。文件不被 git 跟踪（`.gitignore` 已排除 `.rddf/state/`），缺失时 plan 端静默回退到旧行为。
 
 ```bash
 # P2-5 模式: 写入 handoff 状态,作为 arch→plan 的软交接信号
-# 缺失 .spec-workflow 目录时静默创建 (mkdir -p),写失败不阻塞 arch-done 输出
-HANDOFF_FILE="$PROJECT_ROOT/.spec-workflow/.arch-handoff.json"
-mkdir -p "$PROJECT_ROOT/.spec-workflow"
+# 缺失 .rddf/state 目录时静默创建 (mkdir -p),写失败不阻塞 arch-done 输出
+HANDOFF_FILE="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
+mkdir -p "$PROJECT_ROOT/.rddf/state"
 
 # 重新获取 ADR 数量（确保与门控检查一致）
 ADR_COUNT=$(ls -d "$PROJECT_ROOT/docs/adr/ADR-0"*.md 2>/dev/null | grep -v "ADR-0000-template" | wc -l)
@@ -681,7 +681,7 @@ cat > "$HANDOFF_FILE" << EOF
 EOF
 
 if [ -f "$HANDOFF_FILE" ]; then
-    echo "✅ Handoff state written: .spec-workflow/.arch-handoff.json (adr_count=$ADR_COUNT, roadmap_exists=true)"
+    echo "✅ Handoff state written: .rddf/state/.arch-handoff.json (adr_count=$ADR_COUNT, roadmap_exists=true)"
 else
     echo "⚠️  Handoff state write failed, plan 端将使用旧行为"
 fi

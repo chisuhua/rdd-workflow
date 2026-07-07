@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires openspec CLI
 metadata:
   author: sisyphus
-  version: "2.0"  # P0: 新增路线图状态模式（Mode D）和阶段门控报告
+  version: "2.0"  # P0: 新增路线图状态模式（Mode D）和阶段门控报告; v2.0.1: 新增 Mode E (当前迭代视图)
 ---
 
 # OpenSpec 工作流 — Status
@@ -19,6 +19,7 @@ Mode A: 全局概览 — 无需参数，列出所有 change + worktree
 Mode B: 检测修复 — 检查具体 change 的完成状态和同步问题
 Mode C: 归档完成 — change 完成后 merge → archive → cleanup
 Mode D: 路线图状态 — 查看 roadmap 阶段进度和阶段门控
+Mode E: 当前迭代 — 列出当前 sprint 的所有 change (状态/阻塞/进度)
 ```
 
 ## 输入
@@ -27,6 +28,7 @@ Mode D: 路线图状态 — 查看 roadmap 阶段进度和阶段门控
 - change name → Mode B（单 change 详情 + 同步检测）
 - change name + 明确要求归档 → Mode C（归档流程）
 - `--roadmap` 或 `roadmap` → Mode D（路线图状态）
+- `--iteration` 或 `iteration` → Mode E（当前迭代）
 
 ## 工作目录检测（所有模式通用）
 
@@ -458,6 +460,115 @@ case "$choice" in
   *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
 esac
 ```
+
+---
+
+## 模式 E：当前迭代（v2.0 新增）
+
+读取 `.rddf/state/iteration.json` 渲染当前 sprint 视图，列出**所有 active change** 的状态、阻塞关系、任务进度、计划文件路径。供 `propose → guide-ship → execute → archive` 流程中的快速概览。
+
+### Step 1：读取 iteration.json
+
+```bash
+ITERATION_FILE="$PROJECT_ROOT/.rddf/state/iteration.json"
+
+if [ ! -f "$ITERATION_FILE" ]; then
+    echo "📭 iteration.json 不存在"
+    echo "   说明: 尚未运行过 propose (roadmap 模式)"
+    echo "   初始化: skill_use(\"propose\", \"<name>\")"
+    exit 0
+fi
+```
+
+### Step 2：渲染当前迭代表
+
+```bash
+# v2.0.2 安全修复: bash 变量通过环境变量传递 (os.environ),
+# 不用 '$VAR' 直接拼到 Python 源码. 避免单引号路径/注入风险.
+PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
+import os, sys
+from datetime import datetime, timezone
+
+try:
+    from skills._lib import iteration as it_mod
+except ImportError as e:
+    print(f"❌ iteration 模块不可用: {e}")
+    sys.exit(1)
+
+data = it_mod.load(os.environ["PROJECT_ROOT"])
+phase = data.get("current_phase", "default")
+updated_at = data.get("updated_at", "")
+
+# 渲染头
+print("📊 当前迭代视图")
+print(f"   Phase: {phase}    Updated: {updated_at}")
+print(f"   活跃: {sum(1 for c in data[\"changes\"] if c[\"status\"] in (\"proposed\", \"in_worktree\", \"completed\"))} | 已归档: {sum(1 for c in data[\"changes\"] if c[\"status\"] == \"archived\")}")
+print()
+
+active = [c for c in data["changes"] if c["status"] in ("proposed", "in_worktree", "completed")]
+if not active:
+    print("  (无 active change)")
+else:
+    print("| Change | Phase | Cat | Status | Blocker | Group | Conflicts | Tasks | Plan |")
+    print("|--------|-------|-----|--------|---------|-------|-----------|-------|------|")
+    for c in active:
+        status_icon = {"proposed": "📋", "in_worktree": "🔄", "completed": "✅"}.get(c["status"], "?")
+        blocker = c.get("blocker") or "—"
+        group = str(c.get("parallel_group", "—"))
+        conflicts = ",".join(c.get("conflicts", [])) or "—"
+        done = c.get("tasks_done", 0)
+        total = c.get("tasks_total", 0)
+        tasks = f"{done}/{total}" if total else "—"
+        plan = "✅" if c.get("plan_path") else "—"
+        print(f"| {c[\"name\"]} | {c.get(\"phase\", \"—\")[:8]} | {(c.get(\"category\") or \"—\")[:10]} | {status_icon} {c[\"status\"]} | {blocker} | {group} | {conflicts} | {tasks} | {plan} |")
+    print()
+
+# 渲染已归档段
+archived = it_mod.list_archived(data)
+if archived:
+    print("🗄️  最近归档 (top 5):")
+    for c in archived[:5]:
+        print(f"   ✅ {c[\"name\"]}  ({c.get(\"archived_at\", \"\")})")
+    if len(archived) > 5:
+        print(f"   ... (共 {len(archived)} 个归档)")
+    print()
+
+# 漂移提示
+stale = [c for c in active if c.get("last_deps_at")]
+now = datetime.now(timezone.utc)
+for c in stale:
+    last = datetime.fromisoformat(c["last_deps_at"].replace("Z", "+00:00"))
+    age_hours = (now - last).total_seconds() / 3600
+    if age_hours > 24:
+        print(f"⚠️  {c[\"name\"]}: deps 信息已 {age_hours:.0f}h 未更新, 建议重跑 deps")
+'
+```
+
+### Step 3：用户操作
+
+```
+请选择:
+1. 🔄 刷新视图 (重新读取 iteration.json)
+2. 🚀 进入 guide-ship (处理 active change)
+3. 📊 查看完整依赖图 (.rddf/state/deps-output.md)
+4. ↩️ 返回主菜单
+i. 其他输入
+```
+
+**用户输入处理**：
+
+```bash
+case "$choice" in
+  1) exec $0 --iteration ;;  # 重新进入 Mode E
+  2) skill_use("guide-ship") ;;
+  3) [ -f "$PROJECT_ROOT/.rddf/state/deps-output.md" ] && cat "$PROJECT_ROOT/.rddf/state/deps-output.md" ;;
+  4) exec $0 ;;  # 返回 Mode A
+  q|quit) exit 0 ;;
+  *) echo "❌ 无效输入 '$choice'" ;;
+esac
+```
+
+**Mode E 职责说明**：此模式仅做当前 sprint 视图渲染，不修改任何文件。如需更新 iteration 字段（tasks_done 等），由 execute/archive/propose 钩子自动维护。
 
 ---
 

@@ -67,7 +67,7 @@ echo "|-----|-----------|----------|---------|"
 # 把整个表格生成放在 (cd ... && ...) 子 shell 里,这样 git show 可以用相对路径。
 (cd "$PROJECT_ROOT" 2>/dev/null && for name in $ACTIVE_CHANGES; do
     committed=$(git show HEAD:"openspec/changes/$name/.openspec.yaml" > /dev/null 2>&1 && echo "✅" || echo "⏳")
-    wt_path="$PROJECT_ROOT/.spec-workflow/wt/${name}"
+    wt_path="$PROJECT_ROOT/.rddf/wt/${name}"
     wt_exists=$([ -d "$wt_path" ] && git worktree list | grep -q "$wt_path" && echo "✅" || echo "❌")
     plan_exists=$([ -f "$wt_path/.rddf/plans/$name.md" ] 2>/dev/null && echo "✅" || echo "❌")
     echo "| $name | $committed | $wt_exists | $plan_exists |"
@@ -146,7 +146,7 @@ fi
 # ============================================================
 # HANDOFF STATE READ (P2-5)
 # ============================================================
-HANDOFF_FILE="$PROJECT_ROOT/.spec-workflow/.plan-handoff.json"
+HANDOFF_FILE="$PROJECT_ROOT/.rddf/state/.plan-handoff.json"
 if [ -f "$HANDOFF_FILE" ]; then
     echo "📋 Reading plan-done handoff state..."
     cat "$HANDOFF_FILE"
@@ -271,6 +271,48 @@ else
     fi
     echo "✅ 实施计划已生成: $PLAN_TASK_COUNT Tasks / $PLAN_STEP_COUNT Steps (TDD 5 步结构)"
 fi
+
+# ============================================================
+# v2.0 钩子: 更新 iteration.json (current sprint tracker)
+# 在计划生成成功后, 立即把 status 从 proposed 切到 in_worktree,
+# 并写入 worktree_path + plan_path + tasks_total. 失败 graceful 退出.
+# ============================================================
+# v2.0.2 安全修复: bash 变量通过环境变量传递 (os.environ),
+# 不用 '$VAR' 直接拼到 Python 源码. 避免单引号路径/注入风险.
+PROJECT_ROOT="$PROJECT_ROOT" \
+CHANGE_NAME="$CHANGE_NAME" \
+MODE="$MODE" \
+WT_PATH="$WT_PATH" \
+PLAN_STEP_COUNT="$PLAN_STEP_COUNT" \
+python3 -c '
+import os, sys
+try:
+    from skills._lib import iteration as it_mod
+except ImportError as e:
+    print(f"⚠️  iteration 模块不可用, 跳过: {e}", file=sys.stderr)
+    sys.exit(0)
+try:
+    project_root = os.environ["PROJECT_ROOT"]
+    change_name = os.environ["CHANGE_NAME"]
+    mode = os.environ.get("MODE", "")
+    wt_path = os.environ.get("WT_PATH", "")
+    plan_step_count = os.environ.get("PLAN_STEP_COUNT", "0")
+    data = it_mod.load(project_root)
+    kwargs = {
+        "name": change_name,
+        "status": "in_worktree",
+        "plan_path": f".rddf/plans/{change_name}.md",
+        "tasks_total": int(plan_step_count or 0),
+    }
+    if mode == "worktree" and wt_path:
+        kwargs["worktree_path"] = f".rddf/wt/{change_name}"
+    data = it_mod.add_or_update_change(data, **kwargs)
+    it_mod.save(project_root, data)
+    print("✅ iteration.json: status=in_worktree, plan_path 已记录")
+except Exception as e:
+    print(f"⚠️  iteration.json 更新失败 (非致命): {e}", file=sys.stderr)
+    sys.exit(0)
+' 2>&1 | grep -v "^$" || true
 ```
 
 **环境就绪 → 进入执行模式选择**：

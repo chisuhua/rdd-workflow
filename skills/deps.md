@@ -51,12 +51,12 @@ openspec/changes/<name>/
 
 ### Step 0：读取候选列表（来自 plan 的共享文件）
 
-从 plan Phase 0.5 写入的 `.spec-workflow/.deps-candidates.json` 文件读取候选 change name 列表。
+从 plan Phase 0.5 写入的 `.rddf/state/.deps-candidates.json` 文件读取候选 change name 列表。
 
 ```bash
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-DEPS_INPUT="$PROJECT_ROOT/.spec-workflow/.deps-candidates.json"
-DEPS_OUTPUT="$PROJECT_ROOT/.spec-workflow/.deps-output.md"
+DEPS_INPUT="$PROJECT_ROOT/.rddf/state/.deps-candidates.json"
+DEPS_OUTPUT="$PROJECT_ROOT/.rddf/state/.deps-output.md"
 
 if [ ! -f "$DEPS_INPUT" ]; then
   echo "❌ 找不到候选列表文件: $DEPS_INPUT"
@@ -374,12 +374,12 @@ task(
 #### 3e+. 子代理调用方式（bash runtime 包装）
 
 ```bash
-# 实际 bash runtime: 调用 task() 子代理, 写入 .spec-workflow/.deps-ai-result.json
+# 实际 bash runtime: 调用 task() 子代理, 写入 .rddf/state/.deps-ai-result.json
 # 失败条件: subagent 未安装 / 返回非零 / 输出非 JSON / 超时 → 降级
 echo "🤖 正在调用子代理进行语义级依赖分析..."
 echo "   传递 $CANDIDATES_COUNT 个 change 的 artifacts 摘要"
 
-AI_RESULT_FILE=".spec-workflow/.deps-ai-result.json"
+AI_RESULT_FILE=".rddf/state/.deps-ai-result.json"
 if [ -f "$AI_RESULT_FILE" ] && [ -n "${AI_RESULT_FILE:-}" ]; then
     # 成功路径: 子代理已写入结果
     echo "✅ AI 语义分析结果: $AI_RESULT_FILE"
@@ -390,7 +390,7 @@ else
 fi
 ```
 
-> **执行契约**: 成功路径将 JSON 写入 `.spec-workflow/.deps-ai-result.json`,失败路径将 `AI_RESULT_FILE` 置空。Step 5 heredoc 根据此变量决定 AI 建议章节内容。
+> **执行契约**: 成功路径将 JSON 写入 `.rddf/state/.deps-ai-result.json`,失败路径将 `AI_RESULT_FILE` 置空。Step 5 heredoc 根据此变量决定 AI 建议章节内容。
 
 #### 3f. 失败降级 (fallback)
 
@@ -461,10 +461,10 @@ for each change:
 
 ### Step 5：生成输出并写入文件
 
-将 5a-5e 的内容写入 `.spec-workflow/.deps-output.md`，供 plan Phase 1 消费。
+将 5a-5e 的内容写入 `.rddf/state/.deps-output.md`，供 plan Phase 1 消费。
 
 ```bash
-mkdir -p "$PROJECT_ROOT/.spec-workflow/"
+mkdir -p "$PROJECT_ROOT/.rddf/state/"
 
 # Write real output based on collected analysis.
 # NOTE: Step 2 collects per-change data in $FILES_<name>, $ADR_REFS_<name>,
@@ -569,7 +569,7 @@ EOF
 
 # 动态分支: 子代理成功 → 渲染 AI 报告; 失败 → 写入 fallback 标记
 if [ -n "${AI_RESULT_FILE:-}" ] && [ -f "$AI_RESULT_FILE" ]; then
-    # 成功路径: 解析 .spec-workflow/.deps-ai-result.json, 渲染子代理识别的依赖/建议
+    # 成功路径: 解析 .rddf/state/.deps-ai-result.json, 渲染子代理识别的依赖/建议
     cat >> "$DEPS_OUTPUT" << EOF
 
 **子代理语义分析结果** (来源: \`$AI_RESULT_FILE\`):
@@ -611,7 +611,7 @@ fi
 echo "✅ 依赖分析报告已写入: $DEPS_OUTPUT"
 ```
 
-**输出文件格式**（`.spec-workflow/.deps-output.md` 包含以下 5 个章节，所有示例值为运行时注入的模板）：
+**输出文件格式**（`.rddf/state/.deps-output.md` 包含以下 5 个章节，所有示例值为运行时注入的模板）：
 
 #### 5a. 依赖图（Mermaid 格式）
 
@@ -672,7 +672,7 @@ flowchart LR
 
 依赖 Step 3 的子代理调用结果，分两种输出模式：
 
-- **成功路径** (子代理可用): 渲染 `.spec-workflow/.deps-ai-result.json` 中的 `ai_deps` + `suggestions` 字段。
+- **成功路径** (子代理可用): 渲染 `.rddf/state/.deps-ai-result.json` 中的 `ai_deps` + `suggestions` 字段。
   消费者应将此视为**低置信度补充**，不可作为唯一决策依据。
 - **失败 / 降级路径** (子代理不可用): 写入 `⚠️ **AI 语义分析未启用 (fallback)**` 标记。
   消费者应仅依赖 Step 2 静态三轴分析 (文件冲突 / ADR 引用 / 接口依赖)。
@@ -688,7 +688,7 @@ flowchart LR
 
 ## 输出格式（消费方指南）
 
-本技能的全部输出写入 `.spec-workflow/.deps-output.md`，由 plan Phase 1 读取消费。
+本技能的全部输出写入 `.rddf/state/.deps-output.md`，由 plan Phase 1 读取消费。
 
 输出文件包含以下数据：
 
@@ -717,3 +717,131 @@ flowchart LR
 1. **不修改文件**：本技能是只读分析，不修改任何文件
 2. **分析粒度**：目前仅分析 proposal.md 和 design.md 中的显式引用，不分析代码级依赖
 3. **ADR 是关键线索**：建议在 propose 阶段写入完整的 ADR 引用链，以便依赖分析更准确
+
+---
+
+## Step 6（v2.0 新增）：同步 iteration.json
+
+deps 的静态三轴 + AI 子代理分析结果，除了写到 `.deps-output.md`（人类可读）外，也同步到 `.rddf/state/iteration.json`（机器可读 / sprint 跟踪）。这让 `status` Mode E 和 `roadmap.md` AUTO-SPRINT 段能立即反映最新的 blocker / parallel_group / conflicts。
+
+**触发位置**：Step 5 写完 deps-output.md **之后**。失败 graceful 退出（不阻塞 deps 主流程）。
+
+**实现**：
+
+```bash
+# v2.0.2 安全修复: bash 变量通过环境变量传递 (os.environ), 不用 '$VAR'
+# 直接拼到 Python 源码. 避免路径含单引号或 change name 注入.
+PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
+import os, sys, re
+from pathlib import Path
+try:
+    from skills._lib import iteration as it_mod
+    from skills._lib import deps_output as do_mod
+except ImportError as e:
+    print(f"⚠️  iteration/deps_output 模块不可用, 跳过同步: {e}", file=sys.stderr)
+    sys.exit(0)
+
+project_root = os.environ["PROJECT_ROOT"]
+deps_output_path = Path(f"{project_root}/.rddf/state/.deps-output.md")
+if not deps_output_path.exists():
+    print("⚠️  deps-output.md 不存在, 跳过 iteration 同步", file=sys.stderr)
+    sys.exit(0)
+
+# Prefer reading the structured deps-analysis.json (robust, schema-validated).
+# Fall back to parsing deps-output.md if JSON is missing/stale.
+analysis = do_mod.load_analysis(project_root)
+parsed_from = "JSON"
+
+if analysis is None:
+    parsed_from = "MARKDOWN-FALLBACK"
+    text = deps_output_path.read_text(encoding="utf-8")
+
+    # 解析 "Change 状态表" 章节 (§5b)
+    status_table = re.search(r"## Change 状态表\n\n\|.*?\n\|.*?\n((?:\|.*?\n)+)", text)
+    changes_info = {}
+    if status_table:
+        rows = status_table.group(1).strip().split("\n")
+        for idx, row in enumerate(rows):
+            cells = [c.strip() for c in row.strip("|").split("|")]
+            if len(cells) < 2:
+                continue
+            name = cells[0]
+            if not name or name == "—":
+                continue
+            blocker = cells[2] if len(cells) > 2 and cells[2] not in ("—", "") else None
+            # parallel_group 推断: 没 blocker 的为 0, 有 blocker 的按出现顺序递增
+            changes_info[name] = {
+                "blocker": blocker,
+                "parallel_group": idx if blocker else 0,
+                "conflicts": [],
+            }
+
+    # 解析 "冲突警告" 章节 (§5d)
+    conflicts_section = re.search(r"## 冲突警告.*?\n(.*?)(?=\n## |\Z)", text, re.DOTALL)
+    if conflicts_section:
+        for line in conflicts_section.group(1).split("\n"):
+            m = re.search(r"(\S+)\s+←→\s+(\S+):", line)
+            if m:
+                a, b = m.group(1), m.group(2)
+                for n in (a, b):
+                    changes_info.setdefault(n, {"blocker": None, "parallel_group": 0, "conflicts": []})
+                    existing = changes_info[n].get("conflicts", [])
+                    other = b if n == a else a
+                    if other not in existing:
+                        existing.append(other)
+                    changes_info[n]["conflicts"] = existing
+
+    # 升级为 ChangeAnalysis 格式
+    analysis_changes = []
+    for name, info in changes_info.items():
+        status = "blocked_by" if info.get("blocker") else "ready"
+        analysis_changes.append({
+            "name": name,
+            "status": status,
+            "blocker": info.get("blocker"),
+            "blocks": [],
+            "parallel_group": info.get("parallel_group", 0),
+            "conflicts": info.get("conflicts", []),
+            "confidence": "low",  # 来自 markdown fallback, 标记为低置信度
+            "recommendation": "",
+        })
+    analysis = do_mod.build_analysis(analysis_changes, fallback=True)
+
+# 写 deps-analysis.json (即使从 JSON 读的, 也重写以保证 updated_at 最新)
+try:
+    do_mod.write_analysis(project_root, analysis)
+    print(f"✅ deps-analysis.json: {len(analysis[\"changes\"])} 个 change (来源: {parsed_from})")
+except Exception as e:
+    print(f"⚠️  写 deps-analysis.json 失败 (非致命): {e}", file=sys.stderr)
+
+# 同步 iteration.json
+try:
+    count = do_mod.sync_iteration_from_analysis(project_root, it_mod)
+    if count > 0:
+        print(f"✅ iteration.json: 已同步 {count} 个 change 的 deps 信息")
+    else:
+        print("⏭️  iteration.json: 无需同步")
+except Exception as e:
+    print(f"⚠️  iteration.json 同步失败 (deps 主流程仍成功): {e}", file=sys.stderr)
+    sys.exit(0)
+' 2>&1 | grep -v "^$" || true
+```
+
+**为什么放在 deps 而不是 propose**：deps 是 deps 信息的**权威源**（3 轴 + AI 子代理）。让 propose 也算一遍是重复计算。让 deps 写一次，下游所有读取（status Mode E、roadmap.md AUTO-SPRINT）都从同一处拿数据。
+
+**降级行为**：
+- `iteration` / `deps_output` 模块缺失 → 跳过（不报错）
+- `deps-output.md` 不存在 → 跳过（deps 自身失败时也不影响）
+- 解析失败 → 该 change 跳过，**不中断其他 change 的同步**
+- iteration.json / deps-analysis.json 写入失败 → graceful 退出（不阻塞 deps 主流程）
+
+**结构化输出 (deps-analysis.json)**：与 `iteration.json` 并列在 `.rddf/state/` 下的机器可读快照，schema 在 `skills/_lib/schemas/deps_analysis_schema.json`。下游消费者（未来的 planner、status 增强）应优先读此 JSON，markdown 仅用于人类阅读。
+
+---
+
+## 关键约束
+
+1. **不修改 change artifacts**：本技能不修改 `openspec/changes/<name>/` 下的任何文件
+2. **只写 `.rddf/state/` 派生文件**：本技能可写入 `deps-output.md` 和 `iteration.json`（view 层），不写入 source code / roadmap.md
+3. **分析粒度**：目前仅分析 proposal.md 和 design.md 中的显式引用，不分析代码级依赖
+4. **ADR 是关键线索**：建议在 propose 阶段写入完整的 ADR 引用链，以便依赖分析更准确
