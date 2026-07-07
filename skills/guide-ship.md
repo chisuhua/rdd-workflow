@@ -589,6 +589,204 @@ echo "当前状态：${CHANGE_NAME} 🔓 分离执行中"
 
 ---
 
+## Phase 2.5: review — 执行后审查
+
+**入口条件**：execute 完成（tasks.md 中所有 `[ ]` 已变 `[x]`），或用户主动选择审查。
+
+**前置说明**：
+
+execute 在 worktree 中执行 change 后，可能产生三类新债务：
+- **范围内债务**：当前 change 的 scope 内不完整（测试覆盖不全、遗漏边角情况）
+- **旁效应债务**：独立的代码遗留问题（修 A 文件时发现 B 文件有遗留 TODO）
+- **架构漂移**：执行结果偏离 ADR 定义的目标架构
+
+本阶段自动扫描这些债务，分类，并提供回流机制。默认可跳过，不影响 archive。
+
+**1. 采集债务**：
+
+```bash
+CHANGE_NAME="<从 Phase 2 获得>"
+WT_PATH="$PROJECT_ROOT/.rddf/wt/${CHANGE_NAME}"
+
+echo "🔍 扫描 execute 后变化..."
+
+# 1a. 新增 TODO/FIXME 标记
+if [ -d "$WT_PATH" ]; then
+    cd "$WT_PATH"
+    git diff HEAD -- '*.cpp' '*.h' '*.hpp' '*.py' '*.ts' 2>/dev/null \
+      | grep '^+' | grep -E 'TODO|FIXME|HACK|WORKAROUND' \
+      > /tmp/review_new_todos.txt 2>/dev/null
+    NEW_TODO_COUNT=$(wc -l < /tmp/review_new_todos.txt 2>/dev/null || echo 0)
+else
+    NEW_TODO_COUNT=0
+fi
+
+# 1b. 测试回归检测
+if [ -f "build/CTestTestfile.cmake" ] 2>/dev/null; then
+    ctest --test-dir build --output-on-failure 2>/dev/null \
+      | grep -E "FAILED|not ok" \
+      > /tmp/review_test_failures.txt 2>/dev/null
+    TEST_FAIL_COUNT=$(wc -l < /tmp/review_test_failures.txt 2>/dev/null || echo 0)
+else
+    TEST_FAIL_COUNT=0
+fi
+
+echo ""
+echo "📋 债务扫描结果:"
+echo "  新增 TODO/FIXME: $NEW_TODO_COUNT"
+echo "  测试失败: $TEST_FAIL_COUNT"
+```
+
+**2. 分类展示（用户交互）**：
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 执行后审查 (Review Phase)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 ${CHANGE_NAME} (${done}/${total} tasks ✅)
+
+🔍 债务扫描结果:
+  新增 TODO/FIXME: [N] 条
+  测试失败: [N] 个
+
+请选择:
+1. 🏠 范围內债务 → 追加到当前 change tasks.md（返回 execute）
+2. 🔖 创建新 debt change → 加入 proposal-suggestions.md (type=debt)
+3. 📐 架构漂移 → 回注 guide-arch (生成差距分析)
+4. ⏭️  跳过 → 直接进入 archive（默认）
+5. 📋 查看详细债务内容
+i. 手动输入新 change 名称
+```
+
+**用户输入处理（case handler）**：
+
+```bash
+case "$choice" in
+  q|quit|exit) exit 0 ;;
+  r|refresh) continue ;;
+  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
+  1)
+    # 范围內债务: 追加到 tasks.md
+    echo "📝 追加范围內债务到 tasks.md..."
+    if [ -f "/tmp/review_new_todos.txt" ] && [ -s "/tmp/review_new_todos.txt" ]; then
+        cat >> "$WT_PATH/openspec/changes/$CHANGE_NAME/tasks.md" << 'EOF'
+
+## Review 阶段 (execute 后追加)
+
+EOF
+        while IFS= read -r line; do
+            file=$(echo "$line" | cut -d: -f1)
+            text=$(echo "$line" | cut -d: -f2-)
+            echo "- [ ] review: $file — $text" >> "$WT_PATH/openspec/changes/$CHANGE_NAME/tasks.md"
+        done < /tmp/review_new_todos.txt
+        echo "✅ 范围內债务已追加，返回 execute 继续执行..."
+    else
+        echo "⚠️  无范围內债务可追加"
+    fi
+    ;;
+  2)
+    # 旁效应债务: 创建新 change
+    DEBT_NAME="cleanup-${CHANGE_NAME}-debt"
+    echo "🔖 创建新 debt change: $DEBT_NAME"
+
+    # 追加到 proposal-suggestions.md（type=debt）
+    PY_PROJECT_ROOT="$PROJECT_ROOT" python3 -c "
+import os, json, subprocess
+try:
+    debt = {
+        'name': '$DEBT_NAME',
+        'priority': 'P2',
+        'source': 'execute review: $CHANGE_NAME',
+        'status': '待创建',
+        'phase': 'default',
+        'category': 'arch-design',
+        'type': 'debt',
+        'description': '## 架构依据\n- $CHANGE_NAME 执行后审查发现\n## 范围\n- 见 TODO 扫描结果\n## 关键场景\n- 常规清理\n## 技术约束\n- MUST NOT 影响已有功能\n## 验收标准\n- 新增测试通过\n',
+        'effort': '1天'
+    }
+    path = os.path.join(os.environ['PY_PROJECT_ROOT'], 'proposal-suggestions.md')
+    if os.path.isfile(path):
+        with open(path) as f:
+            entries = json.load(f)
+    else:
+        entries = []
+    entries.append(debt)
+    with open(path, 'w') as f:
+        json.dump(entries, f, ensure_ascii=False, indent=2)
+    print(f'✅ 已追加到 proposal-suggestions.md: {debt[\"name\"]}')
+except Exception as e:
+    print(f'⚠️  追加失败: {e}')
+"
+
+    # 创建 openspec change 目录
+    cd "$PROJECT_ROOT"
+    openspec new change "$DEBT_NAME" 2>/dev/null || true
+
+    # 文件冲突检测 → 决定是否重新 deps
+    echo ""
+    echo "🔍 检查文件冲突..."
+    ARCHIVED_CHANGES=$(ls -d openspec/changes/*/ 2>/dev/null | grep -v archive/ | xargs -n1 basename | grep -v "^$DEBT_NAME$" | tr '\n' ' ')
+    if [ -n "$ARCHIVED_CHANGES" ]; then
+        echo "⚠️  其他活跃 changes: $ARCHIVED_CHANGES"
+        echo "  建议重新运行 deps 分析将新 debt change 纳入依赖图:"
+        echo "    skill_use(\"deps\")"
+    else
+        echo "✅ 无其他活跃 change，debt change 可安全 deferred"
+    fi
+    ;;
+  3)
+    # 架构漂移: 回注 guide-arch
+    DRIFT_DOC="$PROJECT_ROOT/docs/architecture/${CHANGE_NAME}-drift-analysis.md"
+    mkdir -p "$(dirname "$DRIFT_DOC")"
+    cat > "$DRIFT_DOC" << DRIFTDOC
+# 架构漂移分析: $CHANGE_NAME
+
+> **来源**: execute 后 review Phase 2.5
+> **生成日期**: $(date -Iseconds)
+> **关联 change**: $CHANGE_NAME
+> **状态**: 草案
+
+## 检测到的漂移
+
+$(cat /tmp/review_new_todos.txt 2>/dev/null | sed 's/^/- /' || echo '(未检测到)')
+
+## 建议操作
+
+1. 运行 skill_use("guide-arch") 审查是否需要修正 ADR
+2. 如 ADR 需修正，回到 adr-create 阶段创建或修订 ADR
+3. 修正后重新运行 guide-plan → deps
+
+DRIFTDOC
+    echo "✅ 差距分析已创建: $DRIFT_DOC"
+    echo ""
+    echo "💡 下一步: 运行 skill_use(\"guide-arch\") 进入架构审查"
+    ;;
+  4)
+    echo "⏭️  跳过 review，直接进入 archive"
+    ;;
+  5)
+    echo "📋 新增 TODO/FIXME 标记:"
+    cat /tmp/review_new_todos.txt 2>/dev/null || echo "(无)"
+    echo ""
+    echo "📋 测试失败详情:"
+    cat /tmp/review_test_failures.txt 2>/dev/null || echo "(无)"
+    ;;
+esac
+```
+
+**3. 门控（可选）**:
+
+review 阶段的目的是分类记录债务，不阻断 archive。如果用户选择 "跳过"（选项 4），正常进入 Phase 3。门控检查通过 gate.py 的 `review_debt_recorded`（warning 级别）实现，见 `skills/_lib/gate.py`。
+
+**4. deps 重新分析规则**:
+
+旁效应债务 change 的 deps 重新分析由**文件冲突**驱动，不按 change type 判断：
+- 新 debt change 修改的文件与已归档 change 的文件无重叠 → 跳过 deps（safe defer）
+- 有重叠 → 建议重新 deps，将新 change 纳入依赖图
+
+---
+
 ## Phase 3: archive — 状态检查与归档
 
 **入口条件**：execute 已完成（所有 worktree 的任务都完成），或用户主动选择此阶段。
