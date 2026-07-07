@@ -2,15 +2,15 @@
 
 > 基于 `guide` 推荐器（spec-side 调 `guide-spec`，ship-side 调 `guide-ship`），覆盖从提案到归档的完整生命周期。
 > 支持多 change 并行执行，可分离到不同终端同时运行。
-> 当前版本: **v2.0.0-beta**（三阶段架构 arch → plan → ship + Loop 引擎 + `spec-workflow/writing-plans` 自包含计划生成器）
+> 当前版本: **v2.0.0**（三阶段架构 arch → plan → ship + Loop 引擎 + `spec-workflow/writing-plans` 自包含计划生成器）
 
 ---
 
 ## 核心概念
 
-### Spec 端 vs Ship 端（v1.1 拆分）
+### Spec 端 vs Ship 端（v1.1 拆分，v2.0 细化为 arch → plan → ship）
 
-`git commit artifacts` 是 spec → ship 的**唯一切换点**。
+`git commit artifacts` 是 spec → ship 的**工作产物切换点**；形式化的交接由 `.rddf/state/arch-handoff.json` / `plan-handoff.json` / `handoff.json` 三个 JSON 文件记录，分布在 arch→plan、plan→ship 边界。
 
 | 端 | 职责 | 关键产物 |
 |----|------|---------|
@@ -91,17 +91,21 @@
 | `status` | 状态查看 | `guide-ship` 内部 / 单独使用 |
 | `spec-workflow/writing-plans` | 实施计划生成器（TDD 5 步结构，自包含） | `guide-ship` Phase 1 内部 |
 
-### 使用 Loop 引擎（v2.0）
+### Loop 引擎（v2.0）
+
+Loop 引擎是 `skills/loop_engine.py` 入口的 Python 模块，不是 `skill_use()` 技能。它串联 8 内置检测器 + 7 内置动作 + 插件机制，支持插件化扩展。
+
+**入口方式**：
 
 ```bash
-# Loop 模式 — 自动扫描、执行、验证
-skill_use("loop", {
-  "goal": "complete all pending changes",
-  "mode": "loop"
-})
+# CLI 方式
+python3 skills/loop_engine.py --config loop.yaml
+
+# 编程方式（从其他 Python 模块导入）
+from skills import loop_engine
 ```
 
-### 配置示例（v2.0）
+**配置示例**（v2.0）：
 
 ```json
 {
@@ -593,38 +597,45 @@ skill_use("guide-ship")
 tests/
 ├── README.md                       # 测试说明
 ├── test_helper.bash                # setup/teardown + `load_lib` 解析器
+├── conftest.py                     # 把项目根加进 sys.path (让 `import skills._lib.*` 可解析)
 ├── smoke.bats                      # 7 个基础设施断言
-├── _lib/                           # 共享辅助函数 + 单元测试
+├── _lib/                           # 共享 bash 辅助 + 单元测试
 │   ├── skill.bash                  # skill frontmatter/metadata/commands/section 解析
 │   ├── deps-subagent.bash          # deps subagent Step 3 验证
 │   ├── test_skill.bats             # skill.bash 单元测试（8 cases）
-│   ├── test_state.bats             # skills/_lib/state.sh 单元测试
+│   ├── test_state.bats             # skills/_lib/state.sh stub 锁定
 │   └── test_worktree.bats          # skills/_lib/worktree.sh 单元测试
-└── integration/                    # 端到端 / CLI 集成测试
+├── unit/                           # 28 个 Python 单元测试 (pytest)
+└── integration/                    # 48 个集成测试 (45 .bats + 3 .py)
     ├── test_<issue-id>.bats        # P0/P1/P2/P3 fix 的回归锁
     ├── test_*_skill.bats           # 每个 skill 的结构/metadata 覆盖（9 个文件）
     ├── test_*_subagent.bats        # subagent 集成测试
     ├── test_skill_metadata_consistency.bats  # package.json ↔ skills/ ↔ smoke.bats 一致性
-    ├── test_adr_directory.bats     # docs/adr/ 完整性（init-adr-directory 验证）
+    ├── test_adr_directory.bats     # docs/adr/ 完整性
     ├── test_archive_dedup.bats     # 归档去重
+    ├── test_loop_flow.py           # Loop 引擎集成（Python）
+    ├── test_gate_transition.py     # 门控切换集成（Python）
+    ├── test_phase_switch.py        # 阶段切换集成（Python）
     └── ...
 ```
 
 ### 运行测试
 
 ```bash
-# 全部测试（推荐 CI）
-bats tests/
+# 全部 bats 测试 (npm test 不会跑 Python)
+npm test                          # 等价于 bats tests/
+bats tests/smoke.bats             # 快速冒烟（7 个 smoke cases）
+bats tests/_lib/test_skill.bats   # skill.bash parser（8 cases）
 
-# 仅 smoke（快速验证）
-bats tests/_lib/test_skill.bats
+# Python 测试（必须显式调用, npm test 不会捕获）
+python3 -m pytest tests/unit/ -q --tb=short
+python3 -m pytest tests/integration/ -q --tb=short
 
-# 集成测试
-bats tests/integration/
-
-# 全部
-npm test   # 等价于 bats tests/
+# 安装 Python 依赖
+pip install -r requirements.txt   # PyYAML, jsonschema, pytest
 ```
+
+> **重要**：`npm test` 只跑 bats，**不会**捕获 Python 测试失败。改完 Python 后必须手动 `pytest tests/`。
 
 ### 编写新测试的约定
 
@@ -719,9 +730,10 @@ docs/adr/
 
 | 版本 | 关键变更 |
 |------|---------|
-| **v2.0.0-beta** (current) | 三阶段架构 `arch` → `plan` → `ship`（新增 `guide-arch`/`guide-plan`，`guide-spec` 保留为兼容别名）；Loop 引擎 `loop_engine.py` + `skills/_lib/`；计划生成器重构: 删除 prometheus-planning(481 行间接层), 替换为 self-contained spec-workflow/writing-plans(~250 行)；保留 v1.x 全部分阶段逻辑 |
+| **v2.0.0** (current) | 三阶段架构 `arch` → `plan` → `ship`（新增 `guide-arch`/`guide-plan`，`guide-spec` 保留为兼容别名，v3.0 移除）；Loop 引擎 `skills/loop_engine.py` + `skills/_lib/` (34 个文件, 8 检测器/7 动作)；计划生成器重构: 删除 prometheus-planning(481 行间接层), 替换为 self-contained `spec-workflow/writing-plans`(~250 行)；新增三组 handoff JSON (`arch-handoff`/`plan-handoff`/`handoff`)；CI 增强: 断言质量门控 + Python integration 拆分；保留 v1.x 全部分阶段逻辑 |
+| v2.0.0-beta (2026-06-26) | 三阶段架构 + Loop 引擎首版；测试基础设施迁移到 `tests/unit/` (Python) + `tests/integration/` (混合) |
 | v1.1 | 拆分 `guide` 为 `guide-spec` (5 阶段) + `guide-ship` (4 阶段)；新增 `roadmap`/`deps` 技能; `prometheus-planning` 作为 v2.0 过渡方案引入；建立 `docs/adr/` 目录（ADR-0001 记录拆分决策）；加入 bats-core 测试基础设施；`prometheus-start-work` 降级为 deprecated |
 | v1.0 | 单一 `guide` 技能驱动全流程；`prometheus-start-work` 作为外部计划生成器（v2.0 已替换为自包含方案） |
 | 2026-06-04 之前 | 使用 `generatedBy: X.Y` 元数据，已重命名为 `evolved-from` |
 
-详见 [ADR-0001](./docs/adr/ADR-0001-propose-plan-execute-state-machine.md)。
+详见 [ADR-0001](./docs/adr/ADR-0001-propose-plan-execute-state-machine.md) / [ADR-0003](./docs/adr/ADR-0003-three-phase-architecture.md)。

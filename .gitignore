@@ -9,9 +9,10 @@
 # .rddf/plans/ is tracked; .rddf/state/ and .rddf/wt/ are runtime-only
 .rddf/state/
 .rddf/wt/
+.rddf/detectors/
+.rddf/actions/
 
-# .spec-workflow/ runtime state files (handoff, deps, state-vector, event-log)
-# Created by guide-arch, guide-plan, guide-ship during normal operation
+# Legacy .spec-workflow/ runtime state (migrated to .rddf/ in v2.0)
 .spec-workflow/
 
 # Legacy .zcf/ (migrated to .rddf/ in v2.0)

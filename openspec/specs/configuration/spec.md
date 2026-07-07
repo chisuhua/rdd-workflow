@@ -6,7 +6,7 @@ TBD - created by archiving change v2-core-foundation. Update Purpose after archi
 ### Requirement: configuration-multi-source-merge
 The system SHALL support configuration from multiple sources with a strict priority order.
 
-Priority order (highest to lowest): runtime parameters > `loop.yaml` > `.spec-workflow.json` > environment variables > built-in defaults.
+Priority order (highest to lowest): runtime parameters > `loop.yaml` > `.rddf.json` > environment variables > built-in defaults.
 
 #### Scenario: Runtime parameter overrides file
 - **WHEN** user passes `--mode loop` at runtime
@@ -14,8 +14,8 @@ Priority order (highest to lowest): runtime parameters > `loop.yaml` > `.spec-wo
 - **THEN** runtime value (`loop`) is used
 
 #### Scenario: Environment variable overrides file
-- **WHEN** env var `SPEC_WORKFLOW_MODE=loop` is set
-- **AND** `.spec-workflow.json` specifies `mode: menu`
+- **WHEN** env var `RDDF_MODE=loop` is set
+- **AND** `.rddf.json` specifies `mode: menu`
 - **THEN** env var value (`loop`) is used
 
 ### Requirement: configuration-defaults

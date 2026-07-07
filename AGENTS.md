@@ -1,19 +1,25 @@
 # AGENTS.md — spec-workflow
 
 > OpenSpec 工作流技能包: `propose → plan → execute → status → archive` change lifecycle.
-> npm 包, v2.0.0-beta. 安装到项目后作为 OpenCode/Claude Code/Cursor 等 AI 助手的 skill 使用。
+> v2.0 self-contained: 内置 TDD 5 步计划生成与执行, 无外部 skill 依赖.
 
 ## 快速命令
 
 ```bash
-npm test                  # bats tests/ (全部 bats 测试)
-python3 -m pytest tests/unit/ -q --tb=short   # Python 单元测试 (29 个文件)
-pip install -r requirements.txt                # Python 依赖 (PyYAML, jsonschema, pytest)
-bats tests/smoke.bats                          # 快速冒烟测试
-bats tests/_lib/test_skill.bats                # skill.bash 单元测试 (8 cases)
+# Bats (shell) 测试 — npm test 只跑这一类
+npm test                                # bats tests/ (全量 bats)
+bats tests/smoke.bats                   # 快速冒烟 (7 个 smoke cases)
+bats tests/_lib/test_skill.bats         # skill.bash parser (8 cases)
+
+# Python 测试 — npm test 不会跑, 必须显式调用
+python3 -m pytest tests/unit/ -q --tb=short          # 28 个 unit 文件
+python3 -m pytest tests/integration/ -q --tb=short   # 3 个 Python integration (.py, 含 loop / gate / phase_switch)
+pip install -r requirements.txt                      # PyYAML, jsonschema, pytest
 ```
 
-CI 在 `.github/workflows/test.yml`，按序执行: 安装 deps → 断言质量门控 → Python 单元测试 → Bats smoke。
+CI 在 `.github/workflows/test.yml`, 按序执行: 安装 deps → **断言质量门控** → Python unit → Python integration → bats smoke → bats static 子集 → bats git-worktree 子集.
+
+> **重要**: `npm test` 只跑 bats, **不会**捕获 Python 测试失败. 改完 Python 后必须手动 `pytest tests/`.
 
 ## 架构
 
@@ -25,60 +31,114 @@ CI 在 `.github/workflows/test.yml`，按序执行: 安装 deps → 断言质量
 | plan | `guide-plan` | 变更生成: scan, propose, deps |
 | ship | `guide-ship` | 变更执行: worktree/轻量, execute, archive, cleanup |
 
-`guide-ship` 自动检测并行冲突：
-- 无其他 worktree **且** 仅此一个 change → ⚡ **轻量模式**（创建 branch，直接在主仓库执行，跳过 worktree）
-- 有活跃 worktree **或** 多个 change → 🔀 **worktree 模式**（创建隔离 worktree）
+`guide-ship` 自动检测并行冲突:
+- 无其他 worktree **且** 仅此一个 change → ⚡ **轻量模式** (创建 branch, 直接在主仓库执行, 跳过 worktree)
+- 有活跃 worktree **或** 多个 change → 🔀 **worktree 模式** (创建隔离 worktree)
 
-`guide-spec` 是向后兼容别名，内部自动调用 `guide-arch` → `guide-plan`。
-`guide` 是无状态推荐器，扫描项目状态推荐下一步。
+`guide-spec` 是向后兼容别名, 内部自动调用 `guide-arch` → `guide-plan` (v3.0 会移除).
+`guide` 是无状态推荐器, 扫描项目状态推荐下一步, 不写文件, 不调 openspec CLI.
 
 ## 关键目录
 
 ```
-skills/               # Markdown skills (12+ 文件)
-  _lib/               # 共享 bash 库 + Python 模块 (33 个文件)
-  loop_engine.py      # v2.0 Loop 引擎 (state_vector, event_log, gate, tribunal 等)
+skills/                       # Markdown skills (12 .md) + loop_engine.py 在根目录
+  INSTALL.md                  # 第一入口 (v1.1.0)
+  guide.md                    # 推荐器
+  guide-arch.md               # arch 阶段 (v1.0)
+  guide-plan.md               # plan 阶段 (v1.0)
+  guide-spec.md               # 别名 (v1.0)
+  guide-ship.md               # ship 阶段 (v2.0) - 包含 v2.0.1 iteration.json hook (创建 worktree 后切 status=in_worktree)
+  propose.md / execute.md / status.md / roadmap.md / deps.md
+  spec-workflow-writing-plans.md  # 内置 TDD 5 步 plan 生成器 (v1.0, 自包含)
+  loop_engine.py              # v2.0 Loop 引擎入口 (在 skills/ 根, 不在 _lib/)
+  _lib/                       # 共享 bash + Python (37 个文件, v2.0.1)
+    state.sh                  # ⚠️ STUB (无 production 调用方, 消费者改用 jq/python3 inline)
+    worktree.sh / archive.sh  # bash 工具
+    state_vector.py / event_log.py / gate.py / tribunal.py / memory.py / session_manager.py
+    agents.py / detectors.py / actions.py / sanitizer.py / ...
+    iteration.py              # v2.0.1 NEW: 当前 sprint 状态 (.rddf/state/iteration.json)
+    deps_output.py            # v2.0.1 NEW: 结构化 deps 输出 (.rddf/state/deps-analysis.json)
+    roadmap_sprint.py         # v2.0.1 NEW: roadmap.md AUTO-SPRINT sentinel 渲染器
+    schemas/                  # JSON Schema for state files (含 iteration_schema.json, deps_analysis_schema.json)
 tests/
-  test_helper.bash    # load_lib 解析器 + 断言辅助
-  smoke.bats          # 基础设施冒烟
-  unit/               # 29 个 Python 单元测试
-  integration/        # 47+ bats 集成测试
-  _lib/               # bash helpers (skill.bash, deps-subagent.bash 等)
-docs/adr/             # ADR-0000 模板, ADR-0001~0012 (12 个)
+  test_helper.bash            # load_lib 解析器 + 断言辅助
+  conftest.py                 # 把项目根加进 sys.path (让 `import skills._lib.*` 可解析)
+  smoke.bats                  # 基础设施冒烟 (注意: 硬编码 9 个 skill 路径, 已过时)
+  unit/                       # 30 个 Python 单元测试 (含 v2.0.1 新增: test_iteration, test_roadmap_sprint, test_deps_output)
+  integration/                # 51 个集成测试 (含 v2.0.1 新增: test_iteration_lifecycle, test_iteration_archive_hook,
+                             #                                       test_guide_ship_iteration_hook, test_deps_analysis)
+  _lib/                       # bash helpers (skill.bash, deps-subagent.bash 等)
+docs/adr/                     # ADR-0000 模板, ADR-0001~0012 (12 个)
+openspec/                     # OpenSpec CLI 数据 (随项目走)
+  changes/                    # active changes + archive/
+  specs/                      # 已采纳的 capability specs (22 个)
+  guide.md                    # 推荐器
+  guide-arch.md               # arch 阶段 (v1.0)
+  guide-plan.md               # plan 阶段 (v1.0)
+  guide-spec.md               # 别名 (v1.0)
+  guide-ship.md               # ship 阶段 (v2.0)
+  propose.md / execute.md / status.md / roadmap.md / deps.md
+  spec-workflow-writing-plans.md  # 内置 TDD 5 步 plan 生成器 (v1.0, 自包含)
+  loop_engine.py              # v2.0 Loop 引擎入口 (在 skills/ 根, 不在 _lib/)
+  _lib/                       # 共享 bash + Python (34 个文件)
+    state.sh                  # ⚠️ STUB (无 production 调用方, 消费者改用 jq/python3 inline)
+    worktree.sh / archive.sh  # bash 工具
+    state_vector.py / event_log.py / gate.py / tribunal.py / memory.py / session_manager.py
+    agents.py / detectors.py / actions.py / sanitizer.py / ...
+tests/
+  test_helper.bash            # load_lib 解析器 + 断言辅助
+  conftest.py                 # 把项目根加进 sys.path (让 `import skills._lib.*` 可解析)
+  smoke.bats                  # 基础设施冒烟 (注意: 硬编码 9 个 skill 路径, 已过时)
+  unit/                       # 28 个 Python 单元测试
+  integration/                # 48 个集成测试 (45 .bats + 3 .py)
+  _lib/                       # bash helpers (skill.bash, deps-subagent.bash 等)
+docs/adr/                     # ADR-0000 模板, ADR-0001~0012 (12 个)
+openspec/                     # OpenSpec CLI 数据 (随项目走)
+  changes/                    # active changes + archive/
+  specs/                      # 已采纳的 capability specs (22 个)
 ```
 
 ## 关键约定 (容易踩坑)
 
 ### 状态文件 (`.rddf/state/`, gitignored)
 
-| 文件 | 用途 |
-|------|------|
-| `.rddf/state/arch-handoff.json` | arch→plan 交接 |
-| `.rddf/state/plan-handoff.json` | plan→ship 交接 |
-| `.rddf/state/deps-analysis.json` | 依赖分析结果 |
-| `.rddf/state/deps-candidates.json` | deps 候选列表 |
-| `.rddf/state/handoff.json` | spec→ship 软交接 |
-| `.rddf/state/index.md` | change 索引 |
+| 文件 | 用途 | 写入方 |
+|------|------|--------|
+| `.rddf/state/arch-handoff.json` | arch→plan 交接 | `guide-arch` (arch-done 写入) / `guide-plan` (plan-start 读取+更新) |
+| `.rddf/state/plan-handoff.json` | plan→ship 交接 | `guide-plan` (plan-done 写入) / `guide-ship` (ship-start 读取) |
+| `.rddf/state/handoff.json` | spec→ship 软交接 | `guide-plan` / `guide-ship` |
+| `.rddf/state/deps-analysis.json` | **结构化** deps 输出 (v2.0.1) | `deps` Step 5b 优先写; Step 6 markdown-fallback 时也写 |
+| `.rddf/state/deps-candidates.json` | deps 候选列表 | `guide-plan` (deps 阶段) |
+| `.rddf/state/deps-output.md` | deps 人类可读报告 | `deps` Step 5 |
+| `.rddf/state/iteration.json` | **当前 sprint 视图** (v2.0.1) | propose/guide-ship/execute/deps/archive hooks |
+| `.rddf/state/roadmap-state.json` | roadmap 阶段/category 计数 | `propose` (status 改时) |
+| `.rddf/state/index.md` | change 索引 | `guide-arch` / `guide-plan` |
+| `.rddf/state/.deps-output.md` | deps 旧路径 (开头有 `.`) | `deps` Step 5 (兼容保留) |
 
-`.rddf/state/` 和 `.rddf/wt/` 全部被 `.gitignore` 排除；`.rddf/plans/` 随 git 版本控制。
-**`proposal-suggestions.md` 在项目根目录，随 git 版本控制** (JSON 列表格式)。
+`.rddf/state/`, `.rddf/wt/`, `.rddf/detectors/`, `.rddf/actions/` 全部 gitignored;
+`.rddf/plans/` **随 git 版本控制** (执行契约路径).
+`iteration.json` 是 **多 hook 写入**的 view 文件, 由 `skills/_lib/iteration.py` 集中管理;
+`deps-analysis.json` 同样是 view 文件, 由 `skills/_lib/deps_output.py` 管理.
+两者 schema 在 `skills/_lib/schemas/` 下, 改 schema 必须 bump version 字段.
+`proposal-suggestions.md` 在项目根目录, 随 git 版本控制, 格式为 **JSON 数组** (用 `json.load()`, 不用 grep).
 
 ### Skill 文件规范
 
 - 每个 `skills/*.md` 以 YAML frontmatter 开头 (`---` 分隔)
-- frontmatter 包含: `name`, `version`, `evolved-from`, `metadata.author`, `license`, `compatibility`
-- `version: X.Y` semver 风格, `evolved-from: "..."` 记录重构历史来源
-- frontmatter 是**只读的** —— metadata/version/name 不可修改
+- **顶层字段**: `name`, `description`, `license`, `compatibility`
+- **`metadata:` 嵌套字段**: `author`, `version`, `evolved-from`, `user-invocable`
+- `version: X.Y` semver, `evolved-from: "..."` 记录重构历史来源
+- frontmatter 是**只读**的 — metadata/version/name/user-invocable 不可修改
 
 ### 分支与 Worktree
 
 - Branch 命名: `openspec/<change-name>`
 - Worktree 路径: `.rddf/wt/<change-name>`
-- Plan 文件路径: `.rddf/plans/<name>.md`
-- Worktree 创建前必须 commit (COMMIT GATE) —— `git worktree add` 需要看到 artifacts
-- 创建 worktree 时必须在 `master` (或 default) 分支
-- `find_default_branch()` (在 `skills/_lib/worktree.sh`) 动态检测 main/master/develop，不要硬编码
-- `main_repo_root()` 用 `git rev-parse --git-common-dir` 获取主仓库路径(worktree 安全)
+- Plan 文件路径: `.rddf/plans/<name>.md` (git tracked)
+- **COMMIT GATE**: `git worktree add` 之前必须 commit — worktree 创建需要看到 artifacts
+- 创建 worktree 时必须在 default branch (master/main/develop)
+- `find_default_branch()` (在 `skills/_lib/worktree.sh`) 动态检测, 不要硬编码
+- `main_repo_root()` 用 `git rev-parse --git-common-dir` 获取主仓库路径 (worktree 安全)
 
 ### ADR 规范
 
@@ -86,7 +146,7 @@ docs/adr/             # ADR-0000 模板, ADR-0001~0012 (12 个)
 - 状态生命周期: `待定 → 已采纳 → 已弃用 / 已替代为 ADR-NNNN`
 - 引用格式: `ADR-NNN §N.M` (例如 `ADR-0003 §2.1`)
 - 模板: `docs/adr/ADR-0000-template.md` (不要给真实 ADR 分配 0000)
-- 最新 ADR 编号: 查看 `docs/adr/` 目录中的最大编号
+- 当前最新编号: ADR-0012 (`docs/adr/` 取最大值)
 
 ### 测试约定
 
@@ -94,13 +154,14 @@ docs/adr/             # ADR-0000 模板, ADR-0001~0012 (12 个)
 - 每个 `.bats` 文件顶部 `load test_helper`
 - `load_lib <name>` 按序查找: `tests/_lib/<name>.bash` → `skills/_lib/<name>.sh` → `tests/_lib/<name>.sh`
 - 辅助断言: `assert_file_exists`, `assert_file_contains`, `assert_cmd_succeeds`
-- Python 测试在 `tests/unit/` 用 pytest 运行
-- 集成 bats 测试在 `tests/integration/`
-- CI 有**恒真断言门控**: `grep -rn "assert.*or True\|assert True" tests/` 会直接 CI FAIL
+- **Python 测试**: `tests/conftest.py` 把项目根加进 `sys.path`, 因此 `import skills._lib.xxx` 能解析
+- Python unit 在 `tests/unit/`, Python integration 在 `tests/integration/` (`test_loop_flow.py`, `test_gate_transition.py`, `test_phase_switch.py`)
+- 集成 bats 测试在 `tests/integration/` (45 个)
+- CI 有**恒真断言门控**: `grep -rn "assert.*or True\|assert True" tests/` 命中即 CI FAIL
 
 ### 归档流程 (`guide-ship` Phase 3)
 
-`guide-ship` 归档时自动检测模式：
+`guide-ship` 归档时自动检测模式:
 - **worktree 模式**: 调用 `skills/_lib/archive.sh` 的 `archive_change <name>` 执行 full 归档
 - **轻量模式**: 直接在 main repo merge branch + 删除分支 + `openspec archive`
 
@@ -116,35 +177,40 @@ docs/adr/             # ADR-0000 模板, ADR-0001~0012 (12 个)
 ### Python 后端 (v2.0)
 
 `skills/_lib/` 包含完整的 Python 模块:
-- `loop_engine.py` — Loop 引擎入口
-- `state_vector.py` — 原子化状态持久化 (JSON schema + checksum)
+- `state_vector.py` — 原子化状态持久化 (JSON schema + checksum, < 10ms 读写)
 - `event_log.py` — 追加式事件日志 (10K 事件 < 100ms 查询)
 - `gate.py` — 插件式质量门控 (error/warning)
 - `tribunal.py` — 多 agent 交叉验证 + 加权评分
 - `sanitizer.py` — API key/密码/敏感路径脱敏 (< 10ms/次)
-- `memory.py` — LoopMemory 历史追踪 + 中断恢复
+- `memory.py` — LoopMemory 历史追踪 + 中断恢复 + 容量归档
 - `session_manager.py` — Session 协调器 + 父子 session 追踪
 - `agents.py` — Planner/Executor/Verifier 协调
-- `detectors.py` / `actions.py` — Loop 引擎检测器与动作 (8 内置检测器, 7 内置动作)
-- 配置: `config.py`, `defaults.py`, `schemas/`, `plugins/`
+- `detectors.py` / `actions.py` — 8 内置检测器 + 7 内置动作 + 插件机制
+- 配置: `config.py`, `defaults.py`, `phase_templates.yaml`, `schemas/`, `plugins/`
+
+`skills/loop_engine.py` (在 skills/ 根) 是引擎入口, 串联以上模块.
 
 ## 常见陷阱
 
-1. **git worktree list branch 在第 3 列** —— `awk '$3 ~ /openspec\//'` (不是 `$2`, 不是 `$4`)
-2. **`git show HEAD:<path>` 要求 repo 相对路径** — 先用 `cd $PROJECT_ROOT`，再用相对 glob
-3. **`main_repo_root()` vs `git rev-parse --show-toplevel`** — worktree 内必须用 `--git-common-dir`，否则返回 worktree 根目录
-4. **`find_default_branch()` 不从 worktree 的 HEAD 推断** — 优先读 `refs/remotes/origin/HEAD`，防 self-merge
+1. **git worktree list branch 在第 3 列** — `awk '$3 ~ /openspec\//'` (不是 `$2`, 不是 `$4`)
+2. **`git show HEAD:<path>` 要求 repo 相对路径** — 先 `cd $PROJECT_ROOT`, 再用相对 glob
+3. **`main_repo_root()` vs `git rev-parse --show-toplevel`** — worktree 内必须用 `--git-common-dir`, 否则返回 worktree 根
+4. **`find_default_branch()` 不从 worktree 的 HEAD 推断** — 优先读 `refs/remotes/origin/HEAD`, 防 self-merge
 5. **Execute 只写 `tasks.md`** — 不写 state 文件, guide 从 tasks.md 同步进度
-6. **execute 阶段不 commit/push** — plan 明确 commit 留到 archive 阶段
+6. **execute 阶段不 commit/push** — commit 留到 archive 阶段
 7. **`guide-arch` 不调用 `guide-plan`** — arch-done 后用户必须手动切换
-8. **`guide-spec` 是别名** — 内部按序调用 `guide-arch` → `guide-plan`，v3.0 会移除
+8. **`guide-spec` 是别名** — 内部按序调用 `guide-arch` → `guide-plan`, v3.0 会移除
 9. **Loop 引擎 max_iterations: 100, max_retries: 3** — 配置在 `interaction` 模式配置中
 10. **proposal-suggestions.md 格式为 JSON** — 用 `json.load()` 解析, 不用 grep (避免 description 字段误匹配)
+11. **`npm test` 不跑 Python** — 改完 Python 必须手动 `pytest tests/`, CI 才会捕获
+12. **`skills/_lib/state.sh` 是 stub** — 无 production 调用方, 需要时直接用 `jq` / `python3` inline
+13. **`.bats-tmp/` 在仓库根自动生成** — gitignored, 不要手动 commit
+14. **`package.json` 是 npm manifest 而非运行时入口** — `"main": "skills/INSTALL.md"`, 用作 skill 分发元数据
 
 ## 前置条件
 
-- `openspec` CLI v1.3.1+
+- `openspec` CLI v1.3.1+ (package.json `engines.openspec-cli`)
 - `git` 2.25+
-- `cmake` 3.16+
-- `bats-core` 1.10+ (可选, 用于跑测试)
-- Python 3.11+ (v2.0 Loop 引擎 + 单元测试)
+- `cmake` 3.16+ (来自 README; 本仓库不直接调用 cmake, 可能仅作为上游约束)
+- `bats-core` 1.10+ (可选, 用于跑 bats 测试)
+- Python 3.11+ (v2.0 Loop 引擎 + 单元测试, CI 固定 3.11)

@@ -40,3 +40,11 @@ v2.0.0-beta 已发布。包含 5 个 Phase，8 个 ADR (ADR-0002~0008) 已全部
 **对应 Change**: `v3-flow-customization`
 **预计工作量**: 大型 (3-4 周)
 **依赖**: Phase 2 (步骤化执行模型为基础)
+
+<!-- AUTO-SPRINT-START -->
+_Phase: `v3.0` · Active: 1 · Archived: 0 · Last deps: never_
+
+| Change | Phase | Cat | Status | Blocker | Group | Conflicts | Tasks | Plan |
+|--------|-------|-----|--------|---------|-------|-----------|-------|------|
+| v3-scheduled-triggers | v3.0 | loop-engin | 📋 proposed | — | — | — | 0/5 | — |
+<!-- AUTO-SPRINT-END -->
