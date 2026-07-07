@@ -33,9 +33,10 @@ setup() {
   [ "$rec_count" -ge 11 ]
 }
 
-@test "guide_skill delegates only to guide-spec / guide-ship / status --roadmap" {
-  # All RECOMMEND= assignments must use one of the three valid values
-  bad=$(grep -E '^[[:space:]]*RECOMMEND=' "$f" | \
+@test "guide_skill delegates only to 3-phase skills (RECOMMEND whitelist)" {
+  # v2.0.1+: RECOMMEND assignments live in scan-state.sh, not guide.md.
+  # Whitelist covers all 3-phase arch→plan→ship values + guide-spec alias.
+  bad=$(grep -E '^[[:space:]]*RECOMMEND=' "$REPO_ROOT/skills/_lib/scan-state.sh" | \
         grep -vE 'RECOMMEND="(guide-spec|guide-plan|guide-arch|guide-ship|status --roadmap)"' || true)
   [ -z "$bad" ]
 }
