@@ -63,6 +63,10 @@ def _check_gap_analysis_complete(ctx: dict) -> tuple[bool, Optional[str]]:
     return (True, "warning")  # Warning: gap analysis is optional
 
 
+def _check_arch_handoff_exists(ctx: dict) -> tuple[bool, Optional[str]]:
+    return (os.path.isfile(".rddf/state/.arch-handoff.json"), None)
+
+
 def _check_changes_committed(ctx: dict) -> tuple[bool, Optional[str]]:
     sv: StateVector = ctx.get("state_vector")
     if sv is None:
@@ -142,6 +146,7 @@ _DEFAULT_CHECKS = {
         Check("gap_analysis_complete", _check_gap_analysis_complete, "Gap analysis not run", "Run: openspec scan", "warning"),
     ],
     "plan_done": [
+        Check("arch_handoff_exists", _check_arch_handoff_exists, "arch-done handoff 缺失", "请先运行 skill_use('guide-arch') 完成架构定义", "error"),
         Check("changes_committed", _check_changes_committed, "Change artifacts not committed", "git add openspec/changes/<name>/ && git commit", "error"),
         Check("artifacts_complete", _check_artifacts_complete, "Missing proposal/design/tasks", "Create all three artifacts in openspec/changes/<name>/", "error"),
         Check("deps_analyzed", _check_deps_analyzed, "Dependencies not analyzed", "Run: openspec deps <name>", "warning"),

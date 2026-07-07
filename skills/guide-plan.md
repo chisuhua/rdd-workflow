@@ -115,25 +115,44 @@ fi
 CURRENT_BRANCH=$(git branch --show-current)
 echo "📌 当前分支: $CURRENT_BRANCH"
 
-# 4. arch 端交付物检查（plan 端的前置条件）
+# 4. arch 端交付物检查（plan 端的前置条件 — 硬阻断）
 ARCH_HANDOFF="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
 ROADMAP_EXISTS=$([ -f "$PROJECT_ROOT/roadmap.md" ] && echo "yes" || echo "no")
-ADR_COUNT=$(ls -d "$PROJECT_ROOT/docs/adr/ADR-0"*.md 2>/dev/null | grep -v "ADR-0000-template" | wc -l)
-echo "📋 ADR 数量: $ADR_COUNT"
-echo "📋 Roadmap: $ROADMAP_EXISTS"
+
+if [ ! -f "$ARCH_HANDOFF" ]; then
+    echo "❌ 未检测到 arch-done handoff (.rddf/state/.arch-handoff.json)"
+    echo ""
+    echo "   arch 阶段必须先完成才能进入 plan 阶段。"
+    echo "   → 请先运行: skill_use(\"guide-arch\")"
+    echo ""
+    echo "   如确定跳过 arch 阶段（已知风险），设置环境变量:"
+    echo "     export SKIP_ARCH_HANDOFF=yes"
+    exit 1
+fi
+
+# 从 arch-handoff 读取 ADR 编号（替代重复扫描源文件）
+ADR_IDS=$(python3 -c "
+import json
+with open('$ARCH_HANDOFF') as f:
+    d = json.load(f)
+print(','.join(d.get('completed_adr_ids', [])))
+" 2>/dev/null || echo "")
+ADR_COUNT=$(echo "$ADR_IDS" | tr ',' '\n' | grep -c . || echo 0)
+CURRENT_PHASE=$(python3 -c "
+import json
+with open('$ARCH_HANDOFF') as f:
+    d = json.load(f)
+print(d.get('current_phase', 'default'))
+" 2>/dev/null || echo "default")
+
+echo "📋 ADR 数量: $ADR_COUNT (from arch-handoff)"
+echo "📋 Roadmap 阶段: $CURRENT_PHASE"
+echo "📋 ADR 编号: $ADR_IDS"
 
 # 5. plan 端当前状态
 ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | grep -c . || true)
 echo "📋 当前活跃 changes: $ACTIVE_CHANGES"
-
-# 6. handoff 信号检测
-if [ -f "$ARCH_HANDOFF" ]; then
-    echo "✅ 检测到 arch-done handoff（arch → plan 软交接信号）"
-else
-    echo "⚠️  未检测到 .rddf/state/.arch-handoff.json"
-    echo "   说明: 之前未运行 guide-arch,或 arch 阶段未完成"
-    echo "   影响: propose 将无法按当前阶段分类生成 change"
-fi
+echo "✅ 检测到 arch-done handoff（arch → plan 硬交接信号）"
 ```
 
 **扫描委托**：
@@ -152,10 +171,11 @@ Plan 阶段环境检查结果：
 ✅ openspec CLI: 1.3.1 (/home/ubuntu/.npm-global/bin/openspec)
 ✅ git 工作区干净
 📌 当前分支: master
-📋 ADR 数量: 3
-📋 Roadmap: 已定义
+📋 ADR 数量: 3 (from arch-handoff)
+📋 Roadmap 阶段: phase-1
+📋 ADR 编号: 0001,0003,0013
 📋 当前活跃 changes: 0
-✅ 检测到 arch-done handoff
+✅ arch-done handoff 已验证 (硬交接)
 
 请选择:
   1. 🔍 扫描新 change 候选（委托 propose）
