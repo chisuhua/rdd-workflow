@@ -18,96 +18,20 @@ metadata:
 
 不持久化任何状态,不调用 openspec CLI,不修改任何文件。
 
-## 扫描逻辑(按优先级)
+## 扫描逻辑（v1.1+：提取到独立脚本）
+
+v1.1 起，扫描逻辑不再写在 skill 文件里——它由 `skills/_lib/scan-state.sh` 暴露的 `scan_state()` 函数提供，独立测试，bash 原生执行（不再每次由 AI 现场"翻译"）。**推荐器调一次即可**：
 
 ```bash
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-
-# 0. 三阶段交接状态检测 (arch → plan → ship) — 优先级最高
-#    通过 .rddf/state/.arch-handoff.json / .rddf/state/.plan-handoff.json 软状态文件判断当前阶段。
-#    arch-done 后但 plan 未开始 → 引导进入 plan
-#    plan-done 后 → 引导进入 ship
-ARCH_HANDOFF="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
-PLAN_HANDOFF="$PROJECT_ROOT/.rddf/state/.plan-handoff.json"
-
-# 1. 有 worktree 且 tasks 未全部 [x] → 继续 ship
-# 注意:awk 的 system() 只返回状态码,不输出字符串,所以不能用 awk + system() 收集结果。
-# 改用 bash 循环,直接检查每个 worktree 的 tasks.md 是否有未勾选任务。
-WORKTREE_IN_PROGRESS=""
-# git worktree list 的输出格式: <path> <commit> [<branch>]
-# branch 在第 3 个字段($3),不是 $2。原代码用 $2 永远匹配不上。
-for wt in $(git worktree list 2>/dev/null | awk '$3 ~ /openspec\// {print $1}'); do
-    for tf in "$wt"/openspec/changes/*/tasks.md; do
-        [ -f "$tf" ] || continue
-        if grep -q '^- \[ \]' "$tf" 2>/dev/null; then
-            WORKTREE_IN_PROGRESS="yes"
-            break 2
-        fi
-    done
-done
-
-# 2. 有 worktree 且 tasks 全 [x] → ship 进入 archive
-# 3. 有 committed change 但无 worktree → ship 开始新 change
-# 4. 无 roadmap.md → arch 初始化
-# 5. 无 committed change → plan 继续 propose
-# 6. 默认 → plan
-
-if [ -f "$ARCH_HANDOFF" ] && [ ! -f "$PLAN_HANDOFF" ]; then
-    RECOMMEND="guide-plan"; REASON="架构定义已完成 → 进入变更生成"
-elif [ -f "$PLAN_HANDOFF" ]; then
-    RECOMMEND="guide-ship"; REASON="变更生成已完成 → 进入变更执行"
-elif [ -n "$WORKTREE_IN_PROGRESS" ]; then
-    RECOMMEND="guide-ship"; REASON="worktree 存在,任务未完成 → 继续执行"
-# P1-3: phase gate report takes priority — must review before proceeding
-# P1-3: detached worktrees (other sessions) may be running, surface them
-elif [ -f "$PROJECT_ROOT/.rddf/state/.phase-gate-report.md" ]; then
-    RECOMMEND="status --roadmap"; REASON="阶段门控报告待 review"
-elif DETACHED=$(git worktree list 2>/dev/null | awk '$3 ~ /^openspec\//' | wc -l)
-     [ "$DETACHED" -gt 0 ]; then
-    RECOMMEND="guide-ship"; REASON="$DETACHED 个 worktree 在跑（可能在分离终端）"
-elif git worktree list 2>/dev/null | awk '$3 ~ /^openspec\//' | grep -q .; then
-    RECOMMEND="guide-ship"; REASON="worktree 存在,任务已完成 → 进入 archive"
-# git show HEAD:<path> 要求相对于 repo root 的相对路径。
-# 所以先 cd 进 PROJECT_ROOT,再用相对 globs 枚举 changes。
-elif (cd "$PROJECT_ROOT" 2>/dev/null && for d in openspec/changes/*/; do
-    [ -d "$d" ] || continue
-    case "$d" in */archive/) continue ;; esac
-    if git show HEAD:"$d.openspec.yaml" > /dev/null 2>&1; then
-        exit 0
-    fi
-done; exit 1); then
-    RECOMMEND="guide-ship"; REASON="有已 commit 的 change 待建 worktree"
-elif [ ! -f "$PROJECT_ROOT/roadmap.md" ]; then
-    RECOMMEND="guide-arch"; REASON="无 roadmap.md → 进入架构定义"
-elif [ -z "$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/)" ]; then
-    RECOMMEND="guide-plan"; REASON="无 change → 进入变更生成"
-else
-    # 6. 读取 proposal-suggestions.md 判断
-    # P1-7: 文件格式已规范化为 JSON 列表
-    #       用 json.load 解析后判断是否有 status == "待创建" 的条目
-    #       旧实现用 grep -q 'status: 待创建'，但 description 字段可能也含"待创建"字面量
-    HAS_PENDING=$(python3 -c "
-import json, sys
-try:
-    with open('proposal-suggestions.md') as f:
-        entries = json.load(f)
-    if not isinstance(entries, list):
-        print('no')
-        sys.exit(0)
-    pending = any(isinstance(e, dict) and e.get('status') == '待创建' for e in entries)
-    print('yes' if pending else 'no')
-except (FileNotFoundError, json.JSONDecodeError):
-    print('no')
-" 2>/dev/null)
-    if [ "$HAS_PENDING" = "yes" ]; then
-      RECOMMEND="guide-plan"
-      REASON="有 change 待创建 → 继续 propose"
-    else
-      RECOMMEND="guide-ship"
-      REASON="无待创建 change → 准备 ship"
-    fi
-fi
+# shellcheck source=/dev/null
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]:-$0}")")/_lib/scan-state.sh"
+scan_state "$PROJECT_ROOT"
 ```
+
+设置 `$RECOMMEND` 和 `$REASON`（沿用旧版变量契约，向后兼容）。优先级 11 条 → 见 `skills/_lib/scan-state.sh` 函数体顶部注释。
+
+P0/P1 bug 历史（`$3` 列、`[openspec/` 前缀、`json.load` 非 grep、cwd 安全）作为注释保留在新脚本里，作为 regression guards。
 
 ## 输出格式
 
