@@ -893,9 +893,9 @@ config = parser.parse(runtime_overrides={"interaction.mode": "loop"})
 print(config["loop"]["max_iterations"])  # 100 (from defaults)
 ```
 
-- Priority order: `runtime_overrides > loop.yaml > .spec-workflow.json > env > defaults`.
+- Priority order: `runtime_overrides > loop.yaml > .rddf.json > env > defaults`.
 - Strict order (not deep merge) — see `design.md` Decision 5.
-- Type coercion for env vars (e.g., `SPEC_WORKFLOW_MAX_ITERATIONS=200` → int).
+- Type coercion for env vars (e.g., `RDDF_MAX_ITERATIONS=200` → int).
 - Validates enum values and numeric ranges; raises `ConfigError` with clear messages.
 
 ### `skills/_lib/sync_state.py` — Sync Functions
@@ -915,7 +915,7 @@ if is_sync_enabled():
 - Bidirectional sync between v2 state vector and v1.x legacy files.
 - State vector is always authoritative (wins on conflict).
 - Conflict detection via mtime comparison.
-- Disable via env var: `SPEC_WORKFLOW_SYNC_DISABLED=1`.
+- Disable via env var: `RDDF_SYNC_DISABLED=1`.
 - Propagation latency: < 50ms.
 
 ---

@@ -260,9 +260,9 @@ skills/_lib/
 **任务详情**:
 
 1. **创建 ConfigParser 类** (`skills/_lib/config.py`)
-   - 实现 `.spec-workflow.json` 解析
+   - 实现 `.rddf.json` 解析
    - 实现 `loop.yaml` 解析（需要 PyYAML）
-   - 实现配置优先级合并（运行时参数 > loop.yaml > .spec-workflow.json > 环境变量 > 默认值）
+   - 实现配置优先级合并（运行时参数 > loop.yaml > .rddf.json > 环境变量 > 默认值）
 
 2. **定义默认配置** (`skills/_lib/defaults.py`)
    - 定义默认交互模式（hybrid）
@@ -270,7 +270,7 @@ skills/_lib/
    - 定义默认 Human-in-Loop 节点列表
 
 3. **实现环境变量支持**
-   - 读取 `SPEC_WORKFLOW_MODE`, `SPEC_WORKFLOW_MAX_ITERATIONS` 等
+   - 读取 `RDDF_MODE`, `RDDF_MAX_ITERATIONS` 等
    - 类型转换（字符串 → 整数/布尔）
 
 4. **实现配置验证**

@@ -338,7 +338,7 @@ control:
     consecutive_failures: 3
 ```
 
-**配置优先级**: `loop.yaml` > `.spec-workflow.json` > 环境变量 > 默认值
+**配置优先级**: `loop.yaml` > `.rddf.json` > 环境变量 > 默认值
 
 ---
 

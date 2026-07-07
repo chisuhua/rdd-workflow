@@ -84,7 +84,7 @@ print(result["message"])  # "Found 2 pending changes"
 
 ### 注册 Detector
 
-在 `.spec-workflow.json` 中注册：
+在 `.rddf.json` 中注册：
 
 ```json
 {
@@ -202,7 +202,7 @@ print(result["message"])  # "Created ADR-0010: Multi-session management"
 
 ### 注册 Action
 
-在 `.spec-workflow.json` 中注册：
+在 `.rddf.json` 中注册：
 
 ```json
 {
@@ -320,7 +320,7 @@ def scan_security_issues() -> list:
 
 ### 注册自定义门控
 
-在 `.spec-workflow.json` 中注册：
+在 `.rddf.json` 中注册：
 
 ```json
 {
@@ -595,7 +595,7 @@ result = node.execute({
 
 ### 注册 Human-in-Loop 节点
 
-在 `.spec-workflow.json` 中注册：
+在 `.rddf.json` 中注册：
 
 ```json
 {
@@ -648,8 +648,8 @@ EOF
 ### 3. 注册扩展
 
 ```bash
-# 更新 .spec-workflow.json
-cat > .spec-workflow.json << 'EOF'
+# 更新 .rddf.json
+cat > .rddf.json << 'EOF'
 {
   "version": "2.0",
   "detectors": {

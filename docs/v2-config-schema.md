@@ -2,7 +2,7 @@
 
 > **版本**: 2.0.0  
 > **日期**: 2026-06-22  
-> **配置文件**: `.spec-workflow.json` + `loop.yaml`
+> **配置文件**: `.rddf.json` + `loop.yaml`
 
 ---
 
@@ -10,7 +10,7 @@
 
 - [概述](#概述)
 - [配置优先级](#配置优先级)
-- [.spec-workflow.json Schema](#spec-workflowjson-schema)
+- [.rddf.json Schema](#spec-workflowjson-schema)
 - [loop.yaml Schema](#loopyaml-schema)
 - [配置示例库](#配置示例库)
 - [验证工具](#验证工具)
@@ -23,7 +23,7 @@ spec-workflow v2.0 支持两种配置格式：
 
 | 格式 | 文件 | 用途 | 人类可读 | 版本控制 |
 |------|------|------|---------|---------|
-| **JSON** | `.spec-workflow.json` | 机器配置，完整 Schema | ❌ 部分 | ✅ 是 |
+| **JSON** | `.rddf.json` | 机器配置，完整 Schema | ❌ 部分 | ✅ 是 |
 | **YAML** | `loop.yaml` | 便携规范，人类可读 | ✅ 是 | ✅ 是 |
 
 ---
@@ -37,7 +37,7 @@ spec-workflow v2.0 支持两种配置格式：
     ↓
 2. loop.yaml（便携规范）
     ↓
-3. .spec-workflow.json（项目配置）
+3. .rddf.json（项目配置）
     ↓
 4. 环境变量（全局配置）
     ↓
@@ -49,7 +49,7 @@ spec-workflow v2.0 支持两种配置格式：
 ```bash
 # 1. 默认值
 skill_use("loop", {goal: "complete changes"})
-# 使用 .spec-workflow.json 或默认值
+# 使用 .rddf.json 或默认值
 
 # 2. 指定 loop.yaml
 skill_use("loop", {
@@ -67,7 +67,7 @@ skill_use("loop", {
 
 ---
 
-## .spec-workflow.json Schema
+## .rddf.json Schema
 
 ### 完整 Schema
 
@@ -515,19 +515,19 @@ goal:
 
 #### `interaction` (必需)
 
-同 `.spec-workflow.json` 的 `interaction` 字段。
+同 `.rddf.json` 的 `interaction` 字段。
 
 ---
 
 #### `loop` (必需)
 
-同 `.spec-workflow.json` 的 `loop` 字段。
+同 `.rddf.json` 的 `loop` 字段。
 
 ---
 
 #### `verification` (可选)
 
-同 `.spec-workflow.json` 的 `verification` 字段。
+同 `.rddf.json` 的 `verification` 字段。
 
 ---
 
@@ -625,7 +625,7 @@ plugins:
 
 **Runtime override**:
 - CLI flag: `--mode loop`
-- Env var: `SPEC_WORKFLOW_MODE=menu`, `SPEC_WORKFLOW_MAX_ITERATIONS=200`, `SPEC_WORKFLOW_MAX_RETRIES=5`
+- Env var: `RDDF_MODE=menu`, `RDDF_MAX_ITERATIONS=200`, `RDDF_MAX_RETRIES=5`
 
 **Safety defaults** (when not specified in config):
 | Field | Default | Source |
@@ -643,7 +643,7 @@ plugins:
 
 ### 示例 1: 最小配置（快速开始）
 
-**文件**: `.spec-workflow.json`
+**文件**: `.rddf.json`
 
 ```json
 {
@@ -660,7 +660,7 @@ plugins:
 
 ### 示例 2: 推荐配置（大多数项目）
 
-**文件**: `.spec-workflow.json`
+**文件**: `.rddf.json`
 
 ```json
 {
@@ -694,7 +694,7 @@ plugins:
 
 ### 示例 3: 全自动配置（CI/CD）
 
-**文件**: `.spec-workflow.json`
+**文件**: `.rddf.json`
 
 ```json
 {
@@ -725,7 +725,7 @@ plugins:
 
 ### 示例 4: 多模型验证（高质量要求）
 
-**文件**: `.spec-workflow.json`
+**文件**: `.rddf.json`
 
 ```json
 {
@@ -813,11 +813,11 @@ skill_use("loop", {
 
 ## 验证工具
 
-### 验证 .spec-workflow.json
+### 验证 .rddf.json
 
 ```bash
 # 1. 使用 jq 验证 JSON 格式
-cat .spec-workflow.json | jq '.'
+cat .rddf.json | jq '.'
 
 # 2. 使用 spec-workflow CLI 验证
 spec-workflow config validate
@@ -854,10 +854,10 @@ spec-workflow config validate --file .spec-workflow/loops/complete-changes.yaml
 
 | 环境变量 | 对应配置字段 | 示例 |
 |---------|------------|------|
-| `SPEC_WORKFLOW_MODE` | `interaction.mode` | `export SPEC_WORKFLOW_MODE=loop` |
-| `SPEC_WORKFLOW_MAX_ITERATIONS` | `loop.max_iterations` | `export SPEC_WORKFLOW_MAX_ITERATIONS=50` |
-| `SPEC_WORKFLOW_MAX_RETRIES` | `loop.max_retries` | `export SPEC_WORKFLOW_MAX_RETRIES=2` |
-| `SPEC_WORKFLOW_VERIFICATION_METHOD` | `verification.method` | `export SPEC_WORKFLOW_VERIFICATION_METHOD=human` |
+| `RDDF_MODE` | `interaction.mode` | `export RDDF_MODE=loop` |
+| `RDDF_MAX_ITERATIONS` | `loop.max_iterations` | `export RDDF_MAX_ITERATIONS=50` |
+| `RDDF_MAX_RETRIES` | `loop.max_retries` | `export RDDF_MAX_RETRIES=2` |
+| `RDDF_VERIFICATION_METHOD` | `verification.method` | `export RDDF_VERIFICATION_METHOD=human` |
 
 ---
 
@@ -883,11 +883,11 @@ priority order (highest to lowest):
 
 1. **Runtime overrides** — passed to `ConfigParser.parse(runtime_overrides=...)`
 2. **`loop.yaml`** (project root)
-3. **`.spec-workflow.json`** (project root)
-4. **Environment variables** (`SPEC_WORKFLOW_*`)
+3. **`.rddf.json`** (project root)
+4. **Environment variables** (`RDDF_*`)
 5. **Built-in defaults** (from `skills/_lib/defaults.py`)
 
-### `.spec-workflow.json` Schema
+### `.rddf.json` Schema
 
 ```json
 {
@@ -943,14 +943,14 @@ priority order (highest to lowest):
 
 | Variable | Mapped To | Coerced Type |
 |---|---|---|
-| `SPEC_WORKFLOW_MODE` | `interaction.mode` | string |
-| `SPEC_WORKFLOW_MAX_ITERATIONS` | `loop.max_iterations` | int |
-| `SPEC_WORKFLOW_MAX_RETRIES` | `loop.max_retries` | int |
-| `SPEC_WORKFLOW_STATE_PATH` | `state.path` | string |
-| `SPEC_WORKFLOW_SYNC_DISABLED` | (disables sync layer) | bool |
+| `RDDF_MODE` | `interaction.mode` | string |
+| `RDDF_MAX_ITERATIONS` | `loop.max_iterations` | int |
+| `RDDF_MAX_RETRIES` | `loop.max_retries` | int |
+| `RDDF_STATE_PATH` | `state.path` | string |
+| `RDDF_SYNC_DISABLED` | (disables sync layer) | bool |
 
 ### `loop.yaml` (alternative config)
 
-A YAML file with the same structure as `.spec-workflow.json`. `loop.yaml` takes
-precedence over `.spec-workflow.json` when both exist. Useful for separating
+A YAML file with the same structure as `.rddf.json`. `loop.yaml` takes
+precedence over `.rddf.json` when both exist. Useful for separating
 "project defaults" (in JSON) from "operator overrides" (in YAML).

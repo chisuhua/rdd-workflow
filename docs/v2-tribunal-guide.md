@@ -735,7 +735,7 @@ cat .rddf/state/event-log.jsonl | jq 'select(.type == "verification_completed")'
 **解决**:
 ```bash
 # 1. 检查脱敏规则
-cat .spec-workflow.json | jq '.verification.data_masking'
+cat .rddf.json | jq '.verification.data_masking'
 
 # 2. 测试脱敏规则
 python3 -c "

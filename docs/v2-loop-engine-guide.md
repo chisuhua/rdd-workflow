@@ -51,7 +51,7 @@ npm install spec-workflow@2.0.0
 
 ```bash
 # 最小配置
-cat > .spec-workflow.json << 'EOF'
+cat > .rddf.json << 'EOF'
 {
   "version": "2.0",
   "interaction": {
@@ -730,7 +730,7 @@ Loop 引擎从历史执行中学习：
 **解决**:
 ```bash
 # 1. 检查配置
-cat .spec-workflow.json | jq '.'
+cat .rddf.json | jq '.'
 
 # 2. 检查状态向量
 cat .rddf/state/state-vector.json | jq '.version'  # 应该是 "2.0"
@@ -787,7 +787,7 @@ cat .rddf/state/event-log.jsonl | jq 'select(.type == "verification_completed")'
 **解决**:
 ```bash
 # 1. 检查记忆系统是否启用
-cat .spec-workflow.json | jq '.memory.enabled'  # 应该是 true
+cat .rddf.json | jq '.memory.enabled'  # 应该是 true
 
 # 2. 检查状态向量中的记忆字段
 cat .rddf/state/state-vector.json | jq '.memory'

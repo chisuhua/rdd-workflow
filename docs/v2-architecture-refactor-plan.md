@@ -51,7 +51,7 @@
 2. 验证设计：确定检查机制
 3. 控制设计：设置刹车机制（断路器、最大迭代）
 
-**便携规范**: 支持 `loop.yaml`（人类可读）和 `.spec-workflow.json`（机器可读）
+**便携规范**: 支持 `loop.yaml`（人类可读）和 `.rddf.json`（机器可读）
 
 ### ADR-0003: 三阶段架构重构
 
@@ -205,7 +205,7 @@ skill_use("guide-plan")   # 变更生成
 skill_use("guide-ship")   # 变更执行
 
 # 方式 3: 配置文件
-# .spec-workflow.json
+# .rddf.json
 {
   "interaction": {
     "mode": "hybrid",
@@ -257,7 +257,7 @@ skill_use("guide-ship")   # 变更执行
 - [ ] 实现 `skills/_lib/state_vector.py` (状态向量 + 记忆系统) — ADR-0006
 - [ ] 实现 `skills/_lib/event_log.py` (事件流) — ADR-0006
 - [ ] 实现 `skills/_lib/gate.py` (门控机制) — ADR-0007
-- [ ] 实现 `.spec-workflow.json` 配置解析器 — ADR-0002
+- [ ] 实现 `.rddf.json` 配置解析器 — ADR-0002
 - [ ] 实现与 v1.x 状态文件的同步层 — ADR-0006
 
 **交付物**:
@@ -375,7 +375,7 @@ v1.x 用户
     ↓
 尝试 skill_use("loop", {...})
     ↓
-配置 .spec-workflow.json
+配置 .rddf.json
     ↓
 完全切换到 Loop 模式 (可选)
 ```

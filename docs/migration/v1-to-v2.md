@@ -57,7 +57,7 @@ spec-workflow v2.0 是一次**重大架构升级**，从状态机驱动升级到
 | **交互** | 固定菜单 | 三种模式（loop/menu/hybrid） | 🟢 低 |
 | **状态管理** | 13 个分散文件 | 统一状态向量 + 事件流 | 🟡 中等 |
 | **技能文件** | guide-spec, guide-ship | guide-arch, guide-plan, guide-ship | 🟡 中等 |
-| **配置** | 无统一配置 | `.spec-workflow.json` + `loop.yaml` | 🟢 低 |
+| **配置** | 无统一配置 | `.rddf.json` + `loop.yaml` | 🟢 低 |
 
 ---
 
@@ -103,7 +103,7 @@ v1.x 用户
     ↓
 3. 验证迁移结果（检查状态向量）
     ↓
-4. 创建 .spec-workflow.json（可选）
+4. 创建 .rddf.json（可选）
     ↓
 5. 尝试 loop 模式（推荐）
     ↓
@@ -119,7 +119,7 @@ v1.x 用户
 - [ ] 手动执行迁移（参见下方『手动迁移』章节；CLI `migrate --apply` 规划中，v2.1 实现）
 - [ ] 验证状态向量（`cat .rddf/state/state-vector.json`；当前版本未使用此路径，状态存储于 Python 库层）
 - [ ] 运行测试（`bats tests/`）
-- [ ] 创建 `.spec-workflow.json`（可选）
+- [ ] 创建 `.rddf.json`（可选）
 - [ ] 尝试 loop 模式（可选）
 
 ---
@@ -181,7 +181,7 @@ v2.0 会自动使用默认配置：
 
 **适用场景**: 大多数项目
 
-创建 `.spec-workflow.json`:
+创建 `.rddf.json`:
 ```json
 {
   "version": "2.0",
@@ -578,7 +578,7 @@ python3 -c "import json, subprocess; print('OK')"
 cat .rddf/state/state-vector.json | jq '.version'  # 应该是 "2.0"
 
 # 3. 检查配置文件
-cat .spec-workflow.json | jq '.'  # 应该是有效 JSON
+cat .rddf.json | jq '.'  # 应该是有效 JSON
 
 # 4. 查看事件流
 tail .rddf/state/event-log.jsonl | jq '.type'  # 查看最后的事件类型
@@ -627,7 +627,7 @@ git checkout v1.x-branch
 #### 选项 2: 禁用 v2.0 特性
 
 ```bash
-# 在 .spec-workflow.json 中禁用 Loop 引擎
+# 在 .rddf.json 中禁用 Loop 引擎
 {
   "version": "2.0",
   "interaction": {
@@ -645,7 +645,7 @@ git checkout v1.x-branch
 # 1. 删除 v2.0 新增文件
 rm .rddf/state/state-vector.json
 rm .rddf/state/event-log.jsonl
-rm .spec-workflow.json
+rm .rddf.json
 
 # 2. 恢复 v1.x 技能文件
 git checkout HEAD -- skills/

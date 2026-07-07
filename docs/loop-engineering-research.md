@@ -32,7 +32,7 @@ Looper 强制用户在执行前完成三阶段设计：
 #### 可借鉴到 spec-workflow v2.0
 
 ```json
-// .spec-workflow.json 增强 Schema
+// .rddf.json 增强 Schema
 {
   "goal_design": {
     "description": "complete all pending changes",
@@ -369,7 +369,7 @@ def generate_flowchart(goal: str, config: LoopConfig) -> str:
 #### 可借鉴到 spec-workflow v2.0
 
 ```json
-// .spec-workflow.json 定时任务配置
+// .rddf.json 定时任务配置
 {
   "scheduled_loops": [
     {
@@ -550,7 +550,7 @@ phases:
 ```
 
 **借鉴价值**: ⭐⭐⭐⭐
-- 当前 ADR-0002 的配置文件是 `.spec-workflow.json`
+- 当前 ADR-0002 的配置文件是 `.rddf.json`
 - 应同时支持 `loop.yaml`（人类可读）和 JSON（机器可读）
 - `loop.yaml` 可纳入版本控制，团队共享最佳实践
 

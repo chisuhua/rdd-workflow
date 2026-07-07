@@ -618,7 +618,7 @@ spec-workflow memory quality-report
 **解决**:
 ```bash
 # 1. 检查记忆系统是否启用
-cat .spec-workflow.json | jq '.memory.enabled'  # 应该是 true
+cat .rddf.json | jq '.memory.enabled'  # 应该是 true
 
 # 2. 检查状态向量
 cat .rddf/state/state-vector.json | jq '.memory'

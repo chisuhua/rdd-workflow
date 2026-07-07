@@ -274,7 +274,7 @@ def check(state: dict) -> dict:
 
 ### 注册自定义门控
 
-在 `.spec-workflow.json` 中注册：
+在 `.rddf.json` 中注册：
 
 ```json
 {
@@ -557,7 +557,7 @@ spec-workflow gates stats
 **解决**:
 ```bash
 # 1. 查看门控条件
-cat .spec-workflow.json | jq '.gates.arch_done'
+cat .rddf.json | jq '.gates.arch_done'
 
 # 2. 查看当前状态
 cat .rddf/state/state-vector.json | jq '.arch_side'
