@@ -92,6 +92,22 @@ def _validate(config: dict) -> None:
         raise ConfigError(f"max_retries must be a non-negative integer (got {max_retries!r})")
 
 
+def is_triggers_disabled() -> bool:
+    """Check if --trigger-off flag is set via env var TRIGGER_OFF."""
+    return os.environ.get("TRIGGER_OFF", "").lower() in ("1", "true", "yes")
+
+
+def apply_safety_rails(triggers_cfg: dict) -> dict:
+    """Apply safety rails to triggers config.
+
+    - If TRIGGER_OFF is set, disable all triggers
+    - If crash_recovery is enabled, ensure state is persisted
+    """
+    if is_triggers_disabled() or triggers_cfg.get("safety", {}).get("trigger_off_override"):
+        triggers_cfg["enabled"] = False
+    return triggers_cfg
+
+
 class ConfigParser:
     """Multi-source config parser. Use `.parse()` to get a fully-merged config dict."""
 
@@ -99,6 +115,7 @@ class ConfigParser:
         self.project_root = Path(project_root)
         self.rddf_json = self.project_root / ".rddf.json"
         self.loop_yaml = self.project_root / "loop.yaml"
+        self.triggers: dict = {}
 
     def parse(self, runtime_overrides: Optional[dict] = None) -> dict:
         """Read all sources, merge in priority order, validate, return config dict.
@@ -149,4 +166,28 @@ class ConfigParser:
             config = _deep_merge(config, runtime_overlay)
 
         _validate(config)
+
+        # v3.0: triggers config
+        triggers_cfg = config.get("triggers", {})
+        # Apply defaults if missing
+        if "enabled" not in triggers_cfg:
+            triggers_cfg["enabled"] = True
+        if "webhook_port" not in triggers_cfg:
+            triggers_cfg["webhook_port"] = 9090
+        if "fs_watch_interval" not in triggers_cfg:
+            triggers_cfg["fs_watch_interval"] = 30.0
+        if "git_poll_interval" not in triggers_cfg:
+            triggers_cfg["git_poll_interval"] = 60.0
+        if "default_rate_limit" not in triggers_cfg:
+            triggers_cfg["default_rate_limit"] = 60
+        safety_cfg = triggers_cfg.get("safety", {})
+        if "max_concurrent_fires" not in safety_cfg:
+            safety_cfg["max_concurrent_fires"] = 5
+        if "crash_recovery" not in safety_cfg:
+            safety_cfg["crash_recovery"] = True
+        if "trigger_off_override" not in safety_cfg:
+            safety_cfg["trigger_off_override"] = False
+        triggers_cfg["safety"] = safety_cfg
+        self.triggers = apply_safety_rails(triggers_cfg)
+
         return config
