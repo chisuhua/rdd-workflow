@@ -6,7 +6,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field, asdict
 from typing import Any, Optional
 import datetime
+import time
 import uuid
+
+from skills._lib.rate_limiter import TokenBucket
 
 
 def _now_iso() -> str:
@@ -34,6 +37,22 @@ class Trigger:
         known = {f for f in cls.__dataclass_fields__}
         return cls(**{k: v for k, v in data.items() if k in known})
 
+    def get_bucket(self) -> TokenBucket:
+        """Get or reconstruct a TokenBucket for this trigger's rate_limit.
+
+        Uses token_bucket field as persisted state; falls back to from_rate_limit.
+        """
+        if self.rate_limit <= 0:
+            # Zero rate limit: only 1 fire ever allowed (capacity 1, no refill)
+            return TokenBucket(capacity=1.0, refill_rate=0.0, tokens=self.token_bucket if self.token_bucket > 0 else 1.0)
+        if self.token_bucket > 0:
+            return TokenBucket.from_dict({
+                "capacity": float(self.rate_limit),
+                "refill_rate": self.rate_limit / 3600.0,
+                "tokens": self.token_bucket,
+                "last_refill": time.time(),
+            })
+        return TokenBucket.from_rate_limit(self.rate_limit)
 
 class TriggerManager:
     """Manages a collection of triggers with dedup and rate limiting hooks."""
@@ -79,9 +98,13 @@ class TriggerManager:
         return True
 
     def fire(self, trigger_id: str) -> bool:
-        """Record a fire event, returns False if rate-limited."""
+        """Record a fire event subject to rate limiting. Returns False if rate-limited."""
         for t in self.triggers:
             if t.id == trigger_id:
+                bucket = t.get_bucket()
+                if not bucket.consume(1.0):
+                    return False  # rate-limited
                 t.last_fire_at = _now_iso()
+                t.token_bucket = bucket.tokens  # persist bucket state
                 return True
         return False
