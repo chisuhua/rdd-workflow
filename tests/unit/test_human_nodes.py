@@ -56,7 +56,7 @@ def fake_actions_module(monkeypatch):
 
 
 def test_seven_node_types_registered():
-    """All 7 human-in-loop node types present in registry."""
+    """All human-in-loop node types present in registry (8 in v2.0.2 — see ADR-0015)."""
     from skills._lib.human_nodes import HumanNodeRegistry
 
     reg = HumanNodeRegistry()
@@ -65,12 +65,24 @@ def test_seven_node_types_registered():
         "arch.roadmap_define",
         "plan.change_select",
         "plan.propose_confirm",
+        "plan.review_validation",
         "ship.archive_confirm",
         "ship.cleanup_confirm",
         "ship.execute_error",
     }
     actual = {n.name for n in reg.list_nodes()}
     assert expected == actual
+
+
+def test_plan_review_validation_default_mode_is_human():
+    """plan.review_validation is registered with default HUMAN verification (ADR-0015 §Decision 4)."""
+    from skills._lib.human_nodes import HumanNodeRegistry, VerificationMode
+
+    reg = HumanNodeRegistry()
+    mode = reg.mode_for("plan.review_validation")
+    assert mode is VerificationMode.HUMAN, (
+        f"plan.review_validation must default to HUMAN mode per ADR-0015; got {mode!r}"
+    )
 
 
 def test_verification_modes_enum():

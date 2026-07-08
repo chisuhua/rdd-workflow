@@ -59,11 +59,14 @@ class VerificationResult:
 
 # Built-in node definitions: name → required verification mode.
 # Sources: openspec/changes/v2-loop-engine/specs/interaction-modes/spec.md
+# See docs/adr/ADR-0015-integrate-openspec-validate-as-plan-critic.md for
+# the design rationale of `plan.review_validation`.
 BUILTIN_NODE_DEFS: List[Tuple[str, VerificationMode]] = [
     ("arch.adr_create", VerificationMode.HUMAN),
     ("arch.roadmap_define", VerificationMode.HUMAN),
     ("plan.change_select", VerificationMode.HUMAN),
     ("plan.propose_confirm", VerificationMode.HUMAN),
+    ("plan.review_validation", VerificationMode.HUMAN),
     ("ship.archive_confirm", VerificationMode.HUMAN),
     ("ship.cleanup_confirm", VerificationMode.SCRIPT),
     ("ship.execute_error", VerificationMode.HUMAN),
