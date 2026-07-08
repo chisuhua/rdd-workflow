@@ -195,7 +195,7 @@ def detect_health_issues(state: dict) -> DetectionResult:
     """Detect general repo health — count uncommitted files via `git status --porcelain`."""
     try:
         result = subprocess.run(
-            ["git", "status", "--porcelain"],
+            ["git", "status", "--porcelain", "--untracked-files=no"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -304,6 +304,12 @@ def detect_trigger_events(state: dict) -> DetectionResult:
         # Use project_root from state if available; otherwise current dir
         project_root = state.get("metadata", {}).get("project_root", ".")
         reg = TriggerRegistry(project_root=project_root)
+        if not os.path.exists(reg.path):
+            return DetectionResult(
+                type="trigger_events",
+                data={"events": [], "count": 0},
+                message="no trigger registry",
+            )
         manager = reg.load()
         # If there's a singleton event queue in process, drain it
         # (In production, the queue would be passed via DI; here we use a heuristic)
