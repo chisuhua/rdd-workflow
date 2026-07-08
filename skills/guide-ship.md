@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires openspec CLI v1.3.1+, git 2.25+. Plan generation delegated to spec-workflow/writing-plans (v2.0 自包含,无外部 skill 依赖).
 metadata:
   author: sisyphus
-  version: "2.0"  # v2.0 重构: 直接调用 spec-workflow/writing-planning, 无中间检测层
+  version: "2.0.1"  # v2.0.1: add post-archive fill suggestion hook for skeleton changes
   evolved-from: "split from guide.md v3.0; v2.0 移除 prometheus-planning 间接层, 直接调用内置 skill"
   user-invocable: true
 ---
@@ -961,6 +961,67 @@ case "$choice" in
   *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
 esac
 ```
+
+---
+
+## Phase 3 完成后: post-archive fill suggestion hook
+
+**触发条件**: archive 成功完成后
+
+**行为**:
+
+1. 调用 `iteration.get_unblocked_planned(project_root)` 扫描 `iteration.json`
+2. 找出所有 `status="planned"` 且 blocker 状态为 `archived` 的 change
+3. 若有结果，输出建议信息（不自动调用 guide-plan fill）
+4. 若无结果，保持现有输出不变
+
+**实现要点**（新增 `iteration.get_unblocked_planned()` 函数后调用）：
+
+```bash
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+
+# 扫描因本次归档而解除阻塞的 planned change
+UNBLOCKED=$(PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
+import os, sys
+try:
+    from skills._lib import iteration as it_mod
+    data = it_mod.load(os.environ["PROJECT_ROOT"])
+    unblocked = []
+    for c in data.get("changes", []):
+        if c.get("status") != "planned":
+            continue
+        blocker_name = c.get("blocker")
+        if not blocker_name:
+            unblocked.append(c["name"])
+            continue
+        # Look up blocker status
+        blocker = next(
+            (b for b in data.get("changes", []) if b.get("name") == blocker_name),
+            None
+        )
+        if blocker and blocker.get("status") in ("completed", "archived"):
+            unblocked.append(c["name"])
+    for n in unblocked:
+        print(n)
+except Exception as e:
+    print(f"⚠️ get_unblocked_planned failed: {e}", file=sys.stderr)
+' 2>/dev/null)
+
+if [ -n "$UNBLOCKED" ]; then
+    echo ""
+    echo "💡 Fill suggestion (post-archive):"
+    echo "   以下 planned change 的 blocker 已解除，可填充："
+    for name in $UNBLOCKED; do
+        echo "     - $name"
+    done
+    echo "   运行 'skill_use(\"guide-plan\")' → 选择 '3. 填充骨架 change (fill)' 来填充下一个"
+fi
+```
+
+**关键约束**:
+- 不自动调用 guide-plan fill（用户必须显式确认）
+- 输出格式与现有 Phase 3 输出兼容
+- 失败容错：iteration.json 读取失败时仅 stderr 警告，不阻塞 archive
 
 ---
 
