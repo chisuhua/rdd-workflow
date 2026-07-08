@@ -3,7 +3,7 @@
 ## Purpose
 Define the skeleton change lifecycle: creation of lightweight change skeletons with minimal artifacts (planned state), dependency pre-analysis, and progressive fill into full proposals.
 
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: planned-status-lifecycle
 The system SHALL support a `planned` status in the change lifecycle, distinct from `proposed`.

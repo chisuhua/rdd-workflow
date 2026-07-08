@@ -3,7 +3,7 @@
 ## Purpose
 Define the guide-plan fill phase: progressive content filling of skeleton changes into complete proposals, driven by dependency analysis results.
 
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: fill-phase-in-guide-plan
 The system SHALL add a `fill` sub-phase to guide-plan, accessible after deps analysis.

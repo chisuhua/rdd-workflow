@@ -17,7 +17,7 @@ The `plan_side` field SHALL include a `planned_changes` array tracking skeleton 
 - **THEN** system falls back to last known good state
 - **AND** records corruption event in event log
 
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: iteration-json-planned-status
 The system SHALL support a `planned` status value in the iteration.json change status enum.

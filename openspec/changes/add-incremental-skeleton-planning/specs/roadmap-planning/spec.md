@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: roadmap-category-validation
 The system SHALL validate that a change's category matches its roadmap phase's valid categories.
