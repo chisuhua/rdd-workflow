@@ -723,16 +723,78 @@ except Exception as e:
     cd "$PROJECT_ROOT"
     openspec new change "$DEBT_NAME" 2>/dev/null || true
 
-    # 文件冲突检测 → 决定是否重新 deps
+    # 文件冲突检测 → 自动增量 deps (v2.0.1)
+    # ADR-0014 决策 3: re-deps 由文件冲突驱动, 非 change type
     echo ""
-    echo "🔍 检查文件冲突..."
-    ARCHIVED_CHANGES=$(ls -d openspec/changes/*/ 2>/dev/null | grep -v archive/ | xargs -n1 basename | grep -v "^$DEBT_NAME$" | tr '\n' ' ')
-    if [ -n "$ARCHIVED_CHANGES" ]; then
-        echo "⚠️  其他活跃 changes: $ARCHIVED_CHANGES"
-        echo "  建议重新运行 deps 分析将新 debt change 纳入依赖图:"
-        echo "    skill_use(\"deps\")"
+    echo "🔍 检查文件冲突 + 自动增量 deps..."
+    
+    # 用 iteration.list_active 获取活跃 (proposed/in_worktree/completed) change 列表
+    ACTIVE_CHANGES_JSON=$(PY_PROJECT_ROOT="$PROJECT_ROOT" python3 << 'PYEOF' 2>/dev/null
+import os, sys, json
+try:
+    from skills._lib import iteration as it
+    d = it.load(os.environ.get("PY_PROJECT_ROOT", "."))
+    out = it.list_active(d)
+    # 排除 DEBT_NAME 自身
+    names = [c["name"] for c in out if c["name"] != "$DEBT_NAME"]
+    print(json.dumps(names))
+except Exception as e:
+    print("[]", file=sys.stderr)
+PYEOF
+)
+    
+    # 启发式冲突检测: debt change 与活跃 change 共享关键词
+    CONFLICT_DETECTED=false
+    if [ -n "$ACTIVE_CHANGES_JSON" ] && [ "$ACTIVE_CHANGES_JSON" != "[]" ]; then
+        # 提取 DEBT_NAME 的关键词 (去掉 debt-/fix-/prefix-/cleanup- 前缀后的第一段)
+        DEBT_KEYWORD=$(echo "$DEBT_NAME" | sed -E 's/^(debt|fix|prefix|cleanup)-?(.*)/\2/' | sed 's/-.*//')
+        if [ -n "$DEBT_KEYWORD" ]; then
+            for active_name in $(echo "$ACTIVE_CHANGES_JSON" | python3 -c "import sys, json; print(' '.join(json.load(sys.stdin)))"); do
+                if echo "$active_name" | grep -qF "$DEBT_KEYWORD"; then
+                    CONFLICT_DETECTED=true
+                    echo "⚠️  潜在文件冲突: $DEBT_NAME 与 $active_name (共享关键词 '$DEBT_KEYWORD')"
+                    break
+                fi
+            done
+        fi
+    fi
+    
+    if [ "$CONFLICT_DETECTED" = "true" ]; then
+        echo "  → 自动增量 deps (将新 debt change 加入 .deps-candidates.json)..."
+        # 追加到 .deps-candidates.json
+        PY_PROJECT_ROOT="$PROJECT_ROOT" python3 << PYEOF
+import os, json
+p = os.path.join(os.environ.get("PY_PROJECT_ROOT", "."), ".rddf/state/.deps-candidates.json")
+data = {"candidates": []}
+if os.path.isfile(p):
+    try:
+        with open(p) as f:
+            data = json.load(f)
+            if not isinstance(data, dict) or "candidates" not in data:
+                data = {"candidates": []}
+    except (FileNotFoundError, json.JSONDecodeError):
+        data = {"candidates": []}
+candidates = data.get("candidates", [])
+if "$DEBT_NAME" not in candidates:
+    candidates.append("$DEBT_NAME")
+    data["candidates"] = candidates
+    with open(p, "w") as f:
+        json.dump(data, f, indent=2)
+    print(f"  ✅ 已添加 $DEBT_NAME 到 .deps-candidates.json")
+else:
+    print(f"  ℹ️  $DEBT_NAME 已在 .deps-candidates.json 中")
+PYEOF
+        # 调用 deps
+        if skill_use("deps") 2>/dev/null; then
+            echo "✅ 增量 deps 完成, 新 debt change 已纳入依赖图"
+            echo "   查看: cat .rddf/state/.deps-output.md"
+        else
+            echo "⚠️  skill_use(\"deps\") 调用失败, 请手动重跑"
+            echo "   运行: skill_use(\"deps\")"
+        fi
     else
-        echo "✅ 无其他活跃 change，debt change 可安全 deferred"
+        echo "✅ 无文件冲突（debt change '$DEBT_NAME' 与活跃 changes 无关键词重叠）"
+        echo "   debt change 可安全 deferred 到下次 sprint"
     fi
     ;;
   3)
