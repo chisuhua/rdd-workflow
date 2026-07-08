@@ -534,6 +534,24 @@ class TestDeriveFeatureName:
     def test_prefix_in_name_but_not_at_start(self):
         assert it.derive_feature_name("v2-multi-session") == "v2-multi-session"
 
+    def test_parent_feature_field_overrides_name(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="my-change", status="proposed", parent_feature="feature-stream")
+        assert it.derive_feature_name("my-change", d) == "feature-stream"
+
+    def test_parent_feature_field_without_data_uses_name(self):
+        assert it.derive_feature_name("my-change") == "my-change"
+
+    def test_parent_feature_field_empty_uses_name(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="my-change", status="proposed")
+        assert it.derive_feature_name("my-change", d) == "my-change"
+
+    def test_parent_feature_field_none_uses_name(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="my-change", status="proposed", parent_feature=None)
+        assert it.derive_feature_name("my-change", d) == "my-change"
+
 
 class TestListFeatureGroups:
     def test_empty_data(self):
@@ -548,6 +566,15 @@ class TestListFeatureGroups:
         groups = it.list_feature_groups(d)
         assert set(groups.keys()) == {"feature-stream"}
         assert len(groups["feature-stream"]) == 3
+
+    def test_parent_feature_field_overrides_name_prefix(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="odd-name", status="proposed", parent_feature="feature-stream")
+        d = it.add_or_update_change(d, name="also-odd", status="proposed", parent_feature="feature-stream")
+        groups = it.list_feature_groups(d)
+        # parent_feature overrides name-prefix derivation
+        assert set(groups.keys()) == {"feature-stream"}
+        assert len(groups["feature-stream"]) == 2
 
     def test_mixed_features_and_standalone(self):
         d = it.create_empty()
@@ -610,6 +637,13 @@ class TestFeatureProgress:
         assert progress["feature-stream"] == (1, 2)
         assert progress["feature-cdc"] == (2, 2)
         assert progress["fix-bug-123"] == (1, 1)
+
+    def test_parent_feature_field_in_progress(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="odd-core", status="archived", parent_feature="feature-stream")
+        d = it.add_or_update_change(d, name="odd-adapters", status="in_worktree", parent_feature="feature-stream")
+        progress = it.feature_progress(d)
+        assert progress["feature-stream"] == (1, 2)
 
 
 # ---------------------------------------------------------------------------

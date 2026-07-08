@@ -381,14 +381,26 @@ def list_blocked(data: dict) -> list[dict]:
 _FEATURE_PREFIX_RE = re.compile(r"^(feature-[a-z0-9]+)(-[a-z0-9-]+)?$")
 
 
-def derive_feature_name(name: str) -> str:
-    """Derive the parent feature name from a change's name.
+def derive_feature_name(name: str, data: Optional[dict] = None) -> str:
+    """Derive the parent feature name for a change.
+
+    Resolution order:
+    1. ``parent_feature`` field in iteration.json (explicit registration)
+    2. Name-prefix convention: ``feature-<name>-<sub>`` → ``feature-<name>``
+    3. Fallback: return the change name as-is (single-change feature)
 
     feature-stream-core → feature-stream
     feature-stream      → feature-stream  (single sub-change)
     debt-cleanup-foo    → debt-cleanup-foo (no feature- prefix — self-group)
-    v2-multi-session    → v2-multi-session  (no feature- prefix)
     """
+    # 1. Check explicit parent_feature field
+    if data is not None:
+        change = get_change(data, name)
+        if change is not None:
+            pf = change.get("parent_feature")
+            if pf:
+                return pf
+    # 2. Name-prefix convention
     m = _FEATURE_PREFIX_RE.match(name)
     return m.group(1) if m else name
 
@@ -402,7 +414,7 @@ def list_feature_groups(data: dict) -> dict[str, list[dict]]:
     """
     groups: dict[str, list[dict]] = {}
     for c in data.get("changes", []):
-        feature = derive_feature_name(c["name"])
+        feature = derive_feature_name(c["name"], data)
         groups.setdefault(feature, []).append(c)
     return groups
 
