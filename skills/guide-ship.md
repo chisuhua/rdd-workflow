@@ -907,9 +907,10 @@ fi
 
 echo "🔍 归档模式: $ARCHIVE_MODE"
 
-# Feature 完整性提示（v2.0.1 新增 — 非阻断）
+# Feature 完整性提示（v2.0.1 新增 — 默认非阻断）
+# 环境变量 FEATURE_ARCHIVE_GATE=hard 可升级为硬阻断
 PY_PROJECT_ROOT="$PROJECT_ROOT" python3 << 'PYEOF' 2>/dev/null
-import os, sys
+import os, sys, json
 try:
     from skills._lib import iteration as it
     d = it.load(os.environ.get("PY_PROJECT_ROOT", "."))
@@ -917,7 +918,12 @@ try:
     feature = it.derive_feature_name(change_name)
 
     # 只有 feature- 前缀的 change 才检查 feature 完整性
-    if not change_name.startswith("feature-"):
+    # （非 feature- 前缀的 change 用 parent_feature 字段检查）
+    pf = None
+    ch = it.get_change(d, change_name)
+    if ch:
+        pf = ch.get("parent_feature")
+    if not change_name.startswith("feature-") and not pf:
         sys.exit(0)
 
     progress = it.feature_progress(d)
@@ -932,7 +938,16 @@ try:
     if remaining > 1 or (remaining == 1 and any(c.get("status") != "archived" for c in d.get("changes", []) if it.derive_feature_name(c.get("name", "")) == feature and c.get("name") != change_name)):
         print(f"⚠️  Feature '{feature}' 完整性提示: 已归档 {done}/{total}")
         print(f"   还有 {total - done} 个 sub-change 未归档，此 feature 仍未完整")
-        print(f"   归档不会阻断，请知悉")
+        
+        # FEATURE_ARCHIVE_GATE=hard 升级为阻断
+        gate_mode = os.environ.get("FEATURE_ARCHIVE_GATE", "soft")
+        if gate_mode == "hard":
+            print(f"   ❌ FEATURE_ARCHIVE_GATE=hard 阻止归档 (请先处理其余 sub-change)")
+            sys.exit(1)
+        else:
+            print(f"   归档不会阻断 (设置 FEATURE_ARCHIVE_GATE=hard 可升级为硬阻断)")
+except SystemExit:
+    raise
 except Exception:
     pass
 PYEOF
