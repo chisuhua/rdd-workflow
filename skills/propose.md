@@ -442,6 +442,23 @@ THIS_SESSION_CREATED=()
 
 for each selected propose <name>:
     # ---------------------------------------------------------------
+    # v2.0.1+: Name-pattern skeleton branching
+    # 匹配 debt/fix-/prefix- 前缀的 change 自动走 skeleton 模式
+    # 理由: 这些是前置修复/债务清理/前缀依赖类小变更,
+    #       先注册为 planned 状态, 后续用 guide-plan fill 填充
+    #       不阻塞主 sprint (ref: ADR-0013)
+    # ---------------------------------------------------------------
+    if [ "$SKELETON_MODE" = "false" ]; then
+        if echo "<name>" | grep -qE '^(debt|fix-|prefix-).*$'; then
+            echo ""
+            echo "💡 '<name>' 匹配 debt/fix-/prefix- 模式"
+            echo "   自动启用 skeleton 模式（仅注册骨架 artifacts）"
+            echo "   后续操作: skill_use(\"guide-plan\") → 选项 3 (fill) 填充"
+            SKELETON_MODE=true
+        fi
+    fi
+
+    # ---------------------------------------------------------------
     # Step 4a: Guardrail — 检查 change 是否已存在
     # ---------------------------------------------------------------
     if [ -d "$PROJECT_ROOT/openspec/changes/<name>/" ]; then
@@ -497,6 +514,24 @@ try:
 except Exception as e:
     print(f"⚠️  iteration.json update failed (non-fatal): {e}", file=sys.stderr)
 ' 2>/dev/null
+        # Update proposal-suggestions.md: status "待创建" → "skeleton"
+        PY_PROJECT_ROOT="$PROJECT_ROOT" python3 << PYEOF 2>/dev/null
+import os, json
+p = os.path.join(os.environ.get("PY_PROJECT_ROOT", "."), "proposal-suggestions.md")
+if os.path.isfile(p):
+    try:
+        with open(p) as f:
+            entries = json.load(f)
+        if isinstance(entries, list):
+            for e in entries:
+                if isinstance(e, dict) and e.get("name") == "<name>":
+                    e["status"] = "skeleton"
+            with open(p, "w") as f:
+                json.dump(entries, f, ensure_ascii=False, indent=2)
+                f.write("\n")
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+PYEOF
         echo "✅ Skeleton created: <name>"
         continue
     fi

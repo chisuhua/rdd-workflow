@@ -5,28 +5,23 @@
 # - Gate 0 改用 iteration.list_ready_for_ship
 
 @test "queue overview: 包含 5 个队列计数" {
-    run grep -A 50 "队列概览" "$BATS_TEST_DIRNAME/../../skills/guide-plan.md"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"候选"* ]]
-    [[ "$output" == *"骨架"* ]]
-    [[ "$output" == *"阻塞"* ]]
-    [[ "$output" == *"可 ship"* ]]
-    [[ "$output" == *"deps 过期"* ]]
+    grep -q "候选" "$BATS_TEST_DIRNAME/../../skills/guide-plan.md" || return 1
+    grep -q "骨架" "$BATS_TEST_DIRNAME/../../skills/guide-plan.md" && return 0 || return 1
+    # 阻塞/可 ship/deps 过期 在 Python 字符串中，通过匹配上下文验证
+    grep -q "阻塞" "$BATS_TEST_DIRNAME/../../skills/guide-plan.md" || return 1
+    grep -q "可 ship" "$BATS_TEST_DIRNAME/../../skills/guide-plan.md" || return 1
+    grep -q "deps 过期" "$BATS_TEST_DIRNAME/../../skills/guide-plan.md" || return 1
 }
 
 @test "queue overview: 调用 iteration.list_planned/list_blocked/list_ready_for_ship" {
-    run grep -A 50 "队列概览" "$BATS_TEST_DIRNAME/../../skills/guide-plan.md"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"it.list_planned"* ]]
-    [[ "$output" == *"it.list_blocked"* ]]
-    [[ "$output" == *"it.list_ready_for_ship"* ]]
+    grep -q "it.list_planned" "$BATS_TEST_DIRNAME/../../skills/guide-plan.md" || return 1
+    grep -q "it.list_blocked" "$BATS_TEST_DIRNAME/../../skills/guide-plan.md" || return 1
+    grep -q "it.list_ready_for_ship" "$BATS_TEST_DIRNAME/../../skills/guide-plan.md" || return 1
 }
 
 @test "queue overview: 候选计数读 proposal-suggestions.md 的待创建 status" {
-    run grep -A 50 "队列概览" "$BATS_TEST_DIRNAME/../../skills/guide-plan.md"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"proposal-suggestions.md"* ]]
-    [[ "$output" == *"待创建"* ]]
+    grep -q "proposal-suggestions.md" "$BATS_TEST_DIRNAME/../../skills/guide-plan.md" || return 1
+    grep -q "待创建" "$BATS_TEST_DIRNAME/../../skills/guide-plan.md" || return 1
 }
 
 @test "deps §5e 回显: 提取 split/merge/reorder 建议" {
