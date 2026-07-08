@@ -1,4 +1,4 @@
-## ADDED Requirements
+## Requirements
 
 ### Requirement: guide-arch-skill
 The system SHALL provide `skills/guide-arch.md` as the architecture definition phase state machine.
