@@ -263,6 +263,66 @@ else
 fi
 ```
 
+**队列概览**（v2.0.1 新增，调用 `iteration` 模块的 4 个 query 函数）：
+
+```bash
+# 5 队列可视化: 让用户一眼看到"我现在能做什么"
+# 调用 iteration.list_planned/list_blocked/list_ready_for_ship
+# 失败时降级为内联过滤, 不阻断菜单显示
+echo ""
+echo "📊 当前队列状态:"
+PY_PROJECT_ROOT="$PROJECT_ROOT" python3 << 'PYEOF' 2>/dev/null
+import os, sys, json
+from datetime import datetime, timezone
+project_root = os.environ.get("PY_PROJECT_ROOT", ".")
+
+candidates = 0
+ps_path = os.path.join(project_root, "proposal-suggestions.md")
+if os.path.isfile(ps_path):
+    try:
+        with open(ps_path) as f:
+            entries = json.load(f)
+        if isinstance(entries, list):
+            candidates = sum(1 for e in entries if isinstance(e, dict) and e.get("status") == "待创建")
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+
+try:
+    from skills._lib import iteration as it
+    d = it.load(project_root)
+    planned = it.list_planned(d)
+    blocked = it.list_blocked(d)
+    ready = it.list_ready_for_ship(d)
+    changes_for_stale = d.get("changes", [])
+except Exception:
+    planned = blocked = ready = []
+    changes_for_stale = []
+
+now = datetime.now(timezone.utc)
+stale = 0
+for c in changes_for_stale:
+    if c.get("status") not in ("proposed", "in_worktree"):
+        continue
+    last = c.get("last_deps_at")
+    if not last:
+        stale += 1
+        continue
+    try:
+        age_hours = (now - datetime.fromisoformat(last.replace("Z", "+00:00"))).total_seconds() / 3600
+        if age_hours > 24:
+            stale += 1
+    except (ValueError, TypeError):
+        stale += 1
+
+print(f"  🆕 候选: {candidates} [💡 选 1 个创建]")
+print(f"  📋 骨架: {len(planned)}")
+print(f"  ⏸️  阻塞: {len(blocked)} [⚠️ 等待 blocker 解除]")
+ready_marker = " [✅ 满足 plan-done 门控]" if ready else ""
+print(f"  🚀 可 ship: {len(ready)}{ready_marker}")
+print(f"  ⚠️  deps 过期: {stale} [> 24h 未更新]")
+PYEOF
+```
+
 **菜单示例**：
 
 ```
@@ -488,21 +548,60 @@ PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 echo "=== Plan 阶段 - 门控检查 ==="
 echo ""
 
-# 门控 0: Mixed state — at least 1 proposed, any number of planned allowed
-echo "门控 0: Mixed state 检查 (proposed + planned)"
-PROPOSED_COUNT=$(python3 -c "
-import json, os
-p = '$PROJECT_ROOT/.rddf/state/iteration.json'
-if not os.path.isfile(p):
-    print(0); exit()
+# v2.0.1: Deps §5e 重组建议回显 (仅参考, 不阻断)
+# 读取 .rddf/state/.deps-output.md 提取 AI 拆分/合并/重排建议
+# 用户可选择"接受建议回到 propose"或"忽略继续 plan-done" (默认忽略)
+SKIP_GATE_0=false
+DEPS_OUTPUT="$PROJECT_ROOT/.rddf/state/.deps-output.md"
+if [ -f "$DEPS_OUTPUT" ]; then
+    SUGGESTIONS=$(awk '/^## 🧠 AI 分析建议/,/^## [^🧠]|^---/' "$DEPS_OUTPUT" 2>/dev/null \
+                  | grep -E "^- \`.*\`: (split|merge|reorder)" || true)
+    FALLBACK_MARKER=$(grep -c "AI 语义分析未启用" "$DEPS_OUTPUT" 2>/dev/null || echo 0)
+    
+    if [ -n "$SUGGESTIONS" ] && [ "${FALLBACK_MARKER:-0}" -eq 0 ]; then
+        echo ""
+        echo "⚠️  Deps AI 重组建议（仅参考不阻断 plan-done）:"
+        echo "$SUGGESTIONS" | sed 's/^/  /'
+        echo ""
+        echo "请选择:"
+        echo "  1. 接受建议 → 跳过 plan-done, 回到 propose 阶段手动处理"
+        echo "  2. 忽略建议 → 继续 plan-done [默认]"
+        # P0-9 fix: env var 替代 read -p 避免非交互环境阻塞
+        dep_choice="${GUIDE_PLAN_DEPS_CHOICE:-2}"
+        case "$dep_choice" in
+            1) echo "→ 用户选择接受建议, 跳过 plan-done"
+                SKIP_GATE_0=true ;;
+            2) echo "→ 用户选择忽略建议, 继续 plan-done" ;;
+            *) echo "→ 无效选择 '$dep_choice', 默认忽略" ;;
+        esac
+    elif [ "${FALLBACK_MARKER:-0}" -gt 0 ]; then
+        echo ""
+        echo "ℹ️  AI 语义分析未启用 (fallback) - 跳过 §5e 重组建议检查"
+    fi
+fi
+echo ""
+
+# 门控 0: Ready-for-ship 状态检查 (v2.0.1 改用 iteration.list_ready_for_ship)
+echo "门控 0: Ready-for-ship changes 数量检查 (proposed + 无活跃 blocker)"
+if [ "$SKIP_GATE_0" = "true" ]; then
+    echo "  ⏭️  跳过（用户接受 deps 重组建议）"
+    echo ""
+    exit 0
+fi
+PROPOSED_COUNT=$(PY_PROJECT_ROOT="$PROJECT_ROOT" python3 << 'PYEOF' 2>/dev/null
+import os, sys
 try:
-    d = json.load(open(p))
-except: print(0); exit()
-print(sum(1 for c in d.get('changes', []) if c.get('status') == 'proposed'))
-" 2>/dev/null)
-echo "  proposed (ready for ship): $PROPOSED_COUNT"
+    from skills._lib import iteration as it
+    d = it.load(os.environ.get("PY_PROJECT_ROOT", "."))
+    ready = it.list_ready_for_ship(d)
+    print(len(ready))
+except Exception:
+    print(0)
+PYEOF
+)
+echo "  ready-for-ship (proposed + blocker cleared): $PROPOSED_COUNT"
 if [ "${PROPOSED_COUNT:-0}" -eq 0 ]; then
-    echo "  ❌ 失败: 至少需要 1 个 proposed 状态 change 才能交接给 guide-ship"
+    echo "  ❌ 失败: 至少需要 1 个 ready-for-ship change 才能交接给 guide-ship"
     echo "     使用 fill 阶段将 planned change 升级，或在 propose 阶段创建完整 change"
     exit 1
 fi
