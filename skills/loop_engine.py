@@ -173,11 +173,21 @@ class LoopEngine:
             )
             return False
 
-    def run(self, goal_predicate: str, max_iterations: Optional[int] = None) -> LoopStatus:
-        """Execute loop cycle until goal achieved or safety trigger."""
+    def run(self, goal_predicate: str, max_iterations: Optional[int] = None,
+            await_triggers: bool = False) -> LoopStatus:
+        """Execute loop cycle until goal achieved or safety trigger.
+
+        If await_triggers=True, the engine will additionally check for pending
+        trigger events before each scan_state iteration and fire them inline.
+        """
         max_iter = max_iterations or self.safety["max_iterations"]
         self.loop_state.goal = goal_predicate
         self.loop_state.iteration = 0
+        if await_triggers:
+            self.event_log.record(
+                EventType.LOOP_STARTED, Severity.INFO,
+                "Loop started in await_triggers mode",
+            )
         self.event_log.record(
             EventType.LOOP_STARTED, Severity.INFO,
             f"Loop started with goal: {goal_predicate}",

@@ -74,7 +74,7 @@ def test_loop_engine_scan_uses_detectors(tmp_path, monkeypatch):
     el_path = str(tmp_path / "event-log.jsonl")
     engine = LoopEngine(state=StateVector.load(sv_path), event_log=EventLog(el_path))
     engine.scan_state()
-    assert len(engine.loop_state.detections) == 8  # all 8 built-ins
+    assert len(engine.loop_state.detections) == 9  # all 9 built-ins
 
 
 def test_loop_engine_accepts_mode_parameter(tmp_path):

@@ -1,0 +1,11 @@
+# spec-workflow v3 config
+triggers:
+  enabled: true
+  webhook_port: 9090
+  fs_watch_interval: 30.0
+  git_poll_interval: 60.0
+  default_rate_limit: 60  # fires per hour per trigger
+  safety:
+    max_concurrent_fires: 5
+    crash_recovery: true
+    trigger_off_override: false  # when true, --trigger-off disables all
