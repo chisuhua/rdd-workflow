@@ -151,7 +151,9 @@ try:
         if not isinstance(entry, dict):
             continue
         name = entry.get('name')
-        if name and os.path.isdir(f'{project_root}/openspec/changes/{name}/'):
+        status = entry.get('status', '待创建')
+        # Keep 'skeleton' status entries even if directory exists
+        if name and os.path.isdir(f'{project_root}/openspec/changes/{name}/') and status != 'skeleton':
             removed.append(name)
         else:
             kept.append(entry)
@@ -428,12 +430,74 @@ else:
 # P0-3: 精确跟踪本次会话成功创建的 change 名称（避免危险的 `git add openspec/changes/*/` glob）
 THIS_SESSION_CREATED=()
 
+    # ---------------------------------------------------------------
+    # Step 4a-skel: --skeleton mode (skeleton-only creation)
+    # ---------------------------------------------------------------
+    SKELETON_MODE=false
+    for arg in "$@"; do
+      case "$arg" in
+        --skeleton|--skeleton-only) SKELETON_MODE=true ;;
+      esac
+    done
+
 for each selected propose <name>:
     # ---------------------------------------------------------------
     # Step 4a: Guardrail — 检查 change 是否已存在
     # ---------------------------------------------------------------
     if [ -d "$PROJECT_ROOT/openspec/changes/<name>/" ]; then
         echo "⚠️ Change <name> 已存在，跳过"
+        continue
+    fi
+
+    # ---------------------------------------------------------------
+    # Step 4a-skel: Skeleton mode branch (only creates skeleton artifacts)
+    # ---------------------------------------------------------------
+    if [ "$SKELETON_MODE" = "true" ]; then
+        echo "📦 Skeleton mode: creating minimal artifacts only"
+        # Create change directory + .openspec.yaml
+        openspec new change "<name>" 2>/dev/null || true
+        # Write minimal proposal.md (only Why + What Changes)
+        cat > "$PROJECT_ROOT/openspec/changes/<name>/proposal.md" << EOF
+## Why
+
+<skeleton motivation - 1-2 sentences>
+
+## What Changes
+
+- <file path or module affected>
+- <file path or module affected>
+EOF
+        # Write minimal roadmap-meta.yaml
+        cat > "$PROJECT_ROOT/openspec/changes/<name>/roadmap-meta.yaml" << EOF
+roadmap:
+  phase: "$CURRENT_PHASE"
+  category: "$CHANGE_CATEGORY"
+  priority: "$PRIORITY"
+  gate_checklist: []
+  cross_phase_deps: []
+  category_validation:
+    valid: true
+    reason: ""
+EOF
+        # Update iteration.json status to planned
+        CHANGE_NAME="<name>" PROJECT_ROOT="$PROJECT_ROOT" \
+          python3 -c '
+import os, sys
+try:
+    from skills._lib import iteration as it_mod
+    data = it_mod.load(os.environ["PROJECT_ROOT"])
+    data = it_mod.add_or_update_change(
+        data,
+        name=os.environ["CHANGE_NAME"],
+        status="planned",
+        phase=None, category=None, priority=None,
+    )
+    it_mod.save(os.environ["PROJECT_ROOT"], data)
+    print(f"  ✅ iteration.json updated: {os.environ[\"CHANGE_NAME\"]} status=planned")
+except Exception as e:
+    print(f"⚠️  iteration.json update failed (non-fatal): {e}", file=sys.stderr)
+' 2>/dev/null
+        echo "✅ Skeleton created: <name>"
         continue
     fi
 
@@ -707,7 +771,22 @@ if [ ${#THIS_SESSION_CREATED[@]} -gt 0 ]; then
 
     # 逐个精确 git add（避免把 archive/ 或其它无关 change 误加进来）
     for name in "${THIS_SESSION_CREATED[@]}"; do
-        git add "openspec/changes/$name/"
+        # Only commit artifacts that exist (skeleton changes have fewer files)
+        if [ -f "$PROJECT_ROOT/openspec/changes/$name/proposal.md" ]; then
+            git add "openspec/changes/$name/proposal.md"
+        fi
+        if [ -f "$PROJECT_ROOT/openspec/changes/$name/roadmap-meta.yaml" ]; then
+            git add "openspec/changes/$name/roadmap-meta.yaml"
+        fi
+        if [ -f "$PROJECT_ROOT/openspec/changes/$name/.openspec.yaml" ]; then
+            git add "openspec/changes/$name/.openspec.yaml"
+        fi
+        if [ -f "$PROJECT_ROOT/openspec/changes/$name/design.md" ]; then
+            git add "openspec/changes/$name/design.md"
+        fi
+        if [ -f "$PROJECT_ROOT/openspec/changes/$name/tasks.md" ]; then
+            git add "openspec/changes/$name/tasks.md"
+        fi
     done
     git add proposal-suggestions.md
 
