@@ -3,3 +3,4 @@
 PyYAML>=6.0
 jsonschema>=4.0
 pytest>=7.0
+croniter>=2.0
