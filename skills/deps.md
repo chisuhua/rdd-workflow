@@ -329,6 +329,7 @@ proposal.md 摘要:
 
 4. **重组建议**：如果发现有粒度问题，给出具体建议
    - 拆分：X change 可以拆分为 [X-core, X-adapters, X-tests]
+   - 拆分时请指定 parent_feature（即父 feature 名称，如 "feature-stream"）
    - 合并：[X, Y] 可以合并为一个 change（因为 X 和 Y 改同一核心）
 
 5. **推荐执行顺序**：考虑依赖和冲突后的最优执行路径
@@ -356,6 +357,8 @@ proposal.md 摘要:
 ### 建议
 - 建议先执行 refactor-stream-base，再执行 add-m2sPipe
 - fix-ns-pollution 可与其他 change 并行
+- **建议拆分**: add-stream-pipes 拆分为 [add-stream-pipe-core, add-stream-pipe-tests]
+  - parent_feature: "feature-stream-pipes"
 ```
 
 #### 3e. 子代理调用 (task API)
@@ -378,7 +381,7 @@ task(
         输出 JSON:
         {{
           "ai_deps": [{{"from": "<name>", "to": "<name>", "kind": "soft|hard", "reason": "..."}}],
-          "suggestions": [{{"change": "<name>", "action": "split|merge|reorder", "reason": "..."}}],
+          "suggestions": [{{"change": "<name>", "action": "split|merge|reorder", "parent_feature": "<feature-name>", "reason": "..."}}],
           "fallback": false
         }}
     """,
@@ -617,7 +620,11 @@ try:
         print('**重组建议** (仅建议不执行):')
         print()
         for s in suggestions:
-            print(f'- \`{s[\"change\"]}\`: {s[\"action\"]} — {s[\"reason\"]}')
+            pf = s.get("parent_feature")
+            if pf:
+               print(f'- \`{s[\"change\"]}\`: {s[\"action\"]} — {s[\"reason\"]} (parent_feature: {pf})')
+            else:
+               print(f'- \`{s[\"change\"]}\`: {s[\"action\"]} — {s[\"reason\"]}')
 except Exception as e:
     print(f'⚠️ 解析 AI_RESULT_FILE 失败: {e}', file=sys.stderr)
 " >> "$DEPS_OUTPUT" 2>/dev/null || true
