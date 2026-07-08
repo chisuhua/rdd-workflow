@@ -46,8 +46,8 @@ def test_detect_worktrees_runs_against_real_git_repo(tmp_path, monkeypatch):
     assert result.data["count"] == len(result.data["worktrees"])
 
 
-def test_eight_builtin_detectors_registered():
-    """BUILTIN_DETECTORS contains exactly the 8 required detectors by name."""
+def test_nine_builtin_detectors_registered():
+    """BUILTIN_DETECTORS contains exactly the 9 required detectors by name."""
     from skills._lib.detectors import BUILTIN_DETECTORS
 
     expected = {
@@ -59,6 +59,7 @@ def test_eight_builtin_detectors_registered():
         "detect_health_issues",
         "detect_test_gaps",
         "detect_stale_branches",
+        "detect_trigger_events",
     }
     actual = {d.name for d in BUILTIN_DETECTORS}
     assert expected == actual
@@ -116,14 +117,14 @@ def test_all_detectors_returns_builtins_plus_plugins():
 
 
 def test_all_builtin_detectors_run_sequentially_under_500ms():
-    """All 8 built-in detectors complete sequentially in < 500ms total."""
+    """All 9 built-in detectors complete sequentially in < 500ms total."""
     from skills._lib.detectors import BUILTIN_DETECTORS
 
     start = time.perf_counter()
     results = [d.detect({}) for d in BUILTIN_DETECTORS]
     elapsed_ms = (time.perf_counter() - start) * 1000
 
-    assert len(results) == 8
+    assert len(results) == 9
     # Each result must be a DetectionResult with required fields populated
     for r in results:
         assert hasattr(r, "type")
