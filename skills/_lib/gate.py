@@ -18,6 +18,7 @@ import os
 import subprocess
 from collections import namedtuple
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Callable, Optional
 
 from skills._lib.event_log import EventLog
@@ -53,12 +54,64 @@ class GateResult:
     suggestion: Optional[str] = None
 
 
+_DEFAULT_ADR_DIR = "docs/adr"
+_DEFAULT_ROADMAP_PATH = "roadmap.md"
+_DEFAULT_ARCHITECTURE_DIR = "docs/architecture"
+_DEFAULT_ADR_PATTERN = "ADR-*.md"
+
+
+def _read_arch_handoff_paths(project_root: str) -> dict:
+    """Read .arch-handoff.json with fallback to v2.0 defaults.
+
+    ADR-0016 Layer 3. Returns dict with keys: adr_dir, roadmap_path,
+    architecture_dir, adr_pattern. All paths relative to project_root.
+    """
+    handoff_path = Path(project_root) / ".rddf" / "state" / ".arch-handoff.json"
+    if not handoff_path.exists():
+        return {
+            "adr_dir": _DEFAULT_ADR_DIR,
+            "roadmap_path": _DEFAULT_ROADMAP_PATH,
+            "architecture_dir": _DEFAULT_ARCHITECTURE_DIR,
+            "adr_pattern": _DEFAULT_ADR_PATTERN,
+        }
+    try:
+        data = json.loads(handoff_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return {
+            "adr_dir": _DEFAULT_ADR_DIR,
+            "roadmap_path": _DEFAULT_ROADMAP_PATH,
+            "architecture_dir": _DEFAULT_ARCHITECTURE_DIR,
+            "adr_pattern": _DEFAULT_ADR_PATTERN,
+        }
+    return {
+        "adr_dir": data.get("adr_dir", _DEFAULT_ADR_DIR),
+        "roadmap_path": data.get("roadmap_path", _DEFAULT_ROADMAP_PATH),
+        "architecture_dir": data.get("architecture_dir", _DEFAULT_ARCHITECTURE_DIR),
+        "adr_pattern": data.get("adr_pattern", _DEFAULT_ADR_PATTERN),
+    }
+
+
 def _check_adr_exists(ctx: dict) -> tuple[bool, Optional[str]]:
-    return (os.path.isdir("docs/adr") and any(f.startswith("ADR-") for f in os.listdir("docs/adr")), None)
+    """ADR-0016: pass if handoff-adr_dir contains any matching pattern files.
+
+    Preserves the original semantic: directory exists AND has at least one
+    file matching the discovered adr_pattern.
+    """
+    project_root = ctx.get("project_root", ".")
+    paths = _read_arch_handoff_paths(project_root)
+    adr_dir = Path(project_root) / paths["adr_dir"]
+    if not adr_dir.is_dir():
+        return (False, None)
+    matches = list(adr_dir.glob(paths["adr_pattern"]))
+    return (len(matches) > 0, None)
 
 
 def _check_roadmap_defined(ctx: dict) -> tuple[bool, Optional[str]]:
-    return (os.path.isfile("roadmap.md"), None)
+    """ADR-0016: pass if handoff-roadmap_path exists."""
+    project_root = ctx.get("project_root", ".")
+    paths = _read_arch_handoff_paths(project_root)
+    roadmap = Path(project_root) / paths["roadmap_path"]
+    return (roadmap.is_file(), None)
 
 
 def _check_gap_analysis_complete(ctx: dict) -> tuple[bool, Optional[str]]:
@@ -66,7 +119,10 @@ def _check_gap_analysis_complete(ctx: dict) -> tuple[bool, Optional[str]]:
 
 
 def _check_arch_handoff_exists(ctx: dict) -> tuple[bool, Optional[str]]:
-    return (os.path.isfile(".rddf/state/.arch-handoff.json"), None)
+    """Unchanged from v2.0 — handoff must exist regardless of path."""
+    project_root = ctx.get("project_root", ".")
+    handoff = Path(project_root) / ".rddf" / "state" / ".arch-handoff.json"
+    return (handoff.is_file(), None)
 
 
 def _check_changes_committed(ctx: dict) -> tuple[bool, Optional[str]]:

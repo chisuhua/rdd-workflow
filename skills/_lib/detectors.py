@@ -174,20 +174,33 @@ def detect_roadmap_state(state: dict) -> DetectionResult:
 
 
 def detect_adr_status(state: dict) -> DetectionResult:
-    """Detect ADR directory status — counts files in `docs/adr/` or `adr/`."""
-    adr_dir = Path("docs/adr") if Path("docs/adr").exists() else Path("adr")
+    """Detect ADR directory status — counts files via handoff-discovered path.
+
+    ADR-0016 Layer 3. Reads .arch-handoff.json; falls back to "docs/adr" + "ADR-*.md".
+    """
+    # Lazy import to avoid top-level circular dependency with gate.py.
+    from skills._lib.gate import _read_arch_handoff_paths
+
+    project_root = state.get("project_root", ".") if isinstance(state, dict) else "."
+    paths = _read_arch_handoff_paths(project_root)
+    adr_dir = Path(project_root) / paths["adr_dir"]
     if not adr_dir.exists():
         return DetectionResult(
             type="adr_status",
-            data={"exists": False},
-            message="No ADR dir",
+            data={"exists": False, "adr_dir": paths["adr_dir"], "files": []},
+            message=f"No ADR directory at {paths['adr_dir']}",
             severity=SEVERITY_WARN,
         )
-    adrs = sorted([f.name for f in adr_dir.glob("*.md")])
+    adrs = sorted([f.name for f in adr_dir.glob(paths["adr_pattern"])])
     return DetectionResult(
         type="adr_status",
-        data={"exists": True, "adrs": adrs, "count": len(adrs)},
-        message=f"{len(adrs)} ADR(s) found",
+        data={
+            "exists": True,
+            "adrs": adrs,
+            "count": len(adrs),
+            "adr_dir": paths["adr_dir"],
+        },
+        message=f"{len(adrs)} ADR(s) found in {paths['adr_dir']}",
     )
 
 

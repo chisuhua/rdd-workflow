@@ -336,20 +336,29 @@ def action_update_roadmap(params: dict, event_log: EventLog) -> ActionResult:
 
 
 def action_create_adr(params: dict, event_log: EventLog) -> ActionResult:
-    """Create a new ADR. params: {title: str, status: str (default 'proposed')}
+    """Create a new ADR. params: {title, status, _project_root, adr_pattern?}
 
-    Writes a Markdown file at `docs/adr/{NNNN}-{slug}.md` where NNNN is the
-    next 4-digit sequence number (existing-count + 1) and slug is the
-    lower-cased, dash-joined title."""
+    ADR-0016 Layer 3: writes to the handoff-discovered adr_dir. Falls back to
+    `docs/adr/` when no handoff is present and no override given. NNNN is
+    the next 4-digit sequence number (existing-count + 1).
+    """
+    # Lazy import to avoid top-level circular dependency with gate.py.
+    from skills._lib.gate import _read_arch_handoff_paths
+
     title = params.get("title")
     status = params.get("status", "proposed")
+    project_root = params.get("_project_root", ".")
+    paths = _read_arch_handoff_paths(project_root)
+    adr_dir_rel = params.get("adr_dir", paths["adr_dir"])
+    adr_pattern = params.get("adr_pattern", paths["adr_pattern"])
+    adr_dir = Path(project_root) / adr_dir_rel
+
     if not title:
         result = ActionResult(success=False, error="title required")
     else:
         try:
-            adr_dir = Path("docs/adr")
             adr_dir.mkdir(parents=True, exist_ok=True)
-            existing = sorted(adr_dir.glob("*.md"))
+            existing = sorted(adr_dir.glob(adr_pattern))
             next_num = len(existing) + 1
             slug = title.lower().replace(" ", "-")
             adr_path = adr_dir / f"{next_num:04d}-{slug}.md"
