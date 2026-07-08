@@ -512,6 +512,107 @@ class TestListBlocked:
 
 
 # ---------------------------------------------------------------------------
+# Feature grouping: derive_feature_name / list_feature_groups / feature_progress
+# ---------------------------------------------------------------------------
+
+class TestDeriveFeatureName:
+    def test_feature_with_sub(self):
+        assert it.derive_feature_name("feature-stream-core") == "feature-stream"
+
+    def test_feature_single(self):
+        assert it.derive_feature_name("feature-stream") == "feature-stream"
+
+    def test_no_feature_prefix(self):
+        assert it.derive_feature_name("debt-cleanup-foo") == "debt-cleanup-foo"
+
+    def test_fix_prefix(self):
+        assert it.derive_feature_name("fix-bug-123") == "fix-bug-123"
+
+    def test_empty_string(self):
+        assert it.derive_feature_name("") == ""
+
+    def test_prefix_in_name_but_not_at_start(self):
+        assert it.derive_feature_name("v2-multi-session") == "v2-multi-session"
+
+
+class TestListFeatureGroups:
+    def test_empty_data(self):
+        d = it.create_empty()
+        assert it.list_feature_groups(d) == {}
+
+    def test_same_feature_grouped(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="feature-stream-core", status="archived")
+        d = it.add_or_update_change(d, name="feature-stream-adapters", status="in_worktree")
+        d = it.add_or_update_change(d, name="feature-stream-tests", status="planned")
+        groups = it.list_feature_groups(d)
+        assert set(groups.keys()) == {"feature-stream"}
+        assert len(groups["feature-stream"]) == 3
+
+    def test_mixed_features_and_standalone(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="feature-stream-core", status="archived")
+        d = it.add_or_update_change(d, name="feature-cdc-scan", status="planned")
+        d = it.add_or_update_change(d, name="fix-bug-123", status="proposed")
+        groups = it.list_feature_groups(d)
+        assert set(groups.keys()) == {"feature-stream", "feature-cdc", "fix-bug-123"}
+        assert len(groups["feature-stream"]) == 1
+        assert len(groups["fix-bug-123"]) == 1
+
+    def test_non_feature_prefix_maps_to_own_name(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="fix-a", status="proposed")
+        d = it.add_or_update_change(d, name="fix-b", status="proposed")
+        groups = it.list_feature_groups(d)
+        # Each non-feature change is its own group
+        assert len(groups) == 2
+        assert "fix-a" in groups
+        assert "fix-b" in groups
+
+
+class TestFeatureProgress:
+    def test_empty_data(self):
+        d = it.create_empty()
+        assert it.feature_progress(d) == {}
+
+    def test_all_archived(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="feature-stream-core", status="archived")
+        d = it.add_or_update_change(d, name="feature-stream-adapters", status="archived")
+        d = it.add_or_update_change(d, name="feature-stream-tests", status="archived")
+        progress = it.feature_progress(d)
+        assert progress["feature-stream"] == (3, 3)
+
+    def test_partial_archived(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="feature-stream-core", status="archived")
+        d = it.add_or_update_change(d, name="feature-stream-adapters", status="in_worktree")
+        d = it.add_or_update_change(d, name="feature-stream-tests", status="planned")
+        progress = it.feature_progress(d)
+        assert progress["feature-stream"] == (1, 3)
+
+    def test_completed_does_not_count_as_done(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="feature-stream-core", status="completed")
+        d = it.add_or_update_change(d, name="feature-stream-adapters", status="archived")
+        progress = it.feature_progress(d)
+        # completed is a transitional state, only archived counts
+        assert progress["feature-stream"] == (1, 2)
+
+    def test_mixed_features(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="feature-stream-core", status="archived")
+        d = it.add_or_update_change(d, name="feature-stream-adapters", status="in_worktree")
+        d = it.add_or_update_change(d, name="feature-cdc-scan", status="archived")
+        d = it.add_or_update_change(d, name="feature-cdc-impl", status="archived")
+        d = it.add_or_update_change(d, name="fix-bug-123", status="archived")
+        progress = it.feature_progress(d)
+        assert progress["feature-stream"] == (1, 2)
+        assert progress["feature-cdc"] == (2, 2)
+        assert progress["fix-bug-123"] == (1, 1)
+
+
+# ---------------------------------------------------------------------------
 # save / load round-trip
 # ---------------------------------------------------------------------------
 

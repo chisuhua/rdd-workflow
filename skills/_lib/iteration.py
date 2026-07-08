@@ -30,6 +30,7 @@ import datetime
 import json
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Any, Optional
 
@@ -367,6 +368,57 @@ def list_blocked(data: dict) -> list[dict]:
         blocker_entry = get_change(data, blocker)
         if blocker_entry and blocker_entry.get("status") in _BLOCKING_STATUSES:
             out.append(c)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Feature grouping — derived from change name prefix (no schema change)
+# Convention: feature-<name>-<sub>, e.g. feature-stream-core → feature-stream
+# Regex: single-word feature names only (no hyphens in the feature part).
+# Non-conforming changes (no feature- prefix) become single-change features.
+# ---------------------------------------------------------------------------
+
+_FEATURE_PREFIX_RE = re.compile(r"^(feature-[a-z0-9]+)(-[a-z0-9-]+)?$")
+
+
+def derive_feature_name(name: str) -> str:
+    """Derive the parent feature name from a change's name.
+
+    feature-stream-core → feature-stream
+    feature-stream      → feature-stream  (single sub-change)
+    debt-cleanup-foo    → debt-cleanup-foo (no feature- prefix — self-group)
+    v2-multi-session    → v2-multi-session  (no feature- prefix)
+    """
+    m = _FEATURE_PREFIX_RE.match(name)
+    return m.group(1) if m else name
+
+
+def list_feature_groups(data: dict) -> dict[str, list[dict]]:
+    """Group changes by derived feature name.
+
+    Returns a dict keyed by feature name, values are lists of change dicts.
+    Changes without a ``feature-`` prefix each become their own single-entry
+    group (keyed by their own name).
+    """
+    groups: dict[str, list[dict]] = {}
+    for c in data.get("changes", []):
+        feature = derive_feature_name(c["name"])
+        groups.setdefault(feature, []).append(c)
+    return groups
+
+
+def feature_progress(data: dict) -> dict[str, tuple[int, int]]:
+    """Return per-feature completion counts (archived, total).
+
+    A sub-change counts as "archived" only when its status is ``archived``
+    (code merged into default branch).  ``completed`` is a transitional
+    state (tasks done but not yet merged) and does NOT count as done here.
+    """
+    out: dict[str, tuple[int, int]] = {}
+    for feature, changes in list_feature_groups(data).items():
+        total = len(changes)
+        done = sum(1 for c in changes if c.get("status") == "archived")
+        out[feature] = (done, total)
     return out
 
 
