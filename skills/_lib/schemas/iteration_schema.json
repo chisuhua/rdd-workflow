@@ -9,8 +9,8 @@
   "properties": {
     "version": {
       "type": "integer",
-      "const": 2,
-      "description": "Schema version. v2: added 'review' status to changes."
+      "const": 3,
+      "description": "Schema version. v3: added 'planned' status to changes."
     },
     "updated_at": {
       "type": "string",
@@ -47,8 +47,8 @@
           },
           "status": {
             "type": "string",
-            "enum": ["proposed", "in_worktree", "review", "completed", "archived"],
-            "description": "Lifecycle status. Updated by propose/guide-ship/execute/archive hooks."
+            "enum": ["planned", "proposed", "in_worktree", "review", "completed", "archived"],
+            "description": "Lifecycle status. Updated by propose/guide-ship/execute/archive hooks. 'planned' = skeleton change (only .openspec.yaml + roadmap-meta.yaml + minimal proposal.md), not yet eligible for guide-ship."
           },
           "added_at": {
             "type": "string",

@@ -43,7 +43,12 @@ SCHEMA_PATH = os.path.join(
     os.path.dirname(__file__), "schemas", "iteration_schema.json"
 )
 _DEFAULT_PHASE = "default"
-_VALID_STATUSES = ("proposed", "in_worktree", "review", "completed", "archived")
+_VALID_STATUSES = ("planned", "proposed", "in_worktree", "review", "completed", "archived")
+# Statuses that block a dependent planned change from being filled.
+# A planned change's blocker must be in one of these statuses to count as
+# "still blocking". When a blocker transitions out (e.g. to archived), the
+# dependent becomes "unblocked" and ready for fill.
+_BLOCKING_STATUSES = ("planned", "in_worktree", "review")
 
 # Sentinel for distinguishing "argument not passed" from "argument passed
 # as None". Used by set_deps_info so callers can explicitly clear a
@@ -177,7 +182,7 @@ def _merge_by_name(existing: dict, incoming: dict) -> dict:
 def create_empty(current_phase: str = _DEFAULT_PHASE) -> dict:
     """Return a fresh empty iteration state. Useful for `skill_use("status", "iteration", "init")`."""
     return {
-        "version": 2,
+        "version": 3,
         "updated_at": _now_iso(),
         "current_phase": current_phase,
         "changes": [],

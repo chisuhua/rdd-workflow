@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires openspec CLI
 metadata:
   author: sisyphus
-  version: "2.0"  # P0: 新增路线图状态模式（Mode D）和阶段门控报告; v2.0.1: 新增 Mode E (当前迭代视图)
+  version: "2.0.2"  # v2.0.2: planned 状态展示 (Mode A + Mode E)
 ---
 
 # OpenSpec 工作流 — Status
@@ -96,6 +96,11 @@ for each active_change:
     # 解析 progress.complete, progress.total, state
 ```
 
+```bash
+# v2.0.2: Planned (skeleton) changes don't have apply progress.
+# For planned changes, skip the progress fetch and display 0/0.
+```
+
 对比 worktree 分支名与 change 名称，建立映射。
 
 ### Step 4：输出概览表格
@@ -118,6 +123,32 @@ pending-change  │ （无 worktree）        │ 2/5  (40%)  │ ⏸ 暂停
   3. 归档 fix-spi（已完成）
   4. ↩️ 返回 Execute 阶段
   i. 其他输入
+```
+
+**动态状态展示（v2.0.2）**：
+
+```bash
+for each active_change:
+    status=$(python3 -c "
+import json
+try:
+    d = json.load(open('.rddf/state/iteration.json'))
+    c = next((c for c in d.get('changes', []) if c.get('name') == '$active_change'), None)
+    if c:
+        print(c.get('status', 'unknown'))
+    else:
+        print('unknown')
+except Exception:
+    print('unknown')
+" 2>/dev/null)
+    case "$status" in
+      planned) echo "📋 $active_change: planned (skeleton)" ;;
+      proposed) echo "✅ $active_change: proposed (ready)" ;;
+      in_worktree) echo "🔧 $active_change: in worktree" ;;
+      completed) echo "✓ $active_change: completed" ;;
+      archived) echo "📦 $active_change: archived" ;;
+      *) echo "❓ $active_change: $status" ;;
+    esac
 ```
 
 **用户输入处理（case handler）**：
@@ -542,6 +573,36 @@ for c in stale:
     if age_hours > 24:
         print(f"⚠️  {c[\"name\"]}: deps 信息已 {age_hours:.0f}h 未更新, 建议重跑 deps")
 '
+```
+
+### Step 2b (v2.0.2): 显示 planned 状态 change
+
+```bash
+PLANNED_LIST=$(python3 -c "
+import json, os
+p = '.rddf/state/iteration.json'
+if not os.path.isfile(p):
+    print('(no iteration.json)')
+else:
+    try:
+        d = json.load(open(p))
+    except Exception as e:
+        print(f'(parse error: {e})')
+        exit()
+    planned = [c for c in d.get('changes', []) if c.get('status') == 'planned']
+    if not planned:
+        print('(none)')
+    else:
+        for c in planned:
+            blocker = c.get('blocker', '')
+            blocker_str = f' (blocked by {blocker})' if blocker else ''
+            print(f\"  📋 {c['name']}{blocker_str}\")
+" 2>/dev/null)
+if [ -n "$PLANNED_LIST" ]; then
+    echo ""
+    echo "📋 Planned (skeleton) changes:"
+    echo "$PLANNED_LIST"
+fi
 ```
 
 ### Step 3：用户操作

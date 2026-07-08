@@ -37,7 +37,7 @@ class TestCreateEmpty:
     def test_default_phase(self):
         d = it.create_empty()
         assert d["current_phase"] == "default"
-        assert d["version"] == 2
+        assert d["version"] == 3
         assert d["changes"] == []
         assert "updated_at" in d
 
@@ -340,7 +340,7 @@ class TestSaveLoad:
     def test_load_returns_empty_when_missing(self, project_root):
         d = it.load(project_root)
         # Compare structurally (ignore updated_at which is wall-clock-dependent)
-        assert d["version"] == 2
+        assert d["version"] == 3
         assert d["current_phase"] == "default"
         assert d["changes"] == []
         # Note: load does NOT create the file
@@ -392,14 +392,14 @@ class TestSaveLoad:
             f.write("{ this is not valid json")
         d = it.load(project_root)
         # load returns empty state on corruption
-        assert d["version"] == 2
+        assert d["version"] == 3
         assert d["changes"] == []
 
     def test_load_returns_empty_on_schema_violation(self, project_root, iteration_path):
         with open(iteration_path, "w") as f:
-            json.dump({"version": 999, "changes": []}, f)  # version: 999 violates const: 2
+            json.dump({"version": 999, "changes": []}, f)  # version: 999 violates const: 3
         d = it.load(project_root)
-        assert d["version"] == 2  # falls back to default
+        assert d["version"] == 3  # falls back to default
         assert d["changes"] == []
 
     def test_atomic_write_does_not_leave_tmp(self, project_root, iteration_path):
