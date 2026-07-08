@@ -151,6 +151,33 @@ echo "📋 现有 ADR: $ADR_COUNT"
 echo "📋 Roadmap: $ROADMAP_EXISTS"
 echo "📋 架构差距分析: $GAP_COUNT"
 echo "📋 活动 changes: $ACTIVE_CHANGES"
+
+# === Phase 1 Step 5: 工件发现 (ADR-0016 Layer 1) ===
+# Read candidate paths before arch-done writes handoff.
+# Idempotent — does not create files. Safe to run multiple times.
+
+if [ -f "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh" ]; then
+    source "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh"
+    discover_adr_dir          >/dev/null
+    discover_roadmap          >/dev/null
+    discover_architecture_dir >/dev/null
+    discover_adr_pattern      >/dev/null
+    echo ""
+    echo "🔍 工件发现 (ADR-0016):"
+    echo "   ADR 目录:      $DISCOVERED_ADR_DIR ($DISCOVERED_ADR_DIR_FOUND)"
+    echo "   ADR 模式:      $DISCOVERED_ADR_PATTERN"
+    echo "   Roadmap:       $DISCOVERED_ROADMAP_PATH ($DISCOVERED_ROADMAP_FOUND)"
+    echo "   Architecture:  $DISCOVERED_ARCHITECTURE_DIR ($DISCOVERED_ARCH_FOUND)"
+else
+    # Fallback when library not yet installed — use hardcoded defaults
+    DISCOVERED_ADR_DIR="docs/adr"
+    DISCOVERED_ROADMAP_PATH="roadmap.md"
+    DISCOVERED_ARCHITECTURE_DIR="docs/architecture"
+    DISCOVERED_ADR_PATTERN="ADR-*.md"
+    DISCOVERED_ADR_DIR_FOUND="false"
+    DISCOVERED_ROADMAP_FOUND="false"
+    DISCOVERED_ARCH_FOUND="false"
+fi
 ```
 
 **展示环境状态 + 选项**：
@@ -207,7 +234,8 @@ esac
 
 ```bash
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-ADR_DIR="$PROJECT_ROOT/docs/adr"
+# ADR-0016: read DISCOVERED_ADR_DIR set by Phase 1 Step 5; fallback to docs/adr
+ADR_DIR="$PROJECT_ROOT/${DISCOVERED_ADR_DIR:-docs/adr}"
 
 echo "=== ADR 文档管理 ==="
 echo ""
@@ -220,7 +248,7 @@ echo "当前 ADR 数量: $ADR_COUNT"
 echo ""
 echo "现有 ADR 列表 (最新 5 个):"
 if [ "$ADR_COUNT" -gt 0 ]; then
-    ls -t "$ADR_DIR"/ADR-0*.md 2>/dev/null | grep -v "ADR-0000-template" | head -5 | while read -r adr_file; do
+    ls -t "$ADR_DIR"/${DISCOVERED_ADR_PATTERN:-ADR-*.md} 2>/dev/null | grep -v "ADR-0000-template" | head -5 | while read -r adr_file; do
         name=$(basename "$adr_file" .md)
         title=$(grep -m1 "^# " "$adr_file" 2>/dev/null | sed 's/^# //' | head -c 60)
         status=$(grep -m1 "状态" "$adr_file" 2>/dev/null | head -c 30)
@@ -271,7 +299,7 @@ ADR_DIR="$PROJECT_ROOT/docs/adr"
 TEMPLATE="$ADR_DIR/ADR-0000-template.md"
 
 # 找到下一个可用编号
-NEXT_NUM=$(ls -d "$ADR_DIR"/ADR-0*.md 2>/dev/null | grep -v "ADR-0000-template" | sed 's|.*/ADR-||;s|\.md$||' | sort -n | tail -1)
+NEXT_NUM=$(ls -d "$ADR_DIR"/${DISCOVERED_ADR_PATTERN:-ADR-*.md} 2>/dev/null | grep -v "ADR-0000-template" | sed 's|.*/ADR-||;s|\.md$||' | sort -n | tail -1)
 NEXT_NUM=${NEXT_NUM:-0}
 NEXT_NUM=$((NEXT_NUM + 1))
 NEXT_NUM_PADDED=$(printf "%04d" "$NEXT_NUM")
@@ -305,12 +333,12 @@ PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 ADR_DIR="$PROJECT_ROOT/docs/adr"
 
 # 列出所有 ADR 供选择
-ls -t "$ADR_DIR"/ADR-0*.md 2>/dev/null | grep -v "ADR-0000-template" | head -10 | nl -w2 -s". "
+ls -t "$ADR_DIR"/${DISCOVERED_ADR_PATTERN:-ADR-*.md} 2>/dev/null | grep -v "ADR-0000-template" | head -10 | nl -w2 -s". "
 echo ""
 echo "请输入 ADR 编号 (1-10):"
 read -r adr_choice
 
-SELECTED=$(ls -t "$ADR_DIR"/ADR-0*.md 2>/dev/null | grep -v "ADR-0000-template" | sed -n "${adr_choice}p")
+SELECTED=$(ls -t "$ADR_DIR"/${DISCOVERED_ADR_PATTERN:-ADR-*.md} 2>/dev/null | grep -v "ADR-0000-template" | sed -n "${adr_choice}p")
 if [ -z "$SELECTED" ]; then
     echo "❌ 无效选择"
     continue
@@ -337,11 +365,12 @@ cat "$SELECTED"
 **展示当前架构文档状态**：
 
 ```bash
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-ARCH_DIR="$PROJECT_ROOT/docs/architecture"
+ PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+ # ADR-0016: read DISCOVERED_ARCHITECTURE_DIR set by Phase 1 Step 5; fallback to docs/architecture
+ ARCH_DIR="$PROJECT_ROOT/${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}"
 
-echo "=== 架构差距分析 ==="
-echo ""
+ echo "=== 架构差距分析 ==="
+ echo ""
 
 # 检查架构目录是否存在
 if [ ! -d "$ARCH_DIR" ]; then
@@ -398,7 +427,8 @@ esac
 
 ```bash
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-ARCH_DIR="$PROJECT_ROOT/docs/architecture"
+# ADR-0016: read DISCOVERED_ARCHITECTURE_DIR set by Phase 1 Step 5; fallback to docs/architecture
+ARCH_DIR="$PROJECT_ROOT/${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}"
 mkdir -p "$ARCH_DIR"
 
 echo "📝 生成新架构差距分析"
@@ -457,7 +487,7 @@ echo "   请编辑该文件补全差距分析内容"
 
 ```bash
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-ARCH_DIR="$PROJECT_ROOT/docs/architecture"
+ARCH_DIR="$PROJECT_ROOT/${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}"
 
 GAP_DOCS=$(ls "$ARCH_DIR/"*-gap-analysis.md 2>/dev/null)
 GAP_COUNT=$(echo "$GAP_DOCS" | grep -c . || echo 0)
@@ -503,7 +533,8 @@ cat "$SELECTED"
 
 ```bash
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
+# ADR-0016: read DISCOVERED_ROADMAP_PATH set by Phase 1 Step 5; fallback to roadmap.md
+ROADMAP_FILE="$PROJECT_ROOT/${DISCOVERED_ROADMAP_PATH:-roadmap.md}"
 STATE_FILE="$PROJECT_ROOT/.rddf/state/.roadmap-state.json"
 
 echo "=== 路线图定义 ==="
@@ -629,13 +660,20 @@ arch-done 必须满足**双重门控**才能通过：
 ```bash
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 
+# ADR-0016: ensure discovery is run before gates check actual paths
+if [ -f "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh" ]; then
+    source "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh"
+    discover_all >/dev/null
+fi
+
 echo "=== Arch 阶段 - 门控检查 ==="
 echo ""
 
-# 门控 1: ADR 数量 ≥ 1
-ADR_COUNT=$(ls -d "$PROJECT_ROOT/docs/adr/ADR-0"*.md 2>/dev/null | grep -v "ADR-0000-template" | wc -l)
+# 门控 1: ADR 数量 ≥ 1 (uses DISCOVERED_ADR_DIR + DISCOVERED_ADR_PATTERN)
+_GLOB="${PROJECT_ROOT}/${DISCOVERED_ADR_DIR}/${DISCOVERED_ADR_PATTERN}"
+ADR_COUNT=$(ls "$_GLOB" 2>/dev/null | grep -v -- '-0000-template\.md$' | wc -l | tr -d ' ')
 echo "门控 1: ADR 数量检查"
-echo "  当前 ADR 数量: $ADR_COUNT"
+echo "  当前 ADR 数量: $ADR_COUNT (path: $DISCOVERED_ADR_DIR, pattern: $DISCOVERED_ADR_PATTERN)"
 if [ "$ADR_COUNT" -lt 1 ]; then
     echo "  ❌ 失败: 至少需要 1 个 ADR"
     echo "     请回到 adr-create 阶段创建 ADR"
@@ -644,12 +682,13 @@ fi
 echo "  ✅ 通过"
 echo ""
 
-# 门控 2: roadmap.md 存在
-ROADMAP_EXISTS=$([ -f "$PROJECT_ROOT/roadmap.md" ] && echo "yes" || echo "no")
-echo "门控 2: roadmap.md 存在性检查"
-echo "  当前状态: $ROADMAP_EXISTS"
+# 门控 2: roadmap 存在 (uses DISCOVERED_ROADMAP_PATH)
+ROADMAP_EXISTS_BOOL=$([ -f "$PROJECT_ROOT/${DISCOVERED_ROADMAP_PATH}" ] && echo "true" || echo "false")
+ROADMAP_EXISTS=$([ "$ROADMAP_EXISTS_BOOL" = "true" ] && echo "yes" || echo "no")
+echo "门控 2: roadmap 存在性检查"
+echo "  当前状态: $ROADMAP_EXISTS (path: $DISCOVERED_ROADMAP_PATH)"
 if [ "$ROADMAP_EXISTS" != "yes" ]; then
-    echo "  ❌ 失败: roadmap.md 不存在"
+    echo "  ❌ 失败: roadmap 不存在"
     echo "     请回到 roadmap-define 阶段创建路线图"
     exit 1
 fi
@@ -659,7 +698,7 @@ echo ""
 
 **写入 handoff 状态**：
 
-arch → plan 交接通过 `.rddf/state/.arch-handoff.json` 软状态文件传递。arch-done 验证通过后立即写入，记录 arch_complete_at、adr_count、completed_adr_ids（所有已创建的 ADR 编号列表）、current_phase（当前 roadmap 阶段）、plan_started_at（初值 null）。文件不被 git 跟踪（`.gitignore` 已排除 `.rddf/state/`），缺失时 plan 端硬阻断。
+arch → plan 交接通过 `.rddf/state/.arch-handoff.json` 软状态文件传递。arch-done 验证通过后立即写入。文件不被 git 跟踪（`.gitignore` 已排除 `.rddf/state/`），缺失时 plan 端硬阻断。v1 schema 见 `skills/_lib/schemas/arch_handoff_schema.json`（ADR-0016 Layer 2）。
 
 ```bash
 # P2-5 模式: 写入 handoff 状态,作为 arch→plan 的软交接信号
@@ -667,19 +706,49 @@ arch → plan 交接通过 `.rddf/state/.arch-handoff.json` 软状态文件传�
 HANDOFF_FILE="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
 mkdir -p "$PROJECT_ROOT/.rddf/state"
 
-# 重新获取 ADR 数量（确保与门控检查一致）
-ADR_COUNT=$(ls -d "$PROJECT_ROOT/docs/adr/ADR-0"*.md 2>/dev/null | grep -v "ADR-0000-template" | wc -l)
+# Re-run discovery to ensure latest values (Phase 5 idempotency)
+if [ -f "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh" ]; then
+    source "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh"
+    discover_adr_dir          >/dev/null
+    discover_roadmap          >/dev/null
+    discover_architecture_dir >/dev/null
+    discover_adr_pattern      >/dev/null
+fi
 
-# 收集所有已创建的 ADR 编号（供 plan 端读取，避免重复扫描源文件）
-ADR_IDS=$(ls -d "$PROJECT_ROOT/docs/adr/ADR-0"*.md 2>/dev/null \
-  | grep -v "ADR-0000-template" \
-  | sed 's|.*/ADR-||;s|\.md$||' \
-  | sort -n | paste -sd ',' - || echo "")
-ADR_IDS_JSON=$(echo "$ADR_IDS" | sed 's/,/","/g')
-[ -n "$ADR_IDS_JSON" ] && ADR_IDS_JSON="\"$ADR_IDS_JSON\""
+# Glob ADR files using DISCOVERED_ADR_PATTERN (NOT the legacy hardcoded
+# "ADR-*.md" — projects may use DEC-*.md, RFD-*.md, etc.). Use mapfile + process
+# substitution to avoid command-substitution newline collapse (Self-verify bug).
+ADR_FILES=()
+while IFS= read -r -d '' f; do
+  case "$f" in
+    *"-0000-template.md") continue ;;
+  esac
+  ADR_FILES+=("$f")
+done < <(find "${PROJECT_ROOT}/${DISCOVERED_ADR_DIR}" \
+            -maxdepth 1 \
+            -name "${DISCOVERED_ADR_PATTERN}" \
+            -type f \
+            -print0 2>/dev/null)
 
-# 读取当前 roadmap 阶段
-CURRENT_PHASE=$(grep -m1 '\*\*当前阶段\*\*' "$PROJECT_ROOT/roadmap.md" 2>/dev/null \
+ADR_COUNT=${#ADR_FILES[@]}
+
+# Extract IDs using the prefix derived from DISCOVERED_ADR_PATTERN.
+# For pattern "ADR-*.md" + filename "ADR-0001-foo.md" → "0001".
+_ID_PREFIX=$(echo "$DISCOVERED_ADR_PATTERN" | sed 's/-.*$//')
+ADR_IDS=()
+for f in "${ADR_FILES[@]}"; do
+  base=$(basename "$f")
+  id=$(echo "$base" | sed "s|^${_ID_PREFIX}-||; s|-.*\.md$||")
+  ADR_IDS+=("$id")
+done
+ADR_IDS_SORTED=$(printf "%s\n" "${ADR_IDS[@]:-}" | sort -n | paste -sd ',' -)
+ADR_IDS_JSON=""
+if [ -n "$ADR_IDS_SORTED" ]; then
+  ADR_IDS_JSON="\"$(echo "$ADR_IDS_SORTED" | sed 's/,/","/g')\""
+fi
+
+# 读取当前 roadmap 阶段 (uses DISCOVERED_ROADMAP_PATH)
+CURRENT_PHASE=$(grep -m1 '\*\*当前阶段\*\*' "$PROJECT_ROOT/${DISCOVERED_ROADMAP_PATH}" 2>/dev/null \
   | sed 's/.*\*\*当前阶段\*\*:\s*//' | tr -d '[:space:]' || echo "default")
 
 cat > "$HANDOFF_FILE" << EOF
@@ -687,14 +756,36 @@ cat > "$HANDOFF_FILE" << EOF
   "arch_complete_at": "$(date -Iseconds)",
   "adr_count": $ADR_COUNT,
   "completed_adr_ids": [$ADR_IDS_JSON],
-  "roadmap_exists": true,
+  "roadmap_exists": $ROADMAP_EXISTS_BOOL,
   "current_phase": "$CURRENT_PHASE",
-  "plan_started_at": null
+  "plan_started_at": null,
+  "adr_dir": "$DISCOVERED_ADR_DIR",
+  "roadmap_path": "$DISCOVERED_ROADMAP_PATH",
+  "architecture_dir": "$DISCOVERED_ARCHITECTURE_DIR",
+  "adr_pattern": "$DISCOVERED_ADR_PATTERN",
+  "discovered": {
+    "adr_dir": {
+      "found": $([ "$DISCOVERED_ADR_DIR_FOUND" = "true" ] && echo "true" || echo "false"),
+      "created": false,
+      "candidates_tried": $DISCOVERED_ADR_DIR_TRIED
+    },
+    "roadmap_path": {
+      "found": $([ "$DISCOVERED_ROADMAP_FOUND" = "true" ] && echo "true" || echo "false"),
+      "created": false,
+      "candidates_tried": $DISCOVERED_ROADMAP_TRIED
+    },
+    "architecture_dir": {
+      "found": $([ "$DISCOVERED_ARCH_FOUND" = "true" ] && echo "true" || echo "false"),
+      "created": false,
+      "candidates_tried": $DISCOVERED_ARCH_TRIED
+    }
+  },
+  "version": 1
 }
 EOF
 
 if [ -f "$HANDOFF_FILE" ]; then
-    echo "✅ Handoff state written: .rddf/state/.arch-handoff.json (adr_count=$ADR_COUNT, phase=$CURRENT_PHASE)"
+    echo "✅ Handoff state written: .rddf/state/.arch-handoff.json (adr_count=$ADR_COUNT, phase=$CURRENT_PHASE, adr_dir=$DISCOVERED_ADR_DIR)"
 else
     echo "⚠️  Handoff state write failed, plan 端将硬阻断"
 fi
