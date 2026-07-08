@@ -1,5 +1,27 @@
 # Changelog
 
+## [Unreleased] — v2.1
+
+### Added (ADR-0016: Arch Artifact Discovery Contract)
+
+- **JSON Schema**: `skills/_lib/schemas/arch_handoff_schema.json` (v1)
+- **Discovery library**: `skills/_lib/discover-arch-artifacts.sh` (4 discover functions + 1 helper)
+- **Tests**: 6 schema tests + 10 discover tests + 10 bats integration tests = 26 new tests
+- **Handoff fields** (`.arch-handoff.json` v1): `adr_dir`, `roadmap_path`, `architecture_dir`, `adr_pattern`, `discovered`, `version`
+- **Env var overrides**: `SPEC_WORKFLOW_ADR_DIR`, `SPEC_WORKFLOW_ROADMAP_PATH`, `SPEC_WORKFLOW_ARCHITECTURE_DIR`, `SPEC_WORKFLOW_ADR_PATTERN`
+
+### Changed
+
+- 10 files updated to read handoff paths with fallback defaults (no breaking changes for v2.0 users)
+- 14+ hardcoded `docs/adr/` / `roadmap.md` references replaced with handoff-aware readers
+- `guide-arch.md` Phase 1 (setup) + Phase 2/3/4 (write paths) + Phase 5 (handoff writer) all consume discovered paths
+- `guide-plan.md` Phase 0, `propose.md` Phase 1a, `roadmap.md` (header + Template 4), `scan-state.sh` line 154 — all handoff-aware
+- `gate.py` `_check_adr_exists` / `_check_roadmap_defined`, `detectors.py` `detect_adr_status`, `actions.py` `action_create_adr` — handoff-aware
+
+### Migration
+
+Zero migration needed. Existing v2.0 projects with `docs/adr/` and `roadmap.md` work unchanged via fallback defaults. Custom layouts (e.g. `doc/adr/`, `planning/roadmap.md`, `DEC-*.md`) now discoverable via env vars or handoff.
+
 ## v2.0.0-beta (2026-06-26)
 
 ### New Features
