@@ -213,3 +213,97 @@ print('OK')
 "
   teardown_custom_repo
 }
+
+# ---- Deep integration tests (Momus HIGH#4 — exercise public APIs) ----
+
+@test "arch_discovery: GateMechanism.verify_transition arch_done passes with default handoff" {
+  REPO_TMP=$(mktemp -d)
+  cd "$REPO_TMP"
+  git init -q
+  mkdir -p docs/adr
+  : > docs/adr/ADR-0001-test.md
+  cat > roadmap.md <<EOF
+# Roadmap
+**当前阶段**: phase-1
+
+@test "arch_discovery: GateMechanism.verify_transition arch_done passes with default handoff" {
+  REPO_TMP=$(mktemp -d)
+  cd "$REPO_TMP"
+  git init -q
+  mkdir -p docs/adr
+  : > docs/adr/ADR-0001-test.md
+  cat > roadmap.md <<EOF
+# Roadmap
+**当前阶段**: phase-1
+EOF
+  mkdir -p .rddf/state
+  cat > .rddf/state/.arch-handoff.json <<EOF
+{
+  "arch_complete_at": "2026-07-08T10:00:00+00:00",
+  "adr_count": 1,
+  "completed_adr_ids": ["0001"],
+  "roadmap_exists": true,
+  "current_phase": "phase-1",
+  "plan_started_at": null,
+  "adr_dir": "docs/adr",
+  "roadmap_path": "roadmap.md",
+  "architecture_dir": "docs/architecture",
+  "adr_pattern": "ADR-*.md",
+  "discovered": {
+    "adr_dir": {"found": true, "created": false, "candidates_tried": 1},
+    "roadmap_path": {"found": true, "created": false, "candidates_tried": 1},
+    "architecture_dir": {"found": false, "created": false, "candidates_tried": 1}
+  },
+  "version": 1
+}
+EOF
+
+  PROJECT_ROOT="$REPO_TMP"
+  export PYTHONPATH="$REPO_ROOT_HERE:$PYTHONPATH"
+  python3 -c "
+import sys
+sys.path.insert(0, '$REPO_ROOT_HERE')
+from skills._lib.gate import _check_adr_exists, _check_roadmap_defined, _check_arch_handoff_exists
+ctx = {'project_root': '$REPO_TMP'}
+a_passed, _ = _check_adr_exists(ctx)
+r_passed, _ = _check_roadmap_defined(ctx)
+h_passed, _ = _check_arch_handoff_exists(ctx)
+print(f'adr={a_passed} roadmap={r_passed} handoff={h_passed}')
+assert a_passed, 'ADR gate failed'
+assert r_passed, 'Roadmap gate failed'
+assert h_passed, 'Handoff gate failed'
+"
+  unset PYTHONPATH
+  rm -rf "$REPO_TMP"
+}
+
+@test "arch_discovery: action_create_adr writes to discovered adr_dir matching pattern" {
+  REPO_TMP=$(mktemp -d)
+  cd "$REPO_TMP"
+  git init -q
+  mkdir -p docs/adr
+
+  PROJECT_ROOT="$REPO_TMP"
+  export PYTHONPATH="$REPO_ROOT_HERE:$PYTHONPATH"
+  python3 -c "
+import sys
+sys.path.insert(0, '$REPO_ROOT_HERE')
+from skills._lib.event_log import EventLog
+from skills._lib.actions import action_create_adr
+import os
+log_path = '$REPO_TMP/event.log'
+params = {
+    'title': 'custom-pattern-test',
+    'status': 'proposed',
+    '_project_root': '$REPO_TMP',
+}
+result = action_create_adr(params, EventLog(log_path))
+assert result.success, f'Action failed: {result.error}'
+created = result.data['path']
+assert created.startswith('$REPO_TMP/docs/adr/'), f'Wrong dir: {created}'
+assert created.endswith('-custom-pattern-test.md'), f'Wrong name: {created}'
+print(f'Created: {created}')
+"
+  unset PYTHONPATH
+  rm -rf "$REPO_TMP"
+}

@@ -102,7 +102,7 @@ openspec/                     # OpenSpec CLI 数据 (随项目走)
 
 | 文件 | 用途 | 写入方 |
 |------|------|--------|
-| `.rddf/state/arch-handoff.json` | arch→plan 交接 | `guide-arch` (arch-done 写入) / `guide-plan` (plan-start 读取+更新) |
+| `.rddf/state/.arch-handoff.json` | arch→plan 交接 + **ADR-0016 发现契约** v1 (adr_dir/roadmap_path/architecture_dir/adr_pattern/discovered/version) | `guide-arch` (arch-done) / `guide-plan` (Phase 0 intake) + `propose`/`roadmap`/`gate.py`/`detectors.py`/`actions.py`/`scan-state.sh` (handoff readers, fallback to defaults) |
 | `.rddf/state/plan-handoff.json` | plan→ship 交接 | `guide-plan` (plan-done 写入) / `guide-ship` (ship-start 读取) |
 | `.rddf/state/handoff.json` | spec→ship 软交接 | `guide-plan` / `guide-ship` |
 | `.rddf/state/deps-analysis.json` | **结构化** deps 输出 (v2.0.1) | `deps` Step 5b 优先写; Step 6 markdown-fallback 时也写 |
@@ -119,6 +119,34 @@ openspec/                     # OpenSpec CLI 数据 (随项目走)
 `deps-analysis.json` 同样是 view 文件, 由 `skills/_lib/deps_output.py` 管理.
 两者 schema 在 `skills/_lib/schemas/` 下, 改 schema 必须 bump version 字段.
 `proposal-suggestions.md` 在项目根目录, 随 git 版本控制, 格式为 **JSON 数组** (用 `json.load()`, 不用 grep).
+
+### Arch Discovery Contract (ADR-0016)
+
+`guide-arch` Phase 1 setup 通过 `skills/_lib/discover-arch-artifacts.sh` 扫描项目布局,
+将发现的 ADR 目录、roadmap 文件、architecture 目录写入 `.arch-handoff.json` 的
+`adr_dir` / `roadmap_path` / `architecture_dir` / `adr_pattern` / `discovered` 字段.
+
+**下游消费者** (`guide-plan`, `propose`, `roadmap`, `gate.py`, `detectors.py`,
+`actions.py`, `scan-state.sh`) 优先读 handoff, 缺失时回退到 v2.0 默认约定:
+
+| 字段 | 默认 fallback |
+|------|---------------|
+| `adr_dir` | `docs/adr` |
+| `roadmap_path` | `roadmap.md` |
+| `architecture_dir` | `docs/architecture` |
+| `adr_pattern` | `ADR-*.md` |
+
+**环境变量优先级最高** (覆盖 handoff):
+- `SPEC_WORKFLOW_ADR_DIR`
+- `SPEC_WORKFLOW_ROADMAP_PATH`
+- `SPEC_WORKFLOW_ARCHITECTURE_DIR`
+- `SPEC_WORKFLOW_ADR_PATTERN`
+
+**Schema 版本**: v1 (字段定义见 `skills/_lib/schemas/arch_handoff_schema.json`).
+字段定义改必须 bump version; 消费者拒绝 version=0 payload.
+
+**测试**: 6 schema tests + 10 discover tests + 8 bats integration tests
+(默认/自定义/缺失布局 + handoff 读写 + env var override + schema 校验).
 
 ### Skill 文件规范
 
@@ -212,3 +240,42 @@ openspec/                     # OpenSpec CLI 数据 (随项目走)
 - `cmake` 3.16+ (来自 README; 本仓库不直接调用 cmake, 可能仅作为上游约束)
 - `bats-core` 1.10+ (可选, 用于跑 bats 测试)
 - Python 3.11+ (v2.0 Loop 引擎 + 单元测试, CI 固定 3.11)
+
+<!-- code-review-graph MCP tools -->
+## MCP Tools: code-review-graph
+
+**IMPORTANT: This project has a knowledge graph. ALWAYS use the
+code-review-graph MCP tools BEFORE using Grep/Glob/Read to explore
+the codebase.** The graph is faster, cheaper (fewer tokens), and gives
+you structural context (callers, dependents, test coverage) that file
+scanning cannot.
+
+### When to use graph tools FIRST
+
+- **Exploring code**: `semantic_search_nodes` or `query_graph` instead of Grep
+- **Understanding impact**: `get_impact_radius` instead of manually tracing imports
+- **Code review**: `detect_changes` + `get_review_context` instead of reading entire files
+- **Finding relationships**: `query_graph` with callers_of/callees_of/imports_of/tests_for
+- **Architecture questions**: `get_architecture_overview` + `list_communities`
+
+Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
+
+### Key Tools
+
+| Tool | Use when |
+| ------ | ---------- |
+| `detect_changes` | Reviewing code changes — gives risk-scored analysis |
+| `get_review_context` | Need source snippets for review — token-efficient |
+| `get_impact_radius` | Understanding blast radius of a change |
+| `get_affected_flows` | Finding which execution paths are impacted |
+| `query_graph` | Tracing callers, callees, imports, tests, dependencies |
+| `semantic_search_nodes` | Finding functions/classes by name or keyword |
+| `get_architecture_overview` | Understanding high-level codebase structure |
+| `refactor_tool` | Planning renames, finding dead code |
+
+### Workflow
+
+1. The graph auto-updates on file changes (via hooks).
+2. Use `detect_changes` for code review.
+3. Use `get_affected_flows` to understand impact.
+4. Use `query_graph` pattern="tests_for" to check coverage.
