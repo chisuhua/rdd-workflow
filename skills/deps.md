@@ -92,6 +92,10 @@ done
 #### 1a. 从 proposal.md 提取 In Scope 文件路径
 
 ```bash
+if [ ! -f "$PROJECT_ROOT/openspec/changes/<name>/proposal.md" ]; then
+  echo "  ⚠️  $name: skeleton change missing proposal.md — skipping"
+  continue
+fi
 SCOPE_FILES=$(grep -E '^[ \t]*-[ \t]*(修改文件|文件|路径)：?' "$PROJECT_ROOT/openspec/changes/<name>/proposal.md" 2>/dev/null \
   | sed 's/.*：//; s/.*://; s/^[ \t]*-[ \t]*//' \
   | tr ',' '\n' \
@@ -211,11 +215,18 @@ done
 
 ```bash
 # 检查 A 定义了接口 X，B 使用了接口 X（使用间接变量展开）
+# Skeleton 兼容: 跳过无 design.md 的 change（axis 3 需要 design.md 中的接口定义）
+SKELETON_COUNT=0
 for a in $CANDIDATES; do
   for b in $CANDIDATES; do
     [ "$a" = "$b" ] && continue
     iface_var_a="IFACE_DEF_$a"
     iface_use_var_b="IFACE_USE_$b"
+    # 检查 a 是否有 design.md（skeleton change 没有）
+    if [ ! -f "$PROJECT_ROOT/openspec/changes/$a/design.md" ]; then
+      SKELETON_COUNT=$((SKELETON_COUNT + 1))
+      continue
+    fi
     for iface in $(eval "echo \${$iface_var_a}"); do
       if eval "echo \${$iface_use_var_b}" | grep -q "$iface"; then
         echo "📦 $b 依赖 $a (接口: $iface)"
@@ -223,6 +234,9 @@ for a in $CANDIDATES; do
     done
   done
 done
+if [ "$SKELETON_COUNT" -gt 0 ]; then
+  echo "  ⏭️  Axis 3 (interface) skipped for $SKELETON_COUNT skeleton change(s)"
+fi
 ```
 
 **判定规则**：
@@ -483,9 +497,13 @@ cat > "$DEPS_OUTPUT" << EOF
 flowchart LR
 EOF
 
-# Add a node per change
+# Add a node per change (skeleton changes use double brackets to indicate planned state)
 for name in "${CANDIDATES[@]}"; do
-  echo "    ${name}[${name}]" >> "$DEPS_OUTPUT"
+  if [ ! -f "$PROJECT_ROOT/openspec/changes/$name/design.md" ]; then
+    echo "    ${name}[[${name}]]  %% skeleton change %% " >> "$DEPS_OUTPUT"
+  else
+    echo "    ${name}[${name}]" >> "$DEPS_OUTPUT"
+  fi
 done
 
 cat >> "$DEPS_OUTPUT" << EOF
@@ -525,12 +543,17 @@ cat >> "$DEPS_OUTPUT" << EOF
 
 ## Change 状态表
 
-| Change | 状态 | 推荐 |
-|--------|------|------|
+| Change | 状态 | 推荐 | 备注 |
+|--------|------|------|------|
 EOF
 
 # Add a row per change with status (fallback: ✅ ready; AI-detected blocker: ⚠️ blocked_by)
 for name in "${CANDIDATES[@]}"; do
+  # Detect skeleton changes (no design.md)
+  IS_SKELETON=""
+  if [ ! -f "$PROJECT_ROOT/openspec/changes/$name/design.md" ]; then
+    IS_SKELETON="📋 skeleton"
+  fi
   # AI 成功路径: 检查此 change 是否被 AI 报告为 blocked_by
   if [ -n "${AI_RESULT_FILE:-}" ] && [ -f "$AI_RESULT_FILE" ]; then
     BLOCKER=$(python3 -c "
@@ -546,12 +569,12 @@ except Exception:
     pass
 " 2>/dev/null)
     if [ -n "$BLOCKER" ]; then
-      echo "| $name | ⚠️ blocked_by | $BLOCKER |" >> "$DEPS_OUTPUT"
+      echo "| $name | ⚠️ blocked_by | $BLOCKER | $IS_SKELETON |" >> "$DEPS_OUTPUT"
       continue
     fi
   fi
   # Fallback (or 无 AI blocker): 原占位符
-  echo "| $name | ✅ ready | 第 1 |" >> "$DEPS_OUTPUT"
+  echo "| $name | ✅ ready | 第 1 | $IS_SKELETON |" >> "$DEPS_OUTPUT"
 done
 
 cat >> "$DEPS_OUTPUT" << EOF
