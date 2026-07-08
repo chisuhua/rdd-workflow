@@ -37,7 +37,17 @@ guide → roadmap（本技能）→ propose → deps → plan → execute → st
 
 ```bash
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
+# ADR-0016: read DISCOVERED_ROADMAP_PATH from handoff; fallback to v2.0 default.
+ARCH_HANDOFF="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
+if [ -f "$ARCH_HANDOFF" ]; then
+    ROADMAP_FILE="$PROJECT_ROOT/$(jq -r '.roadmap_path // "roadmap.md"' "$ARCH_HANDOFF")"
+    ADR_DIR=$(jq -r '.adr_dir // "docs/adr"' "$ARCH_HANDOFF")
+    ADR_PATTERN=$(jq -r '.adr_pattern // "ADR-*.md"' "$ARCH_HANDOFF")
+else
+    ROADMAP_FILE="$PROJECT_ROOT/roadmap.md"
+    ADR_DIR="docs/adr"
+    ADR_PATTERN="ADR-*.md"
+fi
 STATE_FILE="$PROJECT_ROOT/.rddf/state/roadmap-state.json"
 
 # 加载 state.sh 辅助函数（safe_python_json, safe_python_yaml）
@@ -191,17 +201,16 @@ fi
 > 扫描 `docs/adr/ADR-*.md` 文件,统计数量并按状态分组生成路线图。
 
 ```bash
-# Template 4 (ADR-based): Scan docs/adr/
+# Template 4 (ADR-based): Scan ADR directory from handoff (ADR-0016)
 if [ "$TEMPLATE" = "4" ]; then
-  echo "📋 从 docs/adr/ 生成路线图"
-  if [ ! -d "docs/adr" ]; then
-    echo "❌ docs/adr 目录不存在"
-    exit 1
+  echo "📋 从 $ADR_DIR 生成路线图"
+  if [ ! -d "$PROJECT_ROOT/$ADR_DIR" ]; then
+    mkdir -p "$PROJECT_ROOT/$ADR_DIR"
   fi
-
-  ADR_COUNT=$(ls docs/adr/ADR-*.md 2>/dev/null | wc -l)
+  # ⚠️ partial-quote for glob expansion (see propose.md rationale)
+  ADR_COUNT=$(ls "$PROJECT_ROOT/$ADR_DIR"/$ADR_PATTERN 2>/dev/null | grep -v -- '-0000-template\.md$' | wc -l)
   if [ "$ADR_COUNT" -eq 0 ]; then
-    echo "❌ docs/adr/ 中未发现 ADR 文件"
+    echo "❌ $ADR_DIR 中未发现 $ADR_PATTERN 文件"
     exit 1
   fi
 

@@ -150,10 +150,19 @@ scan_state() {
     return 0
   fi
 
-  # 8. no roadmap.md → guide-arch
-  if [ ! -f "$PROJECT_ROOT/roadmap.md" ]; then
+  # 8. no roadmap → guide-arch
+  # ADR-0016 Layer 3: read roadmap_path from handoff with fallback
+  ARCH_HANDOFF="${PROJECT_ROOT}/.rddf/state/.arch-handoff.json"
+  if [ -f "$ARCH_HANDOFF" ] && command -v jq >/dev/null 2>&1; then
+    _ROADMAP_FILE="${PROJECT_ROOT}/$(jq -r '.roadmap_path // "roadmap.md"' "$ARCH_HANDOFF")"
+    _ROADMAP_NAME=$(jq -r '.roadmap_path // "roadmap.md"' "$ARCH_HANDOFF")
+  else
+    _ROADMAP_FILE="${PROJECT_ROOT}/roadmap.md"
+    _ROADMAP_NAME="roadmap.md"
+  fi
+  if [ ! -f "$_ROADMAP_FILE" ]; then
     RECOMMEND="guide-arch"
-    REASON="无 roadmap.md → 进入架构定义"
+    REASON="无 ${_ROADMAP_NAME} → 进入架构定义"
     return 0
   fi
 

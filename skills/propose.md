@@ -185,7 +185,21 @@ fi
 **1a. 扫描 ADR 文件**
 
 ```bash
-ls docs/adr/ADR-*.md
+# ADR-0016 Layer 3: read paths from handoff. Fallback to v2.0 conventions
+# when handoff missing. ⚠️ partial-quote for glob expansion (Momus CRITICAL#4):
+# prefix is quoted (variable), suffix is unquoted (wildcard expansion).
+ARCH_HANDOFF="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
+if [ -f "$ARCH_HANDOFF" ]; then
+    ADR_DIR=$(jq -r '.adr_dir // "docs/adr"' "$ARCH_HANDOFF")
+    ADR_PATTERN=$(jq -r '.adr_pattern // "ADR-*.md"' "$ARCH_HANDOFF")
+    ARCHITECTURE_DIR=$(jq -r '.architecture_dir // "docs/architecture"' "$ARCH_HANDOFF")
+else
+    ADR_DIR="docs/adr"
+    ADR_PATTERN="ADR-*.md"
+    ARCHITECTURE_DIR="docs/architecture"
+fi
+
+ls "$PROJECT_ROOT/$ADR_DIR"/$ADR_PATTERN 2>/dev/null
 ```
 
 逐个读取，对每个 ADR 提取：
@@ -201,13 +215,13 @@ ls docs/adr/ADR-*.md
 **1b. 扫描架构文档**
 
 ```bash
-ls docs/architecture/*-gap-analysis.md
-ls docs/architecture/*-architecture.md
-ls docs/architecture/PHASE*-ARCHITECTURE.md
+ls "$PROJECT_ROOT/$ARCHITECTURE_DIR/"*-gap-analysis.md 2>/dev/null
+ls "$PROJECT_ROOT/$ARCHITECTURE_DIR/"*-architecture.md 2>/dev/null
+ls "$PROJECT_ROOT/$ARCHITECTURE_DIR/"PHASE*-ARCHITECTURE.md 2>/dev/null
 
 # 开发指南中的技术报告和模式文档
-ls docs/developer_guide/tech-reports/
-ls docs/developer_guide/patterns/
+ls docs/developer_guide/tech-reports/ 2>/dev/null
+ls docs/developer_guide/patterns/ 2>/dev/null
 ```
 
 提取：

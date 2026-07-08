@@ -130,6 +130,16 @@ if [ ! -f "$ARCH_HANDOFF" ]; then
     exit 1
 fi
 
+# ADR-0016 Layer 3: read discovered paths from handoff with v2.0 fallback defaults.
+# jq is used (preferred over python inline - aligns with handoff JSON conventions).
+ADR_DIR=$(jq -r '.adr_dir // "docs/adr"' "$ARCH_HANDOFF" 2>/dev/null || echo "docs/adr")
+ROADMAP_PATH=$(jq -r '.roadmap_path // "roadmap.md"' "$ARCH_HANDOFF" 2>/dev/null || echo "roadmap.md")
+ADR_PATTERN=$(jq -r '.adr_pattern // "ADR-*.md"' "$ARCH_HANDOFF" 2>/dev/null || echo "ADR-*.md")
+ARCHITECTURE_DIR=$(jq -r '.architecture_dir // "docs/architecture"' "$ARCH_HANDOFF" 2>/dev/null || echo "docs/architecture")
+
+# Roadmap existence uses DISCOVERED_ROADMAP_PATH (not hardcoded)
+ROADMAP_EXISTS=$([ -f "$PROJECT_ROOT/$ROADMAP_PATH" ] && echo "yes" || echo "no")
+
 # 从 arch-handoff 读取 ADR 编号（替代重复扫描源文件）
 ADR_IDS=$(python3 -c "
 import json
@@ -145,8 +155,8 @@ with open('$ARCH_HANDOFF') as f:
 print(d.get('current_phase', 'default'))
 " 2>/dev/null || echo "default")
 
-echo "📋 ADR 数量: $ADR_COUNT (from arch-handoff)"
-echo "📋 Roadmap 阶段: $CURRENT_PHASE"
+echo "📋 ADR 数量: $ADR_COUNT (from arch-handoff, dir=$ADR_DIR)"
+echo "📋 Roadmap 阶段: $CURRENT_PHASE (path=$ROADMAP_PATH)"
 echo "📋 ADR 编号: $ADR_IDS"
 
 # 5. plan 端当前状态
