@@ -323,6 +323,42 @@ print(f"  ⚠️  deps 过期: {stale} [> 24h 未更新]")
 PYEOF
 ```
 
+**Feature 进度**（v2.0.1 新增，从 change name 前缀派生，无需 schema 变更）：
+
+```bash
+echo ""
+echo "📌 Feature 进度:"
+PY_PROJECT_ROOT="$PROJECT_ROOT" python3 << 'PYEOF' 2>/dev/null
+import os, sys
+try:
+    from skills._lib import iteration as it
+    d = it.load(os.environ.get("PY_PROJECT_ROOT", "."))
+    progress = it.feature_progress(d)
+except Exception:
+    progress = {}
+
+if not progress:
+    print("  (无 multi-change feature)")
+else:
+    # 按完成比例升序排序（未完成的靠前）
+    sorted_features = sorted(progress.items(), key=lambda kv: (kv[1][0] / kv[1][1]) if kv[1][1] > 0 else 0)
+    for feature, (done, total) in sorted_features:
+        if total == 0:
+            continue
+        if done == total:
+            marker = "✅"
+            note = "所有 sub-change 已归档"
+        elif done == 0:
+            marker = "⏳"
+            note = f"尚未归档 ({total} 个子 change)"
+        else:
+            marker = "⚙️"
+            remaining = total - done
+            note = f"还有 {remaining} 个 sub-change 未归档"
+        print(f"  {marker} {feature}: {done}/{total} {note}")
+PYEOF
+```
+
 **菜单示例**：
 
 ```

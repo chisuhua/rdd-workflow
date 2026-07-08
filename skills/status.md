@@ -540,9 +540,10 @@ active = [c for c in data["changes"] if c["status"] in ("proposed", "in_worktree
 if not active:
     print("  (无 active change)")
 else:
-    print("| Change | Phase | Cat | Status | Blocker | Group | Conflicts | Tasks | Plan |")
-    print("|--------|-------|-----|--------|---------|-------|-----------|-------|------|")
+    print("| Feature | Change | Phase | Cat | Status | Blocker | Group | Conflicts | Tasks | Plan |")
+    print("|---------|--------|-------|-----|--------|---------|-------|-----------|-------|------|")
     for c in active:
+        feature = it_mod.derive_feature_name(c["name"])
         status_icon = {"proposed": "📋", "in_worktree": "🔄", "completed": "✅"}.get(c["status"], "?")
         blocker = c.get("blocker") or "—"
         group = str(c.get("parallel_group", "—"))
@@ -551,7 +552,7 @@ else:
         total = c.get("tasks_total", 0)
         tasks = f"{done}/{total}" if total else "—"
         plan = "✅" if c.get("plan_path") else "—"
-        print(f"| {c[\"name\"]} | {c.get(\"phase\", \"—\")[:8]} | {(c.get(\"category\") or \"—\")[:10]} | {status_icon} {c[\"status\"]} | {blocker} | {group} | {conflicts} | {tasks} | {plan} |")
+        print(f"| {feature} | {c[\"name\"]} | {c.get(\"phase\", \"—\")[:8]} | {(c.get(\"category\") or \"—\")[:10]} | {status_icon} {c[\"status\"]} | {blocker} | {group} | {conflicts} | {tasks} | {plan} |")
     print()
 
 # 渲染已归档段
