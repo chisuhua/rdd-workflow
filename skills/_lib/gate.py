@@ -12,8 +12,10 @@ suggestion string.
 Plugins can register additional checks via `register_gate_check()`.
 """
 from __future__ import annotations
+import json
 import logging
 import os
+import subprocess
 from collections import namedtuple
 from dataclasses import dataclass, field
 from typing import Callable, Optional
@@ -89,7 +91,99 @@ def _check_artifacts_complete(ctx: dict) -> tuple[bool, Optional[str]]:
 
 
 def _check_deps_analyzed(ctx: dict) -> tuple[bool, Optional[str]]:
-    return (True, "warning")
+    """Check that deps analysis has produced a real output (ADR-0015 Decision 3).
+
+    The historic implementation returned `(True, "warning")` unconditionally,
+    a no-op that left deps silent. Real semantics:
+
+    - If `.rddf/state/.deps-output.md` is missing  → `(False, "warning")`
+    - If the file is present but empty (<10 bytes) → `(False, "warning")`
+    - If `openspec validate --specs --json` is callable and reports failures
+      on deps-related specs → `(False, "warning")`
+    - Otherwise → `(True, None)`
+
+    Warning-level (not error): plan_done can transition without deps, but
+    downstreams see a recorded warning so the gap is observable.
+    """
+    deps_md = ".rddf/state/.deps-output.md"
+    if not os.path.isfile(deps_md):
+        return (False, "warning")
+    try:
+        if os.path.getsize(deps_md) < 10:
+            return (False, "warning")
+    except OSError:
+        return (False, "warning")
+    try:
+        result = subprocess.run(
+            ["openspec", "validate", "--specs", "--json"],
+            capture_output=True, text=True, timeout=30,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return (True, "warning")
+    try:
+        report = json.loads(result.stdout or "{}")
+    except json.JSONDecodeError:
+        return (True, "warning")
+    summary = report.get("summary") or {}
+    totals = summary.get("totals") or {}
+    failed = int(totals.get("failed", 0))
+    return (False, "warning") if failed > 0 else (True, None)
+
+
+def _check_openspec_validate(ctx: dict) -> tuple[bool, Optional[str]]:
+    """Run `openspec validate --all --strict --json` and gate the transition on it (ADR-0015).
+
+    Behaviour:
+    - Returns `(True, None)` when JSON summary shows 0 failed items.
+    - Returns `(False, "error")` when summary.failed > 0 — the typical case where
+      `## Purpose` / `## Requirements` / `#### Scenario:` blocks are missing in
+      one or more specs, or where a proposal/design/tasks artifact is malformed.
+    - Returns `(True, "warning")` when the `openspec` binary is not on PATH
+      (FileNotFoundError) or times out. Per ADR-0007 we degrade rather than
+      crash on missing tooling.
+
+    The Check's `suggestion` field tells the user the exact recovery command:
+    `openspec validate` (read failures) → fix → re-run.
+    """
+    try:
+        result = subprocess.run(
+            ["openspec", "validate", "--all", "--strict", "--json"],
+            capture_output=True, text=True, timeout=60,
+        )
+    except FileNotFoundError:
+        return (True, "warning")
+    except (subprocess.TimeoutExpired, OSError):
+        return (True, "warning")
+
+    try:
+        report = json.loads(result.stdout or "{}")
+    except json.JSONDecodeError:
+        return (True, "warning")
+
+    summary = report.get("summary") or {}
+    totals = summary.get("totals") or {}
+    failed = int(totals.get("failed", 0))
+    if failed > 0:
+        return (False, "error")
+    return (True, None)
+
+
+def _check_plan_review_dismissed(ctx: dict) -> tuple[bool, Optional[str]]:
+    """If a `plan.review_validation` override flag was set, surface it as a warning.
+
+    ADR-0015 leaves an opt-out path: a user invoking the
+    `plan.review_validation` human-in-loop node can record an override
+    in the state vector under `plan_side.review_validation_override`.
+    We surface that override as a warning so archive-time reviews can
+    see *why* the gate passed without a clean OpenSpec pass.
+    """
+    sv: StateVector = ctx.get("state_vector")
+    if sv is None:
+        return (True, None)
+    override = sv.get_field("plan_side.review_validation_override")
+    if override:
+        return (True, "warning")
+    return (True, None)
 
 
 def _check_worktrees_empty(ctx: dict) -> tuple[bool, Optional[str]]:
@@ -149,7 +243,9 @@ _DEFAULT_CHECKS = {
         Check("arch_handoff_exists", _check_arch_handoff_exists, "arch-done handoff 缺失", "请先运行 skill_use('guide-arch') 完成架构定义", "error"),
         Check("changes_committed", _check_changes_committed, "Change artifacts not committed", "git add openspec/changes/<name>/ && git commit", "error"),
         Check("artifacts_complete", _check_artifacts_complete, "Missing proposal/design/tasks", "Create all three artifacts in openspec/changes/<name>/", "error"),
+        Check("openspec_validate", _check_openspec_validate, "Plan fails OpenSpec schema validation", "Run: openspec validate --all --strict --json  and fix reported items", "error"),
         Check("deps_analyzed", _check_deps_analyzed, "Dependencies not analyzed", "Run: openspec deps <name>", "warning"),
+        Check("plan_review_dismissed", _check_plan_review_dismissed, "plan.review_validation override active", "Review the recorded override under plan_side.review_validation_override before archive", "warning"),
     ],
     "ship_done": [
         Check("worktrees_empty", _check_worktrees_empty, "Active worktrees remain", "git worktree remove .rddf/wt/<name>", "error"),
