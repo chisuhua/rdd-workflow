@@ -297,6 +297,79 @@ def list_archived(data: dict) -> list[dict]:
     return archived
 
 
+def list_planned(data: dict) -> list[dict]:
+    """[Queue 2] Return changes in `planned` status (skeleton, not yet filled)."""
+    return [c for c in data.get("changes", []) if c.get("status") == "planned"]
+
+
+def list_ready_for_fill(data: dict) -> list[dict]:
+    """[Queue 2 衍生] Return planned changes whose blocker is cleared (None or
+    in a non-blocking status: completed/archived).
+
+    A change is fillable when:
+    - status is `planned`, AND
+    - blocker is None, OR
+    - blocker is set but the blocker entry does not exist, OR
+    - blocker is set and the blocker entry's status is NOT in _BLOCKING_STATUSES.
+    """
+    out: list[dict] = []
+    for c in data.get("changes", []):
+        if c.get("status") != "planned":
+            continue
+        blocker = c.get("blocker")
+        if not blocker:
+            out.append(c)
+            continue
+        blocker_entry = get_change(data, blocker)
+        if blocker_entry is None or blocker_entry.get("status") not in _BLOCKING_STATUSES:
+            out.append(c)
+    return out
+
+
+def list_ready_for_ship(data: dict) -> list[dict]:
+    """[Queue 4] Return proposed changes whose blocker is cleared.
+
+    Used by guide-plan-done gate 0. A change is shippable when:
+    - status is `proposed`, AND
+    - blocker is None, OR
+    - blocker is set but the blocker entry does not exist, OR
+    - blocker is set and the blocker entry's status is NOT in _BLOCKING_STATUSES.
+    """
+    out: list[dict] = []
+    for c in data.get("changes", []):
+        if c.get("status") != "proposed":
+            continue
+        blocker = c.get("blocker")
+        if not blocker:
+            out.append(c)
+            continue
+        blocker_entry = get_change(data, blocker)
+        if blocker_entry is None or blocker_entry.get("status") not in _BLOCKING_STATUSES:
+            out.append(c)
+    return out
+
+
+def list_blocked(data: dict) -> list[dict]:
+    """[Queue 5] Return planned/proposed changes with an active blocker.
+
+    A change is blocked when:
+    - status is `planned` or `proposed`, AND
+    - blocker is set, AND
+    - the blocker entry exists with status in _BLOCKING_STATUSES.
+    """
+    out: list[dict] = []
+    for c in data.get("changes", []):
+        if c.get("status") not in ("planned", "proposed"):
+            continue
+        blocker = c.get("blocker")
+        if not blocker:
+            continue
+        blocker_entry = get_change(data, blocker)
+        if blocker_entry and blocker_entry.get("status") in _BLOCKING_STATUSES:
+            out.append(c)
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Mutations (return new data dict, do not mutate in place — easier to test)
 # ---------------------------------------------------------------------------

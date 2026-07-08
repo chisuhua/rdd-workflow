@@ -328,6 +328,190 @@ class TestListArchived:
 
 
 # ---------------------------------------------------------------------------
+# Queue management helpers: list_planned / list_ready_for_fill /
+# list_ready_for_ship / list_blocked
+# ---------------------------------------------------------------------------
+
+class TestListPlanned:
+    def test_empty_input(self):
+        d = it.create_empty()
+        assert it.list_planned(d) == []
+
+    def test_all_planned(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="a", status="planned")
+        d = it.add_or_update_change(d, name="b", status="planned")
+        d = it.add_or_update_change(d, name="c", status="planned")
+        out = it.list_planned(d)
+        assert len(out) == 3
+        assert {c["name"] for c in out} == {"a", "b", "c"}
+
+    def test_mixed_statuses(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="p1", status="planned")
+        d = it.add_or_update_change(d, name="p2", status="planned")
+        d = it.add_or_update_change(d, name="pr1", status="proposed")
+        d = it.add_or_update_change(d, name="ar1", status="archived")
+        out = it.list_planned(d)
+        assert len(out) == 2
+        assert {c["name"] for c in out} == {"p1", "p2"}
+
+
+class TestListReadyForFill:
+    def test_planned_no_blocker_in_result(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="p1", status="planned")
+        out = it.list_ready_for_fill(d)
+        assert {c["name"] for c in out} == {"p1"}
+
+    def test_planned_with_archived_blocker_in_result(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="blocker", status="archived")
+        d = it.add_or_update_change(d, name="p1", status="planned", blocker="blocker")
+        out = it.list_ready_for_fill(d)
+        assert {c["name"] for c in out} == {"p1"}
+
+    def test_planned_with_completed_blocker_in_result(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="blocker", status="completed")
+        d = it.add_or_update_change(d, name="p1", status="planned", blocker="blocker")
+        out = it.list_ready_for_fill(d)
+        assert {c["name"] for c in out} == {"p1"}
+
+    def test_planned_with_in_worktree_blocker_excluded(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="blocker", status="in_worktree")
+        d = it.add_or_update_change(d, name="p1", status="planned", blocker="blocker")
+        out = it.list_ready_for_fill(d)
+        assert out == []
+
+    def test_planned_with_planned_blocker_excluded(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="blocker", status="planned")
+        d = it.add_or_update_change(d, name="p1", status="planned", blocker="blocker")
+        out = it.list_ready_for_fill(d)
+        assert {c["name"] for c in out} == {"blocker"}
+
+    def test_planned_with_review_blocker_excluded(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="blocker", status="review")
+        d = it.add_or_update_change(d, name="p1", status="planned", blocker="blocker")
+        out = it.list_ready_for_fill(d)
+        assert out == []
+
+    def test_proposed_excluded_even_without_blocker(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="pr1", status="proposed")
+        out = it.list_ready_for_fill(d)
+        assert out == []
+
+    def test_blocker_name_does_not_exist_in_result(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="p1", status="planned", blocker="ghost")
+        out = it.list_ready_for_fill(d)
+        assert {c["name"] for c in out} == {"p1"}
+
+
+class TestListReadyForShip:
+    def test_proposed_no_blocker_in_result(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="pr1", status="proposed")
+        out = it.list_ready_for_ship(d)
+        assert {c["name"] for c in out} == {"pr1"}
+
+    def test_proposed_with_archived_blocker_in_result(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="blocker", status="archived")
+        d = it.add_or_update_change(d, name="pr1", status="proposed", blocker="blocker")
+        out = it.list_ready_for_ship(d)
+        assert {c["name"] for c in out} == {"pr1"}
+
+    def test_proposed_with_completed_blocker_in_result(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="blocker", status="completed")
+        d = it.add_or_update_change(d, name="pr1", status="proposed", blocker="blocker")
+        out = it.list_ready_for_ship(d)
+        assert {c["name"] for c in out} == {"pr1"}
+
+    def test_proposed_with_in_worktree_blocker_excluded(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="blocker", status="in_worktree")
+        d = it.add_or_update_change(d, name="pr1", status="proposed", blocker="blocker")
+        out = it.list_ready_for_ship(d)
+        assert out == []
+
+    def test_proposed_with_planned_blocker_excluded(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="blocker", status="planned")
+        d = it.add_or_update_change(d, name="pr1", status="proposed", blocker="blocker")
+        out = it.list_ready_for_ship(d)
+        assert out == []
+
+    def test_proposed_with_review_blocker_excluded(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="blocker", status="review")
+        d = it.add_or_update_change(d, name="pr1", status="proposed", blocker="blocker")
+        out = it.list_ready_for_ship(d)
+        assert out == []
+
+    def test_planned_excluded_even_without_blocker(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="p1", status="planned")
+        out = it.list_ready_for_ship(d)
+        assert out == []
+
+    def test_in_worktree_excluded(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="w1", status="in_worktree")
+        out = it.list_ready_for_ship(d)
+        assert out == []
+
+
+class TestListBlocked:
+    def test_proposed_with_in_worktree_blocker_in_result(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="blocker", status="in_worktree")
+        d = it.add_or_update_change(d, name="pr1", status="proposed", blocker="blocker")
+        out = it.list_blocked(d)
+        assert {c["name"] for c in out} == {"pr1"}
+
+    def test_proposed_with_proposed_blocker_excluded(self):
+        # Per design: "proposed" means "ready to ship" — not actively blocking.
+        # _BLOCKING_STATUSES = (planned, in_worktree, review) excludes proposed.
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="blocker", status="proposed")
+        d = it.add_or_update_change(d, name="p1", status="planned", blocker="blocker")
+        out = it.list_blocked(d)
+        assert out == []
+
+    def test_proposed_with_archived_blocker_excluded(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="blocker", status="archived")
+        d = it.add_or_update_change(d, name="pr1", status="proposed", blocker="blocker")
+        out = it.list_blocked(d)
+        assert out == []
+
+    def test_proposed_no_blocker_excluded(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="pr1", status="proposed")
+        out = it.list_blocked(d)
+        assert out == []
+
+    def test_in_worktree_excluded(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="w1", status="in_worktree")
+        out = it.list_blocked(d)
+        assert out == []
+
+    def test_archived_excluded(self):
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="blocker", status="in_worktree")
+        d = it.add_or_update_change(d, name="a1", status="archived", blocker="blocker")
+        out = it.list_blocked(d)
+        assert out == []
+
+
+# ---------------------------------------------------------------------------
 # save / load round-trip
 # ---------------------------------------------------------------------------
 
