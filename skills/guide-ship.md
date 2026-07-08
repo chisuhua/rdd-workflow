@@ -907,6 +907,36 @@ fi
 
 echo "🔍 归档模式: $ARCHIVE_MODE"
 
+# Feature 完整性提示（v2.0.1 新增 — 非阻断）
+PY_PROJECT_ROOT="$PROJECT_ROOT" python3 << 'PYEOF' 2>/dev/null
+import os, sys
+try:
+    from skills._lib import iteration as it
+    d = it.load(os.environ.get("PY_PROJECT_ROOT", "."))
+    change_name = os.environ.get("CHANGE_NAME", "")
+    feature = it.derive_feature_name(change_name)
+
+    # 只有 feature- 前缀的 change 才检查 feature 完整性
+    if not change_name.startswith("feature-"):
+        sys.exit(0)
+
+    progress = it.feature_progress(d)
+    if feature not in progress:
+        sys.exit(0)
+
+    done, total = progress[feature]
+    if total <= 1:
+        sys.exit(0)  # 单 change feature，无需检查
+
+    remaining = total - done
+    if remaining > 1 or (remaining == 1 and any(c.get("status") != "archived" for c in d.get("changes", []) if it.derive_feature_name(c.get("name", "")) == feature and c.get("name") != change_name)):
+        print(f"⚠️  Feature '{feature}' 完整性提示: 已归档 {done}/{total}")
+        print(f"   还有 {total - done} 个 sub-change 未归档，此 feature 仍未完整")
+        print(f"   归档不会阻断，请知悉")
+except Exception:
+    pass
+PYEOF
+
 # ============================================================
 # 加载辅助函数
 # ============================================================
