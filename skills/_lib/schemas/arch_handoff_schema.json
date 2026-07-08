@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://spec-workflow.local/schemas/arch_handoff_schema.json",
+  "title": "Arch Handoff v1 (ADR-0016)",
+  "description": "Schema for .rddf/state/.arch-handoff.json emitted by guide-arch Phase 5 arch-done. Consumed by guide-plan, propose, roadmap, gate.py, detectors.py, actions.py, scan-state.sh.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "arch_complete_at",
+    "adr_count",
+    "completed_adr_ids",
+    "roadmap_exists",
+    "current_phase",
+    "plan_started_at",
+    "adr_dir",
+    "roadmap_path",
+    "architecture_dir",
+    "adr_pattern",
+    "discovered",
+    "version"
+  ],
+  "properties": {
+    "arch_complete_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when arch-done was completed"
+    },
+    "adr_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of ADR documents discovered (ADR-0000-template excluded)"
+    },
+    "completed_adr_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9]{4}$"
+      },
+      "description": "Zero-padded 4-digit ADR numbers (e.g. ['0001', '0002'])"
+    },
+    "roadmap_exists": {
+      "type": "boolean",
+      "description": "Whether roadmap.md was present at arch-done"
+    },
+    "current_phase": {
+      "type": "string",
+      "description": "Current roadmap phase (e.g. 'phase-1', 'default')"
+    },
+    "plan_started_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when plan phase started (null until plan runs)"
+    },
+    "adr_dir": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*\\.\\.)[^\\x00]+$",
+      "description": "Relative path to ADR directory (e.g. 'docs/adr', 'doc/adr'). Must not be absolute or contain '..'."
+    },
+    "roadmap_path": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*\\.\\.)[^\\x00]+$",
+      "description": "Relative path to roadmap file (e.g. 'roadmap.md', 'docs/roadmap.md')"
+    },
+    "architecture_dir": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*\\.\\.)[^\\x00]+$",
+      "description": "Relative path to architecture documents directory (e.g. 'docs/architecture')"
+    },
+    "adr_pattern": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_*-]+\\.md$",
+      "description": "Glob pattern for ADR files within adr_dir (e.g. 'ADR-*.md', 'DEC-*.md', 'RFD-*.md'). Must be a filename pattern — no path separators or '..' (Momus HIGH#7 — defends against path-traversal even though this is a glob)."
+    },
+    "discovered": {
+      "type": "object",
+      "description": "Discovery process metadata per artifact type",
+      "properties": {
+        "adr_dir": {
+          "type": "object",
+          "required": ["found", "created", "candidates_tried"],
+          "properties": {
+            "found": {"type": "boolean"},
+            "created": {"type": "boolean"},
+            "candidates_tried": {"type": "integer", "minimum": 0}
+          }
+        },
+        "roadmap_path": {
+          "type": "object",
+          "required": ["found", "created", "candidates_tried"],
+          "properties": {
+            "found": {"type": "boolean"},
+            "created": {"type": "boolean"},
+            "candidates_tried": {"type": "integer", "minimum": 0}
+          }
+        },
+        "architecture_dir": {
+          "type": "object",
+          "required": ["found", "created", "candidates_tried"],
+          "properties": {
+            "found": {"type": "boolean"},
+            "created": {"type": "boolean"},
+            "candidates_tried": {"type": "integer", "minimum": 0}
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Contract version. v1 adds adr_dir/roadmap_path/architecture_dir/adr_pattern/discovered fields (ADR-0016)."
+    }
+  }
+}
