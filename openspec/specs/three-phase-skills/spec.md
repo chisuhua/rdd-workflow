@@ -1,3 +1,8 @@
+# three-phase-skills Specification
+
+## Purpose
+TBD - created by archiving change v2-core-foundation. Update Purpose after archive.
+
 ## Requirements
 
 ### Requirement: guide-arch-skill
