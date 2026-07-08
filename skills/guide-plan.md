@@ -288,9 +288,10 @@ fi
 请选择操作:
   1. 扫描新 change 候选
   2. 创建 change (从 ADR/TODO/测试缺口)
-  3. 运行依赖分析
-  4. 查看 changes 状态
-  5. 完成变更生成 → 进入 Ship 阶段
+  3. 填充骨架 change (fill) — 将 planned 升级为 proposed
+  4. 运行依赖分析
+  5. 查看 changes 状态
+  6. 完成变更生成 → 进入 Ship 阶段
   0. 💾 保存并退出
   i. 手动输入 change 名称
 ```
@@ -335,7 +336,7 @@ esac
 
 **Propose 阶段完成条件**：
 
-用户选择「5. 完成变更生成」后，验证至少有一个 change 的 artifacts 已提交（proposal.md、design.md、tasks.md 都通过 `git show HEAD:` 可访问），然后推进到 **deps 阶段**（依赖分析）。
+用户选择「6. 完成变更生成」后，验证至少有一个 change 的 artifacts 已提交（proposal.md、design.md、tasks.md 都通过 `git show HEAD:` 可访问），然后推进到 **deps 阶段**（依赖分析）。
 
 **Propose → Deps 流程**：
 
@@ -352,6 +353,48 @@ guide-plan 阶段完成（plan-done）
     ↓
 交接给 guide-ship
 ```
+
+---
+
+## Phase 2.5: fill
+
+**入口条件**：deps 已运行（推荐），用户从 Phase 2 菜单选择「3. 填充骨架 change」。
+
+**用途**：将已存在的 `planned` 状态 change（仅含骨架 artifacts）升级为 `proposed` 状态（完整 artifacts），按 deps 推荐的执行顺序（blocker 已清除者优先）。
+
+**行为**：
+
+1. 扫描 `openspec/changes/` 目录找出所有 `planned` 状态的 change
+2. 读取 `.rddf/state/iteration.json` 获取每个的 blocker/parallel_group
+3. 按 parallel_group 升序排序（无 blocker 的 group 0 优先）
+4. 展示候选列表，让用户选择
+5. 对选中的 change：
+   - 读取 `proposal-suggestions.md` 中对应条目的 `description` 字段（完整需求描述）
+   - 调用 `openspec instructions design --change "<name>" --json` 获取 design.md 模板
+   - 写入 design.md
+   - 调用 `openspec instructions tasks --change "<name>" --json` 获取 tasks.md 模板
+   - 写入 tasks.md
+   - 更新 `iteration.json`：`status` 从 `planned` → `proposed`
+   - 更新 `proposal-suggestions.md`：条目 `status` 从 `skeleton` → `已完成`
+6. 失败容错：单 change 填充失败不中断整体流程，继续下一个
+
+**示例输出**：
+
+```
+=== Plan 阶段 - 填充骨架 change (fill) ===
+
+📋 可填充的骨架 change（按 deps 推荐顺序）:
+  1. fix-tcgen05-coverage (planned, parallel_group=0, no blockers)
+  2. cleanup-wmma-namespace (planned, parallel_group=0, no blockers)
+  3. tcgen05-docs (planned, parallel_group=1, blocked_by=fix-tcgen05-coverage)
+
+请选择要填充的 change（多选用逗号分隔, 0 取消）:
+```
+
+**关键约束**：
+- fill 不修改骨架 change 的 proposal.md（保留 Why + What Changes）
+- fill 仅追加 design.md 和 tasks.md
+- iteration.json 的更新由 `iteration.add_or_update_change()` 统一管理
 
 ---
 
@@ -430,7 +473,7 @@ cat "$PROJECT_ROOT/.rddf/state/.deps-output.md"
 
 ## Phase 4: plan-done (Exit)
 
-**入口条件**：scan、propose、deps 三个阶段都已完成，且至少有一个 change 的三个 artifacts（`proposal.md`、`design.md`、`tasks.md`）都通过 `git show HEAD:...` 可访问。
+**入口条件**：用户选择「6. 完成变更生成」后，至少有一个 change 的 artifacts 已提交（`proposal.md`、`design.md`、`tasks.md` 都通过 `git show HEAD:...` 可访问），且门控检查通过。
 
 **门控检查**：
 
@@ -443,6 +486,27 @@ plan-done 必须满足**双重门控**才能通过：
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 
 echo "=== Plan 阶段 - 门控检查 ==="
+echo ""
+
+# 门控 0: Mixed state — at least 1 proposed, any number of planned allowed
+echo "门控 0: Mixed state 检查 (proposed + planned)"
+PROPOSED_COUNT=$(python3 -c "
+import json, os
+p = '$PROJECT_ROOT/.rddf/state/iteration.json'
+if not os.path.isfile(p):
+    print(0); exit()
+try:
+    d = json.load(open(p))
+except: print(0); exit()
+print(sum(1 for c in d.get('changes', []) if c.get('status') == 'proposed'))
+" 2>/dev/null)
+echo "  proposed (ready for ship): $PROPOSED_COUNT"
+if [ "${PROPOSED_COUNT:-0}" -eq 0 ]; then
+    echo "  ❌ 失败: 至少需要 1 个 proposed 状态 change 才能交接给 guide-ship"
+    echo "     使用 fill 阶段将 planned change 升级，或在 propose 阶段创建完整 change"
+    exit 1
+fi
+echo "  ✅ 通过"
 echo ""
 
 # 门控 1: 至少 1 个 active change
