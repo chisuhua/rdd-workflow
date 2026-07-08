@@ -182,7 +182,7 @@ def _merge_by_name(existing: dict, incoming: dict) -> dict:
 def create_empty(current_phase: str = _DEFAULT_PHASE) -> dict:
     """Return a fresh empty iteration state. Useful for `skill_use("status", "iteration", "init")`."""
     return {
-        "version": 2,
+        "version": 3,
         "updated_at": _now_iso(),
         "current_phase": current_phase,
         "changes": [],
