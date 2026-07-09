@@ -232,6 +232,8 @@ def _attach_conflicts(features, deps_analysis):
         for fb in features_list[i + 1:]:
             if fb == UNGROUPED:
                 continue
+            if fb in features[fa]["conflicts_with"]:
+                continue
             fa_set = set(feature_to_changes[fa])
             fb_set = set(feature_to_changes[fb])
             for ch_name, ch_info in changes_map.items():
@@ -241,12 +243,16 @@ def _attach_conflicts(features, deps_analysis):
                             features[fa]["conflicts_with"].append(fb)
                             features[fb]["conflicts_with"].append(fa)
                             break
+                    if fb in features[fa]["conflicts_with"]:
+                        break
                 elif ch_name in fb_set:
                     for c in ch_info.get("conflicts", []):
                         if c in fa_set:
                             features[fa]["conflicts_with"].append(fb)
                             features[fb]["conflicts_with"].append(fa)
                             break
+                    if fb in features[fa]["conflicts_with"]:
+                        break
     return features
 
 

@@ -307,10 +307,6 @@ class TestRenderMermaid:
         assert "wave 0" in out
 
 
-import json
-import tempfile
-from pathlib import Path
-
 from skills._lib import feature_view
 from skills._lib import iteration
 
@@ -328,6 +324,24 @@ def _write_iteration(project_root, changes):
                     for c in changes],
     }
     (state_dir / "iteration.json").write_text(json.dumps(data))
+
+
+def _write_deps(project_root, changes_pairs, conflicts_pairs=None):
+    state_dir = Path(project_root) / ".rddf" / "state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+    changes_map = {}
+    for name, blocker in changes_pairs:
+        if name not in changes_map:
+            changes_map[name] = {"name": name, "blocker": blocker, "conflicts": []}
+        else:
+            changes_map[name]["blocker"] = blocker
+    for a, b in (conflicts_pairs or []):
+        if a in changes_map:
+            changes_map[a]["conflicts"].append(b)
+        else:
+            changes_map[a] = {"name": a, "blocker": None, "conflicts": [b]}
+    data = {"version": 1, "updated_at": "2026-07-09T00:00:00+00:00", "changes": changes_map}
+    (state_dir / "deps-analysis.json").write_text(json.dumps(data))
 
 
 class TestUpdateIterationFeatureView:
@@ -364,3 +378,29 @@ class TestUpdateIterationFeatureView:
         assert fv["features"]["feature-a"]["depends_on"] == []
         assert fv["features"]["feature-a"]["blocks"] == []
         assert fv["execution_order"] == [["feature-a"]]
+
+    def test_cycle_in_dependencies_sets_warning(self, tmp_path):
+        _write_iteration(tmp_path, [
+            {"name": "a1", "parent_feature": "feature-a"},
+            {"name": "b1", "parent_feature": "feature-b"},
+            {"name": "c1", "parent_feature": "feature-c"},
+        ])
+        _write_deps(tmp_path, [("a1", "b1"), ("b1", "c1"), ("c1", "a1")])
+        feature_view.update_iteration_feature_view(str(tmp_path))
+        data = json.loads((tmp_path / ".rddf" / "state" / "iteration.json").read_text())
+        fv = data["feature_view"]
+        assert fv.get("__cycle_warning__") is True
+        assert set(fv.get("__cycle_members__", [])) >= {"feature-a", "feature-b", "feature-c"}
+
+    def test_conflicts_are_deduplicated(self, tmp_path):
+        _write_iteration(tmp_path, [
+            {"name": "a1", "parent_feature": "feature-a"},
+            {"name": "a2", "parent_feature": "feature-a"},
+            {"name": "b1", "parent_feature": "feature-b"},
+        ])
+        _write_deps(tmp_path, [], conflicts_pairs=[("a1", "b1"), ("a2", "b1")])
+        feature_view.update_iteration_feature_view(str(tmp_path))
+        data = json.loads((tmp_path / ".rddf" / "state" / "iteration.json").read_text())
+        fv = data["feature_view"]
+        assert fv["features"]["feature-a"]["conflicts_with"] == ["feature-b"]
+        assert fv["features"]["feature-b"]["conflicts_with"] == ["feature-a"]
