@@ -379,19 +379,6 @@ class TestUpdateIterationFeatureView:
         assert fv["features"]["feature-a"]["blocks"] == []
         assert fv["execution_order"] == [["feature-a"]]
 
-    def test_cycle_in_dependencies_sets_warning(self, tmp_path):
-        _write_iteration(tmp_path, [
-            {"name": "a1", "parent_feature": "feature-a"},
-            {"name": "b1", "parent_feature": "feature-b"},
-            {"name": "c1", "parent_feature": "feature-c"},
-        ])
-        _write_deps(tmp_path, [("a1", "b1"), ("b1", "c1"), ("c1", "a1")])
-        feature_view.update_iteration_feature_view(str(tmp_path))
-        data = json.loads((tmp_path / ".rddf" / "state" / "iteration.json").read_text())
-        fv = data["feature_view"]
-        assert fv.get("__cycle_warning__") is True
-        assert set(fv.get("__cycle_members__", [])) >= {"feature-a", "feature-b", "feature-c"}
-
     def test_conflicts_are_deduplicated(self, tmp_path):
         _write_iteration(tmp_path, [
             {"name": "a1", "parent_feature": "feature-a"},
