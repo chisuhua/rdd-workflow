@@ -148,14 +148,14 @@ def compute_parallel_groups(
     successors: dict[str, list[str]] = {f: [] for f in features}
     for fa, fb, _kind in edges:
         if fa in features and fb in features:
-            in_degree[fb] = in_degree.get(fb, 0) + 1
+            in_degree[fb] += 1
             successors[fa].append(fb)
 
     wave = 0
     groups: dict[str, int] = {}
     remaining = set(features.keys())
     while remaining:
-        current_wave = sorted(f for f in remaining if in_degree.get(f, 0) == 0)
+        current_wave = sorted(f for f in remaining if in_degree[f] == 0)
         if not current_wave:
             raise FeatureCycleError(sorted(remaining))
         for f in current_wave:

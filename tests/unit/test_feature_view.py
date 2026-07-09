@@ -232,3 +232,20 @@ class TestComputeParallelGroups:
         with pytest.raises(FeatureCycleError) as exc_info:
             compute_parallel_groups(edges, features)
         assert set(exc_info.value.cycle) == {"A", "B"}
+
+    def test_three_node_cycle_raises(self):
+        edges = [("A", "B", "hard"), ("B", "C", "hard"), ("C", "A", "hard")]
+        features = {"A": 0, "B": 0, "C": 0}
+        with pytest.raises(FeatureCycleError) as exc_info:
+            compute_parallel_groups(edges, features)
+        assert set(exc_info.value.cycle) == {"A", "B", "C"}
+
+    def test_edges_with_unknown_features_ignored(self):
+        # D and E are not in features; edges to them must be ignored
+        edges = [("A", "B", "hard"), ("A", "D", "hard"), ("E", "B", "hard")]
+        features = {"A": 0, "B": 0}
+        result = compute_parallel_groups(edges, features)
+        assert result == {"A": 0, "B": 1}
+
+    def test_empty_features_returns_empty_dict(self):
+        assert compute_parallel_groups([], {}) == {}
