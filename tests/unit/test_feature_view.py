@@ -153,6 +153,13 @@ class TestRollupStatus:
     def test_empty_returns_ungrouped(self):
         assert rollup_status([]) == "ungrouped"
 
+    def test_completed_status_falls_through_to_in_progress(self):
+        changes = [
+            {"name": "a", "status": "completed"},
+            {"name": "b", "status": "completed"},
+        ]
+        assert rollup_status(changes) == "in_progress"
+
 
 from skills._lib.feature_view import compute_feature_edges, UNGROUPED
 
@@ -391,3 +398,21 @@ class TestUpdateIterationFeatureView:
         fv = data["feature_view"]
         assert fv["features"]["feature-a"]["conflicts_with"] == ["feature-b"]
         assert fv["features"]["feature-b"]["conflicts_with"] == ["feature-a"]
+    def test_rollup_includes_blocked_by_from_deps(self, tmp_path):
+        _write_iteration(tmp_path, [
+            {"name": "a1", "parent_feature": "feature-a"},
+        ])
+        deps_data = {
+            "version": 1,
+            "updated_at": "2026-07-09T00:00:00+00:00",
+            "changes": {
+                "a1": {"name": "a1", "status": "blocked_by", "blocker": None, "conflicts": []}
+            }
+        }
+        (tmp_path / ".rddf" / "state" / "deps-analysis.json").write_text(json.dumps(deps_data))
+        feature_view.update_iteration_feature_view(str(tmp_path))
+        data = json.loads((tmp_path / ".rddf" / "state" / "iteration.json").read_text())
+        fv = data["feature_view"]
+        assert fv["features"]["feature-a"]["status"] == "blocked"
+        iteration_changes = {c["name"]: c for c in data.get("changes", [])}
+        assert iteration_changes["a1"]["status"] == "proposed"

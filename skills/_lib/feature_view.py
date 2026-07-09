@@ -222,6 +222,26 @@ def _compute_rollup_basis(change_names, all_changes):
     return "mixed"
 
 
+def _enrich_changes_with_deps_status(all_changes, deps_analysis):
+    """Return {name: enriched_change} with `status` overridden from deps when applicable.
+
+    Each iteration change keeps its iteration status by default. If the deps
+    analysis marks the change with `status: "blocked_by"`, the enriched copy
+    has `status: "blocked_by"` so that `rollup_status` correctly classifies
+    the parent feature as `blocked`. Original `all_changes` dict is NOT mutated;
+    saves back to iteration.json leave iteration statuses untouched.
+    """
+    deps_changes = deps_analysis.get("changes", {})
+    enriched = {}
+    for name, ch in all_changes.items():
+        ch_copy = dict(ch)
+        dep = deps_changes.get(name, {})
+        if dep.get("status") == "blocked_by":
+            ch_copy["status"] = "blocked_by"
+        enriched[name] = ch_copy
+    return enriched
+
+
 def _attach_conflicts(features, deps_analysis):
     changes_map = deps_analysis.get("changes", {})
     feature_to_changes = {f: info["change_names"] for f, info in features.items()}
@@ -282,8 +302,9 @@ def update_iteration_feature_view(project_root):
     groups = group_changes_by_feature(changes_list)
 
     features = {}
+    enriched_changes = _enrich_changes_with_deps_status(all_changes, deps)
     for name, ch_names in groups.items():
-        ch_records = [all_changes[n] for n in ch_names]
+        ch_records = [enriched_changes[n] for n in ch_names]
         features[name] = {
             "name": name,
             "status": rollup_status(ch_records),
