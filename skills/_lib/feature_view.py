@@ -97,6 +97,10 @@ def compute_feature_edges(
 
     Returns list of (from_feature, to_feature, "hard") tuples.
     The synthetic UNGROUPED feature is excluded from edge computation.
+
+    Note: Under the single-blocker schema (blocker: str | None), a feature
+    edge Fa→Fb can only form when |Fb| == 1, since each change provides at
+    most one blocker and the all-pairs-hard rule requires |Fa| × |Fb| edges.
     """
     changes_map = deps_analysis.get("changes", {})
     real_groups = {k: v for k, v in feature_groups.items() if k != UNGROUPED}
