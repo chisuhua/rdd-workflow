@@ -190,3 +190,64 @@ def test_detect_conflict_returns_session_when_different_owner(coordinator):
     assert result is not None
     assert result.owner_opencode_session_id == "ses_a"
     assert result.state == "active"
+
+
+def test_transfer_ownership(coordinator):
+    """transfer_ownership MUST update owner_opencode_session_id and refresh heartbeat."""
+    sid = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
+    coordinator.transfer_ownership(sid, "ses_b")
+    found = coordinator.find_session(sid)
+    assert found.owner_opencode_session_id == "ses_b"
+
+
+def test_transfer_ownership_terminal_blocked(coordinator):
+    """transfer_ownership MUST reject transfers on terminal sessions."""
+    sid = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
+    coordinator.update_session_status(sid, "completed", end_reason="x")
+    with pytest.raises(RddfSessionError):
+        coordinator.transfer_ownership(sid, "ses_b")
+
+
+def test_abandon(coordinator):
+    """abandon MUST transition state to abandoned with end_reason user-abandoned."""
+    sid = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
+    coordinator.abandon(sid)
+    found = coordinator.find_session(sid)
+    assert found.state == "abandoned"
+    assert found.end_reason == "user-abandoned"
+    assert found.ended_at is not None
+
+
+def test_abandon_terminal_blocked(coordinator):
+    """abandon MUST reject abandoning an already-terminal session."""
+    sid = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
+    coordinator.update_session_status(sid, "completed", end_reason="x")
+    with pytest.raises(RddfSessionError):
+        coordinator.abandon(sid)
+
+
+def test_archive_history(coordinator, sessions_file):
+    """archive_history MUST move old completed/failed/abandoned sessions to .archive.json, keep recent N."""
+    sids = []
+    for i in range(5):
+        sid = coordinator.create_session(
+            kind="stage_arch",
+            owner_opencode_session_id=f"ses_{i}",
+            goal={"intent": "guide-arch", "subject": f"change-{i}"},
+        )
+        sids.append(sid)
+        # Complete first 4 immediately so next create does not conflict
+        # (only one active session per kind is allowed)
+        if i < 4:
+            coordinator.update_session_status(sid, "completed", end_reason="x")
+
+    archived_count = coordinator.archive_history(keep=2)
+    assert archived_count == 2
+
+    remaining = coordinator.list_sessions()
+    assert len(remaining) == 3  # 2 most-recent completed + 1 active
+
+    archive_path = sessions_file.with_suffix(".archive.json")
+    assert archive_path.exists()
+    archive_data = json.loads(archive_path.read_text())
+    assert len(archive_data["sessions"]) == 2

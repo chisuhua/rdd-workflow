@@ -364,10 +364,79 @@ class RddfSessionCoordinator:
         return self._with_file_lock(_do_detect)
 
     def transfer_ownership(self, session_id: str, new_owner: str) -> None:
-        raise NotImplementedError("Implemented in Task 7")
+        """Transfer ownership to a new opencode session. Refreshes heartbeat."""
+        def _do_transfer():
+            data = self._read_unlocked()
+            for s in data["sessions"]:
+                if s["session_id"] == session_id:
+                    if s["state"] != "active":
+                        raise RddfSessionError(
+                            f"Cannot transfer non-active session (state={s['state']!r})"
+                        )
+                    s["owner_opencode_session_id"] = new_owner
+                    s["last_heartbeat"] = _now()
+                    data["updated_at"] = s["last_heartbeat"]
+                    self._atomic_write(data)
+                    return
+            raise RddfSessionError(f"Unknown session: {session_id}")
+        self._with_file_lock(_do_transfer)
 
     def abandon(self, session_id: str) -> None:
-        raise NotImplementedError("Implemented in Task 7")
+        """Mark session as abandoned by current owner."""
+        def _do_abandon():
+            data = self._read_unlocked()
+            for s in data["sessions"]:
+                if s["session_id"] == session_id:
+                    if s["state"] in _TERMINAL_STATES:
+                        raise RddfSessionError(
+                            f"Session already terminal: {s['state']!r}"
+                        )
+                    s["state"] = "abandoned"
+                    s["ended_at"] = _now()
+                    s["end_reason"] = "user-abandoned"
+                    data["updated_at"] = s["ended_at"]
+                    self._atomic_write(data)
+                    return
+            raise RddfSessionError(f"Unknown session: {session_id}")
+        self._with_file_lock(_do_abandon)
 
     def archive_history(self, keep: int = 20) -> int:
-        raise NotImplementedError("Implemented in Task 7")
+        """Move old completed/failed/abandoned sessions to .archive.json.
+
+        Keeps the most recent `keep` terminal sessions in the main file
+        (by ended_at desc) plus all active/orphaned sessions. Returns the
+        count of sessions moved to the archive.
+        """
+        archive_path = self._sessions_file.with_suffix(".archive.json")
+        if archive_path.exists():
+            archive_data = json.loads(archive_path.read_text())
+        else:
+            archive_data = {"version": 1, "sessions": []}
+
+        def _do_archive():
+            nonlocal archive_data
+            data = self._read_unlocked()
+            terminal = [
+                s for s in data["sessions"]
+                if s["state"] in _TERMINAL_STATES
+            ]
+            non_terminal = [
+                s for s in data["sessions"]
+                if s["state"] not in _TERMINAL_STATES
+            ]
+
+            terminal.sort(key=lambda s: s.get("ended_at") or "", reverse=True)
+            to_archive = terminal[keep:]
+            to_keep = terminal[:keep] + non_terminal
+
+            archive_data["sessions"].extend(to_archive)
+            archive_data["updated_at"] = _now()
+            archive_path.parent.mkdir(parents=True, exist_ok=True)
+            with archive_path.open("w") as f:
+                json.dump(archive_data, f, indent=2)
+
+            data["sessions"] = to_keep
+            data["updated_at"] = _now()
+            self._atomic_write(data)
+            return len(to_archive)
+        return self._with_file_lock(_do_archive)
