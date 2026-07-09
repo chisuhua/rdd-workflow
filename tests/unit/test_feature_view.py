@@ -157,18 +157,14 @@ class TestRollupStatus:
 from skills._lib.feature_view import compute_feature_edges, UNGROUPED
 
 
-def _deps(changes_pairs):
-    """Build a minimal deps-analysis-like dict from (change_name, blocker) pairs.
-
-    Multiple pairs for the same change accumulate into a blocker list so the
-    all-pairs-hard check can detect every cross-group edge.
-    """
-    raw: dict[str, dict[str, object]] = {}
-    for name, blocker in changes_pairs:
-        if name not in raw:
-            raw[name] = {"name": name, "blocker": [], "conflicts": []}
-        raw[name]["blocker"].append(blocker)
-    return {"changes": raw}
+def _deps(changes_pairs: list[tuple[str, str | None]]) -> dict:
+    """Build a minimal deps-analysis-like dict from (change_name, blocker) pairs."""
+    return {
+        "changes": {
+            name: {"name": name, "blocker": blocker, "conflicts": []}
+            for name, blocker in changes_pairs
+        }
+    }
 
 
 class TestComputeFeatureEdges:
