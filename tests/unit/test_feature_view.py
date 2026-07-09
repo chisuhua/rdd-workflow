@@ -248,3 +248,34 @@ class TestComputeParallelGroups:
 
     def test_empty_features_returns_empty_dict(self):
         assert compute_parallel_groups([], {}) == {}
+
+
+from skills._lib.feature_view import render_mermaid
+
+
+class TestRenderMermaid:
+    def test_emits_flowchart_lr_header(self):
+        out = render_mermaid({}, [], [], {})
+        assert out.startswith("flowchart LR"), out
+
+    def test_one_node_per_feature(self):
+        features = {
+            "A": {"status": "ready", "archived_count": 0, "change_count": 2, "parallel_group": 0},
+            "B": {"status": "done", "archived_count": 1, "change_count": 1, "parallel_group": 1},
+        }
+        out = render_mermaid(features, [], [], {"A": 0, "B": 1})
+        assert 'A["A' in out
+        assert 'B["B' in out
+
+    def test_hard_edge_renders_arrow(self):
+        features = {"A": {"status": "ready", "archived_count": 0, "change_count": 1, "parallel_group": 0},
+                    "B": {"status": "blocked", "archived_count": 0, "change_count": 1, "parallel_group": 1}}
+        edges = [("A", "B", "hard")]
+        out = render_mermaid(features, edges, [], {"A": 0, "B": 1})
+        assert "A --> B" in out
+
+    def test_conflict_renders_dotted_arrow(self):
+        features = {"A": {"status": "ready", "archived_count": 0, "change_count": 1, "parallel_group": 0},
+                    "B": {"status": "ready", "archived_count": 0, "change_count": 1, "parallel_group": 0}}
+        out = render_mermaid(features, [], [("A", "B")], {"A": 0, "B": 0})
+        assert "A -.->|冲突| B" in out

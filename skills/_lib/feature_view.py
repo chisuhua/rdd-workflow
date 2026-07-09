@@ -166,3 +166,31 @@ def compute_parallel_groups(
                     in_degree[succ] -= 1
         wave += 1
     return groups
+
+
+def render_mermaid(
+    features: dict,
+    edges: list[tuple[str, str, str]],
+    conflicts: list[tuple[str, str]],
+    parallel_groups: dict[str, int],
+) -> str:
+    """Render a Mermaid flowchart at feature granularity.
+
+    `features` is a dict[feature_name, {status, archived_count, change_count, parallel_group}].
+    Returns the Mermaid source as a string.
+    """
+    lines = ["flowchart LR"]
+    for name, info in sorted(features.items()):
+        label = (
+            f"{name}<br/>"
+            f"{info['status']} · "
+            f"{info['archived_count']}/{info['change_count']} · "
+            f"wave {info['parallel_group']}"
+        )
+        safe = label.replace('"', "&quot;")
+        lines.append(f'  {name}["{safe}"]')
+    for fa, fb, _ in edges:
+        lines.append(f"  {fa} --> {fb}")
+    for fa, fb in conflicts:
+        lines.append(f"  {fa} -.->|冲突| {fb}")
+    return "\n".join(lines)
