@@ -7,7 +7,7 @@ from pathlib import Path
 import jsonschema
 import pytest
 
-from skills._lib.rddf_session import RddfSessionCoordinator, RddfSessionError
+from skills._lib.rddf_session import RddfSessionCoordinator, RddfSessionError, ConflictError
 
 
 @pytest.fixture
@@ -251,3 +251,35 @@ def test_archive_history(coordinator, sessions_file):
     assert archive_path.exists()
     archive_data = json.loads(archive_path.read_text())
     assert len(archive_data["sessions"]) == 2
+
+
+def test_create_session_idempotent_same_owner(coordinator):
+    """Calling create_session twice with same kind+owner MUST return same session id (no duplicate)."""
+    sid1 = coordinator.create_session(
+        kind="stage_plan",
+        owner_opencode_session_id="ses_a",
+        goal={"intent": "guide-plan"},
+    )
+    sid2 = coordinator.create_session(
+        kind="stage_plan",
+        owner_opencode_session_id="ses_a",
+        goal={"intent": "guide-plan"},
+    )
+    assert sid1 == sid2
+    all_sessions = coordinator.list_sessions()
+    assert len(all_sessions) == 1
+
+
+def test_create_session_raises_conflict_different_owner(coordinator):
+    """create_session MUST raise ConflictError when active session has different owner."""
+    coordinator.create_session(
+        kind="stage_plan",
+        owner_opencode_session_id="ses_a",
+        goal={"intent": "guide-plan"},
+    )
+    with pytest.raises(ConflictError):
+        coordinator.create_session(
+            kind="stage_plan",
+            owner_opencode_session_id="ses_b",
+            goal={"intent": "guide-plan"},
+        )
