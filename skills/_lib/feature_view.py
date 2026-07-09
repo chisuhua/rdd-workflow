@@ -105,16 +105,15 @@ def compute_feature_edges(
     edges: list[tuple[str, str, str]] = []
     for fa in features:
         for fb in features:
-            if fa >= fb:
+            if fa >= fb:  # avoid duplicates (lex order) and self-loops
                 continue
             n = 0
             m = 0
             for from_ch in real_groups[fa]:
                 info = changes_map.get(from_ch, {})
-                blockers = info.get("blocker") or []
-                if not isinstance(blockers, list):
-                    blockers = [blockers] if blockers else []
-                n += sum(1 for b in blockers if b in real_groups[fb])
+                blocker = info.get("blocker")
+                if blocker in real_groups[fb]:
+                    n += 1
                 m += 1
             m_total = m * len(real_groups[fb])
             if m_total > 0 and n == m_total:
