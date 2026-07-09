@@ -115,7 +115,16 @@
                 "type": "string",
                 "enum": ["active", "paused", "completed", "failed", "archived"]
               },
-              "label": { "type": "string", "description": "Optional human-readable label for this session." }
+              "label": { "type": "string", "description": "Optional human-readable label for this session." },
+              "owner_opencode_session_id": {
+                "type": ["string", "null"],
+                "description": "Optional OpenCode session ID that owns this session. Links to rddf-session via ADR-0017."
+              },
+              "rddf_session_id": {
+                "type": ["string", "null"],
+                "pattern": "^rds_[a-f0-9]{12}$",
+                "description": "Optional rddf-session id (ADR-0017) for cross-opencode-session recovery."
+              }
             }
           }
         },
