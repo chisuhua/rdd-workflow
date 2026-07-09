@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import datetime
 import re
-from typing import Optional
 
 from skills._lib import iteration as it_mod
 
