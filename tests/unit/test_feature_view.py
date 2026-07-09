@@ -173,15 +173,16 @@ def _deps(changes_pairs):
 
 class TestComputeFeatureEdges:
     def test_all_pairs_hard_yields_one_edge(self):
-        groups = {"A": ["a1", "a2"], "B": ["b1", "b2", "b3"]}
-        deps = _deps([("a1", "b1"), ("a1", "b2"), ("a1", "b3"),
-                      ("a2", "b1"), ("a2", "b2"), ("a2", "b3")])
+        # 2 changes in A, 1 in B. m = 2*1 = 2. Each a blocks the single b.
+        groups = {"A": ["a1", "a2"], "B": ["b1"]}
+        deps = _deps([("a1", "b1"), ("a2", "b1")])
         edges = compute_feature_edges(deps, groups)
         assert ("A", "B", "hard") in edges
 
     def test_partial_overlap_yields_no_edge(self):
-        groups = {"A": ["a1", "a2"], "B": ["b1", "b2", "b3"]}
-        deps = _deps([("a1", "b1"), ("a1", "b2"), ("a2", "b1")])
+        # Fb has 2 changes but only 1 of the 2 a's blocks into it
+        groups = {"A": ["a1", "a2"], "B": ["b1", "b2"]}
+        deps = _deps([("a1", "b1"), ("a1", "b2")])  # a2 has no blocker
         edges = compute_feature_edges(deps, groups)
         assert edges == []
 
