@@ -152,3 +152,53 @@ class TestRollupStatus:
 
     def test_empty_returns_ungrouped(self):
         assert rollup_status([]) == "ungrouped"
+
+
+from skills._lib.feature_view import compute_feature_edges, UNGROUPED
+
+
+def _deps(changes_pairs):
+    """Build a minimal deps-analysis-like dict from (change_name, blocker) pairs.
+
+    Multiple pairs for the same change accumulate into a blocker list so the
+    all-pairs-hard check can detect every cross-group edge.
+    """
+    raw: dict[str, dict[str, object]] = {}
+    for name, blocker in changes_pairs:
+        if name not in raw:
+            raw[name] = {"name": name, "blocker": [], "conflicts": []}
+        raw[name]["blocker"].append(blocker)
+    return {"changes": raw}
+
+
+class TestComputeFeatureEdges:
+    def test_all_pairs_hard_yields_one_edge(self):
+        groups = {"A": ["a1", "a2"], "B": ["b1", "b2", "b3"]}
+        deps = _deps([("a1", "b1"), ("a1", "b2"), ("a1", "b3"),
+                      ("a2", "b1"), ("a2", "b2"), ("a2", "b3")])
+        edges = compute_feature_edges(deps, groups)
+        assert ("A", "B", "hard") in edges
+
+    def test_partial_overlap_yields_no_edge(self):
+        groups = {"A": ["a1", "a2"], "B": ["b1", "b2", "b3"]}
+        deps = _deps([("a1", "b1"), ("a1", "b2"), ("a2", "b1")])
+        edges = compute_feature_edges(deps, groups)
+        assert edges == []
+
+    def test_disjoint_yields_no_edge(self):
+        groups = {"A": ["a1"], "B": ["b1"]}
+        deps = _deps([])
+        edges = compute_feature_edges(deps, groups)
+        assert edges == []
+
+    def test_ungrouped_excluded(self):
+        groups = {"A": ["a1"], UNGROUPED: ["x"]}
+        deps = _deps([("a1", "x")])
+        edges = compute_feature_edges(deps, groups)
+        assert edges == [], f"ungrouped should not produce edges, got {edges}"
+
+    def test_self_loop_excluded(self):
+        groups = {"A": ["a1", "a2"]}
+        deps = _deps([("a1", "a2")])
+        edges = compute_feature_edges(deps, groups)
+        assert edges == []

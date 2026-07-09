@@ -84,3 +84,39 @@ def rollup_status(changes: list[dict]) -> str:
     if statuses == {"archived"}:
         return "done"
     return "in_progress"
+
+
+def compute_feature_edges(
+    deps_analysis: dict, feature_groups: dict
+) -> list[tuple[str, str, str]]:
+    """Compute feature-level dependency edges from change-level hard deps.
+
+    For each pair (Fa, Fb) with Fa != Fb, count hard change-level edges from
+    any change in Fa to any change in Fb. Produce a feature edge iff every
+    possible (from_change, to_change) pair is present (all-pairs-hard rule).
+
+    Returns list of (from_feature, to_feature, "hard") tuples.
+    The synthetic UNGROUPED feature is excluded from edge computation.
+    """
+    changes_map = deps_analysis.get("changes", {})
+    real_groups = {k: v for k, v in feature_groups.items() if k != UNGROUPED}
+    features = sorted(real_groups.keys())
+
+    edges: list[tuple[str, str, str]] = []
+    for fa in features:
+        for fb in features:
+            if fa >= fb:
+                continue
+            n = 0
+            m = 0
+            for from_ch in real_groups[fa]:
+                info = changes_map.get(from_ch, {})
+                blockers = info.get("blocker") or []
+                if not isinstance(blockers, list):
+                    blockers = [blockers] if blockers else []
+                n += sum(1 for b in blockers if b in real_groups[fb])
+                m += 1
+            m_total = m * len(real_groups[fb])
+            if m_total > 0 and n == m_total:
+                edges.append((fa, fb, "hard"))
+    return edges
