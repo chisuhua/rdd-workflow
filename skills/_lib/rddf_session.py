@@ -315,12 +315,53 @@ class RddfSessionCoordinator:
         self._with_file_lock(_do_refresh)
 
     def check_heartbeat_timeouts(self) -> List[str]:
-        raise NotImplementedError("Implemented in Task 6")
+        """Mark active sessions with last_heartbeat > timeout as orphaned.
+
+        Returns list of session_ids newly transitioned to orphaned state.
+        """
+        newly_orphaned: List[str] = []
+
+        def _do_check():
+            nonlocal newly_orphaned
+            data = self._read_unlocked()
+            now = datetime.datetime.now(datetime.timezone.utc)
+            for s in data["sessions"]:
+                if s["state"] != "active":
+                    continue
+                last_hb = datetime.datetime.fromisoformat(s["last_heartbeat"])
+                if (now - last_hb).total_seconds() > DEFAULT_HEARTBEAT_TIMEOUT_SECONDS:
+                    s["state"] = "orphaned"
+                    s["ended_at"] = _now()
+                    s["end_reason"] = "heartbeat-timeout"
+                    newly_orphaned.append(s["session_id"])
+            if newly_orphaned:
+                data["updated_at"] = _now()
+                self._atomic_write(data)
+        self._with_file_lock(_do_check)
+        return newly_orphaned
 
     def detect_conflict(
         self, kind: str, owner_opencode_session_id: str
     ) -> Optional[RddfSession]:
-        raise NotImplementedError("Implemented in Task 6")
+        """Return active session of `kind` if owned by a DIFFERENT opencode session.
+
+        Returns None if no active session of `kind`, or if the active session
+        is owned by the same opencode session id. Caller should invoke the
+        4-option soft-prompt when this returns a non-None value.
+        """
+        if kind not in _VALID_KINDS:
+            raise RddfSessionError(
+                f"Invalid kind: {kind}. Must be one of {_VALID_KINDS}"
+            )
+
+        def _do_detect():
+            data = self._read_unlocked()
+            for s in data["sessions"]:
+                if s["kind"] == kind and s["state"] == "active":
+                    if s["owner_opencode_session_id"] != owner_opencode_session_id:
+                        return RddfSession(**s)
+            return None
+        return self._with_file_lock(_do_detect)
 
     def transfer_ownership(self, session_id: str, new_owner: str) -> None:
         raise NotImplementedError("Implemented in Task 7")

@@ -143,3 +143,50 @@ def test_refresh_heartbeat(coordinator):
     coordinator.refresh_heartbeat(sid)
     after = coordinator.find_session(sid).last_heartbeat
     assert after >= before
+
+
+def test_check_heartbeat_timeouts_marks_orphaned(coordinator, sessions_file):
+    """Sessions with last_heartbeat > 30min ago MUST be marked orphaned."""
+    sid = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
+    # Manually backdate last_heartbeat to 2020 (well past 30min)
+    data = json.loads(sessions_file.read_text())
+    for s in data["sessions"]:
+        if s["session_id"] == sid:
+            s["last_heartbeat"] = "2020-01-01T00:00:00+00:00"
+    sessions_file.write_text(json.dumps(data))
+    newly_orphaned = coordinator.check_heartbeat_timeouts()
+    assert sid in newly_orphaned
+    found = coordinator.find_session(sid)
+    assert found.state == "orphaned"
+    assert found.end_reason == "heartbeat-timeout"
+
+
+def test_check_heartbeat_timeouts_keeps_fresh(coordinator):
+    """Sessions with fresh heartbeat MUST NOT be marked orphaned."""
+    sid = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
+    newly_orphaned = coordinator.check_heartbeat_timeouts()
+    assert sid not in newly_orphaned
+    found = coordinator.find_session(sid)
+    assert found.state == "active"
+
+
+def test_detect_conflict_none_when_no_active(coordinator):
+    """detect_conflict MUST return None when no active session of that kind exists."""
+    result = coordinator.detect_conflict("stage_plan", owner_opencode_session_id="ses_a")
+    assert result is None
+
+
+def test_detect_conflict_none_when_same_owner(coordinator):
+    """detect_conflict MUST return None when active session owned by same opencode session."""
+    coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
+    result = coordinator.detect_conflict("stage_plan", owner_opencode_session_id="ses_a")
+    assert result is None
+
+
+def test_detect_conflict_returns_session_when_different_owner(coordinator):
+    """detect_conflict MUST return existing session when owned by different opencode session."""
+    coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
+    result = coordinator.detect_conflict("stage_plan", owner_opencode_session_id="ses_b")
+    assert result is not None
+    assert result.owner_opencode_session_id == "ses_a"
+    assert result.state == "active"
