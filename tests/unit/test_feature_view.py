@@ -199,3 +199,36 @@ class TestComputeFeatureEdges:
         deps = _deps([("a1", "a2")])
         edges = compute_feature_edges(deps, groups)
         assert edges == []
+
+
+from skills._lib.feature_view import compute_parallel_groups, FeatureCycleError
+
+
+class TestComputeParallelGroups:
+    def test_no_edges_all_wave_zero(self):
+        features = {"A": 0, "B": 0, "C": 0}
+        result = compute_parallel_groups([], features)
+        assert result == {"A": 0, "B": 0, "C": 0}
+
+    def test_chain_produces_three_waves(self):
+        edges = [("A", "B", "hard"), ("B", "C", "hard")]
+        features = {"A": 0, "B": 0, "C": 0}
+        result = compute_parallel_groups(edges, features)
+        assert result == {"A": 0, "B": 1, "C": 2}
+
+    def test_diamond_shape(self):
+        # A -> B, A -> C, B -> D, C -> D
+        edges = [
+            ("A", "B", "hard"), ("A", "C", "hard"),
+            ("B", "D", "hard"), ("C", "D", "hard"),
+        ]
+        features = {"A": 0, "B": 0, "C": 0, "D": 0}
+        result = compute_parallel_groups(edges, features)
+        assert result == {"A": 0, "B": 1, "C": 1, "D": 2}
+
+    def test_cycle_raises(self):
+        edges = [("A", "B", "hard"), ("B", "A", "hard")]
+        features = {"A": 0, "B": 0}
+        with pytest.raises(FeatureCycleError) as exc_info:
+            compute_parallel_groups(edges, features)
+        assert set(exc_info.value.cycle) == {"A", "B"}

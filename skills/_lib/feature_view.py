@@ -123,3 +123,46 @@ def compute_feature_edges(
             if m_total > 0 and n == m_total:
                 edges.append((fa, fb, "hard"))
     return edges
+
+
+class FeatureCycleError(Exception):
+    """Raised when the feature dependency graph contains a cycle."""
+
+    def __init__(self, cycle: list[str]):
+        self.cycle = cycle
+        super().__init__(f"feature dependency cycle: {' -> '.join(cycle)}")
+
+
+def compute_parallel_groups(
+    edges: list[tuple[str, str, str]], features: dict
+) -> dict[str, int]:
+    """Assign each feature to a parallel-group wave index via BFS topo layering.
+
+    `features` is a dict (values ignored; keys are the feature names).
+    Returns dict[feature_name, wave_index]. Wave 0 = no incoming edges.
+    Raises FeatureCycleError if a cycle is detected.
+    """
+    if not features:
+        return {}
+    in_degree: dict[str, int] = {f: 0 for f in features}
+    successors: dict[str, list[str]] = {f: [] for f in features}
+    for fa, fb, _kind in edges:
+        if fa in features and fb in features:
+            in_degree[fb] = in_degree.get(fb, 0) + 1
+            successors[fa].append(fb)
+
+    wave = 0
+    groups: dict[str, int] = {}
+    remaining = set(features.keys())
+    while remaining:
+        current_wave = sorted(f for f in remaining if in_degree.get(f, 0) == 0)
+        if not current_wave:
+            raise FeatureCycleError(sorted(remaining))
+        for f in current_wave:
+            groups[f] = wave
+            remaining.discard(f)
+            for succ in successors.get(f, []):
+                if succ in remaining:
+                    in_degree[succ] -= 1
+        wave += 1
+    return groups
