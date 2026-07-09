@@ -29,6 +29,15 @@
         "items": { "type": "string" }
       },
       "description": "Wave-grouped topological order; same index = parallel."
+    },
+    "__cycle_warning__": {
+      "type": "boolean",
+      "description": "True when the feature dependency graph contains a cycle. Consumers should check this before trusting execution_order."
+    },
+    "__cycle_members__": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Feature names involved in the detected cycle, sorted."
     }
   },
   "$defs": {

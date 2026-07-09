@@ -11,6 +11,7 @@ import datetime
 import re
 
 from skills._lib import iteration as it_mod
+from skills._lib.lock import FileLock, LockTimeout
 
 
 # Synthetic feature name for changes with no parent_feature and no feature- prefix.
@@ -203,6 +204,10 @@ class NoIterationError(Exception):
     """Raised when iteration.json is missing — feature view cannot be computed."""
 
 
+class FileLockedError(Exception):
+    """Raised when iteration.json cannot be acquired for writing (FileLock timeout)."""
+
+
 def _now_iso() -> str:
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
@@ -348,5 +353,11 @@ def update_iteration_feature_view(project_root):
         feature_view_node["__cycle_members__"] = cycle_members
 
     data["feature_view"] = feature_view_node
-    it_mod.save(project_root, data)
+    try:
+        it_mod.save(project_root, data)
+    except LockTimeout as e:
+        raise FileLockedError(
+            f"iteration.json is locked by another process (LockTimeout after {5.0}s). "
+            f"Try again after the other writer finishes. ({e})"
+        ) from e
     return len(features)

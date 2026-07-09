@@ -416,3 +416,14 @@ class TestUpdateIterationFeatureView:
         assert fv["features"]["feature-a"]["status"] == "blocked"
         iteration_changes = {c["name"]: c for c in data.get("changes", [])}
         assert iteration_changes["a1"]["status"] == "proposed"
+
+    def test_file_locked_error_when_save_times_out(self, tmp_path, monkeypatch):
+        from skills._lib.lock import LockTimeout
+        _write_iteration(tmp_path, [
+            {"name": "a1", "parent_feature": "feature-a"},
+        ])
+        def _raise_timeout(*args, **kwargs):
+            raise LockTimeout("simulated lock contention")
+        monkeypatch.setattr(feature_view.it_mod, "save", _raise_timeout)
+        with pytest.raises(feature_view.FileLockedError):
+            feature_view.update_iteration_feature_view(str(tmp_path))

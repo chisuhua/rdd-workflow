@@ -48,7 +48,7 @@ except ImportError as e:
     print(f"❌ feature_view module unavailable: {e}", file=sys.stderr); sys.exit(2)
 try:
     fv.update_iteration_feature_view(root)
-except fv.NoIterationError as e:
+except (fv.NoIterationError, fv.FileLockedError) as e:
     print(f"❌ {e}", file=sys.stderr); sys.exit(1)
 data = json.loads(Path(f"{root}/.rddf/state/iteration.json").read_text())
 features = data["feature_view"]["features"]
@@ -83,7 +83,7 @@ except ImportError as e:
     print(f"❌ feature_view module unavailable: {e}", file=sys.stderr); sys.exit(2)
 try:
     fv.update_iteration_feature_view(root)
-except fv.NoIterationError as e:
+except (fv.NoIterationError, fv.FileLockedError) as e:
     print(f"❌ {e}", file=sys.stderr); sys.exit(1)
 data = json.loads(Path(f"{root}/.rddf/state/iteration.json").read_text())
 fv_node = data["feature_view"]
@@ -124,7 +124,7 @@ except ImportError as e:
     print(f"❌ feature_view module unavailable: {e}", file=sys.stderr); sys.exit(2)
 try:
     fv.update_iteration_feature_view(root)
-except fv.NoIterationError as e:
+except (fv.NoIterationError, fv.FileLockedError) as e:
     print(f"❌ {e}", file=sys.stderr); sys.exit(1)
 data = json.loads(Path(f"{root}/.rddf/state/iteration.json").read_text())
 info = data["feature_view"]["features"].get(target)
@@ -158,7 +158,7 @@ except ImportError as e:
     print(f"❌ feature_view module unavailable: {e}", file=sys.stderr); sys.exit(2)
 try:
     fv.update_iteration_feature_view(root)
-except fv.NoIterationError as e:
+except (fv.NoIterationError, fv.FileLockedError) as e:
     print(f"❌ {e}", file=sys.stderr); sys.exit(1)
 data = json.loads(Path(f"{root}/.rddf/state/iteration.json").read_text())
 order = data["feature_view"].get("execution_order", [])
