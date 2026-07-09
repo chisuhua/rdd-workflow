@@ -104,3 +104,42 @@ def test_update_session_status_terminal_blocks(coordinator):
     coordinator.update_session_status(sid, "completed", end_reason="x")
     with pytest.raises(RddfSessionError):
         coordinator.update_session_status(sid, "active")
+
+
+def test_attach_change(coordinator):
+    """attach_change MUST add change_name to session's attached_changes."""
+    sid = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
+    coordinator.attach_change(sid, "change-auth")
+    coordinator.attach_change(sid, "change-user-profile")
+    found = coordinator.find_session(sid)
+    assert "change-auth" in found.attached_changes
+    assert "change-user-profile" in found.attached_changes
+    assert len(found.attached_changes) == 2
+
+
+def test_attach_change_idempotent(coordinator):
+    """attach_change MUST NOT duplicate existing entries."""
+    sid = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
+    coordinator.attach_change(sid, "change-auth")
+    coordinator.attach_change(sid, "change-auth")
+    found = coordinator.find_session(sid)
+    assert found.attached_changes.count("change-auth") == 1
+
+
+def test_detach_change(coordinator):
+    """detach_change MUST remove change_name from attached_changes."""
+    sid = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
+    coordinator.attach_change(sid, "change-auth")
+    coordinator.detach_change(sid, "change-auth")
+    found = coordinator.find_session(sid)
+    assert "change-auth" not in found.attached_changes
+
+
+def test_refresh_heartbeat(coordinator):
+    """refresh_heartbeat MUST update last_heartbeat to now."""
+    sid = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
+    before = coordinator.find_session(sid).last_heartbeat
+    time.sleep(0.01)
+    coordinator.refresh_heartbeat(sid)
+    after = coordinator.find_session(sid).last_heartbeat
+    assert after >= before

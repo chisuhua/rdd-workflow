@@ -267,13 +267,52 @@ class RddfSessionCoordinator:
         return self._with_file_lock(_do_list)
 
     def attach_change(self, session_id: str, change_name: str) -> None:
-        raise NotImplementedError("Implemented in Task 5")
+        """Add change_name to session's attached_changes (idempotent)."""
+        def _do_attach():
+            data = self._read_unlocked()
+            for s in data["sessions"]:
+                if s["session_id"] == session_id:
+                    if change_name not in s["attached_changes"]:
+                        s["attached_changes"].append(change_name)
+                        s["last_heartbeat"] = _now()
+                        data["updated_at"] = s["last_heartbeat"]
+                        self._atomic_write(data)
+                    return
+            raise RddfSessionError(f"Unknown session: {session_id}")
+        self._with_file_lock(_do_attach)
 
     def detach_change(self, session_id: str, change_name: str) -> None:
-        raise NotImplementedError("Implemented in Task 5")
+        """Remove change_name from session's attached_changes (idempotent)."""
+        def _do_detach():
+            data = self._read_unlocked()
+            for s in data["sessions"]:
+                if s["session_id"] == session_id:
+                    if change_name in s["attached_changes"]:
+                        s["attached_changes"].remove(change_name)
+                        s["last_heartbeat"] = _now()
+                        data["updated_at"] = s["last_heartbeat"]
+                        self._atomic_write(data)
+                    return
+            raise RddfSessionError(f"Unknown session: {session_id}")
+        self._with_file_lock(_do_detach)
 
     def refresh_heartbeat(self, session_id: str) -> None:
-        raise NotImplementedError("Implemented in Task 5")
+        """Update last_heartbeat to now. Only valid for active sessions."""
+        def _do_refresh():
+            data = self._read_unlocked()
+            for s in data["sessions"]:
+                if s["session_id"] == session_id:
+                    if s["state"] != "active":
+                        raise RddfSessionError(
+                            f"Cannot refresh heartbeat on non-active session "
+                            f"(state={s['state']!r})"
+                        )
+                    s["last_heartbeat"] = _now()
+                    data["updated_at"] = s["last_heartbeat"]
+                    self._atomic_write(data)
+                    return
+            raise RddfSessionError(f"Unknown session: {session_id}")
+        self._with_file_lock(_do_refresh)
 
     def check_heartbeat_timeouts(self) -> List[str]:
         raise NotImplementedError("Implemented in Task 6")
