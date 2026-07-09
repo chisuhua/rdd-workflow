@@ -279,3 +279,29 @@ class TestRenderMermaid:
                     "B": {"status": "ready", "archived_count": 0, "change_count": 1, "parallel_group": 0}}
         out = render_mermaid(features, [], [("A", "B")], {"A": 0, "B": 0})
         assert "A -.->|冲突| B" in out
+
+    def test_empty_features_emits_only_header(self):
+        out = render_mermaid({}, [], [], {})
+        assert out == "flowchart LR"
+
+    def test_special_chars_in_feature_names(self):
+        features = {"feature-stream_core": {"status": "ready", "archived_count": 0, "change_count": 1, "parallel_group": 0},
+                    "feature-x_v2": {"status": "blocked", "archived_count": 0, "change_count": 1, "parallel_group": 1}}
+        out = render_mermaid(features, [], [], {"feature-stream_core": 0, "feature-x_v2": 1})
+        assert 'feature-stream_core["feature-stream_core' in out
+        assert 'feature-x_v2["feature-x_v2' in out
+
+    def test_deterministic_output(self):
+        features = {"B": {"status": "ready", "archived_count": 0, "change_count": 1, "parallel_group": 0},
+                    "A": {"status": "ready", "archived_count": 0, "change_count": 1, "parallel_group": 0}}
+        out1 = render_mermaid(features, [], [], {"A": 0, "B": 0})
+        out2 = render_mermaid(features, [], [], {"A": 0, "B": 0})
+        assert out1 == out2
+        assert out1.index("A[") < out1.index("B["), "features must be sorted by name"
+
+    def test_label_includes_status_and_progress(self):
+        features = {"A": {"status": "in_progress", "archived_count": 1, "change_count": 3, "parallel_group": 0}}
+        out = render_mermaid(features, [], [], {"A": 0})
+        assert "in_progress" in out
+        assert "1/3" in out
+        assert "wave 0" in out

@@ -177,6 +177,9 @@ def render_mermaid(
     """Render a Mermaid flowchart at feature granularity.
 
     `features` is a dict[feature_name, {status, archived_count, change_count, parallel_group}].
+    `parallel_groups` is accepted for API consistency with the orchestrator (Step 6)
+    but the wave index is sourced from `info['parallel_group']` to ensure the rendered
+    label always reflects what is persisted in the feature_view node.
     Returns the Mermaid source as a string.
     """
     lines = ["flowchart LR"]
