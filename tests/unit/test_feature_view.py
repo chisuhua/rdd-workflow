@@ -64,3 +64,48 @@ class TestFeatureViewSchema:
         valid_payload["features"] = ["feature-stream", "feature-pipes"]
         with pytest.raises(jsonschema.ValidationError):
             jsonschema.validate(valid_payload, schema)
+
+
+from skills._lib.feature_view import group_changes_by_feature
+
+
+class TestGroupChangesByFeature:
+    def test_explicit_parent_feature(self):
+        changes = [
+            {"name": "a-core", "parent_feature": "feature-a"},
+            {"name": "a-adapters", "parent_feature": "feature-a"},
+            {"name": "b-core", "parent_feature": "feature-b"},
+        ]
+        result = group_changes_by_feature(changes)
+        assert set(result.keys()) == {"feature-a", "feature-b"}, result
+        assert sorted(result["feature-a"]) == ["a-adapters", "a-core"]
+        assert result["feature-b"] == ["b-core"]
+
+    def test_name_prefix_fallback(self):
+        changes = [
+            {"name": "feature-stream-core"},
+            {"name": "feature-stream-adapters"},
+            {"name": "feature-utils-helper"},
+        ]
+        result = group_changes_by_feature(changes)
+        assert set(result.keys()) == {"feature-stream", "feature-utils"}, result
+
+    def test_mixed_basis_uses_max_signal(self):
+        changes = [
+            {"name": "feature-stream-core"},
+            {"name": "feature-stream-tests", "parent_feature": "feature-stream"},
+        ]
+        result = group_changes_by_feature(changes)
+        assert list(result.keys()) == ["feature-stream"], result
+        assert sorted(result["feature-stream"]) == ["feature-stream-core", "feature-stream-tests"]
+
+    def test_ungrouped_synthetic(self):
+        changes = [
+            {"name": "fix-typo"},
+            {"name": "debt-cleanup"},
+            {"name": "feature-stream-core", "parent_feature": "feature-stream"},
+        ]
+        result = group_changes_by_feature(changes)
+        assert "__ungrouped__" in result
+        assert sorted(result["__ungrouped__"]) == ["debt-cleanup", "fix-typo"]
+        assert result["feature-stream"] == ["feature-stream-core"]
