@@ -205,15 +205,66 @@ class RddfSessionCoordinator:
     # ---------- Placeholder methods (filled in later tasks 4-7) ----------
 
     def find_session(self, session_id: str) -> Optional[RddfSession]:
-        raise NotImplementedError("Implemented in Task 4")
+        """Look up session by id. Returns a copy or None if not found."""
+        def _do_find():
+            data = self._read_unlocked()
+            for s in data["sessions"]:
+                if s["session_id"] == session_id:
+                    return RddfSession(**s)
+            return None
+        return self._with_file_lock(_do_find)
 
     def update_session_status(
         self, session_id: str, new_state: str, end_reason: Optional[str] = None
     ) -> None:
-        raise NotImplementedError("Implemented in Task 4")
+        """Transition session to new_state. Sets ended_at and end_reason if terminal.
+
+        Raises:
+            RddfSessionError: If new_state is invalid, session not found, or
+                source state is terminal (completed/failed/abandoned).
+        """
+        if new_state not in _VALID_STATES:
+            raise RddfSessionError(
+                f"Invalid state: {new_state}. Must be one of {_VALID_STATES}"
+            )
+
+        def _do_update():
+            data = self._read_unlocked()
+            for s in data["sessions"]:
+                if s["session_id"] == session_id:
+                    if s["state"] in _TERMINAL_STATES:
+                        raise RddfSessionError(
+                            f"Cannot transition from terminal state {s['state']!r}"
+                        )
+                    s["state"] = new_state
+                    if new_state in _TERMINAL_STATES:
+                        s["ended_at"] = _now()
+                        s["end_reason"] = end_reason
+                        data["updated_at"] = s["ended_at"]
+                    else:
+                        # active or orphaned — refresh heartbeat
+                        s["last_heartbeat"] = _now()
+                        data["updated_at"] = s["last_heartbeat"]
+                    self._atomic_write(data)
+                    return
+            raise RddfSessionError(f"Unknown session: {session_id}")
+        self._with_file_lock(_do_update)
 
     def list_sessions(self, kind: Optional[str] = None) -> List[RddfSession]:
-        raise NotImplementedError("Implemented in Task 4")
+        """Return all sessions (or filtered by kind), sorted by started_at desc."""
+        if kind is not None and kind not in _VALID_KINDS:
+            raise RddfSessionError(
+                f"Invalid kind filter: {kind}. Must be one of {_VALID_KINDS}"
+            )
+
+        def _do_list():
+            data = self._read_unlocked()
+            sessions = [RddfSession(**s) for s in data["sessions"]]
+            if kind:
+                sessions = [s for s in sessions if s.kind == kind]
+            sessions.sort(key=lambda s: s.started_at, reverse=True)
+            return sessions
+        return self._with_file_lock(_do_list)
 
     def attach_change(self, session_id: str, change_name: str) -> None:
         raise NotImplementedError("Implemented in Task 5")

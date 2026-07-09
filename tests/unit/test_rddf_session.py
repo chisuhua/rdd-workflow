@@ -57,3 +57,50 @@ def test_create_session_writes_valid_schema(coordinator, sessions_file):
     schema = json.loads(schema_path.read_text())
     data = json.loads(sessions_file.read_text())
     jsonschema.validate(instance=data, schema=schema)
+
+
+def test_find_session_returns_session(coordinator):
+    """find_session MUST return RddfSession for valid id, None otherwise."""
+    sid = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
+    found = coordinator.find_session(sid)
+    assert found is not None
+    assert found.session_id == sid
+    assert found.state == "active"
+
+
+def test_find_session_returns_none_for_unknown(coordinator):
+    assert coordinator.find_session("rds_nonexistent") is None
+
+
+def test_list_sessions_returns_all(coordinator):
+    """list_sessions MUST return all sessions, optionally filtered by kind.
+
+    Note: only ONE active session per kind is allowed (cross-owner creates
+    raise ConflictError), so this test uses distinct kinds for each session.
+    """
+    coordinator.create_session(kind="stage_arch", owner_opencode_session_id="ses_a", goal={})
+    coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
+    coordinator.create_session(kind="stage_ship", owner_opencode_session_id="ses_b", goal={})
+    all_sessions = coordinator.list_sessions()
+    assert len(all_sessions) == 3
+    plan_only = coordinator.list_sessions(kind="stage_plan")
+    assert len(plan_only) == 1
+    assert all(s.kind == "stage_plan" for s in plan_only)
+
+
+def test_update_session_status_valid(coordinator):
+    """update_session_status MUST transition active → completed/failed."""
+    sid = coordinator.create_session(kind="stage_arch", owner_opencode_session_id="ses_a", goal={})
+    coordinator.update_session_status(sid, "completed", end_reason="arch-done")
+    found = coordinator.find_session(sid)
+    assert found.state == "completed"
+    assert found.end_reason == "arch-done"
+    assert found.ended_at is not None
+
+
+def test_update_session_status_terminal_blocks(coordinator):
+    """update_session_status MUST NOT allow transitions from terminal states (completed/failed/abandoned)."""
+    sid = coordinator.create_session(kind="stage_arch", owner_opencode_session_id="ses_a", goal={})
+    coordinator.update_session_status(sid, "completed", end_reason="x")
+    with pytest.raises(RddfSessionError):
+        coordinator.update_session_status(sid, "active")
