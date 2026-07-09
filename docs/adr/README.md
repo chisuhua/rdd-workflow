@@ -38,6 +38,7 @@
 | [ADR-0011](ADR-0011-phase-step-pipeline-model.md) | 阶段步骤化执行模型 | 已采纳 | 2026-06-22 | 模板+触发器 + 步骤引擎 + 中断恢复 |
 | [ADR-0012](ADR-0012-flow-customization-layer.md) | 流程定制层 | 已采纳 | 2026-06-22 | 增量覆盖 + 条件触发 + 自定义技能 |
 | [ADR-0016](ADR-0016-arch-artifact-discovery-contract.md) | Arch 阶段工件发现契约 | 已采纳 | 2026-07-08 | 扩展 `.arch-handoff.json` v1 + 替换 14+ 处硬编码路径 |
+| [ADR-0017](ADR-0017-rddf-session.md) | rddf-session 用户视角工作流会话 | 已采纳 | 2026-07-09 | 项目级 `sessions.json` 持久化 + 4 选项软提示冲突处理 + 跨 OpenCode session 恢复 |
 
 ## 架构演进
 
