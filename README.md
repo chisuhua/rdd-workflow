@@ -38,6 +38,7 @@ git clone https://github.com/chisuhua/spec-workflow.git ~/.agents/skills/spec-wo
    - `skill_use("guide-arch")` - Arch 端状态机(setup → roadmap → arch-done)
    - `skill_use("guide-plan")` - Plan 端状态机(scan → propose → deps → plan-done)
    - `skill_use("guide-ship")` - Ship 端状态机(plan → execute → archive → cleanup)
+   - `skill_use("feature")` - feature 管理(summary/graph/status/order)
    - `skill_use("propose")` - 子技能(被 guide-plan 调用)
    - `skill_use("execute")` - 子技能(被 guide-ship 调用)
    - `skill_use("status")` - 子技能(被 guide-ship 调用或独立使用)
@@ -64,6 +65,10 @@ git clone https://github.com/chisuhua/spec-workflow.git ~/.agents/skills/spec-wo
    Reason: 架构定义已完成 → 进入变更生成
 ```
 
+### Feature 管理
+
+- `skill_use("feature")` - 查看和管理 feature groups（summary、dependency graph、per-feature status、execution order）
+
 ### 测试基础设施
 
 - **18 个 Python 单元测试**：覆盖状态向量、事件日志、门控机制、Loop 引擎等
@@ -84,6 +89,7 @@ spec-workflow/
     ├── guide-arch.md          # Arch 阶段状态机(v2.0+)
     ├── guide-plan.md          # Plan 阶段状态机(v2.0+)
     ├── guide-ship.md          # Ship 端状态机
+    ├── feature.md              # feature 管理 (v1.0)
     ├── propose.md             # 子技能(被 guide-plan 调用)
     ├── execute.md             # 子技能(被 guide-ship 调用)
     ├── roadmap.md             # 子技能(被 guide-arch 调用)

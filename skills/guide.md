@@ -14,7 +14,7 @@ metadata:
 
 ## 用途
 
-`guide` 是一个**无状态推荐器**。它只读不写——扫描项目当前状态，给出一行建议，告诉用户应该调 `guide-arch`、`guide-plan` 还是 `guide-ship`（三阶段架构 ADR-0003：arch → plan → ship）。
+`guide` 是一个**无状态推荐器**。它只读不写——扫描项目当前状态，给出一行建议，告诉用户应该调 `guide-arch`、`guide-plan`、`guide-ship` 或子技能如 `feature`（三阶段架构 ADR-0003：arch → plan → ship）。
 
 不持久化任何状态,不调用 openspec CLI,不修改任何文件。
 

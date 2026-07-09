@@ -47,7 +47,7 @@ skills/                       # Markdown skills (12 .md) + loop_engine.py 在根
   guide-arch.md               # arch 阶段 (v1.0)
   guide-plan.md               # plan 阶段 (v1.0)
   guide-ship.md               # ship 阶段 (v2.0) - 包含 v2.0.1 iteration.json hook (创建 worktree 后切 status=in_worktree)
-  propose.md / execute.md / status.md / roadmap.md / deps.md
+  propose.md / execute.md / status.md / roadmap.md / deps.md / feature.md
   spec-workflow-writing-plans.md  # 内置 TDD 5 步 plan 生成器 (v1.0, 自包含)
   loop_engine.py              # v2.0 Loop 引擎入口 (在 skills/ 根, 不在 _lib/)
   _lib/                       # 共享 bash + Python (37 个文件, v2.0.1)
