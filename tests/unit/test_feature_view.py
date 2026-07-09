@@ -109,3 +109,46 @@ class TestGroupChangesByFeature:
         assert "__ungrouped__" in result
         assert sorted(result["__ungrouped__"]) == ["debt-cleanup", "fix-typo"]
         assert result["feature-stream"] == ["feature-stream-core"]
+
+
+from skills._lib.feature_view import rollup_status
+
+
+class TestRollupStatus:
+    def test_blocked_wins_over_in_progress(self):
+        changes = [
+            {"name": "a", "status": "blocked_by"},
+            {"name": "b", "status": "in_worktree"},
+        ]
+        assert rollup_status(changes) == "blocked"
+
+    def test_in_progress_when_no_blocker_and_one_in_worktree(self):
+        changes = [
+            {"name": "a", "status": "in_worktree"},
+            {"name": "b", "status": "proposed"},
+        ]
+        assert rollup_status(changes) == "in_progress"
+
+    def test_ready_when_all_proposed_or_planned(self):
+        changes = [
+            {"name": "a", "status": "proposed"},
+            {"name": "b", "status": "planned"},
+        ]
+        assert rollup_status(changes) == "ready"
+
+    def test_done_when_all_archived(self):
+        changes = [
+            {"name": "a", "status": "archived"},
+            {"name": "b", "status": "archived"},
+        ]
+        assert rollup_status(changes) == "done"
+
+    def test_in_progress_with_review_counts(self):
+        changes = [
+            {"name": "a", "status": "review"},
+            {"name": "b", "status": "proposed"},
+        ]
+        assert rollup_status(changes) == "in_progress"
+
+    def test_empty_returns_ungrouped(self):
+        assert rollup_status([]) == "ungrouped"

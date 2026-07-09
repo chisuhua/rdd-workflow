@@ -59,3 +59,28 @@ def group_changes_by_feature(changes: list[dict]) -> dict[str, list[str]]:
     for k in groups:
         groups[k] = sorted(groups[k])
     return dict(sorted(groups.items()))
+
+
+# Status priority chain for rollup (first match wins).
+# in_worktree + review both count as "in flight" for rollup purposes.
+_IN_FLIGHT = ("in_worktree", "review")
+_PENDING = ("proposed", "planned")
+
+
+def rollup_status(changes: list[dict]) -> str:
+    """Roll up a list of change dicts into a feature status enum.
+
+    Priority chain: blocked > in_progress > ready > done > ungrouped.
+    """
+    if not changes:
+        return "ungrouped"
+    statuses = {c.get("status") for c in changes}
+    if "blocked_by" in statuses:
+        return "blocked"
+    if any(s in _IN_FLIGHT for s in statuses):
+        return "in_progress"
+    if all(s in _PENDING for s in statuses):
+        return "ready"
+    if statuses == {"archived"}:
+        return "done"
+    return "in_progress"
