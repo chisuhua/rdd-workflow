@@ -102,6 +102,13 @@
           }
         }
       }
+    },
+    "feature_view": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "feature_view_schema.json" }
+      ],
+      "description": "Derived view written by skills/feature.md. Optional."
     }
   }
 }

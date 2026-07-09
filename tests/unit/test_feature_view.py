@@ -305,3 +305,62 @@ class TestRenderMermaid:
         assert "in_progress" in out
         assert "1/3" in out
         assert "wave 0" in out
+
+
+import json
+import tempfile
+from pathlib import Path
+
+from skills._lib import feature_view
+from skills._lib import iteration
+
+
+def _write_iteration(project_root, changes):
+    state_dir = Path(project_root) / ".rddf" / "state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+    data = {
+        "version": 3,
+        "updated_at": "2026-07-09T00:00:00+00:00",
+        "current_phase": "test",
+        "changes": [{"name": c["name"], "status": c.get("status", "proposed"),
+                     "added_at": "2026-07-09T00:00:00+00:00",
+                     "parent_feature": c.get("parent_feature")}
+                    for c in changes],
+    }
+    (state_dir / "iteration.json").write_text(json.dumps(data))
+
+
+class TestUpdateIterationFeatureView:
+    def test_writes_feature_view_node(self, tmp_path):
+        _write_iteration(tmp_path, [
+            {"name": "feature-stream-core", "parent_feature": "feature-stream"},
+            {"name": "feature-stream-tests", "parent_feature": "feature-stream"},
+            {"name": "fix-typo"},
+        ])
+        count = feature_view.update_iteration_feature_view(str(tmp_path))
+        assert count == 2  # feature-stream + __ungrouped__
+        data = json.loads((tmp_path / ".rddf" / "state" / "iteration.json").read_text())
+        assert "feature_view" in data
+        fv = data["feature_view"]
+        assert fv["schema_version"] == 1
+        assert "feature-stream" in fv["features"]
+        assert "__ungrouped__" in fv["features"]
+        assert fv["features"]["feature-stream"]["status"] == "ready"
+        assert fv["features"]["feature-stream"]["change_count"] == 2
+
+    def test_missing_iteration_raises(self, tmp_path):
+        import pytest
+        with pytest.raises(feature_view.NoIterationError):
+            feature_view.update_iteration_feature_view(str(tmp_path))
+
+    def test_missing_deps_analysis_still_writes_status(self, tmp_path):
+        _write_iteration(tmp_path, [
+            {"name": "a-core", "parent_feature": "feature-a"},
+        ])
+        count = feature_view.update_iteration_feature_view(str(tmp_path))
+        assert count == 1
+        data = json.loads((tmp_path / ".rddf" / "state" / "iteration.json").read_text())
+        fv = data["feature_view"]
+        assert fv["features"]["feature-a"]["depends_on"] == []
+        assert fv["features"]["feature-a"]["blocks"] == []
+        assert fv["execution_order"] == [["feature-a"]]

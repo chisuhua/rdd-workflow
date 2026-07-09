@@ -197,3 +197,129 @@ def render_mermaid(
     for fa, fb in conflicts:
         lines.append(f"  {fa} -.->|冲突| {fb}")
     return "\n".join(lines)
+
+
+class NoIterationError(Exception):
+    """Raised when iteration.json is missing — feature view cannot be computed."""
+
+
+def _now_iso() -> str:
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+def _compute_rollup_basis(change_names, all_changes):
+    bases = set()
+    for n in change_names:
+        ch = all_changes.get(n, {})
+        if ch.get("parent_feature"):
+            bases.add("explicit")
+        else:
+            bases.add("name_prefix")
+    if bases == {"explicit"}:
+        return "explicit"
+    if bases == {"name_prefix"}:
+        return "name_prefix"
+    return "mixed"
+
+
+def _attach_conflicts(features, deps_analysis):
+    changes_map = deps_analysis.get("changes", {})
+    feature_to_changes = {f: info["change_names"] for f, info in features.items()}
+    features_list = sorted(feature_to_changes.keys())
+    for i, fa in enumerate(features_list):
+        if fa == UNGROUPED:
+            continue
+        for fb in features_list[i + 1:]:
+            if fb == UNGROUPED:
+                continue
+            fa_set = set(feature_to_changes[fa])
+            fb_set = set(feature_to_changes[fb])
+            for ch_name, ch_info in changes_map.items():
+                if ch_name in fa_set:
+                    for c in ch_info.get("conflicts", []):
+                        if c in fb_set:
+                            features[fa]["conflicts_with"].append(fb)
+                            features[fb]["conflicts_with"].append(fa)
+                            break
+                elif ch_name in fb_set:
+                    for c in ch_info.get("conflicts", []):
+                        if c in fa_set:
+                            features[fa]["conflicts_with"].append(fb)
+                            features[fb]["conflicts_with"].append(fa)
+                            break
+    return features
+
+
+def _waves_to_order(parallel_groups):
+    if not parallel_groups:
+        return []
+    max_wave = max(parallel_groups.values())
+    waves = [[] for _ in range(max_wave + 1)]
+    for f, w in sorted(parallel_groups.items()):
+        waves[w].append(f)
+    return waves
+
+
+def update_iteration_feature_view(project_root):
+    data = it_mod.load(project_root)
+    if not data or not data.get("changes"):
+        raise NoIterationError(
+            "iteration.json missing — run `skill_use('guide-plan')` at least once first."
+        )
+    all_changes = {c["name"]: c for c in data.get("changes", [])}
+    changes_list = list(all_changes.values())
+
+    from skills._lib import deps_output
+
+    deps = deps_output.load_analysis(project_root) or {}
+
+    groups = group_changes_by_feature(changes_list)
+
+    features = {}
+    for name, ch_names in groups.items():
+        ch_records = [all_changes[n] for n in ch_names]
+        features[name] = {
+            "name": name,
+            "status": rollup_status(ch_records),
+            "change_names": ch_names,
+            "change_count": len(ch_names),
+            "archived_count": sum(1 for c in ch_records if c.get("status") == "archived"),
+            "rollup_basis": _compute_rollup_basis(ch_names, all_changes),
+            "depends_on": [],
+            "blocks": [],
+            "parallel_group": 0,
+            "conflicts_with": [],
+        }
+
+    edges = compute_feature_edges(deps, groups)
+    cycle_warning = False
+    cycle_members = []
+    try:
+        pg = compute_parallel_groups(edges, features)
+    except FeatureCycleError as exc:
+        cycle_warning = True
+        cycle_members = exc.cycle
+        pg = {f: 0 for f in features}
+    for f in features:
+        features[f]["parallel_group"] = pg.get(f, 0)
+    for fa, fb, _ in edges:
+        if fa in features and fb in features:
+            features[fa]["blocks"].append(fb)
+            features[fb]["depends_on"].append(fa)
+    features = _attach_conflicts(features, deps)
+
+    execution_order = _waves_to_order(pg)
+
+    feature_view_node = {
+        "schema_version": 1,
+        "updated_at": _now_iso(),
+        "features": features,
+        "execution_order": execution_order,
+    }
+    if cycle_warning:
+        feature_view_node["__cycle_warning__"] = True
+        feature_view_node["__cycle_members__"] = cycle_members
+
+    data["feature_view"] = feature_view_node
+    it_mod.save(project_root, data)
+    return len(features)

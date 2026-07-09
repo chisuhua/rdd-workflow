@@ -35,6 +35,8 @@ from pathlib import Path
 from typing import Any, Optional
 
 import jsonschema
+import referencing
+from referencing.exceptions import NoSuchResource
 
 from skills._lib.lock import FileLock, LockTimeout
 
@@ -78,10 +80,63 @@ def _load_schema() -> dict:
         return json.load(f)
 
 
+def _load_registry() -> referencing.Registry:
+    """Build a referencing.Registry with all local sub-schemas pre-registered."""
+    schemas_dir = os.path.dirname(SCHEMA_PATH)
+    schema_data = _load_schema()
+    registry = referencing.Registry()
+    sid = schema_data.get("$id")
+    if sid:
+        registry = registry.with_resource(sid, referencing.Resource.from_contents(schema_data))
+    registry = _register_refs(registry, schema_data, schemas_dir)
+    return registry
+
+
+def _register_refs(registry: referencing.Registry, schema: dict, base_dir: str) -> referencing.Registry:
+    """Recursively register $ref targets in the schema."""
+    for key, val in schema.items():
+        if key == "$ref" and isinstance(val, str) and val.endswith(".json") and not val.startswith("#"):
+            ref_path = os.path.join(base_dir, val)
+            if os.path.isfile(ref_path) and not _is_registered(registry, ref_path):
+                with open(ref_path) as f:
+                    ref_schema = json.load(f)
+                rid = ref_schema.get("$id")
+                if rid:
+                    registry = registry.with_resource(rid, referencing.Resource.from_contents(ref_schema))
+                registry = _register_refs(registry, ref_schema, base_dir)
+        elif isinstance(val, dict):
+            registry = _register_refs(registry, val, base_dir)
+        elif isinstance(val, list):
+            for item in val:
+                if isinstance(item, dict):
+                    registry = _register_refs(registry, item, base_dir)
+    return registry
+
+
+def _is_registered(registry: referencing.Registry, path: str) -> bool:
+    try:
+        with open(path) as f:
+            data = json.load(f)
+        rid = data.get("$id")
+        if rid:
+            try:
+                registry.get_or_retrieve(rid)
+                return True
+            except NoSuchResource:
+                return False
+    except (json.JSONDecodeError, OSError):
+        return False
+    return False
+
+
 def _validate(data: dict) -> None:
     """Validate iteration data against the schema. Raises jsonschema.ValidationError on failure."""
     schema = _load_schema()
-    jsonschema.validate(data, schema)
+    registry = _load_registry()
+    validator = jsonschema.Draft7Validator(schema, registry=registry)
+    errors = list(validator.iter_errors(data))
+    if errors:
+        raise jsonschema.ValidationError(errors[0].message)
 
 
 def _atomic_write(path: str, data: dict) -> None:
