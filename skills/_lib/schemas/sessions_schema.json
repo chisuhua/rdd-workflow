@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec-workflow.dev/schemas/sessions_schema.json",
+  "title": "RddfSessions",
+  "description": "rddf-session lifecycle persistence for cross-opencode-session workflow recovery. Written by skills/_lib/rddf_session.py. See ADR-0017.",
+  "type": "object",
+  "required": ["version", "sessions"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. Bumped on breaking changes."
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of last modification."
+    },
+    "sessions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Session" },
+      "description": "All rddf-sessions (active + terminal)."
+    }
+  },
+  "$defs": {
+    "Session": {
+      "type": "object",
+      "required": [
+        "session_id",
+        "kind",
+        "owner_opencode_session_id",
+        "state",
+        "started_at",
+        "last_heartbeat"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "pattern": "^rds_[a-f0-9]{12}$",
+          "description": "Unique session id, format rds_<12 hex chars>."
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["stage_arch", "stage_plan", "stage_ship"],
+          "description": "Stage driver: arch / plan / ship (per ADR-0003)."
+        },
+        "owner_opencode_session_id": {
+          "type": ["string", "null"],
+          "description": "OpenCode session ID that owns this rddf-session, or null after abandonment."
+        },
+        "parent_session_id": {
+          "type": ["string", "null"],
+          "pattern": "^rds_[a-f0-9]{12}$",
+          "description": "Parent rddf-session id (e.g. stage_plan.parent = stage_arch.session_id)."
+        },
+        "goal": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "intent": {
+              "type": "string",
+              "enum": ["guide-arch", "guide-plan", "guide-ship"]
+            },
+            "subject": { "type": "string" },
+            "expected_outcome": { "type": "string" }
+          },
+          "description": "Structured goal (intent + subject + expected_outcome)."
+        },
+        "state": {
+          "type": "string",
+          "enum": ["active", "completed", "failed", "orphaned", "abandoned"],
+          "description": "Lifecycle state. completed/failed/abandoned are terminal; orphaned→active allowed."
+        },
+        "attached_changes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Changes attached to this rddf-session (set by guide-plan/guide-ship)."
+        },
+        "context_pointer": {
+          "type": ["string", "null"],
+          "description": "Path to handoff/state file for this session (e.g. .rddf/state/.arch-handoff.json)."
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_heartbeat": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last heartbeat refresh. >30min ago → orphaned."
+        },
+        "ended_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "end_reason": {
+          "type": ["string", "null"],
+          "description": "Why session ended (arch-done | plan-done | heartbeat-timeout | user-abandoned | gate-rejected | ...)."
+        }
+      }
+    }
+  }
+}
