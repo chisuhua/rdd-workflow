@@ -384,6 +384,101 @@ spec-workflow session recalculate-progress
 
 ---
 
+## rddf-session（用户层抽象，ADR-0017）
+
+rddf-session 是 ADR-0017 引入的**用户视角**会话抽象，叠加在 v2.0 SessionCoordinator 之上。它解决了**跨 OpenCode 会话的 workflow 上下文连续性**问题。
+
+### 与 Session 的区别
+
+| 维度 | SessionCoordinator（v2.0） | rddf-session |
+|------|---------------------------|--------------|
+| **作用域** | Loop 引擎内部 | 用户 + 跨 OpenCode session |
+| **持久化** | 仅内存 | `.rddf/state/sessions.json`（gitignored） |
+| **绑定** | 无 | 绑定 OpenCode session ID |
+| **粒度** | 父子 sub-sessions | 仅 3 种 kind（stage_arch/plan/ship） |
+| **冲突处理** | 无 | 4 选项软提示（放弃/转移/强制/查看） |
+
+### 核心场景
+
+**场景 1：在 OpenCode session A 中执行 `guide-plan` Phase 2 创建 3 个 change 后中断**
+
+**场景 2：在 OpenCode session B 中恢复**
+
+```bash
+# 列出所有 sessions（包含 A 创建的）
+skill_use("rddf-session", "list")
+# Output:
+#   session_id       kind         owner                state    last_heartbeat
+#   rds_a3f2b1c9d8e7 stage_plan   ses_A_session_id    active   2026-07-09T10:25:00Z
+
+# 查看详情
+skill_use("rddf-session", "show", "rds_a3f2b1c9d8e7")
+
+# 恢复（转移所有权给当前 session B）
+skill_use("rddf-session", "resume", "rds_a3f2b1c9d8e7")
+# → 继续 Phase 2 → Phase 3 → plan-done
+```
+
+**场景 3：跨 session 冲突软提示**
+
+当 session B 启动 `skill_use("guide-plan")` 时，发现 A 已创建 active `stage_plan` rddf-session：
+
+```
+⚠️ 发现 active stage_plan session: rds_a3f2b1c9d8e7
+   原 OpenCode session: ses_A
+   当前 OpenCode session: ses_B
+   最后心跳: 2026-07-09T10:25:00Z (5 分钟前)
+
+选择:
+  1) 放弃原 session — 创建新 rddf-session（丢失上下文）
+  2) 转移所有权 — 继续原工作
+  3) 强制接管 — 不变更 owner，绕过检测
+  4) 仅查看 — 不操作
+```
+
+**场景 4：心跳超时与 orphaned 恢复**
+
+30 分钟无心跳 → state 自动从 active → orphaned。下次 `list`/`show`/`resume` 时自动检测并提示用户 resume。
+
+### 子命令参考
+
+| 子命令 | 描述 |
+|--------|------|
+| `list` | 列出所有 sessions（按 started_at 降序） |
+| `show <id>` | 显示单个 session 的完整 JSON |
+| `resume <id>` | 转移所有权 + 刷新心跳 + orphaned→active |
+| `abandon <id>` | 标记为 abandoned（end_reason=user-abandoned） |
+| `archive-history [--keep=N]` | 移动历史 completed/failed/abandoned 到 .archive.json |
+
+### 自动管理
+
+`guide-arch`/`guide-plan`/`guide-ship` 在入口自动创建/查找 rddf-session：
+- `guide-arch` 入口 → 创建 `kind=stage_arch`
+- `arch-done` 通过 → `stage_arch` → completed
+- `guide-plan` 入口 → 创建 `kind=stage_plan`, parent=最新 stage_arch
+- `plan-done` 通过 → `stage_plan` → completed
+- `guide-ship` 入口 → 创建 `kind=stage_ship`, parent=最新 stage_plan
+- 所有 attached_changes archived → `stage_ship` → completed
+
+### 心跳机制
+
+- **写入时机**：每次 `guide-arch`/`guide-plan`/`guide-ship` 阶段内调用时刷新
+- **刷新阈值**：5 分钟
+- **超时阈值**：30 分钟 → orphaned
+- **检测时机**：`list`/`show`/`resume` 调用时惰性检测
+
+### 存储与 Schema
+
+- **文件**：`/workspace/project/spec-workflow/.rddf/state/sessions.json`（gitignored）
+- **Schema**：`skills/_lib/schemas/sessions_schema.json` v1
+- **并发**：fcntl.flock 保护 + 原子写（write-tmp + rename）
+
+### 与 worktree 完全解耦
+
+rddf-session **不持有** worktree 路径。所有 worktree 由 `git worktree list` 独立管理。换 opencode session 后靠 `git worktree list` 自动发现。
+
+---
+
 ## v2.1 完整会话管理预告
 
 ### v2.1 新特性

@@ -105,6 +105,7 @@ openspec/                     # OpenSpec CLI 数据 (随项目走)
 | `.rddf/state/.arch-handoff.json` | arch→plan 交接 + **ADR-0016 发现契约** v1 (adr_dir/roadmap_path/architecture_dir/adr_pattern/discovered/version) | `guide-arch` (arch-done) / `guide-plan` (Phase 0 intake) + `propose`/`roadmap`/`gate.py`/`detectors.py`/`actions.py`/`scan-state.sh` (handoff readers, fallback to defaults) |
 | `.rddf/state/plan-handoff.json` | plan→ship 交接 | `guide-plan` (plan-done 写入) / `guide-ship` (ship-start 读取) |
 | `.rddf/state/handoff.json` | spec→ship 软交接 | `guide-plan` / `guide-ship` |
+| `.rddf/state/sessions.json` | **rddf-session 生命周期** (ADR-0017) — 跨 OpenCode session 工作流恢复 | `guide-arch`/`guide-plan`/`guide-ship` 入口 + `rddf-session` skill 5 子命令 |
 | `.rddf/state/deps-analysis.json` | **结构化** deps 输出 (v2.0.1) | `deps` Step 5b 优先写; Step 6 markdown-fallback 时也写 |
 | `.rddf/state/deps-candidates.json` | deps 候选列表 | `guide-plan` (deps 阶段) |
 | `.rddf/state/deps-output.md` | deps 人类可读报告 | `deps` Step 5 |
