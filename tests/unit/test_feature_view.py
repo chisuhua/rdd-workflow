@@ -241,7 +241,6 @@ class TestComputeParallelGroups:
         assert set(exc_info.value.cycle) == {"A", "B", "C"}
 
     def test_edges_with_unknown_features_ignored(self):
-        # D and E are not in features; edges to them must be ignored
         edges = [("A", "B", "hard"), ("A", "D", "hard"), ("E", "B", "hard")]
         features = {"A": 0, "B": 0}
         result = compute_parallel_groups(edges, features)
