@@ -12,6 +12,10 @@
 #   rddf feature order            Wave 分组执行顺序
 #   rddf guide                    无状态推荐器 (下一步建议)
 #   rddf deps                     依赖分析结果展示
+#   rddf session                  rddf-session 管理 (ADR-0017)
+#     list / show <id> / resume <id> / abandon <id> / archive-history
+#   rddf monitor                  实时监控 (session + worktree + events)
+#     --watch=<sec>                  周期刷新
 #   rddf archive <name>           归档 change (merge → archive → cleanup)
 #   rddf cleanup                  清理孤立 worktree 和 branch
 #   rddf validate                 质量门控检查
@@ -145,6 +149,17 @@ rddf_help() {
     echo "  ${BOLD}guide${RESET}                    无状态推荐器"
     echo "  ${BOLD}deps${RESET}                      依赖分析结果"
     echo "  ${BOLD}validate${RESET}                  质量门控检查"
+    echo ""
+    echo "  ${BOLD}session${RESET}                  rddf-session 管理 (ADR-0017)"
+    echo "    list                       列出所有 session"
+    echo "    show <id>                  显示 session 详情"
+    echo "    resume <id>                接管 orphan session"
+    echo "    abandon <id>               放弃 session"
+    echo "    archive-history [--keep=N] 归档历史 session"
+    echo "    stale                      列出需要关注的 orphan"
+    echo ""
+    echo "  ${BOLD}monitor${RESET}                  实时监控"
+    echo "    --watch=<sec>              周期刷新 (Ctrl-C 退出)"
     echo ""
     echo "  ${BOLD}archive <name>${RESET}            归档 change"
     echo "  ${BOLD}cleanup${RESET}                  清理孤立 worktree/branch"
@@ -948,7 +963,453 @@ print()
 "
 }
 
-# ── 3.9 init ─────────────────────────────────────────────────
+# ── 3.9 session (rddf-session, ADR-0017) ─────────────────────
+
+SESSIONS_FILE="$STATE_DIR/sessions.json"
+
+rddf_session() {
+    local sub="${1:-list}"
+    shift 2>/dev/null || true
+    case "$sub" in
+        list|"")            rddf_session_list ;;
+        show)               rddf_session_show "$1" ;;
+        resume)             rddf_session_resume "$1" ;;
+        abandon)            rddf_session_abandon "$1" ;;
+        archive-history)    rddf_session_archive_history "$@" ;;
+        stale)              rddf_session_stale ;;
+        --help|-h)          echo "用法: rddf session [list|show <id>|resume <id>|abandon <id>|archive-history [--keep=N]|stale]" ;;
+        *)                  err "未知 session 子命令: $sub"; echo "可用: list show resume abandon archive-history stale"; exit 1 ;;
+    esac
+}
+
+rddf_session_list() {
+    _py "
+import os, sys, datetime
+
+project_root = '$PROJECT_ROOT'
+sessions_file = os.path.join(project_root, '.rddf', 'state', 'sessions.json')
+
+print()
+print('${BOLD}📋 rddf-sessions (ADR-0017)${RESET}')
+print()
+
+try:
+    from skills._lib.rddf_session import RddfSessionCoordinator
+    coord = RddfSessionCoordinator(sessions_file=sessions_file)
+    coord.check_heartbeat_timeouts()  # mark stale as orphaned
+    sessions = coord.list_sessions()
+except Exception as e:
+    print('  ${YELLOW}读取失败: ' + str(e) + '${RESET}')
+    print('  ${DIM}(是否从未运行过 guide-arch/guide-plan/guide-ship?)${RESET}')
+    print()
+    sys.exit(0)
+
+if not sessions:
+    print('  ${DIM}(无 rddf-session — 第一次启动 guide 时会自动创建)${RESET}')
+    print()
+    sys.exit(0)
+
+now = datetime.datetime.now(datetime.timezone.utc)
+
+h = f'  {\"Session ID\":16s} {\"Kind\":12s} {\"State\":10s} {\"Owner\":22s} {\"Age\":10s} {\"Changes\":8s}'
+print(h)
+print('  ' + '-' * 80)
+for s in sessions:
+    owner = s.owner_opencode_session_id or '<none>'
+    try:
+        last_hb = datetime.datetime.fromisoformat(s.last_heartbeat)
+        age_s = (now - last_hb).total_seconds()
+        if age_s < 60: age = f'{int(age_s)}s'
+        elif age_s < 3600: age = f'{int(age_s/60)}m'
+        else: age = f'{int(age_s/3600)}h'
+    except: age = '?'
+    state_icon = {'active': '${GREEN}●${RESET}', 'orphaned': '${YELLOW}○${RESET}',
+                  'completed': '${DIM}✓${RESET}', 'failed': '${RED}✗${RESET}',
+                  'abandoned': '${DIM}⊘${RESET}'}.get(s.state, '?')
+    kind_color = {'stage_arch': '${CYAN}', 'stage_plan': '${BLUE}', 'stage_ship': '${MAGENTA}'}.get(s.kind, '')
+    print(f'  {s.session_id:<16s} {kind_color}{s.kind:<12s}${RESET} {state_icon} {s.state:<8s} {owner[:22]:22s} {age:10s} {len(s.attached_changes):<8d}')
+print()
+
+n_active = sum(1 for s in sessions if s.state == 'active')
+n_orphaned = sum(1 for s in sessions if s.state == 'orphaned')
+if n_orphaned > 0:
+    resume_hint = 'rddf session resume <id>'
+    print(f'  ${YELLOW}⚠ {n_orphaned} orphaned session(s) — 运行 {resume_hint} 接管${RESET}')
+if n_active > 0:
+    print(f'  ${GREEN}● {n_active} active${RESET}')
+print()
+"
+}
+
+rddf_session_show() {
+    local sid="${1:-}"
+    [ -n "$sid" ] || fail "用法: rddf session show <session-id>"
+
+    _py "
+import os, sys, json
+from datetime import datetime, timezone
+
+sid = '$sid'
+sessions_file = os.path.join('$PROJECT_ROOT', '.rddf', 'state', 'sessions.json')
+
+print()
+print('${BOLD}📄 rddf-session: ${CYAN}' + sid + '${RESET}')
+print()
+
+try:
+    from skills._lib.rddf_session import RddfSessionCoordinator
+    coord = RddfSessionCoordinator(sessions_file=sessions_file)
+    s = coord.find_session(sid)
+except Exception as e:
+    print('${RED}读取失败: ' + str(e) + '${RESET}')
+    sys.exit(1)
+
+if not s:
+    print('  ${YELLOW}Session 不存在: ' + sid + '${RESET}')
+    sys.exit(0)
+
+d = s.to_dict()
+now = datetime.now(timezone.utc)
+try:
+    last_hb = datetime.fromisoformat(d['last_heartbeat'])
+    age = int((now - last_hb).total_seconds())
+    age_s = f'{age}s ago' if age < 60 else (f'{age // 60}m ago' if age < 3600 else f'{age // 3600}h ago')
+except: age_s = 'unknown'
+
+print(f'  ${DIM}Kind:${RESET}        {d[\"kind\"]}')
+print(f'  ${DIM}State:${RESET}       {d[\"state\"]}')
+print(f'  ${DIM}Owner:${RESET}       {d.get(\"owner_opencode_session_id\") or \"<none>\"}')
+print(f'  ${DIM}Parent:${RESET}      {d.get(\"parent_session_id\") or \"-\"}')
+print(f'  ${DIM}Heartbeat:${RESET}   {age_s}')
+print(f'  ${DIM}Started:${RESET}     {d.get(\"started_at\", \"\")}')
+print(f'  ${DIM}Ended:${RESET}       {d.get(\"ended_at\") or \"-\"}')
+if d.get('end_reason'): print(f'  ${DIM}Reason:${RESET}       {d[\"end_reason\"]}')
+print(f'  ${DIM}Changes:${RESET}     {len(d.get(\"attached_changes\", []))}')
+for cn in d.get('attached_changes', []):
+    print(f'    · {cn}')
+print(f'  ${DIM}Context:${RESET}     {d.get(\"context_pointer\") or \"-\"}')
+print(f'  ${DIM}Goal:${RESET}')
+goal = d.get('goal', {})
+if goal:
+    for k, v in goal.items():
+        print(f'    {k}: {v}')
+else:
+    print('    ${DIM}(none)${RESET}')
+print()
+"
+}
+
+rddf_session_resume() {
+    local sid="${1:-}"
+    [ -n "$sid" ] || fail "用法: rddf session resume <session-id>"
+
+    local owner="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
+    _py "
+import os, sys
+sid = '$sid'
+new_owner = '$owner'
+sessions_file = os.path.join('$PROJECT_ROOT', '.rddf', 'state', 'sessions.json')
+
+try:
+    from skills._lib.rddf_session import RddfSessionCoordinator
+    coord = RddfSessionCoordinator(sessions_file=sessions_file)
+    s = coord.find_session(sid)
+    if not s:
+        print('${YELLOW}Session 不存在: ' + sid + '${RESET}')
+        sys.exit(1)
+    if s.state == 'orphaned':
+        coord.update_session_status(sid, 'active')
+        print(f'${GREEN}✓${RESET} state: orphaned → active')
+    elif s.state == 'active':
+        print(f'${DIM}已为 active, 仅转移所有权${RESET}')
+    else:
+        print('${RED}✗ 无法 resume, 当前 state=' + s.state + '${RESET}')
+        sys.exit(1)
+    coord.transfer_ownership(sid, new_owner)
+    print(f'${GREEN}✓${RESET} ownership transferred to {new_owner}')
+    print(f'${GREEN}✓${RESET} heartbeat refreshed')
+except Exception as e:
+    print('${RED}失败: ' + str(e) + '${RESET}')
+    sys.exit(1)
+"
+}
+
+rddf_session_abandon() {
+    local sid="${1:-}"
+    [ -n "$sid" ] || fail "用法: rddf session abandon <session-id>"
+
+    _py "
+import os, sys
+sid = '$sid'
+sessions_file = os.path.join('$PROJECT_ROOT', '.rddf', 'state', 'sessions.json')
+
+try:
+    from skills._lib.rddf_session import RddfSessionCoordinator
+    coord = RddfSessionCoordinator(sessions_file=sessions_file)
+    coord.abandon(sid)
+    print(f'${GREEN}✓${RESET} session {sid} 已标记为 abandoned')
+except Exception as e:
+    print('${RED}失败: ' + str(e) + '${RESET}')
+    sys.exit(1)
+"
+}
+
+rddf_session_archive_history() {
+    local keep=20
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --keep=*)  keep="${1#*=}" ;;
+            --keep)    shift; keep="${1:-20}" ;;
+            *) shift ;;
+        esac
+        shift || break
+    done
+
+    _py "
+import os, sys
+keep = int('$keep')
+sessions_file = os.path.join('$PROJECT_ROOT', '.rddf', 'state', 'sessions.json')
+
+try:
+    from skills._lib.rddf_session import RddfSessionCoordinator
+    coord = RddfSessionCoordinator(sessions_file=sessions_file)
+    n = coord.archive_history(keep=keep)
+    print(f'${GREEN}✓${RESET} 归档了 {n} 个 session (保留最近 {keep} 个 terminal + 所有 active/orphaned)')
+except Exception as e:
+    print('${RED}失败: ' + str(e) + '${RESET}')
+    sys.exit(1)
+"
+}
+
+rddf_session_stale() {
+    # 直接复用 list 的逻辑，但只展示 non-terminal + 上次心跳 > 5 分钟的
+    _py "
+import os, sys, datetime
+
+project_root = '$PROJECT_ROOT'
+sessions_file = os.path.join(project_root, '.rddf', 'state', 'sessions.json')
+THRESHOLD_SECONDS = 5 * 60  # 5 分钟未心跳即视为 stale
+
+print()
+print('${BOLD}⚠ Stale rddf-sessions (心跳 > 5 min)${RESET}')
+print()
+
+try:
+    from skills._lib.rddf_session import RddfSessionCoordinator
+    coord = RddfSessionCoordinator(sessions_file=sessions_file)
+    coord.check_heartbeat_timeouts()
+    sessions = coord.list_sessions()
+except Exception as e:
+    print('${RED}读取失败: ' + str(e) + '${RESET}')
+    sys.exit(1)
+
+now = datetime.datetime.now(datetime.timezone.utc)
+stale = []
+for s in sessions:
+    try:
+        last_hb = datetime.datetime.fromisoformat(s.last_heartbeat)
+        age = (now - last_hb).total_seconds()
+    except: continue
+    if s.state in ('active', 'orphaned') and age > THRESHOLD_SECONDS:
+        stale.append((s, age))
+
+if not stale:
+    print('  ${GREEN}✓${RESET} 无 stale session')
+    print()
+    sys.exit(0)
+
+stale.sort(key=lambda x: -x[1])
+for s, age in stale:
+    owner = s.owner_opencode_session_id or '<none>'
+    print(f'  ${YELLOW}○${RESET} {s.session_id}  state={s.state}  age={int(age/60)}m  owner={owner[:24]}')
+print()
+print(f'  ${DIM}操作:${RESET}')
+print(f'    rddf session resume {stale[0][0].session_id}    # 接管')
+print(f'    rddf session abandon {stale[0][0].session_id}   # 放弃')
+print()
+"
+}
+
+# ── 3.10 monitor (实时监控) ────────────────────────────────
+
+rddf_monitor() {
+    local watch_interval=0
+    local rest_args=()
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --watch=*)  watch_interval="${1#*=}" ;;
+            --watch)    shift; watch_interval="${1:-5}" ;;
+            --no-color) rest_args+=("$1") ;;
+            *)          rest_args+=("$1") ;;
+        esac
+        shift || break
+    done
+
+    # 验证间隔
+    if [ -n "$watch_interval" ] && [ "$watch_interval" != "0" ]; then
+        if ! [[ "$watch_interval" =~ ^[0-9]+$ ]]; then
+            err "无效的 --watch 值: $watch_interval (应为秒数, e.g. --watch=5)"
+            exit 1
+        fi
+        say ""
+        say "${DIM}监控模式 — ${watch_interval}s 刷新 (Ctrl-C 退出)${RESET}"
+        say ""
+        # trap for cleanup
+        trap 'say ""; say "${DIM}退出监控.${RESET}"; exit 0' INT TERM
+        while true; do
+            rddf_monitor_render
+            sleep "$watch_interval"
+        done
+    else
+        rddf_monitor_render
+    fi
+}
+
+rddf_monitor_render() {
+    _py "
+import os, sys, datetime, subprocess
+
+project_root = '$PROJECT_ROOT'
+state_dir = os.path.join(project_root, '.rddf', 'state')
+
+# 清屏 (watch 模式才有意义，但默认无副作用)
+print('\x1b[2J\x1b[H', end='')
+
+now = datetime.datetime.now(datetime.timezone.utc)
+ts = now.strftime('%Y-%m-%d %H:%M:%S UTC')
+print()
+print(f'${BOLD}📡 spec-workflow 实时监控${RESET}  ${DIM}(更新于 {ts})${RESET}')
+print()
+
+# 1. Session 状态
+print(f'${BOLD}── rddf-sessions (ADR-0017) ──${RESET}')
+try:
+    from skills._lib.rddf_session import RddfSessionCoordinator
+    coord = RddfSessionCoordinator(sessions_file=os.path.join(state_dir, 'sessions.json'))
+    coord.check_heartbeat_timeouts()
+    sessions = coord.list_sessions()
+except Exception as e:
+    sessions = None
+
+if sessions is None:
+    print(f'  ${YELLOW}(sessions.json 不可读: {e})${RESET}')
+elif not sessions:
+    print(f'  ${DIM}(无活跃 session)${RESET}')
+else:
+    n_active = sum(1 for s in sessions if s.state == 'active')
+    n_orphaned = sum(1 for s in sessions if s.state == 'orphaned')
+    n_terminal = len(sessions) - n_active - n_orphaned
+    print(f'  Active: ${GREEN}{n_active}${RESET}  Orphaned: ${YELLOW}{n_orphaned}${RESET}  Terminal: {n_terminal}  Total: {len(sessions)}')
+
+    # 列出 active + orphaned
+    active_or_orphan = [s for s in sessions if s.state in ('active', 'orphaned')]
+    if active_or_orphan:
+        for s in active_or_orphan[:5]:
+            try:
+                last_hb = datetime.datetime.fromisoformat(s.last_heartbeat)
+                age_s = int((now - last_hb).total_seconds())
+                age_str = f'{age_s // 60}m{age_s % 60}s' if age_s >= 60 else f'{age_s}s'
+            except: age_str = '?'
+            icon = '${GREEN}●${RESET}' if s.state == 'active' else '${YELLOW}○${RESET}'
+            print(f'    {icon} {s.session_id}  {s.kind}  age={age_str}  changes={len(s.attached_changes)}')
+
+# 2. Worktree 状态
+print()
+print(f'${BOLD}── 工作 Worktree ──${RESET}')
+try:
+    r = subprocess.run(['git', '-C', project_root, 'worktree', 'list'],
+                      capture_output=True, text=True, timeout=5)
+    if r.returncode == 0:
+        lines = r.stdout.strip().split('\n')
+        openspec_lines = [l for l in lines if 'openspec/' in l]
+        if not openspec_lines:
+            print(f'  ${DIM}(无 openspec worktree)${RESET}')
+        else:
+            for l in openspec_lines:
+                parts = l.split()
+                if len(parts) >= 3:
+                    wt_path = parts[0]
+                    wt_br = parts[3].strip('[]') if '[' in l else '?'
+                    wt_name = os.path.basename(wt_path)
+                    print(f'    ${CYAN}↻${RESET} {wt_name:<30s} {wt_br}')
+
+                    # 检查 worktree 的 tasks.md 进度
+                    tasks_path = os.path.join(project_root, wt_path.lstrip('./'), '.openspec-change', 'tasks.md')
+                    possible = [
+                        os.path.join(wt_path, '.openspec-change', 'tasks.md'),
+                        os.path.join(wt_path, 'openspec', 'changes', wt_name.lstrip('openspec/'), 'tasks.md'),
+                    ]
+                    tasks_file = None
+                    for p in possible:
+                        if os.path.isfile(p):
+                            tasks_file = p; break
+                    if tasks_file:
+                        with open(tasks_file) as f:
+                            content = f.read()
+                        done = content.count('[x]') + content.count('[X]')
+                        todo = content.count('[ ]')
+                        if todo or done:
+                            pct = int(done * 100 / max(done + todo, 1))
+                            print(f'        tasks: {done}/{done + todo} ({pct}%)')
+except Exception as e:
+    print(f'  ${YELLOW}(git worktree 异常: {e})${RESET}')
+
+# 3. 当前分支 & 变更
+print()
+print(f'${BOLD}── 当前激活 Stage ──${RESET}')
+try:
+    r = subprocess.run(['git', '-C', project_root, 'branch', '--show-current'],
+                      capture_output=True, text=True, timeout=5)
+    br = r.stdout.strip() if r.returncode == 0 else '?'
+    print(f'  ${DIM}Branch:${RESET} {br}')
+
+    # 尝试读 iteration.json
+    it_path = os.path.join(state_dir, 'iteration.json')
+    if os.path.isfile(it_path):
+        from skills._lib import iteration as it_mod
+        data = it_mod.load(project_root)
+        phase = data.get('current_phase', '?')
+        n_active = sum(1 for c in data.get('changes', []) if c.get('status') not in ('archived', 'completed'))
+        n_archived = sum(1 for c in data.get('changes', []) if c.get('status') in ('archived', 'completed'))
+        print(f'  ${DIM}Phase:${RESET}  {phase}')
+        print(f'  ${DIM}Active:${RESET} {n_active}  Archived: {n_archived}')
+except Exception as e:
+    print(f'  ${YELLOW}(stage 检测异常: {e})${RESET}')
+
+# 4. Event log 最近事件
+print()
+print(f'${BOLD}── 近期事件 (event-log.jsonl) ──${RESET}')
+event_file = os.path.join(state_dir, 'event-log.jsonl')
+if os.path.isfile(event_file):
+    try:
+        with open(event_file) as f:
+            lines = f.readlines()
+        recent = lines[-8:] if len(lines) >= 8 else lines
+        if recent:
+            for line in recent:
+                try:
+                    e = json.loads(line)
+                    sev = e.get('severity', 'info')
+                    icon = {'error': '${RED}✗${RESET}', 'warning': '${YELLOW}⚠${RESET}',
+                            'info': '${DIM}ℹ${RESET}'}.get(sev, '${DIM}ℹ${RESET}')
+                    ts_short = e.get('timestamp', '?')[:19]
+                    msg = e.get('message', '')[:60]
+                    print(f'    {icon} {ts_short}  {msg}')
+                except: pass
+        else:
+            print(f'  ${DIM}(空 event log)${RESET}')
+    except Exception as e:
+        print(f'  ${YELLOW}事件日志读取失败: {e}${RESET}')
+else:
+    print(f'  ${DIM}(event-log.jsonl 不存在)${RESET}')
+
+print()
+print('${DIM}↑ use --watch=N for periodic refresh (e.g. --watch=5)${RESET}')
+print()
+"
+}
+
+# ── 3.11 init ────────────────────────────────────────────────
 
 rddf_init() {
     local target="${1:-$PROJECT_ROOT}"
@@ -1021,6 +1482,8 @@ main() {
         feature)            rddf_feature "$@" ;;
         guide)              rddf_guide ;;
         deps)               rddf_deps ;;
+        session)            rddf_session "$@" ;;
+        monitor)            rddf_monitor "$@" ;;
         archive)            rddf_archive "$@" ;;
         cleanup)            rddf_cleanup ;;
         validate)           rddf_validate ;;
@@ -1032,7 +1495,7 @@ main() {
             ;;
         *)
             err "未知命令: $cmd"
-            echo "可用命令: status feature guide deps archive cleanup validate init help"
+            echo "可用命令: status feature guide deps session monitor archive cleanup validate init help"
             exit 1
             ;;
     esac
