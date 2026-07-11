@@ -27,6 +27,20 @@ jobs:
           if [ -n "$result" ]; then echo "❌ Tautologies:"; echo "$result"; exit 1; fi
           echo "✅ No tautological assertions"
 
+      - name: Arch quality gate (strict mode)
+        env:
+          STRICT_ARCH_GATE: 'yes'
+        run: |
+          python3 -m pytest tests/unit/test_arch_quality_gate.py -q --tb=short
+          echo "✅ Arch quality gate tests passed under STRICT mode"
+
+      - name: Change alignment gate (strict mode)
+        env:
+          STRICT_CHANGE_GATE: 'yes'
+        run: |
+          python3 -m pytest tests/unit/test_change_alignment.py -q --tb=short
+          echo "✅ Change alignment gate tests passed under STRICT mode"
+
       - name: Python unit tests
         run: python3 -m pytest tests/unit/ -q --tb=short
 
