@@ -39,6 +39,8 @@
 | [ADR-0012](ADR-0012-flow-customization-layer.md) | 流程定制层 | 已采纳 | 2026-06-22 | 增量覆盖 + 条件触发 + 自定义技能 |
 | [ADR-0016](ADR-0016-arch-artifact-discovery-contract.md) | Arch 阶段工件发现契约 | 已采纳 | 2026-07-08 | 扩展 `.arch-handoff.json` v1 + 替换 14+ 处硬编码路径 |
 | [ADR-0017](ADR-0017-rddf-session.md) | rddf-session 用户视角工作流会话 | 已采纳 | 2026-07-09 | 项目级 `sessions.json` 持久化 + 4 选项软提示冲突处理 + 跨 OpenCode session 恢复 |
+| [ADR-0018](ADR-0018-arch-quality-gate.md) | 架构质量门 — arch 阶段的定性检查 | 已采纳 | 2026-07-10 | 4 个 warning 级检查 (alignment/debt/clarity/actionable) + `STRICT_ARCH_GATE=yes` CI 升级 |
+| [ADR-0019](ADR-0019-change-arch-alignment.md) | change_arch_alignment — change 提案与架构对齐检查 | 已采纳 | 2026-07-10 | 3 个 warning 级检查 (refs_valid/no_contradiction/task_traceability) + `STRICT_CHANGE_GATE=yes` 独立 env var（Oracle 推荐） |
 
 ## 架构演进
 
