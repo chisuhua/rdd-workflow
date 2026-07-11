@@ -25,6 +25,18 @@ from skills._lib.event_log import EventLog
 from skills._lib.event_types import EventType, Severity
 from skills._lib.state_vector import StateVector
 from skills._lib.defaults import STATE_VECTOR_PATH, EVENT_LOG_PATH
+from skills._lib.arch_quality_gate import (
+    _check_arch_alignment,
+    _check_arch_debt,
+    _check_adr_clarity,
+    _check_handoff_actionable,
+    strict_wrap,
+)
+from skills._lib.change_alignment import (
+    _check_change_adr_refs_valid,
+    _check_change_no_contradiction,
+    _check_change_task_traceability,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -294,6 +306,10 @@ _DEFAULT_CHECKS = {
         Check("adr_exists", _check_adr_exists, "ADR directory missing or empty", "Create ADRs: mkdir -p docs/adr && touch docs/adr/ADR-0001.md", "error"),
         Check("roadmap_defined", _check_roadmap_defined, "roadmap.md not found", "Create roadmap: touch roadmap.md", "error"),
         Check("gap_analysis_complete", _check_gap_analysis_complete, "Gap analysis not run", "Run: openspec scan", "warning"),
+        Check("arch_alignment", strict_wrap(_check_arch_alignment), "roadmap/gap-analysis references ADRs that don't exist on disk", "Resolve ghost ADR references, or create the missing ADR files", "warning"),
+        Check("arch_debt_recorded", strict_wrap(_check_arch_debt), "gap-analysis has unresolved high-severity / P0 row", "Either resolve the gap or schedule it as a P0 task in roadmap.md", "warning"),
+        Check("adr_no_placeholders", strict_wrap(_check_adr_clarity), "ADR file still contains template placeholders (<待补充>, <TBD>, NNNN)", "Complete the ADR content or delete the stub", "warning"),
+        Check("arch_handoff_actionable", strict_wrap(_check_handoff_actionable), ".arch-handoff.json missing actionable fields (current_phase=default or discovered.adr_dir.found=false)", "Re-run guide-arch Phase 5 to regenerate handoff", "warning"),
     ],
     "plan_done": [
         Check("arch_handoff_exists", _check_arch_handoff_exists, "arch-done handoff 缺失", "请先运行 skill_use('guide-arch') 完成架构定义", "error"),
@@ -302,6 +318,9 @@ _DEFAULT_CHECKS = {
         Check("openspec_validate", _check_openspec_validate, "Plan fails OpenSpec schema validation", "Run: openspec validate --all --strict --json  and fix reported items", "error"),
         Check("deps_analyzed", _check_deps_analyzed, "Dependencies not analyzed", "Run: openspec deps <name>", "warning"),
         Check("plan_review_dismissed", _check_plan_review_dismissed, "plan.review_validation override active", "Review the recorded override under plan_side.review_validation_override before archive", "warning"),
+        Check("change_adr_refs_valid", strict_wrap(_check_change_adr_refs_valid, env_var="STRICT_CHANGE_GATE"), "design.md references deprecated/replaced ADRs", "Update references to currently-accepted ADRs (ADR-0019)", "warning"),
+        Check("change_no_contradiction", strict_wrap(_check_change_no_contradiction, env_var="STRICT_CHANGE_GATE"), "design.md contains anti-pattern keywords without ADR justification", "Add ADR reference justifying the choice or rewrite the section (ADR-0019)", "warning"),
+        Check("change_task_traceability", strict_wrap(_check_change_task_traceability, env_var="STRICT_CHANGE_GATE"), "<80% of tasks.md checkbox items trace to an ADR", "Add ADR-NNN references to each architectural task (ADR-0019)", "warning"),
     ],
     "ship_done": [
         Check("worktrees_empty", _check_worktrees_empty, "Active worktrees remain", "git worktree remove .rddf/wt/<name>", "error"),

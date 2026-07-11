@@ -118,6 +118,24 @@ def test_default_arch_done_checks_present(state_path, log_path):
     assert "gap_analysis_complete" in names
 
 
+def test_default_arch_done_includes_quality_checks_adr0013(state_path, log_path):
+    """ADR-0013: arch_done must register 4 qualitative checks (warning level by default)."""
+    sv = make_state()
+    sv.save(state_path)
+    gate = GateMechanism(state_path=state_path, event_log_path=log_path, load_defaults=True)
+    names = gate.get_registered_check_names()
+    for required in (
+        "arch_alignment",
+        "arch_debt_recorded",
+        "adr_no_placeholders",
+        "arch_handoff_actionable",
+    ):
+        assert required in names, (
+            f"arch_done must register {required} per ADR-0013; "
+            f"registered: {names}"
+        )
+
+
 def test_default_plan_done_checks_present(state_path, log_path):
     """Default checks for plan_done include changes_committed, artifacts_complete, deps_analyzed."""
     sv = make_state()
@@ -127,6 +145,23 @@ def test_default_plan_done_checks_present(state_path, log_path):
     assert "changes_committed" in names
     assert "artifacts_complete" in names
     assert "deps_analyzed" in names
+
+
+def test_default_plan_done_includes_change_alignment_checks_adr0019(state_path, log_path):
+    """ADR-0019: plan_done must register 3 change-alignment checks with STRICT_CHANGE_GATE upgrade."""
+    sv = make_state()
+    sv.save(state_path)
+    gate = GateMechanism(state_path=state_path, event_log_path=log_path, load_defaults=True)
+    names = gate.get_registered_check_names()
+    for required in (
+        "change_adr_refs_valid",
+        "change_no_contradiction",
+        "change_task_traceability",
+    ):
+        assert required in names, (
+            f"plan_done must register {required} per ADR-0019; "
+            f"registered: {names}"
+        )
 
 
 def test_default_ship_done_checks_present(state_path, log_path):
