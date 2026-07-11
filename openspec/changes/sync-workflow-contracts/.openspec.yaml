@@ -1,0 +1,74 @@
+schema: spec-driven
+created: 2026-07-11
+name: sync-workflow-contracts
+status: PROPOSED
+scope: [shared]
+goal: Synchronize README, USAGE, AGENTS, INSTALL, package.json, ADR index, OpenSpec specs, and state-file path conventions so they agree with each other and with production skill code. Add anti-drift contract tests that fail CI when any of these surfaces diverge. This change does NOT introduce new runtime workflow behavior; it only reconciles existing documentation and pin contracts with anti-drift enforcement.
+follows:
+  - "doc-truth-sync (prior post-release audit; this change extends its scope)"
+  - "general-docs-match-code (general spec requirement this change updates)"
+  - "arch-discovery-contract (ADR-0016 keeps ADR index and artifact paths honest)"
+baseline:
+  skills_count_disk: 13
+  skills_count_disk_note: ".md files under skills/"
+  skills_in_package_json: 11
+  skills_in_package_json_note: "feature and rddf-session are NOT registered"
+  docs_adr_files: 22
+  docs_adr_files_note: "1 template + 21 ADRs; ADR-0013 is duplicated as extract-scan-state and incremental-skeleton-planning"
+  docs_adr_status_table_entries: 13
+  docs_adr_status_table_note: "0001 to 0012 plus 0016"
+  openspec_specs_count: 25
+  openspec_specs_note: "main specs under openspec/specs/ counted by directory"
+  ship_phases_usaged: "7 numbered subphases: Phase 1, 1.5, 2, 2.5, 3, 4, 5"
+  ship_phases_usaged_sequence: "plan, verification, execute, review, archive, cleanup, ship-done"
+  ship_phases_spec_general: "stale — still says 5 phases + 1 exit"
+  handoff_paths_usaged_dotted:
+    - ".rddf/state/.arch-handoff.json"
+    - ".rddf/state/.plan-handoff.json"
+  handoff_paths_spec_general_undotted:
+    - "handoff.json"
+  plan_path_usaged: ".rddf/plans/NAME.md (git tracked)"
+  plan_path_spec_general_stale: ".sisyphus/plans/NAME.md"
+  guide_spec_status: "removed in v2.0 (was 60-line alias); general spec still references it as consumer"
+  light_worktree_modes: "doc-only in USAGE.md; not covered by general spec"
+target:
+  - "USAGE.md: phase count table + state-file table updated to match production skill code"
+  - "AGENTS.md: skill count (12 to 13) + ADR count (12 to 21 real + 1 dup) + key directories tree refreshed"
+  - "INSTALL.md: skill count description aligned with disk + package.json; add npm test vs pytest anti-drift note"
+  - "package.json: decide whether to publish feature + rddf-session now, or keep src-only with explicit note"
+  - "docs/adr/README.md: v2.0 status table extended to cover 0001 to 0019; duplicated ADR-0013 files deduplicated or split"
+  - "openspec/specs/general/spec.md: MODIFIED Requirements to ship-side phase count + state-file table + consumer list (drop guide-spec)"
+  - "openspec/specs/doc-truth-sync/spec.md: MODIFIED Requirements adding anti-drift contract tests + state-file path sync"
+  - "tests/integration/test_doc_contracts.bats: new bats integration test asserting skill count + ADR count + phase count + state-file path consistency across docs"
+  - "tests/unit/test_doc_contracts.py: new Python unit test for OpenSpec spec and docs cross-checks"
+  - "tests/integration/test_adr_index.bats: new bats test verifying docs/adr/README.md index entries match actual files"
+non_goals:
+  - "Implementing new runtime workflow behavior (phase changes, gate changes, ship flow changes)"
+  - "Backporting fixes to v1.x archived changes"
+  - "Modifying the openspec CLI itself (out of scope)"
+  - "Auto-fixing docs in CI (validation is detect-only; humans correct prose)"
+  - "Renaming existing skills or moving files (purely contract synchronization)"
+risk_level: low
+cross_repo:
+  - "None (spec-workflow meta-repo only)"
+  - "No TaskRunner or UsrLinuxEmu impact"
+estimated_loc_change:
+  new_files: "~250 lines (2 new test files + 2 spec deltas)"
+  modified_files: "~80 lines across 5 doc files + 2 spec files + 1 package.json (if feature/rddf-session decision is publish)"
+acceptance:
+  - "USAGE.md ship-side phase count matches production skill code (7 numbered subphases) and the general spec"
+  - "USAGE.md state-file table lists only existing files with correct dotted/undotted convention"
+  - "AGENTS.md skill count (13), ADR count (21 real + 1 dup), and test counts reflect actual disk"
+  - "INSTALL.md skill description matches disk count (13)"
+  - "package.json either includes feature + rddf-session (publish decision) OR explicitly documents why they are src-only"
+  - "docs/adr/README.md status table covers all real ADRs (0001 to 0019) and flags the duplicated ADR-0013"
+  - "general/spec.md general-docs-match-code Scenarios updated to current ship phase count + state-file paths + consumer list"
+  - "doc-truth-sync/spec.md adds doc-contract-tests-required requirement"
+  - "bats test test_doc_contracts.bats passes (asserts cross-doc consistency)"
+  - "pytest test_doc_contracts.py passes (asserts spec and docs cross-checks)"
+  - "bats test test_adr_index.bats passes (asserts ADR index completeness)"
+  - "All existing bats smoke + pytest tests remain green"
+  - "CI assertion quality gate still blocks tautological assertions"
+supersession:
+  - "Does NOT supersede doc-truth-sync (it extends scope)"
+  - "Does NOT supersede general-docs-match-code (updates it via MODIFIED Requirements)"
