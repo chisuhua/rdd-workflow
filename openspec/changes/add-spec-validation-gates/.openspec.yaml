@@ -1,0 +1,52 @@
+schema: spec-driven
+created: 2026-07-11
+name: add-spec-validation-gates
+status: PROPOSED
+scope: [shared]
+goal: Add pre-flight validation gates that catch spec defects before commit/archive. Catches (1) false baseline claims in .openspec.yaml (e.g., claiming a static symbol exists when git log -S proves it never did) and (2) invalid MODIFIED/RENAMED targets in spec.md delta sections (target spec must already exist in main specs/). Both failures are detected at validate/commit time, not at archive time, eliminating the v1-baseline-fabrication and MODIFIED-on-empty-spec failure modes observed in g-gpu-client-default-stub-init workflow (2026-07-11).
+follows:
+  - gate-mechanism (existing gate framework)
+  - three-phase-skills
+blocks:
+  - harden-openspec-validate-cli (future follow-up: push validators upstream)
+baseline:
+  validators in skills/_lib: 18 .py + 1 .sh (gate.py, validate_report.py, scan-state.sh, etc.)
+  proposal skill (skills/propose.md): creates openspec/changes/<name>/.openspec.yaml without baseline claim validation
+  guide-plan Phase 4 (plan-done gate): validates artifacts completeness but not baseline truthfulness
+  guide-ship Phase 3 (archive): invokes `openspec archive` which aborts at MODIFIED/RENAMED target check
+  openspec CLI: external npm package @fission-ai/openspec v1.4.1; out of scope for this change
+  observed failure mode 1: g-gpu-client-default-stub-init v1 spec claimed "CudaStub g_cuda_stub; exists" (false, git log -S returned only the spec commit)
+  observed failure mode 2: g-gpu-client-meyers-singleton-fallback v2 spec had MODIFIED section for non-existent shim-default-init-fallback capability (target spec missing)
+target:
+  validate_baseline.py: new utility in skills/_lib/ (claim verification against filesystem + git history)
+  validate_delta_targets.py: new utility in skills/_lib/ (MODIFIED/RENAMED target existence check)
+  propose.md: invokes validate_baseline.py before openspec new change commit
+  guide-plan.md Phase 4: invokes both validators in plan-done gate
+  guide-ship.md Phase 3: invokes validate_delta_targets.py in archive pre-flight (before openspec archive abort)
+  tests/unit/test_validate_baseline.py: covers all baseline claim patterns
+  tests/unit/test_validate_delta_targets.py: covers all delta scenarios
+  exit codes: 0=pass, 1=hard fail (block), 2=soft fail (warn)
+non_goals:
+  - Forking or modifying the openspec CLI itself (out of scope; wrappers are the right layer)
+  - Validating proposal.md/design.md prose content (only structured baseline + delta fields)
+  - Auto-fixing invalid claims (validation is detect-only; humans correct)
+  - Backporting to v1.x archived changes (only new changes validated)
+  - Adding new gates to non-spec files (e.g., CHANGELOG, ADR) (out of scope)
+risk_level: low
+cross_repo:
+  - None (spec-workflow meta-repo only)
+  - No TaskRunner or UsrLinuxEmu impact
+estimated_loc_change:
+  new files: ~400 lines (2 utilities + 2 test files + spec.md)
+  modified files: ~30 lines across 3 skill .md files (insert validation hooks)
+acceptance:
+  - validate_baseline.py correctly identifies false file-existence claims (regression-tested against g-gpu-client-default-stub-init v1)
+  - validate_baseline.py correctly identifies false symbol-existence claims via git log -S
+  - validate_delta_targets.py correctly identifies MODIFIED/RENAMED targeting non-existent capabilities
+  - propose.md aborts commit when validate_baseline.py returns exit 1
+  - guide-plan.md blocks plan-done when any active change fails validation
+  - guide-ship.md blocks archive when validate_delta_targets.py fails
+  - All existing skills/propose.md, guide-plan.md, guide-ship.md functionality unchanged when validation passes
+  - Pytest test suite passes: 28+ unit files + new validation tests
+  - bats smoke tests pass
+  - CI assertion quality gate still blocks tautological assertions
