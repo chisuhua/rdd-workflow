@@ -1,0 +1,72 @@
+schema: spec-driven
+created: 2026-07-13
+name: fix-install-lib-distribution
+status: PROPOSED
+scope: [shared]
+goal: Make the skills/_lib/*.py Python modules installable via install.sh and skills/INSTALL.md so that feature.md and rddf-session.md (which declare depends-on on _lib modules) actually work for users who install via npm or the INSTALL skill. This is the prerequisite for sync-workflow-contracts Decision 1 to flip to Option A (publish feature + rddf-session in package.json::skills[]).
+follows:
+  - "add-rddf-session (rddf-session was already shipped but its _lib module is not distributed)"
+  - "feature-management (feature skill depends on iteration + deps_output modules)"
+  - "sync-workflow-contracts (Decision 1 A-flip is blocked without this fix)"
+baseline:
+  skills_lib_path: skills/_lib
+  skills_lib_file_count: 49
+  skills_lib_total_size: 979KB
+  skills_lib_subdirs: [__pycache__, plugins, schedulers, schemas]
+  has_init_py_skills: false
+  has_init_py_skills_lib: false
+  install_sh_copies_lib: false
+  install_md_copies_lib: false
+  install_md_fallback_skills: 11
+  install_md_description_skills: 12   # lists 12 names but claims 13
+  install_md_parens_count: 12
+  install_md_claimed_count: 13
+  feature_depends_on: [iteration, deps_output]
+  rddf_session_depends_on: [rddf_session]
+  feature_status: v1.0 (already shipped, package.json::skills[] does NOT include)
+  rddf_session_status: v1.0 (already shipped, package.json::skills[] does NOT include)
+  rddf_session_adr: ADR-0017 (已采纳)
+  loop_engine_imports_from_lib: true   # skills/loop_engine.py uses from skills._lib.X
+  schedulers_has_init_py: true
+  plugins_has_init_py: false            # plugins/ only has README.md
+  plugins_subdir_purpose: extension point for detectors/actions plugins (dev-only)
+target:
+  - "skills/__init__.py: Create empty package marker"
+  - "skills/_lib/__init__.py: Create empty package marker"
+  - "install.sh L32: Add recursive copy of skills/_lib/*.py + schemas, exclude __pycache__ + plugins + schedulers"
+  - "skills/INSTALL.md L100: Same as install.sh; add Python sys.path guidance"
+  - "skills/INSTALL.md L115 + L118 fallback strings: Update to 13-skill list (matches upstream package.json)"
+  - "skills/INSTALL.md L3 description: Convert from enumerated list to count-based description (avoid drift)"
+  - "tests/integration/test_install_lib_distribution.bats: New bats test asserting _lib/*.py is in install path"
+  - "tests/unit/test_install_lib_distribution.py: New pytest test asserting _lib modules importable post-install"
+  - "openspec/specs/state-management/spec.md: MODIFIED Requirements locking the lib-distribution contract"
+non_goals:
+  - "Modifying any runtime skill behavior (skills/*.md prose beyond INSTALL.md)"
+  - "Adding new dependencies or pip packages"
+  - "Modifying sync-workflow-contracts directly (separate change; depends on this one)"
+  - "Renaming skills or files"
+  - "Refactoring loop_engine.py imports to relative paths (out of scope; current absolute imports work)"
+  - "Building a wheel/sdist (out of scope; this change fixes install.sh + INSTALL.md only)"
+risk_level: medium
+cross_repo:
+  - "None (spec-workflow meta-repo only)"
+estimated_loc_change:
+  new_files: "~30 lines (2 __init__.py + 2 test files)"
+  modified_files: "~20 lines across install.sh + skills/INSTALL.md"
+  npm_install_size_delta: "+979KB (skills/_lib/ total)"
+acceptance:
+  - "skills/__init__.py exists and is empty (Python package marker)"
+  - "skills/_lib/__init__.py exists and is empty"
+  - "install.sh L32 includes copy of skills/_lib/*.py + schemas, excludes __pycache__ + plugins + schedulers"
+  - "skills/INSTALL.md L100 mirrors install.sh behavior"
+  - "skills/INSTALL.md L115 fallback string lists all 13 skills (or uses dynamic derivation)"
+  - "skills/INSTALL.md L118 else-branch fallback lists all 13 skills"
+  - "skills/INSTALL.md L3 description uses count-based phrasing (no enumerated names)"
+  - "All existing bats + pytest tests remain green"
+  - "New bats test test_install_lib_distribution.bats passes"
+  - "New pytest test test_install_lib_distribution.py passes (importable check)"
+  - "CI quality gate intact (grep -rn 'assert.*or True|assert True' tests/ has no matches)"
+  - "After this change lands, sync-workflow-contracts Decision 1 → A becomes safe"
+supersession:
+  - "Does NOT supersede any existing change"
+  - "Unblocks sync-workflow-contracts Decision 1 A-flip"
