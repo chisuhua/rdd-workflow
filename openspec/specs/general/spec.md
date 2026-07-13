@@ -102,9 +102,9 @@ All user-facing documentation in `USAGE.md`, `README.md`, `docs/adr/*.md`, `skil
 #### Scenario: AGENTS.md skill + ADR counts reflect disk
 - **WHEN** `AGENTS.md` is read
 - **THEN** it SHALL state **13 个 .md** (skills count matching disk)
-- **AND** it SHALL state **ADR-0001~0019 (19 个唯一编号 / 20 个实体文件; ADR-0013 重复)** in the docs/adr/ description
+- **AND** it SHALL state **ADR-0001~0020 (20 个唯一编号 / 20 个实体文件)** in the docs/adr/ description
 
-#### Scenario: docs/adr/README.md status table covers all real ADRs (0001-0019) with ADR-0013 dup flag
+#### Scenario: docs/adr/README.md status table covers all real ADRs (0001-0020, no dup)
 - **WHEN** `docs/adr/README.md` is read
-- **THEN** the v2.0 status table SHALL include ADR rows for 0001 through 0019 (with ADR-0013 row explicitly flagged ⚠️重复)
-- **AND** it SHALL NOT reference ADR numbers beyond 0019
+- **THEN** the v2.0 status table SHALL include ADR rows for 0001 through 0020 (with no duplicate numbering — ADR-0013 keeps `extract-scan-state` only; incremental-skeleton-planning is renumbered to ADR-0020 in v2.0.2)
+- **AND** it SHALL NOT reference ADR numbers beyond 0020

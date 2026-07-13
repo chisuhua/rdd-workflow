@@ -83,3 +83,16 @@ def test_adr_index_references_real_files() -> None:
     referenced = set(re.findall(r"ADR-\d{4}-[\w-]+\.md", readme))
     missing = referenced - real
     assert not missing, f"docs/adr/README.md references missing: {sorted(missing)}"
+
+
+def test_no_adr_0013_duplicate_on_disk() -> None:
+    """After v2.0.2 renumber, only one ADR-0013 file should remain (extract-scan-state)."""
+    adr_dir = REPO_ROOT / "docs/adr"
+    adr_0013_files = list(adr_dir.glob("ADR-0013-*.md"))
+    assert len(adr_0013_files) == 1, (
+        f"Expected exactly 1 ADR-0013 file, found {len(adr_0013_files)}: "
+        f"{[p.name for p in adr_0013_files]}"
+    )
+    assert adr_0013_files[0].name == "ADR-0013-extract-scan-state.md"
+    # incremental-skeleton-planning should now live at ADR-0020
+    assert (adr_dir / "ADR-0020-incremental-skeleton-planning.md").exists()

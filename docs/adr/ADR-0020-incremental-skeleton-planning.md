@@ -1,4 +1,4 @@
-# ADR-0013: Incremental Skeleton Planning
+# ADR-0020: Incremental Skeleton Planning
 
 **Status**: 待定 → 已采纳（待 archive 后切换）
 **日期**: 2026-07-08
@@ -88,7 +88,7 @@
 | 4 | deps 骨架容错 (deps.md) | ✅ 已采纳 |
 | 5 | guide-ship archive-fill 触发 (guide-ship.md) | ✅ 已采纳 |
 | 6 | status Mode A/E planned 显示 (status.md) | ✅ 已采纳 |
-| 7 | ADR-0013 文档 | ✅ 已采纳 |
+| 7 | ADR-0020 文档 | ✅ 已采纳 |
 
 ## Related
 

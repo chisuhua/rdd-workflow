@@ -5,8 +5,8 @@ setup() {
   cd "$REPO_ROOT"
 }
 
-@test "adr_index: docs/adr/README.md status table covers all real ADRs (0001-0019)" {
-  for n in 0001 0005 0010 0015 0017 0018 0019; do
+@test "adr_index: docs/adr/README.md status table covers all real ADRs (0001-0020)" {
+  for n in 0001 0005 0010 0015 0017 0018 0019 0020; do
     if ! grep -qE "ADR-${n}\b" docs/adr/README.md; then
       echo "docs/adr/README.md missing ADR-${n} reference"
       return 1
@@ -14,14 +14,20 @@ setup() {
   done
 }
 
-@test "adr_index: docs/adr/README.md does NOT reference ADR-NNN beyond 0019" {
-  # Flag only ADR-0020+ (legitimate range is 0000-0019; 0000 = template, 0001-0019 = real)
-  bad=$(grep -oE "ADR-0[0-9]{3}" docs/adr/README.md | sort -u | grep -E "ADR-0(0[2-9][0-9]|[1-9][0-9]{2})" || true)
+@test "adr_index: docs/adr/README.md does NOT reference ADR-NNN beyond 0020" {
+  # Flag only ADR-0021+ (legitimate range is 0000-0020; 0000 = template, 0001-0020 = real)
+  bad=$(grep -oE "ADR-0[0-9]{3}" docs/adr/README.md | sort -u | grep -E "ADR-0(0[2-9][0-9]|[1-9][0-9]{2})" | grep -v "ADR-0020\b" || true)
   [ -z "$bad" ]
 }
 
-@test "adr_index: duplicated ADR-0013 is explicitly flagged in README.md" {
-  grep -qE "ADR-0013.*重复|重复.*ADR-0013|extract-scan-state.*incremental-skeleton-planning" docs/adr/README.md
+@test "adr_index: no ADR-0013 duplicate exists on disk (incremental-skeleton-planning renumbered to ADR-0020)" {
+  # After v2.0.2 renumbering, only ADR-0013-extract-scan-state.md should remain as 0013
+  count=$(find docs/adr -maxdepth 1 -name 'ADR-0013-*.md' | wc -l)
+  if [ "$count" -ne 1 ]; then
+    echo "Expected exactly 1 ADR-0013 file, found $count"
+    return 1
+  fi
+  [ -f "docs/adr/ADR-0020-incremental-skeleton-planning.md" ]
 }
 
 @test "adr_index: docs/adr/README.md status table is consistent with disk" {

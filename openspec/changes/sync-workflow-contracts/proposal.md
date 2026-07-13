@@ -5,7 +5,7 @@ STATUS: PROPOSED
 
 ## Decision Log (added during plan-done)
 - **DL-1 (skill publish surface)**: Option A — `package.json::skills[]` 补到 13 个(添加 `feature` + `rddf-session`);无需 `_comment` 字段,因 `fix-install-lib-distribution` change 已 commit `171f565`,`_lib/*.py` 分发问题已解决。
-- **DL-2 (ADR-0013)**: Option C — 保留两个文件并在 `docs/adr/README.md` 顶部加 ⚠️ flag(暂不重编号,留给后续 `init-deep` 决策 / `fix-adr-index-and-numbering` change)。
+- **DL-2 (ADR-0013)**: ~~Option C — 保留两个文件并在 `docs/adr/README.md` 顶部加 ⚠️ flag~~ → **实施期升级为 Option A(重编号)**：`ADR-0013-incremental-skeleton-planning.md` 重编号为 `ADR-0020-incremental-skeleton-planning.md`（基于"先到先得"原则：extract-scan-state 2026-07-07 早于 incremental-skeleton-planning 2026-07-08）；ADR-0013 保留 extract-scan-state。结果：20 个唯一编号 / 20 个实体文件，零重复。
 - **DL-3 (worktree)**: in-place — 本 change 无 production skill 代码变更,无需 worktree,直接在 master 主仓库执行。
 
 ## Why
@@ -43,7 +43,7 @@ USAGE.md 已经把 Phase 2.5 Review(execute 后债务扫描)列为 ship 端核�
 
 **漂移 6 — ADR 索引与编号漂移**
 
-`docs/adr/` 当前有 22 个 Markdown 文件:1 个 `README.md` + 1 个 `ADR-0000-template.md` + 20 个实体 ADR 文件。实体 ADR 覆盖 19 个唯一编号(0001-0019),其中 ADR-0013 有两个文件(`extract-scan-state` 与 `incremental-skeleton-planning`)。但:
+`docs/adr/` 当前有 22 个 Markdown 文件:1 个 `README.md` + 1 个 `ADR-0000-template.md` + 20 个实体 ADR 文件。实体 ADR 覆盖 19 个唯一编号(0001-0019),其中 ADR-0013 有两个文件(`extract-scan-state` 与 `incremental-skeleton-planning`)。**注**:本 change 实施期(commit post-12b375b)将 `incremental-skeleton-planning` 重编号为 ADR-0020(v2.0.2 changelog),最终 20 个唯一编号 / 20 个实体文件。但:
 
 - `AGENTS.md::ADR 规范` 仍写 "ADR-0001~0012(12 个)"
 - `docs/adr/README.md` 顶部的 v2.0 ADR 状态表覆盖 0001-0012 + 0016(13 条),漏掉 ADR-0013(且 `ADR-0013-extract-scan-state.md` 与 `ADR-0013-incremental-skeleton-planning.md` **同编号重复**)、0014、0015、0017、0018、0019
@@ -69,7 +69,7 @@ USAGE.md 已经把 Phase 2.5 Review(execute 后债务扫描)列为 ship 端核�
 | 决策点 | 选项 | 推荐 |
 |--------|------|------|
 | `package.json::skills[]` 是否补 `feature` + `rddf-session` | A: 现在补(全部 13 个发布) / B: 保持 src-only + 显式注释说明 | **A**(v2.0.1 + `fix-install-lib-distribution` 已 commit 171f565,`_lib/*.py` 分发问题已解) |
-| ADR-0013 重复文件如何处理 | A: 重新编号其中一个 / B: 合并内容到单文件 / C: 在 README 显式 flag | **C**(先 flag,等 `init-deep` 决策后处理) |
+| ADR-0013 重复文件如何处理 | A: 重新编号其中一个 / B: 合并内容到单文件 / C: 在 README 显式 flag | **C**(先 flag,实施期升级为 **A** 重编号;详见 DL-2) |
 | doc contract test 失败是否阻断 archive | A: warning(只警告) / B: error(阻断 archive) | **B**,对齐现有 `gate.py` 的 error/warning 分级 |
 
 > 决策升级记录:Decision 1 原推荐 B(2026-07-12 起草),后经 Oracle 第二次咨询(2026-07-13)发现 `_lib/*.py` 分发漏洞,需先解决。`fix-install-lib-distribution` change 已 commit 在 `171f565`,Decision 1 升级为 A。Task 2.3(B 路径)被废弃,只剩 A 路径。
@@ -82,7 +82,7 @@ USAGE.md 已经把 Phase 2.5 Review(execute 后债务扫描)列为 ship 端核�
   - `INSTALL.md` — skill description 加 "npm test vs pytest" 反 drift 注脚
   - `README.md` — 目录结构补 guide-arch.md / guide-plan.md / loop_engine.py / `_lib/`
   - `package.json` — skills[] 决策(见上表)
-  - `docs/adr/README.md` — v2.0 status table 补到 0001-0019;duplicated ADR-0013 加 flag
+  - `docs/adr/README.md` — v2.0 status table 补到 0001-0020;ADR-0013 重编号为 ADR-0020(实施期升级,见 DL-2)
   - `openspec/specs/general/spec.md` — `general-docs-match-code` Scenarios 整体刷新到 v2.0.1
   - `openspec/specs/doc-truth-sync/spec.md` — 新增 `doc-contract-tests-required` Requirement
   - `tests/integration/test_doc_contracts.bats` — 新增(~120 LOC)

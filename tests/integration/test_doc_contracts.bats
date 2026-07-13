@@ -33,15 +33,16 @@ PY
   fi
 }
 
-@test "doc_truth_sync: AGENTS.md ADR table lists 0001-0019 with ADR-0013 dup note" {
-  for n in 0001 0010 0019 0013; do
+@test "doc_truth_sync: AGENTS.md ADR table lists 0001-0020 with no dup annotation" {
+  for n in 0001 0010 0019 0020; do
     if ! grep -qE "ADR-${n}\b" AGENTS.md; then
       echo "AGENTS.md missing ADR-${n}"
       return 1
     fi
   done
-  if ! grep -qE "ADR-0013.*重复|重复.*ADR-0013|extract-scan-state.*incremental-skeleton-planning" AGENTS.md; then
-    echo "AGENTS.md missing ADR-0013 dup annotation"
+  # After v2.0.2 renumber, no ADR-0013 dup annotation should remain
+  if grep -qE "ADR-0013.*重复|重复.*ADR-0013|extract-scan-state.*incremental-skeleton-planning" AGENTS.md; then
+    echo "AGENTS.md still has stale ADR-0013 dup annotation (v2.0.2 renumbered incremental-skeleton-planning to ADR-0020)"
     return 1
   fi
 }

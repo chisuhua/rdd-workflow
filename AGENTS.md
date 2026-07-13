@@ -67,7 +67,7 @@ tests/
   integration/                # ~58 个集成测试 (49 .bats + 9 .py; 含 v2.0.1 新增: test_iteration_lifecycle, test_iteration_archive_hook,
                              #                                                              test_guide_ship_iteration_hook, test_deps_analysis)
   _lib/                       # bash helpers (skill.bash, deps-subagent.bash 等)
-docs/adr/                     # ADR-0000 模板 + ADR-0001~0019 (19 个唯一编号 / 20 个实体文件; **ADR-0013 重复**: extract-scan-state + incremental-skeleton-planning)
+docs/adr/                     # ADR-0000 模板 + ADR-0001~0020 (20 个唯一编号, 20 个实体文件; v2.0.2 重编号 ADR-0013 incremental-skeleton-planning → ADR-0020)
                              # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment
 openspec/                     # OpenSpec CLI 数据 (随项目走)
   changes/                    # active changes + archive/
