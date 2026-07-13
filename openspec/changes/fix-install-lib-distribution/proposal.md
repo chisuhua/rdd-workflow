@@ -74,20 +74,20 @@ depends-on: [rddf_session]
 
 ## Acceptance Criteria
 
-- [ ] `skills/__init__.py` 存在且为空
-- [ ] `skills/_lib/__init__.py` 存在且为空
-- [ ] `install.sh` 在复制 `.md` 后递归复制 `skills/_lib/*.py` 和 `skills/_lib/schemas/*.json`
-- [ ] `install.sh` 排除 `__pycache__/` / `plugins/` / `schedulers/` 三个子目录
-- [ ] `skills/INSTALL.md` L100 镜像 `install.sh` 行为
-- [ ] `skills/INSTALL.md` L115 fallback 字符串列全 13 个 skill 名（或动态推导）
-- [ ] `skills/INSTALL.md` L118 else 分支 fallback 列全 13 个 skill 名
-- [ ] `skills/INSTALL.md` L3 description 改为计数式，不再列举名字
-- [ ] `tests/integration/test_install_lib_distribution.bats` 新增且通过
-- [ ] `tests/unit/test_install_lib_distribution.py` 新增且通过（关键 `_lib` 模块可 import）
-- [ ] 既有 pytest + bats zero regression
-- [ ] `openspec validate fix-install-lib-distribution --strict` PASS
-- [ ] CI 恒真断言 grep `! grep -rn 'assert.*or True|assert True' tests/` 退出 0
-- [ ] 本 change 落地后，`sync-workflow-contracts` Decision 1 翻 A 成为安全操作
+- [x] `skills/__init__.py` 存在且为空
+- [x] `skills/_lib/__init__.py` 存在且为空
+- [x] `install.sh` 在复制 `.md` 后递归复制 `skills/_lib/*.py` 和 `skills/_lib/schemas/*.json`
+- [x] `install.sh` 排除 `__pycache__/` / `plugins/` / `schedulers/` 三个子目录
+- [x] `skills/INSTALL.md` L100 镜像 `install.sh` 行为
+- [x] `skills/INSTALL.md` L115 fallback 字符串列全 13 个 skill 名（或动态推导）
+- [x] `skills/INSTALL.md` L118 else 分支 fallback 列全 13 个 skill 名
+- [x] `skills/INSTALL.md` L3 description 改为计数式，不再列举名字
+- [x] `tests/integration/test_install_lib_distribution.bats` 新增且通过
+- [x] `tests/unit/test_install_lib_distribution.py` 新增且通过（关键 `_lib` 模块可 import）
+- [x] 既有 pytest + bats zero regression
+- [x] `openspec validate fix-install-lib-distribution --strict` PASS
+- [x] CI 恒真断言 grep `! grep -rn 'assert.*or True|assert True' tests/` 退出 0
+- [x] 本 change 落地后，`sync-workflow-contracts` Decision 1 翻 A 成为安全操作
 
 ## Risk
 
