@@ -35,14 +35,18 @@ setup() {
 }
 
 @test "install_lib: INSTALL.md fallback lists all 13 skills (or dynamic)" {
-  # Either hardcoded 13 skills, OR a dynamic python3 derivation.
-  # Static check: count the escaped \"<name>\" entries in fallback strings.
-  count=$(grep -oE '\\\\"[A-Za-z0-9_-]+\\\\"' skills/INSTALL.md | sort -u | wc -l)
-  if [ "$count" -lt 13 ]; then
-    # Try without escape
-    count=$(grep -oE '"[A-Za-z0-9_-]+"' skills/INSTALL.md | sort -u | wc -l)
+  # The fallback either hardcodes 13 skill names OR derives them dynamically
+  # from the skills/ directory on disk. Verify either form is present.
+  #
+  # Form A: hardcoded — at least 13 distinct quoted skill-name tokens
+  # Form B: dynamic derivation — uses `ls "$PACKAGE_DIR/skills/"*.md`
+  escaped_count=$(grep -oE '\\\\"[A-Za-z0-9_-]+\\\\"' skills/INSTALL.md | sort -u | wc -l)
+  unescaped_count=$(grep -oE '"[A-Za-z0-9_-]+"' skills/INSTALL.md | sort -u | wc -l)
+  has_dynamic=$(grep -cE 'ls .*PACKAGE_DIR/skills/.*\.md' skills/INSTALL.md || true)
+  if [ "$escaped_count" -lt 13 ] && [ "$unescaped_count" -lt 13 ] && [ "$has_dynamic" -eq 0 ]; then
+    echo "INSTALL.md fallback lacks 13 hardcoded skill names AND no dynamic derivation"
+    return 1
   fi
-  [ "$count" -ge 13 ]
 }
 
 @test "install_lib: INSTALL.md L3 description uses count-based phrasing (no enumerated names)" {

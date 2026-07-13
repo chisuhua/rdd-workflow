@@ -1,6 +1,6 @@
 ---
 name: INSTALL
-description: 安装 Spec Workflow 技能到项目目录。执行后会将全部 13 个子技能（INSTALL/guide/guide-arch/guide-plan/guide-ship/propose/roadmap/deps/execute/status/spec-workflow-writing-plans/feature）复制到项目的 .opencode/skills/ 目录。
+description: 安装 Spec Workflow 技能到项目目录。执行后会将 skills/ 目录下所有子技能（含运行时 Python 模块）复制到项目的 .opencode/skills/spec-workflow/ 目录。
 alias: install
 version: "1.1.0"
 author: sisyphus
@@ -140,10 +140,22 @@ if [ ! -f "$SKILLS_DIR/package.json" ]; then
     if command -v python3 >/dev/null 2>&1 && [ -f "$PACKAGE_DIR/package.json" ]; then
         # 使用 python3 安全地提取 version 与 skills 数组(避免 jq 依赖)
         PKG_VERSION=$(python3 -c "import json,sys;print(json.load(open('$PACKAGE_DIR/package.json'))['version'])" 2>/dev/null || echo "2.0.0-beta")
-        PKG_SKILLS=$(python3 -c "import json,sys;print(','.join(['\"'+s+'\"' for s in json.load(open('$PACKAGE_DIR/package.json'))['skills']]))" 2>/dev/null || echo '"INSTALL","guide","guide-arch","guide-plan","guide-ship","propose","execute","status","roadmap","deps","spec-workflow-writing-plans"')
+        # 动态推导 skills 列表（避免硬编码漂移）
+        PKG_SKILLS=$(python3 -c "import json;print(','.join(['\"'+s+'\"' for s in json.load(open('$PACKAGE_DIR/package.json'))['skills']]))" 2>/dev/null)
     else
         PKG_VERSION="2.0.0-beta"
-        PKG_SKILLS='"INSTALL","guide","guide-arch","guide-plan","guide-ship","propose","execute","status","roadmap","deps","spec-workflow-writing-plans"'
+        # 磁盘推导 fallback：从 skills/*.md 动态生成 skill 列表（避免与 package.json 漂移）
+        # 这样无论 sync-workflow-contracts Decision 3 是 A（13）还是 B（11），fallback 都正确反映磁盘真相
+        PKG_SKILLS=$(ls "$PACKAGE_DIR/skills/"*.md 2>/dev/null \
+            | xargs -n1 basename 2>/dev/null \
+            | sed 's/\.md$//' \
+            | sort -u \
+            | awk 'BEGIN{ORS=""; printf "\""}{printf "\"" $0 "\","}' \
+            | sed 's/,$//')
+    fi
+    # 当 PKG_SKILLS 仍为空（python3 与 source 都不可用）的兜底
+    if [ -z "$PKG_SKILLS" ]; then
+        PKG_SKILLS='"INSTALL"'
     fi
     cat > "$SKILLS_DIR/package.json" << EOF
 {
