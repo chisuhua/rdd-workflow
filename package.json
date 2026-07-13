@@ -31,6 +31,8 @@
     "guide-arch",
     "guide-plan",
     "guide-ship",
+    "feature",
+    "rddf-session",
     "propose",
     "execute",
     "status",

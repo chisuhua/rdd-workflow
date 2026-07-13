@@ -3,6 +3,11 @@ SCOPE: shared
 STATUS: PROPOSED
 ---
 
+## Decision Log (added during plan-done)
+- **DL-1 (skill publish surface)**: Option A — `package.json::skills[]` 补到 13 个(添加 `feature` + `rddf-session`);无需 `_comment` 字段,因 `fix-install-lib-distribution` change 已 commit `171f565`,`_lib/*.py` 分发问题已解决。
+- **DL-2 (ADR-0013)**: Option C — 保留两个文件并在 `docs/adr/README.md` 顶部加 ⚠️ flag(暂不重编号,留给后续 `init-deep` 决策 / `fix-adr-index-and-numbering` change)。
+- **DL-3 (worktree)**: in-place — 本 change 无 production skill 代码变更,无需 worktree,直接在 master 主仓库执行。
+
 ## Why
 
 最近一次 `USAGE.md` 大改后,仓库内的文档/契约在多个维度上彼此不一致,与生产代码也对不上。当前审计识别出至少 7 类漂移,继续放任会导致用户读到错误的 phase 数 / skill 数 / ADR 数 / 路径,后续 contributor 也会反复踩坑:
