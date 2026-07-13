@@ -41,7 +41,11 @@ def engine(state_vector, event_log):
 # ---------- Detector / action registry shape ---------- #
 
 def test_builtin_detector_registry_is_complete():
-    """all_detectors() must return 8 built-in detectors (no plugins in tmp)."""
+    """all_detectors() must return 9 built-in detectors (no plugins in tmp).
+
+    v3.0 added `detect_trigger_events` (v3.0 scheduled-triggers feature); see
+    `skills/_lib/detectors.py::BUILTIN_DETECTORS` for the canonical list.
+    """
     detectors = all_detectors(plugin_dir="/nonexistent/_no_plugins_")
     names = {d.name for d in detectors}
     expected = {
@@ -53,9 +57,10 @@ def test_builtin_detector_registry_is_complete():
         "detect_health_issues",
         "detect_test_gaps",
         "detect_stale_branches",
+        "detect_trigger_events",
     }
     assert expected.issubset(names), f"Missing detectors: {expected - names}"
-    assert len(BUILTIN_DETECTORS) == 8
+    assert len(BUILTIN_DETECTORS) == 9
 
 
 def test_builtin_action_registry_is_complete():
@@ -78,7 +83,7 @@ def test_builtin_action_registry_is_complete():
 # ---------- Scan → Plan → Execute → Verify → Adapt cycle ---------- #
 
 def test_scan_state_populates_detections(engine):
-    """engine.scan_state() must run all 8 built-in detectors and store results."""
+    """engine.scan_state() must run all 9 built-in detectors and store results."""
     assert engine.loop_state.detections == []
     engine.scan_state()
     # Each detector produces a DetectionResult (or compatible dict-like object).
