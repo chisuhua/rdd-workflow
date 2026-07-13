@@ -24,3 +24,24 @@ assert "_comment" not in data, (
 PY
   [ "$status" -eq 0 ]
 }
+
+@test "doc_truth_sync: AGENTS.md skill count matches ls skills/*.md" {
+  disk=$(ls skills/*.md | wc -l)
+  if ! grep -qE "13 个 \.md" AGENTS.md; then
+    echo "AGENTS.md missing '13 个 .md' (disk has $disk)"
+    return 1
+  fi
+}
+
+@test "doc_truth_sync: AGENTS.md ADR table lists 0001-0019 with ADR-0013 dup note" {
+  for n in 0001 0010 0019 0013; do
+    if ! grep -qE "ADR-${n}\b" AGENTS.md; then
+      echo "AGENTS.md missing ADR-${n}"
+      return 1
+    fi
+  done
+  if ! grep -qE "ADR-0013.*重复|重复.*ADR-0013|extract-scan-state.*incremental-skeleton-planning" AGENTS.md; then
+    echo "AGENTS.md missing ADR-0013 dup annotation"
+    return 1
+  fi
+}

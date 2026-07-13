@@ -12,8 +12,8 @@ bats tests/smoke.bats                   # 快速冒烟 (7 个 smoke cases)
 bats tests/_lib/test_skill.bats         # skill.bash parser (8 cases)
 
 # Python 测试 — npm test 不会跑, 必须显式调用
-python3 -m pytest tests/unit/ -q --tb=short          # 28 个 unit 文件
-python3 -m pytest tests/integration/ -q --tb=short   # 3 个 Python integration (.py, 含 loop / gate / phase_switch)
+python3 -m pytest tests/unit/ -q --tb=short          # ~46 个 unit 文件 (含 v2.0.1 新增: test_iteration / test_roadmap_sprint / test_deps_output / test_rddf_session / test_arch_handoff_schema / test_discover_arch_artifacts / test_arch_quality_gate / test_change_alignment / test_iteration_concurrency 等)
+python3 -m pytest tests/integration/ -q --tb=short   # ~9 个 Python integration (.py, 含 loop / gate / phase_switch / iteration_lifecycle / iteration_archive_hook / guide_ship_iteration_hook / deps_analysis / hook_boundary / trigger_e2e)
 pip install -r requirements.txt                      # PyYAML, jsonschema, pytest
 ```
 
@@ -41,13 +41,13 @@ CI 在 `.github/workflows/test.yml`, 按序执行: 安装 deps → **断言质�
 ## 关键目录
 
 ```
-skills/                       # Markdown skills (12 .md) + loop_engine.py 在根目录
+skills/                       # Markdown skills (13 个 .md) + loop_engine.py 在根目录
   INSTALL.md                  # 第一入口 (v1.1.0)
   guide.md                    # 推荐器
   guide-arch.md               # arch 阶段 (v1.0)
   guide-plan.md               # plan 阶段 (v1.0)
   guide-ship.md               # ship 阶段 (v2.0) - 包含 v2.0.1 iteration.json hook (创建 worktree 后切 status=in_worktree)
-  propose.md / execute.md / status.md / roadmap.md / deps.md / feature.md
+  propose.md / execute.md / status.md / roadmap.md / deps.md / feature.md / rddf-session.md
   spec-workflow-writing-plans.md  # 内置 TDD 5 步 plan 生成器 (v1.0, 自包含)
   loop_engine.py              # v2.0 Loop 引擎入口 (在 skills/ 根, 不在 _lib/)
   _lib/                       # 共享 bash + Python (37 个文件, v2.0.1)
@@ -63,37 +63,15 @@ tests/
   test_helper.bash            # load_lib 解析器 + 断言辅助
   conftest.py                 # 把项目根加进 sys.path (让 `import skills._lib.*` 可解析)
   smoke.bats                  # 基础设施冒烟 (注意: 硬编码 9 个 skill 路径, 已过时)
-  unit/                       # 30 个 Python 单元测试 (含 v2.0.1 新增: test_iteration, test_roadmap_sprint, test_deps_output)
-  integration/                # 51 个集成测试 (含 v2.0.1 新增: test_iteration_lifecycle, test_iteration_archive_hook,
-                             #                                       test_guide_ship_iteration_hook, test_deps_analysis)
+  unit/                       # ~46 个 Python 单元测试 (含 v2.0.1 新增: test_iteration, test_roadmap_sprint, test_deps_output, test_rddf_session, test_arch_handoff_schema, test_discover_arch_artifacts, test_arch_quality_gate, test_change_alignment, test_iteration_concurrency 等)
+  integration/                # ~58 个集成测试 (49 .bats + 9 .py; 含 v2.0.1 新增: test_iteration_lifecycle, test_iteration_archive_hook,
+                             #                                                              test_guide_ship_iteration_hook, test_deps_analysis)
   _lib/                       # bash helpers (skill.bash, deps-subagent.bash 等)
-docs/adr/                     # ADR-0000 模板, ADR-0001~0012 (12 个)
+docs/adr/                     # ADR-0000 模板 + ADR-0001~0019 (19 个唯一编号 / 20 个实体文件; **ADR-0013 重复**: extract-scan-state + incremental-skeleton-planning)
+                             # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment
 openspec/                     # OpenSpec CLI 数据 (随项目走)
   changes/                    # active changes + archive/
-  specs/                      # 已采纳的 capability specs (22 个)
-  guide.md                    # 推荐器
-  guide-arch.md               # arch 阶段 (v1.0)
-  guide-plan.md               # plan 阶段 (v1.0)
-  guide-ship.md               # ship 阶段 (v2.0)
-  propose.md / execute.md / status.md / roadmap.md / deps.md
-  spec-workflow-writing-plans.md  # 内置 TDD 5 步 plan 生成器 (v1.0, 自包含)
-  loop_engine.py              # v2.0 Loop 引擎入口 (在 skills/ 根, 不在 _lib/)
-  _lib/                       # 共享 bash + Python (34 个文件)
-    state.sh                  # ⚠️ STUB (无 production 调用方, 消费者改用 jq/python3 inline)
-    worktree.sh / archive.sh  # bash 工具
-    state_vector.py / event_log.py / gate.py / tribunal.py / memory.py / session_manager.py
-    agents.py / detectors.py / actions.py / sanitizer.py / ...
-tests/
-  test_helper.bash            # load_lib 解析器 + 断言辅助
-  conftest.py                 # 把项目根加进 sys.path (让 `import skills._lib.*` 可解析)
-  smoke.bats                  # 基础设施冒烟 (注意: 硬编码 9 个 skill 路径, 已过时)
-  unit/                       # 28 个 Python 单元测试
-  integration/                # 48 个集成测试 (45 .bats + 3 .py)
-  _lib/                       # bash helpers (skill.bash, deps-subagent.bash 等)
-docs/adr/                     # ADR-0000 模板, ADR-0001~0012 (12 个)
-openspec/                     # OpenSpec CLI 数据 (随项目走)
-  changes/                    # active changes + archive/
-  specs/                      # 已采纳的 capability specs (22 个)
+  specs/                      # 已采纳的 capability specs (25 个)
 ```
 
 ## 关键约定 (容易踩坑)
