@@ -65,3 +65,19 @@ PY
     fi
   done
 }
+
+@test "doc_truth_sync: USAGE.md changelog banner names v2.0.1 + sync-workflow-contracts" {
+  if ! grep -qE "v2\.0\.1" USAGE.md; then echo "missing v2.0.1"; return 1; fi
+  if ! grep -qE "sync-workflow-contracts" USAGE.md; then echo "missing sync-workflow-contracts"; return 1; fi
+}
+
+@test "doc_truth_sync: USAGE.md state-file table uses dotted prefixes for handoff-style + canonical/legacy note" {
+  for tail in ".arch-handoff.json" ".plan-handoff.json" ".deps-candidates.json" ".deps-output.md"; do
+    full=".rddf/state/${tail}"
+    if ! grep -qF "$full" USAGE.md; then echo "missing $full"; return 1; fi
+  done
+  for tail in "deps-analysis.json" "iteration.json" "sessions.json" "index.md"; do
+    full=".rddf/state/${tail}"
+    if ! grep -qF "$full" USAGE.md; then echo "missing $full"; return 1; fi
+  done
+}

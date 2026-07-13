@@ -4,6 +4,12 @@
 > 支持多 change 并行执行，可分离到不同终端同时运行。
 > 当前版本: **v2.0 / v2.0.1**（三阶段架构 arch → plan → ship + Loop 引擎 + `spec-workflow/writing-plans` 自包含计划生成器 + `iteration.json` sprint 视图 + 结构化 deps 输出 + `rddf-session` 跨 OpenCode session 恢复）。`package.json` 仍标 `2.0.0`，但工作流文档与状态契约以 v2.0.1 为准。
 
+> 📋 **v2.0.2 changelog（sync-workflow-contracts 已落地，2026-07-13）**：
+> - 13 个 Markdown skill 全部发布到 `package.json::skills[]`（含 `feature` + `rddf-session`），无 src-only 例外
+> - 状态文件表已对齐生产路径：`.rddf/state/.arch-handoff.json` / `.rddf/state/.plan-handoff.json` / `.rddf/state/deps-analysis.json` / `.rddf/state/iteration.json` / `.rddf/state/sessions.json` 全部为点号前缀、gitignored
+> - ADR-0013 文件重复已在 `docs/adr/README.md` 顶部 ⚠️ flag 标注（重编号留待后续 `init-deep` 决策 / `fix-adr-index-and-numbering` change）
+> - 新增 3 个 anti-drift contract test（`tests/integration/test_doc_contracts.bats` + `tests/integration/test_adr_index.bats` + `tests/unit/test_doc_contracts.py`），任何后续漂移立刻 CI FAIL
+
 ---
 
 ## 核心概念
@@ -92,7 +98,7 @@
 
 ### 完整 skill 列表
 
-`skills/` 目录当前包含 **13 个 Markdown skill 文件**（`INSTALL` + `guide` + `guide-arch` + `guide-plan` + `guide-ship` + `feature` + `propose` + `roadmap` + `deps` + `execute` + `status` + `rddf-session` + `spec-workflow/writing-plans`）外加 `loop_engine.py`。其中 **`package.json` 当前仅注册 11 个**（尚未包含 `feature`、`rddf-session`——这两个 skill 在仓库中可用，但 npm 清单暂未同步发布）。
+`skills/` 目录当前包含 **13 个 Markdown skill 文件**（`INSTALL` + `guide` + `guide-arch` + `guide-plan` + `guide-ship` + `feature` + `propose` + `roadmap` + `deps` + `execute` + `status` + `rddf-session` + `spec-workflow/writing-plans`）外加 `loop_engine.py`。**v2.0.2 起** `package.json::skills[]` 已**完整发布全部 13 个**（含 `feature` + `rddf-session`），与磁盘无差异。
 
 | Skill | 用途 | 触发方式 |
 |-------|------|---------|
