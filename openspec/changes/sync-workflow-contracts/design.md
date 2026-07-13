@@ -71,20 +71,23 @@ spec-workflow 是元仓(meta-repo),承载 OpenSpec 工作流的 skill 集合 + L
 - 阻断 archive 比阻断 commit 更合理:本 change 不影响 commit 路径(commit 时还没跑 contract test),只在 PR / CI 阶段 fail-fast
 - 真实修复路径:CI fail → 看错误信息 → 编辑对应 doc → 重跑 → pass
 
-### Decision 3: `package.json::skills[]` 走 B(保留 src-only,加注释)
+### Decision 3: `package.json::skills[]` 走 A(发布全部 13 个 skill)
 
 决策矩阵(见 proposal §What Changes):
 
 | 选项 | 含义 | 副作用 |
 |------|------|--------|
-| A: 现在补 `feature` + `rddf-session` | 用户 `npm install spec-workflow` 立即看到 13 个 skill | API surface 扩张;`INSTALL.md` description 必须同步改;若后续要改这两个 skill 的接口,影响 npm 用户 |
-| **B: 保留 src-only + 加注释** | `package.json` 标 11 个,在文件加 `// src-only: feature, rddf-session — see skills/` | 用户从 npm 安装看到的 11 个 skill 列表与 AGENTS.md / USAGE.md 显式标注的"13 vs 11"差异一致 |
+| **A: 现在补 `feature` + `rddf-session`** | 用户 `npm install spec-workflow` 立即看到 13 个 skill;`INSTALL.md` description 同步改为 13 个(无 src-only delta) | API surface 扩张;若后续要改这两个 skill 的接口,影响 npm 用户 |
+| B: 保留 src-only + 加注释 | `package.json` 标 11 个,在文件加 `_comment` 字段声明 src-only | 用户从 npm 安装看到的 11 个 skill 列表与 AGENTS.md / USAGE.md 显式标注的"13 vs 11"差异一致 |
 
-**选 B** 的理由:
+**选 A** 的理由:
 
-- v2.0.1 仍在 beta,`feature` 与 `rddf-session` 的接口可能还会演进(尤其是 `rddf-session` 的 5 子命令)
-- INSTALL.md description 已写"13 个子技能",若走 A 必须同步改,会触发另一组 narrative 同步
-- 显式标注 src-only 比掩盖差异更诚实,贡献者也更容易理解分发模型
+- `feature` 与 `rddf-session` 均为 v1.0,`rddf-session` 已有 ADR-0017(已采纳),API 已经稳定
+- `install.sh` 与 `INSTALL.md` **已经**通过 `cp -f skills/*.md` 把全部 13 个 .md 文件分发给目标项目,所以 `package.json::skills[]` 的 11 vs 13 差异是**虚假的**"src-only"标签——文件其实已经分发
+- `_lib/*.py` 分发漏洞已由 `fix-install-lib-distribution` change(commit `171f565`)解决,从此 `feature`/`rddf-session` 的运行时依赖(rddf_session.py / iteration.py / deps_output.py)能跟随 npm 包一起到达目标项目,不再有"承诺但跑不起来"的风险
+- 显式把 13 个 skill 都进 `package.json::skills[]`,消除 5 处文档(skills 表 / AGENTS.md / INSTALL.md description / general spec / doc-truth-sync spec)与 npm 元数据之间的 11/13 叙事漂移
+
+> 注:本 change 的任务设计曾同时保留 A 与 B 两条路径(Task 2.2 / Task 2.3),目的是给 PR review 留选择空间。本设计文档采纳 A 后,Task 2.3(B 路径)被合并/废弃,tasks.md 与 `.rddf/plans/sync-workflow-contracts.md` 同步收口。
 
 ### Decision 4: ADR-0013 dup 走 C(README 显式 flag,不重编号)
 

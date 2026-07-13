@@ -59,33 +59,28 @@ Expected: 28+ unit 文件 + 7 smoke cases 全部通过。
 ## 2. README / AGENTS / INSTALL / package.json 决策
 
 > 这一组决定 narrative docs 与分发契约的对齐。先讨论决策,再动手改。
+> 设计层采纳 Decision 3 → A(见 design.md Decision 3),所以 Task 2.3(B 路径)被废弃,只剩 A 路径。
 
-- [ ] **Task 2.1**: 决策 `package.json::skills[]` 是否补 `feature` + `rddf-session`
+- [x] **Task 2.1**: 决策 `package.json::skills[]` 是否补 `feature` + `rddf-session`
 
-**Decision task**(在 PR review 讨论):
+**Decision task**(已锁定 — 见 design.md Decision 3):
 
-- 选项 A:补到 13 个(同步改 INSTALL.md description)
-- **选项 B(推荐)**:保留 11 个,在 `package.json` 顶部加 `// src-only skills (not published via npm): feature, rddf-session — see skills/` 注释
+- **选 A**(已锁定):补到 13 个
+  - 理由 1:`feature` / `rddf-session` 均为 v1.0,API 已稳定
+  - 理由 2:`install.sh` 与 `INSTALL.md` 已经通过 `cp -f skills/*.md` 把全部 13 个 `.md` 文件分发给目标项目,所以原 11/13 差异是**虚假的**"src-only"标签
+  - 理由 3:`fix-install-lib-distribution` change(commit `171f565`)已经解决了 `_lib/*.py` 分发漏洞,从此 `feature`/`rddf-session` 的运行时依赖可以跟随 npm 包一起到达目标项目
 
-输出:**Maintainer 在 PR review 时选定 A 或 B**,对应下方 2.2 或 2.3 任务执行。
-
-- [ ] **Task 2.2 (若选 A)**: 把 `feature` 与 `rddf-session` 加入 `package.json::skills[]`
+- [ ] **Task 2.2**: 把 `feature` 与 `rddf-session` 加入 `package.json::skills[]`
 
 ```bash
 cd /workspace/project/spec-workflow
 # 编辑 package.json,skills[] 末尾加入 "feature", "rddf-session"
-# 同时改 description 字段,体现 13 个 skill
-# 同时改 INSTALL.md description "全部 13 个子技能" → "全部 13 个子技能(均通过 npm 发布)"
+# package.json 顶部不要加 _comment 字段(已废弃)
 ```
 
-- [ ] **Task 2.3 (若选 B)**: 保留 11 个,在 `package.json` 顶部加注释
+- [ ] ~~**Task 2.3 (废弃)**~~: 保留 11 个,在 `package.json` 顶部加注释
 
-```bash
-cd /workspace/project/spec-workflow
-# 在 package.json 顶部(license 字段后)插入注释行:
-# 注意:JSON 标准不支持注释,需用 "_comment": "src-only skills (not in 'skills' array): feature, rddf-session"
-# 同步在 USAGE.md skill 表下方加 "(feature + rddf-session 暂仅在仓库内可用,不在 npm 发布清单)"
-```
+> 已废弃 — Decision 3 翻 A 后,Task 2.3 的 src-only + `_comment` 路径不再执行。如果有人从历史 commit 恢复此路径,会被 `tests/unit/test_doc_contracts.py::test_package_json_skills_count_within_delta` 拦截(assert delta ≤ 2 改为 delta = 0 时 fail)。
 
 - [ ] **Task 2.4**: 改 `USAGE.md`
 
@@ -94,13 +89,13 @@ cd /workspace/project/spec-workflow
 1. 顶部 changelog note 加 `> **v2.0.2 (sync-workflow-contracts)**: ship-side phase count 由 5+1 升级为 7 编号子阶段`
 2. Arch / Plan / Ship 三阶段表 L19 ship 端描述改为 `plan → verification → execute → review → archive → cleanup → ship-done(7 子阶段,编号 1, 1.5, 2, 2.5, 3, 4, 5)`
 3. state-file 表 L57-58:`proposal-suggestions.md` 仍保留无点号;`.rddf/state/.arch-handoff.json` / `.rddf/state/.plan-handoff.json` / `.rddf/state/.deps-candidates.json` / `.rddf/state/.deps-output.md` 保留点号;`.rddf/state/deps-analysis.json` / `iteration.json` / `sessions.json` / `index.md` 保持生产无点路径;`roadmap-state.json` 点/无点混用需显式标注 canonical 决策;移除任何 undotted handoff.json 引用
-4. skill 表(L95-111)保持 13 vs 11 的差异说明(显式标注 `feature` + `rddf-session` 状态)
+4. skill 表(L95-111)改为 13 全发布版本(无 13 vs 11 差异说明,因为 Decision 3 翻 A 后两者一致);移除"feature + rddf-session 暂仅在仓库内可用"的表述
 
 - [ ] **Task 2.5**: 改 `AGENTS.md`
 
 具体修改:
 
-1. 关键目录树 `skills/` 段 L44-61:skill 计数 "12 个 .md" → "13 个 .md";在 INSTALL.md 后插入 `feature.md` 与 `rddf-session.md`(它们在仓库中可用,package.json 暂未注册)
+1. 关键目录树 `skills/` 段 L44-61:skill 计数 "12 个 .md" → "13 个 .md";在 INSTALL.md 后插入 `feature.md` 与 `rddf-session.md`(它们既在仓库内可用,也通过 `package.json::skills[]` 与 npm 发布)
 2. `docs/adr/` 段 L70:`ADR-0001~0012 (12 个)` → `ADR-0001~0019 (19 个,加 ADR-0013 重复:extract-scan-state + incremental-skeleton-planning)`
 3. 关键目录树 `openspec/` 段 L72:`已采纳的 capability specs (22 个)` → `已采纳的 capability specs (25 个)`
 4. 常见陷阱 #11 保持 "`npm test` 不跑 Python" 不变(已有正确描述)

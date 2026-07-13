@@ -63,9 +63,11 @@ USAGE.md 已经把 Phase 2.5 Review(execute 后债务扫描)列为 ship 端核�
 
 | 决策点 | 选项 | 推荐 |
 |--------|------|------|
-| `package.json::skills[]` 是否补 `feature` + `rddf-session` | A: 现在补(对内可见) / B: 保持 src-only + 显式注释说明 | **B**(v2.0.1 暂保留 src-only,加注释) |
+| `package.json::skills[]` 是否补 `feature` + `rddf-session` | A: 现在补(全部 13 个发布) / B: 保持 src-only + 显式注释说明 | **A**(v2.0.1 + `fix-install-lib-distribution` 已 commit 171f565,`_lib/*.py` 分发问题已解) |
 | ADR-0013 重复文件如何处理 | A: 重新编号其中一个 / B: 合并内容到单文件 / C: 在 README 显式 flag | **C**(先 flag,等 `init-deep` 决策后处理) |
 | doc contract test 失败是否阻断 archive | A: warning(只警告) / B: error(阻断 archive) | **B**,对齐现有 `gate.py` 的 error/warning 分级 |
+
+> 决策升级记录:Decision 1 原推荐 B(2026-07-12 起草),后经 Oracle 第二次咨询(2026-07-13)发现 `_lib/*.py` 分发漏洞,需先解决。`fix-install-lib-distribution` change 已 commit 在 `171f565`,Decision 1 升级为 A。Task 2.3(B 路径)被废弃,只剩 A 路径。
 
 ## Impact
 
@@ -91,11 +93,11 @@ USAGE.md 已经把 Phase 2.5 Review(execute 后债务扫描)列为 ship 端核�
 
 - [ ] USAGE.md ship-side phase 表显式列出 7 个编号子阶段(Phase 1, 1.5, 2, 2.5, 3, 4, 5),与 `guide-ship.md` 一致
 - [ ] USAGE.md state-file 表只列磁盘真实存在的文件,且 handoff/plan-handoff/arch-handoff 均为点号前缀路径
-- [ ] USAGE.md skill 表保留 "13 个 .md / 11 个 in package.json" 的差异说明(显式决策 B)
+- [ ] USAGE.md skill 表 13 个全部发布,移除"13 vs 11"差异说明(显式决策 A)
 - [ ] AGENTS.md skill 计数更新为 13,ADR 计数更新为 19 个唯一编号(0001-0019) / 20 个实体 ADR 文件(ADR-0013 重复)
 - [ ] AGENTS.md 关键目录树的 `skills/` 与 `openspec/` 两段都与磁盘 `ls` 一致
 - [ ] INSTALL.md description 保留 13 个子技能数,在末尾新增 "npm test vs pytest" 反 drift 提示块
-- [ ] `package.json::skills[]` 决策落地(选 B:保留 11 个 + 加 `// src-only: feature, rddf-session` 注释,或选 A:补到 13 个)
+- [ ] `package.json::skills[]` 决策落地为 A:补到 13 个,无 `_comment` 字段(`fix-install-lib-distribution` 已解决 `_lib/*.py` 分发前提)
 - [ ] `docs/adr/README.md` 顶部 v2.0 status table 覆盖 0001-0019(19 个唯一编号 + ADR-0013 dup 标注,共 20 个实体 ADR 条目)
 - [ ] `openspec/specs/general/spec.md::Requirement general-docs-match-code` 全部 Scenarios 更新到 v2.0.1:
   - ship-side phase 计数改为 7 编号子阶段

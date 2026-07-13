@@ -28,8 +28,8 @@ package.json, docs/adr/README.md) and OpenSpec specs. The tests MUST fail CI
 (error severity) when any of the following drift classes are observed:
 
 - **D1 — Skill count drift**: `package.json::skills[]` length disagrees with
-  `ls skills/*.md | wc -l` (delta of >2 requires explicit src-only note in
-  package.json).
+  `ls skills/*.md | wc -l` (the lengths MUST be equal — Decision 3 翻 A 后所有
+  skill 都通过 npm 发布,无 src-only 例外,`package.json` 不应有 `_comment` 字段声明 src-only)。
 - **D2 — ADR index drift**: `docs/adr/README.md` references an ADR number whose
   `ADR-NNNN-*.md` file does not exist, OR fails to reference a real ADR file.
 - **D3 — Ship-side phase count drift**: USAGE.md describes ship-side phases
@@ -178,10 +178,10 @@ locked by the `doc-contract-tests-required` test Requirement above.
 - **THEN** the skill list in the description SHALL include all on-disk
   `skills/*.md` files
 - **AND** the package.json template SHALL derive version from the actual package.json
-- **AND** the count SHALL be 13 (current `ls skills/*.md | wc -l`)
-- **AND** the count delta vs `package.json::skills[]` SHALL be explicit
-  (e.g., "13 .md on disk, 11 published via npm: feature + rddf-session are
-  src-only")
+- **AND** the count SHALL be 13 (current `ls skills/*.md | wc -l`), matching
+  `package.json::skills[]` length (Decision 3 = A)
+- **AND** the description SHALL NOT state a src-only delta (no "11 published"
+  mention); both numbers are equal so no delta explanation is needed
 
 #### Scenario: USAGE.md shows correct version and dotted state paths
 

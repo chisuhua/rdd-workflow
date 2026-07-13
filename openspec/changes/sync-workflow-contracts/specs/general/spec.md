@@ -75,12 +75,10 @@ introduced in `openspec/specs/doc-truth-sync/spec.md::Requirement doc-contract-t
 
 - **WHEN** `package.json::skills[]` is read
 - **AND** `ls skills/*.md | wc -l` is computed
-- **THEN** the difference SHALL be ≤ 2
-- **AND** if the difference is > 0, `package.json` SHALL contain an explicit
-  `_comment` field naming the src-only skills (e.g., `feature`,
-  `rddf-session`)
-- **AND** `skills/INSTALL.md` description SHALL state both numbers with the
-  delta explanation
+- **THEN** the difference SHALL be 0
+- **AND** `package.json` SHALL NOT contain a `_comment` field (Decision 3 翻 A 后所有 skill 都通过 npm 发布,无 src-only 例外)
+- **AND** `skills/INSTALL.md` description SHALL NOT enumerate skill names or state a src-only delta(描述应采用计数式,如"详见 skills/ 目录")
+- **AND** upstream `package.json` MUST contain `feature` and `rddf-session`(Decision 3 = A 已锁定)
 
 #### Scenario: status.md sample output uses generic paths
 
@@ -104,7 +102,7 @@ introduced in `openspec/specs/doc-truth-sync/spec.md::Requirement doc-contract-t
   (setup/adr-create/architecture/roadmap-define/arch-done per `guide-arch`)
   and ship-side as **7 numbered subphases (Phase 1, 1.5, 2, 2.5, 3, 4, 5)**
 - **AND** it SHALL list current subskills including `feature` and
-  `rddf-session` (13 on disk total, 11 in package.json publish set)
+  `rddf-session` (13 on disk total, 13 in package.json publish set — Decision 3 = A)
 
 #### Scenario: INSTALL.md version matches package.json
 
@@ -112,8 +110,9 @@ introduced in `openspec/specs/doc-truth-sync/spec.md::Requirement doc-contract-t
 - **THEN** its version field SHALL match `package.json::version`
 - **AND** its embedded package.json heredoc SHALL derive the `skills` array
   from the actual `package.json` (using python3 json.load, not hardcoded list)
-- **AND** its description SHALL include both the disk count (13) and the
-  npm publish count (11) with the src-only delta note
+- **AND** its description SHALL include the disk count (13) matching
+  `package.json::skills[]` length (Decision 3 = A 已锁定,无 src-only 例外);
+  不应出现"13 vs 11"或"src-only delta"等表述
 
 #### Scenario: proposal-suggestions-format consumer list is current
 
