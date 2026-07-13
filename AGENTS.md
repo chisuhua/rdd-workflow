@@ -62,7 +62,7 @@ skills/                       # Markdown skills (13 个 .md) + loop_engine.py �
 tests/
   test_helper.bash            # load_lib 解析器 + 断言辅助
   conftest.py                 # 把项目根加进 sys.path (让 `import skills._lib.*` 可解析)
-  smoke.bats                  # 基础设施冒烟 (注意: 硬编码 9 个 skill 路径, 已过时)
+  smoke.bats                  # 基础设施冒烟 (注意: 硬编码 10 个 skill 路径, 已过时; 缺 feature/rddf-session/spec-workflow-writing-plans)
   unit/                       # ~46 个 Python 单元测试 (含 v2.0.1 新增: test_iteration, test_roadmap_sprint, test_deps_output, test_rddf_session, test_arch_handoff_schema, test_discover_arch_artifacts, test_arch_quality_gate, test_change_alignment, test_iteration_concurrency 等)
   integration/                # ~58 个集成测试 (49 .bats + 9 .py; 含 v2.0.1 新增: test_iteration_lifecycle, test_iteration_archive_hook,
                              #                                                              test_guide_ship_iteration_hook, test_deps_analysis)
@@ -81,8 +81,7 @@ openspec/                     # OpenSpec CLI 数据 (随项目走)
 | 文件 | 用途 | 写入方 |
 |------|------|--------|
 | `.rddf/state/.arch-handoff.json` | arch→plan 交接 + **ADR-0016 发现契约** v1 (adr_dir/roadmap_path/architecture_dir/adr_pattern/discovered/version) | `guide-arch` (arch-done) / `guide-plan` (Phase 0 intake) + `propose`/`roadmap`/`gate.py`/`detectors.py`/`actions.py`/`scan-state.sh` (handoff readers, fallback to defaults) |
-| `.rddf/state/plan-handoff.json` | plan→ship 交接 | `guide-plan` (plan-done 写入) / `guide-ship` (ship-start 读取) |
-| `.rddf/state/handoff.json` | spec→ship 软交接 | `guide-plan` / `guide-ship` |
+| `.rddf/state/.plan-handoff.json` | plan→ship 交接 | `guide-plan` (plan-done 写入) / `guide-ship` (ship-start 读取) |
 | `.rddf/state/sessions.json` | **rddf-session 生命周期** (ADR-0017) — 跨 OpenCode session 工作流恢复 | `guide-arch`/`guide-plan`/`guide-ship` 入口 + `rddf-session` skill 5 子命令 |
 | `.rddf/state/deps-analysis.json` | **结构化** deps 输出 (v2.0.1) | `deps` Step 5b 优先写; Step 6 markdown-fallback 时也写 |
 | `.rddf/state/deps-candidates.json` | deps 候选列表 | `guide-plan` (deps 阶段) |

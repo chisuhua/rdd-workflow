@@ -81,3 +81,11 @@ PY
     if ! grep -qF "$full" USAGE.md; then echo "missing $full"; return 1; fi
   done
 }
+
+@test "doc_truth_sync: AGENTS.md forbids undotted legacy .rddf/state/handoff.json (per general/spec.md Scenario 2)" {
+  # general/spec.md Scenario 2 forbids undotted .rddf/state/handoff.json
+  if grep -qE "(^|[^/])\.rddf/state/handoff\.json|rddf/state/plan-handoff\.json" AGENTS.md; then
+    echo "AGENTS.md references undotted legacy handoff path"
+    return 1
+  fi
+}
