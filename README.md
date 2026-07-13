@@ -89,16 +89,22 @@ spec-workflow/
     ├── guide-arch.md          # Arch 阶段状态机(v2.0+)
     ├── guide-plan.md          # Plan 阶段状态机(v2.0+)
     ├── guide-ship.md          # Ship 端状态机
-    ├── feature.md              # feature 管理 (v1.0)
+    ├── feature.md             # feature 管理 (v2.0+)
+    ├── rddf-session.md        # 跨 OpenCode session 恢复 (ADR-0017)
     ├── propose.md             # 子技能(被 guide-plan 调用)
     ├── execute.md             # 子技能(被 guide-ship 调用)
     ├── roadmap.md             # 子技能(被 guide-arch 调用)
     ├── deps.md                # 子技能(被 guide-plan 调用)
     ├── status.md              # 子技能(被 guide-ship 调用或独立使用)
-    ├── spec-workflow-writing-plans.md # 实施计划生成器(v2.0 自包含, fork 自 superpowers)
-    ├── execute.md             # 实施计划执行(含 TDD 5 步纪律,v2.0 整合)
+    ├── spec-workflow-writing-plans.md  # 实施计划生成器(v2.0 自包含, fork 自 superpowers)
     ├── loop_engine.py         # v2.0 Loop 引擎(state vector + event log)
-    └── _lib/                  # v2.0 共享辅助函数库(state.sh, worktree.sh, archive.sh, deps.sh)
+    └── _lib/                  # v2.0.1 共享辅助函数库(36 .py + 7 schema):
+                                #   state.sh, worktree.sh, archive.sh,
+                                #   state_vector.py, event_log.py, gate.py, tribunal.py,
+                                #   memory.py, session_manager.py, agents.py,
+                                #   detectors.py, actions.py, sanitizer.py,
+                                #   iteration.py (v2.0.1), deps_output.py (v2.0.1),
+                                #   roadmap_sprint.py (v2.0.1), ...
 ```
 
 ## 工作原理

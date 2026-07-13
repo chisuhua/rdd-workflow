@@ -56,3 +56,12 @@ PY
     return 1
   fi
 }
+
+@test "doc_truth_sync: README.md directory tree lists guide-arch / guide-plan / loop_engine / _lib" {
+  for name in guide-arch.md guide-plan.md loop_engine.py "_lib"; do
+    if ! grep -qE "$name" README.md; then
+      echo "README.md missing '$name' in tree"
+      return 1
+    fi
+  done
+}
