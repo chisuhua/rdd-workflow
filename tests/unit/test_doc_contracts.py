@@ -29,11 +29,22 @@ def test_general_spec_phase_count_matches_usaged() -> None:
     )
 
 
-def test_general_spec_no_guide_spec_reference() -> None:
+def test_general_spec_no_active_guide_spec_reference() -> None:
+    """guide-spec is allowed in legacy notes (e.g. 'removed in v2.0') but MUST NOT
+    be prescribed as an active consumer in any Requirement body.
+    """
     spec = _read("openspec/specs/general/spec.md")
-    assert "guide-spec" not in spec, (
-        "general/spec.md still references 'guide-spec' which was removed in v2.0"
-    )
+    import re
+    blocks = re.split(r"\n### Requirement: ", spec)
+    for block in blocks[1:]:
+        active_ref = re.search(
+            r"(consumers?|skills?)\s+(include|are|should include|must include|:)\s+[^.\n]*guide-spec",
+            block,
+            re.IGNORECASE,
+        )
+        assert not active_ref, (
+            f"general/spec.md prescribes 'guide-spec' as active in Requirement:\n{block[:200]}"
+        )
 
 
 def test_general_spec_consumers_drop_guide_spec_add_arch_plan() -> None:
@@ -66,7 +77,19 @@ def test_state_file_paths_in_general_spec_use_canonical_paths() -> None:
                  ".deps-candidates.json", ".deps-output.md"):
         assert f".rddf/state/{tail}" in spec, f"missing '.rddf/state/{tail}'"
     assert ".rddf/state/deps-analysis.json" in spec
-    assert ".sisyphus/plans" not in spec
+    # .sisyphus/plans is allowed in legacy notes (e.g. "wrong directory") but MUST NOT
+    # be prescribed as a canonical/active path in any Requirement body.
+    import re
+    blocks = re.split(r"\n### Requirement: ", spec)
+    for block in blocks[1:]:
+        active_ref = re.search(
+            r"(path|directory|location)\s+(is|are|should be|must be|:)\s+[^.\n]*\.sisyphus/plans",
+            block,
+            re.IGNORECASE,
+        )
+        assert not active_ref, (
+            f"general/spec.md prescribes '.sisyphus/plans' as active in Requirement:\n{block[:200]}"
+        )
 
 
 def test_npm_test_trap_caveat_locked() -> None:

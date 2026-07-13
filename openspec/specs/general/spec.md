@@ -3,7 +3,6 @@
 ## Purpose
 TBD - cross-cutting documentation / contract sync requirement (v2.0.2 sync-workflow-contracts).
 ## Requirements
-
 ### Requirement: general-add-skill-bats-tests
 The system SHALL provide add-skill-bats-tests functionality.
 
@@ -48,63 +47,126 @@ The system SHALL harden documentation and code consistency for spec-workflow v1.
 - **AND** it SHALL NOT return the worktree's own `openspec/<name>` branch as fallback
 
 ### Requirement: general-docs-match-code
-All user-facing documentation in `USAGE.md`, `README.md`, `docs/adr/*.md`, `skills/*.md`, and `tests/README.md` SHALL accurately reflect the actual code state as of the change's commit (v2.0.2 sync-workflow-contracts).
 
-#### Scenario: USAGE.md ship-side phase count (v2.0.1)
+The system SHALL ensure all user-facing documentation in `USAGE.md`, `README.md`,
+`docs/adr/*.md`, `skills/*.md`, and `tests/README.md` accurately reflects the
+actual code state as of the change's commit. The locked fields enumerated in
+the Scenarios below SHALL additionally be enforced by the anti-drift tests
+introduced in `openspec/specs/doc-truth-sync/spec.md::Requirement doc-contract-tests-required`.
+
+#### Scenario: USAGE.md ship-side phase count
+
 - **WHEN** `USAGE.md` is read
-- **THEN** it SHALL describe ship-side as **7 编号子阶段** (numbered subphases: Phase 1, 1.5, 2, 2.5, 3, 4, 5 — plan / verification / execute / review / archive / cleanup / ship-done)
-- **AND** it SHALL NOT contain the legacy 五阶段加一退出描述 (legacy: 五阶段 plus 退出)
-- **AND** it SHALL list the phase sequence as `plan → verification → execute → review → archive → cleanup → ship-done`
+- **THEN** it SHALL describe ship-side as **7 numbered subphases (Phase 1, 1.5,
+  2, 2.5, 3, 4, 5)** with sequence
+  `plan → verification → execute → review → archive → cleanup → ship-done`
+- **AND** it SHALL NOT describe ship-side as "5 phases + 1 exit" (the v1.x
+  model is stale as of v2.0.1)
+- **AND** Phase 2.5 Review SHALL be explicitly named (execute 后债务扫描)
 
-#### Scenario: USAGE.md state-file table (v2.0.1 dotted canonical paths)
+#### Scenario: USAGE.md state-file table uses dotted prefix convention
+
 - **WHEN** `USAGE.md` is read
-- **THEN** the state-file table SHALL include `proposal-suggestions.md`, `openspec/changes/<name>/tasks.md`, `docs/adr/ADR-*.md`, `.rddf/plans/<name>.md`, `.rddf/state/.arch-handoff.json`, `.rddf/state/.plan-handoff.json`, `.rddf/state/roadmap-state.json`, `.rddf/state/deps-analysis.json`, `.rddf/state/iteration.json`, `.rddf/state/sessions.json`, `.rddf/state/.deps-candidates.json`, `.rddf/state/.deps-output.md`, and `.rddf/state/index.md`
-- **AND** it SHALL NOT reference the legacy undotted `.rddf/state/handoff.json` (replaced by `.arch-handoff.json` / `.plan-handoff.json`)
-- **AND** it SHALL NOT reference the legacy plan path under `.sisyphus/` (replaced by `.rddf/plans/<name>.md`)
+- **THEN** the state-file table SHALL list only files that exist on disk
+- **AND** all state files SHALL match production paths — specifically:
+  - `.rddf/state/.arch-handoff.json`
+  - `.rddf/state/.plan-handoff.json`
+  - `.rddf/state/deps-analysis.json`
+  - `.rddf/state/.deps-candidates.json`
+  - `.rddf/state/.deps-output.md` (with legacy undotted path noted as compat)
+  - `.rddf/state/sessions.json`
+  - `.rddf/state/iteration.json`
+  - `.rddf/state/index.md`
+  - `.rddf/state/roadmap-state.json` and/or `.rddf/state/.roadmap-state.json` only if the doc explicitly labels which one is canonical and which one is legacy/compat
+- **AND** the table SHALL NOT contain `handoff.json` (undotted) or
+  `.sisyphus/plans/<name>.md` (wrong directory)
+- **AND** `proposal-suggestions.md` at project root SHALL remain undotted
+  (git-tracked, intentional)
 
-#### Scenario: skill files do not hardcode main branch
-- **WHEN** `skills/*.md` is searched for the literal word "main 分支" or "main branch" in user-facing output
-- **THEN** it SHALL NOT appear (use `${DEFAULT_BRANCH:-master}` or dynamic detection instead)
+#### Scenario: USAGE.md describes lightweight and worktree ship modes
+
+- **WHEN** `USAGE.md` is read
+- **THEN** it SHALL describe ship-side as supporting two execution modes:
+  - **⚡ 轻量模式 (lightweight)**: no other worktree AND only this one change,
+    creates `openspec/<name>` branch directly in main repo (skipping worktree)
+  - **🔀 worktree 模式**: active worktree OR multiple changes, creates
+    `.rddf/wt/<name>` isolated worktree
+- **AND** it SHALL explain that lightweight mode skips the
+  `git worktree remove` step during archive (no worktree to remove)
+
+#### Scenario: package.json skills array aligns with INSTALL.md description
+
+- **WHEN** `package.json::skills[]` is read
+- **AND** `ls skills/*.md | wc -l` is computed
+- **THEN** the difference SHALL be 0
+- **AND** `package.json` SHALL NOT contain a `_comment` field (Decision 3 翻 A 后所有 skill 都通过 npm 发布,无 src-only 例外)
+- **AND** `skills/INSTALL.md` description SHALL NOT enumerate skill names or state a src-only delta(描述应采用计数式,如"详见 skills/ 目录")
+- **AND** upstream `package.json` MUST contain `feature` and `rddf-session`(Decision 3 = A 已锁定)
 
 #### Scenario: status.md sample output uses generic paths
-- **WHEN** `skills/status.md` L68-70 is read
-- **THEN** the sample `git worktree list` output SHALL use `/path/to/PROJECT_ROOT` (not `/path/to/CppHDL`)
 
-#### Scenario: ADR-0001 reflects actual architecture (v2.0.1 supersession)
+- **WHEN** `skills/status.md` L68-70 is read
+- **THEN** the sample `git worktree list` output SHALL use `/path/to/PROJECT_ROOT`
+  (not `/path/to/CppHDL`)
+- **AND** any historical `/path/to/CppHDL` references SHALL be flagged
+  drift-ignore
+
+#### Scenario: skill files do not hardcode main branch
+
+- **WHEN** `skills/*.md` is searched for the literal word "main 分支" or
+  "main branch" in user-facing output
+- **THEN** it SHALL NOT appear (use `${DEFAULT_BRANCH:-master}` or dynamic
+  detection via `find_default_branch()` instead)
+
+#### Scenario: ADR-0001 reflects actual three-phase architecture
+
 - **WHEN** `docs/adr/ADR-0001-propose-plan-execute-state-machine.md` is read
-- **THEN** its Decision section SHALL list spec-side as 5 phases (setup/roadmap/propose/deps/spec-done) and ship-side as **7 编号子阶段** (plan/verification/execute/review/archive/cleanup/ship-done, v2.0.1 supersedes v1.x 五阶段加一退出)
-- **AND** it SHALL reference the **three-phase** consumers `guide-arch`, `guide-plan`, `guide-ship` (NOT the v1.x spec-side 别名 that merged arch + plan)
-- **AND** it SHALL list **13 subskills** (NOT v1.x 9 or v1.x 10)
+- **THEN** its Decision section SHALL list spec-side as 5 phases
+  (setup/adr-create/architecture/roadmap-define/arch-done per `guide-arch`)
+  and ship-side as **7 numbered subphases (Phase 1, 1.5, 2, 2.5, 3, 4, 5)**
+- **AND** it SHALL list current subskills including `feature` and
+  `rddf-session` (13 on disk total, 13 in package.json publish set — Decision 3 = A)
 
 #### Scenario: INSTALL.md version matches package.json
-- **WHEN** `skills/INSTALL.md` is read
-- **THEN** its version SHALL be `1.1.0` (matching `package.json`)
-- **AND** its embedded package.json heredoc SHALL include `feature` + `rddf-session` in the skills array (Decision 3 = A, v2.0.2 publishes all 13)
 
-#### Scenario: proposal-suggestions-format consumers list v2.0+
+- **WHEN** `skills/INSTALL.md` is read
+- **THEN** its version field SHALL match `package.json::version`
+- **AND** its embedded package.json heredoc SHALL derive the `skills` array
+  from the actual `package.json` (using python3 json.load, not hardcoded list)
+- **AND** its description SHALL include the disk count (13) matching
+  `package.json::skills[]` length (Decision 3 = A 已锁定,无 src-only 例外);
+  不应出现"13 vs 11"或"src-only delta"等表述
+
+#### Scenario: proposal-suggestions-format consumer list is current
+
 - **WHEN** `docs/proposal-suggestions-format.md` is read
-- **THEN** the consumer list SHALL include `propose`, `guide`, `status`, `deps`, `guide-arch`, `guide-plan`, `guide-ship` (NOT the v1.x spec-side 别名 that merged arch + plan)
+- **THEN** the consumer list SHALL include `propose`, `guide-arch`,
+  `guide-plan`, `guide`, `status`, and `deps`
+- **AND** it SHALL NOT list `guide-spec` (removed in v2.0)
+- **AND** `roadmap` SHALL be listed if it consumes the format
 
 #### Scenario: propose.md uses 4-digit ADR pattern
+
 - **WHEN** `skills/propose.md` L193 is read
-- **THEN** the regex SHALL use `ADR-NNNN` (4-digit) to match `docs/adr/README.md` convention
+- **THEN** the regex SHALL use `ADR-NNNN` (4-digit) to match
+  `docs/adr/README.md` convention
 
 #### Scenario: tests/README.md matches actual file layout
+
 - **WHEN** `tests/README.md` Layout section is read
 - **THEN** it SHALL include `smoke.bats` and `test_helper.bash` at the root
-- **AND** it SHALL list actual files in `tests/_lib/` (including `deps-subagent.bash`)
+- **AND** it SHALL list actual files in `tests/_lib/` (including
+  `deps-subagent.bash`)
+- **AND** test counts SHALL match `ls tests/unit/*.py | wc -l` and
+  `ls tests/integration/*.bats | wc -l`
 
-#### Scenario: package.json::skills[] publishes all 13 disk skills (Decision 3 = A)
-- **WHEN** `package.json::skills[]` is read
-- **THEN** it SHALL contain 13 entries matching `ls skills/*.md` exactly (INSTALL + guide + guide-arch + guide-plan + guide-ship + feature + rddf-session + propose + execute + status + roadmap + deps + spec-workflow-writing-plans)
-- **AND** it SHALL NOT define a `_comment` field (Decision 3 = A path, no src-only exceptions)
+#### Scenario: npm test vs pytest caveat is locked
 
-#### Scenario: AGENTS.md skill + ADR counts reflect disk
-- **WHEN** `AGENTS.md` is read
-- **THEN** it SHALL state **13 个 .md** (skills count matching disk)
-- **AND** it SHALL state **ADR-0001~0020 (20 个唯一编号 / 20 个实体文件)** in the docs/adr/ description
+- **WHEN** `package.json::scripts.test` is read
+- **THEN** it SHALL contain exactly `bats tests/` (and nothing else that would
+  make `npm test` also invoke pytest)
+- **AND** `USAGE.md` and `AGENTS.md` SHALL each contain a visible warning
+  reminding readers that `npm test` does NOT run pytest
+- **AND** the `doc-contract-tests-required` test in
+  `openspec/specs/doc-truth-sync/spec.md` SHALL enforce this Scenario
 
-#### Scenario: docs/adr/README.md status table covers all real ADRs (0001-0020, no dup)
-- **WHEN** `docs/adr/README.md` is read
-- **THEN** the v2.0 status table SHALL include ADR rows for 0001 through 0020 (with no duplicate numbering — ADR-0013 keeps `extract-scan-state` only; incremental-skeleton-planning is renumbered to ADR-0020 in v2.0.2)
-- **AND** it SHALL NOT reference ADR numbers beyond 0020
