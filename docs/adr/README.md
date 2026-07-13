@@ -2,7 +2,14 @@
 
 > spec-workflow 架构决策记录 (Architecture Decision Records)
 
-> ## 📊 v2.0 ADR 实施状态（2026-06-28）
+> ⚠️ **ADR-0013 重复标注**：当前 `docs/adr/` 下 ADR-0013 有**两个**实体文件（同编号）：
+> - `ADR-0013-extract-scan-state.md`（extract-scan-state 主题）
+> - `ADR-0013-incremental-skeleton-planning.md`（incremental-skeleton-planning 主题）
+>
+> 本 README 暂未重编号（决策 = C：先 flag，重编号留待后续 `init-deep` 决策 / `fix-adr-index-and-numbering` change）。
+> 因此本 ADR 索引的"19 个唯一编号 / 20 个实体 ADR 文件"是当前事实真相，重编号后会变成 20 个唯一编号 / 20 个文件。
+
+> ## 📊 v2.0 ADR 实施状态（2026-07-13 同步 sync-workflow-contracts）
 >
 > | ADR | 标题 | 实施状态 | 目标版本 |
 > |-----|------|---------|---------|
@@ -18,7 +25,13 @@
 > | [ADR-0010](ADR-0010-multi-session-management.md) | 多会话管理 | 已采纳（分阶段） | **v2.1（完整版）** |
 > | [ADR-0011](ADR-0011-phase-step-pipeline-model.md) | 阶段步骤化执行模型 | 已采纳 | **v3.0** |
 > | [ADR-0012](ADR-0012-flow-customization-layer.md) | 流程定制层 | 已采纳 | **v3.0** |
+> | [ADR-0013](ADR-0013-extract-scan-state.md) ⚠️重复 | scan-state 提取（与 ADR-0013-incremental-skeleton-planning.md 同编号） | 已采纳 | 已完成（v2.0） |
+> | [ADR-0014](ADR-0014-review-phase-and-debt-reflow.md) | Review 阶段债务回流机制 | 已采纳 | **v2.1** |
+> | [ADR-0015](ADR-0015-integrate-openspec-validate-as-plan-critic.md) | openspec validate 集成为 plan-critic | 已采纳 | **v2.1** |
 > | [ADR-0016](ADR-0016-arch-artifact-discovery-contract.md) | Arch 阶段工件发现契约 | 已采纳 | **v2.1** |
+> | [ADR-0017](ADR-0017-rddf-session.md) | rddf-session 用户视角工作流会话 | 已采纳 | 已完成（v2.0.1） |
+> | [ADR-0018](ADR-0018-arch-quality-gate.md) | 架构质量门 — arch 阶段的定性检查 | 已采纳 | **v2.1** |
+> | [ADR-0019](ADR-0019-change-arch-alignment.md) | change_arch_alignment — change 提案与架构对齐检查 | 已采纳 | **v2.1** |
 
 ## ADR 列表
 
@@ -37,6 +50,10 @@
 | [ADR-0010](ADR-0010-multi-session-management.md) | 多会话管理与并行执行 | 已采纳（分阶段） | 2026-06-22 | v2.0 轻量级 + v2.1 完整实现 |
 | [ADR-0011](ADR-0011-phase-step-pipeline-model.md) | 阶段步骤化执行模型 | 已采纳 | 2026-06-22 | 模板+触发器 + 步骤引擎 + 中断恢复 |
 | [ADR-0012](ADR-0012-flow-customization-layer.md) | 流程定制层 | 已采纳 | 2026-06-22 | 增量覆盖 + 条件触发 + 自定义技能 |
+| [ADR-0013](ADR-0013-extract-scan-state.md) | scan-state 提取（⚠️与 ADR-0013-incremental-skeleton-planning.md 同编号） | 已采纳 | 2026-06-22 | 拆分 scan-state.sh → `_lib/state.sh` + `_lib/state_vector.py` |
+| [ADR-0013](ADR-0013-incremental-skeleton-planning.md) | 增量 skeleton planning（⚠️与 ADR-0013-extract-scan-state.md 同编号） | 已采纳 | 2026-06-22 | 拆分骨架规划为增量式 |
+| [ADR-0014](ADR-0014-review-phase-and-debt-reflow.md) | Review 阶段债务回流机制 | 已采纳 | 2026-07-05 | 债务回流 4 选项 + 文件冲突驱动 deps |
+| [ADR-0015](ADR-0015-integrate-openspec-validate-as-plan-critic.md) | openspec validate 集成为 plan-critic | 已采纳 | 2026-07-07 | 把 openspec validate 接入 plan-done 门控 |
 | [ADR-0016](ADR-0016-arch-artifact-discovery-contract.md) | Arch 阶段工件发现契约 | 已采纳 | 2026-07-08 | 扩展 `.arch-handoff.json` v1 + 替换 14+ 处硬编码路径 |
 | [ADR-0017](ADR-0017-rddf-session.md) | rddf-session 用户视角工作流会话 | 已采纳 | 2026-07-09 | 项目级 `sessions.json` 持久化 + 4 选项软提示冲突处理 + 跨 OpenCode session 恢复 |
 | [ADR-0018](ADR-0018-arch-quality-gate.md) | 架构质量门 — arch 阶段的定性检查 | 已采纳 | 2026-07-10 | 4 个 warning 级检查 (alignment/debt/clarity/actionable) + `STRICT_ARCH_GATE=yes` CI 升级 |
