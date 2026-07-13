@@ -71,7 +71,9 @@ jobs:
                tests/integration/test_deps_output.bats \
                tests/integration/test_deps_candidate_check.bats \
                tests/integration/scan_state.bats \
-               tests/integration/test_arch_discovery_contract.bats
+               tests/integration/test_arch_discovery_contract.bats \
+               tests/integration/test_doc_contracts.bats \
+               tests/integration/test_adr_index.bats
 
       - name: Bats integration tests (git worktree)
         run: |
