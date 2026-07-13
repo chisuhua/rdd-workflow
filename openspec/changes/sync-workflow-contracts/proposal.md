@@ -96,25 +96,25 @@ USAGE.md 已经把 Phase 2.5 Review(execute 后债务扫描)列为 ship 端核�
 
 ## Acceptance Criteria
 
-- [ ] USAGE.md ship-side phase 表显式列出 7 个编号子阶段(Phase 1, 1.5, 2, 2.5, 3, 4, 5),与 `guide-ship.md` 一致
-- [ ] USAGE.md state-file 表只列磁盘真实存在的文件,且 handoff/plan-handoff/arch-handoff 均为点号前缀路径
-- [ ] USAGE.md skill 表 13 个全部发布,移除"13 vs 11"差异说明(显式决策 A)
-- [ ] AGENTS.md skill 计数更新为 13,ADR 计数更新为 19 个唯一编号(0001-0019) / 20 个实体 ADR 文件(ADR-0013 重复)
-- [ ] AGENTS.md 关键目录树的 `skills/` 与 `openspec/` 两段都与磁盘 `ls` 一致
-- [ ] INSTALL.md description 保留 13 个子技能数,在末尾新增 "npm test vs pytest" 反 drift 提示块
-- [ ] `package.json::skills[]` 决策落地为 A:补到 13 个,无 `_comment` 字段(`fix-install-lib-distribution` 已解决 `_lib/*.py` 分发前提)
-- [ ] `docs/adr/README.md` 顶部 v2.0 status table 覆盖 0001-0019(19 个唯一编号 + ADR-0013 dup 标注,共 20 个实体 ADR 条目)
-- [ ] `openspec/specs/general/spec.md::Requirement general-docs-match-code` 全部 Scenarios 更新到 v2.0.1:
+- [x] USAGE.md ship-side phase 表显式列出 7 个编号子阶段(Phase 1, 1.5, 2, 2.5, 3, 4, 5),与 `guide-ship.md` 一致
+- [x] USAGE.md state-file 表只列磁盘真实存在的文件,且 handoff/plan-handoff/arch-handoff 均为点号前缀路径
+- [x] USAGE.md skill 表 13 个全部发布,移除"13 vs 11"差异说明(显式决策 A)
+- [x] AGENTS.md skill 计数更新为 13,ADR 计数更新为 19 个唯一编号(0001-0019) / 20 个实体 ADR 文件(ADR-0013 重复)
+- [x] AGENTS.md 关键目录树的 `skills/` 与 `openspec/` 两段都与磁盘 `ls` 一致
+- [x] INSTALL.md description 保留 13 个子技能数,在末尾新增 "npm test vs pytest" 反 drift 提示块
+- [x] `package.json::skills[]` 决策落地为 A:补到 13 个,无 `_comment` 字段(`fix-install-lib-distribution` 已解决 `_lib/*.py` 分发前提)
+- [x] `docs/adr/README.md` 顶部 v2.0 status table 覆盖 0001-0019(19 个唯一编号 + ADR-0013 dup 标注,共 20 个实体 ADR 条目)
+- [x] `openspec/specs/general/spec.md::Requirement general-docs-match-code` 全部 Scenarios 更新到 v2.0.1:
   - ship-side phase 计数改为 7 编号子阶段
   - state-file 表移除 undotted 路径,加入 `.rddf/state/.plan-handoff.json` 与 `.rddf/state/.arch-handoff.json`
   - consumer 列表移除 `guide-spec`(v2.0 已删除),加入 `guide-arch` / `guide-plan`
-- [ ] `openspec/specs/doc-truth-sync/spec.md` 新增 Requirement `doc-contract-tests-required`,Scenarios 锁定本 change 引入的 3 个测试
-- [ ] `tests/integration/test_doc_contracts.bats` 新增且通过(断言:skill 数、ADR 数、phase 数、state-file 路径在 5 个 doc 文件之间一致)
-- [ ] `tests/integration/test_adr_index.bats` 新增且通过(断言:`docs/adr/README.md` 引用的 ADR 文件全部存在,且不引用已删除文件)
-- [ ] `tests/unit/test_doc_contracts.py` 新增且通过(断言:spec 文件之间不自相矛盾,且引用真实存在的 ADR 编号)
-- [ ] `pytest tests/unit/` 全套通过(30 既有 + 1 新)
-- [ ] `bats tests/smoke.bats` 通过(无回归)
-- [ ] CI 断言质量门控(`grep -rn "assert.*or True\|assert True" tests/`)不破坏
+- [x] `openspec/specs/doc-truth-sync/spec.md` 新增 Requirement `doc-contract-tests-required`,Scenarios 锁定本 change 引入的 3 个测试
+- [x] `tests/integration/test_doc_contracts.bats` 新增且通过(断言:skill 数、ADR 数、phase 数、state-file 路径在 5 个 doc 文件之间一致)
+- [x] `tests/integration/test_adr_index.bats` 新增且通过(断言:`docs/adr/README.md` 引用的 ADR 文件全部存在,且不引用已删除文件)
+- [x] `tests/unit/test_doc_contracts.py` 新增且通过(断言:spec 文件之间不自相矛盾,且引用真实存在的 ADR 编号)
+- [x] `pytest tests/unit/` 全套通过(30 既有 + 1 新)
+- [x] `bats tests/smoke.bats` 通过(无回归)
+- [x] CI 断言质量门控(`grep -rn "assert.*or True\|assert True" tests/`)不破坏
 
 ## Risk
 
