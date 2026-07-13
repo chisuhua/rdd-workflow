@@ -27,9 +27,22 @@ fi
 
 # 创建目标目录
 mkdir -p "$TARGET_DIR/.opencode/skills/spec-workflow/skills"
+mkdir -p "$TARGET_DIR/.opencode/skills/spec-workflow/skills/_lib/schemas"
 
-# 复制所有子技能
+# 复制所有子技能（.md）
 cp -f "$PACKAGE_DIR/skills/"*.md "$TARGET_DIR/.opencode/skills/spec-workflow/skills/"
+
+# 复制 skills/_lib/ 运行时所需 Python 模块与 schemas（排除 __pycache__ / plugins / schedulers）
+# 这样 feature.md 和 rddf-session.md 的 depends-on 模块才能在目标项目里 import
+if [ -d "$PACKAGE_DIR/skills/_lib" ]; then
+    find "$PACKAGE_DIR/skills/_lib" \
+        -type d \( -name __pycache__ -o -name plugins -o -name schedulers \) -prune \
+        -o -type f \( -name '*.py' -o -name '*.json' \) -print 2>/dev/null | while read -r src; do
+        rel="${src#$PACKAGE_DIR/}"
+        mkdir -p "$TARGET_DIR/.opencode/skills/spec-workflow/$(dirname "$rel")"
+        cp -f "$src" "$TARGET_DIR/.opencode/skills/spec-workflow/$rel"
+    done
+fi
 
 # 复制 package.json（如果存在）
 if [ -f "$PACKAGE_DIR/package.json" ]; then

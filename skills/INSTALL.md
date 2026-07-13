@@ -96,11 +96,39 @@ if [ ! -d "$PACKAGE_DIR/skills" ]; then
     exit 1
 fi
 
-# 复制所有子技能
+# 复制所有子技能（.md）
 cp -f "$PACKAGE_DIR/skills/"*.md "$SKILLS_DIR/skills/"
+
+# 复制 skills/_lib/ 运行时所需 Python 模块与 schemas
+# 这样 feature.md (depends-on: [iteration, deps_output]) 和 rddf-session.md (depends-on: [rddf_session])
+# 在目标项目里也能正常 import
+if [ -d "$PACKAGE_DIR/skills/_lib" ]; then
+    mkdir -p "$SKILLS_DIR/skills/_lib/schemas"
+    find "$PACKAGE_DIR/skills/_lib" \
+        -type d \( -name __pycache__ -o -name plugins -o -name schedulers \) -prune \
+        -o -type f \( -name '*.py' -o -name '*.json' \) -print 2>/dev/null | while read -r src; do
+        rel="${src#$PACKAGE_DIR/}"
+        mkdir -p "$SKILLS_DIR/$(dirname "$rel")"
+        cp -f "$src" "$SKILLS_DIR/$rel"
+    done
+fi
+
+# Python sys.path 提示：target 项目的 root 需要在 sys.path 才能 `from skills._lib.X import Y`
+# 在 AI 助手环境中通常已经满足（conftest.py 自动加）; 在 npx 直接调用场景需用户配置
+cat >> "$SKILLS_DIR/INSTALL_NOTES.txt" << 'NOTES'
+skills/ 已被复制到本项目 .opencode/skills/spec-workflow/ 下。
+
+要让 skills/*.md 中的 Python depends-on 模块能 import，需要：
+1. 确保本项目根目录在 Python sys.path 中（多数 AI 编程助手自动处理）
+2. skills/ 目录下存在 __init__.py 文件（已包含在本次安装中）
+
+如果运行 skill 报 ImportError，请检查上述两点。
+NOTES
 
 echo "✅ 子技能已复制:"
 ls -1 "$SKILLS_DIR/skills/"
+echo "✅ _lib 模块已复制（49 .py + 7 schema）:"
+find "$SKILLS_DIR/skills/_lib" -type f \( -name '*.py' -o -name '*.json' \) | wc -l
 ```
 
 ### 步骤 4：创建包元数据

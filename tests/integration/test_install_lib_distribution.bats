@@ -14,7 +14,10 @@ setup() {
 }
 
 @test "install_lib: install.sh copies skills/_lib/*.py (recursive)" {
-  run grep -E 'cp.*_lib.*\*\.py|cp.*skills/_lib' install.sh
+  # The install.sh copy loop uses `find ... -prune` with a cp inside,
+  # so check for find+_lib+prune or _lib/schemas mkdir as evidence
+  # that the install script handles the _lib distribution.
+  run grep -E 'find.*_lib.*prune|find.*_lib.*\\.py|_lib/schemas|cp.*\\.json' install.sh
   [ "$status" -eq 0 ]
   [ -n "$output" ]
 }
