@@ -1,6 +1,6 @@
 ---
 name: INSTALL
-description: 安装 Spec Workflow 技能到项目目录。执行后会将 skills/ 目录下所有子技能（含运行时 Python 模块）复制到项目的 .opencode/skills/spec-workflow/ 目录。
+description: 安装 Spec Workflow 技能到项目目录。执行后会将 skills/ 目录下全部 13 个子技能（含运行时 Python 模块）复制到项目的 .opencode/skills/spec-workflow/ 目录。
 alias: install
 version: "1.1.0"
 author: sisyphus
@@ -251,3 +251,18 @@ rm -f "$PROJECT_ROOT/install-spec-workflow.sh"
 | 别名 | workflow, install |
 | 版本 | 2.0.0-beta |
 | 作者 | sisyphus |
+
+## npm test vs pytest
+
+> ⚠️ **重要 trap（反漂移提示）**：npm test 只跑 bats tests/，**不会**捕获 Python 测试失败。
+>
+> 本项目 Python 测试数量（pytest tests/ -q）远多于 bats，**改完任何 Python 代码后必须显式**：
+>
+> ```bash
+> python3 -m pytest tests/unit/ -q --tb=short          # ~46 个 unit 文件
+> python3 -m pytest tests/integration/ -q --tb=short   # ~9 个 Python integration
+> ```
+>
+> 完整 CI 顺序（见 .github/workflows/test.yml）：安装 deps → **断言质量门控**（grep -rn "assert.*or True|assert True" tests/ 命中即 FAIL）→ Python unit → Python integration → bats smoke → bats static 子集 → bats git-worktree 子集。
+>
+> 任何 assert ... or True / assert True 写法会立即触发 CI 失败（恒真断言拦截）。

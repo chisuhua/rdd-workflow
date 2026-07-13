@@ -45,3 +45,14 @@ PY
     return 1
   fi
 }
+
+@test "doc_truth_sync: INSTALL.md description lists 13 skills + npm-test-vs-pytest block" {
+  if ! grep -qE "全部 13 个子技能" skills/INSTALL.md; then
+    echo "INSTALL.md description missing '全部 13 个子技能'"
+    return 1
+  fi
+  if ! grep -qE "npm test 只跑 bats" skills/INSTALL.md; then
+    echo "INSTALL.md missing 'npm test vs pytest' reminder block"
+    return 1
+  fi
+}
