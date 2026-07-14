@@ -226,6 +226,34 @@ class RddfSessionCoordinator:
             return matches[0]
         return self._with_file_lock(_do)
 
+    # ---------- Public API: find_next_recommendation ----------
+
+    def find_next_recommendation(
+        self, owner_opencode_session_id: Optional[str] = None
+    ) -> Optional[RddfSession]:
+        """Return the most recently started orphaned rddf-session.
+
+        Algorithm:
+          1. Filter sessions by state == "orphaned".
+          2. Sort by started_at descending.
+          3. Return first match.
+
+        The owner_opencode_session_id parameter is reserved for future
+        filtering (e.g. only recommend sessions originally owned by this
+        OpenCode session). Currently unused.
+        """
+        def _do():
+            data = self._read_unlocked()
+            candidates = [
+                RddfSession(**s) for s in data["sessions"]
+                if s["state"] == "orphaned"
+            ]
+            if not candidates:
+                return None
+            candidates.sort(key=lambda s: s.started_at, reverse=True)
+            return candidates[0]
+        return self._with_file_lock(_do)
+
     # ---------- Placeholder methods (filled in later tasks 4-7) ----------
 
     def find_session(self, session_id: str) -> Optional[RddfSession]:

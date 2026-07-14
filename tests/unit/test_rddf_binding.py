@@ -63,3 +63,85 @@ def test_find_current_binding_picks_most_recent_of_multiple(coordinator):
 def test_find_current_binding_empty_sessions_file(coordinator):
     """sessions.json with empty sessions[] => returns None."""
     assert coordinator.find_current_binding("anybody") is None
+
+
+# -- Next recommendation tests (Task 2) --
+
+
+def _force_orphaned(coordinator, sid):
+    """Helper: bypass heartbeat check by directly setting state via update."""
+    # update_session_status raises if state is already terminal; use find + modify
+    # Simpler: use the public path that promotes via check_heartbeat_timeouts
+    # by manipulating last_heartbeat to be far in the past.
+    data = json.loads(coordinator._sessions_file.read_text())
+    for s in data["sessions"]:
+        if s["session_id"] == sid:
+            s["last_heartbeat"] = "2020-01-01T00:00:00+00:00"
+            break
+    coordinator._atomic_write(data)
+    coordinator.check_heartbeat_timeouts()
+
+
+def test_find_next_recommendation_returns_most_recent_orphaned(coordinator):
+    """Three orphaned → returns newest started_at."""
+    s1 = coordinator.create_session(kind="stage_arch", owner_opencode_session_id="o1", goal={})
+    time.sleep(0.05)
+    s2 = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="o1", goal={})
+    time.sleep(0.05)
+    s3 = coordinator.create_session(kind="stage_ship", owner_opencode_session_id="o1", goal={})
+    _force_orphaned(coordinator, s1)
+    _force_orphaned(coordinator, s2)
+    _force_orphaned(coordinator, s3)
+    found = coordinator.find_next_recommendation()
+    assert found is not None
+    assert found.session_id == s3
+
+
+def test_find_next_recommendation_returns_none_when_no_orphaned(coordinator):
+    """Only active/completed → returns None."""
+    coordinator.create_session(kind="stage_arch", owner_opencode_session_id="o1", goal={})
+    sid = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="o1", goal={})
+    coordinator.update_session_status(sid, "completed", end_reason="plan-done")
+    assert coordinator.find_next_recommendation() is None
+
+
+def test_find_next_recommendation_ignores_active_and_completed(coordinator):
+    """Mixed states → only orphaned considered."""
+    s_active = coordinator.create_session(
+        kind="stage_arch", owner_opencode_session_id="o1", goal={}
+    )
+    s_done = coordinator.create_session(
+        kind="stage_plan", owner_opencode_session_id="o1", goal={}
+    )
+    coordinator.update_session_status(s_done, "completed", end_reason="plan-done")
+    s_orph = coordinator.create_session(
+        kind="stage_ship", owner_opencode_session_id="o1", goal={}
+    )
+    _force_orphaned(coordinator, s_orph)
+    found = coordinator.find_next_recommendation()
+    assert found is not None
+    assert found.session_id == s_orph
+    assert found.session_id != s_active
+    assert found.session_id != s_done
+
+
+def test_find_next_recommendation_empty_sessions(coordinator):
+    """Empty sessions.json → None."""
+    assert coordinator.find_next_recommendation() is None
+
+
+def test_check_heartbeat_then_find_current_returns_none(coordinator):
+    """Active older than 30min → orphaned promoted → find_current_binding None."""
+    sid = coordinator.create_session(
+        kind="stage_plan", owner_opencode_session_id="ses_me", goal={}
+    )
+    data = json.loads(coordinator._sessions_file.read_text())
+    for s in data["sessions"]:
+        if s["session_id"] == sid:
+            s["last_heartbeat"] = "2020-01-01T00:00:00+00:00"
+    coordinator._atomic_write(data)
+    coordinator.check_heartbeat_timeouts()
+    assert coordinator.find_current_binding("ses_me") is None
+    nxt = coordinator.find_next_recommendation()
+    assert nxt is not None
+    assert nxt.session_id == sid
