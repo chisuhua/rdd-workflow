@@ -1,11 +1,11 @@
 ---
 name: guide
-description: 无状态推荐器——扫描项目当前状态（roadmap、arch-handoff、plan-handoff、active changes、worktrees），建议用户调 guide-arch、guide-plan 或 guide-ship。不持有任何状态，不调用 openspec CLI，不修改任何文件。
+description: 无状态推荐器——扫描项目当前状态（roadmap、arch-handoff、plan-handoff、active changes、worktrees、rddf-session binding），建议用户调 guide-arch、guide-plan 或 guide-ship。不持有任何状态，不调用 openspec CLI，不修改任何文件。
 license: MIT
 compatibility: Requires git 2.25+
 metadata:
   author: sisyphus
-  version: "1.0"  # P0: 缩减为无状态推荐器
+  version: "1.1"  # v1.1: append rddf-session binding scan (spec 2026-07-14)
   evolved-from: "split from guide.md v3.0"
   user-invocable: true
 ---
@@ -76,3 +76,9 @@ P0/P1 bug 历史（`$3` 列、`[openspec/` 前缀、`json.load` 非 grep、cwd �
 ```
 
 不自动删除(尊重用户数据)。
+
+## Cross-Reference
+
+- **`rddf-session`** (`skills/rddf-session.md`) — 当输出包含 `📍 No current binding` 时,可调 `skill_use("rddf-session current")` 查看完整绑定状态,或 `skill_use("rddf-session resume <rds_id>")` 接管推荐会话。详见 spec 2026-07-14。
+- **ADR-0017** (`docs/adr/ADR-0017-rddf-session.md`) — rddf-session 数据模型、跨 OpenCode session 恢复语义、心跳机制的来源。
+- **scan-state.sh** (`skills/_lib/scan-state.sh`) — 推荐器底层扫描脚本;11-priority `scan_state` + v2.0.2 `scan_session_binding`。
