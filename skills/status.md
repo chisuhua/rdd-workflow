@@ -113,9 +113,9 @@ OpenSpec 工作流状态概览
 
 Change          │ Worktree              │ 进度        │ 状态
 ──────────────────────────────────────────────────────────────
-add-uart        │ .rddf/wt/add-uart      │ 3/7  (43%)  │ 🔄 执行中
-fix-spi         │ .rddf/wt/fix-spi       │ 6/6  (100%) │ ✅ 可归档
-pending-change  │ （无 worktree）        │ 2/5  (40%)  │ ⏸ 暂停
+add-uart        │ .rddf/wt/add-uart      │ 3/7  (43%)  │ 🔧 in_worktree
+fix-spi         │ .rddf/wt/fix-spi       │ 6/6  (100%) │ ✔ completed
+pending-change  │ （无 worktree）        │ 2/5  (40%)  │ 💼 committed
 ──────────────────────────────────────────────────────────────
 
 请选择要执行的操作（输入编号）：
@@ -126,31 +126,55 @@ pending-change  │ （无 worktree）        │ 2/5  (40%)  │ ⏸ 暂停
   i. 其他输入
 ```
 
-**动态状态展示（v2.0.2）**：
+**Status rendering（v2.0.3，从 iteration.json 派生单一真理源）**：
 
 ```bash
-for each active_change:
-    status=$(python3 -c "
-import json
+render_status() {
+  local change="$1"
+  python3 - "${change}" <<'PYEOF'
+import json, sys, os
+name = sys.argv[1]
+p = '.rddf/state/iteration.json'
 try:
-    d = json.load(open('.rddf/state/iteration.json'))
-    c = next((c for c in d.get('changes', []) if c.get('name') == '$active_change'), None)
-    if c:
-        print(c.get('status', 'unknown'))
-    else:
-        print('unknown')
+    data = json.load(open(p))
 except Exception:
-    print('unknown')
-" 2>/dev/null)
-    case "$status" in
-      planned) echo "📋 $active_change: planned (skeleton)" ;;
-      proposed) echo "✅ $active_change: proposed (ready)" ;;
-      in_worktree) echo "🔧 $active_change: in worktree" ;;
-      completed) echo "✓ $active_change: completed" ;;
-      archived) echo "📦 $active_change: archived" ;;
-      *) echo "❓ $active_change: $status" ;;
-    esac
+    # fallback: filesystem-only detection (commit in HEAD + no worktree)
+    import subprocess
+    has_committed = subprocess.run(
+        ['bash','-c',
+         'for d in openspec/changes/*/; do [ -d "$d" ] || continue; '
+         'case "$d" in */archive/) continue ;; esac; '
+         'git show HEAD:"$d.openspec.yaml" >/dev/null 2>&1 && exit 0; done; exit 1'
+        ], capture_output=True).returncode == 0
+    has_worktree = any(branch == f'openspec/{name}'
+                       for line in subprocess.check_output(['git','worktree','list']).decode().splitlines()
+                       for branch in [line.split()[-1].strip('[]')])
+    if has_committed and not has_worktree:
+        print('💼 committed (no worktree yet)')
+    elif has_worktree:
+        print('🔧 in_worktree (fallback)')
+    else:
+        print('📋 planned (skeleton fallback)')
+    sys.exit(0)
+ch = next((c for c in data.get('changes',[]) if c.get('name')==name), None)
+if not ch:
+    print('❓ unknown')
+    sys.exit(0)
+status = ch.get('status','unknown')
+icons = {
+    'planned':     '📋',
+    'committed':   '💼',
+    'proposed':    '✅',
+    'in_worktree': '🔧',
+    'completed':   '✔',
+    'archived':    '📦',
+}
+print(f"{icons.get(status,'❓')} {status}")
+PYEOF
+}
 ```
+
+**单一真理源规则**：Mode A 的状态列**只**从 iteration.json 读取；filesystem-only fallback 仅在 iteration.json 缺失时触发。禁止在表格或 case 分支里硬编码状态文字。
 
 **用户输入处理（case handler）**：
 
