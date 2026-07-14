@@ -43,7 +43,7 @@ load ../test_helper
   # `git worktree list` outputs `path  hash  [branch]` — so $3 is "[branch]".
   # The helper must include the brackets in the comparison, otherwise the
   # lookup silently fails (the very bug P0-7 was supposed to fix).
-  grep -nE 'awk -v br="\[openspec/\$branch\]"' "$REPO_ROOT/skills/status.md"
+  grep -nE 'awk -v br="\\\[openspec/\\\$branch\\\]"' "$REPO_ROOT/skills/status.md"
 }
 
 @test "status.md REMAINING_WT count uses \$3 (post-archive scan)" {

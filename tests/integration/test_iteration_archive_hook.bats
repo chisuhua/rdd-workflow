@@ -18,10 +18,11 @@ setup() {
     git config user.email "test@example.com"
     git config user.name "Test"
     mkdir -p .rddf/state openspec/changes openspec/changes/archive
-    # Seed iteration.json with a change in in_worktree state
+    # Seed iteration.json with a change in in_worktree state.
+    # Schema version 3 (v2.0.3: matches iteration_schema.json const: 3).
     cat > .rddf/state/iteration.json <<'JSON'
 {
-  "version": 1,
+  "version": 3,
   "updated_at": "2026-07-01T00:00:00+00:00",
   "current_phase": "v2.1",
   "changes": [

@@ -36,9 +36,10 @@ setup() {
     grep -q '"review"' "skills/_lib/iteration.py"
 }
 
-@test "review_phase: iteration schema has version 2 and review status" {
+@test "review_phase: iteration schema has version 3 and review status" {
     [ -f "skills/_lib/schemas/iteration_schema.json" ]
-    grep -q '"const": 2' "skills/_lib/schemas/iteration_schema.json"
+    # Schema v3: 'review' status is in the lifecycle enum, and version=3 is the current const.
+    grep -q '"const": 3' "skills/_lib/schemas/iteration_schema.json"
     grep -q '"review"' "skills/_lib/schemas/iteration_schema.json"
 }
 

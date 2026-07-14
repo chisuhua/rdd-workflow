@@ -69,7 +69,9 @@ _run_scan() {
   git init -q -b master && git config user.email t@t && git config user.name t
   echo x > a && git add a && git commit -q -m init
   mkdir -p .rddf/state
-  echo '{}' > .rddf/state/.arch-handoff.json
+  # adr_count >= 1 means arch-done is complete; without it scan_state falls
+  # through to priority 1.5 (guide-arch recover) per current contract.
+  echo '{"adr_count":1,"arch_done_at":"2026-07-01"}' > .rddf/state/.arch-handoff.json
   # no .plan-handoff.json
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=guide-plan"
@@ -80,7 +82,9 @@ _run_scan() {
   git init -q -b master && git config user.email t@t && git config user.name t
   echo x > a && git add a && git commit -q -m init
   mkdir -p .rddf/state
-  echo '{}' > .rddf/state/.plan-handoff.json
+  # active_changes >= 1 means plan-done is complete; without it scan_state
+  # falls through to priority 2.5 (guide-ship cleanup).
+  echo '{"active_changes":1,"current_change":"add-x"}' > .rddf/state/.plan-handoff.json
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=guide-ship"
 }

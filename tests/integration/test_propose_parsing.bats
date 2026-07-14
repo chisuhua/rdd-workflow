@@ -50,8 +50,8 @@ PROPOSE_MD="$REPO_ROOT/skills/propose.md"
 @test "propose.md uses 'for name in \$THIS_SESSION_CREATED' for git add (P0-3)" {
   # The fix uses a for-loop iterating over the array, NOT a dangerous glob
   grep -qE 'for name in "\$\{THIS_SESSION_CREATED\[@\]\}"' "$PROPOSE_MD"
-  # And it adds each name individually
-  grep -qE 'git add "openspec/changes/\$name/"' "$PROPOSE_MD"
+  # And it adds each name's artifacts individually (proposal.md, roadmap-meta.yaml, etc.)
+  grep -qE 'git add "openspec/changes/\$name/' "$PROPOSE_MD"
 }
 
 @test "propose.md git commit does NOT use awk-piped dirname list (P0-3)" {
