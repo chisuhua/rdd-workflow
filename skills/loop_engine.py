@@ -37,15 +37,15 @@ class _CircuitBroken(Exception):
 
 _SAFE_NODES = frozenset({
     ast.Expression, ast.Compare, ast.BoolOp, ast.BinOp,
-    ast.Name, ast.Attribute, ast.Subscript, ast.Index,
+    ast.Name, ast.Attribute, ast.Subscript,
     ast.Load, ast.Store, ast.Del, ast.AugLoad, ast.AugStore,
-    ast.Str, ast.Num, ast.NameConstant, ast.Constant,
+    ast.Constant,  # unifies ast.Num, ast.Str, ast.Bytes, ast.NameConstant, ast.Ellipsis in Python 3.8+
     ast.Tuple, ast.List, ast.Dict, ast.Set, ast.UnaryOp,
     ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE,
     ast.Is, ast.IsNot, ast.In, ast.NotIn,
     ast.And, ast.Or, ast.Not,
     ast.UAdd, ast.USub, ast.Not,
-    ast.Slice, ast.ExtSlice, ast.Index,
+    ast.Slice, ast.ExtSlice,
     ast.keyword,
     ast.Pass, ast.Break, ast.Continue,
 })
