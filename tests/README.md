@@ -66,13 +66,17 @@ metadata drift between `package.json`, `skills/*.md`, and `smoke.bats`.
 |------------------|------------------------------------------------------------|
 | INSTALL          | `tests/integration/test_install_skill.bats`                |
 | guide            | `tests/integration/test_guide_skill.bats`                  |
-| guide-spec       | `tests/integration/test_guide_spec_skill.bats`             |
+| guide-arch       | `tests/integration/test_guide_arch_skill.bats`             |
+| guide-plan       | `tests/integration/test_guide_plan_skill.bats`             |
 | guide-ship       | `tests/integration/test_guide_ship_skill.bats`             |
+| feature          | `tests/integration/test_feature_skill.bats`                |
+| rddf-session     | `tests/integration/test_rddf_session_skill.bats`           |
 | propose          | `tests/integration/test_propose_skill.bats`                |
 | execute          | `tests/integration/test_execute_skill.bats`                |
 | status           | `tests/integration/test_status_skill.bats`                 |
 | roadmap          | `tests/integration/test_roadmap_skill.bats`                |
 | deps             | `tests/integration/test_deps_skill.bats`                   |
+| spec-workflow/writing-plans | (locked by TDD discipline in `test_execute_skill.bats`) |
 | (cross-skill)    | `tests/integration/test_skill_metadata_consistency.bats`   |
 | (helper)         | `tests/_lib/test_skill.bats` (8 cases for `skill.bash`)    |
 
