@@ -38,11 +38,11 @@ load_lib skill
   [ "$output" = "true" ]
 }
 
-@test "skill_commands returns at least 6 commands for roadmap.md" {
+@test "skill_commands returns at least 5 commands for roadmap.md" {
   run skill_commands skills/roadmap.md
   [ "$status" -eq 0 ]
-  # 6 commands: init/status/edit/validate/advance/gate-report
-  [ "${#lines[@]}" -ge 6 ]
+  # 5 commands after v2.0.3 phase-gate-report removal: init/status/edit/validate/advance
+  [ "${#lines[@]}" -ge 5 ]
 }
 
 @test "skill_commands returns 0 lines for INSTALL.md" {

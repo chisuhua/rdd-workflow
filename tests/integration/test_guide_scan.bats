@@ -8,9 +8,9 @@ load ../test_helper
 
 # P1-3 ---------------------------------------------------------------------
 
-@test "P1-3: scan-state.sh checks .phase-gate-report.md" {
+@test "P1-3: phase-gate-report removed from scan-state.sh (v2.0.3)" {
   [ -f "$REPO_ROOT/skills/_lib/scan-state.sh" ]
-  grep -q ".phase-gate-report.md" "$REPO_ROOT/skills/_lib/scan-state.sh"
+  ! grep -q "phase-gate-report" "$REPO_ROOT/skills/_lib/scan-state.sh"
 }
 
 @test "P1-3: scan-state.sh detects detached worktrees" {

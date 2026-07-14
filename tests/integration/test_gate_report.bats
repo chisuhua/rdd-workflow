@@ -1,50 +1,35 @@
 #!/usr/bin/env bats
 #
-# Wave 7 / T33: verify .phase-gate-report.md dead-code cleanup (P3-5).
-# See plan checkbox:
-#   - [ ] 33. .phase-gate-report.md dead code cleanup (P3-5)
-#
-# P3-5: gate report was written by roadmap.md (gate-report command) but had
-#       no documented reader. T12 (P1-3) wired it into guide.md's scan
-#       loop so that presence of the file triggers a `status --roadmap`
-#       recommendation. T33 documents the writer/reader relationship in
-#       .rddf/state/index.md and locks it in with these tests.
-#
-# All tests are static-grep assertions on skills/guide.md and
-# .rddf/state/index.md; no temp git repo is needed (matches the convention
-# established by test_guide_scan.bats in Wave 3).
+# Wave 8 / fix-debt-audit-2026-07-14 / Wave 2.2: phase-gate-report removal verification.
+# v2.0.3 removed the .phase-gate-report.md mechanism entirely (was dead code
+# with dot/no-dot filename mismatch — writer wrote `phase-gate-report.md`,
+# reader scanned for `.phase-gate-report.md`).
+# This file is now: assert absence locks in the removal so it cannot regress.
 
 load ../test_helper
 
-# Reader link (T12) -------------------------------------------------------
+# Removal verification -------------------------------------------------
 
-@test "P3-5: guide.md detects .phase-gate-report.md" {
+@test "v2.0.3: phase-gate-report removed from guide.md" {
   [ -f "skills/guide.md" ]
-  grep -q ".phase-gate-report.md" skills/guide.md
+  ! grep -q "phase-gate-report" skills/guide.md
 }
 
-@test "P3-5: guide.md recommends status --roadmap on gate report" {
-  [ -f "skills/guide.md" ]
-  # The scan branch should pair the file with a status --roadmap
-  # recommendation. Allow either ordering on the same line.
-  grep -qE "phase-gate-report|status --roadmap" skills/guide.md
-  # The branch must combine detection and recommendation, not be a
-  # dead reference. The `RECOMMEND="status --roadmap"` line is the
-  # authoritative wiring added in T12.
-  grep -qE 'RECOMMEND="status --roadmap"' skills/guide.md
+@test "v2.0.3: phase-gate-report removed from scan-state.sh" {
+  [ -f "skills/_lib/scan-state.sh" ]
+  ! grep -q "phase-gate-report" skills/_lib/scan-state.sh
 }
 
-# Index documentation (T33) -----------------------------------------------
+@test "v2.0.3: phase-gate-report removed from roadmap.md" {
+  [ -f "skills/roadmap.md" ]
+  ! grep -q "phase-gate-report" skills/roadmap.md
+}
 
-@test "P3-5: .rddf/state/index.md documents guide.md as gate report reader" {
+@test "v2.0.3: phase-gate-report removed from index.md (or marked historical)" {
   [ -f ".rddf/state/index.md" ]
-  grep -q "phase-gate-report.md" .rddf/state/index.md
-  # The phase-gate-report entry should now reference guide.md as a reader
-  # (not only manual user review). Accept the spec's bilingual wording.
-  grep -qE "guide\.md.*扫|guide\.md.*scan|guide\.md.*读取" .rddf/state/index.md
-}
-
-@test "P3-5: .rddf/state/index.md links gate report to T12 (P1-3)" {
-  [ -f ".rddf/state/index.md" ]
-  grep -qE "T12.*P1-3|P1-3.*T12" .rddf/state/index.md
+  # Either removed entirely, or only present in a clearly-marked historical note.
+  if grep -q "phase-gate-report" .rddf/state/index.md; then
+    # If present, must be in a "removed" or "historical" context
+    grep -qiE "removed|historical|已移除|废弃|v2\.0\.3" .rddf/state/index.md
+  fi
 }

@@ -19,14 +19,14 @@ setup() {
   [ "$(skill_field "$f" name)" = "roadmap" ]
 }
 
-@test "roadmap_skill declares 6 commands" {
+@test "roadmap_skill declares 5 commands (v2.0.3: gate-report removed)" {
   run skill_commands "$f"
   [ "$status" -eq 0 ]
-  [ "${#lines[@]}" -ge 6 ]
-  # Each line must be one of the 6 known commands
+  [ "${#lines[@]}" -ge 5 ]
+  # Each line must be one of the 5 known commands (gate-report removed in v2.0.3)
   for cmd in "${lines[@]}"; do
     case "$cmd" in
-      init|status|edit|validate|advance|gate-report) ;;
+      init|status|edit|validate|advance) ;;
       *) echo "unexpected command: $cmd" >&2; return 1 ;;
     esac
   done

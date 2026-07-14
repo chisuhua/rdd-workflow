@@ -29,7 +29,6 @@
 # State files read (gitignored under .rddf/state/):
 #   - .rddf/state/.arch-handoff.json   — arch phase done sentinel
 #   - .rddf/state/.plan-handoff.json   — plan phase done sentinel
-#   - .rddf/state/.phase-gate-report.md — pending review
 #   - proposal-suggestions.md          — JSON array with status field
 #   - roadmap.md                       — arch artifact (committed)
 
@@ -41,14 +40,13 @@
 #     2.  plan-handoff present                     → "guide-ship"
 #     2.5 plan-handoff present, active_changes = 0  → "guide-ship (cleanup)"
 #     3.  worktree with incomplete tasks           → "guide-ship"
-#     4. .phase-gate-report.md present              → "status --roadmap"
-#     5. detached worktrees (count > 0)             → "guide-ship"
-#     6. worktree tasks all completed               → "guide-ship"
-#     7.  committed change in HEAD (no worktree)   → "guide-ship"
-#     8.  no roadmap.md                            → "guide-arch"
-#     9.  no openspec/changes/                     → "guide-plan"
-#    10. proposal-suggestions.md has pending entry  → "guide-plan"
-#    11. default                                    → "guide-ship"
+#     4.  detached worktrees (count > 0)             → "guide-ship"
+#     5.  worktree tasks all completed               → "guide-ship"
+#     6.  committed change in HEAD (no worktree)   → "guide-ship"
+#     7.  no roadmap.md                            → "guide-arch"
+#     8.  no openspec/changes/                     → "guide-plan"
+#     9.  proposal-suggestions.md has pending entry  → "guide-plan"
+#    10. default                                    → "guide-ship"
 scan_state() {
   local PROJECT_ROOT="$1"
   if [[ -z "$PROJECT_ROOT" ]]; then
@@ -112,15 +110,7 @@ scan_state() {
     return 0
   fi
 
-  # 4. phase-gate-report exists → status --roadmap
-  # P1-3: must review before proceeding
-  if [ -f "$PROJECT_ROOT/.rddf/state/.phase-gate-report.md" ]; then
-    RECOMMEND="status --roadmap"
-    REASON="阶段门控报告待 review"
-    return 0
-  fi
-
-  # 5. detached worktrees (other sessions) → guide-ship
+  # 4. detached worktrees (other sessions) → guide-ship
   local DETACHED
   DETACHED=$(git worktree list 2>/dev/null | awk 'index($3, "[openspec/") == 1' | wc -l)
   if [ "$DETACHED" -gt 0 ]; then
@@ -129,14 +119,14 @@ scan_state() {
     return 0
   fi
 
-  # 6. worktree tasks all completed → guide-ship (archive)
+  # 5. worktree tasks all completed → guide-ship (archive)
   if git worktree list 2>/dev/null | awk 'index($3, "[openspec/") == 1' | grep -q .; then
     RECOMMEND="guide-ship"
     REASON="worktree 存在,任务已完成 → 进入 archive"
     return 0
   fi
 
-  # 7. committed change in HEAD (no worktree yet) → guide-ship
+  # 6. committed change in HEAD (no worktree yet) → guide-ship
   # git show HEAD:<path> requires repo-relative path; cd into PROJECT_ROOT first
   if (cd "$PROJECT_ROOT" 2>/dev/null && for d in openspec/changes/*/; do
     [ -d "$d" ] || continue
@@ -150,7 +140,7 @@ scan_state() {
     return 0
   fi
 
-  # 8. no roadmap → guide-arch
+  # 7. no roadmap → guide-arch
   # ADR-0016 Layer 3: read roadmap_path from handoff with fallback
   ARCH_HANDOFF="${PROJECT_ROOT}/.rddf/state/.arch-handoff.json"
   if [ -f "$ARCH_HANDOFF" ] && command -v jq >/dev/null 2>&1; then
@@ -166,14 +156,14 @@ scan_state() {
     return 0
   fi
 
-  # 9. no openspec/changes/ directory → guide-plan
+  # 8. no openspec/changes/ directory → guide-plan
   if [ ! -d "$PROJECT_ROOT/openspec/changes" ]; then
     RECOMMEND="guide-plan"
     REASON="无 change → 进入变更生成"
     return 0
   fi
 
-  # 10/11. proposal-suggestions.md JSON parse
+  # 9/10. proposal-suggestions.md JSON parse
   # P1-7: json.load not grep (description field may also contain "待创建" text)
   # cwd safety: PY_PROJECT_ROOT env var (archive.sh:mark_iteration_archived pattern)
   local HAS_PENDING

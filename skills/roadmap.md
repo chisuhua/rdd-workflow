@@ -1,9 +1,10 @@
 ---
 name: roadmap
-description: 路线图管理技能——初始化、编辑、验证项目路线图。被 guide-arch 调用执行 init/status/edit/validate/advance/gate-report 命令。
+description: 路线图管理技能——初始化、编辑、验证项目路线图。被 guide-arch 调用执行 init/status/edit/validate/advance 命令。
 license: MIT
 compatibility: Requires spec-workflow v2.0+
 metadata:
+  version: "2.0"
   author: sisyphus
   version: "1.0"
   evolved-from: "iterate of v1.0"
@@ -29,7 +30,6 @@ guide → roadmap（本技能）→ propose → deps → plan → execute → st
 | `edit` | 编辑路线图（交互式） |
 | `validate <change-name>` | 验证 change 的分类 |
 | `advance` | 推进到下一阶段 |
-| `gate-report [phase]` | 生成阶段门控报告 |
 
 ---
 
@@ -576,7 +576,6 @@ if not all_complete:
     print('')
     print('当前阶段未完成，无法推进')
     print('请完成所有 change 和门控条件后重试')
-    print('或使用: skill_use(\"roadmap\", \"gate-report\") 查看详情')
     exit(1)
 
 print(f'✅ 阶段 {current} 已完成，可以推进')
@@ -665,69 +664,6 @@ print('✅ roadmap.md 已更新')
 
 ---
 
-## 命令：gate-report — 生成阶段门控报告
-
-```bash
-# P2-3: 用 safe_python_json 替代 json.load(open(...)) 一行式
-# safe_python_json 内置 try/except,文件缺失/JSON 损坏都返回 "unknown"
-PHASE=${1:-$(safe_python_json "$STATE_FILE" "current_phase")}
-
-REPORT_FILE="$PROJECT_ROOT/.rddf/state/phase-gate-report.md"
-
-python3 -c "
-import json
-from datetime import datetime
-
-with open('$STATE_FILE') as f:
-    state = json.load(f)
-
-phase_data = state['phases'].get('$PHASE', {})
-
-report = f'''# 阶段门控报告: {$PHASE}
-
-生成时间: {datetime.now().isoformat()}
-
-## 阶段完成状态
-
-'''
-
-# 分类完成情况
-report += '### 分类完成情况\n\n'
-for cat_id, cat_data in phase_data.get('categories', {}).items():
-    total = len(cat_data.get('changes', []))
-    completed = len(cat_data.get('completed_changes', []))
-    status = '✅' if completed >= total else '❌'
-    report += f'- {status} {cat_id}: {completed}/{total}\n'
-
-# 门控检查项
-report += '\n### 门控检查项\n\n'
-for check, checked in phase_data.get('gate_status', {}).get('checklist', {}).items():
-    status = '✅' if checked else '❌'
-    report += f'- {status} {check}\n'
-
-# 是否可推进
-all_complete = phase_data.get('gate_status', {}).get('all_changes_complete', False)
-checklist_complete = all(phase_data.get('gate_status', {}).get('checklist', {}).values())
-can_advance = all_complete and checklist_complete
-
-report += f'''
-## 总结
-
-- 所有 change 完成: {\"✅\" if all_complete else \"❌\"}
-- 门控检查通过: {\"✅\" if checklist_complete else \"❌\"}
-- **可以推进下一阶段: {\"✅ 是\" if can_advance else \"❌ 否\"}**
-'''
-
-with open('$REPORT_FILE', 'w') as f:
-    f.write(report)
-
-print(f'✅ 阶段门控报告已生成: $REPORT_FILE')
-print('')
-print(report)
-"
-```
-
----
 
 ## 辅助函数
 
