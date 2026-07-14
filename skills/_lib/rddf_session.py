@@ -202,6 +202,30 @@ class RddfSessionCoordinator:
 
         return self._with_file_lock(_do_create)
 
+    # ---------- Public API: find_current_binding ----------
+
+    def find_current_binding(
+        self, owner_opencode_session_id: str
+    ) -> Optional[RddfSession]:
+        """Return the active rddf-session owned by this OpenCode session.
+
+        Returns None if no active session is bound. If multiple active
+        sessions exist for the same owner, returns the most recently
+        started one (deterministic via sort).
+        """
+        def _do():
+            data = self._read_unlocked()
+            matches = [
+                RddfSession(**s) for s in data["sessions"]
+                if s["state"] == "active"
+                and s["owner_opencode_session_id"] == owner_opencode_session_id
+            ]
+            if not matches:
+                return None
+            matches.sort(key=lambda s: s.started_at, reverse=True)
+            return matches[0]
+        return self._with_file_lock(_do)
+
     # ---------- Placeholder methods (filled in later tasks 4-7) ----------
 
     def find_session(self, session_id: str) -> Optional[RddfSession]:
