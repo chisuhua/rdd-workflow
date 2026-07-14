@@ -1,6 +1,6 @@
 """Tests for arch_quality_gate — qualitative arch-done checks beyond structural existence.
 
-ADR-0013 introduces 4 warning-level checks that run on arch_done transition:
+ADR-0018 introduces 4 warning-level checks that run on arch_done transition:
   - arch_alignment       — ADR/roadmap/gap-analysis cross-references resolve
   - arch_debt_recorded   — gap-analysis has no unresolved high-priority items
   - adr_no_placeholders  — ADR files are not template stubs

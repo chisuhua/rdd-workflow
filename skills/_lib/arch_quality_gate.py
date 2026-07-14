@@ -1,4 +1,4 @@
-"""Architecture quality gate — qualitative checks for arch_done transition (ADR-0013).
+"""Architecture quality gate — qualitative checks for arch_done transition (ADR-0018).
 
 Existing arch_done gate in `gate.py` only validates structural existence (ADR ≥ 1,
 roadmap.md exists). This module adds four **qualitative** warning-level checks
@@ -183,7 +183,7 @@ def strict_wrap(
 def _check_arch_alignment(ctx: dict) -> tuple[bool, Optional[str]]:
     """Pass if all ADR-NNNN references in roadmap.md and gap-analysis docs resolve.
 
-    ADR-0013 §3.1. A "ghost" reference (ADR mentioned in text but no matching
+    ADR-0018 §3.1. A "ghost" reference (ADR mentioned in text but no matching
     file in adr_dir) usually means the architect forgot to commit or the
     roadmap drifted from reality. We only warn; humans can override.
     """
@@ -208,7 +208,7 @@ def _check_arch_alignment(ctx: dict) -> tuple[bool, Optional[str]]:
 
 
 def _check_arch_debt(ctx: dict) -> tuple[bool, Optional[str]]:
-    """Pass if no gap-analysis row is high-severity + P0 + unresolved (ADR-0013 §3.2).
+    """Pass if no gap-analysis row is high-severity + P0 + unresolved (ADR-0018 §3.2).
 
     An unresolved P0/high row in a gap-analysis table signals architecture
     debt that must be tracked. Detection: row's `严重程度` column contains
@@ -240,7 +240,7 @@ def _check_arch_debt(ctx: dict) -> tuple[bool, Optional[str]]:
 
 
 def _check_adr_clarity(ctx: dict) -> tuple[bool, Optional[str]]:
-    """Pass if no ADR file (excluding template) contains placeholder text (ADR-0013 §3.3).
+    """Pass if no ADR file (excluding template) contains placeholder text (ADR-0018 §3.3).
 
     Placeholder patterns: `<待补充>`, `<TBD>`, `<TODO>`, `<kebab-slug>`, `<标题>`,
     template header lines `> **编号**: NNNN` and `# ADR-NNNN: <`.
@@ -269,7 +269,7 @@ def _check_adr_clarity(ctx: dict) -> tuple[bool, Optional[str]]:
 
 
 def _check_handoff_actionable(ctx: dict) -> tuple[bool, Optional[str]]:
-    """Pass if .arch-handoff.json carries actionable fields for guide-plan (ADR-0013 §3.4).
+    """Pass if .arch-handoff.json carries actionable fields for guide-plan (ADR-0018 §3.4).
 
     Actionable means:
       - file exists and is valid JSON

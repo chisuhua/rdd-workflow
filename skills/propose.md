@@ -4,6 +4,7 @@ description: 分析项目文档与代码的差距，生成 propose 建议列表�
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+. Reads docs/adr/, docs/architecture/, docs/developer_guide/, roadmap.md.
 metadata:
+  version: "2.0"
   author: sisyphus
   version: "2.0"  # P0: Roadmap 驱动，支持分阶段 change 生成
   evolved-from: "iterate of v1.0"
@@ -460,7 +461,7 @@ for each selected propose <name>:
     # 匹配 debt/fix-/prefix- 前缀的 change 自动走 skeleton 模式
     # 理由: 这些是前置修复/债务清理/前缀依赖类小变更,
     #       先注册为 planned 状态, 后续用 guide-plan fill 填充
-    #       不阻塞主 sprint (ref: ADR-0013)
+    #       不阻塞主 sprint (ref: ADR-0020)
     # ---------------------------------------------------------------
     if [ "$SKELETON_MODE" = "false" ]; then
         if echo "<name>" | grep -qE '^(debt|fix-|prefix-).*$'; then

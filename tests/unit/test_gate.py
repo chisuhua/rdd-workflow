@@ -119,7 +119,7 @@ def test_default_arch_done_checks_present(state_path, log_path):
 
 
 def test_default_arch_done_includes_quality_checks_adr0013(state_path, log_path):
-    """ADR-0013: arch_done must register 4 qualitative checks (warning level by default)."""
+    """ADR-0018: arch_done must register 4 qualitative checks (warning level by default)."""
     sv = make_state()
     sv.save(state_path)
     gate = GateMechanism(state_path=state_path, event_log_path=log_path, load_defaults=True)
@@ -131,7 +131,7 @@ def test_default_arch_done_includes_quality_checks_adr0013(state_path, log_path)
         "arch_handoff_actionable",
     ):
         assert required in names, (
-            f"arch_done must register {required} per ADR-0013; "
+            f"arch_done must register {required} per ADR-0018; "
             f"registered: {names}"
         )
 

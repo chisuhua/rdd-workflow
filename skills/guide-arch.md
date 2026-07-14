@@ -4,6 +4,7 @@ description: Architecture definition phase state machine for OpenSpec workflow �
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+, git 2.25+
 metadata:
+  version: "2.0"
   author: sisyphus
   version: "1.0"  # Phase 1 of three-phase architecture (ADR-0003)
   evolved-from: "extracted from guide-spec.md v1.0 (Phase 1 + Phase 1.5)"
@@ -867,7 +868,7 @@ PYEOF
 
 Do NOT auto-invoke `guide-plan` — the user must explicitly transition to the plan side.
 
-**架构质量门（ADR-0013）**：
+**架构质量门（ADR-0018）**：
 
 arch-done 双重门控（ADR ≥ 1 + roadmap.md 存在）通过后，自动运行 4 个 warning 级质量检查，输出到 `.rddf/state/.arch-quality-report.json`：
 

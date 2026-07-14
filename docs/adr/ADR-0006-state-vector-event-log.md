@@ -10,7 +10,7 @@
 spec-workflow v1.x 使用 **13 个分散的状态文件**（`.rddf/state/` 目录 + git 跟踪文件），存在以下问题：
 
 1. **状态不一致**: 多个文件存储相同信息（如 change 状态在 `proposal-suggestions.md`、`.rddf/state/roadmap-state.json`、`openspec/changes/<name>/.openspec.yaml` 中重复）
-2. **死代码风险**: `.rddf/state/phase-gate-report.md` 写但从不读（审计 P3-5）
+2. ~~**死代码风险**: `.rddf/state/phase-gate-report.md` 写但从不读（审计 P3-5）~~ — v2.0.3 已彻底删除该机制 (fix-debt-audit-2026-07-14, writer/reader 点号不匹配是根本死因)
 3. **难以观测**: 没有统一的状态快照，调试时需要手动检查多个文件
 4. **缺乏历史**: 状态文件只反映当前状态，无法追溯状态变更历史
 5. **Loop 引擎需求**: ADR-0004 的 Loop 引擎需要统一的状态向量作为输入/输出
