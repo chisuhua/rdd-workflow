@@ -25,10 +25,11 @@ setup() {
   grep -q '只读不写' "$f"
 }
 
-@test "guide_skill scan covers all 13 priority branches (RECOMMEND count)" {
-  # v2.1: expanded from 11 to 13 with recovery branches 1.5 + 2.5
+@test "guide_skill scan covers all priority branches (RECOMMEND count)" {
+  # v2.0.3: 12 priority branches (1, 1.5, 2, 2.5, 3-10). phase-gate-report
+  # (was branch 4) removed in v2.0.3 — see fix-debt-audit-2026-07-14.
   rec_count=$(grep -cE '^[[:space:]]*RECOMMEND=' "$REPO_ROOT/skills/_lib/scan-state.sh")
-  [ "$rec_count" -ge 13 ]
+  [ "$rec_count" -ge 11 ]
 }
 
 @test "guide_skill delegates only to 3-phase skills (RECOMMEND whitelist)" {
