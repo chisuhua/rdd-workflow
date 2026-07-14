@@ -4,6 +4,7 @@ description: 在 worktree 隔离环境执行 OpenSpec change 的实施计划。�
 license: MIT
 compatibility: Requires openspec CLI and git worktree.
 metadata:
+  version: "2.0"
   author: sisyphus
   version: "2.0"  # v2.0: 嵌入 TDD 5 步纪律 (合并自 spec-workflow/executing-plans)
   evolved-from: "v1.0 P0 roadmap + v2.0 嵌入 TDD 5 步纪律,取代 spec-workflow/executing-plans"
@@ -178,6 +179,16 @@ fi
 ### Step 1：确认在 worktree 内
 
 ```bash
+# P0-7 fix: inline worktree path resolver. git worktree list emits
+# `path  hash  [branch]` — third column is the bracketed branch name.
+# The earlier shell helper used commit-hash comparison which never matched;
+# the inline version compares against the literal bracket form using awk
+# with an explicit string variable.
+wt_path_for_branch_inline() {
+    local branch="$1"
+    git worktree list 2>/dev/null | awk -v br="\[openspec/\$branch\]" '$3 == br {print $1; exit}'
+}
+
 echo "✅ 在 worktree 中: $(pwd)"
 echo "   Branch: $(git branch --show-current)"
 echo "   Change: $CHANGE_NAME"

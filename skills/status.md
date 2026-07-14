@@ -4,6 +4,7 @@ description: 查看 OpenSpec change 状态、归档已完成的 change、清理 
 license: MIT
 compatibility: Requires openspec CLI
 metadata:
+  version: "2.0"
   author: sisyphus
   version: "2.0.2"  # v2.0.2: planned 状态展示 (Mode A + Mode E)
 ---
@@ -193,9 +194,18 @@ else
     REMAINING=0
 fi
 
+# P0-7 fix: inline worktree path resolver with bracket-aware branch column lookup.
+# git worktree list emits `path  hash  [branch]` — third column is the
+# bracketed branch name. The earlier shell helper used commit-hash
+# comparison which never matched; the inline version compares against
+# the literal bracket form using awk with an explicit string variable.
+wt_path_for_branch_inline() {
+    local branch="$1"
+    git worktree list 2>/dev/null | awk -v br="\[openspec/\$branch\]" '$3 == br {print $1; exit}'
+}
 # 通过 git worktree list 动态查找 worktree 路径（不硬编码 $PROJECT_ROOT/.rddf/wt/<name>）
-# 使用 _lib/worktree.sh 提供的 helper（该文件在前面已 source）
-WORKTREE_PATH=$(wt_path_for_branch "<name>")
+# P0-7: 使用内联 helper 而非 _lib/worktree.sh — 内联版本处理 bracket column 索引
+WORKTREE_PATH=$(wt_path_for_branch_inline "<name>")
 HAS_WORKTREE=false
 if [ -n "$WORKTREE_PATH" ] && [ -d "$WORKTREE_PATH" ]; then
     HAS_WORKTREE=true
