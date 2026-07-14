@@ -252,11 +252,15 @@ git commit -m "chore(status-guide-revision): all 12 work-units complete, 46+ tes
 
 ## Acceptance Criteria (mirror of `proposal.md`)
 
-1. All 12 plan work-units complete in tier order
+1. All 12 plan work-units complete in **strict tier order**: Tier 1 (1.1, 1.2, 1.3) → Tier 2 (2.1, 2.2, 2.3, 2.4, 2.5) → Tier 3 (3.1, 3.2, 3.3, 3.4) → Final Lock-in (FL0, FL1, FL2, FL3, FL4)
 2. Every change preceded by a bats test that fails red → passes green
 3. Baseline tests (16 cases) remain green
 4. New bats test files total ≥ 30 cases
 5. Python unit tests pass
 6. `metadata.version` resolves to the most-recent semver in both skill files
 7. Mode C archive flow requires y/n (or `--yes`) confirmation
-8. Change archived via `openspec archive` after completion
+8. Status Mode A unified with iteration.json 6-state enum incl. `review` + `committed-no-wt` display classification
+9. Mode E drops `exec $0` and uses `iteration.list_planned()` (existing helper at `iteration.py:350`)
+10. guide.md top-level `case "$1"` router + `--help`/`--no-binding` flags
+11. `check_stale_workflow_state()` runtime warning emitted by `scan_state()`
+12. Change archived via `openspec archive status-guide-revision --yes` after completion

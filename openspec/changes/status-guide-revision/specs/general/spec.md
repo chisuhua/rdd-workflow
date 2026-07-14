@@ -1,3 +1,7 @@
+# general Specification
+
+> This is the **delta form** for the `status-guide-revision` change. The OpenSpec CLI parses `## ADDED Requirements` (line 8) as the delta-header token — that's the standard convention used by all 5 archived changes in `openspec/changes/archive/*/specs/general/spec.md`. During `openspec archive`, the CLI itself handles the merge into `openspec/specs/general/spec.md` (which currently lists 5 existing requirements under a consolidated `## Requirements` header from prior archives). No data loss risk.
+
 ## ADDED Requirements
 
 ### Requirement: general-status-guide-skill-revision
@@ -13,8 +17,9 @@ The skill documentation at `skills/guide.md` and `skills/status.md` SHALL accura
 #### Scenario: Status Mode A status vocabulary unification
 
 - **WHEN** `status.md` Mode A dynamic status block is read
-- **THEN** it SHALL mention each iteration.json status (planned / proposed / in_worktree / completed / archived)
-- **AND** a "💼 committed" or equivalent state SHALL exist for changes committed to HEAD without a worktree
+- **THEN** it SHALL mention **all six** iteration.json schema states: `planned`, `proposed`, `in_worktree`, `review`, `completed`, `archived`
+- **AND** the previously-undocumented `review` state SHALL be explicitly visible (it was missing from the pre-change doc despite being a valid schema state since v2.0)
+- **AND** Mode A SHALL also classify and surface the "💼 committed-no-wt" display-time state — distinct from any schema state — for changes committed to HEAD where no worktree exists yet
 - **AND** the placeholder string "⏸ 暂停" SHALL NOT appear in the Mode A table template
 
 #### Scenario: Status Mode C archive confirmation gate
@@ -70,3 +75,21 @@ The skill documentation at `skills/guide.md` and `skills/status.md` SHALL accura
 - **WHEN** the bats test sweep runs (`bats tests/smoke.bats tests/integration/test_*_*.bats`)
 - **THEN** it SHALL include baseline 16 cases + 30+ new cases from `tests/integration/test_frontmatter_dupkey.bats`, `test_status_state_table.bats`, `test_archive_confirmation.bats`, `test_scan_state_doc.bats`, `test_status_mode_router.bats`, `test_status_mode_b_path_hygiene.bats`, `test_status_mode_d_env_safe.bats`, `test_status_mode_e_exec_safe.bats`, `test_status_mode_a_polish.bats`, `test_guide_binding_skip.bats`, `test_stale_workflow_state.bats`, `test_skill_style_guide.bats`
 - **AND** total ≥ 46 cases SHALL be green
+
+
+#### Scenario: status.md top-level mode router (S8)
+
+- **WHEN** `status.md` "## 输入" subsection is read
+- **THEN** it SHALL contain a top-level `case "$1" in` dispatcher that routes user input to Mode A (no args), Mode B (change name), Mode C (with `--archive` or `--yes`), Mode D (`--roadmap` / `roadmap`), Mode E (`--iteration` / `iteration`), or a `--help` / `-h` listing
+
+#### Scenario: status.md Mode A no longer duplicates `git worktree list` (S3)
+
+- **WHEN** the entire `skills/status.md` file is scanned with `grep -cE "^git worktree list"`
+- **THEN** the count SHALL be ≤ 1 (only the top-of-skill initialization, not duplicated in Mode A)
+- **AND** Mode A's case handler in `status.md` SHALL include an `i|` branch that captures custom user input rather than falling into the wildcard `*)` arm
+
+#### Scenario: status.md Mode A case handler accepts `i` choice (S11)
+
+- **WHEN** `status.md` Mode A `case "$choice" in` is read
+- **THEN** the case pattern list SHALL include `i|` mapping to a `read -r CUSTOM` prompt that surfaces the user's free-text intent
+- **AND** the wildcard `*)` arm SHALL remain for genuinely invalid input but SHALL NOT capture `i`

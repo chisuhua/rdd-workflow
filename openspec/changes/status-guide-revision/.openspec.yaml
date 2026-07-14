@@ -33,14 +33,18 @@ estimated_loc_change:
   new_files_lines: 600
   modified_files_lines: 95
 acceptance:
-  - YAML silent-keep-last bug resolved - metadata.version resolves to most-recent semver
-  - Mode A unified with iteration.json 6-state enum including committed-no-wt
-  - archive_change invoked only after explicit y/n confirmation or --yes/-y bypass
-  - scan-state.sh priority count and guide.md priority claim match exactly
-  - Mode B paths uniformly $PROJECT_ROOT-anchored
-  - Status Mode D python blocks use os.environ[PROJECT_ROOT] instead of bash interpolation
-  - Mode E uses iteration.list_planned() reusing existing helper
-  - check_stale_workflow_state emits warning automatically in scan_state output
+  - YAML silent-keep-last bug resolved - metadata.version resolves to most-recent semver (G1, C1)
+  - Mode A unified with iteration.json 6-state enum (planned/proposed/in_worktree/review/completed/archived) and documents "committed-no-wt" as a display-time classification distinct from the schema's review state (S1, S2)
+  - archive_change invoked only after explicit y/n confirmation or --yes/-y bypass (S7)
+  - scan-state.sh priority count matches guide.md claim (12 entries incl. 1, 1.5, 2, 2.5, 3-10); EXPORTED_VARS={RECOMMEND REASON} header declared (G2, G4)
+  - Mode B paths uniformly $PROJECT_ROOT-anchored; dead `source _lib/worktree.sh` removed; awk column comment mentions $1/$2/$3 (S4, S5, S6)
+  - Status Mode D python blocks use os.environ[PROJECT_ROOT] instead of bash interpolation (S12)
+  - Mode E drops `exec $0` (markdown not script) and consolidates iteration.json reads via iteration.py helper (S9, S10)
+  - check_stale_workflow_state emits warning automatically in scan_state output without auto-deleting the file (G6)
+  - Status Mode A no longer duplicates `git worktree list` call; case handler accepts user `i` choice (S3, S11)
+  - guide.md binding block documents graceful-skip semantics; --help and --no-binding CLI flags supported (G3, G5)
+  - status.md contains an "Output Style Guide" subsection defining a locked emoji vocabulary and Mode A progress column alignment (C2)
+  - status.md top-level mode router dispatches $1 to Mode A/B/C/D/E correctly (S8)
   - All 12 new bats test files pass; baseline 16 cases still pass; total >=46 green
   - python3 -m pytest tests/unit/ passes
   - bats tests/smoke.bats passes
