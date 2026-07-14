@@ -549,20 +549,30 @@ skill_use("guide-spec")  # 首次调用时自动完成迁移
 
 **症状**: 状态向量显示 change 已完成，但 `proposal-suggestions.md` 显示未完成
 
-> **⚠️ 当前版本（v2.0）说明**：CLI `spec-workflow sync` 规划中，v2.1 实现。当前状态数据存储于 Python 库层（`skills/_lib/sync_state.py`），在内存中维护双向一致性。下方命令展示的是 v2.0 完整设计演示。
+> **v2.0.3 (fix-debt-audit-2026-07-14) 说明**：`skills/_lib/sync_state.py` 已被删除。
+> v1.x → v2.0 双向迁移只在 2026-06 至 2026-07 v2.0 过渡期使用。v2.0 是唯一权威状态层;
+> 旧文件迁移不再需要。如未来需要 v2 → v3 迁移,写一个新的 `v2_to_v3.py` 而非复用 v1.x 代码。
+>
+> **遗留演示**（历史参考,代码已删除）:
+> CLI `spec-workflow sync` 规划中，v2.1 实现。当前状态数据存储于 Python 库层（`skills/_lib/sync_state.py`），在内存中维护双向一致性。下方命令展示的是 v2.0 完整设计演示。
 
-**解决**:
+**解决** (v2.0.3 当前):
 ```bash
-# 1. 检查同步层状态（CLI `sync --check` 规划中，v2.1 实现；当前手动检查）
+# 1. 检查状态层一致性
 git status .rddf/state/ proposal-suggestions.md openspec/ .rddf/
 
-# 2. 强制同步（状态向量 → 现有文件；CLI `sync --from state-vector` 规划中，v2.1 实现）
-# 当前手动操作：调用 skill_use("guide-spec") 触发 sync_state.py 的协调逻辑
-skill_use("guide-spec")
+# 2. 状态向量是权威 (v2.0+ 设计)
+#     .rddf/state/roadmap-state.json / iteration.json / sessions.json 是单一真相。
+#     proposal-suggestions.md 仅作为 v1.x 历史快照保留,不再自动同步。
+#     修复一致性:直接编辑 .rddf/state/ 下的文件,然后:
+#     rm proposal-suggestions.md   # 删除历史快照
+#     # 下次 propose/deps 步骤会从 .rddf/state/ 重建内容
+```
 
-# 3. 强制同步（现有文件 → 状态向量；CLI `sync --from legacy` 规划中，v2.1 实现）
-# 当前手动操作：直接编辑源文件（.rddf/state/roadmap-state.json / proposal-suggestions.md）
-# Loop 下次启动时 sync_state.py 会自动读取并同步
+**原始 v2.0 演示** (已过时,仅供历史参考):
+```bash
+# 原 P0 修复 (v2.0 设计): 调用 skill_use("guide-spec") 触发 sync_state.py 的协调逻辑
+# v2.0.3 后: 上述模块已删除,直接编辑 .rddf/state/ 下的权威文件
 ```
 
 ### 问题 3: Loop 引擎不启动

@@ -898,25 +898,12 @@ print(config["loop"]["max_iterations"])  # 100 (from defaults)
 - Type coercion for env vars (e.g., `RDDF_MAX_ITERATIONS=200` → int).
 - Validates enum values and numeric ranges; raises `ConfigError` with clear messages.
 
-### `skills/_lib/sync_state.py` — Sync Functions
-
-```python
-from skills._lib.sync_state import (
-    sync_state_vector_to_legacy,
-    sync_legacy_to_state_vector,
-    is_sync_enabled,
-)
-
-if is_sync_enabled():
-    sync_state_vector_to_legacy(".")
-    sync_legacy_to_state_vector(".")
-```
-
-- Bidirectional sync between v2 state vector and v1.x legacy files.
-- State vector is always authoritative (wins on conflict).
-- Conflict detection via mtime comparison.
-- Disable via env var: `RDDF_SYNC_DISABLED=1`.
-- Propagation latency: < 50ms.
+> **v2.0.3 (fix-debt-audit-2026-07-14)**: `skills/_lib/sync_state.py` was removed.
+> The v1.x → v2.0 bidirectional migration was only used during the v2.0
+> transition (2026-06 to 2026-07). v2.0 is now the only authoritative
+> state layer; legacy file migration is no longer needed. If a future
+> v3 migration is required, write a fresh `v2_to_v3.py` rather than
+> reusing the v1.x-era code.
 
 ---
 
