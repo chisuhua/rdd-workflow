@@ -347,6 +347,27 @@ Worktree: .rddf/wt/<name>
 
 ## 模式 C：归档完成
 
+### Step 0：用户确认 gate（NEW in v2.0.3，对应 S7 + 关键约束 #4 "归档不可逆"）
+
+```bash
+# 必填：强制 y/n 确认。若传入 --yes/-y 则跳过交互（CI 用法）。
+case "${1:-}" in
+  --yes|-y) CONFIRMED=yes ;;
+  *) CONFIRMED=no ;;
+esac
+
+if [ "$CONFIRMED" = "no" ]; then
+  echo "⚠️  即将归档 change <name>。此操作不可逆（merge → archive → cleanup）。"
+  echo -n "   输入 'yes' 确认,其他任意输入取消: "
+  read -r REPLY
+  case "$REPLY" in
+    yes|YES|y|Y) CONFIRMED=yes ;;
+    *) echo "❌ 已取消归档"; exit 1 ;;
+  esac
+fi
+[ "$CONFIRMED" = "yes" ] || { echo "❌ 未确认"; exit 1; }
+```
+
 ### 前置条件：确认全部完成
 
 ```bash
