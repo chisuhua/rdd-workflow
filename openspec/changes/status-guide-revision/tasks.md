@@ -13,7 +13,7 @@ STATUS: PROPOSED
 
 ### 1.1 Eliminate duplicate `version:` keys in skill frontmatter (G1 + C1)
 
-- [ ] 1.1.1 Add `tests/integration/test_frontmatter_dupkey.bats` (3 cases: guide, status, semver-resolve)
+- [x] 1.1.1 Add `tests/integration/test_frontmatter_dupkey.bats` (3 cases: guide, status, semver-resolve)
 
 ```bash
 cat > tests/integration/test_frontmatter_dupkey.bats <<'BATSEOF'
@@ -51,13 +51,13 @@ BATSEOF
 Run: `bats tests/integration/test_frontmatter_dupkey.bats`
 Expected: at least 2 failures (tests 1 & 2). Test 3 may pass pre-fix (YAML keeps last).
 
-- [ ] 1.1.2 In `skills/guide.md` lines 6-11, remove duplicate `version:` (keep line 7 `version: "2.0"` as source-of-truth; move "v1.1 rddf-session binding scan" note into `evolved-from:` string).
+- [x] 1.1.2 In `skills/guide.md` lines 6-11, remove duplicate `version:` (keep line 7 `version: "2.0"` as source-of-truth; move "v1.1 rddf-session binding scan" note into `evolved-from:` string).
 
-- [ ] 1.1.3 In `skills/status.md` lines 6-10, remove duplicate `version:` (keep line 9 `version: "2.0.2"`; move v1.x note into `evolved-from:`).
+- [x] 1.1.3 In `skills/status.md` lines 6-10, remove duplicate `version:` (keep line 9 `version: "2.0.2"`; move v1.x note into `evolved-from:`).
 
-- [ ] 1.1.4 Verify `bats tests/integration/test_frontmatter_dupkey.bats` all green; existing `test_guide_skill.bats` + `test_status_skill.bats` still green.
+- [x] 1.1.4 Verify `bats tests/integration/test_frontmatter_dupkey.bats` all green; existing `test_guide_skill.bats` + `test_status_skill.bats` still green.
 
-- [ ] 1.1.5 Commit:
+- [x] 1.1.5 Commit:
 ```bash
 git add tests/integration/test_frontmatter_dupkey.bats skills/guide.md skills/status.md
 git commit -m "fix(skills): eliminate duplicate version keys in frontmatter (G1, C1)
@@ -69,7 +69,7 @@ Lock invariant with tests/integration/test_frontmatter_dupkey.bats (3 cases)."
 
 ### 1.2 Unify Mode A status column with iteration.json states (S1 + S2)
 
-- [ ] 1.2.1 Add `tests/integration/test_status_state_table.bats` (4 cases).
+- [x] 1.2.1 Add `tests/integration/test_status_state_table.bats` (4 cases).
 
 ```bash
 cat > tests/integration/test_status_state_table.bats <<'BATSEOF'
@@ -98,11 +98,11 @@ load ../test_helper
 BATSEOF
 ```
 
-- [ ] 1.2.2 Verify red (≥1 fail).
+- [x] 1.2.2 Verify red (≥1 fail).
 
-- [ ] 1.2.3 Rewrite `skills/status.md` lines 100-160 (dynamic status block + table) to include 6-state `📋 💼 ✅ 🔧 ✔ 📦` vocabulary; remove `"⏸ 暂停"` placeholder.
+- [x] 1.2.3 Rewrite `skills/status.md` lines 100-160 (dynamic status block + table) to include 6-state `📋 💼 ✅ 🔧 ✔ 📦` vocabulary; remove `"⏸ 暂停"` placeholder.
 
-- [ ] 1.2.4 Verify green + commit:
+- [x] 1.2.4 Verify green + commit:
 ```bash
 git add tests/integration/test_status_state_table.bats skills/status.md
 git commit -m "fix(status): unify Mode A status column with iteration.json states (S1, S2)"
@@ -110,13 +110,13 @@ git commit -m "fix(status): unify Mode A status column with iteration.json state
 
 ### 1.3 Add archive confirmation prompt (S7)
 
-- [ ] 1.3.1 Add `tests/integration/test_archive_confirmation.bats` (2 cases).
+- [x] 1.3.1 Add `tests/integration/test_archive_confirmation.bats` (2 cases).
 
-- [ ] 1.3.2 Verify red.
+- [x] 1.3.2 Verify red.
 
-- [ ] 1.3.3 Insert "Step 0: 用户确认 gate" before `archive_change` invocation in `skills/status.md` Mode C; support `--yes`/`-y` bypass for CI.
+- [x] 1.3.3 Insert "Step 0: 用户确认 gate" before `archive_change` invocation in `skills/status.md` Mode C; support `--yes`/`-y` bypass for CI.
 
-- [ ] 1.3.4 Verify green + commit.
+- [x] 1.3.4 Verify green + commit.
 
 ## Tier 2 — P1 (usability)
 
