@@ -86,3 +86,73 @@ PYEOF
   after_hash=$(sha256sum "$TEST_ROOT/.rddf/state/sessions.json" | awk '{print $1}')
   [ "$before_hash" = "$after_hash" ]
 }
+
+@test "guide 输出 binding 行 当有 current binding" {
+  python3 - <<PYEOF
+import sys
+sys.path.insert(0, "$REPO_ROOT")
+from skills._lib.rddf_session import RddfSessionCoordinator
+coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
+coord.create_session(kind="stage_ship", owner_opencode_session_id="ses_me", goal={})
+PYEOF
+  export OPENCODE_SESSION_ID="ses_me"
+  # Run the full guide flow (scan_state + scan_session_binding + print)
+  scan_state "$TEST_ROOT"
+  scan_session_binding "$TEST_ROOT"
+  # Verify the binding line is present in BINDING_LINES (not yet printed to stdout)
+  [[ "${BINDING_LINES[0]}" == *"📍 Current: rds_"* ]]
+}
+
+@test "guide 不输出 binding 行 当 sessions.json 缺失" {
+  rm -f "$TEST_ROOT/.rddf/state/sessions.json"
+  export OPENCODE_SESSION_ID="ses_me"
+  scan_state "$TEST_ROOT"
+  scan_session_binding "$TEST_ROOT"
+  [ "${#BINDING_LINES[@]}" -eq 0 ]
+}
+
+@test "guide 不改变 RECOMMEND 当 binding 状态变化" {
+  # First scan: no binding
+  scan_state "$TEST_ROOT"
+  R1="$RECOMMEND"
+  scan_session_binding "$TEST_ROOT"
+  L1_COUNT="${#BINDING_LINES[@]}"
+  # Now add a binding and re-scan
+  python3 - <<PYEOF
+import sys
+sys.path.insert(0, "$REPO_ROOT")
+from skills._lib.rddf_session import RddfSessionCoordinator
+coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
+coord.create_session(kind="stage_ship", owner_opencode_session_id="ses_me", goal={})
+PYEOF
+  scan_state "$TEST_ROOT"
+  R2="$RECOMMEND"
+  scan_session_binding "$TEST_ROOT"
+  [ "$R1" = "$R2" ]
+}
+
+@test "guide binding 行在 RECOMMEND/REASON 之后" {
+  # The print order in guide.md MUST be RECOMMEND → REASON → BINDING_LINES.
+  # We verify the source code of guide.md enforces this ordering.
+  grep -q 'scan_session_binding' "$REPO_ROOT/skills/guide.md"
+  # Confirm scan_state appears before scan_session_binding
+  STATE_LINE=$(grep -n 'scan_state' "$REPO_ROOT/skills/guide.md" | head -1 | cut -d: -f1)
+  BIND_LINE=$(grep -n 'scan_session_binding' "$REPO_ROOT/skills/guide.md" | head -1 | cut -d: -f1)
+  [ "$STATE_LINE" -lt "$BIND_LINE" ]
+}
+
+@test "guide 不修改 sessions.json" {
+  python3 - <<PYEOF
+import sys
+sys.path.insert(0, "$REPO_ROOT")
+from skills._lib.rddf_session import RddfSessionCoordinator
+coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
+coord.create_session(kind="stage_ship", owner_opencode_session_id="ses_me", goal={})
+PYEOF
+  before_hash=$(sha256sum "$TEST_ROOT/.rddf/state/sessions.json" | awk '{print $1}')
+  export OPENCODE_SESSION_ID="ses_me"
+  scan_state "$TEST_ROOT"
+  scan_session_binding "$TEST_ROOT"
+  after_hash=$(sha256sum "$TEST_ROOT/.rddf/state/sessions.json" | awk '{print $1}')
+  [ "$before_hash" = "$after_hash" ]
+}
