@@ -1,0 +1,47 @@
+schema: spec-driven
+created: 2026-07-15
+name: status-guide-revision
+status: PROPOSED
+scope: [shared]
+goal: Resolve 15 audit findings in skills/guide.md and skills/status.md identified during a real execution session on 2026-07-15. Tier the fixes P0 (correctness) to P1 (usability) to P2 (consistency). Gate every change with a failing bats test that goes green after the documentation edit.
+follows:
+  - three-phase-skills (existing arch to plan to ship lifecycle)
+  - spec-workflow-writing-plans (TDD 5-step plan generator, reused)
+  - rddf-session (session binding infra, referenced by 1.1 frontmatter convention)
+blocks: []
+baseline:
+  - "YAML silent-keep-last bug — guide.md metadata.version resolves to 1.1 (not 2.0); status.md resolves to 2.0.2"
+  - "Status.md Mode A table hardcodes 3 states while iteration.json has 5-state enum"
+  - "Status.md Mode C invokes archive_change immediately without y/n confirmation"
+  - "guide.md priority claim (11) mismatches scan-state.sh 12 numbered bullets"
+target:
+  - skills/guide.md (frontmatter dedup + priority count + binding block skip + flags)
+  - skills/status.md (Mode A unif + Mode C gate + Mode B paths + Mode D env-safe + Mode E consolidate)
+  - skills/_lib/scan-state.sh (EXPORTED_VARS header + check_stale_workflow_state helper)
+  - 12 bats integration tests at tests/integration/test_*.bats
+  - This change skeleton (proposal/tasks/spec)
+non_goals:
+  - Behavior changes to runtime helpers beyond check_stale_workflow_state
+  - Refactoring status.md Modes into separate files
+  - ADR creation for this revision (deferred)
+  - Refactoring iteration.py beyond reusing existing list_planned
+  - Modifying other 11 skill files outside this change audit scope
+risk_level: low
+cross_repo:
+  - None (spec-workflow meta-repo only)
+estimated_loc_change:
+  new_files_lines: 600
+  modified_files_lines: 95
+acceptance:
+  - YAML silent-keep-last bug resolved - metadata.version resolves to most-recent semver
+  - Mode A unified with iteration.json 6-state enum including committed-no-wt
+  - archive_change invoked only after explicit y/n confirmation or --yes/-y bypass
+  - scan-state.sh priority count and guide.md priority claim match exactly
+  - Mode B paths uniformly $PROJECT_ROOT-anchored
+  - Status Mode D python blocks use os.environ[PROJECT_ROOT] instead of bash interpolation
+  - Mode E uses iteration.list_planned() reusing existing helper
+  - check_stale_workflow_state emits warning automatically in scan_state output
+  - All 12 new bats test files pass; baseline 16 cases still pass; total >=46 green
+  - python3 -m pytest tests/unit/ passes
+  - bats tests/smoke.bats passes
+  - Change archived via openspec archive status-guide-revision --yes after completion
