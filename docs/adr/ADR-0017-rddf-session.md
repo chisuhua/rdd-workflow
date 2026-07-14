@@ -121,3 +121,7 @@ completed  failed    orphaned
 - `docs/v2-workflow-overview.md` §4.5 rddf-session + 闭环 11
 - `docs/v2-multi-session-guide.md` rddf-session 用户指南
 - `openspec/changes/add-rddf-session/` — OpenSpec change artifacts
+
+## Cross-Reference
+
+- **spec 2026-07-14** (`docs/superpowers/specs/2026-07-14-rddf-session-binding-design.md`) — extends this ADR with discoverable binding + next-session recommendation. Adds `RddfSessionCoordinator.find_current_binding()` and `find_next_recommendation()` (read-only methods), `rddf-session current` subcommand, and `scan_session_binding()` integration into `guide`. No schema changes.
