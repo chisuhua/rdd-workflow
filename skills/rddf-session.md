@@ -5,7 +5,8 @@ license: MIT
 compatibility: Requires Python 3.11+ and the rddf_session.py module (installed via this skill pack).
 metadata:
   author: sisyphus
-  version: "1.0"
+  version: "1.1"  # added current subcommand (spec 2026-07-14)
+  evolved-from: "rddf-session.md v1.0"
   depends-on: [rddf_session]
 ---
 
@@ -21,6 +22,7 @@ metadata:
 skill_use("rddf-session")                       # default: list
 skill_use("rddf-session list")                  # same as above
 skill_use("rddf-session show <id>")             # show full JSON for a session
+skill_use("rddf-session current")               # show my current binding + recommend next (spec 2026-07-14)
 skill_use("rddf-session resume <id>")           # transfer ownership to current opencode session; refresh heartbeat
 skill_use("rddf-session abandon <id>")          # mark session as abandoned by current owner
 skill_use("rddf-session archive-history")       # move old terminal sessions to .archive.json (default keep=20)
@@ -78,6 +80,29 @@ if not session:
     print(f"Session not found: {session_id}")
     sys.exit(1)
 print(json.dumps(session.to_dict(), indent=2))
+PYEOF
+        ;;
+
+    current)
+        OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
+        python3 - "$SESSIONS_FILE" "$OPENCODE_SESSION_ID" "$PROJECT_ROOT" <<'PYEOF'
+import sys, json
+sys.path.insert(0, sys.argv[3] if len(sys.argv) > 3 else ".")
+from skills._lib.rddf_session import RddfSessionCoordinator
+sessions_file, owner = sys.argv[1], sys.argv[2]
+coord = RddfSessionCoordinator(sessions_file=sessions_file)
+coord.check_heartbeat_timeouts()
+current = coord.find_current_binding(owner)
+if current:
+    print(f"📍 Current: {current.session_id} (kind={current.kind}, started={current.started_at})")
+else:
+    print("📍 No current binding")
+    nxt = coord.find_next_recommendation(owner)
+    if nxt:
+        print(f"💡 Recommended: {nxt.session_id} (kind={nxt.kind}, last_heartbeat={nxt.last_heartbeat})")
+        print(f'   → skill_use("rddf-session resume {nxt.session_id}")')
+    else:
+        print("   No orphaned rddf-sessions found. Run guide-arch or guide-plan to start.")
 PYEOF
         ;;
 
@@ -146,7 +171,7 @@ PYEOF
 
     *)
         echo "Unknown subcommand: $SUBCOMMAND" >&2
-        echo "Usage: rddf-session {list|show|resume|abandon|archive-history} ..." >&2
+        echo "Usage: rddf-session {list|show|current|resume|abandon|archive-history} ..." >&2
         exit 1
         ;;
 esac

@@ -198,3 +198,48 @@ except (FileNotFoundError, json.JSONDecodeError, KeyError):
     REASON="无待创建 change → 准备 ship"
   fi
 }
+
+# scan_session_binding [PROJECT_ROOT]
+#   Scans .rddf/state/sessions.json for the current OpenCode session's
+#   binding status. Populates global array BINDING_LINES with 1-2 lines:
+#     - Line 1: "📍 Current: <rds_id> (kind=<K>, started=<T>)" if bound
+#               "📍 No current binding" otherwise
+#     - Line 2: "💡 Recommended: <rds_id> ... → skill_use(...)" only when
+#               unbound AND an orphaned session exists.
+#   Silent on missing/invalid file (returns 0, BINDING_LINES stays empty).
+#   Read-only: does NOT modify sessions.json.
+BINDING_LINES=()
+scan_session_binding() {
+  local PROJECT_ROOT="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  local SESSIONS_FILE="$PROJECT_ROOT/.rddf/state/sessions.json"
+  # Derive Python import path from this script's location (skills/_lib/ → repo root)
+  local SCRIPT_DIR
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd 2>/dev/null)" || SCRIPT_DIR=""
+  local PYTHON_PATH="${SCRIPT_DIR:+$(cd "$SCRIPT_DIR/../.." && pwd)}"
+  BINDING_LINES=()
+  [ -f "$SESSIONS_FILE" ] || return 0
+  local owner="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
+  while IFS= read -r line; do
+    BINDING_LINES+=("$line")
+  done < <(PY_PROJECT_ROOT="$PROJECT_ROOT" \
+    python3 - "$SESSIONS_FILE" "$owner" "${PYTHON_PATH:-$PROJECT_ROOT}" <<'PYEOF'
+import os, sys
+sys.path.insert(0, sys.argv[3] if len(sys.argv) > 3 else ".")
+from skills._lib.rddf_session import RddfSessionCoordinator
+coord = RddfSessionCoordinator(sessions_file=sys.argv[1])
+coord.check_heartbeat_timeouts()
+owner = sys.argv[2]
+current = coord.find_current_binding(owner)
+if current:
+    print(f"📍 Current: {current.session_id} (kind={current.kind}, started={current.started_at})")
+else:
+    print("📍 No current binding")
+    nxt = coord.find_next_recommendation(owner)
+    if nxt:
+        print(f"💡 Recommended: {nxt.session_id} (kind={nxt.kind}, last_heartbeat={nxt.last_heartbeat})")
+        print(f'   → skill_use("rddf-session resume {nxt.session_id}")')
+    else:
+        print("   No orphaned rddf-sessions found. Run guide-arch or guide-plan to start.")
+PYEOF
+    )
+}
