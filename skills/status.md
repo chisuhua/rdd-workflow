@@ -4,9 +4,9 @@ description: 查看 OpenSpec change 状态、归档已完成的 change、清理 
 license: MIT
 compatibility: Requires openspec CLI
 metadata:
-  version: "2.0"
+  version: "2.0.2"  # source-of-truth (latest semver)
   author: sisyphus
-  version: "2.0.2"  # v2.0.2: planned 状态展示 (Mode A + Mode E)
+  evolved-from: "status.md v1.x; v2.0.2 added planned 状态展示 (Mode A + Mode E)"
 ---
 
 # OpenSpec 工作流 — Status
