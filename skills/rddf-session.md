@@ -4,6 +4,7 @@ description: User-perspective workflow session management. Persists rddf-session
 license: MIT
 compatibility: Requires Python 3.11+ and the rddf_session.py module (installed via this skill pack).
 metadata:
+  version: "2.0"
   author: sisyphus
   version: "1.1"  # added current subcommand (spec 2026-07-14)
   evolved-from: "rddf-session.md v1.0"

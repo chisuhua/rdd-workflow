@@ -4,6 +4,7 @@ description: Change generation phase state machine for OpenSpec workflow — gui
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+, git 2.25+
 metadata:
+  version: "2.0"
   author: sisyphus
   version: "1.0"  # Phase 2 of three-phase architecture (ADR-0003)
   evolved-from: "extracted from guide-spec.md v1.0 (Phase 2 + Phase 2.5)"

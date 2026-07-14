@@ -4,6 +4,7 @@ description: Ship-side state machine for OpenSpec workflow — guides user from 
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+, git 2.25+. Plan generation delegated to spec-workflow/writing-plans (v2.0 自包含,无外部 skill 依赖).
 metadata:
+  version: "2.0"
   author: sisyphus
   version: "2.0.1"  # v2.0.1: add post-archive fill suggestion hook for skeleton changes
   evolved-from: "split from guide.md v3.0; v2.0 移除 prometheus-planning 间接层, 直接调用内置 skill"

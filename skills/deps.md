@@ -4,6 +4,7 @@ description: 分析 OpenSpec change 之间的依赖关系，生成 Mermaid 依�
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+. Reads proposal.md/design.md/specs/*.md from openspec/changes/.
 metadata:
+  version: "2.0"
   author: sisyphus
   version: "1.0"  # P4: 增强 Step 5e 重组建议格式，明确标注"仅建议不执行"
   hook: "guide 阶段 2.5（propose → plan 之间自动调用）"

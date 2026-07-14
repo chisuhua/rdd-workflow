@@ -4,6 +4,7 @@ description: View and manage features (groups of related changes). Provides summ
 license: MIT
 compatibility: Requires iteration.json (run `guide-plan` once first) and ideally deps-analysis.json (run `deps` first for full graph).
 metadata:
+  version: "2.0"
   author: sisyphus
   version: "1.0"
   depends-on: [iteration, deps_output]

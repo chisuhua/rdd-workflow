@@ -1,8 +1,8 @@
 ---
 name: INSTALL
-description: 安装 Spec Workflow 技能到项目目录。执行后会将 skills/ 目录下全部 13 个子技能（含运行时 Python 模块）复制到项目的 .opencode/skills/spec-workflow/ 目录。
+description: 安装 Spec Workflow 技能到项目目录。执行后会将 skills/ 目录下全部 13 个子技能（含 feature / rddf-session / spec-workflow-writing-plans 等运行时 Python 模块）复制到项目的 .opencode/skills/spec-workflow/ 目录。
 alias: install
-version: "1.1.0"
+version: "2.0"
 author: sisyphus
 ---
 

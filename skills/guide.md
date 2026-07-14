@@ -4,6 +4,7 @@ description: 无状态推荐器——扫描项目当前状态（roadmap、arch-h
 license: MIT
 compatibility: Requires git 2.25+
 metadata:
+  version: "2.0"
   author: sisyphus
   version: "1.1"  # v1.1: append rddf-session binding scan (spec 2026-07-14)
   evolved-from: "split from guide.md v3.0"
