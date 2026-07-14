@@ -1,9 +1,9 @@
 # ADR-0020: Incremental Skeleton Planning
 
-**Status**: 待定 → 已采纳（待 archive 后切换）
-**日期**: 2026-07-08
-**作者**: sisyphus (via dispatching-parallel-agents)
-**evolved-from**: 部分灵感源自 ADR-0011（阶段步骤化执行模型）
+> **状态**: 已采纳（v2.0.2 archive 后切换）
+> **日期**: 2026-07-08
+> **作者**: sisyphus (via dispatching-parallel-agents)
+> **evolved-from**: 部分灵感源自 ADR-0011（阶段步骤化执行模型）
 
 ## Context
 

@@ -1,9 +1,9 @@
 # ADR-0013: Extract scan-state logic from skills/guide.md into skills/_lib/scan-state.sh
 
-- Status: 已采纳
-- Date: 2026-07-07
-- Deciders: spec-workflow maintainers
-- Replaces: (none)
+> **状态**: 已采纳
+> **日期**: 2026-07-07
+> **决策者**: spec-workflow maintainers
+> **替代**: (无)
 
 ## Context
 
