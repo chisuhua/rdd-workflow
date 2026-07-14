@@ -13,6 +13,21 @@ The rddf-session is a user-layer abstraction overlay.
 Platform note: this module uses fcntl.flock for advisory file locking, which is
 POSIX-only. On Windows the lock call will raise AttributeError; callers running
 on Windows should use a different locking mechanism (e.g. msvcrt).
+
+v2.0.3 (fix-debt-audit-2026-07-14 / Wave 3.2): RddfSessionCoordinator is a
+~400-line god class with 3 distinct responsibilities mixed together:
+
+  Persistence:   __init__, _read_unlocked, _atomic_write, _with_file_lock
+  Commands:      create_session, find_session, update_session_status,
+                 list_sessions, attach_change, detach_change,
+                 refresh_heartbeat, abandon, archive_history,
+                 transfer_ownership
+  Binding:       find_current_binding, find_next_recommendation,
+                 detect_conflict, check_heartbeat_timeouts
+
+Full split deferred to a follow-up change to avoid scope creep. The atomic
+write helper used by `_atomic_write` was already consolidated in Wave 3.1
+(``skills/_lib/atomic_write.py::atomic_write_json``).
 """
 from __future__ import annotations
 
@@ -108,11 +123,9 @@ class RddfSessionCoordinator:
 
     def _atomic_write(self, data: dict) -> None:
         """Write sessions.json atomically (write-to-tmp + rename)."""
-        self._sessions_file.parent.mkdir(parents=True, exist_ok=True)
-        tmp_path = self._sessions_file.with_suffix(".json.tmp")
-        with tmp_path.open("w") as f:
-            json.dump(data, f, indent=2, sort_keys=False)
-        os.replace(tmp_path, self._sessions_file)
+        # v2.0.3: delegate to shared atomic_write helper (Wave 3.1).
+        from skills._lib.atomic_write import atomic_write_json
+        atomic_write_json(str(self._sessions_file), data)
 
     def _with_file_lock(self, fn):
         """Acquire advisory file lock, run fn, release.

@@ -141,15 +141,9 @@ def _validate(data: dict) -> None:
 
 def _atomic_write(path: str, data: dict) -> None:
     """Write data to path atomically (write to .tmp, fsync, rename)."""
-    target_dir = os.path.dirname(path)
-    if target_dir:
-        os.makedirs(target_dir, exist_ok=True)
-    tmp_path = path + ".tmp"
-    with open(tmp_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(tmp_path, path)
+    # v2.0.3: delegate to shared atomic_write helper (Wave 3.1).
+    from skills._lib.atomic_write import atomic_write_json
+    atomic_write_json(path, data)
 
 
 def _read_unlocked(path: str) -> Optional[dict]:
