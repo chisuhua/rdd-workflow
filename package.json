@@ -18,7 +18,7 @@
     "tdd"
   ],
   "scripts": {
-    "test": "bats tests/",
+    "test": "bats tests/ --recursive",
     "install-python-deps": "pip install -r requirements.txt"
   },
   "engines": {

@@ -47,8 +47,8 @@ jobs:
       - name: Python integration tests
         run: python3 -m pytest tests/integration/ -q --tb=short
 
-      - name: Bats smoke
-        run: bats tests/smoke.bats
+      - name: Bats smoke (full recursive — v2.0.3)
+        run: bats tests/ --recursive
 
       - name: Bats integration tests (static)
         run: |
@@ -70,10 +70,12 @@ jobs:
                tests/integration/test_handoff.bats \
                tests/integration/test_deps_output.bats \
                tests/integration/test_deps_candidate_check.bats \
-               tests/integration/scan_state.bats \
                tests/integration/test_arch_discovery_contract.bats \
                tests/integration/test_doc_contracts.bats \
-               tests/integration/test_adr_index.bats
+               tests/integration/test_adr_index.bats \
+               tests/integration/test_rddf_cli.bats \
+               tests/_lib/test_scan_state.bats \
+               tests/_lib/test_archive.bats
 
       - name: Bats integration tests (git worktree)
         run: |
