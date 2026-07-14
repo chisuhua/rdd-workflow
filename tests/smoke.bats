@@ -16,7 +16,13 @@ load test_helper
   [ "$major" -ge 1 ]
 }
 
-@test "all 10 skill files exist" {
+@test "all skill files exist (dynamic)" {
+  for f in skills/*.md; do
+    [ -f "$f" ]
+  done
+}
+
+@test "v1.x baseline skills still present (regression)" {
   [ -f "skills/INSTALL.md" ]
   [ -f "skills/guide.md" ]
   [ -f "skills/guide-arch.md" ]
