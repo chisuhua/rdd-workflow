@@ -560,6 +560,18 @@ PYEOF
         continue
     fi
 
+    # Spec-validation gate (add-spec-validation-gates): verify baseline claims BEFORE writing artifacts.
+    # If validate_baseline.py exits 1, the baseline declares a false claim (e.g., file/symbol/git-history
+    # that doesn't actually exist) — block here before any proposal.md/design.md/tasks.md writes.
+    if [ -f "$PROJECT_ROOT/openspec/changes/<name>/.openspec.yaml" ]; then
+        if ! python3 "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/validate_baseline.py" "<name>" >/dev/null 2>&1; then
+            echo "❌ Baseline validation failed for <name>"
+            echo "   See errors below. Fix .openspec.yaml baseline claims before continuing."
+            python3 "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/validate_baseline.py" "<name>" || true
+            continue
+        fi
+    fi
+
     # P0-3: 记录成功创建的 change 名（仅本次会话、仅 openspec new 成功后的）
     THIS_SESSION_CREATED+=("<name>")
     
