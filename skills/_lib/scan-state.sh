@@ -216,8 +216,7 @@ check_stale_workflow_state() {
     echo "   This file is no longer used and will be ignored."
     echo "   Remove it manually if you want: rm workflow-state.md"
   fi
-
-  check_stale_workflow_state "$PROJECT_ROOT"
+  return 0
 }
 
 scan_session_binding() {
