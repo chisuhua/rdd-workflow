@@ -742,6 +742,30 @@ CHANGE_COUNT=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v a
 CURRENT_CHANGE=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | head -1 | xargs -n1 basename 2>/dev/null)
 CURRENT_CHANGE="${CURRENT_CHANGE:-}"
 
+# Spec-validation gate (add-spec-validation-gates): validate every active change's baseline
+# + delta targets before plan-done writes the handoff file. Catches v1 (false baseline)
+# and v2 (MODIFIED-on-empty-spec) class incidents at plan-done time, NOT archive time.
+VALIDATION_FAILED=0
+for d in "$PROJECT_ROOT"/openspec/changes/*/; do
+    [ -d "$d" ] || continue
+    case "$d" in */archive/) continue ;; esac
+    name=$(basename "$d")
+    if ! python3 "$PROJECT_ROOT/skills/_lib/validate_baseline.py" "$name" >/dev/null 2>&1; then
+        echo "❌ plan-done gate: $name failed baseline validation"
+        python3 "$PROJECT_ROOT/skills/_lib/validate_baseline.py" "$name" || true
+        VALIDATION_FAILED=1
+    fi
+    if ! python3 "$PROJECT_ROOT/skills/_lib/validate_delta_targets.py" "$name" >/dev/null 2>&1; then
+        echo "❌ plan-done gate: $name failed delta target validation"
+        python3 "$PROJECT_ROOT/skills/_lib/validate_delta_targets.py" "$name" || true
+        VALIDATION_FAILED=1
+    fi
+done
+if [ "$VALIDATION_FAILED" -ne 0 ]; then
+    echo "❌ plan-done gate blocked: fix validation errors above"
+    exit 1
+fi
+
 cat > "$HANDOFF_FILE" << EOF
 {
   "plan_complete_at": "$(date -Iseconds)",

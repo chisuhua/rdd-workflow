@@ -59,15 +59,27 @@ def find_main_specs_dirs(search_root: Path) -> set:
 
 
 def parse_delta_sections(spec_md: Path) -> dict:
-    """Parse spec.md into sections. Return dict of section_name -> list of requirement body (list of lines)."""
+    """Parse spec.md into sections. Return dict of section_name -> list of requirement body (list of lines).
+
+    A requirement body is the line block from one `### Requirement:` header to the next
+    section/requirement header. Empty placeholders like '(none)' or empty bodies are filtered out.
+    """
     content = spec_md.read_text()
     sections: dict = {}
     current_section = None
     current_body: list = []
+    placeholder_pattern = re.compile(r"^\(none\)\s*$", re.IGNORECASE)
+
+    def is_placeholder(body: list) -> bool:
+        non_empty = [ln for ln in body if ln.strip()]
+        if not non_empty:
+            return True
+        return all(placeholder_pattern.match(ln.strip()) for ln in non_empty)
+
     for line in content.splitlines():
         m = re.match(r"^## (ADDED|MODIFIED|RENAMED|REMOVED) Requirements\s*$", line)
         if m:
-            if current_section in ("MODIFIED", "RENAMED") and current_body:
+            if current_section in ("MODIFIED", "RENAMED") and current_body and not is_placeholder(current_body):
                 sections[current_section].append(current_body)
             current_section = m.group(1)
             sections[current_section] = []
@@ -75,13 +87,13 @@ def parse_delta_sections(spec_md: Path) -> dict:
             continue
         m = re.match(r"^### Requirement:", line)
         if m and current_section in ("MODIFIED", "RENAMED"):
-            if current_body:
+            if current_body and not is_placeholder(current_body):
                 sections[current_section].append(current_body)
             current_body = [line]
             continue
-        if current_section in ("MODIFIED", "RENAMED") and current_body is not None:
+        if current_section in ("MODIFIED", "RENAMED") and current_body:
             current_body.append(line)
-    if current_section in ("MODIFIED", "RENAMED") and current_body:
+    if current_section in ("MODIFIED", "RENAMED") and current_body and not is_placeholder(current_body):
         sections[current_section].append(current_body)
     return sections
 
