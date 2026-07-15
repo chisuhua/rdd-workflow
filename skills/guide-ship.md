@@ -142,209 +142,31 @@ esac
 **选项 1/2 执行内容**（以 fix-ns-pollution 为例）：
 
 ```bash
-CHANGE_NAME="fix-ns-pollution"
+# === Phase 1: thin orchestrator — heavy lifting in skills/_lib/ship_plan.sh ===
+# Skip orchestrator via SKIP_PROMETHEUS_PLANNING=yes (escape hatch; not recommended)
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+CHANGE_NAME="${CHANGE_NAME:-fix-ns-pollution}"  # default for documentation
 
-# COMMIT GATE - 脏检测
-if [ -n "$(git status --porcelain "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/")" ]; then
-    echo "⚠️  检测到未提交的修改，提示用户提交或放弃"
-fi
+source "$REPO_ROOT/skills/_lib/ship_plan.sh"
 
-# COMMIT GATE - 是否已 commit
-if git rev-parse --verify HEAD >/dev/null 2>&1; then
-    if ! (cd "$PROJECT_ROOT" 2>/dev/null && git show HEAD:"openspec/changes/$CHANGE_NAME/.openspec.yaml" > /dev/null 2>&1); then
-        echo "❌ Artifacts 尚未提交，请先提交"
-    fi
-else
-    echo "❌ 当前仓库没有任何提交（HEAD 不存在）"
-    echo "请先 git commit 一些文件后再执行 plan"
-    exit 1
-fi
+# 1) COMMIT GATE
+check_artifacts_committed "$PROJECT_ROOT" "$CHANGE_NAME" || {
+  echo "请先 commit openspec/changes/$CHANGE_NAME/ 后重试"
+  exit 1
+}
 
-# ============================================================
-# PARALLEL CONFLICT DETECTION
-# 自动检测是否存在并行冲突，决定执行模式
-# ============================================================
-EXISTING_WT=$(git worktree list 2>/dev/null | awk '$3 ~ /^openspec\//' | wc -l || echo 0)
-TOTAL_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l || echo 0)
+# 2) PARALLEL CONFLICT DETECTION → execution mode
+MODE=$(detect_execution_mode "$PROJECT_ROOT" "$CHANGE_NAME")
 
-if [ "$EXISTING_WT" -gt 0 ] || [ "$TOTAL_CHANGES" -gt 1 ]; then
-    MODE="worktree"
-    echo "🔀 并行风险: $EXISTING_WT worktrees, $TOTAL_CHANGES changes → worktree 隔离模式"
-else
-    MODE="lightweight"
-    echo "⚡ 无并行冲突 → 轻量模式（跳过 worktree）"
-fi
+# 3) MODE-SPECIFIC SETUP + WORKTREE VERIFICATION GATE
+WT_PATH=$(setup_execution_workspace "$PROJECT_ROOT" "$CHANGE_NAME" "$MODE")
 
-# ============================================================
-# HANDOFF STATE READ (P2-5)
-# ============================================================
-HANDOFF_FILE="$PROJECT_ROOT/.rddf/state/.plan-handoff.json"
-if [ -f "$HANDOFF_FILE" ]; then
-    echo "📋 Reading plan-done handoff state..."
-    cat "$HANDOFF_FILE"
-    echo ""
-    python3 -c "
-import json, datetime, sys
-try:
-    with open('$HANDOFF_FILE') as f:
-        data = json.load(f)
-    data['ship_started_at'] = datetime.datetime.now().isoformat()
-    with open('$HANDOFF_FILE', 'w') as f:
-        json.dump(data, f, indent=2)
-    print('✅ Handoff state updated: ship_started_at set')
-except (FileNotFoundError, json.JSONDecodeError) as e:
-    print(f'⚠️  Failed to update handoff: {e}', file=sys.stderr)
-    sys.exit(0)
-" 2>/dev/null
-fi
+# 4) PLAN GENERATION (calls skill_use "spec-workflow/writing-plans" internally;
+#    honors SKIP_PROMETHEUS_PLANNING=yes to write placeholder plan file)
+PLAN_STEP_COUNT=$(generate_implementation_plan "$PROJECT_ROOT" "$CHANGE_NAME" "$MODE")
 
-# 创建 branch（如不存在）
-if ! git branch --list "openspec/$CHANGE_NAME" | grep -q "openspec/$CHANGE_NAME"; then
-    git branch "openspec/$CHANGE_NAME" HEAD
-fi
-
-# ============================================================
-# MODE-SPECIFIC SETUP
-# ============================================================
-if [ "$MODE" = "worktree" ]; then
-    # --- Worktree 模式 ---
-    if [ -d "$PROJECT_ROOT/.rddf/wt/${CHANGE_NAME}" ]; then
-        if git worktree list | grep -q "$PROJECT_ROOT/.rddf/wt/${CHANGE_NAME}"; then
-            echo "⚠️  Worktree 已存在"
-        else
-            echo "❌ 目录冲突，请先清理: rm -rf \"$PROJECT_ROOT/.rddf/wt/${CHANGE_NAME}\""
-        fi
-    else
-        git worktree add "$PROJECT_ROOT/.rddf/wt/${CHANGE_NAME}" "openspec/$CHANGE_NAME"
-    fi
-
-    # WORKTREE VERIFICATION GATE (P0 FIX)
-    WT_PATH="$PROJECT_ROOT/.rddf/wt/${CHANGE_NAME}"
-    WT_BRANCH=$(git worktree list --porcelain | awk -v path="$WT_PATH" '
-        $1 == "worktree" && $2 == path { found=1; next }
-        found && $1 == "branch" { print $2; exit }
-        found && $1 == "detached" { print "DETACHED"; exit }
-    ')
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "🔍 Worktree 验证"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "  Worktree 路径: $WT_PATH"
-    echo "  分支状态: ${WT_BRANCH:-未找到}"
-
-    if [ "$WT_BRANCH" = "DETACHED" ]; then
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "❌ 错误：Worktree 处于 detached HEAD 状态！"
-        echo ""
-        echo "  请执行以下命令修复："
-        echo "    cd $WT_PATH"
-        echo "    git checkout openspec/$CHANGE_NAME"
-        echo ""
-        echo "  或删除 worktree 重新创建："
-        echo "    git worktree remove $WT_PATH"
-        echo "    git branch -D openspec/$CHANGE_NAME"
-        echo "    skill_use(\"guide-ship\")  # 重新进入 Plan 阶段"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        exit 1
-    elif [ -z "$WT_BRANCH" ]; then
-        echo "⚠️  警告：无法确定 worktree 分支状态"
-    fi
-
-    EXPECTED_BRANCH="refs/heads/openspec/$CHANGE_NAME"
-    if [ "$WT_BRANCH" != "$EXPECTED_BRANCH" ] && [ "$WT_BRANCH" != "openspec/$CHANGE_NAME" ]; then
-        echo "⚠️  警告：Worktree 分支 $WT_BRANCH 与预期不符"
-    fi
-    echo "✅ Worktree 验证通过"
-else
-    # --- 轻量模式 ---
-    # 切换到 change 分支（直接在当前仓库，不创建 worktree）
-    if ! git checkout "openspec/$CHANGE_NAME" 2>/dev/null; then
-        echo "❌ 切换分支失败: openspec/$CHANGE_NAME"
-        exit 1
-    fi
-    WT_PATH="$PROJECT_ROOT"  # 计划在执行时使用当前目录
-    echo "⚡ 轻量模式: 已切换到 openspec/$CHANGE_NAME, 跳过 worktree"
-fi
-```
-
-```bash
-# === Implementation plan generation ===
-# v2.0 简化: 直接调用内置的 spec-workflow/writing-plans 技能
-if [ "$MODE" = "worktree" ]; then
-    cd "$WT_PATH" || { echo "❌ 进入 worktree 失败: $WT_PATH"; exit 1; }
-else
-    cd "$PROJECT_ROOT" || { echo "❌ 进入项目根目录失败"; exit 1; }
-fi
-
-# Skill-level bypass for users who intentionally skip plan generation (known risk).
-if [ "${SKIP_PROMETHEUS_PLANNING:-no}" = "yes" ]; then
-    echo "⚠️  跳过实施计划生成 (SKIP_PROMETHEUS_PLANNING=yes)"
-    echo "   execute.md 阶段将无 .rddf/plans/<name>.md 可读"
-    touch ".rddf/plans/$CHANGE_NAME.md"
-    echo "- [ ] (占位任务) 手工填充 .rddf/plans/$CHANGE_NAME.md" >> ".rddf/plans/$CHANGE_NAME.md"
-else
-    # 直接调用内置 skill (无中间检测层,无外部依赖)
-    if ! skill_use("spec-workflow/writing-plans") 2>/dev/null; then
-        echo "❌ 实施计划生成失败"
-        echo "   spec-workflow/writing-plans 技能未找到,检查安装是否完整"
-        exit 1
-    fi
-
-    # 契约验证 (双重保险)
-    if [ ! -f ".rddf/plans/$CHANGE_NAME.md" ]; then
-        echo "❌ 计划文件缺失: .rddf/plans/$CHANGE_NAME.md"
-        exit 1
-    fi
-    PLAN_TASK_COUNT=$(grep -c '^### Task' ".rddf/plans/$CHANGE_NAME.md" 2>/dev/null || echo 0)
-    PLAN_STEP_COUNT=$(grep -c '^- \[ \]' ".rddf/plans/$CHANGE_NAME.md" 2>/dev/null || echo 0)
-    if [ "$PLAN_TASK_COUNT" -eq 0 ] || [ "$PLAN_STEP_COUNT" -eq 0 ]; then
-        echo "❌ 计划文件存在但无 Task 或 Step (Tasks: $PLAN_TASK_COUNT, Steps: $PLAN_STEP_COUNT)"
-        exit 1
-    fi
-    echo "✅ 实施计划已生成: $PLAN_TASK_COUNT Tasks / $PLAN_STEP_COUNT Steps (TDD 5 步结构)"
-fi
-
-# ============================================================
-# v2.0 钩子: 更新 iteration.json (current sprint tracker)
-# 在计划生成成功后, 立即把 status 从 proposed 切到 in_worktree,
-# 并写入 worktree_path + plan_path + tasks_total. 失败 graceful 退出.
-# ============================================================
-# v2.0.2 安全修复: bash 变量通过环境变量传递 (os.environ),
-# 不用 '$VAR' 直接拼到 Python 源码. 避免单引号路径/注入风险.
-PROJECT_ROOT="$PROJECT_ROOT" \
-CHANGE_NAME="$CHANGE_NAME" \
-MODE="$MODE" \
-WT_PATH="$WT_PATH" \
-PLAN_STEP_COUNT="$PLAN_STEP_COUNT" \
-python3 -c '
-import os, sys
-try:
-    from skills._lib import iteration as it_mod
-except ImportError as e:
-    print(f"⚠️  iteration 模块不可用, 跳过: {e}", file=sys.stderr)
-    sys.exit(0)
-try:
-    project_root = os.environ["PROJECT_ROOT"]
-    change_name = os.environ["CHANGE_NAME"]
-    mode = os.environ.get("MODE", "")
-    wt_path = os.environ.get("WT_PATH", "")
-    plan_step_count = os.environ.get("PLAN_STEP_COUNT", "0")
-    data = it_mod.load(project_root)
-    kwargs = {
-        "name": change_name,
-        "status": "in_worktree",
-        "plan_path": f".rddf/plans/{change_name}.md",
-        "tasks_total": int(plan_step_count or 0),
-    }
-    if mode == "worktree" and wt_path:
-        kwargs["worktree_path"] = f".rddf/wt/{change_name}"
-    data = it_mod.add_or_update_change(data, **kwargs)
-    it_mod.save(project_root, data)
-    print("✅ iteration.json: status=in_worktree, plan_path 已记录")
-except Exception as e:
-    print(f"⚠️  iteration.json 更新失败 (非致命): {e}", file=sys.stderr)
-    sys.exit(0)
-' 2>&1 | grep -v "^$" || true
+# 5) iteration.json HOOK (status → in_worktree)
+record_iteration_status "$PROJECT_ROOT" "$CHANGE_NAME" "$MODE" "$WT_PATH" "$PLAN_STEP_COUNT"
 ```
 
 **环境就绪 → 进入执行模式选择**：

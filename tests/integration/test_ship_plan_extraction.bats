@@ -15,8 +15,12 @@
 
 load ../test_helper
 
-# Phase 1 in guide-ship.md spans lines 32-417.
-PHASE1_RANGE="32,417p"
+# Replaced Phase 1 inline block spans lines 144-348 (the COMMIT GATE +
+# conflict detection + mode setup + plan generation block). Other Phase 1
+# blocks (rddf-session setup, ACTIVE_CHANGES table) were intentionally
+# left in markdown because they're small (<30 lines) and don't fit
+# the ship_plan.sh helper scope.
+REPLACED_RANGE="144,348p"
 
 @test "skills/_lib/ship_plan.sh exists with expected function exports" {
   [ -f "$REPO_ROOT/skills/_lib/ship_plan.sh" ]
@@ -40,19 +44,19 @@ PHASE1_RANGE="32,417p"
 
 @test "guide-ship.md Phase 1 no longer inlines COMMIT GATE logic" {
   [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  ! sed -n "$PHASE1_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'git status --porcelain .*openspec/changes/'
-  ! sed -n "$PHASE1_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'git show HEAD:.*openspec.yaml'
+  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'git status --porcelain .*openspec/changes/'
+  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'git show HEAD:.*openspec.yaml'
 }
 
 @test "guide-ship.md Phase 1 no longer inlines parallel conflict detection" {
   [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  ! sed -n "$PHASE1_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'openspec\\/'
-  ! sed -n "$PHASE1_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'grep -v archive/'
+  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'openspec\\/'
+  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'grep -v archive/'
 }
 
 @test "guide-ship.md Phase 1 no longer inlines worktree creation in markdown bash block" {
   [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  ! sed -n "$PHASE1_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'git worktree add .*\\.rddf/wt/'
+  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'git worktree add .*\\.rddf/wt/'
 }
 
 @test "detect_execution_mode returns lightweight when no parallel conflict" {
@@ -86,4 +90,13 @@ PHASE1_RANGE="32,417p"
   result=$(detect_execution_mode "$TEST_REPO" "c2")
   [ "$result" = "worktree" ]
   rm -rf "$TEST_REPO"
+}
+
+@test "guide-ship.md Phase 1 source block is now ≤ 30 lines (was 200+)" {
+  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
+  # Count lines in the FIRST bash block under Phase 1 (lines 32-417 range).
+  # After extraction, this should be a thin orchestrator ≤ 30 lines.
+  local block_lines
+  block_lines=$(awk 'NR>=32 && NR<=417 && /^```bash$/{n++; next} NR>=32 && NR<=417 && /^```$/{if(n>0){exit}} NR>=32 && NR<=417 && n{print}' "$REPO_ROOT/skills/guide-ship.md" | wc -l)
+  [ "$block_lines" -le 30 ]
 }
