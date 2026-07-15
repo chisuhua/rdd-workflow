@@ -122,47 +122,47 @@ git commit -m "fix(status): unify Mode A status column with iteration.json state
 
 ### 2.1 scan-state.sh — clarify exported vars + fix priority count claim (G2 + G4)
 
-- [ ] 2.1.1 Add `tests/integration/test_scan_state_doc.bats` (3 cases).
+- [x] 2.1.1 Add `tests/integration/test_scan_state_doc.bats` (3 cases).
 
-- [ ] 2.1.2 Verify red.
+- [x] 2.1.2 Verify red.
 
-- [ ] 2.1.3 Patch `skills/_lib/scan-state.sh` header to add `# EXPORTED_VARS: {RECOMMEND REASON}` line; patch `skills/guide.md` line 41 to say "12 条" instead of "11 条".
+- [x] 2.1.3 Patch `skills/_lib/scan-state.sh` header to add `# EXPORTED_VARS: {RECOMMEND REASON}` line; patch `skills/guide.md` line 41 to say "12 条" instead of "11 条".
 
-- [ ] 2.1.4 Verify green + commit.
+- [x] 2.1.4 Verify green + commit.
 
 ### 2.2 Add top-level mode router to status.md (S8)
 
-- [ ] 2.2.1 Add `tests/integration/test_status_mode_router.bats` (3 cases).
+- [x] 2.2.1 Add `tests/integration/test_status_mode_router.bats` (3 cases).
 
-- [ ] 2.2.2 Verify red (expect 1 fail, not 3: tests 2/3 already pass because input table documents the mapping; test 1 fails because no `case "$1"` code).
+- [x] 2.2.2 Verify red (expect 1 fail, not 3: tests 2/3 already pass because input table documents the mapping; test 1 fails because no `case "$1"` code).
 
-- [ ] 2.2.3 Insert `status_router()` case block after "## 输入" subsection in `skills/status.md`.
+- [x] 2.2.3 Insert `status_router()` case block after "## 输入" subsection in `skills/status.md`.
 
-- [ ] 2.2.4 Verify green + commit.
+- [x] 2.2.4 Verify green + commit.
 
 ### 2.3 Mode B cleanup — paths, dead source, comment (S4 + S5 + S6)
 
-- [ ] 2.3.1 Add `tests/integration/test_status_mode_b_path_hygiene.bats` (4 cases; last case uses **revised** awk pattern — see plan §2.3 R4 fix).
+- [x] 2.3.1 Add `tests/integration/test_status_mode_b_path_hygiene.bats` (4 cases; last case uses **revised** awk pattern — see plan §2.3 R4 fix).
 
-- [ ] 2.3.2 Verify red (expect 3 failures; the awk-comment test fails correctly because the comment indeed omits `$1`).
+- [x] 2.3.2 Verify red (expect 3 failures; the awk-comment test fails correctly because the comment indeed omits `$1`).
 
-- [ ] 2.3.3 Patch `skills/status.md`: remove dead `source _lib/worktree.sh` block (lines 38-41), change `PLAN_FILE` to `$PROJECT_ROOT`-anchored, rewrite the line 382 awk comment to include `$1`.
+- [x] 2.3.3 Patch `skills/status.md`: remove dead `source _lib/worktree.sh` block (lines 38-41), change `PLAN_FILE` to `$PROJECT_ROOT`-anchored, rewrite the line 382 awk comment to include `$1`.
 
-- [ ] 2.3.4 Verify green + commit.
+- [x] 2.3.4 Verify green + commit.
 
 ### 2.4 Mode D — drop `$PROJECT_ROOT` interpolation into Python source (S12)
 
-- [ ] 2.4.1 Add `tests/integration/test_status_mode_d_env_safe.bats` (1 case).
+- [x] 2.4.1 Add `tests/integration/test_status_mode_d_env_safe.bats` (1 case).
 
-- [ ] 2.4.2 Verify red.
+- [x] 2.4.2 Verify red.
 
-- [ ] 2.4.3 Rewrite the two `python3 -c "..."` blocks in Mode D to use `os.environ["PROJECT_ROOT"]` per v2.0.2 convention.
+- [x] 2.4.3 Rewrite the two `python3 -c "..."` blocks in Mode D to use `os.environ["PROJECT_ROOT"]` per v2.0.2 convention.
 
-- [ ] 2.4.4 Verify green + commit.
+- [x] 2.4.4 Verify green + commit.
 
 ### 2.5 Mode E — remove `exec $0` and consolidate `iteration.json` reads (S9 + S10)
 
-- [ ] 2.5.1 Add `tests/integration/test_status_mode_e_exec_safe.bats` (2 cases — **not 3**; the `list_planned` test would already pass and is therefore dropped per Oracle review R2).
+- [x] 2.5.1 Add `tests/integration/test_status_mode_e_exec_safe.bats` (2 cases — **not 3**; the `list_planned` test would already pass and is therefore dropped per Oracle review R2).
 
 ```bash
 cat > tests/integration/test_status_mode_e_exec_safe.bats <<'BATSEOF'
@@ -187,11 +187,11 @@ load ../test_helper
 BATSEOF
 ```
 
-- [ ] 2.5.2 Verify red (expect 2 failures).
+- [x] 2.5.2 Verify red (expect 2 failures).
 
-- [ ] 2.5.3 Patch `skills/status.md` Mode E Step 3 (replace `exec $0`) and Step 2b (use `iteration.list_planned()`).
+- [x] 2.5.3 Patch `skills/status.md` Mode E Step 3 (replace `exec $0`) and Step 2b (use `iteration.list_planned()`).
 
-- [ ] 2.5.4 Verify green + commit (no iteration.py change — function already exists).
+- [x] 2.5.4 Verify green + commit (no iteration.py change — function already exists).
 
 ## Tier 3 — P2 (consistency)
 
