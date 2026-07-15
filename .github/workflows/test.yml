@@ -41,6 +41,23 @@ jobs:
           python3 -m pytest tests/unit/test_change_alignment.py -q --tb=short
           echo "✅ Change alignment gate tests passed under STRICT mode"
 
+      - name: Spec validation gate (baseline + delta targets)
+        run: |
+          VALIDATION_FAILED=0
+          for d in openspec/changes/*/; do
+            [ -d "$d" ] || continue
+            case "$d" in */archive/) continue ;; esac
+            name=$(basename "$d")
+            echo "=== Validating $name ==="
+            python3 skills/_lib/validate_baseline.py "$name" || VALIDATION_FAILED=1
+            python3 skills/_lib/validate_delta_targets.py "$name" || VALIDATION_FAILED=1
+          done
+          if [ "${VALIDATION_FAILED:-0}" -ne 0 ]; then
+            echo "❌ Spec validation failed (see errors above)"
+            exit 1
+          fi
+          echo "✅ All active changes pass spec validation"
+
       - name: Python unit tests
         run: python3 -m pytest tests/unit/ -q --tb=short
 
