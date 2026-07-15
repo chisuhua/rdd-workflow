@@ -1,0 +1,53 @@
+schema: spec-driven
+created: 2026-07-15
+name: fix-scan-state-recursion
+status: PROPOSED
+scope: [shared]
+goal: >-
+  Fix infinite recursion bug in skills/_lib/scan-state.sh
+  check_stale_workflow_state function (line 220 self-call without base
+  case). Currently causes `guide` scanner to hang when repo is in
+  clean state (no active changes). User-visible impact: scanner never
+  returns a RECOMMEND, blocking the recommender workflow.
+follows:
+  - three-phase-skills
+  - openspec-cli-integration
+blocks: []
+baseline:
+  scan-state.sh line 212-221: >-
+    check_stale_workflow_state function ends with a self-call
+    (line 220) without a base case, creating infinite recursion when
+    called from scan_state at priority 9/10 default fallback.
+  observed hang (2026-07-15): >-
+    `bash -c 'source scan-state.sh; scan_state ...'` ran >120s before
+    timeout abort; reproducing the hang requires no active change +
+    no arch-handoff + no plan-handoff (i.e., clean state).
+  functional intent: >-
+    print a warning if pre-refactor workflow-state.md file exists at
+    project root; do nothing otherwise (read-only sentinel)
+target:
+  skills/_lib/scan-state.sh: >-
+    "remove the recursive self-call on line 220; replace with `return 0` to terminate the function after the optional warning emission."
+  tests/unit/test_scan_state_stale_check.bats: >-
+    new bats test that verifies scan_state completes in <1s on a
+    clean repo (regression test for the hang).
+  AGENTS.md: >-
+    append note under '常见陷阱' documenting that scan-state.sh
+    check_stale_workflow_state is read-only and terminates after the
+    warning emission.
+non_goals:
+  - Refactoring scan-state.sh broader architecture
+  - Fixing other bugs in scan-state.sh (out of scope for this targeted fix)
+  - Adding tests for other scan-state.sh code paths (separate change)
+risk_level: low
+cross_repo:
+  - None
+estimated_loc_change:
+  modified files: "~5 lines (1 line deletion + 1 line addition in scan-state.sh + 1 bats test + 1 doc note)"
+acceptance:
+  - check_stale_workflow_state terminates within <100ms when workflow-state.md is absent
+  - check_stale_workflow_state terminates within <100ms when workflow-state.md is present
+  - scan_state returns RECOMMEND within <1s on clean state (regression test)
+  - existing bats tests for scan_state still pass (38 tests)
+  - "guide scanner returns RECOMMEND line in <2s when run on clean repo"
+  - AGENTS.md documents the read-only + terminating contract
