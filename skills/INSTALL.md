@@ -99,14 +99,15 @@ fi
 # 复制所有子技能（.md）
 cp -f "$PACKAGE_DIR/skills/"*.md "$SKILLS_DIR/skills/"
 
-# 复制 skills/_lib/ 运行时所需 Python 模块与 schemas
-# 这样 feature.md (depends-on: [iteration, deps_output]) 和 rddf-session.md (depends-on: [rddf_session])
-# 在目标项目里也能正常 import
+# 复制 skills/_lib/ 运行时所需 Python 模块、schemas 和 bash helper
+# 这样 feature.md (depends-on: [iteration, deps_output])、rddf-session.md (depends-on: [rddf_session])
+# 以及 status.md (source _lib/status_helpers.sh)、guide-ship.md (source _lib/archive.sh) 等
+# 在目标项目里也能正常 import / source
 if [ -d "$PACKAGE_DIR/skills/_lib" ]; then
     mkdir -p "$SKILLS_DIR/skills/_lib/schemas"
     find "$PACKAGE_DIR/skills/_lib" \
         -type d \( -name __pycache__ -o -name plugins -o -name schedulers \) -prune \
-        -o -type f \( -name '*.py' -o -name '*.json' \) -print 2>/dev/null | while read -r src; do
+        -o -type f \( -name '*.py' -o -name '*.json' -o -name '*.sh' \) -print 2>/dev/null | while read -r src; do
         rel="${src#$PACKAGE_DIR/}"
         mkdir -p "$SKILLS_DIR/$(dirname "$rel")"
         cp -f "$src" "$SKILLS_DIR/$rel"
@@ -127,8 +128,8 @@ NOTES
 
 echo "✅ 子技能已复制:"
 ls -1 "$SKILLS_DIR/skills/"
-echo "✅ _lib 模块已复制（49 .py + 7 schema）:"
-find "$SKILLS_DIR/skills/_lib" -type f \( -name '*.py' -o -name '*.json' \) | wc -l
+echo "✅ _lib 模块已复制（49 .py + 7 schema + 6 bash helper）:"
+find "$SKILLS_DIR/skills/_lib" -type f \( -name '*.py' -o -name '*.json' -o -name '*.sh' \) | wc -l
 ```
 
 ### 步骤 4：创建包元数据

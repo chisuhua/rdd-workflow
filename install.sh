@@ -32,12 +32,13 @@ mkdir -p "$TARGET_DIR/.opencode/skills/spec-workflow/skills/_lib/schemas"
 # 复制所有子技能（.md）
 cp -f "$PACKAGE_DIR/skills/"*.md "$TARGET_DIR/.opencode/skills/spec-workflow/skills/"
 
-# 复制 skills/_lib/ 运行时所需 Python 模块与 schemas（排除 __pycache__ / plugins / schedulers）
-# 这样 feature.md 和 rddf-session.md 的 depends-on 模块才能在目标项目里 import
+# 复制 skills/_lib/ 运行时所需 Python 模块、schemas 和 bash helper（排除 __pycache__ / plugins / schedulers）
+# 这样 feature.md 和 rddf-session.md 的 depends-on 模块才能在目标项目里 import，
+# status.md / guide-ship.md 等 source 的 _lib/*.sh 也能在目标项目里可被 bash source
 if [ -d "$PACKAGE_DIR/skills/_lib" ]; then
     find "$PACKAGE_DIR/skills/_lib" \
         -type d \( -name __pycache__ -o -name plugins -o -name schedulers \) -prune \
-        -o -type f \( -name '*.py' -o -name '*.json' \) -print 2>/dev/null | while read -r src; do
+        -o -type f \( -name '*.py' -o -name '*.json' -o -name '*.sh' \) -print 2>/dev/null | while read -r src; do
         rel="${src#$PACKAGE_DIR/}"
         mkdir -p "$TARGET_DIR/.opencode/skills/spec-workflow/$(dirname "$rel")"
         cp -f "$src" "$TARGET_DIR/.opencode/skills/spec-workflow/$rel"
