@@ -1057,11 +1057,18 @@ else
              exit 1
          fi
 
-         # openspec archive（CLI 调用）
-         openspec archive "$CHANGE_NAME" --yes || {
-             echo "⚠️  openspec archive 失败（可能是 CLI 未找到）"
-         }
-     fi
+        # openspec archive（CLI 调用）
+        openspec archive "$CHANGE_NAME" --yes || {
+            echo "⚠️  openspec archive 失败（可能是 CLI 未找到）"
+        }
+
+        # Auto-commit archive file moves (added by add-archive-auto-commit).
+        # Tolerates failure — file moves remain in working tree for human review.
+        if [ -f "$PROJECT_ROOT/skills/_lib/archive.sh" ]; then
+            source "$PROJECT_ROOT/skills/_lib/archive.sh"
+        fi
+        commit_archive_moves "$CHANGE_NAME" "$PROJECT_ROOT" || true
+    fi
 
     # 删除分支
     if git branch -d "$branch" 2>/dev/null; then
