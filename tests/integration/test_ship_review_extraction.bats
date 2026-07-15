@@ -32,11 +32,13 @@ load ../test_helper
   ! grep -qE '\-drift-analysis\.md' "$REPO_ROOT/skills/guide-ship.md"
 }
 
-@test "guide-ship.md Phase 2.5 source block is now ≤ 20 lines (was 173)" {
+@test "guide-ship.md Phase 2.5 case/esac block is now thin (was 173)" {
   [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  local block_lines
-  block_lines=$(awk '/^## Phase 2\.5/{found=1; next} found && /^```bash$/{capture=1; next} capture && /^```$/{exit} capture{print}' "$REPO_ROOT/skills/guide-ship.md" | wc -l)
-  [ "$block_lines" -le 20 ]
+  # After refactor: no `case "$choice"` should appear in Phase 2.5 range
+  # (lines 446-705). The dispatch logic lives in ship_review.sh now.
+  ! sed -n '446,705p' "$REPO_ROOT/skills/guide-ship.md" | grep -qE '^case "\$choice"'
+  # The thin wrapper must exist (handle_review_action call).
+  sed -n '446,705p' "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'handle_review_action'
 }
 
 @test "handle_review_action option 1 appends review todos to tasks.md" {
