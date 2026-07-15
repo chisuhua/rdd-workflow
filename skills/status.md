@@ -84,19 +84,6 @@ fi
 
 ## 模式 A：状态概览
 
-### Step 1：获取 worktree 列表
-
-```bash
-git worktree list
-```
-
-输出示例：
-```
-/path/to/PROJECT_ROOT                    master
-/path/to/PROJECT_ROOT/.rddf/wt/add-uart   openspec/add-uart
-/path/to/PROJECT_ROOT/.rddf/wt/fix-spi    openspec/fix-spi
-```
-
 ### Step 2：获取 openspec 列表
 
 ```bash
@@ -199,8 +186,9 @@ PYEOF
 ```bash
 case "$choice" in
   q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
+  r|refresh) continue ;;
+  ?|help) echo "可用命令: [数字选项], i(自定义输入), q(退出), r(刷新), ?(帮助)" ;;
+  i)         echo -n "  自定义操作: "; read -r CUSTOM; echo "   收到: '$CUSTOM' — 尝试路由" ;;
   *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
 esac
 ```
@@ -558,8 +546,12 @@ fi
 ```bash
 case "$choice" in
   q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
+  r|refresh) continue ;;
+  ?|help) echo "可用命令: [数字选项], i(自定义输入), q(退出), r(刷新), ?(帮助)" ;;
+  i)         # 用户自定义输入
+     echo -n "  自定义操作: "; read -r CUSTOM
+     echo "   收到: '$CUSTOM' — 尝试路由到最接近的 mode"
+     ;;
   *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
 esac
 ```
@@ -695,6 +687,31 @@ i. 其他输入
 **Mode E 职责说明**：此模式仅做当前 sprint 视图渲染，不修改任何文件。如需更新 iteration 字段（tasks_done 等），由 execute/archive/propose 钩子自动维护。
 
 ---
+
+
+## 输出风格指南（v2.0.3 NEW，对应 C2）
+
+**Emoji 集（locked vocabulary）**：
+
+| 用途 | Emoji |
+|------|-------|
+| 扫描/推荐 | 🔍 |
+| 推荐操作 | 💡 |
+| 警告 | ⚠️ |
+| 成功 | ✅ |
+| 失败 | ❌ |
+| 计划/草稿 | 📋 |
+| 庆祝 | 🎉 |
+| 状态: planned | 📋 |
+| 状态: committed-no-wt | 💼 |
+| 状态: proposed | ✅ |
+| 状态: in_worktree | 🔧 |
+| 状态: completed | ✔ |
+| 状态: archived | 📦 |
+
+**对齐规范**：表格使用等宽对齐；进度列格式 `done/total  (P%)`（左对齐 11 字符）。Mode A/B/C/D/E 五种输出统一使用上表 emoji，不得混用（🔄 已禁用，统一用 🔧 表示 in_worktree）。
+
+**语言**：中文为主，专有名词保持原文（`openspec`、`worktree`、`ADR`）。
 
 ## 关键约束
 

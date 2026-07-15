@@ -23,17 +23,34 @@ metadata:
 v1.1 起，扫描逻辑不再写在 skill 文件里——它由 `skills/_lib/scan-state.sh` 暴露的 `scan_state()` 函数提供，独立测试，bash 原生执行（不再每次由 AI 现场"翻译"）。**推荐器调一次即可**：
 
 ```bash
+case "${1:-}" in
+  --help|-h)
+    cat <<'EOF'
+guide 推荐器 — 用法:
+  skill_use("guide")                  # 默认扫描并输出 RECOMMEND + REASON
+  skill_use("guide --no-binding")     # 不输出 rddf-session binding block
+  skill_use("guide --help")           # 打印此帮助
+EOF
+    return 0 2>/dev/null || exit 0
+    ;;
+  --no-binding)   NO_BINDING=1 ;;
+  *)              NO_BINDING=0 ;;
+esac
+
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-# shellcheck source=/dev/null
 source "$(dirname "$(readlink -f "${BASH_SOURCE[0]:-$0}")")/_lib/scan-state.sh"
 scan_state "$PROJECT_ROOT"
 echo "💡 Recommended: skill_use(\"$RECOMMEND\")"
 echo "   Reason: $REASON"
 
 # Binding discovery (spec 2026-07-14): read-only rddf-session binding scan
-scan_session_binding "$PROJECT_ROOT"
-if [ ${#BINDING_LINES[@]} -gt 0 ]; then
-  printf '%s\n' "${BINDING_LINES[@]}"
+# 当 BINDING_LINES 为空（sessions.json 不存在或当前无绑定）时静默跳过，
+# 不打印任何额外行。
+if [ "${NO_BINDING:-0}" -eq 0 ]; then
+  scan_session_binding "$PROJECT_ROOT"
+  if [ ${#BINDING_LINES[@]} -gt 0 ]; then
+    printf '%s\n' "${BINDING_LINES[@]}"
+  fi
 fi
 ```
 
@@ -65,17 +82,11 @@ P0/P1 bug 历史（`$3` 列、`[openspec/` 前缀、`json.load` 非 grep、cwd �
 💡 Recommended: rds_yyy ... → skill_use("rddf-session resume ...")  # 当存在 orphaned session
 ```
 
-## 过期状态检测
+## 过期状态检测（v2.0.3 提升为 runtime check）
 
-如果 `$PROJECT_ROOT/workflow-state.md` 存在(旧版文件),打印一次警告:
-
-```
-⚠️  Stale workflow-state.md detected (pre-refactor format).
-   This file is no longer used and will be ignored.
-   Remove it manually if you want: rm workflow-state.md
-```
-
-不自动删除(尊重用户数据)。
+> 该检测已下沉到 `skills/_lib/scan-state.sh::check_stale_workflow_state()`，
+> 在 `scan_state()` 末尾自动调用。AI 不再需要主动读取 `workflow-state.md`。
+> 输出格式见辅助函数源码。
 
 ## Cross-Reference
 

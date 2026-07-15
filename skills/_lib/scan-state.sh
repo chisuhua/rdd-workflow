@@ -191,6 +191,8 @@ except (FileNotFoundError, json.JSONDecodeError, KeyError):
     RECOMMEND="guide-ship"
     REASON="无待创建 change → 准备 ship"
   fi
+
+  check_stale_workflow_state "$PROJECT_ROOT"
 }
 
 # scan_session_binding [PROJECT_ROOT]
@@ -203,6 +205,21 @@ except (FileNotFoundError, json.JSONDecodeError, KeyError):
 #   Silent on missing/invalid file (returns 0, BINDING_LINES stays empty).
 #   Read-only: does NOT modify sessions.json.
 BINDING_LINES=()
+
+# check_stale_workflow_state [PROJECT_ROOT]
+#   Emits a one-line warning if a pre-refactor workflow-state.md exists.
+#   Read-only: never deletes the file (respects user data per AGENTS.md).
+check_stale_workflow_state() {
+  local PROJECT_ROOT="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  if [ -f "$PROJECT_ROOT/workflow-state.md" ]; then
+    echo "⚠️  Stale workflow-state.md detected (pre-refactor format)."
+    echo "   This file is no longer used and will be ignored."
+    echo "   Remove it manually if you want: rm workflow-state.md"
+  fi
+
+  check_stale_workflow_state "$PROJECT_ROOT"
+}
+
 scan_session_binding() {
   local PROJECT_ROOT="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
   local SESSIONS_FILE="$PROJECT_ROOT/.rddf/state/sessions.json"
@@ -212,7 +229,9 @@ scan_session_binding() {
   local PYTHON_PATH="${SCRIPT_DIR:+$(cd "$SCRIPT_DIR/../.." && pwd)}"
   BINDING_LINES=()
   [ -f "$SESSIONS_FILE" ] || return 0
-  local owner="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
+  local owner="${OPENCODE_SESSION_ID:-$(hostname -s)_$$
+  # check_stale_workflow_state() is called automatically at the end of scan_state()
+}"
   while IFS= read -r line; do
     BINDING_LINES+=("$line")
   done < <(PY_PROJECT_ROOT="$PROJECT_ROOT" \
