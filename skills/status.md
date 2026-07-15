@@ -245,78 +245,46 @@ fi
 
 ### Step 2：三类问题检测
 
-#### 问题类型一：不同步（tasks.md 与实际完成状态不一致）
+检测逻辑已抽取到 `skills/_lib/status_helpers.sh::detect_sync_issues` (单入口、三类问题统一报告)。
+status.md 只保留 prose 解释 + 1 行调用,确保 AI 助手有可执行规约可循。
 
 ```bash
-# 方法：对比 openspec CLI progress 与计划文件中的实际完成标记
-# CLI progress 来源于 tasks.md 的 [x] 计数
-# .rddf/plans/ 中的 [x] 标记是 Prometheus 执行的实际完成状态
+# Mode B Step 2: 三类问题检测（已抽取到 _lib/status_helpers.sh）
+#   detect_sync_issues <project_root> <name> <has_worktree> <wt_dirty>
+#   返回 0 表示发现至少一个问题,1 表示全部正常。
+#   HAS_WORKTREE (1/0) 与 WT_DIRTY (n) 由 Step 1 计算后传入。
 
-PLAN_FILE="$PROJECT_ROOT/.rddf/plans/<name>.md"
-TASKS_FILE="$PROJECT_ROOT/openspec/changes/<name>/tasks.md"
-
-# 如果 plan 文件存在，检查其 [x] 计数
-PLAN_DONE=0
-if [ -f "$PLAN_FILE" ]; then
-    PLAN_DONE=$(grep -c "\- \[x\]" "$PLAN_FILE" 2>/dev/null || echo 0)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+if [ -f "$SCRIPT_DIR/_lib/status_helpers.sh" ]; then
+  source "$SCRIPT_DIR/_lib/status_helpers.sh"
 fi
 
-# tasks.md 的 [x] 计数
-TASKS_DONE=$(grep -c "\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo 0)
-
-if [ "$PLAN_DONE" -gt "$TASKS_DONE" ]; then
-    echo "⚠️ 不同步: Prometheus 已完成 $PLAN_DONE 个单元，但 tasks.md 只标记了 $TASKS_DONE 个"
-    echo "修复: 同步 tasks.md 以匹配实际完成状态"
-fi
+detect_sync_issues "$PROJECT_ROOT" "<name>" "$HAS_WORKTREE" "$WT_DIRTY"
 ```
 
-#### 问题类型二：worktree 有未提交更改
+**三类问题语义**:
 
-```bash
-if [ "$HAS_WORKTREE" = true ] && [ "$WT_DIRTY" -gt 0 ]; then
-    echo "⚠️ Worktree 有 $WT_DIRTY 个未提交文件"
-    git status --short
-fi
-```
-
-#### 问题类型三：worktree 分支落后于默认分支
-
-```bash
-if [ "$HAS_WORKTREE" = true ]; then
-    # 动态检测默认分支（不硬编码 main/master）
-    DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@.*/@@' || echo "main")
-    MERGE_BASE=$(git merge-base "openspec/<name>" "$DEFAULT_BRANCH" 2>/dev/null)
-    MAIN_TIP=$(git rev-parse "$DEFAULT_BRANCH" 2>/dev/null)
-    if [ "$MERGE_BASE" != "$MAIN_TIP" ]; then
-        echo "⚠️ Worktree 分支落后于 $DEFAULT_BRANCH（创建后有新 commit 进入默认分支）"
-    fi
-fi
-```
+| # | 触发条件 | 含义 | 处理 |
+|---|---|---|---|
+| 1 | `PLAN_DONE > TASKS_DONE` | Prometheus 已完成 N 个单元,但 tasks.md 只标记了 M < N 个 | 跑 Step 3 修复 tasks.md |
+| 2 | `HAS_WORKTREE=1 && WT_DIRTY>0` | worktree 有未提交文件 | 先 `git commit` 再继续 |
+| 3 | `merge_base != main_tip` | worktree 分支落后默认分支 | 重新基于默认分支 rebase 或 merge |
 
 ### Step 3：不同步修复
 
 **核心原则**：不同步修复通过 `sed` 直接修改 tasks.md，**不重新执行 plan**。
 
-```bash
-# 场景 A：Prometheus 已完成但 tasks.md 未标记
-# 使用 awk index() 进行字面量匹配（避免正则元字符风险）
-TASK_DESC="具体任务描述"
-TMPFILE=$(mktemp -t status_tasks_XXXXXX.md)
-awk -v desc="- [ ] $TASK_DESC" -v repl="- [x] $TASK_DESC" '
-  index($0, desc) { sub(desc, repl); changed=1 }
-  { print }
-  END { exit (changed ? 0 : 1) }
-' $PROJECT_ROOT/openspec/changes/<name>/tasks.md > "$TMPFILE" && \
-  mv "$TMPFILE" $PROJECT_ROOT/openspec/changes/<name>/tasks.md || {
-    echo "⚠️  未找到匹配的任务描述: $TASK_DESC"
-    rm -f "$TMPFILE"
-  }
+修复逻辑已抽取到 `skills/_lib/status_helpers.sh::repair_sync_state` (awk `index()` 字面量匹配,避免正则元字符风险)。
 
-# 场景 B：tasks.md 标记完成但实际代码未提交
-# 提示先 git commit
-echo "⚠️ tasks.md 标记完成但 worktree 有未提交代码"
-echo "请先提交代码更改，或确认更改是否完整"
+```bash
+# Mode B Step 3: 不同步修复（已抽取到 _lib/status_helpers.sh）
+#   repair_sync_state <project_root> <name> "<task_description>"
+#   找到首个 "- [ ] <task>" 替换为 "- [x] <task>",返回 0 表示成功。
+
+repair_sync_state "$PROJECT_ROOT" "<name>" "<具体任务描述>"
 ```
+
+**场景 B 处理** (tasks.md 标记完成但 worktree 有未提交代码): 这是用户责任,AI 助手应提示 `git commit` 或确认更改完整性 — 不能由 helper 静默处理。
 
 ### Step 4：输出检测报告
 
@@ -564,100 +532,28 @@ esac
 
 ### Step 1：读取 iteration.json
 
-```bash
-ITERATION_FILE="$PROJECT_ROOT/.rddf/state/iteration.json"
+读取与渲染已合并抽取到 `skills/_lib/iteration.py::print_view()`。模块函数内部处理文件缺失(友好提示)、schema 校验失败(回退到空 state)和漂移检测。
 
-if [ ! -f "$ITERATION_FILE" ]; then
-    echo "📭 iteration.json 不存在"
-    echo "   说明: 尚未运行过 propose (roadmap 模式)"
-    echo "   初始化: skill_use(\"propose\", \"<name>\")"
-    exit 0
-fi
+```bash
+# Mode E: 渲染当前迭代视图（已抽取到 _lib/iteration.py::print_view）
+#   print_view <project_root>  → 渲染 header + active 表 + 归档 top5 + 漂移提示 + planned
+#   缺失 iteration.json 时返回 0 + 友好提示,不抛错。
+
+PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
+import os, sys
+sys.path.insert(0, os.path.join(os.environ["PROJECT_ROOT"]))
+from skills._lib.iteration import print_view
+sys.exit(print_view(os.environ["PROJECT_ROOT"]))
+'
 ```
 
 ### Step 2：渲染当前迭代表
 
-```bash
-# v2.0.2 安全修复: bash 变量通过环境变量传递 (os.environ),
-# 不用 '$VAR' 直接拼到 Python 源码. 避免单引号路径/注入风险.
-PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
-import os, sys
-from datetime import datetime, timezone
+见 Step 1 — 已合并到 `print_view()` 单次调用。表格字段、archived top-5、漂移告警、planned 列表(S10)都在模块内部统一处理。
 
-try:
-    from skills._lib import iteration as it_mod
-except ImportError as e:
-    print(f"❌ iteration 模块不可用: {e}")
-    sys.exit(1)
+### Step 2b (v2.0.3): 显示 planned 状态 change
 
-data = it_mod.load(os.environ["PROJECT_ROOT"])
-phase = data.get("current_phase", "default")
-updated_at = data.get("updated_at", "")
-
-# 渲染头
-print("📊 当前迭代视图")
-print(f"   Phase: {phase}    Updated: {updated_at}")
-print(f"   活跃: {sum(1 for c in data[\"changes\"] if c[\"status\"] in (\"proposed\", \"in_worktree\", \"completed\"))} | 已归档: {sum(1 for c in data[\"changes\"] if c[\"status\"] == \"archived\")}")
-print()
-
-active = [c for c in data["changes"] if c["status"] in ("proposed", "in_worktree", "completed")]
-if not active:
-    print("  (无 active change)")
-else:
-    print("| Feature | Change | Phase | Cat | Status | Blocker | Group | Conflicts | Tasks | Plan |")
-    print("|---------|--------|-------|-----|--------|---------|-------|-----------|-------|------|")
-    for c in active:
-        feature = it_mod.derive_feature_name(c["name"])
-        status_icon = {"proposed": "📋", "in_worktree": "🔄", "completed": "✅"}.get(c["status"], "?")
-        blocker = c.get("blocker") or "—"
-        group = str(c.get("parallel_group", "—"))
-        conflicts = ",".join(c.get("conflicts", [])) or "—"
-        done = c.get("tasks_done", 0)
-        total = c.get("tasks_total", 0)
-        tasks = f"{done}/{total}" if total else "—"
-        plan = "✅" if c.get("plan_path") else "—"
-        print(f"| {feature} | {c[\"name\"]} | {c.get(\"phase\", \"—\")[:8]} | {(c.get(\"category\") or \"—\")[:10]} | {status_icon} {c[\"status\"]} | {blocker} | {group} | {conflicts} | {tasks} | {plan} |")
-    print()
-
-# 渲染已归档段
-archived = it_mod.list_archived(data)
-if archived:
-    print("🗄️  最近归档 (top 5):")
-    for c in archived[:5]:
-        print(f"   ✅ {c[\"name\"]}  ({c.get(\"archived_at\", \"\")})")
-    if len(archived) > 5:
-        print(f"   ... (共 {len(archived)} 个归档)")
-    print()
-
-# 漂移提示
-stale = [c for c in active if c.get("last_deps_at")]
-now = datetime.now(timezone.utc)
-for c in stale:
-    last = datetime.fromisoformat(c["last_deps_at"].replace("Z", "+00:00"))
-    age_hours = (now - last).total_seconds() / 3600
-    if age_hours > 24:
-        print(f"⚠️  {c[\"name\"]}: deps 信息已 {age_hours:.0f}h 未更新, 建议重跑 deps")
-'
-```
-
-### Step 2b (v2.0.3): 显示 planned 状态 change（S10 — 改用模块函数）
-
-```bash
-PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
-import os, sys
-sys.path.insert(0, os.path.join(os.environ["PROJECT_ROOT"]))
-from skills._lib import iteration as it_mod
-data = it_mod.load(os.environ["PROJECT_ROOT"])
-planned = it_mod.list_planned(data)
-if not planned:
-    print("(none)")
-else:
-    for c in planned:
-        b = c.get("blocker") or ""
-        bs = f" (blocked by {b})" if b else ""
-        print(f"  📋 {c['"'"'name'"'"']}{bs}")
-'
-```
+planned 列表由 `print_view(show_planned=True)` 统一渲染 (默认 True)。若需隐藏 planned 段,传 `show_planned=False`。
 
 ### Step 3：用户操作
 
