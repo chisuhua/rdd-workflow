@@ -11,8 +11,12 @@
 #
 # Function exported:
 #   - scan_state
-#       Sets global RECOMMEND (skill name) and REASON (one-line explanation)
-#       based on priority-ordered detection. Returns 0 always (best-effort).
+#       Sets globals RECOMMEND + REASON only (other potential globals
+#       such as ROADMAP, ARCH_HANDOFF, etc. are deliberately NOT
+#       exported — callers must read the filesystem themselves if
+#       they need additional state).
+#       See `EXPORTED_VARS: {RECOMMEND REASON}` header for grep-ability.
+# EXPORTED_VARS: {RECOMMEND REASON}
 #
 # Bug fix history (carried verbatim from skills/guide.md, comments preserved
 # as regression guards):

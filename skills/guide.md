@@ -37,7 +37,7 @@ if [ ${#BINDING_LINES[@]} -gt 0 ]; then
 fi
 ```
 
-设置 `$RECOMMEND` 和 `$REASON`（沿用旧版变量契约，向后兼容）。优先级 11 条 → 见 `skills/_lib/scan-state.sh` 函数体顶部注释。
+设置 `$RECOMMEND` 和 `$REASON`（沿用旧版变量契约，向后兼容）。优先级 12 条 → 见 `skills/_lib/scan-state.sh` 函数体顶部注释。
 
 `scan_session_binding` 是 v2.0.2 新增的只读函数，扫描 `.rddf/state/sessions.json` 的当前绑定状态，将结果存入 `BINDING_LINES` 数组。推荐器 AI 应在打印 RECOMMEND/REASON 之后、关闭输出之前输出这批行（见下方输出格式）。
 
