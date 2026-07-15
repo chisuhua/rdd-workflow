@@ -23,13 +23,31 @@ Mode D: 路线图状态 — 查看 roadmap 阶段进度和阶段门控
 Mode E: 当前迭代 — 列出当前 sprint 的所有 change (状态/阻塞/进度)
 ```
 
-## 输入
+## 输入 + 顶层路由（NEW in v2.0.3，对应 S8）
 
-- 无参数 → Mode A（全局概览）
-- change name → Mode B（单 change 详情 + 同步检测）
-- change name + 明确要求归档 → Mode C（归档流程）
-- `--roadmap` 或 `roadmap` → Mode D（路线图状态）
-- `--iteration` 或 `iteration` → Mode E（当前迭代）
+| 输入 | Mode | 备注 |
+|------|------|------|
+| 无参数 / `status` | Mode A | 全局概览 |
+| `<change-name>` | Mode B | 单 change 详情 + 同步检测 |
+| `<change-name> --archive` / `--yes` | Mode C | 归档（强制确认 gate 由 1.3 引入） |
+| `--roadmap` / `roadmap` | Mode D | 路线图状态 |
+| `--iteration` / `iteration` | Mode E | 当前迭代视图 |
+| `--help` / `-h` / `?` | （帮助） | 列出 5 个 mode + 用法 |
+
+**路由实现**：
+
+```bash
+status_router() {
+  case "$1" in
+    "")                                echo "A" ;;
+    --roadmap|roadmap)                 echo "D" ;;
+    --iteration|iteration)             echo "E" ;;
+    --help|-h|help|\?)                 echo "help" ;;
+    --archive|--yes|-y)                echo "C" ;;
+    *)                                 echo "B:$1" ;;           # 视为 change name
+  esac
+}
+```
 
 ## 工作目录检测（所有模式通用）
 
