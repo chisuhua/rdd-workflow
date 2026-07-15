@@ -1,7 +1,7 @@
 # archive-auto-commit Specification
 
 ## Purpose
-TBD - created by archiving change add-archive-auto-commit. Update Purpose after archive.
+Auto-commit `openspec archive` file moves (deleted active change dir → `archive/<date>-<name>/`, new spec → main specs/) via `archive.sh::commit_archive_moves` helper. Eliminates the post-archive dirty-working-tree gap; fires from `guide-ship` skill entry point (worktree `archive_change` + lightweight Phase 3). Honors `SKIP_ARCHIVE_AUTO_COMMIT=yes` opt-out; idempotent on clean tree.
 ## Requirements
 ### Requirement: `archive.sh::commit_archive_moves <name> <main_root>` MUST stage + commit the archive paths
 
