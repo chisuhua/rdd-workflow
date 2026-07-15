@@ -1039,18 +1039,29 @@ else
         if git merge --ff-only "$branch" 2>/dev/null; then
             echo "✅ Fast-forward merge 到 $DEFAULT_BRANCH 完成"
         else
-            echo "⚠️  Fast-forward 不可用，创建 merge commit"
-            git merge --no-ff "$branch" -m "merge: $CHANGE_NAME change" || {
-                echo "❌ merge 失败"
-                exit 1
-            }
-        fi
+             echo "⚠️  Fast-forward 不可用，创建 merge commit"
+             git merge --no-ff "$branch" -m "merge: $CHANGE_NAME change" || {
+                 echo "❌ merge 失败"
+                 exit 1
+             }
+         fi
 
-        # openspec archive（CLI 调用）
-        openspec archive "$CHANGE_NAME" --yes || {
-            echo "⚠️  openspec archive 失败（可能是 CLI 未找到）"
-        }
-    fi
+         # Spec-validation gate (add-spec-validation-gates): before running openspec archive,
+         # ensure the change's MODIFIED/RENAMED targets all exist in main openspec/specs/.
+         # Catches MODIFIED-on-empty-spec aborts (e.g., g-gpu-client-meyers-singleton-fallback v2)
+         # at this pre-flight rather than waiting for openspec CLI to abort partway through archive.
+         if ! python3 "$PROJECT_ROOT/skills/_lib/validate_delta_targets.py" "$CHANGE_NAME" 2>/dev/null; then
+             echo "❌ Archive pre-flight failed for $CHANGE_NAME"
+             echo "   Delta targets invalid. Run validate_delta_targets.py for details."
+             python3 "$PROJECT_ROOT/skills/_lib/validate_delta_targets.py" "$CHANGE_NAME"
+             exit 1
+         fi
+
+         # openspec archive（CLI 调用）
+         openspec archive "$CHANGE_NAME" --yes || {
+             echo "⚠️  openspec archive 失败（可能是 CLI 未找到）"
+         }
+     fi
 
     # 删除分支
     if git branch -d "$branch" 2>/dev/null; then
