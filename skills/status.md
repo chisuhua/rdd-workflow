@@ -52,11 +52,9 @@ status_router() {
 ## 工作目录检测（所有模式通用）
 
 ```bash
-# Source helper (worktree-aware functions)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
-if [ -f "$SCRIPT_DIR/_lib/worktree.sh" ]; then
-  source "$SCRIPT_DIR/_lib/worktree.sh"
-fi
+# 工作目录检测（所有模式通用）
+# 注（v2.0.3）：原 dead-source `_lib/worktree.sh` 已移除（S5）。
+# Mode B 内联使用 `wt_path_for_branch_inline`（P0-7）作为唯一来源。
 ```
 
 ```bash
@@ -217,7 +215,7 @@ esac
 
 ```bash
 # 阶段检测：先检查是否已 plan
-PLAN_FILE=".rddf/plans/<name>.md"
+PLAN_FILE="$PROJECT_ROOT/.rddf/plans/<name>.md"
 if [ ! -f "$PLAN_FILE" ]; then
     echo "⏳ Change <name> 已 propose 但尚未 plan"
     echo "   请先执行: skill_use(\"guide-ship\")   # 内部选择 <name>"
@@ -266,7 +264,7 @@ fi
 # CLI progress 来源于 tasks.md 的 [x] 计数
 # .rddf/plans/ 中的 [x] 标记是 Prometheus 执行的实际完成状态
 
-PLAN_FILE=".rddf/plans/<name>.md"
+PLAN_FILE="$PROJECT_ROOT/.rddf/plans/<name>.md"
 TASKS_FILE="$PROJECT_ROOT/openspec/changes/<name>/tasks.md"
 
 # 如果 plan 文件存在，检查其 [x] 计数
@@ -442,7 +440,8 @@ archive_change "<name>"
 **归档后循环检查**（与 guide 的 status_archive 阶段保持一致）：
 
 ```bash
-# 检查是否还有其他 worktree（$2 是 commit hash, $3 是 "[branch]"; regex 需含前导 `[`）
+# P1-PIN: git worktree list 输出 "path  hash  [branch]" — $1=path, $2=commit hash, $3="[branch]"
+# 因此 regex 必须含前导 `[`，不能匹配路径中含 "openspec/" 的子串
 REMAINING_WT=$(git worktree list 2>/dev/null | awk '$3 ~ /^\[openspec\// {print $1}' | grep -c . || true)
 if [ "$REMAINING_WT" -gt 0 ]; then
     echo ""
@@ -495,52 +494,52 @@ if [ "$MODE" = "roadmap" ] || ([ -z "$MODE" ] && [ -f "$PROJECT_ROOT/roadmap.md"
     
     # 读取 roadmap
     if [ -f "$PROJECT_ROOT/roadmap.md" ]; then
-        CURRENT_PHASE=$(python3 -c "
-import re
-with open('$PROJECT_ROOT/roadmap.md') as f:
+        CURRENT_PHASE=$(PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
+import os, re
+with open(os.path.join(os.environ["PROJECT_ROOT"], "roadmap.md")) as f:
     content = f.read()
-phase_match = re.search(r'\*\*当前阶段\*\*:\s*(\S+)', content)
-print(phase_match.group(1) if phase_match else 'unknown')
-")
+phase_match = re.search(r"\*\*当前阶段\*\*:\s*(\S+)", content)
+print(phase_match.group(1) if phase_match else "unknown")
+')
         echo "当前阶段: $CURRENT_PHASE"
     fi
     
     # 读取状态
     if [ -f "$PROJECT_ROOT/.rddf/state/roadmap-state.json" ]; then
-        python3 -c "
-import json
-with open('$PROJECT_ROOT/.rddf/state/roadmap-state.json') as f:
+        PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
+import os, json
+with open(os.path.join(os.environ["PROJECT_ROOT"], ".rddf/state/roadmap-state.json")) as f:
     state = json.load(f)
 
-print('')
-print('阶段进度:')
-for phase_id, phase_data in state.get('phases', {}).items():
-    status = phase_data.get('status', 'unknown')
-    status_icon = {'completed': '✅', 'in_progress': '🔄', 'pending': '⏳'}.get(status, '❓')
+print("")
+print("阶段进度:")
+for phase_id, phase_data in state.get("phases", {}).items():
+    status = phase_data.get("status", "unknown")
+    status_icon = {"completed": "✅", "in_progress": "🔄", "pending": "⏳"}.get(status, "❓")
     
-    total = sum(len(c.get('changes', [])) for c in phase_data.get('categories', {}).values())
-    completed = sum(len(c.get('completed_changes', [])) for c in phase_data.get('categories', {}).values())
+    total = sum(len(c.get("changes", [])) for c in phase_data.get("categories", {}).values())
+    completed = sum(len(c.get("completed_changes", [])) for c in phase_data.get("categories", {}).values())
     
-    print(f'{status_icon} {phase_id}: {completed}/{total} change 完成')
+    print(f"{status_icon} {phase_id}: {completed}/{total} change 完成")
     
     # 分类详情
-    for cat_id, cat_data in phase_data.get('categories', {}).items():
-        cat_total = len(cat_data.get('changes', []))
-        cat_completed = len(cat_data.get('completed_changes', []))
+    for cat_id, cat_data in phase_data.get("categories", {}).items():
+        cat_total = len(cat_data.get("changes", []))
+        cat_completed = len(cat_data.get("completed_changes", []))
         if cat_total > 0:
-            print(f'   - {cat_id}: {cat_completed}/{cat_total}')
+            print(f"   - {cat_id}: {cat_completed}/{cat_total}")
 
 # 当前阶段门控
-if 'current_phase' in state:
-    phase = state['current_phase']
-    if phase in state.get('phases', {}):
-        gate = state['phases'][phase].get('gate_status', {})
-        print('')
-        print('阶段门控:')
-        print(f'  所有 change 完成: {\"✅\" if gate.get(\"all_changes_complete\") else \"❌\"}')
-        for check, checked in gate.get('checklist', {}).items():
-            print(f'  {check}: {\"✅\" if checked else \"❌\"}')
-"
+if "current_phase" in state:
+    phase = state["current_phase"]
+    if phase in state.get("phases", {}):
+        gate = state["phases"][phase].get("gate_status", {})
+        print("")
+        print("阶段门控:")
+        print(f"  所有 change 完成: {\"✅\" if gate.get(\"all_changes_complete\") else \"❌\"}")
+        for check, checked in gate.get("checklist", {}).items():
+            print(f"  {check}: {\"✅\" if checked else \"❌\"}")
+'
     fi
     
     echo ""
@@ -649,34 +648,23 @@ for c in stale:
 '
 ```
 
-### Step 2b (v2.0.2): 显示 planned 状态 change
+### Step 2b (v2.0.3): 显示 planned 状态 change（S10 — 改用模块函数）
 
 ```bash
-PLANNED_LIST=$(python3 -c "
-import json, os
-p = '.rddf/state/iteration.json'
-if not os.path.isfile(p):
-    print('(no iteration.json)')
+PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
+import os, sys
+sys.path.insert(0, os.path.join(os.environ["PROJECT_ROOT"]))
+from skills._lib import iteration as it_mod
+data = it_mod.load(os.environ["PROJECT_ROOT"])
+planned = it_mod.list_planned(data)
+if not planned:
+    print("(none)")
 else:
-    try:
-        d = json.load(open(p))
-    except Exception as e:
-        print(f'(parse error: {e})')
-        exit()
-    planned = [c for c in d.get('changes', []) if c.get('status') == 'planned']
-    if not planned:
-        print('(none)')
-    else:
-        for c in planned:
-            blocker = c.get('blocker', '')
-            blocker_str = f' (blocked by {blocker})' if blocker else ''
-            print(f\"  📋 {c['name']}{blocker_str}\")
-" 2>/dev/null)
-if [ -n "$PLANNED_LIST" ]; then
-    echo ""
-    echo "📋 Planned (skeleton) changes:"
-    echo "$PLANNED_LIST"
-fi
+    for c in planned:
+        b = c.get("blocker") or ""
+        bs = f" (blocked by {b})" if b else ""
+        print(f"  📋 {c['"'"'name'"'"']}{bs}")
+'
 ```
 
 ### Step 3：用户操作
@@ -690,17 +678,18 @@ fi
 i. 其他输入
 ```
 
-**用户输入处理**：
+**用户输入处理（v2.0.3 重写，S9 修复）**：
 
-```bash
-case "$choice" in
-  1) exec $0 --iteration ;;  # 重新进入 Mode E
-  2) skill_use("guide-ship") ;;
-  3) [ -f "$PROJECT_ROOT/.rddf/state/deps-output.md" ] && cat "$PROJECT_ROOT/.rddf/state/deps-output.md" ;;
-  4) exec $0 ;;  # 返回 Mode A
-  q|quit) exit 0 ;;
-  *) echo "❌ 无效输入 '$choice'" ;;
-esac
+> 注：markdown skill 不是 shell 脚本，`exec $0` 无法工作。重新进入 Mode E 由 AI 助手按以下提示执行：
+
+| 用户输入 | 动作 |
+|---------|------|
+| `1` 或 `refresh` | 重新读取 iteration.json 并渲染 |
+| `2` | `skill_use("guide-ship")` 进入 ship 流 |
+| `3` | `cat $PROJECT_ROOT/.rddf/state/deps-output.md` （如存在） |
+| `4` 或 `back` | 返回 Mode A 概览 |
+| `q` / `quit` / `exit` | 退出 status |
+| 其他 | "❌ 无效输入 '$choice'" 提示 |
 ```
 
 **Mode E 职责说明**：此模式仅做当前 sprint 视图渲染，不修改任何文件。如需更新 iteration 字段（tasks_done 等），由 execute/archive/propose 钩子自动维护。
