@@ -245,71 +245,20 @@ fi
 
 ### 步骤 4：初始化状态文件
 
+状态初始化逻辑已抽取到 `skills/_lib/roadmap_state.py::init_state()`,默认生成 phase-1/2/3 模板。bash 端只保留 source + 1 行调用,确保 AI 助手有可执行规约可循。
+
 ```bash
-mkdir -p "$PROJECT_ROOT/.zcf"
+# init Step 4: 状态文件初始化（已抽取到 _lib/roadmap_state.py::init_state）
+#   init_state(state_file, current_phase='phase-1')
+#   默认 3-phase 模板（arch-design/infra-setup/core-impl/core-test 等），
+#   函数内部处理 mkdir + 原子写入。
 
-python3 -c "
-import json
-from datetime import datetime
-
-state = {
-    'version': 1,
-    'updated_at': datetime.now().isoformat(),
-    'current_phase': 'phase-1',
-    'phases': {
-        'phase-1': {
-            'status': 'in_progress',
-            'started_at': datetime.now().isoformat(),
-            'completed_at': None,
-            'categories': {
-                'arch-design': {'total_changes': 0, 'completed_changes': 0, 'changes': []},
-                'infra-setup': {'total_changes': 0, 'completed_changes': 0, 'changes': []},
-                'core-impl': {'total_changes': 0, 'completed_changes': 0, 'changes': []},
-                'core-test': {'total_changes': 0, 'completed_changes': 0, 'changes': []}
-            },
-            'gate_status': {
-                'all_changes_complete': False,
-                'checklist': {
-                    '核心接口定义完成': False,
-                    '单元测试覆盖 > 80%': False
-                }
-            }
-        },
-        'phase-2': {
-            'status': 'pending',
-            'started_at': None,
-            'completed_at': None,
-            'categories': {
-                'feature-impl': {'total_changes': 0, 'completed_changes': 0, 'changes': []},
-                'feature-test': {'total_changes': 0, 'completed_changes': 0, 'changes': []},
-                'perf-opt': {'total_changes': 0, 'completed_changes': 0, 'changes': []}
-            },
-            'gate_status': {
-                'all_changes_complete': False,
-                'checklist': {}
-            }
-        },
-        'phase-3': {
-            'status': 'pending',
-            'started_at': None,
-            'completed_at': None,
-            'categories': {
-                'advanced': {'total_changes': 0, 'completed_changes': 0, 'changes': []},
-                'optimization': {'total_changes': 0, 'completed_changes': 0, 'changes': []}
-            },
-            'gate_status': {
-                'all_changes_complete': False,
-                'checklist': {}
-            }
-        }
-    }
-}
-
-with open('$STATE_FILE', 'w') as f:
-    json.dump(state, f, indent=2)
-
-print('✅ 路线图状态文件已创建: $STATE_FILE')
-"
+PROJECT_ROOT="$PROJECT_ROOT" STATE_FILE="$STATE_FILE" python3 -c '
+import os, sys
+sys.path.insert(0, os.path.join(os.environ["PROJECT_ROOT"]))
+from skills._lib.roadmap_state import init_state
+init_state(os.environ["STATE_FILE"])
+'
 ```
 
 ### 步骤 5：输出结果
@@ -338,74 +287,27 @@ print('✅ 路线图状态文件已创建: $STATE_FILE')
 
 ### 步骤 1：读取路线图和状态
 
-```bash
-if [ ! -f "$ROADMAP_FILE" ]; then
-    echo "❌ roadmap.md 不存在"
-    echo "请先初始化: skill_use(\"roadmap\", \"init\")"
-    exit 1
-fi
+读取 + 展示已合并抽取到 `skills/_lib/roadmap_state.py::render_status_view()`。模块函数内部处理 roadmap.md 缺失、state.json 缺失、阶段进度、门控状态展示。
 
-if [ ! -f "$STATE_FILE" ]; then
-    echo "⚠️  状态文件不存在，正在重建..."
-    # 调用 rebuild 逻辑
-fi
+```bash
+# status Step 1: 渲染路线图状态（已抽取到 _lib/roadmap_state.py::render_status_view）
+#   render_status_view(roadmap_file, state_file) → 返回 0/1
+#   roadmap.md 缺失时返回 1 + 友好提示,不抛错。
+
+PROJECT_ROOT="$PROJECT_ROOT" ROADMAP_FILE="$ROADMAP_FILE" STATE_FILE="$STATE_FILE" python3 -c '
+import os, sys
+sys.path.insert(0, os.path.join(os.environ["PROJECT_ROOT"]))
+from skills._lib.roadmap_state import render_status_view
+sys.exit(render_status_view(
+    os.environ["ROADMAP_FILE"],
+    os.environ["STATE_FILE"],
+))
+'
 ```
 
 ### 步骤 2：解析并展示
 
-```bash
-python3 -c "
-import re
-import json
-
-# 读取 roadmap
-with open('$ROADMAP_FILE') as f:
-    roadmap_content = f.read()
-
-# 读取状态
-with open('$STATE_FILE') as f:
-    state = json.load(f)
-
-# 提取当前阶段
-current_phase = state.get('current_phase', 'unknown')
-
-print('📊 路线图状态')
-print('=' * 50)
-print(f'当前阶段: {current_phase}')
-print('')
-
-# 展示各阶段进度
-for phase_id, phase_data in state.get('phases', {}).items():
-    status = phase_data.get('status', 'unknown')
-    status_icon = {
-        'completed': '✅',
-        'in_progress': '🔄',
-        'pending': '⏳'
-    }.get(status, '❓')
-    
-    total = sum(len(c.get('changes', [])) for c in phase_data.get('categories', {}).values())
-    completed = sum(len(c.get('completed_changes', [])) for c in phase_data.get('categories', {}).values())
-    
-    print(f'{status_icon} {phase_id}: {completed}/{total} change 完成 ({status})')
-    
-    # 展示分类详情
-    for cat_id, cat_data in phase_data.get('categories', {}).items():
-        cat_total = len(cat_data.get('changes', []))
-        cat_completed = len(cat_data.get('completed_changes', []))
-        if cat_total > 0:
-            print(f'   - {cat_id}: {cat_completed}/{cat_total}')
-
-print('')
-
-# 阶段门控状态
-if current_phase in state.get('phases', {}):
-    gate = state['phases'][current_phase].get('gate_status', {})
-    print('阶段门控:')
-    print(f'  所有 change 完成: {\"✅\" if gate.get(\"all_changes_complete\") else \"❌\"}')
-    for check, checked in gate.get('checklist', {}).items():
-        print(f'  {check}: {\"✅\" if checked else \"❌\"}')
-"
-```
+见 Step 1 — 已合并到 `render_status_view()` 单次调用。阶段进度、分类详情、门控状态都在模块内部统一处理。
 
 ---
 
@@ -436,41 +338,20 @@ read PHASE_NAME
 echo "输入前置阶段 ID (可选):"
 read PREREQ_PHASE
 
-# 追加到 roadmap.md
-python3 -c "
-with open('$ROADMAP_FILE', 'a') as f:
-    f.write(f''\n\n### {PHASE_NAME} ({PHASE_ID})\n''')
-    f.write(f''**目标**: \n''')
-    f.write(f''**状态**: ⏳ 未开始\n''')
-    if '$PREREQ_PHASE':
-        f.write(f''**前置阶段**: $PREREQ_PHASE\n''')
-    f.write(f''**完成条件**:\n''')
-    f.write(f''  - [ ] 所有分类的 change 完成\n''')
-    f.write(f''\n#### 任务分类\n''')
-    f.write(f''| 分类ID | 名称 | 描述 | 优先级 |\n''')
-    f.write(f''|--------|------|------|--------|\n''')
-"
-
-# 更新状态文件
-python3 -c "
-import json
-with open('$STATE_FILE') as f:
-    state = json.load(f)
-
-state['phases']['$PHASE_ID'] = {
-    'status': 'pending',
-    'started_at': None,
-    'completed_at': None,
-    'categories': {},
-    'gate_status': {
-        'all_changes_complete': False,
-        'checklist': {}
-    }
-}
-
-with open('$STATE_FILE', 'w') as f:
-    json.dump(state, f, indent=2)
-"
+# 追加到 roadmap.md + 更新状态文件（已抽取到 _lib/roadmap_state.py::add_phase）
+PROJECT_ROOT="$PROJECT_ROOT" ROADMAP_FILE="$ROADMAP_FILE" STATE_FILE="$STATE_FILE" \
+PHASE_ID="$PHASE_ID" PHASE_NAME="$PHASE_NAME" PREREQ_PHASE="$PREREQ_PHASE" python3 -c '
+import os, sys
+sys.path.insert(0, os.path.join(os.environ["PROJECT_ROOT"]))
+from skills._lib.roadmap_state import add_phase
+sys.exit(add_phase(
+    os.environ["ROADMAP_FILE"],
+    os.environ["STATE_FILE"],
+    os.environ["PHASE_ID"],
+    os.environ["PHASE_NAME"],
+    os.environ.get("PREREQ_PHASE", ""),
+))
+'
 ```
 
 ---
@@ -479,186 +360,49 @@ with open('$STATE_FILE', 'w') as f:
 
 ### 验证逻辑
 
+校验逻辑已抽取到 `skills/_lib/roadmap_state.py::validate_change()`,函数内部用 `yaml.safe_load` 解析 meta、用 regex 解析 roadmap 阶段 + 分类结构,保留所有原有错误提示与成功消息字符串。
+
 ```bash
-CHANGE_NAME=$1
+# validate: 校验 change 分类（已抽取到 _lib/roadmap_state.py::validate_change）
+#   validate_change(roadmap_file, meta_file, change_name) → 返回 0/1
+#   函数内部处理: meta 缺失 / yaml 解析失败 / 阶段不存在 / 分类不在阶段中
 
-if [ -z "$CHANGE_NAME" ]; then
-    echo "❌ 请提供 change 名称"
-    echo "用法: skill_use(\"roadmap\", \"validate\", \"change-name\")"
-    exit 1
-fi
-
-META_FILE="$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/roadmap-meta.yaml"
-
-if [ ! -f "$META_FILE" ]; then
-    echo "❌ Change '$CHANGE_NAME' 不存在或没有 roadmap 元数据"
-    exit 1
-fi
-
-python3 -c "
-import yaml
-import re
-
-# 读取 change meta
-with open('$META_FILE') as f:
-    meta = yaml.safe_load(f)
-
-change_phase = meta.get('roadmap', {}).get('phase', 'unknown')
-change_category = meta.get('roadmap', {}).get('category', 'unknown')
-
-# 读取 roadmap
-with open('$ROADMAP_FILE') as f:
-    roadmap = f.read()
-
-# 验证阶段存在
-phase_pattern = rf'### .*? \({change_phase}\)'
-if not re.search(phase_pattern, roadmap):
-    print(f'❌ 阶段 \"{change_phase}\" 不存在于 roadmap')
-    exit(1)
-
-# 验证分类存在
-# 找到阶段部分
-phase_section = re.search(rf'### .*? \({change_phase}\).*?(?=### |## |$)', roadmap, re.DOTALL)
-if phase_section:
-    # 在阶段部分查找分类
-    cat_pattern = rf'\|\s*{change_category}\s*\|'
-    if not re.search(cat_pattern, phase_section.group()):
-        print(f'⚠️  分类 \"{change_category}\" 不在阶段 \"{change_phase}\" 中')
-        print('')
-        print('有效分类:')
-        # 提取所有分类
-        cats = re.findall(r'\|\s*(\S+)\s*\|\s*([^|]+)\|', phase_section.group())
-        for cat_id, cat_name in cats:
-            print(f'  - {cat_id}: {cat_name.strip()}')
-        exit(1)
-
-print(f'✅ Change \"$CHANGE_NAME\" 验证通过')
-print(f'   阶段: {change_phase}')
-print(f'   分类: {change_category}')
-"
+PROJECT_ROOT="$PROJECT_ROOT" ROADMAP_FILE="$ROADMAP_FILE" \
+META_FILE="$META_FILE" CHANGE_NAME="$CHANGE_NAME" python3 -c '
+import os, sys
+sys.path.insert(0, os.path.join(os.environ["PROJECT_ROOT"]))
+from skills._lib.roadmap_state import validate_change
+sys.exit(validate_change(
+    os.environ["ROADMAP_FILE"],
+    os.environ["META_FILE"],
+    os.environ["CHANGE_NAME"],
+))
+'
 ```
 
 ---
 
 ## 命令：advance — 推进阶段
 
-### 前置检查
+### 前置检查 + 执行推进（合并）
+
+前置检查(分类完成 + 门控条件)与执行推进(找下一阶段 + 更新 state)已合并抽取到 `skills/_lib/roadmap_state.py::advance_phase()`,函数内部用 re.findall 提取阶段列表、用 json 读写 state,保留所有原输出字符串。
 
 ```bash
-# 检查当前阶段是否已完成
-python3 -c "
-import json
+# advance: 推进阶段（已抽取到 _lib/roadmap_state.py::advance_phase）
+#   advance_phase(roadmap_file, state_file) → 返回 0/1
+#   函数内部: 1) 预检分类完成 2) 预检门控条件 3) 找下一阶段
+#             4) 标记当前完成 5) 激活下一阶段 6) 写回 state
 
-with open('$STATE_FILE') as f:
-    state = json.load(f)
-
-current = state['current_phase']
-phase_data = state['phases'].get(current, {})
-
-# 检查所有 change 完成
-all_complete = True
-for cat_id, cat_data in phase_data.get('categories', {}).items():
-    total = len(cat_data.get('changes', []))
-    completed = len(cat_data.get('completed_changes', []))
-    if completed < total:
-        all_complete = False
-        print(f'❌ 分类 {cat_id} 未完成: {completed}/{total}')
-
-# 检查门控条件
-checklist = phase_data.get('gate_status', {}).get('checklist', {})
-for check, checked in checklist.items():
-    if not checked:
-        all_complete = False
-        print(f'❌ 门控条件未完成: {check}')
-
-if not all_complete:
-    print('')
-    print('当前阶段未完成，无法推进')
-    print('请完成所有 change 和门控条件后重试')
-    exit(1)
-
-print(f'✅ 阶段 {current} 已完成，可以推进')
-"
-```
-
-### 执行推进
-
-```bash
-# 找到下一个阶段
-NEXT_PHASE=$(python3 -c "
-import re
-with open('$ROADMAP_FILE') as f:
-    content = f.read()
-
-phases = re.findall(r'\((phase-\d+)\)', content)
-current = '$CURRENT_PHASE'
-
-try:
-    idx = phases.index(current)
-    if idx + 1 < len(phases):
-        print(phases[idx + 1])
-    else:
-        print('LAST')
-except ValueError:
-    print('UNKNOWN')
-")
-
-if [ "$NEXT_PHASE" = "LAST" ]; then
-    echo "🎉 已是最后一个阶段"
-    exit 0
-elif [ "$NEXT_PHASE" = "UNKNOWN" ]; then
-    echo "❌ 无法确定下一阶段"
-    exit 1
-fi
-
-# 更新状态
-python3 -c "
-import json
-from datetime import datetime
-
-with open('$STATE_FILE') as f:
-    state = json.load(f)
-
-current = state['current_phase']
-
-# 标记当前阶段完成
-state['phases'][current]['status'] = 'completed'
-state['phases'][current]['completed_at'] = datetime.now().isoformat()
-
-# 激活下一阶段
-state['current_phase'] = '$NEXT_PHASE'
-state['phases']['$NEXT_PHASE']['status'] = 'in_progress'
-state['phases']['$NEXT_PHASE']['started_at'] = datetime.now().isoformat()
-state['updated_at'] = datetime.now().isoformat()
-
-with open('$STATE_FILE', 'w') as f:
-    json.dump(state, f, indent=2)
-
-print(f'✅ 已推进到阶段: $NEXT_PHASE')
-"
-
-# 更新 roadmap.md
-python3 -c "
-with open('$ROADMAP_FILE', 'r') as f:
-    content = f.read()
-
-# 更新当前阶段标记
-content = content.replace(
-    f'**当前阶段**: {current}',
-    f'**当前阶段**: $NEXT_PHASE'
-)
-
-# 更新阶段状态
-content = content.replace(
-    f'**状态**: 🔄 进行中\n**前置阶段**: {current}',
-    f'**状态**: 🔄 进行中\n**前置阶段**: {current}'
-)
-
-with open('$ROADMAP_FILE', 'w') as f:
-    f.write(content)
-
-print('✅ roadmap.md 已更新')
-"
+PROJECT_ROOT="$PROJECT_ROOT" ROADMAP_FILE="$ROADMAP_FILE" STATE_FILE="$STATE_FILE" python3 -c '
+import os, sys
+sys.path.insert(0, os.path.join(os.environ["PROJECT_ROOT"]))
+from skills._lib.roadmap_state import advance_phase
+sys.exit(advance_phase(
+    os.environ["ROADMAP_FILE"],
+    os.environ["STATE_FILE"],
+))
+'
 ```
 
 ---
@@ -681,17 +425,13 @@ get_current_phase() {
 ```bash
 get_phase_categories() {
     PHASE=$1
-    python3 -c "
-import re
-with open('$ROADMAP_FILE') as f:
-    content = f.read()
-
-phase_section = re.search(rf'### .*? \($PHASE\).*?(?=### |## |$)', content, re.DOTALL)
-if phase_section:
-    cats = re.findall(r'\|\s*(\S+)\s*\|\s*([^|]+)\|', phase_section.group())
-    for cat_id, cat_name in cats:
-        print(f'{cat_id}:{cat_name.strip()}')
-"
+    PROJECT_ROOT="$PROJECT_ROOT" ROADMAP_FILE="$ROADMAP_FILE" \
+    PHASE="$PHASE" python3 -c '
+import os, sys
+sys.path.insert(0, os.path.join(os.environ["PROJECT_ROOT"]))
+from skills._lib.roadmap_state import get_phase_categories
+get_phase_categories(os.environ["ROADMAP_FILE"], os.environ["PHASE"])
+'
 }
 ```
 
@@ -703,30 +443,19 @@ update_change_count() {
     PHASE=$2
     CATEGORY=$3
     OPERATION=${4:-"add"}  # add 或 remove
-    
-    python3 -c "
-import json
-
-with open('$STATE_FILE') as f:
-    state = json.load(f)
-
-if '$PHASE' in state['phases'] and '$CATEGORY' in state['phases']['$PHASE']['categories']:
-    cat_data = state['phases']['$PHASE']['categories']['$CATEGORY']
-    
-    if '$OPERATION' == 'add':
-        if '$CHANGE_NAME' not in cat_data['changes']:
-            cat_data['changes'].append('$CHANGE_NAME')
-            cat_data['total_changes'] = len(cat_data['changes'])
-    elif '$OPERATION' == 'remove':
-        if '$CHANGE_NAME' in cat_data['changes']:
-            cat_data['changes'].remove('$CHANGE_NAME')
-            cat_data['total_changes'] = len(cat_data['changes'])
-        if '$CHANGE_NAME' in cat_data.get('completed_changes', []):
-            cat_data['completed_changes'].remove('$CHANGE_NAME')
-    
-    with open('$STATE_FILE', 'w') as f:
-        json.dump(state, f, indent=2)
-"
+    PROJECT_ROOT="$PROJECT_ROOT" STATE_FILE="$STATE_FILE" \
+    CHANGE_NAME="$CHANGE_NAME" PHASE="$PHASE" CATEGORY="$CATEGORY" OPERATION="$OPERATION" python3 -c '
+import os, sys
+sys.path.insert(0, os.path.join(os.environ["PROJECT_ROOT"]))
+from skills._lib.roadmap_state import update_change_count
+update_change_count(
+    os.environ["STATE_FILE"],
+    os.environ["CHANGE_NAME"],
+    os.environ["PHASE"],
+    os.environ["CATEGORY"],
+    os.environ.get("OPERATION", "add"),
+)
+'
 }
 ```
 
