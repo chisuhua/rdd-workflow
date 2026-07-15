@@ -101,11 +101,13 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     }
 }
 
-@test "guide-ship.md version bumped to 2.0" {
+@test "guide-ship.md version is at least 2.0.1 (was bumped post-fill-hook)" {
     local f="$REPO_ROOT_ORIGIN/skills/guide-ship.md"
     local ver
     ver=$(skill_meta_field "$f" version)
-    [[ "$ver" == "2.0" ]]
+    # The post-archive fill suggestion hook (commit a1e0aaf) bumped
+    # guide-ship to 2.0.1. Accept any 2.0.x in case of future patch bumps.
+    [[ "$ver" == 2.0* ]] && [[ "$ver" != "2.0" ]]
 }
 
 # === 4. package.json 简化依赖 ===

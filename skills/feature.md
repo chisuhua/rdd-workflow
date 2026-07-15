@@ -6,7 +6,6 @@ compatibility: Requires iteration.json (run `guide-plan` once first) and ideally
 metadata:
   version: "2.0"
   author: sisyphus
-  version: "1.0"
   depends-on: [iteration, deps_output]
 ---
 

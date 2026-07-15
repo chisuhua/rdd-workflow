@@ -6,7 +6,6 @@ compatibility: Requires spec-workflow v2.0+
 metadata:
   version: "2.0"
   author: sisyphus
-  version: "1.0"
   evolved-from: "iterate of v1.0"
 ---
 

@@ -4,9 +4,8 @@ description: 分析项目文档与代码的差距，生成 propose 建议列表�
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+. Reads docs/adr/, docs/architecture/, docs/developer_guide/, roadmap.md.
 metadata:
-  version: "2.0"
-  author: sisyphus
   version: "2.0"  # P0: Roadmap 驱动，支持分阶段 change 生成
+  author: sisyphus
   evolved-from: "iterate of v1.0"
   replaces-step: "step1-manual"  # 替代原工作流 Step 1 的手动 openspec new/propose 操作
 ---

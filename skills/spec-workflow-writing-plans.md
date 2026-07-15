@@ -4,9 +4,8 @@ description: 自包含的 OpenSpec 实施计划生成器。为 OpenSpec change �
 license: MIT
 compatibility: Requires git 2.25+, openspec CLI 1.3.1+. 无外部 skill 依赖。
 metadata:
-  version: "2.0"
+  version: "2.0"  # v2.0 重构: 完全自包含, fork 自 superpowers/writing-plans
   author: sisyphus
-  version: "1.0"  # v2.0 重构: 完全自包含, fork 自 superpowers/writing-plans
   evolved-from: "superpowers/writing-plans v152 行核心 TDD 纪律 + OpenSpec change 上下文适配"
   user-invocable: false
 ---

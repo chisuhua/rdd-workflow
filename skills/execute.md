@@ -6,7 +6,6 @@ compatibility: Requires openspec CLI and git worktree.
 metadata:
   version: "2.0"
   author: sisyphus
-  version: "2.0"  # v2.0: 嵌入 TDD 5 步纪律 (合并自 spec-workflow/executing-plans)
   evolved-from: "v1.0 P0 roadmap + v2.0 嵌入 TDD 5 步纪律,取代 spec-workflow/executing-plans"
   user-invocable: true
 ---
