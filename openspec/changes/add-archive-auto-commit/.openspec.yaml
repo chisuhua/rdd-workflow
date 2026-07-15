@@ -1,0 +1,74 @@
+schema: spec-driven
+created: 2026-07-15
+name: add-archive-auto-commit
+status: PROPOSED
+scope: [shared]
+goal: >-
+  Eliminate dirty-working-tree after `openspec archive` by auto-committing
+  the file moves (active change dir → archive/, new spec → main specs/).
+  Currently the CLI leaves 5+ untracked/deleted files behind, requiring
+  manual `git add` + commit, which produces inconsistent commit messages
+  and is a recurring post-archive gap.
+follows:
+  - three-phase-skills
+  - openspec-cli-integration
+blocks: []
+baseline:
+  archive_change in archive.sh: >-
+    full pipeline (pre-merge check → switch → merge → openspec archive
+    to cleanup to mark_iteration_archived, but NO git commit step
+  guide-ship lightweight mode: >-
+    also calls `openspec archive $CHANGE_NAME --yes` inline, but NO
+    git commit step
+  openspec CLI v1.4.1: >-
+    `openspec archive <name> --yes` moves files but does NOT invoke
+    git commit (verified empirically on 2026-07-15 with
+    add-spec-validation-gates)
+  observed post-archive gap: >-
+    after `openspec archive`, working tree had 5 deletions (active
+    change files) + 2 untracked dirs (archive/<date>-<name>/ +
+    openspec/specs/<new-cap>/); required manual `git add
+    openspec/changes/<name>/ openspec/changes/archive/<date>-<name>/
+    openspec/specs/<new-cap>/` + manually crafted
+    `archive(<name>): archive completed` commit
+  mark_iteration_archived already exists: >-
+    called from archive_change. State writes can be safely post-hoc
+    in archive flow
+target:
+  skills/_lib/archive.sh: >-
+    new helper `commit_archive_moves <name> <main_root>` that stages
+    + commits the three paths; hook into `archive_change` after
+    `openspec archive` (worktree mode)
+  skills/guide-ship.md: >-
+    Phase 3 lightweight mode also calls helper after inline
+    `openspec archive`
+  tests/integration/test_commit_archive_moves.bats: >-
+    new bats test verifying auto-commit produces a single commit
+    with the expected message
+  AGENTS.md: >-
+    append note under `归档流程` documenting the new behavior +
+    opt-out env var
+non_goals:
+  - Modifying openspec CLI behavior
+  - Auto-pushing archive commits to origin
+  - Making commit message customizable via flags
+  - Squashing archive commits
+risk_level: low
+cross_repo:
+  - None
+estimated_loc_change:
+  new code: >-
+    ~40 lines (1 helper function + 1 hook + 1 bats test + 1 doc note)
+  modified files: >-
+    ~15 lines across skills/_lib/archive.sh + skills/guide-ship.md +
+    AGENTS.md
+acceptance:
+  - "`commit_archive_moves` is a documented exported helper in skills/_lib/archive.sh"
+  - "`archive_change` calls `commit_archive_moves` after `openspec archive` and produces exactly 1 new git commit on the default branch"
+  - "guide-ship.md Phase 3 lightweight mode also calls the helper after the inline `openspec archive`"
+  - "helper honors `SKIP_ARCHIVE_AUTO_COMMIT=yes` env var (opt-out, default on)"
+  - "helper is idempotent: when working tree is clean (already committed), does nothing and exits 0"
+  - "helper commit message follows repo convention: `archive(<name>): archive completed`"
+  - "bats test runs the full archive flow and verifies auto-commit produces correct diff/messages"
+  - "all existing tests still pass (551 unit + 76 integration + bats full suite)"
+  - "AGENTS.md documents the behavior + the opt-out env var"
