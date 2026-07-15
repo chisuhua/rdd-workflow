@@ -197,55 +197,55 @@ BATSEOF
 
 ### 3.1 Mode A — dedup worktree list + add `i` handler (S3 + S11)
 
-- [ ] 3.1.1 Add `tests/integration/test_status_mode_a_polish.bats` (2 cases).
+- [x] 3.1.1 Add `tests/integration/test_status_mode_a_polish.bats` (2 cases).
 
-- [ ] 3.1.2 Verify red.
+- [x] 3.1.2 Verify red.
 
-- [ ] 3.1.3 Patch `skills/status.md`: remove the redundant "Step 1：获取 worktree 列表" subsection (lines 71-82); expand Mode A's case handler to include `i|` branch.
+- [x] 3.1.3 Patch `skills/status.md`: remove the redundant "Step 1：获取 worktree 列表" subsection (lines 71-82); expand Mode A's case handler to include `i|` branch.
 
-- [ ] 3.1.4 Verify green + commit.
+- [x] 3.1.4 Verify green + commit.
 
 ### 3.2 guide.md — graceful binding skip + `--help`/`--no-binding` flags (G3 + G5)
 
-- [ ] 3.2.1 Add `tests/integration/test_guide_binding_skip.bats` (3 cases).
+- [x] 3.2.1 Add `tests/integration/test_guide_binding_skip.bats` (3 cases).
 
-- [ ] 3.2.2 Verify red.
+- [x] 3.2.2 Verify red.
 
-- [ ] 3.2.3 Patch `skills/guide.md` lines 22-46: add input parser with `--help` / `--no-binding`; document graceful-skip semantics.
+- [x] 3.2.3 Patch `skills/guide.md` lines 22-46: add input parser with `--help` / `--no-binding`; document graceful-skip semantics.
 
-- [ ] 3.2.4 Verify green + commit.
+- [x] 3.2.4 Verify green + commit.
 
 ### 3.3 Promote stale `workflow-state.md` warning into scan-state.sh (G6)
 
-- [ ] 3.3.1 Add `tests/integration/test_stale_workflow_state.bats` (3 cases).
+- [x] 3.3.1 Add `tests/integration/test_stale_workflow_state.bats` (3 cases).
 
-- [ ] 3.3.2 Verify red.
+- [x] 3.3.2 Verify red.
 
-- [ ] 3.3.3 Append `check_stale_workflow_state()` to `skills/_lib/scan-state.sh`; invoke from `scan_state()`; trim doc in `skills/guide.md` lines 69-79.
+- [x] 3.3.3 Append `check_stale_workflow_state()` to `skills/_lib/scan-state.sh`; invoke from `scan_state()`; trim doc in `skills/guide.md` lines 69-79.
 
-- [ ] 3.3.4 Smoke: create temp repo with stale file, verify warning prints.
+- [x] 3.3.4 Smoke: create temp repo with stale file, verify warning prints.
 
-- [ ] 3.3.5 Verify green + commit.
+- [x] 3.3.5 Verify green + commit.
 
 ### 3.4 Add a unified output style guide subsection (C2)
 
-- [ ] 3.4.1 Add `tests/integration/test_skill_style_guide.bats` (4 cases).
+- [x] 3.4.1 Add `tests/integration/test_skill_style_guide.bats` (4 cases).
 
-- [ ] 3.4.2 Verify red (expect ≥1 failure).
+- [x] 3.4.2 Verify red (expect ≥1 failure).
 
-- [ ] 3.4.3 Insert "## 输出风格指南" subsection in `skills/status.md` before "## 关键约束".
+- [x] 3.4.3 Insert "## 输出风格指南" subsection in `skills/status.md` before "## 关键约束".
 
-- [ ] 3.4.4 Verify green + `npm test` smoke still passes.
+- [x] 3.4.4 Verify green + `npm test` smoke still passes.
 
-- [ ] 3.4.5 Commit.
+- [x] 3.4.5 Commit.
 
 ## Final Lock-in
 
-- [ ] FL0 Run full test sweep (16 baseline + 30 new = ≥46 cases)
-- [ ] FL1 Run `python3 -m pytest tests/unit/ -q --tb=short`
-- [ ] FL2 `git status --short` clean (only intended files)
-- [ ] FL3 Sync `.rddf/state/iteration.json` to mark this change `status=completed` after all tier work done
-- [ ] FL4 Final commit:
+- [x] FL0 Run full test sweep (16 baseline + 30 new = ≥46 cases)
+- [x] FL1 Run `python3 -m pytest tests/unit/ -q --tb=short`
+- [x] FL2 `git status --short` clean (only intended files)
+- [x] FL3 Sync `.rddf/state/iteration.json` to mark this change `status=completed` after all tier work done
+- [x] FL4 Final commit:
 ```bash
 git commit -m "chore(status-guide-revision): all 12 work-units complete, 46+ tests green"
 ```
