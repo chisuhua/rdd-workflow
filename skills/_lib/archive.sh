@@ -34,9 +34,20 @@
 #
 #   - archive_change <name>
 #       Full archive flow: pre-check → merge (ff-only or no-ff) → verify
-#       → openspec archive → worktree/branch cleanup. The openspec CLI
+#       → openspec archive → worktree/branch cleanup → auto-commit of
+#       archive file moves (via commit_archive_moves). The openspec CLI
 #       call is kept inline (not a helper) because it is CLI, not
 #       library code.
+#
+#   - commit_archive_moves <name> <main_root>
+#       Stage + commit the 3 path trio created by `openspec archive
+#       <name>`: the deleted active change dir, the new
+#       archive/<date>-<name>/ dir, and the new main spec dir.
+#       Honors SKIP_ARCHIVE_AUTO_COMMIT=yes (opt-out).
+#       Idempotent: when working tree is clean (already committed),
+#       exits 0 with no commit.
+#       Returns 0 on success or skipped, 1 on commit failure (after
+#       git reset HEAD to clean up the index).
 #
 #   - mark_iteration_archived <name> <main_root>
 #       Update .rddf/state/iteration.json to mark <name> as archived.
@@ -287,6 +298,10 @@ archive_change() {
   # 7. Cleanup worktree + branch
   cleanup_worktree_and_branch "$name" "$main_root" "$wt_path" "$branch" || return 1
 
+  # 7.5 Auto-commit archive file moves (added by add-archive-auto-commit).
+  # Tolerate failure (file moves remain in working tree for human review).
+  commit_archive_moves "$name" "$main_root" || true
+
   # 8. Update iteration.json (current sprint tracker). Best-effort.
   mark_iteration_archived "$name" "$main_root"
 
@@ -351,5 +366,60 @@ except Exception as e:
     # python3 itself failed (not installed) — silently skip
     :
   fi
+  return 0
+}
+
+# commit_archive_moves <name> <main_root>
+#   Stage + commit the 3 path trio created by `openspec archive <name>`:
+#     - openspec/changes/<name>/            (deleted active change dir)
+#     - openspec/changes/archive/           (new archive dir + contents)
+#     - openspec/specs/                     (new main spec dir)
+#   The path scope is intentionally strict (NOT `openspec/` whole) so we
+#   never accidentally stage unrelated dirty files. Writes exactly 1
+#   commit with subject `archive(<name>): archive completed`, matching
+#   the convention established by 0d6ba45.
+#
+#   Honors opt-out via SKIP_ARCHIVE_AUTO_COMMIT=yes (callers can choose
+#   to commit manually instead). Idempotent: clean working tree → exit
+#   0 with no commit. On commit failure, runs `git reset HEAD` to roll
+#   back the index pollution.
+#
+#   Returns 0 on success or skipped, 1 if `git add` or `git commit` fails.
+#   Callers (archive_change + guide-ship.md lightweight path) typically
+#   tolerate failure via `|| true` — the archive itself succeeded, only
+#   the auto-commit failed, leaving moves for the human to handle.
+commit_archive_moves() {
+  local name="${1:-}" main_root="${2:-}"
+  [[ -z "$name" || -z "$main_root" ]] && {
+    echo "❌ commit_archive_moves 需要 name 和 main_root"; return 1;
+  }
+
+  if [ "${SKIP_ARCHIVE_AUTO_COMMIT:-no}" = "yes" ]; then
+    echo "ℹ️  commit_archive_moves: SKIPPED (SKIP_ARCHIVE_AUTO_COMMIT=yes)"
+    return 0
+  fi
+
+  if [ -z "$(git status --porcelain 2>/dev/null)" ]; then
+    return 0
+  fi
+
+  cd "$main_root" || { echo "❌ commit_archive_moves: cannot cd to $main_root"; return 1; }
+
+  if ! git add \
+        "openspec/changes/${name}/" \
+        "openspec/changes/archive/" \
+        "openspec/specs/" 2>/dev/null; then
+    git reset HEAD >/dev/null 2>&1 || true
+    echo "❌ commit_archive_moves: git add failed"
+    return 1
+  fi
+
+  if ! git commit -m "archive(${name}): archive completed"; then
+    git reset HEAD >/dev/null 2>&1 || true
+    echo "❌ commit_archive_moves: git commit failed"
+    return 1
+  fi
+
+  echo "✅ commit_archive_moves: archive(${name}) committed"
   return 0
 }
