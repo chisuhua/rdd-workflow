@@ -24,6 +24,11 @@ write_arch_handoff() {
 
   mkdir -p "$PROJECT_ROOT/.rddf/state"
 
+  # Compute ROADMAP_EXISTS_BOOL from filesystem (don't rely on env var — may not propagate
+  # between bash code blocks in markdown). DISCOVERED_ROADMAP_PATH is set by discover_roadmap
+  # call in this same function above.
+  ROADMAP_EXISTS_BOOL=$([ -f "$PROJECT_ROOT/${DISCOVERED_ROADMAP_PATH}" ] && echo "true" || echo "false")
+
   # Delegate to Python helper via env-var passing only (Oracle C1: no bash string interp)
   PROJECT_ROOT="$PROJECT_ROOT" \
   DISCOVERED_ADR_DIR="$DISCOVERED_ADR_DIR" \
@@ -36,6 +41,6 @@ write_arch_handoff() {
   DISCOVERED_ADR_DIR_TRIED="${DISCOVERED_ADR_DIR_TRIED:-0}" \
   DISCOVERED_ROADMAP_TRIED="${DISCOVERED_ROADMAP_TRIED:-0}" \
   DISCOVERED_ARCH_TRIED="${DISCOVERED_ARCH_TRIED:-0}" \
-  ROADMAP_EXISTS_BOOL="${ROADMAP_EXISTS_BOOL:-false}" \
+  ROADMAP_EXISTS_BOOL="$ROADMAP_EXISTS_BOOL" \
   python3 "$SCRIPT_DIR/write_arch_handoff_env.py"
 }
