@@ -36,33 +36,10 @@ skill_use("guide-ship")   # 无参数版本
 **rddf-session 入口 hook**（ADR-0017）：创建或查找当前 opencode session 的 `stage_ship` rddf-session（parent=最新 stage_plan）：
 
 ```bash
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
-python3 - "$PROJECT_ROOT" "$OPENCODE_SESSION_ID" <<'PYEOF'
-import sys, os
-sys.path.insert(0, sys.argv[1])
-from skills._lib.rddf_session import RddfSessionCoordinator, ConflictError
-project_root = sys.argv[1]
-opencode_sid = sys.argv[2]
-sessions_file = os.path.join(project_root, ".rddf", "state", "sessions.json")
-os.makedirs(os.path.dirname(sessions_file), exist_ok=True)
-coord = RddfSessionCoordinator(sessions_file=sessions_file)
-coord.check_heartbeat_timeouts()
-plan_sessions = coord.list_sessions(kind="stage_plan")
-parent_id = plan_sessions[0].session_id if plan_sessions else None
-try:
-    sid = coord.create_session(
-        kind="stage_ship",
-        owner_opencode_session_id=opencode_sid,
-        goal={"intent": "guide-ship", "subject": "ship-phase", "expected_outcome": "archive-all"},
-        parent_session_id=parent_id,
-    )
-    print(f"rddf-session: {sid} (stage_ship, parent={parent_id})")
-except ConflictError as e:
-    print(f"CONFLICT: {e}")
-    print("  → use skill_use('rddf-session','list') to inspect")
-    sys.exit(2)
-PYEOF
+# rddf-session 入口 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
+# stage_ship parent: latest stage_plan (auto-resolved by helper)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/rddf_session_hooks.sh"
+rddf_session_hook_entry stage_ship guide-ship ship-phase archive-all
 ```
 
 **前置说明**：
@@ -774,28 +751,11 @@ Triggered when all committed changes have been archived (or no changes remain).
 **rddf-session 关闭 hook**（ADR-0017）：所有 changes 归档完成后，将 `stage_ship` rddf-session 标记为 completed：
 
 ```bash
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
-python3 - "$PROJECT_ROOT" "$OPENCODE_SESSION_ID" <<'PYEOF'
-import sys, os
-sys.path.insert(0, sys.argv[1])
-from skills._lib.rddf_session import RddfSessionCoordinator
-project_root = sys.argv[1]
-opencode_sid = sys.argv[2]
-sessions_file = os.path.join(project_root, ".rddf", "state", "sessions.json")
-if os.path.exists(sessions_file):
-    coord = RddfSessionCoordinator(sessions_file=sessions_file)
-    try:
-        sid = coord.create_session(
-            kind="stage_ship",
-            owner_opencode_session_id=opencode_sid,
-            goal={"intent": "guide-ship"},
-        )
-        coord.update_session_status(sid, "completed", end_reason="ship-done")
-        print(f"rddf-session: {sid} -> completed (ship-done)")
-    except Exception as e:
-        print(f"rddf-session close skipped: {e}")
-PYEOF
+# rddf-session 关闭 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
+# Documented behavior change (P3-4c): ship now prints 'not found, skipping'
+# when sessions.json missing, consistent with arch/plan close.
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/rddf_session_hooks.sh"
+rddf_session_hook_close stage_ship ship-done guide-ship
 ```
 
 **Loop check:**
