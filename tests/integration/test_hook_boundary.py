@@ -83,26 +83,29 @@ class TestBashPythonBoundary:
         """propose.md hook should successfully write iteration.json
         when PROJECT_ROOT contains a single quote.
 
-        The OLD pattern (bash string interpolation) would have produced
-        a Python SyntaxError because the Python source would have a
-        broken string literal.
+        P0-1 extraction (P3-4d): inline python3 -c heredocs were removed
+        from propose.md Phase 4. The iteration.json update logic now lives
+        in _lib/propose_change.py::update_iteration_proposed, called via
+        _lib/propose_change.sh::propose_finalize_change. This test
+        verifies the NEW pattern (env-var passing via os.environ) survives
+        the same pathological case.
         """
-        # We extract the actual hook from propose.md and run it.
-        # The hook is environment-aware: passes PROJECT_ROOT, CHANGE_NAME,
-        # etc. via env vars and reads them with os.environ.
-        md_path = SPEC_WORKFLOW_ROOT / "skills" / "propose.md"
-        python_source = _extract_python_source(md_path)
+        from skills._lib import iteration as it
+        # Initialize iteration.json at the quoted path
+        it.save(project_root_with_quote, it.create_empty())
 
-        # Run the hook with all required env vars set
+        # Source the new helper and invoke propose_finalize_change
+        helper_path = SPEC_WORKFLOW_ROOT / "skills" / "_lib" / "propose_change.sh"
+        bash_command = (
+            f'source "{helper_path}" && '
+            f'PROJECT_ROOT="{project_root_with_quote}" '
+            f'propose_finalize_change c1 phase-1 arch-design P0 '
+            f'"arch-design:Architecture Design"'
+        )
         env = os.environ.copy()
         env["PROJECT_ROOT"] = project_root_with_quote
-        env["CHANGE_NAME"] = "c1"
-        env["CHANGE_PHASE"] = "v2.1"
-        env["CHANGE_CATEGORY"] = "test"
-        env["PRIORITY"] = "P0"
-
         result = subprocess.run(
-            [sys.executable, "-c", python_source],
+            ["bash", "-c", bash_command],
             env=env,
             capture_output=True,
             text=True,
@@ -110,15 +113,17 @@ class TestBashPythonBoundary:
         )
 
         assert result.returncode == 0, (
-            f"propose hook failed with quoted path:\n"
+            f"propose_finalize_change failed with quoted path:\n"
             f"STDOUT: {result.stdout}\n"
             f"STDERR: {result.stderr}"
         )
 
         # Verify the hook actually wrote iteration.json correctly
-        from skills._lib import iteration as it
         loaded = it.load(project_root_with_quote)
         assert any(c["name"] == "c1" for c in loaded["changes"])
+        # And status should be 'proposed'
+        match = next(c for c in loaded["changes"] if c["name"] == "c1")
+        assert match["status"] == "proposed"
 
     def test_change_name_with_shell_metacharacters(self, project_root_with_quote):
         """A change name containing shell metacharacters (e.g. '; rm -rf /')
@@ -176,27 +181,32 @@ class TestProposeHookPlaceholder:
     """Oracle C2 finding: propose.md previously used literal '<name>'
     placeholder instead of bash variable. Verify the new pattern uses
     $CHANGE_NAME consistently and falls back to <name> for legacy callers.
+
+    P0-1 extraction (P3-4d): the iteration.json update was extracted to
+    _lib/propose_change.py::update_iteration_proposed. The <name> placeholder
+    is now resolved by the agent's bash loop BEFORE calling the helper
+    (e.g. propose_finalize_change "$CHANGE_NAME" ...). The helper itself
+    takes the resolved name as a parameter — no string interpolation risk.
     """
 
     def test_propose_hook_extracts_change_name_from_env(self, tmp_path):
-        """When CHANGE_NAME env var is set, the hook uses it directly
-        (no manual <name> substitution needed)."""
+        """When CHANGE_NAME env var is set, the helper uses it directly."""
         from skills._lib import iteration as it
         project_root = str(tmp_path)
         os.makedirs(f"{project_root}/.rddf/state")
 
-        md_path = SPEC_WORKFLOW_ROOT / "skills" / "propose.md"
-        python_source = _extract_python_source(md_path)
-
+        helper_path = SPEC_WORKFLOW_ROOT / "skills" / "_lib" / "propose_change.sh"
+        bash_command = (
+            f'source "{helper_path}" && '
+            f'PROJECT_ROOT="{project_root}" '
+            f'propose_finalize_change "real-change-name" phase-1 arch-design P0 '
+            f'"arch-design:Architecture Design"'
+        )
         env = os.environ.copy()
         env["PROJECT_ROOT"] = project_root
-        env["CHANGE_NAME"] = "real-change-name"
-        env["CHANGE_PHASE"] = "v2.1"
-        env["CHANGE_CATEGORY"] = "test"
-        env["PRIORITY"] = "P0"
 
         result = subprocess.run(
-            [sys.executable, "-c", python_source],
+            ["bash", "-c", bash_command],
             env=env, capture_output=True, text=True,
             cwd=str(SPEC_WORKFLOW_ROOT),
         )
@@ -208,43 +218,39 @@ class TestProposeHookPlaceholder:
         assert "<name>" not in names  # placeholder must NOT be a literal entry
 
     def test_propose_hook_legacy_fallback(self, tmp_path):
-        """When CHANGE_NAME is NOT set in the env, the bash-level
-        ${CHANGE_NAME:-<name>} fallback substitutes the literal '<name>'
-        placeholder so legacy hand-copied callers still work.
+        """When a legacy hand-copied caller passes '<name>' as the literal
+        change name to the helper, the helper receives it directly as a
+        parameter and writes it as-is to iteration.json.
 
-        The hook contract is the WHOLE bash command, not just the
-        python3 -c block. This test runs the full prefix + python3.
+        The inline orchestrator (the agent's bash loop) is responsible for
+        substituting `<name>` with the actual change name before calling
+        propose_finalize_change. Legacy code that didn't do this would
+        pass '<name>' literally — the helper accepts it without injection
+        risk (Oracle C1 finding).
         """
         from skills._lib import iteration as it
         project_root = str(tmp_path)
         os.makedirs(f"{project_root}/.rddf/state")
 
-        md_path = SPEC_WORKFLOW_ROOT / "skills" / "propose.md"
-        python_source = _extract_python_source(md_path)
-
+        helper_path = SPEC_WORKFLOW_ROOT / "skills" / "_lib" / "propose_change.sh"
+        # Use single quotes around '<name>' to avoid bash redirect parsing
+        bash_command = (
+            f'source "{helper_path}" && '
+            f'PROJECT_ROOT="{project_root}" '
+            f"propose_finalize_change '<name>' phase-1 arch-design P0 "
+            f'"arch-design:Architecture Design"'
+        )
         env = os.environ.copy()
         env["PROJECT_ROOT"] = project_root
-        env["CHANGE_PHASE"] = "v2.1"
-        env["CHANGE_CATEGORY"] = "test"
-        env["PRIORITY"] = "P0"
         env.pop("CHANGE_NAME", None)
 
-        # Run the full hook: bash env-setup + python3 invocation
-        bash_command = (
-            f'PROJECT_ROOT="{project_root}" '
-            f'CHANGE_PHASE="v2.1" '
-            f'CHANGE_CATEGORY="test" '
-            f'PRIORITY="P0" '
-            f'CHANGE_NAME="${{CHANGE_NAME:-<name>}}" '
-            f"python3 -c '{python_source}'"
-        )
         result = subprocess.run(
             ["bash", "-c", bash_command],
             env=env, capture_output=True, text=True,
             cwd=str(SPEC_WORKFLOW_ROOT),
         )
         assert result.returncode == 0, (
-            f"propose hook (legacy fallback) failed:\n"
+            f"propose_finalize_change (legacy fallback) failed:\n"
             f"STDOUT: {result.stdout}\n"
             f"STDERR: {result.stderr}"
         )

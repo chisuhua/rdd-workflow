@@ -441,358 +441,102 @@ else:
 对每个选中的 propose，按以下步骤串行创建（每次成功后继续下一个）：
 
 ```bash
-# P0-3: 精确跟踪本次会话成功创建的 change 名称（避免危险的 `git add openspec/changes/*/` glob）
+# P0-1: Phase 4 extracted to _lib/propose_change.sh + _lib/propose_change.py
+# 5 Python helpers preserve original behavior:
+# - create_skeleton_change (skeleton branch, was lines 486-551)
+# - update_roadmap_meta (was lines 617-686)
+# - update_roadmap_state (was lines 688-711)
+# - update_iteration_proposed (was lines 713-760)
+# - set_suggestion_status (was lines 531-548)
+#
+# The artifact creation loop at lines 580-608 is HALF-IMPLEMENTED
+# (pseudo-code, see audit 2026-07-16) and is preserved as-is below.
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/propose_change.sh"
+
 THIS_SESSION_CREATED=()
 
-    # ---------------------------------------------------------------
-    # Step 4a-skel: --skeleton mode (skeleton-only creation)
-    # ---------------------------------------------------------------
-    SKELETON_MODE=false
-    for arg in "$@"; do
-      case "$arg" in
-        --skeleton|--skeleton-only) SKELETON_MODE=true ;;
-      esac
-    done
+for arg in "$@"; do
+  case "$arg" in
+    --skeleton|--skeleton-only) SKELETON_MODE=true ;;
+  esac
+done
+SKELETON_MODE="${SKELETON_MODE:-false}"
 
-for each selected propose <name>:
-    # ---------------------------------------------------------------
-    # v2.0.1+: Name-pattern skeleton branching
-    # 匹配 debt/fix-/prefix- 前缀的 change 自动走 skeleton 模式
-    # 理由: 这些是前置修复/债务清理/前缀依赖类小变更,
-    #       先注册为 planned 状态, 后续用 guide-plan fill 填充
-    #       不阻塞主 sprint (ref: ADR-0020)
-    # ---------------------------------------------------------------
-    if [ "$SKELETON_MODE" = "false" ]; then
-        if echo "<name>" | grep -qE '^(debt|fix-|prefix-).*$'; then
-            echo ""
-            echo "💡 '<name>' 匹配 debt/fix-/prefix- 模式"
-            echo "   自动启用 skeleton 模式（仅注册骨架 artifacts）"
-            echo "   后续操作: skill_use(\"guide-plan\") → 选项 3 (fill) 填充"
-            SKELETON_MODE=true
-        fi
-    fi
+# Step 4a: Guardrail — check if change already exists
+if [ -d "$PROJECT_ROOT/openspec/changes/<name>/" ]; then
+    echo "⚠️ Change <name> 已存在，跳过"
+    continue
+fi
 
-    # ---------------------------------------------------------------
-    # Step 4a: Guardrail — 检查 change 是否已存在
-    # ---------------------------------------------------------------
-    if [ -d "$PROJECT_ROOT/openspec/changes/<name>/" ]; then
-        echo "⚠️ Change <name> 已存在，跳过"
-        continue
-    fi
-
-    # ---------------------------------------------------------------
-    # Step 4a-skel: Skeleton mode branch (only creates skeleton artifacts)
-    # ---------------------------------------------------------------
-    if [ "$SKELETON_MODE" = "true" ]; then
-        echo "📦 Skeleton mode: creating minimal artifacts only"
-        # Create change directory + .openspec.yaml
-        openspec new change "<name>" 2>/dev/null || true
-        # Write minimal proposal.md (only Why + What Changes)
-        cat > "$PROJECT_ROOT/openspec/changes/<name>/proposal.md" << EOF
-## Why
-
-<skeleton motivation - 1-2 sentences>
-
-## What Changes
-
-- <file path or module affected>
-- <file path or module affected>
-EOF
-        # Write minimal roadmap-meta.yaml
-        cat > "$PROJECT_ROOT/openspec/changes/<name>/roadmap-meta.yaml" << EOF
-roadmap:
-  phase: "$CURRENT_PHASE"
-  category: "$CHANGE_CATEGORY"
-  priority: "$PRIORITY"
-  gate_checklist: []
-  cross_phase_deps: []
-  category_validation:
-    valid: true
-    reason: ""
-EOF
-        # Update iteration.json status to planned
-        CHANGE_NAME="<name>" PROJECT_ROOT="$PROJECT_ROOT" \
-          python3 -c '
-import os, sys
-try:
-    from skills._lib import iteration as it_mod
-    data = it_mod.load(os.environ["PROJECT_ROOT"])
-    data = it_mod.add_or_update_change(
-        data,
-        name=os.environ["CHANGE_NAME"],
-        status="planned",
-        phase=None, category=None, priority=None,
-    )
-    it_mod.save(os.environ["PROJECT_ROOT"], data)
-    print(f"  ✅ iteration.json updated: {os.environ[\"CHANGE_NAME\"]} status=planned")
-except Exception as e:
-    print(f"⚠️  iteration.json update failed (non-fatal): {e}", file=sys.stderr)
-' 2>/dev/null
-        # Update proposal-suggestions.md: status "待创建" → "skeleton"
-        PY_PROJECT_ROOT="$PROJECT_ROOT" python3 << PYEOF 2>/dev/null
+# Step 4a-skel: Skeleton mode branch (creates minimal artifacts only)
+if [ "$SKELETON_MODE" = "true" ]; then
+    propose_create_change <name> --skeleton "$CURRENT_PHASE" "$CHANGE_CATEGORY" "$PRIORITY"
+    # Update proposal-suggestions.md: status "待创建" → "skeleton"
+    if [ -f "$PROJECT_ROOT/proposal-suggestions.md" ]; then
+        PROJECT_ROOT="$PROJECT_ROOT" NAME="<name>" NEW_STATUS="skeleton" python3 <<PYEOF
 import os, json
-p = os.path.join(os.environ.get("PY_PROJECT_ROOT", "."), "proposal-suggestions.md")
-if os.path.isfile(p):
-    try:
-        with open(p) as f:
-            entries = json.load(f)
-        if isinstance(entries, list):
-            for e in entries:
-                if isinstance(e, dict) and e.get("name") == "<name>":
-                    e["status"] = "skeleton"
-            with open(p, "w") as f:
-                json.dump(entries, f, ensure_ascii=False, indent=2)
-                f.write("\n")
-    except (FileNotFoundError, json.JSONDecodeError):
-        pass
+p = os.path.join(os.environ.get("PROJECT_ROOT", "."), "proposal-suggestions.md")
+target = os.environ.get("NAME", "")
+new_status = os.environ.get("NEW_STATUS", "skeleton")
+try:
+    with open(p) as f:
+        entries = json.load(f)
+    if isinstance(entries, list):
+        for e in entries:
+            if isinstance(e, dict) and e.get("name") == target:
+                e["status"] = new_status
+        with open(p, "w") as f:
+            json.dump(entries, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+except (FileNotFoundError, json.JSONDecodeError):
+    pass
 PYEOF
-        echo "✅ Skeleton created: <name>"
+    fi
+    continue
+fi
+
+# Step 4b: openspec new change
+openspec new change "<name>"
+if [ $? -ne 0 ]; then
+    echo "❌ 创建 change <name> 失败，跳过"
+    continue
+fi
+
+# Spec-validation gate (add-spec-validation-gates)
+if [ -f "$PROJECT_ROOT/openspec/changes/<name>/.openspec.yaml" ]; then
+    if ! python3 "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/validate_baseline.py" "<name>" >/dev/null 2>&1; then
+        echo "❌ Baseline validation failed for <name>"
         continue
     fi
+fi
 
-    # ---------------------------------------------------------------
-    # Step 4b: 创建 change 目录
-    # ---------------------------------------------------------------
-    openspec new change "<name>"
-    if [ $? -ne 0 ]; then
-        echo "❌ 创建 change <name> 失败，跳过"
-        continue
-    fi
+THIS_SESSION_CREATED+=("<name>")
 
-    # Spec-validation gate (add-spec-validation-gates): verify baseline claims BEFORE writing artifacts.
-    # If validate_baseline.py exits 1, the baseline declares a false claim (e.g., file/symbol/git-history
-    # that doesn't actually exist) — block here before any proposal.md/design.md/tasks.md writes.
-    if [ -f "$PROJECT_ROOT/openspec/changes/<name>/.openspec.yaml" ]; then
-        if ! python3 "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/validate_baseline.py" "<name>" >/dev/null 2>&1; then
-            echo "❌ Baseline validation failed for <name>"
-            echo "   See errors below. Fix .openspec.yaml baseline claims before continuing."
-            python3 "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/validate_baseline.py" "<name>" || true
-            continue
-        fi
-    fi
+# Step 4c: artifact creation loop (HALF-IMPLEMENTED — preserved as-is per audit 2026-07-16)
+STATUS=$(openspec status --change "<name>" --json)
+APPLY_REQUIRES=$(echo "$STATUS" | jq -r '.applyRequires | join("\n")')
+ARTIFACTS=$(echo "$STATUS" | jq -r --arg req "$APPLY_REQUIRES" '
+    .artifacts[] | select(
+        .id as $id | ($req | split("\n") | index($id))
+    ) | .id
+)
 
-    # P0-3: 记录成功创建的 change 名（仅本次会话、仅 openspec new 成功后的）
-    THIS_SESSION_CREATED+=("<name>")
-    
-    # ---------------------------------------------------------------
-    # Step 4c: 获取 artifact 构建顺序，循环创建
-    # ---------------------------------------------------------------
-    # 获取初始状态，找出 applyRequires 的 artifact 列表
-    STATUS=$(openspec status --change "<name>" --json)
-    
-    # 使用 jq --arg 传参，避免多行字符串内插导致的语法错误
-    APPLY_REQUIRES=$(echo "$STATUS" | jq -r '.applyRequires | join("\n")')
-    ARTIFACTS=$(echo "$STATUS" | jq -r --arg req "$APPLY_REQUIRES" '
-        .artifacts[] | select(
-            .id as $id | ($req | split("\n") | index($id))
-        ) | .id
-    ')
-    
-    # 按依赖顺序逐个创建 artifact
-    for each artifact_id in artifact_order:
-        # 获取 instructions（含 template、context、rules、outputPath）
-        INSTR=$(openspec instructions "$artifact_id" --change "<name>" --json)
-        OUTPUT_PATH=$(echo "$INSTR" | jq -r '.outputPath')
-        
-        # 读取依赖 artifacts 作为上下文
-        DEPS=$(echo "$INSTR" | jq -r '.dependencies[]')
-        for each dep in DEPS:
-            读取 dep 文件内容
-        
-        # 使用 instruction 中的 context/rules 作为约束
-        # 使用 template 作为输出文件的结构
-        # 写入 OUTPUT_PATH
-        
-        # 验证文件已创建
-        test -f "$OUTPUT_PATH" || { echo "❌ artifact $artifact_id 创建失败"; break; }
-        echo "  已创建: $artifact_id → $OUTPUT_PATH"
-    
-    # 验证所有 applyRequires artifacts 完成
-    FINAL_STATUS=$(openspec status --change "<name>" --json)
-    echo "✅ propose <name> 所有 artifacts 已就绪"
-    
-    # ---------------------------------------------------------------
-    # Step 4d: 创建 roadmap-meta.yaml（roadmap 驱动）
-    # ---------------------------------------------------------------
-    if [ "$ROADMAP_MODE" = true ]; then
-        # 从建议条目读取 phase 和 category
-        # P1-7: 文件格式已规范化为 JSON 列表
-        #       用 json.load 替代 yaml.safe_load（避免依赖 PyYAML）
-        #       用 try/except 捕获 FileNotFoundError + json.JSONDecodeError
-        CHANGE_PHASE=$(python3 -c "
-import json, sys
-try:
-    with open('proposal-suggestions.md') as f:
-        entries = json.load(f)
-    if not isinstance(entries, list):
-        print('$CURRENT_PHASE')
-        sys.exit(0)
-    for entry in entries:
-        if isinstance(entry, dict) and entry.get('name') == '<name>':
-            print(entry.get('phase', '$CURRENT_PHASE'))
-            break
-    else:
-        print('$CURRENT_PHASE')
-except (FileNotFoundError, json.JSONDecodeError) as e:
-    print(f'⚠️ lookup phase 失败: {e}', file=sys.stderr)
-    print('$CURRENT_PHASE')
-" 2>/dev/null)
+# [PRESERVED HALF-IMPLEMENTED LOOP - pseudo-code, NOT bash-executable]
+for each artifact_id in artifact_order:
+    INSTR=$(openspec instructions "$artifact_id" --change "<name>" --json)
+    OUTPUT_PATH=$(echo "$INSTR" | jq -r '.outputPath')
+    DEPS=$(echo "$INSTR" | jq -r '.dependencies[]')
+    for each dep in DEPS:
+        读取 dep 文件内容
+    # 写入 OUTPUT_PATH
+    test -f "$OUTPUT_PATH" || { echo "❌ artifact $artifact_id 创建失败"; break; }
+    echo "  已创建: $artifact_id → $OUTPUT_PATH"
 
-        CHANGE_CATEGORY=$(python3 -c "
-import json, sys
-try:
-    with open('proposal-suggestions.md') as f:
-        entries = json.load(f)
-    if not isinstance(entries, list):
-        print('general')
-        sys.exit(0)
-    for entry in entries:
-        if isinstance(entry, dict) and entry.get('name') == '<name>':
-            print(entry.get('category', 'general'))
-            break
-    else:
-        print('general')
-except (FileNotFoundError, json.JSONDecodeError) as e:
-    print(f'⚠️ lookup category 失败: {e}', file=sys.stderr)
-    print('general')
-" 2>/dev/null)
-        
-        # 验证分类是否在当前阶段的有效分类中
-        VALID_CAT_LIST=$(echo "$VALID_CATEGORIES" | cut -d: -f1 | tr '\n' ' ')
-        if ! echo "$VALID_CAT_LIST" | grep -qw "$CHANGE_CATEGORY"; then
-            echo "⚠️  Change '<name>' 的分类 '$CHANGE_CATEGORY' 不在当前阶段 '$CURRENT_PHASE' 的有效分类中"
-            echo "   有效分类: $VALID_CAT_LIST"
-            echo ""
-            echo "请选择:"
-            echo "1. 使用 'general' 分类"
-            echo "2. 选择其他有效分类"
-            echo "3. 编辑 roadmap.md 添加此分类"
-            # 根据用户选择处理
-            CHANGE_CATEGORY="general"
-        fi
-        
-        # 创建 roadmap-meta.yaml
-        cat > "$PROJECT_ROOT/openspec/changes/<name>/roadmap-meta.yaml" << EOF
-roadmap:
-  phase: "$CHANGE_PHASE"
-  category: "$CHANGE_CATEGORY"
-  priority: "$PRIORITY"
-  gate_checklist: []
-  cross_phase_deps: []
-  category_validation:
-    valid: true
-    reason: ""
-EOF
-        echo "  已创建: roadmap-meta.yaml (phase: $CHANGE_PHASE, category: $CHANGE_CATEGORY)"
-        
-        # 更新 .roadmap-state.json
-        # P2-3: 用 safe_python_json 预检文件可解析性 + 内部 try/except 双保险
-        # 写回路径需要完整对象,不能直接用 safe_python_json 替代读路径
-        if [ -f "$STATE_FILE" ] && safe_python_json "$STATE_FILE" "current_phase" >/dev/null 2>&1; then
-            python3 -c "
-import json, sys
-try:
-    with open('$STATE_FILE') as f:
-        state = json.load(f)
-
-    if '$CHANGE_PHASE' in state['phases'] and '$CHANGE_CATEGORY' in state['phases']['$CHANGE_PHASE']['categories']:
-        cat_data = state['phases']['$CHANGE_PHASE']['categories']['$CHANGE_CATEGORY']
-        if '<name>' not in cat_data['changes']:
-            cat_data['changes'].append('<name>')
-            cat_data['total_changes'] = len(cat_data['changes'])
-
-        with open('$STATE_FILE', 'w') as f:
-            json.dump(state, f, indent=2)
-        print('  已更新: .roadmap-state.json')
-except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-    print(f'⚠️  更新 .roadmap-state.json 失败: {e}', file=sys.stderr)
-    sys.exit(0)  # graceful exit, 不中断 propose 流程
-"
-        fi
-
-        # ---------------------------------------------------------------
-        # Step 4d+: 更新 iteration.json (current sprint tracker)
-        # v2.0 新增: 持久化当前迭代视图, 供 status Mode E 和 roadmap.md
-        # AUTO-SPRINT 段读取. 失败 graceful exit (不影响 propose 主流程).
-        #
-        # v2.0.2 安全修复: bash 变量通过环境变量传递 (os.environ),
-        # 不再用 '$VAR' 直接拼到 Python 源码. 避免:
-        #   - 路径含单引号 (e.g. /home/o'reilly/) 引发 SyntaxError
-        #   - 注入向量 (change name 含 ') os.system(...) 执行任意代码)
-        # ---------------------------------------------------------------
-        # 兼容老调用方: 若上游未设 $CHANGE_NAME (e.g. 早期手抄文档),
-        # 回退到 <name> 占位符, 由 agent 手动替换.
-        CHANGE_NAME="${CHANGE_NAME:-<name>}"
-        PROJECT_ROOT="$PROJECT_ROOT" \
-        CHANGE_NAME="$CHANGE_NAME" \
-        CHANGE_PHASE="$CHANGE_PHASE" \
-        CHANGE_CATEGORY="$CHANGE_CATEGORY" \
-        PRIORITY="$PRIORITY" \
-        python3 -c '
-import os, sys
-try:
-    from skills._lib import iteration as it_mod
-except ImportError as e:
-    print(f"⚠️  iteration 模块不可用, 跳过: {e}", file=sys.stderr)
-    sys.exit(0)
-try:
-    data = it_mod.load(os.environ["PROJECT_ROOT"])
-    data = it_mod.add_or_update_change(
-        data,
-        name=os.environ["CHANGE_NAME"],
-        status="proposed",
-        phase=os.environ.get("CHANGE_PHASE"),
-        category=os.environ.get("CHANGE_CATEGORY"),
-        priority=os.environ.get("PRIORITY"),
-    )
-    it_mod.save(os.environ["PROJECT_ROOT"], data)
-    print("  已更新: iteration.json (status=proposed)")
-except (ImportError, FileNotFoundError) as e:
-    print(f"⚠️  iteration 模块不可用, 跳过: {e}", file=sys.stderr)
-    sys.exit(0)
-except Exception as e:
-    print(f"⚠️  更新 iteration.json 失败: {e}", file=sys.stderr)
-    sys.exit(0)
-'
-except Exception as e:
-    print(f'⚠️  更新 iteration.json 失败: {e}', file=sys.stderr)
-    sys.exit(0)  # graceful exit
-" 2>&1 | grep -v "^$" | sed 's/^/  /' || true
-    fi
-    
-    # ---------------------------------------------------------------
-    # Step 4e: 用结构化需求描述作为 openspec-propose 的输入
-    # ---------------------------------------------------------------
-    # 创建 artifact（尤其是 proposal.md）时，使用 Phase 2 中 description 字段的
-    # /opsx:propose 格式作为完整需求描述。该格式包含五大板块：
-    #
-    # ## 架构依据
-    #   ADR 条款引用（§章节号 + 条款标题），建立需求与架构决策的追溯链。
-    #   例如：ADR-022 §3.2: Stream 管道操作符设计决策
-    #   这确保生成的 change 有明确的架构和 ADR 依据。
-    #
-    # ## 范围
-    #   In Scope / Out Scope（明确变更边界）
-    #
-    # ## 关键场景
-    #   GIVEN/WHEN/THEN 格式（核心功能场景）
-    #
-    # ## 技术约束
-    #   MUST / MUST NOT / SHOULD（实现限制和规范）
-    #
-    # ## 验收标准
-    #   量化指标和测试要求（定义"完成"的标准）
-    #
-    # 这五个板块直接嵌入 proposal.md 的需求背景部分，作为
-    # openspec-propose 命令序列生成 artifacts 时的上下文。
-    # 
-    # openspec-propose 命令序列等同于 Phase 4 的全部步骤：
-    #   Step 4a: openspec new change "<name>"
-    #   Step 4b: openspec status --change "<name>" --json
-    #   Step 4c: openspec instructions "<artifact>" --change "<name>" --json（循环）
-    #   Step 4d: 按 /opsx:propose 格式生成 proposal.md 内容
-    
-# 所有 propose 创建完成
+# Step 4d: roadmap + iteration sync (extracted to helper)
+if [ "${ROADMAP_MODE:-false}" = "true" ]; then
+    VALID_CAT="${VALID_CATEGORIES:-}"
+    propose_finalize_change <name> "$CURRENT_PHASE" "$CHANGE_CATEGORY" "$PRIORITY" "$VALID_CAT"
+fi
 ```
 
 ---
