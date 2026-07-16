@@ -80,34 +80,10 @@ skill_use("guide-plan")   # 无参数版本
 **rddf-session 入口 hook**（ADR-0017）：创建或查找当前 opencode session 的 `stage_plan` rddf-session（parent=最新 stage_arch）：
 
 ```bash
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
-python3 - "$PROJECT_ROOT" "$OPENCODE_SESSION_ID" <<'PYEOF'
-import sys, os
-sys.path.insert(0, sys.argv[1])
-from skills._lib.rddf_session import RddfSessionCoordinator, ConflictError
-project_root = sys.argv[1]
-opencode_sid = sys.argv[2]
-sessions_file = os.path.join(project_root, ".rddf", "state", "sessions.json")
-os.makedirs(os.path.dirname(sessions_file), exist_ok=True)
-coord = RddfSessionCoordinator(sessions_file=sessions_file)
-coord.check_heartbeat_timeouts()
-arch_sessions = coord.list_sessions(kind="stage_arch")
-parent_id = arch_sessions[0].session_id if arch_sessions else None
-try:
-    sid = coord.create_session(
-        kind="stage_plan",
-        owner_opencode_session_id=opencode_sid,
-        goal={"intent": "guide-plan", "subject": "plan-phase", "expected_outcome": "plan-done"},
-        parent_session_id=parent_id,
-        context_pointer=".rddf/state/.plan-handoff.json",
-    )
-    print(f"rddf-session: {sid} (stage_plan, parent={parent_id})")
-except ConflictError as e:
-    print(f"CONFLICT: {e}")
-    print("  → use skill_use('rddf-session','list') to inspect")
-    sys.exit(2)
-PYEOF
+# rddf-session 入口 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
+# stage_plan parent: latest stage_arch (auto-resolved by helper)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/rddf_session_hooks.sh"
+rddf_session_hook_entry stage_plan guide-plan plan-phase plan-done .rddf/state/.plan-handoff.json
 ```
 
 **行为**：
@@ -779,30 +755,9 @@ fi
 **rddf-session 关闭 hook**（ADR-0017）：plan-done 验证通过后，将 `stage_plan` rddf-session 标记为 completed：
 
 ```bash
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
-python3 - "$PROJECT_ROOT" "$OPENCODE_SESSION_ID" <<'PYEOF'
-import sys, os
-sys.path.insert(0, sys.argv[1])
-from skills._lib.rddf_session import RddfSessionCoordinator
-project_root = sys.argv[1]
-opencode_sid = sys.argv[2]
-sessions_file = os.path.join(project_root, ".rddf", "state", "sessions.json")
-if os.path.exists(sessions_file):
-    coord = RddfSessionCoordinator(sessions_file=sessions_file)
-    try:
-        sid = coord.create_session(
-            kind="stage_plan",
-            owner_opencode_session_id=opencode_sid,
-            goal={"intent": "guide-plan"},
-        )
-        coord.update_session_status(sid, "completed", end_reason="plan-done")
-        print(f"rddf-session: {sid} -> completed (plan-done)")
-    except Exception as e:
-        print(f"rddf-session close skipped: {e}")
-else:
-    print("rddf-session: sessions.json not found, skipping close")
-PYEOF
+# rddf-session 关闭 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/rddf_session_hooks.sh"
+rddf_session_hook_close stage_plan plan-done guide-plan
 ```
 
 **Output to user**：
