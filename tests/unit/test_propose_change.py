@@ -272,3 +272,38 @@ class TestUpdateRoadmapState:
         result = pc.update_roadmap_state(str(tmp_path), "c1", "phase-1", "arch-design")
         # Returns None for graceful skip
         assert result is None or result is False
+
+
+class TestUpdateIterationProposed:
+    """update_iteration_proposed encapsulates lines 713-760 of propose.md:
+    Updates iteration.json with status=proposed + phase/category/priority.
+
+    Per baseline: phase/category values are real init_state defaults
+    (phase-1, arch-design/infra-setup/core-impl/core-test), NOT 'general'.
+    """
+
+    def test_updates_status_to_proposed(self, tmp_path):
+        from skills._lib import iteration as it
+        it.save(str(tmp_path), it.create_empty())
+        pc.update_iteration_proposed(
+            str(tmp_path), "c1",
+            phase="phase-1", category="core-impl", priority="P2",
+        )
+        loaded = it.load(str(tmp_path))
+        match = next(c for c in loaded["changes"] if c["name"] == "c1")
+        assert match["status"] == "proposed"
+        assert match["phase"] == "phase-1"
+        assert match["category"] == "core-impl"
+        assert match["priority"] == "P2"
+
+    def test_handles_special_chars_in_change_name_safely(self, tmp_path):
+        from skills._lib import iteration as it
+        it.save(str(tmp_path), it.create_empty())
+        # Should not raise even with special characters in name
+        pc.update_iteration_proposed(
+            str(tmp_path), "test-with-dash_and_underscore",
+            phase="phase-1", category="core-impl", priority="P2",
+        )
+        loaded = it.load(str(tmp_path))
+        names = [c["name"] for c in loaded["changes"]]
+        assert "test-with-dash_and_underscore" in names

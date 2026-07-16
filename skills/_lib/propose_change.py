@@ -258,3 +258,45 @@ def update_roadmap_state(
     except Exception as e:
         print(f"⚠️  更新 .roadmap-state.json 失败: {e}", file=sys.stderr)
         return False
+
+
+def update_iteration_proposed(
+    project_root: str,
+    name: str,
+    phase: str,
+    category: str,
+    priority: str,
+) -> Optional[bool]:
+    """Update iteration.json with status=proposed (propose.md lines 713-760).
+
+    Uses iteration.add_or_update_change (NOT set_deps_info — deps set
+    by deps.md Step 6). Graceful skip on ImportError.
+
+    Per Oracle audit: this MUST only call add_or_update_change (not
+    set_deps_info) to preserve deps.md Step 6's responsibility boundary.
+    """
+    import sys
+    try:
+        from skills._lib import iteration as it_mod
+    except ImportError as e:
+        print(f"⚠️  iteration 模块不可用, 跳过: {e}", file=sys.stderr)
+        return None
+    try:
+        data = it_mod.load(project_root)
+        data = it_mod.add_or_update_change(
+            data,
+            name=name,
+            status="proposed",
+            phase=phase,
+            category=category,
+            priority=priority,
+        )
+        it_mod.save(project_root, data)
+        print("  已更新: iteration.json (status=proposed)")
+        return True
+    except (FileNotFoundError,) as e:
+        print(f"⚠️  iteration 模块不可用, 跳过: {e}", file=sys.stderr)
+        return None
+    except Exception as e:
+        print(f"⚠️  更新 iteration.json 失败: {e}", file=sys.stderr)
+        return False
