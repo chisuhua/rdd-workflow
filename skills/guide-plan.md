@@ -449,33 +449,10 @@ guide-plan 阶段完成（plan-done）
 **自动执行内容**：
 
 ```bash
-# Step 1: 生成候选列表（guide-plan 负责此步骤）
-mkdir -p "$PROJECT_ROOT/.rddf/state"
-python3 -c "
-import json, os, sys, subprocess
-
-# 读取所有已提交的 change
-changes_dir = '$PROJECT_ROOT/openspec/changes'
-candidates = []
-if os.path.isdir(changes_dir):
-    for name in sorted(os.listdir(changes_dir)):
-        # 检查 change 是否已提交（.openspec.yaml 在 HEAD 中存在）
-        # 用 git show HEAD: 比对文件系统更准确：未提交的本地草稿不应被视作候选
-        try:
-            result = subprocess.run(
-                ['git', 'show', f'HEAD:openspec/changes/{name}/.openspec.yaml'],
-                capture_output=True, text=True
-            )
-            if result.returncode == 0:
-                candidates.append(name)
-        except (FileNotFoundError, subprocess.SubprocessError) as e:
-            print(f'⚠️ git show failed for {name}: {e}', file=sys.stderr)
-
-data = {'candidates': candidates}
-with open('$PROJECT_ROOT/.rddf/state/.deps-candidates.json', 'w') as f:
-    json.dump(data, f, indent=2)
-print(f'生成候选列表: {candidates}')
-"
+# Round B: extracted to _lib/plan_deps_candidates.{py,sh} (L451-L488, ~38 lines)
+# Oracle C1 fix: bash wrapper passes PROJECT_ROOT env var only
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/plan_deps_candidates.sh"
+generate_deps_candidates
 
 # Step 2: 调用 deps.md 技能（静态三轴分析 + 子代理语义分析占位）
 # deps.md 读取 .rddf/state/.deps-candidates.json，输出 .rddf/state/.deps-output.md
