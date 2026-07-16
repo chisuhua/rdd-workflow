@@ -562,36 +562,9 @@ Do NOT auto-invoke `guide-plan` — the user must explicitly transition to the p
 arch-done 双重门控（ADR ≥ 1 + roadmap.md 存在）通过后，自动运行 4 个 warning 级质量检查，输出到 `.rddf/state/.arch-quality-report.json`：
 
 ```bash
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-
-python3 - "$PROJECT_ROOT" <<'PYEOF'
-import sys, json, os
-sys.path.insert(0, sys.argv[1])
-from skills._lib.arch_quality_gate import ArchQualityReport, is_strict_mode
-project_root = sys.argv[1]
-report = ArchQualityReport.verify(project_root)
-out_path = os.path.join(project_root, ".rddf", "state", ".arch-quality-report.json")
-os.makedirs(os.path.dirname(out_path), exist_ok=True)
-with open(out_path, "w", encoding="utf-8") as f:
-    json.dump({
-        "passed": report.passed,
-        "warnings": report.warnings,
-        "failed_checks": report.failed_checks,
-        "detail": report.detail,
-        "strict_mode": is_strict_mode(),
-    }, f, ensure_ascii=False, indent=2)
-if report.warnings or report.failed_checks:
-    mode = "STRICT" if is_strict_mode() else "WARN"
-    print(f"\n⚠️  架构质量门 ({mode}):")
-    for w in report.warnings:
-        print(f"  - [WARN] {w}: {report.detail[w].get('severity')}")
-    for f in report.failed_checks:
-        print(f"  - [FAIL] {f}: {report.detail[f].get('severity')}")
-    if is_strict_mode():
-        sys.exit(1)
-else:
-    print("\n✅ 架构质量门: 全部通过 (warning 级)")
-PYEOF
+# Round B: extracted to _lib/arch_quality_report.sh (L564-L595, ~32 lines)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/arch_quality_report.sh"
+run_arch_quality_report
 ```
 
 **严格模式 (CI)**：当 `STRICT_ARCH_GATE=yes` 时，warning 自动升级为 error 并 exit 1。本地开发默认关闭。
