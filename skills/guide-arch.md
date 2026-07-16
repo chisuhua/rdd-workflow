@@ -616,94 +616,9 @@ echo ""
 arch → plan 交接通过 `.rddf/state/.arch-handoff.json` 软状态文件传递。arch-done 验证通过后立即写入。文件不被 git 跟踪（`.gitignore` 已排除 `.rddf/state/`），缺失时 plan 端硬阻断。v1 schema 见 `skills/_lib/schemas/arch_handoff_schema.json`（ADR-0016 Layer 2）。
 
 ```bash
-# P2-5 模式: 写入 handoff 状态,作为 arch→plan 的软交接信号
-# 缺失 .rddf/state 目录时静默创建 (mkdir -p),写失败不阻塞 arch-done 输出
-HANDOFF_FILE="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
-mkdir -p "$PROJECT_ROOT/.rddf/state"
-
-# Re-run discovery to ensure latest values (Phase 5 idempotency)
-if [ -f "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh" ]; then
-    source "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh"
-    discover_adr_dir          >/dev/null
-    discover_roadmap          >/dev/null
-    discover_architecture_dir >/dev/null
-    discover_adr_pattern      >/dev/null
-fi
-
-# Glob ADR files using DISCOVERED_ADR_PATTERN (NOT the legacy hardcoded
-# "ADR-*.md" — projects may use DEC-*.md, RFD-*.md, etc.). Use mapfile + process
-# substitution to avoid command-substitution newline collapse (Self-verify bug).
-ADR_FILES=()
-while IFS= read -r -d '' f; do
-  case "$f" in
-    *"-0000-template.md") continue ;;
-  esac
-  ADR_FILES+=("$f")
-done < <(find "${PROJECT_ROOT}/${DISCOVERED_ADR_DIR}" \
-            -maxdepth 1 \
-            -name "${DISCOVERED_ADR_PATTERN}" \
-            -type f \
-            -print0 2>/dev/null)
-
-ADR_COUNT=${#ADR_FILES[@]}
-
-# Extract IDs using the prefix derived from DISCOVERED_ADR_PATTERN.
-# For pattern "ADR-*.md" + filename "ADR-0001-foo.md" → "0001".
-_ID_PREFIX=$(echo "$DISCOVERED_ADR_PATTERN" | sed 's/-.*$//')
-ADR_IDS=()
-for f in "${ADR_FILES[@]}"; do
-  base=$(basename "$f")
-  id=$(echo "$base" | sed "s|^${_ID_PREFIX}-||; s|-.*\.md$||")
-  ADR_IDS+=("$id")
-done
-ADR_IDS_SORTED=$(printf "%s\n" "${ADR_IDS[@]:-}" | sort -n | paste -sd ',' -)
-ADR_IDS_JSON=""
-if [ -n "$ADR_IDS_SORTED" ]; then
-  ADR_IDS_JSON="\"$(echo "$ADR_IDS_SORTED" | sed 's/,/","/g')\""
-fi
-
-# 读取当前 roadmap 阶段 (uses DISCOVERED_ROADMAP_PATH)
-CURRENT_PHASE=$(grep -m1 '\*\*当前阶段\*\*' "$PROJECT_ROOT/${DISCOVERED_ROADMAP_PATH}" 2>/dev/null \
-  | sed 's/.*\*\*当前阶段\*\*:\s*//' | tr -d '[:space:]' || echo "default")
-
-cat > "$HANDOFF_FILE" << EOF
-{
-  "arch_complete_at": "$(date -Iseconds)",
-  "adr_count": $ADR_COUNT,
-  "completed_adr_ids": [$ADR_IDS_JSON],
-  "roadmap_exists": $ROADMAP_EXISTS_BOOL,
-  "current_phase": "$CURRENT_PHASE",
-  "plan_started_at": null,
-  "adr_dir": "$DISCOVERED_ADR_DIR",
-  "roadmap_path": "$DISCOVERED_ROADMAP_PATH",
-  "architecture_dir": "$DISCOVERED_ARCHITECTURE_DIR",
-  "adr_pattern": "$DISCOVERED_ADR_PATTERN",
-  "discovered": {
-    "adr_dir": {
-      "found": $([ "$DISCOVERED_ADR_DIR_FOUND" = "true" ] && echo "true" || echo "false"),
-      "created": false,
-      "candidates_tried": $DISCOVERED_ADR_DIR_TRIED
-    },
-    "roadmap_path": {
-      "found": $([ "$DISCOVERED_ROADMAP_FOUND" = "true" ] && echo "true" || echo "false"),
-      "created": false,
-      "candidates_tried": $DISCOVERED_ROADMAP_TRIED
-    },
-    "architecture_dir": {
-      "found": $([ "$DISCOVERED_ARCH_FOUND" = "true" ] && echo "true" || echo "false"),
-      "created": false,
-      "candidates_tried": $DISCOVERED_ARCH_TRIED
-    }
-  },
-  "version": 1
-}
-EOF
-
-if [ -f "$HANDOFF_FILE" ]; then
-    echo "✅ Handoff state written: .rddf/state/.arch-handoff.json (adr_count=$ADR_COUNT, phase=$CURRENT_PHASE, adr_dir=$DISCOVERED_ADR_DIR)"
-else
-    echo "⚠️  Handoff state write failed, plan 端将硬阻断"
-fi
+# Round A: extracted to _lib/write_arch_handoff.{py,sh} (L618-L707, ~88 lines)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/write_arch_handoff.sh"
+write_arch_handoff
 ```
 
 ```bash
