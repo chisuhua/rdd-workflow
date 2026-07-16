@@ -20,7 +20,8 @@ load ../test_helper
 @test "P0-8: execute.md uses main_repo_root or --git-common-dir" {
   [ -f "skills/execute.md" ]
   # Either the helper function or the direct git command must be referenced
-  grep -qE 'git rev-parse --git-common-dir|main_repo_root' skills/execute.md
+  # (Round A extraction: main_repo_root lives in _lib/select_worktree.sh, sourced by execute.md)
+  grep -qE 'git rev-parse --git-common-dir|main_repo_root' skills/execute.md skills/_lib/select_worktree.sh
 }
 
 @test "P0-8: execute.md no longer uses just --show-toplevel for PROJECT_ROOT" {

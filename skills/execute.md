@@ -52,119 +52,12 @@ worktree (openspec/<name>): 本技能在此执行
 ### 模式自动识别
 
 ```bash
-# Source helper (worktree-aware functions)
+# Round A: extracted to _lib/select_worktree.sh (L54-L168, ~113 lines)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
-if [ -f "$SCRIPT_DIR/_lib/worktree.sh" ]; then
-  source "$SCRIPT_DIR/_lib/worktree.sh"
+if [ -f "$SCRIPT_DIR/_lib/select_worktree.sh" ]; then
+  source "$SCRIPT_DIR/_lib/select_worktree.sh"
 fi
-
-# 自动检测项目根目录（用于全局安装的技能）
-# P0-8: use main_repo_root (works in both main repo and worktrees)
-PROJECT_ROOT=$(main_repo_root)
-[ -d "$PROJECT_ROOT" ] || PROJECT_ROOT=$(pwd)
-export PROJECT_ROOT
-# 检测当前 git 上下文
-CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
-GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "unknown")
-
-# 列出所有 worktree 以确定关系
-WORKTREE_LIST=$(git worktree list)
-
-# 判断是否在 worktree 内
-if echo "$CURRENT_BRANCH" | grep -q '^openspec/'; then
-    CHANGE_NAME=$(echo "$CURRENT_BRANCH" | sed 's/^openspec\///')
-    WORKTREE_PATH=$(pwd)
-    HAS_WORKTREE=true
-    
-    # 验证当前目录确实是对应的 worktree 目录
-    MAIN_WT_PATH=$(echo "$WORKTREE_LIST" | grep "openspec/$CHANGE_NAME" | awk '{print $1}')
-    if [ "$MAIN_WT_PATH" != "$(pwd)" ]; then
-        echo "⚠️ 分支名与 worktree 路径不匹配"
-        echo "   branch: openspec/$CHANGE_NAME"
-        echo "   worktree from list: $MAIN_WT_PATH"
-        echo "   current dir: $(pwd)"
-    fi
-else
-    # ============================================================
-    # P0 修复：不在 worktree 内时，提供自动引导而非直接退出
-    # ============================================================
-    echo "⚠️  当前不在 worktree 内"
-    echo ""
-    
-    # 检查是否有已创建的 worktree
-    WT_INFO=$(git worktree list | grep "openspec/" | awk '{print $1, $3}')
-    
-    if [ -z "$WT_INFO" ]; then
-        echo "❌ 无已创建的 worktree"
-        echo ""
-        echo "请先执行 guide-ship 技能创建 worktree："
-        echo "  skill_use(\"guide-ship\")   # 内部选择 change"
-        echo ""
-        echo "可用 change 列表："
-        ls -d $PROJECT_ROOT/openspec/changes/*/ 2>/dev/null | grep -v archive/ | while read dir; do
-            name=$(basename "$dir")
-            echo "  - $name"
-        done
-        exit 1
-    fi
-    
-    # 有 worktree 存在，显示选择菜单
-    WT_COUNT=$(echo "$WT_INFO" | grep -c .)
-    echo "📋 发现 $WT_COUNT 个已创建的 worktree："
-    echo ""
-    WORKTREE_COUNT=0
-    while read -r wt_path wt_branch; do
-        WORKTREE_COUNT=$((WORKTREE_COUNT + 1))
-        name=$(echo "$wt_branch" | sed 's|^openspec/||')
-        plan_file="$wt_path/.rddf/plans/$name.md"
-        if [ -f "$plan_file" ]; then
-            status="✅ 有计划文件"
-        else
-            status="⏳ 无计划文件"
-        fi
-        echo "  $WORKTREE_COUNT. $name"
-        echo "     路径: $wt_path"
-        echo "     分支: $wt_branch"
-        echo "     状态: $status"
-        echo ""
-    done <<< "$WT_INFO"
-    
-    # P0-9 修复：用 EXECUTE_CHOICE 环境变量取代 read -p
-    # 原因：read -p 在 AI/CI 等非交互环境会从 stdin 读取，永远阻塞直到输入
-    # 新行为：
-    #   - 默认选择 1（最常见：进入主 worktree）
-    #   - 可通过 EXECUTE_CHOICE=N 覆盖选择 N
-    #   - 多 worktree 场景下提示用户可通过环境变量覆盖
-    WT_COUNT=$(echo "$WT_INFO" | grep -c .)
-    choice="${EXECUTE_CHOICE:-1}"
-    if [ -z "${EXECUTE_CHOICE:-}" ] && [ "$WT_COUNT" -gt 1 ]; then
-        echo "ℹ️  多个 worktree 检测到，默认选择 1（可通过 EXECUTE_CHOICE=N 覆盖）"
-    fi
-    selected_line=$(echo "$WT_INFO" | sed -n "${choice}p")
-    
-    if [ -z "$selected_line" ]; then
-        echo "❌ 无效选择，请设置 EXECUTE_CHOICE=1..$WT_COUNT"
-        exit 1
-    fi
-    
-    target_path=$(echo "$selected_line" | awk '{print $1}')
-    target_branch=$(echo "$selected_line" | awk '{print $2}')
-    
-    echo ""
-    echo "正在切换到 worktree：$target_path"
-    cd "$target_path"
-    CHANGE_NAME=$(echo "$target_branch" | sed 's|^openspec/||')
-    echo "✅ 已切换到: $(pwd)"
-    echo "   Branch: $(git branch --show-current)"
-    echo "   Change: $CHANGE_NAME"
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "💡 提示：下次可直接使用以下命令进入此 worktree"
-    echo "   cd $target_path"
-    echo "   skill_use(\"execute\")"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo ""
-fi
+auto_detect_worktree_context
 ```
 
 > **为什么必须在 worktree 内执行？**

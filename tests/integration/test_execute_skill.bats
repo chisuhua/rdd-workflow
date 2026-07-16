@@ -23,11 +23,13 @@ setup() {
 }
 
 @test "execute_skill uses main_repo_root for PROJECT_ROOT" {
-  grep -q 'main_repo_root' "$f"
+  # Round A extraction: main_repo_root is now in the helper, sourced by execute.md
+  grep -q 'main_repo_root' "$f" || grep -q 'main_repo_root' "$REPO_ROOT/skills/_lib/select_worktree.sh"
 }
 
 @test "execute_skill honors EXECUTE_CHOICE escape hatch" {
-  grep -q 'EXECUTE_CHOICE' "$f"
+  # Round A extraction: EXECUTE_CHOICE is now in the helper, sourced by execute.md
+  grep -q 'EXECUTE_CHOICE' "$f" || grep -q 'EXECUTE_CHOICE' "$REPO_ROOT/skills/_lib/select_worktree.sh"
   # Default value pattern: ${EXECUTE_CHOICE:-1}
-  grep -qE 'EXECUTE_CHOICE:[[:space:]]*-[[:space:]]*1' "$f"
+  grep -qE 'EXECUTE_CHOICE:[[:space:]]*-[[:space:]]*1' "$f" || grep -qE 'EXECUTE_CHOICE:-1' "$REPO_ROOT/skills/_lib/select_worktree.sh"
 }

@@ -34,9 +34,13 @@ load ../test_helper
 
 @test "P0-7: execute.md has inline wt_path_for_branch_inline helper" {
   [ -f "skills/execute.md" ]
-  grep -q "wt_path_for_branch_inline" "skills/execute.md"
-  # Helper should reference $3 (the branch column in `git worktree list`)
-  grep -A 4 "wt_path_for_branch_inline()" "skills/execute.md" | grep -q '\$3'
+  # Round A extraction: inline helper was removed, replaced by _lib/worktree.sh::wt_path_for_branch
+  # sourced through _lib/select_worktree.sh. Verify execute.md no longer inlines the helper
+  # and that worktree.sh provides the canonical implementation.
+  ! grep -q "wt_path_for_branch_inline" "skills/execute.md"
+  grep -q "select_worktree.sh\|auto_detect_worktree_context" "skills/execute.md"
+  # The worktree.sh helper still exists (provides wt_path_for_branch)
+  grep -q "wt_path_for_branch" "skills/_lib/worktree.sh"
 }
 
 # P0-9 ---------------------------------------------------------------------
@@ -51,9 +55,11 @@ load ../test_helper
 
 @test "P0-9: execute.md uses EXECUTE_CHOICE env var as escape hatch" {
   [ -f "skills/execute.md" ]
-  grep -q "EXECUTE_CHOICE" "skills/execute.md"
+  # Round A extraction: EXECUTE_CHOICE logic is in the helper, sourced by execute.md.
+  # Verify it exists in the helper.
+  grep -q "EXECUTE_CHOICE" "skills/_lib/select_worktree.sh"
   # Should default to 1 when unset
-  grep -qE 'EXECUTE_CHOICE:-1' "skills/execute.md"
+  grep -qE 'EXECUTE_CHOICE:-1' "skills/_lib/select_worktree.sh"
 }
 
 # Doc table ---------------------------------------------------------------
