@@ -346,6 +346,30 @@ skills/*.md 行数 (累计):
 
 合并到 master: 11 commits (1 plan + 10 refactor)。
 
+### Round C: feature.md 重构 (v2.0.7 新增)
+
+`skills/feature.md` (183 行) 重构 — 整个文件转写为 4 个 per-subcommand helper + 1 个 Python 模块:
+
+| Subcommand | Bash helper | Python function |
+|-----------|-------------|-----------------|
+| `feature [summary]` | `feature_summary.sh` → `render_feature_summary()` | `feature_cli.py::render_summary()` |
+| `feature graph` | `feature_graph.sh` → `render_feature_graph()` | `feature_cli.py::render_graph()` |
+| `feature status <name>` | `feature_status.sh` → `render_feature_status()` | `feature_cli.py::render_status()` |
+| `feature order` | `feature_order.sh` → `render_feature_order()` | `feature_cli.py::render_order()` |
+
+**关键改进**:
+
+- **DRY**: 4 个 subcommand 共享 `_load_feature_view()` helper (消除 ~15 行 boilerplate × 4 = 60 行重复)
+- **结构清晰**: 每 subcommand 一个文件 (1 .py + 4 .sh + 16 bats tests),而不是 152 行连续 bash
+- **Oracle C1 保持**: 原始 `python3 - <<'PYEOF'` (引用型 heredoc) — 已安全,无需修复
+- **命令行兼容**: 4 个 subcommand 沿用相同的 `skill_use("feature ...")` 调用方式
+
+**`feature.md` 行数**: 183 → ~45 行 (-75%).
+
+**测试**: 16 bats integration tests (4 × 4 subcommand × 4 维度: helper存在/inline移除/invoke/边界)
+
+合并到 master: 7 commits (1 module + 4 helper + 1 migrate + 1 tests)。
+
 - 配置: `config.py`, `defaults.py`, `phase_templates.yaml`, `schemas/`, `plugins/`
 
 `skills/loop_engine.py` (在 skills/ 根) 是引擎入口, 串联以上模块.
