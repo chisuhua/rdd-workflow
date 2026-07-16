@@ -56,6 +56,7 @@ worktree (openspec/<name>): 本技能在此执行
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
 if [ -f "$SCRIPT_DIR/_lib/select_worktree.sh" ]; then
   source "$SCRIPT_DIR/_lib/select_worktree.sh"
+  source "$SCRIPT_DIR/_lib/update_roadmap_progress.sh"
 fi
 auto_detect_worktree_context || exit 1
 ```
@@ -293,59 +294,8 @@ case "$choice" in
 esac
 ```
 
-# ============================================================
 # P0: Roadmap 进度更新
-# ============================================================
-STATE_FILE="$PROJECT_ROOT/.rddf/state/roadmap-state.json"
-if [ -f "$STATE_FILE" ] && [ -f "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/roadmap-meta.yaml" ]; then
-    echo ""
-    echo "📊 更新路线图进度..."
-    
-    python3 -c "
-import json
-import yaml
-
-with open('$STATE_FILE') as f:
-    state = json.load(f)
-
-with open('$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/roadmap-meta.yaml') as f:
-    meta = yaml.safe_load(f)
-
-change_phase = meta.get('roadmap', {}).get('phase')
-change_category = meta.get('roadmap', {}).get('category')
-
-if change_phase and change_category:
-    if change_phase in state['phases'] and change_category in state['phases'][change_phase]['categories']:
-        cat_data = state['phases'][change_phase]['categories'][change_category]
-        
-        # 标记 change 完成
-        if '$CHANGE_NAME' not in cat_data.get('completed_changes', []):
-            cat_data.setdefault('completed_changes', []).append('$CHANGE_NAME')
-        
-        # 检查阶段是否完成
-        all_complete = True
-        for cat_id, cat_info in state['phases'][change_phase]['categories'].items():
-            total = len(cat_info.get('changes', []))
-            completed = len(cat_info.get('completed_changes', []))
-            if completed < total:
-                all_complete = False
-                break
-        
-        state['phases'][change_phase]['gate_status']['all_changes_complete'] = all_complete
-        
-        with open('$STATE_FILE', 'w') as f:
-            json.dump(state, f, indent=2)
-        
-        print(f'✅ 路线图进度已更新')
-        if all_complete:
-            print(f'🎉 阶段 {change_phase} 的所有 change 已完成！')
-            print(f'   请检查阶段门控条件，准备进入下一阶段')
-            print(f'   运行: skill_use(\"roadmap\", \"gate-report\")')
-"
-fi
-```
-
-**注意**：此输出在每个独立的 execute session 结束时显示，引导用户回到 guide 或继续其他操作。
+update_roadmap_progress "$CHANGE_NAME"
 
 ## Work Unit 验证标准
 
