@@ -519,6 +519,12 @@ plan-done 必须满足**双重门控**才能通过：
 # Round A: extracted to _lib/plan_done_gate.{py,sh} (L517-L677, ~150 lines)
 source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/plan_done_gate.sh"
 run_plan_done_gate || exit 1
+# Gate 0 skip sentinel: when user accepts Deps suggestions, no handoff is written
+# (matches original 'exit 0' semantics before extraction)
+if [ "${PLAN_GATE_0_SKIPPED:-}" = "true" ]; then
+    echo "⚠️  Gate 0 skipped (user accepted Deps suggestions), no handoff written"
+    exit 0
+fi
 write_plan_handoff || exit 1
 \`\`\`
 

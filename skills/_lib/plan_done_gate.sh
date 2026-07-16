@@ -24,8 +24,10 @@ run_plan_done_gate() {
   echo ""
 
   # v2.0.1: Deps §5e 重组建议回显 (仅参考, 不阻断)
-  local SKIP_GATE_0=false
+  # External SKIP_GATE_0 env var takes priority (bash expands RHS before local shadowing)
+  local SKIP_GATE_0="${SKIP_GATE_0:-false}"
   local DEPS_OUTPUT="$PROJECT_ROOT/.rddf/state/.deps-output.md"
+  [ ! -f "$DEPS_OUTPUT" ] && DEPS_OUTPUT="$PROJECT_ROOT/.rddf/state/deps-output.md"
   if [ -f "$DEPS_OUTPUT" ]; then
       local SUGGESTIONS FALLBACK_MARKER dep_choice
       SUGGESTIONS=$(awk '/^## 🧠 AI 分析建议/,/^## [^🧠]|^---/' "$DEPS_OUTPUT" 2>/dev/null \
@@ -59,6 +61,7 @@ run_plan_done_gate() {
   if [ "${SKIP_GATE_0:-false}" = "true" ] || [ "${SKIP_GATE_0}" = "true" ]; then
       echo "  ⏭️  跳过（用户接受 deps 重组建议）"
       echo ""
+      export PLAN_GATE_0_SKIPPED="true"
       return 0
   fi
 
@@ -98,6 +101,7 @@ PYEOF
 
   # 门控 2: 所有 change 的三个 artifacts 已提交
   echo "门控 2: Artifacts 提交性检查"
+  # 把循环放在子 shell 里,避免污染调用者的 cwd;再用 $? 拿子 shell 的退出码决定是否拒绝。
   if (cd "$PROJECT_ROOT" 2>/dev/null && for d in openspec/changes/*/; do
       [ -d "$d" ] || continue
       case "$d" in */archive/) continue ;; esac
@@ -105,7 +109,7 @@ PYEOF
       for artifact in proposal.md design.md tasks.md; do
           if ! git show HEAD:"$d$artifact" > /dev/null 2>&1; then
               echo "  ❌ $name missing committed $artifact — refuse to exit plan-side"
-              return 1
+              exit 1   # subshell exit, not function exit
           fi
       done
   done); then
@@ -119,9 +123,9 @@ PYEOF
 }
 
 write_plan_handoff() {
+  local PROJECT_ROOT
   PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
   export PROJECT_ROOT
-  mkdir -p "$PROJECT_ROOT/.rddf/state"
 
   # Spec-validation gate: validate every active change's baseline + delta targets
   # before writing the handoff file. Catches v1 (false baseline) and v2

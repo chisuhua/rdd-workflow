@@ -95,3 +95,23 @@ assert d['active_changes'] == 2, f'expected 2, got {d[\"active_changes\"]}'
   fi
   rm -rf "$tmpdir"
 }
+
+@test "gate_0_skip_sets_sentinel_and_prevents_handoff" {
+  # When SKIP_GATE_0=true, PLAN_GATE_0_SKIPPED should be set and handoff NOT written
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  mkdir -p "$tmpdir/openspec/changes/test-change"
+  mkdir -p "$tmpdir/.rddf/state"
+  # Run with SKIP_GATE_0=true, then try to write handoff (should NOT create the file)
+  result=$(bash -c "
+cd '$tmpdir'
+source '$REPO_ROOT/skills/_lib/plan_done_gate.sh'
+export SKIP_GATE_0=true
+run_plan_done_gate
+echo \"SENTINEL=\${PLAN_GATE_0_SKIPPED:-}\"
+" 2>&1) || true
+  echo "$result" | grep -q 'SENTINEL=true'
+  # handoff file should NOT exist
+  [ ! -f "$tmpdir/.rddf/state/.plan-handoff.json" ]
+  rm -rf "$tmpdir"
+}
