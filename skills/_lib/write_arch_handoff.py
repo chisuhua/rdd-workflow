@@ -3,14 +3,19 @@
 Extracted from skills/guide-arch.md lines 618-707 (~88-line inline bash block).
 Preserves exact behavior: ADR glob, ID extraction, roadmap phase reading,
 discovery metadata, and JSON file output to .rddf/state/.arch-handoff.json.
+
+Known limitations:
+- ADR files with non-4-digit IDs (e.g., ADR-42-foo.md) are excluded to align
+  with arch_handoff_schema.json v1 which requires ^[0-9]{4}$. If your project
+  uses non-4-digit IDs, override by extending the schema.
 """
 
-import glob as g
+import glob
 import json
 import os
 import re
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List
 
 
 def _to_bool(s: str) -> bool:
@@ -37,10 +42,12 @@ def _glob_adr_files(adr_dir_abs: str, pattern: str) -> List[str]:
     if not os.path.isdir(adr_dir_abs):
         return []
     files = []
-    for path in g.glob(os.path.join(adr_dir_abs, pattern)):
+    for path in glob.glob(os.path.join(adr_dir_abs, pattern)):
+        if not os.path.isfile(path):
+            continue  # Skip directories matching the pattern
         basename = os.path.basename(path)
         # Exclude ADR-0000-template.md (and any -0000-template variant)
-        if basename.endswith("-0000-template.md"):
+        if basename.endswith("-0000-template.md") or basename == "0000-template.md":
             continue
         files.append(path)
     return sorted(files)

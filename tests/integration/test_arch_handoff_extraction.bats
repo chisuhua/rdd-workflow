@@ -13,9 +13,6 @@
 
 load ../test_helper
 
-# The inline block to be removed spans lines 618-707 (markdown code fence).
-REPLACED_RANGE="618,707p"
-
 @test "skills/_lib/write_arch_handoff.{sh,py,env.py} exist" {
   [ -f "$REPO_ROOT/skills/_lib/write_arch_handoff.sh" ]
   [ -f "$REPO_ROOT/skills/_lib/write_arch_handoff.py" ]
@@ -27,10 +24,8 @@ REPLACED_RANGE="618,707p"
 }
 
 @test "guide-arch.md replaced inline block no longer contains cat heredoc" {
-  # L618-L707 inline block removed — no 'cat > "$HANDOFF_FILE"' in that range
-  if sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-arch.md" | grep -c 'cat > "\$HANDOFF_FILE"' 2>/dev/null; then
-    return 1
-  fi
+  # Content-driven check (not line-range): verify no heredoc writes to HANDOFF_FILE
+  ! grep -q 'cat > "\$HANDOFF_FILE"' "$REPO_ROOT/skills/guide-arch.md"
 }
 
 @test "guide-arch.md sources _lib/write_arch_handoff.sh and calls write_arch_handoff" {
