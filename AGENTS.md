@@ -293,7 +293,7 @@ skills/*.md 行数 (累计):
   arch: 962 → 784 (-178)
   plan: 886 → 655 (-231)
   ship: 1361 → 751 (-610)
-  execute: 516 → 521 (几乎不变)
+  execute: 516 → 409 (-107)
   total reduction: ~1100 行
 ```
 
