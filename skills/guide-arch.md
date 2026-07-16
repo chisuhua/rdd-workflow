@@ -341,84 +341,31 @@ esac
 **选项 1（生成新差距分析）执行内容**：
 
 ```bash
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-# ADR-0016: read DISCOVERED_ARCHITECTURE_DIR set by Phase 1 Step 5; fallback to docs/architecture
-ARCH_DIR="$PROJECT_ROOT/${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}"
-mkdir -p "$ARCH_DIR"
+# Round B: extracted to _lib/arch_gap_analysis.sh (L343-L399)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/arch_gap_analysis.sh"
 
 echo "📝 生成新架构差距分析"
 echo ""
 echo "请提供差距分析主题 (kebab-case, ≤ 50 字符):"
 read -r GAP_SLUG
 
-if [ -z "$GAP_SLUG" ]; then
-    echo "❌ 主题不能为空"
-    continue
-fi
-
-NEW_GAP="$ARCH_DIR/${GAP_SLUG}-gap-analysis.md"
-if [ -f "$NEW_GAP" ]; then
-    echo "❌ 差距分析已存在: $NEW_GAP"
-    continue
-fi
-
-# 生成差距分析模板
-cat > "$NEW_GAP" << EOF
-# 架构差距分析: $GAP_SLUG
-
-> **生成日期**: $(date -Iseconds)
-> **状态**: 草案
-> **关联 ADR**: (待补充)
-
-## 1. 目标架构
-
-(描述 ADR 中定义的目标架构)
-
-## 2. 当前架构
-
-(描述项目当前实际架构)
-
-## 3. 差距清单
-
-| # | 差距项 | 严重程度 | 优先级 | 关联 change |
-|---|--------|---------|--------|------------|
-| 1 | ... | 高/中/低 | P0/P1/P2 | ... |
-
-## 4. 补齐路径
-
-(描述从当前架构迁移到目标架构的步骤、顺序、依赖)
-
-## 5. 参考资料
-
-- 相关 ADR
-- 相关 change artifacts
-EOF
-
-echo "✅ 已创建: $NEW_GAP"
-echo "   请编辑该文件补全差距分析内容"
+generate_gap_analysis "$GAP_SLUG" || continue
 ```
 
 **选项 2（查看现有分析）执行内容**：
 
 ```bash
+# Round B: extracted to _lib/arch_gap_analysis.sh (L403-L431)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/arch_gap_analysis.sh"
+list_gap_analyses || continue
+
+# Interactive viewer stays inline
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 ARCH_DIR="$PROJECT_ROOT/${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}"
-
-GAP_DOCS=$(ls "$ARCH_DIR/"*-gap-analysis.md 2>/dev/null)
-GAP_COUNT=$(echo "$GAP_DOCS" | grep -c . || echo 0)
-
-if [ "$GAP_COUNT" -eq 0 ]; then
-    echo "⚠️  暂无差距分析"
-    continue
-fi
-
-echo "现有差距分析列表:"
-echo "$GAP_DOCS" | nl -w2 -s". " | while read -r line; do
-    echo "  $line"
-done
+GAP_DOCS=$(ls "$ARCH_DIR/"*-gap-analysis.md 2>/dev/null || true)
 
 echo ""
-echo "请输入要查看的编号 (1-$GAP_COUNT):"
+echo "请输入要查看的编号 (1-$(echo "$GAP_DOCS" | wc -l)):"
 read -r gap_choice
 
 SELECTED=$(echo "$GAP_DOCS" | sed -n "${gap_choice}p")
