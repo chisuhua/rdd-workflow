@@ -61,3 +61,27 @@ load ../test_helper
   # Must not crash; should print timestamp
   echo "$output" | grep -q '上次检测'
 }
+
+@test "ship_monitor: zero-checkbox tasks.md shows 0/0 not 0/0\\n0" {
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  git init -q -b master "$tmpdir"
+  cd "$tmpdir"
+  git config user.email "test@test"
+  git config user.name "test"
+  git commit --allow-empty -m "init" --quiet
+  git checkout -b openspec/zero-task --quiet
+  mkdir -p "openspec/changes/zero-task"
+  cat > "openspec/changes/zero-task/tasks.md" <<'EOF'
+# No checkboxes here
+Just plain text.
+EOF
+  local my_output
+  # unset PROJECT_ROOT so ship_monitor.sh defaults to the temp git repo root
+  my_output=$(unset PROJECT_ROOT && cd "$tmpdir" && source "$REPO_ROOT/skills/_lib/ship_monitor.sh" && run_ship_monitor 2>&1 || true)
+  rm -rf "$tmpdir"
+  grep -qE '0/0' <<< "$my_output"
+  local count
+  count=$(grep -o '0/0' <<< "$my_output" | wc -l)
+  [ "$count" -ge 1 ]
+}

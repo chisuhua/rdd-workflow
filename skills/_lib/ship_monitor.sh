@@ -44,8 +44,8 @@ run_ship_monitor() {
       tasks_file="$wt/openspec/changes/$name/tasks.md"
       mode="worktree"
       if [ -f "$tasks_file" ]; then
-          total=$(grep -c '^- \[' "$tasks_file" 2>/dev/null || echo 0)
-          done=$(grep -c '^- \[x\]' "$tasks_file" 2>/dev/null || echo 0)
+          total=$(grep -c '^- \[' "$tasks_file" 2>/dev/null | head -n1 || echo 0)
+          done=$(grep -c '^- \[x\]' "$tasks_file" 2>/dev/null | head -n1 || echo 0)
           progress="${done}/${total}"
       else
           progress="? (文件不存在)"
@@ -72,8 +72,8 @@ run_ship_monitor() {
               mode="轻量"
           fi
           if [ -f "$tasks_file" ]; then
-              total=$(grep -c '^- \[' "$tasks_file" 2>/dev/null || echo 0)
-              done=$(grep -c '^- \[x\]' "$tasks_file" 2>/dev/null || echo 0)
+              total=$(grep -c '^- \[' "$tasks_file" 2>/dev/null | head -n1 || echo 0)
+              done=$(grep -c '^- \[x\]' "$tasks_file" 2>/dev/null | head -n1 || echo 0)
               progress="${done}/${total}"
           else
               progress="? (文件不存在)"
