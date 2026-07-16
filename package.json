@@ -1,6 +1,6 @@
 {
   "name": "spec-workflow",
-  "version": "2.0.0",
+  "version": "2.0.7",
   "description": "Spec Workflow - OpenSpec \u5de5\u4f5c\u6d41\u6280\u80fd\u5305\uff08propose\u2192plan\u2192execute\u2192status\u2192archive\uff09\u3002v2.0 \u81ea\u5305\u542b TDD \u8ba1\u5212\u751f\u6210\u4e0e\u6267\u884c\uff0c\u65e0\u5916\u90e8 skill \u4f9d\u8d56\u3002",
   "main": "skills/INSTALL.md",
   "author": "sisyphus",
