@@ -179,15 +179,8 @@ fi
 
 ```bash
 # P0-7 fix: inline worktree path resolver. git worktree list emits
-# `path  hash  [branch]` — third column is the bracketed branch name.
-# The earlier shell helper used commit-hash comparison which never matched;
-# the inline version compares against the literal bracket form using awk
-# with an explicit string variable.
-wt_path_for_branch_inline() {
-    local branch="$1"
-    git worktree list 2>/dev/null | awk -v br="\[openspec/\$branch\]" '$3 == br {print $1; exit}'
-}
-
+# P3-3c: 删除 P0-7 引入的 inline wt path helper (silent bug — 见 status.md 注释).
+# 如果未来需要 wt 路径解析, 直接 source _lib/worktree.sh::wt_path_for_branch.
 echo "✅ 在 worktree 中: $(pwd)"
 echo "   Branch: $(git branch --show-current)"
 echo "   Change: $CHANGE_NAME"

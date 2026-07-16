@@ -223,19 +223,11 @@ else
 fi
 
 # P0-7 fix: inline worktree path resolver with bracket-aware branch column lookup.
-# git worktree list emits `path  hash  [branch]` — third column is the
-# bracketed branch name. The earlier shell helper used commit-hash
-# comparison which never matched; the inline version compares against
-# the literal bracket form using awk with an explicit string variable.
-wt_path_for_branch_inline() {
-    local branch="$1"
-    git worktree list 2>/dev/null | awk -v br="\[openspec/\$branch\]" '$3 == br {print $1; exit}'
-}
-# 通过 git worktree list 动态查找 worktree 路径（不硬编码 $PROJECT_ROOT/.rddf/wt/<name>）
-# P0-7: 使用内联 helper 而非 _lib/worktree.sh — 内联版本处理 bracket column 索引
-WORKTREE_PATH=$(wt_path_for_branch_inline "<name>")
-HAS_WORKTREE=false
-if [ -n "$WORKTREE_PATH" ] && [ -d "$WORKTREE_PATH" ]; then
+# P3-3c: 使用 _lib/worktree.sh::wt_path_for_branch 替代 P0-7 内联版本 (修复 silent bug)
+# P0-7 引入的内联 helper 因 awk 字符串比较中 '\\[' 与 '[' 不匹配而永远返回空,
+# 导致 HAS_WORKTREE 永远为 false. _lib/worktree.sh 用 porcelain 格式 + kv 解析, 工作正常.
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/worktree.sh"
+WORKTREE_PATH=$(wt_path_for_branch "<name>")
     HAS_WORKTREE=true
     # 使用 subshell 获取 worktree 内状态，不改变当前目录
     WT_BRANCH=$(cd "$WORKTREE_PATH" && git branch --show-current)
@@ -410,19 +402,8 @@ else
     # P1-7: 文件格式已规范化为 JSON 列表
     #       用 json.load 解析后统计 status == "待创建" 的条目数
     if [ -f "proposal-suggestions.md" ]; then
-        REMAINING=$(python3 -c "
-import json, sys
-try:
-    with open('proposal-suggestions.md') as f:
-        entries = json.load(f)
-    if not isinstance(entries, list):
-        print(0)
-        sys.exit(0)
-    count = sum(1 for e in entries if isinstance(e, dict) and e.get('status') == '待创建')
-    print(count)
-except (FileNotFoundError, json.JSONDecodeError):
-    print(0)
-" 2>/dev/null)
+        source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/state.sh"
+        REMAINING=$(count_pending_suggestions "$PROJECT_ROOT")
         REMAINING=${REMAINING:-0}
         if [ "$REMAINING" -gt 0 ]; then
             echo ""
@@ -444,66 +425,33 @@ fi
 ### 展示内容
 
 ```bash
+```bash
+# === Mode D: thin wrapper — render logic in skills/_lib/roadmap_state.py ===
 if [ "$MODE" = "roadmap" ] || ([ -z "$MODE" ] && [ -f "$PROJECT_ROOT/roadmap.md" ]); then
-    echo "📊 路线图状态"
-    echo "=============="
-    
-    # 读取 roadmap
-    if [ -f "$PROJECT_ROOT/roadmap.md" ]; then
-        CURRENT_PHASE=$(PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
-import os, re
-with open(os.path.join(os.environ["PROJECT_ROOT"], "roadmap.md")) as f:
-    content = f.read()
-phase_match = re.search(r"\*\*当前阶段\*\*:\s*(\S+)", content)
-print(phase_match.group(1) if phase_match else "unknown")
-')
-        echo "当前阶段: $CURRENT_PHASE"
-    fi
-    
-    # 读取状态
     if [ -f "$PROJECT_ROOT/.rddf/state/roadmap-state.json" ]; then
+        # Indent the python3 call
         PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
-import os, json
-with open(os.path.join(os.environ["PROJECT_ROOT"], ".rddf/state/roadmap-state.json")) as f:
-    state = json.load(f)
-
-print("")
-print("阶段进度:")
-for phase_id, phase_data in state.get("phases", {}).items():
-    status = phase_data.get("status", "unknown")
-    status_icon = {"completed": "✅", "in_progress": "🔄", "pending": "⏳"}.get(status, "❓")
-    
-    total = sum(len(c.get("changes", [])) for c in phase_data.get("categories", {}).values())
-    completed = sum(len(c.get("completed_changes", [])) for c in phase_data.get("categories", {}).values())
-    
-    print(f"{status_icon} {phase_id}: {completed}/{total} change 完成")
-    
-    # 分类详情
-    for cat_id, cat_data in phase_data.get("categories", {}).items():
-        cat_total = len(cat_data.get("changes", []))
-        cat_completed = len(cat_data.get("completed_changes", []))
-        if cat_total > 0:
-            print(f"   - {cat_id}: {cat_completed}/{cat_total}")
-
-# 当前阶段门控
-if "current_phase" in state:
-    phase = state["current_phase"]
-    if phase in state.get("phases", {}):
-        gate = state["phases"][phase].get("gate_status", {})
-        print("")
-        print("阶段门控:")
-        print(f"  所有 change 完成: {\"✅\" if gate.get(\"all_changes_complete\") else \"❌\"}")
-        for check, checked in gate.get("checklist", {}).items():
-            print(f"  {check}: {\"✅\" if checked else \"❌\"}")
+import os, sys
+try:
+    from skills._lib.roadmap_state import render_status_view
+except ImportError as e:
+    print(f"⚠️  roadmap_state 模块不可用: {e}", file=sys.stderr)
+    sys.exit(0)
+project_root = os.environ.get("PROJECT_ROOT", ".")
+sys.exit(render_status_view(
+    os.path.join(project_root, "roadmap.md"),
+    os.path.join(project_root, ".rddf/state/roadmap-state.json"),
+))
 '
+    else
+        echo "⚠️  .rddf/state/roadmap-state.json 不存在，请先运行 skill_use(\"roadmap\", \"init\")"
     fi
-    
     echo ""
     echo "操作选项:"
     echo "1. 生成阶段门控报告"
     echo "2. 推进到下一阶段（如满足条件）"
-        echo "3. 查看详细 change 列表"
-        echo "i. 其他输入"
+    echo "3. 查看详细 change 列表"
+    echo "i. 其他输入"
 fi
 ```
 
