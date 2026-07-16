@@ -57,7 +57,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
 if [ -f "$SCRIPT_DIR/_lib/select_worktree.sh" ]; then
   source "$SCRIPT_DIR/_lib/select_worktree.sh"
 fi
-auto_detect_worktree_context
+auto_detect_worktree_context || exit 1
 ```
 
 > **为什么必须在 worktree 内执行？**

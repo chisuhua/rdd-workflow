@@ -75,13 +75,13 @@ auto_detect_worktree_context() {
           for change_dir in $(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/); do
               echo "  - $(basename "$change_dir")"
           done
-          exit 1
+          return 1
       fi
 
       # 有 worktree 存在，显示选择菜单
-      local WT_COUNT WORKTREE_COUNT plan_file status choice selected_line target_path target_branch
-      WT_COUNT=$(echo "$WT_INFO" | grep -c .)
-      echo "📋 发现 $WT_COUNT 个已创建的 worktree："
+      local WT_TOTAL WORKTREE_COUNT plan_file status choice selected_line target_path target_branch
+      WT_TOTAL=$(echo "$WT_INFO" | grep -c .)
+      echo "📋 发现 $WT_TOTAL 个已创建的 worktree："
       echo ""
       WORKTREE_COUNT=0
       while read -r wt_path wt_branch; do
@@ -107,14 +107,14 @@ auto_detect_worktree_context() {
       #   - 可通过 EXECUTE_CHOICE=N 覆盖选择 N
       #   - 多 worktree 场景下提示用户可通过环境变量覆盖
       choice="${EXECUTE_CHOICE:-1}"
-      if [ -z "${EXECUTE_CHOICE:-}" ] && [ "$WT_COUNT" -gt 1 ]; then
+      if [ -z "${EXECUTE_CHOICE:-}" ] && [ "$WT_TOTAL" -gt 1 ]; then
           echo "ℹ️  多个 worktree 检测到，默认选择 1（可通过 EXECUTE_CHOICE=N 覆盖）"
       fi
       selected_line=$(echo "$WT_INFO" | sed -n "${choice}p")
 
       if [ -z "$selected_line" ]; then
-          echo "❌ 无效选择，请设置 EXECUTE_CHOICE=1..$WT_COUNT"
-          exit 1
+          echo "❌ 无效选择，请设置 EXECUTE_CHOICE=1..$WT_TOTAL"
+          return 1
       fi
 
       target_path=$(echo "$selected_line" | awk '{print $1}')
