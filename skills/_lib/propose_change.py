@@ -199,3 +199,62 @@ def update_roadmap_meta(
 
     print(f"  已创建: roadmap-meta.yaml (phase: {lookup_phase}, category: {lookup_category})")
     return True
+
+
+def update_roadmap_state(
+    project_root: str,
+    name: str,
+    change_phase: str,
+    change_category: str,
+) -> Optional[bool]:
+    """Update roadmap-state.json with the new change (propose.md lines 688-711).
+
+    Uses existing roadmap_state.update_change_count helper. Gracefully skips
+    when state file is missing, or phase/category doesn't exist in state
+    (matches original inline behavior at lines 707-709 which catches
+    FileNotFoundError, json.JSONDecodeError, KeyError).
+
+    Per baseline verification (2026-07-16): update_change_count is a
+    SILENT no-op when phase/category is missing — does NOT raise KeyError.
+    Therefore we explicitly check state BEFORE calling, and read state
+    AFTER to detect silent no-op. Returns False on no-op (not raised).
+
+    Returns True on actual update, False/None on graceful skip.
+    """
+    import os
+    import sys
+    state_file = os.path.join(project_root, ".rddf", "state", "roadmap-state.json")
+    if not os.path.isfile(state_file):
+        print("  ⚠️  roadmap-state.json 不存在, 跳过 roadmap state 更新")
+        return None
+
+    try:
+        from skills._lib import roadmap_state as rs
+
+        # Pre-check: confirm phase/category exists (matches original inline check)
+        state = rs.read_state(state_file)
+        if not (
+            change_phase in state.get("phases", {})
+            and change_category in state["phases"][change_phase].get("categories", {})
+        ):
+            print(
+                f"  ⚠️  roadmap-state.json 中 phase='{change_phase}' "
+                f"category='{change_category}' 不存在, 跳过"
+            )
+            return False
+
+        rs.update_change_count(
+            state_file=state_file,
+            change_name=name,
+            phase=change_phase,
+            category=change_category,
+            operation="add",
+        )
+        print("  已更新: .roadmap-state.json")
+        return True
+    except (KeyError, OSError) as e:
+        print(f"⚠️  更新 .roadmap-state.json 失败: {e}", file=sys.stderr)
+        return False
+    except Exception as e:
+        print(f"⚠️  更新 .roadmap-state.json 失败: {e}", file=sys.stderr)
+        return False

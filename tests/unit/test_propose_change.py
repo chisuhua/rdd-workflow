@@ -207,3 +207,68 @@ class TestUpdateRoadmapMeta:
         )
         yaml_path = tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml"
         assert 'priority: "P0"' in yaml_path.read_text()
+
+
+class TestUpdateRoadmapState:
+    """update_roadmap_state encapsulates lines 688-711 of propose.md:
+    Add change to .rddf/state/roadmap-state.json under the right
+    phase/category. Uses existing roadmap_state.update_change_count helper.
+
+    Per baseline correction: defensive against missing phase/category.
+    """
+
+    def test_adds_change_to_correct_phase_and_category(self, tmp_path):
+        from skills._lib import roadmap_state as rs
+        # Initialize roadmap-state.json with real init_state defaults
+        state_file = str(tmp_path / ".rddf" / "state" / "roadmap-state.json")
+        rs.init_state(state_file, "phase-1")
+        result = pc.update_roadmap_state(str(tmp_path), "c1", "phase-1", "arch-design")
+        assert result is True
+        state = rs.read_state(state_file)
+        changes = state["phases"]["phase-1"]["categories"]["arch-design"]["changes"]
+        assert "c1" in changes
+
+    def test_does_not_duplicate_existing_change(self, tmp_path):
+        from skills._lib import roadmap_state as rs
+        state_file = str(tmp_path / ".rddf" / "state" / "roadmap-state.json")
+        rs.init_state(state_file, "phase-1")
+        pc.update_roadmap_state(str(tmp_path), "c1", "phase-1", "arch-design")
+        pc.update_roadmap_state(str(tmp_path), "c1", "phase-1", "arch-design")
+        state = rs.read_state(state_file)
+        changes = state["phases"]["phase-1"]["categories"]["arch-design"]["changes"]
+        # No duplicates (update_change_count is idempotent)
+        assert changes.count("c1") == 1
+
+    def test_handles_missing_category_gracefully(self, tmp_path):
+        """Per baseline: update_change_count raises KeyError when category
+        doesn't exist in state. update_roadmap_state MUST catch this
+        gracefully (matches original inline behavior lines 707-709).
+        """
+        from skills._lib import roadmap_state as rs
+        state_file = str(tmp_path / ".rddf" / "state" / "roadmap-state.json")
+        rs.init_state(state_file, "phase-1")
+        # 'nonexistent' is NOT in phase-1's default categories
+        result = pc.update_roadmap_state(
+            str(tmp_path), "c1", "phase-1", "nonexistent"
+        )
+        # Must NOT crash; returns False (graceful skip)
+        assert result is False or result is None
+        # State file unchanged
+        state = rs.read_state(state_file)
+        assert "nonexistent" not in state["phases"]["phase-1"]["categories"]
+
+    def test_handles_missing_phase_gracefully(self, tmp_path):
+        """Same defensive behavior for missing phase."""
+        from skills._lib import roadmap_state as rs
+        state_file = str(tmp_path / ".rddf" / "state" / "roadmap-state.json")
+        rs.init_state(state_file, "phase-1")
+        result = pc.update_roadmap_state(
+            str(tmp_path), "c1", "nonexistent-phase", "arch-design"
+        )
+        assert result is False or result is None
+
+    def test_returns_none_when_state_file_missing(self, tmp_path):
+        # No roadmap-state.json at all
+        result = pc.update_roadmap_state(str(tmp_path), "c1", "phase-1", "arch-design")
+        # Returns None for graceful skip
+        assert result is None or result is False
