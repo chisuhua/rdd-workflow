@@ -363,40 +363,23 @@ fi
 
 执行完成后必须同步 tasks.md 以通知 openspec CLI：
 
+使用 `skills/_lib/tasks_writeback.sh` 辅助函数（Round B 提取自 execute.md L366-L399）：
+
 ```bash
-# 方法 A：已知任务描述，精确匹配（推荐）
-# 使用 awk 的 index() 进行字面量匹配（不是 gsub 的正则匹配），
-# 避免 TASK_DESC 中的正则元字符（如 [ ] . *）导致静默失败
-TASK_DESC="实现UART寄存器配置"
+source "$SCRIPT_DIR/_lib/tasks_writeback.sh"
 
-# 使用 index() 精确查找，只在匹配时替换
-# index() 返回子串位置（1-based），0 表示不匹配
-TMPFILE=$(mktemp -t tasks_XXXXXX.md)
-awk -v desc="- [ ] $TASK_DESC" -v repl="- [x] $TASK_DESC" '
-  index($0, desc) { sub(desc, repl); changed=1 }
-  { print }
-  END { exit (changed ? 0 : 1) }
-' "$PROJECT_ROOT/openspec/changes/<name>/tasks.md" > "$TMPFILE"
-
-if [ $? -eq 0 ]; then
-    mv "$TMPFILE" "$PROJECT_ROOT/openspec/changes/<name>/tasks.md"
-    echo "✅ tasks.md 已更新"
-else
-    echo "⚠️  未找到匹配的任务描述: $TASK_DESC"
-    rm -f "$TMPFILE"
-fi
+# 方法 A：精确匹配单个任务（使用 awk index() + substr() 字面量匹配）
+CHANGE_NAME="<name>" mark_task_done "实现UART寄存器配置"
 
 # 方法 B：批量标记所有未完成任务（仅当全部完成时使用）
-TMPFILE=$(mktemp -t tasks_XXXXXX.md)
-awk '{gsub(/- \[ \] /,"- [x] ")}1' \
-  $PROJECT_ROOT/openspec/changes/<name>/tasks.md > "$TMPFILE" && \
-  mv "$TMPFILE" $PROJECT_ROOT/openspec/changes/<name>/tasks.md
-
-# 注意：
-# - index() 进行字面量匹配，不会将 TASK_DESC 中的 [ ] . * 等解释为正则
-# - 方法 A 使用 exit code 验证替换是否实际发生（方法 B 是全量替换无需验证）
-# - mktemp 避免并发场景文件冲突
+CHANGE_NAME="<name>" mark_all_tasks_done
 ```
+
+**实现说明：**
+- `mark_task_done` 用 awk `index()` + `substr()` 进行字面量匹配，不将任务描述中的 `[ ] . *` 解释为正则
+- `mark_task_done` 用 exit code 验证替换是否实际发生（未匹配返回 1）
+- 两者都内建 `mktemp` + `mv` 原子写入，避免并发场景文件冲突
+- 需要 `CHANGE_NAME` 环境变量（由调用方设置）
 
 ## 常见问题处理
 
