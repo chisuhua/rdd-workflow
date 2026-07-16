@@ -63,3 +63,52 @@ class TestSetSuggestionStatus:
         bad_file.write_text("not valid json {{{")
         result = pc.set_suggestion_status(str(tmp_path), "c1", "skeleton")
         assert result is False
+
+class TestCreateSkeletonChange:
+    """create_skeleton_change writes minimal proposal.md + roadmap-meta.yaml
+    and updates iteration.json (status=planned). Encapsulates the skeleton
+    branch of propose.md Phase 4 (lines 486-551).
+    """
+
+    def test_writes_proposal_md_with_why_and_what_changes(self, tmp_path):
+        result = pc.create_skeleton_change(
+            project_root=str(tmp_path),
+            name="my-change",
+            current_phase="phase-1",
+            category="general",
+            priority="P2",
+        )
+        assert result is True
+        proposal = (tmp_path / "openspec" / "changes" / "my-change" / "proposal.md").read_text()
+        assert "## Why" in proposal
+        assert "## What Changes" in proposal
+
+    def test_writes_roadmap_meta_yaml(self, tmp_path):
+        pc.create_skeleton_change(str(tmp_path), "c1", "phase-1", "general", "P2")
+        yaml_path = tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml"
+        assert yaml_path.exists()
+        content = yaml_path.read_text()
+        assert 'phase: "phase-1"' in content
+        assert 'category: "general"' in content
+        assert 'priority: "P2"' in content
+
+    def test_updates_iteration_json_status_to_planned(self, tmp_path):
+        from skills._lib import iteration as it
+        it.save(str(tmp_path), it.create_empty())
+        pc.create_skeleton_change(str(tmp_path), "c1", "phase-1", "general", "P2")
+        loaded = it.load(str(tmp_path))
+        names = [c["name"] for c in loaded["changes"]]
+        assert "c1" in names
+        match = next(c for c in loaded["changes"] if c["name"] == "c1")
+        assert match["status"] == "planned"
+
+    def test_returns_true_even_when_iteration_module_unavailable(self, tmp_path, monkeypatch):
+        # Simulate ImportError by patching sys.modules
+        import sys
+        monkeypatch.setitem(sys.modules, "skills._lib.iteration", None)
+        # Should not crash; proposal + yaml should still be written
+        result = pc.create_skeleton_change(str(tmp_path), "c1", "phase-1", "general", "P2")
+        assert result is True
+        # proposal.md + yaml should exist
+        assert (tmp_path / "openspec" / "changes" / "c1" / "proposal.md").exists()
+        assert (tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml").exists()
