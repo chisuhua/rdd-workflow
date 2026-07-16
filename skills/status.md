@@ -444,66 +444,33 @@ fi
 ### 展示内容
 
 ```bash
+```bash
+# === Mode D: thin wrapper — render logic in skills/_lib/roadmap_state.py ===
 if [ "$MODE" = "roadmap" ] || ([ -z "$MODE" ] && [ -f "$PROJECT_ROOT/roadmap.md" ]); then
-    echo "📊 路线图状态"
-    echo "=============="
-    
-    # 读取 roadmap
-    if [ -f "$PROJECT_ROOT/roadmap.md" ]; then
-        CURRENT_PHASE=$(PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
-import os, re
-with open(os.path.join(os.environ["PROJECT_ROOT"], "roadmap.md")) as f:
-    content = f.read()
-phase_match = re.search(r"\*\*当前阶段\*\*:\s*(\S+)", content)
-print(phase_match.group(1) if phase_match else "unknown")
-')
-        echo "当前阶段: $CURRENT_PHASE"
-    fi
-    
-    # 读取状态
     if [ -f "$PROJECT_ROOT/.rddf/state/roadmap-state.json" ]; then
+        # Indent the python3 call
         PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
-import os, json
-with open(os.path.join(os.environ["PROJECT_ROOT"], ".rddf/state/roadmap-state.json")) as f:
-    state = json.load(f)
-
-print("")
-print("阶段进度:")
-for phase_id, phase_data in state.get("phases", {}).items():
-    status = phase_data.get("status", "unknown")
-    status_icon = {"completed": "✅", "in_progress": "🔄", "pending": "⏳"}.get(status, "❓")
-    
-    total = sum(len(c.get("changes", [])) for c in phase_data.get("categories", {}).values())
-    completed = sum(len(c.get("completed_changes", [])) for c in phase_data.get("categories", {}).values())
-    
-    print(f"{status_icon} {phase_id}: {completed}/{total} change 完成")
-    
-    # 分类详情
-    for cat_id, cat_data in phase_data.get("categories", {}).items():
-        cat_total = len(cat_data.get("changes", []))
-        cat_completed = len(cat_data.get("completed_changes", []))
-        if cat_total > 0:
-            print(f"   - {cat_id}: {cat_completed}/{cat_total}")
-
-# 当前阶段门控
-if "current_phase" in state:
-    phase = state["current_phase"]
-    if phase in state.get("phases", {}):
-        gate = state["phases"][phase].get("gate_status", {})
-        print("")
-        print("阶段门控:")
-        print(f"  所有 change 完成: {\"✅\" if gate.get(\"all_changes_complete\") else \"❌\"}")
-        for check, checked in gate.get("checklist", {}).items():
-            print(f"  {check}: {\"✅\" if checked else \"❌\"}")
+import os, sys
+try:
+    from skills._lib.roadmap_state import render_status_view
+except ImportError as e:
+    print(f"⚠️  roadmap_state 模块不可用: {e}", file=sys.stderr)
+    sys.exit(0)
+project_root = os.environ.get("PROJECT_ROOT", ".")
+sys.exit(render_status_view(
+    os.path.join(project_root, "roadmap.md"),
+    os.path.join(project_root, ".rddf/state/roadmap-state.json"),
+))
 '
+    else
+        echo "⚠️  .rddf/state/roadmap-state.json 不存在，请先运行 skill_use(\"roadmap\", \"init\")"
     fi
-    
     echo ""
     echo "操作选项:"
     echo "1. 生成阶段门控报告"
     echo "2. 推进到下一阶段（如满足条件）"
-        echo "3. 查看详细 change 列表"
-        echo "i. 其他输入"
+    echo "3. 查看详细 change 列表"
+    echo "i. 其他输入"
 fi
 ```
 
