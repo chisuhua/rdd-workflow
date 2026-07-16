@@ -43,7 +43,9 @@ import datetime
 import json
 import logging
 import os
-from typing import Any, Optional
+from pathlib import Path
+import re
+from typing import Any, Dict, List, Optional
 
 from skills._lib.lock import FileLock, LockTimeout
 
@@ -228,3 +230,88 @@ def sync_iteration_from_analysis(project_root: str, iteration_module: Any) -> in
     if count > 0:
         iteration_module.save(project_root, data)
     return count
+
+
+# ---------------------------------------------------------------------------
+# Markdown fallback parser (P3-4d: extracted from deps.md Step 6 inline heredoc)
+# ---------------------------------------------------------------------------
+
+DEPS_OUTPUT_MD_PATH = ".rddf/state/.deps-output.md"
+
+
+def parse_markdown_fallback(project_root: str) -> Optional[List[dict]]:
+    """Parse .deps-output.md as fallback when deps-analysis.json is missing/stale.
+
+    Returns list of change records compatible with build_analysis(), or None
+    when file is missing/malformed/has no Change 状态表. Records carry
+    confidence='low' to signal markdown-fallback origin.
+    """
+    path = os.path.join(project_root, DEPS_OUTPUT_MD_PATH)
+    try:
+        text = Path(path).read_text(encoding="utf-8")
+    except (FileNotFoundError, OSError):
+        return None
+
+    changes_info: Dict[str, dict] = {}
+
+    status_table = re.search(
+        r"## Change 状态表\n\n\|.*?\n\|.*?\n((?:\|.*?\n)+)",
+        text,
+    )
+    if status_table:
+        rows = status_table.group(1).strip().split("\n")
+        for idx, row in enumerate(rows):
+            cells = [c.strip() for c in row.strip("|").split("|")]
+            if len(cells) < 2:
+                continue
+            name = cells[0]
+            if not name or name == "—":
+                continue
+            blocker = (
+                cells[2]
+                if len(cells) > 2 and cells[2] not in ("—", "")
+                else None
+            )
+            changes_info[name] = {
+                "blocker": blocker,
+                "parallel_group": idx if blocker else 0,
+                "conflicts": [],
+            }
+
+    conflicts_section = re.search(
+        r"## 冲突警告.*?\n(.*?)(?=\n## |\Z)",
+        text,
+        re.DOTALL,
+    )
+    if conflicts_section:
+        for line in conflicts_section.group(1).split("\n"):
+            m = re.search(r"(\S+)\s+←→\s+(\S+):", line)
+            if not m:
+                continue
+            a, b = m.group(1), m.group(2)
+            for n in (a, b):
+                changes_info.setdefault(
+                    n, {"blocker": None, "parallel_group": 0, "conflicts": []}
+                )
+                existing = changes_info[n].get("conflicts", [])
+                other = b if n == a else a
+                if other not in existing:
+                    existing.append(other)
+                changes_info[n]["conflicts"] = existing
+
+    if not changes_info:
+        return None
+
+    return [
+        {
+            "name": name,
+            "status": "blocked_by" if info.get("blocker") else "ready",
+            "blocker": info.get("blocker"),
+            "blocks": [],
+            "parallel_group": info.get("parallel_group", 0),
+            "conflicts": info.get("conflicts", []),
+            "confidence": "low",
+            "recommendation": "",
+        }
+        for name, info in changes_info.items()
+    ]
