@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/plan_intake.sh — extracted from guide-plan.md L95-L175
+# skills/_lib/plan_intake.sh — extracted from guide-plan.md Phase 0 intake (L95-L175)
 # Exports: run_plan_intake()
 #
 # Behavior preserved:
@@ -51,6 +51,11 @@ run_plan_intake() {
   # 4. arch 端交付物检查（plan 端的前置条件 — 硬阻断）
   local ARCH_HANDOFF="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
 
+  if [ "${SKIP_ARCH_HANDOFF:-}" = "yes" ]; then
+      echo "⚠️  SKIP_ARCH_HANDOFF=yes: 跳过 arch-handoff 检查（已知风险）"
+      return 0
+  fi
+
   if [ ! -f "$ARCH_HANDOFF" ]; then
       echo "❌ 未检测到 arch-done handoff (.rddf/state/.arch-handoff.json)"
       echo ""
@@ -75,27 +80,25 @@ run_plan_intake() {
 
   # Read ADR_IDS + CURRENT_PHASE from handoff via env-var passing (Oracle C1 safe)
   # Instead of bash $ARCH_HANDOFF string interpolation, use env var
-  local ADR_IDS CURRENT_PHASE ADR_COUNT
-  export PYTHON_HANDOFF_PATH="$ARCH_HANDOFF"
-  ADR_IDS=$(python3 -c "
+  local ADR_IDS CURRENT_PHASE ADR_COUNT parsed
+  parsed=$(PYTHON_HANDOFF_PATH="$ARCH_HANDOFF" python3 -c "
 import json, os
 try:
     with open(os.environ['PYTHON_HANDOFF_PATH']) as f:
         d = json.load(f)
     print(','.join(d.get('completed_adr_ids', [])))
-except Exception:
-    print('')
-" 2>/dev/null || echo "")
-  CURRENT_PHASE=$(python3 -c "
-import json, os
-try:
-    with open(os.environ['PYTHON_HANDOFF_PATH']) as f:
-        d = json.load(f)
     print(d.get('current_phase', 'default'))
 except Exception:
+    print('')
     print('default')
-" 2>/dev/null || echo "default")
-  ADR_COUNT=$(echo "$ADR_IDS" | tr ',' '\n' | grep -c . || echo 0)
+" 2>/dev/null || printf '%s\n' '' 'default')
+  ADR_IDS=$(echo "$parsed" | sed -n '1p')
+  CURRENT_PHASE=$(echo "$parsed" | sed -n '2p')
+  if [ -z "$ADR_IDS" ]; then
+    ADR_COUNT=0
+  else
+    ADR_COUNT=$(echo "$ADR_IDS" | tr ',' '\n' | grep -c .)
+  fi
 
   echo "📋 ADR 数量: $ADR_COUNT (from arch-handoff, dir=$ADR_DIR)"
   echo "📋 Roadmap 阶段: $CURRENT_PHASE (path=$ROADMAP_PATH)"

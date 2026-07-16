@@ -53,7 +53,7 @@ REPLACED_RANGE="95,175p"
   "current_phase": "phase-2"
 }
 EOF
-  bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/_lib/plan_intake.sh' && run_plan_intake" >/dev/null 2>&1 || true
+  bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/_lib/plan_intake.sh' && run_plan_intake" >/dev/null 2>&1
   rm -rf "$tmpdir"
 }
 
@@ -84,4 +84,13 @@ EOF
   output=$(bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/_lib/plan_intake.sh' && run_plan_intake" 2>&1 || true)
   rm -rf "$tmpdir"
   echo "$output" | grep -q 'docs/custom'
+}
+
+@test "run_plan_intake_respects_skip_arch_handoff_env" {
+  # No handoff file — should still succeed with SKIP_ARCH_HANDOFF=yes
+  local tmpdir output
+  tmpdir=$(mktemp -d)
+  output=$(SKIP_ARCH_HANDOFF=yes bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/_lib/plan_intake.sh' && run_plan_intake" 2>&1 || true)
+  rm -rf "$tmpdir"
+  echo "$output" | grep -q 'SKIP_ARCH_HANDOFF=yes'
 }
