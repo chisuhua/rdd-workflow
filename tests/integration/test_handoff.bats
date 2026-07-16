@@ -27,15 +27,21 @@ load ../test_helper
 }
 
 @test "guide-plan.md writes handoff.json at plan-done exit" {
+  # After Round A extraction, the handoff implementation lives in _lib/plan_done_gate.{py,sh}
+  # while guide-plan.md still references .plan-handoff.json at the contract level.
   [ -f "$REPO_ROOT/skills/guide-plan.md" ]
-  # 1. handoff.json is mentioned in the doc
-  grep -q "handoff.json" "$REPO_ROOT/skills/guide-plan.md"
-  # 2. plan_complete_at field is written
-  grep -q "plan_complete_at" "$REPO_ROOT/skills/guide-plan.md"
-  # 3. The write happens after the exit guard
-  grep -q "Handoff state write" "$REPO_ROOT/skills/guide-plan.md"
-  # 4. current_change field is recorded
-  grep -q "current_change" "$REPO_ROOT/skills/guide-plan.md"
+  [ -f "$REPO_ROOT/skills/_lib/plan_done_gate.py" ]
+  [ -f "$REPO_ROOT/skills/_lib/plan_done_gate.sh" ]
+  # 1. handoff.json contract still referenced in guide-plan.md
+  grep -q "\.plan-handoff.json" "$REPO_ROOT/skills/guide-plan.md"
+  # 2. plan_complete_at field is written (now in plan_done_gate.py)
+  grep -q "plan_complete_at" "$REPO_ROOT/skills/_lib/plan_done_gate.py"
+  # 3. The write happens after the exit guard (now in plan_done_gate.sh calls + .py)
+  grep -q "Handoff state" "$REPO_ROOT/skills/_lib/plan_done_gate_env.py"
+  # 4. current_change field is recorded (now in plan_done_gate.py)
+  grep -q "current_change" "$REPO_ROOT/skills/_lib/plan_done_gate.py"
+  # 5. guide-plan.md invokes write_plan_handoff helper
+  grep -q "write_plan_handoff" "$REPO_ROOT/skills/guide-plan.md"
 }
 
 @test "guide-ship.md reads handoff.json at Phase 1 (entry)" {
