@@ -520,42 +520,9 @@ arch-done 必须满足**双重门控**才能通过：
 2. **roadmap.md 存在**（必须定义项目路线图）
 
 ```bash
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-
-# ADR-0016: ensure discovery is run before gates check actual paths
-if [ -f "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh" ]; then
-    source "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh"
-    discover_all >/dev/null
-fi
-
-echo "=== Arch 阶段 - 门控检查 ==="
-echo ""
-
-# 门控 1: ADR 数量 ≥ 1 (uses DISCOVERED_ADR_DIR + DISCOVERED_ADR_PATTERN)
-_GLOB="${PROJECT_ROOT}/${DISCOVERED_ADR_DIR}/${DISCOVERED_ADR_PATTERN}"
-ADR_COUNT=$(ls "$_GLOB" 2>/dev/null | grep -v -- '-0000-template\.md$' | wc -l | tr -d ' ')
-echo "门控 1: ADR 数量检查"
-echo "  当前 ADR 数量: $ADR_COUNT (path: $DISCOVERED_ADR_DIR, pattern: $DISCOVERED_ADR_PATTERN)"
-if [ "$ADR_COUNT" -lt 1 ]; then
-    echo "  ❌ 失败: 至少需要 1 个 ADR"
-    echo "     请回到 adr-create 阶段创建 ADR"
-    exit 1
-fi
-echo "  ✅ 通过"
-echo ""
-
-# 门控 2: roadmap 存在 (uses DISCOVERED_ROADMAP_PATH)
-ROADMAP_EXISTS_BOOL=$([ -f "$PROJECT_ROOT/${DISCOVERED_ROADMAP_PATH}" ] && echo "true" || echo "false")
-ROADMAP_EXISTS=$([ "$ROADMAP_EXISTS_BOOL" = "true" ] && echo "yes" || echo "no")
-echo "门控 2: roadmap 存在性检查"
-echo "  当前状态: $ROADMAP_EXISTS (path: $DISCOVERED_ROADMAP_PATH)"
-if [ "$ROADMAP_EXISTS" != "yes" ]; then
-    echo "  ❌ 失败: roadmap 不存在"
-    echo "     请回到 roadmap-define 阶段创建路线图"
-    exit 1
-fi
-echo "  ✅ 通过"
-echo ""
+# Round B: extracted to _lib/arch_done_gate.sh (L522-L559, ~38 lines)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/arch_done_gate.sh"
+check_arch_done_gate || exit 1
 ```
 
 **写入 handoff 状态**：
