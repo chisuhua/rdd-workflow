@@ -57,6 +57,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
 if [ -f "$SCRIPT_DIR/_lib/select_worktree.sh" ]; then
   source "$SCRIPT_DIR/_lib/select_worktree.sh"
   source "$SCRIPT_DIR/_lib/update_roadmap_progress.sh"
+  source "$SCRIPT_DIR/_lib/execute_step7.sh"
 fi
 auto_detect_worktree_context || exit 1
 ```
@@ -193,92 +194,14 @@ for each work_unit in plan.tasks (按依赖顺序):
 执行完成后，输出清晰的后续操作指引：
 
 ```bash
-# 获取最终进度
-COMPLETE=$(grep -c '^- \[x\]' "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/tasks.md")
-TOTAL=$(grep -c '^- \[' "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/tasks.md")
-
-# 同步 iteration.json (current sprint tracker). 失败 graceful 退出.
-# v2.0.2 安全修复: bash 变量通过环境变量传递 (os.environ),
-# 不用 '$VAR' 直接拼到 Python 源码. 避免单引号路径/注入风险.
-PROJECT_ROOT="$PROJECT_ROOT" \
-CHANGE_NAME="$CHANGE_NAME" \
-COMPLETE="$COMPLETE" \
-TOTAL="$TOTAL" \
-python3 -c '
-import os, sys
-try:
-    from skills._lib import iteration as it_mod
-    data = it_mod.load(os.environ["PROJECT_ROOT"])
-    data = it_mod.set_tasks_done(
-        data,
-        os.environ["CHANGE_NAME"],
-        done=int(os.environ.get("COMPLETE", "0") or 0),
-        total=int(os.environ.get("TOTAL", "0") or 0),
-    )
-    it_mod.save(os.environ["PROJECT_ROOT"], data)
-except Exception as e:
-    print(f"⚠️  iteration.json 同步失败: {e}", file=sys.stderr)
-    sys.exit(0)
-' 2>&1 | grep -v "^$" || true
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "✅ 执行完成"
-echo ""
-echo "Change: $CHANGE_NAME"
-echo "当前进度：$COMPLETE/$TOTAL"
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "📋 下一步操作："
-echo ""
-echo "1. 在主 session 查看最新进度："
-echo "   skill_use(\"guide\")"
-echo "   → 进入 Execute 监控模式"
-echo ""
-echo "2. 直接归档（如果已完成所有任务）："
-echo "   cd \"$PROJECT_ROOT\""
-echo "   skill_use(\"status $CHANGE_NAME --archive\")"
-echo ""
-echo "3. 继续处理其他 worktree："
-echo "   skill_use(\"guide-ship\")   # 内部选择 change"
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# ============================================================
-# P0 FIX: 执行完毕后自动检查是否还有其他 worktree 需要处理
-# ============================================================
-# 使用 awk 检查分支名（第三列）而非路径，避免路径含 openspec/ 的误匹配
-# P0-7 修复：`git worktree list` 默认输出字段为
-#   $1=path  $2=<sha>  $3=[branch]
-# 因此分支在 $3，旧 awk '$2 ~ /^openspec\//' 永远匹配不到。
-# 使用 _lib/worktree.sh::wt_path_for_branch（该文件已 source），统一走 --porcelain 解析
-OTHER_WTS=""
-CURRENT_WT=$(wt_path_for_branch "$CHANGE_NAME")
-for wt in $(git worktree list 2>/dev/null | awk '$3 ~ /^\[openspec\// {print $1}'); do
-  if [ "$wt" != "$CURRENT_WT" ]; then
-    OTHER_WTS="$OTHER_WTS $wt"
-  fi
-done
-OTHER_WTS=$(echo $OTHER_WTS | wc -w)
-if [ "$OTHER_WTS" -gt 0 ]; then
-    echo ""
-    echo "📋 发现其他 $OTHER_WTS 个 worktree:"
-    # 输出 $1 (path) 和 $3 ([branch])，read 拆为 path + branch
-    # $3 在 `git worktree list` 默认格式里是 "[branch]"，要去掉方括号才能跟 openspec/$CHANGE_NAME 比较
-    git worktree list | awk '$3 ~ /^\[openspec\// {print $1, $3}' | while read -r path branch; do
-        # branch 形如 "[openspec/xxx]"，去括号得 "openspec/xxx"
-        branch_clean="${branch#[}"; branch_clean="${branch_clean%]}"
-        if [ -n "$branch_clean" ] && [ "$branch_clean" != "openspec/$CHANGE_NAME" ]; then
-            name=$(echo "$branch_clean" | sed 's|openspec/||')
-            echo "   - $name → $path"
-        fi
-    done
-    echo ""
-    echo "请选择:"
-    echo "1. 切换到另一个 worktree 继续执行"
-    echo "2. 返回主 session（skill_use(\"guide\"))"
-    echo "i. 其他输入"
-fi
+# Round B: extracted to _lib/execute_step7.{py,sh,env.py} (L195-L282, ~88 lines)
+# Calls run_step7_report() from the helper — handles:
+#   - Reading tasks.md progress (done/total)
+#   - Syncing iteration.json (graceful failure)
+#   - Printing final report + next-step instructions
+#   - Listing other worktrees (porcelain-format parsing)
+# Oracle C1 safe: env-var passing through execute_step7_env.py
+run_step7_report
 ```
 
 **用户输入处理（case handler）**：
