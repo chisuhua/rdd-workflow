@@ -56,6 +56,7 @@ load ../test_helper
   grep -q '当前架构' "$file"
   grep -q '差距清单' "$file"
   grep -q '补齐路径' "$file"
+  grep -q '参考资料' "$file"
   rm -rf "$tmpdir"
 }
 

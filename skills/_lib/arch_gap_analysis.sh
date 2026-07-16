@@ -18,7 +18,7 @@ generate_gap_analysis() {
     return 1
   fi
 
-  mkdir -p "$ARCH_DIR"
+  mkdir -p "$ARCH_DIR" || { echo "❌ 无法创建目录: $ARCH_DIR"; return 1; }
   local NEW_GAP="$ARCH_DIR/${SLUG}-gap-analysis.md"
   if [ -f "$NEW_GAP" ]; then
     echo "❌ 差距分析已存在: $NEW_GAP"
@@ -82,4 +82,5 @@ list_gap_analyses() {
   echo "$GAP_DOCS" | nl -w2 -s". " | while read -r line; do
       echo "  $line"
   done
+  return 0
 }
