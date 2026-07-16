@@ -258,60 +258,9 @@ esac
 **前置检测（每次入口执行）**：
 
 ```bash
-# 读取所有 tasks.md 的实际进度（支持 worktree + 轻量模式）
-echo "📋 所有 Changes 实际进度:"
-
-LAST_CHECK=$(date "+%Y-%m-%d %H:%M:%S")
-
-# 收集所有活跃的 openspec/* 分支（含 worktree 和轻量模式）
-# 从 worktree 列表获取
-mapfile -t wt_list < <(git worktree list --porcelain | awk '/^worktree / {path=$2} /^branch refs\/heads\/openspec\// {print path}')
-for wt in "${wt_list[@]}"; do
-    branch=$(git worktree list | grep -F "$wt" | awk '{print $3}')
-    name=$(echo "$branch" | sed 's|openspec/||')
-    tasks_file="$wt/openspec/changes/$name/tasks.md"
-    mode="worktree"
-    if [ -f "$tasks_file" ]; then
-        total=$(grep -c '^- \[' "$tasks_file" 2>/dev/null || echo 0)
-        done=$(grep -c '^- \[x\]' "$tasks_file" 2>/dev/null || echo 0)
-        progress="${done}/${total}"
-    else
-        progress="? (文件不存在)"
-    fi
-    echo "  $name → $progress [$mode]"
-done
-
-# 补充轻量模式（有 openspec/ 分支但不在 worktree 列表中的）
-if git branch | grep -q "openspec/"; then
-    for branch in $(git branch | grep "openspec/" | sed 's/.*openspec\///'); do
-        # 跳过已在 worktree 列表中的
-        in_wt=false
-        for wt in "${wt_list[@]}"; do
-            wt_branch=$(git worktree list | grep -F "$wt" | awk '{print $3}' | sed 's|openspec/||')
-            [ "$wt_branch" = "$branch" ] && in_wt=true && break
-        done
-        $in_wt && continue
-
-        tasks_file="$PROJECT_ROOT/openspec/changes/$branch/tasks.md"
-        CURRENT_BRANCH=$(git branch --show-current)
-        if [ "$CURRENT_BRANCH" = "openspec/$branch" ]; then
-            mode="轻量(当前)"
-        else
-            mode="轻量"
-        fi
-        if [ -f "$tasks_file" ]; then
-            total=$(grep -c '^- \[' "$tasks_file" 2>/dev/null || echo 0)
-            done=$(grep -c '^- \[x\]' "$tasks_file" 2>/dev/null || echo 0)
-            progress="${done}/${total}"
-        else
-            progress="? (文件不存在)"
-        fi
-        echo "  $branch → $progress [$mode]"
-    done
-fi
-
-echo ""
-echo "上次检测: $LAST_CHECK"
+# Round A: extracted to _lib/ship_monitor.sh (L260-L315, ~54 lines)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_monitor.sh"
+run_ship_monitor
 ```
 
 **菜单选项**：
