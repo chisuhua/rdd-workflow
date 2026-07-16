@@ -22,6 +22,64 @@
 
 Zero migration needed. Existing v2.0 projects with `docs/adr/` and `roadmap.md` work unchanged via fallback defaults. Custom layouts (e.g. `doc/adr/`, `planning/roadmap.md`, `DEC-*.md`) now discoverable via env vars or handoff.
 
+## [2.0.7] — 2026-07-17
+
+### Changed (Round A: 6 inline bash extractions)
+
+- **guide-arch.md**: 962 → 671 lines (-30%) via 3 new `_lib/` helpers (`arch_env_check.sh`, `write_arch_handoff.{sh,py,env.py}`)
+- **guide-plan.md**: 886 → 564 lines (-36%) via 3 new helpers (`plan_intake.sh`, `plan_done_gate.{sh,py,env.py}`)
+- **guide-ship.md**: 1361 → 751 lines (-45%, P3-2 + P3-3 partial) via 1 new helper (`ship_monitor.sh`)
+- **execute.md**: 516 → 265 lines (-49%) via 1 new helper (`select_worktree.sh`)
+- **status.md**: 566 → 531 lines (-6%) (minor — Round B only)
+- 10 new `_lib/` helpers + 66 new tests
+
+### Changed (Round B: 10 inline bash extractions)
+
+- **guide-arch.md**: 671 → 602 lines (gap analysis + dual gate + quality report)
+- **guide-plan.md**: 564 → 514 lines (deps-candidates + queue overview + feature progress)
+- **execute.md**: 265 → 251 lines (tasks writeback + roadmap progress + step 7 report)
+- **status.md**: 531 → 525 lines (mode A render)
+- + 11 new `_lib/` helpers, ~480 lines removed from 4 skill files
+- 2 SEC fixes: `python3 -c` with bash `$VAR` interpolation eliminated
+- 1 real bug fix: `awk sub()` regex issue in tasks.md writeback
+- 68 new tests
+
+### Changed (Round C: feature.md refactor)
+
+- **feature.md**: 183 → 77 lines (-58%) via 4 per-subcommand helpers
+- 1 new `_lib/feature_cli.py` + 4 thin bash wrappers
+- 16 new bats tests
+- DRY: 60 lines of duplicated heredoc boilerplate eliminated via `_load_feature_view()`
+
+### Changed (Guide-ship extraction — v2.0.5 holdover)
+
+- **guide-ship.md**: 1361 → 751 lines (-45%) via 3 `_lib/ship_*.sh` scripts
+- Extracted Phase 1 (plan), Phase 2.5 (review), Phase 3 (archive) into dedicated modules
+- 9 bats integration tests lock contract
+
+### Changed (Deps + Propose extraction — v2.0.6 holdover)
+
+- **deps.md**: 786 → 637 lines (-19%) via `deps_output.py::render_markdown_report` + `deps_render_report.sh`
+- **propose.md**: 942 → 686 lines (-27%) via `propose_change.{sh,py}` (5 Python functions)
+- 17 Python unit + 9 bats (deps); 21 Python unit + 9 bats (propose)
+
+### Bug Fixes
+
+- **SECURITY (B3, B8)**: Eliminated `python3 -c "..."` with bash `$VAR` string interpolation (Oracle C1 risk) in plan deps-candidates and execute roadmap-progress writers. Now use env-var passing.
+- **Tasks writeback (B7)**: `awk sub()` was interpreting `[ ]` as regex character class, causing silent zero-match failure. Replaced with `awk index()` + `substr()` for literal match.
+- **SKIP_ARCH_HANDOFF** (Round A): Was dead code (error message told users to set env var but code never read it). Now wired.
+- **roadmap_exists** (Round A final review): Was always `false` because env var didn't propagate between markdown code blocks. Now computed from filesystem.
+- **commit gate (#7)**: Fixed `e3f466c commit` writing artifacts missed intermediate staging.
+- **Plan Gate 0 skip semantics**: `exit 0` terminated entire plan-done block (preventing handoff write) → fixed with `PLAN_GATE_0_SKIPPED` sentinel.
+
+### Total Stats
+
+- 37 commits across master
+- ~1,800 lines of inline bash extracted from skill files
+- 25+ new `_lib/` helpers (bash wrappers + Python modules)
+- ~150 new tests (19 Python unit + 131 bats integration)
+- All 732 Python tests passing, full bats regression green
+
 ## v2.0.0-beta (2026-06-26)
 
 ### New Features
