@@ -473,7 +473,7 @@ if [ "$SKELETON_MODE" = "true" ]; then
     propose_create_change <name> --skeleton "$CURRENT_PHASE" "$CHANGE_CATEGORY" "$PRIORITY"
     # Update proposal-suggestions.md: status "待创建" → "skeleton"
     if [ -f "$PROJECT_ROOT/proposal-suggestions.md" ]; then
-        PROJECT_ROOT="$PROJECT_ROOT" NAME="<name>" NEW_STATUS="skeleton" python3 <<'PYEOF'
+        PROJECT_ROOT="$PROJECT_ROOT" NAME="<name>" NEW_STATUS="skeleton" python3 <<PYEOF
 import os, json
 p = os.path.join(os.environ.get("PROJECT_ROOT", "."), "proposal-suggestions.md")
 target = os.environ.get("NAME", "")
