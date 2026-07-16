@@ -301,6 +301,51 @@ skills/*.md 行数 (累计):
 - `arch_env_check.sh`, `write_arch_handoff.{sh,py,env.py}`, `plan_intake.sh`, `plan_done_gate.{sh,py,env.py}`, `ship_monitor.sh`, `select_worktree.sh`
 
 合并到 master: 13 commits (1 plan + 6 refactor + 5 review-fix + 1 final-bug-fix)。
+
+### Round B: 10-任务内联 Bash 提取 (v2.0.7 新增)
+
+`skills/*.md` 提取第三批 — 10 个内联 bash 块横跨 4 个 skill 文件 (~480 行) 迁移到 `_lib/`:
+
+| Task | Skill | Lines | Helper(s) | Tests | 备注 |
+|------|-------|-------|-----------|-------|------|
+| B1 | `guide-arch.md` gap analysis | 85 | `arch_gap_analysis.sh` | 8 bats | generator + viewer |
+| B2 | `guide-arch.md` Phase 5 dual gate | 38 | `arch_done_gate.sh` | 6 bats | ADR + roadmap gate |
+| B3 | `guide-plan.md` deps-candidates | 38 | `plan_deps_candidates.{sh,py,env.py}` | 6 unit + 6 bats | **SECURITY FIX**: oracle C1 |
+| B4 | `guide-plan.md` queue overview | 50 | `plan_queue_overview.sh` | 6 bats | 5-state summary |
+| B5 | `guide-plan.md` feature progress | 34 | `plan_feature_progress.sh` | 5 bats | per-feature |
+| B6 | `status.md` render_status Mode A | 45 | `status_render_mode_a.sh` | 6 bats | iteration + fallback |
+| B7 | `execute.md` tasks writeback | 34 | `tasks_writeback.sh` | 6 bats | **BUG FIX**: sub() regex issue |
+| B8 | `execute.md` roadmap progress | 50 | `update_roadmap_progress.{sh,py,env.py}` | 7 unit + 6 bats | **SECURITY FIX**: oracle C1 |
+| B9 | `execute.md` Step 7 report | 88 | `execute_step7.{sh,py,env.py}` | 6 unit + 8 bats | final report + sync |
+| B10 | `guide-arch.md` arch-quality-report | 32 | `arch_quality_report.sh` | 4 bats | thin wrapper |
+| **总计** | 4 skill files | **494** | **14 helpers** | **68 tests** | 2 SECURITY + 1 BUG FIX |
+
+**关键 bug / 安全修复**:
+
+- **B3 SECURITY**: `python3 -c "..."` 内联 `$PROJECT_ROOT` 字符串插值 → 提取到 `_lib/plan_deps_candidates.{sh,py,env.py}` 模式
+- **B7 BUG FIX**: `sub()` 正则表达式解释 `[ ]` 字符类导致静默失败 → 改用 `index()` + `substr()` 字面量重建
+- **B8 SECURITY**: 同样的 oracle C1 字符串插值 → `_lib/update_roadmap_progress.{sh,py,env.py}` 模式
+
+**提取后总成果 (含 Round A + Round B)**:
+
+```
+skills/*.md 行数 (累计):
+  arch: 962 → 671 (-291)
+  plan: 886 → 564 (-322)
+  ship: 1361 → 751 (-610)  [Round A only]
+  execute: 516 → 265 (-251)
+  status: 566 → 531 (-35)
+  total reduction: -1509 行
+```
+
+新 `_lib/` helpers (Round B 贡献 11 个):
+- `arch_gap_analysis.sh`, `arch_done_gate.sh`, `arch_quality_report.sh`
+- `plan_deps_candidates.{sh,py,env.py}`, `plan_queue_overview.sh`, `plan_feature_progress.sh`
+- `status_render_mode_a.sh`
+- `tasks_writeback.sh`, `update_roadmap_progress.{sh,py,env.py}`, `execute_step7.{sh,py,env.py}`
+
+合并到 master: 11 commits (1 plan + 10 refactor)。
+
 - 配置: `config.py`, `defaults.py`, `phase_templates.yaml`, `schemas/`, `plugins/`
 
 `skills/loop_engine.py` (在 skills/ 根) 是引擎入口, 串联以上模块.
