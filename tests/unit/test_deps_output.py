@@ -373,3 +373,260 @@ c1 ←→ c2: shared file src/api.py
         for name in ("c1", "c2"):
             assert changes[name]["blocker"] is None
             assert changes[name]["status"] == "ready"
+
+
+# ---------------------------------------------------------------------------
+# render_markdown_report (P3-4e: extracted from deps.md Step 5 lines 483-642)
+# ---------------------------------------------------------------------------
+
+class TestRenderMarkdownReport:
+    """render_markdown_report encapsulates deps.md Step 5 (lines 483-642,
+    160-line inline bash block). Generates complete markdown report with:
+    - Header + candidate count
+    - Mermaid dependency graph
+    - Phase precheck table
+    - Change status table
+    - Recommended execution order
+    - Conflict warnings (placeholder)
+    - AI analysis suggestions (or fallback message)
+
+    Returns full markdown as a string. Caller writes to file.
+    """
+
+    def test_returns_header_with_candidate_count(self, tmp_path):
+        from skills._lib import deps_output as do
+        out = do.render_markdown_report(
+            candidates=["c1", "c2", "c3"],
+            project_root=str(tmp_path),
+        )
+        assert "# 依赖分析报告" in out
+        assert "候选 changes: 3" in out
+
+    def test_includes_mermaid_flowchart_with_all_nodes(self, tmp_path):
+        from skills._lib import deps_output as do
+        out = do.render_markdown_report(
+            candidates=["c1", "c2"],
+            project_root=str(tmp_path),
+        )
+        assert "```mermaid" in out
+        assert "flowchart LR" in out
+        # c1 and c2 should appear as nodes
+        assert "c1" in out
+        assert "c2" in out
+
+    def test_marks_skeleton_changes_with_double_brackets(self, tmp_path):
+        from skills._lib import deps_output as do
+        # c1 has design.md (full), c2 doesn't (skeleton)
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        (tmp_path / "openspec" / "changes" / "c1" / "design.md").write_text("# design")
+        (tmp_path / "openspec" / "changes" / "c2").mkdir(parents=True)
+        out = do.render_markdown_report(
+            candidates=["c1", "c2"],
+            project_root=str(tmp_path),
+        )
+        # c1 should have normal brackets [c1]
+        assert "c1[c1]" in out
+        # c2 should have double brackets [[c2]] (skeleton marker)
+        assert "c2[[c2]]" in out
+
+    def test_phase_precheck_table_within_current_phase(self, tmp_path):
+        from skills._lib import deps_output as do
+        # c1 has roadmap-meta.yaml with phase=phase-1, matches ROADMAP_CURRENT_PHASE
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        (tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml").write_text(
+            'roadmap:\n  phase: "phase-1"\n  category: "general"\n'
+        )
+        out = do.render_markdown_report(
+            candidates=["c1"],
+            project_root=str(tmp_path),
+            roadmap_current_phase="phase-1",
+        )
+        assert "## 阶段预检" in out
+        assert "| c1 | phase-1 | general | ✅ 在阶段内 |" in out
+
+    def test_phase_precheck_marks_out_of_phase_change(self, tmp_path):
+        from skills._lib import deps_output as do
+        # c1 has phase=phase-2, but current is phase-1
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        (tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml").write_text(
+            'roadmap:\n  phase: "phase-2"\n  category: "core-impl"\n'
+        )
+        out = do.render_markdown_report(
+            candidates=["c1"],
+            project_root=str(tmp_path),
+            roadmap_current_phase="phase-1",
+        )
+        assert "| c1 | phase-2 | core-impl | ⚠️ 不在当前阶段 (phase-1) |" in out
+
+    def test_phase_precheck_marks_missing_roadmap_meta_as_compat(self, tmp_path):
+        from skills._lib import deps_output as do
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        # No roadmap-meta.yaml
+        out = do.render_markdown_report(
+            candidates=["c1"],
+            project_root=str(tmp_path),
+            roadmap_current_phase="phase-1",
+        )
+        assert "| c1 | (compat) | (compat) | ⚠️ 无 roadmap-meta |" in out
+
+    def test_change_status_table_shows_ready_when_no_ai_blocker(self, tmp_path):
+        from skills._lib import deps_output as do
+        out = do.render_markdown_report(
+            candidates=["c1"],
+            project_root=str(tmp_path),
+            ai_result_file=None,  # No AI result
+        )
+        assert "## Change 状态表" in out
+        assert "| c1 | ✅ ready | 第 1 |" in out
+
+    def test_change_status_table_marks_skeleton_in_status(self, tmp_path):
+        from skills._lib import deps_output as do
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        # No design.md → skeleton
+        out = do.render_markdown_report(
+            candidates=["c1"],
+            project_root=str(tmp_path),
+        )
+        assert "📋 skeleton" in out
+
+    def test_change_status_table_uses_ai_blocker_when_present(self, tmp_path):
+        from skills._lib import deps_output as do
+        # AI result file marking c2 as blocked by c1
+        ai_file = tmp_path / ".rddf" / "state" / ".deps-ai-result.json"
+        ai_file.parent.mkdir(parents=True)
+        ai_file.write_text('{"ai_deps": [{"from": "c1", "to": "c2", "kind": "hard"}]}')
+        out = do.render_markdown_report(
+            candidates=["c1", "c2"],
+            project_root=str(tmp_path),
+            ai_result_file=str(ai_file),
+        )
+        assert "| c2 | ⚠️ blocked_by | c1 |" in out
+        # c1 is not blocked, shows ready
+        assert "| c1 | ✅ ready" in out
+
+    def test_ai_blocker_only_for_hard_kind_not_soft(self, tmp_path):
+        from skills._lib import deps_output as do
+        ai_file = tmp_path / "ai.json"
+        # kind is "soft" (not hard) — should NOT trigger blocked_by
+        ai_file.write_text('{"ai_deps": [{"from": "c1", "to": "c2", "kind": "soft"}]}')
+        out = do.render_markdown_report(
+            candidates=["c1", "c2"],
+            project_root=str(tmp_path),
+            ai_result_file=str(ai_file),
+        )
+        # Both should be ready
+        assert "| c1 | ✅ ready" in out
+        assert "| c2 | ✅ ready" in out
+
+    def test_recommended_execution_order_section(self, tmp_path):
+        from skills._lib import deps_output as do
+        out = do.render_markdown_report(
+            candidates=["first-c", "second-c"],
+            project_root=str(tmp_path),
+        )
+        assert "## 推荐执行顺序" in out
+        assert "`first-c`" in out
+        assert "第一个候选" in out
+
+    def test_conflict_warnings_placeholder(self, tmp_path):
+        from skills._lib import deps_output as do
+        out = do.render_markdown_report(
+            candidates=["c1"],
+            project_root=str(tmp_path),
+        )
+        assert "## 冲突警告" in out
+        assert "（如有文件冲突将列于此处）" in out
+
+    def test_ai_section_renders_with_ai_data(self, tmp_path):
+        from skills._lib import deps_output as do
+        ai_file = tmp_path / "ai.json"
+        ai_file.write_text("""{
+  "ai_deps": [
+    {"from": "c1", "to": "c2", "kind": "soft", "reason": "implicit dep"}
+  ],
+  "suggestions": [
+    {"change": "c1", "action": "拆分", "reason": "too large"}
+  ]
+}""")
+        out = do.render_markdown_report(
+            candidates=["c1"],
+            project_root=str(tmp_path),
+            ai_result_file=str(ai_file),
+        )
+        assert "## 🧠 AI 分析建议" in out
+        assert "**子代理语义分析结果**" in out
+        assert "`c1` → `c2` (soft)" in out
+        assert "拆分" in out
+
+    def test_ai_section_fallback_when_no_ai_result(self, tmp_path):
+        from skills._lib import deps_output as do
+        out = do.render_markdown_report(
+            candidates=["c1"],
+            project_root=str(tmp_path),
+            ai_result_file=None,
+        )
+        assert "## 🧠 AI 分析建议" in out
+        assert "AI 语义分析未启用 (fallback)" in out
+
+    def test_ai_section_handles_malformed_ai_json_gracefully(self, tmp_path):
+        from skills._lib import deps_output as do
+        ai_file = tmp_path / "ai.json"
+        ai_file.write_text("not valid json {{{")
+        # Should not raise; should fallback gracefully
+        out = do.render_markdown_report(
+            candidates=["c1"],
+            project_root=str(tmp_path),
+            ai_result_file=str(ai_file),
+        )
+        # Falls back to the fallback message (no ai_deps rendered)
+        assert "AI 语义分析未启用 (fallback)" in out
+
+    def test_ai_section_suggestions_with_parent_feature(self, tmp_path):
+        from skills._lib import deps_output as do
+        ai_file = tmp_path / "ai.json"
+        ai_file.write_text("""{
+  "suggestions": [
+    {"change": "c1", "action": "合并", "reason": "duplicate work", "parent_feature": "core"}
+  ]
+}""")
+        out = do.render_markdown_report(
+            candidates=["c1"],
+            project_root=str(tmp_path),
+            ai_result_file=str(ai_file),
+        )
+        assert "(parent_feature: core)" in out
+
+    def test_returns_complete_document_for_full_scenario(self, tmp_path):
+        from skills._lib import deps_output as do
+        # Realistic scenario: 2 candidates, 1 skeleton, AI blockers
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        (tmp_path / "openspec" / "changes" / "c1" / "design.md").write_text("# c1 design")
+        (tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml").write_text(
+            'roadmap:\n  phase: "phase-1"\n  category: "core-impl"\n'
+        )
+        (tmp_path / "openspec" / "changes" / "c2").mkdir(parents=True)
+        # c2 has no design.md → skeleton
+        ai_file = tmp_path / "ai.json"
+        ai_file.write_text('{"ai_deps": [{"from": "c1", "to": "c2", "kind": "hard"}]}')
+        out = do.render_markdown_report(
+            candidates=["c1", "c2"],
+            project_root=str(tmp_path),
+            ai_result_file=str(ai_file),
+            roadmap_current_phase="phase-1",
+        )
+        # All sections present
+        assert "# 依赖分析报告" in out
+        assert "## 依赖图 (Mermaid)" in out
+        assert "## 阶段预检" in out
+        assert "## Change 状态表" in out
+        assert "## 推荐执行顺序" in out
+        assert "## 冲突警告" in out
+        assert "## 🧠 AI 分析建议" in out
+        # Specific content
+        assert "候选 changes: 2" in out
+        assert "c1[c1]" in out  # full change, normal brackets
+        assert "c2[[c2]]" in out  # skeleton, double brackets
+        assert "| c1 | phase-1 | core-impl | ✅ 在阶段内 |" in out
+        assert "| c2 | (compat) | (compat) | ⚠️ 无 roadmap-meta |" in out
+        assert "| c1 | ✅ ready" in out  # not blocked
+        assert "| c2 | ⚠️ blocked_by | c1 |" in out  # blocked by c1

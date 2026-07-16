@@ -315,3 +315,170 @@ def parse_markdown_fallback(project_root: str) -> Optional[List[dict]]:
         }
         for name, info in changes_info.items()
     ]
+
+
+# ---------------------------------------------------------------------------
+# render_markdown_report (P3-4e: extracted from deps.md Step 5 lines 483-642)
+# ---------------------------------------------------------------------------
+
+
+def render_markdown_report(
+    candidates,
+    project_root,
+    ai_result_file=None,
+    roadmap_current_phase=None,
+):
+    """Render the deps.md .rddf/state/.deps-output.md human-readable report.
+
+    Args:
+        candidates: list of change names to include
+        project_root: for reading openspec/changes/<name>/{design.md,roadmap-meta.yaml}
+        ai_result_file: optional path to .rddf/state/.deps-ai-result.json (AI subagent output)
+        roadmap_current_phase: optional current phase for out-of-phase detection
+
+    Returns:
+        Complete markdown report as a string. Caller writes to file.
+
+    Behavior preserved from inline version (deps.md lines 483-642):
+    - Mermaid graph with double-bracket [[name]] markers for skeleton changes
+    - Phase precheck table (in-phase vs out-of-phase vs missing roadmap-meta)
+    - Change status table (ready vs blocked_by from AI hard deps)
+    - Recommended execution order (first candidate)
+    - Conflict warnings placeholder
+    - AI analysis section (rich if ai_result_file exists, fallback otherwise)
+    """
+    from datetime import datetime, timezone
+    lines = []
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    lines.append("# 依赖分析报告")
+    lines.append("")
+    lines.append(f"生成时间: {timestamp}")
+    lines.append(f"候选 changes: {len(candidates)}")
+    lines.append("")
+
+    # Mermaid graph
+    lines.append("## 依赖图 (Mermaid)")
+    lines.append("")
+    lines.append("```mermaid")
+    lines.append("flowchart LR")
+    for name in candidates:
+        design_path = os.path.join(project_root, "openspec", "changes", name, "design.md")
+        if not os.path.isfile(design_path):
+            lines.append(f"    {name}[[{name}]]  %% skeleton change %% ")
+        else:
+            lines.append(f"    {name}[{name}]")
+    lines.append("```")
+    lines.append("")
+
+    # Phase precheck
+    lines.append("## 阶段预检")
+    lines.append("")
+    lines.append("基于每 change 的 `roadmap-meta.yaml`：")
+    lines.append("")
+    lines.append("| Change | Phase | Category | 状态 |")
+    lines.append("|--------|-------|----------|------|")
+    for name in candidates:
+        meta_file = os.path.join(
+            project_root, "openspec", "changes", name, "roadmap-meta.yaml"
+        )
+        if os.path.isfile(meta_file):
+            meta_content = open(meta_file).read()
+            phase_match = re.search(r'^\s*phase:\s*"?([^"\s]+)"?', meta_content, re.MULTILINE)
+            category_match = re.search(r'^\s*category:\s*"?([^"\s]+)"?', meta_content, re.MULTILINE)
+            phase = phase_match.group(1) if phase_match else ""
+            category = category_match.group(1) if category_match else ""
+            if roadmap_current_phase and phase and phase != roadmap_current_phase:
+                lines.append(f"| {name} | {phase} | {category} | ⚠️ 不在当前阶段 ({roadmap_current_phase}) |")
+            else:
+                lines.append(f"| {name} | {phase} | {category} | ✅ 在阶段内 |")
+        else:
+            lines.append(f"| {name} | (compat) | (compat) | ⚠️ 无 roadmap-meta |")
+    lines.append("")
+
+    # Change status table
+    lines.append("## Change 状态表")
+    lines.append("")
+    lines.append("| Change | 状态 | 推荐 | 备注 |")
+    lines.append("|--------|------|------|------|")
+
+    ai_blockers = {}
+    if ai_result_file and os.path.isfile(ai_result_file):
+        try:
+            with open(ai_result_file) as f:
+                ai_data = json.load(f)
+            for d in ai_data.get("ai_deps", []):
+                if d.get("kind") == "hard":
+                    ai_blockers[d.get("to")] = d.get("from", "")
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    for name in candidates:
+        design_path = os.path.join(project_root, "openspec", "changes", name, "design.md")
+        is_skeleton = "" if os.path.isfile(design_path) else "📋 skeleton"
+        if name in ai_blockers:
+            lines.append(f"| {name} | ⚠️ blocked_by | {ai_blockers[name]} | {is_skeleton} |")
+        else:
+            lines.append(f"| {name} | ✅ ready | 第 1 | {is_skeleton} |")
+    lines.append("")
+
+    # Recommended execution order
+    lines.append("## 推荐执行顺序")
+    lines.append("")
+    first = candidates[0] if candidates else "none"
+    lines.append(f"1. `{first}` ← 第一个候选")
+    lines.append("")
+
+    # Conflict warnings placeholder
+    lines.append("## 冲突警告")
+    lines.append("")
+    lines.append("（如有文件冲突将列于此处）")
+    lines.append("")
+
+    # AI analysis
+    lines.append("## 🧠 AI 分析建议")
+    lines.append("")
+
+    if ai_result_file and os.path.isfile(ai_result_file):
+        lines.append("")
+        lines.append(f"**子代理语义分析结果** (来源: `{ai_result_file}`):")
+        lines.append("")
+        try:
+            with open(ai_result_file) as f:
+                ai_data = json.load(f)
+            ai_deps = ai_data.get("ai_deps", [])
+            suggestions = ai_data.get("suggestions", [])
+            if ai_deps:
+                lines.append("**AI 识别的额外依赖** (低置信度, 仅作参考):")
+                lines.append("")
+                for d in ai_deps:
+                    kind = d.get("kind", "soft")
+                    reason = d.get("reason", "")
+                    from_name = d.get("from", "")
+                    to_name = d.get("to", "")
+                    lines.append(f"- `{from_name}` → `{to_name}` ({kind}): {reason}")
+            if suggestions:
+                lines.append("")
+                lines.append("**重组建议** (仅建议不执行):")
+                lines.append("")
+                for s in suggestions:
+                    change = s.get("change", "")
+                    action = s.get("action", "")
+                    reason = s.get("reason", "")
+                    pf = s.get("parent_feature")
+                    if pf:
+                        lines.append(f"- `{change}`: {action} — {reason} (parent_feature: {pf})")
+                    else:
+                        lines.append(f"- `{change}`: {action} — {reason}")
+        except (json.JSONDecodeError, OSError):
+            pass
+        else:
+            return "\n".join(lines)
+
+    # Fallback
+    lines.append("")
+    lines.append("⚠️ **AI 语义分析未启用 (fallback)** — 子代理不可用或调用失败, 详见 deps.md Step 3f")
+    lines.append("以下内容为基于静态三轴分析（文件冲突、ADR 引用、接口依赖）的结论。")
+    lines.append("AI 子代理语义分析功能（语义依赖、粒度评估、重组建议）待子代理可用时启用。")
+
+    return "\n".join(lines)
