@@ -314,21 +314,15 @@ fi
 # 失败时降级为内联过滤, 不阻断菜单显示
 echo ""
 echo "📊 当前队列状态:"
-PY_PROJECT_ROOT="$PROJECT_ROOT" python3 << 'PYEOF' 2>/dev/null
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/state.sh"
+PENDING_SUGGESTIONS_COUNT=$(count_pending_suggestions "$PROJECT_ROOT")
+PY_PROJECT_ROOT="$PROJECT_ROOT" PENDING_SUGGESTIONS_COUNT="$PENDING_SUGGESTIONS_COUNT" python3 << 'PYEOF' 2>/dev/null
 import os, sys, json
 from datetime import datetime, timezone
 project_root = os.environ.get("PY_PROJECT_ROOT", ".")
 
-candidates = 0
-ps_path = os.path.join(project_root, "proposal-suggestions.md")
-if os.path.isfile(ps_path):
-    try:
-        with open(ps_path) as f:
-            entries = json.load(f)
-        if isinstance(entries, list):
-            candidates = sum(1 for e in entries if isinstance(e, dict) and e.get("status") == "待创建")
-    except (FileNotFoundError, json.JSONDecodeError):
-        pass
+# P3-3b: candidates sourced from _lib/state.sh via env var (set by bash caller)
+candidates = int(os.environ.get("PENDING_SUGGESTIONS_COUNT", "0"))
 
 try:
     from skills._lib import iteration as it

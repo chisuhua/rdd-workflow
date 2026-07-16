@@ -410,19 +410,8 @@ else
     # P1-7: 文件格式已规范化为 JSON 列表
     #       用 json.load 解析后统计 status == "待创建" 的条目数
     if [ -f "proposal-suggestions.md" ]; then
-        REMAINING=$(python3 -c "
-import json, sys
-try:
-    with open('proposal-suggestions.md') as f:
-        entries = json.load(f)
-    if not isinstance(entries, list):
-        print(0)
-        sys.exit(0)
-    count = sum(1 for e in entries if isinstance(e, dict) and e.get('status') == '待创建')
-    print(count)
-except (FileNotFoundError, json.JSONDecodeError):
-    print(0)
-" 2>/dev/null)
+        source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/state.sh"
+        REMAINING=$(count_pending_suggestions "$PROJECT_ROOT")
         REMAINING=${REMAINING:-0}
         if [ "$REMAINING" -gt 0 ]; then
             echo ""

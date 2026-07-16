@@ -135,3 +135,33 @@ with open(inp, 'w') as f:
     f.write('\n')
 " "$file" "$data"
 }
+
+# count_pending_suggestions [project_root]
+# Counts entries in proposal-suggestions.md where status == "待创建".
+# Returns 0 on missing file, malformed JSON, empty list, or no matches.
+# Defaults to ./proposal-suggestions.md when project_root not given.
+#
+# Extracted from inline Python heredocs in propose.md, status.md, and
+# guide-plan.md (P3-3b). Algorithm equivalent to original inline versions:
+# sum over list elements where element is a dict and status == "待创建".
+count_pending_suggestions() {
+  local project_root="${1:-.}"
+  local ps_path="$project_root/proposal-suggestions.md"
+  python3 -c "
+import json, sys, os
+p = sys.argv[1]
+try:
+    if not os.path.isfile(p):
+        print(0)
+        sys.exit(0)
+    with open(p) as f:
+        entries = json.load(f)
+    if not isinstance(entries, list):
+        print(0)
+        sys.exit(0)
+    count = sum(1 for e in entries if isinstance(e, dict) and e.get('status') == '待创建')
+    print(count)
+except (FileNotFoundError, json.JSONDecodeError):
+    print(0)
+" "$ps_path" 2>/dev/null || echo 0
+}
