@@ -481,166 +481,17 @@ for each change:
 将 5a-5e 的内容写入 `.rddf/state/.deps-output.md`，供 plan Phase 1 消费。
 
 ```bash
-mkdir -p "$PROJECT_ROOT/.rddf/state/"
-
-# Write real output based on collected analysis.
-# NOTE: Step 2 collects per-change data in $FILES_<name>, $ADR_REFS_<name>,
-# $IFACE_DEF_<name>, $IFACE_USE_<name>. We emit a structured report using
-# $CANDIDATES (the array of candidate change names) so the file actually
-# contains per-change rows rather than a literal placeholder.
-cat > "$DEPS_OUTPUT" << EOF
-# 依赖分析报告
-
-生成时间: $(date -Iseconds)
-候选 changes: ${#CANDIDATES[@]}
-
-## 依赖图 (Mermaid)
-
-\`\`\`mermaid
-flowchart LR
-EOF
-
-# Add a node per change (skeleton changes use double brackets to indicate planned state)
-for name in "${CANDIDATES[@]}"; do
-  if [ ! -f "$PROJECT_ROOT/openspec/changes/$name/design.md" ]; then
-    echo "    ${name}[[${name}]]  %% skeleton change %% " >> "$DEPS_OUTPUT"
-  else
-    echo "    ${name}[${name}]" >> "$DEPS_OUTPUT"
-  fi
-done
-
-cat >> "$DEPS_OUTPUT" << EOF
-\`\`\`
-
-EOF
-
-# === P1-9: 阶段预检 ===
-# 基于每个 change 的 roadmap-meta.yaml 输出"该 change 是否在当前阶段内"的提示。
-# 缺失 roadmap-meta.yaml 的 change 走 compat 模式，标注 ⚠️，不破坏现有流程。
-cat >> "$DEPS_OUTPUT" << EOF
-## 阶段预检
-
-基于每 change 的 \`roadmap-meta.yaml\`：
-
-| Change | Phase | Category | 状态 |
-|--------|-------|----------|------|
-EOF
-
-for name in "${CANDIDATES[@]}"; do
-  meta_file="$PROJECT_ROOT/openspec/changes/$name/roadmap-meta.yaml"
-  if [ -f "$meta_file" ]; then
-    PHASE=$(grep -E "^\s*phase:" "$meta_file" | awk '{print $2}' | tr -d '"' | head -1)
-    CATEGORY=$(grep -E "^\s*category:" "$meta_file" | awk '{print $2}' | tr -d '"' | head -1)
-    # 阶段内判定: 当前 roadmap 阶段由 ROADMAP_CURRENT_PHASE 注入,未设置时一律视为"在阶段内"
-    if [ -n "${ROADMAP_CURRENT_PHASE:-}" ] && [ -n "$PHASE" ] && [ "$PHASE" != "$ROADMAP_CURRENT_PHASE" ]; then
-      echo "| $name | $PHASE | $CATEGORY | ⚠️ 不在当前阶段 ($ROADMAP_CURRENT_PHASE) |" >> "$DEPS_OUTPUT"
-    else
-      echo "| $name | $PHASE | $CATEGORY | ✅ 在阶段内 |" >> "$DEPS_OUTPUT"
-    fi
-  else
-    echo "| $name | (compat) | (compat) | ⚠️ 无 roadmap-meta |" >> "$DEPS_OUTPUT"
-  fi
-done
-
-cat >> "$DEPS_OUTPUT" << EOF
-
-## Change 状态表
-
-| Change | 状态 | 推荐 | 备注 |
-|--------|------|------|------|
-EOF
-
-# Add a row per change with status (fallback: ✅ ready; AI-detected blocker: ⚠️ blocked_by)
-for name in "${CANDIDATES[@]}"; do
-  # Detect skeleton changes (no design.md)
-  IS_SKELETON=""
-  if [ ! -f "$PROJECT_ROOT/openspec/changes/$name/design.md" ]; then
-    IS_SKELETON="📋 skeleton"
-  fi
-  # AI 成功路径: 检查此 change 是否被 AI 报告为 blocked_by
-  if [ -n "${AI_RESULT_FILE:-}" ] && [ -f "$AI_RESULT_FILE" ]; then
-    BLOCKER=$(python3 -c "
-import json
-try:
-    with open('$AI_RESULT_FILE') as f:
-        data = json.load(f)
-    for d in data.get('ai_deps', []):
-        if d.get('to') == '$name' and d.get('kind') == 'hard':
-            print(d.get('from', ''))
-            break
-except Exception:
-    pass
-" 2>/dev/null)
-    if [ -n "$BLOCKER" ]; then
-      echo "| $name | ⚠️ blocked_by | $BLOCKER | $IS_SKELETON |" >> "$DEPS_OUTPUT"
-      continue
-    fi
-  fi
-  # Fallback (or 无 AI blocker): 原占位符
-  echo "| $name | ✅ ready | 第 1 | $IS_SKELETON |" >> "$DEPS_OUTPUT"
-done
-
-cat >> "$DEPS_OUTPUT" << EOF
-
-## 推荐执行顺序
-
-1. \`${CANDIDATES[0]:-none}\` ← 第一个候选
-
-## 冲突警告
-
-（如有文件冲突将列于此处）
-
-## 🧠 AI 分析建议
-EOF
-
-# 动态分支: 子代理成功 → 渲染 AI 报告; 失败 → 写入 fallback 标记
-if [ -n "${AI_RESULT_FILE:-}" ] && [ -f "$AI_RESULT_FILE" ]; then
-    # 成功路径: 解析 .rddf/state/.deps-ai-result.json, 渲染子代理识别的依赖/建议
-    cat >> "$DEPS_OUTPUT" << EOF
-
-**子代理语义分析结果** (来源: \`$AI_RESULT_FILE\`):
-
-EOF
-    python3 -c "
-import json, sys
-try:
-    with open('$AI_RESULT_FILE') as f:
-        data = json.load(f)
-    ai_deps = data.get('ai_deps', [])
-    suggestions = data.get('suggestions', [])
-    if ai_deps:
-        print('**AI 识别的额外依赖** (低置信度, 仅作参考):')
-        print()
-        for d in ai_deps:
-            kind = d.get('kind', 'soft')
-            reason = d.get('reason', '')
-            print(f'- \`{d[\"from\"]}\` → \`{d[\"to\"]}\` ({kind}): {reason}')
-    if suggestions:
-        print()
-        print('**重组建议** (仅建议不执行):')
-        print()
-        for s in suggestions:
-            pf = s.get("parent_feature")
-            if pf:
-               print(f'- \`{s[\"change\"]}\`: {s[\"action\"]} — {s[\"reason\"]} (parent_feature: {pf})')
-            else:
-               print(f'- \`{s[\"change\"]}\`: {s[\"action\"]} — {s[\"reason\"]}')
-except Exception as e:
-    print(f'⚠️ 解析 AI_RESULT_FILE 失败: {e}', file=sys.stderr)
-" >> "$DEPS_OUTPUT" 2>/dev/null || true
-else
-    # 失败 / 降级路径: 写入 fallback 标记, 保留字符串 `AI 语义分析未启用` 供下游兼容
-    cat >> "$DEPS_OUTPUT" << EOF
-
-⚠️ **AI 语义分析未启用 (fallback)** — 子代理不可用或调用失败, 详见 deps.md Step 3f
-以下内容为基于静态三轴分析（文件冲突、ADR 引用、接口依赖）的结论。
-AI 子代理语义分析功能（语义依赖、粒度评估、重组建议）待子代理可用时启用。
-EOF
-fi
-
-echo "✅ 依赖分析报告已写入: $DEPS_OUTPUT"
+# P0-3: Step 5 重构 — 160 行 inline bash 块提取到 _lib/deps_render_report.sh
+# 内部渲染逻辑已迁移到 _lib/deps_output.py::render_markdown_report (有 Python unit 覆盖).
+# - Mermaid 依赖图 (skeleton changes 用 [[name]] 标记)
+# - 阶段预检表 (in-phase / out-of-phase / missing-meta)
+# - Change 状态表 (ready / blocked_by from AI hard deps)
+# - 推荐执行顺序
+# - 冲突警告占位符
+# - AI 分析建议 (rich if ai_result_file exists, fallback otherwise)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/deps_render_report.sh"
+render_deps_report
 ```
-
 **输出文件格式**（`.rddf/state/.deps-output.md` 包含以下 5 个章节，所有示例值为运行时注入的模板）：
 
 #### 5a. 依赖图（Mermaid 格式）

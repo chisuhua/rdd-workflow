@@ -59,14 +59,20 @@ setup() {
   echo "$step3" | grep -q 'tasks\.md'
 }
 
-@test "deps.md Step 5 heredoc has dynamic branch (AI_RESULT_FILE or fallback)" {
-  # Extract the heredoc block (after "## 🧠 AI 分析建议")
-  ai_section=$(awk '
-    /^## 🧠 AI 分析建议/ { in_ai=1; next }
-    in_ai { print }
-  ' "$f" | head -50)
-  # Must contain either the success-path variable, the fallback marker, or "fallback" keyword
-  echo "$ai_section" | grep -qE 'AI_RESULT_FILE|fallback|降级'
+@test "deps.md Step 5 has dynamic branch (AI_RESULT_FILE or fallback) — extracted to helper" {
+  # P0-3 extraction: the AI dynamic branch logic moved to _lib/deps_output.py.
+  # Verify both the inline wrapper reference AND the Python helper contain
+  # the keywords (AI_RESULT_FILE / fallback / 降级) that downstream tests
+  # and consumers rely on.
+  echo "$f" | xargs grep -lE '_lib/deps_render_report.sh' >/dev/null
+  python3 -c "
+import sys
+sys.path.insert(0, '$REPO_ROOT')
+from skills._lib import deps_output as do
+src = open('$REPO_ROOT/skills/_lib/deps_output.py').read()
+assert 'AI 语义分析未启用' in src, 'fallback string missing from deps_output.py'
+assert 'AI_RESULT_FILE' in src or 'ai_result_file' in src, 'ai_result_file missing'
+"
 }
 
 @test "deps.md fallback marker preserves 'AI 语义分析未启用' string (downstream compat)" {
