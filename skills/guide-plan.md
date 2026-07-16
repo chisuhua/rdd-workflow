@@ -93,85 +93,9 @@ rddf_session_hook_entry stage_plan guide-plan plan-phase plan-done .rddf/state/.
 **执行环境检测**：
 
 ```bash
-echo "🔍 Plan 阶段环境检查..."
-echo ""
-
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-
-# 1. openspec CLI 检测
-OPENSPEC_PATH=""
-for p in $(command -v openspec 2>/dev/null) /home/ubuntu/.npm-global/bin/openspec /usr/local/bin/openspec /opt/homebrew/bin/openspec; do
-  [ -x "$p" ] && OPENSPEC_PATH="$p" && break
-done
-if [ -x "$OPENSPEC_PATH" ]; then
-    OPENSPEC_VER=$("$OPENSPEC_PATH" --version 2>/dev/null || echo "?")
-    echo "✅ openspec CLI: $OPENSPEC_VER"
-else
-    echo "❌ openspec CLI 未找到"
-    echo "   请安装: npm install -g openspec-cli"
-    exit 1
-fi
-
-# 2. git 状态
-GIT_CLEAN=$(git status --porcelain | grep -c . || true)
-if [ "$GIT_CLEAN" -eq 0 ]; then
-    echo "✅ git 工作区干净"
-else
-    echo "⚠️  git 工作区有 $GIT_CLEAN 个未跟踪/修改文件"
-fi
-
-# 3. 当前分支
-CURRENT_BRANCH=$(git branch --show-current)
-echo "📌 当前分支: $CURRENT_BRANCH"
-
-# 4. arch 端交付物检查（plan 端的前置条件 — 硬阻断）
-ARCH_HANDOFF="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
-ROADMAP_EXISTS=$([ -f "$PROJECT_ROOT/roadmap.md" ] && echo "yes" || echo "no")
-
-if [ ! -f "$ARCH_HANDOFF" ]; then
-    echo "❌ 未检测到 arch-done handoff (.rddf/state/.arch-handoff.json)"
-    echo ""
-    echo "   arch 阶段必须先完成才能进入 plan 阶段。"
-    echo "   → 请先运行: skill_use(\"guide-arch\")"
-    echo ""
-    echo "   如确定跳过 arch 阶段（已知风险），设置环境变量:"
-    echo "     export SKIP_ARCH_HANDOFF=yes"
-    exit 1
-fi
-
-# ADR-0016 Layer 3: read discovered paths from handoff with v2.0 fallback defaults.
-# jq is used (preferred over python inline - aligns with handoff JSON conventions).
-ADR_DIR=$(jq -r '.adr_dir // "docs/adr"' "$ARCH_HANDOFF" 2>/dev/null || echo "docs/adr")
-ROADMAP_PATH=$(jq -r '.roadmap_path // "roadmap.md"' "$ARCH_HANDOFF" 2>/dev/null || echo "roadmap.md")
-ADR_PATTERN=$(jq -r '.adr_pattern // "ADR-*.md"' "$ARCH_HANDOFF" 2>/dev/null || echo "ADR-*.md")
-ARCHITECTURE_DIR=$(jq -r '.architecture_dir // "docs/architecture"' "$ARCH_HANDOFF" 2>/dev/null || echo "docs/architecture")
-
-# Roadmap existence uses DISCOVERED_ROADMAP_PATH (not hardcoded)
-ROADMAP_EXISTS=$([ -f "$PROJECT_ROOT/$ROADMAP_PATH" ] && echo "yes" || echo "no")
-
-# 从 arch-handoff 读取 ADR 编号（替代重复扫描源文件）
-ADR_IDS=$(python3 -c "
-import json
-with open('$ARCH_HANDOFF') as f:
-    d = json.load(f)
-print(','.join(d.get('completed_adr_ids', [])))
-" 2>/dev/null || echo "")
-ADR_COUNT=$(echo "$ADR_IDS" | tr ',' '\n' | grep -c . || echo 0)
-CURRENT_PHASE=$(python3 -c "
-import json
-with open('$ARCH_HANDOFF') as f:
-    d = json.load(f)
-print(d.get('current_phase', 'default'))
-" 2>/dev/null || echo "default")
-
-echo "📋 ADR 数量: $ADR_COUNT (from arch-handoff, dir=$ADR_DIR)"
-echo "📋 Roadmap 阶段: $CURRENT_PHASE (path=$ROADMAP_PATH)"
-echo "📋 ADR 编号: $ADR_IDS"
-
-# 5. plan 端当前状态
-ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | grep -c . || true)
-echo "📋 当前活跃 changes: $ACTIVE_CHANGES"
-echo "✅ 检测到 arch-done handoff（arch → plan 硬交接信号）"
+# Round A: extracted to _lib/plan_intake.sh (L95-L175, ~79 lines)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/plan_intake.sh"
+run_plan_intake || exit 1
 ```
 
 **扫描委托**：
