@@ -132,49 +132,14 @@ pending-change  │ （无 worktree）        │ 2/5  (40%)  │ 💼 committed
 **Status rendering（v2.0.3，从 iteration.json 派生单一真理源）**：
 
 ```bash
-render_status() {
-  local change="$1"
-  python3 - "${change}" <<'PYEOF'
-import json, sys, os
-name = sys.argv[1]
-p = '.rddf/state/iteration.json'
-try:
-    data = json.load(open(p))
-except Exception:
-    # fallback: filesystem-only detection (commit in HEAD + no worktree)
-    import subprocess
-    has_committed = subprocess.run(
-        ['bash','-c',
-         'for d in openspec/changes/*/; do [ -d "$d" ] || continue; '
-         'case "$d" in */archive/) continue ;; esac; '
-         'git show HEAD:"$d.openspec.yaml" >/dev/null 2>&1 && exit 0; done; exit 1'
-        ], capture_output=True).returncode == 0
-    has_worktree = any(branch == f'openspec/{name}'
-                       for line in subprocess.check_output(['git','worktree','list']).decode().splitlines()
-                       for branch in [line.split()[-1].strip('[]')])
-    if has_committed and not has_worktree:
-        print('💼 committed (no worktree yet)')
-    elif has_worktree:
-        print('🔧 in_worktree (fallback)')
-    else:
-        print('📋 planned (skeleton fallback)')
-    sys.exit(0)
-ch = next((c for c in data.get('changes',[]) if c.get('name')==name), None)
-if not ch:
-    print('❓ unknown')
-    sys.exit(0)
-status = ch.get('status','unknown')
-icons = {
-    'planned':     '📋',
-    'committed':   '💼',
-    'proposed':    '✅',
-    'in_worktree': '🔧',
-    'completed':   '✔',
-    'archived':    '📦',
-}
-print(f"{icons.get(status,'❓')} {status}")
-PYEOF
-}
+# Status rendering extracted to skills/_lib/status_render_mode_a.sh (Round B Task B6).
+# Single-import helper for Mode A change status display.
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/status_render_mode_a.sh"
+
+# Usage: render_status_mode_a <change-name>
+# The helper queries iteration.json (primary) with filesystem fallback
+# and returns an emoji + status label string, e.g.:
+#   status=$(render_status_mode_a "my-change")
 ```
 
 **单一真理源规则**：Mode A 的状态列**只**从 iteration.json 读取；filesystem-only fallback 仅在 iteration.json 缺失时触发。禁止在表格或 case 分支里硬编码状态文字。
