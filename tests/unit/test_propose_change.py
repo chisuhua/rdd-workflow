@@ -112,3 +112,98 @@ class TestCreateSkeletonChange:
         # proposal.md + yaml should exist
         assert (tmp_path / "openspec" / "changes" / "c1" / "proposal.md").exists()
         assert (tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml").exists()
+
+
+class TestUpdateRoadmapMeta:
+    """update_roadmap_meta encapsulates lines 617-686 of propose.md:
+    - Lookup phase/category from proposal-suggestions.md (or fallback)
+    - Validate category against valid_categories list
+    - Write roadmap-meta.yaml
+
+    Per baseline correction: uses real init_state('phase-1') categories
+    (arch-design, infra-setup, core-impl, core-test), NOT 'general'.
+    """
+
+    def test_writes_yaml_with_phase_and_category(self, tmp_path):
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        # Set up proposal-suggestions.md with explicit phase/category
+        entries = [{"name": "c1", "phase": "phase-2", "category": "core-impl"}]
+        (tmp_path / "proposal-suggestions.md").write_text(json.dumps(entries))
+        result = pc.update_roadmap_meta(
+            str(tmp_path), "c1",
+            current_phase="phase-1",
+            change_category="arch-design",
+            priority="P2",
+            valid_categories=(
+                "arch-design:Architecture Design\n"
+                "infra-setup:Infrastructure Setup\n"
+                "core-impl:Core Implementation\n"
+                "core-test:Core Test"
+            ),
+        )
+        assert result is True
+        yaml_path = tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml"
+        assert yaml_path.exists()
+        content = yaml_path.read_text()
+        # Should use entry's phase (phase-2) not current_phase
+        assert 'phase: "phase-2"' in content
+        assert 'category: "core-impl"' in content
+
+    def test_falls_back_to_arguments_when_suggestions_missing(self, tmp_path):
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        # No proposal-suggestions.md
+        result = pc.update_roadmap_meta(
+            str(tmp_path), "c1",
+            current_phase="phase-3",
+            change_category="arch-design",
+            priority="P1",
+            valid_categories="arch-design:Arch",
+        )
+        assert result is True
+        yaml_path = tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml"
+        content = yaml_path.read_text()
+        assert 'phase: "phase-3"' in content
+
+    def test_always_falls_back_to_general_when_category_invalid(self, tmp_path):
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        entries = [{"name": "c1", "category": "nonexistent"}]
+        (tmp_path / "proposal-suggestions.md").write_text(json.dumps(entries))
+        result = pc.update_roadmap_meta(
+            str(tmp_path), "c1",
+            current_phase="phase-1",
+            change_category="general",
+            priority="P2",
+            valid_categories=(
+                "arch-design:Architecture Design\n"
+                "infra-setup:Infrastructure Setup\n"
+                "core-impl:Core Implementation\n"
+                "core-test:Core Test"
+            ),
+        )
+        assert result is True
+        yaml_path = tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml"
+        content = yaml_path.read_text()
+        # Should ALWAYS fallback to 'general' regardless of valid_categories
+        assert 'category: "general"' in content
+
+    def test_returns_false_when_change_directory_missing(self, tmp_path):
+        result = pc.update_roadmap_meta(
+            str(tmp_path), "missing-change",
+            current_phase="phase-1",
+            change_category="arch-design",
+            priority="P2",
+            valid_categories="arch-design:Architecture",
+        )
+        assert result is False
+
+    def test_uses_priority_argument(self, tmp_path):
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        result = pc.update_roadmap_meta(
+            str(tmp_path), "c1",
+            current_phase="phase-1",
+            change_category="core-impl",
+            priority="P0",
+            valid_categories="arch-design:Arch\ncore-impl:Core",
+        )
+        yaml_path = tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml"
+        assert 'priority: "P0"' in yaml_path.read_text()

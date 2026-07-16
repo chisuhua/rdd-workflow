@@ -125,3 +125,77 @@ def create_skeleton_change(
 
     print(f"✅ Skeleton created: {name}")
     return True
+
+def update_roadmap_meta(
+    project_root: str,
+    name: str,
+    current_phase: str,
+    change_category: str,
+    priority: str,
+    valid_categories: str,
+) -> bool:
+    """Update roadmap-meta.yaml for a change (propose.md lines 617-686).
+
+    Looks up phase/category from proposal-suggestions.md, falls back to
+    arguments. ALWAYS falls back to 'general' on invalid category (matches
+    original inline behavior at line 671 which hard-codes
+    CHANGE_CATEGORY='general' regardless of valid_categories).
+    Returns False if openspec/changes/<name>/ doesn't exist or yaml write fails.
+    """
+    import os
+    change_dir = os.path.join(project_root, "openspec", "changes", name)
+    if not os.path.isdir(change_dir):
+        return False
+
+    # Lookup phase/category from proposal-suggestions.md (matches lines 622-658)
+    suggestions_path = os.path.join(project_root, "proposal-suggestions.md")
+    lookup_phase = current_phase
+    lookup_category = change_category
+    try:
+        with open(suggestions_path) as f:
+            entries = json.load(f)
+        if isinstance(entries, list):
+            for entry in entries:
+                if isinstance(entry, dict) and entry.get("name") == name:
+                    if entry.get("phase"):
+                        lookup_phase = entry["phase"]
+                    if entry.get("category"):
+                        lookup_category = entry["category"]
+                    break
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass  # fall back to arguments
+
+    # Validate category (matches lines 660-672)
+    valid_cat_set = set()
+    for line in (valid_categories or "").split("\n"):
+        if ":" in line:
+            valid_cat_set.add(line.split(":")[0].strip())
+
+    if lookup_category not in valid_cat_set:
+        # ALWAYS fallback to "general" regardless of valid_categories content.
+        # Matches original inline behavior at propose.md line 671.
+        print(
+            f"⚠️  Change '{name}' 的分类 '{lookup_category}' "
+            f"不在当前阶段 '{current_phase}' 的有效分类中"
+        )
+        print(f"   有效分类: {' '.join(sorted(valid_cat_set))}")
+        lookup_category = "general"
+
+    # Write roadmap-meta.yaml (matches lines 675-685)
+    yaml_path = os.path.join(change_dir, "roadmap-meta.yaml")
+    try:
+        with open(yaml_path, "w") as f:
+            f.write('roadmap:\n')
+            f.write(f'  phase: "{lookup_phase}"\n')
+            f.write(f'  category: "{lookup_category}"\n')
+            f.write(f'  priority: "{priority}"\n')
+            f.write(f'  gate_checklist: []\n')
+            f.write(f'  cross_phase_deps: []\n')
+            f.write(f'  category_validation:\n')
+            f.write(f'    valid: true\n')
+            f.write(f'    reason: ""\n')
+    except OSError:
+        return False
+
+    print(f"  已创建: roadmap-meta.yaml (phase: {lookup_phase}, category: {lookup_category})")
+    return True
