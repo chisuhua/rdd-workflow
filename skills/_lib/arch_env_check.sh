@@ -11,6 +11,7 @@
 # - Delegates to discover-arch-artifacts.sh (ADR-0016 Layer 1)
 
 run_arch_env_check() {
+  local PROJECT_ROOT
   PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
   export PROJECT_ROOT
 
