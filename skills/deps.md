@@ -759,102 +759,10 @@ deps 的静态三轴 + AI 子代理分析结果，除了写到 `.deps-output.md`
 **实现**：
 
 ```bash
-# v2.0.2 安全修复: bash 变量通过环境变量传递 (os.environ), 不用 '$VAR'
-# 直接拼到 Python 源码. 避免路径含单引号或 change name 注入.
-PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
-import os, sys, re
-from pathlib import Path
-try:
-    from skills._lib import iteration as it_mod
-    from skills._lib import deps_output as do_mod
-except ImportError as e:
-    print(f"⚠️  iteration/deps_output 模块不可用, 跳过同步: {e}", file=sys.stderr)
-    sys.exit(0)
-
-project_root = os.environ["PROJECT_ROOT"]
-deps_output_path = Path(f"{project_root}/.rddf/state/.deps-output.md")
-if not deps_output_path.exists():
-    print("⚠️  deps-output.md 不存在, 跳过 iteration 同步", file=sys.stderr)
-    sys.exit(0)
-
-# Prefer reading the structured deps-analysis.json (robust, schema-validated).
-# Fall back to parsing deps-output.md if JSON is missing/stale.
-analysis = do_mod.load_analysis(project_root)
-parsed_from = "JSON"
-
-if analysis is None:
-    parsed_from = "MARKDOWN-FALLBACK"
-    text = deps_output_path.read_text(encoding="utf-8")
-
-    # 解析 "Change 状态表" 章节 (§5b)
-    status_table = re.search(r"## Change 状态表\n\n\|.*?\n\|.*?\n((?:\|.*?\n)+)", text)
-    changes_info = {}
-    if status_table:
-        rows = status_table.group(1).strip().split("\n")
-        for idx, row in enumerate(rows):
-            cells = [c.strip() for c in row.strip("|").split("|")]
-            if len(cells) < 2:
-                continue
-            name = cells[0]
-            if not name or name == "—":
-                continue
-            blocker = cells[2] if len(cells) > 2 and cells[2] not in ("—", "") else None
-            # parallel_group 推断: 没 blocker 的为 0, 有 blocker 的按出现顺序递增
-            changes_info[name] = {
-                "blocker": blocker,
-                "parallel_group": idx if blocker else 0,
-                "conflicts": [],
-            }
-
-    # 解析 "冲突警告" 章节 (§5d)
-    conflicts_section = re.search(r"## 冲突警告.*?\n(.*?)(?=\n## |\Z)", text, re.DOTALL)
-    if conflicts_section:
-        for line in conflicts_section.group(1).split("\n"):
-            m = re.search(r"(\S+)\s+←→\s+(\S+):", line)
-            if m:
-                a, b = m.group(1), m.group(2)
-                for n in (a, b):
-                    changes_info.setdefault(n, {"blocker": None, "parallel_group": 0, "conflicts": []})
-                    existing = changes_info[n].get("conflicts", [])
-                    other = b if n == a else a
-                    if other not in existing:
-                        existing.append(other)
-                    changes_info[n]["conflicts"] = existing
-
-    # 升级为 ChangeAnalysis 格式
-    analysis_changes = []
-    for name, info in changes_info.items():
-        status = "blocked_by" if info.get("blocker") else "ready"
-        analysis_changes.append({
-            "name": name,
-            "status": status,
-            "blocker": info.get("blocker"),
-            "blocks": [],
-            "parallel_group": info.get("parallel_group", 0),
-            "conflicts": info.get("conflicts", []),
-            "confidence": "low",  # 来自 markdown fallback, 标记为低置信度
-            "recommendation": "",
-        })
-    analysis = do_mod.build_analysis(analysis_changes, fallback=True)
-
-# 写 deps-analysis.json (即使从 JSON 读的, 也重写以保证 updated_at 最新)
-try:
-    do_mod.write_analysis(project_root, analysis)
-    print(f"✅ deps-analysis.json: {len(analysis[\"changes\"])} 个 change (来源: {parsed_from})")
-except Exception as e:
-    print(f"⚠️  写 deps-analysis.json 失败 (非致命): {e}", file=sys.stderr)
-
-# 同步 iteration.json
-try:
-    count = do_mod.sync_iteration_from_analysis(project_root, it_mod)
-    if count > 0:
-        print(f"✅ iteration.json: 已同步 {count} 个 change 的 deps 信息")
-    else:
-        print("⏭️  iteration.json: 无需同步")
-except Exception as e:
-    print(f"⚠️  iteration.json 同步失败 (deps 主流程仍成功): {e}", file=sys.stderr)
-    sys.exit(0)
-' 2>&1 | grep -v "^$" || true
+# P3-4d: Step 6 重构 — 97 行 inline heredoc 提取到 _lib/deps_iteration_sync.sh
+# 内部解析已迁移到 _lib/deps_output.py::parse_markdown_fallback (有 Python unit 覆盖).
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/deps_iteration_sync.sh"
+deps_iteration_sync
 ```
 
 **为什么放在 deps 而不是 propose**：deps 是 deps 信息的**权威源**（3 轴 + AI 子代理）。让 propose 也算一遍是重复计算。让 deps 写一次，下游所有读取（status Mode E、roadmap.md AUTO-SPRINT）都从同一处拿数据。

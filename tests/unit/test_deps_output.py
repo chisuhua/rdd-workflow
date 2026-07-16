@@ -1,6 +1,7 @@
 """Unit tests for skills/_lib/deps_output.py — structured deps analysis."""
 import json
 import os
+from pathlib import Path
 import pytest
 
 from skills._lib import deps_output as do
@@ -228,3 +229,147 @@ class TestSyncIterationFromAnalysis:
 
         loaded = it.load(project_root)
         assert loaded["changes"][0]["status"] == "in_worktree"
+
+
+# ---------------------------------------------------------------------------
+# parse_markdown_fallback (P3-4d: extracted from deps.md Step 6 inline heredoc)
+# ---------------------------------------------------------------------------
+
+class TestParseMarkdownFallback:
+    """Parse the .deps-output.md human-readable report and extract change
+    deps info. Returns a dict suitable for build_analysis() (list of change
+    records with name/blocker/blocks/parallel_group/conflicts/confidence).
+    Returns None when the file is missing, malformed, or has no Change table.
+    """
+
+    def _write_deps_output(self, project_root, content):
+        path = Path(project_root) / ".rddf" / "state" / ".deps-output.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+
+    def test_missing_file_returns_none(self, project_root):
+        result = do.parse_markdown_fallback(project_root)
+        assert result is None
+
+    def test_no_change_table_returns_none(self, project_root):
+        self._write_deps_output(project_root, "# Empty report\n\nNo data here.\n")
+        assert do.parse_markdown_fallback(project_root) is None
+
+    def test_parses_status_table_with_no_blocker(self, project_root):
+        md = """# Deps Report
+
+## Change 状态表
+
+| Change | Status | Blocker | Parallel Group | Conflicts |
+|--------|--------|---------|----------------|-----------|
+| c1 | ready | — | 0 | — |
+| c2 | ready | — | 0 | — |
+"""
+        self._write_deps_output(project_root, md)
+        result = do.parse_markdown_fallback(project_root)
+        assert result is not None
+        changes = {c["name"]: c for c in result}
+        assert changes["c1"]["blocker"] is None
+        assert changes["c1"]["parallel_group"] == 0
+        assert changes["c1"]["conflicts"] == []
+        assert changes["c1"]["status"] == "ready"
+        assert changes["c2"]["parallel_group"] == 0
+
+    def test_parses_blocker_chain_assigns_increasing_parallel_group(self, project_root):
+        md = """## Change 状态表
+
+| Change | Status | Blocker | Parallel Group | Conflicts |
+|--------|--------|---------|----------------|-----------|
+| c1 | blocked | c2 | — | — |
+| c2 | blocked | c3 | — | — |
+| c3 | ready | — | — | — |
+"""
+        self._write_deps_output(project_root, md)
+        result = do.parse_markdown_fallback(project_root)
+        changes = {c["name"]: c for c in result}
+        assert changes["c1"]["blocker"] == "c2"
+        assert changes["c1"]["status"] == "blocked_by"
+        # Items with blockers get sequential parallel_group by table position
+        assert changes["c1"]["parallel_group"] == 0
+        assert changes["c2"]["parallel_group"] == 1
+        # No blocker → group 0
+        assert changes["c3"]["parallel_group"] == 0
+
+    def test_parses_conflicts_section(self, project_root):
+        md = """## Change 状态表
+
+| Change | Status | Blocker | Parallel Group | Conflicts |
+|--------|--------|---------|----------------|-----------|
+| c1 | ready | — | 0 | — |
+| c2 | ready | — | 0 | — |
+
+## 冲突警告
+
+c1 ←→ c2: shared file src/api.py
+"""
+        self._write_deps_output(project_root, md)
+        result = do.parse_markdown_fallback(project_root)
+        changes = {c["name"]: c for c in result}
+        assert "c2" in changes["c1"]["conflicts"]
+        assert "c1" in changes["c2"]["conflicts"]
+
+    def test_conflicts_section_adds_changes_not_in_status_table(self, project_root):
+        md = """## Change 状态表
+
+| Change | Status | Blocker | Parallel Group | Conflicts |
+|--------|--------|---------|----------------|-----------|
+| c1 | ready | — | 0 | — |
+
+## 冲突警告
+
+c1 ←→ c2: shared file src/api.py
+"""
+        self._write_deps_output(project_root, md)
+        result = do.parse_markdown_fallback(project_root)
+        names = sorted(c["name"] for c in result)
+        assert names == ["c1", "c2"]
+        changes = {c["name"]: c for c in result}
+        assert changes["c2"]["blocker"] is None
+        assert changes["c2"]["parallel_group"] == 0
+
+    def test_returns_changes_with_low_confidence(self, project_root):
+        """Markdown fallback must be tagged low confidence (P3-4d)."""
+        md = """## Change 状态表
+
+| Change | Status | Blocker | Parallel Group | Conflicts |
+|--------|--------|---------|----------------|-----------|
+| c1 | ready | — | 0 | — |
+"""
+        self._write_deps_output(project_root, md)
+        result = do.parse_markdown_fallback(project_root)
+        assert result[0]["confidence"] == "low"
+
+    def test_skips_empty_or_dash_rows_in_status_table(self, project_root):
+        md = """## Change 状态表
+
+| Change | Status | Blocker | Parallel Group | Conflicts |
+|--------|--------|---------|----------------|-----------|
+| — | — | — | — | — |
+| c1 | ready | — | 0 | — |
+"""
+        self._write_deps_output(project_root, md)
+        result = do.parse_markdown_fallback(project_root)
+        names = [c["name"] for c in result]
+        assert "c1" in names
+        assert "—" not in names
+        assert "" not in names
+
+    def test_blocker_with_dash_treated_as_none(self, project_root):
+        md = """## Change 状态表
+
+| Change | Status | Blocker | Parallel Group | Conflicts |
+|--------|--------|---------|----------------|-----------|
+| c1 | ready | — | 0 | — |
+| c2 | ready | — | 0 | — |
+"""
+        self._write_deps_output(project_root, md)
+        result = do.parse_markdown_fallback(project_root)
+        changes = {c["name"]: c for c in result}
+        for name in ("c1", "c2"):
+            assert changes[name]["blocker"] is None
+            assert changes[name]["status"] == "ready"
