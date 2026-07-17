@@ -35,10 +35,10 @@ load ../test_helper
 @test "guide-ship.md Phase 2.5 case/esac block is now thin (was 173)" {
   [ -f "$REPO_ROOT/skills/guide-ship.md" ]
   # After refactor: no `case "$choice"` should appear in Phase 2.5 range
-  # (lines 446-705). The dispatch logic lives in ship_review.sh now.
-  ! sed -n '446,705p' "$REPO_ROOT/skills/guide-ship.md" | grep -qE '^case "\$choice"'
+  # (lines 352-441). The dispatch logic lives in ship_review.sh now.
+  ! sed -n '352,441p' "$REPO_ROOT/skills/guide-ship.md" | grep -qE '^case "\$choice"'
   # The thin wrapper must exist (handle_review_action call).
-  sed -n '446,705p' "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'handle_review_action'
+  sed -n '352,441p' "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'handle_review_action'
 }
 
 @test "handle_review_action option 1 appends review todos to tasks.md" {

@@ -420,6 +420,36 @@ def list_blocked(data: dict) -> list[dict]:
     return out
 
 
+def get_unblocked_planned(project_root: str) -> list[dict]:
+    """[Post-archive hook] Return planned changes whose blockers are resolved.
+
+    Called by guide-ship Phase 3 after archive completes. Returns skeleton
+    (planned) changes whose blocker has transitioned to completed/archived,
+    making them candidates for fill.
+
+    More restrictive than list_ready_for_fill: only considers explicitly
+    resolved blockers (status in {"completed", "archived"}), not missing
+    or unlisted blockers.
+
+    Args:
+        project_root: Path to project root with .rddf/state/iteration.json
+    Returns:
+        List of change dicts with at minimum name, status, blocker fields.
+    """
+    data = load(project_root)
+    unblocked: list[dict] = []
+    for c in data.get("changes", []):
+        if c.get("status") != "planned":
+            continue
+        blocker_name = c.get("blocker")
+        if not blocker_name:
+            unblocked.append(c)
+            continue
+        blocker = get_change(data, blocker_name)
+        if blocker and blocker.get("status") in ("completed", "archived"):
+            unblocked.append(c)
+    return unblocked
+
 # ---------------------------------------------------------------------------
 # Feature grouping — derived from change name prefix (no schema change)
 # Convention: feature-<name>-<sub>, e.g. feature-stream-core → feature-stream

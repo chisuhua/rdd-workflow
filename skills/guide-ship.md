@@ -4,7 +4,7 @@ description: Ship-side state machine for OpenSpec workflow — guides user from 
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+, git 2.25+. Plan generation delegated to spec-workflow/writing-plans (v2.0 自包含,无外部 skill 依赖).
 metadata:
-  version: "2.0.1"  # v2.0.1: add post-archive fill suggestion hook for skeleton changes
+  version: "2.0.7"  # v2.0.7: P0-P2 refactors — heartbeat helper, post-archive fill extraction, case handler dedup
   author: sisyphus
   evolved-from: "split from guide.md v3.0; v2.0 移除 prometheus-planning 间接层, 直接调用内置 skill"
   user-invocable: true
@@ -103,17 +103,12 @@ Plan 阶段
 i. 其他输入
 ```
 
-**用户输入处理（case handler）**：
-
-当用户输入不在上述有效选项内时，按以下 case 分支处理：
+**输入处理**：
 
 ```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
+# 输入处理 — extracted to _lib/ship_case_handler.sh
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+handle_invalid_choice "$choice"
 ```
 
 **选项 1/2 执行内容**（以 fix-ns-pollution 为例）：
@@ -163,17 +158,12 @@ ${CHANGE_NAME} 已就绪（${MODE}模式），请选择执行方式：
 i. 其他输入
 ```
 
-**用户输入处理（case handler）**：
-
-当用户输入不在上述有效选项内时，按以下 case 分支处理：
+**输入处理**：
 
 ```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
+# 输入处理 — extracted to _lib/ship_case_handler.sh
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+handle_invalid_choice "$choice"
 ```
 
 **选项 1（阻塞执行）执行内容**：
@@ -236,17 +226,12 @@ if [ "$TOTAL_ACTIVE" -gt 0 ]; then
 fi
 ```
 
-**用户输入处理（case handler）**：
-
-当用户输入不在上述有效选项内时，按以下 case 分支处理：
+**输入处理**：
 
 ```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
+# 输入处理 — extracted to _lib/ship_case_handler.sh
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+handle_invalid_choice "$choice"
 ```
 
 ---
@@ -289,17 +274,12 @@ Execute 阶段（监控模式）
 i. 其他输入
 ```
 
-**用户输入处理（case handler）**：
-
-当用户输入不在上述有效选项内时，按以下 case 分支处理：
+**输入处理**：
 
 ```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
+# 输入处理 — extracted to _lib/ship_case_handler.sh
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+handle_invalid_choice "$choice"
 ```
 
 **选项 7（刷新进度）执行内容**：
@@ -487,17 +467,12 @@ Status 阶段
 i. 其他输入
 ```
 
-**用户输入处理（case handler）**：
-
-当用户输入不在上述有效选项内时，按以下 case 分支处理：
+**输入处理**：
 
 ```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
+# 输入处理 — extracted to _lib/ship_case_handler.sh
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+handle_invalid_choice "$choice"
 ```
 
 **归档流程（选项 1/2）**：
@@ -513,50 +488,22 @@ check_feature_integrity "$PROJECT_ROOT" "$CHANGE_NAME"
 archive_change_for_mode "$PROJECT_ROOT" "$CHANGE_NAME" "$ARCHIVE_MODE"
 ```
 
-**用户输入处理（case handler）**：
-
-当用户输入不在上述有效选项内时，按以下 case 分支处理：
+**输入处理**：
 
 ```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
+# 输入处理 — extracted to _lib/ship_case_handler.sh
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+handle_invalid_choice "$choice"
 ```
 
 ---
 
-**rddf-session 关闭 hook**（ADR-0017）：archive 成功后，刷新对应 rddf-session 心跳（标记 stage_ship 仍在执行，直到 ship-done 才标 completed）：
+**rddf-session heartbeat refresh**（ADR-0017）：archive 成功后，刷新对应 rddf-session 心跳（标记 stage_ship 仍在执行，直到 ship-done 才标 completed）：
 
 ```bash
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
-CHANGE_NAME="${CHANGE_NAME:-}"
-python3 - "$PROJECT_ROOT" "$OPENCODE_SESSION_ID" "$CHANGE_NAME" <<'PYEOF'
-import sys, os
-sys.path.insert(0, sys.argv[1])
-from skills._lib.rddf_session import RddfSessionCoordinator
-project_root = sys.argv[1]
-opencode_sid = sys.argv[2]
-change_name = sys.argv[3]
-sessions_file = os.path.join(project_root, ".rddf", "state", "sessions.json")
-if os.path.exists(sessions_file):
-    coord = RddfSessionCoordinator(sessions_file=sessions_file)
-    try:
-        sid = coord.create_session(
-            kind="stage_ship",
-            owner_opencode_session_id=opencode_sid,
-            goal={"intent": "guide-ship"},
-        )
-        if change_name:
-            coord.detach_change(sid, change_name)
-        coord.refresh_heartbeat(sid)
-        print(f"rddf-session: {sid} heartbeat refreshed (after archive {change_name})")
-    except Exception as e:
-        print(f"rddf-session heartbeat skip: {e}")
-PYEOF
+# rddf-session heartbeat refresh (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/rddf_session_hooks.sh"
+rddf_session_hook_heartbeat stage_ship "$CHANGE_NAME"
 ```
 
 ## Phase 3 完成后: post-archive fill suggestion hook
@@ -566,51 +513,14 @@ PYEOF
 **行为**:
 
 1. 调用 `iteration.get_unblocked_planned(project_root)` 扫描 `iteration.json`
-2. 找出所有 `status="planned"` 且 blocker 状态为 `archived` 的 change
+2. 找出所有 `status="planned"` 且 blocker 已归档的 change
 3. 若有结果，输出建议信息（不自动调用 guide-plan fill）
 4. 若无结果，保持现有输出不变
 
-**实现要点**（新增 `iteration.get_unblocked_planned()` 函数后调用）：
-
 ```bash
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-
-# 扫描因本次归档而解除阻塞的 planned change
-UNBLOCKED=$(PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
-import os, sys
-try:
-    from skills._lib import iteration as it_mod
-    data = it_mod.load(os.environ["PROJECT_ROOT"])
-    unblocked = []
-    for c in data.get("changes", []):
-        if c.get("status") != "planned":
-            continue
-        blocker_name = c.get("blocker")
-        if not blocker_name:
-            unblocked.append(c["name"])
-            continue
-        # Look up blocker status
-        blocker = next(
-            (b for b in data.get("changes", []) if b.get("name") == blocker_name),
-            None
-        )
-        if blocker and blocker.get("status") in ("completed", "archived"):
-            unblocked.append(c["name"])
-    for n in unblocked:
-        print(n)
-except Exception as e:
-    print(f"⚠️ get_unblocked_planned failed: {e}", file=sys.stderr)
-' 2>/dev/null)
-
-if [ -n "$UNBLOCKED" ]; then
-    echo ""
-    echo "💡 Fill suggestion (post-archive):"
-    echo "   以下 planned change 的 blocker 已解除，可填充："
-    for name in $UNBLOCKED; do
-        echo "     - $name"
-    done
-    echo "   运行 'skill_use(\"guide-plan\")' → 选择 '3. 填充骨架 change (fill)' 来填充下一个"
-fi
+# Phase 3 post-archive: fill suggestion hook — extracted to _lib/post_archive_fill.sh
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/post_archive_fill.sh"
+run_post_archive_fill_suggestion
 ```
 
 **关键约束**:
@@ -640,17 +550,12 @@ fi
 i. 其他输入
 ```
 
-**用户输入处理（case handler）**：
-
-当用户输入不在上述有效选项内时，按以下 case 分支处理：
+**输入处理**：
 
 ```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
+# 输入处理 — extracted to _lib/ship_case_handler.sh
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+handle_invalid_choice "$choice"
 ```
 
 **选项 1 执行**：
@@ -737,15 +642,10 @@ else
 fi
 ```
 
-**用户输入处理（case handler）**：
-
-当用户输入不在上述有效选项内时，按以下 case 分支处理：
+**输入处理**：
 
 ```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
+# 输入处理 — extracted to _lib/ship_case_handler.sh
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+handle_invalid_choice "$choice"
 ```

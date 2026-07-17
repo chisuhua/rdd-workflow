@@ -138,3 +138,54 @@ except Exception as e:
     print(f"rddf-session close skipped: {e}")
 PYEOF
 }
+
+# rddf_session_hook_heartbeat <kind> [change_name]
+#
+# Called by guide-ship Phase 3 after each archive to refresh the
+# rddf-session heartbeat (marking the session as still active until
+# ship-done). Optionally detaches the archived change from the session.
+#
+# Gracefully skips when sessions.json does not exist (consistent with
+# entry/close hooks after P3-4c alignment).
+rddf_session_hook_heartbeat() {
+  local kind="$1"
+  local change_name="${2:-}"
+
+  PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
+
+  KIND="$kind" \
+  CHANGE_NAME="$change_name" \
+  PROJECT_ROOT="$PROJECT_ROOT" \
+  OPENCODE_SESSION_ID="$OPENCODE_SESSION_ID" \
+  python3 <<'PYEOF'
+import os, sys
+sys.path.insert(0, os.environ["PROJECT_ROOT"])
+from skills._lib.rddf_session import RddfSessionCoordinator
+
+project_root = os.environ["PROJECT_ROOT"]
+kind = os.environ["KIND"]
+change_name = os.environ.get("CHANGE_NAME") or None
+opencode_sid = os.environ["OPENCODE_SESSION_ID"]
+
+sessions_file = os.path.join(project_root, ".rddf", "state", "sessions.json")
+if not os.path.exists(sessions_file):
+    print("rddf-session: sessions.json not found, skipping heartbeat")
+    sys.exit(0)
+
+coord = RddfSessionCoordinator(sessions_file=sessions_file)
+try:
+    sid = coord.create_session(
+        kind=kind,
+        owner_opencode_session_id=opencode_sid,
+        goal={"intent": "guide-ship"},
+    )
+    if change_name:
+        coord.detach_change(sid, change_name)
+    coord.refresh_heartbeat(sid)
+    action = f"(after archive {change_name})" if change_name else ""
+    print(f"rddf-session: {sid} heartbeat refreshed {action}".strip())
+except Exception as e:
+    print(f"rddf-session heartbeat skip: {e}")
+PYEOF
+}
