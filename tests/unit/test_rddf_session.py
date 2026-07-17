@@ -7,7 +7,7 @@ from pathlib import Path
 import jsonschema
 import pytest
 
-from skills._lib.rddf_session import RddfSessionCoordinator, RddfSessionError, ConflictError
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator, RddfSessionError, ConflictError
 
 
 @pytest.fixture

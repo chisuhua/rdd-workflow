@@ -26,7 +26,7 @@ run_current() {
   PY_PROJECT_ROOT="$TEST_ROOT" python3 - <<PYEOF
 import os, sys
 sys.path.insert(0, "$REPO_ROOT")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file=os.path.join(os.environ["PY_PROJECT_ROOT"], ".rddf/state/sessions.json"))
 coord.check_heartbeat_timeouts()
 current = coord.find_current_binding("$owner")
@@ -47,7 +47,7 @@ PYEOF
   python3 - <<PYEOF
 import sys
 sys.path.insert(0, "$REPO_ROOT")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
 coord.create_session(kind="stage_plan", owner_opencode_session_id="ses_me", goal={})
 PYEOF
@@ -61,7 +61,7 @@ PYEOF
   python3 - <<PYEOF
 import sys
 sys.path.insert(0, "$REPO_ROOT")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
 coord.create_session(kind="stage_plan", owner_opencode_session_id="ses_other", goal={})
 PYEOF
@@ -74,7 +74,7 @@ PYEOF
   python3 - <<PYEOF
 import sys, json
 sys.path.insert(0, "$REPO_ROOT")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
 sid = coord.create_session(kind="stage_plan", owner_opencode_session_id="ses_old", goal={})
 # Force orphaned
@@ -113,7 +113,7 @@ PYEOF
   python3 - <<PYEOF
 import sys
 sys.path.insert(0, "$REPO_ROOT")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
 coord.create_session(kind="stage_arch", owner_opencode_session_id="ses_special_marker_42", goal={})
 PYEOF
@@ -128,7 +128,7 @@ PYEOF
   python3 - <<PYEOF
 import sys, socket
 sys.path.insert(0, "$REPO_ROOT")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
 expected = f"{socket.gethostname().split('.')[0]}_$$"
 coord.create_session(kind="stage_plan", owner_opencode_session_id=expected, goal={})
@@ -142,7 +142,7 @@ PYEOF
   python3 - <<PYEOF
 import sys
 sys.path.insert(0, "$REPO_ROOT")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
 coord.create_session(kind="stage_plan", owner_opencode_session_id="ses_me", goal={})
 PYEOF

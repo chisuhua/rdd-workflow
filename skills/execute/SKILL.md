@@ -54,10 +54,10 @@ worktree (openspec/<name>): 本技能在此执行
 ```bash
 # Round A: extracted to _lib/select_worktree.sh (L54-L168, ~113 lines)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
-if [ -f "$SCRIPT_DIR/../_lib/select_worktree.sh" ]; then
-  source "$SCRIPT_DIR/../_lib/select_worktree.sh"
-  source "$SCRIPT_DIR/../_lib/update_roadmap_progress.sh"
-  source "$SCRIPT_DIR/../_lib/execute_step7.sh"
+if [ -f "$SCRIPT_DIR/scripts/select_worktree.sh" ]; then
+  source "$SCRIPT_DIR/scripts/select_worktree.sh"
+  source "$SCRIPT_DIR/scripts/update_roadmap_progress.sh"
+  source "$SCRIPT_DIR/scripts/execute_step7.sh"
 fi
 auto_detect_worktree_context || exit 1
 ```
@@ -236,10 +236,10 @@ update_roadmap_progress "$CHANGE_NAME"
 
 执行完成后必须同步 tasks.md 以通知 openspec CLI：
 
-使用 `skills/_lib/tasks_writeback.sh` 辅助函数（Round B 提取自 execute.md L366-L399）：
+使用 `scripts/tasks_writeback.sh` 辅助函数（Round B 提取自 execute.md L366-L399）：
 
 ```bash
-source "$SCRIPT_DIR/../_lib/tasks_writeback.sh"
+source "$SCRIPT_DIR/scripts/tasks_writeback.sh"
 
 # 方法 A：精确匹配单个任务（使用 awk index() + substr() 字面量匹配）
 CHANGE_NAME="<name>" mark_task_done "实现UART寄存器配置"

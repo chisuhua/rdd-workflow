@@ -10,8 +10,8 @@
 load ../test_helper
 
 @test "feature_order: helper file exists with render_feature_order function" {
-  [ -f "$REPO_ROOT/skills/_lib/feature_order.sh" ]
-  bash -c "source '$REPO_ROOT/skills/_lib/feature_order.sh' && declare -f render_feature_order" | grep -q 'render_feature_order'
+  [ -f "$REPO_ROOT/skills/feature/scripts/feature_order.sh" ]
+  bash -c "source '$REPO_ROOT/skills/feature/scripts/feature_order.sh' && declare -f render_feature_order" | grep -q 'render_feature_order'
 }
 
 @test "feature_order: feature.md inline order block removed" {
@@ -24,14 +24,14 @@ load ../test_helper
 }
 
 @test "feature_order: feature.md sources and calls helper" {
-  grep -q 'source.*_lib/feature_order.sh' "$REPO_ROOT/skills/feature/SKILL.md"
+  grep -q 'source.*scripts/feature_order.sh' "$REPO_ROOT/skills/feature/SKILL.md"
   grep -q 'render_feature_order' "$REPO_ROOT/skills/feature/SKILL.md"
 }
 
 @test "feature_order: handles missing iteration.json gracefully" {
   local tmpdir
   tmpdir=$(mktemp -d)
-  output=$(PYTHONPATH="$REPO_ROOT" PROJECT_ROOT="$tmpdir" bash -c "source '$REPO_ROOT/skills/_lib/feature_order.sh' && render_feature_order" 2>&1 || true)
+  output=$(PYTHONPATH="$REPO_ROOT" PROJECT_ROOT="$tmpdir" bash -c "source '$REPO_ROOT/skills/feature/scripts/feature_order.sh' && render_feature_order" 2>&1 || true)
   rm -rf "$tmpdir"
   echo "$output" | grep -qE 'guide-plan|iteration'
 }

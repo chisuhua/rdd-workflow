@@ -57,9 +57,9 @@ load ../test_helper
   [ -f "skills/execute/SKILL.md" ]
   # Round A extraction: EXECUTE_CHOICE logic is in the helper, sourced by execute.md.
   # Verify it exists in the helper.
-  grep -q "EXECUTE_CHOICE" "skills/_lib/select_worktree.sh"
+  grep -q "EXECUTE_CHOICE" "skills/execute/scripts/select_worktree.sh"
   # Should default to 1 when unset
-  grep -qE 'EXECUTE_CHOICE:-1' "skills/_lib/select_worktree.sh"
+  grep -qE 'EXECUTE_CHOICE:-1' "skills/execute/scripts/select_worktree.sh"
 }
 
 # Doc table ---------------------------------------------------------------

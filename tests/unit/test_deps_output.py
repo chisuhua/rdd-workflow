@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import pytest
 
-from skills._lib import deps_output as do
+from skills.deps.scripts import deps_output as do
 from skills._lib import iteration as it
 
 
@@ -394,7 +394,7 @@ class TestRenderMarkdownReport:
     """
 
     def test_returns_header_with_candidate_count(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         out = do.render_markdown_report(
             candidates=["c1", "c2", "c3"],
             project_root=str(tmp_path),
@@ -403,7 +403,7 @@ class TestRenderMarkdownReport:
         assert "候选 changes: 3" in out
 
     def test_includes_mermaid_flowchart_with_all_nodes(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         out = do.render_markdown_report(
             candidates=["c1", "c2"],
             project_root=str(tmp_path),
@@ -415,7 +415,7 @@ class TestRenderMarkdownReport:
         assert "c2" in out
 
     def test_marks_skeleton_changes_with_double_brackets(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         # c1 has design.md (full), c2 doesn't (skeleton)
         (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
         (tmp_path / "openspec" / "changes" / "c1" / "design.md").write_text("# design")
@@ -430,7 +430,7 @@ class TestRenderMarkdownReport:
         assert "c2[[c2]]" in out
 
     def test_phase_precheck_table_within_current_phase(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         # c1 has roadmap-meta.yaml with phase=phase-1, matches ROADMAP_CURRENT_PHASE
         (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
         (tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml").write_text(
@@ -445,7 +445,7 @@ class TestRenderMarkdownReport:
         assert "| c1 | phase-1 | general | ✅ 在阶段内 |" in out
 
     def test_phase_precheck_marks_out_of_phase_change(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         # c1 has phase=phase-2, but current is phase-1
         (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
         (tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml").write_text(
@@ -459,7 +459,7 @@ class TestRenderMarkdownReport:
         assert "| c1 | phase-2 | core-impl | ⚠️ 不在当前阶段 (phase-1) |" in out
 
     def test_phase_precheck_marks_missing_roadmap_meta_as_compat(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
         # No roadmap-meta.yaml
         out = do.render_markdown_report(
@@ -470,7 +470,7 @@ class TestRenderMarkdownReport:
         assert "| c1 | (compat) | (compat) | ⚠️ 无 roadmap-meta |" in out
 
     def test_change_status_table_shows_ready_when_no_ai_blocker(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         out = do.render_markdown_report(
             candidates=["c1"],
             project_root=str(tmp_path),
@@ -480,7 +480,7 @@ class TestRenderMarkdownReport:
         assert "| c1 | ✅ ready | 第 1 |" in out
 
     def test_change_status_table_marks_skeleton_in_status(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
         # No design.md → skeleton
         out = do.render_markdown_report(
@@ -490,7 +490,7 @@ class TestRenderMarkdownReport:
         assert "📋 skeleton" in out
 
     def test_change_status_table_uses_ai_blocker_when_present(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         # AI result file marking c2 as blocked by c1
         ai_file = tmp_path / ".rddf" / "state" / ".deps-ai-result.json"
         ai_file.parent.mkdir(parents=True)
@@ -505,7 +505,7 @@ class TestRenderMarkdownReport:
         assert "| c1 | ✅ ready" in out
 
     def test_ai_blocker_only_for_hard_kind_not_soft(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         ai_file = tmp_path / "ai.json"
         # kind is "soft" (not hard) — should NOT trigger blocked_by
         ai_file.write_text('{"ai_deps": [{"from": "c1", "to": "c2", "kind": "soft"}]}')
@@ -519,7 +519,7 @@ class TestRenderMarkdownReport:
         assert "| c2 | ✅ ready" in out
 
     def test_recommended_execution_order_section(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         out = do.render_markdown_report(
             candidates=["first-c", "second-c"],
             project_root=str(tmp_path),
@@ -529,7 +529,7 @@ class TestRenderMarkdownReport:
         assert "第一个候选" in out
 
     def test_conflict_warnings_placeholder(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         out = do.render_markdown_report(
             candidates=["c1"],
             project_root=str(tmp_path),
@@ -538,7 +538,7 @@ class TestRenderMarkdownReport:
         assert "（如有文件冲突将列于此处）" in out
 
     def test_ai_section_renders_with_ai_data(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         ai_file = tmp_path / "ai.json"
         ai_file.write_text("""{
   "ai_deps": [
@@ -559,7 +559,7 @@ class TestRenderMarkdownReport:
         assert "拆分" in out
 
     def test_ai_section_fallback_when_no_ai_result(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         out = do.render_markdown_report(
             candidates=["c1"],
             project_root=str(tmp_path),
@@ -569,7 +569,7 @@ class TestRenderMarkdownReport:
         assert "AI 语义分析未启用 (fallback)" in out
 
     def test_ai_section_handles_malformed_ai_json_gracefully(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         ai_file = tmp_path / "ai.json"
         ai_file.write_text("not valid json {{{")
         # Should not raise; should fallback gracefully
@@ -582,7 +582,7 @@ class TestRenderMarkdownReport:
         assert "AI 语义分析未启用 (fallback)" in out
 
     def test_ai_section_suggestions_with_parent_feature(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         ai_file = tmp_path / "ai.json"
         ai_file.write_text("""{
   "suggestions": [
@@ -597,7 +597,7 @@ class TestRenderMarkdownReport:
         assert "(parent_feature: core)" in out
 
     def test_returns_complete_document_for_full_scenario(self, tmp_path):
-        from skills._lib import deps_output as do
+        from skills.deps.scripts import deps_output as do
         # Realistic scenario: 2 candidates, 1 skeleton, AI blockers
         (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
         (tmp_path / "openspec" / "changes" / "c1" / "design.md").write_text("# c1 design")

@@ -28,14 +28,14 @@ setup() {
 @test "guide_skill scan covers all priority branches (RECOMMEND count)" {
   # v2.0.3: 12 priority branches (1, 1.5, 2, 2.5, 3-10). phase-gate-report
   # (was branch 4) removed in v2.0.3 — see fix-debt-audit-2026-07-14.
-  rec_count=$(grep -cE '^[[:space:]]*RECOMMEND=' "$REPO_ROOT/skills/_lib/scan-state.sh")
+  rec_count=$(grep -cE '^[[:space:]]*RECOMMEND=' "$REPO_ROOT/skills/guide/scripts/scan-state.sh")
   [ "$rec_count" -ge 11 ]
 }
 
 @test "guide_skill delegates only to 3-phase skills (RECOMMEND whitelist)" {
   # v2.0.1+: RECOMMEND assignments live in scan-state.sh, not guide.md.
   # Whitelist covers all 3-phase arch→plan→ship values + guide-spec alias.
-  bad=$(grep -E '^[[:space:]]*RECOMMEND=' "$REPO_ROOT/skills/_lib/scan-state.sh" | \
+  bad=$(grep -E '^[[:space:]]*RECOMMEND=' "$REPO_ROOT/skills/guide/scripts/scan-state.sh" | \
         grep -vE 'RECOMMEND="(guide-plan|guide-arch|guide-ship|status --roadmap)"' || true)
   [ -z "$bad" ]
 }

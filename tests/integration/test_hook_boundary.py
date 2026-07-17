@@ -95,7 +95,7 @@ class TestBashPythonBoundary:
         it.save(project_root_with_quote, it.create_empty())
 
         # Source the new helper and invoke propose_finalize_change
-        helper_path = SPEC_WORKFLOW_ROOT / "skills" / "_lib" / "propose_change.sh"
+        helper_path = SPEC_WORKFLOW_ROOT / "skills" / "propose" / "scripts" / "propose_change.sh"
         bash_command = (
             f'source "{helper_path}" && '
             f'PROJECT_ROOT="{project_root_with_quote}" '
@@ -195,7 +195,7 @@ class TestProposeHookPlaceholder:
         project_root = str(tmp_path)
         os.makedirs(f"{project_root}/.rddf/state")
 
-        helper_path = SPEC_WORKFLOW_ROOT / "skills" / "_lib" / "propose_change.sh"
+        helper_path = SPEC_WORKFLOW_ROOT / "skills" / "propose" / "scripts" / "propose_change.sh"
         bash_command = (
             f'source "{helper_path}" && '
             f'PROJECT_ROOT="{project_root}" '
@@ -232,7 +232,7 @@ class TestProposeHookPlaceholder:
         project_root = str(tmp_path)
         os.makedirs(f"{project_root}/.rddf/state")
 
-        helper_path = SPEC_WORKFLOW_ROOT / "skills" / "_lib" / "propose_change.sh"
+        helper_path = SPEC_WORKFLOW_ROOT / "skills" / "propose" / "scripts" / "propose_change.sh"
         # Use single quotes around '<name>' to avoid bash redirect parsing
         bash_command = (
             f'source "{helper_path}" && '

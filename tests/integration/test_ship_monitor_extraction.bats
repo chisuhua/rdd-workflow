@@ -15,8 +15,8 @@
 load ../test_helper
 
 @test "ship_monitor: helper file exists with run_ship_monitor function" {
-  [ -f "$REPO_ROOT/skills/_lib/ship_monitor.sh" ]
-  bash -c "source '$REPO_ROOT/skills/_lib/ship_monitor.sh' && declare -f run_ship_monitor" | grep -q 'run_ship_monitor'
+  [ -f "$REPO_ROOT/skills/guide-ship/scripts/ship_monitor.sh" ]
+  bash -c "source '$REPO_ROOT/skills/guide-ship/scripts/ship_monitor.sh' && declare -f run_ship_monitor" | grep -q 'run_ship_monitor'
 }
 
 @test "ship_monitor: guide-ship.md inline block L260-L315 removed" {
@@ -31,18 +31,18 @@ load ../test_helper
 
 @test "ship_monitor: guide-ship.md sources and calls helper" {
   [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
-  grep -q 'source.*_lib/ship_monitor.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  grep -q 'source.*scripts/ship_monitor.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
   grep -q 'run_ship_monitor' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
 @test "ship_monitor: prints LAST_CHECK timestamp" {
   # In this repo, no openspec/* worktrees should exist (clean main repo)
-  run bash -c "source '$REPO_ROOT/skills/_lib/ship_monitor.sh' && run_ship_monitor"
+  run bash -c "source '$REPO_ROOT/skills/guide-ship/scripts/ship_monitor.sh' && run_ship_monitor"
   echo "$output" | grep -q '上次检测'
 }
 
 @test "ship_monitor: handles no openspec/* worktrees gracefully (no crash)" {
-  run bash -c "cd '$REPO_ROOT' && source skills/_lib/ship_monitor.sh && run_ship_monitor"
+  run bash -c "cd '$REPO_ROOT' && source skills/guide-ship/scripts/ship_monitor.sh && run_ship_monitor"
   [ "$status" -eq 0 ]
 }
 
@@ -56,7 +56,7 @@ load ../test_helper
   git config user.name "test"
   git commit --allow-empty -m "init" --quiet
   git checkout -b openspec/test-branch --quiet
-  run bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/_lib/ship_monitor.sh' && run_ship_monitor"
+  run bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-ship/scripts/ship_monitor.sh' && run_ship_monitor"
   rm -rf "$tmpdir"
   # Must not crash; should print timestamp
   echo "$output" | grep -q '上次检测'
@@ -78,7 +78,7 @@ Just plain text.
 EOF
   local my_output
   # unset PROJECT_ROOT so ship_monitor.sh defaults to the temp git repo root
-  my_output=$(unset PROJECT_ROOT && cd "$tmpdir" && source "$REPO_ROOT/skills/_lib/ship_monitor.sh" && run_ship_monitor 2>&1 || true)
+  my_output=$(unset PROJECT_ROOT && cd "$tmpdir" && source "$REPO_ROOT/skills/guide-ship/scripts/ship_monitor.sh" && run_ship_monitor 2>&1 || true)
   rm -rf "$tmpdir"
   grep -qE '0/0' <<< "$my_output"
   local count

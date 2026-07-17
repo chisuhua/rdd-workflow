@@ -132,9 +132,9 @@ pending-change  │ （无 worktree）        │ 2/5  (40%)  │ 💼 committed
 **Status rendering（v2.0.3，从 iteration.json 派生单一真理源）**：
 
 ```bash
-# Status rendering extracted to skills/_lib/status_render_mode_a.sh (Round B Task B6).
+# Status rendering extracted to scripts/status_render_mode_a.sh (Round B Task B6).
 # Single-import helper for Mode A change status display.
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/status_render_mode_a.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/status_render_mode_a.sh"
 
 # Usage: render_status_mode_a <change-name>
 # The helper queries iteration.json (primary) with filesystem fallback

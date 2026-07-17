@@ -104,6 +104,12 @@ for skill_dir in "$PACKAGE_DIR/skills/"*/; do
     if [ -d "$skill_dir" ]; then
         mkdir -p "$SKILLS_DIR/skills/$skill_name/scripts" "$SKILLS_DIR/skills/$skill_name/references"
         [ -f "$skill_dir/SKILL.md" ] && cp -f "$skill_dir/SKILL.md" "$SKILLS_DIR/skills/$skill_name/"
+        if [ -d "$skill_dir/scripts" ]; then
+            cp -rf "$skill_dir/scripts/." "$SKILLS_DIR/skills/$skill_name/scripts/"
+        fi
+        if [ -d "$skill_dir/references" ]; then
+            cp -rf "$skill_dir/references/." "$SKILLS_DIR/skills/$skill_name/references/"
+        fi
     fi
 done
 # 顶层 INSTALL.md 单独复制（保持在 skills/ 顶层，不放入子目录）

@@ -29,7 +29,7 @@ teardown() {
 
 @test "scan_state: empty repo returns default recommend" {
   run bash -c "
-    source '$REPO_ROOT/skills/_lib/scan-state.sh'
+    source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
     scan_state '$TEST_REPO'
     echo \"RECOMMEND=\$RECOMMEND\"
   "
@@ -43,7 +43,7 @@ teardown() {
   echo '{"arch_done_at":"2026-07-01","adr_count":1,"current_change":null}' > "$STATE_DIR/.arch-handoff.json"
 
   run bash -c "
-    source '$REPO_ROOT/skills/_lib/scan-state.sh'
+    source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
     scan_state '$TEST_REPO'
     echo \"RECOMMEND=\$RECOMMEND\"
   "
@@ -56,7 +56,7 @@ teardown() {
   echo '{"plan_done_at":"2026-07-01","active_changes":1,"current_change":"add-x"}' > "$STATE_DIR/.plan-handoff.json"
 
   run bash -c "
-    source '$REPO_ROOT/skills/_lib/scan-state.sh'
+    source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
     scan_state '$TEST_REPO'
     echo \"RECOMMEND=\$RECOMMEND\"
   "
@@ -71,7 +71,7 @@ teardown() {
   echo '# stale' > "$STATE_DIR/.phase-gate-report.md"
 
   run bash -c "
-    source '$REPO_ROOT/skills/_lib/scan-state.sh'
+    source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
     scan_state '$TEST_REPO'
     echo \"RECOMMEND=\$RECOMMEND\"
     echo \"REASON=\$REASON\"
@@ -83,14 +83,14 @@ teardown() {
 
 @test "scan_session_binding: callable, exits 0" {
   run bash -c "
-    source '$REPO_ROOT/skills/_lib/scan-state.sh'
+    source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
     scan_session_binding '$TEST_REPO' || true
   "
   [ "$status" -eq 0 ]
 }
 
 @test "scan_state: priority comment header is updated to 10 entries" {
-  run grep -cE "^#     [0-9]+\." "$REPO_ROOT/skills/_lib/scan-state.sh"
+  run grep -cE "^#     [0-9]+\." "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
   [ "$status" -eq 0 ]
   # Header has priority 1, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 8, 9, 10 = 12 entries
   [ "$output" -ge 10 ]

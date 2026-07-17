@@ -7,7 +7,7 @@ import yaml
 from pathlib import Path
 
 
-VALIDATOR_SCRIPT = Path(__file__).parent.parent.parent / "skills" / "_lib" / "validate_baseline.py"
+VALIDATOR_SCRIPT = Path(__file__).parent.parent.parent / "skills" / "propose" / "scripts" / "validate_baseline.py"
 
 
 def run_validator(change_dir: Path, change_name: str) -> tuple[int, str]:

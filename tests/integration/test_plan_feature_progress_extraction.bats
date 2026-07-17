@@ -15,8 +15,8 @@ setup() {
 }
 
 @test "plan_feature_progress_helper_exists" {
-  [ -f "$WT/skills/_lib/plan_feature_progress.sh" ]
-  bash -c "cd '$WT' && source skills/_lib/plan_feature_progress.sh && declare -f show_feature_progress" | grep -q 'show_feature_progress'
+  [ -f "$WT/skills/guide-plan/scripts/plan_feature_progress.sh" ]
+  bash -c "cd '$WT' && source skills/guide-plan/scripts/plan_feature_progress.sh && declare -f show_feature_progress" | grep -q 'show_feature_progress'
 }
 
 @test "guide_plan_feature_inline_block_removed" {
@@ -26,7 +26,7 @@ setup() {
 }
 
 @test "guide_plan_invokes_helper" {
-  grep -q 'source.*_lib/plan_feature_progress.sh' "$WT/skills/guide-plan/SKILL.md"
+  grep -q 'source.*scripts/plan_feature_progress.sh' "$WT/skills/guide-plan/SKILL.md"
   grep -q 'show_feature_progress' "$WT/skills/guide-plan/SKILL.md"
 }
 
@@ -34,12 +34,12 @@ setup() {
   local tmpdir
   tmpdir=$(mktemp -d)
   cd "$tmpdir"
-  output=$(PROJECT_ROOT="$tmpdir" bash -c "source '$WT/skills/_lib/plan_feature_progress.sh' && show_feature_progress" 2>&1 || true)
+  output=$(PROJECT_ROOT="$tmpdir" bash -c "source '$WT/skills/guide-plan/scripts/plan_feature_progress.sh' && show_feature_progress" 2>&1 || true)
   rm -rf "$tmpdir"
   # Empty repo should print "(无 multi-change feature)"
   echo "$output" | grep -qE '无 multi-change feature|\(无'
 }
 
 @test "oracle_c1_no_bash_string_interpolation_in_python" {
-  ! grep -n "python3.*'\$" "$WT/skills/_lib/plan_feature_progress.sh"
+  ! grep -n "python3.*'\$" "$WT/skills/guide-plan/scripts/plan_feature_progress.sh"
 }

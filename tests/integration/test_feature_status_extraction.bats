@@ -10,8 +10,8 @@
 load ../test_helper
 
 @test "feature_status: helper file exists with render_feature_status function" {
-  [ -f "$REPO_ROOT/skills/_lib/feature_status.sh" ]
-  bash -c "source '$REPO_ROOT/skills/_lib/feature_status.sh' && declare -f render_feature_status" | grep -q 'render_feature_status'
+  [ -f "$REPO_ROOT/skills/feature/scripts/feature_status.sh" ]
+  bash -c "source '$REPO_ROOT/skills/feature/scripts/feature_status.sh' && declare -f render_feature_status" | grep -q 'render_feature_status'
 }
 
 @test "feature_status: feature.md inline status block removed" {
@@ -24,14 +24,14 @@ load ../test_helper
 }
 
 @test "feature_status: feature.md sources and calls helper" {
-  grep -q 'source.*_lib/feature_status.sh' "$REPO_ROOT/skills/feature/SKILL.md"
+  grep -q 'source.*scripts/feature_status.sh' "$REPO_ROOT/skills/feature/SKILL.md"
   grep -q 'render_feature_status' "$REPO_ROOT/skills/feature/SKILL.md"
 }
 
 @test "feature_status: handles missing iteration.json gracefully" {
   local tmpdir
   tmpdir=$(mktemp -d)
-  output=$(PYTHONPATH="$REPO_ROOT" PROJECT_ROOT="$tmpdir" bash -c "source '$REPO_ROOT/skills/_lib/feature_status.sh' && render_feature_status nonexistent" 2>&1 || true)
+  output=$(PYTHONPATH="$REPO_ROOT" PROJECT_ROOT="$tmpdir" bash -c "source '$REPO_ROOT/skills/feature/scripts/feature_status.sh' && render_feature_status nonexistent" 2>&1 || true)
   rm -rf "$tmpdir"
   echo "$output" | grep -qE 'guide-plan|iteration'
 }

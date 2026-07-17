@@ -2,7 +2,7 @@
 import json
 import os
 import pytest
-from skills._lib import write_arch_handoff as wah
+from skills.guide_arch.scripts import write_arch_handoff as wah
 
 
 @pytest.fixture

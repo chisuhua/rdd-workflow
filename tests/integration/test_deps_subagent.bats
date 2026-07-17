@@ -64,11 +64,11 @@ setup() {
   # Verify both the inline wrapper reference AND the Python helper contain
   # the keywords (AI_RESULT_FILE / fallback / 降级) that downstream tests
   # and consumers rely on.
-  echo "$f" | xargs grep -lE '_lib/deps_render_report.sh' >/dev/null
+  echo "$f" | xargs grep -lE 'scripts/deps_render_report.sh' >/dev/null
   python3 -c "
 import sys
 sys.path.insert(0, '$REPO_ROOT')
-from skills._lib import deps_output as do
+from skills.deps.scripts import deps_output as do
 src = open('$REPO_ROOT/skills/_lib/deps_output.py').read()
 assert 'AI 语义分析未启用' in src, 'fallback string missing from deps_output.py'
 assert 'AI_RESULT_FILE' in src or 'ai_result_file' in src, 'ai_result_file missing'

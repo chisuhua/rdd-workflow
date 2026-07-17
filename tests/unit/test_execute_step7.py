@@ -4,7 +4,7 @@ import os
 import tempfile
 from datetime import datetime
 import pytest
-from skills._lib import execute_step7 as es7
+from skills.execute.scripts import execute_step7 as es7
 
 
 @pytest.fixture

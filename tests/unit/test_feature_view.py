@@ -66,7 +66,7 @@ class TestFeatureViewSchema:
             jsonschema.validate(valid_payload, schema)
 
 
-from skills._lib.feature_view import group_changes_by_feature
+from skills.feature.scripts.feature_view import group_changes_by_feature
 
 
 class TestGroupChangesByFeature:
@@ -111,7 +111,7 @@ class TestGroupChangesByFeature:
         assert result["feature-stream"] == ["feature-stream-core"]
 
 
-from skills._lib.feature_view import rollup_status
+from skills.feature.scripts.feature_view import rollup_status
 
 
 class TestRollupStatus:
@@ -161,7 +161,7 @@ class TestRollupStatus:
         assert rollup_status(changes) == "in_progress"
 
 
-from skills._lib.feature_view import compute_feature_edges, UNGROUPED
+from skills.feature.scripts.feature_view import compute_feature_edges, UNGROUPED
 
 
 def _deps(changes_pairs: list[tuple[str, str | None]]) -> dict:
@@ -208,7 +208,7 @@ class TestComputeFeatureEdges:
         assert edges == []
 
 
-from skills._lib.feature_view import compute_parallel_groups, FeatureCycleError
+from skills.feature.scripts.feature_view import compute_parallel_groups, FeatureCycleError
 
 
 class TestComputeParallelGroups:
@@ -257,7 +257,7 @@ class TestComputeParallelGroups:
         assert compute_parallel_groups([], {}) == {}
 
 
-from skills._lib.feature_view import render_mermaid
+from skills.feature.scripts.feature_view import render_mermaid
 
 
 class TestRenderMermaid:
@@ -314,7 +314,7 @@ class TestRenderMermaid:
         assert "wave 0" in out
 
 
-from skills._lib import feature_view
+from skills.feature.scripts import feature_view
 from skills._lib import iteration
 
 

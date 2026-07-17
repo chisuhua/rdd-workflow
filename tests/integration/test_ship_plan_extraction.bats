@@ -23,22 +23,22 @@ load ../test_helper
 REPLACED_RANGE="144,348p"
 
 @test "skills/_lib/ship_plan.sh exists with expected function exports" {
-  [ -f "$REPO_ROOT/skills/_lib/ship_plan.sh" ]
-  grep -q "^check_artifacts_committed()" "$REPO_ROOT/skills/_lib/ship_plan.sh"
-  grep -q "^detect_execution_mode()" "$REPO_ROOT/skills/_lib/ship_plan.sh"
-  grep -q "^setup_execution_workspace()" "$REPO_ROOT/skills/_lib/ship_plan.sh"
-  grep -q "^generate_implementation_plan()" "$REPO_ROOT/skills/_lib/ship_plan.sh"
-  grep -q "^record_iteration_status()" "$REPO_ROOT/skills/_lib/ship_plan.sh"
+  [ -f "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh" ]
+  grep -q "^check_artifacts_committed()" "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
+  grep -q "^detect_execution_mode()" "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
+  grep -q "^setup_execution_workspace()" "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
+  grep -q "^generate_implementation_plan()" "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
+  grep -q "^record_iteration_status()" "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
 }
 
 @test "ship_plan.sh sources worktree.sh for wt_path_for_branch + find_default_branch" {
-  [ -f "$REPO_ROOT/skills/_lib/ship_plan.sh" ]
-  grep -q "worktree.sh" "$REPO_ROOT/skills/_lib/ship_plan.sh"
+  [ -f "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh" ]
+  grep -q "worktree.sh" "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
 }
 
 @test "guide-ship.md Phase 1 sources and uses ship_plan.sh helpers" {
   [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
-  grep -nE 'source .*_lib/ship_plan.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  grep -nE 'source .*scripts/ship_plan.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
   grep -nE 'detect_execution_mode|setup_execution_workspace|generate_implementation_plan|record_iteration_status' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
@@ -69,7 +69,7 @@ REPLACED_RANGE="144,348p"
   git add README.md && git commit -q -m "initial"
   mkdir -p openspec/changes/single-change
   source "$REPO_ROOT/skills/_lib/worktree.sh"
-  source "$REPO_ROOT/skills/_lib/ship_plan.sh"
+  source "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
   result=$(detect_execution_mode "$TEST_REPO" "single-change")
   [ "$result" = "lightweight" ]
   rm -rf "$TEST_REPO"
@@ -86,7 +86,7 @@ REPLACED_RANGE="144,348p"
   mkdir -p openspec/changes/c1 openspec/changes/c2
   git worktree add -b openspec/c1 .rddf/wt/c1 HEAD >/dev/null 2>&1
   source "$REPO_ROOT/skills/_lib/worktree.sh"
-  source "$REPO_ROOT/skills/_lib/ship_plan.sh"
+  source "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
   result=$(detect_execution_mode "$TEST_REPO" "c2")
   [ "$result" = "worktree" ]
   rm -rf "$TEST_REPO"

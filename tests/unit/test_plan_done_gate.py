@@ -4,7 +4,7 @@ import os
 import tempfile
 from datetime import datetime
 import pytest
-from skills._lib import plan_done_gate as pdg
+from skills.guide_plan.scripts import plan_done_gate as pdg
 
 
 @pytest.fixture

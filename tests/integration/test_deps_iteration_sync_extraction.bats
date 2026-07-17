@@ -18,8 +18,8 @@
 load ../test_helper
 
 @test "skills/_lib/deps_iteration_sync.sh exists with deps_iteration_sync function" {
-  [ -f "$REPO_ROOT/skills/_lib/deps_iteration_sync.sh" ]
-  grep -q '^deps_iteration_sync()' "$REPO_ROOT/skills/_lib/deps_iteration_sync.sh"
+  [ -f "$REPO_ROOT/skills/deps/scripts/deps_iteration_sync.sh" ]
+  grep -q '^deps_iteration_sync()' "$REPO_ROOT/skills/deps/scripts/deps_iteration_sync.sh"
 }
 
 @test "deps.md Step 6 no longer inlines the 97-line PYEOF heredoc" {
@@ -30,7 +30,7 @@ load ../test_helper
 
 @test "deps.md Step 6 invokes deps_iteration_sync helper" {
   [ -f "$REPO_ROOT/skills/deps/SKILL.md" ]
-  grep -q '_lib/deps_iteration_sync.sh' "$REPO_ROOT/skills/deps/SKILL.md"
+  grep -q 'scripts/deps_iteration_sync.sh' "$REPO_ROOT/skills/deps/SKILL.md"
   grep -q 'deps_iteration_sync' "$REPO_ROOT/skills/deps/SKILL.md"
 }
 
@@ -39,7 +39,7 @@ load ../test_helper
   cd "$TEST_REPO"
   ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
   export PROJECT_ROOT="$TEST_REPO"
-  source "$REPO_ROOT/skills/_lib/deps_iteration_sync.sh"
+  source "$REPO_ROOT/skills/deps/scripts/deps_iteration_sync.sh"
   output=$(deps_iteration_sync 2>&1 || true)
   echo "$output" | grep -qE '跳过|skip'
   # No deps-analysis.json should be created
@@ -57,7 +57,7 @@ load ../test_helper
   python3 -c "
 import sys
 sys.path.insert(0, '$TEST_REPO')
-from skills._lib.deps_output import build_analysis, write_analysis
+from skills.deps.scripts.deps_output import build_analysis, write_analysis
 analysis = build_analysis([{'name': 'c1', 'blocker': None, 'parallel_group': 0, 'conflicts': []}])
 write_analysis('$TEST_REPO', analysis)
 print('pre-analysis written')
@@ -69,7 +69,7 @@ sys.path.insert(0, '$TEST_REPO')
 from skills._lib import iteration as it
 it.save('$TEST_REPO', it.create_empty())
 "
-  source "$REPO_ROOT/skills/_lib/deps_iteration_sync.sh"
+  source "$REPO_ROOT/skills/deps/scripts/deps_iteration_sync.sh"
   deps_iteration_sync 2>&1
   # iteration.json should have c1 entry now
   python3 -c "
@@ -106,7 +106,7 @@ sys.path.insert(0, '$TEST_REPO')
 from skills._lib import iteration as it
 it.save('$TEST_REPO', it.create_empty())
 "
-  source "$REPO_ROOT/skills/_lib/deps_iteration_sync.sh"
+  source "$REPO_ROOT/skills/deps/scripts/deps_iteration_sync.sh"
   deps_iteration_sync 2>&1
   # deps-analysis.json should now exist (created from markdown fallback)
   [ -f .rddf/state/deps-analysis.json ]
@@ -132,7 +132,7 @@ print('OK')
   python3 -c "
 import sys
 sys.path.insert(0, '$TEST_REPO')
-from skills._lib.deps_output import build_analysis, write_analysis
+from skills.deps.scripts.deps_output import build_analysis, write_analysis
 analysis = build_analysis([
     {'name': 'c1', 'blocker': 'c2', 'parallel_group': 1, 'conflicts': []},
     {'name': 'c2', 'blocker': None, 'parallel_group': 0, 'conflicts': []},
@@ -145,7 +145,7 @@ sys.path.insert(0, '$TEST_REPO')
 from skills._lib import iteration as it
 it.save('$TEST_REPO', it.create_empty())
 "
-  source "$REPO_ROOT/skills/_lib/deps_iteration_sync.sh"
+  source "$REPO_ROOT/skills/deps/scripts/deps_iteration_sync.sh"
   deps_iteration_sync 2>&1
   python3 -c "
 import json
@@ -170,12 +170,12 @@ print('OK')
   python3 -c "
 import sys
 sys.path.insert(0, '$TEST_REPO')
-from skills._lib.deps_output import build_analysis, write_analysis
+from skills.deps.scripts.deps_output import build_analysis, write_analysis
 write_analysis('$TEST_REPO', build_analysis([{'name': 'c1'}]))
 from skills._lib import iteration as it
 it.save('$TEST_REPO', it.create_empty())
 "
-  source "$REPO_ROOT/skills/_lib/deps_iteration_sync.sh"
+  source "$REPO_ROOT/skills/deps/scripts/deps_iteration_sync.sh"
   output=$(deps_iteration_sync 2>&1)
   echo "$output" | grep -qE '来源: JSON|JSON'
   rm -rf "$TEST_REPO"

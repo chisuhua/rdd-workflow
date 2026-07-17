@@ -38,7 +38,7 @@ skill_use("guide-ship")   # 无参数版本
 ```bash
 # rddf-session 入口 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
 # stage_ship parent: latest stage_plan (auto-resolved by helper)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/rddf_session_hooks.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_hooks.sh"
 rddf_session_hook_entry stage_ship guide-ship ship-phase archive-all
 ```
 
@@ -107,19 +107,19 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
 **选项 1/2 执行内容**（以 fix-ns-pollution 为例）：
 
 ```bash
-# === Phase 1: thin orchestrator — heavy lifting in skills/_lib/ship_plan.sh ===
+# === Phase 1: thin orchestrator — heavy lifting in scripts/ship_plan.sh ===
 # Skip orchestrator via SKIP_PROMETHEUS_PLANNING=yes (escape hatch; not recommended)
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 CHANGE_NAME="${CHANGE_NAME:-fix-ns-pollution}"  # default for documentation
 
-source "$REPO_ROOT/skills/_lib/ship_plan.sh"
+source "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
 
 # 1) COMMIT GATE
 check_artifacts_committed "$PROJECT_ROOT" "$CHANGE_NAME" || {
@@ -162,7 +162,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -230,7 +230,7 @@ fi
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -244,7 +244,7 @@ handle_invalid_choice "$choice"
 
 ```bash
 # Round A: extracted to _lib/ship_monitor.sh (L260-L315, ~54 lines)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_monitor.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_monitor.sh"
 run_ship_monitor
 ```
 
@@ -278,7 +278,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -422,8 +422,8 @@ i. 手动输入新 change 名称
 **用户输入处理（case handler）**：
 
 ```bash
-# === Phase 2.5: thin orchestrator — heavy lifting in skills/_lib/ship_review.sh ===
-source "$REPO_ROOT/skills/_lib/ship_review.sh"
+# === Phase 2.5: thin orchestrator — heavy lifting in scripts/ship_review.sh ===
+source "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh"
 handle_review_action "$PROJECT_ROOT" "$CHANGE_NAME" "$WT_PATH" "$choice"
 ```
 
@@ -471,15 +471,15 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
 **归档流程（选项 1/2）**：
 
 ```bash
-# === Phase 3: thin orchestrator — heavy lifting in skills/_lib/ship_archive.sh ===
-source "$REPO_ROOT/skills/_lib/ship_archive.sh"
+# === Phase 3: thin orchestrator — heavy lifting in scripts/ship_archive.sh ===
+source "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"
 
 ARCHIVE_MODE=$(detect_archive_mode "$PROJECT_ROOT" "$CHANGE_NAME")
 echo "🔍 归档模式: $ARCHIVE_MODE"
@@ -492,7 +492,7 @@ archive_change_for_mode "$PROJECT_ROOT" "$CHANGE_NAME" "$ARCHIVE_MODE"
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -502,7 +502,7 @@ handle_invalid_choice "$choice"
 
 ```bash
 # rddf-session heartbeat refresh (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/rddf_session_hooks.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_hooks.sh"
 rddf_session_hook_heartbeat stage_ship "$CHANGE_NAME"
 ```
 
@@ -519,7 +519,7 @@ rddf_session_hook_heartbeat stage_ship "$CHANGE_NAME"
 
 ```bash
 # Phase 3 post-archive: fill suggestion hook — extracted to _lib/post_archive_fill.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/post_archive_fill.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/post_archive_fill.sh"
 run_post_archive_fill_suggestion
 ```
 
@@ -554,7 +554,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -608,7 +608,7 @@ Triggered when all committed changes have been archived (or no changes remain).
 # rddf-session 关闭 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
 # Documented behavior change (P3-4c): ship now prints 'not found, skipping'
 # when sessions.json missing, consistent with arch/plan close.
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/rddf_session_hooks.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_hooks.sh"
 rddf_session_hook_close stage_ship ship-done guide-ship
 ```
 
@@ -646,6 +646,6 @@ fi
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```

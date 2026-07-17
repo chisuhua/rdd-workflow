@@ -20,7 +20,7 @@ metadata:
 
 ## 扫描逻辑（v1.1+：提取到独立脚本）
 
-v1.1 起，扫描逻辑不再写在 skill 文件里——它由 `skills/_lib/scan-state.sh` 暴露的 `scan_state()` 函数提供，独立测试，bash 原生执行（不再每次由 AI 现场"翻译"）。**推荐器调一次即可**：
+v1.1 起，扫描逻辑不再写在 skill 文件里——它由 `scripts/scan-state.sh` 暴露的 `scan_state()` 函数提供，独立测试，bash 原生执行（不再每次由 AI 现场"翻译"）。**推荐器调一次即可**：
 
 ```bash
 case "${1:-}" in
@@ -38,7 +38,7 @@ EOF
 esac
 
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]:-$0}")")/../_lib/scan-state.sh"
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]:-$0}")")/scripts/scan-state.sh"
 scan_state "$PROJECT_ROOT"
 echo "💡 Recommended: skill_use(\"$RECOMMEND\")"
 echo "   Reason: $REASON"
@@ -54,7 +54,7 @@ if [ "${NO_BINDING:-0}" -eq 0 ]; then
 fi
 ```
 
-设置 `$RECOMMEND` 和 `$REASON`（沿用旧版变量契约，向后兼容）。优先级 12 条 → 见 `skills/_lib/scan-state.sh` 函数体顶部注释。
+设置 `$RECOMMEND` 和 `$REASON`（沿用旧版变量契约，向后兼容）。优先级 12 条 → 见 `scripts/scan-state.sh` 函数体顶部注释。
 
 `scan_session_binding` 是 v2.0.2 新增的只读函数，扫描 `.rddf/state/sessions.json` 的当前绑定状态，将结果存入 `BINDING_LINES` 数组。推荐器 AI 应在打印 RECOMMEND/REASON 之后、关闭输出之前输出这批行（见下方输出格式）。
 
@@ -84,7 +84,7 @@ P0/P1 bug 历史（`$3` 列、`[openspec/` 前缀、`json.load` 非 grep、cwd �
 
 ## 过期状态检测（v2.0.3 提升为 runtime check）
 
-> 该检测已下沉到 `skills/_lib/scan-state.sh::check_stale_workflow_state()`，
+> 该检测已下沉到 `scripts/scan-state.sh::check_stale_workflow_state()`，
 > 在 `scan_state()` 末尾自动调用。AI 不再需要主动读取 `workflow-state.md`。
 > 输出格式见辅助函数源码。
 
@@ -92,4 +92,4 @@ P0/P1 bug 历史（`$3` 列、`[openspec/` 前缀、`json.load` 非 grep、cwd �
 
 - **`rddf-session`** (`skills/rddf-session.md`) — 当输出包含 `📍 No current binding` 时,可调 `skill_use("rddf-session current")` 查看完整绑定状态,或 `skill_use("rddf-session resume <rds_id>")` 接管推荐会话。详见 spec 2026-07-14。
 - **ADR-0017** (`docs/adr/ADR-0017-rddf-session.md`) — rddf-session 数据模型、跨 OpenCode session 恢复语义、心跳机制的来源。
-- **scan-state.sh** (`skills/_lib/scan-state.sh`) — 推荐器底层扫描脚本;11-priority `scan_state` + v2.0.2 `scan_session_binding`。
+- **scan-state.sh** (`scripts/scan-state.sh`) — 推荐器底层扫描脚本;11-priority `scan_state` + v2.0.2 `scan_session_binding`。

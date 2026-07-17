@@ -42,14 +42,14 @@ setup() {
   [ -n "$output" ]
 }
 
-@test "install_lib: source repo has _lib/*.sh files to distribute" {
-  # Sanity: this repo (the upstream source) must actually have *.sh files
-  # in _lib/ for the distribution to be meaningful. If someone deletes
-  # all of them, this test fails first and tells us we have nothing to ship.
+@test "install_lib: source repo has _lib/*.sh files to distribute (retains shared)" {
+  # Phase 2: 46 single-skill helpers moved to per-skill scripts/.
+  # _lib/ retains ~45 shared files (.sh + .py), including state.sh, worktree.sh,
+  # archive.sh, discover-arch-artifacts.sh, status_helpers.sh.
   local n
   n=$(find skills/_lib -maxdepth 1 -name '*.sh' | wc -l)
   [ "$n" -ge 4 ] || {
-    echo "FAIL: expected at least 4 _lib/*.sh files (archive, worktree, state, scan-state, discover-arch-artifacts, status_helpers), got $n"
+    echo "FAIL: expected at least 4 shared _lib/*.sh files, got $n"
     return 1
   }
 }

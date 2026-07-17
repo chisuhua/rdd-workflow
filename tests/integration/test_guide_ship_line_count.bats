@@ -30,7 +30,7 @@ load ../test_helper
 }
 
 @test "all 3 _lib/ship_*.sh helpers exist" {
-  [ -f "$REPO_ROOT/skills/_lib/ship_plan.sh" ]
-  [ -f "$REPO_ROOT/skills/_lib/ship_review.sh" ]
-  [ -f "$REPO_ROOT/skills/_lib/ship_archive.sh" ]
+  [ -f "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh" ]
+  [ -f "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh" ]
+  [ -f "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh" ]
 }

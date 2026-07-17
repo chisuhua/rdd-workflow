@@ -47,7 +47,7 @@ case "$SUBCOMMAND" in
         python3 - "$SESSIONS_FILE" <<'PYEOF'
 import sys
 sys.path.insert(0, sys.argv[2] if len(sys.argv) > 2 else ".")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 sessions_file = sys.argv[1]
 coord = RddfSessionCoordinator(sessions_file=sessions_file)
 # Check timeouts first
@@ -71,7 +71,7 @@ PYEOF
         python3 - "$SESSIONS_FILE" "$SESSION_ID" "$PROJECT_ROOT" <<'PYEOF'
 import sys, json
 sys.path.insert(0, sys.argv[3] if len(sys.argv) > 3 else ".")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 sessions_file = sys.argv[1]
 session_id = sys.argv[2]
 coord = RddfSessionCoordinator(sessions_file=sessions_file)
@@ -88,7 +88,7 @@ PYEOF
         python3 - "$SESSIONS_FILE" "$OPENCODE_SESSION_ID" "$PROJECT_ROOT" <<'PYEOF'
 import sys, json
 sys.path.insert(0, sys.argv[3] if len(sys.argv) > 3 else ".")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 sessions_file, owner = sys.argv[1], sys.argv[2]
 coord = RddfSessionCoordinator(sessions_file=sessions_file)
 coord.check_heartbeat_timeouts()
@@ -112,7 +112,7 @@ PYEOF
         python3 - "$SESSIONS_FILE" "$SESSION_ID" "$OPENCODE_SESSION_ID" "$PROJECT_ROOT" <<'PYEOF'
 import sys
 sys.path.insert(0, sys.argv[4] if len(sys.argv) > 4 else ".")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 sessions_file = sys.argv[1]
 session_id = sys.argv[2]
 new_owner = sys.argv[3]
@@ -139,7 +139,7 @@ PYEOF
         python3 - "$SESSIONS_FILE" "$SESSION_ID" "$PROJECT_ROOT" <<'PYEOF'
 import sys
 sys.path.insert(0, sys.argv[3] if len(sys.argv) > 3 else ".")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 sessions_file = sys.argv[1]
 session_id = sys.argv[2]
 coord = RddfSessionCoordinator(sessions_file=sessions_file)
@@ -160,7 +160,7 @@ PYEOF
         python3 - "$SESSIONS_FILE" "$KEEP" "$PROJECT_ROOT" <<'PYEOF'
 import sys
 sys.path.insert(0, sys.argv[3] if len(sys.argv) > 3 else ".")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 sessions_file = sys.argv[1]
 keep = int(sys.argv[2])
 coord = RddfSessionCoordinator(sessions_file=sessions_file)

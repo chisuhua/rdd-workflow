@@ -14,8 +14,8 @@
 load ../test_helper
 
 @test "skills/_lib/deps_render_report.sh exists with render_deps_report function" {
-  [ -f "$REPO_ROOT/skills/_lib/deps_render_report.sh" ]
-  grep -q '^render_deps_report()' "$REPO_ROOT/skills/_lib/deps_render_report.sh"
+  [ -f "$REPO_ROOT/skills/deps/scripts/deps_render_report.sh" ]
+  grep -q '^render_deps_report()' "$REPO_ROOT/skills/deps/scripts/deps_render_report.sh"
 }
 
 @test "deps.md Step 5 no longer inlines the 160-line block" {
@@ -27,7 +27,7 @@ load ../test_helper
 
 @test "deps.md Step 5 invokes the render helper" {
   [ -f "$REPO_ROOT/skills/deps/SKILL.md" ]
-  grep -q '_lib/deps_render_report.sh' "$REPO_ROOT/skills/deps/SKILL.md"
+  grep -q 'scripts/deps_render_report.sh' "$REPO_ROOT/skills/deps/SKILL.md"
 }
 
 @test "render_deps_report writes .deps-output.md with all sections" {
@@ -41,7 +41,7 @@ roadmap:
   phase: "phase-1"
   category: "general"
 EOF
-  source "$REPO_ROOT/skills/_lib/deps_render_report.sh"
+  source "$REPO_ROOT/skills/deps/scripts/deps_render_report.sh"
   PROJECT_ROOT="$TEST_REPO" CANDIDATES="c1" DEPS_OUTPUT="$TEST_REPO/.rddf/state/.deps-output.md" \
     render_deps_report
   [ -f .rddf/state/.deps-output.md ]
@@ -58,7 +58,7 @@ EOF
   TEST_REPO=$(mktemp -d)
   cd "$TEST_REPO"
   ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
-  source "$REPO_ROOT/skills/_lib/deps_render_report.sh"
+  source "$REPO_ROOT/skills/deps/scripts/deps_render_report.sh"
   PROJECT_ROOT="$TEST_REPO" CANDIDATES="" DEPS_OUTPUT="$TEST_REPO/.rddf/state/.deps-output.md" \
     render_deps_report
   grep -q "AI 语义分析未启用 (fallback)" .rddf/state/.deps-output.md
@@ -76,7 +76,7 @@ EOF
   "suggestions": [{"change": "c1", "action": "拆分", "reason": "too large"}]
 }
 EOF
-  source "$REPO_ROOT/skills/_lib/deps_render_report.sh"
+  source "$REPO_ROOT/skills/deps/scripts/deps_render_report.sh"
   PROJECT_ROOT="$TEST_REPO" CANDIDATES="c1 c2" DEPS_OUTPUT="$TEST_REPO/.rddf/state/.deps-output.md" \
     AI_RESULT_FILE="$TEST_REPO/.rddf/state/.deps-ai-result.json" \
     render_deps_report

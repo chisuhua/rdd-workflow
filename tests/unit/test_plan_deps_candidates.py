@@ -6,7 +6,7 @@ import tempfile
 from unittest import mock
 
 import pytest
-from skills._lib import plan_deps_candidates as pdc
+from skills.guide_plan.scripts import plan_deps_candidates as pdc
 
 
 @pytest.fixture

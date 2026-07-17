@@ -32,7 +32,7 @@ SELECT_WT="$REPO_ROOT/skills/_lib/select_worktree.sh"
 }
 
 @test "execute_invokes_helper" {
-  grep -q 'source.*_lib/select_worktree.sh' "$EXECUTE_MD"
+  grep -q 'source.*scripts/select_worktree.sh' "$EXECUTE_MD"
   grep -q 'auto_detect_worktree_context' "$EXECUTE_MD"
 }
 

@@ -17,10 +17,10 @@
 load ../test_helper
 
 @test "plan_done_gate_helper_exists" {
-  [ -f "$REPO_ROOT/skills/_lib/plan_done_gate.sh" ]
-  [ -f "$REPO_ROOT/skills/_lib/plan_done_gate.py" ]
-  [ -f "$REPO_ROOT/skills/_lib/plan_done_gate_env.py" ]
-  bash -c "cd '$REPO_ROOT' && source skills/_lib/plan_done_gate.sh && declare -f run_plan_done_gate && declare -f write_plan_handoff" | grep -q 'run_plan_done_gate'
+  [ -f "$REPO_ROOT/skills/guide-plan/scripts/plan_done_gate.sh" ]
+  [ -f "$REPO_ROOT/skills/guide-plan/scripts/plan_done_gate.py" ]
+  [ -f "$REPO_ROOT/skills/guide-plan/scripts/plan_done_gate_env.py" ]
+  bash -c "cd '$REPO_ROOT' && source skills/guide-plan/scripts/plan_done_gate.sh && declare -f run_plan_done_gate && declare -f write_plan_handoff" | grep -q 'run_plan_done_gate'
 }
 
 @test "guide_plan_inline_gate_block_removed" {
@@ -36,7 +36,7 @@ load ../test_helper
 }
 
 @test "guide_plan_invokes_helpers" {
-  grep -q 'source.*_lib/plan_done_gate.sh' "$REPO_ROOT/skills/guide-plan/SKILL.md"
+  grep -q 'source.*scripts/plan_done_gate.sh' "$REPO_ROOT/skills/guide-plan/SKILL.md"
   grep -q 'run_plan_done_gate' "$REPO_ROOT/skills/guide-plan/SKILL.md"
   grep -q 'write_plan_handoff' "$REPO_ROOT/skills/guide-plan/SKILL.md"
 }
@@ -44,7 +44,7 @@ load ../test_helper
 @test "run_plan_done_gate_fails_with_no_changes" {
   local tmpdir
   tmpdir=$(mktemp -d)
-  output=$(bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/_lib/plan_done_gate.sh' && run_plan_done_gate" 2>&1 || true)
+  output=$(bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-plan/scripts/plan_done_gate.sh' && run_plan_done_gate" 2>&1 || true)
   rm -rf "$tmpdir"
   echo "$output" | grep -q '失败\|EXIT'
 }
@@ -53,7 +53,7 @@ load ../test_helper
   local tmpdir
   tmpdir=$(mktemp -d)
   mkdir -p "$tmpdir/.rddf/state"
-  bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/_lib/plan_done_gate.sh' && write_plan_handoff" >/dev/null 2>&1 || true
+  bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-plan/scripts/plan_done_gate.sh' && write_plan_handoff" >/dev/null 2>&1 || true
   if [ ! -f "$tmpdir/.rddf/state/.plan-handoff.json" ]; then
     rm -rf "$tmpdir"
     return 1
@@ -65,7 +65,7 @@ load ../test_helper
   local tmpdir
   tmpdir=$(mktemp -d)
   mkdir -p "$tmpdir/.rddf/state"
-  bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/_lib/plan_done_gate.sh' && write_plan_handoff" >/dev/null 2>&1 || true
+  bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-plan/scripts/plan_done_gate.sh' && write_plan_handoff" >/dev/null 2>&1 || true
   cat "$tmpdir/.rddf/state/.plan-handoff.json" | python3 -c "
 import json, sys
 d = json.load(sys.stdin)
@@ -85,7 +85,7 @@ assert 'current_change' in d
   # Pre-create 2 active changes
   mkdir -p "$tmpdir/openspec/changes/change-1"
   mkdir -p "$tmpdir/openspec/changes/change-2"
-  bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/_lib/plan_done_gate.sh' && write_plan_handoff" >/dev/null 2>&1 || true
+  bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-plan/scripts/plan_done_gate.sh' && write_plan_handoff" >/dev/null 2>&1 || true
   if [ -f "$tmpdir/.rddf/state/.plan-handoff.json" ]; then
     cat "$tmpdir/.rddf/state/.plan-handoff.json" | python3 -c "
 import json, sys
@@ -105,7 +105,7 @@ assert d['active_changes'] == 2, f'expected 2, got {d[\"active_changes\"]}'
   # Run with SKIP_GATE_0=true, then try to write handoff (should NOT create the file)
   result=$(bash -c "
 cd '$tmpdir'
-source '$REPO_ROOT/skills/_lib/plan_done_gate.sh'
+source '$REPO_ROOT/skills/guide-plan/scripts/plan_done_gate.sh'
 export SKIP_GATE_0=true
 run_plan_done_gate
 echo \"SENTINEL=\${PLAN_GATE_0_SKIPPED:-}\"

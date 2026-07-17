@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+# skills/_lib/plan_done_gate.sh — extracted from guide-plan.md L518-L677
+# Exports:
+#   - run_plan_done_gate() — Triple-gate validation (Gate 0/1/2)
+#   - write_plan_handoff() — Write .rddf/state/.plan-handoff.json
+#
+# Triple-gate:
+#   Gate 0: Ready-for-ship changes count (delegates to iteration.list_ready_for_ship)
+#   Gate 1: Active changes count >= 1
+#   Gate 2: All changes' artifacts (proposal.md, design.md, tasks.md) committed
+#
+# Honors env vars:
+#   - SKIP_GATE_0=yes — skip Gate 0 (Deps AI reorganization accepted)
+#   - GUIDE_PLAN_DEPS_CHOICE=1 — accept Deps AI suggestions (same as SKIP_GATE_0)
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+
+run_plan_done_gate() {
+  local PROJECT_ROOT
+  PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+  export PROJECT_ROOT
+
+  echo "=== Plan 阶段 - 门控检查 ==="
+  echo ""
+
+  # v2.0.1: Deps §5e 重组建议回显 (仅参考, 不阻断)
+  # External SKIP_GATE_0 env var takes priority (bash expands RHS before local shadowing)
+  local SKIP_GATE_0="${SKIP_GATE_0:-false}"
+  local DEPS_OUTPUT="$PROJECT_ROOT/.rddf/state/.deps-output.md"
+  [ ! -f "$DEPS_OUTPUT" ] && DEPS_OUTPUT="$PROJECT_ROOT/.rddf/state/deps-output.md"
+  if [ -f "$DEPS_OUTPUT" ]; then
+      local SUGGESTIONS FALLBACK_MARKER dep_choice
+      SUGGESTIONS=$(awk '/^## 🧠 AI 分析建议/,/^## [^🧠]|^---/' "$DEPS_OUTPUT" 2>/dev/null \
+                    | grep -E "^- \`.*\`: (split|merge|reorder)" || true)
+      FALLBACK_MARKER=$(grep -c "AI 语义分析未启用" "$DEPS_OUTPUT" 2>/dev/null || echo 0)
+
+      if [ -n "$SUGGESTIONS" ] && [ "${FALLBACK_MARKER:-0}" -eq 0 ]; then
+          echo ""
+          echo "⚠️  Deps AI 重组建议（仅参考不阻断 plan-done）:"
+          echo "$SUGGESTIONS" | sed 's/^/  /'
+          echo ""
+          echo "请选择:"
+          echo "  1. 接受建议 → 跳过 plan-done, 回到 propose 阶段手动处理"
+          echo "  2. 忽略建议 → 继续 plan-done [默认]"
+          dep_choice="${GUIDE_PLAN_DEPS_CHOICE:-2}"
+          case "$dep_choice" in
+              1) echo "→ 用户选择接受建议, 跳过 plan-done"
+                  SKIP_GATE_0=true ;;
+              2) echo "→ 用户选择忽略建议, 继续 plan-done" ;;
+              *) echo "→ 无效选择 '$dep_choice', 默认忽略" ;;
+          esac
+      elif [ "${FALLBACK_MARKER:-0}" -gt 0 ]; then
+          echo ""
+          echo "ℹ️  AI 语义分析未启用 (fallback) - 跳过 §5e 重组建议检查"
+      fi
+  fi
+  echo ""
+
+  # 门控 0: Ready-for-ship changes 数量检查
+  echo "门控 0: Ready-for-ship changes 数量检查 (proposed + 无活跃 blocker)"
+  if [ "${SKIP_GATE_0:-false}" = "true" ] || [ "${SKIP_GATE_0}" = "true" ]; then
+      echo "  ⏭️  跳过（用户接受 deps 重组建议）"
+      echo ""
+      export PLAN_GATE_0_SKIPPED="true"
+      return 0
+  fi
+
+  local PROPOSED_COUNT
+  PROPOSED_COUNT=$(PY_PROJECT_ROOT="$PROJECT_ROOT" python3 <<'PYEOF' 2>/dev/null
+import os, sys
+try:
+    from skills._lib import iteration as it
+    d = it.load(os.environ.get("PY_PROJECT_ROOT", "."))
+    ready = it.list_ready_for_ship(d)
+    print(len(ready))
+except Exception:
+    print(0)
+PYEOF
+)
+  echo "  ready-for-ship (proposed + blocker cleared): $PROPOSED_COUNT"
+  if [ "${PROPOSED_COUNT:-0}" -eq 0 ]; then
+      echo "  ❌ 失败: 至少需要 1 个 ready-for-ship change 才能交接给 guide-ship"
+      echo "     使用 fill 阶段将 planned change 升级，或在 propose 阶段创建完整 change"
+      return 1
+  fi
+  echo "  ✅ 通过"
+  echo ""
+
+  # 门控 1: 至少 1 个 active change
+  local CHANGE_COUNT
+  CHANGE_COUNT=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l)
+  echo "门控 1: Active changes 数量检查"
+  echo "  当前活跃 changes: $CHANGE_COUNT"
+  if [ "$CHANGE_COUNT" -eq 0 ]; then
+      echo "  ❌ 失败: 至少需要 1 个 active change"
+      echo "     请回到 propose 阶段创建 change"
+      return 1
+  fi
+  echo "  ✅ 通过"
+  echo ""
+
+  # 门控 2: 所有 change 的三个 artifacts 已提交
+  echo "门控 2: Artifacts 提交性检查"
+  # 把循环放在子 shell 里,避免污染调用者的 cwd;再用 $? 拿子 shell 的退出码决定是否拒绝。
+  if (cd "$PROJECT_ROOT" 2>/dev/null && for d in openspec/changes/*/; do
+      [ -d "$d" ] || continue
+      case "$d" in */archive/) continue ;; esac
+      name=$(basename "$d")
+      for artifact in proposal.md design.md tasks.md; do
+          if ! git show HEAD:"$d$artifact" > /dev/null 2>&1; then
+              echo "  ❌ $name missing committed $artifact — refuse to exit plan-side"
+              exit 1   # subshell exit, not function exit
+          fi
+      done
+  done); then
+      echo "  ✅ 所有 change 的 artifacts 已提交"
+  else
+      echo "  ❌ 失败: 存在未提交 artefacts"
+      echo "     请回到 propose 阶段完成 artifacts 创建并提交"
+      return 1
+  fi
+  echo ""
+}
+
+write_plan_handoff() {
+  local PROJECT_ROOT
+  PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+  export PROJECT_ROOT
+
+  # Spec-validation gate: validate every active change's baseline + delta targets
+  # before writing the handoff file. Catches v1 (false baseline) and v2
+  # (MODIFIED-on-empty-spec) class incidents at plan-done time, NOT archive time.
+  local VALIDATION_FAILED=0
+  for d in "$PROJECT_ROOT"/openspec/changes/*/; do
+      [ -d "$d" ] || continue
+      case "$d" in */archive/) continue ;; esac
+      local name
+      name=$(basename "$d")
+      if [ -f "$PROJECT_ROOT/skills/propose/scripts/validate_baseline.py" ]; then
+          if ! python3 "$PROJECT_ROOT/skills/propose/scripts/validate_baseline.py" "$name" >/dev/null 2>&1; then
+              echo "❌ plan-done gate: $name failed baseline validation"
+              python3 "$PROJECT_ROOT/skills/propose/scripts/validate_baseline.py" "$name" || true
+              VALIDATION_FAILED=1
+          fi
+      fi
+      if [ -f "$PROJECT_ROOT/skills/_lib/validate_delta_targets.py" ]; then
+          if ! python3 "$PROJECT_ROOT/skills/_lib/validate_delta_targets.py" "$name" >/dev/null 2>&1; then
+              echo "❌ plan-done gate: $name failed delta target validation"
+              python3 "$PROJECT_ROOT/skills/_lib/validate_delta_targets.py" "$name" || true
+              VALIDATION_FAILED=1
+          fi
+      fi
+  done
+  if [ "$VALIDATION_FAILED" -ne 0 ]; then
+      echo "❌ plan-done gate blocked: fix validation errors above"
+      return 1
+  fi
+
+  # Delegate to Python helper via env-var passing only (Oracle C1: no bash string interp)
+  PROJECT_ROOT="$PROJECT_ROOT" \
+  ACTIVE_CHANGES_COUNT="${ACTIVE_CHANGES_COUNT:-}" \
+  CURRENT_CHANGE="${CURRENT_CHANGE:-}" \
+  python3 "$SCRIPT_DIR/plan_done_gate_env.py"
+}

@@ -15,10 +15,10 @@
 load ../test_helper
 
 @test "plan_deps_candidates_helper_exists" {
-  [ -f "$REPO_ROOT/skills/_lib/plan_deps_candidates.sh" ]
-  [ -f "$REPO_ROOT/skills/_lib/plan_deps_candidates.py" ]
-  [ -f "$REPO_ROOT/skills/_lib/plan_deps_candidates_env.py" ]
-  bash -c "cd '$REPO_ROOT' && source skills/_lib/plan_deps_candidates.sh && declare -f generate_deps_candidates" | grep -q 'generate_deps_candidates'
+  [ -f "$REPO_ROOT/skills/guide-plan/scripts/plan_deps_candidates.sh" ]
+  [ -f "$REPO_ROOT/skills/guide-plan/scripts/plan_deps_candidates.py" ]
+  [ -f "$REPO_ROOT/skills/guide-plan/scripts/plan_deps_candidates_env.py" ]
+  bash -c "cd '$REPO_ROOT' && source skills/guide-plan/scripts/plan_deps_candidates.sh && declare -f generate_deps_candidates" | grep -q 'generate_deps_candidates'
 }
 
 @test "guide_plan_inline_block_removed" {
@@ -29,13 +29,13 @@ load ../test_helper
 }
 
 @test "guide_plan_invokes_helper" {
-  grep -q 'source.*_lib/plan_deps_candidates.sh' "$REPO_ROOT/skills/guide-plan/SKILL.md"
+  grep -q 'source.*scripts/plan_deps_candidates.sh' "$REPO_ROOT/skills/guide-plan/SKILL.md"
   grep -q 'generate_deps_candidates' "$REPO_ROOT/skills/guide-plan/SKILL.md"
 }
 
 @test "oracle_c1_no_bash_string_interpolation" {
   # Bash wrapper must NOT inject variables into Python source
-  ! grep -n "python3.*'\$" "$REPO_ROOT/skills/_lib/plan_deps_candidates.sh"
+  ! grep -n "python3.*'\$" "$REPO_ROOT/skills/guide-plan/scripts/plan_deps_candidates.sh"
 }
 
 @test "generate_deps_candidates_creates_file" {
@@ -44,7 +44,7 @@ load ../test_helper
   git init "$tmpdir" >/dev/null 2>&1
   mkdir -p "$tmpdir/openspec/changes/test-change"
   echo "name: test" > "$tmpdir/openspec/changes/test-change/.openspec.yaml"
-  bash -c "cd '$tmpdir' && git add -A && git commit -m init >/dev/null 2>&1 && source $REPO_ROOT/skills/_lib/plan_deps_candidates.sh && generate_deps_candidates" 2>&1 || true
+  bash -c "cd '$tmpdir' && git add -A && git commit -m init >/dev/null 2>&1 && source $REPO_ROOT/skills/guide-plan/scripts/plan_deps_candidates.sh && generate_deps_candidates" 2>&1 || true
   if [ -f "$tmpdir/.rddf/state/.deps-candidates.json" ]; then
     cat "$tmpdir/.rddf/state/.deps-candidates.json" | grep -q 'candidates'
   fi
@@ -55,7 +55,7 @@ load ../test_helper
   local tmpdir
   tmpdir=$(mktemp -d)
   git init "$tmpdir" >/dev/null 2>&1
-  bash -c "cd '$tmpdir' && git commit --allow-empty -m init >/dev/null 2>&1 && source $REPO_ROOT/skills/_lib/plan_deps_candidates.sh && generate_deps_candidates" 2>&1 || true
+  bash -c "cd '$tmpdir' && git commit --allow-empty -m init >/dev/null 2>&1 && source $REPO_ROOT/skills/guide-plan/scripts/plan_deps_candidates.sh && generate_deps_candidates" 2>&1 || true
   if [ -f "$tmpdir/.rddf/state/.deps-candidates.json" ]; then
     cat "$tmpdir/.rddf/state/.deps-candidates.json" | grep -q '"candidates": \[\]'
   fi

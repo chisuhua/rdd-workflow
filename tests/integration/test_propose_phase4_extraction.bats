@@ -14,9 +14,9 @@
 load ../test_helper
 
 @test "skills/_lib/propose_change.sh exists with both functions" {
-  [ -f "$REPO_ROOT/skills/_lib/propose_change.sh" ]
-  grep -q '^propose_create_change()' "$REPO_ROOT/skills/_lib/propose_change.sh"
-  grep -q '^propose_finalize_change()' "$REPO_ROOT/skills/_lib/propose_change.sh"
+  [ -f "$REPO_ROOT/skills/propose/scripts/propose_change.sh" ]
+  grep -q '^propose_create_change()' "$REPO_ROOT/skills/propose/scripts/propose_change.sh"
+  grep -q '^propose_finalize_change()' "$REPO_ROOT/skills/propose/scripts/propose_change.sh"
 }
 
 @test "propose.md Phase 4 no longer inlines the 353-line block" {
@@ -34,7 +34,7 @@ load ../test_helper
 
 @test "propose.md Phase 4 invokes the helper" {
   [ -f "$REPO_ROOT/skills/propose/SKILL.md" ]
-  grep -q '_lib/propose_change.sh' "$REPO_ROOT/skills/propose/SKILL.md"
+  grep -q 'scripts/propose_change.sh' "$REPO_ROOT/skills/propose/SKILL.md"
 }
 
 @test "propose.md Step 4e docs (30 lines /opsx:propose explanation) removed" {
@@ -68,7 +68,7 @@ load ../test_helper
   cd "$TEST_REPO"
   ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
   export PROJECT_ROOT="$TEST_REPO"
-  source "$REPO_ROOT/skills/_lib/propose_change.sh"
+  source "$REPO_ROOT/skills/propose/scripts/propose_change.sh"
   python3 -c "
 import sys; sys.path.insert(0, '$TEST_REPO')
 from skills._lib import iteration as it
@@ -96,7 +96,7 @@ print('OK')
   cd "$TEST_REPO"
   ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
   export PROJECT_ROOT="$TEST_REPO"
-  source "$REPO_ROOT/skills/_lib/propose_change.sh"
+  source "$REPO_ROOT/skills/propose/scripts/propose_change.sh"
   python3 -c "
 import sys; sys.path.insert(0, '$TEST_REPO')
 from skills._lib import iteration as it
@@ -125,7 +125,7 @@ print('OK')
   cd "$TEST_REPO"
   ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
   export PROJECT_ROOT="$TEST_REPO"
-  source "$REPO_ROOT/skills/_lib/propose_change.sh"
+  source "$REPO_ROOT/skills/propose/scripts/propose_change.sh"
   # Only init iteration, NOT roadmap-state
   python3 -c "
 import sys; sys.path.insert(0, '$TEST_REPO')

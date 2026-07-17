@@ -451,7 +451,7 @@ else:
 #
 # The artifact creation loop at lines 580-608 is HALF-IMPLEMENTED
 # (pseudo-code, see audit 2026-07-16) and is preserved as-is below.
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/propose_change.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/propose_change.sh"
 
 THIS_SESSION_CREATED=()
 

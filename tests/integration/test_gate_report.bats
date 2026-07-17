@@ -16,8 +16,8 @@ load ../test_helper
 }
 
 @test "v2.0.3: phase-gate-report removed from scan-state.sh" {
-  [ -f "skills/_lib/scan-state.sh" ]
-  ! grep -q "phase-gate-report" skills/_lib/scan-state.sh
+  [ -f "skills/guide/scripts/scan-state.sh" ]
+  ! grep -q "phase-gate-report" skills/guide/scripts/scan-state.sh
 }
 
 @test "v2.0.3: phase-gate-report removed from roadmap.md" {

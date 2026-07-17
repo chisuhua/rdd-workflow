@@ -15,8 +15,8 @@ setup() {
 }
 
 @test "plan_queue_overview_helper_exists" {
-  [ -f "$WT/skills/_lib/plan_queue_overview.sh" ]
-  bash -c "cd '$WT' && source skills/_lib/plan_queue_overview.sh && declare -f show_queue_overview" | grep -q 'show_queue_overview'
+  [ -f "$WT/skills/guide-plan/scripts/plan_queue_overview.sh" ]
+  bash -c "cd '$WT' && source skills/guide-plan/scripts/plan_queue_overview.sh && declare -f show_queue_overview" | grep -q 'show_queue_overview'
 }
 
 @test "guide_plan_queue_inline_block_removed" {
@@ -26,12 +26,12 @@ setup() {
 }
 
 @test "guide_plan_invokes_helper" {
-  grep -q 'source.*_lib/plan_queue_overview.sh' "$WT/skills/guide-plan/SKILL.md"
+  grep -q 'source.*scripts/plan_queue_overview.sh' "$WT/skills/guide-plan/SKILL.md"
   grep -q 'show_queue_overview' "$WT/skills/guide-plan/SKILL.md"
 }
 
 @test "show_queue_overview_prints_5_states" {
-  output=$(bash -c "cd '$WT' && source skills/_lib/plan_queue_overview.sh && show_queue_overview" 2>&1 || true)
+  output=$(bash -c "cd '$WT' && source skills/guide-plan/scripts/plan_queue_overview.sh && show_queue_overview" 2>&1 || true)
   # Should print 4 state lines (candidate/planned/blocked/ready + 1 stale)
   echo "$output" | grep -q '候选'
   echo "$output" | grep -q '骨架'
@@ -43,7 +43,7 @@ setup() {
   local tmpdir
   tmpdir=$(mktemp -d)
   cd "$tmpdir"
-  output=$(PROJECT_ROOT="$tmpdir" bash -c "source '$WT/skills/_lib/plan_queue_overview.sh' && show_queue_overview" 2>&1 || true)
+  output=$(PROJECT_ROOT="$tmpdir" bash -c "source '$WT/skills/guide-plan/scripts/plan_queue_overview.sh' && show_queue_overview" 2>&1 || true)
   rm -rf "$tmpdir"
   # Should print empty states (or fallback)
   echo "$output" | grep -q '队列'
@@ -51,5 +51,5 @@ setup() {
 
 @test "oracle_c1_no_bash_string_interpolation_in_python" {
   # Bash wrapper must NOT inject env vars into Python source
-  ! grep -n "python3.*'\$" "$WT/skills/_lib/plan_queue_overview.sh"
+  ! grep -n "python3.*'\$" "$WT/skills/guide-plan/scripts/plan_queue_overview.sh"
 }

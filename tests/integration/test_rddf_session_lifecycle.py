@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from skills._lib.rddf_session import RddfSessionCoordinator, ConflictError
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator, ConflictError
 
 
 @pytest.fixture

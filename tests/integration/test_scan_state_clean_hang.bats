@@ -17,7 +17,7 @@ setup() {
     mkdir -p openspec/changes openspec/specs
 
     run bash -c "
-        source '$REPO_ROOT/skills/_lib/scan-state.sh'
+        source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
         scan_state '$PWD'
     "
     # The key regression: status 124 = timeout = hang bug present.
@@ -28,7 +28,7 @@ setup() {
 
 @test "check_stale_workflow_state: terminates when workflow-state.md is absent" {
     run bash -c "
-        source '$REPO_ROOT/skills/_lib/scan-state.sh'
+        source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
         check_stale_workflow_state '$PWD'
     "
     [ "$status" -eq 0 ]
@@ -38,7 +38,7 @@ setup() {
     echo "stale content" > workflow-state.md
 
     run bash -c "
-        source '$REPO_ROOT/skills/_lib/scan-state.sh'
+        source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
         check_stale_workflow_state '$PWD'
     "
     [ "$status" -eq 0 ]

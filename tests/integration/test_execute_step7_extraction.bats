@@ -19,7 +19,7 @@ load ../test_helper
   assert_file_exists "$REPO_ROOT/skills/_lib/execute_step7.sh"
   assert_file_exists "$REPO_ROOT/skills/_lib/execute_step7.py"
   assert_file_exists "$REPO_ROOT/skills/_lib/execute_step7_env.py"
-  bash -c "cd '$REPO_ROOT' && source skills/_lib/execute_step7.sh && declare -f run_step7_report" | grep -q 'run_step7_report'
+  bash -c "cd '$REPO_ROOT' && source skills/execute/scripts/execute_step7.sh && declare -f run_step7_report" | grep -q 'run_step7_report'
 }
 
 @test "execute_inline_step7_block_removed" {
@@ -29,13 +29,13 @@ load ../test_helper
 }
 
 @test "execute_invokes_step7_helper" {
-  grep -q 'source.*_lib/execute_step7.sh' "$REPO_ROOT/skills/execute/SKILL.md"
+  grep -q 'source.*scripts/execute_step7.sh' "$REPO_ROOT/skills/execute/SKILL.md"
   grep -q 'run_step7_report' "$REPO_ROOT/skills/execute/SKILL.md"
 }
 
 @test "oracle_c1_no_bash_string_interpolation_step7" {
   # Must not have $VAR interpolated into Python source code
-  ! grep -n "python3.*'\\\\$" "$REPO_ROOT/skills/_lib/execute_step7.sh"
+  ! grep -n "python3.*'\\\\$" "$REPO_ROOT/skills/execute/scripts/execute_step7.sh"
 }
 
 @test "run_step7_report_runs_in_scratch" {
@@ -46,7 +46,7 @@ load ../test_helper
 - [x] Task 1
 - [ ] Task 2
 EOF
-  output=$(PROJECT_ROOT="$tmpdir" CHANGE_NAME="test-change" bash -c "source '$REPO_ROOT/skills/_lib/execute_step7.sh' && run_step7_report" 2>&1 || true)
+  output=$(PROJECT_ROOT="$tmpdir" CHANGE_NAME="test-change" bash -c "source '$REPO_ROOT/skills/execute/scripts/execute_step7.sh' && run_step7_report" 2>&1 || true)
   rm -rf "$tmpdir"
   echo "$output" | grep -qE '执行完成|Change:'
 }
@@ -54,7 +54,7 @@ EOF
 @test "run_step7_report_handles_missing_change" {
   local tmpdir
   tmpdir=$(mktemp -d)
-  output=$(PROJECT_ROOT="$tmpdir" CHANGE_NAME="nonexistent" bash -c "source '$REPO_ROOT/skills/_lib/execute_step7.sh' && run_step7_report" 2>&1 || true)
+  output=$(PROJECT_ROOT="$tmpdir" CHANGE_NAME="nonexistent" bash -c "source '$REPO_ROOT/skills/execute/scripts/execute_step7.sh' && run_step7_report" 2>&1 || true)
   rm -rf "$tmpdir"
   # Should print something (not crash)
   echo "$output" | grep -qE 'Change:|0/0|nonexistent'
@@ -63,13 +63,13 @@ EOF
 @test "run_step7_report_uses_porcelain_not_raw_awk" {
   # Should NOT use raw awk for openspec/ branch parsing
   # (uses git worktree list --porcelain internally in the Python code)
-  ! grep -n "awk.*openspec/" "$REPO_ROOT/skills/_lib/execute_step7.sh"
+  ! grep -n "awk.*openspec/" "$REPO_ROOT/skills/execute/scripts/execute_step7.sh"
 }
 
 @test "run_step7_report_includes_next_steps_section" {
   local tmpdir
   tmpdir=$(mktemp -d)
-  output=$(PROJECT_ROOT="$tmpdir" CHANGE_NAME="test" bash -c "source '$REPO_ROOT/skills/_lib/execute_step7.sh' && run_step7_report" 2>&1 || true)
+  output=$(PROJECT_ROOT="$tmpdir" CHANGE_NAME="test" bash -c "source '$REPO_ROOT/skills/execute/scripts/execute_step7.sh' && run_step7_report" 2>&1 || true)
   rm -rf "$tmpdir"
   # Should print "下一步" or similar next-step guidance
   echo "$output" | grep -qE '下一步|📋'

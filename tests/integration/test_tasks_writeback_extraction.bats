@@ -32,7 +32,7 @@ TASKS_WB="$REPO_ROOT/skills/_lib/tasks_writeback.sh"
 }
 
 @test "execute_invokes_helper" {
-  grep -q 'source.*_lib/tasks_writeback.sh' "$EXECUTE_MD"
+  grep -q 'source.*scripts/tasks_writeback.sh' "$EXECUTE_MD"
   grep -qE 'mark_task_done|mark_all_tasks_done' "$EXECUTE_MD"
 }
 

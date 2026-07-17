@@ -13,13 +13,13 @@
 load ../test_helper
 
 @test "skills/_lib/ship_review.sh exists with handle_review_action" {
-  [ -f "$REPO_ROOT/skills/_lib/ship_review.sh" ]
-  grep -q "^handle_review_action()" "$REPO_ROOT/skills/_lib/ship_review.sh"
+  [ -f "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh" ]
+  grep -q "^handle_review_action()" "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh"
 }
 
 @test "guide-ship.md Phase 2.5 sources and uses ship_review.sh" {
   [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
-  grep -nE 'source .*_lib/ship_review.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  grep -nE 'source .*scripts/ship_review.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
   grep -nE 'handle_review_action' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
@@ -50,7 +50,7 @@ load ../test_helper
   mkdir -p openspec/changes/test-change
   echo "# tasks" > openspec/changes/test-change/tasks.md
   printf "src/api.py: consider type hints\n" > /tmp/review_new_todos.txt
-  source "$REPO_ROOT/skills/_lib/ship_review.sh"
+  source "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh"
   handle_review_action "$TEST_REPO" "test-change" "$TEST_REPO" "1"
   grep -q "review: src/api.py" "$TEST_REPO/openspec/changes/test-change/tasks.md"
   rm -rf "$TEST_REPO"
@@ -64,7 +64,7 @@ load ../test_helper
   git config user.email "test@test"
   git config user.name "test"
   mkdir -p openspec/changes/parent-change
-  source "$REPO_ROOT/skills/_lib/ship_review.sh"
+  source "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh"
   handle_review_action "$TEST_REPO" "parent-change" "$TEST_REPO" "2"
   [ -f "$TEST_REPO/proposal-suggestions.md" ]
   grep -q '"type": "debt"' "$TEST_REPO/proposal-suggestions.md"
@@ -78,7 +78,7 @@ load ../test_helper
   git init -q -b master
   git config user.email "test@test"
   git config user.name "test"
-  source "$REPO_ROOT/skills/_lib/ship_review.sh"
+  source "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh"
   run handle_review_action "$TEST_REPO" "x" "$TEST_REPO" "4"
   [ "$status" -eq 0 ]
   rm -rf "$TEST_REPO"

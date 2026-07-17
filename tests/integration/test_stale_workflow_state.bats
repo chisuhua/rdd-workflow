@@ -5,7 +5,7 @@
 load ../test_helper
 
 @test "scan-state.sh defines check_stale_workflow_state function" {
-  grep -qF "check_stale_workflow_state()" skills/_lib/scan-state.sh
+  grep -qF "check_stale_workflow_state()" skills/guide/scripts/scan-state.sh
 }
 
 @test "scan-state.sh invokes check_stale_workflow_state from scan_state" {

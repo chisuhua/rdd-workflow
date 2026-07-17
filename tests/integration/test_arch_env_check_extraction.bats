@@ -20,10 +20,10 @@ load ../test_helper
 REPLACED_RANGE="92,189p"
 
 @test "arch_env_check_helper_exists" {
-  [ -f "$REPO_ROOT/skills/_lib/arch_env_check.sh" ]
-  grep -q 'run_arch_env_check()' "$REPO_ROOT/skills/_lib/arch_env_check.sh"
+  [ -f "$REPO_ROOT/skills/guide-arch/scripts/arch_env_check.sh" ]
+  grep -q 'run_arch_env_check()' "$REPO_ROOT/skills/guide-arch/scripts/arch_env_check.sh"
   # Verify the function is sourceable
-  bash -c "cd '$REPO_ROOT' && source skills/_lib/arch_env_check.sh && declare -f run_arch_env_check" | grep -q 'run_arch_env_check'
+  bash -c "cd '$REPO_ROOT' && source skills/guide-arch/scripts/arch_env_check.sh && declare -f run_arch_env_check" | grep -q 'run_arch_env_check'
 }
 
 @test "guide_arch_inline_block_removed" {
@@ -36,28 +36,28 @@ REPLACED_RANGE="92,189p"
 
 @test "guide_arch_invokes_helper" {
   [ -f "$REPO_ROOT/skills/guide-arch/SKILL.md" ]
-  grep -q 'source.*_lib/arch_env_check.sh' "$REPO_ROOT/skills/guide-arch/SKILL.md"
+  grep -q 'source.*scripts/arch_env_check.sh' "$REPO_ROOT/skills/guide-arch/SKILL.md"
   grep -q 'run_arch_env_check' "$REPO_ROOT/skills/guide-arch/SKILL.md"
 }
 
 @test "run_arch_env_check_runs_in_repo" {
-  bash -c "cd '$REPO_ROOT' && source skills/_lib/arch_env_check.sh && run_arch_env_check" >/dev/null
+  bash -c "cd '$REPO_ROOT' && source skills/guide-arch/scripts/arch_env_check.sh && run_arch_env_check" >/dev/null
 }
 
 @test "run_arch_env_check_sets_project_root" {
-  bash -c "cd '$REPO_ROOT' && source skills/_lib/arch_env_check.sh && run_arch_env_check >/dev/null && test -n \"\$PROJECT_ROOT\""
+  bash -c "cd '$REPO_ROOT' && source skills/guide-arch/scripts/arch_env_check.sh && run_arch_env_check >/dev/null && test -n \"\$PROJECT_ROOT\""
 }
 
 @test "run_arch_env_check_fails_when_openspec_missing" {
   # Mock PATH to exclude openspec
   local output
-  output=$(PATH=/usr/bin:/bin bash -c "cd '$REPO_ROOT' && source skills/_lib/arch_env_check.sh && run_arch_env_check" 2>&1) || true
+  output=$(PATH=/usr/bin:/bin bash -c "cd '$REPO_ROOT' && source skills/guide-arch/scripts/arch_env_check.sh && run_arch_env_check" 2>&1) || true
   echo "$output" | grep -q 'openspec CLI 未找到'
 }
 
 @test "run_arch_env_check_discovers_counts" {
   local output
-  output=$(bash -c "cd '$REPO_ROOT' && source skills/_lib/arch_env_check.sh && run_arch_env_check" 2>&1) || true
+  output=$(bash -c "cd '$REPO_ROOT' && source skills/guide-arch/scripts/arch_env_check.sh && run_arch_env_check" 2>&1) || true
   echo "$output" | grep -q '现有 ADR'
   echo "$output" | grep -q 'Roadmap'
   echo "$output" | grep -q '架构差距分析'
@@ -66,7 +66,7 @@ REPLACED_RANGE="92,189p"
 
 @test "run_arch_env_check_sources_discover_helper" {
   local output
-  output=$(bash -c "cd '$REPO_ROOT' && source skills/_lib/arch_env_check.sh && run_arch_env_check" 2>&1) || true
+  output=$(bash -c "cd '$REPO_ROOT' && source skills/guide-arch/scripts/arch_env_check.sh && run_arch_env_check" 2>&1) || true
   echo "$output" | grep -q '工件发现 (ADR-0016)'
 }
 
@@ -76,7 +76,7 @@ REPLACED_RANGE="92,189p"
   tmpdir=$(mktemp -d)
   cp -r "$REPO_ROOT" "$tmpdir/repo"
   rm "$tmpdir/repo/skills/_lib/discover-arch-artifacts.sh"
-  output=$(bash -c "cd '$tmpdir/repo' && source skills/_lib/arch_env_check.sh && run_arch_env_check" 2>&1)
+  output=$(bash -c "cd '$tmpdir/repo' && source skills/guide-arch/scripts/arch_env_check.sh && run_arch_env_check" 2>&1)
   rm -rf "$tmpdir"
   # Should NOT print "工件发现 (ADR-0016)" since the helper was missing
   echo "$output" | grep -q '现有 ADR'

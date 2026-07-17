@@ -18,13 +18,13 @@
 load ../test_helper
 
 @test "skills/_lib/rddf_session_hooks.sh exists with both function exports" {
-  [ -f "$REPO_ROOT/skills/_lib/rddf_session_hooks.sh" ]
-  grep -q '^rddf_session_hook_entry()' "$REPO_ROOT/skills/_lib/rddf_session_hooks.sh"
-  grep -q '^rddf_session_hook_close()' "$REPO_ROOT/skills/_lib/rddf_session_hooks.sh"
+  [ -f "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh" ]
+  grep -q '^rddf_session_hook_entry()' "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
+  grep -q '^rddf_session_hook_close()' "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
 }
 
 @test "rddf_session_hooks.sh does not duplicate RddfSessionCoordinator API (no API surface change)" {
-  [ -f "$REPO_ROOT/skills/_lib/rddf_session_hooks.sh" ]
+  [ -f "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh" ]
   grep -q 'from skills._lib.rddf_session' "$REPO_ROOT/skills/_lib/rddf_session_hooks.sh"
 }
 
@@ -61,9 +61,9 @@ load ../test_helper
 }
 
 @test "all 3 skills invoke rddf_session_hooks helper" {
-  grep -q '_lib/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-arch/SKILL.md"
-  grep -q '_lib/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-plan/SKILL.md"
-  grep -q '_lib/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  grep -q 'scripts/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-arch/SKILL.md"
+  grep -q 'scripts/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-plan/SKILL.md"
+  grep -q 'scripts/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
 # --- Runtime: helper functions work correctly ---
@@ -73,7 +73,7 @@ load ../test_helper
   cd "$TEST_REPO"
   ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
   export PROJECT_ROOT="$TEST_REPO"
-  source "$REPO_ROOT/skills/_lib/rddf_session_hooks.sh"
+  source "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
   OPENCODE_SESSION_ID="test_owner_1" \
     rddf_session_hook_entry stage_arch guide-arch arch-phase arch-done .rddf/state/.arch-handoff.json
   [ -f .rddf/state/sessions.json ]
@@ -101,7 +101,7 @@ print('OK')
   cd "$TEST_REPO"
   ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
   export PROJECT_ROOT="$TEST_REPO"
-  source "$REPO_ROOT/skills/_lib/rddf_session_hooks.sh"
+  source "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
   OPENCODE_SESSION_ID="test_owner_2" \
     rddf_session_hook_entry stage_arch guide-arch arch-phase arch-done 2>&1
   OPENCODE_SESSION_ID="test_owner_2" \
@@ -124,7 +124,7 @@ print('OK')
   cd "$TEST_REPO"
   ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
   export PROJECT_ROOT="$TEST_REPO"
-  source "$REPO_ROOT/skills/_lib/rddf_session_hooks.sh"
+  source "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
   OPENCODE_SESSION_ID="test_owner_3" \
     rddf_session_hook_entry stage_arch guide-arch arch-phase arch-done 2>&1
   OPENCODE_SESSION_ID="test_owner_3" \
@@ -146,7 +146,7 @@ print('OK')
   cd "$TEST_REPO"
   ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
   export PROJECT_ROOT="$TEST_REPO"
-  source "$REPO_ROOT/skills/_lib/rddf_session_hooks.sh"
+  source "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
   output=$(OPENCODE_SESSION_ID="test_owner_4" \
     rddf_session_hook_close stage_arch arch-done guide-arch 2>&1 || true)
   echo "$output" | grep -qiE 'skip|not found'
@@ -158,7 +158,7 @@ print('OK')
   cd "$TEST_REPO"
   ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
   export PROJECT_ROOT="$TEST_REPO"
-  source "$REPO_ROOT/skills/_lib/rddf_session_hooks.sh"
+  source "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
   # Spawn 3 parallel entries with DIFFERENT kinds (same owner).
   # fcntl.flock with LOCK_NB serializes — at LEAST one succeeds, others
   # may get BlockingIOError on lock acquisition (pre-existing race in
@@ -194,7 +194,7 @@ print('OK')
   cd "$TEST_REPO"
   ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
   export PROJECT_ROOT="$TEST_REPO"
-  source "$REPO_ROOT/skills/_lib/rddf_session_hooks.sh"
+  source "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
   # First entry — succeeds (creates session with owner_a)
   OPENCODE_SESSION_ID="owner_a" \
     rddf_session_hook_entry stage_arch guide-arch arch-phase arch-done 2>&1

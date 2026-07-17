@@ -34,12 +34,9 @@ def _repo_root_on_path() -> None:
 
 @pytest.mark.parametrize("module_name", [
     "skills._lib.iteration",
-    "skills._lib.deps_output",
-    "skills._lib.rddf_session",
     "skills._lib.state_vector",
     "skills._lib.event_log",
     "skills._lib.lock",
-    "skills._lib.feature_view",
     "skills._lib.gate",
 ])
 def test_lib_module_importable(module_name: str) -> None:

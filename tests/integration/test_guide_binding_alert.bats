@@ -25,7 +25,7 @@ teardown() {
   python3 - <<PYEOF
 import sys
 sys.path.insert(0, "$REPO_ROOT")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
 coord.create_session(kind="stage_ship", owner_opencode_session_id="ses_me", goal={})
 PYEOF
@@ -39,7 +39,7 @@ PYEOF
   python3 - <<PYEOF
 import sys, json
 sys.path.insert(0, "$REPO_ROOT")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
 sid = coord.create_session(kind="stage_plan", owner_opencode_session_id="ses_old", goal={})
 data = json.loads(coord._sessions_file.read_text())
@@ -76,7 +76,7 @@ PYEOF
   python3 - <<PYEOF
 import sys
 sys.path.insert(0, "$REPO_ROOT")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
 coord.create_session(kind="stage_ship", owner_opencode_session_id="ses_me", goal={})
 PYEOF
@@ -91,7 +91,7 @@ PYEOF
   python3 - <<PYEOF
 import sys
 sys.path.insert(0, "$REPO_ROOT")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
 coord.create_session(kind="stage_ship", owner_opencode_session_id="ses_me", goal={})
 PYEOF
@@ -121,7 +121,7 @@ PYEOF
   python3 - <<PYEOF
 import sys
 sys.path.insert(0, "$REPO_ROOT")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
 coord.create_session(kind="stage_ship", owner_opencode_session_id="ses_me", goal={})
 PYEOF
@@ -145,7 +145,7 @@ PYEOF
   python3 - <<PYEOF
 import sys
 sys.path.insert(0, "$REPO_ROOT")
-from skills._lib.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file="$TEST_ROOT/.rddf/state/sessions.json")
 coord.create_session(kind="stage_ship", owner_opencode_session_id="ses_me", goal={})
 PYEOF

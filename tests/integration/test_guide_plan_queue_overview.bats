@@ -25,7 +25,7 @@
 }
 
 @test "deps §5e 回显: 提取 split/merge/reorder 建议" {
-    run grep -A 25 "Deps §5e" "$BATS_TEST_DIRNAME/../../skills/_lib/plan_done_gate.sh"
+    run grep -A 25 "Deps §5e" "$BATS_TEST_DIRNAME/../../skills/guide-plan/scripts/plan_done_gate.sh"
     [ "$status" -eq 0 ]
     [[ "$output" == *"split|merge|reorder"* ]]
     [[ "$output" == *"FALLBACK_MARKER"* ]]
@@ -33,14 +33,14 @@
 }
 
 @test "deps §5e 回显: 默认忽略（不阻断）" {
-    run grep -B 1 -A 5 "GUIDE_PLAN_DEPS_CHOICE" "$BATS_TEST_DIRNAME/../../skills/_lib/plan_done_gate.sh"
+    run grep -B 1 -A 5 "GUIDE_PLAN_DEPS_CHOICE" "$BATS_TEST_DIRNAME/../../skills/guide-plan/scripts/plan_done_gate.sh"
     [ "$status" -eq 0 ]
     [[ "$output" == *"-2"* ]]
     [[ "$output" == *"SKIP_GATE_0"* ]]
 }
 
 @test "deps §5e 回显: 接受建议时设置 SKIP_GATE_0=true" {
-    run grep -A 1 '1)' "$BATS_TEST_DIRNAME/../../skills/_lib/plan_done_gate.sh"
+    run grep -A 1 '1)' "$BATS_TEST_DIRNAME/../../skills/guide-plan/scripts/plan_done_gate.sh"
     [ "$status" -eq 0 ]
     [[ "$output" == *"SKIP_GATE_0=true"* ]]
 }
@@ -55,12 +55,12 @@
 
 @test "gate 0: 旧的内联 sum() 必须被移除" {
     # 旧实现: sum(1 for c in d.get('changes', []) if c.get('status') == 'proposed')
-    run grep "sum(1 for c in d.get" "$BATS_TEST_DIRNAME/../../skills/_lib/plan_done_gate.sh"
+    run grep "sum(1 for c in d.get" "$BATS_TEST_DIRNAME/../../skills/guide-plan/scripts/plan_done_gate.sh"
     [ "$status" -ne 0 ]
 }
 
 @test "gate 0: SKIP_GATE_0 短路时直接 exit 0" {
-    run grep -A 3 "SKIP_GATE_0.*true" "$BATS_TEST_DIRNAME/../../skills/_lib/plan_done_gate.sh"
+    run grep -A 3 "SKIP_GATE_0.*true" "$BATS_TEST_DIRNAME/../../skills/guide-plan/scripts/plan_done_gate.sh"
     [ "$status" -eq 0 ]
     [[ "$output" == *"return 0"* ]]
 }

@@ -14,13 +14,13 @@
 load ../test_helper
 
 @test "skills/_lib/write_arch_handoff.{sh,py,env.py} exist" {
-  [ -f "$REPO_ROOT/skills/_lib/write_arch_handoff.sh" ]
-  [ -f "$REPO_ROOT/skills/_lib/write_arch_handoff.py" ]
-  [ -f "$REPO_ROOT/skills/_lib/write_arch_handoff_env.py" ]
+  [ -f "$REPO_ROOT/skills/guide-arch/scripts/write_arch_handoff.sh" ]
+  [ -f "$REPO_ROOT/skills/guide-arch/scripts/write_arch_handoff.py" ]
+  [ -f "$REPO_ROOT/skills/guide-arch/scripts/write_arch_handoff_env.py" ]
 }
 
 @test "write_arch_handoff.sh exports write_arch_handoff function" {
-  bash -c "cd '$REPO_ROOT' && source skills/_lib/write_arch_handoff.sh && declare -f write_arch_handoff" | grep -q 'write_arch_handoff'
+  bash -c "cd '$REPO_ROOT' && source skills/guide-arch/scripts/write_arch_handoff.sh && declare -f write_arch_handoff" | grep -q 'write_arch_handoff'
 }
 
 @test "guide-arch.md replaced inline block no longer contains cat heredoc" {
@@ -29,7 +29,7 @@ load ../test_helper
 }
 
 @test "guide-arch.md sources _lib/write_arch_handoff.sh and calls write_arch_handoff" {
-  grep -q 'source.*_lib/write_arch_handoff.sh' "$REPO_ROOT/skills/guide-arch/SKILL.md"
+  grep -q 'source.*scripts/write_arch_handoff.sh' "$REPO_ROOT/skills/guide-arch/SKILL.md"
   grep -q 'write_arch_handoff' "$REPO_ROOT/skills/guide-arch/SKILL.md"
 }
 
@@ -89,7 +89,7 @@ print('OK')
   # code block propagation would normally fail here if the helper relied on env var.
   # Explicitly override PROJECT_ROOT to tmpdir — test_helper exports PROJECT_ROOT
   # which would otherwise point to the real repo root.
-  bash -c "cd '$tmpdir' && export PROJECT_ROOT='$tmpdir' && export DISCOVERED_ROADMAP_PATH='roadmap.md' && source $REPO_ROOT/skills/_lib/write_arch_handoff.sh && write_arch_handoff" 2>&1
+  bash -c "cd '$tmpdir' && export PROJECT_ROOT='$tmpdir' && export DISCOVERED_ROADMAP_PATH='roadmap.md' && source $REPO_ROOT/skills/guide-arch/scripts/write_arch_handoff.sh && write_arch_handoff" 2>&1
 
   # Verify .arch-handoff.json has roadmap_exists: true
   if [ -f "$tmpdir/.rddf/state/.arch-handoff.json" ]; then

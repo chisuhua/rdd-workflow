@@ -6,7 +6,7 @@
 load ../test_helper
 
 @test "scan-state.sh header lists EXPORTED_VARS set to {RECOMMEND REASON}" {
-  grep -qE '^#[[:space:]]*EXPORTED_VARS:[[:space:]]*\{RECOMMEND[[:space:]]+REASON\}' skills/_lib/scan-state.sh
+  grep -qE '^#[[:space:]]*EXPORTED_VARS:[[:space:]]*\{RECOMMEND[[:space:]]+REASON\}' skills/guide/scripts/scan-state.sh
 }
 
 @test "scan-state.sh priority list (1..N) is internally consistent" {

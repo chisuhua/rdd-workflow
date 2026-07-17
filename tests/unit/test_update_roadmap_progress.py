@@ -3,7 +3,7 @@ import os
 import json
 import tempfile
 import pytest
-from skills._lib import update_roadmap_progress as urmp
+from skills.execute.scripts import update_roadmap_progress as urmp
 
 
 @pytest.fixture

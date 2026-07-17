@@ -21,8 +21,8 @@
 load ../test_helper
 
 @test "status_render_mode_a: helper file exists with function" {
-  [ -f "$REPO_ROOT/skills/_lib/status_render_mode_a.sh" ]
-  bash -c "source '$REPO_ROOT/skills/_lib/status_render_mode_a.sh' && declare -f render_status_mode_a" | grep -q 'render_status_mode_a'
+  [ -f "$REPO_ROOT/skills/status/scripts/status_render_mode_a.sh" ]
+  bash -c "source '$REPO_ROOT/skills/status/scripts/status_render_mode_a.sh' && declare -f render_status_mode_a" | grep -q 'render_status_mode_a'
 }
 
 @test "status_render_mode_a: status.md inline render_status() bash block removed" {
@@ -35,13 +35,13 @@ load ../test_helper
 
 @test "status_render_mode_a: status.md invokes helper" {
   [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
-  grep -q 'source.*_lib/status_render_mode_a.sh' "$REPO_ROOT/skills/status/SKILL.md"
+  grep -q 'source.*scripts/status_render_mode_a.sh' "$REPO_ROOT/skills/status/SKILL.md"
   grep -q 'render_status_mode_a' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "status_render_mode_a: runs without crashing in real repo" {
   local output
-  output=$(cd "$REPO_ROOT" && source skills/_lib/status_render_mode_a.sh && render_status_mode_a "fake-change" 2>&1 || true)
+  output=$(cd "$REPO_ROOT" && source skills/status/scripts/status_render_mode_a.sh && render_status_mode_a "fake-change" 2>&1 || true)
   # Must not crash; output depends on repo state
   echo "$output" | grep -qE 'unknown|committed|in_worktree|planned|no worktree|openspec' || true
 }
@@ -55,18 +55,18 @@ load ../test_helper
   git config user.name "test"
   git commit --allow-empty -m "init" --quiet
   local output
-  output=$(PROJECT_ROOT="$tmpdir" bash -c "source '$REPO_ROOT/skills/_lib/status_render_mode_a.sh' && render_status_mode_a 'some-change'" 2>&1 || true)
+  output=$(PROJECT_ROOT="$tmpdir" bash -c "source '$REPO_ROOT/skills/status/scripts/status_render_mode_a.sh' && render_status_mode_a 'some-change'" 2>&1 || true)
   rm -rf "$tmpdir"
   # Must not crash; fallback prints something recognizable
   echo "$output" | grep -qE 'planned|unknown|没有|committed' || true
 }
 
 @test "status_render_mode_a: Oracle C1 — no bash string interpolation" {
-  [ -f "$REPO_ROOT/skills/_lib/status_render_mode_a.sh" ]
+  [ -f "$REPO_ROOT/skills/status/scripts/status_render_mode_a.sh" ]
   # No unquoted heredoc: <<EOF allows bash expansion, <<'EOF' does not
-  run grep -cE 'python3.*<<[A-Z]+$' "$REPO_ROOT/skills/_lib/status_render_mode_a.sh"
+  run grep -cE 'python3.*<<[A-Z]+$' "$REPO_ROOT/skills/status/scripts/status_render_mode_a.sh"
   [ "$output" = "0" ] || echo "WARNING: unquoted heredoc found"
   # No $VAR inside double-quoted python3 argument (bash string interpolation risk)
-  run grep -c 'python3 -c .*\${' "$REPO_ROOT/skills/_lib/status_render_mode_a.sh"
+  run grep -c 'python3 -c .*\${' "$REPO_ROOT/skills/status/scripts/status_render_mode_a.sh"
   [ "$output" = "0" ] || echo "WARNING: bash interpolation in python3 call"
 }

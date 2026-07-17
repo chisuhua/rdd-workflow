@@ -1,7 +1,7 @@
 """Unit tests for skills/_lib/propose_change.py."""
 import json
 import pytest
-from skills._lib import propose_change as pc
+from skills.propose.scripts import propose_change as pc
 
 
 @pytest.fixture

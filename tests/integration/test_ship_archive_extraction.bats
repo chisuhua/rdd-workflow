@@ -17,21 +17,21 @@ load ../test_helper
 PHASE3_RANGE="706,976p"
 
 @test "skills/_lib/ship_archive.sh exists with expected exports" {
-  [ -f "$REPO_ROOT/skills/_lib/ship_archive.sh" ]
-  grep -q "^detect_archive_mode()" "$REPO_ROOT/skills/_lib/ship_archive.sh"
-  grep -q "^check_feature_integrity()" "$REPO_ROOT/skills/_lib/ship_archive.sh"
-  grep -q "^archive_change_for_mode()" "$REPO_ROOT/skills/_lib/ship_archive.sh"
+  [ -f "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh" ]
+  grep -q "^detect_archive_mode()" "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"
+  grep -q "^check_feature_integrity()" "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"
+  grep -q "^archive_change_for_mode()" "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"
 }
 
 @test "ship_archive.sh sources worktree.sh and archive.sh" {
-  [ -f "$REPO_ROOT/skills/_lib/ship_archive.sh" ]
-  grep -q "worktree.sh" "$REPO_ROOT/skills/_lib/ship_archive.sh"
-  grep -q "archive.sh" "$REPO_ROOT/skills/_lib/ship_archive.sh"
+  [ -f "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh" ]
+  grep -q "worktree.sh" "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"
+  grep -q "archive.sh" "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"
 }
 
 @test "guide-ship.md Phase 3 sources and uses ship_archive.sh" {
   [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
-  grep -nE 'source .*_lib/ship_archive.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  grep -nE 'source .*scripts/ship_archive.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
   grep -nE 'archive_change_for_mode|detect_archive_mode|check_feature_integrity' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
@@ -56,7 +56,7 @@ PHASE3_RANGE="706,976p"
   mkdir -p openspec/changes/c1
   git worktree add -b openspec/c1 .rddf/wt/c1 HEAD >/dev/null 2>&1
   source "$REPO_ROOT/skills/_lib/worktree.sh"
-  source "$REPO_ROOT/skills/_lib/ship_archive.sh"
+  source "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"
   result=$(detect_archive_mode "$TEST_REPO" "c1")
   [ "$result" = "worktree" ]
   rm -rf "$TEST_REPO"
@@ -72,7 +72,7 @@ PHASE3_RANGE="706,976p"
   mkdir -p openspec/changes/c1
   git checkout -b openspec/c1 >/dev/null 2>&1
   source "$REPO_ROOT/skills/_lib/worktree.sh"
-  source "$REPO_ROOT/skills/_lib/ship_archive.sh"
+  source "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"
   result=$(detect_archive_mode "$TEST_REPO" "c1")
   [ "$result" = "lightweight" ]
   rm -rf "$TEST_REPO"
@@ -86,7 +86,7 @@ PHASE3_RANGE="706,976p"
   git config user.name "test"
   echo "x" > README.md && git add README.md && git commit -q -m "initial"
   # No iteration.json, no feature-X changes → should exit 0 (no-op)
-  source "$REPO_ROOT/skills/_lib/ship_archive.sh"
+  source "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"
   run check_feature_integrity "$TEST_REPO" "any-change"
   [ "$status" -eq 0 ]
   rm -rf "$TEST_REPO"

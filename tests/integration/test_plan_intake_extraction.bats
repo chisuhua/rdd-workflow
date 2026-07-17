@@ -18,10 +18,10 @@ load ../test_helper
 REPLACED_RANGE="95,175p"
 
 @test "plan_intake_helper_exists" {
-  [ -f "$REPO_ROOT/skills/_lib/plan_intake.sh" ]
-  grep -q 'run_plan_intake()' "$REPO_ROOT/skills/_lib/plan_intake.sh"
+  [ -f "$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh" ]
+  grep -q 'run_plan_intake()' "$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh"
   # Verify the function is sourceable
-  bash -c "cd '$REPO_ROOT' && source skills/_lib/plan_intake.sh && declare -f run_plan_intake" | grep -q 'run_plan_intake'
+  bash -c "cd '$REPO_ROOT' && source skills/guide-plan/scripts/plan_intake.sh && declare -f run_plan_intake" | grep -q 'run_plan_intake'
 }
 
 @test "guide_plan_inline_block_removed" {
@@ -34,7 +34,7 @@ REPLACED_RANGE="95,175p"
 
 @test "guide_plan_invokes_helper" {
   [ -f "$REPO_ROOT/skills/guide-plan/SKILL.md" ]
-  grep -q 'source.*_lib/plan_intake.sh' "$REPO_ROOT/skills/guide-plan/SKILL.md"
+  grep -q 'source.*scripts/plan_intake.sh' "$REPO_ROOT/skills/guide-plan/SKILL.md"
   grep -q 'run_plan_intake' "$REPO_ROOT/skills/guide-plan/SKILL.md"
 }
 
@@ -53,7 +53,7 @@ REPLACED_RANGE="95,175p"
   "current_phase": "phase-2"
 }
 EOF
-  bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/_lib/plan_intake.sh' && run_plan_intake" >/dev/null 2>&1
+  bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh' && run_plan_intake" >/dev/null 2>&1
   rm -rf "$tmpdir"
 }
 
@@ -61,7 +61,7 @@ EOF
   # No handoff → should print error about arch-done handoff
   local tmpdir output
   tmpdir=$(mktemp -d)
-  output=$(bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/_lib/plan_intake.sh' && run_plan_intake" 2>&1 || true)
+  output=$(bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh' && run_plan_intake" 2>&1 || true)
   rm -rf "$tmpdir"
   echo "$output" | grep -q 'arch-done handoff'
 }
@@ -81,7 +81,7 @@ EOF
   "current_phase": "phase-test"
 }
 EOF
-  output=$(bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/_lib/plan_intake.sh' && run_plan_intake" 2>&1 || true)
+  output=$(bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh' && run_plan_intake" 2>&1 || true)
   rm -rf "$tmpdir"
   echo "$output" | grep -q 'docs/custom'
 }
@@ -90,7 +90,7 @@ EOF
   # No handoff file — should still succeed with SKIP_ARCH_HANDOFF=yes
   local tmpdir output
   tmpdir=$(mktemp -d)
-  output=$(SKIP_ARCH_HANDOFF=yes bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/_lib/plan_intake.sh' && run_plan_intake" 2>&1 || true)
+  output=$(SKIP_ARCH_HANDOFF=yes bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh' && run_plan_intake" 2>&1 || true)
   rm -rf "$tmpdir"
   echo "$output" | grep -q 'SKIP_ARCH_HANDOFF=yes'
 }

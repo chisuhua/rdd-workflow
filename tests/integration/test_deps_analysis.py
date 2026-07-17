@@ -17,7 +17,7 @@ import re
 import pytest
 import jsonschema
 
-from skills._lib import deps_output as do
+from skills.deps.scripts import deps_output as do
 from skills._lib import iteration as it
 
 

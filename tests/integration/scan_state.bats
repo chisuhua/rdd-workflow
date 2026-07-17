@@ -19,31 +19,31 @@ load ../test_helper
 # ---- Static tests (no git repo required) --------------------------------
 
 @test "scan_state: library file exists" {
-  [ -f "$REPO_ROOT/skills/_lib/scan-state.sh" ]
+  [ -f "$REPO_ROOT/skills/guide/scripts/scan-state.sh" ]
 }
 
 @test "scan_state: defines scan_state function" {
-  grep -qE '^scan_state\(\) ?\{' "$REPO_ROOT/skills/_lib/scan-state.sh"
+  grep -qE '^scan_state\(\) ?\{' "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
 }
 
 @test "scan_state: header documents P0/P1 bug history (regression guards)" {
-  grep -q "P0\|P1" "$REPO_ROOT/skills/_lib/scan-state.sh"
-  grep -q '\$3' "$REPO_ROOT/skills/_lib/scan-state.sh"
-  grep -q "json.load" "$REPO_ROOT/skills/_lib/scan-state.sh"
+  grep -q "P0\|P1" "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
+  grep -q '\$3' "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
+  grep -q "json.load" "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
 }
 
 @test "scan_state: uses fixed bracket format \[openspec/ in awk regex" {
   # Regression guard for the $3 ~ /^openspec\// bracket bug
-  grep -qE 'awk.*\$3.*\[openspec/' "$REPO_ROOT/skills/_lib/scan-state.sh"
+  grep -qE 'awk.*\$3.*\[openspec/' "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
   # And must NOT have the buggy unbracketed variant anywhere
-  ! grep -qE "awk.*'\\\$3 ~ /\\^openspec\\\\\//" "$REPO_ROOT/skills/_lib/scan-state.sh"
+  ! grep -qE "awk.*'\\\$3 ~ /\\^openspec\\\\\//" "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
 }
 
 @test "scan_state: Python heredoc uses PY_PROJECT_ROOT env var (cwd safety)" {
-  grep -q "PY_PROJECT_ROOT" "$REPO_ROOT/skills/_lib/scan-state.sh"
-  grep -q 'os.environ\[.PY_PROJECT_ROOT.\]' "$REPO_ROOT/skills/_lib/scan-state.sh"
+  grep -q "PY_PROJECT_ROOT" "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
+  grep -q 'os.environ\[.PY_PROJECT_ROOT.\]' "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
   # Negative: must NOT rely on cwd relative open
-  ! grep -qE "open\(['\"]proposal-suggestions.md['\"]" "$REPO_ROOT/skills/_lib/scan-state.sh"
+  ! grep -qE "open\(['\"]proposal-suggestions.md['\"]" "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
 }
 
 # ---- Runtime tests (Pattern C: mktemp -d in @test body) ------------------
@@ -57,7 +57,7 @@ _run_scan() {
     cd "$repo" || exit 1
     export PROJECT_ROOT="$repo"
     # shellcheck source=/dev/null
-    source "$REPO_ROOT/skills/_lib/scan-state.sh"
+    source "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
     scan_state
     echo "RECOMMEND=$RECOMMEND"
     echo "REASON=$REASON"

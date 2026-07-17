@@ -10,8 +10,8 @@
 load ../test_helper
 
 @test "feature_graph: helper file exists with render_feature_graph function" {
-  [ -f "$REPO_ROOT/skills/_lib/feature_graph.sh" ]
-  bash -c "source '$REPO_ROOT/skills/_lib/feature_graph.sh' && declare -f render_feature_graph" | grep -q 'render_feature_graph'
+  [ -f "$REPO_ROOT/skills/feature/scripts/feature_graph.sh" ]
+  bash -c "source '$REPO_ROOT/skills/feature/scripts/feature_graph.sh' && declare -f render_feature_graph" | grep -q 'render_feature_graph'
 }
 
 @test "feature_graph: feature.md inline graph block removed" {
@@ -24,14 +24,14 @@ load ../test_helper
 }
 
 @test "feature_graph: feature.md sources and calls helper" {
-  grep -q 'source.*_lib/feature_graph.sh' "$REPO_ROOT/skills/feature/SKILL.md"
+  grep -q 'source.*scripts/feature_graph.sh' "$REPO_ROOT/skills/feature/SKILL.md"
   grep -q 'render_feature_graph' "$REPO_ROOT/skills/feature/SKILL.md"
 }
 
 @test "feature_graph: handles missing iteration.json gracefully" {
   local tmpdir
   tmpdir=$(mktemp -d)
-  output=$(PYTHONPATH="$REPO_ROOT" PROJECT_ROOT="$tmpdir" bash -c "source '$REPO_ROOT/skills/_lib/feature_graph.sh' && render_feature_graph" 2>&1 || true)
+  output=$(PYTHONPATH="$REPO_ROOT" PROJECT_ROOT="$tmpdir" bash -c "source '$REPO_ROOT/skills/feature/scripts/feature_graph.sh' && render_feature_graph" 2>&1 || true)
   rm -rf "$tmpdir"
   echo "$output" | grep -qE 'guide-plan|iteration'
 }
