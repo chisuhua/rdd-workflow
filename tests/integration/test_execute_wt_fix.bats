@@ -15,30 +15,30 @@ load ../test_helper
 # P0-7 ---------------------------------------------------------------------
 
 @test "P0-7: execute.md no longer has \$2 openspec/ awk patterns" {
-  [ -f "skills/execute.md" ]
+  [ -f "skills/execute/SKILL.md" ]
   # The old buggy pattern was: awk '$2 ~ /^openspec\// ...'
   # Use a regex that's specific to the bug (the field index $2 next to openspec/).
-  if grep -nE '\$2[ ~]*\^?/?"?openspec/' "skills/execute.md"; then
+  if grep -nE '\$2[ ~]*\^?/?"?openspec/' "skills/execute/SKILL.md"; then
     echo "FAIL: \$2 BUG pattern still present in execute.md"
     return 1
   fi
 }
 
 @test "P0-7: execute.md uses \$3 (not \$2) for openspec/ branch matching" {
-  [ -f "skills/execute.md" ]
+  [ -f "skills/execute/SKILL.md" ]
   # Should have at least one $3 pattern for branch matching (the awk branch filter)
-  grep -qE '\$3[[:space:]]*~[[:space:]]*.*openspec' "skills/execute.md"
+  grep -qE '\$3[[:space:]]*~[[:space:]]*.*openspec' "skills/execute/SKILL.md"
   # And at least one $3 == "openspec/..." pattern (for path lookup)
-  grep -qE '\$3=="openspec/' "skills/execute.md"
+  grep -qE '\$3=="openspec/' "skills/execute/SKILL.md"
 }
 
 @test "P0-7: execute.md has inline wt_path_for_branch_inline helper" {
-  [ -f "skills/execute.md" ]
+  [ -f "skills/execute/SKILL.md" ]
   # Round A extraction: inline helper was removed, replaced by _lib/worktree.sh::wt_path_for_branch
   # sourced through _lib/select_worktree.sh. Verify execute.md no longer inlines the helper
   # and that worktree.sh provides the canonical implementation.
-  ! grep -q "wt_path_for_branch_inline" "skills/execute.md"
-  grep -q "select_worktree.sh\|auto_detect_worktree_context" "skills/execute.md"
+  ! grep -q "wt_path_for_branch_inline" "skills/execute/SKILL.md"
+  grep -q "select_worktree.sh\|auto_detect_worktree_context" "skills/execute/SKILL.md"
   # The worktree.sh helper still exists (provides wt_path_for_branch)
   grep -q "wt_path_for_branch" "skills/_lib/worktree.sh"
 }
@@ -46,15 +46,15 @@ load ../test_helper
 # P0-9 ---------------------------------------------------------------------
 
 @test "P0-9: execute.md no longer has read -p or read -r" {
-  [ -f "skills/execute.md" ]
+  [ -f "skills/execute/SKILL.md" ]
   # The two most common blocking forms: read -p and read -r
-  ! grep -qE '^\s*read -[pr]' "skills/execute.md"
+  ! grep -qE '^\s*read -[pr]' "skills/execute/SKILL.md"
   # Also block the bare `read VAR` form (the original bug class)
-  ! grep -qE '^\s*read [a-zA-Z_]+' "skills/execute.md"
+  ! grep -qE '^\s*read [a-zA-Z_]+' "skills/execute/SKILL.md"
 }
 
 @test "P0-9: execute.md uses EXECUTE_CHOICE env var as escape hatch" {
-  [ -f "skills/execute.md" ]
+  [ -f "skills/execute/SKILL.md" ]
   # Round A extraction: EXECUTE_CHOICE logic is in the helper, sourced by execute.md.
   # Verify it exists in the helper.
   grep -q "EXECUTE_CHOICE" "skills/_lib/select_worktree.sh"
@@ -65,15 +65,15 @@ load ../test_helper
 # Doc table ---------------------------------------------------------------
 
 @test "P0-7: execute.md doc table uses \$3 (not \$2) as recommended" {
-  [ -f "skills/execute.md" ]
+  [ -f "skills/execute/SKILL.md" ]
   # The "worktree 路径查找" row's 处理 (recommendation) should reference $3
   # Find the row, then look at the awk pattern in the 处理 column.
-  if grep -nE 'worktree 路径查找' "skills/execute.md" | grep -qE '\$2'; then
+  if grep -nE 'worktree 路径查找' "skills/execute/SKILL.md" | grep -qE '\$2'; then
     echo "FAIL: doc table worktree-路径查找 row still uses \$2"
     return 1
   fi
   # The fix row should have $3
-  grep -nE 'worktree 路径查找.*\$3' "skills/execute.md"
+  grep -nE 'worktree 路径查找.*\$3' "skills/execute/SKILL.md"
 }
 
 # Runtime regression test --------------------------------------------------

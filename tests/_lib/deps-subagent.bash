@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/_lib/deps-subagent.bash
 #
-# Test fixture for skills/deps.md Step 3 subagent semantic analysis
+# Test fixture for skills/deps/SKILL.md Step 3 subagent semantic analysis
 # (P2-4 follow-up: replace the 3 TODO/placeholder sites at L345/L499/L566
 # with a real subagent call + graceful fallback).
 #

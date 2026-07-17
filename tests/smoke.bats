@@ -24,19 +24,20 @@ load test_helper
 
 @test "v1.x baseline skills still present (regression)" {
   [ -f "skills/INSTALL.md" ]
-  [ -f "skills/guide.md" ]
-  [ -f "skills/guide-arch.md" ]
-  [ -f "skills/guide-plan.md" ]
-  [ -f "skills/guide-ship.md" ]
-  [ -f "skills/propose.md" ]
-  [ -f "skills/execute.md" ]
-  [ -f "skills/status.md" ]
-  [ -f "skills/roadmap.md" ]
-  [ -f "skills/deps.md" ]
+  [ -f "skills/guide/SKILL.md" ]
+  [ -f "skills/guide-arch/SKILL.md" ]
+  [ -f "skills/guide-plan/SKILL.md" ]
+  [ -f "skills/guide-ship/SKILL.md" ]
+  [ -f "skills/propose/SKILL.md" ]
+  [ -f "skills/execute/SKILL.md" ]
+  [ -f "skills/status/SKILL.md" ]
+  [ -f "skills/roadmap/SKILL.md" ]
+  [ -f "skills/deps/SKILL.md" ]
 }
 
 @test "all skill files have valid frontmatter" {
-  for f in skills/*.md; do
+  for f in skills/*.md skills/*/SKILL.md; do
+    [ -f "$f" ] || continue
     head -1 "$f" | grep -q "^---$"
   done
 }

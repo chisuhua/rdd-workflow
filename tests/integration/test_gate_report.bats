@@ -11,8 +11,8 @@ load ../test_helper
 # Removal verification -------------------------------------------------
 
 @test "v2.0.3: phase-gate-report removed from guide.md" {
-  [ -f "skills/guide.md" ]
-  ! grep -q "phase-gate-report" skills/guide.md
+  [ -f "skills/guide/SKILL.md" ]
+  ! grep -q "phase-gate-report" skills/guide/SKILL.md
 }
 
 @test "v2.0.3: phase-gate-report removed from scan-state.sh" {
@@ -21,8 +21,8 @@ load ../test_helper
 }
 
 @test "v2.0.3: phase-gate-report removed from roadmap.md" {
-  [ -f "skills/roadmap.md" ]
-  ! grep -q "phase-gate-report" skills/roadmap.md
+  [ -f "skills/roadmap/SKILL.md" ]
+  ! grep -q "phase-gate-report" skills/roadmap/SKILL.md
 }
 
 @test "v2.0.3: phase-gate-report removed from index.md (or marked historical)" {

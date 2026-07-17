@@ -134,7 +134,7 @@ pending-change  │ （无 worktree）        │ 2/5  (40%)  │ 💼 committed
 ```bash
 # Status rendering extracted to skills/_lib/status_render_mode_a.sh (Round B Task B6).
 # Single-import helper for Mode A change status display.
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/status_render_mode_a.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/status_render_mode_a.sh"
 
 # Usage: render_status_mode_a <change-name>
 # The helper queries iteration.json (primary) with filesystem fallback
@@ -191,7 +191,7 @@ fi
 # P3-3c: 使用 _lib/worktree.sh::wt_path_for_branch 替代 P0-7 内联版本 (修复 silent bug)
 # P0-7 引入的内联 helper 因 awk 字符串比较中 '\\[' 与 '[' 不匹配而永远返回空,
 # 导致 HAS_WORKTREE 永远为 false. _lib/worktree.sh 用 porcelain 格式 + kv 解析, 工作正常.
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/worktree.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/worktree.sh"
 WORKTREE_PATH=$(wt_path_for_branch "<name>")
     HAS_WORKTREE=true
     # 使用 subshell 获取 worktree 内状态，不改变当前目录
@@ -212,8 +212,8 @@ status.md 只保留 prose 解释 + 1 行调用,确保 AI 助手有可执行规�
 #   HAS_WORKTREE (1/0) 与 WT_DIRTY (n) 由 Step 1 计算后传入。
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
-if [ -f "$SCRIPT_DIR/_lib/status_helpers.sh" ]; then
-  source "$SCRIPT_DIR/_lib/status_helpers.sh"
+if [ -f "$SCRIPT_DIR/../_lib/status_helpers.sh" ]; then
+  source "$SCRIPT_DIR/../_lib/status_helpers.sh"
 fi
 
 detect_sync_issues "$PROJECT_ROOT" "<name>" "$HAS_WORKTREE" "$WT_DIRTY"
@@ -319,8 +319,8 @@ fi
 # 提取到 skills/_lib/archive.sh,与 guide-ship.md Phase 3 共享同一份实现。
 # 源文件: skills/_lib/archive.sh::archive_change
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
-if [ -f "$SCRIPT_DIR/_lib/archive.sh" ]; then
-  source "$SCRIPT_DIR/_lib/archive.sh"
+if [ -f "$SCRIPT_DIR/../_lib/archive.sh" ]; then
+  source "$SCRIPT_DIR/../_lib/archive.sh"
 fi
 
 archive_change "<name>"
@@ -367,7 +367,7 @@ else
     # P1-7: 文件格式已规范化为 JSON 列表
     #       用 json.load 解析后统计 status == "待创建" 的条目数
     if [ -f "proposal-suggestions.md" ]; then
-        source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/state.sh"
+        source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/state.sh"
         REMAINING=$(count_pending_suggestions "$PROJECT_ROOT")
         REMAINING=${REMAINING:-0}
         if [ "$REMAINING" -gt 0 ]; then

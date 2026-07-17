@@ -3,7 +3,7 @@ import os
 import pytest
 import yaml
 
-SKILL_PATH = os.path.join(os.path.dirname(__file__), "../../skills/guide-arch.md")
+SKILL_PATH = os.path.join(os.path.dirname(__file__), "../../skills/guide-arch/SKILL.md")
 
 def test_guide_arch_exists():
     assert os.path.exists(SKILL_PATH)

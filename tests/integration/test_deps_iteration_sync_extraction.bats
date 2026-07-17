@@ -23,15 +23,15 @@ load ../test_helper
 }
 
 @test "deps.md Step 6 no longer inlines the 97-line PYEOF heredoc" {
-  [ -f "$REPO_ROOT/skills/deps.md" ]
+  [ -f "$REPO_ROOT/skills/deps/SKILL.md" ]
   # Original heredoc had this exact regex pattern; after extraction, gone.
-  ! grep -qE '## Change 状态表.*status_table = re\.search' "$REPO_ROOT/skills/deps.md"
+  ! grep -qE '## Change 状态表.*status_table = re\.search' "$REPO_ROOT/skills/deps/SKILL.md"
 }
 
 @test "deps.md Step 6 invokes deps_iteration_sync helper" {
-  [ -f "$REPO_ROOT/skills/deps.md" ]
-  grep -q '_lib/deps_iteration_sync.sh' "$REPO_ROOT/skills/deps.md"
-  grep -q 'deps_iteration_sync' "$REPO_ROOT/skills/deps.md"
+  [ -f "$REPO_ROOT/skills/deps/SKILL.md" ]
+  grep -q '_lib/deps_iteration_sync.sh' "$REPO_ROOT/skills/deps/SKILL.md"
+  grep -q 'deps_iteration_sync' "$REPO_ROOT/skills/deps/SKILL.md"
 }
 
 @test "deps_iteration_sync: skips gracefully when .deps-output.md missing" {

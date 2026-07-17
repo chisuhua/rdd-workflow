@@ -19,21 +19,21 @@
 load ../test_helper
 
 @test "status.md no longer inlines roadmap render algorithm (P3-3a)" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
   # The old inline version re-read roadmap.md with re.search for **当前阶段**:
-  ! grep -qE 'phase_match = re\.search\(r"\*\*当前阶段\*\*' "$REPO_ROOT/skills/status.md"
+  ! grep -qE 'phase_match = re\.search\(r"\*\*当前阶段\*\*' "$REPO_ROOT/skills/status/SKILL.md"
   # Old inline version manually iterated state.get("phases", {}).items():
-  ! grep -qE 'phase_id, phase_data in state\.get\("phases"' "$REPO_ROOT/skills/status.md"
+  ! grep -qE 'phase_id, phase_data in state\.get\("phases"' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "status.md invokes render_status_view from _lib/roadmap_state.py" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
   # Either a direct python3 -m call or an import — both are valid invocation patterns
-  grep -qE 'roadmap_state\.(py|sh|render_status_view)|render_status_view' "$REPO_ROOT/skills/status.md"
+  grep -qE 'roadmap_state\.(py|sh|render_status_view)|render_status_view' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "status.md Mode D (roadmap) block is now ≤ 25 lines of bash (was 62)" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
   # Find the bash block under the Mode D heading. After refactor it should
   # be a thin wrapper (≤25 lines including the python3 -c call + menu echo).
   local block_lines
@@ -42,7 +42,7 @@ load ../test_helper
     found && /^```bash$/ {capture=1; next}
     capture && /^```$/ {exit}
     capture {print}
-  ' "$REPO_ROOT/skills/status.md" | wc -l)
+  ' "$REPO_ROOT/skills/status/SKILL.md" | wc -l)
   [ "$block_lines" -le 30 ]
 }
 

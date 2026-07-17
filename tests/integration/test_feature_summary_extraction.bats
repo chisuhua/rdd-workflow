@@ -16,16 +16,16 @@ load ../test_helper
 
 @test "feature_summary: feature.md inline case block removed" {
   # The old inline Python heredoc (<<'PYEOF') is gone — dispatcher only has bash
-  run grep "<<'PYEOF'" "$REPO_ROOT/skills/feature.md"
+  run grep "<<'PYEOF'" "$REPO_ROOT/skills/feature/SKILL.md"
   [ "$status" -ne 0 ]
   # The old summary heredoc's inline fv.update_iteration_feature_view call is gone
-  run grep 'fv\.update_iteration_feature_view' "$REPO_ROOT/skills/feature.md"
+  run grep 'fv\.update_iteration_feature_view' "$REPO_ROOT/skills/feature/SKILL.md"
   [ "$status" -ne 0 ]
 }
 
 @test "feature_summary: feature.md sources and calls helper" {
-  grep -q 'source.*_lib/feature_summary.sh' "$REPO_ROOT/skills/feature.md"
-  grep -q 'render_feature_summary' "$REPO_ROOT/skills/feature.md"
+  grep -q 'source.*_lib/feature_summary.sh' "$REPO_ROOT/skills/feature/SKILL.md"
+  grep -q 'render_feature_summary' "$REPO_ROOT/skills/feature/SKILL.md"
 }
 
 @test "feature_summary: handles missing iteration.json gracefully" {

@@ -23,14 +23,14 @@ load ../test_helper
 
 @test "guide_plan_inline_block_removed" {
   # No python heredoc with $PROJECT_ROOT interpolation
-  ! grep -q "changes_dir = '\$PROJECT_ROOT" "$REPO_ROOT/skills/guide-plan.md"
+  ! grep -q "changes_dir = '\$PROJECT_ROOT" "$REPO_ROOT/skills/guide-plan/SKILL.md"
   # No '生成候选列表:' message (that's the helper's output now)
-  ! grep -q '生成候选列表:' "$REPO_ROOT/skills/guide-plan.md"
+  ! grep -q '生成候选列表:' "$REPO_ROOT/skills/guide-plan/SKILL.md"
 }
 
 @test "guide_plan_invokes_helper" {
-  grep -q 'source.*_lib/plan_deps_candidates.sh' "$REPO_ROOT/skills/guide-plan.md"
-  grep -q 'generate_deps_candidates' "$REPO_ROOT/skills/guide-plan.md"
+  grep -q 'source.*_lib/plan_deps_candidates.sh' "$REPO_ROOT/skills/guide-plan/SKILL.md"
+  grep -q 'generate_deps_candidates' "$REPO_ROOT/skills/guide-plan/SKILL.md"
 }
 
 @test "oracle_c1_no_bash_string_interpolation" {

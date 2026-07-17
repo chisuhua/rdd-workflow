@@ -53,8 +53,15 @@ def test_general_spec_consumers_drop_guide_spec_add_arch_plan() -> None:
     assert "guide-plan" in spec
 
 
+def _count_skill_files() -> int:
+    """Count skill .md files: top-level INSTALL.md + per-skill SKILL.md in subdirs."""
+    top = list((REPO_ROOT / "skills").glob("*.md"))
+    sub = list((REPO_ROOT / "skills").glob("*/SKILL.md"))
+    return len(top) + len(sub)
+
+
 def test_install_description_skill_count_matches_disk() -> None:
-    disk = len(list((REPO_ROOT / "skills").glob("*.md")))
+    disk = _count_skill_files()
     inst = _read("skills/INSTALL.md")
     m = re.search(r"全部\s*(\d+)\s*个子技能", inst)
     assert m is not None, "INSTALL.md description missing '全部 N 个子技能'"
@@ -65,7 +72,7 @@ def test_install_description_skill_count_matches_disk() -> None:
 
 def test_package_json_skills_count_within_delta() -> None:
     pkg = json.loads(_read("package.json"))
-    disk = len(list((REPO_ROOT / "skills").glob("*.md")))
+    disk = _count_skill_files()
     assert len(pkg["skills"]) <= disk + 2, (
         f"package.json declares {len(pkg['skills'])} skills, disk has {disk}"
     )

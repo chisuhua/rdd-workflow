@@ -12,7 +12,7 @@ load ../test_helper
     in_md && /```bash/ && !bash_seen { bash_seen=1; next }
     in_md && /```/ && bash_seen { exit }
     in_md { print }
-  ' skills/status.md > /tmp/mode_d.bash
+  ' skills/status/SKILL.md > /tmp/mode_d.bash
 
   # Ensure no 'with open...$PROJECT_ROOT...' interpolation
   if grep -qE 'with open.*\$PROJECT_ROOT' /tmp/mode_d.bash; then

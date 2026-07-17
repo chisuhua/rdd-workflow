@@ -15,7 +15,7 @@ load_lib skill
 # All assertions use real skill files in the worktree's skills/ dir.
 
 @test "skill_field returns top-level name for guide.md" {
-  run skill_field skills/guide.md name
+  run skill_field skills/guide/SKILL.md name
   [ "$status" -eq 0 ]
   [ "$output" = "guide" ]
 }
@@ -27,19 +27,19 @@ load_lib skill
 }
 
 @test "skill_meta_field returns semver version for guide-arch.md" {
-  run skill_meta_field skills/guide-arch.md version
+  run skill_meta_field skills/guide-arch/SKILL.md version
   [ "$status" -eq 0 ]
   [[ "$output" =~ ^[0-9]+\.[0-9]+$ ]]
 }
 
 @test "skill_meta_field returns user-invocable=true for guide.md" {
-  run skill_meta_field skills/guide.md user-invocable
+  run skill_meta_field skills/guide/SKILL.md user-invocable
   [ "$status" -eq 0 ]
   [ "$output" = "true" ]
 }
 
 @test "skill_commands returns at least 5 commands for roadmap.md" {
-  run skill_commands skills/roadmap.md
+  run skill_commands skills/roadmap/SKILL.md
   [ "$status" -eq 0 ]
   # 5 commands after v2.0.3 phase-gate-report removal: init/status/edit/validate/advance
   [ "${#lines[@]}" -ge 5 ]
@@ -52,7 +52,7 @@ load_lib skill
 }
 
 @test "skill_has_section returns 0 for status.md '模式 A'" {
-  run skill_has_section skills/status.md "模式 A"
+  run skill_has_section skills/status/SKILL.md "模式 A"
   [ "$status" -eq 0 ]
 }
 

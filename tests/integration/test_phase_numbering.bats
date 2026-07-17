@@ -10,15 +10,15 @@ load ../test_helper
 # so future renames stay consistent.
 
 @test "guide-ship.md has Phase 1.5 numbering" {
-  [ -f "skills/guide-ship.md" ]
-  grep -qE "^## Phase 1\.5" skills/guide-ship.md
+  [ -f "skills/guide-ship/SKILL.md" ]
+  grep -qE "^## Phase 1\.5" skills/guide-ship/SKILL.md
 }
 
 @test "guide-ship.md phases are numbered sequentially" {
-  [ -f "skills/guide-ship.md" ]
+  [ -f "skills/guide-ship/SKILL.md" ]
   # Should have Phase 1, 1.5, 2, 3, 4, 5
   for n in 1 1.5 2 3 4 5; do
-    if ! grep -qE "^## Phase ${n}\\b" skills/guide-ship.md; then
+    if ! grep -qE "^## Phase ${n}\\b" skills/guide-ship/SKILL.md; then
       echo "FAIL: missing Phase $n header"
       return 1
     fi

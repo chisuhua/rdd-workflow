@@ -17,18 +17,18 @@ load ../test_helper
 }
 
 @test "propose.md no longer inlines count pending proposals algorithm" {
-  [ -f "$REPO_ROOT/skills/propose.md" ]
-  ! grep -qE "sum\(1 for e in entries.*e\.get\('status'\) == '待创建'\)" "$REPO_ROOT/skills/propose.md"
+  [ -f "$REPO_ROOT/skills/propose/SKILL.md" ]
+  ! grep -qE "sum\(1 for e in entries.*e\.get\('status'\) == '待创建'\)" "$REPO_ROOT/skills/propose/SKILL.md"
 }
 
 @test "status.md no longer inlines count pending proposals algorithm" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
-  ! grep -qE "sum\(1 for e in entries.*e\.get\(.status.\) == .待创建" "$REPO_ROOT/skills/status.md"
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
+  ! grep -qE "sum\(1 for e in entries.*e\.get\(.status.\) == .待创建" "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "guide-plan.md no longer inlines count pending proposals algorithm" {
-  [ -f "$REPO_ROOT/skills/guide-plan.md" ]
-  ! grep -qE "sum\(1 for e in entries.*e\.get\(.status.\) == .待创建" "$REPO_ROOT/skills/guide-plan.md"
+  [ -f "$REPO_ROOT/skills/guide-plan/SKILL.md" ]
+  ! grep -qE "sum\(1 for e in entries.*e\.get\(.status.\) == .待创建" "$REPO_ROOT/skills/guide-plan/SKILL.md"
 }
 
 @test "count_pending_suggestions returns 0 when proposal-suggestions.md missing" {

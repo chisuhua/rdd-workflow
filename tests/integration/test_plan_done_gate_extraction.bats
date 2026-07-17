@@ -25,20 +25,20 @@ load ../test_helper
 
 @test "guide_plan_inline_gate_block_removed" {
   # Gate markers should not appear in guide-plan.md after extraction
-  ! grep -q '门控 0: Ready-for-ship' "$REPO_ROOT/skills/guide-plan.md"
-  ! grep -q '门控 1: Active changes' "$REPO_ROOT/skills/guide-plan.md"
-  ! grep -q '门控 2: Artifacts 提交性' "$REPO_ROOT/skills/guide-plan.md"
+  ! grep -q '门控 0: Ready-for-ship' "$REPO_ROOT/skills/guide-plan/SKILL.md"
+  ! grep -q '门控 1: Active changes' "$REPO_ROOT/skills/guide-plan/SKILL.md"
+  ! grep -q '门控 2: Artifacts 提交性' "$REPO_ROOT/skills/guide-plan/SKILL.md"
 }
 
 @test "guide_plan_inline_handoff_block_removed" {
-  ! grep -q 'plan → ship 交接' "$REPO_ROOT/skills/guide-plan.md"
-  ! grep -q 'HANDOFF_FILE=.*plan-handoff' "$REPO_ROOT/skills/guide-plan.md"
+  ! grep -q 'plan → ship 交接' "$REPO_ROOT/skills/guide-plan/SKILL.md"
+  ! grep -q 'HANDOFF_FILE=.*plan-handoff' "$REPO_ROOT/skills/guide-plan/SKILL.md"
 }
 
 @test "guide_plan_invokes_helpers" {
-  grep -q 'source.*_lib/plan_done_gate.sh' "$REPO_ROOT/skills/guide-plan.md"
-  grep -q 'run_plan_done_gate' "$REPO_ROOT/skills/guide-plan.md"
-  grep -q 'write_plan_handoff' "$REPO_ROOT/skills/guide-plan.md"
+  grep -q 'source.*_lib/plan_done_gate.sh' "$REPO_ROOT/skills/guide-plan/SKILL.md"
+  grep -q 'run_plan_done_gate' "$REPO_ROOT/skills/guide-plan/SKILL.md"
+  grep -q 'write_plan_handoff' "$REPO_ROOT/skills/guide-plan/SKILL.md"
 }
 
 @test "run_plan_done_gate_fails_with_no_changes" {

@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_deps_skill.bats
 #
-# Structural / metadata coverage for skills/deps.md.
+# Structural / metadata coverage for skills/deps/SKILL.md.
 # Locks the frontmatter, the proposal/design/specs input surface,
 # the Mermaid output format, and the AI 语义分析未启用 disclaimer
 # (P2-4, defense-in-depth, complementary to test_ai_disclaimer.bats).
@@ -12,7 +12,7 @@ load ../test_helper
 load_lib skill
 
 setup() {
-  f="$REPO_ROOT/skills/deps.md"
+  f="$REPO_ROOT/skills/deps/SKILL.md"
 }
 
 @test "deps_skill has correct frontmatter" {

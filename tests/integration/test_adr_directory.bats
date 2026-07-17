@@ -3,8 +3,8 @@
 #
 # Locks the invariants of docs/adr/ directory structure. Establishes
 # the discoverable target for:
-#   - skills/propose.md Phase 1a (`ls docs/adr/ADR-*.md`)
-#   - skills/deps.md Step 1b (`adr_refs` extraction)
+#   - skills/propose/SKILL.md Phase 1a (`ls docs/adr/ADR-*.md`)
+#   - skills/deps/SKILL.md Step 1b (`adr_refs` extraction)
 #   - proposal-suggestions.md `source` field (`ADR-NNN §N.M`)
 #
 # Hard constraint (verified by test 14): no file under skills/ may be
@@ -37,7 +37,7 @@ setup() {
 }
 
 @test "propose.md scanner finds ≥ 2 ADR files" {
-  # This is the exact command from skills/propose.md L186
+  # This is the exact command from skills/propose/SKILL.md L186
   count=$(ls "$ADR_DIR"/ADR-*.md 2>/dev/null | wc -l)
   [ "$count" -ge 2 ]
 }
@@ -108,8 +108,8 @@ setup() {
 
 @test "init-adr-directory hard constraint: no skills/ change in original change" {
   # This test is specific to the original init-adr-directory change.
-  # v2.0.3 (fix-debt-audit-2026-07-14) intentionally modifies skills/guide-arch.md,
-  # skills/propose.md, skills/roadmap.md for ADR renumbering and gate-report
+  # v2.0.3 (fix-debt-audit-2026-07-14) intentionally modifies skills/guide-arch/SKILL.md,
+  # skills/propose/SKILL.md, skills/roadmap/SKILL.md for ADR renumbering and gate-report
   # removal. We skip this assertion when those files are modified.
   cd "$REPO_ROOT"
   changed=$(git diff --name-only HEAD -- 'skills/*.md' 2>/dev/null)

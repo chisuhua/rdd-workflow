@@ -17,12 +17,12 @@ load ../test_helper
 }
 
 @test "guide_arch_inline_quality_report_removed" {
-  ! grep -q 'arch_quality_gate import ArchQualityReport' "$REPO_ROOT/skills/guide-arch.md"
+  ! grep -q 'arch_quality_gate import ArchQualityReport' "$REPO_ROOT/skills/guide-arch/SKILL.md"
 }
 
 @test "guide_arch_invokes_quality_report_helper" {
-  grep -q 'source.*_lib/arch_quality_report.sh' "$REPO_ROOT/skills/guide-arch.md"
-  grep -q 'run_arch_quality_report' "$REPO_ROOT/skills/guide-arch.md"
+  grep -q 'source.*_lib/arch_quality_report.sh' "$REPO_ROOT/skills/guide-arch/SKILL.md"
+  grep -q 'run_arch_quality_report' "$REPO_ROOT/skills/guide-arch/SKILL.md"
 }
 
 @test "run_arch_quality_report_creates_json_file" {

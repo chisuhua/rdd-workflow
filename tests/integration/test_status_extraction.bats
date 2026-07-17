@@ -32,25 +32,25 @@ load ../test_helper
 }
 
 @test "status.md Mode B sources and uses status_helpers.sh::detect_sync_issues" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
-  grep -nE 'source .*_lib/status_helpers.sh' "$REPO_ROOT/skills/status.md"
-  grep -nE 'detect_sync_issues "\$PROJECT_ROOT"' "$REPO_ROOT/skills/status.md"
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
+  grep -nE 'source .*_lib/status_helpers.sh' "$REPO_ROOT/skills/status/SKILL.md"
+  grep -nE 'detect_sync_issues "\$PROJECT_ROOT"' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "status.md Mode B Step 3 uses status_helpers.sh::repair_sync_state" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
-  grep -nE 'repair_sync_state "\$PROJECT_ROOT"' "$REPO_ROOT/skills/status.md"
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
+  grep -nE 'repair_sync_state "\$PROJECT_ROOT"' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "status.md Mode B no longer inlines the sync-detection bash heredoc" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
   # The old inline used a `mktemp` call to stage the tasks.md edit.
   # That mktemp pattern is now ONLY in status_helpers.sh — must not
   # appear in status.md anymore.
-  ! grep -nE 'mktemp -t status_tasks_XXXXXX.md' "$REPO_ROOT/skills/status.md"
+  ! grep -nE 'mktemp -t status_tasks_XXXXXX.md' "$REPO_ROOT/skills/status/SKILL.md"
   # The old inline also used an awk substitution with desc=… variable.
   # Same story — must not appear in status.md anymore.
-  ! grep -nE 'awk -v desc=' "$REPO_ROOT/skills/status.md"
+  ! grep -nE 'awk -v desc=' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "skills/_lib/iteration.py::print_view is defined and importable" {
@@ -77,18 +77,18 @@ print("OK")
 }
 
 @test "status.md Mode E uses iteration.py::print_view" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
-  grep -nE 'from skills\._lib\.iteration import print_view' "$REPO_ROOT/skills/status.md"
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
+  grep -nE 'from skills\._lib\.iteration import print_view' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "status.md Mode E no longer inlines the iteration render heredoc" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
   # The old inline used `from skills._lib import iteration as it_mod`
   # followed by inline render logic that called
   # `it_mod.derive_feature_name(c["name"])`. After extraction both
   # patterns must be gone from status.md.
-  ! grep -nE 'from skills\._lib import iteration as it_mod' "$REPO_ROOT/skills/status.md"
-  ! grep -nE 'it_mod\.derive_feature_name\(c\["name"\]\)' "$REPO_ROOT/skills/status.md"
+  ! grep -nE 'from skills\._lib import iteration as it_mod' "$REPO_ROOT/skills/status/SKILL.md"
+  ! grep -nE 'it_mod\.derive_feature_name\(c\["name"\]\)' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 # ---- Runtime tests ----

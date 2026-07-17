@@ -4,8 +4,8 @@
 #
 # This file locks three properties into the source:
 #   1. `.rddf/state/handoff.json` documents `.handoff.json` as a tracked state file
-#   2. `skills/guide-plan.md` writes `.handoff.json` at plan-done exit
-#   3. `skills/guide-ship.md` reads `.handoff.json` at Phase 1 (entry)
+#   2. `skills/guide-plan/SKILL.md` writes `.handoff.json` at plan-done exit
+#   3. `skills/guide-ship/SKILL.md` reads `.handoff.json` at Phase 1 (entry)
 #
 # All three are static grep tests against the markdown source — full
 # functional execution requires git worktree + openspec CLI which is not
@@ -29,11 +29,11 @@ load ../test_helper
 @test "guide-plan.md writes handoff.json at plan-done exit" {
   # After Round A extraction, the handoff implementation lives in _lib/plan_done_gate.{py,sh}
   # while guide-plan.md still references .plan-handoff.json at the contract level.
-  [ -f "$REPO_ROOT/skills/guide-plan.md" ]
+  [ -f "$REPO_ROOT/skills/guide-plan/SKILL.md" ]
   [ -f "$REPO_ROOT/skills/_lib/plan_done_gate.py" ]
   [ -f "$REPO_ROOT/skills/_lib/plan_done_gate.sh" ]
   # 1. handoff.json contract still referenced in guide-plan.md
-  grep -q "\.plan-handoff.json" "$REPO_ROOT/skills/guide-plan.md"
+  grep -q "\.plan-handoff.json" "$REPO_ROOT/skills/guide-plan/SKILL.md"
   # 2. plan_complete_at field is written (now in plan_done_gate.py)
   grep -q "plan_complete_at" "$REPO_ROOT/skills/_lib/plan_done_gate.py"
   # 3. The write happens after the exit guard (now in plan_done_gate.sh calls + .py)
@@ -41,24 +41,24 @@ load ../test_helper
   # 4. current_change field is recorded (now in plan_done_gate.py)
   grep -q "current_change" "$REPO_ROOT/skills/_lib/plan_done_gate.py"
   # 5. guide-plan.md invokes write_plan_handoff helper
-  grep -q "write_plan_handoff" "$REPO_ROOT/skills/guide-plan.md"
+  grep -q "write_plan_handoff" "$REPO_ROOT/skills/guide-plan/SKILL.md"
 }
 
 @test "guide-ship.md reads handoff.json at Phase 1 (entry)" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
   # 1. handoff.json is mentioned in the doc
-  grep -q "handoff.json" "$REPO_ROOT/skills/guide-ship.md"
+  grep -q "handoff.json" "$REPO_ROOT/skills/guide-ship/SKILL.md"
   # 2. ship_started_at is the field that gets updated
-  grep -q "ship_started_at" "$REPO_ROOT/skills/guide-ship.md"
+  grep -q "ship_started_at" "$REPO_ROOT/skills/guide-ship/SKILL.md"
   # 3. The read happens in Phase 1 (section header marker)
-  grep -q "HANDOFF STATE READ" "$REPO_ROOT/skills/guide-ship.md"
+  grep -q "HANDOFF STATE READ" "$REPO_ROOT/skills/guide-ship/SKILL.md"
   # 4. Missing-file fallback is silent (no exit 1 inside the read block)
   # Locate the HANDOFF STATE READ block and ensure it does NOT contain a hard exit
   awk '/HANDOFF STATE READ/{flag=1} flag{print NR": "$0} flag && /^fi$/{flag=0; exit}' \
-    "$REPO_ROOT/skills/guide-ship.md" | grep -vE "exit 0|exit 1" >/dev/null
+    "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -vE "exit 0|exit 1" >/dev/null
   # 5. Confirm the read is followed by the worktree creation (handoff comes before worktree)
-  HANDOFF_LINE=$(grep -n "HANDOFF STATE READ" "$REPO_ROOT/skills/guide-ship.md" | head -1 | cut -d: -f1)
-  WORKTREE_LINE=$(grep -n "git worktree add" "$REPO_ROOT/skills/guide-ship.md" | head -1 | cut -d: -f1)
+  HANDOFF_LINE=$(grep -n "HANDOFF STATE READ" "$REPO_ROOT/skills/guide-ship/SKILL.md" | head -1 | cut -d: -f1)
+  WORKTREE_LINE=$(grep -n "git worktree add" "$REPO_ROOT/skills/guide-ship/SKILL.md" | head -1 | cut -d: -f1)
   [ -n "$HANDOFF_LINE" ] && [ -n "$WORKTREE_LINE" ]
   [ "$HANDOFF_LINE" -lt "$WORKTREE_LINE" ]
 }

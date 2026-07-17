@@ -21,13 +21,13 @@ setup() {
 
 @test "guide_plan_queue_inline_block_removed" {
   # No '队列概览' block content
-  ! grep -q 'PY_PROJECT_ROOT.*PENDING_SUGGESTIONS_COUNT' "$WT/skills/guide-plan.md"
-  ! grep -q '5 队列可视化' "$WT/skills/guide-plan.md"
+  ! grep -q 'PY_PROJECT_ROOT.*PENDING_SUGGESTIONS_COUNT' "$WT/skills/guide-plan/SKILL.md"
+  ! grep -q '5 队列可视化' "$WT/skills/guide-plan/SKILL.md"
 }
 
 @test "guide_plan_invokes_helper" {
-  grep -q 'source.*_lib/plan_queue_overview.sh' "$WT/skills/guide-plan.md"
-  grep -q 'show_queue_overview' "$WT/skills/guide-plan.md"
+  grep -q 'source.*_lib/plan_queue_overview.sh' "$WT/skills/guide-plan/SKILL.md"
+  grep -q 'show_queue_overview' "$WT/skills/guide-plan/SKILL.md"
 }
 
 @test "show_queue_overview_prints_5_states" {

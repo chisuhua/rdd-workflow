@@ -18,7 +18,7 @@ load ../test_helper
 }
 
 @test "guide.md no longer carries the stale-state warning as duplicated doc" {
-  if grep -q "Stale workflow-state" skills/guide.md; then
+  if grep -q "Stale workflow-state" skills/guide/SKILL.md; then
     echo "FAIL: stale message still in guide.md"
     return 1
   fi

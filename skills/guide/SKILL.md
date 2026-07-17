@@ -38,7 +38,7 @@ EOF
 esac
 
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]:-$0}")")/_lib/scan-state.sh"
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]:-$0}")")/../_lib/scan-state.sh"
 scan_state "$PROJECT_ROOT"
 echo "💡 Recommended: skill_use(\"$RECOMMEND\")"
 echo "   Reason: $REASON"

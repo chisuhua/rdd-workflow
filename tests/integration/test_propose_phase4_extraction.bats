@@ -20,36 +20,36 @@ load ../test_helper
 }
 
 @test "propose.md Phase 4 no longer inlines the 353-line block" {
-  [ -f "$REPO_ROOT/skills/propose.md" ]
+  [ -f "$REPO_ROOT/skills/propose/SKILL.md" ]
   # After extraction: the long inline heredocs are gone.
   # THIS_SESSION_CREATED+= is PRESERVED (used by Phase 5 for commit tracking).
   # Original block had: openspec new change + jq + nested Python heredocs.
   # Verify none of these inline patterns remain in Phase 4 range.
-  ! grep -qE 'jq -r --arg req' "$REPO_ROOT/skills/propose.md"
+  ! grep -qE 'jq -r --arg req' "$REPO_ROOT/skills/propose/SKILL.md"
   # Original had 4 PYEOF heredocs in Phase 4 — should now have 1 (skeleton status update only)
   local py_count
-  py_count=$(grep -c 'PYEOF' "$REPO_ROOT/skills/propose.md")
+  py_count=$(grep -c 'PYEOF' "$REPO_ROOT/skills/propose/SKILL.md")
   [ "$py_count" -le 2 ]  # skeleton update + safe_python_json (Phase 0) at most
 }
 
 @test "propose.md Phase 4 invokes the helper" {
-  [ -f "$REPO_ROOT/skills/propose.md" ]
-  grep -q '_lib/propose_change.sh' "$REPO_ROOT/skills/propose.md"
+  [ -f "$REPO_ROOT/skills/propose/SKILL.md" ]
+  grep -q '_lib/propose_change.sh' "$REPO_ROOT/skills/propose/SKILL.md"
 }
 
 @test "propose.md Step 4e docs (30 lines /opsx:propose explanation) removed" {
-  [ -f "$REPO_ROOT/skills/propose.md" ]
-  ! grep -q '用结构化需求描述作为 openspec-propose 的输入' "$REPO_ROOT/skills/propose.md"
+  [ -f "$REPO_ROOT/skills/propose/SKILL.md" ]
+  ! grep -q '用结构化需求描述作为 openspec-propose 的输入' "$REPO_ROOT/skills/propose/SKILL.md"
 }
 
 @test "propose.md preserves pseudo-code artifact loop (NOT extracted)" {
-  [ -f "$REPO_ROOT/skills/propose.md" ]
+  [ -f "$REPO_ROOT/skills/propose/SKILL.md" ]
   # The half-implemented loop should still be there
-  grep -q 'for each artifact_id in artifact_order' "$REPO_ROOT/skills/propose.md"
+  grep -q 'for each artifact_id in artifact_order' "$REPO_ROOT/skills/propose/SKILL.md"
 }
 
 @test "propose.md Phase 4 block is now thin (≤30 lines per bash block)" {
-  [ -f "$REPO_ROOT/skills/propose.md" ]
+  [ -f "$REPO_ROOT/skills/propose/SKILL.md" ]
   # After extraction, each bash block in Phase 4 should be a thin wrapper.
   # Extract the bash block under "## Phase 4"
   local max_block
@@ -59,7 +59,7 @@ load ../test_helper
     capture && /^```$/ {if (n>0 && lines>max) max=lines; n=0; capture=0; next}
     capture {lines++}
     END {print max+0}
-  ' "$REPO_ROOT/skills/propose.md")
+  ' "$REPO_ROOT/skills/propose/SKILL.md")
   [ "$max_block" -le 30 ]
 }
 

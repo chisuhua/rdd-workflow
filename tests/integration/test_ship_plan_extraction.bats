@@ -37,26 +37,26 @@ REPLACED_RANGE="144,348p"
 }
 
 @test "guide-ship.md Phase 1 sources and uses ship_plan.sh helpers" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  grep -nE 'source .*_lib/ship_plan.sh' "$REPO_ROOT/skills/guide-ship.md"
-  grep -nE 'detect_execution_mode|setup_execution_workspace|generate_implementation_plan|record_iteration_status' "$REPO_ROOT/skills/guide-ship.md"
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
+  grep -nE 'source .*_lib/ship_plan.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  grep -nE 'detect_execution_mode|setup_execution_workspace|generate_implementation_plan|record_iteration_status' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
 @test "guide-ship.md Phase 1 no longer inlines COMMIT GATE logic" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'git status --porcelain .*openspec/changes/'
-  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'git show HEAD:.*openspec.yaml'
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
+  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -qE 'git status --porcelain .*openspec/changes/'
+  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -qE 'git show HEAD:.*openspec.yaml'
 }
 
 @test "guide-ship.md Phase 1 no longer inlines parallel conflict detection" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'openspec\\/'
-  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'grep -v archive/'
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
+  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -qE 'openspec\\/'
+  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -qE 'grep -v archive/'
 }
 
 @test "guide-ship.md Phase 1 no longer inlines worktree creation in markdown bash block" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'git worktree add .*\\.rddf/wt/'
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
+  ! sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -qE 'git worktree add .*\\.rddf/wt/'
 }
 
 @test "detect_execution_mode returns lightweight when no parallel conflict" {
@@ -93,10 +93,10 @@ REPLACED_RANGE="144,348p"
 }
 
 @test "guide-ship.md Phase 1 source block is now ≤ 30 lines (was 200+)" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
   # Count lines in the FIRST bash block under Phase 1 (lines 32-417 range).
   # After extraction, this should be a thin orchestrator ≤ 30 lines.
   local block_lines
-  block_lines=$(awk 'NR>=32 && NR<=417 && /^```bash$/{n++; next} NR>=32 && NR<=417 && /^```$/{if(n>0){exit}} NR>=32 && NR<=417 && n{print}' "$REPO_ROOT/skills/guide-ship.md" | wc -l)
+  block_lines=$(awk 'NR>=32 && NR<=417 && /^```bash$/{n++; next} NR>=32 && NR<=417 && /^```$/{if(n>0){exit}} NR>=32 && NR<=417 && n{print}' "$REPO_ROOT/skills/guide-ship/SKILL.md" | wc -l)
   [ "$block_lines" -le 30 ]
 }

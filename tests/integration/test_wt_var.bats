@@ -26,7 +26,7 @@ get_display_block() {
     in_header && /^```$/ { in_header = 0; in_block = 1; next }
     in_block && /^```$/ { exit }
     in_block { print }
-  ' skills/guide-ship.md
+  ' skills/guide-ship/SKILL.md
 }
 
 # v2.0.3: the P2-7 display block was removed entirely. The P2-7
@@ -35,25 +35,25 @@ get_display_block() {
 # usages (lines 471-474, 492, 1246) are local for-loop variables
 # (`for wt in "${wt_list[@]}"`) — these are in-scope and correct.
 @test "P2-7: guide-ship.md has no unprefixed \$wt (P2-7 fix)" {
-  [ -f "skills/guide-ship.md" ]
+  [ -f "skills/guide-ship/SKILL.md" ]
   # v2.0.3: only allow $wt in the worktree cleanup for-loop context.
   # The for-loop variable `for wt in "${wt_list[@]}"` is local; the
   # original P2-7 bug was using $wt OUTSIDE any loop where it was undefined.
-  if grep -nE '\$\{?wt[^_a-zA-Z}' "skills/guide-ship.md" | grep -v 'for wt in' | grep -q .; then
+  if grep -nE '\$\{?wt[^_a-zA-Z}' "skills/guide-ship/SKILL.md" | grep -v 'for wt in' | grep -q .; then
     echo "FAIL: guide-ship.md uses \$wt outside a for-loop context:"
-    grep -nE '\$\{?wt[^_a-zA-Z]' "skills/guide-ship.md" | grep -v 'for wt in'
+    grep -nE '\$\{?wt[^_a-zA-Z]' "skills/guide-ship/SKILL.md" | grep -v 'for wt in'
     return 1
   fi
 }
 
 @test "P2-7: guide-ship.md uses \$WT_PATH for paths (P2-7 fix)" {
-  [ -f "skills/guide-ship.md" ]
+  [ -f "skills/guide-ship/SKILL.md" ]
   # Either $WT_PATH is present, or the file has no worktree-path display at all.
-  if grep -qE '\$WT_PATH' "skills/guide-ship.md"; then
+  if grep -qE '\$WT_PATH' "skills/guide-ship/SKILL.md"; then
     return 0
   fi
   # No $WT_PATH and no worktree path display = trivially passes P2-7
-  if ! grep -qE "Worktree.*路径|worktree.*path" "skills/guide-ship.md"; then
+  if ! grep -qE "Worktree.*路径|worktree.*path" "skills/guide-ship/SKILL.md"; then
     return 0
   fi
   echo "FAIL: guide-ship.md has worktree path display but no \$WT_PATH"
@@ -61,7 +61,7 @@ get_display_block() {
 }
 
 @test "P2-7: guide-ship.md display block has no unprefixed \$wt" {
-  [ -f "skills/guide-ship.md" ]
+  [ -f "skills/guide-ship/SKILL.md" ]
   # v2.0.3: The "Worktree 创建完成" display block was removed during the
   # v2.0 refactor. The P2-7 fix is vacuously true (no user-facing display
   # block can have an unprefixed $wt if no such block exists).
@@ -79,7 +79,7 @@ get_display_block() {
 }
 
 @test "P2-7: guide-ship.md display block uses \$WT_PATH for paths" {
-  [ -f "skills/guide-ship.md" ]
+  [ -f "skills/guide-ship/SKILL.md" ]
   # v2.0.3: same rationale as test 3 — display block no longer exists.
   local block
   block=$(get_display_block)

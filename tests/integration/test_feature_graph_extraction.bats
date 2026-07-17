@@ -16,16 +16,16 @@ load ../test_helper
 
 @test "feature_graph: feature.md inline graph block removed" {
   # The old graph heredoc printed mermaid via fv.render_mermaid — should be gone
-  run grep 'fv\.render_mermaid' "$REPO_ROOT/skills/feature.md"
+  run grep 'fv\.render_mermaid' "$REPO_ROOT/skills/feature/SKILL.md"
   [ "$status" -ne 0 ]
   # The __cycle_warning__ check from the old inline block should be gone
-  run grep '__cycle_warning__' "$REPO_ROOT/skills/feature.md"
+  run grep '__cycle_warning__' "$REPO_ROOT/skills/feature/SKILL.md"
   [ "$status" -ne 0 ]
 }
 
 @test "feature_graph: feature.md sources and calls helper" {
-  grep -q 'source.*_lib/feature_graph.sh' "$REPO_ROOT/skills/feature.md"
-  grep -q 'render_feature_graph' "$REPO_ROOT/skills/feature.md"
+  grep -q 'source.*_lib/feature_graph.sh' "$REPO_ROOT/skills/feature/SKILL.md"
+  grep -q 'render_feature_graph' "$REPO_ROOT/skills/feature/SKILL.md"
 }
 
 @test "feature_graph: handles missing iteration.json gracefully" {

@@ -12,44 +12,44 @@
 load ../test_helper
 
 @test "status.md has no \$2==openspec/ awk patterns (P0-7 site 1+2)" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
   # The buggy pattern: $2=="openspec/<name>" — $2 is the commit hash, never matches.
-  ! grep -nE '\$2=="openspec/' "$REPO_ROOT/skills/status.md"
+  ! grep -nE '\$2=="openspec/' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "status.md has no \$2 ~ /openspec\\// awk patterns (P0-7 site 3)" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
   # The buggy pattern: $2 ~ /^openspec\// — $2 is the commit hash, never matches.
-  ! grep -nE '\$2 ~ /openspec\\//' "$REPO_ROOT/skills/status.md"
+  ! grep -nE '\$2 ~ /openspec\\//' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "status.md inline helper exists at Mode B (status query) site" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
   # P1-14 (T21) refactored Mode C archive flow to use the centralized
   # _lib/archive.sh::archive_change helper, so the inline helper is no
   # longer needed in Mode C. It must still exist for the Mode B status
   # query (line ~146) where the caller needs the raw worktree path
   # before running the Mode B detection logic.
   local helper_defs
-  helper_defs=$(grep -cE '^wt_path_for_branch_inline\(\) \{$' "$REPO_ROOT/skills/status.md")
+  helper_defs=$(grep -cE '^wt_path_for_branch_inline\(\) \{$' "$REPO_ROOT/skills/status/SKILL.md")
   [ "$helper_defs" -ge 1 ]
   local helper_calls
-  helper_calls=$(grep -cE 'WORKTREE_PATH=\$\(wt_path_for_branch_inline' "$REPO_ROOT/skills/status.md")
+  helper_calls=$(grep -cE 'WORKTREE_PATH=\$\(wt_path_for_branch_inline' "$REPO_ROOT/skills/status/SKILL.md")
   [ "$helper_calls" -ge 1 ]
 }
 
 @test "status.md inline helper compares to bracketed branch column" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
   # `git worktree list` outputs `path  hash  [branch]` — so $3 is "[branch]".
   # The helper must include the brackets in the comparison, otherwise the
   # lookup silently fails (the very bug P0-7 was supposed to fix).
-  grep -nE 'awk -v br="\\\[openspec/\\\$branch\\\]"' "$REPO_ROOT/skills/status.md"
+  grep -nE 'awk -v br="\\\[openspec/\\\$branch\\\]"' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "status.md REMAINING_WT count uses \$3 (post-archive scan)" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
   # $3 is "[branch]"; regex must allow the leading bracket.
-  grep -nE "REMAINING_WT=.*awk '\\\$3 ~ /\\^\\\\\\[openspec\\\\\\//" "$REPO_ROOT/skills/status.md"
+  grep -nE "REMAINING_WT=.*awk '\\\$3 ~ /\\^\\\\\\[openspec\\\\\\//" "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "inline helper returns the worktree path in a real git repo" {

@@ -24,13 +24,13 @@ load ../test_helper
 
 @test "execute_inline_step7_block_removed" {
   # The old inline bash block (~L195-L282) must be removed
-  ! grep -q 'Step 7.*输出明确' "$REPO_ROOT/skills/execute.md"
-  ! grep -q 'iteration.json 同步失败' "$REPO_ROOT/skills/execute.md"
+  ! grep -q 'Step 7.*输出明确' "$REPO_ROOT/skills/execute/SKILL.md"
+  ! grep -q 'iteration.json 同步失败' "$REPO_ROOT/skills/execute/SKILL.md"
 }
 
 @test "execute_invokes_step7_helper" {
-  grep -q 'source.*_lib/execute_step7.sh' "$REPO_ROOT/skills/execute.md"
-  grep -q 'run_step7_report' "$REPO_ROOT/skills/execute.md"
+  grep -q 'source.*_lib/execute_step7.sh' "$REPO_ROOT/skills/execute/SKILL.md"
+  grep -q 'run_step7_report' "$REPO_ROOT/skills/execute/SKILL.md"
 }
 
 @test "oracle_c1_no_bash_string_interpolation_step7" {

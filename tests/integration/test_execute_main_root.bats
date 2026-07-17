@@ -18,16 +18,16 @@ load ../test_helper
 # Static checks (verify the source change is in place) --------------------
 
 @test "P0-8: execute.md uses main_repo_root or --git-common-dir" {
-  [ -f "skills/execute.md" ]
+  [ -f "skills/execute/SKILL.md" ]
   # Either the helper function or the direct git command must be referenced
   # (Round A extraction: main_repo_root lives in _lib/select_worktree.sh, sourced by execute.md)
-  grep -qE 'git rev-parse --git-common-dir|main_repo_root' skills/execute.md skills/_lib/select_worktree.sh
+  grep -qE 'git rev-parse --git-common-dir|main_repo_root' skills/execute/SKILL.md skills/_lib/select_worktree.sh
 }
 
 @test "P0-8: execute.md no longer uses just --show-toplevel for PROJECT_ROOT" {
-  [ -f "skills/execute.md" ]
+  [ -f "skills/execute/SKILL.md" ]
   # The old buggy assignment must be gone
-  if grep -qE 'PROJECT_ROOT=\$\(git rev-parse --show-toplevel 2>/dev/null \|\| pwd\)' skills/execute.md; then
+  if grep -qE 'PROJECT_ROOT=\$\(git rev-parse --show-toplevel 2>/dev/null \|\| pwd\)' skills/execute/SKILL.md; then
     echo "FAIL: old --show-toplevel PROJECT_ROOT assignment still present"
     return 1
   fi

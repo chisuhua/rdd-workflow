@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_execute_skill.bats
 #
-# Structural / metadata coverage for skills/execute.md.
+# Structural / metadata coverage for skills/execute/SKILL.md.
 # Locks the frontmatter, the _lib/worktree.sh source, the main_repo_root
 # PROJECT_ROOT fix (P0-8), and the EXECUTE_CHOICE escape hatch (P0-9).
 #
@@ -11,7 +11,7 @@ load ../test_helper
 load_lib skill
 
 setup() {
-  f="$REPO_ROOT/skills/execute.md"
+  f="$REPO_ROOT/skills/execute/SKILL.md"
 }
 
 @test "execute_skill has correct frontmatter" {

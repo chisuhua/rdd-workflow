@@ -27,17 +27,17 @@ REPLACED_RANGE="92,189p"
 }
 
 @test "guide_arch_inline_block_removed" {
-  [ -f "$REPO_ROOT/skills/guide-arch.md" ]
+  [ -f "$REPO_ROOT/skills/guide-arch/SKILL.md" ]
   # After extraction, L92-L189 should no longer contain inline openspec-detection bash
   local count
-  count=$(sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-arch.md" | grep -c 'command -v openspec' || true)
+  count=$(sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-arch/SKILL.md" | grep -c 'command -v openspec' || true)
   [ "$count" -eq 0 ]
 }
 
 @test "guide_arch_invokes_helper" {
-  [ -f "$REPO_ROOT/skills/guide-arch.md" ]
-  grep -q 'source.*_lib/arch_env_check.sh' "$REPO_ROOT/skills/guide-arch.md"
-  grep -q 'run_arch_env_check' "$REPO_ROOT/skills/guide-arch.md"
+  [ -f "$REPO_ROOT/skills/guide-arch/SKILL.md" ]
+  grep -q 'source.*_lib/arch_env_check.sh' "$REPO_ROOT/skills/guide-arch/SKILL.md"
+  grep -q 'run_arch_env_check' "$REPO_ROOT/skills/guide-arch/SKILL.md"
 }
 
 @test "run_arch_env_check_runs_in_repo" {

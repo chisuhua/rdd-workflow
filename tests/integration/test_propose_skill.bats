@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_propose_skill.bats
 #
-# Structural / metadata coverage for skills/propose.md.
+# Structural / metadata coverage for skills/propose/SKILL.md.
 # Locks the frontmatter, the roadmap.md dependency, the Phase -1..4
 # structure (≥5 headings), and the THIS_SESSION_CREATED auto-commit
 # gating (coarse, complementary to test_propose_parsing.bats).
@@ -12,7 +12,7 @@ load ../test_helper
 load_lib skill
 
 setup() {
-  f="$REPO_ROOT/skills/propose.md"
+  f="$REPO_ROOT/skills/propose/SKILL.md"
 }
 
 @test "propose_skill has correct frontmatter" {

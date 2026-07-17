@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_status_skill.bats
 #
-# Structural / metadata coverage for skills/status.md.
+# Structural / metadata coverage for skills/status/SKILL.md.
 # Locks the frontmatter, the 4-mode structure (Mode A/B/C/D), the
 # $3 branch matching fix (P0-7, defense-in-depth), and the --roadmap
 # flag documentation.
@@ -12,7 +12,7 @@ load ../test_helper
 load_lib skill
 
 setup() {
-  f="$REPO_ROOT/skills/status.md"
+  f="$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "status_skill has correct frontmatter" {

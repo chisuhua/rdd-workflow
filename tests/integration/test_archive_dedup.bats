@@ -34,20 +34,20 @@ load ../test_helper
 }
 
 @test "status.md Mode C sources and uses archive.sh::archive_change" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
   # Source line
-  grep -nE 'source .*_lib/archive.sh' "$REPO_ROOT/skills/status.md"
+  grep -nE 'source .*_lib/archive.sh' "$REPO_ROOT/skills/status/SKILL.md"
   # Call line
-  grep -nE 'archive_change "' "$REPO_ROOT/skills/status.md"
+  grep -nE 'archive_change "' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "status.md Mode C no longer inlines the 6-step archive flow (P1-14 dedup)" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
   # The old code had `git merge --ff-only` and `git merge --no-ff` inline
   # in the Mode C bash block. After the refactor, these should only live
   # in archive.sh, not in status.md.
-  ! grep -nE 'git merge --ff-only' "$REPO_ROOT/skills/status.md"
-  ! grep -nE 'git merge --no-ff' "$REPO_ROOT/skills/status.md"
+  ! grep -nE 'git merge --ff-only' "$REPO_ROOT/skills/status/SKILL.md"
+  ! grep -nE 'git merge --no-ff' "$REPO_ROOT/skills/status/SKILL.md"
   # `openspec archive` may still appear in the explanatory block-quote
   # (the refactor note that documents WHAT was extracted), but it must
   # not appear as an executable command — i.e. not preceded by `^`
@@ -56,34 +56,34 @@ load ../test_helper
   # Concretely: the only acceptable mention of `openspec archive` is in
   # the form `\`openspec archive\`` (backticked, inside the > block).
   # We assert that there is no `openspec archive <name>` style invocation.
-  ! grep -nE '^openspec archive <name> --yes' "$REPO_ROOT/skills/status.md"
+  ! grep -nE '^openspec archive <name> --yes' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "guide-ship.md Phase 3 sources and uses archive.sh::archive_change" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
   # Source line (in addition to worktree.sh)
-  grep -nE 'source .*_lib/archive.sh' "$REPO_ROOT/skills/guide-ship.md"
+  grep -nE 'source .*_lib/archive.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
   # Call line
-  grep -nE 'archive_change "\$CHANGE_NAME"' "$REPO_ROOT/skills/guide-ship.md"
+  grep -nE 'archive_change "\$CHANGE_NAME"' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
 @test "guide-ship.md Phase 3 no longer inlines pre-merge check (P1-14 dedup)" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
   # The old code inlined `WORKTREE_NEW_COMMITS=$(git rev-list --count ...)`;
   # after the refactor that lives inside check_worktree_commits.
   # We still expect the P0 FIX detached-HEAD check to remain (it is
   # caller-specific to guide-ship), but the post-merge verify block
   # (BEFORE_MERGE/AFTER_MERGE) is now inside verify_merge_result.
-  ! grep -nE '^BEFORE_MERGE=' "$REPO_ROOT/skills/guide-ship.md"
-  ! grep -nE '^AFTER_MERGE=' "$REPO_ROOT/skills/guide-ship.md"
+  ! grep -nE '^BEFORE_MERGE=' "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  ! grep -nE '^AFTER_MERGE=' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
 @test "guide-ship.md Phase 3 keeps the P0 FIX detached-HEAD check (caller-specific)" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
   # The detached-HEAD check is unique to guide-ship (status.md does not
   # have it) and stays in the caller.
-  grep -nE 'WT_BRANCH.*DETACHED' "$REPO_ROOT/skills/guide-ship.md"
-  grep -nE 'echo "❌ 错误：Worktree 处于 detached HEAD' "$REPO_ROOT/skills/guide-ship.md"
+  grep -nE 'WT_BRANCH.*DETACHED' "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  grep -nE 'echo "❌ 错误：Worktree 处于 detached HEAD' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
 @test "check_worktree_commits: returns commit count when branch has new commits" {

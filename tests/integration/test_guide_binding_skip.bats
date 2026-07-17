@@ -6,13 +6,13 @@ load ../test_helper
 
 @test "guide.md binding block documents skip-when-empty behavior" {
   # The doc should mention that empty BINDING_LINES results in silent skip
-  grep -qE 'BINDING_LINES|graceful.*skip|空.*跳过|empty.*skip|NO_BINDING' skills/guide.md
+  grep -qE 'BINDING_LINES|graceful.*skip|空.*跳过|empty.*skip|NO_BINDING' skills/guide/SKILL.md
 }
 
 @test "guide.md supports --help flag" {
-  grep -qE -- '--help' skills/guide.md
+  grep -qE -- '--help' skills/guide/SKILL.md
 }
 
 @test "guide.md supports --no-binding flag" {
-  grep -qE -- '--no-binding' skills/guide.md
+  grep -qE -- '--no-binding' skills/guide/SKILL.md
 }

@@ -21,7 +21,7 @@
 load ../test_helper
 
 # Location of the propose skill markdown under test
-PROPOSE_MD="$REPO_ROOT/skills/propose.md"
+PROPOSE_MD="$REPO_ROOT/skills/propose/SKILL.md"
 
 @test "propose.md exists and is non-empty" {
   [ -f "$PROPOSE_MD" ]

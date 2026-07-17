@@ -31,39 +31,39 @@ load ../test_helper
 # --- Structural: 6 sites must be replaced ---
 
 @test "guide-arch.md entry hook no longer inlines PYEOF heredoc" {
-  [ -f "$REPO_ROOT/skills/guide-arch.md" ]
-  ! sed -n '82,110p' "$REPO_ROOT/skills/guide-arch.md" | grep -qE 'kind="stage_arch"'
+  [ -f "$REPO_ROOT/skills/guide-arch/SKILL.md" ]
+  ! sed -n '82,110p' "$REPO_ROOT/skills/guide-arch/SKILL.md" | grep -qE 'kind="stage_arch"'
 }
 
 @test "guide-arch.md close hook no longer inlines PYEOF heredoc" {
-  [ -f "$REPO_ROOT/skills/guide-arch.md" ]
-  ! sed -n '826,855p' "$REPO_ROOT/skills/guide-arch.md" | grep -qE 'end_reason="arch-done"'
+  [ -f "$REPO_ROOT/skills/guide-arch/SKILL.md" ]
+  ! sed -n '826,855p' "$REPO_ROOT/skills/guide-arch/SKILL.md" | grep -qE 'end_reason="arch-done"'
 }
 
 @test "guide-plan.md entry hook no longer inlines PYEOF heredoc" {
-  [ -f "$REPO_ROOT/skills/guide-plan.md" ]
-  ! sed -n '82,115p' "$REPO_ROOT/skills/guide-plan.md" | grep -qE 'kind="stage_plan"'
+  [ -f "$REPO_ROOT/skills/guide-plan/SKILL.md" ]
+  ! sed -n '82,115p' "$REPO_ROOT/skills/guide-plan/SKILL.md" | grep -qE 'kind="stage_plan"'
 }
 
 @test "guide-plan.md close hook no longer inlines PYEOF heredoc" {
-  [ -f "$REPO_ROOT/skills/guide-plan.md" ]
-  ! sed -n '787,810p' "$REPO_ROOT/skills/guide-plan.md" | grep -qE 'end_reason="plan-done"'
+  [ -f "$REPO_ROOT/skills/guide-plan/SKILL.md" ]
+  ! sed -n '787,810p' "$REPO_ROOT/skills/guide-plan/SKILL.md" | grep -qE 'end_reason="plan-done"'
 }
 
 @test "guide-ship.md entry hook no longer inlines PYEOF heredoc" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  ! sed -n '36,65p' "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'kind="stage_ship"'
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
+  ! sed -n '36,65p' "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -qE 'kind="stage_ship"'
 }
 
 @test "guide-ship.md close hook no longer inlines PYEOF heredoc" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  ! sed -n '774,800p' "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'end_reason="ship-done"'
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
+  ! sed -n '774,800p' "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -qE 'end_reason="ship-done"'
 }
 
 @test "all 3 skills invoke rddf_session_hooks helper" {
-  grep -q '_lib/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-arch.md"
-  grep -q '_lib/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-plan.md"
-  grep -q '_lib/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-ship.md"
+  grep -q '_lib/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-arch/SKILL.md"
+  grep -q '_lib/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-plan/SKILL.md"
+  grep -q '_lib/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
 # --- Runtime: helper functions work correctly ---

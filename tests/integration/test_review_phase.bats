@@ -14,16 +14,16 @@ setup() {
 }
 
 @test "review_phase: Phase 2.5 section exists in guide-ship.md" {
-    [ -f "skills/guide-ship.md" ]
-    grep -q "Phase 2.5: review" "skills/guide-ship.md"
+    [ -f "skills/guide-ship/SKILL.md" ]
+    grep -q "Phase 2.5: review" "skills/guide-ship/SKILL.md"
 }
 
 @test "review_phase: review menu has 5 numbered options" {
     count=$(grep -cE '^[1-5]\.' <(
-        awk '/^请选择:/,/^```$/' "skills/guide-ship.md" | head -30
+        awk '/^请选择:/,/^```$/' "skills/guide-ship/SKILL.md" | head -30
     ) 2>/dev/null || echo 0)
     [ "$count" -ge 1 ]  # at least one option block exists
-    grep -qE '范围內债务|创建新 debt|架构漂移|跳过|查看详细' "skills/guide-ship.md"
+    grep -qE '范围內债务|创建新 debt|架构漂移|跳过|查看详细' "skills/guide-ship/SKILL.md"
 }
 
 @test "review_phase: proposal-suggestions-format.md has type field" {

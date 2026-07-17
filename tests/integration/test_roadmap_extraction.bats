@@ -43,45 +43,45 @@ load ../test_helper
 # ---- Positive: roadmap.md uses helpers ----
 
 @test "roadmap.md init Step 4 calls roadmap_state.init_state" {
-  [ -f "$REPO_ROOT/skills/roadmap.md" ]
-  grep -nE 'from skills\._lib\.roadmap_state import init_state' "$REPO_ROOT/skills/roadmap.md"
+  [ -f "$REPO_ROOT/skills/roadmap/SKILL.md" ]
+  grep -nE 'from skills\._lib\.roadmap_state import init_state' "$REPO_ROOT/skills/roadmap/SKILL.md"
 }
 
 @test "roadmap.md status calls roadmap_state.render_status_view" {
   grep -nE 'from skills\._lib\.roadmap_state import render_status_view' \
-    "$REPO_ROOT/skills/roadmap.md"
+    "$REPO_ROOT/skills/roadmap/SKILL.md"
 }
 
 @test "roadmap.md edit calls roadmap_state.add_phase" {
   grep -nE 'from skills\._lib\.roadmap_state import add_phase' \
-    "$REPO_ROOT/skills/roadmap.md"
+    "$REPO_ROOT/skills/roadmap/SKILL.md"
 }
 
 @test "roadmap.md validate calls roadmap_state.validate_change" {
   grep -nE 'from skills\._lib\.roadmap_state import validate_change' \
-    "$REPO_ROOT/skills/roadmap.md"
+    "$REPO_ROOT/skills/roadmap/SKILL.md"
 }
 
 @test "roadmap.md advance calls roadmap_state.advance_phase" {
   grep -nE 'from skills\._lib\.roadmap_state import advance_phase' \
-    "$REPO_ROOT/skills/roadmap.md"
+    "$REPO_ROOT/skills/roadmap/SKILL.md"
 }
 
 @test "roadmap.md helpers call get_phase_categories + update_change_count" {
   grep -nE 'from skills\._lib\.roadmap_state import get_phase_categories' \
-    "$REPO_ROOT/skills/roadmap.md"
+    "$REPO_ROOT/skills/roadmap/SKILL.md"
   grep -nE 'from skills\._lib\.roadmap_state import update_change_count' \
-    "$REPO_ROOT/skills/roadmap.md"
+    "$REPO_ROOT/skills/roadmap/SKILL.md"
 }
 
 # ---- Negative: no inline Python heredocs remaining ----
 
 @test "roadmap.md no longer inlines init_state JSON template" {
-  [ -f "$REPO_ROOT/skills/roadmap.md" ]
+  [ -f "$REPO_ROOT/skills/roadmap/SKILL.md" ]
   # The old code used a large inline Python heredoc with state dict literal
   # containing phase-1/phase-2/phase-3 definitions. After extraction,
   # roadmap.md must not contain the raw Python dict template.
-  ! grep -nE "'core-impl'.*'core-test'" "$REPO_ROOT/skills/roadmap.md"
+  ! grep -nE "'core-impl'.*'core-test'" "$REPO_ROOT/skills/roadmap/SKILL.md"
 }
 
 @test "roadmap.md no longer inlines status render Python heredoc" {
@@ -89,14 +89,14 @@ load ../test_helper
   # state.get('phases', {}).items():` inline. After extraction this
   # lives in render_status_view().
   ! grep -nE 'for phase_id, phase_data in state\.get\(.phases.' \
-    "$REPO_ROOT/skills/roadmap.md"
+    "$REPO_ROOT/skills/roadmap/SKILL.md"
 }
 
 @test "roadmap.md no longer inlines advance pre-check Python heredoc" {
   # The old advance pre-check iterated categories inline:
   #   for cat_id, cat_data in phase_data.get('categories', {}).items():
   ! grep -nE 'for cat_id, cat_data in phase_data\.get\(.categories.' \
-    "$REPO_ROOT/skills/roadmap.md"
+    "$REPO_ROOT/skills/roadmap/SKILL.md"
 }
 
 # ---- Runtime sanity ----

@@ -25,12 +25,12 @@ load ../test_helper
 
 @test "guide-arch.md replaced inline block no longer contains cat heredoc" {
   # Content-driven check (not line-range): verify no heredoc writes to HANDOFF_FILE
-  ! grep -q 'cat > "\$HANDOFF_FILE"' "$REPO_ROOT/skills/guide-arch.md"
+  ! grep -q 'cat > "\$HANDOFF_FILE"' "$REPO_ROOT/skills/guide-arch/SKILL.md"
 }
 
 @test "guide-arch.md sources _lib/write_arch_handoff.sh and calls write_arch_handoff" {
-  grep -q 'source.*_lib/write_arch_handoff.sh' "$REPO_ROOT/skills/guide-arch.md"
-  grep -q 'write_arch_handoff' "$REPO_ROOT/skills/guide-arch.md"
+  grep -q 'source.*_lib/write_arch_handoff.sh' "$REPO_ROOT/skills/guide-arch/SKILL.md"
+  grep -q 'write_arch_handoff' "$REPO_ROOT/skills/guide-arch/SKILL.md"
 }
 
 @test "write_arch_handoff creates .arch-handoff.json in scratch repo" {

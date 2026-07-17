@@ -22,11 +22,11 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 # === 1. 新内置 skills 存在性 ===
 
 @test "spec-workflow/writing-plans.md exists in skills/" {
-    assert_file_exists "$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans.md"
+    assert_file_exists "$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans/SKILL.md"
 }
 
 @test "spec-workflow/writing-plans.md has valid frontmatter (v2.0 self-contained)" {
-    local f="$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans.md"
+    local f="$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans/SKILL.md"
     head -1 "$f" | grep -q '^---$'
     grep -qE '^name:[[:space:]]*spec-workflow/writing-plans' "$f"
     grep -qE '^description:' "$f"
@@ -35,7 +35,7 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 }
 
 @test "spec-workflow/writing-plans.md enforces TDD 5-step structure" {
-    local f="$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans.md"
+    local f="$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans/SKILL.md"
     grep -q 'Write the failing test' "$f"
     grep -q 'Run test to verify it fails' "$f"
     grep -q 'Write minimal implementation' "$f"
@@ -44,19 +44,19 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 }
 
 @test "spec-workflow/writing-plans.md contract: .rddf/plans/<name>.md output path" {
-    local f="$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans.md"
+    local f="$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans/SKILL.md"
     grep -qE '\.rddf/plans/<CHANGE_NAME>\.md' "$f"
 }
 
 @test "spec-workflow/writing-plans.md prohibits placeholders (TDD rigor)" {
-    local f="$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans.md"
+    local f="$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans/SKILL.md"
     grep -q '禁止的占位符' "$f"
     grep -q 'TBD' "$f"
     grep -q 'TODO' "$f"
 }
 
 @test "execute.md has TDD 5-step discipline integrated (merged from executing-plans)" {
-    local f="$REPO_ROOT_ORIGIN/skills/execute.md"
+    local f="$REPO_ROOT_ORIGIN/skills/execute/SKILL.md"
     # TDD 5 步结构
     grep -q 'Write the failing test' "$f"
     grep -q 'Run test to verify it fails' "$f"
@@ -89,12 +89,12 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 # === 3. guide-ship.md 直接调用 (无中间层) ===
 
 @test "guide-ship.md directly calls skill_use('spec-workflow/writing-plans')" {
-    local f="$REPO_ROOT_ORIGIN/skills/guide-ship.md"
+    local f="$REPO_ROOT_ORIGIN/skills/guide-ship/SKILL.md"
     grep -qE 'skill_use\("spec-workflow/writing-plans"\)' "$f"
 }
 
 @test "guide-ship.md no longer has detection chain (no PROMETHEUS_MODE builtin/external/none)" {
-    local f="$REPO_ROOT_ORIGIN/skills/guide-ship.md"
+    local f="$REPO_ROOT_ORIGIN/skills/guide-ship/SKILL.md"
     ! grep -qE 'PROMETHEUS_MODE.*builtin|PROMETHEUS_MODE.*external|PROMETHEUS_MODE.*none' "$f" || {
         echo "guide-ship.md still references PROMETHEUS_MODE (v2.0 should be removed)"
         return 1
@@ -102,7 +102,7 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 }
 
 @test "guide-ship.md version is at least 2.0.1 (was bumped post-fill-hook)" {
-    local f="$REPO_ROOT_ORIGIN/skills/guide-ship.md"
+    local f="$REPO_ROOT_ORIGIN/skills/guide-ship/SKILL.md"
     local ver
     ver=$(skill_meta_field "$f" version)
     # The post-archive fill suggestion hook (commit a1e0aaf) bumped
@@ -187,13 +187,13 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 # === 7. 执行契约保留(.rddf/plans/<name>.md) ===
 
 @test "execute.md still references .rddf/plans/<name>.md as contract path" {
-    local f="$REPO_ROOT_ORIGIN/skills/execute.md"
+    local f="$REPO_ROOT_ORIGIN/skills/execute/SKILL.md"
     grep -qE '\.rddf/plans/' "$f"
     grep -qE '\.rddf/plans/[$]CHANGE_NAME' "$f"
 }
 
 @test "status.md still references .rddf/plans/<name>.md for progress tracking" {
-    local f="$REPO_ROOT_ORIGIN/skills/status.md"
+    local f="$REPO_ROOT_ORIGIN/skills/status/SKILL.md"
     grep -qE '\.rddf/plans/' "$f"
     grep -qE '\- \[x\]' "$f"
 }
@@ -237,7 +237,7 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 
 @test "v2.0 spec-workflow/writing-plans is shorter than old prometheus-planning (481)" {
     local size
-    size=$(wc -l < "$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans.md")
+    size=$(wc -l < "$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans/SKILL.md")
     [[ "$size" -lt 481 ]] || {
         echo "v2.0 writing-plans ($size lines) >= v1.3 prometheus-planning (481)"
         return 1

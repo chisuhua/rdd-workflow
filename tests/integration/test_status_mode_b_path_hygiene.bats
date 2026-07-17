@@ -22,7 +22,7 @@ load ../test_helper
 }
 
 @test "status.md no longer sources _lib/worktree.sh (S5 dead source fix)" {
-  ! grep -E 'source[[:space:]]+\$SCRIPT_DIR/_lib/worktree.sh' skills/status.md
+  ! grep -E 'source[[:space:]]+\$SCRIPT_DIR/_lib/worktree.sh' skills/status/SKILL.md
 }
 
 @test "status.md awk column comment mentions \$1, \$2, \$3" {
@@ -39,11 +39,11 @@ load ../test_helper
     local start=$(( n > 3 ? n - 3 : 1 ))
     local end=$(( n + 3 ))
     local ctx
-    ctx=$(sed -n "${start},${end}p" skills/status.md)
+    ctx=$(sed -n "${start},${end}p" skills/status/SKILL.md)
     if echo "$ctx" | grep -qE '\$1' && echo "$ctx" | grep -qE '\$2'; then
       found=1
       break
     fi
-  done < <(grep -nE '^#.*\$3' skills/status.md)
+  done < <(grep -nE '^#.*\$3' skills/status/SKILL.md)
   [ "$found" -eq 1 ]
 }

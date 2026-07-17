@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_roadmap_skill.bats
 #
-# Structural / metadata coverage for skills/roadmap.md.
+# Structural / metadata coverage for skills/roadmap/SKILL.md.
 # Locks the frontmatter, the 6 declared commands (init/status/edit/
 # validate/advance/gate-report), the _lib/state.sh dependency, and
 # the ROADMAP_PHASE_COUNT env var (P1-5).
@@ -12,7 +12,7 @@ load ../test_helper
 load_lib skill
 
 setup() {
-  f="$REPO_ROOT/skills/roadmap.md"
+  f="$REPO_ROOT/skills/roadmap/SKILL.md"
 }
 
 @test "roadmap_skill has correct frontmatter" {

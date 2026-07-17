@@ -20,13 +20,13 @@ load ../test_helper
 
 @test "guide_arch_inline_gate_block_removed" {
   # Chinese markers from inline gate block must not appear after extraction
-  ! grep -q '门控 1: ADR 数量检查' "$REPO_ROOT/skills/guide-arch.md"
-  ! grep -q '门控 2: roadmap 存在性检查' "$REPO_ROOT/skills/guide-arch.md"
+  ! grep -q '门控 1: ADR 数量检查' "$REPO_ROOT/skills/guide-arch/SKILL.md"
+  ! grep -q '门控 2: roadmap 存在性检查' "$REPO_ROOT/skills/guide-arch/SKILL.md"
 }
 
 @test "guide_arch_invokes_helper" {
-  grep -q 'source.*_lib/arch_done_gate.sh' "$REPO_ROOT/skills/guide-arch.md"
-  grep -q 'check_arch_done_gate' "$REPO_ROOT/skills/guide-arch.md"
+  grep -q 'source.*_lib/arch_done_gate.sh' "$REPO_ROOT/skills/guide-arch/SKILL.md"
+  grep -q 'check_arch_done_gate' "$REPO_ROOT/skills/guide-arch/SKILL.md"
 }
 
 @test "check_arch_done_gate_passes_with_adr_and_roadmap" {

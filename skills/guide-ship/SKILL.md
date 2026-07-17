@@ -38,7 +38,7 @@ skill_use("guide-ship")   # 无参数版本
 ```bash
 # rddf-session 入口 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
 # stage_ship parent: latest stage_plan (auto-resolved by helper)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/rddf_session_hooks.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/rddf_session_hooks.sh"
 rddf_session_hook_entry stage_ship guide-ship ship-phase archive-all
 ```
 
@@ -107,7 +107,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -162,7 +162,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -230,7 +230,7 @@ fi
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -244,7 +244,7 @@ handle_invalid_choice "$choice"
 
 ```bash
 # Round A: extracted to _lib/ship_monitor.sh (L260-L315, ~54 lines)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_monitor.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_monitor.sh"
 run_ship_monitor
 ```
 
@@ -278,7 +278,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -471,7 +471,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -492,7 +492,7 @@ archive_change_for_mode "$PROJECT_ROOT" "$CHANGE_NAME" "$ARCHIVE_MODE"
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -502,7 +502,7 @@ handle_invalid_choice "$choice"
 
 ```bash
 # rddf-session heartbeat refresh (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/rddf_session_hooks.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/rddf_session_hooks.sh"
 rddf_session_hook_heartbeat stage_ship "$CHANGE_NAME"
 ```
 
@@ -519,7 +519,7 @@ rddf_session_hook_heartbeat stage_ship "$CHANGE_NAME"
 
 ```bash
 # Phase 3 post-archive: fill suggestion hook — extracted to _lib/post_archive_fill.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/post_archive_fill.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/post_archive_fill.sh"
 run_post_archive_fill_suggestion
 ```
 
@@ -554,7 +554,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -608,7 +608,7 @@ Triggered when all committed changes have been archived (or no changes remain).
 # rddf-session 关闭 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
 # Documented behavior change (P3-4c): ship now prints 'not found, skipping'
 # when sessions.json missing, consistent with arch/plan close.
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/rddf_session_hooks.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/rddf_session_hooks.sh"
 rddf_session_hook_close stage_ship ship-done guide-ship
 ```
 
@@ -646,6 +646,6 @@ fi
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/ship_case_handler.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```

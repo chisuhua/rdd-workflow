@@ -13,7 +13,7 @@
 
 load ../test_helper
 
-DEPS_MD="$REPO_ROOT/skills/deps.md"
+DEPS_MD="$REPO_ROOT/skills/deps/SKILL.md"
 
 @test "deps.md Step 1 reads roadmap-meta.yaml (P1-9)" {
   [ -f "$DEPS_MD" ]

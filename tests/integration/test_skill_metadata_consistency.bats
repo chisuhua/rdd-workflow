@@ -33,27 +33,29 @@ if missing:
   [ "$status" -eq 0 ]
 }
 
-@test "every package.json skills[] entry has a matching skills/<name>.md" {
+@test "every package.json skills[] entry has a matching skills/<name>/SKILL.md or skills/<name>.md" {
+  # INSTALL stays at top-level (skills/INSTALL.md); others moved to skills/<name>/SKILL.md
   run python3 -c "
 import json, os, sys
 with open('package.json') as f:
     data = json.load(f)
 skills = data.get('skills', [])
 for s in skills:
-    path = f'skills/{s}.md'
-    if not os.path.isfile(path):
-        print(f'missing: {path}', file=sys.stderr)
+    # INSTALL is at top level, others moved to per-skill subdirectory
+    candidates = [f'skills/{s}/SKILL.md', f'skills/{s}.md']
+    if not any(os.path.isfile(p) for p in candidates):
+        print(f'missing: {candidates}', file=sys.stderr)
         sys.exit(1)
 "
   [ "$status" -eq 0 ]
 }
 
 @test "smoke.bats 10-skill list matches package.json skills[] (target set)" {
-  # smoke.bats:19-29 hard-codes the 10 target skill files.
-  # Extract each `skills/X.md` literal and compare to the target set
+  # smoke.bats:25-35 hard-codes the 10 target skill files (mixed INSTALL.md + SKILL.md).
+  # Extract each skill name from the literal and compare to the target set
   # in package.json (allowing extras like prometheus-planning).
-  smoke_skills=$(grep -oE 'skills/[A-Za-z0-9_-]+\.md' tests/smoke.bats | \
-                 sed -E 's|skills/||; s|\.md||' | sort -u)
+  smoke_skills=$(grep -oE 'skills/[A-Za-z0-9_-]+(\.md|/SKILL\.md)' tests/smoke.bats | \
+                 sed -E 's|skills/||; s|\.md||; s|/SKILL||' | sort -u)
   pkg_target_skills=$(python3 -c "
 import json
 target = {'INSTALL', 'deps', 'execute', 'guide', 'guide-ship', 'guide-arch', 'guide-plan', 'propose', 'roadmap', 'status'}

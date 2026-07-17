@@ -10,12 +10,12 @@
 load ../test_helper
 
 @test "guide-ship.md cleanup uses FORCE_BRANCH_DELETE env var" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  grep -q "FORCE_BRANCH_DELETE" "$REPO_ROOT/skills/guide-ship.md"
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
+  grep -q "FORCE_BRANCH_DELETE" "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
 @test "guide-ship.md cleanup shows last commit before delete attempt" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  grep -q "LAST_COMMIT" "$REPO_ROOT/skills/guide-ship.md"
-  grep -q 'git log -1 --format' "$REPO_ROOT/skills/guide-ship.md"
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
+  grep -q "LAST_COMMIT" "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  grep -q 'git log -1 --format' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }

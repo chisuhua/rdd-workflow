@@ -16,16 +16,16 @@ load ../test_helper
 
 @test "feature_order: feature.md inline order block removed" {
   # The old order heredoc printed "Recommended execution order" — gone
-  run grep 'Recommended execution order' "$REPO_ROOT/skills/feature.md"
+  run grep 'Recommended execution order' "$REPO_ROOT/skills/feature/SKILL.md"
   [ "$status" -ne 0 ]
   # The old execution_order key reference — gone
-  run grep 'execution_order' "$REPO_ROOT/skills/feature.md"
+  run grep 'execution_order' "$REPO_ROOT/skills/feature/SKILL.md"
   [ "$status" -ne 0 ]
 }
 
 @test "feature_order: feature.md sources and calls helper" {
-  grep -q 'source.*_lib/feature_order.sh' "$REPO_ROOT/skills/feature.md"
-  grep -q 'render_feature_order' "$REPO_ROOT/skills/feature.md"
+  grep -q 'source.*_lib/feature_order.sh' "$REPO_ROOT/skills/feature/SKILL.md"
+  grep -q 'render_feature_order' "$REPO_ROOT/skills/feature/SKILL.md"
 }
 
 @test "feature_order: handles missing iteration.json gracefully" {

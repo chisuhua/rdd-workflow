@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_guide_ship_skill.bats
 #
-# Structural / metadata coverage for skills/guide-ship.md.
+# Structural / metadata coverage for skills/guide-ship/SKILL.md.
 # Locks the frontmatter, the prometheus-planning delegation
 # (with SKIP_PROMETHEUS_PLANNING escape hatch), the execute/status
 # sub-skill references, and the $3-vs-$2 branch matching fix
@@ -13,7 +13,7 @@ load ../test_helper
 load_lib skill
 
 setup() {
-  f="$REPO_ROOT/skills/guide-ship.md"
+  f="$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
 @test "guide_ship_skill has correct frontmatter" {

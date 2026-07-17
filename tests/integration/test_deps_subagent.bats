@@ -2,13 +2,13 @@
 # tests/integration/test_deps_subagent.bats
 #
 # Locks the implementation of Step 3 subagent semantic analysis in
-# skills/deps.md. Covers the 3 placeholder sites that were replaced:
+# skills/deps/SKILL.md. Covers the 3 placeholder sites that were replaced:
 #   - L345 (original) → 3e "子代理调用 (task API)" sub-section
 #   - L499 (original) → Step 5 heredoc dynamic branch
 #   - L566 (original) → 5e "AI 分析建议（动态输出）" sub-section
 #
 # Compatibility:
-#   - test_deps_skill.bats (structural coverage of skills/deps.md)
+#   - test_deps_skill.bats (structural coverage of skills/deps/SKILL.md)
 #   - test_deps_output.bats (output format of .rddf/state/.deps-output.md)
 #   - test_ai_disclaimer.bats (fallback marker string)
 #
@@ -18,7 +18,7 @@ load ../test_helper
 load_lib deps-subagent
 
 setup() {
-  f="$REPO_ROOT/skills/deps.md"
+  f="$REPO_ROOT/skills/deps/SKILL.md"
   [ -f "$f" ] || skip "deps.md not found"
 }
 

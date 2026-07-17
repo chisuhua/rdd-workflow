@@ -20,7 +20,7 @@ load ../test_helper
 }
 
 @test "guide.md priority comment matches scan-state.sh count" {
-  guide_n=$(grep -oE '优先级[[:space:]]*[0-9]+[[:space:]]*条' skills/guide.md | grep -oE '[0-9]+' | head -1)
+  guide_n=$(grep -oE '优先级[[:space:]]*[0-9]+[[:space:]]*条' skills/guide/SKILL.md | grep -oE '[0-9]+' | head -1)
   # Same relaxed pattern as test 2 — accepts both "1. " and "1.5 " forms
   shell_n=$(awk '/^#[[:space:]]+[0-9]+(\.[0-9]+)?\.?[[:space:]]/ {print}' skills/_lib/scan-state.sh | wc -l)
   [ "$guide_n" = "$shell_n" ] || {

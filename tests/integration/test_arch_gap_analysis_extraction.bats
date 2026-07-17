@@ -25,14 +25,14 @@ load ../test_helper
 @test "guide_arch_inline_gap_block_removed" {
   # After extraction, L343-L431 should no longer contain the gap analysis heredoc
   # template text or viewer text.
-  ! grep -q '请提供差距分析主题' "$REPO_ROOT/skills/guide-arch.md"
-  ! grep -q '现有差距分析列表' "$REPO_ROOT/skills/guide-arch.md"
+  ! grep -q '请提供差距分析主题' "$REPO_ROOT/skills/guide-arch/SKILL.md"
+  ! grep -q '现有差距分析列表' "$REPO_ROOT/skills/guide-arch/SKILL.md"
 }
 
 @test "guide_arch_invokes_helper" {
-  grep -q 'source.*_lib/arch_gap_analysis.sh' "$REPO_ROOT/skills/guide-arch.md"
-  grep -q 'generate_gap_analysis' "$REPO_ROOT/skills/guide-arch.md"
-  grep -q 'list_gap_analyses' "$REPO_ROOT/skills/guide-arch.md"
+  grep -q 'source.*_lib/arch_gap_analysis.sh' "$REPO_ROOT/skills/guide-arch/SKILL.md"
+  grep -q 'generate_gap_analysis' "$REPO_ROOT/skills/guide-arch/SKILL.md"
+  grep -q 'list_gap_analyses' "$REPO_ROOT/skills/guide-arch/SKILL.md"
 }
 
 @test "generate_gap_analysis_creates_file" {

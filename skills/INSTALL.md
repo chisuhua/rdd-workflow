@@ -1,6 +1,6 @@
 ---
 name: INSTALL
-description: 安装 Spec Workflow 技能到项目目录。执行后会将 skills/ 目录下全部 13 个子技能（含 feature / rddf-session / spec-workflow-writing-plans 等运行时 Python 模块）复制到项目的 .opencode/skills/spec-workflow/ 目录。
+description: 安装 Spec Workflow 技能到项目目录。执行后会将 skills/ 目录下全部 13 个子技能（1 个 INSTALL.md 在顶层 + 12 个 per-skill SKILL.md，含 feature / rddf-session / spec-workflow-writing-plans 等运行时 Python 模块）复制到项目的 .opencode/skills/spec-workflow/ 目录。
 alias: install
 version: "2.0"
 author: sisyphus
@@ -96,8 +96,18 @@ if [ ! -d "$PACKAGE_DIR/skills" ]; then
     exit 1
 fi
 
-# 复制所有子技能（.md）
-cp -f "$PACKAGE_DIR/skills/"*.md "$SKILLS_DIR/skills/"
+# 复制所有子技能（递归 per-skill 子目录 + INSTALL.md 在顶层）
+for skill_dir in "$PACKAGE_DIR/skills/"*/; do
+    skill_name=$(basename "$skill_dir")
+    [ "$skill_name" = "_lib" ] && continue
+    [ "$skill_name" = "__pycache__" ] && continue
+    if [ -d "$skill_dir" ]; then
+        mkdir -p "$SKILLS_DIR/skills/$skill_name/scripts" "$SKILLS_DIR/skills/$skill_name/references"
+        [ -f "$skill_dir/SKILL.md" ] && cp -f "$skill_dir/SKILL.md" "$SKILLS_DIR/skills/$skill_name/"
+    fi
+done
+# 顶层 INSTALL.md 单独复制（保持在 skills/ 顶层，不放入子目录）
+cp -f "$PACKAGE_DIR/skills/INSTALL.md" "$SKILLS_DIR/skills/"
 
 # 复制 skills/_lib/ 运行时所需 Python 模块、schemas 和 bash helper
 # 这样 feature.md (depends-on: [iteration, deps_output])、rddf-session.md (depends-on: [rddf_session])
@@ -119,7 +129,7 @@ fi
 cat >> "$SKILLS_DIR/INSTALL_NOTES.txt" << 'NOTES'
 skills/ 已被复制到本项目 .opencode/skills/spec-workflow/ 下。
 
-要让 skills/*.md 中的 Python depends-on 模块能 import，需要：
+要让 skills/<name>/SKILL.md 中的 Python depends-on 模块能 import，需要：
 1. 确保本项目根目录在 Python sys.path 中（多数 AI 编程助手自动处理）
 2. skills/ 目录下存在 __init__.py 文件（已包含在本次安装中）
 
@@ -145,11 +155,10 @@ if [ ! -f "$SKILLS_DIR/package.json" ]; then
         PKG_SKILLS=$(python3 -c "import json;print(','.join(['\"'+s+'\"' for s in json.load(open('$PACKAGE_DIR/package.json'))['skills']]))" 2>/dev/null)
     else
         PKG_VERSION="2.0.0-beta"
-        # 磁盘推导 fallback：从 skills/*.md 动态生成 skill 列表（避免与 package.json 漂移）
-        # 这样无论 sync-workflow-contracts Decision 3 是 A（13）还是 B（11），fallback 都正确反映磁盘真相
-        PKG_SKILLS=$(ls "$PACKAGE_DIR/skills/"*.md 2>/dev/null \
-            | xargs -n1 basename 2>/dev/null \
-            | sed 's/\.md$//' \
+        # 磁盘推导 fallback：从 skills/*/SKILL.md + skills/INSTALL.md 动态生成 skill 列表（避免与 package.json 漂移）
+        # Phase 1+：技能以 per-skill 子目录形式存在；INSTALL.md 仍在顶层
+        PKG_SKILLS=$(find "$PACKAGE_DIR/skills/" -maxdepth 2 -name 'SKILL.md' 2>/dev/null \
+            | while read -r f; do basename "$(dirname "$f")"; done \
             | sort -u \
             | awk 'BEGIN{ORS=""; printf "\""}{printf "\"" $0 "\","}' \
             | sed 's/,$//')
@@ -190,9 +199,19 @@ echo "📦 安装 Spec Workflow 到: $PROJECT_ROOT"
 # 创建目录
 mkdir -p "$PROJECT_ROOT/.opencode/skills/spec-workflow/skills"
 
-# 复制技能
+# 复制技能（递归 per-skill 子目录 + INSTALL.md 在顶层）
 if [ -d "$PACKAGE_DIR/skills" ]; then
-    cp -f "$PACKAGE_DIR/skills/"*.md "$PROJECT_ROOT/.opencode/skills/spec-workflow/skills/"
+    for skill_dir in "$PACKAGE_DIR/skills/"*/; do
+        skill_name=$(basename "$skill_dir")
+        [ "$skill_name" = "_lib" ] && continue
+        [ "$skill_name" = "__pycache__" ] && continue
+        if [ -d "$skill_dir" ]; then
+            mkdir -p "$PROJECT_ROOT/.opencode/skills/spec-workflow/skills/$skill_name/scripts" \
+                     "$PROJECT_ROOT/.opencode/skills/spec-workflow/skills/$skill_name/references"
+            [ -f "$skill_dir/SKILL.md" ] && cp -f "$skill_dir/SKILL.md" "$PROJECT_ROOT/.opencode/skills/spec-workflow/skills/$skill_name/"
+        fi
+    done
+    cp -f "$PACKAGE_DIR/skills/INSTALL.md" "$PROJECT_ROOT/.opencode/skills/spec-workflow/skills/"
     echo "✅ 技能已安装"
     ls -1 "$PROJECT_ROOT/.opencode/skills/spec-workflow/skills/"
 else

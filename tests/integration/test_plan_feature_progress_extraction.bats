@@ -21,13 +21,13 @@ setup() {
 
 @test "guide_plan_feature_inline_block_removed" {
   # No 'Feature 进度' block content
-  ! grep -q 'Feature 进度:' "$WT/skills/guide-plan.md"
-  ! grep -q '所有 sub-change 已归档' "$WT/skills/guide-plan.md"
+  ! grep -q 'Feature 进度:' "$WT/skills/guide-plan/SKILL.md"
+  ! grep -q '所有 sub-change 已归档' "$WT/skills/guide-plan/SKILL.md"
 }
 
 @test "guide_plan_invokes_helper" {
-  grep -q 'source.*_lib/plan_feature_progress.sh' "$WT/skills/guide-plan.md"
-  grep -q 'show_feature_progress' "$WT/skills/guide-plan.md"
+  grep -q 'source.*_lib/plan_feature_progress.sh' "$WT/skills/guide-plan/SKILL.md"
+  grep -q 'show_feature_progress' "$WT/skills/guide-plan/SKILL.md"
 }
 
 @test "show_feature_progress_handles_no_features" {

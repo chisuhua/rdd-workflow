@@ -19,7 +19,7 @@ teardown() {
 }
 
 # Helper: invoke the `current` subcommand via inline python (mirrors
-# the bash heredoc in skills/rddf-session.md but keeps the test pure-python
+# the bash heredoc in skills/rddf-session/SKILL.md but keeps the test pure-python
 # to avoid sourcing markdown heredocs).
 run_current() {
   local owner="${1:-ses_me}"

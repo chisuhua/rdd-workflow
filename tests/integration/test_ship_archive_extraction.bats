@@ -30,20 +30,20 @@ PHASE3_RANGE="706,976p"
 }
 
 @test "guide-ship.md Phase 3 sources and uses ship_archive.sh" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  grep -nE 'source .*_lib/ship_archive.sh' "$REPO_ROOT/skills/guide-ship.md"
-  grep -nE 'archive_change_for_mode|detect_archive_mode|check_feature_integrity' "$REPO_ROOT/skills/guide-ship.md"
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
+  grep -nE 'source .*_lib/ship_archive.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  grep -nE 'archive_change_for_mode|detect_archive_mode|check_feature_integrity' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
 @test "guide-ship.md Phase 3 no longer inlines validate_delta_targets inline call" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  ! grep -nE 'validate_delta_targets\.py' "$REPO_ROOT/skills/guide-ship.md"
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
+  ! grep -nE 'validate_delta_targets\.py' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
 @test "guide-ship.md Phase 3 archive orchestrator block is now thin (was 179)" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
   # After refactor: no `git merge --no-ff` inline, no `PY_PROJECT_ROOT="$PROJECT_ROOT" python3 << 'PYEOF'` inline
-  ! sed -n "$PHASE3_RANGE" "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'git merge --no-ff'
+  ! sed -n "$PHASE3_RANGE" "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -qE 'git merge --no-ff'
 }
 
 @test "detect_archive_mode returns worktree when worktree exists" {

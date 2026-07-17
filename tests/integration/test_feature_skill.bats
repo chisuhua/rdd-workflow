@@ -1,13 +1,13 @@
 #!/usr/bin/env bats
 
 # Integration tests for the feature skill.
-# These extract the embedded bash block from skills/feature.md and run it
+# These extract the embedded bash block from skills/feature/SKILL.md and run it
 # against fixture iteration.json files.
 
 load ../test_helper
 
 setup() {
-    FEATURE_SKILL="$REPO_ROOT/skills/feature.md"
+    FEATURE_SKILL="$REPO_ROOT/skills/feature/SKILL.md"
     TEST_PROJECT="$(mktemp -d)"
     cd "$TEST_PROJECT"
     git init -q

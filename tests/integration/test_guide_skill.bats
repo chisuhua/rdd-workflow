@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_guide_skill.bats
 #
-# Structural / metadata coverage for skills/guide.md.
+# Structural / metadata coverage for skills/guide/SKILL.md.
 # Locks the frontmatter (name + user-invocable), the "无状态/只读不写"
 # self-declarations, the 6-priority scan (RECOMMEND= branches), and
 # that all RECOMMEND values are valid delegations.
@@ -12,7 +12,7 @@ load ../test_helper
 load_lib skill
 
 setup() {
-  f="$REPO_ROOT/skills/guide.md"
+  f="$REPO_ROOT/skills/guide/SKILL.md"
 }
 
 @test "guide_skill has correct frontmatter" {

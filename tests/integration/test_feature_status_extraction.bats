@@ -16,16 +16,16 @@ load ../test_helper
 
 @test "feature_status: feature.md inline status block removed" {
   # The old inline python3 heredoc (python3 - "$TARGET_NAME" <<'PYEOF') is gone
-  run grep 'python3 -.*PYEOF' "$REPO_ROOT/skills/feature.md"
+  run grep 'python3 -.*PYEOF' "$REPO_ROOT/skills/feature/SKILL.md"
   [ "$status" -ne 0 ]
   # The old status heredoc's "all_changes" variable name — gone
-  run grep 'all_changes = ' "$REPO_ROOT/skills/feature.md"
+  run grep 'all_changes = ' "$REPO_ROOT/skills/feature/SKILL.md"
   [ "$status" -ne 0 ]
 }
 
 @test "feature_status: feature.md sources and calls helper" {
-  grep -q 'source.*_lib/feature_status.sh' "$REPO_ROOT/skills/feature.md"
-  grep -q 'render_feature_status' "$REPO_ROOT/skills/feature.md"
+  grep -q 'source.*_lib/feature_status.sh' "$REPO_ROOT/skills/feature/SKILL.md"
+  grep -q 'render_feature_status' "$REPO_ROOT/skills/feature/SKILL.md"
 }
 
 @test "feature_status: handles missing iteration.json gracefully" {

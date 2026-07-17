@@ -82,7 +82,7 @@ skill_use("guide-plan")   # 无参数版本
 ```bash
 # rddf-session 入口 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
 # stage_plan parent: latest stage_arch (auto-resolved by helper)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/rddf_session_hooks.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/rddf_session_hooks.sh"
 rddf_session_hook_entry stage_plan guide-plan plan-phase plan-done .rddf/state/.plan-handoff.json
 ```
 
@@ -94,7 +94,7 @@ rddf_session_hook_entry stage_plan guide-plan plan-phase plan-done .rddf/state/.
 
 ```bash
 # Round A: extracted to _lib/plan_intake.sh (L95-L175, ~79 lines)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/plan_intake.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/plan_intake.sh"
 run_plan_intake || exit 1
 ```
 
@@ -210,7 +210,7 @@ fi
 
 ```bash
 # Round B: extracted to _lib/plan_queue_overview.sh (L211-L261, ~50 lines)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/plan_queue_overview.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/plan_queue_overview.sh"
 show_queue_overview
 ```
 
@@ -218,7 +218,7 @@ show_queue_overview
 
 ```bash
 # Round B: extracted to _lib/plan_feature_progress.sh (L263-L297, ~34 lines)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/plan_feature_progress.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/plan_feature_progress.sh"
 show_feature_progress
 ```
 
@@ -377,7 +377,7 @@ guide-plan 阶段完成（plan-done）
 ```bash
 # Round B: extracted to _lib/plan_deps_candidates.{py,sh} (L451-L488, ~38 lines)
 # Oracle C1 fix: bash wrapper passes PROJECT_ROOT env var only
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/plan_deps_candidates.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/plan_deps_candidates.sh"
 generate_deps_candidates
 
 # Step 2: 调用 deps.md 技能（静态三轴分析 + 子代理语义分析占位）
@@ -420,7 +420,7 @@ plan-done 必须满足**双重门控**才能通过：
 
 ```bash
 # Round A: extracted to _lib/plan_done_gate.{py,sh} (L517-L677, ~150 lines)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/plan_done_gate.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/plan_done_gate.sh"
 run_plan_done_gate || exit 1
 # Gate 0 skip sentinel: when user accepts Deps suggestions, no handoff is written
 # (matches original 'exit 0' semantics before extraction)
@@ -435,7 +435,7 @@ write_plan_handoff || exit 1
 
 ```bash
 # rddf-session 关闭 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/rddf_session_hooks.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/rddf_session_hooks.sh"
 rddf_session_hook_close stage_plan plan-done guide-plan
 ```
 

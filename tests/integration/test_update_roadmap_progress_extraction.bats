@@ -22,17 +22,17 @@ load ../test_helper
 
 @test "execute_inline_python3_c_block_removed" {
   # The old inline python3 -c block with $CHANGE_NAME interp must be removed
-  ! grep -q 'python3 -c.*roadmap' "$REPO_ROOT/skills/execute.md"
+  ! grep -q 'python3 -c.*roadmap' "$REPO_ROOT/skills/execute/SKILL.md"
 }
 
 @test "execute_inline_roadmap_meta_interp_removed" {
   # No shell-var-injected roadmap-meta paths in execute.md
-  ! grep -q 'roadmap-meta.*\$CHANGE_NAME' "$REPO_ROOT/skills/execute.md"
+  ! grep -q 'roadmap-meta.*\$CHANGE_NAME' "$REPO_ROOT/skills/execute/SKILL.md"
 }
 
 @test "execute_invokes_helper" {
-  grep -q 'source.*_lib/update_roadmap_progress.sh' "$REPO_ROOT/skills/execute.md"
-  grep -q 'update_roadmap_progress' "$REPO_ROOT/skills/execute.md"
+  grep -q 'source.*_lib/update_roadmap_progress.sh' "$REPO_ROOT/skills/execute/SKILL.md"
+  grep -q 'update_roadmap_progress' "$REPO_ROOT/skills/execute/SKILL.md"
 }
 
 @test "oracle_c1_no_bash_string_interpolation" {

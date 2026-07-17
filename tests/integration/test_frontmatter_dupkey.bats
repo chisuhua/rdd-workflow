@@ -13,11 +13,11 @@ assert_no_dup_version() {
 }
 
 @test "guide.md frontmatter has at most one version key" {
-  assert_no_dup_version skills/guide.md
+  assert_no_dup_version skills/guide/SKILL.md
 }
 
 @test "status.md frontmatter has at most one version key" {
-  assert_no_dup_version skills/status.md
+  assert_no_dup_version skills/status/SKILL.md
 }
 
 # Cover the remaining 11 skills — pre-fix, deps/execute/feature/guide-arch/
@@ -78,7 +78,7 @@ except Exception:
 @test "guide.md metadata.version matches skill_field semver pattern" {
   run python3 -c "
 import yaml,sys
-d=yaml.safe_load(open('skills/guide.md').read().split('---',2)[1])
+d=yaml.safe_load(open('skills/guide/SKILL.md').read().split('---',2)[1])
 v=d.get('metadata',{}).get('version','')
 import re
 sys.exit(0 if re.match(r'^\d+\.\d+(\.\d+)?$', str(v)) else 2)

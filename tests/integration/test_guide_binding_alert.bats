@@ -134,10 +134,10 @@ PYEOF
 @test "guide binding 行在 RECOMMEND/REASON 之后" {
   # The print order in guide.md MUST be RECOMMEND → REASON → BINDING_LINES.
   # We verify the source code of guide.md enforces this ordering.
-  grep -q 'scan_session_binding' "$REPO_ROOT/skills/guide.md"
+  grep -q 'scan_session_binding' "$REPO_ROOT/skills/guide/SKILL.md"
   # Confirm scan_state appears before scan_session_binding
-  STATE_LINE=$(grep -n 'scan_state' "$REPO_ROOT/skills/guide.md" | head -1 | cut -d: -f1)
-  BIND_LINE=$(grep -n 'scan_session_binding' "$REPO_ROOT/skills/guide.md" | head -1 | cut -d: -f1)
+  STATE_LINE=$(grep -n 'scan_state' "$REPO_ROOT/skills/guide/SKILL.md" | head -1 | cut -d: -f1)
+  BIND_LINE=$(grep -n 'scan_session_binding' "$REPO_ROOT/skills/guide/SKILL.md" | head -1 | cut -d: -f1)
   [ "$STATE_LINE" -lt "$BIND_LINE" ]
 }
 

@@ -26,17 +26,17 @@ load ../test_helper
 }
 
 @test "status_render_mode_a: status.md inline render_status() bash block removed" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
   # The old L135 defined "render_status() {" as an inline bash function.
   # After extraction, this line must NOT exist in status.md.
-  run grep -c 'render_status()' "$REPO_ROOT/skills/status.md"
+  run grep -c 'render_status()' "$REPO_ROOT/skills/status/SKILL.md"
   [ "$output" = "0" ]
 }
 
 @test "status_render_mode_a: status.md invokes helper" {
-  [ -f "$REPO_ROOT/skills/status.md" ]
-  grep -q 'source.*_lib/status_render_mode_a.sh' "$REPO_ROOT/skills/status.md"
-  grep -q 'render_status_mode_a' "$REPO_ROOT/skills/status.md"
+  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
+  grep -q 'source.*_lib/status_render_mode_a.sh' "$REPO_ROOT/skills/status/SKILL.md"
+  grep -q 'render_status_mode_a' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "status_render_mode_a: runs without crashing in real repo" {

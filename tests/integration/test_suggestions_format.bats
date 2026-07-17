@@ -87,9 +87,9 @@ OLD
 # 6. propose.md and consumers reference JSON helpers
 # -----------------------------------------------------------------------
 @test "propose.md and consumers reference JSON helpers" {
-  [ -f "$REPO_ROOT/skills/propose.md" ]
+  [ -f "$REPO_ROOT/skills/propose/SKILL.md" ]
   # propose.md must have a json.load call (the new P1-7 format)
-  grep -qE "json\.load\(" "$REPO_ROOT/skills/propose.md"
+  grep -qE "json\.load\(" "$REPO_ROOT/skills/propose/SKILL.md"
   # And the new format doc must exist
   [ -f "$REPO_ROOT/docs/proposal-suggestions-format.md" ]
   # And the helpers must exist in state.sh

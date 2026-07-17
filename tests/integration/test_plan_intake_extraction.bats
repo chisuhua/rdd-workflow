@@ -25,17 +25,17 @@ REPLACED_RANGE="95,175p"
 }
 
 @test "guide_plan_inline_block_removed" {
-  [ -f "$REPO_ROOT/skills/guide-plan.md" ]
+  [ -f "$REPO_ROOT/skills/guide-plan/SKILL.md" ]
   # After extraction, L95-L175 should no longer contain inline openspec-detection bash
   local count
-  count=$(sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-plan.md" | grep -c 'command -v openspec' || true)
+  count=$(sed -n "$REPLACED_RANGE" "$REPO_ROOT/skills/guide-plan/SKILL.md" | grep -c 'command -v openspec' || true)
   [ "$count" -eq 0 ]
 }
 
 @test "guide_plan_invokes_helper" {
-  [ -f "$REPO_ROOT/skills/guide-plan.md" ]
-  grep -q 'source.*_lib/plan_intake.sh' "$REPO_ROOT/skills/guide-plan.md"
-  grep -q 'run_plan_intake' "$REPO_ROOT/skills/guide-plan.md"
+  [ -f "$REPO_ROOT/skills/guide-plan/SKILL.md" ]
+  grep -q 'source.*_lib/plan_intake.sh' "$REPO_ROOT/skills/guide-plan/SKILL.md"
+  grep -q 'run_plan_intake' "$REPO_ROOT/skills/guide-plan/SKILL.md"
 }
 
 @test "run_plan_intake_runs_with_handoff" {

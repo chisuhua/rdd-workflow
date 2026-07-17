@@ -81,7 +81,7 @@ skill_use("guide-arch")   # 无参数版本
 
 ```bash
 # rddf-session 入口 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/rddf_session_hooks.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/rddf_session_hooks.sh"
 rddf_session_hook_entry stage_arch guide-arch arch-phase arch-done .rddf/state/.arch-handoff.json
 ```
 
@@ -91,7 +91,7 @@ rddf_session_hook_entry stage_arch guide-arch arch-phase arch-done .rddf/state/.
 
 ```bash
 # Round A: extracted to _lib/arch_env_check.sh (L92-L189, ~96 lines)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/arch_env_check.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/arch_env_check.sh"
 run_arch_env_check || exit 1
 ```
 
@@ -342,7 +342,7 @@ esac
 
 ```bash
 # Round B: extracted to _lib/arch_gap_analysis.sh (L343-L399)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/arch_gap_analysis.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/arch_gap_analysis.sh"
 
 echo "📝 生成新架构差距分析"
 echo ""
@@ -356,7 +356,7 @@ generate_gap_analysis "$GAP_SLUG" || continue
 
 ```bash
 # Round B: extracted to _lib/arch_gap_analysis.sh (L403-L431)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/arch_gap_analysis.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/arch_gap_analysis.sh"
 list_gap_analyses || continue
 
 # Interactive viewer stays inline
@@ -521,7 +521,7 @@ arch-done 必须满足**双重门控**才能通过：
 
 ```bash
 # Round B: extracted to _lib/arch_done_gate.sh (L522-L559, ~38 lines)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/arch_done_gate.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/arch_done_gate.sh"
 check_arch_done_gate || exit 1
 ```
 
@@ -531,13 +531,13 @@ arch → plan 交接通过 `.rddf/state/.arch-handoff.json` 软状态文件传�
 
 ```bash
 # Round A: extracted to _lib/write_arch_handoff.{py,sh} (L618-L707, ~88 lines)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/write_arch_handoff.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/write_arch_handoff.sh"
 write_arch_handoff
 ```
 
 ```bash
 # rddf-session 关闭 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/rddf_session_hooks.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/rddf_session_hooks.sh"
 rddf_session_hook_close stage_arch arch-done guide-arch
 ```
 
@@ -563,7 +563,7 @@ arch-done 双重门控（ADR ≥ 1 + roadmap.md 存在）通过后，自动运�
 
 ```bash
 # Round B: extracted to _lib/arch_quality_report.sh (L564-L595, ~32 lines)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/_lib/arch_quality_report.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/arch_quality_report.sh"
 run_arch_quality_report
 ```
 

@@ -63,11 +63,11 @@ teardown() {
 }
 
 @test "roadmap.md uses safe_python_json helper" {
-  [ -f "$REPO_ROOT/skills/roadmap.md" ]
-  grep -q "safe_python_json" "$REPO_ROOT/skills/roadmap.md"
+  [ -f "$REPO_ROOT/skills/roadmap/SKILL.md" ]
+  grep -q "safe_python_json" "$REPO_ROOT/skills/roadmap/SKILL.md"
 }
 
 @test "propose.md uses safe_python_json helper" {
-  [ -f "$REPO_ROOT/skills/propose.md" ]
-  grep -q "safe_python_json" "$REPO_ROOT/skills/propose.md"
+  [ -f "$REPO_ROOT/skills/propose/SKILL.md" ]
+  grep -q "safe_python_json" "$REPO_ROOT/skills/propose/SKILL.md"
 }

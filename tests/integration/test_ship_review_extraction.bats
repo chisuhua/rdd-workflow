@@ -18,27 +18,27 @@ load ../test_helper
 }
 
 @test "guide-ship.md Phase 2.5 sources and uses ship_review.sh" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
-  grep -nE 'source .*_lib/ship_review.sh' "$REPO_ROOT/skills/guide-ship.md"
-  grep -nE 'handle_review_action' "$REPO_ROOT/skills/guide-ship.md"
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
+  grep -nE 'source .*_lib/ship_review.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  grep -nE 'handle_review_action' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
 @test "guide-ship.md Phase 2.5 no longer inlines the 4 debt-action case branches" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
   # Branch 1 (in-scope append): no more "追加到 tasks.md" inside bash block
-  ! grep -qE '"type": "debt"' "$REPO_ROOT/skills/guide-ship.md"
+  ! grep -qE '"type": "debt"' "$REPO_ROOT/skills/guide-ship/SKILL.md"
   # Branch 3 (arch drift doc)
   ! grep -qE '\-drift-analysis\.md' "$REPO_ROOT/skills/guide-review.sh" 2>/dev/null
-  ! grep -qE '\-drift-analysis\.md' "$REPO_ROOT/skills/guide-ship.md"
+  ! grep -qE '\-drift-analysis\.md' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
 @test "guide-ship.md Phase 2.5 case/esac block is now thin (was 173)" {
-  [ -f "$REPO_ROOT/skills/guide-ship.md" ]
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
   # After refactor: no `case "$choice"` should appear in Phase 2.5 range
   # (lines 352-441). The dispatch logic lives in ship_review.sh now.
-  ! sed -n '352,441p' "$REPO_ROOT/skills/guide-ship.md" | grep -qE '^case "\$choice"'
+  ! sed -n '352,441p' "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -qE '^case "\$choice"'
   # The thin wrapper must exist (handle_review_action call).
-  sed -n '352,441p' "$REPO_ROOT/skills/guide-ship.md" | grep -qE 'handle_review_action'
+  sed -n '352,441p' "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -qE 'handle_review_action'
 }
 
 @test "handle_review_action option 1 appends review todos to tasks.md" {

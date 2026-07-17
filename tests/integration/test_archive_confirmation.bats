@@ -11,7 +11,7 @@ load ../test_helper
 
 @test "status.md Mode C documents a confirmation prompt before archive_change" {
   # Match an interactive read pattern, not just any "confirm" keyword
-  grep -qE "read -r|\\[ -n -r|\\[ -r" skills/status.md
+  grep -qE "read -r|\\[ -n -r|\\[ -r" skills/status/SKILL.md
 }
 
 @test "status.md Mode C does NOT call archive_change before user y/n" {
@@ -25,5 +25,5 @@ load ../test_helper
       if (found_confirm == 0) exit 1  # no read -r gate
       exit (found_confirm < found_archive ? 0 : 1)
     }
-  ' skills/status.md
+  ' skills/status/SKILL.md
 }

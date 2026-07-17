@@ -15,9 +15,9 @@ load ../test_helper
 @test "status.md Mode E does NOT call exec \$0" {
   # Match exec $0 in bash code blocks only; the new doc note
   # mentions exec $0 as deprecated, which is fine.
-  ! grep -E 'exec[[:space:]]+\$0' skills/status.md || {
+  ! grep -E 'exec[[:space:]]+\$0' skills/status/SKILL.md || {
     # if found, check that it's NOT in a bash code block context
-    count=$(grep -cE 'exec[[:space:]]+\$0' skills/status.md)
+    count=$(grep -cE 'exec[[:space:]]+\$0' skills/status/SKILL.md)
     [ "$count" -le 1 ]  # only the doc note, not in bash code
   }
 }
@@ -26,6 +26,6 @@ load ../test_helper
   # Step 2 should be the only place opening iteration.json (via
   # iteration.load() helper). Step 2b must use iteration.list_planned()
   # (already defined at iteration.py:350) not json.load(open(...)).
-  json_load_opens=$(grep -cE 'json\.load\(open\(' skills/status.md)
+  json_load_opens=$(grep -cE 'json\.load\(open\(' skills/status/SKILL.md)
   [ "$json_load_opens" -le 1 ]
 }

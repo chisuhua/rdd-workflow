@@ -16,7 +16,7 @@
 
 load ../test_helper
 
-EXECUTE_MD="$REPO_ROOT/skills/execute.md"
+EXECUTE_MD="$REPO_ROOT/skills/execute/SKILL.md"
 SELECT_WT="$REPO_ROOT/skills/_lib/select_worktree.sh"
 
 @test "select_worktree_helper_exists" {

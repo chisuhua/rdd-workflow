@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_deps_output_format.bats
 #
-# Locks the .rddf/state/.deps-output.md output format produced by skills/deps.md
+# Locks the .rddf/state/.deps-output.md output format produced by skills/deps/SKILL.md
 # Step 5. Independent of the subagent call — guards against Step 5 heredoc
 # regressions in the Mermaid / 5-section structure.
 #
@@ -17,7 +17,7 @@
 load ../test_helper
 
 setup() {
-  f="$REPO_ROOT/skills/deps.md"
+  f="$REPO_ROOT/skills/deps/SKILL.md"
   [ -f "$f" ] || skip "deps.md not found"
 }
 

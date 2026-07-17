@@ -39,18 +39,18 @@ TARGET_NAME="${2:-}"
 
 # Source all 4 subcommand helpers
 _SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]:-$0}")"
-if [ ! -f "$_SCRIPT_DIR/_lib/feature_summary.sh" ]; then
+if [ ! -f "$_SCRIPT_DIR/../_lib/feature_summary.sh" ]; then
   # Piped execution (e.g., extracted-by-test): BASH_SOURCE is /dev/fd/N.
   if [ -n "${REPO_ROOT:-}" ] && [ -f "$REPO_ROOT/skills/_lib/feature_summary.sh" ]; then
-    _SCRIPT_DIR="$REPO_ROOT/skills"
+    _SCRIPT_DIR="$REPO_ROOT/skills/feature"
   else
-    _SCRIPT_DIR="$PROJECT_ROOT/skills"
+    _SCRIPT_DIR="$PROJECT_ROOT/skills/feature"
   fi
 fi
-source "$_SCRIPT_DIR/_lib/feature_summary.sh"
-source "$_SCRIPT_DIR/_lib/feature_graph.sh"
-source "$_SCRIPT_DIR/_lib/feature_status.sh"
-source "$_SCRIPT_DIR/_lib/feature_order.sh"
+source "$_SCRIPT_DIR/../_lib/feature_summary.sh"
+source "$_SCRIPT_DIR/../_lib/feature_graph.sh"
+source "$_SCRIPT_DIR/../_lib/feature_status.sh"
+source "$_SCRIPT_DIR/../_lib/feature_order.sh"
 
 case "$SUBCOMMAND" in
     summary|"")

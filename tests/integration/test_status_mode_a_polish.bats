@@ -8,9 +8,9 @@ load ../test_helper
   # After S3 fix, the old Mode A Step 1 section (which duplicated the
   # top-of-file worktree list) should be removed. grep for the old
   # heading that preceded it: it should not appear.
-  ! grep -qF "### Step 1：获取 worktree 列表" skills/status.md
+  ! grep -qF "### Step 1：获取 worktree 列表" skills/status/SKILL.md
 }
 
 @test "status.md Mode A case handler includes i) branch" {
-  grep -qF "i)" skills/status.md
+  grep -qF "i)" skills/status/SKILL.md
 }

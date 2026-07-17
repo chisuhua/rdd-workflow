@@ -19,15 +19,15 @@ load ../test_helper
 }
 
 @test "deps.md Step 5 no longer inlines the 160-line block" {
-  [ -f "$REPO_ROOT/skills/deps.md" ]
+  [ -f "$REPO_ROOT/skills/deps/SKILL.md" ]
   # The original block has 4 separate `cat >>` invocations and 2 inline python3 heredocs.
   # After extraction, none of these patterns should remain in Step 5 range.
-  ! sed -n '483,642p' "$REPO_ROOT/skills/deps.md" | grep -qE 'for name in "\$\{CANDIDATES'
+  ! sed -n '483,642p' "$REPO_ROOT/skills/deps/SKILL.md" | grep -qE 'for name in "\$\{CANDIDATES'
 }
 
 @test "deps.md Step 5 invokes the render helper" {
-  [ -f "$REPO_ROOT/skills/deps.md" ]
-  grep -q '_lib/deps_render_report.sh' "$REPO_ROOT/skills/deps.md"
+  [ -f "$REPO_ROOT/skills/deps/SKILL.md" ]
+  grep -q '_lib/deps_render_report.sh' "$REPO_ROOT/skills/deps/SKILL.md"
 }
 
 @test "render_deps_report writes .deps-output.md with all sections" {

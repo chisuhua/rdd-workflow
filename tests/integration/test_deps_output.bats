@@ -9,26 +9,26 @@
 load ../test_helper
 
 @test "deps.md Step 5 no longer contains placeholder text" {
-  [ -f "$REPO_ROOT/skills/deps.md" ]
+  [ -f "$REPO_ROOT/skills/deps/SKILL.md" ]
   # The old pattern was: "（5a-5e 的全部内容写入此文件，格式见下文）"
-  ! grep -q "5a-5e 的全部内容写入此文件" "$REPO_ROOT/skills/deps.md"
+  ! grep -q "5a-5e 的全部内容写入此文件" "$REPO_ROOT/skills/deps/SKILL.md"
 }
 
 @test "deps.md has real implementation in Step 5" {
-  [ -f "$REPO_ROOT/skills/deps.md" ]
+  [ -f "$REPO_ROOT/skills/deps/SKILL.md" ]
   # Should have heredoc writing actual content (with variables, not literal text)
-  grep -q 'cat > "\$DEPS_OUTPUT"' "$REPO_ROOT/skills/deps.md"
+  grep -q 'cat > "\$DEPS_OUTPUT"' "$REPO_ROOT/skills/deps/SKILL.md"
   # Should have a for-loop generating rows from the CANDIDATES array
-  grep -q 'for name in' "$REPO_ROOT/skills/deps.md"
+  grep -q 'for name in' "$REPO_ROOT/skills/deps/SKILL.md"
 }
 
 @test "deps.md output template references \$CANDIDATES" {
-  [ -f "$REPO_ROOT/skills/deps.md" ]
+  [ -f "$REPO_ROOT/skills/deps/SKILL.md" ]
   # Should use real variables, not just placeholder
-  grep -q '\${CANDIDATES\[@\]}' "$REPO_ROOT/skills/deps.md"
+  grep -q '\${CANDIDATES\[@\]}' "$REPO_ROOT/skills/deps/SKILL.md"
 }
 
 @test "deps.md output mentions AI placeholder disclaimer" {
-  [ -f "$REPO_ROOT/skills/deps.md" ]
-  grep -q "AI 语义分析未启用" "$REPO_ROOT/skills/deps.md"
+  [ -f "$REPO_ROOT/skills/deps/SKILL.md" ]
+  grep -q "AI 语义分析未启用" "$REPO_ROOT/skills/deps/SKILL.md"
 }
