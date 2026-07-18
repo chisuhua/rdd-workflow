@@ -22,6 +22,13 @@ import yaml
 from skills._lib.core.defaults import get_defaults
 
 
+# Path to the JSON Schema for config validation. Resolved relative to this
+# module (skills/_lib/config.py) so it works regardless of CWD.
+_CONFIG_SCHEMA_PATH = os.path.join(
+    os.path.dirname(__file__), "schemas", "config_schema.json"
+)
+
+
 class ConfigError(Exception):
     """Raised on invalid config values or unreadable files."""
 
@@ -90,6 +97,50 @@ def _validate(config: dict) -> None:
     max_retries = config.get("loop", {}).get("max_retries")
     if not isinstance(max_retries, int) or max_retries < 0:
         raise ConfigError(f"max_retries must be a non-negative integer (got {max_retries!r})")
+
+
+def _validate_schema(config: dict, project_root: Optional[str] = None) -> None:
+    """Validate the merged config against config_schema.json using jsonschema.
+
+    Complements the existing ``_validate()`` function with broader structural
+    validation (types, enums, numeric bounds) for interaction, loop, and
+    triggers sections. All fields are optional in the schema - validation
+    only runs on fields that are present (``additionalProperties: true``).
+
+    Backward-compatibility: if the schema file is missing, validation is
+    silently skipped so that older installations without the schema file
+    continue to work.
+
+    Args:
+        config: The merged config dict to validate.
+        project_root: Unused. Kept for signature stability in case future
+            callers want to override the schema location via project root.
+
+    Raises:
+        ConfigError: If the config violates the schema, with the validator's
+            error message embedded.
+    """
+    if not os.path.isfile(_CONFIG_SCHEMA_PATH):
+        return
+    try:
+        import jsonschema
+    except ImportError:
+        return
+    try:
+        with open(_CONFIG_SCHEMA_PATH) as f:
+            schema = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        raise ConfigError(
+            f"config schema at {_CONFIG_SCHEMA_PATH} is unreadable: {e}"
+        ) from e
+    validator = jsonschema.Draft7Validator(schema)
+    errors = sorted(validator.iter_errors(config), key=lambda e: e.path)
+    if errors:
+        first = errors[0]
+        field_path = ".".join(str(p) for p in first.absolute_path) or "<root>"
+        raise ConfigError(
+            f"config schema validation failed at '{field_path}': {first.message}"
+        )
 
 
 def is_triggers_disabled() -> bool:
@@ -166,6 +217,7 @@ class ConfigParser:
             config = _deep_merge(config, runtime_overlay)
 
         _validate(config)
+        _validate_schema(config, str(self.project_root))
 
         # v3.0: triggers config
         triggers_cfg = config.get("triggers", {})
