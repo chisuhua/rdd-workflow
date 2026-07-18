@@ -200,8 +200,13 @@ class LoopEngine:
                 # Update state vector iteration counter (for observability)
                 try:
                     self.state.update_field("loop_state.iteration", self.loop_state.iteration)
-                except Exception:
-                    # Schema may be locked — non-fatal
+                except Exception as e:
+                    # Schema may be locked - non-fatal
+                    self.event_log.record(
+                        EventType.ERROR_OCCURRED, Severity.ERROR,
+                        f"Failed to update state field: {e}",
+                        context={"error": str(e)},
+                    )
                     pass
 
                 if self.verify_goal(goal_predicate):
@@ -273,7 +278,12 @@ class LoopEngine:
         try:
             self.state.update_field("loop_state.current_phase", "scan_state")
             self.state.update_field("loop_state.iteration", self.loop_state.iteration)
-        except Exception:
+        except Exception as e:
+            self.event_log.record(
+                EventType.ERROR_OCCURRED, Severity.ERROR,
+                f"Failed to update state field: {e}",
+                context={"error": str(e)},
+            )
             pass
         self.event_log.record(
             EventType.SCAN_COMPLETED, Severity.INFO,
@@ -302,7 +312,12 @@ class LoopEngine:
         self.loop_state.plan = plan
         try:
             self.state.update_field("loop_state.current_phase", "generate_plan")
-        except Exception:
+        except Exception as e:
+            self.event_log.record(
+                EventType.ERROR_OCCURRED, Severity.ERROR,
+                f"Failed to update state field: {e}",
+                context={"error": str(e)},
+            )
             pass
 
     def execute_plan(self) -> None:
@@ -338,7 +353,12 @@ class LoopEngine:
         ]
         try:
             self.state.update_field("loop_state.current_phase", "execute_plan")
-        except Exception:
+        except Exception as e:
+            self.event_log.record(
+                EventType.ERROR_OCCURRED, Severity.ERROR,
+                f"Failed to update state field: {e}",
+                context={"error": str(e)},
+            )
             pass
 
     def verify_results(self) -> bool:
@@ -355,5 +375,10 @@ class LoopEngine:
         """Update phase marker to 'adapt' on the state vector."""
         try:
             self.state.update_field("loop_state.current_phase", "adapt")
-        except Exception:
+        except Exception as e:
+            self.event_log.record(
+                EventType.ERROR_OCCURRED, Severity.ERROR,
+                f"Failed to update state field: {e}",
+                context={"error": str(e)},
+            )
             pass
