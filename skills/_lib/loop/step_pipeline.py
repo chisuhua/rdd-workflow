@@ -24,9 +24,9 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
-from skills._lib.state_vector import StateVector
-from skills._lib.event_log import EventLog
-from skills._lib.event_types import EventType, Severity
+from skills._lib.core.state_vector import StateVector
+from skills._lib.core.event_log import EventLog
+from skills._lib.core.event_types import EventType, Severity
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,7 @@ class StepPipeline:
         if path:
             candidates.append(path)
         # Default: phase_templates.yaml sitting next to this module
-        default = os.path.join(os.path.dirname(__file__), "phase_templates.yaml")
+        default = os.path.join(os.path.dirname(__file__), "..", "phase_templates.yaml")
         candidates.append(default)
 
         for candidate in candidates:

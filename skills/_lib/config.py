@@ -19,7 +19,7 @@ from typing import Any, Optional
 
 import yaml
 
-from skills._lib.defaults import get_defaults
+from skills._lib.core.defaults import get_defaults
 
 
 class ConfigError(Exception):

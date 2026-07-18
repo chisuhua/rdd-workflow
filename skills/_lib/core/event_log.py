@@ -15,8 +15,8 @@ import threading
 from pathlib import Path
 from typing import Iterable, Optional, Union
 
-from skills._lib.event_types import Event, EventType, Severity
-from skills._lib.lock import FileLock, LockTimeout
+from skills._lib.core.event_types import Event, EventType, Severity
+from skills._lib.core.lock import FileLock, LockTimeout
 
 
 _LOCK_TIMEOUT = 10.0

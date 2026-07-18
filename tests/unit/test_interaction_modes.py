@@ -1,8 +1,8 @@
 """Tests for skills._lib.interaction_modes — Loop / Menu / Hybrid."""
 import pytest
 
-from skills._lib.interaction_modes import LoopMode, MenuMode, HybridMode, make_mode
-from skills._lib.human_nodes import HumanNodeRegistry, NodeTrigger, VerificationMode
+from skills._lib.loop.interaction_modes import LoopMode, MenuMode, HybridMode, make_mode
+from skills._lib.loop.human_nodes import HumanNodeRegistry, NodeTrigger, VerificationMode
 
 
 @pytest.fixture

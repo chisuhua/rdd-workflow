@@ -1,7 +1,7 @@
 """ASCII flowchart generator — reads state vector + event log, renders progress."""
 from __future__ import annotations
-from skills._lib.state_vector import StateVector
-from skills._lib.event_log import EventLog
+from skills._lib.core.state_vector import StateVector
+from skills._lib.core.event_log import EventLog
 
 
 PHASE_LABELS = {

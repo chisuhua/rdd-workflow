@@ -4,7 +4,7 @@ import tempfile
 import threading
 import time
 import pytest
-from skills._lib.lock import FileLock, LockTimeout
+from skills._lib.core.lock import FileLock, LockTimeout
 
 
 @pytest.fixture

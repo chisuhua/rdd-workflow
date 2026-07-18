@@ -22,7 +22,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Optional, Set, Dict, Any
 
-from skills._lib.human_nodes import HumanNodeRegistry, NodeTrigger
+from skills._lib.loop.human_nodes import HumanNodeRegistry, NodeTrigger
 
 
 class InteractionMode(ABC):

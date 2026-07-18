@@ -8,8 +8,8 @@ import logging
 import os
 from typing import Any
 
-from skills._lib.state_vector import StateVector
-from skills._lib.defaults import STATE_VECTOR_PATH
+from skills._lib.core.state_vector import StateVector
+from skills._lib.core.defaults import STATE_VECTOR_PATH
 
 logger = logging.getLogger(__name__)
 

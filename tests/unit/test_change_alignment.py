@@ -28,7 +28,7 @@ from skills._lib.change_alignment import (
     _TASK_ITEM_RE,
     _ANTI_PATTERNS,
 )
-from skills._lib.state_vector import StateVector
+from skills._lib.core.state_vector import StateVector
 
 
 # ---------- Fixtures ----------

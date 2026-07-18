@@ -16,7 +16,7 @@ import pytest
 
 def test_detection_result_dataclass_defaults_severity_to_info():
     """DetectionResult exposes type/data/message/severity; default severity is 'info'."""
-    from skills._lib.detectors import DetectionResult
+    from skills._lib.loop.detectors import DetectionResult
 
     r = DetectionResult(type="x", data={"k": "v"}, message="hello")
     assert r.type == "x"
@@ -36,7 +36,7 @@ def test_detect_worktrees_runs_against_real_git_repo(tmp_path, monkeypatch):
     subprocess.run(["git", "config", "user.name", "test"], capture_output=True, check=False)
     subprocess.run(["git", "commit", "--allow-empty", "-m", "init", "-q"], capture_output=True, check=False)
 
-    from skills._lib.detectors import detect_worktrees
+    from skills._lib.loop.detectors import detect_worktrees
 
     result = detect_worktrees(state={})
     assert result.type == "worktrees"
@@ -48,7 +48,7 @@ def test_detect_worktrees_runs_against_real_git_repo(tmp_path, monkeypatch):
 
 def test_nine_builtin_detectors_registered():
     """BUILTIN_DETECTORS contains exactly the 9 required detectors by name."""
-    from skills._lib.detectors import BUILTIN_DETECTORS
+    from skills._lib.loop.detectors import BUILTIN_DETECTORS
 
     expected = {
         "detect_worktrees",
@@ -72,7 +72,7 @@ def test_nine_builtin_detectors_registered():
 def test_load_plugin_detectors_empty_when_dir_missing(tmp_path, monkeypatch):
     """load_plugin_detectors returns [] when .rddf/detectors/ doesn't exist (no exception)."""
     monkeypatch.chdir(tmp_path)
-    from skills._lib.detectors import load_plugin_detectors
+    from skills._lib.loop.detectors import load_plugin_detectors
 
     plugins = load_plugin_detectors()
     assert plugins == []
@@ -85,7 +85,7 @@ def test_load_plugin_detectors_skips_underscore_files_and_broken_imports(tmp_pat
 
     # Valid plugin: a Detector subclass
     (plugin_dir / "good_detector.py").write_text(
-        "from skills._lib.detectors import Detector, DetectionResult\n"
+        "from skills._lib.loop.detectors import Detector, DetectionResult\n"
         "class MyDetector(Detector):\n"
         "    name = 'my_plugin'\n"
         "    def detect(self, state):\n"
@@ -96,7 +96,7 @@ def test_load_plugin_detectors_skips_underscore_files_and_broken_imports(tmp_pat
     (plugin_dir / "broken.py").write_text("raise RuntimeError('intentional')\n")
 
     monkeypatch.chdir(tmp_path)
-    from skills._lib.detectors import load_plugin_detectors
+    from skills._lib.loop.detectors import load_plugin_detectors
 
     plugins = load_plugin_detectors()
     names = {p.name for p in plugins}
@@ -107,7 +107,7 @@ def test_load_plugin_detectors_skips_underscore_files_and_broken_imports(tmp_pat
 
 def test_all_detectors_returns_builtins_plus_plugins():
     """all_detectors() returns built-in Detector instances + any plugin Detector instances."""
-    from skills._lib.detectors import all_detectors, BUILTIN_DETECTORS
+    from skills._lib.loop.detectors import all_detectors, BUILTIN_DETECTORS
 
     detectors = all_detectors()
     # At minimum the 8 built-ins are present (plugins may add more on disk)
@@ -118,7 +118,7 @@ def test_all_detectors_returns_builtins_plus_plugins():
 
 def test_all_builtin_detectors_run_sequentially_under_500ms():
     """All 9 built-in detectors complete sequentially in < 500ms total."""
-    from skills._lib.detectors import BUILTIN_DETECTORS
+    from skills._lib.loop.detectors import BUILTIN_DETECTORS
 
     start = time.perf_counter()
     results = [d.detect({}) for d in BUILTIN_DETECTORS]

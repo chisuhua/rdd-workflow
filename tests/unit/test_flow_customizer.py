@@ -25,7 +25,7 @@ import copy
 
 import pytest
 
-from skills._lib.flow_customizer import FlowCustomizer
+from skills._lib.loop.flow_customizer import FlowCustomizer
 
 
 # ---------------------------------------------------------------------------

@@ -5,10 +5,11 @@ STATUS: PROPOSED
 
 ## Why
 
-Phase 2 移走了 45 个单 skill helper，`_lib/` 剩余 ~50 个文件。但这些文件内部有复杂的依赖图：
+Phase 2 移走了 45 个单 skill helper，`_lib/` 剩余 40 个 .py 文件和 5 个 .sh 文件。但这些文件内部有复杂的依赖图：
 - **内核模块**: `event_log.py`（被 9 个文件引用）、`event_types.py`（8 个）、`state_vector.py`（7 个）、`defaults.py`（6 个）、`lock.py`（6 个）、`atomic_write.py`（4 个）— 形成运行时内核
-- **Loop 引擎**: `actions.py`, `detectors.py`, `agents.py`, `memory.py` 等 ~20 个文件组成 v2.0 loop 引擎子系统,内部有 lazy-import 循环依赖
-- **跨切共享**: `gate.py`, `iteration.py`, `state.sh` 等被多个消费者引用
+- **Loop 引擎**: `actions.py`, `detectors.py`, `agents.py`, `memory.py` 等 15 个文件组成 v2.0 loop 引擎子系统，内部有 lazy-import 循环依赖
+- **跨切共享**: `gate.py`, `iteration.py`, `state.sh` 等被多个消费者引用，无法下沉到子目录
+- **其余顶层模块**: `arch_quality_gate.py`, `change_alignment.py`, `config.py`, `dependency_scheduler.py`, `event_context.py`, `rate_limiter.py`, `roadmap_sprint.py`, `session.py`, `session_base.py`, `session_manager.py`, `trigger_engine.py`, `trigger_registry.py`, `triggers.py`, `validate_delta_targets.py`, `validate_report.py` — 15 个跨切工具 / 未归入 core/ loop/ 的模块，保留在 `_lib/` 顶层
 
 本 change 将剩余 `_lib/` 文件重组为三个清晰区域：`core/`（内核）、`loop/`（引擎）、和顶层的跨切文件。
 
@@ -28,9 +29,34 @@ mkdir -p skills/_lib/loop
 mv skills/_lib/{actions,detectors,agents,human_nodes,interaction_modes,memory,tribunal,sanitizer,step_pipeline,flowchart,flow_customizer,design_phase,loop_state,plugin_loader,event_queue}.py skills/_lib/loop/
 ```
 
-### 3C: 保留在 `_lib/` 顶层
+### 3C: 保留在 `_lib/` 顶层（跨切核心）
 
-`gate.py`, `iteration.py`, `state.sh`, `rddf_session_hooks.sh`, `worktree.sh`, `archive.sh`, `discover-arch-artifacts.sh`, `roadmap_state.py`, `status_helpers.sh` — 被跨 skill 多消费者引用,不能下沉到子目录。
+`gate.py`, `iteration.py`, `roadmap_state.py`, `roadmap_sprint.py` — 被多 skill、多消费者引用，不能下沉到子目录。
+
+`.sh 文件`: `state.sh`, `worktree.sh`, `archive.sh`, `discover-arch-artifacts.sh`, `status_helpers.sh` — 跨 skill 共享的 shell helper。
+
+### 3D: 保留在 `_lib/` 顶层（其余模块）
+
+以下 15 个 .py 文件不归入 `core/` 或 `loop/`，保留在 `_lib/` 顶层：
+
+| 模块 | 原因 |
+|------|------|
+| `arch_quality_gate.py` | gate.py 交叉引用，多消费者 |
+| `change_alignment.py` | 跨切对齐逻辑 |
+| `config.py` | 多子系统配置解析器 |
+| `dependency_scheduler.py` | 跨子系统调度 |
+| `event_context.py` | 多模块事件上下文 |
+| `rate_limiter.py` | 跨切速率限制 |
+| `session.py` | 会话管理（多消费者） |
+| `session_base.py` | 会话基类 |
+| `session_manager.py` | 跨子系统会话协调 |
+| `trigger_engine.py` | 触发器引擎 |
+| `trigger_registry.py` | 触发器注册表 |
+| `triggers.py` | 触发器定义 |
+| `validate_delta_targets.py` | delta 验证工具 |
+| `validate_report.py` | 跨切验证报告 |
+
+> `schedulers/`、`schemas/`、`plugins/` 已有子目录结构，本次不改动。
 
 ### 路径更新
 
@@ -47,10 +73,13 @@ mv skills/_lib/{actions,detectors,agents,human_nodes,interaction_modes,memory,tr
 ## Impact
 
 - 所有 Python `from skills._lib.X import Y` 需要更新为 `from skills._lib.core.X` 或 `from skills._lib.loop.X`
+- `from skills._lib import X` 模式（引用 `iteration`, `gate`, `roadmap_state` 等顶层保留模块）**不需要改**
 - 57 个测试文件需批量 import 路径更新
+- `tests/integration/test_phase2_python_imports.py` 的 `SHARED_MODULES` 列表需更新
+- Phase 2 移出的 per-skill 脚本（`skills/rddf-session/scripts/`, `skills/deps/scripts/`, `skills/feature/scripts/`）中的 import 也需更新
 - **这是四个 Phase 中风险最高的** — 一旦出错,Python 测试会大面积失败
 
 ## Dependencies
 
-- **前置 change**: `skills-reorg-phase2-single-skill`（`_lib/` 必须先减小到 ~50 个文件）
+- **前置 change**: `skills-reorg-phase2-single-skill`（`_lib/` 已减至 40 个 .py 文件）
 - **后续 change**: `skills-reorg-phase4-thin`（瘦身 SKILL.md）

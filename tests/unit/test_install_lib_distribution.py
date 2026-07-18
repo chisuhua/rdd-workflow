@@ -34,10 +34,11 @@ def _repo_root_on_path() -> None:
 
 @pytest.mark.parametrize("module_name", [
     "skills._lib.iteration",
-    "skills._lib.state_vector",
-    "skills._lib.event_log",
-    "skills._lib.lock",
+    "skills._lib.core.event_log",
+    "skills._lib.core.state_vector",
+    "skills._lib.core.lock",
     "skills._lib.gate",
+    "skills._lib.loop.actions",
 ])
 def test_lib_module_importable(module_name: str) -> None:
     """Each _lib module declared as a dependency MUST import without error."""

@@ -1,7 +1,7 @@
 """Tests for skills/_lib/event_context.py — context snapshot for events."""
 import pytest
 from skills._lib.event_context import current_context, DEFAULT_STATE_PATH
-from skills._lib.state_vector import StateVector
+from skills._lib.core.state_vector import StateVector
 
 
 def test_current_context_returns_dict(tmp_path):

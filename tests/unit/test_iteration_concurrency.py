@@ -14,7 +14,7 @@ import threading
 import pytest
 
 from skills._lib import iteration as it
-from skills._lib.lock import LockTimeout
+from skills._lib.core.lock import LockTimeout
 
 
 @pytest.fixture
@@ -90,7 +90,7 @@ class TestSerialWrites:
         original = it_mod._LOCK_TIMEOUT
         it_mod._LOCK_TIMEOUT = 0.1
         try:
-            from skills._lib.lock import FileLock
+            from skills._lib.core.lock import FileLock
             with FileLock(lock_path, timeout=1.0):
                 # Now try to save — should time out
                 data = it.create_empty()
@@ -111,7 +111,7 @@ class TestLockFileIsolated:
         proj_b.mkdir(parents=True)
 
         # Hold lock on proj_a
-        from skills._lib.lock import FileLock
+        from skills._lib.core.lock import FileLock
         lock_a = proj_a / "iteration.json.lock"
         with FileLock(str(lock_a), timeout=1.0):
             # Save to proj_b must still succeed

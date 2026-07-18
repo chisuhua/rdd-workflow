@@ -57,7 +57,7 @@ def fake_actions_module(monkeypatch):
 
 def test_seven_node_types_registered():
     """All human-in-loop node types present in registry (8 in v2.0.2 — see ADR-0015)."""
-    from skills._lib.human_nodes import HumanNodeRegistry
+    from skills._lib.loop.human_nodes import HumanNodeRegistry
 
     reg = HumanNodeRegistry()
     expected = {
@@ -76,7 +76,7 @@ def test_seven_node_types_registered():
 
 def test_plan_review_validation_default_mode_is_human():
     """plan.review_validation is registered with default HUMAN verification (ADR-0015 §Decision 4)."""
-    from skills._lib.human_nodes import HumanNodeRegistry, VerificationMode
+    from skills._lib.loop.human_nodes import HumanNodeRegistry, VerificationMode
 
     reg = HumanNodeRegistry()
     mode = reg.mode_for("plan.review_validation")
@@ -87,7 +87,7 @@ def test_plan_review_validation_default_mode_is_human():
 
 def test_verification_modes_enum():
     """3 verification modes: human, multi_model, script."""
-    from skills._lib.human_nodes import VerificationMode
+    from skills._lib.loop.human_nodes import VerificationMode
 
     assert VerificationMode.HUMAN.value == "human"
     assert VerificationMode.MULTI_MODEL.value == "multi_model"
@@ -96,7 +96,7 @@ def test_verification_modes_enum():
 
 def test_multi_model_without_tribunal_raises_unavailable():
     """multi_model verification raises when no Tribunal is injected."""
-    from skills._lib.human_nodes import (
+    from skills._lib.loop.human_nodes import (
         HumanNodeRegistry,
         NodeTrigger,
         VerificationMode,
@@ -116,7 +116,7 @@ def test_multi_model_without_tribunal_raises_unavailable():
 def test_multi_model_delegates_to_injected_tribunal():
     """multi_model verification maps TribunalResult into VerificationResult."""
     from dataclasses import dataclass
-    from skills._lib.human_nodes import HumanNodeRegistry, NodeTrigger, VerificationMode
+    from skills._lib.loop.human_nodes import HumanNodeRegistry, NodeTrigger, VerificationMode
 
     @dataclass
     class _Result:
@@ -157,7 +157,7 @@ def test_multi_model_delegates_to_injected_tribunal():
 
 def test_script_verification_runs_command(fake_actions_module):
     """script verification runs configured command and uses exit code."""
-    from skills._lib.human_nodes import HumanNodeRegistry, NodeTrigger, VerificationMode
+    from skills._lib.loop.human_nodes import HumanNodeRegistry, NodeTrigger, VerificationMode
 
     reg = HumanNodeRegistry()
     trigger = NodeTrigger(

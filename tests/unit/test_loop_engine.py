@@ -1,8 +1,8 @@
 """Tests for LoopEngine — main 5-block cycle + safety mechanisms."""
 import pytest
 from skills.loop_engine import LoopEngine, LoopStatus
-from skills._lib.state_vector import StateVector
-from skills._lib.event_log import EventLog
+from skills._lib.core.state_vector import StateVector
+from skills._lib.core.event_log import EventLog
 
 
 @pytest.fixture
@@ -81,8 +81,8 @@ def test_loop_engine_accepts_mode_parameter(tmp_path):
     """LoopEngine accepts interaction mode at construction time."""
     sv_path = str(tmp_path / "state-vector.json")
     el_path = str(tmp_path / "event-log.jsonl")
-    from skills._lib.interaction_modes import make_mode, LoopMode
-    from skills._lib.human_nodes import HumanNodeRegistry
+    from skills._lib.loop.interaction_modes import make_mode, LoopMode
+    from skills._lib.loop.human_nodes import HumanNodeRegistry
     registry = HumanNodeRegistry()
     engine = LoopEngine(
         state=StateVector.load(sv_path),

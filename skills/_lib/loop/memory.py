@@ -22,8 +22,8 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from skills._lib.lock import FileLock
-from skills._lib.defaults import MEMORY_PATH
+from skills._lib.core.lock import FileLock
+from skills._lib.core.defaults import MEMORY_PATH
 
 
 # Threshold above which a past goal is considered similar enough to recommend.

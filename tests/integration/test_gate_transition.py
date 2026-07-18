@@ -19,7 +19,7 @@ from skills._lib.gate import (
     Check,
     register_gate_check,
 )
-from skills._lib.state_vector import StateVector
+from skills._lib.core.state_vector import StateVector
 
 
 # ---------- Fixtures ---------- #

@@ -29,8 +29,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from skills._lib.defaults import DETECTOR_PLUGIN_DIR
-from skills._lib.plugin_loader import PluginLoader
+from skills._lib.core.defaults import DETECTOR_PLUGIN_DIR
+from skills._lib.loop.plugin_loader import PluginLoader
 
 
 # Severity constants — kept module-level so plugins can reuse them.
@@ -304,7 +304,7 @@ def detect_trigger_events(state: dict) -> DetectionResult:
     """
     # Import here to avoid circular dependency at module load
     try:
-        from skills._lib.event_queue import EventQueue
+        from skills._lib.loop.event_queue import EventQueue
         from skills._lib.trigger_registry import TriggerRegistry
     except ImportError:
         return DetectionResult(

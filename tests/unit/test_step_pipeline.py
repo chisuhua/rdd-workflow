@@ -16,8 +16,8 @@ from __future__ import annotations
 import os
 import pytest
 
-from skills._lib.step_pipeline import StepPipeline, PipelineEvent
-from skills._lib.state_vector import StateVector
+from skills._lib.loop.step_pipeline import StepPipeline, PipelineEvent
+from skills._lib.core.state_vector import StateVector
 
 
 # ---------------------------------------------------------------------------

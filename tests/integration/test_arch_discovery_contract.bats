@@ -288,8 +288,8 @@ assert h_passed, 'Handoff gate failed'
   python3 -c "
 import sys
 sys.path.insert(0, '$REPO_ROOT_HERE')
-from skills._lib.event_log import EventLog
-from skills._lib.actions import action_create_adr
+from skills._lib.core.event_log import EventLog
+from skills._lib.loop.actions import action_create_adr
 import os
 log_path = '$REPO_TMP/event.log'
 params = {

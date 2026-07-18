@@ -38,7 +38,7 @@ import jsonschema
 import referencing
 from referencing.exceptions import NoSuchResource
 
-from skills._lib.lock import FileLock, LockTimeout
+from skills._lib.core.lock import FileLock, LockTimeout
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +142,7 @@ def _validate(data: dict) -> None:
 def _atomic_write(path: str, data: dict) -> None:
     """Write data to path atomically (write to .tmp, fsync, rename)."""
     # v2.0.3: delegate to shared atomic_write helper (Wave 3.1).
-    from skills._lib.atomic_write import atomic_write_json
+    from skills._lib.core.atomic_write import atomic_write_json
     atomic_write_json(path, data)
 
 

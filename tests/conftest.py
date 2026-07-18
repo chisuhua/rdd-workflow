@@ -1,16 +1,18 @@
 """Pytest configuration: ensure the project root is on sys.path.
 
-Tests under tests/unit/ import from `skills._lib.*`. Because there is no
-`skills/__init__.py` and `skills` is not an installed package, pytest must
-locate the `skills` directory on sys.path. The project root (parent of this
-`tests/` directory) is added so that `import skills._lib.xxx` resolves to
-`/workspace/project/spec-workflow/skills/_lib/xxx.py`.
+Tests under tests/unit/ import from `skills._lib.*`, `skills._lib.core.*`,
+and `skills._lib.loop.*`. Because there is no `skills/__init__.py` and
+`skills` is not an installed package, pytest must locate the `skills`
+directory on sys.path. The project root (parent of this `tests/` directory)
+is added so that `import skills._lib.xxx` resolves to
+`/workspace/project/spec-workflow/skills/_lib/xxx.py`,
+`import skills._lib.core.xxx` resolves to `…/_lib/core/xxx.py`, and
+`import skills._lib.loop.xxx` resolves to `…/_lib/loop/xxx.py`.
 
-Phase 2 (skills-reorg-phase2-single-skill): skill directories with hyphens
-(guide-arch, guide-plan, guide-ship, rddf-session) cannot be imported as
-Python packages because hyphens are not valid Python identifiers.
-The tool transforms import paths to use underscores (e.g. skills.guide_arch),
-so we bridge the underscored names to the dashed directories.
+Phase 3 (skills-reorg-phase3-core): _lib/ reorganized into core/ (6 runtime
+kernel modules) + loop/ (15 v2.0 loop engine modules). Top-level cross-cutting
+modules stay at _lib/. Import paths now use skills._lib.core.xxx and
+skills._lib.loop.xxx in addition to skills._lib.xxx.
 """
 import sys
 import types

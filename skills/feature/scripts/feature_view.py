@@ -11,7 +11,7 @@ import datetime
 import re
 
 from skills._lib import iteration as it_mod
-from skills._lib.lock import FileLock, LockTimeout
+from skills._lib.core.lock import FileLock, LockTimeout
 
 
 # Synthetic feature name for changes with no parent_feature and no feature- prefix.

@@ -10,7 +10,7 @@ the storage into the state vector proper. The API surface is unchanged.
 """
 import pytest
 
-from skills._lib.state_vector import StateVector
+from skills._lib.core.state_vector import StateVector
 
 
 @pytest.fixture

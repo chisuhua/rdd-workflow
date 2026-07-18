@@ -1,7 +1,7 @@
 """Unit tests for event_queue + fs_watcher + git_hook + webhook_receiver."""
 import os
 import time
-from skills._lib.event_queue import EventQueue
+from skills._lib.loop.event_queue import EventQueue
 from skills._lib.schedulers.fs_watcher import FileSystemWatcher
 from skills._lib.schedulers.git_hook import GitHookListener
 from skills._lib.schedulers.webhook_receiver import WebhookReceiver

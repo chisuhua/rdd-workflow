@@ -9,7 +9,7 @@ import pytest
 
 def test_sanitize_strips_api_key_sk_format():
     """API keys in sk-<20+ alnum chars> format (OpenAI-style) are redacted."""
-    from skills._lib.sanitizer import sanitize
+    from skills._lib.loop.sanitizer import sanitize
 
     text = "API key is sk-abc123def456ghi789jkl012mno and should be hidden"
     result = sanitize(text)
@@ -21,7 +21,7 @@ def test_sanitize_strips_api_key_sk_format():
 
 def test_sanitize_strips_bearer_token():
     """Bearer tokens in Authorization headers are redacted."""
-    from skills._lib.sanitizer import sanitize
+    from skills._lib.loop.sanitizer import sanitize
 
     text = (
         "Authorization: Bearer "
@@ -39,7 +39,7 @@ def test_sanitize_strips_bearer_token():
 
 def test_sanitize_strips_password_kvpair():
     """password=<value> key-value pairs are redacted."""
-    from skills._lib.sanitizer import sanitize
+    from skills._lib.loop.sanitizer import sanitize
 
     text = "config: password=hunter2secretvalue please hide"
     result = sanitize(text)
@@ -51,7 +51,7 @@ def test_sanitize_strips_password_kvpair():
 
 def test_sanitize_strips_secret_env_var():
     """Env-var-style assignments whose name contains SECRET/TOKEN/KEY are redacted."""
-    from skills._lib.sanitizer import sanitize
+    from skills._lib.loop.sanitizer import sanitize
 
     text = "AWS_SECRET_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE leaked"
     result = sanitize(text)
@@ -66,7 +66,7 @@ def test_sanitize_strips_secret_env_var():
 
 def test_sanitize_strips_sensitive_path_etc():
     """Paths under /etc/ are redacted."""
-    from skills._lib.sanitizer import sanitize
+    from skills._lib.loop.sanitizer import sanitize
 
     text = "Reading /etc/passwd for the audit"
     result = sanitize(text)
@@ -78,7 +78,7 @@ def test_sanitize_strips_sensitive_path_etc():
 
 def test_sanitize_strips_sensitive_path_ssh():
     """Paths under ~/.ssh/ are redacted."""
-    from skills._lib.sanitizer import sanitize
+    from skills._lib.loop.sanitizer import sanitize
 
     text = "Keys are stored at ~/.ssh/id_rsa on the host"
     result = sanitize(text)
@@ -93,7 +93,7 @@ def test_sanitize_strips_sensitive_path_ssh():
 
 def test_whitelist_path_not_redacted():
     """A whitelisted sensitive path is preserved (not redacted)."""
-    from skills._lib.sanitizer import sanitize
+    from skills._lib.loop.sanitizer import sanitize
 
     text = "Use /etc/passwd config and /etc/shadow too"
     result = sanitize(text, whitelist=["/etc/passwd"])
@@ -112,7 +112,7 @@ def test_whitelist_path_not_redacted():
 
 def test_no_sensitive_data_unchanged():
     """Text with no sensitive content is returned untouched and has no redactions."""
-    from skills._lib.sanitizer import sanitize
+    from skills._lib.loop.sanitizer import sanitize
 
     text = "Just a regular sentence with no secrets here at all."
     result = sanitize(text)
@@ -127,7 +127,7 @@ def test_no_sensitive_data_unchanged():
 
 def test_redactions_list_populated():
     """The redactions list carries (pattern_name, original) tuples for every match."""
-    from skills._lib.sanitizer import sanitize
+    from skills._lib.loop.sanitizer import sanitize
 
     text = "first api_key=secret123 here and second password=hunter2 there"
     result = sanitize(text)
@@ -145,7 +145,7 @@ def test_redactions_list_populated():
 
 def test_performance_under_10ms():
     """A single sanitize() call on typical input completes in under 10ms."""
-    from skills._lib.sanitizer import sanitize
+    from skills._lib.loop.sanitizer import sanitize
 
     text = (
         "API key sk-abc123def456ghi789jkl012mno and "

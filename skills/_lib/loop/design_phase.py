@@ -4,9 +4,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field, asdict
 from typing import Any
 
-from skills._lib.state_vector import StateVector
-from skills._lib.event_log import EventLog
-from skills._lib.event_types import EventType, Severity
+from skills._lib.core.state_vector import StateVector
+from skills._lib.core.event_log import EventLog
+from skills._lib.core.event_types import EventType, Severity
 
 
 @dataclass

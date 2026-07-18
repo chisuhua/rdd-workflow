@@ -47,7 +47,7 @@ from pathlib import Path
 import re
 from typing import Any, Dict, List, Optional
 
-from skills._lib.lock import FileLock, LockTimeout
+from skills._lib.core.lock import FileLock, LockTimeout
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ def _now_iso() -> str:
 
 def _atomic_write(path: str, data: dict) -> None:
     # v2.0.3: delegate to shared atomic_write helper (Wave 3.1).
-    from skills._lib.atomic_write import atomic_write_json
+    from skills._lib.core.atomic_write import atomic_write_json
     atomic_write_json(path, data)
 
 

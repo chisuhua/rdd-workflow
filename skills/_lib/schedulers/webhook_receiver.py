@@ -5,7 +5,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Callable, Optional
 
-from skills._lib.event_queue import EventQueue
+from skills._lib.loop.event_queue import EventQueue
 
 
 class _WebhookHandler(BaseHTTPRequestHandler):

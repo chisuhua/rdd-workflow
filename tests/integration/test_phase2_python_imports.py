@@ -34,21 +34,56 @@ MOVED_MODULES = [
 
 SHARED_MODULES = [
     "skills._lib.iteration",
-    "skills._lib.state_vector",
-    "skills._lib.event_log",
     "skills._lib.gate",
-    "skills._lib.lock",
-    "skills._lib.memory",
-    "skills._lib.tribunal",
-    "skills._lib.sanitizer",
     "skills._lib.session_manager",
     "skills._lib.roadmap_state",
-    "skills._lib.atomic_write",
-    "skills._lib.plugin_loader",
-    "skills._lib.event_types",
-    "skills._lib.agents",
-    "skills._lib.detectors",
-    "skills._lib.actions",
+]
+
+# Phase 3 (skills-reorg-phase3-core): _lib/ reorganized into core/ + loop/
+CORE_MODULES = [
+    "skills._lib.core.event_log",
+    "skills._lib.core.event_types",
+    "skills._lib.core.state_vector",
+    "skills._lib.core.defaults",
+    "skills._lib.core.lock",
+    "skills._lib.core.atomic_write",
+]
+LOOP_MODULES = [
+    "skills._lib.loop.actions",
+    "skills._lib.loop.detectors",
+    "skills._lib.loop.agents",
+    "skills._lib.loop.human_nodes",
+    "skills._lib.loop.interaction_modes",
+    "skills._lib.loop.memory",
+    "skills._lib.loop.tribunal",
+    "skills._lib.loop.sanitizer",
+    "skills._lib.loop.step_pipeline",
+    "skills._lib.loop.flowchart",
+    "skills._lib.loop.flow_customizer",
+    "skills._lib.loop.design_phase",
+    "skills._lib.loop.loop_state",
+    "skills._lib.loop.plugin_loader",
+    "skills._lib.loop.event_queue",
+]
+TOPLEVEL_MODULES = [
+    "skills._lib.iteration",
+    "skills._lib.gate",
+    "skills._lib.session_manager",
+    "skills._lib.roadmap_state",
+    "skills._lib.roadmap_sprint",
+    "skills._lib.config",
+    "skills._lib.event_context",
+    "skills._lib.session",
+    "skills._lib.session_base",
+    "skills._lib.arch_quality_gate",
+    "skills._lib.change_alignment",
+    "skills._lib.dependency_scheduler",
+    "skills._lib.rate_limiter",
+    "skills._lib.trigger_engine",
+    "skills._lib.trigger_registry",
+    "skills._lib.triggers",
+    "skills._lib.validate_delta_targets",
+    "skills._lib.validate_report",
 ]
 
 
@@ -99,4 +134,71 @@ def test_phase2_rddf_session_hooks_in_rddf_session_scripts():
     assert "from skills.rddf_session.scripts.rddf_session import" in text, (
         "FAIL: rddf_session_hooks.sh still uses old import path — "
         "should be: from skills.rddf_session.scripts.rddf_session import ..."
+    )
+
+
+# ── Phase 3 tests (skills-reorg-phase3-core) ──────────────────────────────
+
+
+@pytest.mark.parametrize("core_path", CORE_MODULES)
+def test_phase3_core_modules_importable(core_path):
+    """Phase 3 core modules MUST be importable from skills._lib.core.X."""
+    spec = importlib.util.find_spec(core_path)
+    assert spec is not None, (
+        f"FAIL: {core_path} not importable — "
+        f"core module should be in skills/_lib/core/"
+    )
+
+
+@pytest.mark.parametrize("loop_path", LOOP_MODULES)
+def test_phase3_loop_modules_importable(loop_path):
+    """Phase 3 loop modules MUST be importable from skills._lib.loop.X."""
+    spec = importlib.util.find_spec(loop_path)
+    assert spec is not None, (
+        f"FAIL: {loop_path} not importable — "
+        f"loop module should be in skills/_lib/loop/"
+    )
+
+
+@pytest.mark.parametrize("toplevel_path", TOPLEVEL_MODULES)
+def test_phase3_toplevel_modules_importable(toplevel_path):
+    """Phase 3 top-level modules MUST be importable from skills._lib.X."""
+    spec = importlib.util.find_spec(toplevel_path)
+    assert spec is not None, (
+        f"FAIL: {toplevel_path} not importable — "
+        f"top-level module should be in skills/_lib/"
+    )
+
+
+OLD_FLAT_PATHS = [
+    "skills._lib.state_vector",
+    "skills._lib.event_log",
+    "skills._lib.lock",
+    "skills._lib.atomic_write",
+    "skills._lib.event_types",
+    "skills._lib.actions",
+    "skills._lib.detectors",
+    "skills._lib.agents",
+    "skills._lib.human_nodes",
+    "skills._lib.interaction_modes",
+    "skills._lib.memory",
+    "skills._lib.tribunal",
+    "skills._lib.sanitizer",
+    "skills._lib.step_pipeline",
+    "skills._lib.flowchart",
+    "skills._lib.flow_customizer",
+    "skills._lib.design_phase",
+    "skills._lib.loop_state",
+    "skills._lib.plugin_loader",
+    "skills._lib.event_queue",
+]
+
+
+@pytest.mark.parametrize("old_path", OLD_FLAT_PATHS)
+def test_phase3_moved_modules_not_at_old_flat_path(old_path):
+    """Phase 3: modules in core/ or loop/ MUST NOT be importable from old flat skills._lib.X path."""
+    spec = importlib.util.find_spec(old_path)
+    assert spec is None, (
+        f"FAIL: {old_path} still importable — "
+        f"module was moved to skills/_lib/core/ or skills/_lib/loop/"
     )

@@ -22,8 +22,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from skills._lib.event_log import EventLog
-from skills._lib.event_types import EventType, Severity
+from skills._lib.core.event_log import EventLog
+from skills._lib.core.event_types import EventType, Severity
 
 
 # ─────────────────────────────────────────────────────────────────────────────

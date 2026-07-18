@@ -1,5 +1,5 @@
 """Integration tests for trigger integration with LoopEngine + detectors."""
-from skills._lib.detectors import detect_trigger_events
+from skills._lib.loop.detectors import detect_trigger_events
 
 
 def test_detect_trigger_events_no_registry(monkeypatch):

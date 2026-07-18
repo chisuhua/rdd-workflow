@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import pytest
 
-from skills._lib.event_log import EventLog
-from skills._lib.event_types import EventType, Severity
+from skills._lib.core.event_log import EventLog
+from skills._lib.core.event_types import EventType, Severity
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -20,7 +20,7 @@ from skills._lib.event_types import EventType, Severity
 
 def test_three_agent_roles_defined():
     """AgentRole enum exposes exactly three values: planner/executor/verifier."""
-    from skills._lib.agents import AgentRole
+    from skills._lib.loop.agents import AgentRole
 
     roles = {r.value for r in AgentRole}
     assert roles == {"planner", "executor", "verifier"}
@@ -28,7 +28,7 @@ def test_three_agent_roles_defined():
 
 def test_agent_send_records_event(tmp_path):
     """Agent.send() persists a STATE_UPDATED event to the event log."""
-    from skills._lib.agents import Agent, AgentRole
+    from skills._lib.loop.agents import Agent, AgentRole
 
     log_path = str(tmp_path / "event-log.jsonl")
     log = EventLog(log_path)
@@ -49,7 +49,7 @@ def test_agent_send_records_event(tmp_path):
 
 def test_agent_receive_returns_messages():
     """Agent.receive() returns the messages the agent sent (local buffer)."""
-    from skills._lib.agents import Agent, AgentRole
+    from skills._lib.loop.agents import Agent, AgentRole
 
     agent = Agent(AgentRole.EXECUTOR)
     agent.send("first")
@@ -70,7 +70,7 @@ def test_agent_receive_returns_messages():
 
 def test_planner_generates_plan():
     """Planner callable signature: planner(goal) -> str (plan content)."""
-    from skills._lib.agents import AgentRole
+    from skills._lib.loop.agents import AgentRole
 
     captured = {}
 
@@ -87,7 +87,7 @@ def test_planner_generates_plan():
 
 def test_executor_runs_actions():
     """Executor callable signature: executor(plan) -> str (execution result)."""
-    from skills._lib.agents import AgentRole
+    from skills._lib.loop.agents import AgentRole
 
     captured = {}
 
@@ -104,7 +104,7 @@ def test_executor_runs_actions():
 
 def test_verifier_scores_quality():
     """Verifier callable signature: verifier(execution_result) -> float in [0.0, 1.0]."""
-    from skills._lib.agents import AgentRole
+    from skills._lib.loop.agents import AgentRole
 
     captured = {}
 
@@ -127,7 +127,7 @@ def test_verifier_scores_quality():
 
 def test_coordinator_runs_full_flow(tmp_path):
     """Coordinator.run() runs planner → executor → verifier in order."""
-    from skills._lib.agents import AgentCoordinator
+    from skills._lib.loop.agents import AgentCoordinator
 
     log = EventLog(str(tmp_path / "event-log.jsonl"))
 
@@ -159,7 +159,7 @@ def test_coordinator_runs_full_flow(tmp_path):
 
 def test_coordinator_records_each_step(tmp_path):
     """Each coordinator step records a STATE_UPDATED event to the event log."""
-    from skills._lib.agents import AgentCoordinator
+    from skills._lib.loop.agents import AgentCoordinator
 
     log = EventLog(str(tmp_path / "event-log.jsonl"))
 

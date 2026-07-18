@@ -3,8 +3,8 @@ import json
 import os
 import time
 import pytest
-from skills._lib.event_log import EventLog
-from skills._lib.event_types import EventType, Severity, Event
+from skills._lib.core.event_log import EventLog
+from skills._lib.core.event_types import EventType, Severity, Event
 
 
 @pytest.fixture

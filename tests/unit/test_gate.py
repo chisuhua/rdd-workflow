@@ -3,7 +3,7 @@ import json
 import os
 import pytest
 from skills._lib.gate import GateMechanism, Check, GateResult, GateError, register_gate_check
-from skills._lib.state_vector import StateVector
+from skills._lib.core.state_vector import StateVector
 
 
 @pytest.fixture

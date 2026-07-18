@@ -23,9 +23,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from skills._lib.event_log import EventLog  # noqa: F401  (type hint for clarity)
-from skills._lib.event_types import EventType, Severity
-from skills._lib.sanitizer import sanitize as _default_sanitize
+from skills._lib.core.event_log import EventLog  # noqa: F401  (type hint for clarity)
+from skills._lib.core.event_types import EventType, Severity
+from skills._lib.loop.sanitizer import sanitize as _default_sanitize
 
 
 # ---------------------------------------------------------------------------
@@ -107,7 +107,7 @@ class Tribunal:
     :meth:`_judge` that computes the weighted score and the conflict.
 
     Example:
-        >>> from skills._lib.tribunal import Tribunal
+        >>> from skills._lib.loop.tribunal import Tribunal
         >>> t = Tribunal(
         ...     executor=lambda n, c, ctx: 0.9,
         ...     reviewer=lambda n, c, ctx: 0.95,

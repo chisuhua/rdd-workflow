@@ -10,11 +10,11 @@ import os
 import json
 import pytest
 
-from skills._lib.loop_state import LoopState
-from skills._lib.state_vector import StateVector
-from skills._lib.event_log import EventLog
-from skills._lib.detectors import all_detectors, BUILTIN_DETECTORS
-from skills._lib.actions import all_actions, BUILTIN_ACTIONS
+from skills._lib.loop.loop_state import LoopState
+from skills._lib.core.state_vector import StateVector
+from skills._lib.core.event_log import EventLog
+from skills._lib.loop.detectors import all_detectors, BUILTIN_DETECTORS
+from skills._lib.loop.actions import all_actions, BUILTIN_ACTIONS
 from skills.loop_engine import LoopEngine, LoopStatus
 
 

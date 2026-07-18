@@ -18,13 +18,13 @@ from typing import Any, Optional
 
 import jsonschema
 
-from skills._lib.lock import FileLock, LockTimeout
+from skills._lib.core.lock import FileLock, LockTimeout
 
 logger = logging.getLogger(__name__)
 
 
 SCHEMA_PATH = os.path.join(
-    os.path.dirname(__file__), "schemas", "state_vector_schema.json"
+    os.path.dirname(__file__), "..", "schemas", "state_vector_schema.json"
 )
 _LOCK_TIMEOUT = 10.0
 _SCHEMA_CACHE: Optional[dict] = None

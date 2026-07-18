@@ -4,7 +4,7 @@ import os
 import time
 import subprocess
 import pytest
-from skills._lib.state_vector import StateVector, StateVectorError
+from skills._lib.core.state_vector import StateVector, StateVectorError
 
 
 @pytest.fixture
@@ -104,7 +104,7 @@ def test_concurrent_writes_are_serialized(state_path):
     code = f"""
 import sys
 sys.path.insert(0, '.')
-from skills._lib.state_vector import StateVector
+from skills._lib.core.state_vector import StateVector
 sv = StateVector.create_default()
 for i in range(50):
     sv.update_field('loop_state.iteration', i)

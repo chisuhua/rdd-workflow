@@ -63,7 +63,7 @@ def test_judge_formula_weighted():
     ADR-0008 weights reviewer (quality/correctness) higher than executor
     (task completion) because review is the more expensive signal.
     """
-    from skills._lib.tribunal import Tribunal
+    from skills._lib.loop.tribunal import Tribunal
 
     tribunal = Tribunal(executor=_executor_stub(0.0), reviewer=_executor_stub(0.0))
     final, conflict = tribunal._judge(exec_score=0.5, review_score=1.0)
@@ -85,7 +85,7 @@ def test_pass_when_high_both():
     ADR-0008 scenario 'High confidence passes': exec=0.9, review=0.95 →
     final = 0.93, no conflict, pass.
     """
-    from skills._lib.tribunal import Tribunal
+    from skills._lib.loop.tribunal import Tribunal
 
     tribunal = Tribunal(executor=_executor_stub(0.9), reviewer=_reviewer_stub(0.95))
     result = tribunal.verify("change-x", "criteria-y", {})
@@ -103,7 +103,7 @@ def test_fail_when_low_final_score():
     ADR-0008 scenario 'Borderline final score': exec=0.7, review=0.85 →
     final = 0.79 (< 0.8 threshold).
     """
-    from skills._lib.tribunal import Tribunal
+    from skills._lib.loop.tribunal import Tribunal
 
     tribunal = Tribunal(executor=_executor_stub(0.7), reviewer=_reviewer_stub(0.85))
     result = tribunal.verify("change-x", "criteria-y", {})
@@ -118,7 +118,7 @@ def test_fail_when_high_conflict():
     ADR-0008 scenario 'High conflict warns': exec=0.9, review=0.4 →
     conflict = 0.5 → fail with high disagreement.
     """
-    from skills._lib.tribunal import Tribunal
+    from skills._lib.loop.tribunal import Tribunal
 
     tribunal = Tribunal(executor=_executor_stub(0.9), reviewer=_reviewer_stub(0.4))
     result = tribunal.verify("change-x", "criteria-y", {})
@@ -135,7 +135,7 @@ def test_fail_when_one_agent_low():
     A single very-low score is a veto per ADR-0008 — the bar is meant to
     guard against agent collapse (e.g. one model returning 0.1 by mistake).
     """
-    from skills._lib.tribunal import Tribunal
+    from skills._lib.loop.tribunal import Tribunal
 
     tribunal = Tribunal(executor=_executor_stub(0.1), reviewer=_reviewer_stub(1.0))
     result = tribunal.verify("change-x", "criteria-y", {})
@@ -159,7 +159,7 @@ def test_warn_when_same_agent():
     alerted that cross-validation has been disabled. ADR-0008 mandates
     that Executor and Reviewer MUST be different agents.
     """
-    from skills._lib.tribunal import Tribunal
+    from skills._lib.loop.tribunal import Tribunal
 
     agent = _executor_stub(0.9)
     tribunal = Tribunal(executor=agent, reviewer=agent)
@@ -180,7 +180,7 @@ def test_sanitize_context_before_invocation():
     payload. We capture what each agent actually receives and assert that
     the API key no longer appears.
     """
-    from skills._lib.tribunal import Tribunal
+    from skills._lib.loop.tribunal import Tribunal
 
     exec_capture: Dict[str, Any] = {}
     review_capture: Dict[str, Any] = {}
@@ -215,8 +215,8 @@ def test_record_verification_event(event_log_path):
     in its context so downstream tools (status report, audit log) can read
     verification outcomes from the event log without re-running the Tribunal.
     """
-    from skills._lib.event_log import EventLog
-    from skills._lib.tribunal import Tribunal
+    from skills._lib.core.event_log import EventLog
+    from skills._lib.loop.tribunal import Tribunal
 
     log = EventLog(event_log_path)
     tribunal = Tribunal(
@@ -246,7 +246,7 @@ def test_graceful_degradation_on_exception():
     the whole workflow. ADR-0008 mandates falling back to single-agent
     verification when cross-validation cannot proceed.
     """
-    from skills._lib.tribunal import Tribunal
+    from skills._lib.loop.tribunal import Tribunal
 
     def broken_executor(change_name: str, criteria: str, context: dict) -> float:
         raise RuntimeError("executor crashed: agent offline")

@@ -19,10 +19,10 @@ from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Optional
 
-from skills._lib.event_log import EventLog
-from skills._lib.event_types import EventType, Severity
-from skills._lib.plugin_loader import PluginLoader
-from skills._lib.defaults import ACTION_PLUGIN_DIR
+from skills._lib.core.event_log import EventLog
+from skills._lib.core.event_types import EventType, Severity
+from skills._lib.loop.plugin_loader import PluginLoader
+from skills._lib.core.defaults import ACTION_PLUGIN_DIR
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -161,7 +161,7 @@ def action_generate_plan(params: dict, event_log: EventLog) -> ActionResult:
         )
         return result
 
-    writing_plans_script = Path(__file__).parent.parent / "spec-workflow-writing-plans.md"
+    writing_plans_script = Path(__file__).parent.parent.parent / "spec-workflow-writing-plans.md"
     if not writing_plans_script.exists():
         result = ActionResult(
             success=False,

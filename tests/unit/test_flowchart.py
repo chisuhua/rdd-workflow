@@ -1,9 +1,9 @@
 """Tests for FlowchartGenerator — ASCII real-time progress display."""
 import time
 import pytest
-from skills._lib.flowchart import FlowchartGenerator
-from skills._lib.state_vector import StateVector
-from skills._lib.event_log import EventLog
+from skills._lib.loop.flowchart import FlowchartGenerator
+from skills._lib.core.state_vector import StateVector
+from skills._lib.core.event_log import EventLog
 
 
 @pytest.fixture
@@ -26,7 +26,7 @@ def test_flowchart_includes_phase_and_iteration(env):
 
 def test_flowchart_includes_event_log_errors(env):
     """Flowchart summarizes recent errors from event log."""
-    from skills._lib.event_types import EventType, Severity
+    from skills._lib.core.event_types import EventType, Severity
     sv, el = env
     el.record(
         event_type=EventType.ERROR_OCCURRED,

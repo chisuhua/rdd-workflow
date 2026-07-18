@@ -4,7 +4,7 @@ Covers: ActionResult dataclass, run_subprocess wrapper (success / failure /
 timeout), 7 built-in actions registered, plugin loading with empty dir.
 """
 import pytest
-from skills._lib.actions import Action, ActionResult, run_subprocess
+from skills._lib.loop.actions import Action, ActionResult, run_subprocess
 
 
 def test_action_result_dataclass():
@@ -50,7 +50,7 @@ def test_run_subprocess_timeout_terminates():
 
 def test_seven_builtin_actions_registered():
     """All 7 built-in actions present in BUILTIN_ACTIONS."""
-    from skills._lib.actions import BUILTIN_ACTIONS
+    from skills._lib.loop.actions import BUILTIN_ACTIONS
 
     expected = {
         "action_create_worktree", "action_generate_plan", "action_execute_worktree",
@@ -64,6 +64,6 @@ def test_seven_builtin_actions_registered():
 def test_load_plugin_actions_empty_when_dir_missing(tmp_path, monkeypatch):
     """No error when .rddf/actions/ doesn't exist."""
     monkeypatch.chdir(tmp_path)
-    from skills._lib.actions import load_plugin_actions
+    from skills._lib.loop.actions import load_plugin_actions
 
     assert load_plugin_actions() == []

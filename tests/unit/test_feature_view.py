@@ -418,7 +418,7 @@ class TestUpdateIterationFeatureView:
         assert iteration_changes["a1"]["status"] == "proposed"
 
     def test_file_locked_error_when_save_times_out(self, tmp_path, monkeypatch):
-        from skills._lib.lock import LockTimeout
+        from skills._lib.core.lock import LockTimeout
         _write_iteration(tmp_path, [
             {"name": "a1", "parent_feature": "feature-a"},
         ])

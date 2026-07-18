@@ -167,7 +167,7 @@ class HumanNodeRegistry:
 
     def _verify_script(self, trigger: NodeTrigger) -> VerificationResult:
         """Execute the configured command and treat exit code as pass/fail."""
-        from skills._lib.actions import run_subprocess  # lazy import (parallel-agent safety)
+        from skills._lib.loop.actions import run_subprocess  # lazy import (parallel-agent safety)
 
         cmd = trigger.params.get("command")
         if not cmd:

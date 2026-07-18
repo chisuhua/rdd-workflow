@@ -50,7 +50,7 @@ def _now_iso() -> str:
 def _atomic_write(path: str, data: dict) -> None:
     # v2.0.3: delegate to shared atomic_write helper (Wave 3.1 of
     # fix-debt-audit-2026-07-14). Behavior unchanged.
-    from skills._lib.atomic_write import atomic_write_json
+    from skills._lib.core.atomic_write import atomic_write_json
     atomic_write_json(path, data)
 
 

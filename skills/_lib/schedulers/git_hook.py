@@ -5,7 +5,7 @@ import threading
 import time
 from typing import Callable, Optional
 
-from skills._lib.event_queue import EventQueue
+from skills._lib.loop.event_queue import EventQueue
 
 
 class GitHookListener:

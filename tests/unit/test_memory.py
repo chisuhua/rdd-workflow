@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
-from skills._lib.memory import ExecutionRecord, LoopMemory
+from skills._lib.loop.memory import ExecutionRecord, LoopMemory
 
 
 # ---------------------------------------------------------------------------

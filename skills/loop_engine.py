@@ -8,10 +8,10 @@ from enum import Enum
 from typing import Any, Optional
 import ast
 import operator
-from skills._lib.state_vector import StateVector
-from skills._lib.event_log import EventLog
-from skills._lib.event_types import EventType, Severity, Event
-from skills._lib.loop_state import LoopState
+from skills._lib.core.state_vector import StateVector
+from skills._lib.core.event_log import EventLog
+from skills._lib.core.event_types import EventType, Severity, Event
+from skills._lib.loop.loop_state import LoopState
 from skills._lib.config import ConfigParser
 
 
@@ -140,8 +140,8 @@ class LoopEngine:
         if mode is not None:
             return mode
         try:
-            from skills._lib.human_nodes import HumanNodeRegistry
-            from skills._lib.interaction_modes import make_mode
+            from skills._lib.loop.human_nodes import HumanNodeRegistry
+            from skills._lib.loop.interaction_modes import make_mode
             registry = HumanNodeRegistry()
             mode_name = cfg.get("interaction", {}).get("mode", "hybrid")
             return make_mode(mode_name, registry)
@@ -258,7 +258,7 @@ class LoopEngine:
 
     def scan_state(self) -> None:
         """Run all detectors and populate loop_state.detections as plain dicts."""
-        from skills._lib.detectors import all_detectors
+        from skills._lib.loop.detectors import all_detectors
         detectors = all_detectors()
         results = [d.detect(self.state.to_dict()) for d in detectors]
         self.loop_state.detections = [
@@ -283,7 +283,7 @@ class LoopEngine:
 
     def generate_plan(self) -> None:
         """Match detectors → actions. 1:1 mapping via `action_<detector_type>`."""
-        from skills._lib.actions import all_actions
+        from skills._lib.loop.actions import all_actions
         action_objs = all_actions()
         action_map = {a.name: a for a in action_objs}
         plan = []

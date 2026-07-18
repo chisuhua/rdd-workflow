@@ -49,7 +49,7 @@ jobs:
             case "$d" in */archive/) continue ;; esac
             name=$(basename "$d")
             echo "=== Validating $name ==="
-            python3 skills/_lib/validate_baseline.py "$name" || VALIDATION_FAILED=1
+            python3 skills/propose/scripts/validate_baseline.py "$name" || VALIDATION_FAILED=1
             python3 skills/_lib/validate_delta_targets.py "$name" || VALIDATION_FAILED=1
           done
           if [ "${VALIDATION_FAILED:-0}" -ne 0 ]; then

@@ -21,10 +21,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
 
-from skills._lib.event_log import EventLog
-from skills._lib.event_types import EventType, Severity
-from skills._lib.state_vector import StateVector
-from skills._lib.defaults import STATE_VECTOR_PATH, EVENT_LOG_PATH
+from skills._lib.core.event_log import EventLog
+from skills._lib.core.event_types import EventType, Severity
+from skills._lib.core.state_vector import StateVector
+from skills._lib.core.defaults import STATE_VECTOR_PATH, EVENT_LOG_PATH
 from skills._lib.arch_quality_gate import (
     _check_arch_alignment,
     _check_arch_debt,

@@ -1,8 +1,8 @@
 """Unit tests for DesignPhase (pre-loop Goal/Verification/Control design)."""
 import pytest
-from skills._lib.design_phase import DesignPhase, DesignResult
-from skills._lib.state_vector import StateVector
-from skills._lib.event_log import EventLog
+from skills._lib.loop.design_phase import DesignPhase, DesignResult
+from skills._lib.core.state_vector import StateVector
+from skills._lib.core.event_log import EventLog
 
 
 @pytest.fixture

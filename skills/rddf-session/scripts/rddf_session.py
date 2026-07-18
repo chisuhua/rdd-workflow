@@ -124,7 +124,7 @@ class RddfSessionCoordinator:
     def _atomic_write(self, data: dict) -> None:
         """Write sessions.json atomically (write-to-tmp + rename)."""
         # v2.0.3: delegate to shared atomic_write helper (Wave 3.1).
-        from skills._lib.atomic_write import atomic_write_json
+        from skills._lib.core.atomic_write import atomic_write_json
         atomic_write_json(str(self._sessions_file), data)
 
     def _with_file_lock(self, fn):

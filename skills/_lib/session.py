@@ -34,8 +34,8 @@ import logging
 import threading
 from typing import Dict, List, Optional
 
-from skills._lib.event_types import EventType, Severity
-from skills._lib.event_log import EventLog
+from skills._lib.core.event_types import EventType, Severity
+from skills._lib.core.event_log import EventLog
 from skills._lib.session_base import (
     InvalidTransitionError,
     Session,
@@ -46,7 +46,7 @@ from skills._lib.session_base import (
     _new_id,
     _now,
 )
-from skills._lib.state_vector import StateVector
+from skills._lib.core.state_vector import StateVector
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 """Tests for skills/_lib/defaults.py — built-in DEFAULTS config & get_defaults() helper."""
 import pytest
-from skills._lib.defaults import DEFAULTS, get_defaults
+from skills._lib.core.defaults import DEFAULTS, get_defaults
 
 
 def test_defaults_has_required_sections():

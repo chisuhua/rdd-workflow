@@ -12,7 +12,7 @@ from pathlib import Path
 from skills._lib.triggers import Trigger, TriggerManager
 from skills._lib.trigger_registry import TriggerRegistry
 from skills._lib.rate_limiter import TokenBucket
-from skills._lib.event_queue import EventQueue
+from skills._lib.loop.event_queue import EventQueue
 from skills._lib.schedulers.cron_scheduler import validate_cron, next_fire_time
 
 
