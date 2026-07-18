@@ -51,13 +51,15 @@ skills/                       # Markdown skills (13 个 .md) + loop_engine.py �
   spec-workflow-writing-plans.md  # 内置 TDD 5 步 plan 生成器 (v1.0, 自包含)
   loop_engine.py              # v2.0 Loop 引擎入口 (在 skills/ 根, 不在 _lib/)
   _lib/                       # 共享 bash + Python (v2.0.8; Phase 3 重组)
-    state.sh                  # 共享工具（6 个函数; 4+ 消费者）
-    worktree.sh / archive.sh  # bash 工具
+    state.sh / worktree.sh / archive.sh / status_helpers.sh / discover-arch-artifacts.sh  # bash 工具 (5 files)
     gate.py / iteration.py / roadmap_state.py  # 跨切核心模块
-    config.py / session.py / session_manager.py  # 其余顶层模块
-    core/                     # 运行时内核 (6 files): event_log, event_types, state_vector, defaults, lock, atomic_write
-    loop/                     # v2.0 loop 引擎 (15 files): actions, detectors, agents, memory, tribunal, etc.
-    schedulers/ / schemas/ / plugins/  # 已有子目录结构
+    config.py / session.py / session_base.py / session_manager.py  # session/config 模块
+    arch_quality_gate.py / change_alignment.py / dependency_scheduler.py / event_context.py / rate_limiter.py / roadmap_sprint.py / trigger_engine.py / trigger_registry.py / triggers.py / validate_delta_targets.py / validate_report.py  # 其余顶层模块 (11 .py)
+    core/                     # 运行时内核 (6 .py): event_log, event_types, state_vector, defaults, lock, atomic_write
+    loop/                     # v2.0 loop 引擎 (15 .py): actions, detectors, agents, memory, tribunal, sanitizer, etc.
+    schedulers/               # 调度器 (4 .py): cron_scheduler, fs_watcher, git_hook, webhook_receiver
+    schemas/                  # JSON schema (7 files): arch_handoff, deps_analysis, feature_view, iteration, sessions, state_vector, trigger
+    plugins/                  # 插件加载器 (README.md)
 tests/
   test_helper.bash            # load_lib 解析器 + 断言辅助
   conftest.py                 # 把项目根加进 sys.path (让 `import skills._lib.* / core.* / loop.*` 可解析)
