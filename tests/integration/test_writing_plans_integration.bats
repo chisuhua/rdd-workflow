@@ -199,13 +199,13 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 }
 
 @test "SKIP_PROMETHEUS_PLANNING=yes escape hatch still works in actions.py" {
-    local f="$REPO_ROOT_ORIGIN/skills/_lib/actions.py"
+    local f="$REPO_ROOT_ORIGIN/skills/_lib/loop/actions.py"
     grep -q 'SKIP_PROMETHEUS_PLANNING' "$f"
     grep -qE 'Placeholder|placeholder' "$f"
 }
 
 @test "actions.py no longer references PROMETHEUS_PLANNING_MODE env var (v2.0 simplified)" {
-    local f="$REPO_ROOT_ORIGIN/skills/_lib/actions.py"
+    local f="$REPO_ROOT_ORIGIN/skills/_lib/loop/actions.py"
     ! grep -qE 'PROMETHEUS_PLANNING_MODE.*builtin|PROMETHEUS_PLANNING_MODE.*external|PROMETHEUS_PLANNING_MODE.*none' "$f" || {
         echo "actions.py still has PROMETHEUS_PLANNING_MODE branches"
         return 1
@@ -213,7 +213,7 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 }
 
 @test "actions.py now references spec-workflow/writing-plans (v2.0 self-contained)" {
-    local f="$REPO_ROOT_ORIGIN/skills/_lib/actions.py"
+    local f="$REPO_ROOT_ORIGIN/skills/_lib/loop/actions.py"
     grep -q 'spec-workflow/writing-plans' "$f"
 }
 

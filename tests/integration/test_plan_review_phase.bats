@@ -39,8 +39,8 @@ setup() {
 }
 
 @test "plan_review: human_nodes.py registers plan.review_validation node" {
-    [ -f "skills/_lib/human_nodes.py" ]
-    grep -q '"plan.review_validation"' "skills/_lib/human_nodes.py"
+    [ -f "skills/_lib/loop/human_nodes.py" ]
+    grep -q '"plan.review_validation"' "skills/_lib/loop/human_nodes.py"
 }
 
 @test "plan_review: validate_report view module exists with dataclass" {
