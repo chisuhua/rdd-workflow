@@ -50,18 +50,17 @@ skills/                       # Markdown skills (13 个 .md) + loop_engine.py �
   propose.md / execute.md / status.md / roadmap.md / deps.md / feature.md / rddf-session.md
   spec-workflow-writing-plans.md  # 内置 TDD 5 步 plan 生成器 (v1.0, 自包含)
   loop_engine.py              # v2.0 Loop 引擎入口 (在 skills/ 根, 不在 _lib/)
-  _lib/                       # 共享 bash + Python (37 个文件, v2.0.1)
-    state.sh                  # ⚠️ STUB (无 production 调用方, 消费者改用 jq/python3 inline)
+  _lib/                       # 共享 bash + Python (v2.0.8; Phase 3 重组)
+    state.sh                  # 共享工具（6 个函数; 4+ 消费者）
     worktree.sh / archive.sh  # bash 工具
-    state_vector.py / event_log.py / gate.py / tribunal.py / memory.py / session_manager.py
-    agents.py / detectors.py / actions.py / sanitizer.py / ...
-    iteration.py              # v2.0.1 NEW: 当前 sprint 状态 (.rddf/state/iteration.json)
-    deps_output.py            # v2.0.1 NEW: 结构化 deps 输出 (.rddf/state/deps-analysis.json)
-    roadmap_sprint.py         # v2.0.1 NEW: roadmap.md AUTO-SPRINT sentinel 渲染器
-    schemas/                  # JSON Schema for state files (含 iteration_schema.json, deps_analysis_schema.json)
+    gate.py / iteration.py / roadmap_state.py  # 跨切核心模块
+    config.py / session.py / session_manager.py  # 其余顶层模块
+    core/                     # 运行时内核 (6 files): event_log, event_types, state_vector, defaults, lock, atomic_write
+    loop/                     # v2.0 loop 引擎 (15 files): actions, detectors, agents, memory, tribunal, etc.
+    schedulers/ / schemas/ / plugins/  # 已有子目录结构
 tests/
   test_helper.bash            # load_lib 解析器 + 断言辅助
-  conftest.py                 # 把项目根加进 sys.path (让 `import skills._lib.*` 可解析)
+  conftest.py                 # 把项目根加进 sys.path (让 `import skills._lib.* / core.* / loop.*` 可解析)
   smoke.bats                  # 基础设施冒烟 (v2.0.3 起: 动态 glob + v1.x regression, 覆盖全部 13 skill)
   unit/                       # ~46 个 Python 单元测试 (含 v2.0.1 新增: test_iteration, test_roadmap_sprint, test_deps_output, test_rddf_session, test_arch_handoff_schema, test_discover_arch_artifacts, test_arch_quality_gate, test_change_alignment, test_iteration_concurrency 等)
   integration/                # ~58 个集成测试 (49 .bats + 9 .py; 含 v2.0.1 新增: test_iteration_lifecycle, test_iteration_archive_hook,
@@ -387,7 +386,7 @@ skills/*.md 行数 (累计):
 9. **Loop 引擎 max_iterations: 100, max_retries: 3** — 配置在 `interaction` 模式配置中
 10. **proposal-suggestions.md 格式为 JSON** — 用 `json.load()` 解析, 不用 grep (避免 description 字段误匹配)
 11. **`npm test` 不跑 Python** — 改完 Python 必须手动 `pytest tests/`, CI 才会捕获
-12. **`skills/_lib/state.sh` 是 stub** — 无 production 调用方, 需要时直接用 `jq` / `python3` inline
+12. **`skills/_lib/state.sh` 是共享工具** — 有 6 个活跃函数（safe_python_json, read_suggestions, write_suggestions, count_pending_suggestions 等），被 propose/roadmap/status/plan_queue_overview 调用，不是 STUB
 13. **`.bats-tmp/` 在仓库根自动生成** — gitignored, 不要手动 commit
 14. **`package.json` 是 npm manifest 而非运行时入口** — `"main": "skills/INSTALL.md"`, 用作 skill 分发元数据
 15. **`check_stale_workflow_state` 是 read-only sentinel** — 不写文件、不递归。`scan_state` 在 priority 9/10 default fallback 调用它;若函数挂死,scanner 也会挂死(历史教训:line 220 self-call bug 修复于 2026-07-15 fix-scan-state-recursion)。

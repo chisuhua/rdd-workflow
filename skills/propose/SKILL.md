@@ -504,7 +504,7 @@ fi
 
 # Spec-validation gate (add-spec-validation-gates)
 if [ -f "$PROJECT_ROOT/openspec/changes/<name>/.openspec.yaml" ]; then
-    if ! python3 "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/validate_baseline.py" "<name>" >/dev/null 2>&1; then
+    if ! python3 "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/validate_baseline.py" "<name>" >/dev/null 2>&1; then
         echo "❌ Baseline validation failed for <name>"
         continue
     fi

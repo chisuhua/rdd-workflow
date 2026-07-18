@@ -2,111 +2,147 @@
 
 > **前置条件**: `skills-reorg-phase3-core` 完成,目录结构稳定
 
-## Task 1: 提取 guide-ship.md 剩余内联代码
+## Task 0: 修复 Phase 3 遗留断裂路径（P0）
 
-### 1.1: Phase 5 loop check → scripts/ship_done.sh
+### 0.1: plan_queue_overview.sh state.sh 路径
+```bash
+# skills/guide-plan/scripts/plan_queue_overview.sh:15
+# OLD: source "$(dirname "${BASH_SOURCE[0]:-$0}")/state.sh"
+# NEW: source "$(dirname "${BASH_SOURCE[0]:-$0}")/../../_lib/state.sh"
+```
 
-L650+ 的 `REMAINING`/`REMAINING_WT` 计算 + 双菜单提取到 `scripts/ship_done.sh::check_remaining_work`。
+### 0.2: propose SKILL.md validate_baseline.py 路径
+```bash
+# skills/propose/SKILL.md:507
+# OLD: ../_lib/validate_baseline.py → NEW: scripts/validate_baseline.py
+```
 
-### 1.2: Phase 2 分离执行 echo → scripts/ship_execute_echo.sh
+### 0.3: guide-ship SKILL.md $REPO_ROOT 替换
+```bash
+# L122: $REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh
+# L426: $REPO_ROOT/skills/guide-ship/scripts/ship_review.sh
+# L482: $REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh
+# → 统一为 $(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_*.sh
+```
 
-L192-215 和 L339-356 两处相似的分离执行指引提取为 `print_detached_execute_instructions <mode> <name>`。
+## Task 1: 提取共享 case handler
 
-### 1.3: Phase 4 清理 → scripts/ship_cleanup.sh
+### 1.1: 创建 scripts/_case_handler.sh
 
-L610+ 的 worktree + branch 批量清理逻辑提取。
+从 guide-ship 的 case handler 提取 `handle_common_cases()` 函数（q/quit/exit/r/refresh/?/help/* 的统一处理）。
+
+```bash
+# skills/guide-ship/scripts/_case_handler.sh
+handle_common_cases() {
+  local choice="$1"
+  case "$choice" in
+    q|quit|exit) echo "👋 已退出" && return 1 ;;
+    r|refresh) return 2 ;;
+    '?') return 3 ;;
+    help) return 4 ;;
+    *) echo "❓ 未知选择: $choice" && return 0 ;;
+  esac
+}
+```
+
+### 1.2: 更新各 SKILL.md 中的 case handler
+
+用 `source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/_case_handler.sh"` + `handle_common_cases "$choice"` 替换 guide-arch/guide-plan/guide-ship/status/roadmap/deps 中的重复 case 块。
+
+**验证**: `bats tests/smoke.bats`
+
+## Task 2: 提取 guide-ship.md 剩余代码
+
+### 2.1: Phase 5 loop check → scripts/ship_done.sh
+
+L650+ `REMAINING`/`REMAINING_WT` 计算 + 双菜单（worktree/轻量模式完成检查）。
+
+### 2.2: Phase 4 清理 → scripts/ship_cleanup.sh
+
+L610+ worktree + branch 批量清理 + `git stash` 提示。
 
 **验证**: `bats tests/integration/test_guide_ship_skill.bats tests/integration/test_ship_*.bats`
 
-## Task 2: 提取其他 SKILL.md 剩余内联代码
+## Task 3: 提取其他 SKILL.md 代码
 
-| SKILL.md | 候选块 | 目标 helper |
-|----------|--------|------------|
-| guide-arch | roadmap init/status/gate-report 交互模板 | `scripts/arch_roadmap_menu.sh` |
-| guide-plan | propose/create 菜单交互 | `scripts/plan_propose_menu.sh` |
-| status | 归档交互 | `scripts/status_archive_menu.sh` |
+| SKILL.md | 候选块 | 目标 helper | 节省 |
+|----------|--------|------------|------|
+| guide-arch | roadmap init/status/gate-report 交互 | `scripts/arch_roadmap_menu.sh` | ~50 |
+| guide-plan | propose/create 菜单交互 | `scripts/plan_propose_menu.sh` | ~40 |
+| status | 归档交互 | `scripts/status_archive_menu.sh` | ~30 |
 
 每提取一个块 → 运行对应 bats 测试验证。
 
-## Task 3: 创建 references/ LLM 参考文档
+## Task 4: 提取 ACTIVE_CHANGES 表渲染
 
-### 3.1: guide-arch/references/adr-format.md
+guide-arch/guide-plan/guide-ship 都有 ACTIVE_CHANGES 表渲染逻辑（openspec status --json + jq 格式化 + 列对齐）。提取为 `scripts/render_active_changes.sh::render_active_changes_table()`。
 
-从 `docs/adr/ADR-0000-template.md` 摘取 ADR frontmatter 模板 + 命名约定。
+**验证**: `bats tests/smoke.bats`
 
-### 3.2: guide-ship/references/worktree-guide.md
+## Task 5: 修正 state.sh STUB 标签
 
-从 `AGENTS.md` 的 "分支与 Worktree" 节 + `docs/adr/ADR-0010-*.md` 摘取 worktree 操作指引。
+### 5.1: 更新 AGENTS.md
 
-### 3.3: propose/references/proposal-format.md
+将 `state.sh` 的标签从 "STUB (无 production 调用方)" 改为 "共享工具（6 个函数，4+ 消费者）"。
 
-从 `docs/proposal-suggestions-format.md` 摘取 JSON 字段说明。
+### 5.2: 扫描残留引用
+```bash
+grep -rn "_lib/" skills/*/SKILL.md | grep -v "scripts/" | grep -v "../_lib/"
+```
+确认无残留的旧路径。
 
-### 3.4: deps/references/deps-analysis-guide.md
+## Task 6: 更新文档
 
-从 `docs/adr/ADR-0014-*.md` 摘取依赖分析规则。
-
-### 3.5: execute/references/tdd-5-steps.md
-
-从 `skills/spec-workflow-writing-plans/SKILL.md` 摘取 TDD 5 步结构。
-
-## Task 4: 更新文档
-
-### 4.1: 更新 CHANGELOG.md
+### 6.1: CHANGELOG.md
 
 新增 v2.0.8 section:
 ```markdown
 ## v2.0.8 — skills/ directory reorganization
 
-### Phase 1: Per-skill subdirectory skeleton
-### Phase 2: Single-skill helper migration (45 files)
-### Phase 3: Core infrastructure consolidation
-### Phase 4: SKILL.md thinning + references/
+### Phase 1: Per-skill subdirectory skeleton (12 skills, 53 source paths)
+### Phase 2: Single-skill helper migration (46 files to per-skill scripts/)
+### Phase 3: _lib/ reorganization into core/ + loop/ subdirectories
+### Phase 4: SKILL.md thinning (shared case handler, menu extraction, broken path fixes)
 ```
 
-### 4.2: 更新 AGENTS.md
+### 6.2: AGENTS.md
 
-更新目录结构描述以反映新布局（`skills/<name>/SKILL.md` + `scripts/` + `references/`）。
+更新目录结构描述以反映 `skills/<name>/SKILL.md` + `scripts/` layout。
 
-### 4.3: 更新 tests/README.md
+### 6.3: tests/README.md
 
 更新技能覆盖表引用路径。
 
-## Task 5: 清理
-
-### 5.1: 确认 state.sh STUB 状态
+## Task 7: 全量验证
 
 ```bash
-grep -rn "state\.sh" skills/ --include="*.sh" | grep -v "^Binary"
-```
-确认 `plan_queue_overview.sh:15` 是唯一引用点。如确实未调用,添加 TODO 注释标记为候选删除（`tech-debt-cleanup`）。
-
-### 5.2: 扫描残留的 `_lib/` 旧路径引用
-
-```bash
-grep -r "_lib/" skills/*/SKILL.md | grep -v "scripts/" | grep -v "../_lib/"
-```
-确认无残留的旧路径。
-
-## Task 6: 全量验证
-
-```bash
+# 7.1: 快速冒烟
 bats tests/smoke.bats
+
+# 7.2: 全量 bats
 bats tests/
+
+# 7.3: 全量 Python
 python3 -m pytest tests/unit/ tests/integration/ -q --tb=short
+
+# 7.4: 线数检查
+find skills -name "SKILL.md" | while read f; do echo "$(wc -l < "$f") $f"; done | sort -rn
+# 预期: 前 7 个文件 ≤ 500 行（propose/deps 可放宽至 500），其余 ≤ 300
 ```
 
-**预期**: 0 failures, 全部现有测试通过。
+**预期**: 0 failures。
 
-## Task 7: commit
+## Task 8: commit
 
 ```bash
-git add skills/*/scripts/ skills/*/references/ skills/*/SKILL.md CHANGELOG.md AGENTS.md tests/README.md
-git commit -m "refactor(skills): Phase 4 — thin SKILL.md + add references/
+git add skills/*/scripts/ skills/*/SKILL.md AGENTS.md CHANGELOG.md tests/README.md
+git commit -m "refactor(skills): Phase 4 — thin SKILL.md + fix broken paths
 
-- Extract remaining inline code blocks from guide-ship/guide-arch/guide-plan/status
-- Add references/ LLM context docs for key skills (adr-format, worktree-guide, etc.)
-- Update CHANGELOG.md (v2.0.8), AGENTS.md, tests/README.md with new layout
-- All SKILL.md files now target ≤ 300 lines
-- skills/ layout matches PKGM-Wiki pattern: SKILL.md + scripts/ + references/"
-```
+- Fix 3 Phase-3 broken paths (plan_queue_overview state.sh, propose validate_baseline, guide-ship \$REPO_ROOT)
+- Extract shared case handler (_case_handler.sh), eliminating 6-8 duplicate case blocks
+- Extract menu scripts: arch_roadmap_menu, plan_propose_menu, status_archive_menu
+- Extract guide-ship: ship_done, ship_cleanup helpers
+- Extract ACTIVE_CHANGES table renderer (shared across arch/plan/ship)
+- Correct state.sh label from STUB to shared utility in AGENTS.md
+- SKILL.md target ≤450 lines (down from ~601 average)
+- Update CHANGELOG (v2.0.8), AGENTS.md, tests/README.md"

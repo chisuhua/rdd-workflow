@@ -119,7 +119,7 @@ handle_invalid_choice "$choice"
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 CHANGE_NAME="${CHANGE_NAME:-fix-ns-pollution}"  # default for documentation
 
-source "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_plan.sh"
 
 # 1) COMMIT GATE
 check_artifacts_committed "$PROJECT_ROOT" "$CHANGE_NAME" || {
@@ -423,7 +423,7 @@ i. 手动输入新 change 名称
 
 ```bash
 # === Phase 2.5: thin orchestrator — heavy lifting in scripts/ship_review.sh ===
-source "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_review.sh"
 handle_review_action "$PROJECT_ROOT" "$CHANGE_NAME" "$WT_PATH" "$choice"
 ```
 
@@ -479,7 +479,7 @@ handle_invalid_choice "$choice"
 
 ```bash
 # === Phase 3: thin orchestrator — heavy lifting in scripts/ship_archive.sh ===
-source "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_archive.sh"
 
 ARCHIVE_MODE=$(detect_archive_mode "$PROJECT_ROOT" "$CHANGE_NAME")
 echo "🔍 归档模式: $ARCHIVE_MODE"

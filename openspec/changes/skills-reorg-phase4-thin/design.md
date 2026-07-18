@@ -1,27 +1,37 @@
 # Design: skills-reorg-phase4-thin
 
-## Decision 1: 提取优先级
+## Decision 1: 现实目标 ≤450 行
 
-遵循 Round A/B/C 的成熟模式：
+提案原先声称 "≤300 行"，但当前前 7 个文件平均 ~601 行，4B 提取仅能移除 ~320 行，剩余 ~281 行差距。且 propose(686) 的 46% 和 deps(636) 的 59% 是纯 markdown 流程说明，无法提取。
+
+修正后的现实目标：≤450 行（降低 ~25%），deps(636) 和 propose(686) 因 markdown 比重高可放宽至 ≤500。
+
+## Decision 2: 提取优先级
+
 1. `> 20 行` 且 `> 80% 代码` 的内联块 → 必提取
-2. `> 10 行` 且 `> 50% 代码` 的内联块 → 建议提取
-3. 纯 markdown 指令/表格 → 保留在 SKILL.md 中
+2. 重复 ≥3 次且 ≥5 行的模式 → 提取为共享 helper（如 case handler）
+3. 纯 markdown 指令/表格/Mermaid 图 → 保留在 SKILL.md 中
 
-## Decision 2: references/ 内容来源
+## Decision 3: 共享 case handler 提取
 
-从 `docs/` 中摘取与具体 skill 强相关的文档片段，而非复制整个文件。例如：
-- `skills/guide-arch/references/adr-format.md` ← `docs/adr/ADR-0000-template.md` 的结构说明部分
-- `skills/guide-ship/references/worktree-guide.md` ← `AGENTS.md` 的 worktree 相关约定
+6-8 个 SKILL.md 文件重复 `q|quit|exit|r|refresh|?|help|*` 交互菜单，提取为 `skills/guide-ship/scripts/_case_handler.sh` 的 `handle_common_cases()` 函数（因 guide-ship 是使用频率最高的文件），其他文件 source 此函数。
 
-## Decision 3: state.sh STUB 处理
+## Decision 4: state.sh 不是 STUB
 
-AGENTS.md 称 `state.sh` 为 STUB（"无 production 调用方"），但实际代码显示 `plan_queue_overview.sh:15` source 了它。Phase 4 中需要确认该函数是否实际被调用；若确实未调用，可考虑删除（但不在本 change 范围 — 属于 `tech-debt-cleanup`）。
+AGENTS.md 的 "STUB (无 production 调用方)" 标签错误。`state.sh` 有 6 个活跃函数：
+- `safe_python_json`, `safe_python_yaml` — 安全解析
+- `read_suggestions`, `write_suggestions` — proposal suggestions 读写
+- `count_pending_suggestions` — 待处理建议计数
 
-## Decision 4: 文档更新
+消费者：propose、roadmap、status、plan_queue_overview。Phase 4 修正 AGENTS.md 标签为 `共享工具`。
 
-- `CHANGELOG.md`: 新增 v2.0.8 section 记录四阶段重构
-- `AGENTS.md`: 更新目录结构描述以反映新布局
-- `tests/README.md`: 更新技能覆盖表引用路径
+## Decision 5: 不创建 references/ 目录
+
+OpenCode skill 系统以 `SKILL.md` 为主文档，`references/` 无消费机制。LLM agent 阅读 SKILL.md 作为主要指令来源，不会自动加载 references/。删除原提案的 4B references/ 计划。
+
+## Decision 6: $REPO_ROOT 统一化
+
+Phase 3 后 guide-ship/SKILL.md 中 3 处 `$REPO_ROOT` 统一为 `$(dirname "${BASH_SOURCE[0]:-$0}")` 模式（与同一文件中其他 13 处 source 行一致）。
 
 ## 回滚方案
 

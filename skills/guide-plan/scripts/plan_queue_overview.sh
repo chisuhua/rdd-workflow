@@ -12,7 +12,7 @@ show_queue_overview() {
 
   echo ""
   echo "📊 当前队列状态:"
-  source "$(dirname "${BASH_SOURCE[0]:-$0}")/state.sh"
+  source "$(dirname "${BASH_SOURCE[0]:-$0}")/../../_lib/state.sh"
   local PENDING_SUGGESTIONS_COUNT
   PENDING_SUGGESTIONS_COUNT=$(count_pending_suggestions "$PROJECT_ROOT")
   PY_PROJECT_ROOT="$PROJECT_ROOT" PENDING_SUGGESTIONS_COUNT="$PENDING_SUGGESTIONS_COUNT" python3 <<'PYEOF' 2>/dev/null

@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased] — v2.0.8
+
+### Changed (skills/ directory reorganization)
+
+**Phase 1** — Per-skill subdirectory skeleton: 12 skills moved to `skills/<name>/SKILL.md`, 53 source paths resolved.
+
+**Phase 2** — Single-skill helper migration: 46 single-skill helpers moved to per-skill `scripts/` directories.
+
+**Phase 3** — `_lib/` reorganization: runtime kernel (6 files) → `_lib/core/`, v2.0 loop engine (15 files) → `_lib/loop/`. Cross-cutting modules stay at top level.
+
+**Phase 4** — Broken path fixes + docs: 3 P0 path fixes (plan_queue_overview state.sh, propose validate_baseline, guide-ship $REPO_ROOT), AGENTS.md state.sh STUB label corrected, directory structure docs updated.
+
 ## [Unreleased] — v2.1
 
 ### Added (ADR-0016: Arch Artifact Discovery Contract)
