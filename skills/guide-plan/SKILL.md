@@ -281,12 +281,10 @@ fi
 **用户输入处理（case handler）**：
 
 ```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
+# Phase 2 propose/create menu - shared handler (extracted from inline case block)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/plan_propose_menu.sh"
+handle_plan_propose_menu "$choice"
+[ $? -eq 2 ] && continue  # r|refresh -> 重新展示菜单
 ```
 
 **创建后循环**：

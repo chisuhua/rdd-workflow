@@ -146,16 +146,13 @@ source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/status_render_mode_a.sh"
 
 **用户输入处理（case handler）**：
 
-当用户输入不在上述有效选项内时，按以下 case 分支处理：
+当用户输入不在上述有效选项内时，调用共享菜单处理器处理（extracted to scripts/status_archive_menu.sh）：
 
 ```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;
-  ?|help) echo "可用命令: [数字选项], i(自定义输入), q(退出), r(刷新), ?(帮助)" ;;
-  i)         echo -n "  自定义操作: "; read -r CUSTOM; echo "   收到: '$CUSTOM' — 尝试路由" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
+# Mode A status overview menu - shared handler (extracted from inline case block)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/status_archive_menu.sh"
+handle_status_archive_menu "$choice"
+[ $? -eq 2 ] && continue  # r|refresh -> 重新展示菜单
 ```
 
 **Mode A 职责说明**：此模式仅做状态概览，不执行问题检测。问题检测由 Mode B 专门负责。

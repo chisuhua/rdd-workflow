@@ -120,15 +120,13 @@ i. 其他输入
 
 **用户输入处理（case handler）**：
 
-当用户输入不在上述有效选项内时，按以下 case 分支处理：
+当用户输入不在上述有效选项内时，调用共享菜单处理器处理（extracted to scripts/arch_roadmap_menu.sh）：
 
 ```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
+# Phase 1 setup menu - shared handler (extracted from inline case block)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_roadmap_menu.sh"
+handle_arch_menu "$choice"
+[ $? -eq 2 ] && continue  # r|refresh -> 重新展示菜单
 ```
 
 **步骤 2：进入对应阶段**
@@ -198,12 +196,10 @@ fi
 **用户输入处理（case handler）**：
 
 ```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
+# Phase 2 adr-create menu - shared handler (extracted from inline case block)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_roadmap_menu.sh"
+handle_arch_menu "$choice"
+[ $? -eq 2 ] && continue  # r|refresh -> 重新展示菜单
 ```
 
 **选项 1（创建新 ADR）执行内容**：
@@ -330,12 +326,10 @@ fi
 **用户输入处理（case handler）**：
 
 ```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
+# Phase 3 architecture menu - shared handler (extracted from inline case block)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_roadmap_menu.sh"
+handle_arch_menu "$choice"
+[ $? -eq 2 ] && continue  # r|refresh -> 重新展示菜单
 ```
 
 **选项 1（生成新差距分析）执行内容**：
@@ -455,12 +449,10 @@ fi
 **用户输入处理（case handler）**：
 
 ```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
+# Phase 4 roadmap-define menu - shared handler (extracted from inline case block)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_roadmap_menu.sh"
+handle_arch_menu "$choice"
+[ $? -eq 2 ] && continue  # r|refresh -> 重新展示菜单
 ```
 
 **选项 1（编辑路线图）执行内容**：

@@ -60,7 +60,7 @@ npm test
 Each skill has a dedicated integration test file that locks its
 frontmatter, dependency declarations, and command/section surface.
 Together with the cross-skill consistency check, these guard against
-metadata drift between `package.json`, `skills/*.md`, and `smoke.bats`.
+metadata drift between `package.json`, `skills/<name>/SKILL.md`, and `smoke.bats`.`
 
 | Skill            | Test file                                                  |
 |------------------|------------------------------------------------------------|

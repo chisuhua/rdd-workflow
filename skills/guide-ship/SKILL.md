@@ -569,31 +569,10 @@ handle_invalid_choice "$choice"
 **选项 2 执行**：
 
 ```bash
-# 清理所有 worktree
-mapfile -t wt_list < <(git worktree list --porcelain | awk '/^worktree / {path=$2} /^branch refs\/heads\/openspec\// {print path}')
-for wt in "${wt_list[@]}"; do
-    git worktree remove "$wt" 2>/dev/null || true
-done
-
-# 清理所有 openspec/* branches
-# 策略 (P2-9): 默认 -d 安全删除；显示最后提交供人审查；未合并时需显式 FORCE_BRANCH_DELETE=yes 才允许 -D
-git branch | grep "openspec/" | while read branch; do
-    LAST_COMMIT=$(git log -1 --format="%h %s" "$branch" 2>/dev/null)
-    if git branch -d "$branch" 2>/dev/null; then
-        echo "✅ $branch deleted (last: $LAST_COMMIT)"
-    else
-        echo "⚠️  $branch 有未合并的提交"
-        echo "   最后提交: $LAST_COMMIT"
-        if [ "${FORCE_BRANCH_DELETE:-no}" = "yes" ]; then
-            git branch -D "$branch" 2>/dev/null || true
-            echo "   强制删除(因 FORCE_BRANCH_DELETE=yes)"
-        else
-            echo "   跳过(设置 FORCE_BRANCH_DELETE=yes 强制删除)"
-        fi
-    fi
-done
-
-echo "✅ 所有 worktree 和 openspec/* branches 已清理"
+# === Phase 4: thin orchestrator - heavy lifting in scripts/ship_cleanup.sh ===
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_cleanup.sh"
+cleanup_worktrees_and_branches "$PROJECT_ROOT"
 ```
 
 ---
@@ -615,31 +594,9 @@ rddf_session_hook_close stage_ship ship-done guide-ship
 **Loop check:**
 
 ```bash
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-
-# Count remaining unprocessed changes
-REMAINING=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l)
-REMAINING_WT=$(git worktree list 2>/dev/null | awk '$3 ~ /^openspec\// {print $1}' | wc -l)
-
-if [ "$REMAINING_WT" -gt 0 ] || [ "$REMAINING" -gt 0 ]; then
-    echo "📋 还有 $REMAINING_WT 个 worktree 在跑,$REMAINING 个未处理 change"
-    echo ""
-    echo "请选择:"
-    echo "1. 继续处理 (skill_use(\"guide-ship\")) — 还有 worktree 要处理"
-    echo "2. 回到 spec 端 (skill_use(\"guide-arch\") 或 skill_use(\"guide-plan\")) — 创建更多 changes"
-    echo "3. 本次 session 结束 — 退出 ship-done,稍后继续"
-    echo "4. 项目完成 — 不再做任何 change(此项目归档)"
-    echo "i. 其他输入"
-else
-    echo "✅ 所有 changes 已处理完毕"
-    echo ""
-    echo "请选择:"
-    echo "1. 继续处理 (skill_use(\"guide-ship\")) — 还有 worktree 要处理"
-    echo "2. 回到 spec 端 (skill_use(\"guide-arch\") 或 skill_use(\"guide-plan\")) — 创建更多 changes"
-    echo "3. 本次 session 结束 — 退出 ship-done,稍后继续"
-    echo "4. 项目完成 — 不再做任何 change(此项目归档)"
-    echo "i. 其他输入"
-fi
+# Phase 5 loop check - extracted to scripts/ship_done.sh
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_done.sh"
+check_remaining_work "$PROJECT_ROOT"
 ```
 
 **输入处理**：
