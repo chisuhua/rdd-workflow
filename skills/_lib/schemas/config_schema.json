@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://spec-workflow.local/schemas/config_schema.json",
+  "title": "spec-workflow Configuration Schema",
+  "description": "JSON Schema for the merged configuration produced by ConfigParser.parse(). Validates the structure of interaction, loop, and triggers sections. All fields are optional - validation only runs on fields that are present. This complements the existing _validate() function in config.py (which checks mode, max_iterations, max_retries) with broader structural validation.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "interaction": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["loop", "menu", "hybrid"],
+          "description": "Interaction mode: loop (autonomous), menu (manual), hybrid (mixed)"
+        }
+      }
+    },
+    "loop": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "max_iterations": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum iterations before the loop halts (must be >= 1)"
+        },
+        "max_retries": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum retries on failure per iteration (must be >= 0)"
+        },
+        "oscillation_window": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of recent states examined when detecting oscillation (must be >= 1)"
+        },
+        "oscillation_distinct_threshold": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of distinct states within the window that indicates oscillation (must be >= 1)"
+        },
+        "circuit_breaker_threshold": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Consecutive failure count that trips the circuit breaker (must be >= 1)"
+        },
+        "action_timeout_seconds": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Per-action timeout in seconds (must be >= 1)"
+        }
+      }
+    },
+    "triggers": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Master switch for the triggers subsystem"
+        },
+        "webhook_port": {
+          "type": "integer",
+          "description": "TCP port for the webhook HTTP listener"
+        },
+        "fs_watch_interval": {
+          "type": "number",
+          "description": "Filesystem polling interval in seconds"
+        },
+        "git_poll_interval": {
+          "type": "number",
+          "description": "Git repository polling interval in seconds"
+        },
+        "safety": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "max_concurrent_fires": {
+              "type": "integer",
+              "description": "Maximum number of triggers firing concurrently"
+            },
+            "crash_recovery": {
+              "type": "boolean",
+              "description": "Whether to recover trigger state after a crash"
+            },
+            "trigger_off_override": {
+              "type": "boolean",
+              "description": "When true, the --trigger-off flag disables all triggers"
+            }
+          }
+        }
+      }
+    }
+  }
+}
