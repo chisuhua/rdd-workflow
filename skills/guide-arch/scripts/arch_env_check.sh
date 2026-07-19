@@ -65,17 +65,9 @@ run_arch_env_check() {
       echo "⚠️  构建目录不存在 ($BUILD_DIR/, $PROJECT_TYPE)"
   fi
 
-  # 5. arch 阶段专用检查
-  local ADR_COUNT ROADMAP_EXISTS GAP_COUNT ACTIVE_CHANGES
-  ADR_COUNT=$(ls -d "$PROJECT_ROOT/docs/adr/ADR-0"*.md 2>/dev/null | wc -l)
-  ROADMAP_EXISTS=$([ -f "$PROJECT_ROOT/roadmap.md" ] && echo "yes" || echo "no")
-  GAP_COUNT=$(ls "$PROJECT_ROOT/docs/architecture/"*-gap-analysis.md 2>/dev/null | wc -l)
-  ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l)
-
-  echo "📋 现有 ADR: $ADR_COUNT"
-  echo "📋 Roadmap: $ROADMAP_EXISTS"
-  echo "📋 架构差距分析: $GAP_COUNT"
-  echo "📋 活动 changes: $ACTIVE_CHANGES"
+  # 5. arch 阶段专用检查 — 先发现路径，再用于计数 (ADR-0016)
+  local DISCOVERED_ADR_DIR DISCOVERED_ADR_PATTERN DISCOVERED_ROADMAP_PATH DISCOVERED_ARCHITECTURE_DIR
+  local DISCOVERED_ADR_DIR_FOUND DISCOVERED_ROADMAP_FOUND DISCOVERED_ARCH_FOUND
 
   # === Phase 1 Step 5: 工件发现 (ADR-0016 Layer 1) ===
   if [ -f "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh" ]; then
@@ -84,12 +76,6 @@ run_arch_env_check() {
       discover_roadmap          >/dev/null
       discover_architecture_dir >/dev/null
       discover_adr_pattern      >/dev/null
-      echo ""
-      echo "🔍 工件发现 (ADR-0016):"
-      echo "   ADR 目录:      $DISCOVERED_ADR_DIR ($DISCOVERED_ADR_DIR_FOUND)"
-      echo "   ADR 模式:      $DISCOVERED_ADR_PATTERN"
-      echo "   Roadmap:       $DISCOVERED_ROADMAP_PATH ($DISCOVERED_ROADMAP_FOUND)"
-      echo "   Architecture:  $DISCOVERED_ARCHITECTURE_DIR ($DISCOVERED_ARCH_FOUND)"
   else
       DISCOVERED_ADR_DIR="docs/adr"
       DISCOVERED_ROADMAP_PATH="roadmap.md"
@@ -99,4 +85,22 @@ run_arch_env_check() {
       DISCOVERED_ROADMAP_FOUND="false"
       DISCOVERED_ARCH_FOUND="false"
   fi
+
+  local ADR_COUNT ROADMAP_EXISTS GAP_COUNT ACTIVE_CHANGES
+  ADR_COUNT=$(ls -d "$PROJECT_ROOT/$DISCOVERED_ADR_DIR/$DISCOVERED_ADR_PATTERN" 2>/dev/null | wc -l)
+  ROADMAP_EXISTS=$([ -f "$PROJECT_ROOT/$DISCOVERED_ROADMAP_PATH" ] && echo "yes" || echo "no")
+  GAP_COUNT=$(ls "$PROJECT_ROOT/$DISCOVERED_ARCHITECTURE_DIR/"*-gap-analysis.md 2>/dev/null | wc -l)
+  ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l)
+
+  echo "📋 现有 ADR: $ADR_COUNT"
+  echo "📋 Roadmap: $ROADMAP_EXISTS"
+  echo "📋 架构差距分析: $GAP_COUNT"
+  echo "📋 活动 changes: $ACTIVE_CHANGES"
+
+  echo ""
+  echo "🔍 工件发现 (ADR-0016):"
+  echo "   ADR 目录:      $DISCOVERED_ADR_DIR ($DISCOVERED_ADR_DIR_FOUND)"
+  echo "   ADR 模式:      $DISCOVERED_ADR_PATTERN"
+  echo "   Roadmap:       $DISCOVERED_ROADMAP_PATH ($DISCOVERED_ROADMAP_FOUND)"
+  echo "   Architecture:  $DISCOVERED_ARCHITECTURE_DIR ($DISCOVERED_ARCH_FOUND)"
 }

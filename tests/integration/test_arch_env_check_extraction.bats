@@ -71,16 +71,15 @@ REPLACED_RANGE="92,189p"
 }
 
 @test "run_arch_env_check_fallback_when_discover_missing" {
-  # Move discover script aside temporarily, run helper, verify fallback sets defaults
+  # Move discover script aside temporarily, run helper, verify fallback shows defaults
   local tmpdir
   tmpdir=$(mktemp -d)
   cp -r "$REPO_ROOT" "$tmpdir/repo"
   rm "$tmpdir/repo/skills/_lib/discover-arch-artifacts.sh"
   output=$(bash -c "cd '$tmpdir/repo' && source skills/guide-arch/scripts/arch_env_check.sh && run_arch_env_check" 2>&1)
   rm -rf "$tmpdir"
-  # Should NOT print "工件发现 (ADR-0016)" since the helper was missing
+  # Discover section always shown, using fallback defaults when helper missing
   echo "$output" | grep -q '现有 ADR'
-  if echo "$output" | grep -q '工件发现 (ADR-0016)'; then
-    return 1  # Should not be present
-  fi
+  echo "$output" | grep -q '工件发现 (ADR-0016)'
+  echo "$output" | grep -q 'docs/adr'
 }
