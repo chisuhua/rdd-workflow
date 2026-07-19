@@ -12,8 +12,8 @@ bats tests/smoke.bats                   # 快速冒烟 (7 个 smoke cases)
 bats tests/_lib/test_skill.bats         # skill.bash parser (8 cases)
 
 # Python 测试 — npm test 不会跑, 必须显式调用
-python3 -m pytest tests/unit/ -q --tb=short          # ~46 个 unit 文件 (含 v2.0.1 新增: test_iteration / test_roadmap_sprint / test_deps_output / test_rddf_session / test_arch_handoff_schema / test_discover_arch_artifacts / test_arch_quality_gate / test_change_alignment / test_iteration_concurrency 等)
-python3 -m pytest tests/integration/ -q --tb=short   # ~9 个 Python integration (.py, 含 loop / gate / phase_switch / iteration_lifecycle / iteration_archive_hook / guide_ship_iteration_hook / deps_analysis / hook_boundary / trigger_e2e)
+python3 -m pytest tests/unit/ -q --tb=short          # 57 个 unit 文件 (含 v2.0.1 新增: test_iteration / test_roadmap_sprint / test_deps_output / test_rddf_session / test_arch_handoff_schema / test_discover_arch_artifacts / test_arch_quality_gate / test_change_alignment / test_iteration_concurrency 等)
+python3 -m pytest tests/integration/ -q --tb=short   # 10 个 Python integration (.py, 含 loop / gate / phase_switch / iteration_lifecycle / iteration_archive_hook / guide_ship_iteration_hook / deps_analysis / hook_boundary / trigger_e2e)
 pip install -r requirements.txt                      # PyYAML, jsonschema, pytest
 ```
 
@@ -41,38 +41,46 @@ CI 在 `.github/workflows/test.yml`, 按序执行: 安装 deps → **断言质�
 ## 关键目录
 
 ```
-skills/                       # Markdown skills (13 个 .md) + loop_engine.py 在根目录
+skills/                       # Markdown skills (13 SKILL.md + INSTALL.md) + per-skill scripts/
   INSTALL.md                  # 第一入口 (v1.1.0)
-  guide.md                    # 推荐器
-  guide-arch.md               # arch 阶段 (v1.0)
-  guide-plan.md               # plan 阶段 (v1.0)
-  guide-ship.md               # ship 阶段 (v2.0) - 包含 v2.0.1 iteration.json hook (创建 worktree 后切 status=in_worktree)
-  propose.md / execute.md / status.md / roadmap.md / deps.md / feature.md / rddf-session.md
-  spec-workflow-writing-plans.md  # 内置 TDD 5 步 plan 生成器 (v1.0, 自包含)
-  loop_engine.py              # v2.0 Loop 引擎入口 (在 skills/ 根, 不在 _lib/)
+  guide/SKILL.md              # 推荐器
+  guide-arch/SKILL.md         # arch 阶段 (v2.0.8 Phase 2 重组)
+  guide-plan/SKILL.md         # plan 阶段
+  guide-ship/SKILL.md         # ship 阶段 (v2.0)
+  propose/SKILL.md / execute/SKILL.md / status/SKILL.md / roadmap/SKILL.md / deps/SKILL.md / feature/SKILL.md / rddf-session/SKILL.md  # 子技能
+  spec-workflow-writing-plans/SKILL.md  # 内置 TDD 5 步 plan 生成器
+  loop_engine.py              # v2.0 Loop 引擎入口（向后兼容 shim，实际实现在 _lib/loop_engine.py）
   _lib/                       # 共享 bash + Python (v2.0.8; Phase 3 重组)
     state.sh / worktree.sh / archive.sh / status_helpers.sh / discover-arch-artifacts.sh  # bash 工具 (5 files)
-    gate.py / iteration.py / roadmap_state.py  # 跨切核心模块
-    config.py / session.py / session_base.py / session_manager.py  # session/config 模块
-    arch_quality_gate.py / change_alignment.py / dependency_scheduler.py / event_context.py / rate_limiter.py / roadmap_sprint.py / trigger_engine.py / trigger_registry.py / triggers.py / validate_delta_targets.py / validate_report.py  # 其余顶层模块 (11 .py)
+    gate.py / roadmap_state.py / config.py / session.py / session_base.py / session_manager.py  # 跨切核心模块
+    arch_quality_gate.py / change_alignment.py / dependency_scheduler.py / event_context.py / rate_limiter.py / roadmap_sprint.py / trigger_engine.py / trigger_registry.py / triggers.py / validate_delta_targets.py / validate_report.py  # 其余顶层模块 (13 .py)
     core/                     # 运行时内核 (6 .py): event_log, event_types, state_vector, defaults, lock, atomic_write
-    loop/                     # v2.0 loop 引擎 (15 .py): actions, detectors, agents, memory, tribunal, sanitizer, etc.
+    loop/                     # v2.0 loop 引擎 (16 个 .py, 含 __init__): actions, agents, design_phase, detectors, event_queue, flow_customizer, flowchart, human_nodes, interaction_modes, loop_state, memory, plugin_loader, sanitizer, step_pipeline, tribunal
+    iteration/                # iteration 视图管理 (render, schema, store)
     schedulers/               # 调度器 (4 .py): cron_scheduler, fs_watcher, git_hook, webhook_receiver
-    schemas/                  # JSON schema (7 files): arch_handoff, deps_analysis, feature_view, iteration, sessions, state_vector, trigger
+    schemas/                  # JSON schema (8 files): arch_handoff, config, deps_analysis, feature_view, iteration, sessions, state_vector, trigger
     plugins/                  # 插件加载器 (README.md)
+  guide-arch/scripts/         # arch 阶段辅助脚本 (arch_env_check, write_arch_handoff, arch_gap_analysis 等)
+  guide-plan/scripts/         # plan 阶段辅助脚本 (plan_intake, plan_done_gate, plan_deps_candidates 等)
+  guide-ship/scripts/         # ship 阶段辅助脚本 (ship_plan, ship_review, ship_archive, ship_monitor 等)
+  execute/scripts/            # execute 辅助脚本 (select_worktree, tasks_writeback, execute_step7 等)
+  deps/scripts/               # deps 辅助脚本 (deps_output, deps_render_report 等)
+  propose/scripts/            # propose 辅助脚本 (propose_change 等)
+  feature/scripts/            # feature 辅助脚本 (feature_summary, feature_graph 等)
+  status/scripts/             # status 辅助脚本 (status_render_mode_a 等)
 tests/
   test_helper.bash            # load_lib 解析器 + 断言辅助
   conftest.py                 # 把项目根加进 sys.path (让 `import skills._lib.* / core.* / loop.*` 可解析)
   smoke.bats                  # 基础设施冒烟 (v2.0.3 起: 动态 glob + v1.x regression, 覆盖全部 13 skill)
-  unit/                       # ~46 个 Python 单元测试 (含 v2.0.1 新增: test_iteration, test_roadmap_sprint, test_deps_output, test_rddf_session, test_arch_handoff_schema, test_discover_arch_artifacts, test_arch_quality_gate, test_change_alignment, test_iteration_concurrency 等)
-  integration/                # ~58 个集成测试 (49 .bats + 9 .py; 含 v2.0.1 新增: test_iteration_lifecycle, test_iteration_archive_hook,
+  unit/                       # 57 个 Python 单元测试 (含 v2.0.1 新增: test_iteration, test_roadmap_sprint, test_deps_output, test_rddf_session, test_arch_handoff_schema, test_discover_arch_artifacts, test_arch_quality_gate, test_change_alignment, test_iteration_concurrency 等)
+  integration/                # 117 个集成测试 (107 .bats + 10 .py; 含 v2.0.1 新增: test_iteration_lifecycle, test_iteration_archive_hook,
                              #                                                              test_guide_ship_iteration_hook, test_deps_analysis)
   _lib/                       # bash helpers (skill.bash, deps-subagent.bash 等)
-docs/adr/                     # ADR-0000 模板 + ADR-0001~0020 (20 个唯一编号, 20 个实体文件; v2.0.2 重编号 ADR-0013 incremental-skeleton-planning → ADR-0020)
+docs/adr/                     # ADR-0000 模板 + ADR-0001~0021 (21 个唯一编号, 22 个实体文件; v2.0.2 重编号 ADR-0013 incremental-skeleton-planning → ADR-0020)
                              # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment
 openspec/                     # OpenSpec CLI 数据 (随项目走)
   changes/                    # active changes + archive/
-  specs/                      # 已采纳的 capability specs (25 个)
+  specs/                      # 已采纳的 capability specs (28 个)
 ```
 
 ## 关键约定 (容易踩坑)
@@ -94,8 +102,8 @@ openspec/                     # OpenSpec CLI 数据 (随项目走)
 
 `.rddf/state/`, `.rddf/wt/`, `.rddf/detectors/`, `.rddf/actions/` 全部 gitignored;
 `.rddf/plans/` **随 git 版本控制** (执行契约路径).
-`iteration.json` 是 **多 hook 写入**的 view 文件, 由 `skills/_lib/iteration.py` 集中管理;
-`deps-analysis.json` 同样是 view 文件, 由 `skills/_lib/deps_output.py` 管理.
+`iteration.json` 是 **多 hook 写入**的 view 文件, 由 `skills/_lib/iteration/` 包集中管理;
+`deps-analysis.json` 同样是 view 文件, 由 `skills/deps/scripts/deps_output.py` 管理.
 两者 schema 在 `skills/_lib/schemas/` 下, 改 schema 必须 bump version 字段.
 `proposal-suggestions.md` 在项目根目录, 随 git 版本控制, 格式为 **JSON 数组** (用 `json.load()`, 不用 grep).
 
@@ -155,7 +163,7 @@ Every workflow session generated by `guide-arch`/`guide-plan`/`guide-ship` MUST 
 - 状态生命周期: `待定 → 已采纳 → 已弃用 / 已替代为 ADR-NNNN`
 - 引用格式: `ADR-NNN §N.M` (例如 `ADR-0003 §2.1`)
 - 模板: `docs/adr/ADR-0000-template.md` (不要给真实 ADR 分配 0000)
-- 当前最新编号: ADR-0012 (`docs/adr/` 取最大值)
+- 当前最新编号: ADR-0021 (`docs/adr/` 取最大值)
 
 ### 测试约定
 
@@ -197,15 +205,15 @@ Every workflow session generated by `guide-arch`/`guide-plan`/`guide-ship` MUST 
 
 无需手工 `git add openspec/...` + 手工 commit message 了。
 
-### Ship 阶段 `_lib/ship_*.sh` 提取（v2.0.5 新增）
+### Ship 阶段 `guide-ship/scripts/ship_*.sh` 提取（v2.0.5 新增，v2.0.8 Phase 2 迁至 per-skill scripts/）
 
-`guide-ship.md` v2.0 起按 Phase 把超过 50 行的内联 bash 块提取为 3 个 `_lib/` 脚本:
+`guide-ship.md` v2.0 起按 Phase 把超过 50 行的内联 bash 块提取为 3 个脚本 (v2.0.8 前在 `_lib/`，Phase 2 重组后迁至 `guide-ship/scripts/`):
 
 | Script | Source Phase | Public functions |
 |--------|-------------|------------------|
-| `skills/_lib/ship_plan.sh` | Phase 1 (plan) | `check_artifacts_committed`, `detect_execution_mode`, `setup_execution_workspace`, `generate_implementation_plan`, `record_iteration_status` |
-| `skills/_lib/ship_review.sh` | Phase 2.5 (review) | `handle_review_action` (4-option dispatch) |
-| `skills/_lib/ship_archive.sh` | Phase 3 (archive) | `detect_archive_mode`, `check_feature_integrity`, `archive_change_for_mode` |
+| `skills/guide-ship/scripts/ship_plan.sh` | Phase 1 (plan) | `check_artifacts_committed`, `detect_execution_mode`, `setup_execution_workspace`, `generate_implementation_plan`, `record_iteration_status` |
+| `skills/guide-ship/scripts/ship_review.sh` | Phase 2.5 (review) | `handle_review_action` (4-option dispatch) |
+| `skills/guide-ship/scripts/ship_archive.sh` | Phase 3 (archive) | `detect_archive_mode`, `check_feature_integrity`, `archive_change_for_mode` |
 
 `guide-ship.md` 由 1361 → 842 行（净减 519 行）。每个 script 都通过 `bats tests/integration/test_ship_*_extraction.bats` 锁定（功能性测试 + 结构性 grep 双保险），遵循 P1-14 archive.sh 提取的同款模式。Phase 2 的 54 行"读取所有 tasks.md 进度"块是后续 P3-3 候选提取目标。
 
@@ -221,12 +229,12 @@ Every workflow session generated by `guide-arch`/`guide-plan`/`guide-ship` MUST 
 - `session_manager.py` — Session 协调器 + 父子 session 追踪
 - `agents.py` — Planner/Executor/Verifier 协调
 - `detectors.py` / `actions.py` — 8 内置检测器 + 7 内置动作 + 插件机制
-- `propose_change.py` (v2.0.6 新增) — Phase 4 状态写入: set_suggestion_status / create_skeleton_change / update_roadmap_meta / update_roadmap_state / update_iteration_proposed
-- `deps_output.py` (v2.0.6 新增 `render_markdown_report`) — Step 5 markdown 报告渲染: mermaid 图 / 阶段预检 / Change 状态表 / AI 建议
+- `propose_change.py` (v2.0.6 新增) — Phase 4 状态写入 (实际位置: skills/propose/scripts/propose_change.py)
+- `deps_output.py` (v2.0.6 新增 `render_markdown_report`) — Step 5 markdown 报告渲染 (实际位置: skills/deps/scripts/deps_output.py)
 
 ### Deps 阶段 `_lib/deps_render_report.sh` 提取（v2.0.6 新增）
 
-`deps.md` Step 5 v2.0.6 起把 160 行内联 PYEOF heredoc 拆分到 `_lib/deps_output.py::render_markdown_report` + `_lib/deps_render_report.sh` bash wrapper:
+`deps.md` Step 5 v2.0.6 起把 160 行内联 PYEOF heredoc 拆分到 `skills/deps/scripts/deps_output.py::render_markdown_report` + `_lib/deps_render_report.sh` bash wrapper (v2.0.8 迁至 `skills/deps/scripts/deps_render_report.sh`):
 
 | Python function | Source lines | Responsibility |
 |------------------|--------------|----------------|
@@ -240,7 +248,7 @@ Every workflow session generated by `guide-arch`/`guide-plan`/`guide-ship` MUST 
 
 ### Propose 阶段 `_lib/propose_change.{sh,py}` 提取（v2.0.6 新增）
 
-`propose.md` Phase 4 v2.0.6 起把 353 行内联代码拆分到 `_lib/propose_change.py` 5 个函数 + `_lib/propose_change.sh` bash wrapper:
+`propose.md` Phase 4 v2.0.6 起把 353 行内联代码拆分到 `_lib/propose_change.py` 5 个函数 + `_lib/propose_change.sh` bash wrapper (v2.0.8 迁至 `skills/propose/scripts/propose_change.{sh,py}`):
 
 | Python function | Source lines | Responsibility |
 |------------------|--------------|----------------|
@@ -263,16 +271,16 @@ Every workflow session generated by `guide-arch`/`guide-plan`/`guide-ship` MUST 
 
 ### Round A: 6-任务内联 Bash 提取 (v2.0.6 新增)
 
-`skills/*.md` 提取第二批 — 6 个内联 bash 块横跨 4 个 skill 文件 (~580 行) 迁移到 `_lib/`:
+`skills/*.md` 提取第二批 — 6 个内联 bash 块横跨 4 个 skill 文件 (~580 行) 迁移到 `_lib/`（v2.0.8 Phase 2 重组后迁至各 skill 的 `scripts/` 目录）:
 
 | Task | Skill | Lines | Helper(s) | Tests | 备注 |
 |------|-------|-------|-----------|-------|------|
-| 1 | `guide-arch.md` Phase 1 Steps 1-5 | 96 | `arch_env_check.sh` | 9 bats | openspec CLI 检查 + 工件发现 |
-| 2 | `guide-arch.md` handoff writer | 88 | `write_arch_handoff.{sh,py,env.py}` | 10 unit + 8 bats | 3 文件 env-var pattern |
-| 3 | `guide-plan.md` Phase 0 intake | 79 | `plan_intake.sh` | 7 bats | Oracle C1 fix：去 bash string interp |
-| 4 | `guide-plan.md` plan-done gate + handoff | 150 | `plan_done_gate.{sh,py,env.py}` | 8 unit + 9 bats | 双闸门 + handoff 写入 |
-| 5 | `guide-ship.md` Phase 2 monitor | 54 | `ship_monitor.sh` | 7 bats | P3-3 maintainer-flagged target |
-| 6 | `execute.md` worktree auto-detect | 113 | `select_worktree.sh` | 8 bats | 大块，type-1 helper |
+| 1 | `guide-arch.md` Phase 1 Steps 1-5 | 96 | `guide-arch/scripts/arch_env_check.sh` | 9 bats | openspec CLI 检查 + 工件发现 |
+| 2 | `guide-arch.md` handoff writer | 88 | `guide-arch/scripts/write_arch_handoff.{sh,py,env.py}` | 10 unit + 8 bats | 3 文件 env-var pattern |
+| 3 | `guide-plan.md` Phase 0 intake | 79 | `guide-plan/scripts/plan_intake.sh` | 7 bats | Oracle C1 fix：去 bash string interp |
+| 4 | `guide-plan.md` plan-done gate + handoff | 150 | `guide-plan/scripts/plan_done_gate.{sh,py,env.py}` | 8 unit + 9 bats | 双闸门 + handoff 写入 |
+| 5 | `guide-ship.md` Phase 2 monitor | 54 | `guide-ship/scripts/ship_monitor.sh` | 7 bats | P3-3 maintainer-flagged target |
+| 6 | `execute.md` worktree auto-detect | 113 | `execute/scripts/select_worktree.sh` | 8 bats | 大块，type-1 helper |
 | **总计** | 4 skill files | **580** | **10 helpers** | **66 tests** | 5 修正 commits (review-found bugs) |
 
 **关键 bug 修复**:
@@ -298,8 +306,8 @@ skills/*.md 行数 (累计):
   total reduction: ~1100 行
 ```
 
-新 `_lib/` helpers (Round A 贡献 10 个):
-- `arch_env_check.sh`, `write_arch_handoff.{sh,py,env.py}`, `plan_intake.sh`, `plan_done_gate.{sh,py,env.py}`, `ship_monitor.sh`, `select_worktree.sh`
+新 helpers (Round A 贡献 10 个):
+- `guide-arch/scripts/arch_env_check.sh`, `guide-arch/scripts/write_arch_handoff.{sh,py,env.py}`, `guide-plan/scripts/plan_intake.sh`, `guide-plan/scripts/plan_done_gate.{sh,py,env.py}`, `guide-ship/scripts/ship_monitor.sh`, `execute/scripts/select_worktree.sh`
 
 合并到 master: 13 commits (1 plan + 6 refactor + 5 review-fix + 1 final-bug-fix)。
 
@@ -309,16 +317,16 @@ skills/*.md 行数 (累计):
 
 | Task | Skill | Lines | Helper(s) | Tests | 备注 |
 |------|-------|-------|-----------|-------|------|
-| B1 | `guide-arch.md` gap analysis | 85 | `arch_gap_analysis.sh` | 8 bats | generator + viewer |
-| B2 | `guide-arch.md` Phase 5 dual gate | 38 | `arch_done_gate.sh` | 6 bats | ADR + roadmap gate |
-| B3 | `guide-plan.md` deps-candidates | 38 | `plan_deps_candidates.{sh,py,env.py}` | 6 unit + 6 bats | **SECURITY FIX**: oracle C1 |
-| B4 | `guide-plan.md` queue overview | 50 | `plan_queue_overview.sh` | 6 bats | 5-state summary |
-| B5 | `guide-plan.md` feature progress | 34 | `plan_feature_progress.sh` | 5 bats | per-feature |
-| B6 | `status.md` render_status Mode A | 45 | `status_render_mode_a.sh` | 6 bats | iteration + fallback |
-| B7 | `execute.md` tasks writeback | 34 | `tasks_writeback.sh` | 6 bats | **BUG FIX**: sub() regex issue |
-| B8 | `execute.md` roadmap progress | 50 | `update_roadmap_progress.{sh,py,env.py}` | 7 unit + 6 bats | **SECURITY FIX**: oracle C1 |
-| B9 | `execute.md` Step 7 report | 88 | `execute_step7.{sh,py,env.py}` | 6 unit + 8 bats | final report + sync |
-| B10 | `guide-arch.md` arch-quality-report | 32 | `arch_quality_report.sh` | 4 bats | thin wrapper |
+| B1 | `guide-arch.md` gap analysis | 85 | `guide-arch/scripts/arch_gap_analysis.sh` | 8 bats | generator + viewer |
+| B2 | `guide-arch.md` Phase 5 dual gate | 38 | `guide-arch/scripts/arch_done_gate.sh` | 6 bats | ADR + roadmap gate |
+| B3 | `guide-plan.md` deps-candidates | 38 | `guide-plan/scripts/plan_deps_candidates.{sh,py,env.py}` | 6 unit + 6 bats | **SECURITY FIX**: oracle C1 |
+| B4 | `guide-plan.md` queue overview | 50 | `guide-plan/scripts/plan_queue_overview.sh` | 6 bats | 5-state summary |
+| B5 | `guide-plan.md` feature progress | 34 | `guide-plan/scripts/plan_feature_progress.sh` | 5 bats | per-feature |
+| B6 | `status.md` render_status Mode A | 45 | `status/scripts/status_render_mode_a.sh` | 6 bats | iteration + fallback |
+| B7 | `execute.md` tasks writeback | 34 | `execute/scripts/tasks_writeback.sh` | 6 bats | **BUG FIX**: sub() regex issue |
+| B8 | `execute.md` roadmap progress | 50 | `execute/scripts/update_roadmap_progress.{sh,py,env.py}` | 7 unit + 6 bats | **SECURITY FIX**: oracle C1 |
+| B9 | `execute.md` Step 7 report | 88 | `execute/scripts/execute_step7.{sh,py,env.py}` | 6 unit + 8 bats | final report + sync |
+| B10 | `guide-arch.md` arch-quality-report | 32 | `guide-arch/scripts/arch_quality_report.sh` | 4 bats | thin wrapper |
 | **总计** | 4 skill files | **494** | **14 helpers** | **68 tests** | 2 SECURITY + 1 BUG FIX |
 
 **关键 bug / 安全修复**:
@@ -339,24 +347,24 @@ skills/*.md 行数 (累计):
   total reduction: -1509 行
 ```
 
-新 `_lib/` helpers (Round B 贡献 11 个):
-- `arch_gap_analysis.sh`, `arch_done_gate.sh`, `arch_quality_report.sh`
-- `plan_deps_candidates.{sh,py,env.py}`, `plan_queue_overview.sh`, `plan_feature_progress.sh`
-- `status_render_mode_a.sh`
-- `tasks_writeback.sh`, `update_roadmap_progress.{sh,py,env.py}`, `execute_step7.{sh,py,env.py}`
+新 helpers (Round B 贡献 11 个):
+- `guide-arch/scripts/arch_gap_analysis.sh`, `guide-arch/scripts/arch_done_gate.sh`, `guide-arch/scripts/arch_quality_report.sh`
+- `guide-plan/scripts/plan_deps_candidates.{sh,py,env.py}`, `guide-plan/scripts/plan_queue_overview.sh`, `guide-plan/scripts/plan_feature_progress.sh`
+- `status/scripts/status_render_mode_a.sh`
+- `execute/scripts/tasks_writeback.sh`, `execute/scripts/update_roadmap_progress.{sh,py,env.py}`, `execute/scripts/execute_step7.{sh,py,env.py}`
 
 合并到 master: 11 commits (1 plan + 10 refactor)。
 
 ### Round C: feature.md 重构 (v2.0.7 新增)
 
-`skills/feature.md` (183 行) 重构 — 整个文件转写为 4 个 per-subcommand helper + 1 个 Python 模块:
+`skills/feature.md` (183 行) 重构 — 整个文件转写为 4 个 per-subcommand helper + 1 个 Python 模块 (v2.0.8 Phase 2 迁至 `skills/feature/scripts/`):
 
 | Subcommand | Bash helper | Python function |
 |-----------|-------------|-----------------|
-| `feature [summary]` | `feature_summary.sh` → `render_feature_summary()` | `feature_cli.py::render_summary()` |
-| `feature graph` | `feature_graph.sh` → `render_feature_graph()` | `feature_cli.py::render_graph()` |
-| `feature status <name>` | `feature_status.sh` → `render_feature_status()` | `feature_cli.py::render_status()` |
-| `feature order` | `feature_order.sh` → `render_feature_order()` | `feature_cli.py::render_order()` |
+| `feature [summary]` | `skills/feature/scripts/feature_summary.sh` → `render_feature_summary()` | `skills/feature/scripts/feature_cli.py::render_summary()` |
+| `feature graph` | `skills/feature/scripts/feature_graph.sh` → `render_feature_graph()` | `skills/feature/scripts/feature_cli.py::render_graph()` |
+| `feature status <name>` | `skills/feature/scripts/feature_status.sh` → `render_feature_status()` | `skills/feature/scripts/feature_cli.py::render_status()` |
+| `feature order` | `skills/feature/scripts/feature_order.sh` → `render_feature_order()` | `skills/feature/scripts/feature_cli.py::render_order()` |
 
 **关键改进**:
 
@@ -373,7 +381,7 @@ skills/*.md 行数 (累计):
 
 - 配置: `config.py`, `defaults.py`, `phase_templates.yaml`, `schemas/`, `plugins/`
 
-`skills/loop_engine.py` (在 skills/ 根) 是引擎入口, 串联以上模块.
+`skills/loop_engine.py` (在 skills/ 根) 是引擎入口 (向后兼容 shim; 实际实现在 `skills/_lib/loop_engine.py`), 串联以上模块.
 
 ## 常见陷阱
 

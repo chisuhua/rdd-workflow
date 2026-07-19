@@ -90,7 +90,7 @@ Zero migration needed. Existing v2.0 projects with `docs/adr/` and `roadmap.md` 
 - ~1,800 lines of inline bash extracted from skill files
 - 25+ new `_lib/` helpers (bash wrappers + Python modules)
 - ~150 new tests (19 Python unit + 131 bats integration)
-- All 732 Python tests passing, full bats regression green
+- All 819 Python test cases passing (57 unit + 10 integration files), full bats regression green
 
 ## v2.0.0-beta (2026-06-26)
 

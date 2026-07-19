@@ -23,8 +23,8 @@
 > | [ADR-0015](ADR-0015-integrate-openspec-validate-as-plan-critic.md) | openspec validate 集成为 plan-critic | 已采纳 | **v2.1** |
 > | [ADR-0016](ADR-0016-arch-artifact-discovery-contract.md) | Arch 阶段工件发现契约 | 已采纳 | **v2.1** |
 > | [ADR-0017](ADR-0017-rddf-session.md) | rddf-session 用户视角工作流会话 | 已采纳 | 已完成（v2.0.1） |
-> | [ADR-0018](ADR-0018-arch-quality-gate.md) | 架构质量门 — arch 阶段的定性检查 | 已采纳 | **v2.1** |
-> | [ADR-0019](ADR-0019-change-arch-alignment.md) | change_arch_alignment — change 提案与架构对齐检查 | 已采纳 | **v2.1** |
+> | [ADR-0018](ADR-0018-arch-quality-gate.md) | 架构质量门 — arch 阶段的定性检查 | 已采纳 | 已完成（v2.0） |
+> | [ADR-0019](ADR-0019-change-arch-alignment.md) | change_arch_alignment — change 提案与架构对齐检查 | 已采纳 | 已完成（v2.0） |
 > | [ADR-0020](ADR-0020-incremental-skeleton-planning.md) | 增量 skeleton planning（v2.0.2 重编号自 ADR-0013） | 已采纳 | **v2.1** |
 
 ## ADR 列表
