@@ -1,28 +1,34 @@
-"""Iteration state — persistent view of the current sprint.
+"""Iteration state - CRUD, mutations, and queries.
 
-Stored as JSON at `.rddf/state/iteration.json`. The file is a sibling of
-`roadmap-state.json` and `plan-handoff.json` in the gitignored `.rddf/state/`
-directory. Unlike `state_vector.json` (which is the Loop engine's
-checksummed, locked authoritative state), iteration.json is a
-**view-oriented** file: it is a denormalized projection of multiple
-sources (propose hooks, deps output, execute progress, archive) into a
-single table that `status` Mode E and `roadmap.md` AUTO-SPRINT renderers
-can read.
+Extracted from ``skills/_lib/iteration.py`` (v2.0.8 split). This module
+holds the in-memory and on-disk data operations:
 
-Design choices:
-- No file lock: iteration.json is written by long-running skills
-  (propose, execute, archive) that are themselves the only writers for
-  their own change names. Concurrent writers would target different
-  entries in the `changes` array, and the worst case is a lost write
-  on the same entry. This is acceptable because (a) contention is
-  human-paced, not loop-paced, and (b) the source-of-truth files
-  (tasks.md, deps-output.md, openspec status) are unaffected.
-- No checksum: lost writes are recoverable by re-running the hook
-  (e.g. `skill_use("status", "iteration", "refresh")`).
-- Schema-validated on load (catches corruption early) but not on
-  every write (would slow propose hook). Schema lives at
-  `schemas/iteration_schema.json`.
-- Atomic write: write to `.tmp` then rename.
+  * ``load`` / ``save`` - JSON file IO with schema validation,
+    file locking (via ``core.lock.FileLock``), atomic writes
+    (via ``core.atomic_write.atomic_write_json``), and merge-on-save
+    to prevent lost updates between concurrent writers.
+  * ``create_empty`` / ``add_or_update_change`` / ``set_status`` /
+    ``set_tasks_done`` / ``set_deps_info`` / ``mark_archived`` /
+    ``remove_change`` / ``set_current_phase`` - mutation helpers that
+    return new dicts (do not mutate in place).
+  * ``get_change`` / ``list_active`` / ``list_archived`` /
+    ``list_planned`` / ``list_ready_for_fill`` / ``list_ready_for_ship`` /
+    ``list_blocked`` / ``get_unblocked_planned`` - queries.
+  * ``derive_feature_name`` / ``list_feature_groups`` /
+    ``feature_progress`` - feature grouping helpers used by the
+    ``feature`` skill and ``status`` Mode E rendering.
+
+All public names here are re-exported from ``skills._lib.iteration``
+(the package ``__init__.py``), so existing
+``from skills._lib.iteration import load, save`` imports continue to
+work unchanged.
+
+A subtle but important compatibility note: ``test_iteration_concurrency``
+mutates ``it_mod._LOCK_TIMEOUT`` at runtime to make the lock-timeout
+test fast. To preserve that behavior, ``save()`` looks up
+``_LOCK_TIMEOUT`` via ``globals()`` at call time rather than capturing
+the value at module load. The module-level ``_LOCK_TIMEOUT`` variable
+is the single source of truth and can be patched by tests.
 """
 from __future__ import annotations
 
@@ -31,112 +37,34 @@ import json
 import logging
 import os
 import re
-from pathlib import Path
 from typing import Any, Optional
 
 import jsonschema
-import referencing
-from referencing.exceptions import NoSuchResource
 
 from skills._lib.core.lock import FileLock, LockTimeout
+from skills._lib.iteration.schema import (
+    _BLOCKING_STATUSES,
+    _DEFAULT_PHASE,
+    _UNSET,
+    _VALID_STATUSES,
+    _validate,
+)
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_PATH = os.path.join(
-    os.path.dirname(__file__), "schemas", "iteration_schema.json"
-)
-_DEFAULT_PHASE = "default"
-_VALID_STATUSES = ("planned", "proposed", "in_worktree", "review", "completed", "archived")
-# Statuses that block a dependent planned change from being filled.
-# A planned change's blocker must be in one of these statuses to count as
-# "still blocking". When a blocker transitions out (e.g. to archived), the
-# dependent becomes "unblocked" and ready for fill.
-_BLOCKING_STATUSES = ("planned", "in_worktree", "review")
-
-# Sentinel for distinguishing "argument not passed" from "argument passed
-# as None". Used by set_deps_info so callers can explicitly clear a
-# field (blocker=None) without affecting it.
-_UNSET: Any = object()
-
 # Lock timeout for iteration.json writes. Short enough that a hung
 # concurrent writer doesn't block the user; long enough that normal
-# load→mutate→save sequences always complete.
+# load->mutate->save sequences always complete.
+#
+# Patched by tests (test_iteration_concurrency.test_lock_timeout_raises_lock_timeout)
+# to a small value. save() looks this up via globals() at call time so
+# patches take effect without needing to re-import.
 _LOCK_TIMEOUT = 5.0
 
 
 def _now_iso() -> str:
     """Return current UTC time as ISO 8601 string with timezone."""
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
-
-
-def _load_schema() -> dict:
-    """Load the JSON Schema (cached on first call)."""
-    if not os.path.isfile(SCHEMA_PATH):
-        raise FileNotFoundError(
-            f"iteration schema not found at {SCHEMA_PATH}; "
-            f"the iteration.py module requires it for validation"
-        )
-    with open(SCHEMA_PATH) as f:
-        return json.load(f)
-
-
-def _load_registry() -> referencing.Registry:
-    """Build a referencing.Registry with all local sub-schemas pre-registered."""
-    schemas_dir = os.path.dirname(SCHEMA_PATH)
-    schema_data = _load_schema()
-    registry = referencing.Registry()
-    sid = schema_data.get("$id")
-    if sid:
-        registry = registry.with_resource(sid, referencing.Resource.from_contents(schema_data))
-    registry = _register_refs(registry, schema_data, schemas_dir)
-    return registry
-
-
-def _register_refs(registry: referencing.Registry, schema: dict, base_dir: str) -> referencing.Registry:
-    """Recursively register $ref targets in the schema."""
-    for key, val in schema.items():
-        if key == "$ref" and isinstance(val, str) and val.endswith(".json") and not val.startswith("#"):
-            ref_path = os.path.join(base_dir, val)
-            if os.path.isfile(ref_path) and not _is_registered(registry, ref_path):
-                with open(ref_path) as f:
-                    ref_schema = json.load(f)
-                rid = ref_schema.get("$id")
-                if rid:
-                    registry = registry.with_resource(rid, referencing.Resource.from_contents(ref_schema))
-                registry = _register_refs(registry, ref_schema, base_dir)
-        elif isinstance(val, dict):
-            registry = _register_refs(registry, val, base_dir)
-        elif isinstance(val, list):
-            for item in val:
-                if isinstance(item, dict):
-                    registry = _register_refs(registry, item, base_dir)
-    return registry
-
-
-def _is_registered(registry: referencing.Registry, path: str) -> bool:
-    try:
-        with open(path) as f:
-            data = json.load(f)
-        rid = data.get("$id")
-        if rid:
-            try:
-                registry.get_or_retrieve(rid)
-                return True
-            except NoSuchResource:
-                return False
-    except (json.JSONDecodeError, OSError):
-        return False
-    return False
-
-
-def _validate(data: dict) -> None:
-    """Validate iteration data against the schema. Raises jsonschema.ValidationError on failure."""
-    schema = _load_schema()
-    registry = _load_registry()
-    validator = jsonschema.Draft7Validator(schema, registry=registry)
-    errors = list(validator.iter_errors(data))
-    if errors:
-        raise jsonschema.ValidationError(errors[0].message)
 
 
 def _atomic_write(path: str, data: dict) -> None:
@@ -212,7 +140,7 @@ def _merge_by_name(existing: dict, incoming: dict) -> dict:
 
     Used inside save() to merge caller's data with whatever was on disk
     when we acquired the lock. Without this, concurrent writers that
-    both did load→mutate→save would overwrite each other's changes.
+    both did load->mutate->save would overwrite each other's changes.
 
     Non-changes fields (current_phase, updated_at) come from incoming
     (the caller is the authoritative source for these).
@@ -247,11 +175,11 @@ def load(project_root: str) -> dict:
     """Load iteration state from disk.
 
     Behavior:
-      - File missing → return empty state (do not create file).
-      - File present + valid JSON + schema-valid → return parsed data.
-      - File present + invalid JSON → log error, copy file aside to
+      - File missing -> return empty state (do not create file).
+      - File present + valid JSON + schema-valid -> return parsed data.
+      - File present + invalid JSON -> log error, copy file aside to
         `iteration.json.corrupt.<timestamp>`, return empty state.
-      - File present + valid JSON but schema-invalid → same: log error,
+      - File present + valid JSON but schema-invalid -> same: log error,
         back up the file, return empty state.
 
     The "return empty on error" policy is intentional: hooks call
@@ -291,7 +219,7 @@ def save(project_root: str, data: dict) -> None:
     Updates `updated_at` and validates schema before write. Inside the
     lock, re-reads the file and merges with caller's data by change
     name (caller wins per-name). This prevents the lost-update bug:
-    without merging, two hooks doing load→mutate→save concurrently
+    without merging, two hooks doing load->mutate->save concurrently
     would each see stale state and overwrite each other's changes.
 
     Semantics: "I want to ensure THESE changes are persisted; preserve
@@ -307,7 +235,9 @@ def save(project_root: str, data: dict) -> None:
     _validate(data)
     path = os.path.join(project_root, ".rddf", "state", "iteration.json")
     lock_path = path + ".lock"
-    with FileLock(lock_path, timeout=_LOCK_TIMEOUT):
+    # Read _LOCK_TIMEOUT via globals() at call time so test patches to
+    # the module attribute take effect without re-import.
+    with FileLock(lock_path, timeout=globals()["_LOCK_TIMEOUT"]):
         existing = _read_unlocked(path)
         if existing is not None:
             data = _merge_by_name(existing, data)
@@ -450,9 +380,10 @@ def get_unblocked_planned(project_root: str) -> list[dict]:
             unblocked.append(c)
     return unblocked
 
+
 # ---------------------------------------------------------------------------
-# Feature grouping — derived from change name prefix (no schema change)
-# Convention: feature-<name>-<sub>, e.g. feature-stream-core → feature-stream
+# Feature grouping - derived from change name prefix (no schema change)
+# Convention: feature-<name>-<sub>, e.g. feature-stream-core -> feature-stream
 # Regex: single-word feature names only (no hyphens in the feature part).
 # Non-conforming changes (no feature- prefix) become single-change features.
 # ---------------------------------------------------------------------------
@@ -465,12 +396,12 @@ def derive_feature_name(name: str, data: Optional[dict] = None) -> str:
 
     Resolution order:
     1. ``parent_feature`` field in iteration.json (explicit registration)
-    2. Name-prefix convention: ``feature-<name>-<sub>`` → ``feature-<name>``
+    2. Name-prefix convention: ``feature-<name>-<sub>`` -> ``feature-<name>``
     3. Fallback: return the change name as-is (single-change feature)
 
-    feature-stream-core → feature-stream
-    feature-stream      → feature-stream  (single sub-change)
-    debt-cleanup-foo    → debt-cleanup-foo (no feature- prefix — self-group)
+    feature-stream-core -> feature-stream
+    feature-stream      -> feature-stream  (single sub-change)
+    debt-cleanup-foo    -> debt-cleanup-foo (no feature- prefix - self-group)
     """
     # 1. Check explicit parent_feature field
     if data is not None:
@@ -514,7 +445,7 @@ def feature_progress(data: dict) -> dict[str, tuple[int, int]]:
 
 
 # ---------------------------------------------------------------------------
-# Mutations (return new data dict, do not mutate in place — easier to test)
+# Mutations (return new data dict, do not mutate in place - easier to test)
 # ---------------------------------------------------------------------------
 
 def add_or_update_change(data: dict, **fields: Any) -> dict:
@@ -620,7 +551,7 @@ def mark_archived(data: dict, name: str) -> dict:
 
 
 def remove_change(data: dict, name: str) -> dict:
-    """Remove a change entry entirely. Use sparingly — mark_archived is preferred.
+    """Remove a change entry entirely. Use sparingly - mark_archived is preferred.
 
     This is provided for hard-delete use cases (e.g. user manually
     deletes a change directory and wants iteration state to forget it).
@@ -635,105 +566,3 @@ def set_current_phase(data: dict, phase: str) -> dict:
     data = dict(data)
     data["current_phase"] = phase
     return data
-
-
-def print_view(project_root: str, show_planned: bool = True) -> int:
-    """Render the iteration view to stdout for `status --iteration`.
-
-    Extracted from status.md Mode E Step 2/2b (lines 580-659) so the
-    rendering logic can be unit-tested without invoking the bash
-    skill, and so future consumers (TUI dashboard, CI summary) get
-    identical output.
-
-    Args:
-        project_root: absolute path to the git repo root.
-        show_planned: when True (default), also render the planned
-            changes list (S10).
-
-    Returns:
-        0 always. Missing iteration.json renders a friendly notice
-        instead of raising.
-    """
-    iter_file = os.path.join(project_root, ".rddf", "state", "iteration.json")
-    if not os.path.isfile(iter_file):
-        print("📭 iteration.json 不存在")
-        print("   说明: 尚未运行过 propose (roadmap 模式)")
-        print('   初始化: skill_use("propose", "<name>")')
-        return 0
-
-    data = load(project_root)
-    phase = data.get("current_phase", "default")
-    updated_at = data.get("updated_at", "")
-
-    print("📊 当前迭代视图")
-    print(f"   Phase: {phase}    Updated: {updated_at}")
-    active_count = sum(
-        1 for c in data.get("changes", []) if c.get("status") in ("proposed", "in_worktree", "completed")
-    )
-    archived_count = sum(
-        1 for c in data.get("changes", []) if c.get("status") == "archived"
-    )
-    print(f"   活跃: {active_count} | 已归档: {archived_count}")
-    print()
-
-    active = [
-        c for c in data.get("changes", [])
-        if c.get("status") in ("proposed", "in_worktree", "completed")
-    ]
-    if not active:
-        print("  (无 active change)")
-    else:
-        print("| Feature | Change | Phase | Cat | Status | Blocker | Group | Conflicts | Tasks | Plan |")
-        print("|---------|--------|-------|-----|--------|---------|-------|-----------|-------|------|")
-        for c in active:
-            feature = derive_feature_name(c["name"])
-            status_icon = {"proposed": "📋", "in_worktree": "🔄", "completed": "✅"}.get(c.get("status"), "?")
-            blocker = c.get("blocker") or "—"
-            group = str(c.get("parallel_group") or "—")
-            conflicts = ",".join(c.get("conflicts") or []) or "—"
-            done = c.get("tasks_done", 0)
-            total = c.get("tasks_total", 0)
-            tasks = f"{done}/{total}" if total else "—"
-            plan = "✅" if c.get("plan_path") else "—"
-            phase_short = (c.get("phase") or "—")[:8]
-            cat_short = (c.get("category") or "—")[:10]
-            print(
-                f"| {feature} | {c['name']} | {phase_short} | {cat_short} | "
-                f"{status_icon} {c.get('status')} | {blocker} | {group} | "
-                f"{conflicts} | {tasks} | {plan} |"
-            )
-        print()
-
-    archived = list_archived(data)
-    if archived:
-        print("🗄️  最近归档 (top 5):")
-        for c in archived[:5]:
-            print(f"   ✅ {c['name']}  ({c.get('archived_at', '')})")
-        if len(archived) > 5:
-            print(f"   ... (共 {len(archived)} 个归档)")
-        print()
-
-    now = datetime.datetime.now(datetime.timezone.utc)
-    for c in active:
-        last_deps = c.get("last_deps_at")
-        if not last_deps:
-            continue
-        try:
-            last = datetime.datetime.fromisoformat(last_deps.replace("Z", "+00:00"))
-        except ValueError:
-            continue
-        age_hours = (now - last).total_seconds() / 3600
-        if age_hours > 24:
-            print(f"⚠️  {c['name']}: deps 信息已 {age_hours:.0f}h 未更新, 建议重跑 deps")
-
-    if show_planned:
-        planned = list_planned(data)
-        if planned:
-            for c in planned:
-                b = c.get("blocker") or ""
-                bs = f" (blocked by {b})" if b else ""
-                print(f"  📋 {c['name']}{bs}")
-        else:
-            print("(none)")
-
-    return 0

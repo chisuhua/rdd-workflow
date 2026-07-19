@@ -6,8 +6,7 @@ planning/execution phases, gate transitions, errors, and lifecycle events.
 from __future__ import annotations
 import enum
 import datetime
-from dataclasses import dataclass, field, asdict
-from typing import Any, Optional
+from dataclasses import dataclass, field
 
 
 class EventType(str, enum.Enum):

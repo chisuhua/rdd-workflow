@@ -4,7 +4,7 @@ Provides Trigger dataclass + TriggerManager for register/unregister/dedup operat
 """
 from __future__ import annotations
 from dataclasses import dataclass, field, asdict
-from typing import Any, Optional
+from typing import Optional
 import datetime
 import time
 import uuid

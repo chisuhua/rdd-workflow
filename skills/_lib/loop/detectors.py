@@ -21,13 +21,12 @@ Performance budget: all 9 built-ins run sequentially in < 500ms
 from __future__ import annotations
 
 import datetime
-import importlib.util
 import json
 import os
 import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Callable
 
 from skills._lib.core.defaults import DETECTOR_PLUGIN_DIR
 from skills._lib.loop.plugin_loader import PluginLoader
@@ -304,7 +303,7 @@ def detect_trigger_events(state: dict) -> DetectionResult:
     """
     # Import here to avoid circular dependency at module load
     try:
-        from skills._lib.loop.event_queue import EventQueue
+        from skills._lib.loop.event_queue import EventQueue  # noqa: F401
         from skills._lib.trigger_registry import TriggerRegistry
     except ImportError:
         return DetectionResult(

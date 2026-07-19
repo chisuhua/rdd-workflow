@@ -13,7 +13,7 @@ import json
 import os
 import threading
 from pathlib import Path
-from typing import Iterable, Optional, Union
+from typing import Optional, Union
 
 from skills._lib.core.event_types import Event, EventType, Severity
 from skills._lib.core.lock import FileLock, LockTimeout

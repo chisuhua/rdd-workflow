@@ -134,7 +134,7 @@ def render_sprint_table(data: dict) -> str:
 
     if archived:
         lines.append("")
-        lines.append(f"_🗄️ Archived (top 5): " + ", ".join(f"`{c.get('name', '?')}`" for c in archived[:5]) + "_")
+        lines.append("_🗄️ Archived (top 5): " + ", ".join(f"`{c.get('name', '?')}`" for c in archived[:5]) + "_")
 
     return "\n".join(lines) + "\n"
 

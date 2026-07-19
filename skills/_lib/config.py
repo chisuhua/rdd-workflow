@@ -13,7 +13,6 @@ A higher-priority source COMPLETELY replaces the lower-priority value
 from __future__ import annotations
 import json
 import os
-import re
 from pathlib import Path
 from typing import Any, Optional
 

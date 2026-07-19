@@ -2,7 +2,6 @@
 from __future__ import annotations
 import os
 import threading
-import time
 from typing import Callable, Optional
 
 from skills._lib.loop.event_queue import EventQueue

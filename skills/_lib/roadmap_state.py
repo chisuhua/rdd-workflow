@@ -35,7 +35,6 @@ import datetime
 import json
 import os
 import re
-from typing import Any
 
 
 def _now_iso() -> str:

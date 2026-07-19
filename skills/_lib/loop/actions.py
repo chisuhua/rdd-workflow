@@ -11,7 +11,6 @@ Per the v2-loop-engine spec (detectors-actions/spec.md):
 """
 from __future__ import annotations
 import subprocess
-import importlib.util
 import json
 import datetime
 import os
@@ -171,7 +170,7 @@ def action_generate_plan(params: dict, event_log: EventLog) -> ActionResult:
         event_log.record(
             EventType.EXECUTION_UNIT_COMPLETED,
             Severity.ERROR,
-            f"plan generation failed: missing spec-workflow/writing-plans skill",
+            "plan generation failed: missing spec-workflow/writing-plans skill",
             context=result.to_dict(),
         )
         return result

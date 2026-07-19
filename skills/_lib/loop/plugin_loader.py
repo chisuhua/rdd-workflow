@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
-from typing import Generic, Optional, Type, TypeVar, List
+from typing import Generic, Optional, Type, TypeVar
 
 T = TypeVar("T")
 

@@ -1,0 +1,30 @@
+# pyproject.toml - Progressive Python linting/type-checking configuration
+# See: AGENTS.md "Python 后端 (v2.0)" for context
+
+[tool.mypy]
+# Suppress missing library stubs (e.g. jsonschema, croniter)
+ignore_missing_imports = true
+
+# Strict mode is enabled via CLI flag `mypy --strict`.
+# Per-file relaxations are configured below to avoid touching source files
+# for type annotations (per project policy: fix bugs, not typing cosmetics).
+
+# Relax type-arg and untyped-def checks for the core/ kernel - these are
+# stable files where adding annotations is out of scope.
+[[tool.mypy.overrides]]
+module = "skills._lib.core.*"
+disable_error_code = [
+    "type-arg",
+    "no-untyped-def",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# Use ruff's default rule selection (subset of E + F that excludes style-only
+# checks like E501 line-length). This catches real bugs (unused imports,
+# ambiguous variable names, undefined names) without blocking CI on pre-existing
+# long-line cosmetics. See ruff defaults: `ruff check --isolated --show-settings`.
+

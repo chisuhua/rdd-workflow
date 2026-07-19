@@ -19,7 +19,7 @@ import subprocess
 from collections import namedtuple
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Optional
 
 from skills._lib.core.event_log import EventLog
 from skills._lib.core.event_types import EventType, Severity
@@ -258,7 +258,7 @@ def _check_worktrees_empty(ctx: dict) -> tuple[bool, Optional[str]]:
     import subprocess
     result = subprocess.run(["git", "worktree", "list"], capture_output=True, text=True)
     # Default worktree is always present; check for any extras
-    lines = [l for l in result.stdout.strip().split("\n") if l]
+    lines = [line for line in result.stdout.strip().split("\n") if line]
     return (len(lines) <= 1, None)
 
 
@@ -276,15 +276,17 @@ def _check_tests_pass(ctx: dict) -> tuple[bool, Optional[str]]:
 
 
 def _check_review_debt_recorded(ctx: dict) -> tuple[bool, Optional[str]]:
-    import json, os, subprocess
+    import json
+    import os
+    import subprocess
     try:
         result = subprocess.run(
             ["git", "diff", "HEAD", "--", "*.cpp", "*.h", "*.py", "*.ts"],
             capture_output=True, text=True, timeout=10,
         )
         new_todos = [
-            l for l in result.stdout.split('\n')
-            if l.startswith('+') and any(t in l for t in ('TODO', 'FIXME', 'HACK'))
+            line for line in result.stdout.split('\n')
+            if line.startswith('+') and any(t in line for t in ('TODO', 'FIXME', 'HACK'))
         ]
         if not new_todos:
             return (True, None)

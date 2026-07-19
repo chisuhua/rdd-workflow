@@ -12,7 +12,6 @@ from dataclasses import dataclass
 from multiprocessing import Queue as MPQueue
 from typing import Dict, List, Optional
 
-from skills._lib.dependency_scheduler import DependencyScheduler
 from skills._lib.core.event_log import EventLog
 from skills._lib.core.event_types import EventType, Severity
 from skills._lib.session_base import (

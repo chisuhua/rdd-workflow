@@ -21,7 +21,7 @@ even before the `actions` module ships. Tests inject a stub via
 from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, Any, Dict, List, Set, Tuple
+from typing import Optional, Any, Dict, List, Tuple
 
 
 class VerificationMode(str, Enum):

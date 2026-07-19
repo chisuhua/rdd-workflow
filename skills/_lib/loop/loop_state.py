@@ -1,7 +1,6 @@
 """Loop iteration state — in-memory state passed between 5 building blocks."""
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Any
 
 
 @dataclass
