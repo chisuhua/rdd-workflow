@@ -1,0 +1,12 @@
+roadmap:
+  category: docs
+  category_validation:
+    reason: ''
+    valid: true
+  cross_phase_deps: []
+  gate_checklist: []
+  manual_blocks: []
+  manual_deps:
+  - add-propose-output-validation
+  phase: v2.1
+  priority: P1

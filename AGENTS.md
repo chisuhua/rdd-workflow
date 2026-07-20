@@ -78,6 +78,7 @@ tests/
   _lib/                       # bash helpers (skill.bash, deps-subagent.bash 等)
 docs/adr/                     # ADR-0000 模板 + ADR-0001~0021 (21 个唯一编号, 22 个实体文件; v2.0.2 重编号 ADR-0013 incremental-skeleton-planning → ADR-0020)
                              # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment
+docs/change-quality-guide.md  # change 质量等级指南 (Bronze/Silver/Gold); 阈值与 Plan B `propose_quality_check.py` 对齐, 反模式以 ADR-0019 为准
 openspec/                     # OpenSpec CLI 数据 (随项目走)
   changes/                    # active changes + archive/
   specs/                      # 已采纳的 capability specs (28 个)
