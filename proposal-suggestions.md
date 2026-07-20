@@ -78,5 +78,67 @@
     "category": "general",
     "description": "## 架构依据\n- Oracle 发现：loop_engine.py 358 行是 v2.0 引擎入口，却放在 skills/ 根目录与其他 13 个 .md skill 文件并列。AGENTS.md 注明\"在 skills/ 根, 不在 _lib/\"，是历史遗留。\n\n## 范围\n- **In Scope**:\n  - skills/loop_engine.py → skills/_lib/loop_engine.py 迁移\n  - skills/loop_engine.py 保留为 re-export shim（from skills._lib.loop_engine import *）\n  - 更新所有 import 路径\n- **Out Scope**:\n  - 不修改 loop_engine.py 内部逻辑\n  - 不修改公有 API\n\n## 技术约束\n- MUST 保留 skills/loop_engine.py 作为兼容 shim（删除原代码，单行 import）\n- MUST 更新 skills/__init__.py 如有必要\n- SHOULD 更新 AGENTS.md 和 README 中 loop_engine.py 的路径引用\n\n## 验收标准\n- skills/_lib/loop_engine.py 存在且与原文件内容一致\n- skills/loop_engine.py 为单行 re-export\n- 所有现有 import 正常工作\n- 所有现有测试通过",
     "effort": "半天"
+  },
+  {
+    "name": "refresh-input-sources",
+    "priority": "P0",
+    "source": ".omo/plans/improve-change-quality-index.md — Plan C",
+    "status": "skeleton",
+    "phase": "v2.1",
+    "category": "planning",
+    "description": "## 架构依据\n- Plan C: 刷新输入源\n\n## 范围\n- **In Scope**:\n  - 扩展 roadmap.md 完整 v2.1/v3.0 的 change 映射\n  - 运行 gap-analysis 扫描 ADR 差距\n  - 扫描 TODO/FIXME 找出未跟踪问题\n  - 扫描 test 缺口\n- **Out Scope**:\n  - 不创建新 change\n  - 不修改 propose 技能\n\n## 关键场景\n- GIVEN roadmap.md 只有标题，WHEN 刷新完成，THEN 所有 v2.1/v3.0 change 有完整映射\n- GIVEN gap-analysis 运行，WHEN 完成，THEN 发现新 gaps 写入 proposal-suggestions.md\n\n## 技术约束\n- MUST 保持 roadmap.md 向后兼容（旧解析器仍可解析）\n- MUST 使用 propose.md 现有扫描逻辑\n- SHOULD 按 plan-queue-overview 格式组织输出\n\n## 验收标准\n- roadmap.md 含 v2.1 + v3.0 全部 6 个 change 映射\n- proposal-suggestions.md 中新发现的 gap 条目 ≤ 5 个",
+    "effort": "1-2h"
+  },
+  {
+    "name": "refine-adr-0015-wiring",
+    "priority": "P0",
+    "source": ".omo/plans/improve-change-quality-index.md — Plan A",
+    "status": "skeleton",
+    "phase": "v2.1",
+    "category": "quality",
+    "description": "## 架构依据\n- ADR-0015: openspec validate 集成为 plan-critic\n- Plan A: 补完 ADR-0015 链路\n\n## 范围\n- **In Scope**:\n  - guide-plan.md Phase 4 插入 PYEOF 块运行 openspec validate 并写入 report\n  - ADR-0015 状态: 待定 → 已采纳（原文 + README + AGENTS.md 同步）\n  - 端到端集成测试\n- **Out Scope**:\n  - 不修改 gate.py（双跑问题短期可接受）\n  - 不修改 validate_report.py（已有 write_report/load_report）\n\n## 技术约束\n- MUST 复用 validate_report.py 的 write_report()\n- MUST 在 guide-plan.md 独立运行 openspec validate（gate.py 不暴露 raw JSON）\n- MUST 同步 ADR-0015 状态三处一致\n\n## 验收标准\n- guide-plan.md Phase 4 运行 openspec validate 并写入 .rddf/state/openspec-validate.json\n- ADR-0015 状态为已采纳\n- 1-2 个集成测试验证",
+    "effort": "2-3h"
+  },
+  {
+    "name": "add-propose-output-validation",
+    "priority": "P1",
+    "source": ".omo/plans/improve-change-quality-index.md — Plan B",
+    "status": "skeleton",
+    "phase": "v2.1",
+    "category": "quality",
+    "description": "## 架构依据\n- ADR-0015: openspec validate 集成为 plan-critic\n- Plan B: Propose 输出验证\n\n## 范围\n- **In Scope**:\n  - iteration_schema v3→v4 + 迁移函数\n  - 5 个 check 函数（含 Why-to-roadmap-gap）\n  - STRICT_PROPOSE_GATE strict mode\n  - propose_quality_check.py 模块\n- **Out Scope**:\n  - 不修改 propose.md 主流程\n  - 不引入新外部依赖\n\n## 技术约束\n- MUST 设计阈值统一为 500 字符\n- MUST propose_quality_check.py 放在 skills/propose/scripts/（非 store.py）\n- MUST 有 __main__ 入口 + CLI 调用补全\n\n## 验收标准\n- iteration_schema v4 含 quality_warnings\n- 5 个 check 函数（含 quality_warnings 输出）\n- STRICT_PROPOSE_GATE=yes 升级为 error\n- 单元测试覆盖全部 5 个 check",
+    "effort": "6-8h"
+  },
+  {
+    "name": "add-change-quality-guide",
+    "priority": "P1",
+    "source": ".omo/plans/improve-change-quality-index.md — Plan D",
+    "status": "skeleton",
+    "phase": "v2.1",
+    "category": "docs",
+    "description": "## 架构依据\n- Plan D: 质量标准模板\n- ADR-0019: change_arch_alignment 反模式清单\n\n## 范围\n- **In Scope**:\n  - docs/change-quality-guide.md\n  - AGENTS.md 引用\n  - propose.md 引用\n- **Out Scope**:\n  - 不强制执行规则（仅文档）\n  - 不修改 CI\n\n## 技术约束\n- MUST 引用 ADR-0019 反模式清单（单一真相源）\n- MUST 量化阈值与 Plan B 对齐（500 字符、80% ADR）\n- MUST 在 Plan B 之后实施（描述 B 实际行为）\n- SHOULD 维护规则明确（量化阈值变更需同步 Plan B）\n\n## 验收标准\n- change-quality-guide.md 存在且引用 ADR-0019\n- 阈值与 Plan B 一致\n- AGENTS.md 和 propose.md 引用该文档",
+    "effort": "2-3h"
+  },
+  {
+    "name": "split-rddf-session-coordinator",
+    "priority": "P2",
+    "source": "gap-analysis: refresh-input-sources (docs/audit/2026-07-14-debt-fix-compliance.md §5 item 1)",
+    "status": "pending",
+    "phase": "v2.1",
+    "category": "refactor",
+    "description": "## 架构依据\n- docs/audit/2026-07-14-debt-fix-compliance.md §5 (Pre-Existing Issues) item 1:\n  \"RddfSessionCoordinator is still 491 lines / 16 methods. Full god-class split deferred to follow-up change.\"\n- 当前实际状态: skills/rddf-session/scripts/rddf_session.py 为 506 行 (经审计后增长 15 行)，含 RddfSessionState + RddfSessionError + SchemaValidationError + ConflictError + RddfSession + RddfSessionCoordinator 6 个类，混合 schema + IO + 协调 + 冲突检测 4 类职责。\n- ADR-0017 (rddf-session) §决策 3: 单文件实现可接受，但应在职责膨胀时拆分。\n\n## 范围\n- **In Scope**:\n  - skills/rddf-session/scripts/rddf_session.py -> rddf-session/scripts/ 子模块拆分\n  - schema.py - RddfSessionState + schema validation\n  - coordinator.py - RddfSessionCoordinator 核心\n  - conflict.py - ConflictError + detect_conflict 逻辑\n  - __init__.py - 兼容 re-export\n  - 迁移现有 test_rddf_session.py 测试\n- **Out Scope**:\n  - 不修改 RddfSessionCoordinator 公有 API\n  - 不修改 sessions.json schema\n  - 不引入新功能\n\n## 关键场景\n- GIVEN rddf_session.py 506 行 6 个类, WHEN 拆分完成, THEN 每个子模块 < 200 行且单一职责\n- GIVEN 现有 import `from skills.rddf-session.scripts.rddf_session import RddfSessionCoordinator`, WHEN 拆分后, THEN 原路径仍可 import (兼容 shim)\n\n## 技术约束\n- MUST 保持 rddf_session.py 作为 re-export shim (类似 loop_engine.py 模式)\n- MUST NOT 改变公有 API 签名\n- SHOULD 参考 iteration.py v2.0.8 拆分模式 (schema/store/render)\n\n## 验收标准\n- rddf_session.py 拆分为 3-4 个子模块 + __init__.py\n- 所有现有 import 正常工作\n- 所有现有测试通过 (test_rddf_session.py 22 个测试 + test_rddf_binding.py)\n- 无功能变化",
+    "effort": "1-2d",
+    "type": "refactor"
+  },
+  {
+    "name": "split-gate-module",
+    "priority": "P2",
+    "source": "gap-analysis: refresh-input-sources (skills/_lib/gate.py 460 lines, 17 functions)",
+    "status": "pending",
+    "phase": "v2.1",
+    "category": "refactor",
+    "description": "## 架构依据\n- skills/_lib/gate.py 当前 460 行，含 GateResult + GateMechanism 2 个类 + 17 个函数/方法，混合 gate 定义、注册、执行、质量检查 4 类职责。\n- 类比 split-iteration-module (已完成) 的拆分模式：iteration.py 739 行 -> iteration/ 子目录 3 文件 + __init__.py。\n- ADR-0007 (gate-mechanism) §3: gate 机制应支持插件式扩展，单文件阻碍新 gate 添加。\n\n## 范围\n- **In Scope**:\n  - skills/_lib/gate.py -> skills/_lib/gate/ 子目录\n  - gate/result.py - GateResult dataclass\n  - gate/mechanism.py - GateMechanism 核心协调\n  - gate/builtin_checks.py - 内置检查函数 (adr_refs_valid, placeholder_scan 等)\n  - gate/__init__.py - 兼容 re-export\n  - 迁移 test_gate.py 测试 (如有必要)\n- **Out Scope**:\n  - 不修改 GateMechanism 公有 API\n  - 不引入新 gate 类型\n  - 不修改 arch_quality_gate.py (已有独立模块)\n\n## 关键场景\n- GIVEN gate.py 460 行混合 4 类职责, WHEN 拆分完成, THEN 每个子模块 < 200 行\n- GIVEN 现有 `from skills._lib.gate import GateMechanism, GateResult`, WHEN 拆分后, THEN 原路径仍可 import\n\n## 技术约束\n- MUST 保持 skills/_lib/gate.py 或 skills/_lib/gate/__init__.py 作为 re-export 入口\n- MUST NOT 改变公有 API 签名\n- SHOULD 参考 iteration/ 拆分模式 (schema/store/render)\n\n## 验收标准\n- gate.py 拆分为 3 个子模块 + __init__.py\n- 所有现有 import 正常工作\n- 所有现有测试通过 (test_gate.py)\n- 无功能变化",
+    "effort": "1-2d",
+    "type": "refactor"
   }
 ]
