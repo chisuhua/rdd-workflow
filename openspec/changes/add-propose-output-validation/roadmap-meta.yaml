@@ -1,0 +1,12 @@
+roadmap:
+  category: quality
+  category_validation:
+    reason: ''
+    valid: true
+  cross_phase_deps: []
+  gate_checklist: []
+  manual_blocks: []
+  manual_deps:
+  - refine-adr-0015-wiring
+  phase: v2.1
+  priority: P1
