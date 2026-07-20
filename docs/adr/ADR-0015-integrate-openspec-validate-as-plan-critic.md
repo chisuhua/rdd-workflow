@@ -1,6 +1,6 @@
 # ADR-0015: Integrate `openspec validate` as the plan-critic gate for plan_done
 
-> **状态**: 待定
+> **状态**: 已采纳
 > **日期**: 2026-07-08
 > **决策者**: sisyphus
 > **依据**: ADR-0007 (gate-mechanism), ADR-0005 (human-in-loop), ADR-0014 (review-phase-and-debt-reflow)
@@ -171,3 +171,13 @@ class ValidateReport:
 - `skills/_lib/deps_output.py` — view 文件参考（同级 view 模块 Schema 设计）
 - `@fission-ai/openspec` CLI 1.4.1 — `validate --all --strict --json` 命令
 - `package.json` engines.openspec-cli — `>=1.3.1` 已声明
+
+
+---
+
+### 修订记录
+
+- **2026-07-20**: 本 ADR 中的 wiring 实装（guide-plan.md Phase 4 调用 `openspec validate` + `write_report()`）已在本 change `refine-adr-0015-wiring` 中完成。状态从 待定 -> 已采纳。
+  - **实装内容**: `skills/guide-plan/SKILL.md` Phase 4 在 `run_plan_done_gate` 之后、`write_plan_handoff` 之前新增 PYEOF 块，对每个 active change 运行 `openspec validate <name> --json` 并通过 `validate_report.write_report()` 持久化到 `.rddf/state/openspec-validate.json`。
+  - **Dual-run 说明**: 短期内 `openspec validate` 在 plan-done 时被运行 N+1 次（gate.py 的 `--all` 1 次 + guide-plan.md 的 per-change N 次）。长期 TODO 是合并到 gate.py 单次运行，需先决定是否拆分 view 文件为 per-change（触及本 ADR §决策 5 契约）。
+  - **后续待办剩余**: `archive.sh` archive 前检查最近一次 validate 通过（第 2 条）、`ship.plan_review` 实装（第 3 条）、`with_change` 范围 validate 评估（第 4 条）仍未完成。

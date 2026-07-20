@@ -1,0 +1,11 @@
+roadmap:
+  phase: "v2.1"
+  category: "quality"
+  priority: "P0"
+  gate_checklist: []
+  cross_phase_deps: []
+  manual_deps: []
+  manual_blocks: []
+  category_validation:
+    valid: true
+    reason: ""

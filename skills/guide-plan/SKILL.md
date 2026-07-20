@@ -426,6 +426,46 @@ if [ "${PLAN_GATE_0_SKIPPED:-}" = "true" ]; then
     echo "⚠️  Gate 0 skipped (user accepted Deps suggestions), no handoff written"
     exit 0
 fi
+
+# ADR-0015: Persist openspec validate report (Plan A refine-adr-0015-wiring)
+# Runs `openspec validate <change> --json` per active change and persists the
+# raw JSON via validate_report.write_report() to .rddf/state/openspec-validate.json.
+# Non-fatal: failures (missing CLI, skeleton change, write error) only emit warnings.
+#
+# TODO(long-term): merge with gate.py::_check_openspec_validate so the CLI runs
+# once (not N+1 times). Blocked on deciding whether to split the single view
+# file into per-change files (ADR-0015 §决策 5 contract change). Tracked as
+# ADR-0015 §后续待办 第一条 follow-up.
+if command -v openspec &>/dev/null; then
+    for change_dir in "$PROJECT_ROOT"/openspec/changes/*/; do
+        [ -d "$change_dir" ] || continue
+        change_name=$(basename "$change_dir")
+        [ "$change_name" = "archive" ] && continue
+        echo "  🔍 ADR-0015: 验证 change: $change_name"
+        # Oracle C1: pipe raw JSON via stdin to Python, no bash string interp.
+        # `openspec validate <name> --json` uses positional arg (not --change).
+        # Python prints "passed=<bool>" so bash can surface it without re-reading the file.
+        passed_line=$(openspec validate "$change_name" --json 2>/dev/null | \
+            PY_PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
+import json, os, sys
+try:
+    raw = json.load(sys.stdin)
+    from skills._lib.validate_report import write_report
+    write_report(os.environ["PY_PROJECT_ROOT"], raw)
+    failed = raw.get("summary", {}).get("totals", {}).get("failed", 1)
+    print("passed={}".format("true" if int(failed) == 0 else "false"))
+except Exception as exc:
+    print("passed=error: {}".format(exc))
+' 2>/dev/null)
+        case "$passed_line" in
+            passed=true)  echo "    ✅ 持久化 validate report (passed)" ;;
+            passed=false) echo "    ⚠️  持久化 validate report (failed - non-fatal, ADR-0015 wiring)" ;;
+            passed=error:*) echo "    ⚠️  $passed_line (non-fatal)" ;;
+            *) echo "    ⚠️  openspec validate 无输出 (non-fatal)" ;;
+        esac
+    done
+fi
+
 write_plan_handoff || exit 1
 \`\`\`
 
