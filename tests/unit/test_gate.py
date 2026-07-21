@@ -1,8 +1,7 @@
 """Tests for GateMechanism — phase-transition gate with two severity levels."""
 import json
-import os
 import pytest
-from skills._lib.gate import GateMechanism, Check, GateResult, GateError, register_gate_check
+from skills._lib.gate import GateMechanism, Check
 from skills._lib.core.state_vector import StateVector
 
 
@@ -268,3 +267,103 @@ def test_default_plan_done_checks_include_openspec_validate(state_path, log_path
         "plan_done must now enforce OpenSpec schema via openspec_validate check; "
         "see ADR-0015. plan_done checks were: " + ", ".join(names)
     )
+
+
+def _seed_good_change_gate(root: str, name: str) -> None:
+    from pathlib import Path
+    change_dir = Path(root) / "openspec" / "changes" / name
+    change_dir.mkdir(parents=True, exist_ok=True)
+    proposal = (
+        "## Why\n\n" + ("x" * 500) + "\n\nRefs ADR-0019.\n\n"
+        "## In Scope\n\ndo thing\n\n## Out of Scope\n\nnot doing\n"
+    )
+    (change_dir / "proposal.md").write_text(proposal, encoding="utf-8")
+    (change_dir / "tasks.md").write_text("## Tasks\n\n- [ ] one\n- [ ] two\n", encoding="utf-8")
+    (Path(root) / "roadmap.md").write_text(f"# Roadmap\n\n- {name}\n", encoding="utf-8")
+
+
+def test_plan_done_includes_propose_quality_checks(state_path, log_path):
+    sv = make_state()
+    sv.save(state_path)
+    gate = GateMechanism(state_path=state_path, event_log_path=log_path, load_defaults=True)
+    names = gate.get_registered_check_names()
+    assert "propose_quality_checks" in names
+
+
+def test_propose_quality_check_default_warning(state_path, log_path, tmp_path, monkeypatch):
+    from skills._lib import gate as gate_mod
+    _seed_good_change_gate(str(tmp_path), "c1")
+    change_dir = tmp_path / "openspec" / "changes" / "c1"
+    (change_dir / "proposal.md").write_text("## Why\n\nshort\n", encoding="utf-8")
+
+    sv = make_state()
+    sv.update_field("plan_side.active_change", "c1")
+    sv.save(state_path)
+    monkeypatch.setenv("PROJECT_ROOT", str(tmp_path))
+    monkeypatch.delenv("STRICT_PROPOSE_GATE", raising=False)
+    gate = gate_mod.GateMechanism(state_path=state_path, event_log_path=log_path, load_defaults=False)
+    gate.register(gate_mod.Check(
+        "propose_quality_checks",
+        gate_mod.strict_wrap(gate_mod._check_propose_quality, env_var="STRICT_PROPOSE_GATE"),
+        "propose quality checks failed",
+        "Fix proposal/tasks content; see .rddf/state/propose-quality.json",
+        "warning",
+    ))
+    result = gate.verify_transition("plan_done", {"project_root": str(tmp_path)})
+    assert result.passed is True
+    assert "propose_quality_checks" in result.warnings
+
+
+def test_propose_quality_check_strict_error(state_path, log_path, tmp_path, monkeypatch):
+    from skills._lib import gate as gate_mod
+    _seed_good_change_gate(str(tmp_path), "c1")
+    change_dir = tmp_path / "openspec" / "changes" / "c1"
+    (change_dir / "proposal.md").write_text("## Why\n\nshort\n", encoding="utf-8")
+
+    sv = make_state()
+    sv.update_field("plan_side.active_change", "c1")
+    sv.save(state_path)
+    monkeypatch.setenv("PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setenv("STRICT_PROPOSE_GATE", "yes")
+    gate = gate_mod.GateMechanism(state_path=state_path, event_log_path=log_path, load_defaults=False)
+    gate.register(gate_mod.Check(
+        "propose_quality_checks",
+        gate_mod.strict_wrap(gate_mod._check_propose_quality, env_var="STRICT_PROPOSE_GATE"),
+        "propose quality checks failed",
+        "Fix proposal/tasks content; see .rddf/state/propose-quality.json",
+        "warning",
+    ))
+    result = gate.verify_transition("plan_done", {"project_root": str(tmp_path)})
+    assert result.passed is False
+    assert "propose_quality_checks" in result.failed_checks
+
+
+def test_propose_quality_check_missing_state_vector_skips(state_path, log_path):
+    from skills._lib import gate as gate_mod
+    passed, severity = gate_mod._check_propose_quality({})
+    assert passed is True
+    assert severity is None
+
+
+def test_propose_quality_check_missing_state_file_reruns(state_path, log_path, tmp_path, monkeypatch):
+    from skills._lib import gate as gate_mod
+    _seed_good_change_gate(str(tmp_path), "c1")
+    change_dir = tmp_path / "openspec" / "changes" / "c1"
+    (change_dir / "proposal.md").write_text("## Why\n\nshort\n", encoding="utf-8")
+
+    sv = make_state()
+    sv.update_field("plan_side.active_change", "c1")
+    sv.save(state_path)
+    monkeypatch.setenv("PROJECT_ROOT", str(tmp_path))
+    monkeypatch.delenv("STRICT_PROPOSE_GATE", raising=False)
+    gate = gate_mod.GateMechanism(state_path=state_path, event_log_path=log_path, load_defaults=False)
+    gate.register(gate_mod.Check(
+        "propose_quality_checks",
+        gate_mod.strict_wrap(gate_mod._check_propose_quality, env_var="STRICT_PROPOSE_GATE"),
+        "propose quality checks failed",
+        "Fix proposal/tasks content; see .rddf/state/propose-quality.json",
+        "warning",
+    ))
+    result = gate.verify_transition("plan_done", {"project_root": str(tmp_path)})
+    assert result.passed is True
+    assert "propose_quality_checks" in result.warnings

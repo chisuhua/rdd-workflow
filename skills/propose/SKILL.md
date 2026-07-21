@@ -492,6 +492,12 @@ except (FileNotFoundError, json.JSONDecodeError):
     pass
 PYEOF
     fi
+
+    # Step 4e: Quality check (propose-quality-autohook)
+    if [ -f "$SCRIPT_DIR/scripts/propose_quality_hook.sh" ]; then
+        source "$SCRIPT_DIR/scripts/propose_quality_hook.sh"
+        invoke_propose_quality_hook "<name>"
+    fi
     continue
 fi
 
@@ -536,6 +542,12 @@ for each artifact_id in artifact_order:
 if [ "${ROADMAP_MODE:-false}" = "true" ]; then
     VALID_CAT="${VALID_CATEGORIES:-}"
     propose_finalize_change <name> "$CURRENT_PHASE" "$CHANGE_CATEGORY" "$PRIORITY" "$VALID_CAT"
+fi
+
+# Step 4e: Quality check (propose-quality-autohook)
+if [ -f "$SCRIPT_DIR/scripts/propose_quality_hook.sh" ]; then
+    source "$SCRIPT_DIR/scripts/propose_quality_hook.sh"
+    invoke_propose_quality_hook "<name>"
 fi
 ```
 
