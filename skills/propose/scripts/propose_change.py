@@ -48,23 +48,35 @@ def create_skeleton_change(
     current_phase: str,
     category: str,
     priority: str,
+    parent_feature: Optional[str] = None,
 ) -> bool:
     """Create minimal skeleton artifacts for a change (propose.md lines 486-551).
 
     Writes:
     - openspec/changes/<name>/proposal.md (Why + What Changes skeleton)
     - openspec/changes/<name>/roadmap-meta.yaml
-    - iteration.json (status=planned) — graceful skip on ImportError
+    - iteration.json (status=planned) - graceful skip on ImportError
 
     Returns True on full success, False if proposal/yaml write failed.
     Matches original inline behavior exactly, including:
     - openspec new change call (best-effort, swallows errors)
     - All output strings ("📦 Skeleton mode:", "  ✅ iteration.json updated:",
       "⚠️  iteration.json update failed (non-fatal):")
+
+    When ``parent_feature`` is provided, it is written to both roadmap-meta.yaml
+    and iteration.json so the change groups under the named feature without
+    requiring a ``feature-`` name prefix. The reserved synthetic key
+    ``__ungrouped__`` is rejected with ``ValueError``.
     """
     import os
     import subprocess
     import sys
+
+    if parent_feature == "__ungrouped__":
+        raise ValueError(
+            "parent_feature='__ungrouped__' is reserved (synthetic feature key); "
+            "use a real feature name or omit parent_feature"
+        )
 
     change_dir = os.path.join(project_root, "openspec", "changes", name)
     os.makedirs(change_dir, exist_ok=True)
@@ -100,6 +112,8 @@ def create_skeleton_change(
             f.write(f'  cross_phase_deps: []\n')
             f.write(f'  manual_deps: []\n')
             f.write(f'  manual_blocks: []\n')
+            pf_yaml = f'"{parent_feature}"' if parent_feature else "null"
+            f.write(f'  parent_feature: {pf_yaml}\n')
             f.write(f'  category_validation:\n')
             f.write(f'    valid: true\n')
             f.write(f'    reason: ""\n')
@@ -110,14 +124,16 @@ def create_skeleton_change(
     try:
         from skills._lib import iteration as it_mod
         data = it_mod.load(project_root)
-        data = it_mod.add_or_update_change(
-            data,
-            name=name,
-            status="planned",
-            phase=None,
-            category=None,
-            priority=None,
-        )
+        kwargs = {
+            "name": name,
+            "status": "planned",
+            "phase": None,
+            "category": None,
+            "priority": None,
+        }
+        if parent_feature is not None:
+            kwargs["parent_feature"] = parent_feature
+        data = it_mod.add_or_update_change(data, **kwargs)
         it_mod.save(project_root, data)
         print(f"  ✅ iteration.json updated: {name} status=planned")
     except ImportError as e:

@@ -113,6 +113,46 @@ class TestCreateSkeletonChange:
         assert (tmp_path / "openspec" / "changes" / "c1" / "proposal.md").exists()
         assert (tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml").exists()
 
+    def test_writes_parent_feature_to_iteration_json(self, tmp_path):
+        """parent_feature 参数应写入 iteration.json 的 change 条目。"""
+        from skills._lib import iteration as it
+        it.save(str(tmp_path), it.create_empty())
+        pc.create_skeleton_change(
+            str(tmp_path), "c1", "phase-1", "general", "P2",
+            parent_feature="feature-rddf",
+        )
+        loaded = it.load(str(tmp_path))
+        match = next(c for c in loaded["changes"] if c["name"] == "c1")
+        assert match["parent_feature"] == "feature-rddf"
+
+    def test_writes_parent_feature_to_roadmap_meta_yaml(self, tmp_path):
+        """parent_feature 参数应写入 roadmap-meta.yaml。"""
+        pc.create_skeleton_change(
+            str(tmp_path), "c1", "phase-1", "general", "P2",
+            parent_feature="feature-rddf",
+        )
+        yaml_path = tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml"
+        content = yaml_path.read_text()
+        assert 'parent_feature: "feature-rddf"' in content
+
+    def test_rejects_ungrouped_parent_feature(self, tmp_path):
+        """parent_feature='__ungrouped__' 必须被拒绝（保留字）。"""
+        with pytest.raises(ValueError, match="__ungrouped__"):
+            pc.create_skeleton_change(
+                str(tmp_path), "c1", "phase-1", "general", "P2",
+                parent_feature="__ungrouped__",
+            )
+        assert not (tmp_path / "openspec" / "changes" / "c1").exists()
+
+    def test_without_parent_feature_backward_compatible(self, tmp_path):
+        """不传 parent_feature 时行为不变（无该字段写入）。"""
+        from skills._lib import iteration as it
+        it.save(str(tmp_path), it.create_empty())
+        pc.create_skeleton_change(str(tmp_path), "c1", "phase-1", "general", "P2")
+        loaded = it.load(str(tmp_path))
+        match = next(c for c in loaded["changes"] if c["name"] == "c1")
+        assert match.get("parent_feature") is None
+
 
 class TestUpdateRoadmapMeta:
     """update_roadmap_meta encapsulates lines 617-686 of propose.md:
