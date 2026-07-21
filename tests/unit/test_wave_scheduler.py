@@ -158,3 +158,224 @@ class TestDetectUnblockedPlanned:
         }
         recs = sched.detect_unblocked(data)
         assert recs == []
+
+
+class TestDetectUnblockedProposed:
+    """detect_unblocked for proposed status (wave=ship)."""
+
+    def test_proposed_with_archived_blocker_returns_ship_rec(self):
+        """proposed + blocker=X + X.status=archived -> 1 ship recommendation."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "change-a", "status": "archived", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "change-c", "status": "proposed", "added_at": "2026-01-01T00:00:00Z",
+                    "blocker": "change-a",
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert len(recs) == 1
+        r = recs[0]
+        assert r.name == "change-c"
+        assert r.current_status == "proposed"
+        assert r.blocked_by == "change-a"
+        assert r.blocker_status == "archived"
+        assert r.wave == "ship"
+        assert r.source == "iteration.blocker"
+
+    def test_proposed_with_completed_blocker_returns_ship_rec(self):
+        """proposed + blocker=X + X.status=completed -> 1 ship rec."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "change-a", "status": "completed", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "change-c", "status": "proposed", "added_at": "2026-01-01T00:00:00Z",
+                    "blocker": "change-a",
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert len(recs) == 1
+        assert recs[0].wave == "ship"
+        assert recs[0].blocker_status == "completed"
+
+    def test_proposed_with_in_worktree_blocker_returns_nothing(self):
+        """proposed + blocker=in_worktree -> 0 recs."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "change-a", "status": "in_worktree", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "change-c", "status": "proposed", "added_at": "2026-01-01T00:00:00Z",
+                    "blocker": "change-a",
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert recs == []
+
+    def test_mixed_planned_and_proposed_both_unblocked(self):
+        """Both planned and proposed changes unblocked -> 2 recs (one fill, one ship)."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "change-a", "status": "archived", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "change-b", "status": "planned", "added_at": "2026-01-01T00:00:00Z",
+                    "blocker": "change-a",
+                },
+                {
+                    "name": "change-c", "status": "proposed", "added_at": "2026-01-01T00:00:00Z",
+                    "blocker": "change-a",
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert len(recs) == 2
+        waves = {r.wave for r in recs}
+        assert waves == {"fill", "ship"}
+
+
+class TestDetectUnblockedManualDeps:
+    """detect_unblocked for manual_deps field (ADR-0022)."""
+
+    def test_manual_deps_all_archived_returns_fill_rec(self):
+        """manual_deps=[A,B] all archived -> 1 fill rec, source=manual_deps."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "A", "status": "archived", "added_at": "2026-01-01T00:00:00Z"},
+                {"name": "B", "status": "archived", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "D", "status": "planned", "added_at": "2026-01-01T00:00:00Z",
+                    "manual_deps": ["A", "B"],
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert len(recs) == 1
+        r = recs[0]
+        assert r.name == "D"
+        assert r.wave == "fill"
+        assert r.source == "manual_deps"
+        assert "A" in r.reason and "B" in r.reason
+
+    def test_manual_deps_partial_archived_returns_nothing(self):
+        """manual_deps=[A,B], A archived but B in_worktree -> 0 recs."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "A", "status": "archived", "added_at": "2026-01-01T00:00:00Z"},
+                {"name": "B", "status": "in_worktree", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "D", "status": "planned", "added_at": "2026-01-01T00:00:00Z",
+                    "manual_deps": ["A", "B"],
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert recs == []
+
+    def test_manual_deps_single_archived_returns_fill_rec(self):
+        """manual_deps=[A] with A archived -> 1 fill rec."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "A", "status": "archived", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "D", "status": "planned", "added_at": "2026-01-01T00:00:00Z",
+                    "manual_deps": ["A"],
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert len(recs) == 1
+        assert recs[0].source == "manual_deps"
+
+    def test_manual_deps_takes_priority_when_blocker_none(self):
+        """blocker=None but manual_deps present -> use manual_deps for detection."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "A", "status": "archived", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "D", "status": "planned", "added_at": "2026-01-01T00:00:00Z",
+                    "blocker": None,
+                    "manual_deps": ["A"],
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert len(recs) == 1
+        assert recs[0].source == "manual_deps"
+
+    def test_manual_deps_completed_also_resolves(self):
+        """manual_deps=[A] with A completed (not archived) -> also resolves."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "A", "status": "completed", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "D", "status": "proposed", "added_at": "2026-01-01T00:00:00Z",
+                    "manual_deps": ["A"],
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert len(recs) == 1
+        assert recs[0].wave == "ship"
+        assert recs[0].source == "manual_deps"
+
+    def test_blocker_takes_priority_over_manual_deps(self):
+        """If both blocker and manual_deps set, blocker wins (static analysis priority).
+        But if blocker resolved AND manual_deps unresolved -> still blocked."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "A", "status": "archived", "added_at": "2026-01-01T00:00:00Z"},
+                {"name": "B", "status": "in_worktree", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "D", "status": "planned", "added_at": "2026-01-01T00:00:00Z",
+                    "blocker": "A",
+                    "manual_deps": ["A", "B"],
+                },
+            ],
+        }
+        # Blocker A is resolved but manual_deps B is not -> still blocked
+        recs = sched.detect_unblocked(data)
+        assert recs == []
+
+    def test_both_blocker_and_manual_deps_resolved(self):
+        """blocker=A (archived) + manual_deps=[A,B] both archived -> 1 rec.
+        source = iteration.blocker (blocker takes precedence for source attribution)."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "A", "status": "archived", "added_at": "2026-01-01T00:00:00Z"},
+                {"name": "B", "status": "archived", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "D", "status": "planned", "added_at": "2026-01-01T00:00:00Z",
+                    "blocker": "A",
+                    "manual_deps": ["A", "B"],
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert len(recs) == 1
+        # blocker is the primary signal for source attribution
+        assert recs[0].source == "iteration.blocker"
+        assert recs[0].blocked_by == "A"
