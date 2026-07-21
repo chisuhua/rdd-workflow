@@ -181,6 +181,9 @@ archive_change_for_mode() {
 
       # Auto-commit archive file moves (failure-tolerant)
       commit_archive_moves "$change_name" "$project_root" || true
+
+      # Sync iteration.json (archive-iteration-sync fix)
+      mark_iteration_archived "$change_name" "$project_root"
     fi
 
     # Delete branch
