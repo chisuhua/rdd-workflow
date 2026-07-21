@@ -248,6 +248,36 @@ class TestUpdateRoadmapMeta:
         yaml_path = tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml"
         assert 'priority: "P0"' in yaml_path.read_text()
 
+    def test_writes_parent_feature_to_yaml(self, tmp_path):
+        """parent_feature 参数应写入 roadmap-meta.yaml。"""
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        result = pc.update_roadmap_meta(
+            str(tmp_path), "c1",
+            current_phase="phase-1",
+            change_category="core-impl",
+            priority="P2",
+            valid_categories="core-impl:Core",
+            parent_feature="feature-stream",
+        )
+        assert result is True
+        yaml_path = tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml"
+        content = yaml_path.read_text()
+        assert 'parent_feature: "feature-stream"' in content
+
+    def test_parent_feature_null_when_not_provided(self, tmp_path):
+        """不传 parent_feature 时 yaml 写入 null。"""
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        pc.update_roadmap_meta(
+            str(tmp_path), "c1",
+            current_phase="phase-1",
+            change_category="core-impl",
+            priority="P2",
+            valid_categories="core-impl:Core",
+        )
+        yaml_path = tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml"
+        content = yaml_path.read_text()
+        assert "parent_feature: null" in content
+
 
 class TestUpdateRoadmapState:
     """update_roadmap_state encapsulates lines 688-711 of propose.md:

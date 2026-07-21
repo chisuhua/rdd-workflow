@@ -151,6 +151,7 @@ def update_roadmap_meta(
     change_category: str,
     priority: str,
     valid_categories: str,
+    parent_feature: Optional[str] = None,
 ) -> bool:
     """Update roadmap-meta.yaml for a change (propose.md lines 617-686).
 
@@ -159,6 +160,10 @@ def update_roadmap_meta(
     original inline behavior at line 671 which hard-codes
     CHANGE_CATEGORY='general' regardless of valid_categories).
     Returns False if openspec/changes/<name>/ doesn't exist or yaml write fails.
+
+    When ``parent_feature`` is provided, it is written to roadmap-meta.yaml
+    so the change groups under the named feature. ``None`` writes ``null``
+    (explicit no-feature affiliation).
     """
     import os
     change_dir = os.path.join(project_root, "openspec", "changes", name)
@@ -211,6 +216,8 @@ def update_roadmap_meta(
             f.write(f'  cross_phase_deps: []\n')
             f.write(f'  manual_deps: []\n')
             f.write(f'  manual_blocks: []\n')
+            pf_yaml = f'"{parent_feature}"' if parent_feature else "null"
+            f.write(f'  parent_feature: {pf_yaml}\n')
             f.write(f'  category_validation:\n')
             f.write(f'    valid: true\n')
             f.write(f'    reason: ""\n')
