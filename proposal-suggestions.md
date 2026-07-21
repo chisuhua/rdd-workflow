@@ -218,5 +218,85 @@
     "category": "quality",
     "description": "## 架构依据\n- Oracle 审查结论: Proposal 需要内容审查 (主观判断)，但不应强行自动化\n- ADR-0015 决策 1 拒绝 Tribunal 做 plan critique — 内容审查同样不应引入多 agent 交叉验证\n- 推荐: 单次 Oracle 调用做 4 项内容审查 (scope 清晰度、ADR 引用相关性、验收标准可测性、范围边界合理性)\n- proposal-suggestions.md 的 5 段式 description 结构适合被审查\n- 与 ADR-0007 gate 哲学一致: warning 级 + 可跳过 (SKIP_CONTENT_REVIEW=yes)\n\n## 范围\n- **In Scope**:\n  - 新建 propose_content_review.py: 单 Oracle 调用 + 结构化输出 + 写 .rddf/state/propose-review.json\n  - Oracle 检查 4 项: scope 清晰度 / ADR 引用相关性 / 验收标准可测性 / 范围边界合理性\n  - propose.md Phase 4 末尾可选调用 (SKIP_CONTENT_REVIEW=yes 跳过)\n  - 输出 warning 级不阻断流程\n  - 对应 unit test\n- **Out Scope**:\n  - 不引入 Tribunal (ADR-0015 约束)\n  - 不做批准/拒绝/打回 (human-in-loop 节点留待后续 ADR)\n  - 不做 plan 阶段内容审查 (仅 proposal 阶段)\n\n## 关键场景\n- GIVEN propose 创建完 change, WHEN SKIP_CONTENT_REVIEW != yes, THEN Oracle 检查 4 项并输出结果到终端 + .rddf/state/propose-review.json\n- GIVEN Oracle 发现 scope 不清晰, WHEN 输出 warning, THEN 不阻断流程 (用户自行决定是否修改)\n- GIVEN SKIP_CONTENT_REVIEW=yes, WHEN propose 完成, THEN 跳过 content review\n\n## 技术约束\n- MUST 使用单次 Oracle 调用 (非 Tribunal)\n- MUST 输出 warning 级不阻断\n- MUST NOT 引入新的 event type (写到 propose-review.json 足矣)\n- SHOULD Oracle prompt 包含 proposal 的 5 段 description 全文\n\n## 验收标准\n- propose_content_review.py 含 4 项检查 + Oracle prompt\n- SKIP_CONTENT_REVIEW=yes 跳过内容审查\n- 输出写入 .rddf/state/propose-review.json\n- 所有现有测试通过",
     "effort": "半天"
+  },
+  {
+    "name": "archive-iteration-sync",
+    "priority": "P0",
+    "source": "Session 复盘 2026-07-21",
+    "status": "proposed",
+    "phase": "v2.1",
+    "category": "planning",
+    "description": "## 架构依据\n- 复盘发现：archive.sh 归档流程完成后，iteration.json 中 5/8 个 change 缺少 `archived_at` 时间戳，feature_view.archived_count 与实际值差 5\n- 根因：skeleton→archive 快速路径跳过了 iteration 同步步骤\n\n## 范围\n- **In Scope**:\n  - archive.sh::archive_change() 末尾强制调用 `iteration.mark_archived(name)` 写入 archived_at 时间戳\n  - feature_view 的 archived_count 从 iteration 动态计算，不依赖缓存字段\n  - 3 个回归测试：正常归档、重复归档幂等、archive 失败不写入\n- **Out Scope**:\n  - 不修改 guide-ship 的轻量模式归档逻辑（仅 worktree 模式）\n\n## 验收标准\n- archive 后迭代 iteration.json，archived_at 存在且 archived_count 正确\n- 3 个 bats 回归测试通过",
+    "effort": "0.5-1天"
+  },
+  {
+    "name": "guide-cross-validate",
+    "priority": "P1",
+    "source": "Session 复盘 2026-07-21",
+    "status": "proposed",
+    "phase": "v2.1",
+    "category": "planning",
+    "description": "## 架构依据\n- 复盘发现：`./rddf guide` 推荐 guide-ship 处理 add-rddf-cli-v1，但它已在 3 天前归档\n- 根因：guide 推荐器只读 plan-handoff.committed_changes，未交叉验证 openspec/changes/archive/ 目录\n\n## 范围\n- **In Scope**:\n  - guide.md 推荐逻辑增加交叉验证步骤：对比 committed_changes 与 archive 目录\n  - 自动跳过已归档的 change，不将其纳入 active_changes 计数\n  - 2 个 bats 测试：有 stale handoff 时的推荐、handoff + archive 交叉验证\n- **Out Scope**:\n  - 不修改 plan-handoff 文件本身（那是 guide-plan plan-done 的职责）\n\n## 验收标准\n- `./rddf guide` 不推荐已归档的 change\n- 2 个 bats 测试通过",
+    "effort": "0.5-1天"
+  },
+  {
+    "name": "agent-completion-contract",
+    "priority": "P1",
+    "source": "Session 复盘 2026-07-21",
+    "status": "proposed",
+    "phase": "v2.1",
+    "category": "planning",
+    "description": "## 架构依据\n- 复盘发现：8 个 deep agent 中仅 3 个完成了完整的自清理（archive 目录 + iteration sync + worktree/branch 删除）\n- 5/8 个 agent 需要手动介入清理残留 worktree 或归档目录\n\n## 范围\n- **In Scope**:\n  - 在 guide-ship 的 Agent 任务 prompt 模板中增加明确的完成契约清单（3 项强制验收点）\n  - 新增 `verify-agent-completion.sh` — orchestrator 在每个 agent 完成后运行，检查 archive 目录存在、iteration.json 已 sync、worktree 已删\n  - 失败时输出警告并尝试自动修复（force-remove worktree、补写 iteration 条目）\n  - 2 个 bats 测试：三契约全部通过、一项失败时的修复行为\n- **Out Scope**:\n  - 不修改 agent 框架本身（prompt 模板变更即可）\n\n## 验收标准\n- prompt 模板包含 3 项完成契约\n- verify 脚本能检测并修复缺失的清理步骤\n- 2 个 bats 测试通过",
+    "effort": "0.5-1天"
+  },
+  {
+    "name": "task-parallel-throttle",
+    "priority": "P1",
+    "source": "Session 复盘 2026-07-21",
+    "status": "proposed",
+    "phase": "v2.1",
+    "category": "planning",
+    "description": "## 架构依据\n- 复盘发现：8 个 deep agent 同时发起导致 volcengine-plan 限流 + kimi-code 配额耗尽，6/8 个 agent 需要 2-3 次重试才能完成\n- 总延迟从线性变为超线性（约 20 分钟 vs 预期 10 分钟）\n\n## 范围\n- **In Scope**:\n  - ./rddf ship --parallel 命令增加 `--max-concurrent=<N>` 参数，默认值 3\n  - 超过限制的 agent 排队等待而非立即发起\n  - 排队逻辑用 bash 实现：wait -n + 自旋检查\n  - 1 个 bats 测试：验证并发数不超过限制\n- **Out Scope**:\n  - 不修改 task() 函数本身（平台层）\n\n## 验收标准\n- 3 agent 并发时不超 3 个同时发起\n- 1 个 bats 测试通过",
+    "effort": "0.5-1天"
+  },
+  {
+    "name": "skill-name-auto-resolve",
+    "priority": "P2",
+    "source": "Session 复盘 2026-07-21",
+    "status": "proposed",
+    "phase": "v2.1",
+    "category": "planning",
+    "description": "## 架构依据\n- 复盘发现：第一轮 8 个 task() 全部因 `load_skills=[\"spec-workflow/writing-plans\"]` 失败\n- 根因：skill 名缺少 `rdd-workflow/skills/` 前缀，无自动补全机制\n\n## 范围\n- **In Scope**:\n  - 在 task() 调用前增加 skill 名校验步骤：从 available list 中搜索匹配\n  - 短名匹配逻辑：`spec-workflow/writing-plans` → 自动补全为 `rdd-workflow/skills/spec-workflow/writing-plans`\n  - 歧义时报错（多个匹配），无匹配时提示候选项\n  - 1 个 bats 测试：短名 → 全名映射、歧义场景、无匹配场景\n- **Out Scope**:\n  - 不修改 task() 平台实现（适配层）\n\n## 验收标准\n- `resolve-skill-name spec-workflow/writing-plans` 输出全名\n- 1 个 bats 测试通过",
+    "effort": "0.5-1天"
+  },
+  {
+    "name": "archive-update-proposal-status",
+    "priority": "P1",
+    "source": "Session 复盘 2026-07-21",
+    "status": "proposed",
+    "phase": "v2.1",
+    "category": "planning",
+    "description": "## 架构依据\n- 复盘发现：8 个 P0 全部归档后，proposal-suggestions.md 中仍标记为 \"skeleton\"，未更新为 \"已完成\"\n- 根因：archive 流程缺少 proposal-suggestions.md 状态同步钩子\n\n## 范围\n- **In Scope**:\n  - archive.sh::archive_change() 成功后自动调用 update_proposal_status(name, \"已完成\")\n  - 函数实现：读取 proposal-suggestions.md JSON → 匹配 name → 更新 status → 写回\n  - 3 个 bats 测试：正常更新、条目不存在时跳过、写入失败容错\n- **Out Scope**:\n  - 不修改 proposal-suggestions.md 格式\n\n## 验收标准\n- archive 后 proposal-suggestions.md 中对应条目 status 变为 \"已完成\"\n- 3 个 bats 测试通过",
+    "effort": "0.5-1天"
+  },
+  {
+    "name": "preship-dirty-check",
+    "priority": "P2",
+    "source": "Session 复盘 2026-07-21",
+    "status": "proposed",
+    "phase": "v2.1",
+    "category": "planning",
+    "description": "## 架构依据\n- 复盘发现：主仓库有预存脏文件（dashboard/__init__.py, renderer.py）未提交，导致 guide-plan-noninteractive 的 git merge 失败\n- 根因：archive 流程未检查主仓库 working tree 清洁度\n\n## 范围\n- **In Scope**:\n  - guide-ship Phase 3 (archive) 前增加 `check_main_repo_clean()` 检查\n  - 如果有脏文件且不涉及当前 change → 警告 + 建议 stash/commit\n  - 如果有脏文件且涉及当前 change → 阻止归档，要求先 commit\n  - 1 个 bats 测试：脏文件检测\n- **Out Scope**:\n  - 不自动 stash（避免意外数据丢失）\n\n## 验收标准\n- 有脏文件时归档被阻止并给出建议\n- 1 个 bats 测试通过",
+    "effort": "0.5-1天"
+  },
+  {
+    "name": "rddf-sessions-gc",
+    "priority": "P2",
+    "source": "Session 复盘 2026-07-21",
+    "status": "proposed",
+    "phase": "v2.1",
+    "category": "planning",
+    "description": "## 架构依据\n- 复盘发现：sessions.json 中有 1 个 owner=\"current\"（字面字符串）的废弃 session，且本次 8-P0 全流程从未被记录\n- 根因：session 创建时 owner_opencode_session_id 使用了占位符 \"current\" 而非真实 session ID，且无 GC 机制\n\n## 范围\n- **In Scope**:\n  - `./rddf sessions gc` 子命令：扫描并清理 owner 为字面字符串 \"current\"、状态 abandoned/orphaned 超 7 天的 session\n  - `./rddf sessions gc --dry-run` 预览模式\n  - 修复 session 创建逻辑：确保 owner 获取真实 session ID（从环境变量 OPENAICODE_SESSION 或 guidgen 生成）\n  - 2 个 bats 测试：GC 清理废弃 session、dry-run 不实际删除\n- **Out Scope**:\n  - 不修改 session 数据模型\n\n## 验收标准\n- `./rddf sessions gc --dry-run` 能找到 \"current\" owner 的废弃 session\n- `./rddf sessions gc` 清理后 sessions.json 干净\n- 2 个 bats 测试通过",
+    "effort": "0.5-1天"
   }
 ]
