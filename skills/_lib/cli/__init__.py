@@ -77,6 +77,7 @@ for _dash, _us in _DASH_SKILLS:
 # returns a process exit code (0 = success, non-zero = error).
 _ROUTES: Dict[str, str] = {
     "dashboard": "skills._lib.cli.dashboard_cmd:cmd_dashboard",
+    "feature": "skills._lib.cli.feature_cmd:cmd_feature",
     "status": "skills._lib.cli.status_cmd:cmd_status",
     "sessions": "skills._lib.cli.sessions_cmd:cmd_sessions",
 }
