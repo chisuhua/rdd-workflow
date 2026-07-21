@@ -80,72 +80,10 @@
     "effort": "半天"
   },
   {
-    "name": "refresh-input-sources",
-    "priority": "P0",
-    "source": ".omo/plans/improve-change-quality-index.md — Plan C",
-    "status": "skeleton",
-    "phase": "v2.1",
-    "category": "planning",
-    "description": "## 架构依据\n- Plan C: 刷新输入源\n\n## 范围\n- **In Scope**:\n  - 扩展 roadmap.md 完整 v2.1/v3.0 的 change 映射\n  - 运行 gap-analysis 扫描 ADR 差距\n  - 扫描 TODO/FIXME 找出未跟踪问题\n  - 扫描 test 缺口\n- **Out Scope**:\n  - 不创建新 change\n  - 不修改 propose 技能\n\n## 关键场景\n- GIVEN roadmap.md 只有标题，WHEN 刷新完成，THEN 所有 v2.1/v3.0 change 有完整映射\n- GIVEN gap-analysis 运行，WHEN 完成，THEN 发现新 gaps 写入 proposal-suggestions.md\n\n## 技术约束\n- MUST 保持 roadmap.md 向后兼容（旧解析器仍可解析）\n- MUST 使用 propose.md 现有扫描逻辑\n- SHOULD 按 plan-queue-overview 格式组织输出\n\n## 验收标准\n- roadmap.md 含 v2.1 + v3.0 全部 6 个 change 映射\n- proposal-suggestions.md 中新发现的 gap 条目 ≤ 5 个",
-    "effort": "1-2h"
-  },
-  {
-    "name": "refine-adr-0015-wiring",
-    "priority": "P0",
-    "source": ".omo/plans/improve-change-quality-index.md — Plan A",
-    "status": "skeleton",
-    "phase": "v2.1",
-    "category": "quality",
-    "description": "## 架构依据\n- ADR-0015: openspec validate 集成为 plan-critic\n- Plan A: 补完 ADR-0015 链路\n\n## 范围\n- **In Scope**:\n  - guide-plan.md Phase 4 插入 PYEOF 块运行 openspec validate 并写入 report\n  - ADR-0015 状态: 待定 → 已采纳（原文 + README + AGENTS.md 同步）\n  - 端到端集成测试\n- **Out Scope**:\n  - 不修改 gate.py（双跑问题短期可接受）\n  - 不修改 validate_report.py（已有 write_report/load_report）\n\n## 技术约束\n- MUST 复用 validate_report.py 的 write_report()\n- MUST 在 guide-plan.md 独立运行 openspec validate（gate.py 不暴露 raw JSON）\n- MUST 同步 ADR-0015 状态三处一致\n\n## 验收标准\n- guide-plan.md Phase 4 运行 openspec validate 并写入 .rddf/state/openspec-validate.json\n- ADR-0015 状态为已采纳\n- 1-2 个集成测试验证",
-    "effort": "2-3h"
-  },
-  {
-    "name": "add-propose-output-validation",
-    "priority": "P1",
-    "source": ".omo/plans/improve-change-quality-index.md — Plan B",
-    "status": "skeleton",
-    "phase": "v2.1",
-    "category": "quality",
-    "description": "## 架构依据\n- ADR-0015: openspec validate 集成为 plan-critic\n- Plan B: Propose 输出验证\n\n## 范围\n- **In Scope**:\n  - iteration_schema v3→v4 + 迁移函数\n  - 5 个 check 函数（含 Why-to-roadmap-gap）\n  - STRICT_PROPOSE_GATE strict mode\n  - propose_quality_check.py 模块\n- **Out Scope**:\n  - 不修改 propose.md 主流程\n  - 不引入新外部依赖\n\n## 技术约束\n- MUST 设计阈值统一为 500 字符\n- MUST propose_quality_check.py 放在 skills/propose/scripts/（非 store.py）\n- MUST 有 __main__ 入口 + CLI 调用补全\n\n## 验收标准\n- iteration_schema v4 含 quality_warnings\n- 5 个 check 函数（含 quality_warnings 输出）\n- STRICT_PROPOSE_GATE=yes 升级为 error\n- 单元测试覆盖全部 5 个 check",
-    "effort": "6-8h"
-  },
-  {
-    "name": "add-change-quality-guide",
-    "priority": "P1",
-    "source": ".omo/plans/improve-change-quality-index.md — Plan D",
-    "status": "skeleton",
-    "phase": "v2.1",
-    "category": "docs",
-    "description": "## 架构依据\n- Plan D: 质量标准模板\n- ADR-0019: change_arch_alignment 反模式清单\n\n## 范围\n- **In Scope**:\n  - docs/change-quality-guide.md\n  - AGENTS.md 引用\n  - propose.md 引用\n- **Out Scope**:\n  - 不强制执行规则（仅文档）\n  - 不修改 CI\n\n## 技术约束\n- MUST 引用 ADR-0019 反模式清单（单一真相源）\n- MUST 量化阈值与 Plan B 对齐（500 字符、80% ADR）\n- MUST 在 Plan B 之后实施（描述 B 实际行为）\n- SHOULD 维护规则明确（量化阈值变更需同步 Plan B）\n\n## 验收标准\n- change-quality-guide.md 存在且引用 ADR-0019\n- 阈值与 Plan B 一致\n- AGENTS.md 和 propose.md 引用该文档",
-    "effort": "2-3h"
-  },
-  {
-    "name": "split-rddf-session-coordinator",
-    "priority": "P2",
-    "source": "gap-analysis: refresh-input-sources (docs/audit/2026-07-14-debt-fix-compliance.md §5 item 1)",
-    "status": "pending",
-    "phase": "v2.1",
-    "category": "refactor",
-    "description": "## 架构依据\n- docs/audit/2026-07-14-debt-fix-compliance.md §5 (Pre-Existing Issues) item 1:\n  \"RddfSessionCoordinator is still 491 lines / 16 methods. Full god-class split deferred to follow-up change.\"\n- 当前实际状态: skills/rddf-session/scripts/rddf_session.py 为 506 行 (经审计后增长 15 行)，含 RddfSessionState + RddfSessionError + SchemaValidationError + ConflictError + RddfSession + RddfSessionCoordinator 6 个类，混合 schema + IO + 协调 + 冲突检测 4 类职责。\n- ADR-0017 (rddf-session) §决策 3: 单文件实现可接受，但应在职责膨胀时拆分。\n\n## 范围\n- **In Scope**:\n  - skills/rddf-session/scripts/rddf_session.py -> rddf-session/scripts/ 子模块拆分\n  - schema.py - RddfSessionState + schema validation\n  - coordinator.py - RddfSessionCoordinator 核心\n  - conflict.py - ConflictError + detect_conflict 逻辑\n  - __init__.py - 兼容 re-export\n  - 迁移现有 test_rddf_session.py 测试\n- **Out Scope**:\n  - 不修改 RddfSessionCoordinator 公有 API\n  - 不修改 sessions.json schema\n  - 不引入新功能\n\n## 关键场景\n- GIVEN rddf_session.py 506 行 6 个类, WHEN 拆分完成, THEN 每个子模块 < 200 行且单一职责\n- GIVEN 现有 import `from skills.rddf-session.scripts.rddf_session import RddfSessionCoordinator`, WHEN 拆分后, THEN 原路径仍可 import (兼容 shim)\n\n## 技术约束\n- MUST 保持 rddf_session.py 作为 re-export shim (类似 loop_engine.py 模式)\n- MUST NOT 改变公有 API 签名\n- SHOULD 参考 iteration.py v2.0.8 拆分模式 (schema/store/render)\n\n## 验收标准\n- rddf_session.py 拆分为 3-4 个子模块 + __init__.py\n- 所有现有 import 正常工作\n- 所有现有测试通过 (test_rddf_session.py 22 个测试 + test_rddf_binding.py)\n- 无功能变化",
-    "effort": "1-2d",
-    "type": "refactor"
-  },
-  {
-    "name": "split-gate-module",
-    "priority": "P2",
-    "source": "gap-analysis: refresh-input-sources (skills/_lib/gate.py 460 lines, 17 functions)",
-    "status": "pending",
-    "phase": "v2.1",
-    "category": "refactor",
-    "description": "## 架构依据\n- skills/_lib/gate.py 当前 460 行，含 GateResult + GateMechanism 2 个类 + 17 个函数/方法，混合 gate 定义、注册、执行、质量检查 4 类职责。\n- 类比 split-iteration-module (已完成) 的拆分模式：iteration.py 739 行 -> iteration/ 子目录 3 文件 + __init__.py。\n- ADR-0007 (gate-mechanism) §3: gate 机制应支持插件式扩展，单文件阻碍新 gate 添加。\n\n## 范围\n- **In Scope**:\n  - skills/_lib/gate.py -> skills/_lib/gate/ 子目录\n  - gate/result.py - GateResult dataclass\n  - gate/mechanism.py - GateMechanism 核心协调\n  - gate/builtin_checks.py - 内置检查函数 (adr_refs_valid, placeholder_scan 等)\n  - gate/__init__.py - 兼容 re-export\n  - 迁移 test_gate.py 测试 (如有必要)\n- **Out Scope**:\n  - 不修改 GateMechanism 公有 API\n  - 不引入新 gate 类型\n  - 不修改 arch_quality_gate.py (已有独立模块)\n\n## 关键场景\n- GIVEN gate.py 460 行混合 4 类职责, WHEN 拆分完成, THEN 每个子模块 < 200 行\n- GIVEN 现有 `from skills._lib.gate import GateMechanism, GateResult`, WHEN 拆分后, THEN 原路径仍可 import\n\n## 技术约束\n- MUST 保持 skills/_lib/gate.py 或 skills/_lib/gate/__init__.py 作为 re-export 入口\n- MUST NOT 改变公有 API 签名\n- SHOULD 参考 iteration/ 拆分模式 (schema/store/render)\n\n## 验收标准\n- gate.py 拆分为 3 个子模块 + __init__.py\n- 所有现有 import 正常工作\n- 所有现有测试通过 (test_gate.py)\n- 无功能变化",
-    "effort": "1-2d",
-    "type": "refactor"
-  },
-  {
     "name": "guide-plan-noninteractive",
     "priority": "P0",
     "source": "复盘改进 #1 — guide-plan 无交互模式",
-    "status": "待创建",
+    "status": "skeleton",
     "phase": "v2.1",
     "category": "core",
     "description": "## 架构依据\n- 复盘发现：guide-plan 是人际交互状态机（菜单+read），AI 编排器无法调用。propose_change.py 虽可用但绕过完整流程。\n\n## 范围\n- **In Scope**:\n  - guide-plan.md 入口检测 `--non-interactive` 或 `SKIP_GUIDE_PLAN_MENU=yes` env var\n  - non-interactive 模式跳过菜单，执行默认流程（scan→propose→deps→plan-done）\n  - propose 增加 `--batch-create` 批量从 proposal-suggestions.md 创建 skeleton\n  - 测试覆盖两种模式\n- **Out Scope**:\n  - 不修改人际交互菜单（向后兼容）\n  - 不修改 guide-ship\n\n## 验收标准\n- `SKIP_GUIDE_PLAN_MENU=yes skill_use(\"guide-plan\")` 自动执行完整 plan 流程\n- `skill_use(\"propose\", \"--batch-create\")` 创建所有 pending 建议的 skeleton\n- 不影响现有交互体验",
@@ -155,7 +93,7 @@
     "name": "auto-wave-scheduler",
     "priority": "P0",
     "source": "复盘改进 #3 + #4 — 自动 Wave 调度 + iteration 状态自动化",
-    "status": "待创建",
+    "status": "skeleton",
     "phase": "v2.1",
     "category": "core",
     "description": "## 架构依据\n- 复盘发现：Wave 切换靠人工判断、iteration.json 状态转换手动操作。manual_deps 已有依赖数据，缺的是自动化消费方。\n\n## 范围\n- **In Scope**:\n  - guide-arch/guide-plan/guide-ship 入口 hook 自动迭代状态转换（planned→proposed→in_worktree→archived）\n  - archived hook 扫描 iteration.json 中 blocker 已解除的 planned change\n  - 输出建议信息“bloker 已解除: change-x, change-y 可以执行”\n  - 不影响现有 hook 行为\n- **Out Scope**:\n  - 不自动调用 guide-ship（仅建议，用户确认）\n  - 不修改 DependencyScheduler（ADR-0010 v2.1 完整版留待后续）\n\n## 验收标准\n- 归档 change-a 后，若 change-b 的 manual_deps=[change-a]，自动打印“建议: change-b blocker 已解除”\n- guide-plan 入口自动设 stage_plan session 状态\n- 测试覆盖 archived→unblocked→suggest 链路",
@@ -163,12 +101,12 @@
   },
   {
     "name": "propose-quality-autohook",
-    "priority": "P1",
-    "source": "复盘改进 #6 — propose_quality_check.py 接入 propose 流程",
-    "status": "待创建",
+    "priority": "P0",
+    "source": "Oracle 架构分析 2026-07-21 — Proposal 审查机制 (P0 升级)",
+    "status": "skeleton",
     "phase": "v2.1",
     "category": "quality",
-    "description": "## 架构依据\n- 复盘发现：propose_quality_check.py 已存在但未接入 propose 流程，需手动调用。\n\n## 范围\n- **In Scope**:\n  - propose.md Phase 4 写入 artifacts 后自动调用 quality check\n  - 失败为 warning 级别，不阻断 propose 流程\n  - 只在 `STRICT_PROPOSE_GATE=yes` 时升级为 error\n- **Out Scope**:\n  - 不修改 propose_quality_check.py 的检查逻辑\n  - 不修改 iteration_schema\n\n## 验收标准\n- `skill_use(\"propose\")` 创建 change 后自动打印质量检查结果\n- `STRICT_PROPOSE_GATE=yes` 时检查失败退出 1\n- 不影响现有 propose 流程",
+    "description": "## 架构依据\n- Oracle 审查结论: propose_quality_check.py 是 dead asset (5 项结构性检查存在但从未接入 propose 流程)\n- 当前 propose 没有任何审查环节，低质量 proposal 直接进入 change pipeline\n- 接入 plan_done gate 作为 warning 级 (STRICT_PROPOSE_GATE=yes 升级为 error)\n\n## 范围\n- **In Scope**:\n  - propose.md Phase 4 末尾调用 propose_quality_check.py --change <name>\n  - gate.py plan_done 注册 propose_quality_checks Check (warning 级)\n  - 输出 warnings 不阻断流程\n  - 对应 unit test\n- **Out Scope**:\n  - 不修改 propose_quality_check.py 的 5 项检查逻辑\n  - 不引入新的检查项\n  - 不做 content review (另见 add-propose-content-review)\n\n## 关键场景\n- GIVEN propose Phase 4 创建完 change artifacts, WHEN 自动触发 quality check, THEN 输出 5 项检查结果 (不阻断)\n- GIVEN plan_done 阶段, WHEN STRICT_PROPOSE_GATE=yes, THEN quality check 失败时返回 error 阻断\n\n## 技术约束\n- MUST NOT 阻断默认流程 (warning 级)\n- MUST 复用现有 propose_quality_check.py 的 run_all_checks()\n- SHOULD 遵循 ADR-0007 gate 哲学: warning 不阻断, error 才阻断\n\n## 验收标准\n- propose 执行后终端输出 quality check 结果\n- plan_done gate 含 propose_quality_checks Check\n- STRICT_PROPOSE_GATE=yes 时检查失败返回非零\n- 所有现有测试通过",
     "effort": "1-2h"
   },
   {
@@ -182,20 +120,10 @@
     "effort": "15min"
   },
   {
-    "name": "add-guide-dashboard",
-    "priority": "P0",
-    "source": "复盘改进 — guide 技能增强为工作流仪表盘",
-    "status": "待创建",
-    "phase": "v2.1",
-    "category": "core",
-    "description": "## 架构依据\n- guide 技能目前是无状态推荐器，只输出一行推荐\n- 用户需要完整的工作流状态概览 + 可交互的下一步选择\n- 与 rddf-session、iteration.json、proposal-suggestions.md 联动\n\n## 范围\n- **In Scope**:\n  - scan-state.sh 增强：额外收集 iteration.json 状态、待创建提案数、session 状态\n  - 新增 render-dashboard.sh：格式化的仪表盘输出（路线图 / changes / session / 下一步）\n  - guide SKILL.md 输出格式从单行推荐改为多区块仪表盘\n  - 仪表盘末尾提供编号操作选项（1-N，含 rddf-session resume）\n- **Out Scope**:\n  - 不修改 guide-arch/guide-plan/guide-ship（仅推荐器层）\n  - 不新增状态文件（只读扩展）\n  - 不修改 scan_session_binding 的 Python 后端\n\n## 关键场景\n- GIVEN 项目有已归档 changes，WHEN 调 guide, THEN 仪表盘显示归档数 + 待创建提案数 + 建议继续 propose\n- GIVEN 存在 orphaned rddf-session，WHEN 调 guide, THEN 仪表盘显示恢复选项\n\n## 验收标准\n- skill_use(\"guide\") 输出至少 4 区块：路线图 / changes / session / 下一步操作\n- 下一步操作至少包含：继续 propose、查看 features、rddf-session 操作\n- 所有现有 tests 通过\n- 不修改任何状态文件（只读）",
-    "effort": "3-4h"
-  },
-  {
     "name": "fix-rddf-schema-validation",
     "priority": "P0",
     "source": ".omo/plans/rddf-session-improvement-plan.md — W0-1",
-    "status": "待创建",
+    "status": "skeleton",
     "phase": "v2.1",
     "category": "core",
     "description": "## 架构依据\n- RDDF session schema validation 基础设施从未生效: SCHEMA_PATH 指向不存在的目录，validate=True 从未传参\n\n## 范围\n- **In Scope**:\n  - 修正 SCHEMA_PATH 指向 skills/_lib/schemas/sessions_schema.json\n  - 在 _read_unlocked() 中启用 schema validation\n  - 3 个 schema validation 测试\n- **Out Scope**:\n  - 不修改 session 数据模型\n  - 不修改 sessions_schema.json 内容\n\n## 验收标准\n- SCHEMA_PATH 指向正确路径且 validation 生效\n- 非法 fields 的 sessions.json 被正确拒绝\n- 合法 sessions.json 正常通过",
@@ -205,7 +133,7 @@
     "name": "audit-attach-detach-calls",
     "priority": "P0",
     "source": ".omo/plans/rddf-session-improvement-plan.md — W0-2",
-    "status": "待创建",
+    "status": "skeleton",
     "phase": "v2.1",
     "category": "core",
     "description": "## 架构依据\n- 不清楚 attach_change/detach_change 是否被 guide 技能实际调用\n\n## 范围\n- **In Scope**:\n  - 查找所有调用 attach_change / detach_change 的位置\n  - 确认 guide-arch/guide-plan/guide-ship 的 hook 调用链\n  - 输出 audit report\n- **Out Scope**:\n  - 不修改代码（仅 audit）\n\n## 验收标准\n- audit report 列出所有调用点 + 缺失的 hook",
@@ -255,10 +183,40 @@
     "name": "add-workflow-synthesizer",
     "priority": "P0",
     "source": ".omo/plans/rddf-session-improvement-plan.md — W3-1",
-    "status": "待创建",
+    "status": "skeleton",
     "phase": "v2.1",
     "category": "core",
     "description": "## 架构依据\n- 核心诉求：guide 运行时知道哪些阶段已完成/待处理，建议 resume 还是 restart\n- 只读模块，不写 sessions.json\n- 与 add-guide-dashboard 互补：synthesizer 提供数据，dashboard 提供展示\n\n## 范围\n- **In Scope**:\n  - skills/_lib/workflow_synthesizer.py：读取 sessions.json + handoff + iteration + git 状态\n  - 结构化推荐：WorkflowRecommendation + PhaseStatus dataclass\n  - 推荐逻辑：resume/restart/start-arch/all-done 决策树\n  - scan-state.sh 集成 synthesizer 输出到 CONTEXT_LINES\n- **Out Scope**:\n  - 不修改 sessions_schema.json（只读）\n  - 不自动执行推荐（仅建议，用户确认）\n\n## 验收标准\n- synthesizer 输出 WorkflowRecommendation with 置信度\n- 10 个测试覆盖每一条推荐路径",
     "effort": "2天"
+  },
+  {
+    "name": "fix-scan-state-binding",
+    "priority": "P0",
+    "source": "设计规范前置依赖: docs/superpowers/specs/2026-07-20-dashboard-design.md §Prerequisite",
+    "status": "skeleton",
+    "phase": "v2.1",
+    "category": "core",
+    "description": "## 架构依据\n- 仪表盘设计规范 docs/superpowers/specs/2026-07-20-dashboard-design.md 明确列出的前置依赖\n- scan-state.sh line 232 存在 syntax bug（变量展开缺闭合 brace），阻塞 session 绑定检测\n\n## 范围\n- **In Scope**:\n  - skills/guide/scripts/scan-state.sh:232 — 修复 local owner 变量展开语法（缺 }）\n  - 将 check_heartbeat_timeouts() 从 scan_session_binding 中解耦提取为独立函数\n  - 验证 rddf dashboard session 区块正确显示绑定\n- **Out Scope**:\n  - 不修改 rddf_session.py（仅修复调用方）\n  - 不修改 dashboard 渲染逻辑\n\n## 验收标准\n- rddf dashboard session 区块显示当前 session 绑定而非 \"(no active session)\"\n- scan_session_binding 不因语法错误提前中断\n- 所有现有测试通过",
+    "effort": "0.5h"
+  },
+  {
+    "name": "add-parent-feature-param",
+    "priority": "P0",
+    "source": "Oracle 架构分析 2026-07-21 — --parent-feature 参数设计",
+    "status": "skeleton",
+    "phase": "v2.1",
+    "category": "core",
+    "description": "## 架构依据\n- Oracle 审查结论: iteration_schema.json 中 parent_feature 字段已定义 (L99-102) 但从未被任何代码写入 — 是 dead field\n- 当前所有 7 个 changes 全在 __ungrouped__，因为没有 feature- 前缀也没有 parent_feature\n- 激活 parent_feature 字段即可让 change 归入 feature 组，无需新增 feature 状态机\n- 与 ADR-0016 \"extend not replace\" 原则一致 — 扩展已有字段而非新建结构\n- Schema 零变更 (字段已存在)，只需修复写入端\n\n## 范围\n- **In Scope**:\n  - propose_change.py::create_skeleton_change + update_iteration_proposed 加 parent_feature 可选参数\n  - propose_change.sh bash wrapper 加 --parent-feature 参数解析\n  - propose.md Phase 3 菜单交互: 可选 \"归属 feature\" 输入\n  - 拒绝 parent_feature=__ungrouped__ (保留字)\n  - 前向声明语义: parent_feature 指向不存在的 feature 时视为定义新 feature\n  - unit test + bats integration test\n- **Out Scope**:\n  - 不写 feature_view (保持纯派生，feature 命令自动重算)\n  - 不新增 feature create 命令\n  - 不自动从命名约定推导 feature 并提示\n\n## 关键场景\n- GIVEN propose --parent-feature feature-rddf, WHEN 创建 change, THEN iteration.json 该 change 的 parent_feature 字段 = \"feature-rddf\"\n- GIVEN parent_feature 已设置, WHEN 运行 feature summary, THEN 该 change 显示在对应 feature 组下 (非 __ungrouped__)\n- GIVEN 第一个 change 使用 parent_feature=\"new-feat\", WHEN 第二个 change 也使用 parent_feature=\"new-feat\", THEN 两个 change 自动归入同一组\n\n## 技术约束\n- MUST 拒绝 parent_feature=__ungrouped__ (保留字)\n- MUST 不校验 parent_feature 是否已存在 (前向声明)\n- MUST 显式 parent_feature 优先于 feature- 命名约定 (derive_feature_name 既有优先级)\n- SHOULD 保持向后兼容 (不传 --parent-feature 时行为不变)\n\n## 验收标准\n- --parent-feature <name> 参数可用\n- iteration.json change 条目含 parent_feature 字段\n- feature summary 显示正确的 feature 分组\n- parent_feature=__ungrouped__ 被拒绝\n- 4 个 unit test + 2 个 integration test\n- 所有现有测试通过",
+    "effort": "半天"
+  },
+  {
+    "name": "add-propose-content-review",
+    "priority": "P1",
+    "source": "Oracle 架构分析 2026-07-21 — Proposal 内容审查机制",
+    "status": "待创建",
+    "phase": "v2.1",
+    "category": "quality",
+    "description": "## 架构依据\n- Oracle 审查结论: Proposal 需要内容审查 (主观判断)，但不应强行自动化\n- ADR-0015 决策 1 拒绝 Tribunal 做 plan critique — 内容审查同样不应引入多 agent 交叉验证\n- 推荐: 单次 Oracle 调用做 4 项内容审查 (scope 清晰度、ADR 引用相关性、验收标准可测性、范围边界合理性)\n- proposal-suggestions.md 的 5 段式 description 结构适合被审查\n- 与 ADR-0007 gate 哲学一致: warning 级 + 可跳过 (SKIP_CONTENT_REVIEW=yes)\n\n## 范围\n- **In Scope**:\n  - 新建 propose_content_review.py: 单 Oracle 调用 + 结构化输出 + 写 .rddf/state/propose-review.json\n  - Oracle 检查 4 项: scope 清晰度 / ADR 引用相关性 / 验收标准可测性 / 范围边界合理性\n  - propose.md Phase 4 末尾可选调用 (SKIP_CONTENT_REVIEW=yes 跳过)\n  - 输出 warning 级不阻断流程\n  - 对应 unit test\n- **Out Scope**:\n  - 不引入 Tribunal (ADR-0015 约束)\n  - 不做批准/拒绝/打回 (human-in-loop 节点留待后续 ADR)\n  - 不做 plan 阶段内容审查 (仅 proposal 阶段)\n\n## 关键场景\n- GIVEN propose 创建完 change, WHEN SKIP_CONTENT_REVIEW != yes, THEN Oracle 检查 4 项并输出结果到终端 + .rddf/state/propose-review.json\n- GIVEN Oracle 发现 scope 不清晰, WHEN 输出 warning, THEN 不阻断流程 (用户自行决定是否修改)\n- GIVEN SKIP_CONTENT_REVIEW=yes, WHEN propose 完成, THEN 跳过 content review\n\n## 技术约束\n- MUST 使用单次 Oracle 调用 (非 Tribunal)\n- MUST 输出 warning 级不阻断\n- MUST NOT 引入新的 event type (写到 propose-review.json 足矣)\n- SHOULD Oracle prompt 包含 proposal 的 5 段 description 全文\n\n## 验收标准\n- propose_content_review.py 含 4 项检查 + Oracle prompt\n- SKIP_CONTENT_REVIEW=yes 跳过内容审查\n- 输出写入 .rddf/state/propose-review.json\n- 所有现有测试通过",
+    "effort": "半天"
   }
 ]
