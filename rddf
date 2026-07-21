@@ -4,16 +4,19 @@
 # Usage: rddf <command> [options]
 #
 # Commands:
+#   rddf dashboard                全项目状态仪表盘 (7 板块)
 #   rddf status                   全局概览 (changes + worktrees)
+#   rddf status <name>            单 change 详情
 #   rddf status --iteration       当前 sprint 表 (Mode E)
 #   rddf status --roadmap         路线图阶段进度 (Mode D)
 #   rddf feature                  按 feature 分组的汇总表
 #   rddf feature graph            Mermaid 依赖拓扑图
 #   rddf feature order            Wave 分组执行顺序
+#   rddf feature status <name>    单 feature 详情
+#   rddf sessions                 会话管理
+#     list / show <id> / current / resume <id> / abandon <id> / gc
 #   rddf guide                    无状态推荐器 (下一步建议)
 #   rddf deps                     依赖分析结果展示
-#   rddf session                  rddf-session 管理 (ADR-0017)
-#     list / show <id> / resume <id> / abandon <id> / archive-history
 #   rddf monitor                  实时监控 (session + worktree + events)
 #     --watch=<sec>                  周期刷新
 #   rddf archive <name>           归档 change (merge → archive → cleanup)
@@ -170,8 +173,15 @@ rddf_help() {
 # ── 3.2 guide ────────────────────────────────────────────────
 
 rddf_guide() {
-    local scan_script="$SKILLS_LIB/scan-state.sh"
-    [ -f "$scan_script" ] || fail "找不到 scan-state.sh (预期位置: $scan_script)"
+    local scan_script=""
+    # v2.0.8: scan-state.sh moved from _lib/ to guide/scripts/
+    for d in "$SKILLS_LIB/../guide/scripts" "$SKILLS_LIB"; do
+        if [ -f "$d/scan-state.sh" ]; then
+            scan_script="$d/scan-state.sh"
+            break
+        fi
+    done
+    [ -f "$scan_script" ] || fail "找不到 scan-state.sh (检查: $SKILLS_LIB/../guide/scripts/)"
 
     # shellcheck source=/dev/null
     source "$scan_script"
@@ -1470,6 +1480,13 @@ rddf_init() {
 # 4. 主分发
 # ────────────────────────────────────────────────────────────
 
+# ────────────────────────────────────────────────────────────
+# 3.0 委托到新 Python CLI（已模块化的命令）
+# ────────────────────────────────────────────────────────────
+_rddf_cli() {
+    PYTHONPATH="${_pkg_root}:${PYTHONPATH:-}" RDDF_PROJECT_ROOT="${PROJECT_ROOT}" python3 -m skills._lib.cli "$@"
+}
+
 main() {
     [ $# -ge 1 ] || { rddf_help; exit 0; }
 
@@ -1478,11 +1495,15 @@ main() {
 
     case "$cmd" in
         help|--help|-h)     rddf_help ;;
-        status)             rddf_status "$@" ;;
-        feature)            rddf_feature "$@" ;;
+        # ── 新 Python CLI（已模块化 + 有测试覆盖）──
+        dashboard)          _rddf_cli dashboard "$@" ;;
+        status)             _rddf_cli status "$@" ;;
+        feature)            _rddf_cli feature "$@" ;;
+        sessions)           _rddf_cli sessions "$@" ;;
+        session)            _rddf_cli sessions "$@" ;;   # 别名 session → sessions
+        # ── 旧 bash 实现（待后续迁移到 Python CLI）──
         guide)              rddf_guide ;;
         deps)               rddf_deps ;;
-        session)            rddf_session "$@" ;;
         monitor)            rddf_monitor "$@" ;;
         archive)            rddf_archive "$@" ;;
         cleanup)            rddf_cleanup ;;
