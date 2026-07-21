@@ -377,3 +377,41 @@ class TestUpdateIterationProposed:
         loaded = it.load(str(tmp_path))
         names = [c["name"] for c in loaded["changes"]]
         assert "test-with-dash_and_underscore" in names
+
+    def test_writes_parent_feature_to_iteration(self, tmp_path):
+        """parent_feature 参数应写入 iteration.json。"""
+        from skills._lib import iteration as it
+        it.save(str(tmp_path), it.create_empty())
+        pc.update_iteration_proposed(
+            str(tmp_path), "c1",
+            phase="phase-1", category="core-impl", priority="P2",
+            parent_feature="feature-stream",
+        )
+        loaded = it.load(str(tmp_path))
+        match = next(c for c in loaded["changes"] if c["name"] == "c1")
+        assert match["parent_feature"] == "feature-stream"
+
+    def test_rejects_ungrouped_parent_feature(self, tmp_path):
+        """parent_feature='__ungrouped__' 必须被拒绝。"""
+        from skills._lib import iteration as it
+        it.save(str(tmp_path), it.create_empty())
+        with pytest.raises(ValueError, match="__ungrouped__"):
+            pc.update_iteration_proposed(
+                str(tmp_path), "c1",
+                phase="phase-1", category="core-impl", priority="P2",
+                parent_feature="__ungrouped__",
+            )
+        loaded = it.load(str(tmp_path))
+        assert all(c.get("name") != "c1" for c in loaded["changes"])
+
+    def test_without_parent_feature_backward_compatible(self, tmp_path):
+        """不传 parent_feature 时 iteration.json 无该字段（向后兼容）。"""
+        from skills._lib import iteration as it
+        it.save(str(tmp_path), it.create_empty())
+        pc.update_iteration_proposed(
+            str(tmp_path), "c1",
+            phase="phase-1", category="core-impl", priority="P2",
+        )
+        loaded = it.load(str(tmp_path))
+        match = next(c for c in loaded["changes"] if c["name"] == "c1")
+        assert match.get("parent_feature") is None

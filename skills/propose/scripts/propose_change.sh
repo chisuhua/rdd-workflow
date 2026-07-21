@@ -38,13 +38,17 @@ propose_create_change() {
 import os, sys
 sys.path.insert(0, os.environ["PROJECT_ROOT"])
 from skills.propose.scripts import propose_change as pc
-result = pc.create_skeleton_change(
+kwargs = dict(
     project_root=os.environ["PROJECT_ROOT"],
     name="$name",
     current_phase="$current_phase",
     category="$category",
     priority="$priority",
 )
+pf = os.environ.get("PARENT_FEATURE") or None
+if pf is not None:
+    kwargs["parent_feature"] = pf
+result = pc.create_skeleton_change(**kwargs)
 if not result:
     sys.exit(1)
 PYEOF
@@ -63,6 +67,7 @@ propose_finalize_change() {
 
   PROJECT_ROOT="$PROJECT_ROOT" CURRENT_PHASE="$current_phase" \
     VALID_CATEGORIES="$valid_categories" \
+    PARENT_FEATURE="${PARENT_FEATURE:-}" \
     python3 <<PYEOF
 import os, sys
 sys.path.insert(0, os.environ["PROJECT_ROOT"])
@@ -70,7 +75,8 @@ from skills.propose.scripts import propose_change as pc
 project_root = os.environ["PROJECT_ROOT"]
 current_phase = os.environ["CURRENT_PHASE"]
 valid_categories = os.environ.get("VALID_CATEGORIES", "")
-pc.update_roadmap_meta(
+pf = os.environ.get("PARENT_FEATURE") or None
+meta_kwargs = dict(
     project_root=project_root,
     name="$name",
     current_phase=current_phase,
@@ -78,18 +84,24 @@ pc.update_roadmap_meta(
     priority="$priority",
     valid_categories=valid_categories,
 )
+if pf is not None:
+    meta_kwargs["parent_feature"] = pf
+pc.update_roadmap_meta(**meta_kwargs)
 pc.update_roadmap_state(
     project_root=project_root,
     name="$name",
     change_phase=current_phase,
     change_category="$category",
 )
-pc.update_iteration_proposed(
+iter_kwargs = dict(
     project_root=project_root,
     name="$name",
     phase=current_phase,
     category="$category",
     priority="$priority",
 )
+if pf is not None:
+    iter_kwargs["parent_feature"] = pf
+pc.update_iteration_proposed(**iter_kwargs)
 PYEOF
 }

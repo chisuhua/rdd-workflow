@@ -108,15 +108,15 @@ def create_skeleton_change(
             f.write(f'  phase: "{current_phase}"\n')
             f.write(f'  category: "{category}"\n')
             f.write(f'  priority: "{priority}"\n')
-            f.write(f'  gate_checklist: []\n')
-            f.write(f'  cross_phase_deps: []\n')
-            f.write(f'  manual_deps: []\n')
-            f.write(f'  manual_blocks: []\n')
+            f.write('  gate_checklist: []\n')
+            f.write('  cross_phase_deps: []\n')
+            f.write('  manual_deps: []\n')
+            f.write('  manual_blocks: []\n')
             pf_yaml = f'"{parent_feature}"' if parent_feature else "null"
             f.write(f'  parent_feature: {pf_yaml}\n')
-            f.write(f'  category_validation:\n')
-            f.write(f'    valid: true\n')
-            f.write(f'    reason: ""\n')
+            f.write('  category_validation:\n')
+            f.write('    valid: true\n')
+            f.write('    reason: ""\n')
     except OSError:
         return False
 
@@ -212,15 +212,15 @@ def update_roadmap_meta(
             f.write(f'  phase: "{lookup_phase}"\n')
             f.write(f'  category: "{lookup_category}"\n')
             f.write(f'  priority: "{priority}"\n')
-            f.write(f'  gate_checklist: []\n')
-            f.write(f'  cross_phase_deps: []\n')
-            f.write(f'  manual_deps: []\n')
-            f.write(f'  manual_blocks: []\n')
+            f.write('  gate_checklist: []\n')
+            f.write('  cross_phase_deps: []\n')
+            f.write('  manual_deps: []\n')
+            f.write('  manual_blocks: []\n')
             pf_yaml = f'"{parent_feature}"' if parent_feature else "null"
             f.write(f'  parent_feature: {pf_yaml}\n')
-            f.write(f'  category_validation:\n')
-            f.write(f'    valid: true\n')
-            f.write(f'    reason: ""\n')
+            f.write('  category_validation:\n')
+            f.write('    valid: true\n')
+            f.write('    reason: ""\n')
     except OSError:
         return False
 
@@ -293,16 +293,27 @@ def update_iteration_proposed(
     phase: str,
     category: str,
     priority: str,
+    parent_feature: Optional[str] = None,
 ) -> Optional[bool]:
     """Update iteration.json with status=proposed (propose.md lines 713-760).
 
-    Uses iteration.add_or_update_change (NOT set_deps_info — deps set
+    Uses iteration.add_or_update_change (NOT set_deps_info - deps set
     by deps.md Step 6). Graceful skip on ImportError.
 
     Per Oracle audit: this MUST only call add_or_update_change (not
     set_deps_info) to preserve deps.md Step 6's responsibility boundary.
+
+    When ``parent_feature`` is provided, it is written to iteration.json
+    so the change groups under the named feature. The reserved synthetic
+    key ``__ungrouped__`` is rejected with ``ValueError`` before any
+    state mutation.
     """
     import sys
+    if parent_feature == "__ungrouped__":
+        raise ValueError(
+            "parent_feature='__ungrouped__' is reserved (synthetic feature key); "
+            "use a real feature name or omit parent_feature"
+        )
     try:
         from skills._lib import iteration as it_mod
     except ImportError as e:
@@ -310,14 +321,16 @@ def update_iteration_proposed(
         return None
     try:
         data = it_mod.load(project_root)
-        data = it_mod.add_or_update_change(
-            data,
-            name=name,
-            status="proposed",
-            phase=phase,
-            category=category,
-            priority=priority,
-        )
+        kwargs = {
+            "name": name,
+            "status": "proposed",
+            "phase": phase,
+            "category": category,
+            "priority": priority,
+        }
+        if parent_feature is not None:
+            kwargs["parent_feature"] = parent_feature
+        data = it_mod.add_or_update_change(data, **kwargs)
         it_mod.save(project_root, data)
         print("  已更新: iteration.json (status=proposed)")
         return True
