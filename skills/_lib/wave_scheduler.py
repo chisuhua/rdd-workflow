@@ -149,3 +149,66 @@ class WaveScheduler:
             if dep_entry.get("status") not in self._RESOLVED_STATUSES:
                 unresolved.append(dep_name)
         return unresolved
+
+    def check_on_archive(self, project_root: str, archived_name: str) -> list[Recommendation]:
+        """Post-archive hook: return recs for changes unblocked by archiving archived_name.
+
+        Loads iteration.json from <project_root>/.rddf/state/iteration.json,
+        runs detect_unblocked, and filters to only those whose blocked_by
+        or manual_deps includes archived_name.
+
+        Tolerates missing or corrupt iteration.json (returns empty list).
+        """
+        from skills._lib import iteration as it_mod
+        try:
+            data = it_mod.load(project_root)
+        except Exception:
+            return []
+        recs = self.detect_unblocked(data)
+        # Filter: only recs where archived_name is the blocked_by OR in manual_deps
+        out: list[Recommendation] = []
+        for r in recs:
+            if r.blocked_by == archived_name:
+                out.append(r)
+                continue
+            # Check manual_deps - need to re-lookup the change entry
+            for c in data.get("changes", []):
+                if c.get("name") != r.name:
+                    continue
+                manual_deps = c.get("manual_deps") or []
+                if archived_name in manual_deps:
+                    out.append(r)
+                break
+        return out
+
+    def check_on_entry(self, project_root: str, skill_name: str = "") -> list[Recommendation]:
+        """Entry hook: scan all unblocked changes when entering a skill.
+
+        Currently skill_name is informational (no per-skill filtering).
+        Returns all unblocked recs regardless of wave.
+
+        Tolerates missing or corrupt iteration.json (returns empty list).
+        """
+        from skills._lib import iteration as it_mod
+        try:
+            data = it_mod.load(project_root)
+        except Exception:
+            return []
+        return self.detect_unblocked(data)
+
+    def format_recommendations(self, recs: list[Recommendation]) -> str:
+        """Render recommendations to a human-readable multi-line string.
+
+        Returns empty string for empty input. Each recommendation includes:
+          - change name
+          - wave (fill/ship)
+          - blocked_by + blocker_status
+          - reason (already human-readable)
+          - source (iteration.blocker / manual_deps)
+        """
+        if not recs:
+            return ""
+        lines: list[str] = []
+        for r in recs:
+            lines.append(f"  - {r.name}: {r.reason} (wave={r.wave}, source={r.source})")
+        return "\n".join(lines)
