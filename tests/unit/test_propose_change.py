@@ -113,6 +113,46 @@ class TestCreateSkeletonChange:
         assert (tmp_path / "openspec" / "changes" / "c1" / "proposal.md").exists()
         assert (tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml").exists()
 
+    def test_writes_parent_feature_to_iteration_json(self, tmp_path):
+        """parent_feature 参数应写入 iteration.json 的 change 条目。"""
+        from skills._lib import iteration as it
+        it.save(str(tmp_path), it.create_empty())
+        pc.create_skeleton_change(
+            str(tmp_path), "c1", "phase-1", "general", "P2",
+            parent_feature="feature-rddf",
+        )
+        loaded = it.load(str(tmp_path))
+        match = next(c for c in loaded["changes"] if c["name"] == "c1")
+        assert match["parent_feature"] == "feature-rddf"
+
+    def test_writes_parent_feature_to_roadmap_meta_yaml(self, tmp_path):
+        """parent_feature 参数应写入 roadmap-meta.yaml。"""
+        pc.create_skeleton_change(
+            str(tmp_path), "c1", "phase-1", "general", "P2",
+            parent_feature="feature-rddf",
+        )
+        yaml_path = tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml"
+        content = yaml_path.read_text()
+        assert 'parent_feature: "feature-rddf"' in content
+
+    def test_rejects_ungrouped_parent_feature(self, tmp_path):
+        """parent_feature='__ungrouped__' 必须被拒绝（保留字）。"""
+        with pytest.raises(ValueError, match="__ungrouped__"):
+            pc.create_skeleton_change(
+                str(tmp_path), "c1", "phase-1", "general", "P2",
+                parent_feature="__ungrouped__",
+            )
+        assert not (tmp_path / "openspec" / "changes" / "c1").exists()
+
+    def test_without_parent_feature_backward_compatible(self, tmp_path):
+        """不传 parent_feature 时行为不变（无该字段写入）。"""
+        from skills._lib import iteration as it
+        it.save(str(tmp_path), it.create_empty())
+        pc.create_skeleton_change(str(tmp_path), "c1", "phase-1", "general", "P2")
+        loaded = it.load(str(tmp_path))
+        match = next(c for c in loaded["changes"] if c["name"] == "c1")
+        assert match.get("parent_feature") is None
+
 
 class TestUpdateRoadmapMeta:
     """update_roadmap_meta encapsulates lines 617-686 of propose.md:
@@ -207,6 +247,36 @@ class TestUpdateRoadmapMeta:
         )
         yaml_path = tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml"
         assert 'priority: "P0"' in yaml_path.read_text()
+
+    def test_writes_parent_feature_to_yaml(self, tmp_path):
+        """parent_feature 参数应写入 roadmap-meta.yaml。"""
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        result = pc.update_roadmap_meta(
+            str(tmp_path), "c1",
+            current_phase="phase-1",
+            change_category="core-impl",
+            priority="P2",
+            valid_categories="core-impl:Core",
+            parent_feature="feature-stream",
+        )
+        assert result is True
+        yaml_path = tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml"
+        content = yaml_path.read_text()
+        assert 'parent_feature: "feature-stream"' in content
+
+    def test_parent_feature_null_when_not_provided(self, tmp_path):
+        """不传 parent_feature 时 yaml 写入 null。"""
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        pc.update_roadmap_meta(
+            str(tmp_path), "c1",
+            current_phase="phase-1",
+            change_category="core-impl",
+            priority="P2",
+            valid_categories="core-impl:Core",
+        )
+        yaml_path = tmp_path / "openspec" / "changes" / "c1" / "roadmap-meta.yaml"
+        content = yaml_path.read_text()
+        assert "parent_feature: null" in content
 
 
 class TestUpdateRoadmapState:
@@ -307,3 +377,41 @@ class TestUpdateIterationProposed:
         loaded = it.load(str(tmp_path))
         names = [c["name"] for c in loaded["changes"]]
         assert "test-with-dash_and_underscore" in names
+
+    def test_writes_parent_feature_to_iteration(self, tmp_path):
+        """parent_feature 参数应写入 iteration.json。"""
+        from skills._lib import iteration as it
+        it.save(str(tmp_path), it.create_empty())
+        pc.update_iteration_proposed(
+            str(tmp_path), "c1",
+            phase="phase-1", category="core-impl", priority="P2",
+            parent_feature="feature-stream",
+        )
+        loaded = it.load(str(tmp_path))
+        match = next(c for c in loaded["changes"] if c["name"] == "c1")
+        assert match["parent_feature"] == "feature-stream"
+
+    def test_rejects_ungrouped_parent_feature(self, tmp_path):
+        """parent_feature='__ungrouped__' 必须被拒绝。"""
+        from skills._lib import iteration as it
+        it.save(str(tmp_path), it.create_empty())
+        with pytest.raises(ValueError, match="__ungrouped__"):
+            pc.update_iteration_proposed(
+                str(tmp_path), "c1",
+                phase="phase-1", category="core-impl", priority="P2",
+                parent_feature="__ungrouped__",
+            )
+        loaded = it.load(str(tmp_path))
+        assert all(c.get("name") != "c1" for c in loaded["changes"])
+
+    def test_without_parent_feature_backward_compatible(self, tmp_path):
+        """不传 parent_feature 时 iteration.json 无该字段（向后兼容）。"""
+        from skills._lib import iteration as it
+        it.save(str(tmp_path), it.create_empty())
+        pc.update_iteration_proposed(
+            str(tmp_path), "c1",
+            phase="phase-1", category="core-impl", priority="P2",
+        )
+        loaded = it.load(str(tmp_path))
+        match = next(c for c in loaded["changes"] if c["name"] == "c1")
+        assert match.get("parent_feature") is None

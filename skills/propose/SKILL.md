@@ -470,6 +470,11 @@ fi
 
 # Step 4a-skel: Skeleton mode branch (creates minimal artifacts only)
 if [ "$SKELETON_MODE" = "true" ]; then
+    # Optional: set PARENT_FEATURE to register this change under a feature group.
+    # This activates the parent_feature field in iteration.json + roadmap-meta.yaml.
+    # Rejected values: "__ungrouped__" (reserved synthetic key).
+    # When unset, behavior is unchanged (backward compatible).
+    # Example: PARENT_FEATURE="feature-rddf" propose_create_change ...
     propose_create_change <name> --skeleton "$CURRENT_PHASE" "$CHANGE_CATEGORY" "$PRIORITY"
     # Update proposal-suggestions.md: status "待创建" → "skeleton"
     if [ -f "$PROJECT_ROOT/proposal-suggestions.md" ]; then
@@ -534,6 +539,11 @@ for each artifact_id in artifact_order:
 
 # Step 4d: roadmap + iteration sync (extracted to helper)
 if [ "${ROADMAP_MODE:-false}" = "true" ]; then
+    # Optional: set PARENT_FEATURE to register this change under a feature group.
+    # This activates the parent_feature field in iteration.json + roadmap-meta.yaml.
+    # Rejected values: "__ungrouped__" (reserved synthetic key).
+    # When unset, behavior is unchanged (backward compatible).
+    # Example: PARENT_FEATURE="feature-rddf" propose_finalize_change ...
     VALID_CAT="${VALID_CATEGORIES:-}"
     propose_finalize_change <name> "$CURRENT_PHASE" "$CHANGE_CATEGORY" "$PRIORITY" "$VALID_CAT"
 fi
