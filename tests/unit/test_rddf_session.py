@@ -1,6 +1,5 @@
 """Tests for RddfSessionCoordinator — user-perspective workflow session persistence (ADR-0017)."""
 import json
-import os
 import time
 from pathlib import Path
 
@@ -48,7 +47,7 @@ def test_create_session_persists_to_file(coordinator, sessions_file):
 
 def test_create_session_writes_valid_schema(coordinator, sessions_file):
     """sessions.json output MUST pass sessions_schema.json validation."""
-    sid = coordinator.create_session(
+    coordinator.create_session(
         kind="stage_ship",
         owner_opencode_session_id="ses_xyz",
         goal={"intent": "guide-ship", "subject": "change-x"},
