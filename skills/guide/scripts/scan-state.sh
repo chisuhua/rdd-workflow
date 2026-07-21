@@ -87,7 +87,15 @@ scan_state() {
     fi
     if [ "$ACTIVE_COUNT" -eq 0 ]; then
       RECOMMEND="guide-ship"
-      REASON="plan-handoff 残留 (无活跃 change → 进入 ship 清理/归档)"
+      REASON="plan-handoff 残留 (无活跃 change -> 进入 ship 清理/归档)"
+      return 0
+    fi
+    # Cross-validate: count non-archived change dirs in filesystem
+    local FS_ACTIVE_COUNT
+    FS_ACTIVE_COUNT=$(cd "$PROJECT_ROOT" 2>/dev/null && ls -d openspec/changes/*/ 2>/dev/null | grep -v 'archive/' | wc -l || echo 0)
+    if [ "$FS_ACTIVE_COUNT" -eq 0 ]; then
+      RECOMMEND="guide-arch"
+      REASON="plan-handoff stale (says $ACTIVE_COUNT active, but 0 in filesystem -> all archived)"
       return 0
     fi
     RECOMMEND="guide-ship"
