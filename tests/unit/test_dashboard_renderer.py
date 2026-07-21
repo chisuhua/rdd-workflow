@@ -26,7 +26,9 @@ from skills._lib.dashboard import (
     PlanInfo,
     SessionEntry,
 )
+from skills._lib.dashboard import collect
 from skills._lib.dashboard.renderer import render
+import skills._lib.dashboard as dashboard
 
 
 # ---------------------------------------------------------------------------
@@ -579,3 +581,63 @@ class TestEdgeCases:
         out = render(data, mode="json")
         parsed = json.loads(out)
         assert parsed["changes"][0]["name"] == "变更-测试"
+
+
+class TestCollectCurrentSession:
+    def _patch_readers(self, monkeypatch, sessions):
+        monkeypatch.setattr(dashboard, "read_arch_handoff", lambda _p: None)
+        monkeypatch.setattr(dashboard, "read_plan_handoff", lambda _p: None)
+        monkeypatch.setattr(dashboard, "read_iteration", lambda _p: None)
+        monkeypatch.setattr(dashboard, "read_roadmap_state", lambda _p: None)
+        monkeypatch.setattr(dashboard, "read_proposal_suggestions", lambda _p: None)
+        monkeypatch.setattr(dashboard, "list_worktrees", lambda: [])
+        monkeypatch.setattr(dashboard, "list_change_dirs", lambda _p: [])
+        monkeypatch.setattr(dashboard, "read_sessions", lambda _p: sessions)
+
+    def test_collect_marks_owner_session_as_current(self, monkeypatch, tmp_path):
+        sessions = [
+            {
+                "session_id": "s1",
+                "kind": "plan",
+                "state": "active",
+                "owner_opencode_session_id": "owner_a",
+                "started_at": "2026-07-21T10:00:00+00:00",
+            },
+            {
+                "session_id": "s2",
+                "kind": "ship",
+                "state": "active",
+                "owner_opencode_session_id": "owner_b",
+                "started_at": "2026-07-21T11:00:00+00:00",
+            },
+        ]
+        self._patch_readers(monkeypatch, sessions)
+        monkeypatch.setenv("OPENCODE_SESSION_ID", "owner_a")
+        data = collect(str(tmp_path))
+        by_id = {s.session_id: s for s in data.sessions}
+        assert by_id["s1"].is_current is True
+        assert by_id["s2"].is_current is False
+
+    def test_collect_falls_back_to_most_recent_active(self, monkeypatch, tmp_path):
+        sessions = [
+            {
+                "session_id": "s1",
+                "kind": "plan",
+                "state": "active",
+                "owner_opencode_session_id": "owner_a",
+                "started_at": "2026-07-21T10:00:00+00:00",
+            },
+            {
+                "session_id": "s2",
+                "kind": "ship",
+                "state": "active",
+                "owner_opencode_session_id": "owner_b",
+                "started_at": "2026-07-21T11:00:00+00:00",
+            },
+        ]
+        self._patch_readers(monkeypatch, sessions)
+        monkeypatch.delenv("OPENCODE_SESSION_ID", raising=False)
+        data = collect(str(tmp_path))
+        by_id = {s.session_id: s for s in data.sessions}
+        assert by_id["s2"].is_current is True
+        assert by_id["s1"].is_current is False

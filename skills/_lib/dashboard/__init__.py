@@ -42,6 +42,7 @@ Emoji mapping (per task brief):
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import os
 from typing import Optional
 
 from skills._lib.state_reader import (
@@ -293,12 +294,21 @@ def collect(project_root: str) -> DashboardData:
     except Exception:
         sessions = None
     if sessions:
-        # Determine the "current" session: the most recently started
-        # active session. state_reader.read_sessions returns a list[dict];
-        # we filter for state=="active" and sort by started_at desc.
-        active = [s for s in sessions if s.get("state") == "active"]
-        active.sort(key=lambda s: s.get("started_at") or "", reverse=True)
-        current_id = active[0].get("session_id") if active else None
+        owner_id = os.environ.get("OPENCODE_SESSION_ID")
+        current_id = None
+        if owner_id:
+            owned = [
+                s for s in sessions
+                if s.get("owner_opencode_session_id") == owner_id
+                and s.get("state") != "abandoned"
+            ]
+            owned.sort(key=lambda s: s.get("started_at") or "", reverse=True)
+            if owned:
+                current_id = owned[0].get("session_id")
+        if current_id is None:
+            active = [s for s in sessions if s.get("state") == "active"]
+            active.sort(key=lambda s: s.get("started_at") or "", reverse=True)
+            current_id = active[0].get("session_id") if active else None
         for s in sessions:
             data.sessions.append(
                 SessionEntry(
