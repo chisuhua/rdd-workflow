@@ -118,6 +118,11 @@ archive_change_for_mode() {
   local change_name="$2"
   local mode="$3"
 
+  check_main_repo_clean "$change_name" "$project_root" || {
+    echo "❌ Archive blocked: main repo has dirty files" >&2
+    return 1
+  }
+
   if [ "$mode" = "worktree" ]; then
     local wt_path="$project_root/.rddf/wt/${change_name}"
     echo "🔍 验证 worktree 分支状态..."
@@ -195,4 +200,40 @@ archive_change_for_mode() {
 
     echo "✅ $change_name 已归档（轻量模式）"
   fi
+}
+
+check_main_repo_clean() {
+  local change_name="$1"
+  local project_root="${2:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  local dirty_files
+
+  dirty_files=$(git -C "$project_root" status --porcelain 2>/dev/null | head -20)
+  if [ -z "$dirty_files" ]; then
+    return 0
+  fi
+
+  local change_scope_dirty=""
+  local other_dirty=""
+  while IFS= read -r line; do
+    local filepath
+    filepath=$(echo "$line" | awk '{print $2}')
+    case "$filepath" in
+      openspec/changes/$change_name/*)
+        change_scope_dirty="$change_scope_dirty $filepath" ;;
+      .rddf/*) ;;
+      *)
+        other_dirty="$other_dirty $filepath" ;;
+    esac
+  done <<< "$dirty_files"
+
+  if [ -n "$change_scope_dirty" ]; then
+    echo "❌ Dirty files in change scope ('$change_name'):$change_scope_dirty" >&2
+    return 1
+  fi
+
+  if [ -n "$other_dirty" ]; then
+    echo "⚠️  Unrelated dirty files:$other_dirty (non-blocking)" >&2
+  fi
+
+  return 0
 }
