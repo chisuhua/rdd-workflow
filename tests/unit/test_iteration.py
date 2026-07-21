@@ -885,3 +885,57 @@ class TestLifecycle:
         assert c["archived_at"]
         # Original added_at preserved across the full lifecycle
         assert c["added_at"]
+
+
+# ---------------------------------------------------------------------------
+# archive-iteration-sync: list_archived consistency with archived_at
+# ---------------------------------------------------------------------------
+
+class TestArchiveIterationSync:
+    """Regression tests for archive-iteration-sync change.
+
+    Verifies that mark_archived sets both status='archived' AND archived_at,
+    and that list_archived only returns changes with both fields. This
+    ensures feature_view.archived_count (which counts status=='archived')
+    is consistent with the actual archived_at timestamp.
+    """
+
+    def test_mark_archived_sets_both_status_and_timestamp(self):
+        d = it.add_or_update_change(it.create_empty(), name="c1", status="in_worktree")
+        d = it.mark_archived(d, "c1")
+        c = it.get_change(d, "c1")
+        assert c is not None
+        assert c["status"] == "archived"
+        assert "archived_at" in c
+        assert c["archived_at"] is not None
+
+    def test_list_archived_returns_only_archived_with_timestamp(self):
+        """list_archived should only return changes with status='archived'."""
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="archived1", status="in_worktree")
+        d = it.mark_archived(d, "archived1")
+        d = it.add_or_update_change(d, name="active1", status="in_worktree")
+        d = it.add_or_update_change(d, name="archived2", status="in_worktree")
+        d = it.mark_archived(d, "archived2")
+
+        archived = it.list_archived(d)
+        names = [c["name"] for c in archived]
+        assert "archived1" in names
+        assert "archived2" in names
+        assert "active1" not in names
+        assert len(archived) == 2
+
+    def test_feature_progress_counts_archived_correctly(self):
+        """feature_progress should count only status='archived' changes as done."""
+        d = it.create_empty()
+        d = it.add_or_update_change(d, name="feature-stream-core", status="archived")
+        d = it.mark_archived(d, "feature-stream-core")
+        d = it.add_or_update_change(d, name="feature-stream-api", status="in_worktree")
+        d = it.add_or_update_change(d, name="feature-stream-ui", status="archived")
+        d = it.mark_archived(d, "feature-stream-ui")
+
+        progress = it.feature_progress(d)
+        assert "feature-stream" in progress
+        done, total = progress["feature-stream"]
+        assert done == 2
+        assert total == 3
