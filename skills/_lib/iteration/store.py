@@ -160,7 +160,7 @@ def _merge_by_name(existing: dict, incoming: dict) -> dict:
 def create_empty(current_phase: str = _DEFAULT_PHASE) -> dict:
     """Return a fresh empty iteration state. Useful for `skill_use("status", "iteration", "init")`."""
     return {
-        "version": 3,
+        "version": 4,
         "updated_at": _now_iso(),
         "current_phase": current_phase,
         "changes": [],
@@ -171,16 +171,49 @@ def create_empty(current_phase: str = _DEFAULT_PHASE) -> dict:
 # Load / save
 # ---------------------------------------------------------------------------
 
+def _migrate_v3_to_v4(data: dict) -> dict:
+    """Migrate a v3 iteration state to v4 in-place.
+
+    v4 adds `manual_deps` and `manual_blocks` mirror fields to each
+    change entry. Existing v3 entries lack these fields; we set them
+    to None (meaning "no deps run yet" per the schema description).
+
+    This is a one-way migration: the version field is bumped to 4 so
+    subsequent loads skip this function. The migrated data is NOT
+    persisted by load() - callers that mutate-and-save will persist
+    the migrated form; read-only callers leave the file untouched.
+    """
+    if data.get("version") != 3:
+        return data
+    data = dict(data)
+    data["version"] = 4
+    migrated_changes = []
+    for c in data.get("changes", []):
+        c = dict(c)
+        if "manual_deps" not in c:
+            c["manual_deps"] = None
+        if "manual_blocks" not in c:
+            c["manual_blocks"] = None
+        migrated_changes.append(c)
+    data["changes"] = migrated_changes
+    return data
+
+
 def load(project_root: str) -> dict:
     """Load iteration state from disk.
 
     Behavior:
       - File missing -> return empty state (do not create file).
       - File present + valid JSON + schema-valid -> return parsed data.
+      - File present + valid JSON but version=3 -> migrate to v4 in
+        memory (add manual_deps/manual_blocks=None to each change),
+        validate, return. File is NOT rewritten; read-only callers
+        leave the v3 file on disk. Next save() persists the v4 form.
       - File present + invalid JSON -> log error, copy file aside to
         `iteration.json.corrupt.<timestamp>`, return empty state.
-      - File present + valid JSON but schema-invalid -> same: log error,
-        back up the file, return empty state.
+      - File present + valid JSON but schema-invalid (other than
+        version=3) -> same: log error, back up the file, return
+        empty state.
 
     The "return empty on error" policy is intentional: hooks call
     `load()` to read state, mutate, then `save()`. A missing or
@@ -201,6 +234,11 @@ def load(project_root: str) -> dict:
         logger.error("iteration.json at %s is unreadable: %s; backing up and returning empty", path, e)
         _backup_corrupt_file(path)
         return create_empty()
+    # v3 -> v4 in-memory migration (adds manual_deps/manual_blocks=None
+    # to each change). Bypasses validation pre-migration because the
+    # v4 schema's `const: 4` would reject a v3 file.
+    if isinstance(data, dict) and data.get("version") == 3:
+        data = _migrate_v3_to_v4(data)
     try:
         _validate(data)
     except jsonschema.ValidationError as e:
@@ -454,7 +492,8 @@ def add_or_update_change(data: dict, **fields: Any) -> dict:
     Required fields in `fields`: name, status.
     Optional: phase, category, priority, worktree_path, plan_path,
               tasks_done, tasks_total, blocker, parallel_group,
-              conflicts, last_deps_at, archived_at.
+              conflicts, last_deps_at, archived_at, manual_deps,
+              manual_blocks.
 
     Returns a new data dict (caller should `save()` it).
     """
@@ -514,12 +553,19 @@ def set_deps_info(
     blocker: Any = _UNSET,
     parallel_group: Any = _UNSET,
     conflicts: Any = _UNSET,
+    manual_deps: Any = _UNSET,
+    manual_blocks: Any = _UNSET,
 ) -> dict:
     """Update blocker/parallel_group/conflicts from a deps run. Records last_deps_at.
 
     Uses sentinel values so callers can pass `blocker=None` to explicitly
     clear a previously-recorded blocker. Arguments that are not passed
     (i.e. still equal to _UNSET) are left untouched.
+
+    `manual_deps` and `manual_blocks` carry human-authored dependency
+    overrides from roadmap-meta.yaml. They are mirror fields: `manual_deps`
+    is the list of changes this one depends on; `manual_blocks` is the
+    reverse-dependency list of changes that must wait for this one.
     """
     existing = get_change(data, name)
     fields: dict = {
@@ -537,6 +583,10 @@ def set_deps_info(
         fields["parallel_group"] = parallel_group
     if conflicts is not _UNSET:
         fields["conflicts"] = list(conflicts)
+    if manual_deps is not _UNSET:
+        fields["manual_deps"] = list(manual_deps) if manual_deps is not None else None
+    if manual_blocks is not _UNSET:
+        fields["manual_blocks"] = list(manual_blocks) if manual_blocks is not None else None
     return add_or_update_change(data, **fields)
 
 

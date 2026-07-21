@@ -9,8 +9,8 @@
   "properties": {
     "version": {
       "type": "integer",
-      "const": 3,
-      "description": "Schema version. v3: added 'planned' status to changes."
+      "const": 4,
+      "description": "Schema version. v4: added manual_deps and manual_blocks mirror fields."
     },
     "updated_at": {
       "type": "string",
@@ -98,7 +98,17 @@
           },
           "parent_feature": {
             "type": ["string", "null"],
-            "description": "Name of the parent feature/epic this change belongs to. Set when a change is decomposed from a larger feature (e.g. feature-stream-core → parent_feature='feature-stream'). Null for standalone changes. Redundant with name-prefix derivation but provides explicit registration for edge cases."
+            "description": "Name of the parent feature/epic this change belongs to. Set when a change is decomposed from a larger feature (e.g. feature-stream-core -> parent_feature='feature-stream'). Null for standalone changes. Redundant with name-prefix derivation but provides explicit registration for edge cases."
+          },
+          "manual_deps": {
+            "type": ["array", "null"],
+            "items": { "type": "string" },
+            "description": "Human-authored dependency overrides from roadmap-meta.yaml. Changes listed here MUST complete before this one. Synced by deps hook. Null if no deps run yet."
+          },
+          "manual_blocks": {
+            "type": ["array", "null"],
+            "items": { "type": "string" },
+            "description": "Human-authored reverse dependencies from roadmap-meta.yaml. Changes listed here MUST wait for this one. Synced by deps hook. Null if no deps run yet."
           }
         }
       }

@@ -477,8 +477,146 @@ def render_markdown_report(
 
     # Fallback
     lines.append("")
-    lines.append("⚠️ **AI 语义分析未启用 (fallback)** — 子代理不可用或调用失败, 详见 deps.md Step 3f")
+    lines.append("⚠️ **AI 语义分析未启用 (fallback)** - 子代理不可用或调用失败, 详见 deps.md Step 3f")
     lines.append("以下内容为基于静态三轴分析（文件冲突、ADR 引用、接口依赖）的结论。")
     lines.append("AI 子代理语义分析功能（语义依赖、粒度评估、重组建议）待子代理可用时启用。")
 
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# merge_manual_deps: merge human-authored overrides from roadmap-meta.yaml
+# ---------------------------------------------------------------------------
+
+
+def _load_manual_overrides(project_root: str, name: str) -> Optional[dict]:
+    """Read manual_deps / manual_blocks from a change's roadmap-meta.yaml.
+
+    Returns a dict with optional keys ``manual_deps`` and ``manual_blocks``
+    (each a list[str]) if the file exists and parses. Returns None if the
+    file is missing or malformed (a warning is logged on malformed YAML).
+
+    The returned dict only contains keys that are actually present in the
+    yaml's ``roadmap:`` section - callers should use ``.get()`` to check.
+    """
+    meta_path = os.path.join(
+        project_root, "openspec", "changes", name, "roadmap-meta.yaml"
+    )
+    if not os.path.isfile(meta_path):
+        return None
+    try:
+        import yaml
+    except ImportError:
+        logger.warning(
+            "PyYAML not installed; cannot parse roadmap-meta.yaml for %s", name
+        )
+        return None
+    try:
+        with open(meta_path, "r", encoding="utf-8") as f:
+            meta = yaml.safe_load(f) or {}
+    except (yaml.YAMLError, OSError) as e:
+        logger.warning(
+            "malformed roadmap-meta.yaml at %s: %s; skipping manual deps",
+            meta_path, e,
+        )
+        return None
+    if not isinstance(meta, dict):
+        return None
+    roadmap = meta.get("roadmap")
+    if not isinstance(roadmap, dict):
+        return None
+    out: dict = {}
+    md = roadmap.get("manual_deps")
+    if isinstance(md, list):
+        out["manual_deps"] = [str(x) for x in md if isinstance(x, str)]
+    mb = roadmap.get("manual_blocks")
+    if isinstance(mb, list):
+        out["manual_blocks"] = [str(x) for x in mb if isinstance(x, str)]
+    return out if out else None
+
+
+def merge_manual_deps(changes: list[dict], project_root: str) -> list[dict]:
+    """Merge human-authored dependency overrides from roadmap-meta.yaml.
+
+    For each change in ``changes``, reads
+    ``openspec/changes/<name>/roadmap-meta.yaml``. If the file contains
+    ``manual_deps`` or ``manual_blocks`` under the ``roadmap:`` section,
+    merges them into the change record:
+
+    - ``manual_deps`` (this change depends on others):
+      * If the change's ``blocker`` is not already set by static analysis,
+        set it to the first entry in ``manual_deps``.
+      * Append any ``manual_deps`` entries that are not already in the
+        change's ``blocks`` list.
+    - ``manual_blocks`` (this change is a prerequisite for others):
+      * For each blocked_change in ``manual_blocks``, find that change in
+        the list and, if its ``blocker`` is not already set, set its
+        ``blocker`` to this change's name.
+
+    When a manual override differs from the static-analysis blocker or
+    adds to ``blocks``, the change's ``recommendation`` is annotated with
+    ``"manual override"`` so downstream renderers can surface it.
+
+    The ``conflicts`` field is never modified by this function.
+
+    Gracefully skips changes whose roadmap-meta.yaml is missing or
+    malformed (a warning is logged for malformed YAML).
+
+    Args:
+        changes: list of change records (mutated in place and returned).
+        project_root: path to project root for reading roadmap-meta.yaml.
+
+    Returns:
+        The same ``changes`` list (mutated in place).
+    """
+    by_name: Dict[str, dict] = {
+        c["name"]: c for c in changes if c.get("name")
+    }
+
+    for change in changes:
+        name = change.get("name")
+        if not name:
+            continue
+        overrides = _load_manual_overrides(project_root, name)
+        if overrides is None:
+            continue
+
+        manual_deps = overrides.get("manual_deps")
+        manual_blocks = overrides.get("manual_blocks")
+
+        annotated = False
+
+        if manual_deps:
+            if not change.get("blocker") and manual_deps:
+                change["blocker"] = manual_deps[0]
+                annotated = True
+            existing_blocks = change.setdefault("blocks", [])
+            for dep in manual_deps:
+                if dep not in existing_blocks:
+                    existing_blocks.append(dep)
+                    annotated = True
+
+        if manual_blocks:
+            for blocked_name in manual_blocks:
+                blocked_change = by_name.get(blocked_name)
+                if blocked_change is None:
+                    continue
+                if not blocked_change.get("blocker"):
+                    blocked_change["blocker"] = name
+                    blocked_change.setdefault("blocks", [])
+                    if name not in blocked_change["blocks"]:
+                        blocked_change["blocks"].append(name)
+                    rec = blocked_change.get("recommendation", "") or ""
+                    if "manual override" not in rec:
+                        blocked_change["recommendation"] = (
+                            (rec + " " if rec else "") + "manual override"
+                        ).strip()
+
+        if annotated:
+            rec = change.get("recommendation", "") or ""
+            if "manual override" not in rec:
+                change["recommendation"] = (
+                    (rec + " " if rec else "") + "manual override"
+                ).strip()
+
+    return changes
