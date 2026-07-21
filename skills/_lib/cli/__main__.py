@@ -162,6 +162,7 @@ def _print_help() -> None:
     print()
     print("subcommands:")
     print("  dashboard    Unified dashboard (7 sections). Flags: --json, --plain")
+    print("  deps         Dependency analysis table from deps-analysis.json")
     print("  status       Change status overview. Flag: --iteration")
     print("  sessions     Session management (read-only). Subcmds: show <id>, current")
     print()

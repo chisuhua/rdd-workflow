@@ -1501,13 +1501,13 @@ main() {
         feature)            _rddf_cli feature "$@" ;;
         sessions)           _rddf_cli sessions "$@" ;;
         session)            _rddf_cli sessions "$@" ;;   # 别名 session → sessions
+        deps)               _rddf_cli deps "$@" ;;        # v3: migrated
+        cleanup)            _rddf_cli cleanup "$@" ;;     # v3: migrated
+        validate)           _rddf_cli validate "$@" ;;    # v3: migrated
+        monitor)            _rddf_cli monitor "$@" ;;     # v3: migrated
         # ── 旧 bash 实现（待后续迁移到 Python CLI）──
         guide)              rddf_guide ;;
-        deps)               rddf_deps ;;
-        monitor)            rddf_monitor "$@" ;;
         archive)            rddf_archive "$@" ;;
-        cleanup)            rddf_cleanup ;;
-        validate)           rddf_validate ;;
         init)               rddf_init "$@" ;;
         version|--version|-v)
             local ver="2.0.0"
