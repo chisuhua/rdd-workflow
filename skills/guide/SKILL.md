@@ -18,15 +18,15 @@ metadata:
 
 不持久化任何状态,不调用 openspec CLI,不修改任何文件。
 
-## 扫描逻辑（v1.1+：提取到独立脚本）
+## 扫描逻辑（v1.1+：提取到独立脚本；v2.1+：synthesizer 增强输出）
 
-v1.1 起，扫描逻辑不再写在 skill 文件里——它由 `scripts/scan-state.sh` 暴露的 `scan_state()` 函数提供，独立测试，bash 原生执行（不再每次由 AI 现场"翻译"）。**推荐器调一次即可**：
+v1.1 起，扫描逻辑不再写在 skill 文件里--它由 `scripts/scan-state.sh` 暴露的 `scan_state()` 函数提供，独立测试，bash 原生执行（不再每次由 AI 现场"翻译"）。v2.1 起增加 Python `workflow_synthesizer.py` 作为结构化输出层：先跑 `scan_state` 取得 baseline `RECOMMEND` + `REASON`，再尝试调用 synthesizer 覆盖输出（synthesizer 失败则保留 baseline，向后兼容）。**推荐器调一次即可**：
 
 ```bash
 case "${1:-}" in
   --help|-h)
     cat <<'EOF'
-guide 推荐器 — 用法:
+guide 推荐器 - 用法:
   skill_use("guide")                  # 默认扫描并输出 RECOMMEND + REASON
   skill_use("guide --no-binding")     # 不输出 rddf-session binding block
   skill_use("guide --help")           # 打印此帮助
@@ -40,6 +40,32 @@ esac
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 source "$(dirname "$(readlink -f "${BASH_SOURCE[0]:-$0}")")/scripts/scan-state.sh"
 scan_state "$PROJECT_ROOT"
+
+# v2.1: structured recommendation from workflow_synthesizer (read-only).
+# Falls back gracefully to legacy scan_state result on Python/import errors.
+# The synthesizer produces a WorkflowRecommendation dataclass with
+# suggested_action/reason/confidence + unblocked_changes + active_session.
+if command -v python3 >/dev/null 2>&1; then
+  RECO_JSON=$(PY_PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
+import json, os, sys
+sys.path.insert(0, os.environ["PY_PROJECT_ROOT"])
+from skills._lib.workflow_synthesizer import synthesize
+r = synthesize(os.environ["PY_PROJECT_ROOT"])
+print(json.dumps({
+    "suggested_action": r.suggested_action,
+    "reason": r.reason,
+    "confidence": r.confidence,
+    "unblocked_changes": list(r.unblocked_changes),
+    "active_session": r.active_session,
+    "orphaned_sessions": list(r.orphaned_sessions),
+}))
+' 2>/dev/null) && [ -n "$RECO_JSON" ]
+  then
+    RECOMMEND=$(printf '%s' "$RECO_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["suggested_action"])')
+    REASON=$(printf '%s' "$RECO_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["reason"])')
+  fi
+fi
+
 echo "💡 Recommended: skill_use(\"$RECOMMEND\")"
 echo "   Reason: $REASON"
 
@@ -54,7 +80,7 @@ if [ "${NO_BINDING:-0}" -eq 0 ]; then
 fi
 ```
 
-设置 `$RECOMMEND` 和 `$REASON`（沿用旧版变量契约，向后兼容）。优先级 12 条 → 见 `scripts/scan-state.sh` 函数体顶部注释。
+设置 `$RECOMMEND` 和 `$REASON`（沿用旧版变量契约，向后兼容）。优先级 12 条 -> 见 `scripts/scan-state.sh` 函数体顶部注释。v2.1 synthesizer 复刻同样 13-path 决策树（路径 10-13 隐式被早期路径短路）并补充 `confidence` / `unblocked_changes` / `active_session` / `orphaned_sessions` 结构化字段。
 
 `scan_session_binding` 是 v2.0.2 新增的只读函数，扫描 `.rddf/state/sessions.json` 的当前绑定状态，将结果存入 `BINDING_LINES` 数组。推荐器 AI 应在打印 RECOMMEND/REASON 之后、关闭输出之前输出这批行（见下方输出格式）。
 

@@ -34,8 +34,40 @@ setup() {
 
 @test "guide_skill delegates only to 3-phase skills (RECOMMEND whitelist)" {
   # v2.0.1+: RECOMMEND assignments live in scan-state.sh, not guide.md.
-  # Whitelist covers all 3-phase arch→plan→ship values + guide-spec alias.
+  # Whitelist covers all 3-phase arch->plan->ship values + guide-spec alias.
   bad=$(grep -E '^[[:space:]]*RECOMMEND=' "$REPO_ROOT/skills/guide/scripts/scan-state.sh" | \
         grep -vE 'RECOMMEND="(guide-plan|guide-arch|guide-ship|status --roadmap)"' || true)
   [ -z "$bad" ]
+}
+
+@test "guide_skill integrates workflow_synthesizer with fallback to scan_state" {
+  # v2.1: guide.md MUST call the Python synthesizer and retain scan_state
+  # as fallback (backward compatibility). The synthesizer produces a
+  # structured WorkflowRecommendation that overrides RECOMMEND/REASON
+  # when Python is available; on any error, scan_state's baseline wins.
+  local skill_file="$REPO_ROOT/skills/guide/SKILL.md"
+  assert_file_exists "$skill_file"
+
+  # Must reference the new synthesizer module
+  assert_file_contains "$skill_file" "workflow_synthesizer"
+  assert_file_contains "$skill_file" "synthesize"
+
+  # Must retain scan_state fallback (backward compat)
+  assert_file_contains "$skill_file" "scan_state"
+  assert_file_contains "$skill_file" "scan-state.sh"
+
+  # Must reference the RECOMMEND/REASON contract
+  assert_file_contains "$skill_file" "RECOMMEND"
+  assert_file_contains "$skill_file" "REASON"
+}
+
+@test "guide_skill synthesizer module exists and is importable" {
+  # The synthesizer module MUST exist and import cleanly.
+  local synth_file="$REPO_ROOT/skills/_lib/workflow_synthesizer.py"
+  assert_file_exists "$synth_file"
+
+  # Must import without error
+  run python3 -c "import sys; sys.path.insert(0, '$REPO_ROOT'); from skills._lib.workflow_synthesizer import synthesize, WorkflowRecommendation, PhaseStatus; print('ok')"
+  [ "$status" -eq 0 ]
+  [ "$output" = "ok" ]
 }
