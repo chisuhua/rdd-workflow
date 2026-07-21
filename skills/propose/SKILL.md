@@ -497,6 +497,12 @@ except (FileNotFoundError, json.JSONDecodeError):
     pass
 PYEOF
     fi
+
+    # Step 4e: Quality check (propose-quality-autohook)
+    if [ -f "$SCRIPT_DIR/scripts/propose_quality_hook.sh" ]; then
+        source "$SCRIPT_DIR/scripts/propose_quality_hook.sh"
+        invoke_propose_quality_hook "<name>"
+    fi
     continue
 fi
 
@@ -546,6 +552,12 @@ if [ "${ROADMAP_MODE:-false}" = "true" ]; then
     # Example: PARENT_FEATURE="feature-rddf" propose_finalize_change ...
     VALID_CAT="${VALID_CATEGORIES:-}"
     propose_finalize_change <name> "$CURRENT_PHASE" "$CHANGE_CATEGORY" "$PRIORITY" "$VALID_CAT"
+fi
+
+# Step 4e: Quality check (propose-quality-autohook)
+if [ -f "$SCRIPT_DIR/scripts/propose_quality_hook.sh" ]; then
+    source "$SCRIPT_DIR/scripts/propose_quality_hook.sh"
+    invoke_propose_quality_hook "<name>"
 fi
 ```
 

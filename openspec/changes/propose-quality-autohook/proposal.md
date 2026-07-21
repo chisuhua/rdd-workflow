@@ -39,9 +39,21 @@
 
 ## What Changes
 
-- TODO: define specific changes during fill phase
+- NEW `skills/propose/scripts/propose_quality_hook.py` - Python entrypoint that calls `run_all_checks` and writes `.rddf/state/propose-quality.json`
+- NEW `skills/propose/scripts/propose_quality_hook.sh` - bash wrapper (env-var safe, Oracle C1)
+- MODIFY `skills/propose/SKILL.md` Phase 4 - add Step 4e invoking the hook after artifact creation (skeleton + full branches)
+- MODIFY `skills/_lib/gate.py` - register `propose_quality_checks` Check in `_DEFAULT_CHECKS["plan_done"]` with `strict_wrap(env_var="STRICT_PROPOSE_GATE")`
+- NEW `tests/unit/test_propose_quality_hook.py` - unit tests for the hook
+- EXTEND `tests/unit/test_gate.py` - gate tests for the new Check
+- NEW `tests/integration/test_propose_quality_hook.bats` - integration tests
 
 ## Impact
 
-- Affected specs: TBD
-- Affected code: TBD
+- Affected specs: none (no spec changes; behavior-only wiring)
+- Affected code:
+  - skills/propose/SKILL.md (Phase 4 +1 step)
+  - skills/_lib/gate.py (plan_done +1 Check)
+  - NEW files under skills/propose/scripts/
+  - NEW test files under tests/
+- State files: NEW `.rddf/state/propose-quality.json` (gitignored view file, schema_version=1)
+- Backward compatibility: full - default mode is warning-only, no flow blocked

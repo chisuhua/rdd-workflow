@@ -37,6 +37,7 @@ from skills._lib.change_alignment import (
     _check_change_no_contradiction,
     _check_change_task_traceability,
 )
+from skills.propose.scripts.propose_quality_check import run_all_checks
 
 logger = logging.getLogger(__name__)
 
@@ -266,6 +267,35 @@ def _check_archive_empty(ctx: dict) -> tuple[bool, Optional[str]]:
     return (True, None)  # Archive is checked at archive time, not pre-ship
 
 
+def _check_propose_quality(ctx: dict) -> tuple[bool, Optional[str]]:
+    """Re-run or reuse cached propose quality checks. Default warning."""
+    sv = ctx.get("state_vector")
+    if sv is None:
+        return (True, None)
+    name = (
+        sv.get_field("plan_side.active_change")
+        or sv.get_field("plan_side.current_change")
+        or sv.get_field("arch_side.active_change")
+        or sv.get_field("arch_side.current_change")
+    )
+    if not name:
+        return (True, None)
+
+    project_root = ctx.get("project_root", ".")
+    report_path = os.path.join(project_root, ".rddf", "state", "propose-quality.json")
+    warnings: list[str] = []
+    if os.path.isfile(report_path):
+        try:
+            with open(report_path, encoding="utf-8") as f:
+                report = json.load(f)
+            warnings = report.get("warnings", [])
+        except (json.JSONDecodeError, OSError):
+            warnings = run_all_checks(name, project_root)
+    else:
+        warnings = run_all_checks(name, project_root)
+    return (len(warnings) == 0, "warning")
+
+
 def _check_tests_pass(ctx: dict) -> tuple[bool, Optional[str]]:
     import subprocess
     result = subprocess.run(
@@ -323,6 +353,13 @@ _DEFAULT_CHECKS = {
         Check("change_adr_refs_valid", strict_wrap(_check_change_adr_refs_valid, env_var="STRICT_CHANGE_GATE"), "design.md references deprecated/replaced ADRs", "Update references to currently-accepted ADRs (ADR-0019)", "warning"),
         Check("change_no_contradiction", strict_wrap(_check_change_no_contradiction, env_var="STRICT_CHANGE_GATE"), "design.md contains anti-pattern keywords without ADR justification", "Add ADR reference justifying the choice or rewrite the section (ADR-0019)", "warning"),
         Check("change_task_traceability", strict_wrap(_check_change_task_traceability, env_var="STRICT_CHANGE_GATE"), "<80% of tasks.md checkbox items trace to an ADR", "Add ADR-NNN references to each architectural task (ADR-0019)", "warning"),
+        Check(
+            "propose_quality_checks",
+            strict_wrap(_check_propose_quality, env_var="STRICT_PROPOSE_GATE"),
+            "propose quality checks failed",
+            "Fix proposal/tasks content; see .rddf/state/propose-quality.json",
+            "warning",
+        ),
     ],
     "ship_done": [
         Check("worktrees_empty", _check_worktrees_empty, "Active worktrees remain", "git worktree remove .rddf/wt/<name>", "error"),
