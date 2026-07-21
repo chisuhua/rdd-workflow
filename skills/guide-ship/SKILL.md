@@ -141,6 +141,14 @@ PLAN_STEP_COUNT=$(generate_implementation_plan "$PROJECT_ROOT" "$CHANGE_NAME" "$
 record_iteration_status "$PROJECT_ROOT" "$CHANGE_NAME" "$MODE" "$WT_PATH" "$PLAN_STEP_COUNT"
 ```
 
+**v2.1: wave scheduler entry check**（入口扫描可推进的 changes）：
+
+```bash
+# v2.1: wave scheduler entry check - suggest changes ready to advance
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/wave_scheduler_hooks.sh"
+wave_scheduler_entry_check "$PROJECT_ROOT" "guide-ship"
+```
+
 **环境就绪 → 进入执行模式选择**：
 
 ```
@@ -518,9 +526,11 @@ rddf_session_hook_heartbeat stage_ship "$CHANGE_NAME"
 4. 若无结果，保持现有输出不变
 
 ```bash
-# Phase 3 post-archive: fill suggestion hook — extracted to _lib/post_archive_fill.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/post_archive_fill.sh"
-run_post_archive_fill_suggestion
+# Phase 3 post-archive: wave scheduler hook (v2.1) - supersedes post_archive_fill.sh
+# WaveScheduler detects both planned (wave=fill) AND proposed (wave=ship) changes
+# whose blockers have resolved. post_archive_fill.sh only handled planned.
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/wave_scheduler_hooks.sh"
+wave_scheduler_post_archive "$PROJECT_ROOT" "$CHANGE_NAME"
 ```
 
 **关键约束**:

@@ -98,6 +98,14 @@ source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/plan_intake.sh"
 run_plan_intake || exit 1
 ```
 
+**v2.1: wave scheduler entry check**（入口扫描可推进的 changes）：
+
+```bash
+# v2.1: wave scheduler entry check - suggest changes ready to advance
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/wave_scheduler_hooks.sh"
+wave_scheduler_entry_check "$PROJECT_ROOT" "guide-plan"
+```
+
 **扫描委托**：
 
 ```bash
