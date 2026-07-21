@@ -54,3 +54,107 @@ class TestWaveSchedulerSkeleton:
         result = sched.detect_unblocked({"changes": []})
         assert isinstance(result, list)
         assert result == []
+
+
+class TestDetectUnblockedPlanned:
+    """detect_unblocked for planned status with iteration.blocker field."""
+
+    def test_planned_with_archived_blocker_returns_fill_rec(self):
+        """planned + blocker=X + X.status=archived -> 1 fill recommendation."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "change-a", "status": "archived", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "change-b", "status": "planned", "added_at": "2026-01-01T00:00:00Z",
+                    "blocker": "change-a",
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert len(recs) == 1
+        r = recs[0]
+        assert r.name == "change-b"
+        assert r.current_status == "planned"
+        assert r.blocked_by == "change-a"
+        assert r.blocker_status == "archived"
+        assert r.wave == "fill"
+        assert r.source == "iteration.blocker"
+
+    def test_planned_with_completed_blocker_returns_fill_rec(self):
+        """planned + blocker=X + X.status=completed -> 1 fill recommendation."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "change-a", "status": "completed", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "change-b", "status": "planned", "added_at": "2026-01-01T00:00:00Z",
+                    "blocker": "change-a",
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert len(recs) == 1
+        assert recs[0].blocker_status == "completed"
+        assert recs[0].wave == "fill"
+
+    def test_planned_with_in_worktree_blocker_returns_nothing(self):
+        """planned + blocker=X + X.status=in_worktree -> 0 recs (still blocked)."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "change-a", "status": "in_worktree", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "change-b", "status": "planned", "added_at": "2026-01-01T00:00:00Z",
+                    "blocker": "change-a",
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert recs == []
+
+    def test_planned_with_proposed_blocker_returns_nothing(self):
+        """planned + blocker=X + X.status=proposed -> 0 recs (still blocked)."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "change-a", "status": "proposed", "added_at": "2026-01-01T00:00:00Z"},
+                {
+                    "name": "change-b", "status": "planned", "added_at": "2026-01-01T00:00:00Z",
+                    "blocker": "change-a",
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert recs == []
+
+    def test_planned_with_no_blocker_returns_nothing(self):
+        """planned + blocker=None -> 0 recs (covered by list_ready_for_fill elsewhere)."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {"name": "change-b", "status": "planned", "added_at": "2026-01-01T00:00:00Z"},
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert recs == []
+
+    def test_planned_with_missing_blocker_entry_returns_nothing(self):
+        """planned + blocker=X but X not in changes -> 0 recs (blocker not yet tracked)."""
+        sched = WaveScheduler()
+        data = {
+            "version": 4,
+            "changes": [
+                {
+                    "name": "change-b", "status": "planned", "added_at": "2026-01-01T00:00:00Z",
+                    "blocker": "ghost-change",
+                },
+            ],
+        }
+        recs = sched.detect_unblocked(data)
+        assert recs == []
