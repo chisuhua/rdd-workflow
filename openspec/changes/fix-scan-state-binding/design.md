@@ -2,9 +2,9 @@
 
 ## 问题分析
 
-### Bug 1: scan-state.sh line 231-233 变量展开语法错误
+### Bug 1: `scan-state.sh` 的 `owner` 变量跨行损坏
 
-当前代码 (`skills/guide/scripts/scan-state.sh:231-233`):
+`skills/guide/scripts/scan-state.sh` 中 `scan_session_binding()` 的 `owner` 赋值在当前分支里被切坏成三行：
 
 ```bash
 local owner="${OPENCODE_SESSION_ID:-$(hostname -s)_$$
@@ -12,126 +12,91 @@ local owner="${OPENCODE_SESSION_ID:-$(hostname -s)_$$
 }"
 ```
 
-**根因**: 双引号字符串跨行,内嵌的 `# check_stale_workflow_state()...` 注释行落在 `${...:-default}` 的 default 子表达式内部,导致:
+这会把注释行卷进 shell 字符串，导致 `owner` 变量不是一个单行 session id，而是污染后的多行文本。结果是后续 Python 端 `find_current_binding(owner)` 无法命中当前绑定，session binding 检测静默失效。
 
-1. 当 `OPENCODE_SESSION_ID` 已设置 (生产常见路径) -> `${VAR:-default}` 短路返回 VAR 值,bug 不触发 (隐蔽性强)。
-2. 当 `OPENCODE_SESSION_ID` 未设置 -> `owner` 被污染为多行字符串:
-   ```
-   my-host_12345
-   # check_stale_workflow_state() is called automatically at the end of scan_state()
-   ```
-   该字符串随后作为 `$owner` 传入 Python heredoc 的 `sys.argv[2]`,导致 `coord.find_current_binding(owner)` 永远匹配不到任何 session,绑定检测静默失败。
-
-**修复**: 将 `owner` 赋值与注释分离,并补充缺失的闭合 brace:
+**修复**：恢复为单行赋值，并把注释放回独立行：
 
 ```bash
-# owner = current OpenCode session id (or host+pid fallback when not bound)
+# owner = current OpenCode session id, or host+pid fallback.
 local owner="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
 # check_stale_workflow_state() is called automatically at the end of scan_state()
 ```
 
-### Bug 2: Python import 路径缺失 dash-bridge
+### Bug 2: `check_heartbeat_timeouts()` 需要从绑定扫描流程中独立出来
 
-`scan_session_binding` 的 Python heredoc (line 240):
-```python
-from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
-```
+当前 `scan_session_binding()` 把 heartbeat GC 逻辑和 binding 查询混在同一个 Python heredoc 中，虽然能工作，但职责不清晰，也让后续复用更难。
 
-`skills/rddf-session/` 目录名含连字符,Python 不能直接 import `skills.rddf_session`。`tests/conftest.py` 通过 dash-bridge 注册 `sys.modules['skills.rddf_session']` 让 pytest 工作,但 standalone Python heredoc 没有此桥接 -> `ModuleNotFoundError` -> `while read` 循环空跑 -> `BINDING_LINES` 永远为空。
+**修复**：把 heartbeat timeout 清理提取成独立 shell helper `check_heartbeat_timeouts()`，再由 `scan_session_binding()` 调用它。这样：
 
-**修复**: 在 Python heredoc 头部复制 conftest 的 dash-bridge 模式,或直接用 `importlib` 从 `skills/rddf-session/scripts/rddf_session.py` 加载。选择后者更简洁、更显式,不依赖 sys.modules 副作用。
+- `check_heartbeat_timeouts()` 只负责 session GC
+- `scan_session_binding()` 先清理超时 session，再做当前绑定和推荐项查询
+- 绑定查询逻辑保持只读输出，不修改 `sessions.json`
 
-### Wiring: dashboard renderer session 区块
+### Bug 3: dashboard 的 current session 标记仍按“最近 active”判断
 
-`skills/_lib/dashboard/__init__.py::collect()` line 296-315 当前用"最近 active 的 session"作为 `is_current`:
+`skills/_lib/dashboard/__init__.py::collect()` 当前使用“最近 started 的 active session”作为 `is_current`，这和 `scan_session_binding()` 里的 owner binding 语义不一致。
 
-```python
-active = [s for s in sessions if s.get("state") == "active"]
-active.sort(key=lambda s: s.get("started_at") or "", reverse=True)
-current_id = active[0].get("session_id") if active else None
-```
-
-**问题**: 这不是"当前 session 绑定"--`is_current` 应基于 `owner_opencode_session_id == os.environ["OPENCODE_SESSION_ID"]`,与 `scan_session_binding` 的 `find_current_binding(owner)` 语义一致。否则 dashboard 显示的 "current" 与 guide recommender 推荐的 binding 不一致 (spec 2026-07-14 §3 binding policy)。
-
-**修复**: `collect()` 读取 `OPENCODE_SESSION_ID` 环境变量,优先标记 `owner_opencode_session_id == OPENCODE_SESSION_ID` 的 session 为 `is_current`;回退到"最近 active"逻辑以保持向后兼容 (旧 sessions.json 可能没有 owner 字段)。
+**修复**：在 `collect()` 中优先用 `OPENCODE_SESSION_ID` 匹配 `owner_opencode_session_id`，将命中的 session 标成 `is_current=True`；如果没有 owner 匹配，再回退到现有的“最近 active”逻辑，保持向后兼容。
 
 ## 设计决策
 
-### D1: dash-bridge 实现 - importlib vs sys.modules 注册
+### D1: heartbeat GC 保持在 scan-state 层，避免散落到 dashboard
 
-**选择**: `importlib.util.spec_from_file_location` 直接从文件路径加载 `rddf_session.py`。
+`check_heartbeat_timeouts()` 属于 workflow state 清理职责，不应进入 dashboard collector。dashboard 只消费已经整理好的 sessions 视图。
 
-**理由**:
-- 不污染 `sys.modules` (standalone Python 进程,无下游消费者)
-- 显式表达"从 rddf-session/scripts/ 加载"的意图
-- 与 `tests/conftest.py` 的 dash-bridge 互不干扰 (conftest 在 pytest 内,heredoc 在 bash 子进程)
-- 已知 `skills/rddf-session/scripts/rddf_session.py` 存在 (`ls` 验证)
+### D2: dashboard current 标记采用 owner 优先、active 回退
 
-### D2: dashboard is_current 策略 - 环境变量优先 + active 回退
+优先级如下：
 
-**选择**: 三层优先级:
+1. 若 `OPENCODE_SESSION_ID` 存在，优先匹配 `owner_opencode_session_id == OPENCODE_SESSION_ID`
+2. 若没有 owner 匹配，回退到“最近 active session”
+3. 若两者都没有，当前 session 不标记
 
-1. `OPENCODE_SESSION_ID` 环境变量存在 -> 找 `owner_opencode_session_id == OPENCODE_SESSION_ID` 且 state != abandoned 的 session 标记为 current
-2. 找不到 owner 匹配 -> 回退到"最近 active"逻辑 (现有行为)
-3. 都没有 -> 不标记任何 session 为 current (现有行为)
+这样能保证和 `scan_session_binding()` 的 binding 语义一致，同时不破坏旧数据。
 
-**理由**:
-- 向后兼容: 旧 sessions.json 无 owner 字段时仍按 active 排序
-- 与 scan_session_binding 语义一致: 都用 owner 字段做绑定匹配
-- 环境变量缺失时优雅降级 (CI 环境、非交互式运行)
+### D3: 回归测试覆盖两个入口
 
-### D3: scan_session_binding 不解耦 check_heartbeat_timeouts
-
-**proposal 范围**: "将 check_heartbeat_timeouts() 从 scan_session_binding 中解耦提取为独立函数"
-
-**重新评估**: 当前 `check_heartbeat_timeouts()` 已经是 `RddfSessionCoordinator` 的方法 (不在 `scan_session_binding` 中),Python heredoc 只是调用它 (`coord.check_heartbeat_timeouts()`)。proposal 描述的"解耦"实际上已经在 `rddf_session.py` 中完成。本 change 仅需确保该调用在语法 bug 修复后能正常工作。
-
-**决定**: 不重复解耦 (DRY)。本 change 聚焦: (a) 修复语法 bug, (b) 修复 import 路径, (c) dashboard wiring。
+新增一个 bats 回归文件锁定 `scan_session_binding()` 的 owner 解析与 heartbeat 调用链，再补一个 Python 单元测试覆盖 dashboard collector 的 owner 优先逻辑。
 
 ## 影响分析
 
 ### 受影响文件
 
 | 文件 | 变更类型 | 说明 |
-|------|---------|------|
-| `skills/guide/scripts/scan-state.sh` | Modify | 修复 line 231-233 语法 + 修复 Python heredoc import 路径 |
-| `skills/_lib/dashboard/__init__.py` | Modify | `collect()` 增加 OPENCODE_SESSION_ID-based is_current 标记 |
-| `tests/integration/test_fix_scan_state_binding.bats` | Create | 回归测试: syntax fix + import 路径 + binding 输出 |
-| `tests/unit/test_dashboard_renderer.py` | Modify | 增加 is_current-by-owner 测试用例 |
+|---|---|---|
+| `skills/guide/scripts/scan-state.sh` | Modify | 修复 `owner` 语法、拆出 `check_heartbeat_timeouts()`、恢复绑定扫描流程 |
+| `skills/_lib/dashboard/__init__.py` | Modify | `collect()` 增加 owner-based current 标记与 active 回退 |
+| `tests/integration/test_fix_scan_state_binding.bats` | Modify | 回归测试覆盖 syntax fix、heartbeat flow、binding 输出 |
+| `tests/unit/test_dashboard_renderer.py` | Modify | 补 owner-based `is_current` 测试 |
 
 ### 不受影响
 
-- `skills/rddf-session/scripts/rddf_session.py` - 不修改 (proposal Out Scope)
-- `skills/_lib/dashboard/renderer.py` - 不修改 (proposal Out Scope: "不修改 dashboard 渲染逻辑"); 渲染层已正确消费 `is_current` 字段
-- `tests/conftest.py` - 不修改 (dash-bridge 已正确)
-
-### 风险
-
-- **R1**: 修改 `collect()` 可能影响现有 dashboard 测试。缓解: 增加 owner-based 测试用例,保留 active-fallback 测试。
-- **R2**: importlib 加载方式与 conftest dash-bridge 可能行为不一致。缓解: 两者独立运行在不同进程 (bash heredoc vs pytest),互不干扰。
+- `skills/rddf-session/scripts/rddf_session.py`：不改业务语义，只调用其现有方法
+- `skills/_lib/dashboard/renderer.py`：渲染层继续消费 `is_current`，无需改动
+- `tests/conftest.py`：不需要额外桥接
 
 ## 验收标准映射
 
-| Proposal 验收标准 | 实现方式 |
-|------------------|---------|
-| rddf dashboard session 区块显示当前 session 绑定而非 "(no active session)" | `collect()` 用 OPENCODE_SESSION_ID 标记 is_current; renderer 已渲染 is_current session |
-| scan_session_binding 不因语法错误提前中断 | 修复 line 231-233 语法 + 修复 Python import 路径 |
-| 所有现有测试通过 | 运行 bats + pytest 验证 |
+| 验收标准 | 实现方式 |
+|---|---|
+| rddf dashboard session 区块显示当前 session 绑定而非 "(no active session)" | `collect()` 用 owner 匹配标记 current，renderer 继续渲染 `is_current` |
+| scan_session_binding 不因语法错误提前中断 | 修复 `owner` 赋值的跨行损坏 |
+| 所有现有测试通过 | bats + pytest 回归覆盖 |
 
 ## 测试策略
 
-### 回归测试 (bats)
+### bats 回归
 
-新增 `tests/integration/test_fix_scan_state_binding.bats`:
+新增 `tests/integration/test_fix_scan_state_binding.bats`，覆盖：
 
-1. **语法修复**: `scan_session_binding` 在 `OPENCODE_SESSION_ID` 未设置时不再污染 owner 变量
-2. **import 路径**: `scan_session_binding` 实际产生 `BINDING_LINES` (非空) 当 sessions.json 有匹配绑定
-3. **未设置 binding**: `scan_session_binding` 输出 "No current binding" 当 owner 无匹配
-4. **dashboard is_current**: `collect()` 标记 owner 匹配的 session 为 current
+1. `scan_session_binding` 在 `OPENCODE_SESSION_ID` 设定时返回 current binding
+2. `scan_session_binding` 在 `OPENCODE_SESSION_ID` 缺失时，`owner` 仍保持单行且不会卷入注释
+3. `check_heartbeat_timeouts()` 仍在 binding flow 内被调用，绑定输出不为空
+4. sessions.json 缺失时，函数静默返回 0
 
-### 单元测试 (pytest)
+### Python 单元
 
-扩展 `tests/unit/test_dashboard_renderer.py`:
+扩展 `tests/unit/test_dashboard_renderer.py`：
 
-1. `collect()` with `OPENCODE_SESSION_ID` set -> matching session `is_current=True`
-2. `collect()` without `OPENCODE_SESSION_ID` -> fallback to most-recent-active (现有行为)
+1. `OPENCODE_SESSION_ID` 存在时，owner 匹配的 session 标为 current
+2. `OPENCODE_SESSION_ID` 不存在时，回退到最近 active session
