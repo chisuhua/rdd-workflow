@@ -1,6 +1,6 @@
 ---
 name: INSTALL
-description: 安装 Spec Workflow 技能到项目目录。执行后会将 skills/ 目录下全部 13 个子技能（1 个 INSTALL.md 在顶层 + 12 个 per-skill SKILL.md，含 feature / rddf-session / spec-workflow-writing-plans 等运行时 Python 模块）复制到项目的 .opencode/skills/spec-workflow/ 目录。
+description: 安装 Spec Workflow 技能——支持全局安装（~/.agents/skills/，跨项目可用）和项目安装（.opencode/skills/spec-workflow/）。全局安装还自动安装 Python 依赖和 rddf CLI。
 alias: install
 version: "2.0"
 author: sisyphus
@@ -9,6 +9,35 @@ author: sisyphus
 # Spec Workflow 安装程序
 
 本技能将 Spec Workflow 的子技能安装到当前项目目录。
+
+## 两种安装模式
+
+| 模式 | 命令 | 目标 | 适用场景 |
+|------|------|------|---------|
+| **全局** | `bash install.sh --global` | `~/.agents/skills/` | 多个项目共享，OpenCode 自动发现 |
+| **项目** | `skill_use("INSTALL")` 或 `bash install.sh` | `.opencode/skills/spec-workflow/` | 单个项目隔离安装 |
+
+### 全局安装（推荐）
+
+```bash
+cd /path/to/spec-workflow-repo
+bash install.sh --global
+```
+
+执行后：
+- 12 个子技能 symlink 到 `~/.agents/skills/` → **所有项目**的 OpenCode 自动发现
+- Python 依赖自动安装 (`pip install --user -r requirements.txt`)
+- `_lib/` 路径写入 Python `.pth` 文件 → 任何项目 `from skills._lib.xxx import yyy` 可用
+- `rddf` CLI 命令创建到 `~/.local/bin/rddf` → 终端直接运行 `rddf status`
+
+全局安装后，在任何项目目录下：
+```
+skill_use("guide")       # 推荐器入口
+skill_use("guide-arch")  # Arch 阶段
+rddf status              # 查看工作流状态
+```
+
+> **注意**：Symlink 指向源码仓库，技能变更即时生效。如需固定版本，使用 `cp -r` 手动复制。
 
 ## 前置条件检查
 
@@ -249,17 +278,22 @@ echo "下一步: 重新加载 session 或执行 skill_use(\"guide\")"
 其他 AI 编程助手可以使用以下命令安装：
 
 ```bash
-# 方式 1: 直接复制
+# 全局安装（跨项目可用，推荐）
+# 安装后 ~/.agents/skills/ 下每个子技能自动被 OpenCode 发现
+bash ~/.agents/skills/spec-workflow/install.sh --global
+
+# 项目安装（单项目隔离）
+# 方式 1: 使用安装脚本
+bash ~/.agents/skills/spec-workflow/install.sh /your/project
+
+# 方式 2: 直接复制
 cp -r ~/.agents/skills/spec-workflow/skills /your/project/.opencode/skills/spec-workflow/
 
-# 方式 2: 使用安装脚本
-curl -sL -o /tmp/install-spec-workflow.sh <raw-url>/install-spec-workflow.sh
-# Optional: verify SHA256 checksum here (security)
-bash /tmp/install-spec-workflow.sh
-rm -f /tmp/install-spec-workflow.sh
+# 方式 3: 使用安装脚本（旧方式）
+bash install-spec-workflow.sh
 
-# 方式 3: Git 克隆
-git clone <repo-url> /path/to/spec-workflow && cp -r spec-workflow/skills /your/project/.opencode/skills/
+# 方式 4: Git 克隆
+git clone <repo-url> /path/to/spec-workflow && bash /path/to/spec-workflow/install.sh --global
 ```
 
 ## 卸载
