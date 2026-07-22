@@ -76,14 +76,18 @@ for _dash, _us in _DASH_SKILLS:
 # Each handler has signature ``cmd_<name>(args: list[str]) -> int`` and
 # returns a process exit code (0 = success, non-zero = error).
 _ROUTES: Dict[str, str] = {
+    "archive": "skills._lib.cli.archive_cmd:cmd_archive",
     "cleanup": "skills._lib.cli.cleanup_cmd:cmd_cleanup",
     "dashboard": "skills._lib.cli.dashboard_cmd:cmd_dashboard",
     "deps": "skills._lib.cli.deps_cmd:cmd_deps",
     "feature": "skills._lib.cli.feature_cmd:cmd_feature",
+    "guide": "skills._lib.cli.guide_cmd:cmd_guide",
+    "init": "skills._lib.cli.init_cmd:cmd_init",
     "monitor": "skills._lib.cli.monitor_cmd:cmd_monitor",
     "status": "skills._lib.cli.status_cmd:cmd_status",
     "sessions": "skills._lib.cli.sessions_cmd:cmd_sessions",
     "validate": "skills._lib.cli.validate_cmd:cmd_validate",
+    "version": "skills._lib.cli.version_cmd:cmd_version",
 }
 
 
