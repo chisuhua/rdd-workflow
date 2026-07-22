@@ -1,6 +1,6 @@
 # ADR 索引
 
-> spec-workflow 架构决策记录 (Architecture Decision Records)
+> rdd-workflow 架构决策记录 (Architecture Decision Records)
 
 > ## 📊 v2.0 ADR 实施状态（2026-07-13 同步 sync-workflow-contracts）
 >
@@ -52,6 +52,9 @@
 | [ADR-0018](ADR-0018-arch-quality-gate.md) | 架构质量门 — arch 阶段的定性检查 | 已采纳 | 2026-07-10 | 4 个 warning 级检查 (alignment/debt/clarity/actionable) + `STRICT_ARCH_GATE=yes` CI 升级 |
 | [ADR-0019](ADR-0019-change-arch-alignment.md) | change_arch_alignment — change 提案与架构对齐检查 | 已采纳 | 2026-07-10 | 3 个 warning 级检查 (refs_valid/no_contradiction/task_traceability) + `STRICT_CHANGE_GATE=yes` 独立 env var（Oracle 推荐） |
 | [ADR-0020](ADR-0020-incremental-skeleton-planning.md) | 增量 skeleton planning（v2.0.2 重编号自 ADR-0013） | 已采纳 | 2026-07-08 | 引入 `planned` 状态 + 6 个关键子决策 |
+| [ADR-0021](ADR-0021-phase2-per-skill-helper-migration.md) | Phase 2 per-skill helper migration | 已采纳 | 2026-07-21 | Per-skill scripts/ 目录迁移 |
+| [ADR-0022](ADR-0022-manual-deps-field.md) | manual_deps 人工依赖声明 | 已采纳 | 2026-07-21 | `manual_deps`/`manual_blocks` 字段 |
+| [ADR-0023](ADR-0023-v3-rename-spec-workflow-to-rdd-workflow.md) | v3.0.0 包名重命名 | 已采纳 | 2026-07-22 | `spec-workflow` → `rdd-workflow` (BREAKING) |
 
 ## 架构演进
 
