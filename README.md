@@ -16,7 +16,24 @@ OpenSpec 工作流技能包 - manage changes via propose → plan → execute �
 
 ## 安装
 
-### 通过 npx skills（推荐）
+### 全局安装（跨项目可用，推荐）
+
+```bash
+git clone https://github.com/chisuhua/spec-workflow.git ~/.agents/skills/spec-workflow
+bash ~/.agents/skills/spec-workflow/install.sh --global
+```
+
+安装后：
+- **12 个子技能** symlink 到 `~/.agents/skills/` → OpenCode 在任何项目下自动发现
+- **Python 依赖** 自动安装（`pip install --user -r requirements.txt`）
+- **`_lib` Python 路径** 写入 `.pth` 文件 → 任何项目 `from skills._lib.xxx import yyy`
+- **`rddf` CLI** 创建到 `~/.local/bin/rddf` → 终端直接 `rddf status`
+
+> 全局安装后**不需要**在每个项目执行 `skill_use("INSTALL")`。技能即时生效。
+
+### 项目安装（单项目隔离）
+
+#### 通过 npx skills
 
 ```bash
 npx skills add chisuhua/spec-workflow -g -y
@@ -24,10 +41,11 @@ npx skills add chisuhua/spec-workflow -g -y
 
 安装后只显示 `INSTALL` 技能。执行 `INSTALL` 后，子技能才会出现在项目中。
 
-### 手动安装
+#### 手动安装
 
 ```bash
-git clone https://github.com/chisuhua/spec-workflow.git ~/.agents/skills/spec-workflow
+git clone https://github.com/chisuhua/spec-workflow.git
+bash install.sh /path/to/project
 ```
 
 ## 使用流程
@@ -104,6 +122,16 @@ spec-workflow/
 
 ## 工作原理
 
+### 全局安装模式（`--global`）
+
+1. 每个子技能 symlink 到 `~/.agents/skills/<name>/` 
+2. OpenCode 自动发现所有子技能（无需 `INSTALL` 步骤）
+3. 技能代码即时同步源码变更
+4. `_lib/` Python 模块通过 `.pth` 文件全局可导入
+5. `rddf` CLI 通过 `~/.local/bin/rddf` 在任何目录可用
+
+### 项目安装模式（`skill_use("INSTALL")`）
+
 1. 全局安装后，只显示 `INSTALL` 技能
 2. 执行 `INSTALL` 将子技能复制到项目的 `.opencode/skills/spec-workflow/`
 3. 子技能通过 `PROJECT_ROOT=$(git rev-parse --show-toplevel)` 自动检测项目根目录
@@ -113,10 +141,13 @@ spec-workflow/
 其他 AI 编程助手可以使用：
 
 ```bash
-# 方式 1: 使用 install.sh
+# 全局安装（所有项目可用，推荐）
+bash ~/.agents/skills/spec-workflow/install.sh --global
+
+# 项目安装
 bash ~/.agents/skills/spec-workflow/install.sh /path/to/project
 
-# 方式 2: 直接复制
+# 或直接复制
 cp -r ~/.agents/skills/spec-workflow/skills /path/to/project/.opencode/skills/spec-workflow/
 ```
 
