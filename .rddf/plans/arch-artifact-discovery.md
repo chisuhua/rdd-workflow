@@ -218,7 +218,7 @@ Create `skills/_lib/schemas/arch_handoff_schema.json`:
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://spec-workflow.local/schemas/arch_handoff_schema.json",
+  "$id": "https://rdd-workflow.local/schemas/arch_handoff_schema.json",
   "title": "Arch Handoff v1 (ADR-0016)",
   "description": "Schema for .rddf/state/.arch-handoff.json emitted by guide-arch Phase 5 arch-done. Consumed by guide-plan, propose, roadmap, gate.py, detectors.py, actions.py, scan-state.sh.",
   "type": "object",
@@ -1181,11 +1181,11 @@ PROJECT_ROOT=$(pwd) bash -c 'source $1 && discover_adr_dir >/dev/null && cat > /
   "discovered": {"adr_dir":{"found":true,"created":false,"candidates_tried":1}},
   "version": 1
 }
-EOF' _ /workspace/project/spec-workflow/skills/_lib/discover-arch-artifacts.sh
+EOF' _ /workspace/project/rdd-workflow/skills/_lib/discover-arch-artifacts.sh
 python3 -c "
 import json
 from jsonschema import Draft7Validator
-schema = json.loads(open('/workspace/project/spec-workflow/skills/_lib/schemas/arch_handoff_schema.json').read())
+schema = json.loads(open('/workspace/project/rdd-workflow/skills/_lib/schemas/arch_handoff_schema.json').read())
 data = json.loads(open('/tmp/handoff.json').read())
 errors = list(Draft7Validator(schema).iter_errors(data))
 print('OK' if not errors else errors)

@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement Phase 2 loop engine for spec-workflow v2.0 — `LoopEngine` class with 5-building-block cycle + 4 safety mechanisms, 8 pluggable detectors, 7 pluggable actions, 3 interaction modes (Loop/Menu/Hybrid), 7 human-in-loop node types with 3 verification modes, design-first phase, and ASCII real-time flowchart generator.
+**Goal:** Implement Phase 2 loop engine for rdd-workflow v2.0 — `LoopEngine` class with 5-building-block cycle + 4 safety mechanisms, 8 pluggable detectors, 7 pluggable actions, 3 interaction modes (Loop/Menu/Hybrid), 7 human-in-loop node types with 3 verification modes, design-first phase, and ASCII real-time flowchart generator.
 
-**Architecture:** Single entry point `skills/loop-engine.py` orchestrating six `_lib/` modules. Loop cycle: `verify_goal → scan_state → generate_plan → execute_plan → verify_results → adapt`. Safety enforced at engine layer (max_iterations=100, max_retries=3, oscillation detection, circuit breaker). Detectors/Actions are pluggable via `.spec-workflow/{detectors,actions}/` Python files. Three modes switchable at runtime. Flowchart reads state vector + event log for observability. Total ~2,500 lines Python + ~150 lines tests. 100% backward compatible with v1.x via existing sync layer.
+**Architecture:** Single entry point `skills/loop-engine.py` orchestrating six `_lib/` modules. Loop cycle: `verify_goal → scan_state → generate_plan → execute_plan → verify_results → adapt`. Safety enforced at engine layer (max_iterations=100, max_retries=3, oscillation detection, circuit breaker). Detectors/Actions are pluggable via `.rdd-workflow/{detectors,actions}/` Python files. Three modes switchable at runtime. Flowchart reads state vector + event log for observability. Total ~2,500 lines Python + ~150 lines tests. 100% backward compatible with v1.x via existing sync layer.
 
 **Tech Stack:** Python 3.10+, existing `skills/_lib/{state_vector,event_log,event_types,gate,config,defaults,sync_state,lock}.py`, `subprocess` (stdlib), `importlib` (stdlib for plugin loading), `pytest` (testing), OpenSpec CLI v1.4.1+ (workflow orchestration).
 
-**OpenSpec Workflow Phases Covered:** This plan executes the full lifecycle for the `v2-loop-engine` change:
+**OpenRDD Workflow Phases Covered:** This plan executes the full lifecycle for the `v2-loop-engine` change:
 - **Phase 0 — Propose** (artifacts already exist in `openspec/changes/v2-loop-engine/`; verified valid)
 - **Phase 1 — Plan** (this document)
 - **Phase 2 — Execute** (Tasks 1-6 below; update `openspec/changes/v2-loop-engine/tasks.md` after each section)
@@ -38,7 +38,7 @@ This change creates new files only. No existing v1.x files are modified — v2-c
 | File | Responsibility |
 |---|---|
 | `tests/unit/test_loop_engine.py` | Full cycle, max_iterations, oscillation detection, circuit breaker, goal achievement, event log coverage |
-| `tests/unit/test_detectors.py` | Each of 8 detectors + plugin loading from `.spec-workflow/detectors/` + performance < 500ms total |
+| `tests/unit/test_detectors.py` | Each of 8 detectors + plugin loading from `.rdd-workflow/detectors/` + performance < 500ms total |
 | `tests/unit/test_actions.py` | Each of 7 actions (mocked subprocess), timeout, error handling, event log integration, plugin loading |
 | `tests/unit/test_interaction_modes.py` | Loop/Menu/Hybrid in isolation + runtime mode switching + each human node verification mode |
 | `tests/unit/test_human_nodes.py` | All 7 node types + each verification mode (human/multi_model/script stub) |
@@ -61,7 +61,7 @@ Already exist. After Task 8 archive, moved to `openspec/changes/archive/2026-06-
 
 Before starting Task 1, confirm:
 
-- [ ] Working directory is `/workspace/project/spec-workflow` (repo root)
+- [ ] Working directory is `/workspace/project/rdd-workflow` (repo root)
 - [ ] On branch `master`, no uncommitted changes to `openspec/changes/v2-loop-engine/` (or work in worktree)
 - [ ] `python3 --version` shows 3.10 or later
 - [ ] `openspec --version` shows 1.4.1 or later
@@ -169,7 +169,7 @@ In the `loop_state.properties` section, add:
 Run existing tests to confirm no regression:
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_state_vector.py -q
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_state_vector.py -q
 ```
 
 Expected: All existing tests still pass (additive schema change).
@@ -210,7 +210,7 @@ def test_verify_goal_with_predicate_returns_false_when_unmet(engine):
 ### Step 1.2: Run test — verify it fails (no `loop_engine` module)
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_loop_engine.py -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_loop_engine.py -v
 ```
 
 Expected: `ModuleNotFoundError: No module named 'skills.loop_engine'`
@@ -248,7 +248,7 @@ class LoopState:
 **File:** `skills/loop-engine.py`
 
 ```python
-"""LoopEngine — the AI-native execution engine for spec-workflow v2.0.
+"""LoopEngine — the AI-native execution engine for rdd-workflow v2.0.
 
 Implements 5-building-block cycle: verify_goal → scan_state → generate_plan →
 execute_plan → verify_results → adapt. Safety mechanisms enforced at engine layer.
@@ -327,7 +327,7 @@ class LoopEngine:
 ### Step 1.5: Run test — verify Step 1.1 now passes
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_loop_engine.py::test_verify_goal_with_predicate_returns_true_when_met tests/unit/test_loop_engine.py::test_verify_goal_with_predicate_returns_false_when_unmet -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_loop_engine.py::test_verify_goal_with_predicate_returns_true_when_met tests/unit/test_loop_engine.py::test_verify_goal_with_predicate_returns_false_when_unmet -v
 ```
 
 Expected: 2 passed
@@ -505,13 +505,13 @@ Update `run()` to catch the new exceptions:
 ### Step 1.7: Run all loop-engine tests + full suite
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_loop_engine.py -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_loop_engine.py -v
 ```
 
 Expected: 4 passed (verify_goal × 2, max_iterations, oscillation)
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q
 ```
 
 Expected: 45 + 4 = 49 passed, no regressions
@@ -519,7 +519,7 @@ Expected: 45 + 4 = 49 passed, no regressions
 ### Step 1.8: Commit
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/loop-engine.py skills/_lib/loop_state.py tests/unit/test_loop_engine.py && git commit -m "feat(loop-engine): LoopEngine class with 5-block skeleton + verify_goal + safety mechanisms (closes §1.1-1.4)"
+cd /workspace/project/rdd-workflow && git add skills/loop-engine.py skills/_lib/loop_state.py tests/unit/test_loop_engine.py && git commit -m "feat(loop-engine): LoopEngine class with 5-block skeleton + verify_goal + safety mechanisms (closes §1.1-1.4)"
 ```
 
 ---
@@ -573,7 +573,7 @@ def test_eight_builtin_detectors_registered():
     assert expected == actual
 
 def test_load_plugin_detectors_empty_when_dir_missing(tmp_path, monkeypatch):
-    """No error when .spec-workflow/detectors/ doesn't exist."""
+    """No error when .rdd-workflow/detectors/ doesn't exist."""
     monkeypatch.chdir(tmp_path)
     plugins = load_plugin_detectors()
     assert plugins == []
@@ -582,7 +582,7 @@ def test_load_plugin_detectors_empty_when_dir_missing(tmp_path, monkeypatch):
 ### Step 2.2: Run — verify failure
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_detectors.py -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_detectors.py -v
 ```
 
 Expected: `ModuleNotFoundError: No module named 'skills._lib.detectors'`
@@ -595,7 +595,7 @@ Expected: `ModuleNotFoundError: No module named 'skills._lib.detectors'`
 """Built-in state detectors + plugin loader for the loop engine.
 
 8 built-in detectors cover v1.x workflow state. Custom detectors can be added
-by dropping Python files in `.spec-workflow/detectors/` that subclass `Detector`.
+by dropping Python files in `.rdd-workflow/detectors/` that subclass `Detector`.
 """
 from __future__ import annotations
 import os
@@ -781,7 +781,7 @@ class _FunctionDetector(Detector):
         return self.fn(state)
 
 
-def load_plugin_detectors(plugin_dir: str = ".spec-workflow/detectors") -> list:
+def load_plugin_detectors(plugin_dir: str = ".rdd-workflow/detectors") -> list:
     """Load custom Detector subclasses from a directory."""
     pdir = Path(plugin_dir)
     if not pdir.exists():
@@ -813,7 +813,7 @@ def all_detectors() -> list:
 ### Step 2.4: Run — verify all 4 tests pass
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_detectors.py -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_detectors.py -v
 ```
 
 Expected: 4 passed
@@ -837,13 +837,13 @@ def test_all_detectors_run_under_500ms():
 ### Step 2.6: Run + commit
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_detectors.py -v && python3 -m pytest tests/unit/ -q
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_detectors.py -v && python3 -m pytest tests/unit/ -q
 ```
 
 Expected: 5 detector tests pass, full suite = 54 passed
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/detectors.py tests/unit/test_detectors.py && git commit -m "feat(detectors): 8 built-in detectors + plugin loader + 500ms perf budget (closes §2.1-2.6)"
+cd /workspace/project/rdd-workflow && git add skills/_lib/detectors.py tests/unit/test_detectors.py && git commit -m "feat(detectors): 8 built-in detectors + plugin loader + 500ms perf budget (closes §2.1-2.6)"
 ```
 
 ---
@@ -908,7 +908,7 @@ def test_seven_builtin_actions_registered():
 ### Step 3.2: Run — verify failure
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_actions.py -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_actions.py -v
 ```
 
 Expected: `ModuleNotFoundError: No module named 'skills._lib.actions'`
@@ -921,7 +921,7 @@ Expected: `ModuleNotFoundError: No module named 'skills._lib.actions'`
 """Built-in actions + subprocess wrapper for the loop engine.
 
 7 built-in actions cover v1.x workflow operations. Custom actions can be added
-by dropping Python files in `.spec-workflow/actions/` that subclass `Action`.
+by dropping Python files in `.rdd-workflow/actions/` that subclass `Action`.
 """
 from __future__ import annotations
 import subprocess
@@ -1124,7 +1124,7 @@ class _FunctionAction:
         return self.fn(params, event_log)
 
 
-def load_plugin_actions(plugin_dir: str = ".spec-workflow/actions") -> list:
+def load_plugin_actions(plugin_dir: str = ".rdd-workflow/actions") -> list:
     """Load custom Action subclasses from a directory."""
     pdir = Path(plugin_dir)
     if not pdir.exists():
@@ -1156,7 +1156,7 @@ def all_actions() -> list:
 ### Step 3.4: Run — verify all tests pass
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_actions.py -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_actions.py -v
 ```
 
 Expected: 5 passed
@@ -1167,7 +1167,7 @@ Add to `tests/unit/test_actions.py`:
 
 ```python
 def test_load_plugin_actions_empty_when_dir_missing(tmp_path, monkeypatch):
-    """No error when .spec-workflow/actions/ doesn't exist."""
+    """No error when .rdd-workflow/actions/ doesn't exist."""
     monkeypatch.chdir(tmp_path)
     from skills._lib.actions import load_plugin_actions
     assert load_plugin_actions() == []
@@ -1176,13 +1176,13 @@ def test_load_plugin_actions_empty_when_dir_missing(tmp_path, monkeypatch):
 ### Step 3.6: Run full suite + commit
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q
 ```
 
 Expected: 60 passed (45 baseline + 4 loop + 5 detectors + 6 actions)
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/actions.py tests/unit/test_actions.py && git commit -m "feat(actions): 7 built-in actions + subprocess wrapper + 30min timeout + plugin loader (closes §3.1-3.5)"
+cd /workspace/project/rdd-workflow && git add skills/_lib/actions.py tests/unit/test_actions.py && git commit -m "feat(actions): 7 built-in actions + subprocess wrapper + 30min timeout + plugin loader (closes §3.1-3.5)"
 ```
 
 ---
@@ -1329,7 +1329,7 @@ class HumanNodeRegistry:
 ### Step 4.3: Run human_nodes tests
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_human_nodes.py -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_human_nodes.py -v
 ```
 
 Expected: 4 passed
@@ -1457,19 +1457,19 @@ def make_mode(name: str, registry: HumanNodeRegistry, **kwargs) -> InteractionMo
 ### Step 4.6: Run + commit
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_interaction_modes.py tests/unit/test_human_nodes.py -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_interaction_modes.py tests/unit/test_human_nodes.py -v
 ```
 
 Expected: 8 passed (4 + 4)
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q
 ```
 
 Expected: 68 passed
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/interaction_modes.py skills/_lib/human_nodes.py tests/unit/test_interaction_modes.py tests/unit/test_human_nodes.py && git commit -m "feat(interaction-modes): Loop/Menu/Hybrid + 7 human nodes + 3 verification modes (closes §4.1-4.7)"
+cd /workspace/project/rdd-workflow && git add skills/_lib/interaction_modes.py skills/_lib/human_nodes.py tests/unit/test_interaction_modes.py tests/unit/test_human_nodes.py && git commit -m "feat(interaction-modes): Loop/Menu/Hybrid + 7 human nodes + 3 verification modes (closes §4.1-4.7)"
 ```
 
 ---
@@ -1504,7 +1504,7 @@ In the `loop_state.properties` section, add:
 Verify no regression:
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_state_vector.py -q
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_state_vector.py -q
 ```
 
 Expected: All existing tests still pass.
@@ -1633,13 +1633,13 @@ class DesignPhase:
 ### Step 5.3: Run + commit
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_design_phase.py -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_design_phase.py -v
 ```
 
 Expected: 3 passed
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/design_phase.py tests/unit/test_design_phase.py && git commit -m "feat(design-phase): pre-loop Goal/Verification/Control design + state persistence (closes §5.1-5.6)"
+cd /workspace/project/rdd-workflow && git add skills/_lib/design_phase.py tests/unit/test_design_phase.py && git commit -m "feat(design-phase): pre-loop Goal/Verification/Control design + state persistence (closes §5.1-5.6)"
 ```
 
 ---
@@ -1773,19 +1773,19 @@ class FlowchartGenerator:
 ### Step 6.3: Run + commit
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_flowchart.py -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_flowchart.py -v
 ```
 
 Expected: 3 passed
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q
 ```
 
 Expected: 74 passed (45 baseline + 4 loop + 5 detectors + 6 actions + 4 modes + 4 human + 3 design + 3 flowchart)
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/flowchart.py tests/unit/test_flowchart.py && git commit -m "feat(flowchart): ASCII real-time progress generator (closes §6.1-6.5)"
+cd /workspace/project/rdd-workflow && git add skills/_lib/flowchart.py tests/unit/test_flowchart.py && git commit -m "feat(flowchart): ASCII real-time progress generator (closes §6.1-6.5)"
 ```
 
 ---
@@ -1915,13 +1915,13 @@ Replace the stub methods:
 ### Step 7.3: Run + commit
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q
 ```
 
 Expected: 76 passed (74 + 2 integration)
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/loop-engine.py tests/unit/test_loop_engine.py && git commit -m "feat(loop-engine): wire scan_state/generate_plan/execute_plan to detectors/actions (closes §1.5-1.7)"
+cd /workspace/project/rdd-workflow && git add skills/loop-engine.py tests/unit/test_loop_engine.py && git commit -m "feat(loop-engine): wire scan_state/generate_plan/execute_plan to detectors/actions (closes §1.5-1.7)"
 ```
 
 ---
@@ -1990,8 +1990,8 @@ loop:
   action_timeout_seconds: 1800
 
 plugins:
-  detectors_dir: .spec-workflow/detectors
-  actions_dir: .spec-workflow/actions
+  detectors_dir: .rdd-workflow/detectors
+  actions_dir: .rdd-workflow/actions
 ```
 
 Runtime override: `--mode loop` CLI flag or `SPEC_WORKFLOW_MODE` env var.
@@ -2002,7 +2002,7 @@ Runtime override: `--mode loop` CLI flag or `SPEC_WORKFLOW_MODE` env var.
 ```markdown
 # Loop Engine User Guide
 
-The v2.0 loop engine drives spec-workflow via a 6-block cycle:
+The v2.0 loop engine drives rdd-workflow via a 6-block cycle:
 
 ```
 verify_goal → scan_state → generate_plan → execute_plan → verify_results → adapt
@@ -2019,8 +2019,8 @@ from skills._lib.event_log import EventLog
 
 # CORRECT API: use .load(path) to load from disk (or .create_default() for in-memory)
 engine = LoopEngine(
-    state=StateVector.load(".spec-workflow/state-vector.json"),
-    event_log=EventLog(".spec-workflow/event-log.jsonl"),
+    state=StateVector.load(".rdd-workflow/state-vector.json"),
+    event_log=EventLog(".rdd-workflow/event-log.jsonl"),
 )
 # Goal predicate uses dotted-path access against state.to_dict()
 status = engine.run(goal_predicate="plan_side['active_change'] is None")
@@ -2036,14 +2036,14 @@ Switch at runtime: `LoopEngine(..., mode=LoopMode(registry))` or `loop.yaml`.
 
 ## Plugins
 
-Drop Python files in `.spec-workflow/detectors/` or `.spec-workflow/actions/` to extend.
+Drop Python files in `.rdd-workflow/detectors/` or `.rdd-workflow/actions/` to extend.
 Each must subclass `Detector` or `Action` and set `name`.
 ```
 
 ### Step 8.4: Commit
 
 ```bash
-cd /workspace/project/spec-workflow && git add docs/v2-api-reference.md docs/v2-config-schema.md docs/v2-loop-engine.md && git commit -m "docs(loop-engine): API reference + config schema + user guide"
+cd /workspace/project/rdd-workflow && git add docs/v2-api-reference.md docs/v2-config-schema.md docs/v2-loop-engine.md && git commit -m "docs(loop-engine): API reference + config schema + user guide"
 ```
 
 ---
@@ -2053,7 +2053,7 @@ cd /workspace/project/spec-workflow && git add docs/v2-api-reference.md docs/v2-
 ### Step 9.1: Run full test suite
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -v
 ```
 
 Expected: 76 passed, 0 failed
@@ -2063,7 +2063,7 @@ If failures occur: do NOT proceed to archive. Fix and re-run.
 ### Step 9.2: Validate openspec change
 
 ```bash
-cd /workspace/project/spec-workflow && openspec validate v2-loop-engine
+cd /workspace/project/rdd-workflow && openspec validate v2-loop-engine
 ```
 
 Expected: `Change 'v2-loop-engine' is valid`
@@ -2071,9 +2071,9 @@ Expected: `Change 'v2-loop-engine' is valid`
 ### Step 9.3: Check task completion status
 
 ```bash
-cd /workspace/project/spec-workflow && openspec instructions apply --change v2-loop-engine 2>&1 | tail -20
+cd /workspace/project/rdd-workflow && openspec instructions apply --change v2-loop-engine 2>&1 | tail -20
 # OR
-cd /workspace/project/spec-workflow && grep -c "\[ \]" openspec/changes/v2-loop-engine/tasks.md
+cd /workspace/project/rdd-workflow && grep -c "\[ \]" openspec/changes/v2-loop-engine/tasks.md
 ```
 
 Expected: 0 unchecked `- [ ]` items remaining
@@ -2081,7 +2081,7 @@ Expected: 0 unchecked `- [ ]` items remaining
 ### Step 9.4: Verify all 36 tasks checked
 
 ```bash
-cd /workspace/project/spec-workflow && grep -E "^\s*-\s*\[" openspec/changes/v2-loop-engine/tasks.md | head -40
+cd /workspace/project/rdd-workflow && grep -E "^\s*-\s*\[" openspec/changes/v2-loop-engine/tasks.md | head -40
 ```
 
 All should be `- [x]`. If not, manually update.
@@ -2093,13 +2093,13 @@ All should be `- [x]`. If not, manually update.
 ### Step 10.1: Replace all `[ ]` with `[x]` in tasks.md
 
 ```bash
-cd /workspace/project/spec-workflow && sed -i 's/- \[ \]/- [x]/g' openspec/changes/v2-loop-engine/tasks.md
+cd /workspace/project/rdd-workflow && sed -i 's/- \[ \]/- [x]/g' openspec/changes/v2-loop-engine/tasks.md
 ```
 
 ### Step 10.2: Verify
 
 ```bash
-cd /workspace/project/spec-workflow && grep -c "\[x\]" openspec/changes/v2-loop-engine/tasks.md && grep -c "\[ \]" openspec/changes/v2-loop-engine/tasks.md
+cd /workspace/project/rdd-workflow && grep -c "\[x\]" openspec/changes/v2-loop-engine/tasks.md && grep -c "\[ \]" openspec/changes/v2-loop-engine/tasks.md
 ```
 
 Expected: 36 `[x]`, 0 `[ ]`
@@ -2107,7 +2107,7 @@ Expected: 36 `[x]`, 0 `[ ]`
 ### Step 10.3: Commit task updates
 
 ```bash
-cd /workspace/project/spec-workflow && git add openspec/changes/v2-loop-engine/tasks.md && git commit -m "docs(tasks): mark all v2-loop-engine tasks complete"
+cd /workspace/project/rdd-workflow && git add openspec/changes/v2-loop-engine/tasks.md && git commit -m "docs(tasks): mark all v2-loop-engine tasks complete"
 ```
 
 ---
@@ -2117,7 +2117,7 @@ cd /workspace/project/spec-workflow && git add openspec/changes/v2-loop-engine/t
 ### Step 11.1: Archive the change
 
 ```bash
-cd /workspace/project/spec-workflow && openspec archive v2-loop-engine -y
+cd /workspace/project/rdd-workflow && openspec archive v2-loop-engine -y
 ```
 
 This command:
@@ -2128,19 +2128,19 @@ This command:
 ### Step 11.2: Verify archive completed
 
 ```bash
-cd /workspace/project/spec-workflow && openspec list
+cd /workspace/project/rdd-workflow && openspec list
 ```
 
 Expected: `v2-loop-engine` no longer in the active list.
 
 ```bash
-cd /workspace/project/spec-workflow && ls -la openspec/changes/archive/ | grep v2-loop-engine
+cd /workspace/project/rdd-workflow && ls -la openspec/changes/archive/ | grep v2-loop-engine
 ```
 
 Expected: `2026-06-25-v2-loop-engine/` directory exists.
 
 ```bash
-cd /workspace/project/spec-workflow && ls openspec/specs/
+cd /workspace/project/rdd-workflow && ls openspec/specs/
 ```
 
 Expected: 4 new spec directories: `loop-engine/`, `detectors-actions/`, `interaction-modes/`, `design-flowchart/`.
@@ -2148,7 +2148,7 @@ Expected: 4 new spec directories: `loop-engine/`, `detectors-actions/`, `interac
 ### Step 11.3: Verify v1.x baseline still passes
 
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q
 ```
 
 Expected: 76 passed, zero regressions.
@@ -2156,13 +2156,13 @@ Expected: 76 passed, zero regressions.
 ### Step 11.4: Final commit
 
 ```bash
-cd /workspace/project/spec-workflow && git status
+cd /workspace/project/rdd-workflow && git status
 ```
 
 If openspec created untracked changes (e.g., archived move creates new files in `openspec/specs/`):
 
 ```bash
-cd /workspace/project/spec-workflow && git add openspec/ && git commit -m "merge: v2-loop-engine (LoopEngine + detectors + actions + modes + design + flowchart)"
+cd /workspace/project/rdd-workflow && git add openspec/ && git commit -m "merge: v2-loop-engine (LoopEngine + detectors + actions + modes + design + flowchart)"
 ```
 
 ---
@@ -2172,13 +2172,13 @@ cd /workspace/project/spec-workflow && git add openspec/ && git commit -m "merge
 ### Step 12.1: Verify final state
 
 ```bash
-cd /workspace/project/spec-workflow && git log --oneline -5
+cd /workspace/project/rdd-workflow && git log --oneline -5
 ```
 
 Expected: archive commit at HEAD.
 
 ```bash
-cd /workspace/project/spec-workflow && openspec list
+cd /workspace/project/rdd-workflow && openspec list
 ```
 
 Expected: v2-loop-engine removed; 3 remaining (v2-advanced-features, v2-migration-and-tests, v2-beta-release).
@@ -2186,7 +2186,7 @@ Expected: v2-loop-engine removed; 3 remaining (v2-advanced-features, v2-migratio
 ### Step 12.2: Confirm no untracked files
 
 ```bash
-cd /workspace/project/spec-workflow && git status
+cd /workspace/project/rdd-workflow && git status
 ```
 
 Expected: clean working tree (except expected `__pycache__/` if not in `.gitignore`).

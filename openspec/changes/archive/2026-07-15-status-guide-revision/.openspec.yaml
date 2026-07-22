@@ -6,7 +6,7 @@ scope: [shared]
 goal: Resolve 15 audit findings in skills/guide.md and skills/status.md identified during a real execution session on 2026-07-15. Tier the fixes P0 (correctness) to P1 (usability) to P2 (consistency). Gate every change with a failing bats test that goes green after the documentation edit.
 follows:
   - three-phase-skills (existing arch to plan to ship lifecycle)
-  - spec-workflow-writing-plans (TDD 5-step plan generator, reused)
+  - rdd-workflow-writing-plans (TDD 5-step plan generator, reused)
   - rddf-session (session binding infra, referenced by 1.1 frontmatter convention)
 blocks: []
 baseline:
@@ -28,7 +28,7 @@ non_goals:
   - Modifying other 11 skill files outside this change audit scope
 risk_level: low
 cross_repo:
-  - None (spec-workflow meta-repo only)
+  - None (rdd-workflow meta-repo only)
 estimated_loc_change:
   new_files_lines: 600
   modified_files_lines: 95

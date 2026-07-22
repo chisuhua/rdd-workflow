@@ -9,7 +9,7 @@
 
 ## 1. Background
 
-`skills/guide.md` is the current interactive wizard for the spec-workflow package. It owns a single state machine spanning setup → roadmap → propose → deps → plan → execute → status/archive → cleanup, with persistence in `workflow-state.md` and `workflow-progress.md`. The file has accumulated to 1465 lines and conflates two very different mental models:
+`skills/guide.md` is the current interactive wizard for the rdd-workflow package. It owns a single state machine spanning setup → roadmap → propose → deps → plan → execute → status/archive → cleanup, with persistence in `workflow-state.md` and `workflow-progress.md`. The file has accumulated to 1465 lines and conflates two very different mental models:
 
 - **Spec-side** (what to build): driven by openspec CLI, ADR scanning, roadmap filtering, change artifacts
 - **Ship-side** (how to build & ship it): driven by git worktree, Prometheus `start_work`, merge, archive
@@ -125,7 +125,7 @@ Total: 1 deleted, 2 created, 1 rewritten, 8 edited.
 
 1. Strip all `workflow-state.md` and `workflow-progress.md` read/write logic (these files are deleted)
 2. Strip all "current global phase" / "recovery point" cross-references to phases owned by `guide-ship`
-3. Replace standalone `skill_use("spec-workflow-propose")` calls with the now-clearly-bounded `propose` sub-skill
+3. Replace standalone `skill_use("rdd-workflow-propose")` calls with the now-clearly-bounded `propose` sub-skill
 4. Strip worktree-creation code (moved to `guide-ship`)
 
 ### 6.2 `guide-ship` — Ship-Side State Machine

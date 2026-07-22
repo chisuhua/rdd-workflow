@@ -11,7 +11,7 @@ from skills._lib.cli import init_cmd
 
 @pytest.fixture
 def fake_repo(tmp_path, monkeypatch):
-    """Build a fake spec-workflow repo at tmp_path/repo with required source files.
+    """Build a fake rdd-workflow repo at tmp_path/repo with required source files.
 
     Layout:
         tmp_path/repo/
@@ -41,11 +41,11 @@ def fake_repo(tmp_path, monkeypatch):
 
 
 def test_cmd_init_copies_to_target_dir(fake_repo, capsys):
-    """cmd_init copies skills/, _lib/, package.json, skills/cli/rddf.sh to <target>/.opencode/skills/spec-workflow/."""
+    """cmd_init copies skills/, _lib/, package.json, skills/cli/rddf.sh to <target>/.opencode/skills/rdd-workflow/."""
     repo, target = fake_repo
     rc = init_cmd.cmd_init([str(target)])
     assert rc == 0
-    dest = target / ".opencode" / "skills" / "spec-workflow"
+    dest = target / ".opencode" / "skills" / "rdd-workflow"
     assert (dest / "package.json").is_file()
     assert (dest / "skills" / "INSTALL.md").is_file()
     assert (dest / "skills" / "guide" / "SKILL.md").is_file()
@@ -54,9 +54,9 @@ def test_cmd_init_copies_to_target_dir(fake_repo, capsys):
 
 
 def test_cmd_init_creates_parent_dirs(fake_repo, capsys):
-    """cmd_init creates .opencode/skills/spec-workflow/ if it does not exist."""
+    """cmd_init creates .opencode/skills/rdd-workflow/ if it does not exist."""
     repo, target = fake_repo
-    dest = target / ".opencode" / "skills" / "spec-workflow"
+    dest = target / ".opencode" / "skills" / "rdd-workflow"
     assert not dest.exists()
     rc = init_cmd.cmd_init([str(target)])
     assert rc == 0
@@ -68,7 +68,7 @@ def test_cmd_init_default_target_is_project_root(fake_repo, monkeypatch, capsys)
     repo, target = fake_repo
     rc = init_cmd.cmd_init([])
     assert rc == 0
-    dest = repo / ".opencode" / "skills" / "spec-workflow"
+    dest = repo / ".opencode" / "skills" / "rdd-workflow"
     assert (dest / "skills" / "INSTALL.md").is_file()
 
 

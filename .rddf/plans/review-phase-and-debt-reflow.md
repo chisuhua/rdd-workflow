@@ -1,4 +1,4 @@
-# spec-workflow v2.1 改进执行计划
+# rdd-workflow v2.1 改进执行计划
 
 > 对应 ADR: [ADR-0014: Add execute-review phase and debt-reflow mechanism](../docs/adr/ADR-0014-review-phase-and-debt-reflow.md)
 > 基于: 22 个流程缺陷分析 + 5 个检查项归属判定 + 债务回流需求
@@ -145,7 +145,7 @@ _VALID_STATUSES = ("proposed", "in_worktree", "review", "completed", "archived")
 | 不在本计划 | 原因 | 后续 |
 |-----------|------|------|
 | 架构漂移自动检测 (mend-adr 模式) | 属于 guide-arch 阶段，需独立 ADR | 未来 ADR |
-| 全面基线快照 | 属于 CI 工具，非 spec-workflow 职责 | 外部 |
+| 全面基线快照 | 属于 CI 工具，非 rdd-workflow 职责 | 外部 |
 | debt-count 驱动的 scan-state 推荐分支 | 需先有 debt 数据积累 | v2.2 |
 | deps subagent 实现 | 需独立架构决策 | 未来 ADR |
 | execute pre-commit 安全快照 | 与 review 独立，可分开发 | 独立 change |

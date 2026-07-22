@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://spec-workflow.dev/schemas/iteration_schema.json",
+  "$id": "https://rdd-workflow.dev/schemas/iteration_schema.json",
   "title": "Spec Workflow Iteration (Current Sprint) State",
   "description": "Persistent view of the current iteration/sprint: which OpenSpec changes are proposed/in-worktree/completed/archived, their blocker relationships, and current task progress. Stored at .rddf/state/iteration.json.",
   "type": "object",

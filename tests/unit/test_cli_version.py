@@ -12,17 +12,17 @@ from skills._lib.cli import version_cmd
 def fake_package_json(tmp_path, monkeypatch):
     """Create a fake package.json with a known version."""
     pkg = tmp_path / "package.json"
-    pkg.write_text(json.dumps({"version": "2.0.7", "name": "spec-workflow"}))
+    pkg.write_text(json.dumps({"version": "3.0.0", "name": "rdd-workflow"}))
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
     return tmp_path
 
 
 def test_cmd_version_prints_banner(fake_package_json, capsys):
-    """cmd_version prints 'rddf v<version> — spec-workflow CLI' to stdout."""
+    """cmd_version prints 'rddf v<version> — rdd-workflow CLI' to stdout."""
     rc = version_cmd.cmd_version([])
     captured = capsys.readouterr()
     assert rc == 0
-    assert captured.out == "rddf v2.0.7 — spec-workflow CLI\n"
+    assert captured.out == "rddf v3.0.0 — rdd-workflow CLI\n"
 
 
 def test_cmd_version_exits_zero(fake_package_json):
@@ -43,7 +43,7 @@ def test_cmd_version_missing_package_json(tmp_path, monkeypatch, capsys):
 def test_cmd_version_missing_version_field(tmp_path, monkeypatch, capsys):
     """When package.json exists but has no 'version' field, fall back to '0.0.0'."""
     pkg = tmp_path / "package.json"
-    pkg.write_text(json.dumps({"name": "spec-workflow"}))
+    pkg.write_text(json.dumps({"name": "rdd-workflow"}))
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
     rc = version_cmd.cmd_version([])
     captured = capsys.readouterr()

@@ -103,14 +103,14 @@ These do not belong in spec-side.
 
 - [ ] **Step 9: Apply light edit #3 — update sub-skill call signature**
 
-Find any `skill_use("spec-workflow-propose")` calls in the lifted content. The signature stays the same (no API change to `propose` skill itself), but add a comment line above each call:
+Find any `skill_use("rdd-workflow-propose")` calls in the lifted content. The signature stays the same (no API change to `propose` skill itself), but add a comment line above each call:
 
 ```bash
 # Sub-skill: propose (called from guide-spec.Phase 2)
-skill_use("spec-workflow-propose")
+skill_use("rdd-workflow-propose")
 ```
 
-Same for `skill_use("spec-workflow-roadmap")` and `skill_use("spec-workflow-deps")` if present.
+Same for `skill_use("rdd-workflow-roadmap")` and `skill_use("rdd-workflow-deps")` if present.
 
 - [ ] **Step 10: Apply light edit #4 — strip worktree-creation code**
 
@@ -602,11 +602,11 @@ With:
 
 - [ ] **Step 2: Edit `USAGE.md`**
 
-Find any references to `skill_use("spec-workflow-guide")` and replace with appropriate new commands based on context:
+Find any references to `skill_use("rdd-workflow-guide")` and replace with appropriate new commands based on context:
 
-- "扫描项目状态" → `skill_use("spec-workflow-guide")` (recommender)
-- "创建新 change" → `skill_use("spec-workflow-guide-spec")`
-- "开始执行 change" → `skill_use("spec-workflow-guide-ship")`
+- "扫描项目状态" → `skill_use("rdd-workflow-guide")` (recommender)
+- "创建新 change" → `skill_use("rdd-workflow-guide-spec")`
+- "开始执行 change" → `skill_use("rdd-workflow-guide-ship")`
 
 If `USAGE.md` is long, do targeted replacements rather than rewriting the whole file.
 
@@ -640,7 +640,7 @@ grep -l "guide-spec\|guide-ship" README.md USAGE.md INSTALL.md
 # Expected: all three files
 
 # No leftover plan.md references in docs
-grep -E "skill_use.*plan\"|spec-workflow-plan" README.md USAGE.md INSTALL.md | wc -l
+grep -E "skill_use.*plan\"|rdd-workflow-plan" README.md USAGE.md INSTALL.md | wc -l
 # Expected: 0
 ```
 

@@ -149,7 +149,7 @@ While fixing the audit, the following pre-existing issues were discovered and **
 
 ```bash
 # Python
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/ -q --tb=line
 # Result: 539 passed, 0 failed
 

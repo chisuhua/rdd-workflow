@@ -103,14 +103,14 @@ templates:
 
 - [ ] **Step 2: Verify YAML is parseable**
 
-Run: `cd /workspace/project/spec-workflow && python3 -c "import yaml; d=yaml.safe_load(open('skills/_lib/phase_templates.yaml')); print(f'✅ {len(d[\"templates\"])} templates, {sum(len(t[\"steps\"]) for t in d[\"templates\"].values())} total steps')"`
+Run: `cd /workspace/project/rdd-workflow && python3 -c "import yaml; d=yaml.safe_load(open('skills/_lib/phase_templates.yaml')); print(f'✅ {len(d[\"templates\"])} templates, {sum(len(t[\"steps\"]) for t in d[\"templates\"].values())} total steps')"`
 
 Expected: 3 templates, ~20 total steps.
 
 - [ ] **Step 3: Commit phase_templates.yaml**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/phase_templates.yaml && git commit -m "feat(pipeline): add default phase templates YAML — arch/plan/ship step sequences (ADR-0011)"
+cd /workspace/project/rdd-workflow && git add skills/_lib/phase_templates.yaml && git commit -m "feat(pipeline): add default phase templates YAML — arch/plan/ship step sequences (ADR-0011)"
 ```
 
 ---
@@ -309,20 +309,20 @@ class StepPipeline:
 
 - [ ] **Step 4: Run tests — all pass**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_step_pipeline.py -v`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_step_pipeline.py -v`
 
 Expected: 7 passed.
 
 - [ ] **Step 5: Run full test suite — no regression**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q --tb=short`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q --tb=short`
 
 Expected: All pass.
 
 - [ ] **Step 6: Commit StepPipeline**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/step_pipeline.py tests/unit/test_step_pipeline.py && git commit -m "feat(pipeline): add StepPipeline with skip-completed recovery and step-level events (ADR-0011)"
+cd /workspace/project/rdd-workflow && git add skills/_lib/step_pipeline.py tests/unit/test_step_pipeline.py && git commit -m "feat(pipeline): add StepPipeline with skip-completed recovery and step-level events (ADR-0011)"
 ```
 
 ---
@@ -347,7 +347,7 @@ Change ADR-0011 row: `❌ 未实施（设计已采纳）` → `✅ 已实施`
 - [ ] **Step 3: Commit ADR update**
 
 ```bash
-cd /workspace/project/spec-workflow && git add docs/adr/ADR-0011-phase-step-pipeline-model.md docs/adr/README.md && git commit -m "docs(adr): ADR-0011 status → implemented (step pipeline complete)"
+cd /workspace/project/rdd-workflow && git add docs/adr/ADR-0011-phase-step-pipeline-model.md docs/adr/README.md && git commit -m "docs(adr): ADR-0011 status → implemented (step pipeline complete)"
 ```
 
 ---
@@ -356,19 +356,19 @@ cd /workspace/project/spec-workflow && git add docs/adr/ADR-0011-phase-step-pipe
 
 - [ ] **Step 1: Run all tests**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q --tb=short`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q --tb=short`
 
 Expected: All pass (including new step_pipeline tests).
 
 - [ ] **Step 2: openspec validate**
 
-Run: `cd /workspace/project/spec-workflow && openspec validate v3-step-pipeline`
+Run: `cd /workspace/project/rdd-workflow && openspec validate v3-step-pipeline`
 
 Expected: Valid.
 
 - [ ] **Step 3: Verify git log**
 
-Run: `cd /workspace/project/spec-workflow && git log --oneline -5`
+Run: `cd /workspace/project/rdd-workflow && git log --oneline -5`
 
 Expected: Clean focused history.
 

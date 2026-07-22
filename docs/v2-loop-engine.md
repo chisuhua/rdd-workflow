@@ -8,7 +8,7 @@
 
 ## 概述
 
-v2.0 Loop Engine 是 spec-workflow 的 AI-native 执行引擎，替代 v1.x 的静态状态机。它通过一个 5+1 块循环自动驱动工作流前进，并在关键决策点暂停人类输入。
+v2.0 Loop Engine 是 rdd-workflow 的 AI-native 执行引擎，替代 v1.x 的静态状态机。它通过一个 5+1 块循环自动驱动工作流前进，并在关键决策点暂停人类输入。
 
 ```
 verify_goal → scan_state → generate_plan → execute_plan → verify_results → adapt
@@ -27,8 +27,8 @@ from skills._lib.event_log import EventLog
 
 # 加载状态向量与事件日志
 engine = LoopEngine(
-    state=StateVector.load(".spec-workflow/state-vector.json"),
-    event_log=EventLog(".spec-workflow/event-log.jsonl"),
+    state=StateVector.load(".rdd-workflow/state-vector.json"),
+    event_log=EventLog(".rdd-workflow/event-log.jsonl"),
 )
 
 # 运行循环，直到目标达成或安全机制触发
@@ -174,10 +174,10 @@ print(fc.render())  # < 100ms
 
 ### 自定义 Detector
 
-在 `.spec-workflow/detectors/` 目录下放一个 Python 文件：
+在 `.rdd-workflow/detectors/` 目录下放一个 Python 文件：
 
 ```python
-# .spec-workflow/detectors/my_detector.py
+# .rdd-workflow/detectors/my_detector.py
 from skills._lib.detectors import Detector, DetectionResult
 
 class MyCustomDetector(Detector):
@@ -196,10 +196,10 @@ class MyCustomDetector(Detector):
 
 ### 自定义 Action
 
-在 `.spec-workflow/actions/` 目录下放一个 Python 文件：
+在 `.rdd-workflow/actions/` 目录下放一个 Python 文件：
 
 ```python
-# .spec-workflow/actions/my_action.py
+# .rdd-workflow/actions/my_action.py
 from skills._lib.actions import Action, ActionResult
 
 class MyCustomAction(Action):

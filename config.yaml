@@ -1,4 +1,4 @@
-# spec-workflow v3 config
+# rdd-workflow v3 config
 triggers:
   enabled: true
   webhook_port: 9090

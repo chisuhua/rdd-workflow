@@ -2,7 +2,7 @@
 # test_helper.bash - common setup/teardown for bats tests
 #
 # Sourced automatically by bats before each test file. Provides:
-#   - $REPO_ROOT: absolute path to the spec-workflow repo root
+#   - $REPO_ROOT: absolute path to the rdd-workflow repo root
 #   - $BATS_TMPDIR: per-test scratch directory (auto-cleaned by bats)
 #   - load_lib(name): source files from tests/_lib/<name>.bash OR
 #                     skills/_lib/<name>.sh OR tests/_lib/<name>.sh

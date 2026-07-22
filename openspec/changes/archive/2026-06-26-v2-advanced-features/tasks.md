@@ -29,7 +29,7 @@
 ## 4. Memory System (P3-T3)
 
 - [x] 4.1 Create `skills/_lib/memory.py` with `LoopMemory` class
-- [x] 4.2 Implement `record_execution()` writing to `.spec-workflow/memory.jsonl`
+- [x] 4.2 Implement `record_execution()` writing to `.rdd-workflow/memory.jsonl`
 - [x] 4.3 Implement `get_execution_history()` with filtering
 - [x] 4.4 Implement `get_insights_for_change(change_name)` returning failure patterns
 - [x] 4.5 Implement `suggest_config(goal)` using heuristic similarity (goal string + config similarity)

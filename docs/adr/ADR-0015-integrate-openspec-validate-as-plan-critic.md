@@ -1,5 +1,8 @@
 # ADR-0015: Integrate `openspec validate` as the plan-critic gate for plan_done
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 已采纳
 > **日期**: 2026-07-08
 > **决策者**: sisyphus
@@ -9,7 +12,7 @@
 
 ### 背景
 
-`spec-workflow` v2.0 三阶段架构（ADR-0003）定义了 `arch → plan → ship` 的严格前向流转。每个阶段都有「退出 → 进入下一阶段」的门控点，由 `skills/_lib/gate.py` 的默认 `Check` 列表实现（ADR-0007）。
+`rdd-workflow` v2.0 三阶段架构（ADR-0003）定义了 `arch → plan → ship` 的严格前向流转。每个阶段都有「退出 → 进入下一阶段」的门控点，由 `skills/_lib/gate.py` 的默认 `Check` 列表实现（ADR-0007）。
 
 `plan_done` 门控点当前 4 个默认 check（`skills/_lib/gate.py:148-153`）：
 
@@ -74,7 +77,7 @@ plan_done 默认 checks (修改后):
 ### 决策 2：错误级而非警告级
 
 **选择理由**：
-- `plan_done` 的失败会**阻断** plan → ship 流转，这是用户对 spec-workflow 的基本期望
+- `plan_done` 的失败会**阻断** plan → ship 流转，这是用户对 rdd-workflow 的基本期望
 - 警告级适合**已知可推迟**的错误（如 ADR-0014 的 `review_debt_recorded`），但 plan 不符合 OpenSpec schema 是**必须修复**的——`openspec validate` 失败时退出码非 0，标准 CI 集成直接 FAIL
 - 让用户在 archive 阶段才被回退（plan 早已 ship 完毕）的代价比在 plan_done 拦截高得多
 

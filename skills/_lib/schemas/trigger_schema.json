@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://spec-workflow.dev/schemas/trigger_schema.json",
+  "$id": "https://rdd-workflow.dev/schemas/trigger_schema.json",
   "title": "Trigger Registry",
   "description": "Schema for .rddf/state/triggers.json — the persistent trigger registry.",
   "type": "object",

@@ -223,7 +223,7 @@ Create `skills/_lib/ship_plan.sh`:
 #
 #   - generate_implementation_plan <project_root> <change_name> <mode>
 #       For worktree mode: cd into worktree. For lightweight: stay in main repo.
-#       Calls skill_use("spec-workflow/writing-plans") unless
+#       Calls skill_use("rdd-workflow/writing-plans") unless
 #       SKIP_PROMETHEUS_PLANNING=yes (in which case writes a placeholder
 #       tasks file). Validates the resulting .rddf/plans/<change_name>.md
 #       has at least 1 Task and 1 Step. Mirrors the original plan-generation
@@ -370,9 +370,9 @@ generate_implementation_plan() {
     return 0
   fi
 
-  if ! skill_use "spec-workflow/writing-plans" 2>/dev/null; then
+  if ! skill_use "rdd-workflow/writing-plans" 2>/dev/null; then
     echo "❌ 实施计划生成失败" >&2
-    echo "   spec-workflow/writing-plans 技能未找到,检查安装是否完整" >&2
+    echo "   rdd-workflow/writing-plans 技能未找到,检查安装是否完整" >&2
     return 1
   fi
 
@@ -503,7 +503,7 @@ MODE=$(detect_execution_mode "$PROJECT_ROOT" "$CHANGE_NAME")
 # 3) MODE-SPECIFIC SETUP + WORKTREE VERIFICATION GATE
 WT_PATH=$(setup_execution_workspace "$PROJECT_ROOT" "$CHANGE_NAME" "$MODE")
 
-# 4) PLAN GENERATION (calls skill_use "spec-workflow/writing-plans" internally)
+# 4) PLAN GENERATION (calls skill_use "rdd-workflow/writing-plans" internally)
 PLAN_STEP_COUNT=$(generate_implementation_plan "$PROJECT_ROOT" "$CHANGE_NAME" "$MODE")
 
 # 5) iteration.json HOOK (status → in_worktree)

@@ -73,7 +73,7 @@ Edit the ADR status table in `docs/adr/README.md` to add a "Target Release" colu
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && python3 -c "
+cd /workspace/project/rdd-workflow && python3 -c "
 with open('docs/adr/README.md') as f:
     c = f.read()
 for adr in ['ADR-0009', 'ADR-0010', 'ADR-0011', 'ADR-0012']:
@@ -88,7 +88,7 @@ print('✅ All ADRs have target release')
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add docs/adr/README.md && git commit -m "docs(adr): add target release column for unimplemented ADRs — ADR-0009/0011/0012→v3.0, ADR-0010→v2.1"
+cd /workspace/project/rdd-workflow && git add docs/adr/README.md && git commit -m "docs(adr): add target release column for unimplemented ADRs — ADR-0009/0011/0012→v3.0, ADR-0010→v2.1"
 ```
 
 ---
@@ -104,7 +104,7 @@ cd /workspace/project/spec-workflow && git add docs/adr/README.md && git commit 
 - [ ] **Step 1: Create v2-multi-session placeholder change**
 
 ```bash
-cd /workspace/project/spec-workflow && openspec new change v2-multi-session \
+cd /workspace/project/rdd-workflow && openspec new change v2-multi-session \
   --description "Implement full multi-session management (ADR-0010): parent-child session trees, parallel execution, dependency scheduling. v2.0 has lightweight baseline (session.py); this completes the vision." \
   --goal "Complete ADR-0010 multi-session management with parallel execution support and dependency scheduling"
 ```
@@ -126,7 +126,7 @@ ADR-0010 defines a multi-session management system with parent-child session tre
 - [ ] **Step 2: Create v3-scheduled-triggers placeholder change**
 
 ```bash
-cd /workspace/project/spec-workflow && openspec new change v3-scheduled-triggers \
+cd /workspace/project/rdd-workflow && openspec new change v3-scheduled-triggers \
   --description "Implement scheduled triggers for loop engine (ADR-0009): cron-like event triggers, time-based detector, scheduled action execution" \
   --goal "Implement ADR-0009 scheduled triggers for the loop engine"
 ```
@@ -136,7 +136,7 @@ Create `proposal.md` with ADR-0009 scope summary.
 - [ ] **Step 3: Create v3-step-pipeline placeholder change**
 
 ```bash
-cd /workspace/project/spec-workflow && openspec new change v3-step-pipeline \
+cd /workspace/project/rdd-workflow && openspec new change v3-step-pipeline \
   --description "Implement phase-step pipeline execution model (ADR-0011): replace monolithic phase with composable steps, trigger conditions, step engine" \
   --goal "Implement ADR-0011 phase-step pipeline execution model"
 ```
@@ -146,8 +146,8 @@ Create `proposal.md` with ADR-0011 scope summary.
 - [ ] **Step 4: Create v3-flow-customization placeholder change**
 
 ```bash
-cd /workspace/project/spec-workflow && openspec new change v3-flow-customization \
-  --description "Implement flow customization layer (ADR-0012): .spec-workflow/flow.yaml, custom skill registration, conditional step skipping" \
+cd /workspace/project/rdd-workflow && openspec new change v3-flow-customization \
+  --description "Implement flow customization layer (ADR-0012): .rdd-workflow/flow.yaml, custom skill registration, conditional step skipping" \
   --goal "Implement ADR-0012 flow customization layer (depends on ADR-0011)"
 ```
 
@@ -157,7 +157,7 @@ Create `proposal.md` with ADR-0012 scope summary.
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && ls -d openspec/changes/*/ | grep -v archive/ && echo "---" && echo "Total active changes: $(ls -d openspec/changes/*/ | grep -v archive/ | wc -l)"
+cd /workspace/project/rdd-workflow && ls -d openspec/changes/*/ | grep -v archive/ && echo "---" && echo "Total active changes: $(ls -d openspec/changes/*/ | grep -v archive/ | wc -l)"
 ```
 
 Expected: 5 active changes (v3-roadmap + 4 placeholders).
@@ -165,7 +165,7 @@ Expected: 5 active changes (v3-roadmap + 4 placeholders).
 - [ ] **Step 6: Commit placeholder changes**
 
 ```bash
-cd /workspace/project/spec-workflow && git add openspec/changes/v2-multi-session/ openspec/changes/v3-scheduled-triggers/ openspec/changes/v3-step-pipeline/ openspec/changes/v3-flow-customization/ && git commit -m "feat(openspec): create placeholder changes for 4 future ADRs — v2-multi-session, v3-scheduled-triggers, v3-step-pipeline, v3-flow-customization"
+cd /workspace/project/rdd-workflow && git add openspec/changes/v2-multi-session/ openspec/changes/v3-scheduled-triggers/ openspec/changes/v3-step-pipeline/ openspec/changes/v3-flow-customization/ && git commit -m "feat(openspec): create placeholder changes for 4 future ADRs — v2-multi-session, v3-scheduled-triggers, v3-step-pipeline, v3-flow-customization"
 ```
 
 ---
@@ -227,7 +227,7 @@ v2.0.0-beta 已发布。详见 `docs/v2-implementation-plan.md`。
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && python3 -c "
+cd /workspace/project/rdd-workflow && python3 -c "
 with open('roadmap.md') as f:
     c = f.read()
 assert '版本 2' in c or '版本: 2' in c, 'Version should be 2'
@@ -243,7 +243,7 @@ print('✅ roadmap.md verified')
 - [ ] **Step 3: Commit roadmap.md**
 
 ```bash
-cd /workspace/project/spec-workflow && git add roadmap.md && git commit -m "docs(roadmap): update from generic Phase-1 to concrete v2.1/v3.0 plan with 4 ADR-backed phases"
+cd /workspace/project/rdd-workflow && git add roadmap.md && git commit -m "docs(roadmap): update from generic Phase-1 to concrete v2.1/v3.0 plan with 4 ADR-backed phases"
 ```
 
 ---
@@ -252,7 +252,7 @@ cd /workspace/project/spec-workflow && git add roadmap.md && git commit -m "docs
 
 - [ ] **Step 1: Verify git log**
 
-Run: `cd /workspace/project/spec-workflow && git log --oneline -7`
+Run: `cd /workspace/project/rdd-workflow && git log --oneline -7`
 
 Expected: 5 commits forming a coherent history.
 
@@ -260,7 +260,7 @@ Expected: 5 commits forming a coherent history.
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && for change in v3-roadmap v2-multi-session v3-scheduled-triggers v3-step-pipeline v3-flow-customization; do
+cd /workspace/project/rdd-workflow && for change in v3-roadmap v2-multi-session v3-scheduled-triggers v3-step-pipeline v3-flow-customization; do
     echo -n "$change: "
     openspec validate "$change" 2>&1 | head -1
 done
@@ -270,7 +270,7 @@ Expected: All 5 changes valid.
 
 - [ ] **Step 3: Run tests to confirm no regressions**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q --tb=short`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q --tb=short`
 
 Expected: All tests pass (no production code was changed).
 

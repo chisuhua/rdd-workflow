@@ -19,7 +19,7 @@ ADR-0011 defines a step-pipeline execution model that replaces the current monol
 
 ### Decision 1: YAML, not Python, for phase templates
 
-Phase templates are YAML so users can customize without writing Python. `phase_templates.yaml` ships as built-in default. Users can override via `.spec-workflow/phase-templates.yaml`.
+Phase templates are YAML so users can customize without writing Python. `phase_templates.yaml` ships as built-in default. Users can override via `.rdd-workflow/phase-templates.yaml`.
 
 ### Decision 2: StepPipeline is a new module, not embedded in loop_engine.py
 

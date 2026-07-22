@@ -1,5 +1,8 @@
 # ADR-0020: Incremental Skeleton Planning
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 已采纳（v2.0.2 archive 后切换）
 > **日期**: 2026-07-08
 > **作者**: sisyphus (via dispatching-parallel-agents)
@@ -7,7 +10,7 @@
 
 ## Context
 
-当前 spec-workflow 的 change 生命周期是线性的：`propose（全量创建）→ deps（单次分析）→ plan-done（全部提交）→ guide-ship`。这种"瀑布式"批处理在多阶段 roadmap 场景中产生摩擦：
+当前 rdd-workflow 的 change 生命周期是线性的：`propose（全量创建）→ deps（单次分析）→ plan-done（全部提交）→ guide-ship`。这种"瀑布式"批处理在多阶段 roadmap 场景中产生摩擦：
 
 1. **多阶段 roadmap**: Phase 1 有 5 个 change，但只有前 3 个需要在当前 sprint 实现
 2. **跨阶段依赖**: Phase 2 的 change 依赖于 Phase 1 的输出，但 Phase 1 尚未完成时无法确定 Phase 2 的完整设计

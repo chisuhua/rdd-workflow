@@ -1,4 +1,4 @@
-# AGENTS.md — spec-workflow
+# AGENTS.md — rdd-workflow
 
 > OpenSpec 工作流技能包: `propose → plan → execute → status → archive` change lifecycle.
 > v2.0 self-contained: 内置 TDD 5 步计划生成与执行, 无外部 skill 依赖.
@@ -48,7 +48,7 @@ skills/                       # Markdown skills (13 SKILL.md + INSTALL.md) + per
   guide-plan/SKILL.md         # plan 阶段
   guide-ship/SKILL.md         # ship 阶段 (v2.0)
   propose/SKILL.md / execute/SKILL.md / status/SKILL.md / roadmap/SKILL.md / deps/SKILL.md / feature/SKILL.md / rddf-session/SKILL.md  # 子技能
-  spec-workflow-writing-plans/SKILL.md  # 内置 TDD 5 步 plan 生成器
+  rdd-workflow-writing-plans/SKILL.md  # 内置 TDD 5 步 plan 生成器
   loop_engine.py              # v2.0 Loop 引擎入口（向后兼容 shim，实际实现在 _lib/loop_engine.py）
   _lib/                       # 共享 bash + Python (v2.0.8; Phase 3 重组)
     state.sh / worktree.sh / archive.sh / status_helpers.sh / discover-arch-artifacts.sh  # bash 工具 (5 files)

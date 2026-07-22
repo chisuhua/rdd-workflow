@@ -106,15 +106,15 @@ sed -n '173,180p' skills/INSTALL.md
 
 Old:
 ```bash
-curl -sL <raw-url>/install-spec-workflow.sh | bash
+curl -sL <raw-url>/install-rdd-workflow.sh | bash
 ```
 
 New (download to temp, optionally verify checksum, then execute):
 ```bash
-curl -sL -o /tmp/install-spec-workflow.sh <raw-url>/install-spec-workflow.sh
+curl -sL -o /tmp/install-rdd-workflow.sh <raw-url>/install-rdd-workflow.sh
 # Optional: verify SHA256 checksum here (security)
-bash /tmp/install-spec-workflow.sh
-rm -f /tmp/install-spec-workflow.sh
+bash /tmp/install-rdd-workflow.sh
+rm -f /tmp/install-rdd-workflow.sh
 ```
 
 - [ ] **Step 3: Commit**
@@ -129,7 +129,7 @@ If the remote is compromised or the connection is MITM'd, arbitrary
 code runs with the user's privileges.
 
 Replaced with download-to-temp-then-execute pattern. The user can
-inspect /tmp/install-spec-workflow.sh before running, and an
+inspect /tmp/install-rdd-workflow.sh before running, and an
 optional SHA256 verification line is included as a comment.
 
 Closes CODE_REVIEW.md issue #24 in skills/INSTALL.md."
@@ -607,7 +607,7 @@ git commit -m "fix(guide): guard cd to worktree against missing path (CODE_REVIE
 
 A plain 'cd \$WORKTREE_PATH' silently continues execution in
 the current directory if the worktree path is invalid. The
-subsequent 'skill_use(\"spec-workflow-execute\")' then runs
+subsequent 'skill_use(\"rdd-workflow-execute\")' then runs
 in the wrong place, producing confusing errors.
 
 Added '|| { echo error; exit 1; }' guard so the script fails

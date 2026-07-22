@@ -1,4 +1,4 @@
-# spec-workflow 新成员入职指南
+# rdd-workflow 新成员入职指南
 
 > 生成时间: 2026-06-29
 > 基于知识图谱分析
@@ -9,7 +9,7 @@
 
 | | |
 |---|---|
-| **项目名** | spec-workflow |
+| **项目名** | rdd-workflow |
 | **版本** | v2.0.0-beta |
 | **描述** | OpenSpec 工作流技能包，实现 propose→plan→execute→status→archive 变更管理生命周期 |
 | **语言** | Python, Shell (Bash), Markdown, YAML, JSON |
@@ -18,7 +18,7 @@
 
 ### 这是什么项目？
 
-spec-workflow 是一个 **AI 助手工作流技能包**，提供给 Claude Code / OpenCode 等 AI 编程助手使用。它定义了从**变更提议**到**执行归档**的完整生命周期管理流程。
+rdd-workflow 是一个 **AI 助手工作流技能包**，提供给 Claude Code / OpenCode 等 AI 编程助手使用。它定义了从**变更提议**到**执行归档**的完整生命周期管理流程。
 
 项目已演进到 **v2.0**，引入了三阶段架构（Arch → Plan → Ship）和闭环自动化引擎（Loop Engine）。
 
@@ -27,7 +27,7 @@ spec-workflow 是一个 **AI 助手工作流技能包**，提供给 Claude Code 
 ## 项目结构总览
 
 ```
-spec-workflow/
+rdd-workflow/
 ├── README.md                         # 项目入口（从这里开始）
 ├── USAGE.md                          # 完整使用指南（术语字典）
 ├── package.json                      # npm 包定义
@@ -45,7 +45,7 @@ spec-workflow/
 │   ├── status.md                     # 状态检查
 │   ├── roadmap.md                    # 路线图管理
 │   ├── deps.md                       # 依赖分析
-│   ├── spec-workflow-writing-plans.md # 实施计划生成
+│   ├── rdd-workflow-writing-plans.md # 实施计划生成
 │   ├── loop_engine.py                # 闭环自动化核心引擎
 │   └── _lib/                         # Python 辅助库（22 个模块）
 │       ├── actions.py                # 核心操作定义
@@ -94,7 +94,7 @@ guide.md (推荐器)
   │     └── [transitions_to]
   ├── guide-plan.md → propose.md, deps.md (Plan 阶段完成)
   │     └── [transitions_to]
-  └── guide-ship.md → spec-workflow-writing-plans.md, execute.md, status.md
+  └── guide-ship.md → rdd-workflow-writing-plans.md, execute.md, status.md
 ```
 
 ### 3. Loop 引擎层（1 个文件）
@@ -191,7 +191,7 @@ v2.0 引入的核心自动化机制。`loop_engine.py` 实现了自适应的闭�
 
 ### 计划生成
 
-`spec-workflow-writing-plans.md` 是 v2.0 自包含的计划生成器，fork 自 superpowers/writing-plans 并适配 OpenSpec change 上下文。
+`rdd-workflow-writing-plans.md` 是 v2.0 自包含的计划生成器，fork 自 superpowers/writing-plans 并适配 OpenSpec change 上下文。
 
 - **TDD 5 步结构**: Write failing test → Verify fail → Implement → Verify pass → Commit
 - **零外部依赖**: 不依赖 oh-my-opencode/superpowers 等外部 skill
@@ -199,7 +199,7 @@ v2.0 引入的核心自动化机制。`loop_engine.py` 实现了自适应的闭�
 
 `guide-ship` Phase 1 自动调用本技能：
 ```
-skill_use("spec-workflow/writing-plans")
+skill_use("rdd-workflow/writing-plans")
 ```
 
 ---
@@ -214,7 +214,7 @@ skill_use("spec-workflow/writing-plans")
 | **4** | guide.md — 工作流推荐器 | `guide.md` |
 | **5** | 三阶段状态机总览 | `guide-arch.md`, `guide-plan.md`, `guide-ship.md` |
 | **6** | Arch 与 Plan 子技能 | `propose.md`, `roadmap.md`, `deps.md` |
-| **7** | Ship 端子技能 + 计划生成 | `execute.md`, `status.md`, `spec-workflow-writing-plans.md` |
+| **7** | Ship 端子技能 + 计划生成 | `execute.md`, `status.md`, `rdd-workflow-writing-plans.md` |
 | **8** | loop_engine.py — 闭环自动化核心引擎 | `loop_engine.py` |
 | **9** | Python 辅助库核心 | `state_vector.py`, `event_log.py`, `event_types.py`, `gate.py`, `memory.py` |
 | **10** | Shell 库、CI 与基础设施 | `state.sh`, `worktree.sh`, `archive.sh`, `test.yml`, `.rddf/state/index.md` |
@@ -272,7 +272,7 @@ bats tests/
 
 ```bash
 # 方式 1: npx skills (推荐)
-npx skills add chisuhua/spec-workflow -g -y
+npx skills add chisuhua/rdd-workflow -g -y
 
 # 方式 2: 手动
 bash install.sh /path/to/project
@@ -299,7 +299,7 @@ package.json                        — npm 包定义
 requirements.txt                    — Python 依赖
 install.sh                          — 安装脚本
 .gitignore                          — Git 忽略规则
-.spec-workflow/flow.yaml.example    — 流程 YAML 配置示例
+.rdd-workflow/flow.yaml.example    — 流程 YAML 配置示例
 project-organization-plan.md        — 项目整理计划
 project-organization.md             — 执行计划（847行）
 proposal-suggestions.md             — 改进建议占位
@@ -318,7 +318,7 @@ skills/roadmap.md                   — 路线图管理
 skills/deps.md                      — 依赖分析（719行）
 skills/execute.md                   — 变更执行（457行）
 skills/status.md                    — 状态检查（470行）
-skills/spec-workflow-writing-plans.md — 计划生成（自包含，TDD 5 步结构）
+skills/rdd-workflow-writing-plans.md — 计划生成（自包含，TDD 5 步结构）
 ```
 
 ### Python 辅助库层

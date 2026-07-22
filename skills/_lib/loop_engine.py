@@ -1,4 +1,4 @@
-"""LoopEngine — the AI-native execution engine for spec-workflow v2.0.
+"""LoopEngine — the AI-native execution engine for rdd-workflow v2.0.
 
 Implements 5-building-block cycle: verify_goal → scan_state → generate_plan →
 execute_plan → verify_results → adapt. Safety mechanisms enforced at engine layer.

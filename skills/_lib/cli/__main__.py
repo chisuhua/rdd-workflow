@@ -14,9 +14,9 @@ Responsibilities (per ``docs/superpowers/specs/2026-07-20-dashboard-design.md``
    line ``ℹ️  running from worktree, reading state from <main_repo>``
    so the user understands why state is being read from elsewhere.
 
-3. **Non-spec-workflow project detection**: if ``.rddf/state/`` does
+3. **Non-rdd-workflow project detection**: if ``.rddf/state/`` does
    not exist at the resolved project root, print
-   ``ℹ️  not a spec-workflow project`` and exit 0 (this is not an
+   ``ℹ️  not a rdd-workflow project`` and exit 0 (this is not an
    error - the user may have invoked the CLI from the wrong dir and
    a non-zero exit would surprise them).
 
@@ -47,7 +47,7 @@ def resolve_project_root() -> str:
     recover the main repo root in both cases.
 
     Falls back to ``os.getcwd()`` if git is unavailable or the cwd is
-    not inside a git repo (so the non-spec-workflow detection below
+    not inside a git repo (so the non-rdd-workflow detection below
     still gets a chance to run and print a friendly message).
     """
     try:
@@ -143,10 +143,10 @@ def main(argv: list[str] | None = None) -> int:
     if _is_in_worktree():
         print(f"ℹ️  running from worktree, reading state from {project_root}")
 
-    # Non-spec-workflow project detection.
+    # Non-rdd-workflow project detection.
     state_dir = os.path.join(project_root, ".rddf", "state")
     if not os.path.isdir(state_dir):
-        print(f"ℹ️  not a spec-workflow project (no {state_dir})")
+        print(f"ℹ️  not a rdd-workflow project (no {state_dir})")
         return 0
 
     # Inject project_root as an env var so handlers can read it
@@ -171,7 +171,7 @@ def _print_help() -> None:
     print("  deps         Dependency analysis table from deps-analysis.json")
     print("  feature      Feature grouping (summary, graph, status, order)")
     print("  guide        Project state scan + recommendation (guide-arch/guide-plan/guide-ship)")
-    print("  init [tgt]   Install spec-workflow to target's .opencode/skills/")
+    print("  init [tgt]   Install rdd-workflow to target's .opencode/skills/")
     print("  monitor      Live monitor (--watch=<sec>)")
     print("  sessions     Session management (read-only). Subcmds: show <id>, current, gc")
     print("  status       Change status overview. Flags: --iteration, --roadmap, <name>")

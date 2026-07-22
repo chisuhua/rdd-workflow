@@ -34,7 +34,7 @@
 - [ ] Subcommand routing table (dashboard / status / sessions)
 - [ ] Worktree-safe project root resolution (`--git-common-dir`)
 - [ ] Worktree detection + auto-redirect
-- [ ] Non-spec-workflow project detection
+- [ ] Non-rdd-workflow project detection
 - [ ] Help command
 
 ### 5. Create `skills/_lib/cli/dashboard_cmd.py` — Dashboard handler

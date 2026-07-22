@@ -1,6 +1,6 @@
 """Three interaction modes for the loop engine: Loop, Menu, Hybrid.
 
-ADR-0002 (spec-workflow): users choose their autonomy level per invocation.
+ADR-0002 (rdd-workflow): users choose their autonomy level per invocation.
 Mode is selectable at construction time and switchable at runtime via the
 `make_mode` factory or by passing a new `InteractionMode` instance to
 `LoopEngine(..., mode=...)`.

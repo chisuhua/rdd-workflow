@@ -12,7 +12,7 @@
 
 - [x] 2.1 Create `skills/_lib/detectors.py` with `Detector` base class and `DetectionResult` (type, data, message)
 - [x] 2.2 Implement 8 built-in detectors: `detect_worktrees`, `detect_pending_changes`, `detect_archived_changes`, `detect_roadmap_state`, `detect_adr_status`, `detect_health_issues`, `detect_test_gaps`, `detect_stale_branches`
-- [x] 2.3 Implement plugin loading from `.spec-workflow/detectors/`
+- [x] 2.3 Implement plugin loading from `.rdd-workflow/detectors/`
 - [x] 2.4 All detectors return structured `DetectionResult`
 - [x] 2.5 All 8 detectors run in < 500ms total
 - [x] 2.6 Write unit tests for each detector + plugin loading
@@ -22,7 +22,7 @@
 - [x] 3.1 Create `skills/_lib/actions.py` with `Action` base class and `ActionResult` (success, data, error)
 - [x] 3.2 Implement 7 built-in actions: `action_create_worktree`, `action_generate_plan`, `action_execute_worktree`, `action_archive_change`, `action_cleanup_stale`, `action_update_roadmap`, `action_create_adr`
 - [x] 3.3 Subprocess invocation with stdout/stderr capture + 30-min timeout
-- [x] 3.4 Plugin loading from `.spec-workflow/actions/`
+- [x] 3.4 Plugin loading from `.rdd-workflow/actions/`
 - [x] 3.5 Write unit tests: each action (mocked subprocess), error handling, timeout, event log integration
 
 ## 4. Three Interaction Modes (P2-T4)

@@ -2,14 +2,14 @@
 
 **Date:** 2026-07-09
 **Status:** Pending Review
-**Scope:** Add first-class feature management surface to spec-workflow (build, status, order, graph)
+**Scope:** Add first-class feature management surface to rdd-workflow (build, status, order, graph)
 **Target Branch:** `master`
 
 ---
 
 ## 1. Background
 
-`spec-workflow` v2.0 ships a three-phase workflow (arch → plan → ship) that manages
+`rdd-workflow` v2.0 ships a three-phase workflow (arch → plan → ship) that manages
 individual OpenSpec changes. Each change goes through `propose → plan → execute → archive`
 on its own. The dependency graph (file conflicts, ADR references, interface usage) is
 computed in `skills/deps.md` at change granularity and persisted to

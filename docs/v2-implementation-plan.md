@@ -1,4 +1,4 @@
-# spec-workflow v2.0 实施计划
+# rdd-workflow v2.0 实施计划
 
 > **版本**: 2.0.0-beta  
 > **日期**: 2026-06-24（更新: 2026-06-28）  
@@ -31,7 +31,7 @@
 
 ## 📋 执行摘要
 
-本文档定义了 spec-workflow v2.0 的完整实施计划，从**状态机驱动**升级到 **Loop 驱动 + Human-in-Loop** 的 AI 编程范式。
+本文档定义了 rdd-workflow v2.0 的完整实施计划，从**状态机驱动**升级到 **Loop 驱动 + Human-in-Loop** 的 AI 编程范式。
 
 ### 核心变更概览
 
@@ -224,7 +224,7 @@ skills/_lib/
 
 3. **实现插件注册机制**
    - 实现 `register_gate_check()` API
-   - 支持从 `.spec-workflow/plugins/` 加载自定义检查
+   - 支持从 `.rdd-workflow/plugins/` 加载自定义检查
 
 4. **定义默认门控检查清单**
    - arch_done: adr_exists (error), roadmap_defined (error), gap_analysis_complete (warning)
@@ -432,7 +432,7 @@ skills/
    - 返回 `DetectionResult` 对象（type, data, message）
 
 3. **实现注册机制**
-   - 支持从 `.spec-workflow/detectors/` 加载自定义 detectors
+   - 支持从 `.rdd-workflow/detectors/` 加载自定义 detectors
    - 支持配置文件注册
 
 **验收标准**:
@@ -480,7 +480,7 @@ skills/_lib/
    - 处理超时（30 分钟）
 
 4. **实现 Action 注册机制**
-   - 支持从 `.spec-workflow/actions/` 加载自定义 actions
+   - 支持从 `.rdd-workflow/actions/` 加载自定义 actions
    - 支持配置文件注册
 
 **验收标准**:
@@ -1124,7 +1124,7 @@ docs/
 
 **验收标准**:
 
-- [ ] `npm install spec-workflow@2.0.0-beta` 成功
+- [ ] `npm install rdd-workflow@2.0.0-beta` 成功
 - [ ] 发布说明完整
 - [ ] 性能指标达标（读写延迟 < 10ms）
 
@@ -1219,7 +1219,7 @@ docs/
 ### 最终目录结构
 
 ```
-spec-workflow/
+rdd-workflow/
 ├── skills/
 │   ├── _lib/                      # Python 核心库（新增）
 │   │   ├── state_vector.py        # 状态向量
@@ -1288,7 +1288,7 @@ spec-workflow/
 │   ├── v2-api-reference.md        # 已存在（更新）
 │   └── v2-loop-engine-tutorial.md # 教程（新增）
 │
-├── .spec-workflow/                # 项目配置目录（可选）
+├── .rdd-workflow/                # 项目配置目录（可选）
 │   ├── detectors/                 # 自定义 detectors
 │   ├── actions/                   # 自定义 actions
 │   ├── gates/                     # 自定义 gates

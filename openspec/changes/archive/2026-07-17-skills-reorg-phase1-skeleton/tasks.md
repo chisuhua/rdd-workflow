@@ -7,7 +7,7 @@
 ### 0.1: 批量替换 test 文件中 `skills/<name>.md` → `skills/<name>/SKILL.md`
 
 ```bash
-for skill in guide guide-arch guide-plan guide-ship propose execute feature status deps roadmap rddf-session spec-workflow-writing-plans; do
+for skill in guide guide-arch guide-plan guide-ship propose execute feature status deps roadmap rddf-session rdd-workflow-writing-plans; do
   find tests/ -type f \( -name '*.bats' -o -name '*.bash' -o -name '*.py' -o -name '*.md' \) \
     -exec sed -i "s|skills/${skill}\\.md|skills/${skill}/SKILL.md|g" {} +
 done
@@ -50,7 +50,7 @@ done
 ### 1.1: 创建 per-skill 目录结构
 
 ```bash
-for skill in guide guide-arch guide-plan guide-ship propose execute feature status deps roadmap rddf-session spec-workflow-writing-plans; do
+for skill in guide guide-arch guide-plan guide-ship propose execute feature status deps roadmap rddf-session rdd-workflow-writing-plans; do
   mkdir -p "skills/$skill/scripts"
   mkdir -p "skills/$skill/references"
 done
@@ -61,7 +61,7 @@ done
 ### 1.2: 移动 SKILL.md 到子目录
 
 ```bash
-for skill in guide guide-arch guide-plan guide-ship propose execute feature status deps roadmap rddf-session spec-workflow-writing-plans; do
+for skill in guide guide-arch guide-plan guide-ship propose execute feature status deps roadmap rddf-session rdd-workflow-writing-plans; do
   mv "skills/$skill.md" "skills/$skill/SKILL.md"
 done
 ```
@@ -153,7 +153,7 @@ done
 # 并保留 INSTALL.md 作为最后一项（来自 skills/INSTALL.md）
 ```
 
-### 2.3: 更新生成的 `install-spec-workflow.sh` 模板
+### 2.3: 更新生成的 `install-rdd-workflow.sh` 模板
 
 `skills/INSTALL.md` 第 195 行附近生成的安装脚本模板中的 cp 命令，同样改为递归复制模式：
 

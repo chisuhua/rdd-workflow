@@ -1,6 +1,6 @@
 """Cross-doc / cross-spec contract tests for sync-workflow-contracts.
 
-锁定 v2.0.2 spec-workflow 仓库内多 surface 一致性：
+锁定 v3.0 rdd-workflow 仓库内多 surface 一致性：
 - openspec/specs/general/spec.md
 - USAGE.md / AGENTS.md / INSTALL.md / package.json
 - docs/adr/README.md

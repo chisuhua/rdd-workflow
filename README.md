@@ -1,15 +1,15 @@
-# Spec Workflow
+# RDD Workflow
 
-[![npm version](https://img.shields.io/npm/v/spec-workflow.svg)](https://www.npmjs.com/package/spec-workflow)
+[![npm version](https://img.shields.io/npm/v/rdd-workflow.svg)](https://www.npmjs.com/package/rdd-workflow)
 
 ## Install
 
 ```bash
 # Latest stable (v1.x)
-npm install spec-workflow
+npm install rdd-workflow
 
 # v2.0 beta
-npm install spec-workflow@2.0.0-beta
+npm install rdd-workflow@2.0.0-beta
 ```
 
 OpenSpec 工作流技能包 - manage changes via propose → plan → execute → status → archive lifecycle.
@@ -19,8 +19,8 @@ OpenSpec 工作流技能包 - manage changes via propose → plan → execute �
 ### 全局安装（跨项目可用，推荐）
 
 ```bash
-git clone https://github.com/chisuhua/spec-workflow.git ~/.agents/skills/spec-workflow
-bash ~/.agents/skills/spec-workflow/install.sh --global
+git clone https://github.com/chisuhua/rdd-workflow.git ~/.agents/skills/rdd-workflow
+bash ~/.agents/skills/rdd-workflow/install.sh --global
 ```
 
 安装后：
@@ -36,7 +36,7 @@ bash ~/.agents/skills/spec-workflow/install.sh --global
 #### 通过 npx skills
 
 ```bash
-npx skills add chisuhua/spec-workflow -g -y
+npx skills add chisuhua/rdd-workflow -g -y
 ```
 
 安装后只显示 `INSTALL` 技能。执行 `INSTALL` 后，子技能才会出现在项目中。
@@ -44,7 +44,7 @@ npx skills add chisuhua/spec-workflow -g -y
 #### 手动安装
 
 ```bash
-git clone https://github.com/chisuhua/spec-workflow.git
+git clone https://github.com/chisuhua/rdd-workflow.git
 bash install.sh /path/to/project
 ```
 
@@ -60,7 +60,7 @@ bash install.sh /path/to/project
    - `skill_use("propose")` - 子技能(被 guide-plan 调用)
    - `skill_use("execute")` - 子技能(被 guide-ship 调用)
    - `skill_use("status")` - 子技能(被 guide-ship 调用或独立使用)
-   - `skill_use("spec-workflow/writing-plans")` - 实施计划生成器(被 guide-ship 调用,v2.0 自包含 TDD 5 步结构)
+   - `skill_use("rdd-workflow/writing-plans")` - 实施计划生成器(被 guide-ship 调用,v2.0 自包含 TDD 5 步结构)
 
 ## v2.0 新特性
 
@@ -96,7 +96,7 @@ bash install.sh /path/to/project
 ## 目录结构
 
 ```
-spec-workflow/
+rdd-workflow/
 ├── package.json
 ├── README.md
 ├── USAGE.md
@@ -114,7 +114,7 @@ spec-workflow/
     ├── roadmap/SKILL.md       # 子技能(被 guide-arch 调用)
     ├── deps/SKILL.md          # 子技能(被 guide-plan 调用)
     ├── status/SKILL.md        # 子技能(被 guide-ship 调用或独立使用)
-    ├── spec-workflow-writing-plans/SKILL.md  # 实施计划生成器(v2.0 自包含)
+    ├── rdd-workflow-writing-plans/SKILL.md  # 实施计划生成器(v2.0 自包含)
     ├── loop_engine.py         # v2.0 Loop 引擎(向后兼容 shim)
     ├── <skill>/scripts/       # per-skill 辅助脚本
     └── _lib/                  # 共享辅助函数库(46 .py + 8 schema)
@@ -133,7 +133,7 @@ spec-workflow/
 ### 项目安装模式（`skill_use("INSTALL")`）
 
 1. 全局安装后，只显示 `INSTALL` 技能
-2. 执行 `INSTALL` 将子技能复制到项目的 `.opencode/skills/spec-workflow/`
+2. 执行 `INSTALL` 将子技能复制到项目的 `.opencode/skills/rdd-workflow/`
 3. 子技能通过 `PROJECT_ROOT=$(git rev-parse --show-toplevel)` 自动检测项目根目录
 
 ## 其他 AI 助手安装
@@ -142,13 +142,13 @@ spec-workflow/
 
 ```bash
 # 全局安装（所有项目可用，推荐）
-bash ~/.agents/skills/spec-workflow/install.sh --global
+bash ~/.agents/skills/rdd-workflow/install.sh --global
 
 # 项目安装
-bash ~/.agents/skills/spec-workflow/install.sh /path/to/project
+bash ~/.agents/skills/rdd-workflow/install.sh /path/to/project
 
 # 或直接复制
-cp -r ~/.agents/skills/spec-workflow/skills /path/to/project/.opencode/skills/spec-workflow/
+cp -r ~/.agents/skills/rdd-workflow/skills /path/to/project/.opencode/skills/rdd-workflow/
 ```
 
 ## 前置条件
@@ -162,16 +162,16 @@ cp -r ~/.agents/skills/spec-workflow/skills /path/to/project/.opencode/skills/sp
 
 ### 实施计划生成器(v2.0 自包含)
 
-v2.0 重构后,实施计划生成器**完全自包含**于 spec-workflow,**无任何外部 skill 依赖**:
+v2.0 重构后,实施计划生成器**完全自包含**于 rdd-workflow,**无任何外部 skill 依赖**:
 
-- ✅ `spec-workflow/writing-plans` — 内置 TDD 5 步结构 plan 生成器(fork 自 superpowers/writing-plans,适配 OpenSpec change 上下文)
-- ✅ `execute` — 内置 plan 执行器,强制 TDD 5 步纪律(整合原 spec-workflow/executing-plans)
+- ✅ `rdd-workflow/writing-plans` — 内置 TDD 5 步结构 plan 生成器(fork 自 superpowers/writing-plans,适配 OpenSpec change 上下文)
+- ✅ `execute` — 内置 plan 执行器,强制 TDD 5 步纪律(整合原 rdd-workflow/executing-plans)
 
 **调用流程**(`guide-ship` Phase 1):
 
 ```bash
 cd "$WT_PATH"
-skill_use("spec-workflow/writing-plans")  # 直接调用内置 skill
+skill_use("rdd-workflow/writing-plans")  # 直接调用内置 skill
 # 生成 .rddf/plans/<CHANGE_NAME>.md
 # 含 TDD 5 步结构: Write failing test → Verify fail → Implement → Verify pass → Commit
 ```
@@ -179,7 +179,7 @@ skill_use("spec-workflow/writing-plans")  # 直接调用内置 skill
 **架构简化**:
 - **删除**: `prometheus-planning.md` (481 行间接层 + 检测链 + 路径桥接 + 混合 TDD)
     *(README 仅作为变更说明保留提及,代码本身已删除)*
-- **替换**: `spec-workflow/writing-plans.md` (~250 行,自包含)
+- **替换**: `rdd-workflow/writing-plans.md` (~250 行,自包含)
 - **零外部依赖**: 不需要 oh-my-opencode、不需要 superpowers 套件
     *(同上,变更说明保留提及)*
 - **零路径桥接**: 单一路径 `.rddf/plans/<name>.md`(执行契约)

@@ -45,7 +45,7 @@ TDD 顺序（每条任务都遵循）：
 ### Phase 1 — 基线验证
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 
 # Step 1.1.1: 捕获磁盘真相
 echo "skills on disk:" && ls skills/*.md | wc -l          # expected 13
@@ -68,7 +68,7 @@ bats tests/smoke.bats 2>&1 | tail -5
 ### Phase 2 — decision + package.json
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 
 # Step 2.1: 在 proposal.md 加 Decision Log（插入到 YAML frontmatter 后，`## Why` 前）
 # Manual edit with Edit tool: insert text below YAML block
@@ -143,7 +143,7 @@ git commit -m "feat(contracts): Decision 3 翻 A — publish feature + rddf-sess
 ### Phase 3 — narrative docs 同步
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 
 # === Task 3.1: AGENTS.md ===
 cat >> tests/integration/test_doc_contracts.bats <<'BATS_EOF'
@@ -243,7 +243,7 @@ git commit -m "feat(contracts): sync USAGE.md state-file table to production pat
 ### Phase 4 — ADR index + spec deltas
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 
 # === Task 4.1: ADR index ===
 cat > tests/integration/test_adr_index.bats <<'BATS_EOF'
@@ -389,7 +389,7 @@ git commit -m "feat(contracts): update general/spec.md to v2.0.1 + lock with pyt
 ### Phase 5 — 验证
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 
 # Step 5.1.1: pytest unit
 python3 -m pytest tests/unit/ -q --tb=short
@@ -425,7 +425,7 @@ bats tests/integration/test_adr_index.bats 2>&1 | tail -3  # expected: pass
 ### Phase 6 — 验收 + handoff
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 
 # Step 6.1: tick 所有 acceptance 项（把 - [ ] 替换为 - [x]）
 # 用 Edit tool 编辑 openspec/changes/sync-workflow-contracts/proposal.md
@@ -477,7 +477,7 @@ echo "=== git status ===" && git status --short
 After all phases complete and final commit lands:
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 openspec validate sync-workflow-contracts --strict
 git log --oneline -20
 git status --short

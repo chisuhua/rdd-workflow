@@ -1,6 +1,6 @@
 # Tests
 
-Bats-core test infrastructure for the spec-workflow skill pack.
+Bats-core test infrastructure for the rdd-workflow skill pack.
 
 ## Layout
 
@@ -76,7 +76,7 @@ metadata drift between `package.json`, `skills/<name>/SKILL.md`, and `smoke.bats
 | status           | `tests/integration/test_status_skill.bats`                 |
 | roadmap          | `tests/integration/test_roadmap_skill.bats`                |
 | deps             | `tests/integration/test_deps_skill.bats`                   |
-| spec-workflow/writing-plans | (locked by TDD discipline in `test_execute_skill.bats`) |
+| rdd-workflow/writing-plans | (locked by TDD discipline in `test_execute_skill.bats`) |
 | (cross-skill)    | `tests/integration/test_skill_metadata_consistency.bats`   |
 | (helper)         | `tests/_lib/test_skill.bats` (8 cases for `skill.bash`)    |
 

@@ -91,7 +91,7 @@ USAGE.md 已经把 Phase 2.5 Review(execute 后债务扫描)列为 ship 端核�
 - **破坏性变更**:无。所有变更都是文档/spec/测试,运行时零变更。
 - **API 变更**:无。
 - **外部依赖**:无新增。
-- **跨仓影响**:无。spec-workflow 是元仓,不影响 TaskRunner / UsrLinuxEmu。
+- **跨仓影响**:无。rdd-workflow 是元仓,不影响 TaskRunner / UsrLinuxEmu。
 - **运行时影响**:**零**。这是契约同步 change,不动 skill 状态机、不动 gate、不动 deps / iteration。
 
 ## Acceptance Criteria

@@ -1,4 +1,4 @@
-# spec-workflow v2.0 记忆系统指南
+# rdd-workflow v2.0 记忆系统指南
 
 > **版本**: 2.0.0  
 > **日期**: 2026-06-22  
@@ -22,7 +22,7 @@
 
 ### 什么是记忆系统？
 
-记忆系统（Memory System）是 spec-workflow v2.0 的**智能学习机制**，从历史执行中学习，提供：
+记忆系统（Memory System）是 rdd-workflow v2.0 的**智能学习机制**，从历史执行中学习，提供：
 
 1. **中断恢复**: 从中断点继续，不丢失进度
 2. **配置推荐**: 基于历史成功执行推荐配置
@@ -116,7 +116,7 @@ Loop 引擎启动时自动检测中断：
 
 ```bash
 # 查看中断的会话
-spec-workflow memory list-sessions --status interrupted
+rdd-workflow memory list-sessions --status interrupted
 
 # 输出:
 # Session ID                    Goal                      Interrupted
@@ -124,7 +124,7 @@ spec-workflow memory list-sessions --status interrupted
 # sess_20260621_003            refactor database          2026-06-21T15:30:00Z
 
 # 恢复特定会话
-spec-workflow memory resume sess_20260622_001
+rdd-workflow memory resume sess_20260622_001
 ```
 
 ---
@@ -329,7 +329,7 @@ def recommend_config(goal: str, memory: dict) -> dict:
 
 ```bash
 # 查看记忆摘要
-spec-workflow memory summary
+rdd-workflow memory summary
 
 # 输出:
 # 记忆系统状态:
@@ -347,7 +347,7 @@ spec-workflow memory summary
 #     失败模式: 3 条
 
 # 查看执行历史
-spec-workflow memory list-executions
+rdd-workflow memory list-executions
 
 # 输出:
 # 执行历史 (最近 10 条):
@@ -358,7 +358,7 @@ spec-workflow memory list-executions
 #   5. 2026-06-20T09:00:00Z - setup CI - SUCCESS (8 iterations)
 
 # 查看失败模式
-spec-workflow memory list-failure-patterns
+rdd-workflow memory list-failure-patterns
 
 # 输出:
 # 失败模式 (3 条):
@@ -376,7 +376,7 @@ spec-workflow memory list-failure-patterns
 
 ```bash
 # 归档过期记忆（默认 90 天）
-spec-workflow memory archive
+rdd-workflow memory archive
 
 # 输出:
 # 归档记忆:
@@ -387,20 +387,20 @@ spec-workflow memory archive
 #   当前记忆: 30 条执行记录, 2 条失败模式
 
 # 自定义归档时间
-spec-workflow memory archive --retention-days 60
+rdd-workflow memory archive --retention-days 60
 
 # 导出记忆
-spec-workflow memory export --output memory-export.json
+rdd-workflow memory export --output memory-export.json
 
 # 导入记忆
-spec-workflow memory import --input memory-export.json
+rdd-workflow memory import --input memory-export.json
 ```
 
 ### 清理记忆
 
 ```bash
 # 清理所有记忆（危险操作）
-spec-workflow memory clear --confirm
+rdd-workflow memory clear --confirm
 
 # 输出:
 # ⚠️ 警告: 此操作将删除所有记忆数据
@@ -563,7 +563,7 @@ spec-workflow memory clear --confirm
 crontab -e
 
 # 添加:
-# 0 2 * * 0 spec-workflow memory archive --retention-days 90
+# 0 2 * * 0 rdd-workflow memory archive --retention-days 90
 ```
 
 ---
@@ -572,10 +572,10 @@ crontab -e
 
 ```bash
 # 每月导出备份
-spec-workflow memory export --output memory-backup-$(date +%Y-%m).json
+rdd-workflow memory export --output memory-backup-$(date +%Y-%m).json
 
 # 存储到远程
-aws s3 cp memory-backup-$(date +%Y-%m).json s3://backups/spec-workflow/
+aws s3 cp memory-backup-$(date +%Y-%m).json s3://backups/rdd-workflow/
 ```
 
 ---
@@ -584,7 +584,7 @@ aws s3 cp memory-backup-$(date +%Y-%m).json s3://backups/spec-workflow/
 
 ```bash
 # 查看记忆质量报告
-spec-workflow memory quality-report
+rdd-workflow memory quality-report
 
 # 输出:
 # 记忆质量报告:
@@ -627,8 +627,8 @@ cat .rddf/state/state-vector.json | jq '.memory'
 cat .rddf/state/state-vector.json | jq '.memory.executions'
 
 # 4. 手动恢复
-spec-workflow memory list-sessions --status interrupted
-spec-workflow memory resume <session-id>
+rdd-workflow memory list-sessions --status interrupted
+rdd-workflow memory resume <session-id>
 ```
 
 ---
@@ -640,7 +640,7 @@ spec-workflow memory resume <session-id>
 **解决**:
 ```bash
 # 1. 查看推荐依据
-spec-workflow memory show-recommendations --goal "complete changes"
+rdd-workflow memory show-recommendations --goal "complete changes"
 
 # 输出:
 # 推荐依据:
@@ -673,13 +673,13 @@ spec-workflow memory show-recommendations --goal "complete changes"
 du -h .rddf/state/state-vector.json
 
 # 2. 归档过期记忆
-spec-workflow memory archive --retention-days 30
+rdd-workflow memory archive --retention-days 30
 
 # 3. 清理无效记录
-spec-workflow memory clean --invalid-only
+rdd-workflow memory clean --invalid-only
 
 # 4. 压缩记忆
-spec-workflow memory compact
+rdd-workflow memory compact
 ```
 
 ---

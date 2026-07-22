@@ -1,4 +1,4 @@
-# spec-workflow v2.0 API 参考文档
+# rdd-workflow v2.0 API 参考文档
 
 > **版本**: 2.0.0  
 > **日期**: 2026-06-22  
@@ -20,7 +20,7 @@
 
 ## state_vector.py
 
-状态向量模块，管理 spec-workflow 的单一真相源。
+状态向量模块，管理 rdd-workflow 的单一真相源。
 
 ### 类: `StateVector`
 
@@ -819,10 +819,10 @@ sv.update_field("goal", "ship v2.0")
 sv.update_field("loop_state.iteration", 1)
 
 # Persist atomically
-sv.save(".spec-workflow/state-vector.json")
+sv.save(".rdd-workflow/state-vector.json")
 
 # Load (returns default if file missing)
-sv = StateVector.load(".spec-workflow/state-vector.json")
+sv = StateVector.load(".rdd-workflow/state-vector.json")
 print(sv.get_field("goal"))  # "ship v2.0"
 print(sv.get_field("loop_state.iteration"))  # 1
 ```
@@ -838,7 +838,7 @@ print(sv.get_field("loop_state.iteration"))  # 1
 from skills._lib.event_log import EventLog
 from skills._lib.event_types import EventType, Severity
 
-log = EventLog(".spec-workflow/event-log.jsonl")
+log = EventLog(".rdd-workflow/event-log.jsonl")
 log.record(EventType.LOOP_STARTED, Severity.INFO, "loop started")
 
 # Query
@@ -861,8 +861,8 @@ print(report)  # {iterations_completed: 5, units_completed: 12, errors: 0, ...}
 from skills._lib.gate import GateMechanism, Check
 
 gate = GateMechanism(
-    state_path=".spec-workflow/state-vector.json",
-    event_log_path=".spec-workflow/event-log.jsonl",
+    state_path=".rdd-workflow/state-vector.json",
+    event_log_path=".rdd-workflow/event-log.jsonl",
 )
 gate.register(Check(
     name="my_check",
@@ -917,8 +917,8 @@ from skills._lib.state_vector import StateVector
 from skills._lib.event_log import EventLog
 
 engine = LoopEngine(
-    state=StateVector.load(".spec-workflow/state-vector.json"),
-    event_log=EventLog(".spec-workflow/event-log.jsonl"),
+    state=StateVector.load(".rdd-workflow/state-vector.json"),
+    event_log=EventLog(".rdd-workflow/event-log.jsonl"),
 )
 status = engine.run(goal_predicate="plan_side['active_change'] is None")
 ```
@@ -956,7 +956,7 @@ from skills._lib.detectors import (
 # detect_test_gaps, detect_stale_branches
 # Performance: all 8 in < 500ms
 
-# Custom plugin: drop a .py file in .spec-workflow/detectors/ subclassing Detector
+# Custom plugin: drop a .py file in .rdd-workflow/detectors/ subclassing Detector
 ```
 
 ### `skills/_lib/actions.py` — Actions

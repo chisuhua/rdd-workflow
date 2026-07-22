@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement the 5 advanced subsystems of spec-workflow v2.0 (Tribunal, Sanitizer, Memory, Session, Agents) with full TDD coverage so that `v2-advanced-features` can be archived.
+**Goal:** Implement the 5 advanced subsystems of rdd-workflow v2.0 (Tribunal, Sanitizer, Memory, Session, Agents) with full TDD coverage so that `v2-advanced-features` can be archived.
 
 **Architecture:** Each subsystem is a standalone Python module in `skills/_lib/` with a matching unit test in `tests/unit/`. All modules depend on the already-shipped v2-core-foundation (StateVector, EventLog, FileLock, ConfigParser) and v2-loop-engine (EventType, Severity, HumanNodeRegistry, actions). The Tribunal specifically implements the `MULTI_MODEL` verification mode that `human_nodes.py` currently raises `MultiModelUnavailableError` for.
 
@@ -188,7 +188,7 @@ class ExecutionRecord:
     duration_seconds: float
 
 class LoopMemory:
-    DEFAULT_PATH = ".spec-workflow/memory.jsonl"
+    DEFAULT_PATH = ".rdd-workflow/memory.jsonl"
     MAX_RECORDS = 10000
 
     def __init__(self, path: Optional[str] = None):

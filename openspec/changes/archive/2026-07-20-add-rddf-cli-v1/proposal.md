@@ -1,6 +1,6 @@
 ## Why
 
-spec-workflow v2.0 has 13 AI skills, all accessed via `skill_use("xxx")` in AI conversations.
+rdd-workflow v2.0 has 13 AI skills, all accessed via `skill_use("xxx")` in AI conversations.
 Users cannot check project state from a terminal without AI assistance. 
 
 We need a unified CLI (`python3 -m skills._lib.cli`) that aggregates all deterministic,

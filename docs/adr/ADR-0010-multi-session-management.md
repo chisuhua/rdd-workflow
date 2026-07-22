@@ -1,5 +1,8 @@
 # ADR-0010: 多会话管理与并行执行
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: ✅ 已采纳 + 已实施（v2.0 轻量 + v2.1 完整 + ADR-0017 rddf-session 用户层）
 > **日期**: 2026-06-22
 > **决策者**: sisyphus
@@ -8,7 +11,7 @@
 
 ## Context
 
-在 spec-workflow v2.0 实施过程中，用户提出了**多会话场景**需求：
+在 rdd-workflow v2.0 实施过程中，用户提出了**多会话场景**需求：
 
 1. **并行执行多个 changes**: 主会话创建子会话，并行处理不同的 changes
 2. **父子会话协作**: 主会话监控进度，子会话执行具体任务

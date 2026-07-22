@@ -1,9 +1,9 @@
-# spec-workflow 流程审计报告
+# rdd-workflow 流程审计报告
 
 | 字段 | 值 |
 |------|-----|
 | **审计日期** | 2026-06-05 |
-| **审计范围** | `/home/ubuntu/.agents/skills/spec-workflow` 全仓库 |
+| **审计范围** | `/home/ubuntu/.agents/skills/rdd-workflow` 全仓库 |
 | **审计者** | Sisyphus (MiniMax-M3) |
 | **审计模式** | 只读,基于"docs 已清空"的全新起点 |
 | **审计对象** | 9 个 skill 文件 + 元数据 + 安装/分发/状态文件 |
@@ -46,7 +46,7 @@
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │  Phase 0  INSTALL        全局安装(唯一入口)                              │
-│            ↓ 复制 skills/ → .opencode/skills/spec-workflow/skills/        │
+│            ↓ 复制 skills/ → .opencode/skills/rdd-workflow/skills/        │
 ├──────────────────────────────────────────────────────────────────────────┤
 │  Phase 0.5  guide        无状态推荐器(扫描后推荐下一步)                    │
 │            ↓ 推荐 guide-spec 或 guide-ship                              │
@@ -88,8 +88,8 @@
 ### 2.1 流程描述
 
 - 用户首次从全局安装,只有 `INSTALL` 技能可见
-- 执行 `skill_use("INSTALL")` 将子技能复制到项目目录 `.opencode/skills/spec-workflow/skills/`
-- 同步创建 `package.json` 和 `install-spec-workflow.sh`(给其他 AI 助手用)
+- 执行 `skill_use("INSTALL")` 将子技能复制到项目目录 `.opencode/skills/rdd-workflow/skills/`
+- 同步创建 `package.json` 和 `install-rdd-workflow.sh`(给其他 AI 助手用)
 
 ### 2.2 🔴 P0-1:openspec CLI 缺失时 `read` 阻塞 stdin
 
@@ -125,13 +125,13 @@ fi
 
 **证据**:
 
-- `INSTALL.md:84`: `PACKAGE_DIR=$(dirname "$(dirname "$(realpath "$0" 2>/dev/null || echo "$HOME/.agents/skills/spec-workflow")")")`
-- `install.sh:9`: `PACKAGE_DIR="${PACKAGE_DIR:-$HOME/.agents/skills/spec-workflow}"`
+- `INSTALL.md:84`: `PACKAGE_DIR=$(dirname "$(dirname "$(realpath "$0" 2>/dev/null || echo "$HOME/.agents/skills/rdd-workflow")")")`
+- `install.sh:9`: `PACKAGE_DIR="${PACKAGE_DIR:-$HOME/.agents/skills/rdd-workflow}"`
 - `install.sh:10`: `TARGET_DIR="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"`
 
 **问题**:两份"安装"文档用不同的路径解析策略;`INSTALL.md` 依赖脚本自身位置(`$0`),`install.sh` 依赖环境变量。两者不互斥但容易让用户混淆。
 
-**修复建议**:统一为"环境变量优先,fallback 到 `~/.agents/skills/spec-workflow`,最后用 `realpath $0`"。
+**修复建议**:统一为"环境变量优先,fallback 到 `~/.agents/skills/rdd-workflow`,最后用 `realpath $0`"。
 
 ### 2.4 🟡 P1-2:环境检查遗漏 `python3` 和 `jq`
 
@@ -1050,11 +1050,11 @@ fi
 
 ### 17.4 关键文件位置速查
 
-- **9 个 skill**:`/home/ubuntu/.agents/skills/spec-workflow/skills/`
-- **元数据**:`/home/ubuntu/.agents/skills/spec-workflow/{README.md, USAGE.md, package.json, install.sh}`
-- **AI 编程助手配置**:`/home/ubuntu/.agents/skills/spec-workflow/.claude-plugin/`
-- **状态文档**:`/home/ubuntu/.agents/skills/spec-workflow/.rddf/state/index.md`
-- **审计文档**:`/home/ubuntu/.agents/skills/spec-workflow/docs/audit/`(本文件位置)
+- **9 个 skill**:`/home/ubuntu/.agents/skills/rdd-workflow/skills/`
+- **元数据**:`/home/ubuntu/.agents/skills/rdd-workflow/{README.md, USAGE.md, package.json, install.sh}`
+- **AI 编程助手配置**:`/home/ubuntu/.agents/skills/rdd-workflow/.claude-plugin/`
+- **状态文档**:`/home/ubuntu/.agents/skills/rdd-workflow/.rddf/state/index.md`
+- **审计文档**:`/home/ubuntu/.agents/skills/rdd-workflow/docs/audit/`(本文件位置)
 
 ---
 

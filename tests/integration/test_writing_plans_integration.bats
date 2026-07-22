@@ -2,10 +2,10 @@
 #
 # test_writing_plans_integration.bats — v2.0 自包含集成测试
 # 覆盖范围:
-#   - spec-workflow/writing-plans 存在 + 元数据 + TDD 5 步结构
+#   - rdd-workflow/writing-plans 存在 + 元数据 + TDD 5 步结构
 #   - execute.md 整合 TDD 5 步纪律
 #   - prometheus-planning.md 已删除
-#   - guide-ship.md 直接调用 spec-workflow/writing-plans (无中间检测层)
+#   - guide-ship.md 直接调用 rdd-workflow/writing-plans (无中间检测层)
 #   - package.json 不再依赖 oh-my-opencode / superpowers / prometheus-start-work
 #   - README.md 反映 v2.0 自包含架构
 #   - 执行契约保留:.rddf/plans/<name>.md
@@ -21,21 +21,21 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 
 # === 1. 新内置 skills 存在性 ===
 
-@test "spec-workflow/writing-plans.md exists in skills/" {
-    assert_file_exists "$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans/SKILL.md"
+@test "rdd-workflow/writing-plans.md exists in skills/" {
+    assert_file_exists "$REPO_ROOT_ORIGIN/skills/rdd-workflow-writing-plans/SKILL.md"
 }
 
-@test "spec-workflow/writing-plans.md has valid frontmatter (v2.0 self-contained)" {
-    local f="$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans/SKILL.md"
+@test "rdd-workflow/writing-plans.md has valid frontmatter (v2.0 self-contained)" {
+    local f="$REPO_ROOT_ORIGIN/skills/rdd-workflow-writing-plans/SKILL.md"
     head -1 "$f" | grep -q '^---$'
-    grep -qE '^name:[[:space:]]*spec-workflow/writing-plans' "$f"
+    grep -qE '^name:[[:space:]]*rdd-workflow/writing-plans' "$f"
     grep -qE '^description:' "$f"
     grep -qE '^[[:space:]]+version:[[:space:]]*"[0-9]+\.[0-9]+"' "$f"
     grep -qE 'no external|无外部' "$f"
 }
 
-@test "spec-workflow/writing-plans.md enforces TDD 5-step structure" {
-    local f="$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans/SKILL.md"
+@test "rdd-workflow/writing-plans.md enforces TDD 5-step structure" {
+    local f="$REPO_ROOT_ORIGIN/skills/rdd-workflow-writing-plans/SKILL.md"
     grep -q 'Write the failing test' "$f"
     grep -q 'Run test to verify it fails' "$f"
     grep -q 'Write minimal implementation' "$f"
@@ -43,13 +43,13 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     grep -q 'Commit' "$f"
 }
 
-@test "spec-workflow/writing-plans.md contract: .rddf/plans/<name>.md output path" {
-    local f="$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans/SKILL.md"
+@test "rdd-workflow/writing-plans.md contract: .rddf/plans/<name>.md output path" {
+    local f="$REPO_ROOT_ORIGIN/skills/rdd-workflow-writing-plans/SKILL.md"
     grep -qE '\.rddf/plans/<CHANGE_NAME>\.md' "$f"
 }
 
-@test "spec-workflow/writing-plans.md prohibits placeholders (TDD rigor)" {
-    local f="$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans/SKILL.md"
+@test "rdd-workflow/writing-plans.md prohibits placeholders (TDD rigor)" {
+    local f="$REPO_ROOT_ORIGIN/skills/rdd-workflow-writing-plans/SKILL.md"
     grep -q '禁止的占位符' "$f"
     grep -q 'TBD' "$f"
     grep -q 'TODO' "$f"
@@ -88,9 +88,9 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 
 # === 3. guide-ship.md 直接调用 (无中间层) ===
 
-@test "guide-ship.md directly calls skill_use('spec-workflow/writing-plans')" {
+@test "guide-ship.md directly calls skill_use('rdd-workflow/writing-plans')" {
     local f="$REPO_ROOT_ORIGIN/skills/guide-ship/SKILL.md"
-    grep -qE 'skill_use\("spec-workflow/writing-plans"\)' "$f"
+    grep -qE 'skill_use\("rdd-workflow/writing-plans"\)' "$f"
 }
 
 @test "guide-ship.md no longer has detection chain (no PROMETHEUS_MODE builtin/external/none)" {
@@ -127,9 +127,9 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     ! grep -qE '"prometheus-planning"' "$f"
 }
 
-@test "package.json lists spec-workflow-writing-plans in skills array" {
+@test "package.json lists rdd-workflow-writing-plans in skills array" {
     local f="$REPO_ROOT_ORIGIN/package.json"
-    grep -qE '"spec-workflow-writing-plans"' "$f"
+    grep -qE '"rdd-workflow-writing-plans"' "$f"
 }
 
 @test "package.json version bumped to 2.0.0" {
@@ -163,9 +163,9 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     ! grep -qE 'superpowers/writing-plans.*回退|superpowers/writing-plans.*fallback' "$f"
 }
 
-@test "README.md mentions spec-workflow/writing-plans (v2.0 self-contained)" {
+@test "README.md mentions rdd-workflow/writing-plans (v2.0 self-contained)" {
     local f="$REPO_ROOT_ORIGIN/README.md"
-    grep -qE 'spec-workflow/writing-plans' "$f"
+    grep -qE 'rdd-workflow/writing-plans' "$f"
 }
 
 @test "README.md describes v2.0 self-contained architecture (no external deps)" {
@@ -176,11 +176,11 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 
 # === 6. INSTALL.md 注册新 skills ===
 
-@test "INSTALL.md registers 13 skills including spec-workflow-writing-plans" {
+@test "INSTALL.md registers 13 skills including rdd-workflow-writing-plans" {
     local f="$REPO_ROOT_ORIGIN/skills/INSTALL.md"
     grep -qE '全部 13 个子技能' "$f"
-    grep -qE 'spec-workflow-writing-plans' "$f"
-    ! grep -qE 'spec-workflow-executing-plans' "$f"
+    grep -qE 'rdd-workflow-writing-plans' "$f"
+    ! grep -qE 'rdd-workflow-executing-plans' "$f"
     ! grep -qE 'prometheus-planning' "$f"
 }
 
@@ -212,9 +212,9 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     }
 }
 
-@test "actions.py now references spec-workflow/writing-plans (v2.0 self-contained)" {
+@test "actions.py now references rdd-workflow/writing-plans (v2.0 self-contained)" {
     local f="$REPO_ROOT_ORIGIN/skills/_lib/loop/actions.py"
-    grep -q 'spec-workflow/writing-plans' "$f"
+    grep -q 'rdd-workflow/writing-plans' "$f"
 }
 
 # === 8. 现有 superpowers plan 文件向后兼容 ===
@@ -235,9 +235,9 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 
 # === 9. 总行数缩减 (代码简化指标) ===
 
-@test "v2.0 spec-workflow/writing-plans is shorter than old prometheus-planning (481)" {
+@test "v2.0 rdd-workflow/writing-plans is shorter than old prometheus-planning (481)" {
     local size
-    size=$(wc -l < "$REPO_ROOT_ORIGIN/skills/spec-workflow-writing-plans/SKILL.md")
+    size=$(wc -l < "$REPO_ROOT_ORIGIN/skills/rdd-workflow-writing-plans/SKILL.md")
     [[ "$size" -lt 481 ]] || {
         echo "v2.0 writing-plans ($size lines) >= v1.3 prometheus-planning (481)"
         return 1

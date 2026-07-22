@@ -1,7 +1,7 @@
 """Dashboard package - data collection and rendering for the ``rddf dashboard`` CLI.
 
 This package is a pure library consumed by ``skills._lib.cli.dashboard_cmd``
-(and any other caller that wants a unified view of spec-workflow project
+(and any other caller that wants a unified view of rdd-workflow project
 state). It is NOT standalone executable - there is no ``__main__.py`` here
 by design (see ``docs/superpowers/specs/2026-07-20-dashboard-design.md``
 §4.3: "dashboard/ is a pure library").

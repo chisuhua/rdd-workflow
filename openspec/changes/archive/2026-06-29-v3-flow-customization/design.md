@@ -1,13 +1,13 @@
 ## Context
 
-ADR-0012 (625 lines) defines the flow customization layer on top of ADR-0011's step pipeline. Users customize phase templates via `.spec-workflow/flow.yaml` using incremental override patterns (insert_after, replace, insert_before). No customization = default behavior unchanged.
+ADR-0012 (625 lines) defines the flow customization layer on top of ADR-0011's step pipeline. Users customize phase templates via `.rdd-workflow/flow.yaml` using incremental override patterns (insert_after, replace, insert_before). No customization = default behavior unchanged.
 
 ## Goals / Non-Goals
 
 **Goals:**
 - `FlowCustomizer` — merges user `flow.yaml` customizations with default phase templates
 - `TriggerEngine` — evaluates trigger conditions (restricted syntax, no eval)
-- `.spec-workflow/flow.yaml` — user configuration file
+- `.rdd-workflow/flow.yaml` — user configuration file
 - Backward compatibility — no flow.yaml = identity merge
 - Full test coverage
 
@@ -28,7 +28,7 @@ Only `changes.any(predicate)` and `step.<id>.status == value`. No arbitrary eval
 
 ### Decision 3: flow.yaml is at project root, user-managed
 
-`.spec-workflow/flow.yaml` is gitignored (like other .zcf files). Users create it manually. Missing file = default behavior.
+`.rdd-workflow/flow.yaml` is gitignored (like other .zcf files). Users create it manually. Missing file = default behavior.
 
 ## Architecture
 

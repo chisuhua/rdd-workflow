@@ -3,7 +3,7 @@
 ### Requirement: state-management-state-vector
 The system SHALL provide a unified state vector as the single source of truth for workflow state.
 
-The state vector SHALL be stored as a JSON file at `.spec-workflow/state-vector.json` and SHALL contain fields: `goal`, `arch_side`, `plan_side`, `ship_side`, `loop_state`, `memory`, `metadata`.
+The state vector SHALL be stored as a JSON file at `.rdd-workflow/state-vector.json` and SHALL contain fields: `goal`, `arch_side`, `plan_side`, `ship_side`, `loop_state`, `memory`, `metadata`.
 
 The `plan_side` field SHALL include a `planned_changes` array tracking skeleton changes.
 

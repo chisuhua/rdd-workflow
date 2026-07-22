@@ -72,7 +72,7 @@ Untracked files:
 - **破坏性变更**: 无。失败时仅 opt-out (env var) 或写日志。
 - **API 变更**: 无。helper 是内部 bash 函数,不暴露 skill 接口。
 - **外部依赖**: 无新增。纯 git + bash。
-- **跨仓影响**: 无。spec-workflow meta-repo only。
+- **跨仓影响**: 无。rdd-workflow meta-repo only。
 
 ## Acceptance Criteria
 

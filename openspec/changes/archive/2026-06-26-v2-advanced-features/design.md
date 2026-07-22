@@ -1,6 +1,6 @@
 ## Context
 
-The advanced features in v2.0 (ADR-0008 Tribunal, ADR-0006 Memory, ADR-0010 Sessions) transform spec-workflow from a static workflow tool into a learning, self-correcting system. The Tribunal provides quality assurance through multi-agent cross-validation. The Memory system enables resumption of interrupted work and configuration optimization. The Session manager coordinates multiple related workflow runs. These features all consume the loop engine, state vector, and event log from the previous changes.
+The advanced features in v2.0 (ADR-0008 Tribunal, ADR-0006 Memory, ADR-0010 Sessions) transform rdd-workflow from a static workflow tool into a learning, self-correcting system. The Tribunal provides quality assurance through multi-agent cross-validation. The Memory system enables resumption of interrupted work and configuration optimization. The Session manager coordinates multiple related workflow runs. These features all consume the loop engine, state vector, and event log from the previous changes.
 
 The Tribunal design follows a weighted voting model: `final_score = exec_score * 0.4 + review_score * 0.6`. Pass condition: `final_score >= 0.8 AND both pass AND conflict < 0.4`. The heavier weight on review reflects that the Reviewer agent has more domain context and is more conservative.
 

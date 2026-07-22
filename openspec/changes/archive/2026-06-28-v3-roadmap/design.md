@@ -5,7 +5,7 @@ The v2.0.0-beta release completed the core v2.0 vision: state vector, event log,
 - **ADR-0009 (Scheduled Triggers)**: Cron-like event triggers for the loop engine. Draft status — lowest maturity.
 - **ADR-0010 (Full Multi-Session)**: v2.0 ships `lightweight session.py`. The full ADR describes parent-child session trees, parallel execution, and dependency scheduling. High value but significant effort.
 - **ADR-0011 (Step Pipeline)**: Phase-template-driven step execution with trigger conditions. Replaces the current monolithic phase approach with composable steps.
-- **ADR-0012 (Flow Customization)**: User-customizable flow via `.spec-workflow/flow.yaml`, custom skill registration, conditional step skipping.
+- **ADR-0012 (Flow Customization)**: User-customizable flow via `.rdd-workflow/flow.yaml`, custom skill registration, conditional step skipping.
 
 All 4 are design-complete but need implementation planning, prioritization, and resource allocation.
 

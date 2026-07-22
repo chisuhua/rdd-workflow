@@ -1,4 +1,4 @@
-"""Unified state vector — single source of truth for spec-workflow v2.
+"""Unified state vector — single source of truth for rdd-workflow v2.
 
 Stored as JSON at `.rddf/state/state-vector.json`. All writes are atomic
 (write-temp-then-rename) and protected by a `FileLock` (10s timeout). All

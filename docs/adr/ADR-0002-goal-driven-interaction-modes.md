@@ -1,5 +1,8 @@
 # ADR-0002: 目标驱动接口与交互模式可配置化
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 已采纳
 > **日期**: 2026-06-22
 > **决策者**: sisyphus
@@ -7,7 +10,7 @@
 
 ## Context
 
-spec-workflow v1.x 采用**菜单驱动**的用户交互模式：用户在每个 phase 面对数字菜单 (1/2/3/i)，通过选择菜单项推进工作流。这种模式在 v1.0-v1.1 的审计中暴露出三类问题：
+rdd-workflow v1.x 采用**菜单驱动**的用户交互模式：用户在每个 phase 面对数字菜单 (1/2/3/i)，通过选择菜单项推进工作流。这种模式在 v1.0-v1.1 的审计中暴露出三类问题：
 
 1. **Human-in-Loop 缺失灵活性**: 菜单是固定的，用户无法跳过不需要的骤或自定义关键决策点
 2. **自动化程度低**: 即使用户希望全自动执行（如 CI/CD 场景），仍需手动选择菜单项
@@ -163,7 +166,7 @@ skill_use("loop", {
 同时支持 JSON 和 YAML 格式。`loop.yaml` 是人类可读的循环规范，可纳入版本控制：
 
 ```yaml
-# .spec-workflow/loops/complete-all-changes.yaml
+# .rdd-workflow/loops/complete-all-changes.yaml
 version: "2.0"
 name: "complete-all-changes"
 description: "自动完成所有待处理 changes"
@@ -194,7 +197,7 @@ interaction:
     - "ship.archive_confirm"
 ```
 
-**存储位置**: `.spec-workflow/loops/<name>.yaml`
+**存储位置**: `.rdd-workflow/loops/<name>.yaml`
 - ✅ 集中管理，支持多个 loop 配置
 - ✅ 可纳入版本控制，团队共享最佳实践
 - ✅ 提供 AI 辅助生成，降低使用门槛
@@ -204,9 +207,9 @@ interaction:
 | 优先级 | 配置来源 | 示例 | 适用场景 |
 |--------|---------|------|---------|
 | 1 (最高) | 命令行参数 | `skill_use("loop", {goal: "..."})` | 临时覆盖 |
-| 2 | loop.yaml | `.spec-workflow/loops/complete-all-changes.yaml` | 项目级便携规范 |
+| 2 | loop.yaml | `.rdd-workflow/loops/complete-all-changes.yaml` | 项目级便携规范 |
 | 3 | .rddf.json | `/path/to/project/.rddf.json` | 项目级配置 |
-| 4 | 用户级配置 | `~/.spec-workflow/config.json` | 用户全局默认 |
+| 4 | 用户级配置 | `~/.rdd-workflow/config.json` | 用户全局默认 |
 | 5 (最低) | 内置默认值 | Loop 引擎硬编码 | 无配置时回退 |
 
 ```json
@@ -282,9 +285,9 @@ interaction:
 ### 负面 / 风险
 
 - **配置复杂度**: 新增配置文件，用户需要学习 `.rddf.json` 格式
-  - **缓解**: 提供 `spec-workflow init` 命令生成默认配置
+  - **缓解**: 提供 `rdd-workflow init` 命令生成默认配置
 - **模式切换成本**: 在不同模式间切换可能需要重新理解工作流
-  - **缓解**: 提供 `spec-workflow status` 显示当前模式和可用操作
+  - **缓解**: 提供 `rdd-workflow status` 显示当前模式和可用操作
 - **测试矩阵扩大**: 需要测试 3 种模式 × N 个 phase 的组合
   - **缓解**: 优先测试 hybrid 模式（推荐默认），其他模式用集成测试覆盖
 

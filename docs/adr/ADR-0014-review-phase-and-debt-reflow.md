@@ -1,12 +1,15 @@
 # ADR-0014: Add execute-review phase and debt-reflow mechanism to three-phase workflow
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 待定
 > **日期**: 2026-07-08
 > **决策者**: sisyphus
 
 ## Context
 
-spec-workflow v2.0 三阶段架构（ADR-0003）定义了 `arch → plan → ship` 的严格前向流转。但在生产使用中发现两个结构性缺口：
+rdd-workflow v2.0 三阶段架构（ADR-0003）定义了 `arch → plan → ship` 的严格前向流转。但在生产使用中发现两个结构性缺口：
 
 ### 缺口 1：execute 后产生的债务无回流路径
 

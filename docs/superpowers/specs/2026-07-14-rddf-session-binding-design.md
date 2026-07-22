@@ -11,7 +11,7 @@
 
 ## 1. Background
 
-`spec-workflow` v2.0 ships ADR-0017 (rddf-session), which provides
+`rdd-workflow` v2.0 ships ADR-0017 (rddf-session), which provides
 cross-OpenCode-session workflow recovery via 5 subcommands:
 `list / show / resume / abandon / archive-history`. The infrastructure
 to **bind** an OpenCode session to an rddf-session already exists —

@@ -62,7 +62,7 @@ $ time source scan-state.sh && scan_state .
 - **Breaking changes**: none — the function's contract (warn if workflow-state.md exists, do nothing otherwise) is preserved; only the missing termination is added.
 - **API changes**: none.
 - **External dependencies**: none.
-- **Cross-repo impact**: none. spec-workflow meta-repo only.
+- **Cross-repo impact**: none. rdd-workflow meta-repo only.
 
 ## Acceptance Criteria
 

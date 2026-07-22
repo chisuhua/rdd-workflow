@@ -1,6 +1,6 @@
 """``rddf init [target]`` subcommand handler.
 
-Installs the spec-workflow distribution to ``<target>/.opencode/skills/spec-workflow/``.
+Installs the rdd-workflow distribution to ``<target>/.opencode/skills/rdd-workflow/``.
 Default target is the current project (``RDDF_PROJECT_ROOT``).
 
 Layout copied (relative to source project root):
@@ -49,7 +49,7 @@ def cmd_init(args: list[str]) -> int:
 
     project_root = Path(os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd())
     target_str = args[0] if args else str(project_root)
-    target = Path(target_str) / ".opencode" / "skills" / "spec-workflow"
+    target = Path(target_str) / ".opencode" / "skills" / "rdd-workflow"
 
     # Verify source layout exists.
     missing = [s for s in _INSTALL_SOURCES if not (project_root / s).exists()]
@@ -102,7 +102,7 @@ def cmd_init(args: list[str]) -> int:
         if (target / "_lib").is_dir()
         else 0
     )
-    print("📦 安装 spec-workflow 到项目")
+    print("📦 安装 rdd-workflow 到项目")
     print(f"   目标: {target}")
     print(f"   技能文件: {skills_md_count} 个")
     print(f"   工具库:   _lib ({lib_count} 文件)")
@@ -114,7 +114,7 @@ def cmd_init(args: list[str]) -> int:
 def _print_help() -> None:
     print("usage: rddf init [target]")
     print()
-    print("Install spec-workflow to <target>/.opencode/skills/spec-workflow/.")
+    print("Install rdd-workflow to <target>/.opencode/skills/rdd-workflow/.")
     print("Default target is RDDF_PROJECT_ROOT (the current project).")
 
 

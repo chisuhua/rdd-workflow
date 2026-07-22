@@ -4,7 +4,7 @@
 - USAGE.md §3 描述测试驱动开发
 - 9 个 skill 全部无 bats 单元测试(高风险回归)
 
-**当前状态**: spec-workflow 项目当前阶段,需要为后续实施奠定基础。
+**当前状态**: rdd-workflow 项目当前阶段,需要为后续实施奠定基础。
 
 **约束**:
 - MUST 使用 bats-core 1.10+

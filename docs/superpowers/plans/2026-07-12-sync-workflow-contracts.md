@@ -62,7 +62,7 @@ Reconcile direction: L4 → L3 → L2 → L1. L1 is **never** modified to satisf
 - [ ] **Step 1: Snapshot current disk truth**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 
 echo "=== skills on disk ===" && ls skills/*.md | wc -l
 echo "=== package.json skills count ===" && python3 -c "import json; print(len(json.load(open('package.json'))['skills']))"
@@ -81,7 +81,7 @@ Notes:
 - [ ] **Step 2: Snapshot narrative drift fields**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 
 echo "=== USAGE.md ship phase count ===" && grep -cE "Phase 1\.5" USAGE.md
 echo "=== USAGE.md dotted arch-handoff ===" && grep -cE '\.rddf/state/\.arch-handoff\.json' USAGE.md
@@ -106,7 +106,7 @@ If any expected line is absent, capture the diff but do not block — the seven 
 - [ ] **Step 3: Run pre-existing test suite for the baseline green state**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/ -q --tb=short
 bats tests/smoke.bats
 ```
@@ -144,7 +144,7 @@ Append the following block immediately after the YAML frontmatter of `proposal.m
 - [ ] **Step 2: Verify the frontmatter still parses**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 openspec validate sync-workflow-contracts --strict
 ```
 
@@ -153,7 +153,7 @@ Expected: `Change 'sync-workflow-contracts' is valid`.
 - [ ] **Step 3: Commit the change draft update (only this PR's PROPOSED change draft)**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add openspec/changes/sync-workflow-contracts/proposal.md
 git commit -m "chore(plan): record decision log for sync-workflow-contracts"
 ```
@@ -196,7 +196,7 @@ EOF
 - [ ] **Step 2: Run the failing test**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 ```
 
@@ -204,10 +204,10 @@ Expected: 1 test, **failing** (the test exits non-zero; the `_comment` field doe
 
 - [ ] **Step 3: Add the `_comment` field to `package.json`**
 
-Edit `package.json` to add `"_comment"` immediately after `"name": "spec-workflow"`, *before* `"version"`. Use `python3` for safe JSON edit:
+Edit `package.json` to add `"_comment"` immediately after `"name": "rdd-workflow"`, *before* `"version"`. Use `python3` for safe JSON edit:
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 - <<'PY'
 import json, sys
 from pathlib import Path
@@ -235,7 +235,7 @@ Expected: prints the comment string and exits 0.
 - [ ] **Step 4: Run the test again**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 ```
 
@@ -244,7 +244,7 @@ Expected: 1 test, **passing**.
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add package.json tests/integration/test_doc_contracts.bats
 git commit -m "feat(contracts): annotate package.json src-only skills + first anti-drift test"
 ```
@@ -278,7 +278,7 @@ EOF
 - [ ] **Step 2: Confirm the test is red**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 ```
 
@@ -297,7 +297,7 @@ Use Edit on the line that currently states the `12 个 .md` figure inside the `s
 - [ ] **Step 4: Run the test**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 ```
 
@@ -328,7 +328,7 @@ EOF
 Run:
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 ```
 
@@ -353,7 +353,7 @@ Use `ls openspec/specs/` to confirm 25 directories before editing.
 - [ ] **Step 7: Re-run the test**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 ```
 
@@ -362,7 +362,7 @@ Expected: all tests pass.
 - [ ] **Step 8: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add AGENTS.md tests/integration/test_doc_contracts.bats
 git commit -m "feat(contracts): sync AGENTS.md skill + ADR counts"
 ```
@@ -393,7 +393,7 @@ EOF
 - [ ] **Step 2: Run; confirm red**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 ```
 
@@ -407,7 +407,7 @@ Append (verbatim) at the end of `skills/INSTALL.md`:
 
 ## npm test vs pytest
 
-> spec-workflow 的 CI 陷阱：`npm test` 只跑 `bats tests/`，**不**跑 `pytest`。
+> rdd-workflow 的 CI 陷阱：`npm test` 只跑 `bats tests/`，**不**跑 `pytest`。
 > 任何 Python 代码改动后必须显式执行 `pytest tests/` 或 `pytest tests/unit/`。
 > 反漂移测试 `tests/integration/test_doc_contracts.bats` 会断言本约束不被违反。
 ```
@@ -415,7 +415,7 @@ Append (verbatim) at the end of `skills/INSTALL.md`:
 - [ ] **Step 4: Re-run**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 ```
 
@@ -424,7 +424,7 @@ Expected: all tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add skills/INSTALL.md tests/integration/test_doc_contracts.bats
 git commit -m "feat(contracts): sync INSTALL.md description + add npm-vs-pytest block"
 ```
@@ -453,7 +453,7 @@ EOF
 - [ ] **Step 2: Run; confirm red**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 ```
 
@@ -477,7 +477,7 @@ Replace the existing `skills/` directory-tree block in `README.md` so it lists e
     ├── roadmap.md             # 子技能(被 guide-arch 调用)
     ├── deps.md                # 子技能(被 guide-plan 调用)
     ├── status.md              # 子技能(被 guide-ship 调用或独立使用)
-    ├── spec-workflow-writing-plans.md  # 实施计划生成器 (TDD 5 步, v2.0 自包含)
+    ├── rdd-workflow-writing-plans.md  # 实施计划生成器 (TDD 5 步, v2.0 自包含)
     ├── loop_engine.py         # v2.0 Loop 引擎入口
     └── _lib/                  # v2.0 共享辅助（state / worktree / archive / deps / iteration 等）
 ```
@@ -487,7 +487,7 @@ Use Edit with the existing tree as `oldString` and the above as `newString`. The
 - [ ] **Step 4: Re-run**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 ```
 
@@ -496,7 +496,7 @@ Expected: all tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add README.md tests/integration/test_doc_contracts.bats
 git commit -m "feat(contracts): sync README.md directory tree to disk"
 ```
@@ -527,7 +527,7 @@ EOF
 - [ ] **Step 2: Run; confirm red**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 ```
 
@@ -544,7 +544,7 @@ Add (immediately above the existing first paragraph `> 基于 guide 推荐器 ..
 - [ ] **Step 4: Re-run**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 ```
 
@@ -586,7 +586,7 @@ EOF
 - [ ] **Step 6: Run; confirm green if USAGE.md is already on v2.0.1**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 ```
 
@@ -613,7 +613,7 @@ Note: `roadmap-state.json` line intentionally keeps BOTH the dotted and undotted
 - [ ] **Step 8: Re-run**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 ```
 
@@ -622,7 +622,7 @@ Expected: all tests pass.
 - [ ] **Step 9: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add USAGE.md tests/integration/test_doc_contracts.bats
 git commit -m "feat(contracts): sync USAGE.md state-file table to production paths"
 ```
@@ -696,7 +696,7 @@ EOF
 - [ ] **Step 2: Run; expect failures**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_adr_index.bats
 ```
 
@@ -730,7 +730,7 @@ After extending, the total number of table rows for the v2.0 status block SHALL 
 - [ ] **Step 5: Re-run**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_adr_index.bats
 ```
 
@@ -739,7 +739,7 @@ Expected: all 4 tests pass.
 - [ ] **Step 6: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add docs/adr/README.md tests/integration/test_adr_index.bats
 git commit -m "feat(contracts): extend ADR index status table to 0001-0019 + flag ADR-0013 dup"
 ```
@@ -870,7 +870,7 @@ EOF
 - [ ] **Step 2: Run; expect a few failing tests**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_doc_contracts.py -v
 ```
 
@@ -923,7 +923,7 @@ Apply edits to the **base** general spec file (not the change copy) so the test 
 - [ ] **Step 4: Re-run**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_doc_contracts.py -v
 ```
 
@@ -932,7 +932,7 @@ Expected: all tests pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add openspec/specs/general/spec.md tests/unit/test_doc_contracts.py
 git commit -m "feat(contracts): update general/spec.md to v2.0.1 + lock with python tests"
 ```
@@ -948,7 +948,7 @@ The change's `openspec/changes/sync-workflow-contracts/specs/doc-truth-sync/spec
 The base `openspec/specs/doc-truth-sync/spec.md` MUST NOT be edited by this plan. Verify the guard by checking git status at the end of this plan:
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 # Base spec must not appear in this change's working tree diff
 ! git status --short -- openspec/specs/doc-truth-sync/spec.md
 ```
@@ -958,7 +958,7 @@ Expected: exit 0 (`!` flips git-status-exit-1 to 0 when the file has no diff).
 If the guard fails (exit non-zero, meaning the base spec was edited), revert the file with:
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git checkout -- openspec/specs/doc-truth-sync/spec.md
 ```
 
@@ -967,7 +967,7 @@ git checkout -- openspec/specs/doc-truth-sync/spec.md
 - [ ] **Step 2: Run validation to confirm**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 openspec validate sync-workflow-contracts --strict
 ```
 
@@ -982,7 +982,7 @@ Expected: `Change 'sync-workflow-contracts' is valid`.
 - [ ] **Step 1: pytest unit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/ -q --tb=short
 ```
 
@@ -991,7 +991,7 @@ Expected: exit 0, all unit tests pass (≥ 30 files including `test_doc_contract
 - [ ] **Step 2: pytest integration**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/integration/ -q --tb=short
 ```
 
@@ -1000,7 +1000,7 @@ Expected: exit 0, all Python integration tests pass.
 - [ ] **Step 3: bats all**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/
 ```
 
@@ -1009,7 +1009,7 @@ Expected: exit 0, all bats tests pass (smoke + static + git-worktree + adr-index
 - [ ] **Step 4: openspec validate**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 openspec validate sync-workflow-contracts --strict
 openspec validate
 ```
@@ -1019,7 +1019,7 @@ Expected: both exit 0; "Change 'sync-workflow-contracts' is valid".
 - [ ] **Step 5: CI 质量门控**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 ! grep -rn 'assert.*or True\|assert True' tests/
 ```
 
@@ -1030,7 +1030,7 @@ Expected: exit 0 (`!` inverts: zero matches means `grep` returns 1, `!` flips to
 - [ ] **Step 1: Provoke a phase-count drift and confirm anti-drift test catches it**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 cp USAGE.md /tmp/USAGE.md.bak
 sed -i 's/Phase 1\.5/Phase 1\.6/' USAGE.md
 bats tests/integration/test_doc_contracts.bats 2>&1 | tail -10
@@ -1045,7 +1045,7 @@ Expected: the first `bats` run exits non-zero AND stderr mentions `Phase` mismat
 - [ ] **Step 2: Provoke an ADR index drift and confirm `test_adr_index.bats` catches it**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 cp docs/adr/README.md /tmp/README.md.bak
 sed -i 's/ADR-0017/ADR-0017-DUMMY/' docs/adr/README.md
 bats tests/integration/test_adr_index.bats 2>&1 | tail -10
@@ -1070,7 +1070,7 @@ Edit `openspec/changes/sync-workflow-contracts/proposal.md` and replace every `-
 Verify:
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 grep -c "^- \[ \]" openspec/changes/sync-workflow-contracts/proposal.md || true
 ```
 
@@ -1079,7 +1079,7 @@ Expected: zero matches in the proposal's `## Acceptance Criteria` section.
 - [ ] **Step 2: Commit the acceptance tick**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add openspec/changes/sync-workflow-contracts/proposal.md
 git commit -m "chore(contracts): mark acceptance criteria complete"
 ```
@@ -1089,7 +1089,7 @@ git commit -m "chore(contracts): mark acceptance criteria complete"
 - [ ] **Step 1: Run the unified verification block**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 
 echo "=== openspec validate ==="
 openspec validate sync-workflow-contracts --strict
@@ -1142,7 +1142,7 @@ These are explicitly **NOT** part of this plan; treat as future-change prep:
 When all tasks complete and final commit lands:
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 openspec validate sync-workflow-contracts --strict
 git log --oneline -20
 git status --short

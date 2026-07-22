@@ -1,5 +1,8 @@
 # ADR-0008: 审判委员会设计 (Tribunal Committee)
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 已采纳
 > **日期**: 2026-06-22
 > **决策者**: sisyphus
@@ -16,8 +19,8 @@
 
 **约束**:
 - 通过 oh-my-opencode 插件调用 agent，不硬编码厂商和模型
-- 所有 spec-workflow 配置在 `.spec-workflow/` 目录下
-- 数据隐私由 spec-workflow 自主处理，不依赖外部插件
+- 所有 rdd-workflow 配置在 `.rdd-workflow/` 目录下
+- 数据隐私由 rdd-workflow 自主处理，不依赖外部插件
 
 ## Decision
 
@@ -90,10 +93,10 @@ class TribunalCommittee:
 
 ### 2. 配置管理
 
-#### spec-workflow 配置
+#### rdd-workflow 配置
 
 ```json
-// .spec-workflow/config.json
+// .rdd-workflow/config.json
 
 {
   "version": "2.0",
@@ -135,7 +138,7 @@ class TribunalCommittee:
 ```
 
 **配置分离原则**:
-- `.spec-workflow/config.json`: spec-workflow 配置（使用哪个 agent、验证标准）
+- `.rdd-workflow/config.json`: rdd-workflow 配置（使用哪个 agent、验证标准）
 - `.opencode/oh-my-opencode.json`: 外部插件配置（agent 对应什么模型）
 
 ### 3. 综合判定算法
@@ -280,7 +283,7 @@ def build_review_prompt(self, change_name: str, artifacts: dict, criteria: List[
 ### 6. 推荐配置模板
 
 ```yaml
-# .spec-workflow/templates/verification-pairs.yaml
+# .rdd-workflow/templates/verification-pairs.yaml
 
 template_pairs:
   code_quality:
@@ -305,8 +308,8 @@ template_pairs:
 - **In Scope**:
   - 新增 `skills/_lib/tribunal.py` (审判委员会实现)
   - 新增 `skills/_lib/sanitizer.py` (数据脱敏)
-  - 更新 `.spec-workflow/config.json` Schema
-  - 添加推荐模板到 `.spec-workflow/templates/`
+  - 更新 `.rdd-workflow/config.json` Schema
+  - 添加推荐模板到 `.rdd-workflow/templates/`
   
 - **Out Scope**:
   - 不修改 oh-my-opencode 插件配置
@@ -326,14 +329,14 @@ template_pairs:
 
 - **质量提升**: 多 agent 交叉验证，降低错误率
 - **灵活性**: 用户可自定义 agent 和模型
-- **隐私保护**: spec-workflow 自主处理数据脱敏
+- **隐私保护**: rdd-workflow 自主处理数据脱敏
 - **解耦**: 不硬编码厂商和模型，通过 oh-my-opencode 抽象
 
 ### 负面 / 风险
 
 - **成本增加**: 每次验证需要调用 2 个 agent
   - **缓解**: 提供 single_agent 模式（快速验证）
-- **配置复杂**: 需要配置 oh-my-opencode 和 spec-workflow
+- **配置复杂**: 需要配置 oh-my-opencode 和 rdd-workflow
   - **缓解**: 提供推荐模板
 - **同 agent 风险**: 用户可能配置同一 agent
   - **缓解**: 警告并记录到事件流
@@ -351,6 +354,6 @@ template_pairs:
 
 - ADR-0005 — Human-in-Loop 节点定义（multi_model 验证模式）
 - Looper — 审判委员会机制（多模型交叉验证）
-- `.spec-workflow/config.json` — spec-workflow 配置
+- `.rdd-workflow/config.json` — rdd-workflow 配置
 - `.opencode/oh-my-opencode.json` — oh-my-opencode 插件配置（外部）
 

@@ -68,14 +68,14 @@ if str(_project_root) not in sys.path:
 
 - [ ] **Step 2: Run all unit tests to verify**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q --tb=short 2>&1 | tail -20`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q --tb=short 2>&1 | tail -20`
 Expected: All tests collected successfully (0 collection errors). Some tests may FAIL due to missing dependencies (jsonschema, PyYAML) — that's expected and addressed in Step 3.
 
 - [ ] **Step 3: Install Python test dependencies**
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 pip install -r requirements.txt -q
 python3 -m pytest tests/unit/ -q --tb=short 2>&1 | tail -30
 ```
@@ -83,7 +83,7 @@ Expected: All tests pass with no errors.
 
 - [ ] **Step 4: Lock the fix**
 
-Run: `cd /workspace/project/spec-workflow && git add tests/conftest.py && git commit -m "fix(tests): add conftest.py to resolve skills._lib imports — closes ImportError collection failures"`
+Run: `cd /workspace/project/rdd-workflow && git add tests/conftest.py && git commit -m "fix(tests): add conftest.py to resolve skills._lib imports — closes ImportError collection failures"`
 Expected: Clean commit.
 
 ---
@@ -209,7 +209,7 @@ echo "💡 下一步: skill_use(\"guide-plan\")"
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add skills/guide-arch.md
 git commit -m "feat(skills): add guide-arch.md — architecture definition phase (ADR-0003)"
 ```
@@ -345,7 +345,7 @@ echo "💡 下一步: skill_use(\"guide-ship\")"
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add skills/guide-plan.md
 git commit -m "feat(skills): add guide-plan.md — change generation phase (forked from guide-spec)"
 ```
@@ -402,14 +402,14 @@ skill_use("guide-plan")
 
 - [ ] **Step 2: Verify alias works conceptually — no syntax errors**
 
-Run: `cd /workspace/project/spec-workflow && python3 -c "import yaml; print('yaml ok')" && python3 -c "import json; print('json ok')"`
+Run: `cd /workspace/project/rdd-workflow && python3 -c "import yaml; print('yaml ok')" && python3 -c "import json; print('json ok')"`
 Expected: No errors.
 
 - [ ] **Step 3: Commit guide-spec.md conversion**
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add skills/guide-spec.md
 git commit -m "refactor(skills): convert guide-spec.md to alias for guide-arch → guide-plan — backward compat retained"
 ```
@@ -488,7 +488,7 @@ fi
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add skills/guide.md
 git commit -m "feat(guide): extend recommender for three-phase scan (arch/plan/ship) — ADR-0003"
 ```
@@ -527,14 +527,14 @@ git commit -m "feat(guide): extend recommender for three-phase scan (arch/plan/s
 
 - [ ] **Step 3: Verify .rddf/state/ is in .gitignore**
 
-Run: `cd /workspace/project/spec-workflow && grep -q '\.rddf/state/' .gitignore && echo "✅ .zcf gitignored" || echo "❌ NOT gitignored"`
+Run: `cd /workspace/project/rdd-workflow && grep -q '\.rddf/state/' .gitignore && echo "✅ .zcf gitignored" || echo "❌ NOT gitignored"`
 Expected: ✅ .zcf gitignored (so handoff files are not tracked by git — correct per design).
 
 - [ ] **Step 4: Commit handoff templates**
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add .rddf/state/arch-handoff.json .rddf/state/plan-handoff.json
 git commit -m "feat(zcf): add phase transition handoff JSON templates — arch-handoff + plan-handoff"
 ```
@@ -641,19 +641,19 @@ def test_guide_plan_has_handoff():
 
 - [ ] **Step 3: Run both new tests**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_guide_arch.py tests/unit/test_guide_plan.py -v --tb=short 2>&1 | tail -20`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_guide_arch.py tests/unit/test_guide_plan.py -v --tb=short 2>&1 | tail -20`
 Expected: All tests pass.
 
 - [ ] **Step 4: Run all unit tests to ensure no breakage**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q --tb=short 2>&1 | tail -15`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q --tb=short 2>&1 | tail -15`
 Expected: All pass (or note pre-existing failures).
 
 - [ ] **Step 5: Commit test files**
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add tests/unit/test_guide_arch.py tests/unit/test_guide_plan.py
 git commit -m "test(unit): add coverage for guide-arch and guide-plan skill structure"
 ```
@@ -860,14 +860,14 @@ def test_phase_switch_without_handoff_fails(temp_dir):
 
 - [ ] **Step 4: Run all integration tests**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/integration/ -v --tb=short 2>&1 | tail -30`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/integration/ -v --tb=short 2>&1 | tail -30`
 Expected: All pass.
 
 - [ ] **Step 5: Commit integration tests**
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add tests/integration/test_loop_flow.py tests/integration/test_gate_transition.py tests/integration/test_phase_switch.py
 git commit -m "test(integration): add loop flow, gate transition, and phase switch tests"
 ```
@@ -888,10 +888,10 @@ v1.x 用户升级到 v2.0 最快只需两步：
 
 ```bash
 # 1. 更新到最新版本
-npm update spec-workflow
+npm update rdd-workflow
 
 # 2. 运行迁移检查（可选）
-spec-workflow migrate --check
+rdd-workflow migrate --check
 ```
 
 **无需修改现有技能文件**。`guide-spec` 调用将自动变更为 `guide-arch` → `guide-plan`。所有现有 worktree 和变化不受影响。
@@ -972,7 +972,7 @@ v2.0 要求**先定义架构，再生成变更**。这意味着：
 
 - [ ] **Step 4: Verify the markdown is valid**
 
-Run: `cd /workspace/project/spec-workflow && python3 -c "
+Run: `cd /workspace/project/rdd-workflow && python3 -c "
 with open('docs/migration/v1-to-v2.md') as f:
     content = f.read()
 assert content.startswith('#'), 'Must start with H1'
@@ -986,7 +986,7 @@ print('✅ Migration doc structure verified')
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add docs/migration/v1-to-v2.md
 git commit -m "docs(migration): add Quick Start, Conceptual Changes, FAQ sections"
 ```
@@ -1118,7 +1118,7 @@ Add after Loop engine example:
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add README.md USAGE.md
 git commit -m "docs: update README and USAGE for v2.0 three-phase architecture and loop engine"
 ```
@@ -1152,13 +1152,13 @@ Edit the `skills` array:
 
 - [ ] **Step 2: Vlidate JSON is parseable**
 
-Run: `cd /workspace/project/spec-workflow && python3 -c "import json; d=json.load(open('package.json')); assert 'guide-arch' in d['skills']; assert 'guide-plan' in d['skills']; print('✅ package.json valid')"`
+Run: `cd /workspace/project/rdd-workflow && python3 -c "import json; d=json.load(open('package.json')); assert 'guide-arch' in d['skills']; assert 'guide-plan' in d['skills']; print('✅ package.json valid')"`
 
 - [ ] **Step 3: Commit package.json update**
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add package.json
 git commit -m "chore(package): add guide-arch and guide-plan to skills list"
 ```
@@ -1169,22 +1169,22 @@ git commit -m "chore(package): add guide-arch and guide-plan to skills list"
 
 - [ ] **Step 1: Run all Python unit tests**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -v --tb=short 2>&1 | tail -30`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -v --tb=short 2>&1 | tail -30`
 Expected: All pass (or clear pre-existing failures documented).
 
 - [ ] **Step 2: Run all Python integration tests**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/integration/ -v --tb=short 2>&1 | tail -30`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/integration/ -v --tb=short 2>&1 | tail -30`
 Expected: All pass.
 
 - [ ] **Step 3: Run bats regression tests**
 
-Run: `cd /workspace/project/spec-workflow && bats tests/ 2>&1 | tail -15`
+Run: `cd /workspace/project/rdd-workflow && bats tests/ 2>&1 | tail -15`
 Expected: Existing bats tests still pass (v1.x backward compat).
 
 - [ ] **Step 4: Verify all new skill files are registered**
 
-Run: `cd /workspace/project/spec-workflow && python3 -c "
+Run: `cd /workspace/project/rdd-workflow && python3 -c "
 import json
 d = json.load(open('package.json'))
 for skill in ['guide-arch', 'guide-plan']:
@@ -1196,7 +1196,7 @@ print('✅ All new skills registered and files exist')
 
 - [ ] **Step 5: Verify handoff JSON schemas**
 
-Run: `cd /workspace/project/spec-workflow && python3 -c "
+Run: `cd /workspace/project/rdd-workflow && python3 -c "
 import json
 with open('.rddf/state/arch-handoff.json') as f:
     arch = json.load(f)
@@ -1215,7 +1215,7 @@ print('✅ Handoff JSON schemas valid')
 
 - [ ] **Step 6: Check git log for all commits**
 
-Run: `cd /workspace/project/spec-workflow && git log --oneline -15`
+Run: `cd /workspace/project/rdd-workflow && git log --oneline -15`
 Expected: Review all commits from this change for a clean, coherent history.
 
 ---

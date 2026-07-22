@@ -1,4 +1,4 @@
-"""Built-in defaults for spec-workflow v2 configuration.
+"""Built-in defaults for rdd-workflow v2 configuration.
 
 The `DEFAULTS` dict is the lowest-priority source in the config merge order:
 runtime params > loop.yaml > .rddf.json > env vars > DEFAULTS.

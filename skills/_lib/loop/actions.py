@@ -117,10 +117,10 @@ def action_create_worktree(params: dict, event_log: EventLog) -> ActionResult:
 def action_generate_plan(params: dict, event_log: EventLog) -> ActionResult:
     """Generate an implementation plan. params: {change: str, output: str}.
 
-    v2.0 contract: dispatches to the spec-workflow/writing-plans skill (no
+    v2.0 contract: dispatches to the rdd-workflow/writing-plans skill (no
     external dependency, no detection chain). When called from an AI session,
     the caller is expected to follow up with
-    skill_use("spec-workflow/writing-plans") to fill in the real plan
+    skill_use("rdd-workflow/writing-plans") to fill in the real plan
     content; this action emits a clear marker so downstream consumers
     (execute.md, status.md) can detect the pending state.
 
@@ -160,28 +160,28 @@ def action_generate_plan(params: dict, event_log: EventLog) -> ActionResult:
         )
         return result
 
-    writing_plans_script = Path(__file__).parent.parent.parent / "spec-workflow-writing-plans.md"
+    writing_plans_script = Path(__file__).parent.parent.parent / "rdd-workflow-writing-plans.md"
     if not writing_plans_script.exists():
         result = ActionResult(
             success=False,
             data={"path": str(out_path), "mode": "missing-skill"},
-            error=f"spec-workflow/writing-plans skill not found at {writing_plans_script}",
+            error=f"rdd-workflow/writing-plans skill not found at {writing_plans_script}",
         )
         event_log.record(
             EventType.EXECUTION_UNIT_COMPLETED,
             Severity.ERROR,
-            "plan generation failed: missing spec-workflow/writing-plans skill",
+            "plan generation failed: missing rdd-workflow/writing-plans skill",
             context=result.to_dict(),
         )
         return result
 
     marker = (
         f"# Plan generation requested for {change}\n\n"
-        f"**Status**: pending — awaiting spec-workflow/writing-plans skill invocation\n"
+        f"**Status**: pending — awaiting rdd-workflow/writing-plans skill invocation\n"
         f"**Output path**: {out_path}\n"
         f"**Generated at**: {datetime.datetime.now().isoformat()}\n\n"
         f"## Next step\n\n"
-        f"Run `skill_use(\"spec-workflow/writing-plans\")` from the AI session, then re-invoke "
+        f"Run `skill_use(\"rdd-workflow/writing-plans\")` from the AI session, then re-invoke "
         f"this action. The skill will populate this file with the real plan content.\n"
     )
     out_path.write_text(marker)

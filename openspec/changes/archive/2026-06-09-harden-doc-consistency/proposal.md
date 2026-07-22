@@ -2,7 +2,7 @@
 
 ## Why
 
-spec-workflow v1.1 已发布（v1.0 → v1.1 拆分记录在 ADR-0001），但代码与文档之间存在 13+ 处不一致，导致：
+rdd-workflow v1.1 已发布（v1.0 → v1.1 拆分记录在 ADR-0001），但代码与文档之间存在 13+ 处不一致，导致：
 - 用户在 USAGE.md 看到的工作流 ≠ `guide-ship.md` 实际实现
 - bats 测试 `test_doc_phase_consistency.bats` 失败（ship-side phase 列表错误）
 - 4 个 `_lib/` bash helper 存在但从未被调用（dead code / DRY 违反）
@@ -24,7 +24,7 @@ spec-workflow v1.1 已发布（v1.0 → v1.1 拆分记录在 ADR-0001），但�
 - 同步 `proposal-suggestions-format.md` consumer 列表（添加 `deps.md`）
 
 **Out of Scope**:
-- 不重构整个 spec-workflow 状态机
+- 不重构整个 rdd-workflow 状态机
 - 不修改 OpenSpec CLI 行为
 - 不创建新的 ADR（只同步 ADR-0001 与代码现状）
 - 不删除任何 skill（仅修正引用）

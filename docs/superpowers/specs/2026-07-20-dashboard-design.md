@@ -2,14 +2,14 @@
 
 **Date:** 2026-07-20
 **Status:** Ready for Implementation (Oracle-reviewed ×2)
-**Scope:** Add `rddf` unified CLI to spec-workflow for terminal-accessible project state visibility
+**Scope:** Add `rddf` unified CLI to rdd-workflow for terminal-accessible project state visibility
 **Target:** `master`
 
 ---
 
 ## 1. Background
 
-spec-workflow v2.0 has 13 AI skills, all accessed via `skill_use("xxx")` in AI conversations.
+rdd-workflow v2.0 has 13 AI skills, all accessed via `skill_use("xxx")` in AI conversations.
 Users cannot check project state from a terminal without AI assistance. This spec adds a
 `python3 -m skills._lib.cli` entry point with subcommands for deterministic, read-heavy operations.
 
@@ -21,7 +21,7 @@ Users cannot check project state from a terminal without AI assistance. This spe
 | `execute` | Requires AI code generation |
 | `propose` | Requires code scanning + AI analysis |
 | `deps` | Requires subagent semantic analysis |
-| `spec-workflow/writing-plans` | Requires AI plan generation |
+| `rdd-workflow/writing-plans` | Requires AI plan generation |
 
 ## 2. CLI Tree
 
@@ -134,26 +134,26 @@ python3 -m skills._lib.cli sessions list
 `cli/__main__.py` 职责：
 1. Worktree-safe project root（`git rev-parse --git-common-dir`）
 2. 检测 worktree 内运行 → `ℹ️  running from worktree, reading state from <main_repo>`
-3. 检测非 spec-workflow 项目 → `ℹ️  not a spec-workflow project (no .rddf/state/)`
+3. 检测非 rdd-workflow 项目 → `ℹ️  not a rdd-workflow project (no .rddf/state/)`
 4. 子命令路由 → 委托给 `_cmd.py`
 
 **不保留** `dashboard/__main__.py`。`dashboard/` 是纯库。
 
 ### 4.4 PYTHONPATH Setup
 
-INSTALL 将 skills 安装到 `.opencode/skills/spec-workflow/skills/`。
+INSTALL 将 skills 安装到 `.opencode/skills/rdd-workflow/skills/`。
 `python3 -m skills._lib.cli` 需要 skills 包的**父目录**在 `PYTHONPATH` 上（`import skills._lib.cli` 从这个目录解析）。
 
 ```bash
 # 手动调用（调试用）
-PYTHONPATH="$HOME/.agents/skills/spec-workflow" python3 -m skills._lib.cli dashboard
+PYTHONPATH="$HOME/.agents/skills/rdd-workflow" python3 -m skills._lib.cli dashboard
 
 # 或通过 bash wrapper（推荐）
 ./rddf dashboard    # wrapper 从 BASH_SOURCE 自推导 PYTHONPATH
 ```
 
 `skills/cli/rddf.sh` wrapper：
-- 从 `BASH_SOURCE` 推导 `PACKAGE_DIR`（spec-workflow 根目录）
+- 从 `BASH_SOURCE` 推导 `PACKAGE_DIR`（rdd-workflow 根目录）
 - 设置 `PYTHONPATH="$PACKAGE_DIR"`
 - 解析 project root（`git rev-parse --git-common-dir`）
 - 转发到 `python3 -m skills._lib.cli "$@"`
@@ -170,7 +170,7 @@ PYTHONPATH="$HOME/.agents/skills/spec-workflow" python3 -m skills._lib.cli dashb
 
 | Scenario | Behavior |
 |----------|----------|
-| No `.rddf/state/` | Short-circuit: `ℹ️ not a spec-workflow project` |
+| No `.rddf/state/` | Short-circuit: `ℹ️ not a rdd-workflow project` |
 | Missing iteration.json | `_read_unlocked()` returns None → section shows N/A |
 | Corrupt iteration.json | Returns None (no `_backup_corrupt_file`) |
 | Corrupt sessions.json | Section shows warning + "(unreadable)" |

@@ -17,7 +17,7 @@ Steps to reproduce the behavior:
 A clear and concise description of what you expected to happen.
 
 **Environment**
-- spec-workflow version: [e.g. 1.1.0, 2.0.0-beta]
+- rdd-workflow version: [e.g. 1.1.0, 2.0.0-beta]
 - OS: [e.g. macOS 14, Ubuntu 24.04]
 - Shell: [e.g. bash 5.2, zsh 5.9]
 

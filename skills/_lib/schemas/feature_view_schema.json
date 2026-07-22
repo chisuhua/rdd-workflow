@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://spec-workflow.dev/schemas/feature_view_schema.json",
+  "$id": "https://rdd-workflow.dev/schemas/feature_view_schema.json",
   "title": "FeatureView",
   "description": "Derived view of features (groups of changes) inside iteration.json. Written by skills/_lib/feature_view.py.",
   "type": "object",

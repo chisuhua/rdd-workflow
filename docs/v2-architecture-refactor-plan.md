@@ -17,7 +17,7 @@
 
 ## 📋 执行摘要
 
-本文档汇总了 spec-workflow v2.0 的完整架构重构方案，从当前的**状态机驱动**范式升级到 **Loop 驱动 + Human-in-Loop** 的 AI 编程范式。
+本文档汇总了 rdd-workflow v2.0 的完整架构重构方案，从当前的**状态机驱动**范式升级到 **Loop 驱动 + Human-in-Loop** 的 AI 编程范式。
 
 ### 核心变更
 

@@ -1,6 +1,6 @@
 ## Context
 
-spec-workflow v1.x represents workflow state across 13 different files: `.zcf/.handoff.json` (spec→ship handoff), `.zcf/.roadmap-state.json`, `.zcf/.deps-output.md`, `proposal-suggestions.md` (with status markers), individual `openspec/changes/<name>/.openspec.yaml` files, and so on. Each phase transition (e.g., spec-done → ship-started) requires ad-hoc validation in the relevant skill. There is no central authority for "what state is the workflow in right now?"
+rdd-workflow v1.x represents workflow state across 13 different files: `.zcf/.handoff.json` (spec→ship handoff), `.zcf/.roadmap-state.json`, `.zcf/.deps-output.md`, `proposal-suggestions.md` (with status markers), individual `openspec/changes/<name>/.openspec.yaml` files, and so on. Each phase transition (e.g., spec-done → ship-started) requires ad-hoc validation in the relevant skill. There is no central authority for "what state is the workflow in right now?"
 
 v2.0 (ADR-0006, ADR-0007) commits to a unified state vector and a gate mechanism. The v2 loop engine (ADR-0004) and tribunal (ADR-0008) both require the state vector as their source of truth. This change establishes the foundation those higher-level systems will build on.
 

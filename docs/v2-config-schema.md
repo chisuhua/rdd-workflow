@@ -1,4 +1,4 @@
-# spec-workflow v2.0 配置 Schema 参考
+# rdd-workflow v2.0 配置 Schema 参考
 
 > **版本**: 2.0.0  
 > **日期**: 2026-06-22  
@@ -10,7 +10,7 @@
 
 - [概述](#概述)
 - [配置优先级](#配置优先级)
-- [.rddf.json Schema](#spec-workflowjson-schema)
+- [.rddf.json Schema](#rdd-workflowjson-schema)
 - [loop.yaml Schema](#loopyaml-schema)
 - [配置示例库](#配置示例库)
 - [验证工具](#验证工具)
@@ -19,7 +19,7 @@
 
 ## 概述
 
-spec-workflow v2.0 支持两种配置格式：
+rdd-workflow v2.0 支持两种配置格式：
 
 | 格式 | 文件 | 用途 | 人类可读 | 版本控制 |
 |------|------|------|---------|---------|
@@ -54,7 +54,7 @@ skill_use("loop", {goal: "complete changes"})
 # 2. 指定 loop.yaml
 skill_use("loop", {
   goal: "complete changes",
-  config_file: ".spec-workflow/loops/quick.yaml"
+  config_file: ".rdd-workflow/loops/quick.yaml"
 })
 
 # 3. 运行时覆盖
@@ -73,7 +73,7 @@ skill_use("loop", {
 
 ```json
 {
-  "$schema": "https://spec-workflow.dev/schemas/config-v2.json",
+  "$schema": "https://rdd-workflow.dev/schemas/config-v2.json",
   "version": "2.0",
   
   "interaction": {
@@ -162,7 +162,7 @@ skill_use("loop", {
         "node": "plan.change_select",
         "verification_mode": "script",
         "skip_if": "auto_select_changes",
-        "script": ".spec-workflow/scripts/verification/check_changes.py"
+        "script": ".rdd-workflow/scripts/verification/check_changes.py"
       },
       {
         "node": "ship.archive_confirm",
@@ -619,8 +619,8 @@ loop:
   action_timeout_seconds: 1800
 
 plugins:
-  detectors_dir: .spec-workflow/detectors
-  actions_dir: .spec-workflow/actions
+  detectors_dir: .rdd-workflow/detectors
+  actions_dir: .rdd-workflow/actions
 ```
 
 **Runtime override**:
@@ -714,7 +714,7 @@ plugins:
   },
   "verification": {
     "method": "script",
-    "script": ".spec-workflow/scripts/verification/ci-check.py"
+    "script": ".rdd-workflow/scripts/verification/ci-check.py"
   }
 }
 ```
@@ -766,7 +766,7 @@ plugins:
 
 ### 示例 5: 便携规范（团队协作）
 
-**文件**: `.spec-workflow/loops/complete-changes.yaml`
+**文件**: `.rdd-workflow/loops/complete-changes.yaml`
 
 ```yaml
 version: "2.0"
@@ -803,7 +803,7 @@ control:
 ```bash
 skill_use("loop", {
   "goal": "complete all pending changes",
-  "config_file": ".spec-workflow/loops/complete-changes.yaml"
+  "config_file": ".rdd-workflow/loops/complete-changes.yaml"
 })
 ```
 
@@ -819,21 +819,21 @@ skill_use("loop", {
 # 1. 使用 jq 验证 JSON 格式
 cat .rddf.json | jq '.'
 
-# 2. 使用 spec-workflow CLI 验证
-spec-workflow config validate
+# 2. 使用 rdd-workflow CLI 验证
+rdd-workflow config validate
 
 # 3. 查看配置解析结果
-spec-workflow config show
+rdd-workflow config show
 ```
 
 ### 验证 loop.yaml
 
 ```bash
 # 1. 使用 yq 验证 YAML 格式
-yq eval '.' .spec-workflow/loops/complete-changes.yaml
+yq eval '.' .rdd-workflow/loops/complete-changes.yaml
 
-# 2. 使用 spec-workflow CLI 验证
-spec-workflow config validate --file .spec-workflow/loops/complete-changes.yaml
+# 2. 使用 rdd-workflow CLI 验证
+rdd-workflow config validate --file .rdd-workflow/loops/complete-changes.yaml
 ```
 
 ### 常见验证错误
@@ -902,11 +902,11 @@ priority order (highest to lowest):
     "retry_backoff_seconds": 5
   },
   "state": {
-    "path": ".spec-workflow/state-vector.json",
+    "path": ".rdd-workflow/state-vector.json",
     "lock_timeout_seconds": 10.0
   },
   "event_log": {
-    "path": ".spec-workflow/event-log.jsonl",
+    "path": ".rdd-workflow/event-log.jsonl",
     "max_size_mb": 50
   },
   "gate": {
@@ -930,9 +930,9 @@ priority order (highest to lowest):
 | `loop.max_iterations` | int > 0 | `100` | Hard cap on loop iterations |
 | `loop.max_retries` | int ≥ 0 | `3` | Retries on transient failure |
 | `loop.retry_backoff_seconds` | float ≥ 0 | `5` | Wait between retries |
-| `state.path` | string | `".spec-workflow/state-vector.json"` | State vector location |
+| `state.path` | string | `".rdd-workflow/state-vector.json"` | State vector location |
 | `state.lock_timeout_seconds` | float > 0 | `10.0` | File lock timeout |
-| `event_log.path` | string | `".spec-workflow/event-log.jsonl"` | Event log location |
+| `event_log.path` | string | `".rdd-workflow/event-log.jsonl"` | Event log location |
 | `event_log.max_size_mb` | int > 0 | `50` | Soft cap (for future rotation) |
 | `gate.load_defaults` | bool | `true` | Include default gate checks |
 | `gate.auto_allow_warnings` | bool | `true` | Proceed past warning-severity gate checks |

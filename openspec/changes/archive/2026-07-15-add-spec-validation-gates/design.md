@@ -5,7 +5,7 @@ STATUS: PROPOSED
 
 ## Context
 
-`spec-workflow` 通过 3 个入口 skill 管理 OpenSpec change lifecycle：
+`rdd-workflow` 通过 3 个入口 skill 管理 OpenSpec change lifecycle：
 
 | Skill | 入口 | 现有验证 |
 |---|---|---|
@@ -154,7 +154,7 @@ validator 失败时输出：
 
 **Rejected**:
 - 依赖外部项目 release cycle，无法快速迭代
-- spec-workflow 用户可能用旧版 openspec CLI
+- rdd-workflow 用户可能用旧版 openspec CLI
 - 维护负担重（fork vs upstream PR）
 
 ### Alt 2: 在 CI 中独立运行 validators
@@ -191,7 +191,7 @@ CI workflow 调用 validators 作为独立 step，不在 skill 流程中。
 
 ```bash
 # 单元测试
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 pip install -r requirements.txt
 python3 -m pytest tests/unit/test_validate_baseline.py -v
 python3 -m pytest tests/unit/test_validate_delta_targets.py -v
@@ -227,6 +227,6 @@ bats tests/smoke.bats  # 不破坏既有 smoke
 - **Q**: MODIFIED target 推断是否需要 LLM 解析 body？
   **A**: v1 不需要。Default target = change 自己的 capability。LLM 解析留后续。
 - **Q**: validator 是否要 ship 到 PyPI？
-  **A**: 不在 v1 scope。spec-workflow 是 git submodule + skills/_lib/ 模式，不是独立 Python package。
+  **A**: 不在 v1 scope。rdd-workflow 是 git submodule + skills/_lib/ 模式，不是独立 Python package。
 - **Q**: CI 何时调用 validator？
   **A**: PR trigger 时（`on: pull_request`），在现有 pytest + bats 之前或之后都可以，建议并列。

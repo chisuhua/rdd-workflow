@@ -23,8 +23,8 @@ The system SHALL distribute `skills/_lib/*.py` and `skills/_lib/schemas/*.json` 
 
 - **WHEN** `install.sh` is invoked
 - **AND** `$PACKAGE_DIR/skills/_lib` exists
-- **THEN** the install script SHALL copy `*.py` files under `skills/_lib/` to the target's `.opencode/skills/spec-workflow/skills/_lib/`
-- **AND** the install script SHALL copy `*.json` files under `skills/_lib/schemas/` to the target's `.opencode/skills/spec-workflow/skills/_lib/schemas/`
+- **THEN** the install script SHALL copy `*.py` files under `skills/_lib/` to the target's `.opencode/skills/rdd-workflow/skills/_lib/`
+- **AND** the install script SHALL copy `*.json` files under `skills/_lib/schemas/` to the target's `.opencode/skills/rdd-workflow/skills/_lib/schemas/`
 - **AND** the target's `skills/__init__.py` and `skills/_lib/__init__.py` SHALL exist as Python package markers
 
 #### Scenario: install.sh excludes dev-only subdirectories

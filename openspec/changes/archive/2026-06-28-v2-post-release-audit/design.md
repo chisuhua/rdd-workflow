@@ -6,7 +6,7 @@ The v2.0.0-beta release (2026-06-26) shipped code for ADR-0002 through ADR-0008 
 
 **Goals:**
 - Synchronize all documentation with current v2.0 code reality
-- Fix the fictional `spec-workflow` CLI in migration guide
+- Fix the fictional `rdd-workflow` CLI in migration guide
 - Fix tautological assertion in test_lock.py
 - Add unit tests for modules with zero coverage
 - Add CI assertion quality gate
@@ -33,7 +33,7 @@ The v2.0.0-beta release (2026-06-26) shipped code for ADR-0002 through ADR-0008 
 
 ### Decision 3: Migration guide CLI references → marked "planned, not implemented"
 
-- **Why**: The `spec-workflow migrate/sync/report` CLI was a design aspiration from the ADR phase. Rather than delete (loses the design intent) or implement (scope creep), mark each command as "planned for v2.1" or replace with equivalent manual steps.
+- **Why**: The `rdd-workflow migrate/sync/report` CLI was a design aspiration from the ADR phase. Rather than delete (loses the design intent) or implement (scope creep), mark each command as "planned for v2.1" or replace with equivalent manual steps.
 - **Risk**: Users may still try the commands. Mitigation: add clear "not yet implemented" warning before each such reference.
 
 ### Decision 4: Per-ADR implementation audit, not blanket statement

@@ -1,17 +1,17 @@
 {
-  "name": "spec-workflow",
-  "displayName": "Spec Workflow",
-  "version": "1.0.0",
+  "name": "rdd-workflow",
+  "displayName": "RDD Workflow",
+  "version": "3.0.0",
   "description": "OpenSpec 工作流技能包 - manage changes via propose → plan → execute → status → archive lifecycle with roadmap phase management",
   "author": {
     "name": "sisyphus",
     "email": "sisyphus@example.com",
-    "url": "https://github.com/chisuhua/spec-workflow"
+    "url": "https://github.com/chisuhua/rdd-workflow"
   },
-  "homepage": "https://github.com/chisuhua/spec-workflow",
+  "homepage": "https://github.com/chisuhua/rdd-workflow",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chisuhua/spec-workflow.git"
+    "url": "https://github.com/chisuhua/rdd-workflow.git"
   },
   "license": "MIT",
   "keywords": [

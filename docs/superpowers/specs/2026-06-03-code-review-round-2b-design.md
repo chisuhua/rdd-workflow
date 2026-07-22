@@ -11,7 +11,7 @@
 
 | # | Question | Decision |
 |---|---|---|
-| 37 | Skill name standardization | **Unify to `spec-workflow-*`** (matches package name, npx install path) |
+| 37 | Skill name standardization | **Unify to `rdd-workflow-*`** (matches package name, npx install path) |
 | 38 | `PROJECT_ROOT` definition | **Standard pattern**: `git rev-parse --show-toplevel 2>/dev/null \|\| pwd` (9 mainstream sites) |
 | 40 | `workflow-state.md` format | **guide.md is authoritative** (more detailed; has "阶段完成情况" phase table) |
 
@@ -25,7 +25,7 @@
 
 | File | Issues | Notes |
 |---|---|---|
-| `USAGE.md` | #37, #40 | 10 `openspec-workflow-*` refs to rename; 1 state format section to rewrite |
+| `USAGE.md` | #37, #40 | 10 `openrdd-workflow-*` refs to rename; 1 state format section to rewrite |
 | `skills/guide.md` | #38 | 1 `PROJECT_ROOT=$(pwd)` outlier (line 162) |
 | `skills/INSTALL.md` | #38 | 1 `PROJECT_ROOT=$(pwd)` in fallback block (line 60) |
 
@@ -33,13 +33,13 @@ Total: 3 files, 3 atomic commits.
 
 ## 4. The 3 Fixes
 
-### Task B1 — Inconsistency #37: Unify skill names to `spec-workflow-*`
+### Task B1 — Inconsistency #37: Unify skill names to `rdd-workflow-*`
 
 **Scope:** `USAGE.md` lines 41, 175, 339, 353, 363, 372, 443, 444, 445, 446, 447.
 
-The 10 references in USAGE.md use the deprecated `openspec-workflow-*` prefix. All actual skill code in `skills/*.md` already uses `spec-workflow-*`. The fix is a global text replace in USAGE.md only.
+The 10 references in USAGE.md use the deprecated `openrdd-workflow-*` prefix. All actual skill code in `skills/*.md` already uses `rdd-workflow-*`. The fix is a global text replace in USAGE.md only.
 
-**Risk:** Documentation-only. No code change. Any user with custom scripts calling `skill_use("openspec-workflow-...")` will need to update their calls, but USAGE.md is the source of truth for the canonical names.
+**Risk:** Documentation-only. No code change. Any user with custom scripts calling `skill_use("openrdd-workflow-...")` will need to update their calls, but USAGE.md is the source of truth for the canonical names.
 
 ### Task B2 — Inconsistency #38: Unify `PROJECT_ROOT` to the standard pattern
 
@@ -73,7 +73,7 @@ The `USAGE.md` "Changes" table contains information that IS useful (per-change w
 
 ## 6. Validation
 
-- `git grep "openspec-workflow-"` → zero matches in `skills/` and `USAGE.md` (after B1)
+- `git grep "openrdd-workflow-"` → zero matches in `skills/` and `USAGE.md` (after B1)
 - `git grep "PROJECT_ROOT=$(pwd)"` → zero matches (after B2)
 - `git grep "状态文件格式"` → USAGE.md still has it but content matches guide.md's schema (after B3)
 - `bash -n` on all modified files (USAGE.md has no bash blocks, so trivially OK)
@@ -92,6 +92,6 @@ All other Medium/Low/Logic items from CODE_REVIEW.md that were not in Round 2a o
 ---
 
 **Approval:** User chose:
-- #37: "统一为 spec-workflow-*（推荐）"
+- #37: "统一为 rdd-workflow-*（推荐）"
 - #38: "git rev-parse ... || pwd（9 处主流，推荐）"
 - #40: "以 guide.md 为准（更详尽）"

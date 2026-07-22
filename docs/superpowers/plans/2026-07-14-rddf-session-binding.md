@@ -127,7 +127,7 @@ def test_find_current_binding_empty_sessions_file(coordinator):
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_binding.py -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_binding.py -v
 ```
 
 Expected: FAIL with `AttributeError: 'RddfSessionCoordinator' object has no attribute 'find_current_binding'`
@@ -164,7 +164,7 @@ In `skills/_lib/rddf_session.py`, insert after the `create_session` method (arou
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_binding.py::test_find_current_binding_returns_active_for_owner tests/unit/test_rddf_binding.py::test_find_current_binding_returns_none_when_terminal tests/unit/test_rddf_binding.py::test_find_current_binding_returns_none_for_different_owner tests/unit/test_rddf_binding.py::test_find_current_binding_picks_most_recent_of_multiple tests/unit/test_rddf_binding.py::test_find_current_binding_empty_sessions_file -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_binding.py::test_find_current_binding_returns_active_for_owner tests/unit/test_rddf_binding.py::test_find_current_binding_returns_none_when_terminal tests/unit/test_rddf_binding.py::test_find_current_binding_returns_none_for_different_owner tests/unit/test_rddf_binding.py::test_find_current_binding_picks_most_recent_of_multiple tests/unit/test_rddf_binding.py::test_find_current_binding_empty_sessions_file -v
 ```
 
 Expected: 5 passed
@@ -172,7 +172,7 @@ Expected: 5 passed
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/rddf_session.py tests/unit/test_rddf_binding.py && git commit -m "feat(rddf-session): add find_current_binding method (spec 2026-07-14)
+cd /workspace/project/rdd-workflow && git add skills/_lib/rddf_session.py tests/unit/test_rddf_binding.py && git commit -m "feat(rddf-session): add find_current_binding method (spec 2026-07-14)
 
 Returns the active rddf-session owned by the given OpenCode session id,
 or None if no active binding exists. Among multiple active sessions for
@@ -280,7 +280,7 @@ def test_check_heartbeat_then_find_current_returns_none(coordinator):
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_binding.py -v -k "next_recommendation or heartbeat_then"
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_binding.py -v -k "next_recommendation or heartbeat_then"
 ```
 
 Expected: FAIL with `AttributeError: ... no attribute 'find_next_recommendation'`
@@ -321,7 +321,7 @@ In `skills/_lib/rddf_session.py`, insert immediately after `find_current_binding
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_binding.py -v
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_binding.py -v
 ```
 
 Expected: 10 passed
@@ -329,7 +329,7 @@ Expected: 10 passed
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/rddf_session.py tests/unit/test_rddf_binding.py && git commit -m "feat(rddf-session): add find_next_recommendation method (spec 2026-07-14)
+cd /workspace/project/rdd-workflow && git add skills/_lib/rddf_session.py tests/unit/test_rddf_binding.py && git commit -m "feat(rddf-session): add find_next_recommendation method (spec 2026-07-14)
 
 Returns the most recently started orphaned rddf-session, or None if no
 orphaned sessions exist. owner_opencode_session_id param reserved for
@@ -514,7 +514,7 @@ PYEOF
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && bats tests/integration/test_rddf_session_current.bats
+cd /workspace/project/rdd-workflow && bats tests/integration/test_rddf_session_current.bats
 ```
 
 Expected: All 8 tests PASS at the Python helper level (because `find_current_binding` + `find_next_recommendation` already work from Task 1+2). This is the data-layer smoke test for the new subcommand.
@@ -566,7 +566,7 @@ PYEOF
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && bats tests/integration/test_rddf_session_current.bats
+cd /workspace/project/rdd-workflow && bats tests/integration/test_rddf_session_current.bats
 ```
 
 Expected: 8 passed
@@ -574,7 +574,7 @@ Expected: 8 passed
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/rddf-session.md tests/integration/test_rddf_session_current.bats && git commit -m "feat(rddf-session): add 'current' subcommand (spec 2026-07-14)
+cd /workspace/project/rdd-workflow && git add skills/rddf-session.md tests/integration/test_rddf_session_current.bats && git commit -m "feat(rddf-session): add 'current' subcommand (spec 2026-07-14)
 
 Prints current OpenCode-session binding (active rddf-session) when bound,
 or recommends the next orphaned session to resume when unbound.
@@ -692,7 +692,7 @@ PYEOF
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && bats tests/integration/test_guide_binding_alert.bats
+cd /workspace/project/rdd-workflow && bats tests/integration/test_guide_binding_alert.bats
 ```
 
 Expected: FAIL with `scan_session_binding: command not found`
@@ -748,7 +748,7 @@ PYEOF
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && bats tests/integration/test_guide_binding_alert.bats
+cd /workspace/project/rdd-workflow && bats tests/integration/test_guide_binding_alert.bats
 ```
 
 Expected: 5 passed
@@ -756,7 +756,7 @@ Expected: 5 passed
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/scan-state.sh tests/integration/test_guide_binding_alert.bats && git commit -m "feat(scan-state): add scan_session_binding function (spec 2026-07-14)
+cd /workspace/project/rdd-workflow && git add skills/_lib/scan-state.sh tests/integration/test_guide_binding_alert.bats && git commit -m "feat(scan-state): add scan_session_binding function (spec 2026-07-14)
 
 Reads .rddf/state/sessions.json via RddfSessionCoordinator and populates
 BINDING_LINES array with current binding + recommendation. Read-only —
@@ -853,7 +853,7 @@ PYEOF
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && bats tests/integration/test_guide_binding_alert.bats
+cd /workspace/project/rdd-workflow && bats tests/integration/test_guide_binding_alert.bats
 ```
 
 Expected: The 4 new tests FAIL with `scan_session_binding: command not found` (or grep miss). The 5 tests from Task 4 should now PASS.
@@ -904,7 +904,7 @@ After the existing example output, add:
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && bats tests/integration/test_guide_binding_alert.bats
+cd /workspace/project/rdd-workflow && bats tests/integration/test_guide_binding_alert.bats
 ```
 
 Expected: 10 passed (5 from Task 4 + 5 from Task 5)
@@ -912,7 +912,7 @@ Expected: 10 passed (5 from Task 4 + 5 from Task 5)
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/guide.md tests/integration/test_guide_binding_alert.bats && git commit -m "feat(guide): append rddf-session binding lines to recommender output
+cd /workspace/project/rdd-workflow && git add skills/guide.md tests/integration/test_guide_binding_alert.bats && git commit -m "feat(guide): append rddf-session binding lines to recommender output
 
 After RECOMMEND/REASON, scan_session_binding populates BINDING_LINES
 with current binding status + next recommendation. guide.md example now
@@ -957,7 +957,7 @@ In `docs/adr/ADR-0017-rddf-session.md`, append at the end (after "## References"
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && grep -q "Session Binding Policy" AGENTS.md && grep -q "spec 2026-07-14" AGENTS.md && grep -q "spec 2026-07-14" docs/adr/ADR-0017-rddf-session.md && echo "All cross-references present"
+cd /workspace/project/rdd-workflow && grep -q "Session Binding Policy" AGENTS.md && grep -q "spec 2026-07-14" AGENTS.md && grep -q "spec 2026-07-14" docs/adr/ADR-0017-rddf-session.md && echo "All cross-references present"
 ```
 
 Expected: `All cross-references present`
@@ -965,7 +965,7 @@ Expected: `All cross-references present`
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add AGENTS.md docs/adr/ADR-0017-rddf-session.md && git commit -m "docs(workflow): add Session Binding Policy + ADR-0017 cross-reference
+cd /workspace/project/rdd-workflow && git add AGENTS.md docs/adr/ADR-0017-rddf-session.md && git commit -m "docs(workflow): add Session Binding Policy + ADR-0017 cross-reference
 
 AGENTS.md gains Session Binding Policy subsection documenting the
 mandatory rddf-session binding for workflow sessions and the discovery
@@ -985,7 +985,7 @@ extends it (2026-07-14) with no schema changes."
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q --tb=short
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q --tb=short
 ```
 
 Expected: all pass; specifically:
@@ -999,7 +999,7 @@ If any fail, identify whether the failure is in new code (regression to fix) or 
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && bats tests/integration/test_rddf_session_current.bats tests/integration/test_guide_binding_alert.bats tests/integration/test_guide_scan.bats
+cd /workspace/project/rdd-workflow && bats tests/integration/test_rddf_session_current.bats tests/integration/test_guide_binding_alert.bats tests/integration/test_guide_scan.bats
 ```
 
 Expected: 8 + 10 + 4 = 22 passed
@@ -1008,7 +1008,7 @@ Expected: 8 + 10 + 4 = 22 passed
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && bats tests/smoke.bats tests/integration/test_skill_metadata_consistency.bats tests/integration/test_guide_skill.bats
+cd /workspace/project/rdd-workflow && bats tests/smoke.bats tests/integration/test_skill_metadata_consistency.bats tests/integration/test_guide_skill.bats
 ```
 
 Expected: all pass. The `test_skill_metadata_consistency.bats` may need a regeneration if the smoke.bats hardcoded list doesn't include `current`; verify but don't preemptively fix.
@@ -1017,7 +1017,7 @@ Expected: all pass. The `test_skill_metadata_consistency.bats` may need a regene
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && grep -rn "assert.*or True\|assert True" tests/ || echo "GATE PASS"
+cd /workspace/project/rdd-workflow && grep -rn "assert.*or True\|assert True" tests/ || echo "GATE PASS"
 ```
 
 Expected: `GATE PASS`
@@ -1026,7 +1026,7 @@ Expected: `GATE PASS`
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && bats tests/integration/test_guide_scan.bats
+cd /workspace/project/rdd-workflow && bats tests/integration/test_guide_scan.bats
 ```
 
 Expected: 4 passed (existing P1-3/P1-4 regression guards still hold)
@@ -1035,7 +1035,7 @@ Expected: 4 passed (existing P1-3/P1-4 regression guards still hold)
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && python3 -c "import json; d=json.load(open('skills/_lib/schemas/sessions_schema.json')); print('schema_version:', d['version']); assert d['version']==1, 'version must stay 1'; print('SCHEMA UNCHANGED')"
+cd /workspace/project/rdd-workflow && python3 -c "import json; d=json.load(open('skills/_lib/schemas/sessions_schema.json')); print('schema_version:', d['version']); assert d['version']==1, 'version must stay 1'; print('SCHEMA UNCHANGED')"
 ```
 
 Expected: `schema_version: 1` + `SCHEMA UNCHANGED`
@@ -1044,7 +1044,7 @@ Expected: `schema_version: 1` + `SCHEMA UNCHANGED`
 
 If any verification step required an inline fix, commit it now:
 ```bash
-cd /workspace/project/spec-workflow && git status
+cd /workspace/project/rdd-workflow && git status
 ```
 
 If dirty, commit with `chore(verify): address spec 2026-07-14 final-verification findings` and the actual diff summary.

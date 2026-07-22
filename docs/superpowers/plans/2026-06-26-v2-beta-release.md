@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Release `spec-workflow@2.0.0-beta` to npm, archive all completed v2 changes, and establish feedback channels for real-world testing.
+**Goal:** Release `rdd-workflow@2.0.0-beta` to npm, archive all completed v2 changes, and establish feedback channels for real-world testing.
 
 **Architecture:** The beta release is a coordinated four-track effort: (1) finalize any remaining v2-migration-and-tests commit, (2) prepare release artifacts (changelog, version bump, issue templates), (3) publish to npm, and (4) archive all completed v2 change directories. Each track is independent and can run in parallel where possible.
 
@@ -43,7 +43,7 @@ This plan covers a single subsystem — the v2-beta-release. The v2-migration-an
   - **This change directory is NOT yet archived** — archiving is part of this plan
 - **v2-beta-release (Phase 5, this plan):** Design/proposal/tasks already in place
 - **Tests:** 171 Python tests pass (unit + integration), bats tests not run
-- **npm:** `spec-workflow` not yet published on registry (first publish will be `2.0.0-beta`)
+- **npm:** `rdd-workflow` not yet published on registry (first publish will be `2.0.0-beta`)
 - **npm credentials:** Not logged in locally — publish step requires `npm login`
 
 ### Key Design Decisions
@@ -100,7 +100,7 @@ Create `CHANGELOG.md` in project root:
 
 - **v1.x compatibility maintained**: `guide-spec` remains as a backward-compatible alias that internally calls `guide-arch` → `guide-plan`. No user skill code changes required.
 - **State file format unchanged**: All `.rddf/state/` state files maintain v1.x format. No migration needed.
-- **npm package rename**: None — package remains `spec-workflow`.
+- **npm package rename**: None — package remains `rdd-workflow`.
 
 ### Performance Targets (Verified)
 
@@ -132,18 +132,18 @@ See [v1.x → v2.0 Migration Guide](./docs/migration/v1-to-v2.md) for step-by-st
 Edit `README.md` to add install instructions and npm badge after line 1:
 
 ```markdown
-# Spec Workflow
+# RDD Workflow
 
-[![npm version](https://img.shields.io/npm/v/spec-workflow.svg)](https://www.npmjs.com/package/spec-workflow)
+[![npm version](https://img.shields.io/npm/v/rdd-workflow.svg)](https://www.npmjs.com/package/rdd-workflow)
 
 ## Install
 
 ```bash
 # Latest stable (v1.x)
-npm install spec-workflow
+npm install rdd-workflow
 
 # v2.0 beta
-npm install spec-workflow@2.0.0-beta
+npm install rdd-workflow@2.0.0-beta
 ```
 ```
 
@@ -171,7 +171,7 @@ Steps to reproduce the behavior:
 A clear and concise description of what you expected to happen.
 
 **Environment**
-- spec-workflow version: [e.g. 1.1.0, 2.0.0-beta]
+- rdd-workflow version: [e.g. 1.1.0, 2.0.0-beta]
 - OS: [e.g. macOS 14, Ubuntu 24.04]
 - Shell: [e.g. bash 5.2, zsh 5.9]
 
@@ -211,7 +211,7 @@ labels: beta-feedback
 ---
 
 **What's your v1.x experience level?**
-- [ ] New user (first time with spec-workflow)
+- [ ] New user (first time with rdd-workflow)
 - [ ] Occasional user
 - [ ] Daily power user
 
@@ -264,7 +264,7 @@ pnpm publish --dry-run
 # pnpm publish --tag beta
 ```
 
-> Note: If `npm whoami` fails, the user must run `npm login` interactively first. The `--tag beta` flag ensures `npm install spec-workflow` (without version) still gets v1.x latest.
+> Note: If `npm whoami` fails, the user must run `npm login` interactively first. The `--tag beta` flag ensures `npm install rdd-workflow` (without version) still gets v1.x latest.
 
 ---
 
@@ -367,7 +367,7 @@ Create `openspec/changes/archive/2026-06-26-v2-beta-release/README.md`:
 
 **Commit:** `<filled-in-after-publish>` `release: v2.0.0-beta — changelog, issue templates, version bump`
 
-**Key deliverables:** `spec-workflow@2.0.0-beta` on npm, `CHANGELOG.md`, 3 GitHub Issue templates, git tag `v2.0.0-beta`
+**Key deliverables:** `rdd-workflow@2.0.0-beta` on npm, `CHANGELOG.md`, 3 GitHub Issue templates, git tag `v2.0.0-beta`
 ```
 
 - [ ] **Step 3: Stage and commit archive**
@@ -397,7 +397,7 @@ Expected output: All commits and the `v2.0.0-beta` tag pushed to GitHub.
 
 ```bash
 # Verify the package is available
-npm view spec-workflow versions --json
+npm view rdd-workflow versions --json
 ```
 
 Expected output: includes `"2.0.0-beta"` in the versions array.
@@ -418,7 +418,7 @@ Verify:
 - [ ] `package.json` version is `2.0.0-beta`
 - [ ] `.github/ISSUE_TEMPLATE/` contains 3 template files
 - [ ] `git tag` `v2.0.0-beta` exists locally and remotely
-- [ ] `npm` shows `spec-workflow@2.0.0-beta` published
+- [ ] `npm` shows `rdd-workflow@2.0.0-beta` published
 - [ ] `openspec/changes/archive/` has both new archives
 - [ ] `openspec/changes/v2-migration-and-tests/` removed
 - [ ] `openspec/changes/v2-beta-release/` removed (self-archived)

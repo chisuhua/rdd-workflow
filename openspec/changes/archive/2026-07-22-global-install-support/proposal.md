@@ -6,7 +6,7 @@
 
 ## Why
 
-Spec-workflow 安装流程只支持项目内安装（.opencode/skills/spec-workflow/）。
+Spec-workflow 安装流程只支持项目内安装（.opencode/skills/rdd-workflow/）。
 需要跨项目共享技能的能力，减少重复安装。
 
 ## 范围

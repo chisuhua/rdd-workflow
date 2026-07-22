@@ -4,10 +4,10 @@
 TBD - created by archiving change v3-flow-customization. Update Purpose after archive.
 ## Requirements
 ### Requirement: flow-yaml-customizations
-The system SHALL read `.spec-workflow/flow.yaml` if present and apply its `customizations.<phase>` directives (`insert_after`, `insert_before`, `replace`) to the default step sequence from `phase_templates.yaml`.
+The system SHALL read `.rdd-workflow/flow.yaml` if present and apply its `customizations.<phase>` directives (`insert_after`, `insert_before`, `replace`) to the default step sequence from `phase_templates.yaml`.
 
 #### Scenario: user inserts a custom step
-- **WHEN** `.spec-workflow/flow.yaml` declares `customizations.plan.insert_after.generate_proposal` with step `compliance_review`
+- **WHEN** `.rdd-workflow/flow.yaml` declares `customizations.plan.insert_after.generate_proposal` with step `compliance_review`
 - **THEN** the effective plan phase steps SHALL include `compliance_review` immediately after `generate_proposal`
 
 ### Requirement: trigger-engine-restricted-dsl
@@ -27,10 +27,10 @@ The system SHALL execute the configured `on_failure` strategy (`back_to:<step>`,
 - **THEN** the StepPipeline SHALL escalate to human instead of attempting a fourth back-to
 
 ### Requirement: backward-compatibility-no-config
-The system SHALL behave identically to the default step pipeline when `.spec-workflow/flow.yaml` is absent.
+The system SHALL behave identically to the default step pipeline when `.rdd-workflow/flow.yaml` is absent.
 
 #### Scenario: no flow.yaml equals default
-- **WHEN** `.spec-workflow/flow.yaml` does not exist
+- **WHEN** `.rdd-workflow/flow.yaml` does not exist
 - **THEN** the effective step sequence SHALL equal the default `phase_templates.yaml`
 - **AND** existing v2.x workflows SHALL be unaffected
 

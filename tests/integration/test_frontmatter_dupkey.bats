@@ -21,7 +21,7 @@ assert_no_dup_version() {
 }
 
 # Cover the remaining 11 skills — pre-fix, deps/execute/feature/guide-arch/
-# guide-plan/guide-ship/propose/rddf-session/roadmap/spec-workflow-writing-plans
+# guide-plan/guide-ship/propose/rddf-session/roadmap/rdd-workflow-writing-plans
 # all had duplicate `version:` keys under metadata: (10 files total).
 # This test was previously missing for those skills, letting the bug
 # silently drift into npm-published skills.

@@ -692,7 +692,7 @@ Replace the template sections with this content:
 
 - Status: 已采纳
 - Date: 2026-07-07
-- Deciders: spec-workflow maintainers
+- Deciders: rdd-workflow maintainers
 - Replaces: (none)
 
 ## Context

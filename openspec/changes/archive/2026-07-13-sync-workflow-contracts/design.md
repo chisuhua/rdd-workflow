@@ -5,7 +5,7 @@ STATUS: PROPOSED
 
 ## Context
 
-spec-workflow 是元仓(meta-repo),承载 OpenSpec 工作流的 skill 集合 + Loop 引擎 + 测试基础设施。它的 7 个 "surface" 各自演进但本应保持一致:
+rdd-workflow 是元仓(meta-repo),承载 OpenSpec 工作流的 skill 集合 + Loop 引擎 + 测试基础设施。它的 7 个 "surface" 各自演进但本应保持一致:
 
 | Surface | 角色 | 真值来源 |
 |--------|------|---------|
@@ -77,7 +77,7 @@ spec-workflow 是元仓(meta-repo),承载 OpenSpec 工作流的 skill 集合 + L
 
 | 选项 | 含义 | 副作用 |
 |------|------|--------|
-| **A: 现在补 `feature` + `rddf-session`** | 用户 `npm install spec-workflow` 立即看到 13 个 skill;`INSTALL.md` description 同步改为 13 个(无 src-only delta) | API surface 扩张;若后续要改这两个 skill 的接口,影响 npm 用户 |
+| **A: 现在补 `feature` + `rddf-session`** | 用户 `npm install rdd-workflow` 立即看到 13 个 skill;`INSTALL.md` description 同步改为 13 个(无 src-only delta) | API surface 扩张;若后续要改这两个 skill 的接口,影响 npm 用户 |
 | B: 保留 src-only + 加注释 | `package.json` 标 11 个,在文件加 `_comment` 字段声明 src-only | 用户从 npm 安装看到的 11 个 skill 列表与 AGENTS.md / USAGE.md 显式标注的"13 vs 11"差异一致 |
 
 **选 A** 的理由:
@@ -149,7 +149,7 @@ spec-workflow 是元仓(meta-repo),承载 OpenSpec 工作流的 skill 集合 + L
 **Rejected**:
 
 - 与 `add-spec-validation-gates` 同样依赖外部 release cycle(它已在 proposal 里 reject 过类似方案)
-- openspec CLI 是 generic spec-driven dev 工具,spec-workflow 自己的 contract 同步不该外溢
+- openspec CLI 是 generic spec-driven dev 工具,rdd-workflow 自己的 contract 同步不该外溢
 - 复用 `skills/_lib/gate.py` 已有 error/warning 分级足够
 
 ### Alt 3: 不修 general spec,只修 USAGE / AGENTS
@@ -192,7 +192,7 @@ python3 -c "import yaml; yaml.safe_load(open('openspec/changes/sync-workflow-con
 echo "exit=$?"
 
 # 2. openspec 验证
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 openspec validate sync-workflow-contracts
 
 # 3. 列出创建的文件

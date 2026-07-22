@@ -50,7 +50,7 @@ non_goals:
   - "Renaming existing skills or moving files (purely contract synchronization)"
 risk_level: low
 cross_repo:
-  - "None (spec-workflow meta-repo only)"
+  - "None (rdd-workflow meta-repo only)"
   - "No TaskRunner or UsrLinuxEmu impact"
 estimated_loc_change:
   new_files: "~250 lines (2 new test files + 2 spec deltas)"

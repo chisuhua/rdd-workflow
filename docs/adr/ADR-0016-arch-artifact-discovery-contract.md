@@ -1,5 +1,8 @@
 # ADR-0016: Arch 阶段工件发现契约 (Arch Artifact Discovery Contract)
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 已采纳
 > **日期**: 2026-07-08
 > **决策者**: sisyphus
@@ -7,7 +10,7 @@
 
 ## Context
 
-spec-workflow v2.0 三阶段架构（ADR-0003）将工作流切分为 `arch → plan → ship`，由 handoff 文件 (`.rddf/state/.arch-handoff.json`、`.rddf/state/.plan-handoff.json`) 串联。经过对现有 8 个 `.md` skill 文件 + 2 个 `.py` 库的完整探索（2026-07-08 审计），发现三类**路径硬编码问题**：
+rdd-workflow v2.0 三阶段架构（ADR-0003）将工作流切分为 `arch → plan → ship`，由 handoff 文件 (`.rddf/state/.arch-handoff.json`、`.rddf/state/.plan-handoff.json`) 串联。经过对现有 8 个 `.md` skill 文件 + 2 个 `.py` 库的完整探索（2026-07-08 审计），发现三类**路径硬编码问题**：
 
 ### 问题 1: arch 阶段产物路径在多端重复硬编码
 

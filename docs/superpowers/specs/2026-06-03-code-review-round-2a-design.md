@@ -105,13 +105,13 @@ Total: 7 files, 10 distinct fixes (some commits bundle multiple sites of the sam
 - Note: this is a larger refactor; the deps.md logic is the most complex in the package. If associative array proves too invasive, alternative is `eval` (carefully escaped) or temp files. Plan to use associative array.
 
 **Task A9 — Medium #24:** `skills/INSTALL.md:175`
-- Old: `curl -sL <raw-url>/install-spec-workflow.sh | bash`
+- Old: `curl -sL <raw-url>/install-rdd-workflow.sh | bash`
 - New (download then execute, with optional checksum verification):
   ```bash
-  curl -sL -o /tmp/install-spec-workflow.sh <raw-url>/install-spec-workflow.sh
+  curl -sL -o /tmp/install-rdd-workflow.sh <raw-url>/install-rdd-workflow.sh
   # Optional: verify checksum here
-  bash /tmp/install-spec-workflow.sh
-  rm -f /tmp/install-spec-workflow.sh
+  bash /tmp/install-rdd-workflow.sh
+  rm -f /tmp/install-rdd-workflow.sh
   ```
 
 **Task A10 — Low #27:** `package.json:12-13`
@@ -151,7 +151,7 @@ Same as Round 1: bash syntax check on all modified bash blocks, negative grep fo
 
 ## 10. Out-of-Scope (Round 2b — needs user decisions)
 
-- Inconsistency #37: skill name standardization (`spec-workflow-*` vs `openspec-workflow-*`)
+- Inconsistency #37: skill name standardization (`rdd-workflow-*` vs `openrdd-workflow-*`)
 - Inconsistency #38: `PROJECT_ROOT` definition (guide.md:162 uses `$(pwd)`, others use `git rev-parse ... || pwd`)
 - Inconsistency #40: `workflow-state.md` format mismatch between guide.md and USAGE.md
 

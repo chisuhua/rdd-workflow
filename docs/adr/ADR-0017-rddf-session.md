@@ -1,5 +1,8 @@
 # ADR-0017: rddf-session — 用户视角工作流会话
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: ✅ 已采纳（已实施）
 > **日期**: 2026-07-09
 > **决策者**: sisyphus
@@ -8,7 +11,7 @@
 
 ## Context
 
-spec-workflow v2.0 实现了三阶段状态机（`guide-arch` → `guide-plan` → `guide-ship`），但**没有跨 OpenCode 会话的 workflow 上下文连续性**：
+rdd-workflow v2.0 实现了三阶段状态机（`guide-arch` → `guide-plan` → `guide-ship`），但**没有跨 OpenCode 会话的 workflow 上下文连续性**：
 
 - 在 OpenCode session A 中执行 `guide-plan` Phase 2 后中断
 - 在 OpenCode session B 中只能看到 `iteration.json` 知道有 proposed changes

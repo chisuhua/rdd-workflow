@@ -1,12 +1,12 @@
 ---
 name: execute
-description: 在 worktree 隔离环境执行 OpenSpec change 的实施计划。基于 .rddf/plans/ 执行,强制 TDD 5 步结构(Write failing test → Verify fail → Implement → Verify pass → Commit)。被 guide-ship 在 plan 阶段后调用。v2.0 整合原 spec-workflow/executing-plans 的 TDD 纪律。
+description: 在 worktree 隔离环境执行 OpenSpec change 的实施计划。基于 .rddf/plans/ 执行,强制 TDD 5 步结构(Write failing test → Verify fail → Implement → Verify pass → Commit)。被 guide-ship 在 plan 阶段后调用。v2.0 整合原 rdd-workflow/executing-plans 的 TDD 纪律。
 license: MIT
 compatibility: Requires openspec CLI and git worktree.
 metadata:
   version: "2.0"
   author: sisyphus
-  evolved-from: "v1.0 P0 roadmap + v2.0 嵌入 TDD 5 步纪律,取代 spec-workflow/executing-plans"
+  evolved-from: "v1.0 P0 roadmap + v2.0 嵌入 TDD 5 步纪律,取代 rdd-workflow/executing-plans"
   user-invocable: true
 ---
 
@@ -124,7 +124,7 @@ test -f "$PLAN_FILE" || { echo "❌ 计划文件不存在"; exit 1; }
 3. **类型一致性**：后序 Task 中使用的类型/函数名是否与前面定义的一致？
 4. **文件路径**：每个 `**Files:**` 中的路径是否合理？（不要求文件已存在，但路径要有意义）
 
-**发现问题** → STOP，回到 guide-ship 重新 `skill_use("spec-workflow/writing-plans")`。
+**发现问题** → STOP，回到 guide-ship 重新 `skill_use("rdd-workflow/writing-plans")`。
 
 **无问题** → 继续 Step 4。
 

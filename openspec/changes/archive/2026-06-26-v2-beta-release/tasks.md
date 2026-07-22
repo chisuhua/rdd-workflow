@@ -6,7 +6,7 @@
 - [ ] 1.4 Performance optimization: state vector caching
 - [ ] 1.5 Performance optimization: event log batch writes
 - [ ] 1.6 Performance optimization: detector/action execution timing
-- [ ] 1.7 Verify `npm install spec-workflow@2.0.0-beta` succeeds in clean environment
+- [ ] 1.7 Verify `npm install rdd-workflow@2.0.0-beta` succeeds in clean environment
 - [ ] 1.8 Verify release notes are complete and reviewed
 - [ ] 1.9 Verify performance metrics (read/write latency < 10ms)
 

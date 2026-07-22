@@ -1,4 +1,4 @@
-# Python dependencies for spec-workflow v2.0
+# Python dependencies for rdd-workflow v3.0
 # Install: pip install -r requirements.txt
 PyYAML>=6.0
 jsonschema>=4.0

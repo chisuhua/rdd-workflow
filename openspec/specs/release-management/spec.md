@@ -1,10 +1,10 @@
 ## ADDED Requirements
 
 ### Requirement: beta-version-published
-The system SHALL publish `spec-workflow@2.0.0-beta` to npm with explicit beta designation.
+The system SHALL publish `rdd-workflow@2.0.0-beta` to npm with explicit beta designation.
 
 #### Scenario: Beta install succeeds
-- **WHEN** user runs `npm install spec-workflow@2.0.0-beta` in a clean project
+- **WHEN** user runs `npm install rdd-workflow@2.0.0-beta` in a clean project
 - **THEN** installation succeeds
 - **AND** v2.0 skills (guide-arch, guide-plan, guide-ship, loop) are available
 

@@ -25,7 +25,7 @@ The system SHALL provide init-adr-directory functionality.
 - **THEN** system implements init-adr-directory correctly
 
 ### Requirement: general-harden-doc-consistency
-The system SHALL harden documentation and code consistency for spec-workflow v1.1 by removing orphan bash helpers, fixing hardcoded branch references, and synchronizing all docs with actual code state.
+The system SHALL harden documentation and code consistency for rdd-workflow v1.1 by removing orphan bash helpers, fixing hardcoded branch references, and synchronizing all docs with actual code state.
 
 #### Scenario: Orphan bash helpers removed
 - **WHEN** `_lib/state.sh` is inspected

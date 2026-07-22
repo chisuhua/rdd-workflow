@@ -19,7 +19,7 @@ skills/
     └── schemas/            # 7 个 JSON Schema，运行时校验需要
 ```
 
-`_lib/` 当前在仓库内能正常 import 是因为 `tests/conftest.py` 把项目根加进了 `sys.path`。一旦 `install.sh` / `INSTALL.md` 复制 `_lib` 到目标项目的 `.opencode/skills/spec-workflow/skills/_lib/`，**绝对导入路径 `skills._lib.X` 不会工作**——除非 `skills/` 在目标项目里也是合法 Python package（需要 `__init__.py`）。
+`_lib/` 当前在仓库内能正常 import 是因为 `tests/conftest.py` 把项目根加进了 `sys.path`。一旦 `install.sh` / `INSTALL.md` 复制 `_lib` 到目标项目的 `.opencode/skills/rdd-workflow/skills/_lib/`，**绝对导入路径 `skills._lib.X` 不会工作**——除非 `skills/` 在目标项目里也是合法 Python package（需要 `__init__.py`）。
 
 依赖链关键点：
 
@@ -88,8 +88,8 @@ find "$PACKAGE_DIR/skills/_lib" \
     -o -type f \( -name '*.py' -o -name '*.json' \) -print | \
 while read -r src; do
     rel="${src#$PACKAGE_DIR/}"
-    mkdir -p "$TARGET_DIR/.opencode/skills/spec-workflow/$(dirname "$rel")"
-    cp -f "$src" "$TARGET_DIR/.opencode/skills/spec-workflow/$rel"
+    mkdir -p "$TARGET_DIR/.opencode/skills/rdd-workflow/$(dirname "$rel")"
+    cp -f "$src" "$TARGET_DIR/.opencode/skills/rdd-workflow/$rel"
 done
 ```
 
@@ -131,10 +131,10 @@ Rationale:
 - 仓库目前没有 Python package metadata（`setup.py` 不存在）
 - 与 INSTALL skill 的"零依赖"哲学冲突
 
-### Alt 3: 不分发 `_lib`，让 npm 用户自己跑 `python3 -m pip install spec-workflow`
+### Alt 3: 不分发 `_lib`，让 npm 用户自己跑 `python3 -m pip install rdd-workflow`
 
 **Rejected**:
-- `spec-workflow` 目前不是 PyPI 包（只是 npm 元仓）
+- `rdd-workflow` 目前不是 PyPI 包（只是 npm 元仓）
 - 引入 PyPI 发布节奏，受 release cycle 约束
 - npm install + pip install 是两套分发渠道，文档/测试要维护两套
 - 用户体验差（要装两次）
@@ -154,7 +154,7 @@ Rationale:
 
 ```bash
 # 单元测试：关键 _lib 模块导入
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_install_lib_distribution.py -v
 # Expected: 全部通过
 

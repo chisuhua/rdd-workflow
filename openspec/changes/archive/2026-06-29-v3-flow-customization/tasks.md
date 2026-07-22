@@ -195,14 +195,14 @@ class FlowCustomizer:
 
 - [ ] **Step 9: Run full unit suite**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q --tb=short`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q --tb=short`
 
 Expected: 165 + 5 + 6 = 176 passed.
 
 - [ ] **Step 10: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/flow_customizer.py skills/_lib/trigger_engine.py tests/unit/test_flow_customizer.py tests/unit/test_trigger_engine.py && git commit -m "feat(flow): add FlowCustomizer + TriggerEngine — ADR-0012 flow customization layer"
+cd /workspace/project/rdd-workflow && git add skills/_lib/flow_customizer.py skills/_lib/trigger_engine.py tests/unit/test_flow_customizer.py tests/unit/test_trigger_engine.py && git commit -m "feat(flow): add FlowCustomizer + TriggerEngine — ADR-0012 flow customization layer"
 ```
 
 ---
@@ -210,13 +210,13 @@ cd /workspace/project/spec-workflow && git add skills/_lib/flow_customizer.py sk
 ## Task 2: Create example flow.yaml
 
 **Files:**
-- Create: `.spec-workflow/flow.yaml.example`
+- Create: `.rdd-workflow/flow.yaml.example`
 
 - [ ] **Step 1: Create example configuration**
 
 ```yaml
-# .spec-workflow/flow.yaml — 流程定制配置（示例）
-# 复制此文件到 .spec-workflow/flow.yaml 并编辑
+# .rdd-workflow/flow.yaml — 流程定制配置（示例）
+# 复制此文件到 .rdd-workflow/flow.yaml 并编辑
 # 不配置此文件 = 使用默认阶段模板（向后兼容）
 version: "2.0"
 
@@ -254,7 +254,7 @@ customizations:
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add .spec-workflow/flow.yaml.example && git commit -m "docs(flow): add example flow.yaml for ADR-0012 customization"
+cd /workspace/project/rdd-workflow && git add .rdd-workflow/flow.yaml.example && git commit -m "docs(flow): add example flow.yaml for ADR-0012 customization"
 ```
 
 ---

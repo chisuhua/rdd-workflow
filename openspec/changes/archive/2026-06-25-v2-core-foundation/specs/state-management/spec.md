@@ -3,7 +3,7 @@
 ### Requirement: state-management-state-vector
 The system SHALL provide a unified state vector as the single source of truth for workflow state.
 
-The state vector SHALL be stored as a JSON file at `.spec-workflow/state-vector.json` and SHALL contain fields: `goal`, `arch_side`, `plan_side`, `ship_side`, `loop_state`, `memory`, `metadata`.
+The state vector SHALL be stored as a JSON file at `.rdd-workflow/state-vector.json` and SHALL contain fields: `goal`, `arch_side`, `plan_side`, `ship_side`, `loop_state`, `memory`, `metadata`.
 
 #### Scenario: State vector write
 - **WHEN** any component updates workflow state
@@ -18,7 +18,7 @@ The state vector SHALL be stored as a JSON file at `.spec-workflow/state-vector.
 ### Requirement: state-management-event-log
 The system SHALL maintain an append-only event log recording all workflow state changes.
 
-The event log SHALL be stored as JSONL at `.spec-workflow/event-log.jsonl`. Each event SHALL have a unique ID in format `evt_YYYYMMDD_HHMMSS_NNN`.
+The event log SHALL be stored as JSONL at `.rdd-workflow/event-log.jsonl`. Each event SHALL have a unique ID in format `evt_YYYYMMDD_HHMMSS_NNN`.
 
 #### Scenario: Event recorded
 - **WHEN** a workflow state transition occurs

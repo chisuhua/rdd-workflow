@@ -4,7 +4,7 @@
 - docs/proposal-suggestions-format.md 假设存在 ADR 引用
 - 9 个 skill 中隐含架构决策未结构化记录
 
-**当前状态**: spec-workflow 项目当前阶段,需要为后续实施奠定基础。
+**当前状态**: rdd-workflow 项目当前阶段,需要为后续实施奠定基础。
 
 **约束**:
 - MUST 使用 bats-core 1.10+
@@ -17,7 +17,7 @@
 In Scope**:
   - 创建 docs/adr/ 目录结构
   - 添加 ADR 模板(ADR-0000-template.md)
-  - 编写首个 ADR(spec-workflow 架构选型)
+  - 编写首个 ADR(rdd-workflow 架构选型)
 - **
 
 **Non-Goals:**

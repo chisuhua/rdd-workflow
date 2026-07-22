@@ -37,7 +37,7 @@ npm test 2>&1 | grep -c "^ok "
 ### Task 0.2: 确认基线测试状态
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 
 # Python (全量)
 python3 -m pytest tests/unit/ -q --tb=short
@@ -69,7 +69,7 @@ bats tests/_lib/test_state.bats 2>&1 | tail -3
 **步骤 A**: `arch_quality_gate.py` 5 处 + `guide-arch.md:870` → ADR-0018
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 sed -i '1s/ADR-0013/ADR-0018/' skills/_lib/arch_quality_gate.py
 sed -i 's/ADR-0013 §3\.1/ADR-0018 §3.1/' skills/_lib/arch_quality_gate.py
 sed -i 's/ADR-0013 §3\.2/ADR-0018 §3.2/' skills/_lib/arch_quality_gate.py
@@ -197,7 +197,7 @@ grep -c "source.*state.sh" skills/propose.md skills/roadmap.md  # → 各 1 处,
 
 ```bash
 # AGENTS.md: "12 个 .md" → "13 个 .md"
-# tests/README.md skill coverage map: 补充 feature / rddf-session / spec-workflow-writing-plans
+# tests/README.md skill coverage map: 补充 feature / rddf-session / rdd-workflow-writing-plans
 ```
 
 **验收**: `grep "个 \.md" AGENTS.md | grep -o "[0-9]\+"` → 13
@@ -287,7 +287,7 @@ bats tests/_lib/test_archive.bats            # → all pass
 
 ### Task 2.5: 文档同步 — tests/README.md coverage map
 
-补充 `feature`, `rddf-session`, `spec-workflow-writing-plans` 和新增 bats 测试到 coverage map。
+补充 `feature`, `rddf-session`, `rdd-workflow-writing-plans` 和新增 bats 测试到 coverage map。
 
 ---
 

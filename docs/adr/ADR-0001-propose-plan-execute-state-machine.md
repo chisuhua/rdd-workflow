@@ -1,4 +1,7 @@
-# ADR-0001: spec-workflow 状态机分相（spec 端 / ship 端状态机分离）
+# ADR-0001: rdd-workflow 状态机分相（spec 端 / ship 端状态机分离）
+
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
 
 > **状态**: 已替代为 ADR-0002 + ADR-0003（已实施）
 > **日期**: 2026-06-08
@@ -7,7 +10,7 @@
 
 ## Context
 
-spec-workflow 是一个面向 OpenSpec 变更管理的工作流技能包。在 spec-workflow v1.0 之前，整个工作流被压在一个庞大的 `guide.md` 状态机中，单一文件承担了：
+rdd-workflow 是一个面向 OpenSpec 变更管理的工作流技能包。在 rdd-workflow v1.0 之前，整个工作流被压在一个庞大的 `guide.md` 状态机中，单一文件承担了：
 
 - 推荐入口（用户首次进入时决定调 `guide-spec` 还是 `guide-ship`）
 - spec 端状态机（setup → roadmap → propose → deps → spec-done）
@@ -23,13 +26,13 @@ spec-workflow 是一个面向 OpenSpec 变更管理的工作流技能包。在 s
 `docs/audit/2026-06-05-workflow-audit.md` 记录了 6 处 P0/P1 缺陷（已通过 v1.1 的 `prometheus-planning` 三级回退链、`$2`/`$3` 列号修复（P0-7）、PROJECT_ROOT 解析（P0-8）、`read -p` 阻塞（P0-9）等修复），全部源于单文件状态机的复杂度。
 
 **约束**:
-- 保持向后兼容：现有 `npx skills add chisuhua/spec-workflow` 用户的工作流不中断
+- 保持向后兼容：现有 `npx skills add chisuhua/rdd-workflow` 用户的工作流不中断
 - 推荐入口必须仍然是无状态的（写一次代码 → 不需要任何 state 文件）
 - 10 个 skill 的内容不重新设计，只做"工作流层"拆分
 
 ## Decision
 
-我们将 spec-workflow 工作流拆分为 **2 状态机 + 1 推荐器 + 10 子技能** 的三层层级结构：
+我们将 rdd-workflow 工作流拆分为 **2 状态机 + 1 推荐器 + 10 子技能** 的三层层级结构：
 
 ```
 推荐器层 (1):     guide

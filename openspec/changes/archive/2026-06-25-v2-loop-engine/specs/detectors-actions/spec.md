@@ -14,10 +14,10 @@ Built-in detectors: `detect_worktrees`, `detect_pending_changes`, `detect_archiv
 - **THEN** total execution time is < 500ms
 
 ### Requirement: detectors-plugin-extension
-The system SHALL allow custom detectors to be loaded from `.spec-workflow/detectors/`.
+The system SHALL allow custom detectors to be loaded from `.rdd-workflow/detectors/`.
 
 #### Scenario: Custom detector loaded
-- **WHEN** a Python file exists in `.spec-workflow/detectors/`
+- **WHEN** a Python file exists in `.rdd-workflow/detectors/`
 - **THEN** its `Detector` subclass is registered and runs alongside built-ins
 
 ### Requirement: actions-builtin-set
@@ -36,8 +36,8 @@ Built-in actions: `action_create_worktree`, `action_generate_plan`, `action_exec
 - **AND** failure is returned to loop engine
 
 ### Requirement: actions-plugin-extension
-The system SHALL allow custom actions to be loaded from `.spec-workflow/actions/`.
+The system SHALL allow custom actions to be loaded from `.rdd-workflow/actions/`.
 
 #### Scenario: Custom action loaded
-- **WHEN** a Python file exists in `.spec-workflow/actions/`
+- **WHEN** a Python file exists in `.rdd-workflow/actions/`
 - **THEN** its `Action` subclass is registered and available for loop engine invocation

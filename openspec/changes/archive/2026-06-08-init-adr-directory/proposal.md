@@ -9,7 +9,7 @@
 - **In Scope**:
 - 创建 docs/adr/ 目录结构
 - 添加 ADR 模板(ADR-0000-template.md)
-- 编写首个 ADR(spec-workflow 架构选型)
+- 编写首个 ADR(rdd-workflow 架构选型)
 - **Out Scope**:
 - 不迁移现有 skill 中的隐含决策
 - 不修改 proposal-suggestions-format.md 引用规则

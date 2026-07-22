@@ -1,14 +1,14 @@
-# spec-workflow v2.0 业务流程全景
+# rdd-workflow v2.0 业务流程全景
 
 > **版本**: 2.0.0
 > **日期**: 2026-07-09
-> **目标读者**: 使用 spec-workflow 的产品经理、架构师、开发者
+> **目标读者**: 使用 rdd-workflow 的产品经理、架构师、开发者
 
 ---
 
 ## 架构理念
 
-spec-workflow v2.0 按**三阶段架构**（ADR-0003）拆分，用户感知的是**三个业务层级**的循环：
+rdd-workflow v2.0 按**三阶段架构**（ADR-0003）拆分，用户感知的是**三个业务层级**的循环：
 
 ```
  Roadmap ──────→ Feature ──────→ Change ──────→ Archive ──────→ Roadmap
@@ -254,7 +254,7 @@ Phase 1: plan（选择 + 准备）
    ├── 创建 branch（openspec/<name>）
    ├── [worktree 模式] git worktree add + WORKTREE VERIFICATION GATE
     ├── [轻量模式] git checkout openspec/<name>
-    └── 生成实施计划（委托 spec-workflow/writing-plans → TDD 5 步结构）
+    └── 生成实施计划（委托 rdd-workflow/writing-plans → TDD 5 步结构）
 
 > ⚠️ **轻量模式 UX 说明**：轻量模式下 `guide-ship` 在主仓库直接切分支（`git checkout openspec/<name>`），你的工作目录会跟随分支变更。worktree 模式则在隔离目录 `.rddf/wt/<name>` 中工作，主分支不变。模式由系统自动选择，不可手动指定。
 

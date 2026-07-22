@@ -39,7 +39,7 @@ Also update `additionalProperties` from `false` to allow these new root-level ke
 
 - [ ] **Step 2: Run existing tests to verify no regression**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_state_vector.py -q --tb=short`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_state_vector.py -q --tb=short`
 
 Expected: All pass (schema extension is backward compatible).
 
@@ -117,7 +117,7 @@ def test_can_execute_returns_true_when_all_deps_met():
 
 - [ ] **Step 2: Run test — verify it fails**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_dependency_scheduler.py -v`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_dependency_scheduler.py -v`
 
 Expected: `ModuleNotFoundError: No module named 'skills._lib.dependency_scheduler'`
 
@@ -192,14 +192,14 @@ class DependencyScheduler:
 
 - [ ] **Step 4: Run tests — verify all pass**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_dependency_scheduler.py -v`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_dependency_scheduler.py -v`
 
 Expected: 7 passed.
 
 - [ ] **Step 5: Commit DependencyScheduler**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/dependency_scheduler.py tests/unit/test_dependency_scheduler.py && git commit -m "feat(session): add DependencyScheduler with Kahn topological sort — ADR-0010 v2.1"
+cd /workspace/project/rdd-workflow && git add skills/_lib/dependency_scheduler.py tests/unit/test_dependency_scheduler.py && git commit -m "feat(session): add DependencyScheduler with Kahn topological sort — ADR-0010 v2.1"
 ```
 
 ---
@@ -277,7 +277,7 @@ def test_create_session_with_parent(session_manager):
 
 - [ ] **Step 2: Run test — verify it fails**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_session_manager.py -v`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_session_manager.py -v`
 
 Expected: `ModuleNotFoundError: No module named 'skills._lib.session_manager'`
 
@@ -452,14 +452,14 @@ class SessionManager:
 
 - [ ] **Step 4: Run tests — verify all pass**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_session_manager.py -v`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_session_manager.py -v`
 
 Expected: 6 passed.
 
 - [ ] **Step 5: Commit SessionManager**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/session_manager.py tests/unit/test_session_manager.py && git commit -m "feat(session): add SessionManager with parallel mode — ADR-0010 v2.1"
+cd /workspace/project/rdd-workflow && git add skills/_lib/session_manager.py tests/unit/test_session_manager.py && git commit -m "feat(session): add SessionManager with parallel mode — ADR-0010 v2.1"
 ```
 
 ---
@@ -484,7 +484,7 @@ Change ADR-0010 row from `⚠️ 部分实施（v2.0 轻量级）` to `✅ 已�
 - [ ] **Step 3: Commit ADR update**
 
 ```bash
-cd /workspace/project/spec-workflow && git add docs/adr/ADR-0010-multi-session-management.md docs/adr/README.md && git commit -m "docs(adr): ADR-0010 status → implemented (v2.1 multi-session complete)"
+cd /workspace/project/rdd-workflow && git add docs/adr/ADR-0010-multi-session-management.md docs/adr/README.md && git commit -m "docs(adr): ADR-0010 status → implemented (v2.1 multi-session complete)"
 ```
 
 ---
@@ -493,25 +493,25 @@ cd /workspace/project/spec-workflow && git add docs/adr/ADR-0010-multi-session-m
 
 - [ ] **Step 1: Run all unit tests**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q --tb=short`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q --tb=short`
 
 Expected: 145 + 7 + 6 = 158 passed.
 
 - [ ] **Step 2: Run all integration tests**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/integration/ -q --tb=short`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/integration/ -q --tb=short`
 
 Expected: All pass.
 
 - [ ] **Step 3: Verify openspec validate**
 
-Run: `cd /workspace/project/spec-workflow && openspec validate v2-multi-session`
+Run: `cd /workspace/project/rdd-workflow && openspec validate v2-multi-session`
 
 Expected: Valid.
 
 - [ ] **Step 4: Check git log**
 
-Run: `cd /workspace/project/spec-workflow && git log --oneline -8`
+Run: `cd /workspace/project/rdd-workflow && git log --oneline -8`
 
 Expected: Clean, focused commits.
 

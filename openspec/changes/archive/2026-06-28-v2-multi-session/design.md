@@ -30,7 +30,7 @@ True parallelism requires separate processes (Python GIL). `ProcessPoolExecutor`
 
 ### Decision 3: Opt-in via config, not automatic
 
-Full parallel mode is opt-in via `.spec-workflow.json`: `{"session": {"mode": "parallel"}}`. Default stays sequential (v2.0 behavior). Zero breakage for existing users.
+Full parallel mode is opt-in via `.rdd-workflow.json`: `{"session": {"mode": "parallel"}}`. Default stays sequential (v2.0 behavior). Zero breakage for existing users.
 
 ### Decision 4: DAG resolution at change level, not task level
 

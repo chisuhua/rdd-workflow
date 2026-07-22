@@ -1,8 +1,11 @@
 # ADR-0013: Extract scan-state logic from skills/guide.md into skills/_lib/scan-state.sh
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 已采纳
 > **日期**: 2026-07-07
-> **决策者**: spec-workflow maintainers
+> **决策者**: rdd-workflow maintainers
 > **替代**: (无)
 
 ## Context

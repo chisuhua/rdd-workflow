@@ -5,7 +5,7 @@ STATUS: PROPOSED
 
 ## Context
 
-spec-workflow v2.0.2 已完成核心架构迁移 (arch → plan → ship 三阶段) + rddf-session binding + iteration lifecycle + arch quality gate + change alignment。本 change 是 **2026-07-14 全量债务审计**的修复执行。
+rdd-workflow v2.0.2 已完成核心架构迁移 (arch → plan → ship 三阶段) + rddf-session binding + iteration lifecycle + arch quality gate + change alignment。本 change 是 **2026-07-14 全量债务审计**的修复执行。
 
 审计基于 code-review-graph 结构分析 (1416 节点 / 10533 边) + 手动 grep/read 三方交叉验证,发现 22 项债务。本 change 覆盖其中 **11 项立即修复 + 本迭代修复**,其余 P3 观察项留待后续。
 
@@ -97,10 +97,10 @@ v2.0.2 重编号后,`ADR-0013` 语义分裂,需要按上下文分两路修正:
 **选择**: Wave 2 先做出 **"独立 CLI vs 集成" 的显式决策** + 添加 bats 基础测试;完整拆分留待后续 change。
 
 **决策标准**:
-- 如果 `rddf` 被视为 spec-workflow 的一部分 → Wave 2 只加测试,后续 change 做拆分
+- 如果 `rddf` 被视为 rdd-workflow 的一部分 → Wave 2 只加测试,后续 change 做拆分
 - 如果 `rddf` 被视为独立 CLI → Wave 2 将它移出到独立仓库
 
-**默认假设**: `rddf` 是 spec-workflow CLI 入口,保持集成,本 change 只加测试。
+**默认假设**: `rddf` 是 rdd-workflow CLI 入口,保持集成,本 change 只加测试。
 
 ### Decision 5: sync_state.py 的去留
 

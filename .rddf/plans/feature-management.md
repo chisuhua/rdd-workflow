@@ -135,7 +135,7 @@ class TestFeatureViewSchema:
 - [ ] **Step 2: Run tests, expect FAIL (schema file does not exist yet)**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_feature_view.py::TestFeatureViewSchema -v 2>&1 | head -30
 ```
 
@@ -146,7 +146,7 @@ Expected: `FileNotFoundError` or `jsonschema.SchemaError` for missing schema.
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://spec-workflow.dev/schemas/feature_view_schema.json",
+  "$id": "https://rdd-workflow.dev/schemas/feature_view_schema.json",
   "title": "FeatureView",
   "description": "Derived view of features (groups of changes) inside iteration.json. Written by skills/_lib/feature_view.py.",
   "type": "object",
@@ -212,7 +212,7 @@ Expected: `FileNotFoundError` or `jsonschema.SchemaError` for missing schema.
 - [ ] **Step 4: Run tests, expect PASS**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_feature_view.py::TestFeatureViewSchema -v
 ```
 
@@ -221,7 +221,7 @@ Expected: 6 passed.
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add skills/_lib/schemas/feature_view_schema.json tests/unit/test_feature_view.py
 git commit -m "feat(feature-view): JSON schema v1 + 6 validation tests"
 ```
@@ -287,7 +287,7 @@ class TestGroupChangesByFeature:
 - [ ] **Step 2: Run tests, expect FAIL (module does not exist)**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_feature_view.py::TestGroupChangesByFeature -v 2>&1 | tail -20
 ```
 
@@ -365,7 +365,7 @@ def group_changes_by_feature(changes: list[dict]) -> dict[str, list[str]]:
 - [ ] **Step 4: Run tests, expect PASS**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_feature_view.py::TestGroupChangesByFeature -v
 ```
 
@@ -374,7 +374,7 @@ Expected: 4 passed.
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add skills/_lib/feature_view.py tests/unit/test_feature_view.py
 git commit -m "feat(feature-view): group_changes_by_feature + 4 tests"
 ```
@@ -437,7 +437,7 @@ class TestRollupStatus:
 - [ ] **Step 2: Run tests, expect FAIL**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_feature_view.py::TestRollupStatus -v 2>&1 | tail -10
 ```
 
@@ -478,7 +478,7 @@ def rollup_status(changes: list[dict]) -> str:
 - [ ] **Step 4: Run tests, expect PASS**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_feature_view.py::TestRollupStatus -v
 ```
 
@@ -487,7 +487,7 @@ Expected: 6 passed.
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add skills/_lib/feature_view.py tests/unit/test_feature_view.py
 git commit -m "feat(feature-view): rollup_status with priority chain + 6 tests"
 ```
@@ -554,7 +554,7 @@ class TestComputeFeatureEdges:
 - [ ] **Step 2: Run tests, expect FAIL**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_feature_view.py::TestComputeFeatureEdges -v 2>&1 | tail -10
 ```
 
@@ -603,7 +603,7 @@ def compute_feature_edges(
 - [ ] **Step 4: Run tests, expect PASS**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_feature_view.py::TestComputeFeatureEdges -v
 ```
 
@@ -612,7 +612,7 @@ Expected: 5 passed.
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add skills/_lib/feature_view.py tests/unit/test_feature_view.py
 git commit -m "feat(feature-view): compute_feature_edges (all-pairs-hard rule) + 5 tests"
 ```
@@ -665,7 +665,7 @@ class TestComputeParallelGroups:
 - [ ] **Step 2: Run tests, expect FAIL**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_feature_view.py::TestComputeParallelGroups -v 2>&1 | tail -10
 ```
 
@@ -723,7 +723,7 @@ def compute_parallel_groups(
 - [ ] **Step 4: Run tests, expect PASS**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_feature_view.py::TestComputeParallelGroups -v
 ```
 
@@ -732,7 +732,7 @@ Expected: 4 passed.
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add skills/_lib/feature_view.py tests/unit/test_feature_view.py
 git commit -m "feat(feature-view): compute_parallel_groups (BFS topo) + 4 tests"
 ```
@@ -782,7 +782,7 @@ class TestRenderMermaid:
 - [ ] **Step 2: Run tests, expect FAIL**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_feature_view.py::TestRenderMermaid -v 2>&1 | tail -10
 ```
 
@@ -825,7 +825,7 @@ def render_mermaid(
 - [ ] **Step 4: Run tests, expect PASS**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_feature_view.py::TestRenderMermaid -v
 ```
 
@@ -834,7 +834,7 @@ Expected: 4 passed.
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add skills/_lib/feature_view.py tests/unit/test_feature_view.py
 git commit -m "feat(feature-view): render_mermaid + 4 tests"
 ```
@@ -851,7 +851,7 @@ git commit -m "feat(feature-view): render_mermaid + 4 tests"
 - [ ] **Step 1: Verify and patch iteration_schema.json if needed**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 head -30 skills/_lib/schemas/iteration_schema.json
 ```
 
@@ -937,7 +937,7 @@ class TestUpdateIterationFeatureView:
 - [ ] **Step 3: Run tests, expect FAIL**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_feature_view.py::TestUpdateIterationFeatureView -v 2>&1 | tail -15
 ```
 
@@ -1093,7 +1093,7 @@ def update_iteration_feature_view(project_root: str) -> int:
 - [ ] **Step 5: Run tests, expect PASS**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_feature_view.py::TestUpdateIterationFeatureView -v
 ```
 
@@ -1102,7 +1102,7 @@ Expected: 3 passed. (If `it_mod.load` rejects the test fixture because of schema
 - [ ] **Step 6: Run full unit test suite, expect ALL PASS**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/ -q --tb=short
 ```
 
@@ -1111,7 +1111,7 @@ Expected: 27+ passed (16 new + 27 existing). If pre-existing tests fail, do not 
 - [ ] **Step 7: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add skills/_lib/feature_view.py skills/_lib/schemas/iteration_schema.json tests/unit/test_feature_view.py
 git commit -m "feat(feature-view): orchestrator with cycle handling + 3 tests"
 ```
@@ -1137,7 +1137,7 @@ metadata:
   depends-on: [iteration, deps_output]
 ---
 
-# OpenSpec Workflow — Feature Management
+# OpenRDD Workflow — Feature Management
 
 > **Pure derived view** — never mutates any change artifacts. Reads `iteration.json`
 > and (optionally) `deps-analysis.json`, writes only the `feature_view` node back
@@ -1320,7 +1320,7 @@ esac
 The repo already has an `openspec/changes/archive/` directory. First, ensure `iteration.json` exists by running `python3 -c "from skills._lib import iteration; import json; d = iteration.load('.') or {'version': 1, 'changes': []}; iteration.save('.', d)"` (this creates an empty iteration.json if absent). Then:
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 export PROJECT_ROOT=$(pwd)
 bash skills/feature.md summary 2>&1 | head -20
 bash skills/feature.md graph 2>&1 | head -20
@@ -1333,7 +1333,7 @@ Expected: graceful output (empty tables, helpful hints) for each. No tracebacks.
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add skills/feature.md
 git commit -m "feat(feature): skill body with 4 subcommands (summary/graph/status/order)"
 ```
@@ -1445,7 +1445,7 @@ EOF
 - [ ] **Step 2: Run bats tests, expect PASS**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_feature_skill.bats
 ```
 
@@ -1454,7 +1454,7 @@ Expected: 6 ok, 0 failed. (If `bats` is not installed, install bats-core or run 
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add tests/integration/test_feature_skill.bats
 git commit -m "test(feature): 6 bats integration tests for feature skill"
 ```
@@ -1508,7 +1508,7 @@ Find the `skills/` enumeration in AGENTS.md (e.g., `loop_engine.py # v2.0 Loop �
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add skills/guide.md skills/INSTALL.md README.md AGENTS.md
 git commit -m "docs(feature): add feature to guide/INSTALL/README/AGENTS"
 ```
@@ -1522,7 +1522,7 @@ git commit -m "docs(feature): add feature to guide/INSTALL/README/AGENTS"
 - [ ] **Step 1: Run full test suite**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/ -q --tb=short
 bats tests/integration/test_feature_skill.bats
 ```
@@ -1532,7 +1532,7 @@ Expected: all green. (Bats smoke and the existing 51 integration tests are not i
 - [ ] **Step 2: Run CI constant-truth gate**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 if grep -rn "assert .* or True" tests/ 2>/dev/null; then
     echo "❌ CI gate FAILED: assert ... or True pattern found"
     exit 1
@@ -1568,7 +1568,7 @@ Walk the spec's §2 Goals and §6.2 Field reference line by line. Each item shou
 - [ ] **Step 4: Commit any pending doc fixes and final tag**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git status
 # If anything is uncommitted, commit it now with a clear message.
 git log --oneline -5

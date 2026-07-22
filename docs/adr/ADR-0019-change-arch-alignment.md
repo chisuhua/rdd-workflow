@@ -1,5 +1,8 @@
 # ADR-0019: change_arch_alignment — change 提案与架构对齐检查
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: ✅ 已采纳
 > **日期**: 2026-07-10
 > **决策者**: sisyphus

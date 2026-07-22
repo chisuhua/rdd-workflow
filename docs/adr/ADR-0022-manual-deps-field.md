@@ -1,5 +1,8 @@
 # ADR-0022: Manual Deps Field for roadmap-meta.yaml
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 已采纳
 > **日期**: 2026-07-20
 > **作者**: sisyphus (with Oracle analysis of `.rddf/orch_plans/` necessity)
@@ -7,7 +10,7 @@
 
 ## Context
 
-spec-workflow 存在一个缺口：deps 分析（3 轴静态：文件冲突、ADR 引用、接口依赖）纯粹是派生的。用户无法声明"change A 必须在 change B 之前运行"，即便静态分析检测不到任何文件级冲突。`deps-analysis.json` 中的 `parallel_group` 字段是拓扑计算的——用户无法覆盖它。
+rdd-workflow 存在一个缺口：deps 分析（3 轴静态：文件冲突、ADR 引用、接口依赖）纯粹是派生的。用户无法声明"change A 必须在 change B 之前运行"，即便静态分析检测不到任何文件级冲突。`deps-analysis.json` 中的 `parallel_group` 字段是拓扑计算的——用户无法覆盖它。
 
 现有的编排机制（`roadmap.md`、`proposal-suggestions.md`、`iteration.json.feature_view`）要么太粗，要么太派生。所需要的是字段级的表达能力：让 `roadmap-meta.yaml` 承载人工编写的依赖声明。
 

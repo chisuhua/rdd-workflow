@@ -17,7 +17,7 @@ The v2.0 architecture (ADR-0004) describes a Loop-driven engine that replaces v1
 
 ### New Capabilities
 - `loop-engine`: Main loop cycle with 5 building blocks + safety mechanisms (max iterations, retries, oscillation detection, circuit breaker)
-- `detectors`: 8 built-in state detectors with extension API via `.spec-workflow/detectors/`
+- `detectors`: 8 built-in state detectors with extension API via `.rdd-workflow/detectors/`
 - `actions`: 7 built-in actions with subprocess invocation + 30-min timeout
 - `interaction-modes`: Loop / Menu / Hybrid modes with runtime config override
 - `human-in-loop-nodes`: 7 key node types (arch.adr_create, plan.change_select, ship.archive_confirm, etc.) with 3 verification modes (human/multi_model/script)

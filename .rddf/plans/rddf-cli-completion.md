@@ -16,8 +16,8 @@
 
 | File | Responsibility |
 |---|---|
-| `skills/_lib/cli/version_cmd.py` | `rddf version` — read `package.json`, print `rddf v<X.Y.Z> — spec-workflow CLI` |
-| `skills/_lib/cli/init_cmd.py` | `rddf init [target]` — copy `skills/`, `_lib/`, `package.json`, and the `skills/cli/rddf.sh` shim to `<target>/.opencode/skills/spec-workflow/` |
+| `skills/_lib/cli/version_cmd.py` | `rddf version` — read `package.json`, print `rddf v<X.Y.Z> — rdd-workflow CLI` |
+| `skills/_lib/cli/init_cmd.py` | `rddf init [target]` — copy `skills/`, `_lib/`, `package.json`, and the `skills/cli/rddf.sh` shim to `<target>/.opencode/skills/rdd-workflow/` |
 | `skills/_lib/cli/archive_cmd.py` | `rddf archive <name>` — subprocess to `archive.sh` `archive_change` (thin wrapper, not a reimplementation) |
 | `skills/_lib/cli/guide_cmd.py` | `rddf guide` — port of `scan-state.sh::scan_state` 10-priority ladder; reads `.arch-handoff.json`, `.plan-handoff.json`, `openspec/changes/`, `proposal-suggestions.md`, `roadmap.md`; emits `RECOMMEND` + `REASON` |
 
@@ -109,17 +109,17 @@ from skills._lib.cli import version_cmd
 def fake_package_json(tmp_path, monkeypatch):
     """Create a fake package.json with a known version."""
     pkg = tmp_path / "package.json"
-    pkg.write_text(json.dumps({"version": "2.0.7", "name": "spec-workflow"}))
+    pkg.write_text(json.dumps({"version": "2.0.7", "name": "rdd-workflow"}))
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
     return tmp_path
 
 
 def test_cmd_version_prints_banner(fake_package_json, capsys):
-    """cmd_version prints 'rddf v<version> — spec-workflow CLI' to stdout."""
+    """cmd_version prints 'rddf v<version> — rdd-workflow CLI' to stdout."""
     rc = version_cmd.cmd_version([])
     captured = capsys.readouterr()
     assert rc == 0
-    assert captured.out == "rddf v2.0.7 — spec-workflow CLI\n"
+    assert captured.out == "rddf v2.0.7 — rdd-workflow CLI\n"
 
 
 def test_cmd_version_exits_zero(fake_package_json):
@@ -140,7 +140,7 @@ def test_cmd_version_missing_package_json(tmp_path, monkeypatch, capsys):
 def test_cmd_version_missing_version_field(tmp_path, monkeypatch, capsys):
     """When package.json exists but has no 'version' field, fall back to '0.0.0'."""
     pkg = tmp_path / "package.json"
-    pkg.write_text(json.dumps({"name": "spec-workflow"}))
+    pkg.write_text(json.dumps({"name": "rdd-workflow"}))
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
     rc = version_cmd.cmd_version([])
     captured = capsys.readouterr()
@@ -161,7 +161,7 @@ Write `skills/_lib/cli/version_cmd.py`:
 """``rddf version`` subcommand handler.
 
 Reads the ``version`` field from ``<project_root>/package.json`` and prints
-the canonical banner ``rddf v<X.Y.Z> — spec-workflow CLI``. Project root
+the canonical banner ``rddf v<X.Y.Z> — rdd-workflow CLI``. Project root
 is injected by ``cli.__main__`` via the ``RDDF_PROJECT_ROOT`` env var;
 falls back to ``os.getcwd()`` when unset (so direct test invocation
 works).
@@ -204,7 +204,7 @@ def cmd_version(args: list[str]) -> int:
         return 1
 
     version = data.get("version") or "0.0.0"
-    print(f"rddf v{version} — spec-workflow CLI")
+    print(f"rddf v{version} — rdd-workflow CLI")
     return 0
 
 
@@ -225,13 +225,13 @@ git commit -m "feat(rddf): add version_cmd.py with package.json reading"
 
 ---
 
-## Task 2: `init_cmd.py` — install spec-workflow to target
+## Task 2: `init_cmd.py` — install rdd-workflow to target
 
 **Files:**
 - Create: `skills/_lib/cli/init_cmd.py`
 - Create: `tests/unit/test_cli_init.py`
 
-Copies the spec-workflow distribution (skills, _lib, package.json, the new `skills/cli/rddf.sh` shim) to `<target>/.opencode/skills/spec-workflow/`. Default target is the current project's `.opencode/skills/spec-workflow/`. Returns 0 on success, 1 if source files are missing.
+Copies the rdd-workflow distribution (skills, _lib, package.json, the new `skills/cli/rddf.sh` shim) to `<target>/.opencode/skills/rdd-workflow/`. Default target is the current project's `.opencode/skills/rdd-workflow/`. Returns 0 on success, 1 if source files are missing.
 
 - [ ] **Step 2.1: Write the failing test**
 
@@ -252,7 +252,7 @@ from skills._lib.cli import init_cmd
 
 @pytest.fixture
 def fake_repo(tmp_path, monkeypatch):
-    """Build a fake spec-workflow repo at tmp_path/repo with required source files.
+    """Build a fake rdd-workflow repo at tmp_path/repo with required source files.
 
     Layout:
         tmp_path/repo/
@@ -282,11 +282,11 @@ def fake_repo(tmp_path, monkeypatch):
 
 
 def test_cmd_init_copies_to_target_dir(fake_repo, capsys):
-    """cmd_init copies skills/, _lib/, package.json, skills/cli/rddf.sh to <target>/.opencode/skills/spec-workflow/."""
+    """cmd_init copies skills/, _lib/, package.json, skills/cli/rddf.sh to <target>/.opencode/skills/rdd-workflow/."""
     repo, target = fake_repo
     rc = init_cmd.cmd_init([str(target)])
     assert rc == 0
-    dest = target / ".opencode" / "skills" / "spec-workflow"
+    dest = target / ".opencode" / "skills" / "rdd-workflow"
     assert (dest / "package.json").is_file()
     assert (dest / "skills" / "INSTALL.md").is_file()
     assert (dest / "skills" / "guide" / "SKILL.md").is_file()
@@ -295,9 +295,9 @@ def test_cmd_init_copies_to_target_dir(fake_repo, capsys):
 
 
 def test_cmd_init_creates_parent_dirs(fake_repo, capsys):
-    """cmd_init creates .opencode/skills/spec-workflow/ if it does not exist."""
+    """cmd_init creates .opencode/skills/rdd-workflow/ if it does not exist."""
     repo, target = fake_repo
-    dest = target / ".opencode" / "skills" / "spec-workflow"
+    dest = target / ".opencode" / "skills" / "rdd-workflow"
     assert not dest.exists()
     rc = init_cmd.cmd_init([str(target)])
     assert rc == 0
@@ -309,7 +309,7 @@ def test_cmd_init_default_target_is_project_root(fake_repo, monkeypatch, capsys)
     repo, target = fake_repo
     rc = init_cmd.cmd_init([])
     assert rc == 0
-    dest = repo / ".opencode" / "skills" / "spec-workflow"
+    dest = repo / ".opencode" / "skills" / "rdd-workflow"
     assert (dest / "skills" / "INSTALL.md").is_file()
 
 
@@ -353,7 +353,7 @@ Write `skills/_lib/cli/init_cmd.py`:
 ```python
 """``rddf init [target]`` subcommand handler.
 
-Installs the spec-workflow distribution to ``<target>/.opencode/skills/spec-workflow/``.
+Installs the rdd-workflow distribution to ``<target>/.opencode/skills/rdd-workflow/``.
 Default target is the current project (``RDDF_PROJECT_ROOT``).
 
 Layout copied (relative to source project root):
@@ -403,7 +403,7 @@ def cmd_init(args: list[str]) -> int:
 
     project_root = Path(os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd())
     target_str = args[0] if args else str(project_root)
-    target = Path(target_str) / ".opencode" / "skills" / "spec-workflow"
+    target = Path(target_str) / ".opencode" / "skills" / "rdd-workflow"
 
     # Verify source layout exists.
     missing = [s for s in _INSTALL_SOURCES if not (project_root / s).exists()]
@@ -447,7 +447,7 @@ def cmd_init(args: list[str]) -> int:
         os.chmod(target / "rddf.sh", 0o755)
 
     skills_md_count = sum(1 for _ in (target / "skills").glob("*.md")) if (target / "skills").is_dir() else 0
-    print("📦 安装 spec-workflow 到项目")
+    print("📦 安装 rdd-workflow 到项目")
     print(f"   目标: {target}")
     print(f"   技能文件: {skills_md_count} 个")
     print(f"   工具库:   _lib ({sum(1 for _ in (target / '_lib').iterdir()) if (target / '_lib').is_dir() else 0} 文件)")
@@ -459,7 +459,7 @@ def cmd_init(args: list[str]) -> int:
 def _print_help() -> None:
     print("usage: rddf init [target]")
     print()
-    print("Install spec-workflow to <target>/.opencode/skills/spec-workflow/.")
+    print("Install rdd-workflow to <target>/.opencode/skills/rdd-workflow/.")
     print("Default target is RDDF_PROJECT_ROOT (the current project).")
 
 
@@ -1258,7 +1258,7 @@ def _print_help() -> None:
     print("  validate     Quality gate checks")
     print("  monitor      Live monitor (--watch=<sec>)")
     print("  archive <n>  Archive a change (merge → openspec archive → cleanup)")
-    print("  init [tgt]   Install spec-workflow to target's .opencode/skills/")
+    print("  init [tgt]   Install rdd-workflow to target's .opencode/skills/")
     print("  guide        Project state scan + recommendation")
     print("  version      Print rddf version")
     print()
@@ -1295,7 +1295,7 @@ Edit `skills/cli/rddf.sh` (lines 1-8). The current comment is implicit (`PACKAGE
 
 ```bash
 #!/usr/bin/env bash
-# rddf — spec-workflow CLI entry point (thin shim → python3 -m skills._lib.cli)
+# rddf — rdd-workflow CLI entry point (thin shim → python3 -m skills._lib.cli)
 #
 # Subcommands (12): dashboard, status, feature, sessions, deps, cleanup,
 #                   validate, monitor, archive, init, guide, version
@@ -1396,7 +1396,7 @@ Write `rddf` (overwrite the 1525-line file):
 
 ```bash
 #!/usr/bin/env bash
-# rddf — spec-workflow CLI entry point (shim)
+# rddf — rdd-workflow CLI entry point (shim)
 #
 # This file is now a 5-line shim. All logic lives in the Python CLI at
 # `python3 -m skills._lib.cli`, invoked via `skills/cli/rddf.sh`.
@@ -1510,6 +1510,6 @@ git commit -am "test(rddf): fixup regression found in full-suite run"
 
 **Recommended execution mode**: Run the tasks in order (1→9). Each task ends with a commit, so progress is preserved if any task fails. The shim collapse (Task 8) is the most user-visible change and should be reviewed carefully before the final commit.
 
-**Worktree**: This plan assumes execution in a worktree at `.rddf/wt/rddf-cli-completion` (per spec-workflow convention). If running in the main repo, ensure no other worktrees are active (`git worktree list` should show only the main repo).
+**Worktree**: This plan assumes execution in a worktree at `.rddf/wt/rddf-cli-completion` (per rdd-workflow convention). If running in the main repo, ensure no other worktrees are active (`git worktree list` should show only the main repo).
 
 **Skip Task 3 (archive_cmd) if the user wants to defer the archive.sh bash subprocess**: the only consequence is that `rddf archive <name>` will continue to use the legacy root `rddf`'s `rddf_archive` function via main() — but main() now delegates to Python, so `archive` will not work without Task 3. So Task 3 is required.

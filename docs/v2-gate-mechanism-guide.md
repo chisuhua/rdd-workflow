@@ -1,4 +1,4 @@
-# spec-workflow v2.0 门控机制指南
+# rdd-workflow v2.0 门控机制指南
 
 > **版本**: 2.0.0  
 > **日期**: 2026-06-22  
@@ -195,10 +195,10 @@ Arch 阶段 ──[门控]──→ Plan 阶段 ──[门控]──→ Ship 阶
 
 ### 插件结构
 
-门控插件是 Python 脚本，位于 `.spec-workflow/gates/` 目录：
+门控插件是 Python 脚本，位于 `.rdd-workflow/gates/` 目录：
 
 ```
-.spec-workflow/
+.rdd-workflow/
 └── gates/
     ├── arch_done.py
     ├── plan_done.py
@@ -282,7 +282,7 @@ def check(state: dict) -> dict:
     "arch_done": [
       {
         "name": "custom_adr_check",
-        "script": ".spec-workflow/gates/arch_done.py",
+        "script": ".rdd-workflow/gates/arch_done.py",
         "severity": "error"
       }
     ]
@@ -503,7 +503,7 @@ def get_repair_suggestions(check_name: str) -> list:
 对于复杂检查，编写自定义插件：
 
 ```python
-# .spec-workflow/gates/custom_quality_check.py
+# .rdd-workflow/gates/custom_quality_check.py
 
 def check(state: dict) -> dict:
     """自定义质量检查"""
@@ -530,7 +530,7 @@ def check(state: dict) -> dict:
 
 ```bash
 # 查看门控失败统计
-spec-workflow gates stats
+rdd-workflow gates stats
 
 # 输出:
 # Gate: arch_done
@@ -567,7 +567,7 @@ cat .rddf/state/state-vector.json | jq '.arch_side'
 ls docs/adr/ADR-*.md | wc -l
 
 # 4. 检查门控插件逻辑
-cat .spec-workflow/gates/arch_done.py
+cat .rdd-workflow/gates/arch_done.py
 ```
 
 ---
@@ -585,7 +585,7 @@ cat .rddf/state/event-log.jsonl | jq 'select(.type == "gate_error")'
 python3 -c "import state_vector; print('OK')"
 
 # 3. 检查插件语法
-python3 -m py_compile .spec-workflow/gates/arch_done.py
+python3 -m py_compile .rdd-workflow/gates/arch_done.py
 
 # 4. 手动运行插件
 python3 -c "

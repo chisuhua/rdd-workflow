@@ -1,4 +1,4 @@
-# spec-workflow v2.0 审判委员会指南
+# rdd-workflow v2.0 审判委员会指南
 
 > **版本**: 2.0.0  
 > **日期**: 2026-06-22  
@@ -22,7 +22,7 @@
 
 ### 什么是审判委员会？
 
-审判委员会（Tribunal Committee）是 spec-workflow v2.0 的**多 Agent 交叉验证机制**，通过多个 AI 模型独立评估执行结果，提高决策质量。
+审判委员会（Tribunal Committee）是 rdd-workflow v2.0 的**多 Agent 交叉验证机制**，通过多个 AI 模型独立评估执行结果，提高决策质量。
 
 ```
 Executor Agent ──→ 评分: 0.90
@@ -667,7 +667,7 @@ Architect: 0.88
 
 ```bash
 # 查看验证统计
-spec-workflow verification stats
+rdd-workflow verification stats
 
 # 输出:
 # 总验证次数: 100

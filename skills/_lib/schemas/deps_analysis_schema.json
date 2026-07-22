@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://spec-workflow.dev/schemas/deps_analysis_schema.json",
+  "$id": "https://rdd-workflow.dev/schemas/deps_analysis_schema.json",
   "title": "Spec Workflow Deps Analysis (Structured)",
   "description": "Machine-readable counterpart to .rddf/state/.deps-output.md. Consumed by the iteration.json sync hook (deps.md Step 6) and any future planning tooling. Stored at .rddf/state/deps-analysis.json.",
   "type": "object",

@@ -2,7 +2,7 @@
 
 > 基于 `guide` 推荐器（arch-side 调 `guide-arch`，plan-side 调 `guide-plan`，ship-side 调 `guide-ship`），覆盖从提案到归档的完整生命周期。
 > 支持多 change 并行执行，可分离到不同终端同时运行。
-> 当前版本: **v2.0 / v2.0.1**（三阶段架构 arch → plan → ship + Loop 引擎 + `spec-workflow/writing-plans` 自包含计划生成器 + `iteration.json` sprint 视图 + 结构化 deps 输出 + `rddf-session` 跨 OpenCode session 恢复）。`package.json` 仍标 `2.0.0`，但工作流文档与状态契约以 v2.0.1 为准。
+> 当前版本: **v2.0 / v2.0.1**（三阶段架构 arch → plan → ship + Loop 引擎 + `rdd-workflow/writing-plans` 自包含计划生成器 + `iteration.json` sprint 视图 + 结构化 deps 输出 + `rddf-session` 跨 OpenCode session 恢复）。`package.json` 仍标 `2.0.0`，但工作流文档与状态契约以 v2.0.1 为准。
 
 > 📋 **v2.0.2 changelog（sync-workflow-contracts 已落地，2026-07-13）**：
 > - 13 个 Markdown skill 全部发布到 `package.json::skills[]`（含 `feature` + `rddf-session`），无 src-only 例外
@@ -51,7 +51,7 @@
 | `proposal-suggestions.md` | 项目根目录 | 扫描出的建议列表（JSON 数组格式），随 git 版本控制 | `propose` / `roadmap` / `status` / `guide-arch` / `guide-plan` |
 | `openspec/changes/<name>/tasks.md` | change 目录 | Execute 阶段任务清单（权威进度来源） | `execute` / `guide-ship` |
 | `docs/adr/ADR-*.md` | ADR 目录 | 架构决策记录（propose 扫描 + 引用源） | 用户手工编写（待 propose 扫描拾取） |
-| `.rddf/plans/<name>.md` | worktree 内或主仓库（轻量模式） | Prometheus 计划文件（ship 端产物，git tracked） | `spec-workflow/writing-plans` / `guide-ship` |
+| `.rddf/plans/<name>.md` | worktree 内或主仓库（轻量模式） | Prometheus 计划文件（ship 端产物，git tracked） | `rdd-workflow/writing-plans` / `guide-ship` |
 | `.rddf/state/.arch-handoff.json` | `.rddf/state/`（gitignored） | arch → plan 阶段交接状态（arch_complete_at / arch_artifacts / adr_dir / roadmap_path / discovered）+ ADR-0016 发现契约 v1 | `guide-arch`（arch-done 写入）/ `guide-plan`（Phase 0 读取+fallback defaults） |
 | `.rddf/state/.plan-handoff.json` | `.rddf/state/`（gitignored） | plan → ship 阶段交接状态（plan_complete_at / committed_changes / ship_started_at） | `guide-plan`（plan-done 写入）/ `guide-ship`（ship-start 读取） |
 | `.rddf/state/sessions.json` | `.rddf/state/`（gitignored） | **rddf-session 生命周期**（ADR-0017）— 跨 OpenCode session 工作流恢复（stage_arch / stage_plan / stage_ship + heartbeat + 4 选项冲突处理） | `guide-arch` / `guide-plan` / `guide-ship` 入口 + `rddf-session` 技能 5 子命令 |
@@ -98,7 +98,7 @@
 
 ### 完整 skill 列表
 
-`skills/` 目录当前包含 **13 个 Markdown skill 文件**（`INSTALL` + `guide` + `guide-arch` + `guide-plan` + `guide-ship` + `feature` + `propose` + `roadmap` + `deps` + `execute` + `status` + `rddf-session` + `spec-workflow/writing-plans`）外加 `loop_engine.py`。**v2.0.2 起** `package.json::skills[]` 已**完整发布全部 13 个**（含 `feature` + `rddf-session`），与磁盘无差异。
+`skills/` 目录当前包含 **13 个 Markdown skill 文件**（`INSTALL` + `guide` + `guide-arch` + `guide-plan` + `guide-ship` + `feature` + `propose` + `roadmap` + `deps` + `execute` + `status` + `rddf-session` + `rdd-workflow/writing-plans`）外加 `loop_engine.py`。**v2.0.2 起** `package.json::skills[]` 已**完整发布全部 13 个**（含 `feature` + `rddf-session`），与磁盘无差异。
 
 | Skill | 用途 | 触发方式 |
 |-------|------|---------|
@@ -114,7 +114,7 @@
 | `execute` | 在 worktree（或轻量模式当前分支）内执行任务，写 `tasks.md` 进度 | `guide-ship` 内部 / worktree 内单独使用 |
 | `status` | 状态查看（tasks.md 进度 + iteration.json） | `guide-ship` 内部 / 单独使用 |
 | `rddf-session` | **跨 OpenCode session 恢复**（ADR-0017）— 5 子命令：list / resume / abandon / heartbeat / status | `skill_use("rddf-session", "<sub>")` |
-| `spec-workflow/writing-plans` | 实施计划生成器（TDD 5 步结构，自包含，零外部依赖） | `guide-ship` Phase 1 内部 |
+| `rdd-workflow/writing-plans` | 实施计划生成器（TDD 5 步结构，自包含，零外部依赖） | `guide-ship` Phase 1 内部 |
 
 ### Loop 引擎（v2.0）
 
@@ -328,7 +328,7 @@ i. 手动输入 change 名称
 
 ### Phase 1 — Plan（Commit + 模式检测 + 计划生成）
 
-为已提交的 change 创建工作区（worktree 或轻量分支）并生成 spec-workflow 计划。
+为已提交的 change 创建工作区（worktree 或轻量分支）并生成 rdd-workflow 计划。
 
 **入口条件**：`openspec/changes/<name>/{proposal,design,tasks}.md` 已 git 提交（`git show HEAD:<path>` 验证）。
 
@@ -341,7 +341,7 @@ i. 手动输入 change 名称
    - 无其他 worktree **且** 仅此一个 change → ⚡ 轻量模式（创建 `openspec/<name>` branch + `git checkout`，**跳过** worktree 创建；后续归档走轻量归档路径）
    - 有活跃 worktree **或** 多个 change → 🔀 worktree 模式（创建 `.rddf/wt/<name>` 隔离 worktree；归档走 `archive_change`）
 6. 在选定工作区通过内置 skill 生成计划：
-   - `spec-workflow/writing-plans` — 直接生成 `.rddf/plans/<CHANGE_NAME>.md`
+   - `rdd-workflow/writing-plans` — 直接生成 `.rddf/plans/<CHANGE_NAME>.md`
    - 计划包含 TDD 5 步结构：Write failing test → Verify fail → Implement → Verify pass → **Summary / ready-for-archive**
    - **注意**：TDD 5 步中的「Commit」一词在 plan 词汇里指**「总结报告 + 标记该 Task 可进入 archive」的 archive 交接标记**，**不是** execute 阶段的 `git commit`；execute 阶段本身**不**做 `git commit` / `git push`，所有 git commit 动作留到 archive 阶段
    - 零外部依赖，零路径桥接，任何 AI 编程助手通用
@@ -754,7 +754,7 @@ skill_use("guide-ship")
 
 ## 测试基础设施
 
-> spec-workflow 验证的测试组织与运行约定。
+> rdd-workflow 验证的测试组织与运行约定。
 
 ### 工具链
 
@@ -899,7 +899,7 @@ ADR 状态字段遵循 `docs/adr/README.md` 的五状态生命周期：
 | worktree 分支冲突 | `git worktree add` 失败 | 提供 `git worktree list` 查看现有 |
 | 未 plan 就 status | `.rddf/plans/<name>.md` 不存在 | 提示先执行 plan |
 | execute 不在工作区内 | `git branch --show-current` 非 `openspec/<name>`（轻量模式）/ 不在 `.rddf/wt/<name>`（worktree 模式） | 提示先 `cd` 到正确工作区（worktree 模式：`cd "$PROJECT_ROOT/.rddf/wt/<name>"`；轻量模式：`cd "$PROJECT_ROOT" && git checkout openspec/<name>`）或使用分离执行 |
-| spec-workflow/writing-plans 生成失败 | `.rddf/plans/<name>.md` 未生成 | 检查 worktree 内 skills 是否完整安装；手动触发 `skill_use("spec-workflow/writing-plans")` |
+| rdd-workflow/writing-plans 生成失败 | `.rddf/plans/<name>.md` 未生成 | 检查 worktree 内 skills 是否完整安装；手动触发 `skill_use("rdd-workflow/writing-plans")` |
 | bats-core 缺失 | `bats --version` 失败 | 提示安装 bats-core 1.10+ |
 | ADR 引用格式错误 | `grep -E "ADR-[0-9]+ §[0-9]+" proposal.md` 无匹配 | 提示按 ADR-NNN §N.M 格式补充 |
 

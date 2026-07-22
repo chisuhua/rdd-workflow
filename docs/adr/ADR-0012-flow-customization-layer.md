@@ -1,5 +1,8 @@
 # ADR-0012: 流程定制层
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 已采纳
 > **日期**: 2026-06-22
 > **决策者**: sisyphus
@@ -17,7 +20,7 @@
 
 **设计约束**：
 - 必须保持**向后兼容**：不配置定制规则时，行为与当前完全一致
-- 必须保持**版本兼容**：spec-workflow 升级时，用户的定制配置不被破坏
+- 必须保持**版本兼容**：rdd-workflow 升级时，用户的定制配置不被破坏
 - 必须保持**安全性**：条件表达式不能直接 eval，必须有受限的语法
 - 必须与 ADR-0005 的 Human-in-Loop **共用验证机制**
 
@@ -27,11 +30,11 @@
 
 ### 设计 1：增量覆盖模式
 
-用户**只声明增量**，不声明完整序列。spec-workflow 升级时，默认步骤的变更会自动合并到用户的配置中。
+用户**只声明增量**，不声明完整序列。rdd-workflow 升级时，默认步骤的变更会自动合并到用户的配置中。
 
 **用户配置**：
 ```yaml
-# .spec-workflow/flow.yaml
+# .rdd-workflow/flow.yaml
 version: "2.0"
 
 customizations:
@@ -426,7 +429,7 @@ def verify_step_result(self, step: StepDefinition, result: StepResult) -> bool:
 ### 完整配置示例
 
 ```yaml
-# .spec-workflow/flow.yaml
+# .rdd-workflow/flow.yaml
 version: "2.0"
 
 description: "包含安全审查和合规检查的开发流程"
@@ -547,7 +550,7 @@ customizations:
 
 ## 评估标准
 
-1. **向后兼容**：无 `.spec-workflow/flow.yaml` 时，行为与当前完全一致
+1. **向后兼容**：无 `.rdd-workflow/flow.yaml` 时，行为与当前完全一致
 2. **增量覆盖**：默认步骤升级时，用户定制配置不被破坏
 3. **条件表达式安全**：解析器不执行任意代码，只支持预定义函数
 4. **回退限制**：`on_failure_max_retries` 有效防止无限循环

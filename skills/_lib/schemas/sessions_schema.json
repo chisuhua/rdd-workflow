@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://spec-workflow.dev/schemas/sessions_schema.json",
+  "$id": "https://rdd-workflow.dev/schemas/sessions_schema.json",
   "title": "RddfSessions",
   "description": "rddf-session lifecycle persistence for cross-opencode-session workflow recovery. Written by skills/_lib/rddf_session.py. See ADR-0017.",
   "type": "object",

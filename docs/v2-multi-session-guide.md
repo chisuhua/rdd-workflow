@@ -1,4 +1,4 @@
-# spec-workflow v2.0 多会话使用指南
+# rdd-workflow v2.0 多会话使用指南
 
 > **版本**: 2.0.0  
 > **日期**: 2026-06-22  
@@ -21,7 +21,7 @@
 
 ### 什么是多会话？
 
-多会话（Multi-Session）允许主会话创建子会话，子会话并行执行 spec-workflow 流程，并与父会话协作。
+多会话（Multi-Session）允许主会话创建子会话，子会话并行执行 rdd-workflow 流程，并与父会话协作。
 
 ### 会话角色
 
@@ -245,7 +245,7 @@ self.coordinator.update_worker_progress(
 
 ```bash
 # 查看所有会话
-spec-workflow session list
+rdd-workflow session list
 
 # 输出:
 # 会话列表:
@@ -255,7 +255,7 @@ spec-workflow session list
 #   └─ sess_20260622_003         worker       running    33%       add-user-profile
 
 # 查看特定会话详情
-spec-workflow session show sess_20260622_001
+rdd-workflow session show sess_20260622_001
 
 # 输出:
 # 会话详情:
@@ -274,7 +274,7 @@ spec-workflow session show sess_20260622_001
 
 ```bash
 # 实时监控股话进度
-watch -n 2 'spec-workflow session list'
+watch -n 2 'rdd-workflow session list'
 
 # 或使用事件流
 tail -f .rddf/state/event-log.jsonl | jq 'select(.type == "session_progress")'
@@ -284,7 +284,7 @@ tail -f .rddf/state/event-log.jsonl | jq 'select(.type == "session_progress")'
 
 ```bash
 # 生成会话报告
-spec-workflow session report
+rdd-workflow session report
 
 # 输出:
 # 会话报告:
@@ -321,17 +321,17 @@ spec-workflow session report
 **解决**:
 ```bash
 # 1. 查看子会话心跳
-spec-workflow session show sess_20260622_002
+rdd-workflow session show sess_20260622_002
 
 # 输出:
 # 最后心跳: 2026-06-22T10:15:00Z (15 分钟前)
 
 # 2. 检查是否超时（默认 10 分钟无心跳视为卡住）
 # 3. 重启子会话
-spec-workflow session restart sess_20260622_002
+rdd-workflow session restart sess_20260622_002
 
 # 4. 或中止子会话
-spec-workflow session abort sess_20260622_002
+rdd-workflow session abort sess_20260622_002
 ```
 
 ---
@@ -343,7 +343,7 @@ spec-workflow session abort sess_20260622_002
 **解决**:
 ```bash
 # 1. 查看失败原因
-spec-workflow session show sess_20260622_002
+rdd-workflow session show sess_20260622_002
 
 # 输出:
 # 状态: failed
@@ -358,7 +358,7 @@ cat .rddf/state/event-log.jsonl | jq 'select(.data.session_id == "sess_20260622_
 # - 中止所有子会话
 
 # 4. 重启子会话
-spec-workflow session restart sess_20260622_002
+rdd-workflow session restart sess_20260622_002
 ```
 
 ---
@@ -379,7 +379,7 @@ cat .rddf/state/state-vector.json | jq '.sub_sessions[] | {session_id, progress,
 # total = (0.67*1 + 0.33*1) / (1+1) = 0.50
 
 # 3. 如果计算错误，手动修复
-spec-workflow session recalculate-progress
+rdd-workflow session recalculate-progress
 ```
 
 ---
@@ -469,7 +469,7 @@ skill_use("rddf-session", "resume", "rds_a3f2b1c9d8e7")
 
 ### 存储与 Schema
 
-- **文件**：`/workspace/project/spec-workflow/.rddf/state/sessions.json`（gitignored）
+- **文件**：`/workspace/project/rdd-workflow/.rddf/state/sessions.json`（gitignored）
 - **Schema**：`skills/_lib/schemas/sessions_schema.json` v1
 - **并发**：fcntl.flock 保护 + 原子写（write-tmp + rename）
 

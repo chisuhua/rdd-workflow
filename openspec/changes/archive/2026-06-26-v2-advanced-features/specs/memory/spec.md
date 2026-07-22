@@ -3,7 +3,7 @@
 ### Requirement: memory-execution-history
 The system SHALL record each loop execution to a memory file for later analysis.
 
-Memory stored at `.spec-workflow/memory.jsonl` as JSONL. Each record contains: `change_name`, `goal`, `config`, `iterations`, `result`, `failure_reason` (if any), `timestamp`.
+Memory stored at `.rdd-workflow/memory.jsonl` as JSONL. Each record contains: `change_name`, `goal`, `config`, `iterations`, `result`, `failure_reason` (if any), `timestamp`.
 
 #### Scenario: Execution recorded
 - **WHEN** a loop execution completes

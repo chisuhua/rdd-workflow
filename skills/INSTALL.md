@@ -1,26 +1,26 @@
 ---
 name: INSTALL
-description: 安装 Spec Workflow 技能——支持全局安装（~/.agents/skills/，跨项目可用）和项目安装（.opencode/skills/spec-workflow/）。全局安装还自动安装 Python 依赖和 rddf CLI。
+description: 安装 RDD Workflow 技能——支持全局安装（~/.agents/skills/，跨项目可用）和项目安装（.opencode/skills/rdd-workflow/）。全局安装后从 1 个顶层 INSTALL.md 加 12 个 per-skill 子目录复制全部 13 个子技能到目标位置；自动安装 Python 依赖和 rddf CLI。
 alias: install
-version: "2.0"
+version: "3.0"
 author: sisyphus
 ---
 
-# Spec Workflow 安装程序
+# RDD Workflow 安装程序
 
-本技能将 Spec Workflow 的子技能安装到当前项目目录。
+本技能将 RDD Workflow 的 13 个子技能安装到当前项目目录。
 
 ## 两种安装模式
 
 | 模式 | 命令 | 目标 | 适用场景 |
 |------|------|------|---------|
 | **全局** | `bash install.sh --global` | `~/.agents/skills/` | 多个项目共享，OpenCode 自动发现 |
-| **项目** | `skill_use("INSTALL")` 或 `bash install.sh` | `.opencode/skills/spec-workflow/` | 单个项目隔离安装 |
+| **项目** | `skill_use("INSTALL")` 或 `bash install.sh` | `.opencode/skills/rdd-workflow/` | 单个项目隔离安装 |
 
 ### 全局安装（推荐）
 
 ```bash
-cd /path/to/spec-workflow-repo
+cd /path/to/rdd-workflow-repo
 bash install.sh --global
 ```
 
@@ -102,7 +102,7 @@ echo "📁 项目根目录: $PROJECT_ROOT"
 
 ```bash
 # 创建项目技能目录（如果不存在）
-SKILLS_DIR="$PROJECT_ROOT/.opencode/skills/spec-workflow"
+SKILLS_DIR="$PROJECT_ROOT/.opencode/skills/rdd-workflow"
 
 mkdir -p "$SKILLS_DIR"
 
@@ -116,12 +116,12 @@ echo "✅ 技能目录已创建: $SKILLS_DIR"
 
 ```bash
 # 获取技能包位置（兼容 macOS/BSD）
-PACKAGE_DIR=$(dirname "$(dirname "$(realpath "$0" 2>/dev/null || echo "$HOME/.agents/skills/spec-workflow")")")
+PACKAGE_DIR=$(dirname "$(dirname "$(realpath "$0" 2>/dev/null || echo "$HOME/.agents/skills/rdd-workflow")")")
 
 # 检查技能包是否存在
 if [ ! -d "$PACKAGE_DIR/skills" ]; then
     echo "❌ 找不到技能包: $PACKAGE_DIR/skills"
-    echo "   请确认已正确安装 spec-workflow 技能包"
+    echo "   请确认已正确安装 rdd-workflow 技能包"
     exit 1
 fi
 
@@ -162,7 +162,7 @@ fi
 # Python sys.path 提示：target 项目的 root 需要在 sys.path 才能 `from skills._lib.X import Y`
 # 在 AI 助手环境中通常已经满足（conftest.py 自动加）; 在 npx 直接调用场景需用户配置
 cat >> "$SKILLS_DIR/INSTALL_NOTES.txt" << 'NOTES'
-skills/ 已被复制到本项目 .opencode/skills/spec-workflow/ 下。
+skills/ 已被复制到本项目 .opencode/skills/rdd-workflow/ 下。
 
 要让 skills/<name>/SKILL.md 中的 Python depends-on 模块能 import，需要：
 1. 确保本项目根目录在 Python sys.path 中（多数 AI 编程助手自动处理）
@@ -204,9 +204,9 @@ if [ ! -f "$SKILLS_DIR/package.json" ]; then
     fi
     cat > "$SKILLS_DIR/package.json" << EOF
 {
-  "name": "spec-workflow",
+  "name": "rdd-workflow",
   "version": "${PKG_VERSION}",
-  "description": "Spec Workflow - OpenSpec \u5de5\u4f5c\u6d41\u6280\u80fd\u5305\uff08propose\u2192plan\u2192execute\u2192status\u2192archive\uff09",
+  "description": "RDD Workflow - OpenSpec \u5de5\u4f5c\u6d41\u6280\u80fd\u5305\uff08propose\u2192plan\u2192execute\u2192status\u2192archive\uff09",
   "author": "sisyphus",
   "skills": [${PKG_SKILLS}]
 }
@@ -219,20 +219,20 @@ fi
 
 ```bash
 # 创建 install.sh 脚本到项目根目录
-cat > "$PROJECT_ROOT/install-spec-workflow.sh" << 'SCRIPT'
+cat > "$PROJECT_ROOT/install-rdd-workflow.sh" << 'SCRIPT'
 #!/bin/bash
-# Spec Workflow 安装脚本（供其他 AI 助手使用）
-# 用法: bash install-spec-workflow.sh
+# RDD Workflow 安装脚本（供其他 AI 助手使用）
+# 用法: bash install-rdd-workflow.sh
 
 set -e
 
-PACKAGE_DIR="${PACKAGE_DIR:-$HOME/.agents/skills/spec-workflow}"
+PACKAGE_DIR="${PACKAGE_DIR:-$HOME/.agents/skills/rdd-workflow}"
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 
-echo "📦 安装 Spec Workflow 到: $PROJECT_ROOT"
+echo "📦 安装 RDD Workflow 到: $PROJECT_ROOT"
 
 # 创建目录
-mkdir -p "$PROJECT_ROOT/.opencode/skills/spec-workflow/skills"
+mkdir -p "$PROJECT_ROOT/.opencode/skills/rdd-workflow/skills"
 
 # 复制技能（递归 per-skill 子目录 + INSTALL.md 在顶层）
 if [ -d "$PACKAGE_DIR/skills" ]; then
@@ -241,22 +241,22 @@ if [ -d "$PACKAGE_DIR/skills" ]; then
         [ "$skill_name" = "_lib" ] && continue
         [ "$skill_name" = "__pycache__" ] && continue
         if [ -d "$skill_dir" ]; then
-            mkdir -p "$PROJECT_ROOT/.opencode/skills/spec-workflow/skills/$skill_name/scripts" \
-                     "$PROJECT_ROOT/.opencode/skills/spec-workflow/skills/$skill_name/references"
-            [ -f "$skill_dir/SKILL.md" ] && cp -f "$skill_dir/SKILL.md" "$PROJECT_ROOT/.opencode/skills/spec-workflow/skills/$skill_name/"
+            mkdir -p "$PROJECT_ROOT/.opencode/skills/rdd-workflow/skills/$skill_name/scripts" \
+                     "$PROJECT_ROOT/.opencode/skills/rdd-workflow/skills/$skill_name/references"
+            [ -f "$skill_dir/SKILL.md" ] && cp -f "$skill_dir/SKILL.md" "$PROJECT_ROOT/.opencode/skills/rdd-workflow/skills/$skill_name/"
         fi
     done
-    cp -f "$PACKAGE_DIR/skills/INSTALL.md" "$PROJECT_ROOT/.opencode/skills/spec-workflow/skills/"
+    cp -f "$PACKAGE_DIR/skills/INSTALL.md" "$PROJECT_ROOT/.opencode/skills/rdd-workflow/skills/"
     echo "✅ 技能已安装"
-    ls -1 "$PROJECT_ROOT/.opencode/skills/spec-workflow/skills/"
+    ls -1 "$PROJECT_ROOT/.opencode/skills/rdd-workflow/skills/"
 else
     echo "❌ 找不到技能包: $PACKAGE_DIR/skills"
     exit 1
 fi
 SCRIPT
 
-chmod +x "$PROJECT_ROOT/install-spec-workflow.sh"
-echo "✅ 安装脚本已创建: $PROJECT_ROOT/install-spec-workflow.sh"
+chmod +x "$PROJECT_ROOT/install-rdd-workflow.sh"
+echo "✅ 安装脚本已创建: $PROJECT_ROOT/install-rdd-workflow.sh"
 ```
 
 ### 步骤 6：验证安装
@@ -280,34 +280,34 @@ echo "下一步: 重新加载 session 或执行 skill_use(\"guide\")"
 ```bash
 # 全局安装（跨项目可用，推荐）
 # 安装后 ~/.agents/skills/ 下每个子技能自动被 OpenCode 发现
-bash ~/.agents/skills/spec-workflow/install.sh --global
+bash ~/.agents/skills/rdd-workflow/install.sh --global
 
 # 项目安装（单项目隔离）
 # 方式 1: 使用安装脚本
-bash ~/.agents/skills/spec-workflow/install.sh /your/project
+bash ~/.agents/skills/rdd-workflow/install.sh /your/project
 
 # 方式 2: 直接复制
-cp -r ~/.agents/skills/spec-workflow/skills /your/project/.opencode/skills/spec-workflow/
+cp -r ~/.agents/skills/rdd-workflow/skills /your/project/.opencode/skills/rdd-workflow/
 
 # 方式 3: 使用安装脚本（旧方式）
-bash install-spec-workflow.sh
+bash install-rdd-workflow.sh
 
 # 方式 4: Git 克隆
-git clone <repo-url> /path/to/spec-workflow && bash /path/to/spec-workflow/install.sh --global
+git clone <repo-url> /path/to/rdd-workflow && bash /path/to/rdd-workflow/install.sh --global
 ```
 
 ## 卸载
 
 ```bash
-rm -rf "$PROJECT_ROOT/.opencode/skills/spec-workflow"
-rm -f "$PROJECT_ROOT/install-spec-workflow.sh"
+rm -rf "$PROJECT_ROOT/.opencode/skills/rdd-workflow"
+rm -f "$PROJECT_ROOT/install-rdd-workflow.sh"
 ```
 
 ## 元信息
 
 | 字段 | 值 |
 |------|-----|
-| 包名称 | spec-workflow |
+| 包名称 | rdd-workflow |
 | 别名 | workflow, install |
 | 版本 | 2.0.0-beta |
 | 作者 | sisyphus |

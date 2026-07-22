@@ -1,5 +1,8 @@
 # ADR-0007: 门控机制设计 (Gate Mechanism)
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 已采纳
 > **日期**: 2026-06-22
 > **决策者**: sisyphus
@@ -8,7 +11,7 @@
 
 ## Context
 
-spec-workflow v1.x 的阶段切换只有简单验证（如"active_changes.count >= 1"），缺乏严格的检查清单和失败处理机制。在 v2.0 的三阶段架构（arch → plan → ship）中，需要确保每个阶段完成时必须通过质量检查，才能进入下一阶段。
+rdd-workflow v1.x 的阶段切换只有简单验证（如"active_changes.count >= 1"），缺乏严格的检查清单和失败处理机制。在 v2.0 的三阶段架构（arch → plan → ship）中，需要确保每个阶段完成时必须通过质量检查，才能进入下一阶段。
 
 **核心问题**:
 1. **质量保障缺失**: 阶段切换时没有检查清单，可能跳过关键步骤
@@ -218,7 +221,7 @@ def handle_gate_failure(self, result: GateResult, state: StateVector):
 支持用户添加自定义检查：
 
 ```python
-# .spec-workflow/plugins/my_gate_checks.py
+# .rdd-workflow/plugins/my_gate_checks.py
 
 def custom_adr_compliance_check(state: StateVector) -> bool:
     """自定义检查：ADR 合规性"""

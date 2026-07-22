@@ -30,8 +30,8 @@
 
 ## 4. Configuration Parser (P1-T4)
 
-- [x] 4.1 Create `skills/_lib/config.py` with `ConfigParser` class (parse `.spec-workflow.json` and `loop.yaml`)
-- [x] 4.2 Implement priority-merge: runtime params > loop.yaml > .spec-workflow.json > env vars > defaults
+- [x] 4.1 Create `skills/_lib/config.py` with `ConfigParser` class (parse `.rdd-workflow.json` and `loop.yaml`)
+- [x] 4.2 Implement priority-merge: runtime params > loop.yaml > .rdd-workflow.json > env vars > defaults
 - [x] 4.3 Create `skills/_lib/defaults.py` with default values (mode=hybrid, max_iterations=100, max_retries=3)
 - [x] 4.4 Read env vars: `SPEC_WORKFLOW_MODE`, `SPEC_WORKFLOW_MAX_ITERATIONS` with type conversion
 - [x] 4.5 Validate required fields, enum values (mode in loop/menu/hybrid), numeric ranges (max_iterations > 0)
@@ -50,6 +50,6 @@
 ## 6. Integration & Documentation
 
 - [x] 6.1 Update `docs/v2-api-reference.md` with new public APIs
-- [x] 6.2 Update `docs/v2-config-schema.md` with `.spec-workflow.json` schema
+- [x] 6.2 Update `docs/v2-config-schema.md` with `.rdd-workflow.json` schema
 - [x] 6.3 Run full test suite: `pytest tests/unit/`
 - [x] 6.4 Verify zero regressions in v1.x skills (run `tests/integration/`)

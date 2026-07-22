@@ -1,5 +1,8 @@
 # ADR-0021: Phase 2 Per-Skill Helper Migration Strategy
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 已采纳（v2.0.8 archive 后切换）
 > **日期**: 2026-07-17
 > **作者**: sisyphus (with Metis hostile review of `skills-reorg-phase2-single-skeleton`)

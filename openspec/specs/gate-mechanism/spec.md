@@ -37,12 +37,12 @@ The system SHALL provide default gate checks for `arch_done`, `plan_done`, and `
 - **THEN** transition is rejected with message "ADR required before planning"
 
 ### Requirement: gate-mechanism-plugin-api
-The system SHALL allow extension via plugins loaded from `.spec-workflow/plugins/`.
+The system SHALL allow extension via plugins loaded from `.rdd-workflow/plugins/`.
 
 The plugin API SHALL provide `register_gate_check(check: Check)` to add custom checks.
 
 #### Scenario: Plugin gate check loaded
-- **WHEN** a plugin file exists in `.spec-workflow/plugins/`
+- **WHEN** a plugin file exists in `.rdd-workflow/plugins/`
 - **THEN** its registered gate checks are added to the default checklist
 
 ### Requirement: gate-mechanism-actionable-suggestions

@@ -5,7 +5,7 @@ STATUS: PROPOSED
 
 ## Why
 
-2026-07-14 对 spec-workflow 仓库 (116 文件 / 1416 节点 / 7766 行代码) 进行全量架构/技术/代码债务审计,发现 **22 项债务** (3 P0 / 6 P1 / 8 P2 / 5 P3)。pytest 545/545 + bats 7/7 全绿,但以下问题形成系统性风险:
+2026-07-14 对 rdd-workflow 仓库 (116 文件 / 1416 节点 / 7766 行代码) 进行全量架构/技术/代码债务审计,发现 **22 项债务** (3 P0 / 6 P1 / 8 P2 / 5 P3)。pytest 545/545 + bats 7/7 全绿,但以下问题形成系统性风险:
 
 ### P0 立即修复 (数据完整性影响)
 
@@ -23,13 +23,13 @@ v2.0.2 将 `ADR-0013-incremental-skeleton-planning.md` 重编号为 `ADR-0020`,�
 
 **漂移 3 — `tests/smoke.bats` 硬编码 10 个 skill,不保护新增 skill**
 
-smoke.bats:19 声明 "all 10 skill files exist" 并显式检查 10 个文件名。AGENTS.md 和 README 说 13 个 skill,磁盘上也是 13 个。stale 测试不会 fail (因为抽查的文件都在),但新增的 `feature`, `rddf-session`, `spec-workflow-writing-plans` 不在保护范围内。
+smoke.bats:19 声明 "all 10 skill files exist" 并显式检查 10 个文件名。AGENTS.md 和 README 说 13 个 skill,磁盘上也是 13 个。stale 测试不会 fail (因为抽查的文件都在),但新增的 `feature`, `rddf-session`, `rdd-workflow-writing-plans` 不在保护范围内。
 
 ### P1 本迭代 (架构/测试债务)
 
 **漂移 4 — `rddf` 1505 行单文件 monolith,核心 CLI 0 测试覆盖**
 
-`rddf` 是 27 个函数的 bash 单体,知识图谱显示 `spec-workflow-rddf` community (36 nodes) 与库模块零耦合 — 已退化成独立 CLI。`rddf_archive`, `rddf_help`, `rddf_cleanup`, `rddf_init` 等核心入口函数全部在 `untested_hotspots` 列表中 (degree 29-53)。
+`rddf` 是 27 个函数的 bash 单体,知识图谱显示 `rdd-workflow-rddf` community (36 nodes) 与库模块零耦合 — 已退化成独立 CLI。`rddf_archive`, `rddf_help`, `rddf_cleanup`, `rddf_init` 等核心入口函数全部在 `untested_hotspots` 列表中 (degree 29-53)。
 
 **漂移 5 — Python 3.14 弃用警告 82 个**
 

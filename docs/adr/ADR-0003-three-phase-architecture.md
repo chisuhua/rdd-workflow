@@ -1,5 +1,8 @@
 # ADR-0003: 三阶段架构重构 (arch → plan → ship)
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 已采纳
 > **日期**: 2026-06-22
 > **决策者**: sisyphus
@@ -7,7 +10,7 @@
 
 ## Context
 
-spec-workflow v1.x 采用**双阶段架构**（spec 端 + ship 端），以 `git commit artifacts` 为切分点：
+rdd-workflow v1.x 采用**双阶段架构**（spec 端 + ship 端），以 `git commit artifacts` 为切分点：
 
 ```
 v1.x 架构:

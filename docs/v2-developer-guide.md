@@ -1,8 +1,8 @@
-# spec-workflow v2.0 开发者指南
+# rdd-workflow v2.0 开发者指南
 
 > **版本**: 2.0.0  
 > **日期**: 2026-06-22  
-> **目标读者**: 想要扩展 spec-workflow 的开发者
+> **目标读者**: 想要扩展 rdd-workflow 的开发者
 
 ---
 
@@ -21,15 +21,15 @@
 
 ## 概述
 
-spec-workflow v2.0 是**高度可扩展**的架构，允许开发者自定义：
+rdd-workflow v2.0 是**高度可扩展**的架构，允许开发者自定义：
 
 | 扩展点 | 说明 | 文件位置 |
 |--------|------|---------|
-| **Detectors** | 状态检测器 | `.spec-workflow/detectors/` |
-| **Actions** | 执行动作 | `.spec-workflow/actions/` |
-| **Gates** | 门控检查 | `.spec-workflow/gates/` |
-| **Verifiers** | 验证脚本 | `.spec-workflow/verifiers/` |
-| **Human-in-Loop** | 人工节点 | `.spec-workflow/human_nodes/` |
+| **Detectors** | 状态检测器 | `.rdd-workflow/detectors/` |
+| **Actions** | 执行动作 | `.rdd-workflow/actions/` |
+| **Gates** | 门控检查 | `.rdd-workflow/gates/` |
+| **Verifiers** | 验证脚本 | `.rdd-workflow/verifiers/` |
+| **Human-in-Loop** | 人工节点 | `.rdd-workflow/human_nodes/` |
 
 ---
 
@@ -93,7 +93,7 @@ print(result["message"])  # "Found 2 pending changes"
       {
         "name": "pending_changes",
         "class": "PendingChangesDetector",
-        "script": ".spec-workflow/detectors/pending_changes.py"
+        "script": ".rdd-workflow/detectors/pending_changes.py"
       }
     ]
   }
@@ -211,7 +211,7 @@ print(result["message"])  # "Created ADR-0010: Multi-session management"
       {
         "name": "create_adr",
         "class": "CreateADRAction",
-        "script": ".spec-workflow/actions/create_adr.py"
+        "script": ".rdd-workflow/actions/create_adr.py"
       }
     ]
   }
@@ -328,7 +328,7 @@ def scan_security_issues() -> list:
     "ship_done": [
       {
         "name": "code_quality_check",
-        "script": ".spec-workflow/gates/code_quality.py",
+        "script": ".rdd-workflow/gates/code_quality.py",
         "severity": "warning"
       }
     ]
@@ -469,7 +469,7 @@ if __name__ == "__main__":
       {
         "node": "plan.change_select",
         "verification_mode": "script",
-        "script": ".spec-workflow/verifiers/verify_change.py"
+        "script": ".rdd-workflow/verifiers/verify_change.py"
       }
     ]
   }
@@ -604,7 +604,7 @@ result = node.execute({
       {
         "node": "arch.architecture_review",
         "class": "ArchitectureReviewNode",
-        "script": ".spec-workflow/human_nodes/architecture_review.py",
+        "script": ".rdd-workflow/human_nodes/architecture_review.py",
         "verification_mode": "human",
         "skip_if": "never"
       }
@@ -620,14 +620,14 @@ result = node.execute({
 ### 1. 创建扩展目录
 
 ```bash
-mkdir -p .spec-workflow/{detectors,actions,gates,verifiers,human_nodes}
+mkdir -p .rdd-workflow/{detectors,actions,gates,verifiers,human_nodes}
 ```
 
 ### 2. 编写扩展代码
 
 ```bash
 # 创建自定义 detector
-cat > .spec-workflow/detectors/pending_changes.py << 'EOF'
+cat > .rdd-workflow/detectors/pending_changes.py << 'EOF'
 from state_vector import StateVector
 
 class PendingChangesDetector:
@@ -657,7 +657,7 @@ cat > .rddf.json << 'EOF'
       {
         "name": "pending_changes",
         "class": "PendingChangesDetector",
-        "script": ".spec-workflow/detectors/pending_changes.py"
+        "script": ".rdd-workflow/detectors/pending_changes.py"
       }
     ]
   }
@@ -671,7 +671,7 @@ EOF
 # 测试 detector
 python3 -c "
 from state_vector import StateVector
-from .spec-workflow.detectors.pending_changes import PendingChangesDetector
+from .rdd-workflow.detectors.pending_changes import PendingChangesDetector
 
 sv = StateVector()
 detector = PendingChangesDetector(sv)
@@ -683,7 +683,7 @@ print(result)
 ### 5. 提交扩展
 
 ```bash
-git add .spec-workflow/
+git add .rdd-workflow/
 git commit -m "Add custom pending_changes detector"
 ```
 
@@ -700,7 +700,7 @@ git commit -m "Add custom pending_changes detector"
 
 import unittest
 from unittest.mock import Mock
-from .spec-workflow.detectors.pending_changes import PendingChangesDetector
+from .rdd-workflow.detectors.pending_changes import PendingChangesDetector
 
 class TestPendingChangesDetector(unittest.TestCase):
     

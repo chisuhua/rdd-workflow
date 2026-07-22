@@ -34,7 +34,7 @@ non_goals:
   - Adding new gates to non-spec files (e.g., CHANGELOG, ADR) (out of scope)
 risk_level: low
 cross_repo:
-  - None (spec-workflow meta-repo only)
+  - None (rdd-workflow meta-repo only)
   - No TaskRunner or UsrLinuxEmu impact
 estimated_loc_change:
   new files: ~400 lines (2 utilities + 2 test files + spec.md)

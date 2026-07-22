@@ -8,7 +8,7 @@
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 echo "ADR-0002 goal-driven modes → test_interaction_modes.py ✅"
 echo "ADR-0003 three-phase arch → guide-arch.md, guide-plan.md ✅"
 echo "ADR-0004 loop engine → test_loop_engine.py ✅"
@@ -28,7 +28,7 @@ Expected: Clear per-ADR mapping for status update.
 
 Edit `docs/adr/README.md` lines 5-12: Replace blanket "未实施" with per-ADR status:
 ```
-# spec-workflow Architecture Decision Records
+# rdd-workflow Architecture Decision Records
 
 ## v2.0 ADR 状态 (2026-06-27)
 
@@ -61,7 +61,7 @@ Multiple edits:
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && python3 -c "
+cd /workspace/project/rdd-workflow && python3 -c "
 with open('docs/adr/README.md') as f:
     c = f.read()
 assert '已实施' in c, 'Must have implementation status'
@@ -77,7 +77,7 @@ print('✅ v2-adr-summary count verified')
 - [ ] **Step 5: Commit ADR fixes**
 
 ```bash
-cd /workspace/project/spec-workflow && git add docs/adr/README.md docs/v2-adr-summary.md && git commit -m "fix(docs): sync ADR status with v2.0 code reality — per-ADR audit, count 9→12, remove false 'not implemented' claims"
+cd /workspace/project/rdd-workflow && git add docs/adr/README.md docs/v2-adr-summary.md && git commit -m "fix(docs): sync ADR status with v2.0 code reality — per-ADR audit, count 9→12, remove false 'not implemented' claims"
 ```
 
 ---
@@ -87,16 +87,16 @@ cd /workspace/project/spec-workflow && git add docs/adr/README.md docs/v2-adr-su
 **Files:**
 - Modify: `docs/migration/v1-to-v2.md`
 
-- [ ] **Step 1: Replace fictional `spec-workflow migrate` CLI references**
+- [ ] **Step 1: Replace fictional `rdd-workflow migrate` CLI references**
 
 The migration guide references these non-existent commands:
-- `spec-workflow migrate --check` (lines 19, 117, 509)
-- `spec-workflow migrate --dry-run` (line 118)
-- `spec-workflow migrate --apply` (lines 119, 339, 501, 516)
-- `spec-workflow report` (line 469)
-- `spec-workflow sync --check` (line 526)
-- `spec-workflow sync --from state-vector` (line 529)
-- `spec-workflow sync --from legacy` (line 532)
+- `rdd-workflow migrate --check` (lines 19, 117, 509)
+- `rdd-workflow migrate --dry-run` (line 118)
+- `rdd-workflow migrate --apply` (lines 119, 339, 501, 516)
+- `rdd-workflow report` (line 469)
+- `rdd-workflow sync --check` (line 526)
+- `rdd-workflow sync --from state-vector` (line 529)
+- `rdd-workflow sync --from legacy` (line 532)
 
 For each, replace with either:
 - (a) Equivalent manual steps (e.g., `git diff` instead of `migrate --check`)
@@ -105,7 +105,7 @@ For each, replace with either:
 Example replacement pattern:
 ```markdown
 <!-- Before -->
-4. 运行 `spec-workflow migrate --apply` 执行迁移
+4. 运行 `rdd-workflow migrate --apply` 执行迁移
 
 <!-- After -->
 4. 执行迁移（当前需手动完成；自动化 `migrate` 命令规划在 v2.1）：
@@ -123,13 +123,13 @@ Example replacement pattern:
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && grep -n "spec-workflow migrate\|spec-workflow sync\|spec-workflow report" docs/migration/v1-to-v2.md && echo "❌ STILL EXISTS" || echo "✅ No fictional CLI references remain"
+cd /workspace/project/rdd-workflow && grep -n "rdd-workflow migrate\|rdd-workflow sync\|rdd-workflow report" docs/migration/v1-to-v2.md && echo "❌ STILL EXISTS" || echo "✅ No fictional CLI references remain"
 ```
 
 - [ ] **Step 4: Commit migration guide fixes**
 
 ```bash
-cd /workspace/project/spec-workflow && git add docs/migration/v1-to-v2.md && git commit -m "fix(docs): remove fictional spec-workflow CLI from migration guide, fix dangling file refs (loop.md→loop_engine.py)"
+cd /workspace/project/rdd-workflow && git add docs/migration/v1-to-v2.md && git commit -m "fix(docs): remove fictional rdd-workflow CLI from migration guide, fix dangling file refs (loop.md→loop_engine.py)"
 ```
 
 ---
@@ -145,7 +145,7 @@ cd /workspace/project/spec-workflow && git add docs/migration/v1-to-v2.md && git
 
 Frontmatter:
 ```yaml
-description: 安装 Spec Workflow 技能到项目目录。执行后会将全部 12 个子技能复制到项目的 .opencode/skills/ 目录。
+description: 安装 RDD Workflow 技能到项目目录。执行后会将全部 12 个子技能复制到项目的 .opencode/skills/ 目录。
 ```
 Update skill list in description to include all 12: INSTALL/guide/guide-arch/guide-plan/guide-spec/guide-ship/propose/roadmap/deps/execute/status/prometheus-planning
 
@@ -180,7 +180,7 @@ Add missing files to the directory tree:
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && python3 -c "
+cd /workspace/project/rdd-workflow && python3 -c "
 import json
 import os
 
@@ -208,7 +208,7 @@ print('✅ All three docs consistent with package.json')
 - [ ] **Step 5: Commit metadata fixes**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/INSTALL.md USAGE.md README.md && git commit -m "fix(docs): sync INSTALL/USAGE/README with package.json v2.0.0-beta — version, skill count 12, directory structure, .zcf state files"
+cd /workspace/project/rdd-workflow && git add skills/INSTALL.md USAGE.md README.md && git commit -m "fix(docs): sync INSTALL/USAGE/README with package.json v2.0.0-beta — version, skill count 12, directory structure, .zcf state files"
 ```
 
 ---
@@ -227,7 +227,7 @@ cd /workspace/project/spec-workflow && git add skills/INSTALL.md USAGE.md README
 
 First, verify lock.py release behavior:
 ```bash
-cd /workspace/project/spec-workflow && grep -A 20 "def release\|def __exit__\|def unlock" skills/_lib/lock.py
+cd /workspace/project/rdd-workflow && grep -A 20 "def release\|def __exit__\|def unlock" skills/_lib/lock.py
 ```
 
 If `release()` removes the lock file:
@@ -315,7 +315,7 @@ def test_event_dataclass_creation():
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_event_context.py tests/unit/test_defaults.py tests/unit/test_event_types.py -v --tb=short
+cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_event_context.py tests/unit/test_defaults.py tests/unit/test_event_types.py -v --tb=short
 ```
 
 Expected: All pass.
@@ -349,7 +349,7 @@ setup() {
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && bats tests/_lib/test_state.bats
+cd /workspace/project/rdd-workflow && bats tests/_lib/test_state.bats
 ```
 
 Expected: 2 passed.
@@ -391,7 +391,7 @@ jobs:
 - [ ] **Step 9: Commit test quality fixes**
 
 ```bash
-cd /workspace/project/spec-workflow && git add tests/unit/test_lock.py tests/unit/test_event_context.py tests/unit/test_defaults.py tests/unit/test_event_types.py tests/_lib/test_state.bats .github/workflows/test.yml && git commit -m "fix(tests): repair tautological assertion, add coverage for 4 untested modules, add CI assertion quality gate"
+cd /workspace/project/rdd-workflow && git add tests/unit/test_lock.py tests/unit/test_event_context.py tests/unit/test_defaults.py tests/unit/test_event_types.py tests/_lib/test_state.bats .github/workflows/test.yml && git commit -m "fix(tests): repair tautological assertion, add coverage for 4 untested modules, add CI assertion quality gate"
 ```
 
 ---
@@ -408,7 +408,7 @@ Replace all `session_v20.py` with `session.py` (file exists at `skills/_lib/sess
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && sed -i 's/session_v20\.py/session.py/g' docs/v2-api-reference.md && grep -n "session_v20" docs/v2-api-reference.md && echo "❌ STILL EXISTS" || echo "✅ All session_v20.py replaced"
+cd /workspace/project/rdd-workflow && sed -i 's/session_v20\.py/session.py/g' docs/v2-api-reference.md && grep -n "session_v20" docs/v2-api-reference.md && echo "❌ STILL EXISTS" || echo "✅ All session_v20.py replaced"
 ```
 
 - [ ] **Step 2: Fix docs/v2-loop-engine.md**
@@ -417,13 +417,13 @@ Replace all `loop-engine.py` (hyphen) with `loop_engine.py` (underscore) — act
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && sed -i 's/loop-engine\.py/loop_engine.py/g' docs/v2-loop-engine.md && grep -n "loop-engine\.py" docs/v2-loop-engine.md && echo "❌ STILL EXISTS" || echo "✅ All loop-engine.py replaced"
+cd /workspace/project/rdd-workflow && sed -i 's/loop-engine\.py/loop_engine.py/g' docs/v2-loop-engine.md && grep -n "loop-engine\.py" docs/v2-loop-engine.md && echo "❌ STILL EXISTS" || echo "✅ All loop-engine.py replaced"
 ```
 
 - [ ] **Step 3: Commit path fixes**
 
 ```bash
-cd /workspace/project/spec-workflow && git add docs/v2-api-reference.md docs/v2-loop-engine.md && git commit -m "fix(docs): correct file path references — session_v20.py→session.py, loop-engine.py→loop_engine.py"
+cd /workspace/project/rdd-workflow && git add docs/v2-api-reference.md docs/v2-loop-engine.md && git commit -m "fix(docs): correct file path references — session_v20.py→session.py, loop-engine.py→loop_engine.py"
 ```
 
 ---
@@ -439,20 +439,20 @@ cd /workspace/project/spec-workflow && git add docs/v2-api-reference.md docs/v2-
 - [ ] **Step 1: Promote release-management spec**
 
 ```bash
-cd /workspace/project/spec-workflow && mkdir -p openspec/specs/release-management && cp openspec/changes/archive/2026-06-26-v2-beta-release/specs/release-management/spec.md openspec/specs/release-management/spec.md
+cd /workspace/project/rdd-workflow && mkdir -p openspec/specs/release-management && cp openspec/changes/archive/2026-06-26-v2-beta-release/specs/release-management/spec.md openspec/specs/release-management/spec.md
 ```
 
 - [ ] **Step 2: Promote migration-docs, test-suite, three-phase-skills specs**
 
 ```bash
-cd /workspace/project/spec-workflow && for dir in migration-docs test-suite three-phase-skills; do mkdir -p "openspec/specs/$dir" && cp "openspec/changes/archive/2026-06-26-v2-migration-and-tests/specs/$dir/spec.md" "openspec/specs/$dir/spec.md"; done
+cd /workspace/project/rdd-workflow && for dir in migration-docs test-suite three-phase-skills; do mkdir -p "openspec/specs/$dir" && cp "openspec/changes/archive/2026-06-26-v2-migration-and-tests/specs/$dir/spec.md" "openspec/specs/$dir/spec.md"; done
 ```
 
 - [ ] **Step 3: Verify all 15 specs are now in openspec/specs/**
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && echo "Total specs: $(ls -d openspec/specs/*/ | wc -l)" && ls openspec/specs/ && python3 -c "
+cd /workspace/project/rdd-workflow && echo "Total specs: $(ls -d openspec/specs/*/ | wc -l)" && ls openspec/specs/ && python3 -c "
 expected = {'configuration', 'design-flowchart', 'detectors-actions', 'gate-mechanism', 'general', 'interaction-modes', 'loop-engine', 'memory', 'migration-docs', 'release-management', 'session-agents', 'state-management', 'test-suite', 'three-phase-skills', 'tribunal'}
 actual = {d.name for d in __import__('pathlib').Path('openspec/specs').iterdir() if d.is_dir()}
 missing = expected - actual
@@ -469,7 +469,7 @@ if not missing and not extra:
 - [ ] **Step 4: Commit spec promotion**
 
 ```bash
-cd /workspace/project/spec-workflow && git add openspec/specs/release-management/ openspec/specs/migration-docs/ openspec/specs/test-suite/ openspec/specs/three-phase-skills/ && git commit -m "chore(specs): promote 4 orphaned specs from archive — release-management, migration-docs, test-suite, three-phase-skills"
+cd /workspace/project/rdd-workflow && git add openspec/specs/release-management/ openspec/specs/migration-docs/ openspec/specs/test-suite/ openspec/specs/three-phase-skills/ && git commit -m "chore(specs): promote 4 orphaned specs from archive — release-management, migration-docs, test-suite, three-phase-skills"
 ```
 
 ---
@@ -478,13 +478,13 @@ cd /workspace/project/spec-workflow && git add openspec/specs/release-management
 
 - [ ] **Step 1: Run all Python unit tests**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q --tb=short`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q --tb=short`
 
 Expected: All pass (including 3 newly created test files).
 
 - [ ] **Step 2: Run all Python integration tests**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/integration/ -q --tb=short`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/integration/ -q --tb=short`
 
 Expected: All pass.
 
@@ -492,7 +492,7 @@ Expected: All pass.
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && bats tests/smoke.bats tests/_lib/test_state.bats
+cd /workspace/project/rdd-workflow && bats tests/smoke.bats tests/_lib/test_state.bats
 ```
 
 Expected: All pass.
@@ -501,7 +501,7 @@ Expected: All pass.
 
 Run:
 ```bash
-cd /workspace/project/spec-workflow && echo "=== Doc path consistency ===" && python3 -c "
+cd /workspace/project/rdd-workflow && echo "=== Doc path consistency ===" && python3 -c "
 import glob, os
 # Check no remaining fictional CLI in migration guide
 with open('docs/migration/v1-to-v2.md') as f:
@@ -518,7 +518,7 @@ print('✅ All doc path references consistent')
 
 - [ ] **Step 5: Check git log for clean history**
 
-Run: `cd /workspace/project/spec-workflow && git log --oneline -8`
+Run: `cd /workspace/project/rdd-workflow && git log --oneline -8`
 
 Expected: 7 commits forming a coherent, linear history.
 
@@ -530,7 +530,7 @@ Expected: 7 commits forming a coherent, linear history.
 
 | Oracle Finding | Plan Task | Status |
 |----------------|-----------|--------|
-| P0: migration guide fictional CLI | Task 2 | ✅ Remove/replace all `spec-workflow migrate/sync/report` |
+| P0: migration guide fictional CLI | Task 2 | ✅ Remove/replace all `rdd-workflow migrate/sync/report` |
 | P0: ADR README "not implemented" | Task 1 | ✅ Per-ADR audit + status update |
 | P0: test_lock.py tautology | Task 4.1 | ✅ Replace `or True` |
 | P1: v2-adr-summary count 9→12 (+ADR-0003) | Task 1.3 | ✅ Add missing ADRs, fix count |

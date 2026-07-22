@@ -5,7 +5,7 @@ labels: beta-feedback
 ---
 
 **What's your v1.x experience level?**
-- [ ] New user (first time with spec-workflow)
+- [ ] New user (first time with rdd-workflow)
 - [ ] Occasional user
 - [ ] Daily power user
 

@@ -1,5 +1,8 @@
 # ADR-0006: 状态向量与事件流设计
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 已采纳
 > **日期**: 2026-06-22
 > **决策者**: sisyphus
@@ -7,7 +10,7 @@
 
 ## Context
 
-spec-workflow v1.x 使用 **13 个分散的状态文件**（`.rddf/state/` 目录 + git 跟踪文件），存在以下问题：
+rdd-workflow v1.x 使用 **13 个分散的状态文件**（`.rddf/state/` 目录 + git 跟踪文件），存在以下问题：
 
 1. **状态不一致**: 多个文件存储相同信息（如 change 状态在 `proposal-suggestions.md`、`.rddf/state/roadmap-state.json`、`openspec/changes/<name>/.openspec.yaml` 中重复）
 2. ~~**死代码风险**: `.rddf/state/phase-gate-report.md` 写但从不读（审计 P3-5）~~ — v2.0.3 已彻底删除该机制 (fix-debt-audit-2026-07-14, writer/reader 点号不匹配是根本死因)
@@ -38,7 +41,7 @@ spec-workflow v1.x 使用 **13 个分散的状态文件**（`.rddf/state/` 目�
 
 ```json
 {
-  "$schema": "https://spec-workflow.dev/schemas/state-vector-v2.json",
+  "$schema": "https://rdd-workflow.dev/schemas/state-vector-v2.json",
   "version": "2.0",
   "timestamp": "2026-06-22T10:30:00Z",
   "project_root": "/absolute/path/to/project",
@@ -588,7 +591,7 @@ def suggest_config(self, goal: str) -> LoopConfig:
 **数据保留策略**:
 - 永久保留（提供归档命令）
 - 项目级隔离（不跨项目共享）
-- 归档命令: `spec-workflow archive-memory --before 2026-01-01`
+- 归档命令: `rdd-workflow archive-memory --before 2026-01-01`
 
 ### 与现有状态文件的同步
 
@@ -694,7 +697,7 @@ class FileLock:
 | 备选 | 理由 |
 |------|------|
 | **完全替换现有状态文件** | 拒绝：迁移成本过高，向后兼容要求 |
-| **数据库 (SQLite)** | 拒绝：引入过重依赖，spec-workflow 应保持轻量 |
+| **数据库 (SQLite)** | 拒绝：引入过重依赖，rdd-workflow 应保持轻量 |
 | **JSON + JSONL** | 接受：轻量、可读、易调试、工具链成熟 |
 | **无事件流** | 拒绝：Loop 引擎需要完整审计追踪 |
 
@@ -711,7 +714,7 @@ class FileLock:
 ### 负面 / 风险
 
 - **存储开销**: 事件流可能增长较快（每次迭代多个事件）
-  - **缓解**: 提供事件归档命令 (`spec-workflow archive-events`)
+  - **缓解**: 提供事件归档命令 (`rdd-workflow archive-events`)
 - **同步复杂度**: 状态向量与现有文件双向同步
   - **缓解**: 自动化同步脚本，v3.x 移除现有文件
 - **性能**: 每次迭代读写 JSON 文件
@@ -725,7 +728,7 @@ class FileLock:
 - [ ] 添加 JSON Schema 验证
 - [ ] 添加并发控制单元测试
 - [ ] 添加事件流查询工具
-- [ ] 实现进度报告生成 (`spec-workflow report`)
+- [ ] 实现进度报告生成 (`rdd-workflow report`)
 - [ ] 编写状态向量文档
 
 ## References

@@ -1,5 +1,8 @@
 # ADR-0004: Loop 引擎核心设计
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 已采纳
 > **日期**: 2026-06-22
 > **决策者**: sisyphus
@@ -7,7 +10,7 @@
 
 ## Context
 
-spec-workflow v1.x 采用**显式阶段切换**的菜单驱动模式，用户需要在每个 phase 手动选择菜单项推进工作流。这种模式在以下场景存在局限：
+rdd-workflow v1.x 采用**显式阶段切换**的菜单驱动模式，用户需要在每个 phase 手动选择菜单项推进工作流。这种模式在以下场景存在局限：
 
 1. **自动化场景缺失**: CI/CD 管道、批量处理、明确目标时，用户希望声明目标后自动执行
 2. **AI 助手兼容性**: AI 编程助手需要声明式接口（目标 → 自动编排），而非解析菜单文本
@@ -29,7 +32,7 @@ spec-workflow v1.x 采用**显式阶段切换**的菜单驱动模式，用户需
 
 ## Decision
 
-我们实现 **Loop 引擎**作为 spec-workflow v2.x 的核心编排器，采用 **Detector-Action 架构** + **状态向量** + **事件流**：
+我们实现 **Loop 引擎**作为 rdd-workflow v2.x 的核心编排器，采用 **Detector-Action 架构** + **状态向量** + **事件流**：
 
 ### 核心架构
 
@@ -424,7 +427,7 @@ class LoopEngine:
 |------|------|
 | **纯 bash 实现** | 拒绝：状态管理、JSON 解析、事件流在 bash 中复杂度高 |
 | **完全重写 skill 文件** | 拒绝：迁移成本过高，保留现有 skill 作为 action 调用 |
-| **外部依赖 (Celery/Airflow)** | 拒绝：引入过重依赖，spec-workflow 应保持轻量 |
+| **外部依赖 (Celery/Airflow)** | 拒绝：引入过重依赖，rdd-workflow 应保持轻量 |
 | **Python + bash hybrid** | 接受：Python 处理逻辑，bash 处理系统操作 |
 
 ## Consequences
@@ -442,7 +445,7 @@ class LoopEngine:
 - **学习成本**: 用户需要理解 Loop 引擎配置和工作原理
   - **缓解**: 提供默认配置和教程
 - **调试复杂度**: Python + bash 混合，错误追踪需要跨语言
-  - **缓解**: 事件流完整记录，提供 `spec-workflow debug` 命令
+  - **缓解**: 事件流完整记录，提供 `rdd-workflow debug` 命令
 - **性能开销**: Python 进程启动 + subprocess 调用
   - **缓解**: 缓存状态向量，减少重复扫描
 

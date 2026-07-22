@@ -70,7 +70,7 @@ print('\n'.join(sorted(target & all_skills)))
 }
 
 @test "prometheus-planning.md no longer exists (v2.0 self-contained)" {
-  # v2.0 removed prometheus-planning.md entirely (replaced by spec-workflow/* skills)
+  # v2.0 removed prometheus-planning.md entirely (replaced by rdd-workflow/* skills)
   ! [ -f skills/prometheus-planning.md ]
   # No test_<name>_skill.bats file references it
   ! ls tests/integration/test_prometheus_planning_skill.bats 2>/dev/null

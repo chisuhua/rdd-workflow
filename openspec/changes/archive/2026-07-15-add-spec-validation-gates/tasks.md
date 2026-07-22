@@ -14,7 +14,7 @@ STATUS: PROPOSED
 - [ ] 1.1 Verify baseline tests pass before changes
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 pip install -r requirements.txt
 python3 -m pytest tests/unit/ -q --tb=short
 bats tests/smoke.bats
@@ -177,7 +177,7 @@ def test_v1_g_gpu_client_baseline_fails_regression(tmp_path):
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_validate_baseline.py -v --tb=short
 ```
 
@@ -355,7 +355,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/test_validate_baseline.py -v --tb=short
 ```
 
@@ -716,7 +716,7 @@ EOF
 git add . && git commit -q -m "test"
 
 # Now simulate propose flow (just call validate)
-python3 /workspace/project/spec-workflow/skills/_lib/validate_baseline.py test
+python3 /workspace/project/rdd-workflow/skills/_lib/validate_baseline.py test
 echo "exit=$?"
 ```
 
@@ -733,7 +733,7 @@ name: bad
 baseline:
   fake-symbol: "file-exists:does/not/exist.cpp"
 EOF
-python3 /workspace/project/spec-workflow/skills/_lib/validate_baseline.py bad
+python3 /workspace/project/rdd-workflow/skills/_lib/validate_baseline.py bad
 echo "exit=$?"
 ```
 
@@ -903,7 +903,7 @@ git commit -m "ci: run validate_baseline.py + validate_delta_targets.py on all c
 - [ ] 3.1 Run full test suite
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/ -q --tb=short
 ```
 

@@ -110,7 +110,7 @@ def _render_monitor(project_root: str) -> None:
     now = datetime.now(timezone.utc)
     ts = now.strftime("%Y-%m-%d %H:%M:%S UTC")
     print()
-    print(f"📡 spec-workflow 实时监控  (更新于 {ts})")
+    print(f"📡 rdd-workflow 实时监控  (更新于 {ts})")
     print()
 
     # Panel 1: Sessions

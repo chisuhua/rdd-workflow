@@ -297,7 +297,7 @@ sed -i 's|\$PROJECT_ROOT/skills/_lib/validate_baseline\.py|$PROJECT_ROOT/skills/
         fi
 ```
 
-### 4.2: 同样修改 `install-spec-workflow.sh` 模板（INSTALL.md L195 附近）
+### 4.2: 同样修改 `install-rdd-workflow.sh` 模板（INSTALL.md L195 附近）
 
 ### 4.3: 修复 `test_install_lib_distribution.bats:45` 断言
 
@@ -381,7 +381,7 @@ sed -i 's|\$PROJECT_ROOT/skills/_lib/validate_baseline\.py|$PROJECT_ROOT/skills/
 
 ### 5.5: `tests/integration/test_phase2_readlink_fallback.bats` — 手工路径验证
 
-（**模板由 tasks.md 模板生成器提供**：参考 `skills/spec-workflow-writing-plans.md`）
+（**模板由 tasks.md 模板生成器提供**：参考 `skills/rdd-workflow-writing-plans.md`）
 
 ## Task 6: 全量验证
 

@@ -4,7 +4,7 @@
 
 This document is the single source of truth for how the
 `proposal-suggestions.md` file is structured, read, and written by the
-spec-workflow skills (`propose`, `guide-spec`, `guide`, `status`, `deps`).
+rdd-workflow skills (`propose`, `guide-spec`, `guide`, `status`, `deps`).
 
 ---
 

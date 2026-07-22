@@ -1,4 +1,4 @@
-# spec-workflow v1.x → v2.0 迁移指南
+# rdd-workflow v1.x → v2.0 迁移指南
 
 > **版本**: 2.0.0  
 > **日期**: 2026-06-22  
@@ -13,9 +13,9 @@ v1.x 用户升级到 v2.0 最快只需两步：
 
 ```bash
 # 1. 更新到最新版本
-npm update spec-workflow
+npm update rdd-workflow
 
-# 2. 手动验证 v1.x 状态文件存在（可选；CLI `spec-workflow migrate` 规划中，v2.1 实现）
+# 2. 手动验证 v1.x 状态文件存在（可选；CLI `rdd-workflow migrate` 规划中，v2.1 实现）
 ls -la .rddf/state/ .openspec/ proposal-suggestions.md
 ```
 
@@ -47,7 +47,7 @@ ls -la .rddf/state/ .openspec/ proposal-suggestions.md
 
 ## 概述
 
-spec-workflow v2.0 是一次**重大架构升级**，从状态机驱动升级到 Loop 驱动。但我们会确保**平滑迁移**：
+rdd-workflow v2.0 是一次**重大架构升级**，从状态机驱动升级到 Loop 驱动。但我们会确保**平滑迁移**：
 
 ### v1.x vs v2.0 对比
 
@@ -113,7 +113,7 @@ v1.x 用户
 ### 迁移检查清单
 
 - [ ] 备份现有项目（`git commit` 或 `git tag v1-backup`）
-- [ ] 安装 spec-workflow v2.0
+- [ ] 安装 rdd-workflow v2.0
 - [ ] 手动验证 v1.x 状态文件存在（`ls -la .rddf/state/ .openspec/ proposal-suggestions.md`；CLI `migrate --check` 规划中，v2.1 实现）
 - [ ] 手动预览迁移范围（`git diff --stat v1-backup -- .rddf/state/ .openspec/ .rddf/`；CLI `migrate --dry-run` 规划中，v2.1 实现）
 - [ ] 手动执行迁移（参见下方『手动迁移』章节；CLI `migrate --apply` 规划中，v2.1 实现）
@@ -223,7 +223,7 @@ v2.0 会自动使用默认配置：
         "node": "plan.change_select",
         "verification_mode": "script",
         "skip_if": "auto_select_changes",
-        "script": ".spec-workflow/scripts/verification/check_changes.py"
+        "script": ".rdd-workflow/scripts/verification/check_changes.py"
       },
       {
         "node": "ship.archive_confirm",
@@ -270,7 +270,7 @@ v2.0 会自动使用默认配置：
 
 **适用场景**: 团队协作，需要版本控制
 
-创建 `.spec-workflow/loops/complete-changes.yaml`:
+创建 `.rdd-workflow/loops/complete-changes.yaml`:
 ```yaml
 version: "2.0"
 name: "complete-all-changes"
@@ -306,7 +306,7 @@ control:
 ```bash
 skill_use("loop", {
   "goal": "complete all pending changes",
-  "config_file": ".spec-workflow/loops/complete-changes.yaml"
+  "config_file": ".rdd-workflow/loops/complete-changes.yaml"
 })
 ```
 
@@ -317,7 +317,7 @@ skill_use("loop", {
 > **⚠️ 当前版本（v2.0）实现状态**
 > - `.rddf/state/state-vector.json` 和 `.rddf/state/event-log.jsonl` **当前版本未使用此路径，状态存储于 Python 库层**（`skills/_lib/state_vector.py`、`skills/_lib/event_log.py`，内存中维护）
 > - 本节中 `cat .rddf/state/state-vector.json`、`tail -f .rddf/state/event-log.jsonl` 等命令展示的是 v2.0 完整设计下的预期行为；当前请使用下方表格中映射的源文件（`.rddf/state/roadmap-state.json`、`proposal-suggestions.md`、`openspec/changes/*/ .openspec.yaml`、`.rddf/plans/*.md`）作为状态查询入口
-> - 统一 CLI 工具 `spec-workflow migrate / sync / report` 规划中，v2.1 实现
+> - 统一 CLI 工具 `rdd-workflow migrate / sync / report` 规划中，v2.1 实现
 
 ### 自动迁移
 
@@ -338,7 +338,7 @@ $ skill_use("guide-spec")
 
 ### 手动迁移
 
-如果需要手动迁移（CLI `spec-workflow migrate --apply` 规划中，v2.1 实现）：
+如果需要手动迁移（CLI `rdd-workflow migrate --apply` 规划中，v2.1 实现）：
 
 ```bash
 # 1. 备份 v1.x 状态文件
@@ -489,7 +489,7 @@ cat .rddf/state/state-vector.json | jq '.'
 # 方式 3: 查看事件流（同上）
 tail -f .rddf/state/event-log.jsonl | jq '.'
 
-# 方式 4: 生成进度报告（CLI `spec-workflow report` 规划中，v2.1 实现）
+# 方式 4: 生成进度报告（CLI `rdd-workflow report` 规划中，v2.1 实现）
 # 当前手动生成报告：组合方式 1-3 的输出，或：
 cat .rddf/state/roadmap-state.json proposal-suggestions.md  # 综合源文件
 ls openspec/changes/ .rddf/plans/                  # 列出活跃工作
@@ -524,7 +524,7 @@ skill_use("loop", {
 
 ### 问题 1: 迁移失败
 
-**症状**: 手动迁移步骤报错（CLI `spec-workflow migrate --apply` 规划中，v2.1 实现）
+**症状**: 手动迁移步骤报错（CLI `rdd-workflow migrate --apply` 规划中，v2.1 实现）
 
 **解决**:
 ```bash
@@ -554,7 +554,7 @@ skill_use("guide-spec")  # 首次调用时自动完成迁移
 > 旧文件迁移不再需要。如未来需要 v2 → v3 迁移,写一个新的 `v2_to_v3.py` 而非复用 v1.x 代码。
 >
 > **遗留演示**（历史参考,代码已删除）:
-> CLI `spec-workflow sync` 规划中，v2.1 实现。当前状态数据存储于 Python 库层（`skills/_lib/sync_state.py`），在内存中维护双向一致性。下方命令展示的是 v2.0 完整设计演示。
+> CLI `rdd-workflow sync` 规划中，v2.1 实现。当前状态数据存储于 Python 库层（`skills/_lib/sync_state.py`），在内存中维护双向一致性。下方命令展示的是 v2.0 完整设计演示。
 
 **解决** (v2.0.3 当前):
 ```bash
@@ -661,7 +661,7 @@ rm .rddf.json
 git checkout HEAD -- skills/
 
 # 3. 重新安装 v1.x
-npm install spec-workflow@1.x
+npm install rdd-workflow@1.x
 ```
 
 ---
@@ -734,7 +734,7 @@ npm install spec-workflow@1.x
 
 ### 迁移步骤
 
-**无需操作**。直接 `npm update spec-workflow` 即可。
+**无需操作**。直接 `npm update rdd-workflow` 即可。
 
 如果你使用了 `prometheus-start-work` 作为唯一回退路径:
 1. **影响**: v1.2 检测链不再查找 `prometheus-start-work`。如果你的环境中只有它(没有 oh-my-opencode 或 superpowers),`prometheus-planning` 会报错。

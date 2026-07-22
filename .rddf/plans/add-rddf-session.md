@@ -167,7 +167,7 @@ Expected: no error (silent exit).
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/schemas/sessions_schema.json && git commit -m "feat(schemas): add sessions_schema.json v1 for rddf-session — ADR-0017"
+cd /workspace/project/rdd-workflow && git add skills/_lib/schemas/sessions_schema.json && git commit -m "feat(schemas): add sessions_schema.json v1 for rddf-session — ADR-0017"
 ```
 
 ---
@@ -211,13 +211,13 @@ Also change the root `"additionalProperties": false` to `"additionalProperties":
 
 - [ ] **Step 3: Verify existing unit tests pass**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_state_vector.py -q --tb=short`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_state_vector.py -q --tb=short`
 Expected: All pass (backward-compatible).
 
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/state_vector.py && git commit -m "feat(state-vector): allow session_management field in schema — ADR-0017"
+cd /workspace/project/rdd-workflow && git add skills/_lib/state_vector.py && git commit -m "feat(state-vector): allow session_management field in schema — ADR-0017"
 ```
 
 ---
@@ -295,7 +295,7 @@ def test_create_session_writes_valid_schema(coordinator, sessions_file):
 
 - [ ] **Step 2: Run test — verify it fails**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v`
 Expected: `ModuleNotFoundError: No module named 'skills._lib.rddf_session'`
 
 - [ ] **Step 3: Create rddf_session.py with skeleton + create_session**
@@ -519,13 +519,13 @@ class RddfSessionCoordinator:
 
 - [ ] **Step 4: Run tests — verify create tests pass**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v`
 Expected: 3 passed (create tests).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/rddf_session.py tests/unit/test_rddf_session.py && git commit -m "feat(rddf-session): add RddfSessionCoordinator skeleton with create_session — ADR-0017"
+cd /workspace/project/rdd-workflow && git add skills/_lib/rddf_session.py tests/unit/test_rddf_session.py && git commit -m "feat(rddf-session): add RddfSessionCoordinator skeleton with create_session — ADR-0017"
 ```
 
 ---
@@ -585,7 +585,7 @@ def test_update_session_status_terminal_blocks(coordinator):
 
 - [ ] **Step 2: Run — verify fail**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "find_session or list_sessions or update_session_status"`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "find_session or list_sessions or update_session_status"`
 Expected: NotImplementedError raised.
 
 - [ ] **Step 3: Implement methods**
@@ -642,13 +642,13 @@ Replace the placeholder NotImplementedError methods in `skills/_lib/rddf_session
 
 - [ ] **Step 4: Run — verify pass**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "find_session or list_sessions or update_session_status"`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "find_session or list_sessions or update_session_status"`
 Expected: 5 passed.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/rddf_session.py tests/unit/test_rddf_session.py && git commit -m "feat(rddf-session): add find/list/update_session_status — ADR-0017"
+cd /workspace/project/rdd-workflow && git add skills/_lib/rddf_session.py tests/unit/test_rddf_session.py && git commit -m "feat(rddf-session): add find/list/update_session_status — ADR-0017"
 ```
 
 ---
@@ -704,7 +704,7 @@ def test_refresh_heartbeat(coordinator):
 
 - [ ] **Step 2: Run — verify fail**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "attach_change or detach_change or refresh_heartbeat"`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "attach_change or detach_change or refresh_heartbeat"`
 Expected: NotImplementedError.
 
 - [ ] **Step 3: Implement methods**
@@ -760,13 +760,13 @@ Replace the placeholder methods in `skills/_lib/rddf_session.py`:
 
 - [ ] **Step 4: Run — verify pass**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "attach_change or detach_change or refresh_heartbeat"`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "attach_change or detach_change or refresh_heartbeat"`
 Expected: 4 passed.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/rddf_session.py tests/unit/test_rddf_session.py && git commit -m "feat(rddf-session): add attach_change/detach_change/refresh_heartbeat — ADR-0017"
+cd /workspace/project/rdd-workflow && git add skills/_lib/rddf_session.py tests/unit/test_rddf_session.py && git commit -m "feat(rddf-session): add attach_change/detach_change/refresh_heartbeat — ADR-0017"
 ```
 
 ---
@@ -822,7 +822,7 @@ def test_detect_conflict_returns_session_when_different_owner(coordinator):
 
 - [ ] **Step 2: Run — verify fail**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "check_heartbeat or detect_conflict"`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "check_heartbeat or detect_conflict"`
 Expected: NotImplementedError.
 
 - [ ] **Step 3: Implement methods**
@@ -867,13 +867,13 @@ Replace the placeholder methods in `skills/_lib/rddf_session.py`:
 
 - [ ] **Step 4: Run — verify pass**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "check_heartbeat or detect_conflict"`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "check_heartbeat or detect_conflict"`
 Expected: 4 passed.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/rddf_session.py tests/unit/test_rddf_session.py && git commit -m "feat(rddf-session): add heartbeat-timeout check + conflict detection — ADR-0017"
+cd /workspace/project/rdd-workflow && git add skills/_lib/rddf_session.py tests/unit/test_rddf_session.py && git commit -m "feat(rddf-session): add heartbeat-timeout check + conflict detection — ADR-0017"
 ```
 
 ---
@@ -941,7 +941,7 @@ def test_archive_history(coordinator):
 
 - [ ] **Step 2: Run — verify fail**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "transfer_ownership or abandon or archive_history"`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "transfer_ownership or abandon or archive_history"`
 Expected: NotImplementedError.
 
 - [ ] **Step 3: Implement methods**
@@ -1019,13 +1019,13 @@ Replace the placeholder methods in `skills/_lib/rddf_session.py`:
 
 - [ ] **Step 4: Run — verify pass**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "transfer_ownership or abandon or archive_history"`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v -k "transfer_ownership or abandon or archive_history"`
 Expected: 3 passed.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/_lib/rddf_session.py tests/unit/test_rddf_session.py && git commit -m "feat(rddf-session): add transfer/abandon/archive_history — ADR-0017"
+cd /workspace/project/rdd-workflow && git add skills/_lib/rddf_session.py tests/unit/test_rddf_session.py && git commit -m "feat(rddf-session): add transfer/abandon/archive_history — ADR-0017"
 ```
 
 ---
@@ -1058,13 +1058,13 @@ def test_create_session_raises_conflict_different_owner(coordinator):
 
 - [ ] **Step 2: Run all unit tests — verify total ≥14 pass**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/test_rddf_session.py -v`
 Expected: 14+ passed.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add tests/unit/test_rddf_session.py && git commit -m "test(rddf-session): add idempotency + conflict-resilience — ADR-0017"
+cd /workspace/project/rdd-workflow && git add tests/unit/test_rddf_session.py && git commit -m "test(rddf-session): add idempotency + conflict-resilience — ADR-0017"
 ```
 
 ---
@@ -1082,7 +1082,7 @@ Write to `skills/rddf-session.md`:
 name: rddf-session
 description: 用户视角工作流会话管理 — list/show/resume/abandon/archive-history
 license: MIT
-compatibility: Python 3.11+, spec-workflow v2.0.1+
+compatibility: Python 3.11+, rdd-workflow v2.0.1+
 metadata:
   author: sisyphus
   version: "1.0"
@@ -1246,13 +1246,13 @@ Expected: silent exit (no error).
 
 - [ ] **Step 3: Smoke test the skill body**
 
-Run: `cd /tmp && mkdir -p rddf-smoke && cd rddf-smoke && git init -q && mkdir -p .rddf/state && bash /workspace/project/spec-workflow/skills/rddf-session.md list`
+Run: `cd /tmp && mkdir -p rddf-smoke && cd rddf-smoke && git init -q && mkdir -p .rddf/state && bash /workspace/project/rdd-workflow/skills/rddf-session.md list`
 Expected: `No rddf-sessions found.` or similar.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/rddf-session.md && git commit -m "feat(skill): add rddf-session skill body with 5 subcommands — ADR-0017"
+cd /workspace/project/rdd-workflow && git add skills/rddf-session.md && git commit -m "feat(skill): add rddf-session skill body with 5 subcommands — ADR-0017"
 ```
 
 ---
@@ -1410,13 +1410,13 @@ print(f'rddf-session: {sid} → completed (archive-all)')
 
 - [ ] **Step 4: Verify skills still pass openspec validate**
 
-Run: `cd /workspace/project/spec-workflow && openspec validate add-rddf-session`
+Run: `cd /workspace/project/rdd-workflow && openspec validate add-rddf-session`
 Expected: `Change 'add-rddf-session' is valid`
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add skills/guide-arch.md skills/guide-plan.md skills/guide-ship.md && git commit -m "feat(skills): integrate rddf-session lifecycle hooks in guide-arch/plan/ship — ADR-0017"
+cd /workspace/project/rdd-workflow && git add skills/guide-arch.md skills/guide-plan.md skills/guide-ship.md && git commit -m "feat(skills): integrate rddf-session lifecycle hooks in guide-arch/plan/ship — ADR-0017"
 ```
 
 ---
@@ -1603,13 +1603,13 @@ def test_history_archive(project_root):
 
 - [ ] **Step 2: Run integration tests**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/integration/test_rddf_session_lifecycle.py -v`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/integration/test_rddf_session_lifecycle.py -v`
 Expected: 5 passed.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add tests/integration/test_rddf_session_lifecycle.py && git commit -m "test(rddf-session): add 5 integration tests (lifecycle/conflict/worktree/orphaned/archive) — ADR-0017"
+cd /workspace/project/rdd-workflow && git add tests/integration/test_rddf_session_lifecycle.py && git commit -m "test(rddf-session): add 5 integration tests (lifecycle/conflict/worktree/orphaned/archive) — ADR-0017"
 ```
 
 ---
@@ -1635,7 +1635,7 @@ Write to `docs/adr/ADR-0017-rddf-session.md`:
 
 ## Context
 
-spec-workflow v2.0 实现了三阶段状态机（`guide-arch` → `guide-plan` → `guide-ship`），但**没有跨 OpenCode 会话的 workflow 上下文连续性**：
+rdd-workflow v2.0 实现了三阶段状态机（`guide-arch` → `guide-plan` → `guide-ship`），但**没有跨 OpenCode 会话的 workflow 上下文连续性**：
 
 - 在 OpenCode session A 中执行 `guide-plan` Phase 2 后中断
 - 在 OpenCode session B 中只能看到 `iteration.json` 知道有 proposed changes
@@ -1763,13 +1763,13 @@ Edit `docs/adr/README.md` ADR table to add row for ADR-0017:
 
 - [ ] **Step 4: Verify docs render**
 
-Run: `cd /workspace/project/spec-workflow && openspec validate add-rddf-session`
+Run: `cd /workspace/project/rdd-workflow && openspec validate add-rddf-session`
 Expected: `Change 'add-rddf-session' is valid`
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add docs/adr/ADR-0017-rddf-session.md docs/adr/ADR-0010-multi-session-management.md docs/adr/README.md && git commit -m "docs(adr): add ADR-0017-rddf-session + update ADR-0010 status — rddf-session"
+cd /workspace/project/rdd-workflow && git add docs/adr/ADR-0017-rddf-session.md docs/adr/ADR-0010-multi-session-management.md docs/adr/README.md && git commit -m "docs(adr): add ADR-0017-rddf-session + update ADR-0010 status — rddf-session"
 ```
 
 ---
@@ -1875,7 +1875,7 @@ In `AGENTS.md`, find the table that starts with "| 文件 | 用途 | 写入方 |
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /workspace/project/spec-workflow && git add docs/v2-workflow-overview.md docs/v2-multi-session-guide.md AGENTS.md && git commit -m "docs: add rddf-session sections to v2-workflow-overview, v2-multi-session-guide, AGENTS.md — ADR-0017"
+cd /workspace/project/rdd-workflow && git add docs/v2-workflow-overview.md docs/v2-multi-session-guide.md AGENTS.md && git commit -m "docs: add rddf-session sections to v2-workflow-overview, v2-multi-session-guide, AGENTS.md — ADR-0017"
 ```
 
 ---
@@ -1887,38 +1887,38 @@ cd /workspace/project/spec-workflow && git add docs/v2-workflow-overview.md docs
 
 - [ ] **Step 1: Run all unit tests**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/unit/ -q --tb=short`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/unit/ -q --tb=short`
 Expected: All pass (existing + 14 new rddf-session tests).
 
 - [ ] **Step 2: Run all integration tests**
 
-Run: `cd /workspace/project/spec-workflow && python3 -m pytest tests/integration/ -q --tb=short`
+Run: `cd /workspace/project/rdd-workflow && python3 -m pytest tests/integration/ -q --tb=short`
 Expected: All pass (existing + 5 new rddf-session integration tests).
 
 - [ ] **Step 3: Run bats tests**
 
-Run: `cd /workspace/project/spec-workflow && bats tests/`
+Run: `cd /workspace/project/rdd-workflow && bats tests/`
 Expected: All pass.
 
 - [ ] **Step 4: Run openspec validate**
 
-Run: `cd /workspace/project/spec-workflow && openspec validate add-rddf-session`
+Run: `cd /workspace/project/rdd-workflow && openspec validate add-rddf-session`
 Expected: `Change 'add-rddf-session' is valid`
 
 - [ ] **Step 5: Check git log**
 
-Run: `cd /workspace/project/spec-workflow && git log --oneline -12`
+Run: `cd /workspace/project/rdd-workflow && git log --oneline -12`
 Expected: Clean focused commits, includes 11+ rddf-session related commits.
 
 - [ ] **Step 6: Archive the change**
 
-Run: `cd /workspace/project/spec-workflow && openspec archive add-rddf-session --yes 2>&1`
+Run: `cd /workspace/project/rdd-workflow && openspec archive add-rddf-session --yes 2>&1`
 Expected: `Change 'add-rddf-session' archived to openspec/changes/archive/2026-07-09-add-rddf-session/`
 
 - [ ] **Step 7: Final commit (if needed)**
 
 ```bash
-cd /workspace/project/spec-workflow && git status
+cd /workspace/project/rdd-workflow && git status
 # If there are uncommitted archive changes:
 git add openspec/changes/archive/ && git commit -m "chore(archive): archive change add-rddf-session"
 ```

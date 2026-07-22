@@ -1,27 +1,27 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "spec-workflow-marketplace",
+  "name": "rdd-workflow-marketplace",
   "owner": {
     "name": "sisyphus",
     "email": "sisyphus@example.com"
   },
-  "version": "1.0.0",
+  "version": "3.0.0",
   "plugins": [
     {
-      "name": "spec-workflow",
-      "displayName": "Spec Workflow",
+      "name": "rdd-workflow",
+      "displayName": "RDD Workflow",
       "description": "OpenSpec 工作流技能包 - manage changes via propose → plan → execute → status → archive lifecycle with roadmap phase management",
       "author": {
         "name": "sisyphus",
         "email": "sisyphus@example.com",
-        "url": "https://github.com/chisuhua/spec-workflow"
+        "url": "https://github.com/chisuhua/rdd-workflow"
       },
       "category": "development",
-      "tags": ["spec", "workflow", "openspec", "change-management", "cli", "project-management"],
+      "tags": ["rdd-workflow", "workflow", "openspec", "change-management", "cli", "project-management"],
       "source": "./",
-      "homepage": "https://github.com/chisuhua/spec-workflow",
+      "homepage": "https://github.com/chisuhua/rdd-workflow",
       "keywords": [
-        "spec",
+        "rdd-workflow",
         "workflow",
         "openspec",
         "change-management",

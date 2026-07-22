@@ -1,6 +1,6 @@
 ## Why
 
-spec-workflow 当前的会话管理（ADR-0010）实现了 Loop 引擎的 `SessionCoordinator`/`SessionManager` Python 抽象，但**这些抽象从未与 OpenCode 会话 ID（`ses_...`）建立任何关联**。用户在不同 OpenCode session 之间切换时，工作流上下文完全丢失：
+rdd-workflow 当前的会话管理（ADR-0010）实现了 Loop 引擎的 `SessionCoordinator`/`SessionManager` Python 抽象，但**这些抽象从未与 OpenCode 会话 ID（`ses_...`）建立任何关联**。用户在不同 OpenCode session 之间切换时，工作流上下文完全丢失：
 
 - 在 OpenCode session A 中执行 `guide-plan` Phase 2 创建了 3 个 change 后中断
 - 进入 OpenCode session B，`iteration.json` 知道有 change 存在（status=proposed）

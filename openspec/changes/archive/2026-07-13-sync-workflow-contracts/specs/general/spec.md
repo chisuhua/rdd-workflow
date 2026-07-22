@@ -9,7 +9,7 @@ RELATED_INCIDENT: 2026-07-11 post-release audit; 7 drift categories identified (
 
 # Capability: general
 
-> General-purpose requirements for spec-workflow v2.0.x. This change targets
+> General-purpose requirements for rdd-workflow v2.0.x. This change targets
 > `Requirement general-docs-match-code` whose Scenarios were authored against
 > the v1.x "5 phases + 1 exit" mental model and are now stale relative to the
 > v2.0.1 "7 numbered subphases (1, 1.5, 2, 2.5, 3, 4, 5)" model.

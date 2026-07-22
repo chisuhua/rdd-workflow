@@ -9,13 +9,13 @@ load ../test_helper
 @test "resolve-skill-name: short name resolves to full name" {
     PROJECT_ROOT=$(git rev-parse --show-toplevel)
     TMP_LIST=$(mktemp)
-    echo "rdd-workflow/skills/spec-workflow/writing-plans" > "$TMP_LIST"
+    echo "rdd-workflow/skills/rdd-workflow-writing-plans" > "$TMP_LIST"
     echo "rdd-workflow/skills/guide" >> "$TMP_LIST"
 
     source "$PROJECT_ROOT/skills/_lib/resolve_skill_name.sh"
-    run resolve_skill_name "spec-workflow/writing-plans" "$TMP_LIST"
+    run resolve_skill_name "rdd-workflow-writing-plans" "$TMP_LIST"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"rdd-workflow/skills/spec-workflow/writing-plans"* ]]
+    [[ "$output" == *"rdd-workflow/skills/rdd-workflow-writing-plans"* ]]
     rm -f "$TMP_LIST"
 }
 

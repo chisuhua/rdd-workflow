@@ -1,5 +1,22 @@
 # Changelog
 
+## [v3.0.0] — 2026-07-22 (BREAKING)
+
+### Renamed: `spec-workflow` → `rdd-workflow`
+
+**Why**: Align with GitHub repo name `chisuhua/rdd-workflow`.  
+**Scope**: Code, docs, ADRs, specs, archive, install paths, skill names, npm package.  
+**Compat**: NONE. Hard cut. No backward compatibility shim.
+
+**Action items for users**:
+1. Remove old installation: `rm -rf ~/.agents/skills/spec-workflow .opencode/skills/spec-workflow`
+2. Reinstall: `git clone https://github.com/chisuhua/rdd-workflow.git ~/.agents/skills/rdd-workflow && bash ~/.agents/skills/rdd-workflow/install.sh --global`
+3. Update script calls: `skill_use("spec-workflow/X")` → `skill_use("rdd-workflow/X")`
+
+**Historical note**: Documents authored before v3.0.0 used the name `spec-workflow`. These have been retroactively renamed. Each ADR carries a footnote. See ADR-0023 for the rename decision.
+
+No data migration: `.rddf/state/` content unchanged. Existing rddf-sessions, iterations, deps-analysis continue to work.
+
 ## [Unreleased] — v2.0.8
 
 ### Changed (skills/ directory reorganization)
@@ -110,7 +127,7 @@ Zero migration needed. Existing v2.0 projects with `docs/adr/` and `roadmap.md` 
 
 - **v1.x compatibility maintained**: `guide-spec` remains as a backward-compatible alias that internally calls `guide-arch` → `guide-plan`. No user skill code changes required.
 - **State file format unchanged**: All `.rddf/state/` state files maintain v1.x format. No migration needed.
-- **npm package rename**: None — package remains `spec-workflow`.
+- **npm package rename**: None — package remains `rdd-workflow`.
 
 ### Performance Targets (Verified)
 

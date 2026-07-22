@@ -49,7 +49,7 @@ non_goals:
   - "Building a wheel/sdist (out of scope; this change fixes install.sh + INSTALL.md only)"
 risk_level: medium
 cross_repo:
-  - "None (spec-workflow meta-repo only)"
+  - "None (rdd-workflow meta-repo only)"
 estimated_loc_change:
   new_files: "~30 lines (2 __init__.py + 2 test files)"
   modified_files: "~20 lines across install.sh + skills/INSTALL.md"

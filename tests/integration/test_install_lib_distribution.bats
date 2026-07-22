@@ -36,7 +36,7 @@ setup() {
   run grep -nE "name '?\\*\\.sh'?" install.sh
   [ "$status" -eq 0 ]
   [ -n "$output" ]
-  # Also assert INSTALL.md mirrors this (since it ships install-spec-workflow.sh).
+  # Also assert INSTALL.md mirrors this (since it ships install-rdd-workflow.sh).
   run grep -nE "name '?\\*\\.sh'?" skills/INSTALL.md
   [ "$status" -eq 0 ]
   [ -n "$output" ]

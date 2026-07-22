@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://spec-workflow.local/schemas/config_schema.json",
-  "title": "spec-workflow Configuration Schema",
+  "$id": "https://rdd-workflow.local/schemas/config_schema.json",
+  "title": "rdd-workflow Configuration Schema",
   "description": "JSON Schema for the merged configuration produced by ConfigParser.parse(). Validates the structure of interaction, loop, and triggers sections. All fields are optional - validation only runs on fields that are present. This complements the existing _validate() function in config.py (which checks mode, max_iterations, max_retries) with broader structural validation.",
   "type": "object",
   "additionalProperties": true,

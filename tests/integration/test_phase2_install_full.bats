@@ -19,7 +19,7 @@ teardown() {
 @test "phase2_install: INSTALL.md copy loop populates scripts/ in target" {
   # Extract the for-loop from INSTALL.md L99-115 (or wherever after Phase 2 update)
   # and run it against TEST_DEST
-  SKILLS_DIR="$TEST_DEST/.opencode/skills/spec-workflow"
+  SKILLS_DIR="$TEST_DEST/.opencode/skills/rdd-workflow"
   PACKAGE_DIR="$REPO_ROOT"
 
   # Source the relevant INSTALL.md bash block — extract L88-143 (Phase 1 layout)
@@ -56,7 +56,7 @@ teardown() {
 }
 
 @test "phase2_install: install preserves _lib/ shared files (state.sh, worktree.sh)" {
-  SKILLS_DIR="$TEST_DEST/.opencode/skills/spec-workflow"
+  SKILLS_DIR="$TEST_DEST/.opencode/skills/rdd-workflow"
   PACKAGE_DIR="$REPO_ROOT"
   bash -c "
     PACKAGE_DIR='$PACKAGE_DIR'

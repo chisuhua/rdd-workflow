@@ -53,9 +53,9 @@ skills/
 
 **选 B**。INSTALL.md 是安装脚本而非运行时技能，在 `skills/` 顶层保持特殊地位更合理。Phase 1 不移动 INSTALL.md。
 
-## Decision 4: `spec-workflow-writing-plans.md` 处理
+## Decision 4: `rdd-workflow-writing-plans.md` 处理
 
-该文件是纯参考文档（0 个 `_lib/` 依赖），放在 `skills/spec-workflow-writing-plans/SKILL.md`。
+该文件是纯参考文档（0 个 `_lib/` 依赖），放在 `skills/rdd-workflow-writing-plans/SKILL.md`。
 
 ## Decision 5: package.json 兼容性
 
@@ -90,7 +90,7 @@ for dir in skills/*/; do
 done
 
 # Step 3: 还原 test 文件路径
-for skill in guide guide-arch guide-plan guide-ship propose execute feature status deps roadmap rddf-session spec-workflow-writing-plans; do
+for skill in guide guide-arch guide-plan guide-ship propose execute feature status deps roadmap rddf-session rdd-workflow-writing-plans; do
   find tests/ -type f \( -name '*.bats' -o -name '*.bash' -o -name '*.py' -o -name '*.md' \) \
     -exec sed -i "s|skills/${skill}/SKILL.md|skills/${skill}.md|g" {} +
 done

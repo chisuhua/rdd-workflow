@@ -1,4 +1,4 @@
-# spec-workflow v2.0 Loop 引擎使用指南
+# rdd-workflow v2.0 Loop 引擎使用指南
 
 > **版本**: 2.0.0  
 > **日期**: 2026-06-22  
@@ -24,7 +24,7 @@
 
 ## 概述
 
-spec-workflow v2.0 引入了全新的 **Loop 引擎**，从状态机驱动升级到自主运行的 AI 编程范式。
+rdd-workflow v2.0 引入了全新的 **Loop 引擎**，从状态机驱动升级到自主运行的 AI 编程范式。
 
 ### 核心特性
 
@@ -44,7 +44,7 @@ spec-workflow v2.0 引入了全新的 **Loop 引擎**，从状态机驱动升级
 ### 1. 安装 v2.0
 
 ```bash
-npm install spec-workflow@2.0.0
+npm install rdd-workflow@2.0.0
 ```
 
 ### 2. 创建配置文件
@@ -640,7 +640,7 @@ Planner Agent → Executor Agent → Verifier Agent
 ```
 📜 Script verification: plan.change_select
 
-Running: .spec-workflow/scripts/verification/check_changes.py
+Running: .rdd-workflow/scripts/verification/check_changes.py
 ✅ Changes format: PASS
 ✅ Artifacts complete: PASS
 ✅ Dependencies analyzed: PASS
@@ -845,7 +845,7 @@ cat .rddf/state/state-vector.json | jq '.memory.executions'
 ### 4. 使用便携规范
 
 ```yaml
-# .spec-workflow/loops/complete-changes.yaml
+# .rdd-workflow/loops/complete-changes.yaml
 version: "2.0"
 name: "complete-all-changes"
 
@@ -867,7 +867,7 @@ tail -f .rddf/state/event-log.jsonl | jq '.'
 cat .rddf/state/event-log.jsonl | jq 'select(.type == "gate_failed")'
 
 # 生成进度报告
-spec-workflow report
+rdd-workflow report
 ```
 
 ---

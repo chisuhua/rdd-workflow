@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# rddf — spec-workflow CLI entry point
+# rddf — rdd-workflow CLI entry point
 #
 # Usage: rddf <command> [options]
 #
@@ -22,10 +22,10 @@
 #   rddf archive <name>           归档 change (merge → archive → cleanup)
 #   rddf cleanup                  清理孤立 worktree 和 branch
 #   rddf validate                 质量门控检查
-#   rddf init                     安装 spec-workflow 到当前项目
+#   rddf init                     安装 rdd-workflow 到当前项目
 #   rddf help                     显示此帮助
 #
-# Repository: https://github.com/chisuhua/spec-workflow
+# Repository: https://github.com/chisuhua/rdd-workflow
 # License: MIT
 
 set -euo pipefail
@@ -134,7 +134,7 @@ rddf_help() {
     # 从本脚本顶部提取用法
     local usage
     usage=$(sed -n '/^# Usage:/,/^$/p' "$0" | sed 's/^# \?//')
-    echo "${BOLD}rddf${RESET} — spec-workflow CLI"
+    echo "${BOLD}rddf${RESET} — rdd-workflow CLI"
     echo ""
     echo "${usage}"
     echo ""
@@ -1288,7 +1288,7 @@ print('\x1b[2J\x1b[H', end='')
 now = datetime.datetime.now(datetime.timezone.utc)
 ts = now.strftime('%Y-%m-%d %H:%M:%S UTC')
 print()
-print(f'${BOLD}📡 spec-workflow 实时监控${RESET}  ${DIM}(更新于 {ts})${RESET}')
+print(f'${BOLD}📡 rdd-workflow 实时监控${RESET}  ${DIM}(更新于 {ts})${RESET}')
 print()
 
 # 1. Session 状态
@@ -1425,7 +1425,7 @@ rddf_init() {
     local target="${1:-$PROJECT_ROOT}"
 
     say ""
-    say "${BOLD}📦 安装 spec-workflow 到项目${RESET}"
+    say "${BOLD}📦 安装 rdd-workflow 到项目${RESET}"
     say "${DIM}━${RESET}${DIM}━${RESET}"
     say "  ${DIM}目标:${RESET} $target"
 
@@ -1439,8 +1439,8 @@ rddf_init() {
         fail "找不到技能源目录 (在 $SKILLS_DIR/skills/ 或 $PROJECT_ROOT/skills/)"
     fi
 
-    # 目标: .opencode/skills/spec-workflow/
-    local dest="$target/.opencode/skills/spec-workflow"
+    # 目标: .opencode/skills/rdd-workflow/
+    local dest="$target/.opencode/skills/rdd-workflow"
     mkdir -p "$dest/skills"
     mkdir -p "$dest/_lib"
 
@@ -1512,7 +1512,7 @@ main() {
         version|--version|-v)
             local ver="2.0.0"
             [ -f "$SKILLS_DIR/package.json" ] && ver=$(grep -m1 '"version"' "$SKILLS_DIR/package.json" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' 2>/dev/null || echo "$ver")
-            echo "rddf v$ver — spec-workflow CLI"
+            echo "rddf v$ver — rdd-workflow CLI"
             ;;
         *)
             err "未知命令: $cmd"

@@ -1,4 +1,4 @@
-"""Generic plugin loader for the v2-loop-engine spec-workflow modules.
+"""Generic plugin loader for the v2-loop-engine rdd-workflow modules.
 
 Provides a reusable `PluginLoader[BaseClass]` that scans a directory of
 `.py` files, imports them via `importlib`, discovers subclasses of the

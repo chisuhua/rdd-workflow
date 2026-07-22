@@ -2,7 +2,7 @@
 
 ### Background
 
-spec-workflow v2.0 实现了三阶段架构（arch → plan → ship，ADR-0003），每个阶段有 `guide-*` 状态机技能驱动。state machine 在每个 skill 内部维护，但**没有跨 OpenCode session 的工作流连续性**。
+rdd-workflow v2.0 实现了三阶段架构（arch → plan → ship，ADR-0003），每个阶段有 `guide-*` 状态机技能驱动。state machine 在每个 skill 内部维护，但**没有跨 OpenCode session 的工作流连续性**。
 
 ADR-0010（多会话管理，2026-06-22 已采纳）设计了 `SessionCoordinator`（v2.0 轻量级）和 `SessionManager`（v2.1 完整并行）Python 抽象，但：
 1. 这两个类**从未被 `loop_engine.py` 或任何 skill 导入使用**（grep 确认：仅在自身文件 + session_base.py 中引用）

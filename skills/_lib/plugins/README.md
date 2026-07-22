@@ -1,6 +1,6 @@
 # Gate Mechanism Plugins
 
-Custom gate checks for the spec-workflow v2 phase-transition gate. Plugins let you
+Custom gate checks for the rdd-workflow v2 phase-transition gate. Plugins let you
 add organization- or project-specific validation without modifying core code.
 
 ## Writing a Plugin

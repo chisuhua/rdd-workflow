@@ -26,7 +26,7 @@ OpenSpec 工作流在 `g-gpu-client-default-stub-init` ship 流程中暴露了�
 
 需要额外 6 步修复：编辑 spec → commit → push TaskRunner → bump submodule → push UsrLinuxEmu → 重试 archive。
 
-**根本原因**：spec-workflow 的验证逻辑分散在 `skills/propose.md` / `guide-plan.md` / `guide-ship.md` 三处，都只检查**结构完整性**（artifacts 存在、commit 存在），不检查**声明真实性**（baseline 是否成立、delta target 是否存在）。
+**根本原因**：rdd-workflow 的验证逻辑分散在 `skills/propose.md` / `guide-plan.md` / `guide-ship.md` 三处，都只检查**结构完整性**（artifacts 存在、commit 存在），不检查**声明真实性**（baseline 是否成立、delta target 是否存在）。
 
 ## What Changes
 
@@ -72,7 +72,7 @@ OpenSpec 工作流在 `g-gpu-client-default-stub-init` ship 流程中暴露了�
 - **破坏性变更**: 无。失败时仅阻断（exit 1），不影响通过路径。
 - **API 变更**: 无。新工具仅 CLI 调用（`python3 validate_baseline.py <change-name>`）。
 - **外部依赖**: 无新增。纯 Python 标准库（`subprocess`、`pathlib`、`re`、`json`）。
-- **跨仓影响**: 无。spec-workflow 是元仓，不影响 TaskRunner / UsrLinuxEmu。
+- **跨仓影响**: 无。rdd-workflow 是元仓，不影响 TaskRunner / UsrLinuxEmu。
 
 ## Acceptance Criteria
 

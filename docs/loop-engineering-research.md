@@ -1,8 +1,8 @@
-# Loop 工程业界调研与 spec-workflow v2.0 借鉴方案
+# Loop 工程业界调研与 rdd-workflow v2.0 借鉴方案
 
 > **调研日期**: 2026-06-22  
 > **调研范围**: Looper、Anthropic Agents、Claude Code /loop、OpenHands、SWE-Agent、Requesty  
-> **目标**: 提取可借鉴到 spec-workflow v2.0 的设计模式
+> **目标**: 提取可借鉴到 rdd-workflow v2.0 的设计模式
 
 ---
 
@@ -29,7 +29,7 @@ Looper 强制用户在执行前完成三阶段设计：
 2. **验证设计**: 确定检查机制（脚本/模型/人工）
 3. **控制设计**: 设置刹车机制（最大迭代、无进展终止）
 
-#### 可借鉴到 spec-workflow v2.0
+#### 可借鉴到 rdd-workflow v2.0
 
 ```json
 // .rddf.json 增强 Schema
@@ -88,7 +88,7 @@ Looper 强制用户在执行前完成三阶段设计：
 - 利用不同模型的"盲区差异"降低错误率
 - 跨厂商数据脱敏处理
 
-#### 可借鉴到 spec-workflow v2.0
+#### 可借鉴到 rdd-workflow v2.0
 
 ```python
 # skills/_lib/verification.py
@@ -162,7 +162,7 @@ Requesty 提出 5 大 Loop 构建块：
 
 关键：**Verify 阶段是门控**，验证失败则不进入下一阶段
 
-#### 可借鉴到 spec-workflow v2.0
+#### 可借鉴到 rdd-workflow v2.0
 
 ```python
 # skills/_lib/gate.py
@@ -249,7 +249,7 @@ class GateMechanism:
 - **SWE-Agent**: 简单 Agent + 工具链（文件编辑、测试运行、git 操作）
 - **共同点**: 分离"执行"和"验证"角色
 
-#### 可借鉴到 spec-workflow v2.0
+#### 可借鉴到 rdd-workflow v2.0
 
 ```python
 # skills/_lib/multi_agent.py
@@ -310,7 +310,7 @@ Looper 在执行前生成 ASCII 流程图：
 目标 -> 计划 -> 门控 -> 交付 -> 门控 -> 最终输出
 ```
 
-#### 可借鉴到 spec-workflow v2.0
+#### 可借鉴到 rdd-workflow v2.0
 
 ```python
 # skills/_lib/visualization.py
@@ -366,7 +366,7 @@ def generate_flowchart(goal: str, config: LoopConfig) -> str:
 - Claude Code `/loop` 命令：定时触发循环任务
 - Routines：后台持续运行的 Agent，监听 Git 提交、PR 等事件
 
-#### 可借鉴到 spec-workflow v2.0
+#### 可借鉴到 rdd-workflow v2.0
 
 ```json
 // .rddf.json 定时任务配置
@@ -403,7 +403,7 @@ def generate_flowchart(goal: str, config: LoopConfig) -> str:
 ```
 
 **借鉴价值**: ⭐⭐⭐⭐
-- 当前 spec-workflow 只有手动触发
+- 当前 rdd-workflow 只有手动触发
 - 应支持**定时循环**，如每日代码审查、每周架构审计
 - 可与 GitHub Actions 集成，实现 CI/CD 自动化
 
@@ -415,7 +415,7 @@ def generate_flowchart(goal: str, config: LoopConfig) -> str:
 - **OpenHands**: 跨会话记忆（保存执行痕迹、失败原因、修复方案）
 - **Anthropic Agents**: 上下文管理（工具使用历史、环境变量、文件状态）
 
-#### 可借鉴到 spec-workflow v2.0
+#### 可借鉴到 rdd-workflow v2.0
 
 ```python
 # skills/_lib/memory.py
@@ -489,7 +489,7 @@ class LoopMemory:
 - `loop.resolved.json`: 机器可解析的完整配置
 - `run-loop.py`: 独立的 Python 运行器
 
-#### 可借鉴到 spec-workflow v2.0
+#### 可借鉴到 rdd-workflow v2.0
 
 ```yaml
 # loop.yaml 示例
@@ -625,7 +625,7 @@ human_in_loop_nodes:
 4. **Orchestrator-Workers**: 主 Agent 协调子 Agent
 5. **Evaluator-Optimizer**: 评估器 + 优化器循环
 
-**借鉴**: spec-workflow v2.0 的 Loop 引擎应支持这 5 种模式的组合
+**借鉴**: rdd-workflow v2.0 的 Loop 引擎应支持这 5 种模式的组合
 
 ### Requesty 5 大构建块
 
@@ -658,5 +658,5 @@ human_in_loop_nodes:
 
 ---
 
-**调研结论**: spec-workflow v2.0 的 Loop 引擎设计方向与业界最佳实践高度一致（Requesty 5 大构建块、Anthropic 工作流模式）。应重点借鉴 Looper 的"设计先行"、"审判委员会"和"便携规范"三大创新，进一步提升架构的严谨性和用户体验。
+**调研结论**: rdd-workflow v2.0 的 Loop 引擎设计方向与业界最佳实践高度一致（Requesty 5 大构建块、Anthropic 工作流模式）。应重点借鉴 Looper 的"设计先行"、"审判委员会"和"便携规范"三大创新，进一步提升架构的严谨性和用户体验。
 

@@ -4,7 +4,7 @@
 - docs/audit/2026-06-05-workflow-audit.md:490:L320 TODO 同源
 - 3 处文档(deps.md L345/L499/L566)明确标注占位符待实现
 
-**当前状态**: spec-workflow 项目当前阶段,需要为后续实施奠定基础。
+**当前状态**: rdd-workflow 项目当前阶段,需要为后续实施奠定基础。
 
 **约束**:
 - MUST 使用 bats-core 1.10+

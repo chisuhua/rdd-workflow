@@ -97,7 +97,7 @@ load ../test_helper
   echo "y" > b && git add b && git commit -q -m "feat: b"
   git checkout master 2>/dev/null || git checkout main 2>/dev/null
 
-  # Source the helper from the spec-workflow repo
+  # Source the helper from the rdd-workflow repo
   source "$REPO_ROOT/skills/_lib/archive.sh"
 
   run check_worktree_commits test-1

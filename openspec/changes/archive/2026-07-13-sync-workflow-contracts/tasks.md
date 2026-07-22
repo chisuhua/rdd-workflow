@@ -19,7 +19,7 @@ STATUS: PROPOSED
 - [ ] **Task 1.1**: 记录磁盘真相
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 echo "=== skills on disk ===" && ls skills/*.md | wc -l
 echo "=== package.json skills count ===" && python3 -c "import json; print(len(json.load(open('package.json'))['skills']))"
 echo "=== ADR files ===" && ls docs/adr/ADR-*.md | wc -l
@@ -32,7 +32,7 @@ Expected: 13 / 11 / 21 / {0001..0012,0013,0013,0014..0019} / 25
 - [ ] **Task 1.2**: 记录当前 drift 字段
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 echo "=== USAGE.md ship-side phase count ===" && grep -E "Phase [0-9]" USAGE.md | head -10
 echo "=== general/spec.md ship-side phase count ===" && grep -E "5 阶段|ship-side" openspec/specs/general/spec.md
 echo "=== general/spec.md handoff paths ===" && grep -E "handoff\\.json|plan-handoff" openspec/specs/general/spec.md
@@ -47,7 +47,7 @@ Expected: 确认 7 类 drift 全部可观察(为后续 spec delta 提供 baselin
 - [ ] **Task 1.3**: 跑 baseline 测试,确保改动前全部通过
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/ -q --tb=short 2>&1 | tail -5
 bats tests/smoke.bats 2>&1 | tail -5
 ```
@@ -73,7 +73,7 @@ Expected: 28+ unit 文件 + 7 smoke cases 全部通过。
 - [ ] **Task 2.2**: 把 `feature` 与 `rddf-session` 加入 `package.json::skills[]`
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 # 编辑 package.json,skills[] 末尾加入 "feature", "rddf-session"
 # package.json 顶部不要加 _comment 字段(已废弃)
 ```
@@ -110,7 +110,7 @@ cd /workspace/project/spec-workflow
 ```
 ## npm test vs pytest
 
-> spec-workflow 的 CI 陷阱:`npm test` 只跑 bats,**不**跑 pytest。
+> rdd-workflow 的 CI 陷阱:`npm test` 只跑 bats,**不**跑 pytest。
 > 任何 Python 代码改动后必须显式执行 `pytest tests/`。
 > 反漂移测试 `tests/integration/test_doc_contracts.bats` 会断言本约束不被违反。
 ```
@@ -255,7 +255,7 @@ TDD Step 1 — 写失败测试。Python pytest 用例:
 - [ ] **Task 6.1**: 跑新增 anti-drift 测试
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 bats tests/integration/test_doc_contracts.bats
 bats tests/integration/test_adr_index.bats
 pytest tests/unit/test_doc_contracts.py -v
@@ -266,7 +266,7 @@ Expected: 三个测试全绿。
 - [ ] **Task 6.2**: 跑既有测试,确认零回归
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 python3 -m pytest tests/unit/ -q --tb=short
 python3 -m pytest tests/integration/ -q --tb=short
 bats tests/smoke.bats
@@ -277,7 +277,7 @@ Expected: 所有既有测试继续通过(28+ unit / 51 integration / 7 smoke)。
 - [ ] **Task 6.3**: 跑 openspec validate 确认 change artifacts 合法
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 openspec validate sync-workflow-contracts
 ```
 
@@ -286,7 +286,7 @@ Expected: PASS(若 validator 报 MODIFIED target 不存在,说明 spec.md target
 - [ ] **Task 6.4**: 跑 CI 质量门控
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 # 恒真断言门控
 grep -rn "assert.*or True\|assert True" tests/ | head -5
 echo "exit=$?"
@@ -301,7 +301,7 @@ Expected: 恒真断言 grep 无命中(空输出,exit 1 from grep means no match)
 
 ```bash
 # 故意制造一个 drift,确认 anti-drift test 能抓住
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 # (临时)把 USAGE.md 中 "Phase 1.5" 改成 "Phase 1.6"
 sed -i.bak 's/Phase 1\.5/Phase 1.6/' USAGE.md
 bats tests/integration/test_doc_contracts.bats 2>&1 | tail -10
@@ -318,7 +318,7 @@ Expected: 第一轮 exit 1 且 stderr 指明漂移;恢复后 exit 0。
 
 ## 7. 提交与归档(Commit + Archive)
 
-> 本 change 的 deliverable 已完成,按 spec-workflow 标准流程 commit + archive。
+> 本 change 的 deliverable 已完成,按 rdd-workflow 标准流程 commit + archive。
 
 - [ ] **Task 7.1**: 提交 artifacts 到 git(在 worktree 内)
 
@@ -350,7 +350,7 @@ git commit -m "feat(contracts): sync-workflow-contracts + anti-drift tests
 - [ ] **Task 7.3**: 归档后验证
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 ls openspec/changes/archive/ | grep sync-workflow-contracts
 # 应该看到 2026-07-11-sync-workflow-contracts/ 目录
 ```

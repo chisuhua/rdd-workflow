@@ -1,7 +1,7 @@
 """``rddf version`` subcommand handler.
 
 Reads the ``version`` field from ``<project_root>/package.json`` and prints
-the canonical banner ``rddf v<X.Y.Z> — spec-workflow CLI``. Project root
+the canonical banner ``rddf v<X.Y.Z> — rdd-workflow CLI``. Project root
 is injected by ``cli.__main__`` via the ``RDDF_PROJECT_ROOT`` env var;
 falls back to ``os.getcwd()`` when unset (so direct test invocation
 works).
@@ -44,7 +44,7 @@ def cmd_version(args: list[str]) -> int:
         return 1
 
     version = data.get("version") or "0.0.0"
-    print(f"rddf v{version} — spec-workflow CLI")
+    print(f"rddf v{version} — rdd-workflow CLI")
     return 0
 
 

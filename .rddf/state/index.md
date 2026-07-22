@@ -1,6 +1,6 @@
 # .rddf/state/ — State Files Index
 
-本目录包含 spec-workflow 状态机使用的状态文件。本索引说明每个文件的角色、写入者和读取者。
+本目录包含 rdd-workflow 状态机使用的状态文件。本索引说明每个文件的角色、写入者和读取者。
 
 ## 状态文件清单
 

@@ -322,7 +322,7 @@ archive_change() {
 #   not treat iteration tracking failure as archive failure).
 #
 #   Implementation: invokes the Python `skills._lib.iteration` module
-#   via a here-string. If the module is missing (older spec-workflow
+#   via a here-string. If the module is missing (older rdd-workflow
 #   version) or the file is unreadable, logs a warning and returns 0.
 #
 #   Path resolution: `skills/_lib/iteration.py` is a sibling of this

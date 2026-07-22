@@ -266,7 +266,7 @@
     "status": "已完成",
     "phase": "v2.1",
     "category": "planning",
-    "description": "## 架构依据\n- 复盘发现：第一轮 8 个 task() 全部因 `load_skills=[\"spec-workflow/writing-plans\"]` 失败\n- 根因：skill 名缺少 `rdd-workflow/skills/` 前缀，无自动补全机制\n\n## 范围\n- **In Scope**:\n  - 在 task() 调用前增加 skill 名校验步骤：从 available list 中搜索匹配\n  - 短名匹配逻辑：`spec-workflow/writing-plans` → 自动补全为 `rdd-workflow/skills/spec-workflow/writing-plans`\n  - 歧义时报错（多个匹配），无匹配时提示候选项\n  - 1 个 bats 测试：短名 → 全名映射、歧义场景、无匹配场景\n- **Out Scope**:\n  - 不修改 task() 平台实现（适配层）\n\n## 验收标准\n- `resolve-skill-name spec-workflow/writing-plans` 输出全名\n- 1 个 bats 测试通过",
+    "description": "## 架构依据\n- 复盘发现：第一轮 8 个 task() 全部因 `load_skills=[\"rdd-workflow/writing-plans\"]` 失败\n- 根因：skill 名缺少 `rdd-workflow/skills/` 前缀，无自动补全机制\n\n## 范围\n- **In Scope**:\n  - 在 task() 调用前增加 skill 名校验步骤：从 available list 中搜索匹配\n  - 短名匹配逻辑：`rdd-workflow/writing-plans` → 自动补全为 `rdd-workflow/skills/rdd-workflow/writing-plans`\n  - 歧义时报错（多个匹配），无匹配时提示候选项\n  - 1 个 bats 测试：短名 → 全名映射、歧义场景、无匹配场景\n- **Out Scope**:\n  - 不修改 task() 平台实现（适配层）\n\n## 验收标准\n- `resolve-skill-name rdd-workflow/writing-plans` 输出全名\n- 1 个 bats 测试通过",
     "effort": "0.5-1天"
   },
   {

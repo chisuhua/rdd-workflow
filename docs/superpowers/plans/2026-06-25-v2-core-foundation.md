@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement Phase 1 core foundation for spec-workflow v2.0 — unified state vector, append-only event log, two-level gate mechanism, multi-source config parser, and v1.x bidirectional sync layer. Establishes the authoritative state layer that v2-loop-engine and v2-advanced-features will build upon.
+**Goal:** Implement Phase 1 core foundation for rdd-workflow v2.0 — unified state vector, append-only event log, two-level gate mechanism, multi-source config parser, and v1.x bidirectional sync layer. Establishes the authoritative state layer that v2-loop-engine and v2-advanced-features will build upon.
 
-**Architecture:** Single JSON state vector (`.spec-workflow/state-vector.json`) as source of truth + append-only JSONL event log (`.spec-workflow/event-log.jsonl`) for audit + fcntl-based file lock (10s default timeout) for concurrency + lambda-based gate mechanism (error/warning severities) for phase transitions + priority-merged config (runtime > loop.yaml > .spec-workflow.json > env > defaults) + bidirectional v1.x sync. All ~1,200 lines Python, fully backward compatible with v1.x skills.
+**Architecture:** Single JSON state vector (`.rdd-workflow/state-vector.json`) as source of truth + append-only JSONL event log (`.rdd-workflow/event-log.jsonl`) for audit + fcntl-based file lock (10s default timeout) for concurrency + lambda-based gate mechanism (error/warning severities) for phase transitions + priority-merged config (runtime > loop.yaml > .rdd-workflow.json > env > defaults) + bidirectional v1.x sync. All ~1,200 lines Python, fully backward compatible with v1.x skills.
 
 **Tech Stack:** Python 3.10+, PyYAML (for `loop.yaml`), jsonschema (for state vector validation), `fcntl` (stdlib for file locking), `pytest` (testing), OpenSpec CLI v1.3.1+ (workflow orchestration), git worktree (isolation).
 
-**OpenSpec Workflow Phases Covered:** This plan executes the full lifecycle for the `v2-core-foundation` change:
+**OpenRDD Workflow Phases Covered:** This plan executes the full lifecycle for the `v2-core-foundation` change:
 - **Phase 0 — Propose** (artifacts already exist; verify and commit)
 - **Phase 1 — Plan** (worktree creation, this plan, dependency confirmation)
 - **Phase 2 — Execute** (Tasks 1-13 below; update `tasks.md` after each task)
@@ -53,7 +53,7 @@ This change creates new files only. No existing v1.x files are modified — sync
 | File | Update Reason |
 |---|---|
 | `docs/v2-api-reference.md` | Document new public APIs: `StateVector`, `EventLog`, `GateMechanism`, `ConfigParser` |
-| `docs/v2-config-schema.md` | Document `.spec-workflow.json` schema (top-level fields, types, defaults) |
+| `docs/v2-config-schema.md` | Document `.rdd-workflow.json` schema (top-level fields, types, defaults) |
 
 ### OpenSpec Artifacts (`openspec/changes/v2-core-foundation/`)
 
@@ -65,7 +65,7 @@ Already created during Phase 0 (propose). No content changes needed; only git co
 
 Before starting Task 1, confirm the following:
 
-- [ ] Working directory is `/workspace/project/spec-workflow` (or equivalent repo root)
+- [ ] Working directory is `/workspace/project/rdd-workflow` (or equivalent repo root)
 - [ ] On branch `master`, no uncommitted changes in `openspec/changes/v2-core-foundation/`
 - [ ] `python3 --version` shows 3.10 or later
 - [ ] `pip install pyyaml jsonschema pytest` succeeds
@@ -86,7 +86,7 @@ Before starting Task 1, confirm the following:
 - [ ] **Step 1: Verify all Phase 0 artifacts exist and are valid**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 ls -la openspec/changes/v2-core-foundation/
 test -f openspec/changes/v2-core-foundation/proposal.md && echo "proposal.md: OK"
 test -f openspec/changes/v2-core-foundation/design.md && echo "design.md: OK"
@@ -100,7 +100,7 @@ Expected: All five `OK` lines printed. If any missing, STOP and investigate.
 - [ ] **Step 2: Commit Phase 0 artifacts to master**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git add openspec/changes/v2-core-foundation/
 git status  # should show: "Changes to be committed: new files: ..."
 git commit -m "feat(openspec): add v2-core-foundation change artifacts
@@ -118,7 +118,7 @@ Expected: One new commit on `master`. Verify with `git log --oneline -1`.
 - [ ] **Step 3: Create branch and worktree**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 DEFAULT_BRANCH=$(git symbolic-ref --short HEAD)
 git branch openspec/v2-core-foundation "$DEFAULT_BRANCH"
 git worktree add .rddf/state/v2-core-foundation-wt -b openspec/v2-core-foundation "$DEFAULT_BRANCH"
@@ -131,9 +131,9 @@ Expected: `git branch --show-current` prints `openspec/v2-core-foundation`. **Al
 - [ ] **Step 4: Save this plan inside the worktree**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 mkdir -p docs/superpowers/plans
-cp /workspace/project/spec-workflow/docs/superpowers/plans/2026-06-25-v2-core-foundation.md \
+cp /workspace/project/rdd-workflow/docs/superpowers/plans/2026-06-25-v2-core-foundation.md \
    docs/superpowers/plans/2026-06-25-v2-core-foundation.md
 git add docs/superpowers/plans/2026-06-25-v2-core-foundation.md
 git commit -m "docs(planning): add v2-core-foundation implementation plan"
@@ -250,7 +250,7 @@ def test_lock_timeout_raises_locktimeout(lock_path):
 - [ ] **Step 1.2: Run test to verify it fails**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_lock.py -v
 ```
 
@@ -367,7 +367,7 @@ class FileLock:
 - [ ] **Step 1.4: Run tests to verify they pass**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_lock.py -v
 ```
 
@@ -376,7 +376,7 @@ Expected: All 6 tests pass. **Do not proceed if any fail.**
 - [ ] **Step 1.5: Update tasks.md and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 sed -i 's/- \[ \] 1.2 Create `skills/_lib/lock.py`/- [x] 1.2 Create `skills/_lib/lock.py`/' openspec/changes/v2-core-foundation/tasks.md
 git add skills/_lib/lock.py tests/unit/test_lock.py openspec/changes/v2-core-foundation/tasks.md
 git commit -m "feat(_lib): add FileLock (fcntl-based, 10s timeout, context manager) — closes 1.2"
@@ -396,7 +396,7 @@ Expected: 1 new commit. `tasks.md` now shows `[x]` for item 1.2.
 - [ ] **Step 2.1: Create the schema file**
 
 ```bash
-mkdir -p /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt/skills/_lib/schemas
+mkdir -p /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt/skills/_lib/schemas
 ```
 
 Create `skills/_lib/schemas/state_vector_schema.json`:
@@ -404,8 +404,8 @@ Create `skills/_lib/schemas/state_vector_schema.json`:
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://spec-workflow.dev/schemas/state_vector_schema.json",
-  "title": "Spec Workflow v2 State Vector",
+  "$id": "https://rdd-workflow.dev/schemas/state_vector_schema.json",
+  "title": "RDD Workflow v2 State Vector",
   "description": "Unified workflow state. Single source of truth; replaces 13 v1.x state files.",
   "type": "object",
   "required": ["version", "goal", "arch_side", "plan_side", "ship_side", "loop_state", "memory", "metadata"],
@@ -520,7 +520,7 @@ Create `skills/_lib/schemas/state_vector_schema.json`:
 - [ ] **Step 2.2: Validate the schema**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -c "
 import json, jsonschema
 with open('skills/_lib/schemas/state_vector_schema.json') as f:
@@ -535,7 +535,7 @@ Expected: `Schema is valid JSON Schema draft-07`.
 - [ ] **Step 2.3: Update tasks.md and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 sed -i 's/- \[ \] 1.3 Create `skills/_lib\/schemas\/state_vector_schema.json`/- [x] 1.3 Create `skills/_lib\/schemas\/state_vector_schema.json`/' openspec/changes/v2-core-foundation/tasks.md
 git add skills/_lib/schemas/state_vector_schema.json openspec/changes/v2-core-foundation/tasks.md
 git commit -m "feat(_lib): add state_vector_schema.json (JSON Schema draft-07) — closes 1.3"
@@ -682,7 +682,7 @@ for i in range(50):
 - [ ] **Step 3.2: Run test to verify it fails**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_state_vector.py -v 2>&1 | head -30
 ```
 
@@ -693,9 +693,9 @@ Expected: `ModuleNotFoundError: No module named 'skills._lib.state_vector'`.
 Create `skills/_lib/state_vector.py`:
 
 ```python
-"""Unified state vector — single source of truth for spec-workflow v2.
+"""Unified state vector — single source of truth for rdd-workflow v2.
 
-Stored as JSON at `.spec-workflow/state-vector.json`. All writes are atomic
+Stored as JSON at `.rdd-workflow/state-vector.json`. All writes are atomic
 (write-temp-then-rename) and protected by a `FileLock` (10s timeout). All
 writes are schema-validated (JSON Schema draft-07) and checksummed
 (SHA-256 of canonical JSON) for corruption detection.
@@ -886,7 +886,7 @@ class StateVector:
 - [ ] **Step 3.4: Run tests to verify they pass**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_state_vector.py -v
 ```
 
@@ -895,7 +895,7 @@ Expected: All 9 tests pass.
 - [ ] **Step 3.5: Update tasks.md (1.1, 1.4, 1.5, 1.6, 1.7) and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 1.1 Create `skills/_lib\/state_vector.py`/- [x] 1.1 Create `skills/_lib\/state_vector.py`/' \
   -e 's/- \[ \] 1.4 Add checksum field to state vector for corruption detection/- [x] 1.4 Add checksum field to state vector for corruption detection/' \
@@ -1002,7 +1002,7 @@ class Event:
 - [ ] **Step 4.2: Verify import works**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -c "
 from skills._lib.event_types import EventType, Severity, Event
 print(f'EventType count: {len(list(EventType))}')
@@ -1016,7 +1016,7 @@ Expected: `EventType count: 17` and `Severity count: 4`.
 - [ ] **Step 4.3: Update tasks.md and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 sed -i 's/- \[ \] 2.2 Create `skills/_lib\/event_types.py`/- [x] 2.2 Create `skills/_lib\/event_types.py`/' openspec/changes/v2-core-foundation/tasks.md
 git add skills/_lib/event_types.py openspec/changes/v2-core-foundation/tasks.md
 git commit -m "feat(_lib): add event_types.py (17 EventType, Severity, Event dataclass) — closes 2.2"
@@ -1050,7 +1050,7 @@ from typing import Any
 from skills._lib.state_vector import StateVector
 
 
-DEFAULT_STATE_PATH = ".spec-workflow/state-vector.json"
+DEFAULT_STATE_PATH = ".rdd-workflow/state-vector.json"
 
 
 def current_context(state_path: str = DEFAULT_STATE_PATH) -> dict:
@@ -1078,13 +1078,13 @@ def current_context(state_path: str = DEFAULT_STATE_PATH) -> dict:
 - [ ] **Step 5.2: Verify import and behavior**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 cd /tmp && rm -rf sw-test && mkdir sw-test && cd sw-test && git init -q
-mkdir -p .spec-workflow .opencode/skills
+mkdir -p .rdd-workflow .opencode/skills
 python3 -c "
-import sys; sys.path.insert(0, '/workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt')
+import sys; sys.path.insert(0, '/workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt')
 from skills._lib.event_context import current_context
-ctx = current_context('/tmp/sw-test/.spec-workflow/state-vector.json')
+ctx = current_context('/tmp/sw-test/.rdd-workflow/state-vector.json')
 print('context:', ctx)
 assert 'loop_iteration' in ctx
 "
@@ -1095,7 +1095,7 @@ Expected: `context: {'goal': None, 'active_change': None, ...}`.
 - [ ] **Step 5.3: Update tasks.md and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 sed -i 's/- \[ \] 2.3 Create `skills/_lib\/event_context.py` reading current context from state vector/- [x] 2.3 Create `skills/_lib\/event_context.py` reading current context from state vector/' openspec/changes/v2-core-foundation/tasks.md
 git add skills/_lib/event_context.py openspec/changes/v2-core-foundation/tasks.md
 git commit -m "feat(_lib): add event_context.py (snapshot of state for event context) — closes 2.3"
@@ -1236,7 +1236,7 @@ def test_survives_corrupt_line(log_path):
 - [ ] **Step 6.2: Run test to verify it fails**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_event_log.py -v 2>&1 | head -10
 ```
 
@@ -1249,7 +1249,7 @@ Create `skills/_lib/event_log.py`:
 ```python
 """Append-only JSONL event log with query API and progress reports.
 
-Stored at `.spec-workflow/event-log.jsonl`. Each line is one event. Writes
+Stored at `.rdd-workflow/event-log.jsonl`. Each line is one event. Writes
 are protected by a file lock for safety. The log is read on every query;
 for 10K+ events the read is < 100ms (see test_query_10k_events_under_100ms).
 
@@ -1400,7 +1400,7 @@ class EventLog:
 - [ ] **Step 6.4: Run tests to verify they pass**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_event_log.py -v
 ```
 
@@ -1409,7 +1409,7 @@ Expected: All 8 tests pass.
 - [ ] **Step 6.5: Update tasks.md (2.1, 2.4, 2.5, 2.6) and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 2.1 Create `skills/_lib\/event_log.py`/- [x] 2.1 Create `skills/_lib\/event_log.py`/' \
   -e 's/- \[ \] 2.4 Event ID format: `evt_YYYYMMDD_HHMMSS_NNN` (unique within same second)/- [x] 2.4 Event ID format: `evt_YYYYMMDD_HHMMSS_NNN` (unique within same second)/' \
@@ -1594,7 +1594,7 @@ def test_get_suggestion_returns_aggregated_text(state_path, log_path):
 - [ ] **Step 7.2: Run test to verify it fails**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_gate.py -v 2>&1 | head -10
 ```
 
@@ -1736,8 +1736,8 @@ class GateMechanism:
 
     def __init__(
         self,
-        state_path: str = ".spec-workflow/state-vector.json",
-        event_log_path: str = ".spec-workflow/event-log.jsonl",
+        state_path: str = ".rdd-workflow/state-vector.json",
+        event_log_path: str = ".rdd-workflow/event-log.jsonl",
         load_defaults: bool = True,
     ):
         self.state_path = state_path
@@ -1856,7 +1856,7 @@ GateError = GateResult  # backward compat alias
 - [ ] **Step 7.4: Run tests to verify they pass**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_gate.py -v
 ```
 
@@ -1865,7 +1865,7 @@ Expected: All 9 tests pass.
 - [ ] **Step 7.5: Update tasks.md (3.1-3.7) and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 3.1 Create `skills/_lib\/gate.py`/- [x] 3.1 Create `skills/_lib\/gate.py`/' \
   -e 's/- \[ \] 3.2 Define `Check` namedtuple: name, condition (lambda), message, severity/- [x] 3.2 Define `Check` namedtuple: name, condition (lambda), message, severity/' \
@@ -1891,7 +1891,7 @@ Expected: 1 new commit.
 - [ ] **Step 8.1: Create the plugin directory and README**
 
 ```bash
-mkdir -p /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt/skills/_lib/plugins
+mkdir -p /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt/skills/_lib/plugins
 ```
 
 Create `skills/_lib/plugins/README.md`:
@@ -1899,7 +1899,7 @@ Create `skills/_lib/plugins/README.md`:
 ```markdown
 # Gate Mechanism Plugins
 
-Custom gate checks for the spec-workflow v2 phase-transition gate. Plugins let you
+Custom gate checks for the rdd-workflow v2 phase-transition gate. Plugins let you
 add organization- or project-specific validation without modifying core code.
 
 ## Writing a Plugin
@@ -1976,7 +1976,7 @@ The `condition` callable receives a `context` dict containing:
 - [ ] **Step 8.2: Update tasks.md and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 sed -i 's|- \[ \] 3.8 Create `skills/_lib\/plugins\/README.md` with plugin development guide|- [x] 3.8 Create `skills/_lib\/plugins\/README.md` with plugin development guide|' openspec/changes/v2-core-foundation/tasks.md
 git add skills/_lib/plugins/README.md openspec/changes/v2-core-foundation/tasks.md
 git commit -m "docs(_lib): add plugins/README.md (gate check plugin guide) — closes 3.8"
@@ -1996,12 +1996,12 @@ Expected: 1 new commit. Gate mechanism complete.
 Create `skills/_lib/defaults.py`:
 
 ```python
-"""Built-in defaults for spec-workflow v2 configuration.
+"""Built-in defaults for rdd-workflow v2 configuration.
 
 The `DEFAULTS` dict is the lowest-priority source in the config merge order:
-runtime params > loop.yaml > .spec-workflow.json > env vars > DEFAULTS.
+runtime params > loop.yaml > .rdd-workflow.json > env vars > DEFAULTS.
 
-Override any value via `.spec-workflow.json` or environment variables
+Override any value via `.rdd-workflow.json` or environment variables
 (see `skills/_lib/config.py`).
 """
 from __future__ import annotations
@@ -2020,11 +2020,11 @@ DEFAULTS = {
         "retry_backoff_seconds": 5,
     },
     "state": {
-        "path": ".spec-workflow/state-vector.json",
+        "path": ".rdd-workflow/state-vector.json",
         "lock_timeout_seconds": 10.0,
     },
     "event_log": {
-        "path": ".spec-workflow/event-log.jsonl",
+        "path": ".rdd-workflow/event-log.jsonl",
         "max_size_mb": 50,
     },
     "gate": {
@@ -2046,7 +2046,7 @@ def get_defaults() -> dict:
 - [ ] **Step 9.2: Verify import**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -c "
 from skills._lib.defaults import DEFAULTS, get_defaults
 assert DEFAULTS['interaction']['mode'] == 'hybrid'
@@ -2061,7 +2061,7 @@ Expected: `defaults OK`.
 - [ ] **Step 9.3: Update tasks.md and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 sed -i 's/- \[ \] 4.3 Create `skills/_lib\/defaults.py`/- [x] 4.3 Create `skills/_lib\/defaults.py`/' openspec/changes/v2-core-foundation/tasks.md
 git add skills/_lib/defaults.py openspec/changes/v2-core-foundation/tasks.md
 git commit -m "feat(_lib): add defaults.py (built-in config defaults) — closes 4.3"
@@ -2104,7 +2104,7 @@ def clean_env(monkeypatch):
 
 def test_minimal_config_parses(tmp_path, clean_env):
     """A config with only `version` and `interaction.mode` should fill defaults for the rest."""
-    cfg_file = tmp_path / ".spec-workflow.json"
+    cfg_file = tmp_path / ".rdd-workflow.json"
     cfg_file.write_text(json.dumps({"version": "2.0", "interaction": {"mode": "hybrid"}}))
     parser = ConfigParser(project_root=str(tmp_path))
     config = parser.parse()
@@ -2122,8 +2122,8 @@ def test_priority_runtime_over_loop_yaml(tmp_path, clean_env):
 
 
 def test_priority_loop_yaml_over_spec_workflow_json(tmp_path, clean_env):
-    """loop.yaml overrides .spec-workflow.json."""
-    (tmp_path / ".spec-workflow.json").write_text(json.dumps({"interaction": {"mode": "menu"}}))
+    """loop.yaml overrides .rdd-workflow.json."""
+    (tmp_path / ".rdd-workflow.json").write_text(json.dumps({"interaction": {"mode": "menu"}}))
     (tmp_path / "loop.yaml").write_text(yaml.dump({"interaction": {"mode": "loop"}}))
     parser = ConfigParser(project_root=str(tmp_path))
     config = parser.parse()
@@ -2131,8 +2131,8 @@ def test_priority_loop_yaml_over_spec_workflow_json(tmp_path, clean_env):
 
 
 def test_env_var_overrides_file_config(tmp_path, clean_env):
-    """SPEC_WORKFLOW_MODE env var overrides .spec-workflow.json."""
-    (tmp_path / ".spec-workflow.json").write_text(json.dumps({"interaction": {"mode": "menu"}}))
+    """SPEC_WORKFLOW_MODE env var overrides .rdd-workflow.json."""
+    (tmp_path / ".rdd-workflow.json").write_text(json.dumps({"interaction": {"mode": "menu"}}))
     clean_env.setenv("SPEC_WORKFLOW_MODE", "loop")
     parser = ConfigParser(project_root=str(tmp_path))
     config = parser.parse()
@@ -2141,7 +2141,7 @@ def test_env_var_overrides_file_config(tmp_path, clean_env):
 
 def test_invalid_mode_rejected(tmp_path, clean_env):
     """An invalid mode value produces ConfigError with clear message."""
-    (tmp_path / ".spec-workflow.json").write_text(json.dumps({"interaction": {"mode": "invalid_mode"}}))
+    (tmp_path / ".rdd-workflow.json").write_text(json.dumps({"interaction": {"mode": "invalid_mode"}}))
     parser = ConfigParser(project_root=str(tmp_path))
     with pytest.raises(ConfigError, match="invalid_mode"):
         parser.parse()
@@ -2149,7 +2149,7 @@ def test_invalid_mode_rejected(tmp_path, clean_env):
 
 def test_negative_max_iterations_rejected(tmp_path, clean_env):
     """max_iterations must be > 0."""
-    (tmp_path / ".spec-workflow.json").write_text(json.dumps({"loop": {"max_iterations": -1}}))
+    (tmp_path / ".rdd-workflow.json").write_text(json.dumps({"loop": {"max_iterations": -1}}))
     parser = ConfigParser(project_root=str(tmp_path))
     with pytest.raises(ConfigError, match="max_iterations"):
         parser.parse()
@@ -2167,7 +2167,7 @@ def test_type_coercion_for_env_vars(tmp_path, clean_env):
 - [ ] **Step 10.2: Run test to verify it fails**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_config.py -v 2>&1 | head -10
 ```
 
@@ -2183,7 +2183,7 @@ Create `skills/_lib/config.py`:
 Priority (highest to lowest):
     1. Runtime overrides (passed to `parse()`)
     2. loop.yaml (project-level)
-    3. .spec-workflow.json (project-level)
+    3. .rdd-workflow.json (project-level)
     4. Environment variables (SPEC_WORKFLOW_*)
     5. Built-in defaults (skills/_lib/defaults.py)
 
@@ -2277,7 +2277,7 @@ class ConfigParser:
 
     def __init__(self, project_root: str = "."):
         self.project_root = Path(project_root)
-        self.spec_workflow_json = self.project_root / ".spec-workflow.json"
+        self.spec_workflow_json = self.project_root / ".rdd-workflow.json"
         self.loop_yaml = self.project_root / "loop.yaml"
 
     def parse(self, runtime_overrides: Optional[dict] = None) -> dict:
@@ -2296,7 +2296,7 @@ class ConfigParser:
                 _set_dotted(env_overlay, dotted_path, coerced)
         config = _deep_merge(config, env_overlay)
 
-        # 3. .spec-workflow.json
+        # 3. .rdd-workflow.json
         if self.spec_workflow_json.is_file():
             try:
                 with open(self.spec_workflow_json) as f:
@@ -2330,7 +2330,7 @@ class ConfigParser:
 Read the current `package.json`, then edit it to add `pyyaml` to the dependencies (or note it in a `requirements.txt` if `package.json` is for npm). The repo already has a `package.json`, so we add a comment block referring to Python deps:
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 cat package.json
 ```
 
@@ -2345,8 +2345,8 @@ pytest>=7.0
 Create `requirements.txt` at the repo root:
 
 ```bash
-cat > /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt/requirements.txt <<'EOF'
-# Python dependencies for spec-workflow v2.0
+cat > /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt/requirements.txt <<'EOF'
+# Python dependencies for rdd-workflow v2.0
 # Install: pip install -r requirements.txt
 PyYAML>=6.0
 jsonschema>=4.0
@@ -2357,7 +2357,7 @@ EOF
 Add a top-level comment to `package.json` (read first, then edit):
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 # Read existing package.json to add a comment about Python deps
 python3 -c "
 import json
@@ -2375,7 +2375,7 @@ Expected: `package.json` now has a `scripts.install-python-deps` entry.
 - [ ] **Step 10.5: Install PyYAML and run tests**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 pip install pyyaml jsonschema pytest 2>&1 | tail -5
 python3 -m pytest tests/unit/test_config.py -v
 ```
@@ -2385,10 +2385,10 @@ Expected: All 7 tests pass.
 - [ ] **Step 10.6: Update tasks.md (4.1, 4.2, 4.4-4.7) and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 4.1 Create `skills/_lib\/config.py`/- [x] 4.1 Create `skills/_lib\/config.py`/' \
-  -e 's/- \[ \] 4.2 Implement priority-merge: runtime params > loop.yaml > .spec-workflow.json > env vars > defaults/- [x] 4.2 Implement priority-merge: runtime params > loop.yaml > .spec-workflow.json > env vars > defaults/' \
+  -e 's/- \[ \] 4.2 Implement priority-merge: runtime params > loop.yaml > .rdd-workflow.json > env vars > defaults/- [x] 4.2 Implement priority-merge: runtime params > loop.yaml > .rdd-workflow.json > env vars > defaults/' \
   -e 's/- \[ \] 4.4 Read env vars: `SPEC_WORKFLOW_MODE`, `SPEC_WORKFLOW_MAX_ITERATIONS` with type conversion/- [x] 4.4 Read env vars: `SPEC_WORKFLOW_MODE`, `SPEC_WORKFLOW_MAX_ITERATIONS` with type conversion/' \
   -e 's/- \[ \] 4.5 Validate required fields, enum values (mode in loop\/menu\/hybrid), numeric ranges (max_iterations > 0)/- [x] 4.5 Validate required fields, enum values (mode in loop\/menu\/hybrid), numeric ranges (max_iterations > 0)/' \
   -e 's/- \[ \] 4.6 Add `PyYAML` to package.json dependencies/- [x] 4.6 Add `PyYAML` to package.json dependencies/' \
@@ -2443,7 +2443,7 @@ def test_state_to_legacy_updates_roadmap_state(project_root):
     sv.update_field("arch_side.phase", "propose")
     sv.update_field("arch_side.current_change", "test-change")
     sv.update_field("arch_side.completed_changes", ["init"])
-    sv_path = project_root / ".spec-workflow" / "state-vector.json"
+    sv_path = project_root / ".rdd-workflow" / "state-vector.json"
     sv_path.parent.mkdir(parents=True, exist_ok=True)
     sv.save(str(sv_path))
 
@@ -2465,7 +2465,7 @@ def test_legacy_to_state_updates_state_vector(project_root):
 
     sync_legacy_to_state_vector(str(project_root))
 
-    sv = StateVector.load(str(project_root / ".spec-workflow" / "state-vector.json"))
+    sv = StateVector.load(str(project_root / ".rdd-workflow" / "state-vector.json"))
     assert sv.get_field("arch_side.phase") == "plan"
     assert sv.get_field("arch_side.current_change") == "legacy-change"
 
@@ -2474,7 +2474,7 @@ def test_state_vector_wins_on_conflict(project_root):
     """When both have changes, state vector's value is authoritative."""
     sv = StateVector.create_default()
     sv.update_field("arch_side.current_change", "from-state")
-    sv_path = project_root / ".spec-workflow" / "state-vector.json"
+    sv_path = project_root / ".rdd-workflow" / "state-vector.json"
     sv_path.parent.mkdir(parents=True, exist_ok=True)
     sv.save(str(sv_path))
 
@@ -2506,7 +2506,7 @@ def test_state_to_legacy_propagation_under_50ms(project_root):
     """State vector change should propagate to legacy files within 50ms."""
     sv = StateVector.create_default()
     sv.update_field("arch_side.phase", "execute")
-    sv_path = project_root / ".spec-workflow" / "state-vector.json"
+    sv_path = project_root / ".rdd-workflow" / "state-vector.json"
     sv_path.parent.mkdir(parents=True, exist_ok=True)
     sv.save(str(sv_path))
 
@@ -2522,7 +2522,7 @@ def test_conflict_logged_to_event_log(project_root):
     """When sync direction conflicts, an event is recorded."""
     sv = StateVector.create_default()
     sv.update_field("arch_side.current_change", "from-state")
-    sv_path = project_root / ".spec-workflow" / "state-vector.json"
+    sv_path = project_root / ".rdd-workflow" / "state-vector.json"
     sv_path.parent.mkdir(parents=True, exist_ok=True)
     sv.save(str(sv_path))
 
@@ -2534,7 +2534,7 @@ def test_conflict_logged_to_event_log(project_root):
     # Force a conflict scenario
     sync_legacy_to_state_vector(str(project_root))
 
-    log_path = project_root / ".spec-workflow" / "event-log.jsonl"
+    log_path = project_root / ".rdd-workflow" / "event-log.jsonl"
     if log_path.is_file():
         import json
         events = [json.loads(line) for line in log_path.read_text().splitlines() if line]
@@ -2547,7 +2547,7 @@ def test_conflict_logged_to_event_log(project_root):
 - [ ] **Step 11.2: Run test to verify it fails**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_sync_state.py -v 2>&1 | head -10
 ```
 
@@ -2583,7 +2583,7 @@ from skills._lib.event_types import EventType, Severity
 from skills._lib.state_vector import StateVector
 
 
-STATE_VECTOR_PATH = ".spec-workflow/state-vector.json"
+STATE_VECTOR_PATH = ".rdd-workflow/state-vector.json"
 LEGACY_ROADMAP_STATE = ".rddf/state/roadmap-state.json"
 
 
@@ -2602,7 +2602,7 @@ def _state_vector_mtime(path: str) -> float:
 def _record_event(project_root: str, event_type: EventType, severity: Severity, message: str, context: dict) -> None:
     """Record an event to the event log. Best-effort; failures are silently ignored."""
     try:
-        log = EventLog(os.path.join(project_root, ".spec-workflow", "event-log.jsonl"))
+        log = EventLog(os.path.join(project_root, ".rdd-workflow", "event-log.jsonl"))
         log.record(event_type, severity, message, context=context)
     except Exception:
         pass
@@ -2743,7 +2743,7 @@ def sync_legacy_to_state_vector(project_root: str = ".") -> bool:
 - [ ] **Step 11.4: Run tests to verify they pass**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/test_sync_state.py -v
 ```
 
@@ -2752,7 +2752,7 @@ Expected: All 6 tests pass.
 - [ ] **Step 11.5: Update tasks.md (5.1-5.6) and commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 5.1 Create `skills/_lib\/sync_state.py`/- [x] 5.1 Create `skills/_lib\/sync_state.py`/' \
   -e 's/- \[ \] 5.2 Sync targets: `.zcf\/.roadmap-state.json`, `proposal-suggestions.md`, `openspec\/changes\/<name>\/.openspec.yaml`/- [x] 5.2 Sync targets: `.zcf\/.roadmap-state.json`, `proposal-suggestions.md`, `openspec\/changes\/<name>\/.openspec.yaml`/' \
@@ -2773,14 +2773,14 @@ Expected: 1 new commit. Core implementation complete.
 
 **Files:**
 - Modify: `docs/v2-api-reference.md` — add new public APIs
-- Modify: `docs/v2-config-schema.md` — add `.spec-workflow.json` schema
+- Modify: `docs/v2-config-schema.md` — add `.rdd-workflow.json` schema
 
 - [ ] **Step 12.1: Append new API section to v2-api-reference.md**
 
 First read the existing file, then append a new section:
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 # Find the end of the file (last section)
 tail -5 docs/v2-api-reference.md
 ```
@@ -2825,10 +2825,10 @@ sv.update_field("goal", "ship v2.0")
 sv.update_field("loop_state.iteration", 1)
 
 # Persist atomically
-sv.save(".spec-workflow/state-vector.json")
+sv.save(".rdd-workflow/state-vector.json")
 
 # Load (returns default if file missing)
-sv = StateVector.load(".spec-workflow/state-vector.json")
+sv = StateVector.load(".rdd-workflow/state-vector.json")
 print(sv.get_field("goal"))  # "ship v2.0"
 print(sv.get_field("loop_state.iteration"))  # 1
 ```
@@ -2844,7 +2844,7 @@ print(sv.get_field("loop_state.iteration"))  # 1
 from skills._lib.event_log import EventLog
 from skills._lib.event_types import EventType, Severity
 
-log = EventLog(".spec-workflow/event-log.jsonl")
+log = EventLog(".rdd-workflow/event-log.jsonl")
 log.record(EventType.LOOP_STARTED, Severity.INFO, "loop started")
 
 # Query
@@ -2867,8 +2867,8 @@ print(report)  # {iterations_completed: 5, units_completed: 12, errors: 0, ...}
 from skills._lib.gate import GateMechanism, Check
 
 gate = GateMechanism(
-    state_path=".spec-workflow/state-vector.json",
-    event_log_path=".spec-workflow/event-log.jsonl",
+    state_path=".rdd-workflow/state-vector.json",
+    event_log_path=".rdd-workflow/event-log.jsonl",
 )
 gate.register(Check(
     name="my_check",
@@ -2899,7 +2899,7 @@ config = parser.parse(runtime_overrides={"interaction.mode": "loop"})
 print(config["loop"]["max_iterations"])  # 100 (from defaults)
 ```
 
-- Priority order: `runtime_overrides > loop.yaml > .spec-workflow.json > env > defaults`.
+- Priority order: `runtime_overrides > loop.yaml > .rdd-workflow.json > env > defaults`.
 - Strict order (not deep merge) — see `design.md` Decision 5.
 - Type coercion for env vars (e.g., `SPEC_WORKFLOW_MAX_ITERATIONS=200` → int).
 - Validates enum values and numeric ranges; raises `ConfigError` with clear messages.
@@ -2935,7 +2935,7 @@ Expected: 1 new commit.
 Read the existing file, then append a new section:
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 tail -3 docs/v2-config-schema.md
 ```
 
@@ -2953,11 +2953,11 @@ priority order (highest to lowest):
 
 1. **Runtime overrides** — passed to `ConfigParser.parse(runtime_overrides=...)`
 2. **`loop.yaml`** (project root)
-3. **`.spec-workflow.json`** (project root)
+3. **`.rdd-workflow.json`** (project root)
 4. **Environment variables** (`SPEC_WORKFLOW_*`)
 5. **Built-in defaults** (from `skills/_lib/defaults.py`)
 
-### `.spec-workflow.json` Schema
+### `.rdd-workflow.json` Schema
 
 ```json
 {
@@ -2972,11 +2972,11 @@ priority order (highest to lowest):
     "retry_backoff_seconds": 5
   },
   "state": {
-    "path": ".spec-workflow/state-vector.json",
+    "path": ".rdd-workflow/state-vector.json",
     "lock_timeout_seconds": 10.0
   },
   "event_log": {
-    "path": ".spec-workflow/event-log.jsonl",
+    "path": ".rdd-workflow/event-log.jsonl",
     "max_size_mb": 50
   },
   "gate": {
@@ -3000,9 +3000,9 @@ priority order (highest to lowest):
 | `loop.max_iterations` | int > 0 | `100` | Hard cap on loop iterations |
 | `loop.max_retries` | int ≥ 0 | `3` | Retries on transient failure |
 | `loop.retry_backoff_seconds` | float ≥ 0 | `5` | Wait between retries |
-| `state.path` | string | `".spec-workflow/state-vector.json"` | State vector location |
+| `state.path` | string | `".rdd-workflow/state-vector.json"` | State vector location |
 | `state.lock_timeout_seconds` | float > 0 | `10.0` | File lock timeout |
-| `event_log.path` | string | `".spec-workflow/event-log.jsonl"` | Event log location |
+| `event_log.path` | string | `".rdd-workflow/event-log.jsonl"` | Event log location |
 | `event_log.max_size_mb` | int > 0 | `50` | Soft cap (for future rotation) |
 | `gate.load_defaults` | bool | `true` | Include default gate checks |
 | `gate.auto_allow_warnings` | bool | `true` | Proceed past warning-severity gate checks |
@@ -3021,8 +3021,8 @@ priority order (highest to lowest):
 
 ### `loop.yaml` (alternative config)
 
-A YAML file with the same structure as `.spec-workflow.json`. `loop.yaml` takes
-precedence over `.spec-workflow.json` when both exist. Useful for separating
+A YAML file with the same structure as `.rdd-workflow.json`. `loop.yaml` takes
+precedence over `.rdd-workflow.json` when both exist. Useful for separating
 "project defaults" (in JSON) from "operator overrides" (in YAML).
 EOF
 git add docs/v2-config-schema.md
@@ -3034,10 +3034,10 @@ Expected: 1 new commit. Documentation complete.
 - [ ] **Step 12.3: Update tasks.md (6.1, 6.2)**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 6.1 Update `docs\/v2-api-reference.md` with new public APIs/- [x] 6.1 Update `docs\/v2-api-reference.md` with new public APIs/' \
-  -e 's/- \[ \] 6.2 Update `docs\/v2-config-schema.md` with `.spec-workflow.json` schema/- [x] 6.2 Update `docs\/v2-config-schema.md` with `.spec-workflow.json` schema/' \
+  -e 's/- \[ \] 6.2 Update `docs\/v2-config-schema.md` with `.rdd-workflow.json` schema/- [x] 6.2 Update `docs\/v2-config-schema.md` with `.rdd-workflow.json` schema/' \
   openspec/changes/v2-core-foundation/tasks.md
 git add openspec/changes/v2-core-foundation/tasks.md
 git commit -m "docs(tasks): mark 6.1 and 6.2 complete"
@@ -3056,7 +3056,7 @@ Expected: 1 new commit.
 - [ ] **Step 13.1: Run full unit test suite**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 python3 -m pytest tests/unit/ -v
 ```
 
@@ -3065,7 +3065,7 @@ Expected: All tests pass (count should be ≥ 37 across `test_lock.py`, `test_st
 - [ ] **Step 13.2: Run v1.x integration tests for regression**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 ls tests/integration/ 2>/dev/null
 if [ -d tests/integration ] && [ -n "$(ls tests/integration/*.bats 2>/dev/null)" ]; then
     which bats && bats tests/integration/ || echo "bats not installed; skipping"
@@ -3079,7 +3079,7 @@ Expected: Either `bats` runs and passes, or a skip message is printed.
 - [ ] **Step 13.3: Verify zero regressions in v1.x skills**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 # Confirm all v1.x skill files are untouched
 git diff master -- skills/INSTALL.md skills/guide.md skills/propose.md skills/execute.md \
   skills/guide-spec.md skills/guide-ship.md skills/roadmap.md skills/deps.md skills/status.md \
@@ -3091,7 +3091,7 @@ Expected: Empty output (no changes to v1.x skill files).
 - [ ] **Step 13.4: Update tasks.md (6.3, 6.4) and final commit**
 
 ```bash
-cd /workspace/project/spec-workflow/.rddf/state/v2-core-foundation-wt
+cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 6.3 Run full test suite: `pytest tests\/unit\/`/- [x] 6.3 Run full test suite: `pytest tests\/unit\/`/' \
   -e 's/- \[ \] 6.4 Verify zero regressions in v1.x skills (run `tests\/integration\/`)/- [x] 6.4 Verify zero regressions in v1.x skills (run `tests\/integration\/`)/' \
@@ -3111,14 +3111,14 @@ Expected: 1 new commit. **All 30+ tasks now show `[x]`.**
 - [ ] **Step 14.1: Switch to main repo and validate via openspec**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 openspec instructions apply --change v2-core-foundation --json 2>&1 | head -40
 ```
 
 Expected: JSON output with `progress.complete` equal to `progress.total`. If `openspec` CLI is not installed, fall back to manual check:
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 echo "=== tasks.md progress ==="
 grep -c "^- \[x\]" openspec/changes/v2-core-foundation/tasks.md
 echo "=== remaining unchecked ==="
@@ -3130,7 +3130,7 @@ Expected: First count > 25; second count = 0.
 - [ ] **Step 14.2: Cross-check from worktree branch**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git log openspec/v2-core-foundation --oneline | head -20
 ```
 
@@ -3139,7 +3139,7 @@ Expected: At least 12 commits on the feature branch (1 plan + 11 implementation 
 - [ ] **Step 14.3: Verify all spec requirements covered by code**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 echo "=== Spec requirements vs implementation ==="
 echo "state-management: $(grep -c 'Requirement:' openspec/changes/v2-core-foundation/specs/state-management/spec.md) requirements"
 echo "gate-mechanism: $(grep -c 'Requirement:' openspec/changes/v2-core-foundation/specs/gate-mechanism/spec.md) requirements"
@@ -3155,7 +3155,7 @@ Expected: 4 / 4 / 3 requirements; ~9 Python modules.
 - [ ] **Step 14.4: Mark validation done**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 # No file change; this is a verification step
 echo "Status validation passed — ready for archive"
 ```
@@ -3177,7 +3177,7 @@ Expected: Print "ready for archive".
 - [ ] **Step 15.1: Pre-merge commit check (T20)**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 DEFAULT_BRANCH=$(git symbolic-ref --short HEAD)
 NEW_COMMITS=$(git rev-list --count "$DEFAULT_BRANCH..openspec/v2-core-foundation")
 echo "Feature branch has $NEW_COMMITS new commits"
@@ -3189,7 +3189,7 @@ Expected: Print count > 0 and "OK to merge".
 - [ ] **Step 15.2: Merge feature branch into default branch**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 DEFAULT_BRANCH=$(git symbolic-ref --short HEAD)
 git merge --no-ff openspec/v2-core-foundation -m "merge: v2-core-foundation (state vector, event log, gate, config, v1.x sync)"
 ```
@@ -3199,7 +3199,7 @@ Expected: Merge completes with a merge commit.
 - [ ] **Step 15.3: Run `openspec archive`**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 openspec archive v2-core-foundation --yes
 ```
 
@@ -3208,7 +3208,7 @@ Expected: Prints "Change v2-core-foundation archived successfully" and moves the
 - [ ] **Step 15.4: Cleanup worktree and branch**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 git worktree remove .rddf/state/v2-core-foundation-wt
 git branch -d openspec/v2-core-foundation
 git worktree list
@@ -3219,7 +3219,7 @@ Expected: Worktree list shows only the main repo on master. `openspec/v2-core-fo
 - [ ] **Step 15.5: Final verification**
 
 ```bash
-cd /workspace/project/spec-workflow
+cd /workspace/project/rdd-workflow
 echo "=== Final state ==="
 echo "Branches:"
 git branch -a

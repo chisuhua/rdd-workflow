@@ -18,11 +18,11 @@ The system SHALL update `docs/v2-adr-summary.md` to include all 12 ADRs (0001-00
 - **AND** the "未实施" DRAFT banner SHALL be replaced with implementation status
 
 ### Requirement: migration-guide-no-fictional-cli
-The system SHALL remove or replace all references to the non-existent `spec-workflow migrate/sync/report` CLI commands in `docs/migration/v1-to-v2.md`, replacing them with equivalent manual steps or "planned" markers.
+The system SHALL remove or replace all references to the non-existent `rdd-workflow migrate/sync/report` CLI commands in `docs/migration/v1-to-v2.md`, replacing them with equivalent manual steps or "planned" markers.
 
 #### Scenario: migration guide no longer references fictional CLI
 - **WHEN** a user reads `docs/migration/v1-to-v2.md`
-- **THEN** SHALL be zero references to `spec-workflow migrate`, `spec-workflow sync`, or `spec-workflow report`
+- **THEN** SHALL be zero references to `rdd-workflow migrate`, `rdd-workflow sync`, or `rdd-workflow report`
 - **AND** any previously fictional CLI commands SHALL be replaced with actionable manual steps or clear "planned for v2.1" markers
 
 #### Scenario: dangling file paths fixed

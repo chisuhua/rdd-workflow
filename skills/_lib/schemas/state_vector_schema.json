@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://spec-workflow.dev/schemas/state_vector_schema.json",
+  "$id": "https://rdd-workflow.dev/schemas/state_vector_schema.json",
   "title": "Spec Workflow v2 State Vector",
   "description": "Unified workflow state. Single source of truth; replaces 13 v1.x state files.",
   "type": "object",

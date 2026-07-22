@@ -1,6 +1,6 @@
 """CLI subcommand routing table for ``python3 -m skills._lib.cli``.
 
-This package is the single CLI entry point for spec-workflow. Each
+This package is the single CLI entry point for rdd-workflow. Each
 subcommand (``dashboard``, ``status``, ``sessions``) is implemented as a
 separate ``*_cmd.py`` module exposing a ``cmd_<name>(args: list[str]) -> int``
 function. The routing table here maps subcommand name -> handler callable.

@@ -9,8 +9,8 @@
 **Tech Stack:** Python 3.11+, Bash, Markdown
 
 **前置条件（Sprint 1 已完成）:**
-- ✅ 状态文件路径 `.zcf/` → `.spec-workflow/` 统一
-- ✅ `.gitignore` 更新（添加 `.spec-workflow/` 排除）
+- ✅ 状态文件路径 `.zcf/` → `.rdd-workflow/` 统一
+- ✅ `.gitignore` 更新（添加 `.rdd-workflow/` 排除）
 - ✅ guide-ship.md handoff 路径修复（`.handoff.json` → `.plan-handoff.json`）
 - ✅ deps 路径对齐（guide-plan.md 与 deps.md）
 - ✅ 所有 176 个测试通过
@@ -24,7 +24,7 @@
 - Modify: `docs/ONBOARDING.md`
 
 **问题分析：**
-Sprint 1 已删除 `skills/prometheus-planning.md` 文件，并将 `guide-ship.md`/`execute.md` 等技能的描述从 "Prometheus" 更新为 "spec-workflow/writing-plans"。但 USAGE.md 和 ONBOARDING.md 仍保留大量 prometheus-planning 引用，构成"幽灵文档"——用户按文档指引会迷失（因为文件已不存在）。
+Sprint 1 已删除 `skills/prometheus-planning.md` 文件，并将 `guide-ship.md`/`execute.md` 等技能的描述从 "Prometheus" 更新为 "rdd-workflow/writing-plans"。但 USAGE.md 和 ONBOARDING.md 仍保留大量 prometheus-planning 引用，构成"幽灵文档"——用户按文档指引会迷失（因为文件已不存在）。
 
 - **USAGE.md**: 10 处 prometheus 引用（第 5, 34, 36, 92, 269, 278, 289, 295, 298, 715, 738, 739, 740 行）
 - **ONBOARDING.md**: 6 处 prometheus 引用（第 48, 98, 193, 195, 198, 212, 317 行）
@@ -33,14 +33,14 @@ Sprint 1 已删除 `skills/prometheus-planning.md` 文件，并将 `guide-ship.m
 
 ```
 旧: > 当前版本: **v2.0.0-beta**（三阶段架构 arch → plan → ship + Loop 引擎 + `prometheus-planning` 三级回退链）
-新: > 当前版本: **v2.0.0-beta**（三阶段架构 arch → plan → ship + Loop 引擎 + `spec-workflow/writing-plans` 自包含计划生成器）
+新: > 当前版本: **v2.0.0-beta**（三阶段架构 arch → plan → ship + Loop 引擎 + `rdd-workflow/writing-plans` 自包含计划生成器）
 ```
 
 - [ ] **Step 2: 编辑 USAGE.md — 替换技能表第 92 行**
 
 ```
 旧: | `prometheus-planning` | 实施计划生成器（带三级回退链） | `guide-ship` Phase 1 内部 |
-新: | `spec-workflow/writing-plans` | 实施计划生成器（TDD 5 步结构，自包含） | `guide-ship` Phase 1 内部 |
+新: | `rdd-workflow/writing-plans` | 实施计划生成器（TDD 5 步结构，自包含） | `guide-ship` Phase 1 内部 |
 ```
 
 - [ ] **Step 3: 编辑 USAGE.md — 删除"三级回退链"段落（约第 269-300 行）**
@@ -48,10 +48,10 @@ Sprint 1 已删除 `skills/prometheus-planning.md` 文件，并将 `guide-ship.m
 删除第 269-300 行（"为已提交的 change 创建 worktree 并生成 Prometheus 计划。" 段落，含 "prometheus-planning 三级回退链" 子章节），替换为：
 
 ```markdown
-为已提交的 change 创建 worktree 并生成 spec-workflow 计划。
+为已提交的 change 创建 worktree 并生成 rdd-workflow 计划。
 
 在 worktree 内通过内置 skill 生成计划:
-1. `spec-workflow/writing-plans` — 直接生成 `.rddf/plans/<CHANGE_NAME>.md`
+1. `rdd-workflow/writing-plans` — 直接生成 `.rddf/plans/<CHANGE_NAME>.md`
 2. 计划包含 TDD 5 步结构：Write failing test → Verify fail → Implement → Verify pass → Commit
 3. 零外部依赖，零路径桥接，任何 AI 编程助手通用
 ```
@@ -60,14 +60,14 @@ Sprint 1 已删除 `skills/prometheus-planning.md` 文件，并将 `guide-ship.m
 
 ```
 旧: | prometheus-planning 全部回退失败 | 三级回退链全部 ❌ | 提示安装 oh-my-opencode 或 superpowers |
-新: | spec-workflow/writing-plans 生成失败 | `.rddf/plans/<name>.md` 未生成 | 检查 worktree 内 skills 是否完整安装；手动触发 `skill_use("spec-workflow/writing-plans")` |
+新: | rdd-workflow/writing-plans 生成失败 | `.rddf/plans/<name>.md` 未生成 | 检查 worktree 内 skills 是否完整安装；手动触发 `skill_use("rdd-workflow/writing-plans")` |
 ```
 
 - [ ] **Step 5: 编辑 USAGE.md — 更新版本历史表（第 738-740 行）**
 
 ```
 旧 v2.0.0-beta: ...新增 `prometheus-planning` 三级回退链...
-新 v2.0.0-beta: ...计划生成器重构: 删除 prometheus-planning(481 行间接层), 替换为 self-contained spec-workflow/writing-plans(~250 行)...
+新 v2.0.0-beta: ...计划生成器重构: 删除 prometheus-planning(481 行间接层), 替换为 self-contained rdd-workflow/writing-plans(~250 行)...
 旧 v1.1: ...新增 `roadmap`/`deps`/`prometheus-planning` 技能...
 新 v1.1: ...新增 `roadmap`/`deps` 技能; `prometheus-planning` 作为 v2.0 过渡方案引入...
 旧 v1.0: ...`prometheus-start-work` 作为默认计划生成器...
@@ -80,21 +80,21 @@ Sprint 1 已删除 `skills/prometheus-planning.md` 文件，并将 `guide-ship.m
 旧第34行: | `execute` / `guide-ship` / `prometheus-planning` |
 新第34行: | `execute` / `guide-ship` |
 旧第36行: | `prometheus-planning` / `guide-ship` |
-新第36行: | `spec-workflow/writing-plans` / `guide-ship` |
+新第36行: | `rdd-workflow/writing-plans` / `guide-ship` |
 ```
 
 - [ ] **Step 7: 编辑 ONBOARDING.md — 更新第 48 行目录树**
 
 ```
 旧: │   ├── prometheus-planning.md        # 实施计划生成
-新: │   ├── spec-workflow-writing-plans.md # 实施计划生成
+新: │   ├── rdd-workflow-writing-plans.md # 实施计划生成
 ```
 
 - [ ] **Step 8: 编辑 ONBOARDING.md — 更新第 98 行调用链**
 
 ```
 旧: └── guide-ship.md → prometheus-planning.md, execute.md, status.md
-新: └── guide-ship.md → spec-workflow-writing-plans.md, execute.md, status.md
+新: └── guide-ship.md → rdd-workflow-writing-plans.md, execute.md, status.md
 ```
 
 - [ ] **Step 9: 编辑 ONBOARDING.md — 替换"Prometheus 计划生成"完整章节（第 193-212 行）**
@@ -104,7 +104,7 @@ Sprint 1 已删除 `skills/prometheus-planning.md` 文件，并将 `guide-ship.m
 ```markdown
 ### 计划生成
 
-`spec-workflow-writing-plans.md` 是 v2.0 自包含的计划生成器，fork 自 superpowers/writing-plans 并适配 OpenSpec change 上下文。
+`rdd-workflow-writing-plans.md` 是 v2.0 自包含的计划生成器，fork 自 superpowers/writing-plans 并适配 OpenSpec change 上下文。
 
 - **TDD 5 步结构**: Write failing test → Verify fail → Implement → Verify pass → Commit
 - **零外部依赖**: 不依赖 oh-my-opencode/superpowers 等外部 skill
@@ -112,14 +112,14 @@ Sprint 1 已删除 `skills/prometheus-planning.md` 文件，并将 `guide-ship.m
 
 `guide-ship` Phase 1 自动调用本技能：
 ```
-skill_use("spec-workflow/writing-plans")
+skill_use("rdd-workflow/writing-plans")
 ```
 
 - [ ] **Step 10: 编辑 ONBOARDING.md — 更新第 317 行技能列表**
 
 ```
 旧: skills/prometheus-planning.md       — 计划生成（232行）
-新: skills/spec-workflow-writing-plans.md — 计划生成（自包含，TDD 5 步结构）
+新: skills/rdd-workflow-writing-plans.md — 计划生成（自包含，TDD 5 步结构）
 ```
 
 - [ ] **Step 11: 验证 — 确认无残留 prometheus 引用**
@@ -134,7 +134,7 @@ git add USAGE.md docs/ONBOARDING.md
 git commit -m "docs(sprint2): clean up prometheus-planning ghost references from USAGE.md and ONBOARDING.md
 
 Sprint 2 Task 1: Replace all remaining references to deleted
-prometheus-planning.md with spec-workflow/writing-plans.
+prometheus-planning.md with rdd-workflow/writing-plans.
 - USAGE.md: 10 occurrences updated (version string, skill table,
   workflow description, troubleshooting, version history)
 - ONBOARDING.md: 6 occurrences updated (directory tree, call chain,

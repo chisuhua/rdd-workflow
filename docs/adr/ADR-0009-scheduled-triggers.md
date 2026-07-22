@@ -1,5 +1,8 @@
 # ADR-0009: 定时循环与事件触发（占位）
 
+> **v3.0.0 note**: Originally authored as "spec-workflow". Renamed to "rdd-workflow" in v3.0.0 (2026-07-22). See ADR-0023.
+
+
 > **状态**: 模板（v2.1 候选占位）
 > **日期**: 2026-06-22
 > **决策者**: sisyphus
