@@ -73,7 +73,20 @@ setup() {
   [ "$status" -ne 0 ]
 }
 
-@test "rddf: defines at least 20 rddf_* subcommand functions" {
-  count=$(grep -cE "^rddf_[a-z_]+\(\)" "$REPO_ROOT/rddf")
-  [ "$count" -ge 20 ]
+@test "rddf: version subcommand dispatches to Python CLI" {
+  run ./rddf version
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"rddf v"* ]]
+}
+
+@test "rddf: guide subcommand dispatches to Python CLI" {
+  run ./rddf guide
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"项目状态"* ]] || [[ "$output" == *"guide-"* ]]
+}
+
+@test "rddf: init --help exits 0 with usage via Python CLI" {
+  run python3 -m skills._lib.cli init --help
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"usage"* ]] || [[ "$output" == *"用法"* ]]
 }
