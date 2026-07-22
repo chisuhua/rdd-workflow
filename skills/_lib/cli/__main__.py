@@ -126,6 +126,10 @@ def main(argv: list[str] | None = None) -> int:
     subcommand = argv[0]
     rest = argv[1:]
 
+    # Legacy alias: ``session`` → ``sessions`` (bash rddf had this alias).
+    _ALIASES = {"session": "sessions"}
+    subcommand = _ALIASES.get(subcommand, subcommand)
+
     # Validate subcommand name BEFORE resolving project root so that
     # ``rddf help`` and unknown-command errors don't pay the git cost.
     if subcommand not in list_commands():
