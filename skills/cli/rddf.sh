@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# rddf — spec-workflow CLI entry point (thin shim → python3 -m skills._lib.cli)
+#
+# Subcommands (12): archive, cleanup, dashboard, deps, feature, guide,
+#                   init, monitor, sessions, status, validate, version
 set -euo pipefail
 # Derive PACKAGE_DIR from BASH_SOURCE (the spec-workflow root containing skills/)
 _myself="$(realpath "${BASH_SOURCE[0]:-$0}")"
