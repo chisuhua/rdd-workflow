@@ -43,7 +43,7 @@ import os
 import sys
 from typing import Optional
 
-from skills._lib.dashboard import DashboardData
+from skills._lib.dashboard import DashboardData, SuggestionEntry
 
 
 # ---------------------------------------------------------------------------
@@ -480,6 +480,26 @@ def _section_pending_terminal(data: DashboardData, width: int) -> list[str]:
                 width,
             )
         )
+        # Table header
+        lines.append(
+            _content_line(
+                f"  {'NAME':<30} {'PRI':<6} {'STATUS':<18} {'PHASE':<10}",
+                width,
+            )
+        )
+        for s in data.suggestions:
+            status_col = (
+                f"{_STATUS_ICON.get(s.status, '📋')} {s.status}"
+            )
+            lines.append(
+                _content_line(
+                    f"  {s.name[:30]:<30} "
+                    f"{s.priority or '-':<6} "
+                    f"{status_col:<18} "
+                    f"{s.phase or '-':<10}",
+                    width,
+                )
+            )
     else:
         lines.append(_content_line("  (no pending suggestions)", width))
     return lines
@@ -720,6 +740,25 @@ def _p_section_pending(data: DashboardData, width: int) -> str:
                 width,
             )
         )
+        out.append(
+            _p_line(
+                f"  {'NAME':<30} {'PRI':<6} {'STATUS':<18} {'PHASE':<10}",
+                width,
+            )
+        )
+        for s in data.suggestions:
+            status_col = (
+                f"{_STATUS_ICON_PLAIN.get(s.status, '+')} {s.status}"
+            )
+            out.append(
+                _p_line(
+                    f"  {s.name[:30]:<30} "
+                    f"{s.priority or '-':<6} "
+                    f"{status_col:<18} "
+                    f"{s.phase or '-':<10}",
+                    width,
+                )
+            )
     else:
         out.append(_p_line("  (no pending suggestions)", width))
     return "\n".join(out)

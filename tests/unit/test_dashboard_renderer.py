@@ -25,6 +25,7 @@ from skills._lib.dashboard import (
     FeatureSummary,
     PlanInfo,
     SessionEntry,
+    SuggestionEntry,
 )
 from skills._lib.dashboard import collect
 from skills._lib.dashboard.renderer import render
@@ -59,6 +60,7 @@ def make_empty_data():
             roadmap_phase=None,
             roadmap_counts={},
             pending_suggestions=0,
+            suggestions=[],
             divergence_warnings=[],
         )
 
@@ -124,6 +126,7 @@ class TestJsonMode:
             "roadmap_phase",
             "roadmap_counts",
             "pending_suggestions",
+            "suggestions",
             "divergence_warnings",
         }
         assert expected.issubset(parsed.keys()), (
@@ -265,6 +268,65 @@ class TestDivergenceWarnings:
         assert "extra-change" in out
         # Must remain ASCII-only
         assert all(ord(c) < 128 for c in out)
+
+
+# ---------------------------------------------------------------------------
+# Content: pending suggestions
+# ---------------------------------------------------------------------------
+
+
+class TestPendingSuggestions:
+    def test_terminal_shows_suggestion_table(self, make_empty_data, tmp_path):
+        """Terminal mode shows suggestion table with name/priority/status/phase."""
+        data = make_empty_data()
+        data.pending_suggestions = 2
+        data.suggestions = [
+            SuggestionEntry(name="fix-bug", priority="P0", status="skeleton", phase="v2.0"),
+            SuggestionEntry(name="add-feature", priority="P1", status="待创建", phase="v2.1"),
+        ]
+        out = render(data, mode="terminal", output_file=str(tmp_path / "p.txt"))
+        assert "2 pending proposal suggestion(s)" in out
+        assert "fix-bug" in out
+        assert "add-feature" in out
+        assert "P0" in out
+        assert "P1" in out
+        # Header row
+        assert "NAME" in out and "PRI" in out and "STATUS" in out and "PHASE" in out
+
+    def test_plain_shows_suggestion_table(self, make_empty_data):
+        """Plain mode shows suggestion table via ASCII markers."""
+        data = make_empty_data()
+        data.pending_suggestions = 1
+        data.suggestions = [
+            SuggestionEntry(name="fix-bug", priority="P0", status="skeleton", phase="v2.0"),
+        ]
+        out = render(data, mode="plain")
+        assert "1 pending proposal suggestion(s)" in out
+        assert "fix-bug" in out
+        assert "P0" in out
+        # Must remain ASCII-only (emoji replaced with plain marker)
+        assert all(ord(c) < 128 for c in out)
+
+    def test_json_includes_suggestions(self, make_empty_data):
+        """JSON mode includes suggestions array."""
+        data = make_empty_data()
+        data.pending_suggestions = 1
+        data.suggestions = [
+            SuggestionEntry(name="fix-bug", priority="P0", status="skeleton", phase="v2.0"),
+        ]
+        out = render(data, mode="json")
+        parsed = json.loads(out)
+        assert parsed["pending_suggestions"] == 1
+        assert len(parsed["suggestions"]) == 1
+        assert parsed["suggestions"][0]["name"] == "fix-bug"
+
+    def test_no_suggestions_shows_placeholder(self, make_empty_data):
+        """When no suggestions, show placeholder not table."""
+        data = make_empty_data()
+        data.pending_suggestions = 0
+        out = render(data, mode="plain")
+        assert "(no pending suggestions)" in out
+        assert "NAME" not in out  # no table header
 
 
 # ---------------------------------------------------------------------------
