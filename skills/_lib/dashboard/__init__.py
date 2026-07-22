@@ -167,6 +167,24 @@ class FeatureSummary:
 
 
 @dataclass
+class SuggestionEntry:
+    """One row in the Pending (proposal suggestions) section.
+
+    Mirrors the fields from proposal-suggestions.md entries that are
+    relevant for dashboard display. The full ``description`` field is
+    omitted because it is too long for a table row.
+    """
+
+    name: str
+    priority: Optional[str] = None
+    source: Optional[str] = None
+    status: str = "pending"
+    phase: Optional[str] = None
+    category: Optional[str] = None
+    effort: Optional[str] = None
+
+
+@dataclass
 class DashboardData:
     """Top-level container passed to ``render()``.
 
@@ -185,6 +203,7 @@ class DashboardData:
     roadmap_phase: Optional[str] = None
     roadmap_counts: dict[str, tuple[int, int]] = field(default_factory=dict)
     pending_suggestions: int = 0
+    suggestions: list[SuggestionEntry] = field(default_factory=list)
     divergence_warnings: list[str] = field(default_factory=list)
 
 
@@ -392,7 +411,7 @@ def collect(project_root: str) -> DashboardData:
         # is absent (common in projects that never ran `roadmap init`).
         data.roadmap_phase = data.arch.current_phase
 
-    # ---- Section 7: Pending (proposal-suggestions count) ----
+    # ---- Section 7: Pending (proposal-suggestions count + list) ----
     try:
         suggestions = read_proposal_suggestions(project_root)
     except Exception:
@@ -405,6 +424,17 @@ def collect(project_root: str) -> DashboardData:
             if status in ("已完成", "done", "completed", "archived"):
                 continue
             pending += 1
+            data.suggestions.append(
+                SuggestionEntry(
+                    name=s.get("name", "?"),
+                    priority=s.get("priority"),
+                    source=s.get("source"),
+                    status=s.get("status", "pending"),
+                    phase=s.get("phase"),
+                    category=s.get("category"),
+                    effort=s.get("effort"),
+                )
+            )
         data.pending_suggestions = pending
 
     # ---- Divergence detection ----
