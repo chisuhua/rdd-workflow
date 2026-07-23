@@ -1,0 +1,78 @@
+"""Type definitions and constants for rddf-session.
+
+Extracted from the original RddfSessionCoordinator god class
+(split-rddf-god-class change).
+"""
+from __future__ import annotations
+
+import datetime
+import enum
+import json
+import uuid
+
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+
+SCHEMA_PATH = Path(__file__).resolve().parent.parent / "schemas" / "sessions_schema.json"
+DEFAULT_HEARTBEAT_TIMEOUT_SECONDS = 30 * 60  # 30 minutes
+HEARTBEAT_REFRESH_THRESHOLD_SECONDS = 5 * 60  # 5 minutes
+LOCK_TIMEOUT_SECONDS = 5.0
+
+_VALID_KINDS = ("stage_arch", "stage_plan", "stage_ship")
+_VALID_STATES = ("active", "completed", "failed", "orphaned", "abandoned")
+_TERMINAL_STATES = frozenset(("completed", "failed", "abandoned"))
+
+
+class RddfSessionState(str, enum.Enum):
+    """Lifecycle states of an rddf-session."""
+
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    ORPHANED = "orphaned"
+    ABANDONED = "abandoned"
+
+
+class RddfSessionError(Exception):
+    """Base error for rddf-session operations."""
+
+
+class SchemaValidationError(RddfSessionError):
+    """Raised when sessions.json fails schema validation."""
+
+
+class ConflictError(RddfSessionError):
+    """Raised on cross-opencode-session conflict (caller must invoke 4-option prompt)."""
+
+
+def _new_id() -> str:
+    """Generate rds_<12 hex chars>."""
+    return f"rds_{uuid.uuid4().hex[:12]}"
+
+
+def _now() -> str:
+    """ISO 8601 UTC timestamp with timezone."""
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+@dataclass
+class RddfSession:
+    """A single rddf-session record (mirrors ADR-0017 schema)."""
+
+    session_id: str
+    kind: str
+    owner_opencode_session_id: Optional[str]
+    parent_session_id: Optional[str] = None
+    goal: Dict[str, Any] = field(default_factory=dict)
+    state: str = "active"
+    attached_changes: List[str] = field(default_factory=list)
+    context_pointer: Optional[str] = None
+    started_at: str = ""
+    last_heartbeat: str = ""
+    ended_at: Optional[str] = None
+    end_reason: Optional[str] = None
+
+    def to_dict(self) -> dict:
+        return asdict(self)
