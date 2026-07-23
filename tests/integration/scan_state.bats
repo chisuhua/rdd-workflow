@@ -81,9 +81,8 @@ _run_scan() {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo x > a && git add a && git commit -q -m init
-  mkdir -p .rddf/state
-  # active_changes >= 1 means plan-done is complete; without it scan_state
-  # falls through to priority 2.5 (guide-ship cleanup).
+  mkdir -p .rddf/state openspec/changes/add-x
+  # active_changes >= 1 + filesystem dir exists → guide-ship
   echo '{"active_changes":1,"current_change":"add-x"}' > .rddf/state/.plan-handoff.json
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=guide-ship"

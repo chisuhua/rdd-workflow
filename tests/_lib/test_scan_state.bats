@@ -54,6 +54,7 @@ teardown() {
 @test "scan_state: plan-handoff present recommends guide-ship" {
   echo '{"arch_done_at":"2026-07-01","adr_count":1,"current_change":null}' > "$STATE_DIR/.arch-handoff.json"
   echo '{"plan_done_at":"2026-07-01","active_changes":1,"current_change":"add-x"}' > "$STATE_DIR/.plan-handoff.json"
+  mkdir -p "openspec/changes/add-x"
 
   run bash -c "
     source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
