@@ -272,28 +272,62 @@ mark_approved_completed() {
   python3 -c "
 import sys, re
 with open(sys.argv[1]) as f:
-    content = f.read()
+    lines = f.readlines()
 name = sys.argv[2]
 ts = sys.argv[3]
 
-# Find the row for this name
-pattern = rf'\|\s*\[{re.escape(name)}\]\([^)]+\)\s*\|\s*(\S+)\s*\|[^|]*\|[^|]*\|'
-match = re.search(pattern, content)
-if not match:
+# Idempotency: check if already in completed section
+in_completed = False
+for line in lines:
+    if f'[{name}]' in line:
+        in_completed = True
+        break
+
+# Find entry in approved table
+approved_idx = None
+approved_line = None
+for i, line in enumerate(lines):
+    if f'[{name}]' in line and line.strip().startswith('|'):
+        approved_idx = i
+        approved_line = line
+        break
+
+# Already in completed table
+if in_completed and approved_idx is None:
     sys.exit(0)
 
-# Remove from approved section, add to completed section
-row = match.group(0)
-# Extract priority
-priority_match = re.search(r'\|\s*\[[^\]]+\]\([^)]+\)\s*\|\s*(\S+)\s*\|', row)
-priority = priority_match.group(1) if priority_match else '?'
+# Extract priority from approved row
+priority = '?'
+if approved_line:
+    m = re.search(r'\|\s*\[[^\]]+\]\([^)]+\)\s*\|\s*(\S+)\s*\|', approved_line)
+    if m:
+        priority = m.group(1)
 
-content = content.replace(row + '\n', '')
-# Add to completed section
+# Remove from approved table
+if approved_idx is not None:
+    del lines[approved_idx]
+
+# Insert into completed table after header
 completed_row = f'| [{name}](improvements/{name}.md) | {priority} | {ts} |\n'
-content = content.replace('## 已实施\n\n', f'## 已实施\n\n{completed_row}')
+inserted = False
+for i, line in enumerate(lines):
+    if line.startswith('## 已实施'):
+        # Find the separator line after the header
+        j = i + 1
+        while j < len(lines):
+            if lines[j].strip().startswith('|---'):
+                # Insert after separator
+                lines.insert(j + 1, completed_row)
+                inserted = True
+                break
+            j += 1
+        if inserted:
+            break
+
+if not inserted:
+    lines.append(completed_row)
 
 with open(sys.argv[1], 'w') as f:
-    f.write(content)
+    f.writelines(lines)
 " "$approved_file" "$name" "$timestamp"
 }
