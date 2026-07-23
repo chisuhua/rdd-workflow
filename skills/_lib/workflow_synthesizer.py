@@ -90,6 +90,56 @@ class PhaseStatus:
 
 
 @dataclass(frozen=True)
+class MenuOption:
+    """One menu option for the interactive guide entry point.
+
+    Fields:
+        id: unique identifier (e.g. ``"guide-arch"``, ``"resume-rds_xxx"``)
+        label: short display name (e.g. ``"guide-arch"``, ``"resume rds_xxx"``)
+        description: one-line human-readable description
+        action: the skill_use call to execute
+            (e.g. ``"guide-arch"``, ``"rddf-session resume rds_xxx"``)
+        group: display grouping:
+            ``"recommended"`` — the top recommendation (⭐)
+            ``"stages"`` — workflow stage skills
+            ``"session"`` — rddf-session management
+            ``"utilities"`` — other tools (feature, status)
+    """
+    id: str
+    label: str
+    description: str
+    action: str
+    group: str
+
+
+@dataclass(frozen=True)
+class WorkingTreeIssue:
+    """One detected working-tree cleanliness issue.
+
+    Fields:
+        category: ``"deleted"`` | ``"modified"`` | ``"staged"`` |
+            ``"untracked_dirs"``
+        path: affected file or directory path (project-relative)
+        detail: human-readable description (e.g. "archived, needs git rm")
+        severity: ``"safe_auto_fix"`` | ``"needs_review"`` | ``"info"``
+            - safe_auto_fix: can be fixed without risk (e.g. git rm of
+              archived files, .gitignore of build dirs)
+            - needs_review: requires human judgment (e.g. modified config
+              files, staged changes)
+            - info: informational only, no action needed currently
+        auto_fixable: True if a fix_command is available and the fix is
+            safe to apply without side effects
+        fix_command: suggested fix command or None if auto-fix not available
+    """
+    category: str
+    path: str
+    detail: str
+    severity: str = "needs_review"
+    auto_fixable: bool = False
+    fix_command: Optional[str] = None
+
+
+@dataclass(frozen=True)
 class WorkflowRecommendation:
     """Structured recommendation output from ``synthesize()``.
 
@@ -109,6 +159,12 @@ class WorkflowRecommendation:
         orphaned_sessions: ``rds_id`` list with ``state="orphaned"``,
             sorted by ``started_at`` descending (newest first). Empty
             tuple when no orphaned sessions.
+        all_options: all available menu options, including the top
+            recommendation, other workflow stages, session management,
+            and utilities. The first entry is the recommended one.
+            Empty tuple when state is too ambiguous to generate options.
+        wt_issues: working tree cleanliness issues detected.
+            Empty tuple when tree is clean or git unavailable.
     """
     suggested_action: str
     reason: str
@@ -117,6 +173,8 @@ class WorkflowRecommendation:
     unblocked_changes: Tuple[str, ...]
     active_session: Optional[str]
     orphaned_sessions: Tuple[str, ...]
+    all_options: Tuple[MenuOption, ...]
+    wt_issues: Tuple[WorkingTreeIssue, ...]
 
 
 # ---------------------------------------------------------------------------
@@ -154,6 +212,10 @@ def synthesize(project_root: str) -> WorkflowRecommendation:
         suggested, reason, confidence = _decision_tree(
             project_root, arch_handoff, plan_handoff, iteration
         )
+        wt_issues = _detect_working_tree_issues(project_root)
+        options = _build_all_options(
+            suggested, arch_handoff, plan_handoff, iteration, sessions, wt_issues
+        )
         return WorkflowRecommendation(
             suggested_action=suggested,
             reason=reason,
@@ -162,6 +224,8 @@ def synthesize(project_root: str) -> WorkflowRecommendation:
             unblocked_changes=unblocked,
             active_session=active,
             orphaned_sessions=orphaned,
+            all_options=options,
+            wt_issues=wt_issues,
         )
     except Exception:
         return _fallback_recommendation()
@@ -292,6 +356,130 @@ def _orphaned_sessions(sessions: Optional[list]) -> Tuple[str, ...]:
     ]
     orphaned.sort(key=lambda s: str(s.get("started_at", "")), reverse=True)
     return tuple(s["session_id"] for s in orphaned)
+
+
+# ---------------------------------------------------------------------------
+# All options builder (interactive menu)
+# ---------------------------------------------------------------------------
+
+
+def _build_all_options(
+    suggested: str,
+    arch_h: Optional[dict],
+    plan_h: Optional[dict],
+    iteration: Optional[dict],
+    sessions: Optional[list],
+    wt_issues: Tuple[WorkingTreeIssue, ...] = (),
+) -> Tuple[MenuOption, ...]:
+    """Build ALL available menu options sorted by relevance.
+
+    The first entry is always the top recommendation (marked as
+    recommended group). Remaining entries are grouped by:
+        - ``stages``: guide-arch, guide-plan, guide-ship
+        - ``session``: session management actions (when applicable)
+        - ``utilities``: feature, status
+
+    Returns:
+        Tuple of MenuOption entries. Empty tuple when state is
+        completely unknown (no sessions, no handoffs, no iteration).
+    """
+    options: list = []
+
+    # 1. Recommended (first entry, ⭐)
+    reason_map = {
+        "guide-arch": "进入架构定义阶段 — ADR / roadmap / 差距分析",
+        "guide-plan": "进入变更生成阶段 — propose / deps / plan-done",
+        "guide-ship": "进入变更执行阶段 — plan / execute / archive",
+    }
+    options.append(MenuOption(
+        id=suggested,
+        label=suggested,
+        description=reason_map.get(suggested, "继续工作流"),
+        action=suggested,
+        group="recommended",
+    ))
+
+    # 2. All workflow stages (always present)
+    stage_options = [
+        ("guide-arch", "架构定义", "setup → ADR → roadmap → arch-done"),
+        ("guide-plan", "变更生成", "scan → propose → deps → plan-done"),
+        ("guide-ship", "变更执行", "plan → execute → archive → cleanup"),
+    ]
+    for sid, label, desc in stage_options:
+        if sid != suggested:  # skip duplicate with recommended
+            options.append(MenuOption(
+                id=sid, label=label, description=desc, action=sid, group="stages",
+            ))
+
+    # 3. Session management (only when sessions exist)
+    if sessions:
+        for s in sessions:
+            if not isinstance(s, dict):
+                continue
+            sid_rds = s.get("session_id")
+            if not sid_rds or not isinstance(sid_rds, str):
+                continue
+            skind = s.get("kind", "?")
+            sstate = s.get("state", "?")
+            sowner = s.get("owner_opencode_session_id") or "<none>"
+
+            if sstate == "orphaned":
+                short_id = sid_rds[:8] if len(sid_rds) > 8 else sid_rds
+                options.append(MenuOption(
+                    id=f"resume-{sid_rds}",
+                    label=f"resume {short_id}",
+                    description=f"恢复 orphaned {skind} session (原 owner={sowner})",
+                    action=f"rddf-session resume {sid_rds}",
+                    group="session",
+                ))
+
+        # Always include session list utility
+        options.append(MenuOption(
+            id="rddf-session-list",
+            label="rddf-session list",
+            description="查看所有 workflow session",
+            action="rddf-session list",
+            group="session",
+        ))
+
+    # 4. Utilities (always present)
+    options.append(MenuOption(
+        id="feature",
+        label="feature",
+        description="查看 feature 视图 — summary / graph / status / order",
+        action="feature",
+        group="utilities",
+    ))
+    options.append(MenuOption(
+        id="status",
+        label="status",
+        description="查看 change 状态 — 活跃 / 归档 / worktree",
+        action="status",
+        group="utilities",
+    ))
+
+    # 5. Working tree cleanup (when issues detected)
+    if wt_issues:
+        deleted_count = sum(1 for i in wt_issues if i.category == "deleted")
+        modified_count = sum(1 for i in wt_issues if i.category == "modified")
+        staged_count = sum(1 for i in wt_issues if i.category == "staged")
+        parts = []
+        if deleted_count:
+            parts.append(f"{deleted_count} deleted")
+        if modified_count:
+            parts.append(f"{modified_count} modified")
+        if staged_count:
+            parts.append(f"{staged_count} staged")
+        desc = "清理工作树 — " + ", ".join(parts)
+        options.append(MenuOption(
+            id="cleanup-wt",
+            label=f"🧹 清理 ({len(wt_issues)} issues)",
+            description=desc,
+            action="cleanup-working-tree",
+            group="utilities",
+        ))
+
+    return tuple(options)
 
 
 # ---------------------------------------------------------------------------
@@ -457,6 +645,116 @@ def _decision_tree(
 # ---------------------------------------------------------------------------
 
 
+def _detect_working_tree_issues(project_root: str) -> Tuple[WorkingTreeIssue, ...]:
+    """Scan git status for common dirty-tree problems.
+
+    Detects: deleted tracked files, modified tracked files, staged
+    changes, large untracked directories (>10MB). Returns a tuple of
+    WorkingTreeIssue entries sorted by category priority. Empty tuple
+    when tree is clean or git unavailable. Never raises.
+    """
+    issues: list = []
+    try:
+        result = subprocess.run(
+            ["git", "status", "--short"],
+            capture_output=True, text=True, timeout=10, cwd=project_root,
+        )
+        if result.returncode != 0:
+            return ()
+        lines = result.stdout.strip().split("\n")
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return ()
+
+    for line in lines:
+        if not line or len(line) < 4:
+            continue
+        prefix = line[:2]
+        path = line[3:].strip()
+        if not path:
+            continue
+
+        if prefix in (" D", "D "):
+            is_archived = False
+            detail_text = "已删除但未提交 (git rm)"
+            fix = f'git rm "{path}"'
+            archive_name = ""
+            if path.startswith("openspec/changes/") and "/archive/" not in path:
+                parts = path.split("/")
+                if len(parts) >= 4 and parts[0] == "openspec" and parts[1] == "changes":
+                    change_name = parts[2]
+                    archive_path = os.path.join(
+                        "openspec", "changes", "archive", change_name
+                    )
+                    if os.path.isdir(os.path.join(project_root, archive_path)):
+                        is_archived = True
+                        archive_name = change_name
+                        detail_text = f"已归档到 archive/{archive_name}/，需 git rm"
+                        fix = f'git rm -r "openspec/changes/{archive_name}/"'
+            severity = "safe_auto_fix" if is_archived else "needs_review"
+            issues.append(WorkingTreeIssue(
+                "deleted", path, detail_text,
+                severity=severity,
+                auto_fixable=is_archived,
+                fix_command=fix,
+            ))
+
+        elif prefix in (" M", "M "):
+            status_kind = "staged" if prefix == "M " else "modified"
+            desc = "已暂存但未提交" if prefix == "M " else "有未暂存的修改"
+            issues.append(WorkingTreeIssue(
+                status_kind, path, desc,
+                severity="needs_review",
+            ))
+
+    try:
+        untracked = subprocess.run(
+            ["git", "ls-files", "--others", "--exclude-standard", "--directory"],
+            capture_output=True, text=True, timeout=5, cwd=project_root,
+        )
+        if untracked.returncode == 0:
+            for entry in untracked.stdout.strip().split("\n"):
+                if not entry.endswith("/") or entry.startswith("."):
+                    continue
+                full = os.path.join(project_root, entry)
+                try:
+                    total = 0
+                    for dirpath, _, filenames in os.walk(full):
+                        for fn in filenames:
+                            fp = os.path.join(dirpath, fn)
+                            try:
+                                total += os.path.getsize(fp)
+                            except OSError:
+                                pass
+                    size_mb = total / (1024 * 1024)
+                    if size_mb > 10:
+                        issues.append(WorkingTreeIssue(
+                            "untracked_dirs", entry,
+                            f"大目录 ({size_mb:.0f}MB)，建议加入 .gitignore",
+                            severity="safe_auto_fix",
+                            auto_fixable=True,
+                            fix_command=f'echo "{entry}" >> .gitignore',
+                        ))
+                except OSError:
+                    pass
+    except (subprocess.TimeoutExpired, OSError):
+        pass
+
+    return tuple(_deduplicate_issues(issues))
+
+
+def _deduplicate_issues(issues: list) -> list:
+    seen_fixes: set = set()
+    result: list = []
+    for issue in issues:
+        if issue.severity == "safe_auto_fix" and issue.fix_command:
+            if issue.fix_command in seen_fixes:
+                continue
+            seen_fixes.add(issue.fix_command)
+        result.append(issue)
+    result.sort(key=lambda i: (0 if i.severity == "safe_auto_fix" else 1, i.category, i.path))
+    return result
+
+
 def _fallback_recommendation() -> WorkflowRecommendation:
     """Build the never-raises fallback recommendation.
 
@@ -477,4 +775,10 @@ def _fallback_recommendation() -> WorkflowRecommendation:
         unblocked_changes=(),
         active_session=None,
         orphaned_sessions=(),
+        all_options=(
+            MenuOption("guide-ship", "guide-ship", "继续工作流", "guide-ship", "recommended"),
+            MenuOption("guide-arch", "架构定义", "setup → ADR → roadmap → arch-done", "guide-arch", "stages"),
+            MenuOption("guide-plan", "变更生成", "scan → propose → deps → plan-done", "guide-plan", "stages"),
+        ),
+        wt_issues=(),
     )

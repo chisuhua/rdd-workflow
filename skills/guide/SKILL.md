@@ -1,6 +1,6 @@
 ---
 name: guide
-description: 无状态推荐器——扫描项目当前状态（roadmap、arch-handoff、plan-handoff、active changes、worktrees、rddf-session binding），建议用户调 guide-arch、guide-plan 或 guide-ship。不持有任何状态，不调用 openspec CLI，不修改任何文件。
+description: 交互式工作流入口——扫描项目当前状态，展示可选菜单（含 rddf-session 管理），用户可选菜单项执行或进入自由讨论模式咨询后再决定。详见 ADR-0017 (rddf-session) 和 ADR-0003 (三阶段架构)。
 license: MIT
 compatibility: Requires git 2.25+
 metadata:
@@ -10,41 +10,56 @@ metadata:
   user-invocable: true
 ---
 
-# OpenSpec 工作流 — 推荐器入口
+# OpenSpec 工作流 — 交互式入口
 
 ## 用途
 
-`guide` 是一个**无状态推荐器**。它只读不写——扫描项目当前状态，给出一行建议，告诉用户应该调 `guide-arch`、`guide-plan`、`guide-ship` 或子技能如 `feature`（三阶段架构 ADR-0003：arch → plan → ship）。
+`guide` 是**交互式工作流入口**。它扫描项目完整状态，向用户展示包含所有可选操作的菜单（含 ⭐ 推荐选项和 rddf-session 管理），用户选择后自动执行对应的动作。
 
-不持久化任何状态,不调用 openspec CLI,不修改任何文件。
+**不持久化任何状态，不调用 openspec CLI，不修改任何文件。** 纯只读扫描 + 交互式引导。
 
-## 扫描逻辑（v1.1+：提取到独立脚本；v2.1+：synthesizer 增强输出）
+## 流程
 
-v1.1 起，扫描逻辑不再写在 skill 文件里--它由 `scripts/scan-state.sh` 暴露的 `scan_state()` 函数提供，独立测试，bash 原生执行（不再每次由 AI 现场"翻译"）。v2.1 起增加 Python `workflow_synthesizer.py` 作为结构化输出层：先跑 `scan_state` 取得 baseline `RECOMMEND` + `REASON`，再尝试调用 synthesizer 覆盖输出（synthesizer 失败则保留 baseline，向后兼容）。**推荐器调一次即可**：
+```
+skill_use("guide")
+    ↓
+1. 运行 bash scanner (scan-state.sh) → 获取 RECOMMEND + REASON
+2. 运行 Python synthesizer → 获取结构化推荐 + all_options（全部可选操作）
+    ↓
+3. AI 解析输出,构建交互菜单,通过 question tool 展示给用户
+4. 用户选择 → AI 执行对应 skill_use()
+    ↓
+   对应的 guide-skill / rddf-session 命令自动处理 session 生命周期
+```
+
+## 扫描操作（AI 必须执行）
+
+执行以下 bash block 获取项目状态：
 
 ```bash
 case "${1:-}" in
   --help|-h)
     cat <<'EOF'
-guide 推荐器 - 用法:
-  skill_use("guide")                  # 默认扫描并输出 RECOMMEND + REASON
-  skill_use("guide --no-binding")     # 不输出 rddf-session binding block
-  skill_use("guide --help")           # 打印此帮助
+guide 用法:
+  skill_use("guide")                   # 交互式菜单入口（默认）
+  skill_use("guide --json")            # 仅输出 JSON 状态（非交互,供脚本消费）
+  skill_use("guide --no-binding")      # 不扫描 rddf-session binding
+  skill_use("guide --help")            # 此帮助
 EOF
     return 0 2>/dev/null || exit 0
     ;;
-  --no-binding)   NO_BINDING=1 ;;
-  *)              NO_BINDING=0 ;;
+  --json)      OUTPUT_JSON=1; NO_BINDING=1 ;;
+  --no-binding) NO_BINDING=1 ;;
+  *)           OUTPUT_JSON=0; NO_BINDING=0 ;;
 esac
 
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 source "$(dirname "$(readlink -f "${BASH_SOURCE[0]:-$0}")")/scripts/scan-state.sh"
 scan_state "$PROJECT_ROOT"
 
-# v2.1: structured recommendation from workflow_synthesizer (read-only).
-# Falls back gracefully to legacy scan_state result on Python/import errors.
-# The synthesizer produces a WorkflowRecommendation dataclass with
-# suggested_action/reason/confidence + unblocked_changes + active_session.
+# v2.1: structured recommendation from workflow_synthesizer (read-only)
+RECO_JSON=""
+ALL_OPTIONS_JSON=""
 if command -v python3 >/dev/null 2>&1; then
   RECO_JSON=$(PY_PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
 import json, os, sys
@@ -58,64 +73,197 @@ print(json.dumps({
     "unblocked_changes": list(r.unblocked_changes),
     "active_session": r.active_session,
     "orphaned_sessions": list(r.orphaned_sessions),
+    "all_options": [
+        {"id": o.id, "label": o.label, "description": o.description,
+         "action": o.action, "group": o.group}
+        for o in r.all_options
+    ],
 }))
 ' 2>/dev/null) && [ -n "$RECO_JSON" ]
   then
+    ALL_OPTIONS_JSON=$(printf '%s' "$RECO_JSON" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin)["all_options"]))')
+    WT_ISSUES_JSON=$(printf '%s' "$RECO_JSON" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin).get("wt_issues", [])))' 2>/dev/null || echo '[]')
     RECOMMEND=$(printf '%s' "$RECO_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["suggested_action"])')
     REASON=$(printf '%s' "$RECO_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["reason"])')
+    CONFIDENCE=$(printf '%s' "$RECO_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["confidence"])')
   fi
 fi
 
-echo "💡 Recommended: skill_use(\"$RECOMMEND\")"
-echo "   Reason: $REASON"
-
-# Binding discovery (spec 2026-07-14): read-only rddf-session binding scan
-# 当 BINDING_LINES 为空（sessions.json 不存在或当前无绑定）时静默跳过，
-# 不打印任何额外行。
+# Print project state overview (for AI + user visibility)
+echo "📋 Workflow Entry — $(basename "$PROJECT_ROOT")"
+echo "   ───────────────────────────────────────────"
+echo "   roadmap.md: $([ -f "$PROJECT_ROOT/roadmap.md" ] && echo '✅' || echo '❌')"
+echo "   .arch-handoff.json: $([ -f "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" ] && echo '✅' || echo '❌')"
+echo "   .plan-handoff.json: $([ -f "$PROJECT_ROOT/.rddf/state/.plan-handoff.json" ] && echo '✅' || echo '❌')"
 if [ "${NO_BINDING:-0}" -eq 0 ]; then
   scan_session_binding "$PROJECT_ROOT"
-  if [ ${#BINDING_LINES[@]} -gt 0 ]; then
-    printf '%s\n' "${BINDING_LINES[@]}"
-  fi
+fi
+
+# Output JSON if requested (non-interactive mode)
+if [ "${OUTPUT_JSON:-0}" -eq 1 ] && [ -n "$RECO_JSON" ]; then
+  echo "---BEGIN_RECO_JSON---"
+  printf '%s' "$RECO_JSON"
+  echo ""
+  echo "---END_RECO_JSON---"
 fi
 ```
 
-设置 `$RECOMMEND` 和 `$REASON`（沿用旧版变量契约，向后兼容）。优先级 12 条 -> 见 `scripts/scan-state.sh` 函数体顶部注释。v2.1 synthesizer 复刻同样 13-path 决策树（路径 10-13 隐式被早期路径短路）并补充 `confidence` / `unblocked_changes` / `active_session` / `orphaned_sessions` 结构化字段。
+**扫描后**：你（AI）将扫描输出的结构化数据（`RECO_JSON` / `ALL_OPTIONS_JSON`）解析为菜单。扫描状态变量包括：
+- `RECOMMEND` — 推荐的操作（如 `guide-plan`）
+- `REASON` — 推荐原因（中文）
+- `CONFIDENCE` — 置信度（high/medium/low）
+- `ALL_OPTIONS_JSON` — 所有可选项的 JSON 数组
+- `BINDING_LINES` — session 绑定信息数组（可能为空）
+- `WT_ISSUES_JSON` — 工作树干净度问题列表（`wt_issues` 字段），每个 issue 含 `category`, `severity`, `auto_fixable`, `fix_command`, `detail`
 
-`scan_session_binding` 是 v2.0.2 新增的只读函数，扫描 `.rddf/state/sessions.json` 的当前绑定状态，将结果存入 `BINDING_LINES` 数组。推荐器 AI 应在打印 RECOMMEND/REASON 之后、关闭输出之前输出这批行（见下方输出格式）。
+### 工作树清理分析（AI 必须执行）
 
-P0/P1 bug 历史（`$3` 列、`[openspec/` 前缀、`json.load` 非 grep、cwd 安全）作为注释保留在新脚本里，作为 regression guards。
+当 `WT_ISSUES_JSON` 非空时，你（AI）必须在展示菜单前执行清理分析。按 `severity` 分组，用你的判断力给出建议：
 
-## 输出格式
+1. **safe_auto_fix**（可安全自动修复）：
+   - 例如：已归档的 deleted 文件、build 产物目录
+   - **AI 行为**：列出这些 issue，建议一键修复的命令
+   - 示例输出：`🔧 可安全修复 (3): git rm -r openspec/changes/v1-0-release-prep/ openspec/changes/version-policy-adr/ && echo "build-*/" >> .gitignore`
+
+2. **needs_review**（需人工判断）：
+   - 例如：修改的配置文件、未暂存的代码变更、未关联归档的删除
+   - **AI 行为**：解释为什么需要人工审查（可能丢失工作、可能影响其他流程），不自动执行
+   - 示例输出：`⚠️ 需审查: .rddf/state/.plan-handoff.json 有本地修改 — 可能包含未保存的状态变更`
+
+3. **info**（信息提示）：
+   - 不需要立即行动的项目
+   - **AI 行为**：简单列出，不阻塞主流程
+
+AI 必须在分析后将清理建议展示给用户，但**不自动执行任何命令**。用户确认后（输入 `y` 或选择清理菜单项），AI 才执行。
+
+## 交互菜单（AI 必须执行）
+
+解析 `ALL_OPTIONS_JSON` 后，使用 `question` 工具向用户展示菜单。
+
+### 菜单模板
+
+```json
+ALL_OPTIONS_JSON 结构:
+[
+  {"id": "guide-plan", "label": "guide-plan", "description": "进入变更生成阶段...",
+   "action": "guide-plan", "group": "recommended"},
+  ...
+]
+```
+
+每个 option 的 `group` 决定展示位置：
+- `recommended` — ⭐ 推荐（第 1 项,高亮）
+- `stages` — 工作流阶段选项
+- `session` — session 管理
+- `utilities` — 其他工具
+
+### 展示格式
+
+向用户展示的菜单格式：
 
 ```
-🔍 Project state scan:
-   - roadmap.md: [✅ exists / ❌ missing]
-- .rddf/state/.arch-handoff.json: [✅ exists / ❌ missing]
-- .rddf/state/.plan-handoff.json: [✅ exists / ❌ missing]
-   - committed changes: [N]
-   - worktrees: [N, with status]
+📋 Workflow Entry — 选择操作:
 
-💡 Recommended: skill_use("$RECOMMEND")
-   Reason: $REASON
+  ⭐ 1. {recommended.label} — {recommended.description}
+
+  === Workflow Stages ===
+  {N}. guide-arch    — setup → ADR → roadmap → arch-done
+  {N+1}. guide-plan  — scan → propose → deps → plan-done
+  {N+2}. guide-ship  — plan → execute → archive → cleanup
+
+  === Session Management / Utilities ===
+  ...（按 all_options 动态生成）
+
+  === Other ===
+  0. 💬 自由讨论 — 咨询项目状态,了解细节后再决定
+
+选择 (0-{N}):
 ```
 
-输出追加（v2.0.2+，仅当 `.rddf/state/sessions.json` 存在时）：
+`question` 工具的选项列表为 `all_options` 中每项的 `label` + `description`，额外追加"💬 自由讨论"选项（推荐置于第 0 项或最后一项）。第一个选项（recommended）默认高亮。
+
+### 自由讨论模式
+
+当用户的选择不是菜单编号（或选择"自由讨论"）时，你进入 **自由讨论模式**：
+
+1. 用户可以在该模式下自由对话：
+   - 询问项目状态细节（"当前有哪些活跃 changes？"）
+   - 咨询工作流含义（"arch 阶段具体做什么？"）
+   - 讨论下一步策略（"你觉得先做哪个 change 比较好？"）
+   - 查看 session 信息（"有哪些 orphaned session？"）
+   - 任何与项目相关的开放性问题
+
+2. **每次回答完后，主动重新展示简版菜单**（不需要等用户要求）：
+   ```
+   ⭐ guide-plan / guide-arch / guide-ship / resume rds_xxx / feature / status
+   继续自由讨论 (输入 0 或直接提问)
+   ```
+   简版菜单只列选项名称（`label`），不列详细描述。保持一行紧凑格式，不给用户增加阅读负担。
+
+3. 当用户输入菜单编号或对应选项名称（如直接说"执行 guide-plan"）时，视为选中，执行对应 `action`，guide 模式结束。
+
+### 执行选择
+
+用户选择后，AI 执行对应 `action`：
+- `"guide-arch"` → `skill_use("guide-arch")` — 该 skill 自动处理 rddf-session entry hook
+- `"guide-plan"` → `skill_use("guide-plan")` — 同上
+- `"guide-ship"` → `skill_use("guide-ship")` — 同上
+- `"rddf-session resume rds_xxx"` → 先调 `skill_use("rddf-session", "resume", "rds_xxx")` 恢复 session，然后根据 session kind 调对应的 guide skill
+- `"rddf-session list"` → `skill_use("rddf-session", "list")`
+- `"feature"` → `skill_use("feature")`
+- `"status"` → `skill_use("status")`
+
+Session 管理自动完成：guide skills 的 entry/close hooks 已在 `guide-arch.md` / `guide-plan.md` / `guide-ship.md` 中实现，不需要额外操作。
+
+### 完整流程示例
 
 ```
-📍 Current: rds_xxx (kind=stage_X, started=...)             # 当当前 OpenCode session 已绑定一个 active rddf-session
-📍 No current binding                                          # 当无活跃绑定
-💡 Recommended: rds_yyy ... → skill_use("rddf-session resume ...")  # 当存在 orphaned session
+用户: skill_use("guide")
+  ↓
+AI 执行扫描 → 展示菜单:
+  ⭐ 1. guide-plan — 进入变更生成阶段
+  2. guide-arch  ...
+  3. guide-ship  ...
+  0. 💬 自由讨论
+
+用户: "当前有哪些活跃 changes？"  ← 非编号,自动进讨论
+  ↓
+[自由讨论模式]
+AI: "有 3 个 changes: add-auth (proposed), fix-ns-pollution (in worktree), add-stream-pipes (proposed)..."
+    ⭐ guide-plan / guide-arch / guide-ship / ...   ← 主动展示简版菜单
+
+用户: "fix-ns-pollution 卡在哪？"   ← 继续讨论
+  ↓
+AI: "worktree 内 tasks.md 显示 2/5 完成,被 deps 分析标记为阻塞中..."
+    ⭐ guide-plan / guide-arch / guide-ship / ...   ← 再次展示
+
+用户: "guide-plan"  ← 选中菜单项
+  ↓
+AI 执行 skill_use("guide-plan") → 结束
 ```
 
-## 过期状态检测（v2.0.3 提升为 runtime check）
+## 输出格式（旧版兼容）
 
-> 该检测已下沉到 `scripts/scan-state.sh::check_stale_workflow_state()`，
-> 在 `scan_state()` 末尾自动调用。AI 不再需要主动读取 `workflow-state.md`。
-> 输出格式见辅助函数源码。
+当 `--json` 未设置时，扫描器打印人类可读的状态概览：
+
+```
+📋 Workflow Entry — <project_name>
+   ───────────────────────────────────────────
+   roadmap.md: ✅
+   .arch-handoff.json: ✅
+   .plan-handoff.json: ❌
+   📍 Current: rds_xxx (kind=stage_arch, started=2026-07-22T...)
+```
+
+当 `--json` 设置时，追加 JSON 块供脚本消费。
+
+## 过期状态检测
+
+`scan_state()` 末尾自动调用 `check_stale_workflow_state()`（在 `scan-state.sh` 中），检测遗留的 `workflow-state.md`。
 
 ## Cross-Reference
 
-- **`rddf-session`** (`skills/rddf-session.md`) — 当输出包含 `📍 No current binding` 时,可调 `skill_use("rddf-session current")` 查看完整绑定状态,或 `skill_use("rddf-session resume <rds_id>")` 接管推荐会话。详见 spec 2026-07-14。
-- **ADR-0017** (`docs/adr/ADR-0017-rddf-session.md`) — rddf-session 数据模型、跨 OpenCode session 恢复语义、心跳机制的来源。
-- **scan-state.sh** (`scripts/scan-state.sh`) — 推荐器底层扫描脚本;11-priority `scan_state` + v2.0.2 `scan_session_binding`。
+- **rddf-session** (`skills/rddf-session.md`) — session 管理 5 子命令（list/show/resume/abandon/archive-history）
+- **ADR-0017** (`docs/adr/ADR-0017-rddf-session.md`) — rddf-session 数据模型、跨 OpenCode session 恢复语义
+- **ADR-0003** (`docs/adr/ADR-0003-three-phase-architecture.md`) — arch → plan → ship 三阶段架构
+- **scan-state.sh** (`scripts/scan-state.sh`) — 底层扫描脚本；13-path 决策树 + session binding 扫描

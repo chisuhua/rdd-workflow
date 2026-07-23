@@ -20,9 +20,13 @@ setup() {
   [ "$(skill_meta_field "$f" user-invocable)" = "true" ]
 }
 
-@test "guide_skill declares itself stateless and read-only" {
-  grep -q '无状态' "$f"
-  grep -q '只读不写' "$f"
+@test "guide_skill declares itself interactive and read-only/no-openspec" {
+  # v2.1: upgraded to interactive entry point — no longer claims "无状态推荐器"
+  # but must still emphasize no file writes, no openspec CLI calls.
+  grep -q '交互式' "$f"
+  grep -q '不持久化' "$f"
+  grep -q '不调用 openspec CLI' "$f"
+  grep -q '不修改任何文件' "$f"
 }
 
 @test "guide_skill scan covers all priority branches (RECOMMEND count)" {

@@ -201,6 +201,7 @@ except (FileNotFoundError, json.JSONDecodeError, KeyError):
   fi
 
   check_stale_workflow_state "$PROJECT_ROOT"
+  check_working_tree_cleanliness "$PROJECT_ROOT"
 }
 
 # scan_session_binding [PROJECT_ROOT]
@@ -225,6 +226,111 @@ check_stale_workflow_state() {
     echo "   Remove it manually if you want: rm workflow-state.md"
   fi
   return 0
+}
+
+# check_working_tree_cleanliness [PROJECT_ROOT]
+#   Scans git status for common dirty-tree issues:
+#     - Deleted tracked files (file moved but git rm not committed)
+#     - Modified tracked files (unstaged changes)
+#     - Staged changes (git add but not committed)
+#     - Large untracked directories (potential build artifacts)
+#   Prints a structured summary. Sets global WT_ISSUES_COUNT.
+#   Read-only: never modifies files.
+WT_ISSUES_COUNT=0
+check_working_tree_cleanliness() {
+  local PROJECT_ROOT="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  WT_ISSUES_COUNT=0
+
+  # Quick skip: if tree is clean, return early
+  if git -C "$PROJECT_ROOT" diff-index --quiet HEAD -- 2>/dev/null && \
+     [ -z "$(git -C "$PROJECT_ROOT" ls-files --others --exclude-standard 2>/dev/null | head -1)" ]; then
+    return 0
+  fi
+
+  echo ""
+  echo "🧹 Working Tree Check:"
+
+  # 1. Deleted tracked files ( D)
+  local DELETED
+  DELETED=$(git -C "$PROJECT_ROOT" status --short 2>/dev/null | grep '^ D' | sed 's/^ D //' | head -20)
+  local DELETED_COUNT
+  DELETED_COUNT=$(printf '%s' "$DELETED" | grep -c . 2>/dev/null || echo 0)
+  DELETED_COUNT=${DELETED_COUNT##*$'\n'}
+  if [ "${DELETED_COUNT:-0}" -gt 0 ] 2>/dev/null; then
+    echo "   🗑️  Deleted tracked files ($DELETED_COUNT):"
+    echo "$DELETED" | while read -r f; do
+      [ -z "$f" ] && continue
+      # Check if moved to archive/
+      local archive_path="openspec/changes/archive/$(basename "$(dirname "$f")")"
+      if echo "$f" | grep -q '^openspec/changes/' && [ -d "$PROJECT_ROOT/$archive_path" ]; then
+        echo "      $f  (已归档 → git rm \"$f\")"
+      else
+        echo "      $f  (已删除但未提交 → git rm \"$f\")"
+      fi
+    done
+    WT_ISSUES_COUNT=$((WT_ISSUES_COUNT + DELETED_COUNT))
+  fi
+
+  # 2. Modified tracked files ( M)
+  local MODIFIED
+  MODIFIED=$(git -C "$PROJECT_ROOT" status --short 2>/dev/null | grep '^ M' | sed 's/^ M //' | head -10)
+  local MOD_COUNT
+  MOD_COUNT=$(printf '%s' "$MODIFIED" | grep -c . 2>/dev/null || echo 0)
+  MOD_COUNT=${MOD_COUNT##*$'\n'}
+  if [ "${MOD_COUNT:-0}" -gt 0 ] 2>/dev/null; then
+    echo "   ✏️  Modified tracked files ($MOD_COUNT):"
+    echo "$MODIFIED" | while read -r f; do
+      [ -z "$f" ] && continue
+      echo "      $f"
+    done
+    WT_ISSUES_COUNT=$((WT_ISSUES_COUNT + MOD_COUNT))
+  fi
+
+  # 3. Staged changes (M / A in index)
+  local STAGED
+  STAGED=$(git -C "$PROJECT_ROOT" diff --cached --name-only 2>/dev/null | head -10)
+  local STAGED_COUNT
+  STAGED_COUNT=$(printf '%s' "$STAGED" | grep -c . 2>/dev/null || echo 0)
+  STAGED_COUNT=${STAGED_COUNT##*$'\n'}
+  if [ "${STAGED_COUNT:-0}" -gt 0 ] 2>/dev/null; then
+    echo "   📦 Staged changes ($STAGED_COUNT):"
+    echo "$STAGED" | while read -r f; do
+      [ -z "$f" ] && continue
+      echo "      $f"
+    done
+    WT_ISSUES_COUNT=$((WT_ISSUES_COUNT + STAGED_COUNT))
+  fi
+
+  # 4. Large untracked directories (potential build artifacts)
+  local UNTRACKED_DIRS
+  UNTRACKED_DIRS=$(git -C "$PROJECT_ROOT" ls-files --others --exclude-standard --directory 2>/dev/null | grep '/$' | grep -v '^.git' | head -10)
+  local UT_COUNT
+  UT_COUNT=$(printf '%s' "$UNTRACKED_DIRS" | grep -c . 2>/dev/null || echo 0)
+  UT_COUNT=${UT_COUNT##*$'\n'}
+  if [ "${UT_COUNT:-0}" -gt 0 ] 2>/dev/null; then
+    # Check if directories are large (>10MB)
+    local LARGE_DIRS=""
+    while IFS= read -r d; do
+      [ -z "$d" ] && continue
+      local size
+      size=$(du -sm "$PROJECT_ROOT/$d" 2>/dev/null | cut -f1 || echo 0)
+      if [ "${size:-0}" -gt 10 ] 2>/dev/null; then
+        LARGE_DIRS="$LARGE_DIRS$d (${size}MB)"$'\n'
+      fi
+    done <<< "$UNTRACKED_DIRS"
+    if [ -n "$LARGE_DIRS" ] && [ "$(echo "$LARGE_DIRS" | grep -c . 2>/dev/null || echo 0)" -gt 0 ] 2>/dev/null; then
+      echo "   📁 Large untracked directories:"
+      echo "$LARGE_DIRS" | while read -r d; do
+        [ -z "$d" ] && continue
+        echo "      $d → 建议加到 .gitignore 或清理"
+      done
+      WT_ISSUES_COUNT=$((WT_ISSUES_COUNT + 1))
+    fi
+  fi
+
+  if [ "$WT_ISSUES_COUNT" -eq 0 ]; then
+    echo "   ✅ No issues detected"
+  fi
 }
 
 # check_heartbeat_timeouts [PROJECT_ROOT]
