@@ -23,6 +23,7 @@ skill_use("rddf-session")                       # default: list
 skill_use("rddf-session list")                  # same as above
 skill_use("rddf-session show <id>")             # show full JSON for a session
 skill_use("rddf-session current")               # show my current binding + recommend next (spec 2026-07-14)
+skill_use("rddf-session progress")              # show wave execution progress (v3.0)
 skill_use("rddf-session resume <id>")           # transfer ownership to current opencode session; refresh heartbeat
 skill_use("rddf-session abandon <id>")          # mark session as abandoned by current owner
 skill_use("rddf-session archive-history")       # move old terminal sessions to .archive.json (default keep=20)
@@ -103,6 +104,64 @@ else:
         print(f'   → skill_use("rddf-session resume {nxt.session_id}")')
     else:
         print("   No orphaned rddf-sessions found. Run guide-arch or guide-plan to start.")
+    PYEOF
+        ;;
+
+    progress)
+        python3 - "$PROJECT_ROOT" <<'PYEOF'
+import sys
+import json
+import os
+from pathlib import Path
+
+project_root = sys.argv[1]
+plan_handoff = Path(project_root) / ".rddf/state/.plan-handoff.json"
+changes_dir = Path(project_root) / "openspec/changes"
+archive_dir = changes_dir / "archive"
+
+# Read wave info from plan-handoff
+waves = {}
+if plan_handoff.exists():
+    with open(plan_handoff) as f:
+        handoff = json.load(f)
+    waves = handoff.get("wave_order", {})
+
+# Count active and archived changes per wave
+wave_status = {}
+for wave_num, change_names in waves.items():
+    completed = []
+    pending = []
+    for name in change_names:
+        if (archive_dir / f"2026-07-23-{name}").exists() or \
+           any(archive_dir.glob(f"*-{name}")):
+            completed.append(name)
+        elif (changes_dir / name).exists():
+            pending.append(name)
+    wave_status[wave_num] = {"completed": completed, "pending": pending}
+
+# Display progress
+print("📊 Wave Execution Progress")
+print("=" * 50)
+
+priority_map = {"1": "P0", "2": "P1", "3": "P2"}
+for wave_num in sorted(wave_status.keys()):
+    status = wave_status[wave_num]
+    priority = priority_map.get(wave_num, f"Wave {wave_num}")
+    total = len(status["completed"]) + len(status["pending"])
+    done = len(status["completed"])
+    
+    status_icon = "✅" if done == total and total > 0 else "🔄"
+    print(f"\n{status_icon} {priority} (Wave {wave_num}): {done}/{total} done")
+    
+    if status["completed"]:
+        print(f"   ✅ Completed: {', '.join(status['completed'])}")
+    if status["pending"]:
+        print(f"   ⏳ Pending: {', '.join(status['pending'])}")
+
+# Summary
+total_done = sum(len(s["completed"]) for s in wave_status.values())
+total_pending = sum(len(s["pending"]) for s in wave_status.values())
+print(f"\n📈 Total: {total_done}/{total_done + total_pending} changes completed")
 PYEOF
         ;;
 
