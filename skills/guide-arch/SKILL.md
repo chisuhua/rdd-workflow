@@ -584,6 +584,8 @@ echo ""
 echo "📂 improvements/ 目录中的提案:"
 echo ""
 
+echo "🔍 检测已归档提案..."
+ARCHIVED_COUNT=0
 PENDING_COUNT=0
 for f in "$IMPROVEMENTS_DIR"/*.md; do
   [ -f "$f" ] || continue
@@ -591,6 +593,14 @@ for f in "$IMPROVEMENTS_DIR"/*.md; do
   
   # 跳过已批准的
   if echo "$APPROVED_NAMES" | grep -qFx "$name"; then
+    continue
+  fi
+  
+  # 检测是否已归档：已归档的自动批准到 completed
+  if ls -d "$PROJECT_ROOT/openspec/changes/archive/"*"-$name" 2>/dev/null | grep -q .; then
+    priority=$(grep -m1 '^\*\*优先级\*\*:' "$f" 2>/dev/null | sed 's/.*\*\*优先级\*\*: *//' | cut -d'|' -f1 | xargs)
+    mark_approved_completed "$PROJECT_ROOT" "$name" 2>/dev/null
+    ARCHIVED_COUNT=$((ARCHIVED_COUNT + 1))
     continue
   fi
   
@@ -602,6 +612,12 @@ for f in "$IMPROVEMENTS_DIR"/*.md; do
   
   echo "  ${PENDING_COUNT}. [${priority:-?}] $name - ${source:-?}"
 done
+
+echo ""
+if [ "$ARCHIVED_COUNT" -gt 0 ]; then
+  echo "📦 已归档自动批准: $ARCHIVED_COUNT 个（跳过审查）"
+fi
+echo "📋 待审查: $PENDING_COUNT 个"
 
 if [ "$PENDING_COUNT" -eq 0 ]; then
   echo "  (无待讨论提案)"

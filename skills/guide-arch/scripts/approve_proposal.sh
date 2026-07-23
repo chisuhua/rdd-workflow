@@ -28,11 +28,29 @@ if [ ! -f "$APPROVED_FILE" ]; then
   exit 1
 fi
 
+# check_archived <name> <project_root>
+# Returns 0 if change is already archived, 1 otherwise.
+check_archived() {
+  local cname="$1"
+  local proot="${2:-.}"
+  # Match archive pattern: YYYY-MM-DD-<name>
+  if ls -d "$proot/openspec/changes/archive/"*"-$cname" 2>/dev/null | grep -q .; then
+    return 0
+  fi
+  return 1
+}
+
 # Check if improvement file exists
 IMP_FILE="$PROJECT_ROOT/improvements/$NAME.md"
 if [ ! -f "$IMP_FILE" ]; then
   echo "❌ improvement file not found: $IMP_FILE" >&2
   exit 1
+fi
+
+# Skip if already archived: auto-approve to completed section
+if check_archived "$NAME" "$PROJECT_ROOT"; then
+  mark_approved_completed "$PROJECT_ROOT" "$NAME"
+  exit 0
 fi
 
 # Append to approved list
