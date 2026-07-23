@@ -73,6 +73,20 @@
 
 | [update-adr-index](improvements/update-adr-index.md) | P2 | 2026-07-23 | guide-arch |
 
+| [auto-skip-archived-proposals](improvements/auto-skip-archived-proposals.md) | P0 | 2026-07-23 | guide-arch |
+
+| [archive-cleanup-working-tree](improvements/archive-cleanup-working-tree.md) | P1 | 2026-07-23 | guide-arch |
+
+| [fix-mark-approved-completed](improvements/fix-mark-approved-completed.md) | P1 | 2026-07-23 | guide-arch |
+
+| [parallel-oracle-review](improvements/parallel-oracle-review.md) | P1 | 2026-07-23 | guide-arch |
+
+| [update-guide-plan-format](improvements/update-guide-plan-format.md) | P1 | 2026-07-23 | guide-arch |
+
+| [fix-stale-suggestions-warning](improvements/fix-stale-suggestions-warning.md) | P2 | 2026-07-23 | guide-arch |
+
+| [fix-append-approved-output](improvements/fix-append-approved-output.md) | P2 | 2026-07-23 | guide-arch |
+
 ## 已实施
 
 | [proposal-approval-pipeline](improvements/proposal-approval-pipeline.md) | P0 | 2026-07-23 |
