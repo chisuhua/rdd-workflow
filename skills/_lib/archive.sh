@@ -412,6 +412,9 @@ commit_archive_moves() {
 
   cd "$main_root" || { echo "❌ commit_archive_moves: cannot cd to $main_root"; return 1; }
 
+  # Clean up original change directory after openspec archive moves it
+  git rm -r "openspec/changes/${name}" 2>/dev/null || true
+
   if ! git add \
         "openspec/changes/${name}/" \
         "openspec/changes/archive/" \
