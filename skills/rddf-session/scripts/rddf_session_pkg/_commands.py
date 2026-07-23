@@ -19,6 +19,7 @@ from ._types import (
     _VALID_KINDS,
     _VALID_STATES,
     _TERMINAL_STATES,
+    _normalize_kind,
 )
 from ._store import RddfSessionStore
 
@@ -48,6 +49,7 @@ class RddfSessionCommands:
             raise RddfSessionError(
                 f"Invalid kind: {kind}. Must be one of {_VALID_KINDS}"
             )
+        kind = _normalize_kind(kind)  # Normalize to canonical form
         if not isinstance(goal, dict):
             raise RddfSessionError(
                 f"goal must be dict, got {type(goal).__name__}"

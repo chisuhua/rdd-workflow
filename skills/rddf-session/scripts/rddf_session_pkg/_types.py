@@ -21,7 +21,22 @@ DEFAULT_HEARTBEAT_TIMEOUT_SECONDS = 30 * 60  # 30 minutes
 HEARTBEAT_REFRESH_THRESHOLD_SECONDS = 5 * 60  # 5 minutes
 LOCK_TIMEOUT_SECONDS = 5.0
 
-_VALID_KINDS = ("stage_arch", "stage_plan", "stage_ship")
+# v2.1: Accept both naming conventions for better UX
+# - stage_arch / stage_plan / stage_ship (internal canonical)
+# - guide-arch / guide-plan / guide-ship (user-friendly, matches skill names)
+_VALID_KINDS = ("stage_arch", "stage_plan", "stage_ship", "guide-arch", "guide-plan", "guide-ship")
+_KIND_ALIAS = {
+    "guide-arch": "stage_arch",
+    "guide-plan": "stage_plan",
+    "guide-ship": "stage_ship",
+}
+
+
+def _normalize_kind(kind: str) -> str:
+    """Normalize kind to canonical internal form."""
+    return _KIND_ALIAS.get(kind, kind)
+
+
 _VALID_STATES = ("active", "completed", "failed", "orphaned", "abandoned")
 _TERMINAL_STATES = frozenset(("completed", "failed", "abandoned"))
 
