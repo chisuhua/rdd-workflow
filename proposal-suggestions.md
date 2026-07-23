@@ -38,3 +38,8 @@
 | [update-guide-plan-format](improvements/update-guide-plan-format.md) | P1 | 会话复盘 | 2026-07-23 |
 | [fix-stale-suggestions-warning](improvements/fix-stale-suggestions-warning.md) | P2 | 会话复盘 | 2026-07-23 |
 | [fix-append-approved-output](improvements/fix-append-approved-output.md) | P2 | 会话复盘 | 2026-07-23 |
+| [archive-gate-incomplete-tasks](improvements/archive-gate-incomplete-tasks.md) | P1 | 会话复盘 | 2026-07-23 |
+| [fix-skill-tool-cache](improvements/fix-skill-tool-cache.md) | P1 | 会话复盘 | 2026-07-23 |
+| [ship-delete-branch-safety](improvements/ship-delete-branch-safety.md) | P1 | 会话复盘 | 2026-07-23 |
+| [sync-approved-to-suggestions](improvements/sync-approved-to-suggestions.md) | P1 | 会话复盘 | 2026-07-23 |
+| [pre-checkout-warning](improvements/pre-checkout-warning.md) | P2 | 会话复盘 | 2026-07-23 |
