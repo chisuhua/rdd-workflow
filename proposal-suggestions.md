@@ -454,7 +454,7 @@
     "name": "fix-guide-ship-archive-bats",
     "priority": "P2",
     "source": "深度分析 2026-07-23 #3",
-    "status": "待创建",
+    "status": "已完成",
     "phase": "default",
     "category": "infra-setup",
     "description": "## 问题\n- guide-ship archive/cleanup 测试（#141/143/159/162/163）由于缺少 worktree + env var 而失败\n- 这些测试需要 FORCE_BRANCH_DELETE 环境变量和 worktree 环境\n\n## 范围\n- In Scope:\n  - 为测试添加 mock 或 env var 设置\n  - 使测试能在非 worktree 环境下通过\n- Out Scope:\n  - 不修改 guide-ship 源码\n\n## 验收标准\n- 5 个 guide-ship archive 测试通过",
