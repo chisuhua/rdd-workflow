@@ -193,6 +193,21 @@ ALL_OPTIONS_JSON 结构:
    - 查看 session 信息（"有哪些 orphaned session？"）
    - 任何与项目相关的开放性问题
 
+1.5. **意图路由规则**（AI 必须执行）：当用户在自由讨论中表达以下意图时，AI 必须将意图路由到对应的标准技能，而非自行处理：
+
+   | 用户意图 | 触发关键词 | 路由目标 | 禁止行为 |
+   |---------|-----------|---------|---------|
+   | 创建新 change | "创建提案"、"新建 change"、"propose"、"提一个 change"、"新增提案" | `skill_use("propose")` | **禁止手动创建文件**（mkdir + write proposal.md/tasks.md 等） |
+   | 执行 change | "执行"、"开始做"、"ship"、"实施" + change 名称 | `skill_use("guide-ship")` | **禁止直接操作 worktree 或执行 plan** |
+   | 架构设计 | "架构"、"ADR"、"arch"、"架构设计" | `skill_use("guide-arch")` | 禁止手动创建 ADR 文件 |
+   | 变更规划 | "规划"、"plan"、"生成计划"、"扫描 change" | `skill_use("guide-plan")` | 禁止手动创建 plan 文件 |
+   | 查看状态 | "查看状态"、"status"、"进度" | `skill_use("status")` | — |
+   | 查看依赖 | "deps"、"依赖"、"依赖关系" | `skill_use("deps")` | — |
+   | 查看 feature | "feature"、"功能视图" | `skill_use("feature")` | — |
+   | session 管理 | "session"、"恢复"、"resume" | `skill_use("rddf-session", ...)` | — |
+
+   **核心原则**：任何涉及创建或修改项目状态的意图，必须通过标准 workflow skill 执行，AI 不得自行处理。AI 检测到上述意图后，应提示用户并自动执行路由，而非在自由讨论中手动完成。
+
 2. **每次回答完后，主动重新展示简版菜单**（不需要等用户要求）：
    ```
    ⭐ guide-plan / guide-arch / guide-ship / resume rds_xxx / feature / status
@@ -200,18 +215,27 @@ ALL_OPTIONS_JSON 结构:
    ```
    简版菜单只列选项名称（`label`），不列详细描述。保持一行紧凑格式，不给用户增加阅读负担。
 
-3. 当用户输入菜单编号或对应选项名称（如直接说"执行 guide-plan"）时，视为选中，执行对应 `action`，guide 模式结束。
+3. 当用户输入菜单编号或对应选项名称时，视为选中，执行对应 `action`：
+   - **阶段命令**（`group` 为 `recommended` 或 `stages`：`guide-arch`、`guide-plan`、`guide-ship`、`rddf-session resume rds_xxx`）→ 执行后 guide 模式结束。
+   - **工具命令**（`group` 为 `session` 或 `utilities`：`rddf-session list`、`rddf-session current`、`feature`、`status` 等）→ 执行后**重新展示完整菜单**（AI 回到步骤 1：运行 bash 扫描 + Python 合成器 + 重新展示菜单），不结束 guide 模式。
 
 ### 执行选择
 
-用户选择后，AI 执行对应 `action`：
+用户选择后，AI 执行对应 `action`。根据 action 类型，post-action 行为不同：
+
+**阶段命令**（执行后 guide 模式结束，进入对应阶段状态机）：
 - `"guide-arch"` → `skill_use("guide-arch")` — 该 skill 自动处理 rddf-session entry hook
 - `"guide-plan"` → `skill_use("guide-plan")` — 同上
 - `"guide-ship"` → `skill_use("guide-ship")` — 同上
 - `"rddf-session resume rds_xxx"` → 先调 `skill_use("rddf-session", "resume", "rds_xxx")` 恢复 session，然后根据 session kind 调对应的 guide skill
-- `"rddf-session list"` → `skill_use("rddf-session", "list")`
-- `"feature"` → `skill_use("feature")`
-- `"status"` → `skill_use("status")`
+
+**工具命令**（执行后重新展示完整菜单，循环不退出）：
+- `"rddf-session list"` → `skill_use("rddf-session", "list")` → **展示结果后，AI 重新运行 bash 扫描 + Python 合成器 + 重新展示完整菜单**
+- `"rddf-session current"` → 同上
+- `"feature"` → `skill_use("feature")` → **同上**
+- `"status"` → `skill_use("status")` → **同上**
+
+**循环实现**：对于工具命令，AI 在 action 执行完毕后，自动回到 "bash 扫描 + Python 合成器 + 展示菜单" 步骤，不结束 guide 模式。用户可通过选择阶段命令或直接输入阶段命令名称退出循环。
 
 Session 管理自动完成：guide skills 的 entry/close hooks 已在 `guide-arch.md` / `guide-plan.md` / `guide-ship.md` 中实现，不需要额外操作。
 
@@ -224,6 +248,7 @@ AI 执行扫描 → 展示菜单:
   ⭐ 1. guide-plan — 进入变更生成阶段
   2. guide-arch  ...
   3. guide-ship  ...
+  4. rddf-session list — 查看所有 session
   0. 💬 自由讨论
 
 用户: "当前有哪些活跃 changes？"  ← 非编号,自动进讨论
@@ -237,9 +262,55 @@ AI: "有 3 个 changes: add-auth (proposed), fix-ns-pollution (in worktree), add
 AI: "worktree 内 tasks.md 显示 2/5 完成,被 deps 分析标记为阻塞中..."
     ⭐ guide-plan / guide-arch / guide-ship / ...   ← 再次展示
 
-用户: "guide-plan"  ← 选中菜单项
+用户: "guide-plan"  ← 选中阶段命令
   ↓
 AI 执行 skill_use("guide-plan") → 结束
+
+---
+
+用户: skill_use("guide")
+  ↓
+AI 执行扫描 → 展示菜单:
+  ⭐ 1. guide-ship — 进入变更执行阶段
+  2. guide-arch  ...
+  3. guide-plan  ...
+  4. rddf-session list — 查看所有 session
+  5. feature — 查看 feature 视图
+  0. 💬 自由讨论
+
+用户: "4"  ← 选择工具命令 rddf-session list
+  ↓
+AI 执行 skill_use("rddf-session", "list") → 展示 session 列表
+  ↓ (循环 — 不结束 guide 模式)
+AI 重新运行扫描 → 重新展示完整菜单:
+  ⭐ 1. guide-ship — 进入变更执行阶段
+  ...
+
+用户: "5"  ← 选择工具命令 feature
+  ↓
+AI 执行 skill_use("feature") → 展示 feature 视图
+  ↓ (再次循环)
+AI 重新运行扫描 → 重新展示完整菜单
+  ...
+
+用户: "1"  ← 选择阶段命令 guide-ship
+  ↓
+AI 执行 skill_use("guide-ship") → 结束
+```
+
+### 意图路由示例
+
+```
+[自由讨论模式]
+用户: "创建一个修复 LSP 兼容性的提案"  ← 命中 propose 意图
+  ↓
+AI: "检测到创建提案意图，路由到 propose 标准流程 →"
+    skill_use("propose")
+
+用户: "开始执行 wave-1 的 fix-lsp-dash-bridge"  ← 命中 ship 意图
+  ↓
+AI: "检测到执行 change 意图，路由到 guide-ship →"
+    skill_use("guide-ship")
 ```
 
 ## 输出格式（旧版兼容）
