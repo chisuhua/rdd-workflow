@@ -4,9 +4,7 @@
 
 | 提案 | 优先级 | 批准时间 | 批准人 |
 |------|--------|----------|--------|
-| [proposal-approval-pipeline](improvements/proposal-approval-pipeline.md) | P0 | 2026-07-23 | user-session |
 
 ## 已实施
 
-| 提案 | 优先级 | 实施时间 |
-|------|--------|----------|
+| [proposal-approval-pipeline](improvements/proposal-approval-pipeline.md) | P0 | 2026-07-23 |
