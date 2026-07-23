@@ -1,0 +1,28 @@
+{
+  "include": [
+    "skills",
+    "tests"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "skills/**/archive"
+  ],
+  "extraPaths": [
+    "."
+  ],
+  "executionEnvironments": [
+    {
+      "root": "skills/rddf-session"
+    },
+    {
+      "root": "skills/guide-arch"
+    },
+    {
+      "root": "skills/guide-plan"
+    },
+    {
+      "root": "skills/guide-ship"
+    }
+  ]
+}
