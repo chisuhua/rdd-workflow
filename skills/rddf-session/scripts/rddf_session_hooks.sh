@@ -235,3 +235,48 @@ except Exception as e:
     print(f"rddf-session attach skip: {e}")
 PYEOF
 }
+# rddf_session_hook_detach <kind> <change_name>
+#   Symmetric counterpart to attach — detaches a change from the session.
+#   Used when switching worktrees or abandoning a change.
+rddf_session_hook_detach() {
+  local kind="$1"
+  local change_name="$2"
+
+  PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
+
+  KIND="$kind" \
+  CHANGE_NAME="$change_name" \
+  PROJECT_ROOT="$PROJECT_ROOT" \
+  OPENCODE_SESSION_ID="$OPENCODE_SESSION_ID" \
+  python3 <<'PYEOF'
+import os, sys
+sys.path.insert(0, os.environ["PROJECT_ROOT"])
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
+
+project_root = os.environ["PROJECT_ROOT"]
+kind = os.environ["KIND"]
+change_name = os.environ.get("CHANGE_NAME") or ""
+opencode_sid = os.environ["OPENCODE_SESSION_ID"]
+
+sessions_file = os.path.join(project_root, ".rddf", "state", "sessions.json")
+if not os.path.exists(sessions_file):
+    print("rddf-session: sessions.json not found, skipping detach")
+    sys.exit(0)
+
+coord = RddfSessionCoordinator(sessions_file=sessions_file)
+try:
+    # Find session by owner + kind
+    sessions = coord.list_sessions(kind=kind, owner_opencode_session_id=opencode_sid)
+    if not sessions:
+        print(f"rddf-session: no active {kind} session, detach skipped")
+        sys.exit(0)
+    
+    sid = sessions[0].session_id
+    if change_name:
+        coord.detach_change(sid, change_name)
+    print(f"rddf-session: {sid} change {change_name} detached")
+except Exception as e:
+    print(f"rddf-session detach skip: {e}")
+PYEOF
+}
