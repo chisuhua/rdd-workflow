@@ -523,25 +523,33 @@ fi
 
 THIS_SESSION_CREATED+=("<name>")
 
-# Step 4c: artifact creation loop (HALF-IMPLEMENTED — preserved as-is per audit 2026-07-16)
-STATUS=$(openspec status --change "<name>" --json)
-APPLY_REQUIRES=$(echo "$STATUS" | jq -r '.applyRequires | join("\n")')
-ARTIFACTS=$(echo "$STATUS" | jq -r --arg req "$APPLY_REQUIRES" '
-    .artifacts[] | select(
-        .id as $id | ($req | split("\n") | index($id))
-    ) | .id
-)
+# Step 4c: artifact creation loop (TODO — requires openspec CLI artifact support)
+# 
+# Current status: The artifact creation loop was identified as HALF-IMPLEMENTED in audit
+# 2026-07-16. The pseudo-code below outlines the intended behavior, but full implementation
+# requires:
+#   1. openspec CLI 'instructions' command to support artifact generation
+#   2. Proper dependency resolution between artifacts
+#   3. Output path validation and content generation
+#
+# For now, `openspec new change` creates the minimal artifacts (proposal.md, roadmap-meta.yaml).
+# Additional artifacts (design.md, tasks.md, specs/*.md) are created manually or via
+# guide-ship's plan generation phase.
+#
+# TODO(v3.1): Implement full artifact creation loop when openspec CLI adds artifact support.
+#
+# [PRESERVED PSEUDO-CODE FOR REFERENCE - NOT bash-executable]
+# for each artifact_id in artifact_order:
+#     INSTR=$(openspec instructions "$artifact_id" --change "<name>" --json)
+#     OUTPUT_PATH=$(echo "$INSTR" | jq -r '.outputPath')
+#     DEPS=$(echo "$INSTR" | jq -r '.dependencies[]')
+#     for each dep in DEPS:
+#         读取 dep 文件内容
+#     # 写入 OUTPUT_PATH
+#     test -f "$OUTPUT_PATH" || { echo "❌ artifact $artifact_id 创建失败"; break; }
+#     echo "  已创建: $artifact_id → $OUTPUT_PATH"
 
-# [PRESERVED HALF-IMPLEMENTED LOOP - pseudo-code, NOT bash-executable]
-for each artifact_id in artifact_order:
-    INSTR=$(openspec instructions "$artifact_id" --change "<name>" --json)
-    OUTPUT_PATH=$(echo "$INSTR" | jq -r '.outputPath')
-    DEPS=$(echo "$INSTR" | jq -r '.dependencies[]')
-    for each dep in DEPS:
-        读取 dep 文件内容
-    # 写入 OUTPUT_PATH
-    test -f "$OUTPUT_PATH" || { echo "❌ artifact $artifact_id 创建失败"; break; }
-    echo "  已创建: $artifact_id → $OUTPUT_PATH"
+echo "⚠️  Artifact creation loop not yet implemented (requires openspec CLI support)"
 
 # Step 4d: roadmap + iteration sync (extracted to helper)
 if [ "${ROADMAP_MODE:-false}" = "true" ]; then
