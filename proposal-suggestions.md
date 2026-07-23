@@ -31,6 +31,10 @@
 | [agent-completion-contract](improvements/agent-completion-contract.md) | P1 | Session 复盘 | 2026-07-21 |
 | [task-parallel-throttle](improvements/task-parallel-throttle.md) | P1 | Session 复盘 | 2026-07-21 |
 | [ship-incomplete-archive-change-fallback](improvements/ship-incomplete-archive-change-fallback.md) | P1 | 执行复盘 | 2026-07-23 |
-
-> ⚠️ 以上提案的实际 `.md` 文件尚未从旧 JSON 格式迁移，需通过迁移脚本批量转换。
-> 当前仅 `proposal-approval-pipeline` 已转换为新格式作为示例。
+| [auto-skip-archived-proposals](improvements/auto-skip-archived-proposals.md) | P0 | 会话复盘 | 2026-07-23 |
+| [archive-cleanup-working-tree](improvements/archive-cleanup-working-tree.md) | P1 | 会话复盘 | 2026-07-23 |
+| [fix-mark-approved-completed](improvements/fix-mark-approved-completed.md) | P1 | 会话复盘 | 2026-07-23 |
+| [parallel-oracle-review](improvements/parallel-oracle-review.md) | P1 | 会话复盘 | 2026-07-23 |
+| [update-guide-plan-format](improvements/update-guide-plan-format.md) | P1 | 会话复盘 | 2026-07-23 |
+| [fix-stale-suggestions-warning](improvements/fix-stale-suggestions-warning.md) | P2 | 会话复盘 | 2026-07-23 |
+| [fix-append-approved-output](improvements/fix-append-approved-output.md) | P2 | 会话复盘 | 2026-07-23 |
