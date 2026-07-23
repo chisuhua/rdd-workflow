@@ -89,8 +89,21 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 # === 3. guide-ship.md 直接调用 (无中间层) ===
 
 @test "guide-ship.md directly calls skill_use('rdd-workflow/writing-plans')" {
-    local f="$REPO_ROOT_ORIGIN/skills/guide-ship/SKILL.md"
-    grep -qE 'skill_use\("rdd-workflow/writing-plans"\)' "$f"
+    # v3.0: skill_use call moved to ship_plan.sh helper script
+    # Accept either inline in .md or in scripts/ship_plan.sh
+    local md_file="$REPO_ROOT_ORIGIN/skills/guide-ship/SKILL.md"
+    local sh_file="$REPO_ROOT_ORIGIN/skills/guide-ship/scripts/ship_plan.sh"
+    
+    if grep -qE 'skill_use.*rdd-workflow/writing-plans' "$md_file" 2>/dev/null; then
+        return 0
+    fi
+    
+    if [ -f "$sh_file" ] && grep -qE 'skill_use.*rdd-workflow/writing-plans' "$sh_file" 2>/dev/null; then
+        return 0
+    fi
+    
+    echo "skill_use('rdd-workflow/writing-plans') not found in guide-ship/SKILL.md or scripts/ship_plan.sh"
+    return 1
 }
 
 @test "guide-ship.md no longer has detection chain (no PROMETHEUS_MODE builtin/external/none)" {
@@ -101,13 +114,13 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     }
 }
 
-@test "guide-ship.md version is at least 2.0.1 (was bumped post-fill-hook)" {
+@test "guide-ship.md version is at least 3.0 (v3.0 rename per ADR-0023)" {
     local f="$REPO_ROOT_ORIGIN/skills/guide-ship/SKILL.md"
     local ver
     ver=$(skill_meta_field "$f" version)
-    # The post-archive fill suggestion hook (commit a1e0aaf) bumped
-    # guide-ship to 2.0.1. Accept any 2.0.x in case of future patch bumps.
-    [[ "$ver" == 2.0* ]] && [[ "$ver" != "2.0" ]]
+    # v3.0.0 renamed from spec-workflow to rdd-workflow (ADR-0023)
+    # Accept any 3.0.x in case of future patch bumps.
+    [[ "$ver" == 3.0* ]]
 }
 
 # === 4. package.json 简化依赖 ===
@@ -132,9 +145,9 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     grep -qE '"rdd-workflow-writing-plans"' "$f"
 }
 
-@test "package.json version bumped to 2.0.0" {
+@test "package.json version is 3.0.0 (v3.0 rename per ADR-0023)" {
     local f="$REPO_ROOT_ORIGIN/package.json"
-    grep -qE '"version":[[:space:]]*"2\.0\.0"' "$f"
+    grep -qE '"version":[[:space:]]*"3\.0\.0"' "$f"
 }
 
 # === 5. README.md 反映 v2.0 自包含架构 ===

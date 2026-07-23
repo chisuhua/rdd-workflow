@@ -10,6 +10,25 @@ author: sisyphus
 
 本技能将 RDD Workflow 的 13 个子技能安装到当前项目目录。
 
+## 包含的子技能
+
+安装后可用以下技能：
+
+| 技能名称 | 用途 |
+|---------|------|
+| `guide` | 推荐器入口（扫描项目状态，建议下一步） |
+| `guide-arch` | Arch 阶段状态机（setup → roadmap → arch-done） |
+| `guide-plan` | Plan 阶段状态机（scan → propose → deps → plan-done） |
+| `guide-ship` | Ship 阶段状态机（plan → execute → archive → cleanup） |
+| `propose` | 变更提案生成（被 guide-plan 调用） |
+| `execute` | 实施计划执行（被 guide-ship 调用） |
+| `status` | 状态查看和归档（被 guide-ship 调用或独立使用） |
+| `feature` | Feature 管理视图（summary/graph/status/order） |
+| `rddf-session` | 跨 OpenCode session 恢复（ADR-0017） |
+| `roadmap` | 路线图管理（被 guide-arch 调用） |
+| `deps` | 依赖分析（被 guide-plan 调用） |
+| `rdd-workflow-writing-plans` | 实施计划生成器（v2.0 自包含 TDD 5 步结构） |
+
 ## 两种安装模式
 
 | 模式 | 命令 | 目标 | 适用场景 |
