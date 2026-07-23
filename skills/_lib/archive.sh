@@ -305,7 +305,7 @@ archive_change() {
   # 8. Update iteration.json (current sprint tracker). Best-effort.
   mark_iteration_archived "$name" "$main_root"
 
-  # 9. Update proposal-suggestions.md status to "已完成" (archive-update-proposal-status)
+  # 9. Update proposal-approved.md status (archive-update-proposal-status)
   local skills_parent
   skills_parent="$(cd "$_LIB_DIR/../.." 2>/dev/null && pwd)"
   if [ -f "$skills_parent/skills/propose/scripts/update_proposal_status.py" ]; then

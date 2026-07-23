@@ -306,7 +306,6 @@ def _check_tests_pass(ctx: dict) -> tuple[bool, Optional[str]]:
 
 
 def _check_review_debt_recorded(ctx: dict) -> tuple[bool, Optional[str]]:
-    import json
     import os
     import subprocess
     try:
@@ -320,14 +319,19 @@ def _check_review_debt_recorded(ctx: dict) -> tuple[bool, Optional[str]]:
         ]
         if not new_todos:
             return (True, None)
-        if not os.path.isfile("proposal-suggestions.md"):
+        imp_dir = "improvements"
+        if not os.path.isdir(imp_dir):
             return (False, "warning")
-        with open("proposal-suggestions.md") as f:
-            entries = json.load(f)
-        debt_names = {
-            e['name'] for e in entries
-            if isinstance(e, dict) and e.get('type') == 'debt'
-        }
+        import re as _re_debt
+        debt_names = set()
+        for fname in os.listdir(imp_dir):
+            if not fname.endswith('.md'):
+                continue
+            with open(os.path.join(imp_dir, fname)) as f:
+                content = f.read()
+            m = _re_debt.search(r'\*\*类型\*\*:\s*debt', content)
+            if m:
+                debt_names.add(fname[:-3])
         return (True, None) if debt_names else (False, "warning")
     except Exception:
         return (True, None)

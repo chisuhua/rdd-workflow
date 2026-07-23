@@ -651,7 +651,7 @@ class TestCollectCurrentSession:
         monkeypatch.setattr(dashboard, "read_plan_handoff", lambda _p: None)
         monkeypatch.setattr(dashboard, "read_iteration", lambda _p: None)
         monkeypatch.setattr(dashboard, "read_roadmap_state", lambda _p: None)
-        monkeypatch.setattr(dashboard, "read_proposal_suggestions", lambda _p: None)
+        monkeypatch.setattr(dashboard, "read_improvement_entries", lambda _p: [])
         monkeypatch.setattr(dashboard, "list_worktrees", lambda: [])
         monkeypatch.setattr(dashboard, "list_change_dirs", lambda _p: [])
         monkeypatch.setattr(dashboard, "read_sessions", lambda _p: sessions)

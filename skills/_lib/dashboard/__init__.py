@@ -51,7 +51,7 @@ from skills._lib.state_reader import (
     read_arch_handoff,
     read_iteration,
     read_plan_handoff,
-    read_proposal_suggestions,
+    read_improvement_entries,
     read_roadmap_state,
     read_sessions,
 )
@@ -411,31 +411,36 @@ def collect(project_root: str) -> DashboardData:
         # is absent (common in projects that never ran `roadmap init`).
         data.roadmap_phase = data.arch.current_phase
 
-    # ---- Section 7: Pending (proposal-suggestions count + list) ----
+    # ---- Section 7: Pending (improvements/ + proposal-approved.md) ----
     try:
-        suggestions = read_proposal_suggestions(project_root)
-    except Exception:
-        suggestions = None
-    if suggestions:
-        # Count only suggestions whose status is not "已完成" / "done".
+        approved = set()
+        approved_path = os.path.join(project_root, "proposal-approved.md")
+        if os.path.exists(approved_path):
+            import re
+            with open(approved_path) as f:
+                approved = set(re.findall(r"\|\s*\[([^\]]+)\]\(improvements/", f.read()))
+        
+        improvement_entries = read_improvement_entries(project_root)
         pending = 0
-        for s in suggestions:
-            status = (s.get("status") or "").lower()
-            if status in ("已完成", "done", "completed", "archived"):
-                continue
+        for s in improvement_entries:
+            name = s.get("name", "?")
+            if name in approved:
+                continue  # Already approved, skip
             pending += 1
             data.suggestions.append(
                 SuggestionEntry(
-                    name=s.get("name", "?"),
-                    priority=s.get("priority"),
-                    source=s.get("source"),
-                    status=s.get("status", "pending"),
-                    phase=s.get("phase"),
-                    category=s.get("category"),
+                    name=name,
+                    priority=s.get("优先级"),
+                    source=s.get("来源"),
+                    status="待讨论",
+                    phase=s.get("阶段"),
+                    category=s.get("分类"),
                     effort=s.get("effort"),
                 )
             )
         data.pending_suggestions = pending
+    except Exception:
+        pass
 
     # ---- Divergence detection ----
     try:

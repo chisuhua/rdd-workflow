@@ -14,32 +14,49 @@ from typing import Optional
 def set_suggestion_status(
     project_root: str, name: str, new_status: str
 ) -> bool:
-    """Update status field for matching entry in proposal-suggestions.md.
-
-    Returns True if updated, False if file missing / malformed / name not found.
-    Preserves all other fields. Matches original lines 531-548 inline behavior.
+    """Update status field for matching entry in proposal-approved.md.
+    
+    proposal-approved.md is a Markdown table. Status update modifies
+    the table row to reflect the new status.
+    Returns True if updated, False if file missing or name not found.
     """
-    path = os.path.join(project_root, "proposal-suggestions.md")
+    import re
+    path = os.path.join(project_root, "proposal-approved.md")
+    if not os.path.exists(path):
+        return False
+    
+    with open(path) as f:
+        content = f.read()
+    
+    # Find the row with this name
+    pattern = rf'\| \[{re.escape(name)}\]\([^)]+\) \| (\S+) \| ([^|]*) \| ([^|]*) \|'
+    match = re.search(pattern, content)
+    if not match:
+        return False
+    
+    # Replace the row - add status annotation
+    old_row = match.group(0)
+    # For "in_progress", we add a status note; for "completed", we move to completed section
+    if new_status == "completed":
+        # Move to completed section
+        from datetime import date
+        completed_row = f"| [{name}](improvements/{name}.md) | {match.group(1)} | {date.today().isoformat()} |"
+        content = content.replace(old_row + "\n", "")
+        if "## 已实施" in content:
+            content = content.replace("## 已实施\n\n", f"## 已实施\n\n{completed_row}\n")
+        else:
+            content += f"\n{completed_row}\n"
+    elif new_status == "in_progress":
+        # Add in-progress marker
+        new_row = f"| [{name}](improvements/{name}.md) | {match.group(1)} | {match.group(2)} | {match.group(3)} (in_progress) |"
+        content = content.replace(old_row, new_row)
+    
     try:
-        with open(path) as f:
-            entries = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
+        with open(path, "w") as f:
+            f.write(content)
+        return True
+    except OSError:
         return False
-    if not isinstance(entries, list):
-        return False
-    updated = False
-    for entry in entries:
-        if isinstance(entry, dict) and entry.get("name") == name:
-            entry["status"] = new_status
-            updated = True
-    if updated:
-        try:
-            with open(path, "w") as f:
-                json.dump(entries, f, ensure_ascii=False, indent=2)
-                f.write("\n")
-        except OSError:
-            return False
-    return updated
 
 
 def create_skeleton_change(

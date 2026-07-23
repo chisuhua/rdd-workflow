@@ -1,27 +1,70 @@
 #!/usr/bin/env python3
-"""Update a change's status to "已完成" in proposal-suggestions.md."""
-import json, sys
+"""Update a change's completed status in proposal-approved.md."""
+import sys
+import os
+
 
 def update_proposal_status(change_name: str, project_root: str) -> bool:
-    path = f"{project_root}/proposal-suggestions.md"
-    try:
-        with open(path) as f:
-            data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
+    """Mark a proposal as completed in proposal-approved.md.
+    
+    Moves the entry from the '## 已批准提案' table to '## 已实施' table.
+    """
+    import re
+    path = os.path.join(project_root, "proposal-approved.md")
+    if not os.path.exists(path):
         return False
-
+    
+    with open(path) as f:
+        lines = f.readlines()
+    
     found = False
-    for item in data:
-        if item.get("name") == change_name:
-            item["status"] = "已完成"
+    priority = "?"
+    remove_index: int | None = None
+    for i, line in enumerate(lines):
+        if f"[{change_name}]" in line and line.strip().startswith("|"):
+            # Extract priority
+            m = re.search(r'\|\s*\[[^\]]+\]\([^)]+\)\s*\|\s*(\S+)\s*\|', line)
+            if m:
+                priority = m.group(1)
+            # Mark for removal
+            remove_index = i
             found = True
             break
-    if not found:
+    
+    if not found or remove_index is None:
         return False
-
+    
+    # Filter out the marked line
+    new_lines = [ln for idx, ln in enumerate(lines) if idx != remove_index]
+    
+    # Find insertion point (after ## 已实施 header, before next ## section)
+    inserted = False
+    result = []
+    for i, line in enumerate(new_lines):
+        result.append(line)
+        if line.startswith("## 已实施") and not inserted:
+            # Find the first non-header, non-table-header line after this
+            # Insert new row after the header lines
+            j = i + 1
+            while j < len(new_lines) and (
+                new_lines[j].startswith("|") or new_lines[j].strip() == ""
+            ):
+                j += 1
+            # Insert completed row at position j
+            from datetime import date
+            completed_row = f"| [{change_name}](improvements/{change_name}.md) | {priority} | {date.today().isoformat()} |\n"
+            result.insert(j, completed_row)
+            inserted = True
+            break
+    
+    if not inserted:
+        from datetime import date
+        result.append(f"| [{change_name}](improvements/{change_name}.md) | {priority} | {date.today().isoformat()} |\n")
+    
     with open(path, "w") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.writelines(result)
     return True
+
 
 if __name__ == "__main__":
     change_name = sys.argv[1]

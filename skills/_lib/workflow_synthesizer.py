@@ -44,7 +44,7 @@ Priority order (highest first):
     9.  committed change in HEAD, no worktree    -> guide-ship (medium)
     10. no roadmap.md                            -> guide-arch (low)
     11. no openspec/changes/                     -> guide-plan (low)
-    12. proposal-suggestions.md has pending      -> guide-plan (low)
+    12. proposal-approved.md has approved entries -> guide-plan (high)
     13. default                                  -> guide-ship (low)
 
 Paths 10-13 are implicitly unreachable because earlier paths (1, 3, 4-5)

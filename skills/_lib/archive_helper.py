@@ -1,27 +1,25 @@
 #!/usr/bin/env python3
 """Helper for archive operations with change_type awareness."""
-import os
-import json
 import re
 from pathlib import Path
-from typing import Optional, Literal
+from typing import Literal
 
 ChangeType = Literal["test-only", "doc-only", "refactor-only", "feature", "debt"]
 
 
 def get_change_type(project_root: str, change_name: str) -> ChangeType:
-    """Get change type from proposal-suggestions.md or infer from proposal.md."""
-    suggestions_path = Path(project_root) / "proposal-suggestions.md"
+    """Get change type from improvements/<name>.md or infer from proposal.md."""
+    improvement_path = Path(project_root) / "improvements" / f"{change_name}.md"
     
-    # Try to read from suggestions
-    if suggestions_path.exists():
+    # Try to read from improvement file
+    if improvement_path.exists():
         try:
-            with open(suggestions_path) as f:
-                entries = json.load(f)
-            for e in entries:
-                if e.get("name") == change_name:
-                    return e.get("change_type", "feature")
-        except:
+            with open(improvement_path) as f:
+                content = f.read()
+            m = re.search(r'\*\*类型\*\*:\s*(\S+)', content)
+            if m:
+                return m.group(1)
+        except (OSError, UnicodeDecodeError):
             pass
     
     # Try to infer from proposal.md

@@ -175,29 +175,65 @@ scan_state() {
     return 0
   fi
 
-  # 9/10. proposal-suggestions.md JSON parse
-  # P1-7: json.load not grep (description field may also contain "待创建" text)
-  # cwd safety: PY_PROJECT_ROOT env var (archive.sh:mark_iteration_archived pattern)
-  local HAS_PENDING
-  HAS_PENDING=$(PY_PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
-import os, json, sys
+  # 9/10. Dual-index scan: proposal-suggestions.md + proposal-approved.md
+  # Check approved proposals first (ready for plan)
+  # cwd safety: PY_PROJECT_ROOT env var
+  local HAS_APPROVED
+  HAS_APPROVED=$(PY_PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
+import os, re
 try:
-    with open(os.path.join(os.environ["PY_PROJECT_ROOT"], "proposal-suggestions.md")) as f:
-        entries = json.load(f)
-    if not isinstance(entries, list):
+    approved_path = os.path.join(os.environ["PY_PROJECT_ROOT"], "proposal-approved.md")
+    if not os.path.exists(approved_path):
         print("no")
-        sys.exit(0)
-    pending = any(isinstance(e, dict) and e.get("status") == "待创建" for e in entries)
-    print("yes" if pending else "no")
-except (FileNotFoundError, json.JSONDecodeError, KeyError):
+        raise SystemExit(0)
+    with open(approved_path) as f:
+        content = f.read()
+    # Check if there are rows in the approved table (not in completed section)
+    section = re.split(r"## 已实施", content)
+    approved_section = section[0] if section else content
+    has_entries = bool(re.search(r"\|\s*\[[^\]]+\]\(improvements/[^)]+\)\s*\|", approved_section))
+    print("yes" if has_entries else "no")
+except Exception:
     print("no")
 ' 2>/dev/null)
-  if [ "$HAS_PENDING" = "yes" ]; then
+  
+  if [ "$HAS_APPROVED" = "yes" ]; then
     RECOMMEND="guide-plan"
-    REASON="有 change 待创建 → 继续 propose"
+    REASON="有已批准 change 待创建 -> 进入 plan"
+    return 0
+  fi
+
+  # Check pending suggestions (needs arch discussion)
+  local HAS_PENDING
+  HAS_PENDING=$(PY_PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
+import os
+try:
+    imp_dir = os.path.join(os.environ["PY_PROJECT_ROOT"], "improvements")
+    suggestions_path = os.path.join(os.environ["PY_PROJECT_ROOT"], "proposal-suggestions.md")
+    if not os.path.isdir(imp_dir) or not os.path.exists(suggestions_path):
+        print("no")
+        raise SystemExit(0)
+    # Check if suggestions.md references any improvement that is NOT in approved.md
+    approved_names = set()
+    approved_path = os.path.join(os.environ["PY_PROJECT_ROOT"], "proposal-approved.md")
+    if os.path.exists(approved_path):
+        import re
+        with open(approved_path) as f:
+            approved_names = set(re.findall(r"\|\s*\[([^\]]+)\]\(improvements/", f.read()))
+    with open(suggestions_path) as f:
+        suggestions_names = set(re.findall(r"\|\s*\[([^\]]+)\]\(improvements/", f.read()))
+    pending = suggestions_names - approved_names
+    print("yes" if pending else "no")
+except Exception:
+    print("no")
+' 2>/dev/null)
+  
+  if [ "$HAS_PENDING" = "yes" ]; then
+    RECOMMEND="guide-arch"
+    REASON="有待讨论提案 -> 进入 arch 审查"
   else
     RECOMMEND="guide-ship"
-    REASON="无待创建 change → 准备 ship"
+    REASON="无待讨论提案 -> 准备 ship"
   fi
 
   check_stale_workflow_state "$PROJECT_ROOT"

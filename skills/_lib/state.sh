@@ -165,3 +165,135 @@ except (FileNotFoundError, json.JSONDecodeError):
     print(0)
 " "$ps_path" 2>/dev/null || echo 0
 }
+
+# list_improvements <project_root>
+# Lists improvement files in improvements/ directory.
+# Returns newline-separated "name|priority|source" entries.
+list_improvements() {
+  local project_root="${1:-.}"
+  local imp_dir="$project_root/improvements"
+  if [ ! -d "$imp_dir" ]; then
+    echo ""
+    return
+  fi
+  for f in "$imp_dir"/*.md; do
+    [ -f "$f" ] || continue
+    local name=$(basename "$f" .md)
+    # Extract priority and source from frontmatter-like headers
+    local priority=$(grep -m1 '^\*\*优先级\*\*:' "$f" 2>/dev/null | sed 's/.*\*\*优先级\*\*: *//' | cut -d'|' -f1 | xargs)
+    local source=$(grep -m1 '^\*\*优先级\*\*:' "$f" 2>/dev/null | sed 's/.*| \*\*来源\*\*: *//' | xargs)
+    echo "${name}|${priority:-?}|${source:-?}"
+  done
+}
+
+# list_approved <project_root>
+# Parses proposal-approved.md Markdown table and returns approved entries.
+# Returns newline-separated "name|priority|time|approver" entries.
+list_approved() {
+  local project_root="${1:-.}"
+  local approved_file="$project_root/proposal-approved.md"
+  if [ ! -f "$approved_file" ]; then
+    echo ""
+    return
+  fi
+  python3 -c "
+import sys
+with open(sys.argv[1]) as f:
+    content = f.read()
+# Find the approved table (## 已批准提案 section)
+import re
+# Match table rows after '## 已批准提案' header
+section = re.split(r'## 已批准提案', content)
+if len(section) > 1:
+    # Find rows: | [name](path) | priority | time | approver |
+    rows = re.findall(r'\|\s*\[([^\]]+)\]\([^)]+\)\s*\|\s*(\S+)\s*\|', section[1])
+    for name, priority in rows:
+        print(f'{name}|{priority}|-|-')
+" "$approved_file" 2>/dev/null
+}
+
+# append_approved <project_root> <name> <priority>
+# Appends a row to the approved proposals table in proposal-approved.md.
+append_approved() {
+  local project_root="$1"
+  local name="$2"
+  local priority="$3"
+  local approved_file="$project_root/proposal-approved.md"
+  local timestamp=$(date -u +%Y-%m-%d)
+  
+  if [ ! -f "$approved_file" ]; then
+    echo "❌ proposal-approved.md not found" >&2
+    return 1
+  fi
+  
+  # Check if already exists
+  if grep -q "\[$name\]" "$approved_file" 2>/dev/null; then
+    echo "⚠️  $name already in approved list" >&2
+    return 0
+  fi
+  
+  # Insert before the ## 已实施 section
+  local new_row="| [$name](improvements/$name.md) | $priority | $timestamp | guide-arch |"
+  
+  if grep -q '## 已实施' "$approved_file"; then
+    # Insert before ## 已实施
+    python3 -c "
+import sys
+with open(sys.argv[1]) as f:
+    lines = f.readlines()
+inserted = False
+with open(sys.argv[1], 'w') as f:
+    for line in lines:
+        if not inserted and line.startswith('## 已实施'):
+            f.write('$new_row\n\n')
+            inserted = True
+        f.write(line)
+    if not inserted:
+        f.write('$new_row\n')
+" "$approved_file"
+  else
+    echo "$new_row" >> "$approved_file"
+  fi
+  echo "✅ $name added to approved list"
+}
+
+# mark_approved_completed <project_root> <name>
+# Updates proposal-approved.md: moves entry from "已批准提案" to "已实施" table.
+mark_approved_completed() {
+  local project_root="$1"
+  local name="$2"
+  local approved_file="$project_root/proposal-approved.md"
+  local timestamp=$(date -u +%Y-%m-%d)
+  
+  if [ ! -f "$approved_file" ]; then
+    return 1
+  fi
+  
+  python3 -c "
+import sys, re
+with open(sys.argv[1]) as f:
+    content = f.read()
+name = sys.argv[2]
+ts = sys.argv[3]
+
+# Find the row for this name
+pattern = rf'\|\s*\[{re.escape(name)}\]\([^)]+\)\s*\|\s*(\S+)\s*\|[^|]*\|[^|]*\|'
+match = re.search(pattern, content)
+if not match:
+    sys.exit(0)
+
+# Remove from approved section, add to completed section
+row = match.group(0)
+# Extract priority
+priority_match = re.search(r'\|\s*\[[^\]]+\]\([^)]+\)\s*\|\s*(\S+)\s*\|', row)
+priority = priority_match.group(1) if priority_match else '?'
+
+content = content.replace(row + '\n', '')
+# Add to completed section
+completed_row = f'| [{name}](improvements/{name}.md) | {priority} | {ts} |\n'
+content = content.replace('## 已实施\n\n', f'## 已实施\n\n{completed_row}')
+
+with open(sys.argv[1], 'w') as f:
+    f.write(content)
+" "$approved_file" "$name" "$timestamp"
+}

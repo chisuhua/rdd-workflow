@@ -4,64 +4,72 @@ import pytest
 from skills.propose.scripts import propose_change as pc
 
 
+def _write_approved(tmp_path, rows=None):
+    """Write a proposal-approved.md with given rows in the approved table."""
+    lines = [
+        "# 已批准提案",
+        "",
+        "| 提案 | 优先级 | 阶段 | 状态 |",
+        "|------|--------|------|------|",
+    ]
+    for r in (rows or []):
+        lines.append(r)
+    lines += [
+        "",
+        "## 已实施",
+        "",
+        "| 提案 | 优先级 | 完成日期 |",
+        "|------|--------|----------|",
+    ]
+    (tmp_path / "proposal-approved.md").write_text("\n".join(lines) + "\n")
+
+
 @pytest.fixture
 def project_root(tmp_path):
-    (tmp_path / "proposal-suggestions.md").write_text("[]")
     return str(tmp_path)
 
 
 @pytest.fixture
 def project_with_suggestions(tmp_path):
-    entries = [
-        {"name": "c1", "status": "待创建"},
-        {"name": "c2", "status": "created"},
+    rows = [
+        "| [c1](improvements/c1.md) | P1 | 实施期 | 待创建 |",
+        "| [c2](improvements/c2.md) | P2 | 实施期 | created |",
     ]
-    (tmp_path / "proposal-suggestions.md").write_text(
-        json.dumps(entries, ensure_ascii=False, indent=2)
-    )
+    _write_approved(tmp_path, rows)
     return str(tmp_path)
 
 
 class TestSetSuggestionStatus:
     def test_updates_status_for_matching_name(self, project_with_suggestions):
-        result = pc.set_suggestion_status(project_with_suggestions, "c1", "skeleton")
+        result = pc.set_suggestion_status(project_with_suggestions, "c1", "in_progress")
         assert result is True
-        with open(f"{project_with_suggestions}/proposal-suggestions.md") as f:
-            entries = json.load(f)
-        assert entries[0]["status"] == "skeleton"
-        assert entries[1]["status"] == "created"  # unchanged
+        with open(f"{project_with_suggestions}/proposal-approved.md") as f:
+            content = f.read()
+        assert "c1" in content and "(in_progress)" in content
 
     def test_no_op_when_name_not_found(self, project_with_suggestions):
-        result = pc.set_suggestion_status(project_with_suggestions, "c999", "skeleton")
+        result = pc.set_suggestion_status(project_with_suggestions, "c999", "in_progress")
         assert result is False
 
     def test_no_op_when_file_missing(self, project_root):
-        import os
-        os.remove(f"{project_root}/proposal-suggestions.md")
-        result = pc.set_suggestion_status(project_root, "c1", "skeleton")
+        result = pc.set_suggestion_status(project_root, "c1", "in_progress")
         assert result is False
 
-    def test_preserves_other_fields(self, project_with_suggestions):
-        # Add extra fields to first entry
-        with open(f"{project_with_suggestions}/proposal-suggestions.md") as f:
-            entries = json.load(f)
-        entries[0]["phase"] = "phase-1"
-        entries[0]["priority"] = "P2"
-        with open(f"{project_with_suggestions}/proposal-suggestions.md", "w") as f:
-            json.dump(entries, f, ensure_ascii=False, indent=2)
-            f.write("\n")
-        pc.set_suggestion_status(project_with_suggestions, "c1", "skeleton")
-        with open(f"{project_with_suggestions}/proposal-suggestions.md") as f:
-            entries = json.load(f)
-        assert entries[0]["status"] == "skeleton"
-        assert entries[0]["phase"] == "phase-1"  # preserved
-        assert entries[0]["priority"] == "P2"   # preserved
-        assert entries[0]["name"] == "c1"       # preserved
+    def test_completed_moves_to_completed_section(self, project_with_suggestions):
+        result = pc.set_suggestion_status(project_with_suggestions, "c1", "completed")
+        assert result is True
+        with open(f"{project_with_suggestions}/proposal-approved.md") as f:
+            content = f.read()
+        sections = content.split("## 已实施")
+        approved_part = sections[0]
+        completed_part = sections[1] if len(sections) > 1 else ""
+        assert "[c1]" not in approved_part or "(in_progress)" not in approved_part
+        assert "[c1]" in completed_part
 
-    def test_returns_false_on_malformed_json(self, tmp_path):
-        bad_file = tmp_path / "proposal-suggestions.md"
-        bad_file.write_text("not valid json {{{")
-        result = pc.set_suggestion_status(str(tmp_path), "c1", "skeleton")
+    def test_returns_false_on_malformed_file(self, tmp_path):
+        bad_file = tmp_path / "proposal-approved.md"
+        bad_file.write_text("not valid markdown table {{{")
+        result = pc.set_suggestion_status(str(tmp_path), "c1", "in_progress")
         assert result is False
 
 class TestCreateSkeletonChange:

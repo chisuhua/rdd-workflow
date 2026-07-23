@@ -1,7 +1,7 @@
 """Shared read-only data layer for all CLI subcommands.
 
 This module provides 8 fine-grained functions that each read from a
-specific state source (``.rddf/state/*.json``, ``proposal-suggestions.md``,
+specific state source (``.rddf/state/*.json``, ``improvements/*.md + proposal-approved.md``,
 ``git worktree list``, ``openspec/changes/``). All functions are strictly
 read-only: they never write, backup, or mutate any file. All return
 ``None`` (or ``[]`` for list-returning functions) for missing or corrupt
@@ -152,7 +152,8 @@ def read_roadmap_state(project_root: str) -> Optional[dict]:
 
 
 def read_proposal_suggestions(project_root: str) -> Optional[list[dict]]:
-    """Read ``proposal-suggestions.md`` as a JSON array.
+    """DEPRECATED: Use read_improvement_entries() instead.
+    Read ``proposal-suggestions.md`` as a JSON array (legacy format).
 
     The file is a JSON array of suggestion dicts (despite the ``.md``
     extension - see ``docs/proposal-suggestions-format``). Returns the
@@ -251,3 +252,40 @@ def list_change_dirs(project_root: str) -> list[str]:
         and os.path.isdir(os.path.join(changes_dir, e))
     ]
     return sorted(names)
+
+
+def read_improvement_entries(project_root: str) -> list[dict]:
+    """Read all improvement files from improvements/ directory.
+    
+    Returns list of dicts with keys: name, priority, source, phase, category, type.
+    """
+    import re
+    imp_dir = os.path.join(project_root, "improvements")
+    if not os.path.isdir(imp_dir):
+        return []
+    
+    entries: list[dict] = []
+    for fname in sorted(os.listdir(imp_dir)):
+        if not fname.endswith('.md'):
+            continue
+        fpath = os.path.join(imp_dir, fname)
+        entry: dict = {"name": fname[:-3]}
+        try:
+            with open(fpath, encoding="utf-8") as f:
+                content = f.read()
+            lines = content.split('\n')
+            meta_line = lines[2] if len(lines) > 2 else ''
+            for match in re.finditer(r'\*\*(\S+)\*\*:\s*([^|]+)', meta_line):
+                key = match.group(1)
+                val = match.group(2).strip()
+                entry[key] = val
+            if len(lines) > 3:
+                line2 = lines[3]
+                for match in re.finditer(r'\*\*(\S+)\*\*:\s*([^|]+)', line2):
+                    key = match.group(1)
+                    val = match.group(2).strip()
+                    entry[key] = val
+        except (OSError, UnicodeDecodeError):
+            continue
+        entries.append(entry)
+    return entries

@@ -34,7 +34,7 @@ skill_use("guide-arch")   # 无参数版本
 
 | 子技能 | 阶段 | 职责 | 人工介入 |
 |--------|------|------|---------|
-| `guide-arch`（本技能） | arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-done | **高** |
+| `guide-arch`（本技能） | arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-validation → proposal-review → arch-done | **高** |
 | `guide-plan`（后续） | plan | 变更生成：scan → propose → deps → plan-done | **中** |
 | `guide-ship`（后续） | ship | 变更执行：plan → execute → archive → cleanup → ship-done | **低** |
 | `guide`（无状态推荐器） | — | 扫描三阶段状态，推荐下一步 | — |
@@ -441,7 +441,7 @@ fi
   2. 📊 查看路线图状态
   3. 📈 查看阶段门控报告
   4. ⏭️  强制推进到下一阶段
-  5. ✅ 完成路线图定义 → 进入 arch-done 验证
+  5. ✅ 完成路线图定义 → 进入 arch validation
   0. 💾 保存并退出
   i. 其他输入
 ```
@@ -494,15 +494,19 @@ skill_use("roadmap", "advance")
 
 详细模板内容见 `skills/roadmap.md` §命令：init。
 
-**与 arch-done 阶段的衔接**：
+**与 Phase 5 的衔接**：
 
-用户选择「完成路线图定义」后，进入 Phase 5 (arch-done) 执行最终验证 + 写 handoff。roadmap.md 是 arch-done 门控检查的两个关键文件之一（另一个是 ADR ≥ 1）。
+用户选择「完成路线图定义」后，进入 Phase 5 (arch validation) 执行最终验证 + 提案审批 + 写 handoff。roadmap.md 是 arch-done 门控检查的两个关键文件之一（另一个是 ADR ≥ 1）。
 
 ---
 
-## Phase 5: arch-done (Exit)
+## Phase 5: arch validation (门控检查)
 
 **入口条件**：adr-create、architecture、roadmap-define 三个阶段都已完成（或用户主动跳过非必要阶段）。
+
+**行为**：
+
+执行 arch-done 双重门控检查，验证架构定义是否完整。门控通过后进入 Phase 5.5 提案审批，再进入 Phase 6 arch-done 退出。
 
 **门控检查**：
 
@@ -517,49 +521,9 @@ source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_done_gate.sh"
 check_arch_done_gate || exit 1
 ```
 
-**写入 handoff 状态**：
+**门控通过后**：
 
-arch → plan 交接通过 `.rddf/state/.arch-handoff.json` 软状态文件传递。arch-done 验证通过后立即写入。文件不被 git 跟踪（`.gitignore` 已排除 `.rddf/state/`），缺失时 plan 端硬阻断。v1 schema 见 `skills/_lib/schemas/arch_handoff_schema.json`（ADR-0016 Layer 2）。
-
-```bash
-# Round A: extracted to _lib/write_arch_handoff.{py,sh} (L618-L707, ~88 lines)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/write_arch_handoff.sh"
-write_arch_handoff
-```
-
-```bash
-# rddf-session 关闭 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_hooks.sh"
-rddf_session_hook_close stage_arch arch-done guide-arch
-```
-
-**Output to user**：
-
-```
-✅ Arch-side complete. Architecture is defined.
-
-📋 架构定义交付物:
-  - ADR 文档: N 个 (最新: ADR-XXXX)
-  - Roadmap: 已定义 (当前阶段: ...)
-  - 架构差距分析: M 个 (待 roadmap 阶段补齐)
-
-💡 Next: skill_use("guide-plan")
-   This will scan your arch artifacts and start change generation (scan → propose → deps → plan-done).
-```
-
-Do NOT auto-invoke `guide-plan` — the user must explicitly transition to the plan side.
-
-**架构质量门（ADR-0018）**：
-
-arch-done 双重门控（ADR ≥ 1 + roadmap.md 存在）通过后，自动运行 4 个 warning 级质量检查，输出到 `.rddf/state/.arch-quality-report.json`：
-
-```bash
-# Round B: extracted to _lib/arch_quality_report.sh (L564-L595, ~32 lines)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_quality_report.sh"
-run_arch_quality_report
-```
-
-**严格模式 (CI)**：当 `STRICT_ARCH_GATE=yes` 时，warning 自动升级为 error 并 exit 1。本地开发默认关闭。
+门控检查通过后，不直接退出，而是进入 Phase 5.5（提案审批）让用户审查 `improvements/` 目录下的待讨论提案。门控失败时提供回退选项。
 
 **回退到其他 arch 阶段**：
 
@@ -583,10 +547,182 @@ case "$choice" in
   q|quit|exit) exit 0 ;;
   r|refresh) continue ;;  # 重新执行门控检查
   ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  1) echo "→ 回到 adr-create 阶段..."; skill_use("guide-arch") ;;  # 重新调用,选择 adr-create
+  1) echo "-> 回到 adr-create 阶段..."; skill_use("guide-arch") ;;  # 重新调用,选择 adr-create
   *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
 esac
 ```
+
+---
+
+## Phase 5.5: 提案审批
+
+**入口条件**：arch 阶段完成架构定义后（Phase 5 门控通过），用户选择审查提案。
+
+**行为**：
+
+扫描 `proposal-suggestions.md` 索引表，逐一展示 `improvements/` 目录下的待讨论提案，支持批准/拒绝/延迟。
+
+**执行步骤**：
+
+```bash
+# 加载共享函数
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/state.sh"
+
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+IMPROVEMENTS_DIR="$PROJECT_ROOT/improvements"
+APPROVED_FILE="$PROJECT_ROOT/proposal-approved.md"
+SUGGESTIONS_FILE="$PROJECT_ROOT/proposal-suggestions.md"
+
+# 确定哪些提案在 suggestions 索引中但未在 approved 索引中
+APPROVED_NAMES=""
+if [ -f "$APPROVED_FILE" ]; then
+  APPROVED_NAMES=$(grep -oP '\|\s*\[([^\]]+)\]\(improvements/' "$APPROVED_FILE" | sed 's/.*\[//;s/\].*//')
+fi
+
+echo "## 提案审批阶段"
+echo ""
+echo "📂 improvements/ 目录中的提案:"
+echo ""
+
+PENDING_COUNT=0
+for f in "$IMPROVEMENTS_DIR"/*.md; do
+  [ -f "$f" ] || continue
+  name=$(basename "$f" .md)
+  
+  # 跳过已批准的
+  if echo "$APPROVED_NAMES" | grep -qFx "$name"; then
+    continue
+  fi
+  
+  PENDING_COUNT=$((PENDING_COUNT + 1))
+  
+  # 提取优先级和来源
+  priority=$(grep -m1 '^\*\*优先级\*\*:' "$f" 2>/dev/null | sed 's/.*\*\*优先级\*\*: *//' | cut -d'|' -f1 | xargs)
+  source=$(grep -m1 '^\*\*优先级\*\*:' "$f" 2>/dev/null | sed 's/.*| \*\*来源\*\*: *//' | xargs)
+  
+  echo "  ${PENDING_COUNT}. [${priority:-?}] $name - ${source:-?}"
+done
+
+if [ "$PENDING_COUNT" -eq 0 ]; then
+  echo "  (无待讨论提案)"
+  echo ""
+  echo "-> 跳过审批，直接进入 arch-done"
+  return 0
+fi
+
+echo ""
+echo "选择操作:"
+echo "  <编号>        - 查看并审批该提案（批准/拒绝/延迟）"
+echo "  a             - 全部批准"
+echo "  s             - 跳过审批，直接 arch-done"
+echo "  q             - 返回上级菜单"
+
+# 用户选择
+read -r CHOICE
+
+case "$CHOICE" in
+  q|quit|exit)
+    return 0  # 返回上级菜单
+    ;;
+  s|skip)
+    echo "-> 跳过提案审批"
+    return 0
+    ;;
+  a|all)
+    echo "批量批准所有提案..."
+    for f in "$IMPROVEMENTS_DIR"/*.md; do
+      [ -f "$f" ] || continue
+      name=$(basename "$f" .md)
+      if echo "$APPROVED_NAMES" | grep -qFx "$name"; then
+        continue
+      fi
+      priority=$(grep -m1 '^\*\*优先级\*\*:' "$f" 2>/dev/null | sed 's/.*\*\*优先级\*\*: *//' | cut -d'|' -f1 | xargs)
+      bash "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/approve_proposal.sh" "$name" "${priority:-P1}" "$PROJECT_ROOT"
+    done
+    ;;
+  *)
+    # 处理编号选择
+    # 展示单个提案内容并审批
+    ;;
+esac
+```
+
+**单个提案审批交互**：
+
+```
+提案: add-propose-content-review (P1)
+来源: Oracle 架构分析 2026-07-21
+分类: quality - 阶段: v2.1
+
+## 架构依据
+...
+
+选择:
+  y   - 批准（添加到 proposal-approved.md）
+  n   - 拒绝（保留在 suggestions.md，标记 rejected）
+  d   - 延迟（保持待讨论状态）
+  s   - 跳过
+```
+
+批准时调用:
+```bash
+bash "$SCRIPT_DIR/scripts/approve_proposal.sh" "<name>" "<priority>" "$PROJECT_ROOT"
+```
+
+**与 Phase 6 的衔接**：
+
+提案审批完成后（或用户选择跳过），进入 Phase 6 (arch-done) 写入 handoff 状态并退出。
+
+---
+
+## Phase 6: arch-done (Exit)
+
+**入口条件**：Phase 5 门控检查通过 + Phase 5.5 提案审批完成（或跳过）。
+
+**写入 handoff 状态**：
+
+arch -> plan 交接通过 `.rddf/state/.arch-handoff.json` 软状态文件传递。arch-done 验证通过后立即写入。文件不被 git 跟踪（`.gitignore` 已排除 `.rddf/state/`），缺失时 plan 端硬阻断。v1 schema 见 `skills/_lib/schemas/arch_handoff_schema.json`（ADR-0016 Layer 2）。
+
+```bash
+# Round A: extracted to _lib/write_arch_handoff.{py,sh} (L618-L707, ~88 lines)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/write_arch_handoff.sh"
+write_arch_handoff
+```
+
+```bash
+# rddf-session 关闭 hook (ADR-0017) - extracted to _lib/rddf_session_hooks.sh
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_hooks.sh"
+rddf_session_hook_close stage_arch arch-done guide-arch
+```
+
+**Output to user**：
+
+```
+✅ Arch-side complete. Architecture is defined.
+
+📋 架构定义交付物:
+  - ADR 文档: N 个 (最新: ADR-XXXX)
+  - Roadmap: 已定义 (当前阶段: ...)
+  - 架构差距分析: M 个 (待 roadmap 阶段补齐)
+  - 已批准提案: K 个 (待 plan 阶段处理)
+
+💡 Next: skill_use("guide-plan")
+   This will scan your arch artifacts and start change generation (scan -> propose -> deps -> plan-done).
+```
+
+Do NOT auto-invoke `guide-plan` - the user must explicitly transition to the plan side.
+
+**架构质量门（ADR-0018）**：
+
+arch-done 双重门控（ADR ≥ 1 + roadmap.md 存在）通过后，自动运行 4 个 warning 级质量检查，输出到 `.rddf/state/.arch-quality-report.json`：
+
+```bash
+# Round B: extracted to _lib/arch_quality_report.sh (L564-L595, ~32 lines)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_quality_report.sh"
+run_arch_quality_report
+```
+
+**严格模式 (CI)**：当 `STRICT_ARCH_GATE=yes` 时，warning 自动升级为 error 并 exit 1。本地开发默认关闭。
 
 ---
 
@@ -632,8 +768,8 @@ assert meta['metadata']['user-invocable'] is True
 print('✅ guide-arch.md frontmatter valid')
 "
 
-# 2. 验证五个子阶段齐全
-grep -E "^## Phase [0-9]+:" skills/guide-arch.md
+# 2. 验证子阶段齐全 (Phase 1-6 + Phase 5.5)
+grep -E "^## Phase [0-9.]+:" skills/guide-arch.md
 
 # 3. 验证 handoff 文件路径正确
 grep "\.arch-handoff.json" skills/guide-arch.md
