@@ -460,5 +460,15 @@
     "description": "## 问题\n- guide-ship archive/cleanup 测试（#141/143/159/162/163）由于缺少 worktree + env var 而失败\n- 这些测试需要 FORCE_BRANCH_DELETE 环境变量和 worktree 环境\n\n## 范围\n- In Scope:\n  - 为测试添加 mock 或 env var 设置\n  - 使测试能在非 worktree 环境下通过\n- Out Scope:\n  - 不修改 guide-ship 源码\n\n## 验收标准\n- 5 个 guide-ship archive 测试通过",
     "effort": "1-2h",
     "change_type": "feature"
+  },
+  {
+    "name": "ship-incomplete-archive-change-fallback",
+    "priority": "P1",
+    "source": "UsrLinuxEmu hal-iommu-full 执行复盘: 归档时自动将未完成任务转为 change 候选",
+    "status": "待创建",
+    "phase": "v2.1",
+    "category": "core",
+    "effort": "0.5-1天",
+    "description": "## 架构依据\n- 复盘发现：hal-iommu-full ship 完成后有 2 个任务因依赖未解除而延后（iommu_invalidate 不在 gpu_hal_ops 中）\n- 当前 guide-ship archive 阶段：如果 tasks.md 中有未完成的 [ ] 条目，直接归档会导致这些任务丢失\n- 改进需求：archive 前检查 tasks.md 未完成任务，判断是否需要创建新 change，并自动追加到 proposal-suggestions.md\n\n## 范围\n- **In Scope**:\n  - guide-ship Phase 3 (archive) 增加 pre-archive check：扫描 tasks.md 中未完成的 [ ] 条目\n  - 对每个未完成任务：判断是「依赖未解除」还是「主动跳过」\n  - 若是依赖未解除：自动生成 change 候选描述，追加到 proposal-suggestions.md\n  - 若是主动跳过：标记为 skipped，不生成新 change\n  - 用户交互确认（展示即将创建的候选 change 列表）\n- **Out Scope**:\n  - 不自动创建 change（仅追加到 proposal-suggestions.md）\n  - 不修改 tasks.md 格式\n\n## 关键场景\n- GIVEN tasks.md 有未完成的 [ ] 条目标为延后, WHEN 执行 archive, THEN 自动追加对应条目到 proposal-suggestions.md\n- GIVEN 所有任务已完成, WHEN archive, THEN 行为不变（不追加）\n\n## 技术约束\n- MUST 复用 propose.md Phase 2 的 proposal-suggestions.md 写入逻辑\n- SHOULD 从 tasks.md 提取任务描述自动生成 change 名称和描述\n- MUST 用户确认后才追加（非静默）\n\n## 验收标准\n- archive 时检测到未完成任务，打印候选 change 列表\n- 用户确认后 proposal-suggestions.md 新增对应条目\n- 不改变已完成 change 的归档流程\n- 2 个 bats 测试：有未完成任务 + 无未完成任务场景"
   }
 ]
