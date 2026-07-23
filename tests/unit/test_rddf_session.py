@@ -282,3 +282,32 @@ def test_create_session_raises_conflict_different_owner(coordinator):
             owner_opencode_session_id="ses_b",
             goal={"intent": "guide-plan"},
         )
+
+
+def test_heartbeat_config_default():
+    """HeartbeatConfig defaults MUST match module constants."""
+    from skills.rddf_session.scripts.rddf_session import HeartbeatConfig
+    config = HeartbeatConfig()
+    assert config.timeout_seconds == 1800
+    assert config.refresh_threshold_seconds == 300
+
+
+def test_heartbeat_config_env_override(monkeypatch):
+    """HeartbeatConfig.from_env MUST read RDDF_HEARTBEAT_TIMEOUT_SECONDS and
+    RDDF_HEARTBEAT_REFRESH_THRESHOLD_SECONDS."""
+    monkeypatch.setenv("RDDF_HEARTBEAT_TIMEOUT_SECONDS", "3600")
+    monkeypatch.setenv("RDDF_HEARTBEAT_REFRESH_THRESHOLD_SECONDS", "600")
+    from skills.rddf_session.scripts.rddf_session import HeartbeatConfig
+    config = HeartbeatConfig.from_env()
+    assert config.timeout_seconds == 3600
+    assert config.refresh_threshold_seconds == 600
+
+
+def test_heartbeat_config_illegal_env_fallback(monkeypatch):
+    """Illegal or non-positive env var values MUST fall back to defaults."""
+    monkeypatch.setenv("RDDF_HEARTBEAT_TIMEOUT_SECONDS", "not-a-number")
+    monkeypatch.setenv("RDDF_HEARTBEAT_REFRESH_THRESHOLD_SECONDS", "0")
+    from skills.rddf_session.scripts.rddf_session import HeartbeatConfig
+    config = HeartbeatConfig.from_env()
+    assert config.timeout_seconds == 1800
+    assert config.refresh_threshold_seconds == 300

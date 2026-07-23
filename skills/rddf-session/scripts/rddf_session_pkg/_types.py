@@ -8,6 +8,7 @@ from __future__ import annotations
 import datetime
 import enum
 import json
+import os
 import uuid
 
 from dataclasses import asdict, dataclass, field
@@ -76,3 +77,41 @@ class RddfSession:
 
     def to_dict(self) -> dict:
         return asdict(self)
+
+
+@dataclass
+class HeartbeatConfig:
+    """Configurable heartbeat timeout threshold, parsed from env vars.
+
+    Defaults match the module-level constants. Use ``from_env()`` to
+    override from ``RDDF_HEARTBEAT_TIMEOUT_SECONDS`` and
+    ``RDDF_HEARTBEAT_REFRESH_THRESHOLD_SECONDS`` environment variables.
+    """
+
+    timeout_seconds: int = DEFAULT_HEARTBEAT_TIMEOUT_SECONDS
+    refresh_threshold_seconds: int = HEARTBEAT_REFRESH_THRESHOLD_SECONDS
+
+    @staticmethod
+    def from_env() -> "HeartbeatConfig":
+        timeout = DEFAULT_HEARTBEAT_TIMEOUT_SECONDS
+        threshold = HEARTBEAT_REFRESH_THRESHOLD_SECONDS
+
+        raw = os.environ.get("RDDF_HEARTBEAT_TIMEOUT_SECONDS", "")
+        if raw:
+            try:
+                parsed = int(raw)
+                if parsed > 0:
+                    timeout = parsed
+            except ValueError:
+                pass  # illegal value → fall back to default
+
+        raw = os.environ.get("RDDF_HEARTBEAT_REFRESH_THRESHOLD_SECONDS", "")
+        if raw:
+            try:
+                parsed = int(raw)
+                if parsed > 0:
+                    threshold = parsed
+            except ValueError:
+                pass
+
+        return HeartbeatConfig(timeout_seconds=timeout, refresh_threshold_seconds=threshold)
