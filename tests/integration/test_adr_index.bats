@@ -5,8 +5,8 @@ setup() {
   cd "$REPO_ROOT"
 }
 
-@test "adr_index: docs/adr/README.md status table covers all real ADRs (0001-0020)" {
-  for n in 0001 0005 0010 0015 0017 0018 0019 0020; do
+@test "adr_index: docs/adr/README.md status table covers all real ADRs (0001-0023)" {
+  for n in 0001 0005 0010 0015 0017 0018 0019 0020 0021 0022 0023; do
     if ! grep -qE "ADR-${n}\b" docs/adr/README.md; then
       echo "docs/adr/README.md missing ADR-${n} reference"
       return 1
@@ -15,8 +15,8 @@ setup() {
 }
 
 @test "adr_index: docs/adr/README.md does NOT reference ADR-NNN beyond 0020" {
-  # Flag only ADR-0021+ (legitimate range is 0000-0020; 0000 = template, 0001-0020 = real)
-  bad=$(grep -oE "ADR-0[0-9]{3}" docs/adr/README.md | sort -u | grep -E "ADR-0(0[2-9][0-9]|[1-9][0-9]{2})" | grep -v "ADR-0020\b" || true)
+  # Flag only ADR-0024+ (legitimate range is 0000-0020; 0000 = template, 0001-0023 = real; 0024+ = unexpected)
+  bad=$(grep -oE "ADR-0[0-9]{3}" docs/adr/README.md | sort -u | grep -E "ADR-0(0[2-9][0-9]|[1-9][0-9]{2})" | grep -v -E "ADR-002[0-3]\b" || true)
   [ -z "$bad" ]
 }
 
