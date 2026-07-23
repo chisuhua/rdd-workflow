@@ -20,6 +20,7 @@ from __future__ import annotations
 # Re-export all public types from submodules so consumers can import
 # from the same path as before.
 from .rddf_session_pkg._types import (  # noqa: F401
+    HeartbeatConfig,
     RddfSession,
     RddfSessionError,
     SchemaValidationError,
@@ -48,9 +49,11 @@ class RddfSessionCoordinator:
     method signatures are preserved for backward compatibility.
     """
 
-    def __init__(self, sessions_file: str):
+    def __init__(self, sessions_file: str,
+                 config: Optional[HeartbeatConfig] = None):
         self._store = RddfSessionStore(sessions_file)
-        self._commands = RddfSessionCommands(self._store)
+        self._commands = RddfSessionCommands(self._store,
+                                              config or HeartbeatConfig())
         self._binding = RddfSessionBinding(self._store)
 
     # ---------- Backward-compatible private property access ----------

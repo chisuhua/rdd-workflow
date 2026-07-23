@@ -11,6 +11,7 @@ import pathlib
 from typing import Any, Dict, List, Optional
 
 from ._types import (
+    HeartbeatConfig,
     RddfSession,
     RddfSessionError,
     _new_id,
@@ -25,8 +26,9 @@ from ._store import RddfSessionStore
 class RddfSessionCommands:
     """Business logic for each rddf-session subcommand."""
 
-    def __init__(self, store: RddfSessionStore):
+    def __init__(self, store: RddfSessionStore, config: HeartbeatConfig):
         self._store = store
+        self._config = config
 
     def create_session(
         self,
@@ -198,8 +200,6 @@ class RddfSessionCommands:
 
     def check_heartbeat_timeouts(self) -> List[str]:
         """Mark active sessions with last_heartbeat > timeout as orphaned."""
-        from ._types import DEFAULT_HEARTBEAT_TIMEOUT_SECONDS
-
         newly_orphaned: List[str] = []
 
         def _do_check():
@@ -210,7 +210,7 @@ class RddfSessionCommands:
                 if s["state"] != "active":
                     continue
                 last_hb = datetime.datetime.fromisoformat(s["last_heartbeat"])
-                if (now - last_hb).total_seconds() > DEFAULT_HEARTBEAT_TIMEOUT_SECONDS:
+                if (now - last_hb).total_seconds() > self._config.timeout_seconds:
                     s["state"] = "orphaned"
                     s["ended_at"] = _now()
                     s["end_reason"] = "heartbeat-timeout"
