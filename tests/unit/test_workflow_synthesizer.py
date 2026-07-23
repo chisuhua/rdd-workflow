@@ -124,6 +124,7 @@ class TestDataclassShape:
             active_session="rds_abc123def456",
             orphaned_sessions=(),
             all_options=(),
+            wt_issues=(),
         )
         assert r.suggested_action == "guide-plan"
         assert r.confidence == "high"
@@ -131,6 +132,7 @@ class TestDataclassShape:
         assert r.active_session == "rds_abc123def456"
         assert r.orphaned_sessions == ()
         assert r.all_options == ()
+        assert r.wt_issues == ()
 
     def test_frozen_dataclass_mutation_raises(self):
         """Frozen dataclass MUST raise FrozenInstanceError on mutation."""

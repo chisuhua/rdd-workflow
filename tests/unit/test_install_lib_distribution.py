@@ -59,8 +59,24 @@ def test_init_markers_are_empty_or_minimal() -> None:
     for rel in ("skills/__init__.py", "skills/_lib/__init__.py"):
         text = (REPO_ROOT / rel).read_text()
         # Allow empty, docstring, or one-line comment; no import statements
-        lines = [l.strip() for l in text.splitlines() if l.strip() and not l.strip().startswith("#")]
-        for ln in lines:
-            assert not ln.startswith(("import ", "from ")), (
-                f"{rel} contains a side-effect import: {ln!r}"
-            )
+        # Exception: TYPE_CHECKING block is for static analysis only
+        in_type_checking = False
+        for line in text.splitlines():
+            ln = line.strip()
+            if not ln or ln.startswith("#"):
+                continue
+            if 'if TYPE_CHECKING:' in ln:
+                in_type_checking = True
+                continue
+            if in_type_checking:
+                # Ignore everything inside TYPE_CHECKING block
+                if ln.startswith(("import ", "from ")) and ln.endswith(":"):
+                    # Nested block, continue
+                    pass
+                continue
+            # Outside TYPE_CHECKING: check for side-effect imports
+            if ln.startswith(("import ", "from ")):
+                # Exception: TYPE_CHECKING is a static import
+                if "TYPE_CHECKING" in ln:
+                    continue
+                raise AssertionError(f"{rel} contains a side-effect import: {ln!r}")

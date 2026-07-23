@@ -100,19 +100,32 @@ def test_state_file_paths_in_general_spec_use_canonical_paths() -> None:
 
 
 def test_npm_test_trap_caveat_locked() -> None:
+    # v3.0: npm test now runs both bats and pytest.
     # v2.0.3: npm test now runs full recursive bats suite (--recursive flag).
     # The prior "bats tests/" only ran smoke.bats, which was the "trap" this
     # test was warning about. The fix was to use --recursive so developers
     # and CI both run the full integration test suite.
     pkg = json.loads(_read("package.json"))
     test_script = pkg["scripts"]["test"]
-    assert "--recursive" in test_script, (
-        f"package.json::scripts.test must use --recursive to run all bats, "
-        f"got: {test_script!r}"
+    
+    # v3.0: Check that test:bats has --recursive
+    bats_script = pkg["scripts"].get("test:bats", "")
+    assert "--recursive" in bats_script, (
+        f"package.json::scripts.test:bats must use --recursive to run all bats, "
+        f"got: {bats_script!r}"
     )
-    # Backward-compat guard: still roots at tests/
-    assert test_script.startswith("bats tests/"), (
-        f"package.json::scripts.test must target tests/, got: {test_script!r}"
+    
+    # v3.0: Check that test:python exists
+    python_script = pkg["scripts"].get("test:python", "")
+    assert "pytest" in python_script, (
+        f"package.json::scripts.test:python must use pytest, "
+        f"got: {python_script!r}"
+    )
+    
+    # v3.0: Check that npm test runs both
+    assert "test:bats" in test_script and "test:python" in test_script, (
+        f"package.json::scripts.test must run both test:bats and test:python, "
+        f"got: {test_script!r}"
     )
 
 
