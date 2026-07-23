@@ -301,6 +301,46 @@ def _check_handoff_actionable(ctx: dict) -> tuple[bool, Optional[str]]:
     return (True, None)
 
 
+def _check_file_size(ctx: dict) -> tuple[bool, Optional[str]]:
+    """Check if any Python file in skills/_lib exceeds size limit (warning-level).
+
+    Rationale: Large files often indicate god classes or mixed responsibilities.
+    This check surfaces potential refactoring candidates without blocking.
+
+    Environment:
+        ARCH_FILE_SIZE_LIMIT: max lines before warning (default 300)
+        ARCH_FILE_SIZE_SCAN_PATHS: colon-separated paths to scan (default skills/_lib)
+    """
+    project_root = ctx.get("project_root", ".")
+    max_lines = int(os.environ.get("ARCH_FILE_SIZE_LIMIT", "300"))
+    scan_paths = os.environ.get(
+        "ARCH_FILE_SIZE_SCAN_PATHS", "skills/_lib"
+    ).split(":")
+
+    oversized_files = []
+    for scan_path in scan_paths:
+        scan_dir = Path(project_root) / scan_path
+        if not scan_dir.exists():
+            continue
+
+        for py_file in scan_dir.glob("**/*.py"):
+            try:
+                line_count = len(py_file.read_text().splitlines())
+                if line_count > max_lines:
+                    relative = py_file.relative_to(project_root)
+                    oversized_files.append(f"{relative} ({line_count} lines)")
+            except Exception:
+                continue  # Skip files we can't read
+
+    if oversized_files:
+        msg = f"Files exceeding {max_lines} lines: " + ", ".join(oversized_files[:5])
+        if len(oversized_files) > 5:
+            msg += f" ... and {len(oversized_files) - 5} more"
+        return (False, "warning")
+
+    return (True, None)
+
+
 # ---------- aggregator ----------
 
 
@@ -328,6 +368,7 @@ class ArchQualityReport:
             ("arch_debt_recorded", _check_arch_debt),
             ("adr_no_placeholders", _check_adr_clarity),
             ("arch_handoff_actionable", _check_handoff_actionable),
+            ("file_size_limit", _check_file_size),
         ]
         ctx = {"project_root": project_root}
         report = cls(strict_mode=is_strict_mode())
