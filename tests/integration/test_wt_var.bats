@@ -60,31 +60,3 @@ get_display_block() {
   return 1
 }
 
-@test "P2-7: guide-ship.md display block has no unprefixed \$wt" {
-  [ -f "skills/guide-ship/SKILL.md" ]
-  # v2.0.3: The "Worktree 创建完成" display block was removed during the
-  # v2.0 refactor. The P2-7 fix is vacuously true (no user-facing display
-  # block can have an unprefixed $wt if no such block exists).
-  # The global P2-7 check above (test 1) covers the actual current invariant.
-  local block
-  block=$(get_display_block)
-  if [ -z "$block" ]; then
-    skip "Worktree 创建完成 display block was removed in v2.0 — see P2-7 global check above"
-  fi
-  if echo "$block" | grep -qE '\$wt[^_a-zA-Z]'; then
-    echo "FAIL: display block still uses unprefixed \$wt:"
-    echo "$block" | grep -nE '\$wt[^_a-zA-Z]'
-    return 1
-  fi
-}
-
-@test "P2-7: guide-ship.md display block uses \$WT_PATH for paths" {
-  [ -f "skills/guide-ship/SKILL.md" ]
-  # v2.0.3: same rationale as test 3 — display block no longer exists.
-  local block
-  block=$(get_display_block)
-  if [ -z "$block" ]; then
-    skip "Worktree 创建完成 display block was removed in v2.0 — see P2-7 global check above"
-  fi
-  echo "$block" | grep -qE '\$WT_PATH'
-}

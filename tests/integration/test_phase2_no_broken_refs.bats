@@ -59,19 +59,6 @@ resolve_source_line() {
   }
 }
 
-@test "phase2_no_broken_refs: guide.md readlink path resolves" {
-  # Phase 1 N1 lesson: readlink -f pattern must be manually fixed
-  line=$(grep -n 'readlink.*scan-state' skills/guide/SKILL.md)
-  [ -n "$line" ] || {
-    skip "guide.md readlink pattern not found (expected post-Phase-2)"
-  }
-  # Resolve manually (the helper doesn't handle readlink expansions)
-  path="$REPO_ROOT/skills/guide/scripts/scan-state.sh"
-  [ -f "$path" ] || {
-    echo "FAIL: guide.md readlink path resolves to $path which doesn't exist"
-    return 1
-  }
-}
 
 @test "phase2_no_broken_refs: 3 cross-skill rddf-session sources resolve" {
   for skill in guide-arch guide-plan guide-ship; do
