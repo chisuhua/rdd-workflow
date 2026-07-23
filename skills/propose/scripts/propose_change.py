@@ -152,6 +152,7 @@ def update_roadmap_meta(
     priority: str,
     valid_categories: str,
     parent_feature: Optional[str] = None,
+    change_type: Optional[str] = None,
 ) -> bool:
     """Update roadmap-meta.yaml for a change (propose.md lines 617-686).
 
@@ -164,6 +165,9 @@ def update_roadmap_meta(
     When ``parent_feature`` is provided, it is written to roadmap-meta.yaml
     so the change groups under the named feature. ``None`` writes ``null``
     (explicit no-feature affiliation).
+
+    ``change_type``: one of 'feature' (default), 'test-only', 'doc-only',
+    'refactor-only'. Controls delta-check behavior during archive.
     """
     import os
     change_dir = os.path.join(project_root, "openspec", "changes", name)
@@ -206,12 +210,14 @@ def update_roadmap_meta(
 
     # Write roadmap-meta.yaml (matches lines 675-685)
     yaml_path = os.path.join(change_dir, "roadmap-meta.yaml")
+    ct = change_type if change_type else "feature"
     try:
         with open(yaml_path, "w") as f:
             f.write('roadmap:\n')
             f.write(f'  phase: "{lookup_phase}"\n')
             f.write(f'  category: "{lookup_category}"\n')
             f.write(f'  priority: "{priority}"\n')
+            f.write(f'  change_type: "{ct}"\n')
             f.write('  gate_checklist: []\n')
             f.write('  cross_phase_deps: []\n')
             f.write('  manual_deps: []\n')
@@ -224,7 +230,7 @@ def update_roadmap_meta(
     except OSError:
         return False
 
-    print(f"  已创建: roadmap-meta.yaml (phase: {lookup_phase}, category: {lookup_category})")
+    print(f"  已创建: roadmap-meta.yaml (phase: {lookup_phase}, category: {lookup_category}, type: {ct})")
     return True
 
 
