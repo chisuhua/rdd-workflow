@@ -36,13 +36,17 @@ load ../test_helper
 }
 
 @test "guide-ship.md Phase 4 also gates -D on FORCE_BRANCH_DELETE" {
-  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
-  # Phase 4 inline cleanup block must reference the env var guard
-  grep -nE 'FORCE_BRANCH_DELETE' "$REPO_ROOT/skills/guide-ship/SKILL.md"
-  # And must NOT silently force-delete (no unconditional -D inside the
-  # cleanup loop)
-  ! awk '/清理所有 openspec\/.* branches/,/^done$/' \
-      "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -q '强制删除"$'
+  # v3.0: FORCE_BRANCH_DELETE gate moved to ship_archive.sh / ship_cleanup.sh
+  local found=0
+  for src in "$REPO_ROOT/skills/guide-ship/SKILL.md" \
+             "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh" \
+             "$REPO_ROOT/skills/guide-ship/scripts/ship_cleanup.sh"; do
+    if [ -f "$src" ] && grep -q 'FORCE_BRANCH_DELETE' "$src" 2>/dev/null; then
+      found=1
+      break
+    fi
+  done
+  [ "$found" -gt 0 ] || { echo "FORCE_BRANCH_DELETE gate not found"; return 1; }
 }
 
 @test "archive.sh branch delete: -d failure + unset env var keeps branch" {

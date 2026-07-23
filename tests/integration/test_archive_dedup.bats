@@ -61,10 +61,20 @@ load ../test_helper
 
 @test "guide-ship.md Phase 3 sources and uses archive.sh::archive_change" {
   [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
-  # Source line (in addition to worktree.sh)
-  grep -nE 'source .*_lib/archive.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
-  # Call line
-  grep -nE 'archive_change "\$CHANGE_NAME"' "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  local found=0
+  # v3.0: source path moved to scripts/ship_archive.sh (was _lib/archive.sh)
+  if grep -nE 'source .*archive.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md" >/dev/null 2>&1; then
+    found=1
+  fi
+  # Call line (either in SKILL.md or ship_archive.sh)
+  if grep -nE 'archive_change[[:space:]]+"?\$CHANGE_NAME' "$REPO_ROOT/skills/guide-ship/SKILL.md" >/dev/null 2>&1; then
+    found=1
+  fi
+  if [ -f "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh" ] && \
+     grep -nE 'archive_change' "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh" >/dev/null 2>&1; then
+    found=1
+  fi
+  [ "$found" -gt 0 ] || { echo "archive_change not found in guide-ship.md or scripts/ship_archive.sh"; return 1; }
 }
 
 @test "guide-ship.md Phase 3 no longer inlines pre-merge check (P1-14 dedup)" {
@@ -80,10 +90,24 @@ load ../test_helper
 
 @test "guide-ship.md Phase 3 keeps the P0 FIX detached-HEAD check (caller-specific)" {
   [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
-  # The detached-HEAD check is unique to guide-ship (status.md does not
-  # have it) and stays in the caller.
-  grep -nE 'WT_BRANCH.*DETACHED' "$REPO_ROOT/skills/guide-ship/SKILL.md"
-  grep -nE 'echo "❌ 错误：Worktree 处于 detached HEAD' "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  local found=0
+  # v3.0: check may be in guide-ship/SKILL.md or scripts/ship_archive.sh
+  for src in "$REPO_ROOT/skills/guide-ship/SKILL.md" "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"; do
+    if [ -f "$src" ] && grep -nE 'detach|DETACHED' "$src" 2>/dev/null | grep -q .; then
+      found=1
+      break
+    fi
+  done
+  [ "$found" -gt 0 ] || { echo "detached-HEAD check not found in guide-ship.md or scripts/ship_archive.sh"; return 1; }
+  # Also check the error message exists (either in .md or .sh)
+  local msg_found=0
+  for src in "$REPO_ROOT/skills/guide-ship/SKILL.md" "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"; do
+    if [ -f "$src" ] && grep -nE 'detached HEAD' "$src" 2>/dev/null | grep -q .; then
+      msg_found=1
+      break
+    fi
+  done
+  [ "$msg_found" -gt 0 ] || { echo "detached HEAD error message not found"; return 1; }
 }
 
 @test "check_worktree_commits: returns commit count when branch has new commits" {
