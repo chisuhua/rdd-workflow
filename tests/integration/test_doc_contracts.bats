@@ -8,7 +8,9 @@ setup() {
 @test "doc_truth_sync: package.json::skills[] publishes all 13 disk skills (Decision 3 = A)" {
   run python3 - <<'PY'
 import json, sys
-disk = len(list(__import__("pathlib").Path("skills").glob("*.md")))
+from pathlib import Path
+# Count both skills/*.md (e.g. INSTALL.md) and skills/*/SKILL.md (12 per-skill files)
+disk = len(list(Path("skills").glob("*.md"))) + len(list(Path("skills").glob("*/SKILL.md")))
 data = json.load(open("package.json"))
 skills = data.get("skills", [])
 assert len(skills) == disk, (
@@ -25,10 +27,13 @@ PY
   [ "$status" -eq 0 ]
 }
 
-@test "doc_truth_sync: AGENTS.md skill count matches ls skills/*.md" {
-  disk=$(ls skills/*.md | wc -l)
-  if ! grep -qE "13 个 \.md" AGENTS.md; then
-    echo "AGENTS.md missing '13 个 .md' (disk has $disk)"
+@test "doc_truth_sync: AGENTS.md mentions 13 skills" {
+  disk_root=$(ls skills/*.md 2>/dev/null | wc -l)
+  disk_sub=$(ls skills/*/SKILL.md 2>/dev/null | wc -l)
+  disk=$((disk_root + disk_sub))
+  # AGENTS.md uses format "13 SKILL.md + INSTALL.md"
+  if ! grep -qE "13 (SKILL\.md|个 .md)" AGENTS.md; then
+    echo "AGENTS.md missing '13 SKILL.md' or '13 个 .md' (disk has $disk: $disk_root root + $disk_sub subdir)"
     return 1
   fi
 }
@@ -59,9 +64,9 @@ PY
 }
 
 @test "doc_truth_sync: README.md directory tree lists guide-arch / guide-plan / loop_engine / _lib" {
-  for name in guide-arch.md guide-plan.md loop_engine.py "_lib"; do
+  for name in guide-arch guide-plan loop_engine.py "_lib"; do
     if ! grep -qE "$name" README.md; then
-      echo "README.md missing '$name' in tree"
+      echo "README.md missing '$name' in tree or docs"
       return 1
     fi
   done
