@@ -429,28 +429,6 @@
     "change_type": "feature"
   },
   {
-    "name": "fill-iteration-tests",
-    "priority": "P1",
-    "source": "会话深度分析 2026-07-23 #1",
-    "status": "skeleton",
-    "phase": "default",
-    "category": "core-test",
-    "description": "## 架构依据\n- test_iteration.py 941 行但零测试函数\n- iteration/ 子目录管理 6 个模块（schema/store/render/merge 等）的调度生命周期\n- 是项目核心调度模块，无测试覆盖构成最大回归风险\n\n## 范围\n- **In Scope**:\n  - 为 iteration/schema.py 添加 schema 验证测试（至少 5 个）\n  - 为 iteration/store.py 添加 CRUD 操作测试（至少 5 个）\n  - 为 iteration/render.py 添加渲染输出测试（至少 3 个）\n  - 测试状态转换：planned→in_progress→completed 每步的 iteration.json 更新\n- **Out Scope**:\n  - 不修改 iteration/*.py 源码\n  - 不修改 schema 定义\n\n## 关键场景\n- GIVEN iteration.json 含 planned change, WHEN 状态转 in_progress, THEN json 正确更新\n- GIVEN 同时更新多个 change, WHEN 并发写入, THEN 原子性保证\n\n## 技术约束\n- MUST 使用 pytest + tmp_path fixture\n- MUST 遵循现有 test_*.py 命名和风格\n- SHOULD 与 test_iteration_concurrency.py 共享 fixture\n\n## 验收标准\n- 至少 13 个测试函数\n- 所有测试通过\n- 不修改现有 iteration 源码",
-    "effort": "3-5h",
-    "change_type": "test-only"
-  },
-  {
-    "name": "fill-workflow-synthesizer-tests",
-    "priority": "P1",
-    "source": "会话深度分析 2026-07-23 #2",
-    "status": "skeleton",
-    "phase": "default",
-    "category": "core-test",
-    "description": "## 架构依据\n- test_workflow_synthesizer.py 797 行但零测试函数\n- workflow_synthesizer.py 784 行是 guide 推荐器的核心决策逻辑\n- 决定 resume/restart/start-arch/all-done 等关键推荐路径\n- 无测试覆盖意味着推荐器行为不可验证\n\n## 范围\n- **In Scope**:\n  - 为 WorkflowRecommendation 决策树添加测试（resume/restart/start-arch/all-done）\n  - 测试 sessions.json 缺失/存在/过期状态的处理\n  - 测试 handoff 优先级逻辑\n  - 测试 git 状态检测\n- **Out Scope**:\n  - 不修改 workflow_synthesizer.py 源码\n  - 不依赖真实 git history（使用 tmp_path + git init）\n\n## 关键场景\n- GIVEN sessions.json 含 active session, WHEN synthesize(), THEN 推荐 resume\n- GIVEN sessions.json 不存在或全部 abandoned, WHEN synthesize(), THEN 推荐 restart\n\n## 技术约束\n- MUST 使用 pytest + tmp_path fixture\n- MUST 保持只读（不写入 sessions.json）\n- SHOULD 覆盖 5 条推荐路径\n\n## 验收标准\n- 至少 10 个测试函数\n- 所有测试通过\n- 不修改现有 workflow_synthesizer 源码",
-    "effort": "3-5h",
-    "change_type": "test-only"
-  },
-  {
     "name": "fix-doc-truth-sync",
     "priority": "P2",
     "source": "会话深度分析 2026-07-23 #3",
@@ -462,25 +440,25 @@
     "change_type": "feature"
   },
   {
-    "name": "fill-core-test-coverage",
+    "name": "fix-scan-state-bats",
     "priority": "P2",
-    "source": "会话深度分析 2026-07-23 #4",
+    "source": "深度分析 2026-07-23 #2",
     "status": "待创建",
     "phase": "default",
-    "category": "core-test",
-    "description": "## 架构依据\n- test_deps_output.py（632行）、test_wave_scheduler.py（607行）、test_state_reader.py（567行）共 1806 行但零测试\n- 3 个模块都是核心工作流的关键：deps 输出解析、wave 调度、状态读取\n\n## 范围\n- **In Scope**:\n  - deps_output: 测试 markdown 报告生成、mermaid 图验证\n  - wave_scheduler: 测试 wave 排序、独立 change 检测\n  - state_reader: 测试状态文件读取、格式转换\n- **Out Scope**:\n  - 不修改对应源码\n  - 不涉及其他模块\n\n## 验收标准\n- 每个文件至少 5 个测试函数\n- 所有测试通过",
-    "effort": "4-6h",
-    "change_type": "test-only"
+    "category": "infra-setup",
+    "description": "## 问题\n- scan_state 测试（#8, #36）检查 plan-handoff 状态\n- 根因：plan-handoff.json committed_changes 与实际 openspec/changes/ 结构不匹配\n\n## 范围\n- In Scope:\n  - 排查 plan-handoff.json 与实际目录的差异\n  - 修复 scan_state 的 handoff 读取逻辑\n  - 更新或归档已完成的 changes\n- Out Scope:\n  - 不修改 guide 推荐逻辑\n\n## 验收标准\n- scan_state 测试通过",
+    "effort": "1-2h",
+    "change_type": "feature"
   },
   {
-    "name": "fill-remaining-test-skeletons",
+    "name": "fix-guide-ship-archive-bats",
     "priority": "P2",
-    "source": "会话深度分析 2026-07-23 #5",
+    "source": "深度分析 2026-07-23 #3",
     "status": "待创建",
     "phase": "default",
-    "category": "core-test",
-    "description": "## 架构依据\n- 9 个测试文件共 3440 行但零测试函数（dashboard_renderer、feature_view、propose_change 等）\n- 这些是次要模块或辅助工具，但零测试仍构成风险\n\n## 范围\n- **In Scope**:\n  - 为 dashboard_renderer、feature_view、propose_change、propose_quality_check 等添加基础测试\n  - 每个文件至少 3 个测试函数\n- **Out Scope**:\n  - 不修改对应源码\n  - 不涉及核心模块\n\n## 验收标准\n- 每个文件至少 3 个测试函数\n- 所有测试通过",
-    "effort": "4-6h",
-    "change_type": "test-only"
+    "category": "infra-setup",
+    "description": "## 问题\n- guide-ship archive/cleanup 测试（#141/143/159/162/163）由于缺少 worktree + env var 而失败\n- 这些测试需要 FORCE_BRANCH_DELETE 环境变量和 worktree 环境\n\n## 范围\n- In Scope:\n  - 为测试添加 mock 或 env var 设置\n  - 使测试能在非 worktree 环境下通过\n- Out Scope:\n  - 不修改 guide-ship 源码\n\n## 验收标准\n- 5 个 guide-ship archive 测试通过",
+    "effort": "1-2h",
+    "change_type": "feature"
   }
 ]
