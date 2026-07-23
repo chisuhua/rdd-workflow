@@ -40,7 +40,7 @@
 | [ADR-0006](ADR-0006-state-vector-event-log.md) | 状态向量与事件流设计 | 已采纳 (修订) | 2026-06-22 | 统一状态向量 + 记忆系统 |
 | [ADR-0007](ADR-0007-gate-mechanism.md) | 门控机制设计 | 已采纳 | 2026-06-22 | error/warning 两级 + 插件扩展 |
 | [ADR-0008](ADR-0008-tribunal-committee.md) | 审判委员会设计 | 已采纳 | 2026-06-22 | 多 agent 交叉验证 + 数据脱敏 |
-| [ADR-0009](ADR-0009-scheduled-triggers.md) | 定时循环与事件触发（占位） | 模板（v2.1 候选占位） | 2026-06-22 | 编号占位，v2.1 候选 |
+| [ADR-0009](ADR-0009-scheduled-triggers.md) | 定时循环与事件触发（占位） | 模板（v3.0 候选占位） | 2026-06-22 | 编号占位，v3.0 候选 |
 | [ADR-0010](ADR-0010-multi-session-management.md) | 多会话管理与并行执行 | 已采纳（分阶段） | 2026-06-22 | v2.0 轻量级 + v2.1 完整实现 |
 | [ADR-0011](ADR-0011-phase-step-pipeline-model.md) | 阶段步骤化执行模型 | 已采纳 | 2026-06-22 | 模板+触发器 + 步骤引擎 + 中断恢复 |
 | [ADR-0012](ADR-0012-flow-customization-layer.md) | 流程定制层 | 已采纳 | 2026-06-22 | 增量覆盖 + 条件触发 + 自定义技能 |
