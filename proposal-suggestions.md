@@ -298,5 +298,95 @@
     "category": "planning",
     "description": "## 架构依据\n- 复盘发现：sessions.json 中有 1 个 owner=\"current\"（字面字符串）的废弃 session，且本次 8-P0 全流程从未被记录\n- 根因：session 创建时 owner_opencode_session_id 使用了占位符 \"current\" 而非真实 session ID，且无 GC 机制\n\n## 范围\n- **In Scope**:\n  - `./rddf sessions gc` 子命令：扫描并清理 owner 为字面字符串 \"current\"、状态 abandoned/orphaned 超 7 天的 session\n  - `./rddf sessions gc --dry-run` 预览模式\n  - 修复 session 创建逻辑：确保 owner 获取真实 session ID（从环境变量 OPENAICODE_SESSION 或 guidgen 生成）\n  - 2 个 bats 测试：GC 清理废弃 session、dry-run 不实际删除\n- **Out Scope**:\n  - 不修改 session 数据模型\n\n## 验收标准\n- `./rddf sessions gc --dry-run` 能找到 \"current\" owner 的废弃 session\n- `./rddf sessions gc` 清理后 sessions.json 干净\n- 2 个 bats 测试通过",
     "effort": "0.5-1天"
+  },
+  {
+    "name": "fix-lsp-dash-bridge",
+    "priority": "P0",
+    "source": "改进分析报告 #1",
+    "status": "已完成",
+    "phase": "default",
+    "category": "developer-experience",
+    "description": "## 问题\n- 目录命名 `skills/rddf-session/`（连字符）vs 导入 `skills.rddf_session`（下划线）\n- conftest.py 的 dash-bridge 对 LSP 不生效\n- 每个 Python 测试文件都被 LSP 标红（实际运行正常）\n\n## 范围\n- In Scope:\n  - pyrightconfig.json 添加 executionEnvironments 和 extraPaths\n  - 或在 skills/ 各子目录添加 py.typed + __init__.py\n- Out Scope:\n  - 不修改目录命名（Breaking change）\n  - 不修改 conftest.py（已生效）\n\n## 验收标准\n- LSP 不再报告 `Import could not be resolved` 错误\n- 实际运行测试仍通过",
+    "effort": "30min"
+  },
+  {
+    "name": "improve-openspec-test-change-support",
+    "priority": "P0",
+    "source": "改进分析报告 #2",
+    "status": "已完成",
+    "phase": "default",
+    "category": "developer-experience",
+    "description": "## 问题\n- test-only change 被要求提供 specs/ 目录下的 capability spec\n- 归档时有警告：`Change must have at least one delta`\n- tasks.md 状态与实际执行不同步\n\n## 范围\n- In Scope:\n  - roadmap-meta.yaml 添加 `change_type: test-only | doc-only | refactor-only | feature`\n  - openspec CLI 跳过 test-only 的 delta 检查\n  - execute 阶段自动同步 tasks.md 进度（或移除 tasks.md）\n- Out Scope:\n  - 不修改现有 change 的 delta 要求\n  - 不修改 openspec 核心逻辑\n\n## 验收标准\n- test-only change 归档无警告\n- tasks.md 自动同步或移除",
+    "effort": "2-3h"
+  },
+  {
+    "name": "unify-session-kind-naming",
+    "priority": "P0",
+    "source": "改进分析报告 #3",
+    "status": "已完成",
+    "phase": "default",
+    "category": "api-design",
+    "description": "## 问题\n- 用户预期：`create_session(kind=\"guide-plan\")`\n- 实际要求：`create_session(kind=\"stage_plan\")`\n- 错误：`Invalid kind: guide-plan. Must be one of ('stage_arch', 'stage_plan', 'stage_ship')`\n\n## 范围\n- In Scope:\n  - 方案 A：统一为 `guide-arch` / `guide-plan` / `guide-ship`（与 skill 名称一致）\n  - 方案 B：在 _VALID_KINDS 同时接受两种命名\n  - 更新所有现有代码和测试\n- Out Scope:\n  - 不修改 ADR 或文档中的术语定义\n\n## 验收标准\n- 用户可用直觉命名的 kind 参数\n- 所有测试通过",
+    "effort": "1h"
+  },
+  {
+    "name": "add-session-progress-view",
+    "priority": "P1",
+    "source": "改进分析报告 #4",
+    "status": "已完成",
+    "phase": "default",
+    "category": "developer-experience",
+    "description": "## 问题\n- 用户问 \"What did we do so far?\" 时需要手动总结\n- 没有自动的进度追踪视图\n\n## 范围\n- In Scope:\n  - rddf-session progress 子命令\n  - 显示 wave 执行状态和归档情况\n  - 支持按 session 过滤\n- Out Scope:\n  - 不修改 guide-ship 执行逻辑\n\n## 验收标准\n- `rddf-session progress` 显示清晰的进度视图",
+    "effort": "2-3h"
+  },
+  {
+    "name": "unify-test-entry-points",
+    "priority": "P1",
+    "source": "改进分析报告 #5",
+    "status": "已完成",
+    "phase": "default",
+    "category": "developer-experience",
+    "description": "## 问题\n- `npm test` 只跑 bats\n- Python 测试需要单独 `pytest tests/`\n- 容易遗漏 Python 测试\n\n## 范围\n- In Scope:\n  - package.json 添加 test:python 脚本\n  - npm test 改为并行运行 bats + pytest\n- Out Scope:\n  - 不修改测试本身\n\n## 验收标准\n- `npm test` 运行所有 bats + Python 测试",
+    "effort": "10min"
+  },
+  {
+    "name": "parallel-wave-execution",
+    "priority": "P1",
+    "source": "改进分析报告 #6",
+    "status": "已完成",
+    "phase": "default",
+    "category": "performance",
+    "description": "## 问题\n- Wave 2 的 4 个 changes 可以并行执行\n- 实际串行执行，每次都要人工选择\n\n## 范围\n- In Scope:\n  - guide-ship 添加 --parallel 模式\n  - 自动并行执行同一 wave 的所有独立 changes\n  - 依赖检测确保正确顺序\n- Out Scope:\n  - 不修改 deps 分析逻辑\n\n## 验收标准\n- `guide-ship --wave 2 --parallel` 自动并行执行",
+    "effort": "4-6h"
+  },
+  {
+    "name": "auto-sync-adr-index",
+    "priority": "P2",
+    "source": "改进分析报告 #7",
+    "status": "已完成",
+    "phase": "default",
+    "category": "maintenance",
+    "description": "## 问题\n- docs/adr/README.md 需要手动同步新增 ADR\n- test_adr_index.bats 硬编码范围 0001-0020\n\n## 范围\n- In Scope:\n  - scripts/sync_adr_index.py 自动生成 README.md 表格\n  - CI hook 或 pre-commit hook 自动调用\n- Out Scope:\n  - 不修改 ADR 模板或格式\n\n## 验收标准\n- 新增 ADR 后 README.md 自动更新",
+    "effort": "1-2h"
+  },
+  {
+    "name": "add-file-size-quality-gate",
+    "priority": "P2",
+    "source": "改进分析报告 #8",
+    "status": "已完成",
+    "phase": "default",
+    "category": "code-quality",
+    "description": "## 问题\n- split-rddf-god-class 成功拆分了 507 行的 RddfSessionCoordinator\n- 其他大文件可能也有类似问题\n\n## 范围\n- In Scope:\n  - 添加代码质量门控：单文件超过 300 行触发 warning\n  - 或在 arch-quality-gate 中添加检查\n- Out Scope:\n  - 不修改现有代码\n\n## 验收标准\n- 超过 300 行的文件在 CI 中触发警告",
+    "effort": "1h"
+  },
+  {
+    "name": "enforce-hook-symmetry",
+    "priority": "P2",
+    "source": "改进分析报告 #9",
+    "status": "已完成",
+    "phase": "default",
+    "category": "design",
+    "description": "## 问题\n- fix-attach-detach-symmetry 补齐了 rddf_session_hook_attach\n- 初始设计时 attach/detach 不对称\n\n## 范围\n- In Scope:\n  - 在 ADR 或设计文档中明确 hook 对称性要求\n  - 添加测试自动验证 hook 成对存在\n- Out Scope:\n  - 不修改现有 hook 实现\n\n## 验收标准\n- 新增 hook 必须成对（attach/detach）",
+    "effort": "30min"
   }
 ]
