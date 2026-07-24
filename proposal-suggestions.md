@@ -43,3 +43,4 @@
 | [ship-delete-branch-safety](improvements/ship-delete-branch-safety.md) | P1 | 会话复盘 | 2026-07-23 |
 | [sync-approved-to-suggestions](improvements/sync-approved-to-suggestions.md) | P1 | 会话复盘 | 2026-07-23 |
 | [pre-checkout-warning](improvements/pre-checkout-warning.md) | P2 | 会话复盘 | 2026-07-23 |
+| [adr-creation-architecture-gate](improvements/adr-creation-architecture-gate.md) | P1 | Oracle 审查 2026-07-25 | 2026-07-25 |

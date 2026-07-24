@@ -457,6 +457,13 @@ def _build_all_options(
         action="status",
         group="utilities",
     ))
+    options.append(MenuOption(
+        id="add-improve",
+        label="add-improve",
+        description="创建新改进提案 — improvements/<name>.md + 注册索引",
+        action="add-improve",
+        group="utilities",
+    ))
 
     # 5. Working tree cleanup (when issues detected)
     if wt_issues:
@@ -779,6 +786,7 @@ def _fallback_recommendation() -> WorkflowRecommendation:
             MenuOption("guide-ship", "guide-ship", "继续工作流", "guide-ship", "recommended"),
             MenuOption("guide-arch", "架构定义", "setup → ADR → roadmap → arch-done", "guide-arch", "stages"),
             MenuOption("guide-plan", "变更生成", "scan → propose → deps → plan-done", "guide-plan", "stages"),
+            MenuOption("add-improve", "add-improve", "创建新改进提案 — improvements/<name>.md + 注册索引", "add-improve", "utilities"),
         ),
         wt_issues=(),
     )
