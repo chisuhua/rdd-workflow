@@ -16,6 +16,7 @@ setup() {
 }
 
 _write_sessions() {
+    local now; now="$(date -u +%Y-%m-%dT%H:%M:%S+00:00)"
     cat > .rddf/state/sessions.json <<JSON
 {
   "version": 1,
@@ -27,8 +28,8 @@ _write_sessions() {
       "state": "active",
       "goal": {"intent": "plan", "subject": "dashboard"},
       "attached_changes": ["fix-scan-state-binding"],
-      "started_at": "2026-07-21T12:00:00+00:00",
-      "last_heartbeat": "2026-07-21T12:00:00+00:00"
+      "started_at": "$now",
+      "last_heartbeat": "$now"
     }
   ]
 }

@@ -45,10 +45,13 @@ load_lib skill
   [ "${#lines[@]}" -ge 5 ]
 }
 
-@test "skill_commands returns 0 lines for INSTALL.md" {
+@test "skill_commands returns sub-skill list for INSTALL.md" {
+  # v3.0: INSTALL.md now includes a "包含的子技能" table listing all
+  # 12 sub-skills (guide, guide-arch, ..., rdd-workflow-writing-plans).
+  # skill_commands extracts the backtick-quoted command identifiers.
   run skill_commands skills/INSTALL.md
   [ "$status" -eq 0 ]
-  [ "${#lines[@]}" -eq 0 ]
+  [ "${#lines[@]}" -ge 12 ]
 }
 
 @test "skill_has_section returns 0 for status.md '模式 A'" {

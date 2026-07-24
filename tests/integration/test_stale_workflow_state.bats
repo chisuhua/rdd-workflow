@@ -14,7 +14,7 @@ load ../test_helper
     in_fn && /check_stale_workflow_state/ { found=1 }
     in_fn && /^}/ { exit }
     END { exit (found ? 0 : 1) }
-  ' skills/_lib/scan-state.sh
+  ' skills/guide/scripts/scan-state.sh
 }
 
 @test "guide.md no longer carries the stale-state warning as duplicated doc" {

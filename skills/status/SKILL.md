@@ -387,7 +387,6 @@ fi
 ### 展示内容
 
 ```bash
-```bash
 # === Mode D: thin wrapper — render logic in skills/_lib/roadmap_state.py ===
 if [ "$MODE" = "roadmap" ] || ([ -z "$MODE" ] && [ -f "$PROJECT_ROOT/roadmap.md" ]); then
     if [ -f "$PROJECT_ROOT/.rddf/state/roadmap-state.json" ]; then

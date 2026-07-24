@@ -43,8 +43,10 @@ setup() {
 }
 
 @test "deps.md Step 5 writes to .rddf/state/.deps-output.md" {
+  # v2.0.6 extraction: the cat heredoc moved to the bash wrapper
+  # (deps_render_report.sh) which delegates to Python (open(..., "w")).
+  # Verify the output path is referenced in both the wrapper and SKILL.md.
   grep -q '\.rddf/state/\.deps-output\.md' "$f"
-  grep -qE 'cat >? "?\$DEPS_OUTPUT"?(>>)? ' "$f" \
-    || grep -qE 'cat >>? "?\$DEPS_OUTPUT"? ?<<' "$f" \
-    || grep -qE 'cat > "?\$DEPS_OUTPUT"?' "$f"
+  grep -q 'DEPS_OUTPUT' "$REPO_ROOT/skills/deps/scripts/deps_render_report.sh"
+  grep -q 'deps-output' "$REPO_ROOT/skills/deps/scripts/deps_render_report.sh"
 }

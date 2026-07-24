@@ -53,9 +53,15 @@ load ../test_helper
   ! grep -nE 'awk -v desc=' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
-@test "skills/_lib/iteration.py::print_view is defined and importable" {
-  [ -f "$REPO_ROOT/skills/_lib/iteration.py" ]
-  grep -qE '^def print_view\(' "$REPO_ROOT/skills/_lib/iteration.py"
+@test "skills/_lib/iteration package::print_view is defined and importable" {
+  # v2.0.8 Phase 3: iteration.py (single file) was promoted to a package
+  # at skills/_lib/iteration/ with __init__.py re-exporting print_view
+  # from render.py. The import path `from skills._lib.iteration import
+  # print_view` is unchanged.
+  [ -d "$REPO_ROOT/skills/_lib/iteration" ]
+  [ -f "$REPO_ROOT/skills/_lib/iteration/__init__.py" ]
+  grep -qE 'print_view' "$REPO_ROOT/skills/_lib/iteration/__init__.py"
+  grep -qE '^def print_view\(' "$REPO_ROOT/skills/_lib/iteration/render.py"
   REPO_ROOT="$REPO_ROOT" python3 -c '
 import os, sys
 sys.path.insert(0, os.environ["REPO_ROOT"])

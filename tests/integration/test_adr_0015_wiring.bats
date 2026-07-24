@@ -117,11 +117,13 @@ print('OK')
 }
 
 @test "adr_0015: design.md exists for refine-adr-0015-wiring change" {
-  [ -f "$REPO_ROOT/openspec/changes/refine-adr-0015-wiring/design.md" ]
+  # Change was archived to openspec/changes/archive/2026-07-20-refine-adr-0015-wiring/
+  [ -f "$REPO_ROOT/openspec/changes/archive/2026-07-20-refine-adr-0015-wiring/design.md" ]
 }
 
 @test "adr_0015: tasks.md exists for refine-adr-0015-wiring change" {
-  [ -f "$REPO_ROOT/openspec/changes/refine-adr-0015-wiring/tasks.md" ]
+  # Change was archived to openspec/changes/archive/2026-07-20-refine-adr-0015-wiring/
+  [ -f "$REPO_ROOT/openspec/changes/archive/2026-07-20-refine-adr-0015-wiring/tasks.md" ]
 }
 
 @test "adr_0015: end-to-end write_report + load_report roundtrip works" {

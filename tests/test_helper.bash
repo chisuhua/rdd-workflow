@@ -16,15 +16,17 @@ export REPO_ROOT
 export PROJECT_ROOT="${PROJECT_ROOT:-$REPO_ROOT}"
 
 # Load helper libraries. Resolution order (first match wins):
-#   1. tests/_lib/<name>.bash   (test fixtures, original behavior)
-#   2. skills/_lib/<name>.sh    (production libs, primary use case)
-#   3. tests/_lib/<name>.sh     (alternative test fixture extension)
+#   1. tests/_lib/<name>.bash        (test fixtures, original behavior)
+#   2. skills/_lib/<name>.sh         (production libs, primary use case)
+#   3. skills/*/scripts/<name>.sh    (per-skill helpers, v2.0.8 Phase 2 layout)
+#   4. tests/_lib/<name>.sh          (alternative test fixture extension)
 load_lib() {
   local name="$1"
   local path
   for path in \
     "$REPO_ROOT/tests/_lib/${name}.bash" \
     "$REPO_ROOT/skills/_lib/${name}.sh" \
+    "$REPO_ROOT"/skills/*/scripts/"${name}.sh" \
     "$REPO_ROOT/tests/_lib/${name}.sh"; do
     if [[ -f "$path" ]]; then
       # shellcheck source=/dev/null
@@ -32,7 +34,7 @@ load_lib() {
       return 0
     fi
   done
-  echo "load_lib: file not found: ${name} (looked in tests/_lib/${name}.bash, skills/_lib/${name}.sh, tests/_lib/${name}.sh)" >&2
+  echo "load_lib: file not found: ${name} (looked in tests/_lib/${name}.bash, skills/_lib/${name}.sh, skills/*/scripts/${name}.sh, tests/_lib/${name}.sh)" >&2
   return 1
 }
 

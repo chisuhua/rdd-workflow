@@ -28,10 +28,17 @@ DEPS_MD="$REPO_ROOT/skills/deps/SKILL.md"
 
 @test "deps.md Step 5 output has 阶段预检 section (P1-9)" {
   [ -f "$DEPS_MD" ]
-  # The new section header must be emitted into DEPS_OUTPUT
-  grep -q "## 阶段预检" "$DEPS_MD"
+  # v2.0.6 extraction: the Step 5 heredoc that emits the report sections
+  # moved to skills/deps/scripts/deps_output.py::render_markdown_report.
+  # SKILL.md still documents the 阶段预检 feature (in 1e + Step 5 comment +
+  # 消费方指南), but the actual section headers are emitted by the Python
+  # helper. Lock the contract in the Python source.
+  local py="$REPO_ROOT/skills/deps/scripts/deps_output.py"
+  [ -f "$py" ]
+  # The new section header must be emitted by render_markdown_report
+  grep -q '## 阶段预检' "$py"
   # The table must reference both phase and category columns
-  grep -q "| Phase | Category |" "$DEPS_MD"
+  grep -q '| Phase | Category |' "$py"
   # The section must appear AFTER the 依赖图 mermaid block and BEFORE the
   # Change 状态表 header (ordering check via awk on line numbers)
   awk '
@@ -43,7 +50,7 @@ DEPS_MD="$REPO_ROOT/skills/deps/SKILL.md"
       print "ordering: dep=" m " precheck=" p " status=" s
       exit 1
     }
-  ' "$DEPS_MD"
+  ' "$py"
 }
 
 @test "deps.md handles missing roadmap-meta gracefully (P1-9)" {

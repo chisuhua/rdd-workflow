@@ -25,7 +25,9 @@ load ../test_helper
 @test "status.md Mode E consolidates iteration.json reads via iteration.py" {
   # Step 2 should be the only place opening iteration.json (via
   # iteration.load() helper). Step 2b must use iteration.list_planned()
-  # (already defined at iteration.py:350) not json.load(open(...)).
-  json_load_opens=$(grep -cE 'json\.load\(open\(' skills/status/SKILL.md)
+  # (already defined at iteration/render.py) not json.load(open(...)).
+  # Note: grep -c returns exit-1 on 0 matches, which trips bats set -e;
+  # guard with || true.
+  json_load_opens=$(grep -cE 'json\.load\(open\(' skills/status/SKILL.md || true)
   [ "$json_load_opens" -le 1 ]
 }

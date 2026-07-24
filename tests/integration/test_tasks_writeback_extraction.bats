@@ -17,7 +17,7 @@
 load ../test_helper
 
 EXECUTE_MD="$REPO_ROOT/skills/execute/SKILL.md"
-TASKS_WB="$REPO_ROOT/skills/_lib/tasks_writeback.sh"
+TASKS_WB="$REPO_ROOT/skills/execute/scripts/tasks_writeback.sh"
 
 @test "tasks_writeback_helper_exists" {
   [ -f "$TASKS_WB" ]

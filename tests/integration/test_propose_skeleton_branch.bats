@@ -4,8 +4,11 @@
 # - proposal-suggestions.md status 更新
 
 @test "phase 4: 包含 name-pattern skeleton 分流逻辑" {
-    grep -qi "skeleton.*branching" "$BATS_TEST_DIRNAME/../../skills/propose/SKILL.md" || return 1
-    grep -q "debt|fix-|prefix-" "$BATS_TEST_DIRNAME/../../skills/propose/SKILL.md" || return 1
+    # v2.0.6+: skeleton branching uses --skeleton flag parsing + SKELETON_MODE variable.
+    # The old name-pattern auto-detection (debt|fix-|prefix-) was replaced with
+    # explicit flag-based branching (--skeleton|--skeleton-only).
+    grep -qi "skeleton.*branch\|skeleton mode branch" "$BATS_TEST_DIRNAME/../../skills/propose/SKILL.md" || return 1
+    grep -q -- "--skeleton|--skeleton-only" "$BATS_TEST_DIRNAME/../../skills/propose/SKILL.md" || return 1
     return 0
 }
 

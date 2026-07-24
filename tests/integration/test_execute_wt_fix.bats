@@ -26,9 +26,12 @@ load ../test_helper
 
 @test "P0-7: execute.md uses \$3 (not \$2) for openspec/ branch matching" {
   [ -f "skills/execute/SKILL.md" ]
-  # Should have at least one $3 pattern for branch matching (the awk branch filter)
-  grep -qE '\$3[[:space:]]*~[[:space:]]*.*openspec' "skills/execute/SKILL.md"
-  # And at least one $3 == "openspec/..." pattern (for path lookup)
+  # v2.0.8 Phase 2: the awk branch-matching logic moved from execute/SKILL.md
+  # into skills/execute/scripts/select_worktree.sh. Verify the script uses $3
+  # (not $2) for branch field extraction from `git worktree list`.
+  ! grep -nE '\$2[[:space:]]*~[[:space:]]*.*openspec|\$2=="openspec/' "skills/execute/scripts/select_worktree.sh"
+  grep -qE "awk.*\\\$3" "skills/execute/scripts/select_worktree.sh"
+  # The SKILL.md doc table should still reference $3 (not $2)
   grep -qE '\$3=="openspec/' "skills/execute/SKILL.md"
 }
 

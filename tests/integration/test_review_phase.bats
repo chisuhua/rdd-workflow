@@ -31,9 +31,11 @@ setup() {
     grep -q '"type"' "docs/proposal-suggestions-format.md"
 }
 
-@test "review_phase: iteration.py has review in VALID_STATUSES" {
-    [ -f "skills/_lib/iteration.py" ]
-    grep -q '"review"' "skills/_lib/iteration.py"
+@test "review_phase: iteration schema has review in VALID_STATUSES" {
+    # v2.0.8: iteration.py single file refactored to iteration/ package;
+    # _VALID_STATUSES with "review" now lives in iteration/schema.py
+    [ -f "skills/_lib/iteration/schema.py" ]
+    grep -q '"review"' "skills/_lib/iteration/schema.py"
 }
 
 @test "review_phase: iteration schema has version 4 and review status" {

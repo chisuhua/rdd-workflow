@@ -60,7 +60,8 @@ setup() {
 }
 
 @test "deps.md Step 5 has dynamic branch (AI_RESULT_FILE or fallback) — extracted to helper" {
-  # P0-3 extraction: the AI dynamic branch logic moved to _lib/deps_output.py.
+  # P0-3 extraction: the AI dynamic branch logic moved to deps_render_report.sh.
+  # v2.0.8 Phase 2: helper moved from skills/_lib/ to skills/deps/scripts/.
   # Verify both the inline wrapper reference AND the Python helper contain
   # the keywords (AI_RESULT_FILE / fallback / 降级) that downstream tests
   # and consumers rely on.
@@ -69,7 +70,7 @@ setup() {
 import sys
 sys.path.insert(0, '$REPO_ROOT')
 from skills.deps.scripts import deps_output as do
-src = open('$REPO_ROOT/skills/_lib/deps_output.py').read()
+src = open('$REPO_ROOT/skills/deps/scripts/deps_output.py').read()
 assert 'AI 语义分析未启用' in src, 'fallback string missing from deps_output.py'
 assert 'AI_RESULT_FILE' in src or 'ai_result_file' in src, 'ai_result_file missing'
 "

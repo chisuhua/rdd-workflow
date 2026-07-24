@@ -14,14 +14,25 @@
 }
 
 @test "queue overview: 调用 iteration.list_planned/list_blocked/list_ready_for_ship" {
-    grep -q "it.list_planned" "$BATS_TEST_DIRNAME/../../skills/guide-plan/SKILL.md" || return 1
-    grep -q "it.list_blocked" "$BATS_TEST_DIRNAME/../../skills/guide-plan/SKILL.md" || return 1
-    grep -q "it.list_ready_for_ship" "$BATS_TEST_DIRNAME/../../skills/guide-plan/SKILL.md" || return 1
+    # v2.0.8: queue overview logic extracted to scripts/plan_queue_overview.sh
+    local script="$BATS_TEST_DIRNAME/../../skills/guide-plan/scripts/plan_queue_overview.sh"
+    [ -f "$script" ]
+    grep -q "it.list_planned" "$script"
+    grep -q "it.list_blocked" "$script"
+    grep -q "it.list_ready_for_ship" "$script"
 }
 
 @test "queue overview: 候选计数读 proposal-suggestions.md 的待创建 status" {
-    grep -q "proposal-suggestions.md" "$BATS_TEST_DIRNAME/../../skills/guide-plan/SKILL.md" || return 1
-    grep -q "待创建" "$BATS_TEST_DIRNAME/../../skills/guide-plan/SKILL.md" || return 1
+    # v2.0.8: candidate count delegates to _lib/state.sh::count_pending_suggestions
+    # which reads proposal-suggestions.md JSON and filters status == "待创建"
+    local script="$BATS_TEST_DIRNAME/../../skills/guide-plan/scripts/plan_queue_overview.sh"
+    local state_sh="$BATS_TEST_DIRNAME/../../skills/_lib/state.sh"
+    [ -f "$script" ]
+    [ -f "$state_sh" ]
+    # plan_queue_overview.sh sources state.sh and calls count_pending_suggestions
+    grep -q "count_pending_suggestions" "$script"
+    grep -q "proposal-suggestions.md" "$state_sh"
+    grep -q "待创建" "$state_sh"
 }
 
 @test "deps §5e 回显: 提取 split/merge/reorder 建议" {
@@ -46,8 +57,9 @@
 }
 
 @test "gate 0: 改用 iteration.list_ready_for_ship" {
+    # v2.0.8: plan_done_gate.sh moved from _lib/ to guide-plan/scripts/
     # 必须通过 PY_PROJECT_ROOT 环境变量传递 PROJECT_ROOT (v2.0.2 安全模式)
-    run grep -B 2 -A 8 "from skills._lib import iteration" "$BATS_TEST_DIRNAME/../../skills/_lib/plan_done_gate.sh"
+    run grep -B 2 -A 8 "from skills._lib import iteration" "$BATS_TEST_DIRNAME/../../skills/guide-plan/scripts/plan_done_gate.sh"
     [ "$status" -eq 0 ]
     [[ "$output" == *"PY_PROJECT_ROOT"* ]]
     [[ "$output" == *"list_ready_for_ship"* ]]
@@ -59,8 +71,11 @@
     [ "$status" -ne 0 ]
 }
 
-@test "gate 0: SKIP_GATE_0 短路时直接 exit 0" {
-    run grep -A 3 "SKIP_GATE_0.*true" "$BATS_TEST_DIRNAME/../../skills/guide-plan/scripts/plan_done_gate.sh"
+@test "gate 0: SKIP_GATE_0 短路时直接 return 0" {
+    # v2.0.8: the short-circuit block uses 'return 0' (not exit 0) so it
+    # exits the function without blocking the caller. The if-condition
+    # matching '"${SKIP_GATE_0:-false}" = "true"' is the short-circuit guard.
+    run grep -A 5 'SKIP_GATE_0:-false.*=.*"true"' "$BATS_TEST_DIRNAME/../../skills/guide-plan/scripts/plan_done_gate.sh"
     [ "$status" -eq 0 ]
     [[ "$output" == *"return 0"* ]]
 }

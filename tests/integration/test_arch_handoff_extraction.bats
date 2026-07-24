@@ -41,7 +41,7 @@ load ../test_helper
   echo "**当前阶段**: phase-2" > "$tmpdir/roadmap.md"
   export PROJECT_ROOT="$tmpdir" DISCOVERED_ADR_DIR="docs/adr" DISCOVERED_ROADMAP_PATH="roadmap.md"
   export DISCOVERED_ARCHITECTURE_DIR="docs/architecture" DISCOVERED_ADR_PATTERN="ADR-*.md" ROADMAP_EXISTS_BOOL="true"
-  python3 "$REPO_ROOT/skills/_lib/write_arch_handoff_env.py" >/dev/null 2>&1
+  python3 "$REPO_ROOT/skills/guide-arch/scripts/write_arch_handoff_env.py" >/dev/null 2>&1
   if [ ! -f "$tmpdir/.rddf/state/.arch-handoff.json" ]; then
     echo "arch-handoff.json not found in $tmpdir/.rddf/state/"
     return 1
@@ -57,7 +57,7 @@ load ../test_helper
   echo "**当前阶段**: phase-2" > "$tmpdir/roadmap.md"
   export PROJECT_ROOT="$tmpdir" DISCOVERED_ADR_DIR="docs/adr" DISCOVERED_ROADMAP_PATH="roadmap.md"
   export DISCOVERED_ARCHITECTURE_DIR="docs/architecture" DISCOVERED_ADR_PATTERN="ADR-*.md" ROADMAP_EXISTS_BOOL="true"
-  python3 "$REPO_ROOT/skills/_lib/write_arch_handoff_env.py" >/dev/null 2>&1
+  python3 "$REPO_ROOT/skills/guide-arch/scripts/write_arch_handoff_env.py" >/dev/null 2>&1
   local handoff="$tmpdir/.rddf/state/.arch-handoff.json"
   python3 -c "
 import json
@@ -112,6 +112,6 @@ print('PASS: roadmap_exists=True')
   tmpdir=$(mktemp -d)
   export PROJECT_ROOT="$tmpdir" DISCOVERED_ADR_DIR="docs/adr" DISCOVERED_ROADMAP_PATH="roadmap.md"
   export DISCOVERED_ARCHITECTURE_DIR="docs/architecture" DISCOVERED_ADR_PATTERN="ADR-*.md"
-  python3 "$REPO_ROOT/skills/_lib/write_arch_handoff_env.py" 2>&1 || true
+  python3 "$REPO_ROOT/skills/guide-arch/scripts/write_arch_handoff_env.py" 2>&1 || true
   rm -rf "$tmpdir"
 }

@@ -45,20 +45,25 @@ load ../test_helper
 }
 
 @test "guide-ship.md reads handoff.json at Phase 1 (entry)" {
+  # v2.0.8: handoff read logic lives in scripts/ship_plan.sh::read_plan_handoff;
+  # SKILL.md is a thin orchestrator that calls it at Phase 1 entry (step 0).
   [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
-  # 1. handoff.json is mentioned in the doc
-  grep -q "handoff.json" "$REPO_ROOT/skills/guide-ship/SKILL.md"
-  # 2. ship_started_at is the field that gets updated
-  grep -q "ship_started_at" "$REPO_ROOT/skills/guide-ship/SKILL.md"
-  # 3. The read happens in Phase 1 (section header marker)
-  grep -q "HANDOFF STATE READ" "$REPO_ROOT/skills/guide-ship/SKILL.md"
-  # 4. Missing-file fallback is silent (no exit 1 inside the read block)
-  # Locate the HANDOFF STATE READ block and ensure it does NOT contain a hard exit
-  awk '/HANDOFF STATE READ/{flag=1} flag{print NR": "$0} flag && /^fi$/{flag=0; exit}' \
-    "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -vE "exit 0|exit 1" >/dev/null
-  # 5. Confirm the read is followed by the worktree creation (handoff comes before worktree)
-  HANDOFF_LINE=$(grep -n "HANDOFF STATE READ" "$REPO_ROOT/skills/guide-ship/SKILL.md" | head -1 | cut -d: -f1)
-  WORKTREE_LINE=$(grep -n "git worktree add" "$REPO_ROOT/skills/guide-ship/SKILL.md" | head -1 | cut -d: -f1)
+  [ -f "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh" ]
+  # 1. handoff.json contract referenced in the ship_plan.sh helper
+  grep -q "\.plan-handoff.json" "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
+  # 2. ship_started_at is the field that gets updated (in the helper)
+  grep -q "ship_started_at" "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
+  # 3. The read function exists in the helper
+  grep -q "read_plan_handoff" "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
+  # 4. SKILL.md invokes read_plan_handoff at Phase 1 entry
+  grep -q "read_plan_handoff" "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  # 5. Missing-file fallback is silent (no exit 1 in the read function body)
+  #    The function returns 0 early if the file is missing.
+  awk '/^read_plan_handoff\(\)/{flag=1} flag{print NR": "$0} flag && /^}$/{flag=0; exit}' \
+    "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh" | grep -vE "exit 1" >/dev/null
+  # 6. Confirm the read happens before worktree creation (handoff called before setup_execution_workspace)
+  HANDOFF_LINE=$(grep -n "read_plan_handoff" "$REPO_ROOT/skills/guide-ship/SKILL.md" | head -1 | cut -d: -f1)
+  WORKTREE_LINE=$(grep -n "setup_execution_workspace\|git worktree add" "$REPO_ROOT/skills/guide-ship/SKILL.md" | head -1 | cut -d: -f1)
   [ -n "$HANDOFF_LINE" ] && [ -n "$WORKTREE_LINE" ]
   [ "$HANDOFF_LINE" -lt "$WORKTREE_LINE" ]
 }

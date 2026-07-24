@@ -111,36 +111,39 @@ _run_scan() {
   echo "# Roadmap" > roadmap.md
   mkdir -p openspec/changes && touch openspec/changes/.keep
   git add . && git commit -q -m init
-  # proposal-suggestions.md absent → HAS_PENDING=no → guide-ship default
+  # proposal-approved.md / improvements/ absent → HAS_APPROVED=no, HAS_PENDING=no
+  # → guide-ship default
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=guide-ship"
-  echo "$out" | grep -q "无待创建 change"
+  echo "$out" | grep -q "无待讨论提案"
 }
 
-@test "scan_state: proposal-suggestions.md with status=待创建 → guide-plan (branch 10)" {
+@test "scan_state: proposal-approved.md with entry → guide-plan (branch 10)" {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo "# Roadmap" > roadmap.md
   mkdir -p openspec/changes && touch openspec/changes/.keep
-  # proposal-suggestions.md is a JSON array (P1-7 requires json.load, not grep)
-  printf '[{"title":"x","status":"待创建"}]' > proposal-suggestions.md
+  # dual-index model: approved entry in proposal-approved.md → guide-plan
+  mkdir -p improvements && echo "# x" > improvements/x.md
+  printf '| [x](improvements/x.md) | P0 | 2026-07-24 | t |\n' > proposal-approved.md
   git add . && git commit -q -m init
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=guide-plan"
-  echo "$out" | grep -q "待创建"
+  echo "$out" | grep -q "有已批准 change 待创建"
 }
 
-@test "scan_state: Python parser reads proposal-suggestions.md via PROJECT_ROOT, not cwd (P1-7)" {
+@test "scan_state: Python parser reads proposal-approved.md via PROJECT_ROOT, not cwd (P1-7)" {
   # If buggy: scan_state is invoked from a cwd that does NOT contain
-  # proposal-suggestions.md → python FileNotFoundError → HAS_PENDING="" →
-  # falls through to default branch 11 → guide-ship. Correct behavior:
+  # proposal-approved.md → python FileNotFoundError → HAS_APPROVED="" →
+  # falls through to the guide-ship default. Correct behavior:
   # scan_state must locate the file via PROJECT_ROOT regardless of cwd.
   local r; r=$(mktemp -d); cd /tmp || return 1   # deliberately NOT $r
   mkdir -p "$r"
   (cd "$r" && git init -q -b master && git config user.email t@t && git config user.name t
    echo "# Roadmap" > roadmap.md
    mkdir -p openspec/changes && touch openspec/changes/.keep
-   printf '[{"status":"待创建"}]' > proposal-suggestions.md
+   mkdir -p improvements && echo "# x" > improvements/x.md
+   printf '| [x](improvements/x.md) | P0 | 2026-07-24 | t |\n' > proposal-approved.md
    git add . && git commit -q -m init)
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=guide-plan"

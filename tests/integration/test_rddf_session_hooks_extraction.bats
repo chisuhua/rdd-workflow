@@ -24,8 +24,19 @@ load ../test_helper
 }
 
 @test "rddf_session_hooks.sh does not duplicate RddfSessionCoordinator API (no API surface change)" {
+  # After Phase 2 move, the file is at skills/rddf-session/scripts/rddf_session_hooks.sh
+  # and imports from skills.rddf_session.scripts.rddf_session (not skills._lib.rddf_session).
+  # This test verifies: the old import path is GONE (no API surface duplication).
   [ -f "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh" ]
-  grep -q 'from skills._lib.rddf_session' "$REPO_ROOT/skills/_lib/rddf_session_hooks.sh"
+  ! grep -q "from skills\._lib\.rddf_session import" "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh" || {
+    echo "FAIL: rddf_session_hooks.sh still has old import path"
+    return 1
+  }
+  # And the new import path IS present
+  grep -q "from skills\.rddf_session\.scripts\.rddf_session import" "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh" || {
+    echo "FAIL: rddf_session_hooks.sh missing new import path"
+    return 1
+  }
 }
 
 # --- Structural: 6 sites must be replaced ---

@@ -16,9 +16,10 @@
 load ../test_helper
 
 @test "execute_step7_helper_exists" {
-  assert_file_exists "$REPO_ROOT/skills/_lib/execute_step7.sh"
-  assert_file_exists "$REPO_ROOT/skills/_lib/execute_step7.py"
-  assert_file_exists "$REPO_ROOT/skills/_lib/execute_step7_env.py"
+  # v2.0.8 Phase 2: helpers moved from _lib/ to per-skill scripts/
+  assert_file_exists "$REPO_ROOT/skills/execute/scripts/execute_step7.sh"
+  assert_file_exists "$REPO_ROOT/skills/execute/scripts/execute_step7.py"
+  assert_file_exists "$REPO_ROOT/skills/execute/scripts/execute_step7_env.py"
   bash -c "cd '$REPO_ROOT' && source skills/execute/scripts/execute_step7.sh && declare -f run_step7_report" | grep -q 'run_step7_report'
 }
 

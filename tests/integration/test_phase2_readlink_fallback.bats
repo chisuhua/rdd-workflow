@@ -11,22 +11,22 @@ setup() {
   cd "$REPO_ROOT"
 }
 
-@test "phase2_readlink_fallback: guide.md readlink path resolves at runtime" {
-  # Phase 1 N1: guide.md:41 uses readlink -f wrapper. After Phase 2 must point to scripts/.
-  line=$(grep -n 'readlink.*scan-state' skills/guide/SKILL.md | head -1 | cut -d: -f2-)
-  [ -n "$line" ] || {
-    echo "FAIL: guide.md readlink pattern not found"
-    return 1
-  }
-  # The pattern should reference scripts/scan-state.sh, not _lib/scan-state.sh
-  echo "$line" | grep -q 'scripts/scan-state\.sh' || {
-    echo "FAIL: guide.md readlink pattern still references old _lib/ path"
-    echo "  line: $line"
+@test "phase2_readlink_fallback: guide.md scan-state path resolves at runtime" {
+  # Phase 2: guide.md no longer uses readlink -f for scan-state.sh directly.
+  # Instead, it delegates to guide_entry.sh which contains the 4-tier path
+  # resolution fallback. The SKILL.md should reference scripts/guide_entry.sh.
+  grep -q 'scripts/guide_entry.sh' skills/guide/SKILL.md || {
+    echo "FAIL: guide.md does not reference scripts/guide_entry.sh"
     return 1
   }
   # Verify the target file exists
-  [ -f "skills/guide/scripts/scan-state.sh" ] || {
-    echo "FAIL: scripts/scan-state.sh missing in guide/scripts/"
+  [ -f "skills/guide/scripts/guide_entry.sh" ] || {
+    echo "FAIL: scripts/guide_entry.sh missing in guide/scripts/"
+    return 1
+  }
+  # Verify guide_entry.sh sources scan-state.sh from the scripts/ dir
+  grep -q 'scan-state\.sh' skills/guide/scripts/guide_entry.sh || {
+    echo "FAIL: guide_entry.sh does not reference scan-state.sh"
     return 1
   }
 }

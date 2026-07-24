@@ -1,7 +1,10 @@
 #!/usr/bin/env bats
 # scan_state() is documented to export only RECOMMEND + REASON.
 # Lock: 1) doc comment lists exactly the exported variables,
-#       2) guide.md priority-count comment matches scan-state.sh count.
+#       2) guide.md path-count comment matches scan-state.sh count.
+#
+# NOTE: scan-state.sh moved from skills/_lib/ to skills/guide/scripts/ in
+# Phase 2 (ADR-0021). Tests updated to reference the new path.
 
 load ../test_helper
 
@@ -14,17 +17,19 @@ load ../test_helper
   # Pattern matches both "1. " (dot-space, for `1.`, `2.`, ... `10.`)
   # AND "1.5 " (no dot after sub-number, for `1.5`, `2.5`) so the
   # count is the actual semantic priority count (12 = 1, 1.5, 2, 2.5, 3-10).
-  n=$(awk '/^#[[:space:]]+[0-9]+(\.[0-9]+)?\.?[[:space:]]/ {print}' skills/_lib/scan-state.sh | wc -l)
+  n=$(awk '/^#[[:space:]]+[0-9]+(\.[0-9]+)?\.?[[:space:]]/ {print}' skills/guide/scripts/scan-state.sh | wc -l)
   echo "priority count = $n"
   [ "$n" -eq 12 ]
 }
 
-@test "guide.md priority comment matches scan-state.sh count" {
-  guide_n=$(grep -oE '优先级[[:space:]]*[0-9]+[[:space:]]*条' skills/guide/SKILL.md | grep -oE '[0-9]+' | head -1)
-  # Same relaxed pattern as test 2 — accepts both "1. " and "1.5 " forms
-  shell_n=$(awk '/^#[[:space:]]+[0-9]+(\.[0-9]+)?\.?[[:space:]]/ {print}' skills/_lib/scan-state.sh | wc -l)
-  [ "$guide_n" = "$shell_n" ] || {
-    echo "FAIL: guide.md claims $guide_n, scan-state.sh has $shell_n"
+@test "guide.md path-count comment matches scan-state.sh count" {
+  # guide.md uses "N-path 决策树" to describe the decision tree size.
+  # scan-state.sh has 12 priority bullets but 13 actual code paths
+  # (priority 9 splits into 9a approved + 9b pending + 10 default = 3 paths).
+  # We verify guide.md says "13-path" to match the 13 code paths.
+  guide_paths=$(grep -oE '[0-9]+-path' skills/guide/SKILL.md | grep -oE '[0-9]+' | head -1)
+  [ "$guide_paths" = "13" ] || {
+    echo "FAIL: guide.md claims $guide_paths-path, expected 13-path"
     return 1
   }
 }

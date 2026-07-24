@@ -102,9 +102,11 @@ setup() {
 
 @test "phase2: no stale reference to old _lib/X.sh in SKILL.md (sample check)" {
   # Sample: known single-skill files that MUST NOT appear as _lib/ in SKILL.md
+  # executable code (comments mentioning the old path for historical context
+  # are acceptable - only check non-comment lines).
   for f in ship_plan arch_env_check feature_summary deps_render_report status_render_mode_a scan-state rddf_session; do
-    ! grep -qE "_lib/${f}(\.sh|\.py|_env\.py)" skills/*/SKILL.md 2>/dev/null || {
-      echo "FAIL: _lib/$f still referenced in some SKILL.md"
+    ! grep -vE '^\s*#' skills/*/SKILL.md 2>/dev/null | grep -qE "_lib/${f}(\.sh|\.py|_env\.py)" || {
+      echo "FAIL: _lib/$f still referenced in executable code of some SKILL.md"
       return 1
     }
   done

@@ -8,6 +8,13 @@
 #       Returns 1 (with error message) if HEAD does not exist or the change
 #       directory has uncommitted modifications. Mirrors the original COMMIT GATE.
 #
+#   - read_plan_handoff <project_root>
+#       Reads .rddf/state/.plan-handoff.json (written by guide-plan at plan-done),
+#       displays the handoff state to the user, and atomically updates
+#       ship_started_at to the current timestamp. Missing file or parse
+#       failure silently falls back to old behavior (no hard gate).
+#       Mirrors the original HANDOFF STATE READ block (P2-5).
+#
 #   - detect_execution_mode <project_root> <change_name>
 #       Returns "worktree" if (existing openspec/* worktree > 0) OR
 #       (more than 1 non-archived change exists). Returns "lightweight"
@@ -71,6 +78,37 @@ check_artifacts_committed() {
   fi
 
   return 0
+}
+
+# read_plan_handoff <project_root>
+#   Phase 1 entry: read .rddf/state/.plan-handoff.json, display to user,
+#   atomically update ship_started_at. Silent fallback on missing/parse error.
+read_plan_handoff() {
+  local project_root="$1"
+  local handoff_file="$project_root/.rddf/state/.plan-handoff.json"
+
+  if [ ! -f "$handoff_file" ]; then
+    return 0
+  fi
+
+  echo "📋 Reading handoff state from plan-side..."
+  cat "$handoff_file"
+  echo ""
+
+  PY_PROJECT_ROOT="$project_root" python3 -c '
+import os, json, datetime, sys
+try:
+    p = os.path.join(os.environ["PY_PROJECT_ROOT"], ".rddf/state/.plan-handoff.json")
+    with open(p) as f:
+        data = json.load(f)
+    data["ship_started_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    with open(p, "w") as f:
+        json.dump(data, f, indent=2)
+    print("✅ Handoff state updated: ship_started_at set")
+except (FileNotFoundError, json.JSONDecodeError) as e:
+    print(f"⚠️  Failed to update handoff: {e}", file=sys.stderr)
+    sys.exit(0)
+' 2>/dev/null
 }
 
 # detect_execution_mode <project_root> <change_name>

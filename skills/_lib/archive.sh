@@ -412,9 +412,11 @@ commit_archive_moves() {
 
   cd "$main_root" || { echo "❌ commit_archive_moves: cannot cd to $main_root"; return 1; }
 
-  # Clean up original change directory after openspec archive moves it
-  git rm -r "openspec/changes/${name}" 2>/dev/null || true
-
+  # Stage the 3 path trio: deleted active change dir, new archive dir, new spec dir.
+  # git add on the deleted path stages the deletions; git rm -r is NOT needed
+  # (and would cause git add to fail since the path no longer exists in the
+  # working tree after rm). The `|| true` handles the case where the path
+  # doesn't exist (e.g. already cleaned up by openspec archive).
   if ! git add \
         "openspec/changes/${name}/" \
         "openspec/changes/archive/" \

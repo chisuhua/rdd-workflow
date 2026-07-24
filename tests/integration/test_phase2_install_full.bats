@@ -78,9 +78,14 @@ teardown() {
   [ -f "$SKILLS_DIR/skills/_lib/state.sh" ] || return 1
   [ -f "$SKILLS_DIR/skills/_lib/worktree.sh" ] || return 1
 
-  # Moved files should NOT be in _lib/ of target
-  ! [ -f "$SKILLS_DIR/skills/guide-ship/scripts/ship_plan.sh" ] || {
-    echo "FAIL: ship_plan.sh still in _lib/ (should be moved)"
+  # Moved files should NOT be in _lib/ of target (they belong in per-skill scripts/)
+  ! [ -f "$SKILLS_DIR/skills/_lib/ship_plan.sh" ] || {
+    echo "FAIL: ship_plan.sh still in _lib/ (should be in guide-ship/scripts/)"
+    return 1
+  }
+  # And should BE in per-skill scripts/ of target
+  [ -f "$SKILLS_DIR/skills/guide-ship/scripts/ship_plan.sh" ] || {
+    echo "FAIL: ship_plan.sh not in guide-ship/scripts/ of target"
     return 1
   }
 }

@@ -18,19 +18,35 @@ resolve_source_line() {
   local path
 
   # Strip leading whitespace and "source"
-  path=$(echo "$line" | sed -E 's/^[[:space:]]*source[[:space:]]+"([^"]+)".*/\1/')
+  # Handle both `source "..."` and `  source "..."` forms, as well as
+  # `bash -c 'source "..."'` forms (where source is inside single quotes).
+  # The path may contain nested $(dirname ...) with inner quotes, so we
+  # extract everything between the first and last double-quote on the line.
+  path=$(echo "$line" | sed -E 's/.*source[[:space:]]+"(.*)".*/\1/')
   [ -z "$path" ] && return 1
+  # If the sed didn't match (no source + double-quote pattern), skip
+  [[ "$path" == "$line" ]] && return 1
 
   # Expand variables (skills/<skill>/ + ../ tricks)
   if [[ "$path" == *'$REPO_ROOT'* ]]; then
     path="${path//\$REPO_ROOT/$REPO_ROOT}"
   elif [[ "$path" == *'$(dirname'* ]]; then
-    # $(dirname BASH_SOURCE) → skills/<skill>/
-    path=$(echo "$path" | sed "s|\$(dirname \"\${BASH_SOURCE\[0\]:-\$0}\")|$REPO_ROOT/skills/$skill|g")
-    path=$(echo "$path" | sed "s|\$(dirname \"\$(readlink -f \"\${BASH_SOURCE\[0\]:-\$0}\")\")|$REPO_ROOT/skills/$skill|g")
-  elif [[ "$path" == *'$SCRIPT_DIR'* ]] || [[ "$path" == *'$_SCRIPT_DIR'* ]]; then
-    path=$(echo "$path" | sed "s|\$SCRIPT_DIR|$REPO_ROOT/skills/$skill/scripts|g")
-    path=$(echo "$path" | sed "s|\$_SCRIPT_DIR|$REPO_ROOT/skills/$skill/scripts|g")
+    # $(dirname BASH_SOURCE) -> skills/<skill>/ (the SKILL.md directory)
+    # Handle both $(dirname "${BASH_SOURCE[0]:-$0}") and
+    # $(dirname "$(readlink -f "${BASH_SOURCE[0]:-$0}")")
+    local skill_dir="$REPO_ROOT/skills/$skill"
+    # Replace the $(dirname ...) expression with the skill directory
+    path=$(echo "$path" | sed "s|\$(dirname \"\${BASH_SOURCE\[0\]:-\$0}\")|$skill_dir|g")
+    path=$(echo "$path" | sed "s|\$(dirname \"\$(readlink -f \"\${BASH_SOURCE\[0\]:-\$0}\")\")|$skill_dir|g")
+  elif [[ "$path" == *'$SCRIPT_DIR'* ]]; then
+    # $SCRIPT_DIR is defined as the skill directory (skills/<skill>), NOT scripts/
+    path=$(echo "$path" | sed "s|\$SCRIPT_DIR|$REPO_ROOT/skills/$skill|g")
+  elif [[ "$path" == *'$_SCRIPT_DIR'* ]]; then
+    # $_SCRIPT_DIR is defined as the skill directory (skills/<skill>), NOT scripts/
+    path=$(echo "$path" | sed "s|\$_SCRIPT_DIR|$REPO_ROOT/skills/$skill|g")
+  elif [[ "$path" == *'$SKILL_DIR'* ]]; then
+    # $SKILL_DIR is defined as the skill directory (skills/<skill>)
+    path=$(echo "$path" | sed "s|\$SKILL_DIR|$REPO_ROOT/skills/$skill|g")
   fi
 
   echo "$path"

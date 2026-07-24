@@ -114,12 +114,15 @@ handle_invalid_choice "$choice"
 **选项 1/2 执行内容**（以 fix-ns-pollution 为例）：
 
 ```bash
-# === Phase 1: thin orchestrator — heavy lifting in scripts/ship_plan.sh ===
+# === Phase 1: thin orchestrator - heavy lifting in scripts/ship_plan.sh ===
 # Skip orchestrator via SKIP_PROMETHEUS_PLANNING=yes (escape hatch; not recommended)
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 CHANGE_NAME="${CHANGE_NAME:-fix-ns-pollution}"  # default for documentation
 
 source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_plan.sh"
+
+# 0) HANDOFF STATE READ (P2-5) - read .plan-handoff.json, update ship_started_at
+read_plan_handoff "$PROJECT_ROOT"
 
 # 1) COMMIT GATE
 check_artifacts_committed "$PROJECT_ROOT" "$CHANGE_NAME" || {

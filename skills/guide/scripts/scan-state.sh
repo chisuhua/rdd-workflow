@@ -384,14 +384,9 @@ check_heartbeat_timeouts() {
   local PYTHON_PATH="${SCRIPT_DIR:+$(cd "$SCRIPT_DIR/../../.." && pwd)}"
   PY_PROJECT_ROOT="$PROJECT_ROOT" \
   python3 - "$SESSIONS_FILE" "${PYTHON_PATH:-$PROJECT_ROOT}" <<'PYEOF'
-import os, sys, importlib.util
+import sys
 sys.path.insert(0, sys.argv[2] if len(sys.argv) > 2 else ".")
-module_path = os.path.join(sys.argv[2], "skills", "rddf-session", "scripts", "rddf_session.py")
-spec = importlib.util.spec_from_file_location("rddf_session", module_path)
-rddf_session = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = rddf_session
-spec.loader.exec_module(rddf_session)
-RddfSessionCoordinator = rddf_session.RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file=sys.argv[1])
 coord.check_heartbeat_timeouts()
 PYEOF
@@ -414,14 +409,9 @@ scan_session_binding() {
     BINDING_LINES+=("$line")
   done < <(PY_PROJECT_ROOT="$PROJECT_ROOT" \
     python3 - "$SESSIONS_FILE" "$owner" "${PYTHON_PATH:-$PROJECT_ROOT}" <<'PYEOF'
-import os, sys, importlib.util
+import sys
 sys.path.insert(0, sys.argv[3] if len(sys.argv) > 3 else ".")
-module_path = os.path.join(sys.argv[3], "skills", "rddf-session", "scripts", "rddf_session.py")
-spec = importlib.util.spec_from_file_location("rddf_session", module_path)
-rddf_session = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = rddf_session
-spec.loader.exec_module(rddf_session)
-RddfSessionCoordinator = rddf_session.RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
 coord = RddfSessionCoordinator(sessions_file=sys.argv[1])
 owner = sys.argv[2]
 current = coord.find_current_binding(owner)

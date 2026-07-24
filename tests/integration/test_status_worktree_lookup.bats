@@ -23,27 +23,29 @@ load ../test_helper
   ! grep -nE '\$2 ~ /openspec\\//' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
-@test "status.md inline helper exists at Mode B (status query) site" {
+@test "status.md Mode B sources worktree.sh and calls wt_path_for_branch" {
   [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
-  # P1-14 (T21) refactored Mode C archive flow to use the centralized
-  # _lib/archive.sh::archive_change helper, so the inline helper is no
-  # longer needed in Mode C. It must still exist for the Mode B status
-  # query (line ~146) where the caller needs the raw worktree path
-  # before running the Mode B detection logic.
-  local helper_defs
-  helper_defs=$(grep -cE '^wt_path_for_branch_inline\(\) \{$' "$REPO_ROOT/skills/status/SKILL.md")
-  [ "$helper_defs" -ge 1 ]
-  local helper_calls
-  helper_calls=$(grep -cE 'WORKTREE_PATH=\$\(wt_path_for_branch_inline' "$REPO_ROOT/skills/status/SKILL.md")
-  [ "$helper_calls" -ge 1 ]
+  # P3-3c replaced the old inline `wt_path_for_branch_inline()` (which
+  # had a silent awk bracket-mismatch bug) with the centralized
+  # _lib/worktree.sh::wt_path_for_branch that uses `git worktree list
+  # --porcelain` (key/value pairs, no fragile whitespace parsing).
+  # Mode B (status query) must source worktree.sh and call the helper.
+  grep -nE 'source .*_lib/worktree\.sh' "$REPO_ROOT/skills/status/SKILL.md"
+  grep -nE 'WORKTREE_PATH=\$\(wt_path_for_branch ' "$REPO_ROOT/skills/status/SKILL.md"
+  # The old inline definition must NOT be present (it was the buggy one).
+  ! grep -nE '^wt_path_for_branch_inline\(\) \{$' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
-@test "status.md inline helper compares to bracketed branch column" {
+@test "status.md Mode B references porcelain-based worktree lookup (P3-3c fix)" {
   [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
-  # `git worktree list` outputs `path  hash  [branch]` — so $3 is "[branch]".
-  # The helper must include the brackets in the comparison, otherwise the
-  # lookup silently fails (the very bug P0-7 was supposed to fix).
-  grep -nE 'awk -v br="\\\[openspec/\\\$branch\\\]"' "$REPO_ROOT/skills/status/SKILL.md"
+  # The centralized worktree.sh::wt_path_for_branch uses
+  # `git worktree list --porcelain` with `refs/heads/openspec/$branch`
+  # to avoid the fragile `$3 == "[openspec/$branch]"` awk pattern that
+  # silently failed when brackets didn't match. Mode B must reference
+  # the centralized helper, not the old bracket-comparison inline.
+  grep -nE 'wt_path_for_branch' "$REPO_ROOT/skills/status/SKILL.md"
+  # The old bracket-aware inline pattern must NOT appear in status.md.
+  ! grep -nE 'awk -v br="\\\[openspec/\\\$branch\\\]"' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
 @test "status.md REMAINING_WT count uses \$3 (post-archive scan)" {
