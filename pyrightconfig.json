@@ -23,6 +23,30 @@
     },
     {
       "root": "skills/guide-ship"
+    },
+    {
+      "root": "skills/rdd-workflow-writing-plans"
+    },
+    {
+      "root": "skills/feature"
+    },
+    {
+      "root": "skills/propose"
+    },
+    {
+      "root": "skills/deps"
+    },
+    {
+      "root": "skills/execute"
+    },
+    {
+      "root": "skills/status"
+    },
+    {
+      "root": "skills/roadmap"
+    },
+    {
+      "root": "skills/guide"
     }
   ]
 }
