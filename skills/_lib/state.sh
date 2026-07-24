@@ -254,7 +254,6 @@ with open(sys.argv[1], 'w') as f:
   else
     echo "$new_row" >> "$approved_file"
   fi
-  echo "✅ $name added to approved list"
 }
 
 # mark_approved_completed <project_root> <name>
