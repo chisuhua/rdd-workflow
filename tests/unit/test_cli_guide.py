@@ -135,22 +135,36 @@ def test_priority_7_no_changes_dir_recommends_guide_plan(git_repo, capsys):
 
 
 def test_priority_8_pending_proposal_recommends_guide_plan(git_repo, capsys):
-    """roadmap + changes dir, but proposal-suggestions.md has '待创建' entry → 'guide-plan'."""
+    """roadmap + changes dir + unapproved improvement in improvements/ → 'guide-plan'."""
     (git_repo / "roadmap.md").write_text("# Roadmap\n")
-    (git_repo / "proposal-suggestions.md").write_text(
-        json.dumps([{"name": "x", "status": "待创建"}])
+    # Create improvements/ directory with an unapproved proposal
+    (git_repo / "improvements").mkdir()
+    (git_repo / "improvements" / "test-prop.md").write_text(
+        "# test-prop\n\n**优先级**: P0 | **来源**: test\n"
+    )
+    # proposal-approved.md is empty (no approved proposals)
+    (git_repo / "proposal-approved.md").write_text(
+        "# 已批准提案\n\n| 提案 | 优先级 | 批准时间 | 批准者 |\n|------|--------|----------|--------|\n"
     )
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()
     assert rc == 0
     assert "guide-plan" in captured.out
-    assert "待创建" in captured.out or "propose" in captured.out.lower()
+    assert "未审查提案" in captured.out or "propose" in captured.out.lower()
 
 
 def test_priority_9_no_pending_proposal_recommends_guide_ship(git_repo, capsys):
-    """All prior checks pass and no pending proposals → default 'guide-ship'."""
+    """All prior checks pass and all improvements are approved → default 'guide-ship'."""
     (git_repo / "roadmap.md").write_text("# Roadmap\n")
-    (git_repo / "proposal-suggestions.md").write_text(json.dumps([]))
+    # Create improvements/ with an already-approved proposal
+    (git_repo / "improvements").mkdir()
+    (git_repo / "improvements" / "test-prop.md").write_text(
+        "# test-prop\n\n**优先级**: P0 | **来源**: test\n"
+    )
+    # proposal-approved.md contains the proposal (already approved)
+    (git_repo / "proposal-approved.md").write_text(
+        "# 已批准提案\n\n| 提案 | 优先级 | 批准时间 | 批准者 |\n|------|--------|----------|--------|\n| [test-prop](improvements/test-prop.md) | P0 | 2026-07-24 | test |\n"
+    )
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()
     assert rc == 0

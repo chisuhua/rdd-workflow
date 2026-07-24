@@ -26,6 +26,10 @@
 > | [ADR-0018](ADR-0018-arch-quality-gate.md) | 架构质量门 — arch 阶段的定性检查 | 已采纳 | 已完成（v2.0） |
 > | [ADR-0019](ADR-0019-change-arch-alignment.md) | change_arch_alignment — change 提案与架构对齐检查 | 已采纳 | 已完成（v2.0） |
 > | [ADR-0020](ADR-0020-incremental-skeleton-planning.md) | 增量 skeleton planning（v2.0.2 重编号自 ADR-0013） | 已采纳 | **v2.1** |
+> | [ADR-0021](ADR-0021-phase2-per-skill-helper-migration.md) | Phase 2 per-skill helper migration | 已采纳 | 已完成（v2.0.8） |
+> | [ADR-0022](ADR-0022-manual-deps-field.md) | manual_deps 人工依赖声明 | 已采纳 | 已完成（v2.0.8） |
+> | [ADR-0023](ADR-0023-v3-rename-spec-workflow-to-rdd-workflow.md) | v3.0.0 包名重命名 | 已采纳 | **v3.0** |
+> | [ADR-0024](ADR-0024-deps-driven-execution-mode.md) | deps 阶段驱动执行模式决策 | 已采纳 | 已完成（v2.0.9） |
 
 ## ADR 列表
 
@@ -55,6 +59,7 @@
 | [ADR-0021](ADR-0021-phase2-per-skill-helper-migration.md) | Phase 2 per-skill helper migration | 已采纳 | 2026-07-21 | Per-skill scripts/ 目录迁移 |
 | [ADR-0022](ADR-0022-manual-deps-field.md) | manual_deps 人工依赖声明 | 已采纳 | 2026-07-21 | `manual_deps`/`manual_blocks` 字段 |
 | [ADR-0023](ADR-0023-v3-rename-spec-workflow-to-rdd-workflow.md) | v3.0.0 包名重命名 | 已采纳 | 2026-07-22 | `spec-workflow` → `rdd-workflow` (BREAKING) |
+| [ADR-0024](ADR-0024-deps-driven-execution-mode.md) | deps 阶段驱动执行模式决策 | 已采纳 | 2026-07-24 | 执行模式在 plan 阶段决定并写入 handoff |
 
 ## 架构演进
 

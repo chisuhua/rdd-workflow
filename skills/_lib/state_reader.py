@@ -36,9 +36,9 @@ Return contract per function::
     read_iteration            -> dict | None
     read_sessions             -> list[dict] | None
     read_roadmap_state        -> dict | None
-    read_proposal_suggestions -> list[dict] | None
     list_worktrees            -> list[dict]  (empty on error, never None)
     list_change_dirs          -> list[str]   (empty on error, never None)
+    read_improvement_entries  -> list[dict]  (empty on error, never None)
 """
 from __future__ import annotations
 
@@ -147,32 +147,6 @@ def read_roadmap_state(project_root: str) -> Optional[dict]:
     except (FileNotFoundError, json.JSONDecodeError, OSError):
         return None
     if not isinstance(data, dict):
-        return None
-    return data
-
-
-def read_proposal_suggestions(project_root: str) -> Optional[list[dict]]:
-    """DEPRECATED: Use read_improvement_entries() instead.
-    Read ``proposal-suggestions.md`` as a JSON array (legacy format).
-
-    The file is a JSON array of suggestion dicts (despite the ``.md``
-    extension - see ``docs/proposal-suggestions-format``). Returns the
-    list, or ``None`` if the file is missing, empty, or contains invalid
-    JSON / non-array data.
-    """
-    path = os.path.join(project_root, "proposal-suggestions.md")
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            content = f.read().strip()
-    except (FileNotFoundError, OSError):
-        return None
-    if not content:
-        return None
-    try:
-        data = json.loads(content)
-    except json.JSONDecodeError:
-        return None
-    if not isinstance(data, list):
         return None
     return data
 

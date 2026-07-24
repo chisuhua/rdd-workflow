@@ -46,10 +46,17 @@ if analysis is None:
         sys.exit(0)
     records = do_mod.parse_markdown_fallback(project_root)
     if not records:
-        print("⏭️  markdown fallback 无 change records, 跳过", file=sys.stderr)
+        print("⏭️  markdown fallback 无 change records, 跳过 iteration 同步", file=sys.stderr)
         sys.exit(0)
     parsed_from = "MARKDOWN-FALLBACK"
-    analysis = do_mod.build_analysis(records, fallback=True)
+    analysis = do_mod.build_analysis(records, fallback=True, project_root=project_root)
+
+# Ensure execution_mode_recommendations is present (ADR-0023)
+if "execution_mode_recommendations" not in analysis:
+    changes_list = list(analysis.get("changes", {}).values())
+    analysis["execution_mode_recommendations"] = do_mod.compute_execution_mode_recommendations(
+        changes_list, project_root
+    )
 
 try:
     do_mod.write_analysis(project_root, analysis)

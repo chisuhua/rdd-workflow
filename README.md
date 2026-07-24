@@ -60,7 +60,7 @@ bash install.sh /path/to/project
    - `skill_use("propose")` - 子技能(被 guide-plan 调用)
    - `skill_use("execute")` - 子技能(被 guide-ship 调用)
    - `skill_use("status")` - 子技能(被 guide-ship 调用或独立使用)
-   - `skill_use("rdd-workflow/writing-plans")` - 实施计划生成器(被 guide-ship 调用,v2.0 自包含 TDD 5 步结构)
+   - `skill_use("rdd-workflow-writing-plans")` - 实施计划生成器(被 guide-ship 调用,v2.0 自包含 TDD 5 步结构)
 
 ## v2.0 新特性
 
@@ -164,14 +164,14 @@ cp -r ~/.agents/skills/rdd-workflow/skills /path/to/project/.opencode/skills/rdd
 
 v2.0 重构后,实施计划生成器**完全自包含**于 rdd-workflow,**无任何外部 skill 依赖**:
 
-- ✅ `rdd-workflow/writing-plans` — 内置 TDD 5 步结构 plan 生成器(fork 自 superpowers/writing-plans,适配 OpenSpec change 上下文)
+- ✅ `rdd-workflow-writing-plans` — 内置 TDD 5 步结构 plan 生成器(fork 自 superpowers/writing-plans,适配 OpenSpec change 上下文)
 - ✅ `execute` — 内置 plan 执行器,强制 TDD 5 步纪律(整合原 rdd-workflow/executing-plans)
 
 **调用流程**(`guide-ship` Phase 1):
 
 ```bash
 cd "$WT_PATH"
-skill_use("rdd-workflow/writing-plans")  # 直接调用内置 skill
+skill_use("rdd-workflow-writing-plans")  # 直接调用内置 skill
 # 生成 .rddf/plans/<CHANGE_NAME>.md
 # 含 TDD 5 步结构: Write failing test → Verify fail → Implement → Verify pass → Commit
 ```
@@ -179,7 +179,7 @@ skill_use("rdd-workflow/writing-plans")  # 直接调用内置 skill
 **架构简化**:
 - **删除**: `prometheus-planning.md` (481 行间接层 + 检测链 + 路径桥接 + 混合 TDD)
     *(README 仅作为变更说明保留提及,代码本身已删除)*
-- **替换**: `rdd-workflow/writing-plans.md` (~250 行,自包含)
+- **替换**: `rdd-workflow-writing-plans.md` (~250 行,自包含)
 - **零外部依赖**: 不需要 oh-my-opencode、不需要 superpowers 套件
     *(同上,变更说明保留提及)*
 - **零路径桥接**: 单一路径 `.rddf/plans/<name>.md`(执行契约)

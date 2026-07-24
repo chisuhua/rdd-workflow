@@ -30,7 +30,7 @@
 #
 #   - generate_implementation_plan <project_root> <change_name> <mode>
 #       For worktree mode: cd into worktree. For lightweight: stay in main repo.
-#       Calls skill_use("rdd-workflow/writing-plans") unless
+#       Calls skill_use("rdd-workflow-writing-plans") unless
 #       SKIP_PROMETHEUS_PLANNING=yes (in which case writes a placeholder
 #       tasks file). Validates the resulting .rddf/plans/<change_name>.md
 #       has at least 1 Task and 1 Step. Mirrors the original plan-generation
@@ -47,7 +47,9 @@
 #   - find_default_branch
 #   - main_repo_root
 
-_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+# _LIB_DIR points to skills/_lib/ (shared library location)
+_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+_LIB_DIR="$(cd "$_SCRIPT_DIR/../../_lib" 2>/dev/null && pwd)"
 if [ -f "$_LIB_DIR/worktree.sh" ]; then
   # shellcheck source=/dev/null
   source "$_LIB_DIR/worktree.sh"
@@ -112,10 +114,50 @@ except (FileNotFoundError, json.JSONDecodeError) as e:
 }
 
 # detect_execution_mode <project_root> <change_name>
+#   Priority (ADR-0023):
+#     1. Read from .plan-handoff.json execution_mode_decisions[change_name] (deps analysis)
+#     2. Fallback to parallel conflict detection (existing worktrees + total changes)
 detect_execution_mode() {
   local project_root="$1"
   local change_name="$2"
-
+  
+  local handoff_file="$project_root/.rddf/state/.plan-handoff.json"
+  local decision=""
+  local reason=""
+  
+  if [ -f "$handoff_file" ]; then
+    decision=$(PY_PROJECT_ROOT="$project_root" PY_CHANGE_NAME="$change_name" python3 -c '
+import os, json
+try:
+    with open(os.environ["PY_PROJECT_ROOT"] + "/.rddf/state/.plan-handoff.json") as f:
+        data = json.load(f)
+    decisions = data.get("execution_mode_decisions", {})
+    change = os.environ["PY_CHANGE_NAME"]
+    if change in decisions:
+        rec = decisions[change]
+        print(rec.get("mode", ""))
+except: pass
+' 2>/dev/null)
+    reason=$(PY_PROJECT_ROOT="$project_root" PY_CHANGE_NAME="$change_name" python3 -c '
+import os, json
+try:
+    with open(os.environ["PY_PROJECT_ROOT"] + "/.rddf/state/.plan-handoff.json") as f:
+        data = json.load(f)
+    decisions = data.get("execution_mode_decisions", {})
+    change = os.environ["PY_CHANGE_NAME"]
+    if change in decisions:
+        rec = decisions[change]
+        print(rec.get("reason", ""))
+except: pass
+' 2>/dev/null)
+  fi
+  
+  if [ -n "$decision" ]; then
+    echo "$decision"
+    echo "📋 deps 分析决策: $reason" >&2
+    return 0
+  fi
+  
   local existing_wt
   existing_wt=$(git -C "$project_root" worktree list 2>/dev/null | awk '$3 ~ /^openspec\//' | wc -l || echo 0)
 
@@ -208,9 +250,9 @@ generate_implementation_plan() {
     return 0
   fi
 
-  if ! skill_use "rdd-workflow/writing-plans" 2>/dev/null; then
+  if ! skill_use "rdd-workflow-writing-plans" 2>/dev/null; then
     echo "❌ 实施计划生成失败" >&2
-    echo "   rdd-workflow/writing-plans 技能未找到,检查安装是否完整" >&2
+    echo "   rdd-workflow-writing-plans 技能未找到,检查安装是否完整" >&2
     return 1
   fi
 

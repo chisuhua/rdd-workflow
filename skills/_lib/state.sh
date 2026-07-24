@@ -67,103 +67,39 @@ except Exception:
 " "$file" "$key"
 }
 
-# read_suggestions [file]
-# Reads proposal-suggestions.md (or specified file) as JSON array.
-# Returns [] on missing / malformed / legacy format.
-read_suggestions() {
-  local file="${1:-proposal-suggestions.md}"
-  python3 -c "
-import json, sys, os
-try:
-    if not os.path.exists(sys.argv[1]):
-        print('[]', end='')
-        sys.exit(0)
-    with open(sys.argv[1]) as f:
-        content = f.read().strip()
-    if not content:
-        print('[]', end='')
-        sys.exit(0)
-    try:
-        data = json.loads(content)
-        if isinstance(data, list):
-            print(json.dumps(data, ensure_ascii=False), end='')
-        else:
-            print('[]', end='')
-    except json.JSONDecodeError:
-        # Legacy YAML+Markdown format — warn and return []
-        import sys as _sys
-        print('[]', end='')
-except Exception:
-    print('[]', end='')
-" "$file"
-}
-
-# write_suggestions <file> <json>
-# Writes a JSON array to proposal-suggestions.md. If existing file is
-# in legacy (non-JSON) format, creates .bak backup first. Refuses
-# non-JSON input with non-zero exit.
-write_suggestions() {
-  local file="$1"
-  local data="$2"
-  python3 -c "
-import json, sys, os, shutil
-inp = sys.argv[1]
-new_data = sys.argv[2]
-
-# Validate JSON
-try:
-    parsed = json.loads(new_data)
-    if not isinstance(parsed, list):
-        print('Error: not a JSON array', file=sys.stderr)
-        sys.exit(1)
-except json.JSONDecodeError as e:
-    print(f'Error: invalid JSON: {e}', file=sys.stderr)
-    sys.exit(1)
-
-# If existing file is not valid JSON, backup as .bak
-if os.path.exists(inp):
-    with open(inp) as f:
-        existing = f.read().strip()
-    if existing:
-        try:
-            json.loads(existing)
-        except json.JSONDecodeError:
-            shutil.copy2(inp, inp + '.bak')
-
-with open(inp, 'w') as f:
-    json.dump(parsed, f, ensure_ascii=False, indent=2)
-    f.write('\n')
-" "$file" "$data"
-}
-
 # count_pending_suggestions [project_root]
-# Counts entries in proposal-suggestions.md where status == "待创建".
-# Returns 0 on missing file, malformed JSON, empty list, or no matches.
-# Defaults to ./proposal-suggestions.md when project_root not given.
-#
-# Extracted from inline Python heredocs in propose.md, status.md, and
-# guide-plan.md (P3-3b). Algorithm equivalent to original inline versions:
-# sum over list elements where element is a dict and status == "待创建".
+# Counts proposals in improvements/ that are NOT in proposal-approved.md.
+# Returns 0 if no pending proposals or files are missing.
 count_pending_suggestions() {
   local project_root="${1:-.}"
-  local ps_path="$project_root/proposal-suggestions.md"
+  local imp_dir="$project_root/improvements"
+  local approved_file="$project_root/proposal-approved.md"
+  
+  if [ ! -d "$imp_dir" ]; then
+    echo 0
+    return
+  fi
+  
   python3 -c "
-import json, sys, os
-p = sys.argv[1]
+import os, re
 try:
-    if not os.path.isfile(p):
-        print(0)
-        sys.exit(0)
-    with open(p) as f:
-        entries = json.load(f)
-    if not isinstance(entries, list):
-        print(0)
-        sys.exit(0)
-    count = sum(1 for e in entries if isinstance(e, dict) and e.get('status') == '待创建')
-    print(count)
-except (FileNotFoundError, json.JSONDecodeError):
+    imp_dir = '$imp_dir'
+    approved_file = '$approved_file'
+    
+    all_improvements = set()
+    for f in os.listdir(imp_dir):
+        if f.endswith('.md'):
+            all_improvements.add(f[:-3])
+    
+    approved = set()
+    if os.path.isfile(approved_file):
+        with open(approved_file) as f:
+            approved = set(re.findall(r'\|\s*\[([^\]]+)\]\(improvements/', f.read()))
+    
+    print(len(all_improvements - approved))
+except Exception:
     print(0)
-" "$ps_path" 2>/dev/null || echo 0
+"
 }
 
 # list_improvements <project_root>

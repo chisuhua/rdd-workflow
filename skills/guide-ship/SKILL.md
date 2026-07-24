@@ -2,7 +2,7 @@
 name: guide-ship
 description: Ship-side state machine for OpenSpec workflow — guides user from committed changes through worktree creation, rdd-workflow plan generation, execution, archive, and cleanup. Owns git worktrees and tasks.md progress. Called by user when starting work on a committed change.
 license: MIT
-compatibility: Requires openspec CLI v1.3.1+, git 2.25+. Plan generation delegated to rdd-workflow/writing-plans (v2.0 自包含,无外部 skill 依赖).
+compatibility: Requires openspec CLI v1.3.1+, git 2.25+. Plan generation delegated to rdd-workflow-writing-plans (v2.0 自包含,无外部 skill 依赖).
 metadata:
   version: "3.0"  # v3.0 rename (BREAKING); see ADR-0023
   author: sisyphus
@@ -19,7 +19,7 @@ metadata:
 - **不拥有**：`openspec/changes/<name>/{proposal,design,tasks}.md` 的创建与提交（这些由 `guide-arch` / `guide-plan` 处理）
 - **状态持久化**：不写状态文件；ship 端状态由 git worktree 列表和 `tasks.md` 进度反映（on-the-fly 读取）
 
-**v2.0 简化**：v2.0 起,本技能直接调用内置的 `rdd-workflow/writing-plans` 技能生成计划(无中间检测层)。原 `prometheus-planning` 间接层已删除。
+**v2.0 简化**：v2.0 起,本技能直接调用内置的 `rdd-workflow-writing-plans` 技能生成计划(无中间检测层)。原 `prometheus-planning` 间接层已删除。
 
 **调用方式**：
 
@@ -136,7 +136,7 @@ MODE=$(detect_execution_mode "$PROJECT_ROOT" "$CHANGE_NAME")
 # 3) MODE-SPECIFIC SETUP + WORKTREE VERIFICATION GATE
 WT_PATH=$(setup_execution_workspace "$PROJECT_ROOT" "$CHANGE_NAME" "$MODE")
 
-# 4) PLAN GENERATION (calls skill_use "rdd-workflow/writing-plans" internally;
+# 4) PLAN GENERATION (calls skill_use "rdd-workflow-writing-plans" internally;
 #    honors SKIP_PROMETHEUS_PLANNING=yes to write placeholder plan file)
 PLAN_STEP_COUNT=$(generate_implementation_plan "$PROJECT_ROOT" "$CHANGE_NAME" "$MODE")
 

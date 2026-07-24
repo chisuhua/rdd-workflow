@@ -56,31 +56,88 @@ _review_create_debt_change() {
 
   echo "🔖 创建新 debt change: $debt_name"
 
-  # Append to proposal-suggestions.md (type=debt)
+  # Create improvements/<name>.md file (new format)
+  local imp_dir="$project_root/improvements"
+  mkdir -p "$imp_dir"
+  
+  local imp_file="$imp_dir/${debt_name}.md"
+  if [ ! -f "$imp_file" ]; then
+    cat > "$imp_file" << EOF
+# $debt_name
+
+**优先级**: P2 | **来源**: execute review: $change_name
+**阶段**: default | **分类**: arch-design
+**类型**: debt
+
+## 架构依据
+- $change_name 执行后审查发现
+
+## 范围
+- **In Scope**: 见 TODO 扫描结果
+- **Out Scope**: 已完成的功能
+
+## 关键场景
+- GIVEN 原有功能正常, WHEN 添加清理代码, THEN 不引入新问题
+
+## 技术约束
+- MUST NOT 影响已有功能
+- SHOULD 保持代码风格一致
+
+## 验收标准
+- 新增测试通过
+- 无回归
+EOF
+    echo "✅ 已创建 improvements/${debt_name}.md"
+  fi
+
+  # Update proposal-suggestions.md index (Markdown table format)
+  local suggestions_file="$project_root/proposal-suggestions.md"
+  local timestamp=$(date -u +%Y-%m-%d)
+  
   PY_PROJECT_ROOT="$project_root" python3 -c "
-import os, json
+import os, re
 try:
-    debt = {
-        'name': '$debt_name',
-        'priority': 'P2',
-        'source': 'execute review: $change_name',
-        'status': '待创建',
-        'phase': 'default',
-        'category': 'arch-design',
-        'type': 'debt',
-        'description': '## 架构依据\n- $change_name 执行后审查发现\n## 范围\n- 见 TODO 扫描结果\n## 关键场景\n- 常规清理\n## 技术约束\n- MUST NOT 影响已有功能\n## 验收标准\n- 新增测试通过\n',
-        'effort': '1天'
-    }
-    path = os.path.join(os.environ['PY_PROJECT_ROOT'], 'proposal-suggestions.md')
-    if os.path.isfile(path):
-        with open(path) as f:
-            entries = json.load(f)
+    sg_path = os.path.join(os.environ['PY_PROJECT_ROOT'], 'proposal-suggestions.md')
+    debt_name = '$debt_name'
+    timestamp = '$timestamp'
+    
+    # Read existing file or create header
+    if os.path.isfile(sg_path):
+        with open(sg_path) as f:
+            content = f.read()
     else:
-        entries = []
-    entries.append(debt)
-    with open(path, 'w') as f:
-        json.dump(entries, f, ensure_ascii=False, indent=2)
-    print(f'✅ 已追加到 proposal-suggestions.md: {debt[\"name\"]}')
+        content = '''# 提案池（待架构讨论）
+
+> arch 阶段输入。guide-arch Phase 5.5 逐个审查，批准后添加到 \`proposal-approved.md\`。
+
+| 提案 | 优先级 | 来源 | 添加时间 |
+|------|--------|------|----------|
+'''
+    
+    # Check if already in table
+    if f'[{debt_name}]' in content:
+        print(f'⚠️  {debt_name} 已在 proposal-suggestions.md 中')
+    else:
+        # Add new row after header
+        lines = content.split('\n')
+        insert_idx = -1
+        for i, line in enumerate(lines):
+            if '|---|' in line:
+                insert_idx = i + 1
+                break
+        
+        new_row = f'| [{debt_name}](improvements/{debt_name}.md) | P2 | execute review | {timestamp} |'
+        
+        if insert_idx > 0:
+            lines.insert(insert_idx, new_row)
+        else:
+            # Fallback: append at end
+            lines.append(new_row)
+        
+        with open(sg_path, 'w') as f:
+            f.write('\n'.join(lines))
+        
+        print(f'✅ 已追加到 proposal-suggestions.md: {debt_name}')
 except Exception as e:
     print(f'⚠️  追加失败: {e}')
 "

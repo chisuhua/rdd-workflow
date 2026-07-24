@@ -1,5 +1,5 @@
 ---
-name: rdd-workflow/writing-plans
+name: rdd-workflow-writing-plans
 description: 自包含的 OpenSpec 实施计划生成器。为 OpenSpec change 生成 TDD 5 步结构的实施计划(.rddf/plans/<name>.md)。基于 superpowers/writing-plans 改写,完全自包含于 rdd-workflow,不依赖任何外部 skill。被 guide-ship 在 Phase 1 plan 阶段调用。
 license: MIT
 compatibility: Requires git 2.25+, openspec CLI 1.3.1+. 无外部 skill 依赖。
@@ -10,7 +10,7 @@ metadata:
   user-invocable: false
 ---
 
-# Writing Plans (rdd-workflow/writing-plans)
+# Writing Plans (rdd-workflow-writing-plans)
 
 为 OpenSpec change 生成实施计划,采用 TDD 5 步结构。
 
@@ -22,7 +22,7 @@ metadata:
 
 **调用方式**:
 ```
-skill_use("rdd-workflow/writing-plans")   # 无参数,依赖 git context 获取 CHANGE_NAME / WT_PATH
+skill_use("rdd-workflow-writing-plans")   # 无参数,依赖 git context 获取 CHANGE_NAME / WT_PATH
 ```
 
 ## 输入上下文(由 guide-ship 自动注入)

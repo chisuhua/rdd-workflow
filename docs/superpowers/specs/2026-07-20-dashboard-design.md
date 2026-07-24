@@ -21,7 +21,7 @@ Users cannot check project state from a terminal without AI assistance. This spe
 | `execute` | Requires AI code generation |
 | `propose` | Requires code scanning + AI analysis |
 | `deps` | Requires subagent semantic analysis |
-| `rdd-workflow/writing-plans` | Requires AI plan generation |
+| `rdd-workflow-writing-plans` | Requires AI plan generation |
 
 ## 2. CLI Tree
 

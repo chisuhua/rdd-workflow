@@ -199,7 +199,7 @@ v2.0 引入的核心自动化机制。`loop_engine.py` 实现了自适应的闭�
 
 `guide-ship` Phase 1 自动调用本技能：
 ```
-skill_use("rdd-workflow/writing-plans")
+skill_use("rdd-workflow-writing-plans")
 ```
 
 ---

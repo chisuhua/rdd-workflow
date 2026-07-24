@@ -164,26 +164,9 @@ input for `guide-plan`'s propose phase.
 
 ---
 
-## Migration
-
-The migration script `skills/_lib/migrate_proposals.py` converts the
-legacy JSON `proposal-suggestions.md` (backed up to
-`proposal-suggestions.json.bak`) into individual `improvements/*.md`
-files:
-
-```bash
-python3 skills/_lib/migrate_proposals.py /path/to/project
-```
-
-The script is idempotent: existing improvement files are never
-overwritten.
-
----
-
 ## See also
 
-- `docs/proposal-suggestions-format.md` - legacy JSON format (deprecated, kept for reference)
+- `docs/proposal-suggestions-format.md` - format for the pending proposals index
 - `skills/_lib/state.sh` - shell helpers for reading/writing the index files
 - `skills/_lib/state_reader.py` - Python read-only data layer
-- `skills/_lib/migrate_proposals.py` - migration script from JSON to individual files
 - `improvements/proposal-approval-pipeline.md` - the proposal that designed this format

@@ -15,7 +15,6 @@
 
 | [auto-wave-scheduler](improvements/auto-wave-scheduler.md) | P0 | 2026-07-23 | guide-arch |
 
-| [fix-lsp-dash-bridge](improvements/fix-lsp-dash-bridge.md) | P0 | 2026-07-23 | guide-arch |
 
 | [fix-rddf-schema-validation](improvements/fix-rddf-schema-validation.md) | P0 | 2026-07-23 | guide-arch |
 
@@ -88,5 +87,4 @@
 | [fix-append-approved-output](improvements/fix-append-approved-output.md) | P2 | 2026-07-23 | guide-arch |
 
 ## 已实施
-
-| [proposal-approval-pipeline](improvements/proposal-approval-pipeline.md) | P0 | 2026-07-23 |
+| [fix-lsp-dash-bridge](improvements/fix-lsp-dash-bridge.md) | P0 | 2026-07-24 |

@@ -311,68 +311,6 @@ class TestReadRoadmapState:
 
 
 # ---------------------------------------------------------------------------
-# read_proposal_suggestions
-# ---------------------------------------------------------------------------
-
-class TestReadProposalSuggestions:
-    def test_returns_list_when_present(self, project_root):
-        path = os.path.join(project_root, "proposal-suggestions.md")
-        entries = [
-            {"name": "c1", "status": "pending"},
-            {"name": "c2", "status": "created"},
-        ]
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(entries, f)
-
-        result = state_reader.read_proposal_suggestions(project_root)
-
-        assert result is not None
-        assert isinstance(result, list)
-        assert len(result) == 2
-        assert result[0]["name"] == "c1"
-
-    def test_returns_none_when_missing(self, project_root):
-        # No file written
-        assert state_reader.read_proposal_suggestions(project_root) is None
-
-    def test_returns_none_when_file_empty(self, project_root):
-        """Empty file (after strip) is treated as missing -> None."""
-        path = os.path.join(project_root, "proposal-suggestions.md")
-        with open(path, "w", encoding="utf-8") as f:
-            f.write("   \n  \n")  # whitespace only
-
-        assert state_reader.read_proposal_suggestions(project_root) is None
-
-    def test_returns_none_on_corrupt_json(self, project_root):
-        path = os.path.join(project_root, "proposal-suggestions.md")
-        with open(path, "w", encoding="utf-8") as f:
-            f.write("not valid json {{{")
-
-        assert state_reader.read_proposal_suggestions(project_root) is None
-
-    def test_returns_none_when_not_a_list(self, project_root):
-        """Valid JSON but top-level is an object, not an array -> None."""
-        path = os.path.join(project_root, "proposal-suggestions.md")
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump({"not": "an array"}, f)
-
-        assert state_reader.read_proposal_suggestions(project_root) is None
-
-    def test_handles_utf8_content(self, project_root):
-        """The file may contain non-ASCII characters (e.g. CJK status labels).
-        Verify the reader handles UTF-8 correctly."""
-        path = os.path.join(project_root, "proposal-suggestions.md")
-        entries = [{"name": "c1", "status": "待创建"}]
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(entries, f, ensure_ascii=False)
-
-        result = state_reader.read_proposal_suggestions(project_root)
-
-        assert result is not None
-        assert result[0]["status"] == "待创建"
-
-
-# ---------------------------------------------------------------------------
 # list_worktrees
 # ---------------------------------------------------------------------------
 

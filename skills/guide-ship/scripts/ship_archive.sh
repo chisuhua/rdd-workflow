@@ -33,7 +33,12 @@
 #   - commit_archive_moves <name> <root> (archive.sh)
 #   - mark_iteration_archived <name> <root> (archive.sh)
 
-_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+# _LIB_DIR points to skills/_lib/ (shared library location)
+# This script is in skills/guide-ship/scripts/, so we need to go up 2 levels
+# and then into _lib to find the shared helpers.
+_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+_LIB_DIR="$(cd "$_SCRIPT_DIR/../../_lib" 2>/dev/null && pwd)"
+
 if [ -f "$_LIB_DIR/worktree.sh" ]; then
   # shellcheck source=/dev/null
   source "$_LIB_DIR/worktree.sh"

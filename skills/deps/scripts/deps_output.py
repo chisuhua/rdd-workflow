@@ -74,6 +74,7 @@ def build_analysis(
     changes: list[dict],
     execution_order: Optional[list[str]] = None,
     fallback: bool = True,
+    project_root: Optional[str] = None,
 ) -> dict:
     """Build a deps-analysis.json structure from per-change records.
 
@@ -91,6 +92,9 @@ def build_analysis(
 
     `execution_order` defaults to the input order, filtered to only
     include names that appear in `changes`.
+    
+    `project_root` (optional): If provided, computes execution_mode_recommendations
+    for each change (ADR-0023).
     """
     change_map = {}
     for c in changes:
@@ -118,13 +122,20 @@ def build_analysis(
         known = set(change_map.keys())
         execution_order = [n for n in execution_order if n in known]
 
-    return {
+    result = {
         "version": SCHEMA_VERSION,
         "updated_at": _now_iso(),
         "fallback": fallback,
         "changes": change_map,
         "execution_order": execution_order,
     }
+    
+    if project_root:
+        result["execution_mode_recommendations"] = compute_execution_mode_recommendations(
+            list(change_map.values()), project_root
+        )
+    
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -620,3 +631,157 @@ def merge_manual_deps(changes: list[dict], project_root: str) -> list[dict]:
                 ).strip()
 
     return changes
+
+
+# ---------------------------------------------------------------------------
+# Execution Mode Analysis (ADR-0023)
+# ---------------------------------------------------------------------------
+
+def analyze_execution_mode(change_name: str, project_root: str) -> dict:
+    """Analyze execution mode recommendation for a single change.
+    
+    Args:
+        change_name: Name of the change to analyze.
+        project_root: Path to project root.
+    
+    Returns:
+        A dict with fields:
+          - mode: "lightweight" | "worktree"
+          - reason: human-readable explanation
+          - confidence: "high" | "medium" | "low"
+          - details: dict with file_count, task_count, is_risky, change_size
+    """
+    change_dir = os.path.join(project_root, "openspec/changes", change_name)
+    
+    # 1. Count files from design.md
+    file_count = 0
+    design_file = os.path.join(change_dir, "design.md")
+    if os.path.exists(design_file):
+        with open(design_file, "r", encoding="utf-8") as f:
+            for line in f:
+                if re.match(r"^\s*-\s+(Create|Modify|Delete):", line):
+                    file_count += 1
+    
+    # 2. Count tasks from tasks.md
+    task_count = 0
+    tasks_file = os.path.join(change_dir, "tasks.md")
+    if os.path.exists(tasks_file):
+        with open(tasks_file, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip().startswith("- [ ]"):
+                    task_count += 1
+    
+    # 3. Detect risky keywords in proposal.md
+    is_risky = False
+    proposal_file = os.path.join(change_dir, "proposal.md")
+    if os.path.exists(proposal_file):
+        with open(proposal_file, "r", encoding="utf-8") as f:
+            content = f.read().lower()
+            risky_keywords = [
+                "refactor",
+                "restructure",
+                "migration",
+                "breaking change",
+                "architecture change",
+            ]
+            is_risky = any(kw in content for kw in risky_keywords)
+    
+    # 4. Determine change size
+    if file_count <= 2 and task_count <= 3:
+        change_size = "small"
+    elif file_count <= 5 and task_count <= 6:
+        change_size = "medium"
+    else:
+        change_size = "large"
+    
+    # 5. Decision logic
+    if is_risky:
+        return {
+            "mode": "worktree",
+            "reason": "高风险操作（refactor/migration）",
+            "confidence": "high",
+            "details": {
+                "file_count": file_count,
+                "task_count": task_count,
+                "is_risky": is_risky,
+                "change_size": "large",
+            },
+        }
+    elif file_count <= 2 and task_count <= 3:
+        return {
+            "mode": "lightweight",
+            "reason": "小改动 + 低复杂度",
+            "confidence": "high",
+            "details": {
+                "file_count": file_count,
+                "task_count": task_count,
+                "is_risky": is_risky,
+                "change_size": "small",
+            },
+        }
+    elif file_count <= 5 and task_count <= 6:
+        return {
+            "mode": "lightweight",
+            "reason": "中等改动 + 可控范围",
+            "confidence": "medium",
+            "details": {
+                "file_count": file_count,
+                "task_count": task_count,
+                "is_risky": is_risky,
+                "change_size": "medium",
+            },
+        }
+    else:
+        return {
+            "mode": "worktree",
+            "reason": "大改动 + 需要隔离",
+            "confidence": "high",
+            "details": {
+                "file_count": file_count,
+                "task_count": task_count,
+                "is_risky": is_risky,
+                "change_size": "large",
+            },
+        }
+
+
+def compute_execution_mode_recommendations(
+    changes: list[dict], project_root: str
+) -> Dict[str, dict]:
+    """Compute execution mode recommendations for all changes.
+    
+    Args:
+        changes: List of change records from build_analysis().
+        project_root: Path to project root.
+    
+    Returns:
+        A dict mapping change_name -> execution_mode_recommendation.
+    """
+    recommendations = {}
+    for change in changes:
+        name = change.get("name")
+        if not name:
+            continue
+        
+        # Check for file conflicts
+        has_conflicts = bool(change.get("conflicts", []))
+        has_dependencies = bool(change.get("blocker") or change.get("blocks", []))
+        
+        # Get base recommendation from analyze_execution_mode
+        rec = analyze_execution_mode(name, project_root)
+        
+        # Override if there are conflicts
+        if has_conflicts:
+            rec["mode"] = "worktree"
+            rec["reason"] = "文件冲突需要隔离"
+            rec["confidence"] = "high"
+            rec["details"]["has_conflicts"] = True
+        else:
+            rec["details"]["has_conflicts"] = False
+        
+        rec["details"]["has_dependencies"] = has_dependencies
+        rec["details"]["is_independent"] = not (has_conflicts or has_dependencies)
+        
+        recommendations[name] = rec
+    
+    return recommendations

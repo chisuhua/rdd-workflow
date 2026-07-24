@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 from typing import Optional, Tuple
@@ -204,22 +205,34 @@ def _scan_state(project_root: str) -> Tuple[str, str]:
     if not (Path(project_root) / "openspec" / "changes").is_dir():
         return ("guide-plan", "无 change → 进入变更生成")
 
-    # 9-10. proposal-suggestions.md
-    suggestions_path = Path(project_root) / "proposal-suggestions.md"
+    # 9-10. proposal-suggestions.md (current format: Markdown table)
+    # Check if there are unapproved proposals in improvements/
+    improvements_dir = Path(project_root) / "improvements"
+    approved_path = Path(project_root) / "proposal-approved.md"
+    
     pending = False
-    if suggestions_path.is_file():
-        try:
-            entries = json.loads(suggestions_path.read_text())
-            if isinstance(entries, list):
-                pending = any(
-                    isinstance(e, dict) and e.get("status") == "待创建"
-                    for e in entries
-                )
-        except (json.JSONDecodeError, OSError):
-            pending = False
+    if improvements_dir.is_dir():
+        # Get all improvement names
+        all_improvements = set()
+        for f in improvements_dir.glob("*.md"):
+            all_improvements.add(f.stem)
+        
+        # Get approved improvements from proposal-approved.md
+        approved = set()
+        if approved_path.is_file():
+            try:
+                content = approved_path.read_text()
+                # Parse Markdown table: | [name](...) | ... |
+                approved = set(re.findall(r"\|\s*\[([^\]]+)\]\(improvements/", content))
+            except OSError:
+                pass
+        
+        # If there are unapproved improvements, recommend guide-plan
+        if all_improvements - approved:
+            pending = True
 
     if pending:
-        return ("guide-plan", "有 change 待创建 → 继续 propose")
+        return ("guide-plan", "有未审查提案 → 进入变更生成")
     return ("guide-ship", "无待创建 change → 准备 ship")
 
 

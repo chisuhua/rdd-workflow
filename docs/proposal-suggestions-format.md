@@ -1,173 +1,177 @@
 # `proposal-suggestions.md` Format
 
-> **Status**: canonical (P1-7, replaced the legacy mixed YAML+Markdown format).
+> **Status**: canonical (proposal-approval-pipeline, replaced the legacy JSON-only format).
+> 
+> **Updated**: 2026-07-24 — Changed from JSON array to Markdown table (index-only).
 
 This document is the single source of truth for how the
 `proposal-suggestions.md` file is structured, read, and written by the
-rdd-workflow skills (`propose`, `guide-spec`, `guide`, `status`, `deps`).
+rdd-workflow skills (`guide-arch`, `guide-plan`, `propose`, `dashboard`).
 
 ---
 
-## Container format: pure JSON
+## Container format: Markdown table (index only)
 
-The file **MUST** contain a single JSON array at the top level. Each
-element of the array is a suggestion object.
+The file **MUST** contain a Markdown table that **only stores links** to
+individual proposal files in the `improvements/` directory. It never contains
+the full proposal content — that lives in `improvements/<name>.md`.
 
-### Schema
+### Example file
 
-```json
-[
-  {
-    "name": "fix-ns-pollution",
-    "priority": "P0",
-    "source": "ADR-033",
-    "status": "待创建",
-    "phase": "phase-1",
-    "category": "arch-design",
-    "description": "## 架构依据\n- ADR-033 §3.2: ...\n## 范围\n- In Scope: ...\n- Out Scope: ...",
-    "effort": "2-3天",
-    "type": "functional"
-  }
-]
+```markdown
+# 提案池（待架构讨论）
+
+> arch 阶段输入。guide-arch Phase 5.5 逐个审查，批准后添加到 `proposal-approved.md`。
+
+| 提案 | 优先级 | 来源 | 添加时间 |
+|------|--------|------|----------|
+| [fix-silent-exception](improvements/fix-silent-exception.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 |
+| [add-config-validation](improvements/add-config-validation.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 |
 ```
 
-### Field reference
+### Table columns
 
-| Field         | Type   | Required | Description                                                                                       |
-|---------------|--------|----------|---------------------------------------------------------------------------------------------------|
-| `name`        | string | yes      | kebab-case identifier. Used as the `openspec/changes/<name>/` directory name.                     |
-| `priority`    | string | yes      | One of `P0`, `P1`, `P2`. Drives display sort order.                                               |
-| `source`      | string | yes      | Free-form reference (e.g. `ADR-033 §3.2`, `架构差距分析`, `TODO @ src/foo.cpp:42`).               |
-| `status`      | string | yes      | One of `待创建`, `进行中`, `已完成`. Consumers filter on `待创建` to find pending work.            |
-| `phase`       | string | yes      | Roadmap phase id (e.g. `phase-1`) or `default` in compat mode.                                     |
-| `category`    | string | yes      | Task category id (e.g. `arch-design`, `infra-setup`, `core-test`, `core-impl`) or `general`.      |
-| `description` | string | yes      | Multi-line Markdown with `##` headers (5 sections — see below). `\\n` separates lines in JSON.   |
-| `effort`      | string | no       | Free-form effort estimate (e.g. `2-3天`, `1w`). Optional but recommended.                         |
-| `type`        | string | no       | One of `"functional"` (default), `"debt"`, or `"refactor"`. Reviews and sprint planning filter on this field. |
-
-### 5-section description contract
-
-The `description` field embeds the same five Markdown sections that the
-old format used as top-level `##` headers. Consumers and the
-`openspec-propose` pipeline treat them as opaque Markdown — the only
-requirement is that all five sections appear in this order:
-
-1. `## 架构依据` — ADR / 文档引用
-2. `## 范围` — `In Scope` / `Out Scope`
-3. `## 关键场景` — `GIVEN` / `WHEN` / `THEN`
-4. `## 技术约束` — `MUST` / `MUST NOT` / `SHOULD`
-5. `## 验收标准` — 量化指标
-
-When the value is written into JSON, embedded newlines are encoded as
-`\n` (two characters) and embedded `"` are escaped as `\"`.
+| Column     | Format                              | Description                                                |
+|------------|-------------------------------------|------------------------------------------------------------|
+| 提案       | `[name](improvements/name.md)`      | Markdown link to the improvement file. The link text is the proposal name (kebab-case). |
+| 优先级     | `P0` / `P1` / `P2`                 | Priority level, copied from the improvement file metadata. |
+| 来源       | Free-form string                    | Where the proposal came from (e.g. `Oracle 审查`, `复盘改进`). |
+| 添加时间   | `YYYY-MM-DD`                        | UTC date when the proposal was added to the pool.          |
 
 ---
 
-## Migration from the legacy YAML+Markdown format
+## Relationship to `improvements/` directory
 
-The legacy format mixed top-level YAML entries with Markdown `## 架构依据`
-sections. The new format keeps the same logical content (5-section
-description) but moves the description into a single JSON string field.
+The `improvements/` directory contains one `.md` file per proposal with
+the full 5-section content:
 
-### Detection
+```
+improvements/
+├── fix-silent-exception.md      # Full proposal content
+├── add-config-validation.md
+└── ...
+```
 
-A file is treated as **legacy format** if, when parsed as JSON, it fails
-OR its raw text contains the marker `## 架构依据` at column 0 (i.e. as a
-top-level Markdown header, not as a substring of a JSON string value).
+Each improvement file has this structure:
 
-### Behavior
+```markdown
+# <name>
 
-`write_suggestions` (in `skills/_lib/state.sh`) does the following when it
-detects a legacy file before overwriting:
+**优先级**: <priority> | **来源**: <source>
+**阶段**: <phase> | **分类**: <category>
+**类型**: <type>
 
-1. Print a warning to stderr: `⚠️ 旧格式 proposal-suggestions.md 检测到`
-2. Print a hint: `   自动迁移需要手动确认`
-3. Copy the file to `proposal-suggestions.md.bak` (preserves user data)
-4. Print: `   已备份到 proposal-suggestions.md.bak`
-5. Continue with the new write
+## 架构依据
+...
 
-> The skill **never** auto-migrates. The user must run a migration tool
-> or hand-edit the file. This is per the audit's MUST NOT DO
-> requirement: warn only, never rewrite user data silently.
+## 范围
+...
 
-`read_suggestions` does the same detection and prints the warning on
-read, then continues with the (likely empty) parse. This is intentional:
-the user sees the warning every time they touch the file until they
-either delete it or migrate it.
+## 关键场景
+...
+
+## 技术约束
+...
+
+## 验收标准
+...
+```
+
+The `proposal-suggestions.md` file **only** contains links to these files —
+it never duplicates the proposal content. This keeps the index file small
+and ensures a single source of truth for each proposal's details.
+
+---
+
+## Lifecycle
+
+### 1. Proposal creation
+
+Proposals are created as individual `improvements/<name>.md` files (manually
+or by `guide-arch` gap analysis). Each file contains the full 5-section
+proposal content.
+
+### 2. Index update
+
+When a new proposal is added to the pool, `proposal-suggestions.md` is updated
+with a new table row linking to the improvement file.
+
+### 3. Review flow (`guide-arch` Phase 5.5)
+
+1. `guide-arch` reads `proposal-suggestions.md` via `list_improvements()`.
+2. For each entry, it follows the link to `improvements/<name>.md` to display
+   the full content for review.
+3. Approved proposals are added to `proposal-approved.md`.
+4. Rejected proposals remain in `improvements/` but never appear in the
+   approved index.
+
+### 4. Consumption flow (`guide-plan` propose)
+
+1. `guide-plan` reads `proposal-approved.md` via `list_approved()`.
+2. For each approved entry, it follows the link to `improvements/<name>.md`.
+3. It creates an OpenSpec change using the 5-section content.
+
+---
+
+## API reference
+
+### Shell (`skills/_lib/state.sh`)
+
+| Function                          | Description                                                |
+|-----------------------------------|------------------------------------------------------------|
+| `list_improvements <project_root>` | Parse suggestions table. Returns `name\|priority\|source` lines. |
+
+### Python (`skills/_lib/state_reader.py`)
+
+| Function                                  | Returns                          | Description                          |
+|-------------------------------------------|----------------------------------|--------------------------------------|
+| `read_improvement_entries(project_root)`  | `list[dict]`                    | Read all improvement files with parsed metadata (name, priority, source, phase, category, type). |
+| `read_proposal_suggestions(project_root)` | `list[dict]` or `None`          | **DEPRECATED** — reads legacy JSON format. Use `read_improvement_entries()` instead. |
+
+---
+
+## Why Markdown table, not JSON
+
+| Aspect               | Markdown table (current)        | JSON array (legacy)                |
+|----------------------|---------------------------------|------------------------------------|
+| **Human readability** | ✅ Excellent — view in any editor | ❌ Needs formatting tools          |
+| **Git diff**          | ✅ Line-level, easy to review     | ⚠️ Single-line JSON hard to diff   |
+| **Manual editing**    | ✅ Intuitive, no special tools    | ❌ Requires JSON editor            |
+| **Content separation**| ✅ Index + content in separate files | ❌ All content in one file       |
+| **File size**         | ✅ Index stays < 100 lines        | ❌ Can grow to 500+ lines          |
+
+The legacy JSON format stored the full proposal content (5 sections) inside
+each JSON object. This caused:
+- Single-file bloat (500+ lines)
+- All-or-nothing diffs (changing one proposal touched the entire file)
+- Poor readability (JSON strings with escaped newlines)
+
+The new Markdown table format solves these by keeping the index lightweight
+and storing content in individual files.
 
 ---
 
 ## Consumers
 
-All five skills that touch `proposal-suggestions.md` MUST read it as JSON:
+All skills that touch `proposal-suggestions.md` MUST read it as a Markdown
+table and follow the links to `improvements/*.md`:
 
 | Skill           | Where the format matters                                       |
 |-----------------|----------------------------------------------------------------|
-| `propose.md`    | Phase 0 (load + filter), Phase 4d (lookup phase/category), Phase 5d (count remaining) |
-| `guide-spec.md` | Phase 2 display (`cat proposal-suggestions.md`)                |
-| `guide.md`      | Priority 6 (recommend `guide-spec` if any `待创建` exists)      |
-| `status.md`     | Mode C post-archive loop check                                  |
-| `deps.md`       | Step 1b (lookup suggestion metadata for change candidates)     |
+| `guide-arch.md` | Phase 5.5 (review proposals, approve/reject)                  |
+| `guide-plan.md` | Propose phase (read `proposal-approved.md` instead)           |
+| `propose.md`    | Phase 4d (lookup phase/category from improvement file)        |
+| `dashboard`     | Pending section (count unapproved proposals)                   |
 
-The helpers in `skills/_lib/state.sh` (`read_suggestions`,
-`write_suggestions`) centralize the read/write logic so consumers don't
-re-implement JSON parsing.
-
-### Why JSON, not YAML
-
-- **Single source of truth** — no ambiguity about whether `##` is a
-  top-level header or part of a description value
-- **Built-in `json` module** in Python 3 (no PyYAML dependency for
-  this file)
-- **Trivially validated** — `python3 -c "import json; json.load(open(f))"`
-- **Machine-parseable by all 5 consumers** with the same 1-line helper
-
----
-
-## Example: writing a new entry
-
-```python
-import json
-
-entry = {
-    "name": "fix-ns-pollution",
-    "priority": "P0",
-    "source": "ADR-033",
-    "status": "待创建",
-    "phase": "phase-1",
-    "category": "arch-design",
-    "description": (
-        "## 架构依据\n"
-        "- ADR-033 §3.2: 命名空间污染修复决策\n"
-        "\n"
-        "## 范围\n"
-        "- In Scope: 8 个核心头文件\n"
-        "- Out Scope: archive/ 目录\n"
-    ),
-    "effort": "2-3天",
-    "type": "functional",
-}
-
-with open("proposal-suggestions.md", "w") as f:
-    json.dump([entry], f, ensure_ascii=False, indent=2)
-```
-
-## Example: reading and filtering
-
-```python
-import json
-
-with open("proposal-suggestions.md") as f:
-    suggestions = json.load(f)
-
-pending = [s for s in suggestions if s.get("status") == "待创建"]
-print(f"{len(pending)} pending suggestions")
-```
+The helper in `skills/_lib/state.sh::list_improvements()` centralizes the
+parsing logic so consumers don't re-implement regex extraction.
 
 ---
 
 ## See also
 
-- `skills/propose.md` Phase 0 / 2 / 5 — primary producer
-- `skills/_lib/state.sh::read_suggestions` and `::write_suggestions` — shared helpers
-- `tests/integration/test_suggestions_format.bats` — format conformance test
+- `docs/proposal-approved-format.md` — format for the approved proposals index
+- `skills/_lib/state.sh::list_improvements()` — shell helper for reading the table
+- `skills/_lib/state_reader.py::read_improvement_entries()` — Python helper for reading all improvement files
+- `skills/_lib/migrate_proposals.py` — migration script from JSON to individual files
+- `improvements/proposal-approval-pipeline.md` — the proposal that designed this format

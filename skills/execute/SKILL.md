@@ -124,7 +124,7 @@ test -f "$PLAN_FILE" || { echo "❌ 计划文件不存在"; exit 1; }
 3. **类型一致性**：后序 Task 中使用的类型/函数名是否与前面定义的一致？
 4. **文件路径**：每个 `**Files:**` 中的路径是否合理？（不要求文件已存在，但路径要有意义）
 
-**发现问题** → STOP，回到 guide-ship 重新 `skill_use("rdd-workflow/writing-plans")`。
+**发现问题** → STOP，回到 guide-ship 重新 `skill_use("rdd-workflow-writing-plans")`。
 
 **无问题** → 继续 Step 4。
 

@@ -20,7 +20,7 @@ metadata:
 3. 循环 `openspec instructions "<artifact>" --change "<name>" --json` — 获取每个 artifact 的模板、上下文、输出路径
 4. 按依赖顺序创建 artifact 文件（proposal.md → design.md → tasks.md 等）
 
-`proposal-suggestions.md` 是持久化文件（随 git 版本控制），每次执行时更新：新增扫描发现的建议，移除已创建的 propose。
+`proposal-suggestions.md` 是提案索引文件（Markdown 表格格式，随 git 版本控制），索引到 `improvements/` 目录下的完整提案内容。每次扫描发现新建议时，创建 `improvements/<name>.md` 文件并更新索引。审查通过后添加到 `proposal-approved.md`。
 
 ## 工作流位置
 
@@ -115,66 +115,32 @@ fi
 
 ---
 
-### Phase 0：加载现有建议列表
+### Phase 0：检查已创建的 changes
 
-读取已有的 `proposal-suggestions.md`（如果存在），并移除已创建为 change 的条目：
-
-使用 Python 读取 YAML 结构并过滤（比 bash 解析 YAML 更可靠）：
+读取 `improvements/` 目录和 `openspec/changes/` 目录，移除已创建的 change 对应的 improvement 条目：
 
 ```bash
-# 自动检测项目根目录（用于全局安装的技能）
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-if [ -f "proposal-suggestions.md" ]; then
-    echo "📂 加载已有的 proposal-suggestions.md"
-    # P1-7: 文件格式已规范化为 JSON 列表
-    #       用 skills/_lib/state.sh::read_suggestions 读取
-    #       用源生的 json.load / json.dump 替代 yaml.safe_load
-    #       移除已创建为 change 的条目后用 write_suggestions 写回
-    python3 -c "
-import json, os, sys, subprocess
 
-project_root = subprocess.check_output(
-    ['git', 'rev-parse', '--show-toplevel'], text=True
-).strip()
-
-try:
-    with open('proposal-suggestions.md') as f:
-        entries = json.load(f)
-
-    if not isinstance(entries, list):
-        print('⚠️  proposal-suggestions.md 顶层不是 JSON 数组，跳过加载', file=sys.stderr)
-        sys.exit(0)
-
-    kept = []
-    removed = []
-    for entry in entries:
-        if not isinstance(entry, dict):
-            continue
-        name = entry.get('name')
-        status = entry.get('status', '待创建')
-        # Keep 'skeleton' status entries even if directory exists
-        if name and os.path.isdir(f'{project_root}/openspec/changes/{name}/') and status != 'skeleton':
-            removed.append(name)
-        else:
-            kept.append(entry)
-
-    # 写回过滤后的内容（使用 ensure_ascii=False 保留中文）
-    with open('proposal-suggestions.md', 'w') as f:
-        json.dump(kept, f, ensure_ascii=False, indent=2)
-        f.write('\n')
-
-    if removed:
-        print(f'  已从建议列表移除: {\", \".join(removed)}')
-    print(f'  剩余 {len(kept)} 个建议')
-
-except (FileNotFoundError, json.JSONDecodeError) as e:
-    print(f'⚠️  proposal-suggestions.md 解析失败: {e}', file=sys.stderr)
-    print('  保留原文件，继续执行扫描阶段')
-" || echo "⚠️ Python 执行失败，跳过加载"
+# 检查 improvements/ 和 openspec/changes/ 的交集
+if [ -d "$PROJECT_ROOT/improvements" ]; then
+  for imp_file in "$PROJECT_ROOT/improvements"/*.md; do
+    [ -f "$imp_file" ] || continue
+    name=$(basename "$imp_file" .md)
+    
+    # 如果已存在对应的 change 目录，从 proposal-suggestions.md 移除索引
+    if [ -d "$PROJECT_ROOT/openspec/changes/$name" ]; then
+      # 从索引中移除（如果存在）
+      if [ -f "$PROJECT_ROOT/proposal-suggestions.md" ]; then
+        sed -i "/\[$name\](improvements\/$name.md)/d" "$PROJECT_ROOT/proposal-suggestions.md"
+        echo "  已从索引移除: $name (change 已存在)"
+      fi
+    fi
+  done
 fi
 ```
 
-> **首次执行**（文件不存在时）：跳转到 Phase 1。
+> **首次执行**（无 improvements/ 目录时）：跳转到 Phase 1。
 
 ---
 

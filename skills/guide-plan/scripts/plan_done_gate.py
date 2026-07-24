@@ -34,12 +34,13 @@ def write_plan_handoff(
         current_change: Name of first active change (or "" if none).
 
     Returns:
-        Dict matching plan-handoff schema with 5 fields:
+        Dict matching plan-handoff schema with 6 fields:
         - plan_complete_at: ISO timestamp (UTC)
         - active_changes: int
         - all_artifacts_committed: bool (always True — gating is upstream)
         - ship_started_at: None (initial value)
         - current_change: str
+        - execution_mode_decisions: dict mapping change_name -> {mode, reason}
     """
     handoff = {
         "plan_complete_at": datetime.now(timezone.utc).isoformat(),
@@ -47,6 +48,7 @@ def write_plan_handoff(
         "all_artifacts_committed": True,
         "ship_started_at": None,
         "current_change": current_change,
+        "execution_mode_decisions": _load_execution_mode_decisions(project_root),
     }
 
     state_dir = os.path.join(project_root, ".rddf", "state")
@@ -56,3 +58,20 @@ def write_plan_handoff(
         json.dump(handoff, f, indent=2)
 
     return handoff
+
+
+def _load_execution_mode_decisions(project_root: str) -> dict:
+    """Load execution_mode_recommendations from deps-analysis.json.
+    
+    Returns empty dict if deps-analysis.json missing or malformed.
+    """
+    deps_path = os.path.join(project_root, ".rddf", "state", "deps-analysis.json")
+    if not os.path.isfile(deps_path):
+        return {}
+    
+    try:
+        with open(deps_path, "r") as f:
+            data = json.load(f)
+        return data.get("execution_mode_recommendations", {})
+    except (json.JSONDecodeError, OSError):
+        return {}

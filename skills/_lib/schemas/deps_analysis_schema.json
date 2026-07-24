@@ -30,6 +30,11 @@
       "type": "object",
       "description": "Per-change analysis results. Keyed by change name.",
       "additionalProperties": { "$ref": "#/definitions/ChangeAnalysis" }
+    },
+    "execution_mode_recommendations": {
+      "type": "object",
+      "description": "Execution mode recommendations per change (ADR-0023). Keyed by change name.",
+      "additionalProperties": { "$ref": "#/definitions/ExecutionModeRecommendation" }
     }
   },
   "definitions": {
@@ -82,6 +87,50 @@
         "recommendation": {
           "type": "string",
           "description": "Human-readable execution hint (e.g. '第 1 优先', '等 v2-loop-engine 完成后')."
+        }
+      }
+    },
+    "ExecutionModeRecommendation": {
+      "type": "object",
+      "required": ["mode", "reason", "confidence", "details"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["lightweight", "worktree"],
+          "description": "Recommended execution mode. lightweight = direct branch in main repo; worktree = isolated worktree."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Human-readable explanation for the recommendation."
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"],
+          "description": "Confidence level of the recommendation."
+        },
+        "details": {
+          "type": "object",
+          "required": ["file_count", "task_count", "is_risky", "change_size"],
+          "properties": {
+            "file_count": {
+              "type": "integer",
+              "description": "Number of files to be modified (from design.md)."
+            },
+            "task_count": {
+              "type": "integer",
+              "description": "Number of tasks (from tasks.md)."
+            },
+            "is_risky": {
+              "type": "boolean",
+              "description": "Whether the change contains risky keywords (refactor, migration, etc.)."
+            },
+            "change_size": {
+              "type": "string",
+              "enum": ["small", "medium", "large"],
+              "description": "Categorized change size based on file/task counts."
+            }
+          }
         }
       }
     }

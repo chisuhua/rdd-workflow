@@ -168,7 +168,7 @@ Phase 1: scan
    │     ├── 1b: 架构差距分析（❌ / ⚠️ 项）
    │     ├── 1c: 代码 TODO/FIXME/HACK（前 30 条）
    │     └── 1d: 测试覆盖缺口（有头文件无测试）
-   └── 去重合并 → 写入 proposal-suggestions.md（JSON 数组）
+   └── 去重合并 → 创建 improvements/*.md + 更新 proposal-suggestions.md 索引
         ↓
 Phase 2: propose（用户交互核心）
    ├── 展示建议列表（按 P0/P1/P2 优先级分组）
@@ -254,7 +254,7 @@ Phase 1: plan（选择 + 准备）
    ├── 创建 branch（openspec/<name>）
    ├── [worktree 模式] git worktree add + WORKTREE VERIFICATION GATE
     ├── [轻量模式] git checkout openspec/<name>
-    └── 生成实施计划（委托 rdd-workflow/writing-plans → TDD 5 步结构）
+    └── 生成实施计划（委托 rdd-workflow-writing-plans → TDD 5 步结构）
 
 > ⚠️ **轻量模式 UX 说明**：轻量模式下 `guide-ship` 在主仓库直接切分支（`git checkout openspec/<name>`），你的工作目录会跟随分支变更。worktree 模式则在隔离目录 `.rddf/wt/<name>` 中工作，主分支不变。模式由系统自动选择，不可手动指定。
 
@@ -516,7 +516,7 @@ Roadmap Update:
 | | arch | `roadmap.md` | 受版本控制 |
 | | arch | `docs/architecture/*-gap-analysis.md` | 受版本控制 |
 | **Feature** | — | `iteration.json` (feature_view 节点) | gitignored |
-| **Change** | scan | `proposal-suggestions.md` (JSON 数组) | 受版本控制 |
+| **Change** | scan | `improvements/*.md` + `proposal-suggestions.md` (Markdown 索引) | 受版本控制 |
 | | propose | `openspec/changes/<name>/{proposal,design,tasks}.md` | 受版本控制 |
 | | propose | `openspec/changes/<name>/roadmap-meta.yaml` | 受版本控制 |
 | | plan-done | `.rddf/state/.plan-handoff.json` | gitignored |
