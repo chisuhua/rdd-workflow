@@ -4,9 +4,9 @@ description: 交互式工作流入口——扫描项目当前状态，展示可�
 license: MIT
 compatibility: Requires git 2.25+
 metadata:
-  version: "2.0"   # source-of-truth (latest semver)
+  version: "2.1"   # source-of-truth (latest semver)
   author: sisyphus
-  evolved-from: "split from guide.md v3.0; v1.1 also added rddf-session binding scan (spec 2026-07-14)"
+  evolved-from: "split from guide.md v3.0; v1.1 added rddf-session binding scan (spec 2026-07-14); v2.1 extracted entry script to scripts/guide_entry.sh"
   user-invocable: true
 ---
 
@@ -34,79 +34,29 @@ skill_use("guide")
 
 ## 扫描操作（AI 必须执行）
 
-执行以下 bash block 获取项目状态：
+v2.1 起扫描入口已抽到 `skills/guide/scripts/guide_entry.sh` (含 4-tier 路径解析 fallback,处理 `bash -c` 上下文 BASH_SOURCE 失效)。**AI 不再直接复制 64 行 bash 代码**,改为以下 1 行调用:
 
 ```bash
-case "${1:-}" in
-  --help|-h)
-    cat <<'EOF'
-guide 用法:
-  skill_use("guide")                   # 交互式菜单入口（默认）
-  skill_use("guide --json")            # 仅输出 JSON 状态（非交互,供脚本消费）
-  skill_use("guide --no-binding")      # 不扫描 rddf-session binding
-  skill_use("guide --help")            # 此帮助
-EOF
-    return 0 2>/dev/null || exit 0
-    ;;
-  --json)      OUTPUT_JSON=1; NO_BINDING=1 ;;
-  --no-binding) NO_BINDING=1 ;;
-  *)           OUTPUT_JSON=0; NO_BINDING=0 ;;
-esac
-
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]:-$0}")")/scripts/scan-state.sh"
-scan_state "$PROJECT_ROOT"
-
-# v2.1: structured recommendation from workflow_synthesizer (read-only)
-RECO_JSON=""
-ALL_OPTIONS_JSON=""
-if command -v python3 >/dev/null 2>&1; then
-  RECO_JSON=$(PY_PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
-import json, os, sys
-sys.path.insert(0, os.environ["PY_PROJECT_ROOT"])
-from skills._lib.workflow_synthesizer import synthesize
-r = synthesize(os.environ["PY_PROJECT_ROOT"])
-print(json.dumps({
-    "suggested_action": r.suggested_action,
-    "reason": r.reason,
-    "confidence": r.confidence,
-    "unblocked_changes": list(r.unblocked_changes),
-    "active_session": r.active_session,
-    "orphaned_sessions": list(r.orphaned_sessions),
-    "all_options": [
-        {"id": o.id, "label": o.label, "description": o.description,
-         "action": o.action, "group": o.group}
-        for o in r.all_options
-    ],
-}))
-' 2>/dev/null) && [ -n "$RECO_JSON" ]
-  then
-    ALL_OPTIONS_JSON=$(printf '%s' "$RECO_JSON" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin)["all_options"]))')
-    WT_ISSUES_JSON=$(printf '%s' "$RECO_JSON" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin).get("wt_issues", [])))' 2>/dev/null || echo '[]')
-    RECOMMEND=$(printf '%s' "$RECO_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["suggested_action"])')
-    REASON=$(printf '%s' "$RECO_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["reason"])')
-    CONFIDENCE=$(printf '%s' "$RECO_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["confidence"])')
-  fi
-fi
-
-# Print project state overview (for AI + user visibility)
-echo "📋 Workflow Entry — $(basename "$PROJECT_ROOT")"
-echo "   ───────────────────────────────────────────"
-echo "   roadmap.md: $([ -f "$PROJECT_ROOT/roadmap.md" ] && echo '✅' || echo '❌')"
-echo "   .arch-handoff.json: $([ -f "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" ] && echo '✅' || echo '❌')"
-echo "   .plan-handoff.json: $([ -f "$PROJECT_ROOT/.rddf/state/.plan-handoff.json" ] && echo '✅' || echo '❌')"
-if [ "${NO_BINDING:-0}" -eq 0 ]; then
-  scan_session_binding "$PROJECT_ROOT"
-fi
-
-# Output JSON if requested (non-interactive mode)
-if [ "${OUTPUT_JSON:-0}" -eq 1 ] && [ -n "$RECO_JSON" ]; then
-  echo "---BEGIN_RECO_JSON---"
-  printf '%s' "$RECO_JSON"
-  echo ""
-  echo "---END_RECO_JSON---"
-fi
+SKILL_DIR=/workspace/project/rdd-workflow/skills/guide \
+  bash -c 'source "$SKILL_DIR/scripts/guide_entry.sh" && guide_entry'
 ```
+
+支持的参数:
+- `guide_entry` (无参) — 人类可读输出
+- `guide_entry --json` — 追加 `---BEGIN_RECO_JSON---...---END_RECO_JSON---` 块(供脚本消费)
+- `guide_entry --no-binding` — 跳过 rddf-session binding 扫描
+- `guide_entry --help` — 帮助
+
+执行后导出 env vars (供 AI 解析菜单):
+- `RECOMMEND` / `REASON` / `CONFIDENCE` — 推荐项
+- `ALL_OPTIONS_JSON` — 所有菜单项 JSON 数组
+- `WT_ISSUES_JSON` — 工作树干净度问题(`[]` 表示无)
+- `BINDING_LINES` (bash 数组) — session 绑定信息
+
+完整实现见 `skills/guide/scripts/guide_entry.sh` (~180 行,含详细注释 + 4-tier fallback)。脚本内部依次调用:
+1. `scan-state.sh::scan_state()` — 13-path 决策树,产出 baseline `RECOMMEND`/`REASON`
+2. `skills/_lib/workflow_synthesizer.py::synthesize()` — 结构化推荐(若可用,覆盖 baseline;失败时回退到 scan_state 结果)
+3. `scan-state.sh::scan_session_binding()` — rddf-session binding 扫描(若未指定 `--no-binding`)
 
 **扫描后**：你（AI）将扫描输出的结构化数据（`RECO_JSON` / `ALL_OPTIONS_JSON`）解析为菜单。扫描状态变量包括：
 - `RECOMMEND` — 推荐的操作（如 `guide-plan`）
