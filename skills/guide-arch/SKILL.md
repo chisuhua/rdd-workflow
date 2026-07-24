@@ -554,13 +554,39 @@ esac
 
 ---
 
-## Phase 5.5: 提案审批
+## Phase 5.5: 提案管理 — 创建 + 审批
 
-**入口条件**：arch 阶段完成架构定义后（Phase 5 门控通过），用户选择审查提案。
+**入口条件**：arch 阶段完成架构定义后（Phase 5 门控通过），用户选择进入提案管理。
 
 **行为**：
 
-扫描 `proposal-suggestions.md` 索引表，逐一展示 `improvements/` 目录下的待讨论提案，支持批准/拒绝/延迟。
+1. **创建新改进提案** — 通过 `add-improve` 交互式创建 `improvements/<name>.md` 并注册到 `proposal-suggestions.md`
+2. **审查待讨论提案** — 扫描 `proposal-suggestions.md` 索引表，逐一展示 `improvements/` 目录下的提案，支持批准/拒绝/延迟
+
+**菜单**：
+
+```
+提案审批阶段
+
+📂 improvements/ 目录中: X 个待审查提案
+
+选择操作:
+  1. ➕  创建新提案（add-improve 交互式创建）
+  2. 📋 查看所有待审查提案
+  3. ✅ 批量批准所有提案
+  s   跳过审批，直接 arch-done
+  q   返回上级菜单
+```
+
+**选项 1（创建新提案）**：
+
+```bash
+echo "-> 启动 add-improve 创建新改进提案..."
+skill_use("add-improve")
+# add-improve 会调用 rdd-workflow-brainstorm 完成设计 → 创建 improvements/<name>.md → 注册到 proposal-suggestions.md
+echo "-> 创建完成，返回提案审批界面"
+continue  # 重新展示提案列表
+```
 
 **执行步骤**：
 

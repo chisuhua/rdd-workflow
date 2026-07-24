@@ -128,38 +128,34 @@ Plan 阶段环境检查结果：
 📋 当前活跃 changes: 0
 ✅ arch-done handoff 已验证 (硬交接)
 
-请选择:
-  1. 🔍 扫描新 change 候选（委托 propose）
-  2. ➡️  跳过扫描，直接进入 propose（使用已有 proposal-suggestions.md）
-  3. 🔄 重新检查环境
-  0. 💾 保存并退出
-  i. 其他输入
+**环境状态展示**：
+
+```
+Plan 阶段环境检查结果：
+
+✅ openspec CLI: 1.3.1 (/home/ubuntu/.npm-global/bin/openspec)
+✅ git 工作区干净
+📌 当前分支: master
+📋 ADR 数量: 3 (from arch-handoff)
+📋 Roadmap 阶段: phase-1
+📋 ADR 编号: 0001,0003,0013
+📋 当前活跃 changes: 0
+✅ arch-done handoff 已验证 (硬交接)
 ```
 
-**用户输入处理（case handler）**：
+环境检查通过后，自动进入 Phase 2 (propose)，从 `proposal-approved.md` 读取已批准提案创建 change。
 
-```bash
-case "$choice" in
-  q|quit|exit) exit 0 ;;
-  r|refresh) continue ;;  # 重新展示菜单
-  ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
-esac
-```
-
-**步骤 2：进入对应阶段**
-
-根据当前阶段跳转到对应入口。scan 完成后进入 Phase 2 (propose)。
+> **注意**：新改进提案的创建和审批在 `guide-arch` Phase 5.5 中处理。plan 阶段只消费已批准提案。
 
 ---
 
 ## Phase 2: propose
 
-**入口条件**：scan 阶段完成（proposal-suggestions.md 已生成或已存在）。
+**入口条件**：Phase 1 环境检查通过，`proposal-approved.md` 中存在已批准提案。
 
 **行为**：
 
-展示扫描结果，让用户从候选列表中选择并创建 change。本阶段**显示与执行分离**：guide-plan 负责展示候选列表和接收选择，但创建操作通过调用 `propose` 技能完成。
+展示已批准提案列表，让用户选择创建 OpenSpec change。本阶段**显示与执行分离**：guide-plan 负责展示候选列表和接收选择，但创建操作通过调用 `propose` 技能完成。
 
 **展示当前已创建 changes**：
 
@@ -178,39 +174,30 @@ echo "📋 当前已创建的 Changes:"
 done)
 ```
 
-**读取 proposal-suggestions.md**：
+**读取 proposal-approved.md**：
 
 ```bash
-if [ -f "proposal-suggestions.md" ]; then
+if [ -f "proposal-approved.md" ]; then
     echo ""
-    echo "📂 已有的建议列表 (proposal-suggestions.md)"
-    # 用 python 解析后格式化输出（而不是 cat 原始 JSON）
-    # 这样 description 字段的多行内容能正确显示
+    echo "📂 已批准提案列表 (proposal-approved.md)"
     python3 -c "
-import json, sys
+import re, sys
 try:
-    with open('proposal-suggestions.md') as f:
-        entries = json.load(f)
-    if not isinstance(entries, list):
-        print('⚠️  proposal-suggestions.md 顶层不是 JSON 数组', file=sys.stderr)
-        sys.exit(0)
-    for i, e in enumerate(entries, 1):
-        if not isinstance(e, dict):
-            continue
-        name = e.get('name', '?')
-        priority = e.get('priority', '?')
-        source = e.get('source', '?')
-        status = e.get('status', '?')
-        effort = e.get('effort', '')
-        effort_str = f' ({effort})' if effort else ''
-        print(f'  {i}. [{priority}] {name} — {source} [{status}]{effort_str}')
-except (FileNotFoundError, json.JSONDecodeError) as e:
+    with open('proposal-approved.md') as f:
+        content = f.read()
+    # Parse the approved table (before ## 已实施 section)
+    section = re.split(r'## 已实施', content)[0]
+    rows = re.findall(r'\|\s*\[([^\]]+)\]\(improvements/([^)]+)\)\s*\|\s*(\S+)\s*\|\s*(\S+)\s*\|\s*(\S+)\s*\|', section)
+    for i, (name, _, priority, date, approver) in enumerate(rows, 1):
+        print(f'  {i}. [{priority}] {name} — 批准: {date}')
+except Exception as e:
     print(f'⚠️  读取失败: {e}', file=sys.stderr)
-" 2>/dev/null || cat proposal-suggestions.md
+" 2>/dev/null || cat proposal-approved.md
 else
     echo ""
-    echo "🆕 未发现 proposal-suggestions.md，请先回到 scan 阶段扫描"
-    continue
+    echo "🆕 未发现 proposal-approved.md — 无已批准提案。"
+    echo "   请先运行 guide-arch Phase 5.5 审查并批准提案。"
+    return 1
 fi
 ```
 
@@ -253,20 +240,19 @@ show_feature_progress
   3. add-cdc-support   — 跨时钟域支持 (架构差距分析) [pending]
 
 请选择操作:
-  1. 扫描新 change 候选
-  2. 创建 change (从 ADR/TODO/测试缺口)
-  3. 填充骨架 change (fill) — 将 planned 升级为 proposed
-  4. 运行依赖分析
-  5. 查看 changes 状态
-  6. 完成变更生成 → 进入 Ship 阶段
+  1. 创建 change (从已批准提案)
+  2. 填充骨架 change (fill) — 将 planned 升级为 proposed
+  3. 运行依赖分析
+  4. 查看 changes 状态
+  5. 完成变更生成 → 进入 Ship 阶段
   0. 💾 保存并退出
   i. 手动输入 change 名称
 ```
 
-**选项 2（创建 change）执行内容**：
+**选项 1（创建 change）执行内容**：
 
 ```bash
-if [ "$choice" = "2" ]; then
+if [ "$choice" = "1" ]; then
     # 询问用户要创建哪个候选
     echo "请输入要创建的 change 名称（或编号）:"
     read -r target_name
