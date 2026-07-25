@@ -16,11 +16,11 @@
 | [auto-wave-scheduler](improvements/auto-wave-scheduler.md) | P0 | 2026-07-23 | guide-arch |
 
 
-| [fix-rddf-schema-validation](improvements/fix-rddf-schema-validation.md) | P0 | 2026-07-23 | guide-arch |
+| [fix-rddf-schema-validation](improvements/fix-rddf-schema-validation.md) | proposed | 2026-07-23 | guide-arch |
 
-| [fix-scan-state-binding](improvements/fix-scan-state-binding.md) | P0 | 2026-07-23 | guide-arch |
+| [fix-scan-state-binding](improvements/fix-scan-state-binding.md) | proposed | 2026-07-23 | guide-arch |
 
-| [fix-silent-exception](improvements/fix-silent-exception.md) | P0 | 2026-07-23 | guide-arch |
+| [fix-silent-exception](improvements/fix-silent-exception.md) | proposed | 2026-07-23 | guide-arch |
 
 | [guide-plan-noninteractive](improvements/guide-plan-noninteractive.md) | P0 | 2026-07-23 | guide-arch |
 
