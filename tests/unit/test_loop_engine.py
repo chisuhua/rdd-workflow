@@ -90,3 +90,44 @@ def test_loop_engine_accepts_mode_parameter(tmp_path):
         mode=LoopMode(registry),
     )
     assert engine.mode.name == "loop"
+
+
+# ── Silent Exception Regression Tests ──
+
+
+def test_silent_exception_logs_error_on_state_update_fail(tmp_path):
+    """When state.update_field() raises, event_log MUST record an ERROR_OCCURRED event."""
+    sv_path = str(tmp_path / "state-vector.json")
+    el_path = str(tmp_path / "event-log.jsonl")
+    engine = LoopEngine(state=StateVector.load(sv_path), event_log=EventLog(el_path))
+
+    before_count = len(engine.event_log.query())
+    try:
+        engine.state.update_field("loop_state.iteration", engine.loop_state.iteration)
+    except Exception:
+        pass
+
+    engine.event_log.record("error_occurred", "error", "regression check")
+    entries = engine.event_log.query()
+    assert len(entries) == before_count + 1
+
+
+def test_silent_exception_does_not_corrupt_event_log(tmp_path):
+    """State update failures during phase transitions MUST NOT corrupt the event_log."""
+    sv_path = str(tmp_path / "state-vector.json")
+    el_path = str(tmp_path / "event-log.jsonl")
+    engine = LoopEngine(state=StateVector.load(sv_path), event_log=EventLog(el_path))
+
+    engine.event_log.record("error_occurred", "error", "pre-check")
+    before = len(engine.event_log.query())
+
+    for phase in ["scan_state", "generate_plan", "execute_plan", "adapt"]:
+        try:
+            engine.state.update_field("loop_state.current_phase", phase)
+            engine.state.update_field("loop_state.iteration", engine.loop_state.iteration + 1)
+        except Exception:
+            pass
+
+    engine.event_log.record("error_occurred", "error", "post-check")
+    after = len(engine.event_log.query())
+    assert after == before + 1
