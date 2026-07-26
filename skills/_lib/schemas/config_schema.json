@@ -8,18 +8,23 @@
   "properties": {
     "interaction": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "mode": {
           "type": "string",
           "enum": ["loop", "menu", "hybrid"],
           "description": "Interaction mode: loop (autonomous), menu (manual), hybrid (mixed)"
+        },
+        "menu_items": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Menu items available in menu/hybrid mode"
         }
       }
     },
     "loop": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "max_iterations": {
           "type": "integer",
@@ -30,6 +35,11 @@
           "type": "integer",
           "minimum": 0,
           "description": "Maximum retries on failure per iteration (must be >= 0)"
+        },
+        "retry_backoff_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Backoff delay in seconds between retries (must be >= 0)"
         },
         "oscillation_window": {
           "type": "integer",
