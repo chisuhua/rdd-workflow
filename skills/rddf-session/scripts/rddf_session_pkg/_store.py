@@ -10,7 +10,7 @@ import pathlib
 
 from typing import Any, Callable
 
-from ._types import RddfSessionError
+from ._types import RddfSessionError, SCHEMA_PATH
 
 
 class RddfSessionStore:
@@ -21,11 +21,19 @@ class RddfSessionStore:
         self._lock_file = self._sessions_file.with_suffix(".lock")
 
     def read_unlocked(self) -> dict:
-        """Read sessions.json. Returns empty structure if missing."""
+        """Read sessions.json. Returns empty structure if missing.
+        Validates against schema when SCHEMA_PATH exists.
+        """
         if not self._sessions_file.exists():
             return {"version": 1, "sessions": []}
         with self._sessions_file.open("r") as f:
-            return json.load(f)
+            data = json.load(f)
+        if SCHEMA_PATH.exists():
+            import jsonschema
+            with SCHEMA_PATH.open("r") as schema_f:
+                schema = json.load(schema_f)
+            jsonschema.validate(instance=data, schema=schema)
+        return data
 
     def atomic_write(self, data: dict) -> None:
         """Write sessions.json atomically (write-to-tmp + rename)."""

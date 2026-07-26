@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
-SCHEMA_PATH = Path(__file__).resolve().parent.parent / "schemas" / "sessions_schema.json"
+SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent.parent / "_lib" / "schemas" / "sessions_schema.json"
 DEFAULT_HEARTBEAT_TIMEOUT_SECONDS = 30 * 60  # 30 minutes
 HEARTBEAT_REFRESH_THRESHOLD_SECONDS = 5 * 60  # 5 minutes
 LOCK_TIMEOUT_SECONDS = 5.0

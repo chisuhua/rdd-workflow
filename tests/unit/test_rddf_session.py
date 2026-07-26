@@ -311,3 +311,68 @@ def test_heartbeat_config_illegal_env_fallback(monkeypatch):
     config = HeartbeatConfig.from_env()
     assert config.timeout_seconds == 1800
     assert config.refresh_threshold_seconds == 300
+
+
+# ── Schema Validation Tests ──
+
+
+def test_validate_legal_session(sessions_file):
+    """Legal sessions.json MUST pass schema validation without error."""
+    legal_data = {
+        "version": 1,
+        "sessions": [
+            {
+                "session_id": "rds_aaaabbbbcccc",
+                "kind": "stage_plan",
+                "owner_opencode_session_id": "ses_test",
+                "state": "active",
+                "started_at": "2026-07-26T00:00:00Z",
+                "last_heartbeat": "2026-07-26T00:05:00Z",
+            }
+        ],
+    }
+    sessions_file.write_text(json.dumps(legal_data))
+    c = RddfSessionCoordinator(sessions_file=str(sessions_file))
+    sessions = c.list_sessions()
+    assert len(sessions) == 1
+
+
+def test_validate_missing_required_field(sessions_file):
+    """Missing required field (session_id) MUST raise ValidationError."""
+    invalid_data = {
+        "version": 1,
+        "sessions": [
+            {
+                "kind": "stage_plan",
+                "owner_opencode_session_id": "ses_test",
+                "state": "active",
+                "started_at": "2026-07-26T00:00:00Z",
+                "last_heartbeat": "2026-07-26T00:05:00Z",
+            }
+        ],
+    }
+    sessions_file.write_text(json.dumps(invalid_data))
+    c = RddfSessionCoordinator(sessions_file=str(sessions_file))
+    with pytest.raises(jsonschema.ValidationError):
+        c.list_sessions()
+
+
+def test_validate_invalid_field_type(sessions_file):
+    """Invalid field type (state is integer, not string) MUST raise ValidationError."""
+    invalid_data = {
+        "version": 1,
+        "sessions": [
+            {
+                "session_id": "rds_aaaabbbbcccc",
+                "kind": "stage_plan",
+                "owner_opencode_session_id": "ses_test",
+                "state": 42,
+                "started_at": "2026-07-26T00:00:00Z",
+                "last_heartbeat": "2026-07-26T00:05:00Z",
+            }
+        ],
+    }
+    sessions_file.write_text(json.dumps(invalid_data))
+    c = RddfSessionCoordinator(sessions_file=str(sessions_file))
+    with pytest.raises(jsonschema.ValidationError):
+        c.list_sessions()
