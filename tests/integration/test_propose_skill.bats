@@ -33,3 +33,13 @@ setup() {
 @test "propose_skill auto-commit is gated by THIS_SESSION_CREATED" {
   grep -q 'THIS_SESSION_CREATED' "$f"
 }
+
+@test "propose_skill Phase 3 has parent-feature prompt" {
+  grep -q '归属.*feature\|parent.feature\|PARENT_FEATURE' "$f"
+  # Verify it's in Phase 3 section (between "Phase 3" and "Phase 4")
+  phase3_start=$(grep -n '^### Phase 3' "$f" | head -1 | cut -d: -f1)
+  phase4_start=$(grep -n '^### Phase 4' "$f" | head -1 | cut -d: -f1)
+  if [ -n "$phase3_start" ] && [ -n "$phase4_start" ]; then
+    sed -n "${phase3_start},${phase4_start}p" "$f" | grep -q '归属.*feature\|parent.feature\|PARENT_FEATURE'
+  fi
+}

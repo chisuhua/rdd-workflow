@@ -8,30 +8,54 @@
 #   - update_iteration_proposed
 #
 # Functions exported:
-#   - propose_create_change <name> --skeleton <phase> <category> <priority>
+#   - propose_create_change <name> --skeleton <phase> <category> <priority> [--parent-feature <name>]
 #       Skeleton branch: writes minimal proposal.md + roadmap-meta.yaml,
 #       updates iteration.json (status=planned). Matches original skeleton
 #       branch at propose.md lines 486-551.
+#       --parent-feature <name>: optional, sets PARENT_FEATURE env var
+#       (takes precedence over existing PARENT_FEATURE env var)
 #
-#   - propose_finalize_change <name> <phase> <category> <priority> <valid_categories>
+#   - propose_finalize_change <name> <phase> <category> <priority> <valid_categories> [--parent-feature <name>]
 #       Full create finalization: writes roadmap-meta.yaml, updates
 #       roadmap-state.json, updates iteration.json (status=proposed).
 #       Matches original full branch at propose.md lines 617-760.
+#       --parent-feature <name>: optional, same as above
 #       Note: openspec new change + baseline validation (lines 553-575)
 #       are NOT extracted — they remain in propose.md inline because they
 #       orchestrate external openspec CLI calls.
 #       The artifact creation loop at lines 580-608 (HALF-IMPLEMENTED
 #       pseudo-code) is preserved as-is in propose.md.
 
-# propose_create_change <name> --skeleton <phase> <category> <priority>
+# propose_create_change <name> --skeleton <phase> <category> <priority> [--parent-feature <name>]
 propose_create_change() {
-  local name="$1"
-  local mode="$2"
-  local current_phase="$3"
-  local category="$4"
-  local priority="$5"
+  local parent_feature=""
+  local positional=()
+  # Parse all args: extract --parent-feature, collect rest as positional
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --parent-feature)
+        parent_feature="$2"
+        shift 2
+        ;;
+      *)
+        positional+=("$1")
+        shift
+        ;;
+    esac
+  done
+
+  local name="${positional[0]}"
+  local mode="${positional[1]}"
+  local current_phase="${positional[2]}"
+  local category="${positional[3]}"
+  local priority="${positional[4]}"
 
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+
+  # CLI --parent-feature takes precedence over PARENT_FEATURE env var
+  if [ -n "$parent_feature" ]; then
+    export PARENT_FEATURE="$parent_feature"
+  fi
 
   if [ "$mode" = "--skeleton" ]; then
     PROJECT_ROOT="$PROJECT_ROOT" python3 <<PYEOF
@@ -55,15 +79,36 @@ PYEOF
   fi
 }
 
-# propose_finalize_change <name> <phase> <category> <priority> <valid_categories>
+# propose_finalize_change <name> <phase> <category> <priority> <valid_categories> [--parent-feature <name>]
 propose_finalize_change() {
-  local name="$1"
-  local current_phase="$2"
-  local category="$3"
-  local priority="$4"
-  local valid_categories="$5"
+  local parent_feature=""
+  local positional=()
+  # Parse all args: extract --parent-feature, collect rest as positional
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --parent-feature)
+        parent_feature="$2"
+        shift 2
+        ;;
+      *)
+        positional+=("$1")
+        shift
+        ;;
+    esac
+  done
+
+  local name="${positional[0]}"
+  local current_phase="${positional[1]}"
+  local category="${positional[2]}"
+  local priority="${positional[3]}"
+  local valid_categories="${positional[4]}"
 
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+
+  # CLI --parent-feature takes precedence over PARENT_FEATURE env var
+  if [ -n "$parent_feature" ]; then
+    export PARENT_FEATURE="$parent_feature"
+  fi
 
   PROJECT_ROOT="$PROJECT_ROOT" CURRENT_PHASE="$current_phase" \
     VALID_CATEGORIES="$valid_categories" \

@@ -400,6 +400,33 @@ else:
 | 跳过（未选择） | 直接进入 Phase 5，跳过创建 |
 | Phase 4 完成后回到 Phase 3 继续选择 | 支持多次选择，直到用户完成 |
 
+**Phase 3.5：归属 feature 提示（可选）**
+
+用户选择 propose 后、进入 Phase 4 之前，可选询问是否归属到 feature 组：
+
+```
+将此 change 归属到哪个 feature 组？
+（可选，直接回车跳过 - 保持向后兼容）
+> 
+```
+
+处理逻辑：
+
+| 用户输入 | 行为 |
+|---------|------|
+| 输入 feature 名称 | 设置 `PARENT_FEATURE=<value>`，传给 Phase 4 |
+| 直接回车（空） | `PARENT_FEATURE` 保持未设置（向后兼容） |
+| 输入 `__ungrouped__` | 拒绝："保留字，请输入其他名称或留空"，重新提示 |
+
+```bash
+# Optional: set PARENT_FEATURE to register this change under a feature group.
+# Rejected values: "__ungrouped__" (reserved synthetic key per feature_view.py::UNGROUPED).
+# When user presses Enter (empty), PARENT_FEATURE stays unset (backward compatible).
+# When user provides a value, set PARENT_FEATURE env var for Phase 4 consumption.
+# Phase 4 functions (propose_create_change / propose_finalize_change) also accept
+# --parent-feature CLI arg which takes precedence over the env var.
+```
+
 ---
 
 ### Phase 4：串行创建每个 propose
