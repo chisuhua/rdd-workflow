@@ -66,7 +66,7 @@ scan_state() {
     # 1.5: arch-done incomplete — arch-handoff exists but ADR missing
     local ADR_COUNT=0
     if command -v python3 >/dev/null 2>&1 && [ -f "$ARCH_HANDOFF" ]; then
-      ADR_COUNT=$(python3 -c "import json; d=json.load(open('$ARCH_HANDOFF')); print(d.get('adr_count',0))" 2>/dev/null || echo 0)
+      ADR_COUNT=$(python3 -c "import json; d=json.load(open('$ARCH_HANDOFF')); v=d.get('adr_count',0); print(v if isinstance(v,int) else len(v))" 2>/dev/null || echo 0)
     fi
     if [ "$ADR_COUNT" -lt 1 ]; then
       RECOMMEND="guide-arch"
@@ -83,7 +83,7 @@ scan_state() {
     # 2.5: ghost plan-handoff — file exists but no active changes
     local ACTIVE_COUNT=0
     if command -v python3 >/dev/null 2>&1 && [ -f "$PLAN_HANDOFF" ]; then
-      ACTIVE_COUNT=$(python3 -c "import json; d=json.load(open('$PLAN_HANDOFF')); print(d.get('active_changes',0))" 2>/dev/null || echo 0)
+      ACTIVE_COUNT=$(python3 -c "import json; d=json.load(open('$PLAN_HANDOFF')); v=d.get('active_changes',0); print(v if isinstance(v,int) else len(v))" 2>/dev/null || echo 0)
     fi
     if [ "$ACTIVE_COUNT" -eq 0 ]; then
       RECOMMEND="guide-ship"
