@@ -1,4 +1,4 @@
-# skills/_lib/ship_plan.sh
+# skills/guide-ship/scripts/ship_plan.sh
 # Phase 1 of guide-ship.md extracted into a reusable helper.
 # Was a 123-line inline bash block in guide-ship.md Phase 1 (lines 144-268 + 270-348).
 #
@@ -42,10 +42,29 @@
 #       to call skills._lib.iteration. Graceful exit on import failure.
 #       Mirrors the original v2.0.2 iteration hook.
 #
+#   - run_ship_phase1 <project_root> <change_name>
+#       Thin orchestrator replacing the 30-line inline block at guide-ship.md
+#       SKILL.md L116-L145. MUST be invoked on the SAME LINE as the `source`
+#       of this file (AI platforms may split markdown bash blocks into
+#       multiple bash processes; a separate call line would hit
+#       "run_ship_phase1: command not found"). Sets globals MODE, WT_PATH,
+#       PLAN_STEP_COUNT for downstream lines. Uses `return 1` (NOT `exit 1`)
+#       on every failure — same lesson as plan_done_gate.sh's
+#       PLAN_GATE_0_SKIPPED sentinel fix; exit would kill the AI host shell.
+#
 # Helpers required (provided by skills/_lib/worktree.sh):
 #   - wt_path_for_branch <name>
 #   - find_default_branch
 #   - main_repo_root
+
+# Guard against direct execution (sourced-only). Same pattern as
+# skills/_lib/discover-arch-artifacts.sh L27-30 — uses [ not [[ to match
+# the existing precedent. Direct execution produces a clear error instead
+# of the cryptic "command not found" downstream callers would otherwise see.
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  echo "ERROR: ship_plan.sh defines bash functions only. Source it instead: source skills/guide-ship/scripts/ship_plan.sh" >&2
+  exit 1
+fi
 
 # _LIB_DIR points to skills/_lib/ (shared library location)
 _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
@@ -318,4 +337,57 @@ except Exception as e:
     print(f"⚠️  iteration.json 更新失败 (非致命): {e}", file=sys.stderr)
     sys.exit(0)
 ' 2>&1 | grep -v "^$" || true
+}
+
+# run_ship_phase1 <project_root> <change_name>
+#   Thin orchestrator for guide-ship.md Phase 1 (was the 30-line inline
+#   block at SKILL.md L116-L145). Call it on the SAME LINE as `source`
+#   of this file:
+#     source ".../ship_plan.sh" && run_ship_phase1 "$PROJECT_ROOT" "$CHANGE_NAME"
+#   AI platforms may split markdown bash blocks into multiple bash
+#   processes; a separate call line would hit "run_ship_phase1: command
+#   not found".
+#
+#   Sets globals MODE / WT_PATH / PLAN_STEP_COUNT for downstream lines
+#   in the same shell; echoes three capture-friendly summary lines.
+#
+#   All failures use `return 1`, NEVER `exit 1`: this file is sourced,
+#   and `exit` would kill the AI host shell mid-workflow (same bug
+#   class as the plan_done_gate.sh exit → PLAN_GATE_0_SKIPPED fix).
+run_ship_phase1() {
+  local project_root="$1"
+  local change_name="$2"
+
+  if [ -z "$project_root" ] || [ -z "$change_name" ]; then
+    echo "❌ 用法: run_ship_phase1 <project_root> <change_name>" >&2
+    return 1
+  fi
+
+  # 0) HANDOFF STATE READ (P2-5) - read .plan-handoff.json, update ship_started_at
+  read_plan_handoff "$project_root"
+
+  # 1) COMMIT GATE — return 1, NOT exit 1 (see header note)
+  if ! check_artifacts_committed "$project_root" "$change_name"; then
+    echo "请先 commit openspec/changes/$change_name/ 后重试" >&2
+    return 1
+  fi
+
+  # 2) PARALLEL CONFLICT DETECTION → execution mode
+  MODE=$(detect_execution_mode "$project_root" "$change_name") || return 1
+
+  # 3) MODE-SPECIFIC SETUP + WORKTREE VERIFICATION GATE
+  WT_PATH=$(setup_execution_workspace "$project_root" "$change_name" "$MODE") || return 1
+
+  # 4) PLAN GENERATION (calls skill_use "rdd-workflow-writing-plans" internally;
+  #    honors SKIP_PROMETHEUS_PLANNING=yes to write placeholder plan file)
+  PLAN_STEP_COUNT=$(generate_implementation_plan "$project_root" "$change_name" "$MODE") || return 1
+
+  # 5) iteration.json HOOK (status → in_worktree)
+  record_iteration_status "$project_root" "$change_name" "$MODE" "$WT_PATH" "$PLAN_STEP_COUNT"
+
+  # Globals for same-shell downstream lines; echo 3 lines as capture-friendly summary
+  export MODE WT_PATH PLAN_STEP_COUNT
+  echo "MODE=$MODE"
+  echo "WT_PATH=$WT_PATH"
+  echo "PLAN_STEP_COUNT=$PLAN_STEP_COUNT"
 }
