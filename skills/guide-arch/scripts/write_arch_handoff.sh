@@ -43,4 +43,24 @@ write_arch_handoff() {
   DISCOVERED_ARCH_TRIED="${DISCOVERED_ARCH_TRIED:-0}" \
   ROADMAP_EXISTS_BOOL="$ROADMAP_EXISTS_BOOL" \
   python3 "$SCRIPT_DIR/write_arch_handoff_env.py"
+
+  # ── reflect_engine(arch): post-gate reflection hook ──
+  # Non-blocking: failures here never affect the handoff write result.
+  # Arch phase is log-only: friction signals are written to
+  # .rddf/state/reflect-friction.log for future analysis.
+  if [ "${SKIP_WORKFLOW_REFLECTION:-}" != "1" ]; then
+    PROJECT_ROOT="$PROJECT_ROOT" python3 -c "
+import os, sys
+root = os.environ.get('PROJECT_ROOT', '.')
+sys.path.insert(0, root)
+try:
+    from skills._lib.reflect_engine import ReflectEngine
+    engine = ReflectEngine(phase='arch', project_root=root, timeout=10)
+    result = engine.analyze(failures=[])
+    if result.action == 'log_friction':
+        pass  # arch phase silently logs friction
+except Exception:
+    pass  # non-blocking
+" 2>/dev/null || true
+  fi
 }

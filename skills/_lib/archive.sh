@@ -313,6 +313,37 @@ archive_change() {
   fi
 
   echo "✅ $name 已归档"
+
+  # ── reflect_engine(ship): post-archive reflection hook ──
+  # Non-blocking: failures here never affect the archive result.
+  # Ship phase triggers on any unrecovered failure or execute error.
+  if [ "${SKIP_WORKFLOW_REFLECTION:-}" != "1" ]; then
+    local reflect_root
+    reflect_root="${main_root:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+    REFLECT_ROOT="$reflect_root" python3 -c "
+import os, sys, json
+root = os.environ.get('REFLECT_ROOT', '.')
+sys.path.insert(0, root)
+try:
+    from skills._lib.reflect_engine import ReflectEngine
+    failures = []
+    event_log_path = os.path.join(root, '.rddf', 'state', 'event_log.json')
+    if os.path.isfile(event_log_path):
+        with open(event_log_path) as f:
+            events = json.load(f)
+        for ev in events[-20:]:
+            if ev.get('type') in ('unrecovered_failure', 'execute_error'):
+                failures.append(ev)
+    engine = ReflectEngine(phase='ship', project_root=root, timeout=10)
+    result = engine.analyze(failures=failures)
+    if result.action == 'propose_issue':
+        print(f'🔍 Reflect: Ship phase detected failures.')
+        print(f'   Fingerprint: {result.fingerprint}')
+except Exception:
+    pass  # non-blocking
+" 2>/dev/null || true
+  fi
+
   return 0
 }
 

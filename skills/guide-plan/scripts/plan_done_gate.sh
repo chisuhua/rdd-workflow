@@ -115,11 +115,39 @@ PYEOF
   done); then
       echo "  ✅ 所有 change 的 artifacts 已提交"
   else
-      echo "  ❌ 失败: 存在未提交 artefacts"
+      echo "❌ 失败: 存在未提交 artefacts"
       echo "     请回到 propose 阶段完成 artifacts 创建并提交"
       return 1
   fi
   echo ""
+
+  # ── reflect_engine(plan): post-gate reflection hook ──
+  # Non-blocking: failures here never affect the gate decision.
+  # Plan phase triggers when the same root cause appears >= 2 times.
+  if [ "${SKIP_WORKFLOW_REFLECTION:-}" != "1" ]; then
+    PROJECT_ROOT="$PROJECT_ROOT" python3 -c "
+import os, sys, json
+root = os.environ.get('PROJECT_ROOT', '.')
+sys.path.insert(0, root)
+try:
+    from skills._lib.reflect_engine import ReflectEngine
+    failures = []
+    event_log_path = os.path.join(root, '.rddf', 'state', 'event_log.json')
+    if os.path.isfile(event_log_path):
+        with open(event_log_path) as f:
+            events = json.load(f)
+        for ev in events[-20:]:
+            if ev.get('type') == 'gate_fail' and ev.get('gate') == 'plan-done':
+                failures.append(ev)
+    engine = ReflectEngine(phase='plan', project_root=root, timeout=10)
+    result = engine.analyze(failures=failures)
+    if result.action == 'propose_issue':
+        print(f'🔍 Reflect: Detected {len(failures)} plan-done failures.')
+        print(f'   Fingerprint: {result.fingerprint}')
+except Exception:
+    pass  # non-blocking
+" 2>/dev/null || true
+  fi
 }
 
 write_plan_handoff() {
