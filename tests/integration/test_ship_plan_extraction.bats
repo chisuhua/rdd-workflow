@@ -39,7 +39,10 @@ REPLACED_RANGE="144,348p"
 @test "guide-ship.md Phase 1 sources and uses ship_plan.sh helpers" {
   [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
   grep -nE 'source .*scripts/ship_plan.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
-  grep -nE 'detect_execution_mode|setup_execution_workspace|generate_implementation_plan|record_iteration_status' "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  # After run_ship_phase1 extraction (see test_ship_phase1.bats), the 5 helper
+  # calls are no longer inlined in SKILL.md — the only remaining reference is
+  # the single-line `source && run_ship_phase1` invocation.
+  grep -nE 'source .*scripts/ship_plan\.sh" && run_ship_phase1' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
 @test "guide-ship.md Phase 1 no longer inlines COMMIT GATE logic" {

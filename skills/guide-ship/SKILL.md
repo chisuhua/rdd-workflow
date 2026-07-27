@@ -38,7 +38,7 @@ skill_use("guide-ship")   # 无参数版本
 ```bash
 # rddf-session 入口 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
 # stage_ship parent: latest stage_plan (auto-resolved by helper)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_hooks.sh"
+source "$PROJECT_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
 rddf_session_hook_entry stage_ship guide-ship ship-phase archive-all
 ```
 
@@ -107,7 +107,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
+source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -115,40 +115,20 @@ handle_invalid_choice "$choice"
 
 ```bash
 # === Phase 1: thin orchestrator - heavy lifting in scripts/ship_plan.sh ===
-# Skip orchestrator via SKIP_PROMETHEUS_PLANNING=yes (escape hatch; not recommended)
+# Skip plan generation via SKIP_PROMETHEUS_PLANNING=yes (escape hatch; not recommended)
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 CHANGE_NAME="${CHANGE_NAME:-fix-ns-pollution}"  # default for documentation
 
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_plan.sh"
-
-# 0) HANDOFF STATE READ (P2-5) - read .plan-handoff.json, update ship_started_at
-read_plan_handoff "$PROJECT_ROOT"
-
-# 1) COMMIT GATE
-check_artifacts_committed "$PROJECT_ROOT" "$CHANGE_NAME" || {
-  echo "请先 commit openspec/changes/$CHANGE_NAME/ 后重试"
-  exit 1
-}
-
-# 2) PARALLEL CONFLICT DETECTION → execution mode
-MODE=$(detect_execution_mode "$PROJECT_ROOT" "$CHANGE_NAME")
-
-# 3) MODE-SPECIFIC SETUP + WORKTREE VERIFICATION GATE
-WT_PATH=$(setup_execution_workspace "$PROJECT_ROOT" "$CHANGE_NAME" "$MODE")
-
-# 4) PLAN GENERATION (calls skill_use "rdd-workflow-writing-plans" internally;
-#    honors SKIP_PROMETHEUS_PLANNING=yes to write placeholder plan file)
-PLAN_STEP_COUNT=$(generate_implementation_plan "$PROJECT_ROOT" "$CHANGE_NAME" "$MODE")
-
-# 5) iteration.json HOOK (status → in_worktree)
-record_iteration_status "$PROJECT_ROOT" "$CHANGE_NAME" "$MODE" "$WT_PATH" "$PLAN_STEP_COUNT"
+# source 与调用必须同一行: AI 平台可能把代码块拆到多个 bash 进程,
+# 拆行会导致 "run_ship_phase1: command not found" (与 detect_execution_mode 同款根因)
+source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_plan.sh" && run_ship_phase1 "$PROJECT_ROOT" "$CHANGE_NAME"
 ```
 
 **v2.1: wave scheduler entry check**（入口扫描可推进的 changes）：
 
 ```bash
 # v2.1: wave scheduler entry check - suggest changes ready to advance
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/wave_scheduler_hooks.sh"
+source "$PROJECT_ROOT/skills/_lib/wave_scheduler_hooks.sh"
 wave_scheduler_entry_check "$PROJECT_ROOT" "guide-ship"
 ```
 
@@ -173,7 +153,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
+source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -241,7 +221,7 @@ fi
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
+source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -255,7 +235,7 @@ handle_invalid_choice "$choice"
 
 ```bash
 # Round A: extracted to _lib/ship_monitor.sh (L260-L315, ~54 lines)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_monitor.sh"
+source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_monitor.sh"
 run_ship_monitor
 ```
 
@@ -289,7 +269,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
+source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -434,7 +414,7 @@ i. 手动输入新 change 名称
 
 ```bash
 # === Phase 2.5: thin orchestrator — heavy lifting in scripts/ship_review.sh ===
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_review.sh"
+source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_review.sh"
 handle_review_action "$PROJECT_ROOT" "$CHANGE_NAME" "$WT_PATH" "$choice"
 ```
 
@@ -482,7 +462,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
+source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -490,7 +470,7 @@ handle_invalid_choice "$choice"
 
 ```bash
 # === Phase 3: thin orchestrator — heavy lifting in scripts/ship_archive.sh ===
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_archive.sh"
+source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_archive.sh"
 
 ARCHIVE_MODE=$(detect_archive_mode "$PROJECT_ROOT" "$CHANGE_NAME")
 echo "🔍 归档模式: $ARCHIVE_MODE"
@@ -503,7 +483,7 @@ archive_change_for_mode "$PROJECT_ROOT" "$CHANGE_NAME" "$ARCHIVE_MODE"
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
+source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -513,7 +493,7 @@ handle_invalid_choice "$choice"
 
 ```bash
 # rddf-session heartbeat refresh (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_hooks.sh"
+source "$PROJECT_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
 rddf_session_hook_heartbeat stage_ship "$CHANGE_NAME"
 ```
 
@@ -532,7 +512,7 @@ rddf_session_hook_heartbeat stage_ship "$CHANGE_NAME"
 # Phase 3 post-archive: wave scheduler hook (v2.1) - supersedes post_archive_fill.sh
 # WaveScheduler detects both planned (wave=fill) AND proposed (wave=ship) changes
 # whose blockers have resolved. post_archive_fill.sh only handled planned.
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/wave_scheduler_hooks.sh"
+source "$PROJECT_ROOT/skills/_lib/wave_scheduler_hooks.sh"
 wave_scheduler_post_archive "$PROJECT_ROOT" "$CHANGE_NAME"
 ```
 
@@ -567,7 +547,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
+source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
@@ -584,7 +564,7 @@ handle_invalid_choice "$choice"
 ```bash
 # === Phase 4: thin orchestrator - heavy lifting in scripts/ship_cleanup.sh ===
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_cleanup.sh"
+source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_cleanup.sh"
 cleanup_worktrees_and_branches "$PROJECT_ROOT"
 ```
 
@@ -600,7 +580,7 @@ Triggered when all committed changes have been archived (or no changes remain).
 # rddf-session 关闭 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
 # Documented behavior change (P3-4c): ship now prints 'not found, skipping'
 # when sessions.json missing, consistent with arch/plan close.
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_hooks.sh"
+source "$PROJECT_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
 rddf_session_hook_close stage_ship ship-done guide-ship
 ```
 
@@ -608,7 +588,7 @@ rddf_session_hook_close stage_ship ship-done guide-ship
 
 ```bash
 # Phase 5 loop check - extracted to scripts/ship_done.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_done.sh"
+source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_done.sh"
 check_remaining_work "$PROJECT_ROOT"
 ```
 
@@ -616,6 +596,6 @@ check_remaining_work "$PROJECT_ROOT"
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_case_handler.sh"
+source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```

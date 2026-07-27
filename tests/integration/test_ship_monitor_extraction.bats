@@ -21,12 +21,14 @@ load ../test_helper
 
 @test "ship_monitor: guide-ship.md inline block L260-L315 removed" {
   [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
-  # The old inline bash block is replaced. The replacement sits at ~L260-L264.
-  # Scan the narrow post-replacement range. Don't confuse with the unrelated
-  # LAST_CHECK= in the "选项 7（刷新进度）" documentation block at a later line.
-  ! sed -n '258,270p' "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -q 'LAST_CHECK='
+  # The old inline bash block is replaced. After run_ship_phase1 extraction
+  # compressed Phase 1 by 23 lines (L116-145 → L116-122), this range shifted
+  # from L258-L270 to L235-L247. The replacement thin call (source +
+  # run_ship_monitor) sits there. Don't confuse with the unrelated menu item
+  # "7. 🔄 刷新进度（重新读取所有 tasks.md）" at L262.
+  ! sed -n '235,247p' "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -q 'LAST_CHECK='
   # The old code comment about reading tasks.md progress must be gone from this range
-  ! sed -n '258,270p' "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -q '读取所有 tasks.md'
+  ! sed -n '235,247p' "$REPO_ROOT/skills/guide-ship/SKILL.md" | grep -q '读取所有 tasks.md'
 }
 
 @test "ship_monitor: guide-ship.md sources and calls helper" {
