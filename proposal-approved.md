@@ -27,6 +27,11 @@
 
 | [add-propose-content-review](improvements/add-propose-content-review.md) | P1 | 2026-07-23 | guide-arch |
 
+> **supersedes** (2026-07-28): 原始设计（propose Phase 4 自动末尾 + 写 `.rddf/state/propose-review.json`）已被后续 commits 修订：
+> - `b4ad917` — relocate to arch Phase 5.5 human-in-loop 节点
+> - `a99017b` — refine wording `修复` → `修订`（关联提案 add-change-content-review）
+> - 当前最终设计：arch Phase 5.5 在 suggestions→approved 迁移界面 y/n/d/s 决策前，Oracle 终端展示 3 级报告（pass/warn/block），不持久化。已实现的孤儿 `skills/_lib/propose_content_review.py` 已删除（`311d497`）。
+
 | [add-rddf-concurrency-tests](improvements/add-rddf-concurrency-tests.md) | P1 | 2026-07-23 | guide-arch |
 
 | [add-session-progress-view](improvements/add-session-progress-view.md) | P1 | 2026-07-23 | guide-arch |
