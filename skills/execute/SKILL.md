@@ -53,7 +53,7 @@ worktree (openspec/<name>): 本技能在此执行
 
 ```bash
 # Round A: extracted to _lib/select_worktree.sh (L54-L168, ~113 lines)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+SCRIPT_DIR="$PROJECT_ROOT/skills/execute"
 if [ -f "$SCRIPT_DIR/scripts/select_worktree.sh" ]; then
   source "$SCRIPT_DIR/scripts/select_worktree.sh"
   source "$SCRIPT_DIR/scripts/update_roadmap_progress.sh"
