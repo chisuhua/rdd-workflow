@@ -26,6 +26,7 @@
 | [fix-scan-state-binding](improvements/fix-scan-state-binding.md) | P0 | dashboard spec | 2026-07-21 |
 | [add-parent-feature-param](improvements/add-parent-feature-param.md) | P0 | Oracle 架构分析 | 2026-07-21 |
 | [add-propose-content-review](improvements/add-propose-content-review.md) | P1 | Oracle 架构分析 | 2026-07-21 |
+| [add-change-content-review](improvements/add-change-content-review.md) | P1 | add-propose-content-review 讨论 | 2026-07-27 |
 | [archive-iteration-sync](improvements/archive-iteration-sync.md) | P0 | Session 复盘 | 2026-07-21 |
 | [guide-cross-validate](improvements/guide-cross-validate.md) | P1 | Session 复盘 | 2026-07-21 |
 | [agent-completion-contract](improvements/agent-completion-contract.md) | P1 | Session 复盘 | 2026-07-21 |
@@ -56,3 +57,5 @@
 | [fix-deps-render-empty-candidates](improvements/fix-deps-render-empty-candidates.md) | P2 | 2026-07-27 会话复盘 | 2026-07-27 |
 | [fix-ship-lightweight-wt-path-pollution](improvements/fix-ship-lightweight-wt-path-pollution.md) | P2 | 2026-07-27 会话复盘 | 2026-07-27 |
 | [fix-plan-done-gate-zero-stale-count](improvements/fix-plan-done-gate-zero-stale-count.md) | P2 | 2026-07-27 会话复盘 | 2026-07-27 |
+| [add-full-regression-gate](improvements/add-full-regression-gate.md) | P0 | UsrLinuxEmu 回归复盘 2026-07-27 | 2026-07-27 |
+| [add-openspec-gate](improvements/add-openspec-gate.md) | P0 | UsrLinuxEmu backfill 事件复盘 2026-07-27 | 2026-07-27 |
