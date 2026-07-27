@@ -31,9 +31,13 @@ render_deps_report() {
 
   # Convert CANDIDATES string to Python list format
   local candidates_py="[$(echo "$CANDIDATES" | sed "s/[^ ]*/'&'/g" | sed "s/''//" | sed "s/',' /', '/g")]"
-  # If CANDIDATES is empty, use empty list
+  # If CANDIDATES is empty, fall back to reading deps-candidates.json
   if [ -z "$CANDIDATES" ]; then
-    candidates_py="[]"
+    local deps_input="$PROJECT_ROOT/.rddf/state/.deps-candidates.json"
+    CANDIDATES=$(python3 -c "import json; d=json.load(open('$deps_input')); print(' '.join(d.get('candidates',[])))" 2>/dev/null)
+    if [ -z "$CANDIDATES" ]; then
+      candidates_py="[]"
+    fi
   fi
 
   PROJECT_ROOT="$PROJECT_ROOT" \

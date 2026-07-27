@@ -221,11 +221,11 @@ setup_execution_workspace() {
     echo "$wt_path"
   else
     # Lightweight mode: switch branch in main repo
-    if ! git -C "$project_root" checkout "openspec/$change_name" 2>/dev/null; then
+    if ! git -C "$project_root" checkout "openspec/$change_name" >/dev/null 2>&1; then
       echo "❌ 切换分支失败: openspec/$change_name" >&2
       return 1
     fi
-    echo "⚡ 轻量模式: 已切换到 openspec/$change_name, 跳过 worktree" >&2
+    echo "⚡ 轻量模式: 已切换到 openspec/$change_name, 跳过 worktree" >&2 >&2
     echo "$project_root"
   fi
 }
