@@ -1,0 +1,44 @@
+## Why
+
+- `state.sh::append_approved` 函数内部 `echo "✅ $name added to approved list"`
+- 外部调用循环也有 `echo "  ✅ $name"`
+- 导致每次批准都输出两行重复信息
+
+## What Changes
+
+- **In Scope**:
+  - 移除 `append_approved` 内部的成功 echo（函数应返回状态码，由调用方决定输出格式）
+  - 或者：将内部 echo 改为 `>&2` 输出到 stderr，保持调用方输出干净
+- **Out Scope**:
+  - 不修改 `list_approved` / `list_improvements` 等其他函数
+
+## 关键场景
+
+- GIVEN 批量批准 10 个提案, WHEN 调用 append_approved, THEN 每个提案只输出一行
+- GIVEN append_approved 静默模式, WHEN 调用方不想显示输出, THEN 可重定向
+
+## 技术约束
+
+- MUST 保持函数返回值语义不变（0=成功，1=失败）
+- SHOULD 将日志信息输出到 stderr 或移除
+
+## 验收标准
+
+- 批量批准时每个提案只占一行输出
+- 函数调用方可自行控制输出格式
+
+## Capabilities
+
+### New Capabilities
+- `workflow-synthesizer` (add-workflow-synthesizer only): WorkflowRecommendation + PhaseStatus module
+- `archive-iteration-sync`: iteration.json 同步机制
+- `wave-scheduler`: 自动 wave 调度引擎
+- `propose-quality-check`: propose 阶段质量检查 hook
+- `guide-plan-noninteractive`: 非交互模式
+
+### Modified Capabilities
+（视具体 change 而定）
+
+## Impact
+
+（视具体 change 而定）
