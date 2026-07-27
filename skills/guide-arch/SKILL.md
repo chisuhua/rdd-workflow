@@ -35,7 +35,7 @@ skill_use("guide-arch")   # 无参数版本
 | 子技能 | 阶段 | 职责 | 人工介入 |
 |--------|------|------|---------|
 | `guide-arch`（本技能） | arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-validation → proposal-review → arch-done | **高** |
-| `guide-plan`（后续） | plan | 变更生成：scan → propose → deps → plan-done | **中** |
+| `guide-plan`（后续） | plan | 变更生成：审批提案消费 → propose → deps → plan-done | **中** |
 | `guide-ship`（后续） | ship | 变更执行：plan → execute → archive → cleanup → ship-done | **低** |
 | `guide`（无状态推荐器） | — | 扫描三阶段状态，推荐下一步 | — |
 
@@ -749,7 +749,7 @@ rddf_session_hook_close stage_arch arch-done guide-arch
   - 已批准提案: K 个 (待 plan 阶段处理)
 
 💡 Next: skill_use("guide-plan")
-   This will scan your arch artifacts and start change generation (scan -> propose -> deps -> plan-done).
+   This will consume approved proposals and start change generation (propose -> deps -> plan-done).
 ```
 
 Do NOT auto-invoke `guide-plan` - the user must explicitly transition to the plan side.

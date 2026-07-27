@@ -1,6 +1,6 @@
 ---
 name: guide-plan
-description: Change generation phase state machine for OpenSpec workflow — guides user through scan, propose, deps, and emits plan-done handoff. Called after arch-done or when creating new changes. Owns openspec/changes/<name>/ artifacts.
+description: Change generation phase state machine for OpenSpec workflow — guides user through proposal-approved consumption, propose, deps, and emits plan-done handoff. Called after arch-done or when creating new changes. Owns openspec/changes/<name>/ artifacts.
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+, git 2.25+
 metadata:
@@ -12,10 +12,10 @@ metadata:
 
 # OpenSpec 工作流 — Plan-Side Guide
 
-本技能是 OpenSpec 工作流 v2.0 的 **plan 端状态机**：负责在生成 OpenSpec change artifacts 阶段的**变更生成**工作——扫描候选、创建 change、依赖分析、变更生成完成交接。plan 阶段是三阶段架构（arch → plan → ship，ADR-0003）的第二阶段，专为中人工介入、AI 辅助生成场景设计。
+本技能是 OpenSpec 工作流 v2.0 的 **plan 端状态机**：负责在生成 OpenSpec change artifacts 阶段的**变更生成**工作——消费已批准提案、创建 change、依赖分析、变更生成完成交接。plan 阶段是三阶段架构（arch → plan → ship，ADR-0003）的第二阶段，专为中人工介入、AI 辅助生成场景设计。
 
 **职责边界**：
-- **拥有**：`openspec/changes/<name>/{proposal,design,tasks}.md`（change artifacts）、`proposal-suggestions.md`（候选列表）
+- **拥有**：`openspec/changes/<name>/{proposal,design,tasks}.md`（change artifacts）
 - **不拥有**：`docs/adr/ADR-*.md`（属于 `guide-arch`）、git worktree + Prometheus 计划（属于 `guide-ship`）
 - **状态持久化**：plan-done 时写入 `.rddf/state/.plan-handoff.json`（不被 git 跟踪，缺失时 ship 端静默回退）
 - **人工介入程度**：**中** —— plan 阶段 AI 辅助生成 change 提案，用户主要做决策（选择候选、确认依赖关系）
@@ -35,7 +35,7 @@ skill_use("guide-plan")   # 无参数版本
 | 子技能 | 阶段 | 职责 | 人工介入 |
 |--------|------|------|---------|
 | `guide-arch`（前序） | arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-done | **高** |
-| `guide-plan`（本技能） | plan | 变更生成：scan → propose → deps → plan-done | **中** |
+| `guide-plan`（本技能） | plan | 变更生成：审批提案消费 → propose → deps → plan-done | **中** |
 | `guide-ship`（后续） | ship | 变更执行：plan → execute → archive → cleanup → ship-done | **低** |
 | `guide`（无状态推荐器） | — | 扫描三阶段状态，推荐下一步 | — |
 
@@ -66,14 +66,13 @@ skill_use("guide-plan")   # 无参数版本
 
 **plan 端必须写的文件**：
 
-- 通过 scan 阶段生成/更新 `proposal-suggestions.md`（plan 端唯一持久化候选列表）
 - 通过 propose 阶段创建 `openspec/changes/<name>/{proposal.md, design.md, tasks.md, .openspec.yaml}`
 - 通过 deps 阶段生成 `.rddf/state/.deps-candidates.json`（输入契约）和 `.rddf/state/.deps-output.md`（分析输出）
 - plan-done 时写入 `.rddf/state/.plan-handoff.json`（plan → ship 的软交接信号）
 
 ---
 
-## Phase 1: scan
+## Phase 1: 环境检查与提案消费
 
 **入口条件**：用户调用 `skill_use("guide-plan")` 后立即执行；或 `guide-arch` 完成后用户主动切换到 plan 端。
 
@@ -88,7 +87,7 @@ rddf_session_hook_entry stage_plan guide-plan plan-phase plan-done .rddf/state/.
 
 **行为**：
 
-执行环境检测，然后**将扫描完全委托给 `propose` 技能**。guide-plan 不直接扫描 ADR / 架构差距分析 / TODO / 测试缺口——所有扫描逻辑由 `propose` 技能统一处理。
+执行环境检测后，直接从 `proposal-approved.md` 读取已批准提案进入 Phase 2。plan 阶段**不负责扫描**——新提案的扫描和审批已在 `guide-arch` Phase 5.5 中完成。
 
 **执行环境检测**：
 
@@ -105,28 +104,6 @@ run_plan_intake || exit 1
 source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/wave_scheduler_hooks.sh"
 wave_scheduler_entry_check "$PROJECT_ROOT" "guide-plan"
 ```
-
-**扫描委托**：
-
-```bash
-# 将扫描完全委托给 propose 技能
-# propose 会: 扫描 ADR → 扫描架构差距 → 扫描 TODO → 扫描测试缺口 → 生成 proposal-suggestions.md
-skill_use("propose")
-```
-
-**环境状态展示**：
-
-```
-Plan 阶段环境检查结果：
-
-✅ openspec CLI: 1.3.1 (/home/ubuntu/.npm-global/bin/openspec)
-✅ git 工作区干净
-📌 当前分支: master
-📋 ADR 数量: 3 (from arch-handoff)
-📋 Roadmap 阶段: phase-1
-📋 ADR 编号: 0001,0003,0013
-📋 当前活跃 changes: 0
-✅ arch-done handoff 已验证 (硬交接)
 
 **环境状态展示**：
 
@@ -145,7 +122,7 @@ Plan 阶段环境检查结果：
 
 环境检查通过后，自动进入 Phase 2 (propose)，从 `proposal-approved.md` 读取已批准提案创建 change。
 
-> **注意**：新改进提案的创建和审批在 `guide-arch` Phase 5.5 中处理。plan 阶段只消费已批准提案。
+> **注意**：新改进提案的扫描和审批在 `guide-arch` Phase 5.5 中处理。plan 阶段只消费已批准提案。
 
 ---
 
@@ -230,7 +207,7 @@ show_feature_progress
   - fix-ns-pollution  [Artifacts: ✅]
   - add-stream-pipes  [Artifacts: ⏳]
 
-建议列表（来自 ADR 扫描 + 代码 TODO）:
+已批准提案列表（来自 proposal-approved.md）:
 
 🔴 高优先级
   1. fix-circular-deps — 修复循环依赖 (ADR-033, 3 个任务) [pending]
@@ -283,7 +260,7 @@ handle_plan_propose_menu "$choice"
 
 **创建后循环**：
 
-每次创建完成后，重新检查建议列表 + 活跃 changes，重新展示选项菜单（循环）。用户在 proposal-suggestions.md 中已选的候选会自动标记为 `[created]`。
+每次创建完成后，重新检查已批准提案列表 + 活跃 changes，重新展示选项菜单（循环）。用户在 proposal-approved.md 中已选的提案会自动标记为 `[created]`。
 
 **Propose 阶段完成条件**：
 
@@ -320,13 +297,13 @@ guide-plan 阶段完成（plan-done）
 3. 按 parallel_group 升序排序（无 blocker 的 group 0 优先）
 4. 展示候选列表，让用户选择
 5. 对选中的 change：
-   - 读取 `proposal-suggestions.md` 中对应条目的 `description` 字段（完整需求描述）
+   - 读取 `proposal-approved.md` 中对应条目的 `description` 字段（完整需求描述）
    - 调用 `openspec instructions design --change "<name>" --json` 获取 design.md 模板
    - 写入 design.md
    - 调用 `openspec instructions tasks --change "<name>" --json` 获取 tasks.md 模板
    - 写入 tasks.md
    - 更新 `iteration.json`：`status` 从 `planned` → `proposed`
-   - 更新 `proposal-suggestions.md`：条目 `status` 从 `skeleton` → `已完成`
+   - 更新 `proposal-approved.md`：条目 `status` 从 `skeleton` → `已完成`
 6. 失败容错：单 change 填充失败不中断整体流程，继续下一个
 
 **示例输出**：
@@ -495,7 +472,7 @@ Do NOT auto-invoke `guide-ship` — the user must explicitly transition to the s
 门控失败: Active changes 数量为 0
 
 请选择:
-  1. ↩️  回到 scan 阶段扫描候选
+  1. ↩️  回到 Phase 1 重新检查环境
   2. ↩️  回到 propose 阶段创建 change
   3. 🔄 重新执行门控检查
   0. 💾 保存并退出
@@ -509,7 +486,7 @@ case "$choice" in
   q|quit|exit) exit 0 ;;
   r|refresh) continue ;;  # 重新执行门控检查
   ?|help) echo "可用命令: [数字选项], q(退出), r(刷新), ?(帮助)" ;;
-  1) echo "→ 回到 scan 阶段..."; skill_use("guide-plan") ;;  # 重新调用,选择 scan
+  1) echo "→ 回到 Phase 1 环境检查..."; skill_use("guide-plan") ;;  # 重新调用,选择 Phase 1
   2) echo "→ 回到 propose 阶段..."; skill_use("guide-plan") ;;  # 重新调用,选择 propose
   *) echo "❌ 无效输入 '$choice',请重试或输入 ? 查看帮助" ;;
 esac
@@ -523,8 +500,8 @@ plan 阶段内部支持**循环迭代**（细化变更生成）：
 
 ```
 plan 内部循环:
-  scan → propose → deps → propose (循环添加 change)
-  scan → propose → deps → scan (重新扫描候选)
+  审批提案消费 → propose → deps → propose (循环添加 change)
+  审批提案消费 → propose → deps → Phase 1 (重新检查环境)
 ```
 
 plan → ship 的**前向切换**：
@@ -592,6 +569,6 @@ grep -E "skill_use\(\"(propose|deps|guide-arch|guide-ship)\"\)" skills/guide-pla
 - `skills/guide-arch.md` — arch 端状态机（前序阶段，本技能的 source）
 - `skills/guide-spec.md` — v1.x spec 端状态机（Phase 2 + Phase 2.5 的 source）
 - `skills/guide-ship.md` — ship 端状态机（后续阶段）
-- `skills/propose.md` — 变更候选扫描与创建技能（被 plan Phase 1 + Phase 2 调用）
+- `skills/propose.md` — 变更创建技能（被 plan Phase 2 调用）
 - `skills/deps.md` — 依赖分析技能（被 plan Phase 3 调用）
 - `docs/adr/ADR-0003-three-phase-architecture.md` — 三阶段架构详细说明

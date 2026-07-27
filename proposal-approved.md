@@ -16,11 +16,8 @@
 | [auto-wave-scheduler](improvements/auto-wave-scheduler.md) | P0 | 2026-07-23 | guide-arch |
 
 
-| [fix-rddf-schema-validation](improvements/fix-rddf-schema-validation.md) | proposed | 2026-07-23 | guide-arch |
 
-| [fix-scan-state-binding](improvements/fix-scan-state-binding.md) | proposed | 2026-07-23 | guide-arch |
 
-| [fix-silent-exception](improvements/fix-silent-exception.md) | proposed | 2026-07-23 | guide-arch |
 
 | [guide-plan-noninteractive](improvements/guide-plan-noninteractive.md) | P0 | 2026-07-23 | guide-arch |
 
@@ -86,5 +83,47 @@
 
 | [fix-append-approved-output](improvements/fix-append-approved-output.md) | P2 | 2026-07-23 | guide-arch |
 
+| [ship-incomplete-archive-change-fallback](improvements/ship-incomplete-archive-change-fallback.md) | P1 | 2026-07-26 | guide-arch |
+
+| [archive-gate-incomplete-tasks](improvements/archive-gate-incomplete-tasks.md) | P1 | 2026-07-26 | guide-arch |
+
+| [fix-skill-tool-cache](improvements/fix-skill-tool-cache.md) | P1 | 2026-07-26 | guide-arch |
+
+| [ship-delete-branch-safety](improvements/ship-delete-branch-safety.md) | P1 | 2026-07-26 | guide-arch |
+
+| [sync-approved-to-suggestions](improvements/sync-approved-to-suggestions.md) | P1 | 2026-07-26 | guide-arch |
+
+| [pre-checkout-warning](improvements/pre-checkout-warning.md) | P2 | 2026-07-26 | guide-arch |
+
+| [adr-creation-architecture-gate](improvements/adr-creation-architecture-gate.md) | P1 | 2026-07-26 | guide-arch |
+
+| [fix-scan-state-integer-comparison](improvements/fix-scan-state-integer-comparison.md) | P2 | 2026-07-26 | guide-arch |
+
+| [fix-arch-handoff-stale-detection](improvements/fix-arch-handoff-stale-detection.md) | P1 | 2026-07-26 | guide-arch |
+
+| [filter-guide-ship-when-no-changes](improvements/filter-guide-ship-when-no-changes.md) | P2 | 2026-07-26 | guide-arch |
+
+| [guide-plan-fallback-direct-create](improvements/guide-plan-fallback-direct-create.md) | P1 | 2026-07-26 | guide-arch |
+
+| [fix-rddf-session-owner-cross-call](improvements/fix-rddf-session-owner-cross-call.md) | P1 | 2026-07-26 | guide-arch |
+
+| [detect-suggestions-approved-inconsistency](improvements/detect-suggestions-approved-inconsistency.md) | P3 | 2026-07-26 | guide-arch |
+
+| [prompt-worktree-cleanup-before-stage](improvements/prompt-worktree-cleanup-before-stage.md) | P3 | 2026-07-26 | guide-arch |
+
+| [add-workflow-reflect-engine](improvements/add-workflow-reflect-engine.md) | P1 | 2026-07-26 | guide-arch |
+
+| [fix-arch-env-check-adr-count-bug](improvements/fix-arch-env-check-adr-count-bug.md) | P2 | 2026-07-27 | guide-arch |
+
+| [fix-deps-render-empty-candidates](improvements/fix-deps-render-empty-candidates.md) | P2 | 2026-07-27 | guide-arch |
+
+| [fix-ship-lightweight-wt-path-pollution](improvements/fix-ship-lightweight-wt-path-pollution.md) | P2 | 2026-07-27 | guide-arch |
+
 ## 已实施
-| [fix-lsp-dash-bridge](improvements/fix-lsp-dash-bridge.md) | P0 | 2026-07-24 |
+| 提案 | 状态 | 实施时间 |
+|------|------|----------|
+| [fix-silent-exception](improvements/fix-silent-exception.md) | proposed | 2026-07-26 |
+| [fix-rddf-schema-validation](improvements/fix-rddf-schema-validation.md) | ? | 2026-07-26 |
+| [audit-attach-detach-calls](improvements/audit-attach-detach-calls.md) | ? | 2026-07-26 |
+| [fix-scan-state-binding](improvements/fix-scan-state-binding.md) | ? | 2026-07-26 |
+| [add-workflow-synthesizer](improvements/add-workflow-synthesizer.md) | proposed | 2026-07-26 |

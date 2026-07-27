@@ -22,7 +22,7 @@
 | [add-rddf-concurrency-tests](improvements/add-rddf-concurrency-tests.md) | P1 | rddf-session plan | 2026-07-21 |
 | [fix-attach-detach-symmetry](improvements/fix-attach-detach-symmetry.md) | P1 | rddf-session plan | 2026-07-21 |
 | [split-rddf-god-class](improvements/split-rddf-god-class.md) | P2 | rddf-session plan | 2026-07-21 |
-| [add-workflow-synthesizer](improvements/add-workflow-synthesizer.md) | P0 | rddf-session plan | 2026-07-21 |
+
 | [fix-scan-state-binding](improvements/fix-scan-state-binding.md) | P0 | dashboard spec | 2026-07-21 |
 | [add-parent-feature-param](improvements/add-parent-feature-param.md) | P0 | Oracle 架构分析 | 2026-07-21 |
 | [add-propose-content-review](improvements/add-propose-content-review.md) | P1 | Oracle 架构分析 | 2026-07-21 |
@@ -44,3 +44,15 @@
 | [sync-approved-to-suggestions](improvements/sync-approved-to-suggestions.md) | P1 | 会话复盘 | 2026-07-23 |
 | [pre-checkout-warning](improvements/pre-checkout-warning.md) | P2 | 会话复盘 | 2026-07-23 |
 | [adr-creation-architecture-gate](improvements/adr-creation-architecture-gate.md) | P1 | Oracle 审查 2026-07-25 | 2026-07-25 |
+| [fix-scan-state-integer-comparison](improvements/fix-scan-state-integer-comparison.md) | P2 | Session 复盘 2026-07-26 — guide-entry 实操 | 2026-07-26 |
+| [fix-arch-handoff-stale-detection](improvements/fix-arch-handoff-stale-detection.md) | P1 | Session 复盘 2026-07-26 — ADR 检测失效 | 2026-07-26 |
+| [filter-guide-ship-when-no-changes](improvements/filter-guide-ship-when-no-changes.md) | P2 | Session 复盘 2026-07-26 — 空转 | 2026-07-26 |
+| [guide-plan-fallback-direct-create](improvements/guide-plan-fallback-direct-create.md) | P1 | Session 复盘 2026-07-26 — 成熟项目 dead-end | 2026-07-26 |
+| [fix-rddf-session-owner-cross-call](improvements/fix-rddf-session-owner-cross-call.md) | P1 | Session 复盘 2026-07-26 — session owner mismatch | 2026-07-26 |
+| [detect-suggestions-approved-inconsistency](improvements/detect-suggestions-approved-inconsistency.md) | P3 | Session 复盘 2026-07-26 — 审计追溯缺失 | 2026-07-26 |
+| [prompt-worktree-cleanup-before-stage](improvements/prompt-worktree-cleanup-before-stage.md) | P3 | Session 复盘 2026-07-26 — 13 WT issues 无人处理 | 2026-07-26 |
+| [add-workflow-reflect-engine](improvements/add-workflow-reflect-engine.md) | P1 | 用户反馈 | 2026-07-26 |
+| [fix-arch-env-check-adr-count-bug](improvements/fix-arch-env-check-adr-count-bug.md) | P2 | 2026-07-27 会话复盘 | 2026-07-27 |
+| [fix-deps-render-empty-candidates](improvements/fix-deps-render-empty-candidates.md) | P2 | 2026-07-27 会话复盘 | 2026-07-27 |
+| [fix-ship-lightweight-wt-path-pollution](improvements/fix-ship-lightweight-wt-path-pollution.md) | P2 | 2026-07-27 会话复盘 | 2026-07-27 |
+| [fix-plan-done-gate-zero-stale-count](improvements/fix-plan-done-gate-zero-stale-count.md) | P2 | 2026-07-27 会话复盘 | 2026-07-27 |

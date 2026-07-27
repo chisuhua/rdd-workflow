@@ -35,7 +35,7 @@
 
 ---
 
-## Task 1: 创建 WaveScheduler 模块骨架 (Recommendation + WaveScheduler 类)
+### Task 1: 创建 WaveScheduler 模块骨架 (Recommendation + WaveScheduler 类)
 
 **Files:**
 - Create: `skills/_lib/wave_scheduler.py`
@@ -190,7 +190,7 @@ git commit -m "feat(auto-wave-scheduler): add WaveScheduler module skeleton with
 
 ---
 
-## Task 2: 实现 detect_unblocked - planned 状态 + iteration.blocker 字段
+### Task 2: 实现 detect_unblocked - planned 状态 + iteration.blocker 字段
 
 **Files:**
 - Modify: `skills/_lib/wave_scheduler.py`
@@ -383,7 +383,7 @@ git commit -m "feat(auto-wave-scheduler): implement detect_unblocked for planned
 
 ---
 
-## Task 3: 扩展 detect_unblocked - proposed 状态 (wave=ship)
+### Task 3: 扩展 detect_unblocked - proposed 状态 (wave=ship)
 
 **Files:**
 - Modify: `skills/_lib/wave_scheduler.py`
@@ -562,7 +562,7 @@ git commit -m "feat(auto-wave-scheduler): extend detect_unblocked for proposed s
 
 ---
 
-## Task 4: 扩展 detect_unblocked - manual_deps 多依赖检测
+### Task 4: 扩展 detect_unblocked - manual_deps 多依赖检测
 
 **Files:**
 - Modify: `skills/_lib/wave_scheduler.py`
@@ -804,7 +804,7 @@ git commit -m "feat(auto-wave-scheduler): support manual_deps multi-dependency d
 
 ---
 
-## Task 5: 实现 check_on_archive (归档钩子)
+### Task 5: 实现 check_on_archive (归档钩子)
 
 **Files:**
 - Modify: `skills/_lib/wave_scheduler.py`
@@ -979,7 +979,7 @@ git commit -m "feat(auto-wave-scheduler): implement check_on_archive hook"
 
 ---
 
-## Task 6: 实现 check_on_entry (入口钩子) + format_recommendations
+### Task 6: 实现 check_on_entry (入口钩子) + format_recommendations
 
 **Files:**
 - Modify: `skills/_lib/wave_scheduler.py`
@@ -1169,7 +1169,7 @@ git commit -m "feat(auto-wave-scheduler): implement check_on_entry hook and form
 
 ---
 
-## Task 7: bash wrapper - wave_scheduler_hooks.sh
+### Task 7: bash wrapper - wave_scheduler_hooks.sh
 
 **Files:**
 - Create: `skills/_lib/wave_scheduler_hooks.sh`
@@ -1416,7 +1416,7 @@ git commit -m "feat(auto-wave-scheduler): add bash wrapper wave_scheduler_hooks.
 
 ---
 
-## Task 8: Hook 集成 - guide-ship Phase 3 post-archive
+### Task 8: Hook 集成 - guide-ship Phase 3 post-archive
 
 **Files:**
 - Modify: `skills/guide-ship/SKILL.md`
@@ -1478,7 +1478,7 @@ git commit -m "feat(auto-wave-scheduler): integrate wave_scheduler into guide-sh
 
 ---
 
-## Task 9: Hook 集成 - guide-plan 和 guide-ship 入口
+### Task 9: Hook 集成 - guide-plan 和 guide-ship 入口
 
 **Files:**
 - Modify: `skills/guide-plan/SKILL.md`
@@ -1536,7 +1536,7 @@ git commit -m "feat(auto-wave-scheduler): integrate wave_scheduler entry check i
 
 ---
 
-## Task 10: 全量验证 + smoke test 更新
+### Task 10: 全量验证 + smoke test 更新
 
 **Files:**
 - Test: `tests/unit/test_wave_scheduler.py`

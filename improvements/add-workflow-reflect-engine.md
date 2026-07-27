@@ -17,7 +17,7 @@
 
 设计原则：
 - 反思引擎读取但不修改现有状态文件，遵循 Oracle 模式的只读原则
-- 去重机制复用 `proposal-suggestions.md` 的已有 improvements 索引
+- 去重机制复用 `proposal-suggestions.md` 的已有 improvements 索引（53 条待审批 + 已批准列表），不做全仓库扫描
 - Issue 创建走 GitHub API（`gh issue create`），自动填入模板化的标题和正文
 - 冷却记录写入 `.rddf/state/reflect-cooldown.json`（fingerprint → last_triggered_at）
 
@@ -61,27 +61,37 @@ guide-ship:  Phase 3 archive →  archive完成 →  reflect_engine(ship)
 
 - GIVEN plan-done gate 因"propose 质量门未达标"失败，用户修改后再次提交仍失败
   WHEN 同一 gate 同根因失败次数 ≥2
-  THEN reflect_engine(plan) 触发，去重发现已存在 `propose-quality-autohook` improvements → 提示"已有相关提案，是否追加评论？"
+  THEN reflect_engine(plan) 触发，去重发现已存在 `propose-quality-autohook` improvements → 提示"已有相关提案，是否追加评论？" → 用户选择追加 → 在已有 issue 下添加评论
 
 - GIVEN arch 阶段 gate 通过，但 event log 显示用户重做了 4 次 ADR 编辑才通过质量门
   WHEN reflect_engine(arch) 触发
-  THEN 判定为"摩擦信号" → 不弹出确认提示 → 写入 `.rddf/state/reflect-friction.log`
+  THEN 判定为"摩擦信号" → 不弹出确认提示 → 写入 `.rddf/state/reflect-friction.log` → 供 v2 periodic digest
 
 - GIVEN fingerprint `plan-done:propose-quality-gate-fail` 在 12 小时前已触发过一次
   WHEN 同一 fingerprint 再次触发
   THEN reflect_engine 静默跳过，不重复分析也不提示
 
+- GIVEN reflect_engine 分析出根因为 "deps 分析漏检循环依赖"
+  WHEN 去重查询发现 `improvements/` 中已存在相关提案
+  THEN 提示格式变为 "已有提案 [xxx]，是否追加评论？[Y/n]"
+
+- GIVEN 分析发现失败根因为用户项目配置文件语法错误，改动文件均在用户项目路径下
+  WHEN 判定为 user_project 类型
+  THEN issue 模板中包含项目路径和上下文，目标仓库从 `git remote get-url origin` 自动提取
+
 ## 技术约束
 
 **MUST**
-- 反思引擎必须只读——不修改任何状态文件
+
+- 反思引擎必须只读——不修改任何状态文件（`event_log`、`tasks.md`、`sessions.json` 等）
 - gate 非阻塞——反思失败不得阻止 gate 通过
-- fingerprint 格式固定为 `{phase}:{gate_name}:{error_category}`
+- fingerprint 格式固定为 `{phase}:{gate_name}:{error_category}`（如 `plan:plan-done:quality-gate-fail`）
 - 去重必须覆盖 `improvements/` 目录 + `proposal-suggestions.md` + `proposal-approved.md`
 - `gh issue create` 必须可退出——用户拒绝确认时不得创建 issue
 - 输入必须从现有数据源获取（event log + tasks.md + session 状态），不做全仓库扫描
 
 **MUST NOT**
+
 - 不自动 file issue（v1 永远需用户确认）
 - 不进行语义聚类 fingerprint——只用字面匹配
 - 不触发实时摩擦信号提示（只记录到日志）
@@ -89,6 +99,7 @@ guide-ship:  Phase 3 archive →  archive完成 →  reflect_engine(ship)
 - 不阻塞或延迟 gate 判定（超时 10s 后自动放弃）
 
 **SHOULD**
+
 - 使用 GitHub CLI (`gh`) 而非直接 HTTP API（减少依赖）
 - 分析结果写入 `.rddf/state/reflect-analysis.json` 供审计
 - issue 模板包含：触发阶段、session ID、错误摘要、event log 相关片段
