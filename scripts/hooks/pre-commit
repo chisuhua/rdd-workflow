@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# pre-commit hook: detect changed build files and run quick regression
+set -euo pipefail
+PROJECT_ROOT=$(git rev-parse --show-toplevel)
+CHANGED_BUILD_FILES=$(git diff --cached --name-only | grep -E 'src/CMakeLists.txt|src/kernel/' || true)
+if [ -n "$CHANGED_BUILD_FILES" ]; then
+  echo "🔍 Build files changed, running quick regression..."
+  bash "$PROJECT_ROOT/scripts/regression-test.sh" quick
+fi
