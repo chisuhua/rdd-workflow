@@ -187,6 +187,21 @@ for each work_unit in plan.tasks (按依赖顺序):
 - 同一 Step 连续失败 2 次以上
 - 计划中的文件路径不存在或明显不合理
 
+### Step 5: Full Regression Gate
+
+执行所有 WU 后，强制运行全量回归：
+
+```bash
+if [ "${SKIP_REGRESSION:-}" != "1" ]; then
+  echo "🔍 全量回归门 (Step 5)..."
+  ctest --test-dir build --output-on-failure || {
+    echo "❌ 全量回归失败: 修复后重试，或 SKIP_REGRESSION=1 跳过"
+    exit 1
+  }
+  echo "✅ 全量回归通过"
+fi
+```
+
 ### Step 6：全部完成后输出报告
 
 ### Step 7：输出明确的下一步操作指引
