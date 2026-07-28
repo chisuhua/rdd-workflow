@@ -13,7 +13,6 @@
 
 
 
-| [fix-scan-state-bats](improvements/fix-scan-state-bats.md) | P2 | 2026-07-23 | guide-arch |
 | [ship-incomplete-archive-change-fallback](improvements/ship-incomplete-archive-change-fallback.md) | P1 | 2026-07-26 | guide-arch |
 
 | [archive-gate-incomplete-tasks](improvements/archive-gate-incomplete-tasks.md) | P1 | 2026-07-26 | guide-arch |
@@ -72,6 +71,7 @@
 
 
 ## 已实施
+| [fix-scan-state-bats](improvements/fix-scan-state-bats.md) | P2 | 2026-07-23 | guide-arch |
 | [add-config-validation](improvements/add-config-validation.md) | ? | 2026-07-28 |
 | [add-file-size-quality-gate](improvements/add-file-size-quality-gate.md) | ? | 2026-07-28 |
 | [add-full-regression-gate](improvements/add-full-regression-gate.md) | P0 | 2026-07-28 |
