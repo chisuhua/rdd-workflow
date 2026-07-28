@@ -248,6 +248,30 @@ DRIFTDOC
   echo "💡 下一步: 运行 skill_use(\"guide-arch\") 进入架构审查"
 }
 
+# Full regression gate (add-full-regression-gate)
+full_regression_gate() {
+  local project_root="$1"
+  if [ "${SKIP_REGRESSION:-}" = "1" ]; then
+    echo "⚠️  已跳过回归门 (SKIP_REGRESSION=1)"
+    return 0
+  fi
+  local build_dir="$project_root/build"
+  if [ ! -d "$build_dir" ]; then
+    echo "⚠️  无构建目录，跳过回归门"
+    return 0
+  fi
+  if ctest --test-dir "$build_dir" --output-on-failure; then
+    echo "✅ 全量回归通过"
+    return 0
+  fi
+  echo ""
+  echo "❌ 全量回归失败。请选择:"
+  echo "1. 返回 execute 修复问题"
+  echo "2. 创建 debt change 跟踪"
+  echo "3. SKIP_REGRESSION=1 强制跳过"
+  return 1
+}
+
 # handle_review_action <project_root> <change_name> <wt_path> <choice>
 handle_review_action() {
   local project_root="$1"
