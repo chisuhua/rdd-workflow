@@ -292,7 +292,7 @@ fi
 
 # 列出已有差距分析
 GAP_DOCS=$(ls "$ARCH_DIR/"*-gap-analysis.md 2>/dev/null)
-GAP_COUNT=$(echo "$GAP_DOCS" | grep -c . || echo 0)
+GAP_COUNT=$(echo "$GAP_DOCS" | grep -c . || true)
 
 echo "现有架构差距分析: $GAP_COUNT"
 if [ "$GAP_COUNT" -gt 0 ]; then

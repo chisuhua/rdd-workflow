@@ -290,7 +290,7 @@ check_working_tree_cleanliness() {
   local DELETED
   DELETED=$(git -C "$PROJECT_ROOT" status --short 2>/dev/null | grep '^ D' | sed 's/^ D //' | head -20)
   local DELETED_COUNT
-  DELETED_COUNT=$(printf '%s' "$DELETED" | grep -c . 2>/dev/null || echo 0)
+  DELETED_COUNT=$(printf '%s' "$DELETED" | grep -c . 2>/dev/null || true)
   DELETED_COUNT=${DELETED_COUNT##*$'\n'}
   if [ "${DELETED_COUNT:-0}" -gt 0 ] 2>/dev/null; then
     echo "   🗑️  Deleted tracked files ($DELETED_COUNT):"
@@ -311,7 +311,7 @@ check_working_tree_cleanliness() {
   local MODIFIED
   MODIFIED=$(git -C "$PROJECT_ROOT" status --short 2>/dev/null | grep '^ M' | sed 's/^ M //' | head -10)
   local MOD_COUNT
-  MOD_COUNT=$(printf '%s' "$MODIFIED" | grep -c . 2>/dev/null || echo 0)
+  MOD_COUNT=$(printf '%s' "$MODIFIED" | grep -c . 2>/dev/null || true)
   MOD_COUNT=${MOD_COUNT##*$'\n'}
   if [ "${MOD_COUNT:-0}" -gt 0 ] 2>/dev/null; then
     echo "   ✏️  Modified tracked files ($MOD_COUNT):"
@@ -326,7 +326,7 @@ check_working_tree_cleanliness() {
   local STAGED
   STAGED=$(git -C "$PROJECT_ROOT" diff --cached --name-only 2>/dev/null | head -10)
   local STAGED_COUNT
-  STAGED_COUNT=$(printf '%s' "$STAGED" | grep -c . 2>/dev/null || echo 0)
+  STAGED_COUNT=$(printf '%s' "$STAGED" | grep -c . 2>/dev/null || true)
   STAGED_COUNT=${STAGED_COUNT##*$'\n'}
   if [ "${STAGED_COUNT:-0}" -gt 0 ] 2>/dev/null; then
     echo "   📦 Staged changes ($STAGED_COUNT):"
@@ -341,7 +341,7 @@ check_working_tree_cleanliness() {
   local UNTRACKED_DIRS
   UNTRACKED_DIRS=$(git -C "$PROJECT_ROOT" ls-files --others --exclude-standard --directory 2>/dev/null | grep '/$' | grep -v '^.git' | head -10)
   local UT_COUNT
-  UT_COUNT=$(printf '%s' "$UNTRACKED_DIRS" | grep -c . 2>/dev/null || echo 0)
+  UT_COUNT=$(printf '%s' "$UNTRACKED_DIRS" | grep -c . 2>/dev/null || true)
   UT_COUNT=${UT_COUNT##*$'\n'}
   if [ "${UT_COUNT:-0}" -gt 0 ] 2>/dev/null; then
     # Check if directories are large (>10MB)
@@ -354,7 +354,7 @@ check_working_tree_cleanliness() {
         LARGE_DIRS="$LARGE_DIRS$d (${size}MB)"$'\n'
       fi
     done <<< "$UNTRACKED_DIRS"
-    if [ -n "$LARGE_DIRS" ] && [ "$(echo "$LARGE_DIRS" | grep -c . 2>/dev/null || echo 0)" -gt 0 ] 2>/dev/null; then
+    if [ -n "$LARGE_DIRS" ] && [ "$(echo "$LARGE_DIRS" | grep -c . 2>/dev/null || true)" -gt 0 ] 2>/dev/null; then
       echo "   📁 Large untracked directories:"
       echo "$LARGE_DIRS" | while read -r d; do
         [ -z "$d" ] && continue
