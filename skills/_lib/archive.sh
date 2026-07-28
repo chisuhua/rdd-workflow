@@ -305,12 +305,7 @@ archive_change() {
   # 8. Update iteration.json (current sprint tracker). Best-effort.
   mark_iteration_archived "$name" "$main_root"
 
-  # 9. Update proposal-approved.md status (archive-update-proposal-status)
-  local skills_parent
-  skills_parent="$(cd "$_LIB_DIR/../.." 2>/dev/null && pwd)"
-  if [ -f "$skills_parent/skills/propose/scripts/update_proposal_status.py" ]; then
-    python3 "$skills_parent/skills/propose/scripts/update_proposal_status.py" "$name" "$main_root" 2>/dev/null || true
-  fi
+  # 9. (Moved to ship_archive.sh::archive_change_for_mode — single funnel for both modes)
 
   echo "✅ $name 已归档"
 

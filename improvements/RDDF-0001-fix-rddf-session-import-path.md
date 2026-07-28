@@ -242,3 +242,13 @@ cd tests && python3 -m pytest integration/test_phase2_python_imports.py -v 2>&1 
 2. **保持所有现有导入路径兼容** — hooks.sh (str→import)、scan-state.sh (importlib)、pytest (dash-bridge)
 3. **最小化变更范围** — 仅修改 `rddf_session.py` 一个文件
 4. **不破坏现有测试** — pytest dash-bridge 无冲突
+
+### 2026-07-28 审计发现: 部分修复状态
+
+**hooks.sh 路径**: 已通过 `skills/rddf_session.py` proxy 文件（`__path__` 桥接）在 2026-07-23 修复。该文件将 Python 的 `skills.rddf_session` 模块名映射到文件系统目录 `skills/rddf-session/`。导入路径 (`from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator`) 正常运行。
+
+**scan-state.sh 路径**: 仍断裂。`importlib.util.spec_from_file_location` 直接加载带连字符路径的文件时，相对导入 `from .rddf_session_pkg import ...` 因缺失 `__package__` 设置而失败。
+
+**bats 测试 (15/15)**: 全部通过，但覆盖范围仅限于 hooks 功能，未测试 scan-state.sh 的运行时导入路径。
+
+**修正建议**: 原方案 A（importlib 自加载）仍为推荐修复方案。hooks.sh 的临时 proxy 修复可保留作为后备，但 scan-state.sh 路径需要主动修复。|

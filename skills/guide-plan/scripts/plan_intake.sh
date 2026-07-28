@@ -109,4 +109,12 @@ except Exception:
   ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | grep -c . || true)
   echo "📋 当前活跃 changes: $ACTIVE_CHANGES"
   echo "✅ 检测到 arch-done handoff（arch → plan 硬交接信号）"
+
+  # 6. 提案状态同步: 扫描已归档但未标记的提案，自动标记为已实施
+  local STATE_SH="$PROJECT_ROOT/skills/_lib/state.sh"
+  if [ -f "$STATE_SH" ]; then
+    # shellcheck source=/dev/null
+    source "$STATE_SH"
+    sweep_implemented_proposals "$PROJECT_ROOT"
+  fi
 }

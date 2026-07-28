@@ -266,3 +266,53 @@ with open(sys.argv[1], 'w') as f:
     f.writelines(lines)
 " "$approved_file" "$name" "$timestamp"
 }
+
+# sweep_implemented_proposals <project_root>
+# Scans proposal-approved.md pending table against openspec/changes/archive/.
+# For each pending entry with a matching archive dir (suffix match),
+# calls mark_approved_completed to move it to the "已实施" section.
+# Idempotent: safe to run repeatedly.
+sweep_implemented_proposals() {
+  local project_root="$1"
+  local approved_file="$project_root/proposal-approved.md"
+
+  if [ ! -f "$approved_file" ]; then
+    return 0
+  fi
+
+  local archive_dir="$project_root/openspec/changes/archive"
+  if [ ! -d "$archive_dir" ]; then
+    return 0
+  fi
+
+  echo "🔍 扫描已实现提案 (sweep_implemented_proposals)..."
+  local moved=0
+
+  # Parse pending proposals from proposal-approved.md (before ## 已实施)
+  # Extract [name](improvements/name.md) entries, check archive dir
+  while IFS='|' read -r name rest; do
+    [ -z "$name" ] && continue
+    # Trim whitespace
+    name=$(echo "$name" | xargs)
+    # Check for matching archive dir: archive/*-<name>
+    if ls -d "$archive_dir/"*-"$name" 2>/dev/null | grep -q .; then
+      mark_approved_completed "$project_root" "$name"
+      echo "  ✅ $name — 已归档，标记为已实施"
+      moved=$((moved + 1))
+    fi
+  done < <(python3 -c "
+import sys, re
+with open(sys.argv[1]) as f:
+    content = f.read()
+# Only scan entries before ## 已实施
+section = re.split(r'## 已实施', content)[0]
+for m in re.finditer(r'\|\s*\[([^\]]+)\]\(improvements/([^)]+)\)\s*\|', section):
+    print(f\"{m.group(1)}|{m.group(2)}\")
+" "$approved_file" 2>/dev/null)
+
+  if [ "$moved" -gt 0 ]; then
+    echo "  🎯 共标记 $moved 个提案为已实施"
+  else
+    echo "  无已归档但未标记的提案"
+  fi
+}

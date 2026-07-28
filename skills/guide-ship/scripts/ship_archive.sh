@@ -208,6 +208,13 @@ archive_change_for_mode() {
 
     echo "✅ $change_name 已归档（轻量模式）"
   fi
+
+  # Update proposal-approved.md status (archive-update-proposal-status fix)
+  # Moved from archive.sh step 9 to this single funnel for both modes.
+  local update_script="$_SCRIPT_DIR/../../propose/scripts/update_proposal_status.py"
+  if [ -f "$update_script" ]; then
+    python3 "$update_script" "$change_name" "$project_root" 2>/dev/null || true
+  fi
 }
 
 check_main_repo_clean() {
