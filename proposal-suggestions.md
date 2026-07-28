@@ -59,3 +59,4 @@
 | [fix-plan-done-gate-zero-stale-count](improvements/fix-plan-done-gate-zero-stale-count.md) | P2 | 2026-07-27 会话复盘 | 2026-07-27 |
 | [add-full-regression-gate](improvements/add-full-regression-gate.md) | P0 | UsrLinuxEmu 回归复盘 2026-07-27 | 2026-07-27 |
 | [add-openspec-gate](improvements/add-openspec-gate.md) | P0 | UsrLinuxEmu backfill 事件复盘 2026-07-27 | 2026-07-27 |
+| [add-proposal-defer-support](improvements/add-proposal-defer-support.md) | P1 | PTX-EMU 2026-07-28 实战 — guide-arch 无法跳过已评估推迟的提案 | 2026-07-28 |
