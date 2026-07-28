@@ -114,20 +114,36 @@ run_arch_env_check || exit 1
 请选择:
 1. ✅ 继续 → 进入 adr-create 阶段
 2. 🔄 重新检查
+3. 📋 提案审批 → 审查/审批 improvements 提案（无需门控检查）
 0. 💾 保存并退出
 i. 其他输入
 ```
 
 **用户输入处理（case handler）**：
 
-当用户输入不在上述有效选项内时，调用共享菜单处理器处理（extracted to scripts/arch_roadmap_menu.sh）：
-
 ```bash
-# Phase 1 setup menu - shared handler (extracted from inline case block)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_roadmap_menu.sh"
-handle_arch_menu "$choice"
-[ $? -eq 2 ] && continue  # r|refresh -> 重新展示菜单
+case "$choice" in
+  1) echo "-> 进入 adr-create 阶段..." ; echo "(跳转到 Phase 2 入口)" ;;
+  3)
+    echo "-> 进入提案审批阶段..."
+    export PHASE_5_5_ENTRY=phase1  # 标记从 Phase 1 进入，跳过 gate 直通提案管理
+    PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+    # 调用 arch_proposal_review.sh 处理提案审查
+    source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_proposal_review.sh"
+    arch_proposal_review "$PROJECT_ROOT" "$PHASE_5_5_ENTRY"
+    # 审批完成后根据 PHASE_5_5_ENTRY 决定去向：
+    #   phase1 → 回到 Phase 1 菜单（继续展示菜单）
+    #   gate   → 进入 Phase 6 arch-done
+    ;;
+  r|refresh) continue ;;
+  *) source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_roadmap_menu.sh"; handle_arch_menu "$choice"; [ $? -eq 2 ] && continue ;;
+esac
 ```
+
+当用户选择 `3` 时，直接执行 Phase 5.5 的提案审批逻辑，**无需经过 Phase 5 门控**。审批完成或跳过后的行为由 `PHASE_5_5_ENTRY` 控制：
+
+- `phase1` → 回到 Phase 1 继续其他操作
+- `gate` → 进入 Phase 6 arch-done
 
 **步骤 2：进入对应阶段**
 
@@ -523,7 +539,17 @@ check_arch_done_gate || exit 1
 
 **门控通过后**：
 
-门控检查通过后，不直接退出，而是进入 Phase 5.5（提案审批）让用户审查 `improvements/` 目录下的待讨论提案。门控失败时提供回退选项。
+门控检查通过后，不直接退出，而是设置环境变量后进入 Phase 5.5（提案审批）：
+
+```bash
+export PHASE_5_5_ENTRY=gate  # 标记从门控进入，审批完成后走向 arch-done
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_proposal_review.sh"
+arch_proposal_review "$PROJECT_ROOT" "$PHASE_5_5_ENTRY"
+# 审批完成或跳过后，进入 Phase 6 arch-done
+```
+
+门控失败时提供回退选项。
 
 **回退到其他 arch 阶段**：
 
@@ -556,7 +582,12 @@ esac
 
 ## Phase 5.5: 提案管理 — 创建 + 审批
 
-**入口条件**：arch 阶段完成架构定义后（Phase 5 门控通过），用户选择进入提案管理。
+**入口条件**：
+
+- **Path A**：从 Phase 1 菜单选项 `3` 直接进入（**不受门控限制**），审批完成后回到 Phase 1 菜单
+- **Path B**：Phase 5 门控通过后自动进入，审批完成后进入 Phase 6 arch-done
+
+两种路径的行为一致，唯一差异是"跳过/完成"后的去向：**Phase 1 入口回到 Phase 1 菜单；Phase 5 入口进入 arch-done**。通过 `$PHASE_5_5_ENTRY` 环境变量区分（`phase1` 或 `gate`）。
 
 **行为**：
 
@@ -590,103 +621,19 @@ continue  # 重新展示提案列表
 
 **执行步骤**：
 
+Phase 5.5 的逻辑已提取到 `scripts/arch_proposal_review.sh`，支持：
+
+- **双源扫描**：同时从 `improvements/` 和 `proposal-suggestions.md` 收集待审提案
+- **交叉引用**：自动排除已批准、已归档的提案
+- **已归档自动批准**：在 `openspec/changes/archive/` 中找到匹配的提案自动标记为已实施
+- **三种审批决策**：批准（y）、拒绝（n）、延迟（d）
+- **批处理**：支持全部批准（a）、跳過（s）
+
+调用方式：
+
 ```bash
-# 加载共享函数
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/../_lib/state.sh"
-
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-IMPROVEMENTS_DIR="$PROJECT_ROOT/improvements"
-APPROVED_FILE="$PROJECT_ROOT/proposal-approved.md"
-SUGGESTIONS_FILE="$PROJECT_ROOT/proposal-suggestions.md"
-
-# 确定哪些提案在 suggestions 索引中但未在 approved 索引中
-APPROVED_NAMES=""
-if [ -f "$APPROVED_FILE" ]; then
-  APPROVED_NAMES=$(grep -oP '\|\s*\[([^\]]+)\]\(improvements/' "$APPROVED_FILE" | sed 's/.*\[//;s/\].*//')
-fi
-
-echo "## 提案审批阶段"
-echo ""
-echo "📂 improvements/ 目录中的提案:"
-echo ""
-
-echo "🔍 检测已归档提案..."
-ARCHIVED_COUNT=0
-PENDING_COUNT=0
-for f in "$IMPROVEMENTS_DIR"/*.md; do
-  [ -f "$f" ] || continue
-  name=$(basename "$f" .md)
-  
-  # 跳过已批准的
-  if echo "$APPROVED_NAMES" | grep -qFx "$name"; then
-    continue
-  fi
-  
-  # 检测是否已归档：已归档的自动批准到 completed
-  if ls -d "$PROJECT_ROOT/openspec/changes/archive/"*"-$name" 2>/dev/null | grep -q .; then
-    priority=$(grep -m1 '^\*\*优先级\*\*:' "$f" 2>/dev/null | sed 's/.*\*\*优先级\*\*: *//' | cut -d'|' -f1 | xargs)
-    mark_approved_completed "$PROJECT_ROOT" "$name" 2>/dev/null
-    ARCHIVED_COUNT=$((ARCHIVED_COUNT + 1))
-    continue
-  fi
-  
-  PENDING_COUNT=$((PENDING_COUNT + 1))
-  
-  # 提取优先级和来源
-  priority=$(grep -m1 '^\*\*优先级\*\*:' "$f" 2>/dev/null | sed 's/.*\*\*优先级\*\*: *//' | cut -d'|' -f1 | xargs)
-  source=$(grep -m1 '^\*\*优先级\*\*:' "$f" 2>/dev/null | sed 's/.*| \*\*来源\*\*: *//' | xargs)
-  
-  echo "  ${PENDING_COUNT}. [${priority:-?}] $name - ${source:-?}"
-done
-
-echo ""
-if [ "$ARCHIVED_COUNT" -gt 0 ]; then
-  echo "📦 已归档自动批准: $ARCHIVED_COUNT 个（跳过审查）"
-fi
-echo "📋 待审查: $PENDING_COUNT 个"
-
-if [ "$PENDING_COUNT" -eq 0 ]; then
-  echo "  (无待讨论提案)"
-  echo ""
-  echo "-> 跳过审批，直接进入 arch-done"
-  return 0
-fi
-
-echo ""
-echo "选择操作:"
-echo "  <编号>        - 查看并审批该提案（批准/拒绝/延迟）"
-echo "  a             - 全部批准"
-echo "  s             - 跳过审批，直接 arch-done"
-echo "  q             - 返回上级菜单"
-
-# 用户选择
-read -r CHOICE
-
-case "$CHOICE" in
-  q|quit|exit)
-    return 0  # 返回上级菜单
-    ;;
-  s|skip)
-    echo "-> 跳过提案审批"
-    return 0
-    ;;
-  a|all)
-    echo "批量批准所有提案..."
-    for f in "$IMPROVEMENTS_DIR"/*.md; do
-      [ -f "$f" ] || continue
-      name=$(basename "$f" .md)
-      if echo "$APPROVED_NAMES" | grep -qFx "$name"; then
-        continue
-      fi
-      priority=$(grep -m1 '^\*\*优先级\*\*:' "$f" 2>/dev/null | sed 's/.*\*\*优先级\*\*: *//' | cut -d'|' -f1 | xargs)
-      bash "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/approve_proposal.sh" "$name" "${priority:-P1}" "$PROJECT_ROOT"
-    done
-    ;;
-  *)
-    # 处理编号选择
-    # 展示单个提案内容并审批
-    ;;
-esac
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_proposal_review.sh"
+arch_proposal_review "$PROJECT_ROOT" "$PHASE_5_5_ENTRY"
 ```
 
 **单个提案审批交互**：
@@ -713,13 +660,14 @@ bash "$SCRIPT_DIR/scripts/approve_proposal.sh" "<name>" "<priority>" "$PROJECT_R
 
 **与 Phase 6 的衔接**：
 
-提案审批完成后（或用户选择跳过），进入 Phase 6 (arch-done) 写入 handoff 状态并退出。
+从 Phase 1（`PHASE_5_5_ENTRY=phase1`）进入时，审批完成或跳过后**回到 Phase 1 菜单**，不进入 arch-done。
+从 Phase 5 门控（`PHASE_5_5_ENTRY=gate`）进入时，审批完成或跳过后进入 Phase 6 arch-done 写入 handoff 状态并退出。
 
 ---
 
 ## Phase 6: arch-done (Exit)
 
-**入口条件**：Phase 5 门控检查通过 + Phase 5.5 提案审批完成（或跳过）。
+**入口条件**：Phase 5 门控检查通过 + Phase 5.5 提案审批完成（或跳过），且 `PHASE_5_5_ENTRY=gate`。从 Phase 1 直接进入提案审批的路径不会导致 arch-done，而是回到 Phase 1 菜单。
 
 **写入 handoff 状态**：
 

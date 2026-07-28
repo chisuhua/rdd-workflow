@@ -6,18 +6,6 @@
 |------|--------|----------|--------|
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 > **supersedes** (2026-07-28): 原始设计（propose Phase 4 自动末尾 + 写 `.rddf/state/propose-review.json`）已被后续 commits 修订：
 > - `b4ad917` — relocate to arch Phase 5.5 human-in-loop 节点
 > - `a99017b` — refine wording `修复` → `修订`（关联提案 add-change-content-review）
@@ -25,33 +13,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 | [fix-scan-state-bats](improvements/fix-scan-state-bats.md) | P2 | 2026-07-23 | guide-arch |
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 | [ship-incomplete-archive-change-fallback](improvements/ship-incomplete-archive-change-fallback.md) | P1 | 2026-07-26 | guide-arch |
 
 | [archive-gate-incomplete-tasks](improvements/archive-gate-incomplete-tasks.md) | P1 | 2026-07-26 | guide-arch |
@@ -108,5 +70,58 @@
 
 | [guide-ship-quick-finish](improvements/guide-ship-quick-finish.md) | P2 | 2026-07-28 | guide-arch |
 
+
 ## 已实施
+| [add-config-validation](improvements/add-config-validation.md) | ? | 2026-07-28 |
+| [add-file-size-quality-gate](improvements/add-file-size-quality-gate.md) | ? | 2026-07-28 |
+| [add-full-regression-gate](improvements/add-full-regression-gate.md) | P0 | 2026-07-28 |
+| [add-heartbeat-config](improvements/add-heartbeat-config.md) | ? | 2026-07-28 |
 | [add-openspec-gate](improvements/add-openspec-gate.md) | P0 | 2026-07-28 |
+| [add-parent-feature-param](improvements/add-parent-feature-param.md) | ? | 2026-07-28 |
+| [add-plugin-loader-tests](improvements/add-plugin-loader-tests.md) | ? | 2026-07-28 |
+| [add-progressive-linting](improvements/add-progressive-linting.md) | ? | 2026-07-28 |
+| [add-propose-content-review](improvements/add-propose-content-review.md) | ? | 2026-07-28 |
+| [add-rddf-concurrency-tests](improvements/add-rddf-concurrency-tests.md) | ? | 2026-07-28 |
+| [add-session-progress-view](improvements/add-session-progress-view.md) | ? | 2026-07-28 |
+| [add-workflow-reflect-engine](improvements/add-workflow-reflect-engine.md) | ? | 2026-07-28 |
+| [add-workflow-synthesizer](improvements/add-workflow-synthesizer.md) | ? | 2026-07-28 |
+| [agent-completion-contract](improvements/agent-completion-contract.md) | ? | 2026-07-28 |
+| [archive-cleanup-working-tree](improvements/archive-cleanup-working-tree.md) | ? | 2026-07-28 |
+| [archive-iteration-sync](improvements/archive-iteration-sync.md) | ? | 2026-07-28 |
+| [archive-update-proposal-status](improvements/archive-update-proposal-status.md) | ? | 2026-07-28 |
+| [audit-attach-detach-calls](improvements/audit-attach-detach-calls.md) | ? | 2026-07-28 |
+| [auto-skip-archived-proposals](improvements/auto-skip-archived-proposals.md) | ? | 2026-07-28 |
+| [auto-sync-adr-index](improvements/auto-sync-adr-index.md) | ? | 2026-07-28 |
+| [auto-wave-scheduler](improvements/auto-wave-scheduler.md) | ? | 2026-07-28 |
+| [enforce-hook-symmetry](improvements/enforce-hook-symmetry.md) | ? | 2026-07-28 |
+| [fix-append-approved-output](improvements/fix-append-approved-output.md) | ? | 2026-07-28 |
+| [fix-arch-env-check-adr-count-bug](improvements/fix-arch-env-check-adr-count-bug.md) | ? | 2026-07-28 |
+| [fix-attach-detach-symmetry](improvements/fix-attach-detach-symmetry.md) | ? | 2026-07-28 |
+| [fix-deps-render-empty-candidates](improvements/fix-deps-render-empty-candidates.md) | ? | 2026-07-28 |
+| [fix-lsp-dash-bridge](improvements/fix-lsp-dash-bridge.md) | ? | 2026-07-28 |
+| [fix-mark-approved-completed](improvements/fix-mark-approved-completed.md) | ? | 2026-07-28 |
+| [fix-rddf-schema-validation](improvements/fix-rddf-schema-validation.md) | ? | 2026-07-28 |
+| [fix-scan-state-binding](improvements/fix-scan-state-binding.md) | ? | 2026-07-28 |
+| [fix-ship-lightweight-wt-path-pollution](improvements/fix-ship-lightweight-wt-path-pollution.md) | ? | 2026-07-28 |
+| [fix-silent-exception](improvements/fix-silent-exception.md) | ? | 2026-07-28 |
+| [fix-stale-suggestions-warning](improvements/fix-stale-suggestions-warning.md) | ? | 2026-07-28 |
+| [guide-cross-validate](improvements/guide-cross-validate.md) | ? | 2026-07-28 |
+| [guide-plan-noninteractive](improvements/guide-plan-noninteractive.md) | ? | 2026-07-28 |
+| [improve-openspec-test-change-support](improvements/improve-openspec-test-change-support.md) | ? | 2026-07-28 |
+| [parallel-oracle-review](improvements/parallel-oracle-review.md) | ? | 2026-07-28 |
+| [parallel-wave-execution](improvements/parallel-wave-execution.md) | ? | 2026-07-28 |
+| [preship-dirty-check](improvements/preship-dirty-check.md) | ? | 2026-07-28 |
+| [proposal-approval-pipeline](improvements/proposal-approval-pipeline.md) | ? | 2026-07-28 |
+| [propose-quality-autohook](improvements/propose-quality-autohook.md) | ? | 2026-07-28 |
+| [rddf-sessions-gc](improvements/rddf-sessions-gc.md) | ? | 2026-07-28 |
+| [relocate-loop-engine](improvements/relocate-loop-engine.md) | ? | 2026-07-28 |
+| [remove-ci-redundant-bats](improvements/remove-ci-redundant-bats.md) | ? | 2026-07-28 |
+| [skill-name-auto-resolve](improvements/skill-name-auto-resolve.md) | ? | 2026-07-28 |
+| [split-iteration-module](improvements/split-iteration-module.md) | ? | 2026-07-28 |
+| [split-rddf-god-class](improvements/split-rddf-god-class.md) | ? | 2026-07-28 |
+| [task-parallel-throttle](improvements/task-parallel-throttle.md) | ? | 2026-07-28 |
+| [unify-session-kind-naming](improvements/unify-session-kind-naming.md) | ? | 2026-07-28 |
+| [unify-test-entry-points](improvements/unify-test-entry-points.md) | ? | 2026-07-28 |
+| [update-adr-index](improvements/update-adr-index.md) | ? | 2026-07-28 |
+| [update-agents-module-map](improvements/update-agents-module-map.md) | ? | 2026-07-28 |
+| [update-guide-plan-format](improvements/update-guide-plan-format.md) | ? | 2026-07-28 |
