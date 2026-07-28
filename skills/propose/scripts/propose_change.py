@@ -98,6 +98,17 @@ def create_skeleton_change(
         )
 
     change_dir = os.path.join(project_root, "openspec", "changes", name)
+
+    # Idempotency guard: a pre-existing proposal.md means the change was
+    # already created; re-running must skip, never clobber artifacts.
+    proposal_path = os.path.join(change_dir, "proposal.md")
+    if os.path.exists(proposal_path):
+        print(
+            f"⚠️  Change '{name}' 已存在 (proposal.md), 跳过创建 (幂等保护)",
+            file=sys.stderr,
+        )
+        return False
+
     os.makedirs(change_dir, exist_ok=True)
 
     # openspec new change (best-effort, matches original)
@@ -367,8 +378,26 @@ def update_iteration_proposed(
         return False
 
 
+def _change_dir_exists(project_root: str, name: str) -> bool:
+    return os.path.isdir(os.path.join(project_root, "openspec", "changes", name))
+
+
+def _change_is_archived(project_root: str, name: str) -> bool:
+    import glob
+    archive_dir = os.path.join(project_root, "openspec", "changes", "archive")
+    return any(
+        os.path.isdir(p)
+        for p in glob.glob(os.path.join(archive_dir, f"*-{name}"))
+    )
+
+
 def batch_create_pending(project_root: str) -> list[str]:
-    """Create skeleton changes for all pending suggestions in proposal-approved.md."""
+    """Create skeleton changes for all pending suggestions in proposal-approved.md.
+
+    Idempotent: entries whose change already exists under openspec/changes/
+    (active) or openspec/changes/archive/ (completed) are skipped, so
+    re-running never overwrites existing artifacts.
+    """
     approved_file = os.path.join(project_root, "proposal-approved.md")
     if not os.path.exists(approved_file):
         return []
@@ -377,10 +406,16 @@ def batch_create_pending(project_root: str) -> list[str]:
     section = re.split(r'## 已实施', content)[0]
     rows = re.findall(r'\[\s*([^\]]+)\]\s*\(\s*improvements/([^)]+)\s*\)', section)
     created = []
+    skipped = []
     for name, _ in rows:
+        if _change_dir_exists(project_root, name) or _change_is_archived(project_root, name):
+            skipped.append(name)
+            continue
         try:
-            create_skeleton_change(project_root, name, "default", "general", "P2")
-            created.append(name)
+            if create_skeleton_change(project_root, name, "default", "general", "P2"):
+                created.append(name)
         except Exception as e:
             print(f"WARN: failed to create {name}: {e}", file=sys.stderr)
+    if skipped:
+        print(f"⏭️  跳过 {len(skipped)} 个已创建/已归档的 change: {', '.join(skipped)}")
     return created

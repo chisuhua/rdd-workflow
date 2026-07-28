@@ -143,6 +143,17 @@ class TestCreateSkeletonChange:
         content = yaml_path.read_text()
         assert 'parent_feature: "feature-rddf"' in content
 
+    def test_idempotent_skip_when_proposal_exists(self, tmp_path):
+        """已存在的 proposal.md 不得被覆盖（幂等保护）。"""
+        change_dir = tmp_path / "openspec" / "changes" / "c1"
+        change_dir.mkdir(parents=True)
+        sentinel = "# Original hand-written proposal\n"
+        (change_dir / "proposal.md").write_text(sentinel)
+        result = pc.create_skeleton_change(str(tmp_path), "c1", "phase-1", "general", "P2")
+        assert result is False
+        assert (change_dir / "proposal.md").read_text() == sentinel
+        assert not (change_dir / "roadmap-meta.yaml").exists()
+
     def test_rejects_ungrouped_parent_feature(self, tmp_path):
         """parent_feature='__ungrouped__' 必须被拒绝（保留字）。"""
         with pytest.raises(ValueError, match="__ungrouped__"):
@@ -461,3 +472,34 @@ class TestBatchCreatePending:
         """When proposal-approved.md doesn't exist, return empty list."""
         created = pc.batch_create_pending(str(tmp_path))
         assert created == []
+
+    def test_skips_entries_with_existing_change_dir(self, tmp_path):
+        """batch_create_pending 跳过 openspec/changes/ 中已存在的 change。"""
+        rows = [
+            "| [c1](improvements/c1.md) | P1 | 2026-07-28 | guide-arch |",
+            "| [c2](improvements/c2.md) | P2 | 2026-07-28 | guide-arch |",
+        ]
+        _write_approved(tmp_path, rows)
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        created = pc.batch_create_pending(str(tmp_path))
+        assert created == ["c2"]
+        assert (tmp_path / "openspec" / "changes" / "c2" / "proposal.md").exists()
+        assert not (tmp_path / "openspec" / "changes" / "c1" / "proposal.md").exists()
+
+    def test_skips_archived_entries(self, tmp_path):
+        """batch_create_pending 跳过已归档 (archive/*-<name>) 的提案。"""
+        rows = [
+            "| [c1](improvements/c1.md) | P1 | 2026-07-28 | guide-arch |",
+            "| [c2](improvements/c2.md) | P2 | 2026-07-28 | guide-arch |",
+        ]
+        _write_approved(tmp_path, rows)
+        (tmp_path / "openspec" / "changes" / "archive" / "2026-07-27-c1").mkdir(parents=True)
+        created = pc.batch_create_pending(str(tmp_path))
+        assert created == ["c2"]
+
+    def test_returns_empty_when_all_already_created(self, tmp_path):
+        """全部已创建时返回空列表（完全幂等）。"""
+        rows = ["| [c1](improvements/c1.md) | P1 | 2026-07-28 | guide-arch |"]
+        _write_approved(tmp_path, rows)
+        (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
+        assert pc.batch_create_pending(str(tmp_path)) == []

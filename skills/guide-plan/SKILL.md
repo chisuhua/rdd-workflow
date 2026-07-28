@@ -37,12 +37,19 @@ if [ "$NON_INTERACTIVE" = "true" ]; then
     # Auto-select each pending proposal individually
     if [ -f "proposal-approved.md" ]; then
       python3 -c "
-import re, sys
+import re, sys, os, glob
 with open('proposal-approved.md') as f:
     content = f.read()
 section = re.split(r'## 已实施', content)[0]
 rows = re.findall(r'\[\s*([^\]]+)\]\s*\(\s*improvements/([^)]+)\s*\)', section)
 for name, _ in rows:
+    # 幂等: 跳过已创建 (openspec/changes/<name>/) 或已归档 (archive/*-<name>)
+    if os.path.isdir(os.path.join('openspec/changes', name)):
+        print(f'⏭️  跳过已创建: {name}', file=sys.stderr)
+        continue
+    if any(os.path.isdir(p) for p in glob.glob(f'openspec/changes/archive/*-{name}')):
+        print(f'⏭️  跳过已归档: {name}', file=sys.stderr)
+        continue
     print(name)
 " 2>/dev/null | while read -r pending_name; do
         [ -z "$pending_name" ] && continue
@@ -211,15 +218,25 @@ if [ -f "proposal-approved.md" ]; then
     echo ""
     echo "📂 已批准提案列表 (proposal-approved.md)"
     python3 -c "
-import re, sys
+import re, sys, os, glob
 try:
     with open('proposal-approved.md') as f:
         content = f.read()
     # Parse the approved table (before ## 已实施 section)
     section = re.split(r'## 已实施', content)[0]
     rows = re.findall(r'\|\s*\[([^\]]+)\]\(improvements/([^)]+)\)\s*\|\s*(\S+)\s*\|\s*(\S+)\s*\|\s*(\S+)\s*\|', section)
-    for i, (name, _, priority, date, approver) in enumerate(rows, 1):
-        print(f'  {i}. [{priority}] {name} — 批准: {date}')
+    creatable = 0
+    for name, _, priority, date, approver in rows:
+        # 消费状态由 openspec/changes/ 派生: 活跃目录 = 已创建, archive/ = 已归档
+        if os.path.isdir(os.path.join('openspec/changes', name)):
+            print(f'  ⏭️  [{priority}] {name} — [已创建 change]')
+        elif any(os.path.isdir(p) for p in glob.glob(f'openspec/changes/archive/*-{name}')):
+            print(f'  ✅ [{priority}] {name} — [已归档]')
+        else:
+            creatable += 1
+            print(f'  {creatable}. [{priority}] {name} — 批准: {date}')
+    if rows and creatable == 0:
+        print('  (无可创建提案 — 全部已创建或已归档)')
 except Exception as e:
     print(f'⚠️  读取失败: {e}', file=sys.stderr)
 " 2>/dev/null || cat proposal-approved.md
@@ -316,7 +333,7 @@ handle_plan_propose_menu "$choice"
 
 **创建后循环**：
 
-每次创建完成后，重新检查已批准提案列表 + 活跃 changes，重新展示选项菜单（循环）。用户在 proposal-approved.md 中已选的提案会自动标记为 `[created]`。
+每次创建完成后，重新检查已批准提案列表 + 活跃 changes，重新展示选项菜单（循环）。已创建 change 的提案通过对比 `openspec/changes/` 目录自动标注为 `[已创建 change]`（见上方展示代码）；重复创建由两道防线阻断：propose Step 4a 的目录存在守卫 + `create_skeleton_change()` 的幂等保护（proposal.md 已存在则跳过）。`proposal-approved.md` 本身不写回任何状态。
 
 **Propose 阶段完成条件**：
 
@@ -359,7 +376,7 @@ guide-plan 阶段完成（plan-done）
    - 调用 `openspec instructions tasks --change "<name>" --json` 获取 tasks.md 模板
    - 写入 tasks.md
    - 更新 `iteration.json`：`status` 从 `planned` → `proposed`
-   - 更新 `proposal-approved.md`：条目 `status` 从 `skeleton` → `已完成`
+   - **不修改** `proposal-approved.md`：该文件无 status 列，消费状态由 `openspec/changes/` 目录派生；条目仅在 change 归档时由 `mark_approved_completed()` 移至 `## 已实施`
 6. 失败容错：单 change 填充失败不中断整体流程，继续下一个
 
 **示例输出**：
