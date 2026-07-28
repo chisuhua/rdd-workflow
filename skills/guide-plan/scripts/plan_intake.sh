@@ -48,7 +48,18 @@ run_plan_intake() {
   CURRENT_BRANCH=$(git branch --show-current)
   echo "📌 当前分支: $CURRENT_BRANCH"
 
-  # 4. arch 端交付物检查（plan 端的前置条件 — 硬阻断）
+  # 4. plan 端当前状态
+  local ACTIVE_CHANGES
+  ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | grep -c . || true)
+  echo "📋 当前活跃 changes: $ACTIVE_CHANGES"
+
+  local PENDING_PROPOSALS
+  PENDING_PROPOSALS=$(grep -c '| \[' "$PROJECT_ROOT/proposal-approved.md" 2>/dev/null || echo 0)
+  if [ "$PENDING_PROPOSALS" -gt 0 ] && [ "$ACTIVE_CHANGES" -eq 0 ]; then
+    echo "⚠️  proposal-approved.md 中有 $PENDING_PROPOSALS 个已批准提案但无活跃 change（可能需运行 propose）"
+  fi
+
+  # 5. arch 端交付物检查（plan 端的前置条件 — 硬阻断）
   local ARCH_HANDOFF="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
 
   if [ "${SKIP_ARCH_HANDOFF:-}" = "yes" ]; then
@@ -103,11 +114,6 @@ except Exception:
   echo "📋 ADR 数量: $ADR_COUNT (from arch-handoff, dir=$ADR_DIR)"
   echo "📋 Roadmap 阶段: $CURRENT_PHASE (path=$ROADMAP_PATH)"
   echo "📋 ADR 编号: $ADR_IDS"
-
-  # 5. plan 端当前状态
-  local ACTIVE_CHANGES
-  ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | grep -c . || true)
-  echo "📋 当前活跃 changes: $ACTIVE_CHANGES"
   echo "✅ 检测到 arch-done handoff（arch → plan 硬交接信号）"
 
   # 6. 提案状态同步: 扫描已归档但未标记的提案，自动标记为已实施

@@ -102,6 +102,32 @@
           }
         }
       }
+    },
+    "openspec_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Path prefixes to scan for staged files"
+        },
+        "extensions": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "File extensions to scan for staged files"
+        },
+        "exclude": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Path patterns to exclude from the gate"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["warn", "block"],
+          "description": "Gate mode: warn prints a message, block exits with error"
+        }
+      }
     }
   }
 }

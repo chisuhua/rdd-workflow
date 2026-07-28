@@ -9,3 +9,19 @@ triggers:
     max_concurrent_fires: 5
     crash_recovery: true
     trigger_off_override: false  # when true, --trigger-off disables all
+
+openspec_gate:
+  paths:
+    - include/
+    - src/
+    - plugins/
+    - drivers/
+  extensions:
+    - .cpp
+    - .h
+    - .hpp
+    - .c
+    - .py
+    - .ts
+  exclude: []
+  mode: warn   # warn | block
