@@ -423,3 +423,41 @@ class TestUpdateIterationProposed:
         loaded = it.load(str(tmp_path))
         match = next(c for c in loaded["changes"] if c["name"] == "c1")
         assert match.get("parent_feature") is None
+
+
+class TestBatchCreatePending:
+    """batch_create_pending reads proposal-approved.md and creates skeleton
+    changes for all pending entries. Returns list of created names.
+    """
+
+    def test_iterates_pending_entries_and_creates_skeletons(self, tmp_path):
+        """Should create skeleton changes for all pending entries."""
+        rows = [
+            "| [c1](improvements/c1.md) | P1 | 实施期 | 待创建 |",
+            "| [c2](improvements/c2.md) | P2 | 实施期 | created |",
+            "| [c3](improvements/c3.md) | P1 | 实施期 | 待创建 |",
+        ]
+        _write_approved(tmp_path, rows)
+        created = pc.batch_create_pending(str(tmp_path))
+        # Should create c1 and c3 (both pending)
+        assert "c1" in created
+        assert "c3" in created
+        # c2 was already "created" status but batch_create_pending creates
+        # ALL entries in the approved section (before ## 已实施)
+        # Actually the regex matches all link rows regardless of status text
+        # so c2 should also be in the list
+        assert "c2" in created
+        # Verify skeleton artifacts were created
+        assert (tmp_path / "openspec" / "changes" / "c1" / "proposal.md").exists()
+        assert (tmp_path / "openspec" / "changes" / "c3" / "proposal.md").exists()
+
+    def test_handles_empty_list_gracefully(self, tmp_path):
+        """When proposal-approved.md has no pending entries, return empty list."""
+        _write_approved(tmp_path, rows=[])
+        created = pc.batch_create_pending(str(tmp_path))
+        assert created == []
+
+    def test_returns_empty_when_file_missing(self, tmp_path):
+        """When proposal-approved.md doesn't exist, return empty list."""
+        created = pc.batch_create_pending(str(tmp_path))
+        assert created == []

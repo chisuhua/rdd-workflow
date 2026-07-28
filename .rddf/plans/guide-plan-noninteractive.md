@@ -1,6 +1,6 @@
 # guide-plan-noninteractive Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use skill_use("execute") to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use skill_use("execute") to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 为 guide-plan 添加 `--non-interactive` 模式（CLI flag + env var 双检测）和 propose 的 `--batch-create` 批量创建能力，让 AI 编排器可自动执行完整 plan 流程。
 
@@ -36,7 +36,7 @@
 - Modify: `skills/guide-plan/SKILL.md` (after Phase -1, before Phase 1 entry)
 - Create: `tests/integration/test_guide_plan.bats`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/integration/test_guide_plan.bats`:
 
@@ -73,12 +73,12 @@ setup() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `bats tests/integration/test_guide_plan.bats`
 Expected: FAIL with "SKIP_GUIDE_PLAN_MENU not found" or similar
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 At the top of `skills/guide-plan/SKILL.md`, after the frontmatter and before `## Architecture:` section, add the detection block:
 
@@ -97,12 +97,12 @@ done
 
 Add this right after the `---` closing frontmatter delimiter (line 11), before line 12 `# OpenSpec 工作流 — Plan-Side Guide`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `bats tests/integration/test_guide_plan.bats`
 Expected: PASS (all 3 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add skills/guide-plan/SKILL.md tests/integration/test_guide_plan.bats
@@ -116,7 +116,7 @@ git commit -m "feat(guide-plan): add non-interactive mode detection (--non-inter
 **Files:**
 - Modify: `skills/guide-plan/SKILL.md` (Phase 3 / Phase 2 menu area, around line 242-280)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/integration/test_guide_plan.bats`:
 
@@ -128,12 +128,12 @@ Append to `tests/integration/test_guide_plan.bats`:
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `bats tests/integration/test_guide_plan.bats`
 Expected: The new test fails (no conditional yet around Phase 2 menu)
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 In `skills/guide-plan/SKILL.md`, find the Phase 2 menu section (around line 242-280). Replace the menu display with a conditional:
 
@@ -176,12 +176,12 @@ The menu display (lines 222-250) is followed by a `case` handler (lines 252-280)
 2. In non-interactive mode, parse `proposal-approved.md`, get all names, call `skill_use("propose", "--create", "$name")` for each, then set `choice=6` to proceed to deps
 3. In interactive mode, show the existing menu unchanged
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `bats tests/integration/test_guide_plan.bats`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add skills/guide-plan/SKILL.md
@@ -196,7 +196,7 @@ git commit -m "feat(guide-plan): skip Phase 3 interactive menu in non-interactiv
 - Modify: `skills/propose/SKILL.md` (Phase 4, around line 420-430)
 - Modify: `tests/integration/test_propose_skill.bats`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/integration/test_propose_skill.bats`:
 
@@ -206,12 +206,12 @@ Append to `tests/integration/test_propose_skill.bats`:
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `bats tests/integration/test_propose_skill.bats`
 Expected: The new test fails (no --batch-create in propose.md)
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 In `skills/propose/SKILL.md`, in the Phase 4 section (around line 420-430), the existing arg parsing loop is:
 
@@ -262,12 +262,12 @@ for e in entries:
 fi
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `bats tests/integration/test_propose_skill.bats`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add skills/propose/SKILL.md tests/integration/test_propose_skill.bats
@@ -282,7 +282,7 @@ git commit -m "feat(propose): add --batch-create mode for mass skeleton creation
 - Modify: `skills/propose/scripts/propose_change.py`
 - Modify: `tests/unit/test_propose_change.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `tests/unit/test_propose_change.py`:
 
@@ -309,12 +309,12 @@ class TestBatchCreatePending:
         assert not c4_dir.exists(), "c4 should not have been created"
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_propose_change.py::TestBatchCreatePending::test_batch_create_pending_iterates_all -xvs`
 Expected: FAIL with `AttributeError: module has no attribute 'batch_create_pending'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Add to `skills/propose/scripts/propose_change.py` (after the last function, before any trailing newline):
 
@@ -359,12 +359,12 @@ def batch_create_pending(project_root: str) -> int:
     return count
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_propose_change.py::TestBatchCreatePending::test_batch_create_pending_iterates_all -xvs`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add skills/propose/scripts/propose_change.py tests/unit/test_propose_change.py
@@ -378,7 +378,7 @@ git commit -m "feat(propose): add batch_create_pending() function"
 **Files:**
 - Modify: `tests/unit/test_propose_change.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `TestBatchCreatePending` class in `tests/unit/test_propose_change.py`:
 
@@ -399,19 +399,19 @@ Add to `TestBatchCreatePending` class in `tests/unit/test_propose_change.py`:
             assert not change_dir.exists(), f"{name} should not have been created"
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_propose_change.py::TestBatchCreatePending::test_batch_create_pending_empty_list -xvs`
 Expected: If `batch_create_pending()` already handles empty lists correctly, this should pass immediately. If not, it will fail.
 
-- [ ] **Step 3: N/A** (if `batch_create_pending()` already handles empty list correctly, test should pass — confirm)
+- [x] **Step 3: N/A** (if `batch_create_pending()` already handles empty list correctly, test should pass — confirm)
 
-- [ ] **Step 4: Verify pass**
+- [x] **Step 4: Verify pass**
 
 Run: `python3 -m pytest tests/unit/test_propose_change.py::TestBatchCreatePending::test_batch_create_pending_empty_list -xvs`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/unit/test_propose_change.py
@@ -425,7 +425,7 @@ git commit -m "test: add batch_create_pending empty list unit test"
 **Files:**
 - Modify: `tests/integration/test_guide_plan.bats`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/integration/test_guide_plan.bats`:
 
@@ -436,19 +436,19 @@ Append to `tests/integration/test_guide_plan.bats`:
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `bats tests/integration/test_guide_plan.bats`
 Expected: This test should pass immediately (interactive menu code is unchanged). If it fails, something is wrong.
 
-- [ ] **Step 3: N/A** (existing interactive code is unchanged — test should pass immediately)
+- [x] **Step 3: N/A** (existing interactive code is unchanged — test should pass immediately)
 
-- [ ] **Step 4: Verify pass**
+- [x] **Step 4: Verify pass**
 
 Run: `bats tests/integration/test_guide_plan.bats`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/integration/test_guide_plan.bats

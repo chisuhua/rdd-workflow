@@ -43,3 +43,18 @@ setup() {
     sed -n "${phase3_start},${phase4_start}p" "$f" | grep -q '归属.*feature\|parent.feature\|PARENT_FEATURE'
   fi
 }
+
+@test "propose_skill Phase 4 has --batch-create flag detection" {
+  grep -q -- '--batch-create' "$f"
+  # Verify it's in Phase 4 section (after "Phase 4" heading)
+  phase4_start=$(grep -n '^### Phase 4' "$f" | head -1 | cut -d: -f1)
+  if [ -n "$phase4_start" ]; then
+    sed -n "${phase4_start},\$p" "$f" | grep -q -- '--batch-create'
+  fi
+}
+
+@test "propose_skill Phase 4 batch-create calls batch_create_pending" {
+  # When --batch-create is set, should call batch_create_pending from propose_change.py
+  grep -q 'batch_create_pending' "$f"
+  grep -q 'BATCH_CREATE' "$f"
+}

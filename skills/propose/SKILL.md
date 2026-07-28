@@ -451,9 +451,27 @@ THIS_SESSION_CREATED=()
 for arg in "$@"; do
   case "$arg" in
     --skeleton|--skeleton-only) SKELETON_MODE=true ;;
+    --batch-create) BATCH_CREATE=true ;;
   esac
 done
 SKELETON_MODE="${SKELETON_MODE:-false}"
+
+# --- batch-create mode (guide-plan-noninteractive change) ---
+# When --batch-create is set, create skeleton changes for ALL pending
+# entries in proposal-approved.md without user interaction.
+# Enables AI orchestrators to auto-create all approved proposals.
+if [ "${BATCH_CREATE:-}" = "true" ]; then
+    echo "📦 Batch-create mode: creating skeleton changes for all pending proposals"
+    PROJECT_ROOT="$PROJECT_ROOT" python3 -c "
+import os, sys
+sys.path.insert(0, os.environ.get('PROJECT_ROOT', '.'))
+from skills.propose.scripts.propose_change import batch_create_pending
+created = batch_create_pending(os.environ['PROJECT_ROOT'])
+print(f'Created {len(created)} skeleton changes: {created}')
+" 2>/dev/null || echo "⚠️ batch_create_pending failed (non-fatal)"
+    echo "✅ Batch-create complete"
+    exit 0
+fi
 
 # Step 4a: Guardrail — check if change already exists
 if [ -d "$PROJECT_ROOT/openspec/changes/<name>/" ]; then

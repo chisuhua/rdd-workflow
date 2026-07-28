@@ -8,6 +8,8 @@ strings and exception handling.
 
 import json
 import os
+import re
+import sys
 from typing import Optional
 
 
@@ -363,3 +365,22 @@ def update_iteration_proposed(
     except Exception as e:
         print(f"⚠️  更新 iteration.json 失败: {e}", file=sys.stderr)
         return False
+
+
+def batch_create_pending(project_root: str) -> list[str]:
+    """Create skeleton changes for all pending suggestions in proposal-approved.md."""
+    approved_file = os.path.join(project_root, "proposal-approved.md")
+    if not os.path.exists(approved_file):
+        return []
+    with open(approved_file) as f:
+        content = f.read()
+    section = re.split(r'## 已实施', content)[0]
+    rows = re.findall(r'\[\s*([^\]]+)\]\s*\(\s*improvements/([^)]+)\s*\)', section)
+    created = []
+    for name, _ in rows:
+        try:
+            create_skeleton_change(project_root, name, "default", "general", "P2")
+            created.append(name)
+        except Exception as e:
+            print(f"WARN: failed to create {name}: {e}", file=sys.stderr)
+    return created
