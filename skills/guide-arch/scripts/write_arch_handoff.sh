@@ -14,8 +14,9 @@ write_arch_handoff() {
   export PROJECT_ROOT
 
   # Re-run discovery to ensure latest values (Phase 5 idempotency)
-  if [ -f "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh" ]; then
-      source "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh"
+  source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+  if [ -f "$(resolve_rdd_lib_dir)/discover-arch-artifacts.sh" ]; then
+      source "$(resolve_rdd_lib_dir)/discover-arch-artifacts.sh"
       discover_adr_dir          >/dev/null
       discover_roadmap          >/dev/null
       discover_architecture_dir >/dev/null

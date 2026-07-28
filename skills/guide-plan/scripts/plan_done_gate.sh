@@ -164,17 +164,22 @@ write_plan_handoff() {
       case "$d" in */archive/) continue ;; esac
       local name
       name=$(basename "$d")
-      if [ -f "$PROJECT_ROOT/skills/propose/scripts/validate_baseline.py" ]; then
-          if ! python3 "$PROJECT_ROOT/skills/propose/scripts/validate_baseline.py" "$name" >/dev/null 2>&1; then
+      source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+      local PROPOSE_DIR
+      PROPOSE_DIR="$(resolve_rdd_skill_dir propose)"
+      local RDD_LIB_DIR
+      RDD_LIB_DIR="$(resolve_rdd_lib_dir)"
+      if [ -f "$PROPOSE_DIR/scripts/validate_baseline.py" ]; then
+          if ! python3 "$PROPOSE_DIR/scripts/validate_baseline.py" "$name" >/dev/null 2>&1; then
               echo "❌ plan-done gate: $name failed baseline validation"
-              python3 "$PROJECT_ROOT/skills/propose/scripts/validate_baseline.py" "$name" || true
+              python3 "$PROPOSE_DIR/scripts/validate_baseline.py" "$name" || true
               VALIDATION_FAILED=1
           fi
       fi
-      if [ -f "$PROJECT_ROOT/skills/_lib/validate_delta_targets.py" ]; then
-          if ! python3 "$PROJECT_ROOT/skills/_lib/validate_delta_targets.py" "$name" >/dev/null 2>&1; then
+      if [ -f "$RDD_LIB_DIR/validate_delta_targets.py" ]; then
+          if ! python3 "$RDD_LIB_DIR/validate_delta_targets.py" "$name" >/dev/null 2>&1; then
               echo "❌ plan-done gate: $name failed delta target validation"
-              python3 "$PROJECT_ROOT/skills/_lib/validate_delta_targets.py" "$name" || true
+              python3 "$RDD_LIB_DIR/validate_delta_targets.py" "$name" || true
               VALIDATION_FAILED=1
           fi
       fi

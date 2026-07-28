@@ -117,7 +117,8 @@ except Exception:
   echo "✅ 检测到 arch-done handoff（arch → plan 硬交接信号）"
 
   # 6. 提案状态同步: 扫描已归档但未标记的提案，自动标记为已实施
-  local STATE_SH="$PROJECT_ROOT/skills/_lib/state.sh"
+  source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+  local STATE_SH="$(resolve_rdd_lib_dir)/state.sh"
   if [ -f "$STATE_SH" ]; then
     # shellcheck source=/dev/null
     source "$STATE_SH"

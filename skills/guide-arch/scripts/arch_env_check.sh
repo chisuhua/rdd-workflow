@@ -70,8 +70,9 @@ run_arch_env_check() {
   local DISCOVERED_ADR_DIR_FOUND DISCOVERED_ROADMAP_FOUND DISCOVERED_ARCH_FOUND
 
   # === Phase 1 Step 5: 工件发现 (ADR-0016 Layer 1) ===
-  if [ -f "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh" ]; then
-      source "$PROJECT_ROOT/skills/_lib/discover-arch-artifacts.sh"
+  source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+  if [ -f "$(resolve_rdd_lib_dir)/discover-arch-artifacts.sh" ]; then
+      source "$(resolve_rdd_lib_dir)/discover-arch-artifacts.sh"
       discover_adr_dir          >/dev/null
       discover_roadmap          >/dev/null
       discover_architecture_dir >/dev/null

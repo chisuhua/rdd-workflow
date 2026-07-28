@@ -116,6 +116,16 @@ install_global_symlinks() {
         COUNT=$((COUNT + 1))
     done
 
+    # Symlink _lib (shared library — not a skill, but required by all skills'
+    # bash code blocks and scripts via resolve_rdd_lib_dir()). Without this,
+    # globally-installed skills fail outside the rdd-workflow repo.
+    local LIB_SRC="$PACKAGE_DIR/skills/_lib"
+    local LIB_DST="$AGENTS_DIR/_lib"
+    if [ -L "$LIB_DST" ] || [ -d "$LIB_DST" ]; then
+        rm -f "$LIB_DST"
+    fi
+    ln -sf "$LIB_SRC" "$LIB_DST"
+
     # 兼容: 旧 install.sh 用户可能引用 PACKAGE_DIR=$HOME/.agents/skills/rdd-workflow，
     # 创建完整包引用让 INSTALL.md 的 $PACKAGE_DIR 解析依然有效
     local PACKAGE_SYMLINK="$AGENTS_DIR/rdd-workflow"

@@ -53,7 +53,8 @@ worktree (openspec/<name>): 本技能在此执行
 
 ```bash
 # Round A: extracted to _lib/select_worktree.sh (L54-L168, ~113 lines)
-SCRIPT_DIR="$PROJECT_ROOT/skills/execute"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+SCRIPT_DIR="$(resolve_rdd_skill_dir execute)"
 if [ -f "$SCRIPT_DIR/scripts/select_worktree.sh" ]; then
   source "$SCRIPT_DIR/scripts/select_worktree.sh"
   source "$SCRIPT_DIR/scripts/update_roadmap_progress.sh"

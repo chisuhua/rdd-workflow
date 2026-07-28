@@ -131,7 +131,8 @@ skill_use("guide-plan")   # 无参数版本
 ```bash
 # rddf-session 入口 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
 # stage_plan parent: latest stage_arch (auto-resolved by helper)
-source "$PROJECT_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "$(resolve_rdd_skill_dir rddf-session)/scripts/rddf_session_hooks.sh"
 rddf_session_hook_entry stage_plan guide-plan plan-phase plan-done .rddf/state/.plan-handoff.json
 ```
 
@@ -143,7 +144,8 @@ rddf_session_hook_entry stage_plan guide-plan plan-phase plan-done .rddf/state/.
 
 ```bash
 # Round A: extracted to _lib/plan_intake.sh (L95-L175, ~79 lines)
-source "$PROJECT_ROOT/skills/guide-plan/scripts/plan_intake.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "$(resolve_rdd_skill_dir guide-plan)/scripts/plan_intake.sh"
 run_plan_intake || exit 1
 ```
 
@@ -151,7 +153,8 @@ run_plan_intake || exit 1
 
 ```bash
 # v2.1: wave scheduler entry check - suggest changes ready to advance
-source "$PROJECT_ROOT/skills/_lib/wave_scheduler_hooks.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "$(resolve_rdd_lib_dir)/wave_scheduler_hooks.sh"
 wave_scheduler_entry_check "$PROJECT_ROOT" "guide-plan"
 ```
 
@@ -232,7 +235,8 @@ fi
 
 ```bash
 # Round B: extracted to _lib/plan_queue_overview.sh (L211-L261, ~50 lines)
-source "$PROJECT_ROOT/skills/guide-plan/scripts/plan_queue_overview.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "$(resolve_rdd_skill_dir guide-plan)/scripts/plan_queue_overview.sh"
 show_queue_overview
 ```
 
@@ -240,7 +244,8 @@ show_queue_overview
 
 ```bash
 # Round B: extracted to _lib/plan_feature_progress.sh (L263-L297, ~34 lines)
-source "$PROJECT_ROOT/skills/guide-plan/scripts/plan_feature_progress.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "$(resolve_rdd_skill_dir guide-plan)/scripts/plan_feature_progress.sh"
 show_feature_progress
 ```
 
@@ -303,7 +308,8 @@ fi
 
 ```bash
 # Phase 2 propose/create menu - shared handler (extracted from inline case block)
-source "$PROJECT_ROOT/skills/guide-plan/scripts/plan_propose_menu.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "$(resolve_rdd_skill_dir guide-plan)/scripts/plan_propose_menu.sh"
 handle_plan_propose_menu "$choice"
 [ $? -eq 2 ] && continue  # r|refresh -> 重新展示菜单
 ```
@@ -396,7 +402,8 @@ guide-plan 阶段完成（plan-done）
 ```bash
 # Round B: extracted to _lib/plan_deps_candidates.{py,sh} (L451-L488, ~38 lines)
 # Oracle C1 fix: bash wrapper passes PROJECT_ROOT env var only
-source "$PROJECT_ROOT/skills/guide-plan/scripts/plan_deps_candidates.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "$(resolve_rdd_skill_dir guide-plan)/scripts/plan_deps_candidates.sh"
 generate_deps_candidates
 
 # Step 2: 调用 deps.md 技能（静态三轴分析 + 子代理语义分析占位）
@@ -439,7 +446,8 @@ plan-done 必须满足**双重门控**才能通过：
 
 ```bash
 # Round A: extracted to _lib/plan_done_gate.{py,sh} (L517-L677, ~150 lines)
-source "$PROJECT_ROOT/skills/guide-plan/scripts/plan_done_gate.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "$(resolve_rdd_skill_dir guide-plan)/scripts/plan_done_gate.sh"
 run_plan_done_gate || exit 1
 # Gate 0 skip sentinel: when user accepts Deps suggestions, no handoff is written
 # (matches original 'exit 0' semantics before extraction)
@@ -494,7 +502,8 @@ write_plan_handoff || exit 1
 
 ```bash
 # rddf-session 关闭 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
-source "$PROJECT_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "$(resolve_rdd_skill_dir rddf-session)/scripts/rddf_session_hooks.sh"
 rddf_session_hook_close stage_plan plan-done guide-plan
 ```
 

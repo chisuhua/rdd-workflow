@@ -51,7 +51,8 @@ STATE_FILE="$PROJECT_ROOT/.rddf/state/roadmap-state.json"
 
 # 加载 state.sh 辅助函数（safe_python_json, safe_python_yaml）
 # P2-3: 所有 json.load(open(...)) 一行式调用改为 safe_python_json
-SCRIPT_DIR="$PROJECT_ROOT/skills/roadmap"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+SCRIPT_DIR="$(resolve_rdd_skill_dir roadmap)"
 if [ -f "$SCRIPT_DIR/../_lib/state.sh" ]; then
   source "$SCRIPT_DIR/../_lib/state.sh"
 fi
