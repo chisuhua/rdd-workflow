@@ -71,9 +71,9 @@ detect_sync_issues() {
   # Class 1: PLAN_DONE vs TASKS_DONE divergence
   plan_done=0
   if [ -f "$plan_file" ]; then
-    plan_done=$(grep -c "\- \[x\]" "$plan_file" 2>/dev/null || echo 0)
+    plan_done=$(grep -c "\- \[x\]" "$plan_file" 2>/dev/null || true)
   fi
-  tasks_done=$(grep -c "\- \[x\]" "$tasks_file" 2>/dev/null || echo 0)
+  tasks_done=$(grep -c "\- \[x\]" "$tasks_file" 2>/dev/null || true)
   if [ "$plan_done" -gt "$tasks_done" ]; then
     echo "⚠️ 不同步: Prometheus 已完成 $plan_done 个单元，但 tasks.md 只标记了 $tasks_done 个"
     echo "修复: 同步 tasks.md 以匹配实际完成状态"

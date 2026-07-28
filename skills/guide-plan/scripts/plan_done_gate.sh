@@ -32,7 +32,7 @@ run_plan_done_gate() {
       local SUGGESTIONS FALLBACK_MARKER dep_choice
       SUGGESTIONS=$(awk '/^## 🧠 AI 分析建议/,/^## [^🧠]|^---/' "$DEPS_OUTPUT" 2>/dev/null \
                     | grep -E "^- \`.*\`: (split|merge|reorder)" || true)
-      FALLBACK_MARKER=$(grep -c "AI 语义分析未启用" "$DEPS_OUTPUT" 2>/dev/null || echo 0)
+      FALLBACK_MARKER=$(grep -c "AI 语义分析未启用" "$DEPS_OUTPUT" 2>/dev/null || true)
 
       if [ -n "$SUGGESTIONS" ] && [ "${FALLBACK_MARKER:-0}" -eq 0 ]; then
           echo ""

@@ -282,9 +282,9 @@ generate_implementation_plan() {
   fi
 
   local plan_task_count
-  plan_task_count=$(grep -c '^### Task' "$plan_file" 2>/dev/null || echo 0)
+  plan_task_count=$(grep -c '^### Task' "$plan_file" 2>/dev/null || true)
   local plan_step_count
-  plan_step_count=$(grep -c '^- \[ \]' "$plan_file" 2>/dev/null || echo 0)
+  plan_step_count=$(grep -c '^- \[ \]' "$plan_file" 2>/dev/null || true)
 
   if [ "$plan_task_count" -eq 0 ] || [ "$plan_step_count" -eq 0 ]; then
     echo "❌ 计划文件存在但无 Task 或 Step (Tasks: $plan_task_count, Steps: $plan_step_count)" >&2
