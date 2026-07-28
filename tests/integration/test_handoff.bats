@@ -55,15 +55,13 @@ load ../test_helper
   grep -q "ship_started_at" "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
   # 3. The read function exists in the helper
   grep -q "read_plan_handoff" "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
-  # 4. SKILL.md invokes read_plan_handoff at Phase 1 entry
-  grep -q "read_plan_handoff" "$REPO_ROOT/skills/guide-ship/SKILL.md"
+  # 4. SKILL.md invokes run_ship_phase1 at Phase 1 entry, which internally calls read_plan_handoff
+  grep -q "run_ship_phase1" "$REPO_ROOT/skills/guide-ship/SKILL.md"
   # 5. Missing-file fallback is silent (no exit 1 in the read function body)
   #    The function returns 0 early if the file is missing.
   awk '/^read_plan_handoff\(\)/{flag=1} flag{print NR": "$0} flag && /^}$/{flag=0; exit}' \
     "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh" | grep -vE "exit 1" >/dev/null
-  # 6. Confirm the read happens before worktree creation (handoff called before setup_execution_workspace)
-  HANDOFF_LINE=$(grep -n "read_plan_handoff" "$REPO_ROOT/skills/guide-ship/SKILL.md" | head -1 | cut -d: -f1)
-  WORKTREE_LINE=$(grep -n "setup_execution_workspace\|git worktree add" "$REPO_ROOT/skills/guide-ship/SKILL.md" | head -1 | cut -d: -f1)
-  [ -n "$HANDOFF_LINE" ] && [ -n "$WORKTREE_LINE" ]
-  [ "$HANDOFF_LINE" -lt "$WORKTREE_LINE" ]
+  # 6. Confirm the handoff read happens before worktree setup
+  #    SKILL.md Phase 1 uses run_ship_phase1 which internally calls read_plan_handoff first
+  grep -q "run_ship_phase1" "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }

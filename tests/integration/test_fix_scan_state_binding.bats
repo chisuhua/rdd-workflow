@@ -22,11 +22,11 @@ _write_sessions() {
   "version": 1,
   "sessions": [
     {
-      "session_id": "rds_abc123",
+      "session_id": "rds_a1b2c3d4e5f6",
       "kind": "stage_plan",
       "owner_opencode_session_id": "omo_ses_owner_001",
       "state": "active",
-      "goal": {"intent": "plan", "subject": "dashboard"},
+      "goal": {"intent": "guide-plan", "subject": "dashboard"},
       "attached_changes": ["fix-scan-state-binding"],
       "started_at": "$now",
       "last_heartbeat": "$now"
@@ -47,8 +47,8 @@ JSON
     "
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Current:"* ]]
-    [[ "$output" == *"rds_abc123"* ]]
+    [[ "$output" == *"📍 Current:"* ]]
+    [[ "$output" == *"rds_a1b2c3d4e5f6"* ]]
 }
 
 @test "scan_session_binding: reports no binding when owner does not match" {
@@ -62,7 +62,7 @@ JSON
     "
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"No current binding"* ]]
+    [[ "$output" == *"📍 No current binding"* ]]
 }
 
 @test "scan_session_binding: owner variable is single line without OPENCODE_SESSION_ID" {
