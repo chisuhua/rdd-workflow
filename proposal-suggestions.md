@@ -22,7 +22,6 @@
 | [add-rddf-concurrency-tests](improvements/add-rddf-concurrency-tests.md) | P1 | rddf-session plan | 2026-07-21 |
 | [fix-attach-detach-symmetry](improvements/fix-attach-detach-symmetry.md) | P1 | rddf-session plan | 2026-07-21 |
 | [split-rddf-god-class](improvements/split-rddf-god-class.md) | P2 | rddf-session plan | 2026-07-21 |
-
 | [fix-scan-state-binding](improvements/fix-scan-state-binding.md) | P0 | dashboard spec | 2026-07-21 |
 | [add-parent-feature-param](improvements/add-parent-feature-param.md) | P0 | Oracle 架构分析 | 2026-07-21 |
 | [add-propose-content-review](improvements/add-propose-content-review.md) | P1 | Oracle 架构分析 | 2026-07-21 |
