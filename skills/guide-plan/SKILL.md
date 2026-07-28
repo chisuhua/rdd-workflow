@@ -10,6 +10,56 @@ metadata:
   user-invocable: true
 ---
 
+<!-- Non-interactive mode detection (guide-plan-noninteractive change) -->
+<!-- Detects --non-interactive CLI flag or SKIP_GUIDE_PLAN_MENU env var. -->
+<!-- When NON_INTERACTIVE=true, auto-selects all pending proposals and -->
+<!-- skips the interactive menu, enabling AI orchestrators to run the -->
+<!-- full plan flow without human intervention. -->
+```bash
+# --- Non-interactive mode detection ---
+NON_INTERACTIVE=false
+for arg in "$@"; do
+  case "$arg" in
+    --non-interactive) NON_INTERACTIVE=true ;;
+    --batch-create)   NON_INTERACTIVE=true; BATCH_CREATE=true ;;
+  esac
+done
+[ -n "${SKIP_GUIDE_PLAN_MENU:-}" ] && NON_INTERACTIVE=true
+
+if [ "$NON_INTERACTIVE" = "true" ]; then
+  echo "🤖 Non-interactive mode: auto-selecting all pending proposals"
+
+  # Auto-create all pending changes from proposal-approved.md
+  if [ -n "${BATCH_CREATE:-}" ]; then
+    # --batch-create: delegate to propose skill for bulk creation
+    skill_use("propose", "--batch-create")
+  else
+    # Auto-select each pending proposal individually
+    if [ -f "proposal-approved.md" ]; then
+      python3 -c "
+import re, sys
+with open('proposal-approved.md') as f:
+    content = f.read()
+section = re.split(r'## 已实施', content)[0]
+rows = re.findall(r'\[\s*([^\]]+)\]\s*\(\s*improvements/([^)]+)\s*\)', section)
+for name, _ in rows:
+    print(name)
+" 2>/dev/null | while read -r pending_name; do
+        [ -z "$pending_name" ] && continue
+        echo "-> 创建 change: $pending_name"
+        skill_use("propose", "--create", "$pending_name")
+      done
+    fi
+  fi
+
+  # Skip interactive menu, go straight to deps phase (choice="6")
+  choice="6"
+else
+  # Interactive mode: show menu and wait for user input
+  echo "📋 Interactive mode: showing menu"
+fi
+```
+
 # OpenSpec 工作流 — Plan-Side Guide
 
 本技能是 OpenSpec 工作流 v2.0 的 **plan 端状态机**：负责在生成 OpenSpec change artifacts 阶段的**变更生成**工作——消费已批准提案、创建 change、依赖分析、变更生成完成交接。plan 阶段是三阶段架构（arch → plan → ship，ADR-0003）的第二阶段，专为中人工介入、AI 辅助生成场景设计。
