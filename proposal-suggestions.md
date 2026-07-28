@@ -60,3 +60,4 @@
 | [add-full-regression-gate](improvements/add-full-regression-gate.md) | P0 | UsrLinuxEmu 回归复盘 2026-07-27 | 2026-07-27 |
 | [add-openspec-gate](improvements/add-openspec-gate.md) | P0 | UsrLinuxEmu backfill 事件复盘 2026-07-27 | 2026-07-27 |
 | [add-proposal-defer-support](improvements/add-proposal-defer-support.md) | P1 | PTX-EMU 2026-07-28 实战 — guide-arch 无法跳过已评估推迟的提案 | 2026-07-28 |
+| [add-proposal-deps-and-features](improvements/add-proposal-deps-and-features.md) | P1 | 用户实战讨论 2026-07-28 | 2026-07-28 |
