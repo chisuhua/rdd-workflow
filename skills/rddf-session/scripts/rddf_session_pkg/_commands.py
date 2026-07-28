@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import datetime
 import json
+import os
 import pathlib
 
 from typing import Any, Dict, List, Optional
@@ -76,6 +77,21 @@ class RddfSessionCommands:
                             f"4-option soft prompt"
                         )
                     return existing["session_id"]
+
+            # Stage-level singleton: cross-stage concurrent runs race on
+            # unlocked project singletons (proposal-approved.md, handoffs).
+            # RDDF_ALLOW_CROSS_STAGE_PARALLEL=yes restores legacy behavior.
+            if os.environ.get("RDDF_ALLOW_CROSS_STAGE_PARALLEL", "").lower() not in ("yes", "true", "1"):
+                for existing in data["sessions"]:
+                    if existing["state"] == "active" and existing["kind"] != kind:
+                        from ._types import ConflictError
+                        raise ConflictError(
+                            f"Active {existing['kind']} session {existing['session_id']} "
+                            f"blocks new {kind} session (stage-level singleton). "
+                            f"Resolve via skill_use('rddf-session','resume'|'abandon'), "
+                            f"or set RDDF_ALLOW_CROSS_STAGE_PARALLEL=yes to opt into "
+                            f"cross-stage parallelism"
+                        )
 
             now = _now()
             session = RddfSession(

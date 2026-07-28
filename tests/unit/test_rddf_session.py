@@ -71,12 +71,13 @@ def test_find_session_returns_none_for_unknown(coordinator):
     assert coordinator.find_session("rds_nonexistent") is None
 
 
-def test_list_sessions_returns_all(coordinator):
+def test_list_sessions_returns_all(coordinator, monkeypatch):
     """list_sessions MUST return all sessions, optionally filtered by kind.
 
-    Note: only ONE active session per kind is allowed (cross-owner creates
-    raise ConflictError), so this test uses distinct kinds for each session.
+    Uses the cross-stage escape hatch so three kinds can be active at once
+    (default policy is stage-level singleton — one active session total).
     """
+    monkeypatch.setenv("RDDF_ALLOW_CROSS_STAGE_PARALLEL", "yes")
     coordinator.create_session(kind="stage_arch", owner_opencode_session_id="ses_a", goal={})
     coordinator.create_session(kind="stage_plan", owner_opencode_session_id="ses_a", goal={})
     coordinator.create_session(kind="stage_ship", owner_opencode_session_id="ses_b", goal={})
@@ -282,6 +283,56 @@ def test_create_session_raises_conflict_different_owner(coordinator):
             owner_opencode_session_id="ses_b",
             goal={"intent": "guide-plan"},
         )
+
+
+def test_cross_stage_singleton_blocks_different_kind(coordinator):
+    """Default policy: an active stage session blocks creating ANY other kind
+    (stage-level singleton), even for the same owner."""
+    coordinator.create_session(
+        kind="stage_arch", owner_opencode_session_id="ses_a", goal={},
+    )
+    with pytest.raises(ConflictError, match="stage-level singleton"):
+        coordinator.create_session(
+            kind="stage_plan", owner_opencode_session_id="ses_a", goal={},
+        )
+    with pytest.raises(ConflictError, match="stage-level singleton"):
+        coordinator.create_session(
+            kind="stage_ship", owner_opencode_session_id="ses_b", goal={},
+        )
+
+
+def test_cross_stage_singleton_allows_after_completion(coordinator):
+    """Once the active session reaches a terminal state, the next stage may start."""
+    sid = coordinator.create_session(
+        kind="stage_arch", owner_opencode_session_id="ses_a", goal={},
+    )
+    coordinator.update_session_status(sid, "completed", end_reason="arch-done")
+    plan_sid = coordinator.create_session(
+        kind="stage_plan", owner_opencode_session_id="ses_a", goal={},
+    )
+    assert plan_sid != sid
+
+
+def test_cross_stage_singleton_allows_orphaned(coordinator):
+    """Orphaned sessions (heartbeat timeout) MUST NOT block new stage entries."""
+    sid = coordinator.create_session(
+        kind="stage_arch", owner_opencode_session_id="ses_a", goal={},
+    )
+    coordinator.update_session_status(sid, "orphaned")
+    plan_sid = coordinator.create_session(
+        kind="stage_plan", owner_opencode_session_id="ses_a", goal={},
+    )
+    assert plan_sid != sid
+
+
+def test_cross_stage_parallel_escape_hatch(coordinator, monkeypatch):
+    """RDDF_ALLOW_CROSS_STAGE_PARALLEL=yes restores legacy cross-stage behavior."""
+    monkeypatch.setenv("RDDF_ALLOW_CROSS_STAGE_PARALLEL", "yes")
+    coordinator.create_session(kind="stage_arch", owner_opencode_session_id="ses_a", goal={})
+    plan_sid = coordinator.create_session(
+        kind="stage_plan", owner_opencode_session_id="ses_b", goal={},
+    )
+    assert plan_sid.startswith("rds_")
 
 
 def test_heartbeat_config_default():

@@ -85,7 +85,7 @@ PYEOF
         ;;
 
     current)
-        OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
+        OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
         python3 - "$SESSIONS_FILE" "$OPENCODE_SESSION_ID" "$PROJECT_ROOT" <<'PYEOF'
 import sys, json
 sys.path.insert(0, sys.argv[3] if len(sys.argv) > 3 else ".")
@@ -167,7 +167,7 @@ PYEOF
 
     resume)
         SESSION_ID="${1:?Usage: rddf-session resume <session_id>}"
-        OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
+        OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
         python3 - "$SESSIONS_FILE" "$SESSION_ID" "$OPENCODE_SESSION_ID" "$PROJECT_ROOT" <<'PYEOF'
 import sys
 sys.path.insert(0, sys.argv[4] if len(sys.argv) > 4 else ".")
@@ -241,6 +241,15 @@ esac
 - **Storage**: `.rddf/state/sessions.json` (gitignored, project-scoped)
 - **Schema**: `skills/_lib/schemas/sessions_schema.json` v1 (ADR-0017)
 - **Concurrency**: file lock via `fcntl.flock`; atomic write via tmp+rename
+- **Stage-level singleton** (default): at most ONE active session across all
+  stage kinds. Cross-stage concurrent runs race on unlocked project
+  singletons (`proposal-approved.md`, handoffs), so `create_session` raises
+  `ConflictError` when any other-kind session is active. Set
+  `RDDF_ALLOW_CROSS_STAGE_PARALLEL=yes` to opt into legacy cross-stage
+  parallelism.
+- **Owner identity**: `OPENCODE_SESSION_ID` env var, falling back to
+  `$(hostname -s)_$PPID` (opencode server PID — stable across bash tool
+  calls within one window, differs across windows).
 - **Heartbeat**: refreshed on every `guide-arch`/`guide-plan`/`guide-ship` phase call;
   30-minute timeout → orphaned
 

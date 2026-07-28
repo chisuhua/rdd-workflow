@@ -46,8 +46,9 @@ def test_find_current_binding_returns_none_for_different_owner(coordinator):
     assert coordinator.find_current_binding("ses_me") is None
 
 
-def test_find_current_binding_picks_most_recent_of_multiple(coordinator):
+def test_find_current_binding_picks_most_recent_of_multiple(coordinator, monkeypatch):
     """Two actives same owner => returns newer started_at."""
+    monkeypatch.setenv("RDDF_ALLOW_CROSS_STAGE_PARALLEL", "yes")
     sid1 = coordinator.create_session(
         kind="stage_arch", owner_opencode_session_id="ses_owner", goal={}
     )
@@ -82,8 +83,9 @@ def _force_orphaned(coordinator, sid):
     coordinator.check_heartbeat_timeouts()
 
 
-def test_find_next_recommendation_returns_most_recent_orphaned(coordinator):
+def test_find_next_recommendation_returns_most_recent_orphaned(coordinator, monkeypatch):
     """Three orphaned → returns newest started_at."""
+    monkeypatch.setenv("RDDF_ALLOW_CROSS_STAGE_PARALLEL", "yes")
     s1 = coordinator.create_session(kind="stage_arch", owner_opencode_session_id="o1", goal={})
     time.sleep(0.05)
     s2 = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="o1", goal={})
@@ -97,16 +99,18 @@ def test_find_next_recommendation_returns_most_recent_orphaned(coordinator):
     assert found.session_id == s3
 
 
-def test_find_next_recommendation_returns_none_when_no_orphaned(coordinator):
+def test_find_next_recommendation_returns_none_when_no_orphaned(coordinator, monkeypatch):
     """Only active/completed → returns None."""
+    monkeypatch.setenv("RDDF_ALLOW_CROSS_STAGE_PARALLEL", "yes")
     coordinator.create_session(kind="stage_arch", owner_opencode_session_id="o1", goal={})
     sid = coordinator.create_session(kind="stage_plan", owner_opencode_session_id="o1", goal={})
     coordinator.update_session_status(sid, "completed", end_reason="plan-done")
     assert coordinator.find_next_recommendation() is None
 
 
-def test_find_next_recommendation_ignores_active_and_completed(coordinator):
+def test_find_next_recommendation_ignores_active_and_completed(coordinator, monkeypatch):
     """Mixed states → only orphaned considered."""
+    monkeypatch.setenv("RDDF_ALLOW_CROSS_STAGE_PARALLEL", "yes")
     s_active = coordinator.create_session(
         kind="stage_arch", owner_opencode_session_id="o1", goal={}
     )

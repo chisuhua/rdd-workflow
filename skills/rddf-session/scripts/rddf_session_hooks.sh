@@ -17,7 +17,9 @@
 #       Gracefully skips when sessions.json does not exist.
 #
 # Behavior preserved from inline versions:
-#   - OPENCODE_SESSION_ID fallback: $(hostname -s)_$$ (matches inline)
+#   - OPENCODE_SESSION_ID fallback: $(hostname -s)_$PPID (parent = opencode
+#     server PID; stable across bash tool calls in one window, differs
+#     across windows — fixes per-call $$ owner mismatch)
 #   - PROJECT_ROOT fallback: git rev-parse --show-toplevel || pwd
 #   - Entry: prints "rddf-session: <sid> (<kind>, parent=<id>)" on success
 #   - Entry: prints "CONFLICT: ..." + 4-option prompt hint + exit 2 on conflict
@@ -44,7 +46,7 @@ rddf_session_hook_entry() {
   local context_pointer="${5:-}"
 
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
+  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
 
   KIND="$kind" \
   INTENT="$intent" \
@@ -102,7 +104,7 @@ rddf_session_hook_close() {
   local intent="$3"
 
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
+  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
 
   KIND="$kind" \
   END_REASON="$end_reason" \
@@ -152,7 +154,7 @@ rddf_session_hook_heartbeat() {
   local change_name="${2:-}"
 
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
+  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
 
   KIND="$kind" \
   CHANGE_NAME="$change_name" \
@@ -200,7 +202,7 @@ rddf_session_hook_attach() {
   local change_name="$2"
 
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
+  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
 
   KIND="$kind" \
   CHANGE_NAME="$change_name" \
@@ -243,7 +245,7 @@ rddf_session_hook_detach() {
   local change_name="$2"
 
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
+  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
 
   KIND="$kind" \
   CHANGE_NAME="$change_name" \

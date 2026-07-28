@@ -106,13 +106,13 @@ def _resolve_sessions_file() -> str:
 def _resolve_owner_id() -> str:
     """Return the current OpenCode session id for binding lookup.
 
-    Mirrors the bash pattern in ``rddf-session/SKILL.md`` line 87:
-    ``OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"``.
+    Fallback uses the parent PID (opencode server process), which is
+    stable across bash/python tool calls within one window.
     """
     owner = os.environ.get("OPENCODE_SESSION_ID")
     if owner:
         return owner
-    return f"{socket.gethostname().split('.')[0]}_{os.getpid()}"
+    return f"{socket.gethostname().split('.')[0]}_{os.getppid()}"
 
 
 def _get_coordinator():

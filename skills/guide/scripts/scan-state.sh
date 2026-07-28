@@ -402,7 +402,7 @@ scan_session_binding() {
   local PYTHON_PATH="${SCRIPT_DIR:+$(cd "$SCRIPT_DIR/../../.." && pwd)}"
   BINDING_LINES=()
   [ -f "$SESSIONS_FILE" ] || return 0
-  local owner="${OPENCODE_SESSION_ID:-$(hostname -s)_$$}"
+  local owner="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
   # check_stale_workflow_state() is called automatically at the end of scan_state()
   check_heartbeat_timeouts "$PROJECT_ROOT"
   while IFS= read -r line; do
