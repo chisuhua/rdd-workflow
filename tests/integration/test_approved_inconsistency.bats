@@ -104,3 +104,24 @@ EOF
     run grep -E "source.*state\.sh" "$REPO_ROOT/skills/guide/scripts/guide_entry.sh"
     [ "$status" -eq 0 ]
 }
+
+# ---------------------------------------------------------------------------
+# Task 3 tests: e2e smoke regression
+# ---------------------------------------------------------------------------
+
+@test "approved_inconsistency: smoke regression - no false positive on clean project" {
+    # Empty repo, no proposal-suggestions.md -> silent
+    source "$REPO_ROOT/skills/_lib/state.sh"
+    run detect_approved_inconsistency "$TEST_DIR"
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"⚠️"* ]]
+}
+
+@test "approved_inconsistency: smoke regression - existing state.sh functions still work" {
+    source "$REPO_ROOT/skills/_lib/state.sh"
+    run bash -c "
+        source $REPO_ROOT/skills/_lib/state.sh
+        type list_improvements > /dev/null
+    "
+    [ "$status" -eq 0 ]
+}
