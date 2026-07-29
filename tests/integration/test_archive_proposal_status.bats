@@ -1,7 +1,7 @@
 load ../test_helper
 
 @test "archive-proposal-status: update script exists" {
-    PROJECT_ROOT=$(git rev-parse --show-toplevel)
+    PROJECT_ROOT="$REPO_ROOT"
     run test -f "$PROJECT_ROOT/skills/propose/scripts/update_proposal_status.py"
     [ "$status" -eq 0 ]
 }
@@ -25,7 +25,7 @@ load ../test_helper
 |----------|----------|-----------|
 MD
     echo "# test change" > "$TEST_DIR/improvements/test-change.md"
-    PROJECT_ROOT=$(git rev-parse --show-toplevel)
+    PROJECT_ROOT="$REPO_ROOT"
     run python3 "$PROJECT_ROOT/skills/propose/scripts/update_proposal_status.py" "test-change" "$TEST_DIR"
     [ "$status" -eq 0 ]
     # Verify the entry was moved to "已实施" section
@@ -63,14 +63,14 @@ print('completed' if found else 'not-completed')
 | Proposal | Priority | Completed |
 |----------|----------|-----------|
 MD
-    PROJECT_ROOT=$(git rev-parse --show-toplevel)
+    PROJECT_ROOT="$REPO_ROOT"
     run python3 "$PROJECT_ROOT/skills/propose/scripts/update_proposal_status.py" "nonexistent" "$TEST_DIR"
     [ "$status" -eq 1 ]
     rm -rf "$TEST_DIR"
 }
 
 @test "archive-proposal-status: archive.sh calls update_proposal_status" {
-    PROJECT_ROOT=$(git rev-parse --show-toplevel)
+    PROJECT_ROOT="$REPO_ROOT"
     run grep -c "update_proposal_status" "$PROJECT_ROOT/skills/_lib/archive.sh"
     [ "$status" -eq 0 ]
     [ "$output" -ge 1 ]

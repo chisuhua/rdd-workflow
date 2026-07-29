@@ -22,3 +22,7 @@ load ../test_helper
     [[ -d "$TEST_REPO_DIR/openspec/changes/my-feature" ]]
     archive_test_teardown
 }
+
+@test "archive_helper: test_archive_proposal_status.bats uses REPO_ROOT (no inline git rev-parse)" {
+    ! grep -q 'git rev-parse --show-toplevel' "$REPO_ROOT/tests/integration/test_archive_proposal_status.bats"
+}
