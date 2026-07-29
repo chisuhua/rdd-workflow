@@ -250,6 +250,7 @@ except Exception:
   check_stale_workflow_state "$PROJECT_ROOT"
   check_working_tree_cleanliness "$PROJECT_ROOT"
   check_arch_handoff_stale "$PROJECT_ROOT"
+  check_orphan_plan_files "$PROJECT_ROOT" 2>/dev/null || true
 }
 
 # check_arch_handoff_stale [PROJECT_ROOT]
@@ -470,5 +471,43 @@ else:
     else:
         print("   No orphaned rddf-sessions found. Run guide-arch or guide-plan to start.")
 PYEOF
-    )
+     )
+}
+
+# check_orphan_plan_files <project_root>
+#   Scan .rddf/plans/ for plan files whose corresponding change is no longer
+#   active (not in openspec/changes/ and not in openspec/changes/archive/).
+#   Outputs a non-blocking warning with file names and count.
+check_orphan_plan_files() {
+  local project_root="$1"
+  local plans_dir="$project_root/.rddf/plans"
+
+  [ -d "$plans_dir" ] || return 0
+
+  local orphan_count=0
+  local orphan_list=""
+
+  for plan_file in "$plans_dir"/*.md; do
+    [ -f "$plan_file" ] || continue
+    local basename
+    basename=$(basename "$plan_file" .md)
+    local change_dir="$project_root/openspec/changes/$basename"
+
+    if [ -d "$change_dir" ]; then
+      continue
+    fi
+
+    if ls "$project_root/openspec/changes/archive/"*-"$basename" >/dev/null 2>&1; then
+      continue
+    fi
+
+    orphan_count=$((orphan_count + 1))
+    orphan_list="$orphan_list  - $basename"$'\n'
+  done
+
+  if [ "$orphan_count" -gt 0 ]; then
+    echo "⚠️  发现 $orphan_count 个孤立计划文件 (.rddf/plans/):"
+    echo "$orphan_list"
+    echo "   (对应 change 已归档或不存在，可手动删除)"
+  fi
 }

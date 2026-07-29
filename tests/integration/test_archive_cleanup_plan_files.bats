@@ -49,3 +49,45 @@ teardown() {
     run cleanup_plan_file "$TEST_DIR" "nonexistent-change"
     [ "$status" -eq 0 ]
 }
+
+# ---------------------------------------------------------------------------
+# Task 2: check_orphan_plan_files() in scan-state.sh
+# ---------------------------------------------------------------------------
+
+@test "archive_cleanup_plan_files: check_orphan_plan_files exists in scan-state.sh" {
+    run grep -F "check_orphan_plan_files" "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
+    [ "$status" -eq 0 ]
+}
+
+@test "archive_cleanup_plan_files: orphan plan file triggers warning" {
+    # Create orphan plan file (no corresponding change)
+    echo "# Orphan" > ".rddf/plans/orphan-change.md"
+
+    # shellcheck source=/dev/null
+    source "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
+    run check_orphan_plan_files "$TEST_DIR"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"⚠️"* ]]
+    [[ "$output" == *"孤立"* ]]
+}
+
+@test "archive_cleanup_plan_files: matched plan file (active change) no warning" {
+    # Create active change + its plan file
+    mkdir -p openspec/changes/active-change
+    echo "# Plan" > ".rddf/plans/active-change.md"
+
+    # shellcheck source=/dev/null
+    source "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
+    run check_orphan_plan_files "$TEST_DIR"
+    [ "$status" -eq 0 ]
+    [[ ! "$output" == *"孤立"* ]]
+}
+
+@test "archive_cleanup_plan_files: missing .rddf/plans/ dir is silent" {
+    rm -rf .rddf/plans
+
+    # shellcheck source=/dev/null
+    source "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
+    run check_orphan_plan_files "$TEST_DIR"
+    [ "$status" -eq 0 ]
+}
