@@ -1,6 +1,6 @@
 # fix-doc-truth-sync — Implementation Tasks
 
-## Task 1: Write failing test that confirms 3 skills missing from package.json
+## Task 1: Write failing test that confirms 3 skills missing from package.json [DONE]
 
 **Write failing test**: Create a test that asserts the 3 missing skills are absent from `package.json skills[]`.
 
@@ -22,7 +22,7 @@ python3 -c "import json; data=json.load(open('package.json')); skills=data.get('
 
 **Expected**: The test fails — 3 skills are not in `package.json skills[]`.
 
-## Task 2: Add 3 missing skills to package.json
+## Task 2: Add 3 missing skills to package.json [DONE]
 
 **Implement**: Edit `package.json` to add `add-improve`, `openspec-gate`, and `rdd-workflow-brainstorm` to the `skills[]` array.
 
@@ -69,7 +69,7 @@ After the change, it should be:
 
 The 3 new entries are inserted in alphabetical order before `rdd-workflow-writing-plans`.
 
-## Task 3: Verify all doc_truth_sync tests pass
+## Task 3: Verify all doc_truth_sync tests pass [DONE]
 
 **Verify pass**: Run the full doc_contracts test suite:
 
@@ -87,7 +87,7 @@ bats tests/smoke.bats
 
 Commit the change with a descriptive message.
 
-## Task 4: Commit
+## Task 4: Commit [DONE]
 
 ```bash
 git add package.json
