@@ -1,6 +1,6 @@
 # Prompt worktree cleanup before stage commands — 实施任务
 
-## Task 1: 在 `guide/SKILL.md` 中新增"阶段命令门控"步骤
+## Task 1: 在 `guide/SKILL.md` 中新增"阶段命令门控"步骤 [DONE]
 
 **TDD 步骤**:
 1. 在 `tests/integration/` 中编写 `test_guide_worktree_gate.bats`，验证：
@@ -30,7 +30,7 @@
 4. 验证测试通过
 5. Commit
 
-## Task 2: 更新 `guide/SKILL.md` 的"工作树清理分析"章节，与门控步骤联动
+## Task 2: 更新 `guide/SKILL.md` 的"工作树清理分析"章节，与门控步骤联动 [DONE]
 
 **TDD 步骤**:
 1. 在 `tests/integration/` 中编写 `test_guide_worktree_gate_flow.bats`，验证：
@@ -43,7 +43,7 @@
 4. 验证测试通过
 5. Commit
 
-## Task 3: 端到端 bats 测试——验证清理门控在三种阶段命令下均生效
+## Task 3: 端到端 bats 测试——验证清理门控在三种阶段命令下均生效 [DONE]
 
 **TDD 步骤**:
 1. 在 `tests/integration/` 中编写 `test_guide_worktree_gate_e2e.bats`，验证：
