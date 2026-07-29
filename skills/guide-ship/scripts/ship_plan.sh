@@ -178,10 +178,10 @@ except: pass
   fi
   
   local existing_wt
-  existing_wt=$(git -C "$project_root" worktree list 2>/dev/null | awk '$3 ~ /^openspec\//' | wc -l || echo 0)
+  existing_wt=$(git -C "$project_root" worktree list 2>/dev/null | awk '$3 ~ /^openspec\//' | wc -l | tr -d '[:space:]' || echo 0)
 
   local total_changes
-  total_changes=$(ls -d "$project_root"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l || echo 0)
+  total_changes=$(ls -d "$project_root"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l | tr -d '[:space:]' || echo 0)
 
   if [ "$existing_wt" -gt 0 ] || [ "$total_changes" -gt 1 ]; then
     echo "worktree"

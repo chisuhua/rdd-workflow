@@ -88,7 +88,7 @@ PYEOF
 
   # 门控 1: 至少 1 个 active change
   local CHANGE_COUNT
-  CHANGE_COUNT=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l)
+  CHANGE_COUNT=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l | tr -d '[:space:]')
   echo "门控 1: Active changes 数量检查"
   echo "  当前活跃 changes: $CHANGE_COUNT"
   if [ "$CHANGE_COUNT" -eq 0 ]; then

@@ -20,9 +20,9 @@ check_remaining_work() {
 
   # Count remaining unprocessed changes
   local REMAINING
-  REMAINING=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l)
+  REMAINING=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l | tr -d '[:space:]')
   local REMAINING_WT
-  REMAINING_WT=$(git worktree list 2>/dev/null | awk '$3 ~ /^openspec\// {print $1}' | wc -l)
+  REMAINING_WT=$(git worktree list 2>/dev/null | awk '$3 ~ /^openspec\// {print $1}' | wc -l | tr -d '[:space:]')
 
   if [ "$REMAINING_WT" -gt 0 ] || [ "$REMAINING" -gt 0 ]; then
       echo "📋 还有 $REMAINING_WT 个 worktree 在跑,$REMAINING 个未处理 change"
