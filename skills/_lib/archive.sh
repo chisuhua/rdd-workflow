@@ -240,6 +240,32 @@ cleanup_worktree_and_branch() {
   fi
 }
 
+# archive_gate_check <change_name>
+#   Returns 0 if change has at least 1 completed task ([x]), returns 1 if 0.
+#   Honors FORCE_ARCHIVE_INCOMPLETE=yes to bypass the gate.
+archive_gate_check() {
+  local change_name="${1:-}"
+  [[ -z "$change_name" ]] && return 0
+
+  if [ "${FORCE_ARCHIVE_INCOMPLETE:-no}" = "yes" ]; then
+    return 0
+  fi
+
+  local tasks_file="openspec/changes/$change_name/tasks.md"
+  if [ ! -f "$tasks_file" ]; then
+    return 0
+  fi
+
+  local completed
+  completed=$(grep -c '^- \[x\]' "$tasks_file" 2>/dev/null || echo 0)
+
+  if [ "$completed" -eq 0 ]; then
+    echo "❌ 未实现 (0 个完成任务)。设置 FORCE_ARCHIVE_INCOMPLETE=yes 跳过"
+    return 1
+  fi
+  return 0
+}
+
 # archive_change <name>
 #   Full archive flow used by status.md Mode C and guide-ship.md Phase 3.
 #   Steps:
@@ -250,13 +276,13 @@ cleanup_worktree_and_branch() {
 #     4. Merge worktree branch, --ff-only or --no-ff
 #        (merge_feature_branch)
 #     5. Post-merge verification (verify_merge_result)
-#     6. openspec archive <name> --yes (kept inline — CLI, not lib)
+#     6. openspec archive <name> --yes (kept inline - CLI, not lib)
 #     7. git worktree remove + git branch -d (or -D via FORCE_BRANCH_DELETE)
 #        (cleanup_worktree_and_branch)
 #   Returns 0 on success, 1 on any failure.
 #
 #   Environment:
-#     FORCE_BRANCH_DELETE=yes  — fall back to `git branch -D` if `-d`
+#     FORCE_BRANCH_DELETE=yes  - fall back to `git branch -D` if `-d`
 #                                fails (worktree branch not fully merged)
 archive_change() {
   local name="${1:-}" wt_path branch default_branch main_root

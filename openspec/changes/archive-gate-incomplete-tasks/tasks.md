@@ -1,10 +1,5 @@
-## 1. <!-- Task Group Name -->
+## 1. Archive gate 实现
 
-- [ ] 1.1 <!-- Task description -->
-- [ ] 1.2 <!-- Task description -->
-
-## 2. <!-- Task Group Name -->
-
-- [ ] 2.1 <!-- Task description -->
-- [ ] 2.2 <!-- Task description -->
+- [x] 1.1 实现 archive_gate_check 函数 (skills/_lib/archive.sh)
+- [x] 1.2 编写测试 (tests/integration/test_archive_gate.bats)
 
