@@ -98,17 +98,20 @@ class MenuOption:
         label: short display name (e.g. ``"guide-arch"``, ``"resume rds_xxx"``)
         description: one-line human-readable description
         action: the skill_use call to execute
-            (e.g. ``"guide-arch"``, ``"rddf-session resume rds_xxx"``)
+            (e.g. ``"guide-arch"``, ``"rddf-session resume rds_xxx"``),
+            or ``None`` when the option is disabled
+            (``group="disabled"``).
         group: display grouping:
-            ``"recommended"`` — the top recommendation (⭐)
-            ``"stages"`` — workflow stage skills
-            ``"session"`` — rddf-session management
-            ``"utilities"`` — other tools (feature, status)
+            ``"recommended"`` - the top recommendation (⭐)
+            ``"stages"`` - workflow stage skills
+            ``"session"`` - rddf-session management
+            ``"utilities"`` - other tools (feature, status)
+            ``"disabled"`` - not actionable (e.g. no active changes)
     """
     id: str
     label: str
     description: str
-    action: str
+    action: Optional[str]
     group: str
 
 
@@ -363,6 +366,19 @@ def _orphaned_sessions(sessions: Optional[list]) -> Tuple[str, ...]:
 # ---------------------------------------------------------------------------
 
 
+def _count_active_changes(iteration: Optional[dict]) -> int:
+    """Count non-archived changes in iteration.json (FS_ACTIVE_COUNT)."""
+    if not iteration or not isinstance(iteration, dict):
+        return 0
+    changes = iteration.get("changes")
+    if not isinstance(changes, list):
+        return 0
+    return sum(
+        1 for c in changes
+        if isinstance(c, dict) and c.get("status") != "archived"
+    )
+
+
 def _build_all_options(
     suggested: str,
     arch_h: Optional[dict],
@@ -400,15 +416,33 @@ def _build_all_options(
     ))
 
     # 2. All workflow stages (always present)
+    # guide-ship is gated on FS_ACTIVE_COUNT: when no active changes
+    # exist, mark it disabled (group="disabled", action=None) to prevent
+    # empty journeys (filter-guide-ship-when-no-changes).
+    _fs_active_count = _count_active_changes(iteration)
     stage_options = [
-        ("guide-arch", "架构定义", "setup → ADR → roadmap → arch-done"),
-        ("guide-plan", "变更生成", "scan → propose → deps → plan-done"),
-        ("guide-ship", "变更执行", "plan → execute → archive → cleanup"),
+        ("guide-arch", "架构定义", "setup -> ADR -> roadmap -> arch-done"),
+        ("guide-plan", "变更生成", "scan -> propose -> deps -> plan-done"),
     ]
     for sid, label, desc in stage_options:
         if sid != suggested:  # skip duplicate with recommended
             options.append(MenuOption(
                 id=sid, label=label, description=desc, action=sid, group="stages",
+            ))
+    if _fs_active_count > 0:
+        if "guide-ship" != suggested:
+            options.append(MenuOption(
+                id="guide-ship", label="变更执行",
+                description="plan -> execute -> archive -> cleanup",
+                action="guide-ship", group="stages",
+            ))
+    else:
+        # No active changes: disable guide-ship
+        if "guide-ship" != suggested:
+            options.append(MenuOption(
+                id="guide-ship", label="变更执行",
+                description="plan -> execute -> archive -> cleanup (无活跃 change)",
+                action=None, group="disabled",
             ))
 
     # 3. Session management (only when sessions exist)
