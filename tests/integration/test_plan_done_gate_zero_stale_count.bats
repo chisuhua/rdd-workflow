@@ -50,3 +50,38 @@ teardown() {
     "
     [[ "$output" == *"cleared): 0"* ]]
 }
+
+# ── Task 2: Archive-then-recheck scenarios ──
+
+@test "plan_done_gate_zero: archive 2 of 3 changes -> Gate 0 shows 1" {
+    for n in test-a test-b test-c; do
+        mkdir -p "openspec/changes/$n"
+        echo "test" > "openspec/changes/$n/proposal.md"
+    done
+
+    # Archive 2 of them (move to archive/ subdirectory)
+    mkdir -p openspec/changes/archive/2026-07-29-test-a
+    mkdir -p openspec/changes/archive/2026-07-29-test-b
+    mv openspec/changes/test-a openspec/changes/archive/2026-07-29-test-a/test-a
+    mv openspec/changes/test-b openspec/changes/archive/2026-07-29-test-b/test-b
+
+    run bash -c "
+        source '$REPO_ROOT/skills/guide-plan/scripts/plan_done_gate.sh'
+        run_plan_done_gate 2>&1 | grep 'ready-for-ship' || true
+    "
+    [[ "$output" == *"cleared): 1"* ]]
+}
+
+@test "plan_done_gate_zero: all archived -> Gate 0 returns 0" {
+    # Create one change, then archive it
+    mkdir -p openspec/changes/test-only
+    echo "test" > "openspec/changes/test-only/proposal.md"
+    mkdir -p openspec/changes/archive/2026-07-29-test-only
+    mv openspec/changes/test-only openspec/changes/archive/2026-07-29-test-only/test-only
+
+    run bash -c "
+        source '$REPO_ROOT/skills/guide-plan/scripts/plan_done_gate.sh'
+        run_plan_done_gate 2>&1 | grep 'ready-for-ship' || true
+    "
+    [[ "$output" == *"cleared): 0"* ]]
+}
