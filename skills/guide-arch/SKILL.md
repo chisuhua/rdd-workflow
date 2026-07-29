@@ -170,7 +170,7 @@ echo "=== ADR 文档管理 ==="
 echo ""
 
 # 统计 ADR 数量
-ADR_COUNT=$(ls -d "$ADR_DIR/ADR-0"*.md 2>/dev/null | grep -v "ADR-0000-template" | wc -l)
+ADR_COUNT=$(ls -d "$ADR_DIR/ADR-0"*.md 2>/dev/null | grep -v "ADR-0000-template" | wc -l | tr -d '[:space:]')
 echo "当前 ADR 数量: $ADR_COUNT"
 
 # 列出最新 5 个 ADR

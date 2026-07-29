@@ -208,7 +208,7 @@ if [ "$TEMPLATE" = "4" ]; then
     mkdir -p "$PROJECT_ROOT/$ADR_DIR"
   fi
   # ⚠️ partial-quote for glob expansion (see propose.md rationale)
-  ADR_COUNT=$(ls "$PROJECT_ROOT/$ADR_DIR"/$ADR_PATTERN 2>/dev/null | grep -v -- '-0000-template\.md$' | wc -l)
+  ADR_COUNT=$(ls "$PROJECT_ROOT/$ADR_DIR"/$ADR_PATTERN 2>/dev/null | grep -v -- '-0000-template\.md$' | wc -l | tr -d '[:space:]')
   if [ "$ADR_COUNT" -eq 0 ]; then
     echo "❌ $ADR_DIR 中未发现 $ADR_PATTERN 文件"
     exit 1
