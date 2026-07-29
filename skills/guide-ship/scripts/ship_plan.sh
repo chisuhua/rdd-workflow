@@ -391,3 +391,61 @@ run_ship_phase1() {
   echo "WT_PATH=$WT_PATH"
   echo "PLAN_STEP_COUNT=$PLAN_STEP_COUNT"
 }
+
+# detect_quick_finish <project_root> <change_name>
+#   Returns: "quick_finish" (exit 0) if remaining tasks are trivial and ≤2,
+#            "standard" (exit 0) otherwise,
+#            "no_tasks" (exit 1) if tasks.md missing.
+#   Trivial keywords: update, proposal, suggestion, doc, status, changelog,
+#     readme, .md, bump, version, release, note.
+#   Non-trivial keywords (any match blocks quick-finish): implement, add,
+#     create, build, refactor, test, function, class, module, api, feature,
+#     logic, handler, controller, schema, migration, script.
+detect_quick_finish() {
+  local project_root="$1"
+  local change_name="$2"
+  local tasks_file="$project_root/openspec/changes/$change_name/tasks.md"
+
+  # Missing tasks.md -> no_tasks
+  if [ ! -f "$tasks_file" ]; then
+    echo "no_tasks"
+    return 1
+  fi
+
+  # Collect remaining unchecked tasks
+  local remaining
+  remaining=$(grep -cE '^\- \[ \]' "$tasks_file" 2>/dev/null || echo 0)
+  remaining=$(echo "$remaining" | tr -d '[:space:]')
+
+  # 0 tasks or >2 tasks -> standard
+  if [ "${remaining:-0}" -eq 0 ] || [ "${remaining:-0}" -gt 2 ]; then
+    echo "standard"
+    return 0
+  fi
+
+  # Extract the task text lines
+  local task_text
+  task_text=$(grep -E '^\- \[ \]' "$tasks_file")
+
+  # Non-trivial keywords block quick-finish
+  if echo "$task_text" | grep -qiE 'implement|add |create|build|refactor|test |function|class|module|api|feature|logic|handler|controller|schema|migration|script'; then
+    echo "standard"
+    return 0
+  fi
+
+  # Trivial keywords required (at least one)
+  if ! echo "$task_text" | grep -qiE 'update|proposal|suggestion|doc|status|changelog|readme|\.md|bump|version|release|note'; then
+    echo "standard"
+    return 0
+  fi
+
+  # Check git status: no uncommitted code changes (exclude tasks.md)
+  local dirty_code
+  dirty_code=$(git -C "$project_root" status --porcelain 2>/dev/null | grep -vE 'tasks\.md$' | head -1)
+  if [ -n "$dirty_code" ]; then
+    echo "standard"
+    return 0
+  fi
+
+  echo "quick_finish"
+}
