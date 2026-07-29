@@ -190,6 +190,8 @@ with open(sys.argv[1], 'w') as f:
   else
     echo "$new_row" >> "$approved_file"
   fi
+  
+  sync_suggestions "$project_root" "$name" "approved"
 }
 
 # mark_approved_completed <project_root> <name>
@@ -265,6 +267,36 @@ if not inserted:
 with open(sys.argv[1], 'w') as f:
     f.writelines(lines)
 " "$approved_file" "$name" "$timestamp"
+
+  sync_suggestions "$project_root" "$name" "completed"
+}
+
+# sync_suggestions <project_root> <name> <status>
+#   Syncs a change's status from proposal-approved.md to proposal-suggestions.md.
+#   Updates the status column in the suggestions table to match the approved status.
+sync_suggestions() {
+  local project_root="$1"
+  local name="$2"
+  local status="${3:-approved}"
+  
+  local suggestions_file="$project_root/proposal-suggestions.md"
+  [ ! -f "$suggestions_file" ] && return 0
+  
+  SUGGESTIONS_FILE="$suggestions_file" CHANGE_NAME="$name" NEW_STATUS="$status" \
+  python3 -c '
+import os, re
+suggestions_file = os.environ["SUGGESTIONS_FILE"]
+name = os.environ["CHANGE_NAME"]
+status = os.environ["NEW_STATUS"]
+with open(suggestions_file) as f:
+    content = f.read()
+pattern = r"(\| \[" + re.escape(name) + r"\]\([^)]+\) \| [^|]+ \| [^|]+ \|) [^|]+ (\|)"
+replacement = r"\1 " + status + r" \2"
+new_content = re.sub(pattern, replacement, content)
+if new_content != content:
+    with open(suggestions_file, "w") as f:
+        f.write(new_content)
+'
 }
 
 # sweep_implemented_proposals <project_root>
