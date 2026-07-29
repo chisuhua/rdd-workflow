@@ -88,10 +88,10 @@ run_arch_env_check() {
   fi
 
   local ADR_COUNT ROADMAP_EXISTS GAP_COUNT ACTIVE_CHANGES
-  ADR_COUNT=$(ls -d "$PROJECT_ROOT/$DISCOVERED_ADR_DIR/"$DISCOVERED_ADR_PATTERN 2>/dev/null | wc -l)
+  ADR_COUNT=$(ls -d "$PROJECT_ROOT/$DISCOVERED_ADR_DIR/"$DISCOVERED_ADR_PATTERN 2>/dev/null | wc -l | tr -d '[:space:]')
   ROADMAP_EXISTS=$([ -f "$PROJECT_ROOT/$DISCOVERED_ROADMAP_PATH" ] && echo "yes" || echo "no")
-  GAP_COUNT=$(ls "$PROJECT_ROOT/$DISCOVERED_ARCHITECTURE_DIR/"*-gap-analysis.md 2>/dev/null | wc -l)
-  ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l)
+  GAP_COUNT=$(ls "$PROJECT_ROOT/$DISCOVERED_ARCHITECTURE_DIR/"*-gap-analysis.md 2>/dev/null | wc -l | tr -d '[:space:]')
+  ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l | tr -d '[:space:]')
 
   echo "📋 现有 ADR: $ADR_COUNT"
   echo "📋 Roadmap: $ROADMAP_EXISTS"

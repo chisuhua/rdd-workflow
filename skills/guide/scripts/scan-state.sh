@@ -95,7 +95,7 @@ scan_state() {
     fi
     # Cross-validate: count non-archived change dirs in filesystem
     local FS_ACTIVE_COUNT
-    FS_ACTIVE_COUNT=$(cd "$PROJECT_ROOT" 2>/dev/null && ls -d openspec/changes/*/ 2>/dev/null | grep -v 'archive/' | wc -l || echo 0)
+    FS_ACTIVE_COUNT=$(cd "$PROJECT_ROOT" 2>/dev/null && ls -d openspec/changes/*/ 2>/dev/null | grep -v 'archive/' | wc -l | tr -d '[:space:]' || echo 0)
     if [ "$FS_ACTIVE_COUNT" -eq 0 ]; then
       RECOMMEND="guide-arch"
       REASON="plan-handoff stale (says $ACTIVE_COUNT active, but 0 in filesystem -> all archived)"
@@ -127,7 +127,7 @@ scan_state() {
 
   # 4. detached worktrees (other sessions) → guide-ship
   local DETACHED
-  DETACHED=$(git worktree list 2>/dev/null | awk 'index($3, "[openspec/") == 1' | wc -l)
+  DETACHED=$(git worktree list 2>/dev/null | awk 'index($3, "[openspec/") == 1' | wc -l | tr -d '[:space:]')
   if [ "$DETACHED" -gt 0 ]; then
     RECOMMEND="guide-ship"
     REASON="$DETACHED 个 worktree 在跑（可能在分离终端）"

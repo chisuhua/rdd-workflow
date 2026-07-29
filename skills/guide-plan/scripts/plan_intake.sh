@@ -19,7 +19,7 @@ check_direct_create_fallback() {
 
   if [ ! -f "$approved_file" ]; then
     local archived_count
-    archived_count=$(ls -d "$project_root"/openspec/changes/archive/*/ 2>/dev/null | wc -l)
+    archived_count=$(ls -d "$project_root"/openspec/changes/archive/*/ 2>/dev/null | wc -l | tr -d '[:space:]')
     if [ "${archived_count:-0}" -gt 0 ]; then
       echo "🆕 未发现 proposal-approved.md - 检测到 $archived_count 个历史归档"
       echo "   后备模式: 跳过提案审批，直接创建新 change"

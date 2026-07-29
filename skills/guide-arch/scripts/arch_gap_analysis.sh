@@ -70,7 +70,7 @@ list_gap_analyses() {
   if [ -z "$GAP_DOCS" ]; then
     GAP_COUNT=0
   else
-    GAP_COUNT=$(echo "$GAP_DOCS" | wc -l)
+    GAP_COUNT=$(echo "$GAP_DOCS" | wc -l | tr -d '[:space:]')
   fi
 
   if [ "$GAP_COUNT" -eq 0 ]; then

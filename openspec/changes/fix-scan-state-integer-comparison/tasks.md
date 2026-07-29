@@ -1,6 +1,6 @@
 # Fix scan-state integer comparison — 实施任务
 
-## Task 1: 修复 `scan-state.sh` 中 2 处 `wc -l` 赋值 + 添加 bats 测试
+## Task 1: DONE - 修复 `scan-state.sh` 中 2 处 `wc -l` 赋值 + 添加 bats 测试
 
 **TDD 步骤**:
 1. 在 `tests/integration/` 中编写 `test_scan_state_integer_comparison.bats`，定义修复行为：
@@ -14,7 +14,7 @@
 4. 验证测试通过
 5. Commit
 
-## Task 2: 修复所有 `skills/*/scripts/` 中 `wc -l` 赋值
+## Task 2: DONE - 修复所有 `skills/*/scripts/` 中 `wc -l` 赋值
 
 **TDD 步骤**:
 1. 在 `tests/integration/` 中编写 `test_scripts_wc_l_sanitize.bats`，验证：
@@ -29,7 +29,7 @@
 4. 验证测试通过
 5. Commit
 
-## Task 3: 修复 SKILL.md 内联代码中的 `wc -l` 赋值 + 边缘情况 bats 测试
+## Task 3: DONE - 修复 SKILL.md 内联代码中的 `wc -l` 赋值 + 边缘情况 bats 测试
 
 **TDD 步骤**:
 1. 在 `tests/integration/` 中编写 `test_skill_md_wc_l_sanitize.bats`，验证：

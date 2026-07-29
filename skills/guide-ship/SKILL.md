@@ -207,7 +207,7 @@ echo "当前状态：${CHANGE_NAME} 等待分离执行（${MODE}模式）"
 
 ```bash
 # 检查活跃的 openspec/* 分支（含 worktree 和轻量模式）
-WORKTREE_COUNT=$(git worktree list 2>/dev/null | awk '$3 ~ /^openspec\//' | wc -l || echo 0)
+WORKTREE_COUNT=$(git worktree list 2>/dev/null | awk '$3 ~ /^openspec\//' | wc -l | tr -d '[:space:]' || echo 0)
 LIGHTWEIGHT_COUNT=$(git branch 2>/dev/null | grep -c "openspec/" || true)
 TOTAL_ACTIVE=$((WORKTREE_COUNT + LIGHTWEIGHT_COUNT))
 
