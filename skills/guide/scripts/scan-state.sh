@@ -239,6 +239,9 @@ except Exception:
   check_stale_workflow_state "$PROJECT_ROOT"
   check_working_tree_cleanliness "$PROJECT_ROOT"
   check_arch_handoff_stale "$PROJECT_ROOT"
+
+  type -t check_dirty_key_files &>/dev/null || source "$PROJECT_ROOT/skills/_lib/state.sh"
+  check_dirty_key_files "$PROJECT_ROOT"
 }
 
 # check_arch_handoff_stale [PROJECT_ROOT]

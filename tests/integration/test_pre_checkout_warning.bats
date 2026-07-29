@@ -53,3 +53,14 @@ teardown() {
     [ "$status" -eq 0 ]
     [[ "$output" != *"⚠️"* ]]
 }
+
+# ---------------------------------------------------------------------------
+# Task 2: wire check_dirty_key_files into scan-state.sh
+# ---------------------------------------------------------------------------
+
+@test "pre_checkout_warning: scan-state.sh references check_dirty_key_files" {
+    run grep -F "check_dirty_key_files" "$PROJECT_ROOT/skills/guide/scripts/scan-state.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"check_dirty_key_files"* ]]
+}
+
