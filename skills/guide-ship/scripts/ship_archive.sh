@@ -223,6 +223,23 @@ archive_change_for_mode() {
 
   # Cleanup plan-handoff after archive (archive-cleanup-plan-handoff)
   cleanup_plan_handoff "$project_root" "$change_name" || true
+
+  # Cleanup plan file after archive (archive-cleanup-plan-files)
+  cleanup_plan_file "$project_root" "$change_name" || true
+}
+
+# cleanup_plan_file <project_root> <change_name>
+#   Delete .rddf/plans/<change_name>.md after archive.
+#   Idempotent: returns 0 if file doesn't exist.
+cleanup_plan_file() {
+  local project_root="$1"
+  local change_name="$2"
+  local plan_file="$project_root/.rddf/plans/${change_name}.md"
+
+  [ -f "$plan_file" ] || return 0
+
+  rm -f "$plan_file"
+  echo "✅ 已清理计划文件: .rddf/plans/${change_name}.md"
 }
 
 # cleanup_plan_handoff <project_root> <change_name>
