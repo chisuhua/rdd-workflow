@@ -1,6 +1,6 @@
-# Archive cleanup plan files — 实施任务
+# Archive cleanup plan files - 实施任务
 
-## Task 1: 在 `ship_archive.sh` 中添加 `cleanup_plan_file()` 函数
+## Task 1: 在 `ship_archive.sh` 中添加 `cleanup_plan_file()` 函数 [DONE]
 
 **TDD 步骤**:
 1. 在 `tests/integration/` 中编写 `test_archive_cleanup_plan_files.bats`，定义 `cleanup_plan_file()` 的行为：
@@ -17,7 +17,7 @@
 5. 验证测试通过
 6. Commit
 
-## Task 2: 在 `scan-state.sh` 中添加 `check_orphan_plan_files()` 函数
+## Task 2: 在 `scan-state.sh` 中添加 `check_orphan_plan_files()` 函数 [DONE]
 
 **TDD 步骤**:
 1. 在 `tests/integration/` 中扩展 `test_archive_cleanup_plan_files.bats`，定义 `check_orphan_plan_files()` 的行为：
@@ -37,7 +37,7 @@
 5. 验证测试通过
 6. Commit
 
-## Task 3: 端到端 bats 测试
+## Task 3: 端到端 bats 测试 [DONE]
 
 **TDD 步骤**:
 1. 在 `tests/integration/` 中扩展 `test_archive_cleanup_plan_files.bats`，编写端到端场景：
