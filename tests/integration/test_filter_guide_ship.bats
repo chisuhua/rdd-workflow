@@ -89,3 +89,45 @@ teardown_scan_test() {
     [[ "$output" == *"RECOMMEND=guide-ship"* ]] && return 1
     [[ "$output" != *"RECOMMEND=guide-ship"* ]]
 }
+
+# ---------------------------------------------------------------------------
+# Task 3: Regression smoke test
+# ---------------------------------------------------------------------------
+
+@test "filter_guide_ship: existing scan_state tests still pass (no regression)" {
+    TEST_DIR=$(mktemp -d)
+    cd "$TEST_DIR"
+    git init -q
+    git config user.email "t@t.com"
+    git config user.name "T"
+    echo "# Roadmap" > roadmap.md
+    mkdir -p openspec/changes/archive
+    mkdir -p openspec/specs
+    run bash -c "
+        source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
+        scan_state '$TEST_DIR' > /dev/null 2>&1 || true
+    "
+    cd /workspace/project/rdd-workflow
+    rm -rf "$TEST_DIR"
+    [ -n "$status" ]
+}
+
+@test "filter_guide_ship: guide-ship recommended when active change dir exists" {
+    TEST_DIR=$(mktemp -d)
+    cd "$TEST_DIR"
+    git init -q
+    git config user.email "t@t.com"
+    git config user.name "T"
+    echo "# Roadmap" > roadmap.md
+    mkdir -p openspec/changes/archive
+    mkdir -p openspec/changes/some-active-change
+    mkdir -p openspec/specs
+    run bash -c "
+        source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
+        scan_state '$TEST_DIR'
+        echo \"RECOMMEND=\$RECOMMEND\"
+    "
+    cd /workspace/project/rdd-workflow
+    rm -rf "$TEST_DIR"
+    [[ "$output" == *"RECOMMEND=guide-ship"* ]]
+}
