@@ -376,3 +376,52 @@ check_dirty_key_files() {
   fi
   return 0
 }
+
+# detect_approved_inconsistency <project_root>
+# Detect suggestions marked "completed" in proposal-suggestions.md that have
+# no corresponding entry in proposal-approved.md. Outputs a warning if
+# inconsistent. Non-blocking: always returns 0.
+# Uses env-var passing (PY_SUGGESTIONS / PY_APPROVED) per Oracle C1 fix to
+# avoid bash string-interpolation injection.
+detect_approved_inconsistency() {
+    local project_root="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+    local suggestions_file="$project_root/proposal-suggestions.md"
+    local approved_file="$project_root/proposal-approved.md"
+
+    [ ! -f "$suggestions_file" ] && return 0
+
+    PY_SUGGESTIONS="$suggestions_file" PY_APPROVED="$approved_file" python3 -c '
+import os, re, sys
+
+suggestions_file = os.environ["PY_SUGGESTIONS"]
+approved_file = os.environ["PY_APPROVED"]
+
+try:
+    with open(suggestions_file) as f:
+        suggestions = f.read()
+
+    sug_entries = set()
+    for m in re.finditer(r"\|\s*\[([^\]]+)\]\(improvements/[^)]+\)\s*\|\s*\S+\s*\|\s*\S+\s*\|\s*(\S+)", suggestions):
+        name = m.group(1).strip()
+        status = m.group(2).strip()
+        if status in ("completed", "已完成"):
+            sug_entries.add(name)
+
+    if not sug_entries:
+        sys.exit(0)
+
+    approved_names = set()
+    if os.path.isfile(approved_file):
+        with open(approved_file) as f:
+            content = f.read()
+        approved_names = set(re.findall(r"\|\s*\[([^\]]+)\]\(improvements/", content))
+
+    missing = sug_entries - approved_names
+    if missing:
+        names_str = ", ".join(sorted(missing))
+        print(f"⚠️  {len(missing)} 个 suggestions 标记已完成但无 approved 记录: {names_str}")
+        print("   建议审计: 检查这些 change 是否已归档，或通过 guide-arch 补充批准")
+except Exception:
+    pass
+' 2>/dev/null
+}

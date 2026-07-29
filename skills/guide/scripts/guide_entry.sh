@@ -175,11 +175,17 @@ print(json.dumps({
   fi
 
   # Print project state overview (for AI + user visibility)
-  echo "📋 Workflow Entry — $(basename "$PROJECT_ROOT")"
+  echo "📋 Workflow Entry - $(basename "$PROJECT_ROOT")"
   echo "   ───────────────────────────────────────────"
   echo "   roadmap.md: $([ -f "$PROJECT_ROOT/roadmap.md" ] && echo '✅' || echo '❌')"
   echo "   .arch-handoff.json: $([ -f "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" ] && echo '✅' || echo '❌')"
   echo "   .plan-handoff.json: $([ -f "$PROJECT_ROOT/.rddf/state/.plan-handoff.json" ] && echo '✅' || echo '❌')"
+
+  # Ensure state.sh helpers are available (scan-state.sh may have skipped sourcing)
+  type -t detect_approved_inconsistency &>/dev/null || source "$PROJECT_ROOT/skills/_lib/state.sh"
+  # Audit trail protection: flag suggestions marked "completed" without an approved record
+  detect_approved_inconsistency "$PROJECT_ROOT" 2>/dev/null || true
+
   if [ "$NO_BINDING" -eq 0 ]; then
     scan_session_binding "$PROJECT_ROOT"
   fi
