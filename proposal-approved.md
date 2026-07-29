@@ -11,23 +11,13 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [ship-incomplete-archive-change-fallback](improvements/ship-incomplete-archive-change-fallback.md) | P1 | 2026-07-26 | guide-arch |
-| [archive-gate-incomplete-tasks](improvements/archive-gate-incomplete-tasks.md) | P1 | 2026-07-26 | guide-arch |
-| [fix-skill-tool-cache](improvements/fix-skill-tool-cache.md) | P1 | 2026-07-26 | guide-arch |
-| [sync-approved-to-suggestions](improvements/sync-approved-to-suggestions.md) | P1 | 2026-07-26 | guide-arch |
 | [pre-checkout-warning](improvements/pre-checkout-warning.md) | P2 | 2026-07-26 | guide-arch |
-| [adr-creation-architecture-gate](improvements/adr-creation-architecture-gate.md) | P1 | 2026-07-26 | guide-arch |
 | [fix-scan-state-integer-comparison](improvements/fix-scan-state-integer-comparison.md) | P2 | 2026-07-26 | guide-arch |
-| [fix-arch-handoff-stale-detection](improvements/fix-arch-handoff-stale-detection.md) | P1 | 2026-07-26 | guide-arch |
 | [filter-guide-ship-when-no-changes](improvements/filter-guide-ship-when-no-changes.md) | P2 | 2026-07-26 | guide-arch |
-| [guide-plan-fallback-direct-create](improvements/guide-plan-fallback-direct-create.md) | P1 | 2026-07-26 | guide-arch |
 | [detect-suggestions-approved-inconsistency](improvements/detect-suggestions-approved-inconsistency.md) | P3 | 2026-07-26 | guide-arch |
 | [prompt-worktree-cleanup-before-stage](improvements/prompt-worktree-cleanup-before-stage.md) | P3 | 2026-07-26 | guide-arch |
-| [add-change-content-review](improvements/add-change-content-review.md) | P1 | 2026-07-28 | guide-arch |
 | [add-proposal-defer-support](improvements/add-proposal-defer-support.md) | P2 | 2026-07-28 | guide-arch |
-| [add-proposal-deps-and-features](improvements/add-proposal-deps-and-features.md) | P1 | 2026-07-28 | guide-arch |
 | [archive-cleanup-plan-files](improvements/archive-cleanup-plan-files.md) | P2 | 2026-07-28 | guide-arch |
-| [archive-cleanup-plan-handoff](improvements/archive-cleanup-plan-handoff.md) | P1 | 2026-07-28 | guide-arch |
 | [deps-driven-execution-mode](improvements/deps-driven-execution-mode.md) | P2 | 2026-07-28 | guide-arch |
 | [fix-doc-truth-sync](improvements/fix-doc-truth-sync.md) | P2 | 2026-07-28 | guide-arch |
 | [fix-guide-ship-archive-bats](improvements/fix-guide-ship-archive-bats.md) | P2 | 2026-07-28 | guide-arch |
@@ -38,6 +28,16 @@
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
+| [archive-cleanup-plan-handoff](improvements/archive-cleanup-plan-handoff.md) | P1 | 2026-07-29 |
+| [add-proposal-deps-and-features](improvements/add-proposal-deps-and-features.md) | P1 | 2026-07-29 |
+| [add-change-content-review](improvements/add-change-content-review.md) | P1 | 2026-07-29 |
+| [guide-plan-fallback-direct-create](improvements/guide-plan-fallback-direct-create.md) | P1 | 2026-07-29 |
+| [fix-arch-handoff-stale-detection](improvements/fix-arch-handoff-stale-detection.md) | P1 | 2026-07-29 |
+| [adr-creation-architecture-gate](improvements/adr-creation-architecture-gate.md) | P1 | 2026-07-29 |
+| [sync-approved-to-suggestions](improvements/sync-approved-to-suggestions.md) | P1 | 2026-07-29 |
+| [fix-skill-tool-cache](improvements/fix-skill-tool-cache.md) | P1 | 2026-07-29 |
+| [archive-gate-incomplete-tasks](improvements/archive-gate-incomplete-tasks.md) | P1 | 2026-07-29 |
+| [ship-incomplete-archive-change-fallback](improvements/ship-incomplete-archive-change-fallback.md) | P1 | 2026-07-29 |
 | [fix-scan-state-bats](improvements/fix-scan-state-bats.md) | P2 | 2026-07-23 |
 | [add-config-validation](improvements/add-config-validation.md) | P0 | 2026-07-28 |
 | [add-file-size-quality-gate](improvements/add-file-size-quality-gate.md) | P2 | 2026-07-28 |
