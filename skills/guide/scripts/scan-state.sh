@@ -238,6 +238,42 @@ except Exception:
 
   check_stale_workflow_state "$PROJECT_ROOT"
   check_working_tree_cleanliness "$PROJECT_ROOT"
+  check_skill_versions "$PROJECT_ROOT"
+}
+
+# check_skill_versions [PROJECT_ROOT]
+#   Scans skills/ directory for .md files that are newer than their last git
+#   commit (mtime > git_commit_time). Emits a warning for each stale file.
+check_skill_versions() {
+  local PROJECT_ROOT="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  local skills_dir="$PROJECT_ROOT/skills"
+  [ -d "$skills_dir" ] || return 0
+
+  local stale_count=0
+  while IFS= read -r skill_file; do
+    [ -z "$skill_file" ] && continue
+    local rel_path="${skill_file#$PROJECT_ROOT/}"
+    local file_mtime
+    file_mtime=$(stat -c %Y "$skill_file" 2>/dev/null || echo 0)
+    local git_mtime
+    git_mtime=$(git -C "$PROJECT_ROOT" log -1 --format=%ct -- "$rel_path" 2>/dev/null || echo 0)
+
+    if [ "$git_mtime" -gt 0 ] && [ "$file_mtime" -gt "$git_mtime" ]; then
+      if [ "$stale_count" -eq 0 ]; then
+        echo ""
+        echo "🔄 Skill 版本检测:"
+      fi
+      local skill_name
+      skill_name=$(basename "$skill_file" .md)
+      echo "   ⚠️  $skill_name 版本滞后 (文件比 git 新)"
+      stale_count=$((stale_count + 1))
+    fi
+  done < <(find "$skills_dir" -name '*.md' -path '*/SKILL.md' 2>/dev/null | head -20)
+
+  if [ "$stale_count" -gt 0 ]; then
+    echo "   共 $stale_count 个 skill 文件可能未提交变更"
+  fi
+  return 0
 }
 
 # scan_session_binding [PROJECT_ROOT]
