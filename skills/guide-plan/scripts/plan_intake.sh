@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# skills/_lib/plan_intake.sh — extracted from guide-plan.md Phase 0 intake (L95-L175)
-# Exports: run_plan_intake()
+# skills/_lib/plan_intake.sh - extracted from guide-plan.md Phase 0 intake (L95-L175)
+# Exports: run_plan_intake(), check_direct_create_fallback()
 #
 # Behavior preserved:
 # - openspec CLI detection (returns 1 if missing)
@@ -12,6 +12,23 @@
 # - Reads ADR_IDS + CURRENT_PHASE from handoff via python3 (with $ARCH_HANDOFF via env-var)
 # - Counts active openspec changes
 # - Prints summary
+
+check_direct_create_fallback() {
+  local project_root="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  local approved_file="$project_root/proposal-approved.md"
+
+  if [ ! -f "$approved_file" ]; then
+    local archived_count
+    archived_count=$(ls -d "$project_root"/openspec/changes/archive/*/ 2>/dev/null | wc -l)
+    if [ "${archived_count:-0}" -gt 0 ]; then
+      echo "🆕 未发现 proposal-approved.md - 检测到 $archived_count 个历史归档"
+      echo "   后备模式: 跳过提案审批，直接创建新 change"
+      echo "   后续可手动追加 proposal-approved.md 作为审计追溯"
+      return 0
+    fi
+  fi
+  return 1
+}
 
 run_plan_intake() {
   local PROJECT_ROOT
@@ -59,7 +76,10 @@ run_plan_intake() {
     echo "⚠️  proposal-approved.md 中有 $PENDING_PROPOSALS 个已批准提案但无活跃 change（可能需运行 propose）"
   fi
 
-  # 5. arch 端交付物检查（plan 端的前置条件 — 硬阻断）
+  # 4.5. Direct-create fallback detection (guide-plan-fallback-direct-create)
+  check_direct_create_fallback "$PROJECT_ROOT" || true
+
+  # 5. arch 端交付物检查（plan 端的前置条件 - 硬阻断）
   local ARCH_HANDOFF="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
 
   if [ "${SKIP_ARCH_HANDOFF:-}" = "yes" ]; then
@@ -71,10 +91,12 @@ run_plan_intake() {
       echo "❌ 未检测到 arch-done handoff (.rddf/state/.arch-handoff.json)"
       echo ""
       echo "   arch 阶段必须先完成才能进入 plan 阶段。"
-      echo "   → 请先运行: skill_use(\"guide-arch\")"
+      echo "   -> 请先运行: skill_use(\"guide-arch\")"
       echo ""
       echo "   如确定跳过 arch 阶段（已知风险），设置环境变量:"
       echo "     export SKIP_ARCH_HANDOFF=yes"
+      
+      check_direct_create_fallback "$PROJECT_ROOT"
       return 1
   fi
 
