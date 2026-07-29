@@ -115,6 +115,8 @@ for m in re.finditer(r'\|\s*\[([^\]]+)\]\([^)]+\)', section):
 
   local -a PENDING_PROPS=()       # name|priority|source
   local ARCHIVED_COUNT=0
+  local DEFERRED_COUNT=0
+  local SHOW_ALL="${SHOW_ALL:-false}"
 
   for name in "${ALL_CANDIDATES[@]}"; do
     # 跳过已批准的
@@ -129,6 +131,16 @@ for m in re.finditer(r'\|\s*\[([^\]]+)\]\([^)]+\)', section):
 
     # 跳过已标记 rejected / deferred 的
     if echo "$status" | grep -qiE 'rejected|已拒绝|deferred|已延迟'; then
+      continue
+    fi
+
+    # 读取 improvement 文件中的 **状态** 字段（ADR: proposal defer support）
+    local file_status=$(grep -m1 '^\*\*状态\*\*:' "$imp_file" 2>/dev/null | sed 's/.*\*\*状态\*\*: *//' | cut -d'|' -f1 | xargs)
+    file_status="${file_status:-待讨论}"
+
+    # 已推迟 -> 默认跳过（除非 SHOW_ALL 模式）
+    if [ "$file_status" = "已推迟" ] && [ "$SHOW_ALL" != "true" ]; then
+      DEFERRED_COUNT=$((DEFERRED_COUNT + 1))
       continue
     fi
 
@@ -176,6 +188,9 @@ for m in re.finditer(r'\|\s*\[([^\]]+)\]\([^)]+\)', section):
 
   local pending_count=${#PENDING_PROPS[@]}
   echo "📋 待审查: $pending_count 个"
+  if [ "$DEFERRED_COUNT" -gt 0 ]; then
+    echo "⏸️ 已推迟: $DEFERRED_COUNT 个（按 v 查看全部）"
+  fi
   echo ""
 
   if [ "$pending_count" -eq 0 ]; then
@@ -197,7 +212,13 @@ for m in re.finditer(r'\|\s*\[([^\]]+)\]\([^)]+\)', section):
     local priority=$(echo "$entry" | cut -d'|' -f2)
     local source=$(echo "$entry" | cut -d'|' -f3-)
     local path_hint="${SUGGESTION_PATHS[$name]:-}"
-    echo "  ${idx}. [${priority}] $name"
+    local imp_file="$IMPROVEMENTS_DIR/$name.md"
+    local disp_status=$(grep -m1 '^\*\*状态\*\*:' "$imp_file" 2>/dev/null | sed 's/.*\*\*状态\*\*: *//' | cut -d'|' -f1 | xargs)
+    local prefix=""
+    if [ "$SHOW_ALL" = "true" ] && [ "$disp_status" = "已推迟" ]; then
+      prefix="⏸️ "
+    fi
+    echo "  ${idx}. [${priority}] ${prefix}${name}"
     if [ -n "$source" ]; then
     echo "     来源: $source"
     fi
@@ -207,6 +228,9 @@ for m in re.finditer(r'\|\s*\[([^\]]+)\]\([^)]+\)', section):
   echo "选择操作:"
   echo "  <编号>        - 查看并审批该提案（批准/拒绝/延迟）"
   echo "  a             - 全部批准"
+  if [ "$DEFERRED_COUNT" -gt 0 ]; then
+  echo "  v             - 查看全部（含已推迟提案）"
+  fi
   if [ "$PHASE_5_5_ENTRY" = "phase1" ]; then
     echo "  s             - 跳过审批，返回上级菜单"
   else
@@ -240,6 +264,12 @@ for m in re.finditer(r'\|\s*\[([^\]]+)\]\([^)]+\)', section):
         bash "$SCRIPT_DIR/approve_proposal.sh" "$name" "${priority:-P1}" "$PROJECT_ROOT" && \
           echo "  ✅ $name 已批准"
       done
+      ;;
+    v|V|view-all)
+      SHOW_ALL=true
+      export SHOW_ALL
+      arch_proposal_review "$PROJECT_ROOT" "$PHASE_5_5_ENTRY"
+      return $?
       ;;
     *)
       # 数字选择：查看单个提案并审批
@@ -316,13 +346,20 @@ for m in re.finditer(r'\|\s*\[([^\]]+)\]\([^)]+\)', section):
           fi
           ;;
         d|D|defer)
+          if [ -f "$imp_file" ]; then
+            if ! grep -q '^\*\*状态\*\*:' "$imp_file" 2>/dev/null; then
+              sed -i '/^\*\*类型\*\*:/a\**状态**: 已推迟' "$imp_file"
+            else
+              sed -i 's/^\*\*状态\*\*:.*$/**状态**: 已推迟/' "$imp_file"
+            fi
+          fi
           if [ -f "$SUGGESTIONS_FILE" ]; then
             local timestamp=$(date -u +%Y-%m-%d)
             if grep -q "\[$name\]" "$SUGGESTIONS_FILE" 2>/dev/null; then
               sed -i "s/\(\[$name\].[^|]*|[^|]*|[^|]*|\)[^|]*/\1 ⏳ 已延迟 ($timestamp)/" "$SUGGESTIONS_FILE"
             fi
-            echo "⏳ $name 已标记为延迟"
           fi
+          echo "⏳ $name 已标记为延迟"
           ;;
         s|S|skip)
           echo "-> 跳过 $name"
