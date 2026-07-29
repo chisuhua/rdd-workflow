@@ -54,3 +54,38 @@ for o in opts:
     [[ "$output" == *"GROUP=stages"* ]]
     [[ "$output" == *"ACTION=guide-ship"* ]]
 }
+
+# ---------------------------------------------------------------------------
+# Task 2: Skip guide-ship in scan-state.sh when FS_ACTIVE_COUNT is 0
+# ---------------------------------------------------------------------------
+
+setup_scan_test() {
+    TEST_DIR=$(mktemp -d)
+    cd "$TEST_DIR"
+    git init -q
+    git config user.email "t@t.com"
+    git config user.name "T"
+    # No handoff files -> skip paths 1-2.5
+    # roadmap.md present -> skip path 7
+    # openspec/changes/ with only archive/ -> FS_ACTIVE_COUNT == 0
+    echo "# Roadmap" > roadmap.md
+    mkdir -p openspec/changes/archive
+    mkdir -p openspec/specs
+}
+
+teardown_scan_test() {
+    cd /workspace/project/rdd-workflow
+    rm -rf "$TEST_DIR"
+}
+
+@test "filter_guide_ship: scan-state.sh skips guide-ship when FS_ACTIVE_COUNT is 0" {
+    setup_scan_test
+    run bash -c "
+        source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
+        scan_state '$TEST_DIR'
+        echo \"RECOMMEND=\$RECOMMEND\"
+    "
+    teardown_scan_test
+    [[ "$output" == *"RECOMMEND=guide-ship"* ]] && return 1
+    [[ "$output" != *"RECOMMEND=guide-ship"* ]]
+}
