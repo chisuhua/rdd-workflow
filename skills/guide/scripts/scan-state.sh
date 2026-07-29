@@ -238,41 +238,38 @@ except Exception:
 
   check_stale_workflow_state "$PROJECT_ROOT"
   check_working_tree_cleanliness "$PROJECT_ROOT"
-  check_skill_versions "$PROJECT_ROOT"
+  check_arch_handoff_stale "$PROJECT_ROOT"
 }
 
-# check_skill_versions [PROJECT_ROOT]
-#   Scans skills/ directory for .md files that are newer than their last git
-#   commit (mtime > git_commit_time). Emits a warning for each stale file.
-check_skill_versions() {
+# check_arch_handoff_stale [PROJECT_ROOT]
+#   Cross-validates arch-handoff.json's adr_count against the filesystem.
+#   When handoff says 0 ADRs but the filesystem has ADR files, emits a
+#   warning that the handoff may be stale.
+check_arch_handoff_stale() {
   local PROJECT_ROOT="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  local skills_dir="$PROJECT_ROOT/skills"
-  [ -d "$skills_dir" ] || return 0
-
-  local stale_count=0
-  while IFS= read -r skill_file; do
-    [ -z "$skill_file" ] && continue
-    local rel_path="${skill_file#$PROJECT_ROOT/}"
-    local file_mtime
-    file_mtime=$(stat -c %Y "$skill_file" 2>/dev/null || echo 0)
-    local git_mtime
-    git_mtime=$(git -C "$PROJECT_ROOT" log -1 --format=%ct -- "$rel_path" 2>/dev/null || echo 0)
-
-    if [ "$git_mtime" -gt 0 ] && [ "$file_mtime" -gt "$git_mtime" ]; then
-      if [ "$stale_count" -eq 0 ]; then
-        echo ""
-        echo "🔄 Skill 版本检测:"
-      fi
-      local skill_name
-      skill_name=$(basename "$skill_file" .md)
-      echo "   ⚠️  $skill_name 版本滞后 (文件比 git 新)"
-      stale_count=$((stale_count + 1))
-    fi
-  done < <(find "$skills_dir" -name '*.md' -path '*/SKILL.md' 2>/dev/null | head -20)
-
-  if [ "$stale_count" -gt 0 ]; then
-    echo "   共 $stale_count 个 skill 文件可能未提交变更"
-  fi
+  local arch_handoff="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
+  
+  [ ! -f "$arch_handoff" ] && return 0
+  
+  PY_HANDOFF="$arch_handoff" PY_ROOT="$PROJECT_ROOT" python3 -c '
+import os, json, glob
+try:
+    with open(os.environ["PY_HANDOFF"]) as f:
+        d = json.load(f)
+    adr_count = d.get("adr_count", 0)
+    if isinstance(adr_count, list):
+        adr_count = len(adr_count)
+    if adr_count == 0:
+        root = os.environ["PY_ROOT"]
+        adr_dir = d.get("adr_dir", "docs/adr")
+        adr_path = os.path.join(root, adr_dir)
+        fs_files = glob.glob(os.path.join(adr_path, "ADR-*.md"))
+        fs_count = len([f for f in fs_files if os.path.isfile(f)])
+        if fs_count > 0:
+            print(f"⚠️  arch-handoff 记录 0 ADRs 但文件系统发现 {fs_count} 个 - handoff 可能过期")
+except Exception:
+    pass
+' 2>/dev/null
   return 0
 }
 
