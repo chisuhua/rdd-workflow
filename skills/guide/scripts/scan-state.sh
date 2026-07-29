@@ -235,8 +235,16 @@ except Exception:
     RECOMMEND="guide-arch"
     REASON="有待讨论提案 -> 进入 arch 审查"
   else
-    RECOMMEND="guide-ship"
-    REASON="无待讨论提案 -> 准备 ship"
+    # filter-guide-ship: skip guide-ship when no active changes in filesystem
+    local FS_ACTIVE_COUNT_DEFAULT
+    FS_ACTIVE_COUNT_DEFAULT=$(cd "$PROJECT_ROOT" 2>/dev/null && ls -d openspec/changes/*/ 2>/dev/null | grep -v 'archive/' | wc -l || echo 0)
+    if [ "$FS_ACTIVE_COUNT_DEFAULT" -eq 0 ]; then
+      RECOMMEND="guide-plan"
+      REASON="无活跃 change -> 进入变更生成 (跳过 guide-ship)"
+    else
+      RECOMMEND="guide-ship"
+      REASON="无待讨论提案 -> 准备 ship"
+    fi
   fi
 
   check_stale_workflow_state "$PROJECT_ROOT"
