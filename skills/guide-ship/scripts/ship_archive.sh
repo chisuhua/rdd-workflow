@@ -220,6 +220,47 @@ archive_change_for_mode() {
   if [ -f "$update_script" ]; then
     python3 "$update_script" "$change_name" "$project_root" 2>/dev/null || true
   fi
+
+  # Cleanup plan-handoff after archive (archive-cleanup-plan-handoff)
+  cleanup_plan_handoff "$project_root" "$change_name" || true
+}
+
+# cleanup_plan_handoff <project_root> <change_name>
+#   Updates .rddf/state/.plan-handoff.json after archiving a change:
+#   - Adds archived_at timestamp
+#   - Decrements active_changes count
+#   - Appends to archived_changes list
+cleanup_plan_handoff() {
+  local project_root="$1"
+  local change_name="$2"
+  local handoff_file="$project_root/.rddf/state/.plan-handoff.json"
+
+  [ ! -f "$handoff_file" ] && return 0
+
+  HANDOFF_FILE="$handoff_file" CHANGE_NAME="$change_name" \
+  python3 -c '
+import json, os
+from datetime import datetime, timezone
+
+handoff_file = os.environ["HANDOFF_FILE"]
+change_name = os.environ["CHANGE_NAME"]
+
+with open(handoff_file) as f:
+    data = json.load(f)
+
+data["archived_at"] = datetime.now(timezone.utc).isoformat()
+
+active = data.get("active_changes", 0)
+if isinstance(active, int) and active > 0:
+    data["active_changes"] = active - 1
+
+if "archived_changes" not in data:
+    data["archived_changes"] = []
+data["archived_changes"].append(change_name)
+
+with open(handoff_file, "w") as f:
+    json.dump(data, f, indent=2)
+' 2>/dev/null || true
 }
 
 check_main_repo_clean() {
