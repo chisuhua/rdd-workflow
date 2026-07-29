@@ -104,7 +104,9 @@ except Exception:
 
 # list_improvements <project_root>
 # Lists improvement files in improvements/ directory.
-# Returns newline-separated "name|priority|source" entries.
+# Returns newline-separated "name|priority|source|status" entries.
+# The status field defaults to "待讨论" if the improvement file has no
+# **状态** metadata line (backward compatible with old files).
 list_improvements() {
   local project_root="${1:-.}"
   local imp_dir="$project_root/improvements"
@@ -118,7 +120,8 @@ list_improvements() {
     # Extract priority and source from frontmatter-like headers
     local priority=$(grep -m1 '^\*\*优先级\*\*:' "$f" 2>/dev/null | sed 's/.*\*\*优先级\*\*: *//' | cut -d'|' -f1 | xargs)
     local source=$(grep -m1 '^\*\*优先级\*\*:' "$f" 2>/dev/null | sed 's/.*| \*\*来源\*\*: *//' | xargs)
-    echo "${name}|${priority:-?}|${source:-?}"
+    local status=$(grep -m1 '^\*\*状态\*\*:' "$f" 2>/dev/null | sed 's/.*\*\*状态\*\*: *//' | cut -d'|' -f1 | xargs)
+    echo "${name}|${priority:-?}|${source:-?}|${status:-待讨论}"
   done
 }
 
