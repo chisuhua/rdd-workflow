@@ -123,6 +123,11 @@ archive_change_for_mode() {
   local change_name="$2"
   local mode="$3"
 
+  # Pre-archive: check for incomplete tasks (ship-incomplete-archive-change-fallback)
+  if ! check_incomplete_tasks "$change_name" 2>/dev/null; then
+    append_incomplete_to_suggestions "$change_name" "$project_root" 2>/dev/null || true
+  fi
+
   check_main_repo_clean "$change_name" "$project_root" || {
     echo "❌ Archive blocked: main repo has dirty files" >&2
     return 1

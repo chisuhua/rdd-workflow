@@ -240,6 +240,54 @@ cleanup_worktree_and_branch() {
   fi
 }
 
+# check_incomplete_tasks <change_name>
+#   Pre-archive check: scans tasks.md for incomplete tasks (lines matching
+#   `^- [ ]`). Returns 1 if incomplete tasks found, 0 otherwise.
+#   Honors FORCE_ARCHIVE_INCOMPLETE=yes to skip the check.
+check_incomplete_tasks() {
+  local change_name="${1:-}"
+  [[ -z "$change_name" ]] && return 0
+
+  if [ "${FORCE_ARCHIVE_INCOMPLETE:-no}" = "yes" ]; then
+    return 0
+  fi
+
+  local tasks_file="openspec/changes/$change_name/tasks.md"
+  if [ ! -f "$tasks_file" ]; then
+    return 0
+  fi
+
+  local incomplete_count
+  incomplete_count=$(grep -c '^- \[ \]' "$tasks_file" 2>/dev/null || echo 0)
+  if [ "$incomplete_count" -gt 0 ]; then
+    echo "⚠️  发现 $incomplete_count 个未完成任务 ($change_name)"
+    echo "   设置 FORCE_ARCHIVE_INCOMPLETE=yes 跳过此检查"
+    return 1
+  fi
+  return 0
+}
+
+# append_incomplete_to_suggestions <change_name>
+#   Appends incomplete change as a candidate to proposal-suggestions.md
+#   so the task is not lost after archiving.
+append_incomplete_to_suggestions() {
+  local change_name="${1:-}"
+  local project_root="${2:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  [[ -z "$change_name" ]] && return 0
+
+  local suggestions_file="$project_root/proposal-suggestions.md"
+  local timestamp
+  timestamp=$(date -u +%Y-%m-%d)
+
+  # Check if already present
+  if [ -f "$suggestions_file" ] && grep -q "$change_name" "$suggestions_file" 2>/dev/null; then
+    return 0
+  fi
+
+  echo "| [$change_name](improvements/$change_name.md) | P2 | $timestamp | 待讨论 |" >> "$suggestions_file"
+  echo "✅ 已将 $change_name 追加到 proposal-suggestions.md"
+}
+
 # archive_change <name>
 #   Full archive flow used by status.md Mode C and guide-ship.md Phase 3.
 #   Steps:
@@ -250,13 +298,13 @@ cleanup_worktree_and_branch() {
 #     4. Merge worktree branch, --ff-only or --no-ff
 #        (merge_feature_branch)
 #     5. Post-merge verification (verify_merge_result)
-#     6. openspec archive <name> --yes (kept inline — CLI, not lib)
+#     6. openspec archive <name> --yes (kept inline - CLI, not lib)
 #     7. git worktree remove + git branch -d (or -D via FORCE_BRANCH_DELETE)
 #        (cleanup_worktree_and_branch)
 #   Returns 0 on success, 1 on any failure.
 #
 #   Environment:
-#     FORCE_BRANCH_DELETE=yes  — fall back to `git branch -D` if `-d`
+#     FORCE_BRANCH_DELETE=yes  - fall back to `git branch -D` if `-d`
 #                                fails (worktree branch not fully merged)
 archive_change() {
   local name="${1:-}" wt_path branch default_branch main_root
