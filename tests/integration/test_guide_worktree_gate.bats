@@ -46,3 +46,50 @@ load ../test_helper
     # Must mention WT_ISSUES_JSON
     echo "$section" | grep -qF 'WT_ISSUES_JSON'
 }
+
+# ---------------------------------------------------------------------------
+# Task 3: E2E - gate applies to all 3 stage commands + smoke regression
+# ---------------------------------------------------------------------------
+
+@test "guide_worktree_gate: SKILL.md has content for all 3 stage commands with gate" {
+    # Verify gate applies to all 3 stages by checking each command is present
+    # in the same file that documents the gate step.
+    local f="$PROJECT_ROOT/skills/guide/SKILL.md"
+    # Gate section must exist first
+    grep -qF '阶段命令门控' "$f"
+    # All 3 stage commands must appear in the file
+    local total=0
+    for cmd in guide-arch guide-plan guide-ship; do
+        if grep -qF "$cmd" "$f"; then
+            total=$((total + 1))
+        fi
+    done
+    [ "$total" -eq 3 ]
+}
+
+@test "guide_worktree_gate: gate section precedes 执行选择 dispatch" {
+    # The gate section must appear BEFORE the 执行选择 section so the
+    # AI reads the gate instruction before dispatching stage commands.
+    local f="$PROJECT_ROOT/skills/guide/SKILL.md"
+    local gate_line dispatch_line
+    gate_line=$(grep -nF '### 阶段命令门控' "$f" | head -1 | cut -d: -f1)
+    dispatch_line=$(grep -nF '### 执行选择' "$f" | head -1 | cut -d: -f1)
+    [ -n "$gate_line" ]
+    [ -n "$dispatch_line" ]
+    [ "$gate_line" -lt "$dispatch_line" ]
+}
+
+@test "guide_worktree_gate: smoke regression - SKILL.md still parseable" {
+    # Ensure SKILL.md is still valid markdown structure with frontmatter.
+    local f="$PROJECT_ROOT/skills/guide/SKILL.md"
+    run head -1 "$f"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"---"* ]]
+}
+
+@test "guide_worktree_gate: smoke regression - guide_skill tests still pass" {
+    # Ensure our doc edits did not break the existing guide skill metadata
+    # test suite (frontmatter / structure locks).
+    run bats tests/integration/test_guide_skill.bats
+    [ "$status" -eq 0 ]
+}
