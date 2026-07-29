@@ -94,6 +94,13 @@ EOF
     [[ "$output" == *"Quick Finish"* ]] || [[ "$output" == *"quick_finish"* ]]
 }
 
+@test "ship_quick_finish: smoke regression - ship_plan.sh sources cleanly" {
+    # Verify the script can be sourced without syntax errors (it defines
+    # functions only; direct execution exits 1 with a guard message).
+    run bash -c "source '$PROJECT_ROOT/skills/guide-ship/scripts/ship_plan.sh' 2>&1"
+    [ "$status" -eq 0 ]
+}
+
 teardown() {
     rm -rf "$TEST_DIR"
 }
