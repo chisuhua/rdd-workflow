@@ -238,6 +238,39 @@ except Exception:
 
   check_stale_workflow_state "$PROJECT_ROOT"
   check_working_tree_cleanliness "$PROJECT_ROOT"
+  check_arch_handoff_stale "$PROJECT_ROOT"
+}
+
+# check_arch_handoff_stale [PROJECT_ROOT]
+#   Cross-validates arch-handoff.json's adr_count against the filesystem.
+#   When handoff says 0 ADRs but the filesystem has ADR files, emits a
+#   warning that the handoff may be stale.
+check_arch_handoff_stale() {
+  local PROJECT_ROOT="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  local arch_handoff="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
+  
+  [ ! -f "$arch_handoff" ] && return 0
+  
+  PY_HANDOFF="$arch_handoff" PY_ROOT="$PROJECT_ROOT" python3 -c '
+import os, json, glob
+try:
+    with open(os.environ["PY_HANDOFF"]) as f:
+        d = json.load(f)
+    adr_count = d.get("adr_count", 0)
+    if isinstance(adr_count, list):
+        adr_count = len(adr_count)
+    if adr_count == 0:
+        root = os.environ["PY_ROOT"]
+        adr_dir = d.get("adr_dir", "docs/adr")
+        adr_path = os.path.join(root, adr_dir)
+        fs_files = glob.glob(os.path.join(adr_path, "ADR-*.md"))
+        fs_count = len([f for f in fs_files if os.path.isfile(f)])
+        if fs_count > 0:
+            print(f"⚠️  arch-handoff 记录 0 ADRs 但文件系统发现 {fs_count} 个 - handoff 可能过期")
+except Exception:
+    pass
+' 2>/dev/null
+  return 0
 }
 
 # scan_session_binding [PROJECT_ROOT]
