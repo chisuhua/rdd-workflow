@@ -240,11 +240,10 @@ cleanup_worktree_and_branch() {
   fi
 }
 
-# check_incomplete_tasks <change_name>
-#   Pre-archive check: scans tasks.md for incomplete tasks (lines matching
-#   `^- [ ]`). Returns 1 if incomplete tasks found, 0 otherwise.
-#   Honors FORCE_ARCHIVE_INCOMPLETE=yes to skip the check.
-check_incomplete_tasks() {
+# archive_gate_check <change_name>
+#   Returns 0 if change has at least 1 completed task ([x]), returns 1 if 0.
+#   Honors FORCE_ARCHIVE_INCOMPLETE=yes to bypass the gate.
+archive_gate_check() {
   local change_name="${1:-}"
   [[ -z "$change_name" ]] && return 0
 
@@ -257,35 +256,14 @@ check_incomplete_tasks() {
     return 0
   fi
 
-  local incomplete_count
-  incomplete_count=$(grep -c '^- \[ \]' "$tasks_file" 2>/dev/null || echo 0)
-  if [ "$incomplete_count" -gt 0 ]; then
-    echo "⚠️  发现 $incomplete_count 个未完成任务 ($change_name)"
-    echo "   设置 FORCE_ARCHIVE_INCOMPLETE=yes 跳过此检查"
+  local completed
+  completed=$(grep -c '^- \[x\]' "$tasks_file" 2>/dev/null || echo 0)
+
+  if [ "$completed" -eq 0 ]; then
+    echo "❌ 未实现 (0 个完成任务)。设置 FORCE_ARCHIVE_INCOMPLETE=yes 跳过"
     return 1
   fi
   return 0
-}
-
-# append_incomplete_to_suggestions <change_name>
-#   Appends incomplete change as a candidate to proposal-suggestions.md
-#   so the task is not lost after archiving.
-append_incomplete_to_suggestions() {
-  local change_name="${1:-}"
-  local project_root="${2:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  [[ -z "$change_name" ]] && return 0
-
-  local suggestions_file="$project_root/proposal-suggestions.md"
-  local timestamp
-  timestamp=$(date -u +%Y-%m-%d)
-
-  # Check if already present
-  if [ -f "$suggestions_file" ] && grep -q "$change_name" "$suggestions_file" 2>/dev/null; then
-    return 0
-  fi
-
-  echo "| [$change_name](improvements/$change_name.md) | P2 | $timestamp | 待讨论 |" >> "$suggestions_file"
-  echo "✅ 已将 $change_name 追加到 proposal-suggestions.md"
 }
 
 # archive_change <name>
