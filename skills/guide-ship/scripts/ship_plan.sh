@@ -372,6 +372,21 @@ run_ship_phase1() {
     return 1
   fi
 
+  # 1.5) QUICK-FINISH DETECTION - if remaining tasks <=2 and trivial,
+  #      offer a shortcut that skips worktree/plan/execute steps.
+  local _qf_result
+  _qf_result=$(detect_quick_finish "$project_root" "$change_name") || true
+  if [ "$_qf_result" = "quick_finish" ]; then
+    echo ""
+    echo "🚀 Quick Finish 可用！剩余任务 ≤ 2 且均为 trivial"
+    echo "  A: Quick Finish (推荐) - 跳过 worktree/plan/execute，直接 review -> archive"
+    echo "  B: 标准流程 - 完整 worktree -> plan -> execute -> archive"
+    if [ "${QUICK_FINISH_SELECTED:-}" = "A" ]; then
+      export QUICK_FINISH_DETECTED=yes
+      return 0
+    fi
+  fi
+
   # 2) PARALLEL CONFLICT DETECTION → execution mode
   MODE=$(detect_execution_mode "$project_root" "$change_name") || return 1
 

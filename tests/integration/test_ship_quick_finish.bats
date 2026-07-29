@@ -68,6 +68,32 @@ EOF
     [ "$output" = "no_tasks" ]
 }
 
+@test "ship_quick_finish: run_ship_phase1 mentions Quick Finish when triggered" {
+    cat > openspec/changes/test-change/tasks.md << 'EOF'
+# Tasks
+- [ ] Update proposal-suggestions.md status
+EOF
+    # Commit tasks.md so the COMMIT GATE passes (check_artifacts_committed
+    # requires HEAD:openspec/changes/<name>/.openspec.yaml, so add that too).
+    # But check_artifacts_committed checks for uncommitted dirt in change_dir,
+    # so we must commit tasks.md. Also need .openspec.yaml in HEAD.
+    cat > openspec/changes/test-change/.openspec.yaml << 'EOF'
+change: test-change
+EOF
+    git add openspec/changes/test-change/
+    git commit -q -m "add tasks + openspec yaml"
+
+    # Set QUICK_FINISH_SELECTED=A so the quick-finish path returns early,
+    # avoiding full worktree/plan execution that requires skill_use etc.
+    run bash -c "
+        export PROJECT_ROOT='$PROJECT_ROOT'
+        export QUICK_FINISH_SELECTED=A
+        source '$PROJECT_ROOT/skills/guide-ship/scripts/ship_plan.sh'
+        run_ship_phase1 '$TEST_DIR' 'test-change' 2>&1 || true
+    "
+    [[ "$output" == *"Quick Finish"* ]] || [[ "$output" == *"quick_finish"* ]]
+}
+
 teardown() {
     rm -rf "$TEST_DIR"
 }
