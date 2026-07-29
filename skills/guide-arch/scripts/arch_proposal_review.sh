@@ -346,13 +346,20 @@ for m in re.finditer(r'\|\s*\[([^\]]+)\]\([^)]+\)', section):
           fi
           ;;
         d|D|defer)
+          if [ -f "$imp_file" ]; then
+            if ! grep -q '^\*\*状态\*\*:' "$imp_file" 2>/dev/null; then
+              sed -i '/^\*\*类型\*\*:/a\**状态**: 已推迟' "$imp_file"
+            else
+              sed -i 's/^\*\*状态\*\*:.*$/**状态**: 已推迟/' "$imp_file"
+            fi
+          fi
           if [ -f "$SUGGESTIONS_FILE" ]; then
             local timestamp=$(date -u +%Y-%m-%d)
             if grep -q "\[$name\]" "$SUGGESTIONS_FILE" 2>/dev/null; then
               sed -i "s/\(\[$name\].[^|]*|[^|]*|[^|]*|\)[^|]*/\1 ⏳ 已延迟 ($timestamp)/" "$SUGGESTIONS_FILE"
             fi
-            echo "⏳ $name 已标记为延迟"
           fi
+          echo "⏳ $name 已标记为延迟"
           ;;
         s|S|skip)
           echo "-> 跳过 $name"

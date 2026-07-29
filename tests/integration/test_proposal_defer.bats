@@ -63,3 +63,34 @@ teardown() {
     grep -q 'view-all' "$REPO_ROOT/skills/guide-arch/scripts/arch_proposal_review.sh"
     grep -q '⏸️' "$REPO_ROOT/skills/guide-arch/scripts/arch_proposal_review.sh"
 }
+
+@test "proposal_defer: d decision persists status to improvement file" {
+    # Structural: d handler must write **状态**: 已推迟 to imp_file
+    # Check that the sed insert after 类型 line exists, targeting imp_file
+    grep -qF '/a\**状态**: 已推迟' "$REPO_ROOT/skills/guide-arch/scripts/arch_proposal_review.sh"
+    grep -qF '"$imp_file"' "$REPO_ROOT/skills/guide-arch/scripts/arch_proposal_review.sh"
+    grep -q '已推迟' "$REPO_ROOT/skills/guide-arch/scripts/arch_proposal_review.sh"
+
+    # Behavioral: simulate the d-branch sed command on a real improvement file
+    mkdir -p "$TEST_DIR/improvements"
+    cat > "$TEST_DIR/improvements/test-to-defer.md" << 'INNER_EOF'
+# test-to-defer
+**优先级**: P1 | **来源**: test
+**阶段**: default | **分类**: general
+**类型**: feature
+INNER_EOF
+    local imp_file="$TEST_DIR/improvements/test-to-defer.md"
+
+    # Simulate the sed insert that the d handler does
+    sed -i '/^\*\*类型\*\*:/a\**状态**: 已推迟' "$imp_file"
+
+    # Verify status was written
+    run grep -m1 '^\*\*状态\*\*:' "$imp_file"
+    [ "$status" -eq 0 ]
+    echo "$output" | grep -q '已推迟'
+
+    # Verify re-entry skips it (status extraction works)
+    run bash -c "grep -m1 '^\*\*状态\*\*:' '$imp_file' | sed 's/.*\*\*状态\*\*: *//' | cut -d'|' -f1 | xargs"
+    [ "$status" -eq 0 ]
+    [ "$output" = "已推迟" ]
+}
