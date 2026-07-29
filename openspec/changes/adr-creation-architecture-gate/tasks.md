@@ -1,10 +1,5 @@
-## 1. <!-- Task Group Name -->
+## 1. ADR 架构门控
 
-- [ ] 1.1 <!-- Task description -->
-- [ ] 1.2 <!-- Task description -->
-
-## 2. <!-- Task Group Name -->
-
-- [ ] 2.1 <!-- Task description -->
-- [ ] 2.2 <!-- Task description -->
+- [x] 1.1 创建 adr_gate.sh 脚本 (skills/guide-arch/scripts/adr_gate.sh)
+- [x] 1.2 编写测试 (tests/integration/test_adr_gate.bats)
 
