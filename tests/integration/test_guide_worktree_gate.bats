@@ -28,3 +28,21 @@ load ../test_helper
     grep -qF 'guide-plan' "$f"
     grep -qF 'guide-ship' "$f"
 }
+
+# ---------------------------------------------------------------------------
+# Task 2: cleanup-analysis section links to the stage-command gate
+# ---------------------------------------------------------------------------
+
+@test "guide_worktree_gate: cleanup-analysis section mentions stage gate linkage" {
+    # The cleanup analysis section should reference the stage-command gate
+    # and reuse WT_ISSUES_JSON data.
+    local f="$PROJECT_ROOT/skills/guide/SKILL.md"
+    # Extract the "### 工作树清理分析" section body (until next ### )
+    local section
+    section=$(awk '/^### 工作树清理分析/{flag=1;next} /^### /{flag=0} flag' "$f")
+    [ -n "$section" ]
+    # Must mention the gate linkage
+    echo "$section" | grep -qF '阶段命令门控'
+    # Must mention WT_ISSUES_JSON
+    echo "$section" | grep -qF 'WT_ISSUES_JSON'
+}
