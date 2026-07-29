@@ -42,6 +42,9 @@
     "status",
     "roadmap",
     "deps",
+    "add-improve",
+    "openspec-gate",
+    "rdd-workflow-brainstorm",
     "rdd-workflow-writing-plans"
   ]
 }
