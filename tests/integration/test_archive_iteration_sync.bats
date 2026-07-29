@@ -11,7 +11,7 @@ load ../test_helper
     # the worktree path does via archive_change().
     #
     # This test verifies the call exists in the lightweight branch.
-    PROJECT_ROOT=$(git rev-parse --show-toplevel)
+    PROJECT_ROOT="$REPO_ROOT"
     SHIP_ARCHIVE="$PROJECT_ROOT/skills/guide-ship/scripts/ship_archive.sh"
 
     # Extract the lightweight branch (else clause) and check for the call
@@ -26,7 +26,7 @@ load ../test_helper
 @test "archive-iteration-sync: worktree path calls mark_iteration_archived via archive_change" {
     # The worktree path calls archive_change which internally calls
     # mark_iteration_archived. Verify this chain exists.
-    PROJECT_ROOT=$(git rev-parse --show-toplevel)
+    PROJECT_ROOT="$REPO_ROOT"
     ARCHIVE_SH="$PROJECT_ROOT/skills/_lib/archive.sh"
 
     run grep -c "mark_iteration_archived" "$ARCHIVE_SH"
@@ -36,7 +36,7 @@ load ../test_helper
 
 @test "archive-iteration-sync: mark_archived sets archived_at in iteration module" {
     # Verify the Python mark_archived function properly sets archived_at
-    PROJECT_ROOT=$(git rev-parse --show-toplevel)
+    PROJECT_ROOT="$REPO_ROOT"
     cd "$PROJECT_ROOT"
 
     run python3 -c "
