@@ -14,7 +14,6 @@
 | [ship-incomplete-archive-change-fallback](improvements/ship-incomplete-archive-change-fallback.md) | P1 | 2026-07-26 | guide-arch |
 | [archive-gate-incomplete-tasks](improvements/archive-gate-incomplete-tasks.md) | P1 | 2026-07-26 | guide-arch |
 | [fix-skill-tool-cache](improvements/fix-skill-tool-cache.md) | P1 | 2026-07-26 | guide-arch |
-| [ship-delete-branch-safety](improvements/ship-delete-branch-safety.md) | P1 | 2026-07-26 | guide-arch |
 | [sync-approved-to-suggestions](improvements/sync-approved-to-suggestions.md) | P1 | 2026-07-26 | guide-arch |
 | [pre-checkout-warning](improvements/pre-checkout-warning.md) | P2 | 2026-07-26 | guide-arch |
 | [adr-creation-architecture-gate](improvements/adr-creation-architecture-gate.md) | P1 | 2026-07-26 | guide-arch |
@@ -22,12 +21,10 @@
 | [fix-arch-handoff-stale-detection](improvements/fix-arch-handoff-stale-detection.md) | P1 | 2026-07-26 | guide-arch |
 | [filter-guide-ship-when-no-changes](improvements/filter-guide-ship-when-no-changes.md) | P2 | 2026-07-26 | guide-arch |
 | [guide-plan-fallback-direct-create](improvements/guide-plan-fallback-direct-create.md) | P1 | 2026-07-26 | guide-arch |
-| [fix-rddf-session-owner-cross-call](improvements/fix-rddf-session-owner-cross-call.md) | P1 | 2026-07-26 | guide-arch |
 | [detect-suggestions-approved-inconsistency](improvements/detect-suggestions-approved-inconsistency.md) | P3 | 2026-07-26 | guide-arch |
 | [prompt-worktree-cleanup-before-stage](improvements/prompt-worktree-cleanup-before-stage.md) | P3 | 2026-07-26 | guide-arch |
-| [RDDF-0001-fix-rddf-session-import-path](improvements/RDDF-0001-fix-rddf-session-import-path.md) | P1 | 2026-07-28 | guide-arch |
 | [add-change-content-review](improvements/add-change-content-review.md) | P1 | 2026-07-28 | guide-arch |
-| [add-proposal-defer-support](improvements/add-proposal-defer-support.md) | P1 | 2026-07-28 | guide-arch |
+| [add-proposal-defer-support](improvements/add-proposal-defer-support.md) | P2 | 2026-07-28 | guide-arch |
 | [add-proposal-deps-and-features](improvements/add-proposal-deps-and-features.md) | P1 | 2026-07-28 | guide-arch |
 | [archive-cleanup-plan-files](improvements/archive-cleanup-plan-files.md) | P2 | 2026-07-28 | guide-arch |
 | [archive-cleanup-plan-handoff](improvements/archive-cleanup-plan-handoff.md) | P1 | 2026-07-28 | guide-arch |
@@ -95,3 +92,6 @@
 | [update-adr-index](improvements/update-adr-index.md) | P2 | 2026-07-28 |
 | [update-agents-module-map](improvements/update-agents-module-map.md) | P1 | 2026-07-28 |
 | [update-guide-plan-format](improvements/update-guide-plan-format.md) | P1 | 2026-07-28 |
+| [ship-delete-branch-safety](improvements/ship-delete-branch-safety.md) | P1 | 2026-07-29 |
+| [fix-rddf-session-owner-cross-call](improvements/fix-rddf-session-owner-cross-call.md) | P1 | 2026-07-29 |
+| [RDDF-0001-fix-rddf-session-import-path](improvements/RDDF-0001-fix-rddf-session-import-path.md) | P1 | 2026-07-29 |
