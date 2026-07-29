@@ -66,17 +66,9 @@ run_plan_done_gate() {
   fi
 
   local PROPOSED_COUNT
-  PROPOSED_COUNT=$(PY_PROJECT_ROOT="$PROJECT_ROOT" python3 <<'PYEOF' 2>/dev/null
-import os, sys
-try:
-    from skills._lib import iteration as it
-    d = it.load(os.environ.get("PY_PROJECT_ROOT", "."))
-    ready = it.list_ready_for_ship(d)
-    print(len(ready))
-except Exception:
-    print(0)
-PYEOF
-)
+  # Filesystem scan (matches Gate 1): count active changes directly.
+  # Avoids stale data from iteration.json accumulating after archive operations.
+  PROPOSED_COUNT=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l | tr -d '[:space:]' || echo 0)
   echo "  ready-for-ship (proposed + blocker cleared): $PROPOSED_COUNT"
   if [ "${PROPOSED_COUNT:-0}" -eq 0 ]; then
       echo "  ❌ 失败: 至少需要 1 个 ready-for-ship change 才能交接给 guide-ship"
