@@ -57,11 +57,12 @@ rddf_session_hook_entry stage_ship guide-ship ship-phase archive-all
 1. 展示所有活跃 changes 的状态列表
 2. 用户选择要处理的 change（或选「全部处理」）
 3. 对选中的 change 执行 COMMIT GATE
-4. **自动检测并行冲突**：
+4. **Quick Finish 检测**：若 tasks.md 剩余 ≤2 个 trivial 任务且无未提交代码变更，提示用户选择 Quick Finish（跳过 worktree/plan/execute）或标准流程
+5. **自动检测并行冲突**：
    - 无其他 worktree 且仅此一个 change → ⚡ 轻量模式（创建 branch，跳过 worktree）
    - 已有其他 worktree 或多个 change → 🔀 worktree 模式（创建 branch + worktree）
-5. 生成实施计划
-6. 进入执行模式选择
+6. 生成实施计划
+7. 进入执行模式选择
 
 **展示所有活跃 changes 的状态**：
 
