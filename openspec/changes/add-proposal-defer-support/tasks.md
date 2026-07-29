@@ -1,6 +1,6 @@
 # Add proposal defer support — 实施任务
 
-## Task 1: 在 `list_improvements()` 中增加状态字段输出
+## Task 1: 在 `list_improvements()` 中增加状态字段输出 - [x] DONE
 
 **TDD 步骤**:
 1. 在 `tests/unit/test_state.sh` 或 `tests/integration/test_proposal_defer.bats` 中编写测试，定义：
@@ -19,7 +19,7 @@
 4. 验证测试通过
 5. Commit
 
-## Task 2: 更新 `arch_proposal_review.sh` 支持延迟状态跳过
+## Task 2: 更新 `arch_proposal_review.sh` 支持延迟状态跳过 - [x] DONE
 
 **TDD 步骤**:
 1. 在 `tests/integration/test_proposal_defer.bats` 中追加测试，定义：
@@ -41,7 +41,7 @@
 4. 验证测试通过
 5. Commit
 
-## Task 3: 实现 `d`（延迟）决策写入 improvement 文件 + 集成测试
+## Task 3: 实现 `d`（延迟）决策写入 improvement 文件 + 集成测试 - [x] DONE
 
 **TDD 步骤**:
 1. 在 `tests/integration/test_proposal_defer.bats` 中追加集成测试：
