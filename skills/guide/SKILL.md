@@ -86,6 +86,8 @@ SKILL_DIR=/workspace/project/rdd-workflow/skills/guide \
 
 AI 必须在分析后将清理建议展示给用户，但**不自动执行任何命令**。用户确认后（输入 `y` 或选择清理菜单项），AI 才执行。
 
+> **阶段命令门控联动**：清理分析结果不仅用于菜单展示前的分析，也用于阶段命令门控（见下方"阶段命令门控（工作树检查）"步骤）。门控步骤在"执行选择"阶段触发，使用相同的 `WT_ISSUES_JSON` 数据，不重新扫描。
+
 ## 交互菜单（AI 必须执行）
 
 解析 `ALL_OPTIONS_JSON` 后，使用 `question` 工具向用户展示菜单。
@@ -170,7 +172,29 @@ ALL_OPTIONS_JSON 结构:
    - **阶段命令**（`group` 为 `recommended` 或 `stages`：`guide-arch`、`guide-plan`、`guide-ship`、`rddf-session resume rds_xxx`）→ 执行后 guide 模式结束。
    - **工具命令**（`group` 为 `session` 或 `utilities`：`rddf-session list`、`rddf-session current`、`feature`、`status` 等）→ 执行后**重新展示完整菜单**（AI 回到步骤 1：运行 bash 扫描 + Python 合成器 + 重新展示菜单），不结束 guide 模式。
 
+### 阶段命令门控（工作树检查）
+
+当用户选择阶段命令（`guide-arch` / `guide-plan` / `guide-ship`）时，AI 必须在执行 `skill_use()` 前检查 `WT_ISSUES_JSON`：
+
+- 如果 `WT_ISSUES_JSON` 为空或仅含 `info` 级别 issue -> 直接执行，无提示
+- 如果 `WT_ISSUES_JSON` 非空且包含非 `info` 级别 issue -> 展示提示：
+
+  ```
+  ⚠️ 工作树有 N 个待处理问题（M 删除 + K 修改）
+  建议先清理再进入工作流阶段。
+
+  1. 🧹 先清理（进入清理菜单）
+  2. ⏭️  跳过，直接进入 [阶段名]
+  ```
+
+- 用户选择"跳过"后正常执行 `skill_use()`
+- 用户选择"清理"后，引导用户选择 `🧹 清理 (N issues)` 菜单项
+
+> **数据来源**：`WT_ISSUES_JSON` 由上方"工作树清理分析"步骤产出，此处复用相同数据，不重新扫描。
+
 ### 执行选择
+
+> **前置门控**：执行下方任一阶段命令前，必须先完成"阶段命令门控（工作树检查）"步骤。
 
 用户选择后，AI 执行对应 `action`。根据 action 类型，post-action 行为不同：
 
