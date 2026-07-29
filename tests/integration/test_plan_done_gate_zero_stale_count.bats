@@ -85,3 +85,31 @@ teardown() {
     "
     [[ "$output" == *"cleared): 0"* ]]
 }
+
+# ── Task 3: Full create->archive->recheck integration test ──
+
+@test "plan_done_gate_zero: integration - full create->archive->recheck" {
+    # Create 2 changes
+    for n in change-a change-b; do
+        mkdir -p "openspec/changes/$n"
+        echo "x" > "openspec/changes/$n/proposal.md"
+    done
+
+    # First check: count is 2
+    out1=$(bash -c "
+        source '$REPO_ROOT/skills/guide-plan/scripts/plan_done_gate.sh'
+        run_plan_done_gate 2>&1 | grep 'ready-for-ship' || true
+    ")
+    [[ "$out1" == *"cleared): 2"* ]]
+
+    # Archive one
+    mkdir -p openspec/changes/archive/2026-07-29-change-a
+    mv openspec/changes/change-a openspec/changes/archive/2026-07-29-change-a/change-a
+
+    # Second check: count should be 1
+    out2=$(bash -c "
+        source '$REPO_ROOT/skills/guide-plan/scripts/plan_done_gate.sh'
+        run_plan_done_gate 2>&1 | grep 'ready-for-ship' || true
+    ")
+    [[ "$out2" == *"cleared): 1"* ]]
+}
