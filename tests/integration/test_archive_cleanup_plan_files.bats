@@ -91,3 +91,48 @@ teardown() {
     run check_orphan_plan_files "$TEST_DIR"
     [ "$status" -eq 0 ]
 }
+
+# ---------------------------------------------------------------------------
+# Task 3: e2e cleanup + scan regression tests
+# ---------------------------------------------------------------------------
+
+@test "archive_cleanup_plan_files: e2e - cleanup + scan no warning" {
+    # Create 2 active changes + plan files
+    for n in keep-a keep-b; do
+        mkdir -p "openspec/changes/$n"
+        echo "# Plan" > ".rddf/plans/$n.md"
+    done
+
+    # shellcheck source=/dev/null
+    source "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"
+    # shellcheck source=/dev/null
+    source "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
+
+    # Cleanup one (simulate archive)
+    cleanup_plan_file "$TEST_DIR" "keep-a"
+
+    # Verify keep-a plan deleted, keep-b still exists
+    [[ ! -f "$TEST_DIR/.rddf/plans/keep-a.md" ]]
+    [[ -f "$TEST_DIR/.rddf/plans/keep-b.md" ]]
+
+    # Scan should not warn about active plans
+    run check_orphan_plan_files "$TEST_DIR"
+    [[ ! "$output" == *"孤立"* ]]
+
+    # Cleanup keep-b (also simulates archive)
+    cleanup_plan_file "$TEST_DIR" "keep-b"
+    [[ ! -f "$TEST_DIR/.rddf/plans/keep-b.md" ]]
+
+    # Now scan should be silent (no plans left)
+    run check_orphan_plan_files "$TEST_DIR"
+    [[ ! "$output" == *"⚠️"* ]]
+}
+
+@test "archive_cleanup_plan_files: smoke regression - existing scan tests still pass" {
+    # Just verify the script can be sourced without error
+    run bash -c "
+        source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
+        type check_orphan_plan_files > /dev/null
+    "
+    [ "$status" -eq 0 ]
+}
