@@ -1,6 +1,6 @@
 ## Tasks
 
-### Task 1: Create tests/_lib/test_archive_helper.bash with mock worktree setup
+### Task 1: DONE - Create tests/_lib/test_archive_helper.bash with mock worktree setup
 
 **Write failing test:**
 ```bash
@@ -33,7 +33,7 @@ Create `tests/_lib/test_archive_helper.bash` with:
 
 ---
 
-### Task 2: Fix test_archive_proposal_status.bats to use $REPO_ROOT
+### Task 2: DONE - Fix test_archive_proposal_status.bats to use $REPO_ROOT
 
 **Write failing test:**
 ```bash
@@ -53,7 +53,7 @@ Create `tests/_lib/test_archive_helper.bash` with:
 
 ---
 
-### Task 3: Fix test_archive_iteration_sync.bats to use $REPO_ROOT
+### Task 3: DONE - Fix test_archive_iteration_sync.bats to use $REPO_ROOT
 
 **Write failing test:**
 ```bash
