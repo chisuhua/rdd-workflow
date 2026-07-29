@@ -351,3 +351,28 @@ for m in re.finditer(r'\|\s*\[([^\]]+)\]\(improvements/([^)]+)\)\s*\|', section)
     echo "  无已归档但未标记的提案"
   fi
 }
+
+# check_dirty_key_files [project_root]
+#   Detects uncommitted (unstaged) changes to proposal-suggestions.md and
+#   proposal-approved.md via `git diff --name-only`. Emits a warning block
+#   listing the dirty files and a recovery hint when any are dirty.
+#   Non-blocking: always returns 0.
+#   Used by guide/scan-state.sh before destructive git operations.
+check_dirty_key_files() {
+  local project_root="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  local dirty_files=""
+
+  for f in "proposal-suggestions.md" "proposal-approved.md"; do
+    if [ -f "$project_root/$f" ] && \
+       git -C "$project_root" diff --name-only -- "$f" 2>/dev/null | grep -q "^$f$"; then
+      dirty_files="$dirty_files $f"
+    fi
+  done
+
+  if [ -n "$dirty_files" ]; then
+    echo "⚠️  关键文件有未提交更改:$dirty_files"
+    echo "   建议: git add$dirty_files && git commit -m 'save key workflow files'"
+    echo "   避免 git checkout -- . 回滚丢失数据"
+  fi
+  return 0
+}

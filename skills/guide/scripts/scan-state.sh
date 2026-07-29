@@ -61,6 +61,9 @@ scan_state() {
   ARCH_HANDOFF="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
   PLAN_HANDOFF="$PROJECT_ROOT/.rddf/state/.plan-handoff.json"
 
+  type -t check_dirty_key_files &>/dev/null || source "$PROJECT_ROOT/skills/_lib/state.sh"
+  check_dirty_key_files "$PROJECT_ROOT"
+
   # 1. arch-handoff present, plan-handoff absent → guide-plan
   if [ -f "$ARCH_HANDOFF" ] && [ ! -f "$PLAN_HANDOFF" ]; then
     # 1.5: arch-done incomplete — arch-handoff exists but ADR missing
