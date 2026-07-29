@@ -26,3 +26,7 @@ load ../test_helper
 @test "archive_helper: test_archive_proposal_status.bats uses REPO_ROOT (no inline git rev-parse)" {
     ! grep -q 'git rev-parse --show-toplevel' "$REPO_ROOT/tests/integration/test_archive_proposal_status.bats"
 }
+
+@test "archive_helper: test_archive_iteration_sync.bats uses REPO_ROOT (no inline git rev-parse)" {
+    ! grep -q 'git rev-parse --show-toplevel' "$REPO_ROOT/tests/integration/test_archive_iteration_sync.bats"
+}
