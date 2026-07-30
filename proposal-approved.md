@@ -11,23 +11,23 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [pre-checkout-warning](improvements/pre-checkout-warning.md) | P2 | 2026-07-26 | guide-arch |
-| [fix-scan-state-integer-comparison](improvements/fix-scan-state-integer-comparison.md) | P2 | 2026-07-26 | guide-arch |
-| [filter-guide-ship-when-no-changes](improvements/filter-guide-ship-when-no-changes.md) | P2 | 2026-07-26 | guide-arch |
-| [detect-suggestions-approved-inconsistency](improvements/detect-suggestions-approved-inconsistency.md) | P3 | 2026-07-26 | guide-arch |
-| [prompt-worktree-cleanup-before-stage](improvements/prompt-worktree-cleanup-before-stage.md) | P3 | 2026-07-26 | guide-arch |
-| [add-proposal-defer-support](improvements/add-proposal-defer-support.md) | P2 | 2026-07-28 | guide-arch |
-| [archive-cleanup-plan-files](improvements/archive-cleanup-plan-files.md) | P2 | 2026-07-28 | guide-arch |
 | [deps-driven-execution-mode](improvements/deps-driven-execution-mode.md) | P2 | 2026-07-28 | guide-arch |
-| [fix-doc-truth-sync](improvements/fix-doc-truth-sync.md) | P2 | 2026-07-28 | guide-arch |
-| [fix-guide-ship-archive-bats](improvements/fix-guide-ship-archive-bats.md) | P2 | 2026-07-28 | guide-arch |
-| [fix-plan-done-gate-zero-stale-count](improvements/fix-plan-done-gate-zero-stale-count.md) | P2 | 2026-07-28 | guide-arch |
-| [guide-ship-quick-finish](improvements/guide-ship-quick-finish.md) | P2 | 2026-07-28 | guide-arch |
 
 ## 已实施
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
+| [guide-ship-quick-finish](improvements/guide-ship-quick-finish.md) | P2 | 2026-07-29 |
+| [fix-plan-done-gate-zero-stale-count](improvements/fix-plan-done-gate-zero-stale-count.md) | P2 | 2026-07-29 |
+| [fix-guide-ship-archive-bats](improvements/fix-guide-ship-archive-bats.md) | P2 | 2026-07-29 |
+| [fix-doc-truth-sync](improvements/fix-doc-truth-sync.md) | P2 | 2026-07-29 |
+| [archive-cleanup-plan-files](improvements/archive-cleanup-plan-files.md) | P2 | 2026-07-29 |
+| [add-proposal-defer-support](improvements/add-proposal-defer-support.md) | P2 | 2026-07-29 |
+| [prompt-worktree-cleanup-before-stage](improvements/prompt-worktree-cleanup-before-stage.md) | P3 | 2026-07-29 |
+| [detect-suggestions-approved-inconsistency](improvements/detect-suggestions-approved-inconsistency.md) | P3 | 2026-07-29 |
+| [filter-guide-ship-when-no-changes](improvements/filter-guide-ship-when-no-changes.md) | P2 | 2026-07-29 |
+| [fix-scan-state-integer-comparison](improvements/fix-scan-state-integer-comparison.md) | P2 | 2026-07-29 |
+| [pre-checkout-warning](improvements/pre-checkout-warning.md) | P2 | 2026-07-29 |
 | [archive-cleanup-plan-handoff](improvements/archive-cleanup-plan-handoff.md) | P1 | 2026-07-29 |
 | [add-proposal-deps-and-features](improvements/add-proposal-deps-and-features.md) | P1 | 2026-07-29 |
 | [add-change-content-review](improvements/add-change-content-review.md) | P1 | 2026-07-29 |

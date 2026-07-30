@@ -42,21 +42,21 @@
 | [fix-skill-tool-cache](improvements/fix-skill-tool-cache.md) | P1 | 会话复盘 | completed |
 | [ship-delete-branch-safety](improvements/ship-delete-branch-safety.md) | P1 | 会话复盘 | 2026-07-23 |
 | [sync-approved-to-suggestions](improvements/sync-approved-to-suggestions.md) | P1 | 会话复盘 | completed |
-| [pre-checkout-warning](improvements/pre-checkout-warning.md) | P2 | 会话复盘 | 2026-07-23 |
+| [pre-checkout-warning](improvements/pre-checkout-warning.md) | P2 | 会话复盘 | completed |
 | [adr-creation-architecture-gate](improvements/adr-creation-architecture-gate.md) | P1 | Oracle 审查 2026-07-25 | completed |
-| [fix-scan-state-integer-comparison](improvements/fix-scan-state-integer-comparison.md) | P2 | Session 复盘 2026-07-26 — guide-entry 实操 | 2026-07-26 |
+| [fix-scan-state-integer-comparison](improvements/fix-scan-state-integer-comparison.md) | P2 | Session 复盘 2026-07-26 — guide-entry 实操 | completed |
 | [fix-arch-handoff-stale-detection](improvements/fix-arch-handoff-stale-detection.md) | P1 | Session 复盘 2026-07-26 — ADR 检测失效 | completed |
-| [filter-guide-ship-when-no-changes](improvements/filter-guide-ship-when-no-changes.md) | P2 | Session 复盘 2026-07-26 — 空转 | 2026-07-26 |
+| [filter-guide-ship-when-no-changes](improvements/filter-guide-ship-when-no-changes.md) | P2 | Session 复盘 2026-07-26 — 空转 | completed |
 | [guide-plan-fallback-direct-create](improvements/guide-plan-fallback-direct-create.md) | P1 | Session 复盘 2026-07-26 — 成熟项目 dead-end | completed |
 | [fix-rddf-session-owner-cross-call](improvements/fix-rddf-session-owner-cross-call.md) | P1 | Session 复盘 2026-07-26 — session owner mismatch | 2026-07-26 |
-| [detect-suggestions-approved-inconsistency](improvements/detect-suggestions-approved-inconsistency.md) | P3 | Session 复盘 2026-07-26 — 审计追溯缺失 | 2026-07-26 |
-| [prompt-worktree-cleanup-before-stage](improvements/prompt-worktree-cleanup-before-stage.md) | P3 | Session 复盘 2026-07-26 — 13 WT issues 无人处理 | 2026-07-26 |
+| [detect-suggestions-approved-inconsistency](improvements/detect-suggestions-approved-inconsistency.md) | P3 | Session 复盘 2026-07-26 — 审计追溯缺失 | completed |
+| [prompt-worktree-cleanup-before-stage](improvements/prompt-worktree-cleanup-before-stage.md) | P3 | Session 复盘 2026-07-26 — 13 WT issues 无人处理 | completed |
 | [add-workflow-reflect-engine](improvements/add-workflow-reflect-engine.md) | P1 | 用户反馈 | 2026-07-26 |
 | [fix-arch-env-check-adr-count-bug](improvements/fix-arch-env-check-adr-count-bug.md) | P2 | 2026-07-27 会话复盘 | 2026-07-27 |
 | [fix-deps-render-empty-candidates](improvements/fix-deps-render-empty-candidates.md) | P2 | 2026-07-27 会话复盘 | 2026-07-27 |
 | [fix-ship-lightweight-wt-path-pollution](improvements/fix-ship-lightweight-wt-path-pollution.md) | P2 | 2026-07-27 会话复盘 | 2026-07-27 |
-| [fix-plan-done-gate-zero-stale-count](improvements/fix-plan-done-gate-zero-stale-count.md) | P2 | 2026-07-27 会话复盘 | 2026-07-27 |
+| [fix-plan-done-gate-zero-stale-count](improvements/fix-plan-done-gate-zero-stale-count.md) | P2 | 2026-07-27 会话复盘 | completed |
 | [add-full-regression-gate](improvements/add-full-regression-gate.md) | P0 | UsrLinuxEmu 回归复盘 2026-07-27 | 2026-07-27 |
 | [add-openspec-gate](improvements/add-openspec-gate.md) | P0 | UsrLinuxEmu backfill 事件复盘 2026-07-27 | 2026-07-27 |
-| [add-proposal-defer-support](improvements/add-proposal-defer-support.md) | P1 | PTX-EMU 2026-07-28 实战 — guide-arch 无法跳过已评估推迟的提案 | 2026-07-28 |
+| [add-proposal-defer-support](improvements/add-proposal-defer-support.md) | P1 | PTX-EMU 2026-07-28 实战 — guide-arch 无法跳过已评估推迟的提案 | completed |
 | [add-proposal-deps-and-features](improvements/add-proposal-deps-and-features.md) | P1 | 用户实战讨论 2026-07-28 | completed |
