@@ -185,6 +185,8 @@ print(json.dumps({
   type -t detect_approved_inconsistency &>/dev/null || source "$PROJECT_ROOT/skills/_lib/state.sh"
   # Audit trail protection: flag suggestions marked "completed" without an approved record
   detect_approved_inconsistency "$PROJECT_ROOT" 2>/dev/null || true
+  # Auto-cleanup: remove stale suggestions that are already in approved list
+  sweep_stale_suggestions "$PROJECT_ROOT" 2>/dev/null || true
 
   if [ "$NO_BINDING" -eq 0 ]; then
     scan_session_binding "$PROJECT_ROOT"

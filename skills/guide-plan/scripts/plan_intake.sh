@@ -145,5 +145,6 @@ except Exception:
     # shellcheck source=/dev/null
     source "$STATE_SH"
     sweep_implemented_proposals "$PROJECT_ROOT"
+    sweep_stale_suggestions "$PROJECT_ROOT"
   fi
 }

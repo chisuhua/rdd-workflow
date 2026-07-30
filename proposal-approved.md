@@ -11,12 +11,12 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [deps-driven-execution-mode](improvements/deps-driven-execution-mode.md) | P2 | 2026-07-28 | guide-arch |
 
 ## 已实施
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
+| [deps-driven-execution-mode](improvements/deps-driven-execution-mode.md) | P2 | 2026-07-30 |
 | [guide-ship-quick-finish](improvements/guide-ship-quick-finish.md) | P2 | 2026-07-29 |
 | [fix-plan-done-gate-zero-stale-count](improvements/fix-plan-done-gate-zero-stale-count.md) | P2 | 2026-07-29 |
 | [fix-guide-ship-archive-bats](improvements/fix-guide-ship-archive-bats.md) | P2 | 2026-07-29 |
@@ -95,3 +95,4 @@
 | [ship-delete-branch-safety](improvements/ship-delete-branch-safety.md) | P1 | 2026-07-29 |
 | [fix-rddf-session-owner-cross-call](improvements/fix-rddf-session-owner-cross-call.md) | P1 | 2026-07-29 |
 | [RDDF-0001-fix-rddf-session-import-path](improvements/RDDF-0001-fix-rddf-session-import-path.md) | P1 | 2026-07-29 |
+

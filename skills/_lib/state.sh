@@ -275,30 +275,63 @@ with open(sys.argv[1], 'w') as f:
 }
 
 # sync_suggestions <project_root> <name> <status>
-#   Syncs a change's status from proposal-approved.md to proposal-suggestions.md.
-#   Updates the status column in the suggestions table to match the approved status.
+#   Syncs a change's status between proposal-suggestions.md and proposal-approved.md.
+#   - "approved" / "completed": removes the row from suggestions entirely (prevents
+#     ghost entries that show as "pending review" when they are already done).
+#   - "deferred" / "rejected": updates the status column in place (keeps row visible).
+#   - Also accepts optional timestamp: sync_suggestions <root> <name> <status> "<timestamp>"
+#   Idempotent: safe to call multiple times.
 sync_suggestions() {
   local project_root="$1"
   local name="$2"
   local status="${3:-approved}"
+  local timestamp="${4:-$(date -u +%Y-%m-%d)}"
   
   local suggestions_file="$project_root/proposal-suggestions.md"
   [ ! -f "$suggestions_file" ] && return 0
   
+  REMOVE_ROW=false
+  [ "$status" = "approved" ] || [ "$status" = "completed" ] && REMOVE_ROW=true
+  
   SUGGESTIONS_FILE="$suggestions_file" CHANGE_NAME="$name" NEW_STATUS="$status" \
+  REMOVE_ROW="$REMOVE_ROW" NEW_TIMESTAMP="$timestamp" \
   python3 -c '
 import os, re
 suggestions_file = os.environ["SUGGESTIONS_FILE"]
 name = os.environ["CHANGE_NAME"]
 status = os.environ["NEW_STATUS"]
+remove_row = os.environ.get("REMOVE_ROW", "false") == "true"
+ts = os.environ.get("NEW_TIMESTAMP", "")
+
 with open(suggestions_file) as f:
-    content = f.read()
-pattern = r"(\| \[" + re.escape(name) + r"\]\([^)]+\) \| [^|]+ \| [^|]+ \|) [^|]+ (\|)"
-replacement = r"\1 " + status + r" \2"
-new_content = re.sub(pattern, replacement, content)
-if new_content != content:
+    lines = f.readlines()
+
+new_lines = []
+removed = False
+for line in lines:
+    if re.search(r"\[" + re.escape(name) + r"\]\(improvements/", line):
+        if remove_row:
+            removed = True
+            continue  # skip this line entirely
+        else:
+            parts = line.rstrip("\n").split("|")
+            # Format: | [name](path) | priority | source | added_time | status |
+            # After split: ["", " [name]...", " priority ", " source ", " date ", " status ", ""]
+            if len(parts) >= 6:
+                # Timestamped status for deferred/rejected
+                status_display = status
+                if status in ("deferred", "已延迟"):
+                    status_display = f"⏳ 已延迟 ({ts})"
+                elif status in ("rejected", "已拒绝"):
+                    status_display = f"❌ 已拒绝 ({ts})"
+                parts[-2] = f" {status_display} "
+                line = "|".join(parts) + "\n"
+            removed = True
+    new_lines.append(line)
+
+if removed:
     with open(suggestions_file, "w") as f:
-        f.write(new_content)
+        f.writelines(new_lines)
 '
 }
 
@@ -350,6 +383,57 @@ for m in re.finditer(r'\|\s*\[([^\]]+)\]\(improvements/([^)]+)\)\s*\|', section)
   else
     echo "  无已归档但未标记的提案"
   fi
+}
+
+# sweep_stale_suggestions <project_root>
+#   Scans proposal-suggestions.md for entries that are already listed in
+#   proposal-approved.md (either approved or completed sections) and removes
+#   them. Prevents ghost entries where a proposal is already done but the
+#   suggestions table still shows "pending review". Idempotent.
+sweep_stale_suggestions() {
+  local project_root="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  local suggestions_file="$project_root/proposal-suggestions.md"
+  local approved_file="$project_root/proposal-approved.md"
+
+  [ ! -f "$suggestions_file" ] && return 0
+  [ ! -f "$approved_file" ] && return 0
+
+  PY_SUGGESTIONS="$suggestions_file" PY_APPROVED="$approved_file" python3 -c '
+import os, re, sys
+
+suggestions_file = os.environ["PY_SUGGESTIONS"]
+approved_file = os.environ["PY_APPROVED"]
+
+with open(approved_file) as f:
+    approved_content = f.read()
+
+# Collect all names in proposal-approved.md (both approved and completed sections)
+approved_names = set()
+for m in re.finditer(r"\[([^\]]+)\]\(improvements/([^)]+)\)", approved_content):
+    approved_names.add(m.group(1))
+
+if not approved_names:
+    sys.exit(0)
+
+with open(suggestions_file) as f:
+    lines = f.readlines()
+
+new_lines = []
+removed = 0
+for line in lines:
+    # Check if this line contains a suggestion that is now in approved
+    m = re.search(r"\[([^\]]+)\]\(improvements/", line)
+    if m and m.group(1) in approved_names:
+        removed += 1
+        continue
+    new_lines.append(line)
+
+if removed > 0:
+    # Preserve empty table structure: if only header+separator remain, keep them
+    with open(suggestions_file, "w") as f:
+        f.writelines(new_lines)
+    print(f"🧹 sweep_stale_suggestions: removed {removed} stale entries from suggestions table")
+' 2>/dev/null || true
 }
 
 # check_dirty_key_files [project_root]

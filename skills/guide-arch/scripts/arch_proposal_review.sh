@@ -48,41 +48,41 @@ arch_proposal_review() {
   # ============ Step 1: 收集提案 ============
 
   # 从 proposal-suggestions.md 解析所有提案条目
-  # 支持两种格式：
-  #   | [name](path) | priority | source | status [| added_time] |
+  # 当前格式 (5列 + 状态):
+  #   | [name](path) | priority | source | added_time | status |
+  # 列偏移: name=$1, priority=$2, source=$3, added_time=$4, status=$5
   declare -A SUGGESTION_PATHS    # name -> path (from suggestions)
   declare -A SUGGESTION_PRIORITY # name -> priority
   declare -A SUGGESTION_STATUS   # name -> status (from suggestions)
 
   if [ -f "$SUGGESTIONS_FILE" ]; then
-    while IFS='|' read -r _ name_link rest; do
+    while IFS='|' read -r _ name_link priority source added_time status rest; do
       [ -z "$name_link" ] && continue
-      # Extract [name](path)
       name=$(echo "$name_link" | sed -n 's/.*\[\([^]]*\)\](\([^)]*\)).*/\1/p')
       path=$(echo "$name_link" | sed -n 's/.*\[\([^]]*\)\](\([^)]*\)).*/\2/p')
       [ -z "$name" ] && continue
       SUGGESTION_PATHS["$name"]="$path"
-      # Extract priority (first column after name, non-empty)
-      local priority=$(echo "$rest" | awk -F'|' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $1); if ($1 != "") print $1}')
+      # Trim whitespace from each field
+      priority=$(echo "$priority" | xargs)
+      status=$(echo "$status" | xargs)
       SUGGESTION_PRIORITY["$name"]="${priority:-?}"
-      # Extract status
-      local status=$(echo "$rest" | awk -F'|' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $3); if ($3 != "") print $3}')
       SUGGESTION_STATUS["$name"]="${status:-待讨论}"
     done < <(grep -E '^\s*\|\s*\[' "$SUGGESTIONS_FILE" 2>/dev/null || true)
   fi
 
   # 从 proposal-approved.md 读取已批准的提案名
+  # Oracle C1 safe: 通过 env-var 传文件路径，避免 bash 字符串插值
   local APPROVED_NAMES=""
   if [ -f "$APPROVED_FILE" ]; then
-    APPROVED_NAMES=$(python3 -c "
-import re, sys
-with open('$APPROVED_FILE') as f:
+    APPROVED_NAMES=$(PY_APPROVED_FILE="$APPROVED_FILE" python3 -c '
+import os, re, sys
+path = os.environ["PY_APPROVED_FILE"]
+with open(path) as f:
     content = f.read()
-# Find all [name](improvements/...) or [name](...) in the approved section (before ## 已实施)
-section = re.split(r'## 已实施', content)[0]
-for m in re.finditer(r'\|\s*\[([^\]]+)\]\([^)]+\)', section):
+section = re.split(r"## 已实施", content)[0]
+for m in re.finditer(r"\|\s*\[([^\]]+)\]\([^)]+\)", section):
     print(m.group(1))
-" 2>/dev/null || true)
+' 2>/dev/null || true)
   fi
 
   # ============ Step 2: 构建待审查提案列表 ============
@@ -336,14 +336,11 @@ for m in re.finditer(r'\|\s*\[([^\]]+)\]\([^)]+\)', section):
           fi
           ;;
         n|N|no)
-          # 拒绝：在 proposal-suggestions.md 中标记
-          if [ -f "$SUGGESTIONS_FILE" ]; then
-            local timestamp=$(date -u +%Y-%m-%d)
-            if grep -q "\[$name\]" "$SUGGESTIONS_FILE" 2>/dev/null; then
-              sed -i "s/\(\[$name\].[^|]*|[^|]*|[^|]*|\)[^|]*/\1 ❌ 已拒绝 ($timestamp)/" "$SUGGESTIONS_FILE"
-            fi
-            echo "❌ $name 已标记为拒绝"
+          # 拒绝：通过 sync_suggestions 写入状态（Oracle C1 safe, 替代脆弱 sed）
+          if type sync_suggestions &>/dev/null; then
+            sync_suggestions "$PROJECT_ROOT" "$name" "rejected"
           fi
+          echo "❌ $name 已标记为拒绝"
           ;;
         d|D|defer)
           if [ -f "$imp_file" ]; then
@@ -353,11 +350,8 @@ for m in re.finditer(r'\|\s*\[([^\]]+)\]\([^)]+\)', section):
               sed -i 's/^\*\*状态\*\*:.*$/**状态**: 已推迟/' "$imp_file"
             fi
           fi
-          if [ -f "$SUGGESTIONS_FILE" ]; then
-            local timestamp=$(date -u +%Y-%m-%d)
-            if grep -q "\[$name\]" "$SUGGESTIONS_FILE" 2>/dev/null; then
-              sed -i "s/\(\[$name\].[^|]*|[^|]*|[^|]*|\)[^|]*/\1 ⏳ 已延迟 ($timestamp)/" "$SUGGESTIONS_FILE"
-            fi
+          if type sync_suggestions &>/dev/null; then
+            sync_suggestions "$PROJECT_ROOT" "$name" "deferred"
           fi
           echo "⏳ $name 已标记为延迟"
           ;;
