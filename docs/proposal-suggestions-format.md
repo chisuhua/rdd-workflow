@@ -23,10 +23,10 @@ the full proposal content — that lives in `improvements/<name>.md`.
 
 > arch 阶段输入。guide-arch Phase 5.5 逐个审查，批准后添加到 `proposal-approved.md`。
 
-| 提案 | 优先级 | 来源 | 添加时间 |
-|------|--------|------|----------|
-| [fix-silent-exception](improvements/fix-silent-exception.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 |
-| [add-config-validation](improvements/add-config-validation.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 |
+| 提案 | 优先级 | 来源 | 添加时间 | 状态 |
+|------|--------|------|----------|------|
+| [fix-silent-exception](improvements/fix-silent-exception.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 | 待讨论 |
+| [add-config-validation](improvements/add-config-validation.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 | 待讨论 |
 ```
 
 ### Table columns
@@ -37,6 +37,7 @@ the full proposal content — that lives in `improvements/<name>.md`.
 | 优先级     | `P0` / `P1` / `P2`                 | Priority level, copied from the improvement file metadata. |
 | 来源       | Free-form string                    | Where the proposal came from (e.g. `Oracle 审查`, `复盘改进`). |
 | 添加时间   | `YYYY-MM-DD`                        | UTC date when the proposal was added to the pool.          |
+| 状态       | `待讨论` / `已批准` / `已拒绝` / `延迟` | Proposal lifecycle status, read from the improvement file's `**状态**` metadata line. Defaults to `待讨论` if absent. |
 
 ---
 
