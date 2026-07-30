@@ -376,6 +376,93 @@ c1 ←→ c2: shared file src/api.py
 
 
 # ---------------------------------------------------------------------------
+# execution_mode_recommendations (ADR-0023)
+# ---------------------------------------------------------------------------
+
+class TestExecutionModeRecommendations:
+    """Tests for analyze_execution_mode() and compute_execution_mode_recommendations()."""
+
+    def test_analyze_small_change_recommends_lightweight(self, tmp_path):
+        from skills.deps.scripts.deps_output import analyze_execution_mode
+        change_dir = tmp_path / "openspec" / "changes" / "test-small"
+        change_dir.mkdir(parents=True)
+        (change_dir / "design.md").write_text("- Modify: src/main.py\n")
+        (change_dir / "tasks.md").write_text("- [ ] task 1\n- [ ] task 2\n")
+        (change_dir / "proposal.md").write_text("simple fix\n")
+
+        result = analyze_execution_mode("test-small", str(tmp_path))
+        assert result["mode"] == "lightweight", f"expected lightweight, got {result['mode']}"
+        assert result["details"]["change_size"] == "small"
+
+    def test_analyze_large_change_recommends_worktree(self, tmp_path):
+        from skills.deps.scripts.deps_output import analyze_execution_mode
+        change_dir = tmp_path / "openspec" / "changes" / "test-large"
+        change_dir.mkdir(parents=True)
+        (change_dir / "design.md").write_text(
+            "- Modify: src/a.py\n- Modify: src/b.py\n- Modify: src/c.py\n"
+            "- Modify: src/d.py\n- Modify: src/e.py\n- Modify: src/f.py\n"
+        )
+        (change_dir / "tasks.md").write_text("\n".join(f"- [ ] task {i}" for i in range(7)) + "\n")
+        (change_dir / "proposal.md").write_text("large refactor\n")
+
+        result = analyze_execution_mode("test-large", str(tmp_path))
+        assert result["mode"] == "worktree", f"expected worktree, got {result['mode']}"
+        assert result["details"]["change_size"] == "large"
+
+    def test_analyze_risky_keyword_forces_worktree(self, tmp_path):
+        from skills.deps.scripts.deps_output import analyze_execution_mode
+        change_dir = tmp_path / "openspec" / "changes" / "test-risky"
+        change_dir.mkdir(parents=True)
+        (change_dir / "design.md").write_text("- Modify: src/main.py\n")
+        (change_dir / "tasks.md").write_text("- [ ] task 1\n")
+        (change_dir / "proposal.md").write_text("refactor the entire module\n")
+
+        result = analyze_execution_mode("test-risky", str(tmp_path))
+        assert result["mode"] == "worktree", f"expected worktree for risky, got {result['mode']}"
+        assert result["details"]["is_risky"] is True
+
+    def test_analyze_medium_change_defaults_lightweight(self, tmp_path):
+        from skills.deps.scripts.deps_output import analyze_execution_mode
+        change_dir = tmp_path / "openspec" / "changes" / "test-medium"
+        change_dir.mkdir(parents=True)
+        (change_dir / "design.md").write_text(
+            "- Modify: src/a.py\n- Modify: src/b.py\n- Modify: src/c.py\n"
+        )
+        (change_dir / "tasks.md").write_text(
+            "- [ ] task 1\n- [ ] task 2\n- [ ] task 3\n- [ ] task 4\n"
+        )
+        (change_dir / "proposal.md").write_text("feature addition\n")
+
+        result = analyze_execution_mode("test-medium", str(tmp_path))
+        assert result["mode"] == "lightweight"
+        assert result["details"]["change_size"] == "medium"
+
+    def test_compute_recommendations_with_conflicts_forces_worktree(self, tmp_path):
+        from skills.deps.scripts.deps_output import compute_execution_mode_recommendations
+        change_dir = tmp_path / "openspec" / "changes" / "c1"
+        change_dir.mkdir(parents=True)
+        (change_dir / "design.md").write_text("- Modify: src/main.py\n")
+        (change_dir / "tasks.md").write_text("- [ ] task 1\n")
+        (change_dir / "proposal.md").write_text("simple fix\n")
+
+        changes = [{"name": "c1", "conflicts": ["c2"]}]
+        recs = compute_execution_mode_recommendations(changes, str(tmp_path))
+        assert recs["c1"]["mode"] == "worktree", "conflicts should force worktree"
+
+    def test_build_analysis_includes_recommendations_with_project_root(self, tmp_path):
+        from skills.deps.scripts.deps_output import build_analysis
+        change_dir = tmp_path / "openspec" / "changes" / "c1"
+        change_dir.mkdir(parents=True)
+        (change_dir / "design.md").write_text("- Modify: src/main.py\n")
+        (change_dir / "tasks.md").write_text("- [ ] task 1\n")
+        (change_dir / "proposal.md").write_text("simple fix\n")
+
+        result = build_analysis([{"name": "c1"}], project_root=str(tmp_path))
+        assert "execution_mode_recommendations" in result
+        assert result["execution_mode_recommendations"]["c1"]["mode"] == "lightweight"
+
+
+# ---------------------------------------------------------------------------
 # render_markdown_report (P3-4e: extracted from deps.md Step 5 lines 483-642)
 # ---------------------------------------------------------------------------
 
