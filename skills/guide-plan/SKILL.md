@@ -67,9 +67,9 @@ else
 fi
 ```
 
-# OpenSpec 工作流 — Plan-Side Guide
+# rdd-workflow 工作流 — Plan-Side Guide
 
-本技能是 OpenSpec 工作流 v2.0 的 **plan 端状态机**：负责在生成 OpenSpec change artifacts 阶段的**变更生成**工作——消费已批准提案、创建 change、依赖分析、变更生成完成交接。plan 阶段是三阶段架构（arch → plan → ship，ADR-0003）的第二阶段，专为中人工介入、AI 辅助生成场景设计。
+本技能是 rdd-workflow 工作流 v2.0 的 **plan 端状态机**：负责在生成 rdd-workflow change artifacts 阶段的**变更生成**工作——消费已批准提案、创建 change、依赖分析、变更生成完成交接。plan 阶段是三阶段架构（arch → plan → ship，ADR-0003）的第二阶段，专为中人工介入、AI 辅助生成场景设计。
 
 **职责边界**：
 - **拥有**：`openspec/changes/<name>/{proposal,design,tasks}.md`（change artifacts）

@@ -41,16 +41,16 @@ def git_repo(tmp_path, monkeypatch):
     return repo
 
 
-def test_priority_1_arch_done_plan_undone_recommends_guide_plan(git_repo, capsys):
-    """arch-handoff present, plan-handoff absent → 'guide-plan'."""
+def test_priority_1_arch_done_plan_undone_recommends_guide_design(git_repo, capsys):
+    """arch-handoff present, design-handoff absent → 'guide-design'."""
     (git_repo / ".rddf" / "state" / ".arch-handoff.json").write_text(
         json.dumps({"adr_count": 3})
     )
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()
     assert rc == 0
-    assert "guide-plan" in captured.out
-    assert "进入变更生成" in captured.out
+    assert "guide-design" in captured.out
+    assert "进入设计阶段" in captured.out
 
 
 def test_priority_2_arch_done_zero_adrs_recommends_guide_arch_recover(git_repo, capsys):
@@ -149,8 +149,8 @@ def test_priority_8_pending_proposal_recommends_guide_plan(git_repo, capsys):
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()
     assert rc == 0
-    assert "guide-plan" in captured.out
-    assert "未审查提案" in captured.out or "propose" in captured.out.lower()
+    assert "guide-design" in captured.out
+    assert "未审查提案" in captured.out or "设计阶段" in captured.out.lower()
 
 
 def test_priority_9_no_pending_proposal_recommends_guide_ship(git_repo, capsys):

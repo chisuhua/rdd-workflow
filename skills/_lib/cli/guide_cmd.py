@@ -136,12 +136,17 @@ def _scan_state(project_root: str) -> Tuple[str, str]:
     """
     state_dir = Path(project_root) / ".rddf" / "state"
     arch_handoff = state_dir / ".arch-handoff.json"
+    design_handoff = state_dir / ".design-handoff.json"
     plan_handoff = state_dir / ".plan-handoff.json"
 
     arch = _read_json(arch_handoff)
+    design = _read_json(design_handoff)
     plan = _read_json(plan_handoff)
 
     # 1. arch-handoff present, plan-handoff absent
+    #    1a. ADR<1 → guide-arch (recover)
+    #    1b. arch present, design absent → guide-design
+    #    1c. arch present, design present → guide-plan
     if arch is not None and plan is None:
         adr_count = int(arch.get("adr_count", 0) or 0)
         if adr_count < 1:
@@ -149,7 +154,9 @@ def _scan_state(project_root: str) -> Tuple[str, str]:
                 "guide-arch",
                 "arch-done 未完成 (ADR 数量不足 → 回到 adr-create 阶段)",
             )
-        return ("guide-plan", "架构定义已完成 → 进入变更生成")
+        if design is None:
+            return ("guide-design", "arch-done 已完成 → 进入设计阶段")
+        return ("guide-plan", "design-done 已完成 → 进入变更生成")
 
     # 2. plan-handoff present
     if plan is not None:
@@ -227,12 +234,12 @@ def _scan_state(project_root: str) -> Tuple[str, str]:
             except OSError:
                 pass
         
-        # If there are unapproved improvements, recommend guide-plan
+        # If there are unapproved improvements, recommend guide-design
         if all_improvements - approved:
             pending = True
 
     if pending:
-        return ("guide-plan", "有未审查提案 → 进入变更生成")
+        return ("guide-design", "有未审查提案 → 进入设计阶段")
     return ("guide-ship", "无待创建 change → 准备 ship")
 
 
@@ -264,6 +271,7 @@ def cmd_guide(args: list[str]) -> int:
     print("━" * 40)
     print(f"  roadmap.md:           {'✅ 存在' if (Path(project_root) / 'roadmap.md').is_file() else '❌ 缺失'}")
     print(f"  .arch-handoff.json:   {'✅ 存在' if (state_dir / '.arch-handoff.json').is_file() else '· 缺失'}")
+    print(f"  .design-handoff.json: {'✅ 存在' if (state_dir / '.design-handoff.json').is_file() else '· 缺失'}")
     print(f"  .plan-handoff.json:   {'✅ 存在' if (state_dir / '.plan-handoff.json').is_file() else '· 缺失'}")
     print(f"  iteration.json:       {'✅ 存在' if (state_dir / 'iteration.json').is_file() else '· 缺失'}")
     worktree_list = _git_worktree_list(project_root)

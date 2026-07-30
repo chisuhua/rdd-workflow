@@ -1,8 +1,8 @@
 # 提案池（待架构讨论）
 
-> arch 阶段输入。guide-arch Phase 5.5 逐个审查，批准后添加到 `proposal-approved.md`。
+> design 阶段输入。guide-design 逐个审查，批准后添加到 `proposal-approved.md`。
 >
-> **生命周期**: 提案从此文件创建 → 审查批准 → 移至 `proposal-approved.md` 等待实施 → 实施后归档。
+> **生命周期**: 提案从此文件创建 → design 审查 → 批准/拒绝/延迟 → 移至 `proposal-approved.md` 等待实施 → 实施后归档。
 > **自动清理**: 提案被批准或实施后，`sync_suggestions()` 会自动从本表移除该行（不再停留）。
 > **手动审计**: 发现过期条目时，运行 `skill_use("guide")` 的审计功能自动清理。
 

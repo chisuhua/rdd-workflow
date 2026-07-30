@@ -23,11 +23,14 @@ CI 在 `.github/workflows/test.yml`, 按序执行: 安装 deps → **断言质�
 
 ## 架构
 
-**三阶段架构** (ADR-0003): `arch → plan → ship`
+**四阶段架构** (v2.1): `arch → design → plan → ship`
+
+> ⚠️ **v2.1+ 变更**: 新增 `guide-design` 阶段，提案管理（创建、审查、批准/拒绝/延迟）从 `guide-arch` Phase 5.5 迁移到 `guide-design`。存量项目请先运行 `skill_use("guide-design")`，或设置 `SKIP_ARCH_HANDOFF=yes` 临时跳过。
 
 | 阶段 | Skill | 职责 |
 |------|-------|------|
 | arch | `guide-arch` | 架构定义: ADR, 差距分析, roadmap |
+| design | `guide-design` | 设计管理: 提案创建, 审查, 批准/拒绝/延迟 |
 | plan | `guide-plan` | 变更生成: scan, propose, deps |
 | ship | `guide-ship` | 变更执行: worktree/轻量, execute, archive, cleanup |
 
@@ -41,10 +44,11 @@ CI 在 `.github/workflows/test.yml`, 按序执行: 安装 deps → **断言质�
 ## 关键目录
 
 ```
-skills/                       # Markdown skills (13 SKILL.md + INSTALL.md) + per-skill scripts/
+skills/                       # Markdown skills (14 SKILL.md + INSTALL.md) + per-skill scripts/
   INSTALL.md                  # 第一入口 (v1.1.0)
   guide/SKILL.md              # 推荐器
   guide-arch/SKILL.md         # arch 阶段 (v2.0.8 Phase 2 重组)
+  guide-design/SKILL.md       # design 阶段 (v2.1 新增)
   guide-plan/SKILL.md         # plan 阶段
   guide-ship/SKILL.md         # ship 阶段 (v2.0)
   propose/SKILL.md / execute/SKILL.md / status/SKILL.md / roadmap/SKILL.md / deps/SKILL.md / feature/SKILL.md / rddf-session/SKILL.md  # 子技能

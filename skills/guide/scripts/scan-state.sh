@@ -39,8 +39,10 @@
 # scan_state
 #   Mutates caller-namespace globals RECOMMEND and REASON.
 #   Priority order (highest first):
-#     1.  arch-handoff present, plan-handoff absent → "guide-plan"
-#     1.5 arch-handoff present, ADR < 1           → "guide-arch (recover)"
+#     1.  arch-handoff present, plan-handoff absent:
+#     1a.   ADR < 1           → "guide-arch (recover)"
+#     1b.   design-handoff    → "guide-plan"
+#     1c.   design-handoff 缺失 → "guide-design"
 #     2.  plan-handoff present                     → "guide-ship"
 #     2.5 plan-handoff present, active_changes = 0  → "guide-ship (cleanup)"
 #     3.  worktree with incomplete tasks           → "guide-ship"
@@ -49,7 +51,7 @@
 #     6.  committed change in HEAD (no worktree)   → "guide-ship"
 #     7.  no roadmap.md                            → "guide-arch"
 #     8.  no openspec/changes/                     → "guide-plan"
-#     9.  proposal-suggestions.md has pending entry  → "guide-plan"
+#     9.  proposal-suggestions.md has pending entry  → "guide-design"
 #    10. default                                    → "guide-ship"
 scan_state() {
   local PROJECT_ROOT="$1"
@@ -57,27 +59,35 @@ scan_state() {
     PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
   fi
 
-  local ARCH_HANDOFF PLAN_HANDOFF
+  local ARCH_HANDOFF DESIGN_HANDOFF PLAN_HANDOFF
   ARCH_HANDOFF="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
+  DESIGN_HANDOFF="$PROJECT_ROOT/.rddf/state/.design-handoff.json"
   PLAN_HANDOFF="$PROJECT_ROOT/.rddf/state/.plan-handoff.json"
 
   type -t check_dirty_key_files &>/dev/null || source "$PROJECT_ROOT/skills/_lib/state.sh"
   check_dirty_key_files "$PROJECT_ROOT"
 
-  # 1. arch-handoff present, plan-handoff absent → guide-plan
+  # 1. arch-handoff present, plan-handoff absent
   if [ -f "$ARCH_HANDOFF" ] && [ ! -f "$PLAN_HANDOFF" ]; then
     # 1.5: arch-done incomplete — arch-handoff exists but ADR missing
     local ADR_COUNT=0
     if command -v python3 >/dev/null 2>&1 && [ -f "$ARCH_HANDOFF" ]; then
-      ADR_COUNT=$(python3 -c "import json; d=json.load(open('$ARCH_HANDOFF')); v=d.get('adr_count',0); print(v if isinstance(v,int) else len(v))" 2>/dev/null || echo 0)
+      ADR_COUNT=$(PY_HANDOFF="$ARCH_HANDOFF" python3 -c "import json,os; d=json.load(open(os.environ['PY_HANDOFF'])); v=d.get('adr_count',0); print(v if isinstance(v,int) else len(v))" 2>/dev/null || echo 0)
     fi
     if [ "$ADR_COUNT" -lt 1 ]; then
       RECOMMEND="guide-arch"
       REASON="arch-done 未完成 (ADR 数量不足 → 回到 adr-create 阶段)"
       return 0
     fi
-    RECOMMEND="guide-plan"
-    REASON="架构定义已完成 → 进入变更生成"
+    # 1b: design-handoff present → guide-plan
+    if [ -f "$DESIGN_HANDOFF" ]; then
+      RECOMMEND="guide-plan"
+      REASON="design-done 已完成 → 进入变更生成"
+      return 0
+    fi
+    # 1c: design-handoff missing → guide-design
+    RECOMMEND="guide-design"
+    REASON="arch-done 已完成 → 进入设计阶段"
     return 0
   fi
 
@@ -232,8 +242,8 @@ except Exception:
 ' 2>/dev/null)
   
   if [ "$HAS_PENDING" = "yes" ]; then
-    RECOMMEND="guide-arch"
-    REASON="有待讨论提案 -> 进入 arch 审查"
+    RECOMMEND="guide-design"
+    REASON="有待讨论提案 -> 进入设计阶段审查"
   else
     # filter-guide-ship: skip guide-ship when no active changes in filesystem
     local FS_ACTIVE_COUNT_DEFAULT

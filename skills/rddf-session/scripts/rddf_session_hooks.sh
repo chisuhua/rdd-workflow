@@ -74,7 +74,7 @@ coord = RddfSessionCoordinator(sessions_file=sessions_file)
 coord.check_heartbeat_timeouts()
 
 parent_id = None
-parent_kind_map = {"stage_plan": "stage_arch", "stage_ship": "stage_plan"}
+parent_kind_map = {"stage_design": "stage_arch", "stage_plan": "stage_design", "stage_ship": "stage_plan"}
 parent_kind = parent_kind_map.get(kind)
 if parent_kind:
     parents = coord.list_sessions(kind=parent_kind)

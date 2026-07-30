@@ -22,11 +22,12 @@ HEARTBEAT_REFRESH_THRESHOLD_SECONDS = 5 * 60  # 5 minutes
 LOCK_TIMEOUT_SECONDS = 5.0
 
 # v2.1: Accept both naming conventions for better UX
-# - stage_arch / stage_plan / stage_ship (internal canonical)
-# - guide-arch / guide-plan / guide-ship (user-friendly, matches skill names)
-_VALID_KINDS = ("stage_arch", "stage_plan", "stage_ship", "guide-arch", "guide-plan", "guide-ship")
+# - stage_arch / stage_design / stage_plan / stage_ship (internal canonical)
+# - guide-arch / guide-design / guide-plan / guide-ship (user-friendly, matches skill names)
+_VALID_KINDS = ("stage_arch", "stage_design", "stage_plan", "stage_ship", "guide-arch", "guide-design", "guide-plan", "guide-ship")
 _KIND_ALIAS = {
     "guide-arch": "stage_arch",
+    "guide-design": "stage_design",
     "guide-plan": "stage_plan",
     "guide-ship": "stage_ship",
 }

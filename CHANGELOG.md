@@ -47,6 +47,49 @@ No data migration: `.rddf/state/` content unchanged. Existing rddf-sessions, ite
 - `guide-plan.md` Phase 0, `propose.md` Phase 1a, `roadmap.md` (header + Template 4), `scan-state.sh` line 154 — all handoff-aware
 - `gate.py` `_check_adr_exists` / `_check_roadmap_defined`, `detectors.py` `detect_adr_status`, `actions.py` `action_create_adr` — handoff-aware
 
+### Added (guide-design Phase: 四阶段架构 arch → design → plan → ship)
+
+- **New skill**: `skills/guide-design/SKILL.md` — design phase state machine (Phase 1-5: setup, proposal intake, review, gate, exit)
+- **New handoff**: `.rddf/state/.design-handoff.json` (v1 schema, 4 fields: `design_complete_at`, `proposals_reviewed`, `all_proposals_have_decision`, `version`)
+- **New schema**: `skills/_lib/schemas/design_handoff_schema.json`
+- **New rddf-session kind**: `stage_design` (parent=stage_arch, aliased to `guide-design`)
+- **New scripts**:
+  - `skills/guide-design/scripts/design_proposal_review.sh` (搬移自 arch_proposal_review.sh + 重命名)
+  - `skills/guide-design/scripts/approve_proposal.sh` (搬移自 arch/)
+  - `skills/guide-design/scripts/write_design_handoff.{sh,py}` (env-var 模式, Oracle C1 合规)
+- **Tests**: 9 Python unit + 12 bats integration (新增 guide-design 阶段 + shim 行为验证)
+
+### Changed (4-state 重构)
+
+- **guide-arch**: Phase 5.5 删除, 顶部插入 deprecation notice; Phase 6 输出不再含提案计数, 改为 `💡 Next: guide-design`
+- **guide-plan**: `plan_intake.sh` 新增 `check_design_handoff()` 硬门控 (SKIP_ARCH_HANDOFF=yes 同时跳过两门控; direct-create fallback 豁免)
+- **双扫描器**: `guide_cmd.py` + `scan-state.sh` 同步升级为 4-state 优先级阶梯, 两入口推荐一致
+- **sessions schema**: `kind` 枚举追加 `stage_design`, `goal.intent` 追加 `guide-design` (additive, version 保持 1)
+- **rddf-session**: `_VALID_KINDS` + `_KIND_ALIAS` 增加 `stage_design`/`guide-design`; `parent_kind_map` 增加 `stage_design: stage_arch`, `stage_plan` parent 改为 `stage_design`
+- **guide SKILL.md**: 菜单增加 `guide-design` 条目, 顺序在 arch 之后 plan 之前
+- **add-improve SKILL.md**: 批准引用从 `guide-arch Phase 5.5` 改为 `guide-design`
+
+### Deprecated
+- `guide-arch` Phase 5.5 脚本路径替换为 deprecated shim (包装函数转发到 `guide-design/scripts/`), v2.2.0 移除
+
+### Docs
+- `README.md` / `AGENTS.md` 顶部 banner 新增四阶段说明; `README.md` 架构表改为四阶段; `proposal-suggestions.md` 头注释更新
+- `INSTALL.md` 子技能计数更新为 14
+
+- **JSON Schema**: `skills/_lib/schemas/arch_handoff_schema.json` (v1)
+- **Discovery library**: `skills/_lib/discover-arch-artifacts.sh` (4 discover functions + 1 helper)
+- **Tests**: 6 schema tests + 10 discover tests + 10 bats integration tests = 26 new tests
+- **Handoff fields** (`.arch-handoff.json` v1): `adr_dir`, `roadmap_path`, `architecture_dir`, `adr_pattern`, `discovered`, `version`
+- **Env var overrides**: `SPEC_WORKFLOW_ADR_DIR`, `SPEC_WORKFLOW_ROADMAP_PATH`, `SPEC_WORKFLOW_ARCHITECTURE_DIR`, `SPEC_WORKFLOW_ADR_PATTERN`
+
+### Changed
+
+- 10 files updated to read handoff paths with fallback defaults (no breaking changes for v2.0 users)
+- 14+ hardcoded `docs/adr/` / `roadmap.md` references replaced with handoff-aware readers
+- `guide-arch.md` Phase 1 (setup) + Phase 2/3/4 (write paths) + Phase 5 (handoff writer) all consume discovered paths
+- `guide-plan.md` Phase 0, `propose.md` Phase 1a, `roadmap.md` (header + Template 4), `scan-state.sh` line 154 — all handoff-aware
+- `gate.py` `_check_adr_exists` / `_check_roadmap_defined`, `detectors.py` `detect_adr_status`, `actions.py` `action_create_adr` — handoff-aware
+
 ### Migration
 
 Zero migration needed. Existing v2.0 projects with `docs/adr/` and `roadmap.md` work unchanged via fallback defaults. Custom layouts (e.g. `doc/adr/`, `planning/roadmap.md`, `DEC-*.md`) now discoverable via env vars or handoff.

@@ -120,8 +120,9 @@ ALL_OPTIONS_JSON 结构:
 
   === Workflow Stages ===
   {N}. guide-arch    — setup → ADR → roadmap → arch-done
-  {N+1}. guide-plan  — scan → propose → deps → plan-done
-  {N+2}. guide-ship  — plan → execute → archive → cleanup
+  {N+1}. guide-design — 创建/审查改进提案 → design-done
+  {N+2}. guide-plan  — scan → propose → deps → plan-done
+  {N+3}. guide-ship  — plan → execute → archive → cleanup
 
   === Session Management / Utilities ===
   ...（按 all_options 动态生成）
@@ -152,7 +153,7 @@ ALL_OPTIONS_JSON 结构:
    | 创建改进提案 | "创建改进提案"、"improvement"、"add-improve"、"添加改进"、"提出改进" | `skill_use("add-improve")` | **禁止手动创建 improvements/ 文件** — 必须通过 add-improve 交互式流程 |
    | 创建新 change | "创建提案"、"新建 change"、"propose"、"提一个 change"、"新增提案" | `skill_use("propose")` | **禁止手动创建文件**（mkdir + write proposal.md/tasks.md 等） |
    | 执行 change | "执行"、"开始做"、"ship"、"实施" + change 名称 | `skill_use("guide-ship")` | **禁止直接操作 worktree 或执行 plan** |
-   | 架构设计 | "架构"、"ADR"、"arch"、"架构设计" | `skill_use("guide-arch")` | 禁止手动创建 ADR 文件 |
+   | 设计审查 | "设计"、"design"、"提案"、"改进提案"、"改进" | `skill_use("guide-design")` | 禁止手动修改 proposal 文件 |
    | 变更规划 | "规划"、"plan"、"生成计划"、"扫描 change" | `skill_use("guide-plan")` | 禁止手动创建 plan 文件 |
    | 查看状态 | "查看状态"、"status"、"进度" | `skill_use("status")` | — |
    | 查看依赖 | "deps"、"依赖"、"依赖关系" | `skill_use("deps")` | — |
@@ -163,18 +164,18 @@ ALL_OPTIONS_JSON 结构:
 
 2. **每次回答完后，主动重新展示简版菜单**（不需要等用户要求）：
    ```
-   ⭐ guide-plan / guide-arch / guide-ship / resume rds_xxx / feature / status
+   ⭐ guide-plan / guide-design / guide-arch / guide-ship / resume rds_xxx / feature / status
    继续自由讨论 (输入 0 或直接提问)
    ```
    简版菜单只列选项名称（`label`），不列详细描述。保持一行紧凑格式，不给用户增加阅读负担。
 
 3. 当用户输入菜单编号或对应选项名称时，视为选中，执行对应 `action`：
-   - **阶段命令**（`group` 为 `recommended` 或 `stages`：`guide-arch`、`guide-plan`、`guide-ship`、`rddf-session resume rds_xxx`）→ 执行后 guide 模式结束。
+   - **阶段命令**（`group` 为 `recommended` 或 `stages`：`guide-arch`、`guide-design`、`guide-plan`、`guide-ship`、`rddf-session resume rds_xxx`）→ 执行后 guide 模式结束。
    - **工具命令**（`group` 为 `session` 或 `utilities`：`rddf-session list`、`rddf-session current`、`feature`、`status` 等）→ 执行后**重新展示完整菜单**（AI 回到步骤 1：运行 bash 扫描 + Python 合成器 + 重新展示菜单），不结束 guide 模式。
 
 ### 阶段命令门控（工作树检查）
 
-当用户选择阶段命令（`guide-arch` / `guide-plan` / `guide-ship`）时，AI 必须在执行 `skill_use()` 前检查 `WT_ISSUES_JSON`：
+当用户选择阶段命令（`guide-arch` / `guide-design` / `guide-plan` / `guide-ship`）时，AI 必须在执行 `skill_use()` 前检查 `WT_ISSUES_JSON`：
 
 - 如果 `WT_ISSUES_JSON` 为空或仅含 `info` 级别 issue -> 直接执行，无提示
 - 如果 `WT_ISSUES_JSON` 非空且包含非 `info` 级别 issue -> 展示提示：
@@ -200,6 +201,7 @@ ALL_OPTIONS_JSON 结构:
 
 **阶段命令**（执行后 guide 模式结束，进入对应阶段状态机）：
 - `"guide-arch"` → `skill_use("guide-arch")` — 该 skill 自动处理 rddf-session entry hook
+- `"guide-design"` → `skill_use("guide-design")` — 同上
 - `"guide-plan"` → `skill_use("guide-plan")` — 同上
 - `"guide-ship"` → `skill_use("guide-ship")` — 同上
 - `"rddf-session resume rds_xxx"` → 先调 `skill_use("rddf-session", "resume", "rds_xxx")` 恢复 session，然后根据 session kind 调对应的 guide skill
@@ -212,7 +214,7 @@ ALL_OPTIONS_JSON 结构:
 
 **循环实现**：对于工具命令，AI 在 action 执行完毕后，自动回到 "bash 扫描 + Python 合成器 + 展示菜单" 步骤，不结束 guide 模式。用户可通过选择阶段命令或直接输入阶段命令名称退出循环。
 
-Session 管理自动完成：guide skills 的 entry/close hooks 已在 `guide-arch.md` / `guide-plan.md` / `guide-ship.md` 中实现，不需要额外操作。
+Session 管理自动完成：guide skills 的 entry/close hooks 已在 `guide-arch.md` / `guide-design.md` / `guide-plan.md` / `guide-ship.md` 中实现，不需要额外操作。
 
 ### 完整流程示例
 
@@ -220,9 +222,10 @@ Session 管理自动完成：guide skills 的 entry/close hooks 已在 `guide-ar
 用户: skill_use("guide")
   ↓
 AI 执行扫描 → 展示菜单:
-  ⭐ 1. guide-plan — 进入变更生成阶段
-  2. guide-arch  ...
-  3. guide-ship  ...
+  ⭐ 1. guide-design — 进入设计阶段（审查改进提案）
+  2. guide-plan — 进入变更生成阶段
+  3. guide-arch  ...
+  4. guide-ship  ...
   4. rddf-session list — 查看所有 session
   0. 💬 自由讨论
 
@@ -235,7 +238,7 @@ AI: "有 3 个 changes: add-auth (proposed), fix-ns-pollution (in worktree), add
 用户: "fix-ns-pollution 卡在哪？"   ← 继续讨论
   ↓
 AI: "worktree 内 tasks.md 显示 2/5 完成,被 deps 分析标记为阻塞中..."
-    ⭐ guide-plan / guide-arch / guide-ship / ...   ← 再次展示
+    ⭐ guide-design / guide-plan / guide-arch / guide-ship / ...   ← 再次展示
 
 用户: "guide-plan"  ← 选中阶段命令
   ↓

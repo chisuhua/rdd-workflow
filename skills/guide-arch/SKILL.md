@@ -10,9 +10,13 @@ metadata:
   user-invocable: true
 ---
 
-# OpenSpec 工作流 — Arch-Side Guide
+> ⚠️ **DEPRECATION NOTICE (v2.1)**: guide-arch Phase 5.5 (提案审批) 已迁移到 guide-design 阶段。
+>   请使用 `skill_use("guide-design")` 进行提案创建、审查、批准/拒绝/延迟操作。
+>   老路径 `skills/guide-arch/scripts/arch_proposal_review.sh` 以 shim 形式保留至 v2.2.0。
 
-本技能是 OpenSpec 工作流 v2.0 的 **arch 端状态机**：负责在生成 OpenSpec change artifacts 之前的**架构定义**工作——环境检测、ADR 文档管理、架构差距分析、路线图定义。arch 阶段是三阶段架构（arch → plan → ship，ADR-0003）的第一阶段，专为高人工介入、低频执行的架构治理工作而设计。
+# rdd-workflow 工作流 — Arch-Side Guide
+
+本技能是 rdd-workflow 工作流 v2.1 的 **arch 端状态机**：负责在生成 OpenSpec change artifacts 之前的**架构定义**工作——环境检测、ADR 文档管理、架构差距分析、路线图定义。arch 阶段是三阶段架构（arch → plan → ship，ADR-0003）的第一阶段，专为高人工介入、低频执行的架构治理工作而设计。
 
 **职责边界**：
 - **拥有**：`docs/adr/ADR-*.md`（架构决策记录）、`roadmap.md` + `roadmap-meta.yaml`（路线图）、`docs/architecture/*-gap-analysis.md`（架构差距分析）
@@ -30,23 +34,24 @@ skill_use("guide-arch")   # 无参数版本
 
 ## Architecture: v2.0 三阶段拆分
 
-本技能是 OpenSpec 工作流 v2.0 重构后的 **arch 端**实现。在 v2.0 重构前，所有 spec 端工作由单一 `guide-spec` 驱动；v2.0 拆分为三个职责清晰的子技能，按**人工介入程度**和**职责类型**切分：
+本技能是 OpenSpec 工作流 v2.1 重构后的 **arch 端**实现。在 v2.1 重构前，所有 spec 端工作由单一 `guide-spec` 驱动；v2.1 拆分为四个职责清晰的子技能，按**人工介入程度**和**职责类型**切分：
 
 | 子技能 | 阶段 | 职责 | 人工介入 |
 |--------|------|------|---------|
-| `guide-arch`（本技能） | arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-validation → proposal-review → arch-done | **高** |
+| `guide-arch`（本技能） | arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-validation → arch-done | **高** |
+| `guide-design`（后续） | design | 设计管理：提案创建 → 审查 → 批准/拒绝/延迟 → design-done | **中** |
 | `guide-plan`（后续） | plan | 变更生成：审批提案消费 → propose → deps → plan-done | **中** |
 | `guide-ship`（后续） | ship | 变更执行：plan → execute → archive → cleanup → ship-done | **低** |
-| `guide`（无状态推荐器） | — | 扫描三阶段状态，推荐下一步 | — |
+| `guide`（无状态推荐器） | — | 扫描四阶段状态，推荐下一步 | — |
 
 **核心边界（arch-done 即切换点）**：
 
 ```
-[guide-arch]  --(arch-done: ADR ≥ 1 + roadmap.md)-->  [guide-plan]
-   arch 端                                              plan 端
-   owns: docs/adr/ADR-*.md, roadmap.md,                owns: openspec/changes/<name>/
-         docs/architecture/*-gap-analysis.md                  {proposal,design,tasks}.md
-   exits: .rddf/state/.arch-handoff.json                     exits: .rddf/state/.plan-handoff.json
+[guide-arch]  --(arch-done: ADR ≥ 1 + roadmap.md)-->  [guide-design]  --(design-done: 所有提案有决策)-->  [guide-plan]
+   arch 端                                              design 端                                           plan 端
+   owns: docs/adr/ADR-*.md, roadmap.md,               owns: improvements/, proposal-                     owns: openspec/changes/<name>/
+         docs/architecture/*-gap-analysis.md                 suggestions.md, proposal-approved.md                {proposal,design,tasks}.md
+   exits: .rddf/state/.arch-handoff.json                     exits: .rddf/state/.design-handoff.json             exits: .rddf/state/.plan-handoff.json
 ```
 
 **为什么这样切**（节选自 ADR-0003）：
@@ -114,7 +119,6 @@ run_arch_env_check || exit 1
 请选择:
 1. ✅ 继续 → 进入 adr-create 阶段
 2. 🔄 重新检查
-3. 📋 提案审批 → 审查/审批 improvements 提案（无需门控检查）
 0. 💾 保存并退出
 i. 其他输入
 ```
@@ -124,26 +128,12 @@ i. 其他输入
 ```bash
 case "$choice" in
   1) echo "-> 进入 adr-create 阶段..." ; echo "(跳转到 Phase 2 入口)" ;;
-  3)
-    echo "-> 进入提案审批阶段..."
-    export PHASE_5_5_ENTRY=phase1  # 标记从 Phase 1 进入，跳过 gate 直通提案管理
-    PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-    # 调用 arch_proposal_review.sh 处理提案审查
-    source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_proposal_review.sh"
-    arch_proposal_review "$PROJECT_ROOT" "$PHASE_5_5_ENTRY"
-    # 审批完成后根据 PHASE_5_5_ENTRY 决定去向：
-    #   phase1 → 回到 Phase 1 菜单（继续展示菜单）
-    #   gate   → 进入 Phase 6 arch-done
-    ;;
   r|refresh) continue ;;
   *) source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_roadmap_menu.sh"; handle_arch_menu "$choice"; [ $? -eq 2 ] && continue ;;
 esac
 ```
 
-当用户选择 `3` 时，直接执行 Phase 5.5 的提案审批逻辑，**无需经过 Phase 5 门控**。审批完成或跳过后的行为由 `PHASE_5_5_ENTRY` 控制：
-
-- `phase1` → 回到 Phase 1 继续其他操作
-- `gate` → 进入 Phase 6 arch-done
+> 📌 提案审批（原 Phase 5.5 选项 3）已迁移到 `skill_use("guide-design")`。
 
 **步骤 2：进入对应阶段**
 
@@ -512,7 +502,7 @@ skill_use("roadmap", "advance")
 
 **与 Phase 5 的衔接**：
 
-用户选择「完成路线图定义」后，进入 Phase 5 (arch validation) 执行最终验证 + 提案审批 + 写 handoff。roadmap.md 是 arch-done 门控检查的两个关键文件之一（另一个是 ADR ≥ 1）。
+用户选择「完成路线图定义」后，进入 Phase 5 (arch validation) 执行最终验证 + 写 handoff。roadmap.md 是 arch-done 门控检查的两个关键文件之一（另一个是 ADR ≥ 1）。
 
 ---
 
@@ -522,7 +512,7 @@ skill_use("roadmap", "advance")
 
 **行为**：
 
-执行 arch-done 双重门控检查，验证架构定义是否完整。门控通过后进入 Phase 5.5 提案审批，再进入 Phase 6 arch-done 退出。
+执行 arch-done 双重门控检查，验证架构定义是否完整。门控通过后进入 Phase 6 arch-done 退出。
 
 **门控检查**：
 
@@ -539,15 +529,7 @@ check_arch_done_gate || exit 1
 
 **门控通过后**：
 
-门控检查通过后，不直接退出，而是设置环境变量后进入 Phase 5.5（提案审批）：
-
-```bash
-export PHASE_5_5_ENTRY=gate  # 标记从门控进入，审批完成后走向 arch-done
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_proposal_review.sh"
-arch_proposal_review "$PROJECT_ROOT" "$PHASE_5_5_ENTRY"
-# 审批完成或跳过后，进入 Phase 6 arch-done
-```
+门控检查通过后，直接进入 Phase 6 arch-done 写入 handoff 状态并退出。
 
 门控失败时提供回退选项。
 
@@ -580,94 +562,9 @@ esac
 
 ---
 
-## Phase 5.5: 提案管理 — 创建 + 审批
-
-**入口条件**：
-
-- **Path A**：从 Phase 1 菜单选项 `3` 直接进入（**不受门控限制**），审批完成后回到 Phase 1 菜单
-- **Path B**：Phase 5 门控通过后自动进入，审批完成后进入 Phase 6 arch-done
-
-两种路径的行为一致，唯一差异是"跳过/完成"后的去向：**Phase 1 入口回到 Phase 1 菜单；Phase 5 入口进入 arch-done**。通过 `$PHASE_5_5_ENTRY` 环境变量区分（`phase1` 或 `gate`）。
-
-**行为**：
-
-1. **创建新改进提案** — 通过 `add-improve` 交互式创建 `improvements/<name>.md` 并注册到 `proposal-suggestions.md`
-2. **审查待讨论提案** — 扫描 `proposal-suggestions.md` 索引表，逐一展示 `improvements/` 目录下的提案，支持批准/拒绝/延迟
-
-**菜单**：
-
-```
-提案审批阶段
-
-📂 improvements/ 目录中: X 个待审查提案
-
-选择操作:
-  1. ➕  创建新提案（add-improve 交互式创建）
-  2. 📋 查看所有待审查提案
-  3. ✅ 批量批准所有提案
-  s   跳过审批，直接 arch-done
-  q   返回上级菜单
-```
-
-**选项 1（创建新提案）**：
-
-```bash
-echo "-> 启动 add-improve 创建新改进提案..."
-skill_use("add-improve")
-# add-improve 会调用 rdd-workflow-brainstorm 完成设计 → 创建 improvements/<name>.md → 注册到 proposal-suggestions.md
-echo "-> 创建完成，返回提案审批界面"
-continue  # 重新展示提案列表
-```
-
-**执行步骤**：
-
-Phase 5.5 的逻辑已提取到 `scripts/arch_proposal_review.sh`，支持：
-
-- **双源扫描**：同时从 `improvements/` 和 `proposal-suggestions.md` 收集待审提案
-- **交叉引用**：自动排除已批准、已归档的提案
-- **已归档自动批准**：在 `openspec/changes/archive/` 中找到匹配的提案自动标记为已实施
-- **三种审批决策**：批准（y）、拒绝（n）、延迟（d）
-- **批处理**：支持全部批准（a）、跳過（s）
-
-调用方式：
-
-```bash
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_proposal_review.sh"
-arch_proposal_review "$PROJECT_ROOT" "$PHASE_5_5_ENTRY"
-```
-
-**单个提案审批交互**：
-
-```
-提案: add-propose-content-review (P1)
-来源: Oracle 架构分析 2026-07-21
-分类: quality - 阶段: v2.1
-
-## 架构依据
-...
-
-选择:
-  y   - 批准（添加到 proposal-approved.md）
-  n   - 拒绝（保留在 suggestions.md，标记 rejected）
-  d   - 延迟（保持待讨论状态）
-  s   - 跳过
-```
-
-批准时调用:
-```bash
-bash "$SCRIPT_DIR/scripts/approve_proposal.sh" "<name>" "<priority>" "$PROJECT_ROOT"
-```
-
-**与 Phase 6 的衔接**：
-
-从 Phase 1（`PHASE_5_5_ENTRY=phase1`）进入时，审批完成或跳过后**回到 Phase 1 菜单**，不进入 arch-done。
-从 Phase 5 门控（`PHASE_5_5_ENTRY=gate`）进入时，审批完成或跳过后进入 Phase 6 arch-done 写入 handoff 状态并退出。
-
----
-
 ## Phase 6: arch-done (Exit)
 
-**入口条件**：Phase 5 门控检查通过 + Phase 5.5 提案审批完成（或跳过），且 `PHASE_5_5_ENTRY=gate`。从 Phase 1 直接进入提案审批的路径不会导致 arch-done，而是回到 Phase 1 菜单。
+**入口条件**：Phase 5 门控检查通过。arch-done 不再依赖提案审批结果。
 
 **写入 handoff 状态**：
 
@@ -694,10 +591,9 @@ rddf_session_hook_close stage_arch arch-done guide-arch
   - ADR 文档: N 个 (最新: ADR-XXXX)
   - Roadmap: 已定义 (当前阶段: ...)
   - 架构差距分析: M 个 (待 roadmap 阶段补齐)
-  - 已批准提案: K 个 (待 plan 阶段处理)
 
-💡 Next: skill_use("guide-plan")
-   This will consume approved proposals and start change generation (propose -> deps -> plan-done).
+💡 Next: skill_use("guide-design")
+   This will review pending proposals and prepare for change generation (propose -> deps -> plan-done).
 ```
 
 Do NOT auto-invoke `guide-plan` - the user must explicitly transition to the plan side.
@@ -725,10 +621,10 @@ arch 内部循环:
   adr-create → architecture → roadmap-define → adr-create (循环细化)
 ```
 
-arch → plan 的**前向切换**：
+arch → design 的**前向切换**：
 
 ```
-arch → plan: arch-done 验证通过 (ADR ≥ 1 + roadmap.md 存在)
+arch → design: arch-done 验证通过 (ADR ≥ 1 + roadmap.md 存在)
 ```
 
 plan → arch 的**反向切换**（v2.0 后续支持）：
@@ -758,8 +654,8 @@ assert meta['metadata']['user-invocable'] is True
 print('✅ guide-arch.md frontmatter valid')
 "
 
-# 2. 验证子阶段齐全 (Phase 1-6 + Phase 5.5)
-grep -E "^## Phase [0-9.]+:" skills/guide-arch.md
+# 2. 验证子阶段齐全 (Phase 1-6)
+grep -E "^## Phase [0-9]+:" skills/guide-arch.md
 
 # 3. 验证 handoff 文件路径正确
 grep "\.arch-handoff.json" skills/guide-arch.md
@@ -777,7 +673,7 @@ ls roadmap.md
 
 ## 参考资料
 
-- **ADR-0003** — 三阶段架构重构（arch → plan → ship），本技能的架构依据
+- **ADR-0003** — 四阶段架构拆分（arch → design → plan → ship），本技能的架构依据
 - **ADR-0001** — 双阶段状态机分离（v1.x 架构，guide-spec 的来源）
 - **ADR-0007** — 门控机制（arch-done 双重门控的设计依据）
 - **ADR-0010** — 多会话管理（arch 阶段的人工介入设计）

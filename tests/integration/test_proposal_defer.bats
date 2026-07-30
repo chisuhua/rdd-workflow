@@ -33,9 +33,9 @@ teardown() {
 
 @test "proposal_defer: arch_proposal_review skips deferred by default" {
     # Structural: arch_proposal_review.sh must contain the deferred-skip logic
-    grep -q 'DEFERRED_COUNT' "$REPO_ROOT/skills/guide-arch/scripts/arch_proposal_review.sh"
-    grep -q 'SHOW_ALL' "$REPO_ROOT/skills/guide-arch/scripts/arch_proposal_review.sh"
-    grep -q '已推迟' "$REPO_ROOT/skills/guide-arch/scripts/arch_proposal_review.sh"
+    grep -q 'DEFERRED_COUNT' "$REPO_ROOT/skills/guide-design/scripts/design_proposal_review.sh"
+    grep -q 'SHOW_ALL' "$REPO_ROOT/skills/guide-design/scripts/design_proposal_review.sh"
+    grep -q '已推迟' "$REPO_ROOT/skills/guide-design/scripts/design_proposal_review.sh"
     # Behavioral: the skip logic must correctly skip deferred, show pending
     run bash -c "
         IMPROVEMENTS_DIR=$TEST_DIR/improvements
@@ -60,16 +60,16 @@ teardown() {
 }
 
 @test "proposal_defer: arch_proposal_review has v show-all option" {
-    grep -q 'view-all' "$REPO_ROOT/skills/guide-arch/scripts/arch_proposal_review.sh"
-    grep -q '⏸️' "$REPO_ROOT/skills/guide-arch/scripts/arch_proposal_review.sh"
+    grep -q 'view-all' "$REPO_ROOT/skills/guide-design/scripts/design_proposal_review.sh"
+    grep -q '⏸️' "$REPO_ROOT/skills/guide-design/scripts/design_proposal_review.sh"
 }
 
 @test "proposal_defer: d decision persists status to improvement file" {
     # Structural: d handler must write **状态**: 已推迟 to imp_file
     # Check that the sed insert after 类型 line exists, targeting imp_file
-    grep -qF '/a\**状态**: 已推迟' "$REPO_ROOT/skills/guide-arch/scripts/arch_proposal_review.sh"
-    grep -qF '"$imp_file"' "$REPO_ROOT/skills/guide-arch/scripts/arch_proposal_review.sh"
-    grep -q '已推迟' "$REPO_ROOT/skills/guide-arch/scripts/arch_proposal_review.sh"
+    grep -qF '/a\**状态**: 已推迟' "$REPO_ROOT/skills/guide-design/scripts/design_proposal_review.sh"
+    grep -qF '"$imp_file"' "$REPO_ROOT/skills/guide-design/scripts/design_proposal_review.sh"
+    grep -q '已推迟' "$REPO_ROOT/skills/guide-design/scripts/design_proposal_review.sh"
 
     # Behavioral: simulate the d-branch sed command on a real improvement file
     mkdir -p "$TEST_DIR/improvements"

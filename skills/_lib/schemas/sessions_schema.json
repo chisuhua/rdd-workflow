@@ -43,8 +43,8 @@
         },
         "kind": {
           "type": "string",
-          "enum": ["stage_arch", "stage_plan", "stage_ship"],
-          "description": "Stage driver: arch / plan / ship (per ADR-0003)."
+          "enum": ["stage_arch", "stage_design", "stage_plan", "stage_ship"],
+          "description": "Stage driver: arch / design / plan / ship (per v2.1 four-phase)."
         },
         "owner_opencode_session_id": {
           "type": ["string", "null"],
@@ -61,7 +61,7 @@
           "properties": {
             "intent": {
               "type": "string",
-              "enum": ["guide-arch", "guide-plan", "guide-ship"]
+              "enum": ["guide-arch", "guide-design", "guide-plan", "guide-ship"]
             },
             "subject": { "type": "string" },
             "expected_outcome": { "type": "string" }

@@ -30,6 +30,48 @@ check_direct_create_fallback() {
   return 1
 }
 
+check_design_handoff() {
+  local project_root="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  local handoff_path="$project_root/.rddf/state/.design-handoff.json"
+
+  if [ "${SKIP_DESIGN_HANDOFF:-}" = "yes" ]; then
+    echo "⚠️  SKIP_DESIGN_HANDOFF=yes: 跳过 design-done 检查（已知风险）"
+    return 0
+  fi
+
+  if [ ! -f "$handoff_path" ]; then
+    # Fallback: projects with archived changes can bypass design gate
+    if check_direct_create_fallback "$project_root" 2>/dev/null; then
+      return 0
+    fi
+    echo "❌ design-done 未完成 (.rddf/state/.design-handoff.json 缺失)"
+    echo ""
+    echo "   design 阶段必须先完成才能进入 plan 阶段。"
+    echo "   -> 请先运行: skill_use(\"guide-design\")"
+    echo ""
+    echo "   如确定跳过 design 阶段（已知风险），设置环境变量:"
+    echo "     export SKIP_DESIGN_HANDOFF=yes"
+    return 1
+  fi
+
+  # Validate schema v1
+  PYTHON_HANDOFF_PATH="$handoff_path" python3 -c "
+import json, os, sys
+try:
+    with open(os.environ['PYTHON_HANDOFF_PATH']) as f:
+        d = json.load(f)
+    assert d.get('version') == 1, 'version must be 1'
+    assert d.get('all_proposals_have_decision') == True, 'all_proposals_have_decision must be true'
+    assert isinstance(d.get('proposals_reviewed'), int) and d['proposals_reviewed'] >= 0
+except (AssertionError, json.JSONDecodeError, KeyError) as e:
+    print(f'❌ design-handoff 验证失败: {e}', file=sys.stderr)
+    sys.exit(1)
+" 2>&1 || return 1
+
+  echo "✅ design-done handoff 已验证 (v1 schema)"
+  return 0
+}
+
 run_plan_intake() {
   local PROJECT_ROOT
   PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
@@ -83,7 +125,7 @@ run_plan_intake() {
   local ARCH_HANDOFF="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
 
   if [ "${SKIP_ARCH_HANDOFF:-}" = "yes" ]; then
-      echo "⚠️  SKIP_ARCH_HANDOFF=yes: 跳过 arch-handoff 检查（已知风险）"
+      echo "⚠️  SKIP_ARCH_HANDOFF=yes: 跳过 arch-handoff + design-handoff 检查（已知风险）"
       return 0
   fi
 
@@ -137,6 +179,9 @@ except Exception:
   echo "📋 Roadmap 阶段: $CURRENT_PHASE (path=$ROADMAP_PATH)"
   echo "📋 ADR 编号: $ADR_IDS"
   echo "✅ 检测到 arch-done handoff（arch → plan 硬交接信号）"
+
+  # 5.5. design-done 门控检查 (硬切换, v2.1)
+  check_design_handoff "$PROJECT_ROOT" || return 1
 
   # 6. 提案状态同步: 扫描已归档但未标记的提案，自动标记为已实施
   source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"

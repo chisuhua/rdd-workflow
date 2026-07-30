@@ -70,7 +70,7 @@ rdd-workflow-brainstorm 的设计获得批准后：
 建议用户后续操作：
 
 1. **审查提案** — 检查 `improvements/<name>.md` 内容是否完整准确
-2. **批准流程** — 运行 `guide-arch` 进入 Phase 5.5 审查该提案
+2. **批准流程** — 运行 `guide-design` 审查该提案
 3. **跳转到 guide** — `skill_use("guide")` 查看当前项目状态
 
 ## 输出示例

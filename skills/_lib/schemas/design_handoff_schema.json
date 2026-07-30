@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rdd-workflow.local/schemas/design_handoff_schema.json",
+  "title": "Design Handoff v1",
+  "description": "Schema for .rddf/state/.design-handoff.json emitted by guide-design Phase 5 design-done. Consumed by guide-plan plan_intake.sh.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "design_complete_at",
+    "proposals_reviewed",
+    "all_proposals_have_decision",
+    "version"
+  ],
+  "properties": {
+    "design_complete_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when design-done was completed"
+    },
+    "proposals_reviewed": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of proposals reviewed (approved+rejected+deferred)"
+    },
+    "all_proposals_have_decision": {
+      "type": "boolean",
+      "description": "True if every entry in proposal-suggestions.md has a decision"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version (must be 1)"
+    }
+  }
+}
