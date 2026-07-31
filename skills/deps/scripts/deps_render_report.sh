@@ -29,14 +29,27 @@ render_deps_report() {
 
   mkdir -p "$(dirname "$DEPS_OUTPUT")"
 
-  # Convert CANDIDATES string to Python list format
-  local candidates_py="[$(echo "$CANDIDATES" | sed "s/[^ ]*/'&'/g" | sed "s/''//" | sed "s/',' /', '/g")]"
+  # Convert CANDIDATES string to Python list format (comma-separated,
+  # avoids adjacent-string concat bug: 'a' 'b' 'c' != ['a','b','c'])
+  local candidates_py
+  candidates_py=$(PY_CANDIDATES="$CANDIDATES" python3 -c '
+import json, os, shlex
+cands = shlex.split(os.environ.get("PY_CANDIDATES", ""))
+print(json.dumps(cands))
+' 2>/dev/null)
   # If CANDIDATES is empty, fall back to reading deps-candidates.json
   if [ -z "$CANDIDATES" ]; then
     local deps_input="$PROJECT_ROOT/.rddf/state/.deps-candidates.json"
     CANDIDATES=$(python3 -c "import json; d=json.load(open('$deps_input')); print(' '.join(d.get('candidates',[])))" 2>/dev/null)
     if [ -z "$CANDIDATES" ]; then
       candidates_py="[]"
+    else
+      # fallback 读取成功后重新计算 candidates_py（原实现漏掉此行）
+      candidates_py=$(PY_CANDIDATES="$CANDIDATES" python3 -c '
+import json, os, shlex
+cands = shlex.split(os.environ.get("PY_CANDIDATES", ""))
+print(json.dumps(cands))
+' 2>/dev/null)
     fi
   fi
 
