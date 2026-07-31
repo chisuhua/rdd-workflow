@@ -111,3 +111,31 @@ EOF
   [ "$status" -ne 0 ]
   rm -rf "$TEST_REPO"
 }
+
+@test "render_deps_report: empty CANDIDATES falls back to deps-candidates.json and renders all" {
+  TEST_REPO=$(mktemp -d)
+  cd "$TEST_REPO"
+  ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
+  mkdir -p openspec/changes/a1 openspec/changes/a2 openspec/changes/a3
+  for c in a1 a2 a3; do
+    echo "# design" > "openspec/changes/$c/design.md"
+    cat > "openspec/changes/$c/roadmap-meta.yaml" <<'EOF'
+roadmap:
+  phase: "v2.1"
+  category: "core-impl"
+EOF
+  done
+  mkdir -p .rddf/state
+  cat > .rddf/state/.deps-candidates.json <<'EOF'
+{"candidates": ["a1", "a2", "a3"]}
+EOF
+  source "$REPO_ROOT/skills/deps/scripts/deps_render_report.sh"
+  CANDIDATES="" PROJECT_ROOT="$TEST_REPO" DEPS_OUTPUT="$TEST_REPO/.rddf/state/.deps-output.md" \
+    render_deps_report >/dev/null 2>&1
+  [ -f "$TEST_REPO/.rddf/state/.deps-output.md" ]
+  # 报告必须显示 3 个候选（而非 0 候选）
+  # design.md 已存在 → 实际渲染为 a1[a1] / a2[a2] / a3[a3]（单括号）
+  run grep -c 'a1\[a1\]\|a2\[a2\]\|a3\[a3\]' "$TEST_REPO/.rddf/state/.deps-output.md"
+  [ "$status" -eq 0 ]
+  rm -rf "$TEST_REPO"
+}
