@@ -1,4 +1,4 @@
-load test_helper
+load ../test_helper
 
 @test "plan_intake: check_direct_create_fallback offers direct-create when no approved" {
   source "$PROJECT_ROOT/skills/guide-plan/scripts/plan_intake.sh"

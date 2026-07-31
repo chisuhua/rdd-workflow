@@ -1,4 +1,4 @@
-load test_helper
+load ../test_helper
 
 @test "scan-state: detects stale arch-handoff with 0 ADRs but filesystem has files" {
   source "$PROJECT_ROOT/skills/guide/scripts/scan-state.sh"

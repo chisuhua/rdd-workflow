@@ -1,4 +1,4 @@
-load test_helper
+load ../test_helper
 
 @test "adr_gate: classifies ARCHITECTURE decision" {
   run bash "$PROJECT_ROOT/skills/guide-arch/scripts/adr_gate.sh" "Define module boundary"
