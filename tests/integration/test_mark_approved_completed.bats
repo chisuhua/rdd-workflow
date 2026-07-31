@@ -50,3 +50,33 @@ MD
 
     rm -rf "$TEST_DIR"
 }
+
+@test "mark-approved-completed: first-time archive uses today's date" {
+    TEST_DIR=$(mktemp -d)
+    mkdir -p "$TEST_DIR/improvements"
+    cat > "$TEST_DIR/proposal-approved.md" <<'MD'
+# 已批准提案
+
+| Proposal | Priority | Approved |
+|----------|----------|----------|
+| [new-change](improvements/new-change.md) | P1 | 2026-07-31 |
+
+## 已实施
+
+| Proposal | Priority | Completed |
+|----------|----------|-----------|
+MD
+    echo "# x" > "$TEST_DIR/improvements/new-change.md"
+
+    # shellcheck source=/dev/null
+    source "$REPO_ROOT/skills/_lib/state.sh"
+
+    run mark_approved_completed "$TEST_DIR" "new-change"
+    [ "$status" -eq 0 ]
+
+    today=$(date -u +%Y-%m-%d)
+    run grep -F "$today" "$TEST_DIR/proposal-approved.md"
+    [ "$status" -eq 0 ]
+
+    rm -rf "$TEST_DIR"
+}
