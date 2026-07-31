@@ -111,3 +111,36 @@ print(' '.join(sorted(names)))
     [ "$completed_entries" = "new-change old-a old-b" ]
     rm -rf "$TEST_DIR"
 }
+
+@test "archive-proposal-status: consecutive archives accumulate entries" {
+    TEST_DIR=$(mktemp -d)
+    mkdir -p "$TEST_DIR/improvements"
+    cat > "$TEST_DIR/proposal-approved.md" <<'MD'
+# 已批准提案
+
+| Proposal | Priority | Approved |
+|----------|----------|----------|
+| [c1](improvements/c1.md) | P0 | 2026-07-31 |
+| [c2](improvements/c2.md) | P1 | 2026-07-31 |
+| [c3](improvements/c3.md) | P2 | 2026-07-31 |
+
+## 已实施
+
+| Proposal | Priority | Completed |
+|----------|----------|-----------|
+| [base](improvements/base.md) | P1 | 2026-07-01 |
+MD
+    echo "# x" > "$TEST_DIR/improvements/c1.md"
+    echo "# x" > "$TEST_DIR/improvements/c2.md"
+    echo "# x" > "$TEST_DIR/improvements/c3.md"
+    echo "# x" > "$TEST_DIR/improvements/base.md"
+    PROJECT_ROOT="$REPO_ROOT"
+    for c in c1 c2 c3; do
+        run python3 "$PROJECT_ROOT/skills/propose/scripts/update_proposal_status.py" "$c" "$TEST_DIR"
+        [ "$status" -eq 0 ]
+    done
+    count=$(grep -c 'improvements/' "$TEST_DIR/proposal-approved.md" 2>/dev/null || true)
+    # 已批准区 0 + 已实施区 4 (base+c1+c2+c3)
+    [ "$count" -eq 4 ]
+    rm -rf "$TEST_DIR"
+}
