@@ -40,6 +40,23 @@ skill_use("add-improve")
 
 ## 执行流程
 
+### Phase 0 — 无参数模式
+
+**入口条件**：`skill_use("add-improve")` 无参数调用。
+
+**<HARD-GATE>**：无参数模式下第一轮**不得**使用 `question` 工具弹出多选菜单。
+
+**行为**：
+
+1. AI 必须使用纯文本 prompt 向用户收集改进描述。
+2. prompt 模板：
+   > "请用自然语言描述你想改进的内容（包含: 症状/痛点/期望效果/优先级/是否引用 ADR）"
+3. 禁用清单：
+   - 不允许把"描述改进"做成多选题
+   - 不允许假设用户会用 `<name>` CLI 参数
+
+**后续澄清**：用户描述改进后，后续的优先级/范围/分类等子项可以使用 `question` 工具选择题。
+
 ### Phase 1：加载 rdd-workflow-brainstorm
 
 加载 `rdd-workflow-brainstorm` 技能，按照其 checklist 执行：
