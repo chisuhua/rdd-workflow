@@ -216,24 +216,31 @@ with open(sys.argv[1]) as f:
 name = sys.argv[2]
 ts = sys.argv[3]
 
-# Idempotency: check if already in completed section
-in_completed = False
-for line in lines:
-    if f'[{name}]' in line:
-        in_completed = True
+# Split sections: everything after '## 已实施' is the completed table
+completed_section_start = None
+for i, line in enumerate(lines):
+    if line.startswith('## 已实施'):
+        completed_section_start = i
         break
 
-# Find entry in approved table
+# Idempotency: if entry already in completed table, keep original row (preserve date)
+for i, line in enumerate(lines):
+    if f'[{name}]' in line and line.strip().startswith('|'):
+        if completed_section_start is not None and i > completed_section_start:
+            sys.exit(0)  # already completed — preserve original date, no rewrite
+
+# Find entry in approved table (only in the approved section)
 approved_idx = None
 approved_line = None
 for i, line in enumerate(lines):
     if f'[{name}]' in line and line.strip().startswith('|'):
+        if completed_section_start is not None and i > completed_section_start:
+            continue  # skip completed-section rows
         approved_idx = i
         approved_line = line
         break
 
-# Already in completed table
-if in_completed and approved_idx is None:
+if approved_idx is None:
     sys.exit(0)
 
 # Extract priority from approved row
