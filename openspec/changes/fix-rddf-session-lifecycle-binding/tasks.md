@@ -1,17 +1,17 @@
 ## 1. guide-design SKILL.md hook 修复
 
-- [ ] 1.1 在 `guide-design/SKILL.md` Phase 1 `rddf_session_hook_entry` 调用前添加 skill_root.sh fallback source 逻辑
-- [ ] 1.2 在 `guide-design/SKILL.md` Phase 5 `rddf_session_hook_close` 调用前添加同样的 source 逻辑
+- [x] 1.1 在 `guide-design/SKILL.md` Phase 1 `rddf_session_hook_entry` 调用前添加 skill_root.sh fallback source 逻辑
+- [x] 1.2 在 `guide-design/SKILL.md` Phase 5 `rddf_session_hook_close` 调用前添加同样的 source 逻辑
 
 ## 2. guide-plan SKILL.md hook 修复
 
-- [ ] 2.1 在 `guide-plan/SKILL.md` Phase 1 `rddf_session_hook_entry` 调用前添加 skill_root.sh fallback source 逻辑
-- [ ] 2.2 在 `guide-plan/SKILL.md` Phase 4 `rddf_session_hook_close` 调用前添加同样的 source 逻辑
+- [x] 2.1 在 `guide-plan/SKILL.md` Phase 1 `rddf_session_hook_entry` 调用前添加 skill_root.sh fallback source 逻辑
+- [x] 2.2 在 `guide-plan/SKILL.md` Phase 4 `rddf_session_hook_close` 调用前添加同样的 source 逻辑
 
 ## 3. guide-ship SKILL.md hook 修复
 
-- [ ] 3.1 在 `guide-ship/SKILL.md` Phase 1 `rddf_session_hook_entry` 调用前添加 skill_root.sh fallback source 逻辑
-- [ ] 3.2 在 `guide-ship/SKILL.md` Phase 5 `rddf_session_hook_close` 调用前添加同样的 source 逻辑
+- [x] 3.1 在 `guide-ship/SKILL.md` Phase 1 `rddf_session_hook_entry` 调用前添加 skill_root.sh fallback source 逻辑
+- [x] 3.2 在 `guide-ship/SKILL.md` Phase 5 `rddf_session_hook_close` 调用前添加同样的 source 逻辑
 
 ## 4. 优雅降级验证
 
