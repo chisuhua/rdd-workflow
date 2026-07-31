@@ -8,8 +8,5 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [fix-plan-deps-candidates-import-guard](improvements/fix-plan-deps-candidates-import-guard.md) | P0 | 会话复盘 2026-07-31 — plan_deps_candidates_env.py 无 None guard + execution_mode_decisions 数据残留 | 2026-07-31 | 已批准 |
-| [fix-rddf-session-lifecycle-binding](improvements/fix-rddf-session-lifecycle-binding.md) | P1 | 会话复盘 2026-07-31 — 4 阶段工作流执行中缺少 session 生命周期管理 | 2026-07-31 | 已批准 |
-| [fix-test-infrastructure-and-skill-registration](improvements/fix-test-infrastructure-and-skill-registration.md) | P2 | 会话复盘 2026-07-31 — bats 基础设施损坏 + 9 个 Python 测试持续失败 | 2026-07-31 | 已批准 |
 
 
