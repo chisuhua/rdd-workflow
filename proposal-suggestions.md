@@ -8,5 +8,9 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
+| [fix-update-proposal-status-data-loss](improvements/fix-update-proposal-status-data-loss.md) | P0 | 会话复盘 2026-07-31 — 归档后 proposal-approved.md 已实施表从 83 条坍缩到 1 条（历史审计数据丢失） | 2026-07-31 | 待创建 |
+| [fix-deps-render-report-multi-candidate](improvements/fix-deps-render-report-multi-candidate.md) | P1 | 会话复盘 2026-07-31 — 3 个候选 change 渲染成单个拼接字符串 | 2026-07-31 | 待创建 |
+| [fix-ship-plan-skill-use-fallback](improvements/fix-ship-plan-skill-use-fallback.md) | P1 | 会话复盘 2026-07-31 — bash 子进程调用 skill_use 恒失败，3 次计划生成失败 | 2026-07-31 | 待创建 |
+| [fix-mark-approved-completed-date-drift](improvements/fix-mark-approved-completed-date-drift.md) | P2 | 会话复盘 2026-07-31 — 幂等调用覆盖原完成日期 | 2026-07-31 | 待创建 |
 
 
