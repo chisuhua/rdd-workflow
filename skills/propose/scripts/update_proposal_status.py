@@ -55,7 +55,7 @@ def update_proposal_status(change_name: str, project_root: str) -> bool:
             completed_row = f"| [{change_name}](improvements/{change_name}.md) | {priority} | {date.today().isoformat()} |\n"
             result.insert(j, completed_row)
             inserted = True
-            break
+            # 不再 break —— 后续行（表头、分隔线、旧条目）继续被 append
     
     if not inserted:
         from datetime import date

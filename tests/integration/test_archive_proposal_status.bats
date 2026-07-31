@@ -75,3 +75,39 @@ MD
     [ "$status" -eq 0 ]
     [ "$output" -ge 1 ]
 }
+
+@test "archive-proposal-status: preserves existing completed entries" {
+    TEST_DIR=$(mktemp -d)
+    mkdir -p "$TEST_DIR/improvements"
+    cat > "$TEST_DIR/proposal-approved.md" <<'MD'
+# 已批准提案
+
+| Proposal | Priority | Approved |
+|----------|----------|----------|
+| [new-change](improvements/new-change.md) | P1 | 2026-07-31 |
+
+## 已实施
+
+| Proposal | Priority | Completed |
+|----------|----------|-----------|
+| [old-a](improvements/old-a.md) | P0 | 2026-07-20 |
+| [old-b](improvements/old-b.md) | P1 | 2026-07-22 |
+MD
+    echo "# old a" > "$TEST_DIR/improvements/old-a.md"
+    echo "# old b" > "$TEST_DIR/improvements/old-b.md"
+    echo "# new change" > "$TEST_DIR/improvements/new-change.md"
+    PROJECT_ROOT="$REPO_ROOT"
+    run python3 "$PROJECT_ROOT/skills/propose/scripts/update_proposal_status.py" "new-change" "$TEST_DIR"
+    [ "$status" -eq 0 ]
+    # 已实施表必须包含 new-change + 全部旧条目 (old-a, old-b)
+    completed_entries=$(python3 -c "
+with open('$TEST_DIR/proposal-approved.md') as f:
+    content = f.read()
+section = content.split('## 已实施')[1]
+import re
+names = re.findall(r'\[([^\]]+)\]\(improvements/', section)
+print(' '.join(sorted(names)))
+")
+    [ "$completed_entries" = "new-change old-a old-b" ]
+    rm -rf "$TEST_DIR"
+}
