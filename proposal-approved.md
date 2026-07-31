@@ -12,6 +12,14 @@
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
 
+| [fix-update-proposal-status-data-loss](improvements/fix-update-proposal-status-data-loss.md) | P0 | 2026-07-31 | guide-arch |
+
+| [fix-deps-render-report-multi-candidate](improvements/fix-deps-render-report-multi-candidate.md) | P1 | 2026-07-31 | guide-arch |
+
+| [fix-ship-plan-skill-use-fallback](improvements/fix-ship-plan-skill-use-fallback.md) | P1 | 2026-07-31 | guide-arch |
+
+| [fix-mark-approved-completed-date-drift](improvements/fix-mark-approved-completed-date-drift.md) | P2 | 2026-07-31 | guide-arch |
+
 ## 已实施
 
 | 提案 | 优先级 | 完成时间 |
