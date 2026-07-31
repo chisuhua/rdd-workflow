@@ -6,8 +6,8 @@
 
 ## 2. skill 计数动态化
 
-- [ ] 2.1 更新 `tests/unit/test_doc_contracts.py`：skill 计数改为动态扫描磁盘（含 `guide-design`）
-- [ ] 2.2 运行 `python3 -m pytest tests/unit/test_doc_contracts.py -q --tb=short` 通过
+- [x] 2.1 更新 `tests/unit/test_doc_contracts.py`：skill 计数改为动态扫描磁盘（含 `guide-design`）
+- [x] 2.2 运行 `python3 -m pytest tests/unit/test_doc_contracts.py -q --tb=short` 通过
 
 ## 3. concurrency / cross-session 测试环境自适应
 
