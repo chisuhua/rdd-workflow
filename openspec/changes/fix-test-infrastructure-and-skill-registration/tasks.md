@@ -1,8 +1,8 @@
 ## 1. bats test_helper 路径修复
 
-- [ ] 1.1 修复 `tests/integration/test_helper.bash` 路径解析（`bats_load_safe` 找不到）
-- [ ] 1.2 修正 `tests/integration/` 下所有 `.bats` 文件的 `load test_helper` 为 `BATS_TEST_DIRNAME` 派生路径
-- [ ] 1.3 运行 `npm test`（至少 smoke.bats）确认退出码 0
+- [x] 1.1 修复 `tests/integration/test_helper.bash` 路径解析（`bats_load_safe` 找不到）
+- [x] 1.2 修正 `tests/integration/` 下所有 `.bats` 文件的 `load test_helper` 为 `BATS_TEST_DIRNAME` 派生路径
+- [x] 1.3 运行 `npm test`（至少 smoke.bats）确认退出码 0
 
 ## 2. skill 计数动态化
 
