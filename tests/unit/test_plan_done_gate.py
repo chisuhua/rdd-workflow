@@ -85,3 +85,32 @@ def test_plan_handoff_file_written(tmp_repo):
         content = json.load(f)
     assert content["active_changes"] == 3
     assert content["current_change"] == "name"
+
+
+def _write_deps_analysis(project_root, recommendations):
+    state_dir = os.path.join(project_root, ".rddf", "state")
+    os.makedirs(state_dir, exist_ok=True)
+    with open(os.path.join(state_dir, "deps-analysis.json"), "w") as f:
+        json.dump({"execution_mode_recommendations": recommendations}, f)
+
+
+def test_filters_archived_changes(tmp_path):
+    """Only active (non-archive) changes remain in execution_mode_decisions."""
+    # Active change dir + archived change dir
+    (tmp_path / "openspec" / "changes" / "fix-active").mkdir(parents=True)
+    (tmp_path / "openspec" / "changes" / "archive" / "2026-07-31-old-archived").mkdir(parents=True)
+
+    _write_deps_analysis(tmp_path, {
+        "fix-active": {"mode": "lightweight", "reason": "ok"},
+        "old-archived": {"mode": "worktree", "reason": "stale"},
+    })
+
+    decisions = pdg._load_execution_mode_decisions(str(tmp_path))
+
+    assert "fix-active" in decisions
+    assert "old-archived" not in decisions
+
+
+def test_missing_deps_file_returns_empty(tmp_path):
+    """Missing deps-analysis.json yields empty dict (unchanged behavior)."""
+    assert pdg._load_execution_mode_decisions(str(tmp_path)) == {}

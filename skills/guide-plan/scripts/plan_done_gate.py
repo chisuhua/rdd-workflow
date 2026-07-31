@@ -62,16 +62,36 @@ def write_plan_handoff(
 
 def _load_execution_mode_decisions(project_root: str) -> dict:
     """Load execution_mode_recommendations from deps-analysis.json.
-    
+
+    Only keeps entries whose change has an active (non-archive) directory
+    under openspec/changes/, filtering stale decisions for archived changes.
+
     Returns empty dict if deps-analysis.json missing or malformed.
     """
     deps_path = os.path.join(project_root, ".rddf", "state", "deps-analysis.json")
     if not os.path.isfile(deps_path):
         return {}
-    
+
     try:
         with open(deps_path, "r") as f:
             data = json.load(f)
-        return data.get("execution_mode_recommendations", {})
     except (json.JSONDecodeError, OSError):
         return {}
+
+    recommendations = data.get("execution_mode_recommendations", {})
+    if not recommendations:
+        return {}
+
+    active_dir = os.path.join(project_root, "openspec", "changes")
+    active_names = set()
+    if os.path.isdir(active_dir):
+        for entry in os.listdir(active_dir):
+            entry_path = os.path.join(active_dir, entry)
+            if os.path.isdir(entry_path) and entry != "archive":
+                active_names.add(entry)
+
+    return {
+        name: rec
+        for name, rec in recommendations.items()
+        if name in active_names
+    }
