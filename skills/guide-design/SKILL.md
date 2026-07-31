@@ -46,6 +46,9 @@ skill_use("guide-design")   # 无参数版本
 **rddf-session 入口 hook**（ADR-0017）：创建或查找当前 opencode session 的 `stage_design` rddf-session（parent=latest stage_arch）：
 
 ```bash
+# rddf-session 入口 hook (ADR-0017) - extracted to _lib/rddf_session_hooks.sh
+# stage_design parent: latest stage_arch (auto-resolved by helper)
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir rddf-session)/scripts/rddf_session_hooks.sh"
 rddf_session_hook_entry stage_design guide-design design-phase design-done .rddf/state/.design-handoff.json
 ```
@@ -150,8 +153,14 @@ write_design_handoff "$proposals_reviewed"
 
 **rddf-session 关闭 hook**：
 ```bash
-source "$(resolve_rdd_skill_dir rddf-session)/scripts/rddf_session_hooks.sh"
-rddf_session_hook_close stage_design design-done guide-design
+# rddf-session 关闭 hook (ADR-0017) - graceful degradation when skill_root.sh missing
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+if command -v resolve_rdd_skill_dir >/dev/null 2>&1; then
+    source "$(resolve_rdd_skill_dir rddf-session)/scripts/rddf_session_hooks.sh"
+    rddf_session_hook_close stage_design design-done guide-design
+else
+    echo "⚠️  resolve_rdd_skill_dir 不可用, 跳过 rddf-session 关闭 hook (graceful degradation)" >&2
+fi
 ```
 
 **Output to user**：
