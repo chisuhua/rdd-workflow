@@ -11,15 +11,15 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [fix-plan-deps-candidates-import-guard](improvements/fix-plan-deps-candidates-import-guard.md) | P0 | 2026-07-31 | 批量批准 |
-| [fix-rddf-session-lifecycle-binding](improvements/fix-rddf-session-lifecycle-binding.md) | P1 | 2026-07-31 | 批量批准 |
-| [fix-test-infrastructure-and-skill-registration](improvements/fix-test-infrastructure-and-skill-registration.md) | P2 | 2026-07-31 | 批量批准 |
 
 ## 已实施
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
 | [fix-add-improve-initial-prompt-ux](improvements/fix-add-improve-initial-prompt-ux.md) | P1 | 2026-07-31 |
+| [fix-plan-deps-candidates-import-guard](improvements/fix-plan-deps-candidates-import-guard.md) | P0 | 2026-07-31 |
+| [fix-rddf-session-lifecycle-binding](improvements/fix-rddf-session-lifecycle-binding.md) | P1 | 2026-07-31 |
+| [fix-test-infrastructure-and-skill-registration](improvements/fix-test-infrastructure-and-skill-registration.md) | P2 | 2026-07-31 |
 | [deps-driven-execution-mode](improvements/deps-driven-execution-mode.md) | P2 | 2026-07-30 |
 | [guide-ship-quick-finish](improvements/guide-ship-quick-finish.md) | P2 | 2026-07-29 |
 | [fix-plan-done-gate-zero-stale-count](improvements/fix-plan-done-gate-zero-stale-count.md) | P2 | 2026-07-29 |
@@ -42,7 +42,9 @@
 | [fix-skill-tool-cache](improvements/fix-skill-tool-cache.md) | P1 | 2026-07-29 |
 | [archive-gate-incomplete-tasks](improvements/archive-gate-incomplete-tasks.md) | P1 | 2026-07-29 |
 | [ship-incomplete-archive-change-fallback](improvements/ship-incomplete-archive-change-fallback.md) | P1 | 2026-07-29 |
-| [fix-scan-state-bats](improvements/fix-scan-state-bats.md) | P2 | 2026-07-23 |
+| [ship-delete-branch-safety](improvements/ship-delete-branch-safety.md) | P1 | 2026-07-29 |
+| [fix-rddf-session-owner-cross-call](improvements/fix-rddf-session-owner-cross-call.md) | P1 | 2026-07-29 |
+| [RDDF-0001-fix-rddf-session-import-path](improvements/RDDF-0001-fix-rddf-session-import-path.md) | P1 | 2026-07-29 |
 | [add-config-validation](improvements/add-config-validation.md) | P0 | 2026-07-28 |
 | [add-file-size-quality-gate](improvements/add-file-size-quality-gate.md) | P2 | 2026-07-28 |
 | [add-full-regression-gate](improvements/add-full-regression-gate.md) | P0 | 2026-07-28 |
@@ -96,7 +98,4 @@
 | [update-adr-index](improvements/update-adr-index.md) | P2 | 2026-07-28 |
 | [update-agents-module-map](improvements/update-agents-module-map.md) | P1 | 2026-07-28 |
 | [update-guide-plan-format](improvements/update-guide-plan-format.md) | P1 | 2026-07-28 |
-| [ship-delete-branch-safety](improvements/ship-delete-branch-safety.md) | P1 | 2026-07-29 |
-| [fix-rddf-session-owner-cross-call](improvements/fix-rddf-session-owner-cross-call.md) | P1 | 2026-07-29 |
-| [RDDF-0001-fix-rddf-session-import-path](improvements/RDDF-0001-fix-rddf-session-import-path.md) | P1 | 2026-07-29 |
-
+| [fix-scan-state-bats](improvements/fix-scan-state-bats.md) | P2 | 2026-07-23 |
