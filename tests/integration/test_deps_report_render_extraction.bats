@@ -84,3 +84,30 @@ EOF
   grep -q "拆分" .rddf/state/.deps-output.md
   rm -rf "$TEST_REPO"
 }
+
+@test "render_deps_report: 3 candidates render as 3 independent mermaid nodes" {
+  TEST_REPO=$(mktemp -d)
+  cd "$TEST_REPO"
+  ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
+  mkdir -p openspec/changes/c1 openspec/changes/c2 openspec/changes/c3
+  for c in c1 c2 c3; do
+    echo "# design" > "openspec/changes/$c/design.md"
+    cat > "openspec/changes/$c/roadmap-meta.yaml" <<'EOF'
+roadmap:
+  phase: "v2.1"
+  category: "core-impl"
+EOF
+  done
+  source "$REPO_ROOT/skills/deps/scripts/deps_render_report.sh"
+  CANDIDATES="c1 c2 c3" PROJECT_ROOT="$TEST_REPO" DEPS_OUTPUT="$TEST_REPO/.rddf/state/.deps-output.md" \
+    render_deps_report >/dev/null 2>&1
+  [ -f "$TEST_REPO/.rddf/state/.deps-output.md" ]
+  # Mermaid 图必须含 3 个独立节点（而非拼接节点 c1c2c3）
+  # design.md 已存在 → 实际渲染为 c1[c1] / c2[c2] / c3[c3]（单括号）
+  run grep -c 'c1\[c1\]\|c2\[c2\]\|c3\[c3\]' "$TEST_REPO/.rddf/state/.deps-output.md"
+  [ "$status" -eq 0 ]
+  # 断言不存在拼接节点
+  run grep -q 'c1c2c3' "$TEST_REPO/.rddf/state/.deps-output.md"
+  [ "$status" -ne 0 ]
+  rm -rf "$TEST_REPO"
+}
