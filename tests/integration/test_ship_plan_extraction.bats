@@ -122,3 +122,8 @@ REPLACED_RANGE="144,348p"
   [[ "$output" == *"skill_use"* ]]
   rm -rf "$TEST_REPO"
 }
+
+@test "guide-ship SKILL.md Phase 1 notes orchestrator-owned plan generation" {
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
+  grep -q "编排" "$REPO_ROOT/skills/guide-ship/SKILL.md"
+}

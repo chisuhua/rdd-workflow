@@ -6,8 +6,8 @@
 
 ## 2. SKILL.md 说明
 
-- [ ] 2.1 在 `skills/guide-ship/SKILL.md` Phase 1 补充说明：AI 编排环境计划生成由编排者完成
-- [ ] 2.2 验证交互式 AI 环境（skill_use 可用）计划生成行为不变
+- [x] 2.1 在 `skills/guide-ship/SKILL.md` Phase 1 补充说明：AI 编排环境计划生成由编排者完成
+- [x] 2.2 验证交互式 AI 环境（skill_use 可用）计划生成行为不变
 
 ## 3. 测试
 
