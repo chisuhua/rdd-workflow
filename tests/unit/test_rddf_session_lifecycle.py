@@ -42,3 +42,11 @@ def test_guide_plan_and_ship_hooks_have_skill_root_source():
             assert "skill_root.sh" in block, (
                 f"{name} {hook} missing skill_root.sh source"
             )
+
+
+def test_entry_hook_has_graceful_fallback():
+    """Entry hook source line must include fallback paths (not single hardcode)."""
+    content = _read_skill("guide-design")
+    entry_block = content.split("rddf_session_hook_entry")[0]
+    assert ".opencode/skills/_lib/skill_root.sh" in entry_block
+    assert "$HOME/.agents/skills/_lib/skill_root.sh" in entry_block
