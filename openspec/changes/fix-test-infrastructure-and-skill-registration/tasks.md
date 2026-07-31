@@ -11,11 +11,11 @@
 
 ## 3. concurrency / cross-session 测试环境自适应
 
-- [ ] 3.1 4 个 concurrency 测试（`test_rddf_session_concurrency`）：单 worker / 无 xdist 环境 `pytest.skip()` 而非 FAIL
-- [ ] 3.2 4 个 cross-session recovery 测试（`test_rddf_session_cross_session_recovery`）：检查 timeout 配置，必要时放宽
-- [ ] 3.3 运行 `python3 -m pytest tests/unit/ -q --tb=short` 全量通过（concurrency 可 skip 但不可 FAIL）
+- [x] 3.1 4 个 concurrency 测试（`test_rddf_session_concurrency`）：单 worker / 无 xdist 环境 `pytest.skip()` 而非 FAIL
+- [x] 3.2 4 个 cross-session recovery 测试（`test_rddf_session_cross_session_recovery`）：检查 timeout 配置，必要时放宽
+- [x] 3.3 运行 `python3 -m pytest tests/unit/ -q --tb=short` 全量通过（concurrency 可 skip 但不可 FAIL）
 
 ## 4. guide-design skill 注册验证
 
-- [ ] 4.1 验证 `skill_use("guide-design")` 在 skill 工具中可用
-- [ ] 4.2 若未注册，完成注册并更新相关文档/测试
+- [x] 4.1 验证 `skill_use("guide-design")` 在 skill 工具中可用
+- [x] 4.2 若未注册，完成注册并更新相关文档/测试
