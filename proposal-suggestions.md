@@ -8,5 +8,6 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
+| [fix-add-improve-initial-prompt-ux](improvements/fix-add-improve-initial-prompt-ux.md) | P1 | 会话复盘 2026-07-31 — add-improve 无参数模式交互阻塞 | 2026-07-31 | |
 
 

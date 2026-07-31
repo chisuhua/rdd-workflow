@@ -67,21 +67,23 @@ bash install.sh /path/to/project
    - `skill_use("status")` - 子技能(被 guide-ship 调用或独立使用)
    - `skill_use("rdd-workflow-writing-plans")` - 实施计划生成器(被 guide-ship 调用,v2.0 自包含 TDD 5 步结构)
 
-## v2.0 新特性
+## v2.1 新特性
 
-### 三阶段架构 (arch → plan → ship)
+### 四阶段架构 (arch → design → plan → ship)
 
 | 阶段 | 技能 | 职责 | 人工介入 |
 |------|------|------|---------|
 | **Arch** | `guide-arch` | 架构定义（ADR、roadmap、差距分析） | 高 |
+| **Design** | `guide-design` | 设计管理（提案创建、审查、批准/拒绝/延迟） | 中 |
 | **Plan** | `guide-plan` | 变更生成（scan、propose、deps） | 中 |
 | **Ship** | `guide-ship` | 变更执行（worktree、execute、archive） | 低 |
 
-> **v2.0+ 变更**: `guide-spec` 别名已在 v2.0 移除（原为 60 行别名，自动调用 arch → plan）。请直接使用 `guide-arch` 和 `guide-plan`。
+> **v2.1+ 变更**: 从三阶段扩展为四阶段架构。提案管理（创建、审查、批准/拒绝/延迟）从 `guide-arch` Phase 5.5 迁移到独立的 `guide-design` 阶段。
+> `guide-spec` 别名已在 v2.0 移除。请直接使用 `guide-arch` → `guide-design` → `guide-plan` → `guide-ship`。
 
 ### 推荐器升级
 
-`guide` 推荐器现在支持三阶段扫描：
+`guide` 推荐器现在支持四阶段扫描：
 
 ```
 💡 Recommended: skill_use("guide-plan")

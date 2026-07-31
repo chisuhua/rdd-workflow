@@ -638,13 +638,13 @@ grep -E "skill_use\(\"(propose|deps|guide-arch|guide-ship)\"\)" skills/guide-pla
 
 ## 参考资料
 
-- **ADR-0003** — 三阶段架构重构（arch → plan → ship），本技能的架构依据
+- **ADR-0003** — 四阶段架构重构（arch → design → plan → ship），本技能的架构依据
 - **ADR-0001** — 双阶段状态机分离（v1.x 架构，guide-spec 的来源）
 - **ADR-0007** — 门控机制（plan-done 双重门控的设计依据）
 - **ADR-0011** — 阶段步骤化执行模型（plan 阶段的子阶段设计）
 - `skills/guide-arch.md` — arch 端状态机（前序阶段，本技能的 source）
-- `skills/guide-spec.md` — v1.x spec 端状态机（Phase 2 + Phase 2.5 的 source）
+- `skills/guide-design.md` — v2.1 design 端状态机（前序阶段，由 design-done 触发本阶段）
 - `skills/guide-ship.md` — ship 端状态机（后续阶段）
 - `skills/propose.md` — 变更创建技能（被 plan Phase 2 调用）
 - `skills/deps.md` — 依赖分析技能（被 plan Phase 3 调用）
-- `docs/adr/ADR-0003-three-phase-architecture.md` — 三阶段架构详细说明
+- `docs/adr/ADR-0003-three-phase-architecture.md` — 四阶段架构详细说明（v2.1 从三阶段扩展为四阶段）

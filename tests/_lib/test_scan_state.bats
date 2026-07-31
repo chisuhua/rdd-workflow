@@ -38,9 +38,23 @@ teardown() {
   # recommends 'guide-ship' (or guide-arch if no roadmap.md)
 }
 
-@test "scan_state: arch-handoff + no plan-handoff recommends guide-plan" {
+@test "scan_state: arch-handoff + no design-handoff recommends guide-design {
   # arch-handoff with adr_count >= 1 means arch-done is complete
+  # No design-handoff -> should recommend guide-design (v2.1 four-phase)
   echo '{"arch_done_at":"2026-07-01","adr_count":1,"current_change":null}' > "$STATE_DIR/.arch-handoff.json"
+
+  run bash -c "
+    source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
+    scan_state '$TEST_REPO'
+    echo \"RECOMMEND=\$RECOMMEND\"
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"guide-design"* ]]
+}
+
+@test "scan_state: arch-handoff + design-handoff + no plan-handoff recommends guide-plan" {
+  echo '{"arch_done_at":"2026-07-01","adr_count":1,"current_change":null}' > "$STATE_DIR/.arch-handoff.json"
+  echo '{"version":1,"design_complete_at":"2026-07-01","proposals_reviewed":3,"all_proposals_have_decision":true}' > "$STATE_DIR/.design-handoff.json"
 
   run bash -c "
     source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'

@@ -64,7 +64,7 @@ _run_scan() {
   )
 }
 
-@test "scan_state: arch-handoff + no plan-handoff → guide-plan (branch 1)" {
+@test "scan_state: arch-handoff + no design-handoff → guide-design (branch 1c)" {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo x > a && git add a && git commit -q -m init
@@ -72,6 +72,18 @@ _run_scan() {
   # adr_count >= 1 means arch-done is complete; without it scan_state falls
   # through to priority 1.5 (guide-arch recover) per current contract.
   echo '{"adr_count":1,"arch_done_at":"2026-07-01"}' > .rddf/state/.arch-handoff.json
+  # no .design-handoff.json, no .plan-handoff.json
+  local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
+  echo "$out" | grep -q "RECOMMEND=guide-design"
+}
+
+@test "scan_state: arch-handoff + design-handoff + no plan-handoff → guide-plan (branch 1b)" {
+  local r; r=$(mktemp -d); cd "$r" || return 1
+  git init -q -b master && git config user.email t@t && git config user.name t
+  echo x > a && git add a && git commit -q -m init
+  mkdir -p .rddf/state
+  echo '{"adr_count":1,"arch_done_at":"2026-07-01"}' > .rddf/state/.arch-handoff.json
+  echo '{"version":1,"design_complete_at":"2026-07-01","proposals_reviewed":3,"all_proposals_have_decision":true}' > .rddf/state/.design-handoff.json
   # no .plan-handoff.json
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=guide-plan"

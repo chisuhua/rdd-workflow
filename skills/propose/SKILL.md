@@ -324,7 +324,7 @@ else:
 }
 ```
 
-> 上面的 `description` 是一个 JSON 字符串字段（用 `\n` 表示换行）。`propose.md` 和 4 个其他 consumer（`guide-spec.md`、`guide.md`、`status.md`、`deps.md`）都通过 `skills/_lib/state.sh::read_suggestions` / `write_suggestions` 读写。
+> 上面的 `description` 是一个 JSON 字符串字段（用 `\n` 表示换行）。`propose.md` 和 4 个其他 consumer（`guide-design.md`、`guide.md`、`status.md`、`deps.md`）都通过 `skills/_lib/state.sh::read_suggestions` / `write_suggestions` 读写。
 
 **优先级归类**：
 

@@ -78,6 +78,23 @@ def read_arch_handoff(project_root: str) -> Optional[dict]:
     return data
 
 
+def read_design_handoff(project_root: str) -> Optional[dict]:
+    """Read ``.rddf/state/.design-handoff.json``.
+
+    Returns the parsed dict, or ``None`` if the file is missing, contains
+    invalid JSON, or the top-level value is not a dict.
+    """
+    path = _state_path(project_root, ".design-handoff.json")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
 def read_plan_handoff(project_root: str) -> Optional[dict]:
     """Read ``.rddf/state/.plan-handoff.json``.
 

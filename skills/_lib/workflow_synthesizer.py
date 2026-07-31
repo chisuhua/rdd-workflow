@@ -30,32 +30,33 @@ Consumes (read-only)
 - ``skills/_lib/state_reader.py`` (existing data layer)
 - ``git worktree list --porcelain`` (read-only subprocess)
 
-Decision tree (13-path priority, mirrors scan-state.sh::scan_state)
+Decision tree (14-path priority, mirrors scan-state.sh::scan_state)
 -------------------------------------------------------------------
 Priority order (highest first):
     1.  arch-handoff missing                     -> guide-arch (high)
     2.  arch-handoff present, adr_count < 1      -> guide-arch (high, recover)
-    3.  arch done, plan-handoff missing          -> guide-plan (high)
-    4.  plan-handoff present, active_changes==0  -> guide-ship (high, cleanup)
-    5.  plan-handoff present, active_changes>0   -> guide-ship (high)
-    6.  worktree with incomplete tasks           -> guide-ship (medium)
-    7.  detached openspec worktrees              -> guide-ship (medium)
-    8.  worktree tasks all completed             -> guide-ship (medium, archive)
-    9.  committed change in HEAD, no worktree    -> guide-ship (medium)
-    10. no roadmap.md                            -> guide-arch (low)
-    11. no openspec/changes/                     -> guide-plan (low)
-    12. proposal-approved.md has approved entries -> guide-plan (high)
-    13. default                                  -> guide-ship (low)
+    3.  arch done, design-handoff missing        -> guide-design (high)
+    4.  arch done, design done, plan-handoff missing -> guide-plan (high)
+    5.  plan-handoff present, active_changes==0  -> guide-ship (high, cleanup)
+    6.  plan-handoff present, active_changes>0   -> guide-ship (high)
+    7.  worktree with incomplete tasks           -> guide-ship (medium)
+    8.  detached openspec worktrees              -> guide-ship (medium)
+    9.  worktree tasks all completed             -> guide-ship (medium, archive)
+    10. committed change in HEAD, no worktree    -> guide-ship (medium)
+    11. no roadmap.md                            -> guide-arch (low)
+    12. no openspec/changes/                     -> guide-plan (low)
+    13. proposal-approved.md has approved entries -> guide-plan (high)
+    14. default                                  -> guide-ship (low)
 
-Paths 10-13 are implicitly unreachable because earlier paths (1, 3, 4-5)
-catch all those states first. The 13-path enumeration is preserved for
+Paths 11-14 are implicitly unreachable because earlier paths (1, 3-6)
+catch all those states first. The 14-path enumeration is preserved for
 parity with scan-state.sh documentation but the actual decision tree
-short-circuits at paths 1-9.
+short-circuits at paths 1-10.
 
 Confidence levels:
-    - ``high``: paths 1-5 (handoff-based, deterministic)
-    - ``medium``: paths 6-9 (worktree/git-based)
-    - ``low``: paths 10-13 (fallback) + never-raises fallback
+    - ``high``: paths 1-6 (handoff-based, deterministic)
+    - ``medium``: paths 7-10 (worktree/git-based)
+    - ``low``: paths 11-14 (fallback) + never-raises fallback
 """
 from __future__ import annotations
 
@@ -74,14 +75,14 @@ from skills._lib import state_reader
 
 @dataclass(frozen=True)
 class PhaseStatus:
-    """One phase (arch/plan/ship) status snapshot.
+    """One phase (arch/design/plan/ship) status snapshot.
 
     Fields:
-        phase: ``"arch"`` | ``"plan"`` | ``"ship"``
+        phase: ``"arch"`` | ``"design"`` | ``"plan"`` | ``"ship"``
         done: ``True`` if the phase has emitted its handoff sentinel
             (or, for ship, has recorded archived changes in iteration.json)
         detail: human-readable detail string
-            (e.g. ``"adr_count=5"``, ``"active_changes=3"``,
+            (e.g. ``"adr_count=5"``, ``"proposals_reviewed=3"``, ``"active_changes=3"``,
             ``"changes=4, archived=2"``, ``"no handoff"``)
     """
     phase: str
@@ -152,7 +153,7 @@ class WorkflowRecommendation:
         reason: one-sentence human-readable reason (Chinese, matches
             scan-state.sh output for backward compatibility)
         confidence: ``"high"`` | ``"medium"`` | ``"low"``
-        phase_status: tuple of 3 ``PhaseStatus`` entries (arch, plan, ship)
+        phase_status: tuple of 4 ``PhaseStatus`` entries (arch, design, plan, ship)
         unblocked_changes: change names ready to ship, sorted
             alphabetically for determinism. Empty tuple when no
             iteration.json or no ready changes.
@@ -203,21 +204,22 @@ def synthesize(project_root: str) -> WorkflowRecommendation:
     """
     try:
         arch_handoff = state_reader.read_arch_handoff(project_root)
+        design_handoff = state_reader.read_design_handoff(project_root)
         plan_handoff = state_reader.read_plan_handoff(project_root)
         iteration = state_reader.read_iteration(project_root)
         sessions = state_reader.read_sessions(project_root)
 
-        phase_status = _build_phase_status(arch_handoff, plan_handoff, iteration)
+        phase_status = _build_phase_status(arch_handoff, design_handoff, plan_handoff, iteration)
         unblocked = _unblocked_changes(iteration)
         active = _active_session(sessions)
         orphaned = _orphaned_sessions(sessions)
 
         suggested, reason, confidence = _decision_tree(
-            project_root, arch_handoff, plan_handoff, iteration
+            project_root, arch_handoff, design_handoff, plan_handoff, iteration
         )
         wt_issues = _detect_working_tree_issues(project_root)
         options = _build_all_options(
-            suggested, arch_handoff, plan_handoff, iteration, sessions, wt_issues
+            suggested, arch_handoff, design_handoff, plan_handoff, iteration, sessions, wt_issues
         )
         return WorkflowRecommendation(
             suggested_action=suggested,
@@ -241,12 +243,13 @@ def synthesize(project_root: str) -> WorkflowRecommendation:
 
 def _build_phase_status(
     arch_h: Optional[dict],
+    design_h: Optional[dict],
     plan_h: Optional[dict],
     iteration: Optional[dict],
 ) -> Tuple[PhaseStatus, ...]:
-    """Build the 3-entry phase status tuple.
+    """Build the 4-entry phase status tuple.
 
-    Returns a tuple of 3 ``PhaseStatus`` entries (arch, plan, ship).
+    Returns a tuple of 4 ``PhaseStatus`` entries (arch, design, plan, ship).
     Each entry has a human-readable ``detail`` string with key metrics.
     """
     # arch
@@ -256,6 +259,14 @@ def _build_phase_status(
     else:
         arch_done = False
         arch_detail = "no handoff"
+
+    # design
+    if design_h is not None:
+        design_done = True
+        design_detail = f"proposals_reviewed={design_h.get('proposals_reviewed', 0)}"
+    else:
+        design_done = False
+        design_detail = "no handoff"
 
     # plan
     if plan_h is not None:
@@ -278,6 +289,7 @@ def _build_phase_status(
 
     return (
         PhaseStatus("arch", arch_done, arch_detail),
+        PhaseStatus("design", design_done, design_detail),
         PhaseStatus("plan", plan_done, plan_detail),
         PhaseStatus("ship", False, ship_detail),
     )
@@ -382,6 +394,7 @@ def _count_active_changes(iteration: Optional[dict]) -> int:
 def _build_all_options(
     suggested: str,
     arch_h: Optional[dict],
+    design_h: Optional[dict],
     plan_h: Optional[dict],
     iteration: Optional[dict],
     sessions: Optional[list],
@@ -391,7 +404,7 @@ def _build_all_options(
 
     The first entry is always the top recommendation (marked as
     recommended group). Remaining entries are grouped by:
-        - ``stages``: guide-arch, guide-plan, guide-ship
+        - ``stages``: guide-arch, guide-design, guide-plan, guide-ship
         - ``session``: session management actions (when applicable)
         - ``utilities``: feature, status
 
@@ -404,6 +417,7 @@ def _build_all_options(
     # 1. Recommended (first entry, ⭐)
     reason_map = {
         "guide-arch": "进入架构定义阶段 — ADR / roadmap / 差距分析",
+        "guide-design": "进入设计阶段 — 提案审查 / 批准 / design-done",
         "guide-plan": "进入变更生成阶段 — propose / deps / plan-done",
         "guide-ship": "进入变更执行阶段 — plan / execute / archive",
     }
@@ -422,6 +436,7 @@ def _build_all_options(
     _fs_active_count = _count_active_changes(iteration)
     stage_options = [
         ("guide-arch", "架构定义", "setup -> ADR -> roadmap -> arch-done"),
+        ("guide-design", "设计阶段", "提案创建 / 审查 / 批准 / design-done"),
         ("guide-plan", "变更生成", "scan -> propose -> deps -> plan-done"),
     ]
     for sid, label, desc in stage_options:
@@ -605,18 +620,19 @@ def _committed_change_in_head(project_root: str) -> bool:
 def _decision_tree(
     project_root: str,
     arch_h: Optional[dict],
+    design_h: Optional[dict],
     plan_h: Optional[dict],
     iteration: Optional[dict],
 ) -> Tuple[str, str, str]:
-    """13-path priority decision tree.
+    """14-path priority decision tree.
 
     Returns a ``(suggested_action, reason, confidence)`` tuple.
     See module docstring for the full priority table.
 
-    Paths 10-13 (no roadmap, no openspec/changes, pending proposal,
-    default) are implicitly unreachable because earlier paths (1, 3,
-    4-5) catch all those states first. The 13-path enumeration is
-    preserved for parity with scan-state.sh documentation.
+    Paths 11-14 (no roadmap, no openspec/changes, pending proposal,
+    default) are implicitly unreachable because earlier paths (1, 3-6)
+    catch all those states first. The 14-path enumeration is preserved
+    for parity with scan-state.sh documentation.
     """
     # Path 1: arch-handoff missing -> guide-arch
     if arch_h is None:
@@ -631,11 +647,15 @@ def _decision_tree(
             "high",
         )
 
-    # Path 3: arch done, plan-handoff missing -> guide-plan
-    if plan_h is None:
-        return ("guide-plan", "架构定义已完成 -> 进入变更生成", "high")
+    # Path 3: arch done, design-handoff missing -> guide-design
+    if design_h is None:
+        return ("guide-design", "arch-done 已完成 -> 进入设计阶段", "high")
 
-    # Path 4: plan-handoff exists, active_changes == 0 -> guide-ship (cleanup)
+    # Path 4: arch done, design done, plan-handoff missing -> guide-plan
+    if plan_h is None:
+        return ("guide-plan", "design-done 已完成 -> 进入变更生成", "high")
+
+    # Path 5: plan-handoff exists, active_changes == 0 -> guide-ship (cleanup)
     active_changes = (
         plan_h.get("active_changes", 0) if isinstance(plan_h, dict) else 0
     )
@@ -648,13 +668,13 @@ def _decision_tree(
             "high",
         )
 
-    # Paths 6-9: worktree + git state (only reached when plan-handoff
+    # Paths 7-10: worktree + git state (only reached when plan-handoff
     # says active_changes > 0; we still check worktree state because
     # handoff may be stale).
     worktrees = _list_worktrees(project_root)
     openspec_wts = [w for w in worktrees if w.get("is_openspec")]
 
-    # Path 6: worktree with incomplete tasks -> guide-ship
+    # Path 7: worktree with incomplete tasks -> guide-ship
     for wt in openspec_wts:
         wt_path = wt.get("path")
         if wt_path and _worktree_has_incomplete_tasks(wt_path):
@@ -664,7 +684,7 @@ def _decision_tree(
                 "medium",
             )
 
-    # Path 7 / 8: detached openspec worktrees (with or without complete tasks)
+    # Path 8 / 9: detached openspec worktrees (with or without complete tasks)
     if openspec_wts:
         return (
             "guide-ship",
@@ -672,11 +692,11 @@ def _decision_tree(
             "medium",
         )
 
-    # Path 9: committed change in HEAD, no worktree -> guide-ship
+    # Path 10: committed change in HEAD, no worktree -> guide-ship
     if _committed_change_in_head(project_root):
         return ("guide-ship", "有已 commit 的 change 待建 worktree", "medium")
 
-    # Path 5 (default for this branch): plan-handoff exists,
+    # Path 6 (default for this branch): plan-handoff exists,
     # active_changes > 0, no worktree activity -> guide-ship
     return ("guide-ship", "变更生成已完成 -> 进入变更执行", "high")
 
@@ -810,6 +830,7 @@ def _fallback_recommendation() -> WorkflowRecommendation:
         confidence="low",
         phase_status=(
             PhaseStatus("arch", False, "unknown"),
+            PhaseStatus("design", False, "unknown"),
             PhaseStatus("plan", False, "unknown"),
             PhaseStatus("ship", False, "unknown"),
         ),
@@ -819,6 +840,7 @@ def _fallback_recommendation() -> WorkflowRecommendation:
         all_options=(
             MenuOption("guide-ship", "guide-ship", "继续工作流", "guide-ship", "recommended"),
             MenuOption("guide-arch", "架构定义", "setup → ADR → roadmap → arch-done", "guide-arch", "stages"),
+            MenuOption("guide-design", "设计阶段", "提案创建 / 审查 / 批准 / design-done", "guide-design", "stages"),
             MenuOption("guide-plan", "变更生成", "scan → propose → deps → plan-done", "guide-plan", "stages"),
             MenuOption("add-improve", "add-improve", "创建新改进提案 — improvements/<name>.md + 注册索引", "add-improve", "utilities"),
         ),

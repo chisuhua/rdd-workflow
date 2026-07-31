@@ -678,7 +678,8 @@ ls roadmap.md
 - **ADR-0007** — 门控机制（arch-done 双重门控的设计依据）
 - **ADR-0010** — 多会话管理（arch 阶段的人工介入设计）
 - **ADR-0011** — 阶段步骤化执行模型（arch 阶段的子阶段设计）
-- `skills/guide-spec.md` — v1.x spec 端状态机（本技能的 source）
+- `skills/guide-design.md` — v2.1 design 端状态机（后续阶段）
+- `skills/guide-plan.md` — plan 端状态机（后续阶段，由 design-done 触发）
 - `skills/guide-ship.md` — ship 端状态机（参考模式）
 - `skills/roadmap.md` — 路线图管理技能（被 arch Phase 4 调用）
 - `docs/adr/ADR-0000-template.md` — ADR 模板（被 arch Phase 2 使用）

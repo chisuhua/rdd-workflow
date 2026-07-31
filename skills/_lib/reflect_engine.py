@@ -52,8 +52,8 @@ class ReflectEngine:
     """
 
     def __init__(self, phase, project_root=None, dry_run=False, timeout=10.0):
-        if phase not in ("arch", "plan", "ship"):
-            raise ValueError(f"Invalid phase: {phase}. Must be arch, plan, or ship.")
+        if phase not in ("arch", "design", "plan", "ship"):
+            raise ValueError(f"Invalid phase: {phase}. Must be arch, design, plan, or ship.")
         self.phase = phase
         self.project_root = project_root or self._find_project_root()
         self.dry_run = dry_run
@@ -94,7 +94,7 @@ class ReflectEngine:
 
     def draft_issue(self, result):
         """Create an IssueDraft from a ReflectResult."""
-        phase_display = {"arch": "Architecture (arch)", "plan": "Planning (plan)", "ship": "Ship (ship)"}
+        phase_display = {"arch": "Architecture (arch)", "design": "Design (design)", "plan": "Planning (plan)", "ship": "Ship (ship)"}
         title = f"[reflect] {self.phase}: {result.fingerprint}"
         body = f"""## Reflection Analysis
 

@@ -2,8 +2,8 @@
 
 Covers:
 - Dataclass shape (frozen, fields)
-- All 13 decision paths (parametrized + individual)
-- Phase status summary (3 phases with correct detail strings)
+- All 14 decision paths (parametrized + individual)
+- Phase status summary (4 phases with correct detail strings)
 - unblocked_changes filtering and sorting
 - rddf-session active_session / orphaned_sessions
 - Never-raises contract (corrupt JSON, missing state dir, exceptions)
@@ -60,6 +60,17 @@ def _write_arch_handoff(project_root, *, adr_count=5, roadmap_exists=True):
             "roadmap_path": {"found": True, "created": False, "candidates_tried": 1},
             "architecture_dir": {"found": True, "created": False, "candidates_tried": 1},
         },
+    }))
+
+
+def _write_design_handoff(project_root, *, proposals_reviewed=1):
+    """Write a valid .design-handoff.json."""
+    path = Path(project_root) / ".rddf" / "state" / ".design-handoff.json"
+    path.write_text(json.dumps({
+        "version": 1,
+        "design_complete_at": "2026-01-01T12:00:00+00:00",
+        "proposals_reviewed": proposals_reviewed,
+        "all_proposals_have_decision": True,
     }))
 
 
@@ -184,21 +195,36 @@ class TestPathArchIncomplete:
 
 
 # ---------------------------------------------------------------------------
-# Path 3: arch done, plan-handoff missing -> guide-plan
+# Path 3: arch done, design-handoff missing -> guide-design
 # ---------------------------------------------------------------------------
 
 
-class TestPathArchDonePlanMissing:
-    def test_arch_done_plan_missing_recommends_guide_plan(self, project_root):
-        """Path 3: arch-handoff ok, no plan-handoff -> guide-plan."""
+class TestPathArchDoneDesignMissing:
+    def test_arch_done_design_missing_recommends_guide_design(self, project_root):
+        """Path 3: arch-handoff ok, no design-handoff -> guide-design."""
         _write_arch_handoff(project_root, adr_count=5)
+        r = synthesize(project_root)
+        assert r.suggested_action == "guide-design"
+        assert r.confidence == "high"
+
+
+# ---------------------------------------------------------------------------
+# Path 4: arch done, design done, plan-handoff missing -> guide-plan
+# ---------------------------------------------------------------------------
+
+
+class TestPathArchDoneDesignDonePlanMissing:
+    def test_arch_done_plan_missing_recommends_guide_plan(self, project_root):
+        """Path 4: arch-handoff + design-handoff ok, no plan-handoff -> guide-plan."""
+        _write_arch_handoff(project_root, adr_count=5)
+        _write_design_handoff(project_root, proposals_reviewed=3)
         r = synthesize(project_root)
         assert r.suggested_action == "guide-plan"
         assert r.confidence == "high"
 
 
 # ---------------------------------------------------------------------------
-# Path 4: plan-handoff exists, active_changes=0 -> guide-ship (cleanup)
+# Path 5: plan-handoff exists, active_changes=0 -> guide-ship (cleanup)
 # ---------------------------------------------------------------------------
 
 
@@ -206,8 +232,9 @@ class TestPathPlanHandoffZeroActive:
     def test_plan_handoff_zero_active_recommends_guide_ship_cleanup(
         self, project_root
     ):
-        """Path 4: plan-handoff exists, active_changes=0 -> guide-ship."""
+        """Path 5: plan-handoff exists, active_changes=0 -> guide-ship."""
         _write_arch_handoff(project_root, adr_count=5)
+        _write_design_handoff(project_root, proposals_reviewed=3)
         _write_plan_handoff(project_root, active_changes=0)
         r = synthesize(project_root)
         assert r.suggested_action == "guide-ship"
@@ -215,7 +242,7 @@ class TestPathPlanHandoffZeroActive:
 
 
 # ---------------------------------------------------------------------------
-# Path 5: plan-handoff exists, active_changes>0 -> guide-ship
+# Path 6: plan-handoff exists, active_changes>0 -> guide-ship
 # ---------------------------------------------------------------------------
 
 
@@ -223,10 +250,11 @@ class TestPathPlanHandoffActiveChanges:
     def test_plan_handoff_active_changes_recommends_guide_ship(
         self, project_root, monkeypatch
     ):
-        """Path 5: plan-handoff exists, active_changes>0, no worktree -> guide-ship."""
+        """Path 6: plan-handoff exists, active_changes>0, no worktree -> guide-ship."""
         _write_arch_handoff(project_root, adr_count=5)
+        _write_design_handoff(project_root, proposals_reviewed=3)
         _write_plan_handoff(project_root, active_changes=3)
-        # Mock no worktrees, no committed change -> path 5 default
+        # Mock no worktrees, no committed change -> path 6 default
         from skills._lib import workflow_synthesizer as ws
         monkeypatch.setattr(ws, "_list_worktrees", lambda pr: [])
         monkeypatch.setattr(ws, "_committed_change_in_head", lambda pr: False)
@@ -236,7 +264,7 @@ class TestPathPlanHandoffActiveChanges:
 
 
 # ---------------------------------------------------------------------------
-# Path 6: worktree with incomplete tasks -> guide-ship
+# Path 7: worktree with incomplete tasks -> guide-ship
 # ---------------------------------------------------------------------------
 
 
@@ -244,8 +272,9 @@ class TestPathWorktreeInProgress:
     def test_worktree_incomplete_tasks_recommends_guide_ship(
         self, project_root, monkeypatch
     ):
-        """Path 6: worktree has incomplete tasks -> guide-ship (medium)."""
+        """Path 7: worktree has incomplete tasks -> guide-ship (medium)."""
         _write_arch_handoff(project_root, adr_count=5)
+        _write_design_handoff(project_root, proposals_reviewed=3)
         _write_plan_handoff(project_root, active_changes=1)
         from skills._lib import workflow_synthesizer as ws
         monkeypatch.setattr(ws, "_list_worktrees", lambda pr: [
@@ -262,7 +291,7 @@ class TestPathWorktreeInProgress:
 
 
 # ---------------------------------------------------------------------------
-# Path 7: detached openspec worktrees -> guide-ship
+# Path 8: detached openspec worktrees -> guide-ship
 # ---------------------------------------------------------------------------
 
 
@@ -270,8 +299,9 @@ class TestPathDetachedWorktrees:
     def test_detached_worktrees_recommends_guide_ship(
         self, project_root, monkeypatch
     ):
-        """Path 7: detached openspec worktrees -> guide-ship (medium)."""
+        """Path 8: detached openspec worktrees -> guide-ship (medium)."""
         _write_arch_handoff(project_root, adr_count=5)
+        _write_design_handoff(project_root, proposals_reviewed=3)
         _write_plan_handoff(project_root, active_changes=1)
         from skills._lib import workflow_synthesizer as ws
         monkeypatch.setattr(ws, "_list_worktrees", lambda pr: [
@@ -290,8 +320,9 @@ class TestPathDetachedWorktrees:
     def test_multiple_detached_worktrees_count_in_reason(
         self, project_root, monkeypatch
     ):
-        """Path 7: reason string MUST include the worktree count."""
+        """Path 8: reason string MUST include the worktree count."""
         _write_arch_handoff(project_root, adr_count=5)
+        _write_design_handoff(project_root, proposals_reviewed=3)
         _write_plan_handoff(project_root, active_changes=1)
         from skills._lib import workflow_synthesizer as ws
         monkeypatch.setattr(ws, "_list_worktrees", lambda pr: [
@@ -305,7 +336,7 @@ class TestPathDetachedWorktrees:
 
 
 # ---------------------------------------------------------------------------
-# Path 9: committed change in HEAD, no worktree -> guide-ship
+# Path 10: committed change in HEAD, no worktree -> guide-ship
 # ---------------------------------------------------------------------------
 
 
@@ -313,8 +344,9 @@ class TestPathCommittedChangeInHead:
     def test_committed_change_recommends_guide_ship(
         self, project_root, monkeypatch
     ):
-        """Path 9: committed change in HEAD, no worktree -> guide-ship (medium)."""
+        """Path 10: committed change in HEAD, no worktree -> guide-ship (medium)."""
         _write_arch_handoff(project_root, adr_count=5)
+        _write_design_handoff(project_root, proposals_reviewed=3)
         _write_plan_handoff(project_root, active_changes=1)
         from skills._lib import workflow_synthesizer as ws
         monkeypatch.setattr(ws, "_list_worktrees", lambda pr: [])
@@ -325,19 +357,20 @@ class TestPathCommittedChangeInHead:
 
 
 # ---------------------------------------------------------------------------
-# Phase status summary (3 phases)
+# Phase status summary (4 phases)
 # ---------------------------------------------------------------------------
 
 
 class TestPhaseStatusSummary:
-    def test_phase_status_has_3_entries(self, project_root):
-        """phase_status MUST be a tuple of 3 entries: arch, plan, ship."""
+    def test_phase_status_has_4_entries(self, project_root):
+        """phase_status MUST be a tuple of 4 entries: arch, design, plan, ship."""
         _write_arch_handoff(project_root, adr_count=5)
+        _write_design_handoff(project_root, proposals_reviewed=3)
         _write_plan_handoff(project_root, active_changes=2)
         r = synthesize(project_root)
-        assert len(r.phase_status) == 3
+        assert len(r.phase_status) == 4
         phases = [ps.phase for ps in r.phase_status]
-        assert phases == ["arch", "plan", "ship"]
+        assert phases == ["arch", "design", "plan", "ship"]
 
     def test_phase_status_arch_done_detail(self, project_root):
         """phase_status arch entry MUST show adr_count in detail when done."""
@@ -355,12 +388,32 @@ class TestPhaseStatusSummary:
         assert arch_ps.done is False
         assert "no handoff" in arch_ps.detail
 
+    def test_phase_status_design_done_detail(self, project_root):
+        """phase_status design entry MUST show proposals_reviewed in detail when done."""
+        _write_arch_handoff(project_root, adr_count=5)
+        _write_design_handoff(project_root, proposals_reviewed=3)
+        r = synthesize(project_root)
+        design_ps = r.phase_status[1]
+        assert design_ps.phase == "design"
+        assert design_ps.done is True
+        assert "proposals_reviewed=3" in design_ps.detail
+
+    def test_phase_status_design_missing_detail(self, project_root):
+        """phase_status design entry MUST show 'no handoff' when missing."""
+        _write_arch_handoff(project_root, adr_count=5)
+        r = synthesize(project_root)
+        design_ps = r.phase_status[1]
+        assert design_ps.phase == "design"
+        assert design_ps.done is False
+        assert "no handoff" in design_ps.detail
+
     def test_phase_status_plan_done_detail(self, project_root):
         """phase_status plan entry MUST show active_changes in detail when done."""
         _write_arch_handoff(project_root, adr_count=5)
+        _write_design_handoff(project_root, proposals_reviewed=3)
         _write_plan_handoff(project_root, active_changes=4)
         r = synthesize(project_root)
-        plan_ps = r.phase_status[1]
+        plan_ps = r.phase_status[2]
         assert plan_ps.phase == "plan"
         assert plan_ps.done is True
         assert "active_changes=4" in plan_ps.detail
@@ -373,7 +426,7 @@ class TestPhaseStatusSummary:
             {"name": "c2", "status": "proposed", "added_at": "x"},
         ])
         r = synthesize(project_root)
-        ship_ps = r.phase_status[2]
+        ship_ps = r.phase_status[3]
         assert ship_ps.phase == "ship"
         assert "changes=2" in ship_ps.detail
         assert "archived=1" in ship_ps.detail
@@ -382,7 +435,7 @@ class TestPhaseStatusSummary:
         """phase_status ship entry defaults to 'no worktree' when no iteration."""
         _write_arch_handoff(project_root, adr_count=5)
         r = synthesize(project_root)
-        ship_ps = r.phase_status[2]
+        ship_ps = r.phase_status[3]
         assert "no worktree" in ship_ps.detail
 
 
@@ -577,7 +630,7 @@ class TestNeverRaises:
         sessions_path.write_text("{not valid json")
         r = synthesize(project_root)
         # state_reader returns None for corrupt JSON, so synthesizer proceeds
-        assert r.suggested_action in ("guide-plan", "guide-ship", "guide-arch")
+        assert r.suggested_action in ("guide-plan", "guide-ship", "guide-arch", "guide-design")
 
     def test_corrupt_iteration_json_does_not_raise(self, project_root):
         """synthesize MUST NOT raise on corrupt iteration.json."""
@@ -587,7 +640,7 @@ class TestNeverRaises:
         )
         iteration_path.write_text("{broken json")
         r = synthesize(project_root)
-        assert r.suggested_action in ("guide-plan", "guide-ship", "guide-arch")
+        assert r.suggested_action in ("guide-plan", "guide-ship", "guide-arch", "guide-design")
 
     def test_missing_state_dir_returns_recommendation(self, tmp_path):
         """synthesize MUST NOT raise when .rddf/state/ doesn't exist."""
@@ -614,10 +667,10 @@ class TestNeverRaises:
         assert r.confidence == "low"
         assert "fallback" in r.reason.lower()
 
-    def test_fallback_recommendation_has_3_phase_status_entries(
+    def test_fallback_recommendation_has_4_phase_status_entries(
         self, project_root, monkeypatch
     ):
-        """Fallback recommendation MUST include 3 phase_status entries."""
+        """Fallback recommendation MUST include 4 phase_status entries."""
         _write_arch_handoff(project_root, adr_count=5)
         from skills._lib import workflow_synthesizer as ws
 
@@ -626,9 +679,9 @@ class TestNeverRaises:
 
         monkeypatch.setattr(ws.state_reader, "read_arch_handoff", boom)
         r = synthesize(project_root)
-        assert len(r.phase_status) == 3
+        assert len(r.phase_status) == 4
         phases = [ps.phase for ps in r.phase_status]
-        assert phases == ["arch", "plan", "ship"]
+        assert phases == ["arch", "design", "plan", "ship"]
 
 
 # ---------------------------------------------------------------------------
@@ -703,38 +756,42 @@ class TestDecisionTreeAllPaths:
     """Parametrized coverage of all decision paths."""
 
     @pytest.mark.parametrize(
-        "scenario,arch_adr_count,has_plan_handoff,plan_active_changes,"
-        "has_worktree,worktree_incomplete,has_committed_change,"
-        "expected_action,expected_confidence",
+        "scenario,arch_adr_count,has_design_handoff,has_plan_handoff,"
+        "plan_active_changes,has_worktree,worktree_incomplete,"
+        "has_committed_change,expected_action,expected_confidence",
         [
             # Path 1: no arch-handoff
-            ("p1-no-arch", None, False, 0, False, False, False, "guide-arch", "high"),
+            ("p1-no-arch", None, False, False, 0, False, False, False, "guide-arch", "high"),
             # Path 2: arch-handoff exists, adr_count < 1
-            ("p2-adr-zero", 0, False, 0, False, False, False, "guide-arch", "high"),
-            # Path 3: arch done, no plan-handoff
-            ("p3-arch-done", 5, False, 0, False, False, False, "guide-plan", "high"),
-            # Path 4: plan-handoff exists, 0 active
-            ("p4-plan-zero", 5, True, 0, False, False, False, "guide-ship", "high"),
-            # Path 5: plan-handoff, active>0, no worktree
-            ("p5-plan-active", 5, True, 1, False, False, False, "guide-ship", "high"),
-            # Path 6: worktree with incomplete tasks
-            ("p6-wt-incomplete", 5, True, 1, True, True, False, "guide-ship", "medium"),
-            # Path 7: detached worktrees (no incomplete)
-            ("p7-detached-wt", 5, True, 1, True, False, False, "guide-ship", "medium"),
-            # Path 9: committed change, no worktree
-            ("p9-committed", 5, True, 1, False, False, True, "guide-ship", "medium"),
+            ("p2-adr-zero", 0, False, False, 0, False, False, False, "guide-arch", "high"),
+            # Path 3: arch done, no design-handoff
+            ("p3-no-design", 5, False, False, 0, False, False, False, "guide-design", "high"),
+            # Path 4: arch + design done, no plan-handoff
+            ("p4-no-plan", 5, True, False, 0, False, False, False, "guide-plan", "high"),
+            # Path 5: plan-handoff exists, 0 active
+            ("p5-plan-zero", 5, True, True, 0, False, False, False, "guide-ship", "high"),
+            # Path 6: plan-handoff, active>0, no worktree
+            ("p6-plan-active", 5, True, True, 1, False, False, False, "guide-ship", "high"),
+            # Path 7: worktree with incomplete tasks
+            ("p7-wt-incomplete", 5, True, True, 1, True, True, False, "guide-ship", "medium"),
+            # Path 8: detached worktrees (no incomplete)
+            ("p8-detached-wt", 5, True, True, 1, True, False, False, "guide-ship", "medium"),
+            # Path 10: committed change, no worktree
+            ("p10-committed", 5, True, True, 1, False, False, True, "guide-ship", "medium"),
         ],
     )
     def test_decision_path(
         self, project_root, monkeypatch, scenario, arch_adr_count,
-        has_plan_handoff, plan_active_changes, has_worktree,
-        worktree_incomplete, has_committed_change,
+        has_design_handoff, has_plan_handoff, plan_active_changes,
+        has_worktree, worktree_incomplete, has_committed_change,
         expected_action, expected_confidence,
     ):
         from skills._lib import workflow_synthesizer as ws
 
         if arch_adr_count is not None:
             _write_arch_handoff(project_root, adr_count=arch_adr_count)
+        if has_design_handoff:
+            _write_design_handoff(project_root, proposals_reviewed=3)
         if has_plan_handoff:
             _write_plan_handoff(
                 project_root, active_changes=plan_active_changes
