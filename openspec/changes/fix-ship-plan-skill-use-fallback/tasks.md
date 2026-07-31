@@ -11,5 +11,5 @@
 
 ## 3. 测试
 
-- [ ] 3.1 新增 `tests/integration/test_ship_plan_extraction.bats` 降级场景用例：bash 子进程（无 skill_use）调用 run_ship_phase1，断言输出降级指引且退出码 0
-- [ ] 3.2 运行 `bats tests/integration/test_ship_plan_extraction.bats` 全部通过（含新增降级用例）
+- [x] 3.1 新增 `tests/integration/test_ship_plan_extraction.bats` 降级场景用例：bash 子进程（无 skill_use）调用 run_ship_phase1，断言输出降级指引且退出码 0
+- [x] 3.2 运行 `bats tests/integration/test_ship_plan_extraction.bats` 全部通过（含新增降级用例）
