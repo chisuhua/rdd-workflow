@@ -103,3 +103,22 @@ REPLACED_RANGE="144,348p"
   block_lines=$(awk 'NR>=32 && NR<=417 && /^```bash$/{n++; next} NR>=32 && NR<=417 && /^```$/{if(n>0){exit}} NR>=32 && NR<=417 && n{print}' "$REPO_ROOT/skills/guide-ship/SKILL.md" | wc -l)
   [ "$block_lines" -le 30 ]
 }
+
+@test "generate_implementation_plan: degrades gracefully without skill_use" {
+  TEST_REPO=$(mktemp -d)
+  cd "$TEST_REPO"
+  ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
+  mkdir -p openspec/changes/c1
+  echo "# design" > openspec/changes/c1/design.md
+  echo "# tasks" > openspec/changes/c1/tasks.md
+  git init -q .
+  git add -A
+  git -c user.email=t@t -c user.name=t commit -qm init
+  source "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
+  # bash 子进程无 skill_use 命令 → 应输出降级指引而非 "技能未找到"
+  run generate_implementation_plan "$TEST_REPO" "c1" "lightweight"
+  [ "$status" -eq 0 ]
+  # 输出必须包含降级指引（而非 "❌ 实施计划生成失败"）
+  [[ "$output" == *"skill_use"* ]]
+  rm -rf "$TEST_REPO"
+}
