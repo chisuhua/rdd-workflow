@@ -15,6 +15,6 @@
 
 ## 4. 优雅降级验证
 
-- [ ] 4.1 验证 `skill_root.sh` 缺失时 hook 打印 warning 且不阻塞工作流
-- [ ] 4.2 运行 `skill_use("guide-plan")` 后确认 `sessions.json` 出现 `kind=stage_plan` 且 parent 指向 stage_design
-- [ ] 4.3 运行 `python3 -m pytest tests/unit/ -q` 全量回归，确认无破坏
+- [x] 4.1 验证 `skill_root.sh` 缺失时 hook 打印 warning 且不阻塞工作流
+- [x] 4.2 运行 `skill_use("guide-plan")` 后确认 `sessions.json` 出现 `kind=stage_plan` 且 parent 指向 stage_design
+- [x] 4.3 运行 `python3 -m pytest tests/unit/ -q` 全量回归，确认无破坏
