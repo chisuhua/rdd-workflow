@@ -269,6 +269,14 @@ generate_implementation_plan() {
     return 0
   fi
 
+  if ! command -v skill_use >/dev/null 2>&1; then
+    echo "⚠️  当前 bash 环境无 skill_use 命令（AI 编排子进程）" >&2
+    echo "   ▶ 计划生成需由编排者调用 skill_use(\"rdd-workflow-writing-plans\") 完成" >&2
+    echo "   ▶ 请确保 .rddf/plans/$change_name.md 存在后再进入 execute 阶段" >&2
+    # 降级不返回非零：worktree 创建流程不应中断（返回可辨识状态码 0）
+    return 0
+  fi
+
   if ! skill_use "rdd-workflow-writing-plans" 2>/dev/null; then
     echo "❌ 实施计划生成失败" >&2
     echo "   rdd-workflow-writing-plans 技能未找到,检查安装是否完整" >&2

@@ -128,6 +128,8 @@ source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/de
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_plan.sh" && run_ship_phase1 "$PROJECT_ROOT" "$CHANGE_NAME"
 ```
 
+> **AI 编排环境**: 当 bash 子进程无 `skill_use` 命令时（AI 编排者调用辅助脚本），计划生成由编排者完成——编排者需按 `rdd-workflow-writing-plans` 规范生成 `.rddf/plans/<change_name>.md`。`ship_plan.sh` 会降级输出指引而非报错中断。
+
 **v2.1: wave scheduler entry check**（入口扫描可推进的 changes）：
 
 ```bash

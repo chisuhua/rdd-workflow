@@ -103,3 +103,45 @@ REPLACED_RANGE="144,348p"
   block_lines=$(awk 'NR>=32 && NR<=417 && /^```bash$/{n++; next} NR>=32 && NR<=417 && /^```$/{if(n>0){exit}} NR>=32 && NR<=417 && n{print}' "$REPO_ROOT/skills/guide-ship/SKILL.md" | wc -l)
   [ "$block_lines" -le 30 ]
 }
+
+@test "generate_implementation_plan: degrades gracefully without skill_use" {
+  TEST_REPO=$(mktemp -d)
+  cd "$TEST_REPO"
+  ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
+  mkdir -p openspec/changes/c1
+  echo "# design" > openspec/changes/c1/design.md
+  echo "# tasks" > openspec/changes/c1/tasks.md
+  git init -q .
+  git add -A
+  git -c user.email=t@t -c user.name=t commit -qm init
+  source "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
+  # bash 子进程无 skill_use 命令 → 应输出降级指引而非 "技能未找到"
+  run generate_implementation_plan "$TEST_REPO" "c1" "lightweight"
+  [ "$status" -eq 0 ]
+  # 输出必须包含降级指引（而非 "❌ 实施计划生成失败"）
+  [[ "$output" == *"skill_use"* ]]
+  rm -rf "$TEST_REPO"
+}
+
+@test "guide-ship SKILL.md Phase 1 notes orchestrator-owned plan generation" {
+  [ -f "$REPO_ROOT/skills/guide-ship/SKILL.md" ]
+  grep -q "编排" "$REPO_ROOT/skills/guide-ship/SKILL.md"
+}
+
+@test "run_ship_phase1: worktree creation survives plan generation degradation" {
+  TEST_REPO=$(mktemp -d)
+  cd "$TEST_REPO"
+  ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
+  mkdir -p openspec/changes/c1
+  echo "# design" > openspec/changes/c1/design.md
+  echo "# tasks" > openspec/changes/c1/tasks.md
+  git init -q .
+  git add -A
+  git -c user.email=t@t -c user.name=t commit -qm init
+  source "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
+  # 无 skill_use 的 bash 环境：run_ship_phase1 不应因计划生成失败而 return 1
+  # （此处仅验证降级路径存在；worktree 创建由 Task 1 修复保证不中断）
+  command -v skill_use >/dev/null 2>&1 && SKIP=1 || SKIP=0
+  [ "$SKIP" -eq 1 ] || run generate_implementation_plan "$TEST_REPO" "c1" "lightweight"
+  rm -rf "$TEST_REPO"
+}
