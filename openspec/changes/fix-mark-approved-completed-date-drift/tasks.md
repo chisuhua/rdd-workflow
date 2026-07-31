@@ -11,4 +11,4 @@
 ## 3. 测试
 
 - [x] 3.1 新增幂等日期保留测试：构造已实施区含原日期的 fixture，断言幂等调用后日期不变
-- [ ] 3.2 运行新增测试通过，`bats tests/` 与 `python3 -m pytest tests/unit/ -q` 全量回归通过
+- [x] 3.2 运行新增测试通过，`bats tests/` 与 `python3 -m pytest tests/unit/ -q` 全量回归通过
