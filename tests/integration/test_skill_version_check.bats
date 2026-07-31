@@ -1,4 +1,4 @@
-load test_helper
+load ../test_helper
 
 @test "scan-state: check_skill_versions detects stale skill files" {
   source "$PROJECT_ROOT/skills/guide/scripts/scan-state.sh"

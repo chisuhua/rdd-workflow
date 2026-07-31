@@ -1,4 +1,4 @@
-load test_helper
+load ../test_helper
 
 @test "archive-gate: blocks change with 0 completed tasks" {
   source "$PROJECT_ROOT/skills/_lib/archive.sh"

@@ -1,4 +1,4 @@
-load test_helper
+load ../test_helper
 
 @test "archive: check_incomplete_tasks detects incomplete tasks" {
   source "$PROJECT_ROOT/skills/_lib/archive.sh"

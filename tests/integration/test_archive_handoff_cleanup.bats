@@ -1,4 +1,4 @@
-load test_helper
+load ../test_helper
 
 @test "archive: cleanup_plan_handoff adds archived_at timestamp" {
   source "$PROJECT_ROOT/skills/guide-ship/scripts/ship_archive.sh"
