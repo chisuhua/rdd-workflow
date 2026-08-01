@@ -408,6 +408,7 @@ skills/*.md 行数 (累计):
 15. **`check_stale_workflow_state` 是 read-only sentinel** — 不写文件、不递归。`scan_state` 在 priority 9/10 default fallback 调用它;若函数挂死,scanner 也会挂死(历史教训:line 220 self-call bug 修复于 2026-07-15 fix-scan-state-recursion)。
 16. **manual_deps 人工依赖声明 (ADR-0022)**: `roadmap-meta.yaml` 支持 `manual_deps: [change_name]` 和 `manual_blocks: [change_name]` 字段。deps 分析时人工声明优先于静态分析 — 若 manual_deps 声明 A→B 但静态无证据，标注 "manual override"。详见 ADR-0022。
 17. **deps-driven execution mode (ADR-0024)**: 执行模式（lightweight vs worktree）在 plan 阶段的 deps 分析时就决定，并写入 `.plan-handoff.json`。`guide-ship` 的 `detect_execution_mode()` 优先读取 handoff 决策，fallback 到并行冲突检测。决策维度：文件数（≤2 → lightweight）、任务数（≤3 → lightweight）、风险关键词（refactor/migration → worktree）、文件冲突（有冲突 → worktree）。
+18. **Scanner state.sh fallback**: `skills/guide/scripts/scan-state.sh` and `guide_entry.sh` first try `$PROJECT_ROOT/skills/_lib/state.sh`, then fall back to `${HOME}/.agents/skills/_lib/state.sh`. If both are missing, a non-blocking stderr warning is printed; stdout and exit code remain unchanged. Do not add symlinks or runtime path resolution.
 
 ## 前置条件
 

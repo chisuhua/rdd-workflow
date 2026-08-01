@@ -31,6 +31,11 @@ No data migration: `.rddf/state/` content unchanged. Existing rddf-sessions, ite
 
 ## [Unreleased] — v2.1
 
+### Fixed
+
+- **Scanner fallback**: `skills/guide/scripts/scan-state.sh` and `skills/guide/scripts/guide_entry.sh` now load `skills/_lib/state.sh` from `$PROJECT_ROOT` first, then fall back to `${HOME}/.agents/skills/_lib/state.sh`, with a non-blocking stderr warning if both are missing.
+- **Orphaned session archival**: `skills/rddf-session/scripts/rddf_session_pkg/_types.py` now includes `"orphaned"` in `_TERMINAL_STATES`, so `archive_history` archives heartbeat-timeout sessions instead of leaving them in `sessions.json`.
+
 ### Added (ADR-0016: Arch Artifact Discovery Contract)
 
 - **JSON Schema**: `skills/_lib/schemas/arch_handoff_schema.json` (v1)
