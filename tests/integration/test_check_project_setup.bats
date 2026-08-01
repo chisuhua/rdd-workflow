@@ -106,3 +106,9 @@ setup() {
   [ "$output" = "safe_auto_fix" ]
   rm -f "$fixture/bigbuild/blob"
 }
+
+@test "check_project_setup: JSON schema — every issue has name/status/severity/fix_command/detail" {
+  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq '.[] | has(\"name\") and has(\"status\") and has(\"severity\") and has(\"fix_command\") and has(\"detail\")' | sort -u"
+  [ "$status" -eq 0 ]
+  [ "$output" = "true" ]
+}
