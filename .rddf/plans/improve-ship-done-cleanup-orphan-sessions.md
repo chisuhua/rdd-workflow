@@ -35,7 +35,7 @@
 - Create: `skills/_lib/sessions_count.sh`
 - Create: `tests/integration/test_ship_done_orphan_prompt.bats`
 
-- [ ] **Step 1: Write the failing helper tests**
+- [x] **Step 1: Write the failing helper tests**
 
 Create `tests/integration/test_ship_done_orphan_prompt.bats` with the file header, helpers, and three `count_orphaned_sessions` test cases (missing file, corrupt file, mixed sessions). The baseline `setup()`/`teardown()` builds a throwaway git repo at `$repo` and commits one file so that `git rev-parse --show-toplevel` resolves inside the helper.
 
@@ -108,12 +108,12 @@ teardown() {
 }
 ```
 
-- [ ] **Step 2: Run the new tests to verify they fail**
+- [x] **Step 2: Run the new tests to verify they fail**
 
 Run: `cd "$REPO_ROOT" && bats tests/integration/test_ship_done_orphan_prompt.bats --filter count_orphaned_sessions`
 Expected: 3 FAIL with `source: skills/_lib/sessions_count.sh: No such file or directory` (helper not yet created).
 
-- [ ] **Step 3: Write the helper implementation**
+- [x] **Step 3: Write the helper implementation**
 
 Create `skills/_lib/sessions_count.sh` with the `count_orphaned_sessions` function. The function uses `jq` when available, falls back to `python3 -c`, and echoes `0` on any failure (missing file, permission denied, corrupt JSON). It must stay ≤ 20 lines.
 
@@ -133,14 +133,14 @@ count_orphaned_sessions() {
 }
 ```
 
-- [ ] **Step 4: Run the helper tests to verify they pass**
+- [x] **Step 4: Run the helper tests to verify they pass**
 
 Run: `cd "$REPO_ROOT" && bats tests/integration/test_ship_done_orphan_prompt.bats --filter count_orphaned_sessions`
 Expected: 3 PASS.
 
 Also verify the line-count constraint: `wc -l skills/_lib/sessions_count.sh` → output must be ≤ 20.
 
-- [ ] **Step 5: Commit the helper**
+- [x] **Step 5: Commit the helper**
 
 ```bash
 cd "$REPO_ROOT"
@@ -156,7 +156,7 @@ git commit -m "feat(ship-done): read-only orphaned rddf-session counter"
 - Modify: `skills/guide-ship/scripts/ship_done.sh:18-46` (replace `check_remaining_work` body)
 - Modify: `tests/integration/test_ship_done_orphan_prompt.bats` (append 4 matrix tests)
 
-- [ ] **Step 1: Write the failing ship-done integration tests**
+- [x] **Step 1: Write the failing ship-done integration tests**
 
 Append the four matrix tests below to `tests/integration/test_ship_done_orphan_prompt.bats` (after the three helper tests). They cover: 3 orphans + 0 changes, 0 orphans + 0 changes (baseline), 1 orphan + 1 change (📋 还有 header), and >3 orphans with `+N more` overflow.
 
@@ -212,12 +212,12 @@ Append the four matrix tests below to `tests/integration/test_ship_done_orphan_p
 }
 ```
 
-- [ ] **Step 2: Run the new tests to verify they fail**
+- [x] **Step 2: Run the new tests to verify they fail**
 
 Run: `cd "$REPO_ROOT" && bats tests/integration/test_ship_done_orphan_prompt.bats`
 Expected: 4 new FAILs (the 3 helper tests from Task 1 still pass; the 4 matrix tests fail because `check_remaining_work` does not yet emit the orphan warning or option 5). Total status: 3 PASS / 4 FAIL.
 
-- [ ] **Step 3: Modify `check_remaining_work` to emit the orphan prompt**
+- [x] **Step 3: Modify `check_remaining_work` to emit the orphan prompt**
 
 Replace the body of `check_remaining_work` in `skills/guide-ship/scripts/ship_done.sh` (lines 18-46) with the implementation below. The new body: (1) sources the helper via `skill_root.sh::resolve_rdd_lib_dir`, (2) counts `REMAINING`, `REMAINING_WT`, and `ORPHANS`, (3) prints the same dual-variant header as before, (4) when `ORPHANS > 0` inserts a warning line with the first three IDs (or `+N more` overflow) plus a hint to use `rddf-session` cleanup, and (5) appends option 5 only when `ORPHANS > 0`. The file must stay ≤ 30 lines.
 
@@ -264,7 +264,7 @@ Also update the file-level comment header to document the new behavior. Replace 
 
 Verify the line-count constraint: `wc -l skills/guide-ship/scripts/ship_done.sh` → output must be ≤ 30.
 
-- [ ] **Step 4: Run the integration tests to verify they pass**
+- [x] **Step 4: Run the integration tests to verify they pass**
 
 Run: `cd "$REPO_ROOT" && bats tests/integration/test_ship_done_orphan_prompt.bats`
 Expected: 7 PASS (3 helper + 4 matrix).
@@ -272,7 +272,7 @@ Expected: 7 PASS (3 helper + 4 matrix).
 Then run the existing regression suite to confirm the baseline 4-option layout is untouched: `cd "$REPO_ROOT" && bats tests/integration/test_ship_done_semantics.bats`
 Expected: 2 PASS (the existing `test_ship_done_semantics.bats` is the regression lock for the old 4-option menu).
 
-- [ ] **Step 5: Commit the ship-done integration**
+- [x] **Step 5: Commit the ship-done integration**
 
 ```bash
 cd "$REPO_ROOT"
@@ -287,7 +287,7 @@ git commit -m "feat(ship-done): conditional orphan cleanup prompt in Phase 5 men
 **Files:**
 - Modify: `skills/guide-ship/SKILL.md` (insert one paragraph after line 614, before the `**输入处理**` line at 616)
 
-- [ ] **Step 1: Add the documentation paragraph**
+- [x] **Step 1: Add the documentation paragraph**
 
 In `skills/guide-ship/SKILL.md`, insert the following one-paragraph block immediately after the closing ` ``` ` of the `**Loop check:**` code block (line 614) and before the `**输入处理**：` heading (line 616):
 
@@ -295,7 +295,7 @@ In `skills/guide-ship/SKILL.md`, insert the following one-paragraph block immedi
 **Orphaned rddf-sessions prompt**: When `.rddf/state/sessions.json` contains orphaned sessions, `check_remaining_work` prints the first three IDs (with `+N more` if there are more) and adds option 5 to the ship-done menu. Choosing option 5 launches the rddf-session cleanup skill; no automatic cleanup occurs.
 ```
 
-- [ ] **Step 2: Run the full ship-done bats suite**
+- [x] **Step 2: Run the full ship-done bats suite**
 
 Run: `cd "$REPO_ROOT" && bats tests/integration/test_ship_done_*.bats`
 Expected: 9 PASS (7 from `test_ship_done_orphan_prompt.bats` + 2 from `test_ship_done_semantics.bats`).
@@ -303,14 +303,14 @@ Expected: 9 PASS (7 from `test_ship_done_orphan_prompt.bats` + 2 from `test_ship
 Verify the documentation paragraph is present: `grep -c "orphaned rddf-sessions" skills/guide-ship/SKILL.md` → output must be `1`.
 Verify the line-count constraint on the production code: `wc -l skills/guide-ship/scripts/ship_done.sh skills/_lib/sessions_count.sh | tail -1` → the sum line must be ≤ 50 (per spec). Each individual file must be ≤ 30 and ≤ 20 respectively.
 
-- [ ] **Step 3: Run strict OpenSpec validation**
+- [x] **Step 3: Run strict OpenSpec validation**
 
 Run: `cd "$REPO_ROOT" && openspec validate --type change improve-ship-done-cleanup-orphan-sessions --strict --json`
 Expected: JSON output with `"valid": true` for the change.
 
 If the JSON parsing fails, the literal string `valid=true` must appear in stdout (the validation script may print a non-JSON summary on success in some environments).
 
-- [ ] **Step 4: Commit the documentation update**
+- [x] **Step 4: Commit the documentation update**
 
 ```bash
 cd "$REPO_ROOT"
