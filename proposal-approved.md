@@ -16,6 +16,14 @@
 
 
 
+| [check-project-setup](improvements/check-project-setup.md) | P1 | 2026-08-01 | guide-arch |
+
+| [fix-scanner-fallback-and-orphan-archival](improvements/fix-scanner-fallback-and-orphan-archival.md) | P1 | 2026-08-01 | guide-arch |
+
+| [fix-wt-scanner-strip-bug-and-untracked-coverage](improvements/fix-wt-scanner-strip-bug-and-untracked-coverage.md) | P1 | 2026-08-01 | guide-arch |
+
+| [improve-ship-done-cleanup-orphan-sessions](improvements/improve-ship-done-cleanup-orphan-sessions.md) | P2 | 2026-08-01 | guide-arch |
+
 ## 已实施
 | [fix-mark-approved-completed-date-drift](improvements/fix-mark-approved-completed-date-drift.md) | P2 | 2026-08-01 |
 | [fix-ship-plan-skill-use-fallback](improvements/fix-ship-plan-skill-use-fallback.md) | P1 | 2026-08-01 |
