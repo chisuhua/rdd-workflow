@@ -10,5 +10,7 @@
 |------|--------|------|----------|------|
 | [check-project-setup](improvements/check-project-setup.md) | P1 | 用户反馈 — 启动无 gitignore 知识门槛 + 硬/软门控不对称 | 2026-07-31 | 待讨论 |
 | [fix-scanner-fallback-and-orphan-archival](improvements/fix-scanner-fallback-and-orphan-archival.md) | P1 | HydraForge 案例 2026-07-31 — 消费方项目 scanner 静默失败 + rddf-session 孤儿归档残留 | 2026-08-01 | 待讨论 |
+| [fix-wt-scanner-strip-bug-and-untracked-coverage](improvements/fix-wt-scanner-strip-bug-and-untracked-coverage.md) | P1 | session 2026-08-01 — `.strip()` before split 吞掉状态首字符 + 小型 untracked 文件未上报 | 2026-08-01 | 待讨论 |
+| [improve-ship-done-cleanup-orphan-sessions](improvements/improve-ship-done-cleanup-orphan-sessions.md) | P2 | session 2026-08-01 — ship-done 菜单未提示 orphaned sessions 清理 | 2026-08-01 | 待讨论 |
 
 
