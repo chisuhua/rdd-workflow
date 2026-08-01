@@ -8,5 +8,7 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
+| [check-project-setup](improvements/check-project-setup.md) | P1 | 用户反馈 — 启动无 gitignore 知识门槛 + 硬/软门控不对称 | 2026-07-31 | 待讨论 |
+| [fix-scanner-fallback-and-orphan-archival](improvements/fix-scanner-fallback-and-orphan-archival.md) | P1 | HydraForge 案例 2026-07-31 — 消费方项目 scanner 静默失败 + rddf-session 孤儿归档残留 | 2026-08-01 | 待讨论 |
 
 
