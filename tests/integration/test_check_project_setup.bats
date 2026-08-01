@@ -81,3 +81,15 @@ setup() {
   [ "$status" -eq 0 ]
   [ "$output" = "fail" ]
 }
+
+@test "check_project_setup: no gitignore → rddf_state_ignored fail + suggested creation command" {
+  local fixture="$BATS_TEST_TMPDIR/no-gitignore"
+  mkdir -p "$fixture" && (cd "$fixture" && git init -q && \
+    git -c user.email=t@t -c user.name=t commit -q --allow-empty -m init)
+  rm -f "$fixture/.gitignore"
+  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$fixture' 2>/dev/null | jq '.[] | select(.name==\"rddf_state_ignored\") | {status, fix_command}'"
+  [ "$status" -eq 0 ]
+  [ "$(echo "$output" | jq -r .status)" = "fail" ]
+  [[ "$(echo "$output" | jq -r .fix_command)" == *"echo"* ]]
+  [[ "$(echo "$output" | jq -r .fix_command)" == *".gitignore"* ]]
+}
