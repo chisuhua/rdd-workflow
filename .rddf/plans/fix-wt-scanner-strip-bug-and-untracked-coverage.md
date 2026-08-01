@@ -396,7 +396,7 @@ git commit -m "fix(scanner): report untracked files as info-only and keep large 
 - Create: `tests/integration/test_guide_entry_wt_issues.bats`
 - Create: `tests/integration/fixtures/guide_entry_clean.json`
 
-- [ ] **Step 3.1: Write the bats integration test (failing on missing fixture)**
+- [x] **Step 3.1: Write the bats integration test (failing on missing fixture)**
 
 Create `tests/integration/test_guide_entry_wt_issues.bats` with the 2 cases from tasks.md §3.1 (`guide_entry --json: clean tree produces identical output`, `guide_entry --json: untracked improvements file is info-only`):
 
@@ -429,7 +429,7 @@ load ../test_helper
 }
 ```
 
-- [ ] **Step 3.2: Verify the bats file fails on the missing fixture (red)**
+- [x] **Step 3.2: Verify the bats file fails on the missing fixture (red)**
 
 ```bash
 cd /workspace/project/rdd-workflow
@@ -438,7 +438,7 @@ bats tests/integration/test_guide_entry_wt_issues.bats
 
 Expected before the snapshot exists: 1 FAIL on the clean-tree case (fixture missing) and the untracked case may also fail until Tasks 1-2 are in place. This step only proves the test file is wired correctly and reaches the fixture read.
 
-- [ ] **Step 3.3: Create the baseline snapshot for the clean-tree test**
+- [x] **Step 3.3: Create the baseline snapshot for the clean-tree test**
 
 ```bash
 cd /workspace/project/rdd-workflow
@@ -446,7 +446,7 @@ mkdir -p tests/integration/fixtures
 SKILL_DIR=skills/guide bash -c 'source skills/guide/scripts/guide_entry.sh && guide_entry --json' > tests/integration/fixtures/guide_entry_clean.json
 ```
 
-- [ ] **Step 3.4: Verify the fixture exists and is non-empty**
+- [x] **Step 3.4: Verify the fixture exists and is non-empty**
 
 ```bash
 test -s /workspace/project/rdd-workflow/tests/integration/fixtures/guide_entry_clean.json && echo OK
@@ -454,7 +454,7 @@ test -s /workspace/project/rdd-workflow/tests/integration/fixtures/guide_entry_c
 
 Expected: prints `OK`.
 
-- [ ] **Step 3.5: Re-run the bats integration test and confirm both cases pass**
+- [x] **Step 3.5: Re-run the bats integration test and confirm both cases pass**
 
 ```bash
 cd /workspace/project/rdd-workflow
@@ -463,7 +463,7 @@ bats tests/integration/test_guide_entry_wt_issues.bats
 
 Expected: 2 PASS.
 
-- [ ] **Step 3.6: Commit the end-to-end regression test**
+- [x] **Step 3.6: Commit the end-to-end regression test**
 
 ```bash
 cd /workspace/project/rdd-workflow

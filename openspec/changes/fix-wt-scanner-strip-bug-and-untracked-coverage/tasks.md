@@ -267,7 +267,7 @@
 
 ## 3. Add end-to-end regression test
 
-- [ ] 3.1 Create the failing integration test `tests/integration/test_guide_entry_wt_issues.bats`.
+- [x] 3.1 Create the failing integration test `tests/integration/test_guide_entry_wt_issues.bats`.
 
     ```bash
     #!/usr/bin/env bats
@@ -300,7 +300,7 @@
 
     Verification: `bats tests/integration/test_guide_entry_wt_issues.bats` (expected: 1 FAIL on clean-tree snapshot until fixture is created, then both pass after fix)
 
-- [ ] 3.2 Create the baseline snapshot for the clean-tree test.
+- [x] 3.2 Create the baseline snapshot for the clean-tree test.
 
     ```bash
     mkdir -p tests/integration/fixtures
@@ -309,11 +309,11 @@
 
     Verification: `test -f tests/integration/fixtures/guide_entry_clean.json` is true and the file is non-empty
 
-- [ ] 3.3 Run the integration test again and confirm both cases pass.
+- [x] 3.3 Run the integration test again and confirm both cases pass.
 
     Verification: `bats tests/integration/test_guide_entry_wt_issues.bats` (expected: 2 PASS)
 
-- [ ] 3.4 Commit the end-to-end regression test.
+- [x] 3.4 Commit the end-to-end regression test.
 
     ```bash
     git add tests/integration/test_guide_entry_wt_issues.bats tests/integration/fixtures/guide_entry_clean.json
