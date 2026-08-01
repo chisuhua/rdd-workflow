@@ -39,7 +39,7 @@ def _normalize_kind(kind: str) -> str:
 
 
 _VALID_STATES = ("active", "completed", "failed", "orphaned", "abandoned")
-_TERMINAL_STATES = frozenset(("completed", "failed", "abandoned"))
+_TERMINAL_STATES = frozenset(("completed", "failed", "abandoned", "orphaned"))
 
 
 class RddfSessionState(str, enum.Enum):

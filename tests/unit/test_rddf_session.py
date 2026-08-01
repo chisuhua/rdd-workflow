@@ -253,6 +253,27 @@ def test_archive_history(coordinator, sessions_file):
     assert len(archive_data["sessions"]) == 2
 
 
+def test_archive_history_archives_orphaned_and_keeps_active(coordinator, sessions_file):
+    """archive_history(keep=0) MUST archive orphaned sessions while preserving active ones."""
+    orphan_sid = coordinator.create_session(
+        kind="stage_plan", owner_opencode_session_id="ses_orphan", goal={}
+    )
+    data = json.loads(sessions_file.read_text())
+    data["sessions"][0]["state"] = "orphaned"
+    sessions_file.write_text(json.dumps(data))
+
+    active_sid = coordinator.create_session(
+        kind="stage_plan", owner_opencode_session_id="ses_active", goal={}
+    )
+
+    assert coordinator.archive_history(keep=0) == 1
+    assert [s.session_id for s in coordinator.list_sessions()] == [active_sid]
+
+    archive_path = sessions_file.with_suffix(".archive.json")
+    archived = json.loads(archive_path.read_text())["sessions"]
+    assert [s["session_id"] for s in archived] == [orphan_sid]
+
+
 def test_create_session_idempotent_same_owner(coordinator):
     """Calling create_session twice with same kind+owner MUST return same session id (no duplicate)."""
     sid1 = coordinator.create_session(
