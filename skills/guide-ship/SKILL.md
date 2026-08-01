@@ -613,6 +613,8 @@ source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_done.sh"
 check_remaining_work "$PROJECT_ROOT"
 ```
 
+**Orphaned rddf-sessions prompt**: When `.rddf/state/sessions.json` contains orphaned rddf-sessions, `check_remaining_work` prints the first three IDs (with `+N more` if there are more) and adds option 5 to the ship-done menu. Choosing option 5 launches the rddf-session cleanup skill; no automatic cleanup occurs.
+
 **输入处理**：
 
 ```bash
