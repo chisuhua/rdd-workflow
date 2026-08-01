@@ -83,3 +83,13 @@ REPLACED_RANGE="92,189p"
   echo "$output" | grep -q '工件发现 (ADR-0016)'
   echo "$output" | grep -q 'docs/adr'
 }
+
+@test "arch_env_check: setup gate — failing project returns 1" {
+  local fixture="$BATS_TEST_TMPDIR/failing-setup"
+  mkdir -p "$fixture" && (cd "$fixture" && git init -q && \
+    printf 'build/\n' > .gitignore && \
+    git add .gitignore && git -c user.email=t@t -c user.name=t commit -q -m init)
+  run bash -c "source '$REPO_ROOT/skills/guide-arch/scripts/arch_env_check.sh' && run_arch_env_setup_gate '$fixture'"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *".rddf/state/"* ]]
+}

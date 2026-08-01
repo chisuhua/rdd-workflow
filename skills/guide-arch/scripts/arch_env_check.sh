@@ -105,3 +105,30 @@ run_arch_env_check() {
   echo "   Roadmap:       $DISCOVERED_ROADMAP_PATH ($DISCOVERED_ROADMAP_FOUND)"
   echo "   Architecture:  $DISCOVERED_ARCHITECTURE_DIR ($DISCOVERED_ARCH_FOUND)"
 }
+
+# Hard gate: check project setup. Returns 1 if any error-severity issue.
+run_arch_env_setup_gate() {
+  local project_root="${1:-$(pwd)}"
+  if [ -f "${project_root}/skills/_lib/check_project_setup.sh" ]; then
+    source "${project_root}/skills/_lib/check_project_setup.sh"
+  elif [ -f "${PROJECT_ROOT:-/nonexistent}/skills/_lib/check_project_setup.sh" ]; then
+    source "${PROJECT_ROOT}/skills/_lib/check_project_setup.sh"
+  fi
+  if ! declare -F check_project_setup >/dev/null; then
+    return 0
+  fi
+  local issues
+  issues=$(check_project_setup "$project_root" 2>/dev/null) || return 0
+  local fatal
+  fatal=$(echo "$issues" | jq -r '.[] | select(.severity=="error" and .status=="fail") | "\(.name)|\(.detail)|\(.fix_command)"')
+  if [ -n "$fatal" ]; then
+    echo "❌ 项目设置检查未通过 (project-setup-check):"
+    while IFS='|' read -r name detail fix; do
+      echo "  - $name"
+      echo "    $detail"
+      echo "    fix: $fix"
+    done <<< "$fatal"
+    return 1
+  fi
+  return 0
+}
