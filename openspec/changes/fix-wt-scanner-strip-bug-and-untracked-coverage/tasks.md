@@ -1,6 +1,6 @@
 ## 1. Fix working-tree prefix truncation bug
 
-- [ ] 1.1 Create the failing unit test `tests/unit/test_wt_scanner_strip_bug.py` covering the three strip-bug cases.
+- [x] 1.1 Create the failing unit test `tests/unit/test_wt_scanner_strip_bug.py` covering the three strip-bug cases.
 
     ```python
     # tests/unit/test_wt_scanner_strip_bug.py
@@ -65,7 +65,7 @@
 
     Verification: `python3 -m pytest tests/unit/test_wt_scanner_strip_bug.py -q --tb=short` (expected before the fix: 1 PASS and 2 FAIL because ` M` is misclassified/truncated; expected after task 1.2: 3 PASS)
 
-- [ ] 1.2 Apply the one-line fix in `skills/_lib/workflow_synthesizer.py:725`.
+- [x] 1.2 Apply the one-line fix in `skills/_lib/workflow_synthesizer.py:725`.
 
     Replace:
 
@@ -81,11 +81,11 @@
 
     Verification: `sed -n '725p' skills/_lib/workflow_synthesizer.py` outputs a line containing `.splitlines()`
 
-- [ ] 1.3 Run the strip-bug tests again and confirm all three pass.
+- [x] 1.3 Run the strip-bug tests again and confirm all three pass.
 
     Verification: `python3 -m pytest tests/unit/test_wt_scanner_strip_bug.py -q --tb=short` (expected: 3 PASS)
 
-- [ ] 1.4 Commit the strip-bug fix.
+- [x] 1.4 Commit the strip-bug fix.
 
     ```bash
     git add tests/unit/test_wt_scanner_strip_bug.py skills/_lib/workflow_synthesizer.py

@@ -33,7 +33,7 @@
 
 ## Pre-flight
 
-- [ ] **Confirm baseline tests pass before any change**
+- [x] **Confirm baseline tests pass before any change**
 
 ```bash
 cd /workspace/project/rdd-workflow
@@ -42,7 +42,7 @@ python3 -m pytest tests/unit/test_workflow_synthesizer.py -q --tb=short
 
 Expected: existing synthesizer tests pass; record pass count.
 
-- [ ] **Locate the two bug sites and the docstring / consumer sites**
+- [x] **Locate the two bug sites and the docstring / consumer sites**
 
 ```bash
 grep -n 'result.stdout.strip().split' skills/_lib/workflow_synthesizer.py
@@ -61,7 +61,7 @@ Expected: 4 anchor lines (725, ls-files invocation, docstring, staged_count) pri
 - Create: `tests/unit/test_wt_scanner_strip_bug.py`
 - Modify: `skills/_lib/workflow_synthesizer.py:725`
 
-- [ ] **Step 1.1: Write the failing pytest cases for the prefix bug**
+- [x] **Step 1.1: Write the failing pytest cases for the prefix bug**
 
 Create `tests/unit/test_wt_scanner_strip_bug.py` with the 3 cases from tasks.md §1.1 (`test_working_tree_only_modification_is_modified`, `test_staged_modification_is_staged`, `test_path_is_not_truncated_for_working_tree_only`), sharing the `_git_init` and `_track_file` helpers:
 
@@ -131,7 +131,7 @@ def test_path_is_not_truncated_for_working_tree_only():
         assert issues[0].path[0] == "i"
 ```
 
-- [ ] **Step 1.2: Run the strip-bug tests to verify they fail before the fix**
+- [x] **Step 1.2: Run the strip-bug tests to verify they fail before the fix**
 
 ```bash
 cd /workspace/project/rdd-workflow
@@ -140,7 +140,7 @@ python3 -m pytest tests/unit/test_wt_scanner_strip_bug.py -q --tb=short
 
 Expected before the fix: 1 PASS (`M ` → `staged` already works) and 2 FAIL because ` M` is misclassified as `staged` and the path slice is shifted by one character (e.g. `roposal-suggestions.md` instead of `proposal-suggestions.md`).
 
-- [ ] **Step 1.3: Apply the one-line `splitlines()` fix at line 725**
+- [x] **Step 1.3: Apply the one-line `splitlines()` fix at line 725**
 
 In `skills/_lib/workflow_synthesizer.py`, replace:
 
@@ -154,7 +154,7 @@ with:
 lines = result.stdout.splitlines()
 ```
 
-- [ ] **Step 1.4: Re-run the strip-bug tests and confirm all 3 pass**
+- [x] **Step 1.4: Re-run the strip-bug tests and confirm all 3 pass**
 
 ```bash
 cd /workspace/project/rdd-workflow
@@ -163,7 +163,7 @@ python3 -m pytest tests/unit/test_wt_scanner_strip_bug.py -q --tb=short
 
 Expected: 3 PASS.
 
-- [ ] **Step 1.5: Verify the fix is in place**
+- [x] **Step 1.5: Verify the fix is in place**
 
 ```bash
 sed -n '725p' skills/_lib/workflow_synthesizer.py
@@ -171,7 +171,7 @@ sed -n '725p' skills/_lib/workflow_synthesizer.py
 
 Expected: line contains `.splitlines()`.
 
-- [ ] **Step 1.6: Commit the strip-bug fix**
+- [x] **Step 1.6: Commit the strip-bug fix**
 
 ```bash
 cd /workspace/project/rdd-workflow

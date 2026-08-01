@@ -722,7 +722,7 @@ def _detect_working_tree_issues(project_root: str) -> Tuple[WorkingTreeIssue, ..
         )
         if result.returncode != 0:
             return ()
-        lines = result.stdout.strip().split("\n")
+        lines = result.stdout.splitlines()
     except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
         return ()
 
