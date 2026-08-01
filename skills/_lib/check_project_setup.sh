@@ -38,6 +38,13 @@ check_project_setup() {
     issues+=("$(_emit_issue "rddf_plans_not_ignored" "pass" "info" "" "现状: .rddf/plans/ 未被忽略; 期望: 同上")")
   fi
 
+  # Check 4: openspec CLI must be available
+  if command -v openspec >/dev/null 2>&1 && openspec --version >/dev/null 2>&1; then
+    issues+=("$(_emit_issue "openspec_cli_available" "pass" "info" "" "现状: openspec --version 成功; 期望: 同上")")
+  else
+    issues+=("$(_emit_issue "openspec_cli_available" "fail" "error" "参见 rdd-workflow INSTALL.md 安装 openspec CLI" "现状: openspec --version 失败; 期望: 命令可用")")
+  fi
+
   printf '[%s]\n' "$(IFS=,; echo "${issues[*]}")"
 }
 

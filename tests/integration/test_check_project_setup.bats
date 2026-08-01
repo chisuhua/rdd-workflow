@@ -18,3 +18,12 @@ load ../test_helper
   [ "$status" -eq 0 ]
   [ "$output" = "pass" ]
 }
+
+@test "check_project_setup: openspec_cli_available passes when CLI present" {
+  if ! command -v openspec >/dev/null 2>&1; then
+    skip "openspec CLI not installed"
+  fi
+  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq -r '.[] | select(.name==\"openspec_cli_available\") | .status'"
+  [ "$status" -eq 0 ]
+  [ "$output" = "pass" ]
+}
