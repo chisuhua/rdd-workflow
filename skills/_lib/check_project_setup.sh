@@ -33,7 +33,7 @@ check_project_setup() {
 
   # Check 3: .rddf/plans/ must NOT be ignored (regression detection)
   if grep -qE '^\.rddf/plans/' "$gitignore"; then
-    issues+=("$(_emit_issue "rddf_plans_not_ignored" "fail" "error" "sed -i '/^\\.rddf\\/plans\\//d' .gitignore" "现状: .rddf/plans/ 被忽略; 期望: 不应被忽略(执行契约路径)")")
+    issues+=("$(_emit_issue "rddf_plans_not_ignored" "fail" "error" "sed -i '/^[.]rddf[/]plans[/]/d' .gitignore" "现状: .rddf/plans/ 被忽略; 期望: 不应被忽略(执行契约路径)")")
   else
     issues+=("$(_emit_issue "rddf_plans_not_ignored" "pass" "info" "" "现状: .rddf/plans/ 未被忽略; 期望: 同上")")
   fi

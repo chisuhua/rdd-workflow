@@ -71,3 +71,13 @@ setup() {
   [[ "$output" == *".rddf/wt/"* ]]
   [[ "$output" == *".gitignore"* ]]
 }
+
+@test "check_project_setup: plans regression — rddf_plans_not_ignored status=fail" {
+  local fixture="$BATS_TEST_TMPDIR/plans-ignored"
+  mkdir -p "$fixture" && (cd "$fixture" && git init -q && \
+    printf '.rddf/state/\n.rddf/wt/\n.rddf/plans/\n' > .gitignore && \
+    git add .gitignore && git -c user.email=t@t -c user.name=t commit -q -m init)
+  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$fixture' | jq -r '.[] | select(.name==\"rddf_plans_not_ignored\") | .status'"
+  [ "$status" -eq 0 ]
+  [ "$output" = "fail" ]
+}
