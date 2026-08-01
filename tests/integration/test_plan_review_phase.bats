@@ -59,8 +59,9 @@ setup() {
     [ "$status" -eq 0 ]
 }
 
-@test "plan_review: validate_report is gitignored (state file lives under .rddf/)" {
-    # validate_report writes to .rddf/state/openspec-validate.json
-    [ -f ".gitignore" ]
-    grep -qE '^\.rddf/state/' ".gitignore" || grep -qE '^\.rddf/' ".gitignore"
+@test "plan_review: validate_report is gitignored (via check_project_setup helper)" {
+    source "$REPO_ROOT/skills/_lib/check_project_setup.sh"
+    run check_project_setup "$REPO_ROOT"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e '.[] | select(.name=="rddf_state_ignored") | .status == "pass"' >/dev/null
 }
