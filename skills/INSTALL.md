@@ -345,3 +345,17 @@ rm -f "$PROJECT_ROOT/install-rdd-workflow.sh"
 > 完整 CI 顺序（见 .github/workflows/test.yml）：安装 deps → **断言质量门控**（grep -rn "assert.*or True|assert True" tests/ 命中即 FAIL）→ Python unit → Python integration → bats smoke → bats static 子集 → bats git-worktree 子集。
 >
 > 任何 assert ... or True / assert True 写法会立即触发 CI 失败（恒真断言拦截）。
+## 5. 项目设置检查
+
+安装完成后,执行项目设置检查以确认 `.gitignore` 已正确配置:
+
+```bash
+source skills/_lib/check_project_setup.sh
+issues=$(check_project_setup "$(pwd)")
+echo "$issues" | jq -r '.[] | "  \(if .status == "pass" then "✅" else "❌" end) \(.name): \(.detail)"'
+```
+
+检查项:`rddf_state_ignored` / `rddf_wt_ignored` / `rddf_plans_not_ignored` /
+`openspec_cli_available` / `git_head_exists` / `large_untracked_dirs`。
+
+无论结果如何,安装流程均不中断。如有 ❌,运行对应 `fix_command` 后重新执行。
