@@ -49,3 +49,14 @@ setup() {
   [ "$status" -eq 0 ]
   [[ "$output" == "safe_auto_fix" || "$output" == "info" ]]
 }
+
+@test "check_project_setup: missing rddf_state_ignored → status=fail severity=error" {
+  local fixture="$BATS_TEST_TMPDIR/missing-state"
+  mkdir -p "$fixture" && (cd "$fixture" && git init -q && \
+    echo ".rddf/wt/" > .gitignore && \
+    git add .gitignore && git -c user.email=t@t -c user.name=t commit -q -m init)
+  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$fixture' | jq '.[] | select(.name==\"rddf_state_ignored\") | {status, severity}'"
+  [ "$status" -eq 0 ]
+  [ "$(echo "$output" | jq -r .status)" = "fail" ]
+  [ "$(echo "$output" | jq -r .severity)" = "error" ]
+}

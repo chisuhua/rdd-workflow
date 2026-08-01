@@ -18,14 +18,14 @@ check_project_setup() {
   # Check 1: .rddf/state/ must be ignored
   if [ ! -f "$gitignore" ]; then
     issues+=("$(_emit_issue "rddf_state_ignored" "fail" "error" "echo '.rddf/state/' >> .gitignore" "现状: .gitignore 不存在; 期望: 包含 .rddf/state/")")
-  elif grep -qE '^\.rddf/state/' "$gitignore" || grep -qE '^\.rddf/' "$gitignore"; then
+  elif grep -qE '^\.rddf/state/' "$gitignore" || grep -qE '^\.rddf/[[:space:]]*$' "$gitignore"; then
     issues+=("$(_emit_issue "rddf_state_ignored" "pass" "info" "" "现状: .rddf/state/ 已忽略; 期望: 同上")")
   else
     issues+=("$(_emit_issue "rddf_state_ignored" "fail" "error" "echo '.rddf/state/' >> .gitignore" "现状: .gitignore 无 .rddf/state/; 期望: 包含 .rddf/state/")")
   fi
 
   # Check 2: .rddf/wt/ must be ignored
-  if grep -qE '^\.rddf/wt/' "$gitignore" || grep -qE '^\.rddf/' "$gitignore"; then
+  if grep -qE '^\.rddf/wt/' "$gitignore" || grep -qE '^\.rddf/[[:space:]]*$' "$gitignore"; then
     issues+=("$(_emit_issue "rddf_wt_ignored" "pass" "info" "" "现状: .rddf/wt/ 已忽略; 期望: 同上")")
   else
     issues+=("$(_emit_issue "rddf_wt_ignored" "fail" "error" "echo '.rddf/wt/' >> .gitignore" "现状: .gitignore 无 .rddf/wt/; 期望: 包含 .rddf/wt/")")
