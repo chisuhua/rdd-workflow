@@ -1,6 +1,6 @@
 ## 1. Fix working-tree prefix truncation bug
 
-- [ ] 1.1 Create the failing unit test `tests/unit/test_wt_scanner_strip_bug.py` covering the three strip-bug cases.
+- [x] 1.1 Create the failing unit test `tests/unit/test_wt_scanner_strip_bug.py` covering the three strip-bug cases.
 
     ```python
     # tests/unit/test_wt_scanner_strip_bug.py
@@ -65,7 +65,7 @@
 
     Verification: `python3 -m pytest tests/unit/test_wt_scanner_strip_bug.py -q --tb=short` (expected before the fix: 1 PASS and 2 FAIL because ` M` is misclassified/truncated; expected after task 1.2: 3 PASS)
 
-- [ ] 1.2 Apply the one-line fix in `skills/_lib/workflow_synthesizer.py:725`.
+- [x] 1.2 Apply the one-line fix in `skills/_lib/workflow_synthesizer.py:725`.
 
     Replace:
 
@@ -81,11 +81,11 @@
 
     Verification: `sed -n '725p' skills/_lib/workflow_synthesizer.py` outputs a line containing `.splitlines()`
 
-- [ ] 1.3 Run the strip-bug tests again and confirm all three pass.
+- [x] 1.3 Run the strip-bug tests again and confirm all three pass.
 
     Verification: `python3 -m pytest tests/unit/test_wt_scanner_strip_bug.py -q --tb=short` (expected: 3 PASS)
 
-- [ ] 1.4 Commit the strip-bug fix.
+- [x] 1.4 Commit the strip-bug fix.
 
     ```bash
     git add tests/unit/test_wt_scanner_strip_bug.py skills/_lib/workflow_synthesizer.py
@@ -94,7 +94,7 @@
 
 ## 2. Fix untracked file detection
 
-- [ ] 2.1 Create the failing unit test `tests/unit/test_wt_scanner_untracked.py` covering the four untracked cases.
+- [x] 2.1 Create the failing unit test `tests/unit/test_wt_scanner_untracked.py` covering the four untracked cases.
 
     ```python
     # tests/unit/test_wt_scanner_untracked.py
@@ -160,7 +160,7 @@
 
     Verification: `python3 -m pytest tests/unit/test_wt_scanner_untracked.py -q --tb=short` (expected: 1-2 PASS, failures on untracked_file detection)
 
-- [ ] 2.2 Update the `WorkingTreeIssue` category docstring in `skills/_lib/workflow_synthesizer.py:124`.
+- [x] 2.2 Update the `WorkingTreeIssue` category docstring in `skills/_lib/workflow_synthesizer.py:124`.
 
     Replace:
 
@@ -178,7 +178,7 @@
 
     Verification: `grep -n '"untracked_file"' skills/_lib/workflow_synthesizer.py` returns the docstring line
 
-- [ ] 2.3 Rewrite the untracked block in `skills/_lib/workflow_synthesizer.py:771-797` to report files and keep large-directory behavior.
+- [x] 2.3 Rewrite the untracked block in `skills/_lib/workflow_synthesizer.py:771-797` to report files and keep large-directory behavior.
 
     Replace the block with:
 
@@ -237,7 +237,7 @@
 
     Verification: `sed -n '771,830p' skills/_lib/workflow_synthesizer.py` contains one `git ls-files --others --exclude-standard` call (no `--directory`), top-level directory aggregation, and suppression of per-file issues beneath every directory in `large_dirs`.
 
-- [ ] 2.4 Add an untracked count to the cleanup-menu summary in `skills/_lib/workflow_synthesizer.py:519-521`.
+- [x] 2.4 Add an untracked count to the cleanup-menu summary in `skills/_lib/workflow_synthesizer.py:519-521`.
 
     After the existing `staged_count = ...` line, insert:
 
@@ -254,11 +254,11 @@
 
     Verification: `grep -n 'untracked_count' skills/_lib/workflow_synthesizer.py` returns two lines
 
-- [ ] 2.5 Run the untracked tests again and confirm all four pass.
+- [x] 2.5 Run the untracked tests again and confirm all four pass.
 
     Verification: `python3 -m pytest tests/unit/test_wt_scanner_untracked.py -q --tb=short` (expected: 4 PASS)
 
-- [ ] 2.6 Commit the untracked detection fix.
+- [x] 2.6 Commit the untracked detection fix.
 
     ```bash
     git add tests/unit/test_wt_scanner_untracked.py skills/_lib/workflow_synthesizer.py
@@ -267,7 +267,7 @@
 
 ## 3. Add end-to-end regression test
 
-- [ ] 3.1 Create the failing integration test `tests/integration/test_guide_entry_wt_issues.bats`.
+- [x] 3.1 Create the failing integration test `tests/integration/test_guide_entry_wt_issues.bats`.
 
     ```bash
     #!/usr/bin/env bats
@@ -300,7 +300,7 @@
 
     Verification: `bats tests/integration/test_guide_entry_wt_issues.bats` (expected: 1 FAIL on clean-tree snapshot until fixture is created, then both pass after fix)
 
-- [ ] 3.2 Create the baseline snapshot for the clean-tree test.
+- [x] 3.2 Create the baseline snapshot for the clean-tree test.
 
     ```bash
     mkdir -p tests/integration/fixtures
@@ -309,11 +309,11 @@
 
     Verification: `test -f tests/integration/fixtures/guide_entry_clean.json` is true and the file is non-empty
 
-- [ ] 3.3 Run the integration test again and confirm both cases pass.
+- [x] 3.3 Run the integration test again and confirm both cases pass.
 
     Verification: `bats tests/integration/test_guide_entry_wt_issues.bats` (expected: 2 PASS)
 
-- [ ] 3.4 Commit the end-to-end regression test.
+- [x] 3.4 Commit the end-to-end regression test.
 
     ```bash
     git add tests/integration/test_guide_entry_wt_issues.bats tests/integration/fixtures/guide_entry_clean.json
@@ -322,11 +322,11 @@
 
 ## 4. Acceptance validation
 
-- [ ] 4.1 Run the new unit tests together.
+- [x] 4.1 Run the new unit tests together.
 
     Verification: `python3 -m pytest tests/unit/test_wt_scanner_strip_bug.py tests/unit/test_wt_scanner_untracked.py -q --tb=short` (expected: 7 PASS)
 
-- [ ] 4.2 Run the existing workflow synthesizer unit tests to confirm no regressions.
+- [x] 4.2 Run the existing workflow synthesizer unit tests to confirm no regressions.
 
     Verification: `python3 -m pytest tests/unit/test_workflow_synthesizer.py -q --tb=short` (expected: PASS)
 
