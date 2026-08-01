@@ -1,0 +1,12 @@
+roadmap:
+  phase: "v2.2"
+  category: "infra-setup"
+  priority: "P1"
+  gate_checklist: []
+  cross_phase_deps: []
+  manual_deps: []
+  manual_blocks: []
+  parent_feature: null
+  category_validation:
+    valid: true
+    reason: ""
