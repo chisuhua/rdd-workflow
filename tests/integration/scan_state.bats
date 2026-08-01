@@ -160,3 +160,16 @@ _run_scan() {
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=guide-plan"
 }
+@test "scan_state: sources check_project_setup and removes legacy LARGE_DIRS block" {
+  grep -q 'check_project_setup' "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
+  ! grep -q 'LARGE_DIRS' "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
+}
+
+@test "scan_state: setup issues printed but never block (exit 0)" {
+  local fixture="$BATS_TEST_TMPDIR/scan-fixture"
+  mkdir -p "$fixture" && (cd "$fixture" && git init -q && \
+    printf 'build/\n' > .gitignore && \
+    git add .gitignore && git -c user.email=t@t -c user.name=t commit -q -m init)
+  run bash -c "cd '$fixture' && source '$REPO_ROOT/skills/guide/scripts/scan-state.sh' && scan_state"
+  [ "$status" -eq 0 ]
+}

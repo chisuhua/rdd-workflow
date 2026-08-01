@@ -392,31 +392,16 @@ check_working_tree_cleanliness() {
     WT_ISSUES_COUNT=$((WT_ISSUES_COUNT + STAGED_COUNT))
   fi
 
-  # 4. Large untracked directories (potential build artifacts)
-  local UNTRACKED_DIRS
-  UNTRACKED_DIRS=$(git -C "$PROJECT_ROOT" ls-files --others --exclude-standard --directory 2>/dev/null | grep '/$' | grep -v '^.git' | head -10)
-  local UT_COUNT
-  UT_COUNT=$(printf '%s' "$UNTRACKED_DIRS" | grep -c . 2>/dev/null || true)
-  UT_COUNT=${UT_COUNT##*$'\n'}
-  if [ "${UT_COUNT:-0}" -gt 0 ] 2>/dev/null; then
-    # Check if directories are large (>10MB)
-    local LARGE_DIRS=""
-    while IFS= read -r d; do
-      [ -z "$d" ] && continue
-      local size
-      size=$(du -sm "$PROJECT_ROOT/$d" 2>/dev/null | cut -f1 || echo 0)
-      if [ "${size:-0}" -gt 10 ] 2>/dev/null; then
-        LARGE_DIRS="$LARGE_DIRS$d (${size}MB)"$'\n'
-      fi
-    done <<< "$UNTRACKED_DIRS"
-    if [ -n "$LARGE_DIRS" ] && [ "$(echo "$LARGE_DIRS" | grep -c . 2>/dev/null || true)" -gt 0 ] 2>/dev/null; then
-      echo "   📁 Large untracked directories:"
-      echo "$LARGE_DIRS" | while read -r d; do
-        [ -z "$d" ] && continue
-        echo "      $d → 建议加到 .gitignore 或清理"
-      done
-      WT_ISSUES_COUNT=$((WT_ISSUES_COUNT + 1))
-    fi
+  # Pre-menu setup analysis (non-blocking)
+  local _lib_dir
+  _lib_dir=$(cd "$REPO_ROOT/skills/_lib" 2>/dev/null && pwd || echo "$REPO_ROOT/skills/_lib")
+  if [ -f "$_lib_dir/check_project_setup.sh" ]; then
+    source "$_lib_dir/check_project_setup.sh"
+    local _setup_issues
+    _setup_issues=$(check_project_setup "${PROJECT_ROOT:-$REPO_ROOT}" 2>/dev/null || echo '[]')
+    echo ""
+    echo "🔧 项目设置检查 (safe_auto_fix, 不阻塞):"
+    echo "$_setup_issues" | jq -r '.[] | "  - \(.name): \(.status) — \(.detail)\n    fix: \(.fix_command)"' 2>/dev/null || true
   fi
 
   if [ "$WT_ISSUES_COUNT" -eq 0 ]; then
