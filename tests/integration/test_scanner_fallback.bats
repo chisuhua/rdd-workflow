@@ -81,3 +81,32 @@ teardown() {
 
   [ "$(printf '%s\n' "$local_out" | grep -E '^(RECOMMEND|REASON)=')" = "$(printf '%s\n' "$global_out" | grep -E '^(RECOMMEND|REASON)=')" ]
 }
+
+_run_guide_entry() {
+  local repo="$1"
+  local home="$2"
+  bash -c '
+    export HOME="$1"
+    cd "$2"
+    source "$3/skills/guide/scripts/guide_entry.sh"
+    guide_entry --no-binding
+  ' _ "$home" "$repo" "$REPO_ROOT"
+}
+
+@test "guide_entry fallback: global state.sh used when local is missing" {
+  _make_state_sh "$home/.agents/skills/_lib/state.sh"
+
+  run _run_guide_entry "$repo" "$home"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Workflow Entry"* ]]
+  [[ "$output" != *"rdd-workflow not installed"* ]]
+}
+
+@test "guide_entry fallback: warning when both copies are missing" {
+  run _run_guide_entry "$repo" "$home"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"rdd-workflow not installed"* ]]
+  [[ "$output" == *"INSTALL.md"* ]]
+}

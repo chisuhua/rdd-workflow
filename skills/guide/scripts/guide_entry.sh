@@ -182,11 +182,24 @@ print(json.dumps({
   echo "   .plan-handoff.json: $([ -f "$PROJECT_ROOT/.rddf/state/.plan-handoff.json" ] && echo '✅' || echo '❌')"
 
   # Ensure state.sh helpers are available (scan-state.sh may have skipped sourcing)
-  type -t detect_approved_inconsistency &>/dev/null || source "$PROJECT_ROOT/skills/_lib/state.sh"
-  # Audit trail protection: flag suggestions marked "completed" without an approved record
-  detect_approved_inconsistency "$PROJECT_ROOT" 2>/dev/null || true
-  # Auto-cleanup: remove stale suggestions that are already in approved list
-  sweep_stale_suggestions "$PROJECT_ROOT" 2>/dev/null || true
+  if ! type -t detect_approved_inconsistency &>/dev/null; then
+    local _state_helper
+    for _state_helper in "$PROJECT_ROOT/skills/_lib/state.sh" "${HOME}/.agents/skills/_lib/state.sh"; do
+      if [ -f "$_state_helper" ]; then
+        source "$_state_helper"
+        break
+      fi
+    done
+    if ! type -t detect_approved_inconsistency &>/dev/null; then
+      echo "⚠️ rdd-workflow not installed: tried $PROJECT_ROOT/skills/_lib/state.sh and $HOME/.agents/skills/_lib/state.sh, both missing. Run INSTALL.md" >&2
+    fi
+  fi
+  if type -t detect_approved_inconsistency &>/dev/null; then
+    detect_approved_inconsistency "$PROJECT_ROOT" 2>/dev/null || true
+  fi
+  if type -t sweep_stale_suggestions &>/dev/null; then
+    sweep_stale_suggestions "$PROJECT_ROOT" 2>/dev/null || true
+  fi
 
   if [ "$NO_BINDING" -eq 0 ]; then
     scan_session_binding "$PROJECT_ROOT"
