@@ -27,3 +27,9 @@ load ../test_helper
   [ "$status" -eq 0 ]
   [ "$output" = "pass" ]
 }
+
+@test "check_project_setup: git_head_exists passes in repo" {
+  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq -r '.[] | select(.name==\"git_head_exists\") | .status'"
+  [ "$status" -eq 0 ]
+  [ "$output" = "pass" ]
+}

@@ -45,6 +45,13 @@ check_project_setup() {
     issues+=("$(_emit_issue "openspec_cli_available" "fail" "error" "参见 rdd-workflow INSTALL.md 安装 openspec CLI" "现状: openspec --version 失败; 期望: 命令可用")")
   fi
 
+  # Check 5: git HEAD must exist
+  if (cd "$project_root" && git rev-parse HEAD >/dev/null 2>&1); then
+    issues+=("$(_emit_issue "git_head_exists" "pass" "info" "" "现状: git rev-parse HEAD 成功; 期望: 同上")")
+  else
+    issues+=("$(_emit_issue "git_head_exists" "fail" "error" "git commit --allow-empty -m 'initial commit'" "现状: git rev-parse HEAD 失败; 期望: 至少存在一次提交")")
+  fi
+
   printf '[%s]\n' "$(IFS=,; echo "${issues[*]}")"
 }
 
