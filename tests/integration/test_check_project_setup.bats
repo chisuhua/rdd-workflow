@@ -1,6 +1,16 @@
 #!/usr/bin/env bats
 load ../test_helper
 
+setup() {
+  BATS_TEST_TMPDIR="${BATS_TEST_TMPDIR:-$BATS_TMPDIR/test-passing-$$}"
+  mkdir -p "$BATS_TEST_TMPDIR"
+  (cd "$BATS_TEST_TMPDIR" && git init -q && \
+    echo ".rddf/state/" > .gitignore && \
+    echo ".rddf/wt/" >> .gitignore && \
+    git add .gitignore && git -c user.email=t@t -c user.name=t commit -q -m init)
+  export PASSING_FIXTURE="$BATS_TEST_TMPDIR"
+}
+
 @test "check_project_setup: passing project emits valid JSON array" {
   run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT'"
   [ "$status" -eq 0 ]
