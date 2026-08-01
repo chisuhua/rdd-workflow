@@ -1,6 +1,6 @@
 ## 1. Implement read-only orphaned-session counter
 
-- [ ] 1.1 Create the failing test `tests/integration/test_ship_done_orphan_prompt.bats` for the helper `count_orphaned_sessions`.
+- [x] 1.1 Create the failing test `tests/integration/test_ship_done_orphan_prompt.bats` for the helper `count_orphaned_sessions`.
 
     ```bash
     # tests/integration/test_ship_done_orphan_prompt.bats
@@ -77,7 +77,7 @@
 
     Verification: `bats tests/integration/test_ship_done_orphan_prompt.bats` (expected: FAIL, helper not implemented)
 
-- [ ] 1.2 Implement `skills/_lib/sessions_count.sh`.
+- [x] 1.2 Implement `skills/_lib/sessions_count.sh`.
 
     ```bash
     #!/usr/bin/env bash
@@ -97,11 +97,11 @@
 
     Verification: `wc -l skills/_lib/sessions_count.sh` ≤ 20, `grep -c 'count_orphaned_sessions' skills/_lib/sessions_count.sh` ≥ 1
 
-- [ ] 1.3 Run the helper tests and confirm they pass.
+- [x] 1.3 Run the helper tests and confirm they pass.
 
     Verification: `bats tests/integration/test_ship_done_orphan_prompt.bats --filter count_orphaned_sessions` (expected: 3 PASS)
 
-- [ ] 1.4 Commit the helper.
+- [x] 1.4 Commit the helper.
 
     ```bash
     git add skills/_lib/sessions_count.sh tests/integration/test_ship_done_orphan_prompt.bats
@@ -110,7 +110,7 @@
 
 ## 2. Integrate orphan prompt into ship-done menu
 
-- [ ] 2.1 Add the ship-done integration tests to `tests/integration/test_ship_done_orphan_prompt.bats`.
+- [x] 2.1 Add the ship-done integration tests to `tests/integration/test_ship_done_orphan_prompt.bats`.
 
     Append the matrix tests after the helper tests created in 1.1:
 
@@ -168,7 +168,7 @@
 
     Verification: `bats tests/integration/test_ship_done_orphan_prompt.bats` (expected: 4 new FAILs, menu not implemented)
 
-- [ ] 2.2 Modify `skills/guide-ship/scripts/ship_done.sh` to add the orphan prompt and option 5 while keeping the file ≤ 30 lines.
+- [x] 2.2 Modify `skills/guide-ship/scripts/ship_done.sh` to add the orphan prompt and option 5 while keeping the file ≤ 30 lines.
 
     ```bash
     #!/usr/bin/env bash
@@ -200,15 +200,15 @@
 
     Verification: `wc -l skills/guide-ship/scripts/ship_done.sh` ≤ 30
 
-- [ ] 2.3 Run the integration tests and confirm all six matrix cases pass.
+- [x] 2.3 Run the integration tests and confirm all six matrix cases pass.
 
     Verification: `bats tests/integration/test_ship_done_orphan_prompt.bats` (expected: 7 PASS)
 
-- [ ] 2.4 Run the existing ship-done semantics tests to confirm no regression.
+- [x] 2.4 Run the existing ship-done semantics tests to confirm no regression.
 
     Verification: `bats tests/integration/test_ship_done_semantics.bats` (expected: 2 PASS)
 
-- [ ] 2.5 Commit the ship-done integration.
+- [x] 2.5 Commit the ship-done integration.
 
     ```bash
     git add skills/guide-ship/scripts/ship_done.sh tests/integration/test_ship_done_orphan_prompt.bats
@@ -217,7 +217,7 @@
 
 ## 3. Document and validate
 
-- [ ] 3.1 Add a short paragraph to `skills/guide-ship/SKILL.md` Phase 5 describing the orphan prompt.
+- [x] 3.1 Add a short paragraph to `skills/guide-ship/SKILL.md` Phase 5 describing the orphan prompt.
 
     Insert after the `check_remaining_work` code block (around line 613) and before the **输入处理** section (line 616):
 
@@ -227,15 +227,15 @@
 
     Verification: `grep -c "orphaned rddf-sessions" skills/guide-ship/SKILL.md` = 1
 
-- [ ] 3.2 Run the full ship-done bats suite.
+- [x] 3.2 Run the full ship-done bats suite.
 
     Verification: `bats tests/integration/test_ship_done_*.bats` (expected: 9 PASS)
 
-- [ ] 3.3 Run strict OpenSpec validation for the change.
+- [x] 3.3 Run strict OpenSpec validation for the change.
 
     Verification: `openspec validate --type change improve-ship-done-cleanup-orphan-sessions --strict --json` (expected: valid=true)
 
-- [ ] 3.4 Commit the documentation update.
+- [x] 3.4 Commit the documentation update.
 
     ```bash
     git add skills/guide-ship/SKILL.md
