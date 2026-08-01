@@ -549,3 +549,12 @@ Roadmap Update:
 - `docs/v2-developer-guide.md` — 扩展开发指南
 - `docs/v2-gate-mechanism-guide.md` — 门控机制指南
 - `docs/proposal-suggestions-format.md` — proposal-suggestions.md 格式规范
+
+## 项目设置检查
+
+`check_project_setup` 在 `guide-arch` Phase 1 入口硬阻断任何 `severity=error` 的设置问题
+(典型为缺失 `.rddf/state/` / `.rddf/wt/` 忽略规则),并在 `guide` 推荐器和 `INSTALL.md`
+Section 5 中软展示 `safe_auto_fix` 候选。修复方式:运行失败信息中打印的 `fix_command`,
+然后重新执行当前阶段。
+
+> 详见 `docs/adr/ADR-0026-check-project-setup.md`(project-setup 触发位置与等级矩阵)。
