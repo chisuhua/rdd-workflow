@@ -1,6 +1,6 @@
 ## 1. Add scanner fallback to `scan-state.sh`
 
-- [ ] 1.1 Create the failing test `tests/integration/test_scanner_fallback.bats` covering the four local/global `state.sh` presence combinations.
+- [x] 1.1 Create the failing test `tests/integration/test_scanner_fallback.bats` covering the four local/global `state.sh` presence combinations.
 
     ```bash
     # tests/integration/test_scanner_fallback.bats
@@ -79,7 +79,7 @@
 
     Verification: `bats tests/integration/test_scanner_fallback.bats` (expected: FAIL, no fallback implemented yet)
 
-- [ ] 1.2 Modify `skills/guide/scripts/scan-state.sh:67` to use the local-then-global fallback loop.
+- [x] 1.2 Modify `skills/guide/scripts/scan-state.sh:67` to use the local-then-global fallback loop.
 
     Replace the existing line:
 
@@ -100,11 +100,11 @@
 
     Verification: `grep -n "rdd-workflow not installed" skills/guide/scripts/scan-state.sh` returns a line number
 
-- [ ] 1.3 Run the scanner fallback tests and confirm all four matrix cases pass.
+- [x] 1.3 Run the scanner fallback tests and confirm all four matrix cases pass.
 
     Verification: `bats tests/integration/test_scanner_fallback.bats` (expected: 4 PASS)
 
-- [ ] 1.4 Commit the scanner fallback change.
+- [x] 1.4 Commit the scanner fallback change.
 
     ```bash
     git add tests/integration/test_scanner_fallback.bats skills/guide/scripts/scan-state.sh
@@ -113,7 +113,7 @@
 
 ## 2. Add the same fallback to `guide_entry.sh`
 
-- [ ] 2.1 Modify `skills/guide/scripts/guide_entry.sh:185` with the identical loop.
+- [x] 2.1 Modify `skills/guide/scripts/guide_entry.sh:185` with the identical loop.
 
     Replace the existing line:
 
@@ -134,7 +134,7 @@
 
     Verification: `grep -n "rdd-workflow not installed" skills/guide/scripts/guide_entry.sh` returns a line number
 
-- [ ] 2.2 Append the guide-entry tests to `tests/integration/test_scanner_fallback.bats`.
+- [x] 2.2 Append the guide-entry tests to `tests/integration/test_scanner_fallback.bats`.
 
     ```bash
     # append to tests/integration/test_scanner_fallback.bats
@@ -167,7 +167,7 @@
 
     Verification: `bats tests/integration/test_scanner_fallback.bats` (expected: 6 PASS)
 
-- [ ] 2.3 Commit the guide_entry fallback change.
+- [x] 2.3 Commit the guide_entry fallback change.
 
     ```bash
     git add tests/integration/test_scanner_fallback.bats skills/guide/scripts/guide_entry.sh
@@ -176,7 +176,7 @@
 
 ## 3. Add `orphaned` to the rddf-session terminal states
 
-- [ ] 3.1 Create the failing test `tests/unit/test_terminal_states_orphan.bats` asserting the four terminal states.
+- [x] 3.1 Create the failing test `tests/unit/test_terminal_states_orphan.bats` asserting the four terminal states.
 
     ```bash
     # tests/unit/test_terminal_states_orphan.bats
@@ -208,7 +208,7 @@
 
     Verification: `bats tests/unit/test_terminal_states_orphan.bats` (expected: FAIL on orphaned)
 
-- [ ] 3.2 Add a failing behavioral test to `tests/unit/test_rddf_session.py` proving `archive_history(keep=0)` archives orphaned sessions while preserving an active session.
+- [x] 3.2 Add a failing behavioral test to `tests/unit/test_rddf_session.py` proving `archive_history(keep=0)` archives orphaned sessions while preserving an active session.
 
     ```python
     def test_archive_history_archives_orphaned_and_keeps_active(coordinator, sessions_file):
@@ -232,7 +232,7 @@
 
     Verification: `python3 -m pytest tests/unit/test_rddf_session.py::test_archive_history_archives_orphaned_and_keeps_active -q` (expected: FAIL before `_TERMINAL_STATES` changes)
 
-- [ ] 3.3 Modify `skills/rddf-session/scripts/rddf_session_pkg/_types.py:42` to add `"orphaned"` to `_TERMINAL_STATES`.
+- [x] 3.3 Modify `skills/rddf-session/scripts/rddf_session_pkg/_types.py:42` to add `"orphaned"` to `_TERMINAL_STATES`.
 
     Replace:
 
@@ -248,7 +248,7 @@
 
     Verification: `grep -n 'completed.*failed.*abandoned.*orphaned' skills/rddf-session/scripts/rddf_session_pkg/_types.py` returns a line
 
-- [ ] 3.4 Run the new terminal-state and archive-history tests plus the existing rddf-session suite.
+- [x] 3.4 Run the new terminal-state and archive-history tests plus the existing rddf-session suite.
 
     ```bash
     bats tests/unit/test_terminal_states_orphan.bats
@@ -257,7 +257,7 @@
 
     Verification: both commands exit 0, including `test_archive_history_archives_orphaned_and_keeps_active`
 
-- [ ] 3.5 Commit the terminal-state change.
+- [x] 3.5 Commit the terminal-state change.
 
     ```bash
     git add tests/unit/test_terminal_states_orphan.bats tests/unit/test_rddf_session.py skills/rddf-session/scripts/rddf_session_pkg/_types.py
@@ -266,7 +266,7 @@
 
 ## 4. Update documentation
 
-- [ ] 4.1 Add a bullet to `AGENTS.md` "常见陷阱" documenting the scanner fallback.
+- [x] 4.1 Add a bullet to `AGENTS.md` "常见陷阱" documenting the scanner fallback.
 
     Insert after pitfall 17 (or at the end of the numbered list):
 
@@ -276,7 +276,7 @@
 
     Verification: `grep -n "Scanner state.sh fallback" AGENTS.md` returns a line number
 
-- [ ] 4.2 Add a `CHANGELOG.md` entry under `[Unreleased] — v2.1`.
+- [x] 4.2 Add a `CHANGELOG.md` entry under `[Unreleased] — v2.1`.
 
     Insert under the `### Changed` or `### Bug Fixes` section of `[Unreleased] — v2.1`:
 
@@ -289,7 +289,7 @@
 
     Verification: `grep -n "Scanner fallback" CHANGELOG.md` and `grep -n "Orphaned session archival" CHANGELOG.md` both return line numbers
 
-- [ ] 4.3 Commit the documentation updates.
+- [x] 4.3 Commit the documentation updates.
 
     ```bash
     git add AGENTS.md CHANGELOG.md
@@ -298,27 +298,27 @@
 
 ## 5. Acceptance validation
 
-- [ ] 5.1 Run the new bats tests.
+- [x] 5.1 Run the new bats tests.
 
     Verification: `bats tests/integration/test_scanner_fallback.bats tests/unit/test_terminal_states_orphan.bats` (expected: 10 PASS)
 
-- [ ] 5.2 Run the existing scan-state regression suite.
+- [x] 5.2 Run the existing scan-state regression suite.
 
     Verification: `bats tests/integration/scan_state.bats tests/integration/test_guide_scan.bats` (expected: all PASS, zero modifications)
 
-- [ ] 5.3 Run the full Python test suite to confirm no regressions.
+- [x] 5.3 Run the full Python test suite to confirm no regressions.
 
     Verification: `python3 -m pytest tests/ -q --tb=short` (expected: all PASS)
 
-- [ ] 5.4 Run the npm bats suite.
+- [x] 5.4 Run the npm bats suite.
 
     Verification: `npm test` (expected: exit 0)
 
-- [ ] 5.5 Validate the OpenSpec change in strict mode.
+- [x] 5.5 Validate the OpenSpec change in strict mode.
 
     Verification: `openspec validate fix-scanner-fallback-and-orphan-archival --strict` (expected: PASS)
 
-- [ ] 5.6 Confirm the change status is complete.
+- [x] 5.6 Confirm the change status is complete.
 
     Verification: `openspec status --change fix-scanner-fallback-and-orphan-archival --json | jq '.isComplete'` (expected: `true`)
 

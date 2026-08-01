@@ -64,7 +64,12 @@ scan_state() {
   DESIGN_HANDOFF="$PROJECT_ROOT/.rddf/state/.design-handoff.json"
   PLAN_HANDOFF="$PROJECT_ROOT/.rddf/state/.plan-handoff.json"
 
-  type -t check_dirty_key_files &>/dev/null || source "$PROJECT_ROOT/skills/_lib/state.sh"
+  if ! type -t check_dirty_key_files &>/dev/null; then
+    local _state_helper
+    for _state_helper in "$PROJECT_ROOT/skills/_lib/state.sh" "${HOME}/.agents/skills/_lib/state.sh"; do
+      [ -f "$_state_helper" ] && source "$_state_helper" && break
+    done || echo "⚠️ rdd-workflow not installed: tried $PROJECT_ROOT/skills/_lib/state.sh and $HOME/.agents/skills/_lib/state.sh, both missing. Run INSTALL.md" >&2
+  fi
   check_dirty_key_files "$PROJECT_ROOT"
 
   # 1. arch-handoff present, plan-handoff absent
