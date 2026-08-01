@@ -93,3 +93,16 @@ setup() {
   [[ "$(echo "$output" | jq -r .fix_command)" == *"echo"* ]]
   [[ "$(echo "$output" | jq -r .fix_command)" == *".gitignore"* ]]
 }
+
+@test "check_project_setup: large untracked dir → severity=safe_auto_fix" {
+  local fixture="$BATS_TEST_TMPDIR/large-untracked"
+  mkdir -p "$fixture" && (cd "$fixture" && git init -q && \
+    printf '.rddf/state/\n.rddf/wt/\n' > .gitignore && \
+    git add .gitignore && git -c user.email=t@t -c user.name=t commit -q -m init)
+  mkdir -p "$fixture/bigbuild"
+  dd if=/dev/zero of="$fixture/bigbuild/blob" bs=1M count=11 status=none
+  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$fixture' | jq -r '.[] | select(.name==\"large_untracked_dirs\") | .severity'"
+  [ "$status" -eq 0 ]
+  [ "$output" = "safe_auto_fix" ]
+  rm -f "$fixture/bigbuild/blob"
+}
