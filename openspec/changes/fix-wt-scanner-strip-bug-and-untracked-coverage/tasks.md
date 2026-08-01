@@ -322,11 +322,11 @@
 
 ## 4. Acceptance validation
 
-- [ ] 4.1 Run the new unit tests together.
+- [x] 4.1 Run the new unit tests together.
 
     Verification: `python3 -m pytest tests/unit/test_wt_scanner_strip_bug.py tests/unit/test_wt_scanner_untracked.py -q --tb=short` (expected: 7 PASS)
 
-- [ ] 4.2 Run the existing workflow synthesizer unit tests to confirm no regressions.
+- [x] 4.2 Run the existing workflow synthesizer unit tests to confirm no regressions.
 
     Verification: `python3 -m pytest tests/unit/test_workflow_synthesizer.py -q --tb=short` (expected: PASS)
 

@@ -478,7 +478,7 @@ git commit -m "test(integration): guide_entry wt_issues regression for strip/unt
 **Files:**
 - Modify: none (read-only verification)
 
-- [ ] **Step 4.1: Run the new unit tests together (strip + untracked)**
+- [x] **Step 4.1: Run the new unit tests together (strip + untracked)**
 
 ```bash
 cd /workspace/project/rdd-workflow
@@ -487,7 +487,7 @@ python3 -m pytest tests/unit/test_wt_scanner_strip_bug.py tests/unit/test_wt_sca
 
 Expected: 7 PASS (3 strip + 4 untracked).
 
-- [ ] **Step 4.2: Run the existing workflow-synthesizer unit tests for regression**
+- [x] **Step 4.2: Run the existing workflow-synthesizer unit tests for regression**
 
 ```bash
 cd /workspace/project/rdd-workflow
