@@ -122,7 +122,7 @@ class WorkingTreeIssue:
 
     Fields:
         category: ``"deleted"`` | ``"modified"`` | ``"staged"`` |
-            ``"untracked_dirs"``
+            ``"untracked_file"`` | ``"untracked_dirs"``
         path: affected file or directory path (project-relative)
         detail: human-readable description (e.g. "archived, needs git rm")
         severity: ``"safe_auto_fix"`` | ``"needs_review"`` | ``"info"``
@@ -519,6 +519,7 @@ def _build_all_options(
         deleted_count = sum(1 for i in wt_issues if i.category == "deleted")
         modified_count = sum(1 for i in wt_issues if i.category == "modified")
         staged_count = sum(1 for i in wt_issues if i.category == "staged")
+        untracked_count = sum(1 for i in wt_issues if i.category == "untracked_file")
         parts = []
         if deleted_count:
             parts.append(f"{deleted_count} deleted")
@@ -526,6 +527,8 @@ def _build_all_options(
             parts.append(f"{modified_count} modified")
         if staged_count:
             parts.append(f"{staged_count} staged")
+        if untracked_count:
+            parts.append(f"{untracked_count} untracked")
         desc = "清理工作树 — " + ", ".join(parts)
         options.append(MenuOption(
             id="cleanup-wt",
@@ -769,34 +772,52 @@ def _detect_working_tree_issues(project_root: str) -> Tuple[WorkingTreeIssue, ..
 
     try:
         untracked = subprocess.run(
-            ["git", "ls-files", "--others", "--exclude-standard", "--directory"],
+            ["git", "ls-files", "--others", "--exclude-standard"],
             capture_output=True, text=True, timeout=5, cwd=project_root,
         )
         if untracked.returncode == 0:
-            for entry in untracked.stdout.strip().split("\n"):
-                if not entry.endswith("/") or entry.startswith("."):
-                    continue
-                full = os.path.join(project_root, entry)
+            entries = [
+                entry for entry in untracked.stdout.splitlines()
+                if entry and not entry.startswith(".")
+            ]
+            top_level_dirs = {
+                entry.split("/", 1)[0] + "/"
+                for entry in entries if "/" in entry
+            }
+            large_dirs = set()
+            for directory in sorted(top_level_dirs):
+                full_dir = os.path.join(project_root, directory)
+                total = 0
                 try:
-                    total = 0
-                    for dirpath, _, filenames in os.walk(full):
-                        for fn in filenames:
-                            fp = os.path.join(dirpath, fn)
+                    for dirpath, _, filenames in os.walk(full_dir):
+                        for filename in filenames:
                             try:
-                                total += os.path.getsize(fp)
+                                total += os.path.getsize(os.path.join(dirpath, filename))
                             except OSError:
                                 pass
-                    size_mb = total / (1024 * 1024)
-                    if size_mb > 10:
-                        issues.append(WorkingTreeIssue(
-                            "untracked_dirs", entry,
-                            f"大目录 ({size_mb:.0f}MB)，建议加入 .gitignore",
-                            severity="safe_auto_fix",
-                            auto_fixable=True,
-                            fix_command=f'echo "{entry}" >> .gitignore',
-                        ))
                 except OSError:
-                    pass
+                    continue
+                size_mb = total / (1024 * 1024)
+                if size_mb > 10:
+                    large_dirs.add(directory)
+                    issues.append(WorkingTreeIssue(
+                        "untracked_dirs", directory,
+                        f"大目录 ({size_mb:.0f}MB)，建议加入 .gitignore",
+                        severity="safe_auto_fix",
+                        auto_fixable=True,
+                        fix_command=f'echo "{directory}" >> .gitignore',
+                    ))
+
+            for entry in entries:
+                if any(entry.startswith(directory) for directory in large_dirs):
+                    continue
+                full = os.path.join(project_root, entry)
+                if os.path.isfile(full):
+                    issues.append(WorkingTreeIssue(
+                        "untracked_file", entry,
+                        "未跟踪的新文件 (考虑 git add 或登记到 proposal-suggestions.md)",
+                        severity="info",
+                    ))
     except (subprocess.TimeoutExpired, OSError):
         pass
 

@@ -94,7 +94,7 @@
 
 ## 2. Fix untracked file detection
 
-- [ ] 2.1 Create the failing unit test `tests/unit/test_wt_scanner_untracked.py` covering the four untracked cases.
+- [x] 2.1 Create the failing unit test `tests/unit/test_wt_scanner_untracked.py` covering the four untracked cases.
 
     ```python
     # tests/unit/test_wt_scanner_untracked.py
@@ -160,7 +160,7 @@
 
     Verification: `python3 -m pytest tests/unit/test_wt_scanner_untracked.py -q --tb=short` (expected: 1-2 PASS, failures on untracked_file detection)
 
-- [ ] 2.2 Update the `WorkingTreeIssue` category docstring in `skills/_lib/workflow_synthesizer.py:124`.
+- [x] 2.2 Update the `WorkingTreeIssue` category docstring in `skills/_lib/workflow_synthesizer.py:124`.
 
     Replace:
 
@@ -178,7 +178,7 @@
 
     Verification: `grep -n '"untracked_file"' skills/_lib/workflow_synthesizer.py` returns the docstring line
 
-- [ ] 2.3 Rewrite the untracked block in `skills/_lib/workflow_synthesizer.py:771-797` to report files and keep large-directory behavior.
+- [x] 2.3 Rewrite the untracked block in `skills/_lib/workflow_synthesizer.py:771-797` to report files and keep large-directory behavior.
 
     Replace the block with:
 
@@ -237,7 +237,7 @@
 
     Verification: `sed -n '771,830p' skills/_lib/workflow_synthesizer.py` contains one `git ls-files --others --exclude-standard` call (no `--directory`), top-level directory aggregation, and suppression of per-file issues beneath every directory in `large_dirs`.
 
-- [ ] 2.4 Add an untracked count to the cleanup-menu summary in `skills/_lib/workflow_synthesizer.py:519-521`.
+- [x] 2.4 Add an untracked count to the cleanup-menu summary in `skills/_lib/workflow_synthesizer.py:519-521`.
 
     After the existing `staged_count = ...` line, insert:
 
@@ -254,11 +254,11 @@
 
     Verification: `grep -n 'untracked_count' skills/_lib/workflow_synthesizer.py` returns two lines
 
-- [ ] 2.5 Run the untracked tests again and confirm all four pass.
+- [x] 2.5 Run the untracked tests again and confirm all four pass.
 
     Verification: `python3 -m pytest tests/unit/test_wt_scanner_untracked.py -q --tb=short` (expected: 4 PASS)
 
-- [ ] 2.6 Commit the untracked detection fix.
+- [x] 2.6 Commit the untracked detection fix.
 
     ```bash
     git add tests/unit/test_wt_scanner_untracked.py skills/_lib/workflow_synthesizer.py

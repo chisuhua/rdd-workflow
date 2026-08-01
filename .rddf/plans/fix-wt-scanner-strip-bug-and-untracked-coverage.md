@@ -187,7 +187,7 @@ git commit -m "fix(scanner): preserve git status --short prefix with splitlines(
 - Create: `tests/unit/test_wt_scanner_untracked.py`
 - Modify: `skills/_lib/workflow_synthesizer.py:124` (docstring), `:519-521` (cleanup-menu summary), `:771-797` (untracked branch rewrite)
 
-- [ ] **Step 2.1: Write the failing pytest cases for untracked-file detection**
+- [x] **Step 2.1: Write the failing pytest cases for untracked-file detection**
 
 Create `tests/unit/test_wt_scanner_untracked.py` with the 4 cases from tasks.md §2.1 (`test_untracked_file_is_reported_info`, `test_large_untracked_directory_is_safe_auto_fix`, `test_hidden_directory_is_not_reported`, `test_gitignored_directory_is_not_reported`), sharing the `_git_init` helper:
 
@@ -258,7 +258,7 @@ def test_gitignored_directory_is_not_reported():
         assert not any(i.path.startswith("node_modules") for i in issues)
 ```
 
-- [ ] **Step 2.2: Run the untracked tests to verify they fail before the fix**
+- [x] **Step 2.2: Run the untracked tests to verify they fail before the fix**
 
 ```bash
 cd /workspace/project/rdd-workflow
@@ -267,7 +267,7 @@ python3 -m pytest tests/unit/test_wt_scanner_untracked.py -q --tb=short
 
 Expected before the fix: 1-2 PASS (large-dir and hidden-dir / gitignored-dir cases already work because `--directory` collapses and `entry.startswith(".")` filters), and failures on `test_untracked_file_is_reported_info` (file path returned as `improvements/` or omitted entirely).
 
-- [ ] **Step 2.3: Update the `WorkingTreeIssue` category docstring at line 124**
+- [x] **Step 2.3: Update the `WorkingTreeIssue` category docstring at line 124**
 
 In `skills/_lib/workflow_synthesizer.py`, replace:
 
@@ -283,7 +283,7 @@ category: ``"deleted"`` | ``"modified"`` | ``"staged"`` |
     ``"untracked_file"`` | ``"untracked_dirs"``
 ```
 
-- [ ] **Step 2.4: Rewrite the untracked branch at lines 771-797**
+- [x] **Step 2.4: Rewrite the untracked branch at lines 771-797**
 
 In `skills/_lib/workflow_synthesizer.py`, replace the existing block with:
 
@@ -340,7 +340,7 @@ except (subprocess.TimeoutExpired, OSError):
     pass
 ```
 
-- [ ] **Step 2.5: Verify the rewrite is in place**
+- [x] **Step 2.5: Verify the rewrite is in place**
 
 ```bash
 sed -n '771,830p' skills/_lib/workflow_synthesizer.py
@@ -348,7 +348,7 @@ sed -n '771,830p' skills/_lib/workflow_synthesizer.py
 
 Expected: exactly one `git ls-files --others --exclude-standard` invocation (no `--directory` flag), top-level directory aggregation, and suppression of per-file issues beneath every directory in `large_dirs`.
 
-- [ ] **Step 2.6: Add the untracked count to the cleanup-menu summary at lines 519-521**
+- [x] **Step 2.6: Add the untracked count to the cleanup-menu summary at lines 519-521**
 
 In `skills/_lib/workflow_synthesizer.py`, after the existing `staged_count = ...` line, insert:
 
@@ -363,7 +363,7 @@ if untracked_count:
     parts.append(f"{untracked_count} untracked")
 ```
 
-- [ ] **Step 2.7: Verify the cleanup-menu summary update is in place**
+- [x] **Step 2.7: Verify the cleanup-menu summary update is in place**
 
 ```bash
 grep -n 'untracked_count' skills/_lib/workflow_synthesizer.py
@@ -371,7 +371,7 @@ grep -n 'untracked_count' skills/_lib/workflow_synthesizer.py
 
 Expected: 2 lines containing `untracked_count`.
 
-- [ ] **Step 2.8: Re-run the untracked tests and confirm all 4 pass**
+- [x] **Step 2.8: Re-run the untracked tests and confirm all 4 pass**
 
 ```bash
 cd /workspace/project/rdd-workflow
@@ -380,7 +380,7 @@ python3 -m pytest tests/unit/test_wt_scanner_untracked.py -q --tb=short
 
 Expected: 4 PASS.
 
-- [ ] **Step 2.9: Commit the untracked detection fix**
+- [x] **Step 2.9: Commit the untracked detection fix**
 
 ```bash
 cd /workspace/project/rdd-workflow
