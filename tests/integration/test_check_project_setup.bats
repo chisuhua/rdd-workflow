@@ -60,3 +60,14 @@ setup() {
   [ "$(echo "$output" | jq -r .status)" = "fail" ]
   [ "$(echo "$output" | jq -r .severity)" = "error" ]
 }
+
+@test "check_project_setup: missing rddf_wt_ignored fix_command suggests echo to .gitignore" {
+  local fixture="$BATS_TEST_TMPDIR/missing-wt"
+  mkdir -p "$fixture" && (cd "$fixture" && git init -q && \
+    echo ".rddf/state/" > .gitignore && \
+    git add .gitignore && git -c user.email=t@t -c user.name=t commit -q -m init)
+  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$fixture' | jq -r '.[] | select(.name==\"rddf_wt_ignored\") | .fix_command'"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *".rddf/wt/"* ]]
+  [[ "$output" == *".gitignore"* ]]
+}
