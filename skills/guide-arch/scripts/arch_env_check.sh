@@ -109,11 +109,18 @@ run_arch_env_check() {
 # Hard gate: check project setup. Returns 1 if any error-severity issue.
 run_arch_env_setup_gate() {
   local project_root="${1:-$(pwd)}"
-  if [ -f "${project_root}/skills/_lib/check_project_setup.sh" ]; then
-    source "${project_root}/skills/_lib/check_project_setup.sh"
-  elif [ -f "${PROJECT_ROOT:-/nonexistent}/skills/_lib/check_project_setup.sh" ]; then
-    source "${PROJECT_ROOT}/skills/_lib/check_project_setup.sh"
-  fi
+  local _lib_paths=(
+    "${project_root}/skills/_lib/check_project_setup.sh"
+    "${PROJECT_ROOT:-/nonexistent}/skills/_lib/check_project_setup.sh"
+    "${REPO_ROOT:-/nonexistent}/skills/_lib/check_project_setup.sh"
+  )
+  local _p
+  for _p in "${_lib_paths[@]}"; do
+    if [ -f "$_p" ]; then
+      source "$_p"
+      break
+    fi
+  done
   if ! declare -F check_project_setup >/dev/null; then
     return 0
   fi
