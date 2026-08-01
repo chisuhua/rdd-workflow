@@ -52,6 +52,22 @@ check_project_setup() {
     issues+=("$(_emit_issue "git_head_exists" "fail" "error" "git commit --allow-empty -m 'initial commit'" "现状: git rev-parse HEAD 失败; 期望: 至少存在一次提交")")
   fi
 
+  # Check 6: large untracked directories (>10MB) → safe_auto_fix
+  local large_dirs=""
+  while IFS= read -r dir; do
+    local size_mb
+    size_mb=$(du -sm "$project_root/$dir" 2>/dev/null | awk '{print $1}')
+    if [ -n "$size_mb" ] && [ "$size_mb" -gt 10 ] 2>/dev/null; then
+      large_dirs="$large_dirs $dir(${size_mb}MB)"
+    fi
+  done < <(cd "$project_root" && git ls-files --others --exclude-standard --directory 2>/dev/null | awk -F/ '{print $1}' | sort -u)
+
+  if [ -n "$large_dirs" ]; then
+    issues+=("$(_emit_issue "large_untracked_dirs" "warn" "safe_auto_fix" "echo '$large_dirs' | xargs -I{} sh -c 'echo {}/ >> .gitignore'" "现状: 大目录未跟踪:$large_dirs; 期望: 加入 .gitignore")")
+  else
+    issues+=("$(_emit_issue "large_untracked_dirs" "pass" "info" "" "现状: 无 >10MB 未跟踪目录; 期望: 同上")")
+  fi
+
   printf '[%s]\n' "$(IFS=,; echo "${issues[*]}")"
 }
 

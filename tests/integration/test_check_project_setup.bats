@@ -33,3 +33,9 @@ load ../test_helper
   [ "$status" -eq 0 ]
   [ "$output" = "pass" ]
 }
+
+@test "check_project_setup: large_untracked_dirs severity is safe_auto_fix or info" {
+  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq -r '.[] | select(.name==\"large_untracked_dirs\") | .severity'"
+  [ "$status" -eq 0 ]
+  [[ "$output" == "safe_auto_fix" || "$output" == "info" ]]
+}
