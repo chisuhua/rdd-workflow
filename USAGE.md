@@ -808,6 +808,8 @@ tests/
 ### 运行测试
 
 > ⚠️ **`npm test` 陷阱**：`npm test` 只跑 `bats tests/`，**不会**捕获 Python 测试失败。改完任何 Python 代码后必须显式 `pytest tests/`，CI 才会捕获。
+>
+> ⚠️ **`guide-arch` 首次因 `.gitignore` 失败**：运行检查器打印的 `fix_command` 后重新执行。
 
 ```bash
 # === bats（npm test 等价命令，仅覆盖 shell 测试）===
