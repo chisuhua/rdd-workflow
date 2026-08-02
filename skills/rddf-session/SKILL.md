@@ -257,6 +257,44 @@ esac
 - **Heartbeat**: refreshed on every `guide-arch`/`guide-plan`/`guide-ship` phase call;
   30-minute timeout → orphaned
 
+## Auto-Archive on Hook Trigger (P1 hygiene)
+
+`rddf_session_hook_entry` and `rddf_session_hook_close` complete their main
+flow and then automatically trigger `archive_history` to prevent sessions.json
+from growing unbounded.
+
+**Trigger condition**:
+- sessions.json total session count >= threshold (default = `keep + 5 = 15`)
+- Setting either env var to `0` disables auto-archive
+
+**Environment variables**:
+
+| Env Var | Default | Meaning |
+|---------|---------|---------|
+| `RDDF_AUTO_ARCHIVE_KEEP` | `10` | Terminal sessions retained per archive; `0` disables auto-archive |
+| `RDDF_AUTO_ARCHIVE_THRESHOLD` | `keep + 5` | Trigger threshold (total sessions >= threshold); `0` disables |
+
+**Why the default threshold is `keep + 5`**:
+A fixed `>= 15` threshold would never fire in the common steady state of
+keep=10 plus 2-4 active sessions (12-14 total), so sessions.json would still
+accumulate. Using `keep + 5` (default 15) means:
+- Once the backlog triggers, `archive_history` slices to `keep` terminal sessions
+- Steady state becomes ~10 terminal + active sessions, so subsequent triggers
+  become rare
+- Each hook does not rewrite the file unnecessarily
+
+**Best practices**:
+- Heavy debugging leftovers: manually run
+  `rddf-session archive-history --keep=50`
+- CI / automation: use `RDDF_AUTO_ARCHIVE_KEEP=5 RDDF_AUTO_ARCHIVE_THRESHOLD=10`
+  for more aggressive cleanup
+- Performance-sensitive flows: `RDDF_AUTO_ARCHIVE_KEEP=0` disables auto-archive;
+  clean up manually on a schedule
+
+**Failure tolerance**: any exception during auto-archive (corrupt JSON, disk full,
+permission error) is swallowed, a warning is printed to stderr, and the main hook
+flow continues unaffected.
+
 ## Cross-Reference
 
 - `guide-arch` / `guide-plan` / `guide-ship` automatically create `kind=stage_*` rddf-sessions on entry and close them on phase completion.
