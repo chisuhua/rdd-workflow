@@ -111,6 +111,41 @@ _rddf_resolve_owner() {
   RDDF_OWNER_FROM="shell-pid"
   export RDDF_OWNER RDDF_OWNER_FROM
 }
+
+# _rddf_should_auto_archive <total_count> <keep> <threshold>
+#
+# Pure helper: returns 0 (true) if auto-archive should trigger, 1 (false) otherwise.
+# Inputs may come from RDDF_AUTO_ARCHIVE_KEEP (default 10) and
+# RDDF_AUTO_ARCHIVE_THRESHOLD (default keep+5).
+#
+# Disabled when:
+#   - keep <= 0 (RDDF_AUTO_ARCHIVE_KEEP=0)
+#   - threshold <= 0 (RDDF_AUTO_ARCHIVE_THRESHOLD=0)
+# Trigger when: total_count >= threshold
+#
+# Note: keeps helper as pure function so tests don't need sessions.json fixture.
+_rddf_should_auto_archive() {
+  local total_count="$1"
+  local keep="$2"
+  local threshold="$3"
+
+  # Default threshold = keep + 5 when not provided
+  if [ -z "$threshold" ]; then
+    threshold=$((keep + 5))
+  fi
+
+  # Disabled if keep or threshold <= 0
+  if [ "$keep" -le 0 ] 2>/dev/null || [ "$threshold" -le 0 ] 2>/dev/null; then
+    return 1
+  fi
+
+  # Trigger if total_count >= threshold
+  if [ "$total_count" -ge "$threshold" ] 2>/dev/null; then
+    return 0
+  fi
+  return 1
+}
+
 # Concurrency: fcntl.flock inside RddfSessionCoordinator._with_file_lock
 # serializes parallel hook invocations. Multiple parallel entries
 # complete safely without corrupting sessions.json.
