@@ -1,2 +1,3 @@
-name: add-rddf-session-status-cmd
-created_by: guide-design approve
+schema: spec-driven
+created: 2026-08-02
+goal: rddf-session status subcommand with BINDING_LINES in guide recommender (supersedes add-session-progress-view).
