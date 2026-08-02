@@ -1,7 +1,18 @@
 #!/usr/bin/env bash
 # approve_proposal.sh <name> <priority> [project_root]
-# Appends an approved proposal to proposal-approved.md.
-# Uses state.sh::append_approved helper.
+#
+# Appends an approved proposal to proposal-approved.md (existing behavior).
+# Then, when SKIP_DESIGN_HANDOFF is not set, creates the openspec change:
+#   - openspec/changes/<name>/ with .openspec.yaml + full proposal.md
+#   - roadmap-meta.yaml containing change_type (parsed from improvements head)
+#   - iteration.json planned entry
+#
+# Idempotency: if openspec/changes/<name>/ already exists, the create flow
+# is skipped (no overwrite).
+#
+# Env vars:
+#   SKIP_DESIGN_HANDOFF=yes    -> skip create flow (legacy / skeleton path)
+#   PARENT_FEATURE              -> optional, written to roadmap-meta.yaml
 
 set -euo pipefail
 
@@ -55,3 +66,98 @@ fi
 
 # Append to approved list
 append_approved "$PROJECT_ROOT" "$NAME" "$PRIORITY"
+
+# Skip create flow on legacy / skeleton path
+if [ "${SKIP_DESIGN_HANDOFF:-no}" = "yes" ]; then
+  exit 0
+fi
+
+CHANGE_DIR="$PROJECT_ROOT/openspec/changes/$NAME"
+if [ -d "$CHANGE_DIR" ]; then
+  echo "⏭  change dir already exists: $CHANGE_DIR (skipping create)"
+  exit 0
+fi
+
+mkdir -p "$CHANGE_DIR"
+
+cat > "$CHANGE_DIR/.openspec.yaml" <<EOF
+name: $NAME
+created_by: guide-design approve
+EOF
+
+CHANGE_NAME="$NAME" IMPROVEMENTS_PATH="$IMP_FILE" \
+    python3 "$SCRIPT_DIR/generate_full_proposal.py" \
+    > "$CHANGE_DIR/proposal.md" 2>/dev/null || {
+    echo "⚠️  generate_full_proposal.py failed; falling back to skeleton" >&2
+    cat > "$CHANGE_DIR/proposal.md" <<EOF
+# $NAME
+
+## Why
+
+(Generated from $IMP_FILE)
+
+## What Changes
+
+**In Scope**: TBD
+
+**Out of Scope**: TBD
+
+## Capabilities
+
+TBD
+
+## Impact
+
+TBD
+
+## Acceptance
+
+- [ ] TBD
+EOF
+}
+
+HEAD_PHASE="default"
+HEAD_CATEGORY="general"
+HEAD_TYPE="feature"
+if [ -f "$IMP_FILE" ]; then
+  if grep -qE '\*\*阶段\*\*:\s*[^|]+' "$IMP_FILE"; then
+    HEAD_PHASE=$(grep -oE '\*\*阶段\*\*:\s*[^|]+' "$IMP_FILE" | head -1 | sed 's/.*\*\*阶段\*\*:\s*//' | xargs)
+  fi
+  if grep -qE '\*\*分类\*\*:\s*[^|]+' "$IMP_FILE"; then
+    HEAD_CATEGORY=$(grep -oE '\*\*分类\*\*:\s*[^|]+' "$IMP_FILE" | head -1 | sed 's/.*\*\*分类\*\*:\s*//' | xargs)
+  fi
+  if grep -qE '\*\*类型\*\*:\s*[^|]+' "$IMP_FILE"; then
+    HEAD_TYPE=$(grep -oE '\*\*类型\*\*:\s*[^|]+' "$IMP_FILE" | head -1 | sed 's/.*\*\*类型\*\*:\s*//' | xargs)
+  fi
+fi
+
+PARENT_FEATURE="${PARENT_FEATURE:-}"
+cat > "$CHANGE_DIR/roadmap-meta.yaml" <<EOF
+phase: $HEAD_PHASE
+category: $HEAD_CATEGORY
+change_type: $HEAD_TYPE
+priority: $PRIORITY
+parent_feature: "$PARENT_FEATURE"
+EOF
+
+ITERATION_FILE="$PROJECT_ROOT/.rddf/state/iteration.json"
+if [ -f "$ITERATION_FILE" ]; then
+  python3 - <<PYEOF
+import json
+import os
+from pathlib import Path
+p = Path("$ITERATION_FILE")
+data = json.loads(p.read_text()) if p.exists() else {"version": 1, "changes": []}
+data["changes"] = [c for c in data.get("changes", []) if c.get("name") != "$NAME"]
+data["changes"].append({
+    "name": "$NAME",
+    "status": "planned",
+    "phase": "$HEAD_PHASE",
+    "category": "$HEAD_CATEGORY",
+    "added_at": __import__("time").strftime("%Y-%m-%dT%H:%M:%S%z"),
+})
+p.write_text(json.dumps(data, indent=2))
+PYEOF
+fi
+
+echo "✅ change created: $CHANGE_DIR (phase=$HEAD_PHASE, category=$HEAD_CATEGORY, type=$HEAD_TYPE)"

@@ -379,6 +379,17 @@ guide-plan 阶段完成（plan-done）
    - **不修改** `proposal-approved.md`：该文件无 status 列，消费状态由 `openspec/changes/` 目录派生；条目仅在 change 归档时由 `mark_approved_completed()` 移至 `## 已实施`
 6. 失败容错：单 change 填充失败不中断整体流程，继续下一个
 
+### v2.0.6+ 与 guide-design 协同（D3 设计 → plan 消费）
+
+`.rddf/state/.design-handoff.json` v2 schema 含 `changes_pre_created: [name, ...]`，
+描述 design 阶段已直接落盘的 changes（approve 升级后）。
+`plan_intake.sh` 消费该列表：
+
+- **Phase 2 跳过**: 在 `changes_pre_created` 内的 change 不再走 propose 创建（已存在）
+- **Phase 2.5 fill 范围收缩**: 仅补 specs / design.md / tasks.md，**proposal.md 已是完整版本**（D2 映射结果）
+
+Phase 2 展示层给这种 change 加 `🆕 design-pre-created` 标签，便于用户区分新建 vs 预建。
+
 **示例输出**：
 
 ```

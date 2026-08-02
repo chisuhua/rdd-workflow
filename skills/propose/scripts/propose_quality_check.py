@@ -175,6 +175,39 @@ def run_all_checks(name: str, project_root: str) -> List[str]:
     return warnings
 
 
+def run_design_checks(name: str, project_root: str) -> List[str]:
+    """Run only the 3 proposal-level checks (D5 split).
+
+    Design phase invokes only the 3 checks that operate on proposal.md:
+    proposal_length, adr_references, scope_sections. Tasks and roadmap
+    alignment are intentionally excluded because tasks.md and
+    roadmap-meta.yaml may not exist yet at design time (created later
+    by plan-fill), so including them would produce false positives.
+
+    Returns list of warning strings (empty = pass).
+    """
+    change_dir = os.path.join(project_root, "openspec", "changes", name)
+    proposal_path = os.path.join(change_dir, "proposal.md")
+
+    warnings: List[str] = []
+    warnings.extend(check_proposal_length(proposal_path))
+    warnings.extend(check_adr_references(proposal_path))
+    warnings.extend(check_scope_sections(proposal_path))
+    return warnings
+
+
+def run_plan_checks(name: str, project_root: str) -> List[str]:
+    """Run all 5 checks (alias for run_all_checks, kept for D5 symmetry).
+
+    Plan phase invokes the full 5-check suite, including tasks and
+    roadmap alignment, because tasks.md and roadmap entries are
+    expected to exist by plan-done time.
+
+    Returns list of warning strings (empty = pass).
+    """
+    return run_all_checks(name, project_root)
+
+
 def main(argv: list[str] | None = None) -> List[str] | None:
     """CLI entry point.
 

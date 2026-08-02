@@ -410,3 +410,58 @@ class TestCliMain:
         # Should not raise SystemExit; returns empty warnings list.
         result = pqc.main(["--change", "c1", "--strict"])
         assert result == []
+
+
+# ---------------------------------------------------------------------------
+# D5: design vs plan phase check split (move-proposal-creation-to-design)
+# ---------------------------------------------------------------------------
+
+
+class TestPhaseCheckSplit:
+    """D5: design phase runs only proposal-level 3 checks; plan phase runs all 5."""
+
+    def test_design_checks_excludes_tasks_and_roadmap(self, project_root):
+        """design phase must not flag missing tasks.md or roadmap.md entry."""
+        # Bare-minimum proposal — no tasks.md, no roadmap.md
+        _write_proposal(project_root, "c1", "## Why\n\nshort\n")
+        warnings = pqc.run_design_checks("c1", project_root)
+        # Should only flag the short proposal, not the missing tasks/roadmap
+        msg = " ".join(warnings)
+        assert "tasks" not in msg.lower(), f"design should not flag tasks: {warnings}"
+        assert "roadmap" not in msg.lower(), f"design should not flag roadmap: {warnings}"
+
+    def test_plan_checks_includes_all_5(self, project_root):
+        """plan phase runs all 5 checks (no regression)."""
+        _write_proposal(project_root, "c1", "## Why\n\nshort\n")
+        warnings = pqc.run_plan_checks("c1", project_root)
+        msg = " ".join(warnings)
+        # Should flag missing tasks AND missing roadmap entries
+        assert "tasks" in msg.lower(), f"plan must flag missing tasks: {warnings}"
+        assert "roadmap" in msg.lower(), f"plan must flag missing roadmap: {warnings}"
+
+    def test_design_checks_3_count(self, project_root):
+        """design phase runs exactly 3 checks (length, ADR, scope)."""
+        import re
+        # Write a proposal that fails all 3 design checks
+        _write_proposal(project_root, "c1", "x")  # short, no ADR, no scope
+        warnings = pqc.run_design_checks("c1", project_root)
+        # Expect 3 failures: length, ADR, scope (out of scope missing)
+        assert len(warnings) >= 3, f"Expected >=3 design warnings, got: {warnings}"
+
+    def test_design_checks_passes_when_proposal_complete(self, project_root):
+        """design phase passes when proposal has length + ADR + In/Out Scope."""
+        proposal = (
+            "## Why\n\n" + ("x" * 500) + "\n\nRefs ADR-0019.\n\n"
+            "## In Scope\n\ndo thing\n\n## Out of Scope\n\nnot doing\n"
+        )
+        _write_proposal(project_root, "c1", proposal)
+        warnings = pqc.run_design_checks("c1", project_root)
+        assert warnings == [], f"Expected no warnings, got: {warnings}"
+
+    def test_plan_checks_aliases_run_all_checks(self, project_root):
+        """run_plan_checks returns same result as run_all_checks."""
+        proposal = "## Why\n\nshort\n"
+        _write_proposal(project_root, "c1", proposal)
+        all_warnings = pqc.run_all_checks("c1", project_root)
+        plan_warnings = pqc.run_plan_checks("c1", project_root)
+        assert all_warnings == plan_warnings, "run_plan_checks must equal run_all_checks"

@@ -25,13 +25,13 @@ CI 在 `.github/workflows/test.yml`, 按序执行: 安装 deps → **断言质�
 
 **四阶段架构** (v2.1): `arch → design → plan → ship`
 
-> ⚠️ **v2.1+ 变更**: 新增 `guide-design` 阶段，提案管理（创建、审查、批准/拒绝/延迟）从 `guide-arch` Phase 5.5 迁移到 `guide-design`。存量项目请先运行 `skill_use("guide-design")`，或设置 `SKIP_ARCH_HANDOFF=yes` 临时跳过。
+> ⚠️ **v2.0.6+ 变更 (move-proposal-creation-to-design)**: design 阶段升级为「批准即创建 + 内容审查」(approve 后生成完整 proposal.md → 用户确认 → 落盘 + 状态写入)。详见 ADR-0025。
 
 | 阶段 | Skill | 职责 |
 |------|-------|------|
 | arch | `guide-arch` | 架构定义: ADR, 差距分析, roadmap |
-| design | `guide-design` | 设计管理: 提案创建, 审查, 批准/拒绝/延迟 |
-| plan | `guide-plan` | 变更生成: scan, propose, deps |
+| design | `guide-design` | 设计管理 + 内容审查: 提案创建, 审查, 批准/拒绝/延迟; approve 即落盘完整 proposal.md |
+| plan | `guide-plan` | 变更生成: intake (含 changes_pre_created 跳过), fill (specs/design/tasks), deps |
 | ship | `guide-ship` | 变更执行: worktree/轻量, execute, archive, cleanup |
 
 `guide-ship` 自动检测并行冲突:

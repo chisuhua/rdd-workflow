@@ -133,11 +133,20 @@ def create_skeleton_change(
     # Write minimal roadmap-meta.yaml
     yaml_path = os.path.join(change_dir, "roadmap-meta.yaml")
     try:
+        # Extract change_type from improvements head (D6 — feature/test-only/doc-only/refactor)
+        ct = "feature"
+        improvements_path = os.path.join(project_root, "improvements", f"{name}.md")
+        if os.path.exists(improvements_path):
+            m = re.search(r"\*\*类型\*\*:\s*([^|\n]+)", open(improvements_path).read())
+            if m:
+                ct = m.group(1).strip()
+
         with open(yaml_path, "w") as f:
             f.write('roadmap:\n')
             f.write(f'  phase: "{current_phase}"\n')
             f.write(f'  category: "{category}"\n')
             f.write(f'  priority: "{priority}"\n')
+            f.write(f'  change_type: "{ct}"\n')
             f.write('  gate_checklist: []\n')
             f.write('  cross_phase_deps: []\n')
             f.write('  manual_deps: []\n')

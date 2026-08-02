@@ -74,7 +74,7 @@ bash install.sh /path/to/project
 | 阶段 | 技能 | 职责 | 人工介入 |
 |------|------|------|---------|
 | **Arch** | `guide-arch` | 架构定义（ADR、roadmap、差距分析） | 高 |
-| **Design** | `guide-design` | 设计管理（提案创建、审查、批准/拒绝/延迟） | 中 |
+| **Design** | `guide-design` | 设计管理 + 内容审查（提案创建、审查、批准/拒绝/延迟；approve 即落盘 + 两层内容审查） | 中 |
 | **Plan** | `guide-plan` | 变更生成（scan、propose、deps） | 中 |
 | **Ship** | `guide-ship` | 变更执行（worktree、execute、archive） | 低 |
 

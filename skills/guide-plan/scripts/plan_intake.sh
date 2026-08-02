@@ -54,21 +54,52 @@ check_design_handoff() {
     return 1
   fi
 
-  # Validate schema v1
+  # Validate schema v1 or v2 (D3 of move-proposal-creation-to-design)
+  # v2 adds 'changes_pre_created'. v1 readers treat it as empty.
+  CHANGES_PRE_CREATED=()
   PYTHON_HANDOFF_PATH="$handoff_path" python3 -c "
 import json, os, sys
 try:
     with open(os.environ['PYTHON_HANDOFF_PATH']) as f:
         d = json.load(f)
-    assert d.get('version') == 1, 'version must be 1'
+    version = d.get('version')
+    if version not in (1, 2):
+        print(f'❌ design-handoff version must be 1 or 2, got {version}', file=sys.stderr)
+        sys.exit(1)
     assert d.get('all_proposals_have_decision') == True, 'all_proposals_have_decision must be true'
     assert isinstance(d.get('proposals_reviewed'), int) and d['proposals_reviewed'] >= 0
+    # v2: enforce changes_pre_created array
+    if version == 2:
+        cpc = d.get('changes_pre_created')
+        assert isinstance(cpc, list), 'changes_pre_created must be a list'
+        for item in cpc:
+            assert isinstance(item, str) and len(item) > 0, 'changes_pre_created items must be non-empty strings'
 except (AssertionError, json.JSONDecodeError, KeyError) as e:
     print(f'❌ design-handoff 验证失败: {e}', file=sys.stderr)
     sys.exit(1)
 " 2>&1 || return 1
 
-  echo "✅ design-done handoff 已验证 (v1 schema)"
+  # Read changes_pre_created from v2 payload (v1 = empty)
+  if command -v jq >/dev/null 2>&1; then
+    mapfile -t CHANGES_PRE_CREATED < <(jq -r '.changes_pre_created // [] | .[]' "$handoff_path" 2>/dev/null)
+  else
+    while IFS= read -r line; do
+      [ -n "$line" ] && CHANGES_PRE_CREATED+=("$line")
+    done < <(PYTHON_HANDOFF_PATH="$handoff_path" python3 -c "
+import json, os
+with open(os.environ['PYTHON_HANDOFF_PATH']) as f:
+    d = json.load(f)
+for n in d.get('changes_pre_created', []):
+    print(n)
+")
+  fi
+  export CHANGES_PRE_CREATED
+
+  if [ "${#CHANGES_PRE_CREATED[@]}" -gt 0 ]; then
+    echo "✅ design-done handoff 已验证 (v2 schema, ${#CHANGES_PRE_CREATED[@]} 个预建 changes)"
+  else
+    echo "✅ design-done handoff 已验证 (v1 schema)"
+  fi
   return 0
 }
 

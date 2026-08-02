@@ -114,6 +114,56 @@ design_proposal_review "$PROJECT_ROOT" "phase1"
 
 审查支持：y(批准)/n(拒绝)/d(延迟)/s(跳过)/a(全部批准)。批准时调用 `skills/guide-design/scripts/approve_proposal.sh`。
 
+### D1 编排: generate → confirm → fall-through
+
+v2.0.6+ 起，批准动作升级为「生成完整 proposal.md → 用户确认 → 落盘」(D1 of move-proposal-creation-to-design)。
+approve_proposal.sh 在落盘前提供以下两步编排：
+
+#### Step 1: 生成 proposal.md 草稿
+```bash
+CHANGE_NAME="<name>" IMPROVEMENTS_PATH="$PROJECT_ROOT/improvements/<name>.md" \
+    python3 "$PROJECT_ROOT/skills/guide-design/scripts/generate_full_proposal.py" \
+    > /tmp/proposal-draft.md
+```
+
+`generate_full_proposal.py` 按 D2 映射将 improvements 5 段转换：
+- 架构依据 → ## Why
+- 范围 + 关键场景 → ## What Changes (In/Out Scope)
+- 技术约束 → ## Capabilities / ## Impact
+- 验收标准 → ## Acceptance (checkboxes 保留)
+
+#### Step 2: 用户确认
+**AI 不自动确认** — 必须由用户明确同意。
+
+```bash
+echo "━━━ 生成的 proposal.md 草稿 ━━━"
+cat /tmp/proposal-draft.md
+echo ""
+echo "接受并继续? [y/N]: "
+read -r user_reply
+```
+
+#### Step 3: 落盘 + 状态写入
+on `y`：
+```bash
+# 由 approve_proposal.sh 完成（无需手动调用）
+# - mkdir openspec/changes/<name>/
+# - .openspec.yaml + proposal.md (full version)
+# - roadmap-meta.yaml (含 change_type, 从 improvements head 解析)
+# - iteration.json (status=planned, idempotent)
+# 检查人工 hook: DESIGN_PROPOSAL_AUTO_ACCEPT=no 时(y/N 需手工回答)
+```
+
+回落到 approve_proposal.sh 的现有追加逻辑 + 状态写入。
+若 `SKIP_DESIGN_HANDOFF=yes` 既存路径:跳过创建，留给 plan 阶段处理。
+
+design 两层内容审查（warning 默认）:
+- improvements 层: `skills/guide-design/scripts/design_content_review.sh`
+- openspec proposal 层: `skills/propose/scripts/propose_quality_check.py::run_design_checks`
+  (D5:仅 3 项 proposal-level 检查,不含 tasks/roadmap)
+
+`STRICT_DESIGN_GATE=yes` 升级 warning 为阻断;`SKIP_CONTENT_REVIEW=yes` 跳过整个审查。
+
 ## Phase 4: design-done 门控
 
 **入口条件**：用户从 Phase 2 菜单选择选项 4，或所有提案审查完毕。
@@ -145,10 +195,12 @@ check_design_done_gate() {
 
 **入口条件**：Phase 4 门控检查通过，且用户确认退出。
 
-**写入 handoff 状态**：
+**写入 handoff 状态** (v2 schema with changes_pre_created)：
 ```bash
 source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/write_design_handoff.sh"
-write_design_handoff "$proposals_reviewed"
+# Collect change names created during this design session (approved + auto-created)
+# Pass as positional args (preferred) or via CHANGES_PRE_CREATED env var
+write_design_handoff "$proposals_reviewed" ${created_change_names[@]}
 ```
 
 **rddf-session 关闭 hook**：
