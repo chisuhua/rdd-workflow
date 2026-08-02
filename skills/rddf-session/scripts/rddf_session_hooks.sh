@@ -146,6 +146,70 @@ _rddf_should_auto_archive() {
   return 1
 }
 
+# _rddf_auto_archive_if_needed <sessions_file>
+#
+# Best-effort auto-archive trigger. Reads sessions.json, counts total sessions,
+# invokes _rddf_should_auto_archive to decide. If triggered, calls
+# RddfSessionCoordinator.archive_history(keep) via Python (env-var pattern).
+# All exceptions swallowed to never block the main hook flow.
+#
+# Env vars:
+#   RDDF_AUTO_ARCHIVE_KEEP       (default 10, 0 = disabled)
+#   RDDF_AUTO_ARCHIVE_THRESHOLD  (default keep+5, 0 = disabled)
+_rddf_auto_archive_if_needed() {
+  local sessions_file="$1"
+
+  # Read env vars with defaults
+  local keep="${RDDF_AUTO_ARCHIVE_KEEP:-10}"
+  local threshold="${RDDF_AUTO_ARCHIVE_THRESHOLD:-}"
+
+  # Compute threshold default = keep + 5 if not set
+  if [ -z "$threshold" ]; then
+    threshold=$((keep + 5))
+  fi
+
+  # Skip if sessions.json does not exist (no harm, no foul)
+  if [ ! -f "$sessions_file" ]; then
+    return 0
+  fi
+
+  # Count total sessions
+  local total_count
+  total_count=$(python3 -c "
+import json, sys
+try:
+    with open('$sessions_file') as f:
+        data = json.load(f)
+    print(len(data.get('sessions', [])))
+except Exception as e:
+    print(f'rddf-session auto-archive skipped: cannot read sessions.json: {e}', file=sys.stderr)
+    print(0)
+")
+
+  # Decide via pure helper
+  if ! _rddf_should_auto_archive "$total_count" "$keep" "$threshold"; then
+    return 0
+  fi
+
+  # Trigger: invoke archive_history via Python (best-effort, swallow errors)
+  PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}" \
+  SESSIONS_FILE="$sessions_file" \
+  ARCHIVE_KEEP="$keep" \
+  python3 <<'PYEOF' 2>/dev/null
+import os, sys
+try:
+    sys.path.insert(0, os.environ["PROJECT_ROOT"])
+    from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
+    coord = RddfSessionCoordinator(sessions_file=os.environ["SESSIONS_FILE"])
+    archived = coord.archive_history(keep=int(os.environ["ARCHIVE_KEEP"]))
+    if archived > 0:
+        print(f"rddf-session auto-archive: {archived} sessions moved to .archive.json")
+except Exception as e:
+    print(f"rddf-session auto-archive skipped: {e}", file=sys.stderr)
+PYEOF
+  return 0  # always exit 0 (best-effort)
+}
+
 # Concurrency: fcntl.flock inside RddfSessionCoordinator._with_file_lock
 # serializes parallel hook invocations. Multiple parallel entries
 # complete safely without corrupting sessions.json.

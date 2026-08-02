@@ -7,6 +7,7 @@ Contract (from improvements/add-rddf-session-auto-archive-on-entry.md):
 
 Returns: True if total_count >= threshold AND keep > 0 AND threshold > 0
 """
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -72,3 +73,92 @@ def test_below_keep_count_never_triggers():
     # Helper should not trigger.
     assert _invoke_helper(total_count=5, keep=10, threshold=None) is False
     assert _invoke_helper(total_count=10, keep=10, threshold=None) is False
+
+
+def _terminal_session(index: int):
+    return {
+        "session_id": f"rds_{index:012x}",
+        "kind": "stage_arch",
+        "owner_opencode_session_id": "prev_owner",
+        "state": "completed",
+        "started_at": "2026-07-01T00:00:00",
+        "last_heartbeat": "2026-07-01T01:00:00",
+        "ended_at": "2026-07-01T02:00:00",
+        "goal": {"intent": "guide-arch"},
+        "attached_changes": [],
+        "context_pointer": None,
+        "end_reason": "arch-done",
+    }
+
+
+def test_auto_archive_invokes_archive_history_when_triggered(tmp_path, monkeypatch):
+    """When threshold met, helper invokes coord.archive_history(keep)."""
+    # Setup: fake sessions.json with 20 terminal sessions (>= keep+5=15 threshold)
+    sessions_file = tmp_path / "state" / "sessions.json"
+    sessions_file.parent.mkdir(parents=True)
+    sessions_file.write_text(
+        json.dumps({"version": 1, "sessions": [_terminal_session(i) for i in range(20)]})
+    )
+
+    # Patch env so hook can locate sessions.json
+    monkeypatch.setenv("PROJECT_ROOT", str(tmp_path))
+    monkeypatch.delenv("RDDF_AUTO_ARCHIVE_KEEP", raising=False)
+    monkeypatch.delenv("RDDF_AUTO_ARCHIVE_THRESHOLD", raising=False)
+
+    # Invoke helper via bash
+    result = subprocess.run(
+        ["bash", "-c",
+         f'source "{HOOKS_SCRIPT}" >/dev/null 2>&1; _rddf_auto_archive_if_needed "{sessions_file}"'],
+        capture_output=True, env=os.environ,
+    )
+    # Should succeed (exit 0) — best-effort, swallows errors but success path is 0
+    assert result.returncode == 0, f"stderr: {result.stderr.decode()}"
+    # sessions.json should have been updated (archive-history wrote new state)
+    data_after = json.loads(sessions_file.read_text())
+    # After archive_history(keep=10): terminal sessions kept = min(20, 10) = 10
+    assert len(data_after["sessions"]) <= 10, (
+        f"Expected <=10 sessions after archive, got {len(data_after['sessions'])}"
+    )
+
+
+def test_auto_archive_silent_when_below_threshold(tmp_path, monkeypatch):
+    """When below threshold, helper does not touch sessions.json."""
+    sessions_file = tmp_path / "state" / "sessions.json"
+    sessions_file.parent.mkdir(parents=True)
+    original_data = {"version": 1, "sessions": [_terminal_session(i) for i in range(8)]}
+    sessions_file.write_text(json.dumps(original_data))
+
+    monkeypatch.setenv("PROJECT_ROOT", str(tmp_path))
+
+    result = subprocess.run(
+        ["bash", "-c",
+         f'source "{HOOKS_SCRIPT}" >/dev/null 2>&1; _rddf_auto_archive_if_needed "{sessions_file}"'],
+        capture_output=True, env=os.environ,
+    )
+    assert result.returncode == 0
+    # sessions.json unchanged
+    data_after = json.loads(sessions_file.read_text())
+    assert len(data_after["sessions"]) == 8
+
+
+def test_auto_archive_swallows_errors(tmp_path, monkeypatch):
+    """When archive fails (corrupt file), helper exits 0 and stderr prints warning."""
+    sessions_file = tmp_path / "state" / "sessions.json"
+    sessions_file.parent.mkdir(parents=True)
+    # Corrupt JSON to force archive_history to fail
+    sessions_file.write_text("{this is not valid json")
+
+    monkeypatch.setenv("PROJECT_ROOT", str(tmp_path))
+
+    result = subprocess.run(
+        ["bash", "-c",
+         f'source "{HOOKS_SCRIPT}" >/dev/null 2>&1; _rddf_auto_archive_if_needed "{sessions_file}"'],
+        capture_output=True, env=os.environ,
+    )
+    # best-effort: even on failure, exit 0
+    assert result.returncode == 0
+    # stderr should contain a warning
+    err = result.stderr.decode()
+    assert "auto-archive" in err.lower() or "skip" in err.lower(), (
+        f"Expected warning in stderr, got: {err}"
+    )
