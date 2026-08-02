@@ -282,6 +282,11 @@ except ConflictError as e:
     sys.exit(2)
 PYEOF
 
+  local _entry_exit=$?
+  if [ "$_entry_exit" -ne 0 ]; then
+    return "$_entry_exit"
+  fi
+
   # Auto-archive best-effort (P1: add-rddf-session-auto-archive-on-entry)
   _rddf_auto_archive_if_needed "$sessions_file" 2>/dev/null || true
 }
