@@ -247,9 +247,13 @@ esac
   `ConflictError` when any other-kind session is active. Set
   `RDDF_ALLOW_CROSS_STAGE_PARALLEL=yes` to opt into legacy cross-stage
   parallelism.
-- **Owner identity**: `OPENCODE_SESSION_ID` env var, falling back to
-  `$(hostname -s)_$PPID` (opencode server PID — stable across bash tool
-  calls within one window, differs across windows).
+- **Owner identity** (3-layer fallback, see improvements/fix-rddf-session-owner-stability.md):
+  1. `$OPENCODE_SESSION_ID` env var (highest priority — OpenCode platform injection)
+  2. `~/.cache/rddf-session-owner` cache file (per-host, 0600, TTL 1h, cross-bash-call persistence)
+  3. `/proc/<shell-ppid>/cmdline` probe (depth ≤5, accept iff cmdline contains "opencode")
+  4. `$(hostname -s)_$$` current shell PID (last resort fallback)
+  - **DEPRECATED**: previous claim of "`$PPID` stable across bash tool calls" is FALSE; same OpenCode window produces different `$PPID` across consecutive bash tool calls (root cause: 2026-08-02 ship 复盘). The 3-layer chain above is the actual contract.
+  - Debug field `OPENCODE_SESSION_ID_FROM` records the fallback source (env | proc-cmdline | shell-pid | cached-file).
 - **Heartbeat**: refreshed on every `guide-arch`/`guide-plan`/`guide-ship` phase call;
   30-minute timeout → orphaned
 
