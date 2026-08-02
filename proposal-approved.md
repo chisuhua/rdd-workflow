@@ -10,20 +10,19 @@
 ## 已批准提案
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
-|------|--------|----------|--------|
+|------|--------|----------|----------|
+| [fix-rddf-session-owner-stability](improvements/fix-rddf-session-owner-stability.md) | P0 | 2026-08-02 | guide-arch |
+| [add-rddf-session-sub-phase-heartbeat](improvements/add-rddf-session-sub-phase-heartbeat.md) | P1 | 2026-08-02 | guide-arch |
+| [add-rddf-session-auto-archive-on-entry](improvements/add-rddf-session-auto-archive-on-entry.md) | P1 | 2026-08-02 | guide-arch |
+| [add-rddf-session-status-cmd](improvements/add-rddf-session-status-cmd.md) | P2 | 2026-08-02 | guide-arch |
+| [add-rddf-session-workflow-group](improvements/add-rddf-session-workflow-group.md) | P2 | 2026-08-02 | guide-arch |
 
-
-
-
-
-
-
-
-
-
-| [refine-plan-openspec-integration](improvements/refine-plan-openspec-integration.md) | P1 | 2026-08-01 | guide-arch |
+> **supersedes** (2026-08-02 design-done): `add-rddf-session-status-cmd` (本次批准) **supersedes** 已批准 `add-session-progress-view` (P1, 2026-07-28) — 后者范围是前者的子集 (本提案更广: 表格 + BINDING_LINES + guide 推荐器整合)。Plan 阶段实施时跳过 `add-session-progress-view`, 仅实施 `add-rddf-session-status-cmd`。
+>
+> **bump 合并声明** (2026-08-02 design-done): `add-rddf-session-sub-phase-heartbeat` (本次批准) 与 `add-rddf-session-workflow-group` (本次批准) **合并为单一 schema v1→v2 bump PR** (`bump-sessions-schema-v2`), 一次同时支持 `sub_phase: str | null` + `workflow_group: str | null` 两个 optional 字段。**禁止拆为两次独立 bump**。Plan 阶段必须先实施 P0 (`fix-rddf-session-owner-stability`) 再启动本 PR。
 
 ## 已实施
+| [refine-plan-openspec-integration](improvements/refine-plan-openspec-integration.md) | P1 | 2026-08-02 |
 | [move-proposal-creation-to-design](improvements/move-proposal-creation-to-design.md) | P1 | 2026-08-02 |
 | [fix-wt-scanner-strip-bug-and-untracked-coverage](improvements/fix-wt-scanner-strip-bug-and-untracked-coverage.md) | P1 | 2026-08-01 |
 | [improve-ship-done-cleanup-orphan-sessions](improvements/improve-ship-done-cleanup-orphan-sessions.md) | P2 | 2026-08-01 |
