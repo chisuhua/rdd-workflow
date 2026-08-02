@@ -20,11 +20,11 @@
 
 
 
-| [move-proposal-creation-to-design](improvements/move-proposal-creation-to-design.md) | P1 | 2026-08-01 | guide-arch |
 
 | [refine-plan-openspec-integration](improvements/refine-plan-openspec-integration.md) | P1 | 2026-08-01 | guide-arch |
 
 ## 已实施
+| [move-proposal-creation-to-design](improvements/move-proposal-creation-to-design.md) | P1 | 2026-08-02 |
 | [fix-wt-scanner-strip-bug-and-untracked-coverage](improvements/fix-wt-scanner-strip-bug-and-untracked-coverage.md) | P1 | 2026-08-01 |
 | [improve-ship-done-cleanup-orphan-sessions](improvements/improve-ship-done-cleanup-orphan-sessions.md) | P2 | 2026-08-01 |
 | [fix-scanner-fallback-and-orphan-archival](improvements/fix-scanner-fallback-and-orphan-archival.md) | P1 | 2026-08-01 |

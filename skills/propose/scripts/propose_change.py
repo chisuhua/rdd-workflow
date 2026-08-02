@@ -118,6 +118,17 @@ def create_skeleton_change(
         capture_output=True,
     )
 
+    # Extract change_type from improvements head (D6 — feature/test-only/doc-only/refactor)
+    ct = "feature"
+    improvements_path = os.path.join(project_root, "improvements", f"{name}.md")
+    if os.path.exists(improvements_path):
+        m = re.search(r"\*\*类型\*\*:\s*([^|\n]+)", open(improvements_path).read())
+        if m:
+            ct = m.group(1).strip()
+
+    # v1.7.0+: doc-only/test-only changes can use skip_specs: true in .openspec.yaml
+    skip_specs = ct in ("doc-only", "test-only")
+
     # Write minimal proposal.md
     proposal_path = os.path.join(change_dir, "proposal.md")
     try:
@@ -129,6 +140,16 @@ def create_skeleton_change(
             f.write("- <file path or module affected>\n")
     except OSError:
         return False
+
+    # Write .openspec.yaml with optional skip_specs (v1.7.0+)
+    openspec_yaml_path = os.path.join(change_dir, ".openspec.yaml")
+    try:
+        with open(openspec_yaml_path, "w") as f:
+            f.write(f"name: {name}\n")
+            if skip_specs:
+                f.write("skip_specs: true\n")
+    except OSError:
+        pass
 
     # Write minimal roadmap-meta.yaml
     yaml_path = os.path.join(change_dir, "roadmap-meta.yaml")

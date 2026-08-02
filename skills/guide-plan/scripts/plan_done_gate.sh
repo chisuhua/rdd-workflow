@@ -175,6 +175,17 @@ write_plan_handoff() {
               VALIDATION_FAILED=1
           fi
       fi
+
+      # isComplete check: `openspec status --change <name> --json` must report isComplete=true
+      if command -v openspec >/dev/null 2>&1; then
+          local ISCOMPLETE
+          ISCOMPLETE=$(openspec status --change "$name" --json 2>/dev/null | \
+              python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('isComplete', True))" 2>/dev/null || echo "true")
+          if [ "$ISCOMPLETE" = "False" ]; then
+              echo "⚠️  plan-done gate: $name reports isComplete=false (open artifacts remain)"
+              # Warning level — do not increment VALIDATION_FAILED
+          fi
+      fi
   done
   if [ "$VALIDATION_FAILED" -ne 0 ]; then
       echo "❌ plan-done gate blocked: fix validation errors above"

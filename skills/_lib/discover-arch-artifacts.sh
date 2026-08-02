@@ -152,8 +152,38 @@ discover_architecture_dir() {
 }
 
 # adr_pattern has no existence check — it's a glob pattern, not a path.
+#
+# Behavior (priority order):
+#   1. SPEC_WORKFLOW_ADR_PATTERN env var → always wins (backward compat).
+#   2. Auto-detect: probe <ADR_DIR>/<PATTERN> with case variants in order
+#      (uppercase first, then lowercase) and pick the first one with >= 1 match.
+#      This allows projects that use lowercase (e.g. "adr-*.md") to work
+#      alongside the default uppercase ("ADR-*.md") without configuration.
+#   3. Fallback: "ADR-*.md" (rdd-workflow convention).
 discover_adr_pattern() {
-  DISCOVERED_ADR_PATTERN="${SPEC_WORKFLOW_ADR_PATTERN:-ADR-*.md}"
+  if [ -n "${SPEC_WORKFLOW_ADR_PATTERN:-}" ]; then
+    DISCOVERED_ADR_PATTERN="${SPEC_WORKFLOW_ADR_PATTERN}"
+    export DISCOVERED_ADR_PATTERN
+    echo "${DISCOVERED_ADR_PATTERN}"
+    return 0
+  fi
+
+  local _probe_dir="${DISCOVERED_ADR_DIR:-docs/adr}"
+  local _candidates=("ADR-*.md" "adr-*.md")
+  for _candidate in "${_candidates[@]}"; do
+    # Use find -name (standard glob library, not affected by shell quoting
+    # suppression of glob expansion that breaks plain `ls "path/*.md"`).
+    local _hits
+    _hits=$(find "${_probe_dir}" -maxdepth 1 -name "${_candidate}" 2>/dev/null | wc -l | tr -d '[:space:]')
+    if [ "${_hits:-0}" -gt 0 ]; then
+      DISCOVERED_ADR_PATTERN="${_candidate}"
+      export DISCOVERED_ADR_PATTERN
+      echo "${DISCOVERED_ADR_PATTERN}"
+      return 0
+    fi
+  done
+
+  DISCOVERED_ADR_PATTERN="ADR-*.md"
   export DISCOVERED_ADR_PATTERN
   echo "${DISCOVERED_ADR_PATTERN}"
 }
