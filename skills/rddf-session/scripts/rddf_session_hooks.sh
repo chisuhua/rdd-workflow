@@ -232,6 +232,8 @@ rddf_session_hook_entry() {
   OPENCODE_SESSION_ID_FROM="${OPENCODE_SESSION_ID_FROM:-${RDDF_OWNER_FROM:-shell-pid}}"
   export OPENCODE_SESSION_ID_FROM
 
+  local sessions_file="${PROJECT_ROOT}/.rddf/state/sessions.json"
+
   KIND="$kind" \
   INTENT="$intent" \
   SUBJECT="$subject" \
@@ -279,6 +281,9 @@ except ConflictError as e:
     print('  → then skill_use(\'rddf-session\',\'resume\'|\'abandon\') to resolve')
     sys.exit(2)
 PYEOF
+
+  # Auto-archive best-effort (P1: add-rddf-session-auto-archive-on-entry)
+  _rddf_auto_archive_if_needed "$sessions_file" 2>/dev/null || true
 }
 
 # rddf_session_hook_close <kind> <end_reason> <intent>
@@ -292,6 +297,8 @@ rddf_session_hook_close() {
   OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-${RDDF_OWNER:-}}"
   OPENCODE_SESSION_ID_FROM="${OPENCODE_SESSION_ID_FROM:-${RDDF_OWNER_FROM:-shell-pid}}"
   export OPENCODE_SESSION_ID_FROM
+
+  local sessions_file="${PROJECT_ROOT}/.rddf/state/sessions.json"
 
   KIND="$kind" \
   END_REASON="$end_reason" \
@@ -326,6 +333,9 @@ try:
 except Exception as e:
     print(f"rddf-session close skipped: {e}")
 PYEOF
+
+  # Auto-archive best-effort (P1: add-rddf-session-auto-archive-on-entry)
+  _rddf_auto_archive_if_needed "$sessions_file" 2>/dev/null || true
 }
 
 # rddf_session_hook_heartbeat <kind> [change_name]
