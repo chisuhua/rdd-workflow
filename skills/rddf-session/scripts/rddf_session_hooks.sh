@@ -29,6 +29,88 @@
 #     when sessions.json missing (consistent across all 3 callers; was
 #     inconsistent in original — only ship was silent)
 #
+
+# _rddf_resolve_owner — 3-layer owner ID detection (fix-rddf-session-owner-stability)
+#
+# Sets 2 env vars (or returns 0 + sets shell vars):
+#   RDDF_OWNER     — owner ID (string)
+#   RDDF_OWNER_FROM — fallback source: env | proc-cmdline | shell-pid | cached-file
+#
+# Priority chain:
+#   1. $OPENCODE_SESSION_ID env var (OpenCode platform injection)
+#   2. ~/.cache/rddf-session-owner cache file (TTL 1h, 0600 perms)
+#   3. /proc/<shell-ppid>/cmdline probe (depth ≤5, accept iff cmdline contains "opencode")
+#   4. $(hostname -s)_$$  (current shell PID fallback)
+#
+# 跨 bash 调用持久化机制: 探测成功后将 owner+source 写入 ~/.cache/rddf-session-owner
+# (per-host, 0600, TTL 1h). 后续 fallback 在 env var 缺失时优先读此文件.
+_rddf_resolve_owner() {
+  # 1. env var 优先
+  if [ -n "${OPENCODE_SESSION_ID:-}" ]; then
+    RDDF_OWNER="$OPENCODE_SESSION_ID"
+    RDDF_OWNER_FROM="env"
+    export RDDF_OWNER RDDF_OWNER_FROM
+    return 0
+  fi
+
+  # 2. cache file (per-host, 0600, TTL 1h)
+  local cache_file="${HOME}/.cache/rddf-session-owner"
+  if [ -f "$cache_file" ]; then
+    local cache_age=999999
+    if command -v stat >/dev/null 2>&1; then
+      local now_ts
+      now_ts=$(date +%s 2>/dev/null || echo 0)
+      local mtime_ts
+      mtime_ts=$(stat -c %Y "$cache_file" 2>/dev/null || stat -f %m "$cache_file" 2>/dev/null || echo 0)
+      if [ "$now_ts" -gt 0 ] && [ "$mtime_ts" -gt 0 ]; then
+        cache_age=$((now_ts - mtime_ts))
+      fi
+    fi
+    if [ "$cache_age" -lt 3600 ]; then
+      RDDF_OWNER=$(awk -F'\t' 'NR==1{print $1; exit}' "$cache_file" 2>/dev/null)
+      RDDF_OWNER_FROM="cached-file"
+      if [ -n "$RDDF_OWNER" ]; then
+        export RDDF_OWNER RDDF_OWNER_FROM
+        return 0
+      fi
+    fi
+  fi
+
+  # 3. /proc cmdline 探测 (深度 ≤5, 仅采纳 cmdline 含 "opencode")
+  local depth=0
+  local cur_ppid="$$"
+  while [ "$depth" -lt 5 ] && [ -n "$cur_ppid" ] && [ "$cur_ppid" -gt 1 ]; do
+    if [ -r "/proc/$cur_ppid/cmdline" ]; then
+      local cmdline
+      cmdline=$(tr '\0' ' ' < "/proc/$cur_ppid/cmdline" 2>/dev/null || true)
+      if echo "$cmdline" | grep -q "opencode"; then
+        RDDF_OWNER="$(hostname -s)_${cur_ppid}"
+        RDDF_OWNER_FROM="proc-cmdline"
+        # best-effort 写 cache
+        if command -v mkdir >/dev/null 2>&1; then
+          mkdir -p "$(dirname "$cache_file")" 2>/dev/null || true
+          chmod 700 "$(dirname "$cache_file")" 2>/dev/null || true
+          printf '%s\t%s\n' "$RDDF_OWNER" "$RDDF_OWNER_FROM" > "$cache_file" 2>/dev/null || true
+          chmod 600 "$cache_file" 2>/dev/null || true
+        fi
+        export RDDF_OWNER RDDF_OWNER_FROM
+        return 0
+      fi
+    fi
+    # 沿 PPid 链向上
+    if [ -r "/proc/$cur_ppid/status" ]; then
+      cur_ppid=$(awk '/^PPid:[[:space:]]+[0-9]+/{print $2; exit}' "/proc/$cur_ppid/status" 2>/dev/null || echo "")
+    else
+      cur_ppid=""
+    fi
+    depth=$((depth + 1))
+  done
+
+  # 4. shell PID 兜底
+  RDDF_OWNER="$(hostname -s)_$$"
+  RDDF_OWNER_FROM="shell-pid"
+  export RDDF_OWNER RDDF_OWNER_FROM
+}
 # Concurrency: fcntl.flock inside RddfSessionCoordinator._with_file_lock
 # serializes parallel hook invocations. Multiple parallel entries
 # complete safely without corrupting sessions.json.
@@ -46,7 +128,10 @@ rddf_session_hook_entry() {
   local context_pointer="${5:-}"
 
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
+  _rddf_resolve_owner
+  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-${RDDF_OWNER:-}}"
+  OPENCODE_SESSION_ID_FROM="${OPENCODE_SESSION_ID_FROM:-${RDDF_OWNER_FROM:-shell-pid}}"
+  export OPENCODE_SESSION_ID_FROM
 
   KIND="$kind" \
   INTENT="$intent" \
@@ -104,7 +189,10 @@ rddf_session_hook_close() {
   local intent="$3"
 
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
+  _rddf_resolve_owner
+  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-${RDDF_OWNER:-}}"
+  OPENCODE_SESSION_ID_FROM="${OPENCODE_SESSION_ID_FROM:-${RDDF_OWNER_FROM:-shell-pid}}"
+  export OPENCODE_SESSION_ID_FROM
 
   KIND="$kind" \
   END_REASON="$end_reason" \
@@ -154,7 +242,10 @@ rddf_session_hook_heartbeat() {
   local change_name="${2:-}"
 
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
+  _rddf_resolve_owner
+  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-${RDDF_OWNER:-}}"
+  OPENCODE_SESSION_ID_FROM="${OPENCODE_SESSION_ID_FROM:-${RDDF_OWNER_FROM:-shell-pid}}"
+  export OPENCODE_SESSION_ID_FROM
 
   KIND="$kind" \
   CHANGE_NAME="$change_name" \
@@ -202,7 +293,10 @@ rddf_session_hook_attach() {
   local change_name="$2"
 
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
+  _rddf_resolve_owner
+  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-${RDDF_OWNER:-}}"
+  OPENCODE_SESSION_ID_FROM="${OPENCODE_SESSION_ID_FROM:-${RDDF_OWNER_FROM:-shell-pid}}"
+  export OPENCODE_SESSION_ID_FROM
 
   KIND="$kind" \
   CHANGE_NAME="$change_name" \
@@ -245,7 +339,10 @@ rddf_session_hook_detach() {
   local change_name="$2"
 
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
+  _rddf_resolve_owner
+  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-${RDDF_OWNER:-}}"
+  OPENCODE_SESSION_ID_FROM="${OPENCODE_SESSION_ID_FROM:-${RDDF_OWNER_FROM:-shell-pid}}"
+  export OPENCODE_SESSION_ID_FROM
 
   KIND="$kind" \
   CHANGE_NAME="$change_name" \
