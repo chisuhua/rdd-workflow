@@ -232,6 +232,15 @@ rddf_session_hook_entry() {
   OPENCODE_SESSION_ID_FROM="${OPENCODE_SESSION_ID_FROM:-${RDDF_OWNER_FROM:-shell-pid}}"
   export OPENCODE_SESSION_ID_FROM
 
+  if [ -z "${RDDF_WORKFLOW_GROUP:-}" ]; then
+    if command -v python3 >/dev/null 2>&1; then
+      RDDF_WORKFLOW_GROUP=$(python3 -c "import uuid; print(uuid.uuid4())")
+    else
+      RDDF_WORKFLOW_GROUP="auto-$(date +%s%N)"
+    fi
+    export RDDF_WORKFLOW_GROUP
+  fi
+
   local sessions_file="${PROJECT_ROOT}/.rddf/state/sessions.json"
 
   KIND="$kind" \
@@ -239,6 +248,7 @@ rddf_session_hook_entry() {
   SUBJECT="$subject" \
   EXPECTED_OUTCOME="$expected_outcome" \
   CONTEXT_POINTER="$context_pointer" \
+  WORKFLOW_GROUP="$RDDF_WORKFLOW_GROUP" \
   PROJECT_ROOT="$PROJECT_ROOT" \
   OPENCODE_SESSION_ID="$OPENCODE_SESSION_ID" \
   python3 <<'PYEOF'
@@ -253,6 +263,7 @@ intent = os.environ["INTENT"]
 subject = os.environ["SUBJECT"]
 expected_outcome = os.environ["EXPECTED_OUTCOME"]
 context_pointer = os.environ.get("CONTEXT_POINTER") or None
+workflow_group = os.environ.get("WORKFLOW_GROUP", "").strip() or None
 
 sessions_file = os.path.join(project_root, ".rddf", "state", "sessions.json")
 os.makedirs(os.path.dirname(sessions_file), exist_ok=True)
@@ -274,7 +285,14 @@ try:
         parent_session_id=parent_id,
         context_pointer=context_pointer,
     )
-    print(f"rddf-session: {sid} ({kind}, parent={parent_id})")
+    if workflow_group:
+        data = coord._store.read_unlocked()
+        for s in data.get("sessions", []):
+            if s.get("session_id") == sid:
+                s["workflow_group"] = workflow_group
+                break
+        coord._store.atomic_write(data)
+    print(f"rddf-session: {sid} ({kind}, parent={parent_id}, workflow_group={workflow_group})")
 except ConflictError as e:
     print(f"CONFLICT: {e}")
     print('  → use skill_use(\'rddf-session\',\'list\') to inspect')

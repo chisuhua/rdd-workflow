@@ -90,6 +90,8 @@ class RddfSession:
     last_heartbeat: str = ""
     ended_at: Optional[str] = None
     end_reason: Optional[str] = None
+    sub_phase: Optional[str] = None
+    workflow_group: Optional[str] = None
 
     def to_dict(self) -> dict:
         return asdict(self)
