@@ -9,8 +9,8 @@
   "properties": {
     "version": {
       "type": "integer",
-      "const": 2,
-      "description": "Schema version. Bumped on breaking changes. v2 adds optional sub_phase and workflow_group fields."
+      "minimum": 1,
+      "description": "Schema version. v1 original; v2 adds optional sub_phase and workflow_group fields."
     },
     "updated_at": {
       "type": "string",

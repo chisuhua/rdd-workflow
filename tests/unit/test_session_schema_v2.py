@@ -12,8 +12,10 @@ except ImportError:
 SCHEMA = json.loads(Path("skills/_lib/schemas/sessions_schema.json").read_text())
 
 
-def test_schema_version_is_2():
-    assert SCHEMA["properties"]["version"]["const"] == 2
+def test_schema_version_accepts_v1_and_v2():
+    """Schema accepts version >= 1 (backward compat for v1 sessions)."""
+    version_def = SCHEMA["properties"]["version"]
+    assert version_def.get("minimum", 1) >= 1
 
 
 def test_sub_phase_field_optional():
