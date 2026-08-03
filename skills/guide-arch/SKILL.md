@@ -231,16 +231,87 @@ if [ -z "$ADR_SLUG" ]; then
     continue
 fi
 
-# 复制模板并替换占位符
+# 门禁分类 (adr_gate.sh; SKIP_ADR_GATE=yes 旁路 → 直接按 ARCHITECTURE)
+GATE_CLASS=$(bash "$PROJECT_ROOT/skills/guide-arch/scripts/adr_gate.sh" "$ADR_SLUG")
+
 NEW_ADR="$ADR_DIR/ADR-$NEXT_NUM_PADDED-$ADR_SLUG.md"
-cp "$TEMPLATE" "$NEW_ADR"
+trap 'rm -f "${NEW_ADR}.tmp"' EXIT ERR
 
-# 替换标题占位符
-sed -i "s/ADR-NNNN: <标题>/ADR-$NEXT_NUM_PADDED: <$ADR_SLUG>/" "$NEW_ADR"
-sed -i "s/^> \*\*编号\*\*: NNNN/> **编号**: $NEXT_NUM_PADDED/" "$NEW_ADR"
+case "$GATE_CLASS" in
+  ARCHITECTURE)
+    # ── 段 1: 现状挖掘 (agent 自动, 不向用户提问可查事实) ──
+    #   已有相关 ADR: ls "${DISCOVERED_ADR_DIR:-docs/adr}"/${DISCOVERED_ADR_PATTERN:-ADR-*.md} | grep -v 0000-template
+    #   架构文档:     find "${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}" -type f
+    #   代码模式:     grep -l "$ADR_SLUG" docs/adr/ 2>/dev/null
+    #   输出 3 段式摘要: 已有相关 ADR / 架构文档 / 代码模式
 
-echo "✅ 已创建: $NEW_ADR"
-echo "   请编辑该文件完成 ADR 内容"
+    # ── 段 2: 决策对话 (严格 3-5 轮, 一次一问 + 附推荐答案) ──
+    DIALOGUE_ROUND=0
+    CANCELLED=no
+    while [ "$DIALOGUE_ROUND" -lt 5 ] && [ "$CANCELLED" = "no" ]; do
+      DIALOGUE_ROUND=$((DIALOGUE_ROUND + 1))
+      echo "决策点 $DIALOGUE_ROUND/5 (输入: y 接受推荐 / 改写文本 / s 跳过; q/cancel/exit 退出):"
+      read -r DECISION_ANSWER
+      case "$DECISION_ANSWER" in
+        q|cancel|exit) echo "⏹ 退出对话 — 未写任何文件"; CANCELLED=yes ;;
+        s) echo "⏭ 跳过该决策点" ;;
+        *) echo "已记录: $DECISION_ANSWER" ;;
+      esac
+    done
+    if [ "$CANCELLED" = "yes" ]; then
+      continue  # 返回菜单, 不留半成品
+    fi
+    if [ "$DIALOGUE_ROUND" -ge 5 ]; then
+      echo "⚠️  超过 5 轮 — 强制 break。是否继续? (y/n):"
+      read -r CONTINUE_ROUND
+      [ "$CONTINUE_ROUND" = "y" ] || echo "⏹ 以当前信息生成草稿"
+    fi
+
+    # ── 段 3: 草稿呈现 (对话中呈现完整草稿, 覆盖模板全部 section) ──
+    #   元数据行:
+    #     > **状态**: 待定
+    #     > **日期**: $(date +%Y-%m-%d)
+    #     > **决策者**: <name(s)>
+    #   顶层 section:
+    #     ## Context (含 **架构依据** 子项)
+    #     ## Decision (含 ### 影响范围 + ### 备选方案)
+    #     ## Consequences (含 ### 正面 + ### 负面 / 风险 + ### 后续待办)
+    #     ## References
+    #   agent 在对话中逐段呈现完整草稿, 等用户确认
+
+    if [ "${SKIP_ADR_CONFIRM:-no}" != "yes" ]; then
+      echo "确认草稿并写入 $NEW_ADR? (y/n, q/cancel/exit 取消):"
+      read -r CONFIRM
+      case "$CONFIRM" in
+        q|cancel|exit|n) echo "⏹ 未写入任何文件"; continue ;;
+      esac
+    else
+      echo "⏭ SKIP_ADR_CONFIRM=yes — 跳过确认直接落盘"
+    fi
+
+    # 原子写: temp + rename
+    cp "$TEMPLATE" "${NEW_ADR}.tmp"
+    sed -i "s/ADR-NNNN: <标题>/ADR-$NEXT_NUM_PADDED: <$ADR_SLUG>/" "${NEW_ADR}.tmp"
+    sed -i "s/^> \*\*编号\*\*: NNNN/> **编号**: $NEXT_NUM_PADDED/" "${NEW_ADR}.tmp"
+    mv "${NEW_ADR}.tmp" "$NEW_ADR"
+    echo "✅ 已创建: $NEW_ADR"
+    ;;
+  GOVERNANCE)
+    echo "⚠️  该议题偏向治理/流程决策, 更适合: RELEASE.md / ci-cd.md / CONTRIBUTING.md"
+    echo "   仍要创建 ADR? (y/n):"
+    read -r GOV_CONFIRM
+    [ "$GOV_CONFIRM" = "y" ] || continue
+    cp "$TEMPLATE" "$NEW_ADR"
+    sed -i "s/ADR-NNNN: <标题>/ADR-$NEXT_NUM_PADDED: <$ADR_SLUG>/" "$NEW_ADR"
+    echo "✅ 已创建: $NEW_ADR"
+    ;;
+  IMPLEMENTATION)
+    echo "⛔ 该议题是实现类工作, 不应写成 ADR。"
+    echo "   替代路径: docs/ 文档 / .github/ 配置 / tasks.md 任务 / roadmap.md 子任务"
+    continue
+    ;;
+esac
+trap - EXIT ERR
 ```
 
 **选项 3（查看指定 ADR 详情）执行内容**：
