@@ -63,6 +63,13 @@ if [ ! -f ".rddf/state/.arch-handoff.json" ]; then
 fi
 ```
 
+**环境健康快照**（rdd-env-check cache 接入，命中输出单行）：
+
+```bash
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/design_env_check.sh"
+run_design_env_check
+```
+
 **展示 arch 上下文**：
 
 ```

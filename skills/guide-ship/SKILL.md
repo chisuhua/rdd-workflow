@@ -43,6 +43,13 @@ source "$(resolve_rdd_skill_dir rddf-session)/scripts/rddf_session_hooks.sh"
 rddf_session_hook_entry stage_ship guide-ship ship-phase archive-all
 ```
 
+**环境健康快照**（rdd-env-check cache 接入，命中输出单行）：
+
+```bash
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_env_check.sh"
+run_ship_env_check
+```
+
 **前置说明**：
 
 每个 change 独立经历 plan→execute→archive。用户选择要处理的 change 后，自动检测并行冲突，选择执行模式：

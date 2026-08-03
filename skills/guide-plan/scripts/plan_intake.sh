@@ -111,32 +111,35 @@ run_plan_intake() {
   echo "🔍 Plan 阶段环境检查..."
   echo ""
 
-  # 1. openspec CLI 检测
-  local OPENSPEC_PATH=""
-  for p in $(command -v openspec 2>/dev/null) /home/ubuntu/.npm-global/bin/openspec /usr/local/bin/openspec /opt/homebrew/bin/openspec; do
-    [ -x "$p" ] && OPENSPEC_PATH="$p" && break
-  done
-  if [ -z "$OPENSPEC_PATH" ]; then
-      echo "❌ openspec CLI 未找到"
-      echo "   请安装: npm install -g openspec-cli"
-      return 1
+  # 1. openspec CLI 检测 (共享函数, 缺失返回 1 + 修复指引)
+  # source 优先级: 仓库内相对路径 (BASH_SOURCE) → PROJECT_ROOT → skill_root 解析
+  local _PI_SELF _PI_DIR
+  _PI_SELF="${BASH_SOURCE[0]:-$0}"
+  _PI_DIR="$(cd "$(dirname "$_PI_SELF")" && pwd)"
+  if [ -f "$_PI_DIR/../../_lib/env_checks.sh" ]; then
+    source "$_PI_DIR/../../_lib/env_checks.sh"
+  elif [ -f "$PROJECT_ROOT/skills/_lib/env_checks.sh" ]; then
+    source "$PROJECT_ROOT/skills/_lib/env_checks.sh"
+  else
+    source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh" 2>/dev/null
+    if command -v resolve_rdd_lib_dir >/dev/null 2>&1 && [ -f "$(resolve_rdd_lib_dir)/env_checks.sh" ]; then
+      source "$(resolve_rdd_lib_dir)/env_checks.sh"
+    fi
   fi
-  local OPENSPEC_VER="$("$OPENSPEC_PATH" --version 2>/dev/null || echo "?")"
-  echo "✅ openspec CLI: $OPENSPEC_VER"
+  _check_openspec || return 1
+  echo "✅ openspec CLI: $_OPENSPEC_VER"
 
-  # 2. git 状态
-  local GIT_CLEAN
-  GIT_CLEAN=$(git status --porcelain | grep -c . || true)
-  if [ "$GIT_CLEAN" -eq 0 ]; then
+  # 2. git 状态 (共享函数)
+  _check_git
+  if [ "$_GIT_CLEAN" -eq 0 ]; then
       echo "✅ git 工作区干净"
   else
-      echo "⚠️  git 工作区有 $GIT_CLEAN 个未跟踪/修改文件"
+      echo "⚠️  git 工作区有 $_GIT_CLEAN 个未跟踪/修改文件"
   fi
 
-  # 3. 当前分支
-  local CURRENT_BRANCH
-  CURRENT_BRANCH=$(git branch --show-current)
-  echo "📌 当前分支: $CURRENT_BRANCH"
+  # 3. 当前分支 (共享函数)
+  _check_branch
+  echo "📌 当前分支: $_CURRENT_BRANCH"
 
   # 4. plan 端当前状态
   local ACTIVE_CHANGES
