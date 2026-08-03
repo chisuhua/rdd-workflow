@@ -57,14 +57,14 @@
 
 ## 验收标准
 
-- guide-arch SKILL.md Phase 2 选项 1 更新：`adr_gate.sh` 调用嵌入执行路径，三分支均有显式处理
-- ARCHITECTURE 判定后自动进入对话，无手动干预
-- GOVERNANCE 判定 → 二次确认后才允许；IMPLEMENTATION 判定 → 阻断并给出替代路径
-- 对话中 agent 先给出现状摘要（代码挖掘结果），不问用户可查事实
-- 每个决策点：一次一问 + 推荐答案
-- 对话结束生成完整 ADR 草稿（覆盖 section 清单全部 4 顶层 + 5 子 section + 元数据行）
-- 用户确认后文件写入 `docs/adr/ADR-NNNN-<slug>.md`
-- `SKIP_ADR_CONFIRM=yes` 时跳过确认直接落盘（bats 测试覆盖）
-- 中途取消 → 无半成品文件残留
-- 无新增脚本文件（验证：仅 SKILL.md 变更）
-- 新增/扩展 bats 测试覆盖门禁三分支 + confirm-skip 路径（如 test_adr_gate_flow.bats）
+- [x] guide-arch SKILL.md Phase 2 选项 1 更新：`adr_gate.sh` 调用嵌入执行路径，三分支均有显式处理
+- [x] ARCHITECTURE 判定后自动进入对话，无手动干预
+- [x] GOVERNANCE 判定 → 二次确认后才允许；IMPLEMENTATION 判定 → 阻断并给出替代路径
+- [x] 对话中 agent 先给出现状摘要（代码挖掘结果），不问用户可查事实
+- [x] 每个决策点：一次一问 + 推荐答案
+- [x] 对话结束生成完整 ADR 草稿（覆盖 section 清单全部 4 顶层 + 5 子 section + 元数据行）
+- [x] 用户确认后文件写入 `docs/adr/ADR-NNNN-<slug>.md`
+- [x] `SKIP_ADR_CONFIRM=yes` 时跳过确认直接落盘（bats 测试覆盖）
+- [x] 中途取消 → 无半成品文件残留
+- [x] 无新增脚本文件（验证：仅 SKILL.md 变更）
+- [x] 新增/扩展 bats 测试覆盖门禁三分支 + confirm-skip 路径（如 test_adr_gate_flow.bats）
