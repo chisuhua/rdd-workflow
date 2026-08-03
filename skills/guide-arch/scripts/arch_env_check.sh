@@ -15,57 +15,46 @@ run_arch_env_check() {
   PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
   export PROJECT_ROOT
 
+  # source 共享环境检查库 (DRY 单一来源, extract-rdd-env-check-from-guide-arch)
+  # 优先相对路径 (仓库内), 再回退 skill_root.sh 解析 (安装模式)
+  if [ -f "$PROJECT_ROOT/skills/_lib/env_checks.sh" ]; then
+    source "$PROJECT_ROOT/skills/_lib/env_checks.sh"
+  else
+    source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh" 2>/dev/null
+    if command -v resolve_rdd_lib_dir >/dev/null 2>&1 && [ -f "$(resolve_rdd_lib_dir)/env_checks.sh" ]; then
+      source "$(resolve_rdd_lib_dir)/env_checks.sh"
+    fi
+  fi
+
   echo "🔍 环境检查..."
   echo ""
 
-  # 1. openspec CLI 检测
-  local OPENSPEC_PATH=""
-  for p in $(command -v openspec 2>/dev/null) /home/ubuntu/.npm-global/bin/openspec /usr/local/bin/openspec /opt/homebrew/bin/openspec; do
-    [ -x "$p" ] && OPENSPEC_PATH="$p" && break
-  done
-  if [ -z "$OPENSPEC_PATH" ]; then
-      echo "❌ openspec CLI 未找到"
-      echo "   请安装: npm install -g openspec-cli"
-      return 1
-  fi
-  local OPENSPEC_VER="$("$OPENSPEC_PATH" --version 2>/dev/null || echo "?")"
-  echo "✅ openspec CLI: $OPENSPEC_VER"
+  # 1. openspec CLI 检测 (共享函数, 缺失返回 1 + 修复指引)
+  _check_openspec || return 1
+  echo "✅ openspec CLI: $_OPENSPEC_VER"
 
-  # 2. git 状态
-  local GIT_CLEAN
-  GIT_CLEAN=$(git status --porcelain | grep -c . || true)
-  if [ "$GIT_CLEAN" -eq 0 ]; then
+  # 2. git 状态 (共享函数)
+  _check_git
+  if [ "$_GIT_CLEAN" -eq 0 ]; then
       echo "✅ git 工作区干净"
   else
-      echo "⚠️  git 工作区有 $GIT_CLEAN 个未跟踪/修改文件"
+      echo "⚠️  git 工作区有 $_GIT_CLEAN 个未跟踪/修改文件"
   fi
 
-  # 3. 当前分支
-  local CURRENT_BRANCH
-  CURRENT_BRANCH=$(git branch --show-current)
-  echo "📌 当前分支: $CURRENT_BRANCH"
+  # 3. 当前分支 (共享函数)
+  _check_branch
+  echo "📌 当前分支: $_CURRENT_BRANCH"
 
-  # 4. 构建目录（按项目类型检测）
-  local BUILD_DIR PROJECT_TYPE
-  if [ -f "Cargo.toml" ]; then
-    BUILD_DIR="target"; PROJECT_TYPE="Rust"
-  elif [ -f "package.json" ]; then
-    BUILD_DIR="node_modules"; PROJECT_TYPE="Node.js"
-  elif [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
-    BUILD_DIR="venv"; PROJECT_TYPE="Python"
-  elif [ -f "CMakeLists.txt" ] || [ -f "Makefile" ]; then
-    BUILD_DIR="build"; PROJECT_TYPE="C++/Make"
+  # 4. 构建目录（按项目类型检测, 共享函数）
+  _check_build_dir
+  if [ -d "$_BUILD_DIR" ]; then
+      echo "✅ 构建目录存在 ($_BUILD_DIR/, $_PROJECT_TYPE)"
   else
-    BUILD_DIR="build"; PROJECT_TYPE="Unknown"
-  fi
-
-  if [ -d "$BUILD_DIR" ]; then
-      echo "✅ 构建目录存在 ($BUILD_DIR/, $PROJECT_TYPE)"
-  else
-      echo "⚠️  构建目录不存在 ($BUILD_DIR/, $PROJECT_TYPE)"
+      echo "⚠️  构建目录不存在 ($_BUILD_DIR/, $_PROJECT_TYPE)"
   fi
 
   # 5. arch 阶段专用检查 — 先发现路径，再用于计数 (ADR-0016)
+  #    工件发现绝不缓存, 每次 phase 进入重新运行
   local DISCOVERED_ADR_DIR DISCOVERED_ADR_PATTERN DISCOVERED_ROADMAP_PATH DISCOVERED_ARCHITECTURE_DIR
   local DISCOVERED_ADR_DIR_FOUND DISCOVERED_ROADMAP_FOUND DISCOVERED_ARCH_FOUND
 

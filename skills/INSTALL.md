@@ -1,6 +1,6 @@
 ---
 name: INSTALL
-description: 安装 RDD Workflow 技能——支持全局安装（~/.agents/skills/，跨项目可用）和项目安装（.opencode/skills/rdd-workflow/）。全局安装后从 1 个顶层 INSTALL.md 加 16 个 per-skill 子目录复制全部 17 个子技能到目标位置；自动安装 Python 依赖和 rddf CLI。
+description: 安装 RDD Workflow 技能——支持全局安装（~/.agents/skills/，跨项目可用）和项目安装（.opencode/skills/rdd-workflow/）。全局安装后从 1 个顶层 INSTALL.md 加 17 个 per-skill 子目录复制全部 18 个子技能到目标位置；自动安装 Python 依赖和 rddf CLI。
 alias: install
 version: "3.0"
 author: sisyphus
@@ -8,7 +8,7 @@ author: sisyphus
 
 # RDD Workflow 安装程序
 
-本技能将 RDD Workflow 的 17 个子技能安装到当前项目目录。
+本技能将 RDD Workflow 的 18 个子技能安装到当前项目目录。
 
 ## 包含的子技能
 
@@ -28,6 +28,7 @@ author: sisyphus
 | `roadmap` | 路线图管理（被 guide-arch 调用） |
 | `deps` | 依赖分析（被 guide-plan 调用） |
 | `rdd-workflow-writing-plans` | 实施计划生成器（v2.0 自包含 TDD 5 步结构） |
+| `rdd-env-check` | 环境健康检查（openspec/git/build + cache 快照，被 4 个 phase 调用） |
 
 ## 两种安装模式
 

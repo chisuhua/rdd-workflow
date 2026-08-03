@@ -105,14 +105,13 @@ run_arch_env_check || exit 1
 ```
 环境检查结果：
 
-✅ openspec CLI: 1.3.1 (/home/ubuntu/.npm-global/bin/openspec)
-✅ git 工作区干净
-📌 当前分支: master
-✅ 构建目录存在
-📋 现有 ADR: 3
-📋 Roadmap: 已定义
-📋 架构差距分析: 0
-📋 活动 changes: 2
+✅ Env OK (cached 23m ago) | ADR:63 | Roadmap:✓
+
+工件发现 (ADR-0016):
+   ADR 目录:      docs/adr (true)
+   ADR 模式:      ADR-*.md
+   Roadmap:       roadmap.md (true)
+   Architecture:  docs/architecture (true)
 
 当前状态: arch 阶段初始化完成
 
