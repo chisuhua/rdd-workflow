@@ -68,9 +68,9 @@ _cache_read() {
   # 用纯 bash 提取 10 字段 (无 jq 依赖)
   local raw
   raw=$(cat "$cache_file" 2>/dev/null)
-  _CACHE_TS=$(echo "$raw" | grep -oE '"timestamp":[0-9]+' | head -1 | grep -oE '[0-9]+')
+  _CACHE_TS=$(echo "$raw" | grep -oE '"timestamp":"[0-9]*"' | head -1 | grep -oE '[0-9]+')
   _CACHE_BRANCH=$(echo "$raw" | grep -oE '"branch":"[^"]*"' | head -1 | sed 's/.*:"//; s/"//')
-  _CACHE_ADR=$(echo "$raw" | grep -oE '"adr_count":[0-9]+' | head -1 | grep -oE '[0-9]+')
+  _CACHE_ADR=$(echo "$raw" | grep -oE '"adr_count":"[0-9]*"' | head -1 | grep -oE '[0-9]+')
   _CACHE_ROADMAP=$(echo "$raw" | grep -oE '"roadmap_exists":"[^"]*"' | head -1 | sed 's/.*:"//; s/"//')
 }
 
