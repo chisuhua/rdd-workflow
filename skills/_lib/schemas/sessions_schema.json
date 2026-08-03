@@ -9,8 +9,8 @@
   "properties": {
     "version": {
       "type": "integer",
-      "const": 1,
-      "description": "Schema version. Bumped on breaking changes."
+      "const": 2,
+      "description": "Schema version. Bumped on breaking changes. v2 adds optional sub_phase and workflow_group fields."
     },
     "updated_at": {
       "type": "string",
@@ -98,6 +98,14 @@
         "end_reason": {
           "type": ["string", "null"],
           "description": "Why session ended (arch-done | plan-done | heartbeat-timeout | user-abandoned | gate-rejected | ...)."
+        },
+        "sub_phase": {
+          "type": ["string", "null"],
+          "description": "Optional sub-phase marker (e.g. 'phase_3_archive_demo'). Updated by hooks during long-running operations. v2: add-rddf-session-sub-phase-heartbeat."
+        },
+        "workflow_group": {
+          "type": ["string", "null"],
+          "description": "Optional workflow group identifier linking related rddf-sessions. v2: add-rddf-session-workflow-group."
         }
       }
     }
