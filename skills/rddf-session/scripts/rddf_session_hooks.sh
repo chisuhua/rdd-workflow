@@ -363,6 +363,7 @@ rddf_session_hook_heartbeat() {
 
   KIND="$kind" \
   CHANGE_NAME="$change_name" \
+  RDDF_SUB_PHASE="${RDDF_SUB_PHASE:-}" \
   PROJECT_ROOT="$PROJECT_ROOT" \
   OPENCODE_SESSION_ID="$OPENCODE_SESSION_ID" \
   python3 <<'PYEOF'
@@ -374,6 +375,7 @@ project_root = os.environ["PROJECT_ROOT"]
 kind = os.environ["KIND"]
 change_name = os.environ.get("CHANGE_NAME") or None
 opencode_sid = os.environ["OPENCODE_SESSION_ID"]
+sub_phase = os.environ.get("RDDF_SUB_PHASE", "").strip() or None
 
 sessions_file = os.path.join(project_root, ".rddf", "state", "sessions.json")
 if not os.path.exists(sessions_file):
@@ -389,9 +391,20 @@ try:
     )
     if change_name:
         coord.detach_change(sid, change_name)
-    coord.refresh_heartbeat(sid)
+    if sub_phase:
+        data = coord._store.read_unlocked()
+        for s in data.get("sessions", []):
+            if s.get("session_id") == sid:
+                s["sub_phase"] = sub_phase
+                from datetime import datetime, timezone
+                s["last_heartbeat"] = datetime.now(timezone.utc).isoformat()
+                break
+        coord._store.atomic_write(data)
+    else:
+        coord.refresh_heartbeat(sid)
     action = f"(after archive {change_name})" if change_name else ""
-    print(f"rddf-session: {sid} heartbeat refreshed {action}".strip())
+    sub_phase_note = f" sub_phase={sub_phase}" if sub_phase else ""
+    print(f"rddf-session: {sid} heartbeat refreshed {action}{sub_phase_note}".strip())
 except Exception as e:
     print(f"rddf-session heartbeat skip: {e}")
 PYEOF
