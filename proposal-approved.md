@@ -11,17 +11,22 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|----------|
-| [fix-rddf-session-owner-stability](improvements/fix-rddf-session-owner-stability.md) | P0 | 2026-08-02 | guide-arch |
 
 > **supersedes** (2026-08-02 design-done): `add-rddf-session-status-cmd` (本次批准) **supersedes** 已批准 `add-session-progress-view` (P1, 2026-07-28) — 后者范围是前者的子集 (本提案更广: 表格 + BINDING_LINES + guide 推荐器整合)。Plan 阶段实施时跳过 `add-session-progress-view`, 仅实施 `add-rddf-session-status-cmd`。
 >
 > **bump 合并声明** (2026-08-02 design-done): `add-rddf-session-sub-phase-heartbeat` (本次批准) 与 `add-rddf-session-workflow-group` (本次批准) **合并为单一 schema v1→v2 bump PR** (`bump-sessions-schema-v2`), 一次同时支持 `sub_phase: str | null` + `workflow_group: str | null` 两个 optional 字段。**禁止拆为两次独立 bump**。Plan 阶段必须先实施 P0 (`fix-rddf-session-owner-stability`) 再启动本 PR。
 
-| [extract-rdd-env-check-from-guide-arch](improvements/extract-rdd-env-check-from-guide-arch.md) | P1 | 2026-08-03 | guide-arch |
 
-| [adr-create-interactive-drafting](improvements/adr-create-interactive-drafting.md) | P1 | 2026-08-03 | guide-arch |
+
+| [fix-execute-change-name-persistence](improvements/fix-execute-change-name-persistence.md) | P1 | 2026-08-03 | guide-arch |
+
+| [add-skill-registration-checklist](improvements/add-skill-registration-checklist.md) | P2 | 2026-08-03 | guide-arch |
+
+| [add-known-failures-baseline](improvements/add-known-failures-baseline.md) | P3 | 2026-08-03 | guide-arch |
 
 ## 已实施
+| [extract-rdd-env-check-from-guide-arch](improvements/extract-rdd-env-check-from-guide-arch.md) | P1 | 2026-08-03 |
+| [adr-create-interactive-drafting](improvements/adr-create-interactive-drafting.md) | P1 | 2026-08-03 |
 | [add-rddf-session-workflow-group](improvements/add-rddf-session-workflow-group.md) | P2 | 2026-08-03 |
 | [add-rddf-session-sub-phase-heartbeat](improvements/add-rddf-session-sub-phase-heartbeat.md) | P1 | 2026-08-03 |
 | [add-rddf-session-status-cmd](improvements/add-rddf-session-status-cmd.md) | P2 | 2026-08-03 |
@@ -39,6 +44,7 @@
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
+| [fix-rddf-session-owner-stability](improvements/fix-rddf-session-owner-stability.md) | P0 | 2026-08-03 |
 | [fix-add-improve-initial-prompt-ux](improvements/fix-add-improve-initial-prompt-ux.md) | P1 | 2026-07-31 |
 | [fix-plan-deps-candidates-import-guard](improvements/fix-plan-deps-candidates-import-guard.md) | P0 | 2026-07-31 |
 | [fix-rddf-session-lifecycle-binding](improvements/fix-rddf-session-lifecycle-binding.md) | P1 | 2026-07-31 |
