@@ -36,6 +36,59 @@
 #   - proposal-suggestions.md          — JSON array with status field
 #   - roadmap.md                       — arch artifact (committed)
 
+# scan_binding_lines <sessions_file> <owner_id>
+#
+# Emits BINDING_LINES env var or prints to stdout the active session binding
+# for the given owner. Called by scan_state when sessions.json has active sessions.
+scan_binding_lines() {
+  local sessions_file="$1"
+  local owner_id="$2"
+  local binding_line
+
+  if [ ! -f "$sessions_file" ]; then
+    return 0
+  fi
+
+  binding_line=$(python3 - "$sessions_file" "$owner_id" <<'PYEOF'
+import json, sys, os
+from datetime import datetime, timezone
+
+sessions_file = sys.argv[1]
+owner_id = sys.argv[2]
+
+try:
+    with open(sessions_file) as f:
+        data = json.load(f)
+except Exception:
+    sys.exit(0)
+
+active = [s for s in data.get("sessions", []) if s.get("state") == "active"
+          and s.get("owner_opencode_session_id") == owner_id]
+if not active:
+    sys.exit(0)
+
+# Take the most recent active session
+s = max(active, key=lambda x: x.get("started_at", ""))
+started = s.get("started_at", "")
+try:
+    started_dt = datetime.fromisoformat(started.replace("Z", "+00:00"))
+    age_min = int((datetime.now(timezone.utc) - started_dt).total_seconds() // 60)
+except Exception:
+    age_min = -1
+
+changes = s.get("attached_changes", [])
+changes_str = ", ".join(changes) if changes else "(none)"
+line = f"📍 Current: {s['session_id']} (kind={s.get('kind', '?')}, parent={s.get('parent_session_id')}, age={age_min}min, changes={changes_str})"
+print(line)
+PYEOF
+)
+
+  if [ -n "$binding_line" ]; then
+    BINDING_LINES="$binding_line"
+    printf '%s\n' "$binding_line"
+  fi
+}
+
 # scan_state
 #   Mutates caller-namespace globals RECOMMEND and REASON.
 #   Priority order (highest first):
@@ -78,6 +131,11 @@ scan_state() {
   fi
   if type -t check_dirty_key_files &>/dev/null; then
     check_dirty_key_files "$PROJECT_ROOT"
+  fi
+
+  local _binding_owner="${OPENCODE_SESSION_ID:-}"
+  if [ -n "$_binding_owner" ]; then
+    scan_binding_lines "$PROJECT_ROOT/.rddf/state/sessions.json" "$_binding_owner" || true
   fi
 
   # 1. arch-handoff present, plan-handoff absent
@@ -274,6 +332,11 @@ except Exception:
   check_working_tree_cleanliness "$PROJECT_ROOT"
   check_arch_handoff_stale "$PROJECT_ROOT"
   check_orphan_plan_files "$PROJECT_ROOT" 2>/dev/null || true
+
+  local binding_owner="${OPENCODE_SESSION_ID:-}"
+  if [ -n "$binding_owner" ]; then
+    scan_binding_lines "$PROJECT_ROOT/.rddf/state/sessions.json" "$binding_owner" || true
+  fi
 }
 
 # check_arch_handoff_stale [PROJECT_ROOT]
