@@ -24,6 +24,7 @@ skill_use("rddf-session list")                  # same as above
 skill_use("rddf-session show <id>")             # show full JSON for a session
 skill_use("rddf-session current")               # show my current binding + recommend next (spec 2026-07-14)
 skill_use("rddf-session progress")              # show wave execution progress (v3.0)
+skill_use("rddf-session status")                # rich status view (table + binding + counts) — P2
 skill_use("rddf-session resume <id>")           # transfer ownership to current opencode session; refresh heartbeat
 skill_use("rddf-session abandon <id>")          # mark session as abandoned by current owner
 skill_use("rddf-session archive-history")       # move old terminal sessions to .archive.json (default keep=20)
@@ -165,6 +166,52 @@ print(f"\n📈 Total: {total_done}/{total_done + total_pending} changes complete
 PYEOF
         ;;
 
+    status)
+        OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
+        python3 - "$SESSIONS_FILE" "$OPENCODE_SESSION_ID" "$PROJECT_ROOT" <<'PYEOF'
+import sys, json
+from datetime import datetime, timezone
+sys.path.insert(0, sys.argv[3] if len(sys.argv) > 3 else ".")
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
+sessions_file, owner = sys.argv[1], sys.argv[2]
+
+coord = RddfSessionCoordinator(sessions_file=sessions_file)
+# status is read-only: do not refresh heartbeats or mutate sessions.json
+sessions = coord.list_sessions()
+
+# === Binding line ===
+current = coord.find_current_binding(owner)
+if current:
+    age_min = int((datetime.now(timezone.utc) - datetime.fromisoformat(current.started_at.replace("Z", "+00:00"))).total_seconds() // 60)
+    changes = ", ".join(current.attached_changes) if current.attached_changes else "(none)"
+    print(f"📍 Current: {current.session_id} (kind={current.kind}, parent={current.parent_session_id}, age={age_min}min, changes={changes})")
+else:
+    print("📍 No current binding")
+
+# === Table ===
+print()
+if sessions:
+    hdr = f"{'session_id':<17} {'kind':<12} {'owner':<20} {'state':<11} {'started_at':<20} {'changes':<8}"
+    print(hdr)
+    print("-" * len(hdr))
+    for s in sorted(sessions, key=lambda x: (x.state != "active", x.started_at), reverse=True):
+        owner = s.owner_opencode_session_id or "<none>"
+        changes_n = len(s.attached_changes)
+        print(f"{s.session_id:<17} {s.kind:<12} {owner:<20.20} {s.state:<11} {s.started_at[:19]:<20} {changes_n:<8}")
+else:
+    print("No rddf-sessions found")
+
+# === Counts ===
+print()
+state_counts = {}
+for s in sessions:
+    state_counts[s.state] = state_counts.get(s.state, 0) + 1
+print("📊 Counts:")
+for state in sorted(state_counts.keys()):
+    print(f"  {state:<11} {state_counts[state]}")
+PYEOF
+        ;;
+
     resume)
         SESSION_ID="${1:?Usage: rddf-session resume <session_id>}"
         OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
@@ -294,6 +341,21 @@ accumulate. Using `keep + 5` (default 15) means:
 **Failure tolerance**: any exception during auto-archive (corrupt JSON, disk full,
 permission error) is swallowed, a warning is printed to stderr, and the main hook
 flow continues unaffected.
+
+## Status Subcommand (P2 observability)
+
+`skill_use("rddf-session", "status")` 输出综合视图:
+
+1. **Binding line** (顶部): `📍 Current: <sid> (kind=<kind>, parent=<parent>, age=<min>, changes=<list>)`
+   - 显示当前 active session (按 owner 匹配)
+   - 若无 active session: 显示 "📍 No current binding"
+2. **Sessions table**: 列所有 sessions, active 优先 (按 started_at 倒序)
+3. **Counts section**: 每个 state 的总数
+
+**约束**:
+- 纯读视图,**永不修改** sessions.json
+- 输出宽度 ≤100 字符 (适配终端)
+- 不破坏现有 `list` / `show` / `current` 子命令 (向后兼容)
 
 ## Cross-Reference
 
