@@ -1,0 +1,3 @@
+schema: spec-driven
+created: 2026-08-03
+goal: Extract environment health check from guide-arch Phase 1 setup into standalone rdd-env-check skill with .env-cache.json snapshot (TTL 1h + branch invalidation), compressing arch menu first-screen from ~600 to ~50 tokens.
