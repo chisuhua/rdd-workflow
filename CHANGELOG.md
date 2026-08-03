@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **rdd-env-check skill**: 环境健康检查外置为独立 skill，`.rddf/state/.env-cache.json` 快照缓存 (TTL 3600s + branch 失效)，arch/design/plan/ship Phase 1 首屏压缩为单行状态 (~600 tokens → ~50 tokens)。共享 `_check_*` 函数提取至 `skills/_lib/env_checks.sh` (DRY)。
+
 ## [v3.0.0] — 2026-07-22 (BREAKING)
 
 ### Renamed: `spec-workflow` → `rdd-workflow`
