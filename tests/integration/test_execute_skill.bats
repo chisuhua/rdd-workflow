@@ -33,3 +33,7 @@ setup() {
   # Default value pattern: ${EXECUTE_CHOICE:-1}
   grep -qE 'EXECUTE_CHOICE:[[:space:]]*-[[:space:]]*1' "$f" || grep -qE 'EXECUTE_CHOICE:-1' "$REPO_ROOT/skills/execute/scripts/select_worktree.sh"
 }
+
+@test "execute_skill uses run_regression_gate helper for full regression" {
+  grep -q 'run_regression_gate' "$f"
+}
