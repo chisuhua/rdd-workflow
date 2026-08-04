@@ -28,6 +28,15 @@
 #       and returns the main repo path via stdout.
 #       Mirrors the original MODE-SPECIFIC SETUP + WORKTREE VERIFICATION GATE.
 #
+#   - share_submodules_to_worktree <project_root> <wt_path>
+#       If the project uses git submodules, hardlinks the main repo's shared
+#       submodule store into the worktree's private gitdir (cp -al) so the
+#       follow-up `git submodule update` takes git's reuse branch (local
+#       checkout from shared objects) instead of re-downloading from the
+#       network for every worktree. Best-effort by design: any failure
+#       degrades to a stderr warning and returns 0 — never blocks ship.
+#       Called by setup_execution_workspace in worktree mode.
+#
 #   - generate_implementation_plan <project_root> <change_name> <mode>
 #       For worktree mode: cd into worktree. For lightweight: stay in main repo.
 #       Calls skill_use("rdd-workflow-writing-plans") unless
@@ -214,7 +223,7 @@ setup_execution_workspace() {
         return 1
       fi
     else
-      git -C "$project_root" worktree add "$wt_path" "openspec/$change_name"
+      git -C "$project_root" worktree add -q "$wt_path" "openspec/$change_name"
     fi
 
     # WORKTREE VERIFICATION GATE (P0 FIX)
@@ -237,6 +246,8 @@ setup_execution_workspace() {
       echo "⚠️  警告：Worktree 分支 $wt_branch 与预期不符" >&2
     fi
 
+    share_submodules_to_worktree "$project_root" "$wt_path"
+
     echo "$wt_path"
   else
     # Lightweight mode: switch branch in main repo
@@ -247,6 +258,55 @@ setup_execution_workspace() {
     echo "⚡ 轻量模式: 已切换到 openspec/$change_name, 跳过 worktree" >&2 >&2
     echo "$project_root"
   fi
+}
+
+# share_submodules_to_worktree <project_root> <wt_path>
+#   git keeps submodule gitdirs PER-WORKTREE (<wt-gitdir>/modules/<name>;
+#   see submodule_name_to_gitdir() in git's submodule.c). clone_submodule()
+#   reuses an existing gitdir (`file_exists(sm_gitdir)`) and otherwise runs a
+#   fresh network clone — every new worktree re-downloads the submodule unless
+#   its private gitdir is pre-created.
+#
+#   Pre-creates it by hardlinking the main repo's shared store (`cp -al`; pack
+#   files are immutable, so hardlinks are safe). The follow-up
+#   `git submodule update --init --recursive` then hits the reuse branch:
+#   local checkout from shared objects, zero network. index/HEAD/config are
+#   written via rename, which breaks the hardlink — worktrees stay independent.
+#
+#   Best-effort by design: any failure prints a stderr warning and returns 0,
+#   so a submodule hiccup never blocks worktree creation.
+share_submodules_to_worktree() {
+  local project_root="$1"
+  local wt_path="$2"
+
+  if [ ! -f "$project_root/.gitmodules" ]; then
+    return 0
+  fi
+
+  local main_modules
+  main_modules=$(git -C "$project_root" rev-parse --path-format=absolute --git-path modules 2>/dev/null) || return 0
+  if [ ! -d "$main_modules" ]; then
+    echo "🌐 首次初始化 submodule（单次下载，后续 worktree 复用对象库）" >&2
+    git -C "$project_root" submodule update --init --recursive >/dev/null 2>&1 || {
+      echo "⚠️  submodule 初始化失败，worktree 内将按需下载（非阻塞）" >&2
+      return 0
+    }
+  fi
+
+  local wt_modules
+  wt_modules=$(git -C "$wt_path" rev-parse --path-format=absolute --git-path modules 2>/dev/null) || return 0
+  mkdir -p "$wt_modules" 2>/dev/null || return 0
+
+  if ! cp -aln "$main_modules/." "$wt_modules/" 2>/dev/null && ! cp -rn "$main_modules/." "$wt_modules/" 2>/dev/null; then
+    echo "⚠️  submodule 对象库共享失败，worktree 内将按需下载（非阻塞）" >&2
+  else
+    echo "🔗 已共享 submodule 对象库到 worktree（避免重复下载）" >&2
+  fi
+
+  git -C "$wt_path" submodule update --init --recursive >/dev/null 2>&1 || {
+    echo "⚠️  worktree submodule 检出失败（共享对象已就位，可稍后重试）" >&2
+  }
+  return 0
 }
 
 # generate_implementation_plan <project_root> <change_name> <mode>
