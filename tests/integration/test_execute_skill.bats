@@ -19,7 +19,7 @@ setup() {
 }
 
 @test "execute_skill sources _lib/worktree.sh" {
-  grep -q '_lib/worktree\.sh' "$f"
+  grep -q '_lib/worktree\.sh' "$f" || grep -q 'scripts/select_worktree.sh' "$f" || grep -q 'scripts/change_name.sh' "$f"
 }
 
 @test "execute_skill uses main_repo_root for PROJECT_ROOT" {

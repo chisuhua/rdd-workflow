@@ -36,11 +36,22 @@ SELECT_WT="$REPO_ROOT/skills/execute/scripts/select_worktree.sh"
   grep -q 'auto_detect_worktree_context' "$EXECUTE_MD"
 }
 
+@test "auto_detect_invokes_change_name_helper" {
+  grep -q 'change_name.sh' "$SELECT_WT"
+  grep -q 'ensure_change_name' "$SELECT_WT"
+}
+
 @test "auto_detect_runs_in_main_repo" {
-  # Plain main repo (no openspec branch): should detect NOT in worktree
-  output=$(bash -c "cd '$REPO_ROOT' && source '$SELECT_WT' && auto_detect_worktree_context" 2>&1 || true)
-  # Either lists worktrees or prints "no worktree" error
-  echo "$output" | grep -qE '不在 worktree 内|worktree'
+  # When the main repo has no openspec worktree, the helper exits 1 with a
+  # "no worktree" error. Otherwise it lists the available worktrees.
+  tmpdir=$(mktemp -d -t rdd-clean-XXXXXX)
+  git init "$tmpdir" >/dev/null 2>&1
+  cd "$tmpdir"
+  git config user.email "test@example.com" 2>/dev/null
+  git config user.name "Test" 2>/dev/null
+  output=$(bash -c "cd '$tmpdir' && source '$SELECT_WT' && auto_detect_worktree_context" 2>&1 || true)
+  rm -rf "$tmpdir"
+  echo "$output" | grep -q '无已创建的 worktree\|请先执行 guide-ship'
 }
 
 @test "auto_detect_inside_worktree" {
@@ -54,15 +65,11 @@ SELECT_WT="$REPO_ROOT/skills/execute/scripts/select_worktree.sh"
 }
 
 @test "execute_choice_env_var_selection" {
-  # With EXECUTE_CHOICE=1 set, should attempt to select (or note that no worktrees exist)
   output=$(EXECUTE_CHOICE=1 bash -c "cd '$REPO_ROOT' && source '$SELECT_WT' && auto_detect_worktree_context" 2>&1 || true)
-  # Just verify it doesn't crash
   echo "$output" | grep -q '上次检测\|worktree\|EXECUTE_CHOICE' || true
 }
 
 @test "no_worktrees_error_path" {
-  # Create temp repo with no worktrees
-  local tmpdir
   tmpdir=$(mktemp -d)
   git init "$tmpdir" >/dev/null 2>&1
   cd "$tmpdir"
@@ -70,14 +77,10 @@ SELECT_WT="$REPO_ROOT/skills/execute/scripts/select_worktree.sh"
   git config user.name "Test" 2>/dev/null
   output=$(bash -c "cd '$tmpdir' && source '$SELECT_WT' && auto_detect_worktree_context" 2>&1 || true)
   rm -rf "$tmpdir"
-  # Should print error about no worktrees
   echo "$output" | grep -q '无已创建的 worktree\|请先执行 guide-ship'
 }
 
 @test "sets_change_name_env_var" {
-  # Verify CHANGE_NAME is set after function runs (within worktree scenario)
-  # For main repo, CHANGE_NAME should be empty
   output=$(bash -c "cd '$REPO_ROOT' && unset EXECUTE_CHOICE; source '$SELECT_WT'; auto_detect_worktree_context >/dev/null 2>&1; echo \"CHANGE_NAME=[\${CHANGE_NAME:-}]\"" 2>&1 || true)
-  # Just verify we captured the output (even if empty)
   echo "$output" | grep -q 'CHANGE_NAME='
 }

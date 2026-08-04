@@ -11,12 +11,19 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
 
+if [ -f "$SCRIPT_DIR/change_name.sh" ]; then
+  source "$SCRIPT_DIR/change_name.sh"
+fi
+
 update_roadmap_progress() {
   local CHANGE_NAME="${1:-${CHANGE_NAME:-}}"
 
   if [ -z "$CHANGE_NAME" ]; then
-    echo "⚠️  update_roadmap_progress: CHANGE_NAME is required" >&2
-    return 0  # Non-fatal
+    if ! ensure_change_name; then
+      echo "⚠️  update_roadmap_progress: CHANGE_NAME is required" >&2
+      return 0  # Non-fatal
+    fi
+    CHANGE_NAME="${CHANGE_NAME:-}"
   fi
 
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"

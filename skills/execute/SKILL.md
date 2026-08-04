@@ -74,13 +74,14 @@ auto_detect_worktree_context || exit 1
 ### Step 1：确认在 worktree 内
 
 ```bash
-# P0-7 fix: inline worktree path resolver. git worktree list emits
-# P3-3c: 删除 P0-7 引入的 inline wt path helper (silent bug — 见 status.md 注释).
-# 如果未来需要 wt 路径解析, 直接 source _lib/worktree.sh::wt_path_for_branch.
+source "$SCRIPT_DIR/scripts/change_name.sh"
+ensure_change_name || exit 1
 echo "✅ 在 worktree 中: $(pwd)"
 echo "   Branch: $(git branch --show-current)"
 echo "   Change: $CHANGE_NAME"
 ```
+
+> 显式 `CHANGE_NAME` 优先；未设置时由 `ensure_change_name` 从当前 `openspec/<name>` 分支推导；非 OpenSpec 分支返回非 0 并输出修复指引。
 
 ### Step 2：验证 worktree 构建环境
 
