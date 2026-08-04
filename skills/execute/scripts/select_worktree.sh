@@ -12,6 +12,10 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
 
+if [ -f "$SCRIPT_DIR/change_name.sh" ]; then
+  source "$SCRIPT_DIR/change_name.sh"
+fi
+
 auto_detect_worktree_context() {
   # Source helper (worktree-aware functions)
   if [ -f "$SCRIPT_DIR/worktree.sh" ]; then
@@ -39,10 +43,11 @@ auto_detect_worktree_context() {
 
   # 判断是否在 worktree 内
   if echo "$CURRENT_BRANCH" | grep -q '^openspec/'; then
-      CHANGE_NAME=$(echo "$CURRENT_BRANCH" | sed 's/^openspec\///')
       WORKTREE_PATH=$(pwd)
       HAS_WORKTREE=true
-      export CHANGE_NAME HAS_WORKTREE WORKTREE_PATH
+      export HAS_WORKTREE WORKTREE_PATH
+      ensure_change_name
+      export CHANGE_NAME
 
       # 验证当前目录确实是对应的 worktree 目录
       local MAIN_WT_PATH
@@ -62,7 +67,15 @@ auto_detect_worktree_context() {
 
       # 检查是否有已创建的 worktree
       local WT_INFO
-      WT_INFO=$(git worktree list 2>/dev/null | grep "openspec/" | awk '{print $1, $3}')
+      WT_INFO=$(git worktree list --porcelain | awk '
+        /^worktree / { path = substr($0, length("worktree ") + 1); next }
+        /^branch /   {
+          branch = substr($0, length("branch ") + 1)
+          sub(/^refs\/heads\//, "", branch)
+          if (branch ~ /^openspec\//) print path " " branch
+          next
+        }
+      ')
 
       if [ -z "$WT_INFO" ]; then
           echo "❌ 无已创建的 worktree"
@@ -123,10 +136,12 @@ auto_detect_worktree_context() {
       echo ""
       echo "正在切换到 worktree：$target_path"
       cd "$target_path"
-      CHANGE_NAME=$(echo "$target_branch" | sed 's|^openspec/||')
-      export CHANGE_NAME
       HAS_WORKTREE=true
       export HAS_WORKTREE
+      if [ -z "${CHANGE_NAME:-}" ]; then
+        CHANGE_NAME="${target_branch#openspec/}"
+      fi
+      export CHANGE_NAME
       echo "✅ 已切换到: $(pwd)"
       echo "   Branch: $(git branch --show-current)"
       echo "   Change: $CHANGE_NAME"

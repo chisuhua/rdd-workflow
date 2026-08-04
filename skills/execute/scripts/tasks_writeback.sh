@@ -9,13 +9,22 @@
 #   CHANGE_NAME  — the OpenSpec change name (required)
 #   PROJECT_ROOT — git project root (default: auto-detect)
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+
+if [ -f "$SCRIPT_DIR/change_name.sh" ]; then
+  source "$SCRIPT_DIR/change_name.sh"
+fi
+
 mark_task_done() {
   local TASK_DESC="${1:-}"
   local PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  local CHANGE_NAME="${CHANGE_NAME:-}"
 
-  if [ -z "$TASK_DESC" ] || [ -z "$CHANGE_NAME" ]; then
-    echo "❌ 需要 TASK_DESC 和 CHANGE_NAME"
+  if [ -z "$TASK_DESC" ]; then
+    echo "❌ 需要 TASK_DESC"
+    return 1
+  fi
+
+  if ! ensure_change_name; then
     return 1
   fi
 
@@ -25,8 +34,6 @@ mark_task_done() {
     return 1
   fi
 
-  # 使用 awk 的 index() 进行字面量匹配 + substr() 替换，
-  # 避免 TASK_DESC 中的正则元字符（如 [ ] . *）导致静默失败
   local TMPFILE
   TMPFILE=$(mktemp -t tasks_XXXXXX.md)
   awk -v desc="- [ ] $TASK_DESC" -v repl="- [x] $TASK_DESC" '
@@ -53,10 +60,8 @@ mark_task_done() {
 
 mark_all_tasks_done() {
   local PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  local CHANGE_NAME="${CHANGE_NAME:-}"
 
-  if [ -z "$CHANGE_NAME" ]; then
-    echo "❌ 需要 CHANGE_NAME"
+  if ! ensure_change_name; then
     return 1
   fi
 

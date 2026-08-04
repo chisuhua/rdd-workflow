@@ -5,6 +5,7 @@
 ### Added
 
 - **rdd-env-check skill**: 环境健康检查外置为独立 skill，`.rddf/state/.env-cache.json` 快照缓存 (TTL 3600s + branch 失效)，arch/design/plan/ship Phase 1 首屏压缩为单行状态 (~600 tokens → ~50 tokens)。共享 `_check_*` 函数提取至 `skills/_lib/env_checks.sh` (DRY)。
+- **Execute CHANGE_NAME auto-derivation**: 共享 `skills/execute/scripts/change_name.sh::ensure_change_name` 在 execute Step 1 与辅助脚本入口补齐运行时上下文，保留显式值并对非 `openspec/*` 分支报出明确的修复指引。
 
 ## [v3.0.0] — 2026-07-22 (BREAKING)
 

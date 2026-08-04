@@ -13,9 +13,17 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
 
+if [ -f "$SCRIPT_DIR/change_name.sh" ]; then
+  source "$SCRIPT_DIR/change_name.sh"
+fi
+
 run_step7_report() {
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
   export PROJECT_ROOT
-  export CHANGE_NAME="${CHANGE_NAME:-}"
+  if ensure_change_name; then
+    export CHANGE_NAME
+  else
+    export CHANGE_NAME=""
+  fi
   python3 "$SCRIPT_DIR/execute_step7_env.py"
 }
