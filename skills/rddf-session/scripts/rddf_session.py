@@ -116,8 +116,8 @@ class RddfSessionCoordinator:
     def abandon(self, session_id: str) -> None:
         self._commands.abandon(session_id)
 
-    def archive_history(self, keep: int = 20) -> int:
-        return self._commands.archive_history(keep)
+    def archive_history(self, keep: int = 20, archive_orphans: bool = False) -> int:
+        return self._commands.archive_history(keep, archive_orphans=archive_orphans)
 
     # ---------- Binding (delegated) ----------
 

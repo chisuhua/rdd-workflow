@@ -27,8 +27,9 @@ skill_use("rddf-session progress")              # show wave execution progress (
 skill_use("rddf-session status")                # rich status view (table + binding + counts) — P2
 skill_use("rddf-session resume <id>")           # transfer ownership to current opencode session; refresh heartbeat
 skill_use("rddf-session abandon <id>")          # mark session as abandoned by current owner
-skill_use("rddf-session archive-history")       # move old terminal sessions to .archive.json (default keep=20)
-skill_use("rddf-session archive-history --keep=50")  # custom keep count
+skill_use("rddf-session archive-history")                       # move old terminal sessions to .archive.json (default keep=20)
+skill_use("rddf-session archive-history --keep=50")           # custom keep count
+skill_use("rddf-session archive-history --archive-orphans")   # archive orphaned sessions regardless of keep
 ```
 
 ## Implementation (Bash)
@@ -256,22 +257,29 @@ PYEOF
 
     archive-history)
         KEEP=20
+        ARCHIVE_ORPHANS=""
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 --keep=*) KEEP="${1#*=}" ;;
+                --archive-orphans) ARCHIVE_ORPHANS="yes" ;;
                 *) shift ;;
             esac
             shift || break
         done
-        python3 - "$SESSIONS_FILE" "$KEEP" "$PROJECT_ROOT" <<'PYEOF'
+        ARCHIVE_ORPHANS="$ARCHIVE_ORPHANS" python3 - "$SESSIONS_FILE" "$KEEP" "$PROJECT_ROOT" <<'PYEOF'
 import sys
+import os
 sys.path.insert(0, sys.argv[3] if len(sys.argv) > 3 else ".")
-from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator, _TERMINAL_STATES
 sessions_file = sys.argv[1]
 keep = int(sys.argv[2])
+archive_orphans = os.environ.get("ARCHIVE_ORPHANS") == "yes"
 coord = RddfSessionCoordinator(sessions_file=sessions_file)
-n = coord.archive_history(keep=keep)
-print(f"Archived {n} sessions (kept {keep} recent + active/orphaned)")
+n = coord.archive_history(keep=keep, archive_orphans=archive_orphans)
+after = coord.list_sessions()
+active_kept = sum(1 for s in after if s.state not in _TERMINAL_STATES)
+terminal_kept = sum(1 for s in after if s.state in _TERMINAL_STATES)
+print(f"Archived {n} sessions ({active_kept} active kept, {terminal_kept} terminal kept)")
 PYEOF
         ;;
 
@@ -356,6 +364,14 @@ flow continues unaffected.
 - 纯读视图,**永不修改** sessions.json
 - 输出宽度 ≤100 字符 (适配终端)
 - 不破坏现有 `list` / `show` / `current` 子命令 (向后兼容)
+
+## Archive-History Keep Semantics
+
+`archive-history` moves terminal sessions (`completed`, `failed`, `abandoned`, `orphaned`) from `.rddf/state/sessions.json` to `.rddf/state/sessions.archive.json`.
+
+- ``keep=N`` (default 20): retain the N most-recent non-orphan terminal sessions by `ended_at`. Active sessions are always retained and never counted against the keep budget.
+- `--archive-orphans`: explicitly archive all sessions in the `orphaned` state, regardless of the keep budget. This is useful when orphaned sessions have accumulated and the default keep value is larger than the total terminal count, because without this flag orphaned sessions are treated as ordinary terminal sessions and are kept alongside the recent N.
+- Auto-archive hooks (entry/close) still call `archive_history` with the default `archive_orphans=False`, preserving existing behavior.
 
 ## Cross-Reference
 

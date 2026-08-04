@@ -266,7 +266,7 @@ def test_archive_history_archives_orphaned_and_keeps_active(coordinator, session
         kind="stage_plan", owner_opencode_session_id="ses_active", goal={}
     )
 
-    assert coordinator.archive_history(keep=0) == 1
+    assert coordinator.archive_history(keep=0, archive_orphans=True) == 1
     assert [s.session_id for s in coordinator.list_sessions()] == [active_sid]
 
     archive_path = sessions_file.with_suffix(".archive.json")

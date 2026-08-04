@@ -276,8 +276,18 @@ class RddfSessionCommands:
             raise RddfSessionError(f"Unknown session: {session_id}")
         self._store.with_file_lock(_do_abandon)
 
-    def archive_history(self, keep: int = 20) -> int:
-        """Move old completed/failed/abandoned sessions to .archive.json."""
+    def archive_history(
+        self, keep: int = 20, archive_orphans: bool = False
+    ) -> int:
+        """Move old terminal sessions to .archive.json.
+
+        Non-orphan terminal sessions (completed / failed / abandoned) are
+        kept up to ``keep`` most-recent by ``ended_at``. When
+        ``archive_orphans`` is True, sessions in the ``orphaned`` state
+        are archived regardless of the keep budget. Active sessions are
+        never archived. The state machine is unchanged: ``orphaned``
+        remains in ``_TERMINAL_STATES``.
+        """
         archive_path = self._store._sessions_file.with_suffix(".archive.json")
         if archive_path.exists():
             archive_data = json.loads(archive_path.read_text())
@@ -287,11 +297,21 @@ class RddfSessionCommands:
         def _do_archive():
             nonlocal archive_data
             data = self._store.read_unlocked()
-            terminal = [s for s in data["sessions"] if s["state"] in _TERMINAL_STATES]
-            non_terminal = [s for s in data["sessions"] if s["state"] not in _TERMINAL_STATES]
-            terminal.sort(key=lambda s: s.get("ended_at") or "", reverse=True)
-            to_archive = terminal[keep:]
-            to_keep = terminal[:keep] + non_terminal
+            active = [s for s in data["sessions"] if s["state"] not in _TERMINAL_STATES]
+            orphaned = [s for s in data["sessions"] if s["state"] == "orphaned"]
+            terminal_non_orphan = [
+                s for s in data["sessions"]
+                if s["state"] in _TERMINAL_STATES and s["state"] != "orphaned"
+            ]
+            terminal_non_orphan.sort(
+                key=lambda s: s.get("ended_at") or "", reverse=True
+            )
+            kept_terminal = terminal_non_orphan[:keep]
+            to_archive = terminal_non_orphan[keep:]
+            if archive_orphans:
+                to_archive.extend(orphaned)
+            else:
+                kept_terminal.extend(orphaned)
 
             archive_data["sessions"].extend(to_archive)
             archive_data["updated_at"] = _now()
@@ -299,7 +319,7 @@ class RddfSessionCommands:
             with archive_path.open("w") as f:
                 json.dump(archive_data, f, indent=2)
 
-            data["sessions"] = to_keep
+            data["sessions"] = active + kept_terminal
             data["updated_at"] = _now()
             self._store.atomic_write(data)
             return len(to_archive)
