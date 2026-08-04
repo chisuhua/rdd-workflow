@@ -34,17 +34,22 @@ class TestRddfSessionCrossSessionRecovery:
         """
         sessions_file = str(tmp_path / "sessions.json")
         config = HeartbeatConfig(
-            timeout_seconds=0.5,  # 0.5 second timeout for testing
-            refresh_threshold_seconds=0.25,
+            timeout_seconds=0.3,
+            refresh_threshold_seconds=0.15,
         )
 
+        # Test creates both stage_plan and stage_arch sessions; the
+        # stage-level singleton check would otherwise block the second
+        # creation. Opt into cross-stage parallelism for this test.
+        import os
+        os.environ["RDDF_ALLOW_CROSS_STAGE_PARALLEL"] = "yes"
         coord = RddfSessionCoordinator(sessions_file, config)
 
         # Create session
         session_id = coord.create_session(
             kind="stage_plan",
             owner_opencode_session_id="owner_A",
-            goal={"task": "test"},
+            goal={"intent": "guide-plan", "subject": "test"},
         )
 
         session = coord.find_session(session_id)
@@ -84,12 +89,12 @@ class TestRddfSessionCrossSessionRecovery:
         session1_id = coord.create_session(
             kind="stage_plan",
             owner_opencode_session_id="owner_A",
-            goal={"task": "test1"},
+            goal={"intent": "guide-plan", "subject": "test1"},
         )
         session2_id = coord.create_session(
             kind="stage_arch",
             owner_opencode_session_id="owner_B",
-            goal={"task": "test2"},
+            goal={"intent": "guide-arch", "subject": "test2"},
         )
 
         # Refresh session2 to keep it active
@@ -130,7 +135,7 @@ class TestRddfSessionCrossSessionRecovery:
         session_id = coord.create_session(
             kind="stage_plan",
             owner_opencode_session_id="owner_A",
-            goal={"task": "test"},
+            goal={"intent": "guide-plan", "subject": "test"},
         )
 
         session = coord.find_session(session_id)
@@ -183,7 +188,7 @@ class TestRddfSessionCrossSessionRecovery:
         session_a_id = coord.create_session(
             kind="stage_plan",
             owner_opencode_session_id="opencode_session_A",
-            goal={"workflow": "guide-plan"},
+            goal={"intent": "guide-plan", "subject": "workflow-recovery"},
         )
 
         # Step 2: OpenCode session A crashes (simulated by timeout)
