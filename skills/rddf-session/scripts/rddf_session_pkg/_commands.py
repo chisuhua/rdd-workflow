@@ -135,7 +135,8 @@ class RddfSessionCommands:
             data = self._store.read_unlocked()
             for s in data["sessions"]:
                 if s["session_id"] == session_id:
-                    if s["state"] in _TERMINAL_STATES:
+                    is_orphaned_to_active = (s["state"] == "orphaned" and new_state == "active")
+                    if s["state"] in _TERMINAL_STATES and not is_orphaned_to_active:
                         raise RddfSessionError(
                             f"Cannot transition from terminal state {s['state']!r}"
                         )
@@ -145,6 +146,9 @@ class RddfSessionCommands:
                         s["end_reason"] = end_reason
                         data["updated_at"] = s["ended_at"]
                     else:
+                        if is_orphaned_to_active:
+                            s["ended_at"] = None
+                            s["end_reason"] = None
                         s["last_heartbeat"] = _now()
                         data["updated_at"] = s["last_heartbeat"]
                     self._store.atomic_write(data)

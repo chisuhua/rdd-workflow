@@ -13,6 +13,7 @@ import json
 import os
 import tempfile
 import time
+import datetime
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -48,9 +49,12 @@ def _worker_create_session(args: tuple) -> dict:
             # Create new session
             new_session = {
                 "session_id": session_id,
+                "kind": "stage_plan",
                 "owner_opencode_session_id": f"worker_{worker_id}",
-                "status": "active",
-                "created_at": time.time(),
+                "state": "active",
+                "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "last_heartbeat": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "goal": {"intent": "guide-plan", "subject": "concurrent-test"},
             }
             data["sessions"].append(new_session)
             store.atomic_write(data)
@@ -111,10 +115,15 @@ def _worker_write_session(args: tuple) -> dict:
             def do_write():
                 data = store.read_unlocked()
                 data.setdefault("sessions", [])
+                _w_now = datetime.datetime.now(datetime.timezone.utc).isoformat()
                 data["sessions"].append({
-                    "session_id": f"w{worker_id}-s{i}",
-                    "worker": worker_id,
-                    "iteration": i,
+                    "session_id": f"rds_{worker_id:04x}{i:08x}",
+                    "kind": "stage_plan",
+                    "owner_opencode_session_id": f"worker_{worker_id}",
+                    "state": "active",
+                    "started_at": _w_now,
+                    "last_heartbeat": _w_now,
+                    "goal": {"intent": "guide-plan", "subject": "stress"},
                 })
                 store.atomic_write(data)
                 return True
@@ -137,7 +146,7 @@ class TestRddfSessionConcurrency:
         - No data corruption
         """
         sessions_file = str(tmp_path / "sessions.json")
-        session_id = "test-session-concurrent"
+        session_id = "rds_" + "a" * 12
 
         # Prepare 100 workers all trying to create the same session
         args_list = [(i, sessions_file, session_id) for i in range(100)]
@@ -172,7 +181,7 @@ class TestRddfSessionConcurrency:
         sessions_file = str(tmp_path / "sessions.json")
 
         # Each worker creates a unique session
-        args_list = [(i, sessions_file, f"session-{i}") for i in range(100)]
+        args_list = [(i, sessions_file, f"rds_{i:012x}") for i in range(100)]
 
         with Pool(processes=20) as pool:
             results = pool.map(_worker_create_session, args_list)
@@ -203,10 +212,19 @@ class TestRddfSessionConcurrency:
 
         # Pre-populate with some sessions
         store = RddfSessionStore(sessions_file)
+        _prepop_now = datetime.datetime.now(datetime.timezone.utc).isoformat()
         store.atomic_write({
             "version": 1,
             "sessions": [
-                {"session_id": f"session-{i}", "status": "active"}
+                {
+                    "session_id": f"rds_{i:012x}",
+                    "kind": "stage_plan",
+                    "owner_opencode_session_id": "prepop_owner",
+                    "state": "active",
+                    "started_at": _prepop_now,
+                    "last_heartbeat": _prepop_now,
+                    "goal": {"intent": "guide-plan", "subject": "prepop"},
+                }
                 for i in range(10)
             ]
         })
@@ -282,9 +300,9 @@ class TestRddfSessionConcurrency:
         session_ids = [s["session_id"] for s in data["sessions"]]
         assert len(session_ids) == len(set(session_ids)), "Data corruption: duplicate session_ids"
 
-        # Verify: all session_ids follow expected pattern
+        # Verify: all session_ids follow schema-legal pattern rds_<12hex>
         for sid in session_ids:
-            assert sid.startswith("w") and "-s" in sid, f"Invalid session_id: {sid}"
+            assert sid.startswith("rds_") and len(sid) == 16, f"Invalid session_id: {sid}"
 
 
 if __name__ == "__main__":

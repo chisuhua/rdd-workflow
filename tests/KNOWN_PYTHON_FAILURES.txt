@@ -1,0 +1,1 @@
+# Known stable Python test failures. Reviewed baseline; new failures block CI.
