@@ -196,7 +196,8 @@ for each work_unit in plan.tasks (按依赖顺序):
 ```bash
 if [ "${SKIP_REGRESSION:-}" != "1" ]; then
   echo "🔍 全量回归门 (Step 5)..."
-  ctest --test-dir build --output-on-failure || {
+  source "$SCRIPT_DIR/scripts/run_regression_gate.sh"
+  run_regression_gate || {
     echo "❌ 全量回归失败: 修复后重试，或 SKIP_REGRESSION=1 跳过"
     exit 1
   }
