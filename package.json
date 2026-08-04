@@ -33,6 +33,7 @@
     "INSTALL",
     "guide",
     "guide-arch",
+    "guide-design",
     "guide-plan",
     "guide-ship",
     "feature",
@@ -45,6 +46,7 @@
     "add-improve",
     "openspec-gate",
     "rdd-workflow-brainstorm",
-    "rdd-workflow-writing-plans"
+    "rdd-workflow-writing-plans",
+    "rdd-env-check"
   ]
 }

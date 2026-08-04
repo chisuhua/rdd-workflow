@@ -73,8 +73,37 @@ def test_install_description_skill_count_matches_disk() -> None:
 def test_package_json_skills_count_within_delta() -> None:
     pkg = json.loads(_read("package.json"))
     disk = _count_skill_files()
-    assert len(pkg["skills"]) <= disk + 2, (
+    assert len(pkg["skills"]) == disk, (
         f"package.json declares {len(pkg['skills'])} skills, disk has {disk}"
+    )
+
+
+def test_install_sub_skill_table_count_matches_disk() -> None:
+    disk = _count_skill_files()
+    inst = _read("skills/INSTALL.md")
+    names: set[str] = set()
+    in_sub_skill_table = False
+    for raw_line in inst.splitlines():
+        line = raw_line.strip()
+        if not line.startswith("|"):
+            in_sub_skill_table = False
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if not cells:
+            continue
+        first = cells[0]
+        if first.startswith("技能名称"):
+            in_sub_skill_table = True
+            continue
+        if not in_sub_skill_table:
+            continue
+        if set(first) <= set("-—"):
+            continue
+        cleaned = first.strip("`").strip()
+        if cleaned:
+            names.add(cleaned)
+    assert len(names) == disk, (
+        f"INSTALL.md sub-skill table rows={len(names)}, disk has {disk}; rows={sorted(names)}"
     )
 
 

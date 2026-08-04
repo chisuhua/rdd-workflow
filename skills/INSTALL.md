@@ -29,6 +29,11 @@ author: sisyphus
 | `deps` | 依赖分析（被 guide-plan 调用） |
 | `rdd-workflow-writing-plans` | 实施计划生成器（v2.0 自包含 TDD 5 步结构） |
 | `rdd-env-check` | 环境健康检查（openspec/git/build + cache 快照，被 4 个 phase 调用） |
+| `add-improve` | 交互式创建 rdd-workflow 改进提案（注册到 proposal-suggestions.md） |
+| `openspec-gate` | Stage 守卫（未关联 active change 时阻止 commit） |
+| `rdd-workflow-brainstorm` | 提案头脑风暴（5 段格式输出至 improvements/） |
+| `INSTALL` | 当前技能（顶层安装入口，被全局/项目安装流程使用） |
+| `guide-design` | Design 阶段状态机（v2.1 新增；提案审查 + 内容审查） |
 
 ## 两种安装模式
 
