@@ -24,6 +24,16 @@
 
 | [add-known-failures-baseline](improvements/add-known-failures-baseline.md) | P3 | 2026-08-03 | guide-arch |
 
+| [plan-execute-commit-policy-consistency](improvements/plan-execute-commit-policy-consistency.md) | P1 | 2026-08-04 | guide-arch |
+
+| [execute-gate-unified-regression](improvements/execute-gate-unified-regression.md) | P2 | 2026-08-04 | guide-arch |
+
+| [archive-history-keep-semantics](improvements/archive-history-keep-semantics.md) | P2 | 2026-08-04 | guide-arch |
+
+| [test-isolation-from-repo-state](improvements/test-isolation-from-repo-state.md) | P2 | 2026-08-04 | guide-arch |
+
+| [python-failures-baseline](improvements/python-failures-baseline.md) | P3 | 2026-08-04 | guide-arch |
+
 ## 已实施
 | [extract-rdd-env-check-from-guide-arch](improvements/extract-rdd-env-check-from-guide-arch.md) | P1 | 2026-08-03 |
 | [adr-create-interactive-drafting](improvements/adr-create-interactive-drafting.md) | P1 | 2026-08-03 |
