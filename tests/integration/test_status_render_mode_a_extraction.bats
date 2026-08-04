@@ -20,6 +20,16 @@
 
 load ../test_helper
 
+make_status_repo() {
+  local tmpdir
+  tmpdir=$(mktemp -d -t rdd-status-mode-a-XXXXXX)
+  git init -q -b master "$tmpdir"
+  git -C "$tmpdir" config user.email "test@test"
+  git -C "$tmpdir" config user.name "test"
+  git -C "$tmpdir" commit --allow-empty -m "init" --quiet
+  printf '%s' "$tmpdir"
+}
+
 @test "status_render_mode_a: helper file exists with function" {
   [ -f "$REPO_ROOT/skills/status/scripts/status_render_mode_a.sh" ]
   bash -c "source '$REPO_ROOT/skills/status/scripts/status_render_mode_a.sh' && declare -f render_status_mode_a" | grep -q 'render_status_mode_a'
@@ -39,11 +49,15 @@ load ../test_helper
   grep -q 'render_status_mode_a' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
-@test "status_render_mode_a: runs without crashing in real repo" {
+@test "status_render_mode_a: runs without crashing in isolated repo" {
+  local tmpdir
+  tmpdir=$(make_status_repo)
   local output
-  output=$(cd "$REPO_ROOT" && source skills/status/scripts/status_render_mode_a.sh && render_status_mode_a "fake-change" 2>&1 || true)
-  # Must not crash; output depends on repo state
-  echo "$output" | grep -qE 'unknown|committed|in_worktree|planned|no worktree|openspec' || true
+  output=$(PROJECT_ROOT="$tmpdir" bash -c "source '$REPO_ROOT/skills/status/scripts/status_render_mode_a.sh' && render_status_mode_a 'fake-change'" 2>&1 || true)
+  rm -rf "$tmpdir"
+  # Must not crash and must produce some recognizable output
+  [ -n "$output" ]
+  echo "$output" | grep -qE 'unknown|committed|in_worktree|planned|no worktree|openspec'
 }
 
 @test "status_render_mode_a: handles empty repo (no iteration.json, no changes)" {

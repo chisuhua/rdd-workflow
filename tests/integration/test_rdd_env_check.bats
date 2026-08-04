@@ -10,6 +10,17 @@ ENV_CHECK="$SKILL_DIR/scripts/env_check.sh"
 LIB_CHECKS="$REPO_ROOT/skills/_lib/env_checks.sh"
 CACHE_PATH=".rddf/state/.env-cache.json"
 
+make_env_check_repo() {
+  local tmpdir
+  tmpdir=$(mktemp -d -t rdd-env-check-XXXXXX)
+  git init -q -b master "$tmpdir"
+  git -C "$tmpdir" config user.email "test@test"
+  git -C "$tmpdir" config user.name "test"
+  git -C "$tmpdir" commit --allow-empty -m "init" --quiet
+  mkdir -p "$tmpdir/.rddf/state"
+  printf '%s' "$tmpdir"
+}
+
 @test "rdd_env_check: helpers exist" {
   [ -f "$SKILL_DIR/SKILL.md" ]
   [ -f "$ENV_CHECK" ]
@@ -40,75 +51,60 @@ CACHE_PATH=".rddf/state/.env-cache.json"
 }
 
 @test "rdd_env_check: cache hit skips full check (under 100ms)" {
-  # 预写一个新鲜 cache (branch 匹配)
-  local tmp
-  tmp=$(mktemp -d)
-  (cd "$REPO_ROOT" && git rev-parse --abbrev-ref HEAD > "$tmp/branch")
+  local tmpdir
+  tmpdir=$(make_env_check_repo)
   local branch
-  branch=$(cat "$tmp/branch")
-  mkdir -p "$REPO_ROOT/.rddf/state"
-  cat > "$REPO_ROOT/.rddf/state/.env-cache.json" <<EOF
+  branch=$(git -C "$tmpdir" rev-parse --abbrev-ref HEAD)
+  cat > "$tmpdir/.rddf/state/.env-cache.json" <<EOF
 {"timestamp":"$(date +%s)","ttl_s":3600,"branch":"$branch","openspec_ver":"1.3.1","git_clean":0,"build_dir":"node_modules","adr_count":22,"roadmap_exists":"yes","gap_count":0,"active_changes":1}
 EOF
-  run bash -c "cd '$REPO_ROOT' && source '$ENV_CHECK' && _run_env_check_cached"
-  # 命中路径输出单行, 含 cached 标记
+  run bash -c "cd '$tmpdir' && source '$ENV_CHECK' && _run_env_check_cached"
   echo "$output" | grep -q 'cached'
-  # 未调用 openspec 检测 (cache 命中时不该跑全量)
   local log
-  log=$(bash -c "cd '$REPO_ROOT' && source '$ENV_CHECK' && RDD_ENV_CHECK_DEBUG=1 _run_env_check_cached" 2>&1)
+  log=$(bash -c "cd '$tmpdir' && source '$ENV_CHECK' && RDD_ENV_CHECK_DEBUG=1 _run_env_check_cached" 2>&1)
   echo "$log" | grep -q 'cached'
-  rm -f "$REPO_ROOT/.rddf/state/.env-cache.json"
-  rm -rf "$tmp"
+  rm -f "$tmpdir/.rddf/state/.env-cache.json"
+  rm -rf "$tmpdir"
 }
 
 @test "rdd_env_check: TTL expiry triggers full recheck" {
-  local tmp
-  tmp=$(mktemp -d)
-  (cd "$REPO_ROOT" && git rev-parse --abbrev-ref HEAD > "$tmp/branch")
+  local tmpdir
+  tmpdir=$(make_env_check_repo)
   local branch
-  branch=$(cat "$tmp/branch")
-  mkdir -p "$REPO_ROOT/.rddf/state"
-  # 写入过期 cache (mtime 2h 前)
-  cat > "$REPO_ROOT/.rddf/state/.env-cache.json" <<EOF
+  branch=$(git -C "$tmpdir" rev-parse --abbrev-ref HEAD)
+  cat > "$tmpdir/.rddf/state/.env-cache.json" <<EOF
 {"timestamp":"$(date +%s)","ttl_s":3600,"branch":"$branch","openspec_ver":"1.3.1","git_clean":0,"build_dir":"node_modules","adr_count":22,"roadmap_exists":"yes","gap_count":0,"active_changes":1}
 EOF
-  touch -d "2 hours ago" "$REPO_ROOT/.rddf/state/.env-cache.json"
-  run bash -c "cd '$REPO_ROOT' && source '$ENV_CHECK' && _run_env_check_cached"
-  # 过期 → 未命中 cached 标记, 走了全量 (输出非单行 cached 行)
+  touch -d "2 hours ago" "$tmpdir/.rddf/state/.env-cache.json"
+  run bash -c "cd '$tmpdir' && source '$ENV_CHECK' && _run_env_check_cached"
   if echo "$output" | grep -q 'cached'; then
-    # 允许 fallback 也输出单行, 但必须重新检测 openspec
     echo "$output" | grep -q 'openspec'
   fi
-  # cache 被覆盖 (mtime 更新)
   local new_mtime
-  new_mtime=$(stat -c %Y "$REPO_ROOT/.rddf/state/.env-cache.json")
+  new_mtime=$(stat -c %Y "$tmpdir/.rddf/state/.env-cache.json")
   local now
   now=$(date +%s)
   [ $((now - new_mtime)) -lt 120 ]
-  rm -f "$REPO_ROOT/.rddf/state/.env-cache.json"
-  rm -rf "$tmp"
+  rm -f "$tmpdir/.rddf/state/.env-cache.json"
+  rm -rf "$tmpdir"
 }
 
 @test "rdd_env_check: branch change invalidates cache" {
-  local tmp
-  tmp=$(mktemp -d)
-  (cd "$REPO_ROOT" && git rev-parse --abbrev-ref HEAD > "$tmp/current_branch")
+  local tmpdir
+  tmpdir=$(make_env_check_repo)
   local current
-  current=$(cat "$tmp/current_branch")
+  current=$(git -C "$tmpdir" rev-parse --abbrev-ref HEAD)
   local other="other-branch-name"
   [ "$current" != "$other" ] || other="another-branch-name"
-  mkdir -p "$REPO_ROOT/.rddf/state"
-  # 写入 branch 不匹配的 cache (mtime 新鲜)
-  cat > "$REPO_ROOT/.rddf/state/.env-cache.json" <<EOF
+  cat > "$tmpdir/.rddf/state/.env-cache.json" <<EOF
 {"timestamp":"$(date +%s)","ttl_s":3600,"branch":"$other","openspec_ver":"1.3.1","git_clean":0,"build_dir":"node_modules","adr_count":22,"roadmap_exists":"yes","gap_count":0,"active_changes":1}
 EOF
-  run bash -c "cd '$REPO_ROOT' && source '$ENV_CHECK' && _run_env_check_cached"
-  # branch 不匹配 → 重跑并覆盖 cache.branch == 当前 branch
+  run bash -c "cd '$tmpdir' && source '$ENV_CHECK' && _run_env_check_cached"
   local cached_branch
-  cached_branch=$(python3 -c "import json;print(json.load(open('$REPO_ROOT/.rddf/state/.env-cache.json'))['branch'])" 2>/dev/null || echo "$current")
+  cached_branch=$(python3 -c "import json;print(json.load(open('$tmpdir/.rddf/state/.env-cache.json'))['branch'])" 2>/dev/null || echo "$current")
   [ "$cached_branch" = "$current" ]
-  rm -f "$REPO_ROOT/.rddf/state/.env-cache.json"
-  rm -rf "$tmp"
+  rm -f "$tmpdir/.rddf/state/.env-cache.json"
+  rm -rf "$tmpdir"
 }
 
 @test "rdd_env_check: openspec missing blocks with non-zero + repair guidance" {
