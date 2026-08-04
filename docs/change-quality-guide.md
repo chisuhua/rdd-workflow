@@ -69,6 +69,18 @@ Bronze 是**唯一被强制执行**的等级。设置 `STRICT_PROPOSE_GATE=yes`
 > 本指南**非强制**：Silver 和 Gold 是质量愿景，不是 gate。不要用它来
 > 否决已经通过 Bronze 的提案。
 
+## 新增 skill 注册 checklist
+
+每新增一个 `skills/<name>/SKILL.md`（或顶层 `skills/<name>.md`），按顺序核对以下五项，否则本地 `python3 -m pytest tests/unit/test_doc_contracts.py -q` 与 `bats tests/integration/test_skill_metadata_consistency.bats` 会失败：
+
+- [ ] `skills/INSTALL.md` 描述中的 `全部 N 个子技能` 与磁盘 `_count_skill_files()` 完全一致
+- [ ] `skills/INSTALL.md` 的子技能表中追加一行 `| \`<name>\` | <用途说明> |`
+- [ ] `package.json` 的 `skills[]` 数组按字母顺序追加 `<name>`
+- [ ] `tests/smoke.bats` 中“all skill files exist (dynamic)”/“v1.x baseline skills still present”用例若需静态示例，则保留与新技能名同步
+- [ ] `USAGE.md` 中如出现计数或示例，须同步刷新（CI 暂未强制，文档层面维护即可）
+
+自动化校验覆盖了第 1、2、3 项；第 4、5 项为辅助检查项，确保示例与文档不会漂移。
+
 ## 相关文档
 
 - `skills/propose/scripts/propose_quality_check.py` - 自动检查工具（Plan B）

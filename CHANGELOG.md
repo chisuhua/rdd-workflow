@@ -5,6 +5,7 @@
 ### Added
 
 - **rdd-env-check skill**: 环境健康检查外置为独立 skill，`.rddf/state/.env-cache.json` 快照缓存 (TTL 3600s + branch 失效)，arch/design/plan/ship Phase 1 首屏压缩为单行状态 (~600 tokens → ~50 tokens)。共享 `_check_*` 函数提取至 `skills/_lib/env_checks.sh` (DRY)。
+- **Strict skill registration contract**: `test_doc_contracts.py` 收紧为精确 `== disk` 匹配，新增 INSTALL.md 子技能表行数断言；`test_skill_metadata_consistency.bats` 改为基于磁盘 glob 的动态校验；`docs/change-quality-guide.md` 增加五项新增 skill 注册 checklist。`package.json` 与 `skills/INSTALL.md` 同步补齐 guide-design、rdd-env-check 等登记项。
 
 ## [v3.0.0] — 2026-07-22 (BREAKING)
 
