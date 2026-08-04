@@ -34,6 +34,24 @@ bats tests/smoke.bats
 npm test
 ```
 
+## Known failure baseline
+
+`tests/KNOWN_FAILURES.txt` contains the current, reviewed set of pre-existing Bats failures. Each line uses the Bats test name followed by a reason/environment comment. Known failures remain visible in the Bats output and are reported as `已知失败`; they do not fail the incremental gate.
+
+Run the shared local/CI comparison with:
+
+```bash
+bash tests/scripts/report_regression.sh
+```
+
+A failure not present in the baseline is reported as `新增失败` and returns non-zero. Do not add it automatically. After confirming the failure is environmental or otherwise intentionally accepted, review the reason and run the explicit refresh command:
+
+```bash
+bash tests/scripts/refresh_known_failures.sh
+```
+
+Review the resulting diff before committing. Remove a fixed test from the baseline by refreshing after confirming the test is green. CI runs the same report script after the recursive Bats step, so local and CI use one comparison implementation.
+
 ## Conventions
 
 - All test files use `.bats` extension.
