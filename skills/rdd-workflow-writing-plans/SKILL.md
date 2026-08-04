@@ -112,12 +112,10 @@ def function(input):
 Run: `pytest tests/path/test_x.py::test_specific_behavior -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Defer commit**
 
-```bash
-git add tests/path/test_x.py path/to/new_file.py
-git commit -m "feat: add specific feature"
-```
+按仓库约定，execute 阶段不逐任务 commit；所有变更将在 archive 阶段统一提交。
+如需在 execute 阶段逐任务 commit（不推荐），可设置 `COMMIT_IN_EXECUTE=yes`。
 ````
 
 ## 禁止的占位符

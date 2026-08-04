@@ -399,6 +399,7 @@ skills/*.md 行数 (累计):
 4. **`find_default_branch()` 不从 worktree 的 HEAD 推断** — 优先读 `refs/remotes/origin/HEAD`, 防 self-merge
 5. **Execute 只写 `tasks.md`** — 不写 state 文件, guide 从 tasks.md 同步进度
 6. **execute 阶段不 commit/push** — commit 留到 archive 阶段
+   - `rdd-workflow-writing-plans` 生成的 plan 默认在 Step 5 不执行 commit；如需逐任务 commit，设置 `COMMIT_IN_EXECUTE=yes`（不推荐）。
 7. **`guide-arch` 不调用 `guide-plan`** — arch-done 后用户必须手动切换
 8. **`guide-spec` 已移除** — v2.0 中删除（原为 60 行别名），请直接使用 `guide-arch` → `guide-plan`
 9. **Loop 引擎 max_iterations: 100, max_retries: 3** — 配置在 `interaction` 模式配置中
