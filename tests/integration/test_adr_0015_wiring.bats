@@ -23,6 +23,15 @@
 
 load ../test_helper
 
+make_adr_fixture() {
+  local tmpdir
+  tmpdir=$(mktemp -d -t adr0015-XXXXXX)
+  mkdir -p "$tmpdir/openspec/changes/archive/2026-07-20-refine-adr-0015-wiring"
+  printf 'design fixture\n' > "$tmpdir/openspec/changes/archive/2026-07-20-refine-adr-0015-wiring/design.md"
+  printf 'tasks fixture\n' > "$tmpdir/openspec/changes/archive/2026-07-20-refine-adr-0015-wiring/tasks.md"
+  printf '%s' "$tmpdir"
+}
+
 @test "adr_0015: validate_report.py has write_report function importable" {
   # Lock API surface: write_report must be a callable taking (project_root, raw_report)
   python3 -c "
@@ -116,14 +125,18 @@ print('OK')
   grep -q "TODO(long-term): merge with gate.py::_check_openspec_validate" "$REPO_ROOT/skills/guide-plan/SKILL.md"
 }
 
-@test "adr_0015: design.md exists for refine-adr-0015-wiring change" {
-  # Change was archived to openspec/changes/archive/2026-07-20-refine-adr-0015-wiring/
-  [ -f "$REPO_ROOT/openspec/changes/archive/2026-07-20-refine-adr-0015-wiring/design.md" ]
+@test "adr_0015: design.md exists for archived change in fixture" {
+  local tmpdir
+  tmpdir=$(make_adr_fixture)
+  [ -f "$tmpdir/openspec/changes/archive/2026-07-20-refine-adr-0015-wiring/design.md" ]
+  rm -rf "$tmpdir"
 }
 
-@test "adr_0015: tasks.md exists for refine-adr-0015-wiring change" {
-  # Change was archived to openspec/changes/archive/2026-07-20-refine-adr-0015-wiring/
-  [ -f "$REPO_ROOT/openspec/changes/archive/2026-07-20-refine-adr-0015-wiring/tasks.md" ]
+@test "adr_0015: tasks.md exists for archived change in fixture" {
+  local tmpdir
+  tmpdir=$(make_adr_fixture)
+  [ -f "$tmpdir/openspec/changes/archive/2026-07-20-refine-adr-0015-wiring/tasks.md" ]
+  rm -rf "$tmpdir"
 }
 
 @test "adr_0015: end-to-end write_report + load_report roundtrip works" {

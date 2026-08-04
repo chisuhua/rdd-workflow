@@ -19,6 +19,32 @@ load ../test_helper
 EXECUTE_MD="$REPO_ROOT/skills/execute/SKILL.md"
 SELECT_WT="$REPO_ROOT/skills/execute/scripts/select_worktree.sh"
 
+make_git_repo() {
+  local tmpdir
+  tmpdir=$(mktemp -d -t rdd-select-wt-XXXXXX)
+  git -C "$tmpdir" init -q >/dev/null 2>&1
+  git -C "$tmpdir" config user.email "test@example.com"
+  git -C "$tmpdir" config user.name "Test"
+  : > "$tmpdir/README.md"
+  git -C "$tmpdir" add README.md >/dev/null 2>&1
+  git -C "$tmpdir" commit -q -m "init" >/dev/null 2>&1
+  printf '%s' "$tmpdir"
+}
+
+add_openspec_worktrees() {
+  local repo="$1"
+  local count="$2"
+  local i
+  for ((i=1; i<=count; i++)); do
+    git -C "$repo" worktree add -b "openspec/wt-$i" "$repo/.rddf/wt/wt-$i" HEAD >/dev/null 2>&1
+  done
+}
+
+cleanup_repo() {
+  local repo="$1"
+  [ -n "$repo" ] && rm -rf "$repo"
+}
+
 @test "select_worktree_helper_exists" {
   [ -f "$SELECT_WT" ]
   bash -c "cd '$REPO_ROOT' && source '$SELECT_WT' && declare -f auto_detect_worktree_context" | grep -q 'auto_detect_worktree_context'
@@ -41,32 +67,33 @@ SELECT_WT="$REPO_ROOT/skills/execute/scripts/select_worktree.sh"
   grep -q 'ensure_change_name' "$SELECT_WT"
 }
 
-@test "auto_detect_runs_in_main_repo" {
-  # When the main repo has no openspec worktree, the helper exits 1 with a
-  # "no worktree" error. Otherwise it lists the available worktrees.
-  tmpdir=$(mktemp -d -t rdd-clean-XXXXXX)
-  git init "$tmpdir" >/dev/null 2>&1
-  cd "$tmpdir"
-  git config user.email "test@example.com" 2>/dev/null
-  git config user.name "Test" 2>/dev/null
+@test "auto_detect_runs_in_repo_with_no_worktrees" {
+  local tmpdir
+  tmpdir=$(make_git_repo)
+  local output
   output=$(bash -c "cd '$tmpdir' && source '$SELECT_WT' && auto_detect_worktree_context" 2>&1 || true)
-  rm -rf "$tmpdir"
+  cleanup_repo "$tmpdir"
   echo "$output" | grep -q '无已创建的 worktree\|请先执行 guide-ship'
 }
 
-@test "auto_detect_inside_worktree" {
-  local CURRENT
-  CURRENT=$(git branch --show-current)
-  if echo "$CURRENT" | grep -q '^openspec/'; then
-    bash -c "cd '$REPO_ROOT' && source '$SELECT_WT' && auto_detect_worktree_context" >/dev/null 2>&1
-  else
-    skip "Not in an openspec/* worktree (current branch: $CURRENT)"
-  fi
+@test "auto_detect_runs_in_repo_with_multiple_worktrees" {
+  local tmpdir
+  tmpdir=$(make_git_repo)
+  add_openspec_worktrees "$tmpdir" 3
+  local output
+  output=$(bash -c "cd '$tmpdir' && source '$SELECT_WT' && auto_detect_worktree_context" 2>&1 || true)
+  cleanup_repo "$tmpdir"
+  echo "$output" | grep -qE 'wt-1|wt-2|wt-3|上次检测|worktree'
 }
 
 @test "execute_choice_env_var_selection" {
-  output=$(EXECUTE_CHOICE=1 bash -c "cd '$REPO_ROOT' && source '$SELECT_WT' && auto_detect_worktree_context" 2>&1 || true)
-  echo "$output" | grep -q '上次检测\|worktree\|EXECUTE_CHOICE' || true
+  local tmpdir
+  tmpdir=$(make_git_repo)
+  add_openspec_worktrees "$tmpdir" 1
+  local output
+  output=$(cd "$tmpdir" && EXECUTE_CHOICE=1 bash -c "source '$SELECT_WT' && auto_detect_worktree_context" 2>&1 || true)
+  cleanup_repo "$tmpdir"
+  echo "$output" | grep -qE '上次检测|worktree|EXECUTE_CHOICE'
 }
 
 @test "no_worktrees_error_path" {
@@ -81,6 +108,21 @@ SELECT_WT="$REPO_ROOT/skills/execute/scripts/select_worktree.sh"
 }
 
 @test "sets_change_name_env_var" {
-  output=$(bash -c "cd '$REPO_ROOT' && unset EXECUTE_CHOICE; source '$SELECT_WT'; auto_detect_worktree_context >/dev/null 2>&1; echo \"CHANGE_NAME=[\${CHANGE_NAME:-}]\"" 2>&1 || true)
+  local tmpdir
+  tmpdir=$(make_git_repo)
+  add_openspec_worktrees "$tmpdir" 1
+  local output
+  output=$(cd "$tmpdir" && unset EXECUTE_CHOICE && bash -c "source '$SELECT_WT'; auto_detect_worktree_context >/dev/null 2>&1; echo \"CHANGE_NAME=[\${CHANGE_NAME:-}]\"" 2>&1 || true)
+  cleanup_repo "$tmpdir"
   echo "$output" | grep -q 'CHANGE_NAME='
+}
+
+@test "auto_detect_inside_worktree" {
+  local tmpdir
+  tmpdir=$(make_git_repo)
+  add_openspec_worktrees "$tmpdir" 1
+  local wt_dir="$tmpdir/.rddf/wt/wt-1"
+  run bash -c "cd '$wt_dir' && source '$SELECT_WT' && auto_detect_worktree_context" >/dev/null 2>&1
+  [ "$status" -eq 0 ]
+  cleanup_repo "$tmpdir"
 }
