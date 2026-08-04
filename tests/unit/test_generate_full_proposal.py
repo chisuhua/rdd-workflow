@@ -31,9 +31,13 @@ ADR-0003 + ADR-0017 决定 design/plan 职责再分配。ADR-0016 锁定 handoff
 
 ## 范围
 
-- approve 升级
-- 完整 proposal.md 生成
-- iteration.json 状态流转
+- **In Scope**:
+  - approve 升级
+  - 完整 proposal.md 生成
+  - iteration.json 状态流转
+- **Out Scope**:
+  - 不改变 archive 逻辑
+  - 不修改 ADR-0003 职责边界
 
 ## 关键场景
 
@@ -107,3 +111,58 @@ def test_generate_full_proposal_handles_missing_sections():
 def test_generate_full_proposal_change_name_in_title():
     out = generate_full_proposal("my-feature", SAMPLE)
     assert out.startswith("# my-feature\n")
+
+
+# ---------------------------------------------------------------------------
+# Content-correctness regression (2026-08-04): the Out of Scope / Capabilities
+# / Impact blocks were previously HARDCODED to move-proposal-creation-to-design
+# content, leaking irrelevant text into every generated proposal.md. These
+# tests lock the fix: all three blocks must be derived from the improvements
+# input, never from a fixed template.
+# ---------------------------------------------------------------------------
+
+
+def test_no_hardcoded_legacy_proposal_content_leaks():
+    """Out of Scope / Capabilities / Impact must not contain the hardcoded
+    move-proposal-creation-to-design strings (the historical bug)."""
+    out = generate_full_proposal("my-change", SAMPLE)
+    leaked = [
+        "design 阶段不生成 tasks.md",
+        "design-proposal-creation",
+        "design-content-review",
+        "ADR-0025",
+        "SKIP_DESIGN_HANDOFF=yes 存量路径行为不变",
+    ]
+    for text in leaked:
+        assert text not in out, f"hardcoded legacy content leaked: {text!r}"
+
+
+def test_out_of_scope_derived_from_improvements_input():
+    """Out of Scope items must come from the improvements 范围/Out Scope block."""
+    out = generate_full_proposal("my-change", SAMPLE)
+    assert "不改变 archive 逻辑" in out
+    assert "不修改 ADR-0003 职责边界" in out
+    # In Scope items must not be repeated under Out of Scope
+    out_scope_section = out.split("**Out of Scope**:", 1)[1].split("## Capabilities", 1)[0]
+    assert "approve 升级" not in out_scope_section
+
+
+def test_capabilities_impact_derived_from_constraints():
+    """Capabilities / Impact must reflect the improvements 技术约束 items,
+    not a fixed template."""
+    out = generate_full_proposal("my-change", SAMPLE)
+    assert "env-var 传参 (Oracle C1)" in out
+    assert "jsonschema 严格校验" in out
+
+
+def test_scope_split_handles_bullet_style_headers():
+    """- **In Scope**: (dash-prefixed) sub-headers must be treated as section
+    markers, not as scope items themselves."""
+    md = SAMPLE.replace("**In Scope**:", "- **In Scope**:").replace(
+        "**Out Scope**:", "- **Out Scope**:"
+    )
+    out = generate_full_proposal("my-change", md)
+    # The marker line itself must not appear as a bullet item
+    assert "\n- **In Scope**:" not in out
+    assert "\n- **Out Scope**:" not in out
+    assert "不改变 archive 逻辑" in out

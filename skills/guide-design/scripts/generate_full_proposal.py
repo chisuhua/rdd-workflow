@@ -48,19 +48,44 @@ def _extract_section(md: str, title: str) -> str:
     return m.group(1).strip() if m else ""
 
 
-def _extract_in_scope_items(scope_md: str) -> list[str]:
-    """Pull `-` bullet items from the 范围 section. Drops 'In Scope' / 'Out Scope' sub-headers."""
-    items: list[str] = []
+def _extract_scope_items(scope_md: str) -> tuple[list[str], list[str]]:
+    """Split the 范围 section into (in_scope_items, out_scope_items).
+
+    Handles both sub-header styles:
+      - "**In Scope**:" / "- **In Scope**:" (optional leading dash)
+      - items are "- " bullets following each header.
+    Bullets appearing before any header default to in-scope.
+    """
+    in_items: list[str] = []
+    out_items: list[str] = []
+    current: str | None = None  # "in" | "out" | None
     for line in scope_md.splitlines():
         stripped = line.strip()
         if not stripped:
             continue
+        header = stripped[2:].strip() if stripped.startswith("- ") else stripped
+        if header.startswith("**In Scope**"):
+            current = "in"
+            continue
+        if header.startswith("**Out Scope**"):
+            current = "out"
+            continue
+        if stripped.startswith("- "):
+            item = stripped[2:].strip()
+            if current == "out":
+                out_items.append(item)
+            else:
+                in_items.append(item)
+    return in_items, out_items
+
+
+def _extract_bullet_items(section_md: str) -> list[str]:
+    """Pull "- " bullet items from a section body."""
+    items: list[str] = []
+    for line in section_md.splitlines():
+        stripped = line.strip()
         if stripped.startswith("- "):
             items.append(stripped[2:].strip())
-        elif stripped.startswith("**In Scope**") or stripped.startswith("**Out Scope**"):
-            continue
-        elif stripped.startswith("**In Scope:**") or stripped.startswith("**Out Scope:**"):
-            continue
     return items
 
 
@@ -79,28 +104,19 @@ def generate_full_proposal(change_name: str, improvements_md: str) -> str:
     why = _extract_section(improvements_md, "架构依据")
     scope = _extract_section(improvements_md, "范围")
     scenarios = _extract_section(improvements_md, "关键场景")
+    constraints = _extract_section(improvements_md, "技术约束")
     acceptance = _extract_section(improvements_md, "验收标准")
 
-    in_scope_items = _extract_in_scope_items(scope)
+    in_scope_items, out_scope_items = _extract_scope_items(scope)
     in_scope_block = "\n".join(f"- {item}" for item in in_scope_items) if in_scope_items else "- (TBD)"
     if scenarios:
         in_scope_block += "\n\n### 关键场景\n\n" + scenarios
 
-    out_of_scope_block = (
-        "- design 阶段不生成 tasks.md / design.md / specs (留在 plan fill)\n"
-        "- 不修改 ADR-0003 (另起 ADR 记录本次职责再分配)\n"
-    )
+    out_of_scope_block = "\n".join(f"- {item}" for item in out_scope_items) if out_scope_items else "- (TBD)"
 
-    capabilities_block = (
-        "- `design-proposal-creation`: design 审批批准即创建完整 openspec change\n"
-        "- `design-content-review`: 两层内容审查 (improvements 5 段 + openspec validate), warning / strict 双模式\n"
-    )
-
-    impact_block = (
-        "- **受影响文件**: `skills/guide-design/SKILL.md` + 4 个 scripts, `skills/guide-plan/scripts/plan_intake.sh`, `docs/adr/ADR-0025-*.md` (新增)\n"
-        "- **兼容性**: `SKIP_DESIGN_HANDOFF=yes` 存量路径行为不变\n"
-        "- **硬约束**: 批准动作幂等; env-var 传参 (Oracle C1)\n"
-    )
+    constraint_items = _extract_bullet_items(constraints)
+    capabilities_block = "\n".join(f"- {item}" for item in constraint_items) if constraint_items else "- (TBD)"
+    impact_block = "\n".join(f"- {item}" for item in constraint_items) if constraint_items else "- (TBD)"
 
     return (
         f"# {change_name}\n\n"
