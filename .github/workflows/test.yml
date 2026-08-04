@@ -72,3 +72,6 @@ jobs:
 
       - name: Bats smoke (full recursive — v2.0.3)
         run: bats tests/ --recursive
+
+      - name: Incremental Bats regression gate
+        run: bash tests/scripts/report_regression.sh
