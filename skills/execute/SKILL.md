@@ -173,9 +173,9 @@ for each work_unit in plan.tasks (按依赖顺序):
               重新执行测试命令，确认通过。
               Run: pytest <test_path> -v
 
-            Step 5 — Commit：
-              git add <test_files> <implementation_files>
-              git commit -m \"<commit message>\"
+            Step 5 — Defer commit：
+              按仓库约定，execute 阶段不执行 commit；继续下一个 Task。所有变更将在 archive 阶段统一提交。
+              如需在 execute 阶段逐任务 commit（不推荐），设置 `COMMIT_IN_EXECUTE=yes`。
 
             完成后：
               用 sed -i 's/- \\[ \\]/- [x]/' openspec/changes/<CHANGE_NAME>/tasks.md 标记完成
