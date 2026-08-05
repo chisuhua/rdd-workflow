@@ -1,50 +1,31 @@
 load ../test_helper
 
-@test "archive: check_incomplete_tasks detects incomplete tasks" {
-  source "$PROJECT_ROOT/skills/_lib/archive.sh"
-  
-  mkdir -p "$BATS_TMPDIR/test-arch/openspec/changes/test-incomplete"
-  cat > "$BATS_TMPDIR/test-arch/openspec/changes/test-incomplete/tasks.md" <<'EOF'
-## Tasks
-- [ ] Task 1
-- [x] Task 2
-EOF
-  (cd "$BATS_TMPDIR/test-arch" && run check_incomplete_tasks "test-incomplete")
-  [ "$status" -eq 1 ]
-  [[ "$output" =~ "未完成任务" ]]
+# This file previously referenced undefined helpers (check_incomplete_tasks
+# and append_incomplete_to_suggestions) that never existed in archive.sh.
+# It now tests the real archive_gate_check semantics across both modes.
+
+@test "archive: gate blocks change with no completed tasks" {
+    TMP="$BATS_TMPDIR/test-arch"
+    mkdir -p "$TMP/openspec/changes/incomplete"
+    printf -- '- [ ] a\n- [ ] b\n' > "$TMP/openspec/changes/incomplete/tasks.md"
+    run bash -c "source '$PROJECT_ROOT/skills/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'incomplete'"
+    [ "$status" -eq 1 ]
+    [[ "$output" =~ "未实现" ]]
 }
 
-@test "archive: check_incomplete_tasks passes when all complete" {
-  source "$PROJECT_ROOT/skills/_lib/archive.sh"
-  
-  mkdir -p "$BATS_TMPDIR/test-arch2/openspec/changes/test-complete"
-  cat > "$BATS_TMPDIR/test-arch2/openspec/changes/test-complete/tasks.md" <<'EOF'
-## Tasks
-- [x] Task 1
-- [x] Task 2
-EOF
-  (cd "$BATS_TMPDIR/test-arch2" && run check_incomplete_tasks "test-complete")
-  [ "$status" -eq 0 ]
+@test "archive: gate passes when all tasks complete" {
+    TMP="$BATS_TMPDIR/test-arch2"
+    mkdir -p "$TMP/openspec/changes/complete"
+    printf -- '- [x] a\n- [x] b\n' > "$TMP/openspec/changes/complete/tasks.md"
+    run bash -c "source '$PROJECT_ROOT/skills/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'complete'"
+    [ "$status" -eq 0 ]
 }
 
-@test "archive: check_incomplete_tasks skips with FORCE_ARCHIVE_INCOMPLETE" {
-  source "$PROJECT_ROOT/skills/_lib/archive.sh"
-  
-  mkdir -p "$BATS_TMPDIR/test-arch3/openspec/changes/test-force"
-  cat > "$BATS_TMPDIR/test-arch3/openspec/changes/test-force/tasks.md" <<'EOF'
-## Tasks
-- [ ] Task 1
-EOF
-  (cd "$BATS_TMPDIR/test-arch3" && FORCE_ARCHIVE_INCOMPLETE=yes run check_incomplete_tasks "test-force")
-  [ "$status" -eq 0 ]
-}
-
-@test "archive: append_incomplete_to_suggestions writes to suggestions" {
-  source "$PROJECT_ROOT/skills/_lib/archive.sh"
-  
-  mkdir -p "$BATS_TMPDIR/test-sugg"
-  touch "$BATS_TMPDIR/test-sugg/proposal-suggestions.md"
-  (cd "$BATS_TMPDIR/test-sugg" && run append_incomplete_to_suggestions "test-change" "$BATS_TMPDIR/test-sugg")
-  [ "$status" -eq 0 ]
-  grep -q "test-change" "$BATS_TMPDIR/test-sugg/proposal-suggestions.md"
+@test "archive: FORCE_ARCHIVE_INCOMPLETE bypasses gate" {
+    TMP="$BATS_TMPDIR/test-arch3"
+    mkdir -p "$TMP/openspec/changes/force"
+    printf -- '- [ ] a\n- [ ] b\n' > "$TMP/openspec/changes/force/tasks.md"
+    FORCE_ARCHIVE_INCOMPLETE=yes \
+        run bash -c "source '$PROJECT_ROOT/skills/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'force'"
+    [ "$status" -eq 0 ]
 }

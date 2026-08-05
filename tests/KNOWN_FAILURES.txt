@@ -2,14 +2,7 @@ INSTALL.md registers 13 skills including rdd-workflow-writing-plans # historical
 SKILL.md: line count dropped from 340 baseline (v2.1 reduction) # historical documentation line-count contract
 adr_index: docs/adr/README.md does NOT reference ADR-NNN beyond 0020 # historical ADR documentation baseline
 adr_index: docs/adr/README.md status table is consistent with disk # historical ADR documentation baseline
-archive-gate: blocks change with 0 completed tasks # incomplete-task archive fixture
-archive-gate: passes change with completed tasks # archive fixture dependency
-archive-gate: skips with FORCE_ARCHIVE_INCOMPLETE # archive fixture dependency
 archive-proposal-status: archive.sh calls update_proposal_status # archive helper structural baseline
-archive: append_incomplete_to_suggestions writes to suggestions # archive fixture dependency
-archive: check_incomplete_tasks detects incomplete tasks # archive fixture dependency
-archive: check_incomplete_tasks passes when all complete # archive fixture dependency
-archive: check_incomplete_tasks skips with FORCE_ARCHIVE_INCOMPLETE # archive fixture dependency
 auto_detect_runs_in_main_repo # worktree environment fixture
 count_pending_suggestions ignores malformed entries (defensive) # malformed-input fixture
 count_pending_suggestions returns N when entries have 待创建 status # locale/status fixture
