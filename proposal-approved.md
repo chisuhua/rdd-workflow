@@ -11,6 +11,28 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|----------|
+| [fix-rddf-status-corrupt-message](improvements/fix-rddf-status-corrupt-message.md) | P1 | 2026-08-05 | guide-design |
+| [fix-archive-iteration-sync](improvements/fix-archive-iteration-sync.md) | P0 | 2026-08-05 | guide-design |
+| [fix-archive-on-main-flow](improvements/fix-archive-on-main-flow.md) | P0 | 2026-08-05 | guide-design |
+| [add-archive-post-commit-hook-and-force-flag](improvements/add-archive-post-commit-hook-and-force-flag.md) | P0 | 2026-08-05 | guide-design |
+| [rddf-iteration-strict-schema](improvements/rddf-iteration-strict-schema.md) | P1 | 2026-08-05 | guide-design |
+| [fix-tasks-md-archive-residue](improvements/fix-tasks-md-archive-residue.md) | P1 | 2026-08-05 | guide-design |
+| [collect-l2-violation-count-on-archive](improvements/collect-l2-violation-count-on-archive.md) | P2 | 2026-08-05 | guide-design |
+
+> **依赖声明 (2026-08-05 design-done)**: 本批 7 项提案 (本次批准) 形成强依赖链, 计划按下列顺序实施:
+> 1. **`fix-archive-iteration-sync`** (P0) — first: 定义 `sync_iteration_after_archive` helper, 装到 `archive.sh::archive_change()` + `archive_on_main.sh` + `rddf status --archive` 3 个入口
+> 2. **`fix-archive-on-main-flow`** (P0) — after #1: 给 `archive_on_main.sh` 加 `--confirm-main` 必填 + 失败回滚 (在 #1 的 helper 之上加固)
+> 3. **`add-archive-post-commit-hook-and-force-flag`** (P0) — after #1: 凭 #1 的 helper 拦截裸 `git mv` 路径 + `--force` 消除绕过动机 (AC-16 硬约束)
+> 4. **`fix-rddf-status-corrupt-message`** (P1) + **`rddf-iteration-strict-schema`** (P1) — 并行: 共修 `status_cmd.py` + `state_reader.py`, 建议合 PR 避免 collision (前者修 read-side 消息折叠, 后者加 `rddf iteration lint` + `allowed-fields` 写前预检)
+> 5. **`fix-tasks-md-archive-residue`** (P1) — independent, 推荐与 #1 同 PR (共享 `archive_change()` 末尾 hook 触发点)
+> 6. **`collect-l2-violation-count-on-archive`** (P2) — last: 依赖 #4 的 schema 演进策略 (自身需 schema bump, 等 #4 明确 schema 治理流程后实施)
+>
+> **重叠修正 (2026-08-05 design-done)**:
+> - `fix-archive-iteration-sync` 与 `fix-archive-on-main-flow` 在 `archive_on_main.sh` 路径上重叠. 实施时 **#1 先** (helper + 3 个入口), **#2 后** (在该文件加 `--confirm-main` 必填 + 失败回滚 — 不重写 #1 的 sync 调用)
+> - `fix-rddf-status-corrupt-message` 与 `rddf-iteration-strict-schema` 在 `status_cmd.py` 上重叠. 前者修 read-side 错误消息折叠, 后者加 write-side `lint` / `allowed-fields` 子命令. 两者都改 `status_cmd.py`, 建议 **同 PR 合并**避免 file conflict
+> - `fix-archive-iteration-sync` 与 `fix-tasks-md-archive-residue` 在 `archive_change()` 末尾 hook 上重叠. 推荐 **同 PR 合并实施** (sidecar 生成 + tasks_done 派生都在同一 hook 点)
+>
+> **bump 合并声明 (2026-08-05 design-done)**: `fix-rddf-status-corrupt-message` (本次批准) 与 `rddf-iteration-strict-schema` (本次批准) **合并为单一 CLI 消息治理 PR** (`unify-status-cmd-iteration-messages`), 一次同时支持 read-side 缺失/损坏区分 + write-side 预检工具. **禁止拆为两次独立 PR**. Plan 阶段必须先实施 #1 (`fix-archive-iteration-sync`) 再启动本 PR.
 
 > **supersedes** (2026-08-02 design-done): `add-rddf-session-status-cmd` (本次批准) **supersedes** 已批准 `add-session-progress-view` (P1, 2026-07-28) — 后者范围是前者的子集 (本提案更广: 表格 + BINDING_LINES + guide 推荐器整合)。Plan 阶段实施时跳过 `add-session-progress-view`, 仅实施 `add-rddf-session-status-cmd`。
 >
