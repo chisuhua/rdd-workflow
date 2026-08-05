@@ -90,7 +90,7 @@ bash install.sh /path/to/project
 - `guide-ship` Phase 1 通过 `rddf discover-ship-changes` 统一发现候选,单 change 自动选择;多 change 显示菜单。
 - `guide-ship::setup_execution_workspace` 通过 `$RDDF_EXECUTION_ROOT` 把选定工作区交给 `execute`,`execute` 不再自行探测。
 - `SKIP_PROMETHEUS_PLANNING=yes` 必须配 `QUICK_FINISH_DETECTED=yes` 才能跳过 plan 生成(否则 fail closed)。
-- `archive_gate_check` 在 worktree 和 lightweight 两种模式都生效;无 commits 阻断 archive。
+- `archive_gate_check` 在 worktree 和 lightweight 两种模式都生效;lightweight 模式 0 新提交是硬阻断;`archive_change` 路径调用 `check_worktree_commits` 作为 worktree merge 前置 gate。
 
 ### 推荐器升级
 
