@@ -123,8 +123,8 @@ archive_change_for_mode() {
   local change_name="$2"
   local mode="$3"
 
-  # Pre-archive: check for incomplete tasks (ship-incomplete-archive-change-fallback)
-  if ! check_incomplete_tasks "$change_name" 2>/dev/null; then
+  # Pre-archive: completion gate (shared with archive.sh::archive_change)
+  if ! archive_gate_check "$change_name" 2>/dev/null; then
     append_incomplete_to_suggestions "$change_name" "$project_root" 2>/dev/null || true
   fi
 

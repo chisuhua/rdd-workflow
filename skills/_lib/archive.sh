@@ -305,6 +305,9 @@ archive_change() {
   # 2. Pre-merge commit check (T20)
   check_worktree_commits "$name" >/dev/null || return 1
 
+  # 2.5. Shared completion gate (also called by ship_archive.sh lightweight path)
+  archive_gate_check "$name" >/dev/null || return 3
+
   # 3. Switch to default branch in main repo
   switch_to_default_branch "$main_root" "$default_branch" || return 1
 
