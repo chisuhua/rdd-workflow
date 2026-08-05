@@ -521,7 +521,9 @@ run_ship_phase1() {
 #     readme, .md, bump, version, release, note.
 #   Non-trivial keywords (any match blocks quick-finish): implement, add,
 #     create, build, refactor, test, function, class, module, api, feature,
-#     logic, handler, controller, schema, migration, script.
+#     logic, handler, controller, schema, migration, script, breaking.
+#   Also blocks when the change has unresolved manual_blocks in
+#   roadmap-meta.yaml (per ADR-0022).
 detect_quick_finish() {
   local project_root="$1"
   local change_name="$2"
@@ -548,8 +550,8 @@ detect_quick_finish() {
   local task_text
   task_text=$(grep -E '^\- \[ \]' "$tasks_file")
 
-  # Non-trivial keywords block quick-finish
-  if echo "$task_text" | grep -qiE 'implement|add |create|build|refactor|test |function|class|module|api|feature|logic|handler|controller|schema|migration|script'; then
+  # Non-trivial keywords block quick-finish (contract requires 'breaking' here)
+  if echo "$task_text" | grep -qiE 'implement|add |create|build|refactor|test |function|class|module|api|feature|logic|handler|controller|schema|migration|script|breaking'; then
     echo "standard"
     return 0
   fi
@@ -560,9 +562,24 @@ detect_quick_finish() {
     return 0
   fi
 
-  # Check git status: no uncommitted code changes (exclude tasks.md)
+  # Active blockers block quick-finish (manual_blocks list per ADR-0022)
+  local blockers
+  blockers=$(grep -E '^manual_blocks:' "$project_root/openspec/changes/$change_name/roadmap-meta.yaml" 2>/dev/null || true)
+  if [ -n "$blockers" ]; then
+    # any non-empty value under manual_blocks counts as a blocker
+    if echo "$blockers" | grep -vE 'manual_blocks:\s*\[\s*\]\s*$' | grep -q .; then
+      echo "standard"
+      return 0
+    fi
+  fi
+
+  # Check git status: no uncommitted code changes. Only TRACKED modifications
+  # are blockers — untracked or ignored files are not code under review.
   local dirty_code
-  dirty_code=$(git -C "$project_root" status --porcelain 2>/dev/null | grep -vE 'tasks\.md$' | head -1)
+  dirty_code=$(git -C "$project_root" status --porcelain 2>/dev/null \
+    | grep -vE '^\?\?' \
+    | grep -vE 'tasks\.md$' \
+    | head -1)
   if [ -n "$dirty_code" ]; then
     echo "standard"
     return 0
