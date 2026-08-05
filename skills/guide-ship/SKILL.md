@@ -449,6 +449,51 @@ review 阶段的目的是分类记录债务，不阻断 archive。如果用户�
 
 ---
 
+## Phase 2.7: Worktree Commit Flow (execute → archive 过渡)
+
+**入口条件**：Phase 2 execute 已完成（tasks.md 全部 `[x]`），archive 之前。
+
+**显式规则** (v2.0.5+ 添加,worktree-archive-workflow 提案固化):
+
+1. **execute 不逐任务 commit** — 单次 session 完成所有 task 后,统一聚合 commit
+2. **worktree 内 commit 必须** — `archive.sh::check_worktree_commits` 在 archive 阶段要求 worktree 分支有 commits; 无 commits 时 archive 失败
+3. **commit message 风格** (匹配 `archive-history-keep-semantics` 的 commit `50950c5` 模式):
+   - `feat(<scope>): <description>` — 新功能
+   - `fix(<scope>): <description>` — bug 修复
+   - `refactor(<scope>): <description>` — 重构
+   - `test(<scope>): <description>` — 测试变更
+   - `chore(<scope>): <description>` — 工具/基础设施
+
+**操作流程**:
+
+```bash
+# 在 worktree 内 (e.g. .rddf/wt/<change-name>)
+cd "$WT_PATH"
+# 1. 确认所有 task 完成
+grep -c "^- \[ \]" tasks.md || echo "all tasks done"
+# 2. 查看未提交改动
+git status --short
+# 3. 聚合 commit (单一 commit 包含整个 change 的工作)
+git add -A
+git commit -m "feat(<scope>): <description>
+
+<optional body explaining what & why>"
+# 4. 验证 commit
+git log -1 --oneline
+# 5. 进入 Phase 3 archive
+```
+
+**关键约束**:
+- worktree 分支必须至少有 1 个 commit 才能 archive
+- 跨 worktree 批量 archive 可选优化:`rebase 所有 worktree 到最新 master` 或 `批量 no-ff merge` (本提案 Out of Scope, 留后续)
+
+**为什么分两阶段**:
+- **execute 阶段**: 任务粒度细,逐 commit 噪音大,且 tasks.md 已记录进度
+- **worktree commit 阶段**: 聚合 1 个 commit,保持 git history 干净
+- **archive 阶段**: 自动 merge + openspec archive,无需手工 git 操作
+
+---
+
 ## Phase 3: archive — 状态检查与归档
 
 **入口条件**：execute 已完成（所有 worktree 的任务都完成），或用户主动选择此阶段。
