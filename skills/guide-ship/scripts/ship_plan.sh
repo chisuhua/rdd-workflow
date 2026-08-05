@@ -426,9 +426,32 @@ run_ship_phase1() {
   local project_root="$1"
   local change_name="$2"
 
-  if [ -z "$project_root" ] || [ -z "$change_name" ]; then
+  if [ -z "$project_root" ]; then
     echo "❌ 用法: run_ship_phase1 <project_root> <change_name>" >&2
     return 1
+  fi
+
+  # Auto-select: when no change_name passed AND exactly one candidate exists,
+  # pick it. The CLI/UX path: "only one candidate → just go."
+  if [ -z "$change_name" ]; then
+    local _wrapper
+    _wrapper="$project_root/skills/_lib/discover_ship_changes.sh"
+    if [ -f "$_wrapper" ]; then
+      source "$_wrapper"
+      local _count _top
+      _count=$(ship_candidate_count "$project_root")
+      if [ "$_count" = "1" ]; then
+        _top=$(ship_top_candidate "$project_root")
+        echo "📌 检测到 1 个可执行 change,自动选择: $_top" >&2
+        change_name="$_top"
+      else
+        echo "❌ run_ship_phase1: change_name 必填 (检测到 $_count 个 candidate, 请显式传入)" >&2
+        return 1
+      fi
+    else
+      echo "❌ run_ship_phase1: change_name 必填" >&2
+      return 1
+    fi
   fi
 
   # 0) HANDOFF STATE READ (P2-5) - read .plan-handoff.json, update ship_started_at
