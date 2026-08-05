@@ -104,7 +104,7 @@ REPLACED_RANGE="144,348p"
   [ "$block_lines" -le 30 ]
 }
 
-@test "generate_implementation_plan: degrades gracefully without skill_use" {
+@test "generate_implementation_plan: fails closed without skill_use" {
   TEST_REPO=$(mktemp -d)
   cd "$TEST_REPO"
   ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
@@ -115,10 +115,9 @@ REPLACED_RANGE="144,348p"
   git add -A
   git -c user.email=t@t -c user.name=t commit -qm init
   source "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
-  # bash 子进程无 skill_use 命令 → 应输出降级指引而非 "技能未找到"
+  # bash 子进程无 skill_use 命令 → 必须 fail closed (.rddf/plans 是 execute 唯一执行契约)
   run generate_implementation_plan "$TEST_REPO" "c1" "lightweight"
-  [ "$status" -eq 0 ]
-  # 输出必须包含降级指引（而非 "❌ 实施计划生成失败"）
+  [ "$status" -ne 0 ]
   [[ "$output" == *"skill_use"* ]]
   rm -rf "$TEST_REPO"
 }
@@ -128,7 +127,7 @@ REPLACED_RANGE="144,348p"
   grep -q "编排" "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }
 
-@test "run_ship_phase1: worktree creation survives plan generation degradation" {
+@test "run_ship_phase1: worktree creation requires plan to exist" {
   TEST_REPO=$(mktemp -d)
   cd "$TEST_REPO"
   ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
@@ -139,9 +138,12 @@ REPLACED_RANGE="144,348p"
   git add -A
   git -c user.email=t@t -c user.name=t commit -qm init
   source "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
-  # 无 skill_use 的 bash 环境：run_ship_phase1 不应因计划生成失败而 return 1
-  # （此处仅验证降级路径存在；worktree 创建由 Task 1 修复保证不中断）
+  # 无 skill_use 的 bash 环境:generate_implementation_plan 必须返回非零,
+  # 因为 execute 阶段需要 .rddf/plans/c1.md 才能开始.
   command -v skill_use >/dev/null 2>&1 && SKIP=1 || SKIP=0
-  [ "$SKIP" -eq 1 ] || run generate_implementation_plan "$TEST_REPO" "c1" "lightweight"
+  if [ "$SKIP" -eq 0 ]; then
+    run generate_implementation_plan "$TEST_REPO" "c1" "lightweight"
+    [ "$status" -ne 0 ]
+  fi
   rm -rf "$TEST_REPO"
 }

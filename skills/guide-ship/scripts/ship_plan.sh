@@ -320,21 +320,23 @@ generate_implementation_plan() {
   cd "$work_dir" || { echo "❌ 进入工作目录失败: $work_dir" >&2; return 1; }
 
   if [ "${SKIP_PROMETHEUS_PLANNING:-no}" = "yes" ]; then
-    echo "⚠️  跳过实施计划生成 (SKIP_PROMETHEUS_PLANNING=yes)" >&2
+    if [ "${QUICK_FINISH_DETECTED:-no}" != "yes" ]; then
+      echo "❌ SKIP_PROMETHEUS_PLANNING=yes 要求 QUICK_FINISH_DETECTED=yes (.rddf/plans/<change>.md 是 execute 唯一执行契约)" >&2
+      return 2
+    fi
+    echo "⚠️  Quick Finish 跳过实施计划生成" >&2
     mkdir -p .rddf/plans
     local plan_file=".rddf/plans/$change_name.md"
     touch "$plan_file"
-    echo "- [ ] (占位任务) 手工填充 $plan_file" >> "$plan_file"
+    echo "- [ ] (占位任务) Quick Finish 模式跳过详细计划" >> "$plan_file"
     echo 0
     return 0
   fi
 
   if ! command -v skill_use >/dev/null 2>&1; then
-    echo "⚠️  当前 bash 环境无 skill_use 命令（AI 编排子进程）" >&2
-    echo "   ▶ 计划生成需由编排者调用 skill_use(\"rdd-workflow-writing-plans\") 完成" >&2
-    echo "   ▶ 请确保 .rddf/plans/$change_name.md 存在后再进入 execute 阶段" >&2
-    # 降级不返回非零：worktree 创建流程不应中断（返回可辨识状态码 0）
-    return 0
+    echo "❌ 当前 bash 环境无 skill_use 命令 (.rddf/plans 是 execute 唯一执行契约, 不能在缺计划时继续)" >&2
+    echo "   ▶ 编排者需调用 skill_use(\"rdd-workflow-writing-plans\") 后重新执行" >&2
+    return 3
   fi
 
   if ! skill_use "rdd-workflow-writing-plans" 2>/dev/null; then
