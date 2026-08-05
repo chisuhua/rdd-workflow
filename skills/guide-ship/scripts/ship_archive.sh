@@ -118,14 +118,27 @@ PYEOF
 }
 
 # archive_change_for_mode <project_root> <change_name> <mode>
+#   Modes: worktree (uses .rddf/wt/<name>/) or lightweight (branch on main repo).
+#   Returns 0 only after archive succeeded in both modes; any failure returns non-zero
+#   so callers do not silently mark the change as archived.
 archive_change_for_mode() {
   local project_root="$1"
   local change_name="$2"
   local mode="$3"
 
-  # Pre-archive: completion gate (shared with archive.sh::archive_change)
-  if ! archive_gate_check "$change_name" 2>/dev/null; then
-    append_incomplete_to_suggestions "$change_name" "$project_root" 2>/dev/null || true
+  # Determine tasks_root up front so the completion gate reads the up-to-date copy
+  # (worktree copy in worktree mode, main-repo branch in lightweight mode).
+  local tasks_root="$project_root"
+  local wt_path=""
+  if [ "$mode" = "worktree" ]; then
+    wt_path="$project_root/.rddf/wt/${change_name}"
+    tasks_root="$wt_path"
+  fi
+
+  # Shared completion gate (worktree + lightweight). Set FORCE_ARCHIVE_INCOMPLETE=yes
+  # to bypass. archive_gate_check writes its own diagnostic to stderr on failure.
+  if ! archive_gate_check "$change_name" "$tasks_root"; then
+    return 2
   fi
 
   check_main_repo_clean "$change_name" "$project_root" || {
@@ -134,7 +147,6 @@ archive_change_for_mode() {
   }
 
   if [ "$mode" = "worktree" ]; then
-    local wt_path="$project_root/.rddf/wt/${change_name}"
     echo "🔍 验证 worktree 分支状态..."
 
     local wt_branch
@@ -151,7 +163,11 @@ archive_change_for_mode() {
       return 1
     fi
 
-    archive_change "$change_name"
+    if ! archive_change "$change_name"; then
+      echo "❌ archive_change failed; skipping cleanup to keep state consistent" >&2
+      cd "$project_root" || return 1
+      return 1
+    fi
     cd "$project_root" || return 1
   else
     # Lightweight mode
@@ -163,43 +179,45 @@ archive_change_for_mode() {
     new_commits=$(git -C "$project_root" rev-list --count "$default_branch..$branch" 2>/dev/null || echo 0)
 
     if [ "$new_commits" -eq 0 ]; then
-      echo "❌ 分支 $branch 无新提交，无需 merge" >&2
-    else
-      echo "📦 Merge $branch → $default_branch ($new_commits 个新提交)"
-
-      git -C "$project_root" checkout "$default_branch" || {
-        echo "❌ 无法切换到 $default_branch" >&2
-        return 1
-      }
-
-      if git -C "$project_root" merge --ff-only "$branch" 2>/dev/null; then
-        echo "✅ Fast-forward merge 到 $default_branch 完成"
-      else
-        echo "⚠️  Fast-forward 不可用，创建 merge commit"
-        git -C "$project_root" merge --no-ff "$branch" -m "merge: $change_name change" || {
-          echo "❌ merge 失败" >&2
-          return 1
-        }
-      fi
-
-      # Spec-validation gate (add-spec-validation-gates)
-      if ! python3 "$project_root/skills/_lib/validate_delta_targets.py" "$change_name" 2>/dev/null; then
-        echo "❌ Archive pre-flight failed for $change_name" >&2
-        echo "   Delta targets invalid. Run validate_delta_targets.py for details." >&2
-        python3 "$project_root/skills/_lib/validate_delta_targets.py" "$change_name"
-        return 1
-      fi
-
-      openspec archive "$change_name" --yes || {
-        echo "⚠️  openspec archive 失败（可能是 CLI 未找到）" >&2
-      }
-
-      # Auto-commit archive file moves (failure-tolerant)
-      commit_archive_moves "$change_name" "$project_root" || true
-
-      # Sync iteration.json (archive-iteration-sync fix)
-      mark_iteration_archived "$change_name" "$project_root"
+      echo "❌ 分支 $branch 无新提交，archive 阻断 (设置 FORCELESS_COMMITS_BYPASS 或先聚合 commit)" >&2
+      return 1
     fi
+
+    echo "📦 Merge $branch → $default_branch ($new_commits 个新提交)"
+
+    git -C "$project_root" checkout "$default_branch" || {
+      echo "❌ 无法切换到 $default_branch" >&2
+      return 1
+    }
+
+    if git -C "$project_root" merge --ff-only "$branch" 2>/dev/null; then
+      echo "✅ Fast-forward merge 到 $default_branch 完成"
+    else
+      echo "⚠️  Fast-forward 不可用，创建 merge commit"
+      git -C "$project_root" merge --no-ff "$branch" -m "merge: $change_name change" || {
+        echo "❌ merge 失败" >&2
+        return 1
+      }
+    fi
+
+    # Spec-validation gate (add-spec-validation-gates)
+    if ! python3 "$project_root/skills/_lib/validate_delta_targets.py" "$change_name" 2>/dev/null; then
+      echo "❌ Archive pre-flight failed for $change_name" >&2
+      echo "   Delta targets invalid. Run validate_delta_targets.py for details." >&2
+      python3 "$project_root/skills/_lib/validate_delta_targets.py" "$change_name"
+      return 1
+    fi
+
+    if ! openspec archive "$change_name" --yes; then
+      echo "❌ openspec archive 失败" >&2
+      return 1
+    fi
+
+    # Auto-commit archive file moves (failure-tolerant)
+    commit_archive_moves "$change_name" "$project_root" || true
+
+    # Sync iteration.json (archive-iteration-sync fix)
+    mark_iteration_archived "$change_name" "$project_root"
 
     # Delete branch
     if git -C "$project_root" branch -d "$branch" 2>/dev/null; then
@@ -226,6 +244,8 @@ archive_change_for_mode() {
 
   # Cleanup plan file after archive (archive-cleanup-plan-files)
   cleanup_plan_file "$project_root" "$change_name" || true
+
+  return 0
 }
 
 # cleanup_plan_file <project_root> <change_name>

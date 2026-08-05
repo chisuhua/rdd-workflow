@@ -240,20 +240,29 @@ cleanup_worktree_and_branch() {
   fi
 }
 
-# archive_gate_check <change_name>
+# archive_gate_check <change_name> [tasks_root]
 #   Returns 0 if change has at least 1 completed task ([x]), returns 1 if 0.
 #   Honors FORCE_ARCHIVE_INCOMPLETE=yes to bypass the gate.
+#   tasks_root (optional) is the directory containing openspec/changes/<name>/tasks.md
+#   — typically the worktree path in worktree mode or the main repo path in
+#   lightweight mode. If omitted, falls back to the current working directory.
 archive_gate_check() {
   local change_name="${1:-}"
+  local tasks_root="${2:-}"
   [[ -z "$change_name" ]] && return 0
 
   if [ "${FORCE_ARCHIVE_INCOMPLETE:-no}" = "yes" ]; then
     return 0
   fi
 
-  local tasks_file="openspec/changes/$change_name/tasks.md"
+  if [ -z "$tasks_root" ]; then
+    tasks_root="."
+  fi
+
+  local tasks_file="$tasks_root/openspec/changes/$change_name/tasks.md"
   if [ ! -f "$tasks_file" ]; then
-    return 0
+    echo "❌ archive_gate_check: tasks.md 缺失 ($tasks_file)。设置 FORCE_ARCHIVE_INCOMPLETE=yes 跳过"
+    return 1
   fi
 
   local completed
@@ -306,8 +315,10 @@ archive_change() {
   # 2. Pre-merge commit check (T20)
   check_worktree_commits "$name" >/dev/null || return 1
 
-  # 2.5. Shared completion gate (also called by ship_archive.sh lightweight path)
-  archive_gate_check "$name" >/dev/null || return 3
+  # 2.5. Shared completion gate (also called by ship_archive.sh lightweight path).
+  # Pass wt_path so the gate reads the up-to-date tasks.md from the worktree,
+  # not the stale copy on the default branch.
+  archive_gate_check "$name" "$wt_path" >/dev/null || return 3
 
   # 3. Switch to default branch in main repo
   switch_to_default_branch "$main_root" "$default_branch" || return 1
