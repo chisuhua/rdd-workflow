@@ -169,6 +169,7 @@ def _print_help() -> None:
     print("  cleanup      Clean orphaned worktrees and branches")
     print("  dashboard    Unified dashboard (7 sections). Flags: --json, --plain")
     print("  deps         Dependency analysis table from deps-analysis.json")
+    print("  discover-ship-changes  Unified change candidates for guide-ship")
     print("  feature      Feature grouping (summary, graph, status, order)")
     print("  guide        Project state scan + recommendation (guide-arch/guide-plan/guide-ship)")
     print("  init [tgt]   Install rdd-workflow to target's .opencode/skills/")
