@@ -1,0 +1,8 @@
+schema: spec-driven
+created: '2026-08-05'
+name: rddf-iteration-strict-schema
+created_by: guide-plan from improvements/rddf-iteration-strict-schema.md
+goal: >-
+  - **ADR-0017** (已采纳): iteration.json 是工作流核心状态文件，被 rddf 多处消费（status / iteration view / proposal status / iteration render） - **`store.py::_backup_corrupt_file()`** 已有 corrupt 备份机制，但只在 `load()` 路径触发；read 路径（`_read_unlocked` / `state_reader.read_iteration`）对 schema 失败只返回 `None` - **`fix-rddf-status-cor
+affected_areas:
+- infra-setup

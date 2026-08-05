@@ -1,0 +1,5 @@
+phase: default | **分类**: infra-setup
+category: infra-setup
+change_type: bug
+priority: P1 | **来源**: session 2026-08-05 `rddf status` — `.rddf/state/iteration.json` 存在且为合法 JSON, 但 schema 校验失败, CLI 误报 "📭 iteration.json not found" 并建议 `skill_use("propose", ...)` (该建议无法修复 corruption)
+parent_feature: ""

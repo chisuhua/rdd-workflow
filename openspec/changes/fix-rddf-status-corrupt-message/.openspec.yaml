@@ -1,0 +1,8 @@
+schema: spec-driven
+created: '2026-08-05'
+name: fix-rddf-status-corrupt-message
+created_by: guide-plan from improvements/fix-rddf-status-corrupt-message.md
+goal: >-
+  - **ADR-0017** (已采纳): rddf-session / iteration.json 是工作流核心状态文件; 状态文件的诊断准确性直接影响用户恢复决策 - **ADR-0018** (已采纳): arch-quality-gate 强调 "正确性优先于覆盖率" — 错误消息 (missing 误报 corrupt) 比漏报更具误导性 - **`iteration.store` 已有 corrupt 处理先例**: `skills/_lib/iteration/store.py::_backup_corrupt_file()` 在 `load()` 路径上对 schema-in
+affected_areas:
+- infra-setup

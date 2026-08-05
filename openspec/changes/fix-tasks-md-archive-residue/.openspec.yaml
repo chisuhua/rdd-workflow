@@ -1,0 +1,8 @@
+schema: spec-driven
+created: '2026-08-05'
+name: fix-tasks-md-archive-residue
+created_by: guide-plan from improvements/fix-tasks-md-archive-residue.md
+goal: >-
+  - **当前 3 个任务状态源**（互不一致）：   1. `openspec/changes/archive/<date>-<change>/tasks.md` — 静态历史文件，archive 后永不更新   2. `.rddf/state/iteration.json` 中可写的 `tasks_done` 字段   3. `openspec instructions apply --change <name>` 通过 CLI 读取的版本（与 (1) 同源） - **ADR-0017**: iteration.json 是核心状态；tasks.md 在 archive 后变成历史，不应继续
+affected_areas:
+- infra-setup

@@ -1,0 +1,8 @@
+schema: spec-driven
+created: '2026-08-05'
+name: fix-archive-on-main-flow
+created_by: guide-plan from improvements/fix-archive-on-main-flow.md
+goal: >-
+  - **现状**: `tools/archive_on_main.sh`（在 commit `f56df0d` 引入）的脚本职责是"在 main 分支直接归档 change，绕过 worktree"——但**只做归档本身**，不调 `sync_iteration_after_archive` - **ADR-0017**: iteration.json 是工作流核心状态文件，任何归档动作都必须同步更新 - **`fix-archive-iteration-sync.md`** (本 session, P0) 已提出 `skills/_lib/iteration/post_archive.py:
+affected_areas:
+- infra-setup

@@ -1,0 +1,8 @@
+schema: spec-driven
+created: '2026-08-05'
+name: fix-archive-iteration-sync
+created_by: guide-plan from improvements/fix-archive-iteration-sync.md
+goal: >-
+  - **ADR-0017** (已采纳): rddf-session / iteration.json 是工作流核心状态文件；任何归档动作都必须同步更新它 - **现状** (`archive-iteration-sync.md`, P0, 2026-07-21): 已经识别"archive 后 iteration 缺 archived_at"的根因，但只覆盖 `archive.sh::archive_change()` 的 worktree 模式；旁路（on-main 模式、openspec CLI 直归档、`mv openspec/changes/X archive/`）没有被覆盖 - *
+affected_areas:
+- infra-setup

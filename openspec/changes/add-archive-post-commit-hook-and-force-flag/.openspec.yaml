@@ -1,0 +1,8 @@
+schema: spec-driven
+created: '2026-08-05'
+name: add-archive-post-commit-hook-and-force-flag
+created_by: guide-plan from improvements/add-archive-post-commit-hook-and-force-flag.md
+goal: >-
+  **症状 1（HydraForge 2026-08-05, 7 条 stale iteration.json）**: - `rddf dashboard` 报 7 条 changes `divergence_warnings` - git log 多个 commit 自证手工 archive:   - `f2ef392  chore(openspec): archive pkgm-temporal-agent (手工 archive, 绕过 openspec CLI delta 检查)` — commit message **显式自证** bypass   - `3eae4d7 chore(o
+affected_areas:
+- infra-setup

@@ -1,0 +1,8 @@
+schema: spec-driven
+created: '2026-08-05'
+name: collect-l2-violation-count-on-archive
+created_by: guide-plan from improvements/collect-l2-violation-count-on-archive.md
+goal: >-
+  - **现状**: L2 violation count 是项目级指标（"drv/ 还有几处 `#include "sim/"`"），但 archive 时只记录每个 change 的相对减少量 - **ADR-0017**: iteration.json 是核心状态文件 — 它已经记录了 change 粒度的 `archived_at` 等元数据，新增 L2 count 字段是 schema 的自然扩展 - **`rddf-iteration-strict-schema.md`** (本 session, P1) 已提到 schema 严格化但未扩展 schema 本身；本提案是它的**前置
+affected_areas:
+- infra-setup

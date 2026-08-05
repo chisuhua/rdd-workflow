@@ -1,0 +1,5 @@
+phase: v2.1 | **分类**: infra-setup
+category: infra-setup
+change_type: feature
+priority: P2 | **来源**: Session 复盘 2026-08-05 UsrLinuxEmu — 5 个 `stage4-l2-foundation-removal-*` change 的 feat commit 各自声明 L2 违规减少量（`#3/8 → #2/8` / `#4→#3, #3→#2` 等），但项目级"全局绝对计数"从未记录；ADR-072 §D4 revised 的"B-class 12 violations → 0"目标无法在 git history 中验证
+parent_feature: ""
