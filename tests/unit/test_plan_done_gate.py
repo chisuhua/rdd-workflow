@@ -114,3 +114,49 @@ def test_filters_archived_changes(tmp_path):
 def test_missing_deps_file_returns_empty(tmp_path):
     """Missing deps-analysis.json yields empty dict (unchanged behavior)."""
     assert pdg._load_execution_mode_decisions(str(tmp_path)) == {}
+
+
+def _write_change_meta(project_root, name, added_at):
+    change_dir = os.path.join(project_root, "openspec", "changes", name)
+    os.makedirs(change_dir, exist_ok=True)
+    with open(os.path.join(change_dir, "proposal.md"), "w") as f:
+        f.write("# P")
+    with open(os.path.join(change_dir, "design.md"), "w") as f:
+        f.write("# D")
+    with open(os.path.join(change_dir, "tasks.md"), "w") as f:
+        f.write("- [ ] a")
+
+
+def test_freshness_warning_when_deps_stale(tmp_path, capsys):
+    """Plan-done emits a stderr warning when deps-analysis is older than the change."""
+    state_dir = tmp_path / ".rddf" / "state"
+    state_dir.mkdir(parents=True)
+    (state_dir / "deps-analysis.json").write_text(json.dumps({
+        "updated_at": "2026-07-01T00:00:00+00:00",
+        "execution_mode_recommendations": {},
+    }))
+    _write_change_meta(str(tmp_path), "alpha", "2026-08-04T00:00:00+00:00")
+    # Add roadmap-meta.yaml with newer added_at so the freshness warning fires.
+    meta_path = tmp_path / "openspec" / "changes" / "alpha" / "roadmap-meta.yaml"
+    meta_path.write_text('added_at: "2026-08-04T00:00:00+00:00"\n')
+
+    pdg._load_execution_mode_decisions(str(tmp_path))
+    err = capsys.readouterr().err
+    assert "deps-analysis" in err or "stale" in err or "older" in err
+
+
+def test_no_warning_when_deps_fresh(tmp_path, capsys):
+    """Plan-done stays silent when deps-analysis is newer than the change."""
+    state_dir = tmp_path / ".rddf" / "state"
+    state_dir.mkdir(parents=True)
+    (state_dir / "deps-analysis.json").write_text(json.dumps({
+        "updated_at": "2026-08-05T00:00:00+00:00",
+        "execution_mode_recommendations": {},
+    }))
+    _write_change_meta(str(tmp_path), "alpha", "2026-08-04T00:00:00+00:00")
+    meta_path = tmp_path / "openspec" / "changes" / "alpha" / "roadmap-meta.yaml"
+    meta_path.write_text('added_at: "2026-08-04T00:00:00+00:00"\n')
+
+    pdg._load_execution_mode_decisions(str(tmp_path))
+    err = capsys.readouterr().err
+    assert err == ""

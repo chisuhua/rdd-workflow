@@ -67,6 +67,8 @@ def _load_execution_mode_decisions(project_root: str) -> dict:
     under openspec/changes/, filtering stale decisions for archived changes.
 
     Returns empty dict if deps-analysis.json missing or malformed.
+    Emits a stderr warning when deps-analysis.json is older than the most
+    recently added active change (per Task 10 freshness check).
     """
     deps_path = os.path.join(project_root, ".rddf", "state", "deps-analysis.json")
     if not os.path.isfile(deps_path):
@@ -79,8 +81,6 @@ def _load_execution_mode_decisions(project_root: str) -> dict:
         return {}
 
     recommendations = data.get("execution_mode_recommendations", {})
-    if not recommendations:
-        return {}
 
     active_dir = os.path.join(project_root, "openspec", "changes")
     active_names = set()
@@ -90,8 +90,45 @@ def _load_execution_mode_decisions(project_root: str) -> dict:
             if os.path.isdir(entry_path) and entry != "archive":
                 active_names.add(entry)
 
+    _warn_stale_deps(project_root, active_names, data.get("updated_at"))
+
+    if not recommendations:
+        return {}
+
     return {
         name: rec
         for name, rec in recommendations.items()
         if name in active_names
     }
+
+
+def _warn_stale_deps(project_root: str, active_names: set, deps_updated_at: object) -> None:
+    """Emit a stderr warning when deps-analysis.json is older than any active change.
+
+    Falls back silently if timestamps cannot be parsed (best-effort).
+    """
+    if not deps_updated_at or not active_names:
+        return
+    try:
+        deps_ts = datetime.fromisoformat(str(deps_updated_at).replace("Z", "+00:00")).timestamp()
+    except (ValueError, TypeError):
+        return
+    for name in active_names:
+        meta_path = os.path.join(project_root, "openspec", "changes", name, "roadmap-meta.yaml")
+        if not os.path.isfile(meta_path):
+            continue
+        try:
+            with open(meta_path) as f:
+                for line in f:
+                    if line.startswith("added_at:"):
+                        raw = line.split(":", 1)[1].strip().strip('"').strip("'")
+                        change_ts = datetime.fromisoformat(raw.replace("Z", "+00:00")).timestamp()
+                        if deps_ts < change_ts:
+                            print(
+                                f"⚠️  deps-analysis.json ({deps_updated_at}) 比 change {name} 还旧,"
+                                f"execution_mode 回退到并行冲突检测",
+                                file=__import__("sys").stderr,
+                            )
+                        break
+        except (ValueError, TypeError, OSError):
+            continue
