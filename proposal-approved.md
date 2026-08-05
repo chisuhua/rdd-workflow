@@ -31,6 +31,8 @@
 
 
 
+| [fix-rddf-init-broken-layout](improvements/fix-rddf-init-broken-layout.md) | P1 | 2026-08-05 | guide-arch |
+
 ## 已实施
 | [guide-ship-default-serial-execution](improvements/guide-ship-default-serial-execution.md) | P1 | 2026-08-05 |
 | [plan-quality-and-validation](improvements/plan-quality-and-validation.md) | P0 | 2026-08-05 |

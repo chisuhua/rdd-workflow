@@ -1,0 +1,11 @@
+schema: spec-driven
+created: '2026-08-05'
+name: fix-rddf-init-broken-layout
+created_by: guide-design approve
+goal: >-
+  Flatten rdd-workflow package layout (skills/_lib/ → top-level _lib/) +
+  fix __main__.py:154 RDDF_PROJECT_ROOT override bug + provide backward-compat
+  shim so existing globals and PTX-EMU continue to work.
+affected_areas:
+- core-impl
+- install-script
