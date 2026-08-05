@@ -59,6 +59,8 @@ run_ship_env_check
 | ⚡ 轻量模式 | 单 change、无并行 worktree | 直接在当前仓库创建 branch 执行，跳过 worktree |
 | 🔀 worktree 模式 | 多 change 并行或有活跃 worktree | 创建隔离 worktree，互不干扰 |
 
+> **执行契约 (v1)**: 选定的工作区通过 `$RDDF_EXECUTION_ROOT` 传递给 `execute`;`execute` 不再自行探测。详见 `docs/superpowers/specs/2026-08-05-guide-ship-execution-contract.md`。
+
 **行为**：
 
 1. 展示所有活跃 changes 的状态列表

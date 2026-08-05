@@ -45,9 +45,12 @@ worktree (openspec/<name>): 本技能在此执行
 ## 工作模式
 
 ```
-此技能始终在 git worktree 隔离环境中执行。
-所有代码修改和构建都在独立的 .rddf/wt/<name>/ 目录中进行。
+执行环境由 guide-ship 通过 $RDDF_EXECUTION_ROOT 决定:worktree
+(.rddf/wt/<name>/) 或 lightweight (主仓库的 openspec/<name> 分支)。
+execute 仅消费该环境变量,不再自行探测工作区。
 ```
+
+详细契约见 `docs/superpowers/specs/2026-08-05-guide-ship-execution-contract.md`。
 
 ### 模式自动识别
 

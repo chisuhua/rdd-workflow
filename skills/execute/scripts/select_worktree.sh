@@ -22,6 +22,15 @@ auto_detect_worktree_context() {
     source "$SCRIPT_DIR/worktree.sh"
   fi
 
+  # Honor RDDF_EXECUTION_ROOT if guide-ship set it (single source of truth for workspace).
+  # When set, do NOT re-detect; just export PROJECT_ROOT from it and skip worktree probing.
+  if [ -n "${RDDF_EXECUTION_ROOT:-}" ] && [ -d "${RDDF_EXECUTION_ROOT}" ]; then
+    PROJECT_ROOT="${RDDF_EXECUTION_ROOT}"
+    export PROJECT_ROOT
+    cd "$PROJECT_ROOT" || return 1
+    return 0
+  fi
+
   # 自动检测项目根目录（用于全局安装的技能）
   # P0-8: use main_repo_root (works in both main repo and worktrees)
   if type main_repo_root &>/dev/null; then

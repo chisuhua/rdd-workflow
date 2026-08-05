@@ -208,6 +208,10 @@ setup_execution_workspace() {
   local change_name="$2"
   local mode="$3"
 
+  # Export the chosen execution root so downstream `execute` (Task 8 contract)
+  # does not have to re-detect its workspace.
+  export RDDF_EXECUTION_ROOT
+
   # Always ensure branch exists
   if ! git -C "$project_root" branch --list "openspec/$change_name" | grep -q "openspec/$change_name"; then
     git -C "$project_root" branch "openspec/$change_name" HEAD
@@ -248,6 +252,8 @@ setup_execution_workspace() {
 
     share_submodules_to_worktree "$project_root" "$wt_path"
 
+    RDDF_EXECUTION_ROOT="$wt_path"
+    export RDDF_EXECUTION_ROOT
     echo "$wt_path"
   else
     # Lightweight mode: switch branch in main repo
@@ -255,6 +261,8 @@ setup_execution_workspace() {
       echo "❌ 切换分支失败: openspec/$change_name" >&2
       return 1
     fi
+    RDDF_EXECUTION_ROOT="$project_root"
+    export RDDF_EXECUTION_ROOT
     echo "⚡ 轻量模式: 已切换到 openspec/$change_name, 跳过 worktree" >&2 >&2
     echo "$project_root"
   fi
