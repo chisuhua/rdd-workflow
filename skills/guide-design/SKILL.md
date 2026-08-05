@@ -180,7 +180,7 @@ design 两层内容审查（warning 默认）:
 ```bash
 check_design_done_gate() {
   local pending=$(grep -E '^\s*\|\s*\[' "$PROJECT_ROOT/proposal-suggestions.md" 2>/dev/null | \
-    while IFS='|' read -r _ _ _ _ status _; do
+    while IFS='|' read -r _ _ _ _ _ status _; do
       status=$(echo "$status" | xargs)
       if [ "$status" != "已批准" ] && [ "$status" != "已拒绝" ] && [ "$status" != "延迟" ]; then
         echo "$status"
