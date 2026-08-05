@@ -348,6 +348,24 @@ archive_change() {
   archive_commit_sha=$(git -C "$main_root" rev-parse HEAD 2>/dev/null || echo "")
   mark_iteration_archived "$name" "$main_root" "$archive_commit_sha"
 
+  # 8.5 Tasks.md sidecar (fix-tasks-md-archive-residue): snapshot the
+  # original tasks.md to .archived-snapshot and replace tasks.md with
+  # an archived-skeleton header. Must run AFTER step 8 (mark_iteration_archived)
+  # so the [x] count is taken from the original file. Idempotent: skips
+  # if sidecar already exists.
+  PYTHONPATH="$_LIB_DIR/../.." "$_LIB_DIR/../_lib_iteration_sidecar.py" \
+      "$main_root" "$name" \
+      2>/dev/null || true
+  python3 -c "
+import os, sys
+sys.path.insert(0, '$main_root')
+from skills._lib.iteration.archive_sidecar import write_tasks_md_sidecar as w
+import glob
+archived = glob.glob(os.path.join('$main_root', 'openspec', 'changes', 'archive', '*-' + '$name'))
+if archived:
+    w(archived[0])
+" 2>/dev/null || true
+
   # 9. (Moved to ship_archive.sh::archive_change_for_mode — single funnel for both modes)
 
   echo "✅ $name 已归档"

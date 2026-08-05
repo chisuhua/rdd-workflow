@@ -222,8 +222,12 @@ def cmd_status_detail(name: str, project_root: str) -> int:
 
     tasks_done = int(entry.get("tasks_done") or 0)
     tasks_total = int(entry.get("tasks_total") or 0)
+    status = entry.get("status") or "unknown"
     if tasks_total > 0:
-        tasks_disp = f"{tasks_done}/{tasks_total}"
+        if status == "archived":
+            tasks_disp = f"archived (snapshot {tasks_done}/{tasks_total})"
+        else:
+            tasks_disp = f"{tasks_done}/{tasks_total}"
     else:
         tasks_disp = "-"
 
