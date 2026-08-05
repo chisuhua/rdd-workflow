@@ -34,9 +34,9 @@
 
 | [subagent-orchestrator-execution-strategy](improvements/subagent-orchestrator-execution-strategy.md) | P0 | 2026-08-05 | guide-arch |
 
-| [worktree-archive-workflow](improvements/worktree-archive-workflow.md) | P0 | 2026-08-05 | guide-arch |
 
 ## 已实施
+| [worktree-archive-workflow](improvements/worktree-archive-workflow.md) | P0 | 2026-08-05 |
 | [plan-execute-commit-policy-consistency](improvements/plan-execute-commit-policy-consistency.md) | P1 | 2026-08-04 |
 | [python-failures-baseline](improvements/python-failures-baseline.md) | P3 | 2026-08-04 |
 | [test-isolation-from-repo-state](improvements/test-isolation-from-repo-state.md) | P2 | 2026-08-04 |
