@@ -77,6 +77,7 @@ for _dash, _us in _DASH_SKILLS:
 # returns a process exit code (0 = success, non-zero = error).
 _ROUTES: Dict[str, str] = {
     "archive": "skills._lib.cli.archive_cmd:cmd_archive",
+    "archive-sync": "skills._lib.cli.archive_sync_cmd:cmd_archive_sync",
     "cleanup": "skills._lib.cli.cleanup_cmd:cmd_cleanup",
     "dashboard": "skills._lib.cli.dashboard_cmd:cmd_dashboard",
     "deps": "skills._lib.cli.deps_cmd:cmd_deps",
