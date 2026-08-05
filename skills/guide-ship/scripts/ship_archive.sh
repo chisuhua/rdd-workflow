@@ -217,7 +217,9 @@ archive_change_for_mode() {
     commit_archive_moves "$change_name" "$project_root" || true
 
     # Sync iteration.json (archive-iteration-sync fix)
-    mark_iteration_archived "$change_name" "$project_root"
+    local archive_commit_sha=""
+    archive_commit_sha=$(git -C "$project_root" rev-parse HEAD 2>/dev/null || echo "")
+    mark_iteration_archived "$change_name" "$project_root" "$archive_commit_sha"
 
     # Delete branch
     if git -C "$project_root" branch -d "$branch" 2>/dev/null; then

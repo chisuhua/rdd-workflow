@@ -344,7 +344,9 @@ archive_change() {
   commit_archive_moves "$name" "$main_root" || true
 
   # 8. Update iteration.json (current sprint tracker). Best-effort.
-  mark_iteration_archived "$name" "$main_root"
+  local archive_commit_sha=""
+  archive_commit_sha=$(git -C "$main_root" rev-parse HEAD 2>/dev/null || echo "")
+  mark_iteration_archived "$name" "$main_root" "$archive_commit_sha"
 
   # 9. (Moved to ship_archive.sh::archive_change_for_mode — single funnel for both modes)
 
@@ -383,20 +385,20 @@ except Exception:
   return 0
 }
 
-# mark_iteration_archived <name> <main_root>
+# mark_iteration_archived <name> <main_root> [archive_commit_sha]
 #   Best-effort update of .rddf/state/iteration.json: mark the change
 #   as archived with a timestamp. Never returns non-zero (callers should
 #   not treat iteration tracking failure as archive failure).
 #
-#   Implementation: invokes the Python `skills._lib.iteration` module
-#   via a here-string. If the module is missing (older rdd-workflow
-#   version) or the file is unreadable, logs a warning and returns 0.
+#   Implementation: invokes the Python `skills._lib.iteration.post_archive`
+#   module via a here-string. If the module is missing or the file is
+#   unreadable, logs a warning and returns 0.
 #
 #   Path resolution: `skills/_lib/iteration.py` is a sibling of this
 #   script, so the parent of $_LIB_DIR is the directory that contains
 #   the `skills/` package. We insert that parent on sys.path.
 mark_iteration_archived() {
-  local name="${1:-}" main_root="${2:-}"
+  local name="${1:-}" main_root="${2:-}" archive_commit_sha="${3:-}"
   [[ -z "$name" || -z "$main_root" ]] && return 0
 
   local iter_file="$main_root/.rddf/state/iteration.json"
@@ -406,10 +408,6 @@ mark_iteration_archived() {
     return 0
   fi
 
-  # _LIB_DIR is set at source time to skills/_lib/. For
-  # `from skills._lib import iteration` to work, sys.path needs the
-  # PARENT of the `skills/` package, which is two levels up from
-  # _LIB_DIR (skills/_lib/ → skills/ → .).
   local skills_parent
   skills_parent="$(cd "$_LIB_DIR/../.." 2>/dev/null && pwd)"
 
@@ -418,6 +416,7 @@ mark_iteration_archived() {
   if ! SKILLS_PARENT="$skills_parent" \
         MAIN_ROOT="$main_root" \
         CHANGE_NAME="$name" \
+        ARCHIVE_COMMIT_SHA="$archive_commit_sha" \
         python3 -c '
 import os, sys
 sys.path.insert(0, os.environ["SKILLS_PARENT"])
@@ -429,10 +428,13 @@ except ImportError as e:
 try:
     main_root = os.environ["MAIN_ROOT"]
     change_name = os.environ["CHANGE_NAME"]
-    data = it_mod.load(main_root)
-    data = it_mod.mark_archived(data, change_name)
-    it_mod.save(main_root, data)
-    print(f"✅ iteration.json: marked {change_name} as archived")
+    sha = os.environ.get("ARCHIVE_COMMIT_SHA") or None
+    warning = it_mod.post_archive.sync_iteration_after_archive(
+        main_root, change_name, archive_commit_sha=sha)
+    if warning:
+        print(f"⚠️  iteration.json update partial: {warning}", file=sys.stderr)
+    else:
+        print(f"✅ iteration.json: marked {change_name} as archived")
 except Exception as e:
     print(f"⚠️  iteration.json update failed (archive still succeeded): {e}", file=sys.stderr)
     sys.exit(0)

@@ -6,13 +6,16 @@
 
 ## 1. Implementation
 
-- [ ] 1.1 `skills/_lib/iteration/post_archive.py`（新模块）：`sync_iteration_after_archive(name: str, archive_commit_sha: str | None)` 函数，从 iteration.json 找到对应 change entry，写入 `archived_at`、`tasks_done`（如果 tasks.md 在 archive 目录）、`plan_path` 字段
-- [ ] 1.2 `skills/_lib/archive.sh::archive_change()` 末尾调用 `sync_iteration_after_archive`
-- [ ] 1.3 `tools/archive_on_main.sh`（如果存在 / 已存在）末尾强制调用同一个 helper
-- [ ] 1.4 `rddf status --archive <name>` 命令路径同样调用
-- [ ] 1.5 幂等保证：重复调用不重复写 `archived_at`（已存在的 archived_at 保留原值）
-- [ ] 1.6 单元测试：直接调用 helper，验证 iteration.json 被正确 patch；重复调用幂等；archive 失败时 helper 不被调用
+- [x] 1.1 `skills/_lib/iteration/post_archive.py`（新模块）：`sync_iteration_after_archive(name: str, archive_commit_sha: str | None)` 函数，从 iteration.json 找到对应 change entry，写入 `archived_at`、`tasks_done`（如果 tasks.md 在 archive 目录）、`plan_path` 字段
+- [x] 1.2 `skills/_lib/archive.sh::archive_change()` 末尾调用 `sync_iteration_after_archive`
+- [x] 1.3 `tools/archive_on_main.sh`（如果存在 / 已存在）末尾强制调用同一个 helper
+- [ ] 1.4 `rddf status --archive <name>` 命令路径同样调用 (deferred — 当前 CLI 无 --archive mode, 属独立 API)
+- [x] 1.5 幂等保证：重复调用不重复写 `archived_at`（已存在的 archived_at 保留原值）
+- [x] 1.6 单元测试：直接调用 helper，验证 iteration.json 被正确 patch；重复调用幂等；archive 失败时 helper 不被调用
+- [x] 1.7 `skills/_lib/schemas/iteration_schema.json` per-change items 添加 `archive_commit_sha` 字段
+- [x] 1.8 `skills/guide-ship/scripts/ship_archive.sh` lightweight 路径同步调用,使用 `git rev-parse HEAD` 捕获 archive commit SHA
+- [x] 1.9 Bats 集成测试 `tests/integration/test_post_archive_helper.bats` 锁住 bash↔Python 集成 (4 case: 写 SHA / 幂等 / 缺文件 / 缺 entry)
 ## 2. Verification
 
-- [ ] 2.1 Run all existing bats + pytest tests to confirm no regression
+- [x] 2.1 Run all existing bats + pytest tests to confirm no regression
 - [ ] 2.2 Commit working tree in worktree with conventional commit message

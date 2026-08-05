@@ -102,6 +102,11 @@ from skills._lib.iteration.store import (
 from skills._lib.iteration.render import print_view
 
 # ---------------------------------------------------------------------------
+# Post-archive sync helper (fix-archive-iteration-sync, 2026-08-05)
+# ---------------------------------------------------------------------------
+from skills._lib.iteration import post_archive  # noqa: E402  (re-export)
+
+# ---------------------------------------------------------------------------
 # Aliases preserved for backward compatibility
 # ---------------------------------------------------------------------------
 #
@@ -196,6 +201,8 @@ __all__ = [
     "set_current_phase",
     # render layer
     "print_view",
+    # post-archive sync helper (fix-archive-iteration-sync)
+    "post_archive",
     # backward-compat aliases
     "load_iteration",
     "write_iteration",

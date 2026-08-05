@@ -96,6 +96,10 @@
             "format": "date-time",
             "description": "ISO 8601 timestamp when status transitioned to archived."
           },
+          "archive_commit_sha": {
+            "type": ["string", "null"],
+            "description": "Git commit SHA of the archive action that transitioned this change to archived. Set by sync_iteration_after_archive helper (fix-archive-iteration-sync 2026-08-05); preserved if already set (idempotent). Null if not yet archived."
+          },
           "parent_feature": {
             "type": ["string", "null"],
             "description": "Name of the parent feature/epic this change belongs to. Set when a change is decomposed from a larger feature (e.g. feature-stream-core -> parent_feature='feature-stream'). Null for standalone changes. Redundant with name-prefix derivation but provides explicit registration for edge cases."
