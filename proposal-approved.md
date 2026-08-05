@@ -18,23 +18,20 @@
 
 
 
-| [fix-execute-change-name-persistence](improvements/fix-execute-change-name-persistence.md) | P1 | 2026-08-03 | guide-arch |
 
-| [add-skill-registration-checklist](improvements/add-skill-registration-checklist.md) | P2 | 2026-08-03 | guide-arch |
 
-| [add-known-failures-baseline](improvements/add-known-failures-baseline.md) | P3 | 2026-08-03 | guide-arch |
 
-| [plan-execute-commit-policy-consistency](improvements/plan-execute-commit-policy-consistency.md) | P1 | 2026-08-04 | guide-arch |
 
-| [execute-gate-unified-regression](improvements/execute-gate-unified-regression.md) | P2 | 2026-08-04 | guide-arch |
 
-| [archive-history-keep-semantics](improvements/archive-history-keep-semantics.md) | P2 | 2026-08-04 | guide-arch |
 
-| [test-isolation-from-repo-state](improvements/test-isolation-from-repo-state.md) | P2 | 2026-08-04 | guide-arch |
 
-| [python-failures-baseline](improvements/python-failures-baseline.md) | P3 | 2026-08-04 | guide-arch |
 
 ## 已实施
+| [plan-execute-commit-policy-consistency](improvements/plan-execute-commit-policy-consistency.md) | P1 | 2026-08-04 |
+| [python-failures-baseline](improvements/python-failures-baseline.md) | P3 | 2026-08-04 |
+| [test-isolation-from-repo-state](improvements/test-isolation-from-repo-state.md) | P2 | 2026-08-04 |
+| [execute-gate-unified-regression](improvements/execute-gate-unified-regression.md) | P2 | 2026-08-04 |
+| [archive-history-keep-semantics](improvements/archive-history-keep-semantics.md) | P2 | 2026-08-04 |
 | [extract-rdd-env-check-from-guide-arch](improvements/extract-rdd-env-check-from-guide-arch.md) | P1 | 2026-08-03 |
 | [adr-create-interactive-drafting](improvements/adr-create-interactive-drafting.md) | P1 | 2026-08-03 |
 | [add-rddf-session-workflow-group](improvements/add-rddf-session-workflow-group.md) | P2 | 2026-08-03 |
@@ -54,6 +51,9 @@
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
+| [add-known-failures-baseline](improvements/add-known-failures-baseline.md) | P3 | 2026-08-04 |
+| [add-skill-registration-checklist](improvements/add-skill-registration-checklist.md) | P2 | 2026-08-04 |
+| [fix-execute-change-name-persistence](improvements/fix-execute-change-name-persistence.md) | P1 | 2026-08-04 |
 | [fix-rddf-session-owner-stability](improvements/fix-rddf-session-owner-stability.md) | P0 | 2026-08-03 |
 | [fix-add-improve-initial-prompt-ux](improvements/fix-add-improve-initial-prompt-ux.md) | P1 | 2026-07-31 |
 | [fix-plan-deps-candidates-import-guard](improvements/fix-plan-deps-candidates-import-guard.md) | P0 | 2026-07-31 |
