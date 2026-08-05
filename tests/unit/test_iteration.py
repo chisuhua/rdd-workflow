@@ -742,10 +742,17 @@ class TestCorruptionBackup:
     next save, permanently destroying history."""
 
     def _backup_files(self, state_dir):
-        """Helper: return list of corrupt-backup files in state_dir."""
+        """Helper: return list of corrupt-backup files in state_dir.
+
+        Excludes ``.reason.txt`` sidecar files (added in
+        rddf-iteration-strict-schema, 2026-08-05) so tests only
+        match the actual JSON copy, not the error annotation.
+        """
         return [
             f for f in os.listdir(state_dir)
-            if ".corrupt." in f and f != "iteration.json"
+            if ".corrupt." in f
+            and f != "iteration.json"
+            and not f.endswith(".reason.txt")
         ]
 
     def test_corrupt_json_triggers_backup(self, project_root, iteration_path):

@@ -173,6 +173,7 @@ def _print_help() -> None:
     print("  feature      Feature grouping (summary, graph, status, order)")
     print("  guide        Project state scan + recommendation (guide-arch/guide-plan/guide-ship)")
     print("  init [tgt]   Install rdd-workflow to target's .opencode/skills/")
+    print("  iteration    Validate iteration.json (lint, allowed-fields)")
     print("  monitor      Live monitor (--watch=<sec>)")
     print("  sessions     Session management (read-only). Subcmds: show <id>, current, gc")
     print("  status       Change status overview. Flags: --iteration, --roadmap, <name>")

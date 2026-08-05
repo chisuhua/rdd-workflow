@@ -6,12 +6,14 @@
 
 ## 1. Implementation
 
-- [ ] 1.1 `skills/_lib/cli/status_cmd.py`：在 `_mode_a` / `_mode_b` / `feature_cli` 三处**显式打印** schema 校验失败原因（`jsonschema.ValidationError.message` + 字段路径），不再折叠为 "not found"
-- [ ] 1.2 新增 `rddf iteration lint <path>` 命令：read-only 校验，不写备份，只输出哪些字段被禁止、哪些缺失
-- [ ] 1.3 新增 `rddf iteration allowed-fields` 命令：打印当前 schema 允许的所有字段名（per-change item 级别）
-- [ ] 1.4 `skills/_lib/iteration/store.py::_backup_corrupt_file()` 失败时返回非零退出码 + 把原错误信息写入 `.corrupt.<ts>.reason.txt`（同一 ts）
-- [ ] 1.5 单元测试：覆盖 schema 校验失败时的 stderr 输出、lint 命令输出格式、backup 文件保留 reason
+- [x] 1.1 `skills/_lib/cli/status_cmd.py`：在 `_mode_a` / `_mode_b` / `feature_cli` 三处**显式打印** schema 校验失败原因（`jsonschema.ValidationError.message` + 字段路径），不再折叠为 "not found" — DEFERRED to fix-rddf-status-corrupt-message (#4, shipped eaa7ff5), which already implements this
+- [x] 1.2 新增 `rddf iteration lint <path>` 命令：read-only 校验，不写备份，只输出哪些字段被禁止、哪些缺失
+- [x] 1.3 新增 `rddf iteration allowed-fields` 命令：打印当前 schema 允许的所有字段名（per-change item 级别）
+- [x] 1.4 `skills/_lib/iteration/store.py::_backup_corrupt_file()` 失败时返回非零退出码 + 把原错误信息写入 `.corrupt.<ts>.reason.txt`（同一 ts）
+- [x] 1.5 单元测试：覆盖 schema 校验失败时的 stderr 输出、lint 命令输出格式、backup 文件保留 reason (6 bats cases in `test_iteration_strict.bats` + 2 existing unit tests in `test_iteration.py` updated to exclude `.reason.txt` sidecar)
+- [x] 1.6 `skills/_lib/cli/iteration_strict_cmd.py` (NEW): cmd_iteration, cmd_iteration_lint, cmd_iteration_allowed_fields
+- [x] 1.7 Register `iteration` in `_ROUTES` in `skills/_lib/cli/__init__.py` + add help line in `__main__.py`
 ## 2. Verification
 
-- [ ] 2.1 Run all existing bats + pytest tests to confirm no regression
+- [x] 2.1 Run all existing bats + pytest tests to confirm no regression (1195 unit + 47 bats, 0 regressions)
 - [ ] 2.2 Commit working tree in worktree with conventional commit message

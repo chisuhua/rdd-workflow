@@ -133,17 +133,26 @@ def _read_unlocked(path: str) -> Optional[dict]:
     return data
 
 
-def _backup_corrupt_file(path: str) -> Optional[str]:
+def _backup_corrupt_file(path: str, reason: str = "") -> Optional[str]:
     """Copy a corrupt iteration.json aside so the user can recover it.
 
     The backup path is `iteration.json.corrupt.<timestamp>` in the same
-    directory. If the timestamp already exists (rare, requires two
-    corruptions in the same microsecond on the same machine), append
-    a counter suffix. Returns the backup path, or None on failure.
+    directory. A sidecar file `iteration.json.corrupt.<timestamp>.reason.txt`
+    is also written containing the error context (the ``reason`` arg)
+    so AI agents and users can diagnose the corruption without diffing
+    the corrupt JSON against the schema. If the timestamp already exists
+    (rare, requires two corruptions in the same microsecond on the same
+    machine), append a counter suffix. Returns the backup path, or None
+    on failure.
 
     Failure modes are silent: if the backup can't be created (no disk
     space, permission denied), we proceed with returning empty state
     rather than blocking the caller. The backup is best-effort.
+
+    Created: rddf-iteration-strict-schema (P1, 2026-08-05) — added
+    the .reason.txt sidecar to address the "AI 写错字段静默触发备份"
+    gap. The sidecar is written via a best-effort fallback so a
+    permission error on the sidecar does not roll back the main backup.
     """
     if not os.path.isfile(path):
         return None
@@ -169,10 +178,22 @@ def _backup_corrupt_file(path: str) -> Optional[str]:
         logger.warning(
             "backed up corrupt iteration.json: %s -> %s", path, candidate,
         )
-        return candidate
     except OSError as e:
         logger.error("failed to back up corrupt iteration.json %s: %s", path, e)
         return None
+
+    if reason:
+        reason_path = candidate + ".reason.txt"
+        try:
+            with open(reason_path, "w", encoding="utf-8") as f:
+                f.write(f"path: {path}\n")
+                f.write(f"backup: {candidate}\n")
+                f.write(f"timestamp: {ts}\n")
+                f.write(f"reason: {reason}\n")
+        except OSError as e:
+            logger.warning("failed to write .reason.txt sidecar %s: %s",
+                           reason_path, e)
+    return candidate
 
 
 def _merge_by_name(existing: dict, incoming: dict) -> dict:
@@ -272,7 +293,7 @@ def load(project_root: str) -> dict:
             data = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         logger.error("iteration.json at %s is unreadable: %s; backing up and returning empty", path, e)
-        _backup_corrupt_file(path)
+        _backup_corrupt_file(path, f"invalid JSON: {e}")
         return create_empty()
     # v3 -> v4 in-memory migration (adds manual_deps/manual_blocks=None
     # to each change). Bypasses validation pre-migration because the
@@ -286,7 +307,7 @@ def load(project_root: str) -> dict:
             "iteration.json at %s fails schema validation: %s; backing up and returning empty",
             path, e.message,
         )
-        _backup_corrupt_file(path)
+        _backup_corrupt_file(path, f"schema validation failed: {e.message}")
         return create_empty()
     return data
 
