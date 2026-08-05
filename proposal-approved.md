@@ -29,11 +29,11 @@
 
 | [guide-ship-default-serial-execution](improvements/guide-ship-default-serial-execution.md) | P1 | 2026-08-05 | guide-arch |
 
-| [plan-quality-and-validation](improvements/plan-quality-and-validation.md) | P0 | 2026-08-05 | guide-arch |
 
 
 
 ## 已实施
+| [plan-quality-and-validation](improvements/plan-quality-and-validation.md) | P0 | 2026-08-05 |
 | [developer-experience-observability](improvements/developer-experience-observability.md) | P2 | 2026-08-05 |
 | [subagent-orchestrator-execution-strategy](improvements/subagent-orchestrator-execution-strategy.md) | P0 | 2026-08-05 |
 | [worktree-archive-workflow](improvements/worktree-archive-workflow.md) | P0 | 2026-08-05 |
