@@ -73,37 +73,46 @@ run_ship_env_check
 6. 生成实施计划
 7. 进入执行模式选择
 
-**展示所有活跃 changes 的状态**：
+**展示所有活跃 changes 的状态（统一 discovery）**：
 
 ```bash
-# Reconstruct ACTIVE_CHANGES from filesystem (was in spec-side before refactor)
-ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | xargs -n1 basename 2>/dev/null | tr '\n' ' ')
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+SCRIPT_DIR="$(resolve_rdd_skill_dir guide-ship)"
+source "$SCRIPT_DIR/../_lib/discover_ship_changes.sh"
 
-echo "📋 所有活跃 Changes:"
+CANDIDATES_JSON=$(ship_candidates_json "$PROJECT_ROOT")
+COUNT=$(ship_candidate_count "$PROJECT_ROOT")
+TOP=$(ship_top_candidate "$PROJECT_ROOT")
+
+echo "📋 活跃 Changes (统一 discovery):"
 echo ""
-echo "| 变更 | Artifacts | Worktree | 计划文件 |"
-echo "|-----|-----------|----------|---------|"
-# git show HEAD:<path> 要求相对于 repo root 的相对路径。
-# 把整个表格生成放在 (cd ... && ...) 子 shell 里,这样 git show 可以用相对路径。
-(cd "$PROJECT_ROOT" 2>/dev/null && for name in $ACTIVE_CHANGES; do
-    committed=$(git show HEAD:"openspec/changes/$name/.openspec.yaml" > /dev/null 2>&1 && echo "✅" || echo "⏳")
-    wt_path="$PROJECT_ROOT/.rddf/wt/${name}"
-    wt_exists=$([ -d "$wt_path" ] && git worktree list | grep -q "$wt_path" && echo "✅" || echo "❌")
-    plan_exists=$([ -f "$wt_path/.rddf/plans/$name.md" ] 2>/dev/null && echo "✅" || echo "❌")
-    echo "| $name | $committed | $wt_exists | $plan_exists |"
-done)
+echo "| # | 变更 | Artifacts | Worktree | 计划文件 | 标志 |"
+echo "|---|------|-----------|----------|----------|------|"
+i=0
+while IFS= read -r entry; do
+    [ -z "$entry" ] && continue
+    name=$(echo "$entry" | python3 -c "import json,sys;print(json.load(sys.stdin)['name'])")
+    artifacts=$(echo "$entry" | python3 -c "import json,sys;d=json.load(sys.stdin);print('✅' if d.get('artifact_complete') else '⏳')")
+    wt=$(echo "$entry" | python3 -c "import json,sys;d=json.load(sys.stdin);print('✅' if d.get('worktree') else ('🔀' if d.get('branch') else '❌'))")
+    plan=$(echo "$entry" | python3 -c "import json,sys;d=json.load(sys.stdin);print('✅' if d.get('plan_present') else '❌')")
+    flags=$(echo "$entry" | python3 -c "import json,sys;print(','.join(json.load(sys.stdin).get('flags', [])))")
+    i=$((i+1))
+    echo "| $i | $name | $artifacts | $wt | $plan | $flags |"
+done <<< "$(echo "$CANDIDATES_JSON" | python3 -c "import json,sys;print('\\n'.join(json.dumps(c) for c in json.load(sys.stdin)))")"
 ```
+
+> 单一候选: 自动选择 `$TOP`,跳过菜单。多候选: 显示菜单让用户选择。
 
 **选择要处理的 change**：
 
 ```
 Plan 阶段
 
-📋 活跃 Changes:
-| 变更 | Artifacts | Worktree | 计划文件 |
-|-----|-----------|----------|---------|
-| fix-ns-pollution | ✅ | ❌ | ❌ |
-| add-stream-pipes | ✅ | ❌ | ❌ |
+📋 活跃 Changes (统一 discovery):
+| # | 变更 | Artifacts | Worktree | 计划文件 | 标志 |
+|---|------|-----------|----------|----------|------|
+| 1 | fix-ns-pollution | ✅ | ❌ | ❌ | executable |
+| 2 | add-stream-pipes | ✅ | ❌ | ❌ | executable |
 
 请选择:
 1. 为 fix-ns-pollution 创建 worktree + 生成计划
