@@ -1,2 +1,5 @@
-name: plan-quality-and-validation
-created_by: guide-design approve
+schema: spec-driven
+created: '2026-08-05'
+goal: plan 生成器加入 dry-run 验证 + 发布前检查清单 + 自动 BASH_SOURCE guard
+affected_areas:
+- core-impl

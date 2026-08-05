@@ -1,2 +1,5 @@
-name: guide-ship-default-serial-execution
-created_by: guide-design approve
+schema: spec-driven
+created: '2026-08-05'
+goal: 默认串行执行 wave changes + --parallel flag + RDD_SHIP_PARALLEL=yes opt-in
+affected_areas:
+- core-impl

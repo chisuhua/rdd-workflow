@@ -1,2 +1,5 @@
-name: worktree-archive-workflow
-created_by: guide-design approve
+schema: spec-driven
+created: '2026-08-05'
+goal: AGENTS.md / guide-ship SKILL.md 显式 commit flow + 跨 worktree 批量归档优化
+affected_areas:
+- core-impl

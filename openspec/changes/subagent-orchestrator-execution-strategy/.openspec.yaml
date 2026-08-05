@@ -1,2 +1,5 @@
-name: subagent-orchestrator-execution-strategy
-created_by: guide-design approve
+schema: spec-driven
+created: '2026-08-05'
+goal: 配额探测 + 决策规则矩阵 + 配额耗尽自动降级到 orchestrator
+affected_areas:
+- core-impl
