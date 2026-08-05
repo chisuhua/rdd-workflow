@@ -1,0 +1,68 @@
+# fix-archive-on-main-flow
+
+**优先级**: P0 | **来源**: Session 复盘 2026-08-05 UsrLinuxEmu — `archive_on_main.sh` helper (`f56df0d chore(tools): add archive_on_main.sh helper for direct-on-main archive flow`) 被使用 5 次（5 个 `stage4-l2-foundation-removal-*` change 的 archive commit），但每次都没有调用 `sync_iteration_after_archive`；archive 动作与 iteration.json patch 完全解耦
+**阶段**: v2.1 | **分类**: infra-setup
+**类型**: bug
+
+## 架构依据
+
+- **现状**: `tools/archive_on_main.sh`（在 commit `f56df0d` 引入）的脚本职责是"在 main 分支直接归档 change，绕过 worktree"——但**只做归档本身**，不调 `sync_iteration_after_archive`
+- **ADR-0017**: iteration.json 是工作流核心状态文件，任何归档动作都必须同步更新
+- **`fix-archive-iteration-sync.md`** (本 session, P0) 已提出 `skills/_lib/iteration/post_archive.py::sync_iteration_after_archive(name, archive_commit_sha)` helper；本提案聚焦**调用入口**而不是 helper 本身
+- **本提案范围**：把 `archive_on_main.sh` 的旁路流程纳入"强制调用 iteration sync"的范畴，并把"使用旁路"本身作为一个明确的、需要显式确认的操作（不是默认选项）
+
+### 本仓库实际复现 (2026-08-05 UsrLinuxEmu session 已验证)
+
+```
+$ git show f56df0d -- tools/archive_on_main.sh | head -30
++ #!/bin/bash
++ # archive_on_main.sh helper for direct-on-main archive flow
++ # ...
+
+$ git log --oneline -- tools/archive_on_main.sh
+f56df0d chore(tools): add archive_on_main.sh helper for direct-on-main archive flow
+
+$ git show 8e0eb21 -- tools/archive_on_main.sh
+(empty — 后续 archive commit 没有引用该 helper)
+```
+
+**触发链**：
+1. AI / 用户在 main 分支运行 `archive_on_main.sh <change>` → 把 `openspec/changes/<change>/` 移动到 `openspec/changes/archive/2026-08-XX-<change>/`
+2. 脚本结束，**没有**调 `sync_iteration_after_archive`
+3. 提交 `archive: <change> (on main mode)`，iteration.json 保持 `proposed`
+4. 下次 `rddf status` 报 divergence warning
+
+## 范围
+
+- **In Scope**:
+  - `tools/archive_on_main.sh` 末尾**强制**调用 `sync_iteration_after_archive "$CHANGE_NAME" "$GIT_COMMIT_SHA"`；脚本返回非零则整个 archive 操作回滚（删除已 mv 的目录）
+  - 脚本入口增加"使用旁路而非 worktree 流程"的明显 banner（明确这是 off-happy-path），例如：`⚠️  OFF-HAPPY-PATH: archiving on main without worktree. Use --confirm-main to proceed.`
+  - 脚本参数增加 `--confirm-main` 必填（fail-closed），避免误调
+  - 文档（README/USAGE）新增章节"On-main Mode Caveats"，列出 (a) 与 worktree 模式功能差异、(b) iteration.json sync 契约、(c) 推荐用法
+  - 单元测试 / bats：脚本拒绝无 `--confirm-main`、archive 后 iteration.json 同步成功、archive 失败回滚
+- **Out Scope**:
+  - 不实现 worktree 模式（已是 v2.0 主流程）
+  - 不修改 `archive.sh::archive_change()`（worktree 模式）— 它的 iteration 同步交给 `fix-archive-iteration-sync.md`
+  - 不删除 `archive_on_main.sh`（保留旁路，但收敛语义）
+
+## 关键场景
+
+- GIVEN 用户运行 `tools/archive_on_main.sh <change>`，WHEN 没有 `--confirm-main` 参数，THEN 脚本 exit 2 并打印 banner：`⚠️  OFF-HAPPY-PATH. Pass --confirm-main to archive without worktree.`
+- GIVEN 用户运行 `tools/archive_on_main.sh <change> --confirm-main`，WHEN 脚本执行，THEN 完成 `mv openspec/changes/X archive/` → 立即调 `sync_iteration_after_archive` → iteration.json 写入 `archived_at` + `archive_commit_sha`；任何一步失败则 `git reset HEAD~1` + `mv` 回滚
+- GIVEN 同一 archive 操作被意外触发两次（脚本 bug 或 CI 重试），WHEN 重入执行，THEN 第二次检测到 `archive_commit_sha` 已存在则跳过 iteration patch（幂等）
+- GIVEN `sync_iteration_after_archive` 调用失败（iteration.json 不存在 / corrupt），WHEN helper 写 warning 但不抛异常，THEN 脚本仍然 commit archive 动作，但 print 一行 `⚠️  iteration.json sync failed — run 'rddf status --check-archive-sync' later`
+
+## 技术约束
+
+- MUST 把 `sync_iteration_after_archive` 强制放到 archive 操作**之前**的 git pre-commit hook，或者**之后**的脚本末尾（推荐脚本末尾，更可观察）；不允许裸 `mv` 不带 sync 调用
+- MUST 接收 `--confirm-main` 标志；无标志默认拒绝（fail-closed）
+- MUST 检测重复 archive（archive 目录已存在）并拒绝继续
+- SHOULD 接受 `--archive-commit-sha <sha>` 参数，让 caller 显式传入（避免 $GIT_HEAD 在 mv 之后发生变化）
+
+## 验收标准
+
+- `archive_on_main.sh` 至少 30 行（包含 banner / 参数解析 / mv / sync / 失败回滚）
+- 1 个 bats 测试覆盖：拒绝 `--confirm-main` 缺失 / 成功 archive + iteration 同步 / archive 失败回滚
+- README/USAGE 至少新增 10 行"On-main Mode Caveats"章节
+- 实测 UsrLinuxEmu 模拟：在测试项目复制 archive_on_main.sh → 跑一次 archive → 验证 iteration.json 自动 patch
+- 所有现有 bats / pytest 测试通过

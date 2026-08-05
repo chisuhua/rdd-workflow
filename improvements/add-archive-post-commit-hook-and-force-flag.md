@@ -1,0 +1,198 @@
+# add-archive-post-commit-hook-and-force-flag
+
+**优先级**: P0 | **来源**: HydraForge 2026-08-05 dashboard divergence 调查 + UsrLinuxEmu 2026-08-05 on-main archive 复盘 — 手工 archive path 完全未被任何现有提案兜底
+**阶段**: v2.1 | **分类**: infra-setup
+**类型**: feature
+
+> **范围定位**：本提案是 [`fix-archive-iteration-sync`](fix-archive-iteration-sync.md) (P0, 2026-08-05) 的**补充**，聚焦**两个增量维度**：
+> 1. **git post-commit hook** 兜底所有"裸 `git mv` + `git commit` 不调任何脚本"的纯手工路径
+> 2. **`--force` / `--no-validate` CLI flag** 让作者可以快速 archive incomplete work 而不必完全绕过 pipeline（消除"绕过动机"）
+>
+> **不重复** `fix-archive-iteration-sync` 的范围（archive.sh/archive_on_main.sh/`status --archive` 接入 helper），也不 supersede 任何已存在提案。
+
+## 架构依据
+
+**症状 1（HydraForge 2026-08-05, 7 条 stale iteration.json）**:
+- `rddf dashboard` 报 7 条 changes `divergence_warnings`
+- git log 多个 commit 自证手工 archive:
+  - `f2ef392  chore(openspec): archive pkgm-temporal-agent (手工 archive, 绕过 openspec CLI delta 检查)` — commit message **显式自证** bypass
+  - `3eae4d7 chore(openspec): archive adr-0068-event-emission-contract`
+  - `e556d77 chore(archive): finalize adr-0069-tool-coordinator-hooks archive state`
+  - `6bf3913 chore(archive): finalize adr-0070-declare-command archive state`
+  - `1740b88 chore(archive): finalize fix-markdown-parser-yaml archive state`
+  - `9310cfb chore(archive): finalize session-manager-jsonl archive state`
+  - `12b50dd chore(archive): finalize session-manager-jsonl-v2 archive state`
+- 这 7 个 commit 的 message 均为 `chore(archive): finalize ...` 或 `chore(openspec): archive ...`，**无** `archive(NAME): archive completed` 标记 —— 说明作者跑了 `git mv` + `openspec archive` + `git commit` 但**没调** `archive_change()` 也没调 `commit_archive_moves`
+
+**症状 2（UsrLinuxEmu 2026-08-05, 5 条 stage4-l2-foundation-removal-* stale）**:
+- 同一模式：`archive: <change> (on main mode)` commits，iteration.json 不动
+- 已通过 `fix-archive-iteration-sync` 提案的 `sync_iteration_after_archive` helper 解决**只要走 `tools/archive_on_main.sh`** 的路径
+- 但**纯手工**（`git mv` + `git commit`，不调任何 helper）依然没兜底
+
+**绕过动机（第二个症状）**:
+- HydraForge session-manager-jsonl 仅 **12/68 tasks** 完成 (17.6%), session-manager-jsonl-v2 **26/33** (78.8%)
+- 这些 incomplete change 被手工 archive，因为 `archive_gate_check` 阻断 pipeline
+- 作者**只能**手工 mv，否则无法 archive → **本提案提供 `--force` 让作者走 pipeline 而非 bypass**
+
+**现有覆盖矩阵**:
+
+| 路径 | 是否 sync iteration.json |
+|------|-------------------------|
+| `archive.sh::archive_change()` (worktree mode) | ✅ (旧 P0 `archive-iteration-sync` 已 ship) |
+| `ship_archive.sh` lightweight mode | ✅ (line 220 调 `mark_iteration_archived`) |
+| `tools/archive_on_main.sh` (强制 `--confirm-main` 后) | ✅ (`fix-archive-iteration-sync` 提案中, 待 ship) |
+| `rddf status --archive <name>` | ✅ (`fix-archive-iteration-sync` 提案中, 待 ship) |
+| **裸 `git mv` + `git commit` 不调任何脚本** | ❌ **唯一漏洞** ← 本提案覆盖 |
+| `archive_gate_check` 阻断后作者手工 mv | ❌ **绕过动机** ← 本提案 `--force` 覆盖 |
+
+## 范围
+
+### In Scope
+
+**A. git post-commit hook 路径**:
+- 新增 `<project_root>/.git-hooks/post-commit`
+- `git config core.hooksPath .git-hooks` 统一注册
+- 检测 commit diff 含新增 `openspec/changes/archive/<date>-<name>/` 路径
+  → 触发 `sync_iteration_after_archive <name>` 调用（**复用 `fix-archive-iteration-sync` 提案的 helper**）
+- 自动识别 `<date>-<name>` 中 name 部分（剥离 `YYYY-MM-DD-` 前缀，严格匹配 `^\d{4}-\d{2}-\d{2}-.+$`）
+- hook 任何失败 stdout warning + exit 0（**不阻断 commit**）
+- 提供 `<project_root>/scripts/install-archive-hooks.sh` 一键安装（项目本地，幂等）
+- 钩子脚本不修改 commit message、不做 `git commit` 二次提交
+
+**B. `--force` / `--no-validate` CLI flag**:
+- `status --archive` Mode C 暴露 `--force` flag
+- 转换内部为环境变量 `SKIP_ARCHIVE_GATE=1` + `SKIP_DELTA_VALIDATION=1`
+- 软跳过**仅**这两个 gate，**保留**:
+  - `openspec archive <name> --yes`（spec 晋升）
+  - `commit_archive_moves`（git commit 标准化）
+  - `mark_iteration_archived` / `sync_iteration_after_archive`（iteration.json 同步 — 这正是关键）
+  - `cleanup_plan_handoff` / `cleanup_plan_file`
+- 让作者可以"轻量快速 archive" 而不必完全手工操作
+- `--force` 模式下 stdout warnings 列出被跳过的检查，让作者明确知情
+
+**C. 一次性数据 reconcile 工具（可选）**:
+- 新增 `rddf archive-sync <name>` 命令：手动 reconcile 单个 change 的 iteration.json
+- 用于修复 HydraForge 7 条 + UsrLinuxEmu 5 条历史 stale
+- 调用 `sync_iteration_after_archive` (复用 `fix-archive-iteration-sync` helper)
+- 不在 ship gate, 仅作运维工具
+
+### Out Scope
+
+- **不重写** `sync_iteration_after_archive` helper 实现 — 复用 `fix-archive-iteration-sync` 提案的模块（待 ship）
+- **不修改** `archive.sh::archive_change()` 的 worktree / merge 逻辑
+- **不修改** iteration.json schema（schema bump 留给 `rddf-iteration-strict-schema` 提案）
+- **不修改** dashboard `divergence_warnings` 行为（保留兜底）
+- **不实现** `archive_on_main.sh` 的 `--confirm-main` 改造（已归 `fix-archive-on-main-flow` 提案）
+- **不修改** openspec CLI 内部行为
+
+## 关键场景
+
+### 场景 1: 裸 git mv + openspec archive + git commit（手工路径，唯一漏洞）
+- **GIVEN** 作者在 main repo 执行 `git mv openspec/changes/<name>/ openspec/changes/archive/<date>-<name>/`
+  + `openspec archive <name> --yes`
+  + `git commit -m "chore(archive): finalize <name> archive state"`
+- **WHEN** post-commit hook 触发
+- **THEN**
+  - hook 检测 commit diff 含 `openspec/changes/archive/<date>-<name>/` 路径
+  - 提取 `<name>`（剥离 `^\d{4}-\d{2}-\d{2}-` 前缀）
+  - 调用 `sync_iteration_after_archive <name>` (复用 `fix-archive-iteration-sync` helper)
+  - iteration.json 对应 entry status → `archived` + `archived_at`
+  - hook stdout 输出 `✅ archive hook synced: <name>` (一行)
+
+### 场景 2: `--force` flag 快速 archive incomplete work（消除绕过动机）
+- **GIVEN** `tasks.md` 有未完成 `[ ]` 条目（如 HydraForge session-manager-jsonl: 12/68 tasks）
+- **WHEN** 作者运行 `status <name> --archive --force`
+- **THEN**
+  - `SKIP_ARCHIVE_GATE=1` + `SKIP_DELTA_VALIDATION=1` 注入
+  - stdout 打印 `⚠️  --force: skipping archive_gate_check (12/68 tasks incomplete)`
+  - stdout 打印 `⚠️  --force: skipping delta_targets validation`
+  - 仍执行 `openspec archive` / `commit_archive_moves` / `sync_iteration_after_archive` / cleanup
+  - iteration.json 同步更新为 archived（**关键差异**: 走 pipeline 而非手工, 自动同步）
+
+### 场景 3: hook 在非 archive commit 上触发（误报防护）
+- **GIVEN** commit 不涉及 `openspec/changes/archive/` 路径
+- **WHEN** hook 触发
+- **THEN** hook 在检测阶段即 `exit 0`，无副作用，无 stdout 输出
+
+### 场景 4: hook 执行失败（sync helper 抛异常 / iteration.json corrupt）
+- **GIVEN** iteration.json 损坏 / 权限不足 / python3 缺失
+- **WHEN** hook 检测到 archive 路径但 `sync_iteration_after_archive` 失败
+- **THEN**
+  - hook stdout 打印 warning: `⚠️ archive hook failed for <name>: <err>. iteration.json may be stale. Run: rddf archive-sync <name>`
+  - hook exit 0（**不阻断 commit**, 避免恶性卸载循环）
+  - dashboard `divergence_warnings` 仍能兜底提示
+
+### 场景 5: `rddf archive-sync <name>` 一次性 reconcile 工具
+- **GIVEN** HydraForge 7 条 stale iteration.json entry
+- **WHEN** 运维运行 `rddf archive-sync adr-0068-event-emission-contract`
+- **THEN** 调 `sync_iteration_after_archive` 写入 `archived` + `archived_at`，单条 reconcile 完成
+
+### 场景 6: install script 重复执行（幂等）
+- **GIVEN** `<project_root>/scripts/install-archive-hooks.sh` 已运行过
+- **WHEN** 再次运行
+- **THEN** 检测到 `.git-hooks/post-commit` 已存在 + `core.hooksPath` 已设置，跳过操作，stdout 打印 `✓ hooks already installed`
+
+## 技术约束
+
+### MUST
+
+- hook 必须能用 `core.hooksPath` 注册到 `<project_root>/.git-hooks/`，**避免**默认 `.git/hooks/`（避免 .gitignore 静默忽略）
+- hook 检测 archive 路径必须严格匹配 `^\d{4}-\d{2}-\d{2}-.+$` 日期前缀
+- `sync_iteration_after_archive` 调用必须复用 `fix-archive-iteration-sync` 提案的 helper（待 ship），**不重新实现**
+- `--force` flag 必须**保留** `openspec archive <name>` 调用（spec 晋升），仅跳过 gate + delta validation
+- hook 任何失败 `exit 0`，永不阻断 commit
+- `install-archive-hooks.sh` 必须是幂等的：重复运行结果一致
+- hook 脚本不修改 commit message、不做 `git commit` 二次提交
+- hook 在 macOS + Linux 双平台可工作（POSIX sh 兼容, 不依赖 bashisms）
+
+### MUST NOT
+
+- 不在 hook 内做 spec delta 校验（属于 openspec CLI 职责）
+- 不在 hook 内做 `git commit` 二次提交（避免递归触发）
+- 不引入新的硬依赖（python3 + git 已 ship）
+- 不修改 iteration.json schema
+- 不修改 dashboard `divergence_warnings` 行为
+- 不修改 openspec CLI 内部行为
+
+### SHOULD
+
+- hook stdout 输出简洁 ≤ 3 行
+- `--force` 模式下 warnings 列出被跳过的检查
+- `install-archive-hooks.sh` 支持 `dry-run` flag（CI 验证用）
+- `rddf archive-sync` 命令支持批量: `rddf archive-sync <name1> <name2> ...`
+
+## 验收标准
+
+### 功能验收（手工 archive 路径 reconcile）
+
+- **AC-1**: 模拟手工 archive（`git mv` + `openspec archive` + `git commit`）→ commit 后 iteration.json 对应 entry status 变为 `archived`，含 `archived_at`
+- **AC-2**: hook 检测到非 archive 路径 commit → 无副作用, exit 0（场景 3）
+- **AC-3**: 重复 commit 同样 archive 路径 → `sync_iteration_after_archive` 幂等（已 archived 不重写 archived_at）
+
+### `--force` flag
+
+- **AC-4**: `status <name> --archive --force` 跳过 `archive_gate_check` 但仍同步 iteration.json（场景 2）
+- **AC-5**: `status <name> --archive --force` stdout 列出被跳过的检查
+- **AC-6**: `status <name> --archive --force` 仍执行 `openspec archive` + spec 晋升
+
+### 错误兜底
+
+- **AC-7**: hook 在 iteration.json 损坏时 stdout warning + exit 0, commit 成功（场景 4）
+- **AC-8**: hook 在 python3 缺失时 exit 0 + warning, 不报 ENOENT panic
+- **AC-9**: dashboard `rddf dashboard` 仍正确报告 `divergence_warnings`（hook 没成功时 dashboard 兜底）
+
+### 数据修复
+
+- **AC-10**: `rddf archive-sync <name>` 单条 reconcile 成功（场景 5）
+- **AC-11**: HydraForge 7 条 + UsrLinuxEmu 5 条 stale 通过 `rddf archive-sync` 一次性修复
+
+### 治理 / 文档
+
+- **AC-12**: `skills/status/SKILL.md` archive 章节新增 `--force` flag 说明
+- **AC-13**: `skills/_lib/archive.sh` 顶部 docstring 更新, 说明 `--force` 透传 `SKIP_ARCHIVE_GATE` / `SKIP_DELTA_VALIDATION`
+- **AC-14**: 新增 `tests/test_archive_sync_hook.bats` 至少 6 个 case（场景 1/2/3/4 + 幂等 + install 幂等）
+- **AC-15**: `scripts/install-archive-hooks.sh` 顶部 README 段落说明 hook 行为
+
+### 依赖前置
+
+- **AC-16**: 本提案依赖 `fix-archive-iteration-sync` (P0, 2026-08-05) 先 ship `sync_iteration_after_archive` helper. plan 阶段必须先实施前置提案
