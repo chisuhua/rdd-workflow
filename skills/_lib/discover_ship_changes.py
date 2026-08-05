@@ -3,8 +3,9 @@
 Returns the union of:
   - non-archived filesystem change directories
   - names in .plan-handoff.json (current_change, committed_changes)
+    excluding archived_changes
   - iteration.json entries whose status is not archived
-  - openspec/* branch names
+  - openspec/* branch names (only if change is otherwise discoverable)
   - openspec/* worktree branch names
 
 Each candidate carries normalized fields and a `flags` list so guide-ship can
@@ -72,10 +73,13 @@ def _disk_candidates(project_root: Path) -> dict:
 def _handoff_candidates(project_root: Path) -> dict:
     handoff = _read_json(project_root / ".rddf" / "state" / ".plan-handoff.json")
     out: dict = {}
+    archived = set(handoff.get("archived_changes", []) or [])
     for name in handoff.get("committed_changes", []) or []:
+        if name in archived:
+            continue
         out.setdefault(name, Candidate(name=name))
     cur = handoff.get("current_change")
-    if cur:
+    if cur and cur not in archived:
         out.setdefault(cur, Candidate(name=cur))
     return out
 
@@ -87,14 +91,20 @@ def _iteration_candidates(project_root: Path) -> dict:
         status = entry.get("status")
         if status == "archived":
             continue
-        cand = out.setdefault(entry["name"], Candidate(name=entry["name"]))
+        name = entry.get("name")
+        if not name:
+            continue
+        cand = out.setdefault(name, Candidate(name=name))
         cand.iteration_status = status
     return out
 
 
 def _git_candidates(project_root: Path) -> dict:
     out: dict = {}
-    # branches
+    # branches — collected for filtering after union build; branch-only
+    # candidates without disk/iteration/branch context are dropped to
+    # avoid surfacing archived leftovers.
+    raw_branches = []
     try:
         branches = subprocess.run(
             ["git", "branch", "--list", "openspec/*"],
@@ -104,10 +114,19 @@ def _git_candidates(project_root: Path) -> dict:
         branches = []
     for line in branches:
         name = line.split()[-1].removeprefix("openspec/")
-        cand = out.setdefault(name, Candidate(name=name))
-        cand.branch = f"openspec/{name}"
+        if name:
+            raw_branches.append(name)
 
-    # worktrees
+    # worktrees — always included as actionable runtime evidence, EXCEPT for
+    # branches whose change is recorded in .plan-handoff.json's
+    # archived_changes list (those are stale leftovers).
+    archived = set(
+        _read_json(project_root / ".rddf" / "state" / ".plan-handoff.json").get(
+            "archived_changes", []
+        )
+        or []
+    )
+
     try:
         wt = subprocess.run(
             ["git", "worktree", "list", "--porcelain"],
@@ -125,8 +144,23 @@ def _git_candidates(project_root: Path) -> dict:
                 branch = line[len("branch "):].removeprefix("refs/heads/")
         if branch and branch.startswith("openspec/"):
             name = branch.removeprefix("openspec/")
+            if name in archived:
+                # Don't surface the main repo worktree when the user is
+                # currently on an archived branch; ignore it entirely.
+                continue
             cand = out.setdefault(name, Candidate(name=name))
             cand.worktree = path
+            if name in raw_branches:
+                raw_branches.remove(name)
+            cand.branch = f"openspec/{name}"
+
+    # Branch candidates are recorded only if another source already saw them
+    # AND they're not in the archived list.
+    for name in raw_branches:
+        if name in out or name in archived:
+            continue
+        out.setdefault(name, Candidate(name=name))
+        out[name].branch = f"openspec/{name}"
     return out
 
 
