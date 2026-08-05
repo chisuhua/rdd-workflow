@@ -675,3 +675,50 @@ source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/de
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
+
+---
+
+## Execution Mode (v2.0.8+ 默认串行)
+
+Per improvements/guide-ship-default-serial-execution.md:
+
+**默认行为**: Wave 内独立 changes **串行**执行 (concurrency=1)。这是从上轮 5 changes ship 时子代理配额耗尽经验中学到的 — 串行 + 多数 subagent 调度是不可预测的,默认应该更保守。
+
+**Opt-in 并行**: 用户显式启用 `--parallel` flag 或设置 `RDD_SHIP_PARALLEL=yes` env var。
+
+**优先级**: CLI flag (`--parallel`) > env var (`RDD_SHIP_PARALLEL=yes`) > 默认 (serial)。
+
+**`--max-concurrent=N` 兼容性**:
+- 仅在 parallel 模式下生效
+- serial 模式下输出 warning + 忽略
+
+**脚本入口**: `skills/_lib/ship_execution_mode.sh`
+
+```bash
+# 解析模式
+source skills/_lib/ship_execution_mode.sh
+MODE=$(parse_execution_mode "$@")  # 输出 "serial" 或 "parallel"
+
+if [ "$MODE" = "parallel" ]; then
+  execute_wave_parallel change-a change-b change-c
+else
+  execute_wave_serial change-a change-b change-c
+fi
+```
+
+**场景示例** (S1-S6 完整覆盖,见 `tests/integration/test_guide_ship_execution_mode.bats`):
+
+| 场景 | 调用 | 期望输出 |
+|------|------|---------|
+| S1 | `parse_execution_mode` (无参数) | `serial` |
+| S2 | `parse_execution_mode --parallel` | `parallel` + `execute_wave_parallel` 打印 "parallel (3 concurrent)" |
+| S3 | `RDD_SHIP_PARALLEL=yes parse_execution_mode` | `parallel` |
+| S4 | `RDD_SHIP_MAX_CONCURRENT=5 execute_wave_parallel ...` | "parallel (5 concurrent)" |
+| S5 | parallel 模式 + 失败 | exit code != 0, **不**自动降级 serial |
+| S6 | `RDD_SHIP_MAX_CONCURRENT=5` in serial mode | "⚠ --max-concurrent ignored in serial mode" |
+
+**关键约束**:
+- 不修改 `execute/SKILL.md` 的 `run_in_background=false` 默认
+- 不修改 `skills/_lib/loop_engine.py::execute_plan` (已是 serial)
+- 不实现 parallel → serial 自动降级 fallback
+- 不引入新执行引擎或新依赖
