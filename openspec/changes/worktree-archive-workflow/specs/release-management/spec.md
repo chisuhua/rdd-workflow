@@ -1,6 +1,6 @@
 # worktree-commit-flow
 
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: Worktree commit flow
 

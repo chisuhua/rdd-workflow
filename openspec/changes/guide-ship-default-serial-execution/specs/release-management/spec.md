@@ -1,6 +1,6 @@
 # guide-ship-execution-mode
 
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: Default execution mode
 
