@@ -17,18 +17,35 @@ if [ -f "$SCRIPT_DIR/change_name.sh" ]; then
 fi
 
 auto_detect_worktree_context() {
-  # Source helper (worktree-aware functions)
+  # Source helper (worktree-aware functions) — needed by both the RDDF_EXECUTION_ROOT
+  # containment check and the legacy worktree detection below.
   if [ -f "$SCRIPT_DIR/worktree.sh" ]; then
     source "$SCRIPT_DIR/worktree.sh"
   fi
 
   # Honor RDDF_EXECUTION_ROOT if guide-ship set it (single source of truth for workspace).
   # When set, do NOT re-detect; just export PROJECT_ROOT from it and skip worktree probing.
+  # Containment check: RDDF_EXECUTION_ROOT must be a git repo whose --git-common-dir
+  # matches the detected main repo root, otherwise a poisoned env var would redirect
+  # execute into an arbitrary directory.
   if [ -n "${RDDF_EXECUTION_ROOT:-}" ] && [ -d "${RDDF_EXECUTION_ROOT}" ]; then
-    PROJECT_ROOT="${RDDF_EXECUTION_ROOT}"
-    export PROJECT_ROOT
-    cd "$PROJECT_ROOT" || return 1
-    return 0
+    local _expected_main
+    _expected_main=$(main_repo_root 2>/dev/null || pwd)
+    local _rddf_common
+    _rddf_common=$(git -C "${RDDF_EXECUTION_ROOT}" rev-parse --git-common-dir 2>/dev/null || true)
+    local _expected_common
+    _expected_common=$(git -C "$_expected_main" rev-parse --git-common-dir 2>/dev/null || true)
+    # Resolve to absolute paths so a relative ".git" matches itself.
+    [ -n "$_rddf_common" ] && _rddf_common=$(cd "${RDDF_EXECUTION_ROOT}" 2>/dev/null && cd "$_rddf_common" 2>/dev/null && pwd -P)
+    [ -n "$_expected_common" ] && _expected_common=$(cd "$_expected_main" 2>/dev/null && cd "$_expected_common" 2>/dev/null && pwd -P)
+    if [ -n "$_rddf_common" ] && [ -n "$_expected_common" ] && [ "$_rddf_common" = "$_expected_common" ]; then
+      PROJECT_ROOT="${RDDF_EXECUTION_ROOT}"
+      export PROJECT_ROOT
+      cd "$PROJECT_ROOT" || return 1
+      return 0
+    fi
+    echo "⚠️  RDDF_EXECUTION_ROOT (${RDDF_EXECUTION_ROOT}) 不在项目仓库内,忽略并继续探测" >&2
+    unset RDDF_EXECUTION_ROOT
   fi
 
   # 自动检测项目根目录（用于全局安装的技能）

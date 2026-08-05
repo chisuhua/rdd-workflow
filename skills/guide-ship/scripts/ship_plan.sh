@@ -203,14 +203,14 @@ except: pass
 
 # setup_execution_workspace <project_root> <change_name> <mode>
 #   Echoes the working directory (WT_PATH) to stdout for the caller.
+#   Also exports RDDF_EXECUTION_ROOT inside this function (the export is
+#   lost when the caller captures stdout in a subshell, so the caller
+#   MUST re-export RDDF_EXECUTION_ROOT in the parent shell using MODE
+#   and WT_PATH after this returns).
 setup_execution_workspace() {
   local project_root="$1"
   local change_name="$2"
   local mode="$3"
-
-  # Export the chosen execution root so downstream `execute` (Task 8 contract)
-  # does not have to re-detect its workspace.
-  export RDDF_EXECUTION_ROOT
 
   # Always ensure branch exists
   if ! git -C "$project_root" branch --list "openspec/$change_name" | grep -q "openspec/$change_name"; then
@@ -252,8 +252,6 @@ setup_execution_workspace() {
 
     share_submodules_to_worktree "$project_root" "$wt_path"
 
-    RDDF_EXECUTION_ROOT="$wt_path"
-    export RDDF_EXECUTION_ROOT
     echo "$wt_path"
   else
     # Lightweight mode: switch branch in main repo
@@ -261,8 +259,6 @@ setup_execution_workspace() {
       echo "❌ 切换分支失败: openspec/$change_name" >&2
       return 1
     fi
-    RDDF_EXECUTION_ROOT="$project_root"
-    export RDDF_EXECUTION_ROOT
     echo "⚡ 轻量模式: 已切换到 openspec/$change_name, 跳过 worktree" >&2 >&2
     echo "$project_root"
   fi
@@ -493,6 +489,15 @@ run_ship_phase1() {
 
   # 3) MODE-SPECIFIC SETUP + WORKTREE VERIFICATION GATE
   WT_PATH=$(setup_execution_workspace "$project_root" "$change_name" "$MODE") || return 1
+
+  # Re-export RDDF_EXECUTION_ROOT in the parent shell. The export inside
+  # setup_execution_workspace runs in a command-substitution subshell and
+  # is lost on return; downstream `execute` (Phase 2) needs this var.
+  case "$MODE" in
+    worktree)  RDDF_EXECUTION_ROOT="$WT_PATH" ;;
+    *)         RDDF_EXECUTION_ROOT="$project_root" ;;
+  esac
+  export RDDF_EXECUTION_ROOT
 
   # 4) PLAN GENERATION (calls skill_use "rdd-workflow-writing-plans" internally;
   #    honors SKIP_PROMETHEUS_PLANNING=yes to write placeholder plan file)
