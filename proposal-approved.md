@@ -26,6 +26,16 @@
 
 
 
+| [developer-experience-observability](improvements/developer-experience-observability.md) | P2 | 2026-08-05 | guide-arch |
+
+| [guide-ship-default-serial-execution](improvements/guide-ship-default-serial-execution.md) | P1 | 2026-08-05 | guide-arch |
+
+| [plan-quality-and-validation](improvements/plan-quality-and-validation.md) | P0 | 2026-08-05 | guide-arch |
+
+| [subagent-orchestrator-execution-strategy](improvements/subagent-orchestrator-execution-strategy.md) | P0 | 2026-08-05 | guide-arch |
+
+| [worktree-archive-workflow](improvements/worktree-archive-workflow.md) | P0 | 2026-08-05 | guide-arch |
+
 ## 已实施
 | [plan-execute-commit-policy-consistency](improvements/plan-execute-commit-policy-consistency.md) | P1 | 2026-08-04 |
 | [python-failures-baseline](improvements/python-failures-baseline.md) | P3 | 2026-08-04 |
