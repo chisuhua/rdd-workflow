@@ -81,6 +81,17 @@ bash install.sh /path/to/project
 > **v2.1+ 变更**: 从三阶段扩展为四阶段架构。提案管理（创建、审查、批准/拒绝/延迟）从 `guide-arch` Phase 5.5 迁移到独立的 `guide-design` 阶段。
 > `guide-spec` 别名已在 v2.0 移除。请直接使用 `guide-arch` → `guide-design` → `guide-plan` → `guide-ship`。
 
+### Guide-Ship 执行契约 (v2.0.7+)
+
+`tasks.md` 是 OpenSpec 的范围与完成清单;`.rddf/plans/<change>.md` 是 **唯一** 可执行实现契约;`execute` 消费 plan 并把进度回写到 `tasks.md`;`guide-ship` 不直接执行 `tasks.md`。
+
+详细契约见 [`docs/superpowers/specs/2026-08-05-guide-ship-execution-contract.md`](docs/superpowers/specs/2026-08-05-guide-ship-execution-contract.md)。要点:
+
+- `guide-ship` Phase 1 通过 `rddf discover-ship-changes` 统一发现候选,单 change 自动选择;多 change 显示菜单。
+- `guide-ship::setup_execution_workspace` 通过 `$RDDF_EXECUTION_ROOT` 把选定工作区交给 `execute`,`execute` 不再自行探测。
+- `SKIP_PROMETHEUS_PLANNING=yes` 必须配 `QUICK_FINISH_DETECTED=yes` 才能跳过 plan 生成(否则 fail closed)。
+- `archive_gate_check` 在 worktree 和 lightweight 两种模式都生效;无 commits 阻断 archive。
+
 ### 推荐器升级
 
 `guide` 推荐器现在支持四阶段扫描：
