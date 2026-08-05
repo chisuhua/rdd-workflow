@@ -6,12 +6,14 @@
 
 ## 1. Implementation
 
-- [ ] 1.1 `tools/archive_on_main.sh` 末尾**强制**调用 `sync_iteration_after_archive "$CHANGE_NAME" "$GIT_COMMIT_SHA"`；脚本返回非零则整个 archive 操作回滚（删除已 mv 的目录）
-- [ ] 1.2 脚本入口增加"使用旁路而非 worktree 流程"的明显 banner（明确这是 off-happy-path），例如：`⚠️  OFF-HAPPY-PATH: archiving on main without worktree. Use --confirm-main to proceed.`
-- [ ] 1.3 脚本参数增加 `--confirm-main` 必填（fail-closed），避免误调
-- [ ] 1.4 文档（README/USAGE）新增章节"On-main Mode Caveats"，列出 (a) 与 worktree 模式功能差异、(b) iteration.json sync 契约、(c) 推荐用法
-- [ ] 1.5 单元测试 / bats：脚本拒绝无 `--confirm-main`、archive 后 iteration.json 同步成功、archive 失败回滚
+- [x] 1.1 `tools/archive_on_main.sh` 末尾**强制**调用 `sync_iteration_after_archive "$CHANGE_NAME" "$GIT_COMMIT_SHA"`；脚本返回非零则整个 archive 操作回滚（删除已 mv 的目录）
+- [x] 1.2 脚本入口增加"使用旁路而非 worktree 流程"的明显 banner（明确这是 off-happy-path），例如：`⚠️  OFF-HAPPY-PATH: archiving on main without worktree. Use --confirm-main to proceed.`
+- [x] 1.3 脚本参数增加 `--confirm-main` 必填（fail-closed），避免误调
+- [x] 1.4 文档（README/USAGE）新增章节"On-main Mode Caveats"，列出 (a) 与 worktree 模式功能差异、(b) iteration.json sync 契约、(c) 推荐用法
+- [x] 1.5 单元测试 / bats：脚本拒绝无 `--confirm-main`、archive 后 iteration.json 同步成功、archive 失败回滚 (7 cases in test_archive_on_main.bats)
+- [x] 1.6 幂等：检测 archive dir 已存在 (any date prefix) 时拒绝（exit 5），避免 re-archive 双写
+- [x] 1.7 接受 `--archive-commit-sha <sha>` 可选参数（避免 $GIT_HEAD 在 mv 之后漂移）
 ## 2. Verification
 
-- [ ] 2.1 Run all existing bats + pytest tests to confirm no regression
+- [x] 2.1 Run all existing bats + pytest tests to confirm no regression
 - [ ] 2.2 Commit working tree in worktree with conventional commit message

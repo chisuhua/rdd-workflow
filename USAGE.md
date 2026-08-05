@@ -918,6 +918,75 @@ ADR 状态字段遵循 `docs/adr/README.md` 的五状态生命周期：
 7. **Skill metadata 只读**：所有 skill 文件的 `name`/`version`/`compatibility`/`metadata` 前置字段不可修改
 8. **execute 阶段不 commit/push**：plan 中明确 `Executor stops after the summary report`，commit 留到 archive 阶段
 
+## On-main Mode Caveats
+
+`tools/archive_on_main.sh` 是 archive 的 **OFF-HAPPY-PATH 旁路**——在 main 分支直接归档 change，跳过 worktree 隔离。默认 **拒绝** 执行；必须显式传 `--confirm-main` 才放行。本节说明与 worktree 模式的差异、iteration.json 契约、以及何时该用（不该用）这个旁路。
+
+### 与 worktree 模式的差异
+
+| 维度 | worktree 模式（`archive.sh::archive_change`） | on-main 模式（`tools/archive_on_main.sh`） |
+|------|--------------------------------------------|------------------------------------------|
+| 隔离 | 完整 worktree，独立 working tree | 直接在当前 git working tree 操作 |
+| 分支 | 隐式创建 `openspec/<name>` 临时分支 | 不创建分支，直接改 default branch |
+| 守护 | `archive_gate_check` 校验 task 进度 | 不做 task 进度校验（off-happy-path） |
+| 触发 | `guide-ship` Phase 3 自动 | 用户手动调用 |
+| 适用 | 标准 ship 流程（推荐） | 紧急 / 修复 incomplete change / 一次性清理 |
+| 撤销 | `git reset --hard` 即可 | 需手动 `mv` archive dir 回 changes/ + 改 iteration.json |
+
+### iteration.json sync 契约
+
+on-main 模式在 `mv` 之后会调用 `sync_iteration_after_archive`（`skills/_lib/iteration/post_archive.py`），把 change entry 写为：
+
+```json
+{
+  "status": "archived",
+  "archived_at": "<ISO 8601 UTC>",
+  "archive_commit_sha": "<--archive-commit-sha 参数值，或 git rev-parse HEAD>",
+  "tasks_done": "<archive/<date>-<name>/tasks.md 的 [x] 数>",
+  "plan_path": ".rddf/plans/<name>.md"
+}
+```
+
+幂等保证：
+- `archived_at` 已存在时**不覆盖**（防止 race condition 双调用）
+- `archive_commit_sha` 已存在时不覆盖
+- helper 失败（非零返回）时脚本 print warning 但**不滚回** archive mv——archive 成功是首要目标，iteration 漂移可后续 `rddf status --check-archive-sync` 修复
+
+### 推荐用法
+
+**✅ 适用场景**：
+
+- 紧急修复已 archive 但 iteration.json 没同步的历史 stale entry
+- `archive_gate_check` 因 tasks.md 未全部 `[x]` 阻断 standard flow，需绕过
+- 一次性清理（demo / 临时仓库 / 内部工具）
+- `add-archive-post-commit-hook` 还没安装的项目，裸 `git mv` 救场
+
+**❌ 不该用**：
+
+- 正常 ship 流程——请用 `archive.sh::archive_change`（worktree 模式，附 gate check）
+- 多 change 并行——on-main 是串行，worktree 模式可并发
+- CI/自动化——旁路缺 audit trail，应走 `guide-ship` Phase 3 统一管线
+
+### 用法速查
+
+```bash
+# 1. 拒绝执行（必须 --confirm-main）
+tools/archive_on_main.sh my-change
+# → exit 2, "⚠️  OFF-HAPPY-PATH. Pass --confirm-main to archive without worktree."
+
+# 2. 标准 on-main archive
+tools/archive_on_main.sh my-change --confirm-main
+
+# 3. 显式指定 archive commit SHA（避免 $GIT_HEAD 在 mv 之后漂移）
+tools/archive_on_main.sh my-change --confirm-main --archive-commit-sha $(git rev-parse HEAD)
+
+# 4. 失败回滚
+mv openspec/changes/archive/2026-08-05-my-change openspec/changes/my-change
+# 然后用 rddf status --check-archive-sync 修正 iteration.json
+```
+
+**⚠️ 警告**：本旁路是 archive-on-main 流程的 OFF-HAPPY-PATH。标准 ship 流程见 `guide-ship/SKILL.md` Phase 3（worktree 模式）。批量 archive / 自动化场景请用标准流程。
+
 ---
 
 ## 架构参考
