@@ -74,22 +74,62 @@ def _atomic_write(path: str, data: dict) -> None:
     atomic_write_json(path, data)
 
 
+def _read_unlocked_verbose(path: str) -> tuple[Optional[dict], Optional[str]]:
+    """Read iteration.json without acquiring the lock, returning error info.
+
+    Like ``_read_unlocked`` but distinguishes missing from invalid by
+    returning a ``(data, error_message)`` tuple:
+
+      - File missing: ``(None, None)``
+      - ``JSONDecodeError`` or ``OSError``: ``(None, "invalid JSON: <e>")``
+      - ``jsonschema.ValidationError``: ``(None, "schema validation failed
+        at <path>: <message>")``
+      - Success: ``(data, None)``
+
+    Used by CLI layers (``status_cmd.py``, ``feature_cli.py``) that
+    need to surface corrupt-file diagnostics to users. The error
+    message is safe to print: no paths, secrets, or PII.
+
+    Read-only: does NOT write a ``.corrupt.<ts>`` backup (unlike
+    :func:`load`). The read-only contract is enforced by the
+    ``state_reader`` module docstring (no file writes, no lock).
+
+    Created: fix-rddf-status-corrupt-message (P1, 2026-08-05).
+    """
+    if not os.path.isfile(path):
+        return (None, None)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        return (None, f"invalid JSON: {exc}")
+    # Direct validation to capture the first error's full path. Can't
+    # use _validate() because it re-raises with only the message
+    # string, discarding absolute_path.
+    from skills._lib.iteration.schema import _load_registry, _load_schema
+    schema = _load_schema()
+    registry = _load_registry()
+    validator = jsonschema.Draft7Validator(schema, registry=registry)
+    errors = list(validator.iter_errors(data))
+    if errors:
+        first = errors[0]
+        return (
+            None,
+            f"schema validation failed at {list(first.absolute_path)}: {first.message}",
+        )
+    return (data, None)
+
+
 def _read_unlocked(path: str) -> Optional[dict]:
     """Read iteration.json without acquiring the lock. Used inside save().
 
     Returns None if file missing or invalid (same policy as load()).
+
+    Thin wrapper around :func:`_read_unlocked_verbose` that discards
+    the error message. Preserves byte-level behavior for existing
+    callers (``save`` and others that only care about success/failure).
     """
-    if not os.path.isfile(path):
-        return None
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-    except (json.JSONDecodeError, OSError):
-        return None
-    try:
-        _validate(data)
-    except jsonschema.ValidationError:
-        return None
+    data, _ = _read_unlocked_verbose(path)
     return data
 
 

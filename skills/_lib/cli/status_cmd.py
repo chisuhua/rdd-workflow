@@ -61,6 +61,38 @@ _PHASE_STATUS_ICON = {
 }
 
 
+def _render_iteration_read_error(
+    iter_data: object, read_error: str, iter_path: str, mode: str = "name"
+) -> int:
+    """Render a corrupt-iteration.json error and return exit code 1.
+
+    Shared by ``_mode_a`` and ``_mode_b`` so both modes produce
+    identical diagnostic output. Does NOT suggest
+    ``skill_use("propose", ...)`` because the corruption is not
+    fixable by proposing a new change — it would silently wipe the
+    existing data.
+
+    Args:
+        iter_data: Parsed data (``None`` since corrupt).
+        read_error: Error string from :func:`read_iteration_or_corrupt`.
+        iter_path: Absolute path to iteration.json.
+        mode: ``"name"`` (single-change mode B) or ``"table"`` (mode A).
+            Reserved for future divergence; today both produce the
+            same message.
+
+    Returns:
+        Always 1 (corrupt iteration.json is a hard error).
+    """
+    print("❌ iteration.json fails schema validation")
+    print(f"   path: {iter_path}")
+    print(f"   error: {read_error}")
+    print(
+        "   fix: restore from a iteration.json.corrupt.<ts> backup in "
+        ".rddf/state/, or edit the file manually"
+    )
+    return 1
+
+
 def cmd_status(args: list[str]) -> int:
     """Handle ``rddf status [<name>|--roadmap|--iteration]``.
 
@@ -157,19 +189,16 @@ def cmd_status_detail(name: str, project_root: str) -> int:
         0 on success, 1 if iteration.json is missing/unreadable or the
         named change is not found in it.
     """
-    from skills._lib.state_reader import read_iteration
+    from skills._lib.state_reader import read_iteration_or_corrupt
 
-    try:
-        iter_data = read_iteration(project_root)
-    except Exception as e:
-        print(
-            f"❌ status: failed to read iteration.json: {e}",
-            file=sys.stderr,
-        )
-        return 1
+    iter_path = f"{project_root}/.rddf/state/iteration.json"
+    iter_data, read_error = read_iteration_or_corrupt(project_root)
+    if read_error is not None:
+        return _render_iteration_read_error(iter_data, read_error, iter_path)
 
     if iter_data is None:
         print("📭 iteration.json not found")
+        print(f"   expected at {iter_path}")
         print('   initialize via: skill_use("propose", "<change-name>")')
         return 1
 
@@ -292,16 +321,16 @@ def _mode_a(project_root: str) -> int:
     renders a 4-column table. Missing iteration.json renders a friendly
     notice rather than raising.
     """
-    from skills._lib.state_reader import read_iteration
+    from skills._lib.state_reader import read_iteration_or_corrupt
 
-    try:
-        iter_data = read_iteration(project_root)
-    except Exception as e:
-        print(f"❌ status: failed to read iteration.json: {e}", file=sys.stderr)
-        return 1
+    iter_path = f"{project_root}/.rddf/state/iteration.json"
+    iter_data, read_error = read_iteration_or_corrupt(project_root)
+    if read_error is not None:
+        return _render_iteration_read_error(iter_data, read_error, iter_path)
 
     if iter_data is None:
         print("📭 iteration.json not found")
+        print(f"   expected at {iter_path}")
         print('   initialize via: skill_use("propose", "<change-name>")')
         return 0
 

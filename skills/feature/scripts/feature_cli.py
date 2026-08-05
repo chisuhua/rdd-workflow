@@ -31,6 +31,19 @@ def _load_feature_view(project_root: str) -> dict:
         print("❌ iteration.json not found (run guide-plan first)", file=sys.stderr)
         sys.exit(1)
 
+    from skills._lib.state_reader import read_iteration_or_corrupt
+    _iter_data, read_error = read_iteration_or_corrupt(project_root)
+    if read_error is not None:
+        print("❌ iteration.json fails schema validation", file=sys.stderr)
+        print(f"   path: {iteration_path}", file=sys.stderr)
+        print(f"   error: {read_error}", file=sys.stderr)
+        print(
+            "   fix: restore from a iteration.json.corrupt.<ts> backup in "
+            ".rddf/state/, or edit the file manually",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     try:
         fv.update_iteration_feature_view(project_root)
     except (fv.NoIterationError, fv.FileLockedError) as e:

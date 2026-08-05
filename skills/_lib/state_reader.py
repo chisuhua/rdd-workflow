@@ -48,7 +48,7 @@ import os
 import subprocess
 from typing import Optional
 
-from skills._lib.iteration.store import _read_unlocked
+from skills._lib.iteration.store import _read_unlocked, _read_unlocked_verbose
 
 logger = logging.getLogger(__name__)
 
@@ -124,9 +124,33 @@ def read_iteration(project_root: str) -> Optional[dict]:
 
     Returns the parsed and validated dict, or ``None`` if the file is
     missing, contains invalid JSON, or fails schema validation.
+
+    Callers that need to distinguish missing from corrupt should use
+    :func:`read_iteration_or_corrupt` instead.
     """
     path = _state_path(project_root, "iteration.json")
     return _read_unlocked(path)
+
+
+def read_iteration_or_corrupt(project_root: str) -> tuple[Optional[dict], Optional[str]]:
+    """Like :func:`read_iteration` but distinguishes missing from corrupt.
+
+    Returns:
+        ``(data, None)`` on success or when the file is missing.
+        ``(None, error_message)`` if the file exists but is corrupt
+        (invalid JSON or schema-invalid). The error message is safe
+        to print and includes the JSON path to the bad entry.
+
+    Callers that need to surface corrupt-file diagnostics to users
+    (e.g. ``status_cmd.py``) should use this instead of
+    :func:`read_iteration`. The original ``read_iteration`` is kept
+    for backward compatibility — its existing callers (guide
+    recommender, intake phases) are unchanged.
+
+    Created: fix-rddf-status-corrupt-message (P1, 2026-08-05).
+    """
+    path = _state_path(project_root, "iteration.json")
+    return _read_unlocked_verbose(path)
 
 
 def read_sessions(project_root: str) -> Optional[list[dict]]:
