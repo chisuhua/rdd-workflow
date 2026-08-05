@@ -257,7 +257,8 @@ archive_gate_check() {
   fi
 
   local completed
-  completed=$(grep -c '^- \[x\]' "$tasks_file" 2>/dev/null || echo 0)
+  completed=$(grep -c '^- \[x\]' "$tasks_file" 2>/dev/null | head -n1)
+  [[ "$completed" =~ ^[0-9]+$ ]] || completed=0
 
   if [ "$completed" -eq 0 ]; then
     echo "❌ 未实现 (0 个完成任务)。设置 FORCE_ARCHIVE_INCOMPLETE=yes 跳过"
