@@ -125,3 +125,29 @@ def test_malformed_state_json_is_tolerated(tmp_path: Path, monkeypatch):
     from skills._lib.discover_ship_changes import discover
     result = discover(tmp_path)
     assert result == []
+
+
+def test_invalid_change_name_filtered(tmp_path: Path, monkeypatch):
+    """Directories with names that could cause option-injection are filtered."""
+    bad = tmp_path / "openspec" / "changes" / "--evil"
+    bad.mkdir(parents=True)
+    (bad / "tasks.md").write_text("- [x] x\n")
+    good = tmp_path / "openspec" / "changes" / "alpha"
+    good.mkdir(parents=True)
+    (good / "tasks.md").write_text("- [x] x\n")
+    from skills._lib.discover_ship_changes import discover
+    result = discover(tmp_path)
+    names = {c.name for c in result}
+    assert "alpha" in names
+    assert "--evil" not in names
+
+
+def test_is_valid_change_name_accepts_typical_names():
+    from skills._lib.discover_ship_changes import is_valid_change_name
+    assert is_valid_change_name("alpha")
+    assert is_valid_change_name("fix-rddf-init")
+    assert is_valid_change_name("v2.0.1")
+    assert not is_valid_change_name("")
+    assert not is_valid_change_name("--evil")
+    assert not is_valid_change_name("../../etc")
+    assert not is_valid_change_name("-leading-dash")

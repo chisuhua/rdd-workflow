@@ -54,7 +54,7 @@ detect_archive_mode() {
   local change_name="$2"
   local wt_path="$project_root/.rddf/wt/${change_name}"
 
-  if [ -d "$wt_path" ] && git -C "$project_root" worktree list | grep -q "$wt_path"; then
+  if [ -d "$wt_path" ] && git -C "$project_root" worktree list | grep -qF "$wt_path"; then
     echo "worktree"
   else
     echo "lightweight"

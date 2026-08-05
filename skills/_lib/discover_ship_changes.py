@@ -49,6 +49,21 @@ def _read_json(path: Path) -> dict:
         return {}
 
 
+import re as _re
+
+# Change names are filesystem identifiers fed into `openspec archive <name>`,
+# `validate_delta_targets.py <name>`, `git branch openspec/<name>`, etc. A
+# permissive check: alnum, dot, underscore, hyphen. No slashes, no leading
+# hyphen (avoids option-injection when callers forget `--`).
+_VALID_NAME = _re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+
+
+def is_valid_change_name(name: object) -> bool:
+    if not isinstance(name, str) or not name:
+        return False
+    return bool(_VALID_NAME.match(name))
+
+
 def _disk_candidates(project_root: Path) -> dict:
     changes_dir = project_root / "openspec" / "changes"
     out: dict = {}
@@ -56,6 +71,8 @@ def _disk_candidates(project_root: Path) -> dict:
         return out
     for entry in sorted(changes_dir.iterdir()):
         if not entry.is_dir() or entry.name == "archive":
+            continue
+        if not is_valid_change_name(entry.name):
             continue
         cand = Candidate(name=entry.name, filesystem_present=True)
         tasks_md = entry / "tasks.md"
@@ -114,7 +131,7 @@ def _git_candidates(project_root: Path) -> dict:
         branches = []
     for line in branches:
         name = line.split()[-1].removeprefix("openspec/")
-        if name:
+        if name and is_valid_change_name(name):
             raw_branches.append(name)
 
     # worktrees — always included as actionable runtime evidence, EXCEPT for
@@ -144,6 +161,8 @@ def _git_candidates(project_root: Path) -> dict:
                 branch = line[len("branch "):].removeprefix("refs/heads/")
         if branch and branch.startswith("openspec/"):
             name = branch.removeprefix("openspec/")
+            if not is_valid_change_name(name):
+                continue
             if name in archived:
                 # Don't surface the main repo worktree when the user is
                 # currently on an archived branch; ignore it entirely.

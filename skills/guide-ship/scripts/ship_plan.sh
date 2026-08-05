@@ -220,7 +220,7 @@ setup_execution_workspace() {
   if [ "$mode" = "worktree" ]; then
     local wt_path="$project_root/.rddf/wt/${change_name}"
     if [ -d "$wt_path" ]; then
-      if git -C "$project_root" worktree list | grep -q "$wt_path"; then
+      if git -C "$project_root" worktree list | grep -qF "$wt_path"; then
         echo "⚠️  Worktree 已存在" >&2
       else
         echo "❌ 目录冲突，请先清理: rm -rf \"$wt_path\"" >&2
