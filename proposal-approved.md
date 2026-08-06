@@ -47,9 +47,9 @@
 
 
 
-| [post-archive-cleanup-hook](improvements/post-archive-cleanup-hook.md) | P0 | 2026-08-06 | guide-arch |
 
 ## 已实施
+| [post-archive-cleanup-hook](improvements/post-archive-cleanup-hook.md) | P0 | 2026-08-06 |
 | [fix-rddf-init-broken-layout](improvements/fix-rddf-init-broken-layout.md) | P1 | 2026-08-06 |
 | [collect-l2-violation-count-on-archive](improvements/collect-l2-violation-count-on-archive.md) | P2 | 2026-08-06 |
 | [fix-tasks-md-archive-residue](improvements/fix-tasks-md-archive-residue.md) | P1 | 2026-08-06 |
