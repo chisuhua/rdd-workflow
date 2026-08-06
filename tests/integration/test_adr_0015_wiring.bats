@@ -8,7 +8,7 @@
 #
 # This change wires `openspec validate <change> --json` into guide-plan.md
 # Phase 4 (plan-done) and persists the result via
-# `skills/_lib/validate_report.py::write_report()` to
+# `_lib/validate_report.py::write_report()` to
 # `.rddf/state/openspec-validate.json`.
 #
 # These tests lock the contract:

@@ -51,7 +51,7 @@ STATE_FILE="$PROJECT_ROOT/.rddf/state/roadmap-state.json"
 
 # 加载 state.sh 辅助函数（safe_python_json, safe_python_yaml）
 # P2-3: state.json 读取改为防御式 (read+write 路径使用 safe_python_json 预检)
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 SCRIPT_DIR="$(resolve_rdd_skill_dir propose)"
 if [ -f "$SCRIPT_DIR/../_lib/state.sh" ]; then
   source "$SCRIPT_DIR/../_lib/state.sh"
@@ -324,7 +324,7 @@ else:
 }
 ```
 
-> 上面的 `description` 是一个 JSON 字符串字段（用 `\n` 表示换行）。`propose.md` 和 4 个其他 consumer（`guide-design.md`、`guide.md`、`status.md`、`deps.md`）都通过 `skills/_lib/state.sh::read_suggestions` / `write_suggestions` 读写。
+> 上面的 `description` 是一个 JSON 字符串字段（用 `\n` 表示换行）。`propose.md` 和 4 个其他 consumer（`guide-design.md`、`guide.md`、`status.md`、`deps.md`）都通过 `_lib/state.sh::read_suggestions` / `write_suggestions` 读写。
 
 **优先级归类**：
 
@@ -342,7 +342,7 @@ else:
 # 写入 proposal-suggestions.md（覆盖写入）
 # 格式为 JSON 数组（P1-7 规范）
 # 此文件将随 git 版本控制
-# 实际写入委托给 skills/_lib/state.sh::write_suggestions
+# 实际写入委托给 _lib/state.sh::write_suggestions
 ```
 
 ---
@@ -445,7 +445,7 @@ else:
 #
 # The artifact creation loop at lines 580-608 is HALF-IMPLEMENTED
 # (pseudo-code, see audit 2026-07-16) and is preserved as-is below.
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir propose)/scripts/propose_change.sh"
 
 THIS_SESSION_CREATED=()
@@ -675,7 +675,7 @@ if [ -f "proposal-suggestions.md" ]; then
     # P1-7: 文件格式已规范化为 JSON 列表
     #       用 json.load 解析后筛选 status == "待创建" 的条目
     #       旧实现的 grep 在 JSON 字符串中会误匹配 description 字段里的"待创建"字面量
-    source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+    source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
     source "$(resolve_rdd_lib_dir)/state.sh"
     REMAINING=$(count_pending_suggestions "$PROJECT_ROOT")
     REMAINING=${REMAINING:-0}

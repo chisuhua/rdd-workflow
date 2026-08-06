@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/_lib/test_state.bats
 #
-# Smoke tests for skills/_lib/state.sh.
+# Smoke tests for _lib/state.sh.
 #
 # As of general-harden-doc-consistency, state.sh is intentionally a stub
 # (the safe Python JSON/YAML helpers were removed; no production callers
@@ -19,12 +19,12 @@ setup() {
 }
 
 @test "state.sh exists and is readable" {
-  [ -f "$REPO_ROOT/skills/_lib/state.sh" ]
-  [ -r "$REPO_ROOT/skills/_lib/state.sh" ]
+  [ -f "$REPO_ROOT/_lib/state.sh" ]
+  [ -r "$REPO_ROOT/_lib/state.sh" ]
 }
 
 @test "state.sh sources without error" {
-  run bash -c "source '$REPO_ROOT/skills/_lib/state.sh' && echo 'loaded'"
+  run bash -c "source '$REPO_ROOT/_lib/state.sh' && echo 'loaded'"
   [ "$status" -eq 0 ]
   [[ "$output" == *"loaded"* ]]
 }
@@ -34,7 +34,7 @@ setup() {
   # intentionally empty. A regression that re-adds a broken helper would
   # be caught here (and would force the test author to consciously update
   # the contract).
-  run bash -c "source '$REPO_ROOT/skills/_lib/state.sh' && declare -F | awk '{print \$3}' | grep -E '^state_' || true"
+  run bash -c "source '$REPO_ROOT/_lib/state.sh' && declare -F | awk '{print \$3}' | grep -E '^state_' || true"
   [ "$status" -eq 0 ]
   [ -z "$output" ]
 }

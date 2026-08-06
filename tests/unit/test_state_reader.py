@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/state_reader.py - shared read-only data layer.
+"""Unit tests for _lib/state_reader.py - shared read-only data layer.
 
 TDD contract: these tests lock the read-only behavior of every public
 function in state_reader.py. Downstream consumers (guide recommender,

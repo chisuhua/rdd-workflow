@@ -25,6 +25,6 @@ load ../test_helper
 
 @test "iteration.json schema declared states match Mode A list" {
   for s in planned proposed in_worktree completed archived; do
-    grep -qE "\\b$s\\b" skills/_lib/schemas/iteration_schema.json
+    grep -qE "\\b$s\\b" _lib/schemas/iteration_schema.json
   done
 }

@@ -54,7 +54,7 @@ EOF
 EOF
 
     # state.sh (mock minimal)
-    cat > "$WORK_DIR/skills/_lib/state.sh" <<'EOF'
+    cat > "$WORK_DIR/_lib/state.sh" <<'EOF'
 #!/usr/bin/env bash
 append_approved() { return 0; }
 mark_approved_completed() { return 0; }

@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/propose_change.py."""
+"""Unit tests for _lib/propose_change.py."""
 import json
 import pytest
 from skills.propose.scripts import propose_change as pc

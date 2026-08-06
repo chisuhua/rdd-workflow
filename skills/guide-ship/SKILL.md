@@ -38,7 +38,7 @@ skill_use("guide-ship")   # 无参数版本
 ```bash
 # rddf-session 入口 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
 # stage_ship parent: latest stage_plan (auto-resolved by helper)
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir rddf-session)/scripts/rddf_session_hooks.sh"
 rddf_session_hook_entry stage_ship guide-ship ship-phase archive-all
 ```
@@ -76,7 +76,7 @@ run_ship_env_check
 **展示所有活跃 changes 的状态（统一 discovery）**：
 
 ```bash
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 SCRIPT_DIR="$(resolve_rdd_skill_dir guide-ship)"
 source "$SCRIPT_DIR/../_lib/discover_ship_changes.sh"
 
@@ -127,7 +127,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
@@ -142,7 +142,7 @@ CHANGE_NAME="${CHANGE_NAME:-fix-ns-pollution}"  # default for documentation
 
 # source 与调用必须同一行: AI 平台可能把代码块拆到多个 bash 进程,
 # 拆行会导致 "run_ship_phase1: command not found" (与 detect_execution_mode 同款根因)
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_plan.sh" && run_ship_phase1 "$PROJECT_ROOT" "$CHANGE_NAME"
 ```
 
@@ -152,7 +152,7 @@ source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_plan.sh" && run_ship_ph
 
 ```bash
 # v2.1: wave scheduler entry check - suggest changes ready to advance
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_lib_dir)/wave_scheduler_hooks.sh"
 wave_scheduler_entry_check "$PROJECT_ROOT" "guide-ship"
 ```
@@ -178,7 +178,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
@@ -247,7 +247,7 @@ fi
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
@@ -262,7 +262,7 @@ handle_invalid_choice "$choice"
 
 ```bash
 # Round A: extracted to _lib/ship_monitor.sh (L260-L315, ~54 lines)
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_monitor.sh"
 run_ship_monitor
 ```
@@ -297,7 +297,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
@@ -443,14 +443,14 @@ i. 手动输入新 change 名称
 
 ```bash
 # === Phase 2.5: thin orchestrator — heavy lifting in scripts/ship_review.sh ===
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_review.sh"
 handle_review_action "$PROJECT_ROOT" "$CHANGE_NAME" "$WT_PATH" "$choice"
 ```
 
 **3. 门控（可选）**:
 
-review 阶段的目的是分类记录债务，不阻断 archive。如果用户选择 "跳过"（选项 4），正常进入 Phase 3。门控检查通过 gate.py 的 `review_debt_recorded`（warning 级别）实现，见 `skills/_lib/gate.py`。
+review 阶段的目的是分类记录债务，不阻断 archive。如果用户选择 "跳过"（选项 4），正常进入 Phase 3。门控检查通过 gate.py 的 `review_debt_recorded`（warning 级别）实现，见 `_lib/gate.py`。
 
 **4. deps 重新分析规则**:
 
@@ -537,7 +537,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
@@ -546,7 +546,7 @@ handle_invalid_choice "$choice"
 
 ```bash
 # === Phase 3: thin orchestrator — heavy lifting in scripts/ship_archive.sh ===
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_archive.sh"
 
 ARCHIVE_MODE=$(detect_archive_mode "$PROJECT_ROOT" "$CHANGE_NAME")
@@ -560,7 +560,7 @@ archive_change_for_mode "$PROJECT_ROOT" "$CHANGE_NAME" "$ARCHIVE_MODE"
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
@@ -571,7 +571,7 @@ handle_invalid_choice "$choice"
 
 ```bash
 # rddf-session heartbeat refresh (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir rddf-session)/scripts/rddf_session_hooks.sh"
 rddf_session_hook_heartbeat stage_ship "$CHANGE_NAME"
 ```
@@ -591,7 +591,7 @@ rddf_session_hook_heartbeat stage_ship "$CHANGE_NAME"
 # Phase 3 post-archive: wave scheduler hook (v2.1) - supersedes post_archive_fill.sh
 # WaveScheduler detects both planned (wave=fill) AND proposed (wave=ship) changes
 # whose blockers have resolved. post_archive_fill.sh only handled planned.
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_lib_dir)/wave_scheduler_hooks.sh"
 wave_scheduler_post_archive "$PROJECT_ROOT" "$CHANGE_NAME"
 ```
@@ -627,7 +627,7 @@ i. 其他输入
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
@@ -645,7 +645,7 @@ handle_invalid_choice "$choice"
 ```bash
 # === Phase 4: thin orchestrator - heavy lifting in scripts/ship_cleanup.sh ===
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_cleanup.sh"
 cleanup_worktrees_and_branches "$PROJECT_ROOT"
 ```
@@ -662,7 +662,7 @@ Triggered when all committed changes have been archived (or no changes remain).
 # rddf-session 关闭 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
 # Documented behavior change (P3-4c): ship now prints 'not found, skipping'
 # when sessions.json missing, consistent with arch/plan close.
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir rddf-session)/scripts/rddf_session_hooks.sh"
 rddf_session_hook_close stage_ship ship-done guide-ship
 ```
@@ -671,7 +671,7 @@ rddf_session_hook_close stage_ship ship-done guide-ship
 
 ```bash
 # Phase 5 loop check - extracted to scripts/ship_done.sh
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_done.sh"
 check_remaining_work "$PROJECT_ROOT"
 ```
@@ -682,7 +682,7 @@ check_remaining_work "$PROJECT_ROOT"
 
 ```bash
 # 输入处理 — extracted to _lib/ship_case_handler.sh
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
@@ -703,11 +703,11 @@ Per improvements/guide-ship-default-serial-execution.md:
 - 仅在 parallel 模式下生效
 - serial 模式下输出 warning + 忽略
 
-**脚本入口**: `skills/_lib/ship_execution_mode.sh`
+**脚本入口**: `_lib/ship_execution_mode.sh`
 
 ```bash
 # 解析模式
-source skills/_lib/ship_execution_mode.sh
+source _lib/ship_execution_mode.sh
 MODE=$(parse_execution_mode "$@")  # 输出 "serial" 或 "parallel"
 
 if [ "$MODE" = "parallel" ]; then
@@ -730,6 +730,6 @@ fi
 
 **关键约束**:
 - 不修改 `execute/SKILL.md` 的 `run_in_background=false` 默认
-- 不修改 `skills/_lib/loop_engine.py::execute_plan` (已是 serial)
+- 不修改 `_lib/loop_engine.py::execute_plan` (已是 serial)
 - 不实现 parallel → serial 自动降级 fallback
 - 不引入新执行引擎或新依赖

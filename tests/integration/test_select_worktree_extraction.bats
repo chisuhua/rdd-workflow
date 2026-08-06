@@ -2,7 +2,7 @@
 # tests/integration/test_select_worktree_extraction.bats
 # Task 6 regression: execute.md L54-L168 was a ~113-line inline bash block for
 # worktree auto-detect + EXECUTE_CHOICE selection. Extracted to
-# skills/_lib/select_worktree.sh::auto_detect_worktree_context().
+# _lib/select_worktree.sh::auto_detect_worktree_context().
 #
 # 8 tests lock the refactor in place:
 #   1. Helper file exists with exported function.

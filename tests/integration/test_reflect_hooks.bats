@@ -87,7 +87,7 @@ with patch.object(e, '_do_analyze', side_effect=TimeoutError('simulated')):
   for script in \
     "$REPO_ROOT/skills/guide-arch/scripts/write_arch_handoff.sh" \
     "$REPO_ROOT/skills/guide-plan/scripts/plan_done_gate.sh" \
-    "$REPO_ROOT/skills/_lib/archive.sh"; do
+    "$REPO_ROOT/_lib/archive.sh"; do
     assert_reflect_hook_present "$script"
     assert_skip_guard_present "$script"
     assert_non_blocking "$script"

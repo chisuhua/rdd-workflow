@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_state_append_approved.bats
 #
-# Regression tests for append_approved() in skills/_lib/state.sh.
+# Regression tests for append_approved() in _lib/state.sh.
 # Verifies no double-echo bug (fix: 0232805) and correct return semantics.
 # Run: bats tests/integration/test_state_append_approved.bats
 
@@ -31,20 +31,20 @@ teardown() {
 
 @test "append_approved: single output line per approval" {
     # Regression: fix 0232805 removed internal echo that caused double output
-    source "$REPO_ROOT/skills/_lib/state.sh"
-    run bash -c "source '$REPO_ROOT/skills/_lib/state.sh' && append_approved '$FIXTURE_DIR' 'test-new-approval' 'P2'"
+    source "$REPO_ROOT/_lib/state.sh"
+    run bash -c "source '$REPO_ROOT/_lib/state.sh' && append_approved '$FIXTURE_DIR' 'test-new-approval' 'P2'"
     # Should have at most 1 line of output (or 0) — no duplicate echo
     [ "$(echo "$output" | wc -l)" -le 1 ]
 }
 
 @test "append_approved: returns 0 on success" {
-    source "$REPO_ROOT/skills/_lib/state.sh"
-    run bash -c "source '$REPO_ROOT/skills/_lib/state.sh' && append_approved '$FIXTURE_DIR' 'test-return-code' 'P2'"
+    source "$REPO_ROOT/_lib/state.sh"
+    run bash -c "source '$REPO_ROOT/_lib/state.sh' && append_approved '$FIXTURE_DIR' 'test-return-code' 'P2'"
     [ "$status" -eq 0 ]
 }
 
 @test "append_approved: appends row to approved table" {
-    source "$REPO_ROOT/skills/_lib/state.sh"
+    source "$REPO_ROOT/_lib/state.sh"
     append_approved "$FIXTURE_DIR" 'test-verify-row' 'P2'
     grep -q '\[test-verify-row\]' "$FIXTURE_DIR/proposal-approved.md"
 }

@@ -61,7 +61,7 @@ setup() {
 
 @test "deps.md Step 5 has dynamic branch (AI_RESULT_FILE or fallback) — extracted to helper" {
   # P0-3 extraction: the AI dynamic branch logic moved to deps_render_report.sh.
-  # v2.0.8 Phase 2: helper moved from skills/_lib/ to skills/deps/scripts/.
+  # v2.0.8 Phase 2: helper moved from _lib/ to skills/deps/scripts/.
   # Verify both the inline wrapper reference AND the Python helper contain
   # the keywords (AI_RESULT_FILE / fallback / 降级) that downstream tests
   # and consumers rely on.

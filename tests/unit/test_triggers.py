@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/triggers.py"""
+"""Unit tests for _lib/triggers.py"""
 from skills._lib.triggers import Trigger, TriggerManager
 
 

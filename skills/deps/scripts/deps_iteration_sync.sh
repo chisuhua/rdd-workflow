@@ -1,4 +1,4 @@
-# skills/_lib/deps_iteration_sync.sh
+# _lib/deps_iteration_sync.sh
 # Step 6 of deps.md: sync iteration.json from deps-analysis.json (P3-4d).
 # Replaces a 97-line inline PYEOF heredoc with a thin wrapper around
 # deps_output.py + iteration.py. The markdown-fallback regex parsing

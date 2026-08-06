@@ -3,8 +3,8 @@
 # Status extraction regression: Mode B sync detection/repair and Mode E
 # iteration rendering were inlined as bash heredocs in status.md. They
 # were extracted to:
-#   - skills/_lib/status_helpers.sh (detect_sync_issues, repair_sync_state)
-#   - skills/_lib/iteration.py::print_view
+#   - _lib/status_helpers.sh (detect_sync_issues, repair_sync_state)
+#   - _lib/iteration.py::print_view
 #
 # These tests lock the refactor in place:
 #   1. status_helpers.sh exists with detect_sync_issues and
@@ -21,14 +21,14 @@
 
 load ../test_helper
 
-@test "skills/_lib/status_helpers.sh exists with detect_sync_issues function" {
-  [ -f "$REPO_ROOT/skills/_lib/status_helpers.sh" ]
-  grep -qE '^detect_sync_issues\(\)' "$REPO_ROOT/skills/_lib/status_helpers.sh"
+@test "_lib/status_helpers.sh exists with detect_sync_issues function" {
+  [ -f "$REPO_ROOT/_lib/status_helpers.sh" ]
+  grep -qE '^detect_sync_issues\(\)' "$REPO_ROOT/_lib/status_helpers.sh"
 }
 
-@test "skills/_lib/status_helpers.sh also defines repair_sync_state" {
-  [ -f "$REPO_ROOT/skills/_lib/status_helpers.sh" ]
-  grep -qE '^repair_sync_state\(\)' "$REPO_ROOT/skills/_lib/status_helpers.sh"
+@test "_lib/status_helpers.sh also defines repair_sync_state" {
+  [ -f "$REPO_ROOT/_lib/status_helpers.sh" ]
+  grep -qE '^repair_sync_state\(\)' "$REPO_ROOT/_lib/status_helpers.sh"
 }
 
 @test "status.md Mode B sources and uses status_helpers.sh::detect_sync_issues" {
@@ -53,15 +53,15 @@ load ../test_helper
   ! grep -nE 'awk -v desc=' "$REPO_ROOT/skills/status/SKILL.md"
 }
 
-@test "skills/_lib/iteration package::print_view is defined and importable" {
+@test "_lib/iteration package::print_view is defined and importable" {
   # v2.0.8 Phase 3: iteration.py (single file) was promoted to a package
-  # at skills/_lib/iteration/ with __init__.py re-exporting print_view
+  # at _lib/iteration/ with __init__.py re-exporting print_view
   # from render.py. The import path `from skills._lib.iteration import
   # print_view` is unchanged.
-  [ -d "$REPO_ROOT/skills/_lib/iteration" ]
-  [ -f "$REPO_ROOT/skills/_lib/iteration/__init__.py" ]
-  grep -qE 'print_view' "$REPO_ROOT/skills/_lib/iteration/__init__.py"
-  grep -qE '^def print_view\(' "$REPO_ROOT/skills/_lib/iteration/render.py"
+  [ -d "$REPO_ROOT/_lib/iteration" ]
+  [ -f "$REPO_ROOT/_lib/iteration/__init__.py" ]
+  grep -qE 'print_view' "$REPO_ROOT/_lib/iteration/__init__.py"
+  grep -qE '^def print_view\(' "$REPO_ROOT/_lib/iteration/render.py"
   REPO_ROOT="$REPO_ROOT" python3 -c '
 import os, sys
 sys.path.insert(0, os.environ["REPO_ROOT"])
@@ -107,7 +107,7 @@ print("OK")
   git config user.name  "test"
   echo "x" > a && git add a && git commit -q -m "init"
 
-  source "$REPO_ROOT/skills/_lib/status_helpers.sh"
+  source "$REPO_ROOT/_lib/status_helpers.sh"
 
   run detect_sync_issues "$TEST_REPO" "no-such-change" 0 0
   [ "$status" -eq 1 ]
@@ -123,7 +123,7 @@ print("OK")
   printf -- '- [x] task 1\n- [x] task 2\n' > .rddf/plans/foo.md
   printf -- '- [x] task 1\n- [ ] task 2\n' > openspec/changes/foo/tasks.md
 
-  source "$REPO_ROOT/skills/_lib/status_helpers.sh"
+  source "$REPO_ROOT/_lib/status_helpers.sh"
 
   run detect_sync_issues "$TEST_REPO" "foo" 0 0
   [ "$status" -eq 0 ]
@@ -138,7 +138,7 @@ print("OK")
   mkdir -p openspec/changes/foo
   printf -- '- [ ] task A\n- [ ] task B\n' > openspec/changes/foo/tasks.md
 
-  source "$REPO_ROOT/skills/_lib/status_helpers.sh"
+  source "$REPO_ROOT/_lib/status_helpers.sh"
 
   run repair_sync_state "$TEST_REPO" "foo" "task A"
   [ "$status" -eq 0 ]
@@ -154,7 +154,7 @@ print("OK")
   mkdir -p openspec/changes/foo
   printf -- '- [ ] task A\n' > openspec/changes/foo/tasks.md
 
-  source "$REPO_ROOT/skills/_lib/status_helpers.sh"
+  source "$REPO_ROOT/_lib/status_helpers.sh"
 
   run repair_sync_state "$TEST_REPO" "foo" "no such task"
   [ "$status" -eq 1 ]

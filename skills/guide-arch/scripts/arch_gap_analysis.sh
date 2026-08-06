@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/arch_gap_analysis.sh — extracted from guide-arch.md L343-L431
+# _lib/arch_gap_analysis.sh — extracted from guide-arch.md L343-L431
 # Exports:
 #   - generate_gap_analysis <slug> — creates docs/architecture/<slug>-gap-analysis.md
 #   - list_gap_analyses           — prints numbered list of existing gap analyses

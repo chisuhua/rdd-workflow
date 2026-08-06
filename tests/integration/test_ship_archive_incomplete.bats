@@ -8,7 +8,7 @@ load ../test_helper
     TMP="$BATS_TMPDIR/test-arch"
     mkdir -p "$TMP/openspec/changes/incomplete"
     printf -- '- [ ] a\n- [ ] b\n' > "$TMP/openspec/changes/incomplete/tasks.md"
-    run bash -c "source '$PROJECT_ROOT/skills/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'incomplete'"
+    run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'incomplete'"
     [ "$status" -eq 1 ]
     [[ "$output" =~ "未实现" ]]
 }
@@ -17,7 +17,7 @@ load ../test_helper
     TMP="$BATS_TMPDIR/test-arch2"
     mkdir -p "$TMP/openspec/changes/complete"
     printf -- '- [x] a\n- [x] b\n' > "$TMP/openspec/changes/complete/tasks.md"
-    run bash -c "source '$PROJECT_ROOT/skills/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'complete'"
+    run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'complete'"
     [ "$status" -eq 0 ]
 }
 
@@ -26,6 +26,6 @@ load ../test_helper
     mkdir -p "$TMP/openspec/changes/force"
     printf -- '- [ ] a\n- [ ] b\n' > "$TMP/openspec/changes/force/tasks.md"
     FORCE_ARCHIVE_INCOMPLETE=yes \
-        run bash -c "source '$PROJECT_ROOT/skills/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'force'"
+        run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'force'"
     [ "$status" -eq 0 ]
 }

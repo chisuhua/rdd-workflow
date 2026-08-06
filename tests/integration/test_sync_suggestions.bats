@@ -4,7 +4,7 @@
 load ../test_helper
 
 @test "sync: sync_suggestions approved removes row from suggestions" {
-  source "$PROJECT_ROOT/skills/_lib/state.sh"
+  source "$PROJECT_ROOT/_lib/state.sh"
   
   mkdir -p "$BATS_TMPDIR/test-sync"
   cat > "$BATS_TMPDIR/test-sync/proposal-suggestions.md" <<'EOF'
@@ -18,7 +18,7 @@ EOF
 }
 
 @test "sync: sync_suggestions deferred updates status column" {
-  source "$PROJECT_ROOT/skills/_lib/state.sh"
+  source "$PROJECT_ROOT/_lib/state.sh"
   
   mkdir -p "$BATS_TMPDIR/test-defer"
   cat > "$BATS_TMPDIR/test-defer/proposal-suggestions.md" <<'EOF'
@@ -32,7 +32,7 @@ EOF
 }
 
 @test "sync: append_approved calls sync_suggestions (removes row)" {
-  source "$PROJECT_ROOT/skills/_lib/state.sh"
+  source "$PROJECT_ROOT/_lib/state.sh"
   
   mkdir -p "$BATS_TMPDIR/test-append"
   cat > "$BATS_TMPDIR/test-append/proposal-approved.md" <<'EOF'

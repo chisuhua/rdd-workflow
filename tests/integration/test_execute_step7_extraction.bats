@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_execute_step7_extraction.bats
 # Round B Task B9 extraction: execute.md L195-L282 Step 7 final report block
-# (~88 lines) extracted to skills/_lib/execute_step7.{py,sh,env.py}.
+# (~88 lines) extracted to _lib/execute_step7.{py,sh,env.py}.
 #
 # These tests lock the refactor in place:
 #   1. execute_step7.{sh,py,env.py} exist with correct functions.

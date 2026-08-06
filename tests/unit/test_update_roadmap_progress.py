@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/update_roadmap_progress.py"""
+"""Unit tests for _lib/update_roadmap_progress.py"""
 import os
 import json
 import tempfile

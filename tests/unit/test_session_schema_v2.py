@@ -9,7 +9,7 @@ except ImportError:
     pytest.skip("jsonschema not installed", allow_module_level=True)
 
 
-SCHEMA = json.loads(Path("skills/_lib/schemas/sessions_schema.json").read_text())
+SCHEMA = json.loads(Path("_lib/schemas/sessions_schema.json").read_text())
 
 
 def test_schema_version_accepts_v1_and_v2():

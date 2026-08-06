@@ -1,4 +1,4 @@
-"""Tests for skills/_lib/event_types.py — EventType, Severity enums and Event dataclass."""
+"""Tests for _lib/event_types.py — EventType, Severity enums and Event dataclass."""
 import pytest
 from skills._lib.core.event_types import EventType, Severity, Event
 

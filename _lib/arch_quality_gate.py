@@ -302,19 +302,19 @@ def _check_handoff_actionable(ctx: dict) -> tuple[bool, Optional[str]]:
 
 
 def _check_file_size(ctx: dict) -> tuple[bool, Optional[str]]:
-    """Check if any Python file in skills/_lib exceeds size limit (warning-level).
+    """Check if any Python file in _lib exceeds size limit (warning-level).
 
     Rationale: Large files often indicate god classes or mixed responsibilities.
     This check surfaces potential refactoring candidates without blocking.
 
     Environment:
         ARCH_FILE_SIZE_LIMIT: max lines before warning (default 300)
-        ARCH_FILE_SIZE_SCAN_PATHS: colon-separated paths to scan (default skills/_lib)
+        ARCH_FILE_SIZE_SCAN_PATHS: colon-separated paths to scan (default _lib)
     """
     project_root = ctx.get("project_root", ".")
     max_lines = int(os.environ.get("ARCH_FILE_SIZE_LIMIT", "300"))
     scan_paths = os.environ.get(
-        "ARCH_FILE_SIZE_SCAN_PATHS", "skills/_lib"
+        "ARCH_FILE_SIZE_SCAN_PATHS", "_lib"
     ).split(":")
 
     oversized_files = []

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/feature_summary.sh — extracted from feature.md (subcommand: summary)
+# _lib/feature_summary.sh — extracted from feature.md (subcommand: summary)
 # Exports: render_feature_summary()
 
 render_feature_summary() {

@@ -20,7 +20,7 @@ def test_config_openspec_gate_section():
 def test_config_openspec_gate_schema():
     with open("config.yaml") as f:
         cfg = yaml.safe_load(f)
-    schema_path = os.path.join("skills", "_lib", "schemas", "config_schema.json")
+    schema_path = os.path.join("_lib", "schemas", "config_schema.json")
     with open(schema_path) as f:
         schema = json.load(f)
     jsonschema.validate(cfg, schema)

@@ -28,9 +28,9 @@ def test_cmd_archive_help_flag_returns_zero(capsys):
 
 
 def test_cmd_archive_invokes_archive_sh(tmp_path, monkeypatch, capsys):
-    """cmd_archive <name> subprocesses to skills/_lib/archive.sh and reports success."""
+    """cmd_archive <name> subprocesses to _lib/archive.sh and reports success."""
     # Build a fake archive.sh at the expected location
-    fake_archive_dir = tmp_path / "skills" / "_lib"
+    fake_archive_dir = tmp_path / "_lib"
     fake_archive_dir.mkdir(parents=True)
     fake_archive = fake_archive_dir / "archive.sh"
     fake_archive.write_text(
@@ -62,7 +62,7 @@ def test_cmd_archive_missing_archive_sh(tmp_path, monkeypatch, capsys):
     """When archive.sh is not found, cmd_archive prints a clear error and exits 1."""
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
     # Monkeypatch _ARCHIVE_SH to point at a nonexistent file
-    monkeypatch.setattr(archive_cmd, "_ARCHIVE_SH", str(tmp_path / "skills" / "_lib" / "nonexistent.sh"))
+    monkeypatch.setattr(archive_cmd, "_ARCHIVE_SH", str(tmp_path / "_lib" / "nonexistent.sh"))
     rc = archive_cmd.cmd_archive(["my-change"])
     captured = capsys.readouterr()
     assert rc == 1

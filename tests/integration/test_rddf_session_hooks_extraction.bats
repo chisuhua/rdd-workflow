@@ -17,7 +17,7 @@
 
 load ../test_helper
 
-@test "skills/_lib/rddf_session_hooks.sh exists with both function exports" {
+@test "_lib/rddf_session_hooks.sh exists with both function exports" {
   [ -f "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh" ]
   grep -q '^rddf_session_hook_entry()' "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
   grep -q '^rddf_session_hook_close()' "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"

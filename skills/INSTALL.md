@@ -169,12 +169,12 @@ done
 # 顶层 INSTALL.md 单独复制（保持在 skills/ 顶层，不放入子目录）
 cp -f "$PACKAGE_DIR/skills/INSTALL.md" "$SKILLS_DIR/skills/"
 
-# 复制 skills/_lib/ 运行时所需 Python 模块、schemas 和 bash helper
+# 复制 _lib/ 运行时所需 Python 模块、schemas 和 bash helper
 # 这样 feature.md (depends-on: [iteration, deps_output])、rddf-session.md (depends-on: [rddf_session])
 # 以及 status.md (source _lib/status_helpers.sh)、guide-ship.md (source _lib/archive.sh) 等
 # 在目标项目里也能正常 import / source
 if [ -d "$PACKAGE_DIR/skills/_lib" ]; then
-    mkdir -p "$SKILLS_DIR/skills/_lib/schemas"
+    mkdir -p "$SKILLS_DIR/_lib/schemas"
     find "$PACKAGE_DIR/skills/_lib" \
         -type d \( -name __pycache__ -o -name plugins -o -name schedulers \) -prune \
         -o -type f \( -name '*.py' -o -name '*.json' -o -name '*.sh' \) -print 2>/dev/null | while read -r src; do
@@ -356,7 +356,7 @@ rm -f "$PROJECT_ROOT/install-rdd-workflow.sh"
 安装完成后,执行项目设置检查以确认 `.gitignore` 已正确配置:
 
 ```bash
-source skills/_lib/check_project_setup.sh
+source _lib/check_project_setup.sh
 issues=$(check_project_setup "$(pwd)")
 echo "$issues" | jq -r '.[] | "  \(if .status == "pass" then "✅" else "❌" end) \(.name): \(.detail)"'
 ```

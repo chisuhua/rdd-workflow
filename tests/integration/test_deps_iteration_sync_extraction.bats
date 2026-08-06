@@ -17,7 +17,7 @@
 
 load ../test_helper
 
-@test "skills/_lib/deps_iteration_sync.sh exists with deps_iteration_sync function" {
+@test "_lib/deps_iteration_sync.sh exists with deps_iteration_sync function" {
   [ -f "$REPO_ROOT/skills/deps/scripts/deps_iteration_sync.sh" ]
   grep -q '^deps_iteration_sync()' "$REPO_ROOT/skills/deps/scripts/deps_iteration_sync.sh"
 }

@@ -34,18 +34,18 @@ setup() {
 @test "review_phase: iteration schema has review in VALID_STATUSES" {
     # v2.0.8: iteration.py single file refactored to iteration/ package;
     # _VALID_STATUSES with "review" now lives in iteration/schema.py
-    [ -f "skills/_lib/iteration/schema.py" ]
-    grep -q '"review"' "skills/_lib/iteration/schema.py"
+    [ -f "_lib/iteration/schema.py" ]
+    grep -q '"review"' "_lib/iteration/schema.py"
 }
 
 @test "review_phase: iteration schema has version 4 and review status" {
-    [ -f "skills/_lib/schemas/iteration_schema.json" ]
+    [ -f "_lib/schemas/iteration_schema.json" ]
     # Schema v4: 'review' status is in the lifecycle enum, and version=4 is the current const.
-    grep -q '"const": 4' "skills/_lib/schemas/iteration_schema.json"
-    grep -q '"review"' "skills/_lib/schemas/iteration_schema.json"
+    grep -q '"const": 4' "_lib/schemas/iteration_schema.json"
+    grep -q '"review"' "_lib/schemas/iteration_schema.json"
 }
 
 @test "review_phase: gate.py has review_debt_recorded check" {
-    [ -f "skills/_lib/gate.py" ]
-    grep -q "review_debt_recorded" "skills/_lib/gate.py"
+    [ -f "_lib/gate.py" ]
+    grep -q "review_debt_recorded" "_lib/gate.py"
 }

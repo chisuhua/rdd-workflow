@@ -638,7 +638,7 @@ esac
 
 **写入 handoff 状态**：
 
-arch -> plan 交接通过 `.rddf/state/.arch-handoff.json` 软状态文件传递。arch-done 验证通过后立即写入。文件不被 git 跟踪（`.gitignore` 已排除 `.rddf/state/`），缺失时 plan 端硬阻断。v1 schema 见 `skills/_lib/schemas/arch_handoff_schema.json`（ADR-0016 Layer 2）。
+arch -> plan 交接通过 `.rddf/state/.arch-handoff.json` 软状态文件传递。arch-done 验证通过后立即写入。文件不被 git 跟踪（`.gitignore` 已排除 `.rddf/state/`），缺失时 plan 端硬阻断。v1 schema 见 `_lib/schemas/arch_handoff_schema.json`（ADR-0016 Layer 2）。
 
 ```bash
 # Round A: extracted to _lib/write_arch_handoff.{py,sh} (L618-L707, ~88 lines)

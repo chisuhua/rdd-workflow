@@ -151,7 +151,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Inject project_root as an env var so handlers can read it
     # without re-resolving. Handlers import this via os.environ.
-    os.environ["RDDF_PROJECT_ROOT"] = project_root
+    os.environ.setdefault("RDDF_PROJECT_ROOT", project_root)
 
     try:
         return route(subcommand, rest)

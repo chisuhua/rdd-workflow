@@ -1,4 +1,4 @@
-# skills/_lib/ship_archive.sh
+# _lib/ship_archive.sh
 # Phase 3 of guide-ship.md extracted into a reusable helper.
 # Was a 179-line inline bash block (lines 927-1107) handling archive mode
 # detection, feature integrity check, and worktree/lightweight archive
@@ -25,7 +25,7 @@
 #           branch cleanup (-d, fallback -D when FORCE_BRANCH_DELETE=yes).
 #       Mirrors the original MODE-SPECIFIC archive orchestration.
 #
-# Helpers required (provided by skills/_lib/worktree.sh, archive.sh):
+# Helpers required (provided by _lib/worktree.sh, archive.sh):
 #   - wt_path_for_branch <name>           (worktree.sh)
 #   - find_default_branch                (worktree.sh)
 #   - main_repo_root                     (worktree.sh)
@@ -33,7 +33,7 @@
 #   - commit_archive_moves <name> <root> (archive.sh)
 #   - mark_iteration_archived <name> <root> (archive.sh)
 
-# _LIB_DIR points to skills/_lib/ (shared library location)
+# _LIB_DIR points to _lib/ (shared library location)
 # This script is in skills/guide-ship/scripts/, so we need to go up 2 levels
 # and then into _lib to find the shared helpers.
 _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
@@ -201,10 +201,10 @@ archive_change_for_mode() {
     fi
 
     # Spec-validation gate (add-spec-validation-gates)
-    if ! python3 "$project_root/skills/_lib/validate_delta_targets.py" "$change_name" 2>/dev/null; then
+    if ! python3 "$project_root/_lib/validate_delta_targets.py" "$change_name" 2>/dev/null; then
       echo "❌ Archive pre-flight failed for $change_name" >&2
       echo "   Delta targets invalid. Run validate_delta_targets.py for details." >&2
-      python3 "$project_root/skills/_lib/validate_delta_targets.py" "$change_name"
+      python3 "$project_root/_lib/validate_delta_targets.py" "$change_name"
       return 1
     fi
 

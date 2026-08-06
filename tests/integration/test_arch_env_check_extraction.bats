@@ -2,7 +2,7 @@
 # tests/integration/test_arch_env_check_extraction.bats
 # Round A extraction: guide-arch.md Phase 1 Steps 1-5 (L92-L189, ~96 lines)
 # was a single inline bash code block. Extracted to
-# skills/_lib/arch_env_check.sh::run_arch_env_check().
+# _lib/arch_env_check.sh::run_arch_env_check().
 #
 # These tests lock the refactor in place:
 #   1. arch_env_check.sh exists with run_arch_env_check function.
@@ -75,7 +75,7 @@ REPLACED_RANGE="92,189p"
   local tmpdir
   tmpdir=$(mktemp -d)
   cp -r "$REPO_ROOT" "$tmpdir/repo"
-  rm "$tmpdir/repo/skills/_lib/discover-arch-artifacts.sh"
+  rm "$tmpdir/repo/_lib/discover-arch-artifacts.sh"
   output=$(bash -c "cd '$tmpdir/repo' && source skills/guide-arch/scripts/arch_env_check.sh && run_arch_env_check" 2>&1)
   rm -rf "$tmpdir"
   # Discover section always shown, using fallback defaults when helper missing

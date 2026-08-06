@@ -2,7 +2,7 @@
 # tests/integration/test_ship_review_extraction.bats
 # P3-2 regression: Phase 2.5 of guide-ship.md was a 173-line case/esac
 # bash block handling 4 review-debt sub-actions. Extracted to
-# skills/_lib/ship_review.sh.
+# _lib/ship_review.sh.
 #
 # These tests lock the refactor in place:
 #   1. ship_review.sh exists with handle_review_action exported.
@@ -12,7 +12,7 @@
 
 load ../test_helper
 
-@test "skills/_lib/ship_review.sh exists with handle_review_action" {
+@test "_lib/ship_review.sh exists with handle_review_action" {
   [ -f "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh" ]
   grep -q "^handle_review_action()" "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh"
 }

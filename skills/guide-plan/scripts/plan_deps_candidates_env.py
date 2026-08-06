@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Entry-point script for skills/_lib/plan_deps_candidates.sh::generate_deps_candidates.
+"""Entry-point script for _lib/plan_deps_candidates.sh::generate_deps_candidates.
 
 Reads env var PROJECT_ROOT and delegates to plan_deps_candidates.generate_deps_candidates().
 No bash string interpolation - all values flow through os.environ (Oracle C1 safe).

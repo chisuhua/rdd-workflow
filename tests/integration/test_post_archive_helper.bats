@@ -1,7 +1,7 @@
 load ../test_helper
 
 # Integration test for fix-archive-iteration-sync: verify that the bash
-# wrapper mark_iteration_archived in skills/_lib/archive.sh correctly
+# wrapper mark_iteration_archived in _lib/archive.sh correctly
 # calls sync_iteration_after_archive (the new Python helper) and writes
 # the archive_commit_sha field to iteration.json.
 

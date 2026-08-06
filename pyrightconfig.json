@@ -1,6 +1,7 @@
 {
   "include": [
     "skills",
+    "_lib",
     "tests"
   ],
   "exclude": [

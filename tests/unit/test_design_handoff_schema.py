@@ -12,7 +12,6 @@ from jsonschema import Draft7Validator
 
 SCHEMA_PATH = (
     Path(__file__).resolve().parent.parent.parent
-    / "skills"
     / "_lib"
     / "schemas"
     / "design_handoff_schema.json"

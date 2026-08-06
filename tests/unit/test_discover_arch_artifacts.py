@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/discover-arch-artifacts.sh (ADR-0016 Layer 1).
+"""Unit tests for _lib/discover-arch-artifacts.sh (ADR-0016 Layer 1).
 
 Tests rely on subprocess driving the shell script because:
 - Bash globals across `$(...)` have propagation gotchas (Momus CRITICAL#2)
@@ -15,7 +15,6 @@ from pathlib import Path
 
 DISCOVER_SH = (
     Path(__file__).resolve().parent.parent.parent
-    / "skills"
     / "_lib"
     / "discover-arch-artifacts.sh"
 )

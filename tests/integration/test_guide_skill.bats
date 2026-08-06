@@ -67,7 +67,7 @@ setup() {
 
 @test "guide_skill synthesizer module exists and is importable" {
   # The synthesizer module MUST exist and import cleanly.
-  local synth_file="$REPO_ROOT/skills/_lib/workflow_synthesizer.py"
+  local synth_file="$REPO_ROOT/_lib/workflow_synthesizer.py"
   assert_file_exists "$synth_file"
 
   # Must import without error

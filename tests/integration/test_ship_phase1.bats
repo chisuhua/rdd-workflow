@@ -27,7 +27,7 @@ SKILL_MD="$REPO_ROOT/skills/guide-ship/SKILL.md"
 @test "ship_plan.sh has sourced-only guard matching discover-arch-artifacts.sh style" {
   [ -f "$SHIP_PLAN" ]
   # Use [ not [[ — must match existing precedent at
-  # skills/_lib/discover-arch-artifacts.sh L27.
+  # _lib/discover-arch-artifacts.sh L27.
   grep -qE 'if \[ "\$\{BASH_SOURCE\[0\]\}" = "\$0" \]' "$SHIP_PLAN"
   grep -qE 'echo .*Source it instead' "$SHIP_PLAN"
 }

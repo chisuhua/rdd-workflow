@@ -42,23 +42,23 @@ teardown() {
 }
 
 @test "scanner fallback: local state.sh used when both exist" {
-  _make_state_sh "$repo/skills/_lib/state.sh"
-  _make_state_sh "$home/.agents/skills/_lib/state.sh"
+  _make_state_sh "$repo/_lib/state.sh"
+  _make_state_sh "$home/.agents/_lib/state.sh"
 
   run _run_scan_state "$repo"
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"SOURCE=$repo/skills/_lib/state.sh"* ]]
+  [[ "$output" == *"SOURCE=$repo/_lib/state.sh"* ]]
   [[ "$output" == *"RECOMMEND=guide-arch"* ]]
 }
 
 @test "scanner fallback: global state.sh used when local is missing" {
-  _make_state_sh "$home/.agents/skills/_lib/state.sh"
+  _make_state_sh "$home/.agents/_lib/state.sh"
 
   run _run_scan_state "$repo"
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"SOURCE=$home/.agents/skills/_lib/state.sh"* ]]
+  [[ "$output" == *"SOURCE=$home/.agents/_lib/state.sh"* ]]
   [[ "$output" == *"RECOMMEND=guide-arch"* ]]
 }
 
@@ -71,11 +71,11 @@ teardown() {
 }
 
 @test "scanner fallback: local and global produce identical recommendation" {
-  _make_state_sh "$repo/skills/_lib/state.sh"
+  _make_state_sh "$repo/_lib/state.sh"
   local local_out
   local_out=$(_run_scan_state "$repo")
-  rm "$repo/skills/_lib/state.sh"
-  _make_state_sh "$home/.agents/skills/_lib/state.sh"
+  rm "$repo/_lib/state.sh"
+  _make_state_sh "$home/.agents/_lib/state.sh"
   local global_out
   global_out=$(_run_scan_state "$repo")
 
@@ -94,7 +94,7 @@ _run_guide_entry() {
 }
 
 @test "guide_entry fallback: global state.sh used when local is missing" {
-  _make_state_sh "$home/.agents/skills/_lib/state.sh"
+  _make_state_sh "$home/.agents/_lib/state.sh"
 
   run _run_guide_entry "$repo" "$home"
 

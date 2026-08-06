@@ -35,7 +35,7 @@ def project_root(tmp_path):
 def deps_schema():
     schema_path = os.path.join(
         os.path.dirname(__file__),
-        "..", "..", "skills", "_lib", "schemas", "deps_analysis_schema.json",
+        "..", "..", "_lib", "schemas", "deps_analysis_schema.json",
     )
     with open(schema_path, encoding="utf-8") as f:
         return json.load(f)

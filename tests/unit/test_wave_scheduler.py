@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/wave_scheduler.py - auto wave transition detector.
+"""Unit tests for _lib/wave_scheduler.py - auto wave transition detector.
 
 TDD contract: locks the behavior of WaveScheduler which consumes
 iteration.json + deps-analysis.json and returns Recommendation list

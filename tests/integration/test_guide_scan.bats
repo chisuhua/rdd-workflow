@@ -2,7 +2,7 @@
 #
 # Wave 3 / T12: verify scan-state.sh carries the P1-3 and P1-4 fixes.
 # Original audit was on skills/guide/SKILL.md; extraction moved the code to
-# skills/_lib/scan-state.sh, so this file's assertions follow the code.
+# _lib/scan-state.sh, so this file's assertions follow the code.
 
 load ../test_helper
 

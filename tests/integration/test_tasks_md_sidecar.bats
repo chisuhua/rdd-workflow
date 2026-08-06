@@ -52,7 +52,7 @@ exit 0
 EOF
     chmod +x .bin/openspec
     PATH="$(pwd)/.bin:$PATH" bash -c "
-        source '$REPO_ROOT/skills/_lib/archive.sh'
+        source '$REPO_ROOT/_lib/archive.sh'
         archive_change test-change
     " 2>&1 | tail -5
 
@@ -93,7 +93,7 @@ exit 0
 EOF
     chmod +x .bin/openspec
     PATH="$(pwd)/.bin:$PATH" bash -c "
-        source '$REPO_ROOT/skills/_lib/archive.sh'
+        source '$REPO_ROOT/_lib/archive.sh'
         archive_change test-change
     " 2>&1 | tail -5
 
@@ -135,7 +135,7 @@ exit 0
 EOF
     chmod +x .bin/openspec
     PATH="$(pwd)/.bin:$PATH" bash -c "
-        source '$REPO_ROOT/skills/_lib/archive.sh'
+        source '$REPO_ROOT/_lib/archive.sh'
         archive_change test-change
     " 2>&1 | tail -2
 
@@ -172,7 +172,7 @@ exit 0
 EOF
     chmod +x .bin/openspec
     PATH="$(pwd)/.bin:$PATH" bash -c "
-        source '$REPO_ROOT/skills/_lib/archive.sh'
+        source '$REPO_ROOT/_lib/archive.sh'
         archive_change test-change
     " 2>&1 | tail -2
 

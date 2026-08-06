@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/execute_step7.sh — extracted from execute.md L195-L282
+# _lib/execute_step7.sh — extracted from execute.md L195-L282
 # Exports: run_step7_report()
 #
 # Step 7 final report after change execution:

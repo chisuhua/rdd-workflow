@@ -71,7 +71,7 @@ MD
 
 @test "archive-proposal-status: archive.sh calls update_proposal_status" {
     PROJECT_ROOT="$REPO_ROOT"
-    run grep -c "update_proposal_status" "$PROJECT_ROOT/skills/_lib/archive.sh"
+    run grep -c "update_proposal_status" "$PROJECT_ROOT/_lib/archive.sh"
     [ "$status" -eq 0 ]
     [ "$output" -ge 1 ]
 }

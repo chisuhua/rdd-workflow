@@ -84,7 +84,7 @@ setup_added_submodule() {
 @test "ship submodule share: 无 submodule 项目 worktree 创建不受影响且 stdout 纯净" {
   TEST_REPO=$(mktemp -d)
   setup_superproject "$TEST_REPO" "c1"
-  source "$REPO_ROOT/skills/_lib/worktree.sh"
+  source "$REPO_ROOT/_lib/worktree.sh"
   source "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
   WT=$(setup_execution_workspace "$TEST_REPO" "c1" "worktree")
   # stdout 必须是纯路径 (git worktree add -q 修复: 防 "HEAD is now at" 泄漏)
@@ -100,7 +100,7 @@ setup_added_submodule() {
   setup_gitlink_submodule "$TEST_REPO"
   # bootstrap 前提: 共享存储尚不存在
   [ ! -d "$TEST_REPO/.git/modules/sub" ]
-  source "$REPO_ROOT/skills/_lib/worktree.sh"
+  source "$REPO_ROOT/_lib/worktree.sh"
   source "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
   WT=$(setup_execution_workspace "$TEST_REPO" "c1" "worktree")
   [ "$WT" = "$TEST_REPO/.rddf/wt/c1" ]
@@ -130,7 +130,7 @@ setup_added_submodule() {
   setup_added_submodule "$TEST_REPO"
   # 已初始化前提: 共享存储已存在
   [ -d "$TEST_REPO/.git/modules/sub" ]
-  source "$REPO_ROOT/skills/_lib/worktree.sh"
+  source "$REPO_ROOT/_lib/worktree.sh"
   source "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
   WT1=$(setup_execution_workspace "$TEST_REPO" "c1" "worktree")
   [ -f "$WT1/sub/file.txt" ]

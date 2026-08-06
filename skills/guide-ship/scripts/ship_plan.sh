@@ -61,13 +61,13 @@
 #       on every failure — same lesson as plan_done_gate.sh's
 #       PLAN_GATE_0_SKIPPED sentinel fix; exit would kill the AI host shell.
 #
-# Helpers required (provided by skills/_lib/worktree.sh):
+# Helpers required (provided by _lib/worktree.sh):
 #   - wt_path_for_branch <name>
 #   - find_default_branch
 #   - main_repo_root
 
 # Guard against direct execution (sourced-only). Same pattern as
-# skills/_lib/discover-arch-artifacts.sh L27-30 — uses [ not [[ to match
+# _lib/discover-arch-artifacts.sh L27-30 — uses [ not [[ to match
 # the existing precedent. Direct execution produces a clear error instead
 # of the cryptic "command not found" downstream callers would otherwise see.
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then
@@ -75,7 +75,7 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
   exit 1
 fi
 
-# _LIB_DIR points to skills/_lib/ (shared library location)
+# _LIB_DIR points to _lib/ (shared library location)
 _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
 _LIB_DIR="$(cd "$_SCRIPT_DIR/../../_lib" 2>/dev/null && pwd)"
 if [ -f "$_LIB_DIR/worktree.sh" ]; then
@@ -441,7 +441,7 @@ run_ship_phase1() {
   # pick it. The CLI/UX path: "only one candidate → just go."
   if [ -z "$change_name" ]; then
     local _wrapper
-    _wrapper="$project_root/skills/_lib/discover_ship_changes.sh"
+    _wrapper="$project_root/_lib/discover_ship_changes.sh"
     if [ -f "$_wrapper" ]; then
       source "$_wrapper"
       local _count _top

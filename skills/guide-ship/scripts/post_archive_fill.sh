@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/post_archive_fill.sh — extracted from guide-ship.md L562-L614
+# _lib/post_archive_fill.sh — extracted from guide-ship.md L562-L614
 # Exports: run_post_archive_fill_suggestion()
 #
 # Post-archive hook: scans iteration.json for planned changes whose

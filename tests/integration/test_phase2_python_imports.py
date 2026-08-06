@@ -113,7 +113,7 @@ def test_phase2_shared_module_still_in_lib(shared_path):
     spec = importlib.util.find_spec(shared_path)
     assert spec is not None, (
         f"FAIL: {shared_path} not importable — "
-        f"shared modules must stay in skills/_lib/"
+        f"shared modules must stay in _lib/"
     )
 
 
@@ -146,7 +146,7 @@ def test_phase3_core_modules_importable(core_path):
     spec = importlib.util.find_spec(core_path)
     assert spec is not None, (
         f"FAIL: {core_path} not importable — "
-        f"core module should be in skills/_lib/core/"
+        f"core module should be in _lib/core/"
     )
 
 
@@ -156,7 +156,7 @@ def test_phase3_loop_modules_importable(loop_path):
     spec = importlib.util.find_spec(loop_path)
     assert spec is not None, (
         f"FAIL: {loop_path} not importable — "
-        f"loop module should be in skills/_lib/loop/"
+        f"loop module should be in _lib/loop/"
     )
 
 
@@ -166,7 +166,7 @@ def test_phase3_toplevel_modules_importable(toplevel_path):
     spec = importlib.util.find_spec(toplevel_path)
     assert spec is not None, (
         f"FAIL: {toplevel_path} not importable — "
-        f"top-level module should be in skills/_lib/"
+        f"top-level module should be in _lib/"
     )
 
 
@@ -200,5 +200,5 @@ def test_phase3_moved_modules_not_at_old_flat_path(old_path):
     spec = importlib.util.find_spec(old_path)
     assert spec is None, (
         f"FAIL: {old_path} still importable — "
-        f"module was moved to skills/_lib/core/ or skills/_lib/loop/"
+        f"module was moved to _lib/core/ or _lib/loop/"
     )

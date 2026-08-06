@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/write_arch_handoff.py."""
+"""Unit tests for _lib/write_arch_handoff.py."""
 import json
 import os
 import pytest

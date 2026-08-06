@@ -11,9 +11,9 @@
 
 load ../test_helper
 
-@test "skills/_lib/state.sh defines count_pending_suggestions" {
-  [ -f "$REPO_ROOT/skills/_lib/state.sh" ]
-  grep -q '^count_pending_suggestions()' "$REPO_ROOT/skills/_lib/state.sh"
+@test "_lib/state.sh defines count_pending_suggestions" {
+  [ -f "$REPO_ROOT/_lib/state.sh" ]
+  grep -q '^count_pending_suggestions()' "$REPO_ROOT/_lib/state.sh"
 }
 
 @test "propose.md no longer inlines count pending proposals algorithm" {
@@ -34,7 +34,7 @@ load ../test_helper
 @test "count_pending_suggestions returns 0 when proposal-suggestions.md missing" {
   TEST_REPO=$(mktemp -d)
   cd "$TEST_REPO"
-  source "$REPO_ROOT/skills/_lib/state.sh"
+  source "$REPO_ROOT/_lib/state.sh"
   result=$(count_pending_suggestions "$TEST_REPO")
   [ "$result" = "0" ]
   rm -rf "$TEST_REPO"
@@ -44,7 +44,7 @@ load ../test_helper
   TEST_REPO=$(mktemp -d)
   cd "$TEST_REPO"
   echo "[]" > proposal-suggestions.md
-  source "$REPO_ROOT/skills/_lib/state.sh"
+  source "$REPO_ROOT/_lib/state.sh"
   result=$(count_pending_suggestions "$TEST_REPO")
   [ "$result" = "0" ]
   rm -rf "$TEST_REPO"
@@ -61,7 +61,7 @@ load ../test_helper
   {"name": "d", "status": "待创建"}
 ]
 EOF
-  source "$REPO_ROOT/skills/_lib/state.sh"
+  source "$REPO_ROOT/_lib/state.sh"
   result=$(count_pending_suggestions "$TEST_REPO")
   [ "$result" = "3" ]
   rm -rf "$TEST_REPO"
@@ -79,7 +79,7 @@ EOF
   {"name": "c", "status": "待创建"}
 ]
 EOF
-  source "$REPO_ROOT/skills/_lib/state.sh"
+  source "$REPO_ROOT/_lib/state.sh"
   result=$(count_pending_suggestions "$TEST_REPO")
   [ "$result" = "2" ]
   rm -rf "$TEST_REPO"

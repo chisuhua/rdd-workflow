@@ -5,7 +5,7 @@
 #   - $REPO_ROOT: absolute path to the rdd-workflow repo root
 #   - $BATS_TMPDIR: per-test scratch directory (auto-cleaned by bats)
 #   - load_lib(name): source files from tests/_lib/<name>.bash OR
-#                     skills/_lib/<name>.sh OR tests/_lib/<name>.sh
+#                     _lib/<name>.sh OR tests/_lib/<name>.sh
 #   - common assertion helpers
 
 # Resolve repo root (directory above tests/)
@@ -17,7 +17,7 @@ export PROJECT_ROOT="${PROJECT_ROOT:-$REPO_ROOT}"
 
 # Load helper libraries. Resolution order (first match wins):
 #   1. tests/_lib/<name>.bash        (test fixtures, original behavior)
-#   2. skills/_lib/<name>.sh         (production libs, primary use case)
+#   2. _lib/<name>.sh                (production libs, new top-level layout)
 #   3. skills/*/scripts/<name>.sh    (per-skill helpers, v2.0.8 Phase 2 layout)
 #   4. tests/_lib/<name>.sh          (alternative test fixture extension)
 load_lib() {
@@ -25,7 +25,7 @@ load_lib() {
   local path
   for path in \
     "$REPO_ROOT/tests/_lib/${name}.bash" \
-    "$REPO_ROOT/skills/_lib/${name}.sh" \
+    "$REPO_ROOT/_lib/${name}.sh" \
     "$REPO_ROOT"/skills/*/scripts/"${name}.sh" \
     "$REPO_ROOT/tests/_lib/${name}.sh"; do
     if [[ -f "$path" ]]; then
@@ -34,7 +34,7 @@ load_lib() {
       return 0
     fi
   done
-  echo "load_lib: file not found: ${name} (looked in tests/_lib/${name}.bash, skills/_lib/${name}.sh, skills/*/scripts/${name}.sh, tests/_lib/${name}.sh)" >&2
+  echo "load_lib: file not found: ${name} (looked in tests/_lib/${name}.bash, _lib/${name}.sh, skills/*/scripts/${name}.sh, tests/_lib/${name}.sh)" >&2
   return 1
 }
 

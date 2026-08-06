@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/plan_queue_overview.sh — extracted from guide-plan.md L211-L261
+# _lib/plan_queue_overview.sh — extracted from guide-plan.md L211-L261
 # Exports: show_queue_overview()
 #
 # Shows 5-state queue visualization: candidates, planned, blocked, ready-for-ship, stale deps.

@@ -11,7 +11,7 @@
 #       .rddf/state/, not the main repo's — breaking the global state file.
 #       Fix: use `git rev-parse --git-common-dir` (identical for main repo
 #       and all linked worktrees) to derive the main repo root. Encapsulated
-#       in `main_repo_root()` helper in skills/_lib/worktree.sh.
+#       in `main_repo_root()` helper in _lib/worktree.sh.
 
 load ../test_helper
 
@@ -34,10 +34,10 @@ load ../test_helper
 }
 
 @test "P0-8: _lib/worktree.sh exports main_repo_root function" {
-  [ -f "skills/_lib/worktree.sh" ]
-  grep -q "main_repo_root" skills/_lib/worktree.sh
+  [ -f "_lib/worktree.sh" ]
+  grep -q "main_repo_root" _lib/worktree.sh
   # Must be defined as a function
-  grep -qE '^main_repo_root\(\)' skills/_lib/worktree.sh
+  grep -qE '^main_repo_root\(\)' _lib/worktree.sh
 }
 
 @test "P0-8: _lib tests cover main_repo_root" {
@@ -48,7 +48,7 @@ load ../test_helper
 # Runtime checks (verify behavior in a real git repo + worktree) ----------
 
 @test "P0-8: main_repo_root returns main repo from worktree" {
-  source "$REPO_ROOT/skills/_lib/worktree.sh"
+  source "$REPO_ROOT/_lib/worktree.sh"
   # Build a scratch repo with a worktree
   local tmp
   tmp=$(mktemp -d)
@@ -66,7 +66,7 @@ load ../test_helper
 }
 
 @test "P0-8: main_repo_root returns main repo from main repo" {
-  source "$REPO_ROOT/skills/_lib/worktree.sh"
+  source "$REPO_ROOT/_lib/worktree.sh"
   local tmp
   tmp=$(mktemp -d)
   ( cd "$tmp" \
@@ -84,7 +84,7 @@ load ../test_helper
 @test "P0-8: STATE_FILE points to main repo .zcf (not worktree)" {
   # Simulate execute.md's fix: from worktree, PROJECT_ROOT is main repo,
   # so STATE_FILE goes to main repo's .rddf/state/, not the worktree's.
-  source "$REPO_ROOT/skills/_lib/worktree.sh"
+  source "$REPO_ROOT/_lib/worktree.sh"
   local tmp wt_dir
   tmp=$(mktemp -d)
   wt_dir="$tmp/.rddf/wt/test-1"

@@ -2,7 +2,7 @@
 # tests/integration/test_ship_monitor_extraction.bats
 # P3-3 regression: guide-ship.md Phase 2 L260-L315 (~54 lines) bash
 # block reading progress across all openspec/* changes (worktree +
-# lightweight modes). Extracted to skills/_lib/ship_monitor.sh.
+# lightweight modes). Extracted to _lib/ship_monitor.sh.
 #
 # These tests lock the refactor in place:
 #   1. ship_monitor.sh exists with run_ship_monitor exported.

@@ -10,7 +10,7 @@
 
 load ../test_helper
 
-SEM="$REPO_ROOT/skills/_lib/ship_execution_mode.sh"
+SEM="$REPO_ROOT/_lib/ship_execution_mode.sh"
 
 # Helper: clean env for each test
 reset_env() {

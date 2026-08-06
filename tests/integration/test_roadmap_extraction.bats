@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_roadmap_extraction.bats
 # Roadmap extraction regression: the Python heredocs in roadmap.md were
-# moved to skills/_lib/roadmap_state.py (mirrors P1-14 archive.sh +
+# moved to _lib/roadmap_state.py (mirrors P1-14 archive.sh +
 # status_helpers.sh patterns).
 #
 # Extraction targets (all Python heredocs → roadmap_state.py):
@@ -23,17 +23,17 @@ load ../test_helper
 
 # ---- Positive: helper existence ----
 
-@test "skills/_lib/roadmap_state.py exists with init_state function" {
-  [ -f "$REPO_ROOT/skills/_lib/roadmap_state.py" ]
-  grep -qE '^def init_state\(' "$REPO_ROOT/skills/_lib/roadmap_state.py"
+@test "_lib/roadmap_state.py exists with init_state function" {
+  [ -f "$REPO_ROOT/_lib/roadmap_state.py" ]
+  grep -qE '^def init_state\(' "$REPO_ROOT/_lib/roadmap_state.py"
 }
 
-@test "skills/_lib/roadmap_state.py defines all 9 exported functions" {
-  [ -f "$REPO_ROOT/skills/_lib/roadmap_state.py" ]
+@test "_lib/roadmap_state.py defines all 9 exported functions" {
+  [ -f "$REPO_ROOT/_lib/roadmap_state.py" ]
   for fn in init_state read_state render_status_view validate_change \
             add_phase advance_phase update_roadmap_marker \
             get_phase_categories update_change_count; do
-    grep -qE "^def ${fn}\(" "$REPO_ROOT/skills/_lib/roadmap_state.py" || {
+    grep -qE "^def ${fn}\(" "$REPO_ROOT/_lib/roadmap_state.py" || {
       echo "FAIL: missing function ${fn}"
       return 1
     }

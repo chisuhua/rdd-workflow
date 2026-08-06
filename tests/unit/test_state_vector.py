@@ -16,7 +16,7 @@ def test_create_default_returns_valid_state():
     """`create_default()` returns a fully-populated state matching the schema."""
     sv = StateVector.create_default()
     jsonschema = __import__("jsonschema")
-    schema_path = os.path.join(os.path.dirname(__file__), "../../skills/_lib/schemas/state_vector_schema.json")
+    schema_path = os.path.join(os.path.dirname(__file__), "../../_lib/schemas/state_vector_schema.json")
     with open(schema_path) as f:
         schema = json.load(f)
     jsonschema.validate(sv.to_dict(), schema)

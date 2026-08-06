@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 #
 # Wave 8 / fix-debt-audit-2026-07-14 / Wave 2.3: archive.sh smoke tests.
-# Tests the public surface of skills/_lib/archive.sh:
+# Tests the public surface of _lib/archive.sh:
 #   - archive_change() validates input (rejects empty name)
 #   - archive_change() integrates with worktree.sh helpers
 #   - missing worktree is a graceful failure
@@ -15,21 +15,21 @@ setup() {
 }
 
 @test "archive.sh: sourceable" {
-  run bash -c "source '$REPO_ROOT/skills/_lib/archive.sh' && echo 'loaded'"
+  run bash -c "source '$REPO_ROOT/_lib/archive.sh' && echo 'loaded'"
   [ "$status" -eq 0 ]
   [[ "$output" == *"loaded"* ]]
 }
 
 @test "archive.sh: defines archive_change function" {
-  run bash -c "source '$REPO_ROOT/skills/_lib/archive.sh' && declare -F archive_change"
+  run bash -c "source '$REPO_ROOT/_lib/archive.sh' && declare -F archive_change"
   [ "$status" -eq 0 ]
   [[ "$output" == *"archive_change"* ]]
 }
 
 @test "archive_change: empty name exits non-zero" {
   run bash -c "
-    source '$REPO_ROOT/skills/_lib/worktree.sh'
-    source '$REPO_ROOT/skills/_lib/archive.sh'
+    source '$REPO_ROOT/_lib/worktree.sh'
+    source '$REPO_ROOT/_lib/archive.sh'
     archive_change ''
   "
   [ "$status" -ne 0 ]
@@ -45,8 +45,8 @@ setup() {
   echo "x" > a && git add a && git commit -q -m init
 
   run bash -c "
-    source '$REPO_ROOT/skills/_lib/worktree.sh'
-    source '$REPO_ROOT/skills/_lib/archive.sh'
+    source '$REPO_ROOT/_lib/worktree.sh'
+    source '$REPO_ROOT/_lib/archive.sh'
     archive_change 'nonexistent-change-xyz'
   "
   cd /
@@ -55,6 +55,6 @@ setup() {
 }
 
 @test "archive.sh: file exists and is readable" {
-  [ -f "$REPO_ROOT/skills/_lib/archive.sh" ]
-  [ -r "$REPO_ROOT/skills/_lib/archive.sh" ]
+  [ -f "$REPO_ROOT/_lib/archive.sh" ]
+  [ -r "$REPO_ROOT/_lib/archive.sh" ]
 }

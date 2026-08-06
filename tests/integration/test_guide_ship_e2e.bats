@@ -27,7 +27,7 @@ setup() {
 }
 
 @test "singleton auto-select surfaces alpha via bash wrapper" {
-    source "$PROJECT_ROOT/skills/_lib/discover_ship_changes.sh"
+    source "$PROJECT_ROOT/_lib/discover_ship_changes.sh"
     run ship_top_candidate "$TEST_REPO"
     [ "$status" -eq 0 ]
     [ "$output" = "alpha" ]
@@ -38,7 +38,7 @@ setup() {
     cat > .rddf/state/iteration.json <<'EOF'
 {"changes": [{"name": "alpha", "status": "proposed"}]}
 EOF
-    source "$PROJECT_ROOT/skills/_lib/discover_ship_changes.sh"
+    source "$PROJECT_ROOT/_lib/discover_ship_changes.sh"
     run ship_candidates_json "$TEST_REPO"
     [ "$status" -eq 0 ]
     [[ "$output" =~ '"iteration_status": "proposed"' ]]
@@ -54,7 +54,7 @@ EOF
     cat > .rddf/state/iteration.json <<'EOF'
 {"changes": [{"name": "alpha", "status": "proposed"}]}
 EOF
-    source "$PROJECT_ROOT/skills/_lib/discover_ship_changes.sh"
+    source "$PROJECT_ROOT/_lib/discover_ship_changes.sh"
     run ship_top_candidate "$TEST_REPO"
     [ "$output" = "alpha" ]
 }

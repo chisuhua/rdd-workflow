@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/plan_done_gate.sh — extracted from guide-plan.md L518-L677
+# _lib/plan_done_gate.sh — extracted from guide-plan.md L518-L677
 # Exports:
 #   - run_plan_done_gate() — Triple-gate validation (Gate 0/1/2)
 #   - write_plan_handoff() — Write .rddf/state/.plan-handoff.json
@@ -156,7 +156,7 @@ write_plan_handoff() {
       case "$d" in */archive/) continue ;; esac
       local name
       name=$(basename "$d")
-      source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+      source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
       local PROPOSE_DIR
       PROPOSE_DIR="$(resolve_rdd_skill_dir propose)"
       local RDD_LIB_DIR

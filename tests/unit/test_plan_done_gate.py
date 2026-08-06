@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/plan_done_gate.py"""
+"""Unit tests for _lib/plan_done_gate.py"""
 import json
 import os
 import tempfile

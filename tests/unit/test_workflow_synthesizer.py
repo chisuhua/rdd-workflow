@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/workflow_synthesizer.py.
+"""Unit tests for _lib/workflow_synthesizer.py.
 
 Covers:
 - Dataclass shape (frozen, fields)

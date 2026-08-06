@@ -2,7 +2,7 @@
 # tests/integration/test_phase2_layout.bats
 #
 # Phase 2 regression test: lock per-skill scripts/ directory layout.
-# Per ADR-0021: 47 single-skill helpers moved from skills/_lib/ to skills/<skill>/scripts/.
+# Per ADR-0021: 47 single-skill helpers moved from _lib/ to skills/<skill>/scripts/.
 # This test must pass before archive and stay green forever after.
 
 load ../test_helper

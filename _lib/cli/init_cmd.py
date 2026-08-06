@@ -11,8 +11,8 @@ Layout copied (relative to source project root):
 
 Usage::
 
-    python3 -m skills._lib.cli init [target]
-    python3 -m skills._lib.cli init --help
+    python3 -m _lib.cli init [target]
+    python3 -m _lib.cli init --help
 """
 from __future__ import annotations
 

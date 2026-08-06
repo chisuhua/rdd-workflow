@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Entry-point script for skills/_lib/update_roadmap_progress.sh::update_roadmap_progress.
+"""Entry-point script for _lib/update_roadmap_progress.sh::update_roadmap_progress.
 
 Reads env vars:
 - PROJECT_ROOT (required) — absolute path to project root
@@ -21,7 +21,7 @@ def main():
         print("ERROR: PROJECT_ROOT and CHANGE_NAME env vars required", file=sys.stderr)
         sys.exit(1)
 
-    # Compute repo root from this script's location (grandparent of skills/_lib/)
+    # Compute repo root from this script's location (grandparent of _lib/)
     _repo_root = str(Path(__file__).resolve().parent.parent.parent)
     if _repo_root not in sys.path:
         sys.path.insert(0, _repo_root)

@@ -13,7 +13,7 @@
 
 load ../test_helper
 
-@test "skills/_lib/deps_render_report.sh exists with render_deps_report function" {
+@test "_lib/deps_render_report.sh exists with render_deps_report function" {
   [ -f "$REPO_ROOT/skills/deps/scripts/deps_render_report.sh" ]
   grep -q '^render_deps_report()' "$REPO_ROOT/skills/deps/scripts/deps_render_report.sh"
 }

@@ -13,7 +13,7 @@
 
 load ../test_helper
 
-@test "skills/_lib/write_arch_handoff.{sh,py,env.py} exist" {
+@test "_lib/write_arch_handoff.{sh,py,env.py} exist" {
   [ -f "$REPO_ROOT/skills/guide-arch/scripts/write_arch_handoff.sh" ]
   [ -f "$REPO_ROOT/skills/guide-arch/scripts/write_arch_handoff.py" ]
   [ -f "$REPO_ROOT/skills/guide-arch/scripts/write_arch_handoff_env.py" ]

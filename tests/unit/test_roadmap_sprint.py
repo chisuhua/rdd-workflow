@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/roadmap_sprint.py — AUTO-SPRINT section renderer."""
+"""Unit tests for _lib/roadmap_sprint.py — AUTO-SPRINT section renderer."""
 import os
 import pytest
 

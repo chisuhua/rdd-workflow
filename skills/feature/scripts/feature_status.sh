@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/feature_status.sh — extracted from feature.md (subcommand: status)
+# _lib/feature_status.sh — extracted from feature.md (subcommand: status)
 # Exports: render_feature_status() — accepts target feature name as $1
 
 render_feature_status() {

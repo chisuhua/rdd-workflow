@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/feature_order.sh — extracted from feature.md (subcommand: order)
+# _lib/feature_order.sh — extracted from feature.md (subcommand: order)
 # Exports: render_feature_order()
 
 render_feature_order() {

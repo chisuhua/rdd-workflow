@@ -3,7 +3,7 @@
 # tests/integration/test_iteration_archive_hook.bats
 #
 # Integration test for the archive.sh mark_iteration_archived hook.
-# Verifies the bash function correctly delegates to skills/_lib/iteration.py
+# Verifies the bash function correctly delegates to _lib/iteration.py
 # to mark a change as archived in .rddf/state/iteration.json.
 #
 # Run: bats tests/integration/test_iteration_archive_hook.bats
@@ -43,7 +43,7 @@ setup() {
 JSON
     export PROJECT_ROOT="$WORKDIR"
     # Source archive.sh — this exposes mark_iteration_archived
-    source "$REPO_ROOT/skills/_lib/archive.sh"
+    source "$REPO_ROOT/_lib/archive.sh"
 }
 
 teardown() {
@@ -114,5 +114,5 @@ json.dump(data, open('.rddf/state/iteration.json', 'w'), indent=2)
 }
 
 @test "archive.sh syntax is valid bash" {
-    bash -n "$REPO_ROOT/skills/_lib/archive.sh"
+    bash -n "$REPO_ROOT/_lib/archive.sh"
 }

@@ -154,11 +154,11 @@ class TestBashPythonBoundary:
         it.save(project_root_with_quote, data)
 
         # Now invoke the bash function
-        archive_sh = SPEC_WORKFLOW_ROOT / "skills" / "_lib" / "archive.sh"
+        archive_sh = SPEC_WORKFLOW_ROOT / "_lib" / "archive.sh"
         env = os.environ.copy()
         env["PROJECT_ROOT"] = project_root_with_quote
         # _LIB_DIR needs to be set for archive.sh to find iteration module
-        env["_LIB_DIR"] = str(SPEC_WORKFLOW_ROOT / "skills" / "_lib")
+        env["_LIB_DIR"] = str(SPEC_WORKFLOW_ROOT / "_lib")
 
         result = subprocess.run(
             ["bash", "-c", f'source "{archive_sh}" && mark_iteration_archived "c1" "{project_root_with_quote}"'],

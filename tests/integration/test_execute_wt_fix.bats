@@ -43,7 +43,7 @@ load ../test_helper
   ! grep -q "wt_path_for_branch_inline" "skills/execute/SKILL.md"
   grep -q "select_worktree.sh\|auto_detect_worktree_context" "skills/execute/SKILL.md"
   # The worktree.sh helper still exists (provides wt_path_for_branch)
-  grep -q "wt_path_for_branch" "skills/_lib/worktree.sh"
+  grep -q "wt_path_for_branch" "_lib/worktree.sh"
 }
 
 # P0-9 ---------------------------------------------------------------------

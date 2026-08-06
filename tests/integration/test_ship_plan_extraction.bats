@@ -3,7 +3,7 @@
 # P3-2 regression: Phase 1 of guide-ship.md (COMMIT GATE + parallel conflict
 # detection + execution mode selection + worktree/lightweight setup + plan
 # generation + iteration.json hook) was a 123-line inline bash block. Extracted
-# to skills/_lib/ship_plan.sh.
+# to _lib/ship_plan.sh.
 #
 # These tests lock the refactor in place:
 #   1. ship_plan.sh exists with the expected function exports.
@@ -22,7 +22,7 @@ load ../test_helper
 # the ship_plan.sh helper scope.
 REPLACED_RANGE="144,348p"
 
-@test "skills/_lib/ship_plan.sh exists with expected function exports" {
+@test "_lib/ship_plan.sh exists with expected function exports" {
   [ -f "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh" ]
   grep -q "^check_artifacts_committed()" "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
   grep -q "^detect_execution_mode()" "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
@@ -71,7 +71,7 @@ REPLACED_RANGE="144,348p"
   echo "x" > README.md
   git add README.md && git commit -q -m "initial"
   mkdir -p openspec/changes/single-change
-  source "$REPO_ROOT/skills/_lib/worktree.sh"
+  source "$REPO_ROOT/_lib/worktree.sh"
   source "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
   result=$(detect_execution_mode "$TEST_REPO" "single-change")
   [ "$result" = "lightweight" ]
@@ -88,7 +88,7 @@ REPLACED_RANGE="144,348p"
   git add README.md && git commit -q -m "initial"
   mkdir -p openspec/changes/c1 openspec/changes/c2
   git worktree add -b openspec/c1 .rddf/wt/c1 HEAD >/dev/null 2>&1
-  source "$REPO_ROOT/skills/_lib/worktree.sh"
+  source "$REPO_ROOT/_lib/worktree.sh"
   source "$REPO_ROOT/skills/guide-ship/scripts/ship_plan.sh"
   result=$(detect_execution_mode "$TEST_REPO" "c2")
   [ "$result" = "worktree" ]

@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 
-VALIDATOR_SCRIPT = Path(__file__).parent.parent.parent / "skills" / "_lib" / "validate_delta_targets.py"
+VALIDATOR_SCRIPT = Path(__file__).parent.parent.parent / "_lib" / "validate_delta_targets.py"
 
 
 def run_validator(change_dir: Path, change_name: str) -> tuple[int, str]:

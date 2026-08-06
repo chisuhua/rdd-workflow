@@ -2,7 +2,7 @@
 # tests/integration/test_plan_queue_overview_extraction.bats
 # Round B extraction: guide-plan.md L211-L261 queue overview (~50 lines)
 # was a single inline bash code block. Extracted to
-# skills/_lib/plan_queue_overview.sh::show_queue_overview().
+# _lib/plan_queue_overview.sh::show_queue_overview().
 #
 # These tests lock the refactor in place:
 #   1. plan_queue_overview.sh exists with show_queue_overview function.

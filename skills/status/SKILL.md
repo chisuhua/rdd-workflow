@@ -134,7 +134,7 @@ pending-change  │ （无 worktree）        │ 2/5  (40%)  │ 💼 committed
 ```bash
 # Status rendering extracted to scripts/status_render_mode_a.sh (Round B Task B6).
 # Single-import helper for Mode A change status display.
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir status)/scripts/status_render_mode_a.sh"
 
 # Usage: render_status_mode_a <change-name>
@@ -151,7 +151,7 @@ source "$(resolve_rdd_skill_dir status)/scripts/status_render_mode_a.sh"
 
 ```bash
 # Mode A status overview menu - shared handler (extracted from inline case block)
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir status)/scripts/status_archive_menu.sh"
 handle_status_archive_menu "$choice"
 [ $? -eq 2 ] && continue  # r|refresh -> 重新展示菜单
@@ -190,7 +190,7 @@ fi
 # P3-3c: 使用 _lib/worktree.sh::wt_path_for_branch 替代 P0-7 内联版本 (修复 silent bug)
 # P0-7 引入的内联 helper 因 awk 字符串比较中 '\\[' 与 '[' 不匹配而永远返回空,
 # 导致 HAS_WORKTREE 永远为 false. _lib/worktree.sh 用 porcelain 格式 + kv 解析, 工作正常.
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_lib_dir)/worktree.sh"
 WORKTREE_PATH=$(wt_path_for_branch "<name>")
     HAS_WORKTREE=true
@@ -202,7 +202,7 @@ fi
 
 ### Step 2：三类问题检测
 
-检测逻辑已抽取到 `skills/_lib/status_helpers.sh::detect_sync_issues` (单入口、三类问题统一报告)。
+检测逻辑已抽取到 `_lib/status_helpers.sh::detect_sync_issues` (单入口、三类问题统一报告)。
 status.md 只保留 prose 解释 + 1 行调用,确保 AI 助手有可执行规约可循。
 
 ```bash
@@ -211,7 +211,7 @@ status.md 只保留 prose 解释 + 1 行调用,确保 AI 助手有可执行规�
 #   返回 0 表示发现至少一个问题,1 表示全部正常。
 #   HAS_WORKTREE (1/0) 与 WT_DIRTY (n) 由 Step 1 计算后传入。
 
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 
 SCRIPT_DIR="$(resolve_rdd_skill_dir status)"
 if [ -f "$SCRIPT_DIR/../_lib/status_helpers.sh" ]; then
@@ -233,7 +233,7 @@ detect_sync_issues "$PROJECT_ROOT" "<name>" "$HAS_WORKTREE" "$WT_DIRTY"
 
 **核心原则**：不同步修复通过 `sed` 直接修改 tasks.md，**不重新执行 plan**。
 
-修复逻辑已抽取到 `skills/_lib/status_helpers.sh::repair_sync_state` (awk `index()` 字面量匹配,避免正则元字符风险)。
+修复逻辑已抽取到 `_lib/status_helpers.sh::repair_sync_state` (awk `index()` 字面量匹配,避免正则元字符风险)。
 
 ```bash
 # Mode B Step 3: 不同步修复（已抽取到 _lib/status_helpers.sh）
@@ -318,9 +318,9 @@ fi
 
 ```bash
 # P1-14: archive 流程（worktree 查找 → 脏检查 → merge → archive → cleanup）
-# 提取到 skills/_lib/archive.sh,与 guide-ship.md Phase 3 共享同一份实现。
-# 源文件: skills/_lib/archive.sh::archive_change
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+# 提取到 _lib/archive.sh,与 guide-ship.md Phase 3 共享同一份实现。
+# 源文件: _lib/archive.sh::archive_change
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 SCRIPT_DIR="$(resolve_rdd_skill_dir status)"
 if [ -f "$SCRIPT_DIR/../_lib/archive.sh" ]; then
   source "$SCRIPT_DIR/../_lib/archive.sh"
@@ -335,7 +335,7 @@ archive_change "<name>"
 >   `verify_merge_result`（post-merge 校验）、`archive_change`（端到端编排）。
 > - 当 `archive_change` 内部已经走完 dirty-check + pre-merge check + merge + verify +
 >   `openspec archive` + worktree/branch cleanup，调用方不再需要重复这些步骤。
-> - 详细语义见 `skills/_lib/archive.sh` 顶部注释。
+> - 详细语义见 `_lib/archive.sh` 顶部注释。
 
 ### Step 6：输出归档报告 + 循环检查
 
@@ -370,7 +370,7 @@ else
     # P1-7: 文件格式已规范化为 JSON 列表
     #       用 json.load 解析后统计 status == "待创建" 的条目数
     if [ -f "proposal-suggestions.md" ]; then
-        source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+        source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
         source "$(resolve_rdd_lib_dir)/state.sh"
         REMAINING=$(count_pending_suggestions "$PROJECT_ROOT")
         REMAINING=${REMAINING:-0}
@@ -394,7 +394,7 @@ fi
 ### 展示内容
 
 ```bash
-# === Mode D: thin wrapper — render logic in skills/_lib/roadmap_state.py ===
+# === Mode D: thin wrapper — render logic in _lib/roadmap_state.py ===
 if [ "$MODE" = "roadmap" ] || ([ -z "$MODE" ] && [ -f "$PROJECT_ROOT/roadmap.md" ]); then
     if [ -f "$PROJECT_ROOT/.rddf/state/roadmap-state.json" ]; then
         # Indent the python3 call
@@ -448,7 +448,7 @@ esac
 
 ### Step 1：读取 iteration.json
 
-读取与渲染已合并抽取到 `skills/_lib/iteration.py::print_view()`。模块函数内部处理文件缺失(友好提示)、schema 校验失败(回退到空 state)和漂移检测。
+读取与渲染已合并抽取到 `_lib/iteration.py::print_view()`。模块函数内部处理文件缺失(友好提示)、schema 校验失败(回退到空 state)和漂移检测。
 
 ```bash
 # Mode E: 渲染当前迭代视图（已抽取到 _lib/iteration.py::print_view）

@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/schedulers/cron_scheduler.py"""
+"""Unit tests for _lib/schedulers/cron_scheduler.py"""
 import datetime
 import time
 from skills._lib.triggers import Trigger, TriggerManager

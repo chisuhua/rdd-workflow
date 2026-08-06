@@ -12,7 +12,7 @@ ignore_missing_imports = true
 # Relax type-arg and untyped-def checks for the core/ kernel - these are
 # stable files where adding annotations is out of scope.
 [[tool.mypy.overrides]]
-module = "skills._lib.core.*"
+module = "_lib.core.*"
 disable_error_code = [
     "type-arg",
     "no-untyped-def",

@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_arch_quality_report_extraction.bats
 # Round B extraction: guide-arch.md L564-L595 arch-quality-report invoker (~32 lines)
-# extracted to skills/_lib/arch_quality_report.sh::run_arch_quality_report().
+# extracted to _lib/arch_quality_report.sh::run_arch_quality_report().
 #
 # Tests lock:
 #   1. Helper file exists with run_arch_quality_report function.
@@ -32,9 +32,9 @@ load ../test_helper
   mkdir -p "$tmpdir/.rddf/state"
 
   # Stub arch_quality_gate module so the import succeeds
-  cat > "$tmpdir/skills/_lib/__init__.py" <<'PYEOF'
+  cat > "$tmpdir/_lib/__init__.py" <<'PYEOF'
 PYEOF
-  cat > "$tmpdir/skills/_lib/arch_quality_gate.py" <<'PYEOF'
+  cat > "$tmpdir/_lib/arch_quality_gate.py" <<'PYEOF'
 import json, os
 from dataclasses import dataclass, field
 @dataclass

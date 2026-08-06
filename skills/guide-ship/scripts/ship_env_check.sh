@@ -9,7 +9,7 @@ run_ship_env_check() {
   if [ -f "$project_root/skills/rdd-env-check/scripts/env_check.sh" ]; then
     source "$project_root/skills/rdd-env-check/scripts/env_check.sh"
   else
-    source "${project_root:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh" 2>/dev/null
+    source "${project_root:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh" 2>/dev/null
     source "$(resolve_rdd_skill_dir rdd-env-check)/scripts/env_check.sh" 2>/dev/null
   fi
   _run_env_check_cached

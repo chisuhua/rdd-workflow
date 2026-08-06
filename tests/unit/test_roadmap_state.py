@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/roadmap_state.py.
+"""Unit tests for _lib/roadmap_state.py.
 
 Extracted from skills/roadmap/SKILL.md L248-657 — covers init_state,
 render_status_view, validate_change, add_phase, advance_phase,

@@ -1,4 +1,4 @@
-"""Tests for skills/_lib/defaults.py — built-in DEFAULTS config & get_defaults() helper."""
+"""Tests for _lib/defaults.py — built-in DEFAULTS config & get_defaults() helper."""
 import pytest
 from skills._lib.core.defaults import DEFAULTS, get_defaults
 

@@ -184,14 +184,14 @@ print(json.dumps({
   # Ensure state.sh helpers are available (scan-state.sh may have skipped sourcing)
   if ! type -t detect_approved_inconsistency &>/dev/null; then
     local _state_helper
-    for _state_helper in "$PROJECT_ROOT/skills/_lib/state.sh" "${HOME}/.agents/skills/_lib/state.sh"; do
+    for _state_helper in "$PROJECT_ROOT/_lib/state.sh" "$PROJECT_ROOT/skills/_lib/state.sh" "${HOME}/.agents/_lib/state.sh" "${HOME}/.agents/skills/_lib/state.sh"; do
       if [ -f "$_state_helper" ]; then
         source "$_state_helper"
         break
       fi
     done
     if ! type -t detect_approved_inconsistency &>/dev/null; then
-      echo "⚠️ rdd-workflow not installed: tried $PROJECT_ROOT/skills/_lib/state.sh and $HOME/.agents/skills/_lib/state.sh, both missing. Run INSTALL.md" >&2
+      echo "⚠️ rdd-workflow not installed: tried $PROJECT_ROOT/_lib/state.sh and $HOME/.agents/_lib/state.sh, both missing. Run INSTALL.md" >&2
     fi
   fi
   if type -t detect_approved_inconsistency &>/dev/null; then

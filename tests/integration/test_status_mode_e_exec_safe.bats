@@ -6,7 +6,7 @@
 #
 # Note (v2.0.3 R2 fix — Oracle review): the original task wrote a
 # third test asserting `def list_planned` exists in iteration.py.
-# That helper ALREADY exists at skills/_lib/iteration.py:350, so
+# That helper ALREADY exists at _lib/iteration.py:350, so
 # the test was green on first run and Step 3's "add" was a no-op.
 # Test removed; only the two functional red tests remain.
 

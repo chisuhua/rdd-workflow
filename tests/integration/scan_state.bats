@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 #
-# Integration tests for skills/_lib/scan-state.sh (extracted from guide.md).
+# Integration tests for _lib/scan-state.sh (extracted from guide.md).
 #
 # Coverage:
 #   - Static: source-file presence + grep for tokens that prove design

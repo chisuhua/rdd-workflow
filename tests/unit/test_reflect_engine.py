@@ -82,8 +82,8 @@ class TestReflectEngine:
         assert draft.target_repo is not None
 
     def test_route_issue_rdd_workflow_paths(self):
-        """File paths under skills/_lib/ or docs/adr/ route to rdd-workflow repo."""
-        paths = ["skills/_lib/gate.py", "docs/adr/ADR-0007.md"]
+        """File paths under _lib/ or docs/adr/ route to rdd-workflow repo."""
+        paths = ["_lib/gate.py", "docs/adr/ADR-0007.md"]
         repo = self.engine._route_issue(paths)
         assert repo == "chisuhua/rdd-workflow"
 

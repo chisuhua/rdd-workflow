@@ -2,7 +2,7 @@
 #
 # tests/integration/test_mark_approved_completed.bats
 #
-# Regression coverage for `skills/_lib/state.sh::mark_approved_completed`:
+# Regression coverage for `_lib/state.sh::mark_approved_completed`:
 #   - Idempotent call on an entry already in the `## 已实施` section must
 #     preserve the original completion date (not rewrite it to today).
 #   - First-time archive (entry in `## 已批准提案` only) must still use
@@ -30,7 +30,7 @@ MD
     echo "# x" > "$TEST_DIR/improvements/fix-scan-state-bats.md"
 
     # shellcheck source=/dev/null
-    source "$REPO_ROOT/skills/_lib/state.sh"
+    source "$REPO_ROOT/_lib/state.sh"
 
     # Idempotent call: entry is already in the 已实施 table (date 2026-07-23).
     run mark_approved_completed "$TEST_DIR" "fix-scan-state-bats"
@@ -69,7 +69,7 @@ MD
     echo "# x" > "$TEST_DIR/improvements/new-change.md"
 
     # shellcheck source=/dev/null
-    source "$REPO_ROOT/skills/_lib/state.sh"
+    source "$REPO_ROOT/_lib/state.sh"
 
     run mark_approved_completed "$TEST_DIR" "new-change"
     [ "$status" -eq 0 ]

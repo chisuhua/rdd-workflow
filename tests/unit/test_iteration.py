@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/iteration.py — current sprint state manager.
+"""Unit tests for _lib/iteration.py — current sprint state manager.
 
 TDD contract: these tests lock the behavior of every public function in
 iteration.py. Hooks in propose.md, status.md, archive.sh, execute.md,

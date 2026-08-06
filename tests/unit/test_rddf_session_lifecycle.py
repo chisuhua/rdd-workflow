@@ -48,5 +48,5 @@ def test_entry_hook_has_graceful_fallback():
     """Entry hook source line must include fallback paths (not single hardcode)."""
     content = _read_skill("guide-design")
     entry_block = content.split("rddf_session_hook_entry")[0]
-    assert ".opencode/skills/_lib/skill_root.sh" in entry_block
-    assert "$HOME/.agents/skills/_lib/skill_root.sh" in entry_block
+    assert ".opencode/_lib/skill_root.sh" in entry_block
+    assert "$HOME/.agents/_lib/skill_root.sh" in entry_block

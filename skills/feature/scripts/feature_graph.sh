@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/feature_graph.sh — extracted from feature.md (subcommand: graph)
+# _lib/feature_graph.sh — extracted from feature.md (subcommand: graph)
 # Exports: render_feature_graph()
 
 render_feature_graph() {

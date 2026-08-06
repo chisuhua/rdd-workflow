@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_arch_done_gate_extraction.bats
 # Round B extraction: guide-arch.md Phase 5 arch-done dual gate (~38 lines)
-# extracted to skills/_lib/arch_done_gate.sh::check_arch_done_gate().
+# extracted to _lib/arch_done_gate.sh::check_arch_done_gate().
 #
 # These tests lock the refactor in place:
 #   1. arch_done_gate.sh exists with check_arch_done_gate function.
@@ -37,7 +37,7 @@ load ../test_helper
   echo "# ADR-0001-test" > "$tmpdir/docs/adr/ADR-0001-test.md"
   echo "**当前阶段**: test" > "$tmpdir/roadmap.md"
   # Stub discover-arch-artifacts.sh
-  cat > "$tmpdir/skills/_lib/discover-arch-artifacts.sh" <<'EOF'
+  cat > "$tmpdir/_lib/discover-arch-artifacts.sh" <<'EOF'
 discover_all() {
   DISCOVERED_ADR_DIR="docs/adr"
   DISCOVERED_ROADMAP_PATH="roadmap.md"
@@ -57,7 +57,7 @@ EOF
   mkdir -p "$tmpdir/docs/adr"
   mkdir -p "$tmpdir/skills/_lib"
   echo "**当前阶段**: test" > "$tmpdir/roadmap.md"
-  cat > "$tmpdir/skills/_lib/discover-arch-artifacts.sh" <<'EOF'
+  cat > "$tmpdir/_lib/discover-arch-artifacts.sh" <<'EOF'
 discover_all() {
   DISCOVERED_ADR_DIR="docs/adr"
   DISCOVERED_ROADMAP_PATH="roadmap.md"
@@ -77,7 +77,7 @@ EOF
   mkdir -p "$tmpdir/skills/_lib"
   echo "# ADR-0001-test" > "$tmpdir/docs/adr/ADR-0001-test.md"
   # No roadmap.md
-  cat > "$tmpdir/skills/_lib/discover-arch-artifacts.sh" <<'EOF'
+  cat > "$tmpdir/_lib/discover-arch-artifacts.sh" <<'EOF'
 discover_all() {
   DISCOVERED_ADR_DIR="docs/adr"
   DISCOVERED_ROADMAP_PATH="roadmap.md"

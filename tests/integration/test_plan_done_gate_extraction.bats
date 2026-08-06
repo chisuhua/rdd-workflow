@@ -2,7 +2,7 @@
 # tests/integration/test_plan_done_gate_extraction.bats
 # Round A extraction: guide-plan.md plan-done triple gate + handoff writer
 # (L518-L618 gate + L625-L676 handoff, ~150 lines) extracted to
-# skills/_lib/plan_done_gate.{py,sh,env.py}.
+# _lib/plan_done_gate.{py,sh,env.py}.
 #
 # These tests lock the refactor in place:
 #   1. plan_done_gate.{sh,py,env.py} exist with correct functions.

@@ -1,4 +1,4 @@
-# skills/_lib/ship_review.sh
+# _lib/ship_review.sh
 # Phase 2.5 of guide-ship.md extracted into a reusable helper.
 # Was a 173-line case/esac block (lines 696-869) handling 4 review-debt actions.
 #
@@ -13,7 +13,7 @@
 #   /tmp/review_new_todos.txt      - newline-separated "file: text" pairs
 #   /tmp/review_test_failures.txt  - newline-separated failure messages
 #
-# Helpers required (provided by skills/_lib/worktree.sh):
+# Helpers required (provided by _lib/worktree.sh):
 #   - wt_path_for_branch <name>
 #   - main_repo_root
 

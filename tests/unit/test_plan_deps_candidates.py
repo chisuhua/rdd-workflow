@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/plan_deps_candidates.py"""
+"""Unit tests for _lib/plan_deps_candidates.py"""
 import json
 import os
 import subprocess

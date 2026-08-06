@@ -4,7 +4,7 @@ from pathlib import Path
 import jsonschema
 import pytest
 
-SCHEMA_PATH = Path(__file__).resolve().parents[2] / "skills" / "_lib" / "schemas" / "feature_view_schema.json"
+SCHEMA_PATH = Path(__file__).resolve().parents[2] / "_lib" / "schemas" / "feature_view_schema.json"
 
 
 @pytest.fixture

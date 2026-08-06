@@ -5,7 +5,7 @@ load ../test_helper
 }
 
 @test "archive.sh::archive_change invokes archive_gate_check" {
-    grep -q 'archive_gate_check' "$PROJECT_ROOT/skills/_lib/archive.sh"
+    grep -q 'archive_gate_check' "$PROJECT_ROOT/_lib/archive.sh"
 }
 
 @test "archive_gate_check returns non-zero when 0 tasks complete" {
@@ -13,8 +13,8 @@ load ../test_helper
     cd "$TMP"
     mkdir -p openspec/changes/foo
     printf -- '- [ ] a\n- [ ] b\n' > openspec/changes/foo/tasks.md
-    source "$PROJECT_ROOT/skills/_lib/archive.sh"
-    run bash -c "source '$PROJECT_ROOT/skills/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'foo'"
+    source "$PROJECT_ROOT/_lib/archive.sh"
+    run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'foo'"
     [ "$status" -ne 0 ]
     [[ "$output" =~ "未实现" ]]
     cd /
@@ -26,8 +26,8 @@ load ../test_helper
     cd "$TMP"
     mkdir -p openspec/changes/foo
     printf -- '- [x] a\n- [ ] b\n' > openspec/changes/foo/tasks.md
-    source "$PROJECT_ROOT/skills/_lib/archive.sh"
-    run bash -c "source '$PROJECT_ROOT/skills/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'foo'"
+    source "$PROJECT_ROOT/_lib/archive.sh"
+    run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'foo'"
     [ "$status" -eq 0 ]
     cd /
     rm -rf "$TMP"
@@ -38,8 +38,8 @@ load ../test_helper
     cd "$TMP"
     mkdir -p openspec/changes/foo
     printf -- '- [ ] a\n- [ ] b\n' > openspec/changes/foo/tasks.md
-    source "$PROJECT_ROOT/skills/_lib/archive.sh"
-    FORCE_ARCHIVE_INCOMPLETE=yes run bash -c "source '$PROJECT_ROOT/skills/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'foo'"
+    source "$PROJECT_ROOT/_lib/archive.sh"
+    FORCE_ARCHIVE_INCOMPLETE=yes run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'foo'"
     [ "$status" -eq 0 ]
     cd /
     rm -rf "$TMP"

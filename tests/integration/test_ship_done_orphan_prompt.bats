@@ -36,7 +36,7 @@ teardown() {
 @test "count_orphaned_sessions: returns 0 when sessions.json is missing" {
   run bash -c '
     export RDD_WORKFLOW_SRC="$REPO_ROOT"
-    source "$REPO_ROOT/skills/_lib/sessions_count.sh"
+    source "$REPO_ROOT/_lib/sessions_count.sh"
     count_orphaned_sessions "$1"
   ' _ "$repo"
   [ "$status" -eq 0 ]
@@ -47,7 +47,7 @@ teardown() {
   _make_sessions_json "$repo" '{not valid}'
   run bash -c '
     export RDD_WORKFLOW_SRC="$REPO_ROOT"
-    source "$REPO_ROOT/skills/_lib/sessions_count.sh"
+    source "$REPO_ROOT/_lib/sessions_count.sh"
     count_orphaned_sessions "$1"
   ' _ "$repo"
   [ "$status" -eq 0 ]
@@ -58,7 +58,7 @@ teardown() {
   _make_sessions_json "$repo" '{"version":1,"sessions":[{"session_id":"rds_000000000001","state":"orphaned"},{"session_id":"rds_000000000002","state":"active"},{"session_id":"rds_000000000003","state":"completed"}]}'
   run bash -c '
     export RDD_WORKFLOW_SRC="$REPO_ROOT"
-    source "$REPO_ROOT/skills/_lib/sessions_count.sh"
+    source "$REPO_ROOT/_lib/sessions_count.sh"
     count_orphaned_sessions "$1"
   ' _ "$repo"
   [ "$status" -eq 0 ]

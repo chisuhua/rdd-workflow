@@ -2,7 +2,7 @@
 # tests/integration/test_json_safety.bats
 #
 # T22 — json.load error handling (P2-3)
-# Tests verify the safe_python_json helper (from skills/_lib/state.sh) returns
+# Tests verify the safe_python_json helper (from _lib/state.sh) returns
 # "unknown" gracefully for missing / malformed / empty JSON files, and that
 # the consumer markdown files (roadmap.md, propose.md) reference the helper
 # instead of using raw json.load(open(...)) one-liners.
@@ -25,7 +25,7 @@ setup() {
   git config user.email "test@test"
   git config user.name "test"
   echo "x" > a && git add a && git commit -q -m init
-  source "$REPO_ROOT/skills/_lib/state.sh"
+  source "$REPO_ROOT/_lib/state.sh"
 }
 
 teardown() {

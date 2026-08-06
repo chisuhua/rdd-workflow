@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/select_worktree.sh — extracted from execute.md L54-L168
+# _lib/select_worktree.sh — extracted from execute.md L54-L168
 # Exports: auto_detect_worktree_context()
 #
 # Detects if currently inside an openspec/* worktree branch.

@@ -1,4 +1,4 @@
-"""skills/_lib/propose_change.py — helpers for propose.md Phase 4.
+"""_lib/propose_change.py — helpers for propose.md Phase 4.
 
 Extracted from inline PYEOF heredocs in propose.md lines 443-796
 (P0-1 refactor, Metis plan 2026-07-16). Each function preserves the

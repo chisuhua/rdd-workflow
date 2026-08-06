@@ -27,7 +27,7 @@ load ../test_helper
     # The worktree path calls archive_change which internally calls
     # mark_iteration_archived. Verify this chain exists.
     PROJECT_ROOT="$REPO_ROOT"
-    ARCHIVE_SH="$PROJECT_ROOT/skills/_lib/archive.sh"
+    ARCHIVE_SH="$PROJECT_ROOT/_lib/archive.sh"
 
     run grep -c "mark_iteration_archived" "$ARCHIVE_SH"
     [ "$status" -eq 0 ]

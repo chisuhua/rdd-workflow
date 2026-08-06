@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/plan_feature_progress.sh — extracted from guide-plan.md L263-L297
+# _lib/plan_feature_progress.sh — extracted from guide-plan.md L263-L297
 # Exports: show_feature_progress()
 #
 # Shows per-feature progress via iteration.feature_progress (derived from change name prefix).

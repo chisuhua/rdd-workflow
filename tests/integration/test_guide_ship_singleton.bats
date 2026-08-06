@@ -20,7 +20,7 @@ setup() {
 }
 
 @test "singleton change auto-selects top candidate" {
-    source "$PROJECT_ROOT/skills/_lib/discover_ship_changes.sh"
+    source "$PROJECT_ROOT/_lib/discover_ship_changes.sh"
     run ship_top_candidate "$TEST_REPO"
     [ "$status" -eq 0 ]
     [ "$output" = "alpha" ]
@@ -31,14 +31,14 @@ setup() {
     printf '# Tasks\n- [ ] x\n' > openspec/changes/beta/tasks.md
     printf '# P\n' > openspec/changes/beta/proposal.md
     printf '# D\n' > openspec/changes/beta/design.md
-    source "$PROJECT_ROOT/skills/_lib/discover_ship_changes.sh"
+    source "$PROJECT_ROOT/_lib/discover_ship_changes.sh"
     run ship_candidate_count "$TEST_REPO"
     [ "$status" -eq 0 ]
     [ "$output" = "2" ]
 }
 
 @test "disk-only candidate is flagged needs_reconciliation" {
-    source "$PROJECT_ROOT/skills/_lib/discover_ship_changes.sh"
+    source "$PROJECT_ROOT/_lib/discover_ship_changes.sh"
     run ship_candidates_json "$TEST_REPO"
     [ "$status" -eq 0 ]
     [[ "$output" =~ "\"name\": \"alpha\"" ]]

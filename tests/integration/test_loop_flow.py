@@ -44,7 +44,7 @@ def test_builtin_detector_registry_is_complete():
     """all_detectors() must return 9 built-in detectors (no plugins in tmp).
 
     v3.0 added `detect_trigger_events` (v3.0 scheduled-triggers feature); see
-    `skills/_lib/detectors.py::BUILTIN_DETECTORS` for the canonical list.
+    `_lib/detectors.py::BUILTIN_DETECTORS` for the canonical list.
     """
     detectors = all_detectors(plugin_dir="/nonexistent/_no_plugins_")
     names = {d.name for d in detectors}

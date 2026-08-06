@@ -2,7 +2,7 @@ load ../test_helper
 
 @test "resolve-skill-name: script exists" {
     PROJECT_ROOT=$(git rev-parse --show-toplevel)
-    run test -f "$PROJECT_ROOT/skills/_lib/resolve_skill_name.sh"
+    run test -f "$PROJECT_ROOT/_lib/resolve_skill_name.sh"
     [ "$status" -eq 0 ]
 }
 
@@ -12,7 +12,7 @@ load ../test_helper
     echo "rdd-workflow/skills/rdd-workflow-writing-plans" > "$TMP_LIST"
     echo "rdd-workflow/skills/guide" >> "$TMP_LIST"
 
-    source "$PROJECT_ROOT/skills/_lib/resolve_skill_name.sh"
+    source "$PROJECT_ROOT/_lib/resolve_skill_name.sh"
     run resolve_skill_name "rdd-workflow-writing-plans" "$TMP_LIST"
     [ "$status" -eq 0 ]
     [[ "$output" == *"rdd-workflow/skills/rdd-workflow-writing-plans"* ]]
@@ -25,7 +25,7 @@ load ../test_helper
     echo "rdd-workflow/skills/guide" > "$TMP_LIST"
     echo "rdd-workflow/skills/guide-ship" >> "$TMP_LIST"
 
-    source "$PROJECT_ROOT/skills/_lib/resolve_skill_name.sh"
+    source "$PROJECT_ROOT/_lib/resolve_skill_name.sh"
     run resolve_skill_name "nonexistent" "$TMP_LIST"
     [ "$status" -eq 1 ]
     [[ "$output" == *"No skill matches"* ]]
@@ -38,7 +38,7 @@ load ../test_helper
     echo "org/skill-a" > "$TMP_LIST"
     echo "other/skill-a" >> "$TMP_LIST"
 
-    source "$PROJECT_ROOT/skills/_lib/resolve_skill_name.sh"
+    source "$PROJECT_ROOT/_lib/resolve_skill_name.sh"
     run resolve_skill_name "skill-a" "$TMP_LIST"
     [ "$status" -eq 1 ]
     [[ "$output" == *"Ambiguous"* ]]

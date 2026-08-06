@@ -1,4 +1,4 @@
-"""Unit tests for ``skills/_lib/dashboard/renderer.py``.
+"""Unit tests for ``_lib/dashboard/renderer.py``.
 
 Covers all 3 render modes (``terminal``, ``json``, ``plain``), the
 auto-degrade behavior when stdout is not a TTY, the ``output_file``

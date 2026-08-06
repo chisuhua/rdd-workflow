@@ -1,4 +1,4 @@
-# skills/_lib/propose_change.sh
+# _lib/propose_change.sh
 # Bash wrapper for propose.md Phase 4 (P0-1 extraction).
 # Encapsulates 5 Python helpers in _lib/propose_change.py:
 #   - set_suggestion_status

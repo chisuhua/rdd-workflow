@@ -60,7 +60,7 @@ EOF
 EOF
 
     # Source state.sh into the test environment
-    cp "$REPO_ROOT/skills/_lib/state.sh" "$WORK_DIR/skills/_lib/" 2>/dev/null || true
+    cp "$REPO_ROOT/_lib/state.sh" "$WORK_DIR/_lib/" 2>/dev/null || true
 }
 
 teardown() {

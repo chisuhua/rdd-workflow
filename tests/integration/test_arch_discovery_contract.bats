@@ -49,7 +49,7 @@ teardown_custom_repo() {
 @test "arch_discovery: default layout yields docs/adr + roadmap.md" {
   setup_custom_repo "default"
   PROJECT_ROOT="$REPO_TMP"
-  source "$REPO_ROOT_HERE/skills/_lib/discover-arch-artifacts.sh"
+  source "$REPO_ROOT_HERE/_lib/discover-arch-artifacts.sh"
   discover_adr_dir          >/dev/null
   discover_roadmap          >/dev/null
   discover_architecture_dir >/dev/null
@@ -67,7 +67,7 @@ teardown_custom_repo() {
 @test "arch_discovery: custom layout (doc/adr) yields doc/adr" {
   setup_custom_repo "custom_doc"
   PROJECT_ROOT="$REPO_TMP"
-  source "$REPO_ROOT_HERE/skills/_lib/discover-arch-artifacts.sh"
+  source "$REPO_ROOT_HERE/_lib/discover-arch-artifacts.sh"
   discover_adr_dir          >/dev/null
   discover_roadmap          >/dev/null
   discover_architecture_dir >/dev/null
@@ -83,7 +83,7 @@ teardown_custom_repo() {
 @test "arch_discovery: missing layout falls back to defaults with found=false" {
   setup_custom_repo "missing"
   PROJECT_ROOT="$REPO_TMP"
-  source "$REPO_ROOT_HERE/skills/_lib/discover-arch-artifacts.sh"
+  source "$REPO_ROOT_HERE/_lib/discover-arch-artifacts.sh"
   discover_adr_dir          >/dev/null
   discover_roadmap          >/dev/null
   discover_architecture_dir >/dev/null
@@ -169,7 +169,7 @@ assert data['roadmap_path'] == 'roadmap.md'
 EOF
   PROJECT_ROOT="$REPO_TMP"
   export SPEC_WORKFLOW_ADR_DIR="custom/env/adrs"
-  source "$REPO_ROOT_HERE/skills/_lib/discover-arch-artifacts.sh"
+  source "$REPO_ROOT_HERE/_lib/discover-arch-artifacts.sh"
   discover_adr_dir >/dev/null
   [ "$DISCOVERED_ADR_DIR" = "custom/env/adrs" ]
   unset SPEC_WORKFLOW_ADR_DIR
@@ -205,7 +205,7 @@ import json, sys
 sys.path.insert(0, '$REPO_ROOT_HERE')
 from pathlib import Path
 from jsonschema import Draft7Validator
-schema = json.loads(Path('$REPO_ROOT_HERE/skills/_lib/schemas/arch_handoff_schema.json').read_text())
+schema = json.loads(Path('$REPO_ROOT_HERE/_lib/schemas/arch_handoff_schema.json').read_text())
 data = json.loads(Path('$REPO_TMP/.rddf/state/.arch-handoff.json').read_text())
 errors = list(Draft7Validator(schema).iter_errors(data))
 assert not errors, f'Validation failed: {[e.message for e in errors]}'

@@ -16,23 +16,23 @@
 load ../test_helper
 
 @test "archive.sh branch delete uses FORCE_BRANCH_DELETE env var" {
-  [ -f "$REPO_ROOT/skills/_lib/archive.sh" ]
-  grep -q "FORCE_BRANCH_DELETE" "$REPO_ROOT/skills/_lib/archive.sh"
+  [ -f "$REPO_ROOT/_lib/archive.sh" ]
+  grep -q "FORCE_BRANCH_DELETE" "$REPO_ROOT/_lib/archive.sh"
 }
 
 @test "archive.sh branch delete defaults to safe (-d not -D)" {
-  [ -f "$REPO_ROOT/skills/_lib/archive.sh" ]
+  [ -f "$REPO_ROOT/_lib/archive.sh" ]
   # Should try -d first, then -D only with FORCE_BRANCH_DELETE=yes
-  grep -q 'git branch -d' "$REPO_ROOT/skills/_lib/archive.sh"
-  grep -q 'git branch -D' "$REPO_ROOT/skills/_lib/archive.sh"
+  grep -q 'git branch -d' "$REPO_ROOT/_lib/archive.sh"
+  grep -q 'git branch -D' "$REPO_ROOT/_lib/archive.sh"
 }
 
 @test "archive.sh returns 1 when -d fails and FORCE_BRANCH_DELETE is unset" {
-  [ -f "$REPO_ROOT/skills/_lib/archive.sh" ]
+  [ -f "$REPO_ROOT/_lib/archive.sh" ]
   # The else branch must hard-fail (return 1) when the env var is unset
   # — never silently swallow the failed delete.
-  grep -q 'FORCE_BRANCH_DELETE:-no' "$REPO_ROOT/skills/_lib/archive.sh"
-  grep -q 'return 1' "$REPO_ROOT/skills/_lib/archive.sh"
+  grep -q 'FORCE_BRANCH_DELETE:-no' "$REPO_ROOT/_lib/archive.sh"
+  grep -q 'return 1' "$REPO_ROOT/_lib/archive.sh"
 }
 
 @test "guide-ship.md Phase 4 also gates -D on FORCE_BRANCH_DELETE" {
@@ -62,7 +62,7 @@ load ../test_helper
   git checkout master 2>/dev/null || git checkout main 2>/dev/null
 
   # Source the helper and exercise the branch-deletion gate directly
-  source "$REPO_ROOT/skills/_lib/archive.sh"
+  source "$REPO_ROOT/_lib/archive.sh"
   unset FORCE_BRANCH_DELETE
 
   # Reproduce the relevant lines: try -d (fails), fall through to the
@@ -98,7 +98,7 @@ load ../test_helper
   echo "y" > b && git add b && git commit -q -m "feat: b"
   git checkout master 2>/dev/null || git checkout main 2>/dev/null
 
-  source "$REPO_ROOT/skills/_lib/archive.sh"
+  source "$REPO_ROOT/_lib/archive.sh"
   export FORCE_BRANCH_DELETE=yes
 
   local branch="openspec/test-1"

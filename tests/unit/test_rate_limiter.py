@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/rate_limiter.py"""
+"""Unit tests for _lib/rate_limiter.py"""
 import time
 from skills._lib.rate_limiter import TokenBucket
 

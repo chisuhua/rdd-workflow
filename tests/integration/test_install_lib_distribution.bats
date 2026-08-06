@@ -9,20 +9,20 @@ setup() {
   [ -f "skills/__init__.py" ]
 }
 
-@test "install_lib: skills/_lib/ has __init__.py (Python sub-package marker)" {
-  [ -f "skills/_lib/__init__.py" ]
+@test "install_lib: _lib/ has __init__.py (Python sub-package marker)" {
+  [ -f "_lib/__init__.py" ]
 }
 
-@test "install_lib: install.sh copies skills/_lib/*.py (recursive)" {
+@test "install_lib: install.sh copies _lib/*.py (recursive)" {
   # The install.sh copy loop uses `find ... -prune` with a cp inside,
   # so check for find+_lib+prune or _lib/schemas mkdir as evidence
   # that the install script handles the _lib distribution.
-  run grep -E 'find.*_lib.*prune|find.*_lib.*\\.py|_lib/schemas|cp.*\\.json' install.sh
+  run grep -E 'find.*_lib.*prune|find.*_lib.*\.py|_lib/schemas|cp.*\.json' install.sh
   [ "$status" -eq 0 ]
   [ -n "$output" ]
 }
 
-@test "install_lib: install.sh copies skills/_lib/*.sh (bash helpers)" {
+@test "install_lib: install.sh copies _lib/*.sh (bash helpers)" {
   # Regression: prior to this fix, install.sh and INSTALL.md only copied
   # *.py and *.json from _lib/. This silently broke runtime bash helpers
   # like archive.sh, worktree.sh, state.sh, scan-state.sh,

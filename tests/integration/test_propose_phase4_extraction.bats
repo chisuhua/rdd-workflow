@@ -13,7 +13,7 @@
 
 load ../test_helper
 
-@test "skills/_lib/propose_change.sh exists with both functions" {
+@test "_lib/propose_change.sh exists with both functions" {
   [ -f "$REPO_ROOT/skills/propose/scripts/propose_change.sh" ]
   grep -q '^propose_create_change()' "$REPO_ROOT/skills/propose/scripts/propose_change.sh"
   grep -q '^propose_finalize_change()' "$REPO_ROOT/skills/propose/scripts/propose_change.sh"

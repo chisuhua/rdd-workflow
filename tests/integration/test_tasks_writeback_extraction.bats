@@ -2,7 +2,7 @@
 # tests/integration/test_tasks_writeback_extraction.bats
 # Task B7 regression: execute.md L366-L399 was a ~34-line inline bash block for
 # tasks.md writeback (Method A: awk index() precise match, Method B: awk gsub() bulk mark).
-# Extracted to skills/_lib/tasks_writeback.sh exposing:
+# Extracted to _lib/tasks_writeback.sh exposing:
 #   - mark_task_done <task_desc>     — precise single-task mark
 #   - mark_all_tasks_done            — bulk mark all - [ ] → - [x]
 #

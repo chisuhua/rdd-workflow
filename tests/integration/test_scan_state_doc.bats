@@ -3,7 +3,7 @@
 # Lock: 1) doc comment lists exactly the exported variables,
 #       2) guide.md path-count comment matches scan-state.sh count.
 #
-# NOTE: scan-state.sh moved from skills/_lib/ to skills/guide/scripts/ in
+# NOTE: scan-state.sh moved from _lib/ to skills/guide/scripts/ in
 # Phase 2 (ADR-0021). Tests updated to reference the new path.
 
 load ../test_helper

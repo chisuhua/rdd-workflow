@@ -23,31 +23,31 @@ setup() {
 }
 
 @test "plan_review: gate.py has _check_openspec_validate function" {
-    [ -f "skills/_lib/gate.py" ]
-    grep -q "_check_openspec_validate" "skills/_lib/gate.py"
+    [ -f "_lib/gate.py" ]
+    grep -q "_check_openspec_validate" "_lib/gate.py"
 }
 
 @test "plan_review: gate.py registers openspec_validate in plan_done checks" {
-    [ -f "skills/_lib/gate.py" ]
-    grep -qE 'Check\("openspec_validate"' "skills/_lib/gate.py"
+    [ -f "_lib/gate.py" ]
+    grep -qE 'Check\("openspec_validate"' "_lib/gate.py"
 }
 
 @test "plan_review: gate.py _check_deps_analyzed is no longer a no-op (ADR-0015 Decision 3)" {
-    [ -f "skills/_lib/gate.py" ]
+    [ -f "_lib/gate.py" ]
     # Reject the historic placeholder that always returned (True, "warning")
-    ! awk '/def _check_deps_analyzed/,/^$/' "skills/_lib/gate.py" | grep -q 'return (True, "warning")'
+    ! awk '/def _check_deps_analyzed/,/^$/' "_lib/gate.py" | grep -q 'return (True, "warning")'
 }
 
 @test "plan_review: human_nodes.py registers plan.review_validation node" {
-    [ -f "skills/_lib/loop/human_nodes.py" ]
-    grep -q '"plan.review_validation"' "skills/_lib/loop/human_nodes.py"
+    [ -f "_lib/loop/human_nodes.py" ]
+    grep -q '"plan.review_validation"' "_lib/loop/human_nodes.py"
 }
 
 @test "plan_review: validate_report view module exists with dataclass" {
-    [ -f "skills/_lib/validate_report.py" ]
-    grep -q "class ValidateReport" "skills/_lib/validate_report.py"
-    grep -q "def write_report" "skills/_lib/validate_report.py"
-    grep -q "def load_report" "skills/_lib/validate_report.py"
+    [ -f "_lib/validate_report.py" ]
+    grep -q "class ValidateReport" "_lib/validate_report.py"
+    grep -q "def write_report" "_lib/validate_report.py"
+    grep -q "def load_report" "_lib/validate_report.py"
 }
 
 @test "plan_review: openspec CLI is available (1.3.1+ declared, runtime must satisfy)" {
@@ -60,7 +60,7 @@ setup() {
 }
 
 @test "plan_review: validate_report is gitignored (via check_project_setup helper)" {
-    source "$REPO_ROOT/skills/_lib/check_project_setup.sh"
+    source "$REPO_ROOT/_lib/check_project_setup.sh"
     run check_project_setup "$REPO_ROOT"
     [ "$status" -eq 0 ]
     echo "$output" | jq -e '.[] | select(.name=="rddf_state_ignored") | .status == "pass"' >/dev/null

@@ -5,7 +5,7 @@ Mirrors the dependency chain declared in feature.md and rddf-session.md frontmat
 - rddf-session depends on [rddf_session]
 
 These imports must work post-install (i.e., after copying _lib/ to a project).
-With empty __init__.py markers on skills/ and skills/_lib/, the absolute
+With empty __init__.py markers on skills/ and _lib/, the absolute
 import `from skills._lib.X import Y` resolves as long as the project root is on
 sys.path (which tests/conftest.py ensures for the test runtime).
 """
@@ -50,13 +50,17 @@ def test_lib_has_init_marker() -> None:
         "skills/__init__.py must exist for skills to be a Python package"
     )
     assert (REPO_ROOT / "skills" / "_lib" / "__init__.py").exists(), (
-        "skills/_lib/__init__.py must exist for skills._lib to be importable"
+        "_lib/__init__.py must exist for skills._lib to be importable"
     )
 
 
 def test_init_markers_are_empty_or_minimal() -> None:
-    """__init__.py should be empty (or near-empty) — no side-effect imports."""
-    for rel in ("skills/__init__.py", "skills/_lib/__init__.py"):
+    """Top-level _lib/ and skills/ __init__.py should be empty (or near-empty).
+
+    _lib/__init__.py is a backward-compatibility shim (re-exports _lib)
+    and is allowed to contain imports per fix-rddf-init-broken-layout.
+    """
+    for rel in ("_lib/__init__.py", "skills/__init__.py"):
         text = (REPO_ROOT / rel).read_text()
         # Allow empty, docstring, or one-line comment; no import statements
         # Exception: TYPE_CHECKING block is for static analysis only
@@ -80,3 +84,9 @@ def test_init_markers_are_empty_or_minimal() -> None:
                 if "TYPE_CHECKING" in ln:
                     continue
                 raise AssertionError(f"{rel} contains a side-effect import: {ln!r}")
+
+    # Backward-compat shim is explicitly allowed to re-export _lib
+    shim = (REPO_ROOT / "skills" / "_lib" / "__init__.py").read_text()
+    assert "Backward-compat shim" in shim or "_lib" in shim, (
+        "_lib/__init__.py must be a backward-compatibility shim for _lib"
+    )

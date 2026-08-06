@@ -8,17 +8,17 @@ load ../test_helper
 
 @test "status.md PLAN_FILE references \$PROJECT_ROOT" {
   # After the status-extraction refactor, plan_file / tasks_file path
-  # assignments live in skills/_lib/status_helpers.sh. The path-safety
+  # assignments live in _lib/status_helpers.sh. The path-safety
   # contract (S4 — must be $PROJECT_ROOT-anchored) moves with them.
   # Helper uses lowercase local names ($plan_file / $tasks_file);
   # grep is case-insensitive so it matches either spelling.
-  grep -iE 'plan_file=.*project_root' skills/_lib/status_helpers.sh
+  grep -iE 'plan_file=.*project_root' _lib/status_helpers.sh
 }
 
 @test "status.md TASKS_FILE references \$PROJECT_ROOT" {
   # See PLAN_FILE rationale — tasks_file was extracted to
   # status_helpers.sh together with plan_file.
-  grep -iE 'tasks_file=.*project_root' skills/_lib/status_helpers.sh
+  grep -iE 'tasks_file=.*project_root' _lib/status_helpers.sh
 }
 
 @test "status.md no longer sources _lib/worktree.sh (S5 dead source fix)" {

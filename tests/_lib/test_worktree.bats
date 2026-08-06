@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 # tests/_lib/test_worktree.bats
-# Unit tests for skills/_lib/worktree.sh helpers:
+# Unit tests for _lib/worktree.sh helpers:
 #   - wt_path_for_branch
 #   - find_default_branch
 #   - main_repo_root

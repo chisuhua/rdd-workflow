@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/arch_quality_report.sh — extracted from guide-arch.md L564-L595
+# _lib/arch_quality_report.sh — extracted from guide-arch.md L564-L595
 # Exports: run_arch_quality_report()
 #
 # Runs arch quality gate (4 warning-level checks) via ArchQualityReport.verify()

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/write_arch_handoff.sh — extracted from guide-arch.md L618-L707
+# _lib/write_arch_handoff.sh — extracted from guide-arch.md L618-L707
 # Exports: write_arch_handoff()
 #
 # Re-runs ADR-0016 artifact discovery (if helper available) and writes
@@ -14,7 +14,7 @@ write_arch_handoff() {
   export PROJECT_ROOT
 
   # Re-run discovery to ensure latest values (Phase 5 idempotency)
-  source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+  source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
   if [ -f "$(resolve_rdd_lib_dir)/discover-arch-artifacts.sh" ]; then
       source "$(resolve_rdd_lib_dir)/discover-arch-artifacts.sh"
       discover_adr_dir          >/dev/null

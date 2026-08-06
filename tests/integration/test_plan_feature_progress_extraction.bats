@@ -2,7 +2,7 @@
 # tests/integration/test_plan_feature_progress_extraction.bats
 # Round B extraction: guide-plan.md L263-L297 feature progress (~34 lines)
 # was a single inline bash code block. Extracted to
-# skills/_lib/plan_feature_progress.sh::show_feature_progress().
+# _lib/plan_feature_progress.sh::show_feature_progress().
 #
 # These tests lock the refactor in place:
 #   1. plan_feature_progress.sh exists with show_feature_progress function.

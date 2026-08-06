@@ -55,7 +55,7 @@ SKILL_DIR=/workspace/project/rdd-workflow/skills/guide \
 
 完整实现见 `skills/guide/scripts/guide_entry.sh` (~180 行,含详细注释 + 4-tier fallback)。脚本内部依次调用:
 1. `scan-state.sh::scan_state()` — 13-path 决策树,产出 baseline `RECOMMEND`/`REASON`
-2. `skills/_lib/workflow_synthesizer.py::synthesize()` — 结构化推荐(若可用,覆盖 baseline;失败时回退到 scan_state 结果)
+2. `_lib/workflow_synthesizer.py::synthesize()` — 结构化推荐(若可用,覆盖 baseline;失败时回退到 scan_state 结果)
 3. `scan-state.sh::scan_session_binding()` — rddf-session binding 扫描(若未指定 `--no-binding`)
 
 **扫描后**：你（AI）将扫描输出的结构化数据（`RECO_JSON` / `ALL_OPTIONS_JSON`）解析为菜单。扫描状态变量包括：

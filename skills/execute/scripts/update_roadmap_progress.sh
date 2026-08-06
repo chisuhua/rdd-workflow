@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/update_roadmap_progress.sh — extracted from execute.md L296-L346
+# _lib/update_roadmap_progress.sh — extracted from execute.md L296-L346
 # Exports: update_roadmap_progress <change_name>
 #
 # Updates .rddf/state/roadmap-state.json to mark a change as completed.

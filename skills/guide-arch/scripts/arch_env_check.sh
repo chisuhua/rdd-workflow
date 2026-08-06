@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/arch_env_check.sh — extracted from guide-arch.md Phase 1 Steps 1-5 (L92-L189)
+# _lib/arch_env_check.sh — extracted from guide-arch.md Phase 1 Steps 1-5 (L92-L189)
 # Exports: run_arch_env_check()
 #
 # Behavior preserved from inline block:
@@ -17,10 +17,10 @@ run_arch_env_check() {
 
   # source 共享环境检查库 (DRY 单一来源, extract-rdd-env-check-from-guide-arch)
   # 优先相对路径 (仓库内), 再回退 skill_root.sh 解析 (安装模式)
-  if [ -f "$PROJECT_ROOT/skills/_lib/env_checks.sh" ]; then
-    source "$PROJECT_ROOT/skills/_lib/env_checks.sh"
+  if [ -f "$PROJECT_ROOT/_lib/env_checks.sh" ]; then
+    source "$PROJECT_ROOT/_lib/env_checks.sh"
   else
-    source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh" 2>/dev/null
+    source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh" 2>/dev/null
     if command -v resolve_rdd_lib_dir >/dev/null 2>&1 && [ -f "$(resolve_rdd_lib_dir)/env_checks.sh" ]; then
       source "$(resolve_rdd_lib_dir)/env_checks.sh"
     fi
@@ -59,7 +59,7 @@ run_arch_env_check() {
   local DISCOVERED_ADR_DIR_FOUND DISCOVERED_ROADMAP_FOUND DISCOVERED_ARCH_FOUND
 
   # === Phase 1 Step 5: 工件发现 (ADR-0016 Layer 1) ===
-  source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+  source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
   if [ -f "$(resolve_rdd_lib_dir)/discover-arch-artifacts.sh" ]; then
       source "$(resolve_rdd_lib_dir)/discover-arch-artifacts.sh"
       discover_adr_dir          >/dev/null
@@ -99,9 +99,9 @@ run_arch_env_check() {
 run_arch_env_setup_gate() {
   local project_root="${1:-$(pwd)}"
   local _lib_paths=(
-    "${project_root}/skills/_lib/check_project_setup.sh"
-    "${PROJECT_ROOT:-/nonexistent}/skills/_lib/check_project_setup.sh"
-    "${REPO_ROOT:-/nonexistent}/skills/_lib/check_project_setup.sh"
+    "${project_root}/_lib/check_project_setup.sh"
+    "${PROJECT_ROOT:-/nonexistent}/_lib/check_project_setup.sh"
+    "${REPO_ROOT:-/nonexistent}/_lib/check_project_setup.sh"
   )
   local _p
   for _p in "${_lib_paths[@]}"; do

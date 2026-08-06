@@ -50,7 +50,7 @@ load ../test_helper
   git config user.name "t"
   echo "x" > README.md && git add . && git commit -q -m "init"
   git worktree add -b openspec/test-change .rddf/wt/test-change HEAD >/dev/null 2>&1
-  source "$REPO_ROOT/skills/_lib/worktree.sh"
+  source "$REPO_ROOT/_lib/worktree.sh"
   result=$(wt_path_for_branch "test-change")
   rm -rf "$TEST_REPO"
   [ "$result" = "$TEST_REPO/.rddf/wt/test-change" ]

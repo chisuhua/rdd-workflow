@@ -56,7 +56,7 @@ execute 仅消费该环境变量,不再自行探测工作区。
 
 ```bash
 # Round A: extracted to _lib/select_worktree.sh (L54-L168, ~113 lines)
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 SCRIPT_DIR="$(resolve_rdd_skill_dir execute)"
 if [ -f "$SCRIPT_DIR/scripts/select_worktree.sh" ]; then
   source "$SCRIPT_DIR/scripts/select_worktree.sh"

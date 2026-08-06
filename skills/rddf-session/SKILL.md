@@ -294,7 +294,7 @@ esac
 ## Architecture
 
 - **Storage**: `.rddf/state/sessions.json` (gitignored, project-scoped)
-- **Schema**: `skills/_lib/schemas/sessions_schema.json` v1 (ADR-0017)
+- **Schema**: `_lib/schemas/sessions_schema.json` v1 (ADR-0017)
 - **Concurrency**: file lock via `fcntl.flock`; atomic write via tmp+rename
 - **Stage-level singleton** (default): at most ONE active session across all
   stage kinds. Cross-stage concurrent runs race on unlocked project

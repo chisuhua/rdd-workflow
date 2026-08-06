@@ -32,7 +32,7 @@ setup() {
     rmdir openspec/changes/my-change
 
     # Working tree is now dirty. Call helper.
-    source "$REPO_ROOT/skills/_lib/archive.sh"
+    source "$REPO_ROOT/_lib/archive.sh"
     run commit_archive_moves "my-change" "$(pwd)"
     [ "$status" -eq 0 ]
 
@@ -59,7 +59,7 @@ setup() {
     git commit -q -m "init"
 
     export SKIP_ARCHIVE_AUTO_COMMIT=yes
-    source "$REPO_ROOT/skills/_lib/archive.sh"
+    source "$REPO_ROOT/_lib/archive.sh"
     commit_archive_moves "my-change" "$(pwd)"
 
     # No new commit
@@ -78,7 +78,7 @@ setup() {
     git add openspec/
     git commit -q -m "init"
 
-    source "$REPO_ROOT/skills/_lib/archive.sh"
+    source "$REPO_ROOT/_lib/archive.sh"
     run commit_archive_moves "done" "$(pwd)"
     [ "$status" -eq 0 ]
 

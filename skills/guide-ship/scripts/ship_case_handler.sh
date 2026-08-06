@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/ship_case_handler.sh — extracted from guide-ship.md (8 identical blocks)
+# _lib/ship_case_handler.sh — extracted from guide-ship.md (8 identical blocks)
 # Exports: handle_invalid_choice()
 #
 # Handles user input for menu loops in guide-ship.md. Replaces 8

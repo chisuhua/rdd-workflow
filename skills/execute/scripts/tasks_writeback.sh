@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/tasks_writeback.sh — extracted from execute.md L366-L399
+# _lib/tasks_writeback.sh — extracted from execute.md L366-L399
 # Exports:
 #   - mark_task_done <task_desc> — precise mark via awk index()
 #   - mark_all_tasks_done        — bulk mark via awk gsub()

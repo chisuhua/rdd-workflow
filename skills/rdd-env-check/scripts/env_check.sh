@@ -6,7 +6,7 @@
 #   _run_env_check_cached  — 读 cache, 命中输出单行; miss/过期/branch 变化 → 全量 + 覆盖 cache
 #   _run_env_full_check    — 无条件全量检查 (写 cache + 输出 10 字段 JSON)
 #
-# 依赖 skills/_lib/env_checks.sh (共享 _check_* 函数)
+# 依赖 _lib/env_checks.sh (共享 _check_* 函数)
 
 # 定位共享库: worktree 内优先相对路径, 再回退 skill_root.sh 解析。
 _ENV_CHECK_SELF="${BASH_SOURCE[0]:-$0}"
@@ -16,7 +16,7 @@ _LIB_DIR="$_ENV_CHECK_DIR/../../_lib"
 if [ -f "$_LIB_DIR/env_checks.sh" ]; then
   source "$_LIB_DIR/env_checks.sh"
 else
-  source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh" 2>/dev/null
+  source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh" 2>/dev/null
   if command -v resolve_rdd_lib_dir >/dev/null 2>&1 && [ -f "$(resolve_rdd_lib_dir)/env_checks.sh" ]; then
     source "$(resolve_rdd_lib_dir)/env_checks.sh"
   fi

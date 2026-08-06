@@ -8,7 +8,7 @@
 #      when iteration.json is missing
 #   3. Maps status strings to emoji icons
 #
-# Extracted to skills/_lib/status_render_mode_a.sh::render_status_mode_a().
+# Extracted to _lib/status_render_mode_a.sh::render_status_mode_a().
 #
 # These tests lock the refactor in place:
 #   1. Helper file exists with render_status_mode_a function exported.

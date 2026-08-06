@@ -44,7 +44,7 @@ if [ ! -f "$_SCRIPT_DIR/scripts/feature_summary.sh" ]; then
   if [ -n "${REPO_ROOT:-}" ] && [ -f "$REPO_ROOT/skills/feature/scripts/feature_summary.sh" ]; then
     _SCRIPT_DIR="$REPO_ROOT/skills/feature"
   else
-    source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+    source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
     _SCRIPT_DIR="$(resolve_rdd_skill_dir feature)"
   fi
 fi

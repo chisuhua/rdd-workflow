@@ -1,4 +1,4 @@
-"""Tests for skills/_lib/event_context.py — context snapshot for events."""
+"""Tests for _lib/event_context.py — context snapshot for events."""
 import pytest
 from skills._lib.event_context import current_context, DEFAULT_STATE_PATH
 from skills._lib.core.state_vector import StateVector

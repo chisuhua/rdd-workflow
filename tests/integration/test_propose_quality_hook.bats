@@ -12,7 +12,7 @@ load ../test_helper
 }
 
 @test "propose-quality-hook: gate.py registers propose_quality_checks" {
-  assert_file_contains "$REPO_ROOT/skills/_lib/gate.py" "propose_quality_checks"
+  assert_file_contains "$REPO_ROOT/_lib/gate.py" "propose_quality_checks"
 }
 
 @test "propose-quality-hook: hook runs against a valid proposal" {

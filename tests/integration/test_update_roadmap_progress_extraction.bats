@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_update_roadmap_progress_extraction.bats
 # Round B Task B8 extraction: execute.md L296-L346 roadmap progress block
-# (~50 lines) extracted to skills/_lib/update_roadmap_progress.{py,sh,env.py}.
+# (~50 lines) extracted to _lib/update_roadmap_progress.{py,sh,env.py}.
 #
 # These tests lock the refactor in place:
 #   1. update_roadmap_progress.{sh,py,env.py} exist with correct functions.

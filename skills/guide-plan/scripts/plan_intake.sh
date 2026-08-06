@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/plan_intake.sh - extracted from guide-plan.md Phase 0 intake (L95-L175)
+# _lib/plan_intake.sh - extracted from guide-plan.md Phase 0 intake (L95-L175)
 # Exports: run_plan_intake(), check_direct_create_fallback()
 #
 # Behavior preserved:
@@ -118,10 +118,10 @@ run_plan_intake() {
   _PI_DIR="$(cd "$(dirname "$_PI_SELF")" && pwd)"
   if [ -f "$_PI_DIR/../../_lib/env_checks.sh" ]; then
     source "$_PI_DIR/../../_lib/env_checks.sh"
-  elif [ -f "$PROJECT_ROOT/skills/_lib/env_checks.sh" ]; then
-    source "$PROJECT_ROOT/skills/_lib/env_checks.sh"
+  elif [ -f "$PROJECT_ROOT/_lib/env_checks.sh" ]; then
+    source "$PROJECT_ROOT/_lib/env_checks.sh"
   else
-    source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh" 2>/dev/null
+    source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh" 2>/dev/null
     if command -v resolve_rdd_lib_dir >/dev/null 2>&1 && [ -f "$(resolve_rdd_lib_dir)/env_checks.sh" ]; then
       source "$(resolve_rdd_lib_dir)/env_checks.sh"
     fi
@@ -218,7 +218,7 @@ except Exception:
   check_design_handoff "$PROJECT_ROOT" || return 1
 
   # 6. 提案状态同步: 扫描已归档但未标记的提案，自动标记为已实施
-  source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+  source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
   local STATE_SH="$(resolve_rdd_lib_dir)/state.sh"
   if [ -f "$STATE_SH" ]; then
     # shellcheck source=/dev/null

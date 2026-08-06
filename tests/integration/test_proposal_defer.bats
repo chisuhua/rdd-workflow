@@ -19,7 +19,7 @@ EOF
 }
 
 @test "proposal_defer: list_improvements outputs 4 segments with status" {
-    run bash -c "source '$REPO_ROOT/skills/_lib/state.sh' && list_improvements '$TEST_DIR'"
+    run bash -c "source '$REPO_ROOT/_lib/state.sh' && list_improvements '$TEST_DIR'"
     [ "$status" -eq 0 ]
     # Should contain test-pending with default '待讨论'
     echo "$output" | grep -q '|待讨论'

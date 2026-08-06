@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Entry-point script for skills/_lib/write_arch_handoff.sh.
+"""Entry-point script for _lib/write_arch_handoff.sh.
 
 Reads env vars and delegates to write_arch_handoff.write_arch_handoff().
 No bash string interpolation — all values flow through os.environ (Oracle C1 safe).
@@ -13,7 +13,7 @@ if not project_root:
     print("ERROR: PROJECT_ROOT env var not set", file=sys.stderr)
     sys.exit(1)
 
-# Compute repo root from this script's location (grandparent of skills/_lib/).
+# Compute repo root from this script's location (grandparent of _lib/).
 # This is needed when PROJECT_ROOT points to a temp/scratch directory.
 _repo_root = str(Path(__file__).resolve().parent.parent.parent)
 if _repo_root not in sys.path:

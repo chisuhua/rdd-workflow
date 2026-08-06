@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 #
 # Wave 8 / fix-debt-audit-2026-07-14 / Wave 2.3: scan-state.sh smoke tests.
-# Verifies that scan_state() in skills/_lib/scan-state.sh:
+# Verifies that scan_state() in _lib/scan-state.sh:
 #   1. Succeeds in an empty repo (no .rddf/state files)
 #   2. Returns the expected RECOMMEND priority ordering for the
 #      pre-debt-fix state files (arch-handoff, plan-handoff, etc.)

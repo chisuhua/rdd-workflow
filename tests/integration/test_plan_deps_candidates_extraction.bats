@@ -2,7 +2,7 @@
 # tests/integration/test_plan_deps_candidates_extraction.bats
 # Round B extraction: guide-plan.md L451-L488 (~38-line inline bash block)
 # generates .rddf/state/.deps-candidates.json. Extracted to
-# skills/_lib/plan_deps_candidates.{py,sh,env.py}::generate_deps_candidates().
+# _lib/plan_deps_candidates.{py,sh,env.py}::generate_deps_candidates().
 #
 # These tests lock the refactor in place:
 #   1. Helper files exist with generate_deps_candidates function.

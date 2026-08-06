@@ -1,4 +1,4 @@
-# skills/_lib/rddf_session_hooks.sh
+# _lib/rddf_session_hooks.sh
 # Bash wrapper for rddf-session entry/close hooks in guide-arch/plan/ship.
 # Extracted from inline PYEOF heredocs (P3-4) per ADR-0017.
 #

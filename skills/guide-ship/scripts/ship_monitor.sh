@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/ship_monitor.sh
+# _lib/ship_monitor.sh
 # Phase 2 progress monitor from guide-ship.md extracted into a reusable helper.
 # Was ~54-line inline bash block at L260-L315 reading progress across all
 # openspec/* branches (worktree + lightweight modes).

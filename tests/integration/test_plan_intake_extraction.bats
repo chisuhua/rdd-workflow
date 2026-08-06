@@ -2,7 +2,7 @@
 # tests/integration/test_plan_intake_extraction.bats
 # Round A extraction: guide-plan.md Phase 0 intake (L95-L175, ~79 lines)
 # was a single inline bash code block. Extracted to
-# skills/_lib/plan_intake.sh::run_plan_intake().
+# _lib/plan_intake.sh::run_plan_intake().
 #
 # These tests lock the refactor in place:
 #   1. plan_intake.sh exists with run_plan_intake function.

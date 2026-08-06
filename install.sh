@@ -119,7 +119,7 @@ install_global_symlinks() {
     # Symlink _lib (shared library — not a skill, but required by all skills'
     # bash code blocks and scripts via resolve_rdd_lib_dir()). Without this,
     # globally-installed skills fail outside the rdd-workflow repo.
-    local LIB_SRC="$PACKAGE_DIR/skills/_lib"
+    local LIB_SRC="$PACKAGE_DIR/_lib"
     local LIB_DST="$AGENTS_DIR/_lib"
     if [ -L "$LIB_DST" ] || [ -d "$LIB_DST" ]; then
         rm -f "$LIB_DST"
@@ -205,7 +205,7 @@ install_per_project() {
     echo ""
 
     mkdir -p "$SKILLS_TARGET/skills"
-    mkdir -p "$SKILLS_TARGET/skills/_lib/schemas"
+    mkdir -p "$SKILLS_TARGET/_lib"
 
     # 复制子技能（.md + per-skill 子目录）
     for skill_dir in "$PACKAGE_DIR/skills/"*/; do
@@ -230,8 +230,8 @@ install_per_project() {
     cp -f "$PACKAGE_DIR/skills/INSTALL.md" "$SKILLS_TARGET/skills/"
 
     # 复制 _lib/
-    if [ -d "$PACKAGE_DIR/skills/_lib" ]; then
-        find "$PACKAGE_DIR/skills/_lib" \
+    if [ -d "$PACKAGE_DIR/_lib" ]; then
+        find "$PACKAGE_DIR/_lib" \
             -type d \( -name __pycache__ -o -name plugins -o -name schedulers \) -prune \
             -o -type f \( -name '*.py' -o -name '*.json' -o -name '*.sh' \) -print 2>/dev/null | while read -r src; do
             rel="${src#$PACKAGE_DIR/}"
@@ -269,6 +269,11 @@ if [ -d "$PACKAGE_DIR/skills" ]; then
         fi
     done
     cp -f "$PACKAGE_DIR/skills/INSTALL.md" "$PROJECT_ROOT/.opencode/skills/rdd-workflow/skills/"
+    if [ -d "$PACKAGE_DIR/_lib" ]; then
+        mkdir -p "$PROJECT_ROOT/.opencode/skills/rdd-workflow/_lib"
+        cp -r "$PACKAGE_DIR/_lib/." "$PROJECT_ROOT/.opencode/skills/rdd-workflow/_lib/"
+        echo "✅ _lib 已安装"
+    fi
     echo "✅ 技能已安装"
     ls -1 "$PROJECT_ROOT/.opencode/skills/rdd-workflow/skills/"
 else

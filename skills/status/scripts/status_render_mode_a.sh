@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/status_render_mode_a.sh — extracted from status.md L134-L178
+# _lib/status_render_mode_a.sh — extracted from status.md L134-L178
 # Exports: render_status_mode_a()
 #
 # Mode A change status rendering. Queries iteration.json with filesystem-only

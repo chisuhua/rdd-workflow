@@ -29,7 +29,7 @@ teardown() {
     SKILLS_DIR='$SKILLS_DIR'
     $(awk '/^# 复制所有子技能/,/^# 复制 skills\/_lib/' skills/INSTALL.md)
     if [ -d \"\$PACKAGE_DIR/skills/_lib\" ]; then
-        mkdir -p \"\$SKILLS_DIR/skills/_lib/schemas\"
+        mkdir -p \"\$SKILLS_DIR/_lib/schemas\"
         find \"\$PACKAGE_DIR/skills/_lib\" \
             -type d \\( -name __pycache__ -o -name plugins -o -name schedulers \\) -prune \
             -o -type f \\( -name '*.py' -o -name '*.json' -o -name '*.sh' \\) -print 2>/dev/null | while read -r src; do
@@ -63,7 +63,7 @@ teardown() {
     SKILLS_DIR='$SKILLS_DIR'
     $(awk '/^# 复制所有子技能/,/^# 复制 skills\/_lib/' skills/INSTALL.md)
     if [ -d \"\$PACKAGE_DIR/skills/_lib\" ]; then
-        mkdir -p \"\$SKILLS_DIR/skills/_lib/schemas\"
+        mkdir -p \"\$SKILLS_DIR/_lib/schemas\"
         find \"\$PACKAGE_DIR/skills/_lib\" \
             -type d \\( -name __pycache__ \\) -prune \
             -o -type f \\( -name '*.py' -o -name '*.sh' \\) -print 2>/dev/null | while read -r src; do
@@ -75,11 +75,11 @@ teardown() {
   " 2>/dev/null
 
   # Shared files should be in _lib/ of target
-  [ -f "$SKILLS_DIR/skills/_lib/state.sh" ] || return 1
-  [ -f "$SKILLS_DIR/skills/_lib/worktree.sh" ] || return 1
+  [ -f "$SKILLS_DIR/_lib/state.sh" ] || return 1
+  [ -f "$SKILLS_DIR/_lib/worktree.sh" ] || return 1
 
   # Moved files should NOT be in _lib/ of target (they belong in per-skill scripts/)
-  ! [ -f "$SKILLS_DIR/skills/_lib/ship_plan.sh" ] || {
+  ! [ -f "$SKILLS_DIR/_lib/ship_plan.sh" ] || {
     echo "FAIL: ship_plan.sh still in _lib/ (should be in guide-ship/scripts/)"
     return 1
   }

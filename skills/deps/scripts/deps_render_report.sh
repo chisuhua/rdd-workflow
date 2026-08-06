@@ -1,4 +1,4 @@
-# skills/_lib/deps_render_report.sh
+# _lib/deps_render_report.sh
 # Bash wrapper for deps.md Step 5 (P0-3 extraction).
 # Delegates to _lib/deps_output.py::render_markdown_report which
 # encapsulates the 160-line inline bash block from deps.md lines 483-642.

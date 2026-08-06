@@ -52,7 +52,7 @@ def test_create_session_writes_valid_schema(coordinator, sessions_file):
         owner_opencode_session_id="ses_xyz",
         goal={"intent": "guide-ship", "subject": "change-x"},
     )
-    schema_path = Path(__file__).resolve().parents[2] / "skills" / "_lib" / "schemas" / "sessions_schema.json"
+    schema_path = Path(__file__).resolve().parents[2] / "_lib" / "schemas" / "sessions_schema.json"
     schema = json.loads(schema_path.read_text())
     data = json.loads(sessions_file.read_text())
     jsonschema.validate(instance=data, schema=schema)

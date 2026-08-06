@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_archive_dedup.bats
 # P1-14 regression: archive logic was duplicated between status.md Mode C
-# and guide-ship.md Phase 3. Extracted to skills/_lib/archive.sh.
+# and guide-ship.md Phase 3. Extracted to _lib/archive.sh.
 #
 # These tests lock the refactor in place:
 #   1. The helper file exists with archive_change, check_worktree_commits,
@@ -17,20 +17,20 @@
 
 load ../test_helper
 
-@test "skills/_lib/archive.sh exists with archive_change function" {
-  [ -f "$REPO_ROOT/skills/_lib/archive.sh" ]
-  grep -q "^archive_change()" "$REPO_ROOT/skills/_lib/archive.sh"
+@test "_lib/archive.sh exists with archive_change function" {
+  [ -f "$REPO_ROOT/_lib/archive.sh" ]
+  grep -q "^archive_change()" "$REPO_ROOT/_lib/archive.sh"
 }
 
-@test "skills/_lib/archive.sh also defines check_worktree_commits and verify_merge_result" {
-  [ -f "$REPO_ROOT/skills/_lib/archive.sh" ]
-  grep -q "^check_worktree_commits()" "$REPO_ROOT/skills/_lib/archive.sh"
-  grep -q "^verify_merge_result()" "$REPO_ROOT/skills/_lib/archive.sh"
+@test "_lib/archive.sh also defines check_worktree_commits and verify_merge_result" {
+  [ -f "$REPO_ROOT/_lib/archive.sh" ]
+  grep -q "^check_worktree_commits()" "$REPO_ROOT/_lib/archive.sh"
+  grep -q "^verify_merge_result()" "$REPO_ROOT/_lib/archive.sh"
 }
 
 @test "archive.sh sources worktree.sh helpers" {
-  [ -f "$REPO_ROOT/skills/_lib/archive.sh" ]
-  grep -q "worktree.sh" "$REPO_ROOT/skills/_lib/archive.sh"
+  [ -f "$REPO_ROOT/_lib/archive.sh" ]
+  grep -q "worktree.sh" "$REPO_ROOT/_lib/archive.sh"
 }
 
 @test "status.md Mode C sources and uses archive.sh::archive_change" {
@@ -122,7 +122,7 @@ load ../test_helper
   git checkout master 2>/dev/null || git checkout main 2>/dev/null
 
   # Source the helper from the rdd-workflow repo
-  source "$REPO_ROOT/skills/_lib/archive.sh"
+  source "$REPO_ROOT/_lib/archive.sh"
 
   run check_worktree_commits test-1
   [ "$status" -eq 0 ]
@@ -140,7 +140,7 @@ load ../test_helper
   git config user.name  "test"
   echo "x" > a && git add a && git commit -q -m "init"
 
-  source "$REPO_ROOT/skills/_lib/archive.sh"
+  source "$REPO_ROOT/_lib/archive.sh"
 
   run check_worktree_commits does-not-exist
   [ "$status" -eq 1 ]
@@ -160,7 +160,7 @@ load ../test_helper
   # Create branch at HEAD — no new commits
   git branch openspec/test-1 HEAD
 
-  source "$REPO_ROOT/skills/_lib/archive.sh"
+  source "$REPO_ROOT/_lib/archive.sh"
 
   run check_worktree_commits test-1
   [ "$status" -eq 1 ]
@@ -181,7 +181,7 @@ load ../test_helper
   echo "y" > b && git add b && git commit -q -m "feat: b"
   git checkout master 2>/dev/null || git checkout main 2>/dev/null
 
-  source "$REPO_ROOT/skills/_lib/archive.sh"
+  source "$REPO_ROOT/_lib/archive.sh"
 
   BEFORE=$(git rev-parse HEAD)
   git merge --ff-only openspec/test-1 >/dev/null 2>&1
@@ -209,7 +209,7 @@ load ../test_helper
   git merge --ff-only openspec/test-1 >/dev/null 2>&1
   # After merge, branch is ancestor of HEAD. HEAD has not changed since.
   SAME=$(git rev-parse HEAD)
-  source "$REPO_ROOT/skills/_lib/archive.sh"
+  source "$REPO_ROOT/_lib/archive.sh"
 
   run verify_merge_result "$SAME" "$SAME" test-1
   [ "$status" -eq 0 ]

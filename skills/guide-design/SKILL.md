@@ -48,7 +48,7 @@ skill_use("guide-design")   # 无参数版本
 ```bash
 # rddf-session 入口 hook (ADR-0017) - extracted to _lib/rddf_session_hooks.sh
 # stage_design parent: latest stage_arch (auto-resolved by helper)
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir rddf-session)/scripts/rddf_session_hooks.sh"
 rddf_session_hook_entry stage_design guide-design design-phase design-done .rddf/state/.design-handoff.json
 ```
@@ -213,7 +213,7 @@ write_design_handoff "$proposals_reviewed" ${created_change_names[@]}
 **rddf-session 关闭 hook**：
 ```bash
 # rddf-session 关闭 hook (ADR-0017) - graceful degradation when skill_root.sh missing
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 if command -v resolve_rdd_skill_dir >/dev/null 2>&1; then
     source "$(resolve_rdd_skill_dir rddf-session)/scripts/rddf_session_hooks.sh"
     rddf_session_hook_close stage_design design-done guide-design

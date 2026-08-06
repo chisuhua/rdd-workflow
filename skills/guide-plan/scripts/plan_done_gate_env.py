@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Entry-point script for skills/_lib/plan_done_gate.sh::write_plan_handoff.
+"""Entry-point script for _lib/plan_done_gate.sh::write_plan_handoff.
 
 Reads env vars:
 - PROJECT_ROOT (required)
@@ -20,7 +20,7 @@ def main():
         print("ERROR: PROJECT_ROOT env var not set", file=sys.stderr)
         sys.exit(1)
 
-    # Compute repo root from this script's location (grandparent of skills/_lib/).
+    # Compute repo root from this script's location (grandparent of _lib/).
     # Needed when PROJECT_ROOT points to a temp/scratch directory.
     _repo_root = str(Path(__file__).resolve().parent.parent.parent)
     if _repo_root not in sys.path:

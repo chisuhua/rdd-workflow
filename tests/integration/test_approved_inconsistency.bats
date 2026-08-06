@@ -30,7 +30,7 @@ teardown() {
 # ---------------------------------------------------------------------------
 
 @test "approved_inconsistency: detect function exists in state.sh" {
-    source "$REPO_ROOT/skills/_lib/state.sh"
+    source "$REPO_ROOT/_lib/state.sh"
     declare -f detect_approved_inconsistency >/dev/null
 }
 
@@ -42,7 +42,7 @@ teardown() {
 | [orphan](improvements/orphan.md) | P1 | test | completed |
 EOF
 
-    source "$REPO_ROOT/skills/_lib/state.sh"
+    source "$REPO_ROOT/_lib/state.sh"
     run detect_approved_inconsistency "$TEST_DIR"
     [ "$status" -eq 0 ]
     [[ "$output" == *"⚠️"* ]]
@@ -64,14 +64,14 @@ EOF
 | [covered](improvements/covered.md) | P1 |
 EOF
 
-    source "$REPO_ROOT/skills/_lib/state.sh"
+    source "$REPO_ROOT/_lib/state.sh"
     run detect_approved_inconsistency "$TEST_DIR"
     [ "$status" -eq 0 ]
     [[ "$output" != *"⚠️"* ]]
 }
 
 @test "approved_inconsistency: missing proposal-suggestions.md is silent" {
-    source "$REPO_ROOT/skills/_lib/state.sh"
+    source "$REPO_ROOT/_lib/state.sh"
     run detect_approved_inconsistency "$TEST_DIR"
     [ "$status" -eq 0 ]
     [[ "$output" != *"⚠️"* ]]
@@ -85,7 +85,7 @@ EOF
 | [pending](improvements/pending.md) | P1 | test | 2026-07-29 |
 EOF
 
-    source "$REPO_ROOT/skills/_lib/state.sh"
+    source "$REPO_ROOT/_lib/state.sh"
     run detect_approved_inconsistency "$TEST_DIR"
     [ "$status" -eq 0 ]
     [[ "$output" != *"⚠️"* ]]
@@ -111,16 +111,16 @@ EOF
 
 @test "approved_inconsistency: smoke regression - no false positive on clean project" {
     # Empty repo, no proposal-suggestions.md -> silent
-    source "$REPO_ROOT/skills/_lib/state.sh"
+    source "$REPO_ROOT/_lib/state.sh"
     run detect_approved_inconsistency "$TEST_DIR"
     [ "$status" -eq 0 ]
     [[ "$output" != *"⚠️"* ]]
 }
 
 @test "approved_inconsistency: smoke regression - existing state.sh functions still work" {
-    source "$REPO_ROOT/skills/_lib/state.sh"
+    source "$REPO_ROOT/_lib/state.sh"
     run bash -c "
-        source $REPO_ROOT/skills/_lib/state.sh
+        source $REPO_ROOT/_lib/state.sh
         type list_improvements > /dev/null
     "
     [ "$status" -eq 0 ]

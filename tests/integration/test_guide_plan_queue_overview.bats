@@ -26,7 +26,7 @@
     # v2.0.8: candidate count delegates to _lib/state.sh::count_pending_suggestions
     # which reads proposal-suggestions.md JSON and filters status == "待创建"
     local script="$BATS_TEST_DIRNAME/../../skills/guide-plan/scripts/plan_queue_overview.sh"
-    local state_sh="$BATS_TEST_DIRNAME/../../skills/_lib/state.sh"
+    local state_sh="$BATS_TEST_DIRNAME/../../_lib/state.sh"
     [ -f "$script" ]
     [ -f "$state_sh" ]
     # plan_queue_overview.sh sources state.sh and calls count_pending_suggestions

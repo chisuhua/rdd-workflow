@@ -1,4 +1,4 @@
-"""Unit tests for skills/_lib/deps_output.py — structured deps analysis."""
+"""Unit tests for _lib/deps_output.py — structured deps analysis."""
 import json
 import os
 from pathlib import Path

@@ -51,7 +51,7 @@ STATE_FILE="$PROJECT_ROOT/.rddf/state/roadmap-state.json"
 
 # 加载 state.sh 辅助函数（safe_python_json, safe_python_yaml）
 # P2-3: 所有 json.load(open(...)) 一行式调用改为 safe_python_json
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
 SCRIPT_DIR="$(resolve_rdd_skill_dir roadmap)"
 if [ -f "$SCRIPT_DIR/../_lib/state.sh" ]; then
   source "$SCRIPT_DIR/../_lib/state.sh"
@@ -246,7 +246,7 @@ fi
 
 ### 步骤 4：初始化状态文件
 
-状态初始化逻辑已抽取到 `skills/_lib/roadmap_state.py::init_state()`,默认生成 phase-1/2/3 模板。bash 端只保留 source + 1 行调用,确保 AI 助手有可执行规约可循。
+状态初始化逻辑已抽取到 `_lib/roadmap_state.py::init_state()`,默认生成 phase-1/2/3 模板。bash 端只保留 source + 1 行调用,确保 AI 助手有可执行规约可循。
 
 ```bash
 # init Step 4: 状态文件初始化（已抽取到 _lib/roadmap_state.py::init_state）
@@ -288,7 +288,7 @@ init_state(os.environ["STATE_FILE"])
 
 ### 步骤 1：读取路线图和状态
 
-读取 + 展示已合并抽取到 `skills/_lib/roadmap_state.py::render_status_view()`。模块函数内部处理 roadmap.md 缺失、state.json 缺失、阶段进度、门控状态展示。
+读取 + 展示已合并抽取到 `_lib/roadmap_state.py::render_status_view()`。模块函数内部处理 roadmap.md 缺失、state.json 缺失、阶段进度、门控状态展示。
 
 ```bash
 # status Step 1: 渲染路线图状态（已抽取到 _lib/roadmap_state.py::render_status_view）
@@ -361,7 +361,7 @@ sys.exit(add_phase(
 
 ### 验证逻辑
 
-校验逻辑已抽取到 `skills/_lib/roadmap_state.py::validate_change()`,函数内部用 `yaml.safe_load` 解析 meta、用 regex 解析 roadmap 阶段 + 分类结构,保留所有原有错误提示与成功消息字符串。
+校验逻辑已抽取到 `_lib/roadmap_state.py::validate_change()`,函数内部用 `yaml.safe_load` 解析 meta、用 regex 解析 roadmap 阶段 + 分类结构,保留所有原有错误提示与成功消息字符串。
 
 ```bash
 # validate: 校验 change 分类（已抽取到 _lib/roadmap_state.py::validate_change）
@@ -387,7 +387,7 @@ sys.exit(validate_change(
 
 ### 前置检查 + 执行推进（合并）
 
-前置检查(分类完成 + 门控条件)与执行推进(找下一阶段 + 更新 state)已合并抽取到 `skills/_lib/roadmap_state.py::advance_phase()`,函数内部用 re.findall 提取阶段列表、用 json 读写 state,保留所有原输出字符串。
+前置检查(分类完成 + 门控条件)与执行推进(找下一阶段 + 更新 state)已合并抽取到 `_lib/roadmap_state.py::advance_phase()`,函数内部用 re.findall 提取阶段列表、用 json 读写 state,保留所有原输出字符串。
 
 ```bash
 # advance: 推进阶段（已抽取到 _lib/roadmap_state.py::advance_phase）

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/_lib/plan_deps_candidates.sh — extracted from guide-plan.md L451-L488
+# _lib/plan_deps_candidates.sh — extracted from guide-plan.md L451-L488
 # Exports: generate_deps_candidates()
 #
 # Writes .rddf/state/.deps-candidates.json containing all committed changes.

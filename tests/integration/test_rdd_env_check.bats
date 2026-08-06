@@ -7,7 +7,7 @@ load ../test_helper
 
 SKILL_DIR="$REPO_ROOT/skills/rdd-env-check"
 ENV_CHECK="$SKILL_DIR/scripts/env_check.sh"
-LIB_CHECKS="$REPO_ROOT/skills/_lib/env_checks.sh"
+LIB_CHECKS="$REPO_ROOT/_lib/env_checks.sh"
 CACHE_PATH=".rddf/state/.env-cache.json"
 
 make_env_check_repo() {

@@ -12,19 +12,19 @@ setup() {
 }
 
 @test "check_project_setup: passing project emits valid JSON array" {
-  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT'"
+  run bash -c "source '$REPO_ROOT/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT'"
   [ "$status" -eq 0 ]
   echo "$output" | python3 -m json.tool >/dev/null
 }
 
 @test "check_project_setup: rddf_state_ignored passes on repo" {
-  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq -r '.[] | select(.name==\"rddf_state_ignored\") | .status'"
+  run bash -c "source '$REPO_ROOT/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq -r '.[] | select(.name==\"rddf_state_ignored\") | .status'"
   [ "$status" -eq 0 ]
   [ "$output" = "pass" ]
 }
 
 @test "check_project_setup: rddf_plans_not_ignored passes on repo" {
-  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq -r '.[] | select(.name==\"rddf_plans_not_ignored\") | .status'"
+  run bash -c "source '$REPO_ROOT/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq -r '.[] | select(.name==\"rddf_plans_not_ignored\") | .status'"
   [ "$status" -eq 0 ]
   [ "$output" = "pass" ]
 }
@@ -33,19 +33,19 @@ setup() {
   if ! command -v openspec >/dev/null 2>&1; then
     skip "openspec CLI not installed"
   fi
-  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq -r '.[] | select(.name==\"openspec_cli_available\") | .status'"
+  run bash -c "source '$REPO_ROOT/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq -r '.[] | select(.name==\"openspec_cli_available\") | .status'"
   [ "$status" -eq 0 ]
   [ "$output" = "pass" ]
 }
 
 @test "check_project_setup: git_head_exists passes in repo" {
-  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq -r '.[] | select(.name==\"git_head_exists\") | .status'"
+  run bash -c "source '$REPO_ROOT/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq -r '.[] | select(.name==\"git_head_exists\") | .status'"
   [ "$status" -eq 0 ]
   [ "$output" = "pass" ]
 }
 
 @test "check_project_setup: large_untracked_dirs severity is safe_auto_fix or info" {
-  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq -r '.[] | select(.name==\"large_untracked_dirs\") | .severity'"
+  run bash -c "source '$REPO_ROOT/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq -r '.[] | select(.name==\"large_untracked_dirs\") | .severity'"
   [ "$status" -eq 0 ]
   [[ "$output" == "safe_auto_fix" || "$output" == "info" ]]
 }
@@ -55,7 +55,7 @@ setup() {
   mkdir -p "$fixture" && (cd "$fixture" && git init -q && \
     echo ".rddf/wt/" > .gitignore && \
     git add .gitignore && git -c user.email=t@t -c user.name=t commit -q -m init)
-  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$fixture' | jq '.[] | select(.name==\"rddf_state_ignored\") | {status, severity}'"
+  run bash -c "source '$REPO_ROOT/_lib/check_project_setup.sh' && check_project_setup '$fixture' | jq '.[] | select(.name==\"rddf_state_ignored\") | {status, severity}'"
   [ "$status" -eq 0 ]
   [ "$(echo "$output" | jq -r .status)" = "fail" ]
   [ "$(echo "$output" | jq -r .severity)" = "error" ]
@@ -66,7 +66,7 @@ setup() {
   mkdir -p "$fixture" && (cd "$fixture" && git init -q && \
     echo ".rddf/state/" > .gitignore && \
     git add .gitignore && git -c user.email=t@t -c user.name=t commit -q -m init)
-  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$fixture' | jq -r '.[] | select(.name==\"rddf_wt_ignored\") | .fix_command'"
+  run bash -c "source '$REPO_ROOT/_lib/check_project_setup.sh' && check_project_setup '$fixture' | jq -r '.[] | select(.name==\"rddf_wt_ignored\") | .fix_command'"
   [ "$status" -eq 0 ]
   [[ "$output" == *".rddf/wt/"* ]]
   [[ "$output" == *".gitignore"* ]]
@@ -77,7 +77,7 @@ setup() {
   mkdir -p "$fixture" && (cd "$fixture" && git init -q && \
     printf '.rddf/state/\n.rddf/wt/\n.rddf/plans/\n' > .gitignore && \
     git add .gitignore && git -c user.email=t@t -c user.name=t commit -q -m init)
-  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$fixture' | jq -r '.[] | select(.name==\"rddf_plans_not_ignored\") | .status'"
+  run bash -c "source '$REPO_ROOT/_lib/check_project_setup.sh' && check_project_setup '$fixture' | jq -r '.[] | select(.name==\"rddf_plans_not_ignored\") | .status'"
   [ "$status" -eq 0 ]
   [ "$output" = "fail" ]
 }
@@ -87,7 +87,7 @@ setup() {
   mkdir -p "$fixture" && (cd "$fixture" && git init -q && \
     git -c user.email=t@t -c user.name=t commit -q --allow-empty -m init)
   rm -f "$fixture/.gitignore"
-  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$fixture' 2>/dev/null | jq '.[] | select(.name==\"rddf_state_ignored\") | {status, fix_command}'"
+  run bash -c "source '$REPO_ROOT/_lib/check_project_setup.sh' && check_project_setup '$fixture' 2>/dev/null | jq '.[] | select(.name==\"rddf_state_ignored\") | {status, fix_command}'"
   [ "$status" -eq 0 ]
   [ "$(echo "$output" | jq -r .status)" = "fail" ]
   [[ "$(echo "$output" | jq -r .fix_command)" == *"echo"* ]]
@@ -101,14 +101,14 @@ setup() {
     git add .gitignore && git -c user.email=t@t -c user.name=t commit -q -m init)
   mkdir -p "$fixture/bigbuild"
   dd if=/dev/zero of="$fixture/bigbuild/blob" bs=1M count=11 status=none
-  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$fixture' | jq -r '.[] | select(.name==\"large_untracked_dirs\") | .severity'"
+  run bash -c "source '$REPO_ROOT/_lib/check_project_setup.sh' && check_project_setup '$fixture' | jq -r '.[] | select(.name==\"large_untracked_dirs\") | .severity'"
   [ "$status" -eq 0 ]
   [ "$output" = "safe_auto_fix" ]
   rm -f "$fixture/bigbuild/blob"
 }
 
 @test "check_project_setup: JSON schema — every issue has name/status/severity/fix_command/detail" {
-  run bash -c "source '$REPO_ROOT/skills/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq '.[] | has(\"name\") and has(\"status\") and has(\"severity\") and has(\"fix_command\") and has(\"detail\")' | sort -u"
+  run bash -c "source '$REPO_ROOT/_lib/check_project_setup.sh' && check_project_setup '$REPO_ROOT' | jq '.[] | has(\"name\") and has(\"status\") and has(\"severity\") and has(\"fix_command\") and has(\"detail\")' | sort -u"
   [ "$status" -eq 0 ]
   [ "$output" = "true" ]
 }

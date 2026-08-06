@@ -2,7 +2,7 @@
 # tests/integration/test_arch_gap_analysis_extraction.bats
 # Round B extraction: guide-arch.md L343-L431 (~85 lines, 2 inline bash blocks)
 # — gap analysis generator + viewer. Extracted to
-# skills/_lib/arch_gap_analysis.sh exposing:
+# _lib/arch_gap_analysis.sh exposing:
 #   - generate_gap_analysis <slug>  — creates docs/architecture/<slug>-gap-analysis.md
 #   - list_gap_analyses             — prints numbered list of existing gap analyses
 #

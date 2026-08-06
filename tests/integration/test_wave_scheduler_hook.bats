@@ -1,20 +1,20 @@
 #!/usr/bin/env bats
-# Integration tests for skills/_lib/wave_scheduler_hooks.sh
+# Integration tests for _lib/wave_scheduler_hooks.sh
 # Verifies bash wrapper contract: post_archive + entry_check functions.
 
 load ../test_helper
 
-@test "wave_scheduler: hook file exists at skills/_lib/wave_scheduler_hooks.sh" {
-    assert_file_exists "$REPO_ROOT/skills/_lib/wave_scheduler_hooks.sh"
+@test "wave_scheduler: hook file exists at _lib/wave_scheduler_hooks.sh" {
+    assert_file_exists "$REPO_ROOT/_lib/wave_scheduler_hooks.sh"
 }
 
 @test "wave_scheduler: wave_scheduler_post_archive function is defined" {
-    source "$REPO_ROOT/skills/_lib/wave_scheduler_hooks.sh"
+    source "$REPO_ROOT/_lib/wave_scheduler_hooks.sh"
     declare -F wave_scheduler_post_archive >/dev/null
 }
 
 @test "wave_scheduler: wave_scheduler_entry_check function is defined" {
-    source "$REPO_ROOT/skills/_lib/wave_scheduler_hooks.sh"
+    source "$REPO_ROOT/_lib/wave_scheduler_hooks.sh"
     declare -F wave_scheduler_entry_check >/dev/null
 }
 
@@ -33,7 +33,7 @@ load ../test_helper
 }
 EOF
     export PYTHONPATH="$REPO_ROOT:${PYTHONPATH:-}"
-    source "$REPO_ROOT/skills/_lib/wave_scheduler_hooks.sh"
+    source "$REPO_ROOT/_lib/wave_scheduler_hooks.sh"
     run wave_scheduler_post_archive "$TMP_ROOT" "change-a"
     [ "$status" -eq 0 ]
     [[ "$output" == *"change-b"* ]] || {
@@ -61,7 +61,7 @@ EOF
 }
 EOF
     export PYTHONPATH="$REPO_ROOT:${PYTHONPATH:-}"
-    source "$REPO_ROOT/skills/_lib/wave_scheduler_hooks.sh"
+    source "$REPO_ROOT/_lib/wave_scheduler_hooks.sh"
     run wave_scheduler_post_archive "$TMP_ROOT" "change-a"
     [ "$status" -eq 0 ]
     [[ "$output" != *"Wave suggestion"* ]]
@@ -71,7 +71,7 @@ EOF
 @test "wave_scheduler: post_archive missing iteration.json does not error" {
     TMP_ROOT=$(mktemp -d)
     export PYTHONPATH="$REPO_ROOT:${PYTHONPATH:-}"
-    source "$REPO_ROOT/skills/_lib/wave_scheduler_hooks.sh"
+    source "$REPO_ROOT/_lib/wave_scheduler_hooks.sh"
     run wave_scheduler_post_archive "$TMP_ROOT" "change-a"
     [ "$status" -eq 0 ]
     rm -rf "$TMP_ROOT"
@@ -92,7 +92,7 @@ EOF
 }
 EOF
     export PYTHONPATH="$REPO_ROOT:${PYTHONPATH:-}"
-    source "$REPO_ROOT/skills/_lib/wave_scheduler_hooks.sh"
+    source "$REPO_ROOT/_lib/wave_scheduler_hooks.sh"
     run wave_scheduler_entry_check "$TMP_ROOT" "guide-plan"
     [ "$status" -eq 0 ]
     [[ "$output" == *"B"* ]]
@@ -111,7 +111,7 @@ EOF
 }
 EOF
     export PYTHONPATH="$REPO_ROOT:${PYTHONPATH:-}"
-    source "$REPO_ROOT/skills/_lib/wave_scheduler_hooks.sh"
+    source "$REPO_ROOT/_lib/wave_scheduler_hooks.sh"
     run wave_scheduler_entry_check "$TMP_ROOT" "guide-plan"
     [ "$status" -eq 0 ]
     rm -rf "$TMP_ROOT"
