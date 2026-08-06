@@ -48,6 +48,13 @@ if [ -f "$_LIB_DIR/archive.sh" ]; then
   source "$_LIB_DIR/archive.sh"
 fi
 
+# Source post-archive cleanup hook (post-archive-cleanup-hook)
+_HL_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+if [ -f "$_HL_SCRIPT_DIR/../../../_lib/post_archive_cleanup.sh" ]; then
+  # shellcheck source=/dev/null
+  source "$_HL_SCRIPT_DIR/../../../_lib/post_archive_cleanup.sh"
+fi
+
 # detect_archive_mode <project_root> <change_name>
 detect_archive_mode() {
   local project_root="$1"
@@ -246,6 +253,10 @@ archive_change_for_mode() {
 
   # Cleanup plan file after archive (archive-cleanup-plan-files)
   cleanup_plan_file "$project_root" "$change_name" || true
+
+  # Post-archive cleanup hook (post-archive-cleanup-hook).
+  # Non-blocking: clears residual deleted tracked files after archive.
+  post_archive_cleanup "$project_root" "$change_name" || true
 
   return 0
 }

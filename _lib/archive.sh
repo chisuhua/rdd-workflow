@@ -68,6 +68,12 @@ if [ -f "$_LIB_DIR/worktree.sh" ]; then
   source "$_LIB_DIR/worktree.sh"
 fi
 
+# Source post-archive cleanup hook (post-archive-cleanup-hook)
+if [ -f "$_LIB_DIR/post_archive_cleanup.sh" ]; then
+  # shellcheck source=/dev/null
+  source "$_LIB_DIR/post_archive_cleanup.sh"
+fi
+
 # check_worktree_commits <name>
 #   Returns 0 if the worktree branch has new commits vs the default branch.
 #   Returns 1 if the worktree branch is missing OR has zero new commits.
@@ -402,6 +408,11 @@ except Exception:
     pass  # non-blocking
 " 2>/dev/null || true
   fi
+
+  # 9. Post-archive cleanup hook (post-archive-cleanup-hook).
+  # Non-blocking: fixes residual deleted tracked files (e.g. .rddf/plans/<name>.md)
+  # left by the dispersed cleanup chain. Run after all archive git mutations.
+  post_archive_cleanup "$main_root" "$name" || true
 
   return 0
 }
