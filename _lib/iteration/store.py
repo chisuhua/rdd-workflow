@@ -103,6 +103,7 @@ def _read_unlocked_verbose(path: str) -> tuple[Optional[dict], Optional[str]]:
             data = json.load(f)
     except (json.JSONDecodeError, OSError) as exc:
         return (None, f"invalid JSON: {exc}")
+    data = _migrate_to_current(data)
     # Direct validation to capture the first error's full path. Can't
     # use _validate() because it re-raises with only the message
     # string, discarding absolute_path.
@@ -283,6 +284,22 @@ def _migrate_v4_to_v5(data: dict) -> dict:
     return data
 
 
+def _migrate_to_current(data: dict) -> dict:
+    """Walk a versioned iteration state forward to the current schema.
+
+    Returns the migrated dict (a shallow copy if any step ran, or the
+    input unchanged if already at the current version). Each step is
+    idempotent: if the version field already matches, the function is
+    a no-op. Shared by load() and _read_unlocked_verbose() so both
+    write-side and read-side paths surface the same shape.
+    """
+    if isinstance(data, dict) and data.get("version") == 3:
+        data = _migrate_v3_to_v4(data)
+    if isinstance(data, dict) and data.get("version") == 4:
+        data = _migrate_v4_to_v5(data)
+    return data
+
+
 def load(project_root: str) -> dict:
     """Load iteration state from disk.
 
@@ -318,13 +335,7 @@ def load(project_root: str) -> dict:
         logger.error("iteration.json at %s is unreadable: %s; backing up and returning empty", path, e)
         _backup_corrupt_file(path, f"invalid JSON: {e}")
         return create_empty()
-    # v3 -> v4 in-memory migration (adds manual_deps/manual_blocks=None
-    # to each change). Bypasses validation pre-migration because the
-    # v4 schema's `const: 4` would reject a v3 file.
-    if isinstance(data, dict) and data.get("version") == 3:
-        data = _migrate_v3_to_v4(data)
-    if isinstance(data, dict) and data.get("version") == 4:
-        data = _migrate_v4_to_v5(data)
+    data = _migrate_to_current(data)
     try:
         _validate(data)
     except jsonschema.ValidationError as e:
