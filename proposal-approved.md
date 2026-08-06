@@ -46,9 +46,11 @@
 
 
 
-| [fix-rddf-init-broken-layout](improvements/fix-rddf-init-broken-layout.md) | P1 | 2026-08-05 | guide-arch |
+
+| [post-archive-cleanup-hook](improvements/post-archive-cleanup-hook.md) | P0 | 2026-08-06 | guide-arch |
 
 ## 已实施
+| [fix-rddf-init-broken-layout](improvements/fix-rddf-init-broken-layout.md) | P1 | 2026-08-06 |
 | [collect-l2-violation-count-on-archive](improvements/collect-l2-violation-count-on-archive.md) | P2 | 2026-08-06 |
 | [fix-tasks-md-archive-residue](improvements/fix-tasks-md-archive-residue.md) | P1 | 2026-08-06 |
 | [rddf-iteration-strict-schema](improvements/rddf-iteration-strict-schema.md) | P1 | 2026-08-06 |

@@ -1,0 +1,12 @@
+schema: spec-driven
+created: '2026-08-06'
+name: post-archive-cleanup-hook
+created_by: guide-design approve
+goal: >-
+  新增 _lib/post_archive_cleanup.sh 统一 hook,archive 后 idempotent 处理
+  deleted tracked files (git rm)、modified critical files (git add),
+  双 mode 接入 (worktree + lightweight),避免用户下次启动 guide 看到工作树残留警告。
+affected_areas:
+- core-impl
+- guide-ship
+- archive-flow
