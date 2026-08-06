@@ -86,6 +86,7 @@ _ROUTES: Dict[str, str] = {
     "guide": "skills._lib.cli.guide_cmd:cmd_guide",
     "init": "skills._lib.cli.init_cmd:cmd_init",
     "iteration": "skills._lib.cli.iteration_strict_cmd:cmd_iteration",
+    "l2-trend": "skills._lib.cli.l2_trend_cmd:cmd_l2_trend",
     "monitor": "skills._lib.cli.monitor_cmd:cmd_monitor",
     "status": "skills._lib.cli.status_cmd:cmd_status",
     "sessions": "skills._lib.cli.sessions_cmd:cmd_sessions",

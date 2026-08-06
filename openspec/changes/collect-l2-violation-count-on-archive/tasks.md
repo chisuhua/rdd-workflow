@@ -6,13 +6,13 @@
 
 ## 1. Implementation
 
-- [ ] 1.1 iteration.json schema 增加 optional 字段：`l2_violation_count_after` (int, 0..N) 和 `l2_violation_kind` (enum: `sim_include_drv`, `sim_class_type`, ... — 默认 `sim_include_drv`)
-- [ ] 1.2 `archive.sh::archive_change()` 末尾调用 `collect_l2_count()` 函数，写入新字段
-- [ ] 1.3 `collect_l2_count()` 默认实现：`grep -rn '#include.*"sim/' plugins/gpu_driver/drv/ | wc -l`（参考 UsrLinuxEmu 的 L2 基线命令）；可通过 `rddf config set l2_count_cmd '<cmd>'` 自定义
-- [ ] 1.4 `rddf status --iteration` 渲染 archived change 时显示 `L2: <n>` 字段
-- [ ] 1.5 `rddf l2-trend` 子命令：列出所有 archived change 的 L2 count 序列，便于画 trend chart
-- [ ] 1.6 单元测试：collect_l2_count mock stdout；schema bump 后仍兼容旧 iteration.json（schema migration）
+- [x] 1.1 iteration.json schema 增加 optional 字段：`l2_violation_count_after` (int, 0..N) 和 `l2_violation_kind` (enum: `sim_include_drv`, `sim_class_type`, ... — 默认 `sim_include_drv`)
+- [x] 1.2 `archive.sh::archive_change()` 末尾调用 `collect_l2_count()` 函数，写入新字段
+- [x] 1.3 `collect_l2_count()` 默认实现：`grep -rn '#include.*"sim/' plugins/gpu_driver/drv/ | wc -l`（参考 UsrLinuxEmu 的 L2 基线命令）；可通过 `rddf config set l2_count_cmd '<cmd>'` 自定义
+- [x] 1.4 `rddf status --iteration` 渲染 archived change 时显示 `L2: <n>` 字段
+- [x] 1.5 `rddf l2-trend` 子命令：列出所有 archived change 的 L2 count 序列，便于画 trend chart
+- [x] 1.6 单元测试：collect_l2_count mock stdout；schema bump 后仍兼容旧 iteration.json（schema migration）
 ## 2. Verification
 
-- [ ] 2.1 Run all existing bats + pytest tests to confirm no regression
-- [ ] 2.2 Commit working tree in worktree with conventional commit message
+- [x] 2.1 Run all existing bats + pytest tests to confirm no regression
+- [x] 2.2 Commit working tree in worktree with conventional commit message

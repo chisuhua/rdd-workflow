@@ -11,12 +11,6 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|----------|
-| [fix-rddf-status-corrupt-message](improvements/fix-rddf-status-corrupt-message.md) | P1 | 2026-08-05 | guide-design |
-| [fix-archive-iteration-sync](improvements/fix-archive-iteration-sync.md) | P0 | 2026-08-05 | guide-design |
-| [fix-archive-on-main-flow](improvements/fix-archive-on-main-flow.md) | P0 | 2026-08-05 | guide-design |
-| [add-archive-post-commit-hook-and-force-flag](improvements/add-archive-post-commit-hook-and-force-flag.md) | P0 | 2026-08-05 | guide-design |
-| [rddf-iteration-strict-schema](improvements/rddf-iteration-strict-schema.md) | P1 | 2026-08-05 | guide-design |
-| [fix-tasks-md-archive-residue](improvements/fix-tasks-md-archive-residue.md) | P1 | 2026-08-05 | guide-design |
 | [collect-l2-violation-count-on-archive](improvements/collect-l2-violation-count-on-archive.md) | P2 | 2026-08-05 | guide-design |
 
 > **依赖声明 (2026-08-05 design-done)**: 本批 7 项提案 (本次批准) 形成强依赖链, 计划按下列顺序实施:
@@ -56,6 +50,12 @@
 | [fix-rddf-init-broken-layout](improvements/fix-rddf-init-broken-layout.md) | P1 | 2026-08-05 | guide-arch |
 
 ## 已实施
+| [fix-tasks-md-archive-residue](improvements/fix-tasks-md-archive-residue.md) | P1 | 2026-08-06 |
+| [rddf-iteration-strict-schema](improvements/rddf-iteration-strict-schema.md) | P1 | 2026-08-06 |
+| [fix-rddf-status-corrupt-message](improvements/fix-rddf-status-corrupt-message.md) | P1 | 2026-08-06 |
+| [add-archive-post-commit-hook-and-force-flag](improvements/add-archive-post-commit-hook-and-force-flag.md) | P0 | 2026-08-06 |
+| [fix-archive-on-main-flow](improvements/fix-archive-on-main-flow.md) | P0 | 2026-08-06 |
+| [fix-archive-iteration-sync](improvements/fix-archive-iteration-sync.md) | P0 | 2026-08-06 |
 | [guide-ship-default-serial-execution](improvements/guide-ship-default-serial-execution.md) | P1 | 2026-08-05 |
 | [plan-quality-and-validation](improvements/plan-quality-and-validation.md) | P0 | 2026-08-05 |
 | [developer-experience-observability](improvements/developer-experience-observability.md) | P2 | 2026-08-05 |

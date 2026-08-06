@@ -348,6 +348,9 @@ archive_change() {
   archive_commit_sha=$(git -C "$main_root" rev-parse HEAD 2>/dev/null || echo "")
   mark_iteration_archived "$name" "$main_root" "$archive_commit_sha"
 
+  # 8.6 Collect L2 violation count (collect-l2-violation-count-on-archive)
+  collect_l2_count_wrapper "$name" "$main_root"
+
   # 8.5 Tasks.md sidecar (fix-tasks-md-archive-residue): snapshot the
   # original tasks.md to .archived-snapshot and replace tasks.md with
   # an archived-skeleton header. Must run AFTER step 8 (mark_iteration_archived)
@@ -460,6 +463,33 @@ except Exception as e:
     # python3 itself failed (not installed) — silently skip
     :
   fi
+  return 0
+}
+
+# collect_l2_count_wrapper <name> <main_root>
+#   Best-effort L2 count collection. Never propagates failure.
+collect_l2_count_wrapper() {
+  local name="${1:-}" main_root="${2:-}"
+  [[ -z "$name" || -z "$main_root" ]] && return 0
+
+  local skills_parent
+  skills_parent="$(cd "$main_root/skills/../" 2>/dev/null && pwd)"
+  [[ -z "$skills_parent" ]] && return 0
+
+  SKILLS_PARENT="$skills_parent" \
+    MAIN_ROOT="$main_root" \
+    CHANGE_NAME="$name" \
+    python3 -c '
+import os, sys
+sys.path.insert(0, os.environ["SKILLS_PARENT"])
+try:
+    from skills._lib.iteration.l2 import collect_l2_count
+    warning = collect_l2_count(os.environ["MAIN_ROOT"], os.environ["CHANGE_NAME"])
+    if warning:
+        print(f"⚠️  {warning}", file=sys.stderr)
+except Exception as e:
+    print(f"⚠️  collect_l2_count failed (archive continues): {e}", file=sys.stderr)
+' 2>/dev/null || true
   return 0
 }
 

@@ -41,7 +41,7 @@ class TestReadIterationOrCorrupt:
         """GIVEN iteration.json has a JSON syntax error (trailing comma)
         WHEN read_iteration_or_corrupt is called
         THEN it returns (None, error) where error mentions 'invalid JSON'."""
-        _write_iteration(tmp_path, '{"version": 4, "changes": [],}')  # trailing comma
+        _write_iteration(tmp_path, '{"version": 5, "changes": [],}')  # trailing comma
         data, err = state_reader.read_iteration_or_corrupt(str(tmp_path))
         assert data is None
         assert err is not None
@@ -56,7 +56,7 @@ class TestReadIterationOrCorrupt:
         # changes[0] has an extra 'updated_at' field that the per-change
         # item schema rejects (additionalProperties: false).
         content = json.dumps({
-            "version": 4,
+            "version": 5,
             "updated_at": "2026-08-05T10:00:00+00:00",
             "current_phase": "default",
             "changes": [
@@ -82,7 +82,7 @@ class TestReadIterationOrCorrupt:
         WHEN read_iteration_or_corrupt is called
         THEN it returns (data, None)."""
         content = json.dumps({
-            "version": 4,
+            "version": 5,
             "updated_at": "2026-08-01T00:00:00+00:00",
             "current_phase": "default",
             "changes": [
@@ -97,7 +97,7 @@ class TestReadIterationOrCorrupt:
         data, err = state_reader.read_iteration_or_corrupt(str(tmp_path))
         assert err is None
         assert data is not None
-        assert data["version"] == 4
+        assert data["version"] == 5
         assert data["changes"][0]["name"] == "test-change"
 
     def test_readonly_no_backup_files_created(self, tmp_path):
@@ -105,7 +105,7 @@ class TestReadIterationOrCorrupt:
         WHEN read_iteration_or_corrupt is called
         THEN no .corrupt.<ts> backup is written (read-only contract)."""
         content = json.dumps({
-            "version": 4,
+            "version": 5,
             "updated_at": "2026-08-01T00:00:00+00:00",
             "current_phase": "default",
             "changes": [

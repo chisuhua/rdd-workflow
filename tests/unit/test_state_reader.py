@@ -54,9 +54,9 @@ def _corrupt_backup_files(state_dir: str) -> list:
 
 
 def _make_valid_iteration(phase: str = "default") -> dict:
-    """Build a minimal valid v4 iteration dict (passes schema validation)."""
+    """Build a minimal valid v5 iteration dict (passes schema validation)."""
     return {
-        "version": 4,
+        "version": 5,
         "updated_at": "2026-07-21T00:00:00+00:00",
         "current_phase": phase,
         "changes": [
@@ -152,7 +152,7 @@ class TestReadIteration:
         result = state_reader.read_iteration(project_root)
 
         assert result is not None
-        assert result["version"] == 4
+        assert result["version"] == 5
         assert result["current_phase"] == "v2.1"
         assert len(result["changes"]) == 1
         assert result["changes"][0]["name"] == "feature-x"

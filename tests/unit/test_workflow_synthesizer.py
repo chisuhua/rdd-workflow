@@ -88,7 +88,7 @@ def _write_iteration(project_root, changes):
     """Write a valid iteration.json with the given changes list."""
     path = Path(project_root) / ".rddf" / "state" / "iteration.json"
     path.write_text(json.dumps({
-        "version": 4,
+        "version": 5,
         "updated_at": "2026-01-01T00:00:00+00:00",
         "current_phase": "default",
         "changes": changes,

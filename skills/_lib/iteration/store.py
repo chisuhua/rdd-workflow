@@ -221,7 +221,7 @@ def _merge_by_name(existing: dict, incoming: dict) -> dict:
 def create_empty(current_phase: str = _DEFAULT_PHASE) -> dict:
     """Return a fresh empty iteration state. Useful for `skill_use("status", "iteration", "init")`."""
     return {
-        "version": 4,
+        "version": 5,
         "updated_at": _now_iso(),
         "current_phase": current_phase,
         "changes": [],
@@ -255,6 +255,29 @@ def _migrate_v3_to_v4(data: dict) -> dict:
             c["manual_deps"] = None
         if "manual_blocks" not in c:
             c["manual_blocks"] = None
+        migrated_changes.append(c)
+    data["changes"] = migrated_changes
+    return data
+
+
+def _migrate_v4_to_v5(data: dict) -> dict:
+    """Migrate a v4 iteration state to v5 in-place.
+
+    v5 adds `l2_violation_count_after` and `l2_violation_kind` per-change
+    fields. Existing v4 entries lack these fields; we set them to None
+    (meaning 'L2 count was not recorded at archive time').
+
+    Same idempotent / non-persisting contract as _migrate_v3_to_v4.
+    """
+    if data.get("version") != 4:
+        return data
+    data = dict(data)
+    data["version"] = 5
+    migrated_changes = []
+    for c in data.get("changes", []):
+        c = dict(c)
+        c.setdefault("l2_violation_count_after", None)
+        c.setdefault("l2_violation_kind", None)
         migrated_changes.append(c)
     data["changes"] = migrated_changes
     return data
@@ -300,6 +323,8 @@ def load(project_root: str) -> dict:
     # v4 schema's `const: 4` would reject a v3 file.
     if isinstance(data, dict) and data.get("version") == 3:
         data = _migrate_v3_to_v4(data)
+    if isinstance(data, dict) and data.get("version") == 4:
+        data = _migrate_v4_to_v5(data)
     try:
         _validate(data)
     except jsonschema.ValidationError as e:

@@ -100,7 +100,13 @@ def print_view(project_root: str, show_planned: bool = True) -> int:
     if archived:
         print("🗄️  最近归档 (top 5):")
         for c in archived[:5]:
-            print(f"   ✅ {c['name']}  ({c.get('archived_at', '')})")
+            l2_count = c.get("l2_violation_count_after")
+            l2_kind = c.get("l2_violation_kind")
+            if l2_count is not None:
+                l2_disp = f"L2: {l2_count} ({l2_kind or 'unknown'})"
+            else:
+                l2_disp = "L2: not recorded"
+            print(f"   ✅ {c['name']}  ({c.get('archived_at', '')}) — {l2_disp}")
         if len(archived) > 5:
             print(f"   ... (共 {len(archived)} 个归档)")
         print()

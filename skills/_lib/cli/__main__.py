@@ -174,6 +174,7 @@ def _print_help() -> None:
     print("  guide        Project state scan + recommendation (guide-arch/guide-plan/guide-ship)")
     print("  init [tgt]   Install rdd-workflow to target's .opencode/skills/")
     print("  iteration    Validate iteration.json (lint, allowed-fields)")
+    print("  l2-trend     L2 violation count trend for archived changes")
     print("  monitor      Live monitor (--watch=<sec>)")
     print("  sessions     Session management (read-only). Subcmds: show <id>, current, gc")
     print("  status       Change status overview. Flags: --iteration, --roadmap, <name>")

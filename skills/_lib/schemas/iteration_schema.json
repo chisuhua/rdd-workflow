@@ -7,11 +7,11 @@
   "required": ["version", "updated_at", "current_phase", "changes"],
   "additionalProperties": false,
   "properties": {
-    "version": {
-      "type": "integer",
-      "const": 4,
-      "description": "Schema version. v4: added manual_deps and manual_blocks mirror fields."
-    },
+        "version": {
+          "type": "integer",
+          "const": 5,
+          "description": "Schema version. v5: added l2_violation_count_after and l2_violation_kind per-change fields (collect-l2-violation-count-on-archive 2026-08-05)."
+        },
     "updated_at": {
       "type": "string",
       "format": "date-time",
@@ -113,6 +113,16 @@
             "type": ["array", "null"],
             "items": { "type": "string" },
             "description": "Human-authored reverse dependencies from roadmap-meta.yaml. Changes listed here MUST wait for this one. Synced by deps hook. Null if no deps run yet."
+          },
+          "l2_violation_count_after": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "description": "Project-wide L2 violation count AFTER this change was archived. Set by collect_l2_count() (collect-l2-violation-count-on-archive 2026-08-05). Null if L2 count was not collected at archive time."
+          },
+          "l2_violation_kind": {
+            "type": ["string", "null"],
+            "enum": ["sim_include_drv", "sim_class_type", null],
+            "description": "Which L2 violation kind was counted. Default 'sim_include_drv' (matches #include \"sim/\" patterns in plugins/gpu_driver/drv/). Null if not collected."
           }
         }
       }

@@ -39,14 +39,15 @@ class TestReadUnlockedVerbose:
         THEN returns (data, None)."""
         path = tmp_path / "iteration.json"
         _write(path, json.dumps({
-            "version": 4,
+            "version": 5,
             "updated_at": "2026-08-01T00:00:00+00:00",
             "current_phase": "default",
             "changes": [],
         }))
         data, err = store._read_unlocked_verbose(str(path))
         assert err is None
-        assert data["version"] == 4
+        assert data is not None
+        assert data["version"] == 5
 
     def test_schema_invalid_returns_error_with_path(self, tmp_path):
         """GIVEN a schema-invalid iteration.json (per-change entry with extra 'updated_at')
@@ -55,7 +56,7 @@ class TestReadUnlockedVerbose:
         AND contains the JSON path to the bad entry."""
         path = tmp_path / "iteration.json"
         _write(path, json.dumps({
-            "version": 4,
+            "version": 5,
             "updated_at": "2026-08-01T00:00:00+00:00",
             "current_phase": "default",
             "changes": [
