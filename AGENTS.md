@@ -6,20 +6,78 @@
 ## 快速命令
 
 ```bash
-# Bats (shell) 测试 — npm test 只跑这一类
-npm test                                # bats tests/ (全量 bats)
+# 统一入口（推荐）— ./test.sh 包裹 npm test, 自带彩色 + summary
+./test.sh --quick                        # 快速: smoke + pytest unit (~45s)
+./test.sh --full                         # 全量: bats recursive + pytest unit+integration (~8min)
+./test.sh --bats                         # 只跑 bats recursive
+./test.sh --python                       # pytest unit + integration
+./test.sh --unit                         # 只跑 pytest unit
+./test.sh --integration                  # 只跑 pytest integration
+
+# 高级选项 (可与上面模式组合)
+./test.sh --full --regression            # bats 改用 report_regression.sh 对比 KNOWN_FAILURES baseline (区分已知失败 vs 新增失败)
+./test.sh --full --stop-on-failure       # 任一 step 失败立即停止 (默认继续跑拿完整图)
+./test.sh --full --no-color              # 禁用颜色 (适合日志/管道)
+./test.sh <file.bats|file.py>            # 单文件入口 (绕过 mode)
+
+# 单独跑某类 (绕过 test.sh, 用于调试)
+npm test                                # = bats tests/ --recursive (全量 bats, 不跑 pytest)
 bats tests/smoke.bats                   # 快速冒烟 (7 个 smoke cases)
 bats tests/_lib/test_skill.bats         # skill.bash parser (8 cases)
+bats tests/integration/test_global_install_external_project.bats  # 全局安装测试 (11 cases)
 
-# Python 测试 — npm test 不会跑, 必须显式调用
-python3 -m pytest tests/unit/ -q --tb=short          # 57 个 unit 文件 (含 v2.0.1 新增: test_iteration / test_roadmap_sprint / test_deps_output / test_rddf_session / test_arch_handoff_schema / test_discover_arch_artifacts / test_arch_quality_gate / test_change_alignment / test_iteration_concurrency 等)
-python3 -m pytest tests/integration/ -q --tb=short   # 10 个 Python integration (.py, 含 loop / gate / phase_switch / iteration_lifecycle / iteration_archive_hook / guide_ship_iteration_hook / deps_analysis / hook_boundary / trigger_e2e)
+# Python (npm test 不会跑, 必须显式调用)
+python3 -m pytest tests/unit/ -q --tb=short          # 57 个 unit 文件
+python3 -m pytest tests/integration/ -q --tb=short   # 10 个 Python integration (.py)
 pip install -r requirements.txt                      # PyYAML, jsonschema, pytest
+
+# 对比 baseline (CI 等价; ./test.sh --bats --regression 已包含)
+bash tests/scripts/report_regression.sh
 ```
+
+**退出码**: `0`=全绿 / `1`=有失败 / `2`=参数错 / `127`=缺依赖. 详见 `./test.sh --help`.
 
 CI 在 `.github/workflows/test.yml`, 按序执行: 安装 deps → **断言质量门控** → Python unit → Python integration → bats smoke → bats static 子集 → bats git-worktree 子集.
 
-> **重要**: `npm test` 只跑 bats, **不会**捕获 Python 测试失败. 改完 Python 后必须手动 `pytest tests/`.
+> **重要**: `npm test` 只跑 bats, **不会**捕获 Python 测试失败. 改完 Python 后必须手动 `pytest tests/` 或 `./test.sh --python`/`--unit`/`--integration`.
+
+### Archive 前全量回归门（MANDATORY）
+
+**行为规则**: 完成 `openspec/changes/<name>/tasks.md` 的所有 task 后、archive change 之前，必须跑一次全量测试（`./test.sh --full --regression`）确认没有新增失败。
+
+```
+完成所有 task
+    ↓
+./test.sh --full --regression    ← 必须全绿或仅 baseline 已知失败
+    ↓
+git commit (worktree-internal)
+    ↓
+archive change (guide-ship Phase 3)
+```
+
+- **新失败** (`report_regression.sh` 报的"新增失败") 必须修：可能是新引入的 regression
+- **已知失败**（在 `tests/KNOWN_FAILURES.txt` baseline 中）可放行
+- **紧急跳过**: `SKIP_REGRESSION=1` 仅供 hotfix，且必须在 commit message / change 日志中标注
+
+**实现状态**: 此规则已通过 [`add-full-regression-gate`](improvements/add-full-regression-gate.md) 提案（`proposal-approved.md` P0, 2026-07-28）正式批准。当前 `guide-ship` 的 `archive_gate_check()`（`_lib/archive.sh`）只检查 `tasks.md` 完成度，**未自动化强制回归门**。在 `guide-ship` 实施该提案之前，本节作为 agent 的硬性行为约束。
+
+### 全局安装测试（`tests/integration/test_global_install_external_project.bats`）
+
+模拟第三方项目使用全局安装（`~/.agents/skills/`）的能力。**11 个用例**覆盖:
+- `rddf` CLI: `--help`、非 rdd-workflow 项目友好退出、读取外部 `package.json`
+- 解析器 fallback: `resolve_rdd_skill_dir` / `resolve_rdd_lib_dir` 都回退到 `~/.agents/skills/`
+- 文档化的双层 bootstrap 模式 (`source ... || source $HOME/.agents/skills/...`)
+- Python `_lib` 模块通过 `.pth` 发现
+- bash `source ~/.agents/skills/_lib/state.sh` 加载运行时 helper
+- 14 个子技能 symlink 完整性
+
+测试在 `$BATS_TMPDIR` 创建独立的 git 仓库, **不**修改源 repo 的 `.rddf/` (其他 bats 测试依赖 stale state, 删除会级联失败)。
+
+```bash
+bats tests/integration/test_global_install_external_project.bats   # 11/11 pass
+```
+
+**Skip-not-fail 策略**: 全局安装缺失时 (`~/.agents/skills/_lib/skill_root.sh` 不存在) 自动 skip, 适合 CI 在 `install.sh --global` 未执行的环境跑。
 
 ## 架构
 
