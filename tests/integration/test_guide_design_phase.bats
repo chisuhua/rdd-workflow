@@ -14,17 +14,41 @@ teardown() {
   rm -rf "$PROJECT_ROOT"
 }
 
-@test "guide-design: Phase 1 rejects missing arch-handoff" {
-  # No .arch-handoff.json → should fail
+@test "guide-design: Phase 1 invokes preflight before deciding (no evidence)" {
+  # No arch-handoff, no ADRs, no roadmap → hard_reject_no_evidence
   run bash -c '
-    PROJECT_ROOT="$PROJECT_ROOT"
-    if [ ! -f "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" ]; then
-      echo "❌ arch-done 未完成" >&2
-      exit 1
-    fi
-  '
-  [ "$status" -ne 0 ]
-  echo "$output" | grep -q "arch-done"
+    source "'"$REPO_ROOT"'/skills/guide-design/scripts/design_preflight.sh"
+    design_preflight_status "$1"
+  ' _ "$PROJECT_ROOT"
+
+  [ "$status" -eq 0 ]
+  [ "$(echo "$output" | jq -r '.recommendation')" = "hard_reject_no_evidence" ]
+}
+
+@test "guide-design: Phase 1 invokes preflight before deciding (evidence present, handoff missing)" {
+  mkdir -p "$PROJECT_ROOT/docs/adr"
+  touch "$PROJECT_ROOT/docs/adr/ADR-0001-test.md"
+  touch "$PROJECT_ROOT/roadmap.md"
+
+  run bash -c '
+    source "'"$REPO_ROOT"'/skills/guide-design/scripts/design_preflight.sh"
+    design_preflight_status "$1"
+  ' _ "$PROJECT_ROOT"
+
+  [ "$status" -eq 0 ]
+  [ "$(echo "$output" | jq -r '.recommendation')" = "soft_prompt_reconstruct" ]
+}
+
+@test "guide-design: Phase 1 invokes preflight before deciding (handoff present)" {
+  echo '{"version":1,"discovered":{"adr_dir":{"found":true,"created":false,"candidates_tried":1}}}' > "$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
+
+  run bash -c '
+    source "'"$REPO_ROOT"'/skills/guide-design/scripts/design_preflight.sh"
+    design_preflight_status "$1"
+  ' _ "$PROJECT_ROOT"
+
+  [ "$status" -eq 0 ]
+  [ "$(echo "$output" | jq -r '.recommendation')" = "normal" ]
 }
 
 @test "guide-design: design_proposal_review.sh script exists and is executable" {
