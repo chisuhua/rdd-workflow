@@ -19,7 +19,9 @@ emit_status() {
   if [ -d "$adr_dir" ]; then
     local adr_file
     for adr_file in "$adr_dir"/ADR-*.md; do
-      [ -f "$adr_file" ] && adr_count=$((adr_count + 1))
+      [ -f "$adr_file" ] || continue
+      [[ "$(basename "$adr_file")" == *template* ]] && continue
+      adr_count=$((adr_count + 1))
     done
   fi
 
