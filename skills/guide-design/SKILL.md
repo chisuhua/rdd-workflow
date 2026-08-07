@@ -43,17 +43,7 @@ skill_use("guide-design")   # 无参数版本
 
 **入口条件**：用户调用 `skill_use("guide-design")` 后立即执行。
 
-**rddf-session 入口 hook**（ADR-0017）：创建或查找当前 opencode session 的 `stage_design` rddf-session（parent=latest stage_arch）：
-
-```bash
-# rddf-session 入口 hook (ADR-0017) - extracted to _lib/rddf_session_hooks.sh
-# stage_design parent: latest stage_arch (auto-resolved by helper)
-source "${PROJECT_ROOT:-/nonexistent}/skills/rddf-session/scripts/rddf_session_hooks.sh" 2>/dev/null || \
-  source "$HOME/.agents/skills/rddf-session/scripts/rddf_session_hooks.sh"
-rddf_session_hook_entry stage_design guide-design design-phase design-done .rddf/state/.design-handoff.json
-```
-
-**硬依赖检查（已升级为诊断+软提示）**：通过 `design_preflight.sh` 收集证据（arch-handoff 存在 + ADR 数量 + roadmap 存在 + rddf-session 历史），根据 `.recommendation` 字段分支处理：
+**步骤 1 — 诊断+软提示**（先行）：通过 `design_preflight.sh` 收集证据（arch-handoff 存在 + ADR 数量 + roadmap 存在 + rddf-session 历史），根据 `.recommendation` 字段分支处理。**这一步先于 rddf-session hook**，避免 hook 失败时阻塞用户进入 design 阶段：
 
 ```bash
 source "${PROJECT_ROOT:-/nonexistent}/skills/guide-design/scripts/design_preflight.sh" 2>/dev/null || \
@@ -94,6 +84,16 @@ case "$RECOMMENDATION" in
     return 1
     ;;
 esac
+```
+
+**步骤 2 — rddf-session 入口 hook**（ADR-0017，best-effort）：创建或查找当前 opencode session 的 `stage_design` rddf-session（parent=latest stage_arch）。**失败不阻塞 design 阶段**（已通过步骤 1 的诊断保证 arch 工作证据齐全），仅记录警告：
+
+```bash
+# rddf-session 入口 hook (ADR-0017) - best-effort after preflight
+source "${PROJECT_ROOT:-/nonexistent}/skills/rddf-session/scripts/rddf_session_hooks.sh" 2>/dev/null || \
+  source "$HOME/.agents/skills/rddf-session/scripts/rddf_session_hooks.sh"
+rddf_session_hook_entry stage_design guide-design design-phase design-done .rddf/state/.design-handoff.json || \
+  echo "⚠️  rddf-session hook failed (cross-session continuity may be lost, but design proceeds)" >&2
 ```
 
 **环境健康快照**（rdd-env-check cache 接入，命中输出单行）：
