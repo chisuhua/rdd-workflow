@@ -377,12 +377,10 @@ EOF
 
 @test "17_archive: openspec archive moves change into archive/ + creates spec" {
   cd "$PROJECT_ROOT"
-  # Workaround for ship_archive.sh:211 hardcoded $project_root/_lib path
-  # (production uses resolve_rdd_lib_dir but here it's hardcoded). Symlink
-  # _lib into playground so the hardcoded path resolves.
-  ln -sfn "$RDDF_GLOBAL_LIB" "$PROJECT_ROOT/_lib"
+  # ship_archive.sh now resolves the validator through resolve_rdd_lib_dir,
+  # so the previous symlink workaround is no longer needed (and would shadow
+  # the global install by accident).
   source "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"
-  # Use `run` to absorb the buggy bootstrap source failure in line 211.
   run archive_change_for_mode "$PROJECT_ROOT" test-playground-change lightweight
   [ "$status" -eq 0 ]
   [ ! -d "openspec/changes/test-playground-change" ]
