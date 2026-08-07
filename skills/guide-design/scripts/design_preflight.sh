@@ -61,4 +61,11 @@ emit_status() {
       recommendation: $recommendation}'
 }
 
-emit_status
+design_preflight_status() {
+  local project_root="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  PROJECT_ROOT="$project_root" emit_status
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  emit_status
+fi

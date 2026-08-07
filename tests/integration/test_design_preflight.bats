@@ -25,7 +25,7 @@ teardown() { rm -rf "$PROJECT_ROOT"; }
 }
 
 @test "design_preflight: adr_count=0 when adr_dir missing" {
-  rm -rf "$PROJECT_ROOT/docs/adr"  # exercise the truly-missing path
+  rm -rf "$PROJECT_ROOT/docs/adr"
   run bash "$REPO_ROOT/skills/guide-design/scripts/design_preflight.sh" "$PROJECT_ROOT"
   [ "$status" -eq 0 ]
   [ "$(echo "$output" | jq -r '.adr_count')" -eq 0 ]
@@ -74,4 +74,26 @@ teardown() { rm -rf "$PROJECT_ROOT"; }
   run bash "$REPO_ROOT/skills/guide-design/scripts/design_preflight.sh" "$PROJECT_ROOT"
   [ "$status" -eq 0 ]
   [ "$(echo "$output" | jq -r '.recommendation')" = "hard_reject_no_evidence" ]
+}
+
+@test "design_preflight: design_preflight_status() works under set -e when sourced" {
+  touch "$PROJECT_ROOT/docs/adr/ADR-0001-x.md"
+  touch "$PROJECT_ROOT/roadmap.md"
+  run bash -c "
+    set -euo pipefail
+    source '$REPO_ROOT/skills/guide-design/scripts/design_preflight.sh'
+    design_preflight_status '$PROJECT_ROOT'
+  "
+  [ "$status" -eq 0 ]
+  [ "$(echo "$output" | jq -r '.recommendation')" = "soft_prompt_reconstruct" ]
+}
+
+@test "design_preflight: source alone does not emit JSON (library mode)" {
+  run bash -c "
+    set -euo pipefail
+    output=\$(source '$REPO_ROOT/skills/guide-design/scripts/design_preflight.sh' 2>&1)
+    [ -z \"\$output\" ] && echo 'no_output' || echo \"leaked:\$output\"
+  "
+  [ "$status" -eq 0 ]
+  [ "$output" = "no_output" ]
 }
