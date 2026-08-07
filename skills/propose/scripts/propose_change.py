@@ -427,14 +427,16 @@ def batch_create_pending(project_root: str) -> list[str]:
     Idempotent: entries whose change already exists under openspec/changes/
     (active) or openspec/changes/archive/ (completed) are skipped, so
     re-running never overwrites existing artifacts.
+
+    Uses the centralized parse_approved_proposals helper which reads BOTH
+    the `## 已批准提案` and `## 已实施` sections (the previous inline parser
+    only read the region before `## 已实施`, silently missing every entry
+    in this repo where everything lives in `## 已实施`).
     """
+    from skills._lib.parse_approved import parse_approved_proposals
+
     approved_file = os.path.join(project_root, "proposal-approved.md")
-    if not os.path.exists(approved_file):
-        return []
-    with open(approved_file) as f:
-        content = f.read()
-    section = re.split(r'## 已实施', content)[0]
-    rows = re.findall(r'\[\s*([^\]]+)\]\s*\(\s*improvements/([^)]+)\s*\)', section)
+    rows = [(name, "") for name in parse_approved_proposals(approved_file)]
     created = []
     skipped = []
     for name, _ in rows:

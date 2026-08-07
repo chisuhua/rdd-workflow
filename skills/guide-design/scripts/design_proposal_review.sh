@@ -74,14 +74,13 @@ design_proposal_review() {
   # Oracle C1 safe: 通过 env-var 传文件路径，避免 bash 字符串插值
   local APPROVED_NAMES=""
   if [ -f "$APPROVED_FILE" ]; then
-    APPROVED_NAMES=$(PY_APPROVED_FILE="$APPROVED_FILE" python3 -c '
-import os, re, sys
-path = os.environ["PY_APPROVED_FILE"]
-with open(path) as f:
-    content = f.read()
-section = re.split(r"## 已实施", content)[0]
-for m in re.finditer(r"\|\s*\[([^\]]+)\]\([^)]+\)", section):
-    print(m.group(1))
+    local PARSE_LIB_DIR="${PARSE_LIB_DIR:-$SCRIPT_DIR/../../../_lib}"
+    APPROVED_NAMES=$(PY_APPROVED_FILE="$APPROVED_FILE" PY_RDD_LIB="$PARSE_LIB_DIR" python3 -c '
+import os, sys
+sys.path.insert(0, os.environ["PY_RDD_LIB"])
+from parse_approved import parse_approved_proposals
+for name in parse_approved_proposals(os.environ["PY_APPROVED_FILE"]):
+    print(name)
 ' 2>/dev/null || true)
   fi
 

@@ -263,22 +263,33 @@ scan_state() {
   # Check approved proposals first (ready for plan)
   # cwd safety: PY_PROJECT_ROOT env var
   local HAS_APPROVED
-  HAS_APPROVED=$(PY_PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
-import os, re
+  HAS_APPROVED=$(PY_PROJECT_ROOT="$PROJECT_ROOT" PY_RDD_LIB_HELPER="" python3 -c '
+import os, sys, glob
+def _find_helper():
+    candidates = [
+        os.path.join(os.environ["PY_PROJECT_ROOT"], "_lib"),
+        os.path.expanduser("~/.agents/skills/_lib"),
+    ]
+    for d in candidates:
+        if os.path.isfile(os.path.join(d, "parse_approved.py")):
+            return d
+    return ""
+helper_dir = _find_helper()
+if not helper_dir:
+    print("no")
+    sys.exit(0)
+sys.path.insert(0, helper_dir)
 try:
-    approved_path = os.path.join(os.environ["PY_PROJECT_ROOT"], "proposal-approved.md")
-    if not os.path.exists(approved_path):
-        print("no")
-        raise SystemExit(0)
-    with open(approved_path) as f:
-        content = f.read()
-    # Check if there are rows in the approved table (not in completed section)
-    section = re.split(r"## 已实施", content)
-    approved_section = section[0] if section else content
-    has_entries = bool(re.search(r"\|\s*\[[^\]]+\]\(improvements/[^)]+\)\s*\|", approved_section))
-    print("yes" if has_entries else "no")
+    from parse_approved import parse_approved_proposals
 except Exception:
     print("no")
+    sys.exit(0)
+approved_path = os.path.join(os.environ["PY_PROJECT_ROOT"], "proposal-approved.md")
+try:
+    names = parse_approved_proposals(approved_path)
+except Exception:
+    names = []
+print("yes" if names else "no")
 ' 2>/dev/null)
   
   if [ "$HAS_APPROVED" = "yes" ]; then
