@@ -47,3 +47,31 @@ teardown() { rm -rf "$PROJECT_ROOT"; }
   [ "$status" -eq 0 ]
   [ "$(echo "$output" | jq -r '.adr_count')" -eq 1 ]
 }
+
+@test "design_preflight: recommendation=normal when arch_handoff exists" {
+  echo '{"version":1,"discovered":true}' > "$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
+  run bash "$REPO_ROOT/skills/guide-design/scripts/design_preflight.sh" "$PROJECT_ROOT"
+  [ "$status" -eq 0 ]
+  [ "$(echo "$output" | jq -r '.recommendation')" = "normal" ]
+}
+
+@test "design_preflight: recommendation=soft_prompt_reconstruct when ADRs+roadmap exist but no handoff" {
+  touch "$PROJECT_ROOT/docs/adr/ADR-0001-x.md"
+  touch "$PROJECT_ROOT/roadmap.md"
+  run bash "$REPO_ROOT/skills/guide-design/scripts/design_preflight.sh" "$PROJECT_ROOT"
+  [ "$status" -eq 0 ]
+  [ "$(echo "$output" | jq -r '.recommendation')" = "soft_prompt_reconstruct" ]
+}
+
+@test "design_preflight: recommendation=hard_reject_no_evidence when no evidence at all" {
+  run bash "$REPO_ROOT/skills/guide-design/scripts/design_preflight.sh" "$PROJECT_ROOT"
+  [ "$status" -eq 0 ]
+  [ "$(echo "$output" | jq -r '.recommendation')" = "hard_reject_no_evidence" ]
+}
+
+@test "design_preflight: recommendation=hard_reject_no_evidence when only ADRs (no roadmap)" {
+  touch "$PROJECT_ROOT/docs/adr/ADR-0001-x.md"
+  run bash "$REPO_ROOT/skills/guide-design/scripts/design_preflight.sh" "$PROJECT_ROOT"
+  [ "$status" -eq 0 ]
+  [ "$(echo "$output" | jq -r '.recommendation')" = "hard_reject_no_evidence" ]
+}
