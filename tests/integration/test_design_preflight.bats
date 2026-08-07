@@ -25,6 +25,7 @@ teardown() { rm -rf "$PROJECT_ROOT"; }
 }
 
 @test "design_preflight: adr_count=0 when adr_dir missing" {
+  rm -rf "$PROJECT_ROOT/docs/adr"  # exercise the truly-missing path
   run bash "$REPO_ROOT/skills/guide-design/scripts/design_preflight.sh" "$PROJECT_ROOT"
   [ "$status" -eq 0 ]
   [ "$(echo "$output" | jq -r '.adr_count')" -eq 0 ]
