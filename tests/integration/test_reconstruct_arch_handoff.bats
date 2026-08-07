@@ -48,3 +48,25 @@ teardown() { rm -rf "$PROJECT_ROOT"; }
   jq -e '.reconstructed_at | type == "string"' "$handoff" >/dev/null
   jq -e '.reconstructed_from == "filesystem-evidence"' "$handoff" >/dev/null
 }
+
+@test "reconstruct_arch_handoff: refuses to overwrite without --force" {
+  echo '{"version":1,"discovered":false}' > "$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
+  touch "$PROJECT_ROOT/docs/adr/ADR-0001-x.md"
+
+  run bash "$REPO_ROOT/skills/guide-design/scripts/reconstruct_arch_handoff.sh" \
+    --project-root "$PROJECT_ROOT"
+
+  [ "$status" -ne 0 ]
+  jq -e '.discovered == false' "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" >/dev/null
+}
+
+@test "reconstruct_arch_handoff: --force overwrites existing handoff" {
+  echo '{"version":1,"discovered":false}' > "$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
+  touch "$PROJECT_ROOT/docs/adr/ADR-0001-x.md"
+
+  run bash "$REPO_ROOT/skills/guide-design/scripts/reconstruct_arch_handoff.sh" \
+    --project-root "$PROJECT_ROOT" --force
+
+  [ "$status" -eq 0 ]
+  jq -e '.discovered | type == "object"' "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" >/dev/null
+}
