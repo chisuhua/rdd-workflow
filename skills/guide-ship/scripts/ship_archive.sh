@@ -48,6 +48,10 @@ if [ -f "$_LIB_DIR/archive.sh" ]; then
   source "$_LIB_DIR/archive.sh"
 fi
 
+# Bootstrap resolve_rdd_lib_dir for external-project support
+# (fix-ship-archive-resolve-lib-path: was hardcoding $project_root/_lib/)
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/skills/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+
 # Source post-archive cleanup hook (post-archive-cleanup-hook)
 _HL_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
 if [ -f "$_HL_SCRIPT_DIR/../../../_lib/post_archive_cleanup.sh" ]; then
@@ -207,11 +211,20 @@ archive_change_for_mode() {
       }
     fi
 
-    # Spec-validation gate (add-spec-validation-gates)
-    if ! python3 "$project_root/_lib/validate_delta_targets.py" "$change_name" 2>/dev/null; then
+    # Spec-validation gate (fix-ship-archive-resolve-lib-path: use resolve_rdd_lib_dir)
+    RDD_LIB_DIR="$(resolve_rdd_lib_dir)" || {
+      echo "❌ Archive pre-flight failed: cannot resolve shared library (resolve_rdd_lib_dir failed)" >&2
+      echo "   Hint: ensure rdd-workflow is installed globally (install.sh --global) or _lib is available" >&2
+      return 1
+    }
+    if [ ! -f "$RDD_LIB_DIR/validate_delta_targets.py" ]; then
+      echo "❌ Archive pre-flight failed: validate_delta_targets.py not found at $RDD_LIB_DIR" >&2
+      return 1
+    fi
+    if ! python3 "$RDD_LIB_DIR/validate_delta_targets.py" "$change_name" 2>/dev/null; then
       echo "❌ Archive pre-flight failed for $change_name" >&2
       echo "   Delta targets invalid. Run validate_delta_targets.py for details." >&2
-      python3 "$project_root/_lib/validate_delta_targets.py" "$change_name"
+      python3 "$RDD_LIB_DIR/validate_delta_targets.py" "$change_name"
       return 1
     fi
 
