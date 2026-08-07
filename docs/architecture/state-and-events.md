@@ -5,10 +5,10 @@ rdd-workflow runs without a database. Instead, state lives in **three distinct l
 ```mermaid
 graph TB
     subgraph Layer1[Layer 1 — State Vector]
-    SV[_lib/state_vector.py<br/>.rddf/state/state.json<br/>schema-versioned]
+    SV[_lib/core/state_vector.py<br/>.rddf/state/state.json<br/>schema-versioned]
     end
     subgraph Layer2[Layer 2 — Event Log]
-    EL[_lib/event_log.py<br/>.rddf/state/events.jsonl<br/>append-only]
+    EL[_lib/core/event_log.py<br/>.rddf/state/events.jsonl<br/>append-only]
     end
     subgraph Layer3[Layer 3 — Handoffs]
     H1[.arch-handoff.json]
@@ -21,7 +21,7 @@ graph TB
     H3 --> SV
 ```
 
-## Layer 1 — State Vector (`_lib/state_vector.py`)
+## Layer 1 — State Vector (`_lib/core/state_vector.py`, imported as `skills._lib.core.state_vector`)
 
 The **current snapshot** of project state. Schema-versioned JSON; writes are atomic (temp-file + rename). Read/write < 10 ms.
 
@@ -33,7 +33,7 @@ What it holds:
 
 When to use: any code path that needs to **query** current state fast. The Loop engine reads from here on every step.
 
-## Layer 2 — Event Log (`_lib/event_log.py`)
+## Layer 2 — Event Log (`_lib/core/event_log.py`, imported as `skills._lib.core.event_log`)
 
 The **history**. Append-only newline-delimited JSON. Each line is an event (`step_started`, `gate_failed`, `human_approved`, `archive_completed`, etc.) with a timestamp + payload.
 

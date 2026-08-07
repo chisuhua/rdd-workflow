@@ -5,7 +5,7 @@ Four quality mechanisms, each with a different scope and severity model.
 | Mechanism | Scope | Severity | Where |
 |-----------|-------|----------|-------|
 | `gate.py` | Single phase transition | error / warning | `_lib/gate.py` |
-| `tribunal.py` | Cross-agent validation of a single artefact | error / warning | `_lib/tribunal.py` |
+| `tribunal.py` | Cross-agent validation of a single artefact | error / warning | `_lib/loop/tribunal.py` (imported as `skills._lib.loop.tribunal`) |
 | `arch_quality_gate.py` | Architecture proposals (ADRs, gap analyses) | warning only | `_lib/arch_quality_gate.py` |
 | `change_alignment.py` | A change vs the architecture | warning only | `_lib/change_alignment.py` |
 
@@ -29,7 +29,7 @@ Plugin extension: drop a Python module under `_lib/plugins/` and the loader pick
 
 ## `tribunal.py` (ADR-0008)
 
-Multi-agent cross-validation. Given an artefact (proposal, design.md, etc.), it runs N reviewer agents and aggregates weighted scores. Sensitive content (paths, env vars, secrets) is sanitised via `_lib/sanitizer.py` before review.
+Multi-agent cross-validation. Given an artefact (proposal, design.md, etc.), it runs N reviewer agents and aggregates weighted scores. Sensitive content (paths, env vars, secrets) is sanitised via `_lib/loop/sanitizer.py` (imported as `skills._lib.loop.sanitizer`) before review.
 
 Use cases:
 - Verifying an improvement proposal's quality before it enters `proposal-approved.md`.
