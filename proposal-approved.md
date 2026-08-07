@@ -48,6 +48,8 @@
 
 
 
+| [add-env-cache-arch-discovery](improvements/add-env-cache-arch-discovery.md) | P2 | 2026-08-07 | guide-arch |
+
 ## 已实施
 | [post-archive-cleanup-hook](improvements/post-archive-cleanup-hook.md) | P0 | 2026-08-06 |
 | [fix-rddf-init-broken-layout](improvements/fix-rddf-init-broken-layout.md) | P1 | 2026-08-06 |
