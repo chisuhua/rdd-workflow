@@ -24,7 +24,7 @@ _run_env_full_check     # 强制全量检查 (写 cache + 输出 10 字段 JSON)
 
 - 固定路径: `.rddf/state/.env-cache.json` (gitignored)
 - 默认 TTL: 3600 秒; 覆盖: `RDD_ENV_CACHE_TTL` (设 0 恒失效)
-- 固定 10 字段: `timestamp` `ttl_s` `branch` `openspec_ver` `git_clean` `build_dir` `adr_count` `roadmap_exists` `gap_count` `active_changes`
+- 固定 14 字段: `timestamp` `ttl_s` `branch` `openspec_ver` `git_clean` `build_dir` `adr_count` `roadmap_exists` `gap_count` `active_changes` `discovered_adr_dir` `discovered_roadmap_path` `discovered_architecture_dir` `discovered_adr_pattern`
 - 原子写: `.tmp` → `mv` (同目录 rename)
 - 失效条件: 文件缺失 / mtime 超 TTL / `cache.branch != git branch --show-current`
 - 命中输出: `✅ Env OK (cached Xm ago) | ADR:N | Roadmap:✓` (单行)
@@ -37,5 +37,5 @@ _run_env_full_check     # 强制全量检查 (写 cache + 输出 10 字段 JSON)
 
 ## 边界
 
-- 不缓存 ADR-0016 工件发现 (discover-arch-artifacts.sh 由 guide-arch 每次运行)
+- 自动缓存 ADR-0016 工件发现 (opt-out via `SKIP_AUTO_DISCOVERY=yes`)
 - 不修改 rddf-session 协议 (本 cache 是其同目录伴随状态文件)

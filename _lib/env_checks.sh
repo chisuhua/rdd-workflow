@@ -65,7 +65,7 @@ _cache_valid() {
 # 读 cache 到全局变量 (供单行状态输出)。调用方须先验证 _cache_valid。
 _cache_read() {
   local cache_file="${RDD_ENV_CACHE_FILE:-.rddf/state/.env-cache.json}"
-  # 用纯 bash 提取 10 字段 (无 jq 依赖)
+  # 用纯 bash 提取 13 字段 (无 jq 依赖)
   local raw
   raw=$(cat "$cache_file" 2>/dev/null)
   _CACHE_TS=$(echo "$raw" | grep -oE '"timestamp":"?[0-9]+"?' | head -1 | grep -oE '[0-9]+')
@@ -74,19 +74,19 @@ _cache_read() {
   _CACHE_ROADMAP=$(echo "$raw" | grep -oE '"roadmap_exists":"[^"]*"' | head -1 | sed 's/.*:"//; s/"//')
 }
 
-# 原子写 cache: 写 .tmp 后 mv (同目录 atomic rename)。10 字段固定集合。
+# 原子写 cache: 写 .tmp 后 mv (同目录 atomic rename). 13 字段固定集合.
 _cache_write() {
   local cache_file="${RDD_ENV_CACHE_FILE:-.rddf/state/.env-cache.json}"
   local ttl="${RDD_ENV_CACHE_TTL:-3600}"
   mkdir -p "$(dirname "$cache_file")"
   local tmp="${cache_file}.tmp"
   cat > "$tmp" <<EOF
-{"timestamp":"$(date +%s)","ttl_s":"$ttl","branch":"$_CURRENT_BRANCH","openspec_ver":"$_OPENSPEC_VER","git_clean":"$_GIT_CLEAN","build_dir":"$_BUILD_DIR","adr_count":"$_ADR_COUNT","roadmap_exists":"$_ROADMAP_EXISTS","gap_count":"$_GAP_COUNT","active_changes":"$_ACTIVE_CHANGES"}
+{"timestamp":"$(date +%s)","ttl_s":"$ttl","branch":"$_CURRENT_BRANCH","openspec_ver":"$_OPENSPEC_VER","git_clean":"$_GIT_CLEAN","build_dir":"$_BUILD_DIR","adr_count":"$_ADR_COUNT","roadmap_exists":"$_ROADMAP_EXISTS","gap_count":"$_GAP_COUNT","active_changes":"$_ACTIVE_CHANGES","discovered_adr_dir":"${DISCOVERED_ADR_DIR:-}","discovered_roadmap_path":"${DISCOVERED_ROADMAP_PATH:-}","discovered_architecture_dir":"${DISCOVERED_ARCHITECTURE_DIR:-}","discovered_adr_pattern":"${DISCOVERED_ADR_PATTERN:-}"}
 EOF
   mv "$tmp" "$cache_file"
 }
 
-# 输出 10 字段 JSON (逐行 key: value, 供测试解析与兼容 arch_env_check 契约)。
+# 输出 13 字段 JSON (逐行 key: value, 供测试解析与兼容 arch_env_check 契约).
 _emit_json() {
   echo "timestamp: $(date +%s)"
   echo "ttl_s: ${RDD_ENV_CACHE_TTL:-3600}"
@@ -98,6 +98,10 @@ _emit_json() {
   echo "roadmap_exists: ${_ROADMAP_EXISTS:-no}"
   echo "gap_count: ${_GAP_COUNT:-0}"
   echo "active_changes: ${_ACTIVE_CHANGES:-0}"
+  echo "discovered_adr_dir: ${DISCOVERED_ADR_DIR:-}"
+  echo "discovered_roadmap_path: ${DISCOVERED_ROADMAP_PATH:-}"
+  echo "discovered_architecture_dir: ${DISCOVERED_ARCHITECTURE_DIR:-}"
+  echo "discovered_adr_pattern: ${DISCOVERED_ADR_PATTERN:-}"
 }
 
 # 单行状态: ✅ Env OK (cached Xm ago) | ADR:N | Roadmap:✓

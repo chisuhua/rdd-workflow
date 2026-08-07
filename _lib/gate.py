@@ -74,33 +74,66 @@ _DEFAULT_ADR_PATTERN = "ADR-*.md"
 
 
 def _read_arch_handoff_paths(project_root: str) -> dict:
-    """Read .arch-handoff.json with fallback to v2.0 defaults.
+    """Read paths from env-cache → handoff → defaults (3-level fallback).
 
-    ADR-0016 Layer 3. Returns dict with keys: adr_dir, roadmap_path,
-    architecture_dir, adr_pattern. All paths relative to project_root.
+    ADR-0016 Layer 3 + add-env-cache-arch-discovery extension.
+    Priority chain:
+      1. .rddf/state/.env-cache.json "discovered_*" fields (auto-discovered by rdd-env-check)
+      2. .rddf/state/.arch-handoff.json (arch-done contract)
+      3. Hardcoded v2.0 defaults
+
+    Backward-compat: env-cache files lacking discovered_* fall through to handoff.
+    Empty-string discovered_* fields are treated as missing → fall through.
+    Returns dict with keys: adr_dir, roadmap_path, architecture_dir, adr_pattern.
     """
-    handoff_path = Path(project_root) / ".rddf" / "state" / ".arch-handoff.json"
-    if not handoff_path.exists():
+    pr = Path(project_root)
+    env_cache = pr / ".rddf" / "state" / ".env-cache.json"
+    handoff = pr / ".rddf" / "state" / ".arch-handoff.json"
+
+    def _from_env_cache() -> dict | None:
+        if not env_cache.exists():
+            return None
+        try:
+            data = json.loads(env_cache.read_text())
+        except (json.JSONDecodeError, OSError):
+            return None
+        result = {}
+        for cache_key, out_key in (
+            ("discovered_adr_dir", "adr_dir"),
+            ("discovered_roadmap_path", "roadmap_path"),
+            ("discovered_architecture_dir", "architecture_dir"),
+            ("discovered_adr_pattern", "adr_pattern"),
+        ):
+            val = data.get(cache_key, "")
+            if val:
+                result[out_key] = val
+        return result or None
+
+    def _from_handoff() -> dict | None:
+        if not handoff.exists():
+            return None
+        try:
+            data = json.loads(handoff.read_text())
+        except (json.JSONDecodeError, OSError):
+            return None
         return {
-            "adr_dir": _DEFAULT_ADR_DIR,
-            "roadmap_path": _DEFAULT_ROADMAP_PATH,
-            "architecture_dir": _DEFAULT_ARCHITECTURE_DIR,
-            "adr_pattern": _DEFAULT_ADR_PATTERN,
+            "adr_dir": data.get("adr_dir", _DEFAULT_ADR_DIR),
+            "roadmap_path": data.get("roadmap_path", _DEFAULT_ROADMAP_PATH),
+            "architecture_dir": data.get("architecture_dir", _DEFAULT_ARCHITECTURE_DIR),
+            "adr_pattern": data.get("adr_pattern", _DEFAULT_ADR_PATTERN),
         }
-    try:
-        data = json.loads(handoff_path.read_text())
-    except (json.JSONDecodeError, OSError):
-        return {
-            "adr_dir": _DEFAULT_ADR_DIR,
-            "roadmap_path": _DEFAULT_ROADMAP_PATH,
-            "architecture_dir": _DEFAULT_ARCHITECTURE_DIR,
-            "adr_pattern": _DEFAULT_ADR_PATTERN,
-        }
+
+    env_vals = _from_env_cache() or {}
+    handoff_vals = _from_handoff() or {}
+    defaults = {
+        "adr_dir": _DEFAULT_ADR_DIR,
+        "roadmap_path": _DEFAULT_ROADMAP_PATH,
+        "architecture_dir": _DEFAULT_ARCHITECTURE_DIR,
+        "adr_pattern": _DEFAULT_ADR_PATTERN,
+    }
     return {
-        "adr_dir": data.get("adr_dir", _DEFAULT_ADR_DIR),
-        "roadmap_path": data.get("roadmap_path", _DEFAULT_ROADMAP_PATH),
-        "architecture_dir": data.get("architecture_dir", _DEFAULT_ARCHITECTURE_DIR),
-        "adr_pattern": data.get("adr_pattern", _DEFAULT_ADR_PATTERN),
+        k: env_vals.get(k) or handoff_vals.get(k) or defaults[k]
+        for k in defaults
     }
 
 

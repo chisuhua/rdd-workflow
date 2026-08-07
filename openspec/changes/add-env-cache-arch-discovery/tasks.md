@@ -1,6 +1,6 @@
 ## 1. Schema Extension
 
-- [ ] 1.1 修改 `.rddf/state/.env-cache.json` schema 从 10 字段扩展到 13 字段,追加 `discovered_adr_dir` / `discovered_roadmap_path` / `discovered_architecture_dir` / `discovered_adr_pattern` 4 个字段
+- [ ] 1.1 修改 `.rddf/state/.env-cache.json` schema 从 10 字段扩展到 14 字段,追加 `discovered_adr_dir` / `discovered_roadmap_path` / `discovered_architecture_dir` / `discovered_adr_pattern` 4 个字段
 - [ ] 1.2 确认 `rdd-env-check/scripts/env_check.sh` 已有的 10 字段顺序与语义保持不变(纯增量)
 
 ## 2. Auto-Discovery Wiring
@@ -22,7 +22,7 @@
 
 ## 5. Documentation Sync
 
-- [ ] 5.1 更新 `skills/rdd-env-check/SKILL.md` 第 25 行:10 字段列表 → 13 字段
+- [ ] 5.1 更新 `skills/rdd-env-check/SKILL.md` 第 25 行:10 字段列表 → 14 字段
 - [ ] 5.2 更新 SKILL.md 第 40 行边界段:"不缓存 ADR-0016 工件发现" → "自动缓存 ADR-0016 发现(opt-out via `SKIP_AUTO_DISCOVERY=yes`)"
 
 ## 6. Test Coverage

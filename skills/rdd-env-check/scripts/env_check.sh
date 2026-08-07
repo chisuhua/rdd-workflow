@@ -32,14 +32,26 @@ _run_env_full_check() {
   _check_branch
   _check_build_dir
 
-  # ADR-0016 工件路径发现 (仅计数; 发现逻辑保留在 guide-arch, 本脚本不缓存发现结果)。
-  local discovered_adr_dir="docs/adr" discovered_roadmap="roadmap.md" discovered_arch="docs/architecture"
-  if [ -f "$_LIB_DIR/discover-arch-artifacts.sh" ]; then
+  # ADR-0016 工件路径发现 → 4 个 discovered_* 写入 .env-cache.json
+  local discovered_adr_dir="docs/adr" discovered_roadmap="roadmap.md" discovered_arch="docs/architecture" discovered_pattern="ADR-*.md"
+  if [ "${SKIP_AUTO_DISCOVERY:-no}" = "yes" ]; then
+    echo "✅ Skip discovery (SKIP_AUTO_DISCOVERY=yes)"
+    discovered_adr_dir=""
+    discovered_roadmap=""
+    discovered_arch=""
+    discovered_pattern=""
+  elif [ -f "$_LIB_DIR/discover-arch-artifacts.sh" ]; then
     source "$_LIB_DIR/discover-arch-artifacts.sh" 2>/dev/null
     discovered_adr_dir=$(discover_adr_dir 2>/dev/null || echo "$discovered_adr_dir")
     discovered_roadmap=$(discover_roadmap 2>/dev/null || echo "$discovered_roadmap")
     discovered_arch=$(discover_architecture_dir 2>/dev/null || echo "$discovered_arch")
+    discovered_pattern=$(discover_adr_pattern 2>/dev/null || echo "$discovered_pattern")
   fi
+  # Oracle C1: env-var 传递, 禁止 bash $VAR 字符串插值到 Python.
+  export DISCOVERED_ADR_DIR="$discovered_adr_dir"
+  export DISCOVERED_ROADMAP_PATH="$discovered_roadmap"
+  export DISCOVERED_ARCHITECTURE_DIR="$discovered_arch"
+  export DISCOVERED_ADR_PATTERN="$discovered_pattern"
 
   _ADR_COUNT=$(ls -d "$project_root/$discovered_adr_dir/"ADR-*.md 2>/dev/null | wc -l | tr -d '[:space:]')
   _ROADMAP_EXISTS=$([ -f "$project_root/$discovered_roadmap" ] && echo "yes" || echo "no")
