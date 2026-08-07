@@ -46,11 +46,6 @@ emit_status() {
     return 0 2>/dev/null || exit 0
   fi
 
-  if ! command -v jq >/dev/null 2>&1; then
-    printf '%s\n' '{"arch_handoff_exists":false,"adr_count":0,"roadmap_exists":false,"session_history_arch_done":false,"recommendation":"hard_reject_no_evidence","degraded":"jq_missing"}'
-    return 0 2>/dev/null || exit 0
-  fi
-
   jq -n \
     --argjson arch_handoff_exists "$arch_handoff_exists" \
     --argjson adr_count "$adr_count" \
