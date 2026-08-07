@@ -48,7 +48,6 @@
 
 
 
-| [add-env-cache-arch-discovery](improvements/add-env-cache-arch-discovery.md) | P2 | 2026-08-07 | guide-arch |
 
 ## 已实施
 | [post-archive-cleanup-hook](improvements/post-archive-cleanup-hook.md) | P0 | 2026-08-06 |
@@ -89,6 +88,7 @@
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
+| [add-env-cache-arch-discovery](improvements/add-env-cache-arch-discovery.md) | P2 | 2026-08-07 |
 | [add-known-failures-baseline](improvements/add-known-failures-baseline.md) | P3 | 2026-08-04 |
 | [add-skill-registration-checklist](improvements/add-skill-registration-checklist.md) | P2 | 2026-08-04 |
 | [fix-execute-change-name-persistence](improvements/fix-execute-change-name-persistence.md) | P1 | 2026-08-04 |
