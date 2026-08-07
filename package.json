@@ -47,6 +47,7 @@
     "openspec-gate",
     "rdd-workflow-brainstorm",
     "rdd-workflow-writing-plans",
-    "rdd-env-check"
+    "rdd-env-check",
+    "rdd-doctor"
   ]
 }

@@ -483,6 +483,21 @@ skills/*.md 行数 (累计):
 
 `skills/loop_engine.py` (在 skills/ 根) 是引擎入口 (向后兼容 shim; 实际实现在 `skills/_lib/loop_engine.py`), 串联以上模块.
 
+## rdd-doctor (manual diagnostic skill)
+
+When to invoke `bash skills/rdd-doctor/scripts/doctor.sh` (manual trigger only):
+1. After completing a phase, before moving to the next — quick sanity check that no file drift has accumulated
+2. After modifying `_lib/schemas/*.json` — verify no `.rddf/state/*.json` files are stuck on the old schema (`--category state`)
+3. Before upgrading `STRICT_ARCH_GATE=yes` or `STRICT_DESIGN_GATE=yes` — preview how many issues the strict mode would surface
+4. When troubleshooting a workflow that "feels broken" but no specific error is showing
+
+NOT to run rdd-doctor:
+- As part of an automated phase entry (v1 is manual only)
+- To fix files (doctor is read-only; for fixes use the relevant skill like `guide-arch` or `guide-plan`)
+- To replace any existing gate (`rdd-env-check`, `arch-quality-gate`, etc.)
+
+Flags: `--json` (write `.rddf/state/.doctor-report.json`), `--category <name>` (run only one of 5 categories: `state`, `plan-tdd`, `roadmap-meta`, `proposal-table`, `tasks-checkbox`), `--quiet` (single-line output). Exit codes: 0/1/2/3 matching `openspec validate`.
+
 ## 常见陷阱
 
 1. **git worktree list branch 在第 3 列** — `awk '$3 ~ /openspec\//'` (不是 `$2`, 不是 `$4`)
