@@ -489,7 +489,7 @@ for each change:
 # - 推荐执行顺序
 # - 冲突警告占位符
 # - AI 分析建议 (rich if ai_result_file exists, fallback otherwise)
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir deps)/scripts/deps_render_report.sh"
 render_deps_report
 ```
@@ -613,7 +613,7 @@ deps 的静态三轴 + AI 子代理分析结果，除了写到 `.deps-output.md`
 ```bash
 # P3-4d: Step 6 重构 — 97 行 inline heredoc 提取到 _lib/deps_iteration_sync.sh
 # 内部解析已迁移到 _lib/deps_output.py::parse_markdown_fallback (有 Python unit 覆盖).
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
 source "$(resolve_rdd_skill_dir deps)/scripts/deps_iteration_sync.sh"
 deps_iteration_sync
 ```

@@ -20,7 +20,7 @@ run_arch_env_check() {
   if [ -f "$PROJECT_ROOT/_lib/env_checks.sh" ]; then
     source "$PROJECT_ROOT/_lib/env_checks.sh"
   else
-    source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh" 2>/dev/null
+    source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh" 2>/dev/null
     if command -v resolve_rdd_lib_dir >/dev/null 2>&1 && [ -f "$(resolve_rdd_lib_dir)/env_checks.sh" ]; then
       source "$(resolve_rdd_lib_dir)/env_checks.sh"
     fi
@@ -59,7 +59,7 @@ run_arch_env_check() {
   local DISCOVERED_ADR_DIR_FOUND DISCOVERED_ROADMAP_FOUND DISCOVERED_ARCH_FOUND
 
   # === Phase 1 Step 5: 工件发现 (ADR-0016 Layer 1) ===
-  source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
+  source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
   if [ -f "$(resolve_rdd_lib_dir)/discover-arch-artifacts.sh" ]; then
       source "$(resolve_rdd_lib_dir)/discover-arch-artifacts.sh"
       discover_adr_dir          >/dev/null

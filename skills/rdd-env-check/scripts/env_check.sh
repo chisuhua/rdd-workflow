@@ -16,7 +16,7 @@ _LIB_DIR="$_ENV_CHECK_DIR/../../_lib"
 if [ -f "$_LIB_DIR/env_checks.sh" ]; then
   source "$_LIB_DIR/env_checks.sh"
 else
-  source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh" 2>/dev/null
+  source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh" 2>/dev/null
   if command -v resolve_rdd_lib_dir >/dev/null 2>&1 && [ -f "$(resolve_rdd_lib_dir)/env_checks.sh" ]; then
     source "$(resolve_rdd_lib_dir)/env_checks.sh"
   fi

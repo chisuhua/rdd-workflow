@@ -246,7 +246,7 @@ write_design_handoff "$proposals_reviewed" ${created_change_names[@]}
 **rddf-session 关闭 hook**：
 ```bash
 # rddf-session 关闭 hook (ADR-0017) - graceful degradation when skill_root.sh missing
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
 if command -v resolve_rdd_skill_dir >/dev/null 2>&1; then
     source "$(resolve_rdd_skill_dir rddf-session)/scripts/rddf_session_hooks.sh"
     rddf_session_hook_close stage_design design-done guide-design
