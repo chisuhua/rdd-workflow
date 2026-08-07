@@ -17,7 +17,10 @@ emit_status() {
 
   local adr_count=0
   if [ -d "$adr_dir" ]; then
-    adr_count=$(find "$adr_dir" -maxdepth 1 -name 'ADR-*.md' -type f 2>/dev/null | wc -l)
+    local adr_file
+    for adr_file in "$adr_dir"/ADR-*.md; do
+      [ -f "$adr_file" ] && adr_count=$((adr_count + 1))
+    done
   fi
 
   local roadmap_exists="false"
@@ -36,6 +39,16 @@ emit_status() {
     recommendation="normal"
   elif [ "$adr_count" -gt 0 ] && [ "$roadmap_exists" = "true" ]; then
     recommendation="soft_prompt_reconstruct"
+  fi
+
+  if ! command -v jq >/dev/null 2>&1; then
+    printf '%s\n' '{"arch_handoff_exists":false,"adr_count":0,"roadmap_exists":false,"session_history_arch_done":false,"recommendation":"hard_reject_no_evidence","degraded":"jq_missing"}'
+    return 0 2>/dev/null || exit 0
+  fi
+
+  if ! command -v jq >/dev/null 2>&1; then
+    printf '%s\n' '{"arch_handoff_exists":false,"adr_count":0,"roadmap_exists":false,"session_history_arch_done":false,"recommendation":"hard_reject_no_evidence","degraded":"jq_missing"}'
+    return 0 2>/dev/null || exit 0
   fi
 
   jq -n \
