@@ -70,3 +70,30 @@ teardown() { rm -rf "$PROJECT_ROOT"; }
   [ "$status" -eq 0 ]
   jq -e '.discovered | type == "object"' "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" >/dev/null
 }
+
+@test "reconstruct_arch_handoff: rejects when no adr_dir exists" {
+  rm -rf "$PROJECT_ROOT/docs/adr"
+  run bash "$REPO_ROOT/skills/guide-design/scripts/reconstruct_arch_handoff.sh" --project-root "$PROJECT_ROOT"
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "adr_dir not found"
+  [ ! -f "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" ]
+}
+
+@test "reconstruct_arch_handoff: logs to .reconstruction.log" {
+  touch "$PROJECT_ROOT/docs/adr/ADR-0001-x.md"
+  run bash "$REPO_ROOT/skills/guide-design/scripts/reconstruct_arch_handoff.sh" --project-root "$PROJECT_ROOT"
+  [ "$status" -eq 0 ]
+  [ -f "$PROJECT_ROOT/.rddf/state/.reconstruction.log" ]
+  grep -q "reconstructed" "$PROJECT_ROOT/.rddf/state/.reconstruction.log"
+}
+
+@test "reconstruct_arch_handoff: discovers alternative roadmap path" {
+  touch "$PROJECT_ROOT/docs/adr/ADR-0001-x.md"
+  rm "$PROJECT_ROOT/roadmap.md" 2>/dev/null || true
+  touch "$PROJECT_ROOT/my-roadmap.md"
+  run bash "$REPO_ROOT/skills/guide-design/scripts/reconstruct_arch_handoff.sh" --project-root "$PROJECT_ROOT"
+  [ "$status" -eq 0 ]
+  local roadmap_in_handoff
+  roadmap_in_handoff=$(jq -r '.roadmap_path' "$PROJECT_ROOT/.rddf/state/.arch-handoff.json")
+  [[ "$roadmap_in_handoff" == *roadmap* ]]
+}
