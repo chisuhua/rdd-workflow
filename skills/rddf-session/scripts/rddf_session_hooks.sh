@@ -357,6 +357,9 @@ except Exception as e:
     print(f"rddf-session close skipped: {e}")
 PYEOF
 
+  local _exit=$?
+  [ "$_exit" -ne 0 ] && return "$_exit"
+
   # Auto-archive best-effort (P1: add-rddf-session-auto-archive-on-entry)
   _rddf_auto_archive_if_needed "$sessions_file" 2>/dev/null || true
 }
@@ -426,6 +429,9 @@ try:
 except Exception as e:
     print(f"rddf-session heartbeat skip: {e}")
 PYEOF
+
+  local _exit=$?
+  [ "$_exit" -ne 0 ] && return "$_exit"
 }
 
 # rddf_session_hook_attach <kind> <change_name>
@@ -475,7 +481,11 @@ try:
 except Exception as e:
     print(f"rddf-session attach skip: {e}")
 PYEOF
+
+  local _exit=$?
+  [ "$_exit" -ne 0 ] && return "$_exit"
 }
+
 # rddf_session_hook_detach <kind> <change_name>
 #   Symmetric counterpart to attach — detaches a change from the session.
 #   Used when switching worktrees or abandoning a change.
@@ -523,4 +533,6 @@ try:
 except Exception as e:
     print(f"rddf-session detach skip: {e}")
 PYEOF
+  local _exit=$?
+  [ "$_exit" -ne 0 ] && return "$_exit"
 }
