@@ -49,8 +49,8 @@
 
 
 
-| [fix-bootstrap-fallback-paths](improvements/fix-bootstrap-fallback-paths.md) | P1 | 2026-08-07 | guide-arch |
-| [fix-ship-archive-resolve-lib-path](improvements/fix-ship-archive-resolve-lib-path.md) | P1 | 2026-08-07 | guide-arch |
+
+| [fix-design-proposal-review-approved-parsing](improvements/fix-design-proposal-review-approved-parsing.md) | P0 | 2026-08-07 | guide-arch |
 
 ## 已实施
 | [post-archive-cleanup-hook](improvements/post-archive-cleanup-hook.md) | P0 | 2026-08-06 |
@@ -91,6 +91,8 @@
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
+| [fix-ship-archive-resolve-lib-path](improvements/fix-ship-archive-resolve-lib-path.md) | P1 | 2026-08-07 |
+| [fix-bootstrap-fallback-paths](improvements/fix-bootstrap-fallback-paths.md) | P1 | 2026-08-07 |
 | [add-env-cache-arch-discovery](improvements/add-env-cache-arch-discovery.md) | P2 | 2026-08-07 |
 | [add-known-failures-baseline](improvements/add-known-failures-baseline.md) | P3 | 2026-08-04 |
 | [add-skill-registration-checklist](improvements/add-skill-registration-checklist.md) | P2 | 2026-08-04 |

@@ -8,5 +8,4 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [fix-design-proposal-review-approved-parsing](improvements/fix-design-proposal-review-approved-parsing.md) | P0 | Session 复盘 2026-08-07 — guide-design 双源扫描误判已批准 proposal 为待审 | 2026-08-07 | |
 
