@@ -43,24 +43,57 @@ skill_use("guide-design")   # 无参数版本
 
 **入口条件**：用户调用 `skill_use("guide-design")` 后立即执行。
 
-**rddf-session 入口 hook**（ADR-0017）：创建或查找当前 opencode session 的 `stage_design` rddf-session（parent=latest stage_arch）：
+**步骤 1 — 诊断+软提示**（先行）：通过 `design_preflight.sh` 收集证据（arch-handoff 存在 + ADR 数量 + roadmap 存在 + rddf-session 历史），根据 `.recommendation` 字段分支处理。**这一步先于 rddf-session hook**，避免 hook 失败时阻塞用户进入 design 阶段：
 
 ```bash
-# rddf-session 入口 hook (ADR-0017) - extracted to _lib/rddf_session_hooks.sh
-# stage_design parent: latest stage_arch (auto-resolved by helper)
-source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/_lib/skill_root.sh"
-source "$(resolve_rdd_skill_dir rddf-session)/scripts/rddf_session_hooks.sh"
-rddf_session_hook_entry stage_design guide-design design-phase design-done .rddf/state/.design-handoff.json
+source "${PROJECT_ROOT:-/nonexistent}/skills/guide-design/scripts/design_preflight.sh" 2>/dev/null || \
+  source "$HOME/.agents/skills/guide-design/scripts/design_preflight.sh"
+
+PREFLIGHT_STATUS=$(design_preflight_status "${PROJECT_ROOT:-$(pwd)}")
+RECOMMENDATION=$(echo "$PREFLIGHT_STATUS" | jq -r '.recommendation')
+
+case "$RECOMMENDATION" in
+  normal)
+    : # proceed to env check below
+    ;;
+  soft_prompt_reconstruct)
+    echo "⚠️  arch-handoff 缺失但历史证据显示 arch-done 已完成" >&2
+    echo "$PREFLIGHT_STATUS" | jq -r '
+      "  - ADR 数量: \(.adr_count)\n" +
+      "  - 路线图存在: \(.roadmap_exists)\n" +
+      "  - session 历史 arch-done: \(.session_history_arch_done)"
+    ' >&2
+    echo "" >&2
+    echo "可选操作:" >&2
+    echo "  1. 重建 handoff: bash skills/guide-design/scripts/reconstruct_arch_handoff.sh --force" >&2
+    echo "  2. 重跑 guide-arch (会丢失 arch 上下文)" >&2
+    echo "  3. 退出,先手工检查" >&2
+    echo "" >&2
+    read -r -p "选择 [1/2/3]: " recon_choice
+    case "$recon_choice" in
+      1) bash skills/guide-design/scripts/reconstruct_arch_handoff.sh --force \
+           --project-root "${PROJECT_ROOT:-$(pwd)}" || return 1 ;;
+      2) echo "请运行 skill_use(\"guide-arch\") 重做 arch 工作" >&2; return 1 ;;
+      *) echo "已退出" >&2; return 0 ;;
+    esac
+    ;;
+  hard_reject_no_evidence)
+    echo "❌ arch-done 未完成，无法进入 design 阶段" >&2
+    echo "   未发现任何 arch 工作证据 (无 ADR / 无 roadmap)" >&2
+    echo "   请先运行: skill_use(\"guide-arch\")" >&2
+    return 1
+    ;;
+esac
 ```
 
-**硬依赖检查**：`.rddf/state/.arch-handoff.json` 必须存在。缺失时拒绝并提示先运行 `skill_use("guide-arch")`：
+**步骤 2 — rddf-session 入口 hook**（ADR-0017，best-effort）：创建或查找当前 opencode session 的 `stage_design` rddf-session（parent=latest stage_arch）。**失败不阻塞 design 阶段**（已通过步骤 1 的诊断保证 arch 工作证据齐全），仅记录警告：
 
 ```bash
-if [ ! -f ".rddf/state/.arch-handoff.json" ]; then
-  echo "❌ arch-done 未完成，无法进入 design 阶段"
-  echo "   请先运行: skill_use(\"guide-arch\")"
-  return 1
-fi
+# rddf-session 入口 hook (ADR-0017) - best-effort after preflight
+source "${PROJECT_ROOT:-/nonexistent}/skills/rddf-session/scripts/rddf_session_hooks.sh" 2>/dev/null || \
+  source "$HOME/.agents/skills/rddf-session/scripts/rddf_session_hooks.sh"
+rddf_session_hook_entry stage_design guide-design design-phase design-done .rddf/state/.design-handoff.json || \
+  echo "⚠️  rddf-session hook failed (cross-session continuity may be lost, but design proceeds)" >&2
 ```
 
 **环境健康快照**（rdd-env-check cache 接入，命中输出单行）：
