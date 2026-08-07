@@ -12,7 +12,7 @@
 
 **In Scope**:
 
-- **`.rddf/state/.env-cache.json` schema 增量扩展**：10 → 13 字段，追加 `discovered_adr_dir` / `discovered_roadmap_path` / `discovered_architecture_dir` / `discovered_adr_pattern` 4 字段（注：原 10 字段保留顺序与语义）。
+- **`.rddf/state/.env-cache.json` schema 增量扩展**：10 → 14 字段，追加 `discovered_adr_dir` / `discovered_roadmap_path` / `discovered_architecture_dir` / `discovered_adr_pattern` 4 字段（注：原 10 字段保留顺序与语义）。
 - **`rdd-env-check` cache miss 路径**调用 `discover-arch-artifacts.sh::discover_all()`，把 4 个 `DISCOVERED_*` 全局变量写入 cache 已扩展的字段。
 - **`_read_arch_handoff_paths()` 优先级改为三级 fallback**：
 - **branch 失效机制复用**：`.env-cache.json` 已有的 `branch` 字段比对 `git branch --show-current`，本提案无需新增失效逻辑。
@@ -32,7 +32,7 @@
 - AND 当前 branch = `main`
 - WHEN `skill_use("rdd-env-check")` 触发 `_run_env_full_check`
 - THEN `discover_arch_artifacts::discover_all` 扫到 `documentation/decisions` + `planning/roadmap.md` + `RFC-*.md`
-- AND `.env-cache.json` 落盘 13 字段，其中 `discovered_adr_dir="documentation/decisions"`、`discovered_roadmap_path="planning/roadmap.md"`、`discovered_adr_pattern="RFC-*.md"`
+- AND `.env-cache.json` 落盘 14 字段，其中 `discovered_adr_dir="documentation/decisions"`、`discovered_roadmap_path="planning/roadmap.md"`、`discovered_adr_pattern="RFC-*.md"`
 - AND 后续同 session 的 `gate.py:_check_adr_exists` 通过 `_read_arch_handoff_paths()` 直接命中 cache 字段，**不再走硬编码默认**。
 
 ### 场景 2：env-check cache hit
@@ -94,12 +94,12 @@
 
 ## Acceptance
 
-- [ ] `.env-cache.json` schema：**10 → 13 字段**（增量），现有消费者零修改。
+- [ ] `.env-cache.json` schema：**10 → 14 字段**（增量），现有消费者零修改。
 - [ ] env-check cache miss 路径耗时：**< 200ms**（pure filesystem walk + 1-2 find 调用，no subprocess）。
 - [ ] 新增测试通过：
   - [ ] `tests/integration/test_env_check_arch_discovery.bats`：5 个 @test 用例（scenario 1+2+3+4+6）。
   - [ ] `tests/unit/test_gate.py::test_read_arch_handoff_paths_priority`：3 个 case（env-cache 命中 / handoff 命中 / default 命中）。
 - [ ] 现有测试零回归：`./test.sh --quick` 全绿（保留现有 60s pytest unit + 30s bats smoke baseline）。
-- [ ] 文档同步：`skills/rdd-env-check/SKILL.md` 第 25 行（10 字段列表）→ 13 字段 + 边界行（第 40 行）改为"自动缓存 ADR-0016 发现（opt-out via `SKIP_AUTO_DISCOVERY=yes`）"。
+- [ ] 文档同步：`skills/rdd-env-check/SKILL.md` 第 25 行（10 字段列表）→ 14 字段 + 边界行（第 40 行）改为"自动缓存 ADR-0016 发现（opt-out via `SKIP_AUTO_DISCOVERY=yes`）"。
 - [ ] 无新增外部依赖；新增 LOC 估算：**~40 行**（cache writer 扩展 15 行 + `_read_arch_handoff_paths` 优先级链 15 行 + tests 10 行）。
 

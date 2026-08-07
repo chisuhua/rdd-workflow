@@ -31,10 +31,10 @@ make_env_check_repo() {
   grep -q '_check_branch' "$LIB_CHECKS"
 }
 
-@test "rdd_env_check: 10-field JSON contract matches arch_env_check" {
+@test "rdd_env_check: 14-field JSON contract matches arch_env_check" {
   run bash -c "cd '$REPO_ROOT' && source '$ENV_CHECK' && _run_env_full_check"
   [ "$status" -eq 0 ]
-  # 10 个固定字段, 不多不少 (_run_env_full_check 内部已调用 _emit_json)
+  # 14 个固定字段, 不多不少 (add-env-cache-arch-discovery 增量: +4 discovered_*)
   local fields
   fields=$(echo "$output" | grep -oE '^[a-z_]+:' | sort | tr '\n' ' ')
   echo "$fields" | grep -q 'timestamp: '
@@ -47,7 +47,11 @@ make_env_check_repo() {
   echo "$fields" | grep -q 'roadmap_exists: '
   echo "$fields" | grep -q 'gap_count: '
   echo "$fields" | grep -q 'active_changes: '
-  [ "$(echo "$fields" | wc -w)" -eq 10 ]
+  echo "$fields" | grep -q 'discovered_adr_dir: '
+  echo "$fields" | grep -q 'discovered_roadmap_path: '
+  echo "$fields" | grep -q 'discovered_architecture_dir: '
+  echo "$fields" | grep -q 'discovered_adr_pattern: '
+  [ "$(echo "$fields" | wc -w)" -eq 14 ]
 }
 
 @test "rdd_env_check: cache hit skips full check (under 100ms)" {

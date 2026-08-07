@@ -17,7 +17,7 @@
 ## Goals / Non-Goals
 
 **Goals:**
-- 把 `.env-cache.json` 从 10 字段扩展到 13 字段,记录 `discovered_adr_dir` / `discovered_roadmap_path` / `discovered_architecture_dir` / `discovered_adr_pattern`
+- 把 `.env-cache.json` 从 10 字段扩展到 14 字段,记录 `discovered_adr_dir` / `discovered_roadmap_path` / `discovered_architecture_dir` / `discovered_adr_pattern`
 - 让 env-check cache miss 时自动跑 `discover-arch-artifacts.sh::discover_all()` 并持久化发现结果
 - 让 `_read_arch_handoff_paths()` 优先级变为 **env-cache > handoff > 默认**(三级 fallback)
 - 让 `SKIP_AUTO_DISCOVERY=yes` 提供 opt-out 向后兼容
@@ -41,12 +41,12 @@
 - 命名 = `arch_handoff_*`: 与 handoff 同名前缀,容易让消费者误以为是 handoff 字段
 - 命名 = `cache_adr_dir` 等:通用 cache 前缀,但 `.env-cache.json` 已有 10 字段都没有 `cache_` 前缀,会破坏一致性
 
-### Decision 2: 字段数 10 → 13 纯增量,不改既有字段顺序
+### Decision 2: 字段数 10 → 14 纯增量,不改既有字段顺序
 
 **Rationale**: 现有消费者可能硬编码 `jq '.adr_count'` 这类位置字段依赖(虽然项目里没有,但保险起见)。增量扩展保证 `.env-cache.json` v10 schema 仍然能解析。
 
 **Alternatives considered**:
-- 重排 13 字段为更合理顺序:需要遍历全部消费者并修正,工作量大
+- 重排 14 字段为更合理顺序:需要遍历全部消费者并修正,工作量大
 - 用嵌套 `discovered: {adr_dir, ...}` 子对象:嵌套 JSON 比 flat 多 30 行 parser code
 
 ### Decision 3: `_read_arch_handoff_paths()` 优先级 = env-cache > handoff > 默认
@@ -77,7 +77,7 @@
 - [Risk] branch 切换瞬间 `.rddf/state/.env-cache.json` 因 1-2 个并行 phase 抢占失效,但有人读到中间空状态 → [Mitigation] 既有 `.tmp` → `mv` 原子写已经过验证,继续沿用
 - [Risk] `discover-arch-artifacts.sh::discover_all` 单次调用 > 200ms 预算(P1 项目用 M1 Mac,第三方项目可能在 ARM CI 上跑)→ [Mitigation] MUST NOT 5 + 验收标准 `< 200ms` 在 bats 测试中实测,失败则回归
 - [Risk] `SKIP_AUTO_DISCOVERY` env var 被某 ops 误设,导致发现机制静默失效 → [Mitigation] env-check 启动时打印 `✅ Skip discovery (SKIP_AUTO_DISCOVERY=yes)` 一行显眼提示
-- [Trade-off] `.env-cache.json` 字段从 10 → 13 涨 30%,gitignored 文件大小可接受(从 ~200B 到 ~280B)— 选择增量而非新文件,避免 state 文件碎片化
+- [Trade-off] `.env-cache.json` 字段从 10 → 14 涨 30%,gitignored 文件大小可接受(从 ~200B 到 ~280B)— 选择增量而非新文件,避免 state 文件碎片化
 - [Trade-off] `_read_arch_handoff_paths()` 增加 1 层 fallback 检查 +1-2 处 dict.get — 选择 vs 默认 fallback 收益对比(~50% first-run time saved),trade-off 净正
 
 ## Migration Plan
@@ -89,17 +89,17 @@
 **Deploy steps** (按 ship-phase execute 顺序):
 1. `skills/rdd-env-check/scripts/env_check.sh` 增加 `_discover_arch_artifacts_and_persist` 函数,cache miss 路径触发
 2. `_lib/gate.py::_read_arch_handoff_paths()` 改造为 read env-cache first
-3. `skills/rdd-env-check/SKILL.md` 文档同步(10 字段列表 → 13 字段 + 边界行改文案)
+3. `skills/rdd-env-check/SKILL.md` 文档同步(10 字段列表 → 14 字段 + 边界行改文案)
 4. 新增 `tests/integration/test_env_check_arch_discovery.bats` + `tests/unit/test_gate.py` 的 3 个 case
 
 **Rollback**:
 - 任何一阶段回退 = `git revert` 该阶段 commit
 - 用户层 rollback: `SKIP_AUTO_DISCOVERY=yes` 立刻关掉自动写入(降级到现有 default 行为)
-- 数据层 rollback: 13 字段 cache → 删 4 个 discovered 字段 → 回退到 10 字段兼容模式(消费者 `dict.get` 自动 fallback)
+- 数据层 rollback: 14 字段 cache → 删 4 个 discovered 字段 → 回退到 10 字段兼容模式(消费者 `dict.get` 自动 fallback)
 
 **Backwards compat**:
 - 旧 `.env-cache.json` 文件(10 字段)在升级后:env-check 读 `dict.get(discovered_adr_dir, default)` 拿不到时回退到下一级,无异常
-- 旧消费者(只读 10 字段):升级后仍能解析 13 字段,因为新字段名不会冲突
+- 旧消费者(只读 10 字段):升级后仍能解析 14 字段,因为新字段名不会冲突
 
 ## Open Questions
 
@@ -107,4 +107,4 @@
   当前设计:silent skip。优先级很低,留作 follow-up improvement。
 - [Q2] `discover_adr_pattern` 已支持 `adr-*.md` lowercase 自动探测(`_lib/discover-arch-artifacts.sh:163-189`),新 cache 字段 `discovered_adr_pattern` 是否需要二次扫描其他变体(如 `MADR-*` / `RFD-*`)?
   当前设计:不二次扫描,沿用已有大小写探测即可。新变体可在 follow-up improvement 加。
-- [Q3] 升级迁移路径:旧 `.env-cache.json`(10 字段)升级到 13 字段,首次 `rdd-env-check` 触发 discover 后,旧 branch 上的 cache 是否会被覆盖?——branch 失效机制已保证这是预期行为。
+- [Q3] 升级迁移路径:旧 `.env-cache.json`(10 字段)升级到 14 字段,首次 `rdd-env-check` 触发 discover 后,旧 branch 上的 cache 是否会被覆盖?——branch 失效机制已保证这是预期行为。
