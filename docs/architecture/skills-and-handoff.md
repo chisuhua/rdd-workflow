@@ -102,7 +102,9 @@ The canonical schema for each handoff lives under `_lib/schemas/`:
 | Schema | Version | JSON Schema file |
 |--------|---------|------------------|
 | arch-handoff | v1 | `_lib/schemas/arch_handoff_schema.json` |
-| plan-handoff | v1 | `_lib/schemas/plan_handoff_schema.json` (or state_vector section) |
+| design-handoff | v1 | `_lib/schemas/design_handoff_schema.json` |
+| plan-handoff | v1 | `_lib/schemas/plan_handoff_schema.json` |
+| state-vector | v1 | `_lib/schemas/state_vector_schema.json` |
 | iteration | v1 | `_lib/schemas/iteration_schema.json` |
 | sessions | v1 | `_lib/schemas/sessions_schema.json` |
 

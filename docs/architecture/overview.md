@@ -88,10 +88,10 @@ graph TB
 
 | Module | One-liner |
 |--------|-----------|
-| `_lib/state_vector.py` | Atomic JSON state, schema-versioned, <10ms read/write. |
-| `_lib/event_log.py` | Append-only event log; <100ms replay over 10k events. |
+| `_lib/core/state_vector.py` | Atomic JSON state, schema-versioned, <10ms read/write. |
+| `_lib/core/event_log.py` | Append-only event log; <100ms replay over 10k events. |
 | `_lib/gate.py` | Plugin-style quality gate; error/warning levels. |
-| `_lib/tribunal.py` | Multi-agent cross-validation; weighted scoring + sanitization. |
+| `_lib/loop/tribunal.py` | Multi-agent cross-validation; weighted scoring + sanitization. |
 | `_lib/loop_engine.py` | Goal → Plan → Execute → Verify → Adapt orchestrator. |
 | `_lib/session.py` / `session_manager.py` | rddf-session lifecycle (ADR-0017). |
 | `_lib/arch_quality_gate.py` | 4 warning checks on architecture proposals. |

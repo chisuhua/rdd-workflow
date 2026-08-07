@@ -25,7 +25,7 @@ Use cases:
 - archive-done gate: did worktree have commits? are tasks.md checkboxes all done?
 - ship-lightweight-mode gate: are there any commits to merge? (blocks archive if 0 commits)
 
-Plugin extension: drop a Python module under `_lib/plugins/` and the loader picks it up automatically.
+Plugin extension: drop a Python module under `_lib/plugins/` that calls `register_gate_check()` (see `_lib/plugins/README.md` for the contract). Plugins are loaded by explicitly importing them before constructing the `GateMechanism`.
 
 ## `tribunal.py` (ADR-0008)
 
@@ -76,7 +76,7 @@ Each phase transition may invoke multiple gates. The phase only advances if all 
 
 1. Decide scope: phase-transition (`gate.py`), artefact validation (`tribunal.py`), or domain-specific (`*_quality_gate.py`).
 2. Implement check as a function returning `(level, message)`.
-3. Register in the corresponding registry (`gate.py:check_registry`, or a plugin file under `_lib/plugins/`).
+3. Register in the corresponding registry (`_lib/gate.py::_PLUGIN_REGISTRY` via `register_gate_check()`, or a plugin file under `_lib/plugins/`).
 4. Add a test in `tests/unit/` (TDD — write the test first).
 5. Document the check name in this file (so future readers know what `STRICT_*_GATE=yes` actually enables).
 

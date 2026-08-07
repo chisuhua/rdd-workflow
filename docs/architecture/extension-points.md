@@ -24,7 +24,12 @@ Skills are first-class extensions — the project ships 17 and grows over time.
 
 ## Adding a New Detector / Action (Loop Engine Plugin)
 
-Detectors and actions are pluggable units in the Loop engine. They live in `_lib/loop/` or `_lib/plugins/`.
+Detectors and actions are pluggable units in the Loop engine. **Built-ins** live in `_lib/loop/detectors.py` and `_lib/loop/actions.py`. **User-added plugins** are dropped into project-local directories:
+
+- Detector plugins → `.rddf/detectors/`
+- Action plugins → `.rddf/actions/`
+
+(These paths are defined in `_lib/core/defaults.py` as `DETECTOR_PLUGIN_DIR` and `ACTION_PLUGIN_DIR`. `_lib/plugins/` is a separate gate-plugin directory and is unrelated.)
 
 **Detector** — observes state, returns a signal (e.g. "tasks are stale", "config drifted").
 
