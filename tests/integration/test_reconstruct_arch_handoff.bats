@@ -97,3 +97,43 @@ teardown() { rm -rf "$PROJECT_ROOT"; }
   roadmap_in_handoff=$(jq -r '.roadmap_path' "$PROJECT_ROOT/.rddf/state/.arch-handoff.json")
   [[ "$roadmap_in_handoff" == *roadmap* ]]
 }
+
+@test "reconstruct_arch_handoff: honors SPEC_WORKFLOW_ADR_DIR override" {
+  mkdir -p "$PROJECT_ROOT/custom-adrs"
+  touch "$PROJECT_ROOT/custom-adrs/ADR-0001-test.md"
+  touch "$PROJECT_ROOT/custom-adrs/ADR-0002-other.md"
+  touch "$PROJECT_ROOT/roadmap.md"
+
+  run env SPEC_WORKFLOW_ADR_DIR="custom-adrs" bash "$REPO_ROOT/skills/guide-design/scripts/reconstruct_arch_handoff.sh" \
+    --project-root "$PROJECT_ROOT"
+
+  [ "$status" -eq 0 ]
+  jq -e '.adr_dir == "custom-adrs"' "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" >/dev/null
+  jq -e '.adr_count == 2' "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" >/dev/null
+  jq -e '.completed_adr_ids == ["0001", "0002"]' "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" >/dev/null
+}
+
+@test "reconstruct_arch_handoff: honors SPEC_WORKFLOW_ROADMAP_PATH override" {
+  touch "$PROJECT_ROOT/docs/adr/ADR-0001-x.md"
+  touch "$PROJECT_ROOT/docs/my-custom-roadmap.md"
+
+  run env SPEC_WORKFLOW_ROADMAP_PATH="docs/my-custom-roadmap.md" bash "$REPO_ROOT/skills/guide-design/scripts/reconstruct_arch_handoff.sh" \
+    --project-root "$PROJECT_ROOT"
+
+  [ "$status" -eq 0 ]
+  jq -e '.roadmap_path == "docs/my-custom-roadmap.md"' "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" >/dev/null
+  jq -e '.roadmap_exists == true' "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" >/dev/null
+}
+
+@test "reconstruct_arch_handoff: honors SPEC_WORKFLOW_ARCHITECTURE_DIR override" {
+  touch "$PROJECT_ROOT/docs/adr/ADR-0001-x.md"
+  mkdir -p "$PROJECT_ROOT/docs/custom-architecture"
+  touch "$PROJECT_ROOT/docs/custom-architecture/overview.md"
+
+  run env SPEC_WORKFLOW_ARCHITECTURE_DIR="docs/custom-architecture" bash "$REPO_ROOT/skills/guide-design/scripts/reconstruct_arch_handoff.sh" \
+    --project-root "$PROJECT_ROOT"
+
+  [ "$status" -eq 0 ]
+  jq -e '.architecture_dir == "docs/custom-architecture"' "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" >/dev/null
+  jq -e '.discovered.architecture_dir.found == true' "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" >/dev/null
+}

@@ -28,10 +28,10 @@ if [ -f "$OUTPUT_PATH" ] && [ "$FORCE" != "true" ]; then
   exit 1
 fi
 
-ADR_DIR_REL="docs/adr"
+ADR_DIR_REL="${SPEC_WORKFLOW_ADR_DIR:-docs/adr}"
 ADR_DIR_ABS="$PROJECT_ROOT/$ADR_DIR_REL"
-ROADMAP_REL="roadmap.md"
-ARCHITECTURE_DIR_REL="docs/architecture"
+ROADMAP_REL="${SPEC_WORKFLOW_ROADMAP_PATH:-roadmap.md}"
+ARCHITECTURE_DIR_REL="${SPEC_WORKFLOW_ARCHITECTURE_DIR:-docs/architecture}"
 
 if [ ! -d "$ADR_DIR_ABS" ]; then
   echo "❌ adr_dir not found: $ADR_DIR_ABS" >&2
