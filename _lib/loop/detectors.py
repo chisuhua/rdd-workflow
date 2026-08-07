@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Callable
 
 from skills._lib.core.defaults import DETECTOR_PLUGIN_DIR
+from skills._lib.gate import _read_arch_handoff_paths
 from skills._lib.loop.plugin_loader import PluginLoader
 
 
@@ -177,8 +178,7 @@ def detect_adr_status(state: dict) -> DetectionResult:
 
     ADR-0016 Layer 3. Reads .arch-handoff.json; falls back to "docs/adr" + "ADR-*.md".
     """
-    # Lazy import to avoid top-level circular dependency with gate.py.
-    from skills._lib.gate import _read_arch_handoff_paths
+    # Path discovery is imported once at module load to avoid repeated cold-start cost.
 
     project_root = state.get("project_root", ".") if isinstance(state, dict) else "."
     paths = _read_arch_handoff_paths(project_root)
@@ -207,7 +207,7 @@ def detect_health_issues(state: dict) -> DetectionResult:
     """Detect general repo health — count uncommitted files via `git status --porcelain`."""
     try:
         result = subprocess.run(
-            ["git", "status", "--porcelain", "--untracked-files=no"],
+            ["git", "--no-optional-locks", "status", "--porcelain", "--untracked-files=no"],
             capture_output=True,
             text=True,
             timeout=5,
