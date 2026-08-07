@@ -376,5 +376,5 @@ flow continues unaffected.
 ## Cross-Reference
 
 - `guide-arch` / `guide-plan` / `guide-ship` automatically create `kind=stage_*` rddf-sessions on entry and close them on phase completion.
-- See `docs/v2-multi-session-guide.md` for full user guide and conflict-resolution flow.
+- See `docs/architecture/multi-session.md` for full user guide and conflict-resolution flow.
 - See ADR-0017 for design rationale.
