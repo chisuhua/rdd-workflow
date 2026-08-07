@@ -274,3 +274,17 @@ discover_architecture_dir() {
 - `.rddf/state/.arch-handoff.json` — 扩展目标文件
 - `docs/adr/ADR-0000-template.md` — 本 ADR 格式依据
 - `docs/adr/README.md` §命名规范 / §状态生命周期 — 编号/状态合规依据
+
+## Recovery Note (added 2026-08-07)
+
+`.arch-handoff.json` may be reconstructed from filesystem evidence via
+`skills/guide-design/scripts/reconstruct_arch_handoff.sh` when the
+handoff file is missing but arch work is otherwise complete (ADRs
+present, `roadmap.md` exists). Reconstructed handoffs include
+`reconstructed_at` (ISO timestamp) and `reconstructed_from: "filesystem-evidence"`
+fields in addition to the v1 required schema fields.
+
+Schema v1 consumers MUST tolerate the optional `reconstructed_at` and
+`reconstructed_from` fields. Downstream readers should treat
+`reconstructed_from` as informational metadata only; reconstruction
+does not change the semantic meaning of any v1 required field.
