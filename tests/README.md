@@ -94,6 +94,7 @@ metadata drift between `package.json`, `skills/<name>/SKILL.md`, and `smoke.bats
 | status           | `tests/integration/test_status_skill.bats`                 |
 | roadmap          | `tests/integration/test_roadmap_skill.bats`                |
 | deps             | `tests/integration/test_deps_skill.bats`                   |
+| rdd-doctor       | `tests/integration/test_rdd_doctor.bats` (+ `tests/smoke.bats` registration) |
 | rdd-workflow-writing-plans | (locked by TDD discipline in `test_execute_skill.bats`) |
 | (cross-skill)    | `tests/integration/test_skill_metadata_consistency.bats`   |
 | (helper)         | `tests/_lib/test_skill.bats` (8 cases for `skill.bash`)    |

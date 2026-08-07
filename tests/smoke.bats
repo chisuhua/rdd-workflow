@@ -35,6 +35,12 @@ load test_helper
   [ -f "skills/deps/SKILL.md" ]
 }
 
+@test "rdd-doctor skill is registered" {
+  [ -f "skills/rdd-doctor/SKILL.md" ]
+  grep -q "name: rdd-doctor" skills/rdd-doctor/SKILL.md
+  [ -x "skills/rdd-doctor/scripts/doctor.sh" ]
+}
+
 @test "all skill files have valid frontmatter" {
   for f in skills/*.md skills/*/SKILL.md; do
     [ -f "$f" ] || continue

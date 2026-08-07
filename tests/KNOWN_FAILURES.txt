@@ -32,3 +32,5 @@ scan-state: check_skill_versions passes when no stale files # installation envir
 scan_state: roadmap + changes dir + no pending proposals → guide-ship (default) # environment-sensitive state fixture
 ship: detect_execution_mode reads handoff decision # workflow state fixture
 sub-phase: heartbeat without env var leaves sub_phase empty # session environment fixture
+rddf_session: guide-design entry hook missing skill_root.sh source # pre-existing - rdd-doctor change did not touch guide-design
+rddf_session: entry hook graceful_fallback pattern missing # pre-existing - rdd-doctor change did not touch rddf-session
