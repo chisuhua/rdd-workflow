@@ -411,22 +411,30 @@ def collect(project_root: str) -> DashboardData:
         # is absent (common in projects that never ran `roadmap init`).
         data.roadmap_phase = data.arch.current_phase
 
-    # ---- Section 7: Pending (improvements/ + proposal-approved.md) ----
+    # ---- Section 7: Pending (improvements/ + proposal-approved.md + archive bypass) ----
     try:
+        import re
         approved = set()
         approved_path = os.path.join(project_root, "proposal-approved.md")
         if os.path.exists(approved_path):
-            import re
             with open(approved_path) as f:
                 approved = set(re.findall(r"\|\s*\[([^\]]+)\]\(improvements/", f.read()))
-        
+
         improvement_entries = read_improvement_entries(project_root)
-        pending = 0
+        archived_names = set()
+        archive_dir = os.path.join(project_root, "openspec/changes/archive")
+        if os.path.isdir(archive_dir):
+            for entry in os.listdir(archive_dir):
+                m = re.match(r"\d{4}-\d{2}-\d{2}-(.+)", entry)
+                if m:
+                    archived_names.add(m.group(1))
+
         for s in improvement_entries:
             name = s.get("name", "?")
             if name in approved:
-                continue  # Already approved, skip
-            pending += 1
+                continue
+            if name in archived_names:
+                continue
             data.suggestions.append(
                 SuggestionEntry(
                     name=name,
@@ -438,7 +446,7 @@ def collect(project_root: str) -> DashboardData:
                     effort=s.get("effort"),
                 )
             )
-        data.pending_suggestions = pending
+        data.pending_suggestions = len(data.suggestions)
     except Exception:
         pass
 

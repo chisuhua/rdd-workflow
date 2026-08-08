@@ -204,17 +204,18 @@ mark_approved_completed() {
   local name="$2"
   local approved_file="$project_root/proposal-approved.md"
   local timestamp=$(date -u +%Y-%m-%d)
-  
+
   if [ ! -f "$approved_file" ]; then
     return 1
   fi
-  
+
   python3 -c "
-import sys, re
+import sys, re, os
 with open(sys.argv[1]) as f:
     lines = f.readlines()
 name = sys.argv[2]
 ts = sys.argv[3]
+project_root = sys.argv[4]
 
 # Split sections: everything after '## 已实施' is the completed table
 completed_section_start = None
@@ -240,8 +241,39 @@ for i, line in enumerate(lines):
         approved_line = line
         break
 
+# Fallback: if not in main table, check archive/<date>-<name>/ pattern
 if approved_idx is None:
-    sys.exit(0)
+    archive_dir = os.path.join(project_root, 'openspec/changes/archive')
+    if os.path.isdir(archive_dir):
+        import glob
+        pattern = os.path.join(archive_dir, '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-' + name)
+        matches = glob.glob(pattern)
+        if matches:
+            # Recovery path: entry was lost in plan-phase commit but archive exists
+            # Default priority to P1 since we don't know the original priority
+            priority = 'P1'
+            completed_row = f'| [{name}](improvements/{name}.md) | {priority} | {ts} |\n'
+            # Insert into completed table after header
+            inserted = False
+            for i, line in enumerate(lines):
+                if line.startswith('## 已实施'):
+                    j = i + 1
+                    while j < len(lines):
+                        if lines[j].strip().startswith('|---'):
+                            lines.insert(j + 1, completed_row)
+                            inserted = True
+                            break
+                        j += 1
+                    if inserted:
+                        break
+            if not inserted:
+                lines.append(completed_row)
+            with open(sys.argv[1], 'w') as f:
+                f.writelines(lines)
+            sys.exit(0)
+    # No archive evidence either — emit warning, return 1
+    print(f'⚠️ mark_approved_completed: {name} not found in proposal-approved.md and no archive/ detected', file=sys.stderr)
+    sys.exit(1)
 
 # Extract priority from approved row
 priority = '?'
@@ -276,9 +308,13 @@ if not inserted:
 
 with open(sys.argv[1], 'w') as f:
     f.writelines(lines)
-" "$approved_file" "$name" "$timestamp"
-
-  sync_suggestions "$project_root" "$name" "completed"
+" "$approved_file" "$name" "$timestamp" "$project_root"
+  local rc=$?
+  if [ "$rc" -eq 0 ]; then
+    sync_suggestions "$project_root" "$name" "completed"
+    return 0
+  fi
+  return 1
 }
 
 # sync_suggestions <project_root> <name> <status>

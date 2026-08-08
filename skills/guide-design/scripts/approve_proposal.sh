@@ -67,6 +67,14 @@ fi
 # Append to approved list
 append_approved "$PROJECT_ROOT" "$NAME" "$PRIORITY"
 
+# Auto-stage proposal-approved.md so the design-phase write is never lost
+# across the plan-phase commit boundary. fail-fast on git error.
+if ! git add "$APPROVED_FILE" 2>/dev/null; then
+  echo "❌ git add proposal-approved.md failed: $?" >&2
+  exit 1
+fi
+echo "git add proposal-approved.md done"
+
 # Skip create flow on legacy / skeleton path
 if [ "${SKIP_DESIGN_HANDOFF:-no}" = "yes" ]; then
   exit 0

@@ -147,6 +147,16 @@ write_plan_handoff() {
   PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
   export PROJECT_ROOT
 
+  # Warn if proposal-approved.md has uncommitted changes (soft, no block).
+  # Catches plan-phase commits that dropped the design-phase write.
+  if command -v git >/dev/null 2>&1; then
+    local DIRTY
+    DIRTY=$(cd "$PROJECT_ROOT" && git status --porcelain proposal-approved.md 2>/dev/null || true)
+    if [ -n "$DIRTY" ]; then
+      echo "⚠️ proposal-approved.md has uncommitted changes — commit before plan-done" >&2
+    fi
+  fi
+
   # Spec-validation gate: validate every active change's baseline + delta targets
   # before writing the handoff file. Catches v1 (false baseline) and v2
   # (MODIFIED-on-empty-spec) class incidents at plan-done time, NOT archive time.

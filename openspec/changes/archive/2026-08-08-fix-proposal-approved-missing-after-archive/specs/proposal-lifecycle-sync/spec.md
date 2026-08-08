@@ -8,7 +8,9 @@ This delta closes the gaps by:
 1. Adding `git add proposal-approved.md` to `approve_proposal.sh` so design-phase writes are never lost.
 2. Adding a `compgen -G "openspec/changes/archive/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-<name>"` fallback to `mark_approved_completed <name>` so archive-phase can recover from missing entries in the main table.
 3. Hardening the dashboard's pending filter so archived changes are never reported as pending, even if `proposal-approved.md` is missing their entry.
-## Requirements
+
+## MODIFIED Requirements
+
 ### Requirement: `approve_proposal.sh` MUST stage `proposal-approved.md` before returning
 
 The `skills/guide-design/scripts/approve_proposal.sh` script MUST execute `git add proposal-approved.md` after the file is written (whether by `append_approved` or as a fallback) and BEFORE the script exits successfully. The git add call MUST run failure-fast: if the staging fails, the script MUST exit non-zero with a clear error message.
