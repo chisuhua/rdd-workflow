@@ -15,6 +15,8 @@ This delta closes the gaps by:
 
 The `skills/guide-design/scripts/approve_proposal.sh` script MUST execute `git add proposal-approved.md` after the file is written (whether by `append_approved` or as a fallback) and BEFORE the script exits successfully. The git add call MUST run failure-fast: if the staging fails, the script MUST exit non-zero with a clear error message.
 
+modifies: proposal-lifecycle-sync
+
 The script SHALL output a confirmation line `git add proposal-approved.md done` so the AI orchestrator can verify the staging succeeded.
 
 modifies: proposal-lifecycle-sync
@@ -41,6 +43,8 @@ modifies: proposal-lifecycle-sync
 
 The `_lib/state.sh::mark_approved_completed <project_root> <name>` function MUST, when the entry is not found in the main table of `proposal-approved.md`, check if `openspec/changes/archive/<date>-<name>/` exists using the pattern `compgen -G "openspec/changes/archive/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-<name>"`. If the pattern matches, the function MUST append a row to the `## 已实施` section even though the main table entry is missing.
 
+modifies: proposal-lifecycle-sync
+
 The fallback MUST NOT emit a warning when the archive presence is verified — this is a normal recovery path, not an error.
 
 modifies: proposal-lifecycle-sync
@@ -66,11 +70,9 @@ modifies: proposal-lifecycle-sync
 
 ### Requirement: Dashboard pending filter MUST skip archived changes
 
-The `_lib/dashboard/__init__.py` filter for `pending_suggestions` MUST, after the `proposal-approved.md` regex extraction, additionally skip any name for which `openspec/changes/archive/<date>-<name>/` exists. The check MUST use the same `compgen -G` pattern as the post-archive-cleanup hook:
+The `_lib/dashboard/__init__.py` filter for `pending_suggestions` MUST, after the `proposal-approved.md` regex extraction, additionally skip any name for which `openspec/changes/archive/<date>-<name>/` exists (using the same `compgen -G` pattern as the post-archive-cleanup hook: `openspec/changes/archive/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-<name>`).
 
-```
-compgen -G "openspec/changes/archive/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-<name>"
-```
+modifies: proposal-lifecycle-sync
 
 The dashboard collection function MUST also remove the matched name from `data.suggestions` so it does not appear in the rendered table.
 
@@ -108,6 +110,8 @@ modifies: proposal-lifecycle-sync
 ### Requirement: `plan-done` gate MUST warn on dirty `proposal-approved.md`
 
 The `guide-plan.md` plan-done exit handler MUST, before writing `.plan-handoff.json`, check `git status --porcelain proposal-approved.md`. If the output is non-empty (tracked file modified, or untracked file present), the gate MUST emit a warning `⚠️ proposal-approved.md has uncommitted changes — commit before plan-done` to stderr. The gate MUST NOT block plan-done (warning level only).
+
+modifies: proposal-lifecycle-sync
 
 The warning is best-effort: if `git status` fails or `proposal-approved.md` does not exist, the gate MUST skip the warning silently.
 
