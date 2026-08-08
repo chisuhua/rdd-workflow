@@ -5,7 +5,9 @@
 Idempotent post-archive cleanup hook (`_lib/post_archive_cleanup.sh`) that scans `git status --porcelain` after `openspec archive <name>` finishes, classifies residue into whitelist buckets, applies `git rm -f` to deleted-tracked paths and `git add` to modified-critical paths, then commits only the rm bucket with subject `chore(post-archive): clean residue from <name>`. The hook respects `SKIP_POST_ARCHIVE_CLEANUP=yes` (escape hatch) and `DRY_RUN_POST_ARCHIVE_CLEANUP=yes` (echo-only). Auto-invoked from `guide-ship` Phase 3 (`archive_change_for_mode`).
 
 This delta extends the hook to also clean residue from `openspec/changes/<name>/` (the 6 artifact types: `.openspec.yaml`, `design.md`, `proposal.md`, `roadmap-meta.yaml`, `specs/...`, `tasks.md`) when the change has been archived to `openspec/changes/archive/<date>-<name>/`. The defensive archive-presence check prevents accidental deletion of active changes.
-## Requirements
+
+## MODIFIED Requirements
+
 ### Requirement: `_WHITELIST_DELETED_PATTERNS` MUST include `openspec/changes/`
 
 The `_lib/post_archive_cleanup.sh::_WHITELIST_DELETED_PATTERNS` array MUST include `openspec/changes/` as a delete-tracked prefix in addition to the existing `.rddf/plans/` and `.rddf/state/*.tmp` patterns.
@@ -192,4 +194,3 @@ as a delete-prefix target.
 - **THEN** only paths matching `openspec/changes/` (NOT `openspec/changes/archive/`)
   are added to the rm bucket
 - **AND** the `_matches_prefix` function does NOT match `openspec/changes/archive/` as a prefix of itself
-
