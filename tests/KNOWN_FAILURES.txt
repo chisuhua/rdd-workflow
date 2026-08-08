@@ -1,36 +1,58 @@
+17_archive: openspec archive moves change into archive/ + creates spec # reason required
 INSTALL.md registers 13 skills including rdd-workflow-writing-plans # historical documentation contract
+P0-7: execute.md uses $3 (not $2) for openspec/ branch matching # reason required
+README.md no longer mentions 'discover' phase for guide-ship # reason required
 SKILL.md: line count dropped from 340 baseline (v2.1 reduction) # historical documentation line-count contract
 adr_index: docs/adr/README.md does NOT reference ADR-NNN beyond 0020 # historical ADR documentation baseline
-adr_index: docs/adr/README.md status table is consistent with disk # historical ADR documentation baseline
+approve e2e: change dir contains proposal.md >= 500 chars with ADR + In/Out Scope # reason required
+approve e2e: idempotent — second run does not overwrite # reason required
+approve e2e: roadmap-meta.yaml contains change_type # reason required
+approve_proposal: creates change dir with proposal.md and roadmap-meta.yaml # reason required
 archive-proposal-status: archive.sh calls update_proposal_status # archive helper structural baseline
-auto_detect_runs_in_main_repo # worktree environment fixture
+archive_change: creates tasks.md.archived-snapshot sidecar # reason required
+archive_change: idempotent — second run does not overwrite sidecar # reason required
+archive_change: tasks_done in iteration.json derived from sidecar [x] count # reason required
+bootstrap_fallback: no obsolete $HOME/.agents/_lib/skill_root.sh in SKILL.md surfaces # reason required
+check_arch_done_gate_fails_without_adr # reason required
+check_arch_done_gate_fails_without_roadmap # reason required
+check_arch_done_gate_passes_with_adr_and_roadmap # reason required
 count_pending_suggestions ignores malformed entries (defensive) # malformed-input fixture
 count_pending_suggestions returns N when entries have 待创建 status # locale/status fixture
 doc_truth_sync: AGENTS.md mentions 13 skills # historical documentation contract
 doc_truth_sync: INSTALL.md description lists 13 skills + npm-test-vs-pytest block # historical documentation contract
-doc_truth_sync: package.json::skills[] publishes all 13 disk skills (Decision 3 = A) # historical documentation contract
+docs/v2-workflow-overview.md: mentions project-setup check # reason required
+doctor: --json only creates .doctor-report.json (not other writes) # reason required
+doctor: healthy fixture exits 0 (all 5 categories OK) # reason required
 filter_guide_ship: workflow_synthesizer keeps guide-ship enabled when active changes exist # active-change state fixture
-fix_doc_truth_sync: package.json skills[] count matches disk count # historical package contract
 gate 0: 改用 iteration.list_ready_for_ship # iteration state fixture
+guide-ship.md Phase 2.5 case/esac block is now thin (was 173) # reason required
 guide_skill delegates only to 3-phase skills (RECOMMEND whitelist) # historical guide contract
 guide_worktree_gate: smoke regression - guide_skill tests still pass # worktree environment fixture
 handle_review_action option 2 creates debt entry in proposal-suggestions.md # review state fixture
+missing change_name: clear usage error, returns nonzero # reason required
+no 'spec-workflow' references remain anywhere in repo (v3.0.0 rename guard) # reason required
 phase2: 3 cross-skill source lines to rddf-session/scripts/ added # cross-skill installation fixture
+phase2: _lib/ retains only shared files (~44 or fewer .sh+.py) # reason required
+phase2_install: INSTALL.md copy loop populates scripts/ in target # reason required
+phase2_install: install preserves _lib/ shared files (state.sh, worktree.sh) # reason required
 phase2_no_broken_refs: 3 cross-skill rddf-session sources resolve # installation layout fixture
 phase2_no_broken_refs: all SKILL.md source lines resolve to existing files # installation layout fixture
 propose.md uses git rev-parse --show-toplevel for project root (P0-4) # historical shell contract
 propose.md uses json.load (P1-7 format migration) # historical Python contract
 propose.md wraps json.load in try/except FileNotFoundError + JSONDecodeError (P0-4 / P1-7) # historical Python contract
 queue overview: 候选计数读 proposal-suggestions.md 的待创建 status # locale/status fixture
+rddf: feature exits 0 # reason required
+rddf: status exits 0 # reason required
 rddf_session_hook_entry stage_plan links parent to latest stage_arch # session state fixture
 render_deps_report falls back when no AI result file # optional AI result environment fixture
+review_phase: iteration schema has version 4 and review status # reason required
 review_phase: proposal-suggestions-format.md has type field # documentation fixture
+run_arch_quality_report_creates_json_file # reason required
 run_plan_intake_runs_with_handoff # handoff state fixture
 scan-state.sh priority list (1..N) is internally consistent # scanner environment fixture
 scan-state: check_skill_versions detects stale skill files # installation environment fixture
 scan-state: check_skill_versions passes when no stale files # installation environment fixture
 scan_state: roadmap + changes dir + no pending proposals → guide-ship (default) # environment-sensitive state fixture
 ship: detect_execution_mode reads handoff decision # workflow state fixture
+sub-phase: heartbeat records RDDF_SUB_PHASE # reason required
 sub-phase: heartbeat without env var leaves sub_phase empty # session environment fixture
-rddf_session: guide-design entry hook missing skill_root.sh source # pre-existing - rdd-doctor change did not touch guide-design
-rddf_session: entry hook graceful_fallback pattern missing # pre-existing - rdd-doctor change did not touch rddf-session
