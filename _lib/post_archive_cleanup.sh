@@ -32,6 +32,7 @@ _WHITELIST_DELETED_PATTERNS=(
   ".rddf/plans/"
   ".rddf/state/.arch-handoff.json.tmp"
   ".rddf/state/.plan-handoff.json.tmp"
+  "openspec/changes/"
 )
 
 # Whitelist: modified-critical paths to git add (staged, not committed)
@@ -80,7 +81,22 @@ post_archive_cleanup() {
     case "$x$y" in
       ' D')   # deleted in worktree, not staged
         if _matches_prefix "$path" "${_WHITELIST_DELETED_PATTERNS[@]}"; then
-          deleted_to_rm+=("$path")
+          # openspec/changes/<name>/* requires archive-presence check to prevent
+          # accidental deletion of active (non-archived) changes.
+          case "$path" in
+            openspec/changes/archive/*) ;;
+            openspec/changes/*)
+              name=$(echo "$path" | cut -d/ -f3)
+              if compgen -G "openspec/changes/archive/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-$name" > /dev/null; then
+                deleted_to_rm+=("$path")
+              else
+                echo "⚠️  skip $path (no archive/<date>-$name/)" >&2
+              fi
+              ;;
+            *)
+              deleted_to_rm+=("$path")
+              ;;
+          esac
         fi
         ;;
       'M '|'A '|' M')  # modified/added in index, or modified in worktree

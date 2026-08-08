@@ -8,7 +8,4 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [RDDF-0001-fix-rddf-session-import-path](improvements/RDDF-0001-fix-rddf-session-import-path.md) | P1 | pre-v2.1 遗留（未走 design 阶段） | 2026-08-07 | 已拒绝 |
-| [fix-rddf-session-owner-cross-call](improvements/fix-rddf-session-owner-cross-call.md) | P1 | pre-v2.1 遗留（未走 design 阶段） | 2026-08-07 | 已拒绝 |
-| [ship-delete-branch-safety](improvements/ship-delete-branch-safety.md) | P1 | pre-v2.1 遗留（未走 design 阶段） | 2026-08-07 | 已拒绝 |
 
