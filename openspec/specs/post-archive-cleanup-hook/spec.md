@@ -6,7 +6,7 @@ Idempotent post-archive cleanup hook (`_lib/post_archive_cleanup.sh`) that scans
 
 This delta extends the hook to also clean residue from `openspec/changes/<name>/` (the 6 artifact types: `.openspec.yaml`, `design.md`, `proposal.md`, `roadmap-meta.yaml`, `specs/...`, `tasks.md`) when the change has been archived to `openspec/changes/archive/<date>-<name>/`. The defensive archive-presence check prevents accidental deletion of active changes.
 
-## MODIFIED Requirements
+## Requirements
 
 ### Requirement: `_WHITELIST_DELETED_PATTERNS` MUST include `openspec/changes/`
 
