@@ -10,9 +10,11 @@ This delta extends the hook to also clean residue from `openspec/changes/<name>/
 
 ### Requirement: `_WHITELIST_DELETED_PATTERNS` MUST include `openspec/changes/`
 
-The `_lib/post_archive_cleanup.sh::_WHITELIST_DELETED_PATTERNS` array MUST include
-`openspec/changes/` as a delete-tracked prefix in addition to the existing
-`.rddf/plans/` and `.rddf/state/*.tmp` patterns. The pattern MUST be matched
+The `_lib/post_archive_cleanup.sh::_WHITELIST_DELETED_PATTERNS` array MUST include `openspec/changes/` as a delete-tracked prefix in addition to the existing `.rddf/plans/` and `.rddf/state/*.tmp` patterns.
+
+modifies: post-archive-cleanup-hook
+
+The pattern MUST be matched
 as a **prefix** (substring from index 0) so all nested files under
 `openspec/changes/<name>/` are picked up.
 
@@ -65,7 +67,11 @@ prefix, not a glob (no `*` suffix). The exact pattern value is
 
 ### Requirement: `git rm` MUST use `-f` for tracked-only residue
 
-The hook MUST invoke `git rm -f <paths>` (not `git rm -r` and not `rm -rf`)
+The hook MUST invoke `git rm -f <paths>` (not `git rm -r` and not `rm -rf`) to remove the 6-residue from `openspec/changes/<name>/`.
+
+modifies: post-archive-cleanup-hook
+
+The `-f` flag is required because the files are tracked in the index but the working tree files are already deleted (the `D` status indicates worktree deletion only, not stage deletion).
 to remove the 6-residue from `openspec/changes/<name>/`. The `-f` flag is
 required because the files are tracked in the index but the working tree
 files are already deleted (the `D` status indicates worktree deletion only,
@@ -85,7 +91,11 @@ NOT be used (avoids accidental removal of sibling files).
 
 ### Requirement: Hook MUST be idempotent on re-run
 
-A second invocation of `post_archive_cleanup` with the same args MUST
+A second invocation of `post_archive_cleanup` with the same args MUST NOT produce additional commits.
+
+modifies: post-archive-cleanup-hook
+
+The hook's bucket-classification is deterministic — second run sees an empty `git status --porcelain` and exits with no buckets, no commit, no error.
 NOT produce additional commits. The hook's bucket-classification is
 deterministic — second run sees an empty `git status --porcelain` and
 exits with no buckets, no commit, no error.
@@ -101,7 +111,11 @@ exits with no buckets, no commit, no error.
 
 ### Requirement: Hook MUST respect `SKIP_POST_ARCHIVE_CLEANUP=yes`
 
-The hook MUST short-circuit (return 0) when `SKIP_POST_ARCHIVE_CLEANUP=yes`
+The hook MUST short-circuit (return 0) when `SKIP_POST_ARCHIVE_CLEANUP=yes` is exported, without reading `git status` or running any `git rm` / `git add` / `git commit` commands.
+
+modifies: post-archive-cleanup-hook
+
+This is the existing escape hatch behavior; the new `openspec/changes/` extension MUST NOT bypass it.
 is exported, without reading `git status` or running any `git rm` / `git add` /
 `git commit` commands. This is the existing escape hatch behavior; the new
 `openspec/changes/` extension MUST NOT bypass it.
@@ -118,7 +132,11 @@ is exported, without reading `git status` or running any `git rm` / `git add` /
 
 ### Requirement: Hook MUST commit only the rm bucket (not modified)
 
-The system SHALL preserve the existing behavior of `git add` modified-critical
+The system SHALL preserve the existing behavior of `git add` modified-critical paths without committing them (let user review).
+
+modifies: post-archive-cleanup-hook
+
+The new `openspec/changes/` extension adds to the rm bucket only (the 6-residue is `D` status, not `M` status), so the existing `git add` bucket logic is unaffected.
 paths without committing them (let user review). The new `openspec/changes/`
 extension adds to the rm bucket only (the 6-residue is `D` status, not
 `M` status), so the existing `git add` bucket logic is unaffected.
@@ -135,6 +153,8 @@ extension adds to the rm bucket only (the 6-residue is `D` status, not
 ### Requirement: Manual entry MUST support `--include-change-artifacts` flag
 
 The script `scripts/cleanup-plan-files.sh` MUST accept a `--include-change-artifacts` flag. When the flag is present, the manual entry SHALL list each `openspec/changes/<name>/` directory that has a matching `openspec/changes/archive/<date>-<name>/` archive, show the 6-residue file count per directory, request user confirmation before `git rm -r`, and MUST NOT auto-commit. Without the flag, the script MUST retain its existing behavior (only cleans `.rddf/plans/<name>.md`).
+
+modifies: post-archive-cleanup-hook
 
 Without `--include-change-artifacts`, the manual entry MUST retain its
 existing behavior (only cleans `.rddf/plans/<name>.md`).
@@ -159,7 +179,11 @@ existing behavior (only cleans `.rddf/plans/<name>.md`).
 
 ### Requirement: Out-of-scope MUST NOT include proposed change territory
 
-The fix MUST NOT extend to cleaning `openspec/changes/archive/` itself
+The fix MUST NOT extend to cleaning `openspec/changes/archive/` itself (the archive directory is a permanent record by design).
+
+modifies: post-archive-cleanup-hook
+
+The `_WHITELIST_DELETED_PATTERNS` MUST continue to exclude `openspec/changes/archive/` as a delete-prefix target.
 (the archive directory is a permanent record by design). The
 `_WHITELIST_DELETED_PATTERNS` MUST continue to exclude `openspec/changes/archive/`
 as a delete-prefix target.
