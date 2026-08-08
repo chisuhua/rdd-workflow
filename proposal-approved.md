@@ -54,6 +54,7 @@
 | [add-rdd-doctor-skill](improvements/add-rdd-doctor-skill.md) | P1 | 2026-08-07 | guide-arch |
 
 ## 已实施
+| [archive-cleanup-plan-files-extension](improvements/archive-cleanup-plan-files-extension.md) | P2 | 2026-08-08 |
 | [fix-design-proposal-review-approved-parsing](improvements/fix-design-proposal-review-approved-parsing.md) | P0 | 2026-08-07 |
 | [post-archive-cleanup-hook](improvements/post-archive-cleanup-hook.md) | P0 | 2026-08-06 |
 | [fix-rddf-init-broken-layout](improvements/fix-rddf-init-broken-layout.md) | P1 | 2026-08-06 |
