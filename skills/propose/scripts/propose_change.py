@@ -126,6 +126,15 @@ def create_skeleton_change(
         if m:
             ct = m.group(1).strip()
 
+    # Fallback: read parent_feature from **特性** head field when not provided.
+    # add-proposal-deps-and-features defined 特性 as the design-time feature tag,
+    # but explicit parent_feature argument always wins (param beats file).
+    if parent_feature is None and os.path.exists(improvements_path):
+        # [ \t]* (not \s*) to avoid matching across newlines into next section
+        m_pf = re.search(r"\*\*特性\*\*:[ \t]*([^|\n]+)", open(improvements_path).read())
+        if m_pf:
+            parent_feature = m_pf.group(1).strip()
+
     # v1.7.0+: doc-only/test-only changes can use skip_specs: true in .openspec.yaml
     skip_specs = ct in ("doc-only", "test-only")
 
