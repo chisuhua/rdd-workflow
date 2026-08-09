@@ -1,5 +1,5 @@
 # tests/unit/test_reflect_cooldown.py
-import json, os, time, pytest, tempfile
+import json, os, time, pytest
 from pathlib import Path
 
 # Add project root to path for imports
@@ -10,7 +10,14 @@ from skills._lib.reflect_cooldown import CooldownManager
 
 
 class TestCooldownManager:
-    def setup_method(self, tmp_path):
+    # Use autouse fixture (not setup_method) so tmp_path is actually injected.
+    # setup_method does not receive fixtures from pytest, so the previous
+    # signature silently bound tmp_path to the test method itself, leaving
+    # self.tmpdir as '<bound method ...>' string and CooldownManager writing
+    # reflect-cooldown.json into a bogus '<bound method ...>/' directory at
+    # the repo root on every test run.
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path):
         self.tmpdir = str(tmp_path)
         self.cooldown_file = os.path.join(self.tmpdir, "reflect-cooldown.json")
         self.manager = CooldownManager(self.cooldown_file, cooldown_hours=24)
