@@ -1,7 +1,9 @@
 # tests/unit/test_reflect_engine.py
-import os, json, tempfile, sys
+import os, json, sys
 from pathlib import Path
 from unittest.mock import patch, MagicMock
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -9,8 +11,15 @@ from skills._lib.reflect_engine import ReflectEngine, ReflectResult, IssueDraft
 
 
 class TestReflectEngine:
-    def setup_method(self):
-        self.tmpdir = tempfile.mkdtemp()
+    # NOTE: setup_method does not receive fixture injection from pytest. The
+    # tmp_path must be requested via an autouse fixture (see _setup_engine
+    # below) so the engine is constructed against a real per-test directory.
+    # Otherwise self.tmpdir ends up being the bound test method's repr string,
+    # which silently breaks tests that touch the filesystem (e.g.
+    # test_route_issue_user_project_paths reads <tmpdir>/.git/config).
+    @pytest.fixture(autouse=True)
+    def _setup_engine(self, tmp_path):
+        self.tmpdir = str(tmp_path)
         self.engine = ReflectEngine(
             phase="plan",
             project_root=self.tmpdir,
