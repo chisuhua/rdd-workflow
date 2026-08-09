@@ -1,8 +1,8 @@
 # tests/unit/test_reflect_engine.py
-import os, json, tempfile, pytest
+import os, json, tempfile, sys
 from pathlib import Path
 from unittest.mock import patch, MagicMock
-import sys
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from skills._lib.reflect_engine import ReflectEngine, ReflectResult, IssueDraft
@@ -52,13 +52,12 @@ class TestReflectEngine:
         assert result.action == "log_friction"
         assert result.fingerprint != ""
 
-    def test_skip_workflow_reflection_env_var(self):
-        os.environ["SKIP_WORKFLOW_REFLECTION"] = "1"
+    def test_skip_workflow_reflection_env_var(self, monkeypatch):
+        monkeypatch.setenv("SKIP_WORKFLOW_REFLECTION", "1")
         engine = ReflectEngine(phase="ship", project_root=self.tmpdir)
         result = engine.analyze(failures=[{"type": "unrecovered_failure"}])
         assert result.action == "skipped"
         assert result.reason == "SKIP_WORKFLOW_REFLECTION=1"
-        del os.environ["SKIP_WORKFLOW_REFLECTION"]
 
     def test_timeout_handling(self):
         """ReflectEngine should handle timeout exceptions gracefully."""
