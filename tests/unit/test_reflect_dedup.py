@@ -1,5 +1,5 @@
 # tests/unit/test_reflect_dedup.py
-import os, tempfile, json, pytest
+import os, json, pytest
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -8,7 +8,11 @@ from skills._lib.reflect_dedup import DedupMatcher
 
 
 class TestDedupMatcher:
-    def setup_method(self, tmp_path):
+    # Use autouse fixture (not setup_method) so tmp_path is actually injected.
+    # See test_reflect_cooldown.py / test_reflect_engine.py for the same
+    # latent bug pattern and rationale.
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path):
         self.tmpdir = str(tmp_path)
         self.improvements_dir = os.path.join(self.tmpdir, "improvements")
         os.makedirs(self.improvements_dir, exist_ok=True)
