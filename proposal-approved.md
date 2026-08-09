@@ -52,9 +52,8 @@
 
 
 
-| [fix-proposal-approved-missing-after-archive](improvements/fix-proposal-approved-missing-after-archive.md) | P1 | 2026-08-08 | guide-arch |
-
 ## 已实施
+| [fix-proposal-approved-missing-after-archive](improvements/fix-proposal-approved-missing-after-archive.md) | P1 | 2026-08-09 |
 | [add-rdd-doctor-skill](improvements/add-rdd-doctor-skill.md) | P1 | 2026-08-09 |
 | [archive-cleanup-plan-files-extension](improvements/archive-cleanup-plan-files-extension.md) | P2 | 2026-08-08 |
 | [fix-design-proposal-review-approved-parsing](improvements/fix-design-proposal-review-approved-parsing.md) | P0 | 2026-08-07 |
