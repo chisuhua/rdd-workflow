@@ -8,8 +8,8 @@ from skills._lib.reflect_dedup import DedupMatcher
 
 
 class TestDedupMatcher:
-    def setup_method(self):
-        self.tmpdir = tempfile.mkdtemp()
+    def setup_method(self, tmp_path):
+        self.tmpdir = str(tmp_path)
         self.improvements_dir = os.path.join(self.tmpdir, "improvements")
         os.makedirs(self.improvements_dir, exist_ok=True)
         self.suggestions_file = os.path.join(self.tmpdir, "proposal-suggestions.md")

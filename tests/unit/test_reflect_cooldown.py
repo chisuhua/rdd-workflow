@@ -10,8 +10,8 @@ from skills._lib.reflect_cooldown import CooldownManager
 
 
 class TestCooldownManager:
-    def setup_method(self):
-        self.tmpdir = tempfile.mkdtemp()
+    def setup_method(self, tmp_path):
+        self.tmpdir = str(tmp_path)
         self.cooldown_file = os.path.join(self.tmpdir, "reflect-cooldown.json")
         self.manager = CooldownManager(self.cooldown_file, cooldown_hours=24)
 
