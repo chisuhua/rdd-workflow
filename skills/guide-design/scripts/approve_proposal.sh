@@ -127,6 +127,7 @@ EOF
 HEAD_PHASE="default"
 HEAD_CATEGORY="general"
 HEAD_TYPE="feature"
+HEAD_FEATURE=""
 if [ -f "$IMP_FILE" ]; then
   if grep -qE '\*\*阶段\*\*:\s*[^|]+' "$IMP_FILE"; then
     HEAD_PHASE=$(grep -oE '\*\*阶段\*\*:\s*[^|]+' "$IMP_FILE" | head -1 | sed 's/.*\*\*阶段\*\*:\s*//' | xargs)
@@ -137,9 +138,12 @@ if [ -f "$IMP_FILE" ]; then
   if grep -qE '\*\*类型\*\*:\s*[^|]+' "$IMP_FILE"; then
     HEAD_TYPE=$(grep -oE '\*\*类型\*\*:\s*[^|]+' "$IMP_FILE" | head -1 | sed 's/.*\*\*类型\*\*:\s*//' | xargs)
   fi
+  if grep -qE '\*\*特性\*\*:\s*[^|]+' "$IMP_FILE"; then
+    HEAD_FEATURE=$(grep -oE '\*\*特性\*\*:\s*[^|]+' "$IMP_FILE" | head -1 | sed 's/.*\*\*特性\*\*:\s*//' | xargs)
+  fi
 fi
 
-PARENT_FEATURE="${PARENT_FEATURE:-}"
+PARENT_FEATURE="${PARENT_FEATURE:-$HEAD_FEATURE}"
 cat > "$CHANGE_DIR/roadmap-meta.yaml" <<EOF
 phase: $HEAD_PHASE
 category: $HEAD_CATEGORY
