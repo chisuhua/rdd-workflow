@@ -24,7 +24,7 @@ from skills.rddf_session.scripts.rddf_session import (
 class TestRddfSessionCrossSessionRecovery:
     """Test session recovery across OpenCode sessions."""
 
-    def test_timeout_makes_session_orphaned(self, tmp_path: Path):
+    def test_timeout_makes_session_orphaned(self, tmp_path: Path, monkeypatch):
         """A session with expired heartbeat should be marked as orphaned.
 
         Steps:
@@ -41,8 +41,7 @@ class TestRddfSessionCrossSessionRecovery:
         # Test creates both stage_plan and stage_arch sessions; the
         # stage-level singleton check would otherwise block the second
         # creation. Opt into cross-stage parallelism for this test.
-        import os
-        os.environ["RDDF_ALLOW_CROSS_STAGE_PARALLEL"] = "yes"
+        monkeypatch.setenv("RDDF_ALLOW_CROSS_STAGE_PARALLEL", "yes")
         coord = RddfSessionCoordinator(sessions_file, config)
 
         # Create session
@@ -68,7 +67,7 @@ class TestRddfSessionCrossSessionRecovery:
         assert session is not None
         assert session.state == "orphaned"
 
-    def test_find_next_recommendation_returns_orphaned(self, tmp_path: Path):
+    def test_find_next_recommendation_returns_orphaned(self, tmp_path: Path, monkeypatch):
         """find_next_recommendation should return orphaned sessions.
 
         Steps:
@@ -85,7 +84,8 @@ class TestRddfSessionCrossSessionRecovery:
 
         coord = RddfSessionCoordinator(sessions_file, config)
 
-        # Create two sessions
+        # Create two sessions; opt into cross-stage parallelism for stage_arch
+        monkeypatch.setenv("RDDF_ALLOW_CROSS_STAGE_PARALLEL", "yes")
         session1_id = coord.create_session(
             kind="stage_plan",
             owner_opencode_session_id="owner_A",

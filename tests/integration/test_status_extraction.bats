@@ -62,16 +62,17 @@ load ../test_helper
   [ -f "$REPO_ROOT/_lib/iteration/__init__.py" ]
   grep -qE 'print_view' "$REPO_ROOT/_lib/iteration/__init__.py"
   grep -qE '^def print_view\(' "$REPO_ROOT/_lib/iteration/render.py"
-  REPO_ROOT="$REPO_ROOT" python3 -c '
+  REPO_ROOT="$REPO_ROOT" SCRATCH_DIR="$BATS_TMPDIR/rdd-status-$$" python3 -c '
 import os, sys
 sys.path.insert(0, os.environ["REPO_ROOT"])
 from skills._lib.iteration import print_view
 # Run against a scratch dir with no iteration.json so the
 # "missing file" notice path is exercised (the project root has a
 # real iteration.json which would render the active table instead).
-import tempfile, io
+import io, os
 from contextlib import redirect_stdout
-scratch = tempfile.mkdtemp()
+scratch = os.environ["SCRATCH_DIR"]
+os.makedirs(scratch, exist_ok=True)
 buf = io.StringIO()
 with redirect_stdout(buf):
     rc = print_view(scratch)

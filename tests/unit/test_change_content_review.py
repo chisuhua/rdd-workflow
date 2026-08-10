@@ -66,11 +66,7 @@ def test_auto_revise_returns_false_by_default():
         assert revised is False
 
 
-def test_auto_revise_respects_env_var():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        os.environ["CHANGE_CONTENT_REVIEW_AUTO_REVISE"] = "no"
-        try:
-            revised = auto_revise_if_needed("test", tmpdir, {})
-            assert revised is False
-        finally:
-            del os.environ["CHANGE_CONTENT_REVIEW_AUTO_REVISE"]
+def test_auto_revise_respects_env_var(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHANGE_CONTENT_REVIEW_AUTO_REVISE", "no")
+    revised = auto_revise_if_needed("test", str(tmp_path), {})
+    assert revised is False

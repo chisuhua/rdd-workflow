@@ -33,6 +33,11 @@ jobs:
           if [ -n "$result" ]; then echo "❌ Tautologies:"; echo "$result"; exit 1; fi
           echo "✅ No tautological assertions"
 
+      - name: Test isolation gate (anti-pollution)
+        run: |
+          bash tests/scripts/check_test_isolation.sh
+          echo "✅ No test isolation violations"
+
       - name: Arch quality gate (strict mode)
         env:
           STRICT_ARCH_GATE: 'yes'
