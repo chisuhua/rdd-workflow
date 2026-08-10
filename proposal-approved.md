@@ -180,7 +180,6 @@
 | [split-rddf-god-class](improvements/split-rddf-god-class.md) | P2 | 2026-07-28 |
 | [task-parallel-throttle](improvements/task-parallel-throttle.md) | P1 | 2026-07-28 |
 | [unify-session-kind-naming](improvements/unify-session-kind-naming.md) | P0 | 2026-07-28 |
-| [add-rdd-doctor-skill](improvements/add-rdd-doctor-skill.md) | P1 | 2026-08-07 |
 | [unify-test-entry-points](improvements/unify-test-entry-points.md) | P1 | 2026-07-28 |
 | [update-adr-index](improvements/update-adr-index.md) | P2 | 2026-07-28 |
 | [update-agents-module-map](improvements/update-agents-module-map.md) | P1 | 2026-07-28 |
