@@ -104,3 +104,40 @@ def test_create_skeleton_empty_特性_writes_null_parent_feature(tmp_path):
     assert "parent_feature: null" in text, (
         f"empty **特性** should yield parent_feature: null, got:\n{text}"
     )
+
+
+def test_create_skeleton_body_mention_does_not_pollute_head(tmp_path):
+    """Body reference to **特性**: wave-core should NOT be picked up when head is empty."""
+    improvements_path = tmp_path / "improvements" / "demo.md"
+    improvements_path.parent.mkdir(parents=True, exist_ok=True)
+    improvements_path.write_text(
+        "# demo\n\n"
+        "**优先级**: P1 | **来源**: test\n"
+        "**阶段**: design | **分类**: workflow\n"
+        "**类型**: feature\n"
+        "**依赖**: | **特性**:\n\n"
+        "## 架构依据\n\n"
+        "When improvements contains `**特性**: wave-core` in body as example,\n"
+        "the parser should NOT pick it up — only head **特性** matters.\n"
+    )
+    (tmp_path / "openspec").mkdir(exist_ok=True)
+
+    result = create_skeleton_change(
+        project_root=str(tmp_path),
+        name="demo",
+        current_phase="design",
+        category="workflow",
+        priority="P1",
+        parent_feature=None,
+    )
+    assert result is True
+
+    yaml_path = tmp_path / "openspec" / "changes" / "demo" / "roadmap-meta.yaml"
+    text = yaml_path.read_text()
+    # Empty head 特性 should not be polluted by body example
+    assert "parent_feature: null" in text, (
+        f"body mention of **特性** should not pollute empty head, got:\n{text}"
+    )
+    assert "wave-core" not in text, (
+        f"body example value should NOT appear in parent_feature, got:\n{text}"
+    )

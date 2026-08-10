@@ -129,17 +129,19 @@ HEAD_CATEGORY="general"
 HEAD_TYPE="feature"
 HEAD_FEATURE=""
 if [ -f "$IMP_FILE" ]; then
-  if grep -qE '\*\*阶段\*\*:\s*[^|]+' "$IMP_FILE"; then
-    HEAD_PHASE=$(grep -oE '\*\*阶段\*\*:\s*[^|]+' "$IMP_FILE" | head -1 | sed 's/.*\*\*阶段\*\*:\s*//' | xargs)
+  # Restrict to first 8 lines: body often mentions these field names as examples.
+  HEAD_SECTION="$(head -8 "$IMP_FILE")"
+  if echo "$HEAD_SECTION" | grep -qE '\*\*阶段\*\*:[ \t]*[^|]+'; then
+    HEAD_PHASE=$(echo "$HEAD_SECTION" | grep -oE '\*\*阶段\*\*:[ \t]*[^|]+' | head -1 | sed 's/.*\*\*阶段\*\*:[ \t]*//' | xargs)
   fi
-  if grep -qE '\*\*分类\*\*:\s*[^|]+' "$IMP_FILE"; then
-    HEAD_CATEGORY=$(grep -oE '\*\*分类\*\*:\s*[^|]+' "$IMP_FILE" | head -1 | sed 's/.*\*\*分类\*\*:\s*//' | xargs)
+  if echo "$HEAD_SECTION" | grep -qE '\*\*分类\*\*:[ \t]*[^|]+'; then
+    HEAD_CATEGORY=$(echo "$HEAD_SECTION" | grep -oE '\*\*分类\*\*:[ \t]*[^|]+' | head -1 | sed 's/.*\*\*分类\*\*:[ \t]*//' | xargs)
   fi
-  if grep -qE '\*\*类型\*\*:\s*[^|]+' "$IMP_FILE"; then
-    HEAD_TYPE=$(grep -oE '\*\*类型\*\*:\s*[^|]+' "$IMP_FILE" | head -1 | sed 's/.*\*\*类型\*\*:\s*//' | xargs)
+  if echo "$HEAD_SECTION" | grep -qE '\*\*类型\*\*:[ \t]*[^|]+'; then
+    HEAD_TYPE=$(echo "$HEAD_SECTION" | grep -oE '\*\*类型\*\*:[ \t]*[^|]+' | head -1 | sed 's/.*\*\*类型\*\*:[ \t]*//' | xargs)
   fi
-  if grep -qE '\*\*特性\*\*:\s*[^|]+' "$IMP_FILE"; then
-    HEAD_FEATURE=$(grep -oE '\*\*特性\*\*:\s*[^|]+' "$IMP_FILE" | head -1 | sed 's/.*\*\*特性\*\*:\s*//' | xargs)
+  if echo "$HEAD_SECTION" | grep -qE '\*\*特性\*\*:[ \t]*[^|]+'; then
+    HEAD_FEATURE=$(echo "$HEAD_SECTION" | grep -oE '\*\*特性\*\*:[ \t]*[^|]+' | head -1 | sed 's/.*\*\*特性\*\*:[ \t]*//' | xargs)
   fi
 fi
 

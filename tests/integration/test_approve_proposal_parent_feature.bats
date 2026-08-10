@@ -107,3 +107,28 @@ EOF
     run grep -E '^parent_feature: ""' "$WORK_DIR/openspec/changes/demo/roadmap-meta.yaml"
     [ "$status" -eq 0 ]
 }
+
+@test "approve_proposal: body mention of **特性** doesn't pollute head parsing" {
+    # improvement file has empty **特性** in head, but body references it as example
+    cat > "$WORK_DIR/improvements/demo.md" <<EOF
+# demo
+
+**优先级**: P1 | **来源**: bats
+**阶段**: design | **分类**: workflow
+**类型**: feature
+**依赖**: | **特性**:
+
+## 架构依据
+
+When improvements contains \`**特性**: wave-core\` in body as example,
+the parser should NOT pick it up — only head **特性** matters.
+EOF
+
+    cd "$WORK_DIR"
+    unset PARENT_FEATURE
+    bash "$REPO_ROOT/skills/guide-design/scripts/approve_proposal.sh" "demo" "P1" "$WORK_DIR" 2>&1 || true
+
+    [ -f "$WORK_DIR/openspec/changes/demo/roadmap-meta.yaml" ]
+    run grep -E '^parent_feature: ""' "$WORK_DIR/openspec/changes/demo/roadmap-meta.yaml"
+    [ "$status" -eq 0 ]
+}

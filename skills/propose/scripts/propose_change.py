@@ -130,8 +130,9 @@ def create_skeleton_change(
     # add-proposal-deps-and-features defined 特性 as the design-time feature tag,
     # but explicit parent_feature argument always wins (param beats file).
     if parent_feature is None and os.path.exists(improvements_path):
-        # [ \t]* (not \s*) to avoid matching across newlines into next section
-        m_pf = re.search(r"\*\*特性\*\*:[ \t]*([^|\n]+)", open(improvements_path).read())
+        # Restrict to first 8 lines: body often mentions 特性 as an example.
+        head_lines = open(improvements_path).readlines()[:8]
+        m_pf = re.search(r"\*\*特性\*\*:[ \t]*([^|\n]+)", "".join(head_lines))
         if m_pf:
             parent_feature = m_pf.group(1).strip()
 
