@@ -140,6 +140,90 @@ except Exception:
     pass  # non-blocking
 " 2>/dev/null || true
   fi
+
+  # Gate 3: Plan quality checks (wire-plan-done-quality-gates).
+  # Per ADR-0007 default-warning semantics: both run_plan_checks and
+  # change_alignment failures default to warning. STRICT_CHANGE_GATE=yes
+  # (per ADR-0019) escalates change_alignment failures to error and
+  # blocks the gate; it does NOT affect run_plan_checks (independent
+  # escalation per design decision 2).
+  echo ""
+  echo "门控 3: Plan 阶段质量检查 (run_plan_checks + change_alignment)"
+  if ! run_plan_quality_gate "$PROJECT_ROOT"; then
+      return 1
+  fi
+  echo ""
+}
+
+# Standalone Gate 3 runner (extracted for unit/integration testing).
+# Iterates active changes and invokes run_plan_checks + change_alignment,
+# honoring STRICT_CHANGE_GATE escalation for change_alignment only.
+run_plan_quality_gate() {
+  local PROJECT_ROOT="$1"
+  local PLAN_QUALITY_BLOCKED=0
+  for d in "$PROJECT_ROOT"/openspec/changes/*/; do
+      [ -d "$d" ] || continue
+      case "$d" in */archive/) continue ;; esac
+      local name
+      name=$(basename "$d")
+      echo "  → $name"
+
+      local rpc_output
+      rpc_output=$(CHANGE_NAME="$name" PROJECT_ROOT="$PROJECT_ROOT" \
+          python3 -c "
+import os, sys
+sys.path.insert(0, os.environ.get('PROJECT_ROOT', '.'))
+try:
+    from skills.propose.scripts.propose_quality_check import run_plan_checks
+    warnings = run_plan_checks(os.environ['CHANGE_NAME'], os.environ['PROJECT_ROOT'])
+    if warnings:
+        for w in warnings:
+            print(f'    [run_plan_checks] WARNING: {w}')
+    else:
+        print('    [run_plan_checks] pass')
+except Exception as e:
+    print(f'    [run_plan_checks] check unavailable: {e}')
+" 2>&1)
+      echo "$rpc_output"
+
+      local ca_output ca_blocked
+      ca_output=$(CHANGE_NAME="$name" PROJECT_ROOT="$PROJECT_ROOT" \
+          python3 -c "
+import os, sys
+sys.path.insert(0, os.environ.get('PROJECT_ROOT', '.'))
+try:
+    from skills._lib.change_alignment import ChangeAlignmentReport
+    report = ChangeAlignmentReport.verify(
+        os.environ['PROJECT_ROOT'],
+        os.environ['CHANGE_NAME'],
+    )
+    if report.passed:
+        print(f'    [change_alignment] pass (strict={report.strict_mode})')
+    else:
+        for nm in report.warnings:
+            print(f'    [change_alignment] WARNING: {nm}')
+        for nm in report.failed_checks:
+            print(f'    [change_alignment] ERROR: {nm}')
+        sys.exit(1 if report.failed_checks else 0)
+except Exception as e:
+    print(f'    [change_alignment] check unavailable: {e}')
+    sys.exit(2)
+" 2>&1)
+      ca_blocked=$?
+      echo "$ca_output"
+      if [ "$ca_blocked" -eq 1 ]; then
+          PLAN_QUALITY_BLOCKED=1
+      elif [ "$ca_blocked" -eq 2 ]; then
+          :
+      fi
+  done
+  if [ "$PLAN_QUALITY_BLOCKED" -ne 0 ]; then
+      echo ""
+      echo "❌ plan-done gate blocked: change_alignment errors above (STRICT_CHANGE_GATE)"
+      return 1
+  fi
+  echo "  ✅ 质量检查完成 (warning-only 或全部通过)"
+  return 0
 }
 
 write_plan_handoff() {
