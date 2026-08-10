@@ -64,6 +64,25 @@ if check_archived "$NAME" "$PROJECT_ROOT"; then
   exit 0
 fi
 
+# Per wire-design-content-review-gate: invoke improvements-layer content
+# review via the shared helper BEFORE any approve-side-effect. The helper
+# honors STRICT_DESIGN_GATE / SKIP_CONTENT_REVIEW and propagates the
+# review's exit code (0 pass/warn, 1 blocking). In default mode warnings
+# allow approve to continue; in STRICT mode blocking aborts.
+SCRIPT_DIR_LOCAL="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)"
+if [ -x "$SCRIPT_DIR_LOCAL/run_content_review.sh" ]; then
+  export IMPROVEMENTS_PATH="$IMP_FILE"
+  set +e
+  bash "$SCRIPT_DIR_LOCAL/run_content_review.sh"
+  review_rc=$?
+  set -e
+  unset IMPROVEMENTS_PATH
+  if [ "$review_rc" -eq 1 ]; then
+    echo "❌ design content review blocked approve (STRICT_DESIGN_GATE or default blocking)" >&2
+    exit 1
+  fi
+fi
+
 # Append to approved list
 append_approved "$PROJECT_ROOT" "$NAME" "$PRIORITY"
 
