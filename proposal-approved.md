@@ -53,6 +53,12 @@
 
 
 
+| [wire-plan-done-quality-gates](improvements/wire-plan-done-quality-gates.md) | P0 | 2026-08-10 | guide-arch |
+
+| [wire-design-content-review-gate](improvements/wire-design-content-review-gate.md) | P1 | 2026-08-10 | guide-arch |
+
+| [add-proposal-how-leakage-warning](improvements/add-proposal-how-leakage-warning.md) | P1 | 2026-08-10 | guide-arch |
+
 ## 已实施
 | [fix-feature-decision-design-phase](improvements/fix-feature-decision-design-phase.md) | P1 | 2026-08-10 |
 | [fix-proposal-approved-missing-after-archive](improvements/fix-proposal-approved-missing-after-archive.md) | P1 | 2026-08-09 |
