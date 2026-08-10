@@ -8,6 +8,8 @@ Review improvements and proposals at design approve time. Modified by archiving 
 
 The system SHALL invoke the existing `skills/guide-design/scripts/design_content_review.sh` as part of the `guide-design` approve execution path (both single-item and batch), so that improvements-layer content review (5-section completeness, ADR reference, quantifiable acceptance, head fields per ADR-0025 §D4) runs on every normal approve. Failures default to warning per ADR-0025 §D4; `STRICT_DESIGN_GATE=yes` MUST upgrade them to blocking errors; `SKIP_CONTENT_REVIEW=yes` MUST skip the review without affecting other approve semantics.
 
+modifies: design-content-review
+
 #### Scenario: 单项 approve 默认 warning 放行
 
 - GIVEN the user invokes single-item approve on an improvement that fails improvements-layer review (e.g. missing ADR reference)
@@ -45,6 +47,8 @@ The system SHALL invoke the existing `skills/guide-design/scripts/design_content
 ### Requirement: 既有 review 脚本不被复制或重写
 
 The system MUST NOT duplicate or reimplement `design_content_review.py`'s checks, prompts, or severity rules inside the approve wrapper. The wrapper MUST reference the existing script as the single source of truth for improvements-layer review semantics, and MUST NOT introduce a second improvements-layer review implementation, an independent state format, or any new quality gate beyond ADR-0025 §D4.
+
+modifies: design-content-review
 
 #### Scenario: wrapper 仅调用既有脚本
 
