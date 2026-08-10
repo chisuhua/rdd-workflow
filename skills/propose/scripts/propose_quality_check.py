@@ -26,7 +26,21 @@ import argparse
 import os
 import re
 import sys
+from pathlib import Path
 from typing import List
+
+# HOW-leakage detector (improvements/proposal shared layer).
+# Lives at top-level _lib/ per codebase convention; see shim in
+# skills/_lib/__init__.py for the backward-compat alias.
+_HERE = Path(__file__).resolve().parent
+_REPO_ROOT = _HERE.parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+try:
+    from _lib import proposal_review  # type: ignore
+except ImportError:  # pragma: no cover - shim fallback
+    proposal_review = None
 
 # Minimum proposal length in chars (aligned with Plan D input-sources threshold).
 MIN_PROPOSAL_LENGTH = 500
@@ -176,7 +190,7 @@ def run_all_checks(name: str, project_root: str) -> List[str]:
 
 
 def run_design_checks(name: str, project_root: str) -> List[str]:
-    """Run only the 3 proposal-level checks (D5 split).
+    """Run only the 3 proposal-level checks (D5 split) plus HOW-leakage warning.
 
     Design phase invokes only the 3 checks that operate on proposal.md:
     proposal_length, adr_references, scope_sections. Tasks and roadmap
@@ -184,7 +198,12 @@ def run_design_checks(name: str, project_root: str) -> List[str]:
     roadmap-meta.yaml may not exist yet at design time (created later
     by plan-fill), so including them would produce false positives.
 
-    Returns list of warning strings (empty = pass).
+    HOW-leakage is appended as a non-blocking warning with the
+    "[HOW-LEAKAGE-WARN]" prefix so callers can distinguish it from the
+    structural warnings above. Same WarningRecord format as the
+    improvements-layer review (skills/guide-design/scripts/design_content_review.py).
+
+    Returns list of warning strings (empty == pass).
     """
     change_dir = os.path.join(project_root, "openspec", "changes", name)
     proposal_path = os.path.join(change_dir, "proposal.md")
@@ -193,6 +212,21 @@ def run_design_checks(name: str, project_root: str) -> List[str]:
     warnings.extend(check_proposal_length(proposal_path))
     warnings.extend(check_adr_references(proposal_path))
     warnings.extend(check_scope_sections(proposal_path))
+
+    if proposal_review is not None and os.path.isfile(proposal_path):
+        try:
+            with open(proposal_path, encoding="utf-8") as f:
+                text = f.read()
+            hits = proposal_review.detect_how_leakage(text)
+        except Exception:
+            hits = []
+        for h in hits:
+            warnings.append(
+                f"[HOW-LEAKAGE-WARN] signal={h['signal']} section={h['section']} "
+                f"weighted_score={h['weighted_score']:.2f} action={h['action']} "
+                f"(non-blocking; review manually)"
+            )
+
     return warnings
 
 
