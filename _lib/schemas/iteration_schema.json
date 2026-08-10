@@ -9,8 +9,8 @@
   "properties": {
         "version": {
           "type": "integer",
-          "const": 5,
-          "description": "Schema version. v5: added l2_violation_count_after and l2_violation_kind per-change fields (collect-l2-violation-count-on-archive 2026-08-05)."
+          "enum": [3, 4, 5, 6],
+          "description": "Schema version. v5: added l2_violation_count_after and l2_violation_kind per-change fields (collect-l2-violation-count-on-archive 2026-08-05). v6: added filled_at per-change field (fix-iteration-schema-filled-at 2026-08-10) - tracks when a skeleton change was filled with full specs/tasks."
         },
     "updated_at": {
       "type": "string",
@@ -123,6 +123,11 @@
             "type": ["string", "null"],
             "enum": ["sim_include_drv", "sim_class_type", null],
             "description": "Which L2 violation kind was counted. Default 'sim_include_drv' (matches #include \"sim/\" patterns in plugins/gpu_driver/drv/). Null if not collected."
+          },
+          "filled_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when a skeleton change (status='planned') was filled with full proposal.md/design.md/specs/tasks.md. Distinguishes the 'skeleton' (added_at only) phase from the 'filled' (ready-to-ship) phase. Null for legacy changes without tracked fill time or non-skeleton changes that were never in skeleton phase. v6 (fix-iteration-schema-filled-at 2026-08-10)."
           }
         }
       }

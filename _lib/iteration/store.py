@@ -222,7 +222,7 @@ def _merge_by_name(existing: dict, incoming: dict) -> dict:
 def create_empty(current_phase: str = _DEFAULT_PHASE) -> dict:
     """Return a fresh empty iteration state. Useful for `skill_use("status", "iteration", "init")`."""
     return {
-        "version": 5,
+        "version": 6,
         "updated_at": _now_iso(),
         "current_phase": current_phase,
         "changes": [],
@@ -284,6 +284,30 @@ def _migrate_v4_to_v5(data: dict) -> dict:
     return data
 
 
+def _migrate_v5_to_v6(data: dict) -> dict:
+    """Migrate a v5 iteration state to v6 in-place.
+
+    v6 adds the `filled_at` per-change field, tracking when a planned
+    skeleton change was filled with full proposal.md/design.md/specs/tasks.
+    Existing v5 entries lack this field; we set it to None (meaning
+    'skeleton-fill time was not tracked').
+
+    Same idempotent / non-persisting contract as _migrate_v3_to_v4 and
+    _migrate_v4_to_v5. See fix-iteration-schema-filled-at 2026-08-10.
+    """
+    if data.get("version") != 5:
+        return data
+    data = dict(data)
+    data["version"] = 6
+    migrated_changes = []
+    for c in data.get("changes", []):
+        c = dict(c)
+        c.setdefault("filled_at", None)
+        migrated_changes.append(c)
+    data["changes"] = migrated_changes
+    return data
+
+
 def _migrate_to_current(data: dict) -> dict:
     """Walk a versioned iteration state forward to the current schema.
 
@@ -297,6 +321,8 @@ def _migrate_to_current(data: dict) -> dict:
         data = _migrate_v3_to_v4(data)
     if isinstance(data, dict) and data.get("version") == 4:
         data = _migrate_v4_to_v5(data)
+    if isinstance(data, dict) and data.get("version") == 5:
+        data = _migrate_v5_to_v6(data)
     return data
 
 
