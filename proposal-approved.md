@@ -59,6 +59,8 @@
 
 | [add-proposal-how-leakage-warning](improvements/add-proposal-how-leakage-warning.md) | P1 | 2026-08-10 | guide-arch |
 
+| [migrate-improvements-to-rddf-namespace](improvements/migrate-improvements-to-rddf-namespace.md) | P0 | 2026-08-11 | guide-arch |
+
 ## 已实施
 | [fix-feature-decision-design-phase](improvements/fix-feature-decision-design-phase.md) | P1 | 2026-08-10 |
 | [fix-proposal-approved-missing-after-archive](improvements/fix-proposal-approved-missing-after-archive.md) | P1 | 2026-08-09 |
