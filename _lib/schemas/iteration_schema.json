@@ -26,8 +26,8 @@
       "description": "One entry per OpenSpec change ever observed in the current iteration. Archived changes are kept (not deleted) for history.",
       "items": {
         "type": "object",
-        "required": ["name", "status", "added_at"],
-        "additionalProperties": false,
+        "required": ["name", "status"],
+        "additionalProperties": true,
         "properties": {
           "name": {
             "type": "string",
@@ -47,8 +47,20 @@
           },
           "status": {
             "type": "string",
-            "enum": ["planned", "proposed", "in_worktree", "review", "completed", "archived"],
-            "description": "Lifecycle status. Updated by propose/guide-ship/execute/archive hooks. 'planned' = skeleton change (only .openspec.yaml + roadmap-meta.yaml + minimal proposal.md), not yet eligible for guide-ship."
+            "enum": ["planned", "proposed", "in_worktree", "review", "completed", "archived", "archived_partial"],
+            "description": "Lifecycle status. Updated by propose/guide-ship/execute/archive hooks. 'planned' = skeleton change (only .openspec.yaml + roadmap-meta.yaml + minimal proposal.md), not yet eligible for guide-ship. 'archived_partial' = shipped in parts across multiple commits (Phase B 5-step split)."
+          },
+          "archive_path": {
+            "type": ["string", "null"],
+            "description": "Path to OpenSpec archived change directory (e.g. 'openspec/changes/archive/2026-08-09-x/'). Set when change is archived; supersedes worktree_path for post-archive references."
+          },
+          "plan_present": {
+            "type": "boolean",
+            "description": "Whether .rddf/plans/<name>.md exists at archive time. False indicates plan was never generated or was deleted."
+          },
+          "note": {
+            "type": ["string", "null"],
+            "description": "Free-form annotation explaining a partial/exceptional archive state."
           },
           "added_at": {
             "type": "string",

@@ -18,7 +18,7 @@ from doctor_render import Finding, Severity
 _FILES = ["proposal-suggestions.md", "proposal-approved.md"]
 _EXPECTED_COLUMNS = {
     "proposal-suggestions.md": 5,
-    "proposal-approved.md": 3,
+    "proposal-approved.md": 4,
 }
 _ROW_PATTERN = re.compile(r"^\|\s*\[([^\]]+)\]\(([^)]+)\)\s*\|")
 
