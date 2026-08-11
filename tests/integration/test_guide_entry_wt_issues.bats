@@ -29,11 +29,11 @@ run_guide_entry() {
   [ "$output" = "$expected" ]
 }
 
-@test "guide_entry --json: untracked improvements file is info-only" {
+@test "guide_entry --json: untracked .rddf/improvements file is info-only" {
   local repo="$BATS_TEST_TMPDIR/guide-entry-untracked"
   init_repo "$repo"
-  mkdir -p "$repo/improvements"
-  printf 'new\n' > "$repo/improvements/foo.md"
+  mkdir -p "$repo/.rddf/improvements"
+  printf 'new\n' > "$repo/.rddf/improvements/foo.md"
 
   run_guide_entry "$repo"
 

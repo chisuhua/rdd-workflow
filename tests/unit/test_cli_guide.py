@@ -135,11 +135,11 @@ def test_priority_7_no_changes_dir_recommends_guide_plan(git_repo, capsys):
 
 
 def test_priority_8_pending_proposal_recommends_guide_plan(git_repo, capsys):
-    """roadmap + changes dir + unapproved improvement in improvements/ → 'guide-plan'."""
+    """roadmap + changes dir + unapproved improvement in .rddf/improvements/ → 'guide-plan'."""
     (git_repo / "roadmap.md").write_text("# Roadmap\n")
-    # Create improvements/ directory with an unapproved proposal
-    (git_repo / "improvements").mkdir()
-    (git_repo / "improvements" / "test-prop.md").write_text(
+    # Create .rddf/improvements/ directory with an unapproved proposal
+    (git_repo / ".rddf/improvements").mkdir(parents=True)
+    (git_repo / ".rddf/improvements" / "test-prop.md").write_text(
         "# test-prop\n\n**优先级**: P0 | **来源**: test\n"
     )
     # proposal-approved.md is empty (no approved proposals)
@@ -154,16 +154,16 @@ def test_priority_8_pending_proposal_recommends_guide_plan(git_repo, capsys):
 
 
 def test_priority_9_no_pending_proposal_recommends_guide_ship(git_repo, capsys):
-    """All prior checks pass and all improvements are approved → default 'guide-ship'."""
+    """All prior checks pass and all .rddf/improvements are approved → default 'guide-ship'."""
     (git_repo / "roadmap.md").write_text("# Roadmap\n")
-    # Create improvements/ with an already-approved proposal
-    (git_repo / "improvements").mkdir()
-    (git_repo / "improvements" / "test-prop.md").write_text(
+    # Create .rddf/improvements/ with an already-approved proposal
+    (git_repo / ".rddf/improvements").mkdir(parents=True)
+    (git_repo / ".rddf/improvements" / "test-prop.md").write_text(
         "# test-prop\n\n**优先级**: P0 | **来源**: test\n"
     )
     # proposal-approved.md contains the proposal (already approved)
     (git_repo / "proposal-approved.md").write_text(
-        "# 已批准提案\n\n| 提案 | 优先级 | 批准时间 | 批准者 |\n|------|--------|----------|--------|\n| [test-prop](improvements/test-prop.md) | P0 | 2026-07-24 | test |\n"
+        "# 已批准提案\n\n| 提案 | 优先级 | 批准时间 | 批准者 |\n|------|--------|----------|--------|\n| [test-prop](.rddf/improvements/test-prop.md) | P0 | 2026-07-24 | test |\n"
     )
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()

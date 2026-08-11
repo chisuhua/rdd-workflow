@@ -44,7 +44,7 @@ Each phase:
 **Inputs**: `proposal-suggestions.md`, `proposal-approved.md`, current `roadmap-meta.yaml` files for context.
 
 **Outputs**:
-- New `improvements/<name>.md` files.
+- New `.rddf/improvements/<name>.md` files.
 - Updated `proposal-suggestions.md` / `proposal-approved.md`.
 - `.rddf/state/.design-handoff.json`.
 

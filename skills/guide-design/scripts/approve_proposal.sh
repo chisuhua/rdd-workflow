@@ -4,7 +4,7 @@
 # Appends an approved proposal to proposal-approved.md (existing behavior).
 # Then, when SKIP_DESIGN_HANDOFF is not set, creates the openspec change:
 #   - openspec/changes/<name>/ with .openspec.yaml + full proposal.md
-#   - roadmap-meta.yaml containing change_type (parsed from improvements head)
+#   - roadmap-meta.yaml containing change_type (parsed from .rddf/improvements head)
 #   - iteration.json planned entry
 #
 # Idempotency: if openspec/changes/<name>/ already exists, the create flow
@@ -52,7 +52,7 @@ check_archived() {
 }
 
 # Check if improvement file exists
-IMP_FILE="$PROJECT_ROOT/improvements/$NAME.md"
+IMP_FILE="$PROJECT_ROOT/.rddf/improvements/$NAME.md"
 if [ ! -f "$IMP_FILE" ]; then
   echo "❌ improvement file not found: $IMP_FILE" >&2
   exit 1
@@ -64,7 +64,7 @@ if check_archived "$NAME" "$PROJECT_ROOT"; then
   exit 0
 fi
 
-# Per wire-design-content-review-gate: invoke improvements-layer content
+# Per wire-design-content-review-gate: invoke .rddf/improvements-layer content
 # review via the shared helper BEFORE any approve-side-effect. The helper
 # honors STRICT_DESIGN_GATE / SKIP_CONTENT_REVIEW and propagates the
 # review's exit code (0 pass/warn, 1 blocking). In default mode warnings

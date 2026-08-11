@@ -20,7 +20,7 @@
 # Exit codes:
 #   0 — always (idempotent / non-blocking)
 #
-# Root causes this hook fixes (see improvements/post-archive-cleanup-hook.md):
+# Root causes this hook fixes (see .rddf/improvements/post-archive-cleanup-hook.md):
 #   1. ship_archive.sh:256 cleanup_plan_file() uses rm -f instead of git rm
 #   2. _lib/archive.sh:515 commit_archive_moves() only stages 3 paths, misses .rddf/
 #   3. _lib/state.sh:452 check_dirty_key_files() is a sentinel that only warns

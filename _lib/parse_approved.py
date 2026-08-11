@@ -4,7 +4,7 @@ Reads BOTH the `## 已批准提案` and `## 已实施` sections and returns
 approved proposal names, deduplicated, in file-appearance order.
 
 Design choice: full-file regex matching of the row pattern
-`| [name](improvements/<file>.md) | ... |`. The `已批准提案` section holds
+`| [name](.rddf/improvements/<file>.md) | ... |`. The `已批准提案` section holds
 approved-but-not-implemented entries; `已实施` holds approved-and-implemented
 entries. Historical proposals were archived directly after approval, so
 `已批准提案` is often empty in practice — parsers that only read the region
@@ -28,10 +28,10 @@ import re
 import sys
 from pathlib import Path
 
-# Match a markdown table row like `| [name](improvements/<file>.md) | ...`.
+# Match a markdown table row like `| [name](.rddf/improvements/<file>.md) | ...`.
 # Only used inside proposal-approved.md (and similar tables), so the
-# `improvements/` anchor is enough to avoid false positives in body prose.
-_ROW_RE = re.compile(r"\|\s*\[([^\]]+)\]\(\s*improvements/[^)]+\)")
+# <a href=".rddf/improvements/` anchor is enough to avoid false positives in body prose.
+_ROW_RE = re.compile(r"\|\s*\[([^\]]+)\]\(\s*.rddf/improvements/[^)]+\)")
 
 
 def parse_approved_proposals(path: str) -> list[str]:

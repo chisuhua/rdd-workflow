@@ -47,25 +47,25 @@ EOF
 }
 
 @test "design-done-gate: all approved → exit 0 (regression for column index bug)" {
-    _write_suggestions "| [a](improvements/a.md) | P1 | src | 2026-08-01T00:00:00Z | 已批准 |
-| [b](improvements/b.md) | P0 | src | 2026-08-02T00:00:00Z | 已批准 |"
+    _write_suggestions "| [a](.rddf/improvements/a.md) | P1 | src | 2026-08-01T00:00:00Z | 已批准 |
+| [b](.rddf/improvements/b.md) | P0 | src | 2026-08-02T00:00:00Z | 已批准 |"
     run check_design_done_gate
     [ "$status" -eq 0 ]
     [[ "$output" == *"✅"* ]]
 }
 
 @test "design-done-gate: pending mixed with approved → exit 1, list pending rows" {
-    _write_suggestions "| [a](improvements/a.md) | P1 | src | 2026-08-01T00:00:00Z | 已批准 |
-| [b](improvements/b.md) | P0 | src | 2026-08-02T00:00:00Z | pending |
-| [c](improvements/c.md) | P1 | src | 2026-08-03T00:00:00Z | 已批准 |"
+    _write_suggestions "| [a](.rddf/improvements/a.md) | P1 | src | 2026-08-01T00:00:00Z | 已批准 |
+| [b](.rddf/improvements/b.md) | P0 | src | 2026-08-02T00:00:00Z | pending |
+| [c](.rddf/improvements/c.md) | P1 | src | 2026-08-03T00:00:00Z | 已批准 |"
     run check_design_done_gate
     [ "$status" -eq 1 ]
     [[ "$output" == *"pending"* ]]
 }
 
 @test "design-done-gate: rejected and deferred also count as decided" {
-    _write_suggestions "| [a](improvements/a.md) | P1 | src | 2026-08-01T00:00:00Z | 已拒绝 |
-| [b](improvements/b.md) | P0 | src | 2026-08-02T00:00:00Z | 延迟 |"
+    _write_suggestions "| [a](.rddf/improvements/a.md) | P1 | src | 2026-08-01T00:00:00Z | 已拒绝 |
+| [b](.rddf/improvements/b.md) | P0 | src | 2026-08-02T00:00:00Z | 延迟 |"
     run check_design_done_gate
     [ "$status" -eq 0 ]
     [[ "$output" == *"✅"* ]]
@@ -76,7 +76,7 @@ EOF
 @test "design-done-gate: COLUMN INDEX — added_at='pending' must NOT cause gate to fail (status='已批准')" {
     # The bug: buggy version read added_at as status, so this row would
     # be treated as pending. After fix, status column is honored.
-    _write_suggestions "| [a](improvements/a.md) | P1 | src | pending | 已批准 |"
+    _write_suggestions "| [a](.rddf/improvements/a.md) | P1 | src | pending | 已批准 |"
     run check_design_done_gate
     [ "$status" -eq 0 ]
     [[ "$output" == *"✅"* ]]
@@ -85,7 +85,7 @@ EOF
 @test "design-done-gate: COLUMN INDEX — added_at='已批准' must NOT mask real pending status" {
     # Inverse: buggy version would read added_at='已批准' as status and
     # incorrectly accept this row. After fix, status='pending' is detected.
-    _write_suggestions "| [a](improvements/a.md) | P1 | src | 已批准 | pending |"
+    _write_suggestions "| [a](.rddf/improvements/a.md) | P1 | src | 已批准 | pending |"
     run check_design_done_gate
     [ "$status" -eq 1 ]
     [[ "$output" == *"pending"* ]]
@@ -112,13 +112,13 @@ EOF
 }
 
 @test "design-done-gate: realistic 7-row batch (matches this session's approval) → exit 0" {
-    _write_suggestions "| [fix-rddf-status-corrupt-message](improvements/fix-rddf-status-corrupt-message.md) | P1 | src | 2026-08-05T15:59:41Z | 已批准 |
-| [fix-archive-iteration-sync](improvements/fix-archive-iteration-sync.md) | P0 | src | 2026-08-05T16:05:00Z | 已批准 |
-| [fix-archive-on-main-flow](improvements/fix-archive-on-main-flow.md) | P0 | src | 2026-08-05T16:05:00Z | 已批准 |
-| [add-archive-post-commit-hook-and-force-flag](improvements/add-archive-post-commit-hook-and-force-flag.md) | P0 | src | 2026-08-05T16:36:37Z | 已批准 |
-| [rddf-iteration-strict-schema](improvements/rddf-iteration-strict-schema.md) | P1 | src | 2026-08-05T16:05:00Z | 已批准 |
-| [fix-tasks-md-archive-residue](improvements/fix-tasks-md-archive-residue.md) | P1 | src | 2026-08-05T16:05:00Z | 已批准 |
-| [collect-l2-violation-count-on-archive](improvements/collect-l2-violation-count-on-archive.md) | P2 | src | 2026-08-05T16:05:00Z | 已批准 |"
+    _write_suggestions "| [fix-rddf-status-corrupt-message](.rddf/improvements/fix-rddf-status-corrupt-message.md) | P1 | src | 2026-08-05T15:59:41Z | 已批准 |
+| [fix-archive-iteration-sync](.rddf/improvements/fix-archive-iteration-sync.md) | P0 | src | 2026-08-05T16:05:00Z | 已批准 |
+| [fix-archive-on-main-flow](.rddf/improvements/fix-archive-on-main-flow.md) | P0 | src | 2026-08-05T16:05:00Z | 已批准 |
+| [add-archive-post-commit-hook-and-force-flag](.rddf/improvements/add-archive-post-commit-hook-and-force-flag.md) | P0 | src | 2026-08-05T16:36:37Z | 已批准 |
+| [rddf-iteration-strict-schema](.rddf/improvements/rddf-iteration-strict-schema.md) | P1 | src | 2026-08-05T16:05:00Z | 已批准 |
+| [fix-tasks-md-archive-residue](.rddf/improvements/fix-tasks-md-archive-residue.md) | P1 | src | 2026-08-05T16:05:00Z | 已批准 |
+| [collect-l2-violation-count-on-archive](.rddf/improvements/collect-l2-violation-count-on-archive.md) | P2 | src | 2026-08-05T16:05:00Z | 已批准 |"
     run check_design_done_gate
     [ "$status" -eq 0 ]
     [[ "$output" == *"✅"* ]]

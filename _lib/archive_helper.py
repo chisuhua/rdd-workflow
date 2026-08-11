@@ -8,8 +8,8 @@ ChangeType = Literal["test-only", "doc-only", "refactor-only", "feature", "debt"
 
 
 def get_change_type(project_root: str, change_name: str) -> ChangeType:
-    """Get change type from improvements/<name>.md or infer from proposal.md."""
-    improvement_path = Path(project_root) / "improvements" / f"{change_name}.md"
+    """Get change type from .rddf/improvements/<name>.md or infer from proposal.md."""
+    improvement_path = Path(project_root) / ".rddf/improvements" / f"{change_name}.md"
     
     # Try to read from improvement file
     if improvement_path.exists():

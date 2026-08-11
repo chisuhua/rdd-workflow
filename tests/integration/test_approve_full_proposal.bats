@@ -8,12 +8,12 @@ setup() {
     WORK_DIR="$(mktemp -d)"
     mkdir -p "$WORK_DIR/.rddf/state"
     mkdir -p "$WORK_DIR/openspec/changes"
-    mkdir -p "$WORK_DIR/improvements"
+    mkdir -p "$WORK_DIR/.rddf/improvements"
     mkdir -p "$WORK_DIR/skills/guide-design/scripts"
     mkdir -p "$WORK_DIR/skills/_lib"
 
     # Create a realistic improvement file with all 5 sections
-    cat > "$WORK_DIR/improvements/demo.md" <<EOF
+    cat > "$WORK_DIR/.rddf/improvements/demo.md" <<EOF
 # demo
 
 **优先级**: P1 | **来源**: bats

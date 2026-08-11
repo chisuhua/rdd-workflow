@@ -32,7 +32,7 @@ author: sisyphus
 | `rdd-doctor` | 手动触发的只读诊断工具（5 类结构化文件 schema/格式校验，输出分级报告） |
 | `add-improve` | 交互式创建 rdd-workflow 改进提案（注册到 proposal-suggestions.md） |
 | `openspec-gate` | Stage 守卫（未关联 active change 时阻止 commit） |
-| `rdd-workflow-brainstorm` | 提案头脑风暴（5 段格式输出至 improvements/） |
+| `rdd-workflow-brainstorm` | 提案头脑风暴（5 段格式输出至 .rddf/improvements/） |
 | `INSTALL` | 当前技能（顶层安装入口，被全局/项目安装流程使用） |
 | `guide-design` | Design 阶段状态机（v2.1 新增；提案审查 + 内容审查） |
 

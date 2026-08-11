@@ -7,14 +7,14 @@ load ../test_helper
 setup() {
   TEST_TMPDIR="$(mktemp -d)"
   export PROJECT_ROOT="$TEST_TMPDIR/fake-repo"
-  mkdir -p "$PROJECT_ROOT"/{skills/_lib,openspec/changes,openspec/specs,.rddf/state,improvements}
+  mkdir -p "$PROJECT_ROOT"/{skills/_lib,openspec/changes,openspec/specs,.rddf/state,.rddf/improvements}
   cd "$PROJECT_ROOT"
   git init -q -b master
   git config user.email "test@example.com"
   git config user.name "Test"
   git commit --allow-empty -m "init" -q
   # Seed proposal-approved.md with one existing entry
-  printf '| [existing-entry](improvements/existing-entry.md) | P1 | 2026-01-01 |\n' > proposal-approved.md
+  printf '| [existing-entry](.rddf/improvements/existing-entry.md) | P1 | 2026-01-01 |\n' > proposal-approved.md
   git add proposal-approved.md
   git commit -q -m "add proposal-approved.md"
   # Source the helpers
@@ -24,7 +24,7 @@ setup() {
 teardown() { rm -rf "$TEST_TMPDIR"; }
 
 @test "approve_proposal: git add proposal-approved.md succeeds on normal write" {
-  echo "# test change" > improvements/test-change.md
+  echo "# test change" > .rddf/improvements/test-change.md
   bash "$BATS_TEST_DIRNAME/../../skills/guide-design/scripts/approve_proposal.sh" "test-change" "P1" "$PROJECT_ROOT" </dev/null
   # The change dir should exist
   [ -f "openspec/changes/test-change/.openspec.yaml" ]
@@ -40,7 +40,7 @@ teardown() { rm -rf "$TEST_TMPDIR"; }
   git add openspec/changes/archive/2026-08-08-foo
   git commit -q -m "archive foo"
   # baseline proposal-approved.md with no foo entry
-  printf '| [other](improvements/other.md) | P1 | 2026-01-01 |\n' > proposal-approved.md
+  printf '| [other](.rddf/improvements/other.md) | P1 | 2026-01-01 |\n' > proposal-approved.md
   git add proposal-approved.md
   git commit -q -m "init proposal-approved"
   mark_approved_completed "$PROJECT_ROOT" "foo"
@@ -58,7 +58,7 @@ teardown() { rm -rf "$TEST_TMPDIR"; }
 }
 
 @test "mark_approved_completed: main entry present skips archive fallback" {
-  printf '| [already-main](improvements/already-main.md) | P1 | 2026-01-01 |\n' > proposal-approved.md
+  printf '| [already-main](.rddf/improvements/already-main.md) | P1 | 2026-01-01 |\n' > proposal-approved.md
   git add proposal-approved.md
   git commit -q -m "add main entry"
   mark_approved_completed "$PROJECT_ROOT" "already-main"

@@ -691,7 +691,7 @@ handle_invalid_choice "$choice"
 
 ## Execution Mode (v2.0.8+ 默认串行)
 
-Per improvements/guide-ship-default-serial-execution.md:
+Per .rddf/improvements/guide-ship-default-serial-execution.md:
 
 **默认行为**: Wave 内独立 changes **串行**执行 (concurrency=1)。这是从上轮 5 changes ship 时子代理配额耗尽经验中学到的 — 串行 + 多数 subagent 调度是不可预测的,默认应该更保守。
 

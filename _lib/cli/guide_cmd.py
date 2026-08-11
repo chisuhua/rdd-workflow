@@ -213,8 +213,8 @@ def _scan_state(project_root: str) -> Tuple[str, str]:
         return ("guide-plan", "无 change → 进入变更生成")
 
     # 9-10. proposal-suggestions.md (current format: Markdown table)
-    # Check if there are unapproved proposals in improvements/
-    improvements_dir = Path(project_root) / "improvements"
+    # Check if there are unapproved proposals in .rddf/improvements/
+    improvements_dir = Path(project_root) / ".rddf/improvements"
     approved_path = Path(project_root) / "proposal-approved.md"
     
     pending = False
@@ -224,17 +224,17 @@ def _scan_state(project_root: str) -> Tuple[str, str]:
         for f in improvements_dir.glob("*.md"):
             all_improvements.add(f.stem)
         
-        # Get approved improvements from proposal-approved.md
+        # Get approved .rddf/improvements from proposal-approved.md
         approved = set()
         if approved_path.is_file():
             try:
                 content = approved_path.read_text()
                 # Parse Markdown table: | [name](...) | ... |
-                approved = set(re.findall(r"\|\s*\[([^\]]+)\]\(improvements/", content))
+                approved = set(re.findall(r"\|\s*\[([^\]]+)\]\(.rddf/improvements/", content))
             except OSError:
                 pass
         
-        # If there are unapproved improvements, recommend guide-design
+        # If there are unapproved .rddf/improvements, recommend guide-design
         if all_improvements - approved:
             pending = True
 

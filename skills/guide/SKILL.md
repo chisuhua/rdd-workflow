@@ -170,7 +170,7 @@ ALL_OPTIONS_JSON 结构:
 
    | 用户意图 | 触发关键词 | 路由目标 | 禁止行为 |
    |---------|-----------|---------|---------|
-   | 创建改进提案 | "创建改进提案"、"improvement"、"add-improve"、"添加改进"、"提出改进" | `skill_use("add-improve")` | **禁止手动创建 improvements/ 文件** — 必须通过 add-improve 交互式流程 |
+   | 创建改进提案 | "创建改进提案"、"improvement"、"add-improve"、"添加改进"、"提出改进" | `skill_use("add-improve")` | **禁止手动创建 .rddf/improvements/ 文件** — 必须通过 add-improve 交互式流程 |
    | 创建新 change | "创建提案"、"新建 change"、"propose"、"提一个 change"、"新增提案" | `skill_use("propose")` | **禁止手动创建文件**（mkdir + write proposal.md/tasks.md 等） |
    | 执行 change | "执行"、"开始做"、"ship"、"实施" + change 名称 | `skill_use("guide-ship")` | **禁止直接操作 worktree 或执行 plan** |
    | 设计审查 | "设计"、"design"、"提案"、"改进提案"、"改进" | `skill_use("guide-design")` | 禁止手动修改 proposal 文件 |

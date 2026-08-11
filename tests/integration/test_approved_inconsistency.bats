@@ -39,7 +39,7 @@ teardown() {
 # Pool
 | 提案 | 优先级 | 来源 | 添加时间 |
 |------|--------|------|----------|
-| [orphan](improvements/orphan.md) | P1 | test | completed |
+| [orphan](.rddf/improvements/orphan.md) | P1 | test | completed |
 EOF
 
     source "$REPO_ROOT/_lib/state.sh"
@@ -54,14 +54,14 @@ EOF
 # Pool
 | 提案 | 优先级 | 来源 | 添加时间 |
 |------|--------|------|----------|
-| [covered](improvements/covered.md) | P1 | test | completed |
+| [covered](.rddf/improvements/covered.md) | P1 | test | completed |
 EOF
     cat > proposal-approved.md << 'EOF'
 # Approved
 ## 已批准提案
 | 提案 | 优先级 |
 |------|--------|
-| [covered](improvements/covered.md) | P1 |
+| [covered](.rddf/improvements/covered.md) | P1 |
 EOF
 
     source "$REPO_ROOT/_lib/state.sh"
@@ -82,7 +82,7 @@ EOF
 # Pool
 | 提案 | 优先级 | 来源 | 添加时间 |
 |------|--------|------|----------|
-| [pending](improvements/pending.md) | P1 | test | 2026-07-29 |
+| [pending](.rddf/improvements/pending.md) | P1 | test | 2026-07-29 |
 EOF
 
     source "$REPO_ROOT/_lib/state.sh"

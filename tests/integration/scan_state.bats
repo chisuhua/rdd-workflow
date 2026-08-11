@@ -117,17 +117,17 @@ _run_scan() {
   echo "$out" | grep -q "RECOMMEND=guide-plan"
 }
 
-@test "scan_state: roadmap + changes dir + no pending proposals → guide-ship (default)" {
+@test "scan_state: roadmap + changes dir + no pending proposals → filter-guide-ship kicks in" {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo "# Roadmap" > roadmap.md
   mkdir -p openspec/changes && touch openspec/changes/.keep
   git add . && git commit -q -m init
-  # proposal-approved.md / improvements/ absent → HAS_APPROVED=no, HAS_PENDING=no
-  # → guide-ship default
+  # proposal-approved.md / .rddf/improvements/ absent → HAS_APPROVED=no, HAS_PENDING=no
+  # filter-guide-ship: 0 active changes → guide-plan (not guide-ship)
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
-  echo "$out" | grep -q "RECOMMEND=guide-ship"
-  echo "$out" | grep -q "无待讨论提案"
+  echo "$out" | grep -q "RECOMMEND=guide-plan"
+  echo "$out" | grep -q "无活跃 change"
 }
 
 @test "scan_state: proposal-approved.md with entry → guide-plan (branch 10)" {
@@ -136,8 +136,8 @@ _run_scan() {
   echo "# Roadmap" > roadmap.md
   mkdir -p openspec/changes && touch openspec/changes/.keep
   # dual-index model: approved entry in proposal-approved.md → guide-plan
-  mkdir -p improvements && echo "# x" > improvements/x.md
-  printf '| [x](improvements/x.md) | P0 | 2026-07-24 | t |\n' > proposal-approved.md
+  mkdir -p .rddf/improvements && echo "# x" > .rddf/improvements/x.md
+  printf '| [x](.rddf/improvements/x.md) | P0 | 2026-07-24 | t |\n' > proposal-approved.md
   git add . && git commit -q -m init
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=guide-plan"
@@ -154,8 +154,8 @@ _run_scan() {
   (cd "$r" && git init -q -b master && git config user.email t@t && git config user.name t
    echo "# Roadmap" > roadmap.md
    mkdir -p openspec/changes && touch openspec/changes/.keep
-   mkdir -p improvements && echo "# x" > improvements/x.md
-   printf '| [x](improvements/x.md) | P0 | 2026-07-24 | t |\n' > proposal-approved.md
+   mkdir -p .rddf/improvements && echo "# x" > .rddf/improvements/x.md
+   printf '| [x](.rddf/improvements/x.md) | P0 | 2026-07-24 | t |\n' > proposal-approved.md
    git add . && git commit -q -m init)
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=guide-plan"

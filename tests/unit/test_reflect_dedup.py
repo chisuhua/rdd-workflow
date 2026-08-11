@@ -14,7 +14,7 @@ class TestDedupMatcher:
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):
         self.tmpdir = str(tmp_path)
-        self.improvements_dir = os.path.join(self.tmpdir, "improvements")
+        self.improvements_dir = os.path.join(self.tmpdir, ".rddf/improvements")
         os.makedirs(self.improvements_dir, exist_ok=True)
         self.suggestions_file = os.path.join(self.tmpdir, "proposal-suggestions.md")
         self.approved_file = os.path.join(self.tmpdir, "proposal-approved.md")
@@ -39,7 +39,7 @@ class TestDedupMatcher:
                  "| 提案 | 优先级 | 批准时间 | 批准人 |",
                  "|------|--------|----------|--------|"]
         for row in table_rows:
-            lines.append(f"| [{row['name']}](improvements/{row['name']}.md) | {row.get('priority','P1')} | {row.get('date','2026-01-01')} | {row.get('approver','guide-arch')} |")
+            lines.append(f"| [{row['name']}](.rddf/improvements/{row['name']}.md) | {row.get('priority','P1')} | {row.get('date','2026-01-01')} | {row.get('approver','guide-arch')} |")
         with open(self.approved_file, 'w') as f:
             f.write("\n".join(lines))
 
@@ -52,7 +52,7 @@ class TestDedupMatcher:
             "# propose-quality-autohook\n\nquality gate failure detection")
         result = self.matcher.check_all("plan:plan-done:quality-gate-fail")
         assert result is not None
-        assert result["source"] == "improvements"
+        assert result["source"] == ".rddf/improvements"
         assert "quality" in result["matched_name"]
 
     def test_match_in_suggestions(self):
@@ -76,11 +76,11 @@ class TestDedupMatcher:
         self._create_improvement("test-qa", "quality assurance")
         self._create_suggestions_json([
             {"name": "test-qa-v2", "priority": "P1", "source": "Oracle",
-             "description": "QA improvements"}
+             "description": "QA .rddf/improvements"}
         ])
         result = self.matcher.check_all("plan:plan-done:qa-fail")
         assert result is not None
-        assert result["source"] in ("improvements", "suggestions")
+        assert result["source"] in (".rddf/improvements", "suggestions")
 
     def test_signature_with_keywords_in_proposal_text(self):
         self._create_improvement("archive-cleanup",
@@ -89,7 +89,7 @@ class TestDedupMatcher:
         assert result is not None
 
     def test_empty_inputs_all_succeed_gracefully(self):
-        # No improvements dir, no files
+        # No .rddf/improvements dir, no files
         matcher_empty = DedupMatcher(
             improvements_dir=os.path.join(self.tmpdir, "nonexistent"),
             suggestions_file=os.path.join(self.tmpdir, "nonexistent.md"),

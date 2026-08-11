@@ -1,7 +1,7 @@
-"""Tests for design_content_review.py — improvements-layer check (D4).
+"""Tests for design_content_review.py — .rddf/improvements-layer check (D4).
 
 D4: design phase runs two-layer content review:
-  1. improvements layer (this module): 5 sections, ADR refs, acceptance checkboxes,
+  1. .rddf/improvements layer (this module): 5 sections, ADR refs, acceptance checkboxes,
      head fields (阶段 / 分类 / 类型).
   2. openspec proposal layer (uses run_design_checks from propose_quality_check).
 

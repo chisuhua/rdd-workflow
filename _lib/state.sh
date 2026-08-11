@@ -68,11 +68,11 @@ except Exception:
 }
 
 # count_pending_suggestions [project_root]
-# Counts proposals in improvements/ that are NOT in proposal-approved.md.
+# Counts proposals in .rddf/improvements/ that are NOT in proposal-approved.md.
 # Returns 0 if no pending proposals or files are missing.
 count_pending_suggestions() {
   local project_root="${1:-.}"
-  local imp_dir="$project_root/improvements"
+  local imp_dir="$project_root/.rddf/improvements"
   local approved_file="$project_root/proposal-approved.md"
   
   if [ ! -d "$imp_dir" ]; then
@@ -94,7 +94,7 @@ try:
     approved = set()
     if os.path.isfile(approved_file):
         with open(approved_file) as f:
-            approved = set(re.findall(r'\|\s*\[([^\]]+)\]\(improvements/', f.read()))
+            approved = set(re.findall(r'\|\s*\[([^\]]+)\]\(.rddf/improvements/', f.read()))
     
     print(len(all_improvements - approved))
 except Exception:
@@ -103,13 +103,13 @@ except Exception:
 }
 
 # list_improvements <project_root>
-# Lists improvement files in improvements/ directory.
+# Lists improvement files in .rddf/improvements/ directory.
 # Returns newline-separated "name|priority|source|status" entries.
 # The status field defaults to "待讨论" if the improvement file has no
 # **状态** metadata line (backward compatible with old files).
 list_improvements() {
   local project_root="${1:-.}"
-  local imp_dir="$project_root/improvements"
+  local imp_dir="$project_root/.rddf/improvements"
   if [ ! -d "$imp_dir" ]; then
     echo ""
     return
@@ -172,7 +172,7 @@ append_approved() {
   fi
   
   # Insert before the ## 已实施 section
-  local new_row="| [$name](improvements/$name.md) | $priority | $timestamp | guide-arch |"
+  local new_row="| [$name](.rddf/improvements/$name.md) | $priority | $timestamp | guide-arch |"
   
   if grep -q '## 已实施' "$approved_file"; then
     # Insert before ## 已实施
@@ -252,7 +252,7 @@ if approved_idx is None:
             # Recovery path: entry was lost in plan-phase commit but archive exists
             # Default priority to P1 since we don't know the original priority
             priority = 'P1'
-            completed_row = f'| [{name}](improvements/{name}.md) | {priority} | {ts} |\n'
+            completed_row = f'| [{name}](.rddf/improvements/{name}.md) | {priority} | {ts} |\n'
             # Insert into completed table after header
             inserted = False
             for i, line in enumerate(lines):
@@ -287,7 +287,7 @@ if approved_idx is not None:
     del lines[approved_idx]
 
 # Insert into completed table after header
-completed_row = f'| [{name}](improvements/{name}.md) | {priority} | {ts} |\n'
+completed_row = f'| [{name}](.rddf/improvements/{name}.md) | {priority} | {ts} |\n'
 inserted = False
 for i, line in enumerate(lines):
     if line.startswith('## 已实施'):
@@ -352,7 +352,7 @@ with open(suggestions_file) as f:
 new_lines = []
 removed = False
 for line in lines:
-    if re.search(r"\[" + re.escape(name) + r"\]\(improvements/", line):
+    if re.search(r"\[" + re.escape(name) + r"\]\(.rddf/improvements/", line):
         if remove_row:
             removed = True
             continue  # skip this line entirely
@@ -400,7 +400,7 @@ sweep_implemented_proposals() {
   local moved=0
 
   # Parse pending proposals from proposal-approved.md (before ## 已实施)
-  # Extract [name](improvements/name.md) entries, check archive dir
+  # Extract [name](.rddf/improvements/name.md) entries, check archive dir
   while IFS='|' read -r name rest; do
     [ -z "$name" ] && continue
     # Trim whitespace
@@ -417,7 +417,7 @@ with open(sys.argv[1]) as f:
     content = f.read()
 # Only scan entries before ## 已实施
 section = re.split(r'## 已实施', content)[0]
-for m in re.finditer(r'\|\s*\[([^\]]+)\]\(improvements/([^)]+)\)\s*\|', section):
+for m in re.finditer(r'\|\s*\[([^\]]+)\]\(.rddf/improvements/([^)]+)\)\s*\|', section):
     print(f\"{m.group(1)}|{m.group(2)}\")
 " "$approved_file" 2>/dev/null)
 
@@ -452,7 +452,7 @@ with open(approved_file) as f:
 
 # Collect all names in proposal-approved.md (both approved and completed sections)
 approved_names = set()
-for m in re.finditer(r"\[([^\]]+)\]\(improvements/([^)]+)\)", approved_content):
+for m in re.finditer(r"\[([^\]]+)\]\(.rddf/improvements/([^)]+)\)", approved_content):
     approved_names.add(m.group(1))
 
 if not approved_names:
@@ -465,7 +465,7 @@ new_lines = []
 removed = 0
 for line in lines:
     # Check if this line contains a suggestion that is now in approved
-    m = re.search(r"\[([^\]]+)\]\(improvements/", line)
+    m = re.search(r"\[([^\]]+)\]\(.rddf/improvements/", line)
     if m and m.group(1) in approved_names:
         removed += 1
         continue
@@ -528,7 +528,7 @@ try:
         suggestions = f.read()
 
     sug_entries = set()
-    for m in re.finditer(r"\|\s*\[([^\]]+)\]\(improvements/[^)]+\)\s*\|\s*\S+\s*\|\s*\S+\s*\|\s*(\S+)", suggestions):
+    for m in re.finditer(r"\|\s*\[([^\]]+)\]\(.rddf/improvements/[^)]+\)\s*\|\s*\S+\s*\|\s*\S+\s*\|\s*(\S+)", suggestions):
         name = m.group(1).strip()
         status = m.group(2).strip()
         if status in ("completed", "已完成"):
@@ -541,7 +541,7 @@ try:
     if os.path.isfile(approved_file):
         with open(approved_file) as f:
             content = f.read()
-        approved_names = set(re.findall(r"\|\s*\[([^\]]+)\]\(improvements/", content))
+        approved_names = set(re.findall(r"\|\s*\[([^\]]+)\]\(.rddf/improvements/", content))
 
     missing = sug_entries - approved_names
     if missing:

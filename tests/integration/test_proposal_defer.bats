@@ -2,15 +2,15 @@ load ../test_helper
 
 setup() {
     TEST_DIR=$(mktemp -d)
-    mkdir -p "$TEST_DIR/improvements"
-    cat > "$TEST_DIR/improvements/test-deferred.md" << 'EOF'
+    mkdir -p "$TEST_DIR/.rddf/improvements"
+    cat > "$TEST_DIR/.rddf/improvements/test-deferred.md" << 'EOF'
 # test-deferred
 **优先级**: P2 | **来源**: test
 **阶段**: default | **分类**: general
 **类型**: fix
 **状态**: 已推迟
 EOF
-    cat > "$TEST_DIR/improvements/test-pending.md" << 'EOF'
+    cat > "$TEST_DIR/.rddf/improvements/test-pending.md" << 'EOF'
 # test-pending
 **优先级**: P1 | **来源**: test
 **阶段**: default | **分类**: general
@@ -38,7 +38,7 @@ teardown() {
     grep -q '已推迟' "$REPO_ROOT/skills/guide-design/scripts/design_proposal_review.sh"
     # Behavioral: the skip logic must correctly skip deferred, show pending
     run bash -c "
-        IMPROVEMENTS_DIR=$TEST_DIR/improvements
+        IMPROVEMENTS_DIR=$TEST_DIR/.rddf/improvements
         DEFERRED_COUNT=0
         for f in \$IMPROVEMENTS_DIR/*.md; do
             [ -f \"\$f\" ] || continue
@@ -72,14 +72,14 @@ teardown() {
     grep -q '已推迟' "$REPO_ROOT/skills/guide-design/scripts/design_proposal_review.sh"
 
     # Behavioral: simulate the d-branch sed command on a real improvement file
-    mkdir -p "$TEST_DIR/improvements"
-    cat > "$TEST_DIR/improvements/test-to-defer.md" << 'INNER_EOF'
+    mkdir -p "$TEST_DIR/.rddf/improvements"
+    cat > "$TEST_DIR/.rddf/improvements/test-to-defer.md" << 'INNER_EOF'
 # test-to-defer
 **优先级**: P1 | **来源**: test
 **阶段**: default | **分类**: general
 **类型**: feature
 INNER_EOF
-    local imp_file="$TEST_DIR/improvements/test-to-defer.md"
+    local imp_file="$TEST_DIR/.rddf/improvements/test-to-defer.md"
 
     # Simulate the sed insert that the d handler does
     sed -i '/^\*\*类型\*\*:/a\**状态**: 已推迟' "$imp_file"

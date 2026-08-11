@@ -1,6 +1,6 @@
 """Tests for generate_full_proposal.py — D2 mapping.
 
-D2: 5 sections of improvements/<name>.md → canonical openspec proposal.md.
+D2: 5 sections of .rddf/improvements/<name>.md → canonical openspec proposal.md.
 """
 import os
 import sys
@@ -100,7 +100,7 @@ def test_generate_full_proposal_includes_acceptance_checkboxes():
 
 
 def test_generate_full_proposal_handles_missing_sections():
-    """Sections missing from improvements should produce empty mapped output, not crash."""
+    """Sections missing from .rddf/improvements should produce empty mapped output, not crash."""
     minimal = "# x\n\n**阶段**: design\n**分类**: workflow\n**类型**: feature\n"
     out = generate_full_proposal("x", minimal)
     assert "## Why" in out
@@ -117,7 +117,7 @@ def test_generate_full_proposal_change_name_in_title():
 # Content-correctness regression (2026-08-04): the Out of Scope / Capabilities
 # / Impact blocks were previously HARDCODED to move-proposal-creation-to-design
 # content, leaking irrelevant text into every generated proposal.md. These
-# tests lock the fix: all three blocks must be derived from the improvements
+# tests lock the fix: all three blocks must be derived from the .rddf/improvements
 # input, never from a fixed template.
 # ---------------------------------------------------------------------------
 
@@ -138,7 +138,7 @@ def test_no_hardcoded_legacy_proposal_content_leaks():
 
 
 def test_out_of_scope_derived_from_improvements_input():
-    """Out of Scope items must come from the improvements 范围/Out Scope block."""
+    """Out of Scope items must come from the .rddf/improvements 范围/Out Scope block."""
     out = generate_full_proposal("my-change", SAMPLE)
     assert "不改变 archive 逻辑" in out
     assert "不修改 ADR-0003 职责边界" in out
@@ -148,7 +148,7 @@ def test_out_of_scope_derived_from_improvements_input():
 
 
 def test_capabilities_impact_derived_from_constraints():
-    """Capabilities / Impact must reflect the improvements 技术约束 items,
+    """Capabilities / Impact must reflect the .rddf/improvements 技术约束 items,
     not a fixed template."""
     out = generate_full_proposal("my-change", SAMPLE)
     assert "env-var 传参 (Oracle C1)" in out

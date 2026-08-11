@@ -12,7 +12,7 @@ from skills.propose.scripts.propose_change import create_skeleton_change  # noqa
 
 
 def _make_improvement(path: Path, type_value: str) -> None:
-    """Write a minimal improvements/<name>.md with a 类型 head field."""
+    """Write a minimal .rddf/improvements/<name>.md with a 类型 head field."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         f"# demo\n\n"
@@ -27,7 +27,7 @@ def _make_improvement(path: Path, type_value: str) -> None:
 
 def test_create_skeleton_writes_change_type(tmp_path):
     """create_skeleton_change should write change_type into roadmap-meta.yaml."""
-    improvements_path = tmp_path / "improvements" / "demo.md"
+    improvements_path = tmp_path / ".rddf/improvements" / "demo.md"
     _make_improvement(improvements_path, "feature")
 
     openspec_dir = tmp_path / "openspec"
@@ -51,7 +51,7 @@ def test_create_skeleton_writes_change_type(tmp_path):
 
 def test_create_skeleton_defaults_change_type_when_missing(tmp_path):
     """When improvement has no **类型** field, change_type defaults to 'feature'."""
-    improvements_path = tmp_path / "improvements" / "demo.md"
+    improvements_path = tmp_path / ".rddf/improvements" / "demo.md"
     improvements_path.parent.mkdir(parents=True, exist_ok=True)
     improvements_path.write_text(
         "# demo\n\n"

@@ -1,6 +1,6 @@
-"""skills/guide-design/scripts/design_content_review.py — improvements-layer review (D4).
+"""skills/guide-design/scripts/design_content_review.py — .rddf/improvements-layer review (D4).
 
-D4: improvements-layer checks (5 sections, ADR refs, acceptance checkboxes,
+D4: .rddf/improvements-layer checks (5 sections, ADR refs, acceptance checkboxes,
 head fields, HOW-leakage heuristic warning). Returns list of error/warning
 strings (empty == pass). HOW-leakage findings are emitted with the
 "[HOW-LEAKAGE-WARN]" prefix so callers can distinguish advisory warnings
@@ -36,7 +36,7 @@ CHECKBOX_RE = re.compile(r"^- \[[ x]\] ", re.MULTILINE)
 
 
 def review_improvements(md: str) -> list[str]:
-    """Run all improvements-layer checks. Returns list of error/warning messages.
+    """Run all .rddf/improvements-layer checks. Returns list of error/warning messages.
 
     Empty list means pass. Each item is a human-readable string:
       - Structural errors (missing fields, missing sections, no ADR ref,
@@ -108,5 +108,5 @@ if __name__ == "__main__":
             print("WARNING (set STRICT_DESIGN_GATE=yes to block)", file=sys.stderr)
             sys.exit(0)
     else:
-        print("improvements content review: OK")
+        print(".rddf/improvements content review: OK")
         sys.exit(0)

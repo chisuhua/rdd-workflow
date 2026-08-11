@@ -2,7 +2,7 @@
 
 Background: `add-proposal-deps-and-features` defined `**特性**` as the design-time
 feature tag, but create_skeleton_change only honored the explicit parent_feature
-parameter — never read it from improvements/<name>.md. These tests lock the missing
+parameter — never read it from .rddf/improvements/<name>.md. These tests lock the missing
 fallback.
 """
 from __future__ import annotations
@@ -20,7 +20,7 @@ from skills.propose.scripts.propose_change import create_skeleton_change  # noqa
 
 
 def _write_improvement(path: Path, feature_value: str) -> None:
-    """Write a minimal improvements/<name>.md with a **特性** head field."""
+    """Write a minimal .rddf/improvements/<name>.md with a **特性** head field."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         "# demo\n\n"
@@ -34,15 +34,15 @@ def _write_improvement(path: Path, feature_value: str) -> None:
 
 
 def _setup_project(tmp_path: Path, feature_value: str) -> str:
-    """Create a project with openspec/ + improvements/ + an improvement file."""
-    improvements_path = tmp_path / "improvements" / "demo.md"
+    """Create a project with openspec/ + .rddf/improvements/ + an improvement file."""
+    improvements_path = tmp_path / ".rddf/improvements" / "demo.md"
     _write_improvement(improvements_path, feature_value)
     (tmp_path / "openspec").mkdir(exist_ok=True)
     return str(tmp_path)
 
 
 def test_create_skeleton_reads_特性_when_parent_feature_none(tmp_path):
-    """When parent_feature=None and **特性** is set in improvements, write it."""
+    """When parent_feature=None and **特性** is set in .rddf/improvements, write it."""
     project_root = _setup_project(tmp_path, "wave-core")
 
     result = create_skeleton_change(
@@ -108,7 +108,7 @@ def test_create_skeleton_empty_特性_writes_null_parent_feature(tmp_path):
 
 def test_create_skeleton_body_mention_does_not_pollute_head(tmp_path):
     """Body reference to **特性**: wave-core should NOT be picked up when head is empty."""
-    improvements_path = tmp_path / "improvements" / "demo.md"
+    improvements_path = tmp_path / ".rddf/improvements" / "demo.md"
     improvements_path.parent.mkdir(parents=True, exist_ok=True)
     improvements_path.write_text(
         "# demo\n\n"
@@ -117,7 +117,7 @@ def test_create_skeleton_body_mention_does_not_pollute_head(tmp_path):
         "**类型**: feature\n"
         "**依赖**: | **特性**:\n\n"
         "## 架构依据\n\n"
-        "When improvements contains `**特性**: wave-core` in body as example,\n"
+        "When .rddf/improvements contains `**特性**: wave-core` in body as example,\n"
         "the parser should NOT pick it up — only head **特性** matters.\n"
     )
     (tmp_path / "openspec").mkdir(exist_ok=True)

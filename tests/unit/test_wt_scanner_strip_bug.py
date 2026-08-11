@@ -69,11 +69,11 @@ def test_staged_modification_is_staged(tmp_path: Path) -> None:
 
 def test_path_is_not_truncated_for_working_tree_only(tmp_path: Path) -> None:
     _git_init(tmp_path)
-    tracked_file = _track_file(tmp_path, "improvements/proposal.md")
+    tracked_file = _track_file(tmp_path, ".rddf/improvements/proposal.md")
     tracked_file.write_text("changed\n")
 
     issues = _detect_working_tree_issues(str(tmp_path))
 
     assert len(issues) == 1
-    assert issues[0].path == "improvements/proposal.md"
-    assert issues[0].path[0] == "i"
+    assert issues[0].path == ".rddf/improvements/proposal.md"
+    assert issues[0].path[0] == "."

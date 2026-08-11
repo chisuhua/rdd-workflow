@@ -14,7 +14,7 @@ load ../test_helper
 
 @test "mark-approved-completed: idempotent call preserves original completion date" {
     TEST_DIR=$(mktemp -d)
-    mkdir -p "$TEST_DIR/improvements"
+    mkdir -p "$TEST_DIR/.rddf/improvements"
     cat > "$TEST_DIR/proposal-approved.md" <<'MD'
 # 已批准提案
 
@@ -25,9 +25,9 @@ load ../test_helper
 
 | Proposal | Priority | Completed |
 |----------|----------|-----------|
-| [fix-scan-state-bats](improvements/fix-scan-state-bats.md) | P2 | 2026-07-23 |
+| [fix-scan-state-bats](.rddf/improvements/fix-scan-state-bats.md) | P2 | 2026-07-23 |
 MD
-    echo "# x" > "$TEST_DIR/improvements/fix-scan-state-bats.md"
+    echo "# x" > "$TEST_DIR/.rddf/improvements/fix-scan-state-bats.md"
 
     # shellcheck source=/dev/null
     source "$REPO_ROOT/_lib/state.sh"
@@ -53,20 +53,20 @@ MD
 
 @test "mark-approved-completed: first-time archive uses today's date" {
     TEST_DIR=$(mktemp -d)
-    mkdir -p "$TEST_DIR/improvements"
+    mkdir -p "$TEST_DIR/.rddf/improvements"
     cat > "$TEST_DIR/proposal-approved.md" <<'MD'
 # 已批准提案
 
 | Proposal | Priority | Approved |
 |----------|----------|----------|
-| [new-change](improvements/new-change.md) | P1 | 2026-07-31 |
+| [new-change](.rddf/improvements/new-change.md) | P1 | 2026-07-31 |
 
 ## 已实施
 
 | Proposal | Priority | Completed |
 |----------|----------|-----------|
 MD
-    echo "# x" > "$TEST_DIR/improvements/new-change.md"
+    echo "# x" > "$TEST_DIR/.rddf/improvements/new-change.md"
 
     # shellcheck source=/dev/null
     source "$REPO_ROOT/_lib/state.sh"

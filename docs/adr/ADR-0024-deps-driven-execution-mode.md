@@ -14,7 +14,7 @@
 **架构依据**:
 - ADR-0003 §2.1: 三阶段架构（arch → plan → ship）
 - ADR-0019: change 与架构对齐检查
-- improvements/deps-driven-execution-mode.md: 完整问题分析和解决方案
+- .rddf/improvements/deps-driven-execution-mode.md: 完整问题分析和解决方案
 
 ## Decision
 
@@ -101,7 +101,7 @@ guide-ship → detect_execution_mode() 读取 handoff 决策
 
 ## References
 
-- `improvements/deps-driven-execution-mode.md` — 完整问题分析和解决方案
+- `.rddf/improvements/deps-driven-execution-mode.md` — 完整问题分析和解决方案
 - `skills/deps/scripts/deps_output.py` — 执行模式分析实现
 - `skills/guide-plan/scripts/plan_done_gate.py` — handoff 写入逻辑
 - `skills/guide-ship/scripts/ship_plan.sh` — handoff 读取逻辑

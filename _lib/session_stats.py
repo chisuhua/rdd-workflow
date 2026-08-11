@@ -1,6 +1,6 @@
 """Session stats tracking for developer experience observability.
 
-Per improvements/developer-experience-observability.md:
+Per .rddf/improvements/developer-experience-observability.md:
 - Track tool calls (bash, read, edit, write, task) by name
 - Track failures (quota exhausted, timeouts) with type/tool/count
 - Track phase durations (plan, execute, archive) in seconds

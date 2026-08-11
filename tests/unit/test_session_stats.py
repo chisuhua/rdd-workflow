@@ -1,6 +1,6 @@
 """Tests for session_stats module.
 
-Per improvements/developer-experience-observability.md:
+Per .rddf/improvements/developer-experience-observability.md:
 - Track tool calls (bash, read, edit, write, task)
 - Track failures (quota exhausted, timeouts)
 - Track phase durations (plan, execute, archive)

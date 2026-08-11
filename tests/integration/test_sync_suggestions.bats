@@ -8,7 +8,7 @@ load ../test_helper
   
   mkdir -p "$BATS_TMPDIR/test-sync"
   cat > "$BATS_TMPDIR/test-sync/proposal-suggestions.md" <<'EOF'
-| [test-change](improvements/test-change.md) | P1 | 来源 | 2026-01-01 | 待讨论 |
+| [test-change](.rddf/improvements/test-change.md) | P1 | 来源 | 2026-01-01 | 待讨论 |
 EOF
   
   run sync_suggestions "$BATS_TMPDIR/test-sync" "test-change" "approved"
@@ -22,7 +22,7 @@ EOF
   
   mkdir -p "$BATS_TMPDIR/test-defer"
   cat > "$BATS_TMPDIR/test-defer/proposal-suggestions.md" <<'EOF'
-| [test-defer-change](improvements/test-defer-change.md) | P1 | 来源 | 2026-01-01 | 待讨论 |
+| [test-defer-change](.rddf/improvements/test-defer-change.md) | P1 | 来源 | 2026-01-01 | 待讨论 |
 EOF
   
   run sync_suggestions "$BATS_TMPDIR/test-defer" "test-defer-change" "deferred" "2026-07-30"
@@ -44,7 +44,7 @@ EOF
 ## 已实施
 EOF
   cat > "$BATS_TMPDIR/test-append/proposal-suggestions.md" <<'EOF'
-| [test-append-change](improvements/test-append-change.md) | P1 | 来源 | 2026-01-01 | 待讨论 |
+| [test-append-change](.rddf/improvements/test-append-change.md) | P1 | 来源 | 2026-01-01 | 待讨论 |
 EOF
   
   run append_approved "$BATS_TMPDIR/test-append" "test-append-change" "P1"

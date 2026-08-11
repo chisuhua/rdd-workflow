@@ -13,7 +13,7 @@ setup() {
   load_lib reflect_hooks_helper
 
   # Use an isolated temp dir as project_root so dedup scanning does not
-  # match real improvements/ files in the rdd-workflow repo itself.
+  # match real .rddf/improvements/ files in the rdd-workflow repo itself.
   REFLECT_TMPDIR="$(mktemp -d)"
   export REFLECT_TMPDIR
 }

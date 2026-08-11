@@ -1,24 +1,24 @@
 ---
 name: rdd-workflow-brainstorm
-description: "为 rdd-workflow 改进提案（improvements/*.md）提供结构化头脑风暴流程。探索需求、约束、方案，输出符合 5 段格式的提案文件。"
+description: "为 rdd-workflow 改进提案（.rddf/improvements/*.md）提供结构化头脑风暴流程。探索需求、约束、方案，输出符合 5 段格式的提案文件。"
 license: MIT
-compatibility: Requires rdd-workflow 项目结构（improvements/ 目录、proposal-suggestions.md）
+compatibility: Requires rdd-workflow 项目结构（.rddf/improvements/ 目录、proposal-suggestions.md）
 metadata:
   version: "1.0"
   author: sisyphus
-  evolved-from: "superpowers/brainstorming — 适配 rdd-workflow improvements 提案上下文"
+  evolved-from: "superpowers/brainstorming — 适配 rdd-workflow .rddf/improvements 提案上下文"
   user-invocable: true
 ---
 
 # RDD Workflow — Brainstorm 改进提案
 
-帮助用户将改进想法转化为格式规范的 `improvements/<name>.md` 提案文件，通过自然对话逐步完善设计。
+帮助用户将改进想法转化为格式规范的 <a href=".rddf/improvements/<name>.md` 提案文件，通过自然对话逐步完善设计。
 
 ## 与通用 brainstorming 的关键区别
 
 | 维度 | superpowers/brainstorming | rdd-workflow-brainstorm |
 |------|--------------------------|-------------------------|
-| **输出** | `docs/superpowers/specs/` 设计文档 | `improvements/<name>.md` 5 段提案 |
+| **输出** | `docs/superpowers/specs/` 设计文档 | <a href=".rddf/improvements/<name>.md` 5 段提案 |
 | **额外产出** | 无 | `proposal-suggestions.md` 索引行 |
 | **探索范围** | 项目代码、功能需求 | ADR、现有提案、代码问题、工作流改进 |
 | **设计结构** | 自由格式 | **固定 5 段**: 架构依据/范围/关键场景/技术约束/验收标准 |
@@ -37,7 +37,7 @@ metadata:
 2. **提出澄清问题** — 一次一个，理解改进意图/范围/成功标准
 3. **提出 2-3 种方案** — 含权衡分析和推荐
 4. **呈现设计** — 按改进提案的 5 段结构逐段呈现，每段获得用户确认后再继续
-5. **创建 `improvements/<name>.md`** — 包含完整的 5 段内容，前 5 行元数据准确
+5. **创建 <a href=".rddf/improvements/<name>.md`** — 包含完整的 5 段内容，前 5 行元数据准确
 6. **注册到 `proposal-suggestions.md`** — 追加一行 Markdown 表格链接
 7. **展示成果并建议下一步** — guide-arch Phase 5.5 审查
 
@@ -51,7 +51,7 @@ digraph rdd_brainstorm {
     "用户选择方案?" [shape=diamond];
     "呈现 5 段设计\n(逐段确认)" [shape=box];
     "用户批准设计?" [shape=diamond];
-    "创建 improvements/<name>.md" [shape=doublecircle];
+    "创建 .rddf/improvements/<name>.md" [shape=doublecircle];
     "注册到 proposal-suggestions.md" [shape=box];
     "展示成果 + 建议下一步" [shape=box];
 
@@ -62,8 +62,8 @@ digraph rdd_brainstorm {
     "用户选择方案?" -> "呈现 5 段设计\n(逐段确认)" [label="选定"];
     "呈现 5 段设计\n(逐段确认)" -> "用户批准设计?";
     "用户批准设计?" -> "呈现 5 段设计\n(逐段确认)" [label="修改"];
-    "用户批准设计?" -> "创建 improvements/<name>.md" [label="批准"];
-    "创建 improvements/<name>.md" -> "注册到 proposal-suggestions.md";
+    "用户批准设计?" -> "创建 .rddf/improvements/<name>.md" [label="批准"];
+    "创建 .rddf/improvements/<name>.md" -> "注册到 proposal-suggestions.md";
     "注册到 proposal-suggestions.md" -> "展示成果 + 建议下一步";
 }
 ```
@@ -76,7 +76,7 @@ digraph rdd_brainstorm {
 
 检查以下内容以理解项目状态：
 - `docs/adr/` — 现有架构决策，避免冲突
-- `improvements/` — 已有提案，避免重复
+- <a href=".rddf/improvements/` — 已有提案，避免重复
 - `proposal-suggestions.md` — 当前提案池
 - `proposal-approved.md` — 已批准提案
 - 项目根目录的 `roadmap.md`（如存在）
@@ -124,7 +124,7 @@ digraph rdd_brainstorm {
 
 每个 section 完成后问"This section looks right?"，确认后进入下一段。
 
-### 5. 创建 `improvements/<name>.md`
+### 5. 创建 <a href=".rddf/improvements/<name>.md`
 
 用户批准全部设计后，创建提案文件。
 
@@ -170,7 +170,7 @@ digraph rdd_brainstorm {
 在 `proposal-suggestions.md` 的 Markdown 表格中追加一行：
 
 ```
-| [<name>](improvements/<name>.md) | <优先级> | <来源> | <添加时间 YYYY-MM-DD> |
+| [<name>](.rddf/improvements/<name>.md) | <优先级> | <来源> | <添加时间 YYYY-MM-DD> |
 ```
 
 用当前 UTC 日期作为添加时间。插入位置在表格末尾（`| 提案 | ... |` 表头后面任意位置均可）。

@@ -41,7 +41,7 @@ import re, sys, os, glob
 with open('proposal-approved.md') as f:
     content = f.read()
 section = re.split(r'## 已实施', content)[0]
-rows = re.findall(r'\[\s*([^\]]+)\]\s*\(\s*improvements/([^)]+)\s*\)', section)
+rows = re.findall(r'\[\s*([^\]]+)\]\s*\(\s*.rddf/improvements/([^)]+)\s*\)', section)
 for name, _ in rows:
     # 幂等: 跳过已创建 (openspec/changes/<name>/) 或已归档 (archive/*-<name>)
     if os.path.isdir(os.path.join('openspec/changes', name)):
@@ -224,7 +224,7 @@ try:
         content = f.read()
     # Parse the approved table (before ## 已实施 section)
     section = re.split(r'## 已实施', content)[0]
-    rows = re.findall(r'\|\s*\[([^\]]+)\]\(improvements/([^)]+)\)\s*\|\s*(\S+)\s*\|\s*(\S+)\s*\|\s*(\S+)\s*\|', section)
+    rows = re.findall(r'\|\s*\[([^\]]+)\]\(.rddf/improvements/([^)]+)\)\s*\|\s*(\S+)\s*\|\s*(\S+)\s*\|\s*(\S+)\s*\|', section)
     creatable = 0
     for name, _, priority, date, approver in rows:
         # 消费状态由 openspec/changes/ 派生: 活跃目录 = 已创建, archive/ = 已归档

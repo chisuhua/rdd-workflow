@@ -303,7 +303,7 @@ print("yes" if names else "no")
   HAS_PENDING=$(PY_PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
 import os
 try:
-    imp_dir = os.path.join(os.environ["PY_PROJECT_ROOT"], "improvements")
+    imp_dir = os.path.join(os.environ["PY_PROJECT_ROOT"], ".rddf/improvements")
     suggestions_path = os.path.join(os.environ["PY_PROJECT_ROOT"], "proposal-suggestions.md")
     if not os.path.isdir(imp_dir) or not os.path.exists(suggestions_path):
         print("no")
@@ -314,9 +314,9 @@ try:
     if os.path.exists(approved_path):
         import re
         with open(approved_path) as f:
-            approved_names = set(re.findall(r"\|\s*\[([^\]]+)\]\(improvements/", f.read()))
+            approved_names = set(re.findall(r"\|\s*\[([^\]]+)\]\(.rddf/improvements/", f.read()))
     with open(suggestions_path) as f:
-        suggestions_names = set(re.findall(r"\|\s*\[([^\]]+)\]\(improvements/", f.read()))
+        suggestions_names = set(re.findall(r"\|\s*\[([^\]]+)\]\(.rddf/improvements/", f.read()))
     pending = suggestions_names - approved_names
     print("yes" if pending else "no")
 except Exception:

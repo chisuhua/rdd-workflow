@@ -20,7 +20,7 @@ metadata:
 3. 循环 `openspec instructions "<artifact>" --change "<name>" --json` — 获取每个 artifact 的模板、上下文、输出路径
 4. 按依赖顺序创建 artifact 文件（proposal.md → design.md → tasks.md 等）
 
-`proposal-suggestions.md` 是提案索引文件（Markdown 表格格式，随 git 版本控制），索引到 `improvements/` 目录下的完整提案内容。每次扫描发现新建议时，创建 `improvements/<name>.md` 文件并更新索引。审查通过后添加到 `proposal-approved.md`。
+`proposal-suggestions.md` 是提案索引文件（Markdown 表格格式，随 git 版本控制），索引到 <a href=".rddf/improvements/` 目录下的完整提案内容。每次扫描发现新建议时，创建 <a href=".rddf/improvements/<name>.md` 文件并更新索引。审查通过后添加到 `proposal-approved.md`。
 
 ## 工作流位置
 
@@ -118,14 +118,14 @@ fi
 
 ### Phase 0：检查已创建的 changes
 
-读取 `improvements/` 目录和 `openspec/changes/` 目录，移除已创建的 change 对应的 improvement 条目：
+读取 <a href=".rddf/improvements/` 目录和 `openspec/changes/` 目录，移除已创建的 change 对应的 improvement 条目：
 
 ```bash
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 
-# 检查 improvements/ 和 openspec/changes/ 的交集
-if [ -d "$PROJECT_ROOT/improvements" ]; then
-  for imp_file in "$PROJECT_ROOT/improvements"/*.md; do
+# 检查 .rddf/improvements/ 和 openspec/changes/ 的交集
+if [ -d "$PROJECT_ROOT/.rddf/improvements" ]; then
+  for imp_file in "$PROJECT_ROOT/.rddf/improvements"/*.md; do
     [ -f "$imp_file" ] || continue
     name=$(basename "$imp_file" .md)
     
@@ -133,7 +133,7 @@ if [ -d "$PROJECT_ROOT/improvements" ]; then
     if [ -d "$PROJECT_ROOT/openspec/changes/$name" ]; then
       # 从索引中移除（如果存在）
       if [ -f "$PROJECT_ROOT/proposal-suggestions.md" ]; then
-        sed -i "/\[$name\](improvements\/$name.md)/d" "$PROJECT_ROOT/proposal-suggestions.md"
+        sed -i "/\[$name\](.rddf/improvements\/$name.md)/d" "$PROJECT_ROOT/proposal-suggestions.md"
         echo "  已从索引移除: $name (change 已存在)"
       fi
     fi
@@ -141,7 +141,7 @@ if [ -d "$PROJECT_ROOT/improvements" ]; then
 fi
 ```
 
-> **首次执行**（无 improvements/ 目录时）：跳转到 Phase 1。
+> **首次执行**（无 .rddf/improvements/ 目录时）：跳转到 Phase 1。
 
 ---
 

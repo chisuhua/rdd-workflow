@@ -13,8 +13,8 @@ rdd-workflow skills (`guide-arch`, `guide-plan`, `propose`, `dashboard`).
 ## Container format: Markdown table (index only)
 
 The file **MUST** contain a Markdown table that **only stores links** to
-individual proposal files in the `improvements/` directory. It never contains
-the full proposal content — that lives in `improvements/<name>.md`.
+individual proposal files in the `.rddf/improvements/` directory. It never contains
+the full proposal content — that lives in `.rddf/improvements/<name>.md`.
 
 ### Example file
 
@@ -25,15 +25,15 @@ the full proposal content — that lives in `improvements/<name>.md`.
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [fix-silent-exception](improvements/fix-silent-exception.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 | 待讨论 |
-| [add-config-validation](improvements/add-config-validation.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 | 待讨论 |
+| [fix-silent-exception](.rddf/.rddf/improvements/fix-silent-exception.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 | 待讨论 |
+| [add-config-validation](.rddf/.rddf/improvements/add-config-validation.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 | 待讨论 |
 ```
 
 ### Table columns
 
 | Column     | Format                              | Description                                                |
 |------------|-------------------------------------|------------------------------------------------------------|
-| 提案       | `[name](improvements/name.md)`      | Markdown link to the improvement file. The link text is the proposal name (kebab-case). |
+| 提案       | `[name](.rddf/.rddf/improvements/name.md)`      | Markdown link to the improvement file. The link text is the proposal name (kebab-case). |
 | 优先级     | `P0` / `P1` / `P2`                 | Priority level, copied from the improvement file metadata. |
 | 来源       | Free-form string                    | Where the proposal came from (e.g. `Oracle 审查`, `复盘改进`). |
 | 添加时间   | `YYYY-MM-DD`                        | UTC date when the proposal was added to the pool.          |
@@ -41,13 +41,13 @@ the full proposal content — that lives in `improvements/<name>.md`.
 
 ---
 
-## Relationship to `improvements/` directory
+## Relationship to `.rddf/improvements/` directory
 
-The `improvements/` directory contains one `.md` file per proposal with
+The `.rddf/improvements/` directory contains one `.md` file per proposal with
 the full 5-section content:
 
 ```
-improvements/
+.rddf/improvements/
 ├── fix-silent-exception.md      # Full proposal content
 ├── add-config-validation.md
 └── ...
@@ -88,7 +88,7 @@ and ensures a single source of truth for each proposal's details.
 
 ### 1. Proposal creation
 
-Proposals are created as individual `improvements/<name>.md` files (manually
+Proposals are created as individual `.rddf/improvements/<name>.md` files (manually
 or by `guide-arch` gap analysis). Each file contains the full 5-section
 proposal content.
 
@@ -100,16 +100,16 @@ with a new table row linking to the improvement file.
 ### 3. Review flow (`guide-arch` Phase 5.5)
 
 1. `guide-arch` reads `proposal-suggestions.md` via `list_improvements()`.
-2. For each entry, it follows the link to `improvements/<name>.md` to display
+2. For each entry, it follows the link to `.rddf/improvements/<name>.md` to display
    the full content for review.
 3. Approved proposals are added to `proposal-approved.md`.
-4. Rejected proposals remain in `improvements/` but never appear in the
+4. Rejected proposals remain in `.rddf/improvements/` but never appear in the
    approved index.
 
 ### 4. Consumption flow (`guide-plan` propose)
 
 1. `guide-plan` reads `proposal-approved.md` via `list_approved()`.
-2. For each approved entry, it follows the link to `improvements/<name>.md`.
+2. For each approved entry, it follows the link to `.rddf/improvements/<name>.md`.
 3. It creates an OpenSpec change using the 5-section content.
 
 ---
@@ -155,7 +155,7 @@ and storing content in individual files.
 ## Consumers
 
 All skills that touch `proposal-suggestions.md` MUST read it as a Markdown
-table and follow the links to `improvements/*.md`:
+table and follow the links to `.rddf/improvements/*.md`:
 
 | Skill           | Where the format matters                                       |
 |-----------------|----------------------------------------------------------------|
@@ -175,4 +175,4 @@ parsing logic so consumers don't re-implement regex extraction.
 - `skills/_lib/state.sh::list_improvements()` — shell helper for reading the table
 - `skills/_lib/state_reader.py::read_improvement_entries()` — Python helper for reading all improvement files
 - `skills/_lib/migrate_proposals.py` — migration script from JSON to individual files
-- `improvements/proposal-approval-pipeline.md` — the proposal that designed this format
+- `.rddf/improvements/proposal-approval-pipeline.md` — the proposal that designed this format

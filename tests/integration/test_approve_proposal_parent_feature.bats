@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Tests for approve_proposal.sh reading **特性** field from improvements head
+# Tests for approve_proposal.sh reading **特性** field from .rddf/improvements head
 # and using it as fallback for parent_feature when PARENT_FEATURE env var unset.
 #
 # Background: `add-proposal-deps-and-features` defined `**特性**` as the design-time
@@ -13,7 +13,7 @@ setup() {
     WORK_DIR="$(mktemp -d)"
     mkdir -p "$WORK_DIR/.rddf/state"
     mkdir -p "$WORK_DIR/openspec/changes"
-    mkdir -p "$WORK_DIR/improvements"
+    mkdir -p "$WORK_DIR/.rddf/improvements"
     mkdir -p "$WORK_DIR/skills/guide-design/scripts"
     mkdir -p "$WORK_DIR/skills/_lib"
 
@@ -41,7 +41,7 @@ teardown() {
 
 _make_improvement() {
     local feature_value="$1"
-    cat > "$WORK_DIR/improvements/demo.md" <<EOF
+    cat > "$WORK_DIR/.rddf/improvements/demo.md" <<EOF
 # demo
 
 **优先级**: P1 | **来源**: bats
@@ -71,7 +71,7 @@ ADR-0003 reference.
 EOF
 }
 
-@test "approve_proposal: reads 特性 from improvements head into parent_feature when env unset" {
+@test "approve_proposal: reads 特性 from .rddf/improvements head into parent_feature when env unset" {
     _make_improvement "wave-core"
 
     cd "$WORK_DIR"
@@ -110,7 +110,7 @@ EOF
 
 @test "approve_proposal: body mention of **特性** doesn't pollute head parsing" {
     # improvement file has empty **特性** in head, but body references it as example
-    cat > "$WORK_DIR/improvements/demo.md" <<EOF
+    cat > "$WORK_DIR/.rddf/improvements/demo.md" <<EOF
 # demo
 
 **优先级**: P1 | **来源**: bats
@@ -120,7 +120,7 @@ EOF
 
 ## 架构依据
 
-When improvements contains \`**特性**: wave-core\` in body as example,
+When .rddf/improvements contains \`**特性**: wave-core\` in body as example,
 the parser should NOT pick it up — only head **特性** matters.
 EOF
 

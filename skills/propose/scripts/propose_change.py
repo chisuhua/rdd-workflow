@@ -42,7 +42,7 @@ def set_suggestion_status(
     if new_status == "completed":
         # Move to completed section
         from datetime import date
-        completed_row = f"| [{name}](improvements/{name}.md) | {match.group(1)} | {date.today().isoformat()} |"
+        completed_row = f"| [{name}](.rddf/improvements/{name}.md) | {match.group(1)} | {date.today().isoformat()} |"
         content = content.replace(old_row + "\n", "")
         if "## 已实施" in content:
             content = content.replace("## 已实施\n\n", f"## 已实施\n\n{completed_row}\n")
@@ -50,7 +50,7 @@ def set_suggestion_status(
             content += f"\n{completed_row}\n"
     elif new_status == "in_progress":
         # Add in-progress marker
-        new_row = f"| [{name}](improvements/{name}.md) | {match.group(1)} | {match.group(2)} | {match.group(3)} (in_progress) |"
+        new_row = f"| [{name}](.rddf/improvements/{name}.md) | {match.group(1)} | {match.group(2)} | {match.group(3)} (in_progress) |"
         content = content.replace(old_row, new_row)
     
     try:
@@ -118,9 +118,9 @@ def create_skeleton_change(
         capture_output=True,
     )
 
-    # Extract change_type from improvements head (D6 — feature/test-only/doc-only/refactor)
+    # Extract change_type from .rddf/improvements head (D6 — feature/test-only/doc-only/refactor)
     ct = "feature"
-    improvements_path = os.path.join(project_root, "improvements", f"{name}.md")
+    improvements_path = os.path.join(project_root, ".rddf/improvements", f"{name}.md")
     if os.path.exists(improvements_path):
         m = re.search(r"\*\*类型\*\*:\s*([^|\n]+)", open(improvements_path).read())
         if m:
@@ -164,9 +164,9 @@ def create_skeleton_change(
     # Write minimal roadmap-meta.yaml
     yaml_path = os.path.join(change_dir, "roadmap-meta.yaml")
     try:
-        # Extract change_type from improvements head (D6 — feature/test-only/doc-only/refactor)
+        # Extract change_type from .rddf/improvements head (D6 — feature/test-only/doc-only/refactor)
         ct = "feature"
-        improvements_path = os.path.join(project_root, "improvements", f"{name}.md")
+        improvements_path = os.path.join(project_root, ".rddf/improvements", f"{name}.md")
         if os.path.exists(improvements_path):
             m = re.search(r"\*\*类型\*\*:\s*([^|\n]+)", open(improvements_path).read())
             if m:

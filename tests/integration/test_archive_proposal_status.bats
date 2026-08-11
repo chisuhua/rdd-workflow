@@ -9,22 +9,22 @@ load ../test_helper
 @test "archive-proposal-status: normal update changes status" {
     TEST_DIR=$(mktemp -d)
     # Proposal model migrated from JSON (proposal-suggestions.md) to dual-index
-    # markdown (proposal-approved.md + improvements/). The update script now
+    # markdown (proposal-approved.md + .rddf/improvements/). The update script now
     # reads proposal-approved.md and moves the entry to the "已实施" section.
-    mkdir -p "$TEST_DIR/improvements"
+    mkdir -p "$TEST_DIR/.rddf/improvements"
     cat > "$TEST_DIR/proposal-approved.md" <<'MD'
 # 已批准提案
 
 | Proposal | Priority | Approved |
 |----------|----------|----------|
-| [test-change](improvements/test-change.md) | P1 | 2026-07-20 |
+| [test-change](.rddf/improvements/test-change.md) | P1 | 2026-07-20 |
 
 ## 已实施
 
 | Proposal | Priority | Completed |
 |----------|----------|-----------|
 MD
-    echo "# test change" > "$TEST_DIR/improvements/test-change.md"
+    echo "# test change" > "$TEST_DIR/.rddf/improvements/test-change.md"
     PROJECT_ROOT="$REPO_ROOT"
     run python3 "$PROJECT_ROOT/skills/propose/scripts/update_proposal_status.py" "test-change" "$TEST_DIR"
     [ "$status" -eq 0 ]
@@ -56,7 +56,7 @@ print('completed' if found else 'not-completed')
 
 | Proposal | Priority | Approved |
 |----------|----------|----------|
-| [other](improvements/other.md) | P1 | 2026-07-20 |
+| [other](.rddf/improvements/other.md) | P1 | 2026-07-20 |
 
 ## 已实施
 
@@ -78,24 +78,24 @@ MD
 
 @test "archive-proposal-status: preserves existing completed entries" {
     TEST_DIR=$(mktemp -d)
-    mkdir -p "$TEST_DIR/improvements"
+    mkdir -p "$TEST_DIR/.rddf/improvements"
     cat > "$TEST_DIR/proposal-approved.md" <<'MD'
 # 已批准提案
 
 | Proposal | Priority | Approved |
 |----------|----------|----------|
-| [new-change](improvements/new-change.md) | P1 | 2026-07-31 |
+| [new-change](.rddf/improvements/new-change.md) | P1 | 2026-07-31 |
 
 ## 已实施
 
 | Proposal | Priority | Completed |
 |----------|----------|-----------|
-| [old-a](improvements/old-a.md) | P0 | 2026-07-20 |
-| [old-b](improvements/old-b.md) | P1 | 2026-07-22 |
+| [old-a](.rddf/improvements/old-a.md) | P0 | 2026-07-20 |
+| [old-b](.rddf/improvements/old-b.md) | P1 | 2026-07-22 |
 MD
-    echo "# old a" > "$TEST_DIR/improvements/old-a.md"
-    echo "# old b" > "$TEST_DIR/improvements/old-b.md"
-    echo "# new change" > "$TEST_DIR/improvements/new-change.md"
+    echo "# old a" > "$TEST_DIR/.rddf/improvements/old-a.md"
+    echo "# old b" > "$TEST_DIR/.rddf/improvements/old-b.md"
+    echo "# new change" > "$TEST_DIR/.rddf/improvements/new-change.md"
     PROJECT_ROOT="$REPO_ROOT"
     run python3 "$PROJECT_ROOT/skills/propose/scripts/update_proposal_status.py" "new-change" "$TEST_DIR"
     [ "$status" -eq 0 ]
@@ -105,7 +105,7 @@ with open('$TEST_DIR/proposal-approved.md') as f:
     content = f.read()
 section = content.split('## 已实施')[1]
 import re
-names = re.findall(r'\[([^\]]+)\]\(improvements/', section)
+names = re.findall(r'\[([^\]]+)\]\(.rddf/improvements/', section)
 print(' '.join(sorted(names)))
 ")
     [ "$completed_entries" = "new-change old-a old-b" ]
@@ -114,32 +114,32 @@ print(' '.join(sorted(names)))
 
 @test "archive-proposal-status: consecutive archives accumulate entries" {
     TEST_DIR=$(mktemp -d)
-    mkdir -p "$TEST_DIR/improvements"
+    mkdir -p "$TEST_DIR/.rddf/improvements"
     cat > "$TEST_DIR/proposal-approved.md" <<'MD'
 # 已批准提案
 
 | Proposal | Priority | Approved |
 |----------|----------|----------|
-| [c1](improvements/c1.md) | P0 | 2026-07-31 |
-| [c2](improvements/c2.md) | P1 | 2026-07-31 |
-| [c3](improvements/c3.md) | P2 | 2026-07-31 |
+| [c1](.rddf/improvements/c1.md) | P0 | 2026-07-31 |
+| [c2](.rddf/improvements/c2.md) | P1 | 2026-07-31 |
+| [c3](.rddf/improvements/c3.md) | P2 | 2026-07-31 |
 
 ## 已实施
 
 | Proposal | Priority | Completed |
 |----------|----------|-----------|
-| [base](improvements/base.md) | P1 | 2026-07-01 |
+| [base](.rddf/improvements/base.md) | P1 | 2026-07-01 |
 MD
-    echo "# x" > "$TEST_DIR/improvements/c1.md"
-    echo "# x" > "$TEST_DIR/improvements/c2.md"
-    echo "# x" > "$TEST_DIR/improvements/c3.md"
-    echo "# x" > "$TEST_DIR/improvements/base.md"
+    echo "# x" > "$TEST_DIR/.rddf/improvements/c1.md"
+    echo "# x" > "$TEST_DIR/.rddf/improvements/c2.md"
+    echo "# x" > "$TEST_DIR/.rddf/improvements/c3.md"
+    echo "# x" > "$TEST_DIR/.rddf/improvements/base.md"
     PROJECT_ROOT="$REPO_ROOT"
     for c in c1 c2 c3; do
         run python3 "$PROJECT_ROOT/skills/propose/scripts/update_proposal_status.py" "$c" "$TEST_DIR"
         [ "$status" -eq 0 ]
     done
-    count=$(grep -c 'improvements/' "$TEST_DIR/proposal-approved.md" 2>/dev/null || true)
+    count=$(grep -c '.rddf/improvements/' "$TEST_DIR/proposal-approved.md" 2>/dev/null || true)
     # 已批准区 0 + 已实施区 4 (base+c1+c2+c3)
     [ "$count" -eq 4 ]
     rm -rf "$TEST_DIR"

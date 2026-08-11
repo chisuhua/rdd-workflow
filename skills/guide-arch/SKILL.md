@@ -49,7 +49,7 @@ skill_use("guide-arch")   # 无参数版本
 ```
 [guide-arch]  --(arch-done: ADR ≥ 1 + roadmap.md)-->  [guide-design]  --(design-done: 所有提案有决策)-->  [guide-plan]
    arch 端                                              design 端                                           plan 端
-   owns: docs/adr/ADR-*.md, roadmap.md,               owns: improvements/, proposal-                     owns: openspec/changes/<name>/
+   owns: docs/adr/ADR-*.md, roadmap.md,               owns: .rddf/improvements/, proposal-                     owns: openspec/changes/<name>/
          docs/architecture/*-gap-analysis.md                 suggestions.md, proposal-approved.md                {proposal,design,tasks}.md
    exits: .rddf/state/.arch-handoff.json                     exits: .rddf/state/.design-handoff.json             exits: .rddf/state/.plan-handoff.json
 ```

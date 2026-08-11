@@ -1,6 +1,6 @@
 """Hook comment whitelist for developer experience observability.
 
-Per improvements/developer-experience-observability.md:
+Per .rddf/improvements/developer-experience-observability.md:
 - Skip hook warnings on certain comment patterns:
   - bash idioms: BASH_SOURCE, set -u/e/o pipefail
   - magic numbers: numeric thresholds with explanations

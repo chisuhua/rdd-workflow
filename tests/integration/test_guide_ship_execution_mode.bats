@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 # Tests for guide-ship-default-serial-execution change
-# Per improvements/guide-ship-default-serial-execution.md:
+# Per .rddf/improvements/guide-ship-default-serial-execution.md:
 #   S1: default serial (no flag) -> 1 concurrent, stdout "sequentially"
 #   S2: --parallel parallel mode (3 concurrent), stdout "parallel (3 concurrent)"
 #   S3: RDD_SHIP_PARALLEL=yes equivalent to --parallel

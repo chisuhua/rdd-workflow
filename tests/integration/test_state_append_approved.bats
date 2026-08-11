@@ -16,7 +16,7 @@ setup() {
 | 提案 | 优先级 | 批准时间 | 批准人 |
 |------|--------|----------|--------|
 
-| [existing-change](improvements/existing-change.md) | P0 | 2026-07-01 | guide-arch |
+| [existing-change](.rddf/improvements/existing-change.md) | P0 | 2026-07-01 | guide-arch |
 
 ## 已实施
 

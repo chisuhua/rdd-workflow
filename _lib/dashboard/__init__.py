@@ -411,14 +411,14 @@ def collect(project_root: str) -> DashboardData:
         # is absent (common in projects that never ran `roadmap init`).
         data.roadmap_phase = data.arch.current_phase
 
-    # ---- Section 7: Pending (improvements/ + proposal-approved.md + archive bypass) ----
+    # ---- Section 7: Pending (.rddf/improvements/ + proposal-approved.md + archive bypass) ----
     try:
         import re
         approved = set()
         approved_path = os.path.join(project_root, "proposal-approved.md")
         if os.path.exists(approved_path):
             with open(approved_path) as f:
-                approved = set(re.findall(r"\|\s*\[([^\]]+)\]\(improvements/", f.read()))
+                approved = set(re.findall(r"\|\s*\[([^\]]+)\]\(.rddf/improvements/", f.read()))
 
         improvement_entries = read_improvement_entries(project_root)
         archived_names = set()

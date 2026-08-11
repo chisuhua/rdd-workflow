@@ -6,15 +6,15 @@ load ../test_helper
 setup() {
     REPO_ROOT="$(git rev-parse --show-toplevel)"
     WORK_DIR="$(mktemp -d)"
-    mkdir -p "$WORK_DIR/improvements"
+    mkdir -p "$WORK_DIR/.rddf/improvements"
 }
 
 teardown() {
     rm -rf "$WORK_DIR"
 }
 
-@test "content_review: passes on complete improvements" {
-    cat > "$WORK_DIR/improvements/good.md" <<EOF
+@test "content_review: passes on complete .rddf/improvements" {
+    cat > "$WORK_DIR/.rddf/improvements/good.md" <<EOF
 # good
 
 **优先级**: P1 | **来源**: test
@@ -43,7 +43,7 @@ ADR-0003.
 - [ ] d
 EOF
     cd "$WORK_DIR"
-    export IMPROVEMENTS_PATH="$WORK_DIR/improvements/good.md"
+    export IMPROVEMENTS_PATH="$WORK_DIR/.rddf/improvements/good.md"
     export STRICT_DESIGN_GATE=no
     export SKIP_CONTENT_REVIEW=no
     run bash "$REPO_ROOT/skills/guide-design/scripts/design_content_review.sh"
@@ -51,7 +51,7 @@ EOF
 }
 
 @test "content_review: STRICT blocks on missing head fields" {
-    cat > "$WORK_DIR/improvements/bad.md" <<EOF
+    cat > "$WORK_DIR/.rddf/improvements/bad.md" <<EOF
 # bad
 
 ## 架构依据
@@ -75,7 +75,7 @@ ADR-0003.
 - [ ] d
 EOF
     cd "$WORK_DIR"
-    export IMPROVEMENTS_PATH="$WORK_DIR/improvements/bad.md"
+    export IMPROVEMENTS_PATH="$WORK_DIR/.rddf/improvements/bad.md"
     export STRICT_DESIGN_GATE=yes
     export SKIP_CONTENT_REVIEW=no
     run bash "$REPO_ROOT/skills/guide-design/scripts/design_content_review.sh"
@@ -92,7 +92,7 @@ EOF
 }
 
 @test "content_review: warning mode (no strict) exits 0 even with errors" {
-    cat > "$WORK_DIR/improvements/bad.md" <<EOF
+    cat > "$WORK_DIR/.rddf/improvements/bad.md" <<EOF
 # bad
 ## 架构依据
 no ADR
@@ -106,7 +106,7 @@ no ADR
 - d
 EOF
     cd "$WORK_DIR"
-    export IMPROVEMENTS_PATH="$WORK_DIR/improvements/bad.md"
+    export IMPROVEMENTS_PATH="$WORK_DIR/.rddf/improvements/bad.md"
     export STRICT_DESIGN_GATE=no
     export SKIP_CONTENT_REVIEW=no
     run bash "$REPO_ROOT/skills/guide-design/scripts/design_content_review.sh"
