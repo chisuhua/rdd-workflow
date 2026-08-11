@@ -3,7 +3,7 @@
 # Design phase 提案审批逻辑（从 arch_proposal_review.sh 搬移 + 重命名）
 #
 # 职责：
-#   1. 同时扫描 improvements/ 和 proposal-suggestions.md 发现待审提案
+#   1. 同时扫描 .rddf/improvements/ 和 proposal-suggestions.md 发现待审提案
 #   2. 交叉引用 proposal-approved.md 排除已批准的
 #   3. 处理已归档提案的自动批准
 #   4. 展示审查菜单，支持：
@@ -35,7 +35,7 @@ design_proposal_review() {
     source "$LIB_DIR/state.sh"
   fi
 
-  local IMPROVEMENTS_DIR="$PROJECT_ROOT/improvements"
+  local IMPROVEMENTS_DIR="$PROJECT_ROOT/.rddf/improvements"
   local APPROVED_FILE="$PROJECT_ROOT/proposal-approved.md"
   local SUGGESTIONS_FILE="$PROJECT_ROOT/proposal-suggestions.md"
 
@@ -86,11 +86,11 @@ for name in parse_approved_proposals(os.environ["PY_APPROVED_FILE"]):
 
   # ============ Step 2: 构建待审查提案列表 ============
 
-  # 收集所有候选提案名（来自 improvements/ + proposal-suggestions.md）
+  # 收集所有候选提案名（来自 .rddf/improvements/ + proposal-suggestions.md）
   local ALL_CANDIDATES=()
   local -A CANDIDATE_SET=()
 
-  # Pass A: 从 improvements/ 目录
+  # Pass A: 从 .rddf/improvements/ 目录
   if [ -d "$IMPROVEMENTS_DIR" ]; then
     for f in "$IMPROVEMENTS_DIR"/*.md; do
       [ -f "$f" ] || continue
@@ -102,7 +102,7 @@ for name in parse_approved_proposals(os.environ["PY_APPROVED_FILE"]):
     done
   fi
 
-  # Pass B: 从 proposal-suggestions.md（补全 improvements/ 遗漏的）
+  # Pass B: 从 proposal-suggestions.md（补全 .rddf/improvements/ 遗漏的）
   for name in "${!SUGGESTION_PATHS[@]}"; do
     if [ -z "${CANDIDATE_SET[$name]:-}" ]; then
       ALL_CANDIDATES+=("$name")
@@ -257,7 +257,7 @@ for name in parse_approved_proposals(os.environ["PY_APPROVED_FILE"]):
         local priority=$(echo "$entry" | cut -d'|' -f2)
         local imp_file="$IMPROVEMENTS_DIR/$name.md"
         if [ ! -f "$imp_file" ]; then
-          echo "  ⚠️  $name: improvements/$name.md 不存在，跳过"
+          echo "  ⚠️  $name: .rddf/improvements/$name.md 不存在，跳过"
           continue
         fi
         bash "$SCRIPT_DIR/approve_proposal.sh" "$name" "${priority:-P1}" "$PROJECT_ROOT" && \
@@ -303,8 +303,8 @@ design_proposal_review "$PROJECT_ROOT" "$PHASE_5_5_ENTRY"
         fi
       else
         local path_hint="${SUGGESTION_PATHS[$name]:-}"
-        echo "⚠️  改进文件不存在: improvements/$name.md"
-        if [ -n "$path_hint" ] && [ "$path_hint" != "improvements/$name.md" ]; then
+        echo "⚠️  改进文件不存在: .rddf/improvements/$name.md"
+        if [ -n "$path_hint" ] && [ "$path_hint" != ".rddf/improvements/$name.md" ]; then
           echo "   建议路径: $path_hint"
           if [ -f "$PROJECT_ROOT/$path_hint" ]; then
             echo ""
@@ -330,7 +330,7 @@ design_proposal_review "$PROJECT_ROOT" "$PHASE_5_5_ENTRY"
             bash "$SCRIPT_DIR/approve_proposal.sh" "$name" "${priority:-P1}" "$PROJECT_ROOT"
             echo "✅ $name 已批准"
           else
-            echo "❌ 无法批准: improvements/$name.md 不存在"
+            echo "❌ 无法批准: .rddf/improvements/$name.md 不存在"
             echo "   请先通过 add-improve 创建该提案文件"
           fi
           ;;

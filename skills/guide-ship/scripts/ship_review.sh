@@ -56,8 +56,8 @@ _review_create_debt_change() {
 
   echo "🔖 创建新 debt change: $debt_name"
 
-  # Create improvements/<name>.md file (new format)
-  local imp_dir="$project_root/improvements"
+  # Create .rddf/improvements/<name>.md file (new format)
+  local imp_dir="$project_root/.rddf/improvements"
   mkdir -p "$imp_dir"
   
   local imp_file="$imp_dir/${debt_name}.md"
@@ -87,7 +87,7 @@ _review_create_debt_change() {
 - 新增测试通过
 - 无回归
 EOF
-    echo "✅ 已创建 improvements/${debt_name}.md"
+    echo "✅ 已创建 .rddf/improvements/${debt_name}.md"
   fi
 
   # Update proposal-suggestions.md index (Markdown table format)
@@ -126,7 +126,7 @@ try:
                 insert_idx = i + 1
                 break
         
-        new_row = f'| [{debt_name}](improvements/{debt_name}.md) | P2 | execute review | {timestamp} |'
+        new_row = f'| [{debt_name}](.rddf/improvements/{debt_name}.md) | P2 | execute review | {timestamp} |'
         
         if insert_idx > 0:
             lines.insert(insert_idx, new_row)

@@ -1,7 +1,7 @@
 # skills/_lib/reflect_dedup.py
 """Fuzzy dedup matching for reflect_engine.
 
-Searches improvements/*.md, proposal-suggestions.md, and proposal-approved.md
+Searches .rddf/improvements/*.md, proposal-suggestions.md, and proposal-approved.md
 for existing proposals that match a given error signature/fingerprint.
 """
 
@@ -18,7 +18,7 @@ class DedupMatcher:
     def __init__(self, improvements_dir=None, suggestions_file=None,
                  approved_file=None, project_root=None):
         root = project_root or self._find_project_root()
-        self.improvements_dir = improvements_dir or os.path.join(root, "improvements")
+        self.improvements_dir = improvements_dir or os.path.join(root, ".rddf/improvements")
         self.suggestions_file = suggestions_file or os.path.join(root, "proposal-suggestions.md")
         self.approved_file = approved_file or os.path.join(root, "proposal-approved.md")
 
@@ -42,7 +42,7 @@ class DedupMatcher:
         return matches >= 1
 
     def _scan_improvements(self, keywords):
-        """Scan improvements/*.md for matching proposals."""
+        """Scan .rddf/improvements/*.md for matching proposals."""
         if not os.path.isdir(self.improvements_dir):
             return None
         for fname in sorted(os.listdir(self.improvements_dir)):
@@ -54,7 +54,7 @@ class DedupMatcher:
                     content = f.read()
                 if self._fuzzy_match(keywords, content):
                     name = fname[:-3]  # strip .md
-                    return {"matched_name": name, "source": "improvements",
+                    return {"matched_name": name, "source": ".rddf/improvements",
                             "file": fpath, "matched_keywords": keywords}
             except (IOError, OSError):
                 continue
@@ -90,7 +90,7 @@ class DedupMatcher:
                 content = f.read()
             if self._fuzzy_match(keywords, content):
                 # Extract proposal names from markdown table links
-                matches = re.findall(r'\[([^\]]+)\]\(improvements/', content)
+                matches = re.findall(r'\[([^\]]+)\]\(.rddf/improvements/', content)
                 for name in matches:
                     if any(kw in name.lower() for kw in keywords):
                         return {"matched_name": name, "source": "approved",

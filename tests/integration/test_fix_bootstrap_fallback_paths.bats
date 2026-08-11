@@ -20,7 +20,7 @@ CORRECT_PATTERN='\$HOME/\.agents/skills/_lib/skill_root\.sh'
 EXCLUDED_PATHS=(
   "openspec/changes/"
   "tests/integration/test_playground_full_flow.bats"
-  "improvements/"
+  ".rddf/improvements/"
   "docs/superpowers/"
 )
 

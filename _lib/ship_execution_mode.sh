@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # skills/_lib/ship_execution_mode.sh
-# Per improvements/guide-ship-default-serial-execution.md:
+# Per .rddf/improvements/guide-ship-default-serial-execution.md:
 # - Default execution mode = serial (1 concurrent)
 # - Opt-in parallel via --parallel flag or RDD_SHIP_PARALLEL=yes
 # - CLI flag > env var precedence

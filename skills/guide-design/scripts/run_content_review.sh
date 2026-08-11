@@ -8,7 +8,7 @@
 # openspec/changes/wire-design-content-review-gate/design.md.
 #
 # Env vars:
-#   IMPROVEMENTS_PATH   absolute path to improvements/<name>.md (required)
+#   IMPROVEMENTS_PATH   absolute path to .rddf/improvements/<name>.md (required)
 #   PROJECT_ROOT        absolute path to repo root (required)
 #   STRICT_DESIGN_GATE  yes -> review blocks on errors (default: no)
 #   SKIP_CONTENT_REVIEW yes -> short-circuit; exit 0 with skipped=true
@@ -41,7 +41,7 @@ if [ -z "$IMPROVEMENTS_PATH" ]; then
     exit 2
 fi
 if [ ! -f "$IMPROVEMENTS_PATH" ]; then
-    echo "❌ improvements file not found: $IMPROVEMENTS_PATH" >&2
+    echo "❌ .rddf/improvements file not found: $IMPROVEMENTS_PATH" >&2
     exit 2
 fi
 

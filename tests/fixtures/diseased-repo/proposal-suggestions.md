@@ -1,3 +1,3 @@
 | 提案 | 优先级 | 来源 | 添加时间 |
 |------|--------|------|----------|
-| [foo](improvements/foo.md) | P1 | src | 2026-08-07 |
+| [foo](.rddf/improvements/foo.md) | P1 | src | 2026-08-07 |

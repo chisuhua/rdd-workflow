@@ -69,7 +69,7 @@ EOF
 
     run bash "$REPO_ROOT/skills/guide-design/scripts/run_content_review.sh"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"improvements content review: OK"* ]]
+    [[ "$output" == *".rddf/improvements content review: OK"* ]]
     unset IMPROVEMENTS_PATH
 }
 
@@ -116,7 +116,7 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"review skipped"* ]]
     # The natural review output should NOT appear (script never ran).
-    [[ "$output" != *"improvements content review: OK"* ]]
+    [[ "$output" != *".rddf/improvements content review: OK"* ]]
     unset IMPROVEMENTS_PATH SKIP_CONTENT_REVIEW
 }
 

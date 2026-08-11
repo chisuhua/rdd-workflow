@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # Tests for worktree-archive-workflow change
 # Verifies explicit documentation of worktree commit flow in AGENTS.md and guide-ship/SKILL.md
-# (Reference: improvements/worktree-archive-workflow.md)
+# (Reference: .rddf/improvements/worktree-archive-workflow.md)
 
 load ../test_helper
 

@@ -1,6 +1,6 @@
 """Verify _rddf_should_auto_archive threshold helper.
 
-Contract (from improvements/add-rddf-session-auto-archive-on-entry.md):
+Contract (from .rddf/improvements/add-rddf-session-auto-archive-on-entry.md):
   threshold = keep + 5 (default)
   RDDF_AUTO_ARCHIVE_THRESHOLD env var overrides threshold (0 = disabled)
   RDDF_AUTO_ARCHIVE_KEEP env var overrides keep (0 = disabled)

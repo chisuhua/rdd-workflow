@@ -509,7 +509,7 @@ def _build_all_options(
     options.append(MenuOption(
         id="add-improve",
         label="add-improve",
-        description="创建新改进提案 — improvements/<name>.md + 注册索引",
+        description="创建新改进提案 — .rddf/improvements/<name>.md + 注册索引",
         action="add-improve",
         group="utilities",
     ))
@@ -863,7 +863,7 @@ def _fallback_recommendation() -> WorkflowRecommendation:
             MenuOption("guide-arch", "架构定义", "setup → ADR → roadmap → arch-done", "guide-arch", "stages"),
             MenuOption("guide-design", "设计阶段", "提案创建 / 审查 / 批准 / design-done", "guide-design", "stages"),
             MenuOption("guide-plan", "变更生成", "scan → propose → deps → plan-done", "guide-plan", "stages"),
-            MenuOption("add-improve", "add-improve", "创建新改进提案 — improvements/<name>.md + 注册索引", "add-improve", "utilities"),
+            MenuOption("add-improve", "add-improve", "创建新改进提案 — .rddf/improvements/<name>.md + 注册索引", "add-improve", "utilities"),
         ),
         wt_issues=(),
     )

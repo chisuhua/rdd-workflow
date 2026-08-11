@@ -27,14 +27,14 @@ a `## ` header:
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [fix-silent-exception](improvements/fix-silent-exception.md) | P0 | 2026-07-23 | guide-arch |
-| [add-config-validation](improvements/add-config-validation.md) | P0 | 2026-07-23 | guide-arch |
+| [fix-silent-exception](.rddf/.rddf/improvements/fix-silent-exception.md) | P0 | 2026-07-23 | guide-arch |
+| [add-config-validation](.rddf/.rddf/improvements/add-config-validation.md) | P0 | 2026-07-23 | guide-arch |
 
 ## 已实施
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
-| [remove-ci-redundant-bats](improvements/remove-ci-redundant-bats.md) | P1 | 2026-07-20 |
+| [remove-ci-redundant-bats](.rddf/.rddf/improvements/remove-ci-redundant-bats.md) | P1 | 2026-07-20 |
 ```
 
 ### Section: `## 已批准提案`
@@ -43,7 +43,7 @@ Table columns:
 
 | Column     | Format                              | Description                                                |
 |------------|-------------------------------------|------------------------------------------------------------|
-| 提案       | `[name](improvements/name.md)`      | Markdown link to the improvement file. The link text is the proposal name (kebab-case). |
+| 提案       | `[name](.rddf/.rddf/improvements/name.md)`      | Markdown link to the improvement file. The link text is the proposal name (kebab-case). |
 | 优先级     | `P0` / `P1` / `P2`                 | Priority level, copied from the improvement file metadata. |
 | 批准时间   | `YYYY-MM-DD`                        | UTC date when `guide-arch` approved the proposal.          |
 | 批准者     | Free-form string (e.g. `guide-arch`) | Who/what approved the proposal.                            |
@@ -54,7 +54,7 @@ Table columns:
 
 | Column     | Format                              | Description                                                |
 |------------|-------------------------------------|------------------------------------------------------------|
-| 提案       | `[name](improvements/name.md)`      | Same link format as the approved section.                  |
+| 提案       | `[name](.rddf/.rddf/improvements/name.md)`      | Same link format as the approved section.                  |
 | 优先级     | `P0` / `P1` / `P2`                 | Priority level (preserved from approved section).          |
 | 完成时间   | `YYYY-MM-DD`                        | UTC date when the change was archived.                     |
 
@@ -64,17 +64,17 @@ Table columns:
 
 ### Approval flow (`guide-arch` Phase 5.5)
 
-1. `guide-arch` reviews each file in `improvements/` directory.
+1. `guide-arch` reviews each file in `.rddf/improvements/` directory.
 2. For each approved proposal, `append_approved()` (in `skills/_lib/state.sh`)
    inserts a row into the `## 已批准提案` table.
-3. Rejected proposals are simply not added - they remain in `improvements/`
+3. Rejected proposals are simply not added - they remain in `.rddf/improvements/`
    but never appear in `proposal-approved.md`.
 
 ### Consumption flow (`guide-plan` propose)
 
 1. `guide-plan` reads `proposal-approved.md` via `list_approved()` or
    `read_improvement_entries()`.
-2. For each approved entry, it follows the link to `improvements/<name>.md`
+2. For each approved entry, it follows the link to `.rddf/improvements/<name>.md`
    to read the full 5-section content.
 3. It creates an OpenSpec change using that content.
 
@@ -88,13 +88,13 @@ Table columns:
 
 ---
 
-## Relationship to `improvements/` directory
+## Relationship to `.rddf/improvements/` directory
 
-The `improvements/` directory contains one `.md` file per proposal with
+The `.rddf/improvements/` directory contains one `.md` file per proposal with
 the full 5-section content:
 
 ```
-improvements/
+.rddf/improvements/
 ├── fix-silent-exception.md      # Full proposal content
 ├── add-config-validation.md
 ├── ...
@@ -137,7 +137,7 @@ and ensures a single source of truth for each proposal's details.
 |-----------------------------|-------------------------------------------|---------------------|
 | `proposal-suggestions.md`   | Index of ALL proposals (pre-approval)     | Markdown table      |
 | `proposal-approved.md`      | Index of APPROVED proposals (post-arch)   | Markdown table      |
-| `improvements/*.md`         | Full proposal content (one file each)     | Structured Markdown |
+| `.rddf/improvements/*.md`         | Full proposal content (one file each)     | Structured Markdown |
 
 `proposal-suggestions.md` lists every proposal for `guide-arch` to review.
 `proposal-approved.md` lists only those that have been approved and is the
@@ -169,4 +169,4 @@ input for `guide-plan`'s propose phase.
 - `docs/proposal-suggestions-format.md` - format for the pending proposals index
 - `skills/_lib/state.sh` - shell helpers for reading/writing the index files
 - `skills/_lib/state_reader.py` - Python read-only data layer
-- `improvements/proposal-approval-pipeline.md` - the proposal that designed this format
+- `.rddf/improvements/proposal-approval-pipeline.md` - the proposal that designed this format

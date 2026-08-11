@@ -36,7 +36,7 @@ def test_parse_no_deps():
 
 
 def test_auto_detect_references():
-    content = "See improvements/add-foo.md for details"
+    content = "See .rddf/improvements/add-foo.md for details"
     result = parse_proposal_metadata(content)
     assert "add-foo" in result["auto_detected"]
 

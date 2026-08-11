@@ -52,14 +52,14 @@ def update_proposal_status(change_name: str, project_root: str) -> bool:
                 j += 1
             # Insert completed row at position j
             from datetime import date
-            completed_row = f"| [{change_name}](improvements/{change_name}.md) | {priority} | {date.today().isoformat()} |\n"
+            completed_row = f"| [{change_name}](.rddf/improvements/{change_name}.md) | {priority} | {date.today().isoformat()} |\n"
             result.insert(j, completed_row)
             inserted = True
             # 不再 break —— 后续行（表头、分隔线、旧条目）继续被 append
     
     if not inserted:
         from datetime import date
-        result.append(f"| [{change_name}](improvements/{change_name}.md) | {priority} | {date.today().isoformat()} |\n")
+        result.append(f"| [{change_name}](.rddf/improvements/{change_name}.md) | {priority} | {date.today().isoformat()} |\n")
     
     with open(path, "w") as f:
         f.writelines(result)

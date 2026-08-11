@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Migrate legacy JSON proposal-suggestions.md to individual improvements/*.md files.
+"""Migrate legacy JSON proposal-suggestions.md to individual .rddf/improvements/*.md files.
 
 Usage:
     python3 skills/_lib/migrate_proposals.py <project_root>
@@ -8,7 +8,7 @@ Steps:
 1. Reads the OLD JSON content from ``git show HEAD:proposal-suggestions.md``
    (the current working-tree file has been rewritten as a Markdown index).
 2. Backs up the old JSON to ``proposal-suggestions.json.bak``.
-3. For each JSON entry, creates ``improvements/<name>.md`` with a structured
+3. For each JSON entry, creates `<a href=".rddf/improvements/<name>.md`` with a structured
    template extracting the five ``## `` sections from the ``description`` field.
 4. Skips entries whose target file already exists (idempotent).
 
@@ -119,7 +119,7 @@ def main() -> int:
         return 1
 
     project_root = os.path.abspath(sys.argv[1])
-    imp_dir = os.path.join(project_root, "improvements")
+    imp_dir = os.path.join(project_root, ".rddf/improvements")
     os.makedirs(imp_dir, exist_ok=True)
 
     # Step 1: Get old JSON from git HEAD

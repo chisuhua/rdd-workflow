@@ -951,7 +951,7 @@ This task only applies if the user is running this plan via the formal guide-des
 - [ ] **Step 2: Add entry referencing the plan**
 
 Follow `docs/proposal-approved-format.md` (Markdown table format). Entry should reference:
-- `improvements/add-guide-design-phase1-diagnostic.md` (created separately via brainstorming)
+- `.rddf/improvements/add-guide-design-phase1-diagnostic.md` (created separately via brainstorming)
 - Plan file: `docs/superpowers/plans/2026-08-07-guide-design-phase1-diagnostic.md`
 - Status: 已批准
 - Date: today's date

@@ -32,8 +32,8 @@ def project_root(tmp_path):
 @pytest.fixture
 def project_with_suggestions(tmp_path):
     rows = [
-        "| [c1](improvements/c1.md) | P1 | 实施期 | 待创建 |",
-        "| [c2](improvements/c2.md) | P2 | 实施期 | created |",
+        "| [c1](.rddf/improvements/c1.md) | P1 | 实施期 | 待创建 |",
+        "| [c2](.rddf/improvements/c2.md) | P2 | 实施期 | created |",
     ]
     _write_approved(tmp_path, rows)
     return str(tmp_path)
@@ -444,9 +444,9 @@ class TestBatchCreatePending:
     def test_iterates_pending_entries_and_creates_skeletons(self, tmp_path):
         """Should create skeleton changes for all pending entries."""
         rows = [
-            "| [c1](improvements/c1.md) | P1 | 实施期 | 待创建 |",
-            "| [c2](improvements/c2.md) | P2 | 实施期 | created |",
-            "| [c3](improvements/c3.md) | P1 | 实施期 | 待创建 |",
+            "| [c1](.rddf/improvements/c1.md) | P1 | 实施期 | 待创建 |",
+            "| [c2](.rddf/improvements/c2.md) | P2 | 实施期 | created |",
+            "| [c3](.rddf/improvements/c3.md) | P1 | 实施期 | 待创建 |",
         ]
         _write_approved(tmp_path, rows)
         created = pc.batch_create_pending(str(tmp_path))
@@ -476,8 +476,8 @@ class TestBatchCreatePending:
     def test_skips_entries_with_existing_change_dir(self, tmp_path):
         """batch_create_pending 跳过 openspec/changes/ 中已存在的 change。"""
         rows = [
-            "| [c1](improvements/c1.md) | P1 | 2026-07-28 | guide-arch |",
-            "| [c2](improvements/c2.md) | P2 | 2026-07-28 | guide-arch |",
+            "| [c1](.rddf/improvements/c1.md) | P1 | 2026-07-28 | guide-arch |",
+            "| [c2](.rddf/improvements/c2.md) | P2 | 2026-07-28 | guide-arch |",
         ]
         _write_approved(tmp_path, rows)
         (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
@@ -489,8 +489,8 @@ class TestBatchCreatePending:
     def test_skips_archived_entries(self, tmp_path):
         """batch_create_pending 跳过已归档 (archive/*-<name>) 的提案。"""
         rows = [
-            "| [c1](improvements/c1.md) | P1 | 2026-07-28 | guide-arch |",
-            "| [c2](improvements/c2.md) | P2 | 2026-07-28 | guide-arch |",
+            "| [c1](.rddf/improvements/c1.md) | P1 | 2026-07-28 | guide-arch |",
+            "| [c2](.rddf/improvements/c2.md) | P2 | 2026-07-28 | guide-arch |",
         ]
         _write_approved(tmp_path, rows)
         (tmp_path / "openspec" / "changes" / "archive" / "2026-07-27-c1").mkdir(parents=True)
@@ -499,7 +499,7 @@ class TestBatchCreatePending:
 
     def test_returns_empty_when_all_already_created(self, tmp_path):
         """全部已创建时返回空列表（完全幂等）。"""
-        rows = ["| [c1](improvements/c1.md) | P1 | 2026-07-28 | guide-arch |"]
+        rows = ["| [c1](.rddf/improvements/c1.md) | P1 | 2026-07-28 | guide-arch |"]
         _write_approved(tmp_path, rows)
         (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
         assert pc.batch_create_pending(str(tmp_path)) == []

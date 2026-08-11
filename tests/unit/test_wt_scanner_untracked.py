@@ -23,15 +23,17 @@ def _git_init(tmpdir: Path) -> None:
 
 
 def test_untracked_file_is_reported_info(tmp_path: Path) -> None:
+    """Untracked file in tracked dir is reported. .rddf/improvements/ is git-tracked,
+    so files there are reported (the dotfile filter targets .venv/.pytest_cache, etc.)."""
     _git_init(tmp_path)
-    (tmp_path / "improvements").mkdir()
-    (tmp_path / "improvements" / "foo.md").write_text("new\n" * 100)
+    (tmp_path / "proposals").mkdir()
+    (tmp_path / "proposals" / "foo.md").write_text("new\n" * 100)
 
     issues = _detect_working_tree_issues(str(tmp_path))
 
     assert len(issues) == 1
     assert issues[0].category == "untracked_file"
-    assert issues[0].path == "improvements/foo.md"
+    assert issues[0].path == "proposals/foo.md"
     assert issues[0].severity == "info"
 
 

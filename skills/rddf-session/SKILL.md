@@ -302,7 +302,7 @@ esac
   `ConflictError` when any other-kind session is active. Set
   `RDDF_ALLOW_CROSS_STAGE_PARALLEL=yes` to opt into legacy cross-stage
   parallelism.
-- **Owner identity** (3-layer fallback, see improvements/fix-rddf-session-owner-stability.md):
+- **Owner identity** (3-layer fallback, see .rddf/improvements/fix-rddf-session-owner-stability.md):
   1. `$OPENCODE_SESSION_ID` env var (highest priority — OpenCode platform injection)
   2. `~/.cache/rddf-session-owner` cache file (per-host, 0600, TTL 1h, cross-bash-call persistence)
   3. `/proc/<shell-ppid>/cmdline` probe (depth ≤5, accept iff cmdline contains "opencode")

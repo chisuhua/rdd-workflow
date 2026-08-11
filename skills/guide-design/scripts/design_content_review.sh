@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # skills/guide-design/scripts/design_content_review.sh
 #
-# Wrapper for design_content_review.py — improvements-layer content review.
+# Wrapper for design_content_review.py — .rddf/improvements-layer content review.
 # Oracle C1: env-var only passing, no string interpolation into python.
 #
 # Env vars:
-#   IMPROVEMENTS_PATH    path to improvements/<name>.md (required)
+#   IMPROVEMENTS_PATH    path to .rddf/improvements/<name>.md (required)
 #   STRICT_DESIGN_GATE   yes -> exit 1 on review errors (default: warning only)
 #   SKIP_CONTENT_REVIEW  yes -> bypass review entirely (default: no)
 #

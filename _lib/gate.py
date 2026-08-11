@@ -352,7 +352,7 @@ def _check_review_debt_recorded(ctx: dict) -> tuple[bool, Optional[str]]:
         ]
         if not new_todos:
             return (True, None)
-        imp_dir = "improvements"
+        imp_dir = ".rddf/improvements"
         if not os.path.isdir(imp_dir):
             return (False, "warning")
         import re as _re_debt

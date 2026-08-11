@@ -1,6 +1,6 @@
 """skills/guide-design/scripts/generate_full_proposal.py — D2 mapping.
 
-Reads improvements/<name>.md (5 sections: 架构依据 / 范围 / 关键场景 / 技术约束 / 验收标准)
+Reads .rddf/improvements/<name>.md (5 sections: 架构依据 / 范围 / 关键场景 / 技术约束 / 验收标准)
 plus head fields (阶段 / 分类 / 类型), emits a complete openspec proposal.md draft.
 
 D2 mapping:
@@ -20,7 +20,7 @@ _SECTION_RE = re.compile(r"^## (.+)$", re.MULTILINE)
 
 
 def validate_improvements_head(md: str) -> dict[str, str]:
-    """Extract 阶段/分类/类型 from improvements head.
+    """Extract 阶段/分类/类型 from .rddf/improvements head.
 
     Falls back to safe defaults when missing:
       阶段  -> default
@@ -94,7 +94,7 @@ def generate_full_proposal(change_name: str, improvements_md: str) -> str:
 
     Args:
         change_name: The change name (e.g. 'move-proposal-creation-to-design').
-        improvements_md: The full content of improvements/<name>.md.
+        improvements_md: The full content of .rddf/improvements/<name>.md.
 
     Returns:
         Complete markdown draft. The caller is expected to ask the user to
@@ -121,7 +121,7 @@ def generate_full_proposal(change_name: str, improvements_md: str) -> str:
     return (
         f"# {change_name}\n\n"
         f"## Why\n\n"
-        f"{why or '(TBD — 架构依据 from improvements 头部未提供)'}\n\n"
+        f"{why or '(TBD — 架构依据 from .rddf/improvements 头部未提供)'}\n\n"
         f"## What Changes\n\n"
         f"**In Scope**:\n\n"
         f"{in_scope_block}\n\n"
@@ -132,7 +132,7 @@ def generate_full_proposal(change_name: str, improvements_md: str) -> str:
         f"## Impact\n\n"
         f"{impact_block}\n\n"
         f"## Acceptance\n\n"
-        f"{acceptance or '- [ ] (TBD — 验收标准 from improvements 头部未提供)'}\n"
+        f"{acceptance or '- [ ] (TBD — 验收标准 from .rddf/improvements 头部未提供)'}\n"
     )
 
 

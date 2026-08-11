@@ -1,6 +1,6 @@
 """Tests for subagent_strategy module.
 
-Validates the decision matrix and quota probe logic per improvements/subagent-orchestrator-execution-strategy.md.
+Validates the decision matrix and quota probe logic per .rddf/improvements/subagent-orchestrator-execution-strategy.md.
 """
 import pytest
 from unittest.mock import patch, MagicMock

@@ -28,8 +28,8 @@ def test_only_approved_section(tmp_path: Path) -> None:
     p = _write(
         tmp_path,
         "## 已批准提案\n\n"
-        "| [alpha](improvements/alpha.md) | P1 | 2026-08-01 | arch |\n"
-        "| [beta](improvements/beta.md) | P2 | 2026-08-02 | arch |\n"
+        "| [alpha](.rddf/improvements/alpha.md) | P1 | 2026-08-01 | arch |\n"
+        "| [beta](.rddf/improvements/beta.md) | P2 | 2026-08-02 | arch |\n"
         "\n## 已实施\n",
     )
     assert parse_approved_proposals(str(p)) == ["alpha", "beta"]
@@ -40,8 +40,8 @@ def test_only_implemented_section(tmp_path: Path) -> None:
     p = _write(
         tmp_path,
         "## 已批准提案\n\n## 已实施\n\n"
-        "| [gamma](improvements/gamma.md) | P0 | 2026-08-07 | arch |\n"
-        "| [delta](improvements/delta.md) | P1 | 2026-08-06 | arch |\n",
+        "| [gamma](.rddf/improvements/gamma.md) | P0 | 2026-08-07 | arch |\n"
+        "| [delta](.rddf/improvements/delta.md) | P1 | 2026-08-06 | arch |\n",
     )
     assert parse_approved_proposals(str(p)) == ["gamma", "delta"]
 
@@ -51,10 +51,10 @@ def test_both_sections_dedup_keep_order(tmp_path: Path) -> None:
     p = _write(
         tmp_path,
         "## 已批准提案\n\n"
-        "| [alpha](improvements/alpha.md) | P1 | 2026-08-01 | arch |\n"
+        "| [alpha](.rddf/improvements/alpha.md) | P1 | 2026-08-01 | arch |\n"
         "\n## 已实施\n\n"
-        "| [alpha](improvements/alpha.md) | P1 | 2026-08-02 | arch |\n"
-        "| [beta](improvements/beta.md) | P2 | 2026-08-03 | arch |\n",
+        "| [alpha](.rddf/improvements/alpha.md) | P1 | 2026-08-02 | arch |\n"
+        "| [beta](.rddf/improvements/beta.md) | P2 | 2026-08-03 | arch |\n",
     )
     assert parse_approved_proposals(str(p)) == ["alpha", "beta"]
 
@@ -80,8 +80,8 @@ def test_cli_guard_prints_one_name_per_line(tmp_path: Path) -> None:
     p = _write(
         tmp_path,
         "## 已实施\n\n"
-        "| [gamma](improvements/gamma.md) | P0 | 2026-08-07 | arch |\n"
-        "| [delta](improvements/delta.md) | P1 | 2026-08-06 | arch |\n",
+        "| [gamma](.rddf/improvements/gamma.md) | P0 | 2026-08-07 | arch |\n"
+        "| [delta](.rddf/improvements/delta.md) | P1 | 2026-08-06 | arch |\n",
     )
     repo_root = Path(__file__).resolve().parents[2]
     helper = repo_root / "_lib" / "parse_approved.py"

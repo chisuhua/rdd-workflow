@@ -1,7 +1,7 @@
 """Shared read-only data layer for all CLI subcommands.
 
 This module provides 8 fine-grained functions that each read from a
-specific state source (``.rddf/state/*.json``, ``improvements/*.md + proposal-approved.md``,
+specific state source (``.rddf/state/*.json``, `<a href=".rddf/improvements/*.md + proposal-approved.md``,
 ``git worktree list``, ``openspec/changes/``). All functions are strictly
 read-only: they never write, backup, or mutate any file. All return
 ``None`` (or ``[]`` for list-returning functions) for missing or corrupt
@@ -270,12 +270,12 @@ def list_change_dirs(project_root: str) -> list[str]:
 
 
 def read_improvement_entries(project_root: str) -> list[dict]:
-    """Read all improvement files from improvements/ directory.
+    """Read all improvement files from .rddf/improvements/ directory.
     
     Returns list of dicts with keys: name, priority, source, phase, category, type.
     """
     import re
-    imp_dir = os.path.join(project_root, "improvements")
+    imp_dir = os.path.join(project_root, ".rddf/improvements")
     if not os.path.isdir(imp_dir):
         return []
     

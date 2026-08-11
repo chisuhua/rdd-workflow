@@ -5,7 +5,7 @@
 # openspec/changes/add-proposal-how-leakage-warning/tasks.md).
 #
 # Verifies:
-#   - improvements-layer review emits [HOW-LEAKAGE-WARN] prefix when
+#   - .rddf/improvements-layer review emits [HOW-LEAKAGE-WARN] prefix when
 #     heuristic signals fire (multi-signal rule per design).
 #   - openspec proposal-layer review emits the same prefix.
 #   - Both layers share the WarningRecord format (signal/section/etc).
@@ -104,9 +104,9 @@ EOF
     esac
 }
 
-# --- improvements-layer test ---
+# --- .rddf/improvements-layer test ---
 
-@test "improvements-layer: heavy HOW emits [HOW-LEAKAGE-WARN]" {
+@test ".rddf/improvements-layer: heavy HOW emits [HOW-LEAKAGE-WARN]" {
     local sample="$TMPDIR/improvement.md"
     write_sample_md "$sample" "heavy_how"
     export IMPROVEMENTS_PATH="$sample"
@@ -118,7 +118,7 @@ EOF
     [[ "$output" == *"[HOW-LEAKAGE-WARN]"* ]]
 }
 
-@test "improvements-layer: clean proposal does NOT emit [HOW-LEAKAGE-WARN]" {
+@test ".rddf/improvements-layer: clean proposal does NOT emit [HOW-LEAKAGE-WARN]" {
     local sample="$TMPDIR/improvement.md"
     write_sample_md "$sample" "clean"
     export IMPROVEMENTS_PATH="$sample"
@@ -130,7 +130,7 @@ EOF
     [[ "$output" != *"[HOW-LEAKAGE-WARN]"* ]]
 }
 
-@test "improvements-layer: HOW warning does NOT block even with STRICT_DESIGN_GATE=yes (warning-only design)" {
+@test ".rddf/improvements-layer: HOW warning does NOT block even with STRICT_DESIGN_GATE=yes (warning-only design)" {
     # Per design decision 2: HOW-leakage is warning-only. STRICT_DESIGN_GATE
     # may block STRUCTURAL errors but HOW-leakage warnings remain advisory.
     # (Existing STRICT_DESIGN_GATE behavior blocks structural errors; the

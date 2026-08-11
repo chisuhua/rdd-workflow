@@ -1,6 +1,6 @@
 """Tests for plan quality validation module.
 
-Per improvements/plan-quality-and-validation.md:
+Per .rddf/improvements/plan-quality-and-validation.md:
 - Plan quality checklist (BASH_SOURCE guards, fixture paths, expected counts)
 - Auto-guard generation for script templates
 - Dry-run validation

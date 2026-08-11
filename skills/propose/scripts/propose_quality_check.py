@@ -29,7 +29,7 @@ import sys
 from pathlib import Path
 from typing import List
 
-# HOW-leakage detector (improvements/proposal shared layer).
+# HOW-leakage detector (.rddf/improvements/proposal shared layer).
 # Lives at top-level _lib/ per codebase convention; see shim in
 # skills/_lib/__init__.py for the backward-compat alias.
 _HERE = Path(__file__).resolve().parent
@@ -201,7 +201,7 @@ def run_design_checks(name: str, project_root: str) -> List[str]:
     HOW-leakage is appended as a non-blocking warning with the
     "[HOW-LEAKAGE-WARN]" prefix so callers can distinguish it from the
     structural warnings above. Same WarningRecord format as the
-    improvements-layer review (skills/guide-design/scripts/design_content_review.py).
+    .rddf/improvements-layer review (skills/guide-design/scripts/design_content_review.py).
 
     Returns list of warning strings (empty == pass).
     """

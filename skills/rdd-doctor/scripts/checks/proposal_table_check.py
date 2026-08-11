@@ -64,14 +64,14 @@ def run(project_root: Path | None = None) -> List[Finding]:
                     snippet=f"row has {cols} columns, expected {expected_cols}",
                     fix_hint="add/remove columns to match expected schema",
                 ))
-            if link_target.startswith("improvements/") and not (project_root / link_target).is_file():
+            if link_target.startswith(".rddf/improvements/") and not (project_root / link_target).is_file():
                 findings.append(Finding(
                     severity=Severity.WARNING,
                     category="proposal-table",
                     file=fname,
                     line=line_no,
                     snippet=f"broken link to {link_target}",
-                    fix_hint="verify the improvements file exists or remove this row",
+                    fix_hint="verify the .rddf/improvements file exists or remove this row",
                 ))
 
     return findings

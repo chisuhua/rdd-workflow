@@ -71,7 +71,7 @@ docs/v2-workflow-overview.md
 Run:
 ```bash
 cd /workspace/project/rdd-workflow
-git status --porcelain | grep -v 'docs/superpowers/specs/2026-08-07-docs-restructure-architecture-snapshots-design.md' | grep -v 'proposal-suggestions.md' | grep -v '_lib/parse_approved.py' | grep -v 'improvements/add-rdd-doctor-skill.md'
+git status --porcelain | grep -v 'docs/superpowers/specs/2026-08-07-docs-restructure-architecture-snapshots-design.md' | grep -v 'proposal-suggestions.md' | grep -v '_lib/parse_approved.py' | grep -v '.rddf/improvements/add-rdd-doctor-skill.md'
 ```
 Expected: empty. If not empty, the user's prior in-progress work conflicts — STOP and ask the user how to proceed.
 
@@ -979,7 +979,7 @@ Each phase:
 **Inputs**: `proposal-suggestions.md`, `proposal-approved.md`, current `roadmap-meta.yaml` files for context.
 
 **Outputs**:
-- New `improvements/<name>.md` files.
+- New `.rddf/improvements/<name>.md` files.
 - Updated `proposal-suggestions.md` / `proposal-approved.md`.
 - `.rddf/state/.design-handoff.json`.
 

@@ -30,7 +30,7 @@ def parse_proposal_metadata(content: str) -> Dict[str, Any]:
     if feature_match:
         result["feature"] = feature_match.group(1)
 
-    auto_refs = re.findall(r'improvements/([a-z0-9-]+)\.md', content)
+    auto_refs = re.findall(r'.rddf/improvements/([a-z0-9-]+)\.md', content)
     result["auto_detected"] = list(set(auto_refs))
 
     return result

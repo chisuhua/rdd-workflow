@@ -12,7 +12,7 @@ v2.1 四阶段架构（arch → design → plan → ship）落地后，`guide-de
 无内容审查、不触碰 openspec，审批与 change 实体创建脱节。
 
 与此同时，openspec proposal 的实质内容在 design 审批时已全部具备：
-`improvements/<name>.md` 的 5 段（架构依据/范围/关键场景/技术约束/验收标准）经 brainstorm 逐段确认，
+`.rddf/improvements/<name>.md` 的 5 段（架构依据/范围/关键场景/技术约束/验收标准）经 brainstorm 逐段确认，
 信息量足以转换为完整 openspec `proposal.md`（Why / What Changes / Capabilities / Impact）。
 
 当前流程把 improvements 5 段降级为占位骨架（`<skeleton motivation>`），到 plan 阶段才填实。
@@ -67,7 +67,7 @@ plan_done 既有 5 项行为不变。
 
 ### D6 — 元数据来源优先级
 
-`improvements/<name>.md` 头部 > 批准时用户输入 > fallback（default/general + warning）。
+`.rddf/improvements/<name>.md` 头部 > 批准时用户输入 > fallback（default/general + warning）。
 `create_skeleton_change` 骨架分支也补 `change_type` 字段。
 
 ### 配套改动

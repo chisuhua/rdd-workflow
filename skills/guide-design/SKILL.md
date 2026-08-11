@@ -15,7 +15,7 @@ metadata:
 本技能是 rdd-workflow 工作流 v2.1 的 **design 端状态机**：负责在构架定义之后、变更生成之前的设计管理工作——创建改进提案、审查未审批提案、批准/拒绝/延迟决策、设计完成交接。design 阶段是三阶段架构（arch → design → plan → ship）的第二阶段，专为中介入、提案管理而设计。
 
 **职责边界**：
-- **拥有**：`improvements/<name>.md`（提案文件）、`proposal-suggestions.md`（提案池索引）、`proposal-approved.md`（已批准提案索引，与 guide-plan 共享读取）
+- **拥有**：<a href=".rddf/improvements/<name>.md`（提案文件）、`proposal-suggestions.md`（提案池索引）、`proposal-approved.md`（已批准提案索引，与 guide-plan 共享读取）
 - **不拥有**：`docs/adr/ADR-*.md`（属于 `guide-arch`）、`openspec/changes/<name>`（属于 `guide-plan`）、git worktree（属于 `guide-ship`）
 - **状态持久化**：design-done 时写入 `.rddf/state/.design-handoff.json`（不被 git 跟踪，plan 端硬依赖）
 - **人工介入程度**：**中** —— design 阶段 AI 辅助提案审查，用户做决策（批准/拒绝/延迟）
@@ -163,12 +163,12 @@ approve_proposal.sh 在落盘前提供以下两步编排：
 
 #### Step 1: 生成 proposal.md 草稿
 ```bash
-CHANGE_NAME="<name>" IMPROVEMENTS_PATH="$PROJECT_ROOT/improvements/<name>.md" \
+CHANGE_NAME="<name>" IMPROVEMENTS_PATH="$PROJECT_ROOT/.rddf/improvements/<name>.md" \
     python3 "$PROJECT_ROOT/skills/guide-design/scripts/generate_full_proposal.py" \
     > /tmp/proposal-draft.md
 ```
 
-`generate_full_proposal.py` 按 D2 映射将 improvements 5 段转换：
+`generate_full_proposal.py` 按 D2 映射将 .rddf/improvements 5 段转换：
 - 架构依据 → ## Why
 - 范围 + 关键场景 → ## What Changes (In/Out Scope)
 - 技术约束 → ## Capabilities / ## Impact
@@ -191,7 +191,7 @@ on `y`：
 # 由 approve_proposal.sh 完成（无需手动调用）
 # - mkdir openspec/changes/<name>/
 # - .openspec.yaml + proposal.md (full version)
-# - roadmap-meta.yaml (含 change_type, 从 improvements head 解析)
+# - roadmap-meta.yaml (含 change_type, 从 .rddf/improvements head 解析)
 # - iteration.json (status=planned, idempotent)
 # 检查人工 hook: DESIGN_PROPOSAL_AUTO_ACCEPT=no 时(y/N 需手工回答)
 ```
@@ -200,7 +200,7 @@ on `y`：
 若 `SKIP_DESIGN_HANDOFF=yes` 既存路径:跳过创建，留给 plan 阶段处理。
 
 design 两层内容审查（warning 默认）:
-- improvements 层: `skills/guide-design/scripts/design_content_review.sh`
+- .rddf/improvements 层: `skills/guide-design/scripts/design_content_review.sh`
 - openspec proposal 层: `skills/propose/scripts/propose_quality_check.py::run_design_checks`
   (D5:仅 3 项 proposal-level 检查,不含 tasks/roadmap)
 

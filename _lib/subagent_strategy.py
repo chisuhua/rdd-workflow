@@ -1,6 +1,6 @@
 """Subagent orchestrator execution strategy.
 
-Per improvements/subagent-orchestrator-execution-strategy.md:
+Per .rddf/improvements/subagent-orchestrator-execution-strategy.md:
 - Probe subagent quota before parallel dispatch
 - Decision matrix based on task type and quota status
 - Auto-fallback to orchestrator direct execution on quota errors

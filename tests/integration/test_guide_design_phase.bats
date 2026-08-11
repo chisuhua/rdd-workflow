@@ -6,7 +6,7 @@ load ../test_helper
 setup() {
   export PROJECT_ROOT="$BATS_TMPDIR/design-test-$$"
   mkdir -p "$PROJECT_ROOT/.rddf/state"
-  mkdir -p "$PROJECT_ROOT/improvements"
+  mkdir -p "$PROJECT_ROOT/.rddf/improvements"
   mkdir -p "$PROJECT_ROOT/skills/guide-design"
 }
 
