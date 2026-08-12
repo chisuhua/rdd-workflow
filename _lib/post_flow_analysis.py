@@ -11,6 +11,7 @@ report_flow_bug writes a local issue file only for flow-bug classifications.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -444,3 +445,82 @@ def _main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(_main(sys.argv[1:]))
+
+
+def analyze_phase_trace(
+    trace_path: Path,
+    project_root: str = ".",
+) -> Optional[Classification]:
+    """Classify a complete phase trace and return a Classification.
+
+    Reads all subprocess events from ``trace_path`` and synthesizes a
+    ``PhaseOutcome`` for the first failing subprocess. Returns None
+    if all subprocesses returned 0 (success path).
+
+    For multi-step cumulative failures (B3), detects the pattern where
+    multiple subprocesses returned 0 but stderr mentions "invalid state"
+    or similar markers, and reports as ``flow-bug`` / ``F2``.
+    """
+    events = _read_trace_events(trace_path)
+    subprocess_events = [e for e in events if e.get("type") == "subprocess"]
+    if not subprocess_events:
+        return None
+
+    for event in subprocess_events:
+        if event.get("returncode", 0) != 0:
+            outcome = _outcome_from_event(event, project_root)
+            return classify_phase_outcome(
+                phase=os.environ.get("RDDF_PHASE", "unknown"),
+                outcome=outcome,
+            )
+
+    text_blob = " ".join(
+        e.get("stderr_tail", "") for e in subprocess_events
+    )
+    if re.search(
+        r"(invalid state|unexpected (status|phase)|状态机|state machine)",
+        text_blob,
+        re.I,
+    ):
+        return Classification(
+            root_cause=ROOT_CAUSE_FLOW,
+            report_category=REPORT_CATEGORY_GATE,
+            matched_rule="F2-cumulative",
+            description="cumulative failure: state machine violation across multiple zero-exit steps",
+            metadata={"phase": "trace", "matched_rule": "F2-cumulative"},
+            should_report=True,
+            user_hint=USER_HINTS.get(ROOT_CAUSE_FLOW, ""),
+        )
+
+    return None
+
+
+def _read_trace_events(trace_path: Path) -> list[dict]:
+    """Read events from a JSONL trace file. Tolerates missing/malformed lines."""
+    events: list[dict] = []
+    if not trace_path.is_file():
+        return events
+    try:
+        with open(trace_path, encoding="utf-8") as fh:
+            for raw in fh:
+                raw = raw.strip()
+                if not raw:
+                    continue
+                try:
+                    events.append(json.loads(raw))
+                except json.JSONDecodeError:
+                    continue
+    except OSError:
+        pass
+    return events
+
+
+def _outcome_from_event(event: dict, project_root: str) -> PhaseOutcome:
+    """Convert a subprocess trace event into a PhaseOutcome for classification."""
+    return PhaseOutcome(
+        phase=os.environ.get("RDDF_PHASE", "unknown"),
+        exit_code=event.get("returncode", 0),
+        stderr=event.get("stderr_tail", ""),
+        stdout_tail=event.get("stdout_tail", ""),
+        traceback="",
+    )

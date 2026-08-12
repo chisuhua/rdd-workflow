@@ -350,3 +350,54 @@ def test_report_flow_bug_auto_submits_when_enabled(tmp_path, monkeypatch):
     # Verify gh CLI was called with the right label set
     gh_calls = [c for c in m.call_args_list if "issue" in str(c) and "create" in str(c)]
     assert any("auto-reported" in str(c) and "phase-crash" in str(c) and "needs-triage" in str(c) for c in gh_calls)
+
+
+def test_analyze_phase_trace_classifies_single_failure(tmp_path):
+    """A trace with one non-zero subprocess is classified as flow-bug."""
+    from post_flow_analysis import analyze_phase_trace, Classification
+    trace = tmp_path / "guide-arch-ses_x-1-100-aaaaaaaa.jsonl"
+    trace.write_text(
+        '{"ts":"2026-08-12T10:00:00Z","type":"subprocess",'
+        '"cmd":["arch_done_gate.sh"],"returncode":1,'
+        '"stderr_tail":"Traceback in skills/guide-arch/scripts/foo.py","stdout_tail":""}\n'
+    )
+    cls = analyze_phase_trace(trace_path=trace, project_root=str(tmp_path))
+    assert isinstance(cls, Classification)
+    assert cls.should_report is True
+
+
+def test_analyze_phase_trace_returns_none_for_clean_trace(tmp_path):
+    """A trace with all-zero subprocesses returns None."""
+    from post_flow_analysis import analyze_phase_trace
+    trace = tmp_path / "guide-arch-ses_x-1-100-bbbbbbbb.jsonl"
+    trace.write_text(
+        '{"ts":"2026-08-12T10:00:00Z","type":"subprocess","cmd":["echo"],"returncode":0,"stderr_tail":"","stdout_tail":""}\n'
+    )
+    cls = analyze_phase_trace(trace_path=trace, project_root=str(tmp_path))
+    assert cls is None
+
+
+def test_analyze_phase_trace_cumulative_failure_detected(tmp_path):
+    """Multiple zero-exit subprocesses + 'invalid state' in stderr → F2 cumulative."""
+    from post_flow_analysis import analyze_phase_trace
+    trace = tmp_path / "guide-arch-ses_x-1-100-cccccccc.jsonl"
+    trace.write_text(
+        '{"ts":"2026-08-12T10:00:00Z","type":"subprocess","cmd":["setup.sh"],"returncode":0,"stderr_tail":"","stdout_tail":""}\n'
+        '{"ts":"2026-08-12T10:00:01Z","type":"subprocess","cmd":["build.sh"],"returncode":0,"stderr_tail":"","stdout_tail":""}\n'
+        '{"ts":"2026-08-12T10:00:02Z","type":"subprocess","cmd":["deploy.sh"],"returncode":0,"stderr_tail":"Error: invalid state in registry","stdout_tail":""}\n'
+    )
+    cls = analyze_phase_trace(trace_path=trace, project_root=str(tmp_path))
+    assert cls is not None
+    assert cls.matched_rule == "F2-cumulative"
+    assert cls.should_report is True
+
+
+def test_analyze_phase_trace_ignores_irrelevant_text(tmp_path):
+    """Zero-exit subprocesses with benign stderr → returns None."""
+    from post_flow_analysis import analyze_phase_trace
+    trace = tmp_path / "guide-arch-ses_x-1-100-dddddddd.jsonl"
+    trace.write_text(
+        '{"ts":"2026-08-12T10:00:00Z","type":"subprocess","cmd":["echo"],"returncode":0,"stderr_tail":"warning: deprecated","stdout_tail":""}\n'
+    )
+    cls = analyze_phase_trace(trace_path=trace, project_root=str(tmp_path))
+    assert cls is None
