@@ -233,6 +233,11 @@ archive_change_for_mode() {
       return 1
     fi
 
+    # ADR-0027 close hook: auto-close linked GitHub issues (lightweight mode).
+    # Mirrors _lib/archive.sh::archive_change worktree-mode integration.
+    # Failure-tolerant — archive main flow already succeeded, hook is best-effort.
+    close_issues_for_change_hook "$change_name" "$project_root" || true
+
     # Auto-commit archive file moves (failure-tolerant)
     commit_archive_moves "$change_name" "$project_root" || true
 
