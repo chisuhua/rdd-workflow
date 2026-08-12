@@ -175,9 +175,107 @@ def _find_open_trace(trace_dir: Path, phase: str) -> Optional[Path]:
     return None
 
 
-def _handle_subprocess(cmd: list[str], trace_dir: Path) -> int:
-    """Placeholder — filled in Task 3."""
-    raise NotImplementedError("filled in Task 3")
+def _tail_file(path: Path, n: int) -> str:
+    """Return the last ``n`` bytes of a file, decoded as utf-8."""
+    try:
+        size = path.stat().st_size
+        with open(path, "rb") as fh:
+            if size <= n:
+                return fh.read().decode("utf-8", errors="replace")
+            fh.seek(size - n)
+            return fh.read().decode("utf-8", errors="replace")
+    except OSError:
+        return ""
+
+
+def _handle_subprocess(
+    cmd: list[str],
+    trace_dir: Path,
+    timeout: Optional[int] = None,
+) -> int:
+    """Run a subprocess and record its result to a new trace.
+
+    Args:
+        cmd: argv list (no shell). First call per phase entry also
+            triggers a stale-trace sweep.
+        trace_dir: target directory for the trace file.
+        timeout: seconds before subprocess.TimeoutExpired. Defaults to
+            ``RDDF_ORCHESTRATE_TIMEOUT`` env var or 600.
+
+    Returns:
+        The subprocess return code (timeout → 124).
+    """
+    from skills._lib.loop.sanitizer import sanitize
+
+    if timeout is None:
+        timeout = int(os.environ.get("RDDF_ORCHESTRATE_TIMEOUT", "600"))
+
+    _handle_sweep(trace_dir)
+
+    phase = os.environ.get("RDDF_PHASE", "unknown")
+    trace = _open_trace(phase=phase)
+
+    rc = 124
+    stdout_tail = ""
+    stderr_tail = ""
+    duration_ms = 0
+    timed_out = False
+
+    stdout_tmp = tempfile.NamedTemporaryFile(
+        mode="w", delete=False, suffix=".out", encoding="utf-8"
+    )
+    stderr_tmp = tempfile.NamedTemporaryFile(
+        mode="w", delete=False, suffix=".err", encoding="utf-8"
+    )
+    started = time.monotonic()
+    try:
+        proc = subprocess.run(
+            cmd,
+            shell=False,
+            stdout=stdout_tmp,
+            stderr=stderr_tmp,
+            timeout=timeout,
+        )
+        rc = proc.returncode
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        rc = 124
+    finally:
+        duration_ms = int((time.monotonic() - started) * 1000)
+        stdout_tmp.close()
+        stderr_tmp.close()
+
+    try:
+        stdout_tail = _tail_file(Path(stdout_tmp.name), n=4096)
+        stderr_tail = _tail_file(Path(stderr_tmp.name), n=4096)
+        try:
+            stdout_tail = sanitize(stdout_tail).sanitized_text
+        except Exception as e:
+            print(f"warning: sanitizer failed on stdout: {e}", file=sys.stderr)
+            stdout_tail = stdout_tail[:4096]
+        try:
+            stderr_tail = sanitize(stderr_tail).sanitized_text
+        except Exception as e:
+            print(f"warning: sanitizer failed on stderr: {e}", file=sys.stderr)
+            stderr_tail = stderr_tail[:4096]
+    finally:
+        os.unlink(stdout_tmp.name)
+        os.unlink(stderr_tmp.name)
+
+    _append_event(
+        trace,
+        {
+            "type": "subprocess",
+            "cmd": cmd,
+            "returncode": rc,
+            "stdout_tail": stdout_tail,
+            "stderr_tail": stderr_tail,
+            "duration_ms": duration_ms,
+            "timeout": timed_out,
+        },
+    )
+    trace.close()
+    return rc
 
 
 def _handle_checkpoint(name: str, state_marker: str, trace_dir: Path) -> int:
@@ -191,5 +289,5 @@ def _handle_finalize(trace_dir: Path) -> int:
 
 
 def _handle_sweep(trace_dir: Path) -> int:
-    """Placeholder — filled in Task 10."""
-    raise NotImplementedError("filled in Task 10")
+    """Sweep trace dir for stale unfinalized traces. Filled in Task 10."""
+    return 0

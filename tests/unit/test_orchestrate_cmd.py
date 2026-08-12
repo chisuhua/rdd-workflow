@@ -18,8 +18,10 @@ from orchestrate_cmd import (  # noqa: E402
     _get_session_id,
     _get_trace_dir,
     _get_trace_path,
+    _handle_subprocess,
     _open_trace,
     _read_events,
+    _tail_file,
 )
 
 
@@ -113,3 +115,53 @@ def test_get_session_id_reads_from_env(monkeypatch, tmp_path):
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
     monkeypatch.setenv("RDDF_OPENCODE_SESSION_ID", "ses_from_env")
     assert _get_session_id() == "ses_from_env"
+
+
+def test_tail_file_returns_whole_file_when_small(tmp_path):
+    p = tmp_path / "small.txt"
+    p.write_text("hello world")
+    assert _tail_file(p, n=4096) == "hello world"
+
+
+def test_tail_file_truncates_large_file(tmp_path):
+    p = tmp_path / "large.txt"
+    p.write_text("x" * 10000)
+    result = _tail_file(p, n=100)
+    assert len(result.encode("utf-8")) == 100
+
+
+def test_handle_subprocess_runs_command_and_records(monkeypatch, tmp_path):
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setenv("RDDF_PHASE", "int-test")
+    rc = _handle_subprocess(["echo", "hello"], trace_dir=tmp_path)
+    assert rc == 0
+    traces = list(tmp_path.glob("*.jsonl"))
+    assert len(traces) == 1
+    events = _read_events(traces[0])
+    assert len(events) == 1
+    assert events[0]["type"] == "subprocess"
+    assert events[0]["cmd"] == ["echo", "hello"]
+    assert events[0]["returncode"] == 0
+    assert "hello" in events[0]["stdout_tail"]
+
+
+def test_handle_subprocess_swallows_timeout(monkeypatch, tmp_path):
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    monkeypatch.setenv("RDDF_PHASE", "int-test")
+    rc = _handle_subprocess(["sleep", "10"], trace_dir=tmp_path, timeout=1)
+    assert rc == 124
+    events = _read_events(list(tmp_path.glob("*.jsonl"))[0])
+    assert events[0]["timeout"] is True
+
+
+def test_handle_subprocess_sanitizes_output(monkeypatch, tmp_path):
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    monkeypatch.setenv("RDDF_PHASE", "int-test")
+    rc = _handle_subprocess(
+        ["sh", "-c", "echo AWS_SECRET_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE"],
+        trace_dir=tmp_path,
+    )
+    assert rc == 0
+    events = _read_events(list(tmp_path.glob("*.jsonl"))[0])
+    assert "AKIAIOSFODNN7EXAMPLE" not in events[0]["stdout_tail"]
