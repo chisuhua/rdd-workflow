@@ -38,6 +38,11 @@ post_flow_on_err() {
     [ "$code" -eq 130 ] && return 0  # SIGINT
     [ "$code" -eq 143 ] && return 0  # SIGTERM
 
+    # Single-writer rule (spec 2026-08-12 §7): defer to orchestrator.
+    if [ "${RDDF_USE_ORCHESTRATOR:-no}" = "yes" ]; then
+        return 0
+    fi
+
     # Best-effort: find a stderr log. Prefer the env var; fall back to /dev/null.
     local err_log="${RDDF_ERR_LOG:-/dev/null}"
     [ -f "$err_log" ] || err_log="/dev/null"
