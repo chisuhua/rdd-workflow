@@ -11,6 +11,7 @@
 .rddf/wt/
 .rddf/detectors/
 .rddf/actions/
+.rddf/issues/
 
 # Legacy .spec-workflow/ runtime state (migrated to .rddf/ in v2.0)
 .spec-workflow/

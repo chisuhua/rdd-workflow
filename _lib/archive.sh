@@ -342,6 +342,9 @@ archive_change() {
     return 1
   fi
 
+  # 6.5 Close linked GitHub issues (ADR-0027 change-b). Failure-tolerant.
+  close_issues_for_change_hook "$name" "$main_root" || true
+
   # 7. Cleanup worktree + branch
   cleanup_worktree_and_branch "$name" "$main_root" "$wt_path" "$branch" || return 1
 
@@ -561,5 +564,42 @@ commit_archive_moves() {
   fi
 
   echo "✅ commit_archive_moves: archive(${name}) committed"
+  return 0
+}
+
+# close_issues_for_change_hook <name> <main_root>
+#   ADR-0027 change-b: invoke the close hook after openspec archive succeeds.
+#   Failure-tolerant by contract (the archive main flow already passed; the
+#   hook only reports + auto-closes linked GitHub issues, never blocks it).
+#   Returns 0 always so the `|| true` call site stays sound.
+close_issues_for_change_hook() {
+  local name="${1:-}" main_root="${2:-}"
+  [[ -z "$name" || -z "$main_root" ]] && return 0
+
+  if [ "${RDDF_REPORT_CLOSE_ON_ARCHIVE:-yes}" = "no" ]; then
+    return 0
+  fi
+
+  local py_dir
+  py_dir="$(cd "$main_root" && pwd)"
+  if ! RDDF_NEW_VERSION="${RDD_NEW_VERSION:-next}" \
+       python3 -c "
+import sys
+sys.path.insert(0, '${py_dir}/_lib')
+from close_issues import close_issues_for_change
+result = close_issues_for_change('${name}', '${py_dir}')
+if result.closed:
+    print(f'✅ closed {len(result.closed)} issue(s): {result.closed}')
+if result.skipped:
+    print(f'⏭  skipped (already closed): {result.skipped}')
+if result.manual_links:
+    for ref, url in result.manual_links:
+        print(f'ℹ️  no push permission — close manually: {url}')
+if result.errors:
+    for err in result.errors:
+        print(f'⚠️  {err}', file=sys.stderr)
+" 2>/dev/null; then
+    echo "⚠️  close_issues_for_change_hook: python invocation failed (non-blocking)"
+  fi
   return 0
 }
