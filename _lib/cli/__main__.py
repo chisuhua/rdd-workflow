@@ -173,6 +173,7 @@ def _print_help() -> None:
     print("  feature      Feature grouping (summary, graph, status, order)")
     print("  guide        Project state scan + recommendation (guide-arch/guide-plan/guide-ship)")
     print("  init [tgt]   Install rdd-workflow to target's .opencode/skills/")
+    print("  migrate-improvements  Move legacy improvements/ → .rddf/improvements/")
     print("  iteration    Validate iteration.json (lint, allowed-fields)")
     print("  l2-trend     L2 violation count trend for archived changes")
     print("  monitor      Live monitor (--watch=<sec>)")

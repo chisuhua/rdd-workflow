@@ -27,14 +27,14 @@ a `## ` header:
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [fix-silent-exception](.rddf/.rddf/improvements/fix-silent-exception.md) | P0 | 2026-07-23 | guide-arch |
-| [add-config-validation](.rddf/.rddf/improvements/add-config-validation.md) | P0 | 2026-07-23 | guide-arch |
+| [fix-silent-exception](.rddf/improvements/fix-silent-exception.md) | P0 | 2026-07-23 | guide-arch |
+| [add-config-validation](.rddf/improvements/add-config-validation.md) | P0 | 2026-07-23 | guide-arch |
 
 ## 已实施
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
-| [remove-ci-redundant-bats](.rddf/.rddf/improvements/remove-ci-redundant-bats.md) | P1 | 2026-07-20 |
+| [remove-ci-redundant-bats](.rddf/improvements/remove-ci-redundant-bats.md) | P1 | 2026-07-20 |
 ```
 
 ### Section: `## 已批准提案`
@@ -43,7 +43,7 @@ Table columns:
 
 | Column     | Format                              | Description                                                |
 |------------|-------------------------------------|------------------------------------------------------------|
-| 提案       | `[name](.rddf/.rddf/improvements/name.md)`      | Markdown link to the improvement file. The link text is the proposal name (kebab-case). |
+| 提案       | `[name](.rddf/improvements/name.md)`      | Markdown link to the improvement file. The link text is the proposal name (kebab-case). |
 | 优先级     | `P0` / `P1` / `P2`                 | Priority level, copied from the improvement file metadata. |
 | 批准时间   | `YYYY-MM-DD`                        | UTC date when `guide-arch` approved the proposal.          |
 | 批准者     | Free-form string (e.g. `guide-arch`) | Who/what approved the proposal.                            |
@@ -54,7 +54,7 @@ Table columns:
 
 | Column     | Format                              | Description                                                |
 |------------|-------------------------------------|------------------------------------------------------------|
-| 提案       | `[name](.rddf/.rddf/improvements/name.md)`      | Same link format as the approved section.                  |
+| 提案       | `[name](.rddf/improvements/name.md)`      | Same link format as the approved section.                  |
 | 优先级     | `P0` / `P1` / `P2`                 | Priority level (preserved from approved section).          |
 | 完成时间   | `YYYY-MM-DD`                        | UTC date when the change was archived.                     |
 

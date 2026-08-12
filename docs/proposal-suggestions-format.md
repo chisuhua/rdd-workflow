@@ -25,15 +25,15 @@ the full proposal content — that lives in `.rddf/improvements/<name>.md`.
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [fix-silent-exception](.rddf/.rddf/improvements/fix-silent-exception.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 | 待讨论 |
-| [add-config-validation](.rddf/.rddf/improvements/add-config-validation.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 | 待讨论 |
+| [fix-silent-exception](.rddf/improvements/fix-silent-exception.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 | 待讨论 |
+| [add-config-validation](.rddf/improvements/add-config-validation.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 | 待讨论 |
 ```
 
 ### Table columns
 
 | Column     | Format                              | Description                                                |
 |------------|-------------------------------------|------------------------------------------------------------|
-| 提案       | `[name](.rddf/.rddf/improvements/name.md)`      | Markdown link to the improvement file. The link text is the proposal name (kebab-case). |
+| 提案       | `[name](.rddf/improvements/name.md)`      | Markdown link to the improvement file. The link text is the proposal name (kebab-case). |
 | 优先级     | `P0` / `P1` / `P2`                 | Priority level, copied from the improvement file metadata. |
 | 来源       | Free-form string                    | Where the proposal came from (e.g. `Oracle 审查`, `复盘改进`). |
 | 添加时间   | `YYYY-MM-DD`                        | UTC date when the proposal was added to the pool.          |
