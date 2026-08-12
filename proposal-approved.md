@@ -11,6 +11,7 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|----------|
+| [sync-changelog-unreleased](improvements/sync-changelog-unreleased.md) | P1 | 2026-08-13 | manual-approval (dogfooding) |
 
 > **依赖声明 (2026-08-05 design-done)**: 本批 7 项提案 (本次批准) 形成强依赖链, 计划按下列顺序实施:
 > 1. **`fix-archive-iteration-sync`** (P0) — first: 定义 `sync_iteration_after_archive` helper, 装到 `archive.sh::archive_change()` + `archive_on_main.sh` + `rddf status --archive` 3 个入口

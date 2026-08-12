@@ -8,5 +8,6 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
+| [sync-changelog-unreleased](improvements/sync-changelog-unreleased.md) | P1 | 自检 (git log vs CHANGELOG drift) | 2026-08-13 | 待创建 |
 
 
