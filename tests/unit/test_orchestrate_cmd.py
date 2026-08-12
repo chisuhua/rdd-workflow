@@ -18,6 +18,8 @@ from orchestrate_cmd import (  # noqa: E402
     _get_session_id,
     _get_trace_dir,
     _get_trace_path,
+    _handle_checkpoint,
+    _handle_finalize,
     _handle_subprocess,
     _open_trace,
     _read_events,
@@ -165,3 +167,46 @@ def test_handle_subprocess_sanitizes_output(monkeypatch, tmp_path):
     assert rc == 0
     events = _read_events(list(tmp_path.glob("*.jsonl"))[0])
     assert "AKIAIOSFODNN7EXAMPLE" not in events[0]["stdout_tail"]
+
+
+def test_handle_checkpoint_appends_event(tmp_path, monkeypatch):
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    monkeypatch.setenv("RDDF_PHASE", "guide-plan")
+    rc = _handle_checkpoint(
+        name="after-setup",
+        state_marker="phase_started",
+        trace_dir=tmp_path,
+    )
+    assert rc == 0
+    traces = list(tmp_path.glob("*.jsonl"))
+    assert len(traces) == 1
+    events = _read_events(traces[0])
+    assert events[0]["type"] == "checkpoint"
+    assert events[0]["name"] == "after-setup"
+    assert events[0]["state_marker"] == "phase_started"
+
+
+def test_handle_finalize_writes_finalize_event(tmp_path, monkeypatch):
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    monkeypatch.setenv("RDDF_PHASE", "guide-arch")
+    _handle_subprocess(["true"], trace_dir=tmp_path)
+    rc = _handle_finalize(trace_dir=tmp_path)
+    assert rc == 0
+    traces = list(tmp_path.glob("*.jsonl"))
+    events = _read_events(traces[0])
+    last = events[-1]
+    assert last["type"] == "finalize"
+    assert last["subprocess_failures"] == 0
+    assert last["checkpoints"] == 0
+
+
+def test_handle_finalize_counts_failures(tmp_path, monkeypatch):
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    monkeypatch.setenv("RDDF_PHASE", "guide-arch")
+    _handle_subprocess(["false"], trace_dir=tmp_path)
+    _handle_checkpoint("mid", "", trace_dir=tmp_path)
+    _handle_finalize(trace_dir=tmp_path)
+    events = _read_events(list(tmp_path.glob("*.jsonl"))[0])
+    last = events[-1]
+    assert last["subprocess_failures"] == 1
+    assert last["checkpoints"] == 1

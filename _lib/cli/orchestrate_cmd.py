@@ -113,13 +113,21 @@ def _get_trace_path(phase: str, session_id: str, pid: int, epoch: int) -> Path:
 
 
 def _open_trace(phase: str, session_id: Optional[str] = None) -> Trace:
-    """Open a new trace file for writing.
+    """Open or reuse a trace file for writing.
 
-    Ensures ``RDDF_TRACE_DIR`` exists; raises OSError on permission failure.
+    If an unfinalized trace exists for ``phase``, append to it. Otherwise
+    create a new one. Ensures ``RDDF_TRACE_DIR`` exists; raises OSError
+    on permission failure.
     """
     sid = session_id or _get_session_id()
     trace_dir = _get_trace_dir()
     trace_dir.mkdir(parents=True, exist_ok=True)
+
+    existing = _find_open_trace(trace_dir, phase)
+    if existing is not None:
+        fh = open(existing, "a", encoding="utf-8")
+        return Trace(path=existing, phase=phase, session_id=sid, _fh=fh)
+
     path = _get_trace_path(
         phase=phase,
         session_id=sid,
@@ -278,14 +286,81 @@ def _handle_subprocess(
     return rc
 
 
-def _handle_checkpoint(name: str, state_marker: str, trace_dir: Path) -> int:
-    """Placeholder — filled in Task 4."""
-    raise NotImplementedError("filled in Task 4")
+def _handle_checkpoint(
+    name: str,
+    state_marker: str,
+    trace_dir: Path,
+) -> int:
+    """Append a checkpoint event to the current trace."""
+    phase = os.environ.get("RDDF_PHASE", "unknown")
+    trace = _open_trace(phase=phase)
+    _append_event(
+        trace,
+        {
+            "type": "checkpoint",
+            "name": name,
+            "state_marker": state_marker,
+        },
+    )
+    trace.close()
+    return 0
 
 
 def _handle_finalize(trace_dir: Path) -> int:
-    """Placeholder — filled in Task 5."""
-    raise NotImplementedError("filled in Task 5")
+    """Close the current trace with a finalize event and trigger analysis.
+
+    Reads all events written so far, counts subprocess failures + checkpoints,
+    appends a finalize event with those counts. Calls analyze_phase_trace()
+    if there were subprocess failures.
+    """
+    phase = os.environ.get("RDDF_PHASE", "unknown")
+    trace_file = _find_open_trace(trace_dir, phase)
+    if trace_file is None:
+        trace = _open_trace(phase=phase)
+        _append_event(
+            trace,
+            {
+                "type": "finalize",
+                "subprocess_failures": 0,
+                "checkpoints": 0,
+                "report_written": "false",
+            },
+        )
+        trace.close()
+        return 0
+
+    events = _read_events(trace_file)
+    subprocess_failures = sum(
+        1 for e in events
+        if e.get("type") == "subprocess" and e.get("returncode", 0) != 0
+    )
+    checkpoints = sum(1 for e in events if e.get("type") == "checkpoint")
+
+    report_written = "false"
+    if subprocess_failures > 0:
+        try:
+            from skills._lib.post_flow_analysis import analyze_phase_trace
+            project_root = os.environ.get("RDDF_PROJECT_ROOT", ".")
+            cls = analyze_phase_trace(
+                trace_path=trace_file,
+                project_root=project_root,
+            )
+            if cls is not None:
+                report_written = "true"
+        except Exception as e:
+            print(f"warning: analyze_phase_trace failed: {e}", file=sys.stderr)
+
+    with open(trace_file, "a", encoding="utf-8") as fh:
+        finalize_event = {
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "type": "finalize",
+            "subprocess_failures": subprocess_failures,
+            "checkpoints": checkpoints,
+            "report_written": report_written,
+        }
+        fh.write(json.dumps(finalize_event, ensure_ascii=False) + "\n")
+
+    return 0
 
 
 def _handle_sweep(trace_dir: Path) -> int:
