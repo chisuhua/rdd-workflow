@@ -2,6 +2,48 @@
 
 ## [Unreleased]
 
+### rddf orchestrate (Python orchestrator for phase subprocess detection)
+
+Adds `rddf orchestrate` subcommand that batches subprocess invocations of `guide-arch`,
+`guide-design`, `guide-plan`, `guide-ship` into a single traceable checkpoint model,
+with stale-trace sweep + GC. Replaces serial shell-call mode with phase-aware trace
+files + env-var passthrough. 11 commits + 4 supporting commits:
+
+- `ff094b5` feat(cli): add rddf orchestrate subcommand skeleton
+- `388b97c` feat(orchestrate): add trace file management (open/append/read)
+- `0f8925d` feat(orchestrate): implement --subprocess with tempfile streams + sanitize
+- `4be2749` feat(orchestrate): implement --mark-checkpoint + --finalize + trace reuse
+- `666d258` feat(orchestrator): add bash wrapper + __main__ entry point
+- `d771201` feat(post-flow-wrap): add single-writer guard for orchestrator coexistence
+- `3ebe519` feat(post-flow-analysis): add analyze_phase_trace for orchestrator finalize
+- `8539bdc` feat(orchestrate): implement stale-trace sweep + GC (B4 fix - centerpiece)
+- `fdf1f09` test(integration): add 5 end-to-end tests for rddf orchestrate
+- `fdebcf6` docs(skills): replace Phase Exit prose in 4 SKILL.md with 3-rule checklist
+- `9968b43` merge: Python orchestrator for phase subprocess detection (B1-B4 fix)
+- `ed503cd` feat(scripts): integrate orchestrator_entry.sh into 4 phase entry scripts
+- `02a1aa8` test(integration): verify RDDF_USE_ORCHESTRATOR env var toggles behavior
+- `056177c` test(e2e): add temp-project orchestrator tests for realistic scenarios
+- `214137b` fix(orchestrate): sweep always reports, even when last subprocess returned 0
+- `b64b68e` fix(cli): rename argv → args in cmd_orchestrate + add orchestrate to ALL_SUBCOMMANDS
+
+### env-check gh_available field (ADR-0027 reporter prereq)
+
+Adds 15th env-check field `gh_available` (boolean: `gh` CLI on PATH + authenticated)
+required by the post-flow-analysis reporter before attempting `gh issue create`.
+Single commit:
+
+- `61a6d2a` feat(env-check): add gh_available field (15th) for ADR-0027 reporter prereq
+
+### archive close hook: lightweight mode
+
+Closes the dual-mode coverage gap for `close_issues_for_change_hook`. The hook was
+already wired in worktree mode (`_lib/archive.sh::archive_change`, fail-tolerant via
+`|| true`); the lightweight mode path (`guide-ship/scripts/ship_archive.sh::archive_change_for_mode`)
+now mirrors the same call site, ensuring changes archived via the lightweight path
+(small changes per ADR-0024) close their linked GitHub issues in lockstep.
+
+- `582a6f1` feat(archive): wire close_issues_for_change_hook in lightweight mode
+
 ### Continuous evolution feedback loop (ADR-0027)
 
 Three changes implement the Detect → Buffer → Report → Triage → Close loop
