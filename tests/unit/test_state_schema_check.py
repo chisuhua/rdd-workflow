@@ -90,3 +90,55 @@ def test_uses_real_lib_path_not_shim(tmp_path: Path, monkeypatch: pytest.MonkeyP
     findings = run_check(project_root=tmp_path)
     # If real path is used: passes. If shim: would fail with CRITICAL.
     assert findings == []
+
+
+def test_external_ref_in_schema_is_resolved(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Schemas with external $ref must be resolved via referencing.Registry.
+
+    Regression test for: iteration_schema.json has
+    `$ref: "feature_view_schema.json"` (line 150), and the check was
+    raising `_WrappedReferencingError: Unresolvable: feature_view_schema.json`
+    because it built `Draft7Validator(schema)` without a Registry.
+    """
+    real_schemas = tmp_path / "_lib" / "schemas"
+    real_schemas.mkdir(parents=True)
+    # iteration_schema.json with an external $ref to feature_view_schema.json
+    (real_schemas / "iteration_schema.json").write_text(json.dumps({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$id": "iteration_schema.json",
+        "type": "object",
+        "required": ["version"],
+        "additionalProperties": False,
+        "properties": {
+            "version": {"type": "integer"},
+            "feature_view": {
+                "$ref": "feature_view_schema.json",
+            },
+        },
+    }))
+    # The external schema that gets $ref'd
+    (real_schemas / "feature_view_schema.json").write_text(json.dumps({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$id": "feature_view_schema.json",
+        "type": "object",
+        "required": ["schema_version"],
+        "properties": {
+            "schema_version": {"type": "integer"},
+        },
+    }))
+
+    _write_state(tmp_path, "iteration.json", {
+        "version": 5,
+        "feature_view": {"schema_version": 1},
+    })
+
+    monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
+    findings = run_check(project_root=tmp_path)
+
+    # Must NOT raise _WrappedReferencingError / Unresolvable
+    assert all(
+        "Unresolvable" not in f.snippet and "_WrappedReferencingError" not in f.snippet
+        for f in findings
+    ), f"external $ref not resolved: {[f.snippet for f in findings]}"
+    # And the data is valid against the schema
+    assert findings == []

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List
 
 import jsonschema
+from referencing import Registry, Resource
 
 from doctor_render import Finding, Severity
 from path_resolver import LibPathNotFoundError, resolve_real_lib_path
@@ -18,6 +19,26 @@ _STATE_FILES = {
     "iteration.json": "iteration_schema.json",
     "deps_analysis.json": "deps_analysis_schema.json",
 }
+
+
+def _build_schema_registry(schema_path: Path) -> Registry:
+    """Load all sibling *.json schemas into a referencing.Registry.
+
+    Schemas with ``$id`` are registered under that $id so that external
+    ``$ref: "<id>.json"`` lookups inside any schema resolve correctly.
+    Returns an empty Registry if no schemas have $id.
+    """
+    registry: Registry = Registry()
+    for sibling in sorted(schema_path.parent.glob("*.json")):
+        try:
+            data = json.loads(sibling.read_text())
+        except json.JSONDecodeError:
+            continue
+        if "$id" in data:
+            registry = registry.with_resource(
+                uri=data["$id"], resource=Resource.from_contents(data)
+            )
+    return registry
 
 
 def run(project_root: Path | None = None) -> List[Finding]:
@@ -61,7 +82,8 @@ def run(project_root: Path | None = None) -> List[Finding]:
             ))
             continue
 
-        validator = jsonschema.Draft7Validator(schema)
+        registry = _build_schema_registry(schema_path)
+        validator = jsonschema.Draft7Validator(schema, registry=registry)
         for error in sorted(validator.iter_errors(data), key=lambda e: list(e.path)):
             findings.append(Finding(
                 severity=Severity.CRITICAL,
