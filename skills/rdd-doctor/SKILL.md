@@ -116,7 +116,7 @@ rddf migrate-improvements --include-docs
 
 **合并**：同 category 的多个 findings 合并为一次执行（migrate-improvements 一次跑就能修所有 migration-residue）。
 
-### Step 5 — 验证
+### Step 5 — 验证 + 循环
 
 修复完成后**必须**再跑一次 doctor，确认 findings 清零：
 
@@ -124,9 +124,46 @@ rddf migrate-improvements --include-docs
 bash skills/rdd-doctor/scripts/doctor.sh
 ```
 
-向用户报告最终状态：
-- 修了哪些（X 个 category / Y 个 finding）
-- 还剩哪些（哪些 finding 用户选择跳过，或无执行动作）
+#### Step 5.5 — 迭代循环（重要）
+
+**重新扫描不是终点**。修复可能：
+- 暴露之前被掩盖的 finding（修一个看见更多）
+- 修复本身引入新问题（regression 检测）
+- 解锁可修复的下一批 finding（dependency 关系）
+
+**AI 必须循环直到满足以下任一终止条件**：
+
+| 终止条件 | 含义 |
+|----------|------|
+| ✅ **clean** | 再跑 doctor 0 个 finding |
+| 🛑 **user-stop** | 用户主动说"停" / "我来手动处理" / "够了"|
+| 🟡 **only-no-action** | 剩余 findings 全部属于"无执行动作"类别（state drift / plan-tdd 缺 step / proposal-table 格式 / tasks-checkbox / roadmap-meta），AI 无可执行命令，提示用户手工处理 |
+
+每次循环回到 **Step 2**（展示新 findings）+ **Step 3**（再次问授权）。**不允许**在一次跑完后宣布"完成"，即使看起来没新问题。
+
+向用户报告每轮循环结果：
+- 本轮修了什么（X category / Y finding）
+- 累计修了什么
+- 当前还剩什么 / 为什么剩
+
+### 循环示例
+
+```
+第 1 轮:
+  doctor → 3 个 finding (2 migration-residue, 1 proposal-table)
+  修复: rddf migrate-improvements --include-docs
+  再 doctor → 1 个 finding (proposal-table)
+
+第 2 轮:
+  doctor → 1 个 finding (proposal-table)
+  AI: 这个类别无可执行动作，提示用户手工调整表格格式
+  用户: "我手动改"
+  AI: stop iteration
+
+最终状态:
+  修了 2 个 migration-residue
+  剩余 1 个 proposal-table（用户选择手工处理）
+```
 
 ### 关键约束
 

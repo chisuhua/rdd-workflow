@@ -116,6 +116,44 @@ def test_skill_requires_re_verification_after_fix(skill_text):
     ), "SKILL.md missing re-verification step"
 
 
+def test_skill_documents_iteration_loop_until_clean(skill_text):
+    """After fix + verify, AI must ITERATE if new findings appear (loop semantics).
+
+    Without explicit loop, AI might stop after one fix round and miss
+    follow-on issues (e.g., a fix that uncovers a new CRITICAL, or
+    multiple categories with findings where only one is fixable).
+    """
+    text = skill_text.lower()
+    assert any(
+        marker in text
+        for marker in (
+            "循环",
+            "iterate",
+            "loop",
+            "下一轮",
+            "until",
+            "重复 step",
+        )
+    ), "SKILL.md missing iteration-loop semantics"
+
+
+def test_skill_allows_user_to_stop_iteration(skill_text):
+    """User must be able to stop the iteration (e.g., 'stop, I'll handle manually')."""
+    text = skill_text.lower()
+    assert any(
+        marker in text
+        for marker in (
+            "用户说停",
+            "用户可以停",
+            "用户随时",
+            "stop iteration",
+            "stop, i'll handle",
+            "early stop",
+            "可随时停",
+        )
+    ), "SKILL.md missing user-stop semantics"
+
+
 def test_skill_reminds_doctor_stays_readonly_after_protocol_add(skill_text):
     """Adding the orchestration section must NOT weaken the read-only contract."""
     text = skill_text.lower()
