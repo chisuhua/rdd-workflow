@@ -29,13 +29,19 @@ def _project_root() -> Path:
     return p
 
 
-def resolve_real_lib_path(relative: str) -> Path:
+def resolve_real_lib_path(relative: str, project_root: Path | None = None) -> Path:
     """Return absolute path to `<project_root>/_lib/<relative>`.
 
     Raises LibPathNotFoundError if the file does not exist at the real location.
     Does NOT consult any shim path.
+
+    If ``project_root`` is provided, use it directly (avoids env var lookup).
+    Otherwise fall back to ``RDDF_PROJECT_ROOT`` env var.
     """
-    root = _project_root()
+    if project_root is None:
+        root = _project_root()
+    else:
+        root = Path(project_root).resolve()
     real = root / "_lib" / relative
     if not real.is_file():
         raise LibPathNotFoundError(

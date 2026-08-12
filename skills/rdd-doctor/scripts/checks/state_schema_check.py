@@ -46,7 +46,7 @@ def run(project_root: Path | None = None) -> List[Finding]:
     import os
     if project_root is None:
         project_root = Path(os.environ.get("RDDF_PROJECT_ROOT", "."))
-    os.environ.setdefault("RDDF_PROJECT_ROOT", str(project_root.resolve()))
+        os.environ.setdefault("RDDF_PROJECT_ROOT", str(project_root.resolve()))
     state_dir = project_root / ".rddf" / "state"
     if not state_dir.is_dir():
         return []
@@ -57,7 +57,7 @@ def run(project_root: Path | None = None) -> List[Finding]:
         if not state_file.is_file():
             continue
         try:
-            schema_path = resolve_real_lib_path(f"schemas/{schema_name}")
+            schema_path = resolve_real_lib_path(f"schemas/{schema_name}", project_root=project_root)
         except LibPathNotFoundError as e:
             findings.append(Finding(
                 severity=Severity.WARNING,

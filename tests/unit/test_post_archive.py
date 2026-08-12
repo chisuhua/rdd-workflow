@@ -206,7 +206,7 @@ class TestSyncAfterArchive:
         state_dir = tmp_path / ".rddf" / "state"
         state_dir.mkdir(parents=True)
         (state_dir / "iteration.json").write_text(
-            '{"version": 4, "changes": [{"name": "x", "status": "proposed", "added_at": "2026-08-01T00:00:00+00:00", "invalid_field": "BAD"}], "current_phase": "default", "updated_at": "2026-08-01T00:00:00+00:00"}'
+            '{"version": 4, "changes": [{"name": "x", "status": "not_in_enum", "added_at": "2026-08-01T00:00:00+00:00"}], "current_phase": "default", "updated_at": "2026-08-01T00:00:00+00:00"}'
         )
 
         result = post_archive.sync_iteration_after_archive(
