@@ -38,6 +38,10 @@ _ENV_VAR_MAP = {
     "RDDF_MAX_ITERATIONS": "loop.max_iterations",
     "RDDF_MAX_RETRIES": "loop.max_retries",
     "RDDF_STATE_PATH": "state.path",
+    "RDDF_REPORT_ENABLED": "reporting.enabled",
+    "RDDF_REPORT_AUTO_SUBMIT": "reporting.auto_submit",
+    "RDDF_REPORT_CLOSE_ON_ARCHIVE": "reporting.close_on_archive",
+    "RDDF_REPORT_DESTINATION": "reporting.destination",
 }
 
 

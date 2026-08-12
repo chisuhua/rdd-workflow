@@ -5,17 +5,26 @@ Implements data sanitization for cross-model verification per ADR-0008
 (v2-advanced-features) calls this before forwarding context to Executor /
 Reviewer agents so secrets never leak across model boundaries.
 
-Three categories of detection:
+Detection categories:
 
 - API keys — ``sk-<20+ alnum>`` (OpenAI-style), ``api_key=…``, ``Bearer …``
 - Passwords — ``password=…``, ``passwd=…``, env-var names containing
   ``SECRET`` / ``TOKEN`` / ``KEY`` / ``PASSWORD`` (uppercase convention)
-- Sensitive filesystem paths — ``/etc/…``, ``~/.ssh/…``, ``~/.aws/…``
+- Sensitive filesystem paths:
+  - ``/etc/…``, ``~/.ssh/…``, ``~/.aws/…`` (replaced with literal ``<REDACTED>``)
+  - ``/home/<user>/…``, ``/Users/<user>/…``, ``/root/…`` (replaced with
+    ``<REDACTED>/<basename>`` preserving the file name so stack traces
+    stay diagnosable — added per ADR-0027 §C3 issue-reporter prereq)
+- Configurable project names — caller passes ``sensitive_names=[...]`` to
+  redact project directory names even from non-standard locations like
+  ``/opt/`` (also per ADR-0027 §C3)
 
-Each match is replaced with the literal placeholder ``<REDACTED>``. Callers
-may pass a ``whitelist`` of substrings; if a matched sensitive value contains
-any whitelist entry it is preserved verbatim (e.g. an audited ``/etc/passwd``
-reference that the caller has explicitly approved).
+Each match is replaced with the literal placeholder ``<REDACTED>`` (paths
+preserve the trailing basename as described above; project names are
+fully replaced). Callers may pass a ``whitelist`` of substrings; if a matched
+sensitive value contains any whitelist entry it is preserved verbatim
+(e.g. an audited ``/etc/passwd`` reference that the caller has explicitly
+approved).
 
 The whole pipeline is pure-stdlib (``re`` + ``dataclasses``) and pre-compiles
 every pattern at import time so a single ``sanitize()`` call stays well under
@@ -23,6 +32,7 @@ the 10 ms budget enforced by ``test_performance_under_10ms``.
 """
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
@@ -54,10 +64,26 @@ PASSWORD_PATTERNS: List[str] = [
 ]
 
 SENSITIVE_PATH_PATTERNS: List[str] = [
+    # $HOME paths come first so the ``/etc/`` pattern below doesn't greedily
+    # match the ``/etc/`` substring inside ``/root/etc/...``.
+    r"/home/[^/\s\"'<>]+/(?:[^/\s\"'<>]+/)*[^/\s\"'<>:\[]+(?::\d+)?",
+    r"/Users/[^/\s\"'<>]+/(?:[^/\s\"'<>]+/)*[^/\s\"'<>:\[]+(?::\d+)?",
+    r"/root/(?:[^/\s\"'<>]+/)+[^/\s\"'<>:\[]+(?::\d+)?",
     r"/etc/[^\s\"'<>]+",
     r"~/.ssh/[^\s\"'<>]+",
     r"~/.aws/[^\s\"'<>]+",
 ]
+
+# $HOME patterns occupy the first 3 positions in SENSITIVE_PATH_PATTERNS, so
+# their absolute indices in _PATTERN_GROUPS are
+# (api_key_count + password_count + 0..2). Compute rather than hard-code so
+# the slice stays correct if API/PASSWORD pattern lists grow.
+_API_KEY_COUNT = len(API_KEY_PATTERNS)
+_PASSWORD_COUNT = len(PASSWORD_PATTERNS)
+_HOME_PATH_COUNT = 3
+_HOME_PATH_GROUP_INDICES = frozenset(
+    range(_API_KEY_COUNT + _PASSWORD_COUNT, _API_KEY_COUNT + _PASSWORD_COUNT + _HOME_PATH_COUNT)
+)
 
 
 # ── Public dataclass ──────────────────────────────────────────────────────
@@ -101,8 +127,12 @@ _PATTERN_GROUPS: List[Tuple[str, "re.Pattern[str]"]] = [
 _REDACTED_PLACEHOLDER = "<REDACTED>"
 
 
-def sanitize(text: str, whitelist: Optional[List[str]] = None) -> SanitizationResult:
-    """Redact API keys, passwords, and sensitive paths from ``text``.
+def sanitize(
+    text: str,
+    whitelist: Optional[List[str]] = None,
+    sensitive_names: Optional[List[str]] = None,
+) -> SanitizationResult:
+    """Redact API keys, passwords, sensitive paths, and project names from ``text``.
 
     Args:
         text: Input text potentially containing sensitive data.
@@ -110,6 +140,10 @@ def sanitize(text: str, whitelist: Optional[List[str]] = None) -> SanitizationRe
             any whitelist entry as a substring, it is preserved verbatim
             (not redacted). Default: ``None`` (empty whitelist → redact
             every match).
+        sensitive_names: Optional list of project / directory names to
+            redact even when they appear outside the standard sensitive-path
+            patterns (e.g. ``/opt/myproj/...``). Each name is matched as a
+            whole word. Default: ``None`` (no project-name redaction).
 
     Returns:
         :class:`SanitizationResult` carrying the redacted text, the list of
@@ -127,21 +161,34 @@ def sanitize(text: str, whitelist: Optional[List[str]] = None) -> SanitizationRe
     """
     if whitelist is None:
         whitelist = []
+    if sensitive_names is None:
+        sensitive_names = []
 
     sanitized = text
     redactions: List[Tuple[str, str]] = []
 
-    for pattern_name, compiled in _PATTERN_GROUPS:
-        # Materialize match positions once (against the current sanitized
-        # text) and then perform replacements one at a time. This keeps
-        # whitelist skipping precise even after earlier replacements.
+    for idx, (pattern_name, compiled) in enumerate(_PATTERN_GROUPS):
         for match in list(compiled.finditer(sanitized)):
             original = match.group(0)
             if _is_whitelisted(original, whitelist):
                 continue
             redactions.append((pattern_name, original))
-            # count=1 so we only replace the specific occurrence we just
-            # matched, not every later repeat of the same string.
+            replacement = (
+                _replace_with_basename(original)
+                if idx in _HOME_PATH_GROUP_INDICES
+                else _REDACTED_PLACEHOLDER
+            )
+            sanitized = sanitized.replace(original, replacement, 1)
+
+    for name in sensitive_names:
+        if not name:
+            continue
+        name_pattern = re.compile(rf"\b{re.escape(name)}\b")
+        for match in list(name_pattern.finditer(sanitized)):
+            original = match.group(0)
+            if _is_whitelisted(original, whitelist):
+                continue
+            redactions.append(("sensitive_name", original))
             sanitized = sanitized.replace(original, _REDACTED_PLACEHOLDER, 1)
 
     return SanitizationResult(
@@ -154,3 +201,22 @@ def sanitize(text: str, whitelist: Optional[List[str]] = None) -> SanitizationRe
 def _is_whitelisted(matched: str, whitelist: List[str]) -> bool:
     """Return True if any non-empty whitelist entry is contained in ``matched``."""
     return any(entry and entry in matched for entry in whitelist)
+
+
+def _replace_with_basename(path: str) -> str:
+    """Return ``<REDACTED>/<basename>[:lineno]`` preserving the trailing file name.
+
+    Examples:
+        ``/home/alice/myproj/src/main.py:42`` → ``<REDACTED>/main.py:42``
+        ``/Users/bob/repo/lib.py`` → ``<REDACTED>/lib.py``
+        ``/root/etc/config.toml`` → ``<REDACTED>/config.toml``
+    """
+    path_part, lineno = path, ""
+    if ":" in path:
+        idx = path.rfind(":")
+        if path[idx + 1:].isdigit():
+            path_part, lineno = path[:idx], path[idx:]
+    basename = os.path.basename(path_part.rstrip("/"))
+    if not basename:
+        return _REDACTED_PLACEHOLDER
+    return f"{_REDACTED_PLACEHOLDER}/{basename}{lineno}"

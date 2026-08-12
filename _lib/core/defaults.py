@@ -37,6 +37,20 @@ DEFAULTS = {
         "v1x_enabled": True,
         "conflict_resolution": "state_vector_wins",  # the only supported mode
     },
+    "reporting": {
+        "enabled": False,
+        "destination": "github",
+        "auto_submit": False,
+        "submit_categories": {
+            "doctor-critical": True,
+            "gate-failure": True,
+            "phase-crash": True,
+            "manual": True,
+        },
+        "close_on_archive": True,
+        "retention_days": 30,
+        "redact_patterns": [],
+    },
 }
 
 

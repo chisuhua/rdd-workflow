@@ -128,6 +128,51 @@
           "description": "Gate mode: warn prints a message, block exits with error"
         }
       }
+    },
+    "reporting": {
+      "type": "object",
+      "description": "ADR-0027 continuous evolution feedback loop. Triple opt-in (enabled + auto_submit + submit_categories) must all be on for issues to reach GitHub.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Master switch for the issue-reporter. Default false (opt-in)."
+        },
+        "destination": {
+          "type": "string",
+          "enum": ["github", "local", "custom-url"],
+          "default": "github",
+          "description": "Where reported issues go."
+        },
+        "auto_submit": {
+          "type": "boolean",
+          "default": false,
+          "description": "When false, issues stay local-only. When true, L2 gh CLI submission is attempted."
+        },
+        "submit_categories": {
+          "type": "object",
+          "description": "Per-category opt-in. Only categories set to true are submitted.",
+          "additionalProperties": {"type": "boolean"}
+        },
+        "close_on_archive": {
+          "type": "boolean",
+          "default": true,
+          "description": "When true, archive_change automatically closes linked GitHub issues."
+        },
+        "retention_days": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 30,
+          "description": "Days to retain closed issue files locally before pruning."
+        },
+        "redact_patterns": {
+          "type": "array",
+          "items": {"type": "string"},
+          "default": [],
+          "description": "Additional regex patterns to redact beyond sanitizer defaults."
+        }
+      }
     }
   }
 }
