@@ -14,7 +14,8 @@
 > | 已实施（v2.0.2+） | 0020 |
 > | 已实施（v2.0.8+） | 0018, 0019, 0021, 0022 |
 > | 已实施（v2.0.9+） | 0024 |
-> | 已实施（v2.0.6+） | 0025 |
+> | 已实施（v2.0.6+） | 0025, 0026 |
+> | 已采纳（v2.1.x+ 候选） | 0027（实施拆分至 fix-adr-0027-cleanup / change-a / change-b / change-c） |
 > | 已实施（v2.0.5+） | 0016 |
 > | 部分实施（v2.0 轻量级） | 0010 |
 > | 已采纳，未实施（v3.0 候选） | 0009（占位）, 0011, 0012 |
@@ -49,6 +50,8 @@
 | [ADR-0023](ADR-0023-v3-rename-spec-workflow-to-rdd-workflow.md) | v3.0.0 包名重命名 | 已采纳 | `spec-workflow` → `rdd-workflow` (BREAKING) |
 | [ADR-0024](ADR-0024-deps-driven-execution-mode.md) | deps 阶段驱动执行模式决策 | 已采纳 | 执行模式在 plan 阶段决定并写入 handoff |
 | [ADR-0025](ADR-0025-design-proposal-creation.md) | design 阶段提案创建 + 内容审查 | 已采纳 | 设计管理独立成阶段 + 两层内容审查 |
+| [ADR-0026](ADR-0026-internal-metadata-namespace-convention.md) | 内部元数据命名空间约定 | 已采纳 | `>` blockquote 元数据命名规范 |
+| [ADR-0027](ADR-0027-continuous-evolution-feedback-loop.md) | 持续演进反馈环 | 已采纳 | Detect→Buffer→Report→Triage→Close 五环 + 复用 `_lib/config.py` + 三重 opt-in + 幂等 close + Oracle 复核 8/8/7 |
 
 ## 架构演进
 
@@ -200,5 +203,5 @@ ADR-NNN §N.M
 ## 维护者
 
 - 主要决策者: sisyphus
-- 上次同步: 2026-08-07 (docs-restructure-architecture-snapshots)
+- 上次同步: 2026-08-12 (fix-adr-0027-cleanup — 新增 ADR-0027 + Oracle 复核 8/8/7)
 - 下次审查: 新增 ADR 后
