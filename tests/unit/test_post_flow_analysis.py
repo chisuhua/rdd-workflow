@@ -8,6 +8,7 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -273,3 +274,79 @@ def test_report_flow_bug_returns_none_for_env_error(tmp_path):
     cls = classify_phase_outcome(phase="guide-ship", outcome=outcome)
     file_path = report_flow_bug(cls, project_root=str(tmp_path))
     assert file_path is None
+
+
+# ── _should_auto_submit three-gate logic (ADR-0027 design gap fix) ───
+
+
+def test_should_auto_submit_disabled_by_default(monkeypatch):
+    """Without any RDDF_REPORT_* env vars set, auto-submit is off (L1 only)."""
+    monkeypatch.delenv("RDDF_REPORT_ENABLED", raising=False)
+    monkeypatch.delenv("RDDF_REPORT_AUTO_SUBMIT", raising=False)
+    monkeypatch.delenv("RDDF_REPORT_SUBMIT_CATEGORIES", raising=False)
+    from post_flow_analysis import _should_auto_submit
+    assert _should_auto_submit("phase-crash") is False
+
+
+def test_should_auto_submit_requires_both_enabled_and_auto_submit(monkeypatch):
+    """Both RDDF_REPORT_ENABLED=yes AND RDDF_REPORT_AUTO_SUBMIT=yes required."""
+    monkeypatch.delenv("RDDF_REPORT_ENABLED", raising=False)
+    monkeypatch.delenv("RDDF_REPORT_AUTO_SUBMIT", raising=False)
+    monkeypatch.delenv("RDDF_REPORT_SUBMIT_CATEGORIES", raising=False)
+    from post_flow_analysis import _should_auto_submit
+    monkeypatch.setenv("RDDF_REPORT_ENABLED", "yes")
+    assert _should_auto_submit("phase-crash") is False
+    monkeypatch.setenv("RDDF_REPORT_AUTO_SUBMIT", "yes")
+    assert _should_auto_submit("phase-crash") is True
+
+
+def test_should_auto_submit_per_category_filter(monkeypatch):
+    """RDDF_REPORT_SUBMIT_CATEGORIES limits which categories submit."""
+    monkeypatch.setenv("RDDF_REPORT_ENABLED", "yes")
+    monkeypatch.setenv("RDDF_REPORT_AUTO_SUBMIT", "yes")
+    monkeypatch.setenv("RDDF_REPORT_SUBMIT_CATEGORIES", "flow-bug,gate-failure")
+    from post_flow_analysis import _should_auto_submit
+    assert _should_auto_submit("flow-bug") is True
+    assert _should_auto_submit("gate-failure") is True
+    assert _should_auto_submit("phase-crash") is False
+    assert _should_auto_submit("manual") is False
+
+
+def test_should_auto_submit_disabled_in_ci_environment(monkeypatch):
+    """CI markers disable L2 submission even with both env vars set."""
+    monkeypatch.setenv("RDDF_REPORT_ENABLED", "yes")
+    monkeypatch.setenv("RDDF_REPORT_AUTO_SUBMIT", "yes")
+    monkeypatch.setenv("CI", "true")
+    from post_flow_analysis import _should_auto_submit
+    assert _should_auto_submit("phase-crash") is False
+    monkeypatch.delenv("CI")
+    assert _should_auto_submit("phase-crash") is True
+
+
+def test_report_flow_bug_auto_submits_when_enabled(tmp_path, monkeypatch):
+    """End-to-end: enabled+auto_submit triggers gh submission and updates file."""
+    monkeypatch.setenv("RDDF_REPORT_ENABLED", "yes")
+    monkeypatch.setenv("RDDF_REPORT_AUTO_SUBMIT", "yes")
+    monkeypatch.setenv("RDDF_REPORT_GH_REPO", "owner/repo")
+    monkeypatch.setenv("CI", "")  # ensure not CI
+
+    fake_proc = mock.Mock(returncode=0, stdout="https://github.com/owner/repo/issues/42", stderr="")
+    with mock.patch("subprocess.run", return_value=fake_proc) as m:
+        from post_flow_analysis import PhaseOutcome, classify_phase_outcome, report_flow_bug
+        tb = (
+            "Traceback (most recent call last):\n"
+            '  File "/workspace/project/rdd-workflow/_lib/foo.py", line 10, in bar\n'
+            "    raise RuntimeError('x')\n"
+            "RuntimeError: x\n"
+        )
+        outcome = PhaseOutcome(phase="execute", exit_code=1, stderr=tb, traceback=tb)
+        cls = classify_phase_outcome(phase="execute", outcome=outcome)
+        file_path = report_flow_bug(cls, project_root=str(tmp_path))
+
+    assert file_path is not None
+    content = file_path.read_text()
+    assert "submitted: true" in content
+    assert "https://github.com/owner/repo/issues/42" in content
+    # Verify gh CLI was called with the right label set
+    gh_calls = [c for c in m.call_args_list if "issue" in str(c) and "create" in str(c)]
+    assert any("auto-reported" in str(c) and "phase-crash" in str(c) and "needs-triage" in str(c) for c in gh_calls)

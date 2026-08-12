@@ -11,6 +11,7 @@ report_flow_bug writes a local issue file only for flow-bug classifications.
 """
 from __future__ import annotations
 
+import os
 import re
 import sys
 from dataclasses import dataclass, field
@@ -298,6 +299,12 @@ def report_flow_bug(
 ) -> Optional[Path]:
     """Write a local issue file for flow-bug classifications only.
 
+    If ``RDDF_REPORT_AUTO_SUBMIT=yes`` and not in CI, also submit to GitHub
+    via ``submit_issue_via_gh`` and update the local file with the
+    ``submitted_url``. The opt-in chain (master + auto_submit + per-category)
+    is checked at the boundary so a misconfigured environment falls
+    back to L1-only (no submission) rather than leaking issues.
+
     Returns the file path on success, or None if classification is not
     reportable (usage-error / environment-error / OK / SIGINT-excluded).
     """
@@ -314,7 +321,59 @@ def report_flow_bug(
             "metadata": classification.metadata,
         },
     )
-    return write_issue_file(result, project_root=project_root)
+    file_path = write_issue_file(result, project_root=project_root)
+
+    if _should_auto_submit(classification.report_category):
+        from issue_reporter import submit_issue_via_gh  # local import to avoid cycles
+        gh_repo = os.environ.get("RDDF_REPORT_GH_REPO", "chisuhua/rdd-workflow")
+        submit_result = submit_issue_via_gh(file_path, classification.report_category, gh_repo)
+        if submit_result.success:
+            _update_submission_status(file_path, submit_result.submitted_url or "")
+
+    return file_path
+
+
+def _should_auto_submit(category: str) -> bool:
+    """Three-gate opt-in: master + auto_submit + per-category + not CI."""
+    if os.environ.get("RDDF_REPORT_ENABLED", "no").lower() not in ("yes", "true", "1"):
+        return False
+    if os.environ.get("RDDF_REPORT_AUTO_SUBMIT", "no").lower() not in ("yes", "true", "1"):
+        return False
+    from issue_reporter import is_ci_environment
+    if is_ci_environment():
+        return False
+    categories_raw = os.environ.get("RDDF_REPORT_SUBMIT_CATEGORIES", "")
+    if categories_raw:
+        allowed = {c.strip() for c in categories_raw.split(",") if c.strip()}
+        if category not in allowed:
+            return False
+    return True
+
+
+def _update_submission_status(file_path: Path, submitted_url: str) -> None:
+    """Update the issue file's frontmatter with submission result (idempotent)."""
+    try:
+        text = file_path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return
+    text = text.replace("submitted: false", "submitted: true", 1)
+    if "submitted_url: null" in text:
+        text = text.replace(
+            "submitted_url: null",
+            f'submitted_url: "{submitted_url}"',
+            1,
+        )
+    else:
+        text = re.sub(
+            r'submitted_url:\s*"[^"]*"',
+            f'submitted_url: "{submitted_url}"',
+            text,
+            count=1,
+        )
+    try:
+        file_path.write_text(text, encoding="utf-8")
+    except OSError:
+        pass
 
 
 # ── Convenience: analyze-and-report from a file (used by bash trap) ────
