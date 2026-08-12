@@ -15,6 +15,11 @@ export RDDF_PHASE="${RDDF_PHASE:-guide-arch}"
 source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
 trap 'post_flow_on_err' ERR
 
+# ADR-0027 orchestrator path (opt-in via RDDF_USE_ORCHESTRATOR=yes)
+if [ "${RDDF_USE_ORCHESTRATOR:-no}" = "yes" ]; then
+    source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
+fi
+
 run_arch_env_check() {
   local PROJECT_ROOT
   PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)

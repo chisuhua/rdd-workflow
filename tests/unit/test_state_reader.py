@@ -152,7 +152,7 @@ class TestReadIteration:
         result = state_reader.read_iteration(project_root)
 
         assert result is not None
-        assert result["version"] == 5
+        assert result["version"] == 6
         assert result["current_phase"] == "v2.1"
         assert len(result["changes"]) == 1
         assert result["changes"][0]["name"] == "feature-x"

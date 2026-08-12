@@ -757,15 +757,20 @@ ls roadmap.md
 
 ## Phase Exit — Post-Flow Analysis (Agent 平面, ADR-0027 §1.0)
 
-在 arch 阶段异常结束时（如 gate 硬失败、状态机分支错误、无法继续），agent 应主动调用：
+### Checklist (must satisfy exactly one)
 
-```bash
-rddf report-issue --category flow-bug --phase guide-arch "<one-line description>"
-rddf report-issue --category gate-failure --phase guide-arch "<gate 错误描述>"
-```
+- [ ] **Normal exit** → call `orchestrator_finalize` (always, on every exit)
+- [ ] **Abnormal exit** → call `orchestrator_finalize` + `rddf report-issue --phase guide-arch --exit <code> "<one-line>"`
 
-**何时调用**：本 phase 走了非预期路径，**不是**用户用错（那是 UI 提示），也**不是**环境问题（那是退出 + 诊断）。
+### Triggers for "abnormal exit" (non-exhaustive)
 
-**不调用**的场景：usage-error（参数错）、environment-error（缺工具）、SIGINT/Ctrl+C（用户取消）。
+- gate reports CRITICAL and it's not a usage-error / environment-error
+- state machine branch enters an unexpected case
+- agent cannot continue after 3 retries on the same step
+- user explicitly says "this is wrong" while phase reports success
 
-详见 `docs/adr/ADR-0027-continuous-evolution-feedback-loop.md` §1.0 两平面架构。
+### NOT abnormal (do NOT report-issue)
+
+- User-initiated SIGINT / SIGTERM (exit 130/143)
+- Missing tools, network errors, permission errors (environment-error)
+- Bad CLI flags, missing required arguments (usage-error)

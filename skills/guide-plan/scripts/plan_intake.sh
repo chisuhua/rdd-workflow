@@ -13,6 +13,11 @@
 export RDDF_PHASE="${RDDF_PHASE:-guide-plan}"
 source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
 trap 'post_flow_on_err' ERR
+
+# ADR-0027 orchestrator path (opt-in via RDDF_USE_ORCHESTRATOR=yes)
+if [ "${RDDF_USE_ORCHESTRATOR:-no}" = "yes" ]; then
+    source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
+fi
 # - Falls back to defaults if jq missing or handoff fields absent
 # - Reads ADR_IDS + CURRENT_PHASE from handoff via python3 (with $ARCH_HANDOFF via env-var)
 # - Counts active openspec changes

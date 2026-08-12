@@ -52,9 +52,6 @@ class TestReadIterationOrCorrupt:
         WHEN read_iteration_or_corrupt is called
         THEN it returns (None, error) where error mentions 'schema validation failed'
         AND contains the JSON path to the bad entry."""
-        # Replicate the exact bug pattern from this session:
-        # changes[0] has an extra 'updated_at' field that the per-change
-        # item schema rejects (additionalProperties: false).
         content = json.dumps({
             "version": 5,
             "updated_at": "2026-08-05T10:00:00+00:00",
@@ -62,9 +59,8 @@ class TestReadIterationOrCorrupt:
             "changes": [
                 {
                     "name": "test-change",
-                    "status": "proposed",
+                    "status": "not_in_enum",
                     "added_at": "2026-08-01T00:00:00+00:00",
-                    "updated_at": "2026-08-05T11:00:00+00:00",  # not allowed per-item
                 }
             ],
         })
@@ -97,7 +93,7 @@ class TestReadIterationOrCorrupt:
         data, err = state_reader.read_iteration_or_corrupt(str(tmp_path))
         assert err is None
         assert data is not None
-        assert data["version"] == 5
+        assert data["version"] == 6
         assert data["changes"][0]["name"] == "test-change"
 
     def test_readonly_no_backup_files_created(self, tmp_path):

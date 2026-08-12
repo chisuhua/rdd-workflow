@@ -47,10 +47,10 @@ class TestReadUnlockedVerbose:
         data, err = store._read_unlocked_verbose(str(path))
         assert err is None
         assert data is not None
-        assert data["version"] == 5
+        assert data["version"] == 6
 
     def test_schema_invalid_returns_error_with_path(self, tmp_path):
-        """GIVEN a schema-invalid iteration.json (per-change entry with extra 'updated_at')
+        """GIVEN a schema-invalid iteration.json (per-change entry with non-enum status)
         WHEN _read_unlocked_verbose is called
         THEN returns (None, error) where error mentions 'schema validation failed'
         AND contains the JSON path to the bad entry."""
@@ -62,9 +62,8 @@ class TestReadUnlockedVerbose:
             "changes": [
                 {
                     "name": "x",
-                    "status": "proposed",
+                    "status": "not_in_enum",
                     "added_at": "2026-08-01T00:00:00+00:00",
-                    "updated_at": "2026-08-05T11:00:00+00:00",  # not allowed
                 }
             ],
         }))

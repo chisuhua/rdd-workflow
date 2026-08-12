@@ -46,6 +46,7 @@ Global install support      Deps-driven execution mode   Continuous evolution
 | v2.0.8 | Per-project install was painful; users wanted one install for all projects. | Global install via `~/.agents/skills/`. | (no ADR — install-script only) |
 | v2.0.9 | Execution mode (worktree vs lightweight) was decided in guide-ship by inspecting disk; couldn't see plan-time intent. | Deps analysis writes execution mode into `.plan-handoff.json`; guide-ship reads it. | 0024 |
 | v2.1.0 | No structured feedback loop from third-party rdd-workflow users back to maintainers; evolution was driven by intuition, not evidence. | Continuous evolution feedback loop: detect → buffer → report → triage → close, with triple opt-in, dedup_hash for cross-machine stability, dual-mode archive close hook. | 0027 |
+| v2.1.x | Bash `trap ERR` could not capture failures from sub-scripts that didn't source `post_flow_wrap.sh`; agents didn't always comply with SKILL.md Phase Exit prose; SIGKILL/OOM left no signal at all. | New `rddf orchestrate` subcommand: Python supervisor that captures every phase subprocess with tempfile streams + sanitize, appends to JSONL trace, runs stale-trace sweep on entry to detect killed phases (B4 fix), single-writer rule to coexist with existing trap path. 4 SKILL.md files updated with 3-rule Phase Exit checklists. | spec 2026-08-12 |
 
 ## Architectural Constants
 
