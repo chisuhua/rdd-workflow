@@ -114,6 +114,32 @@ Rare; only when a new phase boundary emerges.
 5. Document the schema in [skills-and-handoff.md](skills-and-handoff.md).
 6. Add an ADR (per "Adding a New ADR" above).
 
+## Adding a New Issue Report Trigger Point
+
+The issue reporter (ADR-0027) listens for events from multiple trigger points. The five existing categories in `_lib/issue_reporter.py` cover the major cases (see ADR-0027 §1), but new ones can be wired in without modifying the reporter core.
+
+**Checklist** for adding a new trigger category:
+
+1. **Pick a category name** matching `^[a-z][a-z0-9-]*$` (kebab-case, e.g. `phase-crash`, `gate-failure`).
+2. **Add a detection site** at the appropriate call point. The pattern is always:
+   ```python
+   from issue_reporter import detect_issue, write_issue_file, submit_issue_via_gh
+   result = detect_issue("<your-category>", {"description": ..., "stack": [...]})
+   file_path = write_issue_file(result, project_root=...)
+   if not is_ci_environment():
+       submit_issue_via_gh(file_path, "<your-category>", gh_repo="chisuhua/rdd-workflow")
+   ```
+3. **Register the category** in `config_schema.json::reporting.submit_categories` (add to default in `_lib/core/defaults.py`) so users can opt in/out per category.
+4. **Never block the host flow** — wrap the submission in `try/except` and return a `SubmitResult` even on failure. The reporter is best-effort.
+5. **Write a test** in `tests/unit/test_issue_reporter.py` that mocks `subprocess.run` and asserts the call site invokes the reporter with the correct category.
+6. **Update ADR-0027 §1** table to document the new trigger.
+
+**Don't**:
+
+- Don't call `submit_issue_via_gh` from a non-main thread without serialization (race conditions on the local file).
+- Don't hardcode `gh_repo="chisuhua/rdd-workflow"` — read from the change's `roadmap-meta.yaml` so fork users report to their own fork.
+- Don't skip the `is_ci_environment()` guard — CI auto-submit pollutes the upstream issue tracker.
+
 ## Cross-references
 
 - Skills protocol: [skills-and-handoff.md](skills-and-handoff.md)

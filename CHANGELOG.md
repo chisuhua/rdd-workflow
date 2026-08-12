@@ -2,6 +2,33 @@
 
 ## [Unreleased]
 
+### Continuous evolution feedback loop (ADR-0027)
+
+Three changes implement the Detect → Buffer → Report → Triage → Close loop
+that lets third-party projects (and rdd-workflow itself, via dogfooding)
+report workflow problems to `github.com/chisuhua/rdd-workflow` Issues, with
+maintainers able to triage via `guide-design` and auto-close on archive:
+
+- **`fix-adr-0027-cleanup`** — Apply Oracle's 5 review fixes to ADR-0027
+  (python skeleton bug, 9 stale string occurrences, References dedup, triage
+  label lifecycle, env prefix unification). Flip status to 已采纳.
+- **`add-issue-reporter-prereqs`** — Three prerequisites for the reporter:
+  extend `_lib/loop/sanitizer.py` with `$HOME` path + project name
+  redaction (basename-preserving replacement); add `reporting` namespace to
+  `_lib/config.py` + `config_schema.json` with `RDDF_REPORT_*` env vars;
+  new `_lib/issue_dedup.py` implementing 5 normalization rules
+  (path→basename, lineno, timestamp, digit→N, platform) for cross-machine
+  stable 8-char SHA-256 dedup hashes.
+- **`add-issue-reporter`** — Core reporter (`_lib/issue_reporter.py`) with
+  5 public functions (detect_issue, write_issue_file, submit_issue_via_gh,
+  is_ci_environment, can_close_in_repo); close hook (`_lib/close_issues.py`)
+  with close_issues_for_change + prune_old_issues; integration in
+  `_lib/archive.sh` (worktree mode, failure-tolerant via `|| true`).
+
+Triple opt-in (`enabled` + `auto_submit` + per-category `submit_categories`)
+preserves the default-don't-call-home posture. 62 new unit tests (32 in
+change-a, 30 in change-b), 0 regression. Full unit suite: 1429/1429 pass.
+
 ### Breaking — package layout: skills/_lib → _lib
 
 The shared Python library has moved from `skills/_lib/` to the top-level `_lib/`.

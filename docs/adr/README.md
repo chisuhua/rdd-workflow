@@ -15,7 +15,7 @@
 > | 已实施（v2.0.8+） | 0018, 0019, 0021, 0022 |
 > | 已实施（v2.0.9+） | 0024 |
 > | 已实施（v2.0.6+） | 0025, 0026 |
-> | 已采纳（v2.1.x+ 候选） | 0027（实施拆分至 fix-adr-0027-cleanup / change-a / change-b / change-c） |
+> | 已实施（v2.1.x+） | 0027（拆分至 fix-adr-0027-cleanup / add-issue-reporter-prereqs / add-issue-reporter / add-issue-reporter-tests） |
 > | 已实施（v2.0.5+） | 0016 |
 > | 部分实施（v2.0 轻量级） | 0010 |
 > | 已采纳，未实施（v3.0 候选） | 0009（占位）, 0011, 0012 |
@@ -203,5 +203,5 @@ ADR-NNN §N.M
 ## 维护者
 
 - 主要决策者: sisyphus
-- 上次同步: 2026-08-12 (fix-adr-0027-cleanup — 新增 ADR-0027 + Oracle 复核 8/8/7)
+- 上次同步: 2026-08-12 (add-issue-reporter-tests — ADR-0027 完整 3-change 系列落地：prereqs + reporter + tests/docs)
 - 下次审查: 新增 ADR 后

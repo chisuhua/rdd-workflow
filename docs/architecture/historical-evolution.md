@@ -23,10 +23,11 @@ rddf-session user           Per-skill scripts/           guide-design introduced
 lifecycle                   migration begins             (ADR-0025) — proposal review
 (ADR-0017)                  (ADR-0021)                   moves out of arch
 
-v2.0.8 (2026-07-28)         v2.0.9 (2026-08-04)
-─────────────────           ─────────────────
-Global install support      Deps-driven execution mode
-                            (ADR-0024)
+v2.0.8 (2026-07-28)         v2.0.9 (2026-08-04)         v2.1.0 (2026-08-12)
+─────────────────           ─────────────────           ─────────────────
+Global install support      Deps-driven execution mode   Continuous evolution
+                            (ADR-0024)                  feedback loop
+                                                        (ADR-0027)
 ```
 
 ## Pain Point → Solution Mappings
@@ -44,6 +45,7 @@ Global install support      Deps-driven execution mode
 | v2.0.6 | Arch phase had grown proposal-creation + proposal-review on top of ADR/roadmap work; review load was heavy. | Split `guide-design`: arch keeps architecture definition; design owns proposal lifecycle + two-tier content review. | 0025 |
 | v2.0.8 | Per-project install was painful; users wanted one install for all projects. | Global install via `~/.agents/skills/`. | (no ADR — install-script only) |
 | v2.0.9 | Execution mode (worktree vs lightweight) was decided in guide-ship by inspecting disk; couldn't see plan-time intent. | Deps analysis writes execution mode into `.plan-handoff.json`; guide-ship reads it. | 0024 |
+| v2.1.0 | No structured feedback loop from third-party rdd-workflow users back to maintainers; evolution was driven by intuition, not evidence. | Continuous evolution feedback loop: detect → buffer → report → triage → close, with triple opt-in, dedup_hash for cross-machine stability, dual-mode archive close hook. | 0027 |
 
 ## Architectural Constants
 
@@ -60,3 +62,4 @@ These have held since v2.0 and are unlikely to change without a major version bu
 Tracked under `../proposal-suggestions.md` and `../proposal-approved.md`:
 - v3.0+ candidate: declarative flow DSL (ADR-0011, 0012 — adopted but not implemented).
 - v3.0+ candidate: scheduled triggers (ADR-0009 — placeholder).
+- v2.1.x follow-up: ADR-0017 conflict-resolver 5th option "report upstream" (requires separate ADR to modify rddf-session).
