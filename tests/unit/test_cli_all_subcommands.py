@@ -70,6 +70,7 @@ ALL_SUBCOMMANDS: tuple[str, ...] = (
     "l2-trend",
     "migrate-improvements",
     "monitor",
+    "orchestrate",
     "report-issue",
     "sessions",
     "status",

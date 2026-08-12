@@ -46,7 +46,7 @@ class Trace:
             fh.close()
 
 
-def cmd_orchestrate(argv: list[str]) -> int:
+def cmd_orchestrate(args: list[str]) -> int:
     """Entry point for ``rddf orchestrate <subcommand> [args]``."""
     parser = argparse.ArgumentParser(prog="rddf orchestrate")
     sub = parser.add_subparsers(dest="action", required=True)
@@ -62,16 +62,16 @@ def cmd_orchestrate(argv: list[str]) -> int:
 
     p_sweep = sub.add_parser("sweep-stale-traces", help="Manually trigger sweep")
 
-    args = parser.parse_args(argv)
+    parsed = parser.parse_args(args)
     trace_dir = _get_trace_dir()
 
-    if args.action == "subprocess":
-        return _handle_subprocess(args.cmd, trace_dir)
-    if args.action == "mark-checkpoint":
-        return _handle_checkpoint(args.name, args.state_marker, trace_dir)
-    if args.action == "finalize":
+    if parsed.action == "subprocess":
+        return _handle_subprocess(parsed.cmd, trace_dir)
+    if parsed.action == "mark-checkpoint":
+        return _handle_checkpoint(parsed.name, parsed.state_marker, trace_dir)
+    if parsed.action == "finalize":
         return _handle_finalize(trace_dir)
-    if args.action == "sweep-stale-traces":
+    if parsed.action == "sweep-stale-traces":
         return _handle_sweep(trace_dir)
     return 2  # unreachable
 
