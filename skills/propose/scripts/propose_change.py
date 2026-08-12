@@ -136,6 +136,27 @@ def create_skeleton_change(
         if m_pf:
             parent_feature = m_pf.group(1).strip()
 
+    # Validate parent_feature against existing features (validate-feature-name)
+    # Warning by default (non-blocking), STRICT_FEATURE_VALIDATION=yes exits with code 2
+    if parent_feature:
+        existing_features = _collect_existing_features(project_root)
+        if parent_feature not in existing_features:
+            listed = sorted(existing_features)[:10]
+            suffix = (
+                f" (and {len(existing_features) - 10} more)"
+                if len(existing_features) > 10
+                else ""
+            )
+            msg = (
+                f"⚠️  parent_feature='{parent_feature}' not in existing features "
+                f"{listed}{suffix}. Possible typo — verify spelling or use an "
+                f"existing feature name. Set STRICT_FEATURE_VALIDATION=yes to "
+                f"block on typo."
+            )
+            print(msg, file=sys.stderr)
+            if os.environ.get("STRICT_FEATURE_VALIDATION") == "yes":
+                sys.exit(2)
+
     # v1.7.0+: doc-only/test-only changes can use skip_specs: true in .openspec.yaml
     skip_specs = ct in ("doc-only", "test-only")
 
@@ -461,3 +482,31 @@ def batch_create_pending(project_root: str) -> list[str]:
     if skipped:
         print(f"⏭️  跳过 {len(skipped)} 个已创建/已归档的 change: {', '.join(skipped)}")
     return created
+
+
+def _collect_existing_features(project_root) -> set:
+    """Collect unique parent_feature values from iteration.json, excluding __ungrouped__.
+
+    Single source of truth: only reads .rddf/state/iteration.json (not roadmap-meta.yaml)
+    to avoid double-write drift scenarios.
+
+    Returns empty set if iteration.json is missing or has no changes.
+    Excludes __ungrouped__ synthetic key (it's a fallback bucket, not user-selectable).
+    """
+    import json as _json
+
+    iter_path = os.path.join(project_root, ".rddf", "state", "iteration.json")
+    if not os.path.isfile(iter_path):
+        return set()
+
+    try:
+        data = _json.loads(open(iter_path).read())
+    except (ValueError, OSError):
+        return set()
+
+    features = set()
+    for change in data.get("changes", []):
+        pf = change.get("parent_feature")
+        if pf and pf != "__ungrouped__":
+            features.add(pf)
+    return features

@@ -165,6 +165,41 @@ if [ -f "$IMP_FILE" ]; then
 fi
 
 PARENT_FEATURE="${PARENT_FEATURE:-$HEAD_FEATURE}"
+
+# Validate parent_feature against existing features (validate-feature-name)
+# Warning by default (non-blocking), STRICT_FEATURE_VALIDATION=yes exits with code 2
+if [ -n "$PARENT_FEATURE" ] && [ "$PARENT_FEATURE" != "__ungrouped__" ]; then
+  set +e
+  PROJECT_ROOT_VAL="$PROJECT_ROOT" \
+  PARENT_FEATURE_VAL="$PARENT_FEATURE" \
+  STRICT_FEATURE_VALIDATION_VAL="${STRICT_FEATURE_VALIDATION:-}" \
+  python3 - "$PROJECT_ROOT" "$PARENT_FEATURE" <<'PYEOF'
+import os
+import sys
+from pathlib import Path
+sys.path.insert(0, os.path.join(sys.argv[1], "skills", "propose", "scripts"))
+from propose_change import _collect_existing_features
+existing = _collect_existing_features(sys.argv[1])
+pf = sys.argv[2]
+strict = os.environ.get("STRICT_FEATURE_VALIDATION_VAL", "") == "yes"
+if pf and pf not in existing:
+    listed = sorted(existing)[:10]
+    suffix = f" (and {len(existing) - 10} more)" if len(existing) > 10 else ""
+    msg = (
+        f"⚠️  parent_feature='{pf}' not in existing features {listed}{suffix}. "
+        f"Possible typo — verify spelling or use an existing feature name."
+    )
+    print(msg, file=sys.stderr)
+    sys.exit(2 if strict else 0)
+PYEOF
+  rc=$?
+  set -e
+  if [ "$rc" -eq 2 ]; then
+    echo "❌ parent_feature validation blocked approve (STRICT_FEATURE_VALIDATION=yes)" >&2
+    exit 2
+  fi
+fi
+
 cat > "$CHANGE_DIR/roadmap-meta.yaml" <<EOF
 phase: $HEAD_PHASE
 category: $HEAD_CATEGORY
