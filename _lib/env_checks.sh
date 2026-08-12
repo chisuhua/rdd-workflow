@@ -46,6 +46,28 @@ _check_build_dir() {
   fi
 }
 
+# gh CLI 可用性检测 (ADR-0027 §1.0 reporter 前置依赖). 设置 _GH_AVAILABLE.
+# 三态: "yes:user" (安装 + 认证) / "no:gh-missing" / "no:not-authed".
+# 非阻塞: 缺 gh 不阻断 phase 入口, 仅 reporter L2 路径不可用.
+_check_gh() {
+  if ! command -v gh >/dev/null 2>&1; then
+    _GH_AVAILABLE="no:gh-missing"
+    return 0
+  fi
+  if ! timeout 5 gh auth status >/dev/null 2>&1; then
+    _GH_AVAILABLE="no:not-authed"
+    return 0
+  fi
+  local user
+  user=$(timeout 5 gh api user --jq .login 2>/dev/null | tr -d '[:space:]')
+  if [ -n "$user" ]; then
+    _GH_AVAILABLE="yes:$user"
+  else
+    _GH_AVAILABLE="yes:unknown"
+  fi
+  return 0
+}
+
 # cache 有效判定: 存在 + mtime < TTL + branch 匹配。返回 0 有效。
 # 依赖 _CURRENT_BRANCH 已设置 (调用方先跑 _check_branch)。
 _cache_valid() {
@@ -74,19 +96,19 @@ _cache_read() {
   _CACHE_ROADMAP=$(echo "$raw" | grep -oE '"roadmap_exists":"[^"]*"' | head -1 | sed 's/.*:"//; s/"//')
 }
 
-# 原子写 cache: 写 .tmp 后 mv (同目录 atomic rename). 13 字段固定集合.
+# 原子写 cache: 写 .tmp 后 mv (同目录 atomic rename). 14 字段固定集合.
 _cache_write() {
   local cache_file="${RDD_ENV_CACHE_FILE:-.rddf/state/.env-cache.json}"
   local ttl="${RDD_ENV_CACHE_TTL:-3600}"
   mkdir -p "$(dirname "$cache_file")"
   local tmp="${cache_file}.tmp"
   cat > "$tmp" <<EOF
-{"timestamp":"$(date +%s)","ttl_s":"$ttl","branch":"$_CURRENT_BRANCH","openspec_ver":"$_OPENSPEC_VER","git_clean":"$_GIT_CLEAN","build_dir":"$_BUILD_DIR","adr_count":"$_ADR_COUNT","roadmap_exists":"$_ROADMAP_EXISTS","gap_count":"$_GAP_COUNT","active_changes":"$_ACTIVE_CHANGES","discovered_adr_dir":"${DISCOVERED_ADR_DIR:-}","discovered_roadmap_path":"${DISCOVERED_ROADMAP_PATH:-}","discovered_architecture_dir":"${DISCOVERED_ARCHITECTURE_DIR:-}","discovered_adr_pattern":"${DISCOVERED_ADR_PATTERN:-}"}
+{"timestamp":"$(date +%s)","ttl_s":"$ttl","branch":"$_CURRENT_BRANCH","openspec_ver":"$_OPENSPEC_VER","git_clean":"$_GIT_CLEAN","build_dir":"$_BUILD_DIR","adr_count":"$_ADR_COUNT","roadmap_exists":"$_ROADMAP_EXISTS","gap_count":"$_GAP_COUNT","active_changes":"$_ACTIVE_CHANGES","discovered_adr_dir":"${DISCOVERED_ADR_DIR:-}","discovered_roadmap_path":"${DISCOVERED_ROADMAP_PATH:-}","discovered_architecture_dir":"${DISCOVERED_ARCHITECTURE_DIR:-}","discovered_adr_pattern":"${DISCOVERED_ADR_PATTERN:-}","gh_available":"${_GH_AVAILABLE:-no}"}
 EOF
   mv "$tmp" "$cache_file"
 }
 
-# 输出 13 字段 JSON (逐行 key: value, 供测试解析与兼容 arch_env_check 契约).
+# 输出 14 字段 JSON (逐行 key: value, 供测试解析与兼容 arch_env_check 契约).
 _emit_json() {
   echo "timestamp: $(date +%s)"
   echo "ttl_s: ${RDD_ENV_CACHE_TTL:-3600}"
@@ -102,6 +124,7 @@ _emit_json() {
   echo "discovered_roadmap_path: ${DISCOVERED_ROADMAP_PATH:-}"
   echo "discovered_architecture_dir: ${DISCOVERED_ARCHITECTURE_DIR:-}"
   echo "discovered_adr_pattern: ${DISCOVERED_ADR_PATTERN:-}"
+  echo "gh_available: ${_GH_AVAILABLE:-no}"
 }
 
 # 单行状态: ✅ Env OK (cached Xm ago) | ADR:N | Roadmap:✓

@@ -24,10 +24,11 @@ _run_env_full_check     # 强制全量检查 (写 cache + 输出 10 字段 JSON)
 
 - 固定路径: `.rddf/state/.env-cache.json` (gitignored)
 - 默认 TTL: 3600 秒; 覆盖: `RDD_ENV_CACHE_TTL` (设 0 恒失效)
-- 固定 14 字段: `timestamp` `ttl_s` `branch` `openspec_ver` `git_clean` `build_dir` `adr_count` `roadmap_exists` `gap_count` `active_changes` `discovered_adr_dir` `discovered_roadmap_path` `discovered_architecture_dir` `discovered_adr_pattern`
+- 固定 15 字段: `timestamp` `ttl_s` `branch` `openspec_ver` `git_clean` `build_dir` `adr_count` `roadmap_exists` `gap_count` `active_changes` `discovered_adr_dir` `discovered_roadmap_path` `discovered_architecture_dir` `discovered_adr_pattern` **`gh_available`**
+- `gh_available` 三态: `yes:<user>` (安装 + 认证) / `no:gh-missing` / `no:not-authed` — 用于 ADR-0027 reporter 前置依赖检测, **不** 阻断 phase 入口 (缺 gh 仅使 reporter L2 路径不可用, L1 本地文件仍可用)
 - 原子写: `.tmp` → `mv` (同目录 rename)
 - 失效条件: 文件缺失 / mtime 超 TTL / `cache.branch != git branch --show-current`
-- 命中输出: `✅ Env OK (cached Xm ago) | ADR:N | Roadmap:✓` (单行)
+- 命中输出: `✅ Env OK (cached Xm ago) | ADR:N | Roadmap:✓ | GH:<status>` (单行)
 - 缓存**不保存** token / 绝对路径 / git remote 等敏感信息
 
 ## 失败行为

@@ -31,6 +31,7 @@ _run_env_full_check() {
   _check_git
   _check_branch
   _check_build_dir
+  _check_gh
 
   # ADR-0016 工件路径发现 → 4 个 discovered_* 写入 .env-cache.json
   local discovered_adr_dir="docs/adr" discovered_roadmap="roadmap.md" discovered_arch="docs/architecture" discovered_pattern="ADR-*.md"
