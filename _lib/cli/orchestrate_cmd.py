@@ -25,9 +25,25 @@ import sys
 import tempfile
 import time
 import uuid
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import IO, Any, Optional
+
+
+@dataclass
+class Trace:
+    """Open trace file handle with phase/session metadata."""
+
+    path: Path
+    phase: str
+    session_id: str
+    _fh: Optional[IO[str]] = None
+
+    def close(self) -> None:
+        fh = self._fh
+        if fh is not None and not fh.closed:
+            fh.close()
 
 
 def cmd_orchestrate(argv: list[str]) -> int:
@@ -64,6 +80,99 @@ def _get_trace_dir() -> Path:
     """Return the trace directory from env or default."""
     raw = os.environ.get("RDDF_TRACE_DIR", ".rddf/state/trace")
     return Path(raw).resolve()
+
+
+def _get_session_id() -> str:
+    """Read rddf-session owner_opencode_session_id or generate a fresh UUID.
+
+    Per ADR-0017 fallback: try sessions.json first, then env, then fresh UUID.
+    """
+    project_root = os.environ.get("RDDF_PROJECT_ROOT", ".")
+    sessions_path = Path(project_root) / ".rddf" / "state" / "sessions.json"
+    if sessions_path.is_file():
+        try:
+            data = json.loads(sessions_path.read_text())
+            current = data.get("current", {})
+            sid = current.get("owner_opencode_session_id")
+            if sid:
+                return sid
+        except (OSError, json.JSONDecodeError, KeyError):
+            pass
+    return os.environ.get("RDDF_OPENCODE_SESSION_ID", uuid.uuid4().hex)
+
+
+def _get_trace_path(phase: str, session_id: str, pid: int, epoch: int) -> Path:
+    """Return path for a new trace file.
+
+    Filename: ``<phase>-<session>-<pid>-<epoch>-<uuid>.jsonl``
+    Epoch ensures uniqueness even if pid reused within same second.
+    UUID suffix guards against collision from same-process multi-open.
+    """
+    fname = f"{phase}-{session_id}-{pid}-{epoch}-{uuid.uuid4().hex[:8]}.jsonl"
+    return _get_trace_dir() / fname
+
+
+def _open_trace(phase: str, session_id: Optional[str] = None) -> Trace:
+    """Open a new trace file for writing.
+
+    Ensures ``RDDF_TRACE_DIR`` exists; raises OSError on permission failure.
+    """
+    sid = session_id or _get_session_id()
+    trace_dir = _get_trace_dir()
+    trace_dir.mkdir(parents=True, exist_ok=True)
+    path = _get_trace_path(
+        phase=phase,
+        session_id=sid,
+        pid=os.getpid(),
+        epoch=int(time.time()),
+    )
+    fh = open(path, "a", encoding="utf-8")
+    return Trace(path=path, phase=phase, session_id=sid, _fh=fh)
+
+
+def _append_event(trace: Trace, event: dict) -> None:
+    """Append one event to the trace. Adds timestamp if missing."""
+    if "ts" not in event:
+        event = {**event, "ts": datetime.now(timezone.utc).isoformat()}
+    line = json.dumps(event, ensure_ascii=False, separators=(",", ":"))
+    fh = trace._fh
+    if fh is None:
+        raise RuntimeError("Trace not opened")
+    fh.write(line + "\n")
+    fh.flush()
+
+
+def _read_events(path: Path) -> list[dict]:
+    """Read all events from a JSONL file. Skips malformed lines."""
+    events: list[dict] = []
+    if not path.is_file():
+        return events
+    with open(path, encoding="utf-8") as fh:
+        for raw in fh:
+            raw = raw.strip()
+            if not raw:
+                continue
+            try:
+                events.append(json.loads(raw))
+            except json.JSONDecodeError:
+                continue
+    return events
+
+
+def _find_open_trace(trace_dir: Path, phase: str) -> Optional[Path]:
+    """Return the most recent trace file for ``phase`` that has no finalize event."""
+    candidates = sorted(
+        trace_dir.glob(f"{phase}-*.jsonl"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    for candidate in candidates:
+        events = _read_events(candidate)
+        if not events:
+            continue
+        if events[-1].get("type") != "finalize":
+            return candidate
+    return None
 
 
 def _handle_subprocess(cmd: list[str], trace_dir: Path) -> int:
