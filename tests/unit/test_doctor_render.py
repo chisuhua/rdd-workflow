@@ -85,4 +85,10 @@ def test_quiet_render_single_line():
 
 def test_human_empty_findings_shows_ok():
     out = render_human([], categories_checked=["state", "plans", "roadmap-meta"])
-    assert "All 5 categories OK" in out
+    assert "All 3 categories OK" in out
+
+
+def test_human_empty_findings_count_matches_categories():
+    """Empty findings → OK message reflects the actual number of categories checked."""
+    out = render_human([], categories_checked=["a", "b", "c", "d", "e", "f"])
+    assert "All 6 categories OK" in out

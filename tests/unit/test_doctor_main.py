@@ -13,12 +13,13 @@ from doctor_render import Severity  # noqa: E402
 from doctor_main import aggregate_findings, _CHECKERS  # noqa: E402
 
 
-def test_aggregate_runs_all_5_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """aggregate_findings invokes all 5 checker modules and combines results."""
+def test_aggregate_runs_all_6_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """aggregate_findings invokes all 6 checker modules and combines results."""
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
     findings, categories_checked = aggregate_findings(category=None)
     assert set(categories_checked) == {
-        "state", "plan-tdd", "roadmap-meta", "proposal-table", "tasks-checkbox"
+        "state", "plan-tdd", "roadmap-meta", "proposal-table",
+        "tasks-checkbox", "migration-residue",
     }
 
 
@@ -52,6 +53,6 @@ def test_aggregate_no_category_no_match_returns_empty(tmp_path: Path, monkeypatc
     assert categories_checked == []
 
 
-def test_checkers_dict_has_5_entries():
-    """Lock the public contract: exactly 5 categories wired."""
-    assert len(_CHECKERS) == 5
+def test_checkers_dict_has_6_entries():
+    """Lock the public contract: exactly 6 categories wired."""
+    assert len(_CHECKERS) == 6

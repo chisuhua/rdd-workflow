@@ -57,7 +57,7 @@ def render_human(findings: list[Finding], categories_checked: list[str]) -> str:
     parts.append("")
 
     if not findings:
-        parts.append("✅ All 5 categories OK")
+        parts.append(f"✅ All {len(categories_checked)} categories OK")
         return "\n".join(parts)
 
     icons = {Severity.CRITICAL: "❌", Severity.WARNING: "⚠️ ", Severity.INFO: "ℹ️ "}
@@ -86,12 +86,12 @@ def render_human(findings: list[Finding], categories_checked: list[str]) -> str:
 def render_quiet(findings: list[Finding]) -> str:
     """At most one line: the most severe finding summary."""
     if not findings:
-        return "✅ All 5 categories OK"
+        return "✅ OK"
     by_sev = _group_by_severity(findings)
     for sev in (Severity.CRITICAL, Severity.WARNING, Severity.INFO):
         if by_sev[sev]:
             return f"{sev.value}: {len(by_sev[sev])} ({by_sev[sev][0].category})"
-    return "✅ All 5 categories OK"
+    return "✅ OK"
 
 
 def render_json(findings: list[Finding], categories_checked: list[str]) -> str:

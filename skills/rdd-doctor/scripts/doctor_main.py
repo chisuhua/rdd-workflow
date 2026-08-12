@@ -10,6 +10,7 @@ from typing import List, Tuple
 from doctor_render import Finding, Severity, exit_code_for, render_human, render_json, render_quiet
 
 from checks import (
+    migration_residue_check,
     plan_tdd_check,
     proposal_table_check,
     roadmap_meta_check,
@@ -24,6 +25,7 @@ _CHECKERS = {
     "roadmap-meta": roadmap_meta_check.run,
     "proposal-table": proposal_table_check.run,
     "tasks-checkbox": tasks_checkbox_check.run,
+    "migration-residue": migration_residue_check.run,
 }
 
 

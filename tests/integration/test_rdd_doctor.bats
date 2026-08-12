@@ -65,7 +65,7 @@ setup() {
     [ "$status" -ne 0 ]
 }
 
-@test "doctor: --help mentions all 5 categories" {
+@test "doctor: --help mentions all 6 categories" {
     run bash "$DOCTOR_SH" --help
     [ "$status" -eq 0 ]
     [[ "$output" == *"state"* ]]
@@ -73,4 +73,5 @@ setup() {
     [[ "$output" == *"roadmap-meta"* ]]
     [[ "$output" == *"proposal-table"* ]]
     [[ "$output" == *"tasks-checkbox"* ]]
+    [[ "$output" == *"migration-residue"* ]]
 }
