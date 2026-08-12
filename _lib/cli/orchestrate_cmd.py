@@ -366,3 +366,9 @@ def _handle_finalize(trace_dir: Path) -> int:
 def _handle_sweep(trace_dir: Path) -> int:
     """Sweep trace dir for stale unfinalized traces. Filled in Task 10."""
     return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(cmd_orchestrate(sys.argv[1:]))
