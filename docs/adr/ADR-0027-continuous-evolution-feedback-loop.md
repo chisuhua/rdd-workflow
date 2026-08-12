@@ -66,6 +66,17 @@ rdd-workflow 的 phase **不是**统一可执行进程，存在两种根本不�
 
 **关键边界**：`rdd-doctor` **不是** reporter 的触发点。rdd-doctor 是**静态扫描**（检查 `.rddf.json` / schema / config 文件是否符合要求），其 CRITICAL finding 是**第三方项目的本地配置问题**，应在本地用 `rdd doctor --fix` 修复，**不上报**到上游 rdd-workflow issue tracker。
 
+#### 1.0.1 未来扩展 (Python orchestrator, spec 2026-08-12)
+
+`skills/_lib/orchestrator_entry.sh` 提供 `rddf orchestrate` 包装器，由 `RDDF_USE_ORCHESTRATOR=yes` 启用。补 4 个盲区：
+
+- **B1**: 任何子脚本（无需 source wrapper）都可被 orchestrator 捕获
+- **B2**: agent 不调 finalize 时，下次 entry 扫盘检测 stale trace
+- **B3**: 多步骤累积失败（exit 0 但 stderr 含 invalid state）通过 analyze_phase_trace 检测
+- **B4**: SIGKILL/OOM 留下未 finalize 的 trace，下次 entry 触发 `phase-interrupted` 报告
+
+迁移条件：本仓库 dogfood 2 周零误报后 flip 默认值。
+
 #### 1.1 类别清单
 
 reporter 处理的类别（区分两平面）：
