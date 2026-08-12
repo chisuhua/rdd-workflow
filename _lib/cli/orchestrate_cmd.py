@@ -441,16 +441,34 @@ def _classify_interrupted_phase(events: list[dict]):
         )
 
     last = subprocess_events[-1]
-    outcome = PhaseOutcome(
-        phase=os.environ.get("RDDF_PHASE", "unknown"),
-        exit_code=last.get("returncode", 0),
-        stderr=last.get("stderr_tail", ""),
-        stdout_tail=last.get("stdout_tail", ""),
-        traceback="",
-    )
-    return classify_phase_outcome(
-        phase=os.environ.get("RDDF_PHASE", "unknown"),
-        outcome=outcome,
+    last_returncode = last.get("returncode", 0)
+
+    if last_returncode != 0:
+        outcome = PhaseOutcome(
+            phase=os.environ.get("RDDF_PHASE", "unknown"),
+            exit_code=last_returncode,
+            stderr=last.get("stderr_tail", ""),
+            stdout_tail=last.get("stdout_tail", ""),
+            traceback="",
+        )
+        return classify_phase_outcome(
+            phase=os.environ.get("RDDF_PHASE", "unknown"),
+            outcome=outcome,
+        )
+
+    return Classification(
+        root_cause=ROOT_CAUSE_FLOW,
+        report_category=REPORT_CATEGORY_CRASH,
+        matched_rule="INTERRUPTED-WITH-OK-LAST",
+        description=f"phase ended with last subprocess exit=0 but no finalize event (likely SIGKILL after success, or agent missed checklist)",
+        metadata={
+            "phase": "trace",
+            "matched_rule": "INTERRUPTED-WITH-OK-LAST",
+            "last_returncode": last_returncode,
+            "subprocess_count": len(subprocess_events),
+        },
+        should_report=True,
+        user_hint=USER_HINTS.get(ROOT_CAUSE_FLOW, ""),
     )
 
 

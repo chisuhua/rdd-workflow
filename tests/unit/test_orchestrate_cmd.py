@@ -273,3 +273,14 @@ def test_classify_interrupted_phase_with_subprocess(monkeypatch):
     cls = _classify_interrupted_phase(events)
     assert cls is not None
     assert cls.should_report is True
+
+
+def test_classify_interrupted_phase_with_ok_last_subprocess(monkeypatch):
+    monkeypatch.setenv("RDDF_PHASE", "guide-test")
+    events = [
+        {"type": "subprocess", "cmd": ["x"], "returncode": 0, "stderr_tail": "", "stdout_tail": "ok"},
+    ]
+    cls = _classify_interrupted_phase(events)
+    assert cls is not None
+    assert cls.should_report is True
+    assert cls.matched_rule == "INTERRUPTED-WITH-OK-LAST"
