@@ -53,13 +53,9 @@
 
 
 
-| [wire-plan-done-quality-gates](.rddf/improvements/wire-plan-done-quality-gates.md) | P0 | 2026-08-10 | guide-arch |
 
-| [wire-design-content-review-gate](.rddf/improvements/wire-design-content-review-gate.md) | P1 | 2026-08-10 | guide-arch |
 
-| [add-proposal-how-leakage-warning](.rddf/improvements/add-proposal-how-leakage-warning.md) | P1 | 2026-08-10 | guide-arch |
 
-| [migrate-improvements-to-rddf-namespace](.rddf/improvements/migrate-improvements-to-rddf-namespace.md) | P0 | 2026-08-11 | guide-arch |
 
 
 ## 已实施
@@ -107,6 +103,10 @@
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
+| [migrate-improvements-to-rddf-namespace](.rddf/improvements/migrate-improvements-to-rddf-namespace.md) | P0 | 2026-08-12 |
+| [add-proposal-how-leakage-warning](.rddf/improvements/add-proposal-how-leakage-warning.md) | P1 | 2026-08-12 |
+| [wire-design-content-review-gate](.rddf/improvements/wire-design-content-review-gate.md) | P1 | 2026-08-12 |
+| [wire-plan-done-quality-gates](.rddf/improvements/wire-plan-done-quality-gates.md) | P0 | 2026-08-12 |
 | [fix-ship-archive-resolve-lib-path](.rddf/improvements/fix-ship-archive-resolve-lib-path.md) | P1 | 2026-08-07 |
 | [fix-bootstrap-fallback-paths](.rddf/improvements/fix-bootstrap-fallback-paths.md) | P1 | 2026-08-07 |
 | [add-env-cache-arch-discovery](.rddf/improvements/add-env-cache-arch-discovery.md) | P2 | 2026-08-07 |
