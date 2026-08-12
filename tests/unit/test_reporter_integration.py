@@ -45,7 +45,7 @@ def test_e2e_full_pipeline_creates_submits_and_closes(tmp_path, monkeypatch):
             "/home/alice/myproj/lib/utils.py:13 in helper",
         ],
     }
-    result = detect_issue("doctor-critical", payload)
+    result = detect_issue("flow-bug", payload)
     assert "alice" not in result.sanitized_description
     assert "main.py" in result.sanitized_description
     assert len(result.dedup_hash) == 8
@@ -53,7 +53,7 @@ def test_e2e_full_pipeline_creates_submits_and_closes(tmp_path, monkeypatch):
     # 2. Write
     file_path = write_issue_file(result, project_root=str(tmp_path))
     assert file_path.exists()
-    assert file_path.name.startswith("doctor-critical-")
+    assert file_path.name.startswith("flow-bug-")
 
     # 3. Submit (mocked gh)
     fake_proc = mock.Mock(
@@ -62,7 +62,7 @@ def test_e2e_full_pipeline_creates_submits_and_closes(tmp_path, monkeypatch):
         stderr="",
     )
     monkeypatch.setattr("subprocess.run", mock.Mock(return_value=fake_proc))
-    submit_result = submit_issue_via_gh(file_path, "doctor-critical", "x/y")
+    submit_result = submit_issue_via_gh(file_path, "flow-bug", "x/y")
     assert submit_result.success is True
     assert submit_result.submitted_url == "https://github.com/x/y/issues/1"
 
@@ -132,8 +132,8 @@ def test_e2e_close_hook_dogfooding_closes_and_updates_local_file(
     # Pre-create the local issue file
     issues_dir = tmp_path / ".rddf" / "issues"
     issues_dir.mkdir(parents=True)
-    (issues_dir / "doctor-critical-303.md").write_text(
-        '---\ncategory: "doctor-critical"\ndedup_hash: "303"\nsubmitted_url: null\n---\n\nbody\n',
+    (issues_dir / "flow-bug-303.md").write_text(
+        '---\ncategory: "flow-bug"\ndedup_hash: "303"\nsubmitted_url: null\n---\n\nbody\n',
         encoding="utf-8",
     )
 
@@ -150,7 +150,7 @@ def test_e2e_close_hook_dogfooding_closes_and_updates_local_file(
     assert result.closed == [303]
     assert result.errors == []
 
-    issue_text = (issues_dir / "doctor-critical-303.md").read_text()
+    issue_text = (issues_dir / "flow-bug-303.md").read_text()
     assert "closed_at:" in issue_text
     assert "closed_ref: 303" in issue_text
 
@@ -167,22 +167,22 @@ def test_e2e_retention_prunes_old_keeps_recent_and_unsubmitted(tmp_path):
     old_ts = (datetime.now(timezone.utc) - timedelta(days=40)).isoformat()
     recent_ts = (datetime.now(timezone.utc) - timedelta(days=5)).isoformat()
 
-    (issues_dir / "doctor-critical-old11.md").write_text(
+    (issues_dir / "phase-crash-old11.md").write_text(
         f'---\nclosed_at: "{old_ts}"\n---\n', encoding="utf-8",
     )
-    (issues_dir / "doctor-critical-recent2.md").write_text(
+    (issues_dir / "phase-crash-recent2.md").write_text(
         f'---\nclosed_at: "{recent_ts}"\n---\n', encoding="utf-8",
     )
-    (issues_dir / "doctor-critical-unsub3.md").write_text(
+    (issues_dir / "phase-crash-unsub3.md").write_text(
         '---\nsubmitted_url: null\n---\n', encoding="utf-8",
     )
 
     removed = prune_old_issues(project_root=str(tmp_path), retention_days=30)
     assert removed == 1
     remaining = {p.name for p in issues_dir.glob("*.md")}
-    assert "doctor-critical-old11.md" not in remaining
-    assert "doctor-critical-recent2.md" in remaining
-    assert "doctor-critical-unsub3.md" in remaining
+    assert "phase-crash-old11.md" not in remaining
+    assert "phase-crash-recent2.md" in remaining
+    assert "phase-crash-unsub3.md" in remaining
 
 
 # ── E2E: cross-module composition (change-a + change-b still work) ─────
@@ -194,15 +194,15 @@ def test_e2e_dedup_hash_matches_across_detect_calls():
         "description": "schema drift detected",
         "stack": ["/home/alice/proj/main.py:42 in main"],
     }
-    r1 = detect_issue("doctor-critical", payload)
-    r2 = detect_issue("doctor-critical", payload)
+    r1 = detect_issue("flow-bug", payload)
+    r2 = detect_issue("flow-bug", payload)
     assert r1.dedup_hash == r2.dedup_hash
 
     payload_diff_path = {
         "description": "schema drift detected",
         "stack": ["/Users/bob/other-proj/main.py:99 in main"],
     }
-    r3 = detect_issue("doctor-critical", payload_diff_path)
+    r3 = detect_issue("flow-bug", payload_diff_path)
     assert r3.dedup_hash == r1.dedup_hash  # cross-machine stability
 
 

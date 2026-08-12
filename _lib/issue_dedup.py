@@ -49,7 +49,7 @@ def compute_dedup_hash(category: str, error_message: str, stack_frames: list[str
     """Return the first 8 hex chars of ``sha256(category + ':' + normalized_text)``.
 
     Args:
-        category: One of the ADR-0027 §1 categories (e.g. ``doctor-critical``).
+        category: One of the ADR-0027 §1 categories (e.g. ``flow-bug``, ``gate-failure``).
         error_message: The error string (usually first line of traceback).
         stack_frames: First N stack frames (default 3 per ADR-0027 §4).
 

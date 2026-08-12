@@ -733,3 +733,18 @@ fi
 - 不修改 `_lib/loop_engine.py::execute_plan` (已是 serial)
 - 不实现 parallel → serial 自动降级 fallback
 - 不引入新执行引擎或新依赖
+
+## Phase Exit — Post-Flow Analysis (Agent 平面, ADR-0027 §1.0)
+
+在 ship 阶段异常结束时（如 archive 失败、worktree 状态错误、无法继续），agent 应主动调用：
+
+```bash
+rddf report-issue --category flow-bug --phase guide-ship "<one-line description>"
+rddf report-issue --category gate-failure --phase guide-ship "<gate 错误描述>"
+```
+
+**何时调用**：本 phase 走了非预期路径，**不是**用户用错（那是 UI 提示），也**不是**环境问题（那是退出 + 诊断）。
+
+**不调用**的场景：usage-error（参数错）、environment-error（缺工具）、SIGINT/Ctrl+C（用户取消）。
+
+详见 `docs/adr/ADR-0027-continuous-evolution-feedback-loop.md` §1.0 两平面架构。

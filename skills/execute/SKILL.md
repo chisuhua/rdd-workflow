@@ -284,3 +284,18 @@ CHANGE_NAME="<name>" mark_all_tasks_done
 | worktree 不存在 | `test -d .rddf/wt/<name>` | 提示先执行 plan skill（含 worktree 创建） |
  | 构建失败 | `cmake --build` 非零退出 | 分析错误，修复后重试当前 Work Unit |
 | worktree 路径查找 | `test -d .rddf/wt/<name>` 不可靠 | 用 `git worktree list \| awk '$3=="openspec/<name>" {print $1}'` 动态获取 |
+
+## Phase Exit — Post-Flow Analysis (Agent 平面, ADR-0027 §1.0)
+
+在 execute 阶段异常结束时（如 TDD 5 步失败、plan 步骤异常、无法继续），agent 应主动调用：
+
+```bash
+rddf report-issue --category flow-bug --phase execute "<one-line description>"
+rddf report-issue --category phase-crash --phase execute "<traceback summary>"
+```
+
+**何时调用**：本 phase 走了非预期路径，**不是**用户用错（那是 UI 提示），也**不是**环境问题（那是退出 + 诊断）。
+
+**不调用**的场景：usage-error（参数错）、environment-error（缺工具）、SIGINT/Ctrl+C（用户取消）。
+
+详见 `docs/adr/ADR-0027-continuous-evolution-feedback-loop.md` §1.0 两平面架构。

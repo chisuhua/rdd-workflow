@@ -116,15 +116,15 @@ def test_same_error_different_machines_produces_same_hash():
         "/Users/bob/different-proj/lib/utils.py:55 in helper",
         "/Users/bob/different-proj/handler.py:3 in handle",
     ]
-    hash_a = compute_dedup_hash("doctor-critical", "schema drift detected", frames_machine_a)
-    hash_b = compute_dedup_hash("doctor-critical", "schema drift detected", frames_machine_b)
+    hash_a = compute_dedup_hash("flow-bug", "schema drift detected", frames_machine_a)
+    hash_b = compute_dedup_hash("flow-bug", "schema drift detected", frames_machine_b)
     assert hash_a == hash_b
 
 
 def test_different_category_produces_different_hash():
     """Same error, different category → different hash (per ADR-0027 §4 category prefix)."""
     frames = ["/home/alice/proj/main.py:42 in main"]
-    h_doctor = compute_dedup_hash("doctor-critical", "schema drift", frames)
+    h_doctor = compute_dedup_hash("flow-bug", "schema drift", frames)
     h_gate = compute_dedup_hash("gate-failure", "schema drift", frames)
     assert h_doctor != h_gate
 
@@ -132,8 +132,8 @@ def test_different_category_produces_different_hash():
 def test_different_error_message_produces_different_hash():
     """Same category, different error → different hash."""
     frames = ["/home/alice/proj/main.py:42 in main"]
-    h1 = compute_dedup_hash("doctor-critical", "schema drift detected", frames)
-    h2 = compute_dedup_hash("doctor-critical", "missing field 'name'", frames)
+    h1 = compute_dedup_hash("flow-bug", "schema drift detected", frames)
+    h2 = compute_dedup_hash("flow-bug", "missing field 'name'", frames)
     assert h1 != h2
 
 
@@ -143,7 +143,7 @@ def test_different_error_message_produces_different_hash():
 def test_hash_length_is_8_hex_chars():
     """dedup_hash is always 8 hex characters (32 bits, ADR-0027 §4 collision math)."""
     frames = ["/home/alice/proj/main.py:42 in main"]
-    h = compute_dedup_hash("doctor-critical", "x", frames)
+    h = compute_dedup_hash("flow-bug", "x", frames)
     assert len(h) == 8
     assert re.match(r"^[0-9a-f]{8}$", h), f"not hex: {h}"
 
@@ -151,8 +151,8 @@ def test_hash_length_is_8_hex_chars():
 def test_hash_is_deterministic():
     """Same input → same hash (idempotency)."""
     frames = ["/home/alice/proj/main.py:42 in main"]
-    h1 = compute_dedup_hash("doctor-critical", "schema drift", frames)
-    h2 = compute_dedup_hash("doctor-critical", "schema drift", frames)
+    h1 = compute_dedup_hash("flow-bug", "schema drift", frames)
+    h2 = compute_dedup_hash("flow-bug", "schema drift", frames)
     assert h1 == h2
 
 

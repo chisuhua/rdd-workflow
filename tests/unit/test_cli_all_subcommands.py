@@ -20,11 +20,11 @@ This file exists for two purposes:
    ``TestFilledAtRegression`` class below locks the schema acceptance +
    migration behaviour so this drift cannot recur silently.
 
-Subcommands covered (16 total — must match ``list_commands()``):
+Subcommands covered (17 total — must match ``list_commands()``):
 
     archive, archive-sync, cleanup, dashboard, deps, discover-ship-changes,
-    feature, guide, init, iteration, l2-trend, monitor, sessions, status,
-    validate, version
+    feature, guide, init, iteration, l2-trend, migrate-improvements, monitor,
+    sessions, status, validate, version
 """
 from __future__ import annotations
 
@@ -65,9 +65,12 @@ ALL_SUBCOMMANDS: tuple[str, ...] = (
     "feature",
     "guide",
     "init",
+    "issue",
     "iteration",
     "l2-trend",
+    "migrate-improvements",
     "monitor",
+    "report-issue",
     "sessions",
     "status",
     "validate",

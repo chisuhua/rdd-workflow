@@ -3,6 +3,11 @@
 # Exports: run_ship_env_check()
 # 模式: 读 cache → 命中输出单行; miss/过期/branch 变化 → 现场全量 + 覆盖 cache
 
+# ADR-0027 script-plane trigger (see add-post-flow-analysis change)
+export RDDF_PHASE="${RDDF_PHASE:-guide-ship}"
+source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
+trap 'post_flow_on_err' ERR
+
 run_ship_env_check() {
   local project_root
   project_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)

@@ -42,7 +42,7 @@ DEFAULTS = {
         "destination": "github",
         "auto_submit": False,
         "submit_categories": {
-            "doctor-critical": True,
+            "flow-bug": True,
             "gate-failure": True,
             "phase-crash": True,
             "manual": True,

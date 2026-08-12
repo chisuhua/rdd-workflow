@@ -35,7 +35,7 @@ def _write_roadmap_meta(project_root: str, issue_refs, gh_repo="chisuhua/rdd-wor
     return meta
 
 
-def _make_issue_file(project_root: str, dedup_hash: str, category="doctor-critical", closed_at: str | None = None) -> Path:
+def _make_issue_file(project_root: str, dedup_hash: str, category="phase-crash", closed_at: str | None = None) -> Path:
     issues_dir = Path(project_root) / ".rddf" / "issues"
     issues_dir.mkdir(parents=True, exist_ok=True)
     path = issues_dir / f"{category}-{dedup_hash}.md"
@@ -139,9 +139,9 @@ def test_prune_old_issues_removes_only_old_closed_files(tmp_path):
 
     issues_dir = Path(tmp_path) / ".rddf" / "issues"
     remaining = {p.name for p in issues_dir.glob("*.md")}
-    assert "doctor-critical-old11111.md" not in remaining
-    assert "doctor-critical-recent22.md" in remaining
-    assert "doctor-critical-nosub33.md" in remaining
+    assert "phase-crash-old11111.md" not in remaining
+    assert "phase-crash-recent22.md" in remaining
+    assert "phase-crash-nosub33.md" in remaining
 
 
 def test_prune_old_issues_returns_zero_when_dir_missing(tmp_path):
@@ -158,7 +158,7 @@ def test_prune_old_issues_never_deletes_unsubmitted_files(tmp_path):
     removed = prune_old_issues(project_root=str(tmp_path), retention_days=1)
     assert removed == 0
     issues_dir = Path(tmp_path) / ".rddf" / "issues"
-    assert (issues_dir / "doctor-critical-nosub44.md").exists()
+    assert (issues_dir / "phase-crash-nosub44.md").exists()
 
 
 # ── TDD 2.5: graceful failure handling ──────────────────────────────────

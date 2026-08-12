@@ -659,3 +659,18 @@ grep -E "skill_use\(\"(propose|deps|guide-arch|guide-ship)\"\)" skills/guide-pla
 - `skills/propose.md` — 变更创建技能（被 plan Phase 2 调用）
 - `skills/deps.md` — 依赖分析技能（被 plan Phase 3 调用）
 - `docs/adr/ADR-0003-three-phase-architecture.md` — 四阶段架构详细说明（v2.1 从三阶段扩展为四阶段）
+
+## Phase Exit — Post-Flow Analysis (Agent 平面, ADR-0027 §1.0)
+
+在 plan 阶段异常结束时（如 gate 硬失败、状态机分支错误、无法继续），agent 应主动调用：
+
+```bash
+rddf report-issue --category flow-bug --phase guide-plan "<one-line description>"
+rddf report-issue --category gate-failure --phase guide-plan "<gate 错误描述>"
+```
+
+**何时调用**：本 phase 走了非预期路径，**不是**用户用错（那是 UI 提示），也**不是**环境问题（那是退出 + 诊断）。
+
+**不调用**的场景：usage-error（参数错）、environment-error（缺工具）、SIGINT/Ctrl+C（用户取消）。
+
+详见 `docs/adr/ADR-0027-continuous-evolution-feedback-loop.md` §1.0 两平面架构。

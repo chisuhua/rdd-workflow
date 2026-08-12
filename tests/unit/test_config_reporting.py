@@ -38,7 +38,7 @@ def test_submit_categories_defaults():
     parser = ConfigParser(project_root="/nonexistent")
     config = parser.parse()
     cats = config["reporting"]["submit_categories"]
-    assert cats["doctor-critical"] is True
+    assert cats["flow-bug"] is True
     assert cats["gate-failure"] is True
     assert cats["phase-crash"] is True
     assert cats["manual"] is True
@@ -90,7 +90,7 @@ def test_reporting_section_validates_against_config_schema(tmp_path, monkeypatch
             "auto_submit": True,
             "destination": "github",
             "submit_categories": {
-                "doctor-critical": True,
+                "flow-bug": True,
                 "gate-failure": True,
                 "phase-crash": True,
                 "manual": True,

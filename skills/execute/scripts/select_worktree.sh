@@ -6,6 +6,11 @@
 # If yes: sets CHANGE_NAME + HAS_WORKTREE=true.
 # If no: lists available worktrees, prompts via EXECUTE_CHOICE (default 1), cd's into selected.
 # If NO worktrees exist: prints error + lists available changes + exits 1.
+
+# ADR-0027 script-plane trigger (see add-post-flow-analysis change)
+export RDDF_PHASE="${RDDF_PHASE:-execute}"
+source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
+trap 'post_flow_on_err' ERR
 #
 # Honors env vars:
 #   EXECUTE_CHOICE=N — selects Nth worktree (default 1, avoid read -p in non-interactive envs)

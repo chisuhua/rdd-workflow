@@ -64,15 +64,15 @@ def test_write_issue_file_creates_file_with_frontmatter(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / ".rddf").mkdir()
     payload = {"description": "schema drift detected", "stack": ["/home/x/y.py:1"]}
-    result = detect_issue("doctor-critical", payload)
+    result = detect_issue("flow-bug", payload)
     file_path = write_issue_file(result, project_root=str(tmp_path))
     assert file_path.exists()
-    assert file_path.name.startswith("doctor-critical-")
+    assert file_path.name.startswith("flow-bug-")
     assert file_path.name.endswith(".md")
     content = file_path.read_text(encoding="utf-8")
     assert content.startswith("---\n")
-    assert ('category: "doctor-critical"' in content
-            or "category: doctor-critical" in content)
+    assert ('category: "flow-bug"' in content
+            or "category: flow-bug" in content)
     assert "submitted: false" in content
     assert "schema drift" in content
 
@@ -81,8 +81,8 @@ def test_write_issue_file_dedup_identical_inputs(tmp_path):
     """Same payload on two writes produces the same filename (idempotent)."""
     (tmp_path / ".rddf").mkdir()
     payload = {"description": "schema drift", "stack": ["/home/x/y.py:1"]}
-    r1 = detect_issue("doctor-critical", payload)
-    r2 = detect_issue("doctor-critical", payload)
+    r1 = detect_issue("flow-bug", payload)
+    r2 = detect_issue("flow-bug", payload)
     p1 = write_issue_file(r1, project_root=str(tmp_path))
     p2 = write_issue_file(r2, project_root=str(tmp_path))
     assert p1.name == p2.name
@@ -198,12 +198,12 @@ def test_end_to_end_detect_write_submit(tmp_path, monkeypatch):
         "description": "Failed at /home/alice/myproj/src/main.py:42",
         "stack": ["/home/alice/myproj/lib.py:13 in helper"],
     }
-    result = detect_issue("doctor-critical", payload)
+    result = detect_issue("flow-bug", payload)
     file_path = write_issue_file(result, project_root=str(tmp_path))
     assert file_path.exists()
 
     fake_proc = mock.Mock(returncode=0, stdout="https://github.com/x/y/issues/1", stderr="")
     with mock.patch("subprocess.run", return_value=fake_proc):
-        submit_result = submit_issue_via_gh(file_path, "doctor-critical", "x/y")
+        submit_result = submit_issue_via_gh(file_path, "flow-bug", "x/y")
     assert submit_result.success is True
     assert submit_result.submitted_url == "https://github.com/x/y/issues/1"

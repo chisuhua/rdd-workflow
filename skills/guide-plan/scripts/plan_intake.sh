@@ -8,6 +8,11 @@
 # - Current branch display
 # - HARD-GATE on .arch-handoff.json existence (returns 1 if missing)
 # - Reads ADR_DIR, ROADMAP_PATH, ADR_PATTERN, ARCHITECTURE_DIR via jq from handoff
+
+# ADR-0027 script-plane trigger (see add-post-flow-analysis change)
+export RDDF_PHASE="${RDDF_PHASE:-guide-plan}"
+source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
+trap 'post_flow_on_err' ERR
 # - Falls back to defaults if jq missing or handoff fields absent
 # - Reads ADR_IDS + CURRENT_PHASE from handoff via python3 (with $ARCH_HANDOFF via env-var)
 # - Counts active openspec changes

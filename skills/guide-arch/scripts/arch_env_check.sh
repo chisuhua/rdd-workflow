@@ -10,6 +10,11 @@
 # - ADR/roadmap/gap-analysis/active-change counts
 # - Delegates to discover-arch-artifacts.sh (ADR-0016 Layer 1)
 
+# ADR-0027 script-plane trigger (see add-post-flow-analysis change)
+export RDDF_PHASE="${RDDF_PHASE:-guide-arch}"
+source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
+trap 'post_flow_on_err' ERR
+
 run_arch_env_check() {
   local PROJECT_ROOT
   PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)

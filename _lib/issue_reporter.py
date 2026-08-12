@@ -11,6 +11,12 @@
 - ``can_close_in_repo`` probes ``gh api repos/{owner}/{repo} --jq .permissions.push``
   to decide whether the reporter (or a fork owner) has write access
 
+**Boundary (ADR-0027 §1.0)**: rdd-doctor is a static scanner for project-level
+config/schema issues. Its findings are fixed in the third-party project —
+this module MUST NOT be called from rdd-doctor. Doctor findings stay local;
+reporter only fires for actual rdd-workflow bugs discovered at runtime
+(post-flow-analysis or manual ``rddf report-issue``).
+
 All subprocess calls are guarded by ``FileNotFoundError`` / ``TimeoutExpired``
 so the reporter degrades gracefully on minimal environments (no ``gh``,
 no network).
@@ -64,7 +70,7 @@ def detect_issue(category: str, payload: dict) -> IssueResult:
     """Sanitize a payload dict and produce a ready-to-write IssueResult.
 
     Args:
-        category: One of the ADR-0027 §1 categories (doctor-critical, gate-failure, …).
+        category: One of the ADR-0027 §1 categories (flow-bug, gate-failure, …).
         payload: ``{"description": str, "stack": list[str], "metadata": dict (optional)}``.
     """
     description = payload.get("description", "")

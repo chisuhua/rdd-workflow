@@ -47,20 +47,85 @@ rdd-workflow 已经发布多个版本（v1.0 → v2.0 → v2.1），拥有：
    检测             本地兜底      分层提交        提案化           闭环追溯
 ```
 
-### 1. 检测（Detect）— 故障点自动埋点
+### 1. 检测（Detect）— post-flow-analysis 触发模型
 
-在以下节点检测问题并触发上报：
+#### 1.0 两平面架构（必读）
 
-| 触发点 | 触发条件 | 上报类别 |
-|--------|---------|---------|
-| `rdd-doctor` 跑完 | 至少 1 个 CRITICAL finding | `doctor-critical` |
-| Gate transition | error 级 check 失败 | `gate-failure` |
-| `guide-arch/plan/ship` phase crash | 未捕获异常 / exit code 非 0 | `phase-crash` |
-| 用户手动 | `rddf report-issue "<desc>"` | `manual` |
+rdd-workflow 的 phase **不是**统一可执行进程，存在两种根本不同的运行时形态：
 
-**Out Scope**: 不上报 WARNING（噪音太大）；不上报 INFO。
+| 平面 | 范围 | 进程边界 | 失败信号 |
+|------|------|---------|---------|
+| **Script 平面** | `execute` skill + 所有 per-skill bash 脚本（`skills/*/scripts/*.sh`、`_lib/*.sh`）| ✅ 真实 OS 进程 | exit_code / stderr / traceback / FileNotFoundError / TimeoutExpired |
+| **Agent 平面** | `guide-arch` / `guide-plan` / `guide-ship` SKILL.md（agent 逐轮执行 Markdown 状态机）| ❌ 无进程边界（agent 在 turn 中结束）| agent 观察到 gate 硬失败 / 状态机分支错误 / 无法继续 |
 
-**注**: ADR-0017 的 4 选项冲突解决器（放弃/转移/强制/查看）不直接触发上报 — 若未来要扩展为第 5 选项 "report upstream"，需先修改 ADR-0017 并把 `rddf-session` skill 改造列入 In Scope。
+**影响**：classifier 必须从两个数据源接收输入：
+- **Script plane** → bash trap `ERR` 包装器（`skills/_lib/post_flow_wrap.sh`）捕获 exit_code + stderr，调用 `python3 -m _lib.post_flow_analysis --phase X --exit-code N --stderr-file F`
+- **Agent plane** → SKILL.md 指令 agent 在 phase 异常结束时调 `rddf report-issue --category <flow-bug|gate-failure|phase-crash> --phase <name> "<description>"`（agent 自分类，绕开 classifier）
+
+两平面共用同一个 `_lib/post_flow_analysis.classify_phase_outcome`（agent plane 调 `detect_issue` 直接传 category，绕开 classification）。
+
+**关键边界**：`rdd-doctor` **不是** reporter 的触发点。rdd-doctor 是**静态扫描**（检查 `.rddf.json` / schema / config 文件是否符合要求），其 CRITICAL finding 是**第三方项目的本地配置问题**，应在本地用 `rdd doctor --fix` 修复，**不上报**到上游 rdd-workflow issue tracker。
+
+#### 1.1 类别清单
+
+reporter 处理的类别（区分两平面）：
+
+| 类别 | 含义 | 触发平面 | 上报？ |
+|------|------|---------|--------|
+| `flow-bug` | rdd-workflow 自身 bug（逻辑错误、状态机错误、archive 失败）| 两平面都触发 | ✅ |
+| `gate-failure` | gate 逻辑错误（**不是**用户配置错；是 ADR-0007/0018/0019 自身实现问题）| 两平面都触发 | ✅ |
+| `phase-crash` | phase 抛未捕获异常 / exit code 非 0 且非环境/用法原因 | Script 平面（agent 平面通过 `flow-bug` 表达）| ✅ |
+| `manual` | 用户显式 `rddf report-issue "<desc>"` | Agent 平面（CLI）| ✅ |
+| `usage-error` | 用户用错（错参数、错顺序、缺 flag）| 两平面都识别 | ❌ **不收集** |
+| `environment-error` | 缺工具 / 网络 / 权限 / 磁盘满 | 两平面都识别 | ❌ **不收集** |
+
+#### 1.2 三段式判定（Script 平面 classifier）
+
+```
+phase exit_code != 0  AND  exit_code NOT IN {130, 143}  (排除 SIGINT/SIGTERM)
+  │
+  ├─[1] usage-error？  →  UI 提示 "用法：...，参考 docs/..."，不报
+  │    判据: stderr 匹配 re(r"usage: .*\[-|error: (unrecognized arguments|argument .*(is required|invalid|expected))", re.I)
+  │         OR argparse.ArgumentError raised
+  │         OR exit_code == 2 (rdd CLI handler convention)
+  │         OR stderr 匹配 re(r"(run \S+ first|missing required (argument|flag)|先执行)", re.I)
+  │
+  ├─[2] environment-error？  →  退出 + "需要 X / Y 工具 / 网络 / 权限"，不报
+  │    判据: FileNotFoundError 缺 gh|git|openspec|bats|python3
+  │         OR PermissionError on path OUTSIDE project tree
+  │         OR TimeoutExpired / 网络错误 (Could not resolve host|Connection refused)
+  │         OR No space left on device
+  │         OR stderr 匹配 re(r"(requires|需要).*(version|版本).*(openspec|git|python|bats)")
+  │
+  └─[3] flow-bug（默认 fail-open）  →  reporter 上报
+       判据: stderr 含 "Traceback" 且帧在 _lib/ 或 skills/
+            OR ConfigError surfaced as crash（schema 自身错）
+            OR stderr 匹配 re(r"(invalid state|unexpected (status|phase)|状态机)")
+            OR bash helper exit non-zero with no U/E match
+            OR (无任何 U/E 匹配 AND 非 exit 130/143)  ← 兜底
+```
+
+fine-grained 映射：`F1`（traceback in `_lib/`）→ `phase-crash`；`F4-gate`（gate raised）→ `gate-failure`；其他 `F` → `flow-bug`。
+
+**In Scope**（本 ADR 实施范围内）:
+- `_lib/post_flow_analysis.py` 三段式 classifier（Script 平面）
+- `skills/_lib/post_flow_wrap.sh` bash trap wrapper（Script 平面）
+- 4 个 phase entry 脚本 + `execute` 各加 1 行 trap（Script 平面）
+- 4 个 phase SKILL.md 各加 "Phase Exit" 段（Agent 平面指令）
+- `cli/report_issue_cmd.py` + `cli/issue_cmd.py`（manual 类别 + list/show）
+- 单元测试 ≥15 + bats 集成测试 ≥6
+- rdd-doctor 边界回归测试（doctor 跑完不写 `.rddf/issues/`）
+
+**Out of Scope**:
+- gate 自身实现（ADR-0007/0018/0019 范围）
+- rdd-doctor 改造
+- ADR-0017 冲突解决器扩展
+
+**Out Scope**（不纳入 reporter 类别，**也不在 post-flow-analysis 里上报**）:
+- `rdd-doctor` 的 CRITICAL / WARNING / INFO — 这是**本地诊断工具**，不是 flow 问题
+- `usage-error` — UI 提示即可，不收集
+- `environment-error` — 退出 + 诊断，不收集
+- ADR-0017 4 选项冲突解决器扩展（需独立 ADR 修改 rddf-session）
 
 ### 2. 缓冲（Buffer）— 离线/失败安全网
 
@@ -101,8 +166,8 @@ reporting:
   destination: github           # github | local | custom-url
   custom_repo_url: ""           # 当 destination=custom-url 时使用（如 GitLab 自托管）
   auto_submit: false            # 必须显式 opt-in（默认仅写本地）
-  submit_categories:            # 分类粒度 opt-in
-    doctor-critical: true
+  submit_categories:            # 分类粒度 opt-in (只对真正 flow 问题类别)
+    flow-bug: true
     gate-failure: true
     phase-crash: true
     manual: true
@@ -182,7 +247,7 @@ submitted_url: null
 
 **GitHub issue title 模板**: `[<category>] <description truncated 60 chars> (<dedup_hash>)`
 
-例: `[doctor-critical] state schema drift detected — 3 files on v0 (a1b2c3d4)`
+例: `[flow-bug] state schema drift detected — 3 files on v0 (a1b2c3d4)`
 
 ### 5. Triage — guide-design / guide-arch 消费 issue
 
@@ -217,7 +282,7 @@ gh issue list --repo chisuhua/rdd-workflow \
 
 # 2. 对每个 issue 展示给用户
 echo "Issue #123: state schema drift detected (3 reports)"
-echo "Category: doctor-critical | Hash: a1b2c3d4 | Reporter count: 3"
+echo "Category: flow-bug | Hash: a1b2c3d4 | Reporter count: 3"
 echo "---"
 cat body
 echo "---"
@@ -585,7 +650,7 @@ if os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true":
 
 - `docs/proposal-suggestions-format.md` — 提案格式规范
 - `docs/adr/ADR-0000-template.md` — ADR 模板（待扩展 `issue_refs` blockquote header）
-- `docs/adr/ADR-0007-gate-mechanism.md` §3 — 门控 error/warning 两级（doctor-critical 来源）
+- `docs/adr/ADR-0007-gate-mechanism.md` §3 — 门控 error/warning 两级（`gate-failure` 类别判定参考）
 - `docs/adr/ADR-0016-arch-artifact-discovery-contract.md` §4 — handoff schema 风格
 - `docs/adr/ADR-0018-arch-quality-gate.md` — arch_quality_gate 上报契约
 - `docs/adr/ADR-0019-change-arch-alignment.md` — change_alignment 上报契约
