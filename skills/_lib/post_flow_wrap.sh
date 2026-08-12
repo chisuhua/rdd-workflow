@@ -20,9 +20,11 @@
 # the phase it observes (mirrors _lib/post_archive_cleanup.sh pattern).
 
 # Resolve _lib/ path relative to this script's own location so callers
-# can source the file from any cwd.
+# can source the file from any cwd. This file lives at
+# skills/_lib/post_flow_wrap.sh, so _lib/ is at ../../_lib/ relative
+# to this file's directory.
 _POST_FLOW_WRAP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
-_POST_FLOW_LIB_DIR="$(cd "$_POST_FLOW_WRAP_DIR/../.." && pwd)"
+_POST_FLOW_LIB_DIR="$(cd "$_POST_FLOW_WRAP_DIR/../../_lib" && pwd)"
 
 # post_flow_on_err <phase>
 #   Trap ERR handler. Captures exit code, calls python3 classifier with
@@ -43,12 +45,24 @@ post_flow_on_err() {
     # Best-effort: find project root.
     local project_root="${RDDF_PROJECT_ROOT:-$PWD}"
 
+    RDDF_PHASE="$phase" \
+    RDDF_EXIT_CODE="$code" \
+    RDDF_STDERR_FILE="$err_log" \
+    RDDF_PROJECT_ROOT="$project_root" \
     PYTHONPATH="$_POST_FLOW_LIB_DIR" \
-    python3 -m post_flow_analysis \
-        --phase "$phase" \
-        --exit-code "$code" \
-        --stderr-file "$err_log" \
-        --project-root "$project_root" 2>/dev/null || true
+    python3 -c "
+import os, sys
+sys.path.insert(0, os.environ['RDDF_PROJECT_ROOT'] + '/_lib')
+from post_flow_analysis import analyze_and_report
+cls = analyze_and_report(
+    phase=os.environ['RDDF_PHASE'],
+    exit_code=int(os.environ['RDDF_EXIT_CODE']),
+    stderr_file=os.environ['RDDF_STDERR_FILE'],
+    project_root=os.environ['RDDF_PROJECT_ROOT'],
+)
+if cls.user_hint:
+    print(f'[{cls.root_cause}] {cls.user_hint}')
+" 2>/dev/null || true
 
     return 0
 }
@@ -65,12 +79,24 @@ run_with_analysis() {
     "$@" 2>"$err_log"
     local code=$?
     if [ "$code" -ne 0 ] && [ "$code" -ne 130 ] && [ "$code" -ne 143 ]; then
+        RDDF_PHASE="$phase" \
+        RDDF_EXIT_CODE="$code" \
+        RDDF_STDERR_FILE="$err_log" \
+        RDDF_PROJECT_ROOT="${RDDF_PROJECT_ROOT:-$PWD}" \
         PYTHONPATH="$_POST_FLOW_LIB_DIR" \
-        python3 -m post_flow_analysis \
-            --phase "$phase" \
-            --exit-code "$code" \
-            --stderr-file "$err_log" \
-            --project-root "${RDDF_PROJECT_ROOT:-$PWD}" 2>/dev/null || true
+        python3 -c "
+import os, sys
+sys.path.insert(0, os.environ['RDDF_PROJECT_ROOT'] + '/_lib')
+from post_flow_analysis import analyze_and_report
+cls = analyze_and_report(
+    phase=os.environ['RDDF_PHASE'],
+    exit_code=int(os.environ['RDDF_EXIT_CODE']),
+    stderr_file=os.environ['RDDF_STDERR_FILE'],
+    project_root=os.environ['RDDF_PROJECT_ROOT'],
+)
+if cls.user_hint:
+    print(f'[{cls.root_cause}] {cls.user_hint}')
+" 2>/dev/null || true
     fi
     rm -f "$err_log"
     return "$code"  # preserve original exit code
