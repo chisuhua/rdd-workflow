@@ -14,6 +14,7 @@ sys.path.insert(0, str(_SCRIPTS_DIR))
 from orchestrate_cmd import (  # noqa: E402
     Trace,
     _append_event,
+    _classify_interrupted_phase,
     _find_open_trace,
     _get_session_id,
     _get_trace_dir,
@@ -21,6 +22,7 @@ from orchestrate_cmd import (  # noqa: E402
     _handle_checkpoint,
     _handle_finalize,
     _handle_subprocess,
+    _handle_sweep,
     _open_trace,
     _read_events,
     _tail_file,
@@ -210,3 +212,64 @@ def test_handle_finalize_counts_failures(tmp_path, monkeypatch):
     last = events[-1]
     assert last["subprocess_failures"] == 1
     assert last["checkpoints"] == 1
+
+
+def test_sweep_classifies_unfinalized_old_trace_as_interrupted(tmp_path, monkeypatch):
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setenv("RDDF_PHASE", "guide-arch")
+    trace = tmp_path / "guide-arch-ses_x-1-1000000-aaaaaaaa.jsonl"
+    trace.write_text(
+        '{"ts":"2026-08-12T09:00:00Z","type":"subprocess","cmd":["x"],"returncode":0,"stderr_tail":"","stdout_tail":""}\n'
+    )
+    import os
+    os.utime(trace, (1000000, 1000000))
+    monkeypatch.setenv("RDDF_TRACE_STALE_MINUTES", "0")
+    rc = _handle_sweep(trace_dir=tmp_path)
+    assert rc == 0
+    assert not trace.exists()
+
+
+def test_sweep_skips_finalized_traces(tmp_path, monkeypatch):
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    monkeypatch.setenv("RDDF_PHASE", "guide-arch")
+    import os
+    import time
+    trace = tmp_path / "guide-arch-ses_x-1-1000000-bbbbbbbb.jsonl"
+    trace.write_text(
+        '{"ts":"2026-08-12T09:00:00Z","type":"finalize","subprocess_failures":0}\n'
+    )
+    recent = time.time() - 60
+    os.utime(trace, (recent, recent))
+    _handle_sweep(trace_dir=tmp_path)
+    assert trace.exists()
+
+
+def test_sweep_skips_recent_unfinalized_traces(tmp_path, monkeypatch):
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    monkeypatch.setenv("RDDF_PHASE", "guide-arch")
+    trace = tmp_path / "guide-arch-ses_x-1-1000000-cccccccc.jsonl"
+    trace.write_text(
+        '{"ts":"2026-08-12T09:00:00Z","type":"subprocess","cmd":["x"],"returncode":0}\n'
+    )
+    rc = _handle_sweep(trace_dir=tmp_path)
+    assert rc == 0
+    assert trace.exists()
+
+
+def test_classify_interrupted_phase_with_no_subprocess(monkeypatch):
+    monkeypatch.setenv("RDDF_PHASE", "guide-test")
+    cls = _classify_interrupted_phase([])
+    assert cls is not None
+    assert cls.matched_rule == "INTERRUPTED-NO-SUBPROCESS"
+    assert cls.should_report is True
+
+
+def test_classify_interrupted_phase_with_subprocess(monkeypatch):
+    monkeypatch.setenv("RDDF_PHASE", "guide-test")
+    events = [
+        {"type": "subprocess", "cmd": ["x"], "returncode": 1, "stderr_tail": "fail", "stdout_tail": ""},
+    ]
+    cls = _classify_interrupted_phase(events)
+    assert cls is not None
+    assert cls.should_report is True

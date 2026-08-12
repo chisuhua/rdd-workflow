@@ -364,8 +364,128 @@ def _handle_finalize(trace_dir: Path) -> int:
 
 
 def _handle_sweep(trace_dir: Path) -> int:
-    """Sweep trace dir for stale unfinalized traces. Filled in Task 10."""
+    """Sweep trace directory for stale unfinalized traces (B4 fix).
+
+    For each ``<phase>-*.jsonl`` with no finalize event and mtime older than
+    ``RDDF_TRACE_STALE_MINUTES`` (default 5):
+      - Classify as ``phase-interrupted`` → call ``report_flow_bug``
+      - Unlink the trace file (idempotent)
+
+    Also runs trace GC: deletes finalized traces > 7 days old, caps
+    unfinalized at 50 files.
+    """
+    if not trace_dir.is_dir():
+        return 0
+    max_age_min = int(os.environ.get("RDDF_TRACE_STALE_MINUTES", "5"))
+    phase_filter = os.environ.get("RDDF_PHASE")
+
+    now = time.time()
+    for trace_file in trace_dir.glob("*.jsonl"):
+        if phase_filter and not trace_file.name.startswith(f"{phase_filter}-"):
+            continue
+        try:
+            events = _read_events(trace_file)
+        except OSError:
+            continue
+        if not events:
+            continue
+        if events[-1].get("type") == "finalize":
+            continue
+
+        mtime = trace_file.stat().st_mtime
+        age_seconds = now - mtime
+        if age_seconds < max_age_min * 60:
+            continue
+
+        try:
+            cls = _classify_interrupted_phase(events)
+            if cls is not None:
+                project_root = os.environ.get("RDDF_PROJECT_ROOT", ".")
+                from skills._lib.post_flow_analysis import report_flow_bug
+                report_flow_bug(cls, project_root=project_root)
+        except Exception as e:
+            print(f"warning: sweep report failed for {trace_file.name}: {e}", file=sys.stderr)
+        try:
+            trace_file.unlink()
+        except OSError:
+            pass
+
+    _run_trace_gc(trace_dir)
     return 0
+
+
+def _classify_interrupted_phase(events: list[dict]):
+    """Build a Classification for a stale (interrupted) trace.
+
+    Returns None if events are insufficient to classify.
+    """
+    from skills._lib.post_flow_analysis import (
+        Classification,
+        PhaseOutcome,
+        classify_phase_outcome,
+        ROOT_CAUSE_FLOW,
+        REPORT_CATEGORY_CRASH,
+        USER_HINTS,
+    )
+
+    subprocess_events = [e for e in events if e.get("type") == "subprocess"]
+    if not subprocess_events:
+        return Classification(
+            root_cause=ROOT_CAUSE_FLOW,
+            report_category=REPORT_CATEGORY_CRASH,
+            matched_rule="INTERRUPTED-NO-SUBPROCESS",
+            description="phase interrupted before any subprocess completed (likely SIGKILL/OOM/laptop-close)",
+            metadata={"phase": "trace", "matched_rule": "INTERRUPTED-NO-SUBPROCESS"},
+            should_report=True,
+            user_hint=USER_HINTS.get(ROOT_CAUSE_FLOW, ""),
+        )
+
+    last = subprocess_events[-1]
+    outcome = PhaseOutcome(
+        phase=os.environ.get("RDDF_PHASE", "unknown"),
+        exit_code=last.get("returncode", 0),
+        stderr=last.get("stderr_tail", ""),
+        stdout_tail=last.get("stdout_tail", ""),
+        traceback="",
+    )
+    return classify_phase_outcome(
+        phase=os.environ.get("RDDF_PHASE", "unknown"),
+        outcome=outcome,
+    )
+
+
+def _run_trace_gc(trace_dir: Path) -> None:
+    """Garbage-collect old trace files."""
+    if not trace_dir.is_dir():
+        return
+    now = time.time()
+    finalized_old: list[Path] = []
+    unfinalized: list[tuple[float, Path]] = []
+
+    for trace in trace_dir.glob("*.jsonl"):
+        mtime = trace.stat().st_mtime
+        events = _read_events(trace)
+        if not events:
+            continue
+        if events[-1].get("type") == "finalize":
+            if (now - mtime) > 7 * 86400:
+                finalized_old.append(trace)
+        else:
+            unfinalized.append((mtime, trace))
+
+    for t in finalized_old:
+        try:
+            t.unlink()
+        except OSError:
+            pass
+
+    if len(unfinalized) > 50:
+        unfinalized.sort()
+        for _, t in unfinalized[: len(unfinalized) - 50]:
+            try:
+                t.unlink()
+            except OSError:
+                pass
 
 
 if __name__ == "__main__":
