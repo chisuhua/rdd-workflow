@@ -61,6 +61,8 @@
 
 | [migrate-improvements-to-rddf-namespace](.rddf/improvements/migrate-improvements-to-rddf-namespace.md) | P0 | 2026-08-11 | guide-arch |
 
+| [validate-feature-name](.rddf/improvements/validate-feature-name.md) | P1 | 2026-08-12 | guide-arch |
+
 ## 已实施
 | [fix-feature-decision-design-phase](.rddf/improvements/fix-feature-decision-design-phase.md) | P1 | 2026-08-10 |
 | [fix-proposal-approved-missing-after-archive](.rddf/improvements/fix-proposal-approved-missing-after-archive.md) | P1 | 2026-08-09 |
