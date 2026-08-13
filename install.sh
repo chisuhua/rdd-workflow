@@ -96,6 +96,18 @@ create_rddf_symlink() {
     esac
 }
 
+write_orchestrator_env() {
+    info "写入 RDDF_USE_ORCHESTRATOR_DEFAULT=yes 到 ~/.config/rdd-workflow/env..."
+    local ENV_FILE="${HOME}/.config/rdd-workflow/env"
+    mkdir -p "$(dirname "$ENV_FILE")"
+    if [ ! -f "$ENV_FILE" ] || ! grep -q '^RDDF_USE_ORCHESTRATOR_DEFAULT=' "$ENV_FILE" 2>/dev/null; then
+        printf '\n# RDDF_USE_ORCHESTRATOR_DEFAULT — spec 2026-08-13 §2 (orchestrator default-ON)\nexport RDDF_USE_ORCHESTRATOR_DEFAULT=yes\n' >> "$ENV_FILE"
+        ok "env hook written: $ENV_FILE"
+    else
+        info "RDDF_USE_ORCHESTRATOR_DEFAULT 已存在，跳过"
+    fi
+}
+
 install_global_symlinks() {
     echo ""
     echo "========================================="
