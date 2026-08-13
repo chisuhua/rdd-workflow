@@ -136,6 +136,7 @@ digraph rdd_brainstorm {
 **优先级**: <P0|P1|P2> | **来源**: <来源>
 **阶段**: <阶段ID 或 default> | **分类**: <分类>
 **类型**: <functional|debt|refactor>
+**主题**: <theme-name 或 不适用>
 
 ## 架构依据
 ...
@@ -157,6 +158,8 @@ digraph rdd_brainstorm {
 ```
 
 **命名规则**：kebab-case，如 `fix-silent-exception`、`add-config-validation`
+
+**`主题` 字段语义**：该提案绑定的 roadmap 主题名（来自 `roadmap.md` 第 5 列「预期改进方向」），精确字符串匹配用于覆盖率计算。**约束模式**下由 `add-improve --from-roadmap` 自动填入；**自由模式**下留空或填 `不适用`。
 
 **常用分类参考**（从现有提案中归纳）：
 - `arch-design` — 架构设计

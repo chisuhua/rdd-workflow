@@ -521,6 +521,24 @@ Flags: `--json` (write `.rddf/state/.doctor-report.json`), `--category <name>` (
 16. **manual_deps 人工依赖声明 (ADR-0022)**: `roadmap-meta.yaml` 支持 `manual_deps: [change_name]` 和 `manual_blocks: [change_name]` 字段。deps 分析时人工声明优先于静态分析 — 若 manual_deps 声明 A→B 但静态无证据，标注 "manual override"。详见 ADR-0022。
 17. **deps-driven execution mode (ADR-0024)**: 执行模式（lightweight vs worktree）在 plan 阶段的 deps 分析时就决定，并写入 `.plan-handoff.json`。`guide-ship` 的 `detect_execution_mode()` 优先读取 handoff 决策，fallback 到并行冲突检测。决策维度：文件数（≤2 → lightweight）、任务数（≤3 → lightweight）、风险关键词（refactor/migration → worktree）、文件冲突（有冲突 → worktree）。
 18. **Scanner state.sh fallback**: `skills/guide/scripts/scan-state.sh` and `guide_entry.sh` first try `$PROJECT_ROOT/skills/_lib/state.sh`, then fall back to `${HOME}/.agents/skills/_lib/state.sh`. If both are missing, a non-blocking stderr warning is printed; stdout and exit code remain unchanged. Do not add symlinks or runtime path resolution.
+19. **主题状态词汇 (roadmap-proposal-guidance, v2.2+)**: 
+    | 状态 | 含义 | coverage 分母 |
+    |------|------|---------------|
+    | `未覆盖` | roadmap 定义但无 proposal 匹配 | 计入 |
+    | `已覆盖` | 至少一个 proposal 的 `**主题**:` 字段精确匹配 | 不计入 |
+    | `~skipped~` | 用户显式标记豁免 (在 cell 末尾追加 `~skipped~`) | 不计入 |
+
+    由 `_lib/roadmap_state.py::get_phase_themes()` 解析,由 `guide-design/scripts/design_preflight.py::compute_theme_coverage()` 计算。
+20. **env-var 命名规范 (Oracle C1)**: 
+    - 所有 add-improve/brainstorm 间传参 env-var MUST 大写蛇形: `ADD_IMPROVE_FROM_ROADMAP`, `ADD_IMPROVE_THEME`, `BRAINSTORM_RATIONALE_DRAFT`
+    - 调用结束 MUST `unset` env-var (避免污染 shell),用 `trap cleanup EXIT`
+    - 禁止 `python3 -c "...$VAR..."` 内联 bash 字符串插值
+    - 详见 `skills/add-improve/scripts/from_roadmap.env.py` 校验逻辑
+21. **STRICT_PROPOSAL_COVERAGE 门控 (v2.2+)**: 
+    - 默认 OFF (warning only) — `guide-design` Phase 1 preflight 显示未覆盖主题但允许通过
+    - `STRICT_PROPOSAL_COVERAGE=yes` 升级为严格阻断 (与 `STRICT_DESIGN_GATE` 模式对齐)
+    - `SKIP_PROPOSAL_COVERAGE=yes` 临时绕过 (紧急情况)
+    - 由 `skills/guide-design/scripts/check_theme_coverage_gate.sh` 执行
 
 ## 前置条件
 

@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+### roadmap-proposal-guidance (让 roadmap 节点约束 proposal 创建)
+
+Adds end-to-end constraint-driven link from roadmap to proposal creation:
+
+- **roadmap 模板扩展** — `roadmap.md` 任务分类表格支持第 5 列 "预期改进方向" (可选, `主题1；主题2` 分号分隔)。4 列旧表格向后兼容 (按"无约束"处理)。
+- **`_lib/roadmap_state.py::get_phase_themes()`** — 解析第 5 列,返回该分类下的主题列表。处理 `~skipped~` 标记、空 cell、4 列遗留表、未知 phase、特殊字符 (CJK/dots/parens) 等边界情况。
+- **`rdd-workflow-brainstorm` 模板扩展** — 5 段 metadata 新增 `**主题**:` 字段 (free-form 留空或 `不适用`,约束模式由 `add-improve --from-roadmap` 自动填入)。
+- **`add-improve --from-roadmap` 模式** — 新增 CLI 参数,3 文件 env-var split pattern (`from_roadmap.{sh,env.py,py}`) 满足 Oracle C1 安全要求。env-var 名: `ADD_IMPROVE_FROM_ROADMAP`, `ADD_IMPROVE_THEME`, `BRAINSTORM_RATIONALE_DRAFT`。
+- **`guide-design` Phase 1 preflight 增强** — 直接解析 `roadmap.md` (consume-time, 避免 arch-handoff schema bump)。显示路线图指引 N 主题 across M 分类、当前覆盖 X/Y (Z%)、未覆盖主题列表 (按 phase/category 分组)、未标注主题的旧 proposal 数 (向后兼容, 避免 0/N 假警)。
+- **`guide-design` Phase 2 菜单新增** — 选项 2 "🎯 按路线图主题创建提案 (推荐)" — 列出未覆盖主题,用户选主题后触发 `add-improve --from-roadmap`。
+- **`STRICT_PROPOSAL_COVERAGE` 门控** — design-done Phase 4 新增可选严格校验,默认 warning only,与现有 `STRICT_*_GATE` 模式对齐 (`SKIP_PROPOSAL_COVERAGE=yes` 临时绕过)。
+- **主题状态词汇** — `未覆盖 / 已覆盖 / ~skipped~` 三态明确,`~skipped~` 排除出覆盖率分母。
+- **向后兼容** — 旧 v1 handoff + 无主题字段的旧 proposal 不报错,coverage 显示"未标注主题 K 个"独立统计。
+- **Oracle 审查采纳** — 删除原方案 handoff v2 schema bump (避免 rdd-doctor CRITICAL),改为 consume-time 直接解析 roadmap.md。
+
+测试: 7 unit tests (`test_roadmap_state_themes.py`) + 4 unit tests (`test_brainstorm_template.py`) + 12 unit tests (`test_from_roadmap_env_validation.py`) + 10 bats integration (`test_add_improve_from_roadmap.bats`) + 4 unit tests (`test_guide_design_preflight_themes.py`) + 8 bats integration (`test_strict_proposal_coverage_gate.bats`) = **45 new tests, all pass**.
+
 ### rddf orchestrate (Python orchestrator for phase subprocess detection)
 
 Adds `rddf orchestrate` subcommand that batches subprocess invocations of `guide-arch`,
