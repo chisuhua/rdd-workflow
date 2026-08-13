@@ -59,6 +59,8 @@
 
 
 
+| [complete-third-party-replay-and-upstream-reporting](.rddf/improvements/complete-third-party-replay-and-upstream-reporting.md) | P0 | 2026-08-13 | guide-arch |
+
 ## 已实施
 | [validate-feature-name](.rddf/improvements/validate-feature-name.md) | P1 | 2026-08-12 |
 | [fix-feature-decision-design-phase](.rddf/improvements/fix-feature-decision-design-phase.md) | P1 | 2026-08-10 |
