@@ -114,6 +114,25 @@ run_design_env_check
   - 差距分析: M 个
 ```
 
+**主题覆盖率显示**（v2.2 新增）：
+
+```bash
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/design_preflight.sh"
+run_theme_coverage_display "$PROJECT_ROOT"
+```
+
+显示格式：
+```
+📋 路线图指引: 6 个主题 across 3 分类
+📌 当前提案覆盖: 2/7 (29%) ⚠️
+📌 未覆盖主题:
+  - [phase-1/arch-design] 事件总线契约
+  - [phase-1/infra-setup] Docker镜像
+📌 未标注主题: 1 个旧 proposal (向后兼容)
+```
+
+`~skipped~` 主题（roadmap cell 末尾标记）排除出覆盖率分母。
+
 ## Phase 2: 提案管理
 
 **入口条件**：Phase 1 环境检查通过后直接进入。
@@ -126,14 +145,43 @@ run_design_env_check
   - 待审查: N 个
   - 已归档(自动批准): M 个
   - 已推迟: K 个（按 v 查看全部）
+  - 路线图覆盖: X/M (Y%) ⚠️   ← v2.2 新增
 
 选择操作:
-  1. ➕ 创建新提案（add-improve 交互式创建）
-  2. 📋 审查待批准提案
-  3. ✅ 批量批准所有提案
-  4. ✅ 完成设计阶段 → 进入设计门控
+  1. ➕ 创建新提案（add-improve 自由模式）
+  2. 🎯 按路线图主题创建提案（推荐）  ← v2.2 新增
+  3. 📋 审查待批准提案
+  4. ✅ 批量批准所有提案
+  5. ✅ 完成设计阶段 → 进入设计门控
   0. 💾 保存并退出
 ```
+
+**选项 1（创建新提案 — 自由模式）**：
+```bash
+echo "-> 启动 add-improve 创建新改进提案（自由模式）..."
+skill_use("add-improve")
+echo "-> 创建完成，返回提案列表"
+continue
+```
+
+**选项 2（按路线图主题创建 — 约束模式，v2.2 新增）**：
+
+列出未覆盖主题（按 phase/category 分组），用户选主题后触发 `add-improve --from-roadmap`：
+
+```bash
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/design_preflight.sh"
+list_uncovered_themes "$PROJECT_ROOT"
+# 用户选主题后：
+THEME="<user-selected>"
+PHASE_CAT="<phase_id>/<category_id>"
+PROJECT_ROOT="$PROJECT_ROOT" bash "$ADD_IMPROVE_SCRIPT_DIR/from_roadmap.sh" \
+    --from-roadmap "$PHASE_CAT" \
+    --theme "$THEME" \
+    --project-root "$PROJECT_ROOT"
+echo "-> 约束模式 scaffold 创建完成，需走 brainstorm 完成 5 段确认"
+```
+
+约束模式不绕过 brainstorm HARD-GATE — 仅预填 scaffold。
 
 **选项 1（创建新提案）**：
 ```bash
@@ -232,6 +280,64 @@ check_design_done_gate() {
 ```
 
 门控通过后写入 handoff。失败时列出未决策提案并返回 Phase 2 菜单。
+
+**主题覆盖率门控**（v2.2 新增，可选）：
+
+```bash
+check_theme_coverage_gate() {
+  local project_root="$1"
+  local roadmap_path
+  roadmap_path=$(detect_roadmap_path "$project_root")
+
+  local coverage_json
+  coverage_json=$(PROJECT_ROOT="$project_root" \
+    python3 "$SCRIPT_DIR/../guide-design/scripts/design_preflight.py" \
+    "$project_root" "$roadmap_path" "$project_root/.rddf/improvements" 2>/dev/null)
+
+  local uncovered
+  uncovered=$(echo "$coverage_json" | python3 -c "import sys,json;print(' '.join(json.load(sys.stdin).get('uncovered', [])))")
+  local total
+  total=$(echo "$coverage_json" | python3 -c "import sys,json;print(json.load(sys.stdin).get('total_themes', 0))")
+
+  if [ "$total" -eq 0 ]; then
+    echo "✅ 无 roadmap 主题约束，跳过 coverage gate"
+    return 0
+  fi
+
+  if [ -n "$uncovered" ]; then
+    echo ""
+    echo "📊 Roadmap 主题覆盖率:"
+    echo "   总主题: $total"
+    echo "   未覆盖: $uncovered"
+  fi
+
+  if [ "${STRICT_PROPOSAL_COVERAGE:-}" = "yes" ]; then
+    if [ "${SKIP_PROPOSAL_COVERAGE:-}" != "yes" ] && [ -n "$uncovered" ]; then
+      echo ""
+      echo "❌ STRICT_PROPOSAL_COVERAGE=yes 但有未覆盖主题"
+      echo "   选项: 补 proposal / 显式 skip 主题 / 设置 SKIP_PROPOSAL_COVERAGE=yes 临时绕过"
+      return 1
+    fi
+    if [ "${SKIP_PROPOSAL_COVERAGE:-}" = "yes" ]; then
+      echo "⚠️  SKIP_PROPOSAL_COVERAGE=yes, coverage gate skipped"
+    fi
+  else
+    if [ -n "$uncovered" ]; then
+      echo "⚠️  coverage gate is warning only (set STRICT_PROPOSAL_COVERAGE=yes to enforce)"
+    fi
+  fi
+  return 0
+}
+```
+
+**环境变量**（v2.2 新增）：
+
+| 变量 | 默认 | 含义 |
+|------|------|------|
+| `STRICT_PROPOSAL_COVERAGE` | `no` | `yes` 升级 coverage gate 为严格阻断 |
+| `SKIP_PROPOSAL_COVERAGE` | `no` | `yes` 临时绕过 coverage gate（紧急情况） |
+
+对齐现有 `STRICT_*_GATE` 模式（`STRICT_DESIGN_GATE`, `STRICT_ARCH_GATE` 等）。
 
 ## Phase 5: design-done (Exit)
 

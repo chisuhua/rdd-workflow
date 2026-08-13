@@ -35,6 +35,7 @@ import datetime
 import json
 import os
 import re
+from typing import List
 
 
 def _now_iso() -> str:
@@ -293,8 +294,8 @@ def add_phase(
         f"**完成条件**:\n"
         f"  - [ ] 所有分类的 change 完成\n"
         f"\n#### 任务分类\n"
-        f"| 分类ID | 名称 | 描述 | 优先级 |\n"
-        f"|--------|------|------|--------|\n"
+        f"| 分类ID | 名称 | 描述 | 优先级 | 预期改进方向 |\n"
+        f"|--------|------|------|--------|--------------|\n"
     )
 
     try:
@@ -512,3 +513,55 @@ def update_change_count(
             json.dump(state, f, indent=2)
 
     return 0
+
+
+def get_phase_themes(roadmap_file: str, phase_id: str, category_id: str) -> List[str]:
+    """Parse the 5th column ("预期改进方向") of the task-category table.
+
+    Returns a list of theme names (semicolon-separated in the cell). Returns
+    empty list if the table has only 4 columns (legacy), the cell is empty,
+    the phase/category is not found, or the roadmap file is missing.
+
+    Backward compatible: 4-column tables return [] (no constraint).
+
+    Args:
+        roadmap_file: Path to roadmap.md
+        phase_id: e.g. "phase-1"
+        category_id: e.g. "arch-design"
+
+    Returns:
+        List of theme names (whitespace-stripped, ~skipped~ marker preserved).
+    """
+    if not os.path.isfile(roadmap_file):
+        return []
+
+    with open(roadmap_file, encoding="utf-8") as f:
+        content = f.read()
+
+    phase_section_match = re.search(
+        rf"### .*? \({re.escape(phase_id)}\).*?(?=\n### |\n## |\Z)",
+        content,
+        re.DOTALL,
+    )
+    if not phase_section_match:
+        return []
+
+    for line in phase_section_match.group().splitlines():
+        if not line.strip().startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 2:
+            continue
+        if cells[0] in {"分类ID", "--------"} or set(cells[0]) <= {"-"}:
+            continue
+        if cells[0] != category_id:
+            continue
+        if len(cells) < 5:
+            return []
+        theme_cell = cells[4].strip()
+        if not theme_cell:
+            return []
+        themes = re.split(r"[；;]", theme_cell)
+        return [t.strip() for t in themes if t.strip()]
+
+    return []
