@@ -12,17 +12,23 @@
 
 # ADR-0027 script-plane trigger (see add-post-flow-analysis change)
 export RDDF_PHASE="${RDDF_PHASE:-guide-arch}"
-source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
+
+# Source orchestrator_entry.sh unconditionally (spec 2026-08-13 §2:
+# default ON). Next line uses raw git rev-parse as bootstrap fallback
+# because orchestrator_run isn't defined yet — see §6.1 helper
+# boundary + T8 grep-rule refinement for explicit exemption marker.
+source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
+
+source "${RDDF_PROJECT_ROOT:-$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
 trap 'post_flow_on_err' ERR
 
-# ADR-0027 orchestrator path (opt-in via RDDF_USE_ORCHESTRATOR=yes)
-if [ "${RDDF_USE_ORCHESTRATOR:-no}" = "yes" ]; then
-    source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
-fi
+# C3 (spec 2026-08-13 §6): always finalize on exit so sweep can detect
+# phases killed without explicit cleanup.
+trap 'orchestrator_finalize' EXIT
 
 run_arch_env_check() {
   local PROJECT_ROOT
-  PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+  PROJECT_ROOT=$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)
   export PROJECT_ROOT
 
   # source 共享环境检查库 (DRY 单一来源, extract-rdd-env-check-from-guide-arch)
@@ -87,10 +93,10 @@ run_arch_env_check() {
   fi
 
   local ADR_COUNT ROADMAP_EXISTS GAP_COUNT ACTIVE_CHANGES
-  ADR_COUNT=$(ls -d "$PROJECT_ROOT/$DISCOVERED_ADR_DIR/"$DISCOVERED_ADR_PATTERN 2>/dev/null | wc -l | tr -d '[:space:]')
+  ADR_COUNT=$(orchestrator_run ls -d "$PROJECT_ROOT/$DISCOVERED_ADR_DIR/"$DISCOVERED_ADR_PATTERN 2>/dev/null | wc -l | tr -d '[:space:]')
   ROADMAP_EXISTS=$([ -f "$PROJECT_ROOT/$DISCOVERED_ROADMAP_PATH" ] && echo "yes" || echo "no")
-  GAP_COUNT=$(ls "$PROJECT_ROOT/$DISCOVERED_ARCHITECTURE_DIR/"*-gap-analysis.md 2>/dev/null | wc -l | tr -d '[:space:]')
-  ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l | tr -d '[:space:]')
+  GAP_COUNT=$(orchestrator_run ls "$PROJECT_ROOT/$DISCOVERED_ARCHITECTURE_DIR/"*-gap-analysis.md 2>/dev/null | wc -l | tr -d '[:space:]')
+  ACTIVE_CHANGES=$(orchestrator_run ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l | tr -d '[:space:]')
 
   echo "📋 现有 ADR: $ADR_COUNT"
   echo "📋 Roadmap: $ROADMAP_EXISTS"
