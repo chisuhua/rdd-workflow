@@ -8,7 +8,4 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [preserve-orchestrator-command-stdout](.rddf/improvements/preserve-orchestrator-command-stdout.md) | P1 | Oracle 审查（ADR-0027 follow-up） | 2026-08-13 | 待创建 |
-| [harden-plan-intake-bootstrap-and-design-gate-tests](.rddf/improvements/harden-plan-intake-bootstrap-and-design-gate-tests.md) | P1 | Oracle 审查（ADR-0016/ADR-0025 follow-up） | 2026-08-13 | 待创建 |
-
-
+| [fix-generator-scope-extraction](.rddf/improvements/fix-generator-scope-extraction.md) | P1 | Oracle 审查 + dogfooding 实战发现 | 2026-08-13 | 延迟 |
