@@ -9,13 +9,18 @@
 
 # ADR-0027 script-plane trigger (see add-post-flow-analysis change)
 export RDDF_PHASE="${RDDF_PHASE:-execute}"
-source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
+
+# Source orchestrator_entry.sh unconditionally (spec 2026-08-13 §2).
+# Bootstrap git rev-parse below is unavoidable — orchestrator_run not yet
+# defined. T8 grep-rule will exempt this line per spec §6.1.
+source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
+
+source "${RDDF_PROJECT_ROOT:-$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
 trap 'post_flow_on_err' ERR
 
-# ADR-0027 orchestrator path (opt-in via RDDF_USE_ORCHESTRATOR=yes)
-if [ "${RDDF_USE_ORCHESTRATOR:-no}" = "yes" ]; then
-    source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
-fi
+# C6 (spec 2026-08-13 §6): always finalize on exit so sweep can detect
+# phases killed without explicit cleanup.
+trap 'orchestrator_finalize' EXIT
 #
 # Honors env vars:
 #   EXECUTE_CHOICE=N — selects Nth worktree (default 1, avoid read -p in non-interactive envs)
@@ -42,9 +47,9 @@ auto_detect_worktree_context() {
     local _expected_main
     _expected_main=$(main_repo_root 2>/dev/null || pwd)
     local _rddf_common
-    _rddf_common=$(git -C "${RDDF_EXECUTION_ROOT}" rev-parse --git-common-dir 2>/dev/null || true)
+    _rddf_common=$(orchestrator_run git -C "${RDDF_EXECUTION_ROOT}" rev-parse --git-common-dir 2>/dev/null || true)
     local _expected_common
-    _expected_common=$(git -C "$_expected_main" rev-parse --git-common-dir 2>/dev/null || true)
+    _expected_common=$(orchestrator_run git -C "$_expected_main" rev-parse --git-common-dir 2>/dev/null || true)
     # Resolve to absolute paths so a relative ".git" matches itself.
     [ -n "$_rddf_common" ] && _rddf_common=$(cd "${RDDF_EXECUTION_ROOT}" 2>/dev/null && cd "$_rddf_common" 2>/dev/null && pwd -P)
     [ -n "$_expected_common" ] && _expected_common=$(cd "$_expected_main" 2>/dev/null && cd "$_expected_common" 2>/dev/null && pwd -P)
@@ -63,19 +68,19 @@ auto_detect_worktree_context() {
   if type main_repo_root &>/dev/null; then
     PROJECT_ROOT=$(main_repo_root)
   else
-    PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+    PROJECT_ROOT=$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)
   fi
   [ -d "$PROJECT_ROOT" ] || PROJECT_ROOT=$(pwd)
   export PROJECT_ROOT
   # 检测当前 git 上下文
   local CURRENT_BRANCH
-  CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+  CURRENT_BRANCH=$(orchestrator_run git branch --show-current 2>/dev/null || echo "unknown")
   local GIT_ROOT
-  GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "unknown")
+  GIT_ROOT=$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || echo "unknown")
 
   # 列出所有 worktree 以确定关系
   local WORKTREE_LIST
-  WORKTREE_LIST=$(git worktree list 2>/dev/null || echo "")
+  WORKTREE_LIST=$(orchestrator_run git worktree list 2>/dev/null || echo "")
 
   # 判断是否在 worktree 内
   if echo "$CURRENT_BRANCH" | grep -q '^openspec/'; then
@@ -103,7 +108,7 @@ auto_detect_worktree_context() {
 
       # 检查是否有已创建的 worktree
       local WT_INFO
-      WT_INFO=$(git worktree list --porcelain | awk '
+      WT_INFO=$(orchestrator_run git worktree list --porcelain | awk '
         /^worktree / { path = substr($0, length("worktree ") + 1); next }
         /^branch /   {
           branch = substr($0, length("branch ") + 1)
