@@ -28,3 +28,8 @@ target-version = "py311"
 # ambiguous variable names, undefined names) without blocking CI on pre-existing
 # long-line cosmetics. See ruff defaults: `ruff check --isolated --show-settings`.
 
+[tool.pytest.ini_options]
+markers = [
+    "characterization: tests that lock current behavior as a baseline, not asserting specific pass/fail",
+]
+

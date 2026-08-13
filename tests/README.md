@@ -101,3 +101,21 @@ metadata drift between `package.json`, `skills/<name>/SKILL.md`, and `smoke.bats
 
 > `prometheus-planning.md` is intentionally excluded — it is
 > invoked by `guide-ship` rather than tested in isolation.
+
+## Characterization tests
+
+Pytest tests marked with `@pytest.mark.characterization` lock the **current behavior** of the system under test, regardless of whether that behavior is correct. They serve as a baseline for future refactoring and provide evidence for fix proposals when characterization reveals genuine bugs.
+
+Run only characterization tests:
+
+```bash
+pytest -m characterization
+```
+
+Exclude them from functional test runs:
+
+```bash
+pytest -m "not characterization"
+```
+
+Characterization tests do not assert a specific pass/fail outcome. They assert that the behavior is consistent and reproducible. If a future change intentionally alters the behavior, both the test and the design must be updated.
