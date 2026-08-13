@@ -1,0 +1,15 @@
+roadmap:
+  phase: "v3.0"
+  category: "arch-design"
+  priority: "P1"
+  cross_phase_deps: []
+  blocked_by: []
+  gate_checklist:
+    - "tests_pass"
+    - "migration_backward_compat_verified"
+    - "hard_gate_integrity_preserved"
+    - "env_var_injection_safe"
+    - "coverage_algorithm_unit_tested"
+  category_validation:
+    valid: true
+    reason: "arch-design category accepts cross-cutting workflow design improvements; v3.0 roadmap phase is the active planning horizon for rdd-workflow self-improvement"
