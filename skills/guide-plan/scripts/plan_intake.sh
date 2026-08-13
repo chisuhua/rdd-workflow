@@ -11,25 +11,30 @@
 
 # ADR-0027 script-plane trigger (see add-post-flow-analysis change)
 export RDDF_PHASE="${RDDF_PHASE:-guide-plan}"
-source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
+
+# Source orchestrator_entry.sh unconditionally (spec 2026-08-13 §2).
+# Bootstrap git rev-parse below is unavoidable — orchestrator_run not yet
+# defined. T8 grep-rule will exempt this line per spec §6.1.
+source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
+
+source "${RDDF_PROJECT_ROOT:-$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
 trap 'post_flow_on_err' ERR
 
-# ADR-0027 orchestrator path (opt-in via RDDF_USE_ORCHESTRATOR=yes)
-if [ "${RDDF_USE_ORCHESTRATOR:-no}" = "yes" ]; then
-    source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
-fi
+# C4 (spec 2026-08-13 §6): always finalize on exit so sweep can detect
+# phases killed without explicit cleanup.
+trap 'orchestrator_finalize' EXIT
 # - Falls back to defaults if jq missing or handoff fields absent
 # - Reads ADR_IDS + CURRENT_PHASE from handoff via python3 (with $ARCH_HANDOFF via env-var)
 # - Counts active openspec changes
 # - Prints summary
 
 check_direct_create_fallback() {
-  local project_root="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  local project_root="${1:-$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)}"
   local approved_file="$project_root/proposal-approved.md"
 
   if [ ! -f "$approved_file" ]; then
     local archived_count
-    archived_count=$(ls -d "$project_root"/openspec/changes/archive/*/ 2>/dev/null | wc -l | tr -d '[:space:]')
+    archived_count=$(orchestrator_run ls -d "$project_root"/openspec/changes/archive/*/ 2>/dev/null | wc -l | tr -d '[:space:]')
     if [ "${archived_count:-0}" -gt 0 ]; then
       echo "🆕 未发现 proposal-approved.md - 检测到 $archived_count 个历史归档"
       echo "   后备模式: 跳过提案审批，直接创建新 change"
@@ -41,7 +46,7 @@ check_direct_create_fallback() {
 }
 
 check_design_handoff() {
-  local project_root="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  local project_root="${1:-$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)}"
   local handoff_path="$project_root/.rddf/state/.design-handoff.json"
 
   if [ "${SKIP_DESIGN_HANDOFF:-}" = "yes" ]; then
@@ -67,7 +72,7 @@ check_design_handoff() {
   # Validate schema v1 or v2 (D3 of move-proposal-creation-to-design)
   # v2 adds 'changes_pre_created'. v1 readers treat it as empty.
   CHANGES_PRE_CREATED=()
-  PYTHON_HANDOFF_PATH="$handoff_path" python3 -c "
+  PYTHON_HANDOFF_PATH="$handoff_path" orchestrator_run python3 -c "
 import json, os, sys
 try:
     with open(os.environ['PYTHON_HANDOFF_PATH']) as f:
@@ -91,11 +96,11 @@ except (AssertionError, json.JSONDecodeError, KeyError) as e:
 
   # Read changes_pre_created from v2 payload (v1 = empty)
   if command -v jq >/dev/null 2>&1; then
-    mapfile -t CHANGES_PRE_CREATED < <(jq -r '.changes_pre_created // [] | .[]' "$handoff_path" 2>/dev/null)
+    mapfile -t CHANGES_PRE_CREATED < <(orchestrator_run jq -r '.changes_pre_created // [] | .[]' "$handoff_path" 2>/dev/null)
   else
     while IFS= read -r line; do
       [ -n "$line" ] && CHANGES_PRE_CREATED+=("$line")
-    done < <(PYTHON_HANDOFF_PATH="$handoff_path" python3 -c "
+    done < <(PYTHON_HANDOFF_PATH="$handoff_path" orchestrator_run python3 -c "
 import json, os
 with open(os.environ['PYTHON_HANDOFF_PATH']) as f:
     d = json.load(f)
@@ -115,7 +120,7 @@ for n in d.get('changes_pre_created', []):
 
 run_plan_intake() {
   local PROJECT_ROOT
-  PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+  PROJECT_ROOT=$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)
   export PROJECT_ROOT
 
   echo "🔍 Plan 阶段环境检查..."
@@ -153,11 +158,11 @@ run_plan_intake() {
 
   # 4. plan 端当前状态
   local ACTIVE_CHANGES
-  ACTIVE_CHANGES=$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | grep -c . || true)
+  ACTIVE_CHANGES=$(orchestrator_run ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | grep -c . || true)
   echo "📋 当前活跃 changes: $ACTIVE_CHANGES"
 
   local PENDING_PROPOSALS
-  PENDING_PROPOSALS=$(grep -c '| \[' "$PROJECT_ROOT/proposal-approved.md" 2>/dev/null || echo 0)
+  PENDING_PROPOSALS=$(orchestrator_run grep -c '| \[' "$PROJECT_ROOT/proposal-approved.md" 2>/dev/null || echo 0)
   if [ "$PENDING_PROPOSALS" -gt 0 ] && [ "$ACTIVE_CHANGES" -eq 0 ]; then
     echo "⚠️  proposal-approved.md 中有 $PENDING_PROPOSALS 个已批准提案但无活跃 change（可能需运行 propose）"
   fi
@@ -188,10 +193,10 @@ run_plan_intake() {
 
   # ADR-0016 Layer 3: read discovered paths from handoff with v2.0 fallback defaults.
   local ADR_DIR ROADMAP_PATH ADR_PATTERN ARCHITECTURE_DIR
-  ADR_DIR=$(jq -r '.adr_dir // "docs/adr"' "$ARCH_HANDOFF" 2>/dev/null || echo "docs/adr")
-  ROADMAP_PATH=$(jq -r '.roadmap_path // "roadmap.md"' "$ARCH_HANDOFF" 2>/dev/null || echo "roadmap.md")
-  ADR_PATTERN=$(jq -r '.adr_pattern // "ADR-*.md"' "$ARCH_HANDOFF" 2>/dev/null || echo "ADR-*.md")
-  ARCHITECTURE_DIR=$(jq -r '.architecture_dir // "docs/architecture"' "$ARCH_HANDOFF" 2>/dev/null || echo "docs/architecture")
+  ADR_DIR=$(orchestrator_run jq -r '.adr_dir // "docs/adr"' "$ARCH_HANDOFF" 2>/dev/null || echo "docs/adr")
+  ROADMAP_PATH=$(orchestrator_run jq -r '.roadmap_path // "roadmap.md"' "$ARCH_HANDOFF" 2>/dev/null || echo "roadmap.md")
+  ADR_PATTERN=$(orchestrator_run jq -r '.adr_pattern // "ADR-*.md"' "$ARCH_HANDOFF" 2>/dev/null || echo "ADR-*.md")
+  ARCHITECTURE_DIR=$(orchestrator_run jq -r '.architecture_dir // "docs/architecture"' "$ARCH_HANDOFF" 2>/dev/null || echo "docs/architecture")
 
   # Roadmap existence uses DISCOVERED_ROADMAP_PATH (not hardcoded)
   local ROADMAP_EXISTS
@@ -200,7 +205,7 @@ run_plan_intake() {
   # Read ADR_IDS + CURRENT_PHASE from handoff via env-var passing (Oracle C1 safe)
   # Instead of bash $ARCH_HANDOFF string interpolation, use env var
   local ADR_IDS CURRENT_PHASE ADR_COUNT parsed
-  parsed=$(PYTHON_HANDOFF_PATH="$ARCH_HANDOFF" python3 -c "
+  parsed=$(PYTHON_HANDOFF_PATH="$ARCH_HANDOFF" orchestrator_run python3 -c "
 import json, os
 try:
     with open(os.environ['PYTHON_HANDOFF_PATH']) as f:
