@@ -138,6 +138,19 @@ install_global_symlinks() {
     fi
     ln -sf "$LIB_SRC" "$LIB_DST"
 
+    # Copy orchestrator_entry.sh and post_flow_wrap.sh from skills/_lib/
+    # These are in skills/_lib/ (not top-level _lib/) and are needed by the
+    # phase entry scripts for the global fallback pattern:
+    #   source "${RDDF_PROJECT_ROOT:-...}/skills/_lib/orchestrator_entry.sh"
+    # Without these files in ~/.agents/skills/_lib/, globally-installed skills
+    # cannot source the orchestrator when invoked from third-party projects.
+    if [ -f "$PACKAGE_DIR/skills/_lib/orchestrator_entry.sh" ]; then
+        cp -f "$PACKAGE_DIR/skills/_lib/orchestrator_entry.sh" "$AGENTS_DIR/_lib/"
+    fi
+    if [ -f "$PACKAGE_DIR/skills/_lib/post_flow_wrap.sh" ]; then
+        cp -f "$PACKAGE_DIR/skills/_lib/post_flow_wrap.sh" "$AGENTS_DIR/_lib/"
+    fi
+
     # 兼容: 旧 install.sh 用户可能引用 PACKAGE_DIR=$HOME/.agents/skills/rdd-workflow，
     # 创建完整包引用让 INSTALL.md 的 $PACKAGE_DIR 解析依然有效
     local PACKAGE_SYMLINK="$AGENTS_DIR/rdd-workflow"

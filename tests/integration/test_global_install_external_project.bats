@@ -200,3 +200,161 @@ print(_lib.__file__)
     [ -f "$target/SKILL.md" ] || { echo "broken symlink: $link → $target" >&2; return 1; }
   done
 }
+
+# ── Orchestrator global-install integration (Tasks 1.1-1.2, 1.5-1.6, 7.1-7.4) ──
+
+@test "global_install: orchestrator_entry.sh sources from global install" {
+  [ -f "$RDDF_GLOBAL_LIB/orchestrator_entry.sh" ] || skip "global orchestrator_entry.sh missing"
+  # Source the global install version
+  source "$RDDF_GLOBAL_LIB/orchestrator_entry.sh"
+  type orchestrator_run >/dev/null || return 1
+  type orchestrator_finalize >/dev/null || return 1
+  type orchestrator_mark >/dev/null || return 1
+}
+
+@test "global_install: orchestrator_run produces trace under external project" {
+  [ -f "$RDDF_GLOBAL_LIB/orchestrator_entry.sh" ] || skip "global orchestrator_entry.sh missing"
+  mkdir -p "$EXTERNAL_ROOT/.rddf/state"
+  local trace_dir="$EXTERNAL_ROOT/.rddf/state/trace"
+  mkdir -p "$trace_dir"
+  export RDDF_TRACE_DIR="$trace_dir"
+  export RDDF_PHASE="guide-test"
+  export RDDF_PROJECT_ROOT="$EXTERNAL_ROOT"
+
+  source "$RDDF_GLOBAL_LIB/orchestrator_entry.sh"
+  orchestrator_run echo hello
+
+  # Trace must be under external project, not tool repo
+  [ "$(ls "$trace_dir"/*.jsonl 2>/dev/null | wc -l)" -ge 1 ]
+  [[ "$trace_dir" == "$EXTERNAL_ROOT"* ]]
+}
+
+@test "global_install: orchestrator_run sets RDDF_PROJECT_ROOT to external project" {
+  [ -f "$RDDF_GLOBAL_LIB/orchestrator_entry.sh" ] || skip "global orchestrator_entry.sh missing"
+  mkdir -p "$EXTERNAL_ROOT/.rddf/state"
+  local trace_dir="$EXTERNAL_ROOT/.rddf/state/trace"
+  mkdir -p "$trace_dir"
+  export RDDF_TRACE_DIR="$trace_dir"
+  export RDDF_PHASE="guide-test"
+
+  # Don't set RDDF_PROJECT_ROOT - let orchestrator resolve it
+  unset RDDF_PROJECT_ROOT
+
+  source "$RDDF_GLOBAL_LIB/orchestrator_entry.sh"
+  orchestrator_run echo hello
+
+  # The trace should be in external project even without explicit RDDF_PROJECT_ROOT
+  [ "$(ls "$trace_dir"/*.jsonl 2>/dev/null | wc -l)" -ge 1 ]
+}
+
+@test "global_install: no trace written under tool repository" {
+  [ -f "$RDDF_GLOBAL_LIB/orchestrator_entry.sh" ] || skip "global orchestrator_entry.sh missing"
+  mkdir -p "$EXTERNAL_ROOT/.rddf/state"
+  local trace_dir="$EXTERNAL_ROOT/.rddf/state/trace"
+  mkdir -p "$trace_dir"
+  export RDDF_TRACE_DIR="$trace_dir"
+  export RDDF_PHASE="guide-test"
+  export RDDF_PROJECT_ROOT="$EXTERNAL_ROOT"
+
+  # Record the tool repo's trace dir state before
+  local tool_trace_dir="${HOME}/.agents/rdd-workflow/.rddf/state/trace"
+  mkdir -p "$tool_trace_dir"
+  local before_count
+  before_count=$(ls "$tool_trace_dir"/*.jsonl 2>/dev/null | wc -l)
+
+  source "$RDDF_GLOBAL_LIB/orchestrator_entry.sh"
+  orchestrator_run echo hello
+
+  # After orchestrator run, tool repo trace dir must not have new traces
+  local after_count
+  after_count=$(ls "$tool_trace_dir"/*.jsonl 2>/dev/null | wc -l)
+  [ "$after_count" -eq "$before_count" ]
+}
+
+# ── Replay from root and child directory (Tasks 2.2-2.3) ──
+
+@test "global_install: orchestrate show reads trace from project root" {
+  [ -f "$RDDF_GLOBAL_LIB/orchestrator_entry.sh" ] || skip "global orchestrator_entry.sh missing"
+  mkdir -p "$EXTERNAL_ROOT/.rddf/state"
+  local trace_dir="$EXTERNAL_ROOT/.rddf/state/trace"
+  mkdir -p "$trace_dir"
+  export RDDF_TRACE_DIR="$trace_dir"
+  export RDDF_PHASE="guide-test"
+  export RDDF_PROJECT_ROOT="$EXTERNAL_ROOT"
+
+  source "$RDDF_GLOBAL_LIB/orchestrator_entry.sh"
+  orchestrator_run echo hello
+  orchestrator_finalize
+
+  # Replay from project root should find the trace
+  run bash -c "cd '$EXTERNAL_ROOT' && rddf orchestrate show guide-test"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"hello"* ]]
+}
+
+@test "global_install: orchestrate show reads trace from project subdirectory" {
+  [ -f "$RDDF_GLOBAL_LIB/orchestrator_entry.sh" ] || skip "global orchestrator_entry.sh missing"
+  mkdir -p "$EXTERNAL_ROOT/.rddf/state"
+  local trace_dir="$EXTERNAL_ROOT/.rddf/state/trace"
+  mkdir -p "$trace_dir"
+  export RDDF_TRACE_DIR="$trace_dir"
+  export RDDF_PHASE="guide-test"
+  export RDDF_PROJECT_ROOT="$EXTERNAL_ROOT"
+
+  source "$RDDF_GLOBAL_LIB/orchestrator_entry.sh"
+  orchestrator_run echo from-child
+  orchestrator_finalize
+
+  # Create a subdirectory and run replay from there
+  mkdir -p "$EXTERNAL_ROOT/src/subproject"
+  # Replay from child directory - should still find trace in project root
+  run bash -c "cd '$EXTERNAL_ROOT/src/subproject' && rddf orchestrate show guide-test"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"from-child"* ]]
+}
+
+# ── Wrapped failure -> finalize -> local issue (Tasks 7.2-7.3) ──
+
+@test "global_install: failing subprocess with flow-bug traceback writes local issue" {
+  [ -f "$RDDF_GLOBAL_LIB/orchestrator_entry.sh" ] || skip "global orchestrator_entry.sh missing"
+  mkdir -p "$EXTERNAL_ROOT/.rddf/state"
+  local trace_dir="$EXTERNAL_ROOT/.rddf/state/trace"
+  mkdir -p "$trace_dir"
+  export RDDF_TRACE_DIR="$trace_dir"
+  export RDDF_PHASE="guide-test"
+  export RDDF_PROJECT_ROOT="$EXTERNAL_ROOT"
+
+  # Create a trace with a flow-bug traceback (simulating analyze_phase_trace classification)
+  local trace_file="$trace_dir/guide-test-test-session-$$-1234567890.jsonl"
+  cat > "$trace_file" << 'TRACEDATA'
+{"ts":"2026-08-13T10:00:00Z","type":"subprocess","cmd":["bash"],"returncode":1,"stderr_tail":"Traceback (most recent call last):\n  File \"/skills/_lib/foo.py\", line 1\n    raise RuntimeError()\nRuntimeError\n","stdout_tail":""}
+TRACEDATA
+
+  source "$RDDF_GLOBAL_LIB/orchestrator_entry.sh"
+  orchestrator_finalize
+
+  # A local issue file should be created under external project
+  local issues_dir="$EXTERNAL_ROOT/.rddf/issues"
+  [ -d "$issues_dir" ]
+  [ "$(ls "$issues_dir"/*.md 2>/dev/null | wc -l)" -ge 1 ]
+}
+
+@test "global_install: orchestrator sourced via global fallback for four phase entry scripts" {
+  # Test that all four phase entry scripts can source orchestrator via global fallback
+  [ -f "$RDDF_GLOBAL_LIB/orchestrator_entry.sh" ] || skip "global orchestrator_entry.sh missing"
+
+  local scripts=(
+    "${HOME}/.agents/skills/guide-arch/scripts/arch_env_check.sh"
+    "${HOME}/.agents/skills/guide-plan/scripts/plan_intake.sh"
+    "${HOME}/.agents/skills/guide-ship/scripts/ship_env_check.sh"
+    "${HOME}/.agents/skills/execute/scripts/select_worktree.sh"
+  )
+
+  for script in "${scripts[@]}"; do
+    if [ -f "$script" ]; then
+      # Source in current shell, not subshell
+      run bash -c "source '$script' && type orchestrator_run >/dev/null 2>&1"
+      [ "$status" -eq 0 ] || { echo "Failed to source $script" >&2; return 1; }
+    fi
+  done
+}

@@ -17,9 +17,13 @@ export RDDF_PHASE="${RDDF_PHASE:-guide-arch}"
 # default ON). Next line uses raw git rev-parse as bootstrap fallback
 # because orchestrator_run isn't defined yet — see §6.1 helper
 # boundary + T8 grep-rule refinement for explicit exemption marker.
-source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
+# Global fallback: ~/.agents/skills/_lib/ (installed by install.sh --global).
+source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || \
+source "$HOME/.agents/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
 
-source "${RDDF_PROJECT_ROOT:-$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
+# Global fallback for post_flow_wrap.sh (same pattern).
+source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || \
+source "$HOME/.agents/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
 trap 'post_flow_on_err' ERR
 
 # C3 (spec 2026-08-13 §6): always finalize on exit so sweep can detect

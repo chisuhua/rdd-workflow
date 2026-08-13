@@ -22,9 +22,15 @@
 # Resolve _lib/ path relative to this script's own location so callers
 # can source the file from any cwd. This file lives at
 # skills/_lib/post_flow_wrap.sh, so _lib/ is at ../../_lib/ relative
-# to this file's directory.
+# to this file's directory. For global install (copied to ~/.agents/skills/_lib/),
+# fall back to ~/.agents/skills/_lib/ directly.
 _POST_FLOW_WRAP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
-_POST_FLOW_LIB_DIR="$(cd "$_POST_FLOW_WRAP_DIR/../../_lib" && pwd)"
+if [ -d "$_POST_FLOW_WRAP_DIR/../../_lib" ]; then
+    _POST_FLOW_LIB_DIR="$(cd "$_POST_FLOW_WRAP_DIR/../../_lib" && pwd)"
+else
+    # Global install fallback: _lib is at the parent of _POST_FLOW_WRAP_DIR
+    _POST_FLOW_LIB_DIR="$(cd "$_POST_FLOW_WRAP_DIR/.." && pwd)"
+fi
 
 # post_flow_on_err <phase>
 #   Trap ERR handler. Captures exit code, calls python3 classifier with
@@ -48,7 +54,8 @@ post_flow_on_err() {
     local err_log="${RDDF_ERR_LOG:-/dev/null}"
     [ -f "$err_log" ] || err_log="/dev/null"
 
-    # Best-effort: find project root.
+    # Find project root (explicit env > PWD fallback; PWD is correct when
+    # sourced from a phase script running in the third-party project).
     local project_root="${RDDF_PROJECT_ROOT:-$PWD}"
 
     RDDF_PHASE="$phase" \
@@ -58,7 +65,6 @@ post_flow_on_err() {
     PYTHONPATH="$_POST_FLOW_LIB_DIR" \
     python3 -c "
 import os, sys
-sys.path.insert(0, os.environ['RDDF_PROJECT_ROOT'] + '/_lib')
 from post_flow_analysis import analyze_and_report
 cls = analyze_and_report(
     phase=os.environ['RDDF_PHASE'],
@@ -85,14 +91,14 @@ run_with_analysis() {
     "$@" 2>"$err_log"
     local code=$?
     if [ "$code" -ne 0 ] && [ "$code" -ne 130 ] && [ "$code" -ne 143 ]; then
+        local project_root="${RDDF_PROJECT_ROOT:-$PWD}"
         RDDF_PHASE="$phase" \
         RDDF_EXIT_CODE="$code" \
         RDDF_STDERR_FILE="$err_log" \
-        RDDF_PROJECT_ROOT="${RDDF_PROJECT_ROOT:-$PWD}" \
+        RDDF_PROJECT_ROOT="$project_root" \
         PYTHONPATH="$_POST_FLOW_LIB_DIR" \
         python3 -c "
 import os, sys
-sys.path.insert(0, os.environ['RDDF_PROJECT_ROOT'] + '/_lib')
 from post_flow_analysis import analyze_and_report
 cls = analyze_and_report(
     phase=os.environ['RDDF_PHASE'],

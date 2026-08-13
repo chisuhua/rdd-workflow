@@ -8,15 +8,50 @@
 # All Python invocations are wrapped in || true so a broken orchestrator
 # never breaks the phase (matches _lib/post_archive_cleanup.sh pattern).
 
+# Tool root: derived from the script's own location (wherever _lib/ lives,
+# whether source checkout, global install, or project-local copy).
 _ORCHESTRATOR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
-_PROJECT_ROOT_FROM_ORCH="$(cd "$_ORCHESTRATOR_DIR/../.." && pwd)"
 
-# Bypass skills._lib shim so worktree-local modules are found.
+# Resolve the orchestrator script path. In a source install, the script lives
+# at _lib/cli/orchestrate_cmd.py (at the repo root); in a global install it
+# lives at _lib/cli/orchestrate_cmd.py (under the skills/ root). Detect by
+# checking whether the cli/ subdirectory exists under _ORCHESTRATOR_DIR.
+_orchestrate_script() {
+    # Source install: repo root is _ORCHESTRATOR_DIR/../.. (skills/../../ = repo/)
+    # Global install: script is directly under _ORCHESTRATOR_DIR/cli/
+    if [ -f "${_ORCHESTRATOR_DIR}/cli/orchestrate_cmd.py" ]; then
+        echo "${_ORCHESTRATOR_DIR}/cli/orchestrate_cmd.py"
+    else
+        echo "${_ORCHESTRATOR_DIR}/../../_lib/cli/orchestrate_cmd.py"
+    fi
+}
+
+# Project root: explicit env wins, then git root of cwd, then cwd.
+# This is intentionally independent of _ORCHESTRATOR_DIR so that a globally-
+# installed helper can serve a third-party project without misattributing
+# the project root to the tool repository.
+_resolve_project_root() {
+    if [ -n "${RDDF_PROJECT_ROOT:-}" ]; then
+        echo "$RDDF_PROJECT_ROOT"
+        return
+    fi
+    local git_root
+    git_root="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null)" && {
+        echo "$git_root"
+        return
+    }
+    echo "$PWD"
+}
+
 _orchestrator_py() {
-    PYTHONPATH="${_PROJECT_ROOT_FROM_ORCH}:${PYTHONPATH}" \
-    RDDF_PROJECT_ROOT="${_PROJECT_ROOT_FROM_ORCH}" \
+    local _proj_root
+    _proj_root="$(_resolve_project_root)"
+    local _skills_root
+    _skills_root="$(cd "$_ORCHESTRATOR_DIR/.." && pwd)"
+    PYTHONPATH="${_ORCHESTRATOR_DIR}:${_skills_root}:${PYTHONPATH}" \
+    RDDF_PROJECT_ROOT="$_proj_root" \
     RDDF_PHASE="${RDDF_PHASE:-unknown}" \
-        python3 "${_PROJECT_ROOT_FROM_ORCH}/_lib/cli/orchestrate_cmd.py" "$@"
+        python3 "$(_orchestrate_script)" "$@"
 }
 
 orchestrator_run() {

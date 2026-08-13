@@ -9,9 +9,11 @@ export RDDF_PHASE="${RDDF_PHASE:-guide-ship}"
 # Source orchestrator_entry.sh unconditionally (spec 2026-08-13 §2).
 # Bootstrap git rev-parse below is unavoidable — orchestrator_run not yet
 # defined. T8 grep-rule will exempt this line per spec §6.1.
-source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
+source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || \
+source "$HOME/.agents/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
 
-source "${RDDF_PROJECT_ROOT:-$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
+source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || \
+source "$HOME/.agents/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
 trap 'post_flow_on_err' ERR
 
 # C5 (spec 2026-08-13 §6): always finalize on exit so sweep can detect

@@ -15,6 +15,14 @@ import argparse
 import os
 import sys
 
+# Package-safe import: add _lib/ to sys.path so bare `from issue_reporter`
+# works whether the CLI is run from the source repo, a global install,
+# or a third-party project (matches _lib/post_flow_analysis.py pattern).
+from pathlib import Path
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(_PROJECT_ROOT))
+
 from issue_reporter import detect_issue, write_issue_file, submit_issue_via_gh  # type: ignore[import-not-found]
 
 

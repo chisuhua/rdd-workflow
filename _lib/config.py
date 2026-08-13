@@ -42,6 +42,7 @@ _ENV_VAR_MAP = {
     "RDDF_REPORT_AUTO_SUBMIT": "reporting.auto_submit",
     "RDDF_REPORT_CLOSE_ON_ARCHIVE": "reporting.close_on_archive",
     "RDDF_REPORT_DESTINATION": "reporting.destination",
+    "RDDF_REPORT_GH_REPO": "reporting.gh_repo",
 }
 
 

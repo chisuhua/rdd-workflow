@@ -8,6 +8,7 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [sync-changelog-unreleased](.rddf/improvements/sync-changelog-unreleased.md) | P1 | 自检 (git log vs CHANGELOG drift) | 2026-08-13 | 待创建 |
+| [preserve-orchestrator-command-stdout](.rddf/improvements/preserve-orchestrator-command-stdout.md) | P1 | Oracle 审查（ADR-0027 follow-up） | 2026-08-13 | 待创建 |
+| [harden-plan-intake-bootstrap-and-design-gate-tests](.rddf/improvements/harden-plan-intake-bootstrap-and-design-gate-tests.md) | P1 | Oracle 审查（ADR-0016/ADR-0025 follow-up） | 2026-08-13 | 待创建 |
 
 

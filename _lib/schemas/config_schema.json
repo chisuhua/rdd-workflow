@@ -145,6 +145,11 @@
           "default": "github",
           "description": "Where reported issues go."
         },
+        "gh_repo": {
+          "type": "string",
+          "default": "chisuhua/rdd-workflow",
+          "description": "Upstream GitHub repository for issue submission. Used when destination is 'github'."
+        },
         "auto_submit": {
           "type": "boolean",
           "default": false,
