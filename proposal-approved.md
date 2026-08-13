@@ -11,7 +11,6 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [sync-changelog-unreleased](.rddf/improvements/sync-changelog-unreleased.md) | P1 | 2026-08-13 | manual-approval (dogfooding) |
 
 > **依赖声明 (2026-08-05 design-done)**: 本批 7 项提案 (本次批准) 形成强依赖链, 计划按下列顺序实施:
 > 1. **`fix-archive-iteration-sync`** (P0) — first: 定义 `sync_iteration_after_archive` helper, 装到 `archive.sh::archive_change()` + `archive_on_main.sh` + `rddf status --archive` 3 个入口
@@ -59,7 +58,6 @@
 
 
 
-| [complete-third-party-replay-and-upstream-reporting](.rddf/improvements/complete-third-party-replay-and-upstream-reporting.md) | P0 | 2026-08-13 | guide-arch |
 
 ## 已实施
 | [validate-feature-name](.rddf/improvements/validate-feature-name.md) | P1 | 2026-08-12 |
@@ -106,6 +104,8 @@
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
+| [complete-third-party-replay-and-upstream-reporting](.rddf/improvements/complete-third-party-replay-and-upstream-reporting.md) | P0 | 2026-08-13 |
+| [sync-changelog-unreleased](.rddf/improvements/sync-changelog-unreleased.md) | P1 | 2026-08-13 |
 | [add-roadmap-proposal-guidance](.rddf/improvements/add-roadmap-proposal-guidance.md) | P1 | 2026-08-13 |
 | [migrate-improvements-to-rddf-namespace](.rddf/improvements/migrate-improvements-to-rddf-namespace.md) | P0 | 2026-08-12 |
 | [add-proposal-how-leakage-warning](.rddf/improvements/add-proposal-how-leakage-warning.md) | P1 | 2026-08-12 |
@@ -201,3 +201,4 @@
 | [update-agents-module-map](.rddf/improvements/update-agents-module-map.md) | P1 | 2026-07-28 |
 | [update-guide-plan-format](.rddf/improvements/update-guide-plan-format.md) | P1 | 2026-07-28 |
 | [fix-scan-state-bats](.rddf/improvements/fix-scan-state-bats.md) | P2 | 2026-07-23 |
+| [complete-third-party-replay-and-upstream-reporting](.rddf/improvements/complete-third-party-replay-and-upstream-reporting.md) | P0 | 2026-08-13 |
