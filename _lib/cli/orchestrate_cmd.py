@@ -62,6 +62,15 @@ def cmd_orchestrate(args: list[str]) -> int:
 
     p_sweep = sub.add_parser("sweep-stale-traces", help="Manually trigger sweep")
 
+    p_show = sub.add_parser("show", help="Print trace timeline for a phase")
+    p_show.add_argument("phase", help="Phase name (e.g. guide-arch)")
+    p_show.add_argument("--session", default="", help="Filter by session id")
+    p_show.add_argument(
+        "--type", dest="event_type", default="",
+        choices=["", "subprocess", "checkpoint", "finalize"],
+        help="Filter by event type",
+    )
+
     parsed = parser.parse_args(args)
     trace_dir = _get_trace_dir()
 
@@ -73,6 +82,8 @@ def cmd_orchestrate(args: list[str]) -> int:
         return _handle_finalize(trace_dir)
     if parsed.action == "sweep-stale-traces":
         return _handle_sweep(trace_dir)
+    if parsed.action == "show":
+        return _handle_show(parsed.phase, parsed.session, parsed.event_type, trace_dir)
     return 2  # unreachable
 
 
@@ -504,6 +515,46 @@ def _run_trace_gc(trace_dir: Path) -> None:
                 t.unlink()
             except OSError:
                 pass
+
+
+def _handle_show(phase: str, session_filter: str, type_filter: str, trace_dir: Path) -> int:
+    """Print chronologically-sorted timeline of events for a phase.
+
+    Reads all ``<phase>-*.jsonl`` files in trace_dir, applies optional
+    session/type filters, prints one line per event. Empty result is
+    not an error.
+    """
+    if not trace_dir.is_dir():
+        print(f"(trace dir not found: {trace_dir})")
+        return 0
+    candidates = sorted(trace_dir.glob(f"{phase}-*.jsonl"))
+    if not candidates:
+        print(f"(no traces for phase {phase!r})")
+        return 0
+    rows = []
+    for trace_file in candidates:
+        if session_filter and session_filter not in trace_file.name:
+            continue
+        for event in _read_events(trace_file):
+            if type_filter and event.get("type") != type_filter:
+                continue
+            ts = event.get("ts", "")[:19]
+            etype = event.get("type", "?")
+            detail = ""
+            if etype == "subprocess":
+                detail = f"cmd={event.get('cmd')} rc={event.get('returncode')}"
+            elif etype == "checkpoint":
+                detail = f"name={event.get('name')}"
+            elif etype == "finalize":
+                detail = (
+                    f"failures={event.get('subprocess_failures')} "
+                    f"checkpoints={event.get('checkpoints')}"
+                )
+            rows.append((ts, etype, detail))
+    rows.sort(key=lambda r: r[0])
+    for ts, etype, detail in rows:
+        print(f"{ts}  {etype:<11}  {detail}")
+    return 0
 
 
 if __name__ == "__main__":

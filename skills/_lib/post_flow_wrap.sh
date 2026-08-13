@@ -39,7 +39,8 @@ post_flow_on_err() {
     [ "$code" -eq 143 ] && return 0  # SIGTERM
 
     # Single-writer rule (spec 2026-08-12 §7): defer to orchestrator.
-    if [ "${RDDF_USE_ORCHESTRATOR:-no}" = "yes" ]; then
+    # Default ON since spec 2026-08-13 §2; override with RDDF_USE_ORCHESTRATOR=no.
+    if [ "${RDDF_USE_ORCHESTRATOR:-yes}" = "yes" ]; then
         return 0
     fi
 

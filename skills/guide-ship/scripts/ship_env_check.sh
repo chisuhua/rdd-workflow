@@ -5,17 +5,22 @@
 
 # ADR-0027 script-plane trigger (see add-post-flow-analysis change)
 export RDDF_PHASE="${RDDF_PHASE:-guide-ship}"
-source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
+
+# Source orchestrator_entry.sh unconditionally (spec 2026-08-13 §2).
+# Bootstrap git rev-parse below is unavoidable — orchestrator_run not yet
+# defined. T8 grep-rule will exempt this line per spec §6.1.
+source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
+
+source "${RDDF_PROJECT_ROOT:-$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/post_flow_wrap.sh" 2>/dev/null || true
 trap 'post_flow_on_err' ERR
 
-# ADR-0027 orchestrator path (opt-in via RDDF_USE_ORCHESTRATOR=yes)
-if [ "${RDDF_USE_ORCHESTRATOR:-no}" = "yes" ]; then
-    source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
-fi
+# C5 (spec 2026-08-13 §6): always finalize on exit so sweep can detect
+# phases killed without explicit cleanup.
+trap 'orchestrator_finalize' EXIT
 
 run_ship_env_check() {
   local project_root
-  project_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+  project_root=$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)
   if [ -f "$project_root/skills/rdd-env-check/scripts/env_check.sh" ]; then
     source "$project_root/skills/rdd-env-check/scripts/env_check.sh"
   else
