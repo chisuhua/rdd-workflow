@@ -67,17 +67,25 @@ Top-level fields:
 
 **Versioning policy**: bump `version` whenever a field is added, removed, or its semantics change. Consumers **must reject `version: 0`** payloads (forces explicit migration). The `discovered: true` flag distinguishes "phase ran scan and found these paths" from "phase ran with all defaults" (`discovered: false`).
 
-### `.design-handoff.json` (v1)
+### `.design-handoff.json` (v2, ADR-0025)
 
 Top-level fields:
 ```json
 {
-  "version": 1,
-  "approved_proposals": ["<name1>", "<name2>"],
-  "deferred_proposals": ["<name3>"],
-  "last_review_at": "2026-08-07T12:00:00Z"
+  "design_complete_at": "2026-08-13T01:55:18+00:00",
+  "proposals_reviewed": 1,
+  "all_proposals_have_decision": true,
+  "version": 2,
+  "changes_pre_created": ["fix-foo", "add-bar"]
 }
 ```
+
+**Path A contract**: `changes_pre_created` lists every change that `guide-design` approval directly wrote to `openspec/changes/<name>/{proposal.md, .openspec.yaml, roadmap-meta.yaml}`. `guide-plan` intake exports this as `CHANGES_PRE_CREATED` bash array and consumes it via:
+- `is_design_pre_created <name>` — skip `propose --create` for pre-created changes (Phase 2).
+- `get_design_pre_created_label <name>` — emit `🆕 design-pre-created` badge in the approved-list display.
+- `get_fill_artifacts_for <name>` — narrow Phase 2.5 fill to `design tasks specs` for pre-created changes (NEVER overwrite the complete `proposal.md` that design wrote).
+
+**Versioning policy** (v2.0.6+, `move-proposal-creation-to-design`): v2 schema requires `changes_pre_created` as a non-empty string array. v1 payloads are still accepted by `plan_intake.sh` as backward-compat (empty array), but new handoffs MUST be v2.
 
 ### `.plan-handoff.json` (v1, ADR-0024)
 
@@ -102,8 +110,8 @@ The canonical schema for each handoff lives under `_lib/schemas/`:
 | Schema | Version | JSON Schema file |
 |--------|---------|------------------|
 | arch-handoff | v1 | `_lib/schemas/arch_handoff_schema.json` |
-| design-handoff | v1 | `_lib/schemas/design_handoff_schema.json` |
-| plan-handoff | v1 | `_lib/schemas/plan_handoff_schema.json` |
+| design-handoff | v2 (Path A contract) | `_lib/schemas/design_handoff_schema.json` |
+| plan-handoff | v1 + `execution_mode_decisions` (ADR-0024) | `_lib/schemas/plan_handoff_schema.json` |
 | state-vector | v1 | `_lib/schemas/state_vector_schema.json` |
 | iteration | v1 | `_lib/schemas/iteration_schema.json` |
 | sessions | v1 | `_lib/schemas/sessions_schema.json` |

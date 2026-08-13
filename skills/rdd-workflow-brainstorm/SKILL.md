@@ -39,7 +39,7 @@ metadata:
 4. **呈现设计** — 按改进提案的 5 段结构逐段呈现，每段获得用户确认后再继续
 5. **创建 <a href=".rddf/improvements/<name>.md`** — 包含完整的 5 段内容，前 5 行元数据准确
 6. **注册到 `proposal-suggestions.md`** — 追加一行 Markdown 表格链接
-7. **展示成果并建议下一步** — guide-arch Phase 5.5 审查
+7. **展示成果并建议下一步** — `guide-design` 审查提案（approve/reject/defer）
 
 ## 流程
 
@@ -181,8 +181,8 @@ digraph rdd_brainstorm {
 ### 7. 展示成果并建议下一步
 
 向用户展示最终输出，建议下一步：
-- `guide-arch` Phase 5.5 审查提案
-- 审批通过后进入 `guide-plan` 执行
+- `guide-design` 审查提案（approve/reject/defer）
+- 批准后 design 阶段直接落盘 `openspec/changes/<name>/{proposal.md, .openspec.yaml, roadmap-meta.yaml}`，然后进入 `guide-plan` 补全 `design.md` / `tasks.md` / specs/ 并跑 deps
 
 ## 关键原则
 

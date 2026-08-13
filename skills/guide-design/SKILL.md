@@ -15,9 +15,9 @@ metadata:
 本技能是 rdd-workflow 工作流 v2.1 的 **design 端状态机**：负责在构架定义之后、变更生成之前的设计管理工作——创建改进提案、审查未审批提案、批准/拒绝/延迟决策、设计完成交接。design 阶段是三阶段架构（arch → design → plan → ship）的第二阶段，专为中介入、提案管理而设计。
 
 **职责边界**：
-- **拥有**：<a href=".rddf/improvements/<name>.md`（提案文件）、`proposal-suggestions.md`（提案池索引）、`proposal-approved.md`（已批准提案索引，与 guide-plan 共享读取）
-- **不拥有**：`docs/adr/ADR-*.md`（属于 `guide-arch`）、`openspec/changes/<name>`（属于 `guide-plan`）、git worktree（属于 `guide-ship`）
-- **状态持久化**：design-done 时写入 `.rddf/state/.design-handoff.json`（不被 git 跟踪，plan 端硬依赖）
+- **拥有**：`.rddf/improvements/<name>.md`（提案文件）、`proposal-suggestions.md`（提案池索引）、`proposal-approved.md`（已批准提案索引，与 guide-plan 共享读取）、`openspec/changes/<name>/{proposal.md, .openspec.yaml, roadmap-meta.yaml}`（design 阶段批准时直接落盘完整 proposal.md）
+- **不拥有**：`docs/adr/ADR-*.md`（属于 `guide-arch`）、`openspec/changes/<name>/{design.md, tasks.md, specs/}`（属于 `guide-plan` 补全）、git worktree（属于 `guide-ship`）
+- **状态持久化**：design-done 时写入 `.rddf/state/.design-handoff.json` v2（不被 git 跟踪，含 `changes_pre_created` 数组，plan 端硬依赖）
 - **人工介入程度**：**中** —— design 阶段 AI 辅助提案审查，用户做决策（批准/拒绝/延迟）
 
 **调用方式**：

@@ -45,6 +45,38 @@ check_direct_create_fallback() {
   return 1
 }
 
+# Gap 1 contract: CHANGES_PRE_CREATED consumers (guide-plan.md Phase 0/2/2.5).
+# SKIP_DESIGN_HANDOFF=yes leaves CHANGES_PRE_CREATED=() — helpers safely
+# report "not pre-created" because every entry check fails on an empty array.
+
+is_design_pre_created() {
+  local name="$1"
+  local item
+  for item in "${CHANGES_PRE_CREATED[@]:-}"; do
+    [ "$item" = "$name" ] && return 0
+  done
+  return 1
+}
+
+get_design_pre_created_label() {
+  local name="$1"
+  if is_design_pre_created "$name"; then
+    echo "🆕 design-pre-created"
+  fi
+}
+
+# Space-separated artifact IDs for Phase 2.5 fill. Pre-created changes
+# MUST NOT include 'proposal' — design approval already wrote a complete
+# proposal.md and overwriting would destroy content review artifacts.
+get_fill_artifacts_for() {
+  local name="$1"
+  if is_design_pre_created "$name"; then
+    echo "design tasks specs"
+  else
+    echo "proposal design tasks specs"
+  fi
+}
+
 check_design_handoff() {
   local project_root="${1:-$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)}"
   local handoff_path="$project_root/.rddf/state/.design-handoff.json"
@@ -94,13 +126,15 @@ except (AssertionError, json.JSONDecodeError, KeyError) as e:
     sys.exit(1)
 " 2>&1 || return 1
 
-  # Read changes_pre_created from v2 payload (v1 = empty)
+  # Read changes_pre_created from v2 payload (v1 = empty).
+  # Bypass orchestrator_run: its subprocess wrapper swallows stdout, which
+  # would break mapfile/while-read capture here.
   if command -v jq >/dev/null 2>&1; then
-    mapfile -t CHANGES_PRE_CREATED < <(orchestrator_run jq -r '.changes_pre_created // [] | .[]' "$handoff_path" 2>/dev/null)
+    mapfile -t CHANGES_PRE_CREATED < <(jq -r '.changes_pre_created // [] | .[]' "$handoff_path" 2>/dev/null)
   else
     while IFS= read -r line; do
       [ -n "$line" ] && CHANGES_PRE_CREATED+=("$line")
-    done < <(PYTHON_HANDOFF_PATH="$handoff_path" orchestrator_run python3 -c "
+    done < <(PYTHON_HANDOFF_PATH="$handoff_path" python3 -c "
 import json, os
 with open(os.environ['PYTHON_HANDOFF_PATH']) as f:
     d = json.load(f)
@@ -192,11 +226,12 @@ run_plan_intake() {
   fi
 
   # ADR-0016 Layer 3: read discovered paths from handoff with v2.0 fallback defaults.
+  # Same orchestrator_run caveat as design-handoff block above.
   local ADR_DIR ROADMAP_PATH ADR_PATTERN ARCHITECTURE_DIR
-  ADR_DIR=$(orchestrator_run jq -r '.adr_dir // "docs/adr"' "$ARCH_HANDOFF" 2>/dev/null || echo "docs/adr")
-  ROADMAP_PATH=$(orchestrator_run jq -r '.roadmap_path // "roadmap.md"' "$ARCH_HANDOFF" 2>/dev/null || echo "roadmap.md")
-  ADR_PATTERN=$(orchestrator_run jq -r '.adr_pattern // "ADR-*.md"' "$ARCH_HANDOFF" 2>/dev/null || echo "ADR-*.md")
-  ARCHITECTURE_DIR=$(orchestrator_run jq -r '.architecture_dir // "docs/architecture"' "$ARCH_HANDOFF" 2>/dev/null || echo "docs/architecture")
+  ADR_DIR=$(jq -r '.adr_dir // "docs/adr"' "$ARCH_HANDOFF" 2>/dev/null || echo "docs/adr")
+  ROADMAP_PATH=$(jq -r '.roadmap_path // "roadmap.md"' "$ARCH_HANDOFF" 2>/dev/null || echo "roadmap.md")
+  ADR_PATTERN=$(jq -r '.adr_pattern // "ADR-*.md"' "$ARCH_HANDOFF" 2>/dev/null || echo "ADR-*.md")
+  ARCHITECTURE_DIR=$(jq -r '.architecture_dir // "docs/architecture"' "$ARCH_HANDOFF" 2>/dev/null || echo "docs/architecture")
 
   # Roadmap existence uses DISCOVERED_ROADMAP_PATH (not hardcoded)
   local ROADMAP_EXISTS

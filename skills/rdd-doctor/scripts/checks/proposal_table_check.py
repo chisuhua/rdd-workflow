@@ -64,14 +64,24 @@ def run(project_root: Path | None = None) -> List[Finding]:
                     snippet=f"row has {cols} columns, expected {expected_cols}",
                     fix_hint="add/remove columns to match expected schema",
                 ))
-            if link_target.startswith(".rddf/improvements/") and not (project_root / link_target).is_file():
+            if link_target.startswith(".rddf/improvements/"):
+                if not (project_root / link_target).is_file():
+                    findings.append(Finding(
+                        severity=Severity.WARNING,
+                        category="proposal-table",
+                        file=fname,
+                        line=line_no,
+                        snippet=f"broken link to {link_target}",
+                        fix_hint="verify the .rddf/improvements file exists or remove this row",
+                    ))
+            elif link_target.startswith("improvements/") or "/" not in link_target:
                 findings.append(Finding(
                     severity=Severity.WARNING,
                     category="proposal-table",
                     file=fname,
                     line=line_no,
-                    snippet=f"broken link to {link_target}",
-                    fix_hint="verify the .rddf/improvements file exists or remove this row",
+                    snippet=f"non-canonical link to {link_target} (use .rddf/improvements/<name>.md)",
+                    fix_hint="migrate file to .rddf/improvements/ and update link to canonical prefix",
                 ))
 
     return findings

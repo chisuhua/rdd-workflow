@@ -8,6 +8,10 @@ setup() {
     WORK_DIR="$(mktemp -d)"
     mkdir -p "$WORK_DIR/.rddf/state"
     mkdir -p "$WORK_DIR/openspec/changes"
+    # plan_intake.sh's bootstrap uses ${RDDF_PROJECT_ROOT:-...} to find
+    # orchestrator_entry.sh. WORK_DIR is not a git repo, so without this
+    # export the bootstrap silently fails and orchestrator_run is undefined.
+    export RDDF_PROJECT_ROOT="$REPO_ROOT"
 }
 
 teardown() {

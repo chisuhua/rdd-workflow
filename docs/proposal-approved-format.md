@@ -4,7 +4,7 @@
 
 This document is the single source of truth for how the
 `proposal-approved.md` file is structured, read, and written by the
-rdd-workflow skills (`guide-arch`, `guide-plan`, `propose`, `archive`).
+rdd-workflow skills (`guide-design`, `guide-plan`, `propose`, `archive`).
 
 ---
 
@@ -13,7 +13,7 @@ rdd-workflow skills (`guide-arch`, `guide-plan`, `propose`, `archive`).
 The file **MUST** contain two Markdown table sections, each preceded by
 a `## ` header:
 
-1. `## 已批准提案` - proposals approved by `guide-arch` Phase 5.5, ready for `guide-plan` to create changes.
+1. `## 已批准提案` - proposals approved by `guide-design` (Path A: approval also writes complete `openspec/changes/<name>/proposal.md`); `guide-plan` consumes this index to fill remaining artifacts (`design.md`, `tasks.md`, specs/).
 2. `## 已实施` - proposals whose corresponding OpenSpec changes have been archived.
 
 ### Example file
@@ -21,13 +21,13 @@ a `## ` header:
 ```markdown
 # 已批准提案索引
 
-> guide-arch 批准的提案索引。guide-plan propose 从此文件读取链接。
+> guide-design 批准的提案索引。guide-plan intake 从此文件读取链接，按 `.rddf/state/.design-handoff.json` v2 的 `changes_pre_created` 数组跳过已落盘的 change（Path A）。
 
 ## 已批准提案
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [fix-silent-exception](.rddf/improvements/fix-silent-exception.md) | P0 | 2026-07-23 | guide-arch |
+| [fix-silent-exception](.rddf/improvements/fix-silent-exception.md) | P0 | 2026-07-23 | guide-design |
 | [add-config-validation](.rddf/improvements/add-config-validation.md) | P0 | 2026-07-23 | guide-arch |
 
 ## 已实施
@@ -45,8 +45,8 @@ Table columns:
 |------------|-------------------------------------|------------------------------------------------------------|
 | 提案       | `[name](.rddf/improvements/name.md)`      | Markdown link to the improvement file. The link text is the proposal name (kebab-case). |
 | 优先级     | `P0` / `P1` / `P2`                 | Priority level, copied from the improvement file metadata. |
-| 批准时间   | `YYYY-MM-DD`                        | UTC date when `guide-arch` approved the proposal.          |
-| 批准者     | Free-form string (e.g. `guide-arch`) | Who/what approved the proposal.                            |
+| 批准时间   | `YYYY-MM-DD`                        | UTC date when `guide-design` approved the proposal.        |
+| 批准者     | Free-form string (e.g. `guide-design`) | Who/what approved the proposal.                            |
 
 ### Section: `## 已实施`
 
@@ -62,11 +62,13 @@ Table columns:
 
 ## Lifecycle
 
-### Approval flow (`guide-arch` Phase 5.5)
+### Approval flow (`guide-design` Phase 3 — Path A)
 
-1. `guide-arch` reviews each file in `.rddf/improvements/` directory.
-2. For each approved proposal, `append_approved()` (in `skills/_lib/state.sh`)
-   inserts a row into the `## 已批准提案` table.
+1. `guide-design` reviews each file in `.rddf/improvements/` directory.
+2. For each approved proposal, `approve_proposal.sh`:
+   - Appends a row to the `## 已批准提案` table via `append_approved()`.
+   - **Directly creates** `openspec/changes/<name>/{proposal.md, .openspec.yaml, roadmap-meta.yaml}` with the complete 5-section content.
+   - Adds the change name to `.rddf/state/.design-handoff.json` v2's `changes_pre_created` array.
 3. Rejected proposals are simply not added - they remain in `.rddf/improvements/`
    but never appear in `proposal-approved.md`.
 
@@ -139,9 +141,10 @@ and ensures a single source of truth for each proposal's details.
 | `proposal-approved.md`      | Index of APPROVED proposals (post-arch)   | Markdown table      |
 | `.rddf/improvements/*.md`         | Full proposal content (one file each)     | Structured Markdown |
 
-`proposal-suggestions.md` lists every proposal for `guide-arch` to review.
+`proposal-suggestions.md` lists every proposal for `guide-design` to review.
 `proposal-approved.md` lists only those that have been approved and is the
-input for `guide-plan`'s propose phase.
+input for `guide-plan` intake (combined with `.design-handoff.json`
+`changes_pre_created` array to identify pre-created changes that need fill only).
 
 ---
 

@@ -145,7 +145,7 @@ rddf_session_hook_entry stage_plan guide-plan plan-phase plan-done .rddf/state/.
 
 **行为**：
 
-执行环境检测后，直接从 `proposal-approved.md` 读取已批准提案进入 Phase 2。plan 阶段**不负责扫描**——新提案的扫描和审批已在 `guide-arch` Phase 5.5 中完成。
+执行环境检测后，直接从 `proposal-approved.md` 读取已批准提案进入 Phase 2。plan 阶段**不负责扫描**——新提案的扫描和审批已在 `guide-design` Phase 3 中完成（Path A：批准时已直接落盘 `openspec/changes/<name>/proposal.md`）。
 
 **执行环境检测**：
 
@@ -180,9 +180,9 @@ Plan 阶段环境检查结果：
 ✅ arch-done handoff 已验证 (硬交接)
 ```
 
-环境检查通过后，自动进入 Phase 2 (propose)，从 `proposal-approved.md` 读取已批准提案创建 change。
+环境检查通过后，自动进入 Phase 2 (propose)，从 `proposal-approved.md` 读取已批准提案。**Path A**：如果 change 在 `.design-handoff.json` 的 `changes_pre_created` 中（已被 design 落盘），跳过 propose 进入 fill 阶段；否则走 `propose --create` legacy 路径。
 
-> **注意**：新改进提案的扫描和审批在 `guide-arch` Phase 5.5 中处理。plan 阶段只消费已批准提案。
+> **注意**：新改进提案的扫描和审批在 `guide-design` Phase 3 中处理。plan 阶段只消费已批准提案。
 
 ---
 
@@ -243,7 +243,7 @@ except Exception as e:
 else
     echo ""
     echo "🆕 未发现 proposal-approved.md — 无已批准提案。"
-    echo "   请先运行 guide-arch Phase 5.5 审查并批准提案。"
+    echo "   请先运行 skill_use(\"guide-design\") 审查并批准提案。"
     return 1
 fi
 ```

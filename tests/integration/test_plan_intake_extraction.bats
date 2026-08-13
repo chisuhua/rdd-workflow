@@ -17,6 +17,14 @@ load ../test_helper
 # The inline block spans L95-L175 in guide-plan.md.
 REPLACED_RANGE="95,175p"
 
+# plan_intake.sh's bootstrap uses ${RDDF_PROJECT_ROOT:-...} to find
+# orchestrator_entry.sh. When cwd is a non-git tmpdir, without this
+# export the bootstrap silently fails and orchestrator_run is undefined.
+# Centralized here so all tests in this file inherit the fix.
+setup() {
+    export RDDF_PROJECT_ROOT="$REPO_ROOT"
+}
+
 @test "plan_intake_helper_exists" {
   [ -f "$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh" ]
   grep -q 'run_plan_intake()' "$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh"
@@ -53,7 +61,10 @@ REPLACED_RANGE="95,175p"
   "current_phase": "phase-2"
 }
 EOF
-  bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh' && run_plan_intake" >/dev/null 2>&1
+  # SKIP_DESIGN_HANDOFF=yes: this test focuses on arch-handoff behavior,
+  # not design-handoff (added in v2.1). run_plan_intake requires design-done
+  # post-v2.1 unless explicitly skipped.
+  SKIP_DESIGN_HANDOFF=yes bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh' && run_plan_intake" >/dev/null 2>&1
   rm -rf "$tmpdir"
 }
 
@@ -61,7 +72,7 @@ EOF
   # No handoff → should print error about arch-done handoff
   local tmpdir output
   tmpdir=$(mktemp -d)
-  output=$(bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh' && run_plan_intake" 2>&1 || true)
+  output=$(SKIP_DESIGN_HANDOFF=yes bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh' && run_plan_intake" 2>&1 || true)
   rm -rf "$tmpdir"
   echo "$output" | grep -q 'arch-done handoff'
 }
@@ -81,7 +92,7 @@ EOF
   "current_phase": "phase-test"
 }
 EOF
-  output=$(bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh' && run_plan_intake" 2>&1 || true)
+  output=$(SKIP_DESIGN_HANDOFF=yes bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh' && run_plan_intake" 2>&1 || true)
   rm -rf "$tmpdir"
   echo "$output" | grep -q 'docs/custom'
 }

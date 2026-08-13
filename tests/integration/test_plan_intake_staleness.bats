@@ -4,6 +4,13 @@
 
 load ../test_helper
 
+# plan_intake.sh's bootstrap uses ${RDDF_PROJECT_ROOT:-...} to find
+# orchestrator_entry.sh. When cwd is a non-git tmpdir, without this
+# export the bootstrap silently fails and orchestrator_run is undefined.
+setup() {
+    export RDDF_PROJECT_ROOT="$REPO_ROOT"
+}
+
 @test "plan-intake: detects proposal-approved.md staleness" {
   local tmpdir output
   tmpdir=$(mktemp -d)

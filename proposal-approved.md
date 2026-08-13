@@ -1,17 +1,17 @@
 # 已批准提案（Plan 阶段输入）
 
-> plan 阶段输入。guide-plan propose 从此处读取，按链接打开对应 `improvements/xxx.md` 创建 change。
+> plan 阶段输入。guide-design 批准后直接落盘 `openspec/changes/<name>/proposal.md`，并写入本索引。guide-plan intake 按链接打开对应 `.rddf/improvements/<name>.md`，并通过 `.rddf/state/.design-handoff.json` v2 的 `changes_pre_created` 数组跳过已落盘的 change（Path A）。
 
 > **supersedes** (2026-07-28): 原始设计（propose Phase 4 自动末尾 + 写 `.rddf/state/propose-review.json`）已被后续 commits 修订：
-> - `b4ad917` — relocate to arch Phase 5.5 human-in-loop 节点
+> - `b4ad917` — relocate to arch Phase 5.5 human-in-loop 节点（**历史**：v2.1+ 已迁移至 guide-design Phase 3，详见 ADR-0025）
 > - `a99017b` — refine wording `修复` → `修订`（关联提案 add-change-content-review）
-> - 当前最终设计：arch Phase 5.5 在 suggestions→approved 迁移界面 y/n/d/s 决策前，Oracle 终端展示 3 级报告（pass/warn/block），不持久化。已实现的孤儿 `skills/_lib/propose_content_review.py` 已删除（`311d497`）。
+> - 当前最终设计（**已更新** v2.1+，ADR-0025）：`guide-design` Phase 3 拥有 suggestions→approved 迁移的 y/n/d/s 决策；批准动作直接落盘 `openspec/changes/<name>/proposal.md`（Path A，详见 move-proposal-creation-to-design 提案）。Oracle 终端展示 3 级报告（pass/warn/block），不持久化。已实现的孤儿 `skills/_lib/propose_content_review.py` 已删除（`311d497`）。
 
 ## 已批准提案
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [sync-changelog-unreleased](improvements/sync-changelog-unreleased.md) | P1 | 2026-08-13 | manual-approval (dogfooding) |
+| [sync-changelog-unreleased](.rddf/improvements/sync-changelog-unreleased.md) | P1 | 2026-08-13 | manual-approval (dogfooding) |
 
 > **依赖声明 (2026-08-05 design-done)**: 本批 7 项提案 (本次批准) 形成强依赖链, 计划按下列顺序实施:
 > 1. **`fix-archive-iteration-sync`** (P0) — first: 定义 `sync_iteration_after_archive` helper, 装到 `archive.sh::archive_change()` + `archive_on_main.sh` + `rddf status --archive` 3 个入口
@@ -104,6 +104,7 @@
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
+| [add-roadmap-proposal-guidance](.rddf/improvements/add-roadmap-proposal-guidance.md) | P1 | 2026-08-13 |
 | [migrate-improvements-to-rddf-namespace](.rddf/improvements/migrate-improvements-to-rddf-namespace.md) | P0 | 2026-08-12 |
 | [add-proposal-how-leakage-warning](.rddf/improvements/add-proposal-how-leakage-warning.md) | P1 | 2026-08-12 |
 | [wire-design-content-review-gate](.rddf/improvements/wire-design-content-review-gate.md) | P1 | 2026-08-12 |

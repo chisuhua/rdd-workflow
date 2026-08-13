@@ -6,7 +6,7 @@
 
 This document is the single source of truth for how the
 `proposal-suggestions.md` file is structured, read, and written by the
-rdd-workflow skills (`guide-arch`, `guide-plan`, `propose`, `dashboard`).
+rdd-workflow skills (`guide-design`, `guide-plan`, `propose`, `dashboard`).
 
 ---
 
@@ -19,9 +19,9 @@ the full proposal content — that lives in `.rddf/improvements/<name>.md`.
 ### Example file
 
 ```markdown
-# 提案池（待架构讨论）
+# 提案池（待设计审查）
 
-> arch 阶段输入。guide-arch Phase 5.5 逐个审查，批准后添加到 `proposal-approved.md`。
+> design 阶段输入。`guide-design` 逐个审查（approve/reject/defer），批准后**直接落盘** `openspec/changes/<name>/proposal.md` 并添加一行到 `proposal-approved.md`。
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
@@ -97,12 +97,14 @@ proposal content.
 When a new proposal is added to the pool, `proposal-suggestions.md` is updated
 with a new table row linking to the improvement file.
 
-### 3. Review flow (`guide-arch` Phase 5.5)
+### 3. Review flow (`guide-design` Phase 3)
 
-1. `guide-arch` reads `proposal-suggestions.md` via `list_improvements()`.
+1. `guide-design` reads `proposal-suggestions.md` via `list_improvements()`.
 2. For each entry, it follows the link to `.rddf/improvements/<name>.md` to display
    the full content for review.
-3. Approved proposals are added to `proposal-approved.md`.
+3. Approved proposals are added to `proposal-approved.md` AND design approval
+   directly creates `openspec/changes/<name>/{proposal.md, .openspec.yaml,
+   roadmap-meta.yaml}` (Path A — move-proposal-creation-to-design).
 4. Rejected proposals remain in `.rddf/improvements/` but never appear in the
    approved index.
 
@@ -157,12 +159,12 @@ and storing content in individual files.
 All skills that touch `proposal-suggestions.md` MUST read it as a Markdown
 table and follow the links to `.rddf/improvements/*.md`:
 
-| Skill           | Where the format matters                                       |
-|-----------------|----------------------------------------------------------------|
-| `guide-arch.md` | Phase 5.5 (review proposals, approve/reject)                  |
-| `guide-plan.md` | Propose phase (read `proposal-approved.md` instead)           |
-| `propose.md`    | Phase 4d (lookup phase/category from improvement file)        |
-| `dashboard`     | Pending section (count unapproved proposals)                   |
+| Skill             | Where the format matters                                       |
+|-------------------|----------------------------------------------------------------|
+| `guide-design.md` | Phase 3 (review proposals, approve/reject/defer); also writes `proposal-approved.md` and `openspec/changes/<name>/proposal.md` on approval |
+| `guide-plan.md`   | Phase 0 intake (read `proposal-approved.md` and `.design-handoff.json`'s `changes_pre_created` to identify pre-created changes) |
+| `propose.md`      | Legacy direct-create fallback for projects not yet migrated to Path A (Phase 4d lookup of phase/category from improvement file) |
+| `dashboard`       | Pending section (count unapproved proposals)                   |
 
 The helper in `skills/_lib/state.sh::list_improvements()` centralizes the
 parsing logic so consumers don't re-implement regex extraction.
