@@ -326,7 +326,12 @@ def report_flow_bug(
 
     if _should_auto_submit(classification.report_category):
         from issue_reporter import submit_issue_via_gh  # local import to avoid cycles
+        # Priority: config gh_repo > env var RDDF_REPORT_GH_REPO > upstream default
         gh_repo = os.environ.get("RDDF_REPORT_GH_REPO", "chisuhua/rdd-workflow")
+        if config is not None and isinstance(config, dict):
+            config_gh_repo = config.get("reporting", {}).get("gh_repo")
+            if config_gh_repo:
+                gh_repo = config_gh_repo
         submit_result = submit_issue_via_gh(file_path, classification.report_category, gh_repo)
         if submit_result.success:
             _update_submission_status(file_path, submit_result.submitted_url or "")

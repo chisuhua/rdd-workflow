@@ -401,3 +401,62 @@ def test_analyze_phase_trace_ignores_irrelevant_text(tmp_path):
     )
     cls = analyze_phase_trace(trace_path=trace, project_root=str(tmp_path))
     assert cls is None
+
+
+# ── Task 5.4: config gh_repo wiring ──────────────────────────────────────
+
+
+def test_report_flow_bug_uses_config_gh_repo_when_available(tmp_path, monkeypatch):
+    """When config dict has reporting.gh_repo, it is used for gh submission (not env var)."""
+    monkeypatch.setenv("RDDF_REPORT_ENABLED", "yes")
+    monkeypatch.setenv("RDDF_REPORT_AUTO_SUBMIT", "yes")
+    monkeypatch.setenv("CI", "")
+    monkeypatch.setenv("RDDF_REPORT_GH_REPO", "env-owner/env-repo")
+
+    fake_proc = mock.Mock(returncode=0, stdout="https://github.com/config-owner/config-repo/issues/99", stderr="")
+    with mock.patch("subprocess.run", return_value=fake_proc) as m:
+        from post_flow_analysis import PhaseOutcome, classify_phase_outcome, report_flow_bug
+        tb = (
+            "Traceback (most recent call last):\n"
+            '  File "/workspace/project/rdd-workflow/_lib/foo.py", line 10, in bar\n'
+            "    raise RuntimeError('boom')\n"
+            "RuntimeError: boom\n"
+        )
+        outcome = PhaseOutcome(phase="execute", exit_code=1, stderr=tb, traceback=tb)
+        cls = classify_phase_outcome(phase="execute", outcome=outcome)
+
+        config = {"reporting": {"gh_repo": "config-owner/config-repo"}}
+        file_path = report_flow_bug(cls, project_root=str(tmp_path), config=config)
+
+    assert file_path is not None
+    gh_calls = [c for c in m.call_args_list if "issue" in str(c) and "create" in str(c)]
+    assert any("config-owner/config-repo" in str(c) for c in gh_calls), \
+        f"Expected config-owner/config-repo in gh calls, got: {gh_calls}"
+
+
+def test_report_flow_bug_falls_back_to_env_when_config_has_no_gh_repo(tmp_path, monkeypatch):
+    """When config dict has no reporting.gh_repo, env var RDDF_REPORT_GH_REPO is used."""
+    monkeypatch.setenv("RDDF_REPORT_ENABLED", "yes")
+    monkeypatch.setenv("RDDF_REPORT_AUTO_SUBMIT", "yes")
+    monkeypatch.setenv("CI", "")
+    monkeypatch.setenv("RDDF_REPORT_GH_REPO", "env-owner/env-repo")
+
+    fake_proc = mock.Mock(returncode=0, stdout="https://github.com/env-owner/env-repo/issues/77", stderr="")
+    with mock.patch("subprocess.run", return_value=fake_proc) as m:
+        from post_flow_analysis import PhaseOutcome, classify_phase_outcome, report_flow_bug
+        tb = (
+            "Traceback (most recent call last):\n"
+            '  File "/workspace/project/rdd-workflow/_lib/foo.py", line 10, in bar\n'
+            "    raise RuntimeError('boom')\n"
+            "RuntimeError: boom\n"
+        )
+        outcome = PhaseOutcome(phase="execute", exit_code=1, stderr=tb, traceback=tb)
+        cls = classify_phase_outcome(phase="execute", outcome=outcome)
+
+        config = {"reporting": {"enabled": True}}  # no gh_repo
+        file_path = report_flow_bug(cls, project_root=str(tmp_path), config=config)
+
+    assert file_path is not None
+    gh_calls = [c for c in m.call_args_list if "issue" in str(c) and "create" in str(c)]
+    assert any("env-owner/env-repo" in str(c) for c in gh_calls), \
+        f"Expected env-owner/env-repo in gh calls, got: {gh_calls}"

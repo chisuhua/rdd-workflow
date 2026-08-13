@@ -582,12 +582,17 @@ close_issues_for_change_hook() {
 
   local py_dir
   py_dir="$(cd "$main_root" && pwd)"
-  if ! RDDF_NEW_VERSION="${RDD_NEW_VERSION:-next}" \
+  if ! RDDF_CLOSE_CHANGE_NAME="$name" \
+       RDDF_CLOSE_PROJECT_ROOT="$py_dir" \
+       RDDF_NEW_VERSION="${RDDF_NEW_VERSION:-next}" \
        python3 -c "
-import sys
-sys.path.insert(0, '${py_dir}/_lib')
+import os, sys
+sys.path.insert(0, os.environ['RDDF_CLOSE_PROJECT_ROOT'] + '/_lib')
 from close_issues import close_issues_for_change
-result = close_issues_for_change('${name}', '${py_dir}')
+result = close_issues_for_change(
+    os.environ['RDDF_CLOSE_CHANGE_NAME'],
+    os.environ['RDDF_CLOSE_PROJECT_ROOT']
+)
 if result.closed:
     print(f'✅ closed {len(result.closed)} issue(s): {result.closed}')
 if result.skipped:

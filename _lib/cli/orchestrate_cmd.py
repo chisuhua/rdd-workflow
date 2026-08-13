@@ -88,9 +88,13 @@ def cmd_orchestrate(args: list[str]) -> int:
 
 
 def _get_trace_dir() -> Path:
-    """Return the trace directory from env or default."""
-    raw = os.environ.get("RDDF_TRACE_DIR", ".rddf/state/trace")
-    return Path(raw).resolve()
+    """Return the trace directory from env or default under RDDF_PROJECT_ROOT."""
+    raw = os.environ.get("RDDF_TRACE_DIR")
+    if raw:
+        return Path(raw).resolve()
+    # Default: project-root-aware, not cwd-dependent.
+    project_root = os.environ.get("RDDF_PROJECT_ROOT", ".")
+    return Path(project_root, ".rddf", "state", "trace").resolve()
 
 
 def _get_session_id() -> str:
@@ -350,14 +354,19 @@ def _handle_finalize(trace_dir: Path) -> int:
     report_written = "false"
     if subprocess_failures > 0:
         try:
-            from skills._lib.post_flow_analysis import analyze_phase_trace
+            from skills._lib.post_flow_analysis import (
+                analyze_phase_trace,
+                report_flow_bug,
+            )
             project_root = os.environ.get("RDDF_PROJECT_ROOT", ".")
             cls = analyze_phase_trace(
                 trace_path=trace_file,
                 project_root=project_root,
             )
-            if cls is not None:
-                report_written = "true"
+            if cls is not None and cls.should_report:
+                issue_path = report_flow_bug(cls, project_root=project_root)
+                if issue_path is not None:
+                    report_written = "true"
         except Exception as e:
             print(f"warning: analyze_phase_trace failed: {e}", file=sys.stderr)
 

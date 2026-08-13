@@ -154,6 +154,53 @@ rdd-workflow/
 2. 执行 `INSTALL` 将子技能复制到项目的 `.opencode/skills/rdd-workflow/`
 3. 子技能通过 `PROJECT_ROOT=$(git rev-parse --show-toplevel)` 自动检测项目根目录
 
+### 第三方项目使用（全局安装模式）
+
+全局安装后，在任何第三方项目（非 rdd-workflow 仓库）下可直接使用：
+
+```bash
+# 查看工作流状态
+rddf status
+
+# Replay trace：从项目子目录恢复并查看
+cd /path/to/third-party-project/subdir
+rddf orchestrate show
+
+# 本地 issue 缓冲：查看自动生成的 flow-bug issue
+ls .rddf/issues/
+
+# Issue 上报命令（手动，opt-in）
+RDDF_REPORT_ENABLED=yes RDDF_REPORT_AUTO_SUBMIT=yes rddf report-issue --no-submit
+
+# 指定上游仓库（默认：chisuhua/rdd-workflow）
+RDDF_REPORT_GH_REPO=my-org/my-fork rddf report-issue --no-submit
+```
+
+**路径约定（全局安装模式）：**
+
+| 路径 | 含义 |
+|------|------|
+| `.rddf/state/trace/` | 跟踪记录目录（位于第三方项目根） |
+| `.rddf/issues/` | 本地 issue 缓冲（flow-bug/gate-failure/phase-crash） |
+| `~/.agents/skills/` | 全局安装的工具根（与项目根分离） |
+
+**L2 上报 opt-in（默认关闭）：**
+
+```bash
+# 启用 L2 GitHub issue 提交（三重 opt-in）
+export RDDF_REPORT_ENABLED=yes
+export RDDF_REPORT_AUTO_SUBMIT=yes
+export RDDF_REPORT_SUBMIT_CATEGORIES=flow-bug,gate-failure,phase-crash
+```
+
+CI 环境自动禁用 L2 提交（检测到 `CI/GITHUB_ACTIONS/JENKINS_URL` 等标记）。
+
+**上游目标仓库：**
+
+- 默认：`chisuhua/rdd-workflow`
+- 覆盖：`RDDF_REPORT_GH_REPO=owner/repo`
+- 也可通过 `.rddf.json` 配置：`{"reporting": {"gh_repo": "owner/repo"}}`
+
 ## 其他 AI 助手安装
 
 其他 AI 编程助手可以使用：

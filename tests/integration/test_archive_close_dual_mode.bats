@@ -68,3 +68,23 @@ load ../test_helper
   grep -q 'close_issues_for_change_hook' "$REPO_ROOT/_lib/archive.sh"
   grep -q 'close_issues_for_change_hook' "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh"
 }
+
+# Task 6.2: Oracle C1 security regression — values passed through argv/env, NOT string interpolation
+@test "dual_mode_close: hook passes values via env vars, not bash string interpolation" {
+  [ -f "$REPO_ROOT/_lib/archive.sh" ]
+  # The fixed version uses RDDF_CLOSE_CHANGE_NAME and RDDF_CLOSE_PROJECT_ROOT env vars
+  # and does NOT use '${name}' or '${py_dir}' inside python3 -c strings.
+  # The OLD vulnerable pattern was: python3 -c "...'${name}'..."
+  # The NEW safe pattern is: RDDF_CLOSE_CHANGE_NAME="..." python3 -c "...os.environ['RDDF_CLOSE_CHANGE_NAME']..."
+  local vulnerable_pattern safe_pattern
+  vulnerable_pattern=$(grep -c "\\${name}" "$REPO_ROOT/_lib/archive.sh" 2>/dev/null || echo 0)
+  # The safe version uses os.environ['RDDF_CLOSE_CHANGE_NAME'] instead of string interpolation
+  safe_pattern=$(grep -c "os.environ\['RDDF_CLOSE" "$REPO_ROOT/_lib/archive.sh" 2>/dev/null || echo 0)
+  # Either no interpolation (vulnerable_pattern=0) OR safe pattern present (safe_pattern>0)
+  # If vulnerable_pattern > 0 AND safe_pattern == 0, the fix is not applied
+  if [ "$vulnerable_pattern" -gt 0 ] && [ "$safe_pattern" -eq 0 ]; then
+    echo "SECURITY ISSUE: ${name} appears in python3 -c string without env var passing"
+    echo "vulnerable_pattern=$vulnerable_pattern, safe_pattern=$safe_pattern"
+    return 1
+  fi
+}

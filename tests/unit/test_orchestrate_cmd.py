@@ -324,6 +324,74 @@ def test_cmd_orchestrate_show_filters_by_session(tmp_path, monkeypatch, capsys):
     assert "B" not in out
 
 
+def test_handle_finalize_report_written_false_on_success(tmp_path, monkeypatch):
+    """finalize with all-zero subprocesses sets report_written=false."""
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setenv("RDDF_PHASE", "guide-arch")
+    _handle_subprocess(["true"], trace_dir=tmp_path)
+    rc = _handle_finalize(trace_dir=tmp_path)
+    assert rc == 0
+    events = _read_events(list(tmp_path.glob("*.jsonl"))[0])
+    last = events[-1]
+    assert last["type"] == "finalize"
+    assert last["report_written"] == "false"
+
+
+def test_handle_finalize_report_written_true_on_flow_bug(tmp_path, monkeypatch):
+    """finalize with a flow-bug subprocess writes report_written=true."""
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setenv("RDDF_PHASE", "guide-arch")
+    # Create a trace with a flow-bug traceback so classify returns should_report=True
+    trace_file = tmp_path / "guide-arch-ses_x-1-100-aaaaaaaa.jsonl"
+    trace_file.write_text(
+        '{"ts":"2026-08-13T10:00:00Z","type":"subprocess",'
+        '"cmd":["bash"],"returncode":1,'
+        '"stderr_tail":"Traceback (most recent call last):\\n'
+        '  File \\"/skills/_lib/foo.py\\", line 1\\n'
+        '    raise RuntimeError()\\n'
+        'RuntimeError\\n",'
+        '"stdout_tail":""}\n'
+    )
+    rc = _handle_finalize(trace_dir=tmp_path)
+    assert rc == 0
+    events = _read_events(trace_file)
+    last = events[-1]
+    assert last["type"] == "finalize"
+    assert last["report_written"] == "true"
+    # Verify local issue file was written under project root
+    issues_dir = tmp_path / ".rddf" / "issues"
+    assert issues_dir.is_dir()
+    assert list(issues_dir.glob("*.md"))
+
+
+def test_handle_finalize_always_returns_zero(tmp_path, monkeypatch):
+    """finalize always returns 0 even when the subprocess failed."""
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setenv("RDDF_PHASE", "guide-arch")
+    _handle_subprocess(["false"], trace_dir=tmp_path)
+    rc = _handle_finalize(trace_dir=tmp_path)
+    assert rc == 0
+
+
+def test_get_trace_dir_default_uses_rddf_project_root(tmp_path, monkeypatch):
+    """Default trace dir is relative to RDDF_PROJECT_ROOT, not cwd."""
+    monkeypatch.delenv("RDDF_TRACE_DIR", raising=False)
+    monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
+    d = _get_trace_dir()
+    assert d == (tmp_path / ".rddf" / "state" / "trace").resolve()
+
+
+def test_get_trace_dir_explicit_rddf_trace_dir_overrides(tmp_path, monkeypatch):
+    """Explicit RDDF_TRACE_DIR wins over RDDF_PROJECT_ROOT default."""
+    custom = tmp_path / "custom_trace"
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(custom))
+    monkeypatch.setenv("RDDF_PROJECT_ROOT", "/nonexistent")
+    assert _get_trace_dir() == custom.resolve()
+
+
 def test_cmd_orchestrate_show_filters_by_type(tmp_path, monkeypatch, capsys):
     """`show --type subprocess` filters out non-subprocess events."""
     from orchestrate_cmd import cmd_orchestrate

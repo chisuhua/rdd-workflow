@@ -40,6 +40,7 @@ DEFAULTS = {
     "reporting": {
         "enabled": False,
         "destination": "github",
+        "gh_repo": "chisuhua/rdd-workflow",
         "auto_submit": False,
         "submit_categories": {
             "flow-bug": True,
