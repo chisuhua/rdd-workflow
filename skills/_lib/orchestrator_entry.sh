@@ -53,3 +53,20 @@ orchestrator_sweep() {
     fi
     _orchestrator_py sweep-stale-traces 2>/dev/null || true
 }
+
+orchestrate_phase() {
+    local phase="${1:?orchestrate_phase requires phase name}"
+    shift
+    if [ "$#" -eq 0 ]; then
+        echo "orchestrate_phase: requires command after phase" >&2
+        return 2
+    fi
+    if ! command -v python3 >/dev/null 2>&1; then
+        "$@"
+        return $?
+    fi
+    _orchestrator_py subprocess "$@"
+    local rc=$?
+    _orchestrator_py finalize 2>/dev/null || true
+    return $rc
+}
