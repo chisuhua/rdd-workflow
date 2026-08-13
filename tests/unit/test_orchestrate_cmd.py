@@ -284,3 +284,59 @@ def test_classify_interrupted_phase_with_ok_last_subprocess(monkeypatch):
     assert cls is not None
     assert cls.should_report is True
     assert cls.matched_rule == "INTERRUPTED-WITH-OK-LAST"
+
+
+def test_cmd_orchestrate_show_reads_jsonl(tmp_path, monkeypatch, capsys):
+    """`show` reads trace JSONL and prints timeline."""
+    from orchestrate_cmd import cmd_orchestrate
+    trace = tmp_path / "guide-arch-ses_x-1-100-aaaa.jsonl"
+    trace.write_text(
+        '{"ts":"2026-08-13T10:00:00Z","type":"checkpoint","name":"start"}\n'
+        '{"ts":"2026-08-13T10:00:01Z","type":"subprocess","cmd":["git"],"returncode":0}\n'
+        '{"ts":"2026-08-13T10:00:02Z","type":"finalize","subprocess_failures":0}\n'
+    )
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    rc = cmd_orchestrate(["show", "guide-arch"])
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "10:00:00" in out
+    assert "10:00:01" in out
+    assert "10:00:02" in out
+    assert "checkpoint" in out
+    assert "subprocess" in out
+    assert "finalize" in out
+
+
+def test_cmd_orchestrate_show_filters_by_session(tmp_path, monkeypatch, capsys):
+    """`show --session <id>` filters out events from other sessions."""
+    from orchestrate_cmd import cmd_orchestrate
+    (tmp_path / "guide-arch-ses_A-1-100-aaaa.jsonl").write_text(
+        '{"ts":"2026-08-13T10:00:00Z","type":"checkpoint","name":"A"}\n'
+    )
+    (tmp_path / "guide-arch-ses_B-1-100-bbbb.jsonl").write_text(
+        '{"ts":"2026-08-13T10:00:01Z","type":"checkpoint","name":"B"}\n'
+    )
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    rc = cmd_orchestrate(["show", "guide-arch", "--session", "ses_A"])
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "A" in out
+    assert "B" not in out
+
+
+def test_cmd_orchestrate_show_filters_by_type(tmp_path, monkeypatch, capsys):
+    """`show --type subprocess` filters out non-subprocess events."""
+    from orchestrate_cmd import cmd_orchestrate
+    trace = tmp_path / "guide-arch-ses_x-1-100-aaaa.jsonl"
+    trace.write_text(
+        '{"ts":"2026-08-13T10:00:00Z","type":"checkpoint","name":"start"}\n'
+        '{"ts":"2026-08-13T10:00:01Z","type":"subprocess","cmd":["x"],"returncode":0}\n'
+        '{"ts":"2026-08-13T10:00:02Z","type":"finalize","subprocess_failures":0}\n'
+    )
+    monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
+    rc = cmd_orchestrate(["show", "guide-arch", "--type", "subprocess"])
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "subprocess" in out
+    assert "checkpoint" not in out
+    assert "finalize" not in out
