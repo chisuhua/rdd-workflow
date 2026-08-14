@@ -1,0 +1,31 @@
+name: spec-driven
+version: 1
+description: Spec-driven workflow
+artifacts:
+  - id: proposal
+    generates: proposal.md
+    description: High-level description of the change, its motivation, and scope
+    template: proposal.md
+    requires: []
+  - id: design
+    generates: design.md
+    description: Technical design decisions and implementation approach
+    template: design.md
+    requires:
+      - specs
+  - id: tasks
+    generates: tasks.md
+    description: Implementation checklist with trackable tasks
+    template: tasks.md
+    requires:
+      - design
+  - id: specs
+    generates: specs/**/*.md
+    description: Detailed specifications with requirements and scenarios
+    template: specs/spec.md
+    requires:
+      - proposal
+apply:
+  requires:
+    - tasks
+  tracks: tasks.md
