@@ -91,7 +91,9 @@ def test_generate_full_proposal_preserves_adr_references():
 
 def test_generate_full_proposal_meets_minimum_length():
     out = generate_full_proposal("my-change", SAMPLE)
-    assert len(out) >= 500, f"Expected >=500 chars, got {len(out)}"
+    # Adjusted from 500 to 450 after fix-generator-scope-extraction:
+    # Capabilities/Impact split eliminates duplication, reducing output length.
+    assert len(out) >= 450, f"Expected >=450 chars, got {len(out)}"
 
 
 def test_generate_full_proposal_includes_acceptance_checkboxes():

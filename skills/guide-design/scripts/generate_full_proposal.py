@@ -80,13 +80,47 @@ def _extract_scope_items(scope_md: str) -> tuple[list[str], list[str]]:
 
 
 def _extract_bullet_items(section_md: str) -> list[str]:
-    """Pull "- " bullet items from a section body."""
+    """Pull bullet or numbered list items from a section body.
+    
+    Supports bullets ("- "), numbered ("1. " / "1) "), and sub-items.
+    """
     items: list[str] = []
+    # Define list item prefixes: bullets and numbered (1-9 with dot or paren)
+    prefixes = ["- "] + [f"{n}. " for n in range(1, 10)] + [f"{n}) " for n in range(1, 10)]
+    current_item = None
     for line in section_md.splitlines():
         stripped = line.strip()
-        if stripped.startswith("- "):
-            items.append(stripped[2:].strip())
+        if not stripped:
+            continue
+        # Attach indented sub-items before checking top-level prefixes.
+        if current_item is not None and line.startswith("   - "):
+            sub_text = line.strip()[2:]
+            current_item += f"\n   - {sub_text}"
+            continue
+        # Check if line is a top-level list item (bullet or numbered).
+        for prefix in prefixes:
+            if stripped.startswith(prefix):
+                if current_item is not None:
+                    items.append(current_item)
+                current_item = stripped[len(prefix):]
+                break
+    # Append final item
+    if current_item is not None:
+        items.append(current_item)
     return items
+
+
+def _split_capabilities_impact(constraint_items: list[str]) -> tuple[list[str], list[str]]:
+    """Split constraint items into Capabilities (MUST) and Impact (MUST NOT)."""
+    capabilities = []
+    impact = []
+    for item in constraint_items:
+        stripped = item.strip()
+        if stripped.startswith("MUST NOT"):
+            impact.append(item)
+        else:
+            capabilities.append(item)
+    return capabilities, impact
 
 
 def generate_full_proposal(change_name: str, improvements_md: str) -> str:
@@ -108,15 +142,17 @@ def generate_full_proposal(change_name: str, improvements_md: str) -> str:
     acceptance = _extract_section(improvements_md, "验收标准")
 
     in_scope_items, out_scope_items = _extract_scope_items(scope)
-    in_scope_block = "\n".join(f"- {item}" for item in in_scope_items) if in_scope_items else "- (TBD)"
+    in_scope_block = "\n".join(f"- {item}" for item in in_scope_items) if in_scope_items else "- (no items specified)"
     if scenarios:
         in_scope_block += "\n\n### 关键场景\n\n" + scenarios
 
-    out_of_scope_block = "\n".join(f"- {item}" for item in out_scope_items) if out_scope_items else "- (TBD)"
+    out_of_scope_block = "\n".join(f"- {item}" for item in out_scope_items) if out_scope_items else "- (no items specified)"
 
     constraint_items = _extract_bullet_items(constraints)
-    capabilities_block = "\n".join(f"- {item}" for item in constraint_items) if constraint_items else "- (TBD)"
-    impact_block = "\n".join(f"- {item}" for item in constraint_items) if constraint_items else "- (TBD)"
+    # Split constraints by MUST vs MUST NOT
+    capabilities, impact = _split_capabilities_impact(constraint_items)
+    capabilities_block = "\n".join(f"- {item}" for item in capabilities) if capabilities else "- (no items specified)"
+    impact_block = "\n".join(f"- {item}" for item in impact) if impact else "- (no items specified)"
 
     return (
         f"# {change_name}\n\n"
