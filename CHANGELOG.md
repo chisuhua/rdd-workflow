@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### add-phase-role-model (ADR-0028: 阶段技能角色模型)
+
+Formalizes role metadata for the 4 phase skills via structured `role:` frontmatter field:
+
+- **New frontmatter field**: `role:` with 5 sub-fields (title, perspective, boundaries.owns, boundaries.not_owns, boundaries.human_involvement) in all 4 phase SKILL.md files (guide-arch, guide-design, guide-plan, guide-ship).
+- **JSON Schema**: New `_lib/schemas/skill_role_schema.json` (JSON Schema draft 2020-12) validates the role field structure.
+- **Documentation update**: Each SKILL.md "职责边界" section now references the frontmatter role field as the single source of truth (ADR-0028).
+- **AGENTS.md integration**: New "Skill 角色模型 (ADR-0028)" section in "关键约定" documents the role field convention.
+- **ADR-0028**: Architecture decision record captures the rationale, decision, and consequences. Documentation-only change with no AI behavior enforcement.
+- **Backward compatibility**: Skills without the role field continue to load and parse successfully (validated via test).
+
+测试: 9 integration tests (`test_skill_role_all.bats`) — all 4 phase skills validated for complete role fields + schema compliance + backward compatibility = **9 new tests, all pass**.
+
 ### preserve-orchestrator-command-stdout (orchestrator stdout 透传 + async tee)
 
 Restores user-visible stdout from `rddf orchestrate subprocess` while preserving full trace capture via async tee:

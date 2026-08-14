@@ -8,6 +8,21 @@ metadata:
   author: sisyphus
   evolved-from: "extracted from guide-spec.md v1.0 (Phase 2 + Phase 2.5)"
   user-invocable: true
+role:
+  title: "Tech Lead (技术主管)"
+  perspective: "Bridge architecture and implementation: consume proposals, generate OpenSpec changes, analyze dependencies, emit plan-done handoff."
+  boundaries:
+    owns:
+      - "openspec/changes/<name>/{proposal,design,specs,tasks}.md"
+      - "openspec/changes/<name>/roadmap-meta.yaml"
+      - ".rddf/state/.plan-handoff.json"
+      - ".rddf/state/deps-analysis.json"
+      - ".rddf/state/iteration.json"
+    not_owns:
+      - "docs/adr/ADR-*.md"
+      - ".rddf/wt/<name>/"
+      - ".rddf/plans/<name>.md"
+    human_involvement: "medium"
 ---
 
 <!-- Non-interactive mode detection (guide-plan-noninteractive change) -->
@@ -72,10 +87,10 @@ fi
 本技能是 rdd-workflow 工作流 v2.0 的 **plan 端状态机**：负责在生成 rdd-workflow change artifacts 阶段的**变更生成**工作——消费已批准提案、创建 change、依赖分析、变更生成完成交接。plan 阶段是三阶段架构（arch → plan → ship，ADR-0003）的第二阶段，专为中人工介入、AI 辅助生成场景设计。
 
 **职责边界**：
-- **拥有**：`openspec/changes/<name>/{proposal,design,tasks}.md`（change artifacts）
-- **不拥有**：`docs/adr/ADR-*.md`（属于 `guide-arch`）、git worktree + Prometheus 计划（属于 `guide-ship`）
-- **状态持久化**：plan-done 时写入 `.rddf/state/.plan-handoff.json`（不被 git 跟踪，缺失时 ship 端静默回退）
-- **人工介入程度**：**中** —— plan 阶段 AI 辅助生成 change 提案，用户主要做决策（选择候选、确认依赖关系）
+- **角色定义**：见 frontmatter `role:` 字段（ADR-0028）
+- **拥有**：`role.boundaries.owns` 字段列出的文件路径
+- **不拥有**：`role.boundaries.not_owns` 字段列出的文件路径
+- **人工介入程度**：`role.boundaries.human_involvement` = `medium`
 
 **调用方式**：
 

@@ -8,6 +8,20 @@ metadata:
   author: sisyphus
   evolved-from: "extracted from guide-spec.md v1.0 (Phase 1 + Phase 1.5)"
   user-invocable: true
+role:
+  title: "Architect (架构治理者)"
+  perspective: "Think in terms of long-term architectural coherence, ADR-driven decision-making, and roadmap alignment. Avoid premature implementation details."
+  boundaries:
+    owns:
+      - "docs/adr/ADR-*.md"
+      - "roadmap.md"
+      - "docs/architecture/*-gap-analysis.md"
+      - ".rddf/state/.arch-handoff.json"
+    not_owns:
+      - "openspec/changes/<name>/{proposal,design,tasks}.md"
+      - ".rddf/wt/<name>/"
+      - ".rddf/plans/<name>.md"
+    human_involvement: "high"
 ---
 
 > ⚠️ **DEPRECATION NOTICE (v2.1)**: guide-arch Phase 5.5 (提案审批) 已迁移到 guide-design 阶段。
@@ -19,10 +33,10 @@ metadata:
 本技能是 rdd-workflow 工作流 v2.1 的 **arch 端状态机**：负责在生成 OpenSpec change artifacts 之前的**架构定义**工作——环境检测、ADR 文档管理、架构差距分析、路线图定义。arch 阶段是三阶段架构（arch → plan → ship，ADR-0003）的第一阶段，专为高人工介入、低频执行的架构治理工作而设计。
 
 **职责边界**：
-- **拥有**：`docs/adr/ADR-*.md`（架构决策记录）、`roadmap.md` + `roadmap-meta.yaml`（路线图）、`docs/architecture/*-gap-analysis.md`（架构差距分析）
-- **不拥有**：`openspec/changes/<name>/{proposal,design,tasks}.md`（属于 `guide-plan`）、git worktree（属于 `guide-ship`）
-- **状态持久化**：arch-done 时写入 `.rddf/state/.arch-handoff.json`（不被 git 跟踪，缺失时 plan 端静默回退）
-- **人工介入程度**：**高** —— arch 阶段是三阶段中人工介入最多的，需要架构师思考、审查、决策
+- **角色定义**：见 frontmatter `role:` 字段（ADR-0028）
+- **拥有**：`role.boundaries.owns` 字段列出的文件路径
+- **不拥有**：`role.boundaries.not_owns` 字段列出的文件路径
+- **人工介入程度**：`role.boundaries.human_involvement` = `high`
 
 **调用方式**：
 

@@ -8,6 +8,20 @@ metadata:
   author: sisyphus
   evolved-from: "split from guide.md v3.0; v2.0 移除 prometheus-planning 间接层, 直接调用内置 skill"
   user-invocable: true
+role:
+  title: "DevOps (交付工程师)"
+  perspective: "Execution focus: create worktrees, generate implementation plans, monitor task progress, archive completed changes. Minimal human involvement."
+  boundaries:
+    owns:
+      - ".rddf/wt/<name>/"
+      - ".rddf/plans/<name>.md"
+      - "openspec/changes/<name>/tasks.md"
+      - "git worktree for openspec/<name>"
+    not_owns:
+      - "docs/adr/ADR-*.md"
+      - "openspec/changes/<name>/{proposal,design,specs}.md"
+      - "proposal-suggestions.md"
+    human_involvement: "low"
 ---
 
 # OpenSpec 工作流 — Ship-Side Guide
@@ -15,9 +29,10 @@ metadata:
 本技能是 OpenSpec 工作流的 **ship 端状态机**：负责在 git 提交 OpenSpec change artifacts 之后的所有工作——为已提交的 change 创建 worktree、生成实施计划、监控执行、归档清理。spec 端（`guide-arch` / `guide-plan`）在 artifacts 提交后发出 "ready for guide-ship" 交接信号，本技能接管从 worktree 到归档的全流程。
 
 **职责边界**：
-- **拥有**：git worktree、`.rddf/plans/<name>.md`、归档（merge → archive → cleanup）
-- **不拥有**：`openspec/changes/<name>/{proposal,design,tasks}.md` 的创建与提交（这些由 `guide-arch` / `guide-plan` 处理）
-- **状态持久化**：不写状态文件；ship 端状态由 git worktree 列表和 `tasks.md` 进度反映（on-the-fly 读取）
+- **角色定义**：见 frontmatter `role:` 字段（ADR-0028）
+- **拥有**：`role.boundaries.owns` 字段列出的文件路径
+- **不拥有**：`role.boundaries.not_owns` 字段列出的文件路径
+- **人工介入程度**：`role.boundaries.human_involvement` = `low`
 
 **v2.0 简化**：v2.0 起,本技能直接调用内置的 `rdd-workflow-writing-plans` 技能生成计划(无中间检测层)。原 `prometheus-planning` 间接层已删除。
 

@@ -148,6 +148,17 @@ openspec/                     # OpenSpec CLI 数据 (随项目走)
 
 ## 关键约定 (容易踩坑)
 
+### Skill 角色模型 (ADR-0028)
+
+4 个阶段技能 (`guide-arch`, `guide-design`, `guide-plan`, `guide-ship`) 的 frontmatter 包含 `role:` 字段，定义角色、视角、边界：
+- `role.title`: 双语角色名（如 "Architect (架构治理者)"）
+- `role.perspective`: 思考视角（1-2 句）
+- `role.boundaries.owns`: 文件路径清单（此阶段拥有）
+- `role.boundaries.not_owns`: 明确禁止的文件路径
+- `role.boundaries.human_involvement`: 高/中/低（对应 ADR-0003 梯度）
+
+详见 [ADR-0028](docs/adr/ADR-0028-role-model-per-phase.md)。
+
 ### 状态文件 (`.rddf/state/`, gitignored)
 
 | 文件 | 用途 | 写入方 |
