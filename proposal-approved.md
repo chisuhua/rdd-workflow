@@ -59,10 +59,10 @@
 
 
 
-| [preserve-orchestrator-command-stdout](.rddf/improvements/preserve-orchestrator-command-stdout.md) | P1 | 2026-08-13 | guide-arch |
 
 
 ## 已实施
+| [preserve-orchestrator-command-stdout](.rddf/improvements/preserve-orchestrator-command-stdout.md) | P1 | 2026-08-14 |
 | [harden-plan-intake-bootstrap-and-design-gate-tests](.rddf/improvements/harden-plan-intake-bootstrap-and-design-gate-tests.md) | P1 | 2026-08-13 |
 | [validate-feature-name](.rddf/improvements/validate-feature-name.md) | P1 | 2026-08-12 |
 | [fix-feature-decision-design-phase](.rddf/improvements/fix-feature-decision-design-phase.md) | P1 | 2026-08-10 |
