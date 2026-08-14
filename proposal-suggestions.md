@@ -8,6 +8,3 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [fix-generator-scope-extraction](.rddf/improvements/fix-generator-scope-extraction.md) | P1 | Oracle 审查 + dogfooding 实战发现 | 2026-08-13 | 延迟 |
-| [issue-driven-proposal-creation](.rddf/improvements/issue-driven-proposal-creation.md) | P1 | Oracle 评估 + 当前缺口分析 | 2026-08-13 | 延迟 |
-| [add-phase-role-model](.rddf/improvements/add-phase-role-model.md) | P1 | 本次讨论 + 角色边界缺口 | 2026-08-14 | 待审查 |

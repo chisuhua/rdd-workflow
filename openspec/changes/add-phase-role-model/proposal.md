@@ -1,11 +1,6 @@
 # add-phase-role-model
 
-**优先级**: P1 | **来源**: 本次讨论 + 角色边界缺口
-**阶段**: default | **分类**: arch-design
-**类型**: functional
-**主题**: 不适用
-
-## 架构依据
+## Why
 
 本提案建立于以下架构原则和已识别缺口之上：
 
@@ -35,37 +30,31 @@
 - ADR 模板（`docs/adr/ADR-0000-template.md`）的"决策"和"后果"段落是 ADR-0028 写作格式参考
 - 现有 schema 目录：`_lib/schemas/`（项目根，无 `skills/` 前缀，10 个 .json schema），新 schema 沿用此路径
 
-## 范围
+## What Changes
 
-### In Scope
+**In Scope**:
 
 - **ADR-0028 创建**：`docs/adr/ADR-0028-role-model-per-phase.md`，记录"角色 = 状态机 + 视角 + 边界"三元组的架构决策
 - **SKILL.md frontmatter 扩展（一次性 4 文件）**：4 个 SKILL.md（guide-arch / guide-design / guide-plan / guide-ship）的 YAML frontmatter 添加 `role:` 顶层字段，含：
-  - `role.title`：人类可读角色名（如 "Architect / Tech Lead / DevOps"）
-  - `role.perspective`：思考视角（叙述性，1-2 句）
-  - `role.boundaries.owns`：owns 的文件路径清单
-  - `role.boundaries.not_owns`：明确禁止 owns 的文件路径清单
-  - `role.boundaries.human_involvement`：高/中/低（对应 ADR-0003 梯度）
+- `role.title`：人类可读角色名（如 "Architect / Tech Lead / DevOps"）
+- `role.perspective`：思考视角（叙述性，1-2 句）
+- `role.boundaries.owns`：owns 的文件路径清单
+- `role.boundaries.not_owns`：明确禁止 owns 的文件路径清单
+- `role.boundaries.human_involvement`：高/中/低（对应 ADR-0003 梯度）
 - **SKILL.md 正文同步**：将现有"职责边界"段落改为**引用 frontmatter**而非重复陈述，确保单一事实来源
 - **新建 schema**：`_lib/schemas/skill_role_schema.json` 集中定义 `role:` 字段类型与默认值
 - **bats 测试覆盖**：1 个综合测试 `tests/integration/test_skill_role_all.bats`，验证 4 个 SKILL.md 的 frontmatter 解析 + 5 个 sub-field 存在性 + schema 合规
 - **AGENTS.md 同步更新**：在 `rdd-workflow/AGENTS.md` 关键约定章节引用 ADR-0028，便于未来开发者溯源
-
-### Out Scope
-
 - **不修改 AI 提示词自动拼接机制**：LLM 仍按现有方式读取 frontmatter，本提案不写 hook/prompt 注入器
 - **不写自动边界检测 linter**：不写 pre-commit / bats hook 检查"AI 是否越权写文件"，仅靠角色一致性 + 现有 reviewer 流程
 - **不修改"自由讨论模式"行为**：保留 `guide` 推荐器层的"意图路由规则"，不引入"角色继承到 free discussion"
 - **不修改 OpenSpec CLI 行为**：不写 `openspec` 插件
 - **不引入子技能角色继承机制**：propose/execute/status 等子技能不继承 guide-plan/guide-ship 角色（除非后续单独提案）
 - **不修改现有 ADR-0003 / ADR-0017 / ADR-0025**：本提案是"角色语义补充"，不重定义现有架构
-
-### 不修复 / Deferred（独立提案）
-
 - **AI 实际行为强制约束**：本提案只在 frontmatter 文档化角色，**不强制 LLM 行为**——属 OpenSpec CLI 改造 / AI 框架层独立提案
 - **其他子技能（propose/execute/status/deps/roadmap/feature/rddf-session/add-improve/rdd-env-check/rdd-doctor）的角色定义**：属后续提案范围
 
-## 关键场景
+### 关键场景
 
 ### 场景 1：arch 阶段防越权
 
@@ -100,9 +89,11 @@
 - **AND** 不继承 arch 角色的"owns `docs/adr/`" 边界（design 阶段明确不 owns ADR）
 - **AND** 现有 rddf-session entry hook（ADR-0017）正常工作，记录角色切换点
 
-## 技术约束
+**Out of Scope**:
 
-### MUST（必做）
+- (TBD)
+
+## Capabilities
 
 - **frontmatter YAML schema 严格**：新增字段必须 snake_case（如 `human_involvement`），类型与默认值在 `_lib/schemas/skill_role_schema.json` 集中定义（注意路径：项目根 `_lib/schemas/`，**不是** `skills/_lib/schemas/`）
 - **保持现有 frontmatter 兼容性**：新字段为**可选 + 默认值**，缺字段时 SKILL.md 必须仍可被现有 skill 加载逻辑解析（向后兼容）
@@ -110,9 +101,6 @@
 - **边界清单准确性**：`role.boundaries.owns` / `role.boundaries.not_owns` 必须与各 SKILL.md 当前实际行为对齐（不自创边界）
 - **bats 测试覆盖**：1 个综合测试 `tests/integration/test_skill_role_all.bats` 验证 4 个 SKILL.md 的 frontmatter 解析 + 5 个 sub-field 存在性 + schema 合规
 - **AGENTS.md 同步更新**：在 `rdd-workflow/AGENTS.md` 关键约定章节引用 ADR-0028，便于未来开发者溯源
-
-### MUST NOT（必不做）
-
 - **不修改现有 frontmatter 顶层字段**（name / description / license / compatibility）—— 仅扩展
 - **不写自动边界检查 hook**（pre-commit / bats pre-merge）—— 角色一致性靠 reviewer 流程
 - **不修改 OpenSpec CLI 行为**（不写 openspec 插件）
@@ -120,15 +108,32 @@
 - **不引入跨子技能角色继承**（propose/execute/status 等子技能不继承 guide-* 角色）
 - **不写 Python 模块**（角色定义在 frontmatter YAML，不引入新 Python 加载器）
 - **不拆分 PR**（4 个 SKILL.md 同变更，单 PR 一次性提交）
-
-### SHOULD（建议）
-
 - **每个 SKILL.md 的 `role.title` 使用中英双语**：方便国际化（参考现有"Architect (架构治理者)"模式）
 - **bats 测试复用现有 `load test_helper` + `load_lib skill.bash`**：保持测试基础设施一致
 - **ADR-0028 与现有 ADR-0021 (Phase 2 per-skill helper migration) 风格对齐**：标题、章节、决策结构
 - **CHANGELOG.md 同步更新**：在 changelog 中标注"skill frontmatter 扩展"为向后兼容变更
 
-## 验收标准
+## Impact
+
+- **frontmatter YAML schema 严格**：新增字段必须 snake_case（如 `human_involvement`），类型与默认值在 `_lib/schemas/skill_role_schema.json` 集中定义（注意路径：项目根 `_lib/schemas/`，**不是** `skills/_lib/schemas/`）
+- **保持现有 frontmatter 兼容性**：新字段为**可选 + 默认值**，缺字段时 SKILL.md 必须仍可被现有 skill 加载逻辑解析（向后兼容）
+- **单一事实来源**：SKILL.md 正文中"职责边界"段落必须引用 frontmatter 字段，禁止重复陈述（避免 drift）
+- **边界清单准确性**：`role.boundaries.owns` / `role.boundaries.not_owns` 必须与各 SKILL.md 当前实际行为对齐（不自创边界）
+- **bats 测试覆盖**：1 个综合测试 `tests/integration/test_skill_role_all.bats` 验证 4 个 SKILL.md 的 frontmatter 解析 + 5 个 sub-field 存在性 + schema 合规
+- **AGENTS.md 同步更新**：在 `rdd-workflow/AGENTS.md` 关键约定章节引用 ADR-0028，便于未来开发者溯源
+- **不修改现有 frontmatter 顶层字段**（name / description / license / compatibility）—— 仅扩展
+- **不写自动边界检查 hook**（pre-commit / bats pre-merge）—— 角色一致性靠 reviewer 流程
+- **不修改 OpenSpec CLI 行为**（不写 openspec 插件）
+- **不修改 rddf-session lifecycle**（不引入"角色切换"作为 session kind 的新维度）
+- **不引入跨子技能角色继承**（propose/execute/status 等子技能不继承 guide-* 角色）
+- **不写 Python 模块**（角色定义在 frontmatter YAML，不引入新 Python 加载器）
+- **不拆分 PR**（4 个 SKILL.md 同变更，单 PR 一次性提交）
+- **每个 SKILL.md 的 `role.title` 使用中英双语**：方便国际化（参考现有"Architect (架构治理者)"模式）
+- **bats 测试复用现有 `load test_helper` + `load_lib skill.bash`**：保持测试基础设施一致
+- **ADR-0028 与现有 ADR-0021 (Phase 2 per-skill helper migration) 风格对齐**：标题、章节、决策结构
+- **CHANGELOG.md 同步更新**：在 changelog 中标注"skill frontmatter 扩展"为向后兼容变更
+
+## Acceptance
 
 ### 量化指标
 
@@ -151,3 +156,4 @@
 
 - AI 是否**实际遵循** frontmatter 角色定义（属 LLM 行为，不在本提案验证范围内）
 - 其他子技能（propose / execute / status / deps / roadmap / feature / rddf-session / add-improve / rdd-env-check / rdd-doctor）的角色定义（属后续提案范围）
+

@@ -1,11 +1,6 @@
 # fix-generator-scope-extraction
 
-**优先级**: P1 | **来源**: Oracle 审查 + dogfooding 实战发现
-**阶段**: v2.1 | **分类**: core-impl
-**类型**: bug-fix
-**主题**: 不适用
-
-## 架构依据
+## Why
 
 - ADR-0025（design proposal creation）：`guide-design` 阶段通过 `generate_full_proposal.py` 把 `.rddf/improvements/<name>.md` 的 5 段（架构依据/范围/关键场景/技术约束/验收标准）转换为 openspec `proposal.md`（Why/What Changes/Capabilities/Impact/Acceptance）
 - AGENTS.md "状态文件清单"：`.rddf/improvements/` 是仓库已有 138+ 文件的改进提案池，generator 必须兼容所有现有格式
@@ -32,30 +27,19 @@
 - 现有 improvements 格式（138+ 文件）是事实来源，generator 必须支持
 - ADR-0025 D2 映射：技术约束 → Capabilities/Impact（应是 stakeholder 视角的差异化映射，非同一份内容复制）
 
-## 范围
+## What Changes
 
-### In Scope
-
-1. **修复 `_extract_scope_items()` numbered list 处理**：同时匹配 `- ` (bullet) **和** `1. ` / `2. ` / `1) ` (numbered) 两种 item 起始格式
-2. **修复 numbered item 子项拼接**：`1. **xxx**:` 这种 numbered item 缩进的子项（`   - sub-item`）应拼接到上一行 description（保留 `\n   - sub-item` 格式）
-3. **修复空 section fallback**：缺 In Scope 或 Out Scope 时输出 `- (no items specified)` 而非 `- (TBD)`（仅针对 scope 段；其他段保留 `- (TBD)` 语义）
-4. **修复 Capabilities / Impact 内容差异化**：从同一份 `constraint_items` 拆分为前后半句或按 MUST/MUST NOT/SHOULD 分类（Capabilities = 涉及的能力面，Impact = 受影响面）
-5. **新增 fixtures 测试**：覆盖 3 种剩余格式场景（numbered items / empty section / capabilities 差异化）
-
-### Out Scope
+**In Scope**:
 
 - **不重构 `generate_full_proposal.py` 整个文件**（保留 D2 映射逻辑）
 - **不修改 `_extract_section()` 函数**（除非要修复相同 bug）
 - **不修改 improvements 文件本身的格式要求**（H3 + numbered 是合法格式，向后兼容 138+ 文件）
 - **不重做 commit 132a654 已修复的 header 风格处理**（已 ship）
 - **不引入新依赖**（Python 标准库足够）
-
-### 不修复 / Deferred（独立提案）
-
 - **Capabilities/Impact 段落精细化拆分**：本提案做粗略拆分（按 MUST/MUST NOT/SHOULD 分类），精细化的"受哪些 capability 影响 vs 影响哪些 stakeholder"留独立提案
 - **`.rddf/improvements/` 历史 138 个文件批量 reformat**：本提案只修 generator，已有 138 个文件保留现状（向后兼容）
 
-## 关键场景
+### 关键场景
 
 - GIVEN improvements 文件用 `### In Scope` (H3) 标题 + `1. **xxx**:` numbered items 列出范围，WHEN `generate_full_proposal.py` 转换，THEN `proposal.md` 的 `## What Changes` 段正确显示 In Scope 项 + Out Scope 项（数量与原始 improvements 一致）。
 
@@ -67,7 +51,11 @@
 
 - GIVEN improvements 文件用 `- ` bullet items（现有测试已覆盖），WHEN 转换，THEN 行为不变（向后兼容，132a654 测试不退化）。
 
-## 技术约束
+**Out of Scope**:
+
+- (TBD)
+
+## Capabilities
 
 - MUST 修改 `_extract_scope_items()` 同时支持 `- ` (bullet) **和** `1. ` / `2. ` / `1) ` (numbered) 两种 item 起始格式（不破坏现有 `- ` 兼容）。
 - MUST numbered item 子项（缩进的 `- `）拼接到父 item description（保留 `\n   - sub-item` 格式）。
@@ -81,7 +69,21 @@
 - SHOULD 用 `itertools.takewhile` 或类似技术简化 numbered + sub-items 的拼接逻辑（避免手工循环 bug）。
 - SHOULD 在 `_extract_scope_items` 函数 docstring 明确支持 numbered items 处理。
 
-## 验收标准
+## Impact
+
+- MUST 修改 `_extract_scope_items()` 同时支持 `- ` (bullet) **和** `1. ` / `2. ` / `1) ` (numbered) 两种 item 起始格式（不破坏现有 `- ` 兼容）。
+- MUST numbered item 子项（缩进的 `- `）拼接到父 item description（保留 `\n   - sub-item` 格式）。
+- MUST 修复空 section fallback：缺 In Scope 或缺 Out Scope 时输出 `- (no items specified)`（仅 scope 段；其他段保留 `(TBD)` 语义）。
+- MUST Capabilities 与 Impact 段内容差异化（粗略按 MUST/MUST NOT/SHOULD 语义分类，避免完全相同）。
+- MUST 新增单元测试覆盖 3 种剩余格式场景（fixtures 目录 + pytest）。
+- MUST NOT 修改 `_extract_section()` 签名（向后兼容）。
+- MUST NOT 修改 improvements 文件本身的格式要求（H3 + numbered 是合法格式）。
+- MUST NOT 修改 commit 132a654 已修复的 header 风格处理逻辑。
+- MUST NOT 引入新依赖（Python 标准库足够）。
+- SHOULD 用 `itertools.takewhile` 或类似技术简化 numbered + sub-items 的拼接逻辑（避免手工循环 bug）。
+- SHOULD 在 `_extract_scope_items` 函数 docstring 明确支持 numbered items 处理。
+
+## Acceptance
 
 1. **单元测试覆盖**：新增 `tests/unit/test_generate_full_proposal_scope.py`（或扩展现有 `tests/unit/test_generate_full_proposal.py`）≥3 cases：
    - H3 + numbered items → 正确分类 In/Out Scope（项数与原始 improvements 一致）
@@ -104,3 +106,4 @@
 5. **行数约束**：`generate_full_proposal.py` 增量 ≤50 行（最小侵入）。
 
 6. **向后兼容**：现有 improvements 文件（138 个）`generate_full_proposal()` 输出的 `## What Changes` 段 In Scope 项数 ≥ 原始 improvements 的 In Scope 项数（对用 `- ` bullet 的文件行为不变）。
+

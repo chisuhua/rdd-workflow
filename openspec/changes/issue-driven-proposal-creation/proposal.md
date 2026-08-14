@@ -1,12 +1,6 @@
 # issue-driven-proposal-creation
 
-**优先级**: P1 | **来源**: Oracle 评估（2026-08-13，9 维度深度分析）+ 当前 proposal 创建通路缺口
-**阶段**: v2.1+ | **分类**: arch-design
-**类型**: feature
-**主题**: 不适用（自由模式）
-**状态**: 已推迟 (2026-08-14) — 等 fix-generator-scope-extraction 落地后重新评估 (generator 当前会产出 Capabilities/Impact 重复 + Out Scope (TBD) 的破损 proposal.md) → **2026-08-14 重新激活**（fix-generator-scope-extraction 已批准，前置解锁）+ ADR 重编号 0028 → 0029（add-phase-role-model 占用 0028）
-
-## 架构依据
+## Why
 
 **现状缺口**：
 - rdd-workflow 当前只有 2 条 proposal 创建路径：`add-improve` 头脑风暴（free 模式）+ `propose` 差距扫描
@@ -31,38 +25,26 @@
 **风险/前置修复**：
 - Oracle 发现 `_lib/close_issues.py:180` comment 模板硬编码 "Fixed in rdd-workflow"——本提案落地后 archive 时会写到第三方 repo，必须一并修复。
 
-## 范围
+## What Changes
 
-### In Scope
+**In Scope**:
 
-**A. 新增 scaffold 模式**：
 - `skills/add-improve/scripts/from_issue.sh` — bash wrapper，env-var 契约（uppercase snake，trap cleanup EXIT）
 - `skills/add-improve/scripts/from_issue.py` — 主逻辑：repo 检测 → issue fetch → dedup → scaffold → 注册
 - `skills/_lib/gh_repo_detect.py` — 共享检测模块（env > `gh repo view` > git remote parse）
-
-**B. UI 入口**：
 - `skills/guide-design/SKILL.md` Phase 2 菜单新增"🐙 从 GitHub issue 创建提案"选项（编号 3，其他编号顺移）
-
-**C. Schema 复用**：
 - 复用 ADR-0027 §7 的 `issue_refs: [N]` + `gh_repo` 字段写入 `.rddf/improvements/<name>.md` frontmatter
 - 复用现有 5 段格式（架构依据/范围/关键场景/技术约束/验收标准）
-
-**D. 关联 bug 修复**：
 - `_lib/close_issues.py:180` comment 模板去 "rdd-workflow" 字样（repo-neutral 措辞）
-
-**E. 测试**：
 - `tests/unit/test_gh_repo_detect.py` — 3 种 fallback 链 + gh 缺失 + auth 失败（pytest + subprocess mock）
 - `tests/integration/test_from_issue.bats` — happy path + dedup + slug collision + gh 缺失（bats + PATH stub）
-
-### Out Scope
-
 - ❌ 不重载 `rddf issue list/show` 命名空间（属于本地 `.rddf/issues/` 缓冲，ADR-0027 §10）
 - ❌ 不实现 label-based filtering、batch multi-select、closed-issue sync、linked-PR warning（full scope，列入 ADR-0029 后续）
 - ❌ 不新增 CLI dispatcher（skill-only MVP）
 - ❌ 不修改 ADR-0027 §5 triage menu（保持分离：triage=维护者读上游；本提案=项目用户读本项目）
 - ❌ 不实现 proposal 自动检测"是不是 rdd-workflow"——单一入口池策略（`.rddf/improvements/` 永远是入口）
 
-## 关键场景
+### 关键场景
 
 **场景 1 — 第三方项目 dogfooding**：
 - GIVEN: 用户在第三方项目 X 跑 rdd-workflow，X 有 GitHub repo + 开放 issue
@@ -99,42 +81,57 @@
 - WHEN: 启动 from-issue
 - THEN: 跳过 `gh repo view` 自动检测，直接使用 env 指定值（用于 fork / 跨仓库场景）
 
-## 技术约束
+**Out of Scope**:
 
-### MUST
+- (TBD)
+
+## Capabilities
 
 - 当前项目 GH repo 检测链（按优先级）：
-  1. `RDDF_PROPOSAL_GH_REPO` env（显式覆盖）
-  2. `gh repo view --json nameWithOwner` (subprocess + 10s timeout)
-  3. `git remote get-url origin` parse + GitHub URL 提取
-  4. 失败 → stderr 错误信息 + exit 2（不写文件）
 - 前置 `gh auth status` 检查（即使只读，gh CLI 也需要认证）
 - Dedup 双重扫描位置：
-  - `.rddf/improvements/*.md` frontmatter 的 `issue_ref: N` 字段
-  - `openspec/changes/*/roadmap-meta.yaml::issue_refs`
+- `.rddf/improvements/*.md` frontmatter 的 `issue_ref: N` 字段
+- `openspec/changes/*/roadmap-meta.yaml::issue_refs`
 - Slug 生成规则：`kebab-case(title)`，冲突时 append `-i<N>` (issue number)
 - Issue body 截断 ~4000 字符，剩余追加 "... (剩余 N 字符，参见 <URL>)"
 - env-var 传递模式（参照 add-improve 已有 env.py 模式，禁止 `python3 -c "...$VAR..."` 内联）
 - 保留 brainstorm HARD-GATE（与 from-roadmap 一致：scaffold 预填 + brainstorm 完善）
 - Proposal 永远落 `.rddf/improvements/`（单一入口池；不区分 rdd-workflow self vs 第三方）
 - close_issues.py:180 comment 模板改成 repo-neutral（用 change_name + repo_name，不用 "rdd-workflow" 字面量）
-
-### MUST NOT
-
 - 不回退到 `chisuhua/rdd-workflow` 作为检测 fallback（防止误把第三方 issue 当作上游）
 - 不复用 `RDDF_REPORT_GH_REPO` env（那是 ADR-0027 reporter 的上游目标，与本提案语义不同）
 - 不重载 `rddf issue list/show` 命令（命名空间冲突，违反命名约定）
 - 不修改 ADR-0027 §5 triage menu 代码路径
 - 不静默吞错（gh 缺失/未认证/git remote 不可解析 → 硬退出 + 明确错误）
-
-### SHOULD
-
 - `from-issue` / `from-roadmap` / `free` 3 种 scaffold 在 add-improve 内共享 dedup + scaffold write + register 的公共逻辑
 - `gh_repo_detect.py` 设计上为 ADR-0027 triage 后续复用留接口（不强制本期采用）
 - 检测失败错误信息包含建议命令（如 `gh auth login`、`git remote add origin ...`）
 - Issue 列表支持 `--limit 30` 上限 + `--label` 可选过滤（v2.2+ 可扩展）
 
-## 验收标准
+## Impact
+
+- 当前项目 GH repo 检测链（按优先级）：
+- 前置 `gh auth status` 检查（即使只读，gh CLI 也需要认证）
+- Dedup 双重扫描位置：
+- `.rddf/improvements/*.md` frontmatter 的 `issue_ref: N` 字段
+- `openspec/changes/*/roadmap-meta.yaml::issue_refs`
+- Slug 生成规则：`kebab-case(title)`，冲突时 append `-i<N>` (issue number)
+- Issue body 截断 ~4000 字符，剩余追加 "... (剩余 N 字符，参见 <URL>)"
+- env-var 传递模式（参照 add-improve 已有 env.py 模式，禁止 `python3 -c "...$VAR..."` 内联）
+- 保留 brainstorm HARD-GATE（与 from-roadmap 一致：scaffold 预填 + brainstorm 完善）
+- Proposal 永远落 `.rddf/improvements/`（单一入口池；不区分 rdd-workflow self vs 第三方）
+- close_issues.py:180 comment 模板改成 repo-neutral（用 change_name + repo_name，不用 "rdd-workflow" 字面量）
+- 不回退到 `chisuhua/rdd-workflow` 作为检测 fallback（防止误把第三方 issue 当作上游）
+- 不复用 `RDDF_REPORT_GH_REPO` env（那是 ADR-0027 reporter 的上游目标，与本提案语义不同）
+- 不重载 `rddf issue list/show` 命令（命名空间冲突，违反命名约定）
+- 不修改 ADR-0027 §5 triage menu 代码路径
+- 不静默吞错（gh 缺失/未认证/git remote 不可解析 → 硬退出 + 明确错误）
+- `from-issue` / `from-roadmap` / `free` 3 种 scaffold 在 add-improve 内共享 dedup + scaffold write + register 的公共逻辑
+- `gh_repo_detect.py` 设计上为 ADR-0027 triage 后续复用留接口（不强制本期采用）
+- 检测失败错误信息包含建议命令（如 `gh auth login`、`git remote add origin ...`）
+- Issue 列表支持 `--limit 30` 上限 + `--label` 可选过滤（v2.2+ 可扩展）
+
+## Acceptance
 
 ### 功能验收
 
@@ -164,13 +161,3 @@
 - [ ] 新建 `docs/adr/ADR-0029-issue-driven-proposal-creation.md` 记录本次决策
 - [ ] 引用 ADR-0025（菜单结构）、ADR-0027 §5（scope 区分）/§7（schema 复用）、ADR-0026（命名空间约定）
 
-## 参考
-
-- `_lib/issue_reporter.py` — 上游 bug 上报（参考 env-var 契约）
-- `_lib/close_issues.py:180` — 待修复的 comment 模板
-- `skills/add-improve/scripts/from_roadmap.{sh,py,env.py}` — from-issue 的直接模板
-- `skills/guide-design/SKILL.md` Phase 2 — 菜单插入点
-- `docs/adr/ADR-0027-continuous-evolution-feedback-loop.md` §5/§7 — issue 集成基础
-- `docs/adr/ADR-0025-design-proposal-creation.md` — design 阶段菜单结构
-- `docs/adr/ADR-0026-internal-metadata-namespace-convention.md` — 元数据命名约定
-- Oracle 评估：2026-08-13（9 维度分析，详见对话记录）
