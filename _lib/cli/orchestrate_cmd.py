@@ -97,6 +97,19 @@ def _get_trace_dir() -> Path:
     return Path(project_root, ".rddf", "state", "trace").resolve()
 
 
+def _resolve_capture_mode() -> str:
+    """Read RDDF_ORCHESTRATOR_CAPTURE env var. Returns one of tee|capture|passthrough.
+
+    Default: tee. Invalid values fall back to tee (safe).
+    Per openspec/changes/preserve-orchestrator-command-stdout §Decisions
+    "Capture mode taxonomy".
+    """
+    raw = os.environ.get("RDDF_ORCHESTRATOR_CAPTURE", "").strip().lower()
+    if raw in ("tee", "capture", "passthrough"):
+        return raw
+    return "tee"
+
+
 def _get_session_id() -> str:
     """Read rddf-session owner_opencode_session_id or generate a fresh UUID.
 
@@ -132,11 +145,13 @@ def _open_trace(phase: str, session_id: Optional[str] = None) -> Trace:
 
     If an unfinalized trace exists for ``phase``, append to it. Otherwise
     create a new one. Ensures ``RDDF_TRACE_DIR`` exists; raises OSError
-    on permission failure.
+    on permission failure. Triggers rotation if existing trace exceeds
+    ``RDDF_ORCHESTRATOR_TRACE_MAX_BYTES``.
     """
     sid = session_id or _get_session_id()
     trace_dir = _get_trace_dir()
     trace_dir.mkdir(parents=True, exist_ok=True)
+    _rotate_if_needed(trace_dir, phase)
 
     existing = _find_open_trace(trace_dir, phase)
     if existing is not None:
@@ -211,53 +226,105 @@ def _tail_file(path: Path, n: int) -> str:
         return ""
 
 
+def _rotate_if_needed(trace_dir: Path, phase: str) -> None:
+    """Rotate the largest trace file for ``phase`` if it exceeds RDDF_ORCHESTRATOR_TRACE_MAX_BYTES.
+
+    Renames ``<trace>.jsonl`` → ``<trace>.jsonl.1``. New runs start fresh.
+    Default threshold: 100 MB. Configurable via env var.
+    Per openspec/changes/preserve-orchestrator-command-stdout §Decisions "File rotation".
+    """
+    threshold = int(os.environ.get("RDDF_ORCHESTRATOR_TRACE_MAX_BYTES", str(100 * 1024 * 1024)))
+    candidates = sorted(
+        trace_dir.glob(f"{phase}-*.jsonl"),
+        key=lambda p: p.stat().st_size,
+        reverse=True,
+    )
+    for candidate in candidates:
+        if candidate.stat().st_size >= threshold:
+            rotated = candidate.with_suffix(candidate.suffix + ".1")
+            try:
+                candidate.rename(rotated)
+            except OSError as e:
+                print(f"warning: trace rotation failed: {e}", file=sys.stderr)
+            return  # one rotation per open is enough
+
+
 def _handle_subprocess(
     cmd: list[str],
     trace_dir: Path,
     timeout: Optional[int] = None,
 ) -> int:
-    """Run a subprocess and record its result to a new trace.
+    """Run a subprocess and record its result.
 
-    Args:
-        cmd: argv list (no shell). First call per phase entry also
-            triggers a stale-trace sweep.
-        trace_dir: target directory for the trace file.
-        timeout: seconds before subprocess.TimeoutExpired. Defaults to
-            ``RDDF_ORCHESTRATE_TIMEOUT`` env var or 600.
+    Dispatches based on ``RDDF_ORCHESTRATOR_CAPTURE`` env var:
+
+    - ``tee`` (default): main subprocess inherits stdout/stderr; a dedicated
+      reader subprocess re-runs the same command with PIPE and drains into
+      the trace file asynchronously. Reader failure is non-fatal; trace
+      marks ``reader_died: true``.
+    - ``capture`` (legacy): original PIPE capture (ADR-0027 §1.0.1 behavior).
+      stdout/stderr is hidden from the caller.
+    - ``passthrough``: main subprocess inherits stdout/stderr; no reader is
+      spawned; no trace file is written. Zero-overhead escape hatch.
 
     Returns:
         The subprocess return code (timeout → 124).
     """
-    from skills._lib.loop.sanitizer import sanitize
-
     if timeout is None:
         timeout = int(os.environ.get("RDDF_ORCHESTRATE_TIMEOUT", "600"))
 
     _handle_sweep(trace_dir)
 
     phase = os.environ.get("RDDF_PHASE", "unknown")
-    trace = _open_trace(phase=phase)
+    capture_mode = _resolve_capture_mode()
 
+    if capture_mode == "passthrough":
+        return _run_passthrough(cmd, timeout)
+    if capture_mode == "capture":
+        return _run_legacy_capture(cmd, phase, trace_dir, timeout)
+    return _run_tee_mode(cmd, phase, trace_dir, timeout)
+
+
+def _run_passthrough(cmd: list[str], timeout: int) -> int:
+    """passthrough mode: inherit stdout/stderr, no reader, no trace write.
+
+    Per openspec/changes/preserve-orchestrator-command-stdout §Decisions
+    "Capture mode taxonomy". Caller sees live output; no trace file written.
+    """
+    try:
+        proc = subprocess.run(
+            cmd,
+            shell=False,
+            stdout=None,
+            stderr=None,
+            timeout=timeout,
+        )
+        return proc.returncode
+    except subprocess.TimeoutExpired:
+        return 124
+
+
+def _run_legacy_capture(cmd: list[str], phase: str, trace_dir: Path, timeout: int) -> int:
+    """capture mode: original PIPE capture (ADR-0027 §1.0.1 behavior).
+
+    stdout/stderr are captured to temp files, tailed to trace JSONL,
+    sanitized. Caller does NOT see live output.
+    """
+    from skills._lib.loop.sanitizer import sanitize
+
+    trace = _open_trace(phase=phase)
     rc = 124
     stdout_tail = ""
     stderr_tail = ""
     duration_ms = 0
     timed_out = False
 
-    stdout_tmp = tempfile.NamedTemporaryFile(
-        mode="w", delete=False, suffix=".out", encoding="utf-8"
-    )
-    stderr_tmp = tempfile.NamedTemporaryFile(
-        mode="w", delete=False, suffix=".err", encoding="utf-8"
-    )
+    stdout_tmp = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".out", encoding="utf-8")
+    stderr_tmp = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".err", encoding="utf-8")
     started = time.monotonic()
     try:
         proc = subprocess.run(
-            cmd,
-            shell=False,
-            stdout=stdout_tmp,
-            stderr=stderr_tmp,
-            timeout=timeout,
+            cmd, shell=False, stdout=stdout_tmp, stderr=stderr_tmp, timeout=timeout,
         )
         rc = proc.returncode
     except subprocess.TimeoutExpired:
@@ -285,18 +352,135 @@ def _handle_subprocess(
         os.unlink(stdout_tmp.name)
         os.unlink(stderr_tmp.name)
 
-    _append_event(
-        trace,
-        {
-            "type": "subprocess",
-            "cmd": cmd,
-            "returncode": rc,
-            "stdout_tail": stdout_tail,
-            "stderr_tail": stderr_tail,
-            "duration_ms": duration_ms,
-            "timeout": timed_out,
-        },
+    _append_event(trace, {
+        "type": "subprocess",
+        "cmd": cmd,
+        "returncode": rc,
+        "stdout_tail": stdout_tail,
+        "stderr_tail": stderr_tail,
+        "duration_ms": duration_ms,
+        "timeout": timed_out,
+        "stdout_capture_mode": "capture",
+        "reader_died": False,
+    })
+    trace.close()
+    return rc
+
+
+def _spawn_reader(cmd: list[str], trace: Trace) -> "subprocess.Popen[bytes]":
+    """Spawn reader subprocess + background drain threads.
+
+    Drains stdout/stderr into the trace JSONL via ``_append_event``.
+    Sets ``O_NONBLOCK`` on pipes (POSIX) to prevent buffer deadlock on
+    large output. Reader thread crashes are tolerated; the trace
+    ``subprocess`` event records ``reader_died: true`` if so.
+
+    Per openspec/changes/preserve-orchestrator-command-stdout §Decisions
+    "Async reader implementation" + "Pipe buffer protection".
+    """
+    import fcntl
+    import threading
+
+    proc = subprocess.Popen(
+        cmd, shell=False,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
     )
+
+    # Set O_NONBLOCK on POSIX pipes (Linux/macOS). Windows: not supported, tolerate.
+    try:
+        for pipe in (proc.stdout, proc.stderr):
+            if pipe is None:
+                continue
+            fd = pipe.fileno()
+            flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+            fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+    except (OSError, AttributeError):
+        pass  # Windows: O_NONBLOCK not available on pipes
+
+    def _drain(stream, label: str) -> None:
+        """Read pipe lines until EOF; append each as a trace event."""
+        if stream is None:
+            return
+        while True:
+            try:
+                chunk = stream.readline()
+            except (OSError, ValueError):
+                return  # pipe closed or non-blocking state mismatch
+            if not chunk:
+                return
+            try:
+                _append_event(trace, {
+                    "type": "reader_chunk",
+                    "stream": label,
+                    "data": chunk.decode("utf-8", errors="replace").rstrip("\n"),
+                })
+            except Exception:
+                return  # trace write failed; reader thread dies silently
+
+    t_out = threading.Thread(target=_drain, args=(proc.stdout, "stdout"), daemon=True)
+    t_err = threading.Thread(target=_drain, args=(proc.stderr, "stderr"), daemon=True)
+    t_out.start()
+    t_err.start()
+    # Stash threads on proc for later join in _run_tee_mode
+    proc._reader_threads = (t_out, t_err)  # type: ignore[attr-defined]
+    return proc
+
+
+def _run_tee_mode(cmd: list[str], phase: str, trace_dir: Path, timeout: int) -> int:
+    """tee mode: main inherits stdout/stderr; reader subprocess drains to trace.
+
+    Per openspec/changes/preserve-orchestrator-command-stdout §Decisions
+    "Async reader implementation". Reader crash is non-fatal; trace marks
+    ``reader_died: true``.
+    """
+    trace = _open_trace(phase=phase)
+    reader_died = False
+    started = time.monotonic()
+    rc = 124
+    timed_out = False
+
+    main_proc: Optional[subprocess.Popen] = None
+    reader_proc: Optional[subprocess.Popen] = None
+    try:
+        main_proc = subprocess.Popen(
+            cmd, shell=False,
+            stdout=sys.stdout, stderr=sys.stderr,
+        )
+        # Spawn reader: same command, PIPE → same trace file. Decoupled lifecycle.
+        reader_proc = _spawn_reader(cmd, trace)
+        rc = main_proc.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        rc = 124
+        if main_proc is not None and main_proc.poll() is None:
+            main_proc.kill()
+            main_proc.wait()
+    finally:
+        if reader_proc is not None:
+            threads = getattr(reader_proc, "_reader_threads", None)
+            if threads:
+                for t in threads:
+                    t.join(timeout=5)
+            try:
+                reader_proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                reader_proc.kill()
+                reader_died = True
+            if reader_proc.returncode not in (0, None):
+                reader_died = True
+
+    duration_ms = int((time.monotonic() - started) * 1000)
+    _append_event(trace, {
+        "type": "subprocess",
+        "cmd": cmd,
+        "returncode": rc,
+        "stdout_tail": "",
+        "stderr_tail": "",
+        "duration_ms": duration_ms,
+        "timeout": timed_out,
+        "stdout_capture_mode": "tee",
+        "reader_died": reader_died,
+    })
     trace.close()
     return rc
 
@@ -330,6 +514,11 @@ def _handle_finalize(trace_dir: Path) -> int:
     """
     phase = os.environ.get("RDDF_PHASE", "unknown")
     trace_file = _find_open_trace(trace_dir, phase)
+
+    # passthrough mode: skip trace writing entirely (zero-overhead).
+    if _resolve_capture_mode() == "passthrough" and trace_file is None:
+        return 0
+
     if trace_file is None:
         trace = _open_trace(phase=phase)
         _append_event(

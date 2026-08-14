@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+### preserve-orchestrator-command-stdout (orchestrator stdout 透传 + async tee)
+
+Restores user-visible stdout from `rddf orchestrate subprocess` while preserving full trace capture via async tee:
+
+- **Default mode**: `tee` (was `capture`). Users now see live stdout from `rddf orchestrate subprocess` calls.
+- **Env var**: `RDDF_ORCHESTRATOR_CAPTURE` accepts `tee` (default) | `capture` (legacy) | `passthrough` (zero-overhead).
+- **Async reader**: New reader subprocess drains stdout/stderr to trace file via dedicated process with `O_NONBLOCK` pipes (POSIX).
+- **Schema**: trace JSONL subprocess events gain `stdout_capture_mode` and `reader_died` fields.
+- **Rotation**: trace file rotates to `<trace>.1` when exceeding `RDDF_ORCHESTRATOR_TRACE_MAX_BYTES` (default 100MB).
+- **CI compat**: GitHub Actions runner output now visible (was swallowed by old capture).
+- **Windows caveat**: O_NONBLOCK not supported on Windows pipes; tee mode degrades to default buffer.
+
+测试: 11 unit tests (`test_orchestrator_tee.py`) + 5 bats integration (`test_orchestrator_stdout_passthrough.bats`) = **16 new tests, all pass**.
+
 ### roadmap-proposal-guidance (让 roadmap 节点约束 proposal 创建)
 
 Adds end-to-end constraint-driven link from roadmap to proposal creation:

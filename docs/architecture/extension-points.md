@@ -140,6 +140,37 @@ The issue reporter (ADR-0027) listens for events from multiple trigger points. T
 - Don't hardcode `gh_repo="chisuhua/rdd-workflow"` — read from the change's `roadmap-meta.yaml` so fork users report to their own fork.
 - Don't skip the `is_ci_environment()` guard — CI auto-submit pollutes the upstream issue tracker.
 
+## Orchestrator 输出策略
+
+`rddf orchestrate subprocess` 通过 `RDDF_ORCHESTRATOR_CAPTURE` env var 控制 stdout/stderr 处理模式。三种模式：
+
+| 模式 | 调用方实时输出 | trace 文件 | 使用场景 |
+|------|---------------|-----------|---------|
+| `tee` (默认) | ✅ 透传 | ✅ 异步 tee | 正常 phase 运行 |
+| `capture` | ❌ 隐藏 | ✅ 同步捕获 | 旧 dogfooding 报告 |
+| `passthrough` | ✅ 透传 | ❌ 无 trace | 零开销逃生口 |
+
+**tee 模式实现**：主 subprocess 通过 `Popen(stdout=sys.stdout, stderr=sys.stderr)` 继承父进程输出；同时启动专用 reader subprocess 重跑同一命令并用 `stdout=PIPE` 异步读取到 trace 文件。Reader 进程崩溃时主流程不受影响，trace 标记 `reader_died: true`。
+
+**O_NONBLOCK 保护**：reader subprocess 的 PIPE 文件描述符通过 `fcntl.F_SETFL | O_NONBLOCK` 设置为非阻塞模式，防止子进程输出过快导致 PIPE buffer 溢出（100MB+ 场景）。
+
+**trace 字段**：subprocess 事件新增 `stdout_capture_mode: tee|capture|passthrough` 与 `reader_died: bool` 字段，事后审计可见。
+
+**env var 切换**：
+
+```bash
+# 默认 tee
+rddf orchestrate subprocess bash -c 'echo hi'
+
+# 强制旧 capture 模式
+RDDF_ORCHESTRATOR_CAPTURE=capture rddf orchestrate subprocess bash -c 'echo hi'
+
+# 零开销逃生口
+RDDF_ORCHESTRATOR_CAPTURE=passthrough rddf orchestrate subprocess bash -c 'echo hi'
+```
+
+**trace 文件 rotate**：超过 `RDDF_ORCHESTRATOR_TRACE_MAX_BYTES`（默认 100MB）时，当前文件重命名为 `<trace>.1`，新 trace 文件从空开始。Windows 不支持 O_NONBLOCK，tee 模式在 Windows 上行为降级（可接受）。
+
 ## Cross-references
 
 - Skills protocol: [skills-and-handoff.md](skills-and-handoff.md)

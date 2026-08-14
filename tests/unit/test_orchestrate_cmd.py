@@ -138,6 +138,7 @@ def test_handle_subprocess_runs_command_and_records(monkeypatch, tmp_path):
     monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
     monkeypatch.setenv("RDDF_PHASE", "int-test")
+    monkeypatch.setenv("RDDF_ORCHESTRATOR_CAPTURE", "capture")
     rc = _handle_subprocess(["echo", "hello"], trace_dir=tmp_path)
     assert rc == 0
     traces = list(tmp_path.glob("*.jsonl"))
@@ -162,6 +163,7 @@ def test_handle_subprocess_swallows_timeout(monkeypatch, tmp_path):
 def test_handle_subprocess_sanitizes_output(monkeypatch, tmp_path):
     monkeypatch.setenv("RDDF_TRACE_DIR", str(tmp_path))
     monkeypatch.setenv("RDDF_PHASE", "int-test")
+    monkeypatch.setenv("RDDF_ORCHESTRATOR_CAPTURE", "capture")
     rc = _handle_subprocess(
         ["sh", "-c", "echo AWS_SECRET_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE"],
         trace_dir=tmp_path,

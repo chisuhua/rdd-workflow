@@ -59,3 +59,5 @@ status: corrupt output must NOT contain 'skill_use("propose"' hint # pre-existin
 status: schema-invalid iteration.json → 'fails schema validation' message # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 sub-phase: heartbeat records RDDF_SUB_PHASE # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 sub-phase: heartbeat without env var leaves sub_phase empty # session environment fixture
+Scenario 1: first run writes 14 fields including discovered_* # pre-existing: gh_available field added in commit 61a6d2a (15 fields total), test not updated
+design_proposal_review.sh no longer lists approved-and-implemented entries as pending # pre-existing: parser refactor in commit 93ff053, test edge case
