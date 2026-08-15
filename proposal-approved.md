@@ -64,9 +64,9 @@
 | [fix-generator-scope-extraction](.rddf/improvements/fix-generator-scope-extraction.md) | P1 | 2026-08-14 | guide-arch |
 
 
-| [issue-driven-proposal-creation](.rddf/improvements/issue-driven-proposal-creation.md) | P1 | 2026-08-14 | guide-arch |
 
 ## 已实施
+| [issue-driven-proposal-creation](.rddf/improvements/issue-driven-proposal-creation.md) | P1 | 2026-08-15 |
 | [add-phase-role-model](.rddf/improvements/add-phase-role-model.md) | P1 | 2026-08-14 |
 | [preserve-orchestrator-command-stdout](.rddf/improvements/preserve-orchestrator-command-stdout.md) | P1 | 2026-08-14 |
 | [harden-plan-intake-bootstrap-and-design-gate-tests](.rddf/improvements/harden-plan-intake-bootstrap-and-design-gate-tests.md) | P1 | 2026-08-13 |
