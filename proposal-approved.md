@@ -61,7 +61,6 @@
 
 
 
-| [fix-generator-scope-extraction](.rddf/improvements/fix-generator-scope-extraction.md) | P1 | 2026-08-14 | guide-arch |
 
 
 
@@ -130,6 +129,7 @@
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
+| [fix-generator-scope-extraction](.rddf/improvements/fix-generator-scope-extraction.md) | P1 | 2026-08-15 |
 | [complete-third-party-replay-and-upstream-reporting](.rddf/improvements/complete-third-party-replay-and-upstream-reporting.md) | P0 | 2026-08-13 |
 | [sync-changelog-unreleased](.rddf/improvements/sync-changelog-unreleased.md) | P1 | 2026-08-13 |
 | [add-roadmap-proposal-guidance](.rddf/improvements/add-roadmap-proposal-guidance.md) | P1 | 2026-08-13 |
