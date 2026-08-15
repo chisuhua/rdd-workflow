@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rdd-workflow.local/schemas/contract_cache_schema.json",
+  "title": "Contract Cache v1 (ADR-0030)",
+  "description": "Schema for .rddf/state/.contract-cache.json. Caches Hub contract versions and SHA-256 checksums for offline fallback. Emitted by add-contract-lint-ci-gate (Step 5).",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "version",
+    "last_sync",
+    "contracts"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version"
+    },
+    "last_sync": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when this cache was last synced with Hub"
+    },
+    "hub_repo": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$",
+      "description": "Hub repo reference (e.g. 'org/rdd-hub')"
+    },
+    "hub_ref": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.-]+$",
+      "description": "Git ref (branch/tag) synced from (e.g. 'main', 'v1.2.0')"
+    },
+    "contracts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256", "format", "version"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^contracts/.*\\.(yaml|yml|proto|json)$",
+            "description": "Path within Hub repo (e.g. 'contracts/auth-v2.yaml')"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "SHA-256 checksum of contract content"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["openapi-3.0", "openapi-3.1", "protobuf-3", "json-schema-draft-7"],
+            "description": "Contract format"
+          },
+          "version": {
+            "type": "string",
+            "description": "Semantic version (e.g. '2.1.0')"
+          },
+          "local_path": {
+            "type": "string",
+            "description": "Local path where contract is mirrored (e.g. 'openspec/specs/auth-v2/spec.md')"
+          },
+          "last_synced_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp when this contract was last synced"
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "List of cached contracts"
+    }
+  }
+}

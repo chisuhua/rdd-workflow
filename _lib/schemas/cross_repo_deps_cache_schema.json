@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rdd-workflow.local/schemas/cross_repo_deps_cache_schema.json",
+  "title": "Cross-repo Deps Cache v1 (ADR-0030)",
+  "description": "Schema for .rddf/state/.cross-repo-deps-cache.json. Caches cross-repo dependency graph scan results (TTL 3600s). Emitted by add-cross-repo-deps-orchestration (Step 6).",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "version",
+    "cache_generated_at",
+    "spokes",
+    "dependency_graph"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version"
+    },
+    "cache_generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when this cache was generated"
+    },
+    "ttl_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 3600,
+      "description": "Cache TTL in seconds (default 3600s, matching rdd-env-cache pattern)"
+    },
+    "spokes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$",
+        "description": "Spoke repo reference (e.g. 'org/repo-frontend')"
+      },
+      "description": "List of Spoke repos included in the scan"
+    },
+    "dependency_graph": {
+      "type": "object",
+      "required": ["nodes", "edges"],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "repo", "change", "wave"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique node id (e.g. 'org/repo-frontend#auth-v2-impl')"
+              },
+              "repo": {
+                "type": "string",
+                "description": "Spoke repo"
+              },
+              "change": {
+                "type": "string",
+                "description": "Change name (kebab-case)"
+              },
+              "wave": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Recommended execution wave (1 = independent, 2+ = depends on earlier)"
+              },
+              "eta_days": {
+                "type": ["integer", "null"],
+                "minimum": 0,
+                "description": "Estimated days to complete (from change tasks.md or manual input)"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Dependency graph nodes"
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "to", "type"],
+            "properties": {
+              "from": {"type": "string", "description": "Source node id"},
+              "to": {"type": "string", "description": "Target node id"},
+              "type": {
+                "type": "string",
+                "enum": ["strong", "weak", "manual_deps"],
+                "description": "Dependency type (strong = blocking, weak = advisory, manual_deps = ADR-0022)"
+              },
+              "evidence": {
+                "type": "string",
+                "description": "Where this dependency was detected (e.g. 'contracts/auth-v2.yaml ref')"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Dependency graph edges"
+        }
+      },
+      "additionalProperties": false
+    },
+    "blocked_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["change", "blocked_by", "hub_issue"],
+        "properties": {
+          "change": {"type": "string"},
+          "blocked_by": {"type": "string"},
+          "hub_issue": {"type": "string", "pattern": "^[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+#[0-9]+$"}
+        }
+      },
+      "description": "Changes blocked by cross-repo dependencies (with Hub Issue references)"
+    }
+  }
+}

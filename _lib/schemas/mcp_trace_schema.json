@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rdd-workflow.local/schemas/mcp_trace_schema.json",
+  "title": "MCP Trace v1 (ADR-0030)",
+  "description": "Schema for .rddf/state/.mcp-trace.jsonl (newline-delimited JSON). Records every MCP call between Hub and Spokes. Emitted by add-mcp-cross-repo-protocol (Step 3).",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "timestamp",
+    "direction",
+    "tool_name",
+    "actor_repo",
+    "args_hash",
+    "result_status"
+  ],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when MCP call was made"
+    },
+    "direction": {
+      "type": "string",
+      "enum": ["hub-to-spoke", "spoke-to-hub"],
+      "description": "Direction of the MCP call"
+    },
+    "tool_name": {
+      "type": "string",
+      "enum": ["hub_read_issue", "hub_create_issue", "hub_update_status", "hub_sync_contract", "hub_list_contracts"],
+      "description": "MCP tool name invoked"
+    },
+    "actor_repo": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$",
+      "description": "Repo making the call (e.g. 'org/repo-frontend')"
+    },
+    "args_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 hash of args (privacy-preserving)"
+    },
+    "result_status": {
+      "type": "string",
+      "enum": ["success", "error", "rate-limited", "unauthorized", "timeout"],
+      "description": "Result status of the MCP call"
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Call duration in milliseconds"
+    },
+    "token_id": {
+      "type": "string",
+      "description": "Opaque token identifier (NOT the token itself) for audit correlation"
+    },
+    "error_message": {
+      "type": ["string", "null"],
+      "description": "Error message if result_status is error"
+    }
+  }
+}
