@@ -65,6 +65,22 @@
 
 
 
+| [add-rdd-hub-bootstrap](.rddf/improvements/add-rdd-hub-bootstrap.md) | P0 | 2026-08-15 | guide-arch |
+
+| [add-strict-human-approval-for-cross-repo-changes](.rddf/improvements/add-strict-human-approval-for-cross-repo-changes.md) | P1 | 2026-08-15 | guide-arch |
+
+| [add-rdd-hub-cross-repo-federation](.rddf/improvements/add-rdd-hub-cross-repo-federation.md) | P1 | 2026-08-15 | guide-arch |
+
+| [add-mcp-cross-repo-protocol](.rddf/improvements/add-mcp-cross-repo-protocol.md) | P1 | 2026-08-15 | guide-arch |
+
+| [add-spoke-system-prompt-injection](.rddf/improvements/add-spoke-system-prompt-injection.md) | P1 | 2026-08-15 | guide-arch |
+
+| [add-cross-repo-state-schemas](.rddf/improvements/add-cross-repo-state-schemas.md) | P1 | 2026-08-15 | guide-arch |
+
+| [add-contract-lint-ci-gate](.rddf/improvements/add-contract-lint-ci-gate.md) | P1 | 2026-08-15 | guide-arch |
+
+| [add-cross-repo-deps-orchestration](.rddf/improvements/add-cross-repo-deps-orchestration.md) | P1 | 2026-08-15 | guide-arch |
+
 ## 已实施
 | [issue-driven-proposal-creation](.rddf/improvements/issue-driven-proposal-creation.md) | P1 | 2026-08-15 |
 | [add-phase-role-model](.rddf/improvements/add-phase-role-model.md) | P1 | 2026-08-14 |
