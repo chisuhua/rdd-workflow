@@ -161,6 +161,45 @@ def test_prune_old_issues_never_deletes_unsubmitted_files(tmp_path):
     assert (issues_dir / "phase-crash-nosub44.md").exists()
 
 
+# ── Task 9 (ADR-0029): repo-neutral close comment ───────────────────────────
+
+
+def test_close_issue_uses_repo_neutral_comment():
+    """_close_issue must NOT hardcode 'rdd-workflow' in comment.
+
+    When gh_repo is a third-party repo (e.g. my-org/my-project), the comment
+    should use 'my-project' instead of the hardcoded literal 'rdd-workflow'.
+    """
+    captured = []
+
+    def mock_run(*args, **kwargs):
+        captured.append(args)
+        m = mock.Mock()
+        m.returncode = 0
+        return m
+
+    with mock.patch("subprocess.run", side_effect=mock_run):
+        # Import inside to avoid polluting the module namespace with the patched mock
+        import importlib
+        import close_issues
+        importlib.reload(close_issues)
+        close_issues._close_issue(
+            issue_num=42,
+            gh_repo="my-org/my-project",
+            change_name="fix-foo",
+            new_version="2.1.0",
+            short_sha="abc1234",
+        )
+
+    # The --comment argument is passed as part of the gh issue close command
+    assert len(captured) == 1
+    args = captured[0][0]
+    comment_idx = args.index("--comment") + 1
+    comment = args[comment_idx]
+    assert "rdd-workflow" not in comment, f"comment should not hardcode 'rdd-workflow': {comment!r}"
+    assert "my-project" in comment, f"comment should contain repo name 'my-project': {comment!r}"
+
+
 # ── TDD 2.5: graceful failure handling ──────────────────────────────────
 
 

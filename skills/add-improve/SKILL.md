@@ -122,3 +122,20 @@ rdd-workflow-brainstorm 的设计获得批准后：
 | `proposal-suggestions.md` 不存在 | 创建带标准表头的索引文件 |
 | 提案名称已存在 | 提示用户并用不同的名称、或者确认覆盖 |
 | 用户中途放弃 | 不创建任何文件，保持项目状态不变 |
+
+## Env-var 隔离约定
+
+`add-improve` 支持 3 种提案创建模式（free / from-roadmap / from-issue），各模式使用**互不重叠**的 env-var 前缀：
+
+| 模式 | Env-var 前缀 |
+|------|-------------|
+| free（交互式brainstorm） | `ADD_IMPROVE_` + `BRAINSTORM_` |
+| from-roadmap | `ADD_IMPROVE_FROM_ROADMAP_*` + `ADD_IMPROVE_THEME` + `BRAINSTORM_RATIONALE_DRAFT` |
+| from-issue | `ADD_IMPROVE_FROM_ISSUE` + `ADD_IMPROVE_GH_REPO` + `ADD_IMPROVE_ISSUE_TITLE` + `ADD_IMPROVE_ISSUE_BODY` |
+
+**隔离保证**：
+- 每个脚本的 bash wrapper 在 `EXIT` 时 `trap cleanup` 自动 `unset` 仅属于自己的 env-vars。
+- 运行 `from-roadmap` 后再运行 `from-issue`（反之亦然），不会产生 env-var 污染。
+- 跨模式交叉调用时，被调脚本只读取自己的前缀，不会误读其他模式的变量。
+
+**验证**：见 `tests/integration/test_from_issue_env_isolation.bats`（3 个隔离测试，全部 pass）。

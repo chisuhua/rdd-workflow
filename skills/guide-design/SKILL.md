@@ -163,10 +163,11 @@ run_theme_coverage_display "$PROJECT_ROOT"
 
 选择操作:
   1. ➕ 创建新提案（add-improve 自由模式）
-  2. 🎯 按路线图主题创建提案（推荐）  ← v2.2 新增
-  3. 📋 审查待批准提案
-  4. ✅ 批量批准所有提案
-  5. ✅ 完成设计阶段 → 进入设计门控
+  2. 🎯 按路线图主题创建提案（推荐）
+  3. 🐙 从 GitHub issue 创建提案 ← ADR-0029 新增
+  4. 📋 审查待批准提案
+  5. ✅ 批量批准所有提案
+  6. ✅ 完成设计阶段 → 进入设计门控
   0. 💾 保存并退出
 ```
 
@@ -196,6 +197,46 @@ echo "-> 约束模式 scaffold 创建完成，需走 brainstorm 完成 5 段确�
 ```
 
 约束模式不绕过 brainstorm HARD-GATE — 仅预填 scaffold。
+
+**选项 3（从 GitHub issue 创建提案 — ADR-0029 新增）**：
+
+列出当前项目的开放 issue（按优先级排序，限 30 条），用户选 issue 后触发 `add-improve --from-issue`：
+
+```bash
+# 1. List open issues via gh CLI
+gh_repo=$(PYTHONPATH="$PROJECT_ROOT" python3 -c "
+import sys
+sys.path.insert(0, '$PROJECT_ROOT')
+from _lib.gh_repo_detect import detect_gh_repo
+print(detect_gh_repo())
+" 2>/dev/null) || {
+    echo "ERROR: 无法检测 gh_repo，请显式设置 RDDF_PROPOSAL_GH_REPO=owner/repo"
+    return 1
+}
+
+# 2. Fetch open issues
+issues=$(gh issue list --repo "$gh_repo" --state open --limit 30 --json number,title --jq '.[] | "\(.number)\t\(.title)"')
+echo "$issues" | nl -ba
+
+# 3. User picks issue number
+read -p "选择 issue 编号: " ISSUE_NUM
+
+# 4. Fetch issue details
+issue_json=$(gh issue view "$ISSUE_NUM" --repo "$gh_repo" --json title,body)
+title=$(echo "$issue_json" | python3 -c "import json, sys; print(json.load(sys.stdin)['title'])")
+body=$(echo "$issue_json" | python3 -c "import json, sys; print(json.load(sys.stdin)['body'])")
+
+# 5. Invoke from_issue.sh
+PROJECT_ROOT="$PROJECT_ROOT" bash "$ADD_IMPROVE_SCRIPT_DIR/from_issue.sh" \
+    --from-issue "$ISSUE_NUM" \
+    --gh-repo "$gh_repo" \
+    --title "$title" \
+    --body "$body" \
+    --project-root "$PROJECT_ROOT"
+echo "-> from-issue scaffold 创建完成，需走 brainstorm 完成 5 段确认"
+```
+
+注意：当 `gh` 缺失/未认证时，`detect_gh_repo()` 会硬退出 + 明确错误。
 
 **选项 1（创建新提案）**：
 ```bash

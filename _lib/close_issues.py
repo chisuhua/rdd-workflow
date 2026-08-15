@@ -176,8 +176,9 @@ def _get_issue_state(issue_num: int, gh_repo: str) -> str:
 
 
 def _close_issue(issue_num: int, gh_repo: str, change_name: str, new_version: str, short_sha: str) -> None:
+    repo_name = gh_repo.split("/", 1)[1] if "/" in gh_repo else gh_repo
     comment = (
-        f"✅ Fixed in rdd-workflow v{new_version} via archive {short_sha}.\n\n"
+        f"✅ Fixed in {repo_name} v{new_version} via archive {short_sha}.\n\n"
         f"See: openspec/changes/{change_name}/\n"
     )
     subprocess.run(

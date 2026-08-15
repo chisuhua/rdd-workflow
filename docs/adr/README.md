@@ -52,6 +52,7 @@
 | [ADR-0025](ADR-0025-design-proposal-creation.md) | design 阶段提案创建 + 内容审查 | 已采纳 | 设计管理独立成阶段 + 两层内容审查 |
 | [ADR-0026](ADR-0026-internal-metadata-namespace-convention.md) | 内部元数据命名空间约定 | 已采纳 | `>` blockquote 元数据命名规范 |
 | [ADR-0027](ADR-0027-continuous-evolution-feedback-loop.md) | 持续演进反馈环 | 已采纳 | Detect→Buffer→Report→Triage→Close 五环 + 复用 `_lib/config.py` + 三重 opt-in + 幂等 close + Oracle 复核 8/8/7 |
+| [ADR-0029](ADR-0029-issue-driven-proposal-creation.md) | Issue-Driven Proposal Creation | 已采纳 | 新增 `add-improve --from-issue` 模式 + repo-neutral `close_issues.py` 修复 |
 
 ## 架构演进
 
