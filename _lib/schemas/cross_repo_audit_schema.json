@@ -6,6 +6,7 @@
   "type": "object",
   "additionalProperties": true,
   "required": [
+    "version",
     "timestamp",
     "proposal_name",
     "hub_issue",
@@ -13,6 +14,11 @@
     "actor"
   ],
   "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. v1 introduces cross-repo decision audit records."
+    },
     "timestamp": {
       "type": "string",
       "format": "date-time",

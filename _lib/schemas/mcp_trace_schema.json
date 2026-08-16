@@ -6,6 +6,7 @@
   "type": "object",
   "additionalProperties": true,
   "required": [
+    "version",
     "timestamp",
     "direction",
     "tool_name",
@@ -14,6 +15,11 @@
     "result_status"
   ],
   "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. v1 introduces MCP call trace records."
+    },
     "timestamp": {
       "type": "string",
       "format": "date-time",

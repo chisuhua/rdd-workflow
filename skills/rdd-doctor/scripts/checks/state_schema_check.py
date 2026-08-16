@@ -18,6 +18,13 @@ _STATE_FILES = {
     "sessions.json": "sessions_schema.json",
     "iteration.json": "iteration_schema.json",
     "deps_analysis.json": "deps_analysis_schema.json",
+    # 6 new cross-repo federation schemas (ADR-0030 + 7 related proposals)
+    ".cross-repo-pending.json": "cross_repo_pending_schema.json",
+    ".cross-repo-audit.jsonl": "cross_repo_audit_schema.json",
+    ".mcp-trace.jsonl": "mcp_trace_schema.json",
+    ".contract-cache.json": "contract_cache_schema.json",
+    ".cross-repo-deps-cache.json": "cross_repo_deps_cache_schema.json",
+    ".hub-metrics.json": "hub_metrics_schema.json",
 }
 
 

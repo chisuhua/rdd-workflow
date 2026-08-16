@@ -13,7 +13,7 @@ _CHECKS_DIR = _SCRIPTS_DIR / "checks"
 sys.path.insert(0, str(_SCRIPTS_DIR))
 
 from doctor_render import Finding, Severity  # noqa: E402
-from checks.state_schema_check import run as run_check  # noqa: E402
+from checks.state_schema_check import _STATE_FILES, run as run_check  # noqa: E402
 
 
 def _write_state(tmp_path: Path, name: str, data: dict) -> Path:
@@ -142,3 +142,24 @@ def test_external_ref_in_schema_is_resolved(tmp_path: Path, monkeypatch: pytest.
     ), f"external $ref not resolved: {[f.snippet for f in findings]}"
     # And the data is valid against the schema
     assert findings == []
+
+
+def test_state_files_includes_cross_repo_schemas():
+    """The 6 new cross-repo federation schemas must be in _STATE_FILES mapping."""
+    expected = {
+        ".cross-repo-pending.json",
+        ".cross-repo-audit.jsonl",
+        ".mcp-trace.jsonl",
+        ".contract-cache.json",
+        ".cross-repo-deps-cache.json",
+        ".hub-metrics.json",
+    }
+    actual = set(_STATE_FILES.keys())
+    missing = expected - actual
+    assert not missing, f"Missing cross-repo state file mappings: {missing}"
+    assert _STATE_FILES[".cross-repo-pending.json"] == "cross_repo_pending_schema.json"
+    assert _STATE_FILES[".cross-repo-audit.jsonl"] == "cross_repo_audit_schema.json"
+    assert _STATE_FILES[".mcp-trace.jsonl"] == "mcp_trace_schema.json"
+    assert _STATE_FILES[".contract-cache.json"] == "contract_cache_schema.json"
+    assert _STATE_FILES[".cross-repo-deps-cache.json"] == "cross_repo_deps_cache_schema.json"
+    assert _STATE_FILES[".hub-metrics.json"] == "hub_metrics_schema.json"
