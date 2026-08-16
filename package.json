@@ -48,6 +48,7 @@
     "rdd-workflow-brainstorm",
     "rdd-workflow-writing-plans",
     "rdd-env-check",
-    "rdd-doctor"
+    "rdd-doctor",
+    "rdd-hub-bootstrap"
   ]
 }

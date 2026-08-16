@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info:
+  title: Example Service
+  version: 1.0.0
+  description: 示例契约 — 用作新增契约的起点
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok, degraded]

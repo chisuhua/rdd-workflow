@@ -85,7 +85,7 @@ setup() {
 @test "every real ADR has a ## Context section" {
   for f in "$ADR_DIR"/ADR-[0-9][0-9][0-9][0-9]-*.md; do
     [ -f "$f" ] || continue
-    grep -qE '^## Context' "$f" || {
+    grep -qE '^## (Context|问题|背景)' "$f" || {
       echo "missing Context section in: $f" >&2
       return 1
     }

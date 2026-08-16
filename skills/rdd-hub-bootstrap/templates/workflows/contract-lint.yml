@@ -1,0 +1,11 @@
+name: Contract Lint (Placeholder)
+on:
+  pull_request:
+    paths:
+      - 'contracts/**'
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder
+        run: echo "Contract lint implementation pending - see add-contract-lint-ci-gate"

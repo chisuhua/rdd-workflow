@@ -1,0 +1,10 @@
+name: Stale RFC Cleanup (Placeholder)
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # weekly
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder
+        run: echo "Stale RFC cleanup pending"
