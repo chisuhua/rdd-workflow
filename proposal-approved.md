@@ -75,9 +75,9 @@
 
 
 
-| [enforce-plan-tdd-5step-new](.rddf/improvements/enforce-plan-tdd-5step-new.md) | P2 | 2026-08-16 | guide-arch |
 
 ## 已实施
+| [enforce-plan-tdd-5step-new](.rddf/improvements/enforce-plan-tdd-5step-new.md) | P2 | 2026-08-16 |
 | [backfill-proposal-approved-col4](.rddf/improvements/backfill-proposal-approved-col4.md) | P2 | 2026-08-16 |
 | [add-cross-repo-deps-orchestration](.rddf/improvements/add-cross-repo-deps-orchestration.md) | P1 | 2026-08-16 |
 | [add-strict-human-approval-for-cross-repo-changes](.rddf/improvements/add-strict-human-approval-for-cross-repo-changes.md) | P1 | 2026-08-16 |
