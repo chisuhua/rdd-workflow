@@ -321,20 +321,42 @@ SCRIPT
 }
 
 _do_spoke_init() {
-    local TARGET_DIR="${2:-$(pwd)}"
-    local TEMPLATE="$PACKAGE_DIR/skills/templates/.cursorrules.cross-repo-hub"
-    if [ ! -d "$TARGET_DIR/.git" ] && ! git -C "$TARGET_DIR" rev-parse --git-dir >/dev/null 2>&1; then
-        echo "⚠️  Target is not a git repository: $TARGET_DIR (skipping)" >&2
+    local spoke_tools="all"
+    local target_dir="$(pwd)"
+
+    # Parse --spoke-init [--tools TOOLS] [TARGET_DIR]
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --spoke-init)
+                shift
+                ;;
+            --tools)
+                spoke_tools="${2:-all}"
+                shift 2
+                ;;
+            -*)
+                shift
+                ;;
+            *)
+                target_dir="${1:-$(pwd)}"
+                shift
+                ;;
+        esac
+    done
+
+    local deploy_script="$PACKAGE_DIR/skills/spoke-system-prompt-injection/scripts/deploy.sh"
+
+    if [ ! -d "$target_dir/.git" ] && ! git -C "$target_dir" rev-parse --git-dir >/dev/null 2>&1; then
+        echo "⚠️  Target is not a git repository: $target_dir (skipping)" >&2
         exit 0
     fi
-    if [ -f "$TEMPLATE" ]; then
-        cp "$TEMPLATE" "$TARGET_DIR/.cursorrules"
-        echo "✅ Installed .cursorrules to $TARGET_DIR/.cursorrules"
-        exit 0
-    else
-        echo "ERROR: Template not found: $TEMPLATE" >&2
+
+    if [ ! -f "$deploy_script" ]; then
+        echo "ERROR: deploy.sh not found: $deploy_script" >&2
         exit 1
     fi
+
+    RDDF_SPOKE_TARGET_DIR="$target_dir" bash "$deploy_script" --tools "$spoke_tools"
 }
 
 # ── 主流程 ────────────────────────────────────────────────────────
@@ -347,7 +369,8 @@ case "${1:-}" in
         echo ""
         echo "选项:"
         echo "  --global, -g      全局安装到 ~/.agents/skills/ + Python deps + rddf CLI"
-        echo "  --spoke-init      为 Spoke AI 安装 .cursorrules 协议模板"
+        echo "  --spoke-init [--tools TOOLS]  为 Spoke AI 安装协议模板到配置文件"
+        echo "                          TOOLS: all|cursor,cline,continue,copilot,claude (默认: all)"
         echo "  --help, -h        显示此帮助"
         echo ""
         echo "不带参数: 安装到当前项目目录"

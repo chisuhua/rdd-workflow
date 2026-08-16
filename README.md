@@ -152,6 +152,46 @@ RDDF_HUB_REPO=org/rdd-hub rddf watch-hub --once --owner=org/rdd-hub
 
 `SKIP_HUB_CHECK=true` 环境变量可在 Hub 网络故障时跳过 design-done 门控的 Hub 检查(不推荐,仅 hotfix)。
 
+#### Spoke AI 接入指南
+
+rdd-workflow 支持将 Hub-and-Spoke 协议注入到各种 AI 编程助手的配置文件中,使其能够参与联邦协作:
+
+```bash
+# 部署到所有支持的 AI 工具
+bash skills/spoke-system-prompt-injection/scripts/deploy.sh --tools all
+
+# 部署到特定工具
+bash skills/spoke-system-prompt-injection/scripts/deploy.sh --tools cursor
+
+# 检查注入状态
+bash skills/spoke-system-prompt-injection/scripts/deploy.sh --status
+
+# 卸载（从备份恢复）
+bash skills/spoke-system-prompt-injection/scripts/deploy.sh --uninstall --tools all
+```
+
+支持的工具和配置文件:
+
+| 工具 | 配置文件 |
+|------|----------|
+| Cursor | `.cursorrules` |
+| Cline | `.clinerules` |
+| Continue | `.continue/rules/cross-repo-hub.md` |
+| GitHub Copilot | `.github/copilot-instructions.md` |
+| Claude Code | `CLAUDE.md` |
+
+也可以通过 `install.sh --spoke-init` 快速安装:
+
+```bash
+# 安装所有工具的协议
+bash install.sh --spoke-init
+
+# 安装特定工具
+bash install.sh --spoke-init --tools cursor,cline
+```
+
+详情见 [`docs/spoke-system-prompt.md`](docs/spoke-system-prompt.md)。
+
 ## 目录结构
 
 ```
