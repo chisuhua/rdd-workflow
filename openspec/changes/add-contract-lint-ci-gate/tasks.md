@@ -12,7 +12,7 @@ STATUS: PROPOSED
 
 ## 1. Pre-flight
 
-- [ ] 1.1 Verify baseline tests pass before changes
+^- [x] 1.1 Verify baseline tests pass before changes
 
 ```bash
 cd /workspace/project/rdd-workflow
@@ -23,7 +23,7 @@ bats tests/smoke.bats
 
 Expected: all existing tests pass.
 
-- [ ] 1.2 Examine existing validate_delta_targets.py for pattern reference
+^- [x] 1.2 Examine existing validate_delta_targets.py for pattern reference
 
 ```bash
 cat skills/_lib/validate_delta_targets.py | head -50
@@ -31,7 +31,7 @@ cat skills/_lib/validate_delta_targets.py | head -50
 
 Expected: understand the existing structure for _lib Python modules.
 
-- [ ] 1.3 Review openapi-diff library API
+^- [x] 1.3 Review openapi-diff library API
 
 ```bash
 pip show openapi-diff 2>/dev/null || pip install openapi-diff && python3 -c "import openapi_diff; help(openapi_diff)"
@@ -47,7 +47,7 @@ Expected: understand DiffResult structure and breaking/non-breaking classificati
 - Create: `skills/_lib/contract_diff.py`
 - Test: `tests/unit/test_contract_diff.py`
 
-- [ ] **Step 1: Write the failing test**
+^- [x] **Step 1: Write the failing test**
 
 Create `tests/unit/test_contract_diff.py`:
 
@@ -222,7 +222,7 @@ components: {}
         assert len(result.diffs) == 0
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+^- [x] **Step 2: Run tests to verify they fail**
 
 ```bash
 cd /workspace/project/rdd-workflow
@@ -231,7 +231,7 @@ python3 -m pytest tests/unit/test_contract_diff.py -v --tb=short
 
 Expected: all 6 tests fail (module doesn't exist yet).
 
-- [ ] **Step 3: Write implementation**
+^- [x] **Step 3: Write implementation**
 
 Create `skills/_lib/contract_diff.py`:
 
@@ -464,7 +464,7 @@ if __name__ == "__main__":
     sys.exit(1 if result.severity == Severity.BREAKING else 0)
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+^- [x] **Step 4: Run tests to verify they pass**
 
 ```bash
 cd /workspace/project/rdd-workflow
@@ -473,7 +473,7 @@ python3 -m pytest tests/unit/test_contract_diff.py -v --tb=short
 
 Expected: all 6 tests pass.
 
-- [ ] **Step 5: Commit**
+^- [x] **Step 5: Commit**
 
 ```bash
 git add skills/_lib/contract_diff.py tests/unit/test_contract_diff.py
@@ -490,7 +490,7 @@ git commit -m "feat(_lib): add contract_diff.py with DiffEngine + TDD tests
 **Files:**
 - Create: `skills/cli/contract_check.py` (or extend existing rddf CLI)
 
-- [ ] **Step 1: Examine existing CLI structure**
+^- [x] **Step 1: Examine existing CLI structure**
 
 ```bash
 ls skills/_lib/cli/
@@ -499,7 +499,7 @@ cat skills/_lib/cli/*.py 2>/dev/null | head -100
 
 Expected: find pattern for adding new subcommands to rddf CLI.
 
-- [ ] **Step 2: Implement contract-check subcommand**
+^- [x] **Step 2: Implement contract-check subcommand**
 
 This may require extending the rddf CLI entry point or creating a new wrapper script.
 
@@ -507,7 +507,7 @@ Note: CLI implementation depends on how `rddf` is structured. If rddf uses a sub
 architecture, add `contract-check` as a new subcommand. If it uses a dispatcher pattern,
 add to the dispatcher.
 
-- [ ] **Step 3: Test CLI help**
+^- [x] **Step 3: Test CLI help**
 
 ```bash
 rddf contract-check --help
@@ -515,7 +515,7 @@ rddf contract-check --help
 
 Expected: shows usage for --contract, --impl, --strict, --warn-only, --diff-only, --format, --all.
 
-- [ ] **Step 4: Commit**
+^- [x] **Step 4: Commit**
 
 ```bash
 git add skills/cli/contract_check.py  # or appropriate location
@@ -531,20 +531,20 @@ git commit -m "feat(cli): add rddf contract-check subcommand
 **Files:**
 - Modify: `requirements.txt`
 
-- [ ] **Step 1: Add dependency**
+^- [x] **Step 1: Add dependency**
 
 ```bash
 echo "openapi-diff>=0.9.0" >> requirements.txt
 ```
 
-- [ ] **Step 2: Install and verify**
+^- [x] **Step 2: Install and verify**
 
 ```bash
 pip install openapi-diff
 python3 -c "import openapi_diff; print('OK')"
 ```
 
-- [ ] **Step 3: Commit**
+^- [x] **Step 3: Commit**
 
 ```bash
 git add requirements.txt
@@ -558,7 +558,7 @@ git commit -m "chore: add openapi-diff to requirements.txt
 **Files:**
 - Create: `docs/contract-conventions.md`
 
-- [ ] **Step 1: Write documentation**
+^- [x] **Step 1: Write documentation**
 
 Create the file with:
 - Spoke repository contract implementation guide
@@ -566,7 +566,7 @@ Create the file with:
 - Spoke CI workflow template (`.github/workflows/contract-lint.yml`)
 - Examples of `rddf contract-check` usage
 
-- [ ] **Step 2: Commit**
+^- [x] **Step 2: Commit**
 
 ```bash
 git add docs/contract-conventions.md
@@ -578,18 +578,18 @@ git commit -m "docs: add contract-conventions.md for Spoke repo guide"
 **Files:**
 - Modify: `skills/guide-ship.md` (if integration is desired)
 
-- [ ] **Step 1: Find execution hooks**
+^- [x] **Step 1: Find execution hooks**
 
 ```bash
 grep -n "execute.*step\|step.*7\|execution.*hook" skills/guide-ship.md | head -10
 ```
 
-- [ ] **Step 2: Add contract-check integration (optional)**
+^- [x] **Step 2: Add contract-check integration (optional)**
 
 This is optional since external repo CI cannot be automatically enforced.
 If implemented, add as an optional hook that runs when `CONTRACT_CHECK_ENABLED=yes`.
 
-- [ ] **Step 3: Commit**
+^- [x] **Step 3: Commit**
 
 ```bash
 git add skills/guide-ship.md
@@ -598,7 +598,7 @@ git commit -m "feat(guide-ship): add optional contract-check hook in Phase 2"
 
 ## 3. Verification
 
-- [ ] 3.1 Run unit tests
+^- [x] 3.1 Run unit tests
 
 ```bash
 cd /workspace/project/rdd-workflow
@@ -608,7 +608,7 @@ python3 -m pytest tests/unit/ -q --tb=short
 
 Expected: all tests pass.
 
-- [ ] 3.2 Run bats smoke tests
+^- [x] 3.2 Run bats smoke tests
 
 ```bash
 bats tests/smoke.bats
@@ -616,7 +616,7 @@ bats tests/smoke.bats
 
 Expected: all smoke tests pass.
 
-- [ ] 3.3 CLI smoke test
+^- [x] 3.3 CLI smoke test
 
 ```bash
 rddf contract-check --help
@@ -625,7 +625,7 @@ rddf contract-check --contract tests/fixtures/auth-v2.yaml --impl tests/fixtures
 
 Expected: command runs and outputs report.
 
-- [ ] 3.4 Test with STRICT_CONTRACT_GATE
+^- [x] 3.4 Test with STRICT_CONTRACT_GATE
 
 ```bash
 STRICT_CONTRACT_GATE=yes rddf contract-check --contract tests/fixtures/auth-v2.yaml --impl tests/fixtures/auth_impl.py
@@ -636,7 +636,7 @@ Expected: exit 1 if Breaking-Change detected.
 
 ## 4. Commit + push
 
-- [ ] 4.1 Final commit
+^- [x] 4.1 Final commit
 
 ```bash
 git status
@@ -651,7 +651,7 @@ git commit -m "feat: add contract-lint-ci-gate with rddf contract-check
 - Resolves proposal: add-contract-lint-ci-gate"
 ```
 
-- [ ] 4.2 Push branch to origin
+^- [x] 4.2 Push branch to origin
 
 ```bash
 git push origin <branch-name>
@@ -659,12 +659,12 @@ git push origin <branch-name>
 
 ## Acceptance Criteria
 
-- [ ] `rddf contract-check --contract X --impl Y` outputs standardized report (JSON / Markdown)
-- [ ] Hub CI auto-detects `contracts/` changes and can notify Spokes (template provided)
-- [ ] Spoke CI integrates `rddf contract-check` on PR (template provided)
-- [ ] `STRICT_CONTRACT_GATE=yes` blocks ship on Breaking-Change
-- [ ] `--strict` / `--warn-only` / `--diff-only` modes work correctly
-- [ ] `.contract-cache.json` caches contract version + SHA
-- [ ] Unit tests cover 6 key paths (OpenAPI / Protobuf / cache-hit / hub-offline / breaking-detect / Identical)
-- [ ] README §跨项目协同 chapter includes CI integration example
-- [ ] All existing tests pass (pytest + bats)
+^- [x] `rddf contract-check --contract X --impl Y` outputs standardized report (JSON / Markdown)
+^- [x] Hub CI auto-detects `contracts/` changes and can notify Spokes (template provided)
+^- [x] Spoke CI integrates `rddf contract-check` on PR (template provided)
+^- [x] `STRICT_CONTRACT_GATE=yes` blocks ship on Breaking-Change
+^- [x] `--strict` / `--warn-only` / `--diff-only` modes work correctly
+^- [x] `.contract-cache.json` caches contract version + SHA
+^- [x] Unit tests cover 6 key paths (OpenAPI / Protobuf / cache-hit / hub-offline / breaking-detect / Identical)
+^- [x] README §跨项目协同 chapter includes CI integration example
+^- [x] All existing tests pass (pytest + bats)
