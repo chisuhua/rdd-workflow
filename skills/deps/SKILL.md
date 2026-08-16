@@ -636,3 +636,34 @@ deps_iteration_sync
 2. **只写 `.rddf/state/` 派生文件**：本技能可写入 `deps-output.md` 和 `iteration.json`（view 层），不写入 source code / roadmap.md
 3. **分析粒度**：目前仅分析 proposal.md 和 design.md 中的显式引用，不分析代码级依赖
 4. **ADR 是关键线索**：建议在 propose 阶段写入完整的 ADR 引用链，以便依赖分析更准确
+
+---
+
+## Cross-Repo Dependencies (Hub-and-Spoke Federation)
+
+`rddf deps cross-repo` 编排多 Spoke 仓库间的跨仓库依赖。
+
+```bash
+rddf deps cross-repo --spokes "org/repo-a,org/repo-b" --output-format mermaid
+```
+
+**功能**：
+- 从多个 Spoke 的 `iteration.json::cross_repo_dependencies` 解析跨仓库依赖
+- 构建统一依赖图（Kahn 拓扑排序生成 waves）
+- DFS 循环检测
+- 三级 ETA 回退（tasks.md checkbox → frontmatter eta → manual）
+- Mermaid flowchart 输出
+
+**输出格式**：
+- `--output-format text` — 文本摘要（Waves/Cycle/Graph）
+- `--output-format json` — 结构化 JSON（graph/cycle/waves/etas）
+- `--output-format mermaid` — Mermaid flowchart
+
+**缓存**：
+- 24h TTL 缓存（`.rddf/state/.cross-repo-deps-cache.json`）
+- `--force-refresh` 强制刷新
+
+**核心模块**：
+- `skills/_lib/cross_repo_deps.py` — parse/graph/cycle/topo/eta/mermaid
+- `skills/_lib/cross_repo_deps_cache.py` — TTL 缓存
+- `skills/_lib/hub_issue.py` — Hub Issue CRUD（rddf hub issue --deps）
