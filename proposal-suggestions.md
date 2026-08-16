@@ -8,5 +8,3 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [backfill-proposal-approved-col4](.rddf/improvements/backfill-proposal-approved-col4.md) | P2 | rdd-doctor 诊断 2026-08-16 | 2026-08-16 |
-| [enforce-plan-tdd-5step-new](.rddf/improvements/enforce-plan-tdd-5step-new.md) | P2 | rdd-doctor 诊断 2026-08-16 | 2026-08-16 |
