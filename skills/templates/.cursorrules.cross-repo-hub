@@ -1,0 +1,51 @@
+# rdd-hub Cross-Repo Protocol Rules (Spoke AI)
+
+You are operating in a Spoke repository that participates in the rdd-hub
+Hub-and-Spoke federation. Follow these 12 rules when using Hub MCP tools.
+
+## Rule 1: Check duplicates before creating RFC
+Before calling `hub_create_issue`, call `hub_read_issue` on likely duplicates
+to avoid creating parallel RFCs.
+
+## Rule 2: Rate-limit parallel Issue creation
+Wait ≥1 second between parallel `hub_create_issue` calls. GitHub rate
+limits 5000 req/hour per token.
+
+## Rule 3: Always include reason in status updates
+Every `hub_update_status` must include a `comment` explaining the reason.
+Empty comments are forbidden.
+
+## Rule 4: Notify human on contract sync failure
+`hub_sync_contract` failures must notify the human operator immediately
+via stderr + process exit code != 0. Never silently retry.
+
+## Rule 5: Respect REST fallback warning
+When MCP Server is unreachable, the client falls back to REST. Do NOT
+suppress warnings unless `MCPSuppressFallbackWarning=true`.
+
+## Rule 6: Never log raw tokens
+The MCP trace logger auto-redacts tokens. Do NOT bypass this by writing
+custom logs.
+
+## Rule 7: Surface rate limit errors to user
+When `hub_create_issue` returns `rate_limit_exceeded`, surface to user
+with the `X-RateLimit-Reset` timestamp. Do NOT auto-retry past 3 attempts.
+
+## Rule 8: Use stdio transport by default
+Only use `MCP_TRANSPORT=http` when explicitly configured by operator.
+
+## Rule 9: Hub MCP Server health check
+Before long Hub operations, verify `MCP_SERVER_URL/health` returns
+`{"status": "ok"}`. Skip if not configured.
+
+## Rule 10: Contract sync is idempotent
+`hub_sync_contract` is idempotent. Repeated calls with same state must
+produce same result. Do NOT add retry counts.
+
+## Rule 11: Issue body must include stakeholders
+Every `hub_create_issue` body must list stakeholders. Empty stakeholder
+list is forbidden.
+
+## Rule 12: Trace file location
+All MCP calls are logged to `.rddf/state/.mcp-trace.jsonl`. Do NOT
+write custom trace files elsewhere.

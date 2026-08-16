@@ -32,6 +32,7 @@ _DASH_SKILLS = [
     ("guide-plan", "guide_plan"),
     ("guide-ship", "guide_ship"),
     ("rddf-session", "rddf_session"),
+    ("cross-repo-protocol", "cross_repo_protocol"),
 ]
 
 for _dash, _us in _DASH_SKILLS:

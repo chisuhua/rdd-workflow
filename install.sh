@@ -320,6 +320,23 @@ SCRIPT
     echo ""
 }
 
+_do_spoke_init() {
+    local TARGET_DIR="${2:-$(pwd)}"
+    local TEMPLATE="$PACKAGE_DIR/skills/templates/.cursorrules.cross-repo-hub"
+    if [ ! -d "$TARGET_DIR/.git" ] && ! git -C "$TARGET_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+        echo "⚠️  Target is not a git repository: $TARGET_DIR (skipping)" >&2
+        exit 0
+    fi
+    if [ -f "$TEMPLATE" ]; then
+        cp "$TEMPLATE" "$TARGET_DIR/.cursorrules"
+        echo "✅ Installed .cursorrules to $TARGET_DIR/.cursorrules"
+        exit 0
+    else
+        echo "ERROR: Template not found: $TEMPLATE" >&2
+        exit 1
+    fi
+}
+
 # ── 主流程 ────────────────────────────────────────────────────────
 case "${1:-}" in
     --global|-g)
@@ -330,6 +347,7 @@ case "${1:-}" in
         echo ""
         echo "选项:"
         echo "  --global, -g      全局安装到 ~/.agents/skills/ + Python deps + rddf CLI"
+        echo "  --spoke-init      为 Spoke AI 安装 .cursorrules 协议模板"
         echo "  --help, -h        显示此帮助"
         echo ""
         echo "不带参数: 安装到当前项目目录"
@@ -338,6 +356,9 @@ case "${1:-}" in
         echo "全局安装后，在任何项目下:"
         echo "  skill_use(\"guide\")"
         echo "  rddf status"
+        ;;
+    --spoke-init)
+        _do_spoke_init "$@"
         ;;
     *)
         TARGET_DIR="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
