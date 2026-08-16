@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rdd-workflow.dev/schemas/skill_role_schema.json",
+  "title": "SkillRoleMetadata",
+  "description": "Role metadata for phase skills: title, perspective, ownership boundaries, human involvement level. See ADR-0028.",
+  "type": "object",
+  "required": ["title", "perspective", "boundaries"],
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable role name (bilingual: e.g., 'Architect (架构治理者)')."
+    },
+    "perspective": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Thinking perspective for this phase (1-2 sentences)."
+    },
+    "boundaries": {
+      "type": "object",
+      "required": ["owns", "not_owns", "human_involvement"],
+      "additionalProperties": false,
+      "properties": {
+        "owns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "File paths this phase owns (e.g., 'docs/adr/ADR-*.md')."
+        },
+        "not_owns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "File paths this phase explicitly does NOT own."
+        },
+        "human_involvement": {
+          "type": "string",
+          "enum": ["high", "medium", "low"],
+          "description": "Human involvement level per ADR-0003 gradient."
+        }
+      }
+    }
+  }
+}

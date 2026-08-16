@@ -1,0 +1,138 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rdd-workflow.dev/schemas/deps_analysis_schema.json",
+  "title": "Spec Workflow Deps Analysis (Structured)",
+  "description": "Machine-readable counterpart to .rddf/state/.deps-output.md. Consumed by the iteration.json sync hook (deps.md Step 6) and any future planning tooling. Stored at .rddf/state/deps-analysis.json.",
+  "type": "object",
+  "required": ["version", "updated_at", "fallback", "changes", "execution_order"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. Currently 1. Bumping this is a breaking change for consumers."
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when the analysis was generated."
+    },
+    "fallback": {
+      "type": "boolean",
+      "description": "True when deps ran in static 3-axis mode only (AI subagent unavailable). When true, consumers should treat any AI-only fields as empty."
+    },
+    "execution_order": {
+      "type": "array",
+      "description": "Recommended execution order. Changes at the same parallel_group may run together; the order in this list is the topological sort with parallel groups flattened to a sequence.",
+      "items": { "type": "string" }
+    },
+    "changes": {
+      "type": "object",
+      "description": "Per-change analysis results. Keyed by change name.",
+      "additionalProperties": { "$ref": "#/definitions/ChangeAnalysis" }
+    },
+    "execution_mode_recommendations": {
+      "type": "object",
+      "description": "Execution mode recommendations per change (ADR-0023). Keyed by change name.",
+      "additionalProperties": { "$ref": "#/definitions/ExecutionModeRecommendation" }
+    }
+  },
+  "definitions": {
+    "ChangeAnalysis": {
+      "type": "object",
+      "required": ["name", "status", "parallel_group"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "OpenSpec change name (directory name under openspec/changes/)."
+        },
+        "phase": {
+          "type": ["string", "null"],
+          "description": "Roadmap phase from roadmap-meta.yaml. Null in compat mode."
+        },
+        "category": {
+          "type": ["string", "null"],
+          "description": "Roadmap category from roadmap-meta.yaml. Null in compat mode."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ready", "blocked_by", "prerequisite", "conflict"],
+          "description": "Lifecycle status from deps perspective. Distinct from iteration.json's status (which is propose/execute/archive). ready = no hard blockers; blocked_by = waiting on another change; prerequisite = this change blocks others; conflict = has file-level conflicts."
+        },
+        "blocker": {
+          "type": ["string", "null"],
+          "description": "Name of the change that hard-blocks this one. Null when status is not blocked_by."
+        },
+        "blocks": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Names of changes that this change hard-blocks (reverse direction of blocker)."
+        },
+        "parallel_group": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Topological layer. 0 = can start immediately (no deps); 1 = depends on wave 0; N = depends on wave N-1. Changes in the same wave can run in parallel."
+        },
+        "conflicts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Change names with file-level conflicts (intersection of in-scope files)."
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "low"],
+          "description": "high = static 3-axis evidence; low = AI subagent inferred only. Consumers should require 'high' for hard decisions (e.g. parallel-group assignment)."
+        },
+        "recommendation": {
+          "type": "string",
+          "description": "Human-readable execution hint (e.g. '第 1 优先', '等 v2-loop-engine 完成后')."
+        }
+      }
+    },
+    "ExecutionModeRecommendation": {
+      "type": "object",
+      "required": ["mode", "reason", "confidence", "details"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["lightweight", "worktree"],
+          "description": "Recommended execution mode. lightweight = direct branch in main repo; worktree = isolated worktree."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Human-readable explanation for the recommendation."
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"],
+          "description": "Confidence level of the recommendation."
+        },
+        "details": {
+          "type": "object",
+          "required": ["file_count", "task_count", "is_risky", "change_size"],
+          "properties": {
+            "file_count": {
+              "type": "integer",
+              "description": "Number of files to be modified (from design.md)."
+            },
+            "task_count": {
+              "type": "integer",
+              "description": "Number of tasks (from tasks.md)."
+            },
+            "is_risky": {
+              "type": "boolean",
+              "description": "Whether the change contains risky keywords (refactor, migration, etc.)."
+            },
+            "change_size": {
+              "type": "string",
+              "enum": ["small", "medium", "large"],
+              "description": "Categorized change size based on file/task counts."
+            }
+          }
+        }
+      }
+    }
+  }
+}

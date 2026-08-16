@@ -1,0 +1,235 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rdd-workflow.dev/schemas/state_vector_schema.json",
+  "title": "Spec Workflow v2 State Vector",
+  "description": "Unified workflow state. Single source of truth; replaces 13 v1.x state files.",
+  "type": "object",
+  "required": ["version", "goal", "arch_side", "plan_side", "ship_side", "loop_state", "session_management", "dependency_graph", "memory", "metadata"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "2.0",
+      "description": "Schema version. Must be \"2.0\"."
+    },
+    "goal": {
+      "type": ["string", "null"],
+      "description": "User's high-level goal string. May be null before setup completes."
+    },
+    "arch_side": {
+      "type": "object",
+      "description": "Spec-side state (setup → roadmap → propose → deps).",
+      "required": ["phase", "current_change"],
+      "additionalProperties": false,
+      "properties": {
+        "phase": {
+          "type": "string",
+          "enum": ["setup", "roadmap", "propose", "deps", "done", "idle"]
+        },
+        "current_change": { "type": ["string", "null"] },
+        "completed_changes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "plan_side": {
+      "type": "object",
+      "description": "Plan-side state (planning artifacts for the active change).",
+      "required": ["active_change", "plan_file"],
+      "additionalProperties": false,
+      "properties": {
+        "active_change": { "type": ["string", "null"] },
+        "plan_file": { "type": ["string", "null"] },
+        "worktree_path": { "type": ["string", "null"] }
+      }
+    },
+    "ship_side": {
+      "type": "object",
+      "description": "Ship-side state (execute, status, archive).",
+      "required": ["current_phase", "progress"],
+      "additionalProperties": false,
+      "properties": {
+        "current_phase": {
+          "type": "string",
+          "enum": ["idle", "execute", "verify", "archive", "done"]
+        },
+        "progress": {
+          "type": "object",
+          "required": ["complete", "total"],
+          "properties": {
+            "complete": { "type": "integer", "minimum": 0 },
+            "total": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "loop_state": {
+      "type": "object",
+      "description": "Loop engine state (v2-loop-engine).",
+      "required": ["mode", "iteration"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "type": "string", "enum": ["idle", "loop", "menu", "hybrid"] },
+        "iteration": { "type": "integer", "minimum": 0 },
+        "last_action": { "type": ["string", "null"] },
+        "last_action_at": { "type": ["string", "null"], "format": "date-time" },
+        "current_phase": {
+          "type": ["string", "null"],
+          "enum": ["verify_goal", "scan_state", "generate_plan", "execute_plan", "verify_results", "adapt", null],
+          "description": "Current phase of the loop engine cycle (v2-loop-engine)."
+        },
+        "design": {
+          "type": ["object", "null"],
+          "description": "Pre-loop design result (Goal/Verification/Control) (v2-loop-engine).",
+          "properties": {
+            "goal": { "type": "object" },
+            "verification": { "type": "object" },
+            "control": { "type": "object" }
+          }
+        }
+      }
+    },
+    "session_management": {
+      "type": "object",
+      "description": "Multi-session management state (ADR-0010 v2.1).",
+      "required": ["current_session", "active_sessions", "session_statistics"],
+      "additionalProperties": false,
+      "properties": {
+        "current_session": {
+          "type": ["string", "null"],
+          "description": "ID of the currently active session."
+        },
+        "active_sessions": {
+          "type": "array",
+          "description": "List of all known sessions across the workflow.",
+          "items": {
+            "type": "object",
+            "required": ["id", "created_at", "updated_at", "status"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "created_at": { "type": "string", "format": "date-time" },
+              "updated_at": { "type": "string", "format": "date-time" },
+              "status": {
+                "type": "string",
+                "enum": ["active", "paused", "completed", "failed", "archived"]
+              },
+              "label": { "type": "string", "description": "Optional human-readable label for this session." },
+              "owner_opencode_session_id": {
+                "type": ["string", "null"],
+                "description": "Optional OpenCode session ID that owns this session. Links to rddf-session via ADR-0017."
+              },
+              "rddf_session_id": {
+                "type": ["string", "null"],
+                "pattern": "^rds_[a-f0-9]{12}$",
+                "description": "Optional rddf-session id (ADR-0017) for cross-opencode-session recovery."
+              }
+            }
+          }
+        },
+        "session_statistics": {
+          "type": "object",
+          "description": "Aggregate session counters.",
+          "required": ["total", "active", "completed", "failed"],
+          "additionalProperties": false,
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "active": { "type": "integer", "minimum": 0 },
+            "completed": { "type": "integer", "minimum": 0 },
+            "failed": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "dependency_graph": {
+      "type": "object",
+      "description": "Inter-session dependency graph (ADR-0010 v2.1).",
+      "required": ["nodes", "edges", "execution_order"],
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "description": "Nodes in the dependency graph (one per session or change).",
+          "items": {
+            "type": "object",
+            "required": ["id", "type", "status"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": ["session", "change", "checkpoint", "milestone"]
+              },
+              "status": {
+                "type": "string",
+                "enum": ["pending", "in_progress", "completed", "blocked", "skipped"]
+              },
+              "depends_on": {
+                "type": "array",
+                "description": "IDs of nodes this node depends on.",
+                "items": { "type": "string" }
+              },
+              "label": { "type": "string", "description": "Optional human-readable label." }
+            }
+          }
+        },
+        "edges": {
+          "type": "array",
+          "description": "Directed edges describing dependency relationships.",
+          "items": {
+            "type": "object",
+            "required": ["from", "to", "type"],
+            "additionalProperties": false,
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": ["depends_on", "blocks", "triggers", "continues_from"]
+              }
+            }
+          }
+        },
+        "execution_order": {
+          "type": "array",
+          "description": "Topologically sorted list of node IDs indicating execution priority.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "description": "Persistent memory across iterations (v2-memory-system).",
+      "required": ["notes", "learnings"],
+      "additionalProperties": false,
+      "properties": {
+        "notes": { "type": "string" },
+        "learnings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["text", "created_at"],
+            "properties": {
+              "text": { "type": "string" },
+              "created_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Operational metadata for debugging and audit.",
+      "required": ["spec_workflow_version", "created_at", "updated_at"],
+      "additionalProperties": false,
+      "properties": {
+        "spec_workflow_version": { "type": "string" },
+        "git_commit": { "type": ["string", "null"] },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "checksum": { "type": "string", "description": "SHA-256 of canonical JSON, for corruption detection." }
+      }
+    }
+  }
+}

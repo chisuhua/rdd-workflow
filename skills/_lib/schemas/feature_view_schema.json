@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rdd-workflow.dev/schemas/feature_view_schema.json",
+  "title": "FeatureView",
+  "description": "Derived view of features (groups of changes) inside iteration.json. Written by skills/_lib/feature_view.py.",
+  "type": "object",
+  "required": ["schema_version", "updated_at", "features", "execution_order"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Bumped on breaking changes."
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of last computation."
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/FeatureEntry" },
+      "description": "Map of feature name to FeatureEntry."
+    },
+    "execution_order": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "description": "Wave-grouped topological order; same index = parallel."
+    },
+    "__cycle_warning__": {
+      "type": "boolean",
+      "description": "True when the feature dependency graph contains a cycle. Consumers should check this before trusting execution_order."
+    },
+    "__cycle_members__": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Feature names involved in the detected cycle, sorted."
+    }
+  },
+  "$defs": {
+    "FeatureEntry": {
+      "type": "object",
+      "required": [
+        "name", "status", "change_names", "change_count",
+        "archived_count", "rollup_basis",
+        "depends_on", "blocks", "parallel_group", "conflicts_with"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["blocked", "in_progress", "ready", "done", "ungrouped"]
+        },
+        "change_names": { "type": "array", "items": { "type": "string" } },
+        "change_count": { "type": "integer", "minimum": 0 },
+        "archived_count": { "type": "integer", "minimum": 0 },
+        "rollup_basis": {
+          "type": "string",
+          "enum": ["explicit", "name_prefix", "mixed"]
+        },
+        "depends_on": { "type": "array", "items": { "type": "string" } },
+        "blocks": { "type": "array", "items": { "type": "string" } },
+        "parallel_group": { "type": "integer", "minimum": 0 },
+        "conflicts_with": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

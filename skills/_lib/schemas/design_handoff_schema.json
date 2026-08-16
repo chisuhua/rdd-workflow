@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rdd-workflow.local/schemas/design_handoff_schema.json",
+  "title": "Design Handoff v2",
+  "description": "Schema v2: adds changes_pre_created (consumed by guide-plan intake). v1 readers must accept v1 payloads as-is (changes_pre_created defaults to empty array).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "design_complete_at",
+    "proposals_reviewed",
+    "all_proposals_have_decision",
+    "version",
+    "changes_pre_created"
+  ],
+  "properties": {
+    "design_complete_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when design-done was completed"
+    },
+    "proposals_reviewed": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of proposals reviewed (approved+rejected+deferred)"
+    },
+    "all_proposals_have_decision": {
+      "type": "boolean",
+      "description": "True if every entry in proposal-suggestions.md has a decision"
+    },
+    "version": {
+      "type": "integer",
+      "const": 2,
+      "description": "Schema version (must be 2 — v1 is legacy and rejected)"
+    },
+    "changes_pre_created": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Names of changes created during design approve (consumed by guide-plan intake to skip recreation)"
+    }
+  }
+}

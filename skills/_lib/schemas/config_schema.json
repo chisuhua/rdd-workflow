@@ -1,0 +1,183 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rdd-workflow.local/schemas/config_schema.json",
+  "title": "rdd-workflow Configuration Schema",
+  "description": "JSON Schema for the merged configuration produced by ConfigParser.parse(). Validates the structure of interaction, loop, and triggers sections. All fields are optional - validation only runs on fields that are present. This complements the existing _validate() function in config.py (which checks mode, max_iterations, max_retries) with broader structural validation.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "interaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["loop", "menu", "hybrid"],
+          "description": "Interaction mode: loop (autonomous), menu (manual), hybrid (mixed)"
+        },
+        "menu_items": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Menu items available in menu/hybrid mode"
+        }
+      }
+    },
+    "loop": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_iterations": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum iterations before the loop halts (must be >= 1)"
+        },
+        "max_retries": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum retries on failure per iteration (must be >= 0)"
+        },
+        "retry_backoff_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Backoff delay in seconds between retries (must be >= 0)"
+        },
+        "oscillation_window": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of recent states examined when detecting oscillation (must be >= 1)"
+        },
+        "oscillation_distinct_threshold": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of distinct states within the window that indicates oscillation (must be >= 1)"
+        },
+        "circuit_breaker_threshold": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Consecutive failure count that trips the circuit breaker (must be >= 1)"
+        },
+        "action_timeout_seconds": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Per-action timeout in seconds (must be >= 1)"
+        }
+      }
+    },
+    "triggers": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Master switch for the triggers subsystem"
+        },
+        "webhook_port": {
+          "type": "integer",
+          "description": "TCP port for the webhook HTTP listener"
+        },
+        "fs_watch_interval": {
+          "type": "number",
+          "description": "Filesystem polling interval in seconds"
+        },
+        "git_poll_interval": {
+          "type": "number",
+          "description": "Git repository polling interval in seconds"
+        },
+        "safety": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "max_concurrent_fires": {
+              "type": "integer",
+              "description": "Maximum number of triggers firing concurrently"
+            },
+            "crash_recovery": {
+              "type": "boolean",
+              "description": "Whether to recover trigger state after a crash"
+            },
+            "trigger_off_override": {
+              "type": "boolean",
+              "description": "When true, the --trigger-off flag disables all triggers"
+            }
+          }
+        }
+      }
+    },
+    "openspec_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Path prefixes to scan for staged files"
+        },
+        "extensions": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "File extensions to scan for staged files"
+        },
+        "exclude": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Path patterns to exclude from the gate"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["warn", "block"],
+          "description": "Gate mode: warn prints a message, block exits with error"
+        }
+      }
+    },
+    "reporting": {
+      "type": "object",
+      "description": "ADR-0027 continuous evolution feedback loop. Triple opt-in (enabled + auto_submit + submit_categories) must all be on for issues to reach GitHub.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Master switch for the issue-reporter. Default false (opt-in)."
+        },
+        "destination": {
+          "type": "string",
+          "enum": ["github", "local", "custom-url"],
+          "default": "github",
+          "description": "Where reported issues go."
+        },
+        "gh_repo": {
+          "type": "string",
+          "default": "chisuhua/rdd-workflow",
+          "description": "Upstream GitHub repository for issue submission. Used when destination is 'github'."
+        },
+        "auto_submit": {
+          "type": "boolean",
+          "default": false,
+          "description": "When false, issues stay local-only. When true, L2 gh CLI submission is attempted."
+        },
+        "submit_categories": {
+          "type": "object",
+          "description": "Per-category opt-in. Only categories set to true are submitted.",
+          "additionalProperties": {"type": "boolean"}
+        },
+        "close_on_archive": {
+          "type": "boolean",
+          "default": true,
+          "description": "When true, archive_change automatically closes linked GitHub issues."
+        },
+        "retention_days": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 30,
+          "description": "Days to retain closed issue files locally before pruning."
+        },
+        "redact_patterns": {
+          "type": "array",
+          "items": {"type": "string"},
+          "default": [],
+          "description": "Additional regex patterns to redact beyond sanitizer defaults."
+        }
+      }
+    }
+  }
+}

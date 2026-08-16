@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rdd-workflow.local/schemas/cross_repo_pending_schema.json",
+  "title": "Cross-repo Pending v1 (ADR-0030)",
+  "description": "Schema for .rddf/state/.cross-repo-pending.json. Tracks Hub Issues that are blocking local design-done/plan-done gates. Emitted by add-rdd-hub-cross-repo-federation (Step 2).",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "version",
+    "pending_issues",
+    "last_updated"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. v1 introduces tracking of Hub Issue Status linking to local proposals."
+    },
+    "pending_issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["hub_issue", "local_proposal", "expected_status", "blocked_gates", "added_at"],
+        "properties": {
+          "hub_issue": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+#[0-9]+$",
+            "description": "Hub Issue reference (e.g. 'org/rdd-hub#42')"
+          },
+          "local_proposal": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]+$",
+            "description": "Local proposal name matching .rddf/improvements/<name>.md"
+          },
+          "expected_status": {
+            "type": "string",
+            "enum": ["RFC", "In-Review", "Approved"],
+            "description": "Hub Issue Status that will unblock local gates"
+          },
+          "blocked_gates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["design-done", "plan-done", "ship-done"]
+            },
+            "description": "Local gates blocked by this Hub Issue"
+          },
+          "added_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp when this pending relationship was created"
+          },
+          "last_polled_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "ISO-8601 timestamp when Hub Issue Status was last checked"
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "List of Hub Issues blocking local workflow gates"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when this file was last modified"
+    }
+  }
+}
