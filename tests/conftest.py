@@ -43,3 +43,10 @@ for _dash, _us in _DASH_SKILLS:
             _level_dir = _level.lstrip(".") if _level else _level
             _mod.__path__ = [os.path.join(_PROJECT_ROOT_STR, "skills", _dash, _level_dir) if _level_dir else os.path.join(_PROJECT_ROOT_STR, "skills", _dash)]
             sys.modules[_mod_name] = _mod
+
+# skills._lib submodule: map skills._lib to skills/_lib/ (worktree's skills/_lib)
+if "skills._lib" not in sys.modules:
+    _lib_mod = types.ModuleType("skills._lib")
+    _lib_mod.__path__ = [os.path.join(_PROJECT_ROOT_STR, "skills", "_lib")]
+    _lib_mod.__file__ = os.path.join(_PROJECT_ROOT_STR, "skills", "_lib", "__init__.py")
+    sys.modules["skills._lib"] = _lib_mod

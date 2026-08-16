@@ -152,6 +152,17 @@ RDDF_HUB_REPO=org/rdd-hub rddf watch-hub --once --owner=org/rdd-hub
 
 `SKIP_HUB_CHECK=true` 环境变量可在 Hub 网络故障时跳过 design-done 门控的 Hub 检查(不推荐,仅 hotfix)。
 
+### 跨项目审批(ADR-0031)
+
+`category: cross-repo-federation` 的提案**不可** `--auto-accept`,必须:
+
+```bash
+bash skills/guide-design/scripts/approve_proposal.sh <proposal> \
+  --manual --hub-issue "org/rdd-hub#N"
+```
+
+会 prompt 输入 GitHub 用户名,实时 fetch Hub Issue 状态确认 `approved` 才写入 audit log。`SKIP_HUB_CHECK=true` 仅紧急 hotfix 使用(留 audit trail)。
+
 #### Spoke AI 接入指南
 
 rdd-workflow 支持将 Hub-and-Spoke 协议注入到各种 AI 编程助手的配置文件中,使其能够参与联邦协作:

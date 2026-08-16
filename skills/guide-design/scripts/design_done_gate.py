@@ -33,3 +33,41 @@ def check_hub_pending() -> bool:
         return False
 
     return any(e.get("status") == "pending" for e in state.get("entries", []))
+
+
+def check_cross_repo_approvals() -> bool:
+    """Check if all cross-repo-federation proposals have audit log approvals.
+
+    Returns True if any cross-repo proposal lacks a corresponding 'approved'
+    entry in .rddf/state/.cross-repo-audit.jsonl (gate should BLOCK).
+    """
+    project_root = os.environ.get("RDDF_PROJECT_ROOT", os.getcwd())
+    changes_dir = os.path.join(project_root, "openspec", "changes")
+    if not os.path.isdir(changes_dir):
+        return False
+
+    audit_file = os.path.join(project_root, ".rddf", "state", ".cross-repo-audit.jsonl")
+    approved_proposals = set()
+    if os.path.exists(audit_file):
+        for line in open(audit_file):
+            try:
+                record = json.loads(line)
+                if record.get("decision") == "approved":
+                    approved_proposals.add(record.get("proposal_name"))
+            except (json.JSONDecodeError, KeyError):
+                continue
+
+    pending = []
+    for entry in os.listdir(changes_dir):
+        meta = os.path.join(changes_dir, entry, "roadmap-meta.yaml")
+        if not os.path.isfile(meta):
+            continue
+        with open(meta) as f:
+            for line in f:
+                if line.startswith("category:"):
+                    cat = line.split(":", 1)[1].strip().strip("'\"")
+                    if cat == "cross-repo-federation" and entry not in approved_proposals:
+                        pending.append(entry)
+                    break
+
+    return len(pending) > 0

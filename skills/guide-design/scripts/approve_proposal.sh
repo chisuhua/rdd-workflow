@@ -16,12 +16,69 @@
 
 set -euo pipefail
 
-NAME="$1"
+# Cross-repo approval gate (ADR-0031)
+CROSS_REPO_CATEGORY="cross-repo-federation"
+AUTO_ACCEPT=false
+MANUAL_FLAG=false
+HUB_ISSUE_ARG=""
+
+# Argument parsing: collect flags, leaving NAME and PRIORITY as positional
+_remaining_args=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --auto-accept) AUTO_ACCEPT=true; shift ;;
+    --manual) MANUAL_FLAG=true; shift ;;
+    --hub-issue)
+      HUB_ISSUE_ARG="$2"
+      shift 2 ;;
+    --hub-issue=*)
+      HUB_ISSUE_ARG="${1#*=}"
+      shift ;;
+    --) shift; break ;;
+    -*) shift ;;
+    *) _remaining_args+=("$1"); shift ;;
+  esac
+done
+set -- "${_remaining_args[@]}" "$@"
+
+NAME="${1:-}"
 PRIORITY="${2:-P1}"
 PROJECT_ROOT="${3:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)"
 LIB_DIR="$SCRIPT_DIR/../../_lib"
+
+detect_cross_repo_category() {
+  local proposal_name="$1"
+  local meta_file="$PROJECT_ROOT/openspec/changes/$proposal_name/roadmap-meta.yaml"
+  if [[ ! -f "$meta_file" ]]; then
+    return 1
+  fi
+  grep -E "^category:" "$meta_file" 2>/dev/null | awk '{print $2}' | tr -d '"' | tr -d "'" | head -1
+}
+
+is_cross_repo_proposal() {
+  local cat
+  cat=$(detect_cross_repo_category "$1" 2>/dev/null || echo "")
+  [[ "$cat" == "$CROSS_REPO_CATEGORY" ]]
+}
+
+# Cross-repo gate: block --auto-accept, require --manual + --hub-issue
+if is_cross_repo_proposal "$NAME" 2>/dev/null; then
+  if [ "${AUTO_ACCEPT}" = true ]; then
+    echo "🚫 cross-repo proposal '$NAME' cannot use --auto-accept" >&2
+    echo "   Use --manual --hub-issue <org/repo#N> instead" >&2
+    exit 3
+  fi
+  if [ "$MANUAL_FLAG" != true ]; then
+    echo "🚫 cross-repo proposal '$NAME' requires --manual flag" >&2
+    exit 3
+  fi
+  if [ -z "$HUB_ISSUE_ARG" ]; then
+    echo "🚫 cross-repo proposal requires --hub-issue <org/repo#N>" >&2
+    exit 3
+  fi
+fi
 
 # Source state.sh for append_approved
 if [ -f "$LIB_DIR/state.sh" ]; then
