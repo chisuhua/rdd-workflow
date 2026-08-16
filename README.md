@@ -111,6 +111,47 @@ bash install.sh /path/to/project
 - **10 个 Python 集成测试**：覆盖 Loop 流程、门控切换、阶段切换
 - **测试框架**：pytest (Python) + bats (shell)
 
+### 跨项目协同 (ADR-0030)
+
+rdd-workflow 支持 Hub-and-Spoke 联邦架构。3 个新命令启用双向协同通道:
+
+#### 上行:`rddf report-issue --category=rfc`
+
+在 Hub 创建 `[RFC]` Issue,关联 RDD Cross-Repo Sync Project V2,记录到 `.rddf/state/.cross-repo-pending.json`。
+
+```bash
+RDDF_REPORT_GH_REPO=org/rdd-hub rddf report-issue \
+  --category=rfc \
+  --title "[RFC] 重构用户鉴权流程 (Auth V2)" \
+  --stakeholders "org/repo-backend,org/repo-data" \
+  --gate "Design-Gate" \
+  --contract-impact "Breaking-Change"
+```
+
+#### 下行:`rddf sync-hub --contract <path>`
+
+从 Hub `rdd-hub/contracts/` 拉取契约到本地 `openspec/specs/<name>/spec.md`。
+
+```bash
+RDDF_HUB_REPO=org/rdd-hub rddf sync-hub --contract auth-v2.yaml
+```
+
+#### 监听:`rddf watch-hub --once`
+
+一次性轮询 Hub Issue 状态;由 cron/CI 以 ≤5 分钟间隔调度(不在 CLI 内维护长驻 daemon)。
+
+```bash
+RDDF_HUB_REPO=org/rdd-hub rddf watch-hub --once --owner=org/rdd-hub
+```
+
+#### 挂起状态文件
+
+`.rddf/state/.cross-repo-pending.json` 记录所有本地等待 Hub 端审批的 RFC Issue。结构遵循 `_lib/schemas/cross_repo_pending_schema.json` v1(SSOT)。
+
+#### 紧急跳过
+
+`SKIP_HUB_CHECK=true` 环境变量可在 Hub 网络故障时跳过 design-done 门控的 Hub 检查(不推荐,仅 hotfix)。
+
 ## 目录结构
 
 ```
