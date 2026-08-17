@@ -69,12 +69,12 @@
 
 
 
-| [add-cross-repo-state-schemas](.rddf/improvements/add-cross-repo-state-schemas.md) | P1 | 2026-08-15 | guide-arch |
-
-| [add-contract-lint-ci-gate](.rddf/improvements/add-contract-lint-ci-gate.md) | P1 | 2026-08-15 | guide-arch |
 
 
 
+
+
+| [harden-archive-iteration-sync](.rddf/improvements/harden-archive-iteration-sync.md) | P1 | 2026-08-16 | guide-arch |
 
 ## 已实施
 | [enforce-plan-tdd-5step-new](.rddf/improvements/enforce-plan-tdd-5step-new.md) | P2 | 2026-08-16 |
@@ -133,6 +133,8 @@
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
+| [add-contract-lint-ci-gate](.rddf/improvements/add-contract-lint-ci-gate.md) | P1 | 2026-08-16 |
+| [add-cross-repo-state-schemas](.rddf/improvements/add-cross-repo-state-schemas.md) | P1 | 2026-08-16 |
 | [fix-generator-scope-extraction](.rddf/improvements/fix-generator-scope-extraction.md) | P1 | 2026-08-15 |
 | [complete-third-party-replay-and-upstream-reporting](.rddf/improvements/complete-third-party-replay-and-upstream-reporting.md) | P0 | 2026-08-13 |
 | [sync-changelog-unreleased](.rddf/improvements/sync-changelog-unreleased.md) | P1 | 2026-08-13 |

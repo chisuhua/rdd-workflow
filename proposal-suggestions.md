@@ -8,4 +8,3 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [harden-archive-iteration-sync](.rddf/improvements/harden-archive-iteration-sync.md) | P1 | 2026-08-16 post-archive 验证 | 2026-08-16 |
