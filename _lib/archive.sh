@@ -279,6 +279,38 @@ archive_gate_check() {
     echo "❌ 未实现 (0 个完成任务)。设置 FORCE_ARCHIVE_INCOMPLETE=yes 跳过"
     return 1
   fi
+
+  # AC verification step (ac-verifier skill, Task 10)
+  if [ "${SKIP_AC_VERIFICATION:-no}" != "yes" ]; then
+    local proposal_file="$tasks_root/openspec/changes/$change_name/proposal.md"
+    if [ -f "$proposal_file" ]; then
+      local ac_script
+      ac_script="$(git rev-parse --show-toplevel 2>/dev/null)/skills/ac-verifier/scripts/ac_verifier.sh"
+      if [ -x "$ac_script" ]; then
+        local ac_output ac_exit
+        ac_output=$(PROJECT_ROOT="$tasks_root" bash "$ac_script" "$change_name" 2>&1)
+        ac_exit=$?
+        case $ac_exit in
+          0) ;;  # all pass — continue
+          1)
+            if [ "${STRICT_AC_GATE:-no}" = "yes" ]; then
+              echo "❌ archive_gate_check: AC verification failed under STRICT_AC_GATE"
+              echo "$ac_output" | tail -30
+              return 1
+            else
+              echo "⚠️  archive_gate_check: AC verification warning (set STRICT_AC_GATE=yes to block)"
+              echo "$ac_output" | tail -30
+            fi
+            ;;
+          2) ;;  # skipped — continue silently
+          3)
+            echo "⚠️  AC verification errored; treating as warning (set SKIP_AC_VERIFICATION=yes to suppress)"
+            echo "$ac_output" | tail -10
+            ;;
+        esac
+      fi
+    fi
+  fi
   return 0
 }
 

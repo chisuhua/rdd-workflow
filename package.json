@@ -52,6 +52,7 @@
     "rdd-hub-bootstrap",
     "contract-check",
     "cross-repo-protocol",
-    "spoke-system-prompt-injection"
+    "spoke-system-prompt-injection",
+    "ac-verifier"
   ]
 }
