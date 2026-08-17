@@ -608,3 +608,50 @@ if result.errors:
   fi
   return 0
 }
+
+# reconcile [project_root]
+#   Manual on-disk backfill: scan archive/ for entries missing iteration.json
+#   archived_at, force-set them. Idempotent — safe to run multiple times.
+reconcile() {
+  local project_root="${1:-$PWD}"
+  local archive_dir="$project_root/openspec/changes/archive"
+  [ -d "$archive_dir" ] || { echo "❌ No archive dir at $archive_dir"; return 1; }
+
+  echo "🔍 Scanning $archive_dir for stale iteration.json entries..."
+
+  local skills_parent
+  skills_parent="$(cd "$_LIB_DIR/../.." 2>/dev/null && pwd)"
+
+  local fixed=0 skipped=0
+  for d in "$archive_dir"/*/; do
+    [ -d "$d" ] || continue
+    local dir_name
+    dir_name=$(basename "$d")
+    local change_name="${dir_name#*-}"
+    [ -z "$change_name" ] && continue
+
+    local result
+    result=$(SKILLS_PARENT="$skills_parent" \
+             MAIN_ROOT="$project_root" \
+             CHANGE_NAME="$change_name" \
+             python3 -c '
+import os, sys
+sys.path.insert(0, os.environ["SKILLS_PARENT"])
+try:
+    from skills._lib.iteration.repair import force_mark_archived
+except ImportError:
+    print("error:module")
+    sys.exit(0)
+modified = force_mark_archived(os.environ["MAIN_ROOT"], os.environ["CHANGE_NAME"])
+print("fixed" if modified else "skipped")
+' 2>/dev/null)
+    case "$result" in
+      fixed)   echo "  ✅ $change_name: fixed"; fixed=$((fixed+1)) ;;
+      skipped) echo "  ⏭️  $change_name: already synced"; skipped=$((skipped+1)) ;;
+      *)       echo "  ⚠️  $change_name: $result" ;;
+    esac
+  done
+
+  echo ""
+  echo "Summary: $fixed fixed, $skipped skipped"
+}

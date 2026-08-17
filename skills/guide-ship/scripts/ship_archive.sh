@@ -246,6 +246,36 @@ archive_change_for_mode() {
     archive_commit_sha=$(git -C "$project_root" rev-parse HEAD 2>/dev/null || echo "")
     mark_iteration_archived "$change_name" "$project_root" "$archive_commit_sha"
 
+    # On-disk reconciliation (harden-archive-iteration-sync).
+    # If mark_iteration_archived failed silently (e.g., transient import error),
+    # force-mark from on-disk archive/ truth. Skipped if FORCE_ITERATION_BACKFILL=no.
+    if [ "${FORCE_ITERATION_BACKFILL:-yes}" = "yes" ]; then
+      SKILLS_PARENT="${HOME}/.agents/skills" \
+      MAIN_ROOT="$project_root" \
+      CHANGE_NAME="$change_name" \
+      ARCHIVE_COMMIT_SHA="$archive_commit_sha" \
+        python3 -c '
+import os, sys
+sys.path.insert(0, os.environ["SKILLS_PARENT"])
+try:
+    from skills._lib.iteration.repair import force_mark_archived
+except ImportError as e:
+    print(f"⚠️  repair module unavailable: {e}", file=sys.stderr)
+    sys.exit(0)
+try:
+    main_root = os.environ["MAIN_ROOT"]
+    change_name = os.environ["CHANGE_NAME"]
+    sha = os.environ.get("ARCHIVE_COMMIT_SHA") or None
+    modified = force_mark_archived(main_root, change_name, archive_commit_sha=sha)
+    if modified:
+        print(f"⚠️ iteration.json sync failed — auto-recovered via on-disk scan for {change_name}", file=sys.stderr)
+except Exception as e:
+    print(f"⚠️ on-disk reconciliation failed: {e}", file=sys.stderr)
+' || true
+    else
+      echo "⚠️ FORCE_ITERATION_BACKFILL=no set — skipping on-disk reconciliation" >&2
+    fi
+
     # Delete branch
     if git -C "$project_root" branch -d "$branch" 2>/dev/null; then
       echo "✅ Branch 已删除: $branch"
