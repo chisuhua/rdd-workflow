@@ -119,3 +119,27 @@ def build_agent_prompt(acs: list[dict], change_name: str) -> tuple[str, str]:
     )
     user_prompt = "\n".join(user_lines)
     return _SYSTEM_PROMPT_TEMPLATE, user_prompt
+
+
+def invoke_ai_agent(system: str, user: str) -> str:
+    """Call LLM with tools. Returns raw text.
+
+    In mock mode (AC_LLM_MOCK=yes), returns canned response from mocks module.
+    In real mode, requires API key env var; raises AcVerifierError on failure.
+    """
+    if os.environ.get("AC_LLM_MOCK", "").lower() == "yes":
+        from skills.ac_verifier.scripts import ac_verifier_mocks
+        return ac_verifier_mocks.mock_invoke(system, user)
+
+    provider = os.environ.get("AC_LLM_PROVIDER", "").lower()
+    if not provider:
+        raise AcVerifierError(
+            "AC_LLM_PROVIDER not set and AC_LLM_MOCK != yes. "
+            "Set AC_LLM_PROVIDER=openai|anthropic|local-ollama or use AC_LLM_MOCK=yes."
+        )
+    # Real LLM invocation is delegated to a future implementation.
+    # v1 ships mock-first; real provider implementation in Task 9.
+    raise AcVerifierError(
+        f"Real LLM provider '{provider}' not yet wired in v1. "
+        f"Use AC_LLM_MOCK=yes for testing."
+    )

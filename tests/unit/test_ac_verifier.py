@@ -91,3 +91,38 @@ def test_build_prompt_requires_json_schema():
     assert "ac_id" in system
     assert "status" in system
     assert "pass" in system and "fail" in system
+
+
+import os
+import pytest
+from skills.ac_verifier.scripts.ac_verifier import invoke_ai_agent, AcVerifierError
+
+
+def test_invoke_ai_agent_mock_pass(monkeypatch):
+    """Mock mode returns canned JSON."""
+    monkeypatch.setenv("AC_LLM_MOCK", "yes")
+    monkeypatch.setenv("AC_LLM_MOCK_SCENARIO", "mock_pass_all")
+    raw = invoke_ai_agent("system", "AC-1: foo\nAC-2: bar")
+    import json
+    parsed = json.loads(raw)
+    assert len(parsed) == 2
+    assert parsed[0]["status"] == "pass"
+    assert parsed[1]["status"] == "pass"
+
+
+def test_invoke_ai_agent_mock_fail(monkeypatch):
+    """Mock fail scenario returns one fail."""
+    monkeypatch.setenv("AC_LLM_MOCK", "yes")
+    monkeypatch.setenv("AC_LLM_MOCK_SCENARIO", "mock_fail_one")
+    raw = invoke_ai_agent("system", "AC-1: foo\nAC-2: bar")
+    import json
+    parsed = json.loads(raw)
+    statuses = [v["status"] for v in parsed]
+    assert "fail" in statuses
+
+
+def test_invoke_ai_agent_raises_on_unmocked():
+    """Without AC_LLM_MOCK=yes, raises AcVerifierError (no real LLM in unit tests)."""
+    os.environ.pop("AC_LLM_MOCK", None)
+    with pytest.raises(AcVerifierError):
+        invoke_ai_agent("system", "user")
