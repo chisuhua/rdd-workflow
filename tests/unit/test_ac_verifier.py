@@ -128,7 +128,6 @@ def test_invoke_ai_agent_raises_on_unmocked():
 
 
 import json
-from jsonschema import ValidationError
 from skills.ac_verifier.scripts.ac_verifier import parse_verdict
 
 
@@ -159,6 +158,6 @@ def test_parse_verdict_missing_ac_filled_as_fail():
 
 
 def test_parse_verdict_invalid_json_raises():
-    """Unparseable JSON raises AcVerifierError after 1 internal retry."""
+    """Unparseable JSON raises AcVerifierError."""
     with pytest.raises(AcVerifierError):
         parse_verdict("not json at all", expected_count=2)
