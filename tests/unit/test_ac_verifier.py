@@ -56,3 +56,38 @@ def test_parse_acs_missing_section(tmp_path: Path):
     p = tmp_path / "proposal.md"
     p.write_text("# T\n\n## Acceptance\n- something\n", encoding="utf-8")
     assert parse_acs(p) == []
+
+
+from skills.ac_verifier.scripts.ac_verifier import build_agent_prompt
+
+
+def test_build_prompt_includes_all_acs():
+    """All AC descriptions appear in the user prompt."""
+    acs = [
+        {"ac_id": "AC-1", "description": "First AC", "has_checkbox": True},
+        {"ac_id": "AC-2", "description": "Second AC", "has_checkbox": False},
+    ]
+    system, user = build_agent_prompt(acs, "my-change")
+    assert "AC-1" in user
+    assert "First AC" in user
+    assert "AC-2" in user
+    assert "Second AC" in user
+    assert "my-change" in system or "my-change" in user
+
+
+def test_build_prompt_declares_tools():
+    """System prompt lists all available tools."""
+    acs = [{"ac_id": "AC-1", "description": "x", "has_checkbox": False}]
+    system, _ = build_agent_prompt(acs, "x")
+    for tool in ["codegraph_explore", "grep_app_searchGitHub", "codebase-memory-mcp", "git"]:
+        assert tool in system, f"Tool {tool} not in system prompt"
+
+
+def test_build_prompt_requires_json_schema():
+    """System prompt specifies JSON array output format."""
+    acs = [{"ac_id": "AC-1", "description": "x", "has_checkbox": False}]
+    system, _ = build_agent_prompt(acs, "x")
+    assert "JSON" in system or "json" in system
+    assert "ac_id" in system
+    assert "status" in system
+    assert "pass" in system and "fail" in system
