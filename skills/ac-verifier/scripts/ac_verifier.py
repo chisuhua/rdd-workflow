@@ -41,16 +41,16 @@ For each AC, you MUST:
 
 Output format (strict JSON array, no other text):
 [
-  {{
+  {
     "ac_id": "AC-1",
     "description": "<verbatim AC text>",
     "status": "pass" | "fail" | "partial",
     "confidence": 0.0-1.0,
     "evidence": [
-      {{"tool": "codegraph", "query": "...", "result_summary": "..."}}
+      {"tool": "codegraph", "query": "...", "result_summary": "..."}
     ],
     "reasoning": "1-2 sentences justifying verdict"
-  }}
+  }
 ]
 
 Array length MUST equal AC count. Omitting any AC invalidates response.
