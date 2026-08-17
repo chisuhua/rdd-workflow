@@ -232,3 +232,45 @@ def test_append_audit_log_appends(tmp_path: Path):
     assert len(lines) == 2
     assert json.loads(lines[0])["change_name"] == "change-a"
     assert json.loads(lines[1])["change_name"] == "change-b"
+
+
+from skills.ac_verifier.scripts.ac_verifier import verify_change
+
+
+def test_verify_change_end_to_end_pass(monkeypatch, tmp_path: Path):
+    """Mock pass-all scenario returns exit 0 and writes audit log."""
+    monkeypatch.setenv("AC_LLM_MOCK", "yes")
+    monkeypatch.setenv("AC_LLM_MOCK_SCENARIO", "mock_pass_all")
+    proposal = tmp_path / "proposal.md"
+    proposal.write_text(
+        "# T\n\n## 验收标准\n\n- AC one\n- AC two\n",
+        encoding="utf-8",
+    )
+    exit_code = verify_change("test-change", proposal, project_root=tmp_path, strict=False)
+    assert exit_code == 0
+    log = tmp_path / ".rddf" / "state" / ".ac-verification.jsonl"
+    assert log.is_file()
+
+
+def test_verify_change_strict_blocks_on_fail(monkeypatch, tmp_path: Path):
+    """Mock fail-one + strict → exit 1."""
+    monkeypatch.setenv("AC_LLM_MOCK", "yes")
+    monkeypatch.setenv("AC_LLM_MOCK_SCENARIO", "mock_fail_one")
+    proposal = tmp_path / "proposal.md"
+    proposal.write_text("# T\n\n## 验收标准\n\n- one\n- two\n", encoding="utf-8")
+    exit_code = verify_change("test-change", proposal, project_root=tmp_path, strict=True)
+    assert exit_code == 1
+
+
+def test_verify_change_no_proposal_returns_2(tmp_path: Path):
+    """Missing proposal.md → exit 2 (skip)."""
+    exit_code = verify_change("test-change", tmp_path / "missing.md", project_root=tmp_path, strict=False)
+    assert exit_code == 2
+
+
+def test_verify_change_no_ac_section_returns_0(tmp_path: Path):
+    """Proposal without `## 验收标准` → exit 0 (no ACs to verify)."""
+    proposal = tmp_path / "proposal.md"
+    proposal.write_text("# T\n\n## Other\n- thing\n", encoding="utf-8")
+    exit_code = verify_change("test-change", proposal, project_root=tmp_path, strict=False)
+    assert exit_code == 0

@@ -245,3 +245,42 @@ def append_audit_log(
     }
     with log_path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+def verify_change(
+    change_name: str,
+    proposal_path: Path,
+    project_root: Optional[Path] = None,
+    strict: bool = False,
+    dry_run: bool = False,
+) -> int:
+    """End-to-end AC verification. Returns exit code.
+
+    Orchestrates: parse → build prompt → invoke AI → parse verdict → apply rules.
+    Writes audit log unless dry_run=True.
+    """
+    if not proposal_path.is_file():
+        return 2  # skip — no proposal
+
+    acs = parse_acs(proposal_path)
+    if not acs:
+        return 0  # No ACs to verify (treat as pass-through per spec)
+
+    system, user = build_agent_prompt(acs, change_name)
+
+    # Single LLM call (no internal retry; caller handles via AcVerifierError)
+    try:
+        raw = invoke_ai_agent(system, user)
+    except AcVerifierError as e:
+        print(f"⚠️  AC verification LLM error: {e}", file=sys.stderr)
+        return 3  # error
+
+    verdict = parse_verdict(raw, expected_count=len(acs))
+    exit_code = apply_gate_rules(verdict, strict=strict)
+
+    if not dry_run:
+        if project_root is None:
+            project_root = Path.cwd()
+        append_audit_log(verdict, change_name, exit_code, project_root=project_root)
+
+    return exit_code
