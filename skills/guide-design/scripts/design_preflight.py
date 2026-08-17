@@ -89,9 +89,12 @@ def _read_proposal_subjects(improvements_dir: str) -> tuple[List[str], int]:
         content = f.read_text(encoding="utf-8")
         m = _SUBJECT_RE.search(content)
         if m:
-            subject = m.group(1).strip()
-            if subject and subject != "不适用":
-                matched.append(subject)
+            raw = m.group(1).strip()
+            if raw and raw != "不适用":
+                for part in re.split(r"[；;]", raw):
+                    s = part.strip()
+                    if s:
+                        matched.append(s)
         else:
             unmapped_legacy += 1
 
