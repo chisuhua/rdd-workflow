@@ -8,7 +8,3 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [fix-schema-version-field](.rddf/improvements/fix-schema-version-field.md) | P1 | 审计 add-cross-repo-state-schemas 验收时发现 17 schema 缺 version 字段，doctor 报 5 个 CRITICAL 根因 | 2026-08-17 | pending |
-| [complete-add-contract-lint-ci-gate](.rddf/improvements/complete-add-contract-lint-ci-gate.md) | P1 | 审计 add-contract-lint-ci-gate 验收时发现 3 个 AC 未实现（README CI 示例 / rddf CLI / STRICT_CONTRACT_GATE） | 2026-08-17 | pending |
-| [complete-add-cross-repo-deps-orchestration](.rddf/improvements/complete-add-cross-repo-deps-orchestration.md) | P1 | 审计 add-cross-repo-deps-orchestration 验收时发现 2 个 AC 未实现（STRICT_DEPS_GATE / README 跨仓库依赖示例） | 2026-08-17 | pending |
-| [enforce-tasks-completion-before-archive](.rddf/improvements/enforce-tasks-completion-before-archive.md) | P2 | 审计 9 个归档 change 时发现 tasks.md 完成度参差不齐（0/55、34/41、8/10），无 gate 兜底 | 2026-08-17 | pending |
