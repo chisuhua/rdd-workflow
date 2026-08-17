@@ -41,8 +41,10 @@ def _read_roadmap_themes(roadmap_path: str) -> List[Dict[str, str]]:
 
         start = phase_match.end()
         next_phase = _PHASE_HEADER_RE.search(content, start)
-        end = start + next_phase.start() if next_phase else len(content)
+        end = next_phase.start() if next_phase else len(content)
         phase_section = content[start:end]
+
+        in_category_table = False
 
         for line in phase_section.splitlines():
             if not line.strip().startswith("|"):
@@ -50,7 +52,17 @@ def _read_roadmap_themes(roadmap_path: str) -> List[Dict[str, str]]:
             cells = [c.strip() for c in line.strip().strip("|").split("|")]
             if len(cells) < 5:
                 continue
-            if cells[0] in {"分类ID", "--------"} or set(cells[0]) <= {"-"}:
+            if cells[0] == "分类ID" and "预期改进方向" in cells[4]:
+                in_category_table = True
+                continue
+            if cells[0] in {"分类ID", "ID", "缺口", "启动条件", "日期"}:
+                in_category_table = False
+                continue
+            if set(cells[0]) <= {"-"}:
+                continue
+            if not in_category_table:
+                continue
+            if not (cells[0].startswith("`") and cells[0].endswith("`")):
                 continue
             for theme in _parse_themes_cell(cells[4]):
                 themes.append({
