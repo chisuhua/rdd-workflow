@@ -94,7 +94,6 @@ def test_build_prompt_requires_json_schema():
 
 
 import os
-import pytest
 from skills.ac_verifier.scripts.ac_verifier import invoke_ai_agent, AcVerifierError
 
 
