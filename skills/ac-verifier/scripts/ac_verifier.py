@@ -207,8 +207,8 @@ def parse_verdict(raw: str, expected_count: int) -> list[dict]:
 def apply_gate_rules(verdict: list[dict], strict: bool) -> int:
     """Return exit code based on verdict + strict flag.
 
-    0 if all pass (warning case under non-strict)
-    1 if any fail (warning under non-strict; blocking under strict)
+    0 if all pass, or any fail under non-strict (warning mode)
+    1 if any fail under strict (blocking mode)
     2 if no ACs in verdict (treated as skip)
     """
     if not verdict:
