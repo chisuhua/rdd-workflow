@@ -279,7 +279,12 @@ def verify_change(
         print(f"⚠️  AC verification LLM error: {e}", file=sys.stderr)
         return 3  # error
 
-    verdict = parse_verdict(raw, expected_count=len(acs))
+    try:
+        verdict = parse_verdict(raw, expected_count=len(acs))
+    except AcVerifierError as e:
+        print(f"⚠️  AC verification parse error: {e}", file=sys.stderr)
+        return 3  # error
+
     exit_code = apply_gate_rules(verdict, strict=strict)
 
     if not dry_run:
