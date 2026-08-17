@@ -201,3 +201,34 @@ def test_apply_gate_rules_empty_verdict_returns_2():
     """Empty verdict (no ACs) → exit 2 (skipped)."""
     assert apply_gate_rules([], strict=False) == 2
     assert apply_gate_rules([], strict=True) == 2
+
+
+from skills.ac_verifier.scripts.ac_verifier import append_audit_log
+
+
+def test_append_audit_log_creates_file(tmp_path: Path):
+    """First append creates .rddf/state/.ac-verification.jsonl."""
+    project_root = tmp_path
+    verdict = [{"ac_id": "AC-1", "status": "pass"}]
+    append_audit_log(verdict, "my-change", exit_code=0, project_root=project_root)
+    log = project_root / ".rddf" / "state" / ".ac-verification.jsonl"
+    assert log.is_file()
+    lines = log.read_text(encoding="utf-8").strip().split("\n")
+    assert len(lines) == 1
+    entry = json.loads(lines[0])
+    assert entry["change_name"] == "my-change"
+    assert entry["exit_code"] == 0
+    assert entry["verdict"][0]["ac_id"] == "AC-1"
+    assert "ts" in entry
+
+
+def test_append_audit_log_appends(tmp_path: Path):
+    """Subsequent appends add lines without overwriting."""
+    project_root = tmp_path
+    append_audit_log([{"ac_id": "AC-1", "status": "pass"}], "change-a", 0, project_root=project_root)
+    append_audit_log([{"ac_id": "AC-1", "status": "fail"}], "change-b", 1, project_root=project_root)
+    log = project_root / ".rddf" / "state" / ".ac-verification.jsonl"
+    lines = log.read_text(encoding="utf-8").strip().split("\n")
+    assert len(lines) == 2
+    assert json.loads(lines[0])["change_name"] == "change-a"
+    assert json.loads(lines[1])["change_name"] == "change-b"

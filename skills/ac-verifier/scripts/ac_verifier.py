@@ -217,3 +217,31 @@ def apply_gate_rules(verdict: list[dict], strict: bool) -> int:
     if has_fail and strict:
         return 1
     return 0
+
+
+def append_audit_log(
+    verdict: list[dict],
+    change_name: str,
+    exit_code: int,
+    project_root: Optional[Path] = None,
+) -> None:
+    """Append JSONL entry to .rddf/state/.ac-verification.jsonl.
+
+    Entry: {ts, change_name, verdict, exit_code, llm_model, llm_provider}.
+    Idempotent: creates directory + file on first call, appends on subsequent.
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+    log_path = project_root / ".rddf" / "state" / ".ac-verification.jsonl"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    entry = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "change_name": change_name,
+        "exit_code": exit_code,
+        "llm_provider": os.environ.get("AC_LLM_PROVIDER", "mock"),
+        "llm_model": os.environ.get("AC_LLM_MODEL", "mock"),
+        "verdict": verdict,
+    }
+    with log_path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
