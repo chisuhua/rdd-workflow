@@ -4,6 +4,7 @@
 
 setup() {
     REPO_ROOT="$(cd "${BATS_TEST_DIRNAME}/../.." && pwd)"
+    export REPO_ROOT
     WORK="$(mktemp -d)"
     export RDDF_TRACE_DIR="$WORK/.rddf/state/trace"
     export RDDF_PHASE="int-tee"

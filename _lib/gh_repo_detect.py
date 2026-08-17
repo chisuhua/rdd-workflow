@@ -123,3 +123,16 @@ def detect_gh_repo() -> str:
         "无法检测 GitHub repo，请显式设置 RDDF_PROPOSAL_GH_REPO=owner/repo "
         "或运行 `git remote add origin git@github.com:owner/repo.git`"
     )
+
+
+def detect_hub_repo() -> str:
+    """Detect the Hub repo for cross-repo federation.
+
+    Priority:
+    1. RDDF_REPORT_GH_REPO env var (e.g., "my-org/rdd-hub")
+    2. Default: "rdd-hub" (assumes same Org as current repo)
+
+    Returns:
+        str: <owner>/<repo> of the Hub
+    """
+    return os.environ.get("RDDF_REPORT_GH_REPO", "rdd-hub")

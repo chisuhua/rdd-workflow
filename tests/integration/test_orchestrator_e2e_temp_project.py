@@ -73,6 +73,12 @@ def test_orchestrator_subprocess_in_temp_project(temp_project):
         "RDDF_PHASE": "test-phase",
         "RDDF_TRACE_DIR": str(trace_dir),
         "RDDF_PROJECT_ROOT": str(temp_project),
+        # Lock to legacy capture mode (ADR-0027 §1.0.1) so the trace contains
+        # exactly one `subprocess` event. Default `tee` mode emits `reader_chunk`
+        # events first (commit d089ca0), which would change events[0] from
+        # `subprocess` to `reader_chunk`. This test's intent — "verify trace
+        # has a subprocess event with returncode=0" — is independent of mode.
+        "RDDF_ORCHESTRATOR_CAPTURE": "capture",
     })
     
     result = subprocess.run(

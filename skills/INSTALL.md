@@ -1,6 +1,6 @@
 ---
 name: INSTALL
-description: 安装 RDD Workflow 技能——支持全局安装（~/.agents/skills/，跨项目可用）和项目安装（.opencode/skills/rdd-workflow/）。全局安装后从 1 个顶层 INSTALL.md 加 19 个 per-skill 子目录复制全部 20 个子技能到目标位置；自动安装 Python 依赖和 rddf CLI。
+description: 安装 RDD Workflow 技能——支持全局安装（~/.agents/skills/，跨项目可用）和项目安装（.opencode/skills/rdd-workflow/）。全局安装后从 1 个顶层 INSTALL.md 加 22 个 per-skill 子目录复制全部 23 个子技能到目标位置；自动安装 Python 依赖和 rddf CLI。
 alias: install
 version: "3.0"
 author: sisyphus
@@ -36,6 +36,9 @@ author: sisyphus
 | `rdd-workflow-brainstorm` | 提案头脑风暴（5 段格式输出至 .rddf/improvements/） |
 | `INSTALL` | 当前技能（顶层安装入口，被全局/项目安装流程使用） |
 | `guide-design` | Design 阶段状态机（v2.1 新增；提案审查 + 内容审查） |
+| `contract-check` | Spoke 本地实现 vs Hub OpenAPI contract 一致性校验（Breaking-Change 阻断 CI） |
+| `cross-repo-protocol` | Hub-Spoke 联邦 MCP 客户端（4 Hub 工具 + REST fallback + trace logging） |
+| `spoke-system-prompt-injection` | Hub-Spoke 协议注入 AI 助手配置（Cursor/Cline/Continue/Copilot/Claude Code） |
 
 ## 两种安装模式
 

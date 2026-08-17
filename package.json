@@ -49,6 +49,9 @@
     "rdd-workflow-writing-plans",
     "rdd-env-check",
     "rdd-doctor",
-    "rdd-hub-bootstrap"
+    "rdd-hub-bootstrap",
+    "contract-check",
+    "cross-repo-protocol",
+    "spoke-system-prompt-injection"
   ]
 }

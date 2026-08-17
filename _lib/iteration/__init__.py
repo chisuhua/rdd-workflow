@@ -49,7 +49,7 @@ from __future__ import annotations
 # ---------------------------------------------------------------------------
 # Schema layer
 # ---------------------------------------------------------------------------
-from skills._lib.iteration.schema import (
+from .schema import (
     _BLOCKING_STATUSES,
     _DEFAULT_PHASE,
     _UNSET,
@@ -65,7 +65,7 @@ from skills._lib.iteration.schema import (
 # ---------------------------------------------------------------------------
 # Store layer (CRUD + mutations + queries + feature grouping)
 # ---------------------------------------------------------------------------
-from skills._lib.iteration.store import (
+from .store import (
     _atomic_write,
     _backup_corrupt_file,
     _LOCK_TIMEOUT,
@@ -99,12 +99,12 @@ from skills._lib.iteration.store import (
 # ---------------------------------------------------------------------------
 # Render layer
 # ---------------------------------------------------------------------------
-from skills._lib.iteration.render import print_view
+from .render import print_view
 
 # ---------------------------------------------------------------------------
 # Post-archive sync helper (fix-archive-iteration-sync, 2026-08-05)
 # ---------------------------------------------------------------------------
-from skills._lib.iteration import post_archive  # noqa: E402  (re-export)
+from . import post_archive  # noqa: E402  (re-export)
 
 # ---------------------------------------------------------------------------
 # Aliases preserved for backward compatibility
@@ -151,6 +151,33 @@ def init_iteration(project_root: str, changes=None) -> dict:
 # The original module named this `list_blocked`; alias preserved so
 # `from skills._lib.iteration import get_blocked` works.
 get_blocked = list_blocked
+
+
+# ---------------------------------------------------------------------------
+# v7 schema helpers (commit 02fe62f harden-archive-iteration-sync)
+# ---------------------------------------------------------------------------
+# These functions live in `skills/_lib/iteration/__init__.py` and are
+# also re-exported here so the flatten-layout (root `_lib/`) and the
+# legacy layout (`skills/_lib/`) expose the same public surface.
+import json as _json
+from pathlib import Path as _Path
+from typing import Union as _Union
+
+_PathLike = _Union[str, _Path]
+
+
+def load_iteration_v6_compat(data: dict) -> dict:
+    """Migrate v6 → v7 (add cross_repo_dependencies default)."""
+    data = dict(data)
+    data["version"] = 7
+    for change in data.get("changes", {}).values():
+        change.setdefault("cross_repo_dependencies", [])
+    return data
+
+
+def save_iteration_v7(path: _PathLike, data: dict) -> None:
+    """Write iteration data in v7 format."""
+    _Path(path).write_text(_json.dumps(data, indent=2))
 
 
 __all__ = [
