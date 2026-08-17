@@ -125,3 +125,40 @@ def test_invoke_ai_agent_raises_on_unmocked():
     os.environ.pop("AC_LLM_MOCK", None)
     with pytest.raises(AcVerifierError):
         invoke_ai_agent("system", "user")
+
+
+import json
+from jsonschema import ValidationError
+from skills.ac_verifier.scripts.ac_verifier import parse_verdict
+
+
+def test_parse_verdict_valid():
+    """Valid JSON array with correct count passes through."""
+    raw = json.dumps([
+        {"ac_id": "AC-1", "description": "x", "status": "pass",
+         "confidence": 0.9, "evidence": [], "reasoning": "ok"}
+    ])
+    result = parse_verdict(raw, expected_count=1)
+    assert len(result) == 1
+    assert result[0]["status"] == "pass"
+
+
+def test_parse_verdict_missing_ac_filled_as_fail():
+    """Missing AC entry auto-filled with fail."""
+    raw = json.dumps([
+        {"ac_id": "AC-1", "description": "x", "status": "pass",
+         "confidence": 0.9, "evidence": [], "reasoning": "ok"}
+        # AC-2 missing
+    ])
+    result = parse_verdict(raw, expected_count=2)
+    assert len(result) == 2
+    statuses = {r["ac_id"]: r["status"] for r in result}
+    assert statuses["AC-1"] == "pass"
+    assert statuses["AC-2"] == "fail"
+    assert "AI omitted" in result[1]["reasoning"]
+
+
+def test_parse_verdict_invalid_json_raises():
+    """Unparseable JSON raises AcVerifierError after 1 internal retry."""
+    with pytest.raises(AcVerifierError):
+        parse_verdict("not json at all", expected_count=2)

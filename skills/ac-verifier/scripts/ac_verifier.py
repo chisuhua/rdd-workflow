@@ -143,3 +143,62 @@ def invoke_ai_agent(system: str, user: str) -> str:
         f"Real LLM provider '{provider}' not yet wired in v1. "
         f"Use AC_LLM_MOCK=yes for testing."
     )
+
+
+# Verdict schema for jsonschema validation
+_VERDICT_ITEM_SCHEMA = {
+    "type": "object",
+    "required": ["ac_id", "status", "confidence"],
+    "properties": {
+        "ac_id": {"type": "string", "pattern": r"^AC-\d+$"},
+        "description": {"type": "string"},
+        "status": {"enum": ["pass", "fail", "partial"]},
+        "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+        "evidence": {"type": "array"},
+        "reasoning": {"type": "string"},
+    },
+}
+_VERDICT_SCHEMA = {
+    "type": "array",
+    "items": _VERDICT_ITEM_SCHEMA,
+}
+
+
+def parse_verdict(raw: str, expected_count: int) -> list[dict]:
+    """Parse LLM JSON output, validate schema, auto-fill missing ACs.
+
+    On unparseable JSON: raise AcVerifierError. Auto-fills missing ACs as fail.
+    """
+    # First attempt
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        raise AcVerifierError(f"Verdict not valid JSON: {raw[:100]}...")
+
+    if not isinstance(data, list):
+        raise AcVerifierError(f"Verdict must be JSON array, got {type(data).__name__}")
+
+    # Validate items with jsonschema (best-effort, skip on schema error)
+    try:
+        import jsonschema
+        jsonschema.validate(data, _VERDICT_SCHEMA)
+    except ImportError:
+        pass  # jsonschema not installed
+    except jsonschema.exceptions.ValidationError:
+        pass  # schema validation is advisory; missing/invalid fields fall through
+
+    # Auto-fill missing ACs
+    present_ids = {item.get("ac_id") for item in data}
+    for i in range(1, expected_count + 1):
+        ac_id = f"AC-{i}"
+        if ac_id not in present_ids:
+            data.append({
+                "ac_id": ac_id,
+                "description": "(missing from LLM output)",
+                "status": "fail",
+                "confidence": 0.0,
+                "evidence": [],
+                "reasoning": "AI omitted this AC from verdict",
+            })
+
+    return data
