@@ -161,3 +161,43 @@ def test_parse_verdict_invalid_json_raises():
     """Unparseable JSON raises AcVerifierError."""
     with pytest.raises(AcVerifierError):
         parse_verdict("not json at all", expected_count=2)
+
+
+from skills.ac_verifier.scripts.ac_verifier import apply_gate_rules
+
+
+def test_apply_gate_rules_all_pass_returns_0():
+    """All pass → exit 0."""
+    verdict = [{"ac_id": "AC-1", "status": "pass"}]
+    assert apply_gate_rules(verdict, strict=False) == 0
+
+
+def test_apply_gate_rules_one_fail_warning_returns_0():
+    """One fail, not strict → exit 0 (warning, not blocking)."""
+    verdict = [
+        {"ac_id": "AC-1", "status": "pass"},
+        {"ac_id": "AC-2", "status": "fail"},
+    ]
+    assert apply_gate_rules(verdict, strict=False) == 0
+
+
+def test_apply_gate_rules_one_fail_strict_returns_1():
+    """One fail, strict → exit 1 (blocking)."""
+    verdict = [
+        {"ac_id": "AC-1", "status": "pass"},
+        {"ac_id": "AC-2", "status": "fail"},
+    ]
+    assert apply_gate_rules(verdict, strict=True) == 1
+
+
+def test_apply_gate_rules_partial_warning_returns_0():
+    """Partial counts as warning (not fail)."""
+    verdict = [{"ac_id": "AC-1", "status": "partial"}]
+    assert apply_gate_rules(verdict, strict=False) == 0
+    assert apply_gate_rules(verdict, strict=True) == 0  # partial != fail
+
+
+def test_apply_gate_rules_empty_verdict_returns_2():
+    """Empty verdict (no ACs) → exit 2 (skipped)."""
+    assert apply_gate_rules([], strict=False) == 2
+    assert apply_gate_rules([], strict=True) == 2
