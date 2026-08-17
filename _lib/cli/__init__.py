@@ -76,6 +76,7 @@ for _dash, _us in _DASH_SKILLS:
 # Each handler has signature ``cmd_<name>(args: list[str]) -> int`` and
 # returns a process exit code (0 = success, non-zero = error).
 _ROUTES: Dict[str, str] = {
+    "ac-verify": "skills._lib.cli.ac_verify_cmd:cmd_ac_verify",
     "archive": "skills._lib.cli.archive_cmd:cmd_archive",
     "archive-sync": "skills._lib.cli.archive_sync_cmd:cmd_archive_sync",
     "cleanup": "skills._lib.cli.cleanup_cmd:cmd_cleanup",
