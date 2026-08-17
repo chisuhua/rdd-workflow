@@ -128,8 +128,12 @@ def invoke_ai_agent(system: str, user: str) -> str:
     In real mode, requires API key env var; raises AcVerifierError on failure.
     """
     if os.environ.get("AC_LLM_MOCK", "").lower() == "yes":
-        from skills.ac_verifier.scripts import ac_verifier_mocks
-        return ac_verifier_mocks.mock_invoke(system, user)
+        import importlib.util
+        _mock_path = Path(__file__).resolve().parent / "ac_verifier_mocks.py"
+        _spec = importlib.util.spec_from_file_location("ac_verifier_mocks", _mock_path)
+        _mod = importlib.util.module_from_spec(_spec)
+        _spec.loader.exec_module(_mod)
+        return _mod.mock_invoke(system, user)
 
     provider = os.environ.get("AC_LLM_PROVIDER", "").lower()
     if not provider:
@@ -284,3 +288,26 @@ def verify_change(
         append_audit_log(verdict, change_name, exit_code, project_root=project_root)
 
     return exit_code
+
+
+def _cli_main():
+    """CLI entry point invoked by ac_verifier.sh via `python3 -m ...`."""
+    import argparse
+    parser = argparse.ArgumentParser(description="AC verifier")
+    parser.add_argument("change_name")
+    parser.add_argument("--proposal", type=Path, required=True)
+    parser.add_argument("--project-root", type=Path, default=None)
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--strict", action="store_true")
+    args = parser.parse_args()
+    sys.exit(verify_change(
+        change_name=args.change_name,
+        proposal_path=args.proposal,
+        project_root=args.project_root,
+        strict=args.strict,
+        dry_run=args.dry_run,
+    ))
+
+
+if __name__ == "__main__":
+    _cli_main()
