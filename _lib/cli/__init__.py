@@ -80,6 +80,7 @@ _ROUTES: Dict[str, str] = {
     "archive": "skills._lib.cli.archive_cmd:cmd_archive",
     "archive-sync": "skills._lib.cli.archive_sync_cmd:cmd_archive_sync",
     "cleanup": "skills._lib.cli.cleanup_cmd:cmd_cleanup",
+    "contract-check": "skills._lib.cli.contract_check_cmd:cmd_contract_check",
     "dashboard": "skills._lib.cli.dashboard_cmd:cmd_dashboard",
     "deps": "skills._lib.cli.deps_cmd:cmd_deps",
     "discover-ship-changes": "skills._lib.cli.discover_ship_changes_cmd:cmd_discover_ship_changes",

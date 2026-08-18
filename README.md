@@ -203,6 +203,63 @@ bash install.sh --spoke-init --tools cursor,cline
 
 详情见 [`docs/spoke-system-prompt.md`](docs/spoke-system-prompt.md)。
 
+#### CI 集成示例
+
+将 `rddf contract-check` 嵌入 CI 流水线,确保 Hub 契约与 Spoke 实现保持一致。提供 GitHub Actions 与 GitLab CI 两套配置,任选其一。
+
+**GitHub Actions** (`.github/workflows/contract-check.yml`):
+
+```yaml
+name: contract-check
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  contract-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: contract-check (push = warning)
+        if: github.event_name == 'push'
+        run: rddf contract-check --hub contracts/openapi.yaml --local impl/api.py
+        env:
+          SKIP_CONTRACT_GATE: "yes"
+      - name: contract-check (PR = strict)
+        if: github.event_name == 'pull_request'
+        run: rddf contract-check --hub contracts/openapi.yaml --local impl/api.py
+        env:
+          STRICT_CONTRACT_GATE: "yes"
+```
+
+**GitLab CI** (`.gitlab-ci.yml` 片段):
+
+```yaml
+contract-lint:
+  stage: test
+  image: python:3.11
+  before_script:
+    - pip install -r requirements.txt
+  script:
+    - |
+      if [ "$CI_PIPELINE_SOURCE" = "merge_request_event" ]; then
+        export STRICT_CONTRACT_GATE=yes
+      else
+        export SKIP_CONTRACT_GATE=yes
+      fi
+      rddf contract-check --hub contracts/openapi.yaml --local impl/api.py
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+```
+
+> PR / merge_request 阶段设 `STRICT_CONTRACT_GATE=yes` 触发严格阻断(breaking-change 退出码 1 即失败流水线);push 阶段设 `SKIP_CONTRACT_GATE=yes` 仅 warning,不阻断主线提交。如需 push 也阻断,把 `SKIP_CONTRACT_GATE` 替换为 `STRICT_CONTRACT_GATE`。
+
 ## 目录结构
 
 ```

@@ -153,6 +153,15 @@ except Exception:
       return 1
   fi
   echo ""
+
+  # Gate 4: contract-check (ADR-0018 gate escalation pattern).
+  # Default = warning only; STRICT_CONTRACT_GATE=yes blocks the gate.
+  echo ""
+  echo "门控 4: 契约一致性检查 (contract-check)"
+  if ! check_contract_gate; then
+      return 1
+  fi
+  echo ""
 }
 
 # Standalone Gate 3 runner (extracted for unit/integration testing).
@@ -223,6 +232,32 @@ except Exception as e:
       return 1
   fi
   echo "  ✅ 质量检查完成 (warning-only 或全部通过)"
+  return 0
+}
+
+# Gate 4: contract-check (ADR-0018 gate escalation pattern).
+# Honors STRICT_CONTRACT_GATE (escalate warning→error) and
+# SKIP_CONTRACT_GATE (bypass entirely). Default = warning only.
+check_contract_gate() {
+  if [ "${SKIP_CONTRACT_GATE:-no}" = "yes" ]; then
+      echo "[SKIP] contract gate skipped (SKIP_CONTRACT_GATE=yes)" >&2
+      return 0
+  fi
+  if ! command -v rddf >/dev/null 2>&1; then
+      echo "[INFO] rddf not on PATH, skipping contract gate" >&2
+      return 0
+  fi
+  local contract_output contract_rc=0
+  contract_output=$(rddf contract-check 2>&1) || contract_rc=$?
+  if [ "${contract_rc:-0}" -ne 0 ]; then
+      if [ "${STRICT_CONTRACT_GATE:-no}" = "yes" ]; then
+          echo "❌ STRICT_CONTRACT_GATE: contract breaking-change detected" >&2
+          echo "$contract_output" >&2
+          return 1
+      fi
+      echo "⚠️ contract breaking-change (warning, set STRICT_CONTRACT_GATE=yes to block):" >&2
+      echo "$contract_output" >&2
+  fi
   return 0
 }
 

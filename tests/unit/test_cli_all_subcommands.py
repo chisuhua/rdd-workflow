@@ -60,6 +60,7 @@ ALL_SUBCOMMANDS: tuple[str, ...] = (
     "archive",
     "archive-sync",
     "cleanup",
+    "contract-check",
     "dashboard",
     "deps",
     "discover-ship-changes",
