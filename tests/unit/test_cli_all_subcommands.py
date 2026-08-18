@@ -63,6 +63,7 @@ ALL_SUBCOMMANDS: tuple[str, ...] = (
     "contract-check",
     "dashboard",
     "deps",
+    "deps.cross-repo",
     "discover-ship-changes",
     "feature",
     "guide",
@@ -76,8 +77,10 @@ ALL_SUBCOMMANDS: tuple[str, ...] = (
     "report-issue",
     "sessions",
     "status",
+    "sync-hub",
     "validate",
     "version",
+    "watch-hub",
 )
 
 
@@ -211,6 +214,12 @@ class TestMainDispatchesToEachSubcommand:
 
         calls: dict[str, list[list[str]]] = {}
 
+        # Multiple subcommands may share one module (e.g. ``deps`` and
+        # ``deps.cross-repo`` both live in ``deps_cmd.py``). Reuse the fake
+        # module per module_path so the second registration does not clobber
+        # the first one's handler attribute.
+        fake_modules: dict[str, types.ModuleType] = {}
+
         for sub in ALL_SUBCOMMANDS:
             module_path, _, func_name = _ROUTES[sub].partition(":")
             _calls: list[list[str]] = []
@@ -223,9 +232,12 @@ class TestMainDispatchesToEachSubcommand:
 
                 return _handler
 
-            fake_module = types.ModuleType(module_path)
+            fake_module = fake_modules.get(module_path)
+            if fake_module is None:
+                fake_module = types.ModuleType(module_path)
+                fake_modules[module_path] = fake_module
+                sys.modules[module_path] = fake_module
             setattr(fake_module, func_name, _make_handler(sub))
-            sys.modules[module_path] = fake_module
 
         yield calls
 
