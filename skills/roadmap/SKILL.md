@@ -475,6 +475,39 @@ update_change_count(
 
 ---
 
+## 嵌套阶段语法（可选扩展）
+
+对于业务演进包含子阶段的项目（如 CppTLM Phase 7.A-7.F / Phase 9.0-9.6），roadmap 支持嵌套 ID：
+
+```markdown
+### Phase 7: CPU+GPGPU Fused SoC (APU-first) (phase-3)
+**目标**: ...
+**完成条件**:
+  - [ ] phase-3.1 ~ phase-3.6 全部完成
+
+#### 任务分类                    ← 【硬性约束】必须先于所有 ### 子阶段 heading
+| 分类ID | 名称 | 描述 | 优先级 | 预期改进方向 |
+|--------|------|------|--------|--------------|
+| gpu-infra | 7.A GPU 基础设施 | (phase-3.1) | P0 | ... |
+| ... | | | | |
+
+### 7.A GPU 基础设施 (phase-3.1)  ← 子阶段 heading
+#### 任务分类
+| 分类ID | 名称 | 描述 | 优先级 | 预期改进方向 |
+|--------|------|------|--------|--------------|
+| gpu-bundle | ... | ... | P0 | ... |
+```
+
+**约束**：
+
+1. 父 phase 伞表必须先于所有 `###` 子阶段 heading（`get_phase_categories` section 边界 regex 限制）
+2. change meta `roadmap.phase` 可指向子阶段 ID（`phase-3.3`）
+3. `advance_phase` 自动聚合子阶段完成度
+4. 嵌套 ID 语法：`phase-N.M`（数字后缀），业务标签（7.A/9.0）出现在 heading 文本
+5. 嵌套是正向扩展，平铺 `phase-N` 仍完全支持
+
+---
+
 ## 关键约束
 
 1. **roadmap.md 是用户可编辑的**：提供模板，但允许用户自由修改
