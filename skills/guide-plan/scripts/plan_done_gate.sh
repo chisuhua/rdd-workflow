@@ -162,6 +162,15 @@ except Exception:
       return 1
   fi
   echo ""
+
+  # Gate 5: cross-repo deps (ADR-0018 gate escalation pattern).
+  # Default = warning only; STRICT_DEPS_GATE=yes blocks the gate.
+  echo ""
+  echo "门控 5: 跨仓库依赖检查 (cross-repo-deps)"
+  if ! check_cross_repo_deps_gate; then
+      return 1
+  fi
+  echo ""
 }
 
 # Standalone Gate 3 runner (extracted for unit/integration testing).
@@ -257,6 +266,42 @@ check_contract_gate() {
       fi
       echo "⚠️ contract breaking-change (warning, set STRICT_CONTRACT_GATE=yes to block):" >&2
       echo "$contract_output" >&2
+  fi
+  return 0
+}
+
+# Gate 5: cross-repo deps (ADR-0018 gate escalation pattern).
+# Honors STRICT_DEPS_GATE (escalate warning→error) and
+# SKIP_DEPS_GATE (bypass entirely). Default = warning only.
+check_cross_repo_deps_gate() {
+  if [ "${SKIP_DEPS_GATE:-no}" = "yes" ]; then
+      echo "[SKIP] cross-repo deps gate skipped (SKIP_DEPS_GATE=yes)" >&2
+      return 0
+  fi
+  local PROJECT_ROOT
+  PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+  local blockers_output blockers_rc=0
+  blockers_output=$(PROJECT_ROOT="$PROJECT_ROOT" python3 -c "
+import os, sys
+sys.path.insert(0, os.environ.get('PROJECT_ROOT', '.'))
+try:
+    from skills._lib.cross_repo_gate import check_cross_repo_deps_blocked
+    blockers = check_cross_repo_deps_blocked(os.environ['PROJECT_ROOT'], spokes_key='default')
+    for b in blockers:
+        print(b)
+    sys.exit(1 if blockers else 0)
+except Exception as e:
+    print(f'[INFO] cross_repo_gate unavailable: {e}', file=sys.stderr)
+    sys.exit(0)
+" 2>/dev/null) || blockers_rc=$?
+  if [ "${blockers_rc:-0}" -ne 0 ]; then
+      if [ "${STRICT_DEPS_GATE:-no}" = "yes" ]; then
+          echo "❌ STRICT_DEPS_GATE: cross-repo deps blocker detected" >&2
+          echo "$blockers_output" >&2
+          return 1
+      fi
+      echo "⚠️ cross-repo deps blocker (warning, set STRICT_DEPS_GATE=yes to block):" >&2
+      echo "$blockers_output" >&2
   fi
   return 0
 }

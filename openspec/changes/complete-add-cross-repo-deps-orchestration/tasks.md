@@ -5,7 +5,7 @@
 
 ## Implementation
 
-- [ ] 1.1 创建 `_lib/cross_repo_gate.py`(新文件,避免污染 `cross_repo_deps.py` 纯算法模块)
+- [x] 1.1 创建 `_lib/cross_repo_gate.py`(新文件,避免污染 `cross_repo_deps.py` 纯算法模块)
   - 主函数: `check_cross_repo_deps_blocked(project_root: str, spokes_key: str) -> List[str]`
   - 内部步骤:
     1. `from skills._lib.cross_repo_deps_cache import load_cache, save_cache, is_cache_valid`
@@ -13,7 +13,7 @@
     3. 否则 → 调 `kahn_topological_sort(build_cross_repo_graph(spokes_data))` 重算 + `save_cache()` 写盘
   - 输出格式: 返回 `List[str]`,每条形如 `"<change-name>: blocked by <spoke-repo>"`(空列表 = 无 blocker)
   - 不读 env var(env var 由 `plan_done_gate.sh` 消费,本函数只输出 blocker 列表)
-- [ ] 1.2 在 `skills/guide-plan/scripts/plan_done_gate.sh` 实现 `STRICT_DEPS_GATE` 接线
+- [x] 1.2 在 `skills/guide-plan/scripts/plan_done_gate.sh` 实现 `STRICT_DEPS_GATE` 接线
   - 位置: line 146 之后(`STRICT_CHANGE_GATE` 检查 + `STRICT_CONTRACT_GATE` 调用之后)
   - 函数体(默认 warning):
     ```bash
@@ -38,17 +38,17 @@
     fi
     ```
   - 现有 plan quality checks 不受影响
-- [ ] 1.3 新增 `tests/unit/test_cross_repo_gate.py`(5 个关键路径)
+- [x] 1.3 新增 `tests/unit/test_cross_repo_gate.py`(5 个关键路径)
   - Case 1 (无 blocker): mock `load_cache` 返回 `{"blockers": []}` → `check_cross_repo_deps_blocked()` 返回 `[]`
   - Case 2 (单 blocker): mock `load_cache` 返回 `{"blockers": [{"change": "change1", "spoke": "org/foo"}]}` → 返回 `["change1: blocked by org/foo"]`
   - Case 3 (跨仓库 chain): mock 3 change 跨仓库依赖链 A→B→C → 返回所有 chain 节点
   - Case 4 (cycle-detect): mock 循环依赖 A↔B → 返回 `["⚠️ cycle detected: A -> B -> A"]` + cycle 路径字符串
   - Case 5 (cache-hit): mock `is_cache_valid` 返回 True → 第二次调用不调 `kahn_topological_sort`(用 `unittest.mock.patch` 验证)
-- [ ] 1.4 新增 `tests/integration/test_strict_deps_gate_wiring.bats`(≥3 用例)
+- [x] 1.4 新增 `tests/integration/test_strict_deps_gate_wiring.bats`(≥3 用例)
   - Case 1: 默认 warning — mock blocker + 无 `STRICT_DEPS_GATE` → `plan_done_gate` exit 0 + stderr warning
   - Case 2: STRICT 升级 — `STRICT_DEPS_GATE=yes` + blocker → exit 1 + stderr "❌ STRICT_DEPS_GATE"
   - Case 3: SKIP 跳过 — `SKIP_DEPS_GATE=yes` + blocker → exit 0,无任何输出
-- [ ] 1.5 README.md §跨项目协同 章节末尾新增 `### 跨仓库依赖示例` 子节(≥15 行)
+- [x] 1.5 README.md §跨项目协同 章节末尾新增 `### 跨仓库依赖示例` 子节(≥15 行)
   - 命令示例: `rddf deps cross-repo --spokes org/foo,org/bar`
   - Mermaid 图示例(独立 change 用 `subgraph`, 依赖用 `-->`, 冲突用 `-.->|冲突|`)
   - 推荐顺序表格(name / status / parallel_group / blocker)
@@ -59,11 +59,11 @@
     # 遇到跨仓库 blocker 时 plan-done 被阻断,stderr 输出 ❌ STRICT_DEPS_GATE
     ```
   - 紧急跳过: `export SKIP_DEPS_GATE=yes` 后 plan-done bypass cross-repo gate
-- [ ] 1.6 验证现有 cross-repo deps 测试保持 pass(无 regression)
+- [x] 1.6 验证现有 cross-repo deps 测试保持 pass(无 regression)
   - `tests/unit/test_cross_repo_deps.py` 14 个测试保持 pass
   - `tests/unit/test_cross_repo_deps_cache.py`(若有)测试保持 pass
   - 验证 `cross_repo_deps.py::kahn_topological_sort` 算法本身未被本提案修改
-- [ ] 1.7 手工验证
+- [x] 1.7 手工验证
   - 设置 `STRICT_DEPS_GATE=yes` 后跑 `guide-plan` plan-done 阶段,遇到跨仓库 blocker 时退出码非零
   - 未设置 `STRICT_DEPS_GATE` 时 exit 0 + warning
   - `SKIP_DEPS_GATE=yes` 时 exit 0,无 warning

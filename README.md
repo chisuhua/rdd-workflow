@@ -260,6 +260,48 @@ contract-lint:
 
 > PR / merge_request 阶段设 `STRICT_CONTRACT_GATE=yes` 触发严格阻断(breaking-change 退出码 1 即失败流水线);push 阶段设 `SKIP_CONTRACT_GATE=yes` 仅 warning,不阻断主线提交。如需 push 也阻断,把 `SKIP_CONTRACT_GATE` 替换为 `STRICT_CONTRACT_GATE`。
 
+#### 跨仓库依赖示例
+
+使用 `rddf deps cross-repo` 分析多个 Spoke 的跨仓库依赖,生成 Mermaid 图 + 推荐执行顺序。
+
+```bash
+rddf deps cross-repo --spokes org/foo,org/bar,org/baz
+```
+
+输出包含 4 个 section:依赖图(Mermaid)、每个 change 的 `cross_repo_dependencies` 列表、推荐执行顺序(按 wave 分组)、冲突检测。
+
+```mermaid
+graph TD
+  subgraph org/foo
+    foo-change-a["foo-change-a"]
+  end
+  subgraph org/bar
+    bar-change-b["bar-change-b"]
+  end
+  foo-change-a --> bar-change-b
+```
+
+| change | status | parallel_group | blocker |
+|--------|--------|---------------|---------|
+| bar-change-b | proposed | 0 | — |
+| foo-change-a | proposed | 1 | bar-change-b |
+
+启用严格门控(任何 cross-repo blocker 都阻断 plan-done):
+
+```bash
+export STRICT_DEPS_GATE=yes
+skill_use("guide-plan")  # 触发 plan_done_gate
+# 遇到跨仓库 blocker 时 plan-done 被阻断,stderr 输出 ❌ STRICT_DEPS_GATE
+```
+
+紧急跳过(完全 bypass cross-repo gate):
+
+```bash
+export SKIP_DEPS_GATE=yes  # plan-done 跳过 gate 5
+```
+
+依赖分析使用 24h TTL 缓存(`.rddf/state/.cross-repo-deps-cache.json`),同一 plan-done 流程内多次 gate 调用只计算一次。
+
 ## 目录结构
 
 ```
