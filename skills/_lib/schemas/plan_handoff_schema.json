@@ -1,5 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {
+    "const": "v1",
+    "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline. Future bumps require version-migration flow."
+  },
   "$id": "https://rdd-workflow.dev/schemas/plan_handoff_schema.json",
   "title": "Plan Handoff v1",
   "description": "Schema for .rddf/state/.plan-handoff.json emitted by guide-plan Phase 4 plan-done. Consumed by guide-ship Phase 1 (ship_plan.sh) and ship_archive.sh.",
@@ -28,12 +32,18 @@
       "description": "True if all change artifacts are committed to git"
     },
     "ship_started_at": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "format": "date-time",
       "description": "ISO-8601 timestamp when guide-ship started, or null before first ship entry"
     },
     "current_change": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "Name of the first active change (or null if none)"
     },
     "execution_mode_decisions": {
@@ -41,12 +51,32 @@
       "additionalProperties": {
         "type": "object",
         "properties": {
-          "mode": { "type": "string", "enum": ["lightweight", "worktree"] },
-          "reason": { "type": "string" },
-          "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
-          "details": { "type": "object" }
+          "mode": {
+            "type": "string",
+            "enum": [
+              "lightweight",
+              "worktree"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "details": {
+            "type": "object"
+          }
         },
-        "required": ["mode", "reason"]
+        "required": [
+          "mode",
+          "reason"
+        ]
       },
       "description": "Per-change execution mode decisions from deps analysis (ADR-0024). Keyed by change name."
     }

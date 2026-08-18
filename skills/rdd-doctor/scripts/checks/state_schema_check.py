@@ -48,6 +48,51 @@ def _build_schema_registry(schema_path: Path) -> Registry:
     return registry
 
 
+def _check_schema_version_metadata(project_root: Path) -> List[Finding]:
+    """Scan _lib/schemas/*.json for missing top-level 'version' field.
+
+    Per ADR-0016 + fix-schema-version-field proposal: every schema must
+    declare a top-level `"version": {"const": "v1"}` metadata field.
+    Missing → CRITICAL.
+
+    Schema metadata `version` is distinct from any `properties.version`
+    data field; JSON Schema draft 2020-12 ignores unknown top-level
+    keywords, so the metadata does not interfere with data validation.
+    """
+    findings: List[Finding] = []
+    schemas_root = project_root / "skills" / "_lib" / "schemas"
+    if not schemas_root.is_dir():
+        return findings
+    for schema_path in sorted(schemas_root.glob("*.json")):
+        try:
+            schema = json.loads(schema_path.read_text())
+        except json.JSONDecodeError:
+            continue
+        if "version" not in schema:
+            findings.append(Finding(
+                severity=Severity.CRITICAL,
+                category="state",
+                file=str(schema_path),
+                line=None,
+                snippet="missing top-level 'version' field (ADR-0016 violation)",
+                fix_hint=(
+                    'add "version": {"const": "v1", "description": "..."} '
+                    "to schema top level"
+                ),
+            ))
+            continue
+        if not isinstance(schema["version"], dict) or schema["version"].get("const") != "v1":
+            findings.append(Finding(
+                severity=Severity.WARNING,
+                category="state",
+                file=str(schema_path),
+                line=None,
+                snippet="version.const is not 'v1' (schema metadata drift)",
+                fix_hint="update version.const to 'v1' per ADR-0016 baseline",
+            ))
+    return findings
+
+
 def run(project_root: Path | None = None) -> List[Finding]:
     """Run cat-1 against project_root."""
     import os
@@ -57,6 +102,8 @@ def run(project_root: Path | None = None) -> List[Finding]:
     state_dir = project_root / ".rddf" / "state"
     if not state_dir.is_dir():
         return []
+
+    findings = _check_schema_version_metadata(project_root)
 
     findings: List[Finding] = []
     for state_name, schema_name in _STATE_FILES.items():

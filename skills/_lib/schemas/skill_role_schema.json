@@ -1,16 +1,24 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": {
+    "const": "v1",
+    "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline. Future bumps require version-migration flow."
+  },
   "$id": "https://rdd-workflow.dev/schemas/skill_role_schema.json",
   "title": "SkillRoleMetadata",
   "description": "Role metadata for phase skills: title, perspective, ownership boundaries, human involvement level. See ADR-0028.",
   "type": "object",
-  "required": ["title", "perspective", "boundaries"],
+  "required": [
+    "title",
+    "perspective",
+    "boundaries"
+  ],
   "additionalProperties": false,
   "properties": {
     "title": {
       "type": "string",
       "minLength": 1,
-      "description": "Human-readable role name (bilingual: e.g., 'Architect (架构治理者)')."
+      "description": "Human-readable role name (bilingual: e.g., 'Architect (\u67b6\u6784\u6cbb\u7406\u8005)')."
     },
     "perspective": {
       "type": "string",
@@ -19,24 +27,36 @@
     },
     "boundaries": {
       "type": "object",
-      "required": ["owns", "not_owns", "human_involvement"],
+      "required": [
+        "owns",
+        "not_owns",
+        "human_involvement"
+      ],
       "additionalProperties": false,
       "properties": {
         "owns": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "minItems": 1,
           "description": "File paths this phase owns (e.g., 'docs/adr/ADR-*.md')."
         },
         "not_owns": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "minItems": 1,
           "description": "File paths this phase explicitly does NOT own."
         },
         "human_involvement": {
           "type": "string",
-          "enum": ["high", "medium", "low"],
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
           "description": "Human involvement level per ADR-0003 gradient."
         }
       }

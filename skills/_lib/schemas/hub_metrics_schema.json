@@ -1,5 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {
+    "const": "v1",
+    "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline. Future bumps require version-migration flow."
+  },
   "$id": "https://rdd-workflow.local/schemas/hub_metrics_schema.json",
   "title": "Hub Metrics v1 (ADR-0030)",
   "description": "Schema for .rddf/state/.hub-metrics.json. Aggregate metrics for Hub-and-Spoke 3-month review. Updated by metrics-collection cron / Hub CI.",
@@ -29,7 +33,11 @@
     },
     "rfc_stats": {
       "type": "object",
-      "required": ["total", "by_status", "avg_decision_days"],
+      "required": [
+        "total",
+        "by_status",
+        "avg_decision_days"
+      ],
       "properties": {
         "total": {
           "type": "integer",
@@ -39,17 +47,38 @@
         "by_status": {
           "type": "object",
           "properties": {
-            "Draft": {"type": "integer", "minimum": 0},
-            "RFC": {"type": "integer", "minimum": 0},
-            "In-Review": {"type": "integer", "minimum": 0},
-            "Approved": {"type": "integer", "minimum": 0},
-            "Rejected": {"type": "integer", "minimum": 0},
-            "Blocked": {"type": "integer", "minimum": 0}
+            "Draft": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "RFC": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "In-Review": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Approved": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Rejected": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Blocked": {
+              "type": "integer",
+              "minimum": 0
+            }
           },
           "additionalProperties": false
         },
         "avg_decision_days": {
-          "type": ["number", "null"],
+          "type": [
+            "number",
+            "null"
+          ],
           "minimum": 0,
           "description": "Average days from RFC creation to Approved/Rejected status"
         },
@@ -69,10 +98,18 @@
     "hub_health": {
       "type": "object",
       "properties": {
-        "branch_protection_enabled": {"type": "boolean"},
-        "maintainer_count": {"type": "integer", "minimum": 0},
+        "branch_protection_enabled": {
+          "type": "boolean"
+        },
+        "maintainer_count": {
+          "type": "integer",
+          "minimum": 0
+        },
         "last_security_audit": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "format": "date"
         }
       },

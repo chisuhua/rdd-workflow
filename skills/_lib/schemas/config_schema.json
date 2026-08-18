@@ -1,5 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {
+    "const": "v1",
+    "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline. Future bumps require version-migration flow."
+  },
   "$id": "https://rdd-workflow.local/schemas/config_schema.json",
   "title": "rdd-workflow Configuration Schema",
   "description": "JSON Schema for the merged configuration produced by ConfigParser.parse(). Validates the structure of interaction, loop, and triggers sections. All fields are optional - validation only runs on fields that are present. This complements the existing _validate() function in config.py (which checks mode, max_iterations, max_retries) with broader structural validation.",
@@ -12,12 +16,18 @@
       "properties": {
         "mode": {
           "type": "string",
-          "enum": ["loop", "menu", "hybrid"],
+          "enum": [
+            "loop",
+            "menu",
+            "hybrid"
+          ],
           "description": "Interaction mode: loop (autonomous), menu (manual), hybrid (mixed)"
         },
         "menu_items": {
           "type": "array",
-          "items": {"type": "string"},
+          "items": {
+            "type": "string"
+          },
           "description": "Menu items available in menu/hybrid mode"
         }
       }
@@ -109,22 +119,31 @@
       "properties": {
         "paths": {
           "type": "array",
-          "items": {"type": "string"},
+          "items": {
+            "type": "string"
+          },
           "description": "Path prefixes to scan for staged files"
         },
         "extensions": {
           "type": "array",
-          "items": {"type": "string"},
+          "items": {
+            "type": "string"
+          },
           "description": "File extensions to scan for staged files"
         },
         "exclude": {
           "type": "array",
-          "items": {"type": "string"},
+          "items": {
+            "type": "string"
+          },
           "description": "Path patterns to exclude from the gate"
         },
         "mode": {
           "type": "string",
-          "enum": ["warn", "block"],
+          "enum": [
+            "warn",
+            "block"
+          ],
           "description": "Gate mode: warn prints a message, block exits with error"
         }
       }
@@ -141,7 +160,11 @@
         },
         "destination": {
           "type": "string",
-          "enum": ["github", "local", "custom-url"],
+          "enum": [
+            "github",
+            "local",
+            "custom-url"
+          ],
           "default": "github",
           "description": "Where reported issues go."
         },
@@ -158,7 +181,9 @@
         "submit_categories": {
           "type": "object",
           "description": "Per-category opt-in. Only categories set to true are submitted.",
-          "additionalProperties": {"type": "boolean"}
+          "additionalProperties": {
+            "type": "boolean"
+          }
         },
         "close_on_archive": {
           "type": "boolean",
@@ -173,7 +198,9 @@
         },
         "redact_patterns": {
           "type": "array",
-          "items": {"type": "string"},
+          "items": {
+            "type": "string"
+          },
           "default": [],
           "description": "Additional regex patterns to redact beyond sanitizer defaults."
         }

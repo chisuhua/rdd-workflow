@@ -1,5 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {
+    "const": "v1",
+    "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline. Future bumps require version-migration flow."
+  },
   "$id": "https://rdd-workflow.local/schemas/cross_repo_deps_cache_schema.json",
   "title": "Cross-repo Deps Cache v1 (ADR-0030)",
   "description": "Schema for .rddf/state/.cross-repo-deps-cache.json. Caches cross-repo dependency graph scan results (TTL 3600s). Emitted by add-cross-repo-deps-orchestration (Step 6).",
@@ -39,13 +43,21 @@
     },
     "dependency_graph": {
       "type": "object",
-      "required": ["nodes", "edges"],
+      "required": [
+        "nodes",
+        "edges"
+      ],
       "properties": {
         "nodes": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["id", "repo", "change", "wave"],
+            "required": [
+              "id",
+              "repo",
+              "change",
+              "wave"
+            ],
             "properties": {
               "id": {
                 "type": "string",
@@ -65,7 +77,10 @@
                 "description": "Recommended execution wave (1 = independent, 2+ = depends on earlier)"
               },
               "eta_days": {
-                "type": ["integer", "null"],
+                "type": [
+                  "integer",
+                  "null"
+                ],
                 "minimum": 0,
                 "description": "Estimated days to complete (from change tasks.md or manual input)"
               }
@@ -78,13 +93,27 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["from", "to", "type"],
+            "required": [
+              "from",
+              "to",
+              "type"
+            ],
             "properties": {
-              "from": {"type": "string", "description": "Source node id"},
-              "to": {"type": "string", "description": "Target node id"},
+              "from": {
+                "type": "string",
+                "description": "Source node id"
+              },
+              "to": {
+                "type": "string",
+                "description": "Target node id"
+              },
               "type": {
                 "type": "string",
-                "enum": ["strong", "weak", "manual_deps"],
+                "enum": [
+                  "strong",
+                  "weak",
+                  "manual_deps"
+                ],
                 "description": "Dependency type (strong = blocking, weak = advisory, manual_deps = ADR-0022)"
               },
               "evidence": {
@@ -103,11 +132,22 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["change", "blocked_by", "hub_issue"],
+        "required": [
+          "change",
+          "blocked_by",
+          "hub_issue"
+        ],
         "properties": {
-          "change": {"type": "string"},
-          "blocked_by": {"type": "string"},
-          "hub_issue": {"type": "string", "pattern": "^[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+#[0-9]+$"}
+          "change": {
+            "type": "string"
+          },
+          "blocked_by": {
+            "type": "string"
+          },
+          "hub_issue": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+#[0-9]+$"
+          }
         }
       },
       "description": "Changes blocked by cross-repo dependencies (with Hub Issue references)"
