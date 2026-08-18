@@ -79,6 +79,12 @@
 
 
 
+| [fix-adr-0031-safety-gate-substantiation](.rddf/improvements/fix-adr-0031-safety-gate-substantiation.md) | P0 | 2026-08-18 | guide-arch |
+
+| [fix-orphan-hub-gates-wiring](.rddf/improvements/fix-orphan-hub-gates-wiring.md) | P1 | 2026-08-18 | guide-arch |
+
+| [fix-cli-routing-cross-repo-commands](.rddf/improvements/fix-cli-routing-cross-repo-commands.md) | P1 | 2026-08-18 | guide-arch |
+
 ## 已实施
 | [fix-schema-version-field](.rddf/improvements/fix-schema-version-field.md) | P1 | 2026-08-18 |
 | [enforce-tasks-completion-before-archive](.rddf/improvements/enforce-tasks-completion-before-archive.md) | P2 | 2026-08-18 |
