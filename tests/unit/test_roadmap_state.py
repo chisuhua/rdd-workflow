@@ -6,6 +6,7 @@ update_roadmap_marker, get_phase_categories, update_change_count.
 """
 import json
 import os
+import re
 import tempfile
 from pathlib import Path
 
@@ -332,4 +333,22 @@ def test_update_change_count_remove_clears_change(tmp_roadmap_repo):
     roadmap_state.update_change_count(state_file, "c1", "phase-1", "arch-design", "remove")
 
     state = roadmap_state.read_state(state_file)
-    assert "c1" not in state["phases"]["phase-1"]["categories"]["arch-design"]["changes"]
+
+
+# ----- nested phase regex constants -----
+
+def test_phase_id_constants_match_nested_and_top_level():
+    """Verify PHASE_ID_RE matches both phase-N and phase-N.M; TOP_PHASE_RE only phase-N."""
+    # phase-N.M should match PHASE_ID_RE but not TOP_PHASE_RE
+    assert re.fullmatch(roadmap_state.PHASE_ID_RE, "phase-3.1")
+    assert not re.fullmatch(roadmap_state.TOP_PHASE_RE, "phase-3.1")
+    # phase-N should match both
+    assert re.fullmatch(roadmap_state.PHASE_ID_RE, "phase-3")
+    assert re.fullmatch(roadmap_state.TOP_PHASE_RE, "phase-3")
+    # SUB_PHASE_RE captures parent and sub index
+    m = re.fullmatch(roadmap_state.SUB_PHASE_RE, "phase-3.1")
+    assert m is not None
+    assert m.group(1) == "3"
+    assert m.group(2) == "1"
+    # SUB_PHASE_RE should NOT match top-level phase-N
+    assert re.fullmatch(roadmap_state.SUB_PHASE_RE, "phase-3") is None

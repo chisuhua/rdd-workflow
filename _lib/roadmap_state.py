@@ -37,6 +37,11 @@ import os
 import re
 from typing import List
 
+# Nested phase ID support (backward compatible — flat phase-N still works)
+PHASE_ID_RE = r"phase-\d+(?:\.\d+)?"          # any phase ID (top-level + sub-phase)
+TOP_PHASE_RE = r"phase-\d+"                     # top-level only
+SUB_PHASE_RE = r"phase-(\d+)\.(\d+)"            # sub-phase (captures parent + sub index)
+
 
 def _now_iso() -> str:
     return datetime.datetime.now().isoformat()
