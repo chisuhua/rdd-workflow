@@ -83,6 +83,7 @@ _ROUTES: Dict[str, str] = {
     "contract-check": "skills._lib.cli.contract_check_cmd:cmd_contract_check",
     "dashboard": "skills._lib.cli.dashboard_cmd:cmd_dashboard",
     "deps": "skills._lib.cli.deps_cmd:cmd_deps",
+    "deps.cross-repo": "skills._lib.cli.deps_cmd:cmd_deps_cross_repo",
     "discover-ship-changes": "skills._lib.cli.discover_ship_changes_cmd:cmd_discover_ship_changes",
     "feature": "skills._lib.cli.feature_cmd:cmd_feature",
     "guide": "skills._lib.cli.guide_cmd:cmd_guide",
@@ -96,8 +97,10 @@ _ROUTES: Dict[str, str] = {
     "report-issue": "skills._lib.cli.report_issue_cmd:cmd_report_issue",
     "status": "skills._lib.cli.status_cmd:cmd_status",
     "sessions": "skills._lib.cli.sessions_cmd:cmd_sessions",
+    "sync-hub": "skills._lib.cli.sync_hub_cmd:cmd_sync_hub",
     "validate": "skills._lib.cli.validate_cmd:cmd_validate",
     "version": "skills._lib.cli.version_cmd:cmd_version",
+    "watch-hub": "skills._lib.cli.watch_hub_cmd:cmd_watch_hub",
 }
 
 

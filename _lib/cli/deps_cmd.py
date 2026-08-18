@@ -11,6 +11,7 @@ parsing if the module is unavailable (e.g. during testing).
 Usage::
 
     python3 -m skills._lib.cli deps
+    python3 -m skills._lib.cli deps cross-repo --spokes org/foo,org/bar
 
 The project root is injected by ``cli.__main__`` via the
 ``RDDF_PROJECT_ROOT`` env var; falls back to ``os.getcwd()`` when unset.
@@ -19,6 +20,9 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
+import sys
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 
@@ -54,6 +58,33 @@ def _safe(val: Any, default: str = "-") -> str:
     return s if s else default
 
 
+def cmd_deps_cross_repo(args: list[str]) -> int:
+    """Handle ``rddf deps cross-repo``.
+
+    Thin subprocess wrapper that delegates to the existing
+    ``skills/deps/scripts/cross_repo_cli.py`` argparse entry point
+    (cross-repo dependency graph analysis, ADR-0030). Args are forwarded
+    verbatim; exit codes propagate transparently.
+
+    Args:
+        args: CLI args forwarded verbatim to ``cross_repo_cli.py``
+            (e.g. ``["--spokes", "org/foo,org/bar"]`` or ``["--help"]``).
+
+    Returns:
+        Exit code from the ``cross_repo_cli.py`` subprocess.
+    """
+    project_root = Path(
+        os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+    )
+    script = project_root / "skills" / "deps" / "scripts" / "cross_repo_cli.py"
+
+    result = subprocess.run(
+        [sys.executable, str(script), *args],
+        cwd=str(project_root),
+    )
+    return result.returncode
+
+
 def cmd_deps(args: list[str]) -> int:
     """Handle ``rddf deps``.
 
@@ -76,12 +107,16 @@ def cmd_deps(args: list[str]) -> int:
           2. change-B
 
     Args:
-        args: Remaining CLI args (currently unused — ``deps`` takes no
-            options).
+        args: Remaining CLI args. When the first arg is ``cross-repo``,
+            control is handed to :func:`cmd_deps_cross_repo`; otherwise
+            the plain ``deps`` table is rendered (no options).
 
     Returns:
         0 on success, 1 on JSON parse error.
     """
+    if args and args[0] == "cross-repo":
+        return cmd_deps_cross_repo(args[1:])
+
     project_root = os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
 
     analysis = _load_data(project_root)
@@ -189,4 +224,4 @@ def cmd_deps(args: list[str]) -> int:
     return 0
 
 
-__all__ = ["cmd_deps"]
+__all__ = ["cmd_deps", "cmd_deps_cross_repo"]
