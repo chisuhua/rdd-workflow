@@ -43,7 +43,7 @@ import os
 import sys
 from typing import Optional
 
-from skills._lib.dashboard import DashboardData, SuggestionEntry
+from skills._lib.dashboard import DashboardData
 
 
 # ---------------------------------------------------------------------------
@@ -388,7 +388,16 @@ def _section_changes_terminal(data: DashboardData, width: int) -> list[str]:
                 width,
             )
         )
-        for c in data.changes:
+        active_changes = [c for c in data.changes if c.status != "archived"]
+        archived_changes = [c for c in data.changes if c.status == "archived"]
+        archived_changes.sort(
+            key=lambda c: (c.archived_at or "", c.added_at or ""),
+            reverse=True,
+        )
+        archived_limit = 5
+        archived_shown = archived_changes[:archived_limit]
+        archived_hidden = len(archived_changes) - len(archived_shown)
+        for c in active_changes + archived_shown:
             icon = _STATUS_ICON.get(c.status, "?")
             tasks = (
                 f"{c.tasks_done}/{c.tasks_total}"
@@ -401,6 +410,14 @@ def _section_changes_terminal(data: DashboardData, width: int) -> list[str]:
             lines.append(
                 _content_line(
                     f"  {name:<32} {status_disp:<14} {tasks:<8} {plan:<4}",
+                    width,
+                )
+            )
+        if archived_hidden > 0:
+            lines.append(
+                _content_line(
+                    f"  ... +{archived_hidden} archived change(s) hidden "
+                    f"(showing most recent {archived_limit})",
                     width,
                 )
             )
@@ -473,6 +490,8 @@ def _section_roadmap_terminal(data: DashboardData, width: int) -> list[str]:
 def _section_pending_terminal(data: DashboardData, width: int) -> list[str]:
     lines: list[str] = []
     lines.append(_content_line("7. Pending", width))
+
+    # 7a: Pending suggestions
     if data.pending_suggestions > 0:
         lines.append(
             _content_line(
@@ -480,7 +499,6 @@ def _section_pending_terminal(data: DashboardData, width: int) -> list[str]:
                 width,
             )
         )
-        # Table header
         lines.append(
             _content_line(
                 f"  {'NAME':<30} {'PRI':<6} {'STATUS':<18} {'PHASE':<10}",
@@ -502,6 +520,64 @@ def _section_pending_terminal(data: DashboardData, width: int) -> list[str]:
             )
     else:
         lines.append(_content_line("  (no pending suggestions)", width))
+
+    # 7b: Approved proposals
+    lines.append(_content_line("  7b. Approved proposals", width))
+    if data.approved_proposals:
+        not_impl = sum(1 for r in data.approved_proposals if r.section == "approved")
+        impl = sum(1 for r in data.approved_proposals if r.section == "implemented")
+        summary = f"    {len(data.approved_proposals)} total"
+        if not_impl:
+            summary += f"  ({not_impl} not yet implemented)"
+        if impl:
+            summary += f"  ({impl} implemented)"
+        lines.append(_content_line(summary, width))
+
+        # Show ALL "approved" (not yet implemented) entries
+        pending_rows = [r for r in data.approved_proposals if r.section == "approved"]
+        if pending_rows:
+            lines.append(_content_line("    not yet implemented:", width))
+            for r in pending_rows:
+                lines.append(
+                    _content_line(
+                        f"      📋 {r.name}  ({r.priority or '-'}, {r.date or '-'})",
+                        width,
+                    )
+                )
+
+        impl_rows = [r for r in data.approved_proposals if r.section == "implemented"]
+        impl_rows.sort(key=lambda r: (r.date or "", r.name), reverse=True)
+        impl_limit = 5
+        impl_shown = impl_rows[:impl_limit]
+        impl_hidden = len(impl_rows) - len(impl_shown)
+        if impl_shown:
+            lines.append(_content_line("    implemented (most recent first):", width))
+            lines.append(
+                _content_line(
+                    f"    {'NAME':<28} {'PRI':<5} {'DATE':<11}",
+                    width,
+                )
+            )
+            for r in impl_shown:
+                lines.append(
+                    _content_line(
+                        f"    ✅ {r.name[:27]:<28} "
+                        f"{r.priority or '-':<5} "
+                        f"{(r.date or '-')[:11]:<11}",
+                        width,
+                    )
+                )
+        if impl_hidden > 0:
+            lines.append(
+                _content_line(
+                    f"    ... +{impl_hidden} implemented hidden "
+                    f"(showing most recent {impl_limit})",
+                    width,
+                )
+            )
+    else:
+        lines.append(_content_line("    (no approved proposals)", width))
+
     return lines
 
 
@@ -655,7 +731,16 @@ def _p_section_changes(data: DashboardData, width: int) -> str:
                 width,
             )
         )
-        for c in data.changes:
+        active_changes = [c for c in data.changes if c.status != "archived"]
+        archived_changes = [c for c in data.changes if c.status == "archived"]
+        archived_changes.sort(
+            key=lambda c: (c.archived_at or "", c.added_at or ""),
+            reverse=True,
+        )
+        archived_limit = 5
+        archived_shown = archived_changes[:archived_limit]
+        archived_hidden = len(archived_changes) - len(archived_shown)
+        for c in active_changes + archived_shown:
             icon = _STATUS_ICON_PLAIN.get(c.status, "?")
             tasks = (
                 f"{c.tasks_done}/{c.tasks_total}"
@@ -668,6 +753,14 @@ def _p_section_changes(data: DashboardData, width: int) -> str:
             out.append(
                 _p_line(
                     f"  {name:<32} {status_disp:<14} {tasks:<8} {plan:<4}",
+                    width,
+                )
+            )
+        if archived_hidden > 0:
+            out.append(
+                _p_line(
+                    f"  ... +{archived_hidden} archived change(s) hidden "
+                    f"(showing most recent {archived_limit})",
                     width,
                 )
             )
@@ -733,6 +826,7 @@ def _p_section_roadmap(data: DashboardData, width: int) -> str:
 def _p_section_pending(data: DashboardData, width: int) -> str:
     out: list[str] = []
     out.append(_p_line("7. Pending", width))
+
     if data.pending_suggestions > 0:
         out.append(
             _p_line(
@@ -761,6 +855,61 @@ def _p_section_pending(data: DashboardData, width: int) -> str:
             )
     else:
         out.append(_p_line("  (no pending suggestions)", width))
+
+    out.append(_p_line("  7b. Approved proposals", width))
+    if data.approved_proposals:
+        not_impl = sum(1 for r in data.approved_proposals if r.section == "approved")
+        impl = sum(1 for r in data.approved_proposals if r.section == "implemented")
+        summary = f"    {len(data.approved_proposals)} total"
+        if not_impl:
+            summary += f"  ({not_impl} not yet implemented)"
+        if impl:
+            summary += f"  ({impl} implemented)"
+        out.append(_p_line(summary, width))
+
+        pending_rows = [r for r in data.approved_proposals if r.section == "approved"]
+        if pending_rows:
+            out.append(_p_line("    not yet implemented:", width))
+            for r in pending_rows:
+                out.append(
+                    _p_line(
+                        f"      [+] {r.name}  ({r.priority or '-'}, {r.date or '-'})",
+                        width,
+                    )
+                )
+
+        impl_rows = [r for r in data.approved_proposals if r.section == "implemented"]
+        impl_rows.sort(key=lambda r: (r.date or "", r.name), reverse=True)
+        impl_limit = 5
+        impl_shown = impl_rows[:impl_limit]
+        impl_hidden = len(impl_rows) - len(impl_shown)
+        if impl_shown:
+            out.append(_p_line("    implemented (most recent first):", width))
+            out.append(
+                _p_line(
+                    f"    {'NAME':<28} {'PRI':<5} {'DATE':<11}",
+                    width,
+                )
+            )
+            for r in impl_shown:
+                out.append(
+                    _p_line(
+                        f"    [v] {r.name[:27]:<28} "
+                        f"{r.priority or '-':<5} "
+                        f"{(r.date or '-')[:11]:<11}",
+                        width,
+                    )
+                )
+        if impl_hidden > 0:
+            out.append(
+                _p_line(
+                    f"    ... +{impl_hidden} implemented hidden "
+                    f"(showing most recent {impl_limit})",
+                    width,
+                )
+            )
+    else:
+        out.append(_p_line("    (no approved proposals)", width))
     return "\n".join(out)
 
 

@@ -43,6 +43,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import os
+import re
 from typing import Optional
 
 from skills._lib.state_reader import (
@@ -168,7 +169,7 @@ class FeatureSummary:
 
 @dataclass
 class SuggestionEntry:
-    """One row in the Pending (proposal suggestions) section.
+    """One row in the Pending (proposal suggestions) section of the dashboard.
 
     Mirrors the fields from proposal-suggestions.md entries that are
     relevant for dashboard display. The full ``description`` field is
@@ -182,6 +183,21 @@ class SuggestionEntry:
     phase: Optional[str] = None
     category: Optional[str] = None
     effort: Optional[str] = None
+
+
+@dataclass
+class ApprovedProposalEntry:
+    """One row in the Approved section of the dashboard.
+
+    Mirrors a parsed ``proposal-approved.md`` table row. ``section`` is
+    ``"approved"`` when the row lives under ``## 已批准提案`` (尚未
+    实施) or ``"implemented"`` when it lives under ``## 已实施``.
+    """
+
+    name: str
+    priority: Optional[str] = None
+    date: Optional[str] = None
+    section: str = "approved"
 
 
 @dataclass
@@ -204,6 +220,7 @@ class DashboardData:
     roadmap_counts: dict[str, tuple[int, int]] = field(default_factory=dict)
     pending_suggestions: int = 0
     suggestions: list[SuggestionEntry] = field(default_factory=list)
+    approved_proposals: list[ApprovedProposalEntry] = field(default_factory=list)
     divergence_warnings: list[str] = field(default_factory=list)
 
 
@@ -413,12 +430,21 @@ def collect(project_root: str) -> DashboardData:
 
     # ---- Section 7: Pending (.rddf/improvements/ + proposal-approved.md + archive bypass) ----
     try:
-        import re
-        approved = set()
-        approved_path = os.path.join(project_root, "proposal-approved.md")
-        if os.path.exists(approved_path):
-            with open(approved_path) as f:
-                approved = set(re.findall(r"\|\s*\[([^\]]+)\]\(.rddf/improvements/", f.read()))
+        from skills._lib.parse_approved import parse_approved_proposals_detailed
+
+        approved_rows = parse_approved_proposals_detailed(
+            os.path.join(project_root, "proposal-approved.md")
+        )
+        approved = {row.name for row in approved_rows}
+        for row in approved_rows:
+            data.approved_proposals.append(
+                ApprovedProposalEntry(
+                    name=row.name,
+                    priority=row.priority,
+                    date=row.date,
+                    section=row.section,
+                )
+            )
 
         improvement_entries = read_improvement_entries(project_root)
         archived_names = set()
@@ -518,6 +544,8 @@ __all__ = [
     "SessionEntry",
     "WorktreeEntry",
     "FeatureSummary",
+    "SuggestionEntry",
+    "ApprovedProposalEntry",
     "DashboardData",
     # public API
     "collect",
