@@ -1,17 +1,32 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {
+    "const": "v1",
+    "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline. Future bumps require version-migration flow."
+  },
   "$id": "https://rdd-workflow.dev/schemas/iteration_schema.json",
   "title": "Spec Workflow Iteration (Current Sprint) State",
   "description": "Persistent view of the current iteration/sprint: which OpenSpec changes are proposed/in-worktree/completed/archived, their blocker relationships, and current task progress. Stored at .rddf/state/iteration.json.",
   "type": "object",
-  "required": ["version", "updated_at", "current_phase", "changes"],
+  "required": [
+    "version",
+    "updated_at",
+    "current_phase",
+    "changes"
+  ],
   "additionalProperties": false,
   "properties": {
-        "version": {
-          "type": "integer",
-          "enum": [3, 4, 5, 6, 7],
-          "description": "Schema version. v5: added l2_violation_count_after and l2_violation_kind per-change fields. v6: added filled_at per-change field. v7: added cross_repo_dependencies per-change field for Hub-and-Spoke federation."
-        },
+    "version": {
+      "type": "integer",
+      "enum": [
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "description": "Schema version. v5: added l2_violation_count_after and l2_violation_kind per-change fields. v6: added filled_at per-change field. v7: added cross_repo_dependencies per-change field for Hub-and-Spoke federation."
+    },
     "updated_at": {
       "type": "string",
       "format": "date-time",
@@ -26,7 +41,10 @@
       "description": "One entry per OpenSpec change ever observed in the current iteration. Archived changes are kept (not deleted) for history.",
       "items": {
         "type": "object",
-        "required": ["name", "status"],
+        "required": [
+          "name",
+          "status"
+        ],
         "additionalProperties": true,
         "properties": {
           "name": {
@@ -34,24 +52,44 @@
             "description": "OpenSpec change name (directory name under openspec/changes/)."
           },
           "phase": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Roadmap phase this change belongs to. From roadmap-meta.yaml."
           },
           "category": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Roadmap category within the phase. From roadmap-meta.yaml."
           },
           "priority": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "P0/P1/P2 priority from roadmap-meta.yaml."
           },
           "status": {
             "type": "string",
-            "enum": ["planned", "proposed", "in_worktree", "review", "completed", "archived", "archived_partial"],
+            "enum": [
+              "planned",
+              "proposed",
+              "in_worktree",
+              "review",
+              "completed",
+              "archived",
+              "archived_partial"
+            ],
             "description": "Lifecycle status. Updated by propose/guide-ship/execute/archive hooks."
           },
           "archive_path": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Path to OpenSpec archived change directory."
           },
           "plan_present": {
@@ -59,7 +97,10 @@
             "description": "Whether .rddf/plans/<name>.md exists at archive time."
           },
           "note": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Free-form annotation explaining a partial/exceptional archive state."
           },
           "added_at": {
@@ -68,11 +109,17 @@
             "description": "ISO 8601 timestamp when the change was first added to iteration."
           },
           "worktree_path": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Path to worktree."
           },
           "plan_path": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Path to Prometheus plan."
           },
           "tasks_done": {
@@ -86,64 +133,112 @@
             "description": "Total number of tasks."
           },
           "blocker": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Name of the change that hard-blocks this one."
           },
           "parallel_group": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "description": "Topological layer from deps."
           },
           "conflicts": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "Change names with file-level conflicts."
           },
           "last_deps_at": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time",
             "description": "ISO 8601 timestamp of last deps run."
           },
           "archived_at": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time",
             "description": "ISO 8601 timestamp when status transitioned to archived."
           },
           "archive_commit_sha": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Git commit SHA of the archive action."
           },
           "parent_feature": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Name of the parent feature/epic this change belongs to."
           },
           "manual_deps": {
-            "type": ["array", "null"],
-            "items": { "type": "string" },
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
             "description": "Human-authored dependency overrides from roadmap-meta.yaml."
           },
           "manual_blocks": {
-            "type": ["array", "null"],
-            "items": { "type": "string" },
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
             "description": "Human-authored reverse dependencies from roadmap-meta.yaml."
           },
           "l2_violation_count_after": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "minimum": 0,
             "description": "Project-wide L2 violation count AFTER this change was archived."
           },
           "l2_violation_kind": {
-            "type": ["string", "null"],
-            "enum": ["sim_include_drv", "sim_class_type", null],
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "sim_include_drv",
+              "sim_class_type",
+              null
+            ],
             "description": "Which L2 violation kind was counted."
           },
           "filled_at": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time",
             "description": "Timestamp when a skeleton change was filled."
           },
           "cross_repo_dependencies": {
-            "type": ["array", "null"],
-            "items": { "type": "string" },
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
             "description": "List of cross-repo dependencies in 'org/repo#change' format. v7 (add-cross-repo-deps-orchestration)."
           }
         }
@@ -151,8 +246,12 @@
     },
     "feature_view": {
       "oneOf": [
-        { "type": "null" },
-        { "$ref": "feature_view_schema.json" }
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "feature_view_schema.json"
+        }
       ],
       "description": "Derived view written by skills/feature.md. Optional."
     }

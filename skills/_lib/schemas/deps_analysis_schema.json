@@ -1,10 +1,20 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {
+    "const": "v1",
+    "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline. Future bumps require version-migration flow."
+  },
   "$id": "https://rdd-workflow.dev/schemas/deps_analysis_schema.json",
   "title": "Spec Workflow Deps Analysis (Structured)",
   "description": "Machine-readable counterpart to .rddf/state/.deps-output.md. Consumed by the iteration.json sync hook (deps.md Step 6) and any future planning tooling. Stored at .rddf/state/deps-analysis.json.",
   "type": "object",
-  "required": ["version", "updated_at", "fallback", "changes", "execution_order"],
+  "required": [
+    "version",
+    "updated_at",
+    "fallback",
+    "changes",
+    "execution_order"
+  ],
   "additionalProperties": false,
   "properties": {
     "version": {
@@ -24,23 +34,33 @@
     "execution_order": {
       "type": "array",
       "description": "Recommended execution order. Changes at the same parallel_group may run together; the order in this list is the topological sort with parallel groups flattened to a sequence.",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
     "changes": {
       "type": "object",
       "description": "Per-change analysis results. Keyed by change name.",
-      "additionalProperties": { "$ref": "#/definitions/ChangeAnalysis" }
+      "additionalProperties": {
+        "$ref": "#/definitions/ChangeAnalysis"
+      }
     },
     "execution_mode_recommendations": {
       "type": "object",
       "description": "Execution mode recommendations per change (ADR-0023). Keyed by change name.",
-      "additionalProperties": { "$ref": "#/definitions/ExecutionModeRecommendation" }
+      "additionalProperties": {
+        "$ref": "#/definitions/ExecutionModeRecommendation"
+      }
     }
   },
   "definitions": {
     "ChangeAnalysis": {
       "type": "object",
-      "required": ["name", "status", "parallel_group"],
+      "required": [
+        "name",
+        "status",
+        "parallel_group"
+      ],
       "additionalProperties": false,
       "properties": {
         "name": {
@@ -48,25 +68,41 @@
           "description": "OpenSpec change name (directory name under openspec/changes/)."
         },
         "phase": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Roadmap phase from roadmap-meta.yaml. Null in compat mode."
         },
         "category": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Roadmap category from roadmap-meta.yaml. Null in compat mode."
         },
         "status": {
           "type": "string",
-          "enum": ["ready", "blocked_by", "prerequisite", "conflict"],
+          "enum": [
+            "ready",
+            "blocked_by",
+            "prerequisite",
+            "conflict"
+          ],
           "description": "Lifecycle status from deps perspective. Distinct from iteration.json's status (which is propose/execute/archive). ready = no hard blockers; blocked_by = waiting on another change; prerequisite = this change blocks others; conflict = has file-level conflicts."
         },
         "blocker": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Name of the change that hard-blocks this one. Null when status is not blocked_by."
         },
         "blocks": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Names of changes that this change hard-blocks (reverse direction of blocker)."
         },
         "parallel_group": {
@@ -76,28 +112,41 @@
         },
         "conflicts": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Change names with file-level conflicts (intersection of in-scope files)."
         },
         "confidence": {
           "type": "string",
-          "enum": ["high", "low"],
+          "enum": [
+            "high",
+            "low"
+          ],
           "description": "high = static 3-axis evidence; low = AI subagent inferred only. Consumers should require 'high' for hard decisions (e.g. parallel-group assignment)."
         },
         "recommendation": {
           "type": "string",
-          "description": "Human-readable execution hint (e.g. '第 1 优先', '等 v2-loop-engine 完成后')."
+          "description": "Human-readable execution hint (e.g. '\u7b2c 1 \u4f18\u5148', '\u7b49 v2-loop-engine \u5b8c\u6210\u540e')."
         }
       }
     },
     "ExecutionModeRecommendation": {
       "type": "object",
-      "required": ["mode", "reason", "confidence", "details"],
+      "required": [
+        "mode",
+        "reason",
+        "confidence",
+        "details"
+      ],
       "additionalProperties": false,
       "properties": {
         "mode": {
           "type": "string",
-          "enum": ["lightweight", "worktree"],
+          "enum": [
+            "lightweight",
+            "worktree"
+          ],
           "description": "Recommended execution mode. lightweight = direct branch in main repo; worktree = isolated worktree."
         },
         "reason": {
@@ -106,12 +155,21 @@
         },
         "confidence": {
           "type": "string",
-          "enum": ["high", "medium", "low"],
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
           "description": "Confidence level of the recommendation."
         },
         "details": {
           "type": "object",
-          "required": ["file_count", "task_count", "is_risky", "change_size"],
+          "required": [
+            "file_count",
+            "task_count",
+            "is_risky",
+            "change_size"
+          ],
           "properties": {
             "file_count": {
               "type": "integer",
@@ -127,7 +185,11 @@
             },
             "change_size": {
               "type": "string",
-              "enum": ["small", "medium", "large"],
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
               "description": "Categorized change size based on file/task counts."
             }
           }

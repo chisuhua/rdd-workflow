@@ -1,10 +1,17 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": {
+    "const": "v1",
+    "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline. Future bumps require version-migration flow."
+  },
   "$id": "https://rdd-workflow.dev/schemas/sessions_schema.json",
   "title": "RddfSessions",
   "description": "rddf-session lifecycle persistence for cross-opencode-session workflow recovery. Written by skills/_lib/rddf_session.py. See ADR-0017.",
   "type": "object",
-  "required": ["version", "sessions"],
+  "required": [
+    "version",
+    "sessions"
+  ],
   "additionalProperties": false,
   "properties": {
     "version": {
@@ -19,7 +26,9 @@
     },
     "sessions": {
       "type": "array",
-      "items": { "$ref": "#/$defs/Session" },
+      "items": {
+        "$ref": "#/$defs/Session"
+      },
       "description": "All rddf-sessions (active + terminal)."
     }
   },
@@ -43,15 +52,26 @@
         },
         "kind": {
           "type": "string",
-          "enum": ["stage_arch", "stage_design", "stage_plan", "stage_ship"],
+          "enum": [
+            "stage_arch",
+            "stage_design",
+            "stage_plan",
+            "stage_ship"
+          ],
           "description": "Stage driver: arch / design / plan / ship (per v2.1 four-phase)."
         },
         "owner_opencode_session_id": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "OpenCode session ID that owns this rddf-session, or null after abandonment."
         },
         "parent_session_id": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "pattern": "^rds_[a-f0-9]{12}$",
           "description": "Parent rddf-session id (e.g. stage_plan.parent = stage_arch.session_id)."
         },
@@ -61,25 +81,45 @@
           "properties": {
             "intent": {
               "type": "string",
-              "enum": ["guide-arch", "guide-design", "guide-plan", "guide-ship"]
+              "enum": [
+                "guide-arch",
+                "guide-design",
+                "guide-plan",
+                "guide-ship"
+              ]
             },
-            "subject": { "type": "string" },
-            "expected_outcome": { "type": "string" }
+            "subject": {
+              "type": "string"
+            },
+            "expected_outcome": {
+              "type": "string"
+            }
           },
           "description": "Structured goal (intent + subject + expected_outcome)."
         },
         "state": {
           "type": "string",
-          "enum": ["active", "completed", "failed", "orphaned", "abandoned"],
-          "description": "Lifecycle state. completed/failed/abandoned are terminal; orphaned→active allowed."
+          "enum": [
+            "active",
+            "completed",
+            "failed",
+            "orphaned",
+            "abandoned"
+          ],
+          "description": "Lifecycle state. completed/failed/abandoned are terminal; orphaned\u2192active allowed."
         },
         "attached_changes": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Changes attached to this rddf-session (set by guide-plan/guide-ship)."
         },
         "context_pointer": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Path to handoff/state file for this session (e.g. .rddf/state/.arch-handoff.json)."
         },
         "started_at": {
@@ -89,22 +129,34 @@
         "last_heartbeat": {
           "type": "string",
           "format": "date-time",
-          "description": "Last heartbeat refresh. >30min ago → orphaned."
+          "description": "Last heartbeat refresh. >30min ago \u2192 orphaned."
         },
         "ended_at": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "format": "date-time"
         },
         "end_reason": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Why session ended (arch-done | plan-done | heartbeat-timeout | user-abandoned | gate-rejected | ...)."
         },
         "sub_phase": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Optional sub-phase marker (e.g. 'phase_3_archive_demo'). Updated by hooks during long-running operations. v2: add-rddf-session-sub-phase-heartbeat."
         },
         "workflow_group": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Optional workflow group identifier linking related rddf-sessions. v2: add-rddf-session-workflow-group."
         }
       }

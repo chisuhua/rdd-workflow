@@ -1,5 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {
+    "const": "v1",
+    "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline. Future bumps require version-migration flow."
+  },
   "$id": "https://rdd-workflow.local/schemas/cross_repo_pending_schema.json",
   "title": "Cross-repo Pending v1 (ADR-0030)",
   "description": "Schema for .rddf/state/.cross-repo-pending.json. Tracks Hub Issues that are blocking local design-done/plan-done gates. Emitted by add-rdd-hub-cross-repo-federation (Step 2).",
@@ -20,7 +24,13 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["hub_issue", "local_proposal", "expected_status", "blocked_gates", "added_at"],
+        "required": [
+          "hub_issue",
+          "local_proposal",
+          "expected_status",
+          "blocked_gates",
+          "added_at"
+        ],
         "properties": {
           "hub_issue": {
             "type": "string",
@@ -34,14 +44,22 @@
           },
           "expected_status": {
             "type": "string",
-            "enum": ["RFC", "In-Review", "Approved"],
+            "enum": [
+              "RFC",
+              "In-Review",
+              "Approved"
+            ],
             "description": "Hub Issue Status that will unblock local gates"
           },
           "blocked_gates": {
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["design-done", "plan-done", "ship-done"]
+              "enum": [
+                "design-done",
+                "plan-done",
+                "ship-done"
+              ]
             },
             "description": "Local gates blocked by this Hub Issue"
           },
@@ -51,7 +69,10 @@
             "description": "ISO-8601 timestamp when this pending relationship was created"
           },
           "last_polled_at": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time",
             "description": "ISO-8601 timestamp when Hub Issue Status was last checked"
           }

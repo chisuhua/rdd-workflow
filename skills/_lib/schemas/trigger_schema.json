@@ -1,10 +1,17 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {
+    "const": "v1",
+    "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline. Future bumps require version-migration flow."
+  },
   "$id": "https://rdd-workflow.dev/schemas/trigger_schema.json",
   "title": "Trigger Registry",
-  "description": "Schema for .rddf/state/triggers.json — the persistent trigger registry.",
+  "description": "Schema for .rddf/state/triggers.json \u2014 the persistent trigger registry.",
   "type": "object",
-  "required": ["version", "triggers"],
+  "required": [
+    "version",
+    "triggers"
+  ],
   "additionalProperties": false,
   "properties": {
     "version": {
@@ -16,17 +23,51 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "type", "config", "rate_limit", "enabled"],
+        "required": [
+          "id",
+          "type",
+          "config",
+          "rate_limit",
+          "enabled"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id": {"type": "string"},
-          "type": {"type": "string", "enum": ["cron", "fs", "git", "webhook"]},
-          "config": {"type": "object"},
-          "rate_limit": {"type": "integer", "minimum": 0},
-          "enabled": {"type": "boolean"},
-          "created_at": {"type": "string", "format": "date-time"},
-          "last_fire_at": {"type": ["string", "null"], "format": "date-time"},
-          "token_bucket": {"type": "number"}
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "cron",
+              "fs",
+              "git",
+              "webhook"
+            ]
+          },
+          "config": {
+            "type": "object"
+          },
+          "rate_limit": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_fire_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "token_bucket": {
+            "type": "number"
+          }
         }
       }
     }

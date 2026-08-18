@@ -1,5 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {
+    "const": "v1",
+    "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline. Future bumps require version-migration flow."
+  },
   "$id": "https://rdd-workflow.local/schemas/arch_handoff_schema.json",
   "title": "Arch Handoff v1 (ADR-0016)",
   "description": "Schema for .rddf/state/.arch-handoff.json emitted by guide-arch Phase 5 arch-done. Consumed by guide-plan, propose, roadmap, gate.py, detectors.py, actions.py, scan-state.sh.",
@@ -47,7 +51,10 @@
       "description": "Current roadmap phase (e.g. 'phase-1', 'default')"
     },
     "plan_started_at": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "format": "date-time",
       "description": "ISO-8601 timestamp when plan phase started (null until plan runs)"
     },
@@ -69,7 +76,7 @@
     "adr_pattern": {
       "type": "string",
       "pattern": "^[A-Za-z0-9_*-]+\\.md$",
-      "description": "Glob pattern for ADR files within adr_dir (e.g. 'ADR-*.md', 'DEC-*.md', 'RFD-*.md'). Must be a filename pattern — no path separators or '..' (Momus HIGH#7 — defends against path-traversal even though this is a glob)."
+      "description": "Glob pattern for ADR files within adr_dir (e.g. 'ADR-*.md', 'DEC-*.md', 'RFD-*.md'). Must be a filename pattern \u2014 no path separators or '..' (Momus HIGH#7 \u2014 defends against path-traversal even though this is a glob)."
     },
     "discovered": {
       "type": "object",
@@ -77,29 +84,62 @@
       "properties": {
         "adr_dir": {
           "type": "object",
-          "required": ["found", "created", "candidates_tried"],
+          "required": [
+            "found",
+            "created",
+            "candidates_tried"
+          ],
           "properties": {
-            "found": {"type": "boolean"},
-            "created": {"type": "boolean"},
-            "candidates_tried": {"type": "integer", "minimum": 0}
+            "found": {
+              "type": "boolean"
+            },
+            "created": {
+              "type": "boolean"
+            },
+            "candidates_tried": {
+              "type": "integer",
+              "minimum": 0
+            }
           }
         },
         "roadmap_path": {
           "type": "object",
-          "required": ["found", "created", "candidates_tried"],
+          "required": [
+            "found",
+            "created",
+            "candidates_tried"
+          ],
           "properties": {
-            "found": {"type": "boolean"},
-            "created": {"type": "boolean"},
-            "candidates_tried": {"type": "integer", "minimum": 0}
+            "found": {
+              "type": "boolean"
+            },
+            "created": {
+              "type": "boolean"
+            },
+            "candidates_tried": {
+              "type": "integer",
+              "minimum": 0
+            }
           }
         },
         "architecture_dir": {
           "type": "object",
-          "required": ["found", "created", "candidates_tried"],
+          "required": [
+            "found",
+            "created",
+            "candidates_tried"
+          ],
           "properties": {
-            "found": {"type": "boolean"},
-            "created": {"type": "boolean"},
-            "candidates_tried": {"type": "integer", "minimum": 0}
+            "found": {
+              "type": "boolean"
+            },
+            "created": {
+              "type": "boolean"
+            },
+            "candidates_tried": {
+              "type": "integer",
+              "minimum": 0
+            }
           }
         }
       },

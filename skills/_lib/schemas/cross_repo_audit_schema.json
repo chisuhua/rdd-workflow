@@ -1,5 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {
+    "const": "v1",
+    "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline. Future bumps require version-migration flow."
+  },
   "$id": "https://rdd-workflow.local/schemas/cross_repo_audit_schema.json",
   "title": "Cross-repo Audit v1 (ADR-0030)",
   "description": "Schema for .rddf/state/.cross-repo-audit.jsonl (newline-delimited JSON). Records every cross-repo decision (RFC initiation, approval, rejection, gate block). Emitted by add-strict-human-approval-for-cross-repo-changes (Step 1.5).",
@@ -36,16 +40,30 @@
     },
     "decision": {
       "type": "string",
-      "enum": ["initiate", "approve", "reject", "block", "defer", "revoke"],
+      "enum": [
+        "initiate",
+        "approve",
+        "reject",
+        "block",
+        "defer",
+        "revoke"
+      ],
       "description": "Type of decision recorded"
     },
     "actor": {
       "type": "object",
-      "required": ["type", "id"],
+      "required": [
+        "type",
+        "id"
+      ],
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["human", "ai-agent", "ci-bot"],
+          "enum": [
+            "human",
+            "ai-agent",
+            "ci-bot"
+          ],
           "description": "Type of actor making the decision"
         },
         "id": {
@@ -56,17 +74,31 @@
       "additionalProperties": false
     },
     "reason": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "Optional human-readable reason for the decision"
     },
     "hub_status_at_decision": {
       "type": "string",
-      "enum": ["Draft", "RFC", "In-Review", "Approved", "Rejected", "Blocked"],
+      "enum": [
+        "Draft",
+        "RFC",
+        "In-Review",
+        "Approved",
+        "Rejected",
+        "Blocked"
+      ],
       "description": "Hub Issue Status at the moment of decision"
     },
     "local_gate": {
       "type": "string",
-      "enum": ["design-done", "plan-done", "ship-done"],
+      "enum": [
+        "design-done",
+        "plan-done",
+        "ship-done"
+      ],
       "description": "Local gate affected by this decision"
     }
   }
