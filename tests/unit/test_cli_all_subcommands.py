@@ -56,6 +56,7 @@ from skills._lib.iteration.schema import _load_schema, _validate
 # ---------------------------------------------------------------------------
 
 ALL_SUBCOMMANDS: tuple[str, ...] = (
+    "ac-verify",
     "archive",
     "archive-sync",
     "cleanup",

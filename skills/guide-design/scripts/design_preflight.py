@@ -18,6 +18,7 @@ _SUBJECT_RE = re.compile(r"^\*\*主题\*\*\s*:\s*(.+?)\s*$", re.MULTILINE)
 _SKIPPED_SUFFIX = "~skipped~"
 _PHASE_HEADER_RE = re.compile(r"### Phase \d+:[^\n]*?\(phase-[a-z0-9-]+\)")
 _CATEGORY_TABLE_HEADER_RE = re.compile(r"\|\s*分类ID\s*\|\s*名称\s*\|\s*描述\s*\|\s*优先级\s*\|\s*预期改进方向\s*\|")
+_CATEGORY_ID_RE = re.compile(r"^`?([a-z][a-z0-9-]*)`?$")
 
 
 def _parse_themes_cell(cell: str) -> List[str]:
@@ -62,12 +63,14 @@ def _read_roadmap_themes(roadmap_path: str) -> List[Dict[str, str]]:
                 continue
             if not in_category_table:
                 continue
-            if not (cells[0].startswith("`") and cells[0].endswith("`")):
+            id_match = _CATEGORY_ID_RE.match(cells[0])
+            if not id_match:
                 continue
+            category_id = id_match.group(1)
             for theme in _parse_themes_cell(cells[4]):
                 themes.append({
                     "phase": phase_id,
-                    "category": cells[0],
+                    "category": f"`{category_id}`",
                     "theme": theme,
                 })
 

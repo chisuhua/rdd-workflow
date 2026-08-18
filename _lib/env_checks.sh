@@ -60,7 +60,8 @@ _check_gh() {
   fi
   local user
   user=$(timeout 5 gh api user --jq .login 2>/dev/null | tr -d '[:space:]')
-  if [ -n "$user" ]; then
+  # gh API returns {"message":"..."} on 5xx; only accept a real login shape.
+  if [[ "$user" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]*$ ]]; then
     _GH_AVAILABLE="yes:$user"
   else
     _GH_AVAILABLE="yes:unknown"
