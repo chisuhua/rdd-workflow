@@ -352,3 +352,132 @@ def test_phase_id_constants_match_nested_and_top_level():
     assert m.group(2) == "1"
     # SUB_PHASE_RE should NOT match top-level phase-N
     assert re.fullmatch(roadmap_state.SUB_PHASE_RE, "phase-3") is None
+
+
+# ----- advance_phase sub-phase aggregation -----
+
+def test_advance_phase_aggregates_subphases_prevents_trivial_pass(tmp_roadmap_repo, capsys):
+    """Parent phase-3 with empty categories must NOT pass pre-check when sub-phase phase-3.2 incomplete."""
+    state_file = tmp_roadmap_repo["state_file"]
+    roadmap_file = tmp_roadmap_repo["roadmap_file"]
+
+    # Write roadmap containing phase-3 umbrella + sub-phase phase-3.1 (complete) + phase-3.2 (incomplete)
+    Path(roadmap_file).write_text(
+        "**当前阶段**: phase-3\n\n"
+        "### Phase 7: APU (phase-3)\n"
+        "**状态**: 🔄 进行中\n"
+        "**完成条件**:\n  - [ ] phase-3.1 ~ phase-3.6 全部完成\n\n"
+        "#### 任务分类\n"
+        "| 分类ID | 名称 | 描述 | 优先级 | 预期改进方向 |\n"
+        "|--------|------|------|--------|--------------|\n"
+        "| gpu-infra | 7.A GPU 基础设施 | (phase-3.1) | P0 | gpu |\n\n"
+        "### 7.A GPU 基础设施 (phase-3.1)\n"
+        "**状态**: ✅ 完成\n\n"
+        "#### 任务分类\n"
+        "| 分类ID | 名称 | 描述 | 优先级 | 预期改进方向 |\n"
+        "|--------|------|------|--------|--------------|\n"
+        "| gpu-bundle | GPU Bundle | bundle schema | P0 | ... |\n\n"
+        "### 7.B ComputeUnit (phase-3.2)\n"
+        "**状态**: 🟡 Pending\n\n"
+        "#### 任务分类\n"
+        "| 分类ID | 名称 | 描述 | 优先级 | 预期改进方向 |\n"
+        "|--------|------|------|--------|--------------|\n"
+        "| cu-tickloop | CU tick loop | ... | P0 | ... |\n"
+    )
+
+    # Build state: phase-3 umbrella empty, phase-3.1 complete, phase-3.2 incomplete
+    state = {
+        "version": 1,
+        "current_phase": "phase-3",
+        "phases": {
+            "phase-3": {
+                "status": "in_progress",
+                "categories": {},
+                "gate_status": {"all_changes_complete": False, "checklist": {}},
+            },
+            "phase-3.1": {
+                "status": "completed",
+                "categories": {
+                    "gpu-bundle": {"changes": ["c1"], "completed_changes": ["c1"]},
+                },
+                "gate_status": {"all_changes_complete": True, "checklist": {}},
+            },
+            "phase-3.2": {
+                "status": "in_progress",
+                "categories": {
+                    "cu-tickloop": {"changes": ["c2"], "completed_changes": []},
+                },
+                "gate_status": {"all_changes_complete": False, "checklist": {}},
+            },
+        },
+    }
+    Path(state_file).write_text(json.dumps(state, indent=2))
+
+    rc = roadmap_state.advance_phase(roadmap_file, state_file)
+    out = capsys.readouterr().out
+    # Must report phase-3.2 incomplete and return 1
+    assert rc == 1
+    assert "phase-3.2" in out
+    assert "未完成" in out
+
+
+def test_advance_phase_skips_subphases_for_next_phase(tmp_roadmap_repo, capsys):
+    """advance_phase next-phase search must skip phase-N.M and find phase-4 after phase-3."""
+    state_file = tmp_roadmap_repo["state_file"]
+    roadmap_file = tmp_roadmap_repo["roadmap_file"]
+
+    Path(roadmap_file).write_text(
+        "**当前阶段**: phase-3\n\n"
+        "### Phase 7: APU (phase-3)\n"
+        "**状态**: ✅ 完成\n"
+        "#### 任务分类\n"
+        "| 分类ID | 名称 | 描述 | 优先级 |\n"
+        "|--------|------|------|--------|\n"
+        "| gpu-infra | GPU | ... | P0 |\n\n"
+        "### 7.A GPU (phase-3.1)\n"
+        "#### 任务分类\n"
+        "| 分类ID | 名称 | 描述 | 优先级 |\n"
+        "|--------|------|------|--------|\n"
+        "| gpu-bundle | bundle | ... | P0 |\n\n"
+        "### Phase 8: Validation (phase-4)\n"
+        "#### 任务分类\n"
+        "| 分类ID | 名称 | 描述 | 优先级 |\n"
+        "|--------|------|------|--------|\n"
+        "| trace-align | trace | ... | P0 |\n"
+    )
+
+    # Build state: phase-3 fully complete (including sub-phases), phase-4 pending
+    state = {
+        "version": 1,
+        "current_phase": "phase-3",
+        "phases": {
+            "phase-3": {
+                "status": "in_progress",
+                "categories": {
+                    "gpu-infra": {"changes": ["c0"], "completed_changes": ["c0"]},
+                },
+                "gate_status": {"all_changes_complete": True, "checklist": {}},
+            },
+            "phase-3.1": {
+                "status": "completed",
+                "categories": {
+                    "gpu-bundle": {"changes": ["c1"], "completed_changes": ["c1"]},
+                },
+                "gate_status": {"all_changes_complete": True, "checklist": {}},
+            },
+            "phase-4": {
+                "status": "pending",
+                "categories": {
+                    "trace-align": {"changes": [], "completed_changes": []},
+                },
+                "gate_status": {"all_changes_complete": True, "checklist": {}},
+            },
+        },
+    }
+    Path(state_file).write_text(json.dumps(state, indent=2))
+
+    rc = roadmap_state.advance_phase(roadmap_file, state_file)
+    out = capsys.readouterr().out
+    # Should advance to phase-4 (skipping phase-3.1 sub-phase)
+    assert rc == 0
+    assert "phase-4" in out

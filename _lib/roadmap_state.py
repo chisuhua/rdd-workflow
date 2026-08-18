@@ -355,14 +355,25 @@ def advance_phase(roadmap_file: str, state_file: str) -> int:
     current = state["current_phase"]
     phase_data = state["phases"].get(current, {})
 
-    # Pre-check: all changes complete
+    # Pre-check: all changes complete (aggregates parent + phase-N.M sub-phases)
     all_complete = True
+    # 1. Check current phase's own categories
     for cat_id, cat_data in phase_data.get("categories", {}).items():
         total = len(cat_data.get("changes", []))
         completed = len(cat_data.get("completed_changes", []))
         if completed < total:
             all_complete = False
             print(f"❌ 分类 {cat_id} 未完成: {completed}/{total}")
+    # 2. Aggregate all sub-phases matching phase-N.M
+    sub_ids = sorted(pid for pid in state.get("phases", {})
+                     if re.match(rf"^{re.escape(current)}\.\d+$", pid))
+    for pid in sub_ids:
+        for cat_id, cat_data in state["phases"][pid].get("categories", {}).items():
+            total = len(cat_data.get("changes", []))
+            completed = len(cat_data.get("completed_changes", []))
+            if completed < total:
+                all_complete = False
+                print(f"❌ 子阶段 {pid} 分类 {cat_id} 未完成: {completed}/{total}")
 
     # Pre-check: gate conditions
     checklist = phase_data.get("gate_status", {}).get("checklist", {})
@@ -387,7 +398,8 @@ def advance_phase(roadmap_file: str, state_file: str) -> int:
     with open(roadmap_file) as f:
         content = f.read()
 
-    phases = re.findall(r"\((phase-\d+)\)", content)
+    # Find all phase IDs (incl. nested phase-N.M), then filter to top-level only
+    phases = [p for p in re.findall(r"\((phase-\d+(?:\.\d+)?)\)", content) if "." not in p]
     try:
         idx = phases.index(current)
         if idx + 1 < len(phases):
