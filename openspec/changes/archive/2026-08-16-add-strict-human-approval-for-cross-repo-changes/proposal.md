@@ -112,3 +112,17 @@ $ rddf approve-proposal cross-repo-auth-v2 --manual \
 - [ ] README §跨项目协同 章节明确"AI 不能跨项目自动批准"原则
 - [ ] **无 Spoke 端 bypass 路径**（hub 端 `STRICT_HUB_APPROVAL=no` 需 PR 审计）
 
+## 交付状态修正（2026-08-18，由 `fix-adr-0031-safety-gate-substantiation` 补记）
+
+本 change 归档时 tasks.md 21/21 全勾，但 Oracle 审查（ses_fecf9715affe）发现 ADR-0031 §实现细节 5 项中**仅第 1 项（exit 3 硬阻断）真正落地**，且该路径存在 fail-open 缺陷。据实交付状态：
+
+| AC 项 | 归档时实际状态 | 修复后状态 |
+|-------|---------------|-----------|
+| exit 3 硬阻断 `--auto-accept` | ⚠️ 已实现但 fail-open（category 读 `roadmap-meta.yaml`，首次 approve 时该文件尚不存在） | ✅ 改读 `.rddf/improvements/<name>.md` `**分类**:` SSOT |
+| `RDDF_REQUIRE_HUB_APPROVAL=yes` 强制门控 | ❌ env var 无任何代码读取 | ✅ 已接线（hub 校验失败 exit 5） |
+| `--manual` 交互式 username prompt | ❌ 全仓不存在 | ✅ `read -t 30 -rp` + `RDDF_APPROVE_ACTOR` CI fallback（空/超时 exit 4） |
+| audit log 实际写入 | ❌ `append_audit_log_entry` 无生产调用方，log 永远为空 | ✅ accept 前同步写入（含 actor/hub_state/hub_labels/decision） |
+| Hub Issue 批准前 re-fetch | ❌ 未实现 | ✅ `gh issue view --json state,labels`；closed/缺 label exit 6；network fail-open + warning；auth fail-closed |
+
+实质化修复见 change `fix-adr-0031-safety-gate-substantiation`（9 个 bats case 锁定，`tests/integration/test_strict_human_approval.bats`）。
+

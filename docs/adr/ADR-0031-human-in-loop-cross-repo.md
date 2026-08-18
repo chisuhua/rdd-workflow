@@ -1,7 +1,7 @@
 # ADR-0031: 跨项目 RFC 必须人类决策（Human-in-Loop for Cross-Repo）
 
-> **状态**: 待定
-> **日期**: 2026-08-15
+> **状态**: 已采纳
+> **日期**: 2026-08-15（2026-08-18 经 `fix-adr-0031-safety-gate-substantiation` 实质化后采纳）
 > **决策者**: 待确认
 > **父 ADR**: ADR-0030 (Hub-and-Spoke 联邦协同架构)
 > **落地提案**: `add-strict-human-approval-for-cross-repo-changes` (P1, Step 1.5)
@@ -31,11 +31,13 @@ ADR-0030 确立 Hub-and-Spoke 联邦协同架构后，跨项目变更流程的�
 
 ### 实现细节
 
-1. **升级 `approve_proposal.sh`**：检测 `**分类**: cross-repo-federation` 时，**硬阻断 AI 自动批准**（exit code 3）
-2. **新增 `RDDF_REQUIRE_HUB_APPROVAL=yes`**：跨项目强制门控（独立 env var，与 `STRICT_DESIGN_GATE` 并列）
-3. **交互式 prompt**：`--manual` 模式要求 stdin 输入 GitHub username（避免 process listing 泄露）
-4. **审计日志**：所有 cross-repo 决策记录到 `.rddf/state/.cross-repo-audit.jsonl`
-5. **Hub Issue 状态主动校验**：本地批准前必须重新拉取 Hub Issue 状态（防 race condition）
+> 以下为 2026-08-18 `fix-adr-0031-safety-gate-substantiation` 实质化后的**实际**实现（`skills/guide-design/scripts/approve_proposal.sh`），与代码一一对应。
+
+1. **硬阻断 AI 自动批准**：检测 `**分类**: cross-repo-federation`（SSOT 为 `.rddf/improvements/<name>.md` 头部 `**分类**:` 字段，见下方分类传递契约）时，`--auto-accept` 或缺失 `--manual` / `--hub-issue` 一律 exit 3。**不依赖** `roadmap-meta.yaml`（该文件由 approve 脚本自身随后才创建，曾导致 fail-open）。
+2. **`RDDF_REQUIRE_HUB_APPROVAL=yes`**：跨项目强制门控（独立 env var，与 `STRICT_DESIGN_GATE` 并列）。启用后 Hub Issue re-fetch 未确认 approved（state≠OPEN 或缺 `approved` label）时 exit 5；未启用时同场景 exit 6。
+3. **交互式 prompt**：`--manual` 模式用 `read -t 30 -rp "GitHub username: "` 读取人类决策者；空输入或 30s 超时 exit 4。非交互终端（CI）经 `RDDF_APPROVE_ACTOR` env var 提供 actor。
+4. **审计日志**：accept 前同步调用 `skills/_lib/cross_repo_audit.py::append_audit_log_entry` 写入 `.rddf/state/.cross-repo-audit.jsonl`（字段：timestamp / proposal_name / hub_issue / approver / actor / decision / hub_state / hub_labels）；hub 校验失败路径先写 `decision=fail` 再拒绝。
+5. **Hub Issue 状态主动校验**：本地批准前经 `gh issue view <N> --repo <org/repo> --json state,labels` 重新拉取（防 race condition）。state≠OPEN 或 labels 缺 `approved` → exit 6（或 env var 启用时 exit 5）；**network 类错误**（gh 缺失 / 超时 / 网络不可达）fail-open + ⚠️ warning；**auth 类错误**（401/403/auth）fail-closed。
 
 ### 影响范围
 
@@ -86,10 +88,10 @@ ADR-0030 确立 Hub-and-Spoke 联邦协同架构后，跨项目变更流程的�
 
 ### 后续待办
 
-- [ ] 升级 `approve_proposal.sh` 检测跨项目分类
-- [ ] 新增 `RDDF_REQUIRE_HUB_APPROVAL` env var 支持
-- [ ] 新增 `_lib/cross_repo_audit.py` 审计模块
-- [ ] 单元测试覆盖 5 个关键路径（auto-block / gate-detect / manual-confirm / audit-write / hub-state-recheck）
+- [x] 升级 `approve_proposal.sh` 检测跨项目分类（SSOT = improvements 文件 `**分类**:` 字段）
+- [x] 新增 `RDDF_REQUIRE_HUB_APPROVAL` env var 支持（exit 5 升级路径）
+- [x] 新增 `_lib/cross_repo_audit.py` 审计模块 + approve 流接线（`fix-adr-0031-safety-gate-substantiation`）
+- [x] 集成测试覆盖关键路径（`tests/integration/test_strict_human_approval.bats` 9 cases：auto-block / fail-open 防御 / manual-confirm / audit-write / hub-state-recheck / env var 升级）
 - [ ] README §跨项目协同 章节明确"AI 不能跨项目自动批准"原则
 - [ ] `docs/strict-gate-boundary.md` 已包含 `RDDF_REQUIRE_HUB_APPROVAL` 边界说明
 

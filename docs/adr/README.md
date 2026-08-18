@@ -54,7 +54,7 @@
 | [ADR-0027](ADR-0027-continuous-evolution-feedback-loop.md) | 持续演进反馈环 | 已采纳 | Detect→Buffer→Report→Triage→Close 五环 + 复用 `_lib/config.py` + 三重 opt-in + 幂等 close + Oracle 复核 8/8/7 |
 | [ADR-0029](ADR-0029-issue-driven-proposal-creation.md) | Issue-Driven Proposal Creation | 已采纳 | 新增 `add-improve --from-issue` 模式 + repo-neutral `close_issues.py` 修复 |
 | [ADR-0030](ADR-0030-hub-and-spoke-federation.md) | Hub-and-Spoke 联邦协同架构 | 待定 | 多项目 AI 协同开发采用 Hub 仓库 + L2 升级双向协同通道 + 6 项安全风险 + 3 个月复核 |
-| [ADR-0031](ADR-0031-human-in-loop-cross-repo.md) | 跨项目 RFC 必须人类决策 | 待定 | 跨项目提案 AI 不可自动批准 + `RDDF_REQUIRE_HUB_APPROVAL` 强制门控 + 审计 log + 无 Spoke 端 bypass |
+| [ADR-0031](ADR-0031-human-in-loop-cross-repo.md) | 跨项目 RFC 必须人类决策 | 已采纳 | 跨项目提案 AI 不可自动批准 + `RDDF_REQUIRE_HUB_APPROVAL` 强制门控 + 审计 log + 无 Spoke 端 bypass |
 
 ## 架构演进
 
