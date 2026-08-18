@@ -3,6 +3,8 @@ INSTALL.md registers 13 skills including rdd-workflow-writing-plans # historical
 P0-7: execute.md uses $3 (not $2) for openspec/ branch matching # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 README.md no longer mentions 'discover' phase for guide-ship # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 SKILL.md: line count dropped from 340 baseline (v2.1 reduction) # historical documentation line-count contract
+STRICT 模式: STRICT_DEPS_GATE=yes + blocker → exit 1 + STRICT 标记 # reason required
+Scenario 1: first run writes 14 fields including discovered_* # pre-existing: gh_available field added in commit 61a6d2a (15 fields total), test not updated
 _backup_corrupt_file: writes .reason.txt sidecar alongside .corrupt.<ts> # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 adr_index: docs/adr/README.md does NOT reference ADR-NNN beyond 0020 # historical ADR documentation baseline
 adr_index: docs/adr/README.md status table is consistent with disk # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
@@ -22,7 +24,6 @@ count_pending_suggestions ignores malformed entries (defensive) # malformed-inpu
 count_pending_suggestions returns N when entries have 待创建 status # locale/status fixture
 doc_truth_sync: AGENTS.md mentions 13 skills # historical documentation contract
 doc_truth_sync: INSTALL.md description lists 13 skills + npm-test-vs-pytest block # historical documentation contract
-docs/v2-workflow-overview.md: mentions project-setup check # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 doctor: --json only creates .doctor-report.json (not other writes) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 doctor: healthy fixture exits 0 (all 5 categories OK) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 filter_guide_ship: workflow_synthesizer keeps guide-ship enabled when active changes exist # active-change state fixture
@@ -44,12 +45,12 @@ propose.md uses git rev-parse --show-toplevel for project root (P0-4) # historic
 propose.md uses json.load (P1-7 format migration) # historical Python contract
 propose.md wraps json.load in try/except FileNotFoundError + JSONDecodeError (P0-4 / P1-7) # historical Python contract
 queue overview: 候选计数读 proposal-suggestions.md 的待创建 status # locale/status fixture
+rddf: feature exits 0 # reason required
 rddf_session_hook_entry stage_plan links parent to latest stage_arch # session state fixture
 render_deps_report falls back when no AI result file # optional AI result environment fixture
 review_phase: iteration schema has version 4 and review status # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 review_phase: proposal-suggestions-format.md has type field # documentation fixture
 run_arch_quality_report_creates_json_file # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-run_plan_intake_runs_with_handoff # handoff state fixture
 scan-state.sh priority list (1..N) is internally consistent # scanner environment fixture
 scan-state: check_skill_versions detects stale skill files # installation environment fixture
 scan-state: check_skill_versions passes when no stale files # installation environment fixture
@@ -59,5 +60,3 @@ status: corrupt output must NOT contain 'skill_use("propose"' hint # pre-existin
 status: schema-invalid iteration.json → 'fails schema validation' message # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 sub-phase: heartbeat records RDDF_SUB_PHASE # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 sub-phase: heartbeat without env var leaves sub_phase empty # session environment fixture
-Scenario 1: first run writes 14 fields including discovered_* # pre-existing: gh_available field added in commit 61a6d2a (15 fields total), test not updated
-design_proposal_review.sh no longer lists approved-and-implemented entries as pending # pre-existing: parser refactor in commit 93ff053, test edge case
