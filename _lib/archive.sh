@@ -109,6 +109,56 @@ check_worktree_commits() {
   return 0
 }
 
+# check_tasks_completion <name> <main_root>
+#   Reads <main_root>/openspec/changes/<name>/tasks.md and reports the
+#   checkbox completion ratio. Honors STRICT_TASKS_GATE (blocks when
+#   ratio < 100%) and SKIP_TASKS_GATE (bypass). Default = warning only.
+#   Missing tasks.md or 0 tasks = no-op (return 0).
+#
+#   Origin: enforce-tasks-completion-before-archive proposal. Pairs
+#   with check_worktree_commits as the second pre-merge safety net.
+check_tasks_completion() {
+  local name="${1:-}"
+  local main_root="${2:-}"
+  [[ -z "$name" || -z "$main_root" ]] && return 0
+
+  if [ "${SKIP_TASKS_GATE:-no}" = "yes" ]; then
+      echo "[SKIP] tasks gate skipped (SKIP_TASKS_GATE=yes)" >&2
+      return 0
+  fi
+
+  local tasks_md="$main_root/openspec/changes/$name/tasks.md"
+  if [[ ! -f "$tasks_md" ]]; then
+      echo "[INFO] no tasks.md for $name, skipping completion check" >&2
+      return 0
+  fi
+
+  local done_count open_count total_count pct
+  done_count=$(grep -cE '^- \[[xX]\]' "$tasks_md" 2>/dev/null | head -n1)
+  done_count=${done_count:-0}
+  [[ "$done_count" =~ ^[0-9]+$ ]] || done_count=0
+  open_count=$(grep -cE '^- \[ \]' "$tasks_md" 2>/dev/null | head -n1)
+  open_count=${open_count:-0}
+  [[ "$open_count" =~ ^[0-9]+$ ]] || open_count=0
+  total_count=$(( done_count + open_count ))
+  if [ "$total_count" -eq 0 ]; then
+      echo "[INFO] tasks.md for $name has 0 checkboxes, skipping completion check" >&2
+      return 0
+  fi
+  pct=$(( done_count * 100 / total_count ))
+
+  echo "📋 tasks completion: $done_count/$total_count (${pct}%)"
+
+  if [ "$pct" -lt 100 ]; then
+      if [ "${STRICT_TASKS_GATE:-no}" = "yes" ]; then
+          echo "❌ STRICT_TASKS_GATE: tasks incomplete $done_count/$total_count (${pct}%)" >&2
+          return 1
+      fi
+      echo "⚠️ tasks incomplete (warning, set STRICT_TASKS_GATE=yes to block): $done_count/$total_count (${pct}%)" >&2
+  fi
+  return 0
+}
+
 # verify_merge_result <before_sha> <after_sha>
 #   Returns 0 if HEAD changed (merge produced new commits), OR if the
 #   worktree branch is already an ancestor of HEAD (legitimate no-op).
@@ -388,6 +438,11 @@ archive_change() {
   local archive_commit_sha=""
   archive_commit_sha=$(git -C "$main_root" rev-parse HEAD 2>/dev/null || echo "")
   mark_iteration_archived "$name" "$main_root" "$archive_commit_sha"
+
+  # 8.7 Tasks completion gate (enforce-tasks-completion-before-archive):
+  # warn when tasks.md is < 100% complete; STRICT_TASKS_GATE=yes blocks;
+  # SKIP_TASKS_GATE=yes bypasses. Default = warning only.
+  check_tasks_completion "$name" "$main_root" || true
 
   # 8.6 Collect L2 violation count (collect-l2-violation-count-on-archive)
   collect_l2_count_wrapper "$name" "$main_root"

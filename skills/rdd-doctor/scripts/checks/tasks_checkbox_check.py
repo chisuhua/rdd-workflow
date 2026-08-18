@@ -69,12 +69,30 @@ def run(project_root: Path | None = None) -> List[Finding]:
         done_count = text.count(_CHECKBOX_PATTERN_DONE)
         total = open_count + done_count
         if total == 0:
+            continue
+        if open_count > 0:
+            pct = int(done_count * 100 / total)
+            if pct == 0:
+                severity = Severity.INFO
+                hint = (
+                    "complete tasks checkboxes; ratio is 0/{}".format(total)
+                )
+            else:
+                severity = Severity.WARNING
+                hint = (
+                    "complete remaining {} of {} tasks before archive "
+                    "(set SKIP_TASKS_GATE=yes to bypass archive gate)".format(
+                        open_count, total
+                    )
+                )
             findings.append(Finding(
-                severity=Severity.WARNING,
+                severity=severity,
                 category="tasks-checkbox",
                 file=str(tasks),
                 line=None,
-                snippet="checkbox count = 0 but change is active",
-                fix_hint="add task checkboxes; `execute` cannot track progress without them",
+                snippet="{}: tasks {}/{} ({}%)".format(
+                    change_dir.name, done_count, total, pct
+                ),
+                fix_hint=hint,
             ))
     return findings

@@ -80,9 +80,9 @@
 | [enforce-tasks-completion-before-archive](.rddf/improvements/enforce-tasks-completion-before-archive.md) | P2 | 2026-08-17 | guide-arch |
 
 
-| [complete-add-cross-repo-deps-orchestration](.rddf/improvements/complete-add-cross-repo-deps-orchestration.md) | P1 | 2026-08-17 | guide-arch |
 
 ## 已实施
+| [complete-add-cross-repo-deps-orchestration](.rddf/improvements/complete-add-cross-repo-deps-orchestration.md) | P1 | 2026-08-18 |
 | [complete-add-contract-lint-ci-gate](.rddf/improvements/complete-add-contract-lint-ci-gate.md) | P1 | 2026-08-18 |
 | [enforce-plan-tdd-5step-new](.rddf/improvements/enforce-plan-tdd-5step-new.md) | P2 | 2026-08-16 |
 | [backfill-proposal-approved-col4](.rddf/improvements/backfill-proposal-approved-col4.md) | P2 | 2026-08-16 |
