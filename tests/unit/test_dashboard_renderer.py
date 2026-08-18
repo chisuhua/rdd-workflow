@@ -19,6 +19,7 @@ from unittest.mock import patch
 import pytest
 
 from skills._lib.dashboard import (
+    ApprovedProposalEntry,
     ArchInfo,
     ChangeEntry,
     DashboardData,
@@ -127,6 +128,7 @@ class TestJsonMode:
             "roadmap_counts",
             "pending_suggestions",
             "suggestions",
+            "approved_proposals",
             "divergence_warnings",
         }
         assert expected.issubset(parsed.keys()), (
@@ -154,6 +156,7 @@ class TestJsonMode:
         assert parsed["roadmap_phase"] is None
         assert parsed["roadmap_counts"] == {}
         assert parsed["pending_suggestions"] == 0
+        assert parsed["approved_proposals"] == []
         assert parsed["divergence_warnings"] == []
 
 
@@ -233,6 +236,7 @@ class TestEmptyDataSections:
         assert "(no worktrees)" in out
         assert "(no features)" in out
         assert "(no pending suggestions)" in out
+        assert "(no approved proposals)" in out
 
 
 # ---------------------------------------------------------------------------
@@ -326,6 +330,7 @@ class TestPendingSuggestions:
         data.pending_suggestions = 0
         out = render(data, mode="plain")
         assert "(no pending suggestions)" in out
+        assert "(no approved proposals)" in out
         assert "NAME" not in out  # no table header
 
 
@@ -522,6 +527,223 @@ class TestArchPlanPhaseRendering:
         # Ship in progress -> 🔧
         assert "🔧" in out
         assert "Ship in progress" in out
+
+
+# ---------------------------------------------------------------------------
+# Content: arch completed_adr_ids + pending_adr_ids (v2.1+ arch-handoff fields)
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# Content: approved proposals (Section 7b)
+# ---------------------------------------------------------------------------
+
+
+class TestApprovedProposalsRendering:
+    def test_terminal_shows_approved_subsubsection(self, make_empty_data, tmp_path):
+        data = make_empty_data()
+        data.approved_proposals = [
+            ApprovedProposalEntry(
+                name="fix-bug", priority="P0", date="2026-08-15", section="approved"
+            ),
+            ApprovedProposalEntry(
+                name="add-feature", priority="P1", date="2026-08-14", section="implemented"
+            ),
+        ]
+        out = render(data, mode="terminal", output_file=str(tmp_path / "ap.txt"))
+        assert "7b. Approved proposals" in out
+        assert "2 total" in out
+        assert "(1 not yet implemented)" in out
+        assert "(1 implemented)" in out
+        assert "fix-bug" in out and "add-feature" in out
+
+    def test_plain_shows_approved_table_ascii(self, make_empty_data):
+        data = make_empty_data()
+        data.approved_proposals = [
+            ApprovedProposalEntry(name="c1", priority="P1", date="2026-08-15", section="implemented"),
+        ]
+        out = render(data, mode="plain")
+        assert "7b. Approved proposals" in out
+        assert "1 total" in out
+        assert "(1 implemented)" in out
+        assert "c1" in out
+        assert all(ord(c) < 128 for c in out)
+
+    def test_terminal_implemented_limit_is_five(self, make_empty_data, tmp_path):
+        """Implemented proposals are limited to the 5 most recent by date desc."""
+        data = make_empty_data()
+        data.approved_proposals = [
+            ApprovedProposalEntry(
+                name=f"p{i}", section="implemented",
+                date=f"2026-08-{i + 1:02d}",
+            )
+            for i in range(15)
+        ]
+        out = render(data, mode="terminal", output_file=str(tmp_path / "lim.txt"))
+        assert "15 total" in out
+        # 10 hidden (15 - 5)
+        assert "+10 implemented hidden" in out
+        assert "most recent 5" in out
+        # Most recent first: p14 (2026-08-15) should appear, p0 should not
+        assert "p14" in out
+        assert "p0" not in out
+
+    def test_terminal_shows_all_not_yet_implemented(self, make_empty_data, tmp_path):
+        """Section=='approved' rows are shown in full (no limit)."""
+        data = make_empty_data()
+        data.approved_proposals = [
+            ApprovedProposalEntry(name=f"a{i}", section="approved", date="2026-08-01")
+            for i in range(8)
+        ] + [
+            ApprovedProposalEntry(name="z", section="implemented", date="2026-08-15"),
+        ]
+        out = render(data, mode="terminal", output_file=str(tmp_path / "all.txt"))
+        for i in range(8):
+            assert f"a{i}" in out, f"a{i} should appear (not yet implemented)"
+        assert "z" in out
+
+    def test_json_includes_approved_proposals(self, make_empty_data):
+        data = make_empty_data()
+        data.approved_proposals = [
+            ApprovedProposalEntry(name="x", priority="P0", date="2026-08-01", section="approved"),
+        ]
+        out = render(data, mode="json")
+        parsed = json.loads(out)
+        assert len(parsed["approved_proposals"]) == 1
+        assert parsed["approved_proposals"][0]["name"] == "x"
+        assert parsed["approved_proposals"][0]["section"] == "approved"
+
+
+# ---------------------------------------------------------------------------
+# Content: archived changes limit (Section 3)
+# ---------------------------------------------------------------------------
+
+
+class TestArchivedChangesLimit:
+    def test_terminal_archived_shown_count_is_at_most_five(self, make_empty_data, tmp_path):
+        data = make_empty_data()
+        data.changes = [
+            ChangeEntry(
+                name=f"old-{i:02d}", status="archived",
+                archived_at=f"2026-08-{i + 1:02d}T00:00:00Z",
+            )
+            for i in range(12)
+        ]
+        out = render(data, mode="terminal", output_file=str(tmp_path / "al.txt"))
+        # 7 archived hidden (12 - 5)
+        assert "+7 archived change(s) hidden" in out
+        assert "most recent 5" in out
+
+    def test_terminal_sorts_archived_by_archived_at_desc(self, make_empty_data, tmp_path):
+        data = make_empty_data()
+        data.changes = [
+            ChangeEntry(name="oldest", status="archived", archived_at="2026-01-01"),
+            ChangeEntry(name="middle", status="archived", archived_at="2026-06-01"),
+            ChangeEntry(name="newest", status="archived", archived_at="2026-12-01"),
+        ]
+        out = render(data, mode="terminal", output_file=str(tmp_path / "ord.txt"))
+        newest_pos = out.index("newest")
+        middle_pos = out.index("middle")
+        oldest_pos = out.index("oldest")
+        assert newest_pos < middle_pos < oldest_pos
+
+    def test_terminal_active_changes_unaffected_by_archive_limit(self, make_empty_data, tmp_path):
+        """Non-archived changes should always be shown, regardless of count."""
+        data = make_empty_data()
+        data.changes = [
+            ChangeEntry(name=f"active-{i:02d}", status="in_worktree")
+            for i in range(8)
+        ] + [
+            ChangeEntry(name="archived-1", status="archived", archived_at="2026-08-01"),
+        ]
+        out = render(data, mode="terminal", output_file=str(tmp_path / "act.txt"))
+        for i in range(8):
+            assert f"active-{i:02d}" in out
+        # No hide line since only 1 archived
+        assert "archived change(s) hidden" not in out
+
+    def test_plain_archived_limit_is_five(self, make_empty_data):
+        data = make_empty_data()
+        data.changes = [
+            ChangeEntry(
+                name=f"old-{i:02d}", status="archived",
+                archived_at=f"2026-08-{i + 1:02d}",
+            )
+            for i in range(8)
+        ]
+        out = render(data, mode="plain")
+        assert "+3 archived change(s) hidden" in out
+        assert "most recent 5" in out
+
+
+# ---------------------------------------------------------------------------
+# parse_approved_proposals_detailed — unit tests for the new helper
+# ---------------------------------------------------------------------------
+
+
+class TestParseApprovedDetailed:
+    def test_returns_one_row_per_table_line(self, tmp_path):
+        from _lib.parse_approved import parse_approved_proposals_detailed
+
+        md = tmp_path / "p.md"
+        md.write_text(
+            "# title\n\n"
+            "## 已批准提案\n\n"
+            "| 提案 | 优先级 | 批准时间 | 批准者 |\n"
+            "|------|--------|----------|--------|\n"
+            "| [a](.rddf/improvements/a.md) | P0 | 2026-08-01 | alice |\n"
+            "| [b](.rddf/improvements/b.md) | P1 | 2026-08-02 | bob |\n"
+            "\n"
+            "## 已实施\n\n"
+            "| [c](.rddf/improvements/c.md) | P2 | 2026-08-03 |\n",
+            encoding="utf-8",
+        )
+        rows = parse_approved_proposals_detailed(str(md))
+        assert len(rows) == 3
+        assert rows[0].name == "a"
+        assert rows[0].priority == "P0"
+        assert rows[0].date == "2026-08-01"
+        assert rows[0].section == "approved"
+        assert rows[2].section == "implemented"
+
+    def test_skips_rows_in_non_canonical_sections(self, tmp_path):
+        from _lib.parse_approved import parse_approved_proposals_detailed
+
+        md = tmp_path / "p.md"
+        md.write_text(
+            "## supersedes (2026-08-02)\n\n"
+            "| [should-skip](.rddf/improvements/skip.md) | P0 | x |\n"
+            "\n"
+            "## 已批准提案\n\n"
+            "| [kept](.rddf/improvements/kept.md) | P1 | 2026-08-01 |\n",
+            encoding="utf-8",
+        )
+        rows = parse_approved_proposals_detailed(str(md))
+        names = [r.name for r in rows]
+        assert "kept" in names
+        assert "should-skip" not in names
+
+    def test_dedup_keeps_first_occurrence(self, tmp_path):
+        from _lib.parse_approved import parse_approved_proposals_detailed
+
+        md = tmp_path / "p.md"
+        md.write_text(
+            "## 已批准提案\n\n"
+            "| [dup](.rddf/improvements/dup.md) | P0 | 2026-08-01 |\n"
+            "\n"
+            "## 已实施\n\n"
+            "| [dup](.rddf/improvements/dup.md) | P2 | 2026-08-09 |\n",
+            encoding="utf-8",
+        )
+        rows = parse_approved_proposals_detailed(str(md))
+        assert len(rows) == 1
+        assert rows[0].section == "approved"  # first occurrence wins
+
+    def test_missing_file_returns_empty_list(self, tmp_path):
+        from _lib.parse_approved import parse_approved_proposals_detailed
+
+        rows = parse_approved_proposals_detailed(str(tmp_path / "nope.md"))
+        assert rows == []
 
 
 # ---------------------------------------------------------------------------
