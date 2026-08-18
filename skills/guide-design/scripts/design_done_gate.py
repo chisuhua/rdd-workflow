@@ -52,7 +52,7 @@ def check_cross_repo_approvals() -> bool:
         for line in open(audit_file):
             try:
                 record = json.loads(line)
-                if record.get("decision") == "approved":
+                if record.get("decision") in ("approve", "approved"):
                     approved_proposals.add(record.get("proposal_name"))
             except (json.JSONDecodeError, KeyError):
                 continue
@@ -71,3 +71,30 @@ def check_cross_repo_approvals() -> bool:
                     break
 
     return len(pending) > 0
+
+
+_COMMANDS = {
+    "check-hub-pending": check_hub_pending,
+    "check-cross-repo-approvals": check_cross_repo_approvals,
+}
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI entry: `python3 design_done_gate.py <command>`.
+
+    Exit 0 = pass (no block), 1 = block, 2 = usage error.
+    Used by check_design_done_gate() in skills/guide-design/SKILL.md Phase 4.
+    """
+    import sys
+
+    args = sys.argv[1:] if argv is None else argv
+    if len(args) != 1 or args[0] not in _COMMANDS:
+        print(f"usage: design_done_gate.py <{'|'.join(_COMMANDS)}>", file=sys.stderr)
+        return 2
+    return 1 if _COMMANDS[args[0]]() else 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(main())

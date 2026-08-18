@@ -11,6 +11,7 @@ from doctor_render import Finding, Severity, exit_code_for, render_human, render
 
 from checks import (
     migration_residue_check,
+    orphan_gates_check,
     plan_tdd_check,
     proposal_table_check,
     roadmap_meta_check,
@@ -26,6 +27,7 @@ _CHECKERS = {
     "proposal-table": proposal_table_check.run,
     "tasks-checkbox": tasks_checkbox_check.run,
     "migration-residue": migration_residue_check.run,
+    "orphan-gates": orphan_gates_check.run,
 }
 
 
@@ -68,6 +70,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="rdd-doctor")
     parser.add_argument("--json", action="store_true", help="Write .rddf/state/.doctor-report.json")
     parser.add_argument("--category", choices=list(_CHECKERS.keys()), help="Run only this category")
+    parser.add_argument("--check", choices=list(_CHECKERS.keys()),
+                        help="Alias for --category (e.g. --check orphan-gates)")
     parser.add_argument("--quiet", action="store_true", help="Single-line output, most severe only")
     parser.add_argument("--version", action="store_true")
     args = parser.parse_args(argv)
@@ -76,7 +80,7 @@ def main(argv: list[str] | None = None) -> int:
         print("rdd-doctor 0.1.0")
         return 0
 
-    findings, categories_checked = aggregate_findings(category=args.category)
+    findings, categories_checked = aggregate_findings(category=args.check or args.category)
 
     if args.json:
         report_path = Path(".rddf/state/.doctor-report.json")

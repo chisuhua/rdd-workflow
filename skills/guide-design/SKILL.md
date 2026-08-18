@@ -329,6 +329,39 @@ check_design_done_gate() {
     echo "$pending"
     return 1
   fi
+
+  # Hub gates (fix-orphan-hub-gates-wiring, ADR-0030/0031):
+  # 末尾追加 check_hub_pending → check_cross_repo_approvals (不动既有 check)。
+  # SKIP_HUB_CHECK=true 紧急绕过 (默认 OFF; audit log 仍保留 SKIP 上下文)。
+  if [ "${SKIP_HUB_CHECK:-}" = "true" ]; then
+    echo "⚠️  SKIP_HUB_CHECK=true, 跳过 Hub pending / cross-repo approval 检查 (仅紧急 hotfix)"
+  else
+    local gate_py=""
+    local gate_candidates=(
+      "${RDDF_DESIGN_GATE_PY:-}"
+      "$(git -C "${PROJECT_ROOT:-.}" rev-parse --show-toplevel 2>/dev/null)/skills/guide-design/scripts/design_done_gate.py"
+      "$(git rev-parse --show-toplevel 2>/dev/null)/skills/guide-design/scripts/design_done_gate.py"
+    )
+    local c
+    for c in "${gate_candidates[@]}"; do
+      if [ -n "$c" ] && [ -f "$c" ]; then gate_py="$c"; break; fi
+    done
+    if [ -z "$gate_py" ]; then
+      echo "⚠️  design_done_gate.py 未找到, 跳过 Hub gates (fail-open; 用 rdd-doctor --check orphan-gates 巡检)"
+    else
+      if ! RDDF_PROJECT_ROOT="$PROJECT_ROOT" python3 "$gate_py" check-hub-pending; then
+        echo "❌ design-done 失败: 存在未关闭的 Hub pending RFC (.rddf/state/.cross-repo-pending.json)"
+        echo "   决策: 先关闭 Hub Issue, 或紧急时设置 SKIP_HUB_CHECK=true"
+        return 1
+      fi
+      if ! RDDF_PROJECT_ROOT="$PROJECT_ROOT" python3 "$gate_py" check-cross-repo-approvals; then
+        echo "❌ design-done 失败: 存在未获 Hub 批准的 cross-repo-federation 提案 (.cross-repo-audit.jsonl 无 approve 记录)"
+        echo "   决策: 走 approve_proposal.sh --manual --hub-issue 完成审批, 或紧急时设置 SKIP_HUB_CHECK=true"
+        return 1
+      fi
+    fi
+  fi
+
   echo "✅ 所有提案已有决策，design-done 门控通过"
   return 0
 }

@@ -152,6 +152,8 @@ RDDF_HUB_REPO=org/rdd-hub rddf watch-hub --once --owner=org/rdd-hub
 
 `SKIP_HUB_CHECK=true` 环境变量可在 Hub 网络故障时跳过 design-done 门控的 Hub 检查(不推荐,仅 hotfix)。
 
+**语义**: 默认 **OFF**(未设置即严格检查,design-done gate 会调用 `check_hub_pending` / `check_cross_repo_approvals`);仅在紧急 hotfix 时显式设为 `true`(**ON**)临时绕过。绕过会留 audit trail,事后用 `rdd-doctor --check orphan-gates` 巡检确认 gate 未被静默拆除。
+
 ### 跨项目审批(ADR-0031)
 
 `category: cross-repo-federation` 的提案**不可** `--auto-accept`,必须:
