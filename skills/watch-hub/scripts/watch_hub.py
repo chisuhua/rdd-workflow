@@ -87,7 +87,6 @@ def main() -> int:
         print("ERROR: Rate limited, skipping this poll.", file=sys.stderr)
         return 3
 
-    # Index by number
     by_number = {s["number"]: s for s in statuses}
 
     approved_count = 0
@@ -97,12 +96,7 @@ def main() -> int:
         if not num or num not in by_number:
             continue
         s = by_number[num]
-        if s["state"] == "closed" and s.get("stateReason") == "COMPLETED":
-            # Approve locally
-            subprocess.run([
-                "bash", "scripts/approve_proposal.sh",
-                f"hub-{num}", e["gate_type"], "watch-hub-bot", "auto-approved via watch-hub"
-            ], check=False)
+        if s.get("state") in ("closed", "CLOSED") and s.get("stateReason") == "COMPLETED":
             update_pending_entry(state_dir, url, {"status": "approved"})
             approved_count += 1
 
