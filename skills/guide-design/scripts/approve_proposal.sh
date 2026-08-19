@@ -21,6 +21,9 @@ CROSS_REPO_CATEGORY="cross-repo-federation"
 AUTO_ACCEPT=false
 MANUAL_FLAG=false
 HUB_ISSUE_ARG=""
+AUTO_ISSUE=false
+HUB_STATE="unknown"
+HUB_LABELS=""
 
 # Argument parsing: collect flags, leaving NAME and PRIORITY as positional
 _remaining_args=()
@@ -34,6 +37,7 @@ while [[ $# -gt 0 ]]; do
     --hub-issue=*)
       HUB_ISSUE_ARG="${1#*=}"
       shift ;;
+    --auto-issue) AUTO_ISSUE=true; shift ;;
     --) shift; break ;;
     -*) shift ;;
     *) _remaining_args+=("$1"); shift ;;
@@ -64,6 +68,63 @@ is_cross_repo_proposal() {
   local cat
   cat=$(detect_cross_repo_category "$1" 2>/dev/null || echo "")
   [[ "$cat" == "$CROSS_REPO_CATEGORY" ]]
+}
+
+# _auto_issue_hub: invoke report_issue_rfc.py with the prepared draft, capture URL,
+# write back to draft JSON, append audit entry on success.
+# Args: <project_root> <name> <draft_path>
+_auto_issue_hub() {
+  local proot="$1" pname="$2" dpath="$3"
+  local rddf_hub_repo="${RDDF_HUB_REPO:-chisuhua/rdd-hub}"
+  local report_script="$proot/skills/report-issue/scripts/report_issue_rfc.py"
+
+  local title
+  title=$(python3 -c "import json; print(json.load(open('$dpath'))['title'])" 2>/dev/null || echo "")
+  if [ -z "$title" ]; then
+    echo "⚠️  cannot read draft title from $dpath" >&2
+    return 1
+  fi
+
+  local create_out
+  set +e
+  create_out=$(cd "$proot" && RDDF_REPORT_GH_REPO="$rddf_hub_repo" python3 "$report_script" \
+    --category=rfc \
+    --title "$title" \
+    --body "RFC draft: $dpath" \
+    --stakeholders "$(python3 -c "import json; print(','.join(json.load(open('$dpath')).get('stakeholders', [])))" 2>/dev/null)" \
+    --gate "$(python3 -c "import json; print(json.load(open('$dpath')).get('gate', 'Design-Gate'))" 2>/dev/null)" \
+    --contract-impact "$(python3 -c "import json; print(json.load(open('$dpath')).get('contract_impact', 'Breaking-Change'))" 2>/dev/null)" 2>&1)
+  local rc=$?
+  set -e
+  if [ "$rc" -ne 0 ]; then
+    echo "⚠️  report_issue_rfc.py failed (rc=$rc): $create_out" >&2
+    HUB_STATE="error"
+    HUB_LABELS="create-failed"
+    return 1
+  fi
+
+  local hub_url
+  hub_url=$(echo "$create_out" | grep -oE 'https://github\.com/[^/]+/[^/]+/issues/[0-9]+' | head -1)
+  if [ -z "$hub_url" ]; then
+    echo "⚠️  cannot parse Hub URL from output" >&2
+    return 1
+  fi
+
+  python3 -c "
+import json
+d = json.load(open('$dpath'))
+d['hub_issue_url'] = '$hub_url'
+json.dump(d, open('$dpath', 'w'), indent=2)
+"
+
+  HUB_STATE="open" HUB_LABELS="rfc,cross-repo" _write_cross_repo_audit "approve-auto-issue"
+  echo "✅ Hub Issue auto-created: $hub_url" >&2
+  return 0
+}
+
+# _auto_audit_fail: append a separate audit entry recording Hub creation failure
+_auto_audit_fail() {
+  HUB_STATE="${1:-error}" HUB_LABELS="${2:-create-failed}" _write_cross_repo_audit "fail-auto-issue"
 }
 
 # Append one entry to .rddf/state/.cross-repo-audit.jsonl via cross_repo_audit.
@@ -108,9 +169,24 @@ if is_cross_repo_proposal "$NAME" 2>/dev/null; then
     echo "🚫 cross-repo proposal '$NAME' requires --manual flag" >&2
     exit 3
   fi
-  if [ -z "$HUB_ISSUE_ARG" ]; then
-    echo "🚫 cross-repo proposal requires --hub-issue <org/repo#N>" >&2
+  if [ -z "$HUB_ISSUE_ARG" ] && [ "$AUTO_ISSUE" != true ]; then
+    echo "🚫 cross-repo proposal requires --hub-issue <org/repo#N> OR --auto-issue (with prepared draft)" >&2
     exit 3
+  fi
+
+  # Mutual exclusion: --auto-issue and --hub-issue cannot both be passed
+  if [ "$AUTO_ISSUE" = true ] && [ -n "$HUB_ISSUE_ARG" ]; then
+    echo "🚫 --hub-issue and --auto-issue are mutually exclusive" >&2
+    exit 2
+  fi
+
+  # --auto-issue requires the RFC draft to exist
+  if [ "$AUTO_ISSUE" = true ]; then
+    DRAFT_PATH="$PROJECT_ROOT/.rddf/state/.rfc-draft-$NAME.json"
+    if [ ! -f "$DRAFT_PATH" ]; then
+      echo "🚫 --auto-issue requires rfc-draft for '$NAME'; run rddf rfc-draft $NAME first" >&2
+      exit 4
+    fi
   fi
 
   # --- ADR-0031 §实现细节 3: interactive GitHub username (30s timeout) ---
@@ -128,14 +204,13 @@ if is_cross_repo_proposal "$NAME" 2>/dev/null; then
   fi
 
   # --- ADR-0031 §实现细节 5: Hub Issue re-fetch before local approve ---
-  HUB_REPO_PART="${HUB_ISSUE_ARG%%#*}"
-  HUB_ISSUE_NUM="${HUB_ISSUE_ARG##*#}"
-  if [ "$HUB_REPO_PART" = "$HUB_ISSUE_ARG" ] || [ -z "$HUB_ISSUE_NUM" ]; then
-    echo "🚫 invalid --hub-issue format, expected <org/repo#N>: $HUB_ISSUE_ARG" >&2
-    exit 3
-  fi
-  HUB_STATE="unknown"
-  HUB_LABELS=""
+  if [ "$AUTO_ISSUE" != true ]; then
+    HUB_REPO_PART="${HUB_ISSUE_ARG%%#*}"
+    HUB_ISSUE_NUM="${HUB_ISSUE_ARG##*#}"
+    if [ "$HUB_REPO_PART" = "$HUB_ISSUE_ARG" ] || [ -z "$HUB_ISSUE_NUM" ]; then
+      echo "🚫 invalid --hub-issue format, expected <org/repo#N>: $HUB_ISSUE_ARG" >&2
+      exit 3
+    fi
   set +e
   HUB_FETCH_OUT=$(HUB_REPO_PART="$HUB_REPO_PART" HUB_ISSUE_NUM="$HUB_ISSUE_NUM" python3 - <<'PYEOF'
 import json, os, subprocess, sys
@@ -195,9 +270,21 @@ PYEOF
     echo "🚫 Hub Issue '$HUB_ISSUE_ARG' not approved (state=$HUB_STATE labels=$HUB_LABELS) (exit 6)" >&2
     exit 6
   fi
+  fi
 
   # --- ADR-0031 §实现细节 4: audit log write BEFORE accept ---
   _write_cross_repo_audit "approve"
+
+  # --- ADR-0032 Phase 3: --auto-issue creates Hub Issue via prepared draft ---
+  if [ "$AUTO_ISSUE" = true ]; then
+    _auto_issue_hub "$PROJECT_ROOT" "$NAME" "$DRAFT_PATH" || {
+      # Hub creation failed: write audit fail entry but DO NOT block approve
+      # (approve already succeeded; Hub is best-effort retry by human)
+      _auto_audit_fail "$HUB_STATE" "$HUB_LABELS"
+      echo "⚠️  Hub Issue creation failed; see audit log. Approve succeeded." >&2
+      # Note: exit 0 because approve itself succeeded; Hub is downstream
+    }
+  fi
 fi
 
 # Source state.sh for append_approved
