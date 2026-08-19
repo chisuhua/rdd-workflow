@@ -28,6 +28,29 @@ from skills._lib.gh_hub_client import GhHubClient, RateLimitError
 from skills._lib.cross_repo_state import add_pending_entry
 
 
+def build_contract_draft_block(path: str) -> str:
+    """Read contract file at <path>, base64-encode, return markdown details block.
+
+    Limit: 49152 bytes (~48 KB). Larger files rejected with ValueError.
+    """
+    from pathlib import Path
+    import base64
+    p = Path(path)
+    if not p.is_file():
+        raise FileNotFoundError(f"contract draft file not found: {path}")
+    raw = p.read_bytes()
+    if len(raw) > 49152:
+        raise ValueError(
+            f"contract draft too large ({len(raw)} bytes; max 49152). "
+            "Hub Issue body limit is ~65536 chars (~48 KB base64)."
+        )
+    encoded = base64.b64encode(raw).decode("ascii")
+    return (
+        f"\n\n<details><summary>Contract draft ({path}, {len(raw)} bytes, base64)</summary>\n\n"
+        f"```\n{encoded}\n```\n\n</details>"
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Create Hub RFC Issue")
     parser.add_argument("--category", required=True, choices=["rfc"])
@@ -36,6 +59,8 @@ def main() -> int:
     parser.add_argument("--stakeholders", default="")
     parser.add_argument("--gate", default="Design-Gate")
     parser.add_argument("--contract-impact", default="Medium")
+    parser.add_argument("--contract-draft", default="",
+                        help="Path to contract draft file; base64-inlined into Hub Issue body as <details>")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -55,7 +80,20 @@ def main() -> int:
     if args.gate:
         body_parts.append(f"**Gate**: {args.gate}")
     if args.contract_impact:
-        body_parts.append(f"**Contract Impact**: {args.contract_impact}")
+        body_parts.append(f"\n**Contract Impact**: {args.contract_impact}")
+
+    # Inline base64 contract draft if provided
+    if args.contract_draft:
+        try:
+            contract_block = build_contract_draft_block(args.contract_draft)
+            body_parts.append(contract_block)
+        except FileNotFoundError as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return 4
+        except ValueError as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return 4
+
     body = "\n".join(body_parts)
 
     dry_run = args.dry_run or os.environ.get("RDDF_REPORT_DRY_RUN") == "yes"

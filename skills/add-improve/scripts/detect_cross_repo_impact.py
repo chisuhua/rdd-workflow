@@ -51,6 +51,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 SKIP_ENV_VARS = {"yes", "true", "1", "on"}
+TEMPLATE_START_SENTINEL = "<!-- RFC-DRAFT-START -->"
+TEMPLATE_END_SENTINEL = "<!-- RFC-DRAFT-END -->"
 
 
 def extract_body(text: str) -> str:
@@ -171,6 +173,74 @@ def write_report_atomic(report: dict, output_path: str) -> None:
         raise
 
 
+def build_rfc_draft_template(report: dict, gate: str = "Design-Gate",
+                            contract_impact: str = "Breaking-Change") -> str:
+    """Build a 5-section RFC draft markdown block from a detection report.
+
+    Sections: 变更动机 / 契约草案 / 影响仓库 / 兼容策略 / 回滚方案
+    Wrapped in TEMPLATE_START_SENTINEL / TEMPLATE_END_SENTINEL for idempotent re-append.
+    """
+    matches = report.get("matches", [])
+    stakeholders = report.get("suggested_stakeholders", [])
+    proposal_name = report.get("proposal_name", "")
+
+    contract_lines = []
+    for m in matches:
+        contract_lines.append(f"- `{m['contract_path']}` (matched: {', '.join(m['matched_keywords'])})")
+    contract_block = "\n".join(contract_lines) if contract_lines else "- (no contracts matched)"
+
+    stakeholder_block = ", ".join(f"`{s}`" for s in stakeholders) if stakeholders else "- (no stakeholders detected)"
+
+    body = f"""{TEMPLATE_START_SENTINEL}
+## 变更动机
+
+提案 `{proposal_name}` 检测到与 Hub 联邦契约的关联，需要走 RFC 审批流程。
+
+## 契约草案
+
+{contract_block}
+
+**Gate**: `{gate}`
+**Contract Impact**: `{contract_impact}`
+
+## 影响仓库
+
+{stakeholder_block}
+
+## 兼容策略
+
+<!-- TODO: 由人类填写兼容策略 (向后兼容 / 双写 / 双读 / 版本化 / Feature Flag 等) -->
+
+## 回滚方案
+
+<!-- TODO: 由人类填写回滚方案 (何时回滚 / 如何回滚 / 谁负责 / 多久内完成) -->
+
+{TEMPLATE_END_SENTINEL}"""
+    return body
+
+
+def append_rfc_draft_template(proposal_path: str, template: str) -> bool:
+    """Append RFC draft template to proposal file, idempotent via sentinels.
+
+    Returns True if appended (or replaced), False if no-op.
+    """
+    p = Path(proposal_path)
+    text = p.read_text(encoding="utf-8", errors="replace")
+
+    if TEMPLATE_START_SENTINEL in text and TEMPLATE_END_SENTINEL in text:
+        # Replace existing block
+        start_idx = text.index(TEMPLATE_START_SENTINEL)
+        end_idx = text.index(TEMPLATE_END_SENTINEL) + len(TEMPLATE_END_SENTINEL)
+        new_text = text[:start_idx] + template + text[end_idx:]
+    else:
+        # Append at end (after a blank line)
+        sep = "\n\n" if text and not text.endswith("\n\n") else "\n"
+        new_text = text + sep + template + "\n"
+
+    p.write_text(new_text, encoding="utf-8")
+    return True
+
+
 def print_warnings(report: dict, proposal_path: str) -> None:
     """Print human-readable warnings to stderr. No-op if no matches."""
     matches = report.get("matches", [])
@@ -201,6 +271,8 @@ def main(argv=None) -> int:
     parser.add_argument("--hub-repo", required=True, help="Hub repo <owner>/<name>")
     parser.add_argument("--output", required=True, help="Path to write detection report JSON")
     parser.add_argument("--dry-run", action="store_true", help="Print what would happen without side effects")
+    parser.add_argument("--no-append-template", action="store_true",
+                        help="Skip appending RFC draft template to proposal (added by default when matches found)")
     args = parser.parse_args(argv)
 
     # Opt-out check
@@ -237,6 +309,17 @@ def main(argv=None) -> int:
         return 0
 
     print_warnings(report, args.proposal)
+
+    # Append RFC draft template when matches found (default ON)
+    if report.get("matches") and not args.no_append_template:
+        try:
+            template = build_rfc_draft_template(report)
+            append_rfc_draft_template(args.proposal, template)
+            print(f"   Appended RFC draft template (5 sections) to {args.proposal}", file=sys.stderr)
+        except (OSError, IOError) as e:
+            print(f"⚠️  failed to append RFC template: {e}", file=sys.stderr)
+
+    return 0
     return 0
 
 
