@@ -79,6 +79,14 @@
 
 
 
+| [add-cross-repo-impact-detection](.rddf/improvements/add-cross-repo-impact-detection.md) | P0 | 2026-08-19 | guide-arch |
+
+| [add-rfc-draft-template](.rddf/improvements/add-rfc-draft-template.md) | P0 | 2026-08-19 | guide-arch |
+
+| [add-rfc-interview-flow](.rddf/improvements/add-rfc-interview-flow.md) | P0 | 2026-08-19 | guide-arch |
+
+| [add-auto-rfc-from-approve](.rddf/improvements/add-auto-rfc-from-approve.md) | P0 | 2026-08-19 | guide-arch |
+
 ## 已实施
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
