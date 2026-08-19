@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: gh CLI Compatibility for Hub Issue Operations
 
