@@ -57,6 +57,7 @@ Table columns:
 | 提案       | `[name](.rddf/improvements/name.md)`      | Same link format as the approved section.                  |
 | 优先级     | `P0` / `P1` / `P2`                 | Priority level (preserved from approved section).          |
 | 完成时间   | `YYYY-MM-DD`                        | UTC date when the change was archived.                     |
+| 状态       | `已实施` (literal)                  | Fixed completion status. Originally 3 columns, expanded to 4 in v2.2 to align with the `## 已批准提案` schema (consistent 4-col layout) and to silence `rdd-doctor` `proposal-table` false positives. |
 
 ---
 
