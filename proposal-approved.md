@@ -84,9 +84,9 @@
 
 
 
-| [add-cli-coverage-rdd-doctor-roadmap-rdd-hub](.rddf/improvements/add-cli-coverage-rdd-doctor-roadmap-rdd-hub.md) | P1 | 2026-08-20 | guide-arch |
 
 ## 已实施
+| [add-cli-coverage-rdd-doctor-roadmap-rdd-hub](.rddf/improvements/add-cli-coverage-rdd-doctor-roadmap-rdd-hub.md) | P1 | 2026-08-20 |
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
