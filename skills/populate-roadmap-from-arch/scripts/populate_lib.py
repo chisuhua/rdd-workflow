@@ -1,0 +1,553 @@
+#!/usr/bin/env python3
+"""
+populate-roadmap-from-arch: Python helpers (Step 1-3: catalog / classify / generate_body).
+
+Sourceable module: provides AdrRecord, ArchDocRecord, PhaseRecord dataclasses
+and three main functions:
+  - catalog_sources(project_root, arch_handoff): catalog ADR + arch docs + main doc phase skeleton
+  - classify_adrs_by_phase(adrs, main_doc_phases): map ADR → phase_id
+  - generate_phase_body(phase_id, classified_adrs, arch_docs, main_doc_themes): markdown body
+
+Per skill metadata: version 1.0, evolved-from "manually-composed phase fragments during
+add-hierarchical-roadmap-structure" (commit 51ca983).
+"""
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
+
+
+# ---- Dataclasses ----
+
+@dataclass
+class AdrRecord:
+    """One ADR file's extracted metadata."""
+    id: str                       # e.g. "ADR-0017"
+    path: Path                    # relative path under docs/adr/
+    title: str                    # first line after frontmatter
+    status: str                   # e.g. "已采纳", "待定", "已采纳（v3.0 候选）", "已替代"
+    key_decision: str             # one-sentence summary
+    implementation_version: Optional[str] = None  # e.g. "v2.0.1+" from README 状态段
+
+    def is_implemented(self) -> bool:
+        """Whether this ADR has been implemented in code (per ADR README 状态段)."""
+        if self.implementation_version:
+            return True
+        return self.status in {"已采纳", "已替代"}
+
+    def is_placeholder_or_design(self) -> bool:
+        """ADR-0009/0011/0012/0014/0015: '占位' / '设计稿' 状态."""
+        return (
+            "占位" in self.status
+            or "设计稿" in self.status
+            or "v3.0 候选" in self.status
+        )
+
+
+@dataclass
+class ArchDocRecord:
+    """One architecture doc's extracted summary."""
+    path: Path                    # relative path under docs/architecture/
+    title: str                    # first heading
+    summary: str                  # first paragraph (≤ 200 chars)
+
+
+@dataclass
+class PhaseRecord:
+    """One row of main doc phase skeleton table."""
+    phase_id: str                 # e.g. "phase-1"
+    theme: str                    # theme text
+    status: str = "active"        # from Status column
+
+
+# ---- Step 1: catalog_sources ----
+
+def _read_first_heading_and_summary(path: Path) -> Tuple[str, str]:
+    """Extract first H1 heading + first paragraph (≤ 200 chars).
+
+    Skips blockquote lines (>) when looking for summary.
+    """
+    text = path.read_text(encoding="utf-8", errors="replace")
+    title = ""
+    summary = ""
+    in_code = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        # skip code fences
+        if stripped.startswith("```"):
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        if not title and re.match(r"^#\s+", stripped):
+            title = stripped.lstrip("#").strip()
+            continue
+        if title and not summary and stripped and not stripped.startswith("#") and not stripped.startswith("|"):
+            # Skip blockquote lines and frontmatter-style > notes
+            if stripped.startswith(">"):
+                continue
+            # Skip metadata lines like **v3.0.0 note**: ...
+            if re.match(r"^\*\*[^*]+\*\*[:：]", stripped):
+                continue
+            summary = stripped[:200]
+            if len(stripped) > 200:
+                summary += "..."
+    return title, summary
+
+
+def _extract_adr_status_and_decision(path: Path) -> Tuple[str, str]:
+    """Extract ADR status (已采纳/待定/...) + first sentence of ## 关键决策 段.
+
+    Supports two patterns:
+    1. Inline: `状态: xxx` or `状态:xxx` on a single line, with optional markdown bold (**)
+    2. Header: `## 状态` followed by `xxx` on next non-empty line
+    """
+    text = path.read_text(encoding="utf-8", errors="replace")
+    status = ""
+    decision = ""
+
+    # Pattern 1: inline 状态: xxx — allow optional ** around 状态
+    m = re.search(r"\*{0,2}状态\*{0,2}\s*[:：]\s*(.+)", text)
+    if m:
+        status = m.group(1).strip().strip("*").strip()
+        # Strip emoji like ✅ / ❌ / 🚧 prefix
+        status = re.sub(r"^[✅❌🚧⚠️\s]+", "", status)
+
+    # Pattern 2: header `## 状态` followed by content
+    if not status:
+        m = re.search(r"##\s+状态\s*\n+([^\n#]+)", text)
+        if m:
+            status = m.group(1).strip()
+
+    # Find first non-empty paragraph after "## Decision" / "## 决策" / "## 关键决策" / "## 决定"
+    m = re.search(r"##\s+(关键决策|Decision|决策|决定|关键决策[ ::])[\s\S]+?\n+([^#\n][^\n]+)", text)
+    if m:
+        decision = m.group(2).strip()[:200]
+    else:
+        # Fallback: take first non-empty paragraph after the first H2 section
+        m = re.search(r"^##\s+[^\n]+\n+([^#\n][^\n]+)", text, re.MULTILINE)
+        if m:
+            decision = m.group(1).strip()[:200]
+
+    return status, decision
+
+
+def _parse_implementation_version(adr_id: str, readme_text: str) -> Optional[str]:
+    """Look up ADR in ADR README 状态段; return version string like 'v2.0.1+'."""
+    # Pattern: "已实施（v2.0.X+） | ADR-ID | ..." or similar.
+    # Read README lines containing the ADR id, extract version from context.
+    for line in readme_text.splitlines():
+        if adr_id in line and ("v2." in line or "v3." in line):
+            m = re.search(r"(v[23]\.\d+\.[\dx]+(?:\+)?)", line)
+            if m:
+                return m.group(1)
+    return None
+
+
+def _parse_main_doc_phase_skeleton(main_doc_path: Path) -> List[PhaseRecord]:
+    """Parse .rddf/roadmap.md ## Phase Skeleton table → List[PhaseRecord]."""
+    text = main_doc_path.read_text(encoding="utf-8", errors="replace")
+    records: List[PhaseRecord] = []
+    in_skeleton = False
+    for line in text.splitlines():
+        if re.match(r"^##\s+Phase Skeleton", line):
+            in_skeleton = True
+            continue
+        if in_skeleton:
+            if line.startswith("##"):
+                break
+            # match "| phase-N | theme | status | ... |"
+            m = re.match(r"\|\s*(phase-\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|", line)
+            if m:
+                records.append(
+                    PhaseRecord(
+                        phase_id=m.group(1).strip(),
+                        theme=m.group(2).strip(),
+                        status=m.group(3).strip() or "active",
+                    )
+                )
+    return records
+
+
+def catalog_sources(
+    project_root: Path,
+    adr_dir_rel: str = "docs/adr",
+    arch_dir_rel: str = "docs/architecture",
+    main_doc_rel: str = ".rddf/roadmap.md",
+    arch_handoff_override: Optional[Path] = None,
+) -> Tuple[List[AdrRecord], List[ArchDocRecord], List[PhaseRecord]]:
+    """Catalog all source files for fragment body generation.
+
+    Returns (adrs, arch_docs, main_doc_phases).
+    """
+    project_root = Path(project_root)
+
+    # ADR-0016 v2 handoff can override defaults
+    if arch_handoff_override is None:
+        arch_handoff_path: Path = project_root / ".rddf/state/.arch-handoff.json"
+    else:
+        arch_handoff_path = arch_handoff_override
+
+    if arch_handoff_path.exists():
+        import json
+        handoff = json.loads(arch_handoff_path.read_text(encoding="utf-8"))
+        adr_dir_rel = handoff.get("adr_dir", adr_dir_rel)
+        arch_dir_rel = handoff.get("architecture_dir", arch_dir_rel)
+        # roadmap_path is the main doc; but we use main_doc_rel default
+        # since main doc is .rddf/roadmap.md after migrate
+
+    adr_dir = project_root / adr_dir_rel
+    arch_dir = project_root / arch_dir_rel
+    main_doc = project_root / main_doc_rel
+
+    # ADR README 状态段（用于 implementation_version lookup）
+    adr_readme = adr_dir / "README.md"
+    readme_text = adr_readme.read_text(encoding="utf-8", errors="replace") if adr_readme.exists() else ""
+
+    # Catalog ADRs
+    adrs: List[AdrRecord] = []
+    if adr_dir.exists():
+        for adr_file in sorted(adr_dir.glob("ADR-*.md")):
+            m = re.match(r"ADR-(\d+)-", adr_file.name)
+            if not m:
+                continue
+            adr_id = f"ADR-{m.group(1).zfill(4)}"
+            title, _ = _read_first_heading_and_summary(adr_file)
+            if not title:
+                title = adr_file.stem
+            # Strip leading "ADR-NNNN: " prefix to avoid duplication when formatted
+            title = re.sub(rf"^{re.escape(adr_id)}\s*[:：]\s*", "", title)
+            status, decision = _extract_adr_status_and_decision(adr_file)
+            version = _parse_implementation_version(adr_id, readme_text)
+            adrs.append(
+                AdrRecord(
+                    id=adr_id,
+                    path=adr_file.relative_to(project_root),
+                    title=title,
+                    status=status or "未知",
+                    key_decision=decision or "(无关键决策段)",
+                    implementation_version=version,
+                )
+            )
+
+    # Catalog arch docs
+    arch_docs: List[ArchDocRecord] = []
+    if arch_dir.exists():
+        for arch_file in sorted(arch_dir.glob("*.md")):
+            if arch_file.name.lower() == "readme.md":
+                continue
+            title, summary = _read_first_heading_and_summary(arch_file)
+            if not title:
+                title = arch_file.stem
+            arch_docs.append(
+                ArchDocRecord(
+                    path=arch_file.relative_to(project_root),
+                    title=title,
+                    summary=summary or "(无摘要)",
+                )
+            )
+
+    # Main doc phase skeleton
+    main_doc_phases: List[PhaseRecord] = []
+    if main_doc.exists():
+        main_doc_phases = _parse_main_doc_phase_skeleton(main_doc)
+
+    return adrs, arch_docs, main_doc_phases
+
+
+# ---- Step 2: classify_adrs_by_phase ----
+
+# Phase theme keyword mapping (per main doc table)
+_PHASE_KEYWORDS: Dict[str, List[str]] = {
+    "phase-1": [
+        "多会话", "rddf-session", "跨仓", "跨仓库", "联邦", "Hub", "Spoke",
+        "issue", "提案", "proposal", "触发", "trigger", "scheduler",
+    ],
+    "phase-2": [
+        "审批", "RFC", "design", "plan", "编排", "orchestration",
+        "步骤", "skeleton", "per-skill", "manual_deps", "deps",
+        "execution mode", "quality gate", "alignment", "metadata",
+        "artifact discovery", "discovery",
+    ],
+    "phase-3": [
+        "定制", "演进", "evolution", "反馈", "闭环", "自动发",
+        "流程", "流程定制", "触发器", "步骤引擎", "定制层",
+        "持续演进", "持续", "improvement",
+    ],
+    "phase-4": [
+        "多方", "回归", "回归测试", "P1-P3", "Hub-and-Spoke",
+        "cross-repo", "Federation", "Federation Deepening",
+    ],
+}
+
+
+def classify_adrs_by_phase(
+    adrs: List[AdrRecord],
+    main_doc_phases: List[PhaseRecord],
+) -> Dict[str, List[AdrRecord]]:
+    """Map each ADR to one or more phase_ids based on theme keyword matching.
+
+    Returns Dict[phase_id, List[AdrRecord]].
+    ADRs that match no phase keywords go to phase-1 as default fallback.
+    """
+    result: Dict[str, List[AdrRecord]] = {p.phase_id: [] for p in main_doc_phases}
+
+    for adr in adrs:
+        haystack = f"{adr.title} {adr.key_decision}".lower()
+        matched_phases: Set[str] = set()
+
+        # 1. Try matching against main doc theme text first (highest priority)
+        main_doc_themes_for_adr = [
+            ph for ph in main_doc_phases
+            if any(kw.lower() in haystack for kw in _theme_to_keywords(ph.theme))
+        ]
+        for ph in main_doc_themes_for_adr:
+            matched_phases.add(ph.phase_id)
+
+        # 2. Fallback to phase-keyword table
+        if not matched_phases:
+            for phase_id, keywords in _PHASE_KEYWORDS.items():
+                if phase_id not in result:
+                    continue
+                if any(kw.lower() in haystack for kw in keywords):
+                    matched_phases.add(phase_id)
+
+        # 3. Default fallback to phase-1 if still no match
+        if not matched_phases and "phase-1" in result:
+            matched_phases.add("phase-1")
+
+        for pid in matched_phases:
+            if pid in result:
+                result[pid].append(adr)
+
+    return result
+
+
+def _longest_chinese_token(chinese_tokens: List[str]) -> Optional[str]:
+    """Return the longest Chinese token, used for 2-char sliding window extraction."""
+    if not chinese_tokens:
+        return None
+    return max(chinese_tokens, key=len)
+
+
+def _theme_to_keywords(theme: str) -> List[str]:
+    """Extract keywords from a main doc theme string for ADR matching.
+
+    Strategy:
+    1. Strip parenthetical (A1/A2/A3) / (B1/B3/D2)
+    2. Split by punctuation/whitespace
+    3. For Chinese tokens: include whole token AND 2-char sliding windows
+       (only for the longest Chinese token, to avoid noise from short tokens)
+    4. For English/numeric: include whole tokens
+    """
+    cleaned = re.sub(r"\([^)]*\)", "", theme)
+    keywords: List[str] = []
+    chinese_tokens: List[str] = []
+
+    raw_tokens = re.split(r"[\s,，、:：—\-/／]+", cleaned)
+    for tok in raw_tokens:
+        tok = tok.strip()
+        if len(tok) < 2:
+            continue
+        if re.search(r"[\u4e00-\u9fff]", tok):
+            chinese_tokens.append(tok)
+            keywords.append(tok)
+        else:
+            if tok.lower() not in [k.lower() for k in keywords]:
+                keywords.append(tok)
+
+    longest = _longest_chinese_token(chinese_tokens)
+    if longest and len(longest) >= 4:
+        for i in range(len(longest) - 1):
+            pair = longest[i:i + 2]
+            if pair not in keywords:
+                keywords.append(pair)
+
+    return keywords
+
+
+# ---- Step 3: generate_phase_body ----
+
+def _adr_url(adr: AdrRecord) -> str:
+    """Return ADR relative path as plain URL (no markdown syntax).
+
+    Used as the link target in caller-formatted markdown links.
+    """
+    return "../../" + str(adr.path)
+
+
+def _adr_link(adr: AdrRecord) -> str:
+    """Return ADR as markdown link: [ADR-NNNN](../../docs/adr/...)."""
+    return f"[{adr.id}]({_adr_url(adr)})"
+
+
+def _arch_doc_link(arch_doc: ArchDocRecord) -> str:
+    """Format arch doc as markdown link (relative to fragment: ../../docs/architecture/...)."""
+    rel_path = "../../" + str(arch_doc.path)
+    return f"[{arch_doc.title}]({rel_path})"
+
+
+def _format_adr_block(adr: AdrRecord, project_root: Path, phase_id: str) -> str:
+    """Format one ADR as a bullet section under '## 已实施能力'."""
+    link = _adr_link(adr)
+    status_badge = ""
+    if adr.implementation_version:
+        status_badge = f" *（已实施 {adr.implementation_version}）*"
+    elif adr.is_placeholder_or_design():
+        status_badge = " *（占位 / 未实施）*"
+    elif adr.status == "待定":
+        status_badge = " *（待定）*"
+
+    decision = adr.key_decision[:200]
+    return f"- **{adr.id}** — [{adr.title}]({_adr_url(adr)}){status_badge}\n  - {decision}"
+
+
+def _strip_adr_id_prefix(title: str, adr_id: str) -> str:
+    """Remove leading 'ADR-NNNN: ' or 'ADR-NNNN ' prefix from title to avoid duplication."""
+    return re.sub(rf"^{re.escape(adr_id)}\s*[:：]\s*", "", title)
+
+
+def _format_arch_doc_row(arch_doc: ArchDocRecord, phase_id: str) -> str:
+    """Format one arch doc as a row in '## 架构文档锚点' table."""
+    link = _arch_doc_link(arch_doc)
+    summary = arch_doc.summary[:120].replace("|", "\\|").replace("\n", " ")
+    if len(arch_doc.summary) > 120:
+        summary += "..."
+    return f"| {link} | {summary} |"
+
+
+def _format_placeholder_block(adr: AdrRecord, project_root: Path, phase_id: str) -> str:
+    """Format one placeholder ADR as a section under '## 占位 / 未实施'."""
+    link = _adr_link(adr)
+    return f"### {adr.id} — {adr.title}\n\n- **状态**：{adr.status}\n- **关键决策**：{adr.key_decision[:200]}\n- **阻碍**：需 ADR 正文实质化（脱掉占位/设计稿状态）+ 设计前置依赖\n- **后续**：\n  1. 更新 ADR 正文，列出具体决策点\n  2. 在 `add-improve` 流程中创建对应 implementation change\n  3. 经 design-done gate 进入 plan-done 后归档"
+
+
+def _map_arch_docs_to_phase(arch_docs: List[ArchDocRecord], adrs_for_phase: List[AdrRecord]) -> List[ArchDocRecord]:
+    """Filter arch docs relevant to a phase (heuristic: arch doc filename mentions phase)."""
+    # Naive heuristic: if arch doc filename contains the phase number, include it.
+    # Otherwise include all arch docs in phase-1 (broad overview).
+    return arch_docs  # always include all; user can edit later
+
+
+def generate_phase_body(
+    phase_id: str,
+    classified_adrs: Dict[str, List[AdrRecord]],
+    arch_docs: List[ArchDocRecord],
+    main_doc_phases: List[PhaseRecord],
+    project_root: Path,
+    related_archived_changes: Optional[List[str]] = None,
+    next_phase_id: Optional[str] = None,
+) -> str:
+    """Generate markdown body for one phase fragment.
+
+    Returns the body content (without frontmatter, ready to append after the
+    existing frontmatter `---` closing line + blank line).
+    """
+    adrs_for_phase = classified_adrs.get(phase_id, [])
+    themes_for_phase = [ph.theme for ph in main_doc_phases if ph.phase_id == phase_id]
+
+    implemented_adrs = [a for a in adrs_for_phase if a.is_implemented() and not a.is_placeholder_or_design()]
+    placeholder_adrs = [a for a in adrs_for_phase if a.is_placeholder_or_design() or a.status == "待定"]
+
+    lines: List[str] = []
+
+    # 1. Overview
+    lines.append(f"## {phase_id} 概览\n")
+    if themes_for_phase:
+        lines.append(
+            f"Phase {phase_id.replace('phase-', '')} 覆盖 "
+            f"{len(implemented_adrs)} 个已实施 ADR / "
+            f"{len(placeholder_adrs)} 个占位或待定 ADR / "
+            f"{len(arch_docs)} 个架构文档锚点。"
+            f"按主文档 `## Phase Skeleton` 表格，本阶段包含 "
+            f"{len(themes_for_phase)} 个并列 theme：\n"
+        )
+        lines.append("| Theme | ADR 覆盖 | 状态 |")
+        lines.append("|-------|----------|------|")
+        for theme in themes_for_phase:
+            # Find ADRs related to this theme
+            theme_adrs = [a for a in adrs_for_phase if any(kw.lower() in f"{a.title} {a.key_decision}".lower() for kw in _theme_to_keywords(theme))]
+            if theme_adrs:
+                adr_links = ", ".join(_adr_link(a) for a in theme_adrs[:3])
+                if len(theme_adrs) > 3:
+                    adr_links += f" +{len(theme_adrs)-3}"
+            else:
+                adr_links = "—"
+            # Status from first ADR if any
+            status = "已实施" if implemented_adrs and theme_adrs else ("占位/未实施" if placeholder_adrs and theme_adrs else "—")
+            lines.append(f"| {theme} | {adr_links} | {status} |")
+        lines.append("")
+
+    # 2. Implemented capabilities
+    if implemented_adrs:
+        lines.append("## 已实施能力\n")
+        for adr in implemented_adrs:
+            lines.append(_format_adr_block(adr, project_root, phase_id))
+            lines.append("")
+    else:
+        lines.append("## 已实施能力\n")
+        lines.append("（本 phase 暂无已实施 ADR — 所有 ADR 都属于占位或待定状态）\n")
+
+    # 3. Architecture anchors
+    lines.append("## 架构文档锚点\n")
+    if arch_docs:
+        lines.append("| 文档 | 与本 phase 关联 |")
+        lines.append("|------|----------------|")
+        for arch_doc in _map_arch_docs_to_phase(arch_docs, adrs_for_phase):
+            lines.append(_format_arch_doc_row(arch_doc, phase_id))
+        lines.append("")
+    else:
+        lines.append("（本仓库暂无 `docs/architecture/*.md` 文档）\n")
+
+    # 4. Placeholders / unimplemented
+    lines.append("## 占位 / 未实施\n")
+    if placeholder_adrs:
+        for adr in placeholder_adrs:
+            lines.append(_format_placeholder_block(adr, project_root, phase_id))
+            lines.append("")
+    else:
+        lines.append("（本 phase 无占位或待定 ADR）\n")
+
+    # 5. Theme registry mapping
+    lines.append("## 主题注册表映射\n")
+    if themes_for_phase:
+        lines.append("主文档 `## Phase Skeleton` 表格中 " + phase_id + " 共 "
+                     f"{len(themes_for_phase)} 行（{len(themes_for_phase)} 个 theme）。"
+                     "本 fragment 是这些 theme 的 **聚合根**，单 fragment 多 theme 模式：\n")
+        for idx, theme in enumerate(themes_for_phase, 1):
+            lines.append(f"- \"{theme}\" → 阅上文 主题相关 ADR 段（已实施或占位）")
+        lines.append("")
+    else:
+        lines.append(f"（主文档 phase skeleton 表格中未找到 {phase_id} 的 theme）\n")
+
+    # 6. Related archived changes
+    lines.append("## 相关变更历史\n")
+    if related_archived_changes:
+        for change in related_archived_changes:
+            lines.append(f"- `{change}`")
+        lines.append("")
+    else:
+        lines.append("（本阶段暂无直接相关的归档 change）\n")
+
+    # 7. Next step
+    lines.append("## 下一步\n")
+    if next_phase_id:
+        lines.append(f"Phase {phase_id.replace('phase-', '')} → [{next_phase_id}](../phases/{next_phase_id}.md)\n")
+    else:
+        lines.append("（本阶段为最终 phase，无下一步）\n")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+# ---- Public API summary ----
+
+__all__ = [
+    "AdrRecord",
+    "ArchDocRecord",
+    "PhaseRecord",
+    "catalog_sources",
+    "classify_adrs_by_phase",
+    "generate_phase_body",
+]

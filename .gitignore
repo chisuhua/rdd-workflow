@@ -35,3 +35,5 @@ pnpm-lock.yaml
 
 # .rddf/roadmap-migrate-backup-* 是 destructive 操作的 backup 副产物, 不该 commit
 .rddf/.roadmap-migrate-backup-*
+# .rddf/roadmap/.backup/ 是 populate-roadmap-from-arch 的 backup 目录
+.rddf/roadmap/.backup/
