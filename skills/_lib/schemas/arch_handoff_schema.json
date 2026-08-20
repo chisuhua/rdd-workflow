@@ -2,10 +2,10 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "version": {
     "const": "v1",
-    "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline. Future bumps require version-migration flow."
+    "description": "Schema metadata version per ADR-0016. Project invariant: all rdd-workflow schemas keep version.const='v1' (schema system version, NOT contract version). Contract version lives in properties.version.enum and may be [1, 2] for backward compat."
   },
   "$id": "https://rdd-workflow.local/schemas/arch_handoff_schema.json",
-  "title": "Arch Handoff v1 (ADR-0016)",
+  "title": "Arch Handoff (ADR-0016, contract v2 additive)",
   "description": "Schema for .rddf/state/.arch-handoff.json emitted by guide-arch Phase 5 arch-done. Consumed by guide-plan, propose, roadmap, gate.py, detectors.py, actions.py, scan-state.sh.",
   "type": "object",
   "additionalProperties": true,
@@ -67,6 +67,11 @@
       "type": "string",
       "pattern": "^(?!/)(?!.*\\.\\.)[^\\x00]+$",
       "description": "Relative path to roadmap file (e.g. 'roadmap.md', 'docs/roadmap.md')"
+    },
+    "roadmap_fragments_dir": {
+      "type": "string",
+      "default": ".rddf/roadmap",
+      "description": "Directory containing roadmap fragments (phases/, features/, archive/). Added in ADR-0016 v2 (additive)."
     },
     "architecture_dir": {
       "type": "string",
@@ -147,8 +152,8 @@
     },
     "version": {
       "type": "integer",
-      "const": 1,
-      "description": "Contract version. v1 adds adr_dir/roadmap_path/architecture_dir/adr_pattern/discovered fields (ADR-0016)."
+      "enum": [1, 2],
+      "description": "Contract version. v1 adds adr_dir/roadmap_path/architecture_dir/adr_pattern/discovered fields (ADR-0016). v2 adds optional roadmap_fragments_dir (additive). v1 payloads remain valid under v2 schema (backward compat)."
     }
   }
 }

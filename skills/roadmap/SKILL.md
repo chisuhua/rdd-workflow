@@ -396,6 +396,71 @@ sys.exit(validate_change(
 
 ---
 
+## 命令：migrate — 9 步原子化迁移到 `.rddf/roadmap/`
+
+**目的**: 从单文件 `roadmap.md` 迁移到 `.rddf/roadmap.md` 主文档 + `.rddf/roadmap/{phases,features,archive}/` fragment 树（全部 git tracked）。
+
+**使用**:
+
+```bash
+rddf roadmap migrate --dry-run          # 预览切片（不修改任何文件）
+rddf roadmap migrate --execute --yes    # 执行迁移（需 --yes 显式确认）
+rddf roadmap migrate --rollback <backup-dir> --yes  # 回滚到指定 backup
+```
+
+**9 步流程**: preflight → parse main → plan slice → dry-run → backup → execute → validate → archive hint → rollback hint
+
+**约束**:
+
+- 拒绝 `--execute` 不带 `--yes`（safety gate）
+- 自动创建 backup 到 `.rddf/.roadmap-migrate-backup-<timestamp>/`（含 3 文件：root `roadmap.md` + `openspec/changes/<name>/tasks.md` + `.arch-handoff.json`）
+- 如在 git 仓库，自动 `git tag pre-roadmap-migrate-<timestamp>`
+- 任何写入失败保留 backup + 删除已写入 + `exit 1`（不留半迁移状态）
+- 解析支持两种 phase 格式：`| phase-N | theme | ... |` (table row) 和 `### Phase N: theme` (heading)
+
+**双格式支持**: awk parser 同时识别 table row 和 heading 两种格式,实际 rdd-workflow `roadmap.md` 主要用 `### Phase N: title` heading, 因此 parse 9 个 phase 而非 0。
+
+---
+
+## 命令：validate-fragments — 8 规则 R1-R8 校验
+
+**目的**: 对 `.rddf/roadmap/` 跑 8 条校验规则，exit code 0/1/2/3 对齐 `openspec validate`。
+
+**使用**:
+
+```bash
+rddf roadmap validate-fragments                       # 默认 WARNING 级
+STRICT_ROADMAP_REFS_GATE=yes rddf roadmap validate-fragments  # CRITICAL 阻断
+SKIP_ROADMAP_REFS_GATE=yes rddf roadmap validate-fragments    # 跳过
+```
+
+**8 条规则**:
+
+| 规则 | 严重度 | 说明 |
+|------|--------|------|
+| R1 | CRITICAL | feature.phase_refs 必须引用主文档已注册的 phase |
+| R2 | CRITICAL | fragment id 全局唯一 |
+| R3 | CRITICAL | kind 必须是 `phase` 或 `feature` |
+| R4 | CRITICAL | phase id 命名 `^phase-\d+(\.\d+)?$`（严格化后） |
+| R5 | WARNING | feature 必须有非空 phase_refs |
+| R6 | CRITICAL | phase fragment id 必须在主文档 phase table 注册 |
+| R7 | WARNING | fragments_dir 缺失（v1 handoff 向后兼容） |
+| R8 | CRITICAL | 主文档 phase table 不允许重复 id |
+
+**双入口**: 同一 `validate_fragment_refs` 实现由两个入口调用：
+- 用户门控（`roadmap validate-fragments`，exit code 严格）
+- 诊断（`rdd-doctor --category roadmap-refs`，CRITICAL/WARNING/INFO 分级报告，仍只读）
+
+---
+
+## 嵌套阶段语法
+
+**Sub-phase** (如 `phase-3.1`) 通过 promote 创建：从 `phases/phase-3.md` 内的 section 拆出为独立 `phases/phase-3.1.md`，frontmatter 含 `id: phase-3.1` + `kind: phase` + `phase_refs: [phase-3]`。R4 严格化后只允许 `phase-N` 或 `phase-N.M`（单层 sub-phase），禁止 `phase-1-2` 嵌套命名。
+
+**Feature** (跨阶段) 是 `features/<id>.md`，`kind: feature` + 非空 `phase_refs: [phase-X, phase-Y, ...]`。feature 主题是 metadata，不参与主文档 theme 覆盖度计算（保持 proposal `roadmap-proposal-guidance` 的设计）。
+
+---
+
 ## 命令：advance — 推进阶段
 
 ### 前置检查 + 执行推进（合并）

@@ -15,6 +15,7 @@ from checks import (
     plan_tdd_check,
     proposal_table_check,
     roadmap_meta_check,
+    roadmap_refs_check,
     state_schema_check,
     tasks_checkbox_check,
 )
@@ -28,6 +29,7 @@ _CHECKERS = {
     "tasks-checkbox": tasks_checkbox_check.run,
     "migration-residue": migration_residue_check.run,
     "orphan-gates": orphan_gates_check.run,
+    "roadmap-refs": roadmap_refs_check.run,
 }
 
 

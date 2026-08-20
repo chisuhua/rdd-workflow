@@ -171,6 +171,36 @@ except Exception:
       return 1
   fi
   echo ""
+
+  # Gate 6: roadmap fragment refs (ADR-0016 v2 + add-hierarchical-roadmap-structure).
+  # Default = WARNING level only; STRICT_ROADMAP_REFS_GATE=yes blocks.
+  # SKIP_ROADMAP_REFS_GATE=yes skips entirely. Per Oracle recommendation:
+  # placed after Gate 5 (Deps) and before plan-done handoff.
+  echo ""
+  echo "门控 6: Roadmap 片段引用校验 (validate-fragments)"
+  if [ "${SKIP_ROADMAP_REFS_GATE:-no}" = "yes" ]; then
+      echo "  ⚠️  Gate skipped (SKIP_ROADMAP_REFS_GATE=yes)"
+  elif [ -d "$PROJECT_ROOT/.rddf/roadmap" ]; then
+      VALIDATE_FRAGMENTS_SCRIPT="${RDDF_LIB_DIR:-${HOME}/.agents/skills/rdd-workflow/.rddf/wt/fix-orphan-hub-gates-wiring/skills}/_lib/../roadmap/scripts/roadmap_validate_fragments.sh"
+      if [ ! -f "$VALIDATE_FRAGMENTS_SCRIPT" ]; then
+          VALIDATE_FRAGMENTS_SCRIPT="$PROJECT_ROOT/skills/roadmap/scripts/roadmap_validate_fragments.sh"
+      fi
+      if ! bash "$VALIDATE_FRAGMENTS_SCRIPT" 2>&1 | sed 's/^/  /'; then
+          validate_rc=${PIPESTATUS[0]}
+          if [ "${STRICT_ROADMAP_REFS_GATE:-no}" = "yes" ] || [ "$validate_rc" -ne 0 ]; then
+              if [ "${STRICT_ROADMAP_REFS_GATE:-no}" = "yes" ]; then
+                  echo "  ❌ plan-done BLOCKED (STRICT_ROADMAP_REFS_GATE=yes)" >&2
+              fi
+              # Only return 1 if STRICT mode; otherwise WARNING level per default
+              if [ "${STRICT_ROADMAP_REFS_GATE:-no}" = "yes" ]; then
+                  return 1
+              fi
+          fi
+      fi
+  else
+      echo "  ℹ️  .rddf/roadmap/ not present (v1 handoff backward compat, gate skipped)"
+  fi
+  echo ""
 }
 
 # Standalone Gate 3 runner (extracted for unit/integration testing).

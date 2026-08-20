@@ -582,3 +582,247 @@ def get_phase_themes(roadmap_file: str, phase_id: str, category_id: str) -> List
         return [t.strip() for t in themes if t.strip()]
 
     return []
+
+# ==============================================================================
+# ADR-0016 v2: Hierarchical Roadmap Structure (additive API)
+# ==============================================================================
+# All code below is ADDITIVE — does NOT modify any existing function signature.
+# AC-1.5: 6 new functions (Fragment + 3 in this section, 3 in render/aggregate
+# section added by test_roadmap_state_render_aggregate.py).
+# AC-1.6: Fragment dataclass with 8 fields.
+# AC-1.11: existing functions unchanged (verified via git diff).
+# Consumers (propose, add-improve, 3 tests, phase2_path_migrator) zero diff
+# because they import names that already exist; new names are opt-in.
+# ==============================================================================
+
+from dataclasses import dataclass, field
+from typing import List, Optional, Dict, Any
+
+
+@dataclass
+class Fragment:
+    """A roadmap fragment (phase or feature) loaded from .rddf/roadmap/{phases,features}/.
+
+    AC-1.6: contains 8 fields (id, kind, status, phase_refs, theme, file_path, frontmatter, body).
+    """
+    id: str
+    kind: str  # "phase" | "feature"
+    status: str  # "active" | "done" | "archived"
+    phase_refs: List[str] = field(default_factory=list)
+    theme: str = ""
+    file_path: str = ""
+    frontmatter: Dict[str, Any] = field(default_factory=dict)
+    body: str = ""
+
+
+def _parse_fragment_file(path: "Path") -> Optional[Fragment]:
+    """Parse a single .md fragment file with YAML-like frontmatter.
+
+    Returns None if file missing or not .md or no frontmatter delimiters.
+    Naive YAML parser (no nested structures, no multiline scalars) — sufficient
+    for the controlled fragment frontmatter schema (id/kind/status/phase_refs/主题).
+    """
+    if not path.exists() or path.suffix != ".md":
+        return None
+    try:
+        content = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+    if not content.startswith("---"):
+        return None
+    parts = content.split("---", 2)
+    if len(parts) < 3:
+        return None
+    fm_text, body = parts[1].strip(), parts[2].strip()
+    frontmatter: Dict[str, Any] = {}
+    for line in fm_text.splitlines():
+        if ":" not in line:
+            continue
+        k, v = line.split(":", 1)
+        k, v = k.strip(), v.strip()
+        if not k:
+            continue
+        if v.startswith("[") and v.endswith("]"):
+            # List literal: [a, b, c]
+            items: List[str] = []
+            for x in v[1:-1].split(","):
+                x = x.strip().strip("'\"")
+                if x:
+                    items.append(x)
+            frontmatter[k] = items
+        else:
+            frontmatter[k] = v
+    return Fragment(
+        id=frontmatter.get("id", path.stem),
+        kind=frontmatter.get("kind", "phase"),
+        status=frontmatter.get("status", "active"),
+        phase_refs=frontmatter.get("phase_refs", []),
+        theme=frontmatter.get("主题", ""),
+        file_path=str(path),
+        frontmatter=frontmatter,
+        body=body,
+    )
+
+
+def load_fragments(fragments_dir: str, include_archived: bool = False) -> List[Fragment]:
+    """Load all fragments from .rddf/roadmap/{phases,features,archive}/.
+
+    Returns empty list if dir does not exist (backward compat with v1 handoff
+    that has no fragments dir).
+
+    Args:
+        fragments_dir: Absolute path to the fragments dir (e.g. /path/to/.rddf/roadmap).
+        include_archived: If False (default), exclude status='archived' fragments.
+
+    Returns:
+        List of Fragment, sorted by file path within each subdir.
+    """
+    from pathlib import Path
+    base = Path(fragments_dir)
+    if not base.exists() or not base.is_dir():
+        return []
+    fragments: List[Fragment] = []
+    for sub in ("phases", "features", "archive"):
+        sub_path = base / sub
+        if not sub_path.exists():
+            continue
+        for md_file in sorted(sub_path.glob("*.md")):
+            frag = _parse_fragment_file(md_file)
+            if frag is None:
+                continue
+            if not include_archived and frag.status == "archived":
+                continue
+            fragments.append(frag)
+    return fragments
+
+
+def get_fragment(fragments_dir: str, fragment_id: str) -> Fragment:
+    """Get a single fragment by id (searches phases+features+archive).
+
+    Raises:
+        KeyError: if no fragment with the given id exists.
+    """
+    for frag in load_fragments(fragments_dir, include_archived=True):
+        if frag.id == fragment_id:
+            return frag
+    raise KeyError(f"Fragment not found: {fragment_id}")
+
+
+def list_active_fragments(fragments_dir: str, kind: Optional[str] = None) -> List[Fragment]:
+    """List fragments with status='active', optionally filtered by kind.
+
+    Archived fragments are excluded (use load_fragments(include_archived=True)
+    to see them).
+
+    Args:
+        fragments_dir: Absolute path to the fragments dir.
+        kind: Optional filter ('phase' or 'feature').
+
+    Returns:
+        List of active Fragment objects, sorted by id.
+    """
+    active = sorted(
+        (f for f in load_fragments(fragments_dir) if f.status == "active"),
+        key=lambda f: f.id,
+    )
+    if kind is not None:
+        active = [f for f in active if f.kind == kind]
+    return active
+
+
+# -----------------------------------------------------------------------------
+# Task 4 (T6, T7): render_fragment_index + aggregate_phase_progress
+# -----------------------------------------------------------------------------
+# AC-1.5: continues the 6 additive functions count (3 from Task 3 + 2 here + 1 reserved).
+# AC-1.11: existing functions unchanged (verified via git diff).
+# All output goes to main_doc; the fragments_dir is read-only input.
+# -----------------------------------------------------------------------------
+
+import os
+import tempfile
+from pathlib import Path
+from typing import Tuple  # noqa: E402  (kept near other typing imports)
+
+
+def render_fragment_index(fragments_dir: str, main_doc_path: str) -> None:
+    """Render the AUTO-INDEX sentinel block at the bottom of main_doc.
+
+    The block groups fragments as phases first, then features. Writes are atomic
+    (tmp + os.replace) so a crash mid-write cannot leave a partial main_doc.
+
+    Idempotency: if a previous AUTO-INDEX block exists in main_doc, it is
+    stripped before re-rendering, so calling twice with the same fragments_dir
+    produces the same content.
+
+    Args:
+        fragments_dir: Absolute path to the fragments dir (e.g. /path/.rddf/roadmap).
+        main_doc_path: Absolute path to the main roadmap.md (e.g. /path/.rddf/roadmap.md).
+    """
+    main_path = Path(main_doc_path)
+    if not main_path.parent.exists():
+        main_path.parent.mkdir(parents=True, exist_ok=True)
+    if not main_path.exists():
+        base = "# Roadmap\n\n"
+    else:
+        base = main_path.read_text(encoding="utf-8")
+
+    SENTINEL = "<!-- AUTO-INDEX -->"
+    # Strip any previous sentinel block (between SENTINEL and end-of-file).
+    # Preserve single trailing newline; the next join adds SENTINEL on its own line.
+    if SENTINEL in base:
+        base = base.split(SENTINEL, 1)[0].rstrip() + "\n"
+
+    # Build index (phases first, then features)
+    fragments = load_fragments(fragments_dir)
+    phases = [f for f in fragments if f.kind == "phase"]
+    features = [f for f in fragments if f.kind == "feature"]
+
+    lines: list = [SENTINEL, "", "## Fragment Index (auto-generated)", ""]
+    if phases:
+        lines.append("### Phases")
+        for f in sorted(phases, key=lambda x: x.id):
+            theme = f.theme or "(no theme)"
+            lines.append(f"- `{f.id}` — {theme}")
+        lines.append("")
+    if features:
+        lines.append("### Features")
+        for f in sorted(features, key=lambda x: x.id):
+            theme = f.theme or "(no theme)"
+            refs = ", ".join(f.phase_refs) if f.phase_refs else "(no refs)"
+            lines.append(f"- `{f.id}` — {theme} (refs: {refs})")
+        lines.append("")
+
+    new_content = base + "\n".join(lines) + "\n"
+
+    # Atomic write: tmp file in same dir, then os.replace
+    fd, tmp_path = tempfile.mkstemp(dir=str(main_path.parent), suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(new_content)
+        os.replace(tmp_path, main_path)
+    except Exception:
+        # Clean up tmp on any failure
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        raise
+
+
+def aggregate_phase_progress(fragments_dir: str) -> Tuple[int, int]:
+    """Aggregate phase completion: (active_count, total_count) over phase fragments only.
+
+    Excludes archived fragments by default (use load_fragments(include_archived=True)
+    to see them). Returns (0, 0) when fragments_dir does not exist (backward compat
+    for v1 handoff projects without fragments).
+
+    Args:
+        fragments_dir: Absolute path to the fragments dir.
+
+    Returns:
+        Tuple (active_count, total_count) — both ints. total includes only non-archived.
+    """
+    base = Path(fragments_dir)
+    if not base.exists():
+        return (0, 0)
+    phases = [f for f in load_fragments(fragments_dir) if f.kind == "phase"]
+    active = sum(1 for f in phases if f.status == "active")
+    return (active, len(phases))

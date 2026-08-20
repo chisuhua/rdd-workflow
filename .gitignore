@@ -32,3 +32,6 @@ __pycache__/
 .opencode.json
 node_modules/
 pnpm-lock.yaml
+
+# .rddf/roadmap-migrate-backup-* 是 destructive 操作的 backup 副产物, 不该 commit
+.rddf/.roadmap-migrate-backup-*
