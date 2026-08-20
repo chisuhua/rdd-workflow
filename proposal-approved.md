@@ -83,9 +83,9 @@
 
 
 
-| [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | guide-arch |
 
 ## 已实施
+| [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
 | [add-auto-rfc-from-approve](.rddf/improvements/add-auto-rfc-from-approve.md) | P0 | 2026-08-19 |
