@@ -30,5 +30,5 @@
 ### 验证 & 治理
 
 - [ ] **T22**: 全量回归 `./test.sh --full --regression` 通过（无新增 failure）
-- [ ] **T23**: 更新 `openspec/specs/roadmap-hierarchy/spec.md` Purpose 字段（archive 后）
+- [x] **T23**: 更新 `openspec/specs/roadmap-hierarchy/spec.md` Purpose 字段（archive 后）
 - [x] **T24**: 提交 worktree commits + archive change（`guide-ship` Phase 3）
