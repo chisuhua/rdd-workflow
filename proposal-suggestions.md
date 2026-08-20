@@ -9,3 +9,4 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
+| [extend-populate-roadmap-with-code-verification](.rddf/improvements/extend-populate-roadmap-with-code-verification.md) | P1 | populate-roadmap-from-arch v1.0 (2b0991a) 反馈 | 2026-08-21 | 待讨论 |
