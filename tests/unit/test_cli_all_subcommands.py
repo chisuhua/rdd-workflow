@@ -20,11 +20,13 @@ This file exists for two purposes:
    ``TestFilledAtRegression`` class below locks the schema acceptance +
    migration behaviour so this drift cannot recur silently.
 
-Subcommands covered (17 total — must match ``list_commands()``):
+Subcommands covered (28 total — must match ``list_commands()``):
 
-    archive, archive-sync, cleanup, dashboard, deps, discover-ship-changes,
-    feature, guide, init, iteration, l2-trend, migrate-improvements, monitor,
-    sessions, status, validate, version
+     archive, archive-sync, cleanup, dashboard, deps, deps.cross-repo,
+     discover-ship-changes, doctor, feature, guide, init, issue, iteration,
+     l2-trend, migrate-improvements, monitor, orchestrate, report-issue,
+     rdd-hub-bootstrap, roadmap, sessions, status, sync-hub, validate, version,
+     watch-hub
 """
 from __future__ import annotations
 
@@ -65,6 +67,7 @@ ALL_SUBCOMMANDS: tuple[str, ...] = (
     "deps",
     "deps.cross-repo",
     "discover-ship-changes",
+    "doctor",
     "feature",
     "guide",
     "init",
@@ -74,7 +77,9 @@ ALL_SUBCOMMANDS: tuple[str, ...] = (
     "migrate-improvements",
     "monitor",
     "orchestrate",
+    "rdd-hub-bootstrap",
     "report-issue",
+    "roadmap",
     "sessions",
     "status",
     "sync-hub",
