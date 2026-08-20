@@ -79,17 +79,19 @@
 
 
 
-| [add-cross-repo-impact-detection](.rddf/improvements/add-cross-repo-impact-detection.md) | P0 | 2026-08-19 | guide-arch |
 
-| [add-rfc-draft-template](.rddf/improvements/add-rfc-draft-template.md) | P0 | 2026-08-19 | guide-arch |
 
-| [add-rfc-interview-flow](.rddf/improvements/add-rfc-interview-flow.md) | P0 | 2026-08-19 | guide-arch |
 
-| [add-auto-rfc-from-approve](.rddf/improvements/add-auto-rfc-from-approve.md) | P0 | 2026-08-19 | guide-arch |
+
+| [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | guide-arch |
 
 ## 已实施
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [add-auto-rfc-from-approve](.rddf/improvements/add-auto-rfc-from-approve.md) | P0 | 2026-08-19 |
+| [add-rfc-interview-flow](.rddf/improvements/add-rfc-interview-flow.md) | P0 | 2026-08-19 |
+| [add-rfc-draft-template](.rddf/improvements/add-rfc-draft-template.md) | P0 | 2026-08-19 |
+| [add-cross-repo-impact-detection](.rddf/improvements/add-cross-repo-impact-detection.md) | P0 | 2026-08-19 |
 | [fix-adr-0031-safety-gate-substantiation](.rddf/improvements/fix-adr-0031-safety-gate-substantiation.md) | P0 | 2026-08-18 | 已实施 |
 | [fix-orphan-hub-gates-wiring](.rddf/improvements/fix-orphan-hub-gates-wiring.md) | P1 | 2026-08-18 | 已实施 |
 | [fix-cli-routing-cross-repo-commands](.rddf/improvements/fix-cli-routing-cross-repo-commands.md) | P1 | 2026-08-18 | 已实施 |

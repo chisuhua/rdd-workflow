@@ -9,4 +9,3 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | Oracle 二轮咨询 + 跨阶段特性维护痛点 | 2026-08-20 | 待审查 |

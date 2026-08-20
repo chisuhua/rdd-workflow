@@ -1,0 +1,5 @@
+phase: v2.2 规划中（fallback v2.3）
+category: arch-design
+change_type: refactor
+priority: P1
+parent_feature: ""
