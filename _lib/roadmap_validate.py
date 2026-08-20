@@ -1,11 +1,14 @@
-"""validate_fragment_refs: 8 rules R1-R8 for roadmap fragment integrity.
+r"""validate_fragment_refs: 8 rules R1-R8 for roadmap fragment integrity.
 
 Shared by `roadmap validate-fragments` (gate) and `rdd-doctor --category roadmap-refs` (diagnostic).
 Severity levels: CRITICAL (blocks plan-done in STRICT mode) / WARNING (default) / INFO.
 
 Per Metis review (commit before this version):
   - R8 fixed: previous `if len(Set) < sum(1 for _ in Set)` was always False (Set dedups duplicates),
-    so R8 never fired. Now uses Counter on raw list to preserve duplicates.
+    so R8 never fired. Now uses Counter on (phase_id, theme) tuple to detect genuine
+    row-level duplicates while tolerating nested-phase main docs that legitimately have
+    the same phase id appearing multiple times with different themes.
+
 Per Oracle recommendation:
   - R4 regex strict: `^phase-\d+(\.\d+)?$` (rejects `phase-1-2` nested, allows `phase-2.1` sub-phase).
 """
@@ -43,10 +46,7 @@ def _extract_main_doc_phases(main_doc_path: Path) -> Set[str]:
 
 
 def _extract_main_doc_phases_with_duplicates(main_doc_path: Path) -> List[str]:
-    """Parse main roadmap.md phase table → list of phase ids (preserves duplicates for R8 detection).
-
-    Per Metis review: needed because R8's previous Set-based dedup made the rule never trigger.
-    """
+    """Parse main roadmap.md phase table → list of phase ids (preserves duplicates for R8 detection)."""
     if not main_doc_path.exists():
         return []
     text = main_doc_path.read_text(encoding="utf-8")
@@ -56,6 +56,27 @@ def _extract_main_doc_phases_with_duplicates(main_doc_path: Path) -> List[str]:
         if m:
             phases.append(m.group(1))
     return phases
+
+
+def _extract_main_doc_phase_rows(main_doc_path: Path) -> List[tuple]:
+    """Parse main roadmap.md phase table → list of (phase_id, theme) tuples.
+
+    Used by R8 for nested-phase compatibility: the same phase id may appear
+    multiple times with different themes (one row per sub-phase/theme), so
+    R8 should only flag genuine duplicates where (phase_id, theme) collide.
+    """
+    if not main_doc_path.exists():
+        return []
+    text = main_doc_path.read_text(encoding="utf-8")
+    rows: List[tuple] = []
+    for line in text.splitlines():
+        m = re.match(r"\|\s*(phase-\S+)\s*\|\s*([^|]*?)\s*\|", line)
+        if m:
+            theme = m.group(2).strip()
+            if not theme:
+                theme = "(empty)"
+            rows.append((m.group(1), theme))
+    return rows
 
 
 def validate_fragment_refs(project_root: str) -> List[ValidationError]:
@@ -81,18 +102,26 @@ def validate_fragment_refs(project_root: str) -> List[ValidationError]:
         )
         return errors  # No further checks possible
 
-    # R8: duplicate phase ids in main doc (fixed: Counter preserves duplicates)
-    phase_id_list = _extract_main_doc_phases_with_duplicates(main_doc)
-    phase_counts = Counter(phase_id_list)
-    for pid, count in phase_counts.items():
+    # R8: duplicate (phase_id, theme) rows in main doc
+    # Per Oracle review (P0): nested-phase main docs legitimately have the same
+    # phase id appearing multiple times with different themes (one row per
+    # sub-phase/theme under the parent phase). R8 should only flag genuine
+    # duplicates where (phase_id, theme) collide — i.e. the same phase+theme
+    # appears in the skeleton table more than once, which is always a typo.
+    phase_rows = _extract_main_doc_phase_rows(main_doc)
+    row_counts = Counter(phase_rows)
+    for (pid, theme), count in row_counts.items():
         if count > 1:
             errors.append(
                 ValidationError(
-                    "R8", pid, f"duplicate phase id '{pid}' in main doc ({count}x)", "CRITICAL"
+                    "R8",
+                    pid,
+                    f"duplicate row in main doc phase skeleton: phase='{pid}' theme='{theme}' ({count}x)",
+                    "CRITICAL",
                 )
             )
     # Dedup'd set for R1/R6 reference checks
-    main_phases = set(phase_id_list)
+    main_phases = {pid for (pid, _) in phase_rows}
 
     # Load all fragments
     fragments = load_fragments(str(fragments_dir), include_archived=True)

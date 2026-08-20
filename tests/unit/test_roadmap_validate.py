@@ -143,15 +143,42 @@ def test_r7_fragments_dir_missing_warn(tmp_path):
     assert r7_errors[0].severity == "WARNING"
 
 
-def test_r8_duplicate_phase_id_in_main_doc(setup_with_main_doc, tmp_path):
-    """R8: main doc phase table must not have duplicate phase ids (Per Metis: was always-false bug, fixed)."""
+def test_r8_duplicate_phase_row_in_main_doc(setup_with_main_doc, tmp_path):
+    """R8: main doc phase table must not have duplicate (phase_id, theme) rows.
+
+    Per Oracle P0: nested-phase main docs legitimately have the same phase id
+    appearing multiple times with different themes (one row per sub-phase under
+    the parent phase). R8 only flags when (phase_id, theme) BOTH collide.
+    """
     md = setup_with_main_doc / ".rddf" / "roadmap.md"
-    md.write_text("# Roadmap\n\n| phase-1 | ... |\n| phase-1 | ... |\n")
+    # Same phase id + same theme (typo) → should fire
+    md.write_text("# Roadmap\n\n| phase-1 | same theme |\n| phase-1 | same theme |\n")
     errors = validate_fragment_refs(str(setup_with_main_doc))
     r8_errors = [e for e in errors if e.rule == "R8"]
-    assert len(r8_errors) == 1, f"R8 should fire on duplicate phase-1, got {len(r8_errors)}"
+    assert len(r8_errors) == 1, f"R8 should fire on duplicate (id, theme), got {len(r8_errors)}: {r8_errors}"
     assert "phase-1" in r8_errors[0].message
     assert r8_errors[0].severity == "CRITICAL"
+
+
+def test_r8_nested_phase_with_distinct_themes_passes(setup_with_main_doc, tmp_path):
+    """R8 (Oracle P0): nested-phase main doc with same phase id but different themes does NOT fire R8.
+
+    This is the canonical case from rdd-workflow's own migrated main doc:
+    phase-1 appears 3× with 3 different themes (one per sub-phase/theme under parent).
+    """
+    md = setup_with_main_doc / ".rddf" / "roadmap.md"
+    md.write_text(
+        "# Roadmap\n\n"
+        "| phase-1 | sub-theme A |\n"
+        "| phase-1 | sub-theme B |\n"
+        "| phase-1 | sub-theme C |\n"
+        "| phase-2 | different theme |\n"
+    )
+    errors = validate_fragment_refs(str(setup_with_main_doc))
+    r8_errors = [e for e in errors if e.rule == "R8"]
+    assert r8_errors == [], (
+        f"R8 must NOT fire when same phase id has distinct themes (nested-phase), got: {r8_errors}"
+    )
 
 
 def test_valid_setup_no_critical_errors(setup_with_main_doc, tmp_path):

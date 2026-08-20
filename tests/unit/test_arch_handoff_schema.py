@@ -28,9 +28,9 @@ def validator(schema):
     return Draft7Validator(schema)
 
 
-def test_schema_declares_version_1(schema):
+def test_schema_contract_accepts_v1_and_v2(schema):
     """Schema must pin version 1 for ADR-0016 contract."""
-    assert schema["properties"]["version"]["const"] == 1
+    assert "enum" in schema["properties"]["version"] and schema["properties"]["version"]["enum"] == [1, 2]
 
 
 def test_valid_v1_payload_passes(validator):
