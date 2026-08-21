@@ -207,8 +207,11 @@ def _classify(cand: Candidate) -> None:
         cand.flags.append("in_progress" if cand.tasks_total - cand.tasks_done > 0 else "ready_to_archive")
     elif cand.filesystem_present and cand.artifact_complete:
         cand.flags.append("executable")
-    else:
+    elif cand.iteration_status in (None, "planned", "proposed"):
+        # filesystem_present=False 且迭代中"待落盘/已规划"——正常需要创建 proposal.md
         cand.flags.append("needs_planning")
+    # else: filesystem_present=False 且 iteration_status in ("approved", "archived")
+    #       历史已批准/已归档且路径因 archive 缺失——仅 missing_disk,不再 needs_planning
 
 
 def discover(project_root) -> List[Candidate]:
