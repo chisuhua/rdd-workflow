@@ -151,3 +151,66 @@ def test_is_valid_change_name_accepts_typical_names():
     assert not is_valid_change_name("--evil")
     assert not is_valid_change_name("../../etc")
     assert not is_valid_change_name("-leading-dash")
+
+
+# --- fix-discover-ship-changes-needs-planning-fallback: _classify regression ---
+
+def test_classify_approved_missing_disk_only():
+    """approved + filesystem_present=False → only missing_disk (NOT needs_planning).
+
+    Regression: pre-fix bug appended needs_planning to flags for any
+    filesystem_present=False + non-worktree/branch candidate. This caused
+    ship menu to surface already-implemented proposals as actionable work.
+    """
+    from skills._lib.discover_ship_changes import Candidate, _classify
+    cand = Candidate(name="x", filesystem_present=False, iteration_status="approved")
+    _classify(cand)
+    assert cand.flags == ["missing_disk"], (
+        f"approved candidate should only carry missing_disk, got {cand.flags}"
+    )
+
+
+def test_classify_archived_missing_disk_only():
+    """archived + filesystem_present=False → only missing_disk (NOT needs_planning).
+
+    Most common post-archive case: openspec/changes/<name>/ deleted by
+    'openspec archive', iteration.json updated to status="archived".
+    Should not re-surface in ship menu.
+    """
+    from skills._lib.discover_ship_changes import Candidate, _classify
+    cand = Candidate(name="x", filesystem_present=False, iteration_status="archived")
+    _classify(cand)
+    assert cand.flags == ["missing_disk"], (
+        f"archived candidate should only carry missing_disk, got {cand.flags}"
+    )
+
+
+def test_classify_proposed_needs_planning():
+    """proposed + filesystem_present=False → needs_planning preserved.
+
+    Existing behavior must NOT regress: a proposed change without disk
+    artifacts is a real "needs planning" candidate.
+    """
+    from skills._lib.discover_ship_changes import Candidate, _classify
+    cand = Candidate(name="x", filesystem_present=False, iteration_status="proposed")
+    _classify(cand)
+    assert "missing_disk" in cand.flags, (
+        f"missing_disk should be present, got {cand.flags}"
+    )
+    assert "needs_planning" in cand.flags, (
+        f"needs_planning should be present, got {cand.flags}"
+    )
+
+
+def test_classify_planned_needs_planning():
+    """planned + filesystem_present=False → needs_planning preserved.
+
+    Same regression check for "planned" iteration_status (Path A pre-created
+    changes via guide-design approve stay in "planned" until fill).
+    """
+    from skills._lib.discover_ship_changes import Candidate, _classify
+    cand = Candidate(name="x", filesystem_present=False, iteration_status="planned")
+    _classify(cand)
+    assert "needs_planning" in cand.flags, (
+        f"needs_planning should be present, got {cand.flags}"
+    )
