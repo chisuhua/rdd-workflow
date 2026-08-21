@@ -88,6 +88,8 @@
 
 | [move-populate-roadmap-into-guide-arch](.rddf/improvements/move-populate-roadmap-into-guide-arch.md) | P2 | 2026-08-21 | guide-arch |
 
+| [fix-discover-ship-changes-needs-planning-fallback](.rddf/improvements/fix-discover-ship-changes-needs-planning-fallback.md) | P1 | 2026-08-21 | guide-arch |
+
 ## 已实施
 | [add-cli-coverage-rdd-doctor-roadmap-rdd-hub](.rddf/improvements/add-cli-coverage-rdd-doctor-roadmap-rdd-hub.md) | P1 | 2026-08-20 |
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 |
