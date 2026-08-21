@@ -191,6 +191,25 @@ def _parse_main_doc_phase_skeleton(main_doc_path: Path) -> List[PhaseRecord]:
     return records
 
 
+def _import_scan_adr_catalog():
+    """Import scan_adr_catalog across repo / external-project / global-install layouts."""
+    try:
+        from skills._lib.adr_catalog import scan_adr_catalog
+        return scan_adr_catalog
+    except ModuleNotFoundError:
+        pass
+    import sys
+    lib_parent = str(Path(__file__).resolve().parents[2])
+    if lib_parent not in sys.path:
+        sys.path.insert(0, lib_parent)
+    try:
+        from skills._lib.adr_catalog import scan_adr_catalog
+        return scan_adr_catalog
+    except ModuleNotFoundError:
+        from _lib.adr_catalog import scan_adr_catalog  # global-install layout
+        return scan_adr_catalog
+
+
 def catalog_sources(
     project_root: Path,
     adr_dir_rel: str = "docs/adr",
@@ -226,31 +245,29 @@ def catalog_sources(
     adr_readme = adr_dir / "README.md"
     readme_text = adr_readme.read_text(encoding="utf-8", errors="replace") if adr_readme.exists() else ""
 
-    # Catalog ADRs
+    # ADR file discovery via shared layer; extraction stays local (v1.1 AdrRecord contract)
+    scan_adr_catalog = _import_scan_adr_catalog()
+
     adrs: List[AdrRecord] = []
-    if adr_dir.exists():
-        for adr_file in sorted(adr_dir.glob("ADR-*.md")):
-            m = re.match(r"ADR-(\d+)-", adr_file.name)
-            if not m:
-                continue
-            adr_id = f"ADR-{m.group(1).zfill(4)}"
-            title, _ = _read_first_heading_and_summary(adr_file)
-            if not title:
-                title = adr_file.stem
-            # Strip leading "ADR-NNNN: " prefix to avoid duplication when formatted
-            title = re.sub(rf"^{re.escape(adr_id)}\s*[:：]\s*", "", title)
-            status, decision = _extract_adr_status_and_decision(adr_file)
-            version = _parse_implementation_version(adr_id, readme_text)
-            adrs.append(
-                AdrRecord(
-                    id=adr_id,
-                    path=adr_file.relative_to(project_root),
-                    title=title,
-                    status=status or "未知",
-                    key_decision=decision or "(无关键决策段)",
-                    implementation_version=version,
-                )
+    for adr_id, adr_meta in scan_adr_catalog(project_root, adr_dir=adr_dir_rel).items():
+        adr_file = adr_meta.file_path
+        title, _ = _read_first_heading_and_summary(adr_file)
+        if not title:
+            title = adr_file.stem
+        # Strip leading "ADR-NNNN: " prefix to avoid duplication when formatted
+        title = re.sub(rf"^{re.escape(adr_id)}\s*[:：]\s*", "", title)
+        status, decision = _extract_adr_status_and_decision(adr_file)
+        version = _parse_implementation_version(adr_id, readme_text)
+        adrs.append(
+            AdrRecord(
+                id=adr_id,
+                path=adr_file.relative_to(project_root),
+                title=title,
+                status=status or "未知",
+                key_decision=decision or "(无关键决策段)",
+                implementation_version=version,
             )
+        )
 
     # Catalog arch docs
     arch_docs: List[ArchDocRecord] = []
@@ -603,6 +620,14 @@ __all__ = [
     "verify_all_adrs",
     "load_supplementary_or_default",
     "save_supplementary",
+    # v2: incremental update (move-populate-roadmap-into-guide-arch, Task C)
+    "load_populate_state_or_default",
+    "save_populate_state",
+    "detect_adr_changes",
+    "detect_code_changes",
+    "decide_update_mode",
+    "select_adrs_for_incremental_verify",
+    "should_rewrite_phase_fragment",
 ]
 
 
@@ -877,3 +902,356 @@ def _format_badge_placeholder_but_exists() -> str:
 
 def _format_badge_placeholder_as_claimed() -> str:
     return "*（占位 + 代码未现）*"
+
+
+# ---- v2: Incremental Update (move-populate-roadmap-into-guide-arch, Task C) ----
+#
+# Four-mode incremental roadmap update backed by .rddf/state/.populate-state.json
+# (schema v2). The codegraph signal is env-var injected (RDDF_CODEGRAPH_FINGERPRINT);
+# Python NEVER calls MCP directly (subprocess has no MCP session).
+
+_POPULATE_STATE_REL = Path(".rddf") / "state" / ".populate-state.json"
+_POPULATE_STATE_SCHEMA_VERSION = 2
+
+
+def _populate_state_schema_path() -> Path:
+    """Locate populate_state_schema.json next to this module's skills/ tree."""
+    return (
+        Path(__file__).resolve().parents[2]
+        / "_lib" / "schemas" / "populate_state_schema.json"
+    )
+
+
+def _validate_populate_state_payload(payload: Dict) -> Optional[str]:
+    """Validate a state payload against schema v2; return error message or None.
+
+    Uses jsonschema when available; otherwise falls back to a manual check of
+    the required top-level keys + version const (stdlib-only path).
+    """
+    schema_path = _populate_state_schema_path()
+    if schema_path.exists():
+        try:
+            import json as _json
+            import jsonschema as _js
+            _js.validate(payload, _json.loads(schema_path.read_text(encoding="utf-8")))
+            return None
+        except ImportError:
+            pass  # fall through to manual check
+        except Exception as e:
+            if type(e).__name__ == "ValidationError":
+                return str(e)
+            raise
+    required = {"version", "generated_at", "codebase_commit", "adrs", "reverse_index", "phases"}
+    missing = required - set(payload.keys())
+    if missing:
+        return f"missing required keys: {sorted(missing)}"
+    if payload.get("version") != _POPULATE_STATE_SCHEMA_VERSION:
+        return f"version != {_POPULATE_STATE_SCHEMA_VERSION}"
+    return None
+
+
+def load_populate_state_or_default(project_root: Path) -> Optional[Dict]:
+    """Load .rddf/state/.populate-state.json; return None on missing/invalid.
+
+    Fail-loud on schema version mismatch: prints
+    `schema version X unsupported, expected 2` to stderr and returns None so
+    the caller falls back to full mode (T9).
+    """
+    import json
+    import sys
+
+    state_file = Path(project_root) / _POPULATE_STATE_REL
+    if not state_file.exists():
+        return None
+    try:
+        data = json.loads(state_file.read_text(encoding="utf-8"))
+    except (ValueError, OSError) as e:
+        print(f"populate-state unreadable ({e}); falling back to full mode", file=sys.stderr)
+        return None
+
+    version = data.get("version")
+    if version != _POPULATE_STATE_SCHEMA_VERSION:
+        print(
+            f"schema version {version} unsupported, expected {_POPULATE_STATE_SCHEMA_VERSION}",
+            file=sys.stderr,
+        )
+        return None
+
+    error = _validate_populate_state_payload(data)
+    if error is not None:
+        print(f"populate-state failed schema validation: {error}", file=sys.stderr)
+        return None
+    return data
+
+
+def save_populate_state(state: Dict, project_root: Path, codebase_commit: str) -> Path:
+    """Atomically write state to .rddf/state/.populate-state.json (schema v2).
+
+    Fills version/generated_at defaults, injects codebase_commit, validates
+    against the schema before writing, and uses tempfile + os.replace so a
+    crash never leaves a torn write.
+    """
+    import json
+    import os
+    import tempfile
+    from datetime import datetime, timezone
+
+    project_root = Path(project_root)
+    state_dir = project_root / ".rddf" / "state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+    target = state_dir / ".populate-state.json"
+
+    payload = dict(state)
+    payload["version"] = _POPULATE_STATE_SCHEMA_VERSION
+    payload["codebase_commit"] = codebase_commit
+    payload.setdefault("generated_at", datetime.now(timezone.utc).isoformat())
+    payload.setdefault("codegraph_fingerprint", None)
+    payload.setdefault("adrs", {})
+    payload.setdefault("reverse_index", {})
+    payload.setdefault("phases", {})
+
+    error = _validate_populate_state_payload(payload)
+    if error is not None:
+        raise RuntimeError(f"populate-state payload failed schema v2 validation: {error}")
+
+    fd, tmp_path = tempfile.mkstemp(dir=state_dir, suffix=".tmp", prefix=".populate-state.")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        os.replace(tmp_path, target)
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        raise
+    return target
+
+
+def detect_adr_changes(
+    state: Dict,
+    project_root: Path,
+    scan_adr_catalog_fn,
+) -> Tuple[List[str], List[str], List[str]]:
+    """Compare current ADR file_hashes vs state['adrs']; return (changed, new, deleted).
+
+    scan_adr_catalog_fn is injected (shared layer `_lib/adr_catalog.scan_adr_catalog`)
+    so tests can substitute fakes. Comparison is sha256 file_hash based.
+    """
+    prev = (state or {}).get("adrs", {})
+    current = scan_adr_catalog_fn(Path(project_root))
+
+    prev_ids = set(prev.keys())
+    cur_ids = set(current.keys())
+    new = sorted(cur_ids - prev_ids)
+    deleted = sorted(prev_ids - cur_ids)
+    changed = sorted(
+        adr_id
+        for adr_id in (prev_ids & cur_ids)
+        if prev[adr_id].get("file_hash") != current[adr_id].file_hash
+    )
+    return changed, new, deleted
+
+
+def _git_commit_exists(project_root: Path, commit: str) -> bool:
+    import subprocess
+
+    result = subprocess.run(
+        ["git", "-C", str(project_root), "cat-file", "-e", f"{commit}^{{commit}}"],
+        capture_output=True,
+    )
+    return result.returncode == 0
+
+
+def _git_diff_name_only(project_root: Path, base_commit: str) -> List[str]:
+    import subprocess
+
+    result = subprocess.run(
+        ["git", "-C", str(project_root), "diff", f"{base_commit}..HEAD", "--name-only"],
+        capture_output=True, text=True, timeout=30,
+    )
+    if result.returncode != 0:
+        return []
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def _extract_symbol_defs(file_path: Path) -> Set[str]:
+    """Extract top-level symbol definitions (def/class/function) from a source file.
+
+    Prefers ripgrep `^(def|class|function) `; falls back to a Python regex pass
+    when rg is unavailable. Stdlib-only subprocess (never shell=True).
+    """
+    import subprocess
+
+    pattern = r"^(def|class|function)\s+([A-Za-z_][A-Za-z0-9_]*)"
+    lines: List[str] = []
+    try:
+        result = subprocess.run(
+            ["rg", "--no-filename", "-e", r"^(def|class|function) ", str(file_path)],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode == 0:
+            lines = result.stdout.splitlines()
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+    if not lines:
+        try:
+            lines = file_path.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            return set()
+
+    symbols: Set[str] = set()
+    for line in lines:
+        m = re.match(pattern, line.strip())
+        if m:
+            symbols.add(m.group(2))
+    return symbols
+
+
+def detect_code_changes(
+    state: Dict,
+    project_root: Path,
+) -> Tuple[Set[str], List[str], str]:
+    """Detect code changes since state['codebase_commit']; return (changed_adr_ids, changed_files, status).
+
+    status values:
+      - 'ok'             git baseline valid, diff computed
+      - 'stale'          RDDF_CODEGRAPH_FINGERPRINT=stale (env-var injected signal;
+                         Python never calls MCP — the agent side injects this)
+      - 'commit-missing' state['codebase_commit'] not found in git history
+                         (force-push / gc) — caller falls back to full mode (T13)
+
+    changed_adr_ids is the intersection of changed symbol definitions with
+    state['reverse_index'] (symbol -> [adr_id]).
+    """
+    import os
+    import sys
+
+    project_root = Path(project_root)
+    fingerprint = os.environ.get("RDDF_CODEGRAPH_FINGERPRINT", "")
+    status = "stale" if fingerprint == "stale" else "ok"
+
+    commit = (state or {}).get("codebase_commit", "")
+    if not commit or not _git_commit_exists(project_root, commit):
+        print(
+            f"warning: codebase_commit {commit!r} not found in git history; "
+            "falling back to full mode",
+            file=sys.stderr,
+        )
+        return set(), [], "commit-missing"
+
+    changed_files = _git_diff_name_only(project_root, commit)
+
+    changed_symbols: Set[str] = set()
+    for rel in changed_files:
+        if not rel.endswith(".py"):
+            continue
+        file_path = project_root / rel
+        if not file_path.is_file():
+            continue
+        changed_symbols |= _extract_symbol_defs(file_path)
+
+    reverse_index = (state or {}).get("reverse_index", {})
+    changed_adr_ids: Set[str] = set()
+    for symbol in changed_symbols:
+        changed_adr_ids.update(reverse_index.get(symbol, []))
+
+    return changed_adr_ids, changed_files, status
+
+
+def decide_update_mode(
+    adr_changes: Tuple[List[str], List[str], List[str]],
+    code_changes: Tuple[Set[str], List[str], str],
+) -> Tuple[str, str, Optional[object]]:
+    """Map (adr_changes, code_changes) to (mode, reason, extra).
+
+    mode ∈ {skip, adr_only, code_only, full}:
+      (empty, empty)     -> skip      (extra=None)
+      (some, empty)      -> adr_only  (extra=sorted changed+new+deleted adr ids)
+      (empty, some)      -> code_only (extra=set of changed adr ids)
+      (some, some)       -> full      (extra=None)
+    Any code_changes status != 'ok' (stale codegraph / missing commit) -> full.
+    """
+    changed, new, deleted = adr_changes
+    changed_adr_ids, changed_files, status = code_changes
+
+    if status != "ok":
+        reason = "codegraph stale" if status == "stale" else f"git baseline invalid ({status})"
+        return "full", reason, None
+
+    adr_changed = bool(changed or new or deleted)
+    code_changed = bool(changed_adr_ids or changed_files)
+
+    if not adr_changed and not code_changed:
+        return "skip", "no changes", None
+    if adr_changed and not code_changed:
+        return "adr_only", "only ADR changed", sorted(set(changed) | set(new) | set(deleted))
+    if code_changed and not adr_changed:
+        return "code_only", "only code changed", set(changed_adr_ids)
+    return "full", "both changed", None
+
+
+def _normalize_adr_ids(adrs) -> List[str]:
+    """Accept a list of adr ids, a dict keyed by adr id, or records with .id/.adr_id."""
+    if isinstance(adrs, dict):
+        return list(adrs.keys())
+    ids: List[str] = []
+    for item in adrs or []:
+        if isinstance(item, str):
+            ids.append(item)
+        elif hasattr(item, "id"):
+            ids.append(item.id)
+        elif hasattr(item, "adr_id"):
+            ids.append(item.adr_id)
+    return ids
+
+
+def select_adrs_for_incremental_verify(
+    adrs,
+    state: Dict,
+    mode: str,
+    extra,
+) -> Tuple[List[str], Dict]:
+    """Split ADRs into (to_verify, to_reuse) for the given update mode.
+
+    skip:      verify nothing, reuse all previous state.adrs
+    adr_only:  verify extra (changed/new/deleted adr ids), reuse the rest
+    code_only: verify extra (adr ids, or symbols resolved via reverse_index), reuse the rest
+    full:      verify all adrs, reuse nothing
+    """
+    all_ids = _normalize_adr_ids(adrs)
+    prev = dict((state or {}).get("adrs", {}))
+
+    if mode == "skip":
+        return [], prev
+    if mode == "full":
+        return list(all_ids), {}
+
+    reverse_index = (state or {}).get("reverse_index", {})
+    known = set(all_ids) | set(prev.keys())
+    to_verify: List[str] = []
+    for item in (extra or []):
+        if item in known:
+            candidates = [item]
+        else:
+            candidates = list(reverse_index.get(item, []))
+        for adr_id in candidates:
+            if adr_id not in to_verify:
+                to_verify.append(adr_id)
+    to_verify.sort()
+
+    to_reuse = {k: v for k, v in prev.items() if k not in set(to_verify)}
+    return to_verify, to_reuse
+
+
+def should_rewrite_phase_fragment(
+    phase_id: str,
+    prev_state: Optional[Dict],
+    new_state: Optional[Dict],
+    mode: str,
+) -> bool:
+    """Whether the phase fragment must be regenerated.
+
+    full / adr_only -> True (fragment may reference new or changed ADRs).
+    skip / code_only -> False (v1 simplification: code changes do not alter
+    phase fragment content; fragments from the previous state are preserved).
+    """
+    return mode in ("full", "adr_only")

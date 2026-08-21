@@ -17,6 +17,8 @@ role:
       - "roadmap.md"
       - "docs/architecture/*-gap-analysis.md"
       - ".rddf/state/.arch-handoff.json"
+      - ".rddf/state/.populate-state.json"
+      - ".rddf/roadmap/phases/*.md"
     not_owns:
       - "openspec/changes/<name>/{proposal,design,tasks}.md"
       - ".rddf/wt/<name>/"
@@ -649,6 +651,33 @@ esac
 ## Phase 6: arch-done (Exit)
 
 **入口条件**：Phase 5 门控检查通过。arch-done 不再依赖提案审批结果。
+
+#### Step X: Roadmap Sync (internal)
+
+> **Trigger**: arch-done gate passed. Auto-call (no opt-out flag for now; roadmap update is part of arch-done semantics).
+
+Run:
+
+```bash
+RDDF_PROJECT_ROOT="$PROJECT_ROOT" \
+RDDF_CODEBASE_COMMIT="$(git rev-parse HEAD)" \
+RDDF_ROADMAP_UPDATE=on \
+RDDF_INCREMENTAL=on \
+bash "${GUIDE_ARCH_SCRIPTS}/roadmap_incremental_update.sh"
+```
+
+Behavior:
+- Exit 0 + stderr `Mode: skip` when no changes detected (T1)
+- Exit 0 + writes `.rddf/state/.populate-state.json` when changes (T2-T6)
+- Warning written to `.rddf/quality-reports/.arch-quality-report.json` when roadmap is stale (T9)
+- **NOT blocking**: arch-done gate still only checks ADR ≥ 1 + roadmap.md exists (unchanged from ADR-0018)
+
+Override env vars:
+- `RDDF_ROADMAP_UPDATE=off` — skip roadmap sync entirely (escape hatch)
+- `RDDF_ROADMAP_UPDATE=force` — force full rebuild (reset state)
+- `RDDF_INCREMENTAL=off` — equivalent to force (alias for clarity)
+
+> **Note**: 既有 `rddf_env_check_cache` 集成保持不变 — 本步骤不影响 Phase 1 env-check 流程，也不修改 `.rddf/state/.env-cache.json`。
 
 **写入 handoff 状态**：
 

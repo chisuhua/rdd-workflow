@@ -3,13 +3,21 @@ name: populate-roadmap-from-arch
 description: 从 ADR + 架构文档生成 phase fragment 的 body 内容。被用户在新项目 / 季度 review / 新增 ADR 后调用,自动填充 .rddf/roadmap/phases/*.md 的内容(不修改主文档 .rddf/roadmap.md,不改 frontmatter)。
 license: MIT
 compatibility: Requires rdd-workflow v2.1+ (层次化 roadmap 启用后) + Python 3.11+ + 现有 ADR-0016 v2 handoff
+version: 1.2
+evolved-from: populate-roadmap-from-arch
+deprecated: true
+replacement: guide-arch
 metadata:
-  version: "1.1"
+  version: "1.2"
   author: sisyphus
-  evolved-from: "manually-composed phase fragments during add-hierarchical-roadmap-structure"
+  evolved-from: "populate-roadmap-from-arch"
+  deprecated: true
+  replacement: "guide-arch"
 ---
 
-# Populate Roadmap From Arch (v1.1)
+> ⚠️ **DEPRECATED (v2.2+)**: This skill is superseded by `guide-arch`'s built-in Phase 6 Roadmap Sync step. New projects should call `skill_use("guide-arch")` directly. This skill is preserved as a thin wrapper for backward compatibility; use `--standalone` flag to invoke the v1.1 behavior.
+
+# Populate Roadmap From Arch (v1.2)
 
 ## 职责
 
@@ -251,6 +259,19 @@ skills/populate-roadmap-from-arch/
 - **Pull request checks**：跑 `bash skills/populate-roadmap-from-arch/scripts/populate.sh --yes --code-verify=strict --dry-run` 探测 ADR↔代码 drift，不修改文件。
 - **Nightly**：跑 `--code-verify=on` 并 commit `.rddf/state/.populate-supplementary.json` 更新作为 "roadmap-sync" job。
 - **Local dev**：`RDD_NO_MCP=1 populate.sh --yes --code-verify=on` 在无 mcp 环境下工作。
+
+## Troubleshooting
+
+### Reset roadmap incremental state
+
+```bash
+rm .rddf/state/.populate-state.json   # next run will fallback to full mode
+```
+
+Use when:
+- Branch/worktree switch left stale state
+- codegraph signal corrupted state
+- Manual full regeneration desired
 
 ## 相关 skill / 文件
 

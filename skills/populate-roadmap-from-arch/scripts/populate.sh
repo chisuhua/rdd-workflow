@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
 # populate-roadmap-from-arch: bash wrapper (Step 0/4/5/6/7).
 #
-# Sourceable from SKILL.md flow, or runnable standalone:
-#   bash skills/populate-roadmap-from-arch/scripts/populate.sh                  # all 4 phases
-#   bash skills/populate-roadmap-from-arch/scripts/populate.sh --phase phase-1  # single phase
-#   bash skills/populate-roadmap-from-arch/scripts/populate.sh --dry-run        # preview only
-#   bash skills/populate-roadmap-from-arch/scripts/populate.sh --no-backup      # skip backup
-#   bash skills/populate-roadmap-from-arch/scripts/populate.sh --yes            # skip diff prompt
+# v1.2 (deprecated, move-populate-roadmap-into-guide-arch Task F): this script
+# is a thin wrapper. When called with the new incremental CLI surface
+# (--standalone / --incremental[=on|off] / --roadmap-update=on|off|force) it
+# delegates via exec to guide-arch/scripts/roadmap_incremental_update.sh.
+# v1.1 flags (--yes / --phase / --dry-run / --no-backup / --code-verify=*)
+# keep the legacy populate_main behavior below for backward compatibility.
 #
-# Per skill metadata: version 1.0.
+# Sourceable from SKILL.md flow, or runnable standalone:
+#   bash skills/populate-roadmap-from-arch/scripts/populate.sh                  # all 4 phases (v1.1)
+#   bash skills/populate-roadmap-from-arch/scripts/populate.sh --phase phase-1  # single phase (v1.1)
+#   bash skills/populate-roadmap-from-arch/scripts/populate.sh --dry-run        # preview only (v1.1)
+#   bash skills/populate-roadmap-from-arch/scripts/populate.sh --no-backup      # skip backup (v1.1)
+#   bash skills/populate-roadmap-from-arch/scripts/populate.sh --yes            # skip diff prompt (v1.1)
+#   bash skills/populate-roadmap-from-arch/scripts/populate.sh . --standalone   # force full mode (v1.2)
+#
+# Per skill metadata: version 1.2.
 #
 # Sourced-only entry: populate_main (defined below; call after sourcing)
 
@@ -363,8 +371,60 @@ print(data.get('$phase', ''), end='')
     report "$PROJECT_ROOT" "$BACKUP_DIR"
 }
 
+# --- v1.2 thin-wrapper delegation (move-populate-roadmap-into-guide-arch, Task F) ---
+# Maps the new incremental CLI flags to RDDF_* env vars (Oracle C1: env-var only
+# passing) and execs guide-arch/scripts/roadmap_incremental_update.sh.
+_delegate_to_incremental_update() {
+    local PROJECT_ROOT=""
+    if [ $# -gt 0 ] && [ "${1#-}" = "$1" ]; then
+        PROJECT_ROOT="$1"
+        shift || true
+    fi
+    PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+
+    export RDDF_PROJECT_ROOT="$PROJECT_ROOT"
+    export RDDF_CODEBASE_COMMIT="${RDDF_CODEBASE_COMMIT:-$(cd "$PROJECT_ROOT" && git rev-parse HEAD 2>/dev/null || echo 0000000)}"
+
+    local arg
+    for arg in "$@"; do
+        case "$arg" in
+            --code-verify=off)      export RDDF_ROADMAP_UPDATE=off ;;
+            --code-verify=on)       export RDDF_ROADMAP_UPDATE=on ;;
+            --code-verify=strict)   export RDDF_ROADMAP_UPDATE=on ;;
+            --incremental=off)      export RDDF_INCREMENTAL=off ;;
+            --incremental|--incremental=on) export RDDF_INCREMENTAL=on ;;
+            --standalone)           export RDDF_ROADMAP_UPDATE=force ;;
+            --roadmap-update=off)   export RDDF_ROADMAP_UPDATE=off ;;
+            --roadmap-update=force) export RDDF_ROADMAP_UPDATE=force ;;
+            --roadmap-update=on)    export RDDF_ROADMAP_UPDATE=on ;;
+        esac
+    done
+
+    local SCRIPT_DIR_LOCAL GUIDE_ARCH_SCRIPTS
+    SCRIPT_DIR_LOCAL="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+    GUIDE_ARCH_SCRIPTS="$(cd "$SCRIPT_DIR_LOCAL/../.." && pwd)/guide-arch/scripts"
+    if [ ! -f "$GUIDE_ARCH_SCRIPTS/roadmap_incremental_update.sh" ]; then
+        GUIDE_ARCH_SCRIPTS="${HOME}/.agents/skills/rdd-workflow/skills/guide-arch/scripts"
+    fi
+    exec bash "$GUIDE_ARCH_SCRIPTS/roadmap_incremental_update.sh"
+}
+
+_has_incremental_flag() {
+    local a
+    for a in "$@"; do
+        case "$a" in
+            --standalone|--incremental|--incremental=*|--roadmap-update=*) return 0 ;;
+        esac
+    done
+    return 1
+}
+
 # Sourceable guard (defined last so all functions are available when sourced or executed directly)
 if [ "${BASH_SOURCE[0]:-}" = "${0}" ]; then
-    populate_main "$@"
+    if _has_incremental_flag "$@"; then
+        _delegate_to_incremental_update "$@"
+    else
+        populate_main "$@"
+    fi
     exit $?
 fi

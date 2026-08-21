@@ -171,6 +171,53 @@ parsing logic so consumers don't re-implement regex extraction.
 
 ---
 
+## Related state schema: populate-state.json (v2)
+
+### v2 Schema Example (populate-state.json)
+
+`populate-state.json` v2 schema is used by `guide-arch` Phase 6 internal Roadmap Sync step to track incremental roadmap regeneration state. Defined in `skills/_lib/schemas/populate_state_schema.json` (version const=2).
+
+```json
+{
+  "version": 2,
+  "generated_at": "2026-08-21T17:30:00Z",
+  "codebase_commit": "9536da9",
+  "codegraph_fingerprint": null,
+  "adrs": {
+    "ADR-0001": {
+      "file_path": "docs/adr/ADR-0001-foo.md",
+      "file_hash": "abc123def456abc123def456abc123def456abc123def456abc123def456abcd",
+      "title": "Foo",
+      "status": "已采纳",
+      "phase": null,
+      "category": null
+    }
+  },
+  "reverse_index": {
+    "populate_lib": ["ADR-0001"],
+    "scan_adr_catalog": ["ADR-0001"]
+  },
+  "phases": {
+    "phase-1": {
+      "fragment_path": ".rddf/roadmap/phases/phase-1.md",
+      "last_generated_at": "2026-08-21T17:30:00Z"
+    }
+  }
+}
+```
+
+Key differences from v1 (`populate_supplementary_schema.json`):
+- Independent file (not merged with supplementary)
+- Schema version `const: 2` (rejects v1 files with fail-loud stderr)
+- Required fields: `version`, `generated_at`, `codebase_commit`, `adrs`, `reverse_index`, `phases`
+- Optional: `codegraph_fingerprint` (string or null)
+- `adrs` keyed by adr_id; `file_hash` is sha256 hex 64 chars
+- `reverse_index` maps symbols to adr_ids for code_only mode optimization
+
+Reset command: `rm .rddf/state/.populate-state.json` (next run falls back to full mode).
+
+---
+
 ## See also
 
 - `docs/proposal-approved-format.md` — format for the approved proposals index
