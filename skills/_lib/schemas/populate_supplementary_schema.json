@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "populate-supplementary",
+  "description": "ADR code-verification records written by populate-roadmap-from-arch --code-verify=on|strict",
+  "version": {
+    "const": "v1",
+    "description": "Schema version. Consumers MUST reject version=0 or missing."
+  },
+  "type": "object",
+  "required": ["version", "generated_at", "records"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. Consumers MUST reject version=0 or missing."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "adr_id",
+          "self_claim_version",
+          "verification_status",
+          "code_symbols_found",
+          "code_symbols_expected",
+          "has_discrepancy",
+          "verified_at",
+          "mcp_used"
+        ],
+        "properties": {
+          "adr_id": {
+            "type": "string",
+            "pattern": "^ADR-[0-9]{4}$"
+          },
+          "self_claim_version": {
+            "type": ["string", "null"]
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": ["confirmed", "self-claim-only", "placeholder-as-claimed", "placeholder-but-exists"]
+          },
+          "code_symbols_found": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "code_symbols_expected": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "has_discrepancy": {
+            "type": "boolean"
+          },
+          "verified_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "mcp_used": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

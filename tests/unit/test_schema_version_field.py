@@ -15,7 +15,7 @@ import pytest
 
 SCHEMA_DIR = Path(__file__).parent.parent.parent / "skills" / "_lib" / "schemas"
 SCHEMAS = sorted(p.name for p in SCHEMA_DIR.glob("*.json"))
-assert len(SCHEMAS) == 18, f"expected 18 schemas, found {len(SCHEMAS)}"
+assert len(SCHEMAS) == 19, f"expected 19 schemas, found {len(SCHEMAS)}"
 
 
 @pytest.mark.parametrize("schema_name", SCHEMAS)

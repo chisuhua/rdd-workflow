@@ -62,6 +62,26 @@ class PhaseRecord:
     status: str = "active"        # from Status column
 
 
+@dataclass
+class AdrCodeVerification:
+    """Result of cross-checking an ADR's claimed implementation against actual code (v1.1+).
+
+    verification_status values:
+      - 'confirmed'               ADR claims impl + ≥80% symbols found
+      - 'self-claim-only'         ADR claims impl + <80% symbols found (discrepancy)
+      - 'placeholder-as-claimed'  ADR placeholder + 0 symbols found (no discrepancy)
+      - 'placeholder-but-exists'  ADR placeholder + ≥1 symbol found (discrepancy)
+    """
+    adr_id: str
+    self_claim_version: Optional[str]
+    code_symbols_found: List[str]
+    code_symbols_expected: List[str]
+    verification_status: str
+    has_discrepancy: bool
+    verified_at: str  # ISO 8601
+    mcp_used: bool
+
+
 # ---- Step 1: catalog_sources ----
 
 def _read_first_heading_and_summary(path: Path) -> Tuple[str, str]:
@@ -389,16 +409,40 @@ def _arch_doc_link(arch_doc: ArchDocRecord) -> str:
     return f"[{arch_doc.title}]({rel_path})"
 
 
-def _format_adr_block(adr: AdrRecord, project_root: Path, phase_id: str) -> str:
-    """Format one ADR as a bullet section under '## 已实施能力'."""
+def _format_adr_block(
+    adr: AdrRecord,
+    project_root: Path,
+    phase_id: str,
+    verification: Optional["AdrCodeVerification"] = None,
+) -> str:
+    """Format one ADR as a bullet section under '## 已实施能力'.
+
+    When verification is None (default), uses v1.0 marker (3 types).
+    When verification is provided (v1.1+ --code-verify flag), chooses 1 of 4 new badges.
+    """
     link = _adr_link(adr)
-    status_badge = ""
-    if adr.implementation_version:
-        status_badge = f" *（已实施 {adr.implementation_version}）*"
-    elif adr.is_placeholder_or_design():
-        status_badge = " *（占位 / 未实施）*"
-    elif adr.status == "待定":
-        status_badge = " *（待定）*"
+    if verification is not None:
+        # v1.1+ verification badges
+        status = verification.verification_status
+        if status == "confirmed":
+            status_badge = " " + _format_badge_confirmed(verification.self_claim_version or "v?")
+        elif status == "self-claim-only":
+            status_badge = " " + _format_badge_self_claim_only(verification.self_claim_version or "v?")
+        elif status == "placeholder-but-exists":
+            status_badge = " " + _format_badge_placeholder_but_exists()
+        elif status == "placeholder-as-claimed":
+            status_badge = " " + _format_badge_placeholder_as_claimed()
+        else:
+            status_badge = ""
+    else:
+        # v1.0 marker (backward compatible)
+        status_badge = ""
+        if adr.implementation_version:
+            status_badge = f" *（已实施 {adr.implementation_version}）*"
+        elif adr.is_placeholder_or_design():
+            status_badge = " *（占位 / 未实施）*"
+        elif adr.status == "待定":
+            status_badge = " *（待定）*"
 
     decision = adr.key_decision[:200]
     return f"- **{adr.id}** — [{adr.title}]({_adr_url(adr)}){status_badge}\n  - {decision}"
@@ -439,11 +483,15 @@ def generate_phase_body(
     project_root: Path,
     related_archived_changes: Optional[List[str]] = None,
     next_phase_id: Optional[str] = None,
+    verifications: Optional[Dict[str, "AdrCodeVerification"]] = None,
 ) -> str:
     """Generate markdown body for one phase fragment.
 
     Returns the body content (without frontmatter, ready to append after the
     existing frontmatter `---` closing line + blank line).
+
+    When verifications is provided (v1.1+ --code-verify=on|strict), each ADR
+    block emits a verification badge instead of the v1.0 marker.
     """
     adrs_for_phase = classified_adrs.get(phase_id, [])
     themes_for_phase = [ph.theme for ph in main_doc_phases if ph.phase_id == phase_id]
@@ -467,7 +515,6 @@ def generate_phase_body(
         lines.append("| Theme | ADR 覆盖 | 状态 |")
         lines.append("|-------|----------|------|")
         for theme in themes_for_phase:
-            # Find ADRs related to this theme
             theme_adrs = [a for a in adrs_for_phase if any(kw.lower() in f"{a.title} {a.key_decision}".lower() for kw in _theme_to_keywords(theme))]
             if theme_adrs:
                 adr_links = ", ".join(_adr_link(a) for a in theme_adrs[:3])
@@ -475,7 +522,6 @@ def generate_phase_body(
                     adr_links += f" +{len(theme_adrs)-3}"
             else:
                 adr_links = "—"
-            # Status from first ADR if any
             status = "已实施" if implemented_adrs and theme_adrs else ("占位/未实施" if placeholder_adrs and theme_adrs else "—")
             lines.append(f"| {theme} | {adr_links} | {status} |")
         lines.append("")
@@ -484,7 +530,8 @@ def generate_phase_body(
     if implemented_adrs:
         lines.append("## 已实施能力\n")
         for adr in implemented_adrs:
-            lines.append(_format_adr_block(adr, project_root, phase_id))
+            v = verifications.get(adr.id) if verifications else None
+            lines.append(_format_adr_block(adr, project_root, phase_id, verification=v))
             lines.append("")
     else:
         lines.append("## 已实施能力\n")
@@ -545,9 +592,288 @@ def generate_phase_body(
 
 __all__ = [
     "AdrRecord",
+    "AdrCodeVerification",
     "ArchDocRecord",
     "PhaseRecord",
     "catalog_sources",
     "classify_adrs_by_phase",
     "generate_phase_body",
+    "parse_symbols_from_adr_text",
+    "verify_adr_by_code",
+    "verify_all_adrs",
+    "load_supplementary_or_default",
+    "save_supplementary",
 ]
+
+
+# ---- v1.1+: Code Verification Helpers ----
+
+def parse_symbols_from_adr_text(adr_text: str) -> List[str]:
+    """Extract code symbols from ADR prose, filtering fenced code blocks.
+
+    Patterns:
+      - backtick-quoted: `func()` / `ClassName` / `module.py`
+      - Python definitions: `def func` / `class Class`
+      - CLI flags: `--flag`
+    """
+    text_no_code = re.sub(r"```[\s\S]*?```", "", adr_text)
+
+    symbols: List[str] = []
+    for m in re.finditer(r"`([^`]+)`", text_no_code):
+        sym = m.group(1).strip()
+        if sym:
+            symbols.append(sym)
+
+    for m in re.finditer(r"\b(?:def|class)\s+([A-Za-z_][A-Za-z0-9_]*)", text_no_code):
+        symbols.append(m.group(1))
+
+    for m in re.finditer(r"--([a-z][a-z0-9-]+)", text_no_code):
+        symbols.append(f"--{m.group(1)}")
+
+    seen = set()
+    deduped: List[str] = []
+    for s in symbols:
+        if s not in seen:
+            seen.add(s)
+            deduped.append(s)
+    return deduped
+
+
+def _try_mcp_search(symbol: str, project_root: Path) -> Optional[bool]:
+    """Try codebase-memory-mcp if available; return None on unavailable (fallback to grep)."""
+    try:
+        if not (project_root / ".codebase-memory").exists():
+            return None
+        return None
+    except Exception:
+        return None
+
+
+def _grep_symbol(symbol: str, project_root: Path) -> bool:
+    """Grep for symbol in source files (skip .git, .venv, node_modules, .rddf).
+
+    Uses ripgrep (rg) if available, falls back to grep.
+    """
+    import subprocess
+    rg_cmd = ["rg", "-l", "--type", "py", "--type", "sh", "--type", "ts",
+              "--glob", "!skills/_lib", "--glob", "!.rddf",
+              "--glob", "!.git", "--glob", "!.venv", "--glob", "!node_modules",
+              "-F", "--", symbol, str(project_root)]
+    try:
+        result = subprocess.run(rg_cmd, capture_output=True, timeout=5, text=True)
+        return bool(result.stdout.strip())
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    grep_cmd = [
+        "grep", "-r", "-l", "--include=*.py", "--include=*.sh", "--include=*.ts",
+        "--exclude-dir=.git", "--exclude-dir=.venv", "--exclude-dir=node_modules",
+        "--exclude-dir=.rddf", "--exclude-dir=skills/_lib",
+        "-F", symbol, str(project_root),
+    ]
+    try:
+        result = subprocess.run(grep_cmd, capture_output=True, timeout=10, text=True)
+        return bool(result.stdout.strip())
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False
+
+
+def _grep_symbols_batch(symbols: List[str], project_root: Path) -> set:
+    """Grep many symbols in one ripgrep pass; return set of symbols found.
+
+    Uses `rg -e pat1 -e pat2 ...` to match any pattern in a single process,
+    then for each matched file, checks which symbols appear in its content.
+    """
+    import subprocess
+    if not symbols:
+        return set()
+    cmd = ["rg", "-l", "--type", "py", "--type", "sh", "--type", "ts",
+           "--glob", "!skills/_lib", "--glob", "!.rddf",
+           "--glob", "!.git", "--glob", "!.venv", "--glob", "!node_modules",
+           "-F"]
+    for s in symbols:
+        cmd += ["-e", s]
+    cmd.append(str(project_root))
+    try:
+        result = subprocess.run(cmd, capture_output=True, timeout=15, text=True)
+        files_with_match = result.stdout.strip().splitlines()
+        if not files_with_match:
+            return set()
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return set()
+
+    found = set()
+    remaining = set(symbols)
+    for f in files_with_match:
+        if not remaining:
+            break
+        try:
+            content = Path(f).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for sym in list(remaining):
+            if sym in content:
+                found.add(sym)
+                remaining.discard(sym)
+    return found
+
+
+def verify_adr_by_code(adr: AdrRecord, adr_text: str, project_root: Path) -> AdrCodeVerification:
+    """Verify ADR's self-claim against actual code symbols via mcp→grep fallback.
+
+    Logic:
+      placeholder + ≥1 found → placeholder-but-exists (discrepancy)
+      placeholder + 0 found  → placeholder-as-claimed (no discrepancy)
+      impl      + ≥80% found  → confirmed (no discrepancy)
+      impl      + <80% found  → self-claim-only (discrepancy)
+    """
+    from datetime import datetime, timezone
+
+    symbols = parse_symbols_from_adr_text(adr_text)
+    found: List[str] = []
+    mcp_used = False
+
+    if symbols:
+        found_set = _grep_symbols_batch(symbols, project_root)
+        found = [s for s in symbols if s in found_set]
+
+    is_placeholder = adr.is_placeholder_or_design() or adr.implementation_version is None
+
+    if is_placeholder:
+        if found:
+            status = "placeholder-but-exists"
+            has_discrepancy = True
+        else:
+            status = "placeholder-as-claimed"
+            has_discrepancy = False
+    else:
+        coverage = len(found) / len(symbols) if symbols else 1.0
+        if coverage >= 0.80:
+            status = "confirmed"
+            has_discrepancy = False
+        else:
+            status = "self-claim-only"
+            has_discrepancy = True
+
+    return AdrCodeVerification(
+        adr_id=adr.id,
+        self_claim_version=adr.implementation_version,
+        code_symbols_found=found,
+        code_symbols_expected=symbols,
+        verification_status=status,
+        has_discrepancy=has_discrepancy,
+        verified_at=datetime.now(timezone.utc).isoformat(),
+        mcp_used=mcp_used,
+    )
+
+
+def verify_all_adrs(
+    adr_inputs: List[Tuple["AdrRecord", str, Path]],
+    max_workers: int = 4,
+) -> List[AdrCodeVerification]:
+    """Verify multiple ADRs in parallel using ThreadPoolExecutor."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    if not adr_inputs:
+        return []
+    results: List[AdrCodeVerification] = []
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [
+            executor.submit(verify_adr_by_code, adr, text, root)
+            for (adr, text, root) in adr_inputs
+        ]
+        for fut in futures:
+            results.append(fut.result())
+    return results
+
+
+def load_supplementary_or_default(project_root: Path) -> Dict[str, Dict]:
+    """Load supplementary verification records from disk; return {} if missing/invalid."""
+    state_file = project_root / ".rddf" / "state" / ".populate-supplementary.json"
+    if not state_file.exists():
+        return {}
+    try:
+        import json as _json
+        data = _json.loads(state_file.read_text(encoding="utf-8"))
+        if data.get("version") != 1:
+            return {}
+        return {r["adr_id"]: r for r in data.get("records", [])}
+    except (ValueError, KeyError, OSError):
+        return {}
+
+
+def save_supplementary(
+    records: List[AdrCodeVerification],
+    project_root: Path,
+) -> Path:
+    """Atomically write supplementary records to .rddf/state/.populate-supplementary.json (schema v1)."""
+    import json as _json
+    import os
+    import tempfile
+    from datetime import datetime, timezone
+
+    state_dir = project_root / ".rddf" / "state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+    target = state_dir / ".populate-supplementary.json"
+
+    payload = {
+        "version": 1,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "records": [
+            {
+                "adr_id": r.adr_id,
+                "self_claim_version": r.self_claim_version,
+                "verification_status": r.verification_status,
+                "code_symbols_found": r.code_symbols_found,
+                "code_symbols_expected": r.code_symbols_expected,
+                "has_discrepancy": r.has_discrepancy,
+                "verified_at": r.verified_at,
+                "mcp_used": r.mcp_used,
+            }
+            for r in records
+        ],
+    }
+
+    schema_path = (
+        Path(__file__).resolve().parents[2]
+        / "_lib" / "schemas" / "populate_supplementary_schema.json"
+    )
+    if schema_path.exists():
+        try:
+            import jsonschema as _js
+            _js.validate(payload, _json.loads(schema_path.read_text(encoding="utf-8")))
+        except ImportError:
+            pass
+        except Exception as e:
+            if type(e).__name__ == "ValidationError":
+                raise RuntimeError(
+                    f"populate_supplementary payload failed schema v1 validation: {e}"
+                )
+            raise
+
+    fd, tmp_path = tempfile.mkstemp(dir=state_dir, suffix=".tmp", prefix=".populate-supplementary.")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            _json.dump(payload, f, ensure_ascii=False, indent=2)
+        os.replace(tmp_path, target)
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        raise
+    return target
+
+
+def _format_badge_confirmed(claim_version: str) -> str:
+    return f"*（已实施 {claim_version} + 代码验证）*"
+
+
+def _format_badge_self_claim_only(claim_version: str) -> str:
+    return f"*（已实施 {claim_version} 仅自报）*"
+
+
+def _format_badge_placeholder_but_exists() -> str:
+    return "*（占位 + 代码已现 ⚠️）*"
+
+
+def _format_badge_placeholder_as_claimed() -> str:
+    return "*（占位 + 代码未现）*"

@@ -159,34 +159,79 @@ populate_main() {
             --dry-run) DRY_RUN="true"; shift ;;
             --no-backup) NO_BACKUP="true"; shift ;;
             --yes) SKIP_PROMPT="true"; shift ;;
+            --code-verify) CODE_VERIFY="$2"; shift 2 ;;
+            --code-verify=*) CODE_VERIFY="${1#--code-verify=}"; shift ;;
+            --no-code-verify) CODE_VERIFY="off"; shift ;;
             --help|-h)
-                echo "Usage: populate.sh [--phase phase-N] [--dry-run] [--no-backup] [--yes]"
+                echo "Usage: populate.sh [--phase phase-N] [--dry-run] [--no-backup] [--yes] [--code-verify=off|on|strict]"
+                echo ""
+                echo "  --code-verify=MODE   Cross-check ADRs against code (off|on|strict). Default: off"
+                echo "    off     No verification (v1.0 behavior)"
+                echo "    on      Verify and write supplementary state; render new badges"
+                echo "    strict  Like 'on' but exit 2 on any discrepancy"
+                echo "  --no-code-verify    Shortcut for --code-verify=off"
                 return 0
                 ;;
             *) echo "Unknown flag: $1" >&2; return 1 ;;
         esac
     done
 
+    CODE_VERIFY="${CODE_VERIFY:-off}"
+
     echo "=== populate-roadmap-from-arch ==="
 
     # Step 0
     preflight "$PROJECT_ROOT" || return 1
 
-    # Step 1+2+3: run Python
+    # Step 1+2+3 (+1.5 if --code-verify): run Python
     echo ""
     echo "▶ Catalog + classify + generate (Step 1-3)..."
 
     local PYTHON_OUT
-    PYTHON_OUT=$(cd "$PROJECT_ROOT" && python3 -c "
-import sys, json
+    PYTHON_OUT=$(cd "$PROJECT_ROOT" && CODE_VERIFY_MODE="$CODE_VERIFY" python3 -c "
+import sys, json, os
 sys.path.insert(0, '.')
 sys.path.insert(0, '$SCRIPT_DIR')
 from pathlib import Path
-from populate_lib import catalog_sources, classify_adrs_by_phase, generate_phase_body
+from populate_lib import (
+    catalog_sources, classify_adrs_by_phase, generate_phase_body,
+    verify_adr_by_code, save_supplementary,
+)
 
 project_root = Path('${PROJECT_ROOT}')
 adrs, arch_docs, main_doc_phases = catalog_sources(project_root)
 classified = classify_adrs_by_phase(adrs, main_doc_phases)
+
+code_verify_mode = os.environ.get('CODE_VERIFY_MODE', 'off')
+verifications = {}
+
+if code_verify_mode in ('on', 'strict'):
+    # Step 1.5: cross-check ADRs against actual code (mcp→grep fallback)
+    inputs = []
+    adr_text_map = {}
+    for adr in adrs:
+        try:
+            adr_text = adr.path.read_text(encoding='utf-8', errors='replace')
+        except OSError:
+            adr_text = ''
+        adr_text_map[adr.id] = adr_text
+        inputs.append((adr, adr_text, project_root))
+
+    from populate_lib import verify_all_adrs
+    results = verify_all_adrs(inputs, max_workers=4)
+    verifications = {r.adr_id: r for r in results}
+
+    if '${DRY_RUN}' != 'true':
+        save_supplementary(results, project_root)
+        print(f'[code-verify] Wrote {len(results)} records (mode={code_verify_mode})', file=sys.stderr)
+
+    if code_verify_mode == 'strict':
+        discrepancies = [r for r in results if r.has_discrepancy]
+        if discrepancies:
+            print(f'[code-verify] {len(discrepancies)} discrepancies found:', file=sys.stderr)
+            for d in discrepancies:
+                print(f'  - {d.adr_id}: {d.verification_status}', file=sys.stderr)
+            sys.exit(2)
 
 # Get related archived changes from openspec/changes/archive/
 archive_dir = project_root / 'openspec/changes/archive'
@@ -201,7 +246,6 @@ phase_bodies = {}
 phases_in_order = [f'phase-{i}' for i in range(1, 5)]
 for idx, phase_id in enumerate(phases_in_order):
     next_phase_id = phases_in_order[idx + 1] if idx + 1 < len(phases_in_order) else None
-    # Find archived changes mentioning this phase
     phase_changes = [c for c in related_archived if phase_id in c.lower() or any(kw in c.lower() for kw in ['session', 'design', 'plan', 'hub', 'roadmap'])]
     body = generate_phase_body(
         phase_id=phase_id,
@@ -211,12 +255,21 @@ for idx, phase_id in enumerate(phases_in_order):
         project_root=project_root,
         related_archived_changes=phase_changes[:5],
         next_phase_id=next_phase_id,
+        verifications=verifications if verifications else None,
     )
     phase_bodies[phase_id] = body
 
-# Print as JSON for shell to consume
 print(json.dumps(phase_bodies, ensure_ascii=False))
-" 2>&1) || { echo "❌ Python 步骤失败" >&2; echo "$PYTHON_OUT" >&2; return 1; }
+" 2>&1) || {
+        rc=$?
+        if [ $rc -eq 2 ]; then
+            echo "❌ --code-verify=strict 发现 discrepancy,exit 2" >&2
+            return 2
+        fi
+        echo "❌ Python 步骤失败" >&2
+        echo "$PYTHON_OUT" >&2
+        return 1
+    }
 
     # Step 4: backup
     local BACKUP_DIR=""

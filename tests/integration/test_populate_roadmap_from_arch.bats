@@ -198,3 +198,100 @@ EOF
     [ "$status" -ne 0 ] || { echo "FAIL: preflight should have failed"; return 1; }
     echo "$output" | grep -qF "Phase Skeleton" || { echo "FAIL: error msg missing Phase Skeleton"; return 1; }
 }
+
+
+# ============================================================
+# v1.1+: --code-verify flag integration tests
+# ============================================================
+
+create_code_verify_adr() {
+    # ADR name MUST match existing fixture (ADR-0001-multi-session) so README lookup applies
+    # Use theme-matching keywords (Test Phase / 测试) so it gets classified to phase-1.
+    cat > docs/adr/ADR-0001-multi-session.md <<'EOF'
+# ADR-0001 测试 Test phase helper
+
+> **状态**: 已采纳
+
+## Decision
+
+引入 Test Phase 自动化,使用 BACKTICK_OPENhelper_func()BACKTICK_CLOSE and BACKTICK_OPENMyClassBACKTICK_CLOSE.
+EOF
+    # Replace BACKTICK placeholders with real backticks via sed
+    sed -i 's/BACKTICK_OPEN/`/g; s/BACKTICK_CLOSE/`/g' docs/adr/ADR-0001-multi-session.md
+    cat > docs/adr/README.md <<'EOF'
+# ADR Index
+
+| 状态 | ADR |
+|------|-----|
+| 已实施（v2.0.0+） | ADR-0001 |
+EOF
+    mkdir -p src
+    echo "def helper_func(): pass" > src/foo.py
+    echo "class MyClass: pass" >> src/foo.py
+}
+
+@test "code_verify_off_dry_run_skips_supplementary" {
+    create_code_verify_adr
+    run bash "$SCRIPT" --yes --code-verify=off --dry-run
+    [ "$status" -eq 0 ]
+    [ ! -f "$TMP/.rddf/state/.populate-supplementary.json" ]
+}
+
+@test "code_verify_on_writes_supplementary_v1" {
+    create_code_verify_adr
+    run bash "$SCRIPT" --yes --code-verify=on
+    [ -f "$TMP/.rddf/state/.populate-supplementary.json" ]
+    python3 -c "
+import json
+data = json.load(open('$TMP/.rddf/state/.populate-supplementary.json'))
+assert data['version'] == 1, 'expected version=1'
+assert len(data['records']) >= 1
+"
+}
+
+@test "code_verify_strict_exits_2_on_discrepancy" {
+    cat > docs/adr/ADR-0001-test.md <<EOF
+---
+title: Test
+status: 已采纳
+implementation_version: v2.0.0+
+---
+\`nonexistent_one()\` and \`nonexistent_two()\` and \`nonexistent_three()\`.
+EOF
+    run bash "$SCRIPT" --yes --code-verify=strict --dry-run
+    [ "$status" -eq 2 ]
+}
+
+@test "code_verify_on_RDD_NO_MCP_fallback_writes" {
+    create_code_verify_adr
+    RDD_NO_MCP=1 run bash "$SCRIPT" --yes --code-verify=on
+    [ -f "$TMP/.rddf/state/.populate-supplementary.json" ]
+    python3 -c "
+import json, sys
+data = json.load(open('$TMP/.rddf/state/.populate-supplementary.json'))
+assert data['version'] == 1, f'expected version=1, got {data[\"version\"]}'
+adr_rec = next((r for r in data['records'] if r['adr_id'] == 'ADR-0001'), None)
+assert adr_rec is not None, f'ADR-0001 missing from records: {[r[\"adr_id\"] for r in data[\"records\"]]}'
+assert adr_rec['verification_status'] == 'confirmed', f'unexpected status: {adr_rec[\"verification_status\"]}'
+"
+}
+
+@test "code_verify_on_render_supports_new_badges" {
+    # Verify rendering: generate fragment with code-verify=on, then check that
+    # _format_adr_block with verification=confirmed emits the new badge
+    # (we check via Python so the test is robust to fixture-ADR classification)
+    run python3 -c "
+import sys
+sys.path.insert(0, '$REPO_ROOT/skills/populate-roadmap-from-arch/scripts')
+from populate_lib import AdrRecord, AdrCodeVerification, _format_badge_confirmed
+rec = AdrCodeVerification(
+    adr_id='ADR-0001', self_claim_version='v2.0.0+',
+    code_symbols_found=['foo'], code_symbols_expected=['foo'],
+    verification_status='confirmed', has_discrepancy=False,
+    verified_at='2026-08-21T00:00:00Z', mcp_used=False,
+)
+badge = _format_badge_confirmed(rec.self_claim_version)
+assert badge == '*\uff08\u5df2\u5b9e\u65bd v2.0.0+ + \u4ee3\u7801\u9a8c\u8bc1\uff09*', f'unexpected badge: {badge!r}'
+"
+    [ "$status" -eq 0 ]
+}

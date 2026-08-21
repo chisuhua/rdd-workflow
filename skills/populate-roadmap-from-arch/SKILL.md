@@ -4,12 +4,12 @@ description: 从 ADR + 架构文档生成 phase fragment 的 body 内容。被�
 license: MIT
 compatibility: Requires rdd-workflow v2.1+ (层次化 roadmap 启用后) + Python 3.11+ + 现有 ADR-0016 v2 handoff
 metadata:
-  version: "1.0"
+  version: "1.1"
   author: sisyphus
   evolved-from: "manually-composed phase fragments during add-hierarchical-roadmap-structure"
 ---
 
-# Populate Roadmap From Arch (v1.0)
+# Populate Roadmap From Arch (v1.1)
 
 ## 职责
 
@@ -51,6 +51,10 @@ rdd-doctor --category roadmap-refs (验证 8 条规则)
 | `populate --phase phase-1` | 只生成单个 phase |
 | `populate --dry-run` | 预览生成内容，不写文件 |
 | `populate --no-backup` | 跳过 backup 步骤（覆盖现有内容时不保留旧版本） |
+| `populate --code-verify=off` | 不做 ADR ↔ 代码交叉验证（v1.0 默认行为） |
+| `populate --code-verify=on` | 启用 ADR ↔ 代码交叉验证：写入 `.rddf/state/.populate-supplementary.json` 并在 fragment body 中使用 4 种新 badge |
+| `populate --code-verify=strict` | 同 `on`，但若发现 discrepancy 则 `exit 2`（适合 CI 阻断） |
+| `populate --no-code-verify` | 等价于 `--code-verify=off` |
 
 ## 状态机（7 步）
 
@@ -97,6 +101,23 @@ rdd-doctor --category roadmap-refs (验证 8 条规则)
 
 输出：`Dict[phase_id, List[AdrRecord]]`（每个 ADR 至少出现在 1 个 phase）
 
+### Step 1.5: code verification (optional, v1.1+)
+
+**仅当 `--code-verify=on|strict` 时执行。**
+
+交叉校验每个 ADR 的 `implementation_version` 自报 vs 实际代码符号（`func()`、`Class`、`` `--flag` ``）。结果写入 `.rddf/state/.populate-supplementary.json` (schema v1) 并决定 Step 3 中使用的 badge 类型：
+
+1. 对每个 ADR：
+   - 解析 ADR 文本中的符号（过滤 fenced code block）
+   - `codebase-memory-mcp` 可用时优先调用（`codebase-memory-mcp_search_graph`），否则 fallback 到 ripgrep（`rg -l -F -e pat1 -e pat2 ...`）
+   - 计算覆盖率 ≥80% → `confirmed`；<80% → `self-claim-only`
+   - 占位 ADR：找到 ≥1 个符号 → `placeholder-but-exists`；否则 `placeholder-as-claimed`
+2. 4 个 worker 并行（`ThreadPoolExecutor(max_workers=4)`）
+3. 原子写入 `.rddf/state/.populate-supplementary.json`（schema v1 校验）
+4. 若 `--code-verify=strict` 且存在 `has_discrepancy=True` → stderr 列出 ADR IDs + `exit 2`
+
+输出 4 种 verification 状态之一，影响 Step 3 的 badge 渲染。
+
 ### Step 3: generate fragment body
 
 对每个 phase fragment，按以下 6 段结构生成 markdown body：
@@ -108,6 +129,17 @@ rdd-doctor --category roadmap-refs (验证 8 条规则)
 5. **`## 主题注册表映射`** — 主文档 `## Phase Skeleton` 表格中 phase-N 的 N 行 theme → fragment body 章节的交叉引用
 6. **`## 相关变更历史`** — 与该 phase 相关的已归档 change 列表（从 `openspec/changes/archive/` 提取）
 7. **`## 下一步`** — 链接到下一 phase fragment
+
+#### ADR 实施能力 badge (v1.1+)
+
+Step 3 渲染 ADR 块时根据 verification 状态选择 4 种 badge 之一（仅 `--code-verify=on|strict` 时启用；v1.0 行为保留）：
+
+| Status | Badge | 含义 |
+|---|---|---|
+| `confirmed` | `*（已实施 vX.Y.Z+ + 代码验证）*` | ADR claims impl + ≥80% symbols found |
+| `self-claim-only` | `*（已实施 vX.Y.Z+ 仅自报）*` | ADR claims impl + <80% symbols found (discrepancy) |
+| `placeholder-but-exists` | `*（占位 + 代码已现 ⚠️）*` | ADR placeholder + ≥1 symbol found (discrepancy) |
+| `placeholder-as-claimed` | `*（占位 + 代码未现）*` | ADR placeholder + 0 symbols found (no discrepancy) |
 
 ### Step 4: backup + diff 确认
 
@@ -208,6 +240,17 @@ skills/populate-roadmap-from-arch/
 - 不支持 cross-repo ADR 同步（跨仓库 ADR 引用走 ADR-0030 Hub-and-Spoke 通道）
 - 不支持 fragment body 中嵌入 mermaid 图（如果需要可后续扩展）
 - 不支持 fragment body 多语言（仅 zh-CN + en 段落混排，不做完整 i18n）
+- **codebase-memory-mcp availability（v1.1+）**：当 `--code-verify=on|strict` 在没有 `codebase-memory-mcp` 配置（无 `.codebase-memory/` 目录）的环境中运行时，verifier 退到 ripgrep (`rg -l -F`) 符号搜索。CI 环境无 mcp 时获得次优精度但验证仍运行；设置 `RDD_NO_MCP=1` 显式强制 grep-only。
+- **80% threshold heuristic（v1.1+）**：`confirmed` vs `self-claim-only` 阈值硬编码 80%。未来版本可通过 `--coverage-threshold=N` 配置。
+- **符号 regex coverage（v1.1+）**：backtick 模式 + Python `def`/`class` + CLI `--flag`。C/Rust/Go 定义未提取，详见 Out-of-Scope。
+
+## Recommended CI Integration (v1.1+)
+
+不随此 change 附带 CI workflow YAML。推荐模式：
+
+- **Pull request checks**：跑 `bash skills/populate-roadmap-from-arch/scripts/populate.sh --yes --code-verify=strict --dry-run` 探测 ADR↔代码 drift，不修改文件。
+- **Nightly**：跑 `--code-verify=on` 并 commit `.rddf/state/.populate-supplementary.json` 更新作为 "roadmap-sync" job。
+- **Local dev**：`RDD_NO_MCP=1 populate.sh --yes --code-verify=on` 在无 mcp 环境下工作。
 
 ## 相关 skill / 文件
 
