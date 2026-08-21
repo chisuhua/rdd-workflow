@@ -507,6 +507,26 @@ def collect(project_root: str) -> DashboardData:
             f"but iteration.json has no entry for it"
         )
 
+    # 3. proposal-approved.md "approved" section has matching archive/<date>-name/
+    # but the entry was not moved to "implemented" section. This drift was
+    # historically caused by sweep_implemented_proposals not being wired into
+    # the archive flow (fix-proposal-approved-sync, P0 2026-08-21).
+    archive_dirs = []
+    archive_dir = os.path.join(project_root, "openspec/changes/archive")
+    if os.path.isdir(archive_dir):
+        for entry in os.listdir(archive_dir):
+            m = re.match(r"\d{4}-\d{2}-\d{2}-(.+)", entry)
+            if m:
+                archive_dirs.append(m.group(1))
+    archive_names = set(archive_dirs)
+    for row in data.approved_proposals:
+        if row.section == "approved" and row.name in archive_names:
+            data.divergence_warnings.append(
+                f"proposal-approved.md lists '{row.name}' as approved "
+                f"but openspec/changes/archive/ shows it archived "
+                f"(re-run sweep_implemented_proposals to fix)"
+            )
+
     return data
 
 
