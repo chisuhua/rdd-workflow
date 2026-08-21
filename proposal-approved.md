@@ -85,7 +85,6 @@
 
 
 
-| [extend-populate-roadmap-with-code-verification](.rddf/improvements/extend-populate-roadmap-with-code-verification.md) | P1 | 2026-08-21 | guide-arch |
 
 | [move-populate-roadmap-into-guide-arch](.rddf/improvements/move-populate-roadmap-into-guide-arch.md) | P2 | 2026-08-21 | guide-arch |
 
@@ -94,6 +93,7 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [extend-populate-roadmap-with-code-verification](.rddf/improvements/extend-populate-roadmap-with-code-verification.md) | P1 | 2026-08-21 |
 | [add-auto-rfc-from-approve](.rddf/improvements/add-auto-rfc-from-approve.md) | P0 | 2026-08-19 |
 | [add-rfc-interview-flow](.rddf/improvements/add-rfc-interview-flow.md) | P0 | 2026-08-19 |
 | [add-rfc-draft-template](.rddf/improvements/add-rfc-draft-template.md) | P0 | 2026-08-19 |
