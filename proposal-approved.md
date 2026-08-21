@@ -86,15 +86,15 @@
 
 
 
-| [move-populate-roadmap-into-guide-arch](.rddf/improvements/move-populate-roadmap-into-guide-arch.md) | P2 | 2026-08-21 | guide-arch |
 
-| [fix-discover-ship-changes-needs-planning-fallback](.rddf/improvements/fix-discover-ship-changes-needs-planning-fallback.md) | P1 | 2026-08-21 | guide-arch |
 
 ## 已实施
 | [add-cli-coverage-rdd-doctor-roadmap-rdd-hub](.rddf/improvements/add-cli-coverage-rdd-doctor-roadmap-rdd-hub.md) | P1 | 2026-08-20 |
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-discover-ship-changes-needs-planning-fallback](.rddf/improvements/fix-discover-ship-changes-needs-planning-fallback.md) | P1 | 2026-08-21 |
+| [move-populate-roadmap-into-guide-arch](.rddf/improvements/move-populate-roadmap-into-guide-arch.md) | P2 | 2026-08-21 |
 | [extend-populate-roadmap-with-code-verification](.rddf/improvements/extend-populate-roadmap-with-code-verification.md) | P1 | 2026-08-21 |
 | [add-auto-rfc-from-approve](.rddf/improvements/add-auto-rfc-from-approve.md) | P0 | 2026-08-19 |
 | [add-rfc-interview-flow](.rddf/improvements/add-rfc-interview-flow.md) | P0 | 2026-08-19 |

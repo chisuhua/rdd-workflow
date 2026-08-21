@@ -925,3 +925,133 @@ class TestCollectCurrentSession:
         by_id = {s.session_id: s for s in data.sessions}
         assert by_id["s2"].is_current is True
         assert by_id["s1"].is_current is False
+
+
+# ---------------------------------------------------------------------------
+# Content: divergence warnings — proposal-approved.md vs archive/ consistency
+# ---------------------------------------------------------------------------
+
+
+class TestProposalApprovedArchiveDivergence:
+    """Regression coverage for fix-proposal-approved-sync (P1, 2026-08-21):
+
+    When a proposal is in `proposal-approved.md` "## 已批准提案" section but
+    a matching `openspec/changes/archive/<date>-<name>/` directory exists,
+    the dashboard MUST emit a divergence warning so the user notices the
+    drift before the dashboard '7b. Approved proposals' count lies.
+    """
+
+    def _seed_collect_env(self, monkeypatch, tmp_path, *, proposal_md_text, archive_dirs):
+        """Provision a minimal collect() environment with custom proposal-approved.md
+        and openspec/changes/archive/ contents."""
+        # Approved file
+        (tmp_path / "proposal-approved.md").write_text(proposal_md_text, encoding="utf-8")
+        # Archive dirs
+        archive_root = tmp_path / "openspec" / "changes" / "archive"
+        for d in archive_dirs:
+            (archive_root / d).mkdir(parents=True)
+        # Other state files collect() touches
+        (tmp_path / ".rddf").mkdir(exist_ok=True)
+
+        # Monkeypatch read_iteration / read_arch_handoff / read_plan_handoff /
+        # read_sessions / read_roadmap_state / read_improvement_entries /
+        # list_worktrees to return empty defaults so we don't touch the real repo.
+        from skills._lib import state_reader
+
+        monkeypatch.setattr(state_reader, "read_arch_handoff", lambda *_a, **_k: {})
+        monkeypatch.setattr(state_reader, "read_plan_handoff", lambda *_a, **_k: {})
+        monkeypatch.setattr(state_reader, "read_iteration", lambda *_a, **_k: {})
+        monkeypatch.setattr(state_reader, "read_sessions", lambda *_a, **_k: [])
+        monkeypatch.setattr(state_reader, "read_roadmap_state", lambda *_a, **_k: {})
+        monkeypatch.setattr(state_reader, "read_improvement_entries", lambda *_a, **_k: [])
+        monkeypatch.setattr(state_reader, "list_worktrees", lambda *_a, **_k: [])
+        monkeypatch.setattr(state_reader, "list_change_dirs", lambda *_a, **_k: [])
+
+    def _mk_approved_md(self, name, priority="P1", date="2026-08-21"):
+        return (
+            "## 已批准提案\n\n"
+            f"| [{name}](.rddf/improvements/{name}.md) | {priority} | {date} | guide-arch |\n\n"
+            "## 已实施\n\n"
+            "| 提案 | 优先级 | 完成时间 | 状态 |\n"
+            "|------|--------|----------|------|\n"
+        )
+
+    def test_warning_emitted_when_approved_entry_has_matching_archive_dir(
+        self, monkeypatch, tmp_path
+    ):
+        """Approved entry in '## 已批准提案' + archive/<date>-<name>/ present = warn."""
+        self._seed_collect_env(
+            monkeypatch,
+            tmp_path,
+            proposal_md_text=self._mk_approved_md("fix-drift-1"),
+            archive_dirs=["2026-08-21-fix-drift-1"],
+        )
+        data = collect(str(tmp_path))
+        warnings = data.divergence_warnings
+        assert any(
+            "fix-drift-1" in w and "proposal-approved.md" in w
+            for w in warnings
+        ), f"missing divergence warning for fix-drift-1, got: {warnings}"
+
+    def test_no_warning_when_approved_entry_has_no_archive_dir(
+        self, monkeypatch, tmp_path
+    ):
+        """Approved entry with NO matching archive dir = no warning."""
+        self._seed_collect_env(
+            monkeypatch,
+            tmp_path,
+            proposal_md_text=self._mk_approved_md("fix-still-pending"),
+            archive_dirs=[],
+        )
+        data = collect(str(tmp_path))
+        warnings = [w for w in data.divergence_warnings if "fix-still-pending" in w]
+        assert warnings == [], f"unexpected warning for unsynced proposal: {warnings}"
+
+    def test_no_warning_when_proposal_already_in_implemented_section(
+        self, monkeypatch, tmp_path
+    ):
+        """Proposal in '## 已实施' section + matching archive dir = no warning."""
+        md = (
+            "## 已批准提案\n\n"
+            "| 提案 | 优先级 | 批准时间 | 批准者 |\n"
+            "|------|--------|----------|--------|\n\n"
+            "## 已实施\n\n"
+            "| 提案 | 优先级 | 完成时间 | 状态 |\n"
+            "|------|--------|----------|------|\n"
+            "| [fix-already-synced](.rddf/improvements/fix-already-synced.md) | P1 | 2026-08-21 |\n"
+        )
+        self._seed_collect_env(
+            monkeypatch,
+            tmp_path,
+            proposal_md_text=md,
+            archive_dirs=["2026-08-21-fix-already-synced"],
+        )
+        data = collect(str(tmp_path))
+        warnings = [
+            w for w in data.divergence_warnings if "fix-already-synced" in w
+        ]
+        assert warnings == [], f"unexpected warning for already-synced proposal: {warnings}"
+
+    def test_warning_lists_all_drifted_proposals(self, monkeypatch, tmp_path):
+        """Multiple drifted proposals = multiple warnings."""
+        md = (
+            "## 已批准提案\n\n"
+            "| [fix-drift-a](.rddf/improvements/fix-drift-a.md) | P1 | 2026-08-21 | guide-arch |\n"
+            "| [fix-drift-b](.rddf/improvements/fix-drift-b.md) | P2 | 2026-08-21 | guide-arch |\n\n"
+            "## 已实施\n\n"
+            "| 提案 | 优先级 | 完成时间 | 状态 |\n"
+            "|------|--------|----------|------|\n"
+        )
+        self._seed_collect_env(
+            monkeypatch,
+            tmp_path,
+            proposal_md_text=md,
+            archive_dirs=[
+                "2026-08-21-fix-drift-a",
+                "2026-08-21-fix-drift-b",
+            ],
+        )
+        data = collect(str(tmp_path))
+        names_warned = {w for w in data.divergence_warnings if "proposal-approved.md" in w}
+        assert any("fix-drift-a" in w for w in names_warned)
+        assert any("fix-drift-b" in w for w in names_warned)
