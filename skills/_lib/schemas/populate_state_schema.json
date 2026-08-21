@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {
+    "const": "v1",
+    "description": "Schema metadata version per ADR-0016. Project invariant: all rdd-workflow schemas keep version.const='v1' (schema system version, NOT contract version). Contract version lives in properties.version.const and is 2 for populate-state v2."
+  },
+  "$id": "https://rdd-workflow.local/schemas/populate_state_schema.json",
+  "title": "Populate State (move-populate-roadmap-into-guide-arch, contract v2)",
+  "description": "Schema for .rddf/state/.populate-state.json — incremental populate-roadmap state. Tracks ADR file hashes, a symbol->ADR reverse index, and per-phase fragment generation timestamps so populate-roadmap-from-arch can decide between full regeneration and incremental updates. v2 payloads with properties.version=1 are rejected (fail-loud) so v1.1 users get a clear error.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "generated_at",
+    "codebase_commit",
+    "adrs",
+    "reverse_index",
+    "phases"
+  ],
+  "properties": {
+    "version": {
+      "const": 2,
+      "description": "Contract version. Exactly 2 — v1 state files (from v1.1 populate-roadmap) are rejected with a clear error."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when this state file was last written."
+    },
+    "codebase_commit": {
+      "type": "string",
+      "minLength": 7,
+      "description": "Git commit SHA (short or full) of the codebase at generation time."
+    },
+    "codegraph_fingerprint": {
+      "type": ["string", "null"],
+      "description": "Optional fingerprint of the codegraph index used for the reverse index. Null when codegraph was unavailable."
+    },
+    "adrs": {
+      "type": "object",
+      "description": "Map of ADR id -> ADR metadata snapshot used for change detection.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "file_path",
+          "file_hash",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "Path to the ADR file relative to project root."
+          },
+          "file_hash": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "SHA-256 hex digest (64 lowercase hex chars) of the ADR file content."
+          },
+          "title": {
+            "type": "string",
+            "description": "ADR title (first heading)."
+          },
+          "status": {
+            "type": "string",
+            "description": "ADR lifecycle status (e.g. '已采纳', '已弃用')."
+          },
+          "phase": {
+            "type": ["string", "null"],
+            "description": "Roadmap phase this ADR belongs to, if known."
+          },
+          "category": {
+            "type": ["string", "null"],
+            "description": "Roadmap category within the phase, if known."
+          }
+        }
+      }
+    },
+    "reverse_index": {
+      "type": "object",
+      "description": "symbol -> [adr_id, ...] mapping (populated by adr scan / codegraph).",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "phases": {
+      "type": "object",
+      "description": "Map of phase id -> fragment generation metadata.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fragment_path",
+          "last_generated_at"
+        ],
+        "properties": {
+          "fragment_path": {
+            "type": "string",
+            "description": "Path to the phase fragment file (e.g. '.rddf/roadmap/phases/phase-1.md')."
+          },
+          "last_generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp when this fragment was last (re)generated."
+          }
+        }
+      }
+    }
+  }
+}

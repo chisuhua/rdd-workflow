@@ -550,6 +550,9 @@ Flags: `--json` (write `.rddf/state/.doctor-report.json`), `--category <name>` (
     - `STRICT_PROPOSAL_COVERAGE=yes` 升级为严格阻断 (与 `STRICT_DESIGN_GATE` 模式对齐)
     - `SKIP_PROPOSAL_COVERAGE=yes` 临时绕过 (紧急情况)
     - 由 `skills/guide-design/scripts/check_theme_coverage_gate.sh` 执行
+22. **roadmap 增量 state 隔离**: 切分支/切 worktree 后第一次 arch-done 自动 fallback full (per-worktree `.rddf/state/` 隔离；state 绑 codebase_commit)
+23. **codegraph signal 必须 env-var 注入**: Python subprocess 上下文无法访问 MCP session — populate_lib 内部**禁止**调 MCP；agent 侧通过 `RDDF_CODEGRAPH_FINGERPRINT` env var 注入 signal
+24. **reset roadmap 增量 state**: `rm .rddf/state/.populate-state.json` (无 baseline → 下次 full)；用于分支切换残留、codegraph 索引陈旧、人工强制全量
 
 ## 前置条件
 

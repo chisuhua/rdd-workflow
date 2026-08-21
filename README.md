@@ -304,6 +304,21 @@ export SKIP_DEPS_GATE=yes  # plan-done 跳过 gate 5
 
 依赖分析使用 24h TTL 缓存(`.rddf/state/.cross-repo-deps-cache.json`),同一 plan-done 流程内多次 gate 调用只计算一次。
 
+### Roadmap Incremental Update (v2.2+)
+
+`guide-arch` Phase 6 自动调用 `roadmap_incremental_update.sh`，基于 git HEAD + ADR file hash + reverse index 三源判定增量更新模式：
+
+- **skip** (零变更) — `< 0.1s`
+- **adr_only** (仅 ADR 改) — `< 1s`，仅重写受影响 phase fragment
+- **code_only** (仅代码改) — `< 1.5s`，仅重验证受影响 ADR
+- **full** (两方皆改 / 无 baseline / 陈旧) — `~4s`
+
+State 文件：`.rddf/state/.populate-state.json`（gitignored，独立于 v1.1 `.populate-supplementary.json`）
+
+Reset 命令：`rm .rddf/state/.populate-state.json`
+
+`populate-roadmap-from-arch` skill 已 v1.2 标记 deprecated（thin wrapper），新项目直接用 `skill_use("guide-arch")`。
+
 ## 目录结构
 
 ```
