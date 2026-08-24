@@ -87,6 +87,7 @@ reporter 处理的类别（区分两平面）：
 | `gate-failure` | gate 逻辑错误（**不是**用户配置错；是 ADR-0007/0018/0019 自身实现问题）| 两平面都触发 | ✅ |
 | `phase-crash` | phase 抛未捕获异常 / exit code 非 0 且非环境/用法原因 | Script 平面（agent 平面通过 `flow-bug` 表达）| ✅ |
 | `manual` | 用户显式 `rddf report-issue "<desc>"` | Agent 平面（CLI）| ✅ |
+| `phase-interrupted` | orchestrator 中断的 phase（如 `guide-plan` 期间 Ctrl-C / SIGKILL/OOM 残留 trace,下次 entry 触发）| Script 平面（orchestrator trace 扫描）| ✅ |
 | `usage-error` | 用户用错（错参数、错顺序、缺 flag）| 两平面都识别 | ❌ **不收集** |
 | `environment-error` | 缺工具 / 网络 / 权限 / 磁盘满 | 两平面都识别 | ❌ **不收集** |
 
@@ -147,19 +148,7 @@ fine-grained 映射：`F1`（traceback in `_lib/`）→ `phase-crash`；`F4-gate
 - **内容**: 通过 `_lib/loop/sanitizer.py` 脱敏（API key、密码、`/etc/`、`~/.ssh/`、`~/.aws/`）。**需先扩展 sanitizer**: 新增 `$HOME` 绝对路径（`/home/<user>/...`、`/Users/<user>/...`）与项目名替换规则 — 现有规则**不覆盖**这些（验证 `_lib/loop/sanitizer.py` lines 1-19）。在 sanitizer 扩展完成前，issue 文件**不应自动提交**，仅写本地
 - **失败容忍**: 网络失败、`gh` CLI 缺失、GitHub 5xx → 全部仅写本地文件 + 终端提示用户
 
-**新增状态文件**: `.rddf/state/.issue-reporter.json`（gitignored，结构同 `.env-cache.json`）
-
-```json
-{
-  "schema_version": 1,
-  "last_reported_at": "2026-08-12T10:00:00Z",
-  "local_hashes": ["a1b2c3d4", ...],
-  "submitted_hashes": ["e5f6g7h8", ...],
-  "buffer_size": 3
-}
-```
-
-**新增 schema**: `_lib/schemas/issue_reporter_schema.json`（与现有 10 个 schema 同目录；沿用 ADR-0016 v1 schema 风格）
+**注 (2026-08-24)**: 原设计的 `.rddf/state/.issue-reporter.json` 状态文件已删除（G6 取舍：env-var 方案已够用，不补实现）。配套 schema 改为依赖现有 `_lib/schemas/config_schema.json` 的 reporting namespace；issue_reporter 不再单独维护 schema。
 
 ### 3. 上报（Report）— 分层提交策略
 
@@ -183,7 +172,7 @@ reporting:
     phase-crash: true
     manual: true
   close_on_archive: true        # archive 时自动 close issue（默认 true，需 dry-run 可关闭）
-  retention_days: 30            # .rddf/issues/ 中已 close 的文件保留天数
+  # retention_days 因 prunable code path 不可达,本 ADR 已删除承诺
   redact_patterns:              # 额外正则脱敏（叠加 _lib/loop/sanitizer.py）
     - "(?i)api[_-]?key\\s*[:=]\\s*\\S+"
     - "(?i)secret\\s*[:=]\\s*\\S+"
@@ -192,7 +181,6 @@ reporting:
 **铁律**:
 - `enabled: false`（默认）+ `auto_submit: false`（默认）+ 分类开关 = 三重 opt-in 闸门
 - 任何数据外发都需要用户在 config 中显式声明
-- 第一次启用时打印一次性 banner: "Heads up: rdd-workflow will now report **pseudonymous** issues to github.com/chisuhua/rdd-workflow (project_hash links reports from the same project). Disable by setting `RDDF_REPORT_ENABLED=no` or `.rddf.json::reporting.enabled = false`."
 
 ### 4. Issue 格式（上报契约）
 
@@ -249,7 +237,7 @@ submitted_url: null
 - 时间戳归一为 `TS`（如 `2026-08-12T10:00:00Z` → `TS`）
 - 平台相关字串（`linux`/`darwin` 字符串本身从 stack 中剥离 — OS 信息单独记录在 Reporter 段）
 
-归一化在 `_lib/issue_reporter.py::normalize_for_hash()` 中实现并配 ≥5 个 unit test。
+归一化在 `_lib/issue_dedup.py::compute_dedup_hash` 中实现并配 ≥5 个 unit test。
 
 **属性**:
 - 相同问题在不同机器/时间/路径 → 同一 dedup_hash → 只产生 1 个 issue
@@ -345,6 +333,8 @@ gh_repo: chisuhua/rdd-workflow # issue 所在仓库（支持 fork）
 ```
 
 `adr_refs` extractor（`skills/deps.md` Step 1b）扩展支持 `issue_refs` 字段提取，写入 `deps-analysis.json` 的 `issue_links` 节点，供后续 close 流程使用。
+
+> **§5 Supersession Note (2026-08-24)**: The Triage design described in §5 has been superseded by ADR-0029 (Issue-Driven Proposal Creation). The current triage path is documented in ADR-0029; §5 is preserved as design history only.
 
 ### 6. Close — archive 时自动关闭 issue
 
@@ -482,10 +472,8 @@ loop.yaml 默认段 < .rddf.json 覆盖 < RDDF_REPORT_* env var 覆盖 < 命令�
 
 **配置发现契约**（仿 ADR-0016 arch-handoff）：
 
-- 路径: `.rddf/state/.reporting-config.json`（gitignored）— 解析后的有效配置缓存
-- 内容: `{ enabled, destination, auto_submit, submit_categories, close_on_archive, retention_days }`
-- 缓存 TTL: 3600s（同 `.env-cache.json`，详见 `add-env-cache-arch-discovery`）
-- 缓存失效：branch 切换、`.rddf.json` mtime 变化、`RDDF_REPORT_*` env 变化
+- ~~路径: `.rddf/state/.reporting-config.json`~~（2026-08-24 已删除，G6 取舍：env-var + `.rddf.json` 直接读取，不维护解析缓存）
+- 配置读取: `_lib/config.py` 多源栈按需读取（loop.yaml 默认 → `.rddf.json` → `RDDF_REPORT_*` env → defaults）
 
 ### 9. CI 环境抑制（关键安全门）
 
@@ -559,7 +547,7 @@ if os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true":
 **In Scope**:
 
 - 新增模块: `_lib/issue_reporter.py`（核心 reporter + sanitizer 扩展）+ `_lib/close_issues.py`（close hook 业务逻辑）+ `skills/_lib/close_issues.sh`（bash 入口，通过 shim 调用）
-- 新增 schema: `_lib/schemas/issue_reporter_schema.json`（与现有 10 个 schema 同目录）
+- 配套 schema: 依赖现有 `_lib/schemas/config_schema.json` 的 reporting namespace；issue_reporter 不再单独维护 schema（G6 取舍，2026-08-24）
 - **配置复用**: `_lib/config.py` 现有栈新增 `reporting` namespace + `config_schema.json` 同步扩展（**不**新建独立 `.rddf/config.yaml`）
 - 改造 skill: `guide-design`（Phase 2 菜单 + `issue_to_proposal.sh`）、`guide-arch`（blockquote header `issue_refs`）、`guide-ship`（双模式 close hook）
 - 改造 ADR 模板: `docs/adr/ADR-0000-template.md` 扩展 blockquote header 加入 `issue_refs` / `gh_repo` 字段
@@ -568,8 +556,7 @@ if os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true":
 - `.gitignore`: 新增 `.rddf/issues/`
 - 改造 docs: `docs/architecture/extension-points.md`（新增"添加上报触发点"小节）、`docs/architecture/historical-evolution.md`（新增 v2.1.x 条目）
 - 新增 CLI: `rddf report-issue "<desc>"`, `rddf issue submit <file>`, `rddf issue list`, `rddf issue show <hash>` — 复用 `_lib/cli/` 现有路由表
-- 新增 state 文件: `.rddf/state/.issue-reporter.json`、`.rddf/state/.reporting-config.json`
-- 新增 retention 机制: `retention_days: 30` 由 `_lib/issue_reporter.py::prune_old_issues()` 在每次 reporter 启动时执行（按 `submitted` + `closed_at` 字段清理；未提交文件**不**自动删除，避免数据丢失）
+
 - 新增 CI 探测: `_lib/issue_reporter.py::is_ci_environment()`（6 个 CI 标识）+ L2 强制降级
 - 新增 rdd-env-check 检测: `.rddf/state/.env-cache.json` 新增 `gh_available` 字段（best-effort，不阻塞 phase 入口）
 - 测试: `tests/unit/test_issue_reporter.py`（≥15 cases，含 hash normalization ≥5 cases、sanitizer extension ≥3 cases、CI detection ≥2 cases）、`tests/integration/test_feedback_loop.bats`（≥8 cases，覆盖 worktree + lightweight 双模式）

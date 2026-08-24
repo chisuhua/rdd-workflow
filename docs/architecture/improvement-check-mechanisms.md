@@ -307,15 +307,17 @@ if not parsed.no_submit:
 #### G6(P2)— ADR 承诺的配套工件缺失
 
 **事实**:
-- `_lib/schemas/issue_reporter_schema.json` 不存在(schemas/ 目录 17 个文件中无)
-- `.rddf/state/.issue-reporter.json` 全库无写入点
-- `.rddf/state/.reporting-config.json` 缓存未实现
-- ADR-0027 §3 的一次性 banner 未实现
+- `_lib/schemas/issue_reporter_schema.json` 不存在(schemas/ 目录 17 个文件中无) — **已由 PR-6 删除承诺**（改依赖 `config_schema.json` 的 reporting namespace）
+- `.rddf/state/.issue-reporter.json` 全库无写入点 — **已由 PR-6 删除承诺**
+- `.rddf/state/.reporting-config.json` 缓存未实现 — **已由 PR-6 删除承诺**
+- ADR-0027 §3 的一次性 banner 未实现 — **已由 PR-6 删除承诺**
 - `_should_auto_submit` 只读 env var,`.rddf.json` 的 `reporting.enabled` **不生效**(调用方全传 None)
 
 **修复二选一**(推荐方案 2):
 - A: 全部补实现(工作量 ~3-5 天,跨多文件)
 - **B: 改 ADR 文本,删掉冗余承诺**(env-var 方案已够用,成本 0.5 天)
+
+**执行状态**: 采用方案 B。clean-adr-0027-section-5-supersede change 已删 ADR-0027 中 `issue_reporter_schema.json` / `.issue-reporter.json` / `.reporting-config.json` / 一次性 banner / `retention_days` 的冗余承诺（PR-6）。
 
 #### G7(P3)— 文档/名称小错
 
@@ -354,7 +356,7 @@ if not parsed.no_submit:
 |----|--------|------|------|------|
 | **PR-1** | **P0**(Quick) | `submit_issue_via_gh` 加三重 opt-in + CI 检查;4 个 SKILL.md 把 `--exit <code>` 并入 description 或新增参数 | 无 `RDDF_REPORT_ENABLED=yes` 时 `rddf report-issue` 只写本地并打印 L3 提示;agent 平面可成功上报 | 3 unit(闸门 on/off × CLI 两路径)+ 修正 1 个现有 CLI 测试 |
 | **PR-2** | P1(Short) | `_load_issue_refs` 增加 `openspec/changes/archive/<name>/` 回退路径;`_update_local_issue_files` 改为按 `submitted_url` 尾号匹配 | post-archive 布局下 close 真实执行;重复执行幂等 | 1 unit(模拟 archive 后路径) + 修 `test_archive_close_dual_mode.bats` 行号断言(改为"hook 存在且容错",不再固化顺序) |
-| **PR-3** | P1(Medium) | 初版 P1-A: `_render_issue_body` 补 Reporter 段(python/git/os/project_hash/rddf_session_id/skill_invoked)+ Stack trace + Repro | 新样本含全部 §4 字段;project_hash=sha256(project_root)[:8] 经 sanitize | 2 unit(字段齐全 + 脱敏生效)+ 1 integration |
+| **PR-3** | P1(Medium) | 初版 P1-A: `_render_issue_body` 补 Reporter 段(python/git/os/project_hash/rddf_session_id/skill_invoked)+ Stack trace + Repro | 新样本含全部 §4 字段;project_hash=sha256(project_root)[:8] 经 sanitize | 2 unit(字段齐全 + 脱敏生效)+ 1 integration(与 PR-6 文档对齐配套) |
 | **PR-4** | P2(Quick) | classifier 顺序修正:F2 提至 F3 前 + 补 F4-gate + 统一 `analyze_phase_trace` 映射 | "invalid state → 一致分类" 回归 | 4 unit |
 | **PR-5** | P2(Short) | `_check_review_debt_recorded` 重做:绝对路径 + 收窄 except + 明确触发时机(由 ship_review.sh 在 Phase 2.5 commit 前调用,而非 ship_done gate)+ 扩展语言 glob + debt mtime 绑定 | gate 真正触发;Go/Rust 项目也覆盖 | 4 unit |
 | **PR-6** | P2(Quick) | ADR-0027 §5 supersession 注 + ADR 文本对齐(normalize_for_hash 位置、test 文件名 + G6 取舍决策:**推荐改 ADR,删除冗余 state-file/banner 承诺**,非补实现) + G8 类别补完 | 文档自洽 | 0 test(纯文档) |
