@@ -6,41 +6,41 @@
 
 ### Phase 1: Setup & TDD red
 
-- [ ] Read `proposal.md` fully (especially "What Changes" and "Acceptance Criteria" if present)
-- [ ] Identify all `**不**` (NOT in scope) items to AVOID
-- [ ] Write failing test(s) covering scenarios 场景 A (主场景) per proposal.md
-- [ ] Verify tests fail (red) — `pytest tests/unit/<new_test>.py` or `bats tests/integration/<new>.bats`
+- [x] Read `proposal.md` fully (especially "What Changes" and "Acceptance Criteria" if present)
+- [x] Identify all `**不**` (NOT in scope) items to AVOID
+- [x] Write failing test(s) covering scenarios 场景 A (主场景) per proposal.md
+- [x] Verify tests fail (red) — `pytest tests/unit/<new_test>.py` or `bats tests/integration/<new>.bats`
 
 ### Phase 2: Implementation
 
-- [ ] Task 1: helper 扫 .go 文件(18 种语言 glob 含 .go)
-- [ ] Task 2: 探测 .rddf/improvements/cleanup-<change>-debt.md 是否存在且 mtime > execute_finished_at
-- [ ] Task 3: 若不存在 → 提示用户选项 1-3(范围內 / side-effect / arch drift)
-- [ ] Task 4: 若存在 → silent pass
-- [ ] Task 5: 必填参数 project_root 来自 ctx,绝对路径
-- [ ] Task 6: Path(project_root) / ".rddf/improvements" 解析正确
-- [ ] Task 7: 无 silent failure
-- [ ] Task 8: except PermissionError as e: → 记录具体 stderr 提示 cannot read .rddf/improvements: <reason>
+- [x] Task 1: helper 扫 .go 文件(18 种语言 glob 含 .go)
+- [x] Task 2: 探测 .rddf/improvements/cleanup-<change>-debt.md 是否存在且 mtime > execute_finished_at
+- [x] Task 3: 若不存在 → 提示用户选项 1-3(范围內 / side-effect / arch drift)
+- [x] Task 4: 若存在 → silent pass
+- [x] Task 5: 必填参数 project_root 来自 ctx,绝对路径
+- [x] Task 6: Path(project_root) / ".rddf/improvements" 解析正确
+- [x] Task 7: 无 silent failure
+- [x] Task 8: except PermissionError as e: → 记录具体 stderr 提示 cannot read .rddf/improvements: <reason>
 
 ### Phase 3: TDD green & verification
 
-- [ ] Verify all new tests pass (green)
-- [ ] Run full unit test suite: `pytest tests/unit/ -q`
-- [ ] Run integration tests: `bats tests/integration/<new>.bats`
-- [ ] Verify no regressions in adjacent modules
+- [x] Verify all new tests pass (green)
+- [x] Run full unit test suite: `pytest tests/unit/ -q`
+- [x] Run integration tests: `bats tests/integration/<new>.bats`
+- [x] Verify no regressions in adjacent modules
 
 ### Phase 4: Documentation & cleanup
 
-- [ ] Update relevant docstrings/inline comments if API changed
+- [x] Update relevant docstrings/inline comments if API changed
 - [ ] Update CHANGELOG if user-facing behavior changed
-- [ ] Verify `openspec validate <change>` passes
+- [x] Verify `openspec validate <change>` passes
 - [ ] Commit changes with conventional commit message
 
 ## Acceptance Verification
 
-- [ ] **GIVEN** `.go` 文件新增 `// TODO: refactor this part`
-- [ ] **GIVEN** 用户在 `project-root/subdir/` 跑 `rddf doctor` 等触发 gate 的命令
-- [ ] **GIVEN** `.rddf/improvements/` 目录无读权限或被删
+- [x] **GIVEN** `.go` 文件新增 `// TODO: refactor this part`
+- [x] **GIVEN** 用户在 `project-root/subdir/` 跑 `rddf doctor` 等触发 gate 的命令
+- [x] **GIVEN** `.rddf/improvements/` 目录无读权限或被删
 
 ## Reference
 

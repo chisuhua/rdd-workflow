@@ -248,6 +248,36 @@ DRIFTDOC
   echo "💡 下一步: 运行 skill_use(\"guide-arch\") 进入架构审查"
 }
 
+# _review_debt_precommit_check <project_root> <change_name>
+#   Phase 2.5 review debt check: runs BEFORE the aggregate commit.
+#   Calls _lib/review_debt_checker.py to check for new TODOs without
+#   a corresponding debt file. Exits 1 if TODOs found and no debt file.
+_review_debt_precommit_check() {
+  local project_root="$1"
+  local change_name="$2"
+  local execute_finished_at
+  execute_finished_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+  RDDF_PROJECT_ROOT="$project_root" \
+  RDDF_CHANGE_NAME="$change_name" \
+  RDDF_EXECUTE_FINISHED_AT="$execute_finished_at" \
+  python3 -c "
+import os, sys, datetime
+sys.path.insert(0, os.environ.get('RDDF_EXECUTION_ROOT', '.'))
+from review_debt_checker import check_review_debt_recorded
+project_root = os.environ['RDDF_PROJECT_ROOT']
+change_name = os.environ['RDDF_CHANGE_NAME']
+finish_at = datetime.datetime.fromisoformat(
+    os.environ['RDDF_EXECUTE_FINISHED_AT'].replace('Z', '+00:00')
+)
+verdict = check_review_debt_recorded(project_root, change_name, finish_at)
+print(f'verdict: persisted={verdict.persisted} count={verdict.found_count}')
+print(f'reason: {verdict.reason}')
+if not verdict.persisted and verdict.found_count > 0:
+    sys.exit(1)
+"
+}
+
 # Full regression gate (add-full-regression-gate)
 full_regression_gate() {
   local project_root="$1"
