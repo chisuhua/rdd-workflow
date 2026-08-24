@@ -324,10 +324,12 @@ cleanup_plan_file() {
 }
 
 # cleanup_plan_handoff <project_root> <change_name>
-#   Updates .rddf/state/.plan-handoff.json after archiving a change:
-#   - Adds archived_at timestamp
-#   - Decrements active_changes count
-#   - Appends to archived_changes list
+#   Updates .rddf/state/.plan-handoff.json after archiving a change. Idempotent.
+#   Stale-state guards (clean-stale-plan-handoff-on-ship-done, P1):
+#     - current_change    cleared iff it matches the archived change
+#     - ship_started_at   cleared when active_changes reaches 0 (ship-done)
+#     - execution_mode_decisions preserved as ship history
+#   Final-state invariant: active_changes==0 ⇒ current_change==null ∧ ship_started_at==null
 cleanup_plan_handoff() {
   local project_root="$1"
   local change_name="$2"
@@ -355,6 +357,13 @@ if isinstance(active, int) and active > 0:
 if "archived_changes" not in data:
     data["archived_changes"] = []
 data["archived_changes"].append(change_name)
+
+if data.get("current_change") == change_name:
+    data["current_change"] = None
+
+if data.get("active_changes", 0) == 0:
+    data["ship_started_at"] = None
+    data["last_ship_completed_at"] = datetime.now(timezone.utc).isoformat()
 
 with open(handoff_file, "w") as f:
     json.dump(data, f, indent=2)
