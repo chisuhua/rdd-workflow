@@ -23,15 +23,16 @@ load ../test_helper
 
 @test "dual_mode_close: lightweight mode (ship_archive.sh) wires the hook" {
   [ -f "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh" ]
-  # Hook must be between openspec archive call and commit_archive_moves call.
+  # Hook runs after archive, BUT must work whether archive succeeded or failed
+  # (via _load_issue_refs path fallback) — see fix-adr-0027-close-hook-dead-code.
+  # So we do NOT pin "openspec archive" line < hook line anymore (implementation
+  # detail); we only require the hook to be wired before commit_archive_moves.
   # Filter out comments/docstrings (lines starting with #) to find the actual
   # call sites, not documentation references.
-  local openspec_line hook_line commit_line
-  openspec_line=$(grep -nE '^\s*if ! openspec archive' "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh" | head -1 | cut -d: -f1)
+  local hook_line commit_line
   hook_line=$(grep -nE '^\s*close_issues_for_change_hook' "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh" | head -1 | cut -d: -f1)
   commit_line=$(grep -nE '^\s*commit_archive_moves' "$REPO_ROOT/skills/guide-ship/scripts/ship_archive.sh" | head -1 | cut -d: -f1)
-  [ -n "$openspec_line" ] && [ -n "$hook_line" ] && [ -n "$commit_line" ]
-  [ "$openspec_line" -lt "$hook_line" ]
+  [ -n "$hook_line" ] && [ -n "$commit_line" ]
   [ "$hook_line" -lt "$commit_line" ]
 }
 
@@ -87,4 +88,33 @@ load ../test_helper
     echo "vulnerable_pattern=$vulnerable_pattern, safe_pattern=$safe_pattern"
     return 1
   fi
+}
+
+@test "dual_mode_close: hook finds issue_refs in archive/<date>-<name>/roadmap-meta.yaml (post-archive path)" {
+  # Simulate the post-archive layout: change dir is GONE from
+  # openspec/changes/<name>/, present only in archive/<date>-<name>/
+  local archive_dir="$BATS_TMPDIR/openspec/changes/archive/2026-08-24-fake-change"
+  mkdir -p "$archive_dir"
+  cat > "$archive_dir/roadmap-meta.yaml" <<EOF
+name: fake-change
+issue_refs:
+  - 42
+gh_repo: test-owner/test-repo
+EOF
+
+  # Run the Python loader directly. Values passed via env vars (Oracle C1),
+  # never bash string interpolation into the python -c payload.
+  run env RDDF_TEST_TMPDIR="$BATS_TMPDIR" \
+    RDDF_TEST_LIB_DIR="$REPO_ROOT/_lib" \
+    python3 -c "
+import os, sys
+sys.path.insert(0, os.environ['RDDF_TEST_LIB_DIR'])
+from close_issues import _load_issue_refs
+refs, gh_repo = _load_issue_refs('fake-change', os.environ['RDDF_TEST_TMPDIR'])
+assert refs == [42], f'refs={refs}'
+assert gh_repo == 'test-owner/test-repo', f'gh_repo={gh_repo}'
+print('OK')
+"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"OK"* ]]
 }

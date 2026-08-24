@@ -127,21 +127,48 @@ def can_close_in_repo(gh_repo: str) -> bool:
 
 
 def _load_issue_refs(change_name: str, project_root: str) -> tuple:
-    """Read ``openspec/changes/<name>/roadmap-meta.yaml`` for issue_refs + gh_repo."""
+    """Read ``roadmap-meta.yaml`` for ``issue_refs`` + ``gh_repo``.
+
+    **ADR-0027 §6 / fix-adr-0027-close-hook-dead-code**: try the active
+    path first (pre-archive layout: ``openspec/changes/<name>/``). If
+    not found, fall back to the post-archive layout. ``openspec
+    archive`` moves files to ``archive/<YYYY-MM-DD>-<name>/`` where
+    the date is the archive day. We glob the archive dir for any
+    ``<date>-<name>`` entry — the change_name suffix is the stable
+    identifier since dates are dynamic.
+
+    Returns ``([], "chisuhua/rdd-workflow")`` when neither path exists
+    (safe no-op for changes without a roadmap-meta.yaml).
+    """
     if yaml is None:
         return [], "chisuhua/rdd-workflow"
-    meta_path = Path(project_root) / "openspec" / "changes" / change_name / "roadmap-meta.yaml"
-    if not meta_path.is_file():
-        return [], "chisuhua/rdd-workflow"
-    try:
-        data = yaml.safe_load(meta_path.read_text(encoding="utf-8")) or {}
-    except (OSError, yaml.YAMLError):
-        return [], "chisuhua/rdd-workflow"
-    refs = data.get("issue_refs") or []
-    if not isinstance(refs, list):
-        refs = []
-    gh_repo = data.get("gh_repo") or "chisuhua/rdd-workflow"
-    return [int(r) for r in refs if str(r).isdigit()], gh_repo
+    base = Path(project_root) / "openspec" / "changes"
+
+    # Candidate paths in priority order: active > post-archive (date-prefixed)
+    candidates = [
+        base / change_name / "roadmap-meta.yaml",
+    ]
+    # Find any archive/<date>-<name>/roadmap-meta.yaml whose suffix matches
+    archive_base = base / "archive"
+    if archive_base.is_dir():
+        for child in archive_base.iterdir():
+            if child.is_dir() and child.name.endswith(f"-{change_name}"):
+                candidates.append(child / "roadmap-meta.yaml")
+
+    for meta_path in candidates:
+        if not meta_path.is_file():
+            continue
+        try:
+            data = yaml.safe_load(meta_path.read_text(encoding="utf-8")) or {}
+        except (OSError, yaml.YAMLError):
+            continue
+        refs = data.get("issue_refs") or []
+        if not isinstance(refs, list):
+            refs = []
+        gh_repo = data.get("gh_repo") or "chisuhua/rdd-workflow"
+        return [int(r) for r in refs if str(r).isdigit()], gh_repo
+
+    return [], "chisuhua/rdd-workflow"
 
 
 def _can_close_in_repo(gh_repo: str) -> bool:
@@ -193,7 +220,13 @@ def _close_issue(issue_num: int, gh_repo: str, change_name: str, new_version: st
 
 
 def _update_local_issue_files(refs: List[int], project_root: str, result: CloseResult) -> None:
-    """Mark the corresponding local issue files with the close outcome."""
+    """Mark the corresponding local issue files with the close outcome.
+
+    **fix-adr-0027-close-hook-dead-code**: matches a local issue file
+    to ``refs`` by scanning its ``submitted_url`` for ``/issues/<n>``
+    (not by ``dedup_hash``, which is 8-hex and never collides with the
+    integer issue number).
+    """
     issues_dir = Path(project_root) / ".rddf" / "issues"
     if not issues_dir.is_dir():
         return
@@ -205,7 +238,14 @@ def _update_local_issue_files(refs: List[int], project_root: str, result: CloseR
         except OSError:
             continue
         for ref in refs:
-            if f"dedup_hash: \"{ref}\"" not in text and f"dedup_hash: {ref}" not in text:
+            # Matches by submitted_url containing /issues/<n> (G2 fix, primary),
+            # with a dedup_hash-equality fallback for legacy local files that
+            # pre-date submitted_url (submitted_url: null).
+            if (
+                f"/issues/{ref}" not in text
+                and f"dedup_hash: \"{ref}\"" not in text
+                and f"dedup_hash: {ref}" not in text
+            ):
                 continue
             if ref in closed_set or ref in skipped_set:
                 _append_close_marker(path, text, ref)
@@ -213,15 +253,27 @@ def _update_local_issue_files(refs: List[int], project_root: str, result: CloseR
 
 
 def _append_close_marker(path: Path, text: str, ref: int) -> None:
-    """Append a ``closed_at`` field to the issue file's frontmatter (idempotent)."""
+    """Mark a local issue file with the close outcome (idempotent).
+
+    **fix-adr-0027-close-hook-dead-code**: inject ``closed_at`` +
+    ``closed_ref`` into the YAML frontmatter right after the
+    ``submitted_url`` line, whether the URL is null or a real value.
+    Keeps the marker inside the frontmatter so ``_is_old_closed`` can
+    prune it later. Files without a frontmatter get a trailing HTML
+    comment as a fallback.
+    """
     if "closed_at:" in text:
         return
     timestamp = datetime.now(timezone.utc).isoformat()
-    new_text = text.replace(
-        "submitted_url: null",
-        f'submitted_url: null\nclosed_at: "{timestamp}"\nclosed_ref: {ref}',
-    )
-    if new_text == text:
+    marker = f'closed_at: "{timestamp}"\nclosed_ref: {ref}'
+    if "submitted_url:" in text:
+        lines = text.splitlines(keepends=True)
+        for i, line in enumerate(lines):
+            if line.lstrip().startswith("submitted_url:"):
+                lines.insert(i + 1, marker + "\n")
+                break
+        new_text = "".join(lines)
+    else:
         new_text = text + f'\n<!-- closed_at: "{timestamp}" ref={ref} -->\n'
     try:
         path.write_text(new_text, encoding="utf-8")
