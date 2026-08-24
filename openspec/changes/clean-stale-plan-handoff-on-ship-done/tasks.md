@@ -6,28 +6,28 @@
 
 ### Phase 1: Setup & TDD red
 
-- [ ] Read `proposal.md` fully (especially "What Changes" and "Acceptance Criteria" if present)
-- [ ] Identify all `**不**` (NOT in scope) items to AVOID
-- [ ] Write failing test(s) covering scenarios 场景 A (主场景) per proposal.md
-- [ ] Verify tests fail (red) — `pytest tests/unit/<new_test>.py` or `bats tests/integration/<new>.bats`
+- [x] Read `proposal.md` fully (especially "What Changes" and "Acceptance Criteria" if present)
+- [x] Identify all `**不**` (NOT in scope) items to AVOID
+- [x] Write failing test(s) covering scenarios 场景 A (主场景) per proposal.md
+- [x] Verify tests fail (red) — `pytest tests/unit/<new_test>.py` or `bats tests/integration/<new>.bats`
 
 ### Phase 2: Implementation
 
-- [ ] Task 1: 修改 skills/guide-ship/scripts/ship_archive.sh::cleanup_plan_handoff() 的 Python 块
-- [ ] Task 2: 新增 current_change 字段处理：当被 cleanup 的 change_name == data.get("current_change") 时设 current_change=None
-- [ ] Task 3: 新增 ship_started_at 字段处理：所有 changes 归档完成（active_changes==0）时设 ship_started_at=None
-- [ ] Task 4: 保留 execution_mode_decisions 不动（属于 ship 历史记录，对未来 ship 决策有参考价值）
-- [ ] Task 5: 添加最终态一致性检查（active_changes==0 ⇒ current_change 必为 None ⇒ ship_started_at 必为 None）
-- [ ] Task 6: 写 1 个新 bats integration test tests/integration/test_cleanup_plan_handoff.bats（≥5 cases 锁定新行为）
-- [ ] Task 7: 写 1 个新 pytest unit test tests/unit/test_cleanup_plan_handoff.py 覆盖 Python 块的 4 个分支
-- [ ] Task 8: GIVEN plan-handoff.json {active_changes: 1, current_change: "fix-foo"}
+- [x] Task 1: 修改 skills/guide-ship/scripts/ship_archive.sh::cleanup_plan_handoff() 的 Python 块
+- [x] Task 2: 新增 current_change 字段处理：当被 cleanup 的 change_name == data.get("current_change") 时设 current_change=None
+- [x] Task 3: 新增 ship_started_at 字段处理：所有 changes 归档完成（active_changes==0）时设 ship_started_at=None
+- [x] Task 4: 保留 execution_mode_decisions 不动（属于 ship 历史记录，对未来 ship 决策有参考价值）
+- [x] Task 5: 添加最终态一致性检查（active_changes==0 ⇒ current_change 必为 None ⇒ ship_started_at 必为 None）
+- [x] Task 6: 写 1 个新 bats integration test tests/integration/test_cleanup_plan_handoff.bats（≥5 cases 锁定新行为）
+- [x] Task 7: 写 1 个新 pytest unit test tests/unit/test_cleanup_plan_handoff.py 覆盖 Python 块的 4 个分支
+- [x] Task 8: GIVEN plan-handoff.json {active_changes: 1, current_change: "fix-foo"}
 
 ### Phase 3: TDD green & verification
 
-- [ ] Verify all new tests pass (green)
-- [ ] Run full unit test suite: `pytest tests/unit/ -q`
-- [ ] Run integration tests: `bats tests/integration/<new>.bats`
-- [ ] Verify no regressions in adjacent modules
+- [x] Verify all new tests pass (green)
+- [x] Run full unit test suite: `pytest tests/unit/ -q`
+- [x] Run integration tests: `bats tests/integration/<new>.bats`
+- [x] Verify no regressions in adjacent modules
 
 ### Phase 4: Documentation & cleanup
 
