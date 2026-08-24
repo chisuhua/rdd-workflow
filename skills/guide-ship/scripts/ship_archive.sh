@@ -330,43 +330,24 @@ cleanup_plan_file() {
 #     - ship_started_at   cleared when active_changes reaches 0 (ship-done)
 #     - execution_mode_decisions preserved as ship history
 #   Final-state invariant: active_changes==0 ⇒ current_change==null ∧ ship_started_at==null
+#   Logic lives in skills/_lib/cleanup_plan_handoff.py (unit-testable).
 cleanup_plan_handoff() {
   local project_root="$1"
   local change_name="$2"
   local handoff_file="$project_root/.rddf/state/.plan-handoff.json"
+  local python_path="$(cd "$_SCRIPT_DIR/../../.." && pwd)"
 
   [ ! -f "$handoff_file" ] && return 0
 
-  HANDOFF_FILE="$handoff_file" CHANGE_NAME="$change_name" \
+  PYTHONPATH="$python_path" HANDOFF_FILE="$handoff_file" CHANGE_NAME="$change_name" \
   python3 -c '
-import json, os
-from datetime import datetime, timezone
+import os, sys
+from pathlib import Path
 
-handoff_file = os.environ["HANDOFF_FILE"]
-change_name = os.environ["CHANGE_NAME"]
+sys.path.insert(0, os.environ["PYTHONPATH"])
+from skills._lib.cleanup_plan_handoff import cleanup_plan_handoff
 
-with open(handoff_file) as f:
-    data = json.load(f)
-
-data["archived_at"] = datetime.now(timezone.utc).isoformat()
-
-active = data.get("active_changes", 0)
-if isinstance(active, int) and active > 0:
-    data["active_changes"] = active - 1
-
-if "archived_changes" not in data:
-    data["archived_changes"] = []
-data["archived_changes"].append(change_name)
-
-if data.get("current_change") == change_name:
-    data["current_change"] = None
-
-if data.get("active_changes", 0) == 0:
-    data["ship_started_at"] = None
-    data["last_ship_completed_at"] = datetime.now(timezone.utc).isoformat()
-
-with open(handoff_file, "w") as f:
-    json.dump(data, f, indent=2)
+cleanup_plan_handoff(Path(os.environ["HANDOFF_FILE"]), os.environ["CHANGE_NAME"])
 ' 2>/dev/null || true
 }
 
