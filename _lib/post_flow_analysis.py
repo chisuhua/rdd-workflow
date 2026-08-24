@@ -82,6 +82,38 @@ _STATE_VIOLATION = re.compile(
 )
 
 
+# ── ADR-0027 §1.2 classifier regex set (evaluation order: F4 > F1 > F2 > F3) ──
+
+_RE_F4_GATE_RAISED = re.compile(
+    r"(?:gate raised|_check_\w+.*raised|GateFailure)"
+)
+_RE_F1_TRACEBACK_IN_LIB = re.compile(
+    r"Traceback.*(?:skills/_lib/|_lib/)", re.DOTALL
+)
+_RE_F2_CONFIG_ERROR = re.compile(r"Config(?:Error| validation failed)")
+_RE_F3_INVALID_STATE = re.compile(
+    r"(?:invalid state|unexpected (?:status|phase)|状态机|state machine)",
+    re.I,
+)
+
+
+def _classify_failure_pattern(stderr: str) -> tuple[str, str, str] | None:
+    """Return ``(category, skill_invoked, matched_rule)`` for an F1-F4 match.
+
+    First match wins; gate-raised (F4) beats a generic traceback (F1).
+    Returns ``None`` so the caller falls back to default fail-open.
+    """
+    if _RE_F4_GATE_RAISED.search(stderr):
+        return REPORT_CATEGORY_GATE, "gate-system", "F4"
+    if _RE_F1_TRACEBACK_IN_LIB.search(stderr):
+        return REPORT_CATEGORY_CRASH, "post-flow-analysis", "F1"
+    if _RE_F2_CONFIG_ERROR.search(stderr):
+        return REPORT_CATEGORY_GATE, "post-flow-analysis", "F2"
+    if _RE_F3_INVALID_STATE.search(stderr):
+        return REPORT_CATEGORY_FLOW, "post-flow-analysis", "F3"
+    return None
+
+
 # ── Dataclasses ──────────────────────────────────────────────────────────
 
 
@@ -217,40 +249,22 @@ def _classify_flow(phase: str, outcome: PhaseOutcome, text: str) -> Classificati
     """Fine-grained flow-bug classification with default fail-open."""
     stack_frames = _extract_stack_frames(outcome.traceback or text)
 
-    if stack_frames and _FLOW_FRAMES.search(outcome.traceback or text):
-        if _STDLIB_FRAMES_ONLY(stack_frames):
-            return _classify_usage("U5-stdlib-traceback", "traceback in stdlib/argparse", phase, outcome)
+    # ADR-0027 §1.2: F4 gate-raised > F1 traceback > F2 ConfigError > F3 invalid state
+    match = _classify_failure_pattern(text)
+    if match is not None:
+        category, skill_invoked, matched_rule = match
         return Classification(
             root_cause=ROOT_CAUSE_FLOW,
-            report_category=REPORT_CATEGORY_CRASH,
-            matched_rule="F1",
+            report_category=category,
+            matched_rule=matched_rule,
             description=_truncate(_last_stderr_line(outcome.stderr), 200),
             stack=stack_frames,
-            metadata={"phase": phase, "exit_code": outcome.exit_code, "matched_rule": "F1"},
-            should_report=True,
-            user_hint=USER_HINTS[ROOT_CAUSE_FLOW],
-        )
-
-    if _STATE_VIOLATION.search(text):
-        return Classification(
-            root_cause=ROOT_CAUSE_FLOW,
-            report_category=REPORT_CATEGORY_FLOW,
-            matched_rule="F3",
-            description=_truncate(_last_stderr_line(outcome.stderr), 200),
-            stack=stack_frames,
-            metadata={"phase": phase, "exit_code": outcome.exit_code, "matched_rule": "F3"},
-            should_report=True,
-            user_hint=USER_HINTS[ROOT_CAUSE_FLOW],
-        )
-
-    if "ConfigError" in text or "invalid state" in text.lower():
-        return Classification(
-            root_cause=ROOT_CAUSE_FLOW,
-            report_category=REPORT_CATEGORY_GATE,
-            matched_rule="F2",
-            description=_truncate(_last_stderr_line(outcome.stderr), 200),
-            stack=stack_frames,
-            metadata={"phase": phase, "exit_code": outcome.exit_code, "matched_rule": "F2"},
+            metadata={
+                "phase": phase,
+                "exit_code": outcome.exit_code,
+                "matched_rule": matched_rule,
+                "skill_invoked": skill_invoked,
+            },
             should_report=True,
             user_hint=USER_HINTS[ROOT_CAUSE_FLOW],
         )
@@ -447,19 +461,48 @@ if __name__ == "__main__":
 
 
 def analyze_phase_trace(
-    trace_path: Path,
+    trace_path: Optional[Path] = None,
     project_root: str = ".",
+    phase: str = "unknown",
+    exit_code: int = 0,
+    stderr: str = "",
+    stdout_tail: str = "",
 ) -> Optional[Classification]:
-    """Classify a complete phase trace and return a Classification.
+    """Classify a phase trace or direct stderr input.
 
-    Reads all subprocess events from ``trace_path`` and synthesizes a
-    ``PhaseOutcome`` for the first failing subprocess. Returns None
-    if all subprocesses returned 0 (success path).
+    When ``trace_path`` is given, reads all subprocess events and
+    synthesizes a ``PhaseOutcome`` for the first failing subprocess.
+    When ``trace_path`` is None, uses the ``stderr``/``exit_code``
+    parameters directly (unified path for consistency with the main
+    classifier).
 
-    For multi-step cumulative failures (B3), detects the pattern where
-    multiple subprocesses returned 0 but stderr mentions "invalid state"
-    or similar markers, and reports as ``flow-bug`` / ``F2``.
+    Returns None for success paths (all subprocesses returned 0, or
+    no pattern matched on the direct-input path).
     """
+    if trace_path is None:
+        # Direct-input path: unify with the main classifier.
+        if exit_code == 0:
+            return None
+        match = _classify_failure_pattern(stderr)
+        if match is None:
+            return None
+        category, skill_invoked, matched_rule = match
+        return Classification(
+            root_cause=ROOT_CAUSE_FLOW,
+            report_category=category,
+            matched_rule=matched_rule,
+            description=_truncate(_last_stderr_line(stderr), 200),
+            stack=_extract_stack_frames(stderr),
+            metadata={
+                "phase": phase,
+                "exit_code": exit_code,
+                "matched_rule": matched_rule,
+                "skill_invoked": skill_invoked,
+            },
+            should_report=True,
+            user_hint=USER_HINTS[ROOT_CAUSE_FLOW],
+        )
+
     events = _read_trace_events(trace_path)
     subprocess_events = [e for e in events if e.get("type") == "subprocess"]
     if not subprocess_events:
@@ -476,17 +519,21 @@ def analyze_phase_trace(
     text_blob = " ".join(
         e.get("stderr_tail", "") for e in subprocess_events
     )
-    if re.search(
-        r"(invalid state|unexpected (status|phase)|状态机|state machine)",
-        text_blob,
-        re.I,
-    ):
+    match = _classify_failure_pattern(text_blob)
+    if match is not None:
+        category, skill_invoked, matched_rule = match
         return Classification(
             root_cause=ROOT_CAUSE_FLOW,
-            report_category=REPORT_CATEGORY_GATE,
-            matched_rule="F2-cumulative",
-            description="cumulative failure: state machine violation across multiple zero-exit steps",
-            metadata={"phase": "trace", "matched_rule": "F2-cumulative"},
+            report_category=category,
+            matched_rule=f"{matched_rule}-cumulative",
+            description="cumulative failure: "
+            + _truncate(_last_stderr_line(text_blob), 200),
+            stack=_extract_stack_frames(text_blob),
+            metadata={
+                "phase": "trace",
+                "matched_rule": f"{matched_rule}-cumulative",
+                "skill_invoked": skill_invoked,
+            },
             should_report=True,
             user_hint=USER_HINTS.get(ROOT_CAUSE_FLOW, ""),
         )
