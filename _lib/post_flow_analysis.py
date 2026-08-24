@@ -319,6 +319,8 @@ def report_flow_bug(
         {
             "description": classification.description,
             "stack": list(classification.stack),
+            "skill_invoked": "post-flow-analysis",
+            "project_root": project_root,
             "metadata": classification.metadata,
         },
     )

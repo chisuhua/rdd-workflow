@@ -23,8 +23,10 @@ no network).
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import platform
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -54,6 +56,47 @@ class IssueResult:
     dedup_hash: str = ""
     detected_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     rdd_workflow_version: str = "2.0.9"
+    # ADR-0027 §4 Reporter fields (filled by detect_issue via _collect_reporter_metadata)
+    skill_invoked: str = "manual"
+    project_root: str = ""
+    python_version: str = ""
+    git_version: str = ""
+    os_platform: str = ""
+    project_hash: str = ""
+    rddf_session_id: str = "none"
+    # Caller-provided metadata (e.g., {"phase": "guide-ship", "exit_code": 137})
+    metadata: dict = field(default_factory=dict)
+
+
+def _collect_reporter_metadata(project_root: str = "") -> dict:
+    """Probe runtime environment for ADR-0027 §4 Reporter section.
+
+    Returns a dict with keys: python_version, git_version, os_platform,
+    project_hash, rddf_session_id. All values are strings; project_hash
+    is the sha256 of the absolute project_root path, truncated to 8 chars.
+
+    Each probe is best-effort: failures return empty string or "unknown"
+    so a minimal environment still produces a valid Reporter section.
+    """
+    py_ver = sys.version.split()[0] if sys.version else ""
+    try:
+        git_ver = subprocess.run(
+            ["git", "--version"], capture_output=True, text=True, timeout=3
+        ).stdout.strip() or "unknown"
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        git_ver = "unknown"
+    os_plat = platform.platform() or "unknown"
+    proj_hash = ""
+    if project_root:
+        proj_hash = hashlib.sha256(str(project_root).encode("utf-8")).hexdigest()[:8]
+    rddf_sid = os.environ.get("RDDF_SESSION_ID", "none") or "none"
+    return {
+        "python_version": py_ver,
+        "git_version": git_ver,
+        "os_platform": os_plat,
+        "project_hash": proj_hash,
+        "rddf_session_id": rddf_sid,
+    }
 
 
 @dataclass
@@ -71,19 +114,20 @@ def detect_issue(category: str, payload: dict) -> IssueResult:
 
     Args:
         category: One of the ADR-0027 §1 categories (flow-bug, gate-failure, …).
-        payload: ``{"description": str, "stack": list[str], "metadata": dict (optional)}``.
+        payload: ``{"description": str, "stack": list[str], "metadata": dict (optional),
+                    "skill_invoked": str (optional), "project_root": str (optional)}``.
     """
     description = payload.get("description", "")
     stack = payload.get("stack", []) or []
+    skill_invoked = payload.get("skill_invoked", "manual")
+    project_root = payload.get("project_root", "")
 
     desc_result = sanitize(description)
     sanitized_stack = [sanitize(frame).sanitized_text for frame in stack[:5]]
 
-    dedup_hash = compute_dedup_hash(
-        category,
-        description,
-        stack[:3],
-    )
+    dedup_hash = compute_dedup_hash(category, description, stack[:3])
+
+    reporter = _collect_reporter_metadata(project_root)
 
     return IssueResult(
         category=category,
@@ -93,6 +137,14 @@ def detect_issue(category: str, payload: dict) -> IssueResult:
             sanitize(frame).had_sensitive_data for frame in stack[:5]
         ),
         dedup_hash=dedup_hash,
+        skill_invoked=skill_invoked,
+        project_root=project_root,
+        python_version=reporter["python_version"],
+        git_version=reporter["git_version"],
+        os_platform=reporter["os_platform"],
+        project_hash=reporter["project_hash"],
+        rddf_session_id=reporter["rddf_session_id"],
+        metadata=payload.get("metadata") or {},
     )
 
 
@@ -115,7 +167,16 @@ def write_issue_file(result: IssueResult, project_root: str) -> Path:
 
 
 def _render_issue_body(result: IssueResult) -> str:
-    """Render the Markdown body (frontmatter + Reporter + details)."""
+    """Render the full Markdown body per ADR-0027 §4.
+
+    Sections:
+      1. YAML frontmatter (14 fields: 6 core + 6 Reporter + 2 metadata)
+      2. ## Description
+      3. ## Reporter (6 fields: env fingerprint)
+      4. ## Stack trace / details (if any)
+      5. ## Repro (reproduction hint + invocation metadata)
+      6. ## Reporter commit (legacy single-line version marker)
+    """
     frontmatter = {
         "category": result.category,
         "detected_at": result.detected_at,
@@ -123,7 +184,18 @@ def _render_issue_body(result: IssueResult) -> str:
         "dedup_hash": result.dedup_hash,
         "submitted": False,
         "submitted_url": None,
+        "skill_invoked": result.skill_invoked,
+        "rddf_session_id": result.rddf_session_id,
+        "project_hash": result.project_hash,
+        "python_version": result.python_version,
+        "git_version": result.git_version,
+        "os_platform": result.os_platform,
     }
+    # Caller-provided metadata (e.g., exit_code, phase) merged into frontmatter
+    for k, v in (result.metadata or {}).items():
+        if k not in frontmatter:
+            frontmatter[k] = v
+
     fm_lines = ["---"]
     for k, v in frontmatter.items():
         if v is None:
@@ -133,12 +205,32 @@ def _render_issue_body(result: IssueResult) -> str:
         else:
             fm_lines.append(f"{k}: {json.dumps(v)}")
     fm_lines.append("---\n")
+
     body = "\n".join(fm_lines)
     body += f"\n## Description\n\n{result.sanitized_description}\n"
+
+    body += "\n## Reporter\n\n"
+    body += f"- python_version: `{result.python_version}`\n"
+    body += f"- git_version: `{result.git_version}`\n"
+    body += f"- os_platform: `{result.os_platform}`\n"
+    body += f"- project_hash: `{result.project_hash}`\n"
+    body += f"- rddf_session_id: `{result.rddf_session_id}`\n"
+    body += f"- skill_invoked: `{result.skill_invoked}`\n"
+
     if result.sanitized_stack:
         body += "\n## Stack trace / details\n\n"
         for frame in result.sanitized_stack:
             body += f"- `{frame}`\n"
+
+    body += "\n## Repro\n\n"
+    body += f"Skill: `{result.skill_invoked}` · "
+    body += f"Session: `{result.rddf_session_id}`\n"
+    if result.project_root:
+        body += f"Project: `{result.project_root}`\n"
+    if result.metadata:
+        for k, v in result.metadata.items():
+            body += f"- {k}: `{v}`\n"
+
     body += "\n## Reporter commit\n\n"
     body += f"rdd-workflow v{result.rdd_workflow_version}\n"
     return body

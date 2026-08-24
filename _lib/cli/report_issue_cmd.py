@@ -61,6 +61,8 @@ def cmd_report_issue(args: list[str]) -> int:
     payload = {
         "description": parsed.description,
         "stack": [],
+        "skill_invoked": "manual",
+        "project_root": project_root,
         "metadata": {
             "phase": parsed.phase,
             "exit_code": parsed.exit_code,
