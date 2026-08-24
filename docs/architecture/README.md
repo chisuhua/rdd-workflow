@@ -15,6 +15,7 @@ For **decisions** behind the design, see [`../adr/README.md`](../adr/README.md).
 | [loop-engine.md](loop-engine.md) | 5 building blocks + loop/menu/hybrid modes | 0002, 0004 |
 | [state-and-events.md](state-and-events.md) | 3-layer state model | 0006, 0016 |
 | [gates-and-quality.md](gates-and-quality.md) | gate / tribunal / arch_quality_gate / change_alignment | 0007, 0008, 0018, 0019 |
+| [improvement-check-mechanisms.md](improvement-check-mechanisms.md) | Project-level (ADR-0014) vs workflow-level (ADR-0027) improvement checks, Oracle-reviewed gap analysis + 6-PR plan | 0014, 0027, 0029 |
 | [skills-and-handoff.md](skills-and-handoff.md) | SKILL.md frontmatter, discovery, handoff contracts | 0016 |
 | [multi-session.md](multi-session.md) | rddf-session lifecycle + conflict resolver | 0010, 0017 |
 | [extension-points.md](extension-points.md) | How to add a skill / detector / action / CLI / ADR | 0021 |
