@@ -9,3 +9,4 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
+| [clean-stale-plan-handoff-on-ship-done](.rddf/improvements/clean-stale-plan-handoff-on-ship-done.md) | P1 | 本会话 view bug 调查 (2026-08-22, ship-done state drift) | 2026-08-22 | pending |
