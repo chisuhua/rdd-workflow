@@ -339,6 +339,12 @@ def _check_tests_pass(ctx: dict) -> tuple[bool, Optional[str]]:
 
 
 def _check_review_debt_recorded(ctx: dict) -> tuple[bool, Optional[str]]:
+    """@deprecated: Replaced by _lib/review_debt_checker.py (Phase 2.5 pre-commit helper).
+
+    This gate ran after the worktree commit, so ``git diff HEAD`` was
+    always empty — making it a dead check. The new helper runs BEFORE
+    the aggregate commit in ship_review.sh Phase 2.5.
+    """
     import os
     import subprocess
     try:
@@ -402,10 +408,7 @@ _DEFAULT_CHECKS = {
         Check("worktrees_empty", _check_worktrees_empty, "Active worktrees remain", "git worktree remove .rddf/wt/<name>", "error"),
         Check("archive_empty", _check_archive_empty, "Archive not empty", "Verify archive/", "error"),
         Check("tests_pass", _check_tests_pass, "Tests failing", "Run: pytest tests/ -v", "error"),
-        Check("review_debt_recorded", _check_review_debt_recorded,
-              "execute 后债务未在 proposal-suggestions.md 中记录",
-              "运行 Phase 2.5 review 或选择跳过 (debt 可 deferred)", "warning"),
-    ],
+        ],
 }
 
 
