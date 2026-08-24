@@ -378,7 +378,7 @@ def test_analyze_phase_trace_returns_none_for_clean_trace(tmp_path):
 
 
 def test_analyze_phase_trace_cumulative_failure_detected(tmp_path):
-    """Multiple zero-exit subprocesses + 'invalid state' in stderr → F2 cumulative."""
+    """Multiple zero-exit subprocesses + 'invalid state' in stderr → F3 cumulative."""
     from post_flow_analysis import analyze_phase_trace
     trace = tmp_path / "guide-arch-ses_x-1-100-cccccccc.jsonl"
     trace.write_text(
@@ -388,7 +388,9 @@ def test_analyze_phase_trace_cumulative_failure_detected(tmp_path):
     )
     cls = analyze_phase_trace(trace_path=trace, project_root=str(tmp_path))
     assert cls is not None
-    assert cls.matched_rule == "F2-cumulative"
+    # Unified classifier: "invalid state" → F3 (flow-bug), consistent with classify_phase_outcome
+    assert cls.matched_rule == "F3-cumulative"
+    assert cls.report_category == "flow-bug"
     assert cls.should_report is True
 
 

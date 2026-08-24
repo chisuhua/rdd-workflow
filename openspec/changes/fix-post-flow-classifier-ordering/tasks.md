@@ -6,41 +6,41 @@
 
 ### Phase 1: Setup & TDD red
 
-- [ ] Read `proposal.md` fully (especially "What Changes" and "Acceptance Criteria" if present)
-- [ ] Identify all `**不**` (NOT in scope) items to AVOID
-- [ ] Write failing test(s) covering scenarios 场景 A (主场景) per proposal.md
-- [ ] Verify tests fail (red) — `pytest tests/unit/<new_test>.py` or `bats tests/integration/<new>.bats`
+- [x] Read `proposal.md` fully (especially "What Changes" and "Acceptance Criteria" if present)
+- [x] Identify all `**不**` (NOT in scope) items to AVOID
+- [x] Write failing test(s) covering scenarios 场景 A (主场景) per proposal.md
+- [x] Verify tests fail (red) — `pytest tests/unit/<new_test>.py` or `bats tests/integration/<new>.bats`
 
 ### Phase 2: Implementation
 
-- [ ] Task 1: 检测 stderr 含 gate raised / gate failure / _check_* 调用栈
-- [ ] Task 2: 匹配后归类为 gate-failure
-- [ ] Task 3: F1 正则匹配(Traceback + 栈帧路径含 skills/_lib/ 或 _lib/)
-- [ ] Task 4: 分类为 phase-crash
-- [ ] Task 5: dedup_hash 基于前 3 个 stack frame 归一化
-- [ ] Task 6: F4 正则匹配(优先于 F3)
-- [ ] Task 7: 分类为 gate-failure
-- [ ] Task 8: Reporter 段记 skill_invoked: gate-system
+- [x] Task 1: 检测 stderr 含 gate raised / gate failure / _check_* 调用栈
+- [x] Task 2: 匹配后归类为 gate-failure
+- [x] Task 3: F1 正则匹配(Traceback + 栈帧路径含 skills/_lib/ 或 _lib/)
+- [x] Task 4: 分类为 phase-crash
+- [x] Task 5: dedup_hash 基于前 3 个 stack frame 归一化
+- [x] Task 6: F4 正则匹配(优先于 F3)
+- [x] Task 7: 分类为 gate-failure
+- [x] Task 8: Reporter 段记 skill_invoked: gate-system
 
 ### Phase 3: TDD green & verification
 
-- [ ] Verify all new tests pass (green)
-- [ ] Run full unit test suite: `pytest tests/unit/ -q`
-- [ ] Run integration tests: `bats tests/integration/<new>.bats`
-- [ ] Verify no regressions in adjacent modules
+- [x] Verify all new tests pass (green)
+- [x] Run full unit test suite: `pytest tests/unit/ -q`
+- [x] Run integration tests: `bats tests/integration/<new>.bats`
+- [x] Verify no regressions in adjacent modules
 
 ### Phase 4: Documentation & cleanup
 
-- [ ] Update relevant docstrings/inline comments if API changed
-- [ ] Update CHANGELOG if user-facing behavior changed
-- [ ] Verify `openspec validate <change>` passes
-- [ ] Commit changes with conventional commit message
+- [x] Update relevant docstrings/inline comments if API changed
+- [ ] Update CHANGELOG if user-facing behavior changed (deferred to orchestrator)
+- [x] Verify `openspec validate <change>` passes
+- [ ] Commit changes with conventional commit message (deferred to orchestrator)
 
 ## Acceptance Verification
 
-- [ ] **GIVEN** `_lib/post_flow_analysis.py` 抛 `ZeroDivisionError`,stderr 含 traceback 帧
-- [ ] **GIVEN** `_lib/gate.py::_check_arch_debt` raise `ConfigError`,stderr 含 `gate raised in _check_*`
-- [ ] **GIVEN** schema 加载抛 `ConfigError`,stderr 含 `"Config validation failed: ..."`(不含 "gate raised")
+- [x] **GIVEN** `_lib/post_flow_analysis.py` 抛 `ZeroDivisionError`,stderr 含 traceback 帧
+- [x] **GIVEN** `_lib/gate.py::_check_arch_debt` raise `ConfigError`,stderr 含 `gate raised in _check_*`
+- [x] **GIVEN** schema 加载抛 `ConfigError`,stderr 含 `"Config validation failed: ..."`(不含 "gate raised")
 
 ## Reference
 
