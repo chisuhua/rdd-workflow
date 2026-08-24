@@ -89,7 +89,6 @@
 
 
 
-| [fix-adr-0027-close-hook-dead-code](.rddf/improvements/fix-adr-0027-close-hook-dead-code.md) | P1 | 2026-08-24 | guide-arch |
 
 | [fix-adr-0027-issue-file-frontmatter](.rddf/improvements/fix-adr-0027-issue-file-frontmatter.md) | P1 | 2026-08-24 | guide-arch |
 
@@ -102,6 +101,7 @@
 | [clean-stale-plan-handoff-on-ship-done](.rddf/improvements/clean-stale-plan-handoff-on-ship-done.md) | P1 | 2026-08-24 | guide-arch |
 
 ## 已实施
+| [fix-adr-0027-close-hook-dead-code](.rddf/improvements/fix-adr-0027-close-hook-dead-code.md) | P1 | 2026-08-24 |
 | [fix-adr-0027-cli-optin-gate](.rddf/improvements/fix-adr-0027-cli-optin-gate.md) | P0 | 2026-08-24 |
 | [add-cli-coverage-rdd-doctor-roadmap-rdd-hub](.rddf/improvements/add-cli-coverage-rdd-doctor-roadmap-rdd-hub.md) | P1 | 2026-08-20 |
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 |
