@@ -103,6 +103,9 @@ def test_issue_show_displays_body(tmp_path, monkeypatch, capsys):
 def test_issue_submit_uses_filename_category(tmp_path, monkeypatch):
     """``rddf issue submit <file>`` infers category from filename ``<category>-<hash>.md``."""
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setenv("RDDF_REPORT_ENABLED", "yes")
+    monkeypatch.setenv("RDDF_REPORT_AUTO_SUBMIT", "yes")
+    monkeypatch.setenv("RDDF_REPORT_SUBMIT_CATEGORIES", "flow-bug,gate-failure,phase-crash,manual")
     fake_proc = mock.Mock(returncode=0, stdout="https://github.com/x/y/issues/1", stderr="")
     monkeypatch.setattr("subprocess.run", mock.Mock(return_value=fake_proc))
 

@@ -23,11 +23,17 @@ from pathlib import Path
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 
-from issue_reporter import detect_issue, write_issue_file, submit_issue_via_gh  # type: ignore[import-not-found]
+from issue_reporter import detect_issue, write_issue_file, submit_issue_via_gh, should_auto_submit_gh_submission, is_ci_environment  # type: ignore[import-not-found]
 
 
 def cmd_report_issue(args: list[str]) -> int:
-    """Submit a manual issue report (Agent plane, bypasses classifier)."""
+    """Submit a manual issue report (Agent plane, bypasses classifier).
+
+    By default, **never auto-submits to GitHub** (--no-submit is the default;
+    pass --submit to opt in). Phase-exit hooks in SKILL.md rely on this
+    default to avoid accidental L2 submission when AI agents invoke this
+    command.
+    """
     parser = argparse.ArgumentParser(prog="rddf report-issue")
     parser.add_argument("description", help="One-line description of the issue")
     parser.add_argument(
@@ -37,8 +43,17 @@ def cmd_report_issue(args: list[str]) -> int:
     )
     parser.add_argument("--phase", default="", help="Originating phase (optional metadata)")
     parser.add_argument(
-        "--no-submit", action="store_true",
-        help="Write local file only, skip gh submission",
+        "--exit-code", type=int, default=0,
+        help="Exit code of the originating phase (metadata only, default 0)",
+    )
+    parser.add_argument(
+        "--no-submit", action="store_true", default=True,
+        help="[DEFAULT] Write local file only, skip gh submission",
+    )
+    parser.add_argument(
+        "--submit", dest="no_submit", action="store_false",
+        help="Opt in to gh submission (overrides --no-submit default). "
+             "Honors triple opt-in gate (RDDF_REPORT_ENABLED + AUTO_SUBMIT + category).",
     )
     parsed = parser.parse_args(args)
 
@@ -46,13 +61,24 @@ def cmd_report_issue(args: list[str]) -> int:
     payload = {
         "description": parsed.description,
         "stack": [],
-        "metadata": {"phase": parsed.phase} if parsed.phase else {},
+        "metadata": {
+            "phase": parsed.phase,
+            "exit_code": parsed.exit_code,
+        } if parsed.phase or parsed.exit_code else {},
     }
     result = detect_issue(parsed.category, payload)
     file_path = write_issue_file(result, project_root=project_root)
     print(f"✅ wrote {file_path}")
 
     if not parsed.no_submit:
+        if is_ci_environment():
+            print("ℹ️  local-only (CI auto-downgrade, --submit ignored)")
+            return 0
+        if not should_auto_submit_gh_submission(parsed.category):
+            print("❌ gh submit rejected: triple opt-in not satisfied "
+                  "(need RDDF_REPORT_ENABLED=yes AND RDDF_REPORT_AUTO_SUBMIT=yes "
+                  "AND category ∈ RDDF_REPORT_SUBMIT_CATEGORIES AND NOT CI).")
+            return 2
         gh_repo = os.environ.get("RDDF_REPORT_GH_REPO", "chisuhua/rdd-workflow")
         submit = submit_issue_via_gh(file_path, parsed.category, gh_repo)
         if submit.success:

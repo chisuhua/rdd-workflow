@@ -803,7 +803,7 @@ ls roadmap.md
 ### Checklist (must satisfy exactly one)
 
 - [ ] **Normal exit** → call `orchestrator_finalize` (always, on every exit)
-- [ ] **Abnormal exit** → call `orchestrator_finalize` + `rddf report-issue --phase guide-arch --exit <code> "<one-line>"`
+- [ ] **Abnormal exit** → call `orchestrator_finalize` + `rddf report-issue --phase guide-arch --exit-code <code> "<one-line>"`
 
 ### Triggers for "abnormal exit" (non-exhaustive)
 

@@ -290,7 +290,7 @@ CHANGE_NAME="<name>" mark_all_tasks_done
 ### Checklist (must satisfy exactly one)
 
 - [ ] **Normal exit** → call `orchestrator_finalize` (always, on every exit)
-- [ ] **Abnormal exit** → call `orchestrator_finalize` + `rddf report-issue --phase execute --exit <code> "<one-line>"`
+- [ ] **Abnormal exit** → call `orchestrator_finalize` + `rddf report-issue --phase execute --exit-code <code> "<one-line>"`
 
 ### Triggers for "abnormal exit" (non-exhaustive)
 

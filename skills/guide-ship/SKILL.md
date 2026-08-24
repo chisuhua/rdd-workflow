@@ -754,7 +754,7 @@ fi
 ### Checklist (must satisfy exactly one)
 
 - [ ] **Normal exit** → call `orchestrator_finalize` (always, on every exit)
-- [ ] **Abnormal exit** → call `orchestrator_finalize` + `rddf report-issue --phase guide-ship --exit <code> "<one-line>"`
+- [ ] **Abnormal exit** → call `orchestrator_finalize` + `rddf report-issue --phase guide-ship --exit-code <code> "<one-line>"`
 
 ### Triggers for "abnormal exit" (non-exhaustive)
 

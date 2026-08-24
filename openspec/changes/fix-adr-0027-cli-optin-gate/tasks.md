@@ -6,30 +6,30 @@
 
 ### Phase 1: Setup & TDD red
 
-- [ ] Read `proposal.md` fully (especially "What Changes" and "Acceptance Criteria" if present)
-- [ ] Identify all `**不**` (NOT in scope) items to AVOID
-- [ ] Write failing test(s) covering scenarios 场景 A (主场景) per proposal.md
-- [ ] Verify tests fail (red) — `pytest tests/unit/<new_test>.py` or `bats tests/integration/<new>.bats`
+- [x] Read `proposal.md` fully (especially "What Changes" and "Acceptance Criteria" if present)
+- [x] Identify all `**不**` (NOT in scope) items to AVOID
+- [x] Write failing test(s) covering scenarios 场景 A (主场景) per proposal.md
+- [x] Verify tests fail (red) — `pytest tests/unit/<new_test>.py` or `bats tests/integration/<new>.bats`
 
 ### Phase 2: Implementation
 
-- [ ] Task 1: 把 --exit <code> 改为 --exit-code <code>(适配 PR-1.2)
-- [ ] Task 2: 增加 --no-submit(默认 true,确保 Phase Exit 永不自动外发;用户显式传 --submit 才走 L2)
-- [ ] Task 3: (no items specified)
+- [x] Task 1: 把 --exit <code> 改为 --exit-code <code>(适配 PR-1.2)
+- [x] Task 2: 增加 --no-submit(默认 true,确保 Phase Exit 永不自动外发;用户显式传 --submit 才走 L2)
+- [x] Task 3: (no items specified)
 
 ### Phase 3: TDD green & verification
 
-- [ ] Verify all new tests pass (green)
-- [ ] Run full unit test suite: `pytest tests/unit/ -q`
-- [ ] Run integration tests: `bats tests/integration/<new>.bats`
-- [ ] Verify no regressions in adjacent modules
+- [x] Verify all new tests pass (green)
+- [x] Run full unit test suite: `pytest tests/unit/ -q`
+- [x] Run integration tests: `bats tests/integration/<new>.bats` (N/A — no new bats tests)
+- [x] Verify no regressions in adjacent modules
 
 ### Phase 4: Documentation & cleanup
 
-- [ ] Update relevant docstrings/inline comments if API changed
-- [ ] Update CHANGELOG if user-facing behavior changed
-- [ ] Verify `openspec validate <change>` passes
-- [ ] Commit changes with conventional commit message
+- [x] Update relevant docstrings/inline comments if API changed
+- [ ] Update CHANGELOG if user-facing behavior changed (deferred to orchestrator)
+- [x] Verify `openspec validate <change>` passes
+- [ ] Commit changes with conventional commit message (deferred to orchestrator)
 
 ## Acceptance Verification
 

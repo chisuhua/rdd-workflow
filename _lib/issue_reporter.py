@@ -249,7 +249,37 @@ def is_ci_environment() -> bool:
     return False
 
 
-# ── 5. can_close_in_repo ────────────────────────────────────────────────
+# ── 5. should_auto_submit_gh_submission (single choke point) ─────────────
+
+
+def should_auto_submit_gh_submission(category: str) -> bool:
+    """Triple-gate opt-in: master + auto_submit + per-category + not CI.
+
+    **ADR-0027 §3 single choke point.** Every path that ultimately calls
+    ``gh issue create`` MUST gate through this function. Do NOT reimplement
+    the three checks inline; add new gates here instead.
+
+    Returns True only when ALL of the following hold:
+      1. ``RDDF_REPORT_ENABLED`` ∈ {yes, true, 1}
+      2. ``RDDF_REPORT_AUTO_SUBMIT`` ∈ {yes, true, 1}
+      3. category ∈ ``RDDF_REPORT_SUBMIT_CATEGORIES`` (comma-separated)
+      4. NOT in CI environment (CI/GITHUB_ACTIONS/JENKINS_URL/etc.)
+    """
+    if os.environ.get("RDDF_REPORT_ENABLED", "no").lower() not in ("yes", "true", "1"):
+        return False
+    if os.environ.get("RDDF_REPORT_AUTO_SUBMIT", "no").lower() not in ("yes", "true", "1"):
+        return False
+    if is_ci_environment():
+        return False
+    categories_raw = os.environ.get("RDDF_REPORT_SUBMIT_CATEGORIES", "")
+    if categories_raw:
+        allowed = {c.strip() for c in categories_raw.split(",") if c.strip()}
+        if category not in allowed:
+            return False
+    return True
+
+
+# ── 6. can_close_in_repo ────────────────────────────────────────────────
 
 
 def can_close_in_repo(gh_repo: str) -> bool:

@@ -24,7 +24,7 @@ from pathlib import Path
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 
-from issue_reporter import submit_issue_via_gh  # type: ignore[import-not-found]
+from issue_reporter import submit_issue_via_gh, should_auto_submit_gh_submission, is_ci_environment  # type: ignore[import-not-found]
 
 
 def cmd_issue(args: list[str]) -> int:
@@ -60,6 +60,15 @@ def _issue_submit(args: list[str]) -> int:
     if not category:
         print(f"⚠️  cannot infer category from filename {file_path.name!r}; using 'manual'")
         category = "manual"
+
+    if is_ci_environment():
+        print("ℹ️  local-only (CI auto-downgrade; --submit ignored).")
+        return 0
+    if not should_auto_submit_gh_submission(category):
+        print("❌ gh submit rejected: triple opt-in not satisfied "
+              "(set RDDF_REPORT_ENABLED=yes AND RDDF_REPORT_AUTO_SUBMIT=yes "
+              "AND ensure category is in RDDF_REPORT_SUBMIT_CATEGORIES).")
+        return 2
 
     gh_repo = os.environ.get("RDDF_REPORT_GH_REPO", "chisuhua/rdd-workflow")
     result = submit_issue_via_gh(file_path, category, gh_repo)

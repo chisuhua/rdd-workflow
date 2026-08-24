@@ -340,20 +340,14 @@ def report_flow_bug(
 
 
 def _should_auto_submit(category: str) -> bool:
-    """Three-gate opt-in: master + auto_submit + per-category + not CI."""
-    if os.environ.get("RDDF_REPORT_ENABLED", "no").lower() not in ("yes", "true", "1"):
-        return False
-    if os.environ.get("RDDF_REPORT_AUTO_SUBMIT", "no").lower() not in ("yes", "true", "1"):
-        return False
-    from issue_reporter import is_ci_environment
-    if is_ci_environment():
-        return False
-    categories_raw = os.environ.get("RDDF_REPORT_SUBMIT_CATEGORIES", "")
-    if categories_raw:
-        allowed = {c.strip() for c in categories_raw.split(",") if c.strip()}
-        if category not in allowed:
-            return False
-    return True
+    """Three-gate opt-in: master + auto_submit + per-category + not CI.
+
+    Thin re-export of :func:`issue_reporter.should_auto_submit_gh_submission`
+    (single choke point per ADR-0027 §3). Kept as a private alias for backward
+    compatibility with the existing call site at line 327.
+    """
+    from issue_reporter import should_auto_submit_gh_submission
+    return should_auto_submit_gh_submission(category)
 
 
 def _update_submission_status(file_path: Path, submitted_url: str) -> None:
