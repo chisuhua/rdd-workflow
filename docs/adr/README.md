@@ -51,7 +51,7 @@
 | [ADR-0024](ADR-0024-deps-driven-execution-mode.md) | deps 阶段驱动执行模式决策 | 已采纳 | 执行模式在 plan 阶段决定并写入 handoff |
 | [ADR-0025](ADR-0025-design-proposal-creation.md) | design 阶段提案创建 + 内容审查 | 已采纳 | 设计管理独立成阶段 + 两层内容审查 |
 | [ADR-0026](ADR-0026-internal-metadata-namespace-convention.md) | 内部元数据命名空间约定 | 已采纳 | `>` blockquote 元数据命名规范 |
-| [ADR-0027](ADR-0027-continuous-evolution-feedback-loop.md) | 持续演进反馈环 | 已采纳 | Detect→Buffer→Report→Triage→Close 五环 + 复用 `_lib/config.py` + 三重 opt-in + 幂等 close + Oracle 复核 8/8/7 |
+| [ADR-0027](ADR-0027-continuous-evolution-feedback-loop.md) | 持续演进反馈环 | 已采纳 | Detect→Buffer→Report→Triage→Close 五环 + 复用 `_lib/config.py` + 三重 opt-in + 幂等 close + Oracle 复核 8/8/7 [^adr-0027-supersede] |
 | [ADR-0029](ADR-0029-issue-driven-proposal-creation.md) | Issue-Driven Proposal Creation | 已采纳 | 新增 `add-improve --from-issue` 模式 + repo-neutral `close_issues.py` 修复 |
 | [ADR-0030](ADR-0030-hub-and-spoke-federation.md) | Hub-and-Spoke 联邦协同架构 | 待定 | 多项目 AI 协同开发采用 Hub 仓库 + L2 升级双向协同通道 + 6 项安全风险 + 3 个月复核 |
 | [ADR-0031](ADR-0031-human-in-loop-cross-repo.md) | 跨项目 RFC 必须人类决策 | 已采纳 | 跨项目提案 AI 不可自动批准 + `RDDF_REQUIRE_HUB_APPROVAL` 强制门控 + 审计 log + 无 Spoke 端 bypass |
@@ -209,3 +209,7 @@ ADR-NNN §N.M
 - 主要决策者: sisyphus
 - 上次同步: 2026-08-12 (add-issue-reporter-tests — ADR-0027 完整 3-change 系列落地：prereqs + reporter + tests/docs)
 - 下次审查: 新增 ADR 后
+
+## 脚注
+
+[^adr-0027-supersede]: §5 Triage superseded by ADR-0029 (2026-08-24); see clean-adr-0027-section-5-supersede proposal
