@@ -9,7 +9,6 @@ import json
 import os
 from pathlib import Path
 
-
 def check_hub_pending() -> bool:
     """Check if any Hub RFC Issues are still pending.
 
@@ -33,7 +32,6 @@ def check_hub_pending() -> bool:
         return False
 
     return any(e.get("status") == "pending" for e in state.get("entries", []))
-
 
 def check_cross_repo_approvals() -> bool:
     """Check if all cross-repo-federation proposals have audit log approvals.
@@ -72,83 +70,10 @@ def check_cross_repo_approvals() -> bool:
 
     return len(pending) > 0
 
-
-def _is_cross_repo_federation(project_root: str, change_name: str) -> bool:
-    """Check if a change has category=cross-repo-federation in roadmap-meta.yaml."""
-    meta = os.path.join(project_root, "openspec", "changes", change_name, "roadmap-meta.yaml")
-    if not os.path.isfile(meta):
-        return False
-    with open(meta) as f:
-        for line in f:
-            if line.startswith("category:"):
-                cat = line.split(":", 1)[1].strip().strip("'\"")
-                return cat == "cross-repo-federation"
-    return False
-
-
-def _validate_rfc_draft(draft_path: str) -> bool:
-    """Validate .rfc-draft-<name>.json against rfc_draft_schema.json v1.
-
-    Returns True if valid or schema unavailable (best-effort); False if invalid.
-    """
-    try:
-        import jsonschema
-    except ImportError:
-        return True  # best-effort
-
-    schema_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "..", "..", "_lib", "schemas", "rfc_draft_schema.json",
-    )
-    if not os.path.isfile(schema_path):
-        return True
-
-    try:
-        schema = json.loads(open(schema_path).read())
-        draft = json.loads(open(draft_path).read())
-        jsonschema.validate(draft, schema)
-        return True
-    except (jsonschema.ValidationError, json.JSONDecodeError, OSError):
-        return False
-
-
-def check_rfc_draft() -> bool:
-    """Check if all cross-repo-federation proposals have valid RFC drafts.
-
-    Iterates openspec/changes/<entry>/ for category=cross-repo-federation
-    proposals. For each, requires .rddf/state/.rfc-draft-<entry>.json
-    to exist AND validate against rfc_draft_schema.json v1.
-
-    Returns True (block) if any such proposal lacks a valid draft.
-    Returns False (pass) otherwise (including non-cross-repo proposals).
-    """
-    project_root = os.environ.get("RDDF_PROJECT_ROOT", os.getcwd())
-    changes_dir = os.path.join(project_root, "openspec", "changes")
-    if not os.path.isdir(changes_dir):
-        return False
-
-    state_dir = os.path.join(project_root, ".rddf", "state")
-
-    for entry in os.listdir(changes_dir):
-        if not _is_cross_repo_federation(project_root, entry):
-            continue
-
-        draft_path = os.path.join(state_dir, f".rfc-draft-{entry}.json")
-        if not os.path.isfile(draft_path):
-            return True
-
-        if not _validate_rfc_draft(draft_path):
-            return True
-
-    return False
-
-
 _COMMANDS = {
     "check-hub-pending": check_hub_pending,
     "check-cross-repo-approvals": check_cross_repo_approvals,
-    "check-rfc-draft": check_rfc_draft,
 }
-
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entry: `python3 design_done_gate.py <command>`.
@@ -163,7 +88,6 @@ def main(argv: list[str] | None = None) -> int:
         print(f"usage: design_done_gate.py <{'|'.join(_COMMANDS)}>", file=sys.stderr)
         return 2
     return 1 if _COMMANDS[args[0]]() else 0
-
 
 if __name__ == "__main__":
     import sys

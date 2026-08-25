@@ -3,7 +3,7 @@
   "version": {"const": "v1", "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline."},
   "$id": "https://github.com/chisuhua/rdd-workflow/skills/_lib/schemas/rfc_draft_schema.json",
   "title": "RFC Draft Schema",
-  "description": "Schema v1 for .rddf/state/.rfc-draft-<proposal_name>.json files. Produced by rfc_interview.sh, consumed by rfc-create --from-draft, design-done gate check_rfc_draft, and approve_proposal.sh --auto-issue.",
+  "description": "Schema v1 for .rddf/state/.rfc-draft-<proposal_name>.json files. Produced by rfc_interview.sh, consumed by rfc-create --from-draft and approve_proposal.sh --auto-issue.",
   "type": "object",
   "additionalProperties": false,
   "required": [

@@ -15,6 +15,7 @@ _SCRIPTS_DIR = Path(__file__).parent.parent.parent / "skills" / "guide-design" /
 sys.path.insert(0, str(_SCRIPTS_DIR))
 
 from design_done_gate import (  # noqa: E402
+    _COMMANDS,
     check_cross_repo_approvals,
     check_hub_pending,
     main,
@@ -117,3 +118,20 @@ class TestMainCli:
     def test_usage_error(self, capsys):
         assert main([]) == 2
         assert main(["bogus"]) == 2
+
+    def test_check_rfc_draft_removed(self):
+        """G1 architecture debt: check_rfc_draft() is orphan (never called by
+        check_design_done_gate), so it must be deleted together with its
+        _COMMANDS entry.
+        """
+        # Gateway must no longer be registered
+        assert "check-rfc-draft" not in _COMMANDS, (
+            "check_rfc_draft() is orphan (never called by check_design_done_gate); "
+            "delete function and _COMMANDS entry"
+        )
+        # Exactly the 2 wired gates remain
+        assert set(_COMMANDS) == {"check-hub-pending", "check-cross-repo-approvals"}
+        # CLI invocation is a usage error (exit 2)
+        assert main(["check-rfc-draft"]) == 2
+        # Wired gates still work
+        assert main(["check-hub-pending"]) == 0

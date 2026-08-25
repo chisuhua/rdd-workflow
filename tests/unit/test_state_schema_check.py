@@ -163,3 +163,46 @@ def test_state_files_includes_cross_repo_schemas():
     assert _STATE_FILES[".contract-cache.json"] == "contract_cache_schema.json"
     assert _STATE_FILES[".cross-repo-deps-cache.json"] == "cross_repo_deps_cache_schema.json"
     assert _STATE_FILES[".hub-metrics.json"] == "hub_metrics_schema.json"
+
+
+def test_jsonl_file_not_misreported(tmp_path: Path):
+    """G2 rdd-doctor bug: JSONL file with multiple lines should NOT be
+    flagged as 'invalid JSON: Extra data' (json.load single-doc parser bug).
+    """
+    # Create real _lib/schemas/ dir so resolve_real_lib_path finds the schema
+    real_schemas = tmp_path / "_lib" / "schemas"
+    real_schemas.mkdir(parents=True, exist_ok=True)
+    (real_schemas / "mcp_trace_schema.json").write_text(json.dumps({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "additionalProperties": True,
+        "required": ["version", "timestamp", "direction", "tool_name",
+                      "actor_repo", "args_hash", "result_status"],
+        "properties": {
+            "version": {"type": "integer", "const": 1},
+            "timestamp": {"type": "string", "format": "date-time"},
+            "direction": {"type": "string", "enum": ["hub-to-spoke", "spoke-to-hub"]},
+            "tool_name": {"type": "string"},
+            "actor_repo": {"type": "string"},
+            "args_hash": {"type": "string"},
+            "result_status": {"type": "string", "enum": ["success", "error"]},
+        },
+    }))
+
+    # Write a multi-line JSONL file
+    state = tmp_path / ".rddf" / "state"
+    state.mkdir(parents=True, exist_ok=True)
+    (state / ".mcp-trace.jsonl").write_text(
+        "\n".join([
+            json.dumps({"tool": "a", "ts": 1}),
+            json.dumps({"tool": "b", "ts": 2}),
+            json.dumps({"tool": "c", "ts": 3}),
+        ]) + "\n"
+    )
+
+    # Run the check — must NOT raise "Extra data"
+    findings = run_check(project_root=tmp_path)
+    extra_data = [f for f in findings if "Extra data" in f.snippet]
+    assert not extra_data, (
+        f"JSONL misreported as Extra data: {[f.snippet for f in extra_data]}"
+    )

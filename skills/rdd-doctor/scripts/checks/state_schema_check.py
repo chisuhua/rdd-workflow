@@ -124,6 +124,38 @@ def run(project_root: Path | None = None) -> List[Finding]:
             continue
         try:
             schema = json.loads(schema_path.read_text())
+        except json.JSONDecodeError as e:
+            findings.append(Finding(
+                severity=Severity.CRITICAL,
+                category="state",
+                file=str(schema_path),
+                line=e.lineno,
+                snippet=f"invalid JSON: {e.msg}",
+                fix_hint="check schema file syntax",
+            ))
+            continue
+
+        # JSONL: multi-document, parse per-line (fix: was json.load single-doc)
+        if state_file.suffix == ".jsonl":
+            with open(state_file) as f:
+                for line_no, line in enumerate(f, 1):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        json.loads(line)
+                    except json.JSONDecodeError as e:
+                        findings.append(Finding(
+                            severity=Severity.CRITICAL,
+                            category="state",
+                            file=str(state_file),
+                            line=line_no,
+                            snippet=f"invalid JSON: {e.msg}",
+                            fix_hint="re-run guide-plan or restore from backup",
+                        ))
+            continue
+
+        try:
             data = json.loads(state_file.read_text())
         except json.JSONDecodeError as e:
             findings.append(Finding(
