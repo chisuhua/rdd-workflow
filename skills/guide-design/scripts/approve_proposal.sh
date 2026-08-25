@@ -372,8 +372,9 @@ fi
 mkdir -p "$CHANGE_DIR"
 
 cat > "$CHANGE_DIR/.openspec.yaml" <<EOF
+schema: spec-driven
+created: $(date -u +%Y-%m-%d)
 name: $NAME
-created_by: guide-design approve
 EOF
 
 CHANGE_NAME="$NAME" IMPROVEMENTS_PATH="$IMP_FILE" \
