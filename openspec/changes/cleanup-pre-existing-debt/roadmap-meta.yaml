@@ -1,0 +1,8 @@
+name: cleanup-pre-existing-debt
+phase: v2.1.x
+category: infra-quality
+priority: P2
+type: fix
+adr_refs:
+  - ADR-0018
+  - ADR-0028
