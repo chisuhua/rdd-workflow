@@ -19,6 +19,7 @@ role:
       - ".rddf/state/.arch-handoff.json"
       - ".rddf/state/.populate-state.json"
       - ".rddf/roadmap/phases/*.md"
+      - ".rddf/roadmap/features/*.md"
     not_owns:
       - "openspec/changes/<name>/{proposal,design,tasks}.md"
       - ".rddf/wt/<name>/"
@@ -533,7 +534,8 @@ fi
   2. 📊 查看路线图状态
   3. 📈 查看阶段门控报告
   4. ⏭️  强制推进到下一阶段
-  5. ✅ 完成路线图定义 → 进入 arch validation
+  5. ✨ 添加 feature fragment
+  6. ✅ 完成路线图定义 → 进入 arch validation
   0. 💾 保存并退出
   i. 其他输入
 ```
@@ -573,6 +575,23 @@ skill_use("roadmap", "gate-report")
 ```bash
 # 委托给 roadmap 技能
 skill_use("roadmap", "advance")
+```
+
+**选项 5（添加 feature fragment）执行内容**：
+
+```bash
+# 4 步强制交互（任一步失败 → 返回菜单，不写盘）:
+# 1. 输入 name: kebab-case（CLI 自动 feat- 前缀）；非空校验
+# 2. 输入 theme: 单行中文短句（≤ 50 字）；非空校验
+# 3. 多选 phase_refs: 从 list_active_fragments(kind="phase") 渲染编号列表;
+#    用户输入逗号分隔索引 → phase IDs; 校验所有存在
+# 4. Preview + confirm: 渲染 frontmatter + 3 段骨架到 stderr;
+#    用户输入 y 才落盘（n 返回菜单）
+# 落盘动作委托给 rddf roadmap add-feature:
+rddf roadmap add-feature <name> \
+    --phase-refs <p1,p2,...> \
+    --theme "<theme>" \
+    [--status a|d|x] [--force]
 ```
 
 **roadmap.md 缺失时的特殊行为**：

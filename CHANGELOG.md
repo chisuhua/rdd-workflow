@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+### add-feature-fragment-command (rddf roadmap add-feature primitive)
+
+Adds the `rddf roadmap add-feature <name>` CLI primitive that creates `.rddf/roadmap/features/feat-<name>.md` fragments with valid frontmatter + 3-section body skeleton, and refreshes `.rddf/roadmap.md` AUTO-INDEX atomically. Closes the operation gap from `add-hierarchical-roadmap-structure` (scenario 3, shipped 2026-08-20); users previously had to hand-craft YAML and call `render_fragment_index` manually, leaving `.rddf/roadmap/features/` empty.
+
+- **Components**: `_lib/roadmap_state.py::add_feature` (Python core, ~95 lines) + `skills/roadmap/scripts/roadmap_add_feature.sh` (thin shell wrapper, Oracle C1 env-var passing) + `_lib/cli/roadmap_cmd.py` dispatch extension + `_lib/roadmap_state_wrapper.py` (env-var consuming entry point).
+- **SKILL.md integration**: `guide-arch` Phase 4 menu adds option 5 "添加 feature fragment" with 4-step forced interaction (name → theme → phase_refs multi-select → preview+confirm); `roadmap/SKILL.md` adds add-feature subcommand documentation.
+- **ADR-0028 patch**: `skills/guide-arch/SKILL.md` frontmatter `role.boundaries.owns` now explicitly includes `.rddf/roadmap/features/*.md` alongside `.rddf/roadmap/phases/*.md`.
+- **Tests**: 11 new tests (7 unit + 4 bats). All pass; existing 140 tests unaffected.
+
+### generate-full-proposal-bugfix (Out of Scope ↔ Heading format support)
+
+Fixes 3 related bugs in `skills/guide-design/scripts/generate_full_proposal.py::_extract_scope_items`:
+
+1. `**Out Scope**` → `**Out of Scope**` (was matching without `of`, breaking all bold-line format improvements).
+2. Heading format: only matched `**In Scope**:` bold-line, not `### In Scope` heading — affected all historical proposals using heading format.
+3. Exact match (`==`) → startswith: `### Out of Scope（详见 spec §13）` failed exact match because of trailing annotation.
+
+### approve-proposal-yaml-schema (align with openspec CLI v1.7+)
+
+Fixes `.openspec.yaml` schema field for `guide-design approve_proposal.sh`: was `name + created_by` (unrecognized by openspec CLI), now `schema: spec-driven + created: <date> + name: <name>` (matches openspec CLI v1.7+ format). Future approved proposals no longer require manual schema fix.
+
 ### add-phase-role-model (ADR-0028: 阶段技能角色模型)
 
 Formalizes role metadata for the 4 phase skills via structured `role:` frontmatter field:

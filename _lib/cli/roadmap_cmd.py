@@ -34,6 +34,12 @@ def _help_text() -> str:
     STRICT_ROADMAP_REFS_GATE=yes  升级 WARNING→CRITICAL
     SKIP_ROADMAP_REFS_GATE=yes    跳过校验
 
+  add-feature           创建 feature fragment (rddf roadmap add-feature <name> ...)
+    --phase-refs p1,p2,...   Required. Comma-separated phase IDs
+    --theme "<text>"         Required. Single-line 主题
+    --status a|d|x           Optional. Default: active
+    --force                  Optional. Overwrite existing feat-<name>.md
+
 使用 env var:
   SPEC_WORKFLOW_ROADMAP_FRAGMENTS_DIR 覆盖默认 .rddf/roadmap
 """
@@ -67,6 +73,7 @@ def cmd_roadmap(args: list[str]) -> int:
         / "roadmap"
         / "scripts"
         / "roadmap_validate_fragments.sh",
+        "add-feature": project_root / "skills" / "roadmap" / "scripts" / "roadmap_add_feature.sh",
     }
 
     if subcommand not in _SUBCOMMAND_MAP:

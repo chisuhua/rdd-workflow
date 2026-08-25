@@ -826,3 +826,110 @@ def aggregate_phase_progress(fragments_dir: str) -> Tuple[int, int]:
     phases = [f for f in load_fragments(fragments_dir) if f.kind == "phase"]
     active = sum(1 for f in phases if f.status == "active")
     return (active, len(phases))
+
+
+def add_feature(
+    name: str,
+    phase_refs: list,
+    theme: str,
+    status: str = "active",
+    force: bool = False,
+    project_root: str = ".",
+) -> dict:
+    """Create a feature fragment file and refresh AUTO-INDEX.
+
+    Args:
+        name: kebab-case feature id (CLI auto-prepends 'feat-').
+        phase_refs: list of phase IDs that this feature spans.
+        theme: single-line 主题 (CJK ok).
+        status: 'active' | 'done' | 'archived' (default: 'active').
+        force: overwrite existing feat-<name>.md (default: False).
+        project_root: absolute path to project root.
+
+    Returns:
+        Dict with keys: path (str), main_doc_refreshed (bool).
+
+    Raises:
+        ValueError: if name is not kebab-case, phase_refs is empty,
+            theme is empty/multiline, status is invalid, or any phase_ref is unknown.
+        FileExistsError: if feat-<name>.md exists and force=False.
+    """
+    import re
+    from pathlib import Path
+
+    if not re.match(r"^[a-z][a-z0-9-]*$", name):
+        raise ValueError(f"name must be kebab-case, got: {name!r}")
+    if not phase_refs:
+        raise ValueError("phase_refs must be non-empty")
+    if not theme or "\n" in theme:
+        raise ValueError(f"theme must be non-empty single-line, got: {theme!r}")
+    if status not in ("active", "done", "archived"):
+        raise ValueError(f"status must be active/done/archived, got: {status!r}")
+
+    fragment_id = f"feat-{name}"
+    root = Path(project_root)
+    fragments_dir = root / ".rddf" / "roadmap"
+    features_dir = fragments_dir / "features"
+    fragment_path = features_dir / f"{fragment_id}.md"
+    main_doc = root / ".rddf" / "roadmap.md"
+
+    if fragment_path.exists() and not force:
+        raise FileExistsError(
+            f"{fragment_path.name} already exists; use force=True to overwrite"
+        )
+
+    active_phases = list_active_fragments(str(fragments_dir), kind="phase")
+    active_phase_ids = {p.id for p in active_phases}
+    invalid = [ref for ref in phase_refs if ref not in active_phase_ids]
+    if invalid:
+        raise ValueError(f"unknown phase_refs: {invalid}")
+
+    phase_refs_yaml = "[" + ", ".join(phase_refs) + "]"
+    frontmatter = (
+        f"---\n"
+        f"id: {fragment_id}\n"
+        f"kind: feature\n"
+        f"status: {status}\n"
+        f"phase_refs: {phase_refs_yaml}\n"
+        f"主题: {theme}\n"
+        f"---\n"
+    )
+
+    phase_sections = "\n".join(
+        f"### {ref}\n<TBD - 此阶段内的子任务清单>\n" for ref in phase_refs
+    )
+    body = (
+        f"\n## 概述\n"
+        f"<TBD - 用户后续编辑>\n\n"
+        f"## 跨阶段拆分\n\n"
+        f"{phase_sections}\n\n"
+        f"## 验收标准\n"
+        f"<TBD - markdown checkbox 列表, design/plan 阶段消费>\n"
+    )
+
+    import os
+    import tempfile
+
+    features_dir.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(
+        dir=str(features_dir),
+        prefix=f".{fragment_id}.tmp.",
+        suffix=".md",
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(frontmatter + body)
+        os.replace(tmp_path, fragment_path)
+    except OSError:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        raise
+
+    try:
+        render_fragment_index(str(fragments_dir), str(main_doc))
+    except Exception:
+        if fragment_path.exists():
+            fragment_path.unlink()
+        raise
+
+    return {"path": str(fragment_path), "main_doc_refreshed": True}

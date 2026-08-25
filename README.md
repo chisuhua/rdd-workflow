@@ -319,6 +319,18 @@ Reset 命令：`rm .rddf/state/.populate-state.json`
 
 `populate-roadmap-from-arch` skill 已 v1.2 标记 deprecated（thin wrapper），新项目直接用 `skill_use("guide-arch")`。
 
+### Roadmap feature fragments (v2.2+)
+
+Create a feature fragment spanning multiple phases via the `rddf roadmap add-feature` primitive:
+
+```bash
+rddf roadmap add-feature auth-v2 \
+    --phase-refs phase-2,phase-3 \
+    --theme "RBAC 权限模型"
+```
+
+This creates `.rddf/roadmap/features/feat-auth-v2.md` with valid frontmatter + 3-section body skeleton, and refreshes `.rddf/roadmap.md` AUTO-INDEX atomically. Closes the operation gap from `add-hierarchical-roadmap-structure` (scenario 3). Reachable from `guide-arch` Phase 4 menu option 5. See `skills/roadmap/SKILL.md` for full CLI reference.
+
 ## 目录结构
 
 ```

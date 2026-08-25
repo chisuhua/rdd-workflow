@@ -478,6 +478,162 @@ def test_advance_phase_skips_subphases_for_next_phase(tmp_roadmap_repo, capsys):
 
     rc = roadmap_state.advance_phase(roadmap_file, state_file)
     out = capsys.readouterr().out
-    # Should advance to phase-4 (skipping phase-3.1 sub-phase)
     assert rc == 0
     assert "phase-4" in out
+
+
+def _make_phase_fragment(tmp_path, phase_id="phase-1", theme="test theme"):
+    (tmp_path / ".rddf" / "roadmap" / "phases").mkdir(parents=True)
+    (tmp_path / ".rddf" / "roadmap.md").write_text("# Roadmap\n\n## Phase Skeleton\n\n")
+    phase_file = tmp_path / ".rddf" / "roadmap" / "phases" / f"{phase_id}.md"
+    phase_file.write_text(
+        f"---\n"
+        f"id: {phase_id}\n"
+        f"kind: phase\n"
+        f"status: active\n"
+        f"phase_refs: []\n"
+        f"主题: {theme}\n"
+        f"---\n\n"
+        f"# {phase_id}\n"
+    )
+
+
+def test_add_feature_creates_file_with_frontmatter(tmp_path):
+    _make_phase_fragment(tmp_path)
+
+    result = roadmap_state.add_feature(
+        name="auth-v2",
+        phase_refs=["phase-1"],
+        theme="RBAC 权限模型",
+        status="active",
+        force=False,
+        project_root=str(tmp_path),
+    )
+
+    fragment_path = tmp_path / ".rddf" / "roadmap" / "features" / "feat-auth-v2.md"
+    assert fragment_path.exists()
+    content = fragment_path.read_text(encoding="utf-8")
+    assert "id: feat-auth-v2" in content
+    assert "kind: feature" in content
+    assert "status: active" in content
+    assert "phase_refs: [phase-1]" in content
+    assert "主题: RBAC 权限模型" in content
+    assert "## 概述" in content
+    assert "## 跨阶段拆分" in content
+    assert "### phase-1" in content
+    assert "## 验收标准" in content
+    assert result["path"] == str(fragment_path)
+    assert result["main_doc_refreshed"] is True
+
+
+def test_add_feature_mkdir_features_dir(tmp_path):
+    _make_phase_fragment(tmp_path)
+    assert not (tmp_path / ".rddf" / "roadmap" / "features").exists()
+
+    roadmap_state.add_feature(
+        name="auto-mkdir",
+        phase_refs=["phase-1"],
+        theme="test",
+        project_root=str(tmp_path),
+    )
+
+    assert (tmp_path / ".rddf" / "roadmap" / "features").exists()
+    assert (tmp_path / ".rddf" / "roadmap" / "features" / "feat-auto-mkdir.md").exists()
+
+
+def test_add_feature_validates_phase_refs(tmp_path):
+    _make_phase_fragment(tmp_path)
+
+    with pytest.raises(ValueError, match="unknown phase_refs"):
+        roadmap_state.add_feature(
+            name="bad-refs",
+            phase_refs=["phase-99"],
+            theme="test",
+            project_root=str(tmp_path),
+        )
+    assert not (tmp_path / ".rddf" / "roadmap" / "features" / "feat-bad-refs.md").exists()
+
+    with pytest.raises(ValueError, match="phase_refs must be non-empty"):
+        roadmap_state.add_feature(
+            name="empty-refs",
+            phase_refs=[],
+            theme="test",
+            project_root=str(tmp_path),
+        )
+
+
+def test_add_feature_rejects_duplicate_id(tmp_path):
+    _make_phase_fragment(tmp_path)
+
+    roadmap_state.add_feature(
+        name="dup-test",
+        phase_refs=["phase-1"],
+        theme="first",
+        project_root=str(tmp_path),
+    )
+    fragment_path = tmp_path / ".rddf" / "roadmap" / "features" / "feat-dup-test.md"
+    original_content = fragment_path.read_text()
+    assert "first" in original_content
+
+    with pytest.raises(FileExistsError, match="already exists"):
+        roadmap_state.add_feature(
+            name="dup-test",
+            phase_refs=["phase-1"],
+            theme="second-attempt",
+            project_root=str(tmp_path),
+        )
+    assert fragment_path.read_text() == original_content
+
+
+def test_add_feature_force_regenerates(tmp_path):
+    _make_phase_fragment(tmp_path)
+
+    roadmap_state.add_feature(
+        name="force-test",
+        phase_refs=["phase-1"],
+        theme="first theme",
+        status="active",
+        project_root=str(tmp_path),
+    )
+
+    fragment_path = tmp_path / ".rddf" / "roadmap" / "features" / "feat-force-test.md"
+    edited = fragment_path.read_text().replace("<TBD - 用户后续编辑>", "USER EDIT")
+    fragment_path.write_text(edited)
+    assert "USER EDIT" in fragment_path.read_text()
+
+    roadmap_state.add_feature(
+        name="force-test",
+        phase_refs=["phase-1"],
+        theme="second theme",
+        status="done",
+        force=True,
+        project_root=str(tmp_path),
+    )
+
+    new_content = fragment_path.read_text()
+    assert "second theme" in new_content
+    assert "status: done" in new_content
+    assert "USER EDIT" not in new_content
+
+
+def test_add_feature_renders_auto_index(tmp_path):
+    _make_phase_fragment(tmp_path)
+    main_doc = tmp_path / ".rddf" / "roadmap.md"
+
+    roadmap_state.add_feature(
+        name="index-test",
+        phase_refs=["phase-1"],
+        theme="indexed",
+        project_root=str(tmp_path),
+    )
+
+    content = main_doc.read_text()
+    assert "<!-- AUTO-INDEX -->" in content
+    assert "### Features" in content
+    assert "feat-index-test" in content
+
+
+def test_load_fragments_missing_subdir_tolerance(tmp_path):
+    (tmp_path / ".rddf" / "roadmap").mkdir(parents=True)
+    result = roadmap_state.load_fragments(str(tmp_path / ".rddf" / "roadmap"))
+    assert result == []

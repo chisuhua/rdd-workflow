@@ -453,6 +453,61 @@ SKIP_ROADMAP_REFS_GATE=yes rddf roadmap validate-fragments    # 跳过
 
 ---
 
+## 命令：add-feature — 创建 feature fragment
+
+创建 `.rddf/roadmap/features/feat-<name>.md` 文件并刷新 `.rddf/roadmap.md` AUTO-INDEX。
+
+### 用法
+
+```bash
+rddf roadmap add-feature <name> --phase-refs <p1,p2,...> --theme "<text>" [--status a|d|x] [--force]
+```
+
+### 选项
+
+| 选项 | 必填 | 说明 |
+|------|------|------|
+| `--phase-refs` | 是 | 逗号分隔的 phase IDs；每个 ID 必须存在于 `list_active_fragments(kind="phase")` |
+| `--theme` | 是 | 单行主题（中文短句，≤ 50 字推荐） |
+| `--status` | 否 | `a` (active) / `d` (done) / `x` (archived)；默认 `a` |
+| `--force` | 否 | 覆盖已存在的 `feat-<name>.md`（不 merge，销毁旧 body） |
+
+### 示例
+
+```bash
+# 最小化：创建跨 phase-2 和 phase-3 的 active feature
+rddf roadmap add-feature auth-v2 \
+    --phase-refs phase-2,phase-3 \
+    --theme "RBAC 权限模型"
+
+# 创建时标 done（罕见）
+rddf roadmap add-feature deprecate-legacy-auth \
+    --phase-refs phase-3 \
+    --theme "下线旧版认证" \
+    --status d
+
+# 覆盖已有 fragment（销毁 body 编辑）
+rddf roadmap add-feature auth-v2 \
+    --phase-refs phase-2,phase-3 \
+    --theme "RBAC 权限模型 (v2 重生)" \
+    --force
+```
+
+### 退出码
+
+| Code | 含义 |
+|------|------|
+| 0 | 成功 |
+| 1 | 校验错误（phase_refs 不存在 / 重复无 --force / name 非 kebab-case / theme 为空） |
+| 2 | 使用错误（缺少必填参数 / 非法 flag） |
+
+### 底层实现
+
+`_lib/roadmap_state.py::add_feature`（Python）+ `skills/roadmap/scripts/roadmap_add_feature.sh`（shell wrapper）。
+该 primitive 是 `add-hierarchical-roadmap-structure`（shipped 2026-08-20）"关键场景 3"的操作入口补全。
+
+---
+
 ## 嵌套阶段语法
 
 **Sub-phase** (如 `phase-3.1`) 通过 promote 创建：从 `phases/phase-3.md` 内的 section 拆出为独立 `phases/phase-3.1.md`，frontmatter 含 `id: phase-3.1` + `kind: phase` + `phase_refs: [phase-3]`。R4 严格化后只允许 `phase-N` 或 `phase-N.M`（单层 sub-phase），禁止 `phase-1-2` 嵌套命名。
