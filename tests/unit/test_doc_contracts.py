@@ -54,10 +54,16 @@ def test_general_spec_consumers_drop_guide_spec_add_arch_plan() -> None:
 
 
 def _count_skill_files() -> int:
-    """Count skill .md files: top-level INSTALL.md + per-skill SKILL.md in subdirs."""
-    top = list((REPO_ROOT / "skills").glob("*.md"))
+    """Count sub-skill SKILL.md files only.
+
+    INSTALL.md is the installer, not a sub-skill — excluded from the
+    count so this matches what INSTALL.md ("24 个子技能") and
+    package.json (`skills: [...24 entries]`) claim. The previous
+    version returned `len(top) + len(sub)` which inflated the count by
+    1 and caused 3 baseline failures (fix-skill-count-and-table-schema).
+    """
     sub = list((REPO_ROOT / "skills").glob("*/SKILL.md"))
-    return len(top) + len(sub)
+    return len(sub)
 
 
 def test_install_description_skill_count_matches_disk() -> None:

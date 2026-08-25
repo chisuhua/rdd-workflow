@@ -96,24 +96,24 @@
 
 
 ## 已实施
-| [clean-stale-plan-handoff-on-ship-done](.rddf/improvements/clean-stale-plan-handoff-on-ship-done.md) | P1 | 2026-08-25 |
-| [clean-adr-0027-section-5-supersede](.rddf/improvements/clean-adr-0027-section-5-supersede.md) | P2 | 2026-08-25 |
-| [fix-review-debt-recorded-gate](.rddf/improvements/fix-review-debt-recorded-gate.md) | P2 | 2026-08-25 |
-| [fix-post-flow-classifier-ordering](.rddf/improvements/fix-post-flow-classifier-ordering.md) | P2 | 2026-08-25 |
-| [fix-adr-0027-issue-file-frontmatter](.rddf/improvements/fix-adr-0027-issue-file-frontmatter.md) | P1 | 2026-08-24 |
-| [fix-adr-0027-close-hook-dead-code](.rddf/improvements/fix-adr-0027-close-hook-dead-code.md) | P1 | 2026-08-24 |
-| [fix-adr-0027-cli-optin-gate](.rddf/improvements/fix-adr-0027-cli-optin-gate.md) | P0 | 2026-08-24 |
-| [add-cli-coverage-rdd-doctor-roadmap-rdd-hub](.rddf/improvements/add-cli-coverage-rdd-doctor-roadmap-rdd-hub.md) | P1 | 2026-08-20 |
-| [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 |
+| [clean-stale-plan-handoff-on-ship-done](.rddf/improvements/clean-stale-plan-handoff-on-ship-done.md) | P1 | 2026-08-25 | 已实施 |
+| [clean-adr-0027-section-5-supersede](.rddf/improvements/clean-adr-0027-section-5-supersede.md) | P2 | 2026-08-25 | 已实施 |
+| [fix-review-debt-recorded-gate](.rddf/improvements/fix-review-debt-recorded-gate.md) | P2 | 2026-08-25 | 已实施 |
+| [fix-post-flow-classifier-ordering](.rddf/improvements/fix-post-flow-classifier-ordering.md) | P2 | 2026-08-25 | 已实施 |
+| [fix-adr-0027-issue-file-frontmatter](.rddf/improvements/fix-adr-0027-issue-file-frontmatter.md) | P1 | 2026-08-24 | 已实施 |
+| [fix-adr-0027-close-hook-dead-code](.rddf/improvements/fix-adr-0027-close-hook-dead-code.md) | P1 | 2026-08-24 | 已实施 |
+| [fix-adr-0027-cli-optin-gate](.rddf/improvements/fix-adr-0027-cli-optin-gate.md) | P0 | 2026-08-24 | 已实施 |
+| [add-cli-coverage-rdd-doctor-roadmap-rdd-hub](.rddf/improvements/add-cli-coverage-rdd-doctor-roadmap-rdd-hub.md) | P1 | 2026-08-20 | 已实施 |
+| [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
-| [fix-discover-ship-changes-needs-planning-fallback](.rddf/improvements/fix-discover-ship-changes-needs-planning-fallback.md) | P1 | 2026-08-21 |
-| [move-populate-roadmap-into-guide-arch](.rddf/improvements/move-populate-roadmap-into-guide-arch.md) | P2 | 2026-08-21 |
-| [extend-populate-roadmap-with-code-verification](.rddf/improvements/extend-populate-roadmap-with-code-verification.md) | P1 | 2026-08-21 |
-| [add-auto-rfc-from-approve](.rddf/improvements/add-auto-rfc-from-approve.md) | P0 | 2026-08-19 |
-| [add-rfc-interview-flow](.rddf/improvements/add-rfc-interview-flow.md) | P0 | 2026-08-19 |
-| [add-rfc-draft-template](.rddf/improvements/add-rfc-draft-template.md) | P0 | 2026-08-19 |
-| [add-cross-repo-impact-detection](.rddf/improvements/add-cross-repo-impact-detection.md) | P0 | 2026-08-19 |
+| [fix-discover-ship-changes-needs-planning-fallback](.rddf/improvements/fix-discover-ship-changes-needs-planning-fallback.md) | P1 | 2026-08-21 | 已实施 |
+| [move-populate-roadmap-into-guide-arch](.rddf/improvements/move-populate-roadmap-into-guide-arch.md) | P2 | 2026-08-21 | 已实施 |
+| [extend-populate-roadmap-with-code-verification](.rddf/improvements/extend-populate-roadmap-with-code-verification.md) | P1 | 2026-08-21 | 已实施 |
+| [add-auto-rfc-from-approve](.rddf/improvements/add-auto-rfc-from-approve.md) | P0 | 2026-08-19 | 已实施 |
+| [add-rfc-interview-flow](.rddf/improvements/add-rfc-interview-flow.md) | P0 | 2026-08-19 | 已实施 |
+| [add-rfc-draft-template](.rddf/improvements/add-rfc-draft-template.md) | P0 | 2026-08-19 | 已实施 |
+| [add-cross-repo-impact-detection](.rddf/improvements/add-cross-repo-impact-detection.md) | P0 | 2026-08-19 | 已实施 |
 | [fix-adr-0031-safety-gate-substantiation](.rddf/improvements/fix-adr-0031-safety-gate-substantiation.md) | P0 | 2026-08-18 | 已实施 |
 | [fix-orphan-hub-gates-wiring](.rddf/improvements/fix-orphan-hub-gates-wiring.md) | P1 | 2026-08-18 | 已实施 |
 | [fix-cli-routing-cross-repo-commands](.rddf/improvements/fix-cli-routing-cross-repo-commands.md) | P1 | 2026-08-18 | 已实施 |
