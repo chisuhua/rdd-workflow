@@ -9,4 +9,3 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [submodule-aware-project-root](.rddf/improvements/submodule-aware-project-root.md) | P0 | 用户实战 2026-08-25 — `rddf dashboard` 在 git submodule 内解析到 superproject 的 `.git/modules/<name>` 路径而非 submodule 自身根 | 2026-08-25 | 待讨论 |
