@@ -102,44 +102,49 @@ bats tests/integration/test_global_install_external_project.bats   # 11/11 pass
 ## 关键目录
 
 ```
-skills/                       # Markdown skills (14 SKILL.md + INSTALL.md) + per-skill scripts/
-  INSTALL.md                  # 第一入口 (v1.1.0)
-  guide/SKILL.md              # 推荐器
-  guide-arch/SKILL.md         # arch 阶段 (v2.0.8 Phase 2 重组)
-  guide-design/SKILL.md       # design 阶段 (v2.1 新增)
-  guide-plan/SKILL.md         # plan 阶段
-  guide-ship/SKILL.md         # ship 阶段 (v2.0)
+_lib/                          # ⭐ 真实实现层 (commit c3a90fe "flatten package layout")
+  state.sh / worktree.sh / archive.sh / status_helpers.sh / discover-arch-artifacts.sh / env_checks.sh / parallel_throttle.sh / resolve_skill_name.sh / sessions_count.sh / ship_execution_mode.sh / ship_parallel.sh / skill_root.sh / wave_scheduler_hooks.sh / discover_ship_changes.sh / discover_roadmap_fragments.sh / post_archive_cleanup.sh / check_project_setup.sh / orchestrator_entry.sh / post_flow_wrap.sh  # bash 工具 (~19 files)
+  cli/                         # 28 个 `rddf` 子命令 (ac_verify/archive/cleanup/contract_check/dashboard/deps/discover_ship_changes/doctor/feature/guide/init/issue/iteration_strict/l2_trend/migrate_improvements/monitor/orchestrate/rdd_hub_bootstrap/report_issue/roadmap/sessions/status/sync_hub/validate/version/watch_hub/archive_sync 等)
+  gate.py / roadmap_state.py / config.py / session.py / session_base.py / session_manager.py / session_stats.py  # 跨切核心模块 (会话 + 状态)
+  arch_quality_gate.py / change_alignment.py / dependency_scheduler.py / event_context.py / rate_limiter.py / roadmap_sprint.py / trigger_engine.py / trigger_registry.py / triggers.py / validate_delta_targets.py / validate_report.py  # 其余顶层模块
+  adr_catalog.py / cleanup_plan_handoff.py / contract_diff.py / cross_repo_audit.py / cross_repo_deps.py / cross_repo_deps_cache.py / cross_repo_gate.py / cross_repo_state.py / gh_hub_client.py / hub_issue.py  # P1-1a 迁移的 10 个跨 repo 模块
+  core/                        # 运行时内核 (6 .py): event_log, event_types, state_vector, defaults, lock, atomic_write
+  loop/                        # v2.0 loop 引擎 (15 .py): actions, agents, design_phase, detectors, event_queue, flow_customizer, flowchart, human_nodes, interaction_modes, loop_state, memory, plugin_loader, sanitizer, step_pipeline, tribunal
+  iteration/                   # iteration 视图管理 (render, schema, store, repair, l2, archive_sidecar, post_archive)
+  schedulers/                  # 调度器 (4 .py): cron_scheduler, fs_watcher, git_hook, webhook_receiver
+  schemas/                     # JSON schema (19 files): arch_handoff, config, deps_analysis, design_handoff, feature_view, iteration, plan_handoff, sessions, state_vector, trigger 等
+  loop_engine.py               # v2.0 Loop 引擎入口（向后兼容 shim 实际实现在 _lib/loop_engine.py）
+skills/                        # Markdown skills (14 SKILL.md + INSTALL.md) + per-skill scripts/
+  INSTALL.md                   # 第一入口 (v1.1.0)
+  guide/SKILL.md               # 推荐器
+  guide-arch/SKILL.md          # arch 阶段 (v2.0.8 Phase 2 重组)
+  guide-design/SKILL.md        # design 阶段 (v2.1 新增)
+  guide-plan/SKILL.md          # plan 阶段
+  guide-ship/SKILL.md          # ship 阶段 (v2.0)
   propose/SKILL.md / execute/SKILL.md / status/SKILL.md / roadmap/SKILL.md / deps/SKILL.md / feature/SKILL.md / rddf-session/SKILL.md  # 子技能
   rdd-workflow-writing-plans/SKILL.md  # 内置 TDD 5 步 plan 生成器
-  loop_engine.py              # v2.0 Loop 引擎入口（向后兼容 shim，实际实现在 _lib/loop_engine.py）
-  _lib/                       # 共享 bash + Python (v2.0.8; Phase 3 重组)
-    state.sh / worktree.sh / archive.sh / status_helpers.sh / discover-arch-artifacts.sh  # bash 工具 (5 files)
-    gate.py / roadmap_state.py / config.py / session.py / session_base.py / session_manager.py  # 跨切核心模块
-    arch_quality_gate.py / change_alignment.py / dependency_scheduler.py / event_context.py / rate_limiter.py / roadmap_sprint.py / trigger_engine.py / trigger_registry.py / triggers.py / validate_delta_targets.py / validate_report.py  # 其余顶层模块 (13 .py)
-    core/                     # 运行时内核 (6 .py): event_log, event_types, state_vector, defaults, lock, atomic_write
-    loop/                     # v2.0 loop 引擎 (16 个 .py, 含 __init__): actions, agents, design_phase, detectors, event_queue, flow_customizer, flowchart, human_nodes, interaction_modes, loop_state, memory, plugin_loader, sanitizer, step_pipeline, tribunal
-    iteration/                # iteration 视图管理 (render, schema, store)
-    schedulers/               # 调度器 (4 .py): cron_scheduler, fs_watcher, git_hook, webhook_receiver
-    schemas/                  # JSON schema (8 files): arch_handoff, config, deps_analysis, feature_view, iteration, sessions, state_vector, trigger
-    plugins/                  # 插件加载器 (README.md)
-  guide-arch/scripts/         # arch 阶段辅助脚本 (arch_env_check, write_arch_handoff, arch_gap_analysis 等)
-  guide-plan/scripts/         # plan 阶段辅助脚本 (plan_intake, plan_done_gate, plan_deps_candidates 等)
-  guide-ship/scripts/         # ship 阶段辅助脚本 (ship_plan, ship_review, ship_archive, ship_monitor 等)
-  execute/scripts/            # execute 辅助脚本 (select_worktree, tasks_writeback, execute_step7 等)
-  deps/scripts/               # deps 辅助脚本 (deps_output, deps_render_report 等)
-  propose/scripts/            # propose 辅助脚本 (propose_change 等)
-  feature/scripts/            # feature 辅助脚本 (feature_summary, feature_graph 等)
-  status/scripts/             # status 辅助脚本 (status_render_mode_a 等)
+  loop_engine.py               # v2.0 Loop 引擎入口（向后兼容 shim）
+  _lib/                        # ⭐ shim 层 (post-c3a90fe flatten layout, 2026-08-25 P1-1b identity-merge)
+    *.sh (15 个)               # 6 行 shim: 本地 `${_PARENT_DIR}/_lib/X.sh` 优先,降级到 `~/.agents/skills/_lib/X.sh`
+    core/loop/schedulers/...   # 4 行 __init__.py path-widening shim (向后兼容历史 import)
+    adr_catalog.py ... hub_issue.py  # 10 个 P1-1a 迁移模块的 identity-merge shim (做 `sys.modules[__name__] = _lib.X`)
+  guide-arch/scripts/          # arch 阶段辅助脚本 (arch_env_check, write_arch_handoff, arch_gap_analysis 等)
+  guide-plan/scripts/          # plan 阶段辅助脚本 (plan_intake, plan_done_gate, plan_deps_candidates 等)
+  guide-ship/scripts/          # ship 阶段辅助脚本 (ship_plan, ship_review, ship_archive, ship_monitor 等)
+  execute/scripts/             # execute 辅助脚本 (select_worktree, tasks_writeback, execute_step7 等)
+  deps/scripts/                # deps 辅助脚本 (deps_output, deps_render_report 等)
+  propose/scripts/             # propose 辅助脚本 (propose_change 等)
+  feature/scripts/             # feature 辅助脚本 (feature_summary, feature_graph 等)
+  status/scripts/              # status 辅助脚本 (status_render_mode_a 等)
 tests/
   test_helper.bash            # load_lib 解析器 + 断言辅助
-  conftest.py                 # 把项目根加进 sys.path (让 `import skills._lib.* / core.* / loop.*` 可解析)
-  smoke.bats                  # 基础设施冒烟 (v2.0.3 起: 动态 glob + v1.x regression, 覆盖全部 13 skill)
-  unit/                       # 57 个 Python 单元测试 (含 v2.0.1 新增: test_iteration, test_roadmap_sprint, test_deps_output, test_rddf_session, test_arch_handoff_schema, test_discover_arch_artifacts, test_arch_quality_gate, test_change_alignment, test_iteration_concurrency 等)
-  integration/                # 117 个集成测试 (107 .bats + 10 .py; 含 v2.0.1 新增: test_iteration_lifecycle, test_iteration_archive_hook,
-                             #                                                              test_guide_ship_iteration_hook, test_deps_analysis)
+  conftest.py                 # 把项目根加进 sys.path (P1-1b: `skills._lib` 路由到 `_lib` + 10 个身份合并 shim)
+  smoke.bats                  # 基础设施冒烟 (v2.0.3 起: 动态 glob + v1.x regression, 覆盖全部 skill)
+  unit/                       # ~190 个 Python 单元测试文件 (~1243 测试函数, 含 P1-1b 新增 test_p1_1_identity_merge)
+  integration/                # ~264 bats + 15 py 集成测试 (~1662 bats 测试用例)
   _lib/                       # bash helpers (skill.bash, deps-subagent.bash 等)
-docs/adr/                     # ADR-0000 模板 + ADR-0001~0022 (22 个唯一编号, 23 个实体文件; v2.0.2 重编号 ADR-0013 incremental-skeleton-planning → ADR-0020)
-                             # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment / ADR-0022 manual_deps 字段
+docs/adr/                     # ADR-0000 模板 + ADR-0001~0033 (33 个唯一编号, 34 个实体文件; v2.0.2 重编号 ADR-0013 → ADR-0020; v2.0.8+ 持续追加)
+                             # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0016 arch 发现契约 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment / ADR-0022 manual_deps 字段 / ADR-0024 deps-driven execution mode / ADR-0028 role-model / ADR-0030 hub-spoke / ADR-0033 submodule-aware
 docs/change-quality-guide.md  # change 质量等级指南 (Bronze/Silver/Gold); 阈值与 Plan B `propose_quality_check.py` 对齐, 反模式以 ADR-0019 为准
 openspec/                     # OpenSpec CLI 数据 (随项目走)
   changes/                    # active changes + archive/
@@ -241,7 +246,8 @@ Every workflow session generated by `guide-arch`/`guide-plan`/`guide-ship` MUST 
 - 状态生命周期: `待定 → 已采纳 → 已弃用 / 已替代为 ADR-NNNN`
 - 引用格式: `ADR-NNN §N.M` (例如 `ADR-0003 §2.1`)
 - 模板: `docs/adr/ADR-0000-template.md` (不要给真实 ADR 分配 0000)
-- 当前最新编号: ADR-0022 (`docs/adr/` 取最大值)
+- 当前最新编号: **ADR-0033** (submodule-aware project root resolution, 2026-08-25; `docs/adr/` 取最大值)
+- **架构指针 (P1-2 sync, 2026-08-25)**: 较新的关键 ADR 包括 ADR-0023 (rename spec-workflow→rdd-workflow)、ADR-0024 (deps-driven execution mode)、ADR-0025 (design proposal creation)、ADR-0028 (role model per phase)、ADR-0030 (hub-and-spoke federation)、ADR-0033 (submodule-aware)。任何 agent 在做架构决策前应至少扫读这三篇。
 
 ### 测试约定
 
@@ -554,6 +560,7 @@ Flags: `--json` (write `.rddf/state/.doctor-report.json`), `--category <name>` (
 22. **roadmap 增量 state 隔离**: 切分支/切 worktree 后第一次 arch-done 自动 fallback full (per-worktree `.rddf/state/` 隔离；state 绑 codebase_commit)
 23. **codegraph signal 必须 env-var 注入**: Python subprocess 上下文无法访问 MCP session — populate_lib 内部**禁止**调 MCP；agent 侧通过 `RDDF_CODEGRAPH_FINGERPRINT` env var 注入 signal
 24. **reset roadmap 增量 state**: `rm .rddf/state/.populate-state.json` (无 baseline → 下次 full)；用于分支切换残留、codegraph 索引陈旧、人工强制全量
+25. **`_lib/` vs `skills/_lib/` 双路由 (P1-1b, 2026-08-25)**: 真实代码在仓库根 `_lib/`；`skills/_lib/` 是 shim 层 (15 个 6 行 bash shim 优先本地路径、10 个 identity-merge Python shim、若干 path-widening `__init__.py`)。`import skills._lib.X is _lib.X` 为 True（10 个迁移模块已锁定，详见 `tests/unit/test_p1_1_identity_merge.py`）；其余子模块身份仍分裂（已记入 P2 follow-up）。新增代码 **必须 import `_lib.X`** (canonical, 真正实现)，历史 `skills._lib.X` 调用继续兼容。
 
 ## 前置条件
 

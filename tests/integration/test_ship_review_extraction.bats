@@ -89,32 +89,78 @@ load ../test_helper
   command -v full_regression_gate
 }
 
-@test "full_regression_gate skips when build directory is missing" {
+@test "full_regression_gate fails closed when neither test.sh nor build/ exists (vacuous-gate fix)" {
+  # FIX (2026-08-25): previous behavior silently returned 0 when build/ missing
+  # — a vacuous gate giving false confidence. Lock new fail-closed policy.
   TEST_REPO=$(mktemp -d)
   cd "$TEST_REPO"
   source "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh"
   run full_regression_gate "$TEST_REPO"
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"无构建目录"* ]]
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"fail-closed"* ]]
+  [[ "$output" == *"SKIP_REGRESSION=1"* ]]
   rm -rf "$TEST_REPO"
 }
 
-@test "full_regression_gate fails with 3 options when ctest fails" {
+@test "full_regression_gate invokes test.sh when present (happy path)" {
+  TEST_REPO=$(mktemp -d)
+  cd "$TEST_REPO"
+  cat > "$TEST_REPO/test.sh" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+  chmod +x "$TEST_REPO/test.sh"
+  source "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh"
+  run full_regression_gate "$TEST_REPO"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"test.sh --full --regression"* ]]
+  [[ "$output" == *"全量回归通过"* ]]
+  rm -rf "$TEST_REPO"
+}
+
+@test "full_regression_gate reports test.sh failure with 3 options" {
+  TEST_REPO=$(mktemp -d)
+  cd "$TEST_REPO"
+  cat > "$TEST_REPO/test.sh" <<'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+  chmod +x "$TEST_REPO/test.sh"
+  source "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh"
+  run full_regression_gate "$TEST_REPO"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"全量回归失败"* ]]
+  [[ "$output" == *"1. 返回 execute 修复问题"* ]]
+  [[ "$output" == *"2. 创建 debt change 跟踪"* ]]
+  [[ "$output" == *"3. SKIP_REGRESSION=1 强制跳过"* ]]
+  rm -rf "$TEST_REPO"
+}
+
+@test "full_regression_gate falls back to ctest when test.sh absent and build/ exists" {
+  # Legacy CMake-project support: if no test.sh but build/ + ctest available,
+  # still use ctest (existing rdd-workflow behavior for CMake consumers).
   TEST_REPO=$(mktemp -d)
   cd "$TEST_REPO"
   mkdir -p "$TEST_REPO/build"
   mkdir -p "$TEST_REPO/bin"
   cat > "$TEST_REPO/bin/ctest" <<'EOF'
 #!/usr/bin/env bash
-exit 1
+exit 0
 EOF
   chmod +x "$TEST_REPO/bin/ctest"
   PATH="$TEST_REPO/bin:$PATH" source "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh"
   PATH="$TEST_REPO/bin:$PATH" run full_regression_gate "$TEST_REPO"
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"全量回归失败"* ]]
-  [[ "$output" == *"1. 返回 execute 修复问题"* ]]
-  [[ "$output" == *"2. 创建 debt change 跟踪"* ]]
-  [[ "$output" == *"3. SKIP_REGRESSION=1 强制跳过"* ]]
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"ctest"* ]]
+  rm -rf "$TEST_REPO"
+}
+
+@test "full_regression_gate honors SKIP_REGRESSION=1" {
+  TEST_REPO=$(mktemp -d)
+  cd "$TEST_REPO"
+  source "$REPO_ROOT/skills/guide-ship/scripts/ship_review.sh"
+  SKIP_REGRESSION=1 run full_regression_gate "$TEST_REPO"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"SKIP_REGRESSION=1"* ]]
   rm -rf "$TEST_REPO"
 }

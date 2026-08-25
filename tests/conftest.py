@@ -45,21 +45,26 @@ for _dash, _us in _DASH_SKILLS:
             _mod.__path__ = [os.path.join(_PROJECT_ROOT_STR, "skills", _dash, _level_dir) if _level_dir else os.path.join(_PROJECT_ROOT_STR, "skills", _dash)]
             sys.modules[_mod_name] = _mod
 
-# skills._lib submodule: backward-compat alias for the top-level _lib/ package.
-# Per `fix(init): flatten package layout` (commit c3a90fe), the package was
-# relocated from `skills/_lib/` to the repo-root `_lib/`. Later commits
-# (e.g. 02fe62f harden-archive-iteration-sync) added new modules under
-# the legacy `skills/_lib/` path without mirroring them to `_lib/`, so
-# tests that import `from skills._lib.xxx import yyy` need both locations
-# on __path__ — `_lib/` first (full __init__.py + core modules), then
-# `skills/_lib/` (incremental additions like iteration/repair.py).
-# Python's import machinery uses __path__ to locate submodules, so this
-# multi-directory aliasing is sufficient — no ModuleType hackery needed.
+# skills._lib backward-compat routing with submodule identity-merge (P1-1b).
+#
+# The canonical implementation lives at repo-root `_lib/`; legacy
+# `skills/_lib/X.py` are 4-line shims that do
+# `sys.modules[__name__] = _lib.X` so `skills._lib.X is _lib.X` is True.
+#
+# `skills._lib` is a SEPARATE package (not identity-merged at package level)
+# because merging packages would route `import _lib.X` through the shim and
+# trigger a recursive placeholder import. Using a separate package with
+# `__path__ = [_lib, skills/_lib]` lets canonical `_lib/X.py` load first
+# when no shim exists; the shim is the fallback that merges identity.
 if "skills._lib" not in sys.modules:
     _lib_mod = types.ModuleType("skills._lib")
+    # PREpend skills/_lib/ so identity-merge shims run FIRST for the 10
+    # P1-1a migrated modules; canonical `_lib/X.py` is the fallback for
+    # modules without a shim. After the shim runs, sys.modules[skills._lib.X]
+    # is replaced with sys.modules[_lib.X], achieving identity equality.
     _lib_mod.__path__ = [
-        os.path.join(_PROJECT_ROOT_STR, "_lib"),
         os.path.join(_PROJECT_ROOT_STR, "skills", "_lib"),
+        os.path.join(_PROJECT_ROOT_STR, "_lib"),
     ]
     _lib_mod.__file__ = os.path.join(_PROJECT_ROOT_STR, "_lib", "__init__.py")
     sys.modules["skills._lib"] = _lib_mod

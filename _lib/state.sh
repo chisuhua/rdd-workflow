@@ -252,7 +252,10 @@ if approved_idx is None:
             # Recovery path: entry was lost in plan-phase commit but archive exists
             # Default priority to P1 since we don't know the original priority
             priority = 'P1'
-            completed_row = f'| [{name}](.rddf/improvements/{name}.md) | {priority} | {ts} |\n'
+            # FIX (2026-08-25): include `| 已实施 |` status column (4 columns total) to match
+            # proposal-approved.md table schema. Previously 3 columns broke
+            # tests/unit/test_proposal_table_schema.py and rdd-doctor proposal-table check.
+            completed_row = f'| [{name}](.rddf/improvements/{name}.md) | {priority} | {ts} | 已实施 |\n'
             # Insert into completed table after header
             inserted = False
             for i, line in enumerate(lines):
@@ -287,7 +290,9 @@ if approved_idx is not None:
     del lines[approved_idx]
 
 # Insert into completed table after header
-completed_row = f'| [{name}](.rddf/improvements/{name}.md) | {priority} | {ts} |\n'
+# FIX (2026-08-25): include `| 已实施 |` status column (4 columns total). Locked by
+# tests/unit/test_proposal_table_schema.py + rdd-doctor proposal-table check.
+completed_row = f'| [{name}](.rddf/improvements/{name}.md) | {priority} | {ts} | 已实施 |\n'
 inserted = False
 for i, line in enumerate(lines):
     if line.startswith('## 已实施'):

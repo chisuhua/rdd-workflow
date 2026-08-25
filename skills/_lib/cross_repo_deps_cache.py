@@ -1,44 +1,6 @@
-"""TTL cache for cross_repo_deps (24h default)."""
-from __future__ import annotations
-
-import json
-import time
-from pathlib import Path
-from typing import Any, Dict, Optional, Union
-
-PathLike = Union[str, Path]
-CACHE_TTL_SECONDS = 24 * 60 * 60
-
-
-def _read(path: PathLike) -> Dict[str, Any]:
-    p = Path(path)
-    if not p.exists():
-        return {}
-    return json.loads(p.read_text())
-
-
-def _write(path: PathLike, data: Dict[str, Any]) -> None:
-    Path(path).write_text(json.dumps(data, indent=2))
-
-
-def load_cache(path: PathLike, spokes_key: str) -> Optional[Dict[str, Any]]:
-    cache = _read(path)
-    entry = cache.get(spokes_key)
-    if entry is None:
-        return None
-    return entry.get("data")
-
-
-def save_cache(path: PathLike, spokes_key: str, data: Dict[str, Any]) -> None:
-    cache = _read(path)
-    cache[spokes_key] = {"timestamp": time.time(), "data": data}
-    _write(path, cache)
-
-
-def is_cache_valid(path: PathLike, spokes_key: str) -> bool:
-    cache = _read(path)
-    entry = cache.get(spokes_key)
-    if entry is None:
-        return False
-    age = time.time() - entry.get("timestamp", 0)
-    return age < CACHE_TTL_SECONDS
+# Backward-compat identity-merge shim: real module lives at _lib/cross_repo_deps_cache.py
+# per P1-1a (2026-08-25). `skills._lib.cross_repo_deps_cache is _lib.cross_repo_deps_cache` returns True
+# so isinstance() and module-level state (caches, locks, registries) are shared.
+import sys as _sys
+import _lib.cross_repo_deps_cache as _real
+_sys.modules[__name__] = _real

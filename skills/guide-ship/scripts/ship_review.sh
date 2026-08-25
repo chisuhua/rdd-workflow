@@ -279,26 +279,47 @@ if not verdict.persisted and verdict.found_count > 0:
 }
 
 # Full regression gate (add-full-regression-gate)
+#
+# FIX (2026-08-25): previous implementation ran `ctest --test-dir build` and
+# silently returned 0 when build/ was missing. rdd-workflow is a bats/pytest
+# repo with no CMake build dir, so the gate was vacuously green — false
+# confidence is worse than no gate. New policy: prefer ./test.sh (real runner);
+# fall back to ctest only when test.sh is absent AND build/ exists; fail closed
+# otherwise (require explicit SKIP_REGRESSION=1).
 full_regression_gate() {
   local project_root="$1"
   if [ "${SKIP_REGRESSION:-}" = "1" ]; then
     echo "⚠️  已跳过回归门 (SKIP_REGRESSION=1)"
     return 0
   fi
+
+  local test_runner="$project_root/test.sh"
+  if [ -x "$test_runner" ]; then
+    echo "▶️  跑 $test_runner --full --regression ..."
+    if bash "$test_runner" --full --regression; then
+      echo "✅ 全量回归通过 (test.sh)"
+      return 0
+    fi
+    echo ""
+    echo "❌ 全量回归失败 (test.sh). 请选择:"
+    echo "1. 返回 execute 修复问题"
+    echo "2. 创建 debt change 跟踪"
+    echo "3. SKIP_REGRESSION=1 强制跳过"
+    return 1
+  fi
+
   local build_dir="$project_root/build"
-  if [ ! -d "$build_dir" ]; then
-    echo "⚠️  无构建目录，跳过回归门"
-    return 0
+  if [ -d "$build_dir" ] && command -v ctest >/dev/null 2>&1; then
+    if ctest --test-dir "$build_dir" --output-on-failure; then
+      echo "✅ 全量回归通过 (ctest)"
+      return 0
+    fi
+    echo "❌ 全量回归失败 (ctest)."
+    return 1
   fi
-  if ctest --test-dir "$build_dir" --output-on-failure; then
-    echo "✅ 全量回归通过"
-    return 0
-  fi
-  echo ""
-  echo "❌ 全量回归失败。请选择:"
-  echo "1. 返回 execute 修复问题"
-  echo "2. 创建 debt change 跟踪"
-  echo "3. SKIP_REGRESSION=1 强制跳过"
+
+  echo "❌ 未找到 ./test.sh 或 ctest+build/。回归门 fail-closed。"
+  echo "   设置 SKIP_REGRESSION=1 显式跳过，或补 ./test.sh。"
   return 1
 }
 

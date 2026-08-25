@@ -1,34 +1,6 @@
-"""Cross-repo audit log (JSONL append with validation).
-
-Writes to .rddf/state/.cross-repo-audit.jsonl. Each entry has required
-fields: timestamp, proposal_name, hub_issue, approver, decision.
-"""
-from __future__ import annotations
-
-import json
-import os
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, Dict, Union
-
-PathLike = Union[str, Path]
-
-AUDIT_LOG_FIELDS = ("timestamp", "proposal_name", "hub_issue", "approver", "decision")
-
-
-def validate_entry(entry: Dict[str, Any]) -> None:
-    """Raise ValueError if entry is missing required fields."""
-    missing = [f for f in AUDIT_LOG_FIELDS if f not in entry]
-    if missing:
-        raise ValueError(f"audit log entry missing required fields: {missing}")
-
-
-def append_audit_log_entry(path: PathLike, entry: Dict[str, Any]) -> None:
-    """Append one JSONL line. Auto-creates parent dir."""
-    validate_entry(entry)
-    p = Path(path)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    if "timestamp" not in entry:
-        entry["timestamp"] = datetime.now(timezone.utc).isoformat()
-    with p.open("a") as f:
-        f.write(json.dumps(entry) + "\n")
+# Backward-compat identity-merge shim: real module lives at _lib/cross_repo_audit.py
+# per P1-1a (2026-08-25). `skills._lib.cross_repo_audit is _lib.cross_repo_audit` returns True
+# so isinstance() and module-level state (caches, locks, registries) are shared.
+import sys as _sys
+import _lib.cross_repo_audit as _real
+_sys.modules[__name__] = _real
