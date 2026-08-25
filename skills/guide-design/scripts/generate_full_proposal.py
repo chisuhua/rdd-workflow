@@ -64,10 +64,10 @@ def _extract_scope_items(scope_md: str) -> tuple[list[str], list[str]]:
         if not stripped:
             continue
         header = stripped[2:].strip() if stripped.startswith("- ") else stripped
-        if header.startswith("**In Scope**"):
+        if header.startswith("**In Scope**") or header.lstrip("# ").strip().startswith("In Scope"):
             current = "in"
             continue
-        if header.startswith("**Out Scope**"):
+        if header.startswith("**Out of Scope**") or header.lstrip("# ").strip().startswith("Out of Scope"):
             current = "out"
             continue
         if stripped.startswith("- "):
