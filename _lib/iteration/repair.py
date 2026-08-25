@@ -15,9 +15,18 @@ from __future__ import annotations
 import glob
 import json
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+
+# Archive dirs follow the format ``<YYYY>-<MM>-<DD>-<name>/``. The
+# date prefix must be enforced as an exact prefix (not a suffix) to
+# avoid glob matching bugs where ``*-<name>`` matches ``<YYYY>-<MM>-<DD>-
+# <name>`` even when ``<name>`` itself starts with digits (e.g. ``*-08-
+# 16-foo`` matches ``2026-08-16-foo`` because the dir happens to end
+# with ``-08-16-foo``). See P0 fix-iteration-phantom-from-deps.
+_DATE_PREFIX_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-")
 
 
 def _find_archive_dir(project_root: str, change_name: str) -> Optional[str]:
@@ -25,12 +34,40 @@ def _find_archive_dir(project_root: str, change_name: str) -> Optional[str]:
 
     Returns the path of ``openspec/changes/archive/<date>-<change_name>/``
     if it exists, otherwise ``None``.
+
+    Strict matching: the directory name MUST start with a valid
+    ``<YYYY>-<MM>-<DD>-`` date prefix and, after stripping the prefix,
+    the remainder MUST equal ``change_name`` exactly. The previous
+    glob ``*-<change_name>`` was too permissive — it matched dirs
+    whose names happened to end with the suffix (e.g. wrong-name
+    "08-16-foo" matched real dir "2026-08-16-foo" because the dir
+    ends with ``-08-16-foo``). See P0 fix-iteration-phantom-from-deps.
     """
-    pattern = os.path.join(
-        project_root, "openspec", "changes", "archive", f"*-{change_name}"
-    )
-    matches = [p for p in glob.glob(pattern) if os.path.isdir(p)]
-    return matches[0] if matches else None
+    archive_base = os.path.join(project_root, "openspec", "changes", "archive")
+    if not os.path.isdir(archive_base):
+        return None
+    try:
+        entries = os.listdir(archive_base)
+    except OSError:
+        return None
+    for entry in entries:
+        m = _DATE_PREFIX_RE.match(entry)
+        if not m:
+            continue
+        # Strip the date prefix and compare exactly to change_name.
+        # This is the only correct way — suffix matching would re-introduce
+        # the suffix-overlap bug we just fixed.
+        remainder = entry[m.end():]
+        if remainder == change_name:
+            full = os.path.join(archive_base, entry)
+            if os.path.isdir(full):
+                return full
+    # Backward-compat: also check the no-date-prefix form
+    # ``openspec/changes/archive/<name>/`` (used by some legacy entries).
+    legacy = os.path.join(archive_base, change_name)
+    if os.path.isdir(legacy):
+        return legacy
+    return None
 
 
 def force_mark_archived(

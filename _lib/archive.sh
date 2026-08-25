@@ -714,7 +714,24 @@ reconcile() {
     [ -d "$d" ] || continue
     local dir_name
     dir_name=$(basename "$d")
-    local change_name="${dir_name#*-}"
+    # Strip the full date prefix `<YYYY>-<MM>-<DD>-` (11 chars). The
+    # previous expansion `${dir_name#*-}` only stripped the FIRST `-`,
+    # producing names like `08-16-foo` from `2026-08-16-foo`, which
+    # then fed wrong names to force_mark_archived. Use Python here to
+    # keep the parsing deterministic — bash parameter expansion for
+    # multi-segment prefixes is fragile.
+    local change_name
+    change_name=$(SKILLS_PARENT="$skills_parent" \
+                  DIR_NAME="$dir_name" \
+                  python3 -c '
+import os, re
+dir_name = os.environ["DIR_NAME"]
+m = re.match(r"^\d{4}-\d{2}-\d{2}-(.*)$", dir_name)
+if m:
+    print(m.group(1))
+else:
+    print(dir_name)  # legacy no-date-prefix form: pass through as-is
+')
     [ -z "$change_name" ] && continue
 
     local result

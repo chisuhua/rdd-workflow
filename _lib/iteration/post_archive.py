@@ -152,7 +152,28 @@ def sync_iteration_after_archive(
             existing = c
             break
     if existing is None:
-        msg = f"change '{change_name}' not found in iteration.json; archive sync skipped"
+        # P0 fix-iteration-phantom-from-deps (2026-08-25): previously
+        # this returned a warning and gave up. That left iteration.json
+        # out of sync with disk state when an archive ran before
+        # propose.md registered the entry. Fall back to on-disk
+        # reconciliation (force_mark_archived) which scans
+        # openspec/changes/archive/<date>-<name>/ and creates the entry
+        # from ground truth. This is idempotent and safe to retry.
+        from skills._lib.iteration.repair import force_mark_archived
+        recovered = force_mark_archived(
+            project_root, change_name, archive_commit_sha=archive_commit_sha,
+        )
+        if recovered:
+            logger.info(
+                "sync_iteration_after_archive: change '%s' missing from "
+                "iteration.json; auto-recovered via on-disk scan",
+                change_name,
+            )
+            return None
+        msg = (
+            f"change '{change_name}' not found in iteration.json AND "
+            f"no archive dir on disk; archive sync skipped"
+        )
         logger.warning(msg)
         return msg
 

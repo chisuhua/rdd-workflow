@@ -181,13 +181,18 @@ class TestSetDepsInfo:
         assert d["changes"][0]["parallel_group"] == 1
         assert d["changes"][0]["last_deps_at"]
 
-    def test_creates_entry_with_proposed_if_missing(self):
+    def test_skips_when_change_missing(self):
+        """P0 fix-iteration-phantom-from-deps (2026-08-25): deps is now
+        skip-on-missing. If a change is not in iteration.json, set_deps_info
+        returns the data unchanged and does NOT create a phantom entry.
+        Lifecycle creation is the responsibility of propose.md, not deps."""
         d = it.create_empty()
         d = it.set_deps_info(d, "c1", blocker=None, parallel_group=0, conflicts=[])
-        assert d["changes"][0]["status"] == "proposed"
+        assert d["changes"] == []
 
     def test_records_conflicts(self):
-        d = it.create_empty()
+        """set_deps_info updates conflicts for existing entries."""
+        d = it.add_or_update_change(it.create_empty(), name="c1", status="proposed")
         d = it.set_deps_info(d, "c1", conflicts=["c2", "c3"])
         assert d["changes"][0]["conflicts"] == ["c2", "c3"]
 

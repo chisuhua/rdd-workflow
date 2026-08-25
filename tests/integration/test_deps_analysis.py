@@ -140,10 +140,16 @@ class TestDepsToIterationPipeline:
            d. Sync iteration.json
         """
         # 1. Seed
+        # P0 fix-iteration-phantom-from-deps (2026-08-25): deps is
+        # skip-on-missing. All candidates surfaced by the parser must
+        # already exist in iteration.json — propose.md owns lifecycle
+        # creation, not deps. Pre-seed c3 here so the parser can update
+        # it (rather than expect phantom auto-creation).
         data = it.add_or_update_change(
             it.create_empty(), name="c1", status="proposed",
         )
         data = it.add_or_update_change(data, name="c2", status="proposed")
+        data = it.add_or_update_change(data, name="c3", status="proposed")
         it.save(project_root, data)
 
         # 2. Write deps-output.md in the expected format

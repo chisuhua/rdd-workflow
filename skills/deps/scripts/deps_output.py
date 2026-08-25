@@ -219,9 +219,11 @@ def load_analysis(project_root: str) -> Optional[dict]:
 def sync_iteration_from_analysis(project_root: str, iteration_module: Any) -> int:
     """Sync iteration.json from deps-analysis.json.
 
-    Returns the number of changes updated. 0 means nothing to do
-    (deps-analysis.json missing, or all changes already up to date).
-    Raises nothing on failure: logs and returns 0.
+    Returns the number of changes actually updated (skips names not
+    present in iteration.json — see set_deps_info skip-on-missing
+    contract; deps is read-only w.r.t. lifecycle status). 0 means
+    nothing to do (deps-analysis.json missing, or no candidates match
+    existing entries). Raises nothing on failure: logs and returns 0.
     """
     analysis = load_analysis(project_root)
     if analysis is None:
@@ -230,6 +232,13 @@ def sync_iteration_from_analysis(project_root: str, iteration_module: Any) -> in
     data = iteration_module.load(project_root)
     count = 0
     for name, info in analysis.get("changes", {}).items():
+        # Pre-check: deps only updates metadata for entries that already
+        # exist (propose.md owns lifecycle creation). If the change is
+        # not in iteration.json, set_deps_info is a no-op (logs warning
+        # to stderr). Skip the count in that case so the returned number
+        # reflects actual writes.
+        if iteration_module.get_change(data, name) is None:
+            continue
         kwargs = {
             "name": name,
             "blocker": info.get("blocker"),

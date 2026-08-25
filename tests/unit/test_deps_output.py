@@ -203,8 +203,18 @@ class TestSyncIterationFromAnalysis:
         assert by_name["c2"]["parallel_group"] == 1
 
     def test_creates_entry_for_new_change(self, project_root):
-        """deps may surface a change that isn't in iteration.json yet. The hook
-        should still create an entry (with status=proposed)."""
+        """deps may surface a change that isn't in iteration.json yet.
+
+        P0 fix-iteration-phantom-from-deps (2026-08-25): deps is now
+        skip-on-missing — it does NOT auto-create lifecycle entries.
+        propose.md owns lifecycle creation; deps only updates metadata
+        for entries that already exist. Surfaced names that haven't been
+        proposed via OpenSpec CLI must trigger a separate propose step,
+        not phantom creation here.
+
+        This test now verifies that the skip behavior preserves the
+        empty state and returns count=0 (nothing actually written).
+        """
         data = it.create_empty()  # empty
         it.save(project_root, data)
 
@@ -212,11 +222,13 @@ class TestSyncIterationFromAnalysis:
         do.write_analysis(project_root, analysis)
 
         count = do.sync_iteration_from_analysis(project_root, it)
-        assert count == 1
+        # Skip-on-missing: count is 0 (no entry was actually updated)
+        assert count == 0
 
         loaded = it.load(project_root)
         names = [c["name"] for c in loaded["changes"]]
-        assert "c-new" in names
+        # No phantom entry created
+        assert "c-new" not in names
 
     def test_preserves_iteration_status(self, project_root):
         """set_deps_info must NOT change the lifecycle status (it only updates deps metadata)."""

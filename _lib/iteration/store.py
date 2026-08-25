@@ -689,17 +689,37 @@ def set_deps_info(
     overrides from roadmap-meta.yaml. They are mirror fields: `manual_deps`
     is the list of changes this one depends on; `manual_blocks` is the
     reverse-dependency list of changes that must wait for this one.
+
+    Behavior:
+      - If `name` already has an entry in `data['changes']`, update its
+        deps metadata and leave status untouched.
+      - If `name` is NOT in `data['changes']`, **skip silently** —
+        do NOT auto-create an entry. deps is a pure metadata update
+        step; lifecycle status is the responsibility of propose.md /
+        archive.sh, not deps.md. Auto-creating phantom "proposed"
+        entries here caused iteration.json to diverge from disk state
+    when deps-analysis.json contained names from proposal-approved.md
+    that were never actually proposed via OpenSpec CLI (P0 fix-iteration-
+    phantom-from-deps, 2026-08-25).
     """
     existing = get_change(data, name)
+    if existing is None:
+        # Skip-on-missing: deps is read-only w.r.t. lifecycle.
+        # Log via stderr so `sync_iteration_from_analysis` count remains
+        # accurate (caller can count entries actually modified).
+        import sys
+        print(
+            f"⚠️  set_deps_info: '{name}' not in iteration.json; skipping "
+            f"(deps must not create lifecycle entries; run propose.md first)",
+            file=sys.stderr,
+        )
+        return data
     fields: dict = {
         "name": name,
         "last_deps_at": _now_iso(),
     }
-    if existing is not None:
-        # Preserve status (deps doesn't change lifecycle state)
-        fields["status"] = existing.get("status", "proposed")
-    else:
-        fields["status"] = "proposed"
+    # Preserve status (deps doesn't change lifecycle state)
+    fields["status"] = existing.get("status", "proposed")
     if blocker is not _UNSET:
         fields["blocker"] = blocker
     if parallel_group is not _UNSET:
