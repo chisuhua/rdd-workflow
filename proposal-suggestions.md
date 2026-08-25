@@ -9,4 +9,3 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [add-feature-fragment-command](.rddf/improvements/add-feature-fragment-command.md) | P1 | user request (add-feature 选项) + 2 轮 Oracle 评审 (bg_03696e35, bg_b16179e9) + add-hierarchical-roadmap-structure 场景 3 补全 | 2026-08-25 | 待审查 |

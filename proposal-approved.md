@@ -96,6 +96,8 @@
 
 
 
+| [add-feature-fragment-command](.rddf/improvements/add-feature-fragment-command.md) | P1 | 2026-08-25 | guide-arch |
+
 ## 已实施
 | [submodule-aware-project-root](.rddf/improvements/submodule-aware-project-root.md) | P0 | 2026-08-25 | 已实施 |
 | [clean-stale-plan-handoff-on-ship-done](.rddf/improvements/clean-stale-plan-handoff-on-ship-done.md) | P1 | 2026-08-25 | 已实施 |
