@@ -283,3 +283,4 @@
 | [update-guide-plan-format](.rddf/improvements/update-guide-plan-format.md) | P1 | 2026-07-28 | 已实施 |
 | [fix-scan-state-bats](.rddf/improvements/fix-scan-state-bats.md) | P2 | 2026-07-23 | 已实施 |
 | [complete-third-party-replay-and-upstream-reporting](.rddf/improvements/complete-third-party-replay-and-upstream-reporting.md) | P0 | 2026-08-13 | 已实施 |
+| [add-feature-fragment-command](.rddf/improvements/add-feature-fragment-command.md) | P1 | 2026-08-25 | 已实施 |
