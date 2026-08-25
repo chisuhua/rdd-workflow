@@ -37,6 +37,15 @@
 
 轻量模式下所有 worktree/branch 路径退化为 `$PROJECT_ROOT`；归档时直接 merge branch 而非 `archive_change`。模式选择是**工作区隔离策略**，与下面「🔒 阻塞执行 / 🔓 分离执行」是不同维度——后者是单 session 内的**运行时执行模式**（同一 worktree / 轻量分支上如何跑 `execute`），由用户在 worktree 就绪后另行选择。
 
+### 在 git submodule 内使用（v2.2+）
+
+rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 目录内运行 `rddf dashboard` / `status` / `init` / `validate` 等命令时，`main_repo_root()` 和 `resolve_project_root()` 会优先返回 **submodule 自身的根**（通过 `git rev-parse --show-superproject-working-tree` 检测 + `--show-toplevel`），而**不是**错误地解析到 superproject 的 `.git/modules/<name>`。每个 submodule 独立管理自己的 `.rddf/state/`，符合"每个 submodule 是独立 git repo"的语义。
+
+**注意**：
+- nested submodule 自然处理（`--show-superproject-working-tree` 返回最近一级 superproject，`--show-toplevel` 仍返回自身根）
+- `--git-dir` 在 submodule 内返回 superproject 的 gitdir，**仅用于存在性检查**时语义仍正确；用于路径解析必须改用 `--show-toplevel` 或 `--git-common-dir`（项目内已统一迁移）
+- 详见 `.rddf/improvements/submodule-aware-project-root.md` 和 `docs/adr/ADR-0033-submodule-aware-project-root-resolution.md`
+
 ### 运行时执行模式（同 session 内）
 
 | 模式 | 说明 | 场景 |

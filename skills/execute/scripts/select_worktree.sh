@@ -42,20 +42,21 @@ auto_detect_worktree_context() {
 
   # Honor RDDF_EXECUTION_ROOT if guide-ship set it (single source of truth for workspace).
   # When set, do NOT re-detect; just export PROJECT_ROOT from it and skip worktree probing.
-  # Containment check: RDDF_EXECUTION_ROOT must be a git repo whose --git-common-dir
-  # matches the detected main repo root, otherwise a poisoned env var would redirect
-  # execute into an arbitrary directory.
+  # Containment check: RDDF_EXECUTION_ROOT must be the same git repo (or submodule) as the
+  # detected project root, otherwise a poisoned env var would redirect execute into an
+  # arbitrary directory. Uses --show-toplevel (not --git-common-dir) so submodule projects
+  # resolve correctly: --git-common-dir in a submodule returns the superproject's
+  # .git/modules/<name> which would falsely fail containment.
   if [ -n "${RDDF_EXECUTION_ROOT:-}" ] && [ -d "${RDDF_EXECUTION_ROOT}" ]; then
     local _expected_main
     _expected_main=$(main_repo_root 2>/dev/null || pwd)
-    local _rddf_common
-    _rddf_common=$(orchestrator_run git -C "${RDDF_EXECUTION_ROOT}" rev-parse --git-common-dir 2>/dev/null || true)
-    local _expected_common
-    _expected_common=$(orchestrator_run git -C "$_expected_main" rev-parse --git-common-dir 2>/dev/null || true)
-    # Resolve to absolute paths so a relative ".git" matches itself.
-    [ -n "$_rddf_common" ] && _rddf_common=$(cd "${RDDF_EXECUTION_ROOT}" 2>/dev/null && cd "$_rddf_common" 2>/dev/null && pwd -P)
-    [ -n "$_expected_common" ] && _expected_common=$(cd "$_expected_main" 2>/dev/null && cd "$_expected_common" 2>/dev/null && pwd -P)
-    if [ -n "$_rddf_common" ] && [ -n "$_expected_common" ] && [ "$_rddf_common" = "$_expected_common" ]; then
+    local _rddf_toplevel
+    _rddf_toplevel=$(orchestrator_run git -C "${RDDF_EXECUTION_ROOT}" rev-parse --show-toplevel 2>/dev/null || true)
+    local _expected_toplevel
+    _expected_toplevel=$(orchestrator_run git -C "$_expected_main" rev-parse --show-toplevel 2>/dev/null || true)
+    [ -n "$_rddf_toplevel" ] && _rddf_toplevel=$(cd "${RDDF_EXECUTION_ROOT}" 2>/dev/null && cd "$_rddf_toplevel" 2>/dev/null && pwd -P)
+    [ -n "$_expected_toplevel" ] && _expected_toplevel=$(cd "$_expected_main" 2>/dev/null && cd "$_expected_toplevel" 2>/dev/null && pwd -P)
+    if [ -n "$_rddf_toplevel" ] && [ -n "$_expected_toplevel" ] && [ "$_rddf_toplevel" = "$_expected_toplevel" ]; then
       PROJECT_ROOT="${RDDF_EXECUTION_ROOT}"
       export PROJECT_ROOT
       cd "$PROJECT_ROOT" || return 1

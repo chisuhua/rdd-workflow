@@ -60,11 +60,27 @@ find_default_branch() {
 #   Returns absolute path of the MAIN repository root (NOT the worktree root).
 #   When called from main repo: returns the main repo path.
 #   When called from a worktree: returns the main repo path.
+#   When called from a git submodule: returns the submodule's own working tree
+#   root (NEW: submodule-aware, ADR-0033 / submodule-aware-project-root).
 #   Falls back to pwd if git is not available.
 #   Uses `git rev-parse --git-common-dir` (shared .git dir across worktrees),
 #   which is the canonical worktree-safe replacement for `--show-toplevel`.
+#   Submodule detection: `git rev-parse --show-superproject-working-tree`
+#   returns non-empty in submodule context; we use `--show-toplevel` which
+#   correctly returns the submodule's own root (NOT the superproject's).
 #   P0-8: ensures STATE_FILE writes to main repo's .rddf/state/, not worktree's.
 main_repo_root() {
+  # Submodule-aware priority branch (ADR-0033, submodule-aware-project-root).
+  # In a submodule, --git-common-dir returns the superproject's .git/modules/<name>
+  # which would resolve to the WRONG directory. Detect early and use --show-toplevel.
+  local superproject
+  superproject=$(git rev-parse --show-superproject-working-tree 2>/dev/null) || superproject=""
+  if [ -n "$superproject" ]; then
+    git rev-parse --show-toplevel 2>/dev/null || { pwd; return; }
+    return
+  fi
+
+  # Original worktree / main-repo logic (preserved for P0-8 contract).
   local common_dir
   common_dir=$(git rev-parse --git-common-dir 2>/dev/null) || { pwd; return; }
   case "$common_dir" in

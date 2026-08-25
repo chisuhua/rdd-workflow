@@ -249,6 +249,8 @@ def test_resolve_project_root_relative_dotgit(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
 
     def fake_run(cmd, *args, **kwargs):
+        if "--show-superproject-working-tree" in cmd:
+            return _mock_completed("\n")  # not a submodule (ADR-0033)
         assert cmd == ["git", "rev-parse", "--git-common-dir"]
         return _mock_completed(".git\n")
 
@@ -265,6 +267,8 @@ def test_resolve_project_root_absolute_dotgit(monkeypatch, tmp_path):
     git_dir = main_root / ".git"
 
     def fake_run(cmd, *args, **kwargs):
+        if "--show-superproject-working-tree" in cmd:
+            return _mock_completed("\n")  # not a submodule (ADR-0033)
         return _mock_completed(f"{git_dir}\n")
 
     monkeypatch.setattr(subprocess, "run", fake_run)
@@ -281,6 +285,8 @@ def test_resolve_project_root_worktree_path(monkeypatch, tmp_path):
     common_dir = main_root / ".git" / "worktrees" / "feature-x"
 
     def fake_run(cmd, *args, **kwargs):
+        if "--show-superproject-working-tree" in cmd:
+            return _mock_completed("\n")  # not a submodule (ADR-0033)
         return _mock_completed(f"{common_dir}\n")
 
     monkeypatch.setattr(subprocess, "run", fake_run)
@@ -296,6 +302,8 @@ def test_resolve_project_root_worktree_path_with_trailing_slash(monkeypatch, tmp
     common_dir = main_root / ".git" / "worktrees" / "feature-y"
 
     def fake_run(cmd, *args, **kwargs):
+        if "--show-superproject-working-tree" in cmd:
+            return _mock_completed("\n")  # not a submodule (ADR-0033)
         return _mock_completed(f"{common_dir}/\n")
 
     monkeypatch.setattr(subprocess, "run", fake_run)
@@ -365,6 +373,8 @@ def test_is_in_worktree_false_in_main_repo(monkeypatch, tmp_path):
     git_dir = main_root / ".git"
 
     def fake_run(cmd, *args, **kwargs):
+        if "--show-superproject-working-tree" in cmd:
+            return _mock_completed("\n")  # not a submodule (ADR-0033)
         if "--git-common-dir" in cmd:
             return _mock_completed(f"{git_dir}\n")
         if "--git-dir" in cmd:
@@ -385,6 +395,8 @@ def test_is_in_worktree_true_in_linked_worktree(monkeypatch, tmp_path):
     git_dir = main_root / ".git" / "worktrees" / "feat"
 
     def fake_run(cmd, *args, **kwargs):
+        if "--show-superproject-working-tree" in cmd:
+            return _mock_completed("\n")  # not a submodule (ADR-0033)
         if "--git-common-dir" in cmd:
             return _mock_completed(f"{common}\n")
         if "--git-dir" in cmd:

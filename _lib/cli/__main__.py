@@ -37,19 +37,46 @@ from skills._lib.cli import list_commands, route
 
 
 def resolve_project_root() -> str:
-    """Return the main git repo root, worktree-safe.
+    """Return the main git repo root, worktree- and submodule-safe.
 
-    Uses ``git rev-parse --git-common-dir`` which returns:
-      - ``<main>/.git`` when run in the main repo
-      - ``<main>/.git/worktrees/<name>`` when run in a linked worktree
+    Behavior matrix (ADR-0033 / submodule-aware-project-root):
 
-    We strip the trailing ``/.git`` (or ``/.git/worktrees/<name>``) to
-    recover the main repo root in both cases.
-
-    Falls back to ``os.getcwd()`` if git is unavailable or the cwd is
-    not inside a git repo (so the non-rdd-workflow detection below
-    still gets a chance to run and print a friendly message).
+    - Main repo (``--show-superproject-working-tree`` empty):
+      returns main repo root via ``--git-common-dir`` logic.
+    - Linked worktree (same flag empty): returns main repo root
+      (3 levels up from ``<main>/.git/worktrees/<name>``).
+    - Git submodule (flag non-empty): returns the **submodule's own**
+      working tree root via ``--show-toplevel``. ``--git-common-dir``
+      inside a submodule points to the superproject's
+      ``.git/modules/<name>`` which would resolve to the WRONG dir.
+    - Nested submodule: ``--show-toplevel`` still returns the immediate
+      submodule's own root; the detection naturally recurses.
+    - Non-git directory: falls back to ``os.getcwd()``.
     """
+    # Submodule-aware priority branch: detect before --git-common-dir
+    # because --git-common-dir inside a submodule returns the
+    # superproject's .git/modules/<name>, which would resolve to the
+    # wrong directory.
+    try:
+        r_super = subprocess.run(
+            ["git", "rev-parse", "--show-superproject-working-tree"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if r_super.returncode == 0 and r_super.stdout.strip():
+            r_toplevel = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            if r_toplevel.returncode == 0 and r_toplevel.stdout.strip():
+                return os.path.abspath(r_toplevel.stdout.strip())
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        pass
+
+    # Original worktree / main-repo logic (preserved).
     try:
         r = subprocess.run(
             ["git", "rev-parse", "--git-common-dir"],
@@ -86,7 +113,25 @@ def _is_in_worktree() -> bool:
     ``git rev-parse --git-dir``: in the main repo they are equal; in a
     linked worktree they differ (common-dir points to ``<main>/.git``,
     git-dir points to ``<main>/.git/worktrees/<name>``).
+
+    Submodule short-circuit (ADR-0033): in a submodule, ``--git-common-dir``
+    equals ``--git-dir`` (both point to ``<super>/.git/modules/<name>``),
+    so the equality test below would (incorrectly) report ``False``.
+    We disambiguate by checking ``--show-superproject-working-tree``
+    first and returning ``False`` for submodules.
     """
+    try:
+        r_super = subprocess.run(
+            ["git", "rev-parse", "--show-superproject-working-tree"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if r_super.returncode == 0 and r_super.stdout.strip():
+            return False
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        pass
+
     try:
         common = subprocess.run(
             ["git", "rev-parse", "--git-common-dir"],

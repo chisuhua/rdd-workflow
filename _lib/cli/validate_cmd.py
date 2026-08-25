@@ -57,10 +57,14 @@ def cmd_validate(args: list[str]) -> int:
         print(f"  ✗ openspec CLI: {e}")
 
     # ── Check 2: git repository ────────────────────────────────
+    # Use --show-toplevel instead of --git-dir: in a git submodule,
+    # --git-dir points to the superproject's .git/modules/<name>, which
+    # would falsely pass the check for the wrong repo. --show-toplevel
+    # correctly identifies the local working tree root.
     git_ok = False
     try:
         r = subprocess.run(
-            ["git", "rev-parse", "--git-dir"],
+            ["git", "rev-parse", "--show-toplevel"],
             capture_output=True,
             text=True,
             timeout=10,
