@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "change": "test-change",
+  "codebase_commit": "abc1234567",
+  "verdict": [
+    {
+      "ac_id": "AC-1",
+      "status": "fail",
+      "confidence": 0.88,
+      "evidence": ["file:src/foo.py:50"],
+      "reasoning": "Code exists but mismatches the AC description in proposal.md"
+    },
+    {
+      "ac_id": "AC-2",
+      "status": "fail",
+      "confidence": 0.82,
+      "evidence": ["file:src/bar.py:30"],
+      "reasoning": "Implementation differs from ac specification"
+    }
+  ],
+  "ran_at": "2026-08-26T00:00:00Z",
+  "ran_by": "rdd-verifier"
+}

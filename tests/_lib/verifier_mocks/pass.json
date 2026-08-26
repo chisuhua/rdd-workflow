@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "change": "test-change",
+  "codebase_commit": "abc1234567",
+  "verdict": [
+    {
+      "ac_id": "AC-1",
+      "status": "pass",
+      "confidence": 0.95,
+      "evidence": ["file:tests/test_foo.py:10"],
+      "reasoning": "All ACs verified successfully"
+    },
+    {
+      "ac_id": "AC-2",
+      "status": "pass",
+      "confidence": 0.92,
+      "evidence": ["file:tests/test_bar.py:20"],
+      "reasoning": "Implementation matches AC description"
+    }
+  ],
+  "ran_at": "2026-08-26T00:00:00Z",
+  "ran_by": "rdd-verifier"
+}
