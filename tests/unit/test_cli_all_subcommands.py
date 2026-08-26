@@ -78,6 +78,7 @@ ALL_SUBCOMMANDS: tuple[str, ...] = (
     "monitor",
     "orchestrate",
     "rdd-hub-bootstrap",
+    "rdd-verify",
     "report-issue",
     "roadmap",
     "sessions",

@@ -37,12 +37,13 @@ teardown() {
     [ -z "$output" ]
 }
 
-@test "scan_queue.sh: filters ship-done only (returns 'a c')" {
+@test "scan_queue.sh: filters implemented task-complete changes" {
     cat > .rddf/state/iteration.json <<'EOF'
-{"changes": [
-  {"name": "a", "status": "ship-done"},
-  {"name": "b", "status": "planned"},
-  {"name": "c", "status": "ship-done"}
+{"version": 7, "changes": [
+  {"name": "a", "status": "completed", "tasks_done": 2, "tasks_total": 2},
+  {"name": "b", "status": "in_worktree", "tasks_done": 1, "tasks_total": 2},
+  {"name": "c", "status": "in_worktree", "tasks_done": 3, "tasks_total": 3},
+  {"name": "d", "status": "archived", "tasks_done": 1, "tasks_total": 1}
 ]}
 EOF
     run bash "$REPO_ROOT/skills/rdd-verifier/scripts/scan_queue.sh"
@@ -57,12 +58,12 @@ EOF
     [ -z "$output" ]
 }
 
-@test "scan_queue.sh: honors RDDF_VERIFIER_MAX_CHANGES (returns 'a b')" {
+@test "scan_queue.sh: honors RDDF_VERIFIER_MAX_CHANGES" {
     cat > .rddf/state/iteration.json <<'EOF'
-{"changes": [
-  {"name": "a", "status": "ship-done"},
-  {"name": "b", "status": "ship-done"},
-  {"name": "c", "status": "ship-done"}
+{"version": 7, "changes": [
+  {"name": "a", "status": "completed", "tasks_done": 1, "tasks_total": 1},
+  {"name": "b", "status": "completed", "tasks_done": 1, "tasks_total": 1},
+  {"name": "c", "status": "completed", "tasks_done": 1, "tasks_total": 1}
 ]}
 EOF
     export RDDF_VERIFIER_MAX_CHANGES=2
@@ -163,7 +164,7 @@ EOF
     export RDDF_VERIFIER_MAX_LOOPS=1
     run bash "$REPO_ROOT/skills/rdd-verifier/scripts/route_loop.sh" halt-disk-test implementation_gap
     [ "$status" -eq 1 ]
-    [ -f ".rddf/state/.verifier-loop.json" ]
-    grep -q '"route": "halted"' .rddf/state/.verifier-loop.json
+    [ -f ".rddf/state/verifier/halt-disk-test.json" ]
+    grep -q '"route": "halted"' .rddf/state/verifier/halt-disk-test.json
     unset RDDF_VERIFIER_MAX_LOOPS
 }

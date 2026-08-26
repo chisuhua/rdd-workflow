@@ -1,34 +1,31 @@
 #!/usr/bin/env bash
-# scan_queue.sh — List ship-done changes from iteration.json
-#
-# Usage: PROJECT_ROOT=/path bash scan_queue.sh
-# Stdout: space-separated change names
-# Exit: 0 always (empty stdout if no changes)
-#
-# Per ADR-0034 §4.1: discovery backend for rdd-verifier state machine.
+# scan_queue.sh — List implemented, task-complete changes from iteration.json
 set -euo pipefail
 
 PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-STATE_DIR="$PROJECT_ROOT/.rddf/state"
+STATE_FILE="$PROJECT_ROOT/.rddf/state/iteration.json"
 MAX_CHANGES="${RDDF_VERIFIER_MAX_CHANGES:-10}"
 
-if [ ! -f "$STATE_DIR/iteration.json" ]; then
-    exit 0
-fi
+[ -f "$STATE_FILE" ] || exit 0
 
-python3 - "$STATE_DIR/iteration.json" "$MAX_CHANGES" <<'PYEOF'
+STATE_FILE="$STATE_FILE" MAX_CHANGES="$MAX_CHANGES" python3 - <<'PY'
 import json
-import sys
+import os
 
-state_file, max_changes = sys.argv[1], int(sys.argv[2])
 try:
-    doc = json.loads(open(state_file, encoding="utf-8").read())
-except Exception:
-    sys.exit(0)
+    doc = json.loads(open(os.environ["STATE_FILE"], encoding="utf-8").read())
+except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+    raise SystemExit(0)
 
-queue = [
-    c["name"] for c in doc.get("changes", [])
-    if c.get("status") == "ship-done"
-][:max_changes]
-print(" ".join(queue))
-PYEOF
+eligible = []
+for change in doc.get("changes", []):
+    status = change.get("status")
+    total = change.get("tasks_total") or 0
+    done = change.get("tasks_done") or 0
+    if status in {"in_worktree", "completed"} and total > 0 and done == total:
+        name = change.get("name")
+        if name:
+            eligible.append(name)
+
+print(" ".join(eligible[:max(0, int(os.environ["MAX_CHANGES"]))]))
+PY

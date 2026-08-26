@@ -18,14 +18,15 @@ fi
 
 PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
-PROJECT_ROOT="$PROJECT_ROOT" python3 - "$CHANGE_NAME" "$LABEL" <<'PYEOF'
+SCRIPT_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." 2>/dev/null && pwd)"
+PROJECT_ROOT="$PROJECT_ROOT" SCRIPT_REPO_ROOT="$SCRIPT_REPO_ROOT" python3 - "$CHANGE_NAME" "$LABEL" <<'PYEOF'
 import json
 import os
 import sys
 from pathlib import Path
 
 project_root = Path(os.environ["PROJECT_ROOT"])
-sys.path.insert(0, str(project_root / "_lib"))
+sys.path.insert(0, os.environ["SCRIPT_REPO_ROOT"])
 from _lib.verifier.loop_state import (
     load_loop_state,
     append_classification,
@@ -41,28 +42,23 @@ if label not in VALID_LABELS:
     print(f"❌ unknown label: {label}", file=sys.stderr)
     sys.exit(2)
 
-state = load_loop_state(project_root)
+state = load_loop_state(project_root, change_name)
 if state is None:
-    state = {
-        "version": 1,
-        "change": change_name,
-        "loop_count": 0,
-        "max_loops": int(os.environ.get("RDDF_VERIFIER_MAX_LOOPS", "3")),
-        "classification_history": [],
-        "codebase_commit_at_last_run": "",
-        "route": "archive-ready",
-        "halt_reason": None,
-        "updated_at": "",
-    }
+    from _lib.verifier.loop_state import init_loop_state
+    state = init_loop_state(
+        project_root,
+        change_name,
+        max_loops=int(os.environ.get("RDDF_VERIFIER_MAX_LOOPS", "3")),
+    )
 
-state = append_classification(project_root, state, label, user_confirmed=True)
+state = append_classification(project_root, state, change_name, label, user_confirmed=True)
 
 if state["loop_count"] >= state["max_loops"]:
     state["route"] = "halted"
     state["halt_reason"] = (
         f"max_loops={state['max_loops']} reached with label={label}"
     )
-    save_loop_state(project_root, state)
+    save_loop_state(project_root, state, change_name)
     print(f"❌ HALTED: {state['halt_reason']}")
     sys.exit(1)
 
@@ -71,7 +67,7 @@ if label == "implementation_gap":
 elif label == "proposal_drift":
     state["route"] = "guide-plan"
 
-save_loop_state(project_root, state)
+save_loop_state(project_root, state, change_name)
 print(
     f"→ Route: {state['route']} "
     f"(loop {state['loop_count']}/{state['max_loops']})"

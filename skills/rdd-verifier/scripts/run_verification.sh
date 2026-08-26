@@ -21,4 +21,46 @@ if [ ! -f "$AC_SCRIPT" ]; then
     exit 3
 fi
 
-bash "$AC_SCRIPT" "$CHANGE_NAME"
+set +e
+AC_OUTPUT=$(PROJECT_ROOT="$PROJECT_ROOT" bash "$AC_SCRIPT" "$CHANGE_NAME" 2>&1)
+AC_EXIT=$?
+set -e
+
+printf '%s\n' "$AC_OUTPUT"
+
+if [ "$AC_EXIT" -eq 0 ] || [ "$AC_EXIT" -eq 1 ]; then
+    PROJECT_ROOT="$PROJECT_ROOT" VERIFIER_CHANGE_NAME="$CHANGE_NAME" \
+        VERIFIER_EXIT_CODE="$AC_EXIT" VERIFIER_OUTPUT="$AC_OUTPUT" \
+        python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+from _lib.verifier.branch import resolve_implementation_commit
+from _lib.verifier.cache import verdict_cache
+
+root = Path(os.environ["PROJECT_ROOT"])
+change = os.environ["VERIFIER_CHANGE_NAME"]
+exit_code = int(os.environ["VERIFIER_EXIT_CODE"])
+output = os.environ.get("VERIFIER_OUTPUT", "")
+try:
+    payload = json.loads(output)
+except json.JSONDecodeError:
+    payload = {}
+verdict = payload.get("verdict", []) if isinstance(payload, dict) else []
+failed = [item.get("ac_id", "?") for item in verdict if item.get("status") == "fail"]
+commit = resolve_implementation_commit(root, change) or "unknown"
+verdict_cache(
+    root,
+    change,
+    payload.get("codebase_commit", commit) if isinstance(payload, dict) else commit,
+    verdict,
+    ran_by="rdd-verifier",
+    verification_state="passed" if exit_code == 0 else "failed",
+    failed_acs=failed,
+    implementation_ref=f"openspec/{change}",
+)
+PY
+fi
+
+exit "$AC_EXIT"

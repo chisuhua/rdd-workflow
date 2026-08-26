@@ -49,7 +49,7 @@ _seed_fixture_cache() {
 @test "e2e: all-pass queue (pass.json fixture) classifies nothing" {
     _seed_fixture_cache "pass" "test-change"
     cat > .rddf/state/iteration.json <<'EOF'
-{"changes": [{"name": "test-change", "status": "ship-done"}]}
+{"version": 7, "changes": [{"name": "test-change", "status": "completed", "tasks_done": 1, "tasks_total": 1}]}
 EOF
 
     run bash "$REPO_ROOT/skills/rdd-verifier/scripts/classify_failure.sh" test-change
@@ -58,15 +58,15 @@ EOF
     [ -z "$output" ]
 }
 
-@test "e2e: SKIP_RDD_VERIFIER=yes exits 2" {
+@test "e2e: SKIP_RDD_VERIFIER without reason fails closed" {
     _seed_fixture_cache "pass" "test-change"
     cat > .rddf/state/iteration.json <<'EOF'
-{"changes": [{"name": "test-change", "status": "ship-done"}]}
+{"version": 7, "changes": [{"name": "test-change", "status": "completed", "tasks_done": 1, "tasks_total": 1}]}
 EOF
 
     SKIP_RDD_VERIFIER=yes run python3 "$REPO_ROOT/_lib/cli/rdd_verify_cmd.py"
-    [ "$status" -eq 2 ]
-    [[ "$output" == *"SKIP_RDD_VERIFIER"* ]]
+    [ "$status" -eq 3 ]
+    [[ "$output" == *"RDDF_VERIFIER_BYPASS_REASON"* ]]
 }
 
 @test "e2e: implementation_gap fixture routes to guide-ship" {
@@ -109,10 +109,10 @@ AC-2:implementation_gap" ]
 AC-2:proposal_drift" ]
 }
 
-@test "e2e: dry-run with ship-done change lists it" {
+@test "e2e: dry-run with completed change lists it" {
     _seed_fixture_cache "pass" "test-change"
     cat > .rddf/state/iteration.json <<'EOF'
-{"changes": [{"name": "test-change", "status": "ship-done"}]}
+{"version": 7, "changes": [{"name": "test-change", "status": "completed", "tasks_done": 1, "tasks_total": 1}]}
 EOF
 
     run python3 "$REPO_ROOT/_lib/cli/rdd_verify_cmd.py" --dry-run

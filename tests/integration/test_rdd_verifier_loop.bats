@@ -49,12 +49,12 @@ teardown() {
     export RDDF_VERIFIER_MAX_LOOPS=1
     run bash "$REPO_ROOT/skills/rdd-verifier/scripts/route_loop.sh" halted-state-test implementation_gap
     [ "$status" -eq 1 ]
-    [ -f ".rddf/state/.verifier-loop.json" ]
+    [ -f ".rddf/state/verifier/halted-state-test.json" ]
 
     # Verify state structure (route + halt_reason fields populated)
-    grep -q '"route": "halted"' .rddf/state/.verifier-loop.json
-    grep -q '"halt_reason"' .rddf/state/.verifier-loop.json
-    grep -q '"implementation_gap"' .rddf/state/.verifier-loop.json
+    grep -q '"route": "halted"' .rddf/state/verifier/halted-state-test.json
+    grep -q '"halt_reason"' .rddf/state/verifier/halted-state-test.json
+    grep -q '"implementation_gap"' .rddf/state/verifier/halted-state-test.json
     unset RDDF_VERIFIER_MAX_LOOPS
 }
 
@@ -65,13 +65,9 @@ teardown() {
     bash "$REPO_ROOT/skills/rdd-verifier/scripts/route_loop.sh" history-test implementation_gap >/dev/null 2>&1 || true
 
     # loop_count should be 3
-    grep -q '"loop_count": 3' .rddf/state/.verifier-loop.json
+grep -q '"loop_count": 3' .rddf/state/verifier/history-test.json
     # classification_history should have 3 entries
-    classification_count=$(python3 -c "
-import json
-d = json.load(open('.rddf/state/.verifier-loop.json'))
-print(len(d.get('classification_history', [])))
-")
+    classification_count=$(python3 -c "import json; d=json.load(open('.rddf/state/verifier/history-test.json')); print(len(d.get('classification_history', [])))")
     [ "$classification_count" -eq 3 ]
     unset RDDF_VERIFIER_MAX_LOOPS
 }
@@ -80,8 +76,8 @@ print(len(d.get('classification_history', [])))
     export RDDF_VERIFIER_MAX_LOOPS=5
     run bash "$REPO_ROOT/skills/rdd-verifier/scripts/route_loop.sh" non-halt-test implementation_gap
     [ "$status" -eq 0 ]
-    grep -q '"route": "guide-ship"' .rddf/state/.verifier-loop.json
-    grep -q '"halt_reason": null' .rddf/state/.verifier-loop.json
+grep -q '"route": "guide-ship"' .rddf/state/verifier/non-halt-test.json
+grep -q '"halt_reason": null' .rddf/state/verifier/non-halt-test.json
     unset RDDF_VERIFIER_MAX_LOOPS
 }
 
