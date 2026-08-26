@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### rdd-verifier (5th phase: 验证回环)
+
+Adds the 5th phase `rdd-verifier` (arch → design → plan → ship → **verify** → archive). Runs ac-verifier skill on ship-done changes in batch, classifies failures heuristically (implementation_gap vs proposal_drift), and routes failures back to plan/ship with 3-retry max. See `docs/superpowers/specs/2026-08-26-rdd-verifier-design.md` and ADR-0034.
+
+- **Components**: `skills/rdd-verifier/SKILL.md` (state machine, 242 lines) + 4 bash helpers (`scan_queue.sh`, `run_verification.sh`, `classify_failure.sh`, `route_loop.sh`) + `_lib/verifier/{classify,cache,loop_state}.py` (3 Python modules) + `_lib/cli/rdd_verify_cmd.py` (`rddf rdd-verify` CLI) + 2 JSON schemas (`verifier_loop_schema.json`, `ac_verdict_cache_schema.json`).
+- **SHA-fingerprint verdict cache** (`.rddf/state/.ac-verdict-<name>.json` with `codebase_commit`) shared between rdd-verifier and `archive_gate_check` — prevents double LLM calls (Per ADR-0034 §7.2 + Oracle §C).
+- **Heuristic classification**: Pure-function, no new LLM call (Oracle §E). Reuses ac-verifier verdict JSON evidence + reasoning fields. Drift keywords (`exists but` / `discrepan` / `mismatch`) checked before gap keywords (`missing` / `absent`) per Oracle's conservative-fallback principle.
+- **5th exit code** (`4`): `max_loops` exceeded → archive halted + audit log → manual review required.
+- **`_lib/archive.sh::archive_gate_check` extended**: 3-branch logic (cache-hit skip / cache-stale re-run / cache-miss fresh) replacing prior unconditional LLM call.
+- **AGENTS.md 4 → 5 阶段**: adds `verify | rdd-verifier` row to phase table.
+- **ADR-0034**: new ADR documenting 5th phase architecture.
+- **Tests**: 8 new test files (3 unit + 5 integration), 47 new test cases total. All pass.
+
+### add-feature-fragment-command (rddf roadmap add-feature primitive)
+
 ### add-feature-fragment-command (rddf roadmap add-feature primitive)
 
 Adds the `rddf roadmap add-feature <name>` CLI primitive that creates `.rddf/roadmap/features/feat-<name>.md` fragments with valid frontmatter + 3-section body skeleton, and refreshes `.rddf/roadmap.md` AUTO-INDEX atomically. Closes the operation gap from `add-hierarchical-roadmap-structure` (scenario 3, shipped 2026-08-20); users previously had to hand-craft YAML and call `render_fragment_index` manually, leaving `.rddf/roadmap/features/` empty.
