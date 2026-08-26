@@ -330,34 +330,84 @@ archive_gate_check() {
     return 1
   fi
 
-  # AC verification step (ac-verifier skill, Task 10)
+  # AC verification step (ac-verifier skill, Task 10) + SHA cache check (ADR-0034 §7.2)
   if [ "${SKIP_AC_VERIFICATION:-no}" != "yes" ]; then
     local proposal_file="$tasks_root/openspec/changes/$change_name/proposal.md"
     if [ -f "$proposal_file" ]; then
       local ac_script
       ac_script="$(git rev-parse --show-toplevel 2>/dev/null)/skills/ac-verifier/scripts/ac_verifier.sh"
       if [ -x "$ac_script" ]; then
-        local ac_output ac_exit
-        ac_output=$(PROJECT_ROOT="$tasks_root" bash "$ac_script" "$change_name" 2>&1)
-        ac_exit=$?
-        case $ac_exit in
-          0) ;;  # all pass — continue
-          1)
-            if [ "${STRICT_AC_GATE:-no}" = "yes" ]; then
-              echo "❌ archive_gate_check: AC verification failed under STRICT_AC_GATE"
-              echo "$ac_output" | tail -30
+        # SHA-fingerprint verdict cache check (Per ADR-0034 §7.2 + Oracle §C)
+        # Avoids redundant LLM call when rdd-verifier already ran at same commit.
+        local verdict_cache="$tasks_root/.rddf/state/.ac-verdict-${change_name}.json"
+        local current_sha
+        current_sha=$(git -C "$tasks_root" rev-parse HEAD 2>/dev/null || echo "unknown")
+
+        local cache_hit="no"
+        if [ -f "$verdict_cache" ]; then
+          local cached_sha
+          cached_sha=$(python3 -c "import json,sys; print(json.load(open('$verdict_cache')).get('codebase_commit',''))" 2>/dev/null || echo "")
+          if [ -n "$cached_sha" ] && [ "$cached_sha" = "$current_sha" ]; then
+            cache_hit="yes"
+            echo "♻️  Reusing ac-verifier verdict cache (commit $cached_sha)"
+          else
+            echo "⚠️  ac-verifier verdict cache stale (cached: ${cached_sha:-none}, current: $current_sha)"
+          fi
+        fi
+
+        if [ "$cache_hit" = "yes" ]; then
+          # Evaluate cached verdict for STRICT_AC_GATE
+          if [ "${STRICT_AC_GATE:-no}" = "yes" ]; then
+            local cached_has_fail
+            cached_has_fail=$(python3 -c "
+import json,sys
+try:
+    d = json.load(open('$verdict_cache'))
+    fails = [v for v in d.get('verdict', []) if v.get('status') == 'fail']
+    sys.exit(1 if fails else 0)
+except Exception:
+    sys.exit(0)
+" 2>/dev/null)
+            if [ "$?" -ne 0 ] || [ "$cached_has_fail" = "1" ]; then
+              echo "❌ archive_gate_check: AC verification failed under STRICT_AC_GATE (cached)"
+              python3 -c "
+import json
+try:
+    d = json.load(open('$verdict_cache'))
+    for v in d.get('verdict', []):
+        if v.get('status') == 'fail':
+            print(f'  {v.get(\"ac_id\", \"?\")}: {v.get(\"reasoning\", \"no reasoning\")}')
+except Exception:
+    pass
+" 2>/dev/null
               return 1
-            else
-              echo "⚠️  archive_gate_check: AC verification warning (set STRICT_AC_GATE=yes to block)"
-              echo "$ac_output" | tail -30
             fi
-            ;;
-          2) ;;  # skipped — continue silently
-          3)
-            echo "⚠️  AC verification errored; treating as warning (set SKIP_AC_VERIFICATION=yes to suppress)"
-            echo "$ac_output" | tail -10
-            ;;
-        esac
+          fi
+          # Non-strict + cache hit = pass; skip LLM
+        else
+          # Original ac-verifier invocation (cache miss or stale)
+          local ac_output ac_exit
+          ac_output=$(PROJECT_ROOT="$tasks_root" bash "$ac_script" "$change_name" 2>&1)
+          ac_exit=$?
+          case $ac_exit in
+            0) ;;  # all pass — continue
+            1)
+              if [ "${STRICT_AC_GATE:-no}" = "yes" ]; then
+                echo "❌ archive_gate_check: AC verification failed under STRICT_AC_GATE"
+                echo "$ac_output" | tail -30
+                return 1
+              else
+                echo "⚠️  archive_gate_check: AC verification warning (set STRICT_AC_GATE=yes to block)"
+                echo "$ac_output" | tail -30
+              fi
+              ;;
+            2) ;;  # skipped — continue silently
+            3)
+              echo "⚠️  AC verification errored; treating as warning (set SKIP_AC_VERIFICATION=yes to suppress)"
+              echo "$ac_output" | tail -10
+              ;;
+          esac
+        fi
       fi
     fi
   fi
