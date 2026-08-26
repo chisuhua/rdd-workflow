@@ -56,6 +56,7 @@
 | [ADR-0030](ADR-0030-hub-and-spoke-federation.md) | Hub-and-Spoke 联邦协同架构 | 待定 | 多项目 AI 协同开发采用 Hub 仓库 + L2 升级双向协同通道 + 6 项安全风险 + 3 个月复核 |
 | [ADR-0031](ADR-0031-human-in-loop-cross-repo.md) | 跨项目 RFC 必须人类决策 | 已采纳 | 跨项目提案 AI 不可自动批准 + `RDDF_REQUIRE_HUB_APPROVAL` 强制门控 + 审计 log + 无 Spoke 端 bypass |
 | [ADR-0032](ADR-0032-hub-federation-deepening.md) | Hub 联邦深化 | 待定 | 4 个 P0 change (跨仓分析/RFC 草稿/审批交互/自动发 RFC) + 9 change 总览 + 3 个月复核窗口 2026-11-15 |
+| [ADR-0034](ADR-0034-rdd-verifier-verify-phase-architecture.md) | rdd-verifier 验证回环阶段架构 | 已采纳 | 5 阶段非线性必经节点 + 启发式分类 (implementation_gap vs proposal_drift) + 3 次重试 + SHA 指纹 verdict 缓存 |
 
 ## 架构演进
 
