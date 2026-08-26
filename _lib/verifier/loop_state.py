@@ -1,7 +1,10 @@
-""".verifier-loop.json load/save with schema validation.
+"""Per-change verifier loop state.
 
-Per ADR-0034 §6: tracks loop count, classification history, route, halt reason.
-Schema validated on every save to prevent silent corruption.
+Per fix-rdd-verifier-lifecycle-dashboard Task 2 + ADR-0034 §6:
+- Per-change file at .rddf/state/verifier/<change-name>.json
+- Schema validated on every save
+- Legacy single-file .verifier-loop.json migrates only when its 'change'
+  field matches the sole eligible change
 """
 from __future__ import annotations
 
@@ -14,27 +17,55 @@ _SCHEMA_PATH = (Path(__file__).resolve().parents[1] / "schemas"
                  / "verifier_loop_schema.json")
 _SCHEMA = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
 
+_VERIFIER_DIR = "verifier"
 
-def _state_path(project_root: Path) -> Path:
-    return project_root / ".rddf" / "state" / ".verifier-loop.json"
+
+def _state_path(project_root: Path, change_name: str) -> Path:
+    return (Path(project_root) / ".rddf" / "state" / _VERIFIER_DIR
+            / f"{change_name}.json")
+
+
+def _LEGACY_PATH(project_root: Path) -> Path:
+    return Path(project_root) / ".rddf" / "state" / ".verifier-loop.json"
+
+
+def _migrate_legacy(project_root: Path, change_name: str) -> Optional[dict]:
+    legacy = _LEGACY_PATH(project_root)
+    if not legacy.is_file():
+        return None
+    try:
+        doc = json.loads(legacy.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError):
+        return None
+    if doc.get("change") == change_name:
+        return doc
+    return None
 
 
 def init_loop_state(project_root: Path, change_name: str,
                     max_loops: int = 3) -> dict:
-    """Initialize a new loop state for a change. Persists to disk.
+    existing = _state_path(project_root, change_name)
+    if existing.is_file():
+        loaded = load_loop_state(project_root, change_name)
+        if loaded is not None:
+            return loaded
 
-    Default status="archive-ready" until classification append changes route.
+    migrated = _migrate_legacy(project_root, change_name)
+    if migrated is not None:
+        migrated["updated_at"] = datetime.now(timezone.utc).isoformat()
+        if "verification_state" not in migrated:
+            migrated["verification_state"] = "pending"
+        save_loop_state(project_root, migrated, change_name)
+        return migrated
 
-    Args:
-        project_root: Path to project root.
-        change_name: OpenSpec change name.
-        max_loops: Maximum retry attempts before halt.
+    state = _new_state(change_name, max_loops)
+    save_loop_state(project_root, state, change_name)
+    return state
 
-    Returns:
-        The initialized state dict.
-    """
-    state = {
-        "version": 1,
+
+def _new_state(change_name: str, max_loops: int) -> dict:
+    return {
+        "version": 2,
         "change": change_name,
         "loop_count": 0,
         "max_loops": max_loops,
@@ -42,15 +73,13 @@ def init_loop_state(project_root: Path, change_name: str,
         "codebase_commit_at_last_run": "",
         "route": "archive-ready",
         "halt_reason": None,
+        "verification_state": "pending",
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    save_loop_state(project_root, state)
-    return state
 
 
-def load_loop_state(project_root: Path) -> Optional[dict]:
-    """Load loop state. Returns None if missing or corrupt."""
-    path = _state_path(Path(project_root))
+def load_loop_state(project_root: Path, change_name: str) -> Optional[dict]:
+    path = _state_path(Path(project_root), change_name)
     if not path.is_file():
         return None
     try:
@@ -59,40 +88,19 @@ def load_loop_state(project_root: Path) -> Optional[dict]:
         return None
 
 
-def save_loop_state(project_root: Path, state: dict) -> None:
-    """Save loop state. Validates against schema before writing.
-
-    Args:
-        project_root: Path to project root.
-        state: Loop state dict to persist.
-
-    Raises:
-        jsonschema.ValidationError: if state fails schema validation.
-        OSError: if .rddf/state/ cannot be written.
-    """
+def save_loop_state(project_root: Path, state: dict, change_name: str) -> None:
     import jsonschema
     state["updated_at"] = datetime.now(timezone.utc).isoformat()
     jsonschema.validate(state, _SCHEMA)
 
-    path = _state_path(Path(project_root))
+    path = _state_path(Path(project_root), change_name)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(state, indent=2, ensure_ascii=False))
 
 
-def append_classification(project_root: Path, state: dict, label: str,
-                          user_confirmed: bool) -> dict:
-    """Append a classification to history and increment loop_count.
-
-    Args:
-        project_root: Where to persist.
-        state: Current loop state (will be deep-copied).
-        label: "implementation_gap" or "proposal_drift".
-        user_confirmed: True if user agreed with AI label, False if overridden.
-
-    Returns:
-        Updated state (also persisted to disk).
-    """
-    new_state = json.loads(json.dumps(state))  # deep copy
+def append_classification(project_root: Path, state: dict, change_name: str,
+                          label: str, user_confirmed: bool) -> dict:
+    new_state = json.loads(json.dumps(state))
     new_state["classification_history"].append({
         "loop": new_state["loop_count"] + 1,
         "label": label,
@@ -100,5 +108,5 @@ def append_classification(project_root: Path, state: dict, label: str,
         "at": datetime.now(timezone.utc).isoformat(),
     })
     new_state["loop_count"] += 1
-    save_loop_state(project_root, new_state)
+    save_loop_state(project_root, new_state, change_name)
     return new_state

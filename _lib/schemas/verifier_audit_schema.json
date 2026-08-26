@@ -1,0 +1,18 @@
+"""Append-only verifier audit event schema."""
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["ts", "change", "event"],
+  "additionalProperties": true,
+  "properties": {
+    "ts": {"type": "string", "format": "date-time"},
+    "change": {"type": "string", "minLength": 1},
+    "event": {"enum": ["running", "failed", "halted", "bypassed", "archive-ready", "error", "skipped"]},
+    "commit": {"type": ["string", "null"]},
+    "route": {"type": ["string", "null"]},
+    "halt_reason": {"type": ["string", "null"]},
+    "bypass_reason": {"type": ["string", "null"]},
+    "bypass_source": {"type": ["string", "null"]},
+    "loop_count": {"type": ["integer", "null"], "minimum": 0}
+  }
+}

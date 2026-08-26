@@ -9,8 +9,8 @@
   "properties": {
         "version": {
           "type": "integer",
-          "enum": [3, 4, 5, 6],
-          "description": "Schema version. v5: added l2_violation_count_after and l2_violation_kind per-change fields (collect-l2-violation-count-on-archive 2026-08-05). v6: added filled_at per-change field (fix-iteration-schema-filled-at 2026-08-10) - tracks when a skeleton change was filled with full specs/tasks."
+          "enum": [3, 4, 5, 6, 7],
+          "description": "Schema version. v5: added l2_violation_count_after and l2_violation_kind per-change fields (collect-l2-violation-count-on-archive 2026-08-05). v6: added filled_at per-change field (fix-iteration-schema-filled-at 2026-08-10) - tracks when a skeleton change was filled with full specs/tasks. v7: added verification object per-change field (fix-rdd-verifier-lifecycle-dashboard 2026-08-26) - independent verification lifecycle state, separate from status."
         },
     "updated_at": {
       "type": "string",
@@ -140,6 +140,55 @@
             "type": ["string", "null"],
             "format": "date-time",
             "description": "ISO 8601 timestamp when a skeleton change (status='planned') was filled with full proposal.md/design.md/specs/tasks.md. Distinguishes the 'skeleton' (added_at only) phase from the 'filled' (ready-to-ship) phase. Null for legacy changes without tracked fill time or non-skeleton changes that were never in skeleton phase. v6 (fix-iteration-schema-filled-at 2026-08-10)."
+          },
+          "verification": {
+            "type": ["object", "null"],
+            "description": "Independent verification lifecycle for a change. Optional; missing field treated as 'unknown' for active changes, 'legacy' for archived changes. Summary fields only — retry history lives in .rddf/state/verifier/<change>.json, raw verdict in .rddf/state/.ac-verdict-<change>.json, audit log in .rddf/state/verifier/<change>.audit.jsonl. v7 (fix-rdd-verifier-lifecycle-dashboard 2026-08-26).",
+            "additionalProperties": true,
+            "required": ["state", "archive_ready"],
+            "properties": {
+              "state": {
+                "type": ["string", "null"],
+                "enum": ["pending", "running", "passed", "failed", "halted", "bypassed", "legacy", "unknown", null],
+                "description": "Verification outcome state. Active change without verification data: 'unknown'. Archived change without verification data: 'legacy' (never fabricated as passed)."
+              },
+              "verdict_sha": {
+                "type": ["string", "null"],
+                "description": "Git commit SHA of the implementation branch tip the verdict is bound to. Null if not yet verified."
+              },
+              "checked_at": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "ISO 8601 timestamp of last successful verification check."
+              },
+              "route": {
+                "type": ["string", "null"],
+                "enum": ["archive-ready", "guide-ship", "guide-plan", "halted", null],
+                "description": "Where to send the user based on classification. archive-ready → ship, guide-ship → fix implementation_gap, guide-plan → fix proposal_drift, halted → manual review."
+              },
+              "loop_count": {
+                "type": ["integer", "null"],
+                "minimum": 0,
+                "description": "Number of retry loops completed for this change's verification."
+              },
+              "failed_acs": {
+                "type": ["array", "null"],
+                "items": { "type": "string" },
+                "description": "AC IDs that failed verification."
+              },
+              "bypass_reason": {
+                "type": ["string", "null"],
+                "description": "Audited reason string for bypassed state. Required when state='bypassed'."
+              },
+              "bypass_source": {
+                "type": ["string", "null"],
+                "description": "Source of bypass: 'SKIP_RDD_VERIFIER' or other operator-supplied label."
+              },
+              "archive_ready": {
+                "type": "boolean",
+                "description": "True only when verification passed or bypassed with matching verdict_sha. Required by archive_gate_check."
+              }
+            }
           }
         }
       }

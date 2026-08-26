@@ -14,7 +14,7 @@
     "updated_at"
   ],
   "properties": {
-    "version": {"const": 1},
+    "version": {"enum": [1, 2]},
     "change": {"type": "string", "minLength": 1},
     "loop_count": {"type": "integer", "minimum": 0},
     "max_loops": {"type": "integer", "minimum": 1, "maximum": 10},
@@ -36,6 +36,15 @@
       "enum": ["archive-ready", "guide-ship", "guide-plan", "halted"]
     },
     "halt_reason": {"type": ["string", "null"]},
+    "verification_state": {
+      "type": "string",
+      "enum": ["pending", "running", "passed", "failed", "halted", "bypassed", "legacy", "unknown", "error", "skipped"],
+      "description": "Per-change verification state. Mirrors iteration.verification.state. v2."
+    },
+    "last_user_confirmation_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
     "updated_at": {"type": "string", "format": "date-time"}
   }
 }
