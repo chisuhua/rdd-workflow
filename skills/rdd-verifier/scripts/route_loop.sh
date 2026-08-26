@@ -24,7 +24,7 @@ import os
 import sys
 from pathlib import Path
 
-project_root = Path(os.environ.get("PROJECT_ROOT", "."))
+project_root = Path(os.environ["PROJECT_ROOT"])
 sys.path.insert(0, str(project_root / "_lib"))
 from _lib.verifier.loop_state import (
     load_loop_state,
@@ -34,6 +34,13 @@ from _lib.verifier.loop_state import (
 
 change_name = sys.argv[1]
 label = sys.argv[2]
+
+# Validate label BEFORE mutating state (schema enum check would raise otherwise)
+VALID_LABELS = ("implementation_gap", "proposal_drift")
+if label not in VALID_LABELS:
+    print(f"❌ unknown label: {label}", file=sys.stderr)
+    sys.exit(2)
+
 state = load_loop_state(project_root)
 if state is None:
     state = {
@@ -63,9 +70,6 @@ if label == "implementation_gap":
     state["route"] = "guide-ship"
 elif label == "proposal_drift":
     state["route"] = "guide-plan"
-else:
-    print(f"❌ unknown label: {label}", file=sys.stderr)
-    sys.exit(2)
 
 save_loop_state(project_root, state)
 print(
