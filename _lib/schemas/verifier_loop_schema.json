@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "version",
+    "change",
+    "loop_count",
+    "max_loops",
+    "classification_history",
+    "codebase_commit_at_last_run",
+    "route",
+    "halt_reason",
+    "updated_at"
+  ],
+  "properties": {
+    "version": {"const": 1},
+    "change": {"type": "string", "minLength": 1},
+    "loop_count": {"type": "integer", "minimum": 0},
+    "max_loops": {"type": "integer", "minimum": 1, "maximum": 10},
+    "classification_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["loop", "label", "user_confirmed", "at"],
+        "properties": {
+          "loop": {"type": "integer", "minimum": 1},
+          "label": {"enum": ["implementation_gap", "proposal_drift"]},
+          "user_confirmed": {"type": "boolean"},
+          "at": {"type": "string", "format": "date-time"}
+        }
+      }
+    },
+    "codebase_commit_at_last_run": {"type": "string", "minLength": 7},
+    "route": {
+      "enum": ["archive-ready", "guide-ship", "guide-plan", "halted"]
+    },
+    "halt_reason": {"type": ["string", "null"]},
+    "updated_at": {"type": "string", "format": "date-time"}
+  }
+}
