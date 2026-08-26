@@ -31,7 +31,7 @@
         }
       }
     },
-    "codebase_commit_at_last_run": {"type": "string", "minLength": 7},
+    "codebase_commit_at_last_run": {"type": "string", "minLength": 0, "description": "Empty string means 'not yet run a verification'; valid git SHA ≥7 chars when populated"},
     "route": {
       "enum": ["archive-ready", "guide-ship", "guide-plan", "halted"]
     },

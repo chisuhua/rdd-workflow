@@ -25,7 +25,7 @@ def test_valid_minimal_doc():
         "loop_count": 0,
         "max_loops": 3,
         "classification_history": [],
-        "codebase_commit_at_last_run": "abc1234",
+        "codebase_commit_at_last_run": "",
         "route": "archive-ready",
         "halt_reason": None,
         "updated_at": "2026-08-26T00:00:00Z",
