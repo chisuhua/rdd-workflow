@@ -72,11 +72,33 @@ _STATUS_ICON_PLAIN = {
     "in_worktree":  "*",
     "review":       "*",
     "completed":    "v",
-    "done":          "v",
+    "done":         "v",
     "archived":     "-",
     "committed":    "$",
     "unknown":      "?",
 }
+
+_VERIFICATION_ICON = {
+    "pending": "○",
+    "running": "◐",
+    "passed": "●",
+    "failed": "✗",
+    "halted": "⏸",
+    "bypassed": "↷",
+    "legacy": "?",
+    "unknown": "·",
+}
+_VERIFICATION_ICON_PLAIN = {
+    "pending": "P",
+    "running": "R",
+    "passed": "V",
+    "failed": "F",
+    "halted": "H",
+    "bypassed": "B",
+    "legacy": "L",
+    "unknown": "?",
+}
+
 
 # Session state -> emoji
 _SESSION_ICON = {
@@ -183,9 +205,21 @@ def _render_json(data: DashboardData) -> str:
     (``roadmap_counts``) are converted to lists by the json encoder.
     """
     as_dict = dataclasses.asdict(data)
-    # ``roadmap_counts`` is dict[str, tuple[int, int]]; asdict keeps the
-    # tuples. json.dumps serializes tuples as arrays, which is what we
-    # want - no manual conversion needed.
+    for change in as_dict.get("changes", []):
+        verification = change.get("verification")
+        status = change.get("status")
+        if verification and verification.get("state"):
+            verification_state = verification["state"]
+        elif status in ("archived", "archived_partial"):
+            verification_state = "legacy"
+        else:
+            verification_state = "unknown"
+        change["verification_state"] = verification_state
+        change["archive_ready"] = bool(
+            verification
+            and verification_state in ("passed", "bypassed")
+            and verification.get("archive_ready")
+        )
     return json.dumps(as_dict, indent=2, ensure_ascii=False, default=str) + "\n"
 
 
@@ -384,7 +418,7 @@ def _section_changes_terminal(data: DashboardData, width: int) -> list[str]:
         # Header row
         lines.append(
             _content_line(
-                f"  {'NAME':<32} {'STATUS':<12} {'TASKS':<8} {'PLAN':<4}",
+                f"  {'NAME':<24} {'STATUS':<10} {'VERIFY':<7} {'TASKS':<8} {'PLAN':<4}",
                 width,
             )
         )
@@ -405,11 +439,19 @@ def _section_changes_terminal(data: DashboardData, width: int) -> list[str]:
                 else "-"
             )
             plan = "✅" if c.plan_path else "-"
-            name = c.name[:32]
+            name = c.name[:24]
             status_disp = f"{icon} {c.status}"
+            verification = c.verification_state
+            verify_icon = _VERIFICATION_ICON.get(verification, "?")
+            verify_disp = f"{verify_icon} {verification}"
+            detail = ""
+            if c.verification and c.verification.get("failed_acs"):
+                detail = " failed=" + ",".join(c.verification["failed_acs"])
+            elif c.verification and c.verification.get("route"):
+                detail = " route=" + str(c.verification["route"])
             lines.append(
                 _content_line(
-                    f"  {name:<32} {status_disp:<14} {tasks:<8} {plan:<4}",
+                    f"  {name:<24} {status_disp:<12} {verify_disp:<9} {tasks:<8} {plan:<4}{detail}",
                     width,
                 )
             )
@@ -727,7 +769,7 @@ def _p_section_changes(data: DashboardData, width: int) -> str:
     else:
         out.append(
             _p_line(
-                f"  {'NAME':<32} {'STATUS':<14} {'TASKS':<8} {'PLAN':<4}",
+                f"  {'NAME':<24} {'STATUS':<14} {'VERIFY':<7} {'TASKS':<8} {'PLAN':<4}",
                 width,
             )
         )
@@ -748,11 +790,18 @@ def _p_section_changes(data: DashboardData, width: int) -> str:
                 else "-"
             )
             plan = "v" if c.plan_path else "-"
-            name = c.name[:32]
+            name = c.name[:24]
             status_disp = f"{icon} {c.status}"
+            verification = c.verification_state
+            verify_disp = f"{_VERIFICATION_ICON_PLAIN.get(verification, '?')} {verification}"
+            detail = ""
+            if c.verification and c.verification.get("failed_acs"):
+                detail = " failed=" + ",".join(c.verification["failed_acs"])
+            elif c.verification and c.verification.get("route"):
+                detail = " route=" + str(c.verification["route"])
             out.append(
                 _p_line(
-                    f"  {name:<32} {status_disp:<14} {tasks:<8} {plan:<4}",
+                    f"  {name:<24} {status_disp:<14} {verify_disp:<9} {tasks:<8} {plan:<4}{detail}",
                     width,
                 )
             )

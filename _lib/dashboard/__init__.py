@@ -100,7 +100,11 @@ class ChangeEntry:
 
     Mirrors the subset of iteration.json change fields needed for
     rendering. ``tasks_done``/``tasks_total`` default to 0 (older
-    iteration entries may not track tasks).
+    iteration entries may not track tasks). ``verification`` is an
+    independent object introduced in iteration v7 (per
+    fix-rdd-verifier-lifecycle-dashboard); missing entries are
+    treated as ``legacy`` for archived changes and ``unknown`` for
+    active changes.
     """
 
     name: str
@@ -115,6 +119,32 @@ class ChangeEntry:
     worktree_path: Optional[str] = None
     added_at: Optional[str] = None
     archived_at: Optional[str] = None
+    verification: Optional[dict] = None
+
+    @property
+    def verification_state(self) -> str:
+        """Derived verification state for rendering.
+
+        Priority:
+          1. explicit verification.state when present
+          2. ``legacy`` for archived changes (never fabricate passed)
+          3. ``unknown`` for active changes without verification data
+        """
+        if self.verification:
+            state = self.verification.get("state")
+            if state:
+                return state
+        if self.status in ("archived", "archived_partial"):
+            return "legacy"
+        return "unknown"
+
+    @property
+    def archive_ready(self) -> bool:
+        """True only when verification.state is passed/bypassed and archive_ready=true."""
+        if not self.verification:
+            return False
+        state = self.verification.get("state")
+        return state in ("passed", "bypassed") and bool(self.verification.get("archive_ready"))
 
 
 @dataclass
@@ -321,6 +351,7 @@ def collect(project_root: str) -> DashboardData:
                     worktree_path=c.get("worktree_path"),
                     added_at=c.get("added_at"),
                     archived_at=c.get("archived_at"),
+                    verification=c.get("verification"),
                 )
             )
 
