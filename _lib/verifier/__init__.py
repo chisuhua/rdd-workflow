@@ -9,5 +9,15 @@ Modules are added progressively:
   - loop_state: .verifier-loop.json load/save (Task 6)
 """
 from _lib.verifier.classify import classify_failure  # noqa: F401
+from _lib.verifier.cache import (  # noqa: F401
+    verdict_cache,
+    read_verdict_cache,
+    is_cache_fresh,
+)
 
-__all__ = ["classify_failure"]
+__all__ = [
+    "classify_failure",
+    "verdict_cache",
+    "read_verdict_cache",
+    "is_cache_fresh",
+]
