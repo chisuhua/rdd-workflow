@@ -1,6 +1,6 @@
 ---
 name: rdd-verifier
-description: 5th phase batch verifier — runs ac-verifier skill on ship-done changes, classifies failures heuristically (implementation_gap vs proposal_drift), routes failures back to guide-plan or guide-ship with 3-retry max. Called by user after guide-ship completes (Per ADR-0034).
+description: 5th phase batch verifier — runs ac-verifier on implemented, task-complete, non-archived changes, classifies failures heuristically (implementation_gap vs proposal_drift), routes failures back to guide-plan or guide-ship with a bounded retry loop. Called before archive after guide-ship execution (Per ADR-0034).
 license: MIT
 compatibility: requires openspec CLI v1.3.1+, Python 3.11+, ANTHROPIC_API_KEY or OPENAI_API_KEY (or AC_LLM_MOCK=yes for tests)
 metadata:
@@ -13,9 +13,9 @@ role:
   perspective: "5th phase state machine — guards archive by enforcing AC pass, classifies failures heuristically, routes loops back to plan/ship. High human involvement (AI classification + user confirm + failure routing decisions)."
   boundaries:
     owns:
-      - ".rddf/state/.verifier-loop.json"
+      - ".rddf/state/verifier/<change>.json"
+      - ".rddf/state/verifier/<change>.audit.jsonl"
       - ".rddf/state/.ac-verdict-*.json"
-      - ".rddf/state/.ac-verifier-blocked.jsonl"
     not_owns:
       - "openspec/changes/<name>/"
       - "docs/adr/ADR-*.md"
@@ -50,7 +50,7 @@ skill_use("rdd-verifier")
 
 **与 ac-verifier 的边界**：
 - `rddf ac-verify <name>` = 单 change 原子验证（无状态、无回环）
-- `rddf rdd-verify` = 队列扫描 + 回环编排（有状态、写 `.verifier-loop.json`）
+- `rddf rdd-verify` = 按 iteration lifecycle 扫描 + 批量编排（写 per-change loop state、canonical cache、iteration summary、audit JSONL）
 
 ---
 
@@ -59,7 +59,7 @@ skill_use("rdd-verifier")
 ```
 [ENTRY: guide-ship done]
     ↓
-[1] scan_queue.sh → list ship-done changes from .rddf/state/iteration.json
+[1] scan_queue.sh → list `in_worktree`/`completed` changes with `tasks_done == tasks_total > 0` from .rddf/state/iteration.json
     ↓ (queue = ["change-a", "change-b", ...])
 [2] FOR EACH change (serial, max $RDDF_VERIFIER_MAX_CHANGES):
     ├─ [2a] Check SHA cache (.ac-verdict-<name>.json):
@@ -96,7 +96,7 @@ bash skills/rdd-verifier/scripts/scan_queue.sh
 # Honors RDDF_VERIFIER_MAX_CHANGES (default 10)
 ```
 
-Source: `iteration.json` filter `status="ship-done"` and not archived.
+Source: `iteration.json` filter `status in (in_worktree, completed)` and `tasks_done == tasks_total > 0`; archived and incomplete changes are excluded.
 
 ### Step 2: Per-Change Verification
 
@@ -156,7 +156,7 @@ User options:
 
 ```bash
 bash skills/rdd-verifier/scripts/route_loop.sh "$CHANGE_NAME" "$LABEL"
-# Updates .verifier-loop.json: append_classification + route
+# Updates `.rddf/state/verifier/<change>.json`: append classification + route
 # Exit 0: routed (guide-ship / guide-plan)
 # Exit 1: halted (max_loops reached, audit log written)
 ```
@@ -179,7 +179,7 @@ bash skills/rdd-verifier/scripts/route_loop.sh "$CHANGE_NAME" "$LABEL"
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SKIP_RDD_VERIFIER` | `no` | Skip 5th phase entirely (emergency only) |
+| `SKIP_RDD_VERIFIER` | `no` | Write audited `bypassed` state; requires `RDDF_VERIFIER_BYPASS_REASON` and does not weaken hard archive gates |
 | `RDDF_VERIFIER_MAX_LOOPS` | `3` | Max retry loops per change |
 | `RDDF_VERIFIER_MAX_CHANGES` | `10` | Max changes per scan (cost guardrail) |
 | `RDDF_VERIFIER_DRY_RUN` | `no` | Scan + suggest, no state mutation |
@@ -212,11 +212,10 @@ This log is read-only forensic record. `rdd-doctor --category plan-tdd` can chec
 
 | File | Schema | Purpose |
 |------|--------|---------|
-| `.rddf/state/.verifier-loop.json` | `verifier_loop_schema.json` v1 | Loop count, classification history, route, halt reason |
-| `.rddf/state/.ac-verdict-<name>.json` | `ac_verdict_cache_schema.json` v1 | SHA-fingerprint verdict cache (shared with archive_gate_check) |
-| `.rddf/state/.ac-verifier-blocked.jsonl` | append-only JSONL | Audit log for halted changes |
-
-All 3 files are `.rddf/state/` gitignored, per AGENTS.md state file convention.
+| `.rddf/state/verifier/<change>.json` | `verifier_loop_schema.json` v2 | Per-change loop count, classification history, route, halt reason |
+| `.rddf/state/verifier/<change>.audit.jsonl` | `verifier_audit_schema.json` v1 | Append-only running/failed/halted/bypassed/archive-ready events |
+| `.rddf/state/.ac-verdict-<name>.json` | cache schema v2 | SHA-fingerprint verdict cache, verification state, failed ACs, implementation ref |
+All verifier state files are `.rddf/state/` gitignored, per AGENTS.md state file convention. The canonical audit log is `.rddf/state/verifier/<change>.audit.jsonl`.
 
 ---
 

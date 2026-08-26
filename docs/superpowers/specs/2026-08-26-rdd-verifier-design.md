@@ -25,7 +25,7 @@ rdd-workflow v2.1+ 采用 4 阶段架构：`arch → design → plan → ship`�
 | 独立阶段 | `skills/rdd-verifier/SKILL.md` 状态机 + `guide` 推荐器菜单新增 |
 | 强制模式 | 默认 `STRICT_AC_GATE=yes` 风格（与 archive_gate_check 共享同一开关） |
 | 失败回路 | AI 启发式分类（implementation_gap / proposal_drift）+ 用户确认 + 自动跳回对应阶段 |
-| 批量能力 | `rddf rdd-verify` 扫描 ship-done 队列，串行验证每个，写 verdict 缓存 |
+| 批量能力 | `rddf rdd-verify` 扫描 `in_worktree`/`completed` 且任务完成的非归档 change，串行验证每个，写 per-change state 和 verdict 缓存 |
 
 **非目标 (YAGNI)**:
 - 不重写 ac-verifier LLM 调用（复用 SKILL + CLI）
@@ -59,7 +59,7 @@ arch (guide-arch) → design (guide-design) → plan (guide-plan) → ship (guid
 - 默认严格（`STRICT_AC_GATE` 风格）
 - 失败触发回环到 `plan` 或 `ship`，最多重试 `RDDF_VERIFIER_MAX_LOOPS` 次（默认 3）
 - 角色模型（ADR-0028 扩展）：
-  - `role.owns`: `.rddf/state/.verifier-loop.json`, `.rddf/state/.ac-verdict-<name>.json`, `.rddf/state/.ac-verifier-blocked.jsonl`
+  - `role.owns`: `.rddf/state/verifier/<change>.json`, `.rddf/state/verifier/<change>.audit.jsonl`, `.rddf/state/.ac-verdict-<name>.json`
   - `role.not_owns`: `openspec/changes/<name>/`（不修改提案本身）、`docs/adr/`（不写 ADR）
   - `role.human_involvement`: `high`（AI 分类 + 用户确认 + 失败回环决策）
 
@@ -79,7 +79,7 @@ arch (guide-arch) → design (guide-design) → plan (guide-plan) → ship (guid
 
 ### 4.2 两个新状态文件（gitignored）
 
-**文件 1**: `.rddf/state/.verifier-loop.json`
+**文件 1**: `.rddf/state/verifier/<change>.json`
 ```json
 {
   "version": 1,
@@ -125,7 +125,7 @@ guide-ship done
 [rddf session 提示] "进入 rdd-verifier？"
     ↓ (yes, or direct `rddf rdd-verify`)
 rdd-verifier 扫描:
-    iteration.json status="ship-done" ∧ openspec status="merged" ∧ archived=false
+    iteration.json status in {"in_worktree", "completed"} ∧ tasks_done == tasks_total > 0 ∧ archived=false
     ↓
 对每个 change 串行:
 1. 读 .ac-verdict-<name>.json
@@ -141,7 +141,7 @@ rdd-verifier 扫描:
     ├─ implementation_gap → 跳回 guide-ship (worktree 复用)
     ├─ proposal_drift → 跳回 guide-plan (强制 worktree)
     └─ loop_count == max_loops → 阻断 archive, 写 audit log
-6. 全 pass → 写 .verifier-loop.json status="verified"
+6. 全 pass → 写 per-change loop state + iteration.verification.state="passed"、archive_ready=true
     ↓
 archive (复用 archive_change_for_mode 流程)
 ```

@@ -557,7 +557,7 @@ source "$(resolve_rdd_skill_dir guide-ship)/scripts/ship_case_handler.sh"
 handle_invalid_choice "$choice"
 ```
 
-**归档流程（选项 1/2）**：
+**归档流程（选项 1/2）**：归档前必须完成 verifier handoff。对选定 change 先运行 `rddf rdd-verify`；只有 `verification.state=passed`（或带审计原因的 `bypassed`）且 `archive_ready=true` 时才继续 merge/archive。rdd-verifier 不删除 branch、worktree，也不移动 change 目录。
 
 ```bash
 # === Phase 3: thin orchestrator — heavy lifting in scripts/ship_archive.sh ===

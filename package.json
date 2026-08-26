@@ -53,6 +53,7 @@
     "contract-check",
     "cross-repo-protocol",
     "spoke-system-prompt-injection",
-    "ac-verifier"
+    "ac-verifier",
+    "rdd-verifier"
   ]
 }
