@@ -92,6 +92,7 @@ _ROUTES: Dict[str, str] = {
     "issue": "skills._lib.cli.issue_cmd:cmd_issue",
     "migrate-improvements": "skills._lib.cli.migrate_improvements_cmd:cmd_migrate_improvements",
     "iteration": "skills._lib.cli.iteration_strict_cmd:cmd_iteration",
+    "rdd-verify": "skills._lib.cli.rdd_verify_cmd:cmd_rdd_verify",
     "l2-trend": "skills._lib.cli.l2_trend_cmd:cmd_l2_trend",
     "monitor": "skills._lib.cli.monitor_cmd:cmd_monitor",
     "roadmap": "skills._lib.cli.roadmap_cmd:cmd_roadmap",
