@@ -93,7 +93,7 @@ AI 必须在分析后将清理建议展示给用户，但**不自动执行任何
 AI 必须根据场景选择合适的输入收集方式：
 
 **`question` 工具适用场景**：
-- 阶段选择（guide-arch / guide-design / guide-plan / guide-ship）
+- 阶段选择（guide-arch / guide-design / guide-plan / guide-ship / rdd-verifier）
 - session 选择（resume rds_xxx）
 - 固定结构化选项（优先级 P0/P1/P2）
 
@@ -175,6 +175,7 @@ ALL_OPTIONS_JSON 结构:
    | 执行 change | "执行"、"开始做"、"ship"、"实施" + change 名称 | `skill_use("guide-ship")` | **禁止直接操作 worktree 或执行 plan** |
    | 设计审查 | "设计"、"design"、"提案"、"改进提案"、"改进" | `skill_use("guide-design")` | 禁止手动修改 proposal 文件 |
    | 变更规划 | "规划"、"plan"、"生成计划"、"扫描 change" | `skill_use("guide-plan")` | 禁止手动创建 plan 文件 |
+   | 验证回环 | "验证"、"verify"、"rdd-verify"、"AC 验证"、"archive 前" | `skill_use("rdd-verifier")` | 禁止手动调用 `rddf ac-verify`（仅单点）— 批量/回环用 rdd-verifier |
    | 查看状态 | "查看状态"、"status"、"进度" | `skill_use("status")` | — |
    | 查看依赖 | "deps"、"依赖"、"依赖关系" | `skill_use("deps")` | — |
    | 查看 feature | "feature"、"功能视图" | `skill_use("feature")` | — |
@@ -184,13 +185,13 @@ ALL_OPTIONS_JSON 结构:
 
 2. **每次回答完后，主动重新展示简版菜单**（不需要等用户要求）：
    ```
-   ⭐ guide-plan / guide-design / guide-arch / guide-ship / resume rds_xxx / feature / status
+   ⭐ guide-plan / guide-design / guide-arch / guide-ship / rdd-verifier / resume rds_xxx / feature / status
    继续自由讨论 (输入 0 或直接提问)
    ```
    简版菜单只列选项名称（`label`），不列详细描述。保持一行紧凑格式，不给用户增加阅读负担。
 
 3. 当用户输入菜单编号或对应选项名称时，视为选中，执行对应 `action`：
-   - **阶段命令**（`group` 为 `recommended` 或 `stages`：`guide-arch`、`guide-design`、`guide-plan`、`guide-ship`、`rddf-session resume rds_xxx`）→ 执行后 guide 模式结束。
+   - **阶段命令**（`group` 为 `recommended` 或 `stages`：`guide-arch`、`guide-design`、`guide-plan`、`guide-ship`、`rdd-verifier`、`rddf-session resume rds_xxx`）→ 执行后 guide 模式结束。
    - **工具命令**（`group` 为 `session` 或 `utilities`：`rddf-session list`、`rddf-session current`、`feature`、`status` 等）→ 执行后**重新展示完整菜单**（AI 回到步骤 1：运行 bash 扫描 + Python 合成器 + 重新展示菜单），不结束 guide 模式。
 
 ### 阶段命令门控（工作树检查）
