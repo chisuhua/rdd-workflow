@@ -296,6 +296,54 @@ cleanup_worktree_and_branch() {
   fi
 }
 
+# verifier_contract_check <change_name> [project_root]
+#   Returns 0 if change has passing (or audited bypassed) verification record
+#   bound to the current openspec/<change> branch tip, with no failed AC in
+#   the canonical verdict cache. Returns 1 otherwise.
+#   Honors SKIP_RDD_VERIFIER (audited bypass) and FEATURE_ARCHIVE_GATE=hard.
+#   Per fix-rdd-verifier-lifecycle-dashboard Tasks 11-14.
+#
+#   When iteration.json has NO verification metadata for the change,
+#   returns 0 with reason="verification-missing" (legacy fallback) so
+#   existing changes without verification history are not broken.
+#   Set RDDF_REQUIRE_VERIFIER_CONTRACT=yes to enforce strict mode and
+#   block on missing verification.
+verifier_contract_check() {
+  local change_name="${1:-}"
+  local project_root="${2:-}"
+  [[ -z "$change_name" ]] && return 0
+
+  if [ -z "$project_root" ]; then
+    project_root="${RDDF_PROJECT_ROOT:-${PROJECT_ROOT:-$(pwd)}}"
+  fi
+
+  local require_strict="${RDDF_REQUIRE_VERIFIER_CONTRACT:-no}"
+
+  export RDDF_PROJECT_ROOT="$project_root"
+  local pythonpath="${PROJECT_ROOT:-${REPO_ROOT:-}}"
+  if [ -z "$pythonpath" ]; then
+    pythonpath="$(git -C "$project_root" rev-parse --show-toplevel 2>/dev/null || echo "$project_root")"
+  fi
+  local result
+  result=$(RDDF_PROJECT_ROOT="$project_root" \
+           FEATURE_ARCHIVE_GATE="${FEATURE_ARCHIVE_GATE:-off}" \
+           PYTHONPATH="$pythonpath" \
+           python3 -m _lib.verifier.archive_gate check "$change_name" 2>&1) || true
+  unset RDDF_PROJECT_ROOT
+
+  if [ "$result" = "READY" ]; then
+    return 0
+  fi
+
+  if [ "$require_strict" != "yes" ] && [[ "$result" == *"verification missing"* ]]; then
+    echo "⚠️  verifier contract: $result (legacy fallback, set RDDF_REQUIRE_VERIFIER_CONTRACT=yes to enforce)"
+    return 0
+  fi
+
+  echo "❌ verifier contract: $result"
+  return 1
+}
+
 # archive_gate_check <change_name> [tasks_root]
 #   Returns 0 if change has at least 1 completed task ([x]), returns 1 if 0.
 #   Honors FORCE_ARCHIVE_INCOMPLETE=yes to bypass the gate.
@@ -313,6 +361,15 @@ archive_gate_check() {
 
   if [ -z "$tasks_root" ]; then
     tasks_root="."
+  fi
+
+  # Verifier contract gate (per fix-rdd-verifier-lifecycle-dashboard)
+  # Default: legacy fallback (warning only) when verification data absent.
+  # Set RDDF_REQUIRE_VERIFIER_CONTRACT=yes to enforce strict blocking.
+  if [ "${SKIP_VERIFIER_CONTRACT:-no}" != "yes" ]; then
+    if ! verifier_contract_check "$change_name" "$tasks_root"; then
+      return 1
+    fi
   fi
 
   local tasks_file="$tasks_root/openspec/changes/$change_name/tasks.md"
