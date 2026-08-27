@@ -24,8 +24,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-from _lib.core.atomic_write import atomic_write_json
-from _lib.iteration.store import (
+from skills._lib.core.atomic_write import atomic_write_json
+from skills._lib.iteration import (
     add_or_update_change,
     load as load_iteration,
 )
