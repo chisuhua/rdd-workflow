@@ -38,14 +38,23 @@ def validate_improvements_head(md: str) -> dict[str, str]:
     return head
 
 
-def _extract_section(md: str, title: str) -> str:
-    """Extract content under '## <title>' up to next '## '. Returns '' if missing."""
-    pattern = re.compile(
-        rf"^## {re.escape(title)}\s*$(.*?)(?=^## |\Z)",
-        re.MULTILINE | re.DOTALL,
-    )
-    m = pattern.search(md)
-    return m.group(1).strip() if m else ""
+def _extract_section(md: str, title: str | list[str]) -> str:
+    """Extract content under '## <title>' up to next '## '. Returns '' if missing.
+
+    `title` may be a single string or a list of candidates. When a list is
+    given, the first matching title wins (priority order). This handles
+    `## 验收` vs `## 验收标准` style variants in `.rddf/improvements/*.md`.
+    """
+    titles = [title] if isinstance(title, str) else list(title)
+    for t in titles:
+        pattern = re.compile(
+            rf"^## {re.escape(t)}\s*$(.*?)(?=^## |\Z)",
+            re.MULTILINE | re.DOTALL,
+        )
+        m = pattern.search(md)
+        if m:
+            return m.group(1).strip()
+    return ""
 
 
 def _extract_scope_items(scope_md: str) -> tuple[list[str], list[str]]:
@@ -139,7 +148,7 @@ def generate_full_proposal(change_name: str, improvements_md: str) -> str:
     scope = _extract_section(improvements_md, "范围")
     scenarios = _extract_section(improvements_md, "关键场景")
     constraints = _extract_section(improvements_md, "技术约束")
-    acceptance = _extract_section(improvements_md, "验收标准")
+    acceptance = _extract_section(improvements_md, ["验收", "验收标准"])
 
     in_scope_items, out_scope_items = _extract_scope_items(scope)
     in_scope_block = "\n".join(f"- {item}" for item in in_scope_items) if in_scope_items else "- (no items specified)"
