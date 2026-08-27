@@ -1,7 +1,7 @@
 # fix-disk-count-semantic-conflict
 
-**优先级**: P1 | **来源**: 2026-08-27 ship audit (sync-package-skills-to-disk)
-**阶段**: default | **分类**: docs
+**优先级**: P1 | **来源**: 2026-08-27 ship audit (sync-package-skills-to-disk ship 时 test_doc_contracts.py 与 test_skill_metadata_consistency.bats 对 disk count 语义不一致,一个含 INSTALL.md 一个不含,反复 3 次才定位)
+**阶段**: phase-2 | **分类**: docs
 **类型**: improvement
 
 **主题**: 2026-08-26 文档与代码一致性审计后续修复

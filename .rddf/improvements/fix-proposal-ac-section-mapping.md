@@ -1,7 +1,7 @@
 # fix-proposal-ac-section-mapping
 
-**优先级**: P1 | **来源**: 2026-08-27 ship audit (sync-package-skills-to-disk + sync-agents-md-five-stage + rdd-doctor-docs-consistency)
-**阶段**: default | **分类**: governance
+**优先级**: P1 | **来源**: 2026-08-27 ship audit (generate_full_proposal.py D1 编排 `_extract_section(md, "验收标准")` 不匹配 improvement 文件的 `## 验收` 标题,导致 proposal.md 的 Acceptance 是 TBD 占位符, rdd-verifier ac-verify 永远 parse 出 0 ACs)
+**阶段**: phase-2 | **分类**: governance
 **类型**: bugfix
 
 **主题**: 2026-08-26 文档与代码一致性审计后续修复

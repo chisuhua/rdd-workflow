@@ -1,7 +1,7 @@
 # improve-commit-scope-discipline
 
-**优先级**: P2 | **来源**: 2026-08-27 ship audit (sync-package-skills-to-disk)
-**阶段**: default | **分类**: governance
+**优先级**: P2 | **来源**: 2026-08-27 ship audit (sync-package-skills-to-disk ship 时 `git add -A` 混入了 pre-existing dirty (README/USAGE/AGENTS.md) + 空文件 (.gitignorebash/python3), 需要 git reset --soft + 重新 stage, 浪费 3 步)
+**阶段**: phase-3 | **分类**: governance
 **类型**: process
 
 **主题**: 2026-08-26 文档与代码一致性审计后续修复

@@ -1,7 +1,7 @@
 # improve-change-splitting-strategy
 
-**优先级**: P2 | **来源**: 2026-08-27 ship audit (sync-package-skills-to-disk + sync-agents-md-five-stage)
-**阶段**: default | **分类**: governance
+**优先级**: P2 | **来源**: 2026-08-27 ship audit (sync-package-skills-to-disk 和 sync-agents-md-five-stage 都修改 AGENTS.md 同一文件不同行, ship 时互相污染, 需要 git reset --soft + 手工 patch, 浪费 3 步)
+**阶段**: phase-2 | **分类**: governance
 **类型**: process
 
 **主题**: 2026-08-26 文档与代码一致性审计后续修复

@@ -1,7 +1,7 @@
 # improve-execution-mode-per-change
 
-**优先级**: P2 | **来源**: 2026-08-27 ship audit (3 P1 docs-consistency changes ship)
-**阶段**: default | **分类**: governance
+**优先级**: P2 | **来源**: 2026-08-27 ship audit (detect_execution_mode 仅按 total_changes > 1 决策, 强制 3 个 docs-only P1 changes 走 worktree, 实际 sync-agents-md-five-stage 仅改 AGENTS.md 1 文件, 应可走 lightweight)
+**阶段**: phase-3 | **分类**: governance
 **类型**: improvement
 
 **主题**: 2026-08-26 文档与代码一致性审计后续修复

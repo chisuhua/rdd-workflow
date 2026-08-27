@@ -1,7 +1,7 @@
 # fix-ship-plan-untracked-gate
 
-**优先级**: P1 | **来源**: 2026-08-27 ship audit (3 P1 docs-consistency changes ship)
-**阶段**: default | **分类**: governance
+**优先级**: P1 | **来源**: 2026-08-27 ship audit (ship_plan.sh 的 check_artifacts_committed 把 untracked specs/ 当作污染拒绝, 阻塞 worktree 创建, 需手工 chore(specs) commit 才能继续)
+**阶段**: phase-3 | **分类**: governance
 **类型**: improvement
 
 **主题**: 2026-08-26 文档与代码一致性审计后续修复

@@ -1,7 +1,7 @@
 # fix-design-preflight-roadmap-format
 
-**优先级**: P1 | **来源**: 2026-08-27 ship audit (3 P1 docs-consistency changes ship) + 2026-08-27 feat-fix-audit-findings Hybrid 路径
-**阶段**: default | **分类**: governance
+**优先级**: P1 | **来源**: 2026-08-27 ship audit + 2026-08-27 feat-fix-audit-findings Hybrid 路径验证 (design_preflight.py 的 _PHASE_HEADER_RE 期望 `### Phase N:` 老格式, 但 .rddf/roadmap.md 用 `## Phase Skeleton` 表格,导致 theme coverage 永远 0)
+**阶段**: phase-1 | **分类**: governance
 **类型**: bugfix
 
 **主题**: 2026-08-26 文档与代码一致性审计后续修复

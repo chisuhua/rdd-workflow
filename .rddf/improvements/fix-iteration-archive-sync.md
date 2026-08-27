@@ -1,7 +1,7 @@
 # fix-iteration-archive-sync
 
-**优先级**: P0 | **来源**: 2026-08-27 ship audit (sync-package-skills-to-disk + sync-agents-md-five-stage + rdd-doctor-docs-consistency)
-**阶段**: default | **分类**: governance
+**优先级**: P0 | **来源**: 2026-08-27 ship audit (openspec archive hook 未同步 iteration.json, root cause of reconcile-iteration-after-archive)
+**阶段**: phase-3 | **分类**: governance
 **类型**: bugfix
 
 **主题**: 2026-08-26 文档与代码一致性审计后续修复
