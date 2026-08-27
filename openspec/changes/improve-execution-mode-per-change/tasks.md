@@ -2,10 +2,9 @@
 
 ## Implementation Tasks
 
-- [ ] Task 1: `detect_execution_mode` 接受 per-change file count 维度
-- [ ] Task 2: 阈值可配置(默认: file_count ≤ 2 → lightweight)
-- [ ] Task 3: 回归测试:`sync-agents-md-five-stage` 类(1 file)→ lightweight
-- [ ] Task 4: 回归测试:`rdd-doctor-docs-consistency` 类(>5 files)→ worktree
-- [ ] Task 5: `existing_wt > 0` 的 fallback 行为不变
-- [ ] Task 6: `guide-ship/SKILL.md` Phase 1 表格更新显示新逻辑
-- [ ] Task 7: Run `bash tests/scripts/report_regression.sh` to confirm no new failures
+- [x] Task 1: `detect_execution_mode` 接受 `change_name` 参数 (已有, 按单个 change 评估)
+- [x] Task 2: 新增 per-change 评估维度 (file_count, task_count, risk_keywords)
+- [x] Task 3: 综合分数 > 阈值 → worktree; 否则 lightweight (file_count>5 OR risk>0 OR task_count>5)
+- [x] Task 4: 保留 `existing_wt > 0` fallback (有活跃 worktree 仍然 worktree)
+- [x] Task 5: 新增 bats 测试覆盖所有决策分支 (6 tests, all pass)
+- [x] Task 6: execution_mode_decisions 在 .plan-handoff.json 仍然正确写 (无 schema 变化)
