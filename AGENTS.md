@@ -81,7 +81,7 @@ bats tests/integration/test_global_install_external_project.bats   # 11/11 pass
 
 ## 架构
 
-**四阶段架构** (v2.1): `arch → design → plan → ship`
+**五阶段架构** (v3.0+): `arch → design → plan → ship → verify`
 
 > ⚠️ **v2.0.6+ 变更 (move-proposal-creation-to-design)**: design 阶段升级为「批准即创建 + 内容审查」(approve 后生成完整 proposal.md → 用户确认 → 落盘 + 状态写入)。详见 ADR-0025。
 
@@ -145,7 +145,7 @@ tests/
   integration/                # ~264 bats + 15 py 集成测试 (~1662 bats 测试用例)
   _lib/                       # bash helpers (skill.bash, deps-subagent.bash 等)
 docs/adr/                     # ADR-0000 模板 + ADR-0001~0033 (33 个唯一编号, 34 个实体文件; v2.0.2 重编号 ADR-0013 → ADR-0020; v2.0.8+ 持续追加)
-                             # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0016 arch 发现契约 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment / ADR-0022 manual_deps 字段 / ADR-0024 deps-driven execution mode / ADR-0028 role-model / ADR-0030 hub-spoke / ADR-0033 submodule-aware
+                             # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0016 arch 发现契约 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment / ADR-0022 manual_deps 字段 / ADR-0024 deps-driven execution mode / ADR-0025 design 阶段独立化 / ADR-0027 continuous evolution / ADR-0028 role-model / ADR-0029 issue-driven / ADR-0030 hub-spoke / ADR-0031 cross-repo human-in-loop / ADR-0032 hub deepening / ADR-0033 submodule-aware / ADR-0034 rdd-verifier
 docs/change-quality-guide.md  # change 质量等级指南 (Bronze/Silver/Gold); 阈值与 Plan B `propose_quality_check.py` 对齐, 反模式以 ADR-0019 为准
 openspec/                     # OpenSpec CLI 数据 (随项目走)
   changes/                    # active changes + archive/
@@ -156,7 +156,7 @@ openspec/                     # OpenSpec CLI 数据 (随项目走)
 
 ### Skill 角色模型 (ADR-0028)
 
-4 个阶段技能 (`guide-arch`, `guide-design`, `guide-plan`, `guide-ship`) 的 frontmatter 包含 `role:` 字段，定义角色、视角、边界：
+5 个阶段技能 (`guide-arch`, `guide-design`, `guide-plan`, `guide-ship`, `rdd-verifier`) 的 frontmatter 包含 `role:` 字段（per ADR-0028 + ADR-0034 §10），定义角色、视角、边界：
 - `role.title`: 双语角色名（如 "Architect (架构治理者)"）
 - `role.perspective`: 思考视角（1-2 句）
 - `role.boundaries.owns`: 文件路径清单（此阶段拥有）
