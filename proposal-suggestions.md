@@ -19,4 +19,3 @@
 | [changelog-usage-sync](.rddf/improvements/changelog-usage-sync.md) | P2 | 2026-08-26 文档与代码一致性审计 | 2026-08-26 | ⏳ 已延迟 (2026-08-27) |
 | [verifier-archive-gate-clarification](.rddf/improvements/verifier-archive-gate-clarification.md) | P2 | 2026-08-26 流程设计 review | 2026-08-26 | ⏳ 已延迟 (2026-08-27) |
 
-| [verifier-re-verify-archived-flag](.rddf/improvements/verifier-re-verify-archived-flag.md) | P1 | 2026-08-27 ship audit | 2026-08-27 | 待 design 审查 |
