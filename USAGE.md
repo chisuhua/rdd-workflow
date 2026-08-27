@@ -2,7 +2,7 @@
 
 > 基于 `guide` 推荐器（arch-side 调 `guide-arch`，plan-side 调 `guide-plan`，ship-side 调 `guide-ship`），覆盖从提案到归档的完整生命周期。
 > 支持多 change 并行执行，可分离到不同终端同时运行。
-> 当前版本: **v2.0 / v2.0.1**（三阶段架构 arch → plan → ship + Loop 引擎 + `rdd-workflow-writing-plans` 自包含计划生成器 + `iteration.json` sprint 视图 + 结构化 deps 输出 + `rddf-session` 跨 OpenCode session 恢复）。`package.json` 仍标 `2.0.0`，但工作流文档与状态契约以 v2.0.1 为准。
+> 当前版本: **v3.0+ (2026-08-26)**（五阶段架构 arch → design → plan → ship → verify + Loop 引擎 + `rdd-workflow-writing-plans` 自包含计划生成器 + `iteration.json` sprint 视图 + 结构化 deps 输出 + `rddf-session` 跨 OpenCode session 恢复 + `rdd-verifier` 阶段验证 + Hub-Spoke 联邦）。`package.json` 标 `3.0.0`，文档与状态契约以 v3.0 为准。
 
 > 📋 **v2.0.2 changelog（sync-workflow-contracts 已落地，2026-07-13）**：
 > - 13 个 Markdown skill 全部发布到 `package.json::skills[]`（含 `feature` + `rddf-session`），无 src-only 例外

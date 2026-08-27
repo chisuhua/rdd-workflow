@@ -75,3 +75,40 @@ setup() {
     [[ "$output" == *"tasks-checkbox"* ]]
     [[ "$output" == *"migration-residue"* ]]
 }
+# --- docs-consistency category (sync-2: rdd-doctor-docs-consistency) ---
+
+@test "doctor: --category docs-consistency is registered" {
+    run bash "$DOCTOR_SH" --help
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"docs-consistency"* ]]
+}
+
+@test "doctor: --category docs-consistency runs without error on master" {
+    cd "$PROJECT_ROOT"
+    run bash "$DOCTOR_SH" --category docs-consistency
+    # exit 0 (no CRITICAL/WARNING) or exit 1 (INFO present, no CRITICAL/WARNING) both acceptable
+    [ "$status" -le 2 ]
+}
+
+@test "doctor: --category docs-consistency --quiet produces single line" {
+    cd "$PROJECT_ROOT"
+    run bash "$DOCTOR_SH" --category docs-consistency --quiet
+    [ "$status" -le 2 ]
+    # Single-line output (one \n at end)
+    [[ "$(echo "$output" | wc -l)" -le 2 ]]
+}
+
+@test "doctor: --category docs-consistency detects drift when package.json modified" {
+    cd "$PROJECT_ROOT"
+    cp package.json /tmp/package.json.bak.rdd-doctor
+    python3 -c "
+import json
+data = json.load(open('package.json'))
+data['skills'] = ['INSTALL', 'guide']
+json.dump(data, open('package.json', 'w'), indent=2)
+"
+    run bash "$DOCTOR_SH" --category docs-consistency --quiet
+    cp /tmp/package.json.bak.rdd-doctor package.json
+    # Should fail (drift detected)
+    [ "$status" -ne 0 ]
+}

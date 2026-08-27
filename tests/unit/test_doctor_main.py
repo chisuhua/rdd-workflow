@@ -13,14 +13,18 @@ from doctor_render import Severity  # noqa: E402
 from doctor_main import aggregate_findings, _CHECKERS  # noqa: E402
 
 
-def test_aggregate_runs_all_9_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """aggregate_findings invokes all 9 checker modules and combines results."""
+def test_aggregate_runs_all_10_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """aggregate_findings invokes all 10 checker modules and combines results.
+
+    Per rdd-doctor-docs-consistency change (2026-08-27): adds the
+    docs-consistency category (10th) to the public contract.
+    """
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
     findings, categories_checked = aggregate_findings(category=None)
     assert set(categories_checked) == {
         "state", "plan-tdd", "roadmap-meta", "proposal-table",
         "proposal-section", "tasks-checkbox", "migration-residue",
-        "orphan-gates", "roadmap-refs",
+        "orphan-gates", "roadmap-refs", "docs-consistency",
     }
 
 
@@ -54,6 +58,6 @@ def test_aggregate_no_category_no_match_returns_empty(tmp_path: Path, monkeypatc
     assert categories_checked == []
 
 
-def test_checkers_dict_has_9_entries():
-    """Lock the public contract: exactly 9 categories wired (8 + proposal-section)."""
-    assert len(_CHECKERS) == 9
+def test_checkers_dict_has_10_entries():
+    """Lock the public contract: exactly 10 categories wired (9 + docs-consistency)."""
+    assert len(_CHECKERS) == 10
