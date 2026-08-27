@@ -119,6 +119,8 @@
 
 | [improve-commit-scope-discipline](.rddf/improvements/improve-commit-scope-discipline.md) | P1 | 2026-08-27 | guide-arch |
 
+| [auto-archive-iteration-and-commit](.rddf/improvements/auto-archive-iteration-and-commit.md) | P1 | 2026-08-27 | guide-arch |
+
 ## 已实施
 | [submodule-aware-project-root](.rddf/improvements/submodule-aware-project-root.md) | P0 | 2026-08-25 | 已实施 |
 | [clean-stale-plan-handoff-on-ship-done](.rddf/improvements/clean-stale-plan-handoff-on-ship-done.md) | P1 | 2026-08-25 | 已实施 |
