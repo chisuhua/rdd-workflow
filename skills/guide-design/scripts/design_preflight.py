@@ -16,9 +16,13 @@ from typing import Any, Dict, List
 
 _SUBJECT_RE = re.compile(r"^\*\*主题\*\*\s*:\s*(.+?)\s*$", re.MULTILINE)
 _SKIPPED_SUFFIX = "~skipped~"
+# Legacy phase header (### Phase N: name (phase-X) + 5-col category table)
 _PHASE_HEADER_RE = re.compile(r"### Phase \d+:[^\n]*?\(phase-[a-z0-9-]+\)")
 _CATEGORY_TABLE_HEADER_RE = re.compile(r"\|\s*分类ID\s*\|\s*名称\s*\|\s*描述\s*\|\s*优先级\s*\|\s*预期改进方向\s*\|")
 _CATEGORY_ID_RE = re.compile(r"^`?([a-z][a-z0-9-]*)`?$")
+# New format (## Phase Skeleton + 5-col Phase/Theme/Status/Started/Done table)
+_PHASE_SKELETON_HEADER_RE = re.compile(r"^##\s+Phase Skeleton\s*$", re.MULTILINE)
+_PHASE_SKELETON_TABLE_HEADER_RE = re.compile(r"\|\s*Phase\s*\|\s*Theme\s*\|", re.IGNORECASE)
 
 
 def _parse_themes_cell(cell: str) -> List[str]:
@@ -29,9 +33,63 @@ def _parse_themes_cell(cell: str) -> List[str]:
     return [p.strip() for p in parts if p.strip()]
 
 
-def _read_roadmap_themes(roadmap_path: str) -> List[Dict[str, str]]:
-    """Parse roadmap.md, return list of {phase, category, theme} dicts."""
-    content = Path(roadmap_path).read_text(encoding="utf-8")
+def _read_phase_skeleton_themes(content: str) -> List[Dict[str, str]]:
+    """Parse new-format roadmap.md (## Phase Skeleton + 5-col Phase/Theme/...).
+
+    Returns list of {phase, category, theme} dicts.
+
+    Format:
+      ## Phase Skeleton
+      | Phase | Theme | Status | Started | Done |
+      |-------|-------|--------|---------|------|
+      | phase-1 | 完整多会话支持 | active | | |
+      | phase-1 | 定时循环与事件触发 | active | | |
+    """
+    themes: List[Dict[str, str]] = []
+
+    skeleton_match = _PHASE_SKELETON_HEADER_RE.search(content)
+    if not skeleton_match:
+        return themes
+
+    start = skeleton_match.end()
+    section = content[start:]
+
+    in_table = False
+    for line in section.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            if in_table and stripped.startswith("#"):
+                break
+            continue
+        cells = [c.strip() for c in stripped.strip("|").split("|")]
+        if len(cells) < 2:
+            continue
+        if not in_table:
+            if cells[0].lower() == "phase" and cells[1].lower() == "theme":
+                in_table = True
+                continue
+        else:
+            if set(cells[0]) <= {"-"}:
+                continue
+            phase_id = cells[0]
+            theme = cells[1]
+            if not phase_id.startswith("phase-"):
+                continue
+            if not theme or theme.lower() in ("(none)", "(none yet)"):
+                continue
+            if _SKIPPED_SUFFIX in theme:
+                continue
+            themes.append({
+                "phase": phase_id,
+                "category": "(skeleton)",
+                "theme": theme,
+            })
+
+    return themes
+
+
+def _read_legacy_roadmap_themes(content: str) -> List[Dict[str, str]]:
+    """Parse legacy roadmap.md (### Phase N: + 5-col category table)."""
     themes = []
 
     for phase_match in _PHASE_HEADER_RE.finditer(content):
@@ -75,6 +133,21 @@ def _read_roadmap_themes(roadmap_path: str) -> List[Dict[str, str]]:
                 })
 
     return themes
+
+
+def _read_roadmap_themes(roadmap_path: str) -> List[Dict[str, str]]:
+    """Parse roadmap.md, return list of {phase, category, theme} dicts.
+
+    Supports both new format (## Phase Skeleton + 5-col table) and
+    legacy format (### Phase N: section + category table).
+    """
+    content = Path(roadmap_path).read_text(encoding="utf-8")
+
+    themes = _read_phase_skeleton_themes(content)
+    if themes:
+        return themes
+
+    return _read_legacy_roadmap_themes(content)
 
 
 def _read_proposal_subjects(improvements_dir: str) -> tuple[List[str], int]:

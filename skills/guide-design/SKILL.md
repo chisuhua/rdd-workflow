@@ -147,6 +147,17 @@ run_theme_coverage_display "$PROJECT_ROOT"
 
 `~skipped~` 主题（roadmap cell 末尾标记）排除出覆盖率分母。
 
+**Roadmap 格式支持**（v2.2+ per fix-design-preflight-roadmap-format）：
+
+`design_preflight.py::_read_roadmap_themes` 同时支持两种格式：
+
+| 格式 | 标记 | 列结构 |
+|------|------|--------|
+| 新格式 (默认) | `## Phase Skeleton` | `Phase \| Theme \| Status \| Started \| Done` |
+| 老格式 (legacy) | `### Phase N: <name> (phase-X)` | `分类ID \| 名称 \| 描述 \| 优先级 \| 预期改进方向` |
+
+新格式优先检测；若新格式解析到 themes 则使用，否则 fallback 到老格式。`~skipped~` 标记仅排除整个 theme cell（不是 strip 后缀）。
+
 ## Phase 2: 提案管理
 
 **入口条件**：Phase 1 环境检查通过后直接进入。
