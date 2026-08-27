@@ -9,6 +9,15 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
+| [reconcile-iteration-after-archive](.rddf/improvements/reconcile-iteration-after-archive.md) | P0 | 2026-08-27 ship audit | 2026-08-27 | 待 design 审查 |
+| [fix-iteration-archive-sync](.rddf/improvements/fix-iteration-archive-sync.md) | P0 | 2026-08-27 ship audit | 2026-08-27 | 待 design 审查 |
+| [fix-proposal-ac-section-mapping](.rddf/improvements/fix-proposal-ac-section-mapping.md) | P1 | 2026-08-27 ship audit | 2026-08-27 | 待 design 审查 |
+| [fix-ship-plan-untracked-gate](.rddf/improvements/fix-ship-plan-untracked-gate.md) | P1 | 2026-08-27 ship audit | 2026-08-27 | 待 design 审查 |
+| [fix-disk-count-semantic-conflict](.rddf/improvements/fix-disk-count-semantic-conflict.md) | P1 | 2026-08-27 ship audit | 2026-08-27 | 待 design 审查 |
+| [fix-design-preflight-roadmap-format](.rddf/improvements/fix-design-preflight-roadmap-format.md) | P1 | 2026-08-27 ship audit | 2026-08-27 | 待 design 审查 |
+| [improve-execution-mode-per-change](.rddf/improvements/improve-execution-mode-per-change.md) | P2 | 2026-08-27 ship audit | 2026-08-27 | 待 design 审查 |
+| [improve-change-splitting-strategy](.rddf/improvements/improve-change-splitting-strategy.md) | P2 | 2026-08-27 ship audit | 2026-08-27 | 待 design 审查 |
+| [improve-commit-scope-discipline](.rddf/improvements/improve-commit-scope-discipline.md) | P2 | 2026-08-27 ship audit | 2026-08-27 | 待 design 审查 |
 | [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | P2 | 2026-08-26 文档与代码一致性审计 | 2026-08-26 | ⏳ 已延迟 (2026-08-27) |
 | [bypass-audit-mechanism](.rddf/improvements/bypass-audit-mechanism.md) | P2 | 2026-08-26 流程设计 review | 2026-08-26 | ⏳ 已延迟 (2026-08-27) |
 | [changelog-usage-sync](.rddf/improvements/changelog-usage-sync.md) | P2 | 2026-08-26 文档与代码一致性审计 | 2026-08-26 | ⏳ 已延迟 (2026-08-27) |
