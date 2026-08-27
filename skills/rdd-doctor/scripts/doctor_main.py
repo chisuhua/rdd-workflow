@@ -10,6 +10,7 @@ from typing import List, Tuple
 from doctor_render import Finding, Severity, exit_code_for, render_human, render_json, render_quiet
 
 from checks import (
+    docs_consistency_check,
     migration_residue_check,
     orphan_gates_check,
     plan_tdd_check,
@@ -32,6 +33,7 @@ _CHECKERS = {
     "migration-residue": migration_residue_check.run,
     "orphan-gates": orphan_gates_check.run,
     "roadmap-refs": roadmap_refs_check.run,
+    "docs-consistency": docs_consistency_check.run,
 }
 
 

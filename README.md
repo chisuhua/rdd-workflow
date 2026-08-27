@@ -1,9 +1,10 @@
 # RDD Workflow
 
-> ⚠️ **v2.1+: 工作流从三阶段扩展为四阶段 (arch → design → plan → ship)**
+> ⚠️ **v3.0+ (2026-08-26): 工作流采用五阶段架构 (arch → design → plan → ship → verify)**
 >
 > 提案管理（创建、审查、批准/拒绝/延迟）已从 `guide-arch` Phase 5.5 迁移到独立的 `guide-design` 阶段。
-> 存量项目请先运行 `skill_use("guide-design")` 审查提案，或设置 `SKIP_ARCH_HANDOFF=yes` 临时跳过两个门控。
+> AC 验证从 archive 内嵌 ac-verifier 升级为独立的 `rdd-verifier` 阶段（per ADR-0034）。
+> 存量项目请先运行 `skill_use("guide-design")` 审查提案，再运行 `skill_use("rdd-verifier")` 补做验证。
 
 [![npm version](https://img.shields.io/npm/v/rdd-workflow.svg)](https://www.npmjs.com/package/rdd-workflow)
 
