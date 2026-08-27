@@ -121,6 +121,10 @@
 
 | [auto-archive-iteration-and-commit](.rddf/improvements/auto-archive-iteration-and-commit.md) | P1 | 2026-08-27 | guide-arch |
 
+| [plan-batch-fill-tool](.rddf/improvements/plan-batch-fill-tool.md) | P1 | 2026-08-27 | guide-arch |
+
+| [design-approve-batch-tool](.rddf/improvements/design-approve-batch-tool.md) | P1 | 2026-08-27 | guide-arch |
+
 ## 已实施
 | [submodule-aware-project-root](.rddf/improvements/submodule-aware-project-root.md) | P0 | 2026-08-25 | 已实施 |
 | [clean-stale-plan-handoff-on-ship-done](.rddf/improvements/clean-stale-plan-handoff-on-ship-done.md) | P1 | 2026-08-25 | 已实施 |
