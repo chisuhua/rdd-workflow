@@ -98,6 +98,12 @@
 
 | [add-feature-fragment-command](.rddf/improvements/add-feature-fragment-command.md) | P1 | 2026-08-25 | guide-arch |
 
+| [sync-package-skills-to-disk](.rddf/improvements/sync-package-skills-to-disk.md) | P1 | 2026-08-27 | guide-arch |
+
+| [sync-agents-md-five-stage](.rddf/improvements/sync-agents-md-five-stage.md) | P1 | 2026-08-27 | guide-arch |
+
+| [rdd-doctor-docs-consistency](.rddf/improvements/rdd-doctor-docs-consistency.md) | P1 | 2026-08-27 | guide-arch |
+
 ## 已实施
 | [submodule-aware-project-root](.rddf/improvements/submodule-aware-project-root.md) | P0 | 2026-08-25 | 已实施 |
 | [clean-stale-plan-handoff-on-ship-done](.rddf/improvements/clean-stale-plan-handoff-on-ship-done.md) | P1 | 2026-08-25 | 已实施 |
