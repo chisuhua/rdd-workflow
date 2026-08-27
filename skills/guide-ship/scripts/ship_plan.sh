@@ -83,16 +83,63 @@ if [ -f "$_LIB_DIR/worktree.sh" ]; then
   source "$_LIB_DIR/worktree.sh"
 fi
 
-# check_artifacts_committed <project_root> <change_name>
+# check_artifacts_committed <project_root> <change_name> [strict_untracked]
+#   Verify that the change's tracked artifacts are committed to HEAD.
+#   Untracked files (e.g., specs/<capability>/spec.md newly added by propose)
+#   are ALLOWED — they are legitimate ship-stage additions.
+#
+#   Args:
+#     project_root     Repository root
+#     change_name      Change name (e.g., fix-foo)
+#     strict_untracked  (optional) "yes" to fail on untracked files too (legacy behavior)
+#
+#   Returns:
+#     0 if clean (tracked files unchanged), or untracked files only
+#     1 if tracked files have uncommitted modifications
+#     2 (strict mode only) if untracked files exist
 check_artifacts_committed() {
   local project_root="$1"
   local change_name="$2"
+  local strict_untracked="${3:-${STRICT_UNTRACKED:-no}}"
   local change_dir="$project_root/openspec/changes/$change_name"
 
-  # Check working-tree dirt
-  if [ -n "$(git -C "$project_root" status --porcelain "$change_dir/" 2>/dev/null)" ]; then
-    echo "⚠️  检测到未提交的修改，提示用户提交或放弃" >&2
+  # Separate tracked-modification vs untracked-addition
+  local porcelain
+  porcelain=$(git -C "$project_root" status --porcelain "$change_dir/" 2>/dev/null)
+  local tracked_dirty=""
+  local untracked=""
+  if [ -n "$porcelain" ]; then
+    while IFS= read -r line; do
+      [ -z "$line" ] && continue
+      # porcelain format: "XY path" where X=index, Y=worktree
+      # ?? = untracked, !! = ignored
+      local xy="${line:0:2}"
+      case "$xy" in
+        "??") untracked="${untracked}${line}"$'\n' ;;
+        *)    tracked_dirty="${tracked_dirty}${line}"$'\n' ;;
+      esac
+    done <<< "$porcelain"
+  fi
+
+  # Tracked dirty: always block (real contamination)
+  if [ -n "$tracked_dirty" ]; then
+    echo "❌ 检测到已跟踪文件的未提交修改:" >&2
+    echo "$tracked_dirty" | sed 's/^/   /' >&2
+    echo "请先 git add + commit 这些 tracked 改动再 ship" >&2
     return 1
+  fi
+
+  # Untracked: strict mode blocks (legacy behavior); default allows
+  if [ -n "$untracked" ] && [ "$strict_untracked" = "yes" ]; then
+    echo "❌ (strict-untracked) 检测到 untracked 文件:" >&2
+    echo "$untracked" | sed 's/^/   /' >&2
+    return 2
+  fi
+
+  # Informational: untracked is OK in default mode
+  if [ -n "$untracked" ]; then
+    echo "ℹ️  检测到 untracked 文件 (合法 ship 阶段新增, 不阻塞):" >&2
+    echo "$untracked" | sed 's/^/   /' >&2
   fi
 
   # Check HEAD exists and contains the change artifacts

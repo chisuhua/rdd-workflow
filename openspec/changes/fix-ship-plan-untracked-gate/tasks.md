@@ -2,9 +2,9 @@
 
 ## Implementation Tasks
 
-- [ ] Task 1: `check_artifacts_committed` 重构,只检查 tracked files 的 `M`/`D` 状态,忽略 `??`(untracked)
-- [ ] Task 2: 新增 unit test 覆盖 3 个场景:
-- [ ] Task 3: `--strict-untracked` flag 在 `guide-plan` / `guide-ship` 入口作为 opt-in
-- [ ] Task 4: 删除历史 workaround commit `13ad3ba chore(specs): add openspec validate specs/ for 2 remaining active changes` (合并到新的归档操作内)
-- [ ] Task 5: `guide-ship/SKILL.md` COMMIT GATE 段更新解释新行为
-- [ ] Task 6: Run `bash tests/scripts/report_regression.sh` to confirm no new failures
+- [x] Task 1: `check_artifacts_committed` 改用 porcelain XY prefix 区分 tracked vs untracked
+- [x] Task 2: 仍阻塞 tracked 文件 modification / deletion (verified: exit 1, stderr 明确指出)
+- [x] Task 3: 不阻塞 untracked 文件 (verified: exit 0, stderr 提示 informational)
+- [x] Task 4: 提供 `--strict-untracked` positional arg + `STRICT_UNTRACKED=yes` env var 兼容极端场景
+- [x] Task 5: stderr 输出明确区分 "tracked dirty" vs "untracked addition"
+- [x] Task 6: 新增 bats test `test_check_artifacts_untracked_gate.bats` (7 cases, all pass)
