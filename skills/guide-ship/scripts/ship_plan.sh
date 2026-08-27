@@ -239,12 +239,43 @@ except: pass
   local total_changes
   total_changes=$(ls -d "$project_root"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l | tr -d '[:space:]' || echo 0)
 
+  # Per-change 评估 (per improve-execution-mode-per-change).
+  # file_count: 当前 main 分支 vs HEAD 的差异行数 (粗略估计改动大小)
+  # task_count: tasks.md 的 - [ ] 项数
+  # risk_keywords: grep "refactor|migration|breaking"
+  local file_count=0 task_count=0 risk_keywords=0
+  local change_dir="$project_root/openspec/changes/$change_name"
+  if [ -d "$change_dir" ]; then
+    local fc_raw
+    fc_raw=$(git -C "$project_root" diff main --shortstat -- "$change_dir/" 2>/dev/null \
+      | awk '{for(i=1;i<=NF;i++) if($i~/files? changed/) print $(i-1); exit}' 2>/dev/null | head -n1) || fc_raw="0"
+    file_count=$((fc_raw + 0))
+    if ! [[ "$file_count" =~ ^[0-9]+$ ]]; then file_count=0; fi
+
+    local tc_raw
+    tc_raw=$(grep -c "^- \[ \]" "$change_dir/tasks.md" 2>/dev/null | head -n1) || tc_raw="0"
+    task_count=$((tc_raw + 0))
+    if ! [[ "$task_count" =~ ^[0-9]+$ ]]; then task_count=0; fi
+
+    local rk_raw
+    rk_raw=$(grep -E -c "refactor|migration|breaking" "$change_dir/proposal.md" 2>/dev/null | head -n1) || rk_raw="0"
+    risk_keywords=$((rk_raw + 0))
+    if ! [[ "$risk_keywords" =~ ^[0-9]+$ ]]; then risk_keywords=0; fi
+  fi
+
+  # Decision matrix:
+  #   file_count > 5 OR risk_keywords > 0 OR task_count > 5  → worktree (大改动)
+  #   existing_wt > 0 OR total_changes > 1                    → worktree (并行冲突)
+  #   else                                                      → lightweight
   if [ "$existing_wt" -gt 0 ] || [ "$total_changes" -gt 1 ]; then
     echo "worktree"
     echo "🔀 并行风险: $existing_wt worktrees, $total_changes changes → worktree 隔离模式" >&2
+  elif [ "$file_count" -gt 5 ] || [ "$risk_keywords" -gt 0 ] || [ "$task_count" -gt 5 ]; then
+    echo "worktree"
+    echo "🔀 per-change 评估: file_count=$file_count, task_count=$task_count, risk_keywords=$risk_keywords → worktree 隔离" >&2
   else
     echo "lightweight"
-    echo "⚡ 无并行冲突 → 轻量模式（跳过 worktree）" >&2
+    echo "� per-change 评估: file_count=$file_count, task_count=$task_count, risk_keywords=$risk_keywords → 轻量模式（跳过 worktree）" >&2
   fi
 }
 
