@@ -98,11 +98,26 @@
 
 | [add-feature-fragment-command](.rddf/improvements/add-feature-fragment-command.md) | P1 | 2026-08-25 | guide-arch |
 
-| [sync-package-skills-to-disk](.rddf/improvements/sync-package-skills-to-disk.md) | P1 | 2026-08-27 | guide-arch |
 
-| [sync-agents-md-five-stage](.rddf/improvements/sync-agents-md-five-stage.md) | P1 | 2026-08-27 | guide-arch |
 
-| [rdd-doctor-docs-consistency](.rddf/improvements/rdd-doctor-docs-consistency.md) | P1 | 2026-08-27 | guide-arch |
+
+| [reconcile-iteration-after-archive](.rddf/improvements/reconcile-iteration-after-archive.md) | P1 | 2026-08-27 | guide-arch |
+
+| [fix-iteration-archive-sync](.rddf/improvements/fix-iteration-archive-sync.md) | P1 | 2026-08-27 | guide-arch |
+
+| [fix-design-preflight-roadmap-format](.rddf/improvements/fix-design-preflight-roadmap-format.md) | P1 | 2026-08-27 | guide-arch |
+
+| [fix-ship-plan-untracked-gate](.rddf/improvements/fix-ship-plan-untracked-gate.md) | P1 | 2026-08-27 | guide-arch |
+
+| [fix-disk-count-semantic-conflict](.rddf/improvements/fix-disk-count-semantic-conflict.md) | P1 | 2026-08-27 | guide-arch |
+
+| [fix-proposal-ac-section-mapping](.rddf/improvements/fix-proposal-ac-section-mapping.md) | P1 | 2026-08-27 | guide-arch |
+
+| [improve-execution-mode-per-change](.rddf/improvements/improve-execution-mode-per-change.md) | P1 | 2026-08-27 | guide-arch |
+
+| [improve-change-splitting-strategy](.rddf/improvements/improve-change-splitting-strategy.md) | P1 | 2026-08-27 | guide-arch |
+
+| [improve-commit-scope-discipline](.rddf/improvements/improve-commit-scope-discipline.md) | P1 | 2026-08-27 | guide-arch |
 
 ## 已实施
 | [submodule-aware-project-root](.rddf/improvements/submodule-aware-project-root.md) | P0 | 2026-08-25 | 已实施 |
@@ -117,6 +132,9 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [rdd-doctor-docs-consistency](.rddf/improvements/rdd-doctor-docs-consistency.md) | P1 | 2026-08-27 | 已实施 |
+| [sync-agents-md-five-stage](.rddf/improvements/sync-agents-md-five-stage.md) | P1 | 2026-08-27 | 已实施 |
+| [sync-package-skills-to-disk](.rddf/improvements/sync-package-skills-to-disk.md) | P1 | 2026-08-27 | 已实施 |
 | [fix-discover-ship-changes-needs-planning-fallback](.rddf/improvements/fix-discover-ship-changes-needs-planning-fallback.md) | P1 | 2026-08-21 | 已实施 |
 | [move-populate-roadmap-into-guide-arch](.rddf/improvements/move-populate-roadmap-into-guide-arch.md) | P2 | 2026-08-21 | 已实施 |
 | [extend-populate-roadmap-with-code-verification](.rddf/improvements/extend-populate-roadmap-with-code-verification.md) | P1 | 2026-08-21 | 已实施 |
