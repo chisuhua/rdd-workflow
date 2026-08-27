@@ -53,17 +53,26 @@ def test_general_spec_consumers_drop_guide_spec_add_arch_plan() -> None:
     assert "guide-plan" in spec
 
 
-def _count_skill_files() -> int:
-    """Count sub-skill SKILL.md files only.
+def _count_skill_files(include_top_level: bool = False) -> int:
+    """Count sub-skill SKILL.md files.
 
-    INSTALL.md is the installer, not a sub-skill — excluded from the
-    count so this matches what INSTALL.md ("24 个子技能") and
-    package.json (`skills: [...24 entries]`) claim. The previous
-    version returned `len(top) + len(sub)` which inflated the count by
-    1 and caused 3 baseline failures (fix-skill-count-and-table-schema).
+    Args:
+        include_top_level: If True, also count `skills/INSTALL.md`
+            (top-level installer). Default False to match INSTALL.md
+            ("N 个子技能") and package.json (`skills: [...N entries]`),
+            both of which exclude INSTALL.
+
+    Per fix-disk-count-semantic-conflict: the parameter exists so future
+    tests can opt in to including INSTALL when verifying the
+    installer-discovers-disks contract.
     """
     sub = list((REPO_ROOT / "skills").glob("*/SKILL.md"))
-    return len(sub)
+    total = len(sub)
+    if include_top_level:
+        install = REPO_ROOT / "skills" / "INSTALL.md"
+        if install.is_file():
+            total += 1
+    return total
 
 
 def test_install_description_skill_count_matches_disk() -> None:
@@ -184,3 +193,35 @@ def test_no_adr_0013_duplicate_on_disk() -> None:
     assert adr_0013_files[0].name == "ADR-0013-extract-scan-state.md"
     # incremental-skeleton-planning should now live at ADR-0020
     assert (adr_dir / "ADR-0020-incremental-skeleton-planning.md").exists()
+
+# ---------------------------------------------------------------------------
+# Tests for fix-disk-count-semantic-conflict (include_top_level param)
+# ---------------------------------------------------------------------------
+
+def test_count_skill_files_default_excludes_install() -> None:
+    """默认行为: 不含 INSTALL.md (匹配 package.json 和 bats 语义)."""
+    disk = _count_skill_files()
+    # sub-skill SKILL.md only
+    expected = len(list((REPO_ROOT / "skills").glob("*/SKILL.md")))
+    assert disk == expected
+    # INSTALL.md 存在但不被计入
+    assert (REPO_ROOT / "skills" / "INSTALL.md").is_file()
+    assert disk != _count_skill_files(include_top_level=True)
+
+
+def test_count_skill_files_include_top_level_counts_install() -> None:
+    """include_top_level=True 时, INSTALL.md 也被计入 (供 installer 验证)."""
+    sub_count = len(list((REPO_ROOT / "skills").glob("*/SKILL.md")))
+    with_install = _count_skill_files(include_top_level=True)
+    assert with_install == sub_count + 1
+
+
+def test_disk_count_matches_package_json() -> None:
+    """Per AC: package.json::skills[] 与 disk count 一致 (不含 INSTALL)."""
+    import json
+    pkg = json.loads((REPO_ROOT / "package.json").read_text())
+    declared = pkg.get("skills", [])
+    disk = _count_skill_files()
+    assert len(declared) == disk, (
+        f"package.json has {len(declared)} entries, disk has {disk}"
+    )
