@@ -16,9 +16,10 @@ from pathlib import Path
 pkg = json.loads(Path("package.json").read_text())
 declared = [s.strip() for s in pkg.get("skills", [])]
 
+# Sub-skill SKILL.md only — INSTALL.md is the installer (not a sub-skill),
+# matches test_doc_contracts.py::_count_skill_files() semantics (per
+# fix-skill-count-and-table-schema 2026-08-25).
 disk = set()
-for path in Path("skills").glob("*.md"):
-    disk.add(path.stem)
 for path in Path("skills").glob("*/SKILL.md"):
     disk.add(path.parent.name)
 

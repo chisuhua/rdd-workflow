@@ -1,6 +1,6 @@
 ---
 name: INSTALL
-description: 安装 RDD Workflow 技能——支持全局安装（~/.agents/skills/，跨项目可用）和项目安装（.opencode/skills/rdd-workflow/）。全局安装后从 1 个顶层 INSTALL.md 加 24 个 per-skill 子目录复制全部 25 个子技能到目标位置；自动安装 Python 依赖和 rddf CLI。
+description: 安装 RDD Workflow 技能——支持全局安装（~/.agents/skills/，跨项目可用）和项目安装（.opencode/skills/rdd-workflow/）。全局安装后从 1 个顶层 INSTALL.md 加 26 个 per-skill 子目录复制全部 27 个子技能到目标位置；自动安装 Python 依赖和 rddf CLI。
 alias: install
 version: "3.0"
 author: sisyphus
@@ -8,7 +8,7 @@ author: sisyphus
 
 # RDD Workflow 安装程序
 
-本技能将 RDD Workflow 的 20 个子技能安装到当前项目目录。
+本技能将 RDD Workflow 的 27 个子技能安装到当前项目目录。
 
 ## 包含的子技能
 
@@ -18,8 +18,10 @@ author: sisyphus
 |---------|------|
 | `guide` | 推荐器入口（扫描项目状态，建议下一步） |
 | `guide-arch` | Arch 阶段状态机（setup → roadmap → arch-done） |
+| `guide-design` | Design 阶段状态机（v2.1 新增；提案审查 + 内容审查 + 批准/拒绝/延迟） |
 | `guide-plan` | Plan 阶段状态机（scan → propose → deps → plan-done） |
 | `guide-ship` | Ship 阶段状态机（plan → execute → archive → cleanup） |
+| `rdd-verifier` | Verify 阶段状态机（v3.0 新增；批量 AC 验证 + 启发式分类 + 失败回 plan/ship） |
 | `propose` | 变更提案生成（被 guide-plan 调用） |
 | `execute` | 实施计划执行（被 guide-ship 调用） |
 | `status` | 状态查看和归档（被 guide-ship 调用或独立使用） |
@@ -34,13 +36,13 @@ author: sisyphus
 | `add-improve` | 交互式创建 rdd-workflow 改进提案（注册到 proposal-suggestions.md） |
 | `openspec-gate` | Stage 守卫（未关联 active change 时阻止 commit） |
 | `rdd-workflow-brainstorm` | 提案头脑风暴（5 段格式输出至 .rddf/improvements/） |
-| `INSTALL` | 当前技能（顶层安装入口，被全局/项目安装流程使用） |
-| `guide-design` | Design 阶段状态机（v2.1 新增；提案审查 + 内容审查） |
 | `contract-check` | Spoke 本地实现 vs Hub OpenAPI contract 一致性校验（Breaking-Change 阻断 CI） |
 | `cross-repo-protocol` | Hub-Spoke 联邦 MCP 客户端（4 Hub 工具 + REST fallback + trace logging） |
 | `spoke-system-prompt-injection` | Hub-Spoke 协议注入 AI 助手配置（Cursor/Cline/Continue/Copilot/Claude Code） |
-| `ac-verifier` | AI 语义验证 OpenSpec change 验收标准（archive 前自动调用） |
-| `rdd-verifier` | 批量 rdd-verify 阶段 + per-change 验证状态 + commit-bound 缓存 + archive gate 强制 |
+| `ac-verifier` | AI 语义验证 OpenSpec change 验收标准（archive 前自动调用，rdd-verifier 子后端） |
+| `report-issue` | Hub-Spoke 上行命令（[RFC] issue 上报到 Hub；ADR-0030） |
+| `sync-hub` | Hub-Spoke 下行命令（拉取 Hub 契约到本地 specs；ADR-0030） |
+| `watch-hub` | Hub-Spoke 监听命令（一次性轮询 Hub issue 状态；ADR-0030） |
 
 ## 两种安装模式
 
@@ -57,7 +59,7 @@ bash install.sh --global
 ```
 
 执行后：
-- 12 个子技能 symlink 到 `~/.agents/skills/` → **所有项目**的 OpenCode 自动发现
+- 27 个子技能 symlink 到 `~/.agents/skills/` → **所有项目**的 OpenCode 自动发现（具体清单见 `package.json::skills[]`，与磁盘同步）
 - Python 依赖自动安装 (`pip install --user -r requirements.txt`)
 - `_lib/` 路径写入 Python `.pth` 文件 → 任何项目 `from skills._lib.xxx import yyy` 可用
 - `rddf` CLI 命令创建到 `~/.local/bin/rddf` → 终端直接运行 `rddf status`
@@ -341,18 +343,20 @@ rm -f "$PROJECT_ROOT/install-rdd-workflow.sh"
 |------|-----|
 | 包名称 | rdd-workflow |
 | 别名 | workflow, install |
-| 版本 | 2.0.0-beta |
+| 版本 | 3.0.0（与 `package.json` 同步；npm 注册版本仍为 2.0.0-beta） |
 | 作者 | sisyphus |
 
-## npm test vs pytest
+## npm test vs pytest（v3.0+ 已修正）
 
-> ⚠️ **重要 trap（反漂移提示）**：npm test 只跑 bats tests/，**不会**捕获 Python 测试失败。
+> ✅ **v3.0+（package.json 已同步）**：`npm test` = `npm run test:bats && npm run test:python`，**同时**跑 bats + pytest unit + pytest integration。改 Python 后可直接 `npm test` 验证，或用 `./test.sh --python` / `--unit` / `--integration` 单独跑。
 >
-> 本项目 Python 测试数量（pytest tests/ -q）远多于 bats，**改完任何 Python 代码后必须显式**：
+> ⚠️ **历史 trap（v2.0/v2.1 反漂移提示）**：旧版 `npm test` 只跑 bats（不跑 pytest），漏检 Python 测试失败。**v3.0 起该陷阱已不适用**，但请避免回退到旧版 `package.json::scripts.test = test:bats`。
+>
+> 本项目 Python 测试数量（pytest tests/ -q）远多于 bats，调试 Python 代码时仍可显式调用：
 >
 > ```bash
-> python3 -m pytest tests/unit/ -q --tb=short          # ~46 个 unit 文件
-> python3 -m pytest tests/integration/ -q --tb=short   # ~9 个 Python integration
+> python3 -m pytest tests/unit/ -q --tb=short          # ~190 个 unit 文件 / ~1243 测试函数
+> python3 -m pytest tests/integration/ -q --tb=short   # ~15 个 Python integration
 > ```
 >
 > 完整 CI 顺序（见 .github/workflows/test.yml）：安装 deps → **断言质量门控**（grep -rn "assert.*or True|assert True" tests/ 命中即 FAIL）→ Python unit → Python integration → bats smoke → bats static 子集 → bats git-worktree 子集。

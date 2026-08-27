@@ -69,7 +69,7 @@ archive change (guide-ship Phase 3)
 - 文档化的双层 bootstrap 模式 (`source ... || source $HOME/.agents/skills/...`)
 - Python `_lib` 模块通过 `.pth` 发现
 - bash `source ~/.agents/skills/_lib/state.sh` 加载运行时 helper
-- 14 个子技能 symlink 完整性
+- 27 个子技能 symlink 完整性
 
 测试在 `$BATS_TMPDIR` 创建独立的 git 仓库, **不**修改源 repo 的 `.rddf/` (其他 bats 测试依赖 stale state, 删除会级联失败)。
 
@@ -115,7 +115,7 @@ _lib/                          # ⭐ 真实实现层 (commit c3a90fe "flatten pa
   schedulers/                  # 调度器 (4 .py): cron_scheduler, fs_watcher, git_hook, webhook_receiver
   schemas/                     # JSON schema (19 files): arch_handoff, config, deps_analysis, design_handoff, feature_view, iteration, plan_handoff, sessions, state_vector, trigger 等
   loop_engine.py               # v2.0 Loop 引擎入口（向后兼容 shim 实际实现在 _lib/loop_engine.py）
-skills/                        # Markdown skills (14 SKILL.md + INSTALL.md) + per-skill scripts/
+skills/                        # Markdown skills (27 SKILL.md + INSTALL.md) + per-skill scripts/
   INSTALL.md                   # 第一入口 (v1.1.0)
   guide/SKILL.md               # 推荐器
   guide-arch/SKILL.md          # arch 阶段 (v2.0.8 Phase 2 重组)

@@ -30,7 +30,6 @@
     "openspec-cli": ">=1.7.0"
   },
   "skills": [
-    "INSTALL",
     "guide",
     "guide-arch",
     "guide-design",
@@ -54,6 +53,9 @@
     "cross-repo-protocol",
     "spoke-system-prompt-injection",
     "ac-verifier",
-    "rdd-verifier"
+    "rdd-verifier",
+    "report-issue",
+    "sync-hub",
+    "watch-hub"
   ]
 }

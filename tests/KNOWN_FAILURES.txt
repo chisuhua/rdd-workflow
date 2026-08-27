@@ -84,4 +84,3 @@ roadmap_incremental_update: T18 stale codebase_commit auto-resets to full mode a
 roadmap_incremental_update: edge third consecutive run is still mode=skip (T1 stability) # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 roadmap_incremental_update: full run on empty state.json writes baseline state # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 roadmap_incremental_update: idempotent — second run detects no changes → mode=skip # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-skill consistency: package.json and INSTALL.md align with disk # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
