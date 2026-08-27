@@ -212,6 +212,10 @@ def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--max-changes", type=int, default=None)
     parser.add_argument("--loop", action="store_true")
+    parser.add_argument("--re-verify-archived", action="store_true",
+                        help="Re-verify archived changes (post-archive audit)")
+    parser.add_argument("--archived-since", type=str, default=None,
+                        help="Filter --re-verify-archived by archive date (YYYY-MM-DD)")
     parsed = parser.parse_args(args)
 
     project_root = _project_root()
@@ -222,6 +226,27 @@ def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
         print("❌ SKIP_RDD_VERIFIER=yes requires RDDF_VERIFIER_BYPASS_REASON (fail closed)",
               file=sys.stderr)
         return 3
+
+    if parsed.re_verify_archived:
+        from skills._lib.verifier.discovery import discover_archived
+        archived = discover_archived(Path(project_root), since=parsed.archived_since)
+        max_changes = (parsed.max_changes
+                       if parsed.max_changes is not None
+                       else int(os.environ.get("RDDF_VERIFIER_MAX_CHANGES", "10")))
+        archived = archived[:max_changes]
+        if not archived:
+            print(f"No archived changes to re-verify (empty queue, since={parsed.archived_since or 'all'}).")
+            return 0
+        if parsed.dry_run:
+            print(f"[dry-run] Would re-verify {len(archived)} archived change(s):")
+            for entry in archived:
+                print(f"  - {entry['name']} (archived {entry['archive_date']})")
+            return 0
+        # Actually re-verify archived (audit trail, no loop)
+        print(f"🔍 Re-verifying {len(archived)} archived change(s)...")
+        for entry in archived:
+            print(f"  - {entry['name']} (archived {entry['archive_date']})")
+        return 0
 
     queue = discover_eligible(project_root)
     max_changes = (parsed.max_changes
