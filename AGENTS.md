@@ -152,6 +152,25 @@ openspec/                     # OpenSpec CLI 数据 (随项目走)
   specs/                      # 已采纳的 capability specs (28 个)
 ```
 
+## Active Feature Fragments (v2.2+)
+
+Feature fragments (`rddf roadmap add-feature`) 跨阶段追踪多 phase 改进项。AI agent session 启动时应扫读此段以了解 in-flight 工作流。
+
+**当前活跃 feature**（手动维护，来源：`rddf roadmap list-features` 或扫描 `.rddf/roadmap/features/*.md`）：
+
+| feature id | 主题 | phase_refs | 状态 | 源文件 |
+|---|---|---|---|---|
+| `feat-fix-audit-findings` | 2026-08-26 文档与代码一致性审计后续修复（18 个 audit-followup 提案） | phase-1, phase-2, phase-3, phase-4 | active | `.rddf/roadmap/features/feat-fix-audit-findings.md` |
+
+**自动化进展（per `improve-roadmap-feature-discovery` 提案）**：
+- ✅ `skills/guide-design/scripts/feature_discovery.py::list_active_features` 已实现（commit 9c4e668），可在 `guide-design` Phase 1 preflight 调用
+- ⏳ AGENTS.md 自动段生成（CLI `rddf roadmap --update-agent-md`）未实现 — 当前为手维护
+- ⏳ `guide-arch` Phase 1 输出 feature fragments 列表作为 context 未实现
+
+**注意事项**：
+- 创建新 feature 时同步在本表登记行（避免失去 traceability）
+- feature 状态变 `done`/`archived` 时更新本表
+
 ## 关键约定 (容易踩坑)
 
 ### Skill 角色模型 (ADR-0028)
