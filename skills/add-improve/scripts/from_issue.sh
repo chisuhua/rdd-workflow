@@ -88,4 +88,14 @@ if ! python3 "$SCRIPT_DIR/from_issue.env.py" validate; then
     exit 1
 fi
 
+# Brainstorm HARD-GATE (pre-create): when a draft for this proposal already
+# exists, refuse to (re)create it until the draft satisfies the brainstorm
+# HARD-GATE (5 sections + Why/What Changes + Acceptance checkboxes + 主题).
+BRAINSTORM_CHECK="$SCRIPT_DIR/../../rdd-workflow-brainstorm/scripts/pre_create_brainstorm_check.sh"
+PROPOSAL_FILE="$PROJECT_ROOT/.rddf/improvements/from-issue-${ADD_IMPROVE_FROM_ISSUE}.md"
+if [[ -f "$PROPOSAL_FILE" ]] && ! bash "$BRAINSTORM_CHECK" "$PROPOSAL_FILE" --project-root "$PROJECT_ROOT"; then
+    echo "ERROR: existing draft fails brainstorm HARD-GATE, run skill_use('rdd-workflow-brainstorm') first" >&2
+    exit 1
+fi
+
 python3 "$SCRIPT_DIR/from_issue.py"
