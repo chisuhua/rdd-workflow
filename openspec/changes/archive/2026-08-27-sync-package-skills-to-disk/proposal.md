@@ -50,5 +50,11 @@
 
 ## Acceptance
 
-- [ ] (TBD — 验收标准 from .rddf/improvements 头部未提供)
+- [ ] `package.json::skills[]` 含 `report-issue` / `sync-hub` / `watch-hub`（选项 A 则不含 populate-roadmap-from-arch）
+- [ ] `skills/INSTALL.md` 子技能表行数 == `package.json::skills[]` 长度 == 磁盘 `*/SKILL.md` 数量
+- [ ] `tests/integration/test_skill_metadata_consistency.bats` test 1 PASS
+- [ ] `tests/unit/test_doc_contracts.py` 全部 PASS
+- [ ] 从 `tests/KNOWN_FAILURES.txt` 移除 line 87
+- [ ] AGENTS.md 关键目录注释同步
+- [ ] grep 验证 `populate-roadmap-from-arch` 无外部引用
 

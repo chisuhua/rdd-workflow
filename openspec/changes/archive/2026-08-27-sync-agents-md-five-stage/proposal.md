@@ -40,5 +40,12 @@ AGENTS.md 是 rdd-workflow 项目的"项目本体 AGENTS 文档"（区别于全�
 
 ## Acceptance
 
-- [ ] (TBD — 验收标准 from .rddf/improvements 头部未提供)
+- [ ] AGENTS.md line 84 含 "五阶段架构 (v3.0+)"
+- [ ] AGENTS.md line 88-94 表格列出 5 行（arch/design/plan/ship/verify）已是 SSOT，无变化
+- [ ] AGENTS.md line 148 包含 ADR-0025 / ADR-0027 / ADR-0029 / ADR-0031 / ADR-0034
+- [ ] AGENTS.md line 159 "5 个阶段技能" 含 rdd-verifier
+- [ ] AGENTS.md line 118 "25 SKILL.md + INSTALL.md"
+- [ ] `tests/unit/test_doc_contracts.py` 全部 PASS
+- [ ] `tests/integration/test_adr_index.bats` 不回归
+- [ ] 任何后续 ADR-0035+ 仍能补到 line 148 列表（不必现在生成）
 

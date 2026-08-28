@@ -45,5 +45,12 @@
 
 ## Acceptance
 
-- [ ] (TBD — 验收标准 from .rddf/improvements 头部未提供)
+- [ ] `_lib/docs_consistency.py` 6 个检查函数实现
+- [ ] `_lib/cli/doctor_cmd.py` 新增 `--category docs-consistency` 路由
+- [ ] `bash skills/rdd-doctor/scripts/doctor.sh --category docs-consistency` 在 master 分支运行 0 CRITICAL + 0 WARNING
+- [ ] `bash skills/rdd-doctor/scripts/doctor.sh --category all` 包含 docs-consistency
+- [ ] `tests/unit/test_docs_consistency.py` 6+ 个 unit test PASS
+- [ ] `tests/integration/test_rdd_doctor.bats` 新增 6+ 个 integration test PASS
+- [ ] 文档同步：CHANGELOG.md 添加本次 change 条目；README/AGENTS rdd-doctor 描述更新
+- [ ] 新提案：把 docs-consistency 检查接入 pre-commit hook 作为 follow-up
 
