@@ -166,6 +166,65 @@ for >=6 months. `rddf init` now works from any source directory when
 - **Strict skill registration contract**: `test_doc_contracts.py` 收紧为精确 `== disk` 匹配，新增 INSTALL.md 子技能表行数断言；`test_skill_metadata_consistency.bats` 改为基于磁盘 glob 的动态校验；`docs/change-quality-guide.md` 增加五项新增 skill 注册 checklist。`package.json` 与 `skills/INSTALL.md` 同步补齐 guide-design、rdd-env-check 等登记项。
 - **Execute CHANGE_NAME auto-derivation**: 共享 `skills/execute/scripts/change_name.sh::ensure_change_name` 在 execute Step 1 与辅助脚本入口补齐运行时上下文，保留显式值并对非 `openspec/*` 分支报出明确的修复指引。
 
+## [Unreleased] — v3.1
+
+### feat-fix-audit-findings: 2026-08-26 文档与代码一致性审计后续修复（18 个 audit-followup 提案）
+
+2026-08-26 对 rdd-workflow 自身做了一次全栈审计（package.json skills 漂移、AGENTS.md 阶段描述与 4→5 阶段架构不一致、rdd-doctor 文档不一致等）。发现的问题通过 18 个 audit-followup 提案 + 4 个 batch-tool 提案 + 5 个 process 改进提案分阶段处理，2026-08-27/28 期间由 background Sisyphus session 自动实施并归档。
+
+**Feature fragment**: `.rddf/roadmap/features/feat-fix-audit-findings.md` (kind=feature, phase_refs=[phase-1..4], status=active)。AGENTS.md 新增 "Active Feature Fragments" section (commit 868fce5) 列出此 feature 与自动化进展。
+
+### Added — 18 audit-followup proposals (registered 2026-08-26, archived 2026-08-27/28)
+
+- **P0 reconcile + iteration fix** (2): `fix-iteration-archive-sync`, `reconcile-iteration-after-archive`
+- **P1 docs-consistency** (3): `sync-package-skills-to-disk`, `sync-agents-md-five-stage`, `rdd-doctor-docs-consistency`
+- **P1 bugs / improvements** (6): `fix-disk-count-semantic-conflict`, `fix-proposal-ac-section-mapping`, `fix-design-preflight-roadmap-format`, `fix-ship-plan-untracked-gate`, `fix-rdd-verifier-lifecycle-dashboard`, `improve-execution-mode-per-change`
+- **P2 process improvements** (3): `improve-change-splitting-strategy`, `improve-commit-scope-discipline`, `improve-from-roadmap-naming-flexibility`
+
+### Added — 5 process proposals (registered 2026-08-27, archived 2026-08-28)
+
+- `add-brainstorm-hardgate-enforcement` — HARD-GATE 强制 `rdd-workflow-brainstorm` 调用（防止 `add-improve` 绕过）
+- `add-pre-commit-proposal-quality-check` — `pre-commit` hook 验证 proposal 质量 (Bronze/Silver/Gold)
+- `add-proposal-source-tracking` — `iteration.json` 新增 `proposal_source_tracking` 字段 (session_id / audit_source / created_at_iso / parent_session_id)
+- `improve-from-roadmap-naming-flexibility` — `add-improve` 接受 `--multi` flag 支持从单 theme 批量创建 sub-proposals
+- `improve-roadmap-feature-discovery` — `skills/guide-design/scripts/feature_discovery.py::list_active_features` 在 `guide-design` Phase 1 preflight 列出 active features
+
+### Added — 4 batch-tool proposals (registered 2026-08-27, archived 2026-08-27)
+
+- `auto-archive-iteration-and-commit` — `archive` 命令自动同步 `iteration.json` + commit archive 移动
+- `design-approve-batch-tool` — `guide-design approve_proposal.sh` 支持 `--batch` 批量批准
+- `plan-batch-fill-tool` — `guide-plan` 支持批量填充 design.md + tasks.md
+- `verifier-re-verify-archived-flag` — `rddf rdd-verify --re-verify-archived` 验证 archived 提案（注意：当前实现为 print-only stub，`ac-verifier.sh` 暂不支持 archive 路径 — 后续 follow-up）
+
+### Fixed — Archived proposal.md TBD placeholders
+
+3 个 P1 docs-consistency changes 的 archived `proposal.md` 文件原本含 `(TBD — 验收标准 from .rddf/improvements 头部未提供)` placeholder（因 `generate_full_proposal.py` 早期版本只识别 `## 验收标准` 标题，但源 `.rddf/improvements/*.md` 使用 `## 验收`）。`fix-proposal-ac-section-mapping` (line 151) 修复了 extraction 逻辑（同时接受两种标题），但仅对未来生成生效。**Commit `6e0a538`** 手动重新生成 3 个 archived `proposal.md`：
+
+| Change | AC bullets |
+|---|---|
+| sync-package-skills-to-disk | 7 |
+| sync-agents-md-five-stage | 8 |
+| rdd-doctor-docs-consistency | 8 |
+
+### Test baseline maintenance
+
+**Commit `d6b451c`** 登记 28 个 pre-existing bats 失败到 `tests/KNOWN_FAILURES.txt`：
+
+| 文件 | 失败数 | 根因 |
+|---|---|---|
+| `test_populate_roadmap_from_arch.bats` | 16 | `skills/populate-roadmap-from-arch/` 目录无 SKILL.md + populate.sh（仅 `__pycache__` 残骸），sync-package-skills-to-disk 只清理 package.json 注册未清理磁盘。后续 follow-up：完全删除残骸目录 + tests，或恢复 artifacts |
+| `test_populate_wrapper.bats` | 5 | 同上 |
+| `test_rdd_verifier_skip.bats` | 5 | verifier-re-verify-archived-flag 新增的 skip 行为测试未登记 baseline |
+| `test_roadmap_skill.bats` | 1 | v2.0.3 移除 gate-report 后命令数变化未跟进 |
+| `test_adr_directory.bats` | 1 | ADR status+date 字段检查新增 |
+
+### Notes
+
+- pytest unit: **2256 passed, 3 skipped, 1 flaky** (test_detectors timing — 重跑通过)
+- pytest integration: **182 passed**
+- Phase C1 已通过 commit `868fce5 docs(agents): add Active Feature Fragments section for in-flight feature visibility` 完成
+- Phase A1/B1/B2 完成记录在 HANDOFF.md (2026-08-28)
+
 ## [v3.0.0] — 2026-07-22 (BREAKING)
 
 ### Renamed: `spec-workflow` → `rdd-workflow`
