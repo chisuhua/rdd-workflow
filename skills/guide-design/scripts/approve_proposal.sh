@@ -13,6 +13,12 @@
 # Env vars:
 #   SKIP_DESIGN_HANDOFF=yes    -> skip create flow (legacy / skeleton path)
 #   PARENT_FEATURE              -> optional, written to roadmap-meta.yaml
+#   RDDF_PROPOSAL_SOURCE_SESSION -> optional, recorded on the iteration.json
+#                                   entry as source_session_id (which rddf-session
+#                                   created the change; per ADR-0017)
+#   RDDF_PROPOSAL_AUDIT_SOURCE   -> optional, recorded as audit_source (machine-
+#                                   readable trigger id, e.g. 2026-08-27-ship-audit)
+#                                   (add-proposal-source-tracking, 2026-08-28)
 
 set -euo pipefail
 
@@ -488,6 +494,8 @@ data["changes"].append({
     "phase": "$HEAD_PHASE",
     "category": "$HEAD_CATEGORY",
     "added_at": __import__("time").strftime("%Y-%m-%dT%H:%M:%S%z"),
+    "source_session_id": os.environ.get("RDDF_PROPOSAL_SOURCE_SESSION"),
+    "audit_source": os.environ.get("RDDF_PROPOSAL_AUDIT_SOURCE"),
 })
 p.write_text(json.dumps(data, indent=2))
 PYEOF

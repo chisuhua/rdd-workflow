@@ -609,6 +609,26 @@ def feature_progress(data: dict) -> dict[str, tuple[int, int]]:
 # Mutations (return new data dict, do not mutate in place - easier to test)
 # ---------------------------------------------------------------------------
 
+def proposal_source_fields(env: Optional[dict] = None) -> dict:
+    """Read proposal-source-tracking fields from the environment.
+
+    Returns ``{"source_session_id": ..., "audit_source": ...}`` with values
+    read from ``RDDF_PROPOSAL_SOURCE_SESSION`` and ``RDDF_PROPOSAL_AUDIT_SOURCE``
+    (each `None` when the corresponding env var is unset — graceful for
+    manual / legacy flows that don't set them).
+
+    Called by ``approve_proposal.sh`` so a freshly created OpenSpec change
+    records which rddf-session and audit event produced it
+    (add-proposal-source-tracking, 2026-08-28). Values are passed straight
+    into :func:`add_or_update_change` via ``**fields``.
+    """
+    env = dict(os.environ) if env is None else env
+    return {
+        "source_session_id": env.get("RDDF_PROPOSAL_SOURCE_SESSION"),
+        "audit_source": env.get("RDDF_PROPOSAL_AUDIT_SOURCE"),
+    }
+
+
 def add_or_update_change(data: dict, **fields: Any) -> dict:
     """Add a new change entry or update an existing one. Preserves added_at.
 
@@ -616,7 +636,12 @@ def add_or_update_change(data: dict, **fields: Any) -> dict:
     Optional: phase, category, priority, worktree_path, plan_path,
               tasks_done, tasks_total, blocker, parallel_group,
               conflicts, last_deps_at, archived_at, manual_deps,
-              manual_blocks.
+              manual_blocks, source_session_id, audit_source.
+
+    ``source_session_id`` / ``audit_source`` are proposal-source-tracking
+    fields (add-proposal-source-tracking, 2026-08-28): they record which
+    rddf-session and audit event created the change, populated from env
+    vars by approve_proposal.sh via :func:`proposal_source_fields`.
 
     Returns a new data dict (caller should `save()` it).
     """

@@ -131,6 +131,8 @@
 
 | [add-pre-commit-proposal-quality-check](.rddf/improvements/add-pre-commit-proposal-quality-check.md) | P1 | 2026-08-28 | guide-arch |
 
+| [add-proposal-source-tracking](.rddf/improvements/add-proposal-source-tracking.md) | P1 | 2026-08-28 | guide-arch |
+
 ## 已实施
 | [submodule-aware-project-root](.rddf/improvements/submodule-aware-project-root.md) | P0 | 2026-08-25 | 已实施 |
 | [clean-stale-plan-handoff-on-ship-done](.rddf/improvements/clean-stale-plan-handoff-on-ship-done.md) | P1 | 2026-08-25 | 已实施 |
