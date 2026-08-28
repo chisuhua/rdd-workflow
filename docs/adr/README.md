@@ -23,40 +23,44 @@
 
 ## ADR 列表
 
-| ADR | 标题 | 状态 | 关键决策 |
-|-----|------|------|---------|
-| [ADR-0001](ADR-0001-propose-plan-execute-state-machine.md) | 双阶段状态机分离 (spec/ship) | 已替代为 ADR-0003 | guide 拆分为 guide-spec + guide-ship |
-| [ADR-0002](ADR-0002-goal-driven-interaction-modes.md) | 目标驱动接口与交互模式配置 | 已采纳 | 三种交互模式 + 设计先行阶段 |
-| [ADR-0003](ADR-0003-three-phase-architecture.md) | 三阶段架构重构 (arch → plan → ship) | 已采纳 | 按人工介入程度切分三阶段（v2.0.6+ 由 ADR-0025 扩展为四阶段） |
-| [ADR-0004](ADR-0004-loop-engine-core-design.md) | Loop 引擎核心设计 | 已采纳 | 5 大构建块 + 多 Agent 协作 |
-| [ADR-0005](ADR-0005-human-in-loop-nodes.md) | Human-in-Loop 节点定义 | 已采纳 | 三种验证模式 + 节点策略 |
-| [ADR-0006](ADR-0006-state-vector-event-log.md) | 状态向量与事件流设计 | 已采纳 | 统一状态向量 + 记忆系统 |
-| [ADR-0007](ADR-0007-gate-mechanism.md) | 门控机制设计 | 已采纳 | error/warning 两级 + 插件扩展 |
-| [ADR-0008](ADR-0008-tribunal-committee.md) | 审判委员会设计 | 已采纳 | 多 agent 交叉验证 + 数据脱敏 |
-| [ADR-0009](ADR-0009-scheduled-triggers.md) | 定时循环与事件触发（占位） | 已采纳（v3.0 候选） | 编号占位，v3.0 候选 |
-| [ADR-0010](ADR-0010-multi-session-management.md) | 多会话管理与并行执行 | 已采纳（v2.0 轻量级） | v2.0 轻量级 + v2.1 完整实现 |
-| [ADR-0011](ADR-0011-phase-step-pipeline-model.md) | 阶段步骤化执行模型 | 已采纳（v3.0 候选） | 模板+触发器 + 步骤引擎 + 中断恢复 |
-| [ADR-0012](ADR-0012-flow-customization-layer.md) | 流程定制层 | 已采纳（v3.0 候选） | 增量覆盖 + 条件触发 + 自定义技能 |
-| [ADR-0013](ADR-0013-extract-scan-state.md) | scan-state 提取 | 已采纳 | 拆分 scan-state.sh → `_lib/scan-state.sh` |
-| [ADR-0014](ADR-0014-review-phase-and-debt-reflow.md) | Review 阶段债务回流机制 | 已采纳（设计稿） | 债务回流 4 选项 + 文件冲突驱动 deps |
-| [ADR-0015](ADR-0015-integrate-openspec-validate-as-plan-critic.md) | openspec validate 集成为 plan-critic | 已采纳（设计稿） | 把 openspec validate 接入 plan-done 门控 |
-| [ADR-0016](ADR-0016-arch-artifact-discovery-contract.md) | Arch 阶段工件发现契约 | 已采纳 | 扩展 `.arch-handoff.json` v1 + 替换 14+ 处硬编码路径 |
-| [ADR-0017](ADR-0017-rddf-session.md) | rddf-session 用户视角工作流会话 | 已采纳 | 项目级 `sessions.json` 持久化 + 4 选项软提示冲突处理 + 跨 OpenCode session 恢复 |
-| [ADR-0018](ADR-0018-arch-quality-gate.md) | 架构质量门 — arch 阶段的定性检查 | 已采纳 | 4 个 warning 级检查 (alignment/debt/clarity/actionable) + `STRICT_ARCH_GATE=yes` CI 升级 |
-| [ADR-0019](ADR-0019-change-arch-alignment.md) | change_arch_alignment — change 提案与架构对齐检查 | 已采纳 | 3 个 warning 级检查 (refs_valid/no_contradiction/task_traceability) + `STRICT_CHANGE_GATE=yes` 独立 env var |
-| [ADR-0020](ADR-0020-incremental-skeleton-planning.md) | 增量 skeleton planning | 已采纳 | 引入 `planned` 状态 + 6 个关键子决策 |
-| [ADR-0021](ADR-0021-phase2-per-skill-helper-migration.md) | Phase 2 per-skill helper migration | 已采纳 | Per-skill scripts/ 目录迁移 |
-| [ADR-0022](ADR-0022-manual-deps-field.md) | manual_deps 人工依赖声明 | 已采纳 | `manual_deps`/`manual_blocks` 字段 |
-| [ADR-0023](ADR-0023-v3-rename-spec-workflow-to-rdd-workflow.md) | v3.0.0 包名重命名 | 已采纳 | `spec-workflow` → `rdd-workflow` (BREAKING) |
-| [ADR-0024](ADR-0024-deps-driven-execution-mode.md) | deps 阶段驱动执行模式决策 | 已采纳 | 执行模式在 plan 阶段决定并写入 handoff |
-| [ADR-0025](ADR-0025-design-proposal-creation.md) | design 阶段提案创建 + 内容审查 | 已采纳 | 设计管理独立成阶段 + 两层内容审查 |
-| [ADR-0026](ADR-0026-internal-metadata-namespace-convention.md) | 内部元数据命名空间约定 | 已采纳 | `>` blockquote 元数据命名规范 |
-| [ADR-0027](ADR-0027-continuous-evolution-feedback-loop.md) | 持续演进反馈环 | 已采纳 | Detect→Buffer→Report→Triage→Close 五环 + 复用 `_lib/config.py` + 三重 opt-in + 幂等 close + Oracle 复核 8/8/7 [^adr-0027-supersede] |
-| [ADR-0029](ADR-0029-issue-driven-proposal-creation.md) | Issue-Driven Proposal Creation | 已采纳 | 新增 `add-improve --from-issue` 模式 + repo-neutral `close_issues.py` 修复 |
-| [ADR-0030](ADR-0030-hub-and-spoke-federation.md) | Hub-and-Spoke 联邦协同架构 | 待定 | 多项目 AI 协同开发采用 Hub 仓库 + L2 升级双向协同通道 + 6 项安全风险 + 3 个月复核 |
-| [ADR-0031](ADR-0031-human-in-loop-cross-repo.md) | 跨项目 RFC 必须人类决策 | 已采纳 | 跨项目提案 AI 不可自动批准 + `RDDF_REQUIRE_HUB_APPROVAL` 强制门控 + 审计 log + 无 Spoke 端 bypass |
-| [ADR-0032](ADR-0032-hub-federation-deepening.md) | Hub 联邦深化 | 待定 | 4 个 P0 change (跨仓分析/RFC 草稿/审批交互/自动发 RFC) + 9 change 总览 + 3 个月复核窗口 2026-11-15 |
-| [ADR-0034](ADR-0034-rdd-verifier-verify-phase-architecture.md) | rdd-verifier 验证回环阶段架构 | 已采纳 | 5 阶段非线性必经节点 + 启发式分类 (implementation_gap vs proposal_drift) + 3 次重试 + SHA 指纹 verdict 缓存 |
+<!-- ADR_INDEX_START -->
+| ADR | 标题 | 状态 | 日期 |
+|-----|------|------|------|
+| [ADR-0001](ADR-0001-propose-plan-execute-state-machine.md) | ADR-0001: rdd-workflow 状态机分相（spec 端 / ship 端状态机分离） | 已替代为 ADR-0002 + ADR-0003（已实施） | 2026-06-08 |
+| [ADR-0002](ADR-0002-goal-driven-interaction-modes.md) | ADR-0002: 目标驱动接口与交互模式可配置化 | 已采纳 | 2026-06-22 |
+| [ADR-0003](ADR-0003-three-phase-architecture.md) | ADR-0003: 三阶段架构重构 (arch → plan → ship) | 已采纳 | 2026-06-22 |
+| [ADR-0004](ADR-0004-loop-engine-core-design.md) | ADR-0004: Loop 引擎核心设计 | 已采纳 | 2026-06-22 |
+| [ADR-0005](ADR-0005-human-in-loop-nodes.md) | ADR-0005: Human-in-Loop 节点定义与菜单系统 | 已采纳 | 2026-06-22 |
+| [ADR-0006](ADR-0006-state-vector-event-log.md) | ADR-0006: 状态向量与事件流设计 | 已采纳 | 2026-06-22 |
+| [ADR-0007](ADR-0007-gate-mechanism.md) | ADR-0007: 门控机制设计 (Gate Mechanism) | 已采纳 | 2026-06-22 |
+| [ADR-0008](ADR-0008-tribunal-committee.md) | ADR-0008: 审判委员会设计 (Tribunal Committee) | 已采纳 | 2026-06-22 |
+| [ADR-0009](ADR-0009-scheduled-triggers.md) | ADR-0009: 定时循环与事件触发（占位） | 模板（v3.0 候选占位） | 2026-06-22 |
+| [ADR-0010](ADR-0010-multi-session-management.md) | ADR-0010: 多会话管理与并行执行 | ✅ 已采纳 + 已实施（v2.0 轻量 + v2.1 完整 + ADR-0017 rddf-session 用户层） | 2026-06-22 |
+| [ADR-0011](ADR-0011-phase-step-pipeline-model.md) | ADR-0011: 阶段步骤化执行模型 | 已采纳 | 2026-06-22 |
+| [ADR-0012](ADR-0012-flow-customization-layer.md) | ADR-0012: 流程定制层 | 已采纳 | 2026-06-22 |
+| [ADR-0013](ADR-0013-extract-scan-state.md) | ADR-0013: Extract scan-state logic from skills/guide.md into skills/_lib/scan-state.sh | 已采纳 | 2026-07-07 |
+| [ADR-0014](ADR-0014-review-phase-and-debt-reflow.md) | ADR-0014: Add execute-review phase and debt-reflow mechanism to three-phase workflow | 待定 | 2026-07-08 |
+| [ADR-0015](ADR-0015-integrate-openspec-validate-as-plan-critic.md) | ADR-0015: Integrate `openspec validate` as the plan-critic gate for plan_done | 已采纳 | 2026-07-08 |
+| [ADR-0016](ADR-0016-arch-artifact-discovery-contract.md) | ADR-0016: Arch 阶段工件发现契约 (Arch Artifact Discovery Contract) | 已采纳 | 2026-07-08 |
+| [ADR-0017](ADR-0017-rddf-session.md) | ADR-0017: rddf-session — 用户视角工作流会话 | ✅ 已采纳（已实施） | 2026-07-09 |
+| [ADR-0018](ADR-0018-arch-quality-gate.md) | ADR-0018: 架构质量门 — arch 阶段的定性检查 | ✅ 已采纳 | 2026-07-10 |
+| [ADR-0019](ADR-0019-change-arch-alignment.md) | ADR-0019: change_arch_alignment — change 提案与架构对齐检查 | ✅ 已采纳 | 2026-07-10 |
+| [ADR-0020](ADR-0020-incremental-skeleton-planning.md) | ADR-0020: Incremental Skeleton Planning | 已采纳（v2.0.2 archive 后切换） | 2026-07-08 |
+| [ADR-0021](ADR-0021-phase2-per-skill-helper-migration.md) | ADR-0021: Phase 2 Per-Skill Helper Migration Strategy | 已采纳（v2.0.8 archive 后切换） | 2026-07-17 |
+| [ADR-0022](ADR-0022-manual-deps-field.md) | ADR-0022: Manual Deps Field for roadmap-meta.yaml | 已采纳 | 2026-07-20 |
+| [ADR-0023](ADR-0023-v3-rename-spec-workflow-to-rdd-workflow.md) | ADR-0023: v3.0.0 包名重命名 `spec-workflow` → `rdd-workflow` | 已采纳 | 2026-07-22 |
+| [ADR-0024](ADR-0024-deps-driven-execution-mode.md) | ADR-0024: deps 阶段驱动执行模式决策 | 已采纳 | 2026-07-24 |
+| [ADR-0025](ADR-0025-design-proposal-creation.md) | ADR-0025: design 阶段承担 openspec proposal 创建与内容审查 | 已采纳 | 2026-08-02 |
+| [ADR-0026](ADR-0026-internal-metadata-namespace-convention.md) | ADR-0026: rdd-workflow Internal Metadata Namespace Convention | 已采纳 | 2026-08-11 |
+| [ADR-0027](ADR-0027-continuous-evolution-feedback-loop.md) | ADR-0027: 持续演进反馈环（Continuous Evolution Feedback Loop） | 待定 | YYYY-MM-DD |
+| [ADR-0028](ADR-0028-role-model-per-phase.md) | ADR-0028: Role Model Per Phase | 已采纳 | 2026-08-14 |
+| [ADR-0029](ADR-0029-issue-driven-proposal-creation.md) | ADR-0029: Issue-Driven Proposal Creation | 已采纳 | 2026-08-15 |
+| [ADR-0030](ADR-0030-hub-and-spoke-federation.md) | ADR-0030: 多项目 AI 协同开发采用 Hub-and-Spoke 联邦架构 | 待定 | 2026-08-15 |
+| [ADR-0031](ADR-0031-human-in-loop-cross-repo.md) | ADR-0031: 跨项目 RFC 必须人类决策（Human-in-Loop for Cross-Repo） | 已采纳 | 2026-08-15（2026-08-18 经 `fix-adr-0031-safety-gate-substantiation` 实质化后采纳） |
+| [ADR-0032](ADR-0032-hub-federation-deepening.md) | ADR-0032: Hub 联邦深化 (Hub Federation Deepening) | 待定 | 2026-08-19 |
+| [ADR-0033](ADR-0033-submodule-aware-project-root-resolution.md) | ADR-0033: Submodule-Aware Project Root Resolution | 待定 | 2026-08-25 |
+| [ADR-0034](ADR-0034-rdd-verifier-verify-phase-architecture.md) | ADR-0034: rdd-verifier 验证回环阶段架构 | 已采纳 (2026-08-26) | — |
+<!-- ADR_INDEX_END -->
 
 ## 架构演进
 

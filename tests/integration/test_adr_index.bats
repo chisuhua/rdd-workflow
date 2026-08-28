@@ -14,9 +14,11 @@ setup() {
   done
 }
 
-@test "adr_index: docs/adr/README.md does NOT reference ADR-NNN beyond 0020" {
-  # Flag only ADR-0024+ (legitimate range is 0000-0020; 0000 = template, 0001-0023 = real; 0024+ = unexpected)
-  bad=$(grep -oE "ADR-0[0-9]{3}" docs/adr/README.md | sort -u | grep -E "ADR-0(0[2-9][0-9]|[1-9][0-9]{2})" | grep -v -E "ADR-002[0-3]\b" || true)
+@test "adr_index: docs/adr/README.md does NOT reference ADR-NNN beyond 0034" {
+  # Valid ADR range: 0000 (template) + 0001-0034 (real). adr-index-auto-sync change
+  # #2 has regenerated the README table to cover all 34 real ADRs.
+  # Flag only ADR-0035+ as unexpected (must add new file on disk first).
+  bad=$(grep -oE "ADR-0[0-9]{3}" docs/adr/README.md | sort -u | grep -E "ADR-0(0[3-9][0-9]|[1-9][0-9]{2})" | grep -v -E "ADR-003[0-4]\b" || true)
   [ -z "$bad" ]
 }
 

@@ -144,8 +144,11 @@ tests/
   unit/                       # ~190 个 Python 单元测试文件 (~1243 测试函数, 含 P1-1b 新增 test_p1_1_identity_merge)
   integration/                # ~264 bats + 15 py 集成测试 (~1662 bats 测试用例)
   _lib/                       # bash helpers (skill.bash, deps-subagent.bash 等)
-docs/adr/                     # ADR-0000 模板 + ADR-0001~0033 (33 个唯一编号, 34 个实体文件; v2.0.2 重编号 ADR-0013 → ADR-0020; v2.0.8+ 持续追加)
+docs/adr/                     # ADR-0000 模板 + ADR-0001~0034 (34 个唯一编号, 35 个实体文件; v2.0.2 重编号 ADR-0013 → ADR-0020; v2.0.8+ 持续追加)
                              # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0016 arch 发现契约 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment / ADR-0022 manual_deps 字段 / ADR-0024 deps-driven execution mode / ADR-0025 design 阶段独立化 / ADR-0027 continuous evolution / ADR-0028 role-model / ADR-0029 issue-driven / ADR-0030 hub-spoke / ADR-0031 cross-repo human-in-loop / ADR-0032 hub deepening / ADR-0033 submodule-aware / ADR-0034 rdd-verifier
+                             # **Note**: 此关键 ADR 列表人工维护(策展判断,只列"已实施"+"已采纳"的 ADR)。
+                             # 完整 ADR 索引由 `_lib/adr_index_generator.py` 自动生成,见 `docs/adr/README.md` 中
+                             # `<!-- ADR_INDEX_START --> ... <!-- ADR_INDEX_END -->` 段 (per adr-index-auto-sync change 2026-08-28)。
 docs/change-quality-guide.md  # change 质量等级指南 (Bronze/Silver/Gold); 阈值与 Plan B `propose_quality_check.py` 对齐, 反模式以 ADR-0019 为准
 openspec/                     # OpenSpec CLI 数据 (随项目走)
   changes/                    # active changes + archive/
