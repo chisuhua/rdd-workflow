@@ -182,8 +182,8 @@ def main() -> int:
             for pf in created:
                 print(f"✅ Scaffold created: {pf}")
             print(f"   **主题**: {theme} ({count} sub-proposals)")
-            print(f"   Next: run rdd-workflow-brainstorm on each scaffold")
-            print(f"   HARD-GATE: --from-roadmap mode does NOT bypass brainstorm section approval.")
+            print("   Next: run rdd-workflow-brainstorm on each scaffold")
+            print("   HARD-GATE: --from-roadmap mode does NOT bypass brainstorm section approval.")
         else:
             content = _build_content(
                 base_name, theme, from_roadmap, phase_id, category_id, rationale
@@ -191,8 +191,8 @@ def main() -> int:
             proposal_file = _write_proposal(project_root, base_name, content)
             print(f"✅ Scaffold created: {proposal_file}")
             print(f"   **主题**: {theme}")
-            print(f"   Next: run rdd-workflow-brainstorm interactively to fill scaffold and approve")
-            print(f"   HARD-GATE: --from-roadmap mode does NOT bypass brainstorm section approval.")
+            print("   Next: run rdd-workflow-brainstorm interactively to fill scaffold and approve")
+            print("   HARD-GATE: --from-roadmap mode does NOT bypass brainstorm section approval.")
     except (OSError, ValueError) as e:
         _print_error(str(e))
         return 1

@@ -145,3 +145,31 @@ rdd-workflow-brainstorm 的设计获得批准后：
 - 跨模式交叉调用时，被调脚本只读取自己的前缀，不会误读其他模式的变量。
 
 **验证**：见 `tests/integration/test_from_issue_env_isolation.bats`（3 个隔离测试，全部 pass）。
+
+## from-roadmap 模式命名选项 (improve-from-roadmap-naming-flexibility)
+
+`from_roadmap.sh` 支持灵活的 proposal 命名，覆盖单 proposal 与多 proposal batch 创建：
+
+```bash
+bash skills/add-improve/scripts/from_roadmap.sh \
+  --from-roadmap phase-1/governance \
+  --theme "定时循环" \
+  [--name-prefix fix-audit-] \
+  [--name-suffix -rfc] \
+  [--auto-name] \
+  [--multi 3] \
+  --project-root <path>
+```
+
+| 参数 | 效果 | 示例 |
+|------|------|------|
+| *(默认)* | 向后兼容：`from-roadmap-<phase>-<category>` | `from-roadmap-phase-1-governance.md` |
+| `--name-prefix <prefix>` | 名称加前缀 | `fix-audit-phase-1-governance.md` |
+| `--name-suffix <suffix>` | 名称加后缀 | `phase-1-governance-rfc.md` |
+| `--auto-name` | 追加 timestamp 保证唯一 | `batch-phase-1-governance-20260828T093000.md` |
+| `--multi <N>` | 从 1 个主题生成 N 个 sub-proposal | `from-roadmap-phase-1-governance-sub-1.md` … `-sub-3.md` |
+
+**冲突处理**：目标名称已存在时**不覆盖**，自动追加 `-2`、`-3`…（唯一性保证）。
+**Oracle C1**：所有命名参数经 env-var（`ADD_IMPROVE_NAME_PREFIX` / `ADD_IMPROVE_NAME_SUFFIX` /
+`ADD_IMPROVE_AUTO_NAME` / `ADD_IMPROVE_MULTI`）传递到 `from_roadmap.py`，无 bash 字符串插值。
+`from_roadmap.sh --help` 输出上述全部参数说明。

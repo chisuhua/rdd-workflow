@@ -152,6 +152,84 @@ def test_no_env_vars_is_noop():
     assert result.returncode == 0, f"stderr: {result.stderr}"
 
 
+# === Test Group 4: Naming env-vars (improve-from-roadmap-naming-flexibility) ===
+
+def _base_env():
+    return {
+        "ADD_IMPROVE_FROM_ROADMAP": "phase-1/arch-design",
+        "ADD_IMPROVE_THEME": "测试主题",
+    }
+
+
+def test_accepts_valid_name_prefix_and_suffix():
+    """Kebab-case prefix/suffix are accepted."""
+    result = _run_validate({
+        **_base_env(),
+        "ADD_IMPROVE_NAME_PREFIX": "fix-audit-",
+        "ADD_IMPROVE_NAME_SUFFIX": "-rfc",
+    })
+    assert result.returncode == 0, f"stderr: {result.stderr}"
+
+
+def test_rejects_name_prefix_with_uppercase():
+    """Prefix with uppercase violates kebab-case."""
+    result = _run_validate({
+        **_base_env(),
+        "ADD_IMPROVE_NAME_PREFIX": "Fix-Audit-",
+    })
+    assert result.returncode != 0
+    assert "kebab-case" in result.stderr
+
+
+def test_rejects_name_suffix_with_special_chars():
+    """Suffix with special characters is rejected."""
+    result = _run_validate({
+        **_base_env(),
+        "ADD_IMPROVE_NAME_SUFFIX": "-rfc!",
+    })
+    assert result.returncode != 0
+    assert "kebab-case" in result.stderr
+
+
+def test_accepts_auto_name_true():
+    """ADD_IMPROVE_AUTO_NAME=yes is accepted."""
+    result = _run_validate({
+        **_base_env(),
+        "ADD_IMPROVE_AUTO_NAME": "yes",
+    })
+    assert result.returncode == 0, f"stderr: {result.stderr}"
+
+
+def test_rejects_invalid_auto_name():
+    """ADD_IMPROVE_AUTO_NAME=garbage is rejected."""
+    result = _run_validate({
+        **_base_env(),
+        "ADD_IMPROVE_AUTO_NAME": "garbage",
+    })
+    assert result.returncode != 0
+    assert "ADD_IMPROVE_AUTO_NAME" in result.stderr
+
+
+def test_accepts_multi_positive_int():
+    """ADD_IMPROVE_MULTI=3 is accepted."""
+    result = _run_validate({
+        **_base_env(),
+        "ADD_IMPROVE_MULTI": "3",
+    })
+    assert result.returncode == 0, f"stderr: {result.stderr}"
+
+
+def test_rejects_multi_zero_or_negative():
+    """ADD_IMPROVE_MULTI=0 / -1 are rejected."""
+    for bad in ("0", "-1", "abc"):
+        result = _run_validate({
+            **_base_env(),
+            "ADD_IMPROVE_MULTI": bad,
+        })
+        assert result.returncode != 0
+        assert "ADD_IMPROVE_MULTI" in result.stderr
+
+
 if __name__ == "__main__":
     import pytest
 
