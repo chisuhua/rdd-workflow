@@ -350,6 +350,13 @@ verifier_contract_check() {
 #   tasks_root (optional) is the directory containing openspec/changes/<name>/tasks.md
 #   — typically the worktree path in worktree mode or the main repo path in
 #   lightweight mode. If omitted, falls back to the current working directory.
+#
+# ADR-0035 §1: verifier-archive-gate boundary
+# This function implements scenario 2 (fallback) when rdd-verifier is
+# skipped (SKIP_RDD_VERIFIER=yes). For scenario 1 (standard), rdd-verifier
+# already wrote the verdict cache. Scenario 3 (halted) is blocked upstream
+# by rdd-verifier max_loops guard. See docs/adr/ADR-0035-verifier-archive-
+# gate-boundary.md for full semantics (4 scenarios + STRICT_AC_GATE escalation).
 archive_gate_check() {
   local change_name="${1:-}"
   local tasks_root="${2:-}"

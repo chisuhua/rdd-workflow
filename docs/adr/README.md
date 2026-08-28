@@ -60,6 +60,7 @@
 | [ADR-0032](ADR-0032-hub-federation-deepening.md) | ADR-0032: Hub 联邦深化 (Hub Federation Deepening) | 待定 | 2026-08-19 |
 | [ADR-0033](ADR-0033-submodule-aware-project-root-resolution.md) | ADR-0033: Submodule-Aware Project Root Resolution | 待定 | 2026-08-25 |
 | [ADR-0034](ADR-0034-rdd-verifier-verify-phase-architecture.md) | ADR-0034: rdd-verifier 验证回环阶段架构 | 已采纳 (2026-08-26) | — |
+| [ADR-0035](ADR-0035-verifier-archive-gate-boundary.md) | ADR-0035: rdd-verifier ↔ archive_gate_check 双轨设计边界 | 已采纳 | 2026-08-28 |
 <!-- ADR_INDEX_END -->
 
 ## 架构演进
