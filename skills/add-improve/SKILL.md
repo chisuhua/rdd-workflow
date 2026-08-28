@@ -77,6 +77,12 @@ skill_use("add-improve")
 
 rdd-workflow-brainstorm 的设计获得批准后：
 
+**<HARD-GATE>**：写入 `.rddf/improvements/<name>.md` 后，先运行
+`bash skills/rdd-workflow-brainstorm/scripts/pre_create_brainstorm_check.sh <proposal> --project-root <root>`
+校验草案满足 brainstorm HARD-GATE（5 段 section + `## Why`/`## What Changes` +
+`## Acceptance` 复选框 ≥3 + `**主题**:` 匹配 roadmap 主题）。校验失败则禁止注册到
+`proposal-suggestions.md`，强制先完成 brainstorm。
+
 1. 确定提案名称（kebab-case）— 如果用户未提前指定，从上一步的设计内容中提取
 2. 用批准的 5 段内容创建 <a href=".rddf/improvements/<name>.md`
 3. 在 `proposal-suggestions.md` 表格末尾追加行
