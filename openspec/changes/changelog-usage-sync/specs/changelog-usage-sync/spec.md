@@ -22,22 +22,17 @@ The banner SHALL be placed between `<!-- VERSION_BANNER_START -->` and `<!-- VER
 
 ### Requirement: Doctor module check for CHANGELOG-USAGE drift
 
-The `_lib/doctor.py` (or new `_lib/changelog_usage_sync.py`) module SHALL provide a check function that compares `CHANGELOG.md` [Unreleased] Added/Changed/Fixed sections against `USAGE.md` banner.
+The `_lib/sync_usage_banner.py` module SHALL provide a check function that compares `CHANGELOG.md` [Unreleased] Added/Changed/Fixed sections against `USAGE.md` banner.
 
 #### Scenario: Doctor detects missing USAGE references
 
-- **WHEN** developer runs `rddf doctor --check changelog-usage`
+- **WHEN** developer runs `python3 _lib/sync_usage_banner.py --check`
 - **THEN** any CHANGELOG entries not mentioned in USAGE are reported as drift
+- **AND** exit code is 0 (no drift) or 1 (drift detected)
 
-## MODIFIED Requirements
-
-### Requirement: USAGE.md updates human-in-loop
-
-The system SHALL NOT auto-modify `USAGE.md` content. Any sync detected by the doctor module SHALL emit warnings for human review and manual updates.
-
-#### Scenario: Doctor emits warning but does not auto-fix
+#### Scenario: Doctor does not auto-modify USAGE.md
 
 - **WHEN** doctor check detects CHANGELOG-USAGE drift
 - **THEN** a warning message SHALL be printed listing required USAGE.md changes
 - **AND** the doctor SHALL NOT modify USAGE.md automatically
-- **AND** the doctor SHALL exit with warning-level code (non-blocking by default)
+- **AND** the doctor SHALL exit with non-blocking code (unless --strict flag set)
