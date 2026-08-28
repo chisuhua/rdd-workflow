@@ -6,7 +6,19 @@
 #   bash from_roadmap.sh --from-roadmap <phase_id>/<category_id> \
 #                        --theme <theme_name> \
 #                        [--rationale "<draft rationale>"] \
+#                        [--name-prefix <prefix>] \
+#                        [--name-suffix <suffix>] \
+#                        [--auto-name] \
+#                        [--multi <count>] \
 #                        --project-root <path>
+#
+# Naming (improve-from-roadmap-naming-flexibility, 2026-08-28):
+#   default       from-roadmap-<phase>-<category>        (backward compat)
+#   --name-prefix <prefix>-<phase>-<category>
+#   --name-suffix <phase>-<category><suffix>
+#   --auto-name   <name>-<YYYYMMDDHHMMSS> timestamp-unique
+#   --multi <N>   create N sub-proposals <base>-sub-1..N from one theme
+#   Conflicts (name already exists) auto-append -2, -3, ... (never overwrite).
 #
 # Behavior:
 #   1. Parses CLI args into env-vars (ADD_IMPROVE_FROM_ROADMAP, ADD_IMPROVE_THEME, etc.)
@@ -22,15 +34,23 @@ FROM_ROADMAP=""
 THEME=""
 RATIONALE=""
 PROJECT_ROOT=""
+NAME_PREFIX=""
+NAME_SUFFIX=""
+AUTO_NAME=""
+MULTI=""
 
 usage() {
     cat <<EOF
-Usage: $0 --from-roadmap <phase/category> --theme <name> [--rationale <text>] --project-root <path>
+Usage: $0 --from-roadmap <phase/category> --theme <name> [options] --project-root <path>
 
 Options:
   --from-roadmap    REQUIRED: phase_id/category_id (e.g., phase-1/arch-design)
   --theme           REQUIRED: roadmap theme name (must NOT contain shell metacharacters)
   --rationale       OPTIONAL: AI-drafted rationale (passed to brainstorm scaffold)
+  --name-prefix     OPTIONAL: proposal name prefix (e.g., fix-audit-)
+  --name-suffix     OPTIONAL: proposal name suffix (e.g., -rfc)
+  --auto-name       OPTIONAL: generate timestamp-based unique proposal name
+  --multi <count>   OPTIONAL: generate <count> sub-proposals from one theme
   --project-root    REQUIRED: absolute path to project root
 EOF
     exit 1
@@ -41,6 +61,10 @@ while [[ $# -gt 0 ]]; do
         --from-roadmap) FROM_ROADMAP="$2"; shift 2 ;;
         --theme)        THEME="$2"; shift 2 ;;
         --rationale)    RATIONALE="$2"; shift 2 ;;
+        --name-prefix)  NAME_PREFIX="$2"; shift 2 ;;
+        --name-suffix)  NAME_SUFFIX="$2"; shift 2 ;;
+        --auto-name)    AUTO_NAME="yes"; shift ;;
+        --multi)        MULTI="$2"; shift 2 ;;
         --project-root) PROJECT_ROOT="$2"; shift 2 ;;
         -h|--help)      usage ;;
         *)              echo "Unknown arg: $1" >&2; usage ;;
@@ -52,15 +76,28 @@ if [[ -z "$FROM_ROADMAP" || -z "$THEME" || -z "$PROJECT_ROOT" ]]; then
     usage
 fi
 
+if [[ -n "$MULTI" && ! "$MULTI" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: --multi must be a positive integer (got '$MULTI')" >&2
+    exit 1
+fi
+
 export ADD_IMPROVE_FROM_ROADMAP="$FROM_ROADMAP"
 export ADD_IMPROVE_THEME="$THEME"
 export BRAINSTORM_RATIONALE_DRAFT="$RATIONALE"
+export ADD_IMPROVE_NAME_PREFIX="$NAME_PREFIX"
+export ADD_IMPROVE_NAME_SUFFIX="$NAME_SUFFIX"
+export ADD_IMPROVE_AUTO_NAME="$AUTO_NAME"
+export ADD_IMPROVE_MULTI="$MULTI"
 export PROJECT_ROOT
 
 cleanup() {
     unset ADD_IMPROVE_FROM_ROADMAP
     unset ADD_IMPROVE_THEME
     unset BRAINSTORM_RATIONALE_DRAFT
+    unset ADD_IMPROVE_NAME_PREFIX
+    unset ADD_IMPROVE_NAME_SUFFIX
+    unset ADD_IMPROVE_AUTO_NAME
+    unset ADD_IMPROVE_MULTI
 }
 trap cleanup EXIT
 

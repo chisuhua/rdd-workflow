@@ -133,6 +133,10 @@
 
 | [add-proposal-source-tracking](.rddf/improvements/add-proposal-source-tracking.md) | P1 | 2026-08-28 | guide-arch |
 
+| [improve-from-roadmap-naming-flexibility](.rddf/improvements/improve-from-roadmap-naming-flexibility.md) | P1 | 2026-08-28 | guide-arch |
+
+| [improve-roadmap-feature-discovery](.rddf/improvements/improve-roadmap-feature-discovery.md) | P1 | 2026-08-28 | guide-arch |
+
 ## 已实施
 | [submodule-aware-project-root](.rddf/improvements/submodule-aware-project-root.md) | P0 | 2026-08-25 | 已实施 |
 | [clean-stale-plan-handoff-on-ship-done](.rddf/improvements/clean-stale-plan-handoff-on-ship-done.md) | P1 | 2026-08-25 | 已实施 |
