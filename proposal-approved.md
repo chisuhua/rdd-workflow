@@ -125,7 +125,7 @@
 | [verifier-archive-gate-clarification](.rddf/improvements/verifier-archive-gate-clarification.md) | P1 | 2026-08-28 | guide-arch |
 
 ## 已实施
-| [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | P1 | 2026-08-28 |
+| [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | P1 | 2026-08-28 | guide-arch |
 | [submodule-aware-project-root](.rddf/improvements/submodule-aware-project-root.md) | P0 | 2026-08-25 | 已实施 |
 | [clean-stale-plan-handoff-on-ship-done](.rddf/improvements/clean-stale-plan-handoff-on-ship-done.md) | P1 | 2026-08-25 | 已实施 |
 | [clean-adr-0027-section-5-supersede](.rddf/improvements/clean-adr-0027-section-5-supersede.md) | P2 | 2026-08-25 | 已实施 |
