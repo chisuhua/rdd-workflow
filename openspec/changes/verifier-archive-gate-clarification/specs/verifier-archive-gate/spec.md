@@ -30,8 +30,6 @@ When `STRICT_AC_GATE=yes`, the `SKIP_RDD_VERIFIER=yes` bypass SHALL be ignored a
 - **THEN** archive proceeds via fallback ac-verifier path
 - **AND** cache is written with `ran_by=archive_gate_check` field
 
-## MODIFIED Requirements
-
 ### Requirement: archive_gate_check top-of-file reference
 
 The `_lib/archive.sh::archive_gate_check` function SHALL have a top comment referencing ADR-0035 §1 so future maintainers understand the dual-track design.
