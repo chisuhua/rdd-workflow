@@ -161,6 +161,7 @@ Feature fragments (`rddf roadmap add-feature`) 跨阶段追踪多 phase 改进�
 | feature id | 主题 | phase_refs | 状态 | 源文件 |
 |---|---|---|---|---|
 | `feat-fix-audit-findings` | 2026-08-26 文档与代码一致性审计后续修复（18 个 audit-followup 提案） | phase-1, phase-2, phase-3, phase-4 | active | `.rddf/roadmap/features/feat-fix-audit-findings.md` |
+| `feat-fix-archive-gaps-v2` | 第二波归档治理改进（ADR 索引自动同步 / CHANGELOG-USAGE 同步 / verifier-archive-gate 边界明确化，3 个 P2→P1 升级提案） | phase-1, phase-2, phase-3 | proposed | `.rddf/roadmap/features/feat-fix-archive-gaps-v2.md` |
 
 **自动化进展（per `improve-roadmap-feature-discovery` 提案）**：
 - ✅ `skills/guide-design/scripts/feature_discovery.py::list_active_features` 已实现（commit 9c4e668），可在 `guide-design` Phase 1 preflight 调用

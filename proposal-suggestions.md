@@ -9,8 +9,8 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | P2 | 2026-08-26 文档与代码一致性审计 | 2026-08-26 | ⏳ 已延迟 (2026-08-27) |
-| [bypass-audit-mechanism](.rddf/improvements/bypass-audit-mechanism.md) | P2 | 2026-08-26 流程设计 review | 2026-08-26 | ⏳ 已延迟 (2026-08-27) |
-| [changelog-usage-sync](.rddf/improvements/changelog-usage-sync.md) | P2 | 2026-08-26 文档与代码一致性审计 | 2026-08-26 | ⏳ 已延迟 (2026-08-27) |
-| [verifier-archive-gate-clarification](.rddf/improvements/verifier-archive-gate-clarification.md) | P2 | 2026-08-26 流程设计 review | 2026-08-26 | ⏳ 已延迟 (2026-08-27) |
+| [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | **P1** ↑ | 2026-08-26 文档与代码一致性审计 | 2026-08-26 | ⏳ 已延迟 (2026-08-27) → ⬆ P1 升级 (2026-08-28 per feat-fix-archive-gaps-v2) |
+| [bypass-audit-mechanism](.rddf/improvements/bypass-audit-mechanism.md) | P2 | 2026-08-26 流程设计 review | 2026-08-26 | ⏳ 已延迟 (2026-08-27) — 维持 deferred，留作 v3.2 |
+| [changelog-usage-sync](.rddf/improvements/changelog-usage-sync.md) | **P1** ↑ | 2026-08-26 文档与代码一致性审计 | 2026-08-26 | ⏳ 已延迟 (2026-08-27) → ⬆ P1 升级 (2026-08-28 per feat-fix-archive-gaps-v2) |
+| [verifier-archive-gate-clarification](.rddf/improvements/verifier-archive-gate-clarification.md) | **P1** ↑ | 2026-08-26 流程设计 review | 2026-08-26 | ⏳ 已延迟 (2026-08-27) → ⬆ P1 升级 (2026-08-28 per feat-fix-archive-gaps-v2) |
 
