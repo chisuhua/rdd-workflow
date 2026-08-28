@@ -9,8 +9,6 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [improve-from-roadmap-naming-flexibility](.rddf/improvements/improve-from-roadmap-naming-flexibility.md) | P2 | 2026-08-27 Hybrid path reflection (from_roadmap.sh 命名约束 `from-roadmap-<phase>-<category>` 不支持多 proposal batch 创建) | 2026-08-27 | 待 design 审查 |
-| [improve-roadmap-feature-discovery](.rddf/improvements/improve-roadmap-feature-discovery.md) | P2 | 2026-08-27 Hybrid path reflection (feat-fix-audit-findings 未在 AGENTS.md 引用, 未来 agent 不知此 feature 存在) | 2026-08-27 | 待 design 审查 |
 | [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | P2 | 2026-08-26 文档与代码一致性审计 | 2026-08-26 | ⏳ 已延迟 (2026-08-27) |
 | [bypass-audit-mechanism](.rddf/improvements/bypass-audit-mechanism.md) | P2 | 2026-08-26 流程设计 review | 2026-08-26 | ⏳ 已延迟 (2026-08-27) |
 | [changelog-usage-sync](.rddf/improvements/changelog-usage-sync.md) | P2 | 2026-08-26 文档与代码一致性审计 | 2026-08-26 | ⏳ 已延迟 (2026-08-27) |
