@@ -9,7 +9,6 @@
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [add-brainstorm-hardgate-enforcement](.rddf/improvements/add-brainstorm-hardgate-enforcement.md) | P1 | 2026-08-27 Hybrid path reflection (AI agent 直接创建 9 个 proposal 文件, 绕过 rdd-workflow-brainstorm HARD-GATE) | 2026-08-27 | 待 design 审查 |
 | [add-pre-commit-proposal-quality-check](.rddf/improvements/add-pre-commit-proposal-quality-check.md) | P1 | 2026-08-27 Hybrid path reflection (创建 proposal 后未运行 quality check, 后期才补救) | 2026-08-27 | 待 design 审查 |
 | [add-proposal-source-tracking](.rddf/improvements/add-proposal-source-tracking.md) | P2 | 2026-08-27 Hybrid path reflection (9 个 proposal 缺乏 session_id / audit_source 字段,无法追溯创建上下文) | 2026-08-27 | 待 design 审查 |
 | [improve-from-roadmap-naming-flexibility](.rddf/improvements/improve-from-roadmap-naming-flexibility.md) | P2 | 2026-08-27 Hybrid path reflection (from_roadmap.sh 命名约束 `from-roadmap-<phase>-<category>` 不支持多 proposal batch 创建) | 2026-08-27 | 待 design 审查 |
