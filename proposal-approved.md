@@ -101,41 +101,29 @@
 
 
 
-| [reconcile-iteration-after-archive](.rddf/improvements/reconcile-iteration-after-archive.md) | P1 | 2026-08-27 | guide-arch |
 
-| [fix-iteration-archive-sync](.rddf/improvements/fix-iteration-archive-sync.md) | P1 | 2026-08-27 | guide-arch |
 
-| [fix-design-preflight-roadmap-format](.rddf/improvements/fix-design-preflight-roadmap-format.md) | P1 | 2026-08-27 | guide-arch |
 
-| [fix-ship-plan-untracked-gate](.rddf/improvements/fix-ship-plan-untracked-gate.md) | P1 | 2026-08-27 | guide-arch |
 
-| [fix-disk-count-semantic-conflict](.rddf/improvements/fix-disk-count-semantic-conflict.md) | P1 | 2026-08-27 | guide-arch |
 
-| [fix-proposal-ac-section-mapping](.rddf/improvements/fix-proposal-ac-section-mapping.md) | P1 | 2026-08-27 | guide-arch |
 
-| [improve-execution-mode-per-change](.rddf/improvements/improve-execution-mode-per-change.md) | P1 | 2026-08-27 | guide-arch |
 
-| [improve-change-splitting-strategy](.rddf/improvements/improve-change-splitting-strategy.md) | P1 | 2026-08-27 | guide-arch |
 
-| [improve-commit-scope-discipline](.rddf/improvements/improve-commit-scope-discipline.md) | P1 | 2026-08-27 | guide-arch |
 
-| [auto-archive-iteration-and-commit](.rddf/improvements/auto-archive-iteration-and-commit.md) | P1 | 2026-08-27 | guide-arch |
 
-| [plan-batch-fill-tool](.rddf/improvements/plan-batch-fill-tool.md) | P1 | 2026-08-27 | guide-arch |
 
-| [design-approve-batch-tool](.rddf/improvements/design-approve-batch-tool.md) | P1 | 2026-08-27 | guide-arch |
 
-| [verifier-re-verify-archived-flag](.rddf/improvements/verifier-re-verify-archived-flag.md) | P1 | 2026-08-27 | guide-arch |
 
-| [add-brainstorm-hardgate-enforcement](.rddf/improvements/add-brainstorm-hardgate-enforcement.md) | P1 | 2026-08-28 | guide-arch |
 
-| [add-pre-commit-proposal-quality-check](.rddf/improvements/add-pre-commit-proposal-quality-check.md) | P1 | 2026-08-28 | guide-arch |
 
-| [add-proposal-source-tracking](.rddf/improvements/add-proposal-source-tracking.md) | P1 | 2026-08-28 | guide-arch |
 
-| [improve-from-roadmap-naming-flexibility](.rddf/improvements/improve-from-roadmap-naming-flexibility.md) | P1 | 2026-08-28 | guide-arch |
 
-| [improve-roadmap-feature-discovery](.rddf/improvements/improve-roadmap-feature-discovery.md) | P1 | 2026-08-28 | guide-arch |
+
+| [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | P1 | 2026-08-28 | guide-arch |
+
+| [changelog-usage-sync](.rddf/improvements/changelog-usage-sync.md) | P1 | 2026-08-28 | guide-arch |
+
+| [verifier-archive-gate-clarification](.rddf/improvements/verifier-archive-gate-clarification.md) | P1 | 2026-08-28 | guide-arch |
 
 ## 已实施
 | [submodule-aware-project-root](.rddf/improvements/submodule-aware-project-root.md) | P0 | 2026-08-25 | 已实施 |
@@ -150,6 +138,24 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [improve-roadmap-feature-discovery](.rddf/improvements/improve-roadmap-feature-discovery.md) | P1 | 2026-08-28 | 已实施 |
+| [improve-from-roadmap-naming-flexibility](.rddf/improvements/improve-from-roadmap-naming-flexibility.md) | P1 | 2026-08-28 | 已实施 |
+| [add-proposal-source-tracking](.rddf/improvements/add-proposal-source-tracking.md) | P1 | 2026-08-28 | 已实施 |
+| [add-pre-commit-proposal-quality-check](.rddf/improvements/add-pre-commit-proposal-quality-check.md) | P1 | 2026-08-28 | 已实施 |
+| [add-brainstorm-hardgate-enforcement](.rddf/improvements/add-brainstorm-hardgate-enforcement.md) | P1 | 2026-08-28 | 已实施 |
+| [verifier-re-verify-archived-flag](.rddf/improvements/verifier-re-verify-archived-flag.md) | P1 | 2026-08-28 | 已实施 |
+| [design-approve-batch-tool](.rddf/improvements/design-approve-batch-tool.md) | P1 | 2026-08-28 | 已实施 |
+| [plan-batch-fill-tool](.rddf/improvements/plan-batch-fill-tool.md) | P1 | 2026-08-28 | 已实施 |
+| [auto-archive-iteration-and-commit](.rddf/improvements/auto-archive-iteration-and-commit.md) | P1 | 2026-08-28 | 已实施 |
+| [improve-commit-scope-discipline](.rddf/improvements/improve-commit-scope-discipline.md) | P1 | 2026-08-28 | 已实施 |
+| [improve-change-splitting-strategy](.rddf/improvements/improve-change-splitting-strategy.md) | P1 | 2026-08-28 | 已实施 |
+| [improve-execution-mode-per-change](.rddf/improvements/improve-execution-mode-per-change.md) | P1 | 2026-08-28 | 已实施 |
+| [fix-proposal-ac-section-mapping](.rddf/improvements/fix-proposal-ac-section-mapping.md) | P1 | 2026-08-28 | 已实施 |
+| [fix-disk-count-semantic-conflict](.rddf/improvements/fix-disk-count-semantic-conflict.md) | P1 | 2026-08-28 | 已实施 |
+| [fix-ship-plan-untracked-gate](.rddf/improvements/fix-ship-plan-untracked-gate.md) | P1 | 2026-08-28 | 已实施 |
+| [fix-design-preflight-roadmap-format](.rddf/improvements/fix-design-preflight-roadmap-format.md) | P1 | 2026-08-28 | 已实施 |
+| [fix-iteration-archive-sync](.rddf/improvements/fix-iteration-archive-sync.md) | P1 | 2026-08-28 | 已实施 |
+| [reconcile-iteration-after-archive](.rddf/improvements/reconcile-iteration-after-archive.md) | P1 | 2026-08-28 | 已实施 |
 | [rdd-doctor-docs-consistency](.rddf/improvements/rdd-doctor-docs-consistency.md) | P1 | 2026-08-27 | 已实施 |
 | [sync-agents-md-five-stage](.rddf/improvements/sync-agents-md-five-stage.md) | P1 | 2026-08-27 | 已实施 |
 | [sync-package-skills-to-disk](.rddf/improvements/sync-package-skills-to-disk.md) | P1 | 2026-08-27 | 已实施 |
