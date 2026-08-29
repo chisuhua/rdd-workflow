@@ -3,6 +3,8 @@ id: phase-2
 kind: phase
 status: active
 phase_refs: []
+主题: 审批交互阶段 — 引导式 RFC 内容确认
+主题: 编排能力完善
 主题: 阶段步骤化执行
 ---
 

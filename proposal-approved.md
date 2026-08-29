@@ -122,6 +122,24 @@
 
 
 
+| [phase-1-general-20260829063800](.rddf/improvements/phase-1-general-20260829063800.md) | P1 | 2026-08-29 | guide-arch |
+
+| [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-08-29 | guide-arch |
+
+| [phase-1-general-20260829063814](.rddf/improvements/phase-1-general-20260829063814.md) | P1 | 2026-08-29 | guide-arch |
+
+| [phase-2-general-20260829063814](.rddf/improvements/phase-2-general-20260829063814.md) | P1 | 2026-08-29 | guide-arch |
+
+| [phase-2-general-20260829063801](.rddf/improvements/phase-2-general-20260829063801.md) | P1 | 2026-08-29 | guide-arch |
+
+| [phase-2-general-20260829063801-2](.rddf/improvements/phase-2-general-20260829063801-2.md) | P1 | 2026-08-29 | guide-arch |
+
+| [phase-3-general-20260829063814](.rddf/improvements/phase-3-general-20260829063814.md) | P1 | 2026-08-29 | guide-arch |
+
+| [phase-3-general-20260829063801](.rddf/improvements/phase-3-general-20260829063801.md) | P1 | 2026-08-29 | guide-arch |
+
+| [phase-4-general-20260829063814](.rddf/improvements/phase-4-general-20260829063814.md) | P1 | 2026-08-29 | guide-arch |
+
 ## 已实施
 | [verifier-archive-gate-clarification](.rddf/improvements/verifier-archive-gate-clarification.md) | P1 | 2026-08-28 | guide-arch |
 | [changelog-usage-sync](.rddf/improvements/changelog-usage-sync.md) | P1 | 2026-08-28 | guide-arch |

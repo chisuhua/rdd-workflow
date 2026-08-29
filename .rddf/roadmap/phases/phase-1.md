@@ -3,7 +3,9 @@ id: phase-1
 kind: phase
 status: active
 phase_refs: []
+主题: 完整多会话支持
 主题: 定时循环与事件触发
+主题: 提案生成阶段 — 自动跨仓分析
 ---
 
 ## phase-1 概览
