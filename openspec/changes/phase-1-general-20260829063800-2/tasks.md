@@ -1,8 +1,8 @@
 ## Implementation Tasks
 
-- [ ] 4 scheduler × 3 场景 = 12 测试用例全部 pass
-- [ ] `install.sh --git-hooks` 安装后 hooks 生效实测
-- [ ] webhook HMAC 验签单元测试覆盖4 种异常路径
+- [x] 4 scheduler × 3 场景 = 12 测试用例全部 pass
+- [x] `install.sh --git-hooks` 安装后 hooks 生效实测
+- [x] webhook HMAC 验签单元测试覆盖4 种异常路径
 
 ## 依赖与执行顺序
 
