@@ -88,6 +88,8 @@ def cmd_sessions(args: list[str]) -> int:
         return _abandon_session(rest)
     if sub == "gc":
         return _gc_sessions(rest)
+    if sub == "list-parallel":
+        return _list_parallel_sessions()
 
     print(f"❌ sessions: unknown sub-command {sub!r}", file=sys.stderr)
     print(
@@ -161,6 +163,49 @@ def _list_sessions() -> int:
         n_changes = len(s.attached_changes or [])
         print(f"{sid:<32} {kind:<14} {state:<10} {owner:<24} {n_changes:<8}")
 
+    return 0
+
+
+def _list_parallel_sessions() -> int:
+    """``sessions list-parallel`` — group sessions by workflow_group.
+
+    Prints a table where same-group sessions are shown together with a
+    per-group "parallel" hint. Exits 0 on success, 1 on coordinator error.
+    """
+    try:
+        coord = _get_coordinator()
+    except ImportError as e:
+        print(f"❌ sessions: failed to import RddfSessionCoordinator: {e}", file=sys.stderr)
+        return 1
+
+    try:
+        sessions = coord.list_sessions()
+    except Exception as e:
+        print(f"❌ sessions list-parallel: {e}", file=sys.stderr)
+        return 1
+
+    if not sessions:
+        print("📭 no sessions recorded")
+        print('   create one via: skill_use("guide-arch"|"guide-design"|"guide-plan"|"guide-ship")')
+        return 0
+
+    from collections import defaultdict
+
+    groups: dict = defaultdict(list)
+    for s in sessions:
+        groups[s.workflow_group or "independent"].append(s)
+
+    print("📊 Parallel session groups")
+    for group_name, members in sorted(groups.items()):
+        print(f"\n▸ workflow_group: {group_name}  ({len(members)} sessions)")
+        print(f"{'SESSION_ID':<32} {'KIND':<14} {'STATE':<10} {'CHANGES':<8}")
+        print(f"{'-'*32} {'-'*14} {'-'*10} {'-'*8}")
+        for s in members:
+            sid = (s.session_id or "?")[:32]
+            kind = (s.kind or "?")[:14]
+            state = (s.state or "?")[:10]
+            n_changes = len(s.attached_changes or [])
+            print(f"{sid:<32} {kind:<14} {state:<10} {n_changes:<8}")
     return 0
 
 
