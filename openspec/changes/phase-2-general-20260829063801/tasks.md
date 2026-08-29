@@ -1,8 +1,8 @@
 ## Implementation Tasks
 
-- [ ] 10 change × 3 wave 端到端测试 (生成 → execute → archive 全程)
-- [ ] 失败回滚测试 (mock wave 2 失败)
-- [ ] wave 计算性能测试 < 100ms
+- [x] 10 change × 3 wave 端到端测试 (生成 → execute → archive 全程)
+- [x] 失败回滚测试 (mock wave 2 失败)
+- [x] wave 计算性能测试 < 100ms
 
 ## 依赖与执行顺序
 
