@@ -35,6 +35,29 @@ if [ -z "$ACTOR" ]; then
   exit 4
 fi
 
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+PROPOSAL_MD="$PROJECT_ROOT/openspec/changes/$NAME/proposal.md"
+if [ -f "$PROPOSAL_MD" ]; then
+    RDDF_NAME_FOR_PRECHECK="$NAME" \
+    RDDF_PROPOSAL_PATH="$PROPOSAL_MD" \
+    python3 - <<'PYEOF'
+import os, sys
+sys.path.insert(0, os.environ.get("PROJECT_ROOT", "."))
+from _lib.rfc_ambiguity import detect_ambiguity
+from _lib.rfc_interview_state import save_state
+items = detect_ambiguity(os.environ["RDDF_PROPOSAL_PATH"])
+save_state(os.environ["RDDF_NAME_FOR_PRECHECK"],
+          {"ambiguities": [{"kind": a.kind, "severity": a.severity,
+                            "suggestion": a.suggestion} for a in items]})
+if items:
+    print(f"\n⚠️  RFC ambiguity check ({len(items)} finding(s)):")
+    for a in items:
+        print(f"  [{a.severity}] {a.kind}: {a.suggestion}")
+else:
+    print("✅ RFC precheck: no ambiguities detected.")
+PYEOF
+fi
+
 # Title (required, 3-200 chars)
 _title=""
 for _try in 1 2 3; do
