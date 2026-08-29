@@ -30,7 +30,7 @@ bash ~/.agents/skills/rdd-workflow/install.sh --global
 ```
 
 安装后：
-- **12 个子技能** symlink 到 `~/.agents/skills/` → OpenCode 在任何项目下自动发现
+- **27 个子技能** symlink 到 `~/.agents/skills/` → OpenCode 在任何项目下自动发现
 - **Python 依赖** 自动安装（`pip install --user -r requirements.txt`）
 - **`_lib` Python 路径** 写入 `.pth` 文件 → 任何项目 `from _lib.xxx import yyy`（`from skills._lib.xxx import yyy` 仍通过向后兼容 shim 工作）
 - **`rddf` CLI** 创建到 `~/.local/bin/rddf` → 终端直接 `rddf status`
@@ -68,9 +68,9 @@ bash install.sh /path/to/project
    - `skill_use("status")` - 子技能(被 guide-ship 调用或独立使用)
    - `skill_use("rdd-workflow-writing-plans")` - 实施计划生成器(被 guide-ship 调用,v2.0 自包含 TDD 5 步结构)
 
-## v2.1 新特性
+## v3.0 新特性
 
-### 四阶段架构 (arch → design → plan → ship)
+### 五阶段架构 (arch → design → plan → ship → verify)
 
 | 阶段 | 技能 | 职责 | 人工介入 |
 |------|------|------|---------|
@@ -78,9 +78,11 @@ bash install.sh /path/to/project
 | **Design** | `guide-design` | 设计管理 + 内容审查（提案创建、审查、批准/拒绝/延迟；approve 即落盘 + 两层内容审查） | 中 |
 | **Plan** | `guide-plan` | 变更生成（scan、propose、deps） | 中 |
 | **Ship** | `guide-ship` | 变更执行（worktree、execute、archive） | 低 |
+| **Verify** | `rdd-verifier` | 验证回环（批量 AC 验证 + 启发式分类 + 失败回 plan/ship，per ADR-0034） | 低 |
 
-> **v2.1+ 变更**: 从三阶段扩展为四阶段架构。提案管理（创建、审查、批准/拒绝/延迟）从 `guide-arch` Phase 5.5 迁移到独立的 `guide-design` 阶段。
-> `guide-spec` 别名已在 v2.0 移除。请直接使用 `guide-arch` → `guide-design` → `guide-plan` → `guide-ship`。
+> **v3.0+ 变更**: 从四阶段扩展为五阶段架构。AC 验证从 `archive_gate_check` 内嵌 ac-verifier 升级为独立的 `rdd-verifier` 阶段（per ADR-0034）。
+> **v2.1 历史**: 提案管理（创建、审查、批准/拒绝/延迟）从 `guide-arch` Phase 5.5 迁移到独立的 `guide-design` 阶段。
+> `guide-spec` 别名已在 v2.0 移除。请直接使用 `guide-arch` → `guide-design` → `guide-plan` → `guide-ship` → `rdd-verifier`。
 
 ### Guide-Ship 执行契约 (v2.0.7+)
 
@@ -95,7 +97,7 @@ bash install.sh /path/to/project
 
 ### 推荐器升级
 
-`guide` 推荐器现在支持四阶段扫描：
+`guide` 推荐器现在支持五阶段扫描：
 
 ```
 💡 Recommended: skill_use("guide-plan")
@@ -341,22 +343,37 @@ rdd-workflow/
 ├── USAGE.md
 ├── install.sh           # 手动安装脚本
 └── skills/
-    ├── INSTALL.md             # 安装程序（第一入口）
-    ├── guide/SKILL.md         # 推荐器入口
-    ├── guide-arch/SKILL.md    # Arch 阶段状态机(v2.0+)
-    ├── guide-plan/SKILL.md    # Plan 阶段状态机(v2.0+)
-    ├── guide-ship/SKILL.md    # Ship 端状态机
-    ├── feature/SKILL.md       # feature 管理 (v2.0+)
-    ├── rddf-session/SKILL.md  # 跨 OpenCode session 恢复 (ADR-0017)
-    ├── propose/SKILL.md       # 子技能(被 guide-plan 调用)
-    ├── execute/SKILL.md       # 子技能(被 guide-ship 调用)
-    ├── roadmap/SKILL.md       # 子技能(被 guide-arch 调用)
-    ├── deps/SKILL.md          # 子技能(被 guide-plan 调用)
-    ├── status/SKILL.md        # 子技能(被 guide-ship 调用或独立使用)
+    ├── INSTALL.md                       # 安装程序（第一入口）
+    ├── guide/SKILL.md                   # 推荐器入口
+    ├── guide-arch/SKILL.md              # Arch 阶段状态机(v2.0+)
+    ├── guide-design/SKILL.md            # Design 阶段状态机(v2.1+, 提案管理)
+    ├── guide-plan/SKILL.md              # Plan 阶段状态机(v2.0+)
+    ├── guide-ship/SKILL.md              # Ship 端状态机
+    ├── rdd-verifier/SKILL.md            # Verify 阶段状态机(v3.0+, 批量 AC 验证, ADR-0034)
+    ├── ac-verifier/SKILL.md             # AC 验证底层(被 rdd-verifier 调用)
+    ├── feature/SKILL.md                 # feature 管理 (v2.0+)
+    ├── rddf-session/SKILL.md            # 跨 OpenCode session 恢复 (ADR-0017)
+    ├── propose/SKILL.md                 # 子技能(被 guide-plan 调用)
+    ├── execute/SKILL.md                 # 子技能(被 guide-ship 调用, TDD 5 步)
+    ├── roadmap/SKILL.md                 # 子技能(被 guide-arch 调用)
+    ├── deps/SKILL.md                    # 子技能(被 guide-plan 调用)
+    ├── status/SKILL.md                  # 子技能(被 guide-ship 调用或独立使用)
+    ├── add-improve/SKILL.md             # 提案创建入口(被 guide-design 调用)
     ├── rdd-workflow-writing-plans/SKILL.md  # 实施计划生成器(v2.0 自包含)
-    ├── loop_engine.py         # v2.0 Loop 引擎(向后兼容 shim)
-    ├── <skill>/scripts/       # per-skill 辅助脚本
-    └── _lib/                  # 共享辅助函数库(46 .py + 8 schema)
+    ├── rdd-workflow-brainstorm/SKILL.md # 提案头脑风暴 helper
+    ├── rdd-env-check/SKILL.md           # 独立环境健康检查(各 phase 首屏)
+    ├── rdd-doctor/SKILL.md              # 手动只读诊断(5 类结构化文件)
+    ├── rdd-hub-bootstrap/SKILL.md       # Hub 仓库引导式初始化
+    ├── openspec-gate/SKILL.md           # staged 文件→active change 关联守卫
+    ├── contract-check/SKILL.md          # Spoke vs Hub OpenAPI 一致性校验
+    ├── cross-repo-protocol/SKILL.md     # MCP client for Hub-Spoke 联邦
+    ├── spoke-system-prompt-injection/SKILL.md  # Hub-Spoke 协议注入 AI 助手
+    ├── report-issue/SKILL.md            # Hub-Spoke 上行 [RFC] issue 命令
+    ├── sync-hub/SKILL.md                # Hub-Spoke 下行 contract 拉取
+    ├── watch-hub/SKILL.md               # Hub-Spoke 一次性轮询
+    ├── loop_engine.py                   # v2.0 Loop 引擎入口(向后兼容 shim)
+    ├── <skill>/scripts/                 # per-skill 辅助脚本
+    └── _lib/                            # 共享辅助函数库(19 .sh + 100 .py + 20 schema)
 ```
 
 ## 工作原理

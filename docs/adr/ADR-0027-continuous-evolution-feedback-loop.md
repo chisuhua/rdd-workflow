@@ -322,11 +322,11 @@ gh_repo: chisuhua/rdd-workflow # issue 所在仓库（支持 fork）
 ```markdown
 # ADR-0028: <title>
 
-> **状态**: 待定
-> **日期**: YYYY-MM-DD
-> **决策者**: <name(s)>
-> **issue_refs**: [789]              ← 新增（ADR-0000 模板同步扩展）
-> **gh_repo**: chisuhua/rdd-workflow ← 新增
+> 状态: 待定           ← 示例（避免触发索引生成器正则）
+> 日期: YYYY-MM-DD
+> 决策者: <name(s)>
+> issue_refs: [789]              ← 新增（ADR-0000 模板同步扩展）
+> gh_repo: chisuhua/rdd-workflow ← 新增
 
 ## Context
 ...

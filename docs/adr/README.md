@@ -52,7 +52,7 @@
 | [ADR-0024](ADR-0024-deps-driven-execution-mode.md) | ADR-0024: deps 阶段驱动执行模式决策 | 已采纳 | 2026-07-24 |
 | [ADR-0025](ADR-0025-design-proposal-creation.md) | ADR-0025: design 阶段承担 openspec proposal 创建与内容审查 | 已采纳 | 2026-08-02 |
 | [ADR-0026](ADR-0026-internal-metadata-namespace-convention.md) | ADR-0026: rdd-workflow Internal Metadata Namespace Convention | 已采纳 | 2026-08-11 |
-| [ADR-0027](ADR-0027-continuous-evolution-feedback-loop.md) | ADR-0027: 持续演进反馈环（Continuous Evolution Feedback Loop） | 待定 | YYYY-MM-DD |
+| [ADR-0027](ADR-0027-continuous-evolution-feedback-loop.md) | ADR-0027: 持续演进反馈环（Continuous Evolution Feedback Loop） | 已采纳 | 2026-08-12 |
 | [ADR-0028](ADR-0028-role-model-per-phase.md) | ADR-0028: Role Model Per Phase | 已采纳 | 2026-08-14 |
 | [ADR-0029](ADR-0029-issue-driven-proposal-creation.md) | ADR-0029: Issue-Driven Proposal Creation | 已采纳 | 2026-08-15 |
 | [ADR-0030](ADR-0030-hub-and-spoke-federation.md) | ADR-0030: 多项目 AI 协同开发采用 Hub-and-Spoke 联邦架构 | 待定 | 2026-08-15 |

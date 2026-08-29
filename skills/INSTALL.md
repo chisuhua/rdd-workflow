@@ -6,6 +6,8 @@ version: "3.0"
 author: sisyphus
 ---
 
+> v3.0.0 (2026-08-26): 五阶段架构（arch → design → plan → ship → verify），27 个子技能
+
 # RDD Workflow 安装程序
 
 本技能将 RDD Workflow 的 27 个子技能安装到当前项目目录。
