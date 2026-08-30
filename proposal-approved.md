@@ -125,7 +125,6 @@
 
 | [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-08-29 | guide-arch |
 
-| [phase-1-general-20260829063814](.rddf/improvements/phase-1-general-20260829063814.md) | P1 | 2026-08-29 | guide-arch |
 
 | [phase-2-general-20260829063814](.rddf/improvements/phase-2-general-20260829063814.md) | P1 | 2026-08-29 | guide-arch |
 
@@ -156,6 +155,7 @@
 | [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-08-30 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [phase-1-general-20260829063814](.rddf/improvements/phase-1-general-20260829063814.md) | P1 | 2026-08-30 | 已实施 |
 | [phase-1-general-20260829063800](.rddf/improvements/phase-1-general-20260829063800.md) | P1 | 2026-08-30 | 已实施 |
 | [improve-roadmap-feature-discovery](.rddf/improvements/improve-roadmap-feature-discovery.md) | P1 | 2026-08-28 | 已实施 |
 | [improve-from-roadmap-naming-flexibility](.rddf/improvements/improve-from-roadmap-naming-flexibility.md) | P1 | 2026-08-28 | 已实施 |
