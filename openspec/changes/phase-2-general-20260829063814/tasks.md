@@ -1,7 +1,7 @@
 ## Implementation Tasks
 
-- [ ] GIVEN 提案 In Scope 涉及 8 个文件 (超过阈值 5)
-- [ ] (no items specified)
+- [x] GIVEN 提案 In Scope 涉及 8 个文件 (超过阈值 5)
+- [x] (no items specified)
 
 ## 依赖与执行顺序
 
