@@ -1,7 +1,7 @@
 ## Implementation Tasks
 
-- [ ] 3 个测试用例: cross-repo 提案批准成功 / 本地提案不触发 / gh缺失优雅降级
-- [ ] 端到端: guide-design approve → Hub issue 自动出现 → 本地状态正确
+- [x] 3 个测试用例: cross-repo 提案批准成功 / 本地提案不触发 / gh缺失优雅降级
+- [x] 端到端: guide-design approve → Hub issue 自动出现 → 本地状态正确
 
 ## 依赖与执行顺序
 
