@@ -385,6 +385,22 @@ case "${1:-}" in
     --spoke-init)
         _do_spoke_init "$@"
         ;;
+    --git-hooks)
+        TARGET_DIR="${2:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+        HOOK_PATH="$TARGET_DIR/.git/hooks/post-commit"
+        mkdir -p "$(dirname "$HOOK_PATH")"
+        cat > "$HOOK_PATH" <<'HOOK_EOF'
+#!/bin/sh
+# rdd-workflow post-commit hook: refresh iteration view after any commit.
+# Idempotent: silently no-op if rddf CLI is unavailable.
+if command -v rddf >/dev/null 2>&1; then
+    rddf iteration sync >/dev/null 2>&1 || true
+fi
+HOOK_EOF
+        chmod +x "$HOOK_PATH"
+        echo "✅ post-commit hook installed: $HOOK_PATH"
+        exit 0
+        ;;
     *)
         TARGET_DIR="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
         install_per_project "$TARGET_DIR"
