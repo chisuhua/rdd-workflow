@@ -618,6 +618,10 @@ except Exception:
   # left by the dispersed cleanup chain. Run after all archive git mutations.
   post_archive_cleanup "$main_root" "$name" || true
 
+  # worktree-context-persistence: always land back in main repo so the
+  # next bash call doesn't need a redundant `cd`.
+  cd "$MAIN_REPO_ROOT" 2>/dev/null || true
+
   return 0
 }
 
