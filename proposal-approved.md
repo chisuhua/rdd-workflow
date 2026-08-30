@@ -122,7 +122,6 @@
 
 
 
-| [phase-1-general-20260829063800](.rddf/improvements/phase-1-general-20260829063800.md) | P1 | 2026-08-29 | guide-arch |
 
 | [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-08-29 | guide-arch |
 
@@ -154,8 +153,10 @@
 | [fix-adr-0027-cli-optin-gate](.rddf/improvements/fix-adr-0027-cli-optin-gate.md) | P0 | 2026-08-24 | 已实施 |
 | [add-cli-coverage-rdd-doctor-roadmap-rdd-hub](.rddf/improvements/add-cli-coverage-rdd-doctor-roadmap-rdd-hub.md) | P1 | 2026-08-20 | 已实施 |
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
+| [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-08-30 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [phase-1-general-20260829063800](.rddf/improvements/phase-1-general-20260829063800.md) | P1 | 2026-08-30 | 已实施 |
 | [improve-roadmap-feature-discovery](.rddf/improvements/improve-roadmap-feature-discovery.md) | P1 | 2026-08-28 | 已实施 |
 | [improve-from-roadmap-naming-flexibility](.rddf/improvements/improve-from-roadmap-naming-flexibility.md) | P1 | 2026-08-28 | 已实施 |
 | [add-proposal-source-tracking](.rddf/improvements/add-proposal-source-tracking.md) | P1 | 2026-08-28 | 已实施 |
