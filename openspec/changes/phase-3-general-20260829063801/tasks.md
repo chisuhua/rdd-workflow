@@ -1,8 +1,8 @@
 ## Implementation Tasks
 
-- [ ] 3 reference plugins 端到端测试通过
-- [ ] plugin manifest schema 测试 (5 个 invalid case reject)
-- [ ] plugin 隔离性测试 (mock plugin 抛异常不影响主流程)
+- [x] 3 reference plugins 端到端测试通过
+- [x] plugin manifest schema 测试 (5 个 invalid case reject)
+- [x] plugin 隔离性测试 (mock plugin 抛异常不影响主流程)
 
 ## 依赖与执行顺序
 
