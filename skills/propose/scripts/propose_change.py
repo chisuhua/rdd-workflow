@@ -10,6 +10,7 @@ import json
 import os
 import re
 import sys
+from pathlib import Path
 from typing import Optional
 
 
@@ -231,6 +232,24 @@ def create_skeleton_change(
         print(f"⚠️  iteration 模块不可用, 跳过: {e}", file=sys.stderr)
     except Exception as e:
         print(f"⚠️  iteration.json update failed (non-fatal): {e}", file=sys.stderr)
+
+    try:
+        from _lib.propose_cross_repo_hooks import (
+            detect_hub_scope,
+            inject_hub_rfc_placeholder,
+            update_cross_repo_cache,
+        )
+        hub_scopes = detect_hub_scope(change_dir)
+        cached = update_cross_repo_cache(name, hub_scopes, cache_path=Path(os.path.join(project_root, ".rddf/state/.cross-repo-deps-cache.json")))
+        if cached:
+            current = open(proposal_path, encoding="utf-8").read()
+            new_text = inject_hub_rfc_placeholder(current, cached)
+            if new_text != current:
+                with open(proposal_path, "w", encoding="utf-8") as f:
+                    f.write(new_text)
+                print(f"  ✅ Hub RFC placeholder inserted: {len(cached)} scope(s)")
+    except Exception as e:
+        print(f"⚠️  cross-repo detection failed (non-blocking): {e}", file=sys.stderr)
 
     print(f"✅ Skeleton created: {name}")
     return True

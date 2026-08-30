@@ -1,7 +1,7 @@
 ## Implementation Tasks
 
-- [ ] 3 个测试用例:纯本地提案无 RFC 占位 / 跨仓提案含占位 / 跨仓提案缓存命中跳过重新生成
-- [ ] 端到端: propose → design → plan 全程0 手工 cross-repo 调用
+- [x] 3 个测试用例:纯本地提案无 RFC 占位 / 跨仓提案含占位 / 跨仓提案缓存命中跳过重新生成
+- [x] 端到端: propose → design → plan 全程0 手工 cross-repo 调用
 
 ## 依赖与执行顺序
 
