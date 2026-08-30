@@ -88,6 +88,7 @@ _ROUTES: Dict[str, str] = {
     "doctor": "skills._lib.cli.doctor_cmd:cmd_doctor",
     "feature": "skills._lib.cli.feature_cmd:cmd_feature",
     "guide": "skills._lib.cli.guide_cmd:cmd_guide",
+    "hub": "skills._lib.cli.hub_retry_cmd:cmd_hub_retry",
     "init": "skills._lib.cli.init_cmd:cmd_init",
     "issue": "skills._lib.cli.issue_cmd:cmd_issue",
     "migrate-improvements": "skills._lib.cli.migrate_improvements_cmd:cmd_migrate_improvements",
