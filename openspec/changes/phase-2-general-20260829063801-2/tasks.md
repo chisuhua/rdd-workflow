@@ -1,8 +1,8 @@
 ## Implementation Tasks
 
-- [ ] ≥6 个新 helper 提取,行数减少 ≥200 行
-- [ ] helper 测试覆盖率 ≥90%
-- [ ] ARCHITECTURE_GATE 通过 (no regression)
+- [x] ≥6 个新 helper 提取,行数减少 ≥200 行
+- [x] helper 测试覆盖率 ≥90%
+- [x] ARCHITECTURE_GATE 通过 (no regression)
 
 ## 依赖与执行顺序
 
