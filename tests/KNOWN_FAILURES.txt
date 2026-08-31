@@ -131,3 +131,5 @@ skip: SKIP_RDD_VERIFIER=yes returns exit 2 # pre-existing: rdd_verifier_skip tes
 skip: empty iteration.json returns 0 (no work to do) # pre-existing: rdd_verifier_skip tests added post-baseline
 cli_all_subcommands: ALL_SUBCOMMANDS missing hub and scheduler # pre-existing WIP: hub/scheduler 子命令 (hub_retry_cmd.py / scheduler_cmd.py) 已存在但 ALL_SUBCOMMANDS tuple 2026-08-26 后未同步
 adr_index: docs/adr/README.md does NOT reference ADR-NNN beyond 0034 # pre-existing WIP: ADR-0035 (078c471, 2026-08-28) 已加但 README 索引未自动同步 — adr-index-auto-sync change 范围外的 drift
+adr_directory: every real ADR has a ## 决策 or ## Decision section # pre-existing WIP: ADR-0035 (078c471, 2026-08-28) 缺 Decision section
+adr_directory: every real ADR has status and date fields # pre-existing WIP: ADR-0034 缺 **日期** field (有状态但无日期), test_adr_directory.bats 95 行
