@@ -133,9 +133,9 @@
 
 
 
-| [worktree-context-persistence](.rddf/improvements/worktree-context-persistence.md) | P1 | 2026-08-30 | guide-arch |
 
 ## 已实施
+| [worktree-context-persistence](.rddf/improvements/worktree-context-persistence.md) | P1 | 2026-09-01 |
 | [reduce-rdd-workflow-tool-call-friction](.rddf/improvements/reduce-rdd-workflow-tool-call-friction.md) | P1 | 2026-09-01 |
 | [verifier-archive-gate-clarification](.rddf/improvements/verifier-archive-gate-clarification.md) | P1 | 2026-08-28 | guide-arch |
 | [changelog-usage-sync](.rddf/improvements/changelog-usage-sync.md) | P1 | 2026-08-28 | guide-arch |
