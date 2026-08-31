@@ -136,6 +136,7 @@
 | [worktree-context-persistence](.rddf/improvements/worktree-context-persistence.md) | P1 | 2026-08-30 | guide-arch |
 
 ## 已实施
+| [reduce-rdd-workflow-tool-call-friction](.rddf/improvements/reduce-rdd-workflow-tool-call-friction.md) | P1 | 2026-09-01 |
 | [verifier-archive-gate-clarification](.rddf/improvements/verifier-archive-gate-clarification.md) | P1 | 2026-08-28 | guide-arch |
 | [changelog-usage-sync](.rddf/improvements/changelog-usage-sync.md) | P1 | 2026-08-28 | guide-arch |
 | [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | P1 | 2026-08-28 | guide-arch |
@@ -152,7 +153,6 @@
 | [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-08-30 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
-| [reduce-rdd-workflow-tool-call-friction](.rddf/improvements/reduce-rdd-workflow-tool-call-friction.md) | P1 | 2026-08-31 | 已实施 |
 | [phase-4-general-20260829063814](.rddf/improvements/phase-4-general-20260829063814.md) | P1 | 2026-08-30 | 已实施 |
 | [phase-3-general-20260829063801](.rddf/improvements/phase-3-general-20260829063801.md) | P1 | 2026-08-30 | 已实施 |
 | [phase-3-general-20260829063814](.rddf/improvements/phase-3-general-20260829063814.md) | P1 | 2026-08-30 | 已实施 |
