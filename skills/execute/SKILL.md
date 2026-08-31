@@ -72,6 +72,20 @@ auto_detect_worktree_context || exit 1
 > - 支持并行执行多个 change（每个 worktree 独立）
 > - 隔离 git 操作，merge 时无冲突
 
+### Worktree Context Rule
+
+Agent 在 rdd-workflow 流程中的 `cd` 纪律 (dogfood 实测 354 次 cd / ~50% bash 调用):
+
+| 场景 | 规则 |
+|------|------|
+| 同一 worktree 内省略 cd | **省略 `cd`** — 上一条命令已在该 worktree |
+| 跨 worktree 切换显式 cd | **显式 `cd <wt-path>`** — 不依赖框架记忆 |
+| archive 完成后 | `archive.sh` 自动回主仓库, 无需再 `cd` |
+
+- DO: 进入 worktree 后连续 `pytest` / `cat` / `sed` 直接执行, 不加 `cd`
+- DO: 只有真正要切仓库时才 `cd master` 或 `cd <wt-path>`
+- DON'T: 每条 bash 命令前都重复 `cd <同一个 worktree>` (浪费 token + 时间)
+
 ## 执行步骤
 
 ### Step 1：确认在 worktree 内
