@@ -192,3 +192,9 @@ digraph rdd_brainstorm {
 - **探索替代方案** — 至少 2 种方案
 - **增量确认** — 逐段呈现，确认后再继续
 - **灵活回退** — 用户提出修改时，回到对应阶段
+
+## Agent 工具纪律
+
+编辑/写入/读取前参阅 `skills/_lib/AGENT_TOOL_USAGE.md` 决策树。若命中 3 类 stale 模式
+(edit oldString 过期 / write 覆盖已存在文件 / read 硬编码行号), 先 Read 再操作。
+检测脚本: `skills/rdd-workflow-brainstorm/scripts/pre_tool_use_check.sh` (warn-only, 不阻断)。
