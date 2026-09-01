@@ -1,0 +1,5 @@
+phase: v2.2
+category: infra-setup / 测试基建
+change_type: bug fix
+priority: P1
+parent_feature: ""

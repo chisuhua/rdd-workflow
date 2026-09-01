@@ -1,0 +1,5 @@
+phase: v2.2
+category: infra-setup / 测试基建
+change_type: feature / robustness
+priority: P2
+parent_feature: ""

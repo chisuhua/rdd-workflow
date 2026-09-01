@@ -134,6 +134,20 @@
 
 
 
+| [fix-specs-auto-generate-in-design-precreated](.rddf/improvements/fix-specs-auto-generate-in-design-precreated.md) | P0 | 2026-09-01 | guide-arch |
+
+| [fix-report-regression-sed-double-hash-strip](.rddf/improvements/fix-report-regression-sed-double-hash-strip.md) | P0 | 2026-09-01 | guide-arch |
+
+| [add-e2e-test-skip-on-missing-hub-auth](.rddf/improvements/add-e2e-test-skip-on-missing-hub-auth.md) | P1 | 2026-09-01 | guide-arch |
+
+| [fix-design-done-gate-status-prefix-match](.rddf/improvements/fix-design-done-gate-status-prefix-match.md) | P0 | 2026-09-01 | guide-arch |
+
+| [fix-cli-all-subcommands-dynamic-sync](.rddf/improvements/fix-cli-all-subcommands-dynamic-sync.md) | P1 | 2026-09-01 | guide-arch |
+
+| [add-session-metrics-collection](.rddf/improvements/add-session-metrics-collection.md) | P2 | 2026-09-01 | guide-arch |
+
+| [add-regression-gate-timeout-protection](.rddf/improvements/add-regression-gate-timeout-protection.md) | P2 | 2026-09-01 | guide-arch |
+
 ## 已实施
 | [worktree-context-persistence](.rddf/improvements/worktree-context-persistence.md) | P1 | 2026-09-01 |
 | [reduce-rdd-workflow-tool-call-friction](.rddf/improvements/reduce-rdd-workflow-tool-call-friction.md) | P1 | 2026-09-01 |
@@ -355,3 +369,4 @@
 | [fix-scan-state-bats](.rddf/improvements/fix-scan-state-bats.md) | P2 | 2026-07-23 | 已实施 |
 | [complete-third-party-replay-and-upstream-reporting](.rddf/improvements/complete-third-party-replay-and-upstream-reporting.md) | P0 | 2026-08-13 | 已实施 |
 | [add-feature-fragment-command](.rddf/improvements/add-feature-fragment-command.md) | P1 | 2026-08-25 | 已实施 |
+| [reduce-archive-commit-noise](.rddf/improvements/reduce-archive-commit-noise.md) | P2 | 2026-09-01 | guide-arch |
