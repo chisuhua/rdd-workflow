@@ -32,6 +32,7 @@ cd "$(dirname "$0")"
 WITH_COLOR=auto         # auto | always | never
 STOP_ON_FAILURE=0
 WITH_REGRESSION=0
+MAX_DURATION=0          # (add-regression-gate-timeout-protection): 0 = no timeout
 FAILED=0
 MODE=""
 POSITIONAL=()
@@ -105,12 +106,32 @@ run_bats_smoke() {
 }
 
 run_bats_recursive() {
+  local bats_cmd
   if [ "$WITH_REGRESSION" = "1" ]; then
-    # report_regression.sh runs bats internally AND compares against baseline.
-    # Exits 0 only if there are no NEW failures (known baseline failures allowed).
+    bats_cmd="bash tests/scripts/report_regression.sh"
+    if [ "$MAX_DURATION" -gt 0 ]; then
+      echo "  bats (with --max-duration=$MAX_DURATION s)"
+      timeout --kill-after=10 "$MAX_DURATION" bash -c "$bats_cmd"
+      local rc=$?
+      if [ $rc -eq 124 ]; then
+        echo "  ⏱️ bats timed out after ${MAX_DURATION}s" >&2
+        FAILED=1
+      fi
+      return $rc
+    fi
     run_step "bats regression (baseline-aware)" \
       bash tests/scripts/report_regression.sh
   else
+    if [ "$MAX_DURATION" -gt 0 ]; then
+      echo "  bats (with --max-duration=$MAX_DURATION s)"
+      timeout --kill-after=10 "$MAX_DURATION" bats tests/ --recursive "$@"
+      local rc=$?
+      if [ $rc -eq 124 ]; then
+        echo "  ⏱️ bats timed out after ${MAX_DURATION}s" >&2
+        FAILED=1
+      fi
+      return $rc
+    fi
     run_step "bats recursive" bats tests/ --recursive "$@"
   fi
 }
@@ -164,6 +185,7 @@ Options (compose with any mode):
   --stop-on-failure, -x  失败立即停止 (默认继续跑拿完整图)
   --no-color             禁用颜色 (默认: TTY 时自动启用)
   --color                强制启用颜色 (覆盖 TTY 检测)
+  --max-duration=N      (add-regression-gate-timeout-protection) 超时保护—— bats 超过 N 秒则优雅退出并保存部分结果 (0 = 无限)
 
 Single file:
   ./test.sh <file.bats>     跑单个 bats 文件
@@ -192,6 +214,10 @@ parse_args() {
       --stop-on-failure|-x)  STOP_ON_FAILURE=1 ;;
       --no-color)            WITH_COLOR=never ;;
       --color)               WITH_COLOR=always ;;
+      --max-duration=*)  MAX_DURATION="${1#--max-duration=}" ;;
+      --max-duration)
+        if [[ "$2" =~ ^[0-9]+$ ]]; then MAX_DURATION="$2"; else echo "❌ --max-duration needs integer seconds" >&2; exit 2; fi
+        shift ;;
       --help|-h)             print_help; exit 0 ;;
       --*)                   setup_colors
                               echo "${RED}❌ 未知参数: $1${NC}" >&2
