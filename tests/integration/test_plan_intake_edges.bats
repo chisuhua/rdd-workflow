@@ -185,7 +185,11 @@ EOF
 EOF
     output=$(run_plan_intake_in_tmp "$tmpdir")
     rm -rf "$tmpdir"
-    echo "$output" | grep -qE 'proposal-approved|已批准提案'
+    # fix-plan-intake-stale-pre-created-changes: output is now
+    # "📋 待创建 proposal: N" — checks that proposal-approved.md was
+    # scanned (and reports a count) rather than the old grep -c '| ['
+    # entire-file count.
+    echo "$output" | grep -qE '待创建 proposal|proposal-approved'
 }
 
 @test "plan-intake: no staleness when active changes exist" {

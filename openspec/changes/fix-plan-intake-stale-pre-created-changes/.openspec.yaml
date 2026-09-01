@@ -1,0 +1,10 @@
+{
+  "name": "fix-plan-intake-stale-pre-created-changes",
+  "version": "1.0",
+  "created": "2026-09-01",
+  "owner": "guide-plan",
+  "phase": "v2.2",
+  "category": "core-impl",
+  "change_type": "bugfix",
+  "priority": "P1"
+}

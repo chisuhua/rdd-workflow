@@ -79,6 +79,112 @@ get_fill_artifacts_for() {
   fi
 }
 
+# fix-plan-intake-stale-pre-created-changes (P1, 2026-09-01):
+# Return 0 only if name is in CHANGES_PRE_CREATED AND not yet created
+# (openspec/changes/<name>/ missing) AND not archived
+# (openspec/changes/archive/*-<name> missing).
+#
+# Wrapped in a subshell so the line-23 ERR trap (post_flow_on_err)
+# cannot intercept our explicit exit 1 — subshell exits are immune
+# to the parent shell's ERR trap.
+is_design_pre_created_pending() {
+  (
+    set +e
+    trap - ERR
+    local name="$1"
+    local pr="${PROJECT_ROOT:-}"
+    is_design_pre_created "$name" || exit 1
+    [ -z "$pr" ] && exit 1
+    [ -d "$pr/openspec/changes/$name" ] && exit 1
+    compgen -G "$pr/openspec/changes/archive/*-$name" >/dev/null && exit 1
+    exit 0
+  )
+}
+
+# Run a helper so the line-23 ERR trap cannot zero its explicit `return 1`
+# exit code (post_flow_on_err always returns 0). Use this when wrapping a
+# helper that uses return codes as API.
+with_clean_exit_code() {
+  local _rc
+  (
+    set +e
+    trap - ERR
+    "$@"
+    _rc=$?
+  )
+  return "$_rc"
+}
+
+# fix-plan-intake-stale-pre-created-changes (P1, 2026-09-01):
+# Python one-shot classification of CHANGES_PRE_CREATED. Reads the names
+# already loaded into the array, classifies each as pending/active/archived
+# against openspec/changes/<name> and openspec/changes/archive/*-<name>,
+# and exports CHANGES_PENDING_COUNT / CHANGES_ACTIVE_COUNT /
+# CHANGES_ARCHIVED_COUNT env vars for downstream consumers (Phase 2
+# display layer, guide-plan SKILL.md, fill logic).
+#
+# Args: $1 = PROJECT_ROOT (default: $PROJECT_ROOT env or git toplevel).
+# Sets globals: CHANGES_PENDING_COUNT, CHANGES_ACTIVE_COUNT,
+#               CHANGES_ARCHIVED_COUNT.
+classify_pre_created_changes() {
+  local pr="${1:-${PROJECT_ROOT:-$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)}}"
+  # Bypass orchestrator_run: its subprocess wrapper swallows stdout, which
+  # would break the read-from-pipe capture below. Same caveat as
+  # check_design_handoff's mapfile block.
+  local _result
+  _result=$(PROJECT_ROOT="$pr" CHANGES_PRE_CREATED_CSV="${CHANGES_PRE_CREATED[*]:-}" python3 -c '
+import os, glob
+pr = os.environ["PROJECT_ROOT"]
+names = [n for n in os.environ.get("CHANGES_PRE_CREATED_CSV", "").split() if n]
+pending = active = archived = 0
+for name in names:
+    if os.path.isdir(os.path.join(pr, "openspec", "changes", name)):
+        active += 1
+    elif glob.glob(os.path.join(pr, "openspec", "changes", "archive", f"*-{name}")):
+        archived += 1
+    else:
+        pending += 1
+print(f"{pending} {active} {archived}")
+' 2>/dev/null)
+  read -r CHANGES_PENDING_COUNT CHANGES_ACTIVE_COUNT CHANGES_ARCHIVED_COUNT <<< "$_result"
+  export CHANGES_PENDING_COUNT CHANGES_ACTIVE_COUNT CHANGES_ARCHIVED_COUNT
+  : "${CHANGES_PENDING_COUNT:=0}" "${CHANGES_ACTIVE_COUNT:=0}" "${CHANGES_ARCHIVED_COUNT:=0}"
+}
+
+# fix-plan-intake-stale-pre-created-changes (P1, 2026-09-01):
+# Python one-shot count of proposal-approved.md rows that are:
+#   - in the ## 已批准 section (before ## 已实施)
+#   - NOT yet created (openspec/changes/<name> missing)
+#   - NOT yet archived (openspec/changes/archive/*-<name> missing)
+# Returns the count via stdout. Used by run_plan_intake to fix the
+# misleading "X 个已批准提案但无活跃 change" warning that previously
+# counted the entire file (including the implemented archive section).
+count_pending_proposals() {
+  local pr="${1:-${PROJECT_ROOT:-$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)}}"
+  # Bypass orchestrator_run: its subprocess wrapper swallows stdout.
+  PROJECT_ROOT="$pr" python3 -c '
+import os, glob, re, sys
+pr = os.environ["PROJECT_ROOT"]
+path = os.path.join(pr, "proposal-approved.md")
+if not os.path.isfile(path):
+    print("0")
+    sys.exit(0)
+with open(path, encoding="utf-8") as f:
+    content = f.read()
+section = content.split("## 已实施", 1)[0]
+names = re.findall(r"\[\s*([^\]]+)\]\s*\(\s*\.rddf/improvements/([^)]+)\s*\)", section)
+count = 0
+for disp, fname in names:
+    name = fname.replace(".md", "")
+    if os.path.isdir(os.path.join(pr, "openspec", "changes", name)):
+        continue
+    if glob.glob(os.path.join(pr, "openspec", "changes", "archive", f"*-{name}")):
+        continue
+    count += 1
+print(count)
+' 2>/dev/null
+}
+
 check_design_handoff() {
   local project_root="${1:-$(orchestrator_run git rev-parse --show-toplevel 2>/dev/null || pwd)}"
   local handoff_path="$project_root/.rddf/state/.design-handoff.json"
@@ -147,7 +253,8 @@ for n in d.get('changes_pre_created', []):
   export CHANGES_PRE_CREATED
 
   if [ "${#CHANGES_PRE_CREATED[@]}" -gt 0 ]; then
-    echo "✅ design-done handoff 已验证 (v2 schema, ${#CHANGES_PRE_CREATED[@]} 个预建 changes)"
+    classify_pre_created_changes "$project_root"
+    echo "✅ design-done handoff 已验证 (v2 schema, ${#CHANGES_PRE_CREATED[@]} 个预建 changes: ${CHANGES_PENDING_COUNT} 待处理, ${CHANGES_ACTIVE_COUNT} 已创建, ${CHANGES_ARCHIVED_COUNT} 已归档)"
   else
     echo "✅ design-done handoff 已验证 (v1 schema)"
   fi
@@ -198,9 +305,11 @@ run_plan_intake() {
   echo "📋 当前活跃 changes: $ACTIVE_CHANGES"
 
   local PENDING_PROPOSALS
-  PENDING_PROPOSALS=$(orchestrator_run grep -c '| \[' "$PROJECT_ROOT/proposal-approved.md" 2>/dev/null || echo 0)
+  PENDING_PROPOSALS=$(count_pending_proposals "$PROJECT_ROOT")
+  if [ -z "$PENDING_PROPOSALS" ]; then PENDING_PROPOSALS=0; fi
+  echo "📋 待创建 proposal: $PENDING_PROPOSALS"
   if [ "$PENDING_PROPOSALS" -gt 0 ] && [ "$ACTIVE_CHANGES" -eq 0 ]; then
-    echo "⚠️  proposal-approved.md 中有 $PENDING_PROPOSALS 个已批准提案但无活跃 change（可能需运行 propose）"
+    echo "⚠️  proposal-approved.md 中有 $PENDING_PROPOSALS 个真正待创建提案（已排除已创建/已归档）"
   fi
 
   # 4.5. Direct-create fallback detection (guide-plan-fallback-direct-create)
