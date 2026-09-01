@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": {
-    "const": "v1",
+    "const": "v3",
     "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline. Future bumps require version-migration flow."
   },
   "$id": "https://rdd-workflow.dev/schemas/sessions_schema.json",
@@ -106,7 +106,7 @@
             "orphaned",
             "abandoned"
           ],
-          "description": "Lifecycle state. completed/failed/abandoned are terminal; orphaned\u2192active allowed."
+          "description": "Lifecycle state. completed/failed/abandoned are terminal; orphaned→active allowed."
         },
         "attached_changes": {
           "type": "array",
@@ -129,7 +129,7 @@
         "last_heartbeat": {
           "type": "string",
           "format": "date-time",
-          "description": "Last heartbeat refresh. >30min ago \u2192 orphaned."
+          "description": "Last heartbeat refresh. >30min ago → orphaned."
         },
         "ended_at": {
           "type": [
@@ -158,6 +158,33 @@
             "null"
           ],
           "description": "Optional workflow group identifier linking related rddf-sessions. v2: add-rddf-session-workflow-group."
+        },
+        "metrics": {
+          "type": "object",
+          "description": "Optional session metrics (ADR-0036, schema v3).",
+          "additionalProperties": false,
+          "properties": {
+            "started_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "ended_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "duration_s": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "user_decisions": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "retries": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
         }
       }
     }
