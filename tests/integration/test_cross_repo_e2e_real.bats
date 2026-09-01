@@ -33,6 +33,19 @@ load ../test_helper
 # File-level setup: 一次性环境准备
 # ------------------------------------------------------------------------------
 setup_file() {
+
+  # Skip-not-fail (add-e2e-test-skip-on-missing-hub-auth): 
+  # gh/auth/Hub 不可达时优雅 skip
+  if ! command -v gh >/dev/null 2>&1; then
+    skip "gh CLI not available; skipping E2E (requires real GitHub Hub)"
+  fi
+  if ! gh auth status >/dev/null 2>&1; then
+    skip "gh not authenticated; skipping E2E (requires chisuhua/rdd-hub access)"
+  fi
+  if ! gh repo view "$E2E_HUB_REPO" >/dev/null 2>&1; then
+    skip "Hub $E2E_HUB_REPO unreachable; skipping E2E"
+  fi
+
   E2E_HUB_REPO="${E2E_HUB_REPO:-chisuhua/rdd-hub}"
   E2E_TMPDIR="${E2E_TMPDIR:-/tmp/opencode/rdd-e2e-$$}"
   export E2E_HUB_REPO
