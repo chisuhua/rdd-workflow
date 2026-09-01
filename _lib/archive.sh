@@ -613,10 +613,16 @@ except Exception:
 " 2>/dev/null || true
   fi
 
-  # 9. Post-archive cleanup hook (post-archive-cleanup-hook).
+  # 9. Post-archive cleanup hook (post-archive-cleanup-hook) + amend.
   # Non-blocking: fixes residual deleted tracked files (e.g. .rddf/plans/<name>.md)
   # left by the dispersed cleanup chain. Run after all archive git mutations.
   post_archive_cleanup "$main_root" "$name" || true
+
+  # (reduce-archive-commit-noise v2.2.4+): amend cleanup stage into archive commit.
+  # Idempotent: if working tree is clean, --amend is a no-op.
+  if [ -n "$(git -C "$main_root" status --porcelain 2>/dev/null)" ]; then
+      git -C "$main_root" commit --amend --no-edit -q || true
+  fi
 
   # worktree-context-persistence: always land back in main repo so the
   # next bash call doesn't need a redundant `cd`.

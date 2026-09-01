@@ -147,11 +147,9 @@ post_archive_cleanup() {
     fi
   fi
 
-  # Commit only the rm bucket (not the modified — those stay for user commit)
-  if [ "${#deleted_to_rm[@]}" -gt 0 ] && [ "$dry_run" != "yes" ]; then
-    git commit -q -m "chore(post-archive): clean residue from ${change_name:-unknown}"
-    echo "✅ committed chore(post-archive) for ${change_name:-unknown}"
-  fi
-
+  # (reduce-archive-commit-noise v2.2.4+): 不再独立 commit cleanup —
+  # 由 archive_change 主体 commit 通过 --amend 合并 cleanup stage,
+  # 消除每个 archive 多个 commit 的 git history noise。
+  # 阶段已 git rm + git add 完成,留给 caller amend。
   return 0
 }
