@@ -139,7 +139,6 @@
 | [add-e2e-test-skip-on-missing-hub-auth](.rddf/improvements/add-e2e-test-skip-on-missing-hub-auth.md) | P1 | 2026-09-01 | guide-arch |
 
 
-| [fix-cli-all-subcommands-dynamic-sync](.rddf/improvements/fix-cli-all-subcommands-dynamic-sync.md) | P1 | 2026-09-01 | guide-arch |
 
 | [add-session-metrics-collection](.rddf/improvements/add-session-metrics-collection.md) | P2 | 2026-09-01 | guide-arch |
 
@@ -164,6 +163,7 @@
 | [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-08-30 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-cli-all-subcommands-dynamic-sync](.rddf/improvements/fix-cli-all-subcommands-dynamic-sync.md) | P1 | 2026-09-01 | 已实施 |
 | [fix-design-done-gate-status-prefix-match](.rddf/improvements/fix-design-done-gate-status-prefix-match.md) | P0 | 2026-09-01 | 已实施 |
 | [fix-report-regression-sed-double-hash-strip](.rddf/improvements/fix-report-regression-sed-double-hash-strip.md) | P0 | 2026-09-01 | 已实施 |
 | [fix-specs-auto-generate-in-design-precreated](.rddf/improvements/fix-specs-auto-generate-in-design-precreated.md) | P0 | 2026-09-01 | 已实施 |
