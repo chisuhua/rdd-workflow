@@ -87,3 +87,24 @@ Bronze 是**唯一被强制执行**的等级。设置 `STRICT_PROPOSE_GATE=yes`
 - `docs/adr/ADR-0019-change-arch-alignment.md` - 反模式清单（单一真相源）
 - `roadmap.md` - 路线图与变更映射
 - `AGENTS.md` - 项目文档索引
+
+## 回归门 description 解析 (v2.2+)
+
+`tests/scripts/report_regression.sh` 的 sed strip 正则策略:
+
+**问题**: 通用 regex `[[:space:]]+#.*$` 会把 bats description 中的 `##` (markdown 双井号) 误判为注释起点,导致 baseline 匹配失败、回归门误报"新增失败"。
+
+**修复后策略 (v2.2+)**: 仅白名单 strip 已知注释 marker:
+```sed
+sed -E 's/[[:space:]]+# (pre-existing|historical)[^a-zA-Z0-9_].*$//'
+```
+
+| description 模式 | 处理 |
+|---|---|
+| ` # pre-existing: WIP` | ✅ strip (已知 marker) |
+| ` # historical: legacy` | ✅ strip (已知 marker) |
+| ` ## 决策 or ## Decision section` | ❌ 保留 (markdown `##` 合法) |
+| ` # ADR-NNNN: header` | ❌ 保留 (数字 `# ADR-NNNN:` 是合法 description) |
+| `plain description` | ❌ 保留 (无 `#`) |
+
+**baseline 条目建议**: description 后追加 `# pre-existing: <reason>` 或 `# historical: <reason>` 注释。避免用其他前缀(不会被 strip),也避免单独 `#` 结尾。

@@ -25,11 +25,11 @@ bats_status=$?
 set -e
 
 sed -nE 's/^not ok [0-9]+ (.*)$/\1/p' "$TMP_DIR/bats-output" \
-  | sed -E 's/[[:space:]]+#.*$//' \
+  | sed -E 's/[[:space:]]+# (pre-existing|historical)[^[:alnum:]].*$//' \
   | sed '/^[[:space:]]*$/d' \
   | sort -u >"$TMP_DIR/actual"
 
-sed -E 's/[[:space:]]+#.*$//' "$BASELINE" \
+sed -E 's/[[:space:]]+# (pre-existing|historical)[^[:alnum:]].*$//' "$BASELINE" \
   | sed '/^[[:space:]]*$/d' \
   | sort -u >"$TMP_DIR/baseline"
 
