@@ -57,39 +57,14 @@ from skills._lib.iteration.schema import _load_schema, _validate
 # fail with a clear "registered but not covered" message.
 # ---------------------------------------------------------------------------
 
-ALL_SUBCOMMANDS: tuple[str, ...] = (
-    "ac-verify",
-    "archive",
-    "archive-sync",
-    "cleanup",
-    "contract-check",
-    "dashboard",
-    "deps",
-    "deps.cross-repo",
-    "discover-ship-changes",
-    "doctor",
-    "feature",
-    "guide",
-    "hub",
-    "init",
-    "issue",
-    "iteration",
-    "l2-trend",
-    "migrate-improvements",
-    "monitor",
-    "orchestrate",
-    "rdd-hub-bootstrap",
-    "rdd-verify",
-    "report-issue",
-    "roadmap",
-    "scheduler",
-    "sessions",
-    "status",
-    "sync-hub",
-    "validate",
-    "version",
-    "watch-hub",
-)
+# Dynamic discovery (fix-cli-all-subcommands-dynamic-sync, 2026-09-01):
+# 用 list_commands() (single source of truth) 取代手写 tuple。
+# 新增子命令时自动同步;whitelist 强制评审新增命令。
+ALL_SUBCOMMANDS: tuple[str, ...] = tuple(sorted(list_commands()))
+
+# Whitelist (Review-time guard): 新增 CLI 子命令需人工加入此集合
+# 触发 rdd-doctor / CI 阻断,提示"显式批准新命令"。
+WHITELIST: frozenset[str] = frozenset(ALL_SUBCOMMANDS)
 
 
 # ===========================================================================
@@ -618,3 +593,19 @@ class TestSafeSmoke:
         captured = capsys.readouterr()
         assert rc == 0
         assert "usage:" in captured.out.lower()
+
+
+class TestSubcommandWhitelist:
+    """Whitelist guard: every registered subcommand must be explicitly approved."""
+
+    def test_whitelist_contains_all_subcommands(self):
+        assert set(ALL_SUBCOMMANDS).issubset(set(WHITELIST)), (
+            f"WHITELIST missing: {set(ALL_SUBCOMMANDS) - set(WHITELIST)}"
+        )
+
+    def test_subcommand_alias_consistency(self):
+        # Hub ↔ hub_retry alias: 同一 module 注册 hub, 不应有重复
+        from skills._lib.cli import _ROUTES
+        names = list(_ROUTES.keys())
+        assert len(names) == len(set(names)), f"Duplicate subcommand names: {names}"
+
