@@ -10,4 +10,3 @@
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
 | [bypass-audit-mechanism](.rddf/improvements/bypass-audit-mechanism.md) | P2 | 2026-08-26 流程设计 review | 2026-08-26 | 延迟 (2026-08-28, 维持 v3.2 deferred 决策)  |
-| [fix-plan-intake-stale-pre-created-changes](.rddf/improvements/fix-plan-intake-stale-pre-created-changes.md) | P1 | 2026-09-01 guide-plan session | 2026-09-01 | 已批准 (2026-09-01, self-improve) |

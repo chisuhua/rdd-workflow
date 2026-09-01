@@ -11,7 +11,6 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [fix-plan-intake-stale-pre-created-changes](.rddf/improvements/fix-plan-intake-stale-pre-created-changes.md) | P1 | 2026-09-01 | guide-design (self-improve) |
 
 > **依赖声明 (2026-08-05 design-done)**: 本批 7 项提案 (本次批准) 形成强依赖链, 计划按下列顺序实施:
 > 1. **`fix-archive-iteration-sync`** (P0) — first: 定义 `sync_iteration_after_archive` helper, 装到 `archive.sh::archive_change()` + `archive_on_main.sh` + `rddf status --archive` 3 个入口
@@ -161,6 +160,7 @@
 | [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-08-30 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-plan-intake-stale-pre-created-changes](.rddf/improvements/fix-plan-intake-stale-pre-created-changes.md) | P1 | 2026-09-01 | 已实施 |
 | [add-regression-gate-timeout-protection](.rddf/improvements/add-regression-gate-timeout-protection.md) | P2 | 2026-09-01 | 已实施 |
 | [add-session-metrics-collection](.rddf/improvements/add-session-metrics-collection.md) | P2 | 2026-09-01 | 已实施 |
 | [add-e2e-test-skip-on-missing-hub-auth](.rddf/improvements/add-e2e-test-skip-on-missing-hub-auth.md) | P1 | 2026-09-01 | 已实施 |
