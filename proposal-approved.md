@@ -140,7 +140,6 @@
 
 
 
-| [add-regression-gate-timeout-protection](.rddf/improvements/add-regression-gate-timeout-protection.md) | P2 | 2026-09-01 | guide-arch |
 
 ## 已实施
 | [worktree-context-persistence](.rddf/improvements/worktree-context-persistence.md) | P1 | 2026-09-01 |
@@ -161,6 +160,7 @@
 | [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-08-30 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [add-regression-gate-timeout-protection](.rddf/improvements/add-regression-gate-timeout-protection.md) | P2 | 2026-09-01 | 已实施 |
 | [add-session-metrics-collection](.rddf/improvements/add-session-metrics-collection.md) | P2 | 2026-09-01 | 已实施 |
 | [add-e2e-test-skip-on-missing-hub-auth](.rddf/improvements/add-e2e-test-skip-on-missing-hub-auth.md) | P1 | 2026-09-01 | 已实施 |
 | [fix-cli-all-subcommands-dynamic-sync](.rddf/improvements/fix-cli-all-subcommands-dynamic-sync.md) | P1 | 2026-09-01 | 已实施 |
