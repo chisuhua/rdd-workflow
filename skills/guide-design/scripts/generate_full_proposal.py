@@ -195,3 +195,54 @@ if __name__ == "__main__":
         sys.exit(2)
     text = open(improvements_path, encoding="utf-8").read()
     print(generate_full_proposal(change_name, text))
+
+
+def generate_spec_delta(source_md: str, sub: str) -> str:
+    """D3 mapping: 从源 .rddf/improvements markdown 生成 openspec v1.4 spec.md。
+
+    映射规则 (D2 → D3):
+    - ## Acceptance 每个 - [ ] checkbox → ### Requirement + #### Scenario
+    - ## Capabilities 每条 MUST/MUST NOT → ### Requirement
+    - 顶部统一加 ## ADDED Requirements 段头 (openspec v1.4 强制)
+    - 默认 <sub> 名由调用方传入
+    """
+    lines = ["## ADDED Requirements", ""]
+    req_idx = 0
+
+    # 1. 提取 ## Acceptance checkboxes
+    acc_match = re.search(r"## Acceptance\s*\n(.*?)(?=\n## |\Z)", source_md, re.DOTALL | re.IGNORECASE)
+    if acc_match:
+        for m in re.finditer(r"^\s*-\s*\[[ xX]?\]\s*(.+?)$", acc_match.group(1), re.MULTILINE):
+            req_idx += 1
+            text = m.group(1).strip()
+            req_name = f"acceptance-{req_idx}"
+            lines.append(f"### Requirement: {req_name}")
+            lines.append("")
+            lines.append(f"The system SHALL {text}.")
+            lines.append("")
+            lines.append(f"#### Scenario: {text[:60]}")
+            lines.append("")
+            lines.append("- **WHEN** the change is applied")
+            lines.append(f"- **THEN** {text}")
+            lines.append("")
+
+    # 2. 提取 ## Capabilities MUST/MUST NOT
+    # 注: openspec v1.4 要求每个 Requirement 至少含 1 个 #### Scenario:
+    cap_match = re.search(r"## Capabilities\s*\n(.*?)(?=\n## |\Z)", source_md, re.DOTALL | re.IGNORECASE)
+    if cap_match:
+        for m in re.finditer(r"^\s*-\s*\*\*(MUST(?:\s+NOT)?)\*\*:\s*(.+?)$", cap_match.group(1), re.MULTILINE):
+            req_idx += 1
+            kind = m.group(1).strip()
+            text = m.group(2).strip()
+            req_name = f"capability-{req_idx}"
+            lines.append(f"### Requirement: {req_name}")
+            lines.append("")
+            lines.append(f"The system {kind} {text}.")
+            lines.append("")
+            lines.append(f"#### Scenario: enforces {text[:50]}")
+            lines.append("")
+            lines.append("- **WHEN** the change is applied")
+            lines.append(f"- **THEN** {text} is enforced")
+            lines.append("")
+
+    return "\n".join(lines) + "\n"

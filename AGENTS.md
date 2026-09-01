@@ -155,6 +155,26 @@ openspec/                     # OpenSpec CLI 数据 (随项目走)
   specs/                      # 已采纳的 capability specs (28 个)
 ```
 
+## D3 design-pre-created 协同 (v2.2+)
+
+`guide-design` 批准的 change 自动落盘 `openspec/changes/<name>/specs/<name>/spec.md` (D3 design-pre-created 协同)。
+
+| proposal.md 段 (D2 输出) | specs/<sub>/spec.md 段 | 映射函数 |
+|---|---|---|
+| `## Acceptance` checkbox `- [ ]` | `### Requirement: acceptance-N` + `#### Scenario:` (Given-When-Then) | `generate_spec_delta()` |
+| `## Capabilities` MUST/MUST NOT | `### Requirement: capability-N` + `#### Scenario:` (openspec v1.4 要求每 Requirement 含 Scenario) | `generate_spec_delta()` |
+| 顶部段头 | `## ADDED Requirements` | (v1.4 强制) |
+
+**生成路径**: `approve_proposal.sh` 在写 `proposal.md` 后调用 `generate_spec_delta()`(从 proposal.md 读,确保段头为英文 D2 输出),写入 `specs/<name>/spec.md`。
+
+**Idempotency**: `openspec/changes/<name>/specs/<name>/` 已存在则跳过(手工补过的 case 不被覆盖)。
+
+**Commit 示例**:
+```
+feat(guide-design): auto-generate specs/ on approve
+fix(guide-design): correct inverted git add logic in approve_proposal.sh
+```
+
 ## Active Feature Fragments (v2.2+)
 
 Feature fragments (`rddf roadmap add-feature`) 跨阶段追踪多 phase 改进项。AI agent session 启动时应扫读此段以了解 in-flight 工作流。

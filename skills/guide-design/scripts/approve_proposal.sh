@@ -358,7 +358,9 @@ append_approved "$PROJECT_ROOT" "$NAME" "$PRIORITY"
 
 # Auto-stage proposal-approved.md so the design-phase write is never lost
 # across the plan-phase commit boundary. fail-fast on git error.
-if ! git add "$APPROVED_FILE" 2>/dev/null; then
+if git add "$APPROVED_FILE" 2>/dev/null; then
+  echo "git add proposal-approved.md done"
+else
   echo "❌ git add proposal-approved.md failed: $?" >&2
   exit 1
 fi
@@ -413,6 +415,34 @@ TBD
 - [ ] TBD
 EOF
 }
+
+# D3 design-pre-created: 自动生成 specs/<name>/spec.md (v2.2+)
+# 从已生成的 proposal.md 提取 (D2 输出有英文 ## Acceptance / ## Capabilities / ## Impact)
+# Idempotency: specs/ 目录已存在则跳过
+_specs_dir="$CHANGE_DIR/specs/$NAME"
+if [ -d "$_specs_dir" ]; then
+    echo "⏭  specs already exist for $NAME, skipping"
+else
+    mkdir -p "$_specs_dir"
+    _spec_content=$(CHANGE_NAME="$NAME" \
+        PROJECT_ROOT="$PROJECT_ROOT" \
+        python3 -c "
+import importlib.util, os
+root = os.environ['PROJECT_ROOT']
+_mod = os.path.join(root, 'skills', 'guide-design', 'scripts', 'generate_full_proposal.py')
+_spec = importlib.util.spec_from_file_location('gfp', _mod)
+_gfp = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_gfp)
+_proposal = open(os.path.join(root, 'openspec', 'changes', os.environ['CHANGE_NAME'], 'proposal.md')).read()
+print(_gfp.generate_spec_delta(_proposal, sub=os.environ['CHANGE_NAME']))
+" 2>/dev/null) || _spec_content=""
+    if [ -n "$_spec_content" ]; then
+        printf '%s' "$_spec_content" > "$_specs_dir/spec.md"
+        echo "✅ specs/$NAME/spec.md auto-generated"
+    else
+        echo "⚠️  specs generation failed for $NAME (non-fatal)"
+    fi
+fi
 
 HEAD_PHASE="default"
 HEAD_CATEGORY="general"

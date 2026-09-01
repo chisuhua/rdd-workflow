@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT))
 
 from skills.guide_design.scripts.generate_full_proposal import (  # noqa: E402
     generate_full_proposal,
+    generate_spec_delta,
     validate_improvements_head,
 )
 
@@ -168,3 +169,72 @@ def test_scope_split_handles_bullet_style_headers():
     assert "\n- **In Scope**:" not in out
     assert "\n- **Out Scope**:" not in out
     assert "不改变 archive 逻辑" in out
+
+
+def test_generate_spec_delta_acceptance_to_requirements():
+    """验证 ## 验收标准 段的 - [ ] checkbox 映射到 ### Requirement + #### Scenario"""
+    source = """# Test Proposal
+
+## Capabilities
+
+## Impact
+
+## Acceptance
+
+- [ ] 用户能批准 proposal
+- [ ] 自动写入 specs/ 目录
+"""
+    result = generate_spec_delta(source, sub="test")
+    assert "## ADDED Requirements" in result
+    assert "### Requirement: acceptance-1" in result
+    assert "### Requirement: acceptance-2" in result
+    assert "#### Scenario:" in result
+    assert "acceptance-1" in result
+
+
+def test_generate_spec_delta_capabilities_to_requirements():
+    """验证 ## Capabilities 段 MUST/MUST NOT 映射到 ### Requirement"""
+    source = """## Capabilities
+
+- **MUST**: 自动生成 spec.md
+- **MUST NOT**: 覆盖已有 specs/
+"""
+    result = generate_spec_delta(source, sub="test")
+    assert "### Requirement: capability-1" in result
+    assert "### Requirement: capability-2" in result
+    assert "MUST" in result
+    assert "MUST NOT" in result
+
+
+def test_generate_spec_delta_scenarios_inline():
+    """验证 ## 关键场景 段 GIVEN/WHEN/THEN 嵌入对应 Requirement"""
+    source = """## Acceptance
+
+- [ ] 系统响应
+
+## 关键场景
+
+- **GIVEN** 用户已登录
+- **WHEN** 触发操作
+- **THEN** 系统响应
+"""
+    result = generate_spec_delta(source, sub="test")
+    assert "#### Scenario:" in result
+    assert "系统响应" in result
+
+
+def test_generate_spec_delta_idempotent_input():
+    """验证空 source_md 返回有效骨架(只有 ADDED Requirements 头)"""
+    result = generate_spec_delta("", sub="empty")
+    assert "## ADDED Requirements" in result
+    # 无任何 requirement 也返回头
+    assert "### Requirement" not in result
+
+
+def test_generate_spec_delta_passes_openspec_v1_4_format():
+    """验证输出包含 openspec v1.4 必填 delta 头"""
+    source = "## Acceptance\n\n- [ ] 行为 A"
+    result = generate_spec_delta(source, sub="v1")
+    assert "## ADDED Requirements" in result
+    assert "### Requirement:" in result
+    assert "#### Scenario:" in result
