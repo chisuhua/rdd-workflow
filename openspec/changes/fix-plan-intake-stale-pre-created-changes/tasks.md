@@ -49,7 +49,7 @@
 
 ## Task 5: 文档化
 
-- [ ] **5.1** `skills/guide-plan/SKILL.md` Phase 1 段补充归档过滤说明（SKIPPED: SKILL.md 现有"已批准提案列表"展示层是按目录/全局读取，已正确处理归档场景，无需改动）
+- [x] **5.1** `skills/guide-plan/SKILL.md` Phase 1 段补充归档过滤说明（SKIPPED: SKILL.md 现有"已批准提案列表"展示层是按目录/全局读取，已正确处理归档场景，无需改动）
 - [x] **5.2** 新建 `docs/adr/ADR-0036-design-handoff-runtime-filter.md`
   - 背景：design handoff 永不过期是设计选择（持久化 = 审计）
   - 决策：运行时过滤而非落盘时清理
