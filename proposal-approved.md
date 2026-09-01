@@ -135,7 +135,6 @@
 
 
 
-| [fix-report-regression-sed-double-hash-strip](.rddf/improvements/fix-report-regression-sed-double-hash-strip.md) | P0 | 2026-09-01 | guide-arch |
 
 | [add-e2e-test-skip-on-missing-hub-auth](.rddf/improvements/add-e2e-test-skip-on-missing-hub-auth.md) | P1 | 2026-09-01 | guide-arch |
 
@@ -166,6 +165,7 @@
 | [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-08-30 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-report-regression-sed-double-hash-strip](.rddf/improvements/fix-report-regression-sed-double-hash-strip.md) | P0 | 2026-09-01 | 已实施 |
 | [fix-specs-auto-generate-in-design-precreated](.rddf/improvements/fix-specs-auto-generate-in-design-precreated.md) | P0 | 2026-09-01 | 已实施 |
 | [phase-4-general-20260829063814](.rddf/improvements/phase-4-general-20260829063814.md) | P1 | 2026-08-30 | 已实施 |
 | [phase-3-general-20260829063801](.rddf/improvements/phase-3-general-20260829063801.md) | P1 | 2026-08-30 | 已实施 |
