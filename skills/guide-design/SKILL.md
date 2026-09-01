@@ -328,18 +328,11 @@ design 两层内容审查（warning 默认）:
 
 ```bash
 check_design_done_gate() {
-  local pending=$(grep -E '^\s*\|\s*\[' "$PROJECT_ROOT/proposal-suggestions.md" 2>/dev/null | \
-    while IFS='|' read -r _ _ _ _ _ status _; do
-      status=$(echo "$status" | xargs)
-      if [ "$status" != "已批准" ] && [ "$status" != "已拒绝" ] && [ "$status" != "延迟" ]; then
-        echo "$status"
-      fi
-    done)
-  if [ -n "$pending" ]; then
-    echo "❌ design-done 失败: 以下提案尚无决策:"
-    echo "$pending"
-    return 1
-  fi
+  local _skill_root
+  _skill_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+  source "$_skill_root/skills/guide-design/scripts/design_done_check.sh" 2>/dev/null || true
+  _check_design_done_gate "$PROJECT_ROOT"
+}
 
   # Hub gates (fix-orphan-hub-gates-wiring, ADR-0030/0031):
   # 末尾追加 check_hub_pending → check_cross_repo_approvals (不动既有 check)。
