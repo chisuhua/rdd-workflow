@@ -78,12 +78,19 @@ def test_type_coercion_for_env_vars(tmp_path, clean_env):
 
 
 def test_project_yaml_missing_no_effect(tmp_path, clean_env):
-    """No .rddf/project.yaml → behavior unchanged (backward compatibility)."""
+    """No .rddf/project.yaml → behavior unchanged (backward compatibility).
+
+    Per complete-project-yaml-config-gaps M1 Task 1.2: DEFAULTS now includes
+    'project: {}' as a merge placeholder, so 'project' key IS present after parse,
+    but its value is empty dict (zero behavioral impact, matching i10 contract).
+    """
     (tmp_path / ".rddf.json").write_text(json.dumps({"interaction": {"mode": "menu"}}))
     parser = ConfigParser(project_root=str(tmp_path))
     config = parser.parse()
     assert config["interaction"]["mode"] == "menu"
-    assert "project" not in config
+    assert config.get("project") == {}, (
+        f"Missing project.yaml should yield config['project'] == {{}}, got {config.get('project')!r}"
+    )
 
 
 def test_priority_project_yaml_over_loop_yaml(tmp_path, clean_env):
@@ -125,13 +132,13 @@ def test_project_yaml_runtime_overrides(tmp_path, clean_env):
 
 
 def test_project_yaml_empty_file_handled(tmp_path, clean_env):
-    """Empty project.yaml → equivalent to missing."""
+    """Empty project.yaml → equivalent to missing (config['project'] stays empty dict)."""
     project_dir = tmp_path / ".rddf"
     project_dir.mkdir()
     (project_dir / "project.yaml").write_text("")
     parser = ConfigParser(project_root=str(tmp_path))
     config = parser.parse()
-    assert "project" not in config
+    assert config.get("project") == {}
 
 
 def test_project_yaml_invalid_yaml_raises(tmp_path, clean_env):

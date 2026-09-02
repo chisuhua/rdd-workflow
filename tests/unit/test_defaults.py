@@ -43,3 +43,35 @@ def test_interaction_menu_items_are_supported_skills():
     for item in menu:
         assert isinstance(item, str)
         assert item  # non-empty
+
+
+# ============================================================================
+# Task 1.2 (complete-project-yaml-config-gaps M1): defaults.py 新增 project 默认
+# ============================================================================
+
+
+def test_defaults_has_project_section():
+    """DEFAULTS must include 'project' key (empty dict) for project.yaml merge stability.
+
+    Per rfc-rddf-project-yaml-config-i10 + complete-project-yaml-config-gaps M1:
+    _load_project_yaml returns dict, and ConfigParser deep-merges into DEFAULTS.
+    Without a 'project' key in DEFAULTS, behavior is undefined when project.yaml
+    exists but has no `project:` top-level key (deep_merge silently absent).
+    """
+    assert "project" in DEFAULTS, (
+        "DEFAULTS must include 'project' key for project.yaml merge consistency"
+    )
+    assert isinstance(DEFAULTS["project"], dict), (
+        f"DEFAULTS['project'] must be dict, got {type(DEFAULTS['project']).__name__}"
+    )
+
+
+def test_get_defaults_project_is_deep_copy():
+    """get_defaults()['project'] must be a deep copy (mutable without leaking)."""
+    snapshot = get_defaults()
+    snapshot["project"]["new_field"] = "rogue"
+    fresh = get_defaults()
+    assert "new_field" not in fresh["project"], (
+        "get_defaults()['project'] leaked mutation back to DEFAULTS — not a deep copy"
+    )
+    assert "new_field" not in DEFAULTS["project"]

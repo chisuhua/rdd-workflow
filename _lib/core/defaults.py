@@ -52,6 +52,10 @@ DEFAULTS = {
         "retention_days": 30,
         "redact_patterns": [],
     },
+    # Empty by design — project.yaml supplies values when present; absence = zero impact.
+    # Adding default subkeys here would break i10's "absent = zero-impact" contract.
+    # Refs: rfc-rddf-project-yaml-config-i10 / complete-project-yaml-config-gaps M1 Task 1.2.
+    "project": {},
 }
 
 
