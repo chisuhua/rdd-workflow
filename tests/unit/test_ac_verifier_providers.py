@@ -233,3 +233,41 @@ class TestInvokeRetry:
         with pytest.raises(RateLimitError):
             p.invoke("sys", "usr")
         assert len(calls) == 1
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# T5: OpenAIProvider
+# ──────────────────────────────────────────────────────────────────────────────
+
+from skills.ac_verifier.scripts.llm_providers.openai import OpenAIProvider
+
+
+class TestOpenAIProvider:
+    def test_payload_uses_openai_messages_format(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "sk-test")
+        p = OpenAIProvider()
+        payload = p._build_payload("be terse", "what is 2+2?")
+        assert payload["model"] == "gpt-4o-mini"
+        assert payload["messages"] == [
+            {"role": "system", "content": "be terse"},
+            {"role": "user", "content": "what is 2+2?"},
+        ]
+
+    def test_headers_use_bearer_auth(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "sk-test")
+        p = OpenAIProvider()
+        h = p._build_headers()
+        assert h["Authorization"] == "Bearer sk-test"
+        assert h["Content-Type"] == "application/json"
+
+    def test_default_base_url_is_openai(self, monkeypatch):
+        monkeypatch.delenv("AC_LLM_BASE_URL", raising=False)
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        p = OpenAIProvider()
+        assert p.base_url == "https://api.openai.com"
+
+    def test_model_override(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        monkeypatch.setenv("AC_LLM_MODEL", "gpt-4o")
+        p = OpenAIProvider()
+        assert p.model == "gpt-4o"
