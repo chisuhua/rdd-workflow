@@ -102,3 +102,60 @@ def test_scan_adr_catalog_pattern_override_backward_compat(tmp_path):
     result = scan_adr_catalog(tmp_path)
 
     assert set(result.keys()) == {"ADR-0040"}
+
+
+# ============================================================================
+# M4 Task 4.1 + 4.4 (complete-project-yaml-config-gaps M4):
+# scan_adr_catalog accepts adr_pattern parameter (i10) + adr_pattern_fallback
+# helper for project.yaml direct read when arch-handoff missing.
+# ============================================================================
+
+
+def test_scan_adr_catalog_explicit_arg_overrides_project_yaml(tmp_path):
+    """scan_adr_catalog(adr_pattern=X) beats project.yaml adr.pattern."""
+    import yaml
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    (project_dir / "project.yaml").write_text(
+        yaml.dump({"adr": {"pattern": r"^ADR-(\d{3})-.*\.md$"}})
+    )
+    adr_dir = tmp_path / "docs" / "adr"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "ADR-040-test.md").write_text("# test")
+    (adr_dir / "ADR-0040-test.md").write_text("# test")
+
+    # Explicit 4-digit pattern overrides project.yaml 3-digit
+    result = scan_adr_catalog(tmp_path, adr_pattern=r"^ADR-(\d{4})-.*\.md$")
+    assert set(result.keys()) == {"ADR-0040"}
+    # 3-digit pattern from project.yaml would have returned {"ADR-040"}
+
+
+def test_scan_adr_catalog_project_yaml_fallback_3digit(tmp_path):
+    """scan_adr_catalog falls back to project.yaml adr.pattern when no override."""
+    import yaml
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    (project_dir / "project.yaml").write_text(
+        yaml.dump({"adr": {"pattern": r"^ADR-(\d{3})-.*\.md$"}})
+    )
+    adr_dir = tmp_path / "docs" / "adr"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "ADR-040-test.md").write_text("# test")
+    (adr_dir / "ADR-0040-test.md").write_text("# ignored by 3-digit pattern")
+
+    # No adr_pattern arg, no arch-handoff → fall back to project.yaml
+    result = scan_adr_catalog(tmp_path)
+    assert set(result.keys()) == {"ADR-040"}, (
+        "scan_adr_catalog should fall back to project.yaml 3-digit pattern"
+    )
+
+
+def test_scan_adr_catalog_no_yaml_no_override_uses_default(tmp_path):
+    """scan_adr_catalog without project.yaml and no override uses 4-digit default."""
+    adr_dir = tmp_path / "docs" / "adr"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "ADR-0001-test.md").write_text("# test")
+    (adr_dir / "ADR-040-test.md").write_text("# ignored")
+
+    result = scan_adr_catalog(tmp_path)
+    assert set(result.keys()) == {"ADR-0001"}
