@@ -59,6 +59,44 @@ def test_v1_payload_still_accepted(schema):
     assert errors == [], f"v1 must validate, got errors: {[e.message for e in errors]}"
 
 
+# ============================================================================
+# M4 Task 4.5 (complete-project-yaml-config-gaps): adr_regex field for Python regex passthrough
+# ============================================================================
+
+
+def test_v2_includes_adr_regex_field(schema):
+    """arch_handoff_schema v2 includes optional 'adr_regex' field for Python regex.
+
+    Per complete-project-yaml-config-gaps M4 Task 4.5: write_arch_handoff reads
+    .rddf/project.yaml adr.pattern (Python regex) and writes to arch-handoff
+    adr_regex field. populate_lib then reads this for scan_adr_catalog passthrough.
+    """
+    assert "adr_regex" in schema["properties"], (
+        "arch_handoff_schema v2 must include 'adr_regex' field for Python regex passthrough"
+    )
+    field = schema["properties"]["adr_regex"]
+    assert field["type"] == "string"
+    # adr_regex is optional (backward compat with v1 payloads that don't have it)
+    assert "default" not in field or field.get("default") is None
+
+
+def test_v1_payload_without_adr_regex_still_valid(schema):
+    """v1 payload (no adr_regex field) still validates under v2 schema (backward compat)."""
+    v1 = _full_v1_payload()
+    assert "adr_regex" not in v1, "v1 fixture should not include adr_regex"
+    errors = list(Draft7Validator(schema).iter_errors(v1))
+    assert errors == [], f"v1 (no adr_regex) must validate, got: {[e.message for e in errors]}"
+
+
+def test_v2_payload_with_adr_regex_validates(schema):
+    """v2 payload including adr_regex field validates."""
+    v2 = _full_v1_payload()
+    v2["version"] = 2
+    v2["adr_regex"] = r"^ADR-(\d{3})-.*\.md$"
+    errors = list(Draft7Validator(schema).iter_errors(v2))
+    assert errors == [], f"v2 (with adr_regex) must validate, got: {[e.message for e in errors]}"
+
+
 def test_v2_payload_with_fragments_dir_accepted(schema):
     """v2 payload (version=2 + new roadmap_fragments_dir field) validates."""
     v2 = _full_v1_payload()
