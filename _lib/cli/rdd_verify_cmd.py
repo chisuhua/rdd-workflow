@@ -19,6 +19,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Optional
 
+import yaml
+
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -27,6 +29,7 @@ from _lib.verifier.branch import resolve_implementation_commit
 from _lib.verifier.cache import verdict_cache, read_verdict_cache, is_cache_fresh
 from _lib.verifier.classify import classify_failure
 from _lib.verifier.discovery import discover_eligible
+from _lib.verifier.hook_runner import run_verification_hook
 from _lib.verifier.loop_state import (
     init_loop_state, save_loop_state, load_loop_state,
 )
@@ -34,6 +37,68 @@ from _lib.verifier.loop_state import (
 
 def _project_root() -> Path:
     return Path(os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd())
+
+
+def _detect_verification_provider(project_root: Path) -> str:
+    """Read .rddf/project.yaml verification.provider; default 'llm'.
+
+    Per rfc-rddf-project-yaml-config-i10 + complete-project-yaml-config-gaps M2:
+    ChipForge and similar projects set verification.provider: hook to bypass LLM.
+    """
+    project_yaml = Path(project_root) / ".rddf" / "project.yaml"
+    if not project_yaml.is_file():
+        return "llm"
+    try:
+        cfg = yaml.safe_load(project_yaml.read_text(encoding="utf-8")) or {}
+        return cfg.get("verification", {}).get("provider", "llm") or "llm"
+    except (yaml.YAMLError, OSError, UnicodeDecodeError):
+        return "llm"
+
+
+def _hook_runner(change_name: str, project_root: Path, *, hook_path: Optional[Path] = None) -> dict:
+    """External verification hook runner (provider=hook).
+
+    Per design.md Decision 2: invokes _lib/verifier/hook_runner.run_verification_hook
+    and maps exit codes to verdict dict in the same shape as _default_runner.
+
+    Exit code mapping:
+        0 → passed (exit_code=0, verdict=[{status: pass}], failed_acs=[])
+        1 → failed (exit_code=1, verdict=[{status: fail}], failed_acs=[hook-<change>])
+        2+ or timeout → error (exit_code=3, error=str)
+        missing hook script → skipped (exit_code=0, note="hook script missing")
+
+    HookPathError (security whitelist violation) is propagated, not caught —
+    a misconfigured hook path is a setup error and must surface to the caller.
+    """
+    verdict = run_verification_hook(change_name, Path(project_root), hook_path=hook_path)
+
+    ac_id = f"hook-{change_name}"
+    if verdict == "passed":
+        return {"exit_code": 0,
+                "verdict": [{"ac_id": ac_id, "status": "pass"}],
+                "verdict_json": {"verdict": []},
+                "failed_acs": [],
+                "provider": "hook"}
+    if verdict == "failed":
+        return {"exit_code": 1,
+                "verdict": [{"ac_id": ac_id, "status": "fail"}],
+                "verdict_json": {"verdict": []},
+                "failed_acs": [ac_id],
+                "provider": "hook"}
+    if verdict == "error":
+        return {"exit_code": 3,
+                "verdict": [],
+                "verdict_json": None,
+                "failed_acs": [],
+                "error": "hook execution error/timeout",
+                "provider": "hook"}
+    # verdict == "skipped" — hook script missing, treat as pass for backward compat
+    return {"exit_code": 0,
+            "verdict": [],
+            "verdict_json": None,
+            "failed_acs": [],
+            "note": "hook script missing (skipped)",
+            "provider": "hook"}
 
 
 def _load_iteration_doc(project_root: Path) -> dict:
@@ -286,7 +351,14 @@ def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
             states.append("bypassed")
             continue
 
-        result = run_one_change(project_root, change, runner=runner)
+        # Provider routing per design.md Decision 8: explicit runner wins;
+        # otherwise detect verification.provider from .rddf/project.yaml.
+        if runner is not None:
+            active_runner = runner
+        else:
+            provider = _detect_verification_provider(project_root)
+            active_runner = _hook_runner if provider == "hook" else _default_runner
+        result = run_one_change(project_root, change, runner=active_runner)
         update_iteration_summary(project_root, change, {
             "state": result["state"],
             "verdict_sha": result["verdict_sha"],
