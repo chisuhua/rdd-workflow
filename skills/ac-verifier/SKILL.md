@@ -50,14 +50,63 @@ skill_use("ac-verifier", "<change-name>")
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `STRICT_AC_GATE` | `no` | Promote AC fail → archive blocker |
-| `SKIP_AC_VERIFICATION` | `no` | Skip AI verification entirely |
-| `AC_LLM_MOCK` | `no` | Use mock LLM (testing only) |
-| `AC_LLM_PROVIDER` | auto-detect | `openai` / `anthropic` / `local-ollama` |
-| `AC_LLM_MODEL` | provider default | Model name |
-| `AC_LLM_TIMEOUT` | `60` | Seconds per LLM call |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `STRICT_AC_GATE` | no | `no` | Promote AC fail → archive blocker |
+| `SKIP_AC_VERIFICATION` | no | `no` | Skip AI verification entirely (exit 2) |
+| `AC_LLM_MOCK` | no | `no` | `yes` → use mock LLM (testing only). Short-circuits before provider dispatch. |
+| `AC_LLM_PROVIDER` | yes (if not mocking) | — | `openai` \| `anthropic` \| `ollama` \| `minimax` |
+| `AC_LLM_BASE_URL` | yes for `minimax` | provider-specific | Endpoint URL (no trailing slash) |
+| `AC_LLM_API_KEY` | yes | — | API key (set via env, never commit) |
+| `AC_LLM_MODEL` | no | provider-specific | Model name |
+| `AC_LLM_TIMEOUT` | no | `60` | Seconds per LLM call |
+| `AC_LLM_MAX_RETRIES` | no | `3` | Retries on 429/5xx/network with exponential backoff (1s/2s/4s) |
+
+## Provider Configuration
+
+### Provider-specific defaults
+
+| Provider | base_url | model |
+|----------|----------|-------|
+| `openai` | `https://api.openai.com` | `gpt-4o-mini` |
+| `anthropic` | `https://api.anthropic.com` | `claude-3-5-haiku-20241022` |
+| `ollama` | `http://localhost:11434` | `llama3.1` |
+| `minimax` | `""` ⚠️ **must set `AC_LLM_BASE_URL`** | `MiniMax-M3` |
+
+### Examples
+
+```bash
+# OpenAI
+export AC_LLM_PROVIDER=openai
+export AC_LLM_API_KEY="<your-openai-key>"  # set in env, not committed
+ac_verifier.sh my-change
+
+# Anthropic
+export AC_LLM_PROVIDER=anthropic
+export AC_LLM_API_KEY="<your-anthropic-key>"
+ac_verifier.sh my-change
+
+# Local Ollama (no API key needed)
+export AC_LLM_PROVIDER=ollama
+export AC_LLM_API_KEY=ollama  # required by base class; Ollama ignores it
+ac_verifier.sh my-change
+
+# MiniMax (placeholder — requires real endpoint)
+export AC_LLM_PROVIDER=minimax
+export AC_LLM_BASE_URL="<minimax-endpoint>"
+export AC_LLM_API_KEY="<your-key>"
+ac_verifier.sh my-change
+
+# Mock mode (testing only)
+export AC_LLM_MOCK=yes
+ac_verifier.sh my-change
+```
+
+### Security notes
+
+- **Never** hardcode API keys; always set via environment variables
+- MiniMax's empty `default_base_url` forces explicit configuration — prevents silent calls to wrong endpoints
+- CI must default to mock mode (`AC_LLM_MOCK=yes`); real provider live tests require explicit opt-in
 
 ## Audit Log
 

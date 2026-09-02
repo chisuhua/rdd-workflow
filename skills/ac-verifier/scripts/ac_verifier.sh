@@ -13,9 +13,12 @@
 #   STRICT_AC_GATE=yes          Promote AC fail → archive blocker
 #   SKIP_AC_VERIFICATION=yes    Skip verification entirely (exit 2)
 #   AC_LLM_MOCK=yes             Use mock LLM (testing only)
-#   AC_LLM_PROVIDER             openai | anthropic | local-ollama (default: auto-detect)
-#   AC_LLM_MODEL                Model name
+#   AC_LLM_PROVIDER             openai | anthropic | ollama | minimax (required if AC_LLM_MOCK != yes)
+#   AC_LLM_BASE_URL             Provider endpoint (required for minimax; optional override for others)
+#   AC_LLM_API_KEY              API key (set via env; never commit)
+#   AC_LLM_MODEL                Model name (provider-specific default)
 #   AC_LLM_TIMEOUT              Seconds per LLM call (default: 60)
+#   AC_LLM_MAX_RETRIES          Retry count on 429/5xx/network (default: 3, exponential backoff 1s/2s/4s)
 set -euo pipefail
 
 # Resolve script directory and python module path

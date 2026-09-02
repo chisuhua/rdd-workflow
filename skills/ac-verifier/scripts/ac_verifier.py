@@ -5,9 +5,28 @@ import json
 import os
 import re
 import sys
+import types
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+
+# Dash-bridge: the directory `skills/ac-verifier/` contains a hyphen, which
+# is not a valid Python identifier. pytest tests work because
+# tests/conftest.py registers `skills.ac_verifier` in sys.modules as a
+# stub package. For direct script execution (ac_verifier.sh with
+# PROJECT_ROOT pointing at a tmp dir), we replicate that bridge here.
+_SCRIPTS_DIR = Path(__file__).resolve().parent
+_AC_VERIFIER_DIR = _SCRIPTS_DIR.parent
+if "skills.ac_verifier" not in sys.modules:
+    _stub = types.ModuleType("skills.ac_verifier")
+    _stub.__path__ = [str(_AC_VERIFIER_DIR)]
+    sys.modules["skills.ac_verifier"] = _stub
+if "skills.ac_verifier.scripts" not in sys.modules:
+    _stub = types.ModuleType("skills.ac_verifier.scripts")
+    _stub.__path__ = [str(_SCRIPTS_DIR)]
+    sys.modules["skills.ac_verifier.scripts"] = _stub
+
+from skills.ac_verifier.scripts.llm_providers import get_provider  # noqa: E402
 
 # Section header (Chinese + English variants per brainstorming Q6)
 _AC_SECTION_HEADERS = re.compile(
@@ -121,10 +140,15 @@ def build_agent_prompt(acs: list[dict], change_name: str) -> tuple[str, str]:
 
 
 def invoke_ai_agent(system: str, user: str) -> str:
-    """Call LLM with tools. Returns raw text.
+    """Call LLM with system + user prompts. Returns raw text.
 
-    In mock mode (AC_LLM_MOCK=yes), returns canned response from mocks module.
-    In real mode, requires API key env var; raises AcVerifierError on failure.
+    Priority:
+      1. AC_LLM_MOCK=yes → return canned mock response
+      2. AC_LLM_PROVIDER=<name> → dispatch to named provider via llm_providers
+
+    Raises AcVerifierError on configuration errors. Provider construction
+    failures (missing API key, missing base URL) bubble up as LLMError
+    subclasses (AuthError / ProviderError).
     """
     if os.environ.get("AC_LLM_MOCK", "").lower() == "yes":
         import importlib.util
@@ -134,18 +158,15 @@ def invoke_ai_agent(system: str, user: str) -> str:
         _spec.loader.exec_module(_mod)
         return _mod.mock_invoke(system, user)
 
-    provider = os.environ.get("AC_LLM_PROVIDER", "").lower()
-    if not provider:
+    name = os.environ.get("AC_LLM_PROVIDER", "").lower()
+    if not name:
         raise AcVerifierError(
             "AC_LLM_PROVIDER not set and AC_LLM_MOCK != yes. "
-            "Set AC_LLM_PROVIDER=openai|anthropic|local-ollama or use AC_LLM_MOCK=yes."
+            "Set AC_LLM_PROVIDER=openai|anthropic|ollama|minimax "
+            "or use AC_LLM_MOCK=yes."
         )
-    # Real LLM invocation is delegated to a future implementation.
-    # v1 ships mock-first; real provider implementation in Task 9.
-    raise AcVerifierError(
-        f"Real LLM provider '{provider}' not yet wired in v1. "
-        f"Use AC_LLM_MOCK=yes for testing."
-    )
+    provider = get_provider(name)  # raises ProviderError if unknown
+    return provider.invoke(system, user)
 
 
 # Verdict schema for jsonschema validation
