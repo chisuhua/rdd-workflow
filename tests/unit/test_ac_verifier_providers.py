@@ -271,3 +271,41 @@ class TestOpenAIProvider:
         monkeypatch.setenv("AC_LLM_MODEL", "gpt-4o")
         p = OpenAIProvider()
         assert p.model == "gpt-4o"
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# T6: AnthropicProvider
+# ──────────────────────────────────────────────────────────────────────────────
+
+from skills.ac_verifier.scripts.llm_providers.anthropic import AnthropicProvider
+
+
+class TestAnthropicProvider:
+    def test_payload_uses_anthropic_messages_format(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "sk-ant-test")
+        p = AnthropicProvider()
+        payload = p._build_payload("be terse", "what is 2+2?")
+        assert payload["model"] == "claude-3-5-haiku-20241022"
+        assert payload["system"] == "be terse"
+        assert payload["messages"] == [{"role": "user", "content": "what is 2+2?"}]
+        assert payload["max_tokens"] == 1024
+
+    def test_headers_use_anthropic_auth(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "sk-ant-test")
+        p = AnthropicProvider()
+        h = p._build_headers()
+        assert h["x-api-key"] == "sk-ant-test"
+        assert h["anthropic-version"] == "2023-06-01"
+        assert h["Content-Type"] == "application/json"
+
+    def test_parse_response_extracts_content_text(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        p = AnthropicProvider()
+        data = {"content": [{"type": "text", "text": "4"}]}
+        assert p._parse_response(data) == "4"
+
+    def test_default_base_url_is_anthropic(self, monkeypatch):
+        monkeypatch.delenv("AC_LLM_BASE_URL", raising=False)
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        p = AnthropicProvider()
+        assert p.base_url == "https://api.anthropic.com"
