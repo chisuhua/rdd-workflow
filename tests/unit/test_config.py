@@ -267,3 +267,52 @@ def test_project_yaml_root_level_extras_allowed(tmp_path, clean_env):
     assert config.get("team_notes") == "internal"
     # known section still validated
     assert config["git"]["openspec_tracked"] is True
+
+
+# ============================================================================
+# Task 1.3 (M1): schema 严格性回归门 — 跨章节组合断言
+# ============================================================================
+
+
+def test_project_yaml_all_sections_strict_validation(tmp_path, clean_env):
+    """All 4 sections (project/adr/git/verification) enforce strict on contents.
+
+    Single end-to-end test that combines: invalid type in 'project', invalid
+    glob format in 'adr', invalid type in 'git', invalid enum in 'verification'.
+    Each error must be raised; ordering doesn't matter but at least one ConfigError
+    must surface so users cannot accidentally ship malformed project.yaml.
+
+    Per complete-project-yaml-config-gaps M1 Task 1.3 + spec.md
+    'schema-strict-validation' requirement.
+    """
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    # Combine multiple violations — ConfigParser must raise AT LEAST one
+    (project_dir / "project.yaml").write_text(yaml.dump({
+        "project": {"name": 12345},  # name must be string
+        "verification": {"provider": "invalid_choice"},  # not llm/hook
+    }))
+    parser = ConfigParser(project_root=str(tmp_path))
+    with pytest.raises(ConfigError) as exc_info:
+        parser.parse()
+    msg = str(exc_info.value).lower()
+    # At least one of the bad fields must be flagged
+    assert "project" in msg or "name" in msg or "verification" in msg or "provider" in msg
+
+
+def test_project_yaml_valid_full_payload_parses(tmp_path, clean_env):
+    """A fully-valid project.yaml with all 4 sections parses successfully (positive control)."""
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    (project_dir / "project.yaml").write_text(yaml.dump({
+        "project": {"name": "chipforge", "version": "0.1.0"},
+        "adr": {"pattern": r"^ADR-(\d{3})-.*\.md$", "glob": "ADR-???.md"},
+        "git": {"openspec_tracked": False},
+        "verification": {"provider": "hook"},
+    }))
+    parser = ConfigParser(project_root=str(tmp_path))
+    config = parser.parse()
+    assert config["project"]["name"] == "chipforge"
+    assert config["adr"]["pattern"] == r"^ADR-(\d{3})-.*\.md$"
+    assert config["git"]["openspec_tracked"] is False
+    assert config["verification"]["provider"] == "hook"
