@@ -378,3 +378,56 @@ class TestMiniMaxProvider:
         monkeypatch.delenv("AC_LLM_BASE_URL", raising=False)
         with pytest.raises(ProviderError, match="AC_LLM_BASE_URL"):
             MiniMaxProvider()
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# T9: PROVIDERS registry + get_provider() factory
+# ──────────────────────────────────────────────────────────────────────────────
+
+from skills.ac_verifier.scripts.llm_providers import (
+    PROVIDERS,
+    get_provider,
+    BaseHTTPProvider,  # re-exported
+)
+
+
+class TestRegistry:
+    def test_all_four_providers_registered(self):
+        assert set(PROVIDERS.keys()) == {"openai", "anthropic", "ollama", "minimax"}
+
+    def test_get_provider_openai_returns_openai_provider(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        p = get_provider("openai")
+        assert isinstance(p, BaseHTTPProvider)
+        assert p.name == "openai"
+
+    def test_get_provider_anthropic(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        p = get_provider("anthropic")
+        assert p.name == "anthropic"
+
+    def test_get_provider_ollama(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        p = get_provider("ollama")
+        assert p.name == "ollama"
+
+    def test_get_provider_minimax_requires_base_url(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        monkeypatch.delenv("AC_LLM_BASE_URL", raising=False)
+        with pytest.raises(ProviderError):
+            get_provider("minimax")
+
+    def test_get_provider_unknown_raises_provider_error(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        with pytest.raises(ProviderError, match="Unknown provider 'bogus'"):
+            get_provider("bogus")
+
+    def test_provider_error_message_lists_valid_names(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        with pytest.raises(ProviderError) as exc_info:
+            get_provider("nope")
+        msg = str(exc_info.value)
+        assert "openai" in msg
+        assert "anthropic" in msg
+        assert "ollama" in msg
+        assert "minimax" in msg
