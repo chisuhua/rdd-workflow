@@ -178,3 +178,55 @@ def test_project_config_sh_helper(tmp_path, clean_env, monkeypatch):
         cwd=str(tmp_path), capture_output=True, text=True,
     )
     assert "^ADR-\\d{3}-" in result.stdout
+
+
+# ============================================================================
+# Task 1.1 (complete-project-yaml-config-gaps M1): config_schema.json 新增 4 节
+# ============================================================================
+
+
+def test_project_yaml_schema_strict_raises(tmp_path, clean_env):
+    """project.yaml with invalid git.openspec_tracked type raises ConfigError.
+
+    Per design.md Decision 11: schema strict on new sections' internal contents.
+    Per spec.md `schema-strict-validation`: invalid types SHALL raise ConfigError.
+    """
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    (project_dir / "project.yaml").write_text(yaml.dump({
+        "git": {"openspec_tracked": "yes"},  # string instead of bool
+    }))
+    parser = ConfigParser(project_root=str(tmp_path))
+    with pytest.raises(ConfigError) as exc_info:
+        parser.parse()
+    # Error message must mention the offending field for debuggability
+    msg = str(exc_info.value).lower()
+    assert "openspec_tracked" in msg or "git" in msg
+
+
+def test_project_yaml_verification_provider_enum_rejects(tmp_path, clean_env):
+    """project.yaml verification.provider must be 'llm' or 'hook', not arbitrary string."""
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    (project_dir / "project.yaml").write_text(yaml.dump({
+        "verification": {"provider": "gpt-5"},  # not in enum
+    }))
+    parser = ConfigParser(project_root=str(tmp_path))
+    with pytest.raises(ConfigError) as exc_info:
+        parser.parse()
+    msg = str(exc_info.value).lower()
+    assert "verification" in msg or "provider" in msg
+
+
+def test_project_yaml_adr_unknown_field_rejected(tmp_path, clean_env):
+    """project.yaml adr section rejects unknown subfields (additionalProperties: false)."""
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    (project_dir / "project.yaml").write_text(yaml.dump({
+        "adr": {"pattern": r"^ADR-\d{4}$", "made_up_field": "foo"},
+    }))
+    parser = ConfigParser(project_root=str(tmp_path))
+    with pytest.raises(ConfigError) as exc_info:
+        parser.parse()
+    msg = str(exc_info.value).lower()
+    assert "adr" in msg or "made_up_field" in msg
