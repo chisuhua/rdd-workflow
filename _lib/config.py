@@ -170,6 +170,7 @@ class ConfigParser:
         self.project_root = Path(project_root)
         self.rddf_json = self.project_root / ".rddf.json"
         self.loop_yaml = self.project_root / "loop.yaml"
+        self.project_yaml = self.project_root / ".rddf" / "project.yaml"
         self.triggers: dict = {}
 
     def parse(self, runtime_overrides: Optional[dict] = None) -> dict:
@@ -179,11 +180,12 @@ class ConfigParser:
             runtime_overrides: Dict of dotted-path → value. Highest priority.
 
         Merge order (lowest → highest priority, last write wins):
-            defaults < .rddf.json < env vars < loop.yaml < runtime overrides
+            defaults < .rddf.json < env vars < loop.yaml < project.yaml < runtime overrides
         This ordering reflects the contract tested in tests/unit/test_config.py:
         env vars override .rddf.json (test_env_var_overrides_file_config),
         loop.yaml overrides .rddf.json (test_priority_loop_yaml_over_rddf_json),
-        runtime overrides override loop.yaml (test_priority_runtime_over_loop_yaml).
+        runtime overrides override loop.yaml (test_priority_runtime_over_loop_yaml),
+        project.yaml overrides loop.yaml (test_priority_project_yaml_over_loop_yaml).
         """
         config = get_defaults()
 
@@ -212,6 +214,15 @@ class ConfigParser:
             except yaml.YAMLError as e:
                 raise ConfigError(f"{self.loop_yaml} is not valid YAML: {e}") from e
             config = _deep_merge(config, loop_cfg)
+
+        # project.yaml overrides loop.yaml (highest project-level config)
+        if self.project_yaml.is_file():
+            try:
+                with open(self.project_yaml) as f:
+                    project_cfg = yaml.safe_load(f) or {}
+            except yaml.YAMLError as e:
+                raise ConfigError(f"{self.project_yaml} is not valid YAML: {e}") from e
+            config = _deep_merge(config, project_cfg)
 
         # Highest: runtime overrides
         if runtime_overrides:

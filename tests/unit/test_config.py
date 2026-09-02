@@ -75,3 +75,106 @@ def test_type_coercion_for_env_vars(tmp_path, clean_env):
     config = parser.parse()
     assert config["loop"]["max_iterations"] == 200
     assert isinstance(config["loop"]["max_iterations"], int)
+
+
+def test_project_yaml_missing_no_effect(tmp_path, clean_env):
+    """No .rddf/project.yaml → behavior unchanged (backward compatibility)."""
+    (tmp_path / ".rddf.json").write_text(json.dumps({"interaction": {"mode": "menu"}}))
+    parser = ConfigParser(project_root=str(tmp_path))
+    config = parser.parse()
+    assert config["interaction"]["mode"] == "menu"
+    assert "project" not in config
+
+
+def test_priority_project_yaml_over_loop_yaml(tmp_path, clean_env):
+    """project.yaml overrides loop.yaml (highest project-level config)."""
+    (tmp_path / "loop.yaml").write_text(yaml.dump({"interaction": {"mode": "menu"}}))
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    (project_dir / "project.yaml").write_text(
+        yaml.dump({"interaction": {"mode": "loop"}})
+    )
+    parser = ConfigParser(project_root=str(tmp_path))
+    config = parser.parse()
+    assert config["interaction"]["mode"] == "loop"
+
+
+def test_project_yaml_over_env_vars(tmp_path, clean_env):
+    """project.yaml overrides env vars (project-level > CI injection)."""
+    clean_env.setenv("RDDF_MODE", "menu")
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    (project_dir / "project.yaml").write_text(
+        yaml.dump({"interaction": {"mode": "loop"}})
+    )
+    parser = ConfigParser(project_root=str(tmp_path))
+    config = parser.parse()
+    assert config["interaction"]["mode"] == "loop"
+
+
+def test_project_yaml_runtime_overrides(tmp_path, clean_env):
+    """Runtime overrides still beat project.yaml."""
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    (project_dir / "project.yaml").write_text(
+        yaml.dump({"interaction": {"mode": "menu"}})
+    )
+    parser = ConfigParser(project_root=str(tmp_path))
+    config = parser.parse(runtime_overrides={"interaction.mode": "loop"})
+    assert config["interaction"]["mode"] == "loop"
+
+
+def test_project_yaml_empty_file_handled(tmp_path, clean_env):
+    """Empty project.yaml → equivalent to missing."""
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    (project_dir / "project.yaml").write_text("")
+    parser = ConfigParser(project_root=str(tmp_path))
+    config = parser.parse()
+    assert "project" not in config
+
+
+def test_project_yaml_invalid_yaml_raises(tmp_path, clean_env):
+    """Invalid YAML in project.yaml raises ConfigError."""
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    (project_dir / "project.yaml").write_text("invalid: : : yaml")
+    parser = ConfigParser(project_root=str(tmp_path))
+    with pytest.raises(Exception):  # yaml.YAMLError or ConfigError
+        parser.parse()
+
+
+def test_project_yaml_nested_keys(tmp_path, clean_env):
+    """Nested project.yaml keys merge with defaults via deep_merge."""
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    (project_dir / "project.yaml").write_text(yaml.dump({
+        "project": {"name": "chipforge", "version": "0.1.0"},
+        "adr": {"pattern": r"^ADR-(\d{3})-.*\.md$"},
+    }))
+    parser = ConfigParser(project_root=str(tmp_path))
+    config = parser.parse()
+    assert config["project"]["name"] == "chipforge"
+    assert config["adr"]["pattern"] == r"^ADR-(\d{3})-.*\.md$"
+
+
+def test_project_config_sh_helper(tmp_path, clean_env, monkeypatch):
+    """_lib/project_config.sh::project_yaml_get reads .rddf/project.yaml."""
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    (project_dir / "project.yaml").write_text(yaml.dump({
+        "adr": {"pattern": r"^ADR-\d{3}-"},
+        "git": {"openspec_tracked": False},
+        "verification": {"provider": "hook"},
+    }))
+    monkeypatch.setenv("PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setenv("PROJECT_CONFIG_NO_CACHE", "1")
+
+    import subprocess
+    result = subprocess.run(
+        ["bash", "-c", f"source {tmp_path}/../_lib/project_config.sh 2>/dev/null; "
+         f"source /workspace/project/rdd-workflow/_lib/project_config.sh; "
+         f"project_yaml_get adr.pattern"],
+        cwd=str(tmp_path), capture_output=True, text=True,
+    )
+    assert "^ADR-\\d{3}-" in result.stdout

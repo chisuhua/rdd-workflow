@@ -65,3 +65,40 @@ def test_scan_adr_catalog_skips_nonmatching_files(tmp_path):
     result = scan_adr_catalog(tmp_path)
 
     assert set(result.keys()) == {"ADR-0000", "ADR-0001"}
+
+
+def test_scan_adr_catalog_three_digit_pattern(tmp_path):
+    """Three-digit ADR pattern (ChipForge case) via adr_pattern override."""
+    adr_dir = tmp_path / "docs" / "adr"
+    adr_dir.mkdir(parents=True)
+
+    (adr_dir / "ADR-040-three-digit.md").write_text(
+        "---\ntitle: Three digit test\n---\n# Three digit\n"
+    )
+    (adr_dir / "ADR-041-three-digit.md").write_text(
+        "---\ntitle: Another three digit\n---\n# Three digit\n"
+    )
+    (adr_dir / "ADR-0000-template.md").write_text(
+        "---\nstatus: template\n---\n# Template\n"
+    )
+
+    result = scan_adr_catalog(
+        tmp_path, adr_pattern=r"^ADR-(\d{3})-.*\.md$"
+    )
+
+    assert set(result.keys()) == {"ADR-040", "ADR-041"}
+    assert "ADR-0000" not in result
+
+
+def test_scan_adr_catalog_pattern_override_backward_compat(tmp_path):
+    """No adr_pattern → default 4-digit behavior preserved."""
+    adr_dir = tmp_path / "docs" / "adr"
+    adr_dir.mkdir(parents=True)
+
+    (adr_dir / "ADR-0040-backward.md").write_text(
+        "---\ntitle: Backward compat\n---\n# Backward\n"
+    )
+
+    result = scan_adr_catalog(tmp_path)
+
+    assert set(result.keys()) == {"ADR-0040"}

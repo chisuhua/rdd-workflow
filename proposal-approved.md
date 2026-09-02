@@ -144,8 +144,8 @@
 | [rfc-rddf-project-yaml-config-i10](.rddf/improvements/rfc-rddf-project-yaml-config-i10.md) | P1 | 2026-09-01 | guide-design |
 
 ## 已实施
-| [worktree-context-persistence](.rddf/improvements/worktree-context-persistence.md) | P1 | 2026-09-01 |
-| [reduce-rdd-workflow-tool-call-friction](.rddf/improvements/reduce-rdd-workflow-tool-call-friction.md) | P1 | 2026-09-01 |
+| [worktree-context-persistence](.rddf/improvements/worktree-context-persistence.md) | P1 | 2026-09-01 | 已实施 |
+| [reduce-rdd-workflow-tool-call-friction](.rddf/improvements/reduce-rdd-workflow-tool-call-friction.md) | P1 | 2026-09-01 | 已实施 |
 | [verifier-archive-gate-clarification](.rddf/improvements/verifier-archive-gate-clarification.md) | P1 | 2026-08-28 | guide-arch |
 | [changelog-usage-sync](.rddf/improvements/changelog-usage-sync.md) | P1 | 2026-08-28 | guide-arch |
 | [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | P1 | 2026-08-28 | guide-arch |

@@ -48,18 +48,30 @@ def _parse_frontmatter(text: str) -> dict:
     return out
 
 
-def scan_adr_catalog(project_root: Path, adr_dir: str = "docs/adr") -> dict[str, AdrMeta]:
+def scan_adr_catalog(
+    project_root: Path,
+    adr_dir: str = "docs/adr",
+    adr_pattern: Optional[str] = None,
+) -> dict[str, AdrMeta]:
     """Scan {project_root}/{adr_dir}/ADR-*.md, return {adr_id: AdrMeta}.
 
-    Files not matching ADR_PATTERN (e.g. README.md) are skipped.
+    Files not matching the ADR pattern (e.g. README.md) are skipped.
     A missing directory yields an empty dict.
+
+    Args:
+        project_root: Project root path.
+        adr_dir: ADR directory relative to project_root (default "docs/adr").
+        adr_pattern: Optional regex pattern overriding the default 4-digit
+            pattern (^ADR-(\\d{4})-.*\\.md$). Useful for projects with shorter
+            or longer ADR numbering (e.g. ChipForge uses 3-digit: ^ADR-(\\d{3})).
     """
     root = Path(project_root) / adr_dir
     out: dict[str, AdrMeta] = {}
     if not root.is_dir():
         return out
+    pattern = re.compile(adr_pattern) if adr_pattern else ADR_PATTERN
     for f in sorted(root.glob("ADR-*.md")):
-        m = ADR_PATTERN.match(f.name)
+        m = pattern.match(f.name)
         if not m:
             continue
         adr_id = f"ADR-{m.group(1)}"

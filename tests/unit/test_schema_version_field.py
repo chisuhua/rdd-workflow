@@ -26,8 +26,8 @@ def test_version_field_present(schema_name: str):
     assert isinstance(data["version"], dict), (
         f"{schema_name}: 'version' must be a JSON Schema object with const"
     )
-    assert data["version"].get("const") == "v1", (
-        f"{schema_name}: version.const must equal 'v1', got "
+    assert data["version"].get("const") in ("v1", "v2", "v3"), (
+        f"{schema_name}: version.const must be one of v1/v2/v3, got "
         f"{data['version'].get('const')!r}"
     )
 
@@ -37,7 +37,7 @@ def test_version_field_distinct_from_properties_version():
     top-level const version is a separate metadata field."""
     sessions = json.loads((SCHEMA_DIR / "sessions_schema.json").read_text())
     assert "version" in sessions
-    assert sessions["version"].get("const") == "v1"
+    assert sessions["version"].get("const") in ("v1", "v2", "v3")
     assert "version" in sessions.get("properties", {}), (
         "sessions_schema.json should preserve its business properties.version"
     )

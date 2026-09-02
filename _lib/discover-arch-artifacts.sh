@@ -168,6 +168,23 @@ discover_adr_pattern() {
     return 0
   fi
 
+  # Path 1.5: read .rddf/project.yaml (overrides defaults, below env var).
+  if [ -f "${PROJECT_ROOT:-.}/.rddf/project.yaml" ]; then
+    local _helper="${PROJECT_ROOT:-.}/_lib/project_config.sh"
+    if [ -f "$_helper" ]; then
+      # shellcheck disable=SC1090
+      source "$_helper"
+      local _yaml_pattern
+      _yaml_pattern=$(project_yaml_get "adr.pattern" "")
+      if [ -n "$_yaml_pattern" ]; then
+        DISCOVERED_ADR_PATTERN="$_yaml_pattern"
+        export DISCOVERED_ADR_PATTERN
+        echo "${DISCOVERED_ADR_PATTERN}"
+        return 0
+      fi
+    fi
+  fi
+
   local _probe_dir="${DISCOVERED_ADR_DIR:-docs/adr}"
   local _candidates=("ADR-*.md" "adr-*.md")
   for _candidate in "${_candidates[@]}"; do
