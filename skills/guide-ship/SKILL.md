@@ -79,6 +79,23 @@ source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/ship_env_check.sh"
 run_ship_env_check
 ```
 
+**Step 1.5 — project.yaml openspec_tracked 早检测**（per complete-project-yaml-config-gaps M3 Task 3.1 + spec.md `guide-ship-phase-1-detect-lightweight`）：
+
+```bash
+# Step 1.5: 在 worktree 创建之前检测 project.yaml git.openspec_tracked override
+# 优先级: env var > project.yaml > 默认 (true)
+# 若 openspec_tracked=false → 强制走 lightweight 分支 (跳过 worktree 创建)
+if [ -f "${PROJECT_ROOT:-.}/.rddf/project.yaml" ] && [ -f "${PROJECT_ROOT:-.}/_lib/project_config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "${PROJECT_ROOT:-.}/_lib/project_config.sh"
+    OPENSPEC_TRACKED=$(project_yaml_get "git.openspec_tracked" "true")
+    if [ "$OPENSPEC_TRACKED" = "false" ]; then
+        echo "⚡ 强制轻量模式 (openspec_tracked=false, branch only, no worktree)"
+        export RDDF_EXECUTION_MODE="lightweight"
+    fi
+fi
+```
+
 **前置说明**：
 
 每个 change 独立经历 plan→execute→archive。用户选择要处理的 change 后，自动检测并行冲突，选择执行模式：
