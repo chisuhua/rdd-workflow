@@ -1,4 +1,4 @@
-"""_lib/write_arch_handoff.py — write .arch-handoff.json (ADR-0016 v1 schema).
+"""_lib/write_arch_handoff.py — write .arch-handoff.json (ADR-0016 v2 schema).
 
 Extracted from skills/guide-arch.md lines 618-707 (~88-line inline bash block).
 Preserves exact behavior: ADR glob, ID extraction, roadmap phase reading,
@@ -15,7 +15,7 @@ import json
 import os
 import re
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
 
 
 def _to_bool(s: str) -> bool:
@@ -85,6 +85,25 @@ def _read_roadmap_phase(roadmap_abs: str) -> str:
     except Exception:
         return "default"
     return "default"
+
+
+def _read_project_yaml_adr_pattern(project_root: str) -> Optional[str]:
+    """Read .rddf/project.yaml adr.pattern (Python regex) if present.
+
+    Per complete-project-yaml-config-gaps M4 Task 4.6: arch-handoff carries
+    the Python regex from project.yaml so populate_lib can pass it through.
+    Returns None if project.yaml absent or corrupt (graceful fallback).
+    """
+    import yaml
+    project_yaml = os.path.join(project_root, ".rddf", "project.yaml")
+    if not os.path.isfile(project_yaml):
+        return None
+    try:
+        with open(project_yaml) as f:
+            cfg = yaml.safe_load(f) or {}
+        return cfg.get("adr", {}).get("pattern")
+    except (yaml.YAMLError, OSError):
+        return None
 
 
 def write_arch_handoff(
@@ -168,8 +187,13 @@ def write_arch_handoff(
                 "candidates_tried": _to_int(discovered_arch_tried),
             },
         },
-        "version": 1,
+        "version": 2,
     }
+    # v2: add adr_regex from .rddf/project.yaml (Python regex passthrough
+    # for populate_lib). Distinct from adr_pattern (glob). Optional.
+    adr_regex = _read_project_yaml_adr_pattern(project_root)
+    if adr_regex:
+        handoff["adr_regex"] = adr_regex
 
     # Write to disk
     state_dir = os.path.join(project_root, ".rddf", "state")
