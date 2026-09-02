@@ -328,7 +328,7 @@ verifier_contract_check() {
   result=$(RDDF_PROJECT_ROOT="$project_root" \
            FEATURE_ARCHIVE_GATE="${FEATURE_ARCHIVE_GATE:-off}" \
            PYTHONPATH="$pythonpath" \
-           python3 -m _lib.verifier.archive_gate check "$change_name" 2>&1) || true
+           python3 -m _lib.verifier.archive_gate check "$change_name" 2>/dev/null) || true
   unset RDDF_PROJECT_ROOT
 
   if [ "$result" = "READY" ]; then
