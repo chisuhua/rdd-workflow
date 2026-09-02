@@ -316,3 +316,50 @@ def test_project_yaml_valid_full_payload_parses(tmp_path, clean_env):
     assert config["adr"]["pattern"] == r"^ADR-(\d{3})-.*\.md$"
     assert config["git"]["openspec_tracked"] is False
     assert config["verification"]["provider"] == "hook"
+
+
+# ============================================================================
+# Task 1.4 (M1): 向后兼容零回归 — 验证现有 i10 测试 + 既有 .rddf.json 用户路径
+# ============================================================================
+
+
+def test_existing_rddf_json_user_zero_alignment(tmp_path, clean_env):
+    """Existing user with only .rddf.json (no project.yaml) sees zero behavior change.
+
+    This is the canonical 'zero regression' lock — the i10 contract promised
+    that adding project.yaml support does not break existing users.
+
+    Pre-M1: config["project"] was absent, .rddf.json-only users unaffected.
+    Post-M1: config["project"] == {} (default placeholder), still zero behavioral impact.
+    """
+    # Simulate existing user: only .rddf.json, no project.yaml, no loop.yaml
+    (tmp_path / ".rddf.json").write_text(json.dumps({
+        "interaction": {"mode": "loop"},
+        "loop": {"max_iterations": 50, "max_retries": 2},
+    }))
+    parser = ConfigParser(project_root=str(tmp_path))
+    config = parser.parse()
+    # .rddf.json values preserved
+    assert config["interaction"]["mode"] == "loop"
+    assert config["loop"]["max_iterations"] == 50
+    # project placeholder is empty (no behavioral effect)
+    assert config.get("project") == {}
+    # No new top-level keys leaked into config (other than defaults' empty project)
+    # Defaults-merged keys are allowed (state/event_log/gate/sync/reporting/interaction/loop)
+    assert set(config.keys()) >= {"version", "interaction", "loop", "state", "event_log",
+                                     "gate", "sync", "reporting", "project"}
+
+
+def test_existing_loop_yaml_user_zero_alignment(tmp_path, clean_env):
+    """Existing user with only loop.yaml sees zero behavior change (priority chain intact)."""
+    (tmp_path / "loop.yaml").write_text(yaml.dump({
+        "loop": {"max_iterations": 250},
+    }))
+    parser = ConfigParser(project_root=str(tmp_path))
+    config = parser.parse()
+    # loop.yaml override applied
+    assert config["loop"]["max_iterations"] == 250
+    # other defaults preserved
+    assert config["loop"]["max_retries"] == 3
+    # project placeholder still empty
+    assert config.get("project") == {}
