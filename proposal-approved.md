@@ -141,6 +141,8 @@
 
 
 
+| [rfc-rddf-project-yaml-config-i10](.rddf/improvements/rfc-rddf-project-yaml-config-i10.md) | P1 | 2026-09-01 | guide-design |
+
 ## 已实施
 | [worktree-context-persistence](.rddf/improvements/worktree-context-persistence.md) | P1 | 2026-09-01 |
 | [reduce-rdd-workflow-tool-call-friction](.rddf/improvements/reduce-rdd-workflow-tool-call-friction.md) | P1 | 2026-09-01 |

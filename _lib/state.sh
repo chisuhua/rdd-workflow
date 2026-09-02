@@ -172,7 +172,7 @@ append_approved() {
   fi
   
   # Insert before the ## 已实施 section
-  local new_row="| [$name](.rddf/improvements/$name.md) | $priority | $timestamp | guide-arch |"
+  local new_row="| [$name](.rddf/improvements/$name.md) | $priority | $timestamp | guide-design |"
   
   if grep -q '## 已实施' "$approved_file"; then
     # Insert before ## 已实施
