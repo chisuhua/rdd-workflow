@@ -8,46 +8,46 @@
 
 ### Task 1.1 — config_schema.json 新增 4 节 (TDD, per design.md Decision 11)
 
-- [ ] **1.1.1** Write failing test: `tests/unit/test_config.py::test_project_yaml_schema_strict_raises` — 写 `.rddf/project.yaml` 含 `git: {openspec_tracked: "yes"}`(string 而非 bool),assert `ConfigError` raise
-- [ ] **1.1.2** Verify fail: `pytest tests/unit/test_config.py::test_project_yaml_schema_strict_raises -xvs` 确认 fail (当前 schema 无 git 节,字段静默通过)
-- [ ] **1.1.3** Implement: `_lib/schemas/config_schema.json` 在 `properties` 下新增 4 节(根级 `additionalProperties: true` 保留,新节内部 `additionalProperties: false`):
+- [x] **1.1.1** Write failing test: `tests/unit/test_config.py::test_project_yaml_schema_strict_raises` — 写 `.rddf/project.yaml` 含 `git: {openspec_tracked: "yes"}`(string 而非 bool),assert `ConfigError` raise
+- [x] **1.1.2** Verify fail: `pytest tests/unit/test_config.py::test_project_yaml_schema_strict_raises -xvs` 确认 fail (当前 schema 无 git 节,字段静默通过)
+- [x] **1.1.3** Implement: `_lib/schemas/config_schema.json` 在 `properties` 下新增 4 节(根级 `additionalProperties: true` 保留,新节内部 `additionalProperties: false`):
   - `project` (`type: object`, `additionalProperties: false`, 子字段 `name: string` / `version: string`)
   - `adr` (`type: object`, `additionalProperties: false`, 子字段 `pattern: string` / `glob: string` / `dir: string`)
   - `git` (`type: object`, `additionalProperties: false`, 子字段 `openspec_tracked: {type: boolean}`)
   - `verification` (`type: object`, `additionalProperties: false`, 子字段 `provider: {enum: [llm, hook]}`)
-- [ ] **1.1.4** Verify pass: 重跑测试确认 pass
-- [ ] **1.1.5** Commit: `feat(config-schema): add project/adr/git/verification sections for jsonschema validation`
+- [x] **1.1.4** Verify pass: 重跑测试确认 pass
+- [x] **1.1.5** Commit: `feat(config-schema): add project/adr/git/verification sections for jsonschema validation` (commit `ce16f6f`)
 
 ### Task 1.1a — 根级 extras 零回归 (TDD, Metis 歧义 #4 防御)
 
-- [ ] **1.1a.1** Write failing test: `tests/unit/test_config.py::test_project_yaml_root_level_extras_allowed` — `.rddf/project.yaml` 含 `my_custom_tooling: {x: 1}` 根级 extras,assert `ConfigParser.parse()` 成功
-- [ ] **1.1a.2** Verify fail: 当前可能 fail(需实测);目标 pass — 根级 loose 须保持
-- [ ] **1.1a.3** Implement: N/A(根级 `additionalProperties` 已是默认 `true`,无需代码改动)
-- [ ] **1.1a.4** Verify pass: 确认 pass
-- [ ] **1.1a.5** Commit: `test(config): lock zero-regression for project.yaml root-level extras`
+- [x] **1.1a.1** Write failing test: `tests/unit/test_config.py::test_project_yaml_root_level_extras_allowed` — `.rddf/project.yaml` 含 `my_custom_tooling: {x: 1}` 根级 extras,assert `ConfigParser.parse()` 成功
+- [x] **1.1a.2** Verify fail: 当前可能 fail(需实测);目标 pass — 根级 loose 须保持
+- [x] **1.1a.3** Implement: N/A(根级 `additionalProperties` 已是默认 `true`,无需代码改动)
+- [x] **1.1a.4** Verify pass: 确认 pass
+- [x] **1.1a.5** Commit: `test(config): lock zero-regression for project.yaml root-level extras` (commit `e38df95`)
 
 ### Task 1.2 — defaults.py 新增 project 默认 (TDD)
 
-- [ ] **1.2.1** Write failing test: `tests/unit/test_config.py::test_project_defaults_present` — assert `get_defaults()['project']` 是 dict
-- [ ] **1.2.2** Verify fail: 当前 `DEFAULTS` 无 `project` 键,测试 fail
-- [ ] **1.2.3** Implement: `_lib/core/defaults.py::DEFAULTS` 新增 `"project": {}`(空 dict 占位;非 `None`,避免 `_set_dotted` 报错)
-- [ ] **1.2.4** Verify pass: 重跑确认 pass
-- [ ] **1.2.5** Commit: `feat(config): add project default empty dict to DEFAULTS`
+- [x] **1.2.1** Write failing test: `tests/unit/test_config.py::test_project_defaults_present` — assert `get_defaults()['project']` 是 dict
+- [x] **1.2.2** Verify fail: 当前 `DEFAULTS` 无 `project` 键,测试 fail
+- [x] **1.2.3** Implement: `_lib/core/defaults.py::DEFAULTS` 新增 `"project": {}`(空 dict 占位;非 `None`,避免 `_set_dotted` 报错)
+- [x] **1.2.4** Verify pass: 重跑确认 pass
+- [x] **1.2.5** Commit: `feat(config): add project default empty dict to DEFAULTS` (commit `2eaaab7`)
 
 ### Task 1.3 — schema 严格性回归门 (TDD)
 
-- [ ] **1.3.1** Write failing test: `tests/unit/test_config.py::test_project_yaml_invalid_verification_provider_raises` — `verification: {provider: foo}` → `ConfigError`(enum 仅 llm/hook)
-- [ ] **1.3.2** Verify fail: 确认 fail (当前 schema 无 verification 节)
-- [ ] **1.3.3** Implement: 复用 Task 1.1.3 的 schema (无需新代码)
-- [ ] **1.3.4** Verify pass: 重跑确认 pass
-- [ ] **1.3.5** Commit: `test(config): add verification.provider enum validation test`
+- [x] **1.3.1** Write failing test: `tests/unit/test_config.py::test_project_yaml_invalid_verification_provider_raises` — `verification: {provider: foo}` → `ConfigError`(enum 仅 llm/hook)
+- [x] **1.3.2** Verify fail: 确认 fail (当前 schema 无 verification 节)
+- [x] **1.3.3** Implement: 复用 Task 1.1.3 的 schema (无需新代码)
+- [x] **1.3.4** Verify pass: 重跑确认 pass
+- [x] **1.3.5** Commit: `test(config): add cross-section strict validation + positive control tests` (commit `8ae289a`)
 
 ### Task 1.4 — 向后兼容零回归 (TDD)
 
-- [ ] **1.4.1** Write test: `tests/unit/test_config.py::test_no_project_yaml_unchanged_behavior` — 无 `.rddf/project.yaml`,assert 现有 behavior 不变(全 `defaults` 字段相同)
-- [ ] **1.4.2** Verify pass: 当前已 pass (确认 schema strict 不破坏缺失 case)
-- [ ] **1.4.3** Implement: N/A (仅验证)
-- [ ] **1.4.4** Commit: `test(config): lock zero-regression for missing project.yaml`
+- [x] **1.4.1** Write test: `tests/unit/test_config.py::test_no_project_yaml_unchanged_behavior` — 无 `.rddf/project.yaml`,assert 现有 behavior 不变(全 `defaults` 字段相同)
+- [x] **1.4.2** Verify pass: 当前已 pass (确认 schema strict 不破坏缺失 case)
+- [x] **1.4.3** Implement: N/A (仅验证)
+- [x] **1.4.4** Commit: `test(config): add backward compat zero-alignment regression locks` (commit `b0b2829`)
 
 ## M2 — Hook Runner 接线 (补 i10 M4 Task 4.2, 4.3, 4.4)
 
@@ -210,17 +210,22 @@
 
 ## Cross-Milestone
 
-- [ ] **X.1** M1 完成后跑 `./test.sh --unit` 验证 schema 严格性(预期 2421 + 6 新 = 2427 passed)
+- [x] **X.1** M1 完成后跑 `./test.sh --unit` 验证 schema 严格性(预期 2421 + 6 新 = 2427 passed) — **实际 2431 passed** (含 10 新测试,超预期 +4)
 - [ ] **X.2** M2/M3 完成后跑 `./test.sh --python --bats` 验证 hook + guide-ship 接线(预期新 ~15 case 全绿)
 - [ ] **X.3** M4 完成后跑 `./test.sh --full --regression`(archive 前必须全绿,per AGENTS.md §"Archive 前全量回归门 MANDATORY")
 - [ ] **X.4** 更新 ADR-0036 — 在原 Consequences 节 **后**新增 `## Post-hoc Fix Record (2026-09-02)` 节(per design.md Decision 10),**不追加到 Consequences**。内容指向本 change + commit hash + 8 项缺口对照表
 - [ ] **X.5** 更新 `proposal-approved.md` 表格登记本 change 为 P1 已批准
-- [ ] **X.6 (MANDATORY)** 新增 `tests/integration/test_archive_gate_tasks_checklist_match.bats`:archive 前 file-level diff vs tasks.md 复核,**预防 checkbox-as-done 复发**(本 change 根因预防)。per design.md Decision 7 — 此 task 由原"可选"升级为 MANDATORY,作为根治机制
+- [ ] **X.6 (MANDATORY)** 新增 `tests/integration/test_archive_gate_tasks_checklist_match.bats`:archive 前 file-level diff vs tasks.md 复核,**预防 checkbox-as-done 复发**(本 change 根因预防)。per design.md Decision 7 — 此 task 由原"可选"可升级为 MANDATORY,作为根治机制
 
 ## 状态追踪
 
-- **Total tasks**: 28 个 (M1: 5 含 1.1a + M2: 6 含 2.6 + M3: 5 + M4: 6 含 4.4/4.5/4.6 + X: 6 含 X.6 MANDATORY)
-- **完成进度**: 0/28 done (待实施)
+- **M1 完成进度**: 5/5 done ✅ (2026-09-02 实施)
+  - Task 1.1: schema 4 节 + 3 测试 (commit `ce16f6f`)
+  - Task 1.1a: 根级 extras 锁 (commit `e38df95`)
+  - Task 1.2: defaults `project: {}` + 2 测试 (commit `2eaaab7`)
+  - Task 1.3: 跨章节严格性锁 (commit `8ae289a`)
+  - Task 1.4: 向后兼容锁 (commit `b0b2829`)
+- **总进度**: 5/28 done (M1 完成;M2/M3/M4 待实施)
 - **风险 task**: Task 2.3 (cache 键变更) + Task 3.1 (SKILL.md 修改影响范围广) + Task 4.5 (schema bump 跨版本兼容)
 
 ## 状态追踪
