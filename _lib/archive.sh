@@ -521,7 +521,7 @@ archive_change() {
     openspec_tracked=$(project_yaml_get "git.openspec_tracked" "true")
   fi
 
-  if [ "$openspec_tracked" = "false" ]; then
+  if [ "$openspec_tracked" = "false" ] || [ "$openspec_tracked" = "False" ]; then
     echo "📦 openspec_tracked=false: 跳过 git merge/commit"
     switch_to_default_branch "$main_root" "$default_branch" || return 1
     if ! openspec archive "$name" --yes; then
