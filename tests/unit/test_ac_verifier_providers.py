@@ -341,3 +341,40 @@ class TestOllamaProvider:
         monkeypatch.setenv("AC_LLM_API_KEY", "k")
         p = OllamaProvider()
         assert p.base_url == "http://localhost:11434"
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# T8: MiniMaxProvider (placeholder, no hardcoded endpoint)
+# ──────────────────────────────────────────────────────────────────────────────
+
+from skills.ac_verifier.scripts.llm_providers.minimax import MiniMaxProvider
+
+
+class TestMiniMaxProvider:
+    def test_default_base_url_is_empty_string(self):
+        """MiniMax has no hardcoded endpoint — user MUST set AC_LLM_BASE_URL."""
+        assert MiniMaxProvider.default_base_url == ""
+
+    def test_payload_uses_openai_compat_format(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        monkeypatch.setenv("AC_LLM_BASE_URL", "https://minimax.example.com")
+        p = MiniMaxProvider()
+        payload = p._build_payload("sys", "usr")
+        assert payload["model"] == "MiniMax-M3"
+        assert payload["messages"] == [
+            {"role": "system", "content": "sys"},
+            {"role": "user", "content": "usr"},
+        ]
+
+    def test_headers_use_bearer_auth(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "minimax-key")
+        monkeypatch.setenv("AC_LLM_BASE_URL", "https://minimax.example.com")
+        p = MiniMaxProvider()
+        h = p._build_headers()
+        assert h["Authorization"] == "Bearer minimax-key"
+
+    def test_constructing_without_base_url_raises_provider_error(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        monkeypatch.delenv("AC_LLM_BASE_URL", raising=False)
+        with pytest.raises(ProviderError, match="AC_LLM_BASE_URL"):
+            MiniMaxProvider()
