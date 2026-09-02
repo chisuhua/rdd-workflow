@@ -209,39 +209,39 @@ mark_approved_completed() {
     return 1
   fi
 
-  python3 -c "
-import sys, re, os
-with open(sys.argv[1]) as f:
-    lines = f.readlines()
-name = sys.argv[2]
-ts = sys.argv[3]
-project_root = sys.argv[4]
+  APPROVED_FILE="$approved_file" CHANGE_NAME="$name" CHANGE_TS="$timestamp" PROJECT_ROOT="$project_root" \
+  python3 << 'PYEOF'
+import os, re, sys
 
-# Split sections: everything after '## 已实施' is the completed table
+approved_file = os.environ["APPROVED_FILE"]
+name = os.environ["CHANGE_NAME"]
+ts = os.environ["CHANGE_TS"]
+project_root = os.environ["PROJECT_ROOT"]
+
+with open(approved_file) as f:
+    lines = f.readlines()
+
 completed_section_start = None
 for i, line in enumerate(lines):
     if line.startswith('## 已实施'):
         completed_section_start = i
         break
 
-# Idempotency: if entry already in completed table, keep original row (preserve date)
 for i, line in enumerate(lines):
     if f'[{name}]' in line and line.strip().startswith('|'):
         if completed_section_start is not None and i > completed_section_start:
-            sys.exit(0)  # already completed — preserve original date, no rewrite
+            sys.exit(0)
 
-# Find entry in approved table (only in the approved section)
 approved_idx = None
 approved_line = None
 for i, line in enumerate(lines):
     if f'[{name}]' in line and line.strip().startswith('|'):
         if completed_section_start is not None and i > completed_section_start:
-            continue  # skip completed-section rows
+            continue
         approved_idx = i
         approved_line = line
         break
 
-# Fallback: if not in main table, check archive/<date>-<name>/ pattern
 if approved_idx is None:
     archive_dir = os.path.join(project_root, 'openspec/changes/archive')
     if os.path.isdir(archive_dir):
@@ -249,14 +249,8 @@ if approved_idx is None:
         pattern = os.path.join(archive_dir, '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-' + name)
         matches = glob.glob(pattern)
         if matches:
-            # Recovery path: entry was lost in plan-phase commit but archive exists
-            # Default priority to P1 since we don't know the original priority
             priority = 'P1'
-            # FIX (2026-08-25): include `| 已实施 |` status column (4 columns total) to match
-            # proposal-approved.md table schema. Previously 3 columns broke
-            # tests/unit/test_proposal_table_schema.py and rdd-doctor proposal-table check.
             completed_row = f'| [{name}](.rddf/improvements/{name}.md) | {priority} | {ts} | 已实施 |\n'
-            # Insert into completed table after header
             inserted = False
             for i, line in enumerate(lines):
                 if line.startswith('## 已实施'):
@@ -271,36 +265,28 @@ if approved_idx is None:
                         break
             if not inserted:
                 lines.append(completed_row)
-            with open(sys.argv[1], 'w') as f:
+            with open(approved_file, 'w') as f:
                 f.writelines(lines)
             sys.exit(0)
-    # No archive evidence either — emit warning, return 1
     print(f'⚠️ mark_approved_completed: {name} not found in proposal-approved.md and no archive/ detected', file=sys.stderr)
     sys.exit(1)
 
-# Extract priority from approved row
 priority = '?'
 if approved_line:
     m = re.search(r'\|\s*\[[^\]]+\]\([^)]+\)\s*\|\s*(\S+)\s*\|', approved_line)
     if m:
         priority = m.group(1)
 
-# Remove from approved table
 if approved_idx is not None:
     del lines[approved_idx]
 
-# Insert into completed table after header
-# FIX (2026-08-25): include `| 已实施 |` status column (4 columns total). Locked by
-# tests/unit/test_proposal_table_schema.py + rdd-doctor proposal-table check.
 completed_row = f'| [{name}](.rddf/improvements/{name}.md) | {priority} | {ts} | 已实施 |\n'
 inserted = False
 for i, line in enumerate(lines):
     if line.startswith('## 已实施'):
-        # Find the separator line after the header
         j = i + 1
         while j < len(lines):
             if lines[j].strip().startswith('|---'):
-                # Insert after separator
                 lines.insert(j + 1, completed_row)
                 inserted = True
                 break
@@ -311,9 +297,9 @@ for i, line in enumerate(lines):
 if not inserted:
     lines.append(completed_row)
 
-with open(sys.argv[1], 'w') as f:
+with open(approved_file, 'w') as f:
     f.writelines(lines)
-" "$approved_file" "$name" "$timestamp" "$project_root"
+PYEOF
   local rc=$?
   if [ "$rc" -eq 0 ]; then
     sync_suggestions "$project_root" "$name" "completed"
