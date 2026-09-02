@@ -9,6 +9,7 @@ Cache file: `.rddf/state/.ac-verdict-<change>.json` (gitignored).
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,6 +22,42 @@ _SCHEMA_VERSION = SCHEMA_VERSION_V2
 
 def _cache_path(project_root: Path, change_name: str) -> Path:
     return Path(project_root) / ".rddf" / "state" / f".ac-verdict-{change_name}.json"
+
+
+def cache_key(
+    change_name: str,
+    project_root: Path,
+    *,
+    provider: str = "llm",
+    hook_path: Optional[Path] = None,
+) -> str:
+    """Compute SHA256 content-derived cache key for a verification verdict.
+
+    Per complete-project-yaml-config-gaps M2 Task 2.4 + spec.md
+    'verifier-cache-hook-key' requirement: keys differ across providers
+    to prevent cross-provider cache poisoning (e.g. LLM cached verdict
+    must not be reused when user switches verification.provider: hook).
+
+    Args:
+        change_name: OpenSpec change name.
+        project_root: Absolute project root path.
+        provider: Verification provider ('llm' or 'hook'). Defaults to 'llm'.
+        hook_path: Required when provider='hook' to scope cache by command.
+
+    Returns:
+        SHA256 hex digest (64 chars) of canonical JSON payload.
+    """
+    payload = {
+        "change": change_name,
+        "root": str(Path(project_root).resolve()),
+        "provider": provider,
+    }
+    if provider == "hook":
+        resolved = str(Path(hook_path).resolve()) if hook_path else ""
+        payload["hook"] = resolved
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True).encode("utf-8")
+    ).hexdigest()
 
 
 def verdict_cache(

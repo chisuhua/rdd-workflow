@@ -3,6 +3,9 @@
 Per fix-rdd-verifier-lifecycle-dashboard Task 3:
 - Cache carries verification_state, failed_acs, schema_version, implementation_ref, source/ran_by
 - Backward compat with v1 (version=1) reads
+
+Per complete-project-yaml-config-gaps M2 Task 2.4:
+- cache_key() supports provider=hook with SHA+command-hash composite
 """
 import json
 import sys
@@ -14,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from _lib.verifier.cache import (
     verdict_cache, read_verdict_cache, is_cache_fresh,
-    _cache_path, _SCHEMA_VERSION,
+    _cache_path, _SCHEMA_VERSION, cache_key,
 )
 
 
@@ -97,3 +100,48 @@ def test_cache_failed_acs_serialized_as_list(tmp_path):
 
 def test_schema_version_constant_is_2():
     assert _SCHEMA_VERSION == 2
+
+
+# ============================================================================
+# M2 Task 2.4 (complete-project-yaml-config-gaps M2):
+# cache_key supports provider=hook with SHA+command-hash composite
+# ============================================================================
+
+
+def test_cache_key_default_provider_is_llm(tmp_path):
+    """cache_key with no provider defaults to 'llm' (backward compat)."""
+    key = cache_key("ch-x", tmp_path)
+    key_explicit = cache_key("ch-x", tmp_path, provider="llm")
+    assert isinstance(key, str)
+    assert len(key) == 64  # SHA256 hex digest
+    assert key == key_explicit
+
+
+def test_cache_key_hook_differs_from_llm(tmp_path):
+    """cache_key with provider=hook must differ from provider=llm."""
+    key_llm = cache_key("ch-x", tmp_path, provider="llm")
+    key_hook = cache_key("ch-x", tmp_path, provider="hook")
+    assert key_llm != key_hook
+
+
+def test_cache_key_hook_includes_command_path(tmp_path):
+    """Two hook commands produce different cache keys (prevent cross-hook poisoning)."""
+    hook_a = tmp_path / "hook_a.sh"
+    hook_b = tmp_path / "hook_b.sh"
+    key_a = cache_key("ch-x", tmp_path, provider="hook", hook_path=hook_a)
+    key_b = cache_key("ch-x", tmp_path, provider="hook", hook_path=hook_b)
+    assert key_a != key_b
+
+
+def test_cache_key_stable_across_calls(tmp_path):
+    """Same inputs → same SHA (deterministic)."""
+    key1 = cache_key("ch-x", tmp_path, provider="hook", hook_path=tmp_path/"h.sh")
+    key2 = cache_key("ch-x", tmp_path, provider="hook", hook_path=tmp_path/"h.sh")
+    assert key1 == key2
+
+
+def test_cache_key_different_changes_produce_different_keys(tmp_path):
+    """Different change_name → different cache keys (per-change isolation)."""
+    key_x = cache_key("ch-x", tmp_path, provider="llm")
+    key_y = cache_key("ch-y", tmp_path, provider="llm")
+    assert key_x != key_y
