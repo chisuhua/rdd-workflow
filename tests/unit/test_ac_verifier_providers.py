@@ -98,3 +98,138 @@ class TestEnvVarParsing:
         monkeypatch.delenv("AC_LLM_BASE_URL", raising=False)
         with pytest.raises(ProviderError, match="AC_LLM_BASE_URL"):
             _NoDefault()
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# T4: BaseHTTPProvider.invoke() with retry + error classification
+# ──────────────────────────────────────────────────────────────────────────────
+
+import requests
+from unittest.mock import MagicMock
+
+
+class TestInvokeRetry:
+    """Verify retry-on-transient, no-retry-on-auth, error classification."""
+
+    def _patch_post(self, monkeypatch, side_effects):
+        """side_effects is a list of (response_or_exception) in order."""
+        calls = []
+
+        def fake_post(*args, **kwargs):
+            calls.append((args, kwargs))
+            effect = side_effects[len(calls) - 1]
+            if isinstance(effect, BaseException):
+                raise effect
+            return effect
+
+        monkeypatch.setattr(requests, "post", fake_post)
+        return calls
+
+    def test_successful_200_returns_parsed_text(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        resp = MagicMock(status_code=200)
+        resp.json.return_value = {"choices": [{"message": {"content": "hi"}}]}
+        self._patch_post(monkeypatch, [resp])
+        p = _FakeProvider()
+        assert p.invoke("sys", "usr") == "hi"
+
+    def test_401_raises_auth_error_no_retry(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        resp = MagicMock(status_code=401)
+        calls = self._patch_post(monkeypatch, [resp])
+        p = _FakeProvider()
+        with pytest.raises(AuthError, match="HTTP 401"):
+            p.invoke("sys", "usr")
+        assert len(calls) == 1  # no retry
+
+    def test_403_raises_auth_error_no_retry(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        resp = MagicMock(status_code=403)
+        calls = self._patch_post(monkeypatch, [resp])
+        p = _FakeProvider()
+        with pytest.raises(AuthError, match="HTTP 403"):
+            p.invoke("sys", "usr")
+        assert len(calls) == 1
+
+    def test_429_retries_3x_then_raises(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        monkeypatch.setenv("AC_LLM_MAX_RETRIES", "3")
+        monkeypatch.setattr("time.sleep", lambda s: None)
+        resp = MagicMock(status_code=429)
+        calls = self._patch_post(monkeypatch, [resp, resp, resp, resp])
+        p = _FakeProvider()
+        with pytest.raises(RateLimitError, match="HTTP 429"):
+            p.invoke("sys", "usr")
+        assert len(calls) == 4  # initial + 3 retries
+
+    def test_500_retries_then_raises(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        monkeypatch.setenv("AC_LLM_MAX_RETRIES", "3")
+        monkeypatch.setattr("time.sleep", lambda s: None)
+        resp = MagicMock(status_code=500)
+        calls = self._patch_post(monkeypatch, [resp, resp, resp, resp])
+        p = _FakeProvider()
+        with pytest.raises(ProviderError, match="HTTP 500"):
+            p.invoke("sys", "usr")
+        assert len(calls) == 4
+
+    def test_500_then_200_succeeds(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        monkeypatch.setenv("AC_LLM_MAX_RETRIES", "3")
+        monkeypatch.setattr("time.sleep", lambda s: None)
+        bad = MagicMock(status_code=500)
+        good = MagicMock(status_code=200)
+        good.json.return_value = {"choices": [{"message": {"content": "ok"}}]}
+        calls = self._patch_post(monkeypatch, [bad, good])
+        p = _FakeProvider()
+        assert p.invoke("sys", "usr") == "ok"
+        assert len(calls) == 2
+
+    def test_400_no_retry_raises_provider_error(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        resp = MagicMock(status_code=400, text="bad payload")
+        calls = self._patch_post(monkeypatch, [resp])
+        p = _FakeProvider()
+        with pytest.raises(ProviderError, match="HTTP 400"):
+            p.invoke("sys", "usr")
+        assert len(calls) == 1
+
+    def test_connection_error_retries_then_raises(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        monkeypatch.setenv("AC_LLM_MAX_RETRIES", "3")
+        monkeypatch.setattr("time.sleep", lambda s: None)
+        calls = self._patch_post(monkeypatch, [
+            requests.ConnectionError("refused"),
+            requests.ConnectionError("refused"),
+            requests.ConnectionError("refused"),
+            requests.ConnectionError("refused"),
+        ])
+        p = _FakeProvider()
+        with pytest.raises(NetworkError, match="ConnectionError"):
+            p.invoke("sys", "usr")
+        assert len(calls) == 4
+
+    def test_timeout_retries_then_raises(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        monkeypatch.setenv("AC_LLM_MAX_RETRIES", "3")
+        monkeypatch.setattr("time.sleep", lambda s: None)
+        calls = self._patch_post(monkeypatch, [
+            requests.Timeout("slow"),
+            requests.Timeout("slow"),
+            requests.Timeout("slow"),
+            requests.Timeout("slow"),
+        ])
+        p = _FakeProvider()
+        with pytest.raises(NetworkError, match="Timeout"):
+            p.invoke("sys", "usr")
+        assert len(calls) == 4
+
+    def test_max_retries_0_no_retry(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        monkeypatch.setenv("AC_LLM_MAX_RETRIES", "0")
+        resp = MagicMock(status_code=429)
+        calls = self._patch_post(monkeypatch, [resp])
+        p = _FakeProvider()
+        with pytest.raises(RateLimitError):
+            p.invoke("sys", "usr")
+        assert len(calls) == 1

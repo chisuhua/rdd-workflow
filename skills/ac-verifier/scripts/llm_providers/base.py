@@ -1,6 +1,13 @@
 """LLM error hierarchy + BaseHTTPProvider shared logic."""
 from __future__ import annotations
 
+import os
+import time
+from abc import ABC, abstractmethod
+from typing import Optional
+
+import requests
+
 
 class LLMError(Exception):
     """Base error for all LLM provider operations."""
@@ -20,10 +27,6 @@ class NetworkError(LLMError):
 
 class ProviderError(LLMError):
     """5xx server errors or malformed payloads. 5xx is retryable; 4xx payload errors are not."""
-
-
-import os
-from abc import ABC, abstractmethod
 
 
 class BaseHTTPProvider(ABC):
@@ -63,3 +66,45 @@ class BaseHTTPProvider(ABC):
     def _parse_response(self, data: dict) -> str:
         """Default: OpenAI format. Override for Anthropic."""
         return data["choices"][0]["message"]["content"]
+
+    def invoke(self, system: str, user: str) -> str:
+        """Call LLM, return text. Retry transient errors with exponential backoff."""
+        payload = self._build_payload(system, user)
+        headers = self._build_headers()
+        url = f"{self.base_url}/v1/chat/completions"
+        last_err: Optional[Exception] = None
+
+        for attempt in range(self.max_retries + 1):
+            try:
+                resp = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
+
+                if resp.status_code in (401, 403):
+                    raise AuthError(f"{self.name}: HTTP {resp.status_code}")
+
+                if resp.status_code == 429:
+                    if attempt < self.max_retries:
+                        time.sleep(2 ** attempt)
+                        continue
+                    raise RateLimitError(f"{self.name}: HTTP 429 (max retries)")
+
+                if resp.status_code >= 500:
+                    if attempt < self.max_retries:
+                        time.sleep(2 ** attempt)
+                        continue
+                    raise ProviderError(f"{self.name}: HTTP {resp.status_code}")
+
+                if resp.status_code != 200:
+                    raise ProviderError(
+                        f"{self.name}: HTTP {resp.status_code} body={resp.text[:200]}"
+                    )
+
+                return self._parse_response(resp.json())
+
+            except (requests.ConnectionError, requests.Timeout) as e:
+                last_err = e
+                if attempt < self.max_retries:
+                    time.sleep(2 ** attempt)
+                    continue
+                raise NetworkError(f"{self.name}: {type(e).__name__}: {e}")
+
+        raise ProviderError(f"{self.name}: max retries exceeded: {last_err}")
