@@ -274,3 +274,48 @@ def test_verify_change_no_ac_section_returns_0(tmp_path: Path):
     proposal.write_text("# T\n\n## Other\n- thing\n", encoding="utf-8")
     exit_code = verify_change("test-change", proposal, project_root=tmp_path, strict=False)
     assert exit_code == 0
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# T10: invoke_ai_agent dispatcher (mock short-circuit + provider dispatch)
+# ──────────────────────────────────────────────────────────────────────────────
+
+from unittest.mock import patch, MagicMock
+from skills.ac_verifier.scripts import ac_verifier
+
+
+class TestInvokeDispatcher:
+    """Verify invoke_ai_agent() correctly dispatches to mock or provider."""
+
+    def test_mock_mode_takes_priority_over_provider(self, monkeypatch):
+        """AC_LLM_MOCK=yes must short-circuit even if AC_LLM_PROVIDER is set."""
+        monkeypatch.setenv("AC_LLM_MOCK", "yes")
+        monkeypatch.setenv("AC_LLM_PROVIDER", "openai")
+        result = ac_verifier.invoke_ai_agent("sys", "usr")
+        assert isinstance(result, str)
+
+    def test_real_mode_unknown_provider_raises(self, monkeypatch):
+        monkeypatch.delenv("AC_LLM_MOCK", raising=False)
+        monkeypatch.setenv("AC_LLM_PROVIDER", "bogus")
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        # Unknown provider surfaces as ProviderError from get_provider() (per spec §5).
+        from skills.ac_verifier.scripts.llm_providers.base import ProviderError
+        with pytest.raises(ProviderError, match="Unknown provider 'bogus'"):
+            ac_verifier.invoke_ai_agent("sys", "usr")
+
+    def test_real_mode_missing_provider_raises(self, monkeypatch):
+        monkeypatch.delenv("AC_LLM_MOCK", raising=False)
+        monkeypatch.delenv("AC_LLM_PROVIDER", raising=False)
+        with pytest.raises(ac_verifier.AcVerifierError, match="AC_LLM_PROVIDER not set"):
+            ac_verifier.invoke_ai_agent("sys", "usr")
+
+    def test_real_mode_dispatches_to_provider(self, monkeypatch):
+        monkeypatch.delenv("AC_LLM_MOCK", raising=False)
+        monkeypatch.setenv("AC_LLM_PROVIDER", "openai")
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        fake_provider = MagicMock()
+        fake_provider.invoke.return_value = '{"ac_id": "AC-1", "status": "pass"}'
+        with patch.object(ac_verifier, "get_provider", return_value=fake_provider):
+            result = ac_verifier.invoke_ai_agent("sys", "usr")
+        assert "AC-1" in result
+        fake_provider.invoke.assert_called_once_with("sys", "usr")
