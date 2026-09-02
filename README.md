@@ -68,6 +68,37 @@ bash install.sh /path/to/project
    - `skill_use("status")` - 子技能(被 guide-ship 调用或独立使用)
    - `skill_use("rdd-workflow-writing-plans")` - 实施计划生成器(被 guide-ship 调用,v2.0 自包含 TDD 5 步结构)
 
+## 项目级配置 (`.rddf/project.yaml`)
+
+rdd-workflow 支持 `.rddf/project.yaml` 作为**项目级配置源**（per [ADR-0036](docs/adr/ADR-0036-rddf-project-yaml-config.md)），覆盖默认行为同时保持向后兼容（缺失 = 现状）。
+
+**示例（ChipForge 异构项目）**：
+
+```yaml
+# .rddf/project.yaml
+adr:
+  pattern: "^ADR-(\\d{3})-.*\\.md$"   # 3 位 ADR 编号
+  glob: "ADR-???.md"
+
+git:
+  openspec_tracked: false            # 强制轻量模式（无 worktree）
+
+verification:
+  provider: hook                      # 外部 hook 替代 LLM 验证
+```
+
+**优先级链**：`runtime > project.yaml > loop.yaml > env vars > .rddf.json > defaults`
+
+**支持的字段**：
+
+| 字段 | 作用 |
+|------|------|
+| `adr.pattern` | ADR 编号正则（默认 4 位） |
+| `git.openspec_tracked` | false 强制 guide-ship 轻量模式 |
+| `verification.provider` | `hook` 调 `tools/verify_change.sh` 替代 LLM |
+
+详见 [ADR-0036](docs/adr/ADR-0036-rddf-project-yaml-config.md) 与 [proposal #10](https://github.com/chisuhua/rdd-workflow/issues/10)。
+
 ## v3.0 新特性
 
 ### 五阶段架构 (arch → design → plan → ship → verify)

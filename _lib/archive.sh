@@ -514,6 +514,26 @@ archive_change() {
     return 1
   fi
 
+  local openspec_tracked="true"
+  if [ -f "$main_root/.rddf/project.yaml" ] && [ -f "$main_root/_lib/project_config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$main_root/_lib/project_config.sh"
+    openspec_tracked=$(project_yaml_get "git.openspec_tracked" "true")
+  fi
+
+  if [ "$openspec_tracked" = "false" ]; then
+    echo "📦 openspec_tracked=false: 跳过 git merge/commit"
+    switch_to_default_branch "$main_root" "$default_branch" || return 1
+    if ! openspec archive "$name" --yes; then
+      echo "❌ openspec archive 失败"
+      return 1
+    fi
+    cleanup_worktree_and_branch "$name" "$main_root" "$wt_path" "$branch" || true
+    commit_archive_moves "$name" "$main_root" || true
+    mark_iteration_archived "$name" "$main_root" ""
+    return 0
+  fi
+
   # 2. Pre-merge commit check (T20)
   check_worktree_commits "$name" >/dev/null || return 1
 
