@@ -108,3 +108,12 @@ plan_done 既有 5 项行为不变。
 - `skills/guide-plan/scripts/plan_intake.sh` (v1+v2 compat)
 - `skills/propose/scripts/propose_quality_check.py` (run_design_checks)
 - ADR-0003, ADR-0016, ADR-0017, ADR-0019 (相关)
+
+---
+
+## 演进（Evolution）
+
+> **状态**: 已采纳（v2.1 扩展 ADR）
+> **演进路径**: v2.1 四阶段（arch → design → plan → ship，本 ADR 奠基） → v3.0+ 五阶段（+ rdd-verifier，per ADR-0034）
+> **本 ADR 的历史决策保持不变**: 四阶段 + design 阶段独立化是 v2.1 的奠基决策；v3.0+ 扩展为五阶段由独立 ADR 显式记录（per ADR-0034）。
+> **如需查看当前架构**, 见 [ADR-0034](ADR-0034-rdd-verifier-verify-phase-architecture.md)。

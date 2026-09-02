@@ -10,8 +10,8 @@ For **decisions** behind the design, see [`../adr/README.md`](../adr/README.md).
 
 | Doc | Topic | Primary ADRs |
 |-----|-------|--------------|
-| [overview.md](overview.md) | System overview, module map, design principles | 0003, 0025 |
-| [workflow-phases.md](workflow-phases.md) | Four-phase arch → design → plan → ship + handoffs | 0003, 0024, 0025 |
+| [overview.md](overview.md) | System overview, module map, design principles | 0003, 0025, 0034 |
+| [workflow-phases.md](workflow-phases.md) | Five-phase arch → design → plan → ship → verify + handoffs (v3.0+ per ADR-0034) | 0003, 0024, 0025, 0034 |
 | [loop-engine.md](loop-engine.md) | 5 building blocks + loop/menu/hybrid modes | 0002, 0004 |
 | [state-and-events.md](state-and-events.md) | 3-layer state model | 0006, 0016 |
 | [gates-and-quality.md](gates-and-quality.md) | gate / tribunal / arch_quality_gate / change_alignment | 0007, 0008, 0018, 0019 |

@@ -2,9 +2,9 @@
 
 > rdd-workflow 架构决策记录 (Architecture Decision Records)
 
-> ## 📊 v2.0.9+ ADR 实施状态（2026-08-07 同步 docs-restructure）
+> ## 📊 v3.0+ ADR 实施状态（2026-08-28 同步 ADR-0034/0035）
 >
-> 本索引反映 **v2.0.9+** 代码现状（含 ADR-0025 引入的四阶段架构 arch → design → plan → ship）。
+> 本索引反映 **v3.0+** 代码现状（含 ADR-0025 引入的四阶段架构 arch → design → plan → ship，及 ADR-0034 扩展为五阶段架构 + `rdd-verifier` 第五阶段）。
 > 各 ADR 的实施状态以代码为准 — 见链接的 ADR 文件正文。
 >
 > | 范围 | ADR |
@@ -17,6 +17,7 @@
 > | 已实施（v2.0.6+） | 0025, 0026 |
 > | 已实施（v2.1.x+） | 0027（拆分至 fix-adr-0027-cleanup / add-issue-reporter-prereqs / add-issue-reporter / add-issue-reporter-tests） |
 > | 已实施（v2.0.5+） | 0016 |
+> | 已实施（v3.0+） | 0034（rdd-verifier 五阶段）, 0035（verifier-archive-gate 边界） |
 > | 部分实施（v2.0 轻量级） | 0010 |
 > | 已采纳，未实施（v3.0 候选） | 0009（占位）, 0011, 0012 |
 > | 已采纳（设计稿） | 0014, 0015 |
@@ -90,13 +91,24 @@ v2.0.5 (2026-07-16)        v2.0.6 (2026-07-21)        v2.0.9+ (2026-08-04+)
 ─────────────────          ─────────────────          ─────────────────
 per-skill scripts/    →    四阶段 arch/design/  →     全局安装 + deps 驱动
 迁移 (ADR-0021)             plan/ship (ADR-0025)        执行模式 (ADR-0024)
+
+v3.0+ (2026-08-26)
+──────────────────
+五阶段 arch/design/plan/ship/verify
+(ADR-0034 + ADR-0035)
+   ↓
+rdd-verifier 第五阶段（批量 AC 验证 + bounded retry）
+   ↓
+双轨设计边界（rdd-verifier ↔ archive_gate_check，per ADR-0035）
 ```
 
-## 决策依赖关系（v2.0.9+ 视角）
+## 决策依赖关系（v3.0+ 视角）
 
 ```
-ADR-0001 (双阶段分离) ─→ ADR-0003 (三阶段重构) ─→ ADR-0025 (扩展为四阶段)
-                                                       ↓
+ADR-0001 (双阶段分离) ─→ ADR-0003 (三阶段重构) ─→ ADR-0025 (扩展为四阶段) ─→ ADR-0034 (扩展为五阶段)
+                                                                                  ↓
+                                                              ADR-0035 (verifier-archive-gate 边界)
+                                                                                  ↓
 ADR-0003 ─→ ADR-0002 (交互模式) ─→ ADR-0004 (Loop 引擎) ─→ ADR-0005 (Human-in-Loop)
                                                               ↓
                                                       ADR-0008 (审判委员会)
@@ -115,7 +127,7 @@ ADR-0021 (per-skill scripts/ 迁移) ─→ ADR-0022 (manual_deps)
 ## 主题分类
 
 ### 架构设计
-- ADR-0003: 三阶段架构重构 → ADR-0025: 扩展为四阶段
+- ADR-0003: 三阶段架构重构 → ADR-0025: 扩展为四阶段（+ design）→ ADR-0034: 扩展为五阶段（+ rdd-verifier）→ ADR-0035: 双轨边界
 - ADR-0004: Loop 引擎核心设计
 - ADR-0011: 阶段步骤化执行模型 (v3.0 候选)
 

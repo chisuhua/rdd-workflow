@@ -1,6 +1,6 @@
 ---
 name: guide
-description: 交互式工作流入口——扫描项目当前状态，展示可选菜单（含 rddf-session 管理），用户可选菜单项执行或进入自由讨论模式咨询后再决定。详见 ADR-0017 (rddf-session) 和 ADR-0003 (三阶段架构)。
+description: 交互式工作流入口——扫描项目当前状态，展示可选菜单（含 rddf-session 管理），用户可选菜单项执行或进入自由讨论模式咨询后再决定。详见 ADR-0017 (rddf-session)、ADR-0003 (v2.0 三阶段架构奠基)、ADR-0025 (v2.1 设计阶段独立化) 和 ADR-0034 (v3.0+ 五阶段架构 / `rdd-verifier` 第五阶段)。
 license: MIT
 compatibility: Requires git 2.25+
 metadata:
@@ -335,5 +335,7 @@ AI: "检测到执行 change 意图，路由到 guide-ship →"
 
 - **rddf-session** (`skills/rddf-session.md`) — session 管理 5 子命令（list/show/resume/abandon/archive-history）
 - **ADR-0017** (`docs/adr/ADR-0017-rddf-session.md`) — rddf-session 数据模型、跨 OpenCode session 恢复语义
-- **ADR-0003** (`docs/adr/ADR-0003-three-phase-architecture.md`) — arch → plan → ship 三阶段架构
+- **ADR-0003** (`docs/adr/ADR-0003-three-phase-architecture.md`) — arch → plan → ship 三阶段架构（v2.0 奠基，已演进为五阶段 per ADR-0034）
+- **ADR-0025** (`docs/adr/ADR-0025-design-proposal-creation.md`) — design 阶段独立化（v2.1 四阶段）
+- **ADR-0034** (`docs/adr/ADR-0034-rdd-verifier-verify-phase-architecture.md`) — v3.0+ 五阶段架构（arch → design → plan → ship → verify），`rdd-verifier` 第五阶段
 - **scan-state.sh** (`scripts/scan-state.sh`) — 底层扫描脚本；13-path 决策树 + session binding 扫描

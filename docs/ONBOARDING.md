@@ -1,7 +1,9 @@
 # rdd-workflow 新成员入职指南
 
-> 生成时间: 2026-06-29
-> 基于知识图谱分析
+> 生成时间: 2026-06-29（v2.0.0-beta 知识图谱快照）
+> 当前版本: **v3.0+ (2026-08-26)**，已演进为**五阶段架构**（arch → design → plan → ship → verify，per ADR-0034）。
+> 本 onboarding 文档保留了 v2.0 章节作为历史快照，核心描述已对齐到 v3.0+ 五阶段架构。
+> 当前权威架构说明见 [README.md](../../README.md) §"五阶段架构"、[USAGE.md](../../USAGE.md) §"五阶段架构"、[docs/architecture/workflow-phases.md](../architecture/workflow-phases.md)。
 
 ---
 
@@ -20,7 +22,7 @@
 
 rdd-workflow 是一个 **AI 助手工作流技能包**，提供给 Claude Code / OpenCode 等 AI 编程助手使用。它定义了从**变更提议**到**执行归档**的完整生命周期管理流程。
 
-项目已演进到 **v2.0**，引入了三阶段架构（Arch → Plan → Ship）和闭环自动化引擎（Loop Engine）。
+项目已演进到 **v3.0+**，当前采用**五阶段架构**（arch → design → plan → ship → verify，per ADR-0034）和闭环自动化引擎（Loop Engine）。v2.0 时代的三阶段（Arch → Plan → Ship）见 [ADR-0003](../adr/ADR-0003-three-phase-architecture.md)，v2.1 扩展为四阶段（+ design）见 [ADR-0025](../adr/ADR-0025-design-proposal-creation.md)，v3.0 扩展为五阶段（+ verify）见 [ADR-0034](../adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)。
 
 ---
 
@@ -77,24 +79,30 @@ rdd-workflow/
 | `.gitignore` | Git 忽略规则 |
 
 ### 2. 工作流状态机层（13 个文件）
-定义三阶段（Arch→Plan→Ship）状态机和工作流推荐器。
+定义五阶段（Arch→Design→Plan→Ship→Verify）状态机和工作流推荐器（v3.0+，per ADR-0034）。
 
 **关键文件：**
 | 文件 | 说明 |
 |---|---|
 | `skills/guide.md` | 推荐器入口 — 扫描状态、推荐下一步 |
 | `skills/guide-arch.md` | Arch 端 — 5 阶段：setup → adr-create → architecture → roadmap → arch-done |
+| `skills/guide-design.md` | Design 端 — v2.1+ 提案管理（review → approve/reject/defer → design-done） |
 | `skills/guide-plan.md` | Plan 端 — 4 阶段：scan → propose → deps → plan-done |
 | `skills/guide-ship.md` | Ship 端 — 5 阶段：plan → execute → archive → cleanup → ship-done |
+| `skills/rdd-verifier.md` | Verify 端 — v3.0+ 第五阶段，批量 AC 验证（per ADR-0034） |
 
 **状态机调用链：**
 ```
 guide.md (推荐器)
   ├── guide-arch.md → roadmap.md (Arch 阶段完成)
   │     └── [transitions_to]
+  ├── guide-design.md → add-improve.md, approve_proposal.sh (Design 阶段完成)
+  │     └── [transitions_to]
   ├── guide-plan.md → propose.md, deps.md (Plan 阶段完成)
   │     └── [transitions_to]
-  └── guide-ship.md → rdd-workflow-writing-plans.md, execute.md, status.md
+  ├── guide-ship.md → rdd-workflow-writing-plans.md, execute.md, status.md (Ship 阶段完成)
+  │     └── [transitions_to]
+  └── rdd-verifier.md → ac-verifier.md (Verify 阶段完成 → 可 archive)
 ```
 
 ### 3. Loop 引擎层（1 个文件）
@@ -158,13 +166,15 @@ Schema 定义、状态持久化文件、CI 流水线和 Issue 模板。
 
 ## 关键概念
 
-### 三阶段架构（Arch → Plan → Ship）
+### 五阶段架构（Arch → Design → Plan → Ship → Verify，v3.0+ per ADR-0034）
 
 | 阶段 | 技能 | 职责 | 人工介入 |
 |---|---|---|---|
 | **Arch** | `guide-arch` | 架构定义（ADR、roadmap、差距分析） | 高 |
+| **Design** | `guide-design` | 提案管理 + 内容审查（创建、审查、批准/拒绝/延迟，v2.1+ per ADR-0025） | 中 |
 | **Plan** | `guide-plan` | 变更生成（scan、propose、deps） | 中 |
 | **Ship** | `guide-ship` | 变更执行（worktree、execute、archive） | 低 |
+| **Verify** | `rdd-verifier` | 验证回环（批量 AC 验证 + 启发式分类 + 失败回 plan/ship，v3.0+ per ADR-0034） | 低 |
 
 ### Loop 引擎
 
@@ -212,7 +222,7 @@ skill_use("rdd-workflow-writing-plans")
 | **2** | USAGE.md — 完整使用指南与核心概念 | `USAGE.md` |
 | **3** | INSTALL.md + install.sh — 技能如何进入项目 | `INSTALL.md`, `install.sh`, `package.json` |
 | **4** | guide.md — 工作流推荐器 | `guide.md` |
-| **5** | 三阶段状态机总览 | `guide-arch.md`, `guide-plan.md`, `guide-ship.md` |
+| **5** | 五阶段状态机总览 | `guide-arch.md`, `guide-design.md`, `guide-plan.md`, `guide-ship.md`, `rdd-verifier.md` |
 | **6** | Arch 与 Plan 子技能 | `propose.md`, `roadmap.md`, `deps.md` |
 | **7** | Ship 端子技能 + 计划生成 | `execute.md`, `status.md`, `rdd-workflow-writing-plans.md` |
 | **8** | loop_engine.py — 闭环自动化核心引擎 | `loop_engine.py` |
@@ -359,8 +369,8 @@ skills/_lib/trigger_engine.py       — 触发引擎
 ### Q: 如何为项目添加新的子技能？
 新增 `.md` 文件到 `skills/` 目录，然后在 `package.json` 的 `skills` 数组中注册。如果新技能需要被状态机调用，更新对应的 `guide-*.md` 文件添加引用。
 
-### Q: 如何处理 v1.x 到 v2.0 的迁移？
-v2.0 使用三阶段架构 arch → plan → ship。原来的 `guide-spec` 已被 `guide-arch` + `guide-plan` 替代（`guide-spec` 是 60 行别名，v2.0 已删除）。详细迁移指南见 `docs/migration/v1-to-v2.md`。
+### Q: 如何处理 v1.x 到 v2.0 / v3.0+ 的迁移？
+v2.0 使用三阶段架构 arch → plan → ship（per [ADR-0003](../adr/ADR-0003-three-phase-architecture.md)），v2.1 扩展为四阶段 + design（per [ADR-0025](../adr/ADR-0025-design-proposal-creation.md)），v3.0 扩展为五阶段 + verify（per [ADR-0034](../adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)）。原来的 `guide-spec` 已被 `guide-arch` + `guide-plan` 替代（`guide-spec` 是 60 行别名，v2.0 已删除）。详细迁移指南见 `docs/migration/v1-to-v2.md`。
 
 ### Q: 测试策略是什么？
 - **Python 测试**（pytest）：覆盖状态向量、事件日志、门控机制、Loop 引擎

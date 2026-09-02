@@ -254,6 +254,9 @@ guide → guide-arch (架构定义阶段)
 ## References
 
 - ADR-0001 — 原始双阶段架构 (spec/ship)
+- ADR-0025 — design 阶段独立化（v2.1 扩展为四阶段架构 arch → design → plan → ship）
+- ADR-0034 — rdd-verifier 验证回环阶段（v3.0+ 扩展为五阶段架构 arch → design → plan → ship → verify）
+- ADR-0035 — rdd-verifier ↔ archive_gate_check 双轨设计边界
 - `skills/guide-spec.md` — 当前 spec 端状态机（将拆分为 arch + plan）
 - `skills/guide-ship.md` — 当前 ship 端状态机（保持不变）
 - `skills/guide.md` — 推荐器（将扩展为三阶段扫描）
@@ -261,4 +264,13 @@ guide → guide-arch (架构定义阶段)
 - `roadmap.md` — 路线图（arch 阶段输出）
 - `docs/architecture/*-gap-analysis.md` — 架构差距分析（arch 阶段输出）
 - `openspec/changes/<name>/{proposal,design,tasks}.md` — change artifacts（plan 阶段输出）
+
+---
+
+## 演进（Evolution）
+
+> **状态**: 已采纳（v2.0 奠基 ADR）
+> **演进路径**: v2.0 三阶段 → v2.1 四阶段（+ design，per ADR-0025） → v3.0+ 五阶段（+ rdd-verifier，per ADR-0034）
+> **本 ADR 的历史决策保持不变**: 三阶段是 v2.0 的奠基决策，未被废弃；后续扩展由独立 ADR 显式记录。
+> **如需查看当前架构**, 见 [ADR-0034](ADR-0034-rdd-verifier-verify-phase-architecture.md)。
 

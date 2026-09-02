@@ -18,13 +18,14 @@
 **架构依据**:
 - `ADR-0003 §3.1`: 三阶段架构按人工介入程度切分（高 → 中 → 低），本 ADR 沿用相同梯度原则
 - `ADR-0003 §3.2` → `ADR-0025`: 三阶段扩展为四阶段（arch → design → plan → ship），本 ADR 是 arch 阶段对未来协同层的架构愿景
+- `ADR-0034`: v3.0+ 扩展为五阶段（+ rdd-verifier），本 ADR 沿用同一阶段契约（arch-handoff / design-handoff / plan-handoff / archive），不引入第五阶段的跨项目协同维度
 - `ADR-0017 §4`: rddf-session 当前是单项目概念，跨项目 session 联邦化是本 ADR 的关键依赖
 - `ADR-0029 §3`: Issue 驱动提案创建已支持 `gh_repo` 切换，本 ADR 在此基础上扩展为多仓库协同
 - `ADR-0027 §2`: 持续演进反馈环 L2 上报机制，是 Hub-and-Spoke 的前序能力
 
 ## Decision
 
-**采用 Hub-and-Spoke（中心辐射型）联邦协同架构**：构建独立的中枢仓库 `rdd-hub` 作为跨项目契约、全局决策和协同看板的 SSOT（Single Source of Truth），各业务仓库（Spoke）保留本地 RDD 状态机自治，通过 GitHub MCP 协议与 Hub 通信。Hub 是「跨项目协同层」，**不侵入单项目的 arch → design → plan → ship 四阶段流程**。
+**采用 Hub-and-Spoke（中心辐射型）联邦协同架构**：构建独立的中枢仓库 `rdd-hub` 作为跨项目契约、全局决策和协同看板的 SSOT（Single Source of Truth），各业务仓库（Spoke）保留本地 RDD 状态机自治，通过 GitHub MCP 协议与 Hub 通信。Hub 是「跨项目协同层」，**不侵入单项目的 arch → design → plan → ship → verify 五阶段流程**（v3.0+ 已扩展为五阶段，per ADR-0034）。
 
 ### 影响范围
 
@@ -35,7 +36,7 @@
   - L2 上报通道从「单向上报」升级为「双向协同通道」
   - AI 系统提示词注入机制（`.cursorrules` / `claude.md` 模板）
 - **Out Scope**（明确不涉及）:
-  - **不修改**单项目的 arch → design → plan → ship 四阶段流程
+  - **不修改**单项目的 arch → design → plan → ship → verify 五阶段流程（v3.0+ 已扩展为五阶段，per ADR-0034）
   - **不修改**单项目的状态机契约（arch-handoff / design-handoff / plan-handoff）
   - **不修改**现有 rddf-session 的单项目存储格式
   - **不创建**新的人类介入模式（Human-in-Loop 节点类型不变）
@@ -204,3 +205,11 @@
 - [GitHub Projects V2 API](https://docs.github.com/en/issues/planning-and-tracking-with-projects) — 多维看板字段定义
 - [GitHub MCP Server](https://github.com/modelcontextprotocol/servers/tree/main/src/github) — Spoke-Hub 通信协议
 - [OpenAPI Diff](https://github.com/OpenAPITools/openapi-diff) — 契约一致性校验工具
+
+---
+
+## 演进（Evolution）
+
+> **状态**: 待定（v2.0.8+ 设计稿）
+> **演进路径**: 本 ADR 在 v2.0/v2.1 四阶段架构上下文中起草。v3.0+ 扩展为五阶段（+ rdd-verifier，per ADR-0034）后，本 ADR 的"不侵入单项目阶段流程"承诺保持不变 —— Hub-and-Spoke 联邦化是横向（cross-project）维度，不增加第五阶段的跨项目协同能力（rdd-verifier 默认仅在单项目内运行）。
+> **如需查看当前架构**, 见 [ADR-0034](ADR-0034-rdd-verifier-verify-phase-architecture.md)。

@@ -2,10 +2,10 @@
 
 ## What rdd-workflow Is
 
-rdd-workflow is an **OpenSpec-compatible AI development workflow package**. It manages changes via a five-stage lifecycle (`propose → plan → execute → status → archive`), wrapped in a four-phase architecture (`arch → design → plan → ship`). It runs on any OpenSpec-aware AI coding assistant (opencode, Claude Code, Cursor, Aider, etc.) via the Skill discovery mechanism, with no runtime dependency on a specific vendor.
+rdd-workflow is an **OpenSpec-compatible AI development workflow package**. It manages changes via a five-stage lifecycle (`propose → plan → execute → status → archive`), wrapped in a five-phase architecture (`arch → design → plan → ship → verify`, per ADR-0034). It runs on any OpenSpec-aware AI coding assistant (opencode, Claude Code, Cursor, Aider, etc.) via the Skill discovery mechanism, with no runtime dependency on a specific vendor.
 
 The package ships:
-- **17 user-invocable skills** (4 phase guides + 13 sub-skills), each a `SKILL.md` with structured frontmatter.
+- **27 user-invocable skills** (5 phase guides + 22 sub-skills), each a `SKILL.md` with structured frontmatter.
 - A **shared `_lib/`** of 60+ Python modules and bash helpers implementing state, gate, tribunal, session, loop engine, etc.
 - A **`rddf` CLI** (`rddf status`, `rddf session ...`, `rddf discover-ship-changes`, etc.) for scripting and dashboards.
 
@@ -13,17 +13,18 @@ The package ships:
 
 ```mermaid
 graph TB
-    subgraph Phases[Four Phases]
+    subgraph Phases[Five Phases]
     A[arch<br/>guide-arch]
     D[design<br/>guide-design]
     P[plan<br/>guide-plan]
     S[ship<br/>guide-ship]
+    V[verify<br/>rdd-verifier<br/>ADR-0034]
     end
 
     subgraph Lib[_lib/ Shared Modules]
     SV[state_vector]
     EL[event_log]
-    HO[arch/plan-handoff<br/>files]
+    HO[arch/design/plan-handoff<br/>files]
     GT[gate]
     TR[tribunal]
     LO[loop_engine]
@@ -39,6 +40,7 @@ graph TB
     D --> HO
     P --> HO
     S --> HO
+    V -. ac-verifier .-> S
     A --> GT
     D --> GT
     P --> GT
@@ -65,6 +67,7 @@ graph TB
 | `guide-design` | Manage improvement proposals: create, review (approve/reject/defer), content gate. |
 | `guide-plan` | Generate change artefacts: proposal, specs, design.md, tasks.md; run deps. |
 | `guide-ship` | Execute changes: worktree setup, plan generation, run, archive, cleanup. |
+| `rdd-verifier` | v3.0+ 5th phase: batch AC verification before archive; routes failures back to plan/ship (per ADR-0034). |
 
 ### Sub-skills (called by phase guides)
 
@@ -109,13 +112,15 @@ graph TB
 | `rddf discover-arch-artifacts` | Re-scan ADR/roadmap/architecture dirs. |
 | `rddf env-check` | Print env snapshot (CLI / git / branch). |
 
-## Why Four Phases, Not Three
+## Why Five Phases, Not Three
 
 v1.x used a single `guide.md` with 10 phases (ADR-0001 refactored this into two phases: spec/ship). v2.0 (ADR-0003) refactored again into **three** phases (arch / plan / ship) — splitting at the natural break between "what we want to build" (plan) and "how we build it" (ship).
 
 In practice, **arch** accumulated two distinct responsibilities: defining the **architecture itself** (ADRs, roadmap) and **managing improvement proposals** against that architecture. By v2.0.6 the proposal-review load was heavy enough that a second gate, a content review pass, and a defer mechanism all crowded into arch's Phase 5.5. **ADR-0025** split those responsibilities: `guide-arch` keeps architecture definition; `guide-design` owns proposal lifecycle (create → review → approve/reject/defer → two-tier content review).
 
-This is why the current architecture is **four phases** (arch → design → plan → ship), and any doc that still says "three phases" is stale.
+In v3.0, AC verification was extracted from the inline `archive_gate_check` (which embedded `ac-verifier`) into a separate fifth phase. **ADR-0034** elevates `rdd-verifier` to its own phase (`discover → batch-verify → classify → route`), giving bounded retry (max 3) and heuristic failure classification (implementation_gap vs proposal_drift) before archive.
+
+This is why the current architecture is **five phases** (arch → design → plan → ship → verify), and any doc that still says "three phases" or "four phases" is stale.
 
 ## Why a Loop Engine
 

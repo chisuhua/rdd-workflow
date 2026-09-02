@@ -13,7 +13,7 @@ The banner SHALL be placed between `<!-- VERSION_BANNER_START -->` and `<!-- VER
 
 - **WHEN** `CHANGELOG.md` contains `## [v3.0.0]` section
 - **THEN** `USAGE.md` banner SHALL include reference to v3.0.0 features
-- **AND** the four-stage architecture (arch → design → plan → ship → verify) SHALL be mentioned
+- **AND** the five-stage architecture (arch → design → plan → ship → verify) SHALL be mentioned
 
 #### Scenario: Pre-commit hook flags stale banner
 

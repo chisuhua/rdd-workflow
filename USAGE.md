@@ -16,17 +16,19 @@
 
 ## 核心概念
 
-### Arch / Plan / Ship 三阶段
+### 五阶段架构 (arch → design → plan → ship → verify)
 
-`git commit artifacts` 是 plan → ship 的**工作产物切换点**；形式化的交接由 `.rddf/state/.arch-handoff.json` / `.rddf/state/.plan-handoff.json` 分布在 arch→plan、plan→ship 边界（两个文件都以 `.` 前缀，被 `.gitignore` 排除）。
+`git commit artifacts` 是 plan → ship 的**工作产物切换点**；形式化的交接由 `.rddf/state/.arch-handoff.json` / `.rddf/state/.plan-handoff.json` 分布在 arch→plan、plan→ship 边界（两个文件都以 `.` 前缀，被 `.gitignore` 排除）。`rdd-verifier` 作为 v3.0+ 第五阶段（per ADR-0034），在 archive 前批量跑 AC 验证。
 
 | 端 | 职责 | 关键产物 |
 |----|------|---------|
 | **arch 端** (`guide-arch`) | `setup → adr-create → architecture → roadmap-define → arch-done`（5 子阶段） | `roadmap.md`（默认，可由 ADR-0016 discovery 重新发现）、`docs/adr/ADR-*.md`、`docs/architecture/*-gap-analysis.md`（可选）、`.rddf/state/.arch-handoff.json` |
+| **design 端** (`guide-design`) | `preflight → review → approve/reject/defer → design-done`（v2.1+ 提案管理 + 内容审查） | `.rddf/improvements/<name>.md`、`proposal-approved.md` 更新、`.rddf/state/.design-handoff.json` |
 | **plan 端** (`guide-plan`) | `scan → propose → deps → plan-done`（4 子阶段） | `openspec/changes/<name>/{proposal,design,tasks}.md` 已提交、`.rddf/state/.plan-handoff.json`、`.rddf/state/.deps-analysis.json` |
 | **ship 端** (`guide-ship`) | `plan → verification → execute → review → archive → cleanup → ship-done`（7 子阶段，编号 1, 1.5, 2, 2.5, 3, 4, 5） | worktree 目录或当前分支（轻量模式）、`.rddf/plans/<name>.md`、归档记录、`.rddf/state/iteration.json` |
+| **verify 端** (`rdd-verifier`) | `discover → batch-verify → classify → route`（v3.0+ 第五阶段，ADR-0034，bounded retry 最多 3 次） | `ac-verifier` 报告 + 失败分类（implementation_gap / proposal_drift）+ 回 plan/ship 路由决策 |
 
-详细架构决策见 [ADR-0003](./docs/adr/ADR-0003-three-phase-architecture.md)。
+详细架构决策见 [ADR-0003（奠基：三阶段 arch → plan → ship）](./docs/adr/ADR-0003-three-phase-architecture.md)、[ADR-0025（设计阶段独立化）](./docs/adr/ADR-0025-design-proposal-creation.md)、[ADR-0034（第五阶段 verify 架构）](./docs/adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)。
 
 ### Ship 端两种执行模式（worktree 选择）
 
@@ -1002,4 +1004,4 @@ mv openspec/changes/archive/2026-08-05-my-change openspec/changes/my-change
 
 ## 架构参考
 
-最新架构决策详见 [ADR-0003](./docs/adr/ADR-0003-three-phase-architecture.md)。历史演进记录见 `docs/adr/` 与 `CHANGELOG.md`。
+最新架构决策（v3.0+ 五阶段）详见 [ADR-0034（rdd-verifier 第五阶段）](./docs/adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)；奠基 ADR（v2.0 三阶段）见 [ADR-0003](./docs/adr/ADR-0003-three-phase-architecture.md)；设计阶段独立化见 [ADR-0025](./docs/adr/ADR-0025-design-proposal-creation.md)。历史演进记录见 `docs/adr/` 与 `CHANGELOG.md`。

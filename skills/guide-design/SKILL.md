@@ -26,7 +26,7 @@ role:
 
 # rdd-workflow 工作流 — Design-Side Guide
 
-本技能是 rdd-workflow 工作流 v2.1 的 **design 端状态机**：负责在构架定义之后、变更生成之前的设计管理工作——创建改进提案、审查未审批提案、批准/拒绝/延迟决策、设计完成交接。design 阶段是三阶段架构（arch → design → plan → ship）的第二阶段，专为中介入、提案管理而设计。
+本技能是 rdd-workflow 工作流 v3.0+ 的 **design 端状态机**：负责在构架定义之后、变更生成之前的设计管理工作——创建改进提案、审查未审批提案、批准/拒绝/延迟决策、设计完成交接。design 阶段是**五阶段架构**（arch → design → plan → ship → verify，per [ADR-0034](../adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)）的第二阶段，专为中介入、提案管理而设计。
 
 **职责边界**：
 - **角色定义**：见 frontmatter `role:` 字段（ADR-0028）
@@ -39,7 +39,7 @@ role:
 skill_use("guide-design")   # 无参数版本
 ```
 
-## Architecture: v2.1 四阶段拆分
+## Architecture: v3.0+ 五阶段拆分（per ADR-0034）
 
 | 子技能 | 阶段 | 职责 | 人工介入 |
 |--------|------|------|---------|
@@ -47,10 +47,11 @@ skill_use("guide-design")   # 无参数版本
 | `guide-design`（本技能） | design | 设计管理：提案创建 → 审查 → 批准/拒绝/延迟 → design-done | **中** |
 | `guide-plan`（后续） | plan | 变更生成：审批提案消费 → propose → deps → plan-done | **中** |
 | `guide-ship`（后续） | ship | 变更执行：plan → execute → archive → cleanup → ship-done | **低** |
+| `rdd-verifier`（后续） | verify | 验证回环：批量 AC 验证 + 启发式分类 + bounded retry → verify-done（v3.0+ 新增） | **低** |
 
 **核心边界（design-done 即切换点）**：
 ```
-[guide-arch] --(arch-done)--> [guide-design] --(design-done)--> [guide-plan] --(plan-done)--> [guide-ship]
+[guide-arch] --(arch-done)--> [guide-design] --(design-done)--> [guide-plan] --(plan-done)--> [guide-ship] --(ship-done)--> [rdd-verifier] --(verify-done)--> [archive]
 ```
 
 ## Phase 1: setup

@@ -60,7 +60,7 @@ rdd-hub/
 
 | 能力 | 实现 | 文件 |
 |------|------|------|
-| 单仓库 RDD 状态机 | arch → design → plan → ship 四阶段 | `skills/guide-arch/`, `guide-design/`, `guide-plan/`, `guide-ship/` |
+| 单仓库 RDD 状态机 | arch → design → plan → ship → verify 五阶段（v3.0+ per ADR-0034） | `skills/guide-arch/`, `guide-design/`, `guide-plan/`, `guide-ship/`, `skills/rdd-verifier/` |
 | 全局技能安装 | `install.sh --global` 复制到 `~/.agents/skills/` | `install.sh`, AGENTS.md §全局安装模式 |
 | 跨 OpenCode session 恢复 | `rddf-session` skill 5 子命令 | `skills/rddf-session/`, ADR-0017 |
 | 工件发现契约 | Arch-handoff 软状态文件 | ADR-0016, `.rddf/state/.arch-handoff.json` |

@@ -84,7 +84,7 @@ fi
 
 # rdd-workflow 工作流 — Plan-Side Guide
 
-本技能是 rdd-workflow 工作流 v2.0 的 **plan 端状态机**：负责在生成 rdd-workflow change artifacts 阶段的**变更生成**工作——消费已批准提案、创建 change、依赖分析、变更生成完成交接。plan 阶段是三阶段架构（arch → plan → ship，ADR-0003）的第二阶段，专为中人工介入、AI 辅助生成场景设计。
+本技能是 rdd-workflow 工作流 v3.0+ 的 **plan 端状态机**：负责在生成 rdd-workflow change artifacts 阶段的**变更生成**工作——消费已批准提案、创建 change、依赖分析、变更生成完成交接。plan 阶段是**五阶段架构**（arch → design → plan → ship → verify，per [ADR-0034](../adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)）的第三阶段，专为中人工介入、AI 辅助生成场景设计。
 
 **职责边界**：
 - **角色定义**：见 frontmatter `role:` 字段（ADR-0028）
@@ -100,25 +100,29 @@ skill_use("guide-plan")   # 无参数版本
 
 ---
 
-## Architecture: v2.0 三阶段拆分
+## Architecture: v3.0+ 五阶段拆分（per ADR-0034）
 
-本技能是 OpenSpec 工作流 v2.0 重构后的 **plan 端**实现。在 v2.0 重构前，所有 spec 端工作由单一 `guide-spec` 驱动；v2.0 拆分为三个职责清晰的子技能，按**人工介入程度**和**职责类型**切分：
+本技能是 OpenSpec 工作流 v3.0+ 的 **plan 端**实现。在 v3.0+ 重构前，v2.0 拆分为三个职责清晰的子技能（per ADR-0003），v2.1 扩展为四个（+ design，per ADR-0025），v3.0+ 再拆出第五阶段 `rdd-verifier`（per ADR-0034）。按**人工介入程度**和**职责类型**切分：
 
 | 子技能 | 阶段 | 职责 | 人工介入 |
 |--------|------|------|---------|
 | `guide-arch`（前序） | arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-done | **高** |
+| `guide-design`（前序） | design | 设计管理：提案创建 → 审查 → 批准/拒绝/延迟 → design-done | **中** |
 | `guide-plan`（本技能） | plan | 变更生成：审批提案消费 → propose → deps → plan-done | **中** |
 | `guide-ship`（后续） | ship | 变更执行：plan → execute → archive → cleanup → ship-done | **低** |
-| `guide`（无状态推荐器） | — | 扫描三阶段状态，推荐下一步 | — |
+| `rdd-verifier`（后续） | verify | 验证回环：批量 AC 验证 + 启发式分类 + bounded retry → verify-done（v3.0+ 新增） | **低** |
+| `guide`（无状态推荐器） | — | 扫描五阶段状态，推荐下一步 | — |
 
-**核心边界（arch-done 即切换点）**：
+**核心边界（plan-done 即切换点）**：
 
 ```
-[guide-arch]  --(arch-done: ADR ≥ 1 + roadmap.md)-->  [guide-plan]  --(plan-done: ≥1 change + all artifacts committed)-->  [guide-ship]
-    arch 端                                                 plan 端                                                ship 端
-    owns: docs/adr/ADR-*.md, roadmap.md,                  owns: openspec/changes/<name>/                        owns: worktree, .rddf/plans/,
-          docs/architecture/*-gap-analysis.md                    {proposal,design,tasks}.md                              execute, archive
-    exits: .rddf/state/.arch-handoff.json                     exits: .rddf/state/.plan-handoff.json                     exits: 归档的 change 目录
+[guide-arch] --(arch-done)--> [guide-design] --(design-done)--> [guide-plan] --(plan-done: ≥1 change + all artifacts committed)--> [guide-ship]
+    arch 端                        design 端                       plan 端                                                  ship 端
+    owns: docs/adr/ADR-*.md,       owns: .rddf/improvements/,     owns: openspec/changes/<name>/                        owns: worktree, .rddf/plans/,
+          roadmap.md,                     proposal-suggestions.md,         {proposal,design,tasks}.md                              execute, archive
+          docs/architecture/*-gap-analysis.md  proposal-approved.md       exits: .rddf/state/.plan-handoff.json                     exits: 归档的 change 目录
+    exits: .rddf/state/.arch-handoff.json     exits: .rddf/state/.design-handoff.json
+                                                                  --(ship-done)--> [rdd-verifier] --(verify-done)--> [archive]
 ```
 
 **为什么这样切**（节选自 ADR-0003）：
@@ -664,7 +668,7 @@ grep -E "skill_use\(\"(propose|deps|guide-arch|guide-ship)\"\)" skills/guide-pla
 
 ## 参考资料
 
-- **ADR-0003** — 四阶段架构重构（arch → design → plan → ship），本技能的架构依据
+- **ADR-0003** — v2.0 三阶段架构（arch → plan → ship）的奠基 ADR；v2.1 扩展为四阶段（+ design）见 ADR-0025；v3.0+ 扩展为五阶段（+ verify）见 ADR-0034
 - **ADR-0001** — 双阶段状态机分离（v1.x 架构，guide-spec 的来源）
 - **ADR-0007** — 门控机制（plan-done 双重门控的设计依据）
 - **ADR-0011** — 阶段步骤化执行模型（plan 阶段的子阶段设计）
@@ -673,7 +677,7 @@ grep -E "skill_use\(\"(propose|deps|guide-arch|guide-ship)\"\)" skills/guide-pla
 - `skills/guide-ship.md` — ship 端状态机（后续阶段）
 - `skills/propose.md` — 变更创建技能（被 plan Phase 2 调用）
 - `skills/deps.md` — 依赖分析技能（被 plan Phase 3 调用）
-- `docs/adr/ADR-0003-three-phase-architecture.md` — 四阶段架构详细说明（v2.1 从三阶段扩展为四阶段）
+- `docs/adr/ADR-0003-three-phase-architecture.md` — v2.0 三阶段架构详细说明（奠基；v2.1 → 四阶段、v3.0+ → 五阶段，已分别记录在 ADR-0025 与 ADR-0034）
 
 ## Phase Exit — Post-Flow Analysis (Agent 平面, ADR-0027 §1.0)
 

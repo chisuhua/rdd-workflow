@@ -665,3 +665,11 @@ if os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true":
 - `AGENTS.md` "archive_gate_check 双模式约定" — close hook 必须双模式覆盖
 - `docs/adr/ADR-0010-multi-session-management.md` §3 — 多会话管理（rddf_session_id 作为 issue 关联字段 — **注意**: ADR-0017 的冲突解决器不直接触发上报，本 ADR 仅引用 session 字段做 issue 关联）
 - `tests/integration/test_global_install_external_project.bats` — 第三方项目集成测试模式
+
+---
+
+## 演进（Evolution）
+
+> **状态**: 已采纳（v2.1.x 系列 ADR）
+> **演进路径**: 本 ADR 在 v2.1 四阶段架构 + Hub-and-Spoke 协同上下文中落地（参见 ADR-0030、ADR-0031、ADR-0032）。v3.0+ 进一步扩展为五阶段（+ rdd-verifier，per ADR-0034），但本 ADR 的 L2 上报契约与人类决策机制保持不变，仅与新阶段串联。
+> **如需查看当前架构**, 见 [ADR-0034](ADR-0034-rdd-verifier-verify-phase-architecture.md)。

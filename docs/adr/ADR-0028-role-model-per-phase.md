@@ -46,7 +46,15 @@ SKILL.md 正文的"职责边界"段落改为引用 frontmatter 字段（单一�
 
 ## 参考
 
-- ADR-0003: 三阶段架构（现为四阶段）
+- ADR-0003: 三阶段架构（v2.1 已演化为四阶段 per ADR-0025；v3.0+ 已演化为五阶段 per ADR-0034）
 - ADR-0007: Skill frontmatter 规范
 - ADR-0017: rddf-session
-- ADR-0025: 设计阶段独立化
+- ADR-0025: 设计阶段独立化（v2.1 四阶段；v3.0+ 已扩展为五阶段 per ADR-0034）
+
+---
+
+## 演进（Evolution）
+
+> **状态**: 已采纳（v2.0.8+ 系列）
+> **演进路径**: 本 ADR 在 v2.0/v2.1 阶段落地（按 4 个阶段角色：arch/design/plan/ship）。v3.0+ 扩展为五阶段，新增 `rdd-verifier` 第五阶段角色（per ADR-0034），其 role model 在 [skills/rdd-verifier/SKILL.md](../../skills/rdd-verifier/SKILL.md) frontmatter 显式声明。
+> **如需查看当前架构**, 见 [ADR-0034](ADR-0034-rdd-verifier-verify-phase-architecture.md)。

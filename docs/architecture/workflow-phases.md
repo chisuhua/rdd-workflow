@@ -1,17 +1,19 @@
 # Workflow Phases
 
-rdd-workflow v2.1+ runs every change through **four phases** in order:
+rdd-workflow v3.0+ runs every change through **five phases** in order (per [ADR-0034](../adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)):
 
 ```mermaid
 graph LR
     A[arch<br/>ADR / roadmap] -->|arch-handoff.json| D[design<br/>proposal review]
     D -->|design-handoff.json| P[plan<br/>proposal / specs / tasks]
     P -->|plan-handoff.json| S[ship<br/>worktree / execute / archive]
-    S -.->|archived change<br/>openspec/changes/archive/| A
+    S -->|ready-to-archive flag| V[verify<br/>rdd-verifier<br/>batch AC check]
+    V -.->|fail → bounded retry<br/>max 3 iterations| P
+    V -->|all pass| ARC[(archived<br/>openspec/changes/archive/)]
 ```
 
 Each phase:
-- Has **one entry skill** (`guide-*`).
+- Has **one entry skill** (`guide-*` or `rdd-verifier`).
 - Writes a **handoff file** that the next phase reads.
 - Has a **gate** at its exit (warnings + errors per [gates-and-quality.md](gates-and-quality.md)).
 
@@ -94,6 +96,26 @@ Each phase:
 - `archive_gate_check`: worktree branch must have commits; lightweight mode must have ≥1 new commit.
 - Post-archive cleanup hook (idempotent).
 
+## Phase 5 — `verify` (v3.0+, per [ADR-0034](../adr/ADR-0034-rdd-verifier-verify-phase-architecture.md))
+
+**Purpose**: before archive, batch-verify all implemented, task-complete, non-archived changes against their acceptance criteria. Classify failures heuristically (`implementation_gap` vs `proposal_drift`). Route failures back to plan or ship with a bounded retry loop (max 3 iterations per change). Replaces the previous inline `archive_gate_check` ac-verifier with a first-class fifth phase.
+
+**Entry skill**: `rdd-verifier`.
+
+**Inputs**: scan of `openspec/changes/` for `status=implemented + tasks complete + not archived`, plus `.rddf/state/iteration.json` for cycle context.
+
+**Outputs**:
+- Per-change `ac-verifier` JSON reports.
+- Failure classification (`implementation_gap` → guide-ship retry; `proposal_drift` → guide-plan re-evaluate).
+- Bounded retry counter in `.rddf/state/.rdd-verifier-state.json` (TTL-bounded, max 3 iterations).
+- Final `pass` flag enables archive; `fail` flag blocks archive.
+
+**Why split from ship**: by v2.0.8, AC verification was a hidden second loop inside `archive_gate_check` — running after every commit, with no retry semantics, no failure classification, and no clear ownership. Elevating it to a phase (ADR-0034) gives it first-class gates, retry semantics, and routing decisions.
+
+**Human load**: low. LLM-as-judge (ac-verifier) handles most cases; human only intervenes when classification is ambiguous or retry budget exhausted.
+
+**Sub-skills**: `ac-verifier` (the underlying LLM-as-judge), `rdd-doctor --category state` (cross-check handoff consistency).
+
 ## Phase Recap
 
 | Phase | Entry | Handoff out | Hard gate | Human load |
@@ -102,6 +124,7 @@ Each phase:
 | design | `guide-design` | `.design-handoff.json` | design-done | medium |
 | plan | `guide-plan` | `.plan-handoff.json` | plan-done | medium |
 | ship | `guide-ship` | archive event | archive-done | low |
+| verify | `rdd-verifier` | (no handoff out — gate to archive) | verify-done | low |
 
 ## Why This Order
 
