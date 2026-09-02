@@ -230,3 +230,33 @@ def test_project_yaml_adr_unknown_field_rejected(tmp_path, clean_env):
         parser.parse()
     msg = str(exc_info.value).lower()
     assert "adr" in msg or "made_up_field" in msg
+
+
+# ============================================================================
+# Task 1.1a (M1): 根级 extras 零回归 (per design.md Decision 11)
+# ============================================================================
+
+
+def test_project_yaml_root_level_extras_allowed(tmp_path, clean_env):
+    """Root-level additionalProperties remains true; user-defined keys pass.
+
+    Per design.md Decision 11: root additionalProperties: true (default) preserves
+    backward compat for users with extra root-level keys in project.yaml
+    (e.g. tool-specific configs). New sections (project/adr/git/verification)
+    enforce strict on their OWN contents only.
+    """
+    project_dir = tmp_path / ".rddf"
+    project_dir.mkdir()
+    (project_dir / "project.yaml").write_text(yaml.dump({
+        "my_custom_tooling": {"x": 1, "y": "z"},
+        "team_notes": "internal",
+        # valid known sections also present
+        "git": {"openspec_tracked": True},
+    }))
+    parser = ConfigParser(project_root=str(tmp_path))
+    config = parser.parse()
+    # extras must survive in merged config (passthrough)
+    assert config.get("my_custom_tooling") == {"x": 1, "y": "z"}
+    assert config.get("team_notes") == "internal"
+    # known section still validated
+    assert config["git"]["openspec_tracked"] is True
