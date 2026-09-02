@@ -41,7 +41,10 @@ def _import_dependencies():
     """Import scan_adr_catalog + populate_lib API across repo / worktree /
     global-install layouts (mirrors populate_lib._import_scan_adr_catalog)."""
     try:
-        from skills._lib.adr_catalog import scan_adr_catalog
+        from skills._lib.adr_catalog import (
+            scan_adr_catalog,
+            _resolve_adr_pattern_for_caller,
+        )
         from skills.populate_roadmap_from_arch.scripts.populate_lib import (
             decide_update_mode,
             detect_adr_changes,
@@ -53,6 +56,7 @@ def _import_dependencies():
         )
         return (
             scan_adr_catalog,
+            _resolve_adr_pattern_for_caller,
             load_populate_state_or_default,
             save_populate_state,
             detect_adr_changes,
@@ -63,7 +67,10 @@ def _import_dependencies():
         )
     except ModuleNotFoundError:
         # Global-install layout: skills/_lib on sys.path via .pth.
-        from _lib.adr_catalog import scan_adr_catalog  # type: ignore[no-redef]
+        from _lib.adr_catalog import (  # type: ignore[no-redef]
+            scan_adr_catalog,
+            _resolve_adr_pattern_for_caller,
+        )
 
         scripts_dir = str(_HERE.parents[2] / "populate-roadmap-from-arch" / "scripts")
         if scripts_dir not in sys.path:
@@ -79,6 +86,7 @@ def _import_dependencies():
         )
         return (
             scan_adr_catalog,
+            _resolve_adr_pattern_for_caller,
             load_populate_state_or_default,
             save_populate_state,
             detect_adr_changes,
@@ -160,6 +168,7 @@ def main() -> int:
 
     (
         scan_adr_catalog,
+        _resolve_adr_pattern_for_caller,
         load_populate_state_or_default,
         save_populate_state,
         detect_adr_changes,
@@ -186,7 +195,7 @@ def main() -> int:
             code_changes = detect_code_changes(state, project_root)
             mode, reason, extra = decide_update_mode(adr_changes, code_changes)
 
-        catalog = scan_adr_catalog(project_root)
+        catalog = scan_adr_catalog(project_root, adr_pattern=_resolve_adr_pattern_for_caller(project_root))
         to_verify, to_reuse = select_adrs_for_incremental_verify(
             list(catalog.keys()), state or {}, mode, extra
         )

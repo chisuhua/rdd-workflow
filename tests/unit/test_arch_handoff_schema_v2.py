@@ -97,6 +97,81 @@ def test_v2_payload_with_adr_regex_validates(schema):
     assert errors == [], f"v2 (with adr_regex) must validate, got: {[e.message for e in errors]}"
 
 
+# ============================================================================
+# M4 Task 4.2 (complete-project-yaml-config-gaps M4):
+# roadmap_incremental_update passes adr_regex from arch-handoff to scan_adr_catalog
+# ============================================================================
+
+
+def test_resolve_adr_pattern_priority_chain(tmp_path):
+    """Priority: explicit > arch-handoff > project.yaml > default.
+
+    Per complete-project-yaml-config-gaps M4 Task 4.2: roadmap_incremental_update
+    must read arch-handoff adr_regex and pass it through to scan_adr_catalog
+    so 3-digit projects (ChipForge) work end-to-end.
+
+    This test verifies the resolver logic that the caller
+    (roadmap_incremental_update) will use.
+    """
+    import json
+    import yaml
+    from pathlib import Path
+    from _lib.adr_catalog import _resolve_adr_pattern_for_caller
+    # Setup arch-handoff with adr_regex (3-digit)
+    state_dir = tmp_path / ".rddf" / "state"
+    state_dir.mkdir(parents=True)
+    arch_handoff = {
+        "version": 2,
+        "arch_complete_at": "2026-01-01T00:00:00",
+        "adr_count": 0,
+        "completed_adr_ids": [],
+        "roadmap_exists": False,
+        "current_phase": "phase-1",
+        "plan_started_at": None,
+        "adr_dir": "docs/adr",
+        "roadmap_path": "roadmap.md",
+        "architecture_dir": "docs/architecture",
+        "adr_pattern": "ADR-*.md",
+        "discovered": {
+            "adr_dir": {"found": True, "created": False, "candidates_tried": 1},
+            "roadmap_path": {"found": False, "created": False, "candidates_tried": 0},
+            "architecture_dir": {"found": False, "created": False, "candidates_tried": 0},
+        },
+        "adr_regex": r"^ADR-(\d{3})-.*\.md$",
+    }
+    (state_dir / ".arch-handoff.json").write_text(json.dumps(arch_handoff))
+
+    # arch-handoff adr_regex wins over project.yaml
+    project_dir = tmp_path / ".rddf"
+    (project_dir / "project.yaml").write_text(
+        yaml.dump({"adr": {"pattern": r"^ADR-(\d{4})-.*\.md$"}})
+    )
+    result = _resolve_adr_pattern_for_caller(tmp_path, explicit=None)
+    assert result == r"^ADR-(\d{3})-.*\.md$", (
+        f"arch-handoff adr_regex should win over project.yaml, got {result!r}"
+    )
+
+    # No arch-handoff → falls back to project.yaml
+    (state_dir / ".arch-handoff.json").unlink()
+    result = _resolve_adr_pattern_for_caller(tmp_path, explicit=None)
+    assert result == r"^ADR-(\d{4})-.*\.md$", (
+        f"No arch-handoff should fall back to project.yaml, got {result!r}"
+    )
+
+    # Explicit arg wins over all
+    result = _resolve_adr_pattern_for_caller(
+        tmp_path, explicit=r"^ADR-(\d{2})-.*\.md$"
+    )
+    assert result == r"^ADR-(\d{2})-.*\.md$", (
+        f"Explicit arg should win, got {result!r}"
+    )
+
+    # No arch-handoff, no project.yaml, no explicit → None (caller falls back to default)
+    (project_dir / "project.yaml").unlink()
+    result = _resolve_adr_pattern_for_caller(tmp_path, explicit=None)
+    assert result is None
+
+
 def test_v2_payload_with_fragments_dir_accepted(schema):
     """v2 payload (version=2 + new roadmap_fragments_dir field) validates."""
     v2 = _full_v1_payload()
