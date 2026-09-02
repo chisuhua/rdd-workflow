@@ -235,8 +235,8 @@
   - Task 3.1 + 3.3: guide-ship SKILL.md Phase 1 Step 1.5 (commit `7be7ab6`, 4 bats cases)
   - Task 3.2 + 3.5: ship_execution_mode.sh reads project.yaml (commit `1b42454`, 5 bats cases)
   - Task 3.4: archive.sh openspec_tracked=false + YAML bool 修复 (commit `9098a73`, 3 bats cases)
-- **总进度**: 14/28 done (M1+M2+M3 完成;M4 待实施)
-- **风险 task**: Task 4.5 (schema bump 跨版本兼容)
+- **总进度**: 19/28 done (M1+M2+M3+M4 完成;X.4/X.5/X.6 待实施)
+- **风险 task**: 无 (M4 实施顺利,schema bump 兼容 v1)
 
 ## 状态追踪
 
