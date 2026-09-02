@@ -309,3 +309,35 @@ class TestAnthropicProvider:
         monkeypatch.setenv("AC_LLM_API_KEY", "k")
         p = AnthropicProvider()
         assert p.base_url == "https://api.anthropic.com"
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# T7: OllamaProvider
+# ──────────────────────────────────────────────────────────────────────────────
+
+from skills.ac_verifier.scripts.llm_providers.ollama import OllamaProvider
+
+
+class TestOllamaProvider:
+    def test_payload_uses_openai_compat_format(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        p = OllamaProvider()
+        payload = p._build_payload("sys", "usr")
+        assert payload["model"] == "llama3.1"
+        assert payload["messages"] == [
+            {"role": "system", "content": "sys"},
+            {"role": "user", "content": "usr"},
+        ]
+
+    def test_headers_have_no_auth(self, monkeypatch):
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        p = OllamaProvider()
+        h = p._build_headers()
+        assert "Authorization" not in h
+        assert h["Content-Type"] == "application/json"
+
+    def test_default_base_url_is_localhost_11434(self, monkeypatch):
+        monkeypatch.delenv("AC_LLM_BASE_URL", raising=False)
+        monkeypatch.setenv("AC_LLM_API_KEY", "k")
+        p = OllamaProvider()
+        assert p.base_url == "http://localhost:11434"
