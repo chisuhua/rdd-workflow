@@ -29,7 +29,7 @@
 |-----|------|------|------|
 | [ADR-0001](ADR-0001-propose-plan-execute-state-machine.md) | ADR-0001: rdd-workflow 状态机分相（spec 端 / ship 端状态机分离） | 已替代为 ADR-0002 + ADR-0003（已实施） | 2026-06-08 |
 | [ADR-0002](ADR-0002-goal-driven-interaction-modes.md) | ADR-0002: 目标驱动接口与交互模式可配置化 | 已采纳 | 2026-06-22 |
-| [ADR-0003](ADR-0003-three-phase-architecture.md) | ADR-0003: 三阶段架构重构 (arch → plan → ship) | 已采纳 | 2026-06-22 |
+| [ADR-0003](ADR-0003-three-phase-architecture.md) | ADR-0003: 三阶段架构重构 (arch → plan → ship) | 已采纳（v2.0 奠基 ADR） | 2026-06-22 |
 | [ADR-0004](ADR-0004-loop-engine-core-design.md) | ADR-0004: Loop 引擎核心设计 | 已采纳 | 2026-06-22 |
 | [ADR-0005](ADR-0005-human-in-loop-nodes.md) | ADR-0005: Human-in-Loop 节点定义与菜单系统 | 已采纳 | 2026-06-22 |
 | [ADR-0006](ADR-0006-state-vector-event-log.md) | ADR-0006: 状态向量与事件流设计 | 已采纳 | 2026-06-22 |
@@ -51,17 +51,20 @@
 | [ADR-0022](ADR-0022-manual-deps-field.md) | ADR-0022: Manual Deps Field for roadmap-meta.yaml | 已采纳 | 2026-07-20 |
 | [ADR-0023](ADR-0023-v3-rename-spec-workflow-to-rdd-workflow.md) | ADR-0023: v3.0.0 包名重命名 `spec-workflow` → `rdd-workflow` | 已采纳 | 2026-07-22 |
 | [ADR-0024](ADR-0024-deps-driven-execution-mode.md) | ADR-0024: deps 阶段驱动执行模式决策 | 已采纳 | 2026-07-24 |
-| [ADR-0025](ADR-0025-design-proposal-creation.md) | ADR-0025: design 阶段承担 openspec proposal 创建与内容审查 | 已采纳 | 2026-08-02 |
+| [ADR-0025](ADR-0025-design-proposal-creation.md) | ADR-0025: design 阶段承担 openspec proposal 创建与内容审查 | 已采纳（v2.1 扩展 ADR） | 2026-08-02 |
 | [ADR-0026](ADR-0026-internal-metadata-namespace-convention.md) | ADR-0026: rdd-workflow Internal Metadata Namespace Convention | 已采纳 | 2026-08-11 |
-| [ADR-0027](ADR-0027-continuous-evolution-feedback-loop.md) | ADR-0027: 持续演进反馈环（Continuous Evolution Feedback Loop） | 已采纳 | 2026-08-12 |
-| [ADR-0028](ADR-0028-role-model-per-phase.md) | ADR-0028: Role Model Per Phase | 已采纳 | 2026-08-14 |
+| [ADR-0027](ADR-0027-continuous-evolution-feedback-loop.md) | ADR-0027: 持续演进反馈环（Continuous Evolution Feedback Loop） | 已采纳（v2.1.x 系列 ADR） | 2026-08-12 |
+| [ADR-0028](ADR-0028-role-model-per-phase.md) | ADR-0028: Role Model Per Phase | 已采纳（v2.0.8+ 系列） | 2026-08-14 |
 | [ADR-0029](ADR-0029-issue-driven-proposal-creation.md) | ADR-0029: Issue-Driven Proposal Creation | 已采纳 | 2026-08-15 |
-| [ADR-0030](ADR-0030-hub-and-spoke-federation.md) | ADR-0030: 多项目 AI 协同开发采用 Hub-and-Spoke 联邦架构 | 待定 | 2026-08-15 |
+| [ADR-0030](ADR-0030-hub-and-spoke-federation.md) | ADR-0030: 多项目 AI 协同开发采用 Hub-and-Spoke 联邦架构 | 待定（v2.0.8+ 设计稿） | 2026-08-15 |
 | [ADR-0031](ADR-0031-human-in-loop-cross-repo.md) | ADR-0031: 跨项目 RFC 必须人类决策（Human-in-Loop for Cross-Repo） | 已采纳 | 2026-08-15（2026-08-18 经 `fix-adr-0031-safety-gate-substantiation` 实质化后采纳） |
 | [ADR-0032](ADR-0032-hub-federation-deepening.md) | ADR-0032: Hub 联邦深化 (Hub Federation Deepening) | 待定 | 2026-08-19 |
 | [ADR-0033](ADR-0033-submodule-aware-project-root-resolution.md) | ADR-0033: Submodule-Aware Project Root Resolution | 待定 | 2026-08-25 |
 | [ADR-0034](ADR-0034-rdd-verifier-verify-phase-architecture.md) | ADR-0034: rdd-verifier 验证回环阶段架构 | 已采纳 (2026-08-26) | — |
 | [ADR-0035](ADR-0035-verifier-archive-gate-boundary.md) | ADR-0035: rdd-verifier ↔ archive_gate_check 双轨设计边界 | 已采纳 | 2026-08-28 |
+| [ADR-0036](ADR-0036-design-handoff-runtime-filter.md) | ADR-0036 — design-handoff runtime filter over on-disk cleanup | — | — |
+| [ADR-0037](ADR-0037-feedback-contract.md) | ADR-0037: Feedback Contract for `.rddf/improvements/*.md` | — | — |
+| [ADR-0038](ADR-0038-rdd-planner-crosscutting.md) | ADR-0038: rdd-planner Horizontal Orchestrator (Stage 2) | — | — |
 <!-- ADR_INDEX_END -->
 
 ## 架构演进
@@ -225,7 +228,7 @@ ADR-NNN §N.M
 ## 维护者
 
 - 主要决策者: sisyphus
-- 上次同步: 2026-08-12 (add-issue-reporter-tests — ADR-0027 完整 3-change 系列落地：prereqs + reporter + tests/docs)
+- 上次同步: 2026-09-03 (add-issue-reporter-tests — ADR-0027 完整 3-change 系列落地：prereqs + reporter + tests/docs)
 - 下次审查: 新增 ADR 后
 
 ## 脚注

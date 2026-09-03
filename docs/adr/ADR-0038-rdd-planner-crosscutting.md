@@ -5,6 +5,13 @@
 Accepted (2026-09-03) — Stage 2 of `rdd-planner` design, implemented per
 `docs/superpowers/specs/2026-09-03-rdd-planner-stage2-design.md`.
 
+> **Stage 2.5 (2026-09-03): P0-1 single AUTO-SPRINT writer.**
+> `_lib/roadmap_sprint.update_roadmap` is the sole writer of the
+> AUTO-SPRINT block. Planner sync (`_lib/planner_sync.apply_state`)
+> delegates via the `table='project'` dispatch. `_lib/loop/actions.py
+> ::action_update_roadmap` writes `.rddf/state/roadmap-state.json`
+> (no sentinel, no roadmap write) and is **not** a roadmap writer.
+
 ## Context
 
 After Stage 1 (ADR-0037 feedback contract) shipped, the codebase has:
@@ -43,6 +50,19 @@ Implement `rdd-planner` as a **horizontal orchestrator** (NOT a sixth phase):
 6. **Feedback integration**: Read-only consumer of Stage 1's
    `## Feedback` section via the ADR-0037 contract. No writes to
    improvement files.
+
+7. **Roadmap writer matrix (Stage 2.5)**:
+   - `_lib/roadmap_sprint.update_roadmap(roadmap_path, data, *, table="changes"|"project")`
+     is the **only** writer of the AUTO-SPRINT block. It acquires a
+     per-file `FileLock(<roadmap_path>.lock, timeout=10)` and writes
+     atomically (.tmp + rename).
+   - `_lib/planner_sync.apply_state` delegates to
+     `update_roadmap(..., table="project")`. It does **not** render
+     the sprint block itself nor hold its own roadmap lock.
+   - `_lib/loop/actions.py::action_update_roadmap` writes
+     `.rddf/state/roadmap-state.json` (`{phase, category, updated_at}`)
+     and does **not** touch `.rddf/roadmap.md`. It is **not** a
+     roadmap writer and shares no lock.
 
 ## Consequences
 

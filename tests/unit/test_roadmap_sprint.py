@@ -4,6 +4,7 @@ import pytest
 
 from skills._lib import iteration as it
 from skills._lib import roadmap_sprint as rs
+from skills._lib.core import lock as core_lock
 
 
 # ---------------------------------------------------------------------------
@@ -355,6 +356,78 @@ class TestStaleness:
         ts = rs._now().replace(microsecond=0) - datetime.timedelta(days=3)
         out = rs._format_staleness(ts.isoformat())
         assert "d ago" in out
+
+
+# ---------------------------------------------------------------------------
+# Project table (Stage 2.5 P0-1: planner AUTO-SPRINT render contract)
+# ---------------------------------------------------------------------------
+
+class TestProjectTable:
+    def test_render_project_table_renders_project_rows(self):
+        """render_project_table renders the planner project table shape."""
+        data = {
+            "current_sprint": "sprint-2026-09",
+            "active_projects": [
+                {"project_id": "p1", "phase": "phase-2", "priority": "P1",
+                 "feedback_status": "none", "proposal": "foo"},
+                {"project_id": "p2", "phase": "phase-3", "priority": "P2",
+                 "feedback_status": "needs-revision", "proposal": "bar"},
+            ],
+        }
+        out = rs.render_project_table(data)
+        assert "## Current Sprint: sprint-2026-09" in out
+        assert "| Project | Phase | Priority | Feedback | Proposal |" in out
+        assert "| p1 | phase-2 | P1 | none | foo |" in out
+        assert "| p2 | phase-3 | P2 | needs-revision | bar |" in out
+
+    def test_render_project_table_empty(self):
+        out = rs.render_project_table({"current_sprint": "sprint-x", "active_projects": []})
+        assert "_No active projects in current sprint._" in out
+
+    def test_render_project_table_with_unmapped(self):
+        out = rs.render_project_table({
+            "current_sprint": "sprint-x",
+            "active_projects": [],
+            "unmapped_proposals": ["a", "b"],
+        })
+        assert "### Unmapped (2)" in out
+        assert "- a" in out
+        assert "- b" in out
+
+    def test_update_roadmap_dispatches_project_table(self, monkeypatch):
+        """update_roadmap(..., table='project') renders via render_project_table."""
+        import os
+        captured = {}
+        monkeypatch.setattr(rs, "render_project_table",
+                            lambda d: (captured.setdefault("data", d), "PROJECT-INNER")[1])
+        tmp = os.path.join("/tmp", "_rs_dummy_" + str(os.getpid()))
+        # create empty file so update_roadmap reads OK
+        with open(tmp, "w", encoding="utf-8") as f:
+            f.write("# X\n")
+        try:
+            rs.update_roadmap(tmp, {"current_sprint": "sprint-2026-09", "active_projects": []},
+                              table="project")
+            assert "data" in captured
+        finally:
+            try:
+                os.unlink(tmp)
+                os.unlink(tmp + ".lock")
+            except OSError:
+                pass
+
+    def test_update_roadmap_acquires_roadmap_lock(self, tmp_path, monkeypatch):
+        """update_roadmap acquires a FileLock at <roadmap_path>.lock."""
+        rm_path = tmp_path / "roadmap.md"
+        rm_path.write_text("# R\n")
+        seen_locks = []
+        orig_lock = rs.FileLock
+        def spy(lock_path, *a, **kw):
+            seen_locks.append(str(lock_path))
+            return orig_lock(lock_path, *a, **kw)
+        monkeypatch.setattr(rs, "FileLock", spy)
+        rs.update_roadmap(str(rm_path), {"current_sprint": "sprint-x", "active_projects": []},
+                          table="project")
+        assert any(str(rm_path.with_suffix(".lock")) == p for p in seen_locks)
 
 
 # Need to import datetime at top level

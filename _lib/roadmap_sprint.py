@@ -13,9 +13,17 @@ table) for the AUTO-SPRINT block. `update_roadmap(roadmap_path, data)`
 rewrites the file in place: preserves everything outside the sentinels,
 replaces everything between them.
 
+Stage 2.5 P0-1 (per ADR-0038): `update_roadmap` is the sole writer of
+the AUTO-SPRINT block. Both change-shape (`render_sprint_table`) and
+project-shape (`render_project_table`) rendering share the same sentinel
+split helper and locked atomic write. The lock path is
+`<roadmap_path>.lock`.
+
 Design choices:
 - Atomic write (write to .tmp then rename) so a partial render never
   leaves the file with a half-updated block.
+- Per-file FileLock around read/write so concurrent writers (planner
+  sync and loop hooks) cannot interleave.
 - If the file is missing, the caller should not call this — they
   should run `skill_use("roadmap", "init")` first.
 - If the sentinels are missing, the block is appended to the end of
@@ -28,7 +36,10 @@ from __future__ import annotations
 import datetime
 import logging
 import os
+from pathlib import Path
 from typing import Optional
+
+from skills._lib.core.lock import FileLock
 
 logger = logging.getLogger(__name__)
 
@@ -193,37 +204,86 @@ def render_full_block(data: dict) -> str:
     return f"{START_SENTINEL}\n{inner}{END_SENTINEL}\n"
 
 
-def update_roadmap(roadmap_path: str, data: dict) -> None:
+def render_project_table(data: dict) -> str:
+    """Render the planner project table for AUTO-SPRINT block.
+
+    `data` is a planner state dict with keys:
+      - current_sprint: str (e.g. "sprint-2026-09")
+      - active_projects: list of dicts with keys
+        project_id, phase, priority, feedback_status, proposal
+      - unmapped_proposals: list[str] (optional)
+
+    Returns the inner content (no sentinels) suitable for insertion
+    between `<!-- AUTO-SPRINT-START -->` and `<!-- AUTO-SPRINT-END -->`.
+    """
+    sprint = data.get("current_sprint", "")
+    active = data.get("active_projects") or []
+    unmapped = data.get("unmapped_proposals") or []
+    lines = [f"## Current Sprint: {sprint}", ""]
+    if active:
+        lines.append("| Project | Phase | Priority | Feedback | Proposal |")
+        lines.append("|---------|-------|----------|----------|----------|")
+        for p in active:
+            pid = p.get("project_id") or "—"
+            phase = p.get("phase") or "—"
+            prio = p.get("priority") or "—"
+            fb = p.get("feedback_status") or "none"
+            prop = p.get("proposal") or "—"
+            lines.append(f"| {pid} | {phase} | {prio} | {fb} | {prop} |")
+    else:
+        lines.append("_No active projects in current sprint._")
+    lines.append("")
+    if unmapped:
+        lines.append(f"### Unmapped ({len(unmapped)})")
+        for name in unmapped[:10]:
+            lines.append(f"- {name}")
+        if len(unmapped) > 10:
+            lines.append(f"- ... and {len(unmapped) - 10} more")
+        lines.append("")
+    return "\n".join(lines) + "\n"
+
+
+def update_roadmap(roadmap_path: str, data: dict, *, table: str = "changes") -> None:
     """Rewrite roadmap.md to refresh the AUTO-SPRINT block in place.
 
-    - Atomic write (.tmp + rename).
-    - Preserves all content outside the sentinels.
-    - If sentinels are missing, appends the full block to the end.
-    - Returns silently if `roadmap_path` does not exist (caller should
-      have ensured the file exists; this avoids clobbering).
+    - `table='changes'` (default): legacy change-table renderer
+      (`render_sprint_table`). Used by `test_iteration_lifecycle` and
+      loop hooks.
+    - `table='project'`: planner project-table renderer
+      (`render_project_table`). Used by `rddf planner sync --apply`.
+
+    This function is the **only writer** of the AUTO-SPRINT block. It
+    serializes concurrent writers via a per-file FileLock
+    (`<roadmap_path>.lock`) and writes atomically (.tmp + rename).
+    Returns silently if `roadmap_path` does not exist (caller should
+    have ensured the file exists; this avoids clobbering).
     """
     if not os.path.isfile(roadmap_path):
         logger.debug("roadmap.md not found at %s; skipping AUTO-SPRINT update", roadmap_path)
         return
 
-    with open(roadmap_path, "r", encoding="utf-8") as f:
-        content = f.read()
-
-    before, after = _split_around_sentinels(content)
-    inner = render_sprint_table(data)
-    new_block = f"{START_SENTINEL}\n{inner}{END_SENTINEL}\n"
-
-    if not after:
-        # First-run: append the full block
-        new_content = before + "\n" + new_block
+    if table == "project":
+        inner = render_project_table(data)
     else:
-        # Existing sentinels: replace the inner block, keep the after text
-        new_content = before + new_block + after
+        inner = render_sprint_table(data)
 
-    tmp_path = roadmap_path + ".tmp"
-    with open(tmp_path, "w", encoding="utf-8") as f:
-        f.write(new_content)
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(tmp_path, roadmap_path)
-    logger.debug("roadmap.md AUTO-SPRINT block updated (%d bytes)", len(new_content))
+    lock_path = str(Path(roadmap_path).with_suffix(".lock"))
+    with FileLock(lock_path, timeout=10.0):
+        with open(roadmap_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        before, after = _split_around_sentinels(content)
+        new_block = f"{START_SENTINEL}\n{inner}{END_SENTINEL}\n"
+
+        if not after:
+            new_content = before + "\n" + new_block
+        else:
+            new_content = before + new_block + after
+
+        tmp_path = roadmap_path + ".tmp"
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            f.write(new_content)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, roadmap_path)
+    logger.debug("roadmap.md AUTO-SPRINT block updated (%d bytes, table=%s)", len(new_content), table)

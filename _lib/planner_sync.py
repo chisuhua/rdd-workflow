@@ -1,26 +1,27 @@
-"""Planner sync — discover improvements, render state, dual-zone roadmap write.
+"""Planner sync — discover improvements, render state, delegate roadmap write.
 
 This module is the **read-heavy** worker for `rdd-planner`. It scans
 .rddf/improvements/*.md (read-only, never modifies), computes the
 planner state, and (when --apply) writes:
 
-  - .rddf/state/.planner-state.json  (atomic)
-  - .rddf/roadmap.md  (dual-zone: only the AUTO-SPRINT block)
+  - .rddf/state/.planner-state.json  (atomic, via _lib.planner_state)
+  - .rddf/roadmap.md  AUTO-SPRINT block (delegated to
+    _lib.roadmap_sprint.update_roadmap with table='project')
+
+Per Stage 2.5 P0-1 (ADR-0038): the AUTO-SPRINT block has exactly one
+writer — `_lib.roadmap_sprint.update_roadmap`. This module does not
+hold its own roadmap lock or render its own sprint block.
 
 All improvement files are NEVER modified (Stage 1 ADR-0037 contract).
 """
 from __future__ import annotations
 
 import datetime as _dt
-import json
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
-
-from _lib.core.atomic_write import atomic_write_text
-from _lib.core.lock import FileLock
 
 __all__ = [
     "SyncError",
@@ -29,10 +30,6 @@ __all__ = [
     "render_state",
     "apply_state",
 ]
-
-AUTO_SPRINT_START = "<!-- AUTO-SPRINT-START -->"
-AUTO_SPRINT_END = "<!-- AUTO-SPRINT-END -->"
-SPRINT_HEADER_PREFIX = "## Current Sprint:"
 
 
 class SyncError(Exception):
@@ -149,71 +146,20 @@ def render_state(
 
 
 def apply_state(project_root: Path, state: Dict[str, Any]) -> Dict[str, int]:
-    """Apply state: write .planner-state.json and update AUTO-SPRINT block.
+    """Apply state: write .planner-state.json and delegate AUTO-SPRINT update.
 
     Returns a dict of {'state_written': bool, 'roadmap_written': bool}.
+    Per Stage 2.5 P0-1, the AUTO-SPRINT block is owned exclusively by
+    `_lib.roadmap_sprint.update_roadmap`; this function delegates.
     """
     from _lib.planner_state import write_state
+    from _lib.roadmap_sprint import update_roadmap
     write_state(project_root, state)
 
     roadmap_path = project_root / ".rddf" / "roadmap.md"
+    roadmap_written = 0
     if roadmap_path.exists():
-        roadmap_text = roadmap_path.read_text(encoding="utf-8")
-        new_block = _render_sprint_block(state)
-        updated = _merge_sprint_block(roadmap_text, new_block)
-        with FileLock(str(roadmap_path.with_suffix(".lock")), timeout=10.0):
-            atomic_write_text(roadmap_path, updated)
+        update_roadmap(str(roadmap_path), state, table="project")
+        roadmap_written = 1
 
-    return {"state_written": 1, "roadmap_written": 1 if roadmap_path.exists() else 0}
-
-
-def _render_sprint_block(state: Dict[str, Any]) -> str:
-    """Render the inner content of the AUTO-SPRINT block (no sentinels)."""
-    lines = [f"{SPRINT_HEADER_PREFIX} {state['current_sprint']}", ""]
-    if state["active_projects"]:
-        lines.append("| Project | Phase | Priority | Feedback | Proposal |")
-        lines.append("|---------|-------|----------|----------|----------|")
-        for p in state["active_projects"]:
-            lines.append(
-                f"| {p['project_id']} | {p['phase']} | {p['priority']} | "
-                f"{p['feedback_status']} | {p['proposal']} |"
-            )
-    else:
-        lines.append("_No active projects in current sprint._")
-    lines.append("")
-    if state["unmapped_proposals"]:
-        lines.append(f"### Unmapped ({len(state['unmapped_proposals'])})")
-        for name in state["unmapped_proposals"][:10]:
-            lines.append(f"- {name}")
-        if len(state["unmapped_proposals"]) > 10:
-            lines.append(f"- ... and {len(state['unmapped_proposals']) - 10} more")
-        lines.append("")
-    return "\n".join(lines)
-
-
-def _merge_sprint_block(roadmap_text: str, new_block: str) -> str:
-    """Insert or replace the AUTO-SPRINT block in roadmap_text.
-
-    - If both sentinels present: replace content between them.
-    - If only start sentinel: insert end sentinel and replace.
-    - If neither: append after '## Phase Skeleton' table (idempotent first-run).
-    """
-    start_idx = roadmap_text.find(AUTO_SPRINT_START)
-    end_idx = roadmap_text.find(AUTO_SPRINT_END)
-
-    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-        before = roadmap_text[:start_idx + len(AUTO_SPRINT_START)]
-        after = roadmap_text[end_idx:]
-        return f"{before}\n{new_block}\n{after}"
-
-    if start_idx != -1 and end_idx == -1:
-        before = roadmap_text[:start_idx + len(AUTO_SPRINT_START)]
-        return f"{before}\n{new_block}\n{AUTO_SPRINT_END}\n"
-
-    if "## Phase Skeleton" in roadmap_text and "<!-- AUTO-INDEX -->" in roadmap_text:
-        idx = roadmap_text.index("<!-- AUTO-INDEX -->")
-        before = roadmap_text[:idx].rstrip() + "\n\n"
-        after = "\n" + roadmap_text[idx:]
-        return f"{before}{AUTO_SPRINT_START}\n{new_block}\n{AUTO_SPRINT_END}\n{after}"
-
-    return f"{roadmap_text.rstrip()}\n\n{AUTO_SPRINT_START}\n{new_block}\n{AUTO_SPRINT_END}\n"
+    return {"state_written": 1, "roadmap_written": roadmap_written}

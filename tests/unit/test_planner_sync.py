@@ -15,13 +15,15 @@ from _lib.planner_sync import (
 )
 
 
-def _make_improvement(parent: Path, name: str, *, priority: str = "P2", roadmap_ref: dict | None = None, feedback_block: str = ""):
+def _make_improvement(parent: Path, name: str, *, priority: str = "P2", roadmap_ref: dict | None = None, feedback_block: str = "", last_feedback_id: str | None = None):
     imp_dir = parent / ".rddf" / "improvements"
     imp_dir.mkdir(parents=True, exist_ok=True)
     f = imp_dir / f"{name}.md"
     fm = f"---\nname: {name}\npriority: {priority}\n"
     if roadmap_ref:
         fm += f"roadmap_ref: {json.dumps(roadmap_ref)}\n"
+    if last_feedback_id:
+        fm += f"last_feedback_id: {last_feedback_id}\n"
     fm += "---\n# proposal\n"
     if feedback_block:
         fm += "\n## Feedback\n\n" + feedback_block
@@ -127,3 +129,30 @@ def test_apply_state_writes_planner_state_and_roadmap(tmp_path):
     assert "<!-- AUTO-SPRINT-START -->" in updated
     assert "<!-- AUTO-SPRINT-END -->" in updated
     assert "Phase Skeleton" in updated
+
+
+def test_apply_state_delegates_to_roadmap_sprint_update_roadmap(monkeypatch, tmp_path):
+    """apply_state calls roadmap_sprint.update_roadmap with table='project'."""
+    from _lib import roadmap_sprint as rs_mod
+    captured = {}
+    def fake_update(roadmap_path, data, *, table="changes"):
+        captured["path"] = roadmap_path
+        captured["data"] = data
+        captured["table"] = table
+        return None
+    monkeypatch.setattr(rs_mod, "update_roadmap", fake_update)
+    roadmap = tmp_path / ".rddf" / "roadmap.md"
+    roadmap.parent.mkdir(parents=True)
+    roadmap.write_text("# R\n")
+    state = {
+        "version": 1,
+        "current_sprint": "sprint-2026-09",
+        "last_sync_at": "2026-09-03T10:30:00+00:00",
+        "last_sync_status": "ok",
+        "active_projects": [],
+        "unmapped_proposals": [],
+        "synced_proposals": [],
+    }
+    apply_state(tmp_path, state)
+    assert captured["table"] == "project"
+    assert captured["data"]["current_sprint"] == "sprint-2026-09"
