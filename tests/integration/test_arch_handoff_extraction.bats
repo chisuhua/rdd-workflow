@@ -68,7 +68,7 @@ required = ['arch_complete_at','adr_count','completed_adr_ids','roadmap_exists',
             'adr_pattern','discovered','version']
 for k in required:
     assert k in d, f'Missing key: {k}'
-assert d['version'] == 1
+assert d['version'] == 2
 print('OK')
 "
   rm -rf "$tmpdir"

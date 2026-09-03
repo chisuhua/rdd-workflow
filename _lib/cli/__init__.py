@@ -97,6 +97,7 @@ _ROUTES: Dict[str, str] = {
     "rdd-verify": "skills._lib.cli.rdd_verify_cmd:cmd_rdd_verify",
     "l2-trend": "skills._lib.cli.l2_trend_cmd:cmd_l2_trend",
     "planner": "skills._lib.cli.planner_cmd:cmd_planner",
+    "arch": "skills._lib.cli.rdd_arch_cmd:cmd_arch",
     "monitor": "skills._lib.cli.monitor_cmd:cmd_monitor",
     "roadmap": "skills._lib.cli.roadmap_cmd:cmd_roadmap",
     "scheduler": "skills._lib.cli.scheduler_cmd:cmd_scheduler",

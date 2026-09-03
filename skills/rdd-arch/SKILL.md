@@ -112,6 +112,16 @@ source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_
 rddf_session_hook_entry stage_arch rdd-arch arch-phase arch-done .rddf/state/.arch-handoff.json
 ```
 
+**Stage 3 行为（per ADR-0042）**: 入口后展示 rdd-arch 状态 + planner 反馈摘要。
+
+```bash
+rddf arch status --project-root "$PROJECT_ROOT"
+# 例: rdd-arch: phase-1 | 3 ADRs | Planner: 1 critical, 0 warning, 1 stale
+# 或: rdd-arch: (no arch-done yet) | Planner: No planner feedback
+```
+
+planner 反馈**仅 advisory**，不阻断 arch-done 门控（per ADR-0042 边界契约）。
+
 **行为**：
 
 执行环境检测，检查清单：
