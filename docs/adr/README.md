@@ -60,11 +60,13 @@
 | [ADR-0031](ADR-0031-human-in-loop-cross-repo.md) | ADR-0031: 跨项目 RFC 必须人类决策（Human-in-Loop for Cross-Repo） | 已采纳 | 2026-08-15（2026-08-18 经 `fix-adr-0031-safety-gate-substantiation` 实质化后采纳） |
 | [ADR-0032](ADR-0032-hub-federation-deepening.md) | ADR-0032: Hub 联邦深化 (Hub Federation Deepening) | 待定 | 2026-08-19 |
 | [ADR-0033](ADR-0033-submodule-aware-project-root-resolution.md) | ADR-0033: Submodule-Aware Project Root Resolution | 待定 | 2026-08-25 |
-| [ADR-0034](ADR-0034-rdd-verifier-verify-phase-architecture.md) | ADR-0034: rdd-verifier 验证回环阶段架构 | 已采纳 (2026-08-26) | — |
+| [ADR-0034](ADR-0034-rdd-verifier-verify-phase-architecture.md) | ADR-0034: rdd-verifier 验证回环阶段架构 | 已采纳 (2026-08-26) | 2026-08-26 |
 | [ADR-0035](ADR-0035-verifier-archive-gate-boundary.md) | ADR-0035: rdd-verifier ↔ archive_gate_check 双轨设计边界 | 已采纳 | 2026-08-28 |
-| [ADR-0036](ADR-0036-design-handoff-runtime-filter.md) | ADR-0036 — design-handoff runtime filter over on-disk cleanup | — | — |
-| [ADR-0037](ADR-0037-feedback-contract.md) | ADR-0037: Feedback Contract for `.rddf/improvements/*.md` | — | — |
-| [ADR-0038](ADR-0038-rdd-planner-crosscutting.md) | ADR-0038: rdd-planner Horizontal Orchestrator (Stage 2) | — | — |
+| [ADR-0036](ADR-0036-rddf-project-yaml-config.md) | ADR-0036: .rddf/project.yaml 项目级配置源 | 已采纳 (2026-09-02) | 2026-09-02 |
+| [ADR-0037](ADR-0037-feedback-contract.md) | ADR-0037: Feedback Contract for `.rddf/improvements/*.md` | 已采纳 (2026-09-03) | 2026-09-03 |
+| [ADR-0038](ADR-0038-rdd-planner-crosscutting.md) | ADR-0038: rdd-planner Horizontal Orchestrator (Stage 2) | 已采纳 (2026-09-03) | 2026-09-03 |
+| [ADR-0039](ADR-0039-design-handoff-runtime-filter.md) | ADR-0039 — design-handoff runtime filter over on-disk cleanup | 已采纳 (2026-09-01) | 2026-09-01 |
+| [ADR-0040](ADR-0040-session-metrics.md) | ADR-0040 — schema v3 add session metrics opt-in 字段 | 已采纳 (2026-09-01) | 2026-09-01 |
 <!-- ADR_INDEX_END -->
 
 ## 架构演进

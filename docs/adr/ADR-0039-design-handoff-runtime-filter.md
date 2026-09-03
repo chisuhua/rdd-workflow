@@ -1,4 +1,8 @@
-# ADR-0036 — design-handoff runtime filter over on-disk cleanup
+# ADR-0039 — design-handoff runtime filter over on-disk cleanup
+
+> **状态**: 已采纳 (2026-09-01)
+> **日期**: 2026-09-01
+> **决策者**: sisyphus
 
 ## Status
 已采纳 (2026-09-01, fix-plan-intake-stale-pre-created-changes P1)

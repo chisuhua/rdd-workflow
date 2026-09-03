@@ -1,5 +1,9 @@
 # ADR-0037: Feedback Contract for `.rddf/improvements/*.md`
 
+> **状态**: 已采纳 (2026-09-03)
+> **日期**: 2026-09-03
+> **决策者**: sisyphus
+
 ## Status
 
 Accepted (2026-09-03) — Stage 1 of `rdd-planner` design, implemented per

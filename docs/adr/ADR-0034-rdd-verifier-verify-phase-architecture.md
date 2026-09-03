@@ -1,6 +1,7 @@
 # ADR-0034: rdd-verifier 验证回环阶段架构
 
 > **状态**: 已采纳 (2026-08-26)
+> **日期**: 2026-08-26
 > **修订**: 2026-08-26 — fix-rdd-verifier-lifecycle-dashboard 落地后补充存储契约、branch-identity、bypass 审计
 > **决策者**: sisyphus
 

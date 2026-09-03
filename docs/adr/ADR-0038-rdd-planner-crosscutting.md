@@ -1,5 +1,9 @@
 # ADR-0038: rdd-planner Horizontal Orchestrator (Stage 2)
 
+> **状态**: 已采纳 (2026-09-03)
+> **日期**: 2026-09-03
+> **决策者**: sisyphus
+
 ## Status
 
 Accepted (2026-09-03) — Stage 2 of `rdd-planner` design, implemented per
