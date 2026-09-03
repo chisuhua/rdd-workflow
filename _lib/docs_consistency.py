@@ -40,8 +40,19 @@ def _read_json(rel_path: str) -> dict:
 
 
 def _count_disk_skill_md() -> int:
-    """Count sub-skill SKILL.md files (excludes top-level INSTALL.md)."""
-    return len(list((REPO_ROOT / "skills").glob("*/SKILL.md")))
+    """Count canonical sub-skill SKILL.md files.
+
+    Excludes top-level INSTALL.md and deprecated shims (skills with
+    metadata.deprecated set). Per Stage 3 ADR-0042: guide-arch is a
+    shim forwarding to rdd-arch; both files exist on disk but only
+    rdd-arch counts as canonical.
+    """
+    canonical = []
+    for skill_md in (REPO_ROOT / "skills").glob("*/SKILL.md"):
+        text = skill_md.read_text(encoding="utf-8")
+        if not re.search(r"metadata:.*deprecated:", text, re.DOTALL):
+            canonical.append(skill_md)
+    return len(canonical)
 
 
 def check_skill_count() -> list[dict]:
@@ -287,7 +298,7 @@ def check_role_frontmatter() -> list[dict]:
     """All 5 phase skills have role: frontmatter (per ADR-0028 + ADR-0034)."""
     issues = []
     phase_skills = (
-        "guide-arch",
+        "rdd-arch",
         "guide-design",
         "guide-plan",
         "guide-ship",

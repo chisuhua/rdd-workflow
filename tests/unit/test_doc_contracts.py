@@ -54,7 +54,7 @@ def test_general_spec_consumers_drop_guide_spec_add_arch_plan() -> None:
 
 
 def _count_skill_files(include_top_level: bool = False) -> int:
-    """Count sub-skill SKILL.md files.
+    """Count canonical sub-skill SKILL.md files.
 
     Args:
         include_top_level: If True, also count `skills/INSTALL.md`
@@ -65,9 +65,16 @@ def _count_skill_files(include_top_level: bool = False) -> int:
     Per fix-disk-count-semantic-conflict: the parameter exists so future
     tests can opt in to including INSTALL when verifying the
     installer-discovers-disks contract.
+
+    Per Stage 3 ADR-0042: guide-arch is a deprecated shim forwarding to
+    rdd-arch; excluded from canonical count.
     """
-    sub = list((REPO_ROOT / "skills").glob("*/SKILL.md"))
-    total = len(sub)
+    canonical = []
+    for skill_md in (REPO_ROOT / "skills").glob("*/SKILL.md"):
+        text = skill_md.read_text()
+        if not re.search(r"metadata:.*deprecated:", text, re.DOTALL):
+            canonical.append(skill_md)
+    total = len(canonical)
     if include_top_level:
         install = REPO_ROOT / "skills" / "INSTALL.md"
         if install.is_file():
@@ -199,19 +206,26 @@ def test_no_adr_0013_duplicate_on_disk() -> None:
 # ---------------------------------------------------------------------------
 
 def test_count_skill_files_default_excludes_install() -> None:
-    """默认行为: 不含 INSTALL.md (匹配 package.json 和 bats 语义)."""
+    """默认行为: 不含 INSTALL.md (匹配 package.json 和 bats 语义).
+
+    Per Stage 3 ADR-0042: excludes deprecated shims (e.g. guide-arch)
+    forwarding to canonical skills (e.g. rdd-arch).
+    """
     disk = _count_skill_files()
-    # sub-skill SKILL.md only
-    expected = len(list((REPO_ROOT / "skills").glob("*/SKILL.md")))
-    assert disk == expected
-    # INSTALL.md 存在但不被计入
+    canonical = [
+        p for p in (REPO_ROOT / "skills").glob("*/SKILL.md")
+        if not re.search(r"metadata:.*deprecated:", p.read_text(), re.DOTALL)
+    ]
+    assert disk == len(canonical), (
+        f"_count_skill_files()={disk} != canonical {len(canonical)}"
+    )
     assert (REPO_ROOT / "skills" / "INSTALL.md").is_file()
     assert disk != _count_skill_files(include_top_level=True)
 
 
 def test_count_skill_files_include_top_level_counts_install() -> None:
     """include_top_level=True 时, INSTALL.md 也被计入 (供 installer 验证)."""
-    sub_count = len(list((REPO_ROOT / "skills").glob("*/SKILL.md")))
+    sub_count = _count_skill_files()
     with_install = _count_skill_files(include_top_level=True)
     assert with_install == sub_count + 1
 

@@ -24,7 +24,7 @@ MOVED_MODULES = [
     ("skills._lib.feature_view", "skills.feature.scripts.feature_view", "feature_view.py"),
     ("skills._lib.feature_cli", "skills.feature.scripts.feature_cli", "feature_cli.py"),
     ("skills._lib.propose_change", "skills.propose.scripts.propose_change", "propose_change.py"),
-    ("skills._lib.write_arch_handoff", "skills.guide_arch.scripts.write_arch_handoff", "write_arch_handoff.py"),
+    ("skills._lib.write_arch_handoff", "skills.rdd_arch.scripts.write_arch_handoff", "write_arch_handoff.py"),
     ("skills._lib.plan_deps_candidates", "skills.guide_plan.scripts.plan_deps_candidates", "plan_deps_candidates.py"),
     ("skills._lib.plan_done_gate", "skills.guide_plan.scripts.plan_done_gate", "plan_done_gate.py"),
     ("skills._lib.update_roadmap_progress", "skills.execute.scripts.update_roadmap_progress", "update_roadmap_progress.py"),
