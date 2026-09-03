@@ -98,3 +98,55 @@ def test_cli_add_dry_run(tmp_path):
     ])
     assert rc == 0
     assert improvement.read_text() == original
+
+
+def test_cli_list_outputs_file_content(tmp_path, capsys):
+    _make_project(tmp_path)
+    improvement = tmp_path / ".rddf" / "improvements" / "improve.md"
+    improvement.write_text("---\nname: improve\n---\n# Improve\n")
+    rc = cmd_feedback(["list", "improve", "--project-root", str(tmp_path)])
+    captured = capsys.readouterr()
+    assert rc == 0
+    assert "# Improve" in captured.out
+
+
+def test_cli_show_schema_prints_json(tmp_path, capsys):
+    rc = cmd_feedback(["show-schema", "--project-root", str(tmp_path)])
+    captured = capsys.readouterr()
+    assert rc == 0
+    parsed = json.loads(captured.out)
+    assert parsed["title"] == "FeedbackEntry"
+
+
+def test_cli_resolve_placeholder(tmp_path, capsys):
+    rc = cmd_feedback(["resolve", "improve", "feedback-20260903-001", "--project-root", str(tmp_path)])
+    captured = capsys.readouterr()
+    assert rc == 0
+    assert "resolve subcommand is a placeholder" in captured.out
+
+
+def test_cli_body_from_file(tmp_path, capsys):
+    _make_project(tmp_path)
+    body_file = tmp_path / "body.txt"
+    body_file.write_text("body from file content")
+    improvement = tmp_path / ".rddf" / "improvements" / "improve.md"
+    improvement.write_text("---\nname: improve\n---\n")
+    rc = cmd_feedback([
+        "add", "improve",
+        "--from", "human",
+        "--kind", "noted",
+        "--body", f"@{body_file}",
+        "--project-root", str(tmp_path),
+    ])
+    text = improvement.read_text()
+    assert "body from file content" in text
+    assert rc == 0
+
+
+def test_cli_no_subcommand_exits_nonzero(capsys):
+    """argparse exits 2 when no subcommand given."""
+    try:
+        rc = cmd_feedback([])
+        assert rc != 0
+    except SystemExit as e:
+        assert e.code != 0
