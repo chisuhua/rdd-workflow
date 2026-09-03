@@ -1,8 +1,10 @@
-"""CLI dispatcher for `rddf planner ...` subcommands (Stage 2 MVP).
+"""CLI dispatcher for `rddf planner ...` subcommands.
 
-Subcommands:
-  status                    read-only sprint snapshot
-  sync [--apply] [--dry-run]  default --dry-run; --apply writes state
+Stage 2 MVP + Stage 2.5 P0-3 attach:
+  status                       read-only sprint snapshot
+  sync [--apply] [--dry-run]   default --dry-run; --apply writes state
+  attach <proposal> --project-id X --phase Y [--theme Z]
+                               validated single-file proposal attach
 """
 from __future__ import annotations
 
@@ -11,6 +13,7 @@ import sys
 from pathlib import Path
 from typing import List
 
+from _lib.planner_attach import AttachError
 from _lib.planner_state import PlannerStateError, read_state
 from _lib.planner_sync import apply_state, render_state
 
@@ -32,6 +35,16 @@ def _build_parser() -> argparse.ArgumentParser:
     p_sync = sub.add_parser("sync", help="Sync state (default: dry-run)", parents=[common])
     p_sync.add_argument("--apply", action="store_true", help="Actually write state and roadmap")
     p_sync.add_argument("--dry-run", action="store_true", help="Force dry-run (default)")
+
+    p_attach = sub.add_parser("attach", help="Attach proposal to roadmap project/phase",
+                              parents=[common])
+    p_attach.add_argument("proposal", help="Proposal name (basename without .md)")
+    p_attach.add_argument("--project-id", required=True,
+                          help="project_id must match a Theme value in ## Phase Skeleton")
+    p_attach.add_argument("--phase", required=True,
+                          help="phase must match a Phase value or fragment id")
+    p_attach.add_argument("--theme", default=None,
+                          help="Optional theme string stored in roadmap_ref.theme")
 
     return parser
 
@@ -69,6 +82,22 @@ def cmd_planner(args: List[str]) -> int:
             apply_state(project_root, state)
             sys.stdout.write(f"✓ State written\n")
             sys.stdout.write(f"  Sprint: {state['current_sprint']}\n")
+            return 0
+
+        if ns.subcommand == "attach":
+            from _lib.planner_attach import attach_proposal
+            try:
+                attach_proposal(
+                    project_root=project_root,
+                    proposal=ns.proposal,
+                    project_id=ns.project_id,
+                    phase=ns.phase,
+                    theme=ns.theme,
+                )
+            except AttachError as exc:
+                sys.stderr.write(f"ERROR: {exc}\n")
+                return 1
+            sys.stdout.write(f"✓ Attached: {ns.proposal} -> {ns.project_id}/{ns.phase}\n")
             return 0
 
         parser.print_help()

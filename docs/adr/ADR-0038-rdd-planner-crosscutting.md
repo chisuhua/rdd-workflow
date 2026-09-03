@@ -7,10 +7,21 @@ Accepted (2026-09-03) — Stage 2 of `rdd-planner` design, implemented per
 
 > **Stage 2.5 (2026-09-03): P0-1 single AUTO-SPRINT writer.**
 > `_lib/roadmap_sprint.update_roadmap` is the sole writer of the
-> AUTO-SPRINT block. Planner sync (`_lib/planner_sync.apply_state`)
+> AUTO-SPRINT block. Planner sync (`_lib.planner_sync.apply_state`)
 > delegates via the `table='project'` dispatch. `_lib/loop/actions.py
 > ::action_update_roadmap` writes `.rddf/state/roadmap-state.json`
 > (no sentinel, no roadmap write) and is **not** a roadmap writer.
+
+> **Stage 2.5 (2026-09-03): P0-3 explicit `planner attach` write path.**
+> `rddf planner attach <proposal> --project-id X --phase Y [--theme Z]`
+> is the only command besides `rddf feedback add` that may modify
+> `.rddf/improvements/*.md`. It operates on **exactly one** file
+> under per-file `FileLock` + `atomic_write`, validates `project_id`
+> against Phase Skeleton Theme column (and `phase` against Phase
+> column / fragment ids via `.rddf/roadmap/phases/*.md` `id`), is
+> idempotent for identical mappings, and refuses to overwrite an
+> existing divergent mapping without an explicit flag. No bulk
+> rewrite is permitted.
 
 ## Context
 

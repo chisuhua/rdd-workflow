@@ -110,3 +110,45 @@ EOF
     [[ "$output" =~ "stored" ]]
     [[ "$output" =~ "sprint-2026-09" ]]
 }
+
+@test "planner: attach succeeds when project_id and phase are valid" {
+    cat > .rddf/roadmap.md <<'EOF'
+# Roadmap
+
+## Phase Skeleton
+| Phase | Theme | Status | Started | Done |
+|-------|-------|--------|---------|------|
+| phase-2 | foo bar | active | | |
+EOF
+    cat > .rddf/improvements/imp1.md <<'EOF'
+---
+name: imp1
+priority: P2
+---
+# imp1
+EOF
+
+    run python3 -m _lib.cli planner attach imp1 --project-id "foo bar" --phase phase-2 --project-root "$TEST_TMP"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "Attached: imp1" ]]
+    grep -q "project_id: foo bar" .rddf/improvements/imp1.md
+    grep -q "phase: phase-2" .rddf/improvements/imp1.md
+}
+
+@test "planner: attach rejects unknown project_id" {
+    cat > .rddf/roadmap.md <<'EOF'
+# Roadmap
+## Phase Skeleton
+| Phase | Theme | Status | Started | Done |
+|-------|-------|--------|---------|------|
+| phase-2 | foo bar | active | | |
+EOF
+    printf -- '---\nname: imp1\n---\n# imp1\n' > .rddf/improvements/imp1.md
+
+    run python3 -m _lib.cli planner attach imp1 --project-id nope --phase phase-2 --project-root "$TEST_TMP"
+
+    [ "$status" -eq 1 ]
+    [[ "$output" =~ "project_id not in roadmap" ]]
+    ! grep -q "project_id: nope" .rddf/improvements/imp1.md
+}
