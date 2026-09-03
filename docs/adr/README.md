@@ -65,8 +65,8 @@
 | [ADR-0036](ADR-0036-rddf-project-yaml-config.md) | ADR-0036: .rddf/project.yaml 项目级配置源 | 已采纳 (2026-09-02) | 2026-09-02 |
 | [ADR-0037](ADR-0037-feedback-contract.md) | ADR-0037: Feedback Contract for `.rddf/improvements/*.md` | 已采纳 (2026-09-03) | 2026-09-03 |
 | [ADR-0038](ADR-0038-rdd-planner-crosscutting.md) | ADR-0038: rdd-planner Horizontal Orchestrator (Stage 2) | 已采纳 (2026-09-03) | 2026-09-03 |
-| [ADR-0039](ADR-0039-design-handoff-runtime-filter.md) | ADR-0039 — design-handoff runtime filter over on-disk cleanup | 已采纳 (2026-09-01) | 2026-09-01 |
-| [ADR-0040](ADR-0040-session-metrics.md) | ADR-0040 — schema v3 add session metrics opt-in 字段 | 已采纳 (2026-09-01) | 2026-09-01 |
+| [ADR-0039](ADR-0039-design-handoff-runtime-filter.md) | ADR-0039: design-handoff runtime filter over on-disk cleanup | 已采纳 (2026-09-01) | 2026-09-01 |
+| [ADR-0040](ADR-0040-session-metrics.md) | ADR-0040: schema v3 add session metrics opt-in 字段 | 已采纳 (2026-09-01) | 2026-09-01 |
 | [ADR-0041](ADR-0041-planner-sprint-lifecycle-and-history.md) | ADR-0041: Planner Sprint Lifecycle and History Storage | 已采纳 (2026-09-03) | 2026-09-03 |
 | [ADR-0042](ADR-0042-rdd-arch-rdd-planner-bidirectional-feedback.md) | ADR-0042: rdd-arch rename + rdd-arch ↔ rdd-planner 双向反馈闭环 | 已采纳 (2026-09-03) | 2026-09-03 |
 <!-- ADR_INDEX_END -->
