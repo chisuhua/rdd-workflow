@@ -227,3 +227,55 @@ def apply_state(project_root: Path, state: Dict[str, Any]) -> Dict[str, int]:
         roadmap_written = 1
 
     return {"state_written": 1, "roadmap_written": roadmap_written}
+
+
+def diff_state(project_root: Path) -> Dict[str, Any]:
+    """Compare stored planner state to freshly computed state.
+
+    Returns a dict:
+      - has_baseline: bool (False if state file missing or unreadable)
+      - unmapped_diff: {"added": [...], "removed": [...]}
+      - projects_diff: {project_id: {"phase": (stored, computed), "feedback_status": (stored, computed)}}
+    Timestamps (last_sync_at, last_sync_status, sprint id) are NOT
+    compared — they always differ and would create noise.
+    """
+    from _lib.planner_state import _state_path
+    state_path = _state_path(project_root)
+    if not state_path.exists():
+        return {
+            "has_baseline": False,
+            "unmapped_diff": {"added": [], "removed": []},
+            "projects_diff": {},
+        }
+    try:
+        from _lib.planner_state import read_state
+        stored = read_state(project_root)
+    except Exception:
+        return {
+            "has_baseline": False,
+            "unmapped_diff": {"added": [], "removed": []},
+            "projects_diff": {},
+        }
+    computed = render_state(project_root)
+    stored_unmapped = set(stored.get("unmapped_proposals") or [])
+    computed_unmapped = set(computed.get("unmapped_proposals") or [])
+    stored_active = {p["project_id"]: p for p in (stored.get("active_projects") or [])}
+    computed_active = {p["project_id"]: p for p in (computed.get("active_projects") or [])}
+    projects_diff: Dict[str, Dict[str, tuple]] = {}
+    for pid in sorted(set(stored_active) | set(computed_active)):
+        s = stored_active.get(pid, {})
+        c = computed_active.get(pid, {})
+        d: Dict[str, tuple] = {}
+        for key in ("phase", "feedback_status"):
+            if s.get(key) != c.get(key):
+                d[key] = (s.get(key), c.get(key))
+        if d:
+            projects_diff[pid] = d
+    return {
+        "has_baseline": True,
+        "unmapped_diff": {
+            "added": sorted(computed_unmapped - stored_unmapped),
+            "removed": sorted(stored_unmapped - computed_unmapped),
+        },
+        "projects_diff": projects_diff,
+    }

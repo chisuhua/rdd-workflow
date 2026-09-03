@@ -208,6 +208,37 @@ def test_apply_state_accepts_noted_feedback(tmp_path):
     apply_state(tmp_path, state)
 
 
+def test_diff_state_no_baseline_returns_empty_diff(tmp_path):
+    from _lib.planner_sync import diff_state
+    diff = diff_state(project_root=tmp_path)
+    assert diff["has_baseline"] is False
+    assert diff["unmapped_diff"] == {"added": [], "removed": []}
+    assert diff["projects_diff"] == {}
+
+
+def test_diff_state_identical_when_stored_equals_computed(tmp_path):
+    from _lib.planner_state import write_state
+    _make_improvement(tmp_path, "m", roadmap_ref={"project_id": "p", "phase": "phase-2"})
+    state = render_state(tmp_path)
+    write_state(tmp_path, state)
+    from _lib.planner_sync import diff_state
+    diff = diff_state(project_root=tmp_path)
+    assert diff["has_baseline"] is True
+    assert diff["unmapped_diff"] == {"added": [], "removed": []}
+    assert diff["projects_diff"] == {}
+
+
+def test_diff_state_detects_newly_unmapped(tmp_path):
+    from _lib.planner_state import write_state
+    _make_improvement(tmp_path, "u1")
+    write_state(tmp_path, render_state(tmp_path))
+    _make_improvement(tmp_path, "u2")
+    from _lib.planner_sync import diff_state
+    diff = diff_state(project_root=tmp_path)
+    assert "u2" in diff["unmapped_diff"]["added"]
+    assert diff["unmapped_diff"]["removed"] == []
+
+
 def test_parse_feedback_status_logs_when_pointer_missing(tmp_path, caplog):
     """When last_feedback_id points to a missing block, parser logs a warning."""
     import logging
