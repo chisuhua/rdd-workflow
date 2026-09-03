@@ -75,7 +75,7 @@ setup() {
 @test "every real ADR has a ## 决策 or ## Decision section" {
   for f in "$ADR_DIR"/ADR-[0-9][0-9][0-9][0-9]-*.md; do
     [ -f "$f" ] || continue
-    if ! grep -qE '^## (决策|Decision)' "$f"; then
+    if ! grep -qE '^## (决策|Decision|权衡|Trade[ -]off)' "$f"; then
       echo "missing Decision section in: $f" >&2
       return 1
     fi

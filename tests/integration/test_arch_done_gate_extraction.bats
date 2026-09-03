@@ -32,7 +32,7 @@ load ../test_helper
 @test "check_arch_done_gate_passes_with_adr_and_roadmap" {
   local tmpdir
   tmpdir=$(mktemp -d)
-  mkdir -p "$tmpdir/docs/adr"
+  mkdir -p "$tmpdir/docs/adr" "$tmpdir/_lib"
   mkdir -p "$tmpdir/skills/_lib"
   echo "# ADR-0001-test" > "$tmpdir/docs/adr/ADR-0001-test.md"
   echo "**当前阶段**: test" > "$tmpdir/roadmap.md"
@@ -54,7 +54,7 @@ EOF
 @test "check_arch_done_gate_fails_without_adr" {
   local tmpdir
   tmpdir=$(mktemp -d)
-  mkdir -p "$tmpdir/docs/adr"
+  mkdir -p "$tmpdir/docs/adr" "$tmpdir/_lib"
   mkdir -p "$tmpdir/skills/_lib"
   echo "**当前阶段**: test" > "$tmpdir/roadmap.md"
   cat > "$tmpdir/_lib/discover-arch-artifacts.sh" <<'EOF'
@@ -73,7 +73,7 @@ EOF
 @test "check_arch_done_gate_fails_without_roadmap" {
   local tmpdir
   tmpdir=$(mktemp -d)
-  mkdir -p "$tmpdir/docs/adr"
+  mkdir -p "$tmpdir/docs/adr" "$tmpdir/_lib"
   mkdir -p "$tmpdir/skills/_lib"
   echo "# ADR-0001-test" > "$tmpdir/docs/adr/ADR-0001-test.md"
   # No roadmap.md

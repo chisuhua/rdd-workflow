@@ -14,11 +14,15 @@ setup() {
   done
 }
 
-@test "adr_index: docs/adr/README.md does NOT reference ADR-NNN beyond 0034" {
-  # Valid ADR range: 0000 (template) + 0001-0034 (real). adr-index-auto-sync change
-  # #2 has regenerated the README table to cover all 34 real ADRs.
-  # Flag only ADR-0035+ as unexpected (must add new file on disk first).
-  bad=$(grep -oE "ADR-0[0-9]{3}" docs/adr/README.md | sort -u | grep -E "ADR-0(0[3-9][0-9]|[1-9][0-9]{2})" | grep -v -E "ADR-003[0-4]\b" || true)
+@test "adr_index: docs/adr/README.md does NOT reference ADR-NNN beyond current max" {
+  # Auto-detect current max ADR number from docs/adr/. Per Stage 3 ADR-0042
+  # addition: the test no longer hardcodes "0034" — it flags anything above
+  # the on-disk max as unexpected (must add new ADR file first).
+  current_max=$(ls docs/adr/ADR-[0-9][0-9][0-9][0-9]-*.md 2>/dev/null | \
+    sed -E 's|.*ADR-([0-9]{4})-.*|\1|' | sort -n | tail -1)
+  current_max=${current_max:-0034}
+  bad=$(grep -oE "ADR-0[0-9]{3}" docs/adr/README.md | sort -u | \
+    awk -v max="$current_max" '$0 > "ADR-" max && $0 != "ADR-0000"' || true)
   [ -z "$bad" ]
 }
 

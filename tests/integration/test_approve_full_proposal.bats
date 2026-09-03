@@ -9,6 +9,7 @@ setup() {
     mkdir -p "$WORK_DIR/.rddf/state"
     mkdir -p "$WORK_DIR/openspec/changes"
     mkdir -p "$WORK_DIR/.rddf/improvements"
+    mkdir -p "$WORK_DIR/_lib"
     mkdir -p "$WORK_DIR/skills/guide-design/scripts"
     mkdir -p "$WORK_DIR/skills/_lib"
 
