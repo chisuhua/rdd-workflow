@@ -192,3 +192,18 @@ EOF
     [ "$status" -eq 1 ]
     grep -q "project_id: foo bar" .rddf/improvements/imp1.md
 }
+
+@test "planner: diff with no baseline exits 0 with notice" {
+    run python3 -m _lib.cli planner diff --project-root "$TEST_TMP"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "No baseline" ]]
+}
+
+@test "planner: diff exits 0 when stored matches computed" {
+    mkdir -p .rddf/improvements
+    printf -- '---\nname: foo\npriority: P2\nroadmap_ref:\n  project_id: p1\n  phase: phase-1\n---\n# foo\n' > .rddf/improvements/foo.md
+    python3 -m _lib.cli planner sync --apply --project-root "$TEST_TMP"
+    run python3 -m _lib.cli planner diff --project-root "$TEST_TMP"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "Stored and computed state agree" ]]
+}

@@ -45,6 +45,8 @@ def _build_parser() -> argparse.ArgumentParser:
                           help="phase must match a Phase value or fragment id")
     p_attach.add_argument("--theme", default=None,
                           help="Optional theme string stored in roadmap_ref.theme")
+    sub.add_parser("diff", help="Compare stored vs computed state", parents=[common])
+
     p_attach.add_argument("--overwrite", action="store_true",
                           help="Replace an existing divergent roadmap_ref")
 
@@ -102,6 +104,27 @@ def cmd_planner(args: List[str]) -> int:
                 return 1
             sys.stdout.write(f"✓ Attached: {ns.proposal} -> {ns.project_id}/{ns.phase}\n")
             return 0
+
+        if ns.subcommand == "diff":
+            from _lib.planner_sync import diff_state
+            diff = diff_state(project_root)
+            if not diff["has_baseline"]:
+                sys.stdout.write("No baseline state on disk; nothing to diff.\n")
+                return 0
+            added = diff["unmapped_diff"]["added"]
+            removed = diff["unmapped_diff"]["removed"]
+            proj = diff["projects_diff"]
+            if not added and not removed and not proj:
+                sys.stdout.write("Stored and computed state agree.\n")
+                return 0
+            if added:
+                sys.stdout.write(f"Unmapped added: {', '.join(added)}\n")
+            if removed:
+                sys.stdout.write(f"Unmapped removed: {', '.join(removed)}\n")
+            for pid, fields in proj.items():
+                diffs = ", ".join(f"{k}: {v[0]} -> {v[1]}" for k, v in fields.items())
+                sys.stdout.write(f"{pid}: {diffs}\n")
+            return 1
 
         parser.print_help()
         return 1
