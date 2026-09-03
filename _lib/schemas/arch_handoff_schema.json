@@ -5,8 +5,8 @@
     "description": "Schema metadata version per ADR-0016. Project invariant: all rdd-workflow schemas keep version.const='v1' (schema system version, NOT contract version). Contract version lives in properties.version.enum and may be [1, 2] for backward compat."
   },
   "$id": "https://rdd-workflow.local/schemas/arch_handoff_schema.json",
-  "title": "Arch Handoff (ADR-0016, contract v2 additive)",
-  "description": "Schema for .rddf/state/.arch-handoff.json emitted by guide-arch Phase 5 arch-done. Consumed by guide-plan, propose, roadmap, gate.py, detectors.py, actions.py, scan-state.sh.",
+  "title": "Arch Handoff (ADR-0016 + ADR-0042, contract v2 additive)",
+  "description": "Schema for .rddf/state/.arch-handoff.json emitted by rdd-arch Phase 6 arch-done. Consumed by guide-plan, propose, roadmap, gate.py, detectors.py, actions.py, scan-state.sh. Per ADR-0042 (Stage 3): contract v2 = base + v2_additive(roadmap_fragments_dir + adr_regex) + v2_additive_routing(planner_feedback lives in independent file .rddf/state/.planner-feedback.json owned by rdd-planner, NOT embedded here to preserve ADR-0028 role boundary).",
   "type": "object",
   "additionalProperties": true,
   "required": [
