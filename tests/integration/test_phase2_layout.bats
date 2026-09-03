@@ -48,7 +48,7 @@ setup() {
 @test "phase2: SKILL.md source lines use scripts/ for moved files" {
   # Sample 4 moved files
   grep -q 'scripts/ship_plan' skills/guide-ship/SKILL.md || return 1
-  grep -q 'scripts/arch_env_check' skills/guide-arch/SKILL.md || return 1
+  grep -q 'scripts/arch_env_check' skills/rdd-arch/SKILL.md || return 1
   grep -q 'scripts/feature_summary' skills/feature/SKILL.md || return 1
   grep -q 'scripts/scan-state' skills/guide/SKILL.md || return 1
 }

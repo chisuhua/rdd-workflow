@@ -85,7 +85,7 @@ with patch.object(e, '_do_analyze', side_effect=TimeoutError('simulated')):
 
 @test "reflect: hook code present in all 3 gate scripts" {
   for script in \
-    "$REPO_ROOT/skills/guide-arch/scripts/write_arch_handoff.sh" \
+    "$REPO_ROOT/skills/rdd-arch/scripts/write_arch_handoff.sh" \
     "$REPO_ROOT/skills/guide-plan/scripts/plan_done_gate.sh" \
     "$REPO_ROOT/_lib/archive.sh"; do
     assert_reflect_hook_present "$script"

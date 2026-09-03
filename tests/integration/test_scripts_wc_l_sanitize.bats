@@ -1,12 +1,12 @@
 load ../test_helper
 
 @test "scripts_wc_l_sanitize: arch_env_check.sh sanitizes wc -l" {
-    run grep -E "wc -l.*tr -d" "$PROJECT_ROOT/skills/guide-arch/scripts/arch_env_check.sh"
+    run grep -E "wc -l.*tr -d" "$PROJECT_ROOT/skills/rdd-arch/scripts/arch_env_check.sh"
     [ "$status" -eq 0 ]
 }
 
 @test "scripts_wc_l_sanitize: arch_gap_analysis.sh sanitizes wc -l" {
-    run grep -E "wc -l.*tr -d" "$PROJECT_ROOT/skills/guide-arch/scripts/arch_gap_analysis.sh"
+    run grep -E "wc -l.*tr -d" "$PROJECT_ROOT/skills/rdd-arch/scripts/arch_gap_analysis.sh"
     [ "$status" -eq 0 ]
 }
 

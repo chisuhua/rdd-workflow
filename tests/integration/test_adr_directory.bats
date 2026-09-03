@@ -108,7 +108,7 @@ setup() {
 
 @test "init-adr-directory hard constraint: no skills/ change in original change" {
   # This test is specific to the original init-adr-directory change.
-  # v2.0.3 (fix-debt-audit-2026-07-14) intentionally modifies skills/guide-arch/SKILL.md,
+  # v2.0.3 (fix-debt-audit-2026-07-14) intentionally modifies skills/rdd-arch/SKILL.md,
   # skills/propose/SKILL.md, skills/roadmap/SKILL.md for ADR renumbering and gate-report
   # removal. We skip this assertion when those files are modified.
   cd "$REPO_ROOT"

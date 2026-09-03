@@ -67,13 +67,13 @@ teardown() {
 }
 
 @test "guide-design: deprecated shim forwards to design (wrapper function defined)" {
-  source "$REPO_ROOT/skills/guide-arch/scripts/arch_proposal_review.sh"
+  source "$REPO_ROOT/skills/rdd-arch/scripts/arch_proposal_review.sh"
   type arch_proposal_review 2>/dev/null
 }
 
 @test "guide-design: deprecated shim prints warning when invoked" {
   run bash -c '
-    source "'"$REPO_ROOT"'/skills/guide-arch/scripts/arch_proposal_review.sh"
+    source "'"$REPO_ROOT"'/skills/rdd-arch/scripts/arch_proposal_review.sh"
     arch_proposal_review
   ' 2>&1 || true
   echo "$output" | grep -qi "DEPRECATED"

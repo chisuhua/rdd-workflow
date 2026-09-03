@@ -42,13 +42,13 @@ load ../test_helper
 # --- Structural: 6 sites must be replaced ---
 
 @test "guide-arch.md entry hook no longer inlines PYEOF heredoc" {
-  [ -f "$REPO_ROOT/skills/guide-arch/SKILL.md" ]
-  ! sed -n '82,110p' "$REPO_ROOT/skills/guide-arch/SKILL.md" | grep -qE 'kind="stage_arch"'
+  [ -f "$REPO_ROOT/skills/rdd-arch/SKILL.md" ]
+  ! sed -n '82,110p' "$REPO_ROOT/skills/rdd-arch/SKILL.md" | grep -qE 'kind="stage_arch"'
 }
 
 @test "guide-arch.md close hook no longer inlines PYEOF heredoc" {
-  [ -f "$REPO_ROOT/skills/guide-arch/SKILL.md" ]
-  ! sed -n '826,855p' "$REPO_ROOT/skills/guide-arch/SKILL.md" | grep -qE 'end_reason="arch-done"'
+  [ -f "$REPO_ROOT/skills/rdd-arch/SKILL.md" ]
+  ! sed -n '826,855p' "$REPO_ROOT/skills/rdd-arch/SKILL.md" | grep -qE 'end_reason="arch-done"'
 }
 
 @test "guide-plan.md entry hook no longer inlines PYEOF heredoc" {
@@ -72,7 +72,7 @@ load ../test_helper
 }
 
 @test "all 3 skills invoke rddf_session_hooks helper" {
-  grep -q 'scripts/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-arch/SKILL.md"
+  grep -q 'scripts/rddf_session_hooks.sh' "$REPO_ROOT/skills/rdd-arch/SKILL.md"
   grep -q 'scripts/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-plan/SKILL.md"
   grep -q 'scripts/rddf_session_hooks.sh' "$REPO_ROOT/skills/guide-ship/SKILL.md"
 }

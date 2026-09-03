@@ -102,11 +102,11 @@ teardown() {
 }
 
 @test "guide-arch SKILL.md contains 添加 feature fragment menu option" {
-    grep -q "添加 feature fragment" "$REPO_ROOT/skills/guide-arch/SKILL.md"
+    grep -q "添加 feature fragment" "$REPO_ROOT/skills/rdd-arch/SKILL.md"
 }
 
 @test "guide-arch SKILL.md role.boundaries.owns includes features/*.md" {
-    grep -q "\.rddf/roadmap/features/\*\.md" "$REPO_ROOT/skills/guide-arch/SKILL.md"
+    grep -q "\.rddf/roadmap/features/\*\.md" "$REPO_ROOT/skills/rdd-arch/SKILL.md"
 }
 
 @test "roadmap SKILL.md documents add-feature subcommand" {

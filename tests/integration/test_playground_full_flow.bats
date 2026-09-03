@@ -119,7 +119,7 @@ EOF
 
 @test "03_arch: arch-done gate passes (ADRs + roadmap present)" {
   cd "$PROJECT_ROOT"
-  source "$REPO_ROOT/skills/guide-arch/scripts/arch_done_gate.sh"
+  source "$REPO_ROOT/skills/rdd-arch/scripts/arch_done_gate.sh"
   # Use `run` to capture exit code without triggering bats' ERR trap on the
   # buggy inline bootstrap source (line 22 fails on missing
   # $HOME/.agents/_lib/skill_root.sh even though the gate itself succeeds).
@@ -129,7 +129,7 @@ EOF
 
 @test "04_arch: arch-handoff.json written with completed state" {
   cd "$PROJECT_ROOT"
-  source "$REPO_ROOT/skills/guide-arch/scripts/write_arch_handoff.sh"
+  source "$REPO_ROOT/skills/rdd-arch/scripts/write_arch_handoff.sh"
   # Same workaround as 03_arch — write_arch_handoff.sh has the same buggy
   # bootstrap path on line 17.
   run write_arch_handoff

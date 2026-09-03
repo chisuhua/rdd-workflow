@@ -143,9 +143,9 @@ EOF
 
 @test "rdd_env_check: arch_env_check reuses shared _check_ functions" {
   # DRY 契约: arch_env_check.sh source env_checks.sh 且引用 >= 4 处 _check_
-  grep -q 'env_checks\.sh' "$REPO_ROOT/skills/guide-arch/scripts/arch_env_check.sh"
+  grep -q 'env_checks\.sh' "$REPO_ROOT/skills/rdd-arch/scripts/arch_env_check.sh"
   local refs
-  refs=$(grep -c '_check_' "$REPO_ROOT/skills/guide-arch/scripts/arch_env_check.sh" || true)
+  refs=$(grep -c '_check_' "$REPO_ROOT/skills/rdd-arch/scripts/arch_env_check.sh" || true)
   [ "$refs" -ge 4 ]
 }
 

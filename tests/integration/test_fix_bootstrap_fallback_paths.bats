@@ -39,9 +39,9 @@ RUNTIME_SKILL_MDS=(
 
 RUNTIME_SCRIPTS=(
   "skills/guide-design/scripts/design_env_check.sh"
-  "skills/guide-arch/scripts/write_arch_handoff.sh"
-  "skills/guide-arch/scripts/arch_env_check.sh"
-  "skills/guide-arch/scripts/arch_done_gate.sh"
+  "skills/rdd-arch/scripts/write_arch_handoff.sh"
+  "skills/rdd-arch/scripts/arch_env_check.sh"
+  "skills/rdd-arch/scripts/arch_done_gate.sh"
   "skills/rdd-env-check/scripts/env_check.sh"
   "skills/guide-ship/scripts/ship_env_check.sh"
   "skills/guide-plan/scripts/plan_intake.sh"

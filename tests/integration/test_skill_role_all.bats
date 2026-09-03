@@ -9,7 +9,7 @@ load ../test_helper
 
 setup() {
   SCHEMA_FILE="$REPO_ROOT/_lib/schemas/skill_role_schema.json"
-  SKILLS=(guide-arch guide-design guide-plan guide-ship)
+  SKILLS=(rdd-arch guide-design guide-plan guide-ship)
 }
 
 @test "all 4 phase skills exist" {
@@ -22,10 +22,10 @@ setup() {
   [ -f "$SCHEMA_FILE" ]
 }
 
-@test "guide-arch has role.title field" {
+@test "rdd-arch has role.title field" {
   python3 <<PYEOF
 import yaml, sys
-with open("$REPO_ROOT/skills/guide-arch/SKILL.md") as f:
+with open("$REPO_ROOT/skills/rdd-arch/SKILL.md") as f:
   content = f.read()
   frontmatter = content.split("---\n")[1]
   data = yaml.safe_load(frontmatter)
@@ -121,7 +121,7 @@ PYEOF
   # Copy guide-arch but strip role field
   python3 <<PYEOF
 import sys
-with open("$REPO_ROOT/skills/guide-arch/SKILL.md") as f:
+with open("$REPO_ROOT/skills/rdd-arch/SKILL.md") as f:
   content = f.read()
 parts = content.split("---\n")
 frontmatter_lines = parts[1].split("\n")
@@ -137,14 +137,14 @@ for line in frontmatter_lines:
   skip_role_block = False
   filtered.append(line)
 new_frontmatter = "\n".join(filtered)
-with open("$TEMP_DIR/skills/guide-arch/SKILL.md", "w") as out:
+with open("$TEMP_DIR/skills/rdd-arch/SKILL.md", "w") as out:
   out.write("---\n" + new_frontmatter + "\n---\n" + parts[2])
 PYEOF
   
   # Verify it still parses (no YAML error)
   python3 <<PYEOF
 import yaml
-with open("$TEMP_DIR/skills/guide-arch/SKILL.md") as f:
+with open("$TEMP_DIR/skills/rdd-arch/SKILL.md") as f:
   content = f.read()
   frontmatter = content.split("---\n")[1]
   data = yaml.safe_load(frontmatter)

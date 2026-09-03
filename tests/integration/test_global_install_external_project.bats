@@ -344,7 +344,7 @@ TRACEDATA
   [ -f "$RDDF_GLOBAL_LIB/orchestrator_entry.sh" ] || skip "global orchestrator_entry.sh missing"
 
   local scripts=(
-    "${HOME}/.agents/skills/guide-arch/scripts/arch_env_check.sh"
+    "${HOME}/.agents/skills/rdd-arch/scripts/arch_env_check.sh"
     "${HOME}/.agents/skills/guide-plan/scripts/plan_intake.sh"
     "${HOME}/.agents/skills/guide-ship/scripts/ship_env_check.sh"
     "${HOME}/.agents/skills/execute/scripts/select_worktree.sh"

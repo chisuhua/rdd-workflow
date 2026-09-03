@@ -9,8 +9,8 @@
 
 load ../test_helper
 
-SCRIPT_SH="$REPO_ROOT/skills/guide-arch/scripts/roadmap_incremental_update.sh"
-SCRIPT_ENV_PY="$REPO_ROOT/skills/guide-arch/scripts/roadmap_incremental_update.env.py"
+SCRIPT_SH="$REPO_ROOT/skills/rdd-arch/scripts/roadmap_incremental_update.sh"
+SCRIPT_ENV_PY="$REPO_ROOT/skills/rdd-arch/scripts/roadmap_incremental_update.env.py"
 
 setup() {
     TEST_TMPDIR="$(mktemp -d)"
@@ -215,11 +215,11 @@ PYEOF
 # --- Task E: guide-arch/SKILL.md Phase 6 integration ---
 
 @test "guide_arch_phase6: contains Roadmap Sync internal step" {
-    grep -q "Roadmap Sync (internal)" "$REPO_ROOT/skills/guide-arch/SKILL.md"
-    grep -q "roadmap_incremental_update.sh" "$REPO_ROOT/skills/guide-arch/SKILL.md"
+    grep -q "Roadmap Sync (internal)" "$REPO_ROOT/skills/rdd-arch/SKILL.md"
+    grep -q "roadmap_incremental_update.sh" "$REPO_ROOT/skills/rdd-arch/SKILL.md"
 }
 
 @test "guide_arch_phase6: frontmatter owns .populate-state.json (ADR-0028)" {
-    grep -q '\.rddf/state/\.populate-state\.json' "$REPO_ROOT/skills/guide-arch/SKILL.md"
-    grep -q '\.rddf/roadmap/phases/\*\.md' "$REPO_ROOT/skills/guide-arch/SKILL.md"
+    grep -q '\.rddf/state/\.populate-state\.json' "$REPO_ROOT/skills/rdd-arch/SKILL.md"
+    grep -q '\.rddf/roadmap/phases/\*\.md' "$REPO_ROOT/skills/rdd-arch/SKILL.md"
 }

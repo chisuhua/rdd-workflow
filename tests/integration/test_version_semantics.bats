@@ -40,7 +40,7 @@ load ../test_helper
 # -----------------------------------------------------------------------
 @test "Skills with evolved-from have it documented" {
   # guide-arch, guide-plan, guide-ship, propose should have evolved-from
-  for f in skills/guide-arch/SKILL.md skills/guide-plan/SKILL.md skills/guide-ship/SKILL.md skills/propose/SKILL.md; do
+  for f in skills/rdd-arch/SKILL.md skills/guide-plan/SKILL.md skills/guide-ship/SKILL.md skills/propose/SKILL.md; do
     grep -qE "^[[:space:]]*evolved-from:" "$f" || { echo "FAIL: $f missing evolved-from"; return 1; }
   done
 }

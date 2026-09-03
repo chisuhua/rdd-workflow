@@ -359,7 +359,7 @@ def test_analyze_phase_trace_classifies_single_failure(tmp_path):
     trace.write_text(
         '{"ts":"2026-08-12T10:00:00Z","type":"subprocess",'
         '"cmd":["arch_done_gate.sh"],"returncode":1,'
-        '"stderr_tail":"Traceback in skills/guide-arch/scripts/foo.py","stdout_tail":""}\n'
+        '"stderr_tail":"Traceback in skills/rdd-arch/scripts/foo.py","stdout_tail":""}\n'
     )
     cls = analyze_phase_trace(trace_path=trace, project_root=str(tmp_path))
     assert isinstance(cls, Classification)

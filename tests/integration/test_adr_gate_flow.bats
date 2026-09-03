@@ -1,6 +1,6 @@
 load ../test_helper
 
-SKILL_FILE="$REPO_ROOT/skills/guide-arch/SKILL.md"
+SKILL_FILE="$REPO_ROOT/skills/rdd-arch/SKILL.md"
 
 @test "adr_gate_flow: SKILL.md wires adr_gate.sh with 3-branch dispatch" {
   assert_file_contains "$SKILL_FILE" 'adr_gate\.sh'
@@ -41,7 +41,7 @@ SKILL_FILE="$REPO_ROOT/skills/guide-arch/SKILL.md"
 }
 
 @test "adr_gate_flow: adr_gate.sh classification preserved (regression)" {
-  run bash "$PROJECT_ROOT/skills/guide-arch/scripts/adr_gate.sh" "Define module boundary"
+  run bash "$PROJECT_ROOT/skills/rdd-arch/scripts/adr_gate.sh" "Define module boundary"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "ARCHITECTURE" ]]
 }

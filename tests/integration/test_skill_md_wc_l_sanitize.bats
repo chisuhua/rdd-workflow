@@ -1,7 +1,7 @@
 load ../test_helper
 
 @test "skill_md_wc_l: guide-arch/SKILL.md sanitizes ADR_COUNT" {
-    run grep -E "ADR_COUNT=.*wc -l.*tr -d" "$PROJECT_ROOT/skills/guide-arch/SKILL.md"
+    run grep -E "ADR_COUNT=.*wc -l.*tr -d" "$PROJECT_ROOT/skills/rdd-arch/SKILL.md"
     [ "$status" -eq 0 ]
 }
 
