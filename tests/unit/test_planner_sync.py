@@ -206,3 +206,16 @@ def test_apply_state_accepts_noted_feedback(tmp_path):
     )
     state = render_state(tmp_path)
     apply_state(tmp_path, state)
+
+
+def test_parse_feedback_status_logs_when_pointer_missing(tmp_path, caplog):
+    """When last_feedback_id points to a missing block, parser logs a warning."""
+    import logging
+    f = _make_improvement(tmp_path, "x",
+        feedback_block="### feedback-20260101-001\n- **kind**: needs-revision\n- **resolution**: open\n",
+        last_feedback_id="feedback-does-not-exist",
+    )
+    with caplog.at_level(logging.WARNING, logger="_lib.planner_sync"):
+        result = parse_feedback_status(f)
+    assert result == "none"
+    assert any("feedback-does-not-exist" in r.message for r in caplog.records)

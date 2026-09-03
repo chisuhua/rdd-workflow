@@ -39,7 +39,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from skills._lib.core.lock import FileLock
+from _lib.core.lock import FileLock
 
 logger = logging.getLogger(__name__)
 

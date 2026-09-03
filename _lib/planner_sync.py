@@ -17,11 +17,14 @@ All improvement files are NEVER modified (Stage 1 ADR-0037 contract).
 from __future__ import annotations
 
 import datetime as _dt
+import logging
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "SyncError",
@@ -116,6 +119,10 @@ def parse_feedback_status(proposal_path: Path) -> str:
     if fm_id:
         selected = next((b for b in blocks if b.startswith(f"### {fm_id}")), None)
         if selected is None:
+            logger.warning(
+                "last_feedback_id %r points to missing entry; returning 'none'",
+                fm_id,
+            )
             return "none"
     else:
         selected = blocks[-1]
