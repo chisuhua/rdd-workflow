@@ -218,6 +218,10 @@ def resolve_feedback(
     append-only contract applies to **creation** of new entries, not
     to resolution status updates.
 
+    The marker search is bounded by the `## Feedback` section
+    (matching `parse_feedback_status` semantics) so that headings in
+    other sections (e.g. History) cannot be misresolved.
+
     Reads the file under the same per-file lock as append_feedback,
     isolates the `### <feedback_id>` block, replaces only that block's
     resolution line, and writes atomically. Raises FeedbackError on
@@ -231,11 +235,18 @@ def resolve_feedback(
         text = target.read_text(encoding="utf-8")
         if "## Feedback" not in text:
             raise FeedbackError("No ## Feedback section in target")
+        start = text.index("## Feedback")
+        rest_after_section = text[start + len("## Feedback"):]
+        section_end = len(rest_after_section)
+        pos_next = rest_after_section.find("\n## ", 1)
+        if pos_next != -1 and pos_next < section_end:
+            section_end = pos_next
+        section = text[start: start + len("## Feedback") + section_end]
         marker = f"### {feedback_id}"
-        idx = text.find(marker)
-        if idx == -1:
-            raise FeedbackError(f"Feedback entry not found: {feedback_id}")
-        rest = text[idx + len(marker):]
+        idx_in_section = section.find(marker)
+        if idx_in_section == -1:
+            raise FeedbackError(f"Feedback entry not found in ## Feedback: {feedback_id}")
+        rest = section[idx_in_section + len(marker):]
         end = len(rest)
         for stop in ("\n### ", "\n## "):
             pos = rest.find(stop, 1)
@@ -258,5 +269,6 @@ def resolve_feedback(
         new_lines.append(f"- **resolved_at**: {now_iso}")
         new_lines.append(f"- **resolved_by**: {resolved_by}")
         new_block = "\n".join(new_lines)
-        new_text = text[: idx + len(marker)] + new_block + rest[end:]
+        new_section = section[: idx_in_section + len(marker)] + new_block + rest[end:]
+        new_text = text[:start] + new_section
         atomic_write_text(target, new_text)

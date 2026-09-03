@@ -247,3 +247,31 @@ def test_resolve_feedback_rejects_when_no_feedback_section(tmp_path):
     target.write_text("---\nname: x\n---\n# nothing")
     with pytest.raises(FeedbackError):
         resolve_feedback(target_path=str(target), feedback_id="feedback-x")
+
+
+def test_resolve_feedback_does_not_match_history_section(tmp_path):
+    """A `### feedback-x` heading outside ## Feedback must NOT be resolved."""
+    from _lib.feedback_appender import resolve_feedback
+    target = tmp_path / "imp.md"
+    target.write_text(
+        "---\nname: x\n---\n"
+        "# title\n\n"
+        "## History\n\n### feedback-real\nnot the one to resolve\n\n"
+        "## Feedback\n\n### feedback-real\n- **resolution**: open\n"
+    )
+    resolve_feedback(target_path=str(target), feedback_id="feedback-real")
+    text = target.read_text()
+    assert "### feedback-real\nnot the one" in text
+    feedback_split = text.split("## Feedback")[1]
+    assert "- **resolution**: resolved" in feedback_split
+
+
+def test_resolve_feedback_rejects_when_id_only_in_other_section(tmp_path):
+    from _lib.feedback_appender import FeedbackError, resolve_feedback
+    target = tmp_path / "imp.md"
+    target.write_text(
+        "---\nname: x\n---\n\n## History\n\n### feedback-orphan\n\n## Feedback\n\n"
+        "### feedback-other\n- **resolution**: open\n"
+    )
+    with pytest.raises(FeedbackError, match="not found"):
+        resolve_feedback(target_path=str(target), feedback_id="feedback-orphan")
