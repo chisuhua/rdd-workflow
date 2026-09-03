@@ -105,7 +105,7 @@ _run_scan() {
   git init -q -b master && git config user.email t@t && git config user.name t
   # no roadmap.md, no handoffs
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
-  echo "$out" | grep -q "RECOMMEND=guide-arch"
+  echo "$out" | grep -q "RECOMMEND=rdd-arch"
 }
 
 @test "scan_state: roadmap + no changes dir → guide-plan (branch 9)" {

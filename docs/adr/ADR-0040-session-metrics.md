@@ -1,4 +1,4 @@
-# ADR-0040 — schema v3 add session metrics opt-in 字段
+# ADR-0040: schema v3 add session metrics opt-in 字段
 
 > **状态**: 已采纳 (2026-09-01)
 > **日期**: 2026-09-01

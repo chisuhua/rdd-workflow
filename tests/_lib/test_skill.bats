@@ -26,10 +26,10 @@ load_lib skill
   [ "$output" = "install" ]
 }
 
-@test "skill_meta_field returns semver version for guide-arch.md" {
-  run skill_meta_field skills/guide-arch/SKILL.md version
+@test "skill_meta_field returns semver version for rdd-arch.md" {
+  run skill_meta_field skills/rdd-arch/SKILL.md version
   [ "$status" -eq 0 ]
-  [[ "$output" =~ ^[0-9]+\.[0-9]+$ ]]
+  [[ "$output" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]
 }
 
 @test "skill_meta_field returns user-invocable=true for guide.md" {
