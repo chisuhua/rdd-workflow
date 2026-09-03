@@ -2,6 +2,7 @@
 import json
 import os
 import pytest
+import threading
 from skills.guide_arch.scripts import write_arch_handoff as wah
 
 
@@ -222,3 +223,88 @@ class TestWriteArchHandoff:
             roadmap_exists_bool="false",
         )
         assert result["roadmap_exists"] is False
+
+
+class TestWriteArchHandoffLocked:
+    """Stage 3 Change 0: FileLock + atomic_write contract per Oracle C-1.
+
+    Locks the migration from bare open(w)+json.dump to FileLock + atomic_write_json.
+    Required to support future rdd-planner writing .planner-feedback.json under the
+    same lock convention (no torn writes, no clobbering).
+    """
+
+    def test_lock_file_is_created_alongside_handoff(self, tmp_repo):
+        """Acquires FileLock at .arch-handoff.json.lock (planner_state convention)."""
+        from pathlib import Path
+        wah.write_arch_handoff(
+            project_root=tmp_repo,
+            discovered_adr_dir="docs/adr",
+            discovered_roadmap_path="roadmap.md",
+            discovered_architecture_dir="docs/architecture",
+            discovered_adr_pattern="ADR-*.md",
+        )
+        lock_path = Path(tmp_repo) / ".rddf" / "state" / ".arch-handoff.json.lock"
+        assert lock_path.exists(), "FileLock file must be created in .rddf/state/"
+
+    def test_lock_file_is_released_after_write(self, tmp_repo):
+        """Lock file is closed (released) after write completes."""
+        from pathlib import Path
+        from _lib.core.lock import FileLock
+        lock_path = Path(tmp_repo) / ".rddf" / "state" / ".arch-handoff.json.lock"
+        wah.write_arch_handoff(
+            project_root=tmp_repo,
+            discovered_adr_dir="docs/adr",
+            discovered_roadmap_path="roadmap.md",
+            discovered_architecture_dir="docs/architecture",
+            discovered_adr_pattern="ADR-*.md",
+        )
+        with FileLock(str(lock_path), timeout=1.0):
+            pass
+
+    def test_write_is_atomic_no_tmp_residue(self, tmp_repo):
+        """Writes via tmp + rename (atomic_write_json); no .arch-handoff.json.tmp residue."""
+        from pathlib import Path
+        wah.write_arch_handoff(
+            project_root=tmp_repo,
+            discovered_adr_dir="docs/adr",
+            discovered_roadmap_path="roadmap.md",
+            discovered_architecture_dir="docs/architecture",
+            discovered_adr_pattern="ADR-*.md",
+        )
+        tmp_residue = Path(tmp_repo) / ".rddf" / "state" / ".arch-handoff.json.tmp"
+        assert not tmp_residue.exists(), "Atomic write must clean up .tmp file"
+
+    def test_concurrent_writers_no_data_loss(self, tmp_repo):
+        """Two concurrent write_arch_handoff calls produce valid JSON without torn writes."""
+        results = {}
+        errors = []
+
+        def writer(label):
+            try:
+                r = wah.write_arch_handoff(
+                    project_root=tmp_repo,
+                    discovered_adr_dir="docs/adr",
+                    discovered_roadmap_path="roadmap.md",
+                    discovered_architecture_dir="docs/architecture",
+                    discovered_adr_pattern="ADR-*.md",
+                )
+                results[label] = r["adr_count"]
+            except Exception as exc:
+                errors.append((label, exc))
+
+        t1 = threading.Thread(target=writer, args=("a",))
+        t2 = threading.Thread(target=writer, args=("b",))
+        t1.start()
+        t2.start()
+        t1.join(timeout=10)
+        t2.join(timeout=10)
+
+        assert not errors, f"Concurrent writers must not raise: {errors}"
+        assert results == {"a": 3, "b": 3}
+
+        from pathlib import Path
+        handoff_path = Path(tmp_repo) / ".rddf" / "state" / ".arch-handoff.json"
+        with open(handoff_path) as f:
+            data = json.load(f)
+        assert data["adr_count"] == 3
+        assert data["version"] == 2

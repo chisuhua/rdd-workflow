@@ -195,11 +195,16 @@ def write_arch_handoff(
     if adr_regex:
         handoff["adr_regex"] = adr_regex
 
-    # Write to disk
+    # Write to disk (Stage 3 Change 0: FileLock + atomic_write_json per Oracle C-1)
     state_dir = os.path.join(project_root, ".rddf", "state")
     os.makedirs(state_dir, exist_ok=True)
     handoff_path = os.path.join(state_dir, ".arch-handoff.json")
-    with open(handoff_path, "w") as f:
-        json.dump(handoff, f, indent=2)
+    lock_path = os.path.join(state_dir, ".arch-handoff.json.lock")
+
+    from _lib.core.lock import FileLock
+    from _lib.core.atomic_write import atomic_write_json
+
+    with FileLock(lock_path, timeout=10.0):
+        atomic_write_json(handoff_path, handoff, indent=2, ensure_ascii=False)
 
     return handoff
