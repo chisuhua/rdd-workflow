@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rdd-workflow.local/schemas/feedback_entry_schema.json",
+  "title": "FeedbackEntry",
+  "type": "object",
+  "required": ["feedback_id", "source", "kind", "created_at", "body"],
+  "properties": {
+    "feedback_id": {
+      "type": "string",
+      "pattern": "^feedback-[0-9]{8}-[0-9]{3,6}$"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["guide-design", "guide-plan", "guide-ship", "rdd-verifier", "human"]
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["needs-revision", "ac-fail", "rejected", "blocked", "noted"]
+    },
+    "ref_change": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "body": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10000
+    },
+    "resolution": {
+      "type": "string",
+      "enum": ["open", "resolved", "wont-fix"],
+      "default": "open"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolved_by": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
