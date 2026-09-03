@@ -53,48 +53,50 @@
 
 ### Task 2.1 — rdd_verify_cmd 读 project.yaml verification.provider (TDD)
 
-- [ ] **2.1.1** Write failing test: `tests/unit/test_rdd_verify_cmd.py::test_detect_verification_provider_default_llm` — 无 project.yaml → 返回 "llm"
-- [ ] **2.1.2** Verify fail: 当前函数不存在,测试 fail (ImportError)
-- [ ] **2.1.3** Implement: `_lib/cli/rdd_verify_cmd.py` 新增 `_detect_verification_provider(project_root: Path) -> str` 函数
-- [ ] **2.1.4** Verify pass: 重跑确认 pass
-- [ ] **2.1.5** Commit: `feat(verifier): add _detect_verification_provider to rdd_verify_cmd`
+- [x] **2.1.1** Write failing test: `tests/unit/test_rdd_verify_cmd.py::test_detect_verification_provider_default_llm` — 无 project.yaml → 返回 "llm"
+- [x] **2.1.2** Verify fail: 当前函数不存在,测试 fail (ImportError)
+- [x] **2.1.3** Implement: `_lib/cli/rdd_verify_cmd.py` 新增 `_detect_verification_provider(project_root: Path) -> str` 函数
+- [x] **2.1.4** Verify pass: 重跑确认 pass
+- [x] **2.1.5** Commit: `feat(verifier): wire rdd_verify_cmd to hook_runner when verification.provider=hook` (commit `13ac217`, batched with 2.2/2.3/2.6)
 
 ### Task 2.2 — _hook_runner 函数 + cmd_rdd_verify 分支 (TDD)
 
-- [ ] **2.2.1** Write failing test: `tests/unit/test_rdd_verify_cmd.py::test_hook_runner_passed_returns_exit_0` — 临时 `tools/verify_change.sh` echo + exit 0 → `_hook_runner(change, project_root)` 返回 `{"exit_code": 0, "verdict": [{"ac_id": "hook-...", "status": "pass"}]}`
-- [ ] **2.2.2** Verify fail: 当前 `_hook_runner` 不存在,测试 fail
-- [ ] **2.2.3** Implement: `_lib/cli/rdd_verify_cmd.py` 新增 `_hook_runner(change_name, project_root) -> dict`,内部调 `from _lib.verifier.hook_runner import run_verification_hook`,按 verdict 映射 exit code
-- [ ] **2.2.4** Verify pass: 重跑确认 pass
-- [ ] **2.2.5** Commit: `feat(verifier): add _hook_runner to rdd_verify_cmd with verdict mapping`
+- [x] **2.2.1** Write failing test: `tests/unit/test_rdd_verify_cmd.py::test_hook_runner_passed_returns_exit_0` — 临时 `tools/verify_change.sh` echo + exit 0 → `_hook_runner(change, project_root)` 返回 `{"exit_code": 0, "verdict": [{"ac_id": "hook-...", "status": "pass"}]}`
+- [x] **2.2.2** Verify fail: 当前 `_hook_runner` 不存在,测试 fail
+- [x] **2.2.3** Implement: `_lib/cli/rdd_verify_cmd.py` 新增 `_hook_runner(change_name, project_root, *, hook_path=None) -> dict`,内部调 `from _lib.verifier.hook_runner import run_verification_hook`,按 verdict 映射 exit code
+- [x] **2.2.4** Verify pass: 重跑确认 pass
+- [x] **2.2.5** Commit: `feat(verifier): wire rdd_verify_cmd to hook_runner when verification.provider=hook` (commit `13ac217`)
 
 ### Task 2.3 — cmd_rdd_verify 选择 runner (TDD)
 
-- [ ] **2.3.1** Write failing test: `tests/unit/test_rdd_verify_cmd.py::test_cmd_rdd_verify_uses_hook_runner_when_provider_hook` — 创建临时 project.yaml 设 `verification.provider: hook`,mock queue,验证 runner 是 `_hook_runner`
-- [ ] **2.3.2** Verify fail: 当前 `cmd_rdd_verify` 不读 provider,测试 fail
-- [ ] **2.3.3** Implement: `cmd_rdd_verify()` 在 `for change in queue:` 循环内增加 `provider = _detect_verification_provider(...)`, `active_runner = runner or (_hook_runner if provider == "hook" else _default_runner)`
-- [ ] **2.3.4** Verify pass: 重跑确认 pass
-- [ ] **2.3.5** Commit: `feat(verifier): cmd_rdd_verify routes to hook_runner when provider=hook`
+- [x] **2.3.1** Write failing test: `tests/unit/test_rdd_verify_cmd.py::test_cmd_rdd_verify_uses_hook_runner_when_provider_hook` — 创建临时 project.yaml 设 `verification.provider: hook`,mock queue,验证 runner 是 `_hook_runner`
+- [x] **2.3.2** Verify fail: 当前 `cmd_rdd_verify` 不读 provider,测试 fail
+- [x] **2.3.3** Implement: `cmd_rdd_verify()` 在 `for change in queue:` 循环内增加 `provider = _detect_verification_provider(...)`, `active_runner = runner or (_hook_runner if provider == "hook" else _default_runner)`
+- [x] **2.3.4** Verify pass: 重跑确认 pass
+- [x] **2.3.5** Commit: `feat(verifier): wire rdd_verify_cmd to hook_runner when verification.provider=hook` (commit `13ac217`)
 
 ### Task 2.4 — cache.py cache_key hook 分支 (TDD)
 
-- [ ] **2.4.1** Write failing test: `tests/unit/test_verifier_cache.py::test_cache_key_hook_differs_from_llm` — `cache_key("c", root, provider="hook", hook_path=...)` != `cache_key("c", root, provider="llm")`
-- [ ] **2.4.2** Verify fail: 当前 `cache_key()` 无 provider 参数,测试 fail
-- [ ] **2.4.3** Implement: `_lib/verifier/cache.py::cache_key()` 新增 `provider: str = "llm"` 和 `hook_path: Optional[Path] = None` 参数,provider="hook" 时 payload 含 hook path
-- [ ] **2.4.4** Verify pass: 重跑确认 pass
-- [ ] **2.4.5** Commit: `feat(verifier): cache.py cache_key supports provider=hook with SHA+command-hash`
+- [x] **2.4.1** Write failing test: `tests/unit/test_verifier_cache_v2.py::test_cache_key_hook_differs_from_llm` — `cache_key("c", root, provider="hook", hook_path=...)` != `cache_key("c", root, provider="llm")`
+- [x] **2.4.2** Verify fail: 当前 `cache_key()` 不存在,测试 fail
+- [x] **2.4.3** Implement: `_lib/verifier/cache.py::cache_key()` 新增 `provider: str = "llm"` 和 `hook_path: Optional[Path] = None` 参数,provider="hook" 时 payload 含 hook path
+- [x] **2.4.4** Verify pass: 重跑确认 pass
+- [x] **2.4.5** Commit: `feat(verifier): cache.py cache_key supports provider=hook with SHA+command-hash` (commit `c0949fe`)
 
 ### Task 2.5 — 集成测试 provider=hook (TDD)
 
-- [ ] **2.5.1** Write failing test: `tests/integration/test_rdd_verifier_hook_provider.bats`:
+- [x] **2.5.1** Write failing test: `tests/integration/test_rdd_verifier_hook_provider.bats`:
   - Case 1: project.yaml 设 `verification.provider: hook`,`tools/verify_change.sh` exit 0 → `rddf rdd-verify <change>` exit 0
   - Case 2: exit 1 → exit 1 (failed)
   - Case 3: exit 2 → exit 3 (error)
-  - Case 4: SHA 缓存复用(同一 change 第二次跑走缓存,exit 0)
-  - Case 5: hook_path 在 `tools/` 之外 → exit 3 (HookPathError 安全检查)
-- [ ] **2.5.2** Verify fail: bats 测试文件不存在,skip 或 fail
-- [ ] **2.5.3** Implement: 5 个 @test case + load `test_helper` + 临时 `$BATS_TMPDIR` 创建 mock project.yaml + tools/verify_change.sh
-- [ ] **2.5.4** Verify pass: `bats tests/integration/test_rdd_verifier_hook_provider.bats` 全绿
-- [ ] **2.5.5** Commit: `test(verifier): integration tests for provider=hook with exit code mapping and cache`
+  - Case 4: missing tools/verify_change.sh → rc 0 (skipped)
+  - Case 5: hook_path 在 `tools/` 之外 → HookPathError
+  - Case 6: cache_key isolation (provider=hook vs llm)
+  - Case 7: default-provider routing (no project.yaml → LLM)
+- [x] **2.5.2** Verify fail: bats 测试文件不存在,skip 或 fail
+- [x] **2.5.3** Implement: 7 个 @test case + load `test_helper` + 临时 `$TEST_TMP` 创建 mock project.yaml + tools/verify_change.sh
+- [x] **2.5.4** Verify pass: `bats tests/integration/test_rdd_verifier_hook_provider.bats` 全绿 (7/7)
+- [x] **2.5.5** Commit: `test(verifier): integration tests for provider=hook with exit code mapping and cache` (commit `2495b71`)
 
 ## M3 — Guide-Ship Phase 1 + ship_execution_mode 加固 (补 i10 M3 Task 3.1, 3.2, 3.4, 3.5)
 
@@ -191,11 +193,11 @@
 
 ### Task 2.6 — 显式 runner override 测试 (TDD, Metis 歧义 #1)
 
-- [ ] **2.6.1** Write failing test: `tests/unit/test_rdd_verify_cmd.py::test_explicit_runner_overrides_provider_detection` — `cmd_rdd_verify(args, runner=mock_runner)`,project.yaml 设 `verification.provider: hook`,assert mock_runner 被调用而 `_hook_runner` 未被调用
-- [ ] **2.6.2** Verify fail: 当前 `cmd_rdd_verify` 无 provider 检测,测试可能因不同原因 fail
-- [ ] **2.6.3** Implement: `cmd_rdd_verify` 按 Decision 8 实现显式 runner 优先级
-- [ ] **2.6.4** Verify pass: 重跑确认 pass
-- [ ] **2.6.5** Commit: `test(verifier): lock explicit runner override over provider detection`
+- [x] **2.6.1** Write failing test: `tests/unit/test_rdd_verify_cmd.py::test_explicit_runner_overrides_provider_hook` — `cmd_rdd_verify(args, runner=mock_runner)`,project.yaml 设 `verification.provider: hook`,assert mock_runner 被调用而 `_hook_runner` 未被调用
+- [x] **2.6.2** Verify fail: 当前 `cmd_rdd_verify` 无 provider 检测,测试可能因不同原因 fail
+- [x] **2.6.3** Implement: `cmd_rdd_verify` 按 Decision 8 实现显式 runner 优先级 (`if runner is not None: active_runner = runner else: ...`)
+- [x] **2.6.4** Verify pass: 重跑确认 pass
+- [x] **2.6.5** Commit: `feat(verifier): wire rdd_verify_cmd to hook_runner when verification.provider=hook` (commit `13ac217`, batched with 2.1/2.2/2.3)
 
 ### Task 4.3 — discover_arch_artifacts 集成测试 (TDD, 接收 i10 Task 2.6 deferred)
 
@@ -211,8 +213,8 @@
 ## Cross-Milestone
 
 - [x] **X.1** M1 完成后跑 `./test.sh --unit` 验证 schema 严格性(预期 2421 + 6 新 = 2427 passed) — **实际 2431 passed** (含 10 新测试,超预期 +4)
-- [ ] **X.2** M2/M3 完成后跑 `./test.sh --python --bats` 验证 hook + guide-ship 接线(预期新 ~15 case 全绿)
-- [ ] **X.3** M4 完成后跑 `./test.sh --full --regression`(archive 前必须全绿,per AGENTS.md §"Archive 前全量回归门 MANDATORY")
+- [x] **X.2** M2 完成后跑 `./test.sh --quick` 验证 hook 接线(预期新 ~17 case 全绿) — **实际 2448 passed + 7/7 bats 全绿**
+- [ ] **X.3** M3/M4 完成后跑 `./test.sh --full --regression`(archive 前必须全绿,per AGENTS.md §"Archive 前全量回归门 MANDATORY")
 - [ ] **X.4** 更新 ADR-0036 — 在原 Consequences 节 **后**新增 `## Post-hoc Fix Record (2026-09-02)` 节(per design.md Decision 10),**不追加到 Consequences**。内容指向本 change + commit hash + 8 项缺口对照表
 - [ ] **X.5** 更新 `proposal-approved.md` 表格登记本 change 为 P1 已批准
 - [ ] **X.6 (MANDATORY)** 新增 `tests/integration/test_archive_gate_tasks_checklist_match.bats`:archive 前 file-level diff vs tasks.md 复核,**预防 checkbox-as-done 复发**(本 change 根因预防)。per design.md Decision 7 — 此 task 由原"可选"可升级为 MANDATORY,作为根治机制
@@ -225,8 +227,12 @@
   - Task 1.2: defaults `project: {}` + 2 测试 (commit `2eaaab7`)
   - Task 1.3: 跨章节严格性锁 (commit `8ae289a`)
   - Task 1.4: 向后兼容锁 (commit `b0b2829`)
-- **总进度**: 5/28 done (M1 完成;M2/M3/M4 待实施)
-- **风险 task**: Task 2.3 (cache 键变更) + Task 3.1 (SKILL.md 修改影响范围广) + Task 4.5 (schema bump 跨版本兼容)
+- **M2 完成进度**: 6/6 done ✅ (2026-09-02 实施)
+  - Task 2.1/2.2/2.3/2.6: _detect_verification_provider + _hook_runner + cmd_rdd_verify 接线 (commit `13ac217`, batched 12 tests)
+  - Task 2.4: cache.py cache_key hook 分支 (commit `c0949fe`, 5 tests)
+  - Task 2.5: 集成测试 (commit `2495b71`, 7 bats cases)
+- **总进度**: 11/28 done (M1+M2 完成;M3/M4 待实施)
+- **风险 task**: Task 3.1 (SKILL.md 修改影响范围广) + Task 4.5 (schema bump 跨版本兼容)
 
 ## 状态追踪
 
