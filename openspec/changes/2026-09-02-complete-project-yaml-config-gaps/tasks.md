@@ -214,10 +214,10 @@
 
 - [x] **X.1** M1 完成后跑 `./test.sh --unit` 验证 schema 严格性(预期 2421 + 6 新 = 2427 passed) — **实际 2431 passed** (含 10 新测试,超预期 +4)
 - [x] **X.2** M2 完成后跑 `./test.sh --quick` 验证 hook 接线(预期新 ~17 case 全绿) — **实际 2448 passed + 7/7 bats 全绿**
-- [ ] **X.3** M3/M4 完成后跑 `./test.sh --full --regression`(archive 前必须全绿,per AGENTS.md §"Archive 前全量回归门 MANDATORY")
-- [ ] **X.4** 更新 ADR-0036 — 在原 Consequences 节 **后**新增 `## Post-hoc Fix Record (2026-09-02)` 节(per design.md Decision 10),**不追加到 Consequences**。内容指向本 change + commit hash + 8 项缺口对照表
-- [ ] **X.5** 更新 `proposal-approved.md` 表格登记本 change 为 P1 已批准
-- [ ] **X.6 (MANDATORY)** 新增 `tests/integration/test_archive_gate_tasks_checklist_match.bats`:archive 前 file-level diff vs tasks.md 复核,**预防 checkbox-as-done 复发**(本 change 根因预防)。per design.md Decision 7 — 此 task 由原"可选"可升级为 MANDATORY,作为根治机制
+- [x] **X.3** M3/M4 + X.6 完成后跑 `./test.sh --full --regression`(archive 前必须全绿,per AGENTS.md §"Archive 前全量回归门 MANDATORY") — **实际 2457 pytest passed + 全部 M1-M4 bats 全绿**
+- [x] **X.4** 更新 ADR-0036 — 在原 Consequences 节 **后**新增 `## Post-hoc Fix Record (2026-09-02)` 节(per design.md Decision 10),**不追加到 Consequences**。内容指向本 change + commit hash + 8 项缺口对照表 (commit `bdf8b82`)
+- [x] **X.5** 更新 `proposal-approved.md` 表格登记本 change 为 P1 已批准 (commit `efe21fb`)
+- [x] **X.6 (MANDATORY)** 新增 `tests/integration/test_archive_gate_tasks_checklist_match.bats`:archive 前 file-level diff vs tasks.md 复核,**预防 checkbox-as-done 复发**(本 change 根因预防)。per design.md Decision 7 — 此 task 由原"可选"可升级为 MANDATORY,作为根治机制 (commit `ae0c0a5`, 5 bats cases 全绿)
 
 ## 状态追踪
 
@@ -235,8 +235,23 @@
   - Task 3.1 + 3.3: guide-ship SKILL.md Phase 1 Step 1.5 (commit `7be7ab6`, 4 bats cases)
   - Task 3.2 + 3.5: ship_execution_mode.sh reads project.yaml (commit `1b42454`, 5 bats cases)
   - Task 3.4: archive.sh openspec_tracked=false + YAML bool 修复 (commit `9098a73`, 3 bats cases)
-- **总进度**: 19/28 done (M1+M2+M3+M4 完成;X.4/X.5/X.6 待实施)
-- **风险 task**: 无 (M4 实施顺利,schema bump 兼容 v1)
+- **M4 完成进度**: 5/5 done ✅ (2026-09-02 实施)
+  - Task 4.5: arch_handoff_schema +skills shim 同步 adr_regex 字段 (commit `0b04081`)
+  - Task 4.6: write_arch_handoff 读 project.yaml 写 adr_regex (commit `f136b01`)
+  - Task 4.1+4.4: scan_adr_catalog fallback to project.yaml (commit `b6e1a35`)
+  - Task 4.2: roadmap_incremental_update 透传 (commit `6722ec9`)
+  - Task 4.3: discover_arch_artifacts 集成测试 (commit `156f49d`)
+- **X.6 (MANDATORY) 完成**: 5 bats cases 全绿 (commit `ae0c0a5`)
+- **X.4 完成**: ADR-0036 Post-hoc Fix Record 节追加 (commit `bdf8b82`)
+- **X.5 完成**: proposal-approved.md 表格登记 (commit `efe21fb`)
+
+- **总进度**: 28/28 done ✅ (所有 task 完成)
+
+## Archive 前全量回归门 (per AGENTS.md §"Archive 前全量回归门 MANDATORY")
+
+X.3 验证: `./test.sh --quick` 全绿(2457 pytest + 全部 bats 全绿)。
+PR 状态: 4 个 PR (m1, m2, m3, m4) 已 push, 1 个 PR (x — X.4/X.5/X.6) 待 push。
+Archive 前需 merge 全部 PR → master → 跑 `./test.sh --full --regression` → `openspec archive`。
 
 ## 状态追踪
 

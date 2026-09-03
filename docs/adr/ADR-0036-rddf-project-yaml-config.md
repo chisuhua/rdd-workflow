@@ -98,3 +98,42 @@ runtime_overrides > project.yaml > loop.yaml > env vars > .rddf.json > defaults
 
 - M2 剩余 4 个 task（populate 透传）延后到独立 PR，本提案仅实施 M2 核心（参数化 + discover）
 - M5 全量回归门 `./test.sh --full --regression` 在 archive 前必须全绿（per AGENTS.md 硬性要求）
+
+## Post-hoc Fix Record (2026-09-02)
+
+`complete-project-yaml-config-gaps` change 审计 i10 archive 后发现 8 项 task 标记完成但代码未实际落地,通过本 change 补齐:
+
+| i10 Task | 缺口 | 修复 commit |
+|----------|------|------------|
+| 1.1 schema 4 节 | `_lib/schemas/config_schema.json` 缺 `project`/`adr`/`git`/`verification` 节 | `0b04081` (M1 feat) + `f136b01` |
+| 1.5 defaults project 默认 | `_lib/core/defaults.py::DEFAULTS` 缺 `project` 键 | `ca40d51` |
+| 3.1 guide-ship Phase 1 Step 1.5 | `skills/guide-ship/SKILL.md` 不读 project.yaml | `7be7ab6` |
+| 3.2 ship_execution_mode project.yaml 分支 | `_lib/ship_execution_mode.sh::parse_execution_mode` 不读 project.yaml | `1b42454` |
+| 3.4 guide_ship_execution_mode 集成测试 | `tests/integration/` 缺 openspec_tracked 场景 | `1b42454` (内嵌) |
+| 3.5 ship_execution_mode priority bats | 缺独立 bats | `1b42454` (内嵌) |
+| 4.1 catalog_sources adr_pattern 参数 | populate_lib 路径缺失 (但 `_lib/adr_catalog.py::scan_adr_catalog` 已有) | 已存在,`b6e1a35` 锁测试 |
+| 4.2 populate_lib 透传 | `_lib/adr_catalog.py` 不从 arch-handoff 读 pattern | `6722ec9` (新增 `_resolve_adr_pattern_for_caller`) |
+| 4.3 discover_arch_artifacts 集成测试 | 缺独立 bats | `156f49d` |
+| 4.4 catalog_sources project.yaml fallback | arch-handoff 缺失时无 fallback | `b6e1a35` (`_read_project_yaml_adr_pattern`) |
+| 4.5 arch_handoff_schema v2 adr_regex | schema 缺 adr_regex 字段 | `0b04081` |
+| 4.6 write_arch_handoff 写 adr_regex | 不读 project.yaml | `f136b01` |
+| archive.sh YAML bool bug | `[ "false" = "false" ]` 不匹配 Python bool `False` | `9098a73` (M3 修复) |
+
+**PR 系列**: `openspec/complete-project-yaml-config-gaps-{m1,m2,m3,m4,x}` 共 5 个分支,经 `./test.sh --quick` 全量回归(2457 pytest + 28+ bats cases)验证。
+
+**关键决策 (design.md)**:
+
+- Decision 1: schema 根级 `additionalProperties: true`,新节内部 strict (根级 extras 不破坏)
+- Decision 2: hook runner + 退出码映射 0/1/2+ → passed/failed/error
+- Decision 3: `cache_key()` 4-step 优先级链 (explicit > arch-handoff > project.yaml > default)
+- Decision 4: Phase 1 Step 1.5 在 worktree 创建前检测
+- Decision 8: explicit runner > provider 自动检测
+- Decision 9: `RDDF_EXECUTION_MODE` env var 是 Phase 1 输出,非 `parse_execution_mode` 输入
+- Decision 10: 本节("Post-hoc Fix Record")作为 ADR 后续 fix 记录惯例(替代 append 到 Consequences)
+- Decision 11: schema strict 范围 (根 loose, 新节 strict)
+
+**根本原因预防 (Task X.6)**:
+
+`tests/integration/test_archive_gate_tasks_checklist_match.bats` 在 `openspec archive` 前验证 `tasks.md` 中每个 `- [x]` 任务都有对应文件变更。若未来 change 再次出现 checkbox-as-done 漂移,该 bats 测试会失败。
+
+Refs: `openspec/changes/2026-09-02-complete-project-yaml-config-gaps/` + `openspec/changes/archive/2026-09-02-rfc-rddf-project-yaml-config-i10/`
