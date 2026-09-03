@@ -32,6 +32,9 @@ __all__ = [
     "parse_feedback_status",
     "render_state",
     "apply_state",
+    "apply_state_with_warnings",
+    "diff_state",
+    "advance_sprint",
 ]
 
 
@@ -309,3 +312,78 @@ def diff_state(project_root: Path) -> Dict[str, Any]:
         },
         "projects_diff": projects_diff,
     }
+
+
+_SPRINT_PATTERN = re.compile(r"^sprint-(\d{4})-(0[1-9]|1[0-2])$")
+
+
+def _next_sprint_id(current: str) -> str:
+    m = _SPRINT_PATTERN.match(current)
+    if not m:
+        return f"sprint-{_dt.datetime.now().strftime('%Y-%m')}"
+    year, month = int(m.group(1)), int(m.group(2))
+    if month == 12:
+        return f"sprint-{year + 1:04d}-01"
+    return f"sprint-{year:04d}-{month + 1:02d}"
+
+
+def advance_sprint(
+    project_root: Path,
+    *,
+    to_sprint: Optional[str] = None,
+    force: bool = False,
+    dry_run: bool = False,
+) -> Dict[str, Any]:
+    """Advance current sprint, record previous sprint snapshot to history, and refresh roadmap.
+
+    Enforces forward-only advancement unless force=True.
+    Raises SyncError if no baseline state exists or format is invalid.
+    """
+    from _lib.planner_state import _state_path, read_state, update_state
+    from _lib.planner_history import HistoryEntry, append_history_entry
+
+    state_file = _state_path(project_root)
+    if not state_file.exists():
+        raise SyncError("No baseline state exists. Run `rddf planner sync --apply` first.")
+
+    stored = read_state(project_root)
+    old_sprint = stored["current_sprint"]
+
+    if to_sprint:
+        if not _SPRINT_PATTERN.match(to_sprint):
+            raise SyncError(f"Invalid sprint format: {to_sprint!r}, expected sprint-YYYY-MM")
+        new_sprint = to_sprint
+    else:
+        new_sprint = _next_sprint_id(old_sprint)
+
+    if not force and new_sprint <= old_sprint:
+        raise SyncError(f"Target sprint {new_sprint!r} must move forward from {old_sprint!r}. Use --force to override.")
+
+    if dry_run:
+        return {"old_sprint": old_sprint, "new_sprint": new_sprint, "dry_run": True}
+
+    now_iso = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
+
+    history_entry = HistoryEntry(
+        version=1,
+        sprint=old_sprint,
+        closed_at=now_iso,
+        started_at=stored.get("sprint_started_at", now_iso),
+        snapshot=dict(stored),
+    )
+    append_history_entry(project_root, history_entry)
+
+    def _advance_mutator(state: Dict[str, Any]) -> Dict[str, Any]:
+        state["current_sprint"] = new_sprint
+        state["sprint_started_at"] = now_iso
+        state["last_sync_at"] = now_iso
+        return state
+
+    updated_state = update_state(project_root, _advance_mutator)
+
+    roadmap_path = project_root / ".rddf" / "roadmap.md"
+    if roadmap_path.exists():
+        from _lib.roadmap_sprint import update_roadmap
+        update_roadmap(str(roadmap_path), updated_state, table="project")
+
+    return {"old_sprint": old_sprint, "new_sprint": new_sprint, "dry_run": False}

@@ -47,6 +47,11 @@ def _build_parser() -> argparse.ArgumentParser:
                           help="Optional theme string stored in roadmap_ref.theme")
     sub.add_parser("diff", help="Compare stored vs computed state", parents=[common])
 
+    p_adv = sub.add_parser("advance-sprint", help="Close current sprint and advance to next", parents=[common])
+    p_adv.add_argument("--to-sprint", default=None, help="Target sprint ID (default: next month)")
+    p_adv.add_argument("--force", action="store_true", help="Allow backward/same sprint advancement")
+    p_adv.add_argument("--dry-run", action="store_true", help="Preview advancement without writing")
+
     p_audit = sub.add_parser("audit", help="List unmapped proposals (read-only)", parents=[common])
     p_audit.add_argument("--json", action="store_true", help="Output JSON instead of Markdown")
 
@@ -140,6 +145,25 @@ def cmd_planner(args: List[str]) -> int:
                 sys.stdout.write("\n")
             else:
                 sys.stdout.write(render_markdown(rows))
+            return 0
+
+        if ns.subcommand == "advance-sprint":
+            from _lib.planner_sync import advance_sprint, SyncError
+            try:
+                res = advance_sprint(
+                    project_root,
+                    to_sprint=ns.to_sprint,
+                    force=ns.force,
+                    dry_run=ns.dry_run,
+                )
+            except SyncError as exc:
+                sys.stderr.write(f"ERROR: {exc}\n")
+                return 1
+
+            if res.get("dry_run"):
+                sys.stdout.write(f"DRY-RUN: would advance {res['old_sprint']} -> {res['new_sprint']}\n")
+            else:
+                sys.stdout.write(f"✓ Sprint advanced: {res['old_sprint']} -> {res['new_sprint']}\n")
             return 0
 
         parser.print_help()

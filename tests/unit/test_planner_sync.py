@@ -262,6 +262,52 @@ def test_apply_state_with_warnings_no_warning_when_baseline_equals_current(tmp_p
     assert "newly unmapped" not in captured.out.lower()
 
 
+def test_advance_sprint_enforces_forward_only(tmp_path):
+    from _lib.planner_state import write_state
+    from _lib.planner_sync import advance_sprint, SyncError
+    write_state(tmp_path, {
+        "version": 1,
+        "current_sprint": "sprint-2026-09",
+        "last_sync_at": "2026-09-03T10:00:00Z",
+        "sprint_started_at": "2026-09-01T00:00:00Z",
+        "active_projects": [],
+        "unmapped_proposals": [],
+        "synced_proposals": [],
+    })
+    with pytest.raises(SyncError, match="must move forward"):
+        advance_sprint(tmp_path, to_sprint="sprint-2026-08")
+
+
+def test_advance_sprint_success_records_history_and_updates_state(tmp_path):
+    from _lib.planner_state import write_state, read_state
+    from _lib.planner_history import read_history
+    from _lib.planner_sync import advance_sprint
+    rm_file = tmp_path / ".rddf" / "roadmap.md"
+    rm_file.parent.mkdir(parents=True, exist_ok=True)
+    rm_file.write_text("# Roadmap\n## Phase Skeleton\n<!-- AUTO-INDEX -->\n")
+    write_state(tmp_path, {
+        "version": 1,
+        "current_sprint": "sprint-2026-09",
+        "last_sync_at": "2026-09-03T10:00:00Z",
+        "sprint_started_at": "2026-09-01T00:00:00Z",
+        "active_projects": [{"project_id": "p1", "phase": "p", "priority": "P1", "status": "active", "proposal": "pr1"}],
+        "unmapped_proposals": [],
+        "synced_proposals": ["pr1"],
+    })
+
+    res = advance_sprint(tmp_path, to_sprint="sprint-2026-10")
+    assert res["old_sprint"] == "sprint-2026-09"
+    assert res["new_sprint"] == "sprint-2026-10"
+
+    entries, _ = read_history(tmp_path)
+    assert len(entries) == 1
+    assert entries[0].sprint == "sprint-2026-09"
+
+    st = read_state(tmp_path)
+    assert st["current_sprint"] == "sprint-2026-10"
+    assert st["sprint_started_at"] != "2026-09-01T00:00:00Z"
+
+
 def test_parse_feedback_status_logs_when_pointer_missing(tmp_path, caplog):
     """When last_feedback_id points to a missing block, parser logs a warning."""
     import logging
