@@ -178,6 +178,64 @@
           "description": "Additional regex patterns to redact beyond sanitizer defaults."
         }
       }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Project-level metadata (per rfc-rddf-project-yaml-config-i10 + complete-project-yaml-config-gaps M1).",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Project name (e.g. 'chipforge')"
+        },
+        "version": {
+          "type": "string",
+          "description": "Project version (semver or similar)"
+        }
+      }
+    },
+    "adr": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "ADR discovery configuration (per ADR-0016 + i10 M2 + complete-project-yaml-config-gaps M1).",
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "description": "Python regex for ADR filenames (e.g. '^ADR-(\\\\d{3})-.*\\\\.md$' for 3-digit)"
+        },
+        "glob": {
+          "type": "string",
+          "description": "Shell glob equivalent of pattern (e.g. 'ADR-???.md')"
+        },
+        "dir": {
+          "type": "string",
+          "description": "ADR directory relative to project root (overrides default candidates)"
+        }
+      }
+    },
+    "git": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Git workflow configuration (per i10 M3 + complete-project-yaml-config-gaps M1/M3).",
+      "properties": {
+        "openspec_tracked": {
+          "type": "boolean",
+          "default": true,
+          "description": "If false, force lightweight mode (branch only, no worktree) and skip git merge/commit in archive"
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Verification provider configuration (per i10 M4 + complete-project-yaml-config-gaps M2).",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": ["llm", "hook"],
+          "description": "Verification provider: 'llm' (default ac-verifier) or 'hook' (external tools/verify_change.sh)"
+        }
+      }
     }
   }
 }
