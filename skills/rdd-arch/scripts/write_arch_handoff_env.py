@@ -19,7 +19,7 @@ _repo_root = str(Path(__file__).resolve().parent.parent.parent)
 if _repo_root not in sys.path:
     sys.path.insert(0, _repo_root)
 
-from skills.guide_arch.scripts import write_arch_handoff as wah
+from skills.rdd_arch.scripts import write_arch_handoff as wah
 
 result = wah.write_arch_handoff(
     project_root=os.environ["PROJECT_ROOT"],

@@ -93,7 +93,7 @@ PYEOF
 #   Mutates caller-namespace globals RECOMMEND and REASON.
 #   Priority order (highest first):
 #     1.  arch-handoff present, plan-handoff absent:
-#     1a.   ADR < 1           → "guide-arch (recover)"
+#     1a.   ADR < 1           → "rdd-arch (recover)"
 #     1b.   design-handoff    → "guide-plan"
 #     1c.   design-handoff 缺失 → "guide-design"
 #     2.  plan-handoff present                     → "guide-ship"
@@ -102,7 +102,7 @@ PYEOF
 #     4.  detached worktrees (count > 0)             → "guide-ship"
 #     5.  worktree tasks all completed               → "guide-ship"
 #     6.  committed change in HEAD (no worktree)   → "guide-ship"
-#     7.  no roadmap.md                            → "guide-arch"
+#     7.  no roadmap.md                            → "rdd-arch"
 #     8.  no openspec/changes/                     → "guide-plan"
 #     9.  proposal-suggestions.md has pending entry  → "guide-design"
 #    10. default                                    → "guide-ship"
@@ -146,7 +146,7 @@ scan_state() {
       ADR_COUNT=$(PY_HANDOFF="$ARCH_HANDOFF" python3 -c "import json,os; d=json.load(open(os.environ['PY_HANDOFF'])); v=d.get('adr_count',0); print(v if isinstance(v,int) else len(v))" 2>/dev/null || echo 0)
     fi
     if [ "$ADR_COUNT" -lt 1 ]; then
-      RECOMMEND="guide-arch"
+      RECOMMEND="rdd-arch"
       REASON="arch-done 未完成 (ADR 数量不足 → 回到 adr-create 阶段)"
       return 0
     fi
@@ -178,7 +178,7 @@ scan_state() {
     local FS_ACTIVE_COUNT
     FS_ACTIVE_COUNT=$(cd "$PROJECT_ROOT" 2>/dev/null && ls -d openspec/changes/*/ 2>/dev/null | grep -v 'archive/' | wc -l | tr -d '[:space:]' || echo 0)
     if [ "$FS_ACTIVE_COUNT" -eq 0 ]; then
-      RECOMMEND="guide-arch"
+      RECOMMEND="rdd-arch"
       REASON="plan-handoff stale (says $ACTIVE_COUNT active, but 0 in filesystem -> all archived)"
       return 0
     fi
@@ -236,7 +236,7 @@ scan_state() {
     return 0
   fi
 
-  # 7. no roadmap → guide-arch
+  # 7. no roadmap → rdd-arch
   # ADR-0016 Layer 3: read roadmap_path from handoff with fallback
   ARCH_HANDOFF="${PROJECT_ROOT}/.rddf/state/.arch-handoff.json"
   if [ -f "$ARCH_HANDOFF" ] && command -v jq >/dev/null 2>&1; then
@@ -247,7 +247,7 @@ scan_state() {
     _ROADMAP_NAME="roadmap.md"
   fi
   if [ ! -f "$_ROADMAP_FILE" ]; then
-    RECOMMEND="guide-arch"
+    RECOMMEND="rdd-arch"
     REASON="无 ${_ROADMAP_NAME} → 进入架构定义"
     return 0
   fi
@@ -551,7 +551,7 @@ else:
         print(f"💡 Recommended: {nxt.session_id} (kind={nxt.kind}, last_heartbeat={nxt.last_heartbeat})")
         print(f'   → skill_use("rddf-session resume {nxt.session_id}")')
     else:
-        print("   No orphaned rddf-sessions found. Run guide-arch or guide-plan to start.")
+        print("   No orphaned rddf-sessions found. Run rdd-arch or guide-plan to start.")
 PYEOF
      )
 }

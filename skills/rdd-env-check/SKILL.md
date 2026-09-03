@@ -1,12 +1,12 @@
 ---
 name: rdd-env-check
-description: 独立环境健康检查 skill — 检查 openspec CLI / git 工作区 / branch / build 目录，维护 `.rddf/state/.env-cache.json` 环境快照 (TTL 3600s + branch 失效)，输出单行状态供各 phase 首屏使用。被 guide-arch/guide-design/guide-plan/guide-ship Phase 1 调用。
+description: 独立环境健康检查 skill — 检查 openspec CLI / git 工作区 / branch / build 目录，维护 `.rddf/state/.env-cache.json` 环境快照 (TTL 3600s + branch 失效)，输出单行状态供各 phase 首屏使用。被 rdd-arch/guide-design/guide-plan/guide-ship Phase 1 调用。
 license: MIT
 compatibility: Requires bash + git + openspec CLI; 无需 jq/python3
 metadata:
   author: rdd-workflow
   version: 1.0
-  evolved-from: "skills/guide-arch/scripts/arch_env_check.sh"
+  evolved-from: "skills/rdd-arch/scripts/arch_env_check.sh"
   user-invocable: true
 ---
 

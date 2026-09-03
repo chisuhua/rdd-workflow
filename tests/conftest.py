@@ -29,6 +29,7 @@ if _PROJECT_ROOT_STR not in sys.path:
 _DASH_SKILLS = [
     ("ac-verifier", "ac_verifier"),
     ("guide-arch", "guide_arch"),
+    ("rdd-arch", "rdd_arch"),
     ("guide-design", "guide_design"),
     ("guide-plan", "guide_plan"),
     ("guide-ship", "guide_ship"),

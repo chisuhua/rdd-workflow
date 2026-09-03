@@ -82,7 +82,7 @@
             "intent": {
               "type": "string",
               "enum": [
-                "guide-arch",
+                "rdd-arch",
                 "guide-design",
                 "guide-plan",
                 "guide-ship"

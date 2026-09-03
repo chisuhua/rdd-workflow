@@ -87,7 +87,7 @@ bats tests/integration/test_global_install_external_project.bats   # 11/11 pass
 
 | 阶段 | Skill | 职责 |
 |------|-------|------|
-| arch | `guide-arch` | 架构定义: ADR, 差距分析, roadmap |
+| arch | `rdd-arch` | 架构定义: ADR, 差距分析, roadmap |
 | design | `guide-design` | 设计管理 + 内容审查: 提案创建, 审查, 批准/拒绝/延迟; approve 即落盘完整 proposal.md |
 | plan | `guide-plan` | 变更生成: intake (含 changes_pre_created 跳过), fill (specs/design/tasks), deps |
 | ship | `guide-ship` | 变更执行: worktree/轻量, execute, archive, cleanup |
@@ -97,7 +97,7 @@ bats tests/integration/test_global_install_external_project.bats   # 11/11 pass
 - 无其他 worktree **且** 仅此一个 change → ⚡ **轻量模式** (创建 branch, 直接在主仓库执行, 跳过 worktree)
 - 有活跃 worktree **或** 多个 change → 🔀 **worktree 模式** (创建隔离 worktree)
 
-`guide-spec` 已在 v2.0 移除（原为 60 行别名，内部按序调用 `guide-arch` → `guide-plan`）。请直接使用 `guide-arch` 和 `guide-plan`。
+`guide-spec` 已在 v2.0 移除（原为 60 行别名，内部按序调用 `rdd-arch` → `guide-plan`）。请直接使用 `rdd-arch` 和 `guide-plan`。
 `guide` 是无状态推荐器, 扫描项目状态推荐下一步, 不写文件, 不调 openspec CLI.
 
 ## 关键目录
@@ -118,7 +118,7 @@ _lib/                          # ⭐ 真实实现层 (commit c3a90fe "flatten pa
 skills/                        # Markdown skills (27 SKILL.md + INSTALL.md) + per-skill scripts/
   INSTALL.md                   # 第一入口 (v1.1.0)
   guide/SKILL.md               # 推荐器
-  guide-arch/SKILL.md          # arch 阶段 (v2.0.8 Phase 2 重组)
+  rdd-arch/SKILL.md          # arch 阶段 (v2.0.8 Phase 2 重组)
   guide-design/SKILL.md        # design 阶段 (v2.1 新增)
   guide-plan/SKILL.md          # plan 阶段
   guide-ship/SKILL.md          # ship 阶段 (v2.0)
@@ -129,7 +129,7 @@ skills/                        # Markdown skills (27 SKILL.md + INSTALL.md) + pe
     *.sh (15 个)               # 13 行 shim: 本地 `${_PARENT_DIR}/_lib/X.sh` 优先,降级到 `~/.agents/skills/_lib/X.sh`
     core/loop/schedulers/...   # 4 行 __init__.py path-widening shim (向后兼容历史 import)
     adr_catalog.py ... hub_issue.py  # 10 个 P1-1a 迁移模块的 identity-merge shim (做 `sys.modules[__name__] = _lib.X`)
-  guide-arch/scripts/          # arch 阶段辅助脚本 (arch_env_check, write_arch_handoff, arch_gap_analysis 等)
+  rdd-arch/scripts/          # arch 阶段辅助脚本 (arch_env_check, write_arch_handoff, arch_gap_analysis 等)
   guide-plan/scripts/          # plan 阶段辅助脚本 (plan_intake, plan_done_gate, plan_deps_candidates 等)
   guide-ship/scripts/          # ship 阶段辅助脚本 (ship_plan, ship_review, ship_archive, ship_monitor 等)
   execute/scripts/             # execute 辅助脚本 (select_worktree, tasks_writeback, execute_step7 等)
@@ -189,7 +189,7 @@ Feature fragments (`rddf roadmap add-feature`) 跨阶段追踪多 phase 改进�
 **自动化进展（per `improve-roadmap-feature-discovery` 提案）**：
 - ✅ `skills/guide-design/scripts/feature_discovery.py::list_active_features` 已实现（commit 9c4e668），可在 `guide-design` Phase 1 preflight 调用
 - ⏳ AGENTS.md 自动段生成（CLI `rddf roadmap --update-agent-md`）未实现 — 当前为手维护
-- ⏳ `guide-arch` Phase 1 输出 feature fragments 列表作为 context 未实现
+- ⏳ `rdd-arch` Phase 1 输出 feature fragments 列表作为 context 未实现
 
 **注意事项**：
 - 创建新 feature 时同步在本表登记行（避免失去 traceability）
@@ -199,7 +199,7 @@ Feature fragments (`rddf roadmap add-feature`) 跨阶段追踪多 phase 改进�
 
 ### Skill 角色模型 (ADR-0028)
 
-5 个阶段技能 (`guide-arch`, `guide-design`, `guide-plan`, `guide-ship`, `rdd-verifier`) 的 frontmatter 包含 `role:` 字段（per ADR-0028 + ADR-0034 §10），定义角色、视角、边界：
+5 个阶段技能 (`rdd-arch`, `guide-design`, `guide-plan`, `guide-ship`, `rdd-verifier`) 的 frontmatter 包含 `role:` 字段（per ADR-0028 + ADR-0034 §10），定义角色、视角、边界：
 - `role.title`: 双语角色名（如 "Architect (架构治理者)"）
 - `role.perspective`: 思考视角（1-2 句）
 - `role.boundaries.owns`: 文件路径清单（此阶段拥有）
@@ -212,15 +212,15 @@ Feature fragments (`rddf roadmap add-feature`) 跨阶段追踪多 phase 改进�
 
 | 文件 | 用途 | 写入方 |
 |------|------|--------|
-| `.rddf/state/.arch-handoff.json` | arch→plan 交接 + **ADR-0016 发现契约** v1 (adr_dir/roadmap_path/architecture_dir/adr_pattern/discovered/version) | `guide-arch` (arch-done) / `guide-plan` (Phase 0 intake) + `propose`/`roadmap`/`gate.py`/`detectors.py`/`actions.py`/`scan-state.sh` (handoff readers, fallback to defaults) |
+| `.rddf/state/.arch-handoff.json` | arch→plan 交接 + **ADR-0016 发现契约** v1 (adr_dir/roadmap_path/architecture_dir/adr_pattern/discovered/version) | `rdd-arch` (arch-done) / `guide-plan` (Phase 0 intake) + `propose`/`roadmap`/`gate.py`/`detectors.py`/`actions.py`/`scan-state.sh` (handoff readers, fallback to defaults) |
 | `.rddf/state/.plan-handoff.json` | plan→ship 交接 + **execution_mode_decisions** (ADR-0024) | `guide-plan` (plan-done 写入) / `guide-ship` (ship-start 读取) |
-| `.rddf/state/sessions.json` | **rddf-session 生命周期** (ADR-0017) — 跨 OpenCode session 工作流恢复 | `guide-arch`/`guide-plan`/`guide-ship` 入口 + `rddf-session` skill 5 子命令 |
+| `.rddf/state/sessions.json` | **rddf-session 生命周期** (ADR-0017) — 跨 OpenCode session 工作流恢复 | `rdd-arch`/`guide-plan`/`guide-ship` 入口 + `rddf-session` skill 5 子命令 |
 | `.rddf/state/deps-analysis.json` | **结构化** deps 输出 (v2.0.1) + **execution_mode_recommendations** (ADR-0024) | `deps` Step 5b 优先写; Step 6 markdown-fallback 时也写 |
 | `.rddf/state/deps-candidates.json` | deps 候选列表 | `guide-plan` (deps 阶段) |
 | `.rddf/state/deps-output.md` | deps 人类可读报告 | `deps` Step 5 |
 | `.rddf/state/iteration.json` | **当前 sprint 视图** (v2.0.1) | propose/guide-ship/execute/deps/archive hooks |
 | `.rddf/state/roadmap-state.json` | roadmap 阶段/category 计数 | `propose` (status 改时) |
-| `.rddf/state/index.md` | change 索引 | `guide-arch` / `guide-plan` |
+| `.rddf/state/index.md` | change 索引 | `rdd-arch` / `guide-plan` |
 | `.rddf/state/.deps-output.md` | deps 旧路径 (开头有 `.`) | `deps` Step 5 (兼容保留) |
 | `roadmap-meta.yaml` (in `openspec/changes/<name>/`) | Per-change metadata (含 `manual_deps`/`manual_blocks` 字段, ADR-0022) | `propose` (change creation) | `deps` (manual_deps merge), iteration sync |
 
@@ -233,7 +233,7 @@ Feature fragments (`rddf roadmap add-feature`) 跨阶段追踪多 phase 改进�
 
 ### Arch Discovery Contract (ADR-0016)
 
-`guide-arch` Phase 1 setup 通过 `skills/_lib/discover-arch-artifacts.sh` 扫描项目布局,
+`rdd-arch` Phase 1 setup 通过 `skills/_lib/discover-arch-artifacts.sh` 扫描项目布局,
 将发现的 ADR 目录、roadmap 文件、architecture 目录写入 `.arch-handoff.json` 的
 `adr_dir` / `roadmap_path` / `architecture_dir` / `adr_pattern` / `discovered` 字段.
 
@@ -259,11 +259,11 @@ Feature fragments (`rddf roadmap add-feature`) 跨阶段追踪多 phase 改进�
 **测试**: 6 schema tests + 10 discover tests + 8 bats integration tests
 (默认/自定义/缺失布局 + handoff 读写 + env var override + schema 校验).
 
-- `SKIP_ADR_CONFIRM=yes` — 跳过 guide-arch Phase 2 选项 1 adr-create 草稿确认直接落盘 (作用域: ARCHITECTURE 分支段 3; 与既有 `SKIP_ADR_GATE=yes` 语义独立, 可组合使用)
+- `SKIP_ADR_CONFIRM=yes` — 跳过 rdd-arch Phase 2 选项 1 adr-create 草稿确认直接落盘 (作用域: ARCHITECTURE 分支段 3; 与既有 `SKIP_ADR_GATE=yes` 语义独立, 可组合使用)
 
 ### Session Binding Policy (ADR-0017 + spec 2026-07-14)
 
-Every workflow session generated by `guide-arch`/`guide-plan`/`guide-ship` MUST bind to a rddf-session via `owner_opencode_session_id`. The `guide` recommender surfaces this binding via `BINDING_LINES` (no state mutation). Users running raw skills can check their binding via `skill_use("rddf-session current")`. Manual skill invocation without binding is allowed but the user is responsible for resolving any cross-session conflicts (4-option soft prompt per ADR-0017 §3).
+Every workflow session generated by `rdd-arch`/`guide-plan`/`guide-ship` MUST bind to a rddf-session via `owner_opencode_session_id`. The `guide` recommender surfaces this binding via `BINDING_LINES` (no state mutation). Users running raw skills can check their binding via `skill_use("rddf-session current")`. Manual skill invocation without binding is allowed but the user is responsible for resolving any cross-session conflicts (4-option soft prompt per ADR-0017 §3).
 
 ### Skill 文件规范
 
@@ -437,8 +437,8 @@ Every workflow session generated by `guide-arch`/`guide-plan`/`guide-ship` MUST 
 
 | Task | Skill | Lines | Helper(s) | Tests | 备注 |
 |------|-------|-------|-----------|-------|------|
-| 1 | `guide-arch.md` Phase 1 Steps 1-5 | 96 | `guide-arch/scripts/arch_env_check.sh` | 9 bats | openspec CLI 检查 + 工件发现 |
-| 2 | `guide-arch.md` handoff writer | 88 | `guide-arch/scripts/write_arch_handoff.{sh,py,env.py}` | 10 unit + 8 bats | 3 文件 env-var pattern |
+| 1 | `rdd-arch.md` Phase 1 Steps 1-5 | 96 | `rdd-arch/scripts/arch_env_check.sh` | 9 bats | openspec CLI 检查 + 工件发现 |
+| 2 | `rdd-arch.md` handoff writer | 88 | `rdd-arch/scripts/write_arch_handoff.{sh,py,env.py}` | 10 unit + 8 bats | 3 文件 env-var pattern |
 | 3 | `guide-plan.md` Phase 0 intake | 79 | `guide-plan/scripts/plan_intake.sh` | 7 bats | Oracle C1 fix：去 bash string interp |
 | 4 | `guide-plan.md` plan-done gate + handoff | 150 | `guide-plan/scripts/plan_done_gate.{sh,py,env.py}` | 8 unit + 9 bats | 双闸门 + handoff 写入 |
 | 5 | `guide-ship.md` Phase 2 monitor | 54 | `guide-ship/scripts/ship_monitor.sh` | 7 bats | P3-3 maintainer-flagged target |
@@ -453,7 +453,7 @@ Every workflow session generated by `guide-arch`/`guide-plan`/`guide-ship` MUST 
 - `plan_done_gate.sh` (Task 4) — Gate 0 skip 语义:原始 `exit 0` 终止整个 plan-done 块(防止 handoff 写入);新 `return 0` 仅退出函数——已修复使用 `PLAN_GATE_0_SKIPPED` 哨兵 env var。
 - `ship_monitor.sh` (Task 5) — `grep -c || echo 0` 双重输出:零匹配时 grep 输出 `0`,然后 `|| echo 0` 添加另一个零。已修复用 `| head -n1`。
 - `select_worktree.sh` (Task 6) — `exit 1` → `return 1` (匹配代码库 59 实例约定) + 移除 `WT_COUNT`/`WORKTREE_COUNT` 双计数
-- `write_arch_handoff.sh` (Round A 终审) — **`roadmap_exists` 始终为 false**:env var `ROADMAP_EXISTS_BOOL` 不能跨 `guide-arch.md` 中两个 bash 代码块传播(AI 代理在独立 shell 调用中执行)。已修复：helper 内部从文件系统直接计算。
+- `write_arch_handoff.sh` (Round A 终审) — **`roadmap_exists` 始终为 false**:env var `ROADMAP_EXISTS_BOOL` 不能跨 `rdd-arch.md` 中两个 bash 代码块传播(AI 代理在独立 shell 调用中执行)。已修复：helper 内部从文件系统直接计算。
 
 **Oracle C1 安全**:Round A 强制使用 env-var 传递模式 (Task 2/4 的 3 文件 split + Task 3 内联 env-var) 消除所有 bash `$VAR` 字符串注入风险。
 
@@ -469,7 +469,7 @@ skills/*.md 行数 (累计):
 ```
 
 新 helpers (Round A 贡献 10 个):
-- `guide-arch/scripts/arch_env_check.sh`, `guide-arch/scripts/write_arch_handoff.{sh,py,env.py}`, `guide-plan/scripts/plan_intake.sh`, `guide-plan/scripts/plan_done_gate.{sh,py,env.py}`, `guide-ship/scripts/ship_monitor.sh`, `execute/scripts/select_worktree.sh`
+- `rdd-arch/scripts/arch_env_check.sh`, `rdd-arch/scripts/write_arch_handoff.{sh,py,env.py}`, `guide-plan/scripts/plan_intake.sh`, `guide-plan/scripts/plan_done_gate.{sh,py,env.py}`, `guide-ship/scripts/ship_monitor.sh`, `execute/scripts/select_worktree.sh`
 
 合并到 master: 13 commits (1 plan + 6 refactor + 5 review-fix + 1 final-bug-fix)。
 
@@ -479,8 +479,8 @@ skills/*.md 行数 (累计):
 
 | Task | Skill | Lines | Helper(s) | Tests | 备注 |
 |------|-------|-------|-----------|-------|------|
-| B1 | `guide-arch.md` gap analysis | 85 | `guide-arch/scripts/arch_gap_analysis.sh` | 8 bats | generator + viewer |
-| B2 | `guide-arch.md` Phase 5 dual gate | 38 | `guide-arch/scripts/arch_done_gate.sh` | 6 bats | ADR + roadmap gate |
+| B1 | `rdd-arch.md` gap analysis | 85 | `rdd-arch/scripts/arch_gap_analysis.sh` | 8 bats | generator + viewer |
+| B2 | `rdd-arch.md` Phase 5 dual gate | 38 | `rdd-arch/scripts/arch_done_gate.sh` | 6 bats | ADR + roadmap gate |
 | B3 | `guide-plan.md` deps-candidates | 38 | `guide-plan/scripts/plan_deps_candidates.{sh,py,env.py}` | 6 unit + 6 bats | **SECURITY FIX**: oracle C1 |
 | B4 | `guide-plan.md` queue overview | 50 | `guide-plan/scripts/plan_queue_overview.sh` | 6 bats | 5-state summary |
 | B5 | `guide-plan.md` feature progress | 34 | `guide-plan/scripts/plan_feature_progress.sh` | 5 bats | per-feature |
@@ -488,7 +488,7 @@ skills/*.md 行数 (累计):
 | B7 | `execute.md` tasks writeback | 34 | `execute/scripts/tasks_writeback.sh` | 6 bats | **BUG FIX**: sub() regex issue |
 | B8 | `execute.md` roadmap progress | 50 | `execute/scripts/update_roadmap_progress.{sh,py,env.py}` | 7 unit + 6 bats | **SECURITY FIX**: oracle C1 |
 | B9 | `execute.md` Step 7 report | 88 | `execute/scripts/execute_step7.{sh,py,env.py}` | 6 unit + 8 bats | final report + sync |
-| B10 | `guide-arch.md` arch-quality-report | 32 | `guide-arch/scripts/arch_quality_report.sh` | 4 bats | thin wrapper |
+| B10 | `rdd-arch.md` arch-quality-report | 32 | `rdd-arch/scripts/arch_quality_report.sh` | 4 bats | thin wrapper |
 | **总计** | 4 skill files | **494** | **14 helpers** | **68 tests** | 2 SECURITY + 1 BUG FIX |
 
 **关键 bug / 安全修复**:
@@ -510,7 +510,7 @@ skills/*.md 行数 (累计):
 ```
 
 新 helpers (Round B 贡献 11 个):
-- `guide-arch/scripts/arch_gap_analysis.sh`, `guide-arch/scripts/arch_done_gate.sh`, `guide-arch/scripts/arch_quality_report.sh`
+- `rdd-arch/scripts/arch_gap_analysis.sh`, `rdd-arch/scripts/arch_done_gate.sh`, `rdd-arch/scripts/arch_quality_report.sh`
 - `guide-plan/scripts/plan_deps_candidates.{sh,py,env.py}`, `guide-plan/scripts/plan_queue_overview.sh`, `guide-plan/scripts/plan_feature_progress.sh`
 - `status/scripts/status_render_mode_a.sh`
 - `execute/scripts/tasks_writeback.sh`, `execute/scripts/update_roadmap_progress.{sh,py,env.py}`, `execute/scripts/execute_step7.{sh,py,env.py}`
@@ -555,7 +555,7 @@ When to invoke `bash skills/rdd-doctor/scripts/doctor.sh` (manual trigger only):
 
 NOT to run rdd-doctor:
 - As part of an automated phase entry (v1 is manual only)
-- To fix files (doctor is read-only; for fixes use the relevant skill like `guide-arch` or `guide-plan`)
+- To fix files (doctor is read-only; for fixes use the relevant skill like `rdd-arch` or `guide-plan`)
 - To replace any existing gate (`rdd-env-check`, `arch-quality-gate`, etc.)
 
 Flags: `--json` (write `.rddf/state/.doctor-report.json`), `--category <name>` (run only one of 5 categories: `state`, `plan-tdd`, `roadmap-meta`, `proposal-table`, `tasks-checkbox`), `--quiet` (single-line output). Exit codes: 0/1/2/3 matching `openspec validate`.
@@ -571,8 +571,8 @@ Flags: `--json` (write `.rddf/state/.doctor-report.json`), `--category <name>` (
    - 详细流程见上方 "Worktree Commit Flow" (3 步: execute → worktree-internal commit → archive)
    - `rdd-workflow-writing-plans` 生成的 plan 默认在 Step 5 不执行 commit；如需逐任务 commit，设置 `COMMIT_IN_EXECUTE=yes`（不推荐）
    - **冲突来源**: AGENTS.md 历史上写"execute 不 commit"但 `_lib/archive.sh::check_worktree_commits` 又要求 commits — 本提案显式规则化解此矛盾
-7. **`guide-arch` 不调用 `guide-plan`** — arch-done 后用户必须手动切换
-8. **`guide-spec` 已移除** — v2.0 中删除（原为 60 行别名），请直接使用 `guide-arch` → `guide-plan`
+7. **`rdd-arch` 不调用 `guide-plan`** — arch-done 后用户必须手动切换
+8. **`guide-spec` 已移除** — v2.0 中删除（原为 60 行别名），请直接使用 `rdd-arch` → `guide-plan`
 9. **Loop 引擎 max_iterations: 100, max_retries: 3** — 配置在 `interaction` 模式配置中
 10. **proposal-suggestions.md 格式为 Markdown 表格** — 索引到 `.rddf/improvements/*.md`, 用 `list_improvements()` 或 `read_improvement_entries()` 读取, 审查通过后添加到 `proposal-approved.md`
 11. **`npm test` 不跑 Python** — 改完 Python 必须手动 `pytest tests/`, CI 才会捕获

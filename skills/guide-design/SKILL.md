@@ -6,7 +6,7 @@ compatibility: Requires openspec CLI v1.3.1+, git 2.25+
 metadata:
   version: "1.0"
   author: sisyphus
-  evolved-from: "extracted from guide-arch.md v2.0 Phase 5.5"
+  evolved-from: "extracted from rdd-arch.md v2.0 Phase 5.5"
   user-invocable: true
 role:
   title: "Proposal Manager (提案经理)"
@@ -43,7 +43,7 @@ skill_use("guide-design")   # 无参数版本
 
 | 子技能 | 阶段 | 职责 | 人工介入 |
 |--------|------|------|---------|
-| `guide-arch`（前序） | arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-done | **高** |
+| `rdd-arch`（前序） | arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-done | **高** |
 | `guide-design`（本技能） | design | 设计管理：提案创建 → 审查 → 批准/拒绝/延迟 → design-done | **中** |
 | `guide-plan`（后续） | plan | 变更生成：审批提案消费 → propose → deps → plan-done | **中** |
 | `guide-ship`（后续） | ship | 变更执行：plan → execute → archive → cleanup → ship-done | **低** |
@@ -51,7 +51,7 @@ skill_use("guide-design")   # 无参数版本
 
 **核心边界（design-done 即切换点）**：
 ```
-[guide-arch] --(arch-done)--> [guide-design] --(design-done)--> [guide-plan] --(plan-done)--> [guide-ship] --(ship-done)--> [rdd-verifier] --(verify-done)--> [archive]
+[rdd-arch] --(arch-done)--> [guide-design] --(design-done)--> [guide-plan] --(plan-done)--> [guide-ship] --(ship-done)--> [rdd-verifier] --(verify-done)--> [archive]
 ```
 
 ## Phase 1: setup
@@ -81,21 +81,21 @@ case "$RECOMMENDATION" in
     echo "" >&2
     echo "可选操作:" >&2
     echo "  1. 重建 handoff: bash skills/guide-design/scripts/reconstruct_arch_handoff.sh --force" >&2
-    echo "  2. 重跑 guide-arch (会丢失 arch 上下文)" >&2
+    echo "  2. 重跑 rdd-arch (会丢失 arch 上下文)" >&2
     echo "  3. 退出,先手工检查" >&2
     echo "" >&2
     read -r -p "选择 [1/2/3]: " recon_choice
     case "$recon_choice" in
       1) bash skills/guide-design/scripts/reconstruct_arch_handoff.sh --force \
            --project-root "${PROJECT_ROOT:-$(pwd)}" || return 1 ;;
-      2) echo "请运行 skill_use(\"guide-arch\") 重做 arch 工作" >&2; return 1 ;;
+      2) echo "请运行 skill_use(\"rdd-arch\") 重做 arch 工作" >&2; return 1 ;;
       *) echo "已退出" >&2; return 0 ;;
     esac
     ;;
   hard_reject_no_evidence)
     echo "❌ arch-done 未完成，无法进入 design 阶段" >&2
     echo "   未发现任何 arch 工作证据 (无 ADR / 无 roadmap)" >&2
-    echo "   请先运行: skill_use(\"guide-arch\")" >&2
+    echo "   请先运行: skill_use(\"rdd-arch\")" >&2
     return 1
     ;;
 esac

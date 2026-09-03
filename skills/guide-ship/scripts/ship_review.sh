@@ -108,7 +108,7 @@ try:
     else:
         content = '''# 提案池（待架构讨论）
 
-> arch 阶段输入。guide-arch Phase 5.5 逐个审查，批准后添加到 \`proposal-approved.md\`。
+> arch 阶段输入。rdd-arch Phase 5.5 逐个审查，批准后添加到 \`proposal-approved.md\`。
 
 | 提案 | 优先级 | 来源 | 添加时间 |
 |------|--------|------|----------|
@@ -218,7 +218,7 @@ else:
 
 # _review_record_arch_drift <project_root> <change_name>
 #   Action 3: write docs/architecture/<change>-drift-analysis.md and suggest
-#   re-running guide-arch.
+#   re-running rdd-arch.
 _review_record_arch_drift() {
   local project_root="$1"
   local change_name="$2"
@@ -239,13 +239,13 @@ $(cat /tmp/review_new_todos.txt 2>/dev/null | sed 's/^/- /' || echo '(未检测�
 
 ## 建议操作
 
-1. 运行 skill_use("guide-arch") 审查是否需要修正 ADR
+1. 运行 skill_use("rdd-arch") 审查是否需要修正 ADR
 2. 如 ADR 需修正，回到 adr-create 阶段创建或修订 ADR
 3. 修正后重新运行 guide-plan → deps
 DRIFTDOC
   echo "✅ 差距分析已创建: $drift_doc"
   echo ""
-  echo "💡 下一步: 运行 skill_use(\"guide-arch\") 进入架构审查"
+  echo "💡 下一步: 运行 skill_use(\"rdd-arch\") 进入架构审查"
 }
 
 # _review_debt_precommit_check <project_root> <change_name>

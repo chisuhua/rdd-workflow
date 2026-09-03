@@ -26,7 +26,7 @@ role:
 
 # OpenSpec 工作流 — Ship-Side Guide
 
-本技能是 OpenSpec 工作流的 **ship 端状态机**：负责在 git 提交 OpenSpec change artifacts 之后的所有工作——为已提交的 change 创建 worktree、生成实施计划、监控执行、归档清理。spec 端（`guide-arch` / `guide-plan`）在 artifacts 提交后发出 "ready for guide-ship" 交接信号，本技能接管从 worktree 到归档的全流程。
+本技能是 OpenSpec 工作流的 **ship 端状态机**：负责在 git 提交 OpenSpec change artifacts 之后的所有工作——为已提交的 change 创建 worktree、生成实施计划、监控执行、归档清理。spec 端（`rdd-arch` / `guide-plan`）在 artifacts 提交后发出 "ready for guide-ship" 交接信号，本技能接管从 worktree 到归档的全流程。
 
 **职责边界**：
 - **角色定义**：见 frontmatter `role:` 字段（ADR-0028）
@@ -479,7 +479,7 @@ echo "  测试失败: $TEST_FAIL_COUNT"
 请选择:
 1. 🏠 范围內债务 → 追加到当前 change tasks.md（返回 execute）
 2. 🔖 创建新 debt change → 加入 proposal-suggestions.md (type=debt)
-3. 📐 架构漂移 → 回注 guide-arch (生成差距分析)
+3. 📐 架构漂移 → 回注 rdd-arch (生成差距分析)
 4. ⏭️  跳过 → 直接进入 archive（默认）
 5. 📋 查看详细债务内容
 i. 手动输入新 change 名称

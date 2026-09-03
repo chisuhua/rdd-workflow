@@ -1,6 +1,6 @@
 ---
 name: roadmap
-description: 路线图管理技能——初始化、编辑、验证项目路线图。被 guide-arch 调用执行 init/status/edit/validate/advance 命令。
+description: 路线图管理技能——初始化、编辑、验证项目路线图。被 rdd-arch 调用执行 init/status/edit/validate/advance 命令。
 license: MIT
 compatibility: Requires rdd-workflow v3.0+
 metadata:

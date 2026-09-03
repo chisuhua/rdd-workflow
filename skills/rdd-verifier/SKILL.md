@@ -30,7 +30,7 @@ role:
 - **角色定义**：见 frontmatter `role:` 字段（ADR-0028）
 - **拥有**：`role.boundaries.owns` 列出的状态文件
 - **不拥有**：`openspec/changes/*/`（不修改提案本身）、`docs/adr/ADR-*.md`（不写 ADR）
-- **人工介入程度**：`high`（与 `guide-arch` 同档）
+- **人工介入程度**：`high`（与 `rdd-arch` 同档）
 
 **v1.0 新增**（ADR-0034）：
 - 从 ac-verifier 内嵌步骤升级为独立阶段

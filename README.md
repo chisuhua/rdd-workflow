@@ -2,7 +2,7 @@
 
 > ⚠️ **v3.0+ (2026-08-26): 工作流采用五阶段架构 (arch → design → plan → ship → verify)**
 >
-> 提案管理（创建、审查、批准/拒绝/延迟）已从 `guide-arch` Phase 5.5 迁移到独立的 `guide-design` 阶段。
+> 提案管理（创建、审查、批准/拒绝/延迟）已从 `rdd-arch` Phase 5.5 迁移到独立的 `guide-design` 阶段。
 > AC 验证从 archive 内嵌 ac-verifier 升级为独立的 `rdd-verifier` 阶段（per ADR-0034）。
 > 存量项目请先运行 `skill_use("guide-design")` 审查提案，再运行 `skill_use("rdd-verifier")` 补做验证。
 
@@ -59,7 +59,7 @@ bash install.sh /path/to/project
 1. **安装到项目**：执行 `skill_use("INSTALL")` 将技能复制到项目目录
 2. **使用子技能**：
    - `skill_use("guide")` - 推荐器入口(扫描状态,建议调 arch、plan 或 ship)
-   - `skill_use("guide-arch")` - Arch 端状态机(setup → roadmap → arch-done)
+   - `skill_use("rdd-arch")` - Arch 端状态机(setup → roadmap → arch-done)
    - `skill_use("guide-plan")` - Plan 端状态机(scan → propose → deps → plan-done)
    - `skill_use("guide-ship")` - Ship 端状态机(plan → execute → archive → cleanup)
    - `skill_use("feature")` - feature 管理(summary/graph/status/order)
@@ -105,15 +105,15 @@ verification:
 
 | 阶段 | 技能 | 职责 | 人工介入 |
 |------|------|------|---------|
-| **Arch** | `guide-arch` | 架构定义（ADR、roadmap、差距分析） | 高 |
+| **Arch** | `rdd-arch` | 架构定义（ADR、roadmap、差距分析） | 高 |
 | **Design** | `guide-design` | 设计管理 + 内容审查（提案创建、审查、批准/拒绝/延迟；approve 即落盘 + 两层内容审查） | 中 |
 | **Plan** | `guide-plan` | 变更生成（scan、propose、deps） | 中 |
 | **Ship** | `guide-ship` | 变更执行（worktree、execute、archive） | 低 |
 | **Verify** | `rdd-verifier` | 验证回环（批量 AC 验证 + 启发式分类 + 失败回 plan/ship，per ADR-0034） | 低 |
 
 > **v3.0+ 变更**: 从四阶段扩展为五阶段架构。AC 验证从 `archive_gate_check` 内嵌 ac-verifier 升级为独立的 `rdd-verifier` 阶段（per ADR-0034）。
-> **v2.1 历史**: 提案管理（创建、审查、批准/拒绝/延迟）从 `guide-arch` Phase 5.5 迁移到独立的 `guide-design` 阶段。
-> `guide-spec` 别名已在 v2.0 移除。请直接使用 `guide-arch` → `guide-design` → `guide-plan` → `guide-ship` → `rdd-verifier`。
+> **v2.1 历史**: 提案管理（创建、审查、批准/拒绝/延迟）从 `rdd-arch` Phase 5.5 迁移到独立的 `guide-design` 阶段。
+> `guide-spec` 别名已在 v2.0 移除。请直接使用 `rdd-arch` → `guide-design` → `guide-plan` → `guide-ship` → `rdd-verifier`。
 
 ### Guide-Ship 执行契约 (v2.0.7+)
 
@@ -340,7 +340,7 @@ export SKIP_DEPS_GATE=yes  # plan-done 跳过 gate 5
 
 ### Roadmap Incremental Update (v2.2+)
 
-`guide-arch` Phase 6 自动调用 `roadmap_incremental_update.sh`，基于 git HEAD + ADR file hash + reverse index 三源判定增量更新模式：
+`rdd-arch` Phase 6 自动调用 `roadmap_incremental_update.sh`，基于 git HEAD + ADR file hash + reverse index 三源判定增量更新模式：
 
 - **skip** (零变更) — `< 0.1s`
 - **adr_only** (仅 ADR 改) — `< 1s`，仅重写受影响 phase fragment
@@ -351,7 +351,7 @@ State 文件：`.rddf/state/.populate-state.json`（gitignored，独立于 v1.1 
 
 Reset 命令：`rm .rddf/state/.populate-state.json`
 
-`populate-roadmap-from-arch` skill 已 v1.2 标记 deprecated（thin wrapper），新项目直接用 `skill_use("guide-arch")`。
+`populate-roadmap-from-arch` skill 已 v1.2 标记 deprecated（thin wrapper），新项目直接用 `skill_use("rdd-arch")`。
 
 ### Roadmap feature fragments (v2.2+)
 
@@ -363,7 +363,7 @@ rddf roadmap add-feature auth-v2 \
     --theme "RBAC 权限模型"
 ```
 
-This creates `.rddf/roadmap/features/feat-auth-v2.md` with valid frontmatter + 3-section body skeleton, and refreshes `.rddf/roadmap.md` AUTO-INDEX atomically. Closes the operation gap from `add-hierarchical-roadmap-structure` (scenario 3). Reachable from `guide-arch` Phase 4 menu option 5. See `skills/roadmap/SKILL.md` for full CLI reference.
+This creates `.rddf/roadmap/features/feat-auth-v2.md` with valid frontmatter + 3-section body skeleton, and refreshes `.rddf/roadmap.md` AUTO-INDEX atomically. Closes the operation gap from `add-hierarchical-roadmap-structure` (scenario 3). Reachable from `rdd-arch` Phase 4 menu option 5. See `skills/roadmap/SKILL.md` for full CLI reference.
 
 ## 目录结构
 
@@ -376,7 +376,7 @@ rdd-workflow/
 └── skills/
     ├── INSTALL.md                       # 安装程序（第一入口）
     ├── guide/SKILL.md                   # 推荐器入口
-    ├── guide-arch/SKILL.md              # Arch 阶段状态机(v2.0+)
+    ├── rdd-arch/SKILL.md              # Arch 阶段状态机(v2.0+)
     ├── guide-design/SKILL.md            # Design 阶段状态机(v2.1+, 提案管理)
     ├── guide-plan/SKILL.md              # Plan 阶段状态机(v2.0+)
     ├── guide-ship/SKILL.md              # Ship 端状态机
@@ -386,7 +386,7 @@ rdd-workflow/
     ├── rddf-session/SKILL.md            # 跨 OpenCode session 恢复 (ADR-0017)
     ├── propose/SKILL.md                 # 子技能(被 guide-plan 调用)
     ├── execute/SKILL.md                 # 子技能(被 guide-ship 调用, TDD 5 步)
-    ├── roadmap/SKILL.md                 # 子技能(被 guide-arch 调用)
+    ├── roadmap/SKILL.md                 # 子技能(被 rdd-arch 调用)
     ├── deps/SKILL.md                    # 子技能(被 guide-plan 调用)
     ├── status/SKILL.md                  # 子技能(被 guide-ship 调用或独立使用)
     ├── add-improve/SKILL.md             # 提案创建入口(被 guide-design 调用)

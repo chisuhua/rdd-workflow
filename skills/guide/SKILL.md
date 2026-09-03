@@ -93,7 +93,7 @@ AI 必须在分析后将清理建议展示给用户，但**不自动执行任何
 AI 必须根据场景选择合适的输入收集方式：
 
 **`question` 工具适用场景**：
-- 阶段选择（guide-arch / guide-design / guide-plan / guide-ship / rdd-verifier）
+- 阶段选择（rdd-arch / guide-design / guide-plan / guide-ship / rdd-verifier）
 - session 选择（resume rds_xxx）
 - 固定结构化选项（优先级 P0/P1/P2）
 
@@ -139,7 +139,7 @@ ALL_OPTIONS_JSON 结构:
   ⭐ 1. {recommended.label} — {recommended.description}
 
   === Workflow Stages ===
-  {N}. guide-arch    — setup → ADR → roadmap → arch-done
+  {N}. rdd-arch    — setup → ADR → roadmap → arch-done
   {N+1}. guide-design — 创建/审查改进提案 → design-done
   {N+2}. guide-plan  — scan → propose → deps → plan-done
   {N+3}. guide-ship  — plan → execute → archive → cleanup
@@ -185,18 +185,18 @@ ALL_OPTIONS_JSON 结构:
 
 2. **每次回答完后，主动重新展示简版菜单**（不需要等用户要求）：
    ```
-   ⭐ guide-plan / guide-design / guide-arch / guide-ship / rdd-verifier / resume rds_xxx / feature / status
+   ⭐ guide-plan / guide-design / rdd-arch / guide-ship / rdd-verifier / resume rds_xxx / feature / status
    继续自由讨论 (输入 0 或直接提问)
    ```
    简版菜单只列选项名称（`label`），不列详细描述。保持一行紧凑格式，不给用户增加阅读负担。
 
 3. 当用户输入菜单编号或对应选项名称时，视为选中，执行对应 `action`：
-   - **阶段命令**（`group` 为 `recommended` 或 `stages`：`guide-arch`、`guide-design`、`guide-plan`、`guide-ship`、`rdd-verifier`、`rddf-session resume rds_xxx`）→ 执行后 guide 模式结束。
+   - **阶段命令**（`group` 为 `recommended` 或 `stages`：`rdd-arch`、`guide-design`、`guide-plan`、`guide-ship`、`rdd-verifier`、`rddf-session resume rds_xxx`）→ 执行后 guide 模式结束。
    - **工具命令**（`group` 为 `session` 或 `utilities`：`rddf-session list`、`rddf-session current`、`feature`、`status` 等）→ 执行后**重新展示完整菜单**（AI 回到步骤 1：运行 bash 扫描 + Python 合成器 + 重新展示菜单），不结束 guide 模式。
 
 ### 阶段命令门控（工作树检查）
 
-当用户选择阶段命令（`guide-arch` / `guide-design` / `guide-plan` / `guide-ship`）时，AI 必须在执行 `skill_use()` 前检查 `WT_ISSUES_JSON`：
+当用户选择阶段命令（`rdd-arch` / `guide-design` / `guide-plan` / `guide-ship`）时，AI 必须在执行 `skill_use()` 前检查 `WT_ISSUES_JSON`：
 
 - 如果 `WT_ISSUES_JSON` 为空或仅含 `info` 级别 issue -> 直接执行，无提示
 - 如果 `WT_ISSUES_JSON` 非空且包含非 `info` 级别 issue -> 展示提示：
@@ -221,7 +221,7 @@ ALL_OPTIONS_JSON 结构:
 用户选择后，AI 执行对应 `action`。根据 action 类型，post-action 行为不同：
 
 **阶段命令**（执行后 guide 模式结束，进入对应阶段状态机）：
-- `"guide-arch"` → `skill_use("guide-arch")` — 该 skill 自动处理 rddf-session entry hook
+- `"rdd-arch"` → `skill_use("rdd-arch")` — 该 skill 自动处理 rddf-session entry hook
 - `"guide-design"` → `skill_use("guide-design")` — 同上
 - `"guide-plan"` → `skill_use("guide-plan")` — 同上
 - `"guide-ship"` → `skill_use("guide-ship")` — 同上
@@ -235,7 +235,7 @@ ALL_OPTIONS_JSON 结构:
 
 **循环实现**：对于工具命令，AI 在 action 执行完毕后，自动回到 "bash 扫描 + Python 合成器 + 展示菜单" 步骤，不结束 guide 模式。用户可通过选择阶段命令或直接输入阶段命令名称退出循环。
 
-Session 管理自动完成：guide skills 的 entry/close hooks 已在 `guide-arch.md` / `guide-design.md` / `guide-plan.md` / `guide-ship.md` 中实现，不需要额外操作。
+Session 管理自动完成：guide skills 的 entry/close hooks 已在 `rdd-arch.md` / `guide-design.md` / `guide-plan.md` / `guide-ship.md` 中实现，不需要额外操作。
 
 ### 完整流程示例
 
@@ -245,7 +245,7 @@ Session 管理自动完成：guide skills 的 entry/close hooks 已在 `guide-ar
 AI 执行扫描 → 展示菜单:
   ⭐ 1. guide-design — 进入设计阶段（审查改进提案）
   2. guide-plan — 进入变更生成阶段
-  3. guide-arch  ...
+  3. rdd-arch  ...
   4. guide-ship  ...
   4. rddf-session list — 查看所有 session
   0. 💬 自由讨论
@@ -254,12 +254,12 @@ AI 执行扫描 → 展示菜单:
   ↓
 [自由讨论模式]
 AI: "有 3 个 changes: add-auth (proposed), fix-ns-pollution (in worktree), add-stream-pipes (proposed)..."
-    ⭐ guide-plan / guide-arch / guide-ship / ...   ← 主动展示简版菜单
+    ⭐ guide-plan / rdd-arch / guide-ship / ...   ← 主动展示简版菜单
 
 用户: "fix-ns-pollution 卡在哪？"   ← 继续讨论
   ↓
 AI: "worktree 内 tasks.md 显示 2/5 完成,被 deps 分析标记为阻塞中..."
-    ⭐ guide-design / guide-plan / guide-arch / guide-ship / ...   ← 再次展示
+    ⭐ guide-design / guide-plan / rdd-arch / guide-ship / ...   ← 再次展示
 
 用户: "guide-plan"  ← 选中阶段命令
   ↓
@@ -271,7 +271,7 @@ AI 执行 skill_use("guide-plan") → 结束
   ↓
 AI 执行扫描 → 展示菜单:
   ⭐ 1. guide-ship — 进入变更执行阶段
-  2. guide-arch  ...
+  2. rdd-arch  ...
   3. guide-plan  ...
   4. rddf-session list — 查看所有 session
   5. feature — 查看 feature 视图

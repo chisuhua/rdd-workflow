@@ -5,7 +5,7 @@
     "description": "Schema metadata version per ADR-0016. Project invariant: all rdd-workflow schemas keep version.const='v1' (schema system version, NOT contract version). Contract version lives in properties.version.const and is 2 for populate-state v2."
   },
   "$id": "https://rdd-workflow.local/schemas/populate_state_schema.json",
-  "title": "Populate State (move-populate-roadmap-into-guide-arch, contract v2)",
+  "title": "Populate State (move-populate-roadmap-into-rdd-arch, contract v2)",
   "description": "Schema for .rddf/state/.populate-state.json — incremental populate-roadmap state. Tracks ADR file hashes, a symbol->ADR reverse index, and per-phase fragment generation timestamps so populate-roadmap-from-arch can decide between full regeneration and incremental updates. v2 payloads with properties.version=1 are rejected (fail-loud) so v1.1 users get a clear error.",
   "type": "object",
   "additionalProperties": false,

@@ -425,3 +425,22 @@ See [v1.x → v2.0 Migration Guide](./docs/migration/v1-to-v2.md) for step-by-st
 ### Contributors
 
 - @sisyphus — Architecture, implementation, and release
+## [Unreleased] - 2026-09-03 - Stage 3: rdd-arch rename + bidirectional feedback
+
+### Changed
+- **rdd-arch** (renamed from `guide-arch`, per ADR-0042 / D1a Stage 3 rename).
+  Canonical skill is now `rdd-arch`; legacy `guide-arch` retained as 5-line shim
+  until v3.x + 2 minor release. CLI alias `rddf arch` introduced.
+- `write_arch_handoff.py` upgraded from bare `open(w)+json.dump` to
+  `FileLock` + `atomic_write_json` (Oracle C-1 blocker, see ADR-0042).
+  Lock path: `.rddf/state/.arch-handoff.json.lock`.
+
+### Added
+- Persistent planner feedback channel: `.rddf/state/.planner-feedback.json`
+  (owned by `rdd-planner`, consumed read-only by `rdd-arch`).
+- `rddf planner feedback [--acknowledge|--resolve|--dismiss|--prune-resolved]`.
+- `rddf arch status` displays planner feedback summary with stale indicator.
+
+### Notes
+- No breaking changes to existing OpenSpec change lifecycle.
+- `guide-arch` shim forwards `skill_use("guide-arch")` to `rdd-arch`.

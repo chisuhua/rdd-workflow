@@ -327,7 +327,7 @@ run_plan_intake() {
       echo "❌ 未检测到 arch-done handoff (.rddf/state/.arch-handoff.json)"
       echo ""
       echo "   arch 阶段必须先完成才能进入 plan 阶段。"
-      echo "   -> 请先运行: skill_use(\"guide-arch\")"
+      echo "   -> 请先运行: skill_use(\"rdd-arch\")"
       echo ""
       echo "   如确定跳过 arch 阶段（已知风险），设置环境变量:"
       echo "     export SKIP_ARCH_HANDOFF=yes"

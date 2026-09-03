@@ -3,7 +3,7 @@ import json
 import os
 import pytest
 import threading
-from skills.guide_arch.scripts import write_arch_handoff as wah
+from skills.rdd_arch.scripts import write_arch_handoff as wah
 
 
 @pytest.fixture

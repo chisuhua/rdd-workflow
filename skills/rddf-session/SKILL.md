@@ -105,7 +105,7 @@ else:
         print(f"💡 Recommended: {nxt.session_id} (kind={nxt.kind}, last_heartbeat={nxt.last_heartbeat})")
         print(f'   → skill_use("rddf-session resume {nxt.session_id}")')
     else:
-        print("   No orphaned rddf-sessions found. Run guide-arch or guide-plan to start.")
+        print("   No orphaned rddf-sessions found. Run rdd-arch or guide-plan to start.")
     PYEOF
         ;;
 
@@ -309,7 +309,7 @@ esac
   4. `$(hostname -s)_$$` current shell PID (last resort fallback)
   - **DEPRECATED**: previous claim of "`$PPID` stable across bash tool calls" is FALSE; same OpenCode window produces different `$PPID` across consecutive bash tool calls (root cause: 2026-08-02 ship 复盘). The 3-layer chain above is the actual contract.
   - Debug field `OPENCODE_SESSION_ID_FROM` records the fallback source (env | proc-cmdline | shell-pid | cached-file).
-- **Heartbeat**: refreshed on every `guide-arch`/`guide-plan`/`guide-ship` phase call;
+- **Heartbeat**: refreshed on every `rdd-arch`/`guide-plan`/`guide-ship` phase call;
   30-minute timeout → orphaned
 
 ## Auto-Archive on Hook Trigger (P1 hygiene)
@@ -375,6 +375,6 @@ flow continues unaffected.
 
 ## Cross-Reference
 
-- `guide-arch` / `guide-plan` / `guide-ship` automatically create `kind=stage_*` rddf-sessions on entry and close them on phase completion.
+- `rdd-arch` / `guide-plan` / `guide-ship` automatically create `kind=stage_*` rddf-sessions on entry and close them on phase completion.
 - See `docs/architecture/multi-session.md` for full user guide and conflict-resolution flow.
 - See ADR-0017 for design rationale.

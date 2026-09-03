@@ -1,6 +1,6 @@
 # OpenSpec 工作流技能使用指南
 
-> 基于 `guide` 推荐器（arch-side 调 `guide-arch`，plan-side 调 `guide-plan`，ship-side 调 `guide-ship`），覆盖从提案到归档的完整生命周期。
+> 基于 `guide` 推荐器（arch-side 调 `rdd-arch`，plan-side 调 `guide-plan`，ship-side 调 `guide-ship`），覆盖从提案到归档的完整生命周期。
 > 支持多 change 并行执行，可分离到不同终端同时运行。
 <!-- VERSION_BANNER_START -->
 > 当前版本: **v3.0+ (2026-08-26)**（五阶段架构 arch → design → plan → ship → verify + Loop 引擎 + `rdd-workflow-writing-plans` 自包含计划生成器 + `iteration.json` sprint 视图 + 结构化 deps 输出 + `rddf-session` 跨 OpenCode session 恢复 + `rdd-verifier` 阶段验证 + Hub-Spoke 联邦）。`package.json` 标 `3.0.0`，文档与状态契约以 v3.0 为准。
@@ -22,7 +22,7 @@
 
 | 端 | 职责 | 关键产物 |
 |----|------|---------|
-| **arch 端** (`guide-arch`) | `setup → adr-create → architecture → roadmap-define → arch-done`（5 子阶段） | `roadmap.md`（默认，可由 ADR-0016 discovery 重新发现）、`docs/adr/ADR-*.md`、`docs/architecture/*-gap-analysis.md`（可选）、`.rddf/state/.arch-handoff.json` |
+| **arch 端** (`rdd-arch`) | `setup → adr-create → architecture → roadmap-define → arch-done`（5 子阶段） | `roadmap.md`（默认，可由 ADR-0016 discovery 重新发现）、`docs/adr/ADR-*.md`、`docs/architecture/*-gap-analysis.md`（可选）、`.rddf/state/.arch-handoff.json` |
 | **design 端** (`guide-design`) | `preflight → review → approve/reject/defer → design-done`（v2.1+ 提案管理 + 内容审查） | `.rddf/improvements/<name>.md`、`proposal-approved.md` 更新、`.rddf/state/.design-handoff.json` |
 | **plan 端** (`guide-plan`) | `scan → propose → deps → plan-done`（4 子阶段） | `openspec/changes/<name>/{proposal,design,tasks}.md` 已提交、`.rddf/state/.plan-handoff.json`、`.rddf/state/.deps-analysis.json` |
 | **ship 端** (`guide-ship`) | `plan → verification → execute → review → archive → cleanup → ship-done`（7 子阶段，编号 1, 1.5, 2, 2.5, 3, 4, 5） | worktree 目录或当前分支（轻量模式）、`.rddf/plans/<name>.md`、归档记录、`.rddf/state/iteration.json` |
@@ -61,18 +61,18 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 
 | 文件 | 位置 | 用途 | 写入方 |
 |------|------|------|--------|
-| `proposal-suggestions.md` | 项目根目录 | 扫描出的建议列表（JSON 数组格式），随 git 版本控制 | `propose` / `roadmap` / `status` / `guide-arch` / `guide-plan` |
+| `proposal-suggestions.md` | 项目根目录 | 扫描出的建议列表（JSON 数组格式），随 git 版本控制 | `propose` / `roadmap` / `status` / `rdd-arch` / `guide-plan` |
 | `openspec/changes/<name>/tasks.md` | change 目录 | Execute 阶段任务清单（权威进度来源） | `execute` / `guide-ship` |
 | `docs/adr/ADR-*.md` | ADR 目录 | 架构决策记录（propose 扫描 + 引用源） | 用户手工编写（待 propose 扫描拾取） |
 | `.rddf/plans/<name>.md` | worktree 内或主仓库（轻量模式） | Prometheus 计划文件（ship 端产物，git tracked） | `rdd-workflow-writing-plans` / `guide-ship` |
-| `.rddf/state/.arch-handoff.json` | `.rddf/state/`（gitignored） | arch → plan 阶段交接状态（arch_complete_at / arch_artifacts / adr_dir / roadmap_path / discovered）+ ADR-0016 发现契约 v1 | `guide-arch`（arch-done 写入）/ `guide-plan`（Phase 0 读取+fallback defaults） |
+| `.rddf/state/.arch-handoff.json` | `.rddf/state/`（gitignored） | arch → plan 阶段交接状态（arch_complete_at / arch_artifacts / adr_dir / roadmap_path / discovered）+ ADR-0016 发现契约 v1 | `rdd-arch`（arch-done 写入）/ `guide-plan`（Phase 0 读取+fallback defaults） |
 | `.rddf/state/.plan-handoff.json` | `.rddf/state/`（gitignored） | plan → ship 阶段交接状态（plan_complete_at / committed_changes / ship_started_at） | `guide-plan`（plan-done 写入）/ `guide-ship`（ship-start 读取） |
-| `.rddf/state/sessions.json` | `.rddf/state/`（gitignored） | **rddf-session 生命周期**（ADR-0017）— 跨 OpenCode session 工作流恢复（stage_arch / stage_plan / stage_ship + heartbeat + 4 选项冲突处理） | `guide-arch` / `guide-plan` / `guide-ship` 入口 + `rddf-session` 技能 5 子命令 |
+| `.rddf/state/sessions.json` | `.rddf/state/`（gitignored） | **rddf-session 生命周期**（ADR-0017）— 跨 OpenCode session 工作流恢复（stage_arch / stage_plan / stage_ship + heartbeat + 4 选项冲突处理） | `rdd-arch` / `guide-plan` / `guide-ship` 入口 + `rddf-session` 技能 5 子命令 |
 | `.rddf/state/iteration.json` | `.rddf/state/`（gitignored） | **当前 sprint 视图**（v2.0.1）— change 状态机：proposed → planned → in_worktree → completed → archived；multi-hook 写入 | `propose` / `guide-ship` / `execute` / `deps` / `archive` hooks（集中由 `skills/_lib/iteration.py` 管理） |
 | `.rddf/state/deps-analysis.json` | `.rddf/state/`（gitignored） | **结构化** deps 输出（v2.0.1）— 依赖图 + 执行顺序 JSON（schema 见 `skills/_lib/schemas/deps_analysis_schema.json`） | `deps` Step 5b 优先写；Step 6 markdown-fallback 时也写 |
 | `.rddf/state/.deps-candidates.json` | `.rddf/state/`（gitignored） | deps 阶段候选 change 列表（机器可读） | `guide-plan`（deps 阶段）/ `review-phase` 自动增量 |
 | `.rddf/state/.deps-output.md` | `.rddf/state/`（gitignored） | deps 阶段依赖图 + 推荐执行顺序（人类可读报告；旧 `.rddf/state/deps-output.md` 仅作兼容引用） | `deps` Step 5 / `guide-plan`（deps 阶段） |
-| `.rddf/state/index.md` | `.rddf/state/`（gitignored） | change 索引（自动维护） | `guide-arch` / `guide-plan` |
+| `.rddf/state/index.md` | `.rddf/state/`（gitignored） | change 索引（自动维护） | `rdd-arch` / `guide-plan` |
 
 > 重要：`.rddf/state/`、`.rddf/wt/`、`.rddf/detectors/`、`.rddf/actions/` 全部 gitignored；只有 `.rddf/plans/` **随 git 版本控制**（执行契约路径）。
 
@@ -98,7 +98,7 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 用户: skill_use("guide")
 
 # Arch 端（创建新 change：setup → adr-create → architecture → roadmap-define → arch-done）
-用户: skill_use("guide-arch")
+用户: skill_use("rdd-arch")
 
 # Plan 端（已有架构：scan → propose → deps → plan-done）
 用户: skill_use("guide-plan")
@@ -111,18 +111,18 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 
 ### 完整 skill 列表
 
-`skills/` 目录当前包含 **13 个 Markdown skill 文件**（`INSTALL` + `guide` + `guide-arch` + `guide-plan` + `guide-ship` + `feature` + `propose` + `roadmap` + `deps` + `execute` + `status` + `rddf-session` + `rdd-workflow-writing-plans`）外加 `loop_engine.py`。**v2.0.2 起** `package.json::skills[]` 已**完整发布全部 13 个**（含 `feature` + `rddf-session`），与磁盘无差异。
+`skills/` 目录当前包含 **13 个 Markdown skill 文件**（`INSTALL` + `guide` + `rdd-arch` + `guide-plan` + `guide-ship` + `feature` + `propose` + `roadmap` + `deps` + `execute` + `status` + `rddf-session` + `rdd-workflow-writing-plans`）外加 `loop_engine.py`。**v2.0.2 起** `package.json::skills[]` 已**完整发布全部 13 个**（含 `feature` + `rddf-session`），与磁盘无差异。
 
 | Skill | 用途 | 触发方式 |
 |-------|------|---------|
 | `INSTALL` | 首次安装（将技能复制到项目的 `.opencode/skills/`） | 用户显式调用 |
-| `guide` | 推荐器入口（扫描状态，建议调 guide-arch、guide-plan 或 guide-ship） | `skill_use("guide")` |
-| `guide-arch` | **新** 架构定义阶段（5 子阶段：`setup → adr-create → architecture → roadmap-define → arch-done`） | `skill_use("guide-arch")` |
+| `guide` | 推荐器入口（扫描状态，建议调 rdd-arch、guide-plan 或 guide-ship） | `skill_use("guide")` |
+| `rdd-arch` | **新** 架构定义阶段（5 子阶段：`setup → adr-create → architecture → roadmap-define → arch-done`） | `skill_use("rdd-arch")` |
 | `guide-plan` | **新** 变更生成阶段（4 子阶段：`scan → propose → deps → plan-done`） | `skill_use("guide-plan")` |
 | `guide-ship` | **Ship 端状态机（Phase 1, 1.5, 2, 2.5, 3, 4, 5）**：`plan → verification → execute → review → archive → cleanup → ship-done`，含轻量/worktree 自动检测 | `skill_use("guide-ship")` |
 | `feature` | feature 管理（summary / dependency graph / per-feature status / execution order；feature- 前缀 change 完整性提示） | `skill_use("feature")` |
 | `propose` | 扫描 ADR/代码生成建议列表（`proposal-suggestions.md`，JSON 数组格式） | `guide-plan` 内部 / 单独使用 |
-| `roadmap` | 路线图管理（phase/category 结构 + AUTO-SPRINT sentinel，v2.0.1） | `guide-arch` 内部 / 单独使用 |
+| `roadmap` | 路线图管理（phase/category 结构 + AUTO-SPRINT sentinel，v2.0.1） | `rdd-arch` 内部 / 单独使用 |
 | `deps` | 依赖分析（含 subagent Step 3，结构化输出 `deps-analysis.json`，v2.0.1） | `guide-plan` 内部 / 单独使用 |
 | `execute` | 在 worktree（或轻量模式当前分支）内执行任务，写 `tasks.md` 进度 | `guide-ship` 内部 / worktree 内单独使用 |
 | `status` | 状态查看（tasks.md 进度 + iteration.json） | `guide-ship` 内部 / 单独使用 |
@@ -166,7 +166,7 @@ from skills import loop_engine
 
 ## 完整流程：Arch + Plan 端
 
-Arch 端 5 子阶段（`guide-arch`）+ Plan 端 4 子阶段（`guide-plan`），跨阶段通过 `.rddf/state/.arch-handoff.json` 软交接。**下面 5 个 `### Phase X` 小节是一个精简的用户视角 5 段流程**（Setup → Roadmap-define → Propose → Deps → Handoff），合并呈现 Arch Phase 1、Arch Phase 4、Plan Phase 2、Plan Phase 3、Plan Phase 4 这五个**最常用户操作**的节点；**完整的 9 阶段子模型**参考下方的存档列表（含 Arch Phase 2 ADR Create、Arch Phase 3 Architecture、Plan Phase 1 Scan）。
+Arch 端 5 子阶段（`rdd-arch`）+ Plan 端 4 子阶段（`guide-plan`），跨阶段通过 `.rddf/state/.arch-handoff.json` 软交接。**下面 5 个 `### Phase X` 小节是一个精简的用户视角 5 段流程**（Setup → Roadmap-define → Propose → Deps → Handoff），合并呈现 Arch Phase 1、Arch Phase 4、Plan Phase 2、Plan Phase 3、Plan Phase 4 这五个**最常用户操作**的节点；**完整的 9 阶段子模型**参考下方的存档列表（含 Arch Phase 2 ADR Create、Arch Phase 3 Architecture、Plan Phase 1 Scan）。
 
 **精简 5 段用户视角（下面 5 个 `### Phase X` 小节逐一展开）：**
 
@@ -566,7 +566,7 @@ i. 其他输入
 请选择:
 1. 🏠 范围内债务 → 追加到当前 change tasks.md（返回 execute）
 2. 🔖 创建新 debt change → 加入 proposal-suggestions.md (type=debt)
-3. 📐 架构漂移 → 回注 guide-arch (生成差距分析)
+3. 📐 架构漂移 → 回注 rdd-arch (生成差距分析)
 4. ⏭️  跳过 → 直接进入 archive（默认）
 5. 📋 查看详细债务内容
 i. 手动输入新 change 名称
@@ -822,7 +822,7 @@ tests/
 
 > ⚠️ **`npm test` 陷阱**：`npm test` 只跑 `bats tests/`，**不会**捕获 Python 测试失败。改完任何 Python 代码后必须显式 `pytest tests/`，CI 才会捕获。
 >
-> ⚠️ **`guide-arch` 首次因 `.gitignore` 失败**：运行检查器打印的 `fix_command` 后重新执行。
+> ⚠️ **`rdd-arch` 首次因 `.gitignore` 失败**：运行检查器打印的 `fix_command` 后重新执行。
 
 ```bash
 # === bats（npm test 等价命令，仅覆盖 shell 测试）===
@@ -888,7 +888,7 @@ ADR 状态字段遵循 `docs/adr/README.md` 的五状态生命周期：
 ### 何时写 ADR
 
 - ✅ 引入新 phase/category（roadmap 变更）
-- ✅ 拆分/合并技能（如 v2.0 重构 spec 端为 `guide-arch` + `guide-plan`）
+- ✅ 拆分/合并技能（如 v2.0 重构 spec 端为 `rdd-arch` + `guide-plan`）
 - ✅ 添加新测试基础设施（如 `init-adr-directory` 的 bats 设计）
 - ✅ 修改核心工作流契约（如 phase 边界、git commit 切换点）
 - ❌ 单个 bug 修复（用 commits + PR 描述）

@@ -106,7 +106,7 @@ skill_use("guide-plan")   # 无参数版本
 
 | 子技能 | 阶段 | 职责 | 人工介入 |
 |--------|------|------|---------|
-| `guide-arch`（前序） | arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-done | **高** |
+| `rdd-arch`（前序） | arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-done | **高** |
 | `guide-design`（前序） | design | 设计管理：提案创建 → 审查 → 批准/拒绝/延迟 → design-done | **中** |
 | `guide-plan`（本技能） | plan | 变更生成：审批提案消费 → propose → deps → plan-done | **中** |
 | `guide-ship`（后续） | ship | 变更执行：plan → execute → archive → cleanup → ship-done | **低** |
@@ -116,7 +116,7 @@ skill_use("guide-plan")   # 无参数版本
 **核心边界（plan-done 即切换点）**：
 
 ```
-[guide-arch] --(arch-done)--> [guide-design] --(design-done)--> [guide-plan] --(plan-done: ≥1 change + all artifacts committed)--> [guide-ship]
+[rdd-arch] --(arch-done)--> [guide-design] --(design-done)--> [guide-plan] --(plan-done: ≥1 change + all artifacts committed)--> [guide-ship]
     arch 端                        design 端                       plan 端                                                  ship 端
     owns: docs/adr/ADR-*.md,       owns: .rddf/improvements/,     owns: openspec/changes/<name>/                        owns: worktree, .rddf/plans/,
           roadmap.md,                     proposal-suggestions.md,         {proposal,design,tasks}.md                              execute, archive
@@ -134,8 +134,8 @@ skill_use("guide-plan")   # 无参数版本
 
 **plan 端不写的文件**：
 
-- 不写 `docs/adr/ADR-*.md`（属于 `guide-arch`）
-- 不写 `roadmap.md`（属于 `guide-arch`）
+- 不写 `docs/adr/ADR-*.md`（属于 `rdd-arch`）
+- 不写 `roadmap.md`（属于 `rdd-arch`）
 - 不创建 worktree（属于 `guide-ship`）
 - 不调用 `openspec` 的执行类命令（属于 `guide-ship`）
 - 不做归档/清理（属于 `guide-ship`）
@@ -150,7 +150,7 @@ skill_use("guide-plan")   # 无参数版本
 
 ## Phase 1: 环境检查与提案消费
 
-**入口条件**：用户调用 `skill_use("guide-plan")` 后立即执行；或 `guide-arch` 完成后用户主动切换到 plan 端。
+**入口条件**：用户调用 `skill_use("guide-plan")` 后立即执行；或 `rdd-arch` 完成后用户主动切换到 plan 端。
 
 **rddf-session 入口 hook**（ADR-0017）：创建或查找当前 opencode session 的 `stage_plan` rddf-session（parent=最新 stage_arch）：
 
@@ -658,8 +658,8 @@ grep "\.plan-handoff.json" skills/guide-plan.md
 # 4. 验证 deps 候选列表路径正确
 grep "\.deps-candidates.json" skills/guide-plan.md
 
-# 5. 验证 4 个子技能引用（propose/deps/guide-arch/guide-ship）
-grep -E "skill_use\(\"(propose|deps|guide-arch|guide-ship)\"\)" skills/guide-plan.md
+# 5. 验证 4 个子技能引用（propose/deps/rdd-arch/guide-ship）
+grep -E "skill_use\(\"(propose|deps|rdd-arch|guide-ship)\"\)" skills/guide-plan.md
 ```
 
 <!-- 详细单元测试见 `tests/integration/test_guide_plan_skill.bats`（与本技能配套,待后续创建）。 -->
@@ -672,7 +672,7 @@ grep -E "skill_use\(\"(propose|deps|guide-arch|guide-ship)\"\)" skills/guide-pla
 - **ADR-0001** — 双阶段状态机分离（v1.x 架构，guide-spec 的来源）
 - **ADR-0007** — 门控机制（plan-done 双重门控的设计依据）
 - **ADR-0011** — 阶段步骤化执行模型（plan 阶段的子阶段设计）
-- `skills/guide-arch.md` — arch 端状态机（前序阶段，本技能的 source）
+- `skills/rdd-arch.md` — arch 端状态机（前序阶段，本技能的 source）
 - `skills/guide-design.md` — v2.1 design 端状态机（前序阶段，由 design-done 触发本阶段）
 - `skills/guide-ship.md` — ship 端状态机（后续阶段）
 - `skills/propose.md` — 变更创建技能（被 plan Phase 2 调用）

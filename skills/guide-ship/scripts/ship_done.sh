@@ -19,7 +19,7 @@ check_remaining_work() {
   fi
   echo "请选择:"
   echo "1. 继续处理 (skill_use(\"guide-ship\")) - 还有 worktree 要处理"
-  echo "2. 回到 spec 端 (skill_use(\"guide-arch\") 或 skill_use(\"guide-plan\")) - 创建更多 changes"
+  echo "2. 回到 spec 端 (skill_use(\"rdd-arch\") 或 skill_use(\"guide-plan\")) - 创建更多 changes"
   echo "3. 本次 session 结束 - 退出 ship-done,稍后继续"
   echo "4. 项目完成 - 不再做任何 change(此项目归档)"
   [ "$ORPHANS" -gt 0 ] && echo "5. 🧹 清理 $ORPHANS 个 orphaned sessions (skill_use(\"rddf-session\", \"abandon\", ...) 或 archive-history)"

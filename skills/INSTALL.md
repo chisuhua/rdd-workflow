@@ -19,7 +19,7 @@ author: sisyphus
 | 技能名称 | 用途 |
 |---------|------|
 | `guide` | 推荐器入口（扫描项目状态，建议下一步） |
-| `guide-arch` | Arch 阶段状态机（setup → roadmap → arch-done） |
+| `rdd-arch` | Arch 阶段状态机（setup → roadmap → arch-done） |
 | `guide-design` | Design 阶段状态机（v2.1 新增；提案审查 + 内容审查 + 批准/拒绝/延迟） |
 | `guide-plan` | Plan 阶段状态机（scan → propose → deps → plan-done） |
 | `guide-ship` | Ship 阶段状态机（plan → execute → archive → cleanup） |
@@ -29,7 +29,7 @@ author: sisyphus
 | `status` | 状态查看和归档（被 guide-ship 调用或独立使用） |
 | `feature` | Feature 管理视图（summary/graph/status/order） |
 | `rddf-session` | 跨 OpenCode session 恢复（ADR-0017） |
-| `roadmap` | 路线图管理（被 guide-arch 调用） |
+| `roadmap` | 路线图管理（被 rdd-arch 调用） |
 | `deps` | 依赖分析（被 guide-plan 调用） |
 | `rdd-workflow-writing-plans` | 实施计划生成器（v2.0 自包含 TDD 5 步结构） |
 | `rdd-env-check` | 环境健康检查（openspec/git/build + cache 快照，被 4 个 phase 调用） |
@@ -69,7 +69,7 @@ bash install.sh --global
 全局安装后，在任何项目目录下：
 ```
 skill_use("guide")       # 推荐器入口
-skill_use("guide-arch")  # Arch 阶段
+skill_use("rdd-arch")  # Arch 阶段
 rddf status              # 查看工作流状态
 ```
 

@@ -6,7 +6,7 @@
   },
   "$id": "https://rdd-workflow.local/schemas/arch_handoff_schema.json",
   "title": "Arch Handoff (ADR-0016, contract v2 additive)",
-  "description": "Schema for .rddf/state/.arch-handoff.json emitted by guide-arch Phase 5 arch-done. Consumed by guide-plan, propose, roadmap, gate.py, detectors.py, actions.py, scan-state.sh.",
+  "description": "Schema for .rddf/state/.arch-handoff.json emitted by rdd-arch Phase 5 arch-done. Consumed by guide-plan, propose, roadmap, gate.py, detectors.py, actions.py, scan-state.sh.",
   "type": "object",
   "additionalProperties": true,
   "required": [
