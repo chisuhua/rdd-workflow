@@ -8,11 +8,12 @@ Public API:
   AdrMeta                                       -> dataclass
   scan_adr_catalog(project_root, adr_dir)       -> dict[str, AdrMeta]
 
-Stdlib only (hashlib / pathlib / dataclasses / re).
+Stdlib only (hashlib / json / pathlib / dataclasses / re).
 """
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -64,7 +65,15 @@ def scan_adr_catalog(
         adr_pattern: Optional regex pattern overriding the default 4-digit
             pattern (^ADR-(\\d{4})-.*\\.md$). Useful for projects with shorter
             or longer ADR numbering (e.g. ChipForge uses 3-digit: ^ADR-(\\d{3})).
+
+    Pattern resolution priority (per complete-project-yaml-config-gaps M4 Task 4.1/4.4):
+        1. explicit adr_pattern argument
+        2. .rddf/project.yaml adr.pattern (if file exists)
+        3. arch-handoff adr_regex (passed via arch_pattern param, see _resolve_adr_pattern)
+        4. default 4-digit pattern (ADR_PATTERN)
     """
+    if adr_pattern is None:
+        adr_pattern = _read_project_yaml_adr_pattern(project_root)
     root = Path(project_root) / adr_dir
     out: dict[str, AdrMeta] = {}
     if not root.is_dir():
@@ -87,3 +96,63 @@ def scan_adr_catalog(
             category=meta.get("category") or None,
         )
     return out
+
+
+def _read_project_yaml_adr_pattern(project_root: Path) -> Optional[str]:
+    """Read .rddf/project.yaml adr.pattern (Python regex) if present.
+
+    Per complete-project-yaml-config-gaps M4 Task 4.4: arch-handoff may be
+    missing (first-run, partial setup). Fall back to project.yaml directly.
+    Returns None if project.yaml absent or corrupt (graceful).
+    """
+    import yaml
+    project_yaml = Path(project_root) / ".rddf" / "project.yaml"
+    if not project_yaml.is_file():
+        return None
+    try:
+        with project_yaml.open(encoding="utf-8") as f:
+            cfg = yaml.safe_load(f) or {}
+        return cfg.get("adr", {}).get("pattern")
+    except (yaml.YAMLError, OSError):
+        return None
+
+
+def _read_arch_handoff_adr_regex(project_root: Path) -> Optional[str]:
+    """Read .rddf/state/.arch-handoff.json adr_regex (Python regex) if present.
+
+    Per complete-project-yaml-config-gaps M4 Task 4.2: arch-handoff carries
+    the Python regex (v2 schema) so populate_lib can pass it through to
+    scan_adr_catalog. Returns None if arch-handoff absent or has no adr_regex.
+    """
+    arch_handoff = Path(project_root) / ".rddf" / "state" / ".arch-handoff.json"
+    if not arch_handoff.is_file():
+        return None
+    try:
+        with arch_handoff.open(encoding="utf-8") as f:
+            doc = json.load(f)
+        return doc.get("adr_regex")
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def _resolve_adr_pattern_for_caller(
+    project_root: Path,
+    explicit: Optional[str] = None,
+) -> Optional[str]:
+    """Resolve adr_pattern via 4-step priority chain.
+
+    Per complete-project-yaml-config-gaps M4 Task 4.2:
+        1. explicit argument (highest priority, e.g. CLI flag)
+        2. arch-handoff adr_regex field (v2 schema)
+        3. project.yaml adr.pattern (fallback)
+        4. None (caller should use ADR_PATTERN default)
+
+    Returns the resolved pattern string or None if no source found.
+    Caller passes the result to scan_adr_catalog(adr_pattern=...).
+    """
+    if explicit is not None:
+        return explicit
+    arch_pattern = _read_arch_handoff_adr_regex(project_root)
+    if arch_pattern is not None:
+        return arch_pattern
+    return _read_project_yaml_adr_pattern(project_root)

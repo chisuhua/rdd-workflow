@@ -153,7 +153,11 @@
     "version": {
       "type": "integer",
       "enum": [1, 2],
-      "description": "Contract version. v1 adds adr_dir/roadmap_path/architecture_dir/adr_pattern/discovered fields (ADR-0016). v2 adds optional roadmap_fragments_dir (additive). v1 payloads remain valid under v2 schema (backward compat)."
+      "description": "Contract version. v1 adds adr_dir/roadmap_path/architecture_dir/adr_pattern/discovered fields (ADR-0016). v2 adds optional roadmap_fragments_dir (additive) + optional adr_regex field for Python regex passthrough (complete-project-yaml-config-gaps M4 Task 4.5). v1 payloads remain valid under v2 schema (backward compat)."
+    },
+    "adr_regex": {
+      "type": "string",
+      "description": "Optional Python regex pattern for ADR filenames (per project.yaml adr.pattern). Distinct from adr_pattern (glob). Used by populate_lib to pass Python regex through arch-handoff (complete-project-yaml-config-gaps M4 Task 4.5+4.6)."
     }
   }
 }

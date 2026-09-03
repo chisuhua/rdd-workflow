@@ -37,7 +37,7 @@ class TestWriteArchHandoff:
         assert isinstance(result, dict)
         assert "arch_complete_at" in result
         assert result["adr_count"] == 3  # excludes template
-        assert result["version"] == 1
+        assert result["version"] == 2
         # File should exist on disk
         path = os.path.join(tmp_repo, ".rddf", "state", ".arch-handoff.json")
         assert os.path.exists(path)
@@ -67,6 +67,40 @@ class TestWriteArchHandoff:
         )
         # IDs should be sorted numerically
         assert result["completed_adr_ids"] == ["0001", "0002", "0003"]
+
+    def test_writes_adr_regex_from_project_yaml_when_present(self, tmp_repo):
+        """write_arch_handoff reads .rddf/project.yaml adr.pattern and writes adr_regex.
+
+        Per complete-project-yaml-config-gaps M4 Task 4.6: arch-handoff carries
+        the Python regex from project.yaml so populate_lib can pass it through.
+        """
+        from pathlib import Path
+        rd = Path(tmp_repo)
+        # Create project.yaml with 3-digit adr.pattern
+        project_dir = rd / ".rddf"
+        project_dir.mkdir(exist_ok=True)
+        (project_dir / "project.yaml").write_text(
+            "adr:\n  pattern: \"^ADR-(\\\\d{3})-.*\\\\.md$\"\n"
+        )
+        # Create a 3-digit ADR file matching the pattern
+        (rd / "docs" / "adr").mkdir(parents=True, exist_ok=True)
+        (rd / "docs" / "adr" / "ADR-040-test.md").write_text("# ADR 040")
+        result = wah.write_arch_handoff(
+            project_root=str(rd),
+            discovered_adr_dir="docs/adr",
+        )
+        assert "adr_regex" in result, "write_arch_handoff must write adr_regex from project.yaml"
+        assert result["adr_regex"] == r"^ADR-(\d{3})-.*\.md$"
+
+    def test_no_adr_regex_when_project_yaml_absent(self, tmp_repo):
+        """write_arch_handoff omits adr_regex when no project.yaml (backward compat)."""
+        result = wah.write_arch_handoff(
+            project_root=str(tmp_repo),
+            discovered_adr_dir="docs/adr",
+        )
+        assert "adr_regex" not in result, (
+            "write_arch_handoff must not write adr_regex when project.yaml absent"
+        )
 
     def test_custom_adr_pattern(self, tmp_repo):
         """Works with custom patterns like DEC-*.md or RFD-*.md."""
@@ -141,7 +175,7 @@ class TestWriteArchHandoff:
         assert result["discovered"]["architecture_dir"]["candidates_tried"] == 1
 
     def test_version_field(self, tmp_repo):
-        """Sets version: 1 (matches v1 schema)."""
+        """Sets version: 2 (matches v2 schema with adr_regex passthrough)."""
         result = wah.write_arch_handoff(
             project_root=tmp_repo,
             discovered_adr_dir="docs/adr",
@@ -149,7 +183,7 @@ class TestWriteArchHandoff:
             discovered_architecture_dir="docs/architecture",
             discovered_adr_pattern="ADR-*.md",
         )
-        assert result["version"] == 1
+        assert result["version"] == 2
 
     def test_arch_complete_at_iso_timestamp(self, tmp_repo):
         """Sets arch_complete_at to ISO timestamp."""
