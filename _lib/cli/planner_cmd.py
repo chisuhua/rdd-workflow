@@ -62,6 +62,22 @@ def _build_parser() -> argparse.ArgumentParser:
     p_audit = sub.add_parser("audit", help="List unmapped proposals (read-only)", parents=[common])
     p_audit.add_argument("--json", action="store_true", help="Output JSON instead of Markdown")
 
+    p_fb = sub.add_parser("feedback", help="View or update planner feedback (persistent review tasks)", parents=[common])
+    p_fb.add_argument("--status", choices=["open", "acknowledged", "resolved", "dismissed"],
+                      help="Filter by lifecycle status")
+    p_fb.add_argument("--kind", choices=["unmapped_proposal", "coverage_gap", "adr_drift", "roadmap_staleness"],
+                      help="Filter by feedback kind")
+    p_fb.add_argument("--json", action="store_true", help="Output JSON format")
+    p_fb.add_argument("--recompute", action="store_true", help="Force recompute from filesystem")
+    p_fb.add_argument("--acknowledge", default=None, metavar="FEEDBACK_ID",
+                      help="Transition feedback to acknowledged status")
+    p_fb.add_argument("--resolve", default=None, metavar="FEEDBACK_ID",
+                      help="Transition feedback to resolved status")
+    p_fb.add_argument("--dismiss", default=None, metavar="FEEDBACK_ID",
+                      help="Transition feedback to dismissed status")
+    p_fb.add_argument("--prune-resolved", action="store_true",
+                      help="Remove resolved/dismissed entries")
+
     p_attach.add_argument("--overwrite", action="store_true",
                           help="Replace an existing divergent roadmap_ref")
 
@@ -210,6 +226,78 @@ def cmd_planner(args: List[str]) -> int:
                     started = e.started_at[:10] if len(e.started_at) >= 10 else e.started_at
                     closed = e.closed_at[:10] if len(e.closed_at) >= 10 else e.closed_at
                     sys.stdout.write(f"| {e.sprint} | {started} | {closed} | {active_count} |\n")
+            return 0
+
+        if ns.subcommand == "feedback":
+            from _lib.planner_feedback import (
+                acknowledge_feedback,
+                compute_planner_feedback,
+                dismiss_feedback,
+                prune_resolved_feedback,
+                read_planner_feedback,
+                resolve_feedback,
+                write_planner_feedback,
+            )
+            import json as _json
+
+            if ns.recompute:
+                data = compute_planner_feedback(str(project_root))
+                write_planner_feedback(str(project_root), data)
+                sys.stdout.write(f"✓ Recomputed {len(data['feedbacks'])} feedback entry(ies)\n")
+                return 0
+
+            if ns.prune_resolved:
+                count = prune_resolved_feedback(str(project_root))
+                sys.stdout.write(f"✓ Pruned {count} resolved/dismissed feedback entry(ies)\n")
+                return 0
+
+            if ns.acknowledge:
+                if not acknowledge_feedback(str(project_root), ns.acknowledge):
+                    sys.stderr.write(f"ERROR: feedback_id not found: {ns.acknowledge}\n")
+                    return 1
+                sys.stdout.write(f"✓ Acknowledged: {ns.acknowledge}\n")
+                return 0
+
+            if ns.resolve:
+                if not resolve_feedback(str(project_root), ns.resolve):
+                    sys.stderr.write(f"ERROR: feedback_id not found: {ns.resolve}\n")
+                    return 1
+                sys.stdout.write(f"✓ Resolved: {ns.resolve}\n")
+                return 0
+
+            if ns.dismiss:
+                if not dismiss_feedback(str(project_root), ns.dismiss):
+                    sys.stderr.write(f"ERROR: feedback_id not found: {ns.dismiss}\n")
+                    return 1
+                sys.stdout.write(f"✓ Dismissed: {ns.dismiss}\n")
+                return 0
+
+            data = read_planner_feedback(str(project_root))
+            entries = data.get("feedbacks", [])
+
+            if ns.status:
+                entries = [e for e in entries if e.get("status") == ns.status]
+            if ns.kind:
+                entries = [e for e in entries if e.get("kind") == ns.kind]
+
+            summary = data.get("summary", {})
+            if not entries:
+                sys.stdout.write("No active planner feedback.\n")
+                if summary.get("open_critical", 0) == 0 and summary.get("open_warning", 0) == 0:
+                    pass
+                return 0
+
+            if ns.json:
+                sys.stdout.write(_json.dumps(entries, indent=2, ensure_ascii=False) + "\n")
+            else:
+                sys.stdout.write("| ID | Kind | Severity | Status | Proposal | Stale |\n")
+                sys.stdout.write("|----|------|----------|--------|----------|-------|\n")
+                for e in entries:
+                    sys.stdout.write(
+                        f"| {e['feedback_id']} | {e['kind']} | {e['severity']} | "
+                        f"{e['status']} | {e['proposal']} | "
+                        f"{'yes' if e.get('stale') else 'no'} |\n"
+                    )
             return 0
 
         parser.print_help()
