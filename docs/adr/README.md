@@ -67,6 +67,7 @@
 | [ADR-0038](ADR-0038-rdd-planner-crosscutting.md) | ADR-0038: rdd-planner Horizontal Orchestrator (Stage 2) | 已采纳 (2026-09-03) | 2026-09-03 |
 | [ADR-0039](ADR-0039-design-handoff-runtime-filter.md) | ADR-0039 — design-handoff runtime filter over on-disk cleanup | 已采纳 (2026-09-01) | 2026-09-01 |
 | [ADR-0040](ADR-0040-session-metrics.md) | ADR-0040 — schema v3 add session metrics opt-in 字段 | 已采纳 (2026-09-01) | 2026-09-01 |
+| [ADR-0041](ADR-0041-planner-sprint-lifecycle-and-history.md) | ADR-0041: Planner Sprint Lifecycle and History Storage | 已采纳 (2026-09-03) | 2026-09-03 |
 <!-- ADR_INDEX_END -->
 
 ## 架构演进

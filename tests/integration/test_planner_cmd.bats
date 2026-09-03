@@ -247,3 +247,14 @@ EOF
     [[ "$output" =~ "Sprint advanced" ]]
     [ -f .rddf/state/.planner-history.jsonl ]
 }
+
+@test "planner: history displays closed sprints" {
+    mkdir -p .rddf/improvements
+    printf -- '---\nname: p1\npriority: P2\n---\n# p1\n' > .rddf/improvements/p1.md
+    python3 -m _lib.cli planner sync --apply --project-root "$TEST_TMP"
+    python3 -m _lib.cli planner advance-sprint --to-sprint sprint-2026-11 --project-root "$TEST_TMP"
+
+    run python3 -m _lib.cli planner history --project-root "$TEST_TMP"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "sprint-" ]]
+}

@@ -57,3 +57,21 @@ def test_cli_no_subcommand_exits_nonzero(capsys):
         assert rc != 0
     except SystemExit as e:
         assert e.code != 0
+
+
+def test_cli_history_prints_empty_notice_when_no_history(tmp_path, capsys):
+    rc = cmd_planner(["history", "--project-root", str(tmp_path)])
+    assert rc == 0
+    captured = capsys.readouterr()
+    assert "No sprint history" in captured.out
+
+
+def test_cli_history_lists_entries_and_supports_json(tmp_path, capsys):
+    from _lib.planner_history import HistoryEntry, append_history_entry
+    entry = HistoryEntry(1, "sprint-2026-08", "2026-08-31T00:00:00Z", "2026-08-01T00:00:00Z", {"active_projects": []})
+    append_history_entry(tmp_path, entry)
+
+    rc = cmd_planner(["history", "--json", "--project-root", str(tmp_path)])
+    assert rc == 0
+    captured = capsys.readouterr()
+    assert "sprint-2026-08" in captured.out

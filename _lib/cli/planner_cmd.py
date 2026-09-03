@@ -52,6 +52,13 @@ def _build_parser() -> argparse.ArgumentParser:
     p_adv.add_argument("--force", action="store_true", help="Allow backward/same sprint advancement")
     p_adv.add_argument("--dry-run", action="store_true", help="Preview advancement without writing")
 
+    p_hist = sub.add_parser("history", help="Show or prune sprint history", parents=[common])
+    p_hist.add_argument("--last", type=int, default=None, help="Show last N sprints")
+    p_hist.add_argument("--since", default=None, help="Show sprints since YYYY-MM")
+    p_hist.add_argument("--json", action="store_true", help="Output JSON format")
+    p_hist.add_argument("--prune-keep", type=int, default=None, help="Prune older sprints keeping N latest")
+    p_hist.add_argument("--apply", action="store_true", help="Apply prune modification (default dry-run)")
+
     p_audit = sub.add_parser("audit", help="List unmapped proposals (read-only)", parents=[common])
     p_audit.add_argument("--json", action="store_true", help="Output JSON instead of Markdown")
 
@@ -164,6 +171,45 @@ def cmd_planner(args: List[str]) -> int:
                 sys.stdout.write(f"DRY-RUN: would advance {res['old_sprint']} -> {res['new_sprint']}\n")
             else:
                 sys.stdout.write(f"✓ Sprint advanced: {res['old_sprint']} -> {res['new_sprint']}\n")
+            return 0
+
+        if ns.subcommand == "history":
+            from _lib.planner_history import read_history, prune_history
+            from dataclasses import asdict
+
+            if ns.prune_keep is not None:
+                dry_run = not ns.apply
+                count = prune_history(project_root, keep=ns.prune_keep, dry_run=dry_run)
+                if dry_run:
+                    sys.stdout.write(f"DRY-RUN: would prune {count} historical sprint(s) (keeping {ns.prune_keep})\n")
+                else:
+                    sys.stdout.write(f"✓ Pruned {count} historical sprint(s)\n")
+                return 0
+
+            entries, corrupt_count = read_history(project_root)
+            if corrupt_count > 0:
+                sys.stderr.write(f"WARNING: skipped {corrupt_count} corrupted history record(s)\n")
+
+            if ns.since:
+                entries = [e for e in entries if e.sprint >= ns.since]
+            if ns.last is not None and ns.last >= 0:
+                entries = entries[-ns.last:]
+
+            if not entries:
+                sys.stdout.write("No sprint history recorded.\n")
+                return 0
+
+            if ns.json:
+                import json as _json
+                sys.stdout.write(_json.dumps([asdict(e) for e in entries], indent=2, ensure_ascii=False) + "\n")
+            else:
+                sys.stdout.write("| Sprint | Started | Closed | Active Projects |\n")
+                sys.stdout.write("|--------|---------|--------|-----------------|\n")
+                for e in entries:
+                    active_count = len(e.snapshot.get("active_projects") or [])
+                    started = e.started_at[:10] if len(e.started_at) >= 10 else e.started_at
+                    closed = e.closed_at[:10] if len(e.closed_at) >= 10 else e.closed_at
+                    sys.stdout.write(f"| {e.sprint} | {started} | {closed} | {active_count} |\n")
             return 0
 
         parser.print_help()
