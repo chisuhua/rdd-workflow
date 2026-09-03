@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rdd-workflow.local/schemas/improvement_frontmatter_schema.json",
+  "title": "ImprovementFrontmatter",
+  "type": "object",
+  "properties": {
+    "name": {"type": "string"},
+    "priority": {"type": "string", "enum": ["P0", "P1", "P2", "P3"]},
+    "source": {"type": "string"},
+    "phase": {"type": "string"},
+    "category": {"type": "string"},
+    "type": {"type": "string"},
+    "created_at": {"type": "string"},
+    "change": {
+      "type": "string",
+      "description": "OpenSpec change name (added in v2, opt-in)"
+    },
+    "revision_count": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Auto-managed by feedback_appender (added in v2)"
+    },
+    "max_revisions": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 3,
+      "description": "Loop guard cap (added in v2)"
+    },
+    "last_feedback_id": {
+      "type": "string",
+      "description": "Auto-managed by feedback_appender (added in v2)"
+    },
+    "last_feedback_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Auto-managed by feedback_appender (added in v2)"
+    },
+    "feedback_status": {
+      "type": "string",
+      "enum": ["none", "needs-revision", "rejected", "resolved"],
+      "default": "none",
+      "description": "Auto-managed by feedback_appender (added in v2)"
+    }
+  },
+  "additionalProperties": true
+}
