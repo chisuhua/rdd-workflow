@@ -102,52 +102,52 @@
 
 ### Task 3.1 — guide-ship SKILL.md Phase 1 Step 1.5 (TDD)
 
-- [ ] **3.1.1** Write failing test: `tests/integration/test_guide_ship_skill_metadata.bats::test_guide_ship_step_1_5_reads_project_yaml` — grep SKILL.md 验证 Step 1.5 存在 + 含 "openspec_tracked" + 含 "RDDF_EXECUTION_MODE=lightweight"
-- [ ] **3.1.2** Verify fail: 当前 SKILL.md 无 Step 1.5,grep fail
-- [ ] **3.1.3** Implement: `skills/guide-ship/SKILL.md` Phase 1 在 Step 2 worktree 创建之前新增 Step 1.5 (per design.md Decision 4 bash 块)
-- [ ] **3.1.4** Verify pass: grep 测试 pass
-- [ ] **3.1.5** Commit: `feat(ship): guide-ship Phase 1 Step 1.5 reads project.yaml openspec_tracked`
+- [x] **3.1.1** Write failing test: `tests/integration/test_guide_ship_phase1_project_yaml.bats` — grep SKILL.md 验证 Step 1.5 存在 + 含 "openspec_tracked" + 含 "RDDF_EXECUTION_MODE=lightweight"
+- [x] **3.1.2** Verify fail: 当前 SKILL.md 无 Step 1.5,grep fail
+- [x] **3.1.3** Implement: `skills/guide-ship/SKILL.md` Phase 1 在 Step 2 worktree 创建之前新增 Step 1.5 (per design.md Decision 4 bash 块)
+- [x] **3.1.4** Verify pass: grep 测试 pass
+- [x] **3.1.5** Commit: `feat(ship): guide-ship Phase 1 Step 1.5 reads project.yaml openspec_tracked` (commit `7be7ab6`)
 
 ### Task 3.2 — ship_execution_mode.sh project.yaml 分支 (TDD)
 
-- [ ] **3.2.1** Write failing test: `tests/integration/test_ship_execution_mode_reads_project_yaml.bats::test_openspec_tracked_false_forces_serial` — 创建 mock project.yaml 设 `git.openspec_tracked: false`,跑 `bash _lib/ship_execution_mode.sh parse_execution_mode`,assert 输出 "serial"
-- [ ] **3.2.2** Verify fail: 当前 `parse_execution_mode` 不读 project.yaml,测试 fail
-- [ ] **3.2.3** Implement: `_lib/ship_execution_mode.sh::parse_execution_mode()` 在 CLI flag 之后、env var 之前增加 project.yaml 检测 (per design.md Decision 5)
-- [ ] **3.2.4** Verify pass: 重跑确认 pass
-- [ ] **3.2.5** Commit: `feat(ship): parse_execution_mode reads project.yaml openspec_tracked`
+- [x] **3.2.1** Write failing test: `tests/integration/test_ship_execution_mode_reads_project_yaml.bats::test_openspec_tracked_false_forces_serial` — 创建 mock project.yaml 设 `git.openspec_tracked: false`,跑 `bash _lib/ship_execution_mode.sh parse_execution_mode`,assert 输出 "serial"
+- [x] **3.2.2** Verify fail: 当前 `parse_execution_mode` 不读 project.yaml,测试 fail
+- [x] **3.2.3** Implement: `_lib/ship_execution_mode.sh::parse_execution_mode()` 在 CLI flag 之后、env var 之前增加 project.yaml 检测 (per design.md Decision 5)
+- [x] **3.2.4** Verify pass: 重跑确认 pass
+- [x] **3.2.5** Commit: `feat(ship): parse_execution_mode reads project.yaml openspec_tracked` (commit `1b42454`)
 
 ### Task 3.3 — test_guide_ship_execution_mode.bats 新增 3 case (TDD)
 
-- [ ] **3.3.1** Write failing test: 3 个 @test case:
+- [x] **3.3.1** Write failing test: 3 个 @test case:
   - `openspec_tracked=false` 在 SKILL.md 中存在
   - `RDDF_EXECUTION_MODE=lightweight` 在 SKILL.md 中存在 (Step 1.5 检测的产物)
   - `project_yaml_get "git.openspec_tracked"` 调用在 SKILL.md 中存在
-- [ ] **3.3.2** Verify fail: 当前 12 个 case 无此场景
-- [ ] **3.3.3** Implement: 在 `tests/integration/test_guide_ship_execution_mode.bats` 末尾追加 3 个 case
-- [ ] **3.3.4** Verify pass: `bats tests/integration/test_guide_ship_execution_mode.bats` 15 个 case 全绿
-- [ ] **3.3.5** Commit: `test(ship): integration tests for project.yaml openspec_tracked in execution mode`
+- [x] **3.3.2** Verify fail: 当前 12 个 case 无此场景
+- [x] **3.3.3** Implement: 在 `tests/integration/test_guide_ship_phase1_project_yaml.bats` 新建 (4 cases 涵盖 Step 1.5 全部内容)
+- [x] **3.3.4** Verify pass: `bats tests/integration/test_guide_ship_phase1_project_yaml.bats` 4 个 case 全绿 (与 Task 3.1 共享 commit `7be7ab6`)
+- [x] **3.3.5** Commit: `feat(ship): guide-ship Phase 1 Step 1.5 reads project.yaml openspec_tracked` (commit `7be7ab6`)
 
 ### Task 3.4 — archive_with_openspec_tracked_false.bats (TDD,补 i10 Task 3.5)
 
-- [ ] **3.4.1** Write failing test: `tests/integration/test_archive_with_openspec_tracked_false.bats`:
+- [x] **3.4.1** Write failing test: `tests/integration/test_archive_with_openspec_tracked_false.bats`:
   - Case 1: project.yaml 设 `git.openspec_tracked: false`,创建 worktree + commits,跑 `archive_change`,assert 无 `git merge` 调用 + 无 `commit_archive_moves` + 仅 `openspec archive` + `mark_iteration_archived`
   - Case 2: `git.openspec_tracked: true`(默认),跑同样 archive,assert 走 merge 路径
-- [ ] **3.4.2** Verify fail: bats 文件不存在
-- [ ] **3.4.3** Implement: 2 个 @test case + mock setup/teardown
-- [ ] **3.4.4** Verify pass: bats 全绿
-- [ ] **3.4.5** Commit: `test(archive): integration tests for openspec_tracked=false skipping git operations`
+- [x] **3.4.2** Verify fail: bats 文件不存在
+- [x] **3.4.3** Implement: 3 个 @test case + mock setup/teardown (含 YAML bool "False" → 字符串 "false" 兼容修复)
+- [x] **3.4.4** Verify pass: bats 全绿 (3/3)
+- [x] **3.4.5** Commit: `test(archive): integration tests for openspec_tracked=false skipping git operations` (commit `9098a73`)
 
 ### Task 3.5 — ship_execution_mode_reads_project_yaml.bats (TDD)
 
-- [ ] **3.5.1** Write failing test: `tests/integration/test_ship_execution_mode_reads_project_yaml.bats`:
+- [x] **3.5.1** Write failing test: `tests/integration/test_ship_execution_mode_reads_project_yaml.bats`:
   - Case 1: CLI flag `--parallel` > project.yaml `openspec_tracked: false` → 输出 "parallel"(CLI 优先级最高)
   - Case 2: project.yaml `openspec_tracked: false` > env `RDD_SHIP_PARALLEL=yes` → 输出 "serial"(project.yaml 第二优先级)
   - Case 3: 仅 env `RDD_SHIP_PARALLEL=yes` → 输出 "parallel"
   - Case 4: 无 project.yaml + 无 env → 输出 "serial"(默认)
-- [ ] **3.5.2** Verify fail: bats 文件不存在
-- [ ] **3.5.3** Implement: 4 个 @test case + mock $BATS_TMPDIR/.rddf/project.yaml
-- [ ] **3.5.4** Verify pass: bats 全绿
-- [ ] **3.5.5** Commit: `test(ship): integration tests for parse_execution_mode priority order`
+- [x] **3.5.2** Verify fail: bats 文件不存在
+- [x] **3.5.3** Implement: 5 个 @test case + mock $BATS_TMPDIR/.rddf/project.yaml + symlink _lib/project_config.sh
+- [x] **3.5.4** Verify pass: bats 全绿 (5/5)
+- [x] **3.5.5** Commit: `feat(ship): parse_execution_mode reads project.yaml openspec_tracked` (commit `1b42454`, batched with 3.2)
 
 ## M4 — populate_lib 透传 + i10 M2 deferred 项 (补 i10 M2 Task 2.3, 2.6)
 
@@ -231,8 +231,12 @@
   - Task 2.1/2.2/2.3/2.6: _detect_verification_provider + _hook_runner + cmd_rdd_verify 接线 (commit `13ac217`, batched 12 tests)
   - Task 2.4: cache.py cache_key hook 分支 (commit `c0949fe`, 5 tests)
   - Task 2.5: 集成测试 (commit `2495b71`, 7 bats cases)
-- **总进度**: 11/28 done (M1+M2 完成;M3/M4 待实施)
-- **风险 task**: Task 3.1 (SKILL.md 修改影响范围广) + Task 4.5 (schema bump 跨版本兼容)
+- **M3 完成进度**: 5/5 done ✅ (2026-09-02 实施)
+  - Task 3.1 + 3.3: guide-ship SKILL.md Phase 1 Step 1.5 (commit `7be7ab6`, 4 bats cases)
+  - Task 3.2 + 3.5: ship_execution_mode.sh reads project.yaml (commit `1b42454`, 5 bats cases)
+  - Task 3.4: archive.sh openspec_tracked=false + YAML bool 修复 (commit `9098a73`, 3 bats cases)
+- **总进度**: 14/28 done (M1+M2+M3 完成;M4 待实施)
+- **风险 task**: Task 4.5 (schema bump 跨版本兼容)
 
 ## 状态追踪
 

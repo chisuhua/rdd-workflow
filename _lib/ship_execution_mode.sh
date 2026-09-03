@@ -38,9 +38,11 @@ Subcommands:
 EOF
 }
 
-# parse_execution_mode -- determine execution mode from args + env
+# parse_execution_mode -- determine execution mode from args + env + project.yaml
 # Returns: "serial" | "parallel"
-# Precedence: CLI flag (--parallel) > env var (RDD_SHIP_PARALLEL) > default
+# Precedence (per complete-project-yaml-config-gaps M3 + design.md Decision 5):
+#   CLI flag (--parallel/--serial) > project.yaml git.openspec_tracked >
+#   env var (RDD_SHIP_PARALLEL) > default (serial)
 parse_execution_mode() {
   local cli_mode=""
   local cli_max_concurrent=""
@@ -69,10 +71,28 @@ parse_execution_mode() {
     esac
   done
 
-  # CLI flag takes precedence
+  # CLI flag takes precedence (highest)
   if [[ -n "$cli_mode" ]]; then
     echo "$cli_mode"
     return 0
+  fi
+
+  # Project.yaml git.openspec_tracked: false forces lightweight (serial)
+  # Per i10 + complete-project-yaml-config-gaps M3
+  local _project_root="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  if [ -f "$_project_root/.rddf/project.yaml" ] && [ -f "$_project_root/_lib/project_config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$_project_root/_lib/project_config.sh"
+    local _tracked
+    _tracked=$(project_yaml_get "git.openspec_tracked" "true")
+    # YAML bool false → Python prints "False"; lowercase "false" → string "false"
+    # Accept both representations
+    case "$_tracked" in
+      false|False|"false"|"False")
+        echo "serial"
+        return 0
+        ;;
+    esac
   fi
 
   # Fall back to env var
