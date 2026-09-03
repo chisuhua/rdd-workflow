@@ -45,6 +45,8 @@ def _build_parser() -> argparse.ArgumentParser:
                           help="phase must match a Phase value or fragment id")
     p_attach.add_argument("--theme", default=None,
                           help="Optional theme string stored in roadmap_ref.theme")
+    p_attach.add_argument("--overwrite", action="store_true",
+                          help="Replace an existing divergent roadmap_ref")
 
     return parser
 
@@ -93,6 +95,7 @@ def cmd_planner(args: List[str]) -> int:
                     project_id=ns.project_id,
                     phase=ns.phase,
                     theme=ns.theme,
+                    overwrite=ns.overwrite,
                 )
             except AttachError as exc:
                 sys.stderr.write(f"ERROR: {exc}\n")

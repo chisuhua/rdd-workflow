@@ -32,6 +32,15 @@ class AttachError(Exception):
 _SAFE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 
 
+def _as_list(value):
+    """Coerce a frontmatter scalar or list to a list (handles scalar 主题)."""
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    return [value]
+
+
 def _roadmap_path(project_root: Path) -> Path:
     return project_root / ".rddf" / "roadmap.md"
 
@@ -95,13 +104,44 @@ def _phase_fragment_ids(project_root: Path) -> set[str]:
     return ids
 
 
+def _fragment_themes(project_root: Path) -> set[str]:
+    """Return set of `主题` field values from `.rddf/roadmap/phases/*.md` frontmatter.
+
+    The fragment 主题 field is a backup source for project_id validation
+    when the Theme column in Phase Skeleton does not include a candidate
+    proposal's match (per Stage 2.5 P0-3 plan contract).
+    """
+    themes: set[str] = set()
+    phases_dir = project_root / ".rddf" / "roadmap" / "phases"
+    if not phases_dir.is_dir():
+        return themes
+    for f in phases_dir.glob("*.md"):
+        try:
+            text = f.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if not text.startswith("---"):
+            continue
+        try:
+            end = text.index("\n---", 3)
+            fm = yaml.safe_load(text[3:end]) or {}
+        except (ValueError, yaml.YAMLError):
+            continue
+        for raw in _as_list(fm.get("主题")):
+            if isinstance(raw, str) and raw:
+                themes.add(raw)
+    return themes
+
+
 def list_valid_projects(project_root: Path) -> set[str]:
-    """Return set of valid project_ids (= Phase Skeleton Theme values)."""
+    """Return set of valid project_ids (Phase Skeleton Theme + fragment 主题)."""
     rm = _roadmap_path(project_root)
-    if not rm.exists():
-        return set()
-    themes, _ = _parse_skeleton(rm.read_text(encoding="utf-8"))
-    return {t for t in themes if t and t != "Theme"}
+    projects: set[str] = set()
+    if rm.exists():
+        themes, _ = _parse_skeleton(rm.read_text(encoding="utf-8"))
+        projects |= {t for t in themes if t and t != "Theme"}
+    projects |= _fragment_themes(project_root)
+    return projects
 
 
 def list_valid_phases(project_root: Path) -> set[str]:
@@ -139,9 +179,16 @@ def _serialize_frontmatter(fm: dict) -> str:
 
 
 def attach_proposal(
-    *, project_root: Path, proposal: str, project_id: str, phase: str, theme: str | None = None
+    *, project_root: Path, proposal: str, project_id: str, phase: str,
+    theme: str | None = None, overwrite: bool = False,
 ) -> Path:
-    """Validate and update one improvement's `roadmap_ref`. Idempotent for identical mapping.
+    """Validate and update one improvement's `roadmap_ref`.
+
+    Idempotent for identical {project_id, phase} (theme mismatch on the
+    second call is treated as a no-op when existing has theme and new
+    call omits theme; explicit theme replacement requires overwrite).
+    Refuses to mutate an existing divergent mapping unless
+    `overwrite=True`.
 
     Returns the absolute path to the updated file on success.
     Raises AttachError on validation failure (no write performed).
@@ -152,8 +199,7 @@ def attach_proposal(
     valid_phases = list_valid_phases(project_root)
     if project_id not in valid_projects:
         raise AttachError(
-            f"project_id not in roadmap Phase Skeleton Theme column: {project_id!r}; "
-            f"valid: {sorted(valid_projects)}"
+            f"project_id not in roadmap: {project_id!r}; valid: {sorted(valid_projects)}"
         )
     if phase not in valid_phases:
         raise AttachError(
@@ -169,12 +215,15 @@ def attach_proposal(
         text = target.read_text(encoding="utf-8")
         fm, body = _parse_frontmatter_block(text)
         existing = fm.get("roadmap_ref")
-        if isinstance(existing, dict) and existing == new_ref:
-            return target
         if isinstance(existing, dict):
-            raise AttachError(
-                f"existing roadmap_ref differs: {existing!r}; explicit --overwrite required (not yet implemented)"
-            )
+            existing_normalized = {k: v for k, v in existing.items() if k != "theme"}
+            new_normalized = {k: v for k, v in new_ref.items() if k != "theme"}
+            if existing_normalized == new_normalized:
+                return target
+            if not overwrite:
+                raise AttachError(
+                    f"existing roadmap_ref differs: {existing!r}; pass --overwrite to replace"
+                )
         fm["roadmap_ref"] = new_ref
         new_text = _serialize_frontmatter(fm) + "\n" + body
         atomic_write_text(target, new_text)

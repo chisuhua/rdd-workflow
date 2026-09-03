@@ -152,3 +152,43 @@ EOF
     [[ "$output" =~ "project_id not in roadmap" ]]
     ! grep -q "project_id: nope" .rddf/improvements/imp1.md
 }
+
+@test "planner: attach --overwrite replaces divergent mapping" {
+    cat > .rddf/roadmap.md <<'EOF'
+# Roadmap
+## Phase Skeleton
+| Phase | Theme | Status | Started | Done |
+|-------|-------|--------|---------|------|
+| phase-2 | foo bar | active | | |
+| phase-3 | bar baz | active | | |
+EOF
+    mkdir -p .rddf/roadmap/phases
+    printf -- '---\nid: phase-3\nkind: phase\n---\n' > .rddf/roadmap/phases/phase-3.md
+    printf -- '---\nname: imp1\npriority: P2\nroadmap_ref:\n  project_id: foo bar\n  phase: phase-2\n---\n# imp1\n' > .rddf/improvements/imp1.md
+
+    run python3 -m _lib.cli planner attach imp1 --project-id "bar baz" --phase phase-3 --overwrite --project-root "$TEST_TMP"
+
+    [ "$status" -eq 0 ]
+    grep -q "project_id: bar baz" .rddf/improvements/imp1.md
+    grep -q "phase: phase-3" .rddf/improvements/imp1.md
+    ! grep -q "project_id: foo bar" .rddf/improvements/imp1.md
+}
+
+@test "planner: attach without --overwrite rejects divergent mapping" {
+    cat > .rddf/roadmap.md <<'EOF'
+# Roadmap
+## Phase Skeleton
+| Phase | Theme | Status | Started | Done |
+|-------|-------|--------|---------|------|
+| phase-2 | foo bar | active | | |
+| phase-3 | bar baz | active | | |
+EOF
+    mkdir -p .rddf/roadmap/phases
+    printf -- '---\nid: phase-3\nkind: phase\n---\n' > .rddf/roadmap/phases/phase-3.md
+    printf -- '---\nname: imp1\npriority: P2\nroadmap_ref:\n  project_id: foo bar\n  phase: phase-2\n---\n# imp1\n' > .rddf/improvements/imp1.md
+
+    run python3 -m _lib.cli planner attach imp1 --project-id "bar baz" --phase phase-3 --project-root "$TEST_TMP"
+
+    [ "$status" -eq 1 ]
+    grep -q "project_id: foo bar" .rddf/improvements/imp1.md
+}

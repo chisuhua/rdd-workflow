@@ -101,3 +101,64 @@ def test_attach_rejects_overwrite_without_explicit_flag(tmp_path):
     imp.write_text("---\nname: imp1\npriority: P2\nroadmap_ref:\n  project_id: foo bar\n  phase: phase-2\n---\n\n# proposal\n")
     with pytest.raises(AttachError, match="existing roadmap_ref differs"):
         attach_proposal(project_root=tmp_path, proposal="imp1", project_id="foo bar", phase="phase-3")
+
+
+def test_attach_overwrite_replaces_divergent_mapping(tmp_path):
+    _setup_roadmap(tmp_path, themes=["foo bar", "bar baz"], phases=["phase-2", "phase-3"])
+    (tmp_path / ".rddf" / "roadmap" / "phases").mkdir(parents=True)
+    (tmp_path / ".rddf" / "roadmap" / "phases" / "phase-3.md").write_text("---\nid: phase-3\nkind: phase\n---\n")
+    imp = tmp_path / ".rddf" / "improvements" / "imp1.md"
+    imp.parent.mkdir(parents=True)
+    imp.write_text("---\nname: imp1\npriority: P2\nroadmap_ref:\n  project_id: foo bar\n  phase: phase-2\n---\n\n# proposal\n")
+    attach_proposal(
+        project_root=tmp_path, proposal="imp1",
+        project_id="bar baz", phase="phase-3", overwrite=True,
+    )
+    text = imp.read_text()
+    assert "project_id: bar baz" in text
+    assert "phase: phase-3" in text
+    assert "project_id: foo bar" not in text
+
+
+def test_attach_overwrite_false_rejects_divergent_mapping(tmp_path):
+    _setup_roadmap(tmp_path, themes=["foo bar"], phases=["phase-2", "phase-3"])
+    (tmp_path / ".rddf" / "roadmap" / "phases").mkdir(parents=True)
+    (tmp_path / ".rddf" / "roadmap" / "phases" / "phase-3.md").write_text("---\nid: phase-3\nkind: phase\n---\n")
+    imp = tmp_path / ".rddf" / "improvements" / "imp1.md"
+    imp.parent.mkdir(parents=True)
+    imp.write_text("---\nname: imp1\npriority: P2\nroadmap_ref:\n  project_id: foo bar\n  phase: phase-2\n---\n\n# proposal\n")
+    original = imp.read_text()
+    with pytest.raises(AttachError, match="existing roadmap_ref differs"):
+        attach_proposal(
+            project_root=tmp_path, proposal="imp1",
+            project_id="foo bar", phase="phase-3",
+        )
+    assert imp.read_text() == original
+
+
+def test_attach_theme_idempotent_when_existing_omits_theme(tmp_path):
+    """theme=None on second call matches existing {project_id, phase} (theme ignored)."""
+    _setup_roadmap(tmp_path, themes=["foo bar"], phases=["phase-2"])
+    _setup_improvement(tmp_path, "imp1")
+    attach_proposal(project_root=tmp_path, proposal="imp1",
+                    project_id="foo bar", phase="phase-2", theme="t")
+    first = (tmp_path / ".rddf" / "improvements" / "imp1.md").read_text()
+    attach_proposal(project_root=tmp_path, proposal="imp1",
+                    project_id="foo bar", phase="phase-2", theme=None)
+    second = (tmp_path / ".rddf" / "improvements" / "imp1.md").read_text()
+    assert "theme: t" in first
+    assert first == second
+
+
+def test_attach_accepts_fragment_main_theme_as_project_id(tmp_path):
+    """fragment 主题 field is a valid backup source for project_id."""
+    _setup_roadmap(tmp_path, themes=["skeleton theme"], phases=["phase-2"])
+    (tmp_path / ".rddf" / "roadmap" / "phases").mkdir(parents=True)
+    (tmp_path / ".rddf" / "roadmap" / "phases" / "phase-2.md").write_text(
+        "---\nid: phase-2\nkind: phase\n主题: fragment theme\n---\n"
+    )
+    _setup_improvement(tmp_path, "imp1")
+    attach_proposal(project_root=tmp_path, proposal="imp1",
+                    project_id="fragment theme", phase="phase-2")
+    text = (tmp_path / ".rddf" / "improvements" / "imp1.md").read_text()
+    assert "project_id: fragment theme" in text
