@@ -162,3 +162,17 @@ def test_attach_accepts_fragment_main_theme_as_project_id(tmp_path):
                     project_id="fragment theme", phase="phase-2")
     text = (tmp_path / ".rddf" / "improvements" / "imp1.md").read_text()
     assert "project_id: fragment theme" in text
+
+
+def test_attach_logs_warning_when_fragment_theme_conflicts(tmp_path, caplog):
+    import logging
+    _setup_roadmap(tmp_path, themes=["skeleton theme"], phases=["phase-2"])
+    (tmp_path / ".rddf" / "roadmap" / "phases").mkdir(parents=True)
+    (tmp_path / ".rddf" / "roadmap" / "phases" / "phase-2.md").write_text(
+        "---\nid: phase-2\nkind: phase\n主题: fragment fallback\n---\n"
+    )
+    _setup_improvement(tmp_path, "imp1")
+    with caplog.at_level(logging.WARNING, logger="_lib.planner_attach"):
+        attach_proposal(project_root=tmp_path, proposal="imp1",
+                        project_id="fragment fallback", phase="phase-2")
+    assert any("Theme conflict" in r.message or "fallback" in r.message for r in caplog.records)

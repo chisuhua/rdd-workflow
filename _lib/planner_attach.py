@@ -197,6 +197,21 @@ def attach_proposal(
     target = _improvement_path(project_root, proposal)
     valid_projects = list_valid_projects(project_root)
     valid_phases = list_valid_phases(project_root)
+
+    rm = _roadmap_path(project_root)
+    skeleton_themes: set[str] = set()
+    if rm.exists():
+        s_themes, _ = _parse_skeleton(rm.read_text(encoding="utf-8"))
+        skeleton_themes = {t for t in s_themes if t and t != "Theme"}
+
+    if project_id not in skeleton_themes and project_id in valid_projects:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            "Theme conflict: project_id %r matched fragment 主题 fallback, but not skeleton Theme column.",
+            project_id,
+        )
+
     if project_id not in valid_projects:
         raise AttachError(
             f"project_id not in roadmap: {project_id!r}; valid: {sorted(valid_projects)}"

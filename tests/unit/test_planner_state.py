@@ -104,3 +104,24 @@ def test_default_state_has_all_required_fields(tmp_path):
     assert isinstance(state["active_projects"], list)
     assert isinstance(state["unmapped_proposals"], list)
     assert isinstance(state["synced_proposals"], list)
+
+
+def test_update_state_modifies_under_lock(tmp_path):
+    from _lib.planner_state import write_state, read_state, update_state
+    initial = read_state(tmp_path)
+    write_state(tmp_path, initial)
+
+    def mutator(state):
+        state["current_sprint"] = "sprint-2026-10"
+        return state
+
+    res = update_state(tmp_path, mutator)
+    assert res["current_sprint"] == "sprint-2026-10"
+    loaded = read_state(tmp_path)
+    assert loaded["current_sprint"] == "sprint-2026-10"
+
+
+def test_update_state_fails_if_no_state_file(tmp_path):
+    from _lib.planner_state import update_state, PlannerStateError
+    with pytest.raises(PlannerStateError, match="No state file found"):
+        update_state(tmp_path, lambda s: s)

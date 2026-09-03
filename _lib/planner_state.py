@@ -23,6 +23,7 @@ __all__ = [
     "current_sprint_id",
     "read_state",
     "write_state",
+    "update_state",
     "STATE_FILENAME",
     "SCHEMA_VERSION",
     "STATE_SCHEMA_PATH",
@@ -117,3 +118,40 @@ def write_state(project_root: Path, state: Dict[str, Any], *, validate: bool = T
 
     with FileLock(str(lock_path), timeout=10.0):
         atomic_write_json(path, state)
+
+
+def update_state(
+    project_root: Path,
+    mutator: Any,
+    *,
+    validate: bool = True,
+) -> Dict[str, Any]:
+    """Read state under lock, mutate it in-place, and write atomically.
+
+    Prevents lost-update races in concurrent advance-sprint and sync calls.
+    Raises PlannerStateError if state file does not exist.
+    """
+    path = _state_path(project_root)
+    if not path.exists():
+        raise PlannerStateError(f"No state file found at {path} to update.")
+
+    lock_path = path.with_suffix(path.suffix + ".lock")
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with FileLock(str(lock_path), timeout=10.0):
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        if data.get("version") != SCHEMA_VERSION:
+            raise SchemaMismatchError(f"State version mismatch: {data.get('version')}")
+
+        new_data = mutator(data) or data
+
+        if validate:
+            schema = json.loads(STATE_SCHEMA_PATH.read_text())
+            try:
+                jsonschema.validate(new_data, schema)
+            except jsonschema.ValidationError as exc:
+                raise PlannerStateError(f"State validation failed: {exc.message}") from exc
+
+        atomic_write_json(path, new_data)
+        return new_data
