@@ -86,7 +86,8 @@ def cmd_planner(args: List[str]) -> int:
                 sys.stdout.write(f"  Unmapped: {len(state['unmapped_proposals'])}\n")
                 sys.stdout.write(f"  Run with --apply to write.\n")
                 return 0
-            apply_state(project_root, state)
+            from _lib.planner_sync import apply_state_with_warnings as _apply_state_with_warn
+            _apply_state_with_warn(project_root, state)
             sys.stdout.write(f"✓ State written\n")
             sys.stdout.write(f"  Sprint: {state['current_sprint']}\n")
             return 0

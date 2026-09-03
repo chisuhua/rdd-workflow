@@ -239,6 +239,29 @@ def test_diff_state_detects_newly_unmapped(tmp_path):
     assert diff["unmapped_diff"]["removed"] == []
 
 
+def test_apply_state_with_warnings_emits_newly_unmapped(tmp_path, capsys):
+    """Second sync warns only about newly added unmapped proposals."""
+    _make_improvement(tmp_path, "u1")
+    from _lib.planner_sync import apply_state_with_warnings
+    apply_state_with_warnings(tmp_path, render_state(tmp_path))
+    capsys.readouterr()
+    _make_improvement(tmp_path, "u2")
+    msg = apply_state_with_warnings(tmp_path, render_state(tmp_path))
+    assert "u2" in msg
+    assert "u1" not in msg
+
+
+def test_apply_state_with_warnings_no_warning_when_baseline_equals_current(tmp_path, capsys):
+    """First run suppresses full-list warning (baseline == current)."""
+    _make_improvement(tmp_path, "u1")
+    _make_improvement(tmp_path, "u2")
+    from _lib.planner_sync import apply_state_with_warnings
+    msg = apply_state_with_warnings(tmp_path, render_state(tmp_path))
+    assert msg == ""
+    captured = capsys.readouterr()
+    assert "newly unmapped" not in captured.out.lower()
+
+
 def test_parse_feedback_status_logs_when_pointer_missing(tmp_path, caplog):
     """When last_feedback_id points to a missing block, parser logs a warning."""
     import logging

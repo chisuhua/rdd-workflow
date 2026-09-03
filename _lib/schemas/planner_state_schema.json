@@ -35,6 +35,11 @@
     "synced_proposals": {
       "type": "array",
       "items": {"type": "string"}
+    },
+    "previous_unmapped": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Unmapped proposal names captured at the previous sync (additive v1)."
     }
   },
   "additionalProperties": false

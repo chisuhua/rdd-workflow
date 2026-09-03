@@ -229,6 +229,36 @@ def apply_state(project_root: Path, state: Dict[str, Any]) -> Dict[str, int]:
     return {"state_written": 1, "roadmap_written": roadmap_written}
 
 
+def apply_state_with_warnings(project_root: Path, state: Dict[str, Any]) -> str:
+    """Like apply_state, but emits a stdout warning listing newly added unmapped proposals.
+
+    Returns the warning text (empty string when no new unmapped).
+    Compares the `unmapped_proposals` list against the previous sync's
+    stored `previous_unmapped`. On first sync (state file missing or
+    no previous_unmapped), baseline equals current — no warning.
+    """
+    current_unmapped = list(state.get("unmapped_proposals") or [])
+    try:
+        from _lib.planner_state import read_state
+        existing = read_state(project_root)
+        previous = list(existing.get("previous_unmapped") or current_unmapped)
+    except Exception:
+        previous = current_unmapped
+
+    state_with_baseline = dict(state)
+    state_with_baseline["previous_unmapped"] = current_unmapped
+
+    apply_state(project_root, state_with_baseline)
+
+    newly = [name for name in current_unmapped if name not in previous]
+    if newly:
+        msg = f"\u26a0 newly unmapped proposals (vs prior sync): {', '.join(newly)}\n"
+        import sys as _sys
+        _sys.stdout.write(msg)
+        return msg
+    return ""
+
+
 def diff_state(project_root: Path) -> Dict[str, Any]:
     """Compare stored planner state to freshly computed state.
 
