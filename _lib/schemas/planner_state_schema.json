@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rdd-workflow.local/schemas/planner_state_schema.json",
+  "title": "PlannerState",
+  "type": "object",
+  "required": ["version", "current_sprint", "last_sync_at"],
+  "properties": {
+    "version": {"const": 1},
+    "current_sprint": {"type": "string", "pattern": "^sprint-[0-9]{4}-[0-9]{2}$"},
+    "sprint_started_at": {"type": "string", "format": "date-time"},
+    "last_sync_at": {"type": "string", "format": "date-time"},
+    "last_sync_status": {"type": "string", "enum": ["ok", "warn", "error"]},
+    "active_projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["project_id", "phase", "priority", "status"],
+        "properties": {
+          "project_id": {"type": "string"},
+          "phase": {"type": "string"},
+          "theme": {"type": "string"},
+          "priority": {"type": "string", "enum": ["P0", "P1", "P2", "P3"]},
+          "status": {"type": "string", "enum": ["active", "blocked", "completed"]},
+          "proposal": {"type": "string"},
+          "change": {"type": "string"},
+          "feedback_status": {"type": "string", "enum": ["none", "needs-revision", "rejected", "resolved"]},
+          "last_feedback_id": {"type": "string"}
+        }
+      }
+    },
+    "unmapped_proposals": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "synced_proposals": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  },
+  "additionalProperties": false
+}
