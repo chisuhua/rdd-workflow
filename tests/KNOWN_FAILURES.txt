@@ -134,3 +134,11 @@ adr_index: docs/adr/README.md does NOT reference ADR-NNN beyond 0034 # pre-exist
 every real ADR has a ## 决策 or ## Decision section # pre-existing WIP: ADR-0035 (078c471, 2026-08-28) 缺 Decision section
 every real ADR has status and date fields # pre-existing WIP: ADR-0034 缺 **日期** field (有状态但无日期), test_adr_directory.bats 95 行
 setup_file failed # pre-existing WIP: test_cross_repo_e2e_real.bats setup_file flaky due to gh CLI / network (E2E test requiring chisuhua/rdd-hub)
+every real ADR has a # ADR-NNNN: header # pre-existing: ADR-0036-design-handoff-runtime-filter.md uses em-dash separator (# ADR-0036 — design-handoff runtime filter over on-disk cleanup)
+adr_index: docs/adr/README.md references ADR-0036-design-handoff-runtime-filter.md # pre-existing: README index not auto-sync'd for ADR-0036 sibling
+adr_index: docs/adr/README.md references ADR-0036-session-metrics.md # pre-existing: README index not auto-sync'd for new ADR-0036 sibling
+phase2_no_broken_refs: 4 cross-skill rddf-session sources resolve # pre-existing: i10 session hooks phase 2 added extra source line, test not updated
+phase2: 4 cross-skill source lines to rddf-session/scripts/ added # pre-existing: same root cause as phase2_no_broken_refs
+ship: detect_execution_mode reads handoff decision # pre-existing: i10 plan-handoff decision wiring test, transient on local state
+sub-phase: heartbeat without env var leaves sub_phase empty # pre-existing: rddf-session sub-phase logic edge case
+report: known failures are visible but do not fail the gate # pre-existing: report_regression.sh self-test description drift
