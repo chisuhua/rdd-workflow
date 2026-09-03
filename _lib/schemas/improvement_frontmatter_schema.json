@@ -38,7 +38,7 @@
     },
     "feedback_status": {
       "type": "string",
-      "enum": ["none", "needs-revision", "rejected", "resolved"],
+      "enum": ["none", "needs-revision", "rejected", "resolved", "noted"],
       "default": "none",
       "description": "Auto-managed by feedback_appender (added in v2)"
     }

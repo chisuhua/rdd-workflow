@@ -5,6 +5,17 @@
 Accepted (2026-09-03) — Stage 1 of `rdd-planner` design, implemented per
 `docs/superpowers/specs/2026-09-03-rdd-planner-stage1-feedback-contract.md`.
 
+> **Stage 2.5 (2026-09-03): P0-2 in-place resolution + latest-entry parser.**
+> `rddf feedback resolve <proposal> <feedback_id>` mutates only the
+> selected entry's `resolution: open` to `resolved`, adding `resolved_at`
+> and `resolved_by`. The append-only contract applies to **creation** of
+> new entries, not to resolution status updates. The parser derives
+> `feedback_status` by reading frontmatter `last_feedback_id` and
+> selecting that exact `### feedback-<id>` block; missing pointer →
+> `none`. Precedence is resolution before kind. Status enum: `none |
+> needs-revision | rejected | resolved | noted`. `noted` covers
+> `blocked` and `noted` kinds.
+
 ## Context
 
 Current `.rddf/improvements/*.md` files (226 in the codebase) lack:

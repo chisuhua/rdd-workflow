@@ -156,3 +156,53 @@ def test_apply_state_delegates_to_roadmap_sprint_update_roadmap(monkeypatch, tmp
     apply_state(tmp_path, state)
     assert captured["table"] == "project"
     assert captured["data"]["current_sprint"] == "sprint-2026-09"
+
+
+def test_parse_feedback_status_uses_last_feedback_id(tmp_path):
+    """Historical needs-revision followed by resolved current entry -> resolved."""
+    f = _make_improvement(tmp_path, "x",
+        feedback_block=(
+            "### feedback-20260101-001\n- **kind**: needs-revision\n- **resolution**: open\n\n"
+            "### feedback-20260202-001\n- **kind**: needs-revision\n- **resolution**: resolved\n"
+        ),
+        last_feedback_id="feedback-20260202-001",
+    )
+    assert parse_feedback_status(f) == "resolved"
+
+
+def test_parse_feedback_status_returns_noted_for_blocked(tmp_path):
+    f = _make_improvement(tmp_path, "x",
+        feedback_block="### feedback-x\n- **kind**: blocked\n- **resolution**: open\n",
+        last_feedback_id="feedback-x",
+    )
+    assert parse_feedback_status(f) == "noted"
+
+
+def test_parse_feedback_status_stops_at_next_top_level_section(tmp_path):
+    f = _make_improvement(tmp_path, "x",
+        feedback_block=(
+            "### feedback-x\n- **kind**: needs-revision\n- **resolution**: open\n\n"
+            "## Unrelated\n\n- **kind**: rejected\n"
+        ),
+        last_feedback_id="feedback-x",
+    )
+    assert parse_feedback_status(f) == "needs-revision"
+
+
+def test_parse_feedback_status_fails_closed_on_missing_pointer_entry(tmp_path):
+    f = _make_improvement(tmp_path, "x",
+        feedback_block="### feedback-20260101-001\n- **kind**: needs-revision\n- **resolution**: open\n",
+        last_feedback_id="feedback-does-not-exist",
+    )
+    assert parse_feedback_status(f) == "none"
+
+
+def test_apply_state_accepts_noted_feedback(tmp_path):
+    """sync --apply must accept noted feedback_status (schema includes 'noted')."""
+    _make_improvement(tmp_path, "mapped",
+        roadmap_ref={"project_id": "p", "phase": "phase-2"},
+        feedback_block="### feedback-x\n- **kind**: blocked\n- **resolution**: open\n",
+        last_feedback_id="feedback-x",
+    )
+    state = render_state(tmp_path)
+    apply_state(tmp_path, state)

@@ -120,10 +120,15 @@ def cmd_feedback(args: List[str]) -> int:
             return 0
 
         if ns.subcommand == "resolve":
+            target = _find_improvement(project_root, ns.proposal)
+            try:
+                from _lib.feedback_appender import resolve_feedback as _resolve_feedback
+                _resolve_feedback(target_path=str(target), feedback_id=ns.feedback_id)
+            except FeedbackError as exc:
+                sys.stderr.write(f"ERROR: {exc}\n")
+                return 1
             sys.stdout.write(
-                f"resolve subcommand is a placeholder for Stage 2 (rdd-planner).\n"
-                f"  Proposal: {ns.proposal}\n"
-                f"  Feedback ID: {ns.feedback_id}\n"
+                f"✓ Resolved: {ns.feedback_id}\n  File: {target}\n"
             )
             return 0
 

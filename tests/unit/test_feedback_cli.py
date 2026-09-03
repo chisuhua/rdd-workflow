@@ -119,10 +119,34 @@ def test_cli_show_schema_prints_json(tmp_path, capsys):
 
 
 def test_cli_resolve_placeholder(tmp_path, capsys):
+    """resolve subcommand marks the entry resolved in the improvement file."""
+    _make_project(tmp_path)
+    improvement = tmp_path / ".rddf" / "improvements" / "improve.md"
+    improvement.write_text(
+        "---\nname: improve\n---\n\n## Feedback\n\n"
+        "### feedback-20260903-001\n- **kind**: needs-revision\n- **resolution**: open\n"
+    )
     rc = cmd_feedback(["resolve", "improve", "feedback-20260903-001", "--project-root", str(tmp_path)])
     captured = capsys.readouterr()
     assert rc == 0
-    assert "resolve subcommand is a placeholder" in captured.out
+    assert "Resolved: feedback-20260903-001" in captured.out
+    text = improvement.read_text()
+    assert "- **resolution**: resolved" in text
+
+
+def test_cli_resolve_unknown_id_returns_nonzero(tmp_path, capsys):
+    _make_project(tmp_path)
+    improvement = tmp_path / ".rddf" / "improvements" / "improve.md"
+    improvement.write_text(
+        "---\nname: improve\n---\n\n## Feedback\n\n"
+        "### feedback-existing\n- **resolution**: open\n"
+    )
+    rc = cmd_feedback(["resolve", "improve", "feedback-missing", "--project-root", str(tmp_path)])
+    captured = capsys.readouterr()
+    assert rc == 1
+    assert "ERROR" in captured.err
+    text = improvement.read_text()
+    assert "- **resolution**: open" in text  # unchanged
 
 
 def test_cli_body_from_file(tmp_path, capsys):

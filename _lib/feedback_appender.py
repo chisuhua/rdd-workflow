@@ -22,6 +22,7 @@ from _lib.core.lock import FileLock, LockTimeout
 
 __all__ = [
     "append_feedback",
+    "resolve_feedback",
     "FeedbackError",
     "LoopExceededError",
     "generate_feedback_id",
@@ -204,3 +205,58 @@ def append_feedback(
         _write_counter(target, seq)
 
     return feedback_id
+
+
+def resolve_feedback(
+    *, target_path: str, feedback_id: str, resolved_by: str = "human"
+) -> None:
+    """Mark one existing feedback entry as resolved, atomically.
+
+    Per Stage 2.5 P0-2 (ADR-0037 in-place resolution exception): this
+    mutates only the selected entry's `- **resolution**: open` line to
+    `resolved`, adding `resolved_at` and `resolved_by` lines. The
+    append-only contract applies to **creation** of new entries, not
+    to resolution status updates.
+
+    Reads the file under the same per-file lock as append_feedback,
+    isolates the `### <feedback_id>` block, replaces only that block's
+    resolution line, and writes atomically. Raises FeedbackError on
+    unknown id or malformed entry; does not write on failure.
+    """
+    target = Path(target_path)
+    if not target.exists():
+        raise FeedbackError(f"Improvement file not found: {target}")
+    lock_path = target.with_suffix(target.suffix + ".lock")
+    with FileLock(str(lock_path), timeout=10.0):
+        text = target.read_text(encoding="utf-8")
+        if "## Feedback" not in text:
+            raise FeedbackError("No ## Feedback section in target")
+        marker = f"### {feedback_id}"
+        idx = text.find(marker)
+        if idx == -1:
+            raise FeedbackError(f"Feedback entry not found: {feedback_id}")
+        rest = text[idx + len(marker):]
+        end = len(rest)
+        for stop in ("\n### ", "\n## "):
+            pos = rest.find(stop, 1)
+            if pos != -1 and pos < end:
+                end = pos
+        block = rest[:end]
+        if "- **resolution**:" not in block:
+            raise FeedbackError(f"Entry {feedback_id} has no resolution field")
+        new_lines = []
+        replaced = False
+        for line in block.splitlines():
+            if line.lstrip().startswith("- **resolution**:"):
+                new_lines.append("- **resolution**: resolved")
+                replaced = True
+            else:
+                new_lines.append(line)
+        if not replaced:
+            raise FeedbackError(f"Entry {feedback_id} resolution not updated")
+        now_iso = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
+        new_lines.append(f"- **resolved_at**: {now_iso}")
+        new_lines.append(f"- **resolved_by**: {resolved_by}")
+        new_block = "\n".join(new_lines)
+        new_text = text[: idx + len(marker)] + new_block + rest[end:]
+        atomic_write_text(target, new_text)

@@ -23,7 +23,7 @@
           "status": {"type": "string", "enum": ["active", "blocked", "completed"]},
           "proposal": {"type": "string"},
           "change": {"type": "string"},
-          "feedback_status": {"type": "string", "enum": ["none", "needs-revision", "rejected", "resolved"]},
+          "feedback_status": {"type": "string", "enum": ["none", "needs-revision", "rejected", "resolved", "noted"]},
           "last_feedback_id": {"type": "string"}
         }
       }

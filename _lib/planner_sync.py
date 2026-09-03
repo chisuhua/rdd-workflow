@@ -56,26 +56,83 @@ def _parse_frontmatter(text: str) -> Optional[Dict[str, Any]]:
 
 
 def parse_feedback_status(proposal_path: Path) -> str:
-    """Derive feedback_status from ## Feedback section.
+    """Derive feedback_status from the latest feedback entry.
 
-    Returns one of: 'none' | 'needs-revision' | 'rejected' | 'resolved'.
-    Defaults to 'none' when no ## Feedback section exists.
+    Per Stage 2.5 P0-2 (ADR-0037 latest-entry authority): isolates the
+    `## Feedback` section (up to the next top-level `##`), selects the
+    entry whose `### feedback-<id>` matches the frontmatter
+    `last_feedback_id` (fallback: last `### feedback-*` block when the
+    pointer is absent; fail-closed to `none` when the pointer names a
+    missing block). Precedence is `resolution` (resolved → resolved)
+    before `kind` mapping: needs-revision|ac-fail → needs-revision,
+    rejected → rejected, blocked|noted → noted.
+
+    Returns one of: 'none' | 'needs-revision' | 'rejected' | 'resolved' | 'noted'.
     """
     if not proposal_path.exists():
         return "none"
     text = proposal_path.read_text(encoding="utf-8")
     if "## Feedback" not in text:
         return "none"
-    feedback_section = text[text.index("## Feedback"):]
-    if re.search(r"\*\*kind\*\*: needs-revision", feedback_section):
-        return "needs-revision"
-    if re.search(r"\*\*kind\*\*: rejected", feedback_section):
-        return "rejected"
-    if re.search(r"\*\*kind\*\*: ac-fail", feedback_section):
-        return "needs-revision"
-    if re.search(r"\*\*resolution\*\*: resolved", feedback_section):
+
+    start = text.index("## Feedback")
+    section = text[start:]
+    rest = section[len("## Feedback"):]
+    section_end = len(rest)
+    pos_next_section = rest.find("\n## ", 1)
+    if pos_next_section != -1 and pos_next_section < section_end:
+        section_end = pos_next_section
+    section = section[: len("## Feedback") + section_end]
+
+    fm_id = None
+    if text.startswith("---"):
+        try:
+            end_fm = text.index("\n---", 3)
+            fm_inner = text[3:end_fm]
+            fm = yaml.safe_load(fm_inner) or {}
+            if isinstance(fm, dict):
+                fm_id = fm.get("last_feedback_id")
+        except (ValueError, yaml.YAMLError):
+            fm_id = None
+
+    blocks = []
+    cursor = 0
+    while True:
+        j = section.find("\n### ", cursor + 1)
+        if j == -1:
+            break
+        block_start = j + 1
+        next_marker = section.find("\n### ", block_start)
+        if next_marker == -1:
+            next_marker = len(section)
+        blocks.append(section[block_start:next_marker])
+        cursor = j
+        if cursor > 10_000:
+            break
+
+    if not blocks:
+        return "none"
+
+    if fm_id:
+        selected = next((b for b in blocks if b.startswith(f"### {fm_id}")), None)
+        if selected is None:
+            return "none"
+    else:
+        selected = blocks[-1]
+
+    if re.search(r"\*\*resolution\*\*: resolved", selected):
         return "resolved"
-    return "needs-revision"
+    m = re.search(r"\*\*kind\*\*:\s*(\S+)", selected)
+    if not m:
+        return "none"
+    kind = m.group(1)
+    if kind == "rejected":
+        return "rejected"
+    if kind in ("needs-revision", "ac-fail"):
+        return "needs-revision"
+    if kind in ("blocked", "noted"):
+        return "noted"
+    return "none"
 
 
 def discover_projects(project_root: Path) -> List[Dict[str, Any]]:
