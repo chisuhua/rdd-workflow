@@ -207,3 +207,32 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" =~ "Stored and computed state agree" ]]
 }
+
+@test "planner: audit lists unmapped proposals in Markdown" {
+    cat > .rddf/roadmap.md <<'EOF'
+# Roadmap
+## Phase Skeleton
+| Phase | Theme | Status | Started | Done |
+|-------|-------|--------|---------|------|
+| phase-1 | foo bar | active | | |
+EOF
+    printf -- '---\nname: add-foo-bar-baz\npriority: P2\n---\n# x\n' > .rddf/improvements/add-foo-bar-baz.md
+    run python3 -m _lib.cli planner audit --project-root "$TEST_TMP"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "add-foo-bar-baz" ]]
+    [[ "$output" =~ "foo bar" ]]
+}
+
+@test "planner: audit --json outputs structured list" {
+    cat > .rddf/roadmap.md <<'EOF'
+# Roadmap
+## Phase Skeleton
+| Phase | Theme | Status | Started | Done |
+|-------|-------|--------|---------|------|
+| phase-1 | foo bar | active | | |
+EOF
+    printf -- '---\nname: z\npriority: P2\n---\n# x\n' > .rddf/improvements/z.md
+    run python3 -m _lib.cli planner audit --json --project-root "$TEST_TMP"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ '"propro": "z"' ]]
+}
