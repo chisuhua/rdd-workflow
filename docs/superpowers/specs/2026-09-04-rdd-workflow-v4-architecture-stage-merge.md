@@ -80,6 +80,22 @@ After 1 day of observation + user's 2026-09-04 architectural review, the user id
 
 User explicitly chose "塞进 rdd-builder" for the approval gate (Q1 answer), accepting that the merged builder owns all 3 former responsibilities.
 
+5. **CHECKPOINT LOSS ACKNOWLEDGED + MITIGATED (per Oracle M1)**
+
+D2a's strongest argument was that "merging design/plan loses human-in-loop checkpoints". This counter-argument **concedes the loss** but argues the checkpoint role moves with merge:
+
+- **Conceded loss**: `rddf builder run` (per §5.2) is a single CLI invocation executing P0→P3, removing the 3 session boundaries that 3 separate skills naturally enforced. A user who previously got 3 reflection points across 3 sessions now gets 1 reflection point per `run`.
+- **Mitigated by contract** (per Oracle M1): `rddf builder run` **MUST pause between phases** (specifically between Phase 0 / Phase 1 / Phase 2.5 / Phase 3) and require explicit user `continue` input. Implementation:
+  - `run` mode default: pause at every phase boundary (4 pauses per run)
+  - `run --no-pause` opt-in flag: skip pauses for CI/automation use cases
+  - **Phase 0 pause**: HARD pause (mandatory even with `--no-pause`); user must explicitly approve/reject/defer/revise
+  - **Phase 2.5 pause**: HARD pause (4-option review cannot be auto-skipped per safety)
+  - **Phase 1 and Phase 1.5 pauses**: SOFT pause (skippable via `--no-pause` since they are deterministic)
+  - Each pause emits `.rddf/state/builder/<change>.json::phase_pause_history` entry for audit
+- **Alternative**: per-phase CLI calls (`rddf builder phase0`, `phase1`, etc.) preserve full user-driven checkpoint granularity; `run` is convenience for users who explicitly want reduced checkpoints
+
+This explicit pause contract replaces the implicit "3 skills = 3 checkpoints" pattern with an explicit user-controlled checkpoint system.
+
 ### 2.3 New decision (D2b)
 
 **D2b (design/plan/ship merge into rdd-builder approved)**. The approval gate becomes `rdd-builder` Phase 0; plan generation becomes Phase 1; execute/archive becomes Phase 2-3.
@@ -91,9 +107,12 @@ This is a **deliberate supersession of D2a** and is recorded as such in this spe
 | # | Condition | Verification |
 |---|---|---|
 | 1 | `rdd-planner` Stage 1/2 contracts (`feedback_appender`, `planner_state`) are stable | ✅ Per ADR-0037, ADR-0038 acceptance criteria met |
-| 2 | `rdd-arch` slim can be merged into a single change | ✅ ADR-0042 already renamed; remaining is removing `_check_roadmap_defined` |
-| 3 | `rdd-verifier` integration point is well-defined | ✅ ADR-0035 documents boundary; builder.archive calls verifier pre-archive |
+| 2 | `rdd-arch` slim can be merged into a single change | ✅ ADR-0042 already renamed; remaining is removing `_check_roadmap_defined` (now full removal per §6.2 batch 2) |
+| 3 | `rdd-verifier` integration point is well-defined | ✅ ADR-0035 documents boundary; builder.archive calls verifier pre-archive; verifier 5-value verdict routing table in §3.4 (per batch 1) |
 | 4 | New coexistence migration strategy approved | ✅ Per user Q3 = "新并存" |
+| 5 | D2b checkpoint loss mitigated | ✅ §2.2 item 5 pause contract; `run` pauses at Phase 0/2.5 HARD, Phase 1/1.5 SOFT; per-phase CLI preserves full granularity |
+| 6 | ADR-0028 role boundaries respected | ✅ Phase 0 reject/defer/revise paths use `rddf feedback add` (single-writer contract per ADR-0037); builder does NOT directly write `proposal-suggestions.md` (per Oracle M2) |
+| 7 | D2b reversion path | ⚠ If any condition 1-6 regresses (e.g., feedback appenter fails), D2b is reverted to D2a and Stage 1/2 path continues |
 
 If any condition fails, D2b is reverted to D2a and Stage 1/2 path continues.
 
@@ -123,7 +142,7 @@ If any condition fails, D2b is reverted to D2a and Stage 1/2 path continues.
 |---|---|---|---|---|
 | **rdd-arch** | `docs/adr/*.md`, `docs/architecture/*.md`, `.arch-handoff.json` (per ADR-0016 v2) | (none) | `.arch-handoff.json` (ADR-0016 v2 fields only, **no roadmap_path** in v3) | High (Phase 2 ADR confirmation) |
 | **rdd-planner** | `roadmap.md`, `proposal-suggestions.md`, `proposal-approved.md`, `.rddf/roadmap/features/*.md`, `.rddf/improvements/*.md` (via `add-improve`), `openspec/changes/<name>/proposal.md` (authoring only, no checkbox), `.planner-handoff.json` (NEW) | `.arch-handoff.json`, `_lib/planner_state.py` (via Stage 1/2 lib) | All roadmap files (via dual-zone strategy from ADR-0038 §6), `proposal.md` content | Medium (Phase 1 approval = "approve proposal creation") |
-| **rdd-builder** | `openspec/changes/<name>/tasks.md`, `.rddf/plans/<name>.md`, worktree, branches, `.builder-handoff.json` (NEW) | `proposal.md`, `tasks.md`, `.arch-handoff.json`, `.planner-handoff.json`, `plan_quality.py::evaluate_plan` | `tasks.md`, `.rddf/plans/*.md`, worktree files, branch commits, archive | High (Phase 0 approval, Phase 2.5 review 4-option) |
+| **rdd-builder** | `openspec/changes/<name>/tasks.md`, `.rddf/plans/<name>.md`, worktree, branches, `.rddf/state/builder/<change>.json` (per-change per Oracle H3) | `proposal.md`, `tasks.md`, `.arch-handoff.json`, `.planner-handoff.json`, `plan_quality.py::evaluate_plan` | `tasks.md`, `.rddf/plans/*.md`, worktree files, branch commits, archive, **feedback via `rddf feedback add` only** (NOT direct `proposal-suggestions.md` write — single-writer per ADR-0037, Oracle M2) | High (Phase 0 approval, Phase 2.5 review 4-option) |
 | **rdd-verifier** | `.rddf/state/.verifier-report.json` (per ADR-0034) | worktree branches (diff vs main), `tasks.md`, `.rddf/plans/*.md` | `.rddf/state/.verifier-report.json` | Low (retry loop bounded to 3 per ADR-0034) |
 
 ### 3.3 `rdd-planner` promotion: from horizontal orchestrator to full stage
@@ -389,24 +408,68 @@ rddf planner handoff [--json]                # dump .planner-handoff.json (read-
 
 ```bash
 rddf builder run <change-name>               # full 4-phase run (Phase 0 → 3)
-rddf builder phase0 <change-name>            # approval gate only
+                                             # with pause contract (see below)
+  [--no-pause]                                # OPT-IN: skip SOFT pauses (CI/automation)
+  [--from-phase <N>]                          # resume from phase N (0..3)
+  [--retry-on-fail]                            # allow verifier verdict back-route
+
+rddf builder phase0 <change-name>            # approval gate only (1 phase)
 rddf builder phase1 <change-name>            # plan generation only
+rddf builder phase1.5 <change-name>          # deps + execution_mode decision only
 rddf builder phase2 <change-name>            # worktree + execute only
 rddf builder phase2.5 <change-name>          # review only
 rddf builder phase3 <change-name>            # archive only (calls verifier first)
+
 rddf builder list                            # list builder-eligible changes
-rddf builder status <change-name>            # show current phase
+rddf builder status <change-name>            # show current phase + retry_count + pause_history
 rddf builder --help
 ```
 
-**Exit codes**:
-- `0` — phase completed successfully (or skipped)
-- `1` — approval rejected/deferred, no archive
-- `2` — plan quality gate FAIL
-- `3` — worktree creation failed
-- `4` — execute TDD step failed
-- `5` — review chose revise/abandon
-- `6` — archive gate FAIL (verifier rejected)
+**`run` pause contract** (per §2.2 item 5, addresses Oracle M1 checkpoint loss):
+
+```
+Phase transition        Pause type   Default behavior      --no-pause behavior
+─────────────────────────────────────────────────────────────────────────────
+→ Phase 0 entry         n/a          show pending changes   (same)
+Phase 0 → Phase 1       HARD pause   ALWAYS (1)            ALWAYS (1)
+Phase 1 → Phase 1.5     SOFT pause   prompt + continue     skip
+Phase 1.5 → Phase 2     SOFT pause   prompt + continue     skip
+Phase 2 → Phase 2.5     n/a          automatic            (same)
+Phase 2.5 → Phase 3     HARD pause   ALWAYS (4-option)    ALWAYS (4-option)
+Phase 3 → verifier      n/a          automatic            (same)
+verifier → archive      n/a          automatic (if PASS)  (same)
+verifier FAIL → back    SOFT pause   prompt + continue    skip (default: abort)
+archive → end           n/a          automatic            (same)
+```
+
+- **HARD pauses** (Phase 0, Phase 2.5) cannot be bypassed by `--no-pause` flag — these are governance checkpoints where user input is mandatory for safety (per ADR-0028 + D2a's original checkpoint argument).
+- **SOFT pauses** (Phase 1, Phase 1.5, verifier back-route) are bypassed by `--no-pause` for automation/CI; without flag, default is to pause and prompt.
+- Each pause records to `.rddf/state/builder/<change>.json::phase_pause_history`:
+  ```json
+  {
+    "phase_transition": "phase-0→phase-1",
+    "pause_type": "hard|soft",
+    "skipped": false,
+    "user_input": "approve",
+    "at": "2026-09-04T10:00:00Z"
+  }
+  ```
+- `run --from-phase N` resumes from phase N (skipping earlier phases), preserving audit trail via pause_history.
+
+**Exit codes** (5-value preservation per Oracle H4 — preserved from batch 1 §3.4 verdict routing):
+
+| Exit | Meaning | Phase source |
+|---|---|---|
+| `0` | Phase completed successfully (or skipped via `--from-phase`) | any |
+| `1` | Phase 0 rejected/deferred (decision recorded in builder-handoff, NO archive) | Phase 0 |
+| `2` | Plan quality gate FAIL (`_lib/plan_quality.py::evaluate_plan`) | Phase 1 |
+| `3` | Worktree creation failed OR COMMIT GATE violated | Phase 2 |
+| `4` | Verifier halted (retry_count > max_retries OR verdict_h = needs_human) | Phase 3 |
+| `5` | Review chose revise/abandon | Phase 2.5 |
+| `6` | Deps gate FAIL (STRICT_DEPS_GATE blockers; per ADR-0024) | Phase 1.5 |
+| `7` | Archive gate FAIL (`openspec archive <name> --yes` rejected; post-verifier) | Phase 3 |
+
+Note: this preserves **8 distinct exit codes** (0-7), each carrying semantic information about which phase failed and why. Not collapsed (Oracle H4 fix).
 
 ### 5.3 `rddf roadmap` (deprecated alias in Wave 2)
 
@@ -704,7 +767,31 @@ Wave 1 is **done** when all are true:
 - [ ] **`rddf-session` stage mapping** (per ADR-0042 §6 pattern): `intent: rdd-arch/rdd-planner/rdd-builder` recognized; legacy `intent: guide-design/guide-plan/guide-ship` shim maps to `rdd-builder` (Wave 1 coexistence)
 - [ ] **`stage_arch` / `stage_planner` / `stage_builder` / `stage_verifier`** fields on `rddf-session` schema v3 (per ADR-0040 session metrics precedent); migration of legacy `stage_arch`/`stage_design`/`stage_plan`/`stage_ship`/`stage_verifier` to new naming (Wave 2)
 
-**Total: 64 AC items** (16 core + 8 C1 + 8 C2 + 5 H3 + 9 H1 + 18 H5) — **all must be `[x]` before Wave 1 ships.**
+### Oracle M1 — D2b checkpoint loss mitigated (7 items, addressed in batch 3)
+
+- [ ] §2.2 item 5 added: explicit acknowledgment of D2b checkpoint loss (3 sessions → 1 run) + pause contract mitigation
+- [ ] `rddf builder run` pause contract documented in §5.2: HARD pause at Phase 0 / 2.5; SOFT pause at Phase 1 / 1.5 / verifier back-route
+- [ ] `--no-pause` flag exists and skips SOFT pauses only (HARD pauses cannot be bypassed)
+- [ ] `--from-phase N` flag exists for resume from arbitrary phase
+- [ ] `--retry-on-fail` flag exists for auto-back-route on verifier verdict
+- [ ] `phase_pause_history` field in `.rddf/state/builder/<change>.json` records every pause (skipped or not) with user input + timestamp
+- [ ] `tests/unit/test_builder_run_pause.py` ≥6 tests: HARD pause mandatory, SOFT pause skippable, pause_history append, audit trail
+
+### Oracle M2 — Feedback single-writer contract (5 items, addressed in batch 3)
+
+- [ ] §3.2 ownership matrix updated: rdd-builder does NOT directly write `proposal-suggestions.md` (single-writer contract per ADR-0037)
+- [ ] Phase 0 reject path: `rddf feedback add <proposal> --kind rejected --from rdd-builder` (NOT direct file write)
+- [ ] Phase 0 defer path: `rddf feedback add <proposal> --kind blocked --from rdd-builder` (NOT direct file write)
+- [ ] Phase 0 revise path: `rddf feedback add <proposal> --kind needs-revision --from rdd-builder` (NOT direct file write)
+- [ ] `tests/unit/test_builder_phase0.py` updated: Phase 0 reject/defer/revise assert `rddf feedback add` is invoked exactly once per decision (no direct write to proposal-suggestions.md)
+
+### Oracle H4 — Exit code 5-value preservation (3 items, addressed in batch 3 §5.2)
+
+- [ ] §5.2 exit codes table preserved 8 distinct values (0-7), each carrying semantic phase information
+- [ ] `rddf builder run` exit code propagates the underlying phase exit (not collapsed to single 6 as in pre-batch-1 spec)
+- [ ] `tests/integration/test_rdd_builder_exit_codes.bats` ≥3 tests: each phase produces its documented exit code on failure
+
+**Total: 79 AC items** (16 core + 8 C1 + 8 C2 + 5 H3 + 9 H1 + 18 H5 + 7 M1 + 5 M2 + 3 H4) — **all must be `[x]` before Wave 1 ships.**
 
 ## 9. Demo Run (record after implementation)
 
