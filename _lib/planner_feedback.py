@@ -256,10 +256,11 @@ def _empty_schema(project_root: str) -> Dict[str, Any]:
         "schema": "planner-feedback-v1",
         "version": 1,
         "owner": "rdd-planner",
-        "branch": "main",
+        "branch": _current_branch(project_root),
         "worktree_root": project_root,
         "codebase_commit": "",
         "arch_handoff_revision": 0,
+        "state_revision": 0,
         "planner_state_last_sync_at": "",
         "feedbacks": [],
         "summary": {
@@ -281,6 +282,29 @@ def _current_codebase_commit(project_root: str) -> str:
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         pass
     return ""
+
+
+def _current_branch(project_root: str) -> str:
+    """Return git HEAD short branch name, with explicit fallback semantics.
+
+    - normal branch (e.g. 'main', 'feat-x') → returns the branch name
+    - detached HEAD (raw 'HEAD' from git) → returns 'detached'
+    - non-git / subprocess failure → returns 'unknown'
+    """
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            cwd=project_root, capture_output=True, text=True, timeout=5,
+            check=False,
+        )
+        if result.returncode != 0:
+            return "unknown"
+        branch = result.stdout.strip()
+        if branch == "HEAD":
+            return "detached"
+        return branch or "unknown"
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        return "unknown"
 
 
 def _current_arch_handoff_revision(project_root: str) -> int:
@@ -488,7 +512,7 @@ def compute_planner_feedback(
         "schema": "planner-feedback-v1",
         "version": 1,
         "owner": "rdd-planner",
-        "branch": "main",
+        "branch": _current_branch(project_root),
         "worktree_root": project_root,
         "codebase_commit": codebase_commit,
         "arch_handoff_revision": arch_handoff_rev,
