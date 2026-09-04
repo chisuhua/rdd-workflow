@@ -205,6 +205,15 @@ def write_arch_handoff(
     from _lib.core.atomic_write import atomic_write_json
 
     with FileLock(lock_path, timeout=10.0):
+        prior_revision = 0
+        if os.path.exists(handoff_path):
+            try:
+                with open(handoff_path) as f:
+                    prior = json.load(f)
+                prior_revision = int(prior.get("arch_complete_revision", 0))
+            except (json.JSONDecodeError, OSError, ValueError):
+                prior_revision = 0
+        handoff["arch_complete_revision"] = prior_revision + 1
         atomic_write_json(handoff_path, handoff, indent=2, ensure_ascii=False)
 
     return handoff
