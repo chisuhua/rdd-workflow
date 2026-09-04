@@ -68,7 +68,8 @@
 | [ADR-0039](ADR-0039-design-handoff-runtime-filter.md) | ADR-0039: design-handoff runtime filter over on-disk cleanup | 已采纳 (2026-09-01) | 2026-09-01 |
 | [ADR-0040](ADR-0040-session-metrics.md) | ADR-0040: schema v3 add session metrics opt-in 字段 | 已采纳 (2026-09-01) | 2026-09-01 |
 | [ADR-0041](ADR-0041-planner-sprint-lifecycle-and-history.md) | ADR-0041: Planner Sprint Lifecycle and History Storage | 已采纳 (2026-09-03) | 2026-09-03 |
-| [ADR-0042](ADR-0042-rdd-arch-rdd-planner-bidirectional-feedback.md) | ADR-0042: rdd-arch rename + rdd-arch ↔ rdd-planner 双向反馈闭环 | 已采纳 (2026-09-03) | 2026-09-03 |
+| [ADR-0042](ADR-0042-rdd-arch-rdd-planner-bidirectional-feedback.md)
+|[ADR-0043](ADR-0043-rdd-workflow-v4-stage-merge.md) | ADR-0042: rdd-arch rename + rdd-arch ↔ rdd-planner 双向反馈闭环 | 已采纳 (2026-09-03) | 2026-09-03 |
 <!-- ADR_INDEX_END -->
 
 ## 架构演进

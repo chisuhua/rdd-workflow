@@ -152,14 +152,6 @@ def _check_adr_exists(ctx: dict) -> tuple[bool, Optional[str]]:
     return (len(matches) > 0, None)
 
 
-def _check_roadmap_defined(ctx: dict) -> tuple[bool, Optional[str]]:
-    """ADR-0016: pass if handoff-roadmap_path exists."""
-    project_root = ctx.get("project_root", ".")
-    paths = _read_arch_handoff_paths(project_root)
-    roadmap = Path(project_root) / paths["roadmap_path"]
-    return (roadmap.is_file(), None)
-
-
 def _check_gap_analysis_complete(ctx: dict) -> tuple[bool, Optional[str]]:
     return (True, "warning")  # Warning: gap analysis is optional
 
@@ -379,7 +371,6 @@ def _check_review_debt_recorded(ctx: dict) -> tuple[bool, Optional[str]]:
 _DEFAULT_CHECKS = {
     "arch_done": [
         Check("adr_exists", _check_adr_exists, "ADR directory missing or empty", "Create ADRs: mkdir -p docs/adr && touch docs/adr/ADR-0001.md", "error"),
-        Check("roadmap_defined", _check_roadmap_defined, "roadmap.md not found", "Create roadmap: touch roadmap.md", "error"),
         Check("gap_analysis_complete", _check_gap_analysis_complete, "Gap analysis not run", "Run: openspec scan", "warning"),
         Check("arch_alignment", strict_wrap(_check_arch_alignment), "roadmap/gap-analysis references ADRs that don't exist on disk", "Resolve ghost ADR references, or create the missing ADR files", "warning"),
         Check("arch_debt_recorded", strict_wrap(_check_arch_debt), "gap-analysis has unresolved high-severity / P0 row", "Either resolve the gap or schedule it as a P0 task in roadmap.md", "warning"),

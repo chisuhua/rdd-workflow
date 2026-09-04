@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rdd-workflow.local/schemas/builder_handoff_schema.json",
+  "title": "Builder Handoff (rdd-builder per-change, ADR-0034 §2 fix)",
+  "description": "Schema for .rddf/state/builder/<change>.json (per-change layout per Oracle H3, NOT single file). Prevents global-file serial-write regression. Consumed by rdd-verifier (verdict routing per ADR-0034) and rdd-builder retry loop (per spec §3.4).",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema", "version", "owner", "change_name", "current_phase", "retry_count", "max_retries"],
+  "properties": {
+    "schema": {"const": "builder-handoff-v1"},
+    "version": {"const": 1},
+    "owner": {"const": "rdd-builder"},
+    "change_name": {"type": "string"},
+    "current_phase": {"enum": ["phase-0", "phase-1", "phase-1.5", "phase-2", "phase-2.5", "phase-3"]},
+    "approval_status": {"enum": ["pending", "approved", "rejected", "deferred", "revising"]},
+    "plan_quality_status": {"enum": ["pending", "valid", "invalid"]},
+    "execution_mode_decision": {
+      "type": "object",
+      "properties": {
+        "mode": {"enum": ["worktree", "lightweight"]},
+        "reason": {"type": "string"},
+        "decided_at": {"type": "string", "format": "date-time"},
+        "decided_by": {"type": "string"}
+      }
+    },
+    "deps_status": {
+      "type": "object",
+      "properties": {
+        "blockers": {"type": "array", "items": {"type": "string"}},
+        "manual_deps": {"type": "array", "items": {"type": "string"}},
+        "cross_repo_pending": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "worktree_path": {"type": "string"},
+    "branch": {"type": "string"},
+    "execution_status": {"enum": ["pending", "running", "failed", "completed"]},
+    "review_status": {"enum": ["pending", "merge", "revise", "abandon"]},
+    "retry_count": {"type": "integer", "minimum": 0},
+    "max_retries": {"type": "integer", "minimum": 1},
+    "retry_history": {"type": "array", "items": {"type": "object"}},
+    "phase_pause_history": {"type": "array", "items": {"type": "object"}},
+    "archive_status": {"enum": ["pending", "verifying", "archived", "failed"]},
+    "verifier_report_path": {"type": "string"},
+    "updated_at": {"type": "string", "format": "date-time"}
+  }
+}
