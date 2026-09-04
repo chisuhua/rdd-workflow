@@ -80,3 +80,18 @@ jobs:
 
       - name: Incremental Bats regression gate
         run: bash tests/scripts/report_regression.sh
+
+      - name: KNOWN_FAILURES.txt shrink-only enforcement
+        run: |
+          set -e
+          BASELINE=$(git show origin/master:tests/KNOWN_FAILURES.txt 2>/dev/null || git show HEAD~1:tests/KNOWN_FAILURES.txt)
+          # Reuse report_regression.sh L27-34 sed strip rules
+          BASELINE_STRIPPED=$(echo "$BASELINE" | sed -E 's/[[:space:]]+# (pre-existing|historical)[^[:alnum:]].*$//' | sed '/^[[:space:]]*$/d' | sort -u)
+          CURRENT_STRIPPED=$(sed -E 's/[[:space:]]+# (pre-existing|historical)[^[:alnum:]].*$//' tests/KNOWN_FAILURES.txt | sed '/^[[:space:]]*$/d' | sort -u)
+          NEW_LINES=$(comm -13 <(echo "$BASELINE_STRIPPED") <(echo "$CURRENT_STRIPPED") || true)
+          if [ -n "$NEW_LINES" ]; then
+            echo "❌ KNOWN_FAILURES.txt grew (CI forbidden):"
+            echo "$NEW_LINES"
+            exit 1
+          fi
+          echo "✅ KNOWN_FAILURES.txt did not grow"
