@@ -88,6 +88,16 @@ open  ──[architect sees]──>  acknowledged  ──[fixed]──>  resolve
 - `state_revision`: `.planner-state.json::state_revision`（writer 每次语义变化 +1；排除 `last_sync_at`/`last_sync_status`/`sprint_started_at`/自身）
 - `codebase_commit`: 保留为 `computed_from` informational metadata，**不**作为 stale 触发器（消除 doc-only commit 噪声）
 
+### 2.X. Resolved Revival Semantics（Wave 4 Change 3）
+
+`FeedbackEntry` 新增 `reopened_count: int = 0` 与 `advisory_warning: Optional[str] = None`。
+
+**触发条件**: `compute_planner_feedback` 在 fingerprint match 时，若 prior 条目 `status == "resolved"`，则视为"修订未真正生效"——将该条目翻转为 `status = "open"`，`reopened_count = prior.reopened_count + 1`，**保留** `resolved_at` / `resolved_by`（审计追溯）。后续 cycle 中，若该条目已为 `open` 且 fingerprint 仍命中，则 `reopened_count` **保留**不变（不是无界累计）。
+
+**非对称**: `dismissed` 条目在 fingerprint match 时**不**复活——`dismissed` 语义是"豁免 / 主动弃忽略"，与"已解决但复发"是不同状态。
+
+**Advisory Warning**: `reopened_count >= 3` 时条目携带 `advisory_warning: "high_reopen_count"`，供 `rdd-arch status` 展示。语义：反复复活的条目 = 真实回归未修复，需人工干预（re-attach theme、补 ADR、或重新规划）。
+
 ### 3. arch-handoff.json 正式化 v2（无字段变动）
 
 `_lib/schemas/arch_handoff_schema.json` 已有 contract v2（`properties.version.enum: [1, 2]`），writer 已写 `"version": 2`。Stage 3 不 bump version，**仅在 schema 注释中明确**：
