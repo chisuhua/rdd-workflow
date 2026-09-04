@@ -163,7 +163,7 @@ _lib/
 
 **Backward compat with Stage 1/2**: `.planner-state.json` (per ADR-0038 §3.5) and `.planner-feedback.json` (per ADR-0042 §2) are **NOT** merged into `.planner-handoff.json`. Three files coexist, each with its own owner and FileLock.
 
-### 3.4 `rdd-builder` (NEW) — 4-phase internal state machine
+### 3.4 `rdd-builder` (NEW) — 4-phase internal state machine (with deps + verifier retry loop)
 
 ```text
 rdd-builder
@@ -172,9 +172,9 @@ rdd-builder
 Phase 0: Approval Gate
    ├─ input:  openspec/changes/<name>/proposal.md (from rdd-planner)
    ├─ prompt:  4-option (approve / reject / defer / revise)
-   ├─ reject → write proposal-suggestions.md decision, return exit 0 (no archive)
-   ├─ defer  → write proposal-suggestions.md decision, return exit 0 (no archive)
-   ├─ revise → rddf feedback add <proposal> --from rdd-builder --kind needs-revision, return exit 1
+   ├─ reject → rddf feedback add <proposal> --kind rejected, exit 0 (no archive)
+   ├─ defer  → rddf feedback add <proposal> --kind blocked, exit 0 (no archive)
+   ├─ revise → rddf feedback add <proposal> --kind needs-revision, exit 1
    └─ approve → continue to Phase 1
    │
    ▼
@@ -183,16 +183,27 @@ Phase 1: Plan Generation
    ├─ call:   rdd-workflow-writing-plans (existing, unchanged)
    ├─ write:  openspec/changes/<name>/tasks.md (NEW builder responsibility per user D)
    ├─ write:  .rddf/plans/<name>.md (existing)
-   ├─ validate: _lib/plan_quality.py::evaluate_plan (FAIL → return exit 1)
-   └─ continue to Phase 2
+   ├─ validate: _lib/plan_quality.py::evaluate_plan (FAIL → return exit 2)
+   └─ success → continue to Phase 1.5
+   │
+   ▼
+Phase 1.5: Deps + Execution Mode Decision [NEW per Oracle C2]
+   ├─ reuse skills/deps/scripts/* (existing; absorbed from guide-plan per ADR-0024)
+   ├─ analyze inter-change deps (incl ADR-0022 manual_deps field)
+   ├─ cross-repo gate (per ADR-0031 if category=cross-repo-federation)
+   ├─ STRICT_DEPS_GATE enforcement (per §13 acceptance criteria)
+   ├─ decide execution_mode: worktree vs lightweight
+   ├─ write execution_mode_decision to .rddf/state/builder/<change>.json
+   ├─ FAIL (blockers) → exit 7 (deps gate FAIL)
+   └─ success → continue to Phase 2
    │
    ▼
 Phase 2: Worktree + Execute (TDD 5 步)
-   ├─ select_worktree: existing execute/scripts/select_worktree.sh (extract from execute skill)
-   ├─ create worktree: openspec/<change-name>
-   ├─ execute: TDD 5-step from execute skill (write failing → verify fail → implement → verify pass → commit)
-   ├─ writeback: tasks.md checkboxes updated per execute/scripts/tasks_writeback.sh
-   └─ continue to Phase 2.5
+   ├─ COMMIT GATE: artifacts (proposal.md, tasks.md, plan.md) must be committed
+   ├─ select_worktree: per execution_mode_decision (worktree/lightweight)
+   ├─ execute TDD 5-step from execute skill (write failing → verify fail → implement → verify pass → commit)
+   ├─ writeback tasks.md checkboxes per execute/scripts/tasks_writeback.sh
+   └─ success → continue to Phase 2.5
    │
    ▼
 Phase 2.5: Review (4-option dispatch)
@@ -202,13 +213,45 @@ Phase 2.5: Review (4-option dispatch)
    └─ others → return with state preserved
    │
    ▼
-Phase 3: Archive
-   ├─ existing: skills/_lib/archive.sh::archive_change_for_mode (detect worktree vs lightweight)
-   ├─ pre-call: rdd-verifier hook (per ADR-0035; verifier runs first, then archive)
-   ├─ archive: openspec archive <name> --yes
-   └─ post-archive: commit_archive_moves + post_archive_cleanup (existing)
+Phase 3: Archive [with Verifier Retry Loop per Oracle C1]
+   │
+   ├── pre-call: rdd-verifier (per ADR-0035; verifier runs first, then archive)
+   │
+   ├── verifier verdict dispatch (per ADR-0034 §7):
+   │   ├─ PASS (0)            → continue to archive commit
+   │   ├─ implementation_gap (1) → back-route to Phase 2 (re-execute; plan is fine)
+   │   ├─ ac_fail (2)         → back-route to Phase 1 (re-plan; criteria need revision)
+   │   └─ needs_human (3)     → halt, exit 4 (escalate to human)
+   │
+   ├── retry counter (in per-change handoff):
+   │   ├─ retry_count starts at 0
+   │   ├─ increments on every back-route (Phase 3 → Phase 1 or 2)
+   │   ├─ max_retries = 3 (mirrors ADR-0034 §8 verifier ceiling)
+   │   └─ on retry_count > max_retries: halt, exit 4
+   │
+   ├── archive: openspec archive <name> --yes
+   │
+   └── post-archive: commit_archive_moves + _lib/post_archive_cleanup.sh (existing)
 
+[RETRY LOOP — back-routes from Phase 3 → Phase 1 or Phase 2, capped at 3 retries]
 ```
+
+**Key design points** (all addressing Oracle findings):
+
+1. **Phase 1.5 inserted** to absorb guide-plan's deps + execution_mode responsibilities (per ADR-0024). Without this, Wave 3 retirement of `.plan-handoff.json` orphans the execution_mode_decisions field that drives worktree vs lightweight selection in Phase 2.
+
+2. **Phase 0 reject/defer/revise paths now route through `rddf feedback add`** (per ADR-0037 single-writer contract). Removes builder→`proposal-suggestions.md` direct write, fixing the ADR-0028 role boundary violation (Oracle M2 — addressed in batch 3).
+
+3. **Verifier verdict routing table** (Phase 3) preserves ADR-0034's 5-value exit semantics (0/1/2/3/4) instead of collapsing to a single exit 6. Each verdict has a deterministic destination:
+   - `implementation_gap` (verifier exit 1) → Phase 2 (re-execute)
+   - `ac_fail` / `proposal_drift` (verifier exit 2) → Phase 1 (re-plan)
+   - `needs_human` (verifier exit 3) → halt, exit 4
+   - `halted` max_retries=4 → halt, exit 4 (verifier halt supersedes builder halt)
+   - `pass` (verifier exit 0) → continue to archive
+
+4. **Retry counter** lives in `.rddf/state/builder/<change>.json` (per-change layout, see §6.3). Capped at 3 retries per ADR-0034 ceiling. On exceeded → halt with exit 4, requiring human intervention.
+
+5. **Phase 2 COMMIT GATE** is explicit: artifacts must be committed before `git worktree add`. Prevents TOCTOU race with planner attach dirtying main repo (Oracle Q6 finding).
 
 ## 4. Migration Plan: 3-Wave "新并存" Strategy
 
@@ -224,13 +267,22 @@ add:
   skills/rdd-planner/SKILL.md     # NEW wrapper (already has _lib/planner_*.py)
   skills/rdd-planner/scripts/     # NEW (entry/exit scripts + handoff writer)
   skills/rdd-builder/             # NEW (4-phase internal state machine)
-  skills/rdd-builder/scripts/     # NEW (4 phase scripts)
+  skills/rdd-builder/scripts/     # NEW (5 phase scripts: phase0_approval, phase1_plan,
+                                   #     phase1_5_deps, phase2_execute, phase2_5_review, phase3_archive)
   _lib/cli/planner_cmd.py         # EXISTS, extend with `planner-handoff` sub-subcommand
-  _lib/cli/builder_cmd.py         # NEW
+  _lib/cli/builder_cmd.py         # NEW (rddf builder ... dispatcher)
   _lib/planner_handoff.py         # NEW
+  _lib/builder_handoff.py         # NEW [per-change handoff r/w + FileLock per Oracle H3]
+  _lib/builder_deps.py            # NEW [Phase 1.5 deps + execution_mode decision per Oracle C2]
+  _lib/builder_retry.py           # NEW [verifier verdict → Phase routing + retry counter per Oracle C1]
   _lib/schemas/planner_handoff_schema.json    # NEW v1
+  _lib/schemas/builder_handoff_schema.json    # NEW v1 (per-change layout, NOT single file)
+  _lib/schemas/builder_retry_schema.json      # NEW v1 (verifier verdict + routing table)
   tests/unit/test_planner_handoff.py          # NEW
-  tests/unit/test_builder_*.py                # NEW (~30 tests)
+  tests/unit/test_builder_handoff.py          # NEW (per-change layout, no global file race)
+  tests/unit/test_builder_deps.py             # NEW (Phase 1.5 logic, deps blockers)
+  tests/unit/test_builder_retry.py            # NEW (verifier verdict routing + retry cap)
+  tests/unit/test_builder_*.py                # NEW (~30 tests across phase scripts)
   tests/integration/test_rdd_builder_*.bats   # NEW (~8 bats tests)
   docs/adr/ADR-0043-rdd-workflow-v4-stage-merge.md  # NEW
 
@@ -356,7 +408,7 @@ rddf roadmap add-feature             → rddf planner roadmap add-feature
 | `.rddf/state/.planner-feedback.json` | rdd-planner | No (ADR-0042) | v1 |
 | `.rddf/state/.design-handoff.json` | (none, retiring) | **RETIRE** in Wave 3 | n/a |
 | `.rddf/state/.plan-handoff.json` | (none, retiring) | **RETIRE** in Wave 3 | n/a |
-| `.rddf/state/.builder-handoff.json` | rdd-builder | **NEW** | v1 |
+| `.rddf/state/builder/<change>.json` | rdd-builder | **NEW** (per-change layout, not single file) | v1 |
 | `.rddf/state/.verifier-report.json` | rdd-verifier | No (ADR-0034) | v1 |
 
 ### 6.2 `.arch-handoff.json` v3 schema (modified)
@@ -372,26 +424,73 @@ rddf roadmap add-feature             → rddf planner roadmap add-feature
 
 **Migration**: existing v2 handoff files auto-upgrade on read (add `arch_complete_revision: 0` default if missing). v1 files require manual upgrade.
 
-### 6.3 `.builder-handoff.json` schema v1 (NEW)
+### 6.3 `.rddf/state/builder/<change>.json` schema v1 (NEW, per-change layout per Oracle H3)
+
+**File layout** — one file per change under `.rddf/state/builder/` directory. **Not** a single `.builder-handoff.json` file. This prevents the global-file serial-write regression that ADR-0034 §2 fixed for `.verifier-loop.json`.
+
+```text
+.rddf/state/builder/
+├── change-foo.json    # phase: phase-2, retry_count: 0
+├── change-bar.json    # phase: phase-0, retry_count: 0
+└── change-baz.json   # phase: phase-3, retry_count: 1 (post-verifier implementation_gap)
+```
+
+**Schema v1**:
 
 ```json
 {
   "schema": "builder-handoff-v1",
   "version": 1,
   "owner": "rdd-builder",
-  "current_change": "change-foo",
-  "current_phase": "phase-0",
-  "approval_status": "pending",
+  "change_name": "change-foo",
+  "current_phase": "phase-0|phase-1|phase-1.5|phase-2|phase-2.5|phase-3",
+  "approval_status": "pending|approved|rejected|deferred|revising",
   "plan_quality_status": "pending|valid|invalid",
+  "execution_mode_decision": {
+    "mode": "worktree|lightweight",
+    "reason": "files<=2 AND tasks<=3",
+    "decided_at": "2026-09-04T10:00:00Z",
+    "decided_by": "phase-1.5-deps-analyzer"
+  },
+  "deps_status": {
+    "blockers": [],
+    "manual_deps": [],
+    "cross_repo_pending": [],
+    "decided_at": "2026-09-04T10:00:00Z"
+  },
   "worktree_path": "/abs/path/.rddf/wt/change-foo",
   "branch": "openspec/change-foo",
   "execution_status": "pending|running|failed|completed",
   "review_status": "pending|merge|revise|abandon",
+  "retry_count": 0,
+  "max_retries": 3,
+  "retry_history": [
+    {
+      "from_phase": "phase-3",
+      "to_phase": "phase-1",
+      "verifier_exit_code": 2,
+      "verifier_kind": "ac_fail",
+      "at": "2026-09-04T11:00:00Z"
+    }
+  ],
   "archive_status": "pending|verifying|archived|failed",
   "verifier_report_path": ".rddf/state/.verifier-report.json",
   "updated_at": "2026-09-04T10:00:00Z"
 }
 ```
+
+**Key fields per Oracle findings**:
+
+- `change_name` (replaces `current_change` — implied by filename, but explicit for JSON schema clarity)
+- `current_phase` — supports the new Phase 1.5 (Oracle C2)
+- `execution_mode_decision` — drives Phase 2 worktree selection (Oracle C2: absorbs `execution_mode_decisions` from retired `.plan-handoff.json`)
+- `deps_status` — explicit blocker tracking for STRICT_DEPS_GATE (Oracle C2)
+- `retry_count` + `max_retries` + `retry_history` — required for verifier回环 (Oracle C1)
+- All exit-code-bearing fields use enum string, not concatenated pipe (cleaner than original draft)
+
+**File lock**: `_lib/builder_handoff.py` uses per-file `FileLock(.rddf/state/builder/<change>.json.lock)` with 10s timeout. Multiple changes can be in flight simultaneously without contention.
+
+**Backward compat with `.plan-handoff.json`**: During Wave 1 "新并存" period, builder Phase 1.5 also reads `.plan-handoff.json::execution_mode_decisions` if present (legacy fallback for changes produced by guide-plan). After Wave 3 hard-removal, this fallback path is deleted.
 
 ## 7. Testing Strategy
 
@@ -400,26 +499,32 @@ rddf roadmap add-feature             → rddf planner roadmap add-feature
 | File | Test count target | Coverage |
 |---|---|---|
 | `test_planner_handoff.py` | ≥6 | schema validation, write/read/upgrade v1 → v1 |
-| `test_builder_phase0.py` | ≥8 | approval gate dispatch (4-option), revise → feedback add integration |
-| `test_builder_phase1.py` | ≥6 | plan generation, plan_quality evaluation, tasks.md write |
-| `test_builder_phase2.py` | ≥8 | worktree select, TDD 5-step dispatch, tasks.md writeback |
-| `test_builder_phase3.py` | ≥6 | archive dispatch, verifier hook integration, post-archive cleanup |
-| `test_builder_cli.py` | ≥5 | CLI arg parsing, phase dispatch, exit codes |
+| `test_builder_handoff.py` | ≥8 | per-change layout (`<change>.json` not single file), FileLock acquire/release, schema v1 round-trip, no global-file regression |
+| `test_builder_deps.py` | ≥8 | Phase 1.5: deps analysis, manual_deps merge (ADR-0022), execution_mode decision matrix (file count × task count × risk keyword), STRICT_DEPS_GATE enforcement, cross-repo pending check (ADR-0031) |
+| `test_builder_retry.py` | ≥10 | verifier verdict routing table: PASS(0) → archive; implementation_gap(1) → Phase 2; ac_fail(2) → Phase 1; needs_human(3) → halt exit 4; halted(4) → halt exit 4. Retry counter increments only on back-route; halt at retry_count > max_retries; retry_history append |
+| `test_builder_phase0.py` | ≥8 | approval gate dispatch (4-option), reject/defer/revise → `rddf feedback add` integration (single-writer contract), approval persist + replay skip |
+| `test_builder_phase1.py` | ≥6 | plan generation, plan_quality evaluation, tasks.md write, integration with Phase 1.5 |
+| `test_builder_phase1_5.py` | ≥4 | execution_mode_decision persistence in per-change handoff, deps_status population |
+| `test_builder_phase2.py` | ≥8 | worktree select per execution_mode (worktree/lightweight), COMMIT GATE enforcement, TDD 5-step dispatch, tasks.md writeback |
+| `test_builder_phase3.py` | ≥6 | archive dispatch, verifier hook integration, **verifier exit code preserved (0/1/2/3/4, not collapsed to single 6)**, post-archive cleanup |
+| `test_builder_cli.py` | ≥5 | CLI arg parsing, phase dispatch, **5-value exit code matrix** |
 
-**Total: ≥39 unit tests**
+**Total: ≥69 unit tests** (was ≥39 in pre-batch-1 spec)
 
 ### 7.2 Integration tests (bats)
 
 | File | Test count target | Coverage |
 |---|---|---|
-| `test_rdd_builder_phase0_approval.bats` | ≥4 | end-to-end approval gate flow |
-| `test_rdd_builder_phase1_plan_gen.bats` | ≥3 | plan generation + plan quality gate |
-| `test_rdd_builder_phase2_execute.bats` | ≥4 | worktree creation, TDD execution, tasks writeback |
+| `test_rdd_builder_phase0_approval.bats` | ≥3 | end-to-end approval gate flow |
+| `test_rdd_builder_phase1_1_5_deps.bats` | ≥3 | deps + execution_mode end-to-end (no real openspec needed) |
+| `test_rdd_builder_phase2_execute.bats` | ≥3 | worktree creation, TDD execution, tasks writeback |
 | `test_rdd_builder_phase3_archive.bats` | ≥3 | archive + verifier hook integration |
+| `test_rdd_builder_verifier_retry.bats` | ≥3 | verifier verdict routing end-to-end: implementation_gap → Phase 2 back-route, retry_count increment; ac_fail → Phase 1 back-route; halted → exit 4 halt |
+| `test_rdd_builder_parallel_isolation.bats` | ≥3 | two changes in flight simultaneously (change-foo + change-bar): per-change handoff files isolated, no global-file race (regression test for ADR-0034 §2 fix pattern) |
 | `test_rdd_planner_skill_entry.bats` | ≥3 | skill entry/exit contract, handoff emission |
-| `test_legacy_guide_*_shim.bats` (Wave 2) | ≥3 | backward compat shim |
+| `test_legacy_guide_*_shim.bats` (Wave 2) | ≥3 | backward compat shim (Wave 2 only) |
 
-**Total: ≥20 bats tests**
+**Wave 1 total: ≥21 bats tests** (Wave 2 adds 3 shim tests for total ≥24). The pre-batch-1 spec said ≥20; revised count is ≥21 (consistent within Wave 1 scope).
 
 ### 7.3 Idempotency tests (critical)
 
@@ -432,6 +537,25 @@ def test_builder_phase0_replay_is_idempotent(tmp_path):
     result = builder.phase0(change="change-foo", input="anything")
     assert result.exit_code == 0
     assert result.skipped_reason == "already_approved"
+
+
+def test_builder_retry_loop_caps_at_max(tmp_path):
+    """Retry counter must halt at max_retries=3 (per ADR-0034)."""
+    # First run: verifier implementation_gap → back-route to Phase 2, retry_count=1
+    # ... after 4 total back-routes, exit 4 + halt
+    assert final.retry_count == 4  # one more than max
+    assert final.exit_code == 4
+    assert final.state == "halted_requires_human"
+
+
+def test_builder_parallel_changes_isolated(tmp_path):
+    """Two changes in flight use independent per-change handoff files."""
+    # Simulate two changes executing in parallel
+    # Assert no global-state race (regression test for ADR-0034 §2 pattern)
+    assert (tmp_path / ".rddf/state/builder/change-foo.json").is_file()
+    assert (tmp_path / ".rddf/state/builder/change-bar.json").is_file()
+    # No .builder-handoff.json (single file) — must NOT exist
+    assert not (tmp_path / ".rddf/state/.builder-handoff.json").exists()
 ```
 
 ### 7.4 Regression gate
@@ -445,21 +569,56 @@ Per AGENTS.md "Archive 前全量回归门" rule. Each Wave runs:
 
 Wave 1 is **done** when all are true:
 
+### Core deliverables (16 items)
+
 - [ ] `skills/rdd-planner/SKILL.md` exists with stage entry/exit contract
 - [ ] `skills/rdd-planner/scripts/{planner_stage_entry,planner_stage_exit}.sh` exist
-- [ ] `skills/rdd-builder/SKILL.md` exists with 4-phase state machine contract
-- [ ] `skills/rdd-builder/scripts/{phase0_approval,phase1_plan,phase2_execute,phase2_5_review,phase3_archive}.sh` exist
+- [ ] `skills/rdd-builder/SKILL.md` exists with state machine contract (now 6 phases incl. Phase 1.5)
+- [ ] `skills/rdd-builder/scripts/{phase0_approval,phase1_plan,phase1_5_deps,phase2_execute,phase2_5_review,phase3_archive}.sh` exist
 - [ ] `_lib/planner_handoff.py` exists with `write_planner_handoff()`, `read_planner_handoff()`, schema v1 validation
 - [ ] `_lib/schemas/planner_handoff_schema.json` v1 exists
 - [ ] `_lib/cli/builder_cmd.py` registered in `_lib/cli/__init__.py::_ROUTES` as `rddf builder ...`
-- [ ] `.arch-handoff.json` contract v3 implemented: `roadmap_path` field removed (with v2 → v3 auto-upgrade on read)
-- [ ] `_lib/gate.py::_check_roadmap_defined` removed (no longer called by arch-done gate)
-- [ ] `tests/unit/test_{planner_handoff,builder_*}.py` ≥39 tests, all green under `RDD_PLANNER_MOCK=yes`
-- [ ] `tests/integration/test_rdd_{planner,builder}_*.bats` ≥20 tests, all green
+- [ ] `.arch-handoff.json` contract v3 implemented: `roadmap_path` field removed (with v2 → v3 auto-upgrade on read) — **addressed in batch 2 (Oracle H1)**
+- [ ] `_lib/gate.py::_check_roadmap_defined` removed (no longer called by arch-done gate) — **addressed in batch 2 (Oracle H1)**
+- [ ] `tests/unit/test_{planner_handoff,builder_*}.py` ≥69 tests (revised from ≥39 per batch 1 expansion), all green under `RDD_PLANNER_MOCK=yes`
+- [ ] `tests/integration/test_rdd_{planner,builder}_*.bats` ≥21 tests (revised from ≥20), all green
 - [ ] `./test.sh --full --regression` exits 0 (no new failures)
 - [ ] `ADR-0043-rdd-workflow-v4-stage-merge.md` written and committed (this spec's ADR twin)
 - [ ] Old skills (`guide-design`, `guide-plan`, `guide-ship`) UNTOUCHED — shim banners only in Wave 2
 - [ ] Demo run recorded in §9
+- [ ] All file paths in §4.1 exist on disk (verified via `ls` + git status, no orphans)
+
+### Oracle C1 — Verifier retry loop (8 items)
+
+- [ ] `_lib/builder_retry.py` exists with verifier verdict routing table
+- [ ] `_lib/schemas/builder_retry_schema.json` v1 exists
+- [ ] **Verifier exit codes 0/1/2/3/4 all preserved** in `rddf builder` exit codes (NOT collapsed to single 6)
+- [ ] `retry_count` field exists in `.rddf/state/builder/<change>.json` schema v1
+- [ ] Retry counter increments only on back-route (not on forward progression)
+- [ ] Halt at `retry_count > max_retries=3` (mirrors ADR-0034 §8)
+- [ ] `tests/unit/test_builder_retry.py` ≥10 tests, covers all 5 verdict codes
+- [ ] `tests/integration/test_rdd_builder_verifier_retry.bats` ≥3 tests, end-to-end back-route flow
+
+### Oracle C2 — Deps absorbed into rdd-builder (8 items)
+
+- [ ] `_lib/builder_deps.py` exists with Phase 1.5 deps analysis + execution_mode decision
+- [ ] Phase 1.5 skill script `phase1_5_deps.sh` exists and is invoked from builder Phase 1 → Phase 2 boundary
+- [ ] `execution_mode_decision` field exists in per-change handoff schema (drives Phase 2 worktree selection)
+- [ ] `deps_status` field exists with `blockers`/`manual_deps`/`cross_repo_pending` arrays
+- [ ] ADR-0024 deps-driven execution mode contract migrated: `.plan-handoff.json::execution_mode_decisions` consumers in `_lib/builder_deps.py` (legacy fallback during Wave 1)
+- [ ] `tests/unit/test_builder_deps.py` ≥8 tests, covers STRICT_DEPS_GATE, manual_deps merge, cross-repo check
+- [ ] `tests/integration/test_rdd_builder_phase1_1_5_deps.bats` ≥3 tests, end-to-end deps flow
+- [ ] Pre-condition in §2.4 row 1 updated to reflect C2 fix (deps no longer orphan)
+
+### Oracle H3 — Per-change handoff layout (5 items)
+
+- [ ] `.rddf/state/builder/<change>.json` directory + per-change file layout implemented
+- [ ] **Single-file `.rddf/state/.builder-handoff.json` must NOT exist** (regression assertion)
+- [ ] Per-file `FileLock(.rddf/state/builder/<change>.json.lock, timeout=10)` used for all writes
+- [ ] `tests/unit/test_builder_handoff.py` ≥8 tests, includes parallel-isolation test (two changes in flight, no global race)
+- [ ] `tests/integration/test_rdd_builder_parallel_isolation.bats` ≥3 tests, end-to-end parallel build
+
+**Total: 37 AC items** (16 core + 8 C1 + 8 C2 + 5 H3) — **all must be `[x]` before Wave 1 ships.**
 
 ## 9. Demo Run (record after implementation)
 
