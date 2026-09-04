@@ -309,6 +309,39 @@ def _current_planner_state_revision(project_root: str) -> int:
         return 0
 
 
+def _next_feedback_id(date_prefix: str, prior_entries: List[Dict[str, Any]]) -> str:
+    """Allocate next feedback_id of form pf-YYYYMMDD-NNN where NNN = max(prior same-date)+1.
+
+    Defensive: skips malformed feedback_ids (missing -NNN suffix,
+    non-numeric suffix, missing key) without crashing. Logs skipped IDs
+    at WARNING level for audit.
+    """
+    prefix = f"pf-{date_prefix}-"
+    max_n = 0
+    skipped: List[str] = []
+    for e in prior_entries:
+        fid = e.get("feedback_id")
+        if not isinstance(fid, str) or fid.count("-") != 2:
+            skipped.append(repr(fid) if fid is not None else "<missing>")
+            continue
+        if not fid.startswith(prefix):
+            continue
+        try:
+            n = int(fid.rsplit("-", 1)[1])
+            max_n = max(max_n, n)
+        except (ValueError, IndexError):
+            skipped.append(fid)
+            continue
+    if skipped:
+        import logging
+        logging.getLogger(__name__).warning(
+            "Skipped %d malformed feedback_ids in counter scan: %s",
+            len(skipped),
+            skipped[:5],
+        )
+    return f"{prefix}{max_n + 1:03d}"
+
+
 def _scan_improvements(project_root: str) -> List[Dict[str, str]]:
     """Parse .rddf/improvements/*.md frontmatter → list of {name, priority, theme_ref}."""
     improvements_dir = os.path.join(project_root, ".rddf", "improvements")
@@ -411,11 +444,14 @@ def compute_planner_feedback(
 
     merged: List[Dict[str, Any]] = []
     new_fps = {f.fingerprint for f in new_feedbacks}
+    prior_feedbacks_list = prior.get("feedbacks", [])
     for f in new_feedbacks:
         as_dict = asdict(f)
         prior_match = prior_entries.get(f.fingerprint)
         if prior_match:
+            as_dict["feedback_id"] = prior_match.get("feedback_id", as_dict["feedback_id"])
             as_dict["created_at"] = prior_match["created_at"]
+            as_dict["last_seen_at"] = prior_match.get("last_seen_at", as_dict["last_seen_at"])
             as_dict["status"] = prior_match["status"] if prior_match["status"] != "resolved" else "open"
             as_dict["acknowledged_at"] = prior_match.get("acknowledged_at")
             as_dict["resolved_at"] = prior_match.get("resolved_at")
@@ -429,13 +465,24 @@ def compute_planner_feedback(
                 prior_arch_rev != arch_handoff_rev
                 or prior_state_rev != state_rev
             )
+        else:
+            as_dict["feedback_id"] = _next_feedback_id(date_prefix, prior_feedbacks_list)
+            prior_feedbacks_list = prior_feedbacks_list + [as_dict]
         merged.append(as_dict)
 
     for fp, prior_e in prior_entries.items():
         if fp not in new_fps and prior_e.get("status") in ("resolved", "dismissed"):
             merged.append(prior_e)
 
-    summary = compute_summary([FeedbackEntry(**e) for e in merged if e.get("status") != "stale_only"])
+    summary_entries: List[FeedbackEntry] = []
+    for e in merged:
+        if e.get("status") == "stale_only":
+            continue
+        try:
+            summary_entries.append(FeedbackEntry(**e))
+        except (TypeError, ValueError):
+            continue
+    summary = compute_summary(summary_entries)
 
     return {
         "schema": "planner-feedback-v1",
