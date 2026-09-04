@@ -29,6 +29,7 @@ __all__ = [
     "compute_summary",
     "compute_planner_feedback",
     "read_planner_feedback",
+    "read_planner_feedback_unlocked",
     "write_planner_feedback",
     "acknowledge_feedback",
     "resolve_feedback",
@@ -133,8 +134,13 @@ def _lock_path(project_root: str) -> str:
     return os.path.join(project_root, ".rddf", "state", LOCK_FILENAME)
 
 
-def read_planner_feedback(project_root: str) -> Dict[str, Any]:
-    """Read .planner-feedback.json. Returns empty schema if absent or corrupted."""
+def read_planner_feedback_unlocked(project_root: str) -> Dict[str, Any]:
+    """Read .planner-feedback.json WITHOUT acquiring FileLock.
+
+    Use only inside an outer FileLock critical section. Otherwise races
+    with concurrent writers are possible. See read_planner_feedback
+    for the locked equivalent.
+    """
     path = _feedback_path(project_root)
     if not os.path.exists(path):
         return _empty_schema(project_root)
@@ -145,80 +151,104 @@ def read_planner_feedback(project_root: str) -> Dict[str, Any]:
         return _empty_schema(project_root)
 
 
-def write_planner_feedback(project_root: str, data: Dict[str, Any]) -> None:
-    """Write .planner-feedback.json under FileLock + atomic_write_json."""
+def _write_planner_feedback_unlocked(project_root: str, data: Dict[str, Any]) -> None:
+    """Write .planner-feedback.json via atomic_write_json WITHOUT FileLock.
+
+    Use only inside an outer FileLock critical section (FileLock is
+    fcntl.flock per-fd, non-reentrant — see write_planner_feedback).
+    """
     state_dir = os.path.join(project_root, ".rddf", "state")
     os.makedirs(state_dir, exist_ok=True)
-    lock = _lock_path(project_root)
     path = _feedback_path(project_root)
+    atomic_write_json(path, data, indent=2, ensure_ascii=False)
+
+
+def read_planner_feedback(project_root: str) -> Dict[str, Any]:
+    """Read .planner-feedback.json under FileLock. Returns empty schema if absent/corrupted."""
+    lock = _lock_path(project_root)
     with FileLock(lock, timeout=10.0):
-        atomic_write_json(path, data, indent=2, ensure_ascii=False)
+        return read_planner_feedback_unlocked(project_root)
+
+
+def write_planner_feedback(project_root: str, data: Dict[str, Any]) -> None:
+    """Write .planner-feedback.json under FileLock + atomic_write_json."""
+    lock = _lock_path(project_root)
+    with FileLock(lock, timeout=10.0):
+        _write_planner_feedback_unlocked(project_root, data)
 
 
 def acknowledge_feedback(project_root: str, feedback_id: str) -> bool:
     """Transition feedback to acknowledged status. Returns True if found and updated."""
-    data = read_planner_feedback(project_root)
-    updated = False
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    for entry in data.get("feedbacks", []):
-        if entry["feedback_id"] == feedback_id and entry["status"] == "open":
-            entry["status"] = "acknowledged"
-            entry["acknowledged_at"] = now
-            updated = True
-            break
-    if updated:
-        data["summary"] = compute_summary([FeedbackEntry(**e) for e in data["feedbacks"]])
-        write_planner_feedback(project_root, data)
-    return updated
+    lock = _lock_path(project_root)
+    with FileLock(lock, timeout=10.0):
+        data = read_planner_feedback_unlocked(project_root)
+        updated = False
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        for entry in data.get("feedbacks", []):
+            if entry["feedback_id"] == feedback_id and entry["status"] == "open":
+                entry["status"] = "acknowledged"
+                entry["acknowledged_at"] = now
+                updated = True
+                break
+        if updated:
+            data["summary"] = compute_summary([FeedbackEntry(**e) for e in data["feedbacks"]])
+            _write_planner_feedback_unlocked(project_root, data)
+        return updated
 
 
 def resolve_feedback(project_root: str, feedback_id: str, by: str = "architect") -> bool:
     """Transition feedback to resolved status. Returns True if found and updated."""
-    data = read_planner_feedback(project_root)
-    updated = False
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    for entry in data.get("feedbacks", []):
-        if entry["feedback_id"] == feedback_id and entry["status"] in ("open", "acknowledged"):
-            entry["status"] = "resolved"
-            entry["resolved_at"] = now
-            entry["resolved_by"] = by
-            updated = True
-            break
-    if updated:
-        data["summary"] = compute_summary([FeedbackEntry(**e) for e in data["feedbacks"]])
-        write_planner_feedback(project_root, data)
-    return updated
+    lock = _lock_path(project_root)
+    with FileLock(lock, timeout=10.0):
+        data = read_planner_feedback_unlocked(project_root)
+        updated = False
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        for entry in data.get("feedbacks", []):
+            if entry["feedback_id"] == feedback_id and entry["status"] in ("open", "acknowledged"):
+                entry["status"] = "resolved"
+                entry["resolved_at"] = now
+                entry["resolved_by"] = by
+                updated = True
+                break
+        if updated:
+            data["summary"] = compute_summary([FeedbackEntry(**e) for e in data["feedbacks"]])
+            _write_planner_feedback_unlocked(project_root, data)
+        return updated
 
 
 def dismiss_feedback(project_root: str, feedback_id: str, by: str = "architect") -> bool:
     """Transition feedback to dismissed status. Returns True if found and updated."""
-    data = read_planner_feedback(project_root)
-    updated = False
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    for entry in data.get("feedbacks", []):
-        if entry["feedback_id"] == feedback_id and entry["status"] in ("open", "acknowledged"):
-            entry["status"] = "dismissed"
-            entry["dismissed_at"] = now
-            entry["dismissed_by"] = by
-            updated = True
-            break
-    if updated:
-        data["summary"] = compute_summary([FeedbackEntry(**e) for e in data["feedbacks"]])
-        write_planner_feedback(project_root, data)
-    return updated
+    lock = _lock_path(project_root)
+    with FileLock(lock, timeout=10.0):
+        data = read_planner_feedback_unlocked(project_root)
+        updated = False
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        for entry in data.get("feedbacks", []):
+            if entry["feedback_id"] == feedback_id and entry["status"] in ("open", "acknowledged"):
+                entry["status"] = "dismissed"
+                entry["dismissed_at"] = now
+                entry["dismissed_by"] = by
+                updated = True
+                break
+        if updated:
+            data["summary"] = compute_summary([FeedbackEntry(**e) for e in data["feedbacks"]])
+            _write_planner_feedback_unlocked(project_root, data)
+        return updated
 
 
 def prune_resolved_feedback(project_root: str) -> int:
     """Remove resolved/dismissed entries. Returns count removed."""
-    data = read_planner_feedback(project_root)
-    original = data.get("feedbacks", [])
-    kept = [e for e in original if e["status"] not in ("resolved", "dismissed")]
-    removed = len(original) - len(kept)
-    if removed > 0:
-        data["feedbacks"] = kept
-        data["summary"] = compute_summary([FeedbackEntry(**e) for e in kept])
-        write_planner_feedback(project_root, data)
-    return removed
+    lock = _lock_path(project_root)
+    with FileLock(lock, timeout=10.0):
+        data = read_planner_feedback_unlocked(project_root)
+        original = data.get("feedbacks", [])
+        kept = [e for e in original if e["status"] not in ("resolved", "dismissed")]
+        removed = len(original) - len(kept)
+        if removed > 0:
+            data["feedbacks"] = kept
+            data["summary"] = compute_summary([FeedbackEntry(**e) for e in kept])
+            _write_planner_feedback_unlocked(project_root, data)
+        return removed
 
 
 def _empty_schema(project_root: str) -> Dict[str, Any]:
