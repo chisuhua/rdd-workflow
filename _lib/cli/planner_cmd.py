@@ -9,6 +9,7 @@ Stage 2 MVP + Stage 2.5 P0-3 attach:
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 from typing import List
@@ -116,6 +117,9 @@ def cmd_planner(args: List[str]) -> int:
                 return 0
             from _lib.planner_sync import apply_state_with_warnings as _apply_state_with_warn
             _apply_state_with_warn(project_root, state)
+            if not os.environ.get("SKIP_AUTO_PLANNER_FEEDBACK"):
+                from _lib.planner_feedback import safe_recompute_planner_feedback
+                safe_recompute_planner_feedback(str(project_root))
             sys.stdout.write(f"✓ State written\n")
             sys.stdout.write(f"  Sprint: {state['current_sprint']}\n")
             return 0

@@ -64,4 +64,18 @@ except Exception:
     pass  # non-blocking
 " 2>/dev/null || true
   fi
+
+  # Wave 4 Change 2 hook: auto-recompute planner feedback after arch-done
+  if [ -z "${SKIP_AUTO_PLANNER_FEEDBACK:-}" ]; then
+    PROJECT_ROOT="$PROJECT_ROOT" python3 -c "
+import os, sys
+root = os.environ.get('PROJECT_ROOT', '.')
+sys.path.insert(0, root)
+try:
+    from _lib.planner_feedback import safe_recompute_planner_feedback
+    safe_recompute_planner_feedback(root)
+except Exception as e:
+    print(f'WARNING: auto-feedback recompute failed: {e}', file=sys.stderr)
+" 2>/dev/null || true
+  fi
 }

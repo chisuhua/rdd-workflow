@@ -333,6 +333,40 @@ def _current_planner_state_revision(project_root: str) -> int:
         return 0
 
 
+def recompute_planner_feedback(project_root: str) -> Dict[str, Any]:
+    """Single-FileLock critical section: read prior → compute → write.
+
+    Wave 4 Change 2: canonical recompute path used by hooks (planner
+    sync --apply, rdd-arch arch-done) and the manual --recompute CLI.
+    Centralizing here prevents the RMW race that compute_planner_feedback
+    alone has (read outside lock, merge, caller writes).
+    """
+    lock = _lock_path(project_root)
+    with FileLock(lock, timeout=10.0):
+        prior = read_planner_feedback_unlocked(project_root)
+        new_state = compute_planner_feedback(project_root, prior=prior)
+        _write_planner_feedback_unlocked(project_root, new_state)
+    return new_state
+
+
+def safe_recompute_planner_feedback(project_root: str) -> Optional[Dict[str, Any]]:
+    """Hook wrapper: catches recompute exceptions, logs warning, never re-raises.
+
+    Wave 4 R4 fix: hooks (sync/arch-done) MUST NOT block their parent
+    flow if feedback recompute fails (e.g., corrupt feedback file,
+    permission denied, transient FS error).
+    """
+    try:
+        return recompute_planner_feedback(project_root)
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning(
+            "auto-feedback recompute failed: %s: %s",
+            type(exc).__name__, exc,
+        )
+        return None
+
+
 def _next_feedback_id(date_prefix: str, prior_entries: List[Dict[str, Any]]) -> str:
     """Allocate next feedback_id of form pf-YYYYMMDD-NNN where NNN = max(prior same-date)+1.
 
@@ -402,6 +436,7 @@ def compute_planner_feedback(
     *,
     codebase_commit: Optional[str] = None,
     force_recompute: bool = False,
+    prior: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Scan improvements + ADR + roadmap → emit persistent review tasks.
 
@@ -414,11 +449,18 @@ def compute_planner_feedback(
 
     codebase_commit is stored in computed_from as informational metadata
     (not used for stale trigger — eliminates Stage 3 doc-only-commit noise).
+
+    Args:
+        prior: Optional pre-loaded prior feedback dict. If None, reads via
+            read_planner_feedback. Callers inside a FileLock critical
+            section should pass prior=read_planner_feedback_unlocked(...)
+            to avoid nested-lock deadlock.
     """
     if codebase_commit is None:
         codebase_commit = _current_codebase_commit(project_root)
 
-    prior = read_planner_feedback(project_root)
+    if prior is None:
+        prior = read_planner_feedback(project_root)
     prior_entries = {e["fingerprint"]: e for e in prior.get("feedbacks", [])}
     arch_handoff_rev = _current_arch_handoff_revision(project_root)
     state_rev = _current_planner_state_revision(project_root)
