@@ -1,4 +1,4 @@
-"""_lib/write_arch_handoff.py — write .arch-handoff.json (ADR-0016 v2 schema).
+"""skills/rdd-arch/scripts/write_arch_handoff.py — write .arch-handoff.json (ADR-0016 v2 schema).
 
 Extracted from skills/guide-arch.md lines 618-707 (~88-line inline bash block).
 Preserves exact behavior: ADR glob, ID extraction, roadmap phase reading,
