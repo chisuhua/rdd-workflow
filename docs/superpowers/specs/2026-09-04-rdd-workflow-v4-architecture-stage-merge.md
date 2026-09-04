@@ -122,19 +122,40 @@ If any condition fails, D2b is reverted to D2a and Stage 1/2 path continues.
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌──────────────────┐    ┌──────────────┐
-│  rdd-arch   │ ──▶│ rdd-planner │ ──▶│   rdd-builder    │ ──▶│ rdd-verifier │
+│  rdd-arch   │◄──▶│ rdd-planner │◄──▶│   rdd-builder    │◄──▶│ rdd-verifier │
 │             │    │             │    │                  │    │              │
 │ ADR + arch  │    │ roadmap +   │    │ P0: approval     │    │ batch AC     │
 │ docs (no    │    │ proposal    │    │ P1: plan gen     │    │ verification │
-│ roadmap     │    │ authoring   │    │ P2: worktree +   │    │ (ADR-0034)   │
-│ injection)  │    │ + features  │    │     execute      │    │              │
+│ roadmap     │    │ authoring   │    │ P1.5: deps       │    │ (ADR-0034)   │
+│ injection)  │    │ + features  │    │ P2: worktree +   │    │              │
+│             │    │             │    │     execute      │    │              │
 │             │    │             │    │ P2.5: review     │    │              │
 │             │    │             │    │ P3: archive      │    │              │
 └─────────────┘    └─────────────┘    └──────────────────┘    └──────────────┘
-       │                  │                     │                      │
-       ▼                  ▼                     ▼                      ▼
-.arch-handoff.json  .planner-handoff.json   .builder-handoff.json   .verifier-report.json
+   │      │            │      │           │           │            │      │
+   │      │            │      │           │           │            │      │
+   ▼      │            ▼      │           ▼           │            ▼      │
+ handoff  │           handoff │       handoff  retry │       handoff  retry
+ (fwd)    │           (fwd)   │       (fwd)    loop  │       (fwd)    verdict
+          ▼                   ▼                    ▼                    ▼
+    feedback              feedback             feedback              feedback
+  (back-channel:       (back-channel:       (back-channel:        (back-channel:
+   .planner-             rddf feedback         rddf feedback         Phase 3 → P1/P2
+   feedback.json)        add, Phase 0          add, all              retry loop per
+   per ADR-0042          revise path)          phases)              §3.4)
+                          per ADR-0037         (NEW in batch 4)
 ```
+
+**Forward flow** (handoff contract, top-down):
+```
+.arch-handoff.json → .planner-handoff.json → .builder-handoff.json (per-change) → .verifier-report.json
+```
+
+**Backward flow** (feedback channels, bottom-up + cross-cutting, see §3.5):
+- `rdd-planner → rdd-arch`: `.planner-feedback.json` (persistent review tasks, ADR-0042)
+- `rdd-builder → rdd-planner`: `rddf feedback add` (Phase 0 revise path, ADR-0037)
+- `rdd-verifier → rdd-builder`: Phase 3 retry loop routing (impl_gap → P2, ac_fail → P1)
+- `rdd-builder → rdd-arch`: **`rddf feedback add --kind ac-fail` (NEW in batch 4, ADR-drift detection)**
 
 ### 3.2 Component responsibilities
 
@@ -271,6 +292,69 @@ Phase 3: Archive [with Verifier Retry Loop per Oracle C1]
 4. **Retry counter** lives in `.rddf/state/builder/<change>.json` (per-change layout, see §6.3). Capped at 3 retries per ADR-0034 ceiling. On exceeded → halt with exit 4, requiring human intervention.
 
 5. **Phase 2 COMMIT GATE** is explicit: artifacts must be committed before `git worktree add`. Prevents TOCTOU race with planner attach dirtying main repo (Oracle Q6 finding).
+
+### 3.5 Cross-stage feedback channels [NEW in batch 4]
+
+Each pair of stages has both a **forward handoff contract** (downstream input) and a **backward feedback channel** (upstream signal). This section catalogs both kinds, addressing the implicit gap surfaced by the v4 stage-merge: without explicit feedback channels, a downstream stage cannot push back when it discovers the upstream contract is wrong (e.g., Phase 2 discovers an ADR assumption is false).
+
+#### 3.5.1 Cross-stage feedback matrix
+
+| Source | Target | Channel | Trigger | Persistence | Reference |
+|---|---|---|---|---|---|
+| **rdd-planner** | rdd-arch | `.rddf/state/.planner-feedback.json` (schema `planner-feedback-v1`) | planner sync detects `unmapped_proposal` / `coverage_gap` / `adr_drift` / `roadmap_staleness` | persistent (lifecycle: open → acknowledged → resolved/dismissed, 2-revision stale detection) | [ADR-0042 §2](docs/adr/ADR-0042-rdd-arch-rdd-planner-bidirectional-feedback.md) |
+| **rdd-builder** | rdd-planner | `rddf feedback add <proposal> --from rdd-builder --kind needs-revision` | Phase 0 4-option prompt → revise | persistent (`## Feedback` section in `.rddf/improvements/*.md`) | ADR-0037 (single-writer); spec §3.4 Phase 0 |
+| **rdd-verifier** | rdd-builder | Phase 3 retry loop (verdict routing table) | `implementation_gap` → P2, `ac_fail` → P1, `halted` → halt exit 4 | ephemeral (per `.rddf/state/builder/<change>.json::retry_count`) | [ADR-0034](docs/adr/ADR-0034-rdd-verifier-verify-architecture.md); spec §3.4 Phase 3 |
+| **rdd-builder** | rdd-arch | **`rddf feedback add <proposal> --from rdd-builder --kind ac-fail` [NEW in batch 4]** | Phase 2 ADR-drift detection (e.g., ADR assumes `Foo API returns JSON` but actual returns protobuf) | persistent (`.rddf/improvements/*.md::## Feedback`) + routed via `.planner-feedback.json` re-emit | batch 4 (this section) |
+| **rdd-builder** | rdd-arch (D3 spec-delta) | `approve_proposal.sh::generate_spec_delta` is invoked from builder Phase 0 `approve` | approval gate accept | persistent (`openspec/specs/<name>/spec.md`) | ADR-0025 D3; spec §8 H5 |
+| **rdd-builder** | rdd-planner (legacy plan-handoff) | reads `.rddf/state/.plan-handoff.json::execution_mode_decisions` if present | Phase 1.5 deps phase | read-only (legacy fallback during Wave 1) | spec §3.4 Phase 1.5 |
+| **rdd-arch** | (advisory) | `rddf arch feedback --status open` reads `.planner-feedback.json` | periodic (`rddf env-check` triggers) | read-only display | ADR-0042 §4 |
+
+#### 3.5.2 `rdd-builder → rdd-arch` feedback path [NEW in batch 4]
+
+**Motivation**: When `rdd-builder` Phase 2 (worktree + execute) discovers an upstream assumption is wrong (e.g., ADR says `Foo API returns JSON`, but actual library returns protobuf), there is currently no formal channel to push this finding back to `rdd-arch`. The builder either silently adapts (drift) or fails the change entirely (no learning loop).
+
+**Contract**:
+
+1. **Detection**: Phase 2 TDD step fails in a way that contradicts the approved proposal/ADR (heuristic: failure reason contains keywords like `api-shape-mismatch`, `protocol-drift`, `schema-assumption`,`rdd-arch assumption violated`).
+2. **Emission**: Builder invokes `rddf feedback add` (per ADR-0037 single-writer contract), e.g.:
+   ```bash
+   rddf feedback add <proposal> \
+       --from rdd-builder \
+       --kind ac-fail \
+       --body "ADR-XXXX §3.2 assumes Foo API returns JSON; actual returns protobuf (verified via integration test FooContractTest)." \
+       --ref-change <change>
+   ```
+3. **Routing to architect**: Since `.planner-feedback.json` is the architect-facing channel per ADR-0042, builder-emitted `ac-fail` feedback is **also surfaced** in `.planner-feedback.json` (NEW contract: builder feedback can promote to planner-feedback when `kind=ac-fail` AND `ref_change` matches a proposal that maps to a theme; routing decision in `_lib/builder_feedback_router.py`).
+4. **Architect action**: Architect sees the feedback in `rddf arch feedback --status open` (advisory, read-only). They may then:
+   - Acknowledge: `rddf planner feedback --acknowledge <feedback_id>` (resolves in-place)
+   - Resolve: revise the ADR, then `rddf planner feedback --resolve <feedback_id>` (closes the loop)
+   - Dismiss: `rddf planner feedback --dismiss <feedback_id>` (with reason; won't auto-reopen on match)
+   - Defer: leave open; next arch phase will pick it up
+5. **Audit trail**: feedback entry includes `from=rdd-builder`, `kind=ac-fail`, fingerprint, resolved_at/resolved_by if applicable. Per ADR-0042 §2 lifecycle.
+
+**Pre-conditions for activation**:
+- Architect must explicitly opt-in to accept builder feedback in planner-feedback channel (via `rddf planner feedback --accept-builder-source` config, default ON in v4 per user decision (a))
+- Without opt-in, builder feedback is recorded but NOT routed to architect (only visible via `rddf feedback list <proposal>`)
+
+**Resolved Revival Semantics** (per ADR-0042 §2.X):
+- If a builder-emitted ac-fail feedback is resolved but later fingerprint-matches a new occurrence, it auto-reopens (`reopened_count++`)
+- After 3 reopens, `advisory_warning: "high_reopen_count"` is set; `rddf arch feedback` surfaces it prominently
+
+#### 3.5.3 Why both forward handoff AND backward feedback
+
+A common design mistake is to assume forward handoff is sufficient. The OpenSpec change lifecycle is:
+
+```
+proposal → tasks → plan → execute → archive
+```
+
+If a downstream consumer discovers a problem with an upstream artifact, **without a feedback channel**, the change either:
+- Silently adapts (drift accumulates; future changes inherit the drift)
+- Fails the change (no learning loop; architect never learns of the assumption gap)
+
+The v4 architecture **mandates** both directions per stage pair:
+- Forward: stage handoff JSON files (`.arch-handoff.json`, `.planner-handoff.json`, `.builder/<change>.json`, `.verifier-report.json`)
+- Backward: feedback channels per §3.5.1 matrix (`.planner-feedback.json`, `rddf feedback add`, retry loop, builder→arch NEW in batch 4)
 
 ## 4. Migration Plan: 3-Wave "新并存" Strategy
 
@@ -791,7 +875,18 @@ Wave 1 is **done** when all are true:
 - [ ] `rddf builder run` exit code propagates the underlying phase exit (not collapsed to single 6 as in pre-batch-1 spec)
 - [ ] `tests/integration/test_rdd_builder_exit_codes.bats` ≥3 tests: each phase produces its documented exit code on failure
 
-**Total: 79 AC items** (16 core + 8 C1 + 8 C2 + 5 H3 + 9 H1 + 18 H5 + 7 M1 + 5 M2 + 3 H4) — **all must be `[x]` before Wave 1 ships.**
+### Batch 4 — Cross-stage feedback channels (8 items, per user option (a))
+
+- [ ] §3.1 diagram updated with bidirectional arrows between all 4 stages (forward handoff + backward feedback channels visible)
+- [ ] §3.5 "Cross-stage feedback channels" section added with full feedback matrix (7 source rows)
+- [ ] **§3.5.2 NEW `rdd-builder → rdd-arch` feedback path formalized**: Phase 2 ADR-drift detection → `rddf feedback add --kind ac-fail --from rdd-builder` → routed via `.planner-feedback.json`
+- [ ] `_lib/builder_feedback_router.py` exists: routes `kind=ac-fail` + matching `ref_change` to `.planner-feedback.json` for architect visibility (default ON in v4 per user decision)
+- [ ] Architect opt-in config exists: `rddf planner feedback --accept-builder-source {yes|no}` (default yes); without opt-in, builder feedback recorded but not surfaced to architect
+- [ ] `tests/unit/test_builder_feedback_router.py` ≥6 tests: routing decision matrix (kind + ref_change match → planner-feedback; mismatch → feedback-only)
+- [ ] `tests/integration/test_cross_stage_feedback.bats` ≥3 tests: end-to-end Phase 2 ADR-drift → feedback → architect `rddf arch feedback` visibility
+- [ ] Resolved Revival Semantics (per ADR-0042 §2.X) extend to builder-emitted feedback: `reopened_count++` on fingerprint match, `advisory_warning="high_reopen_count"` after 3 reopens
+
+**Total: 87 AC items** (16 core + 8 C1 + 8 C2 + 5 H3 + 9 H1 + 18 H5 + 7 M1 + 5 M2 + 3 H4 + 8 batch-4) — **all must be `[x]` before Wave 1 ships.**
 
 ## 9. Demo Run (record after implementation)
 
