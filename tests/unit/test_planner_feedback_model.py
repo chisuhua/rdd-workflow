@@ -31,7 +31,7 @@ class TestFeedbackEntryModel:
             resolved_by=None,
             dismissed_at=None,
             dismissed_by=None,
-            computed_from={"planner_state_revision": 1, "arch_handoff_revision": 1, "codebase_commit": "abc"},
+            computed_from={"state_revision": 1, "arch_handoff_revision": 1, "codebase_commit": "abc"},
         )
         assert e.feedback_id.startswith("pf-")
         parts = e.feedback_id.split("-")

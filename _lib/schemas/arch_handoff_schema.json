@@ -5,8 +5,8 @@
     "description": "Schema metadata version per ADR-0016. Project invariant: all rdd-workflow schemas keep version.const='v1' (schema system version, NOT contract version). Contract version lives in properties.version.enum and may be [1, 2] for backward compat."
   },
   "$id": "https://rdd-workflow.local/schemas/arch_handoff_schema.json",
-  "title": "Arch Handoff (ADR-0016 + ADR-0042, contract v2 additive)",
-  "description": "Schema for .rddf/state/.arch-handoff.json emitted by rdd-arch Phase 6 arch-done. Consumed by guide-plan, propose, roadmap, gate.py, detectors.py, actions.py, scan-state.sh. Per ADR-0042 (Stage 3): contract v2 = base + v2_additive(roadmap_fragments_dir + adr_regex) + v2_additive_routing(planner_feedback lives in independent file .rddf/state/.planner-feedback.json owned by rdd-planner, NOT embedded here to preserve ADR-0028 role boundary).",
+  "title": "Arch Handoff (ADR-0016 + ADR-0042, contract v2.1 additive)",
+  "description": "Schema for .rddf/state/.arch-handoff.json emitted by rdd-arch Phase 6 arch-done. Consumed by guide-plan, propose, roadmap, gate.py, detectors.py, actions.py, scan-state.sh. Per ADR-0042 (Stage 3): contract v2 = base + v2_additive(roadmap_fragments_dir + adr_regex) + v2_additive_routing(planner_feedback lives in independent file .rddf/state/.planner-feedback.json owned by rdd-planner, NOT embedded here to preserve ADR-0028 role boundary). contract v2.1 (Wave 4) adds arch_complete_revision: int (optional, monotonic per-write) used by planner_feedback 2-revision stale detection alongside state_revision.",
   "type": "object",
   "additionalProperties": true,
   "required": [
@@ -158,6 +158,11 @@
     "adr_regex": {
       "type": "string",
       "description": "Optional Python regex pattern for ADR filenames (per project.yaml adr.pattern). Distinct from adr_pattern (glob). Used by populate_lib to pass Python regex through arch-handoff (complete-project-yaml-config-gaps M4 Task 4.5+4.6)."
+    },
+    "arch_complete_revision": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonically incremented per write_arch_handoff call (Wave 4 contract v2.1 additive). First write produces 1, subsequent writes produce prior+1. Used by planner_feedback 2-revision stale detection (paired with state_revision in .planner-state.json). Optional; legacy handoffs without this field are treated as revision=0."
     }
   }
 }

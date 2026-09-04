@@ -60,7 +60,7 @@ Stage 2.5 引入的 `rdd-planner` 是五阶段架构的**横切编排器**，管
       "dismissed_at": null,
       "dismissed_by": null,
       "computed_from": {
-        "planner_state_revision": 5,
+        "state_revision": 5,
         "arch_handoff_revision": 12,
         "codebase_commit": "abc123"
       },
@@ -83,7 +83,10 @@ open  ──[architect sees]──>  acknowledged  ──[fixed]──>  resolve
 
 **Fingerprint**: sha256(`kind + proposal + theme + related_adr_ids + reason`)[:16]。同一问题重复 sync **不创建重复条目**，仅更新 `last_seen_at`。
 
-**Stale 检测**: 三标识（`codebase_commit` + `arch_handoff_revision` + `planner_state_last_sync_at`）任一变化 → 标记 `stale: true`。rdd-arch Phase 1 显示 "1 stale, all in T commits ago" advisory。
+**Stale 检测**: 2-revision 比较 — `is_stale = (prior.arch_handoff_revision != current) OR (prior.state_revision != current)`。
+- `arch_handoff_revision`: `.arch-handoff.json::arch_complete_revision`（writer 每次 arch-done +1，per Wave 4 contract v2.1 additive）
+- `state_revision`: `.planner-state.json::state_revision`（writer 每次语义变化 +1；排除 `last_sync_at`/`last_sync_status`/`sprint_started_at`/自身）
+- `codebase_commit`: 保留为 `computed_from` informational metadata，**不**作为 stale 触发器（消除 doc-only commit 噪声）
 
 ### 3. arch-handoff.json 正式化 v2（无字段变动）
 
@@ -130,7 +133,7 @@ rddf arch feedback   # read-only view of .planner-feedback.json
 - ✅ arch 与 planner 双向契约明确，角色边界无冲突
 - ✅ 反馈持久化 + lifecycle，arch 可以追踪未解决问题
 - ✅ fingerprint 去重防止反馈刷屏
-- ✅ 三标识 stale 检测防止基于陈旧数据行动
+- ✅ 2-revision stale 检测防止基于陈旧数据行动（codebase_commit 仅 informational，doc-only commit 不再触发 stale 噪声）
 - ✅ branch/worktree 字段支持未来多 worktree 并行（沿用 ADR-0034 模式）
 - ✅ 无现有消费者 migration cost（contract v2 已存在）
 - ✅ 5 行 shim 兼容 Stage 3 之前的 `skill_use("guide-arch")` 调用

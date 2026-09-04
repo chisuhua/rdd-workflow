@@ -320,7 +320,13 @@ def compute_planner_feedback(
 
     Idempotent: same input produces same fingerprint. New entries merge with
     existing open/acknowledged entries; resolved/dismissed entries preserved.
-    Marks entries stale when codebase_commit or arch_handoff_revision changes.
+
+    Stale determination (2-revision):
+        is_stale = (prior.arch_handoff_revision != current) OR
+                   (prior.state_revision != current)
+
+    codebase_commit is stored in computed_from as informational metadata
+    (not used for stale trigger — eliminates Stage 3 doc-only-commit noise).
     """
     if codebase_commit is None:
         codebase_commit = _current_codebase_commit(project_root)
@@ -328,6 +334,7 @@ def compute_planner_feedback(
     prior = read_planner_feedback(project_root)
     prior_entries = {e["fingerprint"]: e for e in prior.get("feedbacks", [])}
     arch_handoff_rev = _current_arch_handoff_revision(project_root)
+    state_rev = _current_planner_state_revision(project_root)
 
     new_feedbacks: List[FeedbackEntry] = []
     now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -366,7 +373,7 @@ def compute_planner_feedback(
                 dismissed_at=None,
                 dismissed_by=None,
                 computed_from={
-                    "planner_state_revision": 0,
+                    "state_revision": state_rev,
                     "arch_handoff_revision": arch_handoff_rev,
                     "codebase_commit": codebase_commit,
                 },
@@ -385,8 +392,12 @@ def compute_planner_feedback(
             as_dict["resolved_by"] = prior_match.get("resolved_by")
             as_dict["dismissed_at"] = prior_match.get("dismissed_at")
             as_dict["dismissed_by"] = prior_match.get("dismissed_by")
+            prior_cf = prior_match.get("computed_from", {})
+            prior_arch_rev = int(prior_cf.get("arch_handoff_revision", 0))
+            prior_state_rev = int(prior_cf.get("state_revision", 0))
             as_dict["stale"] = (
-                prior_match.get("computed_from", {}).get("codebase_commit") != codebase_commit
+                prior_arch_rev != arch_handoff_rev
+                or prior_state_rev != state_rev
             )
         merged.append(as_dict)
 
@@ -404,6 +415,7 @@ def compute_planner_feedback(
         "worktree_root": project_root,
         "codebase_commit": codebase_commit,
         "arch_handoff_revision": arch_handoff_rev,
+        "state_revision": state_rev,
         "planner_state_last_sync_at": now_iso,
         "feedbacks": merged,
         "summary": summary,

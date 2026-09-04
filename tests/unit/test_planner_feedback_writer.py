@@ -77,11 +77,15 @@ class TestPlannerFeedbackWriter:
         assert result["feedbacks"] == []
         assert result["arch_handoff_revision"] == 0
 
-    def test_compute_planner_feedback_marks_stale_on_commit_mismatch(self, tmp_repo):
-        """When codebase_commit changes vs prior run, prior open entries get stale=True."""
+    def test_compute_planner_feedback_does_not_mark_stale_on_commit_mismatch_only(self, tmp_repo):
+        """codebase_commit change alone (revisions unchanged) does NOT trigger stale.
+
+        stale = arch_handoff_revision OR state_revision mismatch.
+        codebase_commit is informational metadata only (Wave 4 redesign;
+        eliminates Stage 3 doc-only-commit noise).
+        """
         from _lib.planner_feedback import (
             compute_planner_feedback, write_planner_feedback,
-            FeedbackEntry,
         )
         improvements = tmp_repo + "/.rddf/improvements"
         os.makedirs(improvements)
@@ -93,7 +97,10 @@ class TestPlannerFeedbackWriter:
 
         r2 = compute_planner_feedback(tmp_repo, codebase_commit="def456")
         stale = [f for f in r2["feedbacks"] if f.get("stale")]
-        assert stale, "feedbacks from previous commit must be marked stale when commit changes"
+        assert not stale, (
+            "codebase_commit change alone (revisions unchanged) must NOT "
+            "trigger stale — Wave 4 2-revision redesign"
+        )
 
     def test_compute_planner_feedback_handles_corrupted_feedback_file(self, tmp_repo):
         """If .planner-feedback.json exists but is corrupted, compute rebuilds from scratch."""
