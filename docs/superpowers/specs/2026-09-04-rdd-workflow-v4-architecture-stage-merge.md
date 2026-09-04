@@ -278,12 +278,18 @@ add:
   _lib/schemas/planner_handoff_schema.json    # NEW v1
   _lib/schemas/builder_handoff_schema.json    # NEW v1 (per-change layout, NOT single file)
   _lib/schemas/builder_retry_schema.json      # NEW v1 (verifier verdict + routing table)
+  install.sh                                # UPDATE: extend --global to symlink rdd-planner/ + rdd-builder/
+  skills/INSTALL.md                         # UPDATE: Wave 1 install list adds 3 stage skills + re-run notice
   tests/unit/test_planner_handoff.py          # NEW
   tests/unit/test_builder_handoff.py          # NEW (per-change layout, no global file race)
   tests/unit/test_builder_deps.py             # NEW (Phase 1.5 logic, deps blockers)
   tests/unit/test_builder_retry.py            # NEW (verifier verdict routing + retry cap)
   tests/unit/test_builder_*.py                # NEW (~30 tests across phase scripts)
   tests/integration/test_rdd_builder_*.bats   # NEW (~8 bats tests)
+  tests/integration/test_global_install_external_project.bats  # UPDATE: assert 3-stage skill symlink completeness
+  tests/unit/test_arch_handoff_schema_v2.py   # UPDATE: add v3 contract validation
+  tests/unit/test_write_arch_handoff.py       # UPDATE: drop ~13 discovered_roadmap_path assertions
+  tests/integration/test_arch_discovery_contract.bats           # UPDATE: remove _check_roadmap_defined ref + add negative absence test
   docs/adr/ADR-0043-rdd-workflow-v4-stage-merge.md  # NEW
 
 unchanged (remain active):
@@ -329,18 +335,35 @@ remove:
   skills/guide-design/    # DELETE entirely
   skills/guide-plan/      # DELETE entirely
   skills/guide-ship/      # DELETE entirely
-  _lib/cli/design_cmd.py  # DELETE
-  _lib/cli/plan_cmd.py    # DELETE
-  _lib/cli/ship_cmd.py    # DELETE
+  _lib/cli/design_cmd.py  # DELETE (was Wave 2 shim, now obsolete)
+  _lib/cli/plan_cmd.py    # DELETE (was Wave 2 shim, now obsolete)
+  _lib/cli/ship_cmd.py    # DELETE (was Wave 2 shim, now obsolete)
   tests/integration/test_guide_*.bats     # DELETE (~40-50 tests)
+  tests/integration/test_legacy_guide_*_shim.bats  # DELETE (Wave 2 contract; no longer needed)
+  tests/integration/test_global_install_external_project.bats  # UPDATE: drop 4-skill assertion, keep 3-stage + verifier
+  install.sh    # UPDATE: drop guide-{design,plan,ship} from --global symlink list
+  skills/INSTALL.md    # UPDATE: drop guide-{design,plan,ship} from install list (3-stage + verifier only)
+  skills/_lib/discover_ship_changes.sh    # DELETE or REWRITE (only knew guide-plan/guide-ship discovery)
+  skills/guide/scripts/scan-state.sh    # UPDATE: drop guide-* stage references, only arch/planner/builder/verifier
+  _lib/cli/guide_cmd.py    # UPDATE: recommend rdd-arch/rdd-planner/rdd-builder/rdd-verifier (no guide-*)
+  skills/guide/scripts/workflow_synthesizer.py    # UPDATE: same
 
 modify:
   docs/adr/README.md                     # update ADR list
   AGENTS.md                              # update phase references
   README.md                              # update stage table
+  .rddf/state/.env-cache.json schema    # UPDATE: drop guide-* stage fields
+  rddf-session schema v3 (per ADR-0040)   # UPDATE: drop guide-design/guide-plan/guide-ship stage fields
 ```
 
 **Compatibility breaks**: `skill_use("guide-design")` returns "skill not found". Users must migrate to `skill_use("rdd-builder")`.
+
+**Wave 3 trigger conditions** (per Oracle H2, more observable than CI log scraping):
+- **Primary**: ≥4 calendar weeks since Wave 1 ship date
+- **Secondary**: shim埋点 in `.rddf/state/.shim-usage.jsonl` (Wave 2 ships with this logger) shows zero entries for ≥7 consecutive days
+- **Tertiary**: `rdd doctor --check stage-merge` (new check in Wave 2) reports zero users still calling guide-* CLI
+
+If any of (primary + secondary) OR (primary + tertiary) holds, Wave 3 may proceed.
 
 ## 5. CLI Surface
 
@@ -411,18 +434,56 @@ rddf roadmap add-feature             → rddf planner roadmap add-feature
 | `.rddf/state/builder/<change>.json` | rdd-builder | **NEW** (per-change layout, not single file) | v1 |
 | `.rddf/state/.verifier-report.json` | rdd-verifier | No (ADR-0034) | v1 |
 
-### 6.2 `.arch-handoff.json` v3 schema (modified)
+### 6.2 `.arch-handoff.json` v3 schema (modified, full roadmap-field removal per Oracle H1)
 
-**Removed field** (per user first ask: rdd-arch slim):
-- `roadmap_path` (per ADR-0016 v2) — rdd-arch no longer writes this. Consumers fallback to `roadmap.md` default.
+**Removed fields** (per user first ask: rdd-arch slim; rdd-arch no longer does roadmap discovery):
+
+| Field | Was at | Reason for removal |
+|---|---|---|
+| `roadmap_path` (top-level) | `_lib/schemas/arch_handoff_schema.json` (per ADR-0016 v2) | rdd-arch不再生成该字段;rdd-planner接管roadmap职责后,在`.planner-handoff.json`携带 |
+| `roadmap_exists` (top-level) | `_lib/schemas/arch_handoff_schema.json` (per ADR-0016 v2) | 同一原因:rdd-arch不再做roadmap发现 |
+| `discovered.roadmap_path` (nested under `discovered`) | `_lib/schemas/arch_handoff_schema.json:110` | env-check 脚本仍可写入,但 handoff writer 必须停止持久化(避免"rdd-arch 不做 roadmap 发现却把 roadmap 字段写进自己的 handoff"的语义矛盾) |
 
 **Retained fields** (unchanged from v2):
-- `adr_dir`, `adr_pattern`, `architecture_dir`, `discovered`, `arch_complete_revision` (per ADR-0042)
-- `roadmap_fragments_dir`, `adr_regex` (per ADR-0016 v2 additive)
+- `adr_dir`, `adr_pattern`, `architecture_dir`, `discovered` (with roadmap entries stripped), `arch_complete_revision` (per ADR-0042)
+- `roadmap_fragments_dir`, `adr_regex` (per ADR-0016 v2 additive — these are config schemas, NOT runtime discoveries; OK to retain)
 
-**Schema version bump**: `1 → 3` (skipping 2 because v2 already used by ADR-0042). Per `_lib/schemas/arch_handoff_schema.json` precedent: bump version forces consumer validation.
+**Schema version bump**: `version: enum [1, 2, 3]` — readers must accept any version 1/2/3 (backward compat via `additionalProperties: true`).
 
-**Migration**: existing v2 handoff files auto-upgrade on read (add `arch_complete_revision: 0` default if missing). v1 files require manual upgrade.
+**Migration narrative** (corrected per Oracle H1):
+
+```
+v1 handoff on v3 reader → OK (additionalProperties: true; removed fields ignored)
+v2 handoff on v3 reader → OK (same reason; v2 handoff still contains roadmap_path etc. but reader treats them as unknown extra fields)
+v3 handoff on v1/v2 reader → FAIL (version enum mismatch; v1/v2 readers see unknown version 3)
+
+For old writers (write_arch_handoff.py not yet upgraded in Wave 1 coexistence):
+  v1/v2 writer writing fields rdd-arch no longer owns
+  → v3 reader still parses (additionalProperties: true absorbs extra fields)
+  → runtime safe; only schema validation would reject (and there's none currently)
+
+For new v3 writer:
+  writer omits roadmap_path/roadmap_exists/discovered.roadmap_path
+  → v1/v2 readers reading v3 handoff
+  → if reader validates version enum strictly: rejected (correct)
+  → if reader is permissive (current state in _lib/state_reader.py): parses fine
+```
+
+**Read-time upgrade is NOT required** (corrects pre-batch-2 spec error):
+- The original spec said "v2 → v3 auto-upgrade on read (add `arch_complete_revision: 0` default)" — **this is wrong**: `arch_complete_revision` is an unrelated Wave 4 / ADR-0042 field that has nothing to do with roadmap-path removal; it's already mandatory in v2 (added in v2.1, see ADR-0042 §3).
+- Read-time upgrade for **removed** fields is a no-op: there's no data to migrate, just stop writing the fields.
+- v1/v2 files are forward-compatible via `additionalProperties: true` on the reader side.
+
+**Test impact** (Oracle H1 concrete regression gate break, must be addressed in Wave 1 AC):
+
+| Test file | Line(s) | Current behavior | Required change |
+|---|---|---|---|
+| `tests/integration/test_arch_discovery_contract.bats` | 266-269 | imports `_check_roadmap_defined`, calls it | Remove `_check_roadmap_defined` import + call; assert absence via `function_exists` (function must NOT exist in v3) |
+| `tests/unit/test_write_arch_handoff.py` | ~13 refs to `discovered_roadmap_path` | writer emits this field | Update writer + tests to NOT emit `roadmap_path`/`roadmap_exists`/`discovered.roadmap_path` |
+| `tests/integration/test_arch_discovery_contract.bats` | (other lines) | asserts `_check_roadmap_defined` in arch-done gate | Add negative test: assert `_check_roadmap_defined` is **not** registered in arch-done gate |
+| `tests/unit/test_arch_handoff_schema_v2.py` | (cross-repo handoff) | validates v2 handoff | Add v3 contract validation tests (v3 fields present, v3 fields missing) |
+
+**Failure mode if test impact ignored**: regression gate AC §8 will fail with N new bats failures from `test_arch_discovery_contract.bats:266-269`, contradicting spec's own regression-gate AC ("zero new failures").
 
 ### 6.3 `.rddf/state/builder/<change>.json` schema v1 (NEW, per-change layout per Oracle H3)
 
@@ -618,7 +679,32 @@ Wave 1 is **done** when all are true:
 - [ ] `tests/unit/test_builder_handoff.py` ≥8 tests, includes parallel-isolation test (two changes in flight, no global race)
 - [ ] `tests/integration/test_rdd_builder_parallel_isolation.bats` ≥3 tests, end-to-end parallel build
 
-**Total: 37 AC items** (16 core + 8 C1 + 8 C2 + 5 H3) — **all must be `[x]` before Wave 1 ships.**
+### Oracle H1 — arch-handoff v2→v3 full removal (9 items, addressed in batch 2)
+
+- [ ] `_lib/schemas/arch_handoff_schema.json` v3 enum: `[1, 2, 3]`
+- [ ] **All three** roadmap fields removed from handoff writer: `roadmap_path` (top-level), `roadmap_exists` (top-level), `discovered.roadmap_path` (nested)
+- [ ] `roadmap_fragments_dir` + `adr_regex` retained (config schemas, not runtime discoveries)
+- [ ] `_lib/gate.py::_check_roadmap_defined` removed (and `gate.py:382` registration removed from arch-done gate)
+- [ ] `tests/integration/test_arch_discovery_contract.bats:266-269` updated to NOT import/call `_check_roadmap_defined`
+- [ ] `tests/unit/test_write_arch_handoff.py` updated to NOT assert `discovered_roadmap_path` field (~13 references)
+- [ ] **Negative test added**: assert `_check_roadmap_defined` function does NOT exist in `_lib/gate.py` post-Wave-1
+- [ ] **Negative test added**: assert `.arch-handoff.json` written by v3 writer does NOT contain `roadmap_path`/`roadmap_exists`/`discovered.roadmap_path`
+- [ ] **v1/v2 handoff backward compat**: existing v1/v2 files are still parsed by v3 reader (additionalProperties: true; removed fields treated as unknown extras)
+
+### Oracle H5 — §8 AC gaps (Wave 1 deployment surface, addressed in batch 2)
+
+- [ ] **`install.sh --global`** updated to symlink `skills/rdd-planner/` + `skills/rdd-builder/` to `~/.agents/skills/` (alongside existing `skills/rdd-arch/` symlink from ADR-0042)
+- [ ] **`skills/INSTALL.md`** updated: Wave 1 install list now includes 3 stage skills (rdd-arch/rdd-planner/rdd-builder) + rdd-verifier
+- [ ] **`skills/INSTALL.md`** explicitly notes: existing global install users must re-run `bash install.sh --global` to discover new skills (failure mode: AI tool finds rdd-arch in `~/.agents/skills/` but NOT rdd-planner/rdd-builder)
+- [ ] **`tests/integration/test_global_install_external_project.bats`** extended: assert 3-stage skill symlink completeness (rdd-arch + rdd-planner + rdd-builder present in `~/.agents/skills/`)
+- [ ] **`D3 spec-delta generation`** preserved: `approve_proposal.sh::generate_spec_delta` (per ADR-0025 D3) is invoked from rdd-builder Phase 0 `approve` path (NOT from guide-design anymore)
+- [ ] **`design-done gate equivalent`**: rdd-builder Phase 0 `approve` writes equivalent audit trail (was: `design-handoff.json::proposals_reviewed`; now: per-change `.rddf/state/builder/<change>.json::approval_status` + `feedback_status` frontmatter on `.rddf/improvements/*.md`)
+- [ ] **`plan-done gate equivalent`**: rdd-builder Phase 1.5 absorbs plan-done semantics (Gate 0 ready-for-ship + Gate 1 active_changes ≥ 1 + Gate 2 artifacts committed) — all three gates are checked in Phase 1.5 before proceeding to Phase 2
+- [ ] **`COMMIT GATE`**: Phase 2 explicitly checks `git status --porcelain` returns empty for artifacts before `git worktree add` (regression test for planner-attach TOCTOU race per Oracle Q6)
+- [ ] **`rddf-session` stage mapping** (per ADR-0042 §6 pattern): `intent: rdd-arch/rdd-planner/rdd-builder` recognized; legacy `intent: guide-design/guide-plan/guide-ship` shim maps to `rdd-builder` (Wave 1 coexistence)
+- [ ] **`stage_arch` / `stage_planner` / `stage_builder` / `stage_verifier`** fields on `rddf-session` schema v3 (per ADR-0040 session metrics precedent); migration of legacy `stage_arch`/`stage_design`/`stage_plan`/`stage_ship`/`stage_verifier` to new naming (Wave 2)
+
+**Total: 64 AC items** (16 core + 8 C1 + 8 C2 + 5 H3 + 9 H1 + 18 H5) — **all must be `[x]` before Wave 1 ships.**
 
 ## 9. Demo Run (record after implementation)
 
