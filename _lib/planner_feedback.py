@@ -266,6 +266,19 @@ def _current_arch_handoff_revision(project_root: str) -> int:
         return 0
 
 
+def _current_planner_state_revision(project_root: str) -> int:
+    """Read state_revision from .planner-state.json (0 if absent or legacy)."""
+    path = os.path.join(project_root, ".rddf", "state", ".planner-state.json")
+    if not os.path.exists(path):
+        return 0
+    try:
+        with open(path) as f:
+            data = json.load(f)
+        return int(data.get("state_revision", 0))
+    except (json.JSONDecodeError, OSError, ValueError):
+        return 0
+
+
 def _scan_improvements(project_root: str) -> List[Dict[str, str]]:
     """Parse .rddf/improvements/*.md frontmatter → list of {name, priority, theme_ref}."""
     improvements_dir = os.path.join(project_root, ".rddf", "improvements")

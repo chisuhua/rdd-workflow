@@ -8,9 +8,10 @@ mode seen in `.rddf/state/iteration.corrupt.*`.
 from __future__ import annotations
 
 import datetime as _dt
+import hashlib
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import jsonschema
 
@@ -52,10 +53,33 @@ def _state_path(project_root: Path) -> Path:
     return project_root / ".rddf" / "state" / STATE_FILENAME
 
 
+_SEMANTIC_HASH_EXCLUDE = frozenset({
+    "state_revision",
+    "last_sync_at",
+    "last_sync_status",
+    "sprint_started_at",
+})
+
+
+def _planner_state_semantic_hash(state: Dict[str, Any]) -> str:
+    """SHA-256[:16] of semantic fields (excludes timestamps + revision itself).
+
+    Used by write_state/update_state to decide whether to bump state_revision.
+    """
+    semantic = {
+        k: v for k, v in state.items()
+        if k not in _SEMANTIC_HASH_EXCLUDE
+    }
+    return hashlib.sha256(
+        json.dumps(semantic, sort_keys=True, default=str).encode()
+    ).hexdigest()[:16]
+
+
 def _default_state() -> Dict[str, Any]:
     """Return a fresh, empty state dict."""
     return {
         "version": SCHEMA_VERSION,
+        "state_revision": 0,
         "current_sprint": current_sprint_id(),
         "last_sync_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
         "last_sync_status": "ok",
@@ -94,6 +118,23 @@ def read_state(project_root: Path, *, validate: bool = True) -> Dict[str, Any]:
     return data
 
 
+def _maybe_bump_state_revision(
+    new_state: Dict[str, Any],
+    prior_hash: Optional[str],
+) -> None:
+    """In-place bump state_revision when semantic hash differs from prior.
+
+    Args:
+        new_state: The state to be written (mutated in-place).
+        prior_hash: Semantic hash of prior state BEFORE mutator ran, or None
+            if no prior state exists. Caller is responsible for capturing
+            prior_hash before invoking the mutator to avoid aliasing bugs.
+    """
+    new_hash = _planner_state_semantic_hash(new_state)
+    if prior_hash is None or prior_hash != new_hash:
+        new_state["state_revision"] = int(new_state.get("state_revision", 0)) + 1
+
+
 def write_state(project_root: Path, state: Dict[str, Any], *, validate: bool = True) -> None:
     """Atomically write planner state.
 
@@ -117,6 +158,15 @@ def write_state(project_root: Path, state: Dict[str, Any], *, validate: bool = T
     lock_path = path.with_suffix(path.suffix + ".lock")
 
     with FileLock(str(lock_path), timeout=10.0):
+        prior = None
+        if path.exists():
+            try:
+                with open(path, encoding="utf-8") as f:
+                    prior = json.load(f)
+            except (json.JSONDecodeError, OSError):
+                prior = None
+        prior_hash = _planner_state_semantic_hash(prior) if prior else None
+        _maybe_bump_state_revision(state, prior_hash)
         atomic_write_json(path, state)
 
 
@@ -144,6 +194,7 @@ def update_state(
         if data.get("version") != SCHEMA_VERSION:
             raise SchemaMismatchError(f"State version mismatch: {data.get('version')}")
 
+        prior_hash = _planner_state_semantic_hash(data)
         new_data = mutator(data) or data
 
         if validate:
@@ -153,5 +204,6 @@ def update_state(
             except jsonschema.ValidationError as exc:
                 raise PlannerStateError(f"State validation failed: {exc.message}") from exc
 
+        _maybe_bump_state_revision(new_data, prior_hash)
         atomic_write_json(path, new_data)
         return new_data
