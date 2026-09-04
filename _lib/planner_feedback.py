@@ -68,6 +68,8 @@ class FeedbackEntry:
     dismissed_by: Optional[str]
     computed_from: Dict[str, Any]
     stale: bool = False
+    reopened_count: int = 0
+    advisory_warning: Optional[str] = None
 
     def __post_init__(self):
         if self.severity not in VALID_SEVERITIES:
@@ -518,7 +520,16 @@ def compute_planner_feedback(
             as_dict["feedback_id"] = prior_match.get("feedback_id", as_dict["feedback_id"])
             as_dict["created_at"] = prior_match["created_at"]
             as_dict["last_seen_at"] = prior_match.get("last_seen_at", as_dict["last_seen_at"])
-            as_dict["status"] = prior_match["status"] if prior_match["status"] != "resolved" else "open"
+            prior_status = prior_match["status"]
+            prior_reopened = int(prior_match.get("reopened_count", 0))
+            if prior_status == "resolved":
+                as_dict["status"] = "open"
+                as_dict["reopened_count"] = prior_reopened + 1
+                if as_dict["reopened_count"] >= 3:
+                    as_dict["advisory_warning"] = "high_reopen_count"
+            else:
+                as_dict["status"] = prior_status
+                as_dict["reopened_count"] = prior_reopened
             as_dict["acknowledged_at"] = prior_match.get("acknowledged_at")
             as_dict["resolved_at"] = prior_match.get("resolved_at")
             as_dict["resolved_by"] = prior_match.get("resolved_by")
@@ -542,8 +553,6 @@ def compute_planner_feedback(
 
     summary_entries: List[FeedbackEntry] = []
     for e in merged:
-        if e.get("status") == "stale_only":
-            continue
         try:
             summary_entries.append(FeedbackEntry(**e))
         except (TypeError, ValueError):
