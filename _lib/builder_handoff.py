@@ -80,6 +80,33 @@ def read_builder_handoff(project_root: str, change_name: str) -> dict:
         return json.load(f)
 
 
+def update_builder_handoff(project_root: str, change_name: str, **partial) -> dict:
+    """Merge partial fields into existing handoff; auto-include required fields.
+
+    Single-call update API that replaces the dangerous pattern of
+    ``write_builder_handoff(**read_builder_handoff(...))``. Reads the
+    current handoff, merges ``partial`` on top, and writes back atomically
+    under FileLock. Auto-generated fields (schema, version, owner,
+    updated_at) are preserved from the existing handoff or filled in
+    from defaults.
+
+    Returns the merged dict.
+    """
+    existing = read_builder_handoff(project_root, change_name)
+    merged = {**existing, **partial}
+    merged.setdefault("schema", "builder-handoff-v1")
+    merged.setdefault("version", 1)
+    merged.setdefault("owner", "rdd-builder")
+    merged.setdefault("change_name", change_name)
+    merged["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    handoff_path = _handoff_path(project_root, change_name)
+    handoff_path.parent.mkdir(parents=True, exist_ok=True)
+    with FileLock(str(handoff_path) + ".lock", timeout=10):
+        atomic_write_json(str(handoff_path), merged)
+    return merged
+
+
 def increment_retry(
     project_root: str,
     change_name: str,
@@ -90,20 +117,16 @@ def increment_retry(
     data = read_builder_handoff(project_root, change_name)
     data["retry_count"] = data.get("retry_count", 0) + 1
     data["current_phase"] = to_phase
-    data["retry_history"].append({
+    data.setdefault("retry_history", []).append({
         "from_phase": "phase-3",
         "to_phase": to_phase,
         "verifier_exit_code": verifier_exit_code,
         "verifier_kind": verifier_kind,
         "at": datetime.now(timezone.utc).isoformat(),
     })
-    valid_kwargs = {
-        "current_phase", "approval_status", "plan_quality_status",
-        "execution_mode_decision", "deps_status", "worktree_path", "branch",
-        "execution_status", "review_status", "archive_status",
-        "verifier_report_path", "retry_count", "max_retries",
-        "retry_history", "phase_pause_history",
-    }
-    filtered = {k: v for k, v in data.items() if k in valid_kwargs}
-    write_builder_handoff(project_root, change_name, **filtered)
-    return data
+    data.pop("change_name", None)
+    data.pop("schema", None)
+    data.pop("version", None)
+    data.pop("owner", None)
+    data.pop("updated_at", None)
+    return update_builder_handoff(project_root, change_name, **data)

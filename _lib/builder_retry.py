@@ -22,7 +22,7 @@ def route_verifier_verdict(verifier_exit_code: int, verifier_kind=None) -> dict:
 
 
 def should_halt_for_retry_exceeded(retry_count: int, max_retries: int) -> bool:
-    return retry_count > max_retries
+    return retry_count >= max_retries
 
 
 def should_increment_retry(should_back_route: bool) -> bool:

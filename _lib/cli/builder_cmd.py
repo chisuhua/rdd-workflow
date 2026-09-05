@@ -106,7 +106,7 @@ def _cmd_run(args, project_root):
                 print("--from-phase requires integer", file=sys.stderr)
                 return 2
 
-    from _lib.builder_handoff import read_builder_handoff, write_builder_handoff
+    from _lib.builder_handoff import read_builder_handoff, write_builder_handoff, update_builder_handoff
     if not read_builder_handoff(project_root, change_name):
         write_builder_handoff(
             project_root=project_root,
@@ -156,7 +156,7 @@ def _cmd_run(args, project_root):
                 "user_input": user_input.strip(),
                 "at": datetime.now(timezone.utc).isoformat(),
             })
-            write_builder_handoff(project_root, change_name, **handoff)
+            update_builder_handoff(project_root, change_name, **handoff)
 
         elif (not is_hard_pause) and (not no_pause) and phase_exit == 0:
             try:
@@ -174,16 +174,32 @@ def _cmd_run(args, project_root):
                 "user_input": user_input.strip(),
                 "at": datetime.now(timezone.utc).isoformat(),
             })
-            write_builder_handoff(project_root, change_name, **handoff)
+            update_builder_handoff(project_root, change_name, **handoff)
 
         if phase_exit != 0:
             if phase == "phase3" and retry_on_fail:
-                from _lib.builder_retry import route_verifier_verdict
+                from _lib.builder_retry import (
+                    route_verifier_verdict,
+                    should_halt_for_retry_exceeded,
+                )
+                from _lib.builder_handoff import increment_retry
                 decision = route_verifier_verdict(verifier_exit_code=phase_exit)
+                handoff = read_builder_handoff(project_root, change_name)
+                if should_halt_for_retry_exceeded(
+                    handoff.get("retry_count", 0), handoff.get("max_retries", 3)
+                ):
+                    return 4
                 if decision["should_back_route"]:
                     back_phase = decision["next_phase"]
                     back_num = {"phase-1": 1, "phase-2": 3}.get(back_phase, 0)
                     if back_num > 0:
+                        increment_retry(
+                            project_root,
+                            change_name,
+                            to_phase=back_phase,
+                            verifier_kind=decision["verifier_kind"],
+                            verifier_exit_code=phase_exit,
+                        )
                         return _cmd_run(
                             [change_name, "--from-phase", str(back_num)] +
                             (["--no-pause"] if no_pause else []) +
