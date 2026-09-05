@@ -6,16 +6,16 @@ of files and emits the same ``RECOMMEND`` / ``REASON`` strings so that
 the AI agent's behavior is unchanged after migration.
 
 Priority order (highest first; matches scan-state.sh lines 41-53):
-    1.  arch-handoff present, plan-handoff absent, ADR >= 1  → "guide-plan"
+    1.  arch-handoff present, plan-handoff absent, ADR >= 1  → "rdd-builder"
     1b. arch-handoff present, ADR < 1                        → "guide-arch (recover)"
-    2.  plan-handoff present, active_changes > 0             → "guide-ship"
+    2.  plan-handoff present, active_changes > 0             → "rdd-builder"
     2b. plan-handoff present, active_changes == 0            → "guide-ship (cleanup)"
-    3-5. worktree states (incomplete/detached/complete)      → "guide-ship"
-    6.  committed change in HEAD, no worktree                → "guide-ship"
-    7.  no roadmap.md                                         → "guide-arch"
-    8.  no openspec/changes/                                  → "guide-plan"
-    9.  proposal-suggestions.md has pending entry            → "guide-plan"
-    10. default                                               → "guide-ship"
+    3-5. worktree states (incomplete/detached/complete)      → "rdd-builder"
+    6.  committed change in HEAD, no worktree                → "rdd-builder"
+    7.  no roadmap.md                                         → "rdd-arch"
+    8.  no openspec/changes/                                  → "rdd-builder"
+    9.  proposal-suggestions.md has pending entry            → "rdd-builder"
+    10. default                                               → "rdd-builder"
 
 Stale ``workflow-state.md`` (pre-refactor format) emits a one-line
 warning but does not change the recommendation.
@@ -151,19 +151,19 @@ def _scan_state(project_root: str) -> Tuple[str, str]:
         adr_count = int(arch.get("adr_count", 0) or 0)
         if adr_count < 1:
             return (
-                "guide-arch",
+                "rdd-arch",
                 "arch-done 未完成 (ADR 数量不足 → 回到 adr-create 阶段)",
             )
         if design is None:
-            return ("guide-design", "arch-done 已完成 → 进入设计阶段")
-        return ("guide-plan", "design-done 已完成 → 进入变更生成")
+            return ("rdd-builder", "arch-done 已完成 → 进入设计阶段")
+        return ("rdd-builder", "design-done 已完成 → 进入变更生成")
 
     # 2. plan-handoff present
     if plan is not None:
         active_count = int(plan.get("active_changes", 0) or 0)
         if active_count == 0:
             return (
-                "guide-ship",
+                "rdd-builder",
                 "plan-handoff 残留 (无活跃 change -> 进入 ship 清理/归档)",
             )
         # Cross-validate: count non-archived change dirs in filesystem
@@ -175,30 +175,30 @@ def _scan_state(project_root: str) -> Tuple[str, str]:
                     fs_active += 1
         if fs_active == 0:
             return (
-                "guide-arch",
+                "rdd-arch",
                 f"plan-handoff stale (says {active_count} active, but 0 in filesystem -> all archived)",
             )
-        return ("guide-ship", "变更生成已完成 → 进入变更执行")
+        return ("rdd-builder", "变更生成已完成 → 进入变更执行")
 
     # 3-5. worktree states
     worktrees = _git_worktree_list(project_root)
     for wt in worktrees:
         if _worktree_has_incomplete_tasks(wt):
-            return ("guide-ship", "worktree 存在,任务未完成 → 继续执行")
+            return ("rdd-builder", "worktree 存在,任务未完成 → 继续执行")
 
     detached = len(worktrees)
     if detached > 0:
         return (
-            "guide-ship",
+            "rdd-builder",
             f"{detached} 个 worktree 在跑（可能在分离终端）",
         )
 
     if worktrees:
-        return ("guide-ship", "worktree 存在,任务已完成 → 进入 archive")
+        return ("rdd-builder", "worktree 存在,任务已完成 → 进入 archive")
 
     # 6. committed change in HEAD (no worktree yet)
     if _has_committed_change_in_head(project_root):
-        return ("guide-ship", "有已 commit 的 change 待建 worktree")
+        return ("rdd-builder", "有已 commit 的 change 待建 worktree")
 
     # 7. no roadmap.md
     roadmap_rel = "roadmap.md"
@@ -206,11 +206,11 @@ def _scan_state(project_root: str) -> Tuple[str, str]:
         roadmap_rel = arch.get("roadmap_path") or "roadmap.md"
     roadmap_path = Path(project_root) / roadmap_rel
     if not roadmap_path.is_file():
-        return ("guide-arch", f"无 {roadmap_rel} → 进入架构定义")
+        return ("rdd-arch", f"无 {roadmap_rel} → 进入架构定义")
 
     # 8. no openspec/changes/ directory
     if not (Path(project_root) / "openspec" / "changes").is_dir():
-        return ("guide-plan", "无 change → 进入变更生成")
+        return ("rdd-builder", "无 change → 进入变更生成")
 
     # 9-10. proposal-suggestions.md (current format: Markdown table)
     # Check if there are unapproved proposals in .rddf/improvements/
@@ -239,8 +239,8 @@ def _scan_state(project_root: str) -> Tuple[str, str]:
             pending = True
 
     if pending:
-        return ("guide-design", "有未审查提案 → 进入设计阶段")
-    return ("guide-ship", "无待创建 change → 准备 ship")
+        return ("rdd-builder", "有未审查提案 → 进入设计阶段")
+    return ("rdd-builder", "无待创建 change → 准备 ship")
 
 
 def cmd_guide(args: list[str]) -> int:

@@ -33,20 +33,20 @@ Consumes (read-only)
 Decision tree (14-path priority, mirrors scan-state.sh::scan_state)
 -------------------------------------------------------------------
 Priority order (highest first):
-    1.  arch-handoff missing                     -> guide-arch (high)
-    2.  arch-handoff present, adr_count < 1      -> guide-arch (high, recover)
-    3.  arch done, design-handoff missing        -> guide-design (high)
-    4.  arch done, design done, plan-handoff missing -> guide-plan (high)
-    5.  plan-handoff present, active_changes==0  -> guide-ship (high, cleanup)
-    6.  plan-handoff present, active_changes>0   -> guide-ship (high)
-    7.  worktree with incomplete tasks           -> guide-ship (medium)
-    8.  detached openspec worktrees              -> guide-ship (medium)
-    9.  worktree tasks all completed             -> guide-ship (medium, archive)
-    10. committed change in HEAD, no worktree    -> guide-ship (medium)
-    11. no roadmap.md                            -> guide-arch (low)
-    12. no openspec/changes/                     -> guide-plan (low)
-    13. proposal-approved.md has approved entries -> guide-plan (high)
-    14. default                                  -> guide-ship (low)
+    1.  arch-handoff missing                     -> rdd-builder (high)
+    2.  arch-handoff present, adr_count < 1      -> rdd-builder (high, recover)
+    3.  arch done, design-handoff missing        -> rdd-builder (high)
+    4.  arch done, design done, plan-handoff missing -> rdd-builder (high)
+    5.  plan-handoff present, active_changes==0  -> rdd-builder (high, cleanup)
+    6.  plan-handoff present, active_changes>0   -> rdd-builder (high)
+    7.  worktree with incomplete tasks           -> rdd-builder (medium)
+    8.  detached openspec worktrees              -> rdd-builder (medium)
+    9.  worktree tasks all completed             -> rdd-builder (medium, archive)
+    10. committed change in HEAD, no worktree    -> rdd-builder (medium)
+    11. no roadmap.md                            -> rdd-builder (low)
+    12. no openspec/changes/                     -> rdd-builder (low)
+    13. proposal-approved.md has approved entries -> rdd-builder (high)
+    14. default                                  -> rdd-builder (low)
 
 Paths 11-14 are implicitly unreachable because earlier paths (1, 3-6)
 catch all those states first. The 14-path enumeration is preserved for
@@ -95,11 +95,11 @@ class MenuOption:
     """One menu option for the interactive guide entry point.
 
     Fields:
-        id: unique identifier (e.g. ``"guide-arch"``, ``"resume-rds_xxx"``)
-        label: short display name (e.g. ``"guide-arch"``, ``"resume rds_xxx"``)
+        id: unique identifier (e.g. ``"rdd-arch"``, ``"resume-rds_xxx"``)
+        label: short display name (e.g. ``"rdd-arch"``, ``"resume rds_xxx"``)
         description: one-line human-readable description
         action: the skill_use call to execute
-            (e.g. ``"guide-arch"``, ``"rddf-session resume rds_xxx"``),
+            (e.g. ``"rdd-arch"``, ``"rddf-session resume rds_xxx"``),
             or ``None`` when the option is disabled
             (``group="disabled"``).
         group: display grouping:
@@ -148,8 +148,8 @@ class WorkflowRecommendation:
     """Structured recommendation output from ``synthesize()``.
 
     Fields:
-        suggested_action: e.g. ``"guide-plan"``, ``"guide-ship"``,
-            ``"guide-arch"``
+        suggested_action: e.g. ``"rdd-builder"``, ``"rdd-builder"``,
+            ``"rdd-arch"``
         reason: one-sentence human-readable reason (Chinese, matches
             scan-state.sh output for backward compatibility)
         confidence: ``"high"`` | ``"medium"`` | ``"low"``
@@ -190,7 +190,7 @@ def synthesize(project_root: str) -> WorkflowRecommendation:
     """Read state and produce a recommendation. Never raises.
 
     On any unexpected exception, returns a fallback recommendation
-    of ``("guide-ship", "fallback: synthesizer error", "low")`` with
+    of ``("rdd-builder", "fallback: synthesizer error", "low")`` with
     empty ``unblocked_changes`` / ``orphaned_sessions`` and ``None``
     ``active_session``.
 
@@ -404,7 +404,7 @@ def _build_all_options(
 
     The first entry is always the top recommendation (marked as
     recommended group). Remaining entries are grouped by:
-        - ``stages``: guide-arch, guide-design, guide-plan, guide-ship
+        - ``stages``: rdd-arch, rdd-planner, rdd-builder, rdd-verifier
         - ``session``: session management actions (when applicable)
         - ``utilities``: feature, status
 
@@ -416,10 +416,10 @@ def _build_all_options(
 
     # 1. Recommended (first entry, ⭐)
     reason_map = {
-        "guide-arch": "进入架构定义阶段 — ADR / roadmap / 差距分析",
-        "guide-design": "进入设计阶段 — 提案审查 / 批准 / design-done",
-        "guide-plan": "进入变更生成阶段 — propose / deps / plan-done",
-        "guide-ship": "进入变更执行阶段 — plan / execute / archive",
+        "rdd-arch": "进入架构定义阶段 — ADR / roadmap / 差距分析",
+        "rdd-builder": "进入设计阶段 — 提案审查 / 批准 / design-done",
+        "rdd-builder": "进入变更生成阶段 — propose / deps / plan-done",
+        "rdd-builder": "进入变更执行阶段 — plan / execute / archive",
     }
     options.append(MenuOption(
         id=suggested,
@@ -435,9 +435,9 @@ def _build_all_options(
     # empty journeys (filter-guide-ship-when-no-changes).
     _fs_active_count = _count_active_changes(iteration)
     stage_options = [
-        ("guide-arch", "架构定义", "setup -> ADR -> roadmap -> arch-done"),
-        ("guide-design", "设计阶段", "提案创建 / 审查 / 批准 / design-done"),
-        ("guide-plan", "变更生成", "scan -> propose -> deps -> plan-done"),
+        ("rdd-arch", "架构定义", "setup -> ADR -> roadmap -> arch-done"),
+        ("rdd-builder", "设计阶段", "提案创建 / 审查 / 批准 / design-done"),
+        ("rdd-builder", "变更生成", "scan -> propose -> deps -> plan-done"),
     ]
     for sid, label, desc in stage_options:
         if sid != suggested:  # skip duplicate with recommended
@@ -445,17 +445,17 @@ def _build_all_options(
                 id=sid, label=label, description=desc, action=sid, group="stages",
             ))
     if _fs_active_count > 0:
-        if "guide-ship" != suggested:
+        if "rdd-builder" != suggested:
             options.append(MenuOption(
-                id="guide-ship", label="变更执行",
+                id="rdd-builder", label="变更执行",
                 description="plan -> execute -> archive -> cleanup",
-                action="guide-ship", group="stages",
+                action="rdd-builder", group="stages",
             ))
     else:
         # No active changes: disable guide-ship
-        if "guide-ship" != suggested:
+        if "rdd-builder" != suggested:
             options.append(MenuOption(
-                id="guide-ship", label="变更执行",
+                id="rdd-builder", label="变更执行",
                 description="plan -> execute -> archive -> cleanup (无活跃 change)",
                 action=None, group="disabled",
             ))
@@ -637,28 +637,28 @@ def _decision_tree(
     catch all those states first. The 14-path enumeration is preserved
     for parity with scan-state.sh documentation.
     """
-    # Path 1: arch-handoff missing -> guide-arch
+    # Path 1: arch-handoff missing -> rdd-builder
     if arch_h is None:
-        return ("guide-arch", "无 arch-handoff -> 进入架构定义", "high")
+        return ("rdd-arch", "无 arch-handoff -> 进入架构定义", "high")
 
-    # Path 2: arch-handoff exists but ADR count < 1 -> guide-arch (recover)
+    # Path 2: arch-handoff exists but ADR count < 1 -> rdd-builder (recover)
     adr_count = arch_h.get("adr_count", 0) if isinstance(arch_h, dict) else 0
     if not isinstance(adr_count, int) or adr_count < 1:
         return (
-            "guide-arch",
+            "rdd-arch",
             "arch-done 未完成 (ADR 数量不足 -> 回到 adr-create 阶段)",
             "high",
         )
 
-    # Path 3: arch done, design-handoff missing -> guide-design
+    # Path 3: arch done, design-handoff missing -> rdd-builder
     if design_h is None:
-        return ("guide-design", "arch-done 已完成 -> 进入设计阶段", "high")
+        return ("rdd-builder", "arch-done 已完成 -> 进入设计阶段", "high")
 
-    # Path 4: arch done, design done, plan-handoff missing -> guide-plan
+    # Path 4: arch done, design done, plan-handoff missing -> rdd-builder
     if plan_h is None:
-        return ("guide-plan", "design-done 已完成 -> 进入变更生成", "high")
+        return ("rdd-builder", "design-done 已完成 -> 进入变更生成", "high")
 
-    # Path 5: plan-handoff exists, active_changes == 0 -> guide-ship (cleanup)
+    # Path 5: plan-handoff exists, active_changes == 0 -> rdd-builder (cleanup)
     active_changes = (
         plan_h.get("active_changes", 0) if isinstance(plan_h, dict) else 0
     )
@@ -666,7 +666,7 @@ def _decision_tree(
         active_changes = 0
     if active_changes == 0:
         return (
-            "guide-ship",
+            "rdd-builder",
             "plan-handoff 残留 (无活跃 change -> 进入 ship 清理/归档)",
             "high",
         )
@@ -677,12 +677,12 @@ def _decision_tree(
     worktrees = _list_worktrees(project_root)
     openspec_wts = [w for w in worktrees if w.get("is_openspec")]
 
-    # Path 7: worktree with incomplete tasks -> guide-ship
+    # Path 7: worktree with incomplete tasks -> rdd-builder
     for wt in openspec_wts:
         wt_path = wt.get("path")
         if wt_path and _worktree_has_incomplete_tasks(wt_path):
             return (
-                "guide-ship",
+                "rdd-builder",
                 "worktree 存在,任务未完成 -> 继续执行",
                 "medium",
             )
@@ -690,18 +690,18 @@ def _decision_tree(
     # Path 8 / 9: detached openspec worktrees (with or without complete tasks)
     if openspec_wts:
         return (
-            "guide-ship",
+            "rdd-builder",
             f"{len(openspec_wts)} 个 worktree 在跑（可能在分离终端）",
             "medium",
         )
 
-    # Path 10: committed change in HEAD, no worktree -> guide-ship
+    # Path 10: committed change in HEAD, no worktree -> rdd-builder
     if _committed_change_in_head(project_root):
-        return ("guide-ship", "有已 commit 的 change 待建 worktree", "medium")
+        return ("rdd-builder", "有已 commit 的 change 待建 worktree", "medium")
 
     # Path 6 (default for this branch): plan-handoff exists,
-    # active_changes > 0, no worktree activity -> guide-ship
-    return ("guide-ship", "变更生成已完成 -> 进入变更执行", "high")
+    # active_changes > 0, no worktree activity -> rdd-builder
+    return ("rdd-builder", "变更生成已完成 -> 进入变更执行", "high")
 
 
 # ---------------------------------------------------------------------------
@@ -846,7 +846,7 @@ def _fallback_recommendation() -> WorkflowRecommendation:
     fallback in ``guide.md`` will further refine it).
     """
     return WorkflowRecommendation(
-        suggested_action="guide-ship",
+        suggested_action="rdd-builder",
         reason="fallback: synthesizer error",
         confidence="low",
         phase_status=(
@@ -859,10 +859,10 @@ def _fallback_recommendation() -> WorkflowRecommendation:
         active_session=None,
         orphaned_sessions=(),
         all_options=(
-            MenuOption("guide-ship", "guide-ship", "继续工作流", "guide-ship", "recommended"),
-            MenuOption("guide-arch", "架构定义", "setup → ADR → roadmap → arch-done", "guide-arch", "stages"),
-            MenuOption("guide-design", "设计阶段", "提案创建 / 审查 / 批准 / design-done", "guide-design", "stages"),
-            MenuOption("guide-plan", "变更生成", "scan → propose → deps → plan-done", "guide-plan", "stages"),
+            MenuOption("rdd-builder", "rdd-builder", "继续工作流", "rdd-builder", "recommended"),
+            MenuOption("rdd-arch", "架构定义", "setup → ADR → roadmap → arch-done", "rdd-arch", "stages"),
+            MenuOption("rdd-builder", "设计阶段", "提案创建 / 审查 / 批准 / design-done", "rdd-builder", "stages"),
+            MenuOption("rdd-builder", "变更生成", "scan → propose → deps → plan-done", "rdd-builder", "stages"),
             MenuOption("add-improve", "add-improve", "创建新改进提案 — .rddf/improvements/<name>.md + 注册索引", "add-improve", "utilities"),
         ),
         wt_issues=(),

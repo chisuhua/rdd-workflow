@@ -2,9 +2,9 @@
 
 > ⚠️ **v4.0+ (2026-09-04): 工作流采用四阶段架构 (rdd-arch → rdd-planner → rdd-builder → rdd-verifier)**
 >
-> 提案管理（创建、审查、批准/拒绝/延迟）已从 `rdd-arch` Phase 5.5 迁移到独立的 `guide-design` 阶段。
+> 提案管理（创建、审查、批准/拒绝/延迟）已从 `rdd-arch` Phase 5.5 迁移到独立的 `rdd-builder` 阶段。
 > AC 验证从 archive 内嵌 ac-verifier 升级为独立的 `rdd-verifier` 阶段（per ADR-0034）。
-> 存量项目请先运行 `skill_use("guide-design")` 审查提案，再运行 `skill_use("rdd-verifier")` 补做验证。
+> 存量项目请先运行 `skill_use("rdd-builder")` 审查提案，再运行 `skill_use("rdd-verifier")` 补做验证。
 
 [![npm version](https://img.shields.io/npm/v/rdd-workflow.svg)](https://www.npmjs.com/package/rdd-workflow)
 
@@ -60,13 +60,13 @@ bash install.sh /path/to/project
 2. **使用子技能**：
    - `skill_use("guide")` - 推荐器入口(扫描状态,建议调 arch、plan 或 ship)
    - `skill_use("rdd-arch")` - Arch 端状态机(setup → roadmap → arch-done)
-   - `skill_use("guide-plan")` - Plan 端状态机(scan → propose → deps → plan-done)
-   - `skill_use("guide-ship")` - Ship 端状态机(plan → execute → archive → cleanup)
+   - `skill_use("rdd-builder")` - Plan 端状态机(scan → propose → deps → plan-done)
+   - `skill_use("rdd-builder")` - Ship 端状态机(plan → execute → archive → cleanup)
    - `skill_use("feature")` - feature 管理(summary/graph/status/order)
-   - `skill_use("propose")` - 子技能(被 guide-plan 调用)
-   - `skill_use("execute")` - 子技能(被 guide-ship 调用)
-   - `skill_use("status")` - 子技能(被 guide-ship 调用或独立使用)
-   - `skill_use("rdd-workflow-writing-plans")` - 实施计划生成器(被 guide-ship 调用,v2.0 自包含 TDD 5 步结构)
+   - `skill_use("propose")` - 子技能(被 rdd-builder 调用)
+   - `skill_use("execute")` - 子技能(被 rdd-builder 调用)
+   - `skill_use("status")` - 子技能(被 rdd-builder 调用或独立使用)
+   - `skill_use("rdd-workflow-writing-plans")` - 实施计划生成器(被 rdd-builder 调用,v2.0 自包含 TDD 5 步结构)
 
 ## 项目级配置 (`.rddf/project.yaml`)
 
@@ -94,7 +94,7 @@ verification:
 | 字段 | 作用 |
 |------|------|
 | `adr.pattern` | ADR 编号正则（默认 4 位） |
-| `git.openspec_tracked` | false 强制 guide-ship 轻量模式 |
+| `git.openspec_tracked` | false 强制 rdd-builder 轻量模式 |
 | `verification.provider` | `hook` 调 `tools/verify_change.sh` 替代 LLM |
 
 详见 [ADR-0036](docs/adr/ADR-0036-rddf-project-yaml-config.md) 与 [proposal #10](https://github.com/chisuhua/rdd-workflow/issues/10)。
@@ -106,23 +106,23 @@ verification:
 | 阶段 | 技能 | 职责 | 人工介入 |
 |------|------|------|---------|
 | **Arch** | `rdd-arch` | 架构定义（ADR、roadmap、差距分析） | 高 |
-| **Design** | `guide-design` | 设计管理 + 内容审查（提案创建、审查、批准/拒绝/延迟；approve 即落盘 + 两层内容审查） | 中 |
-| **Plan** | `guide-plan` | 变更生成（scan、propose、deps） | 中 |
-| **Ship** | `guide-ship` | 变更执行（worktree、execute、archive） | 低 |
+| **Design** | `rdd-builder` | 设计管理 + 内容审查（提案创建、审查、批准/拒绝/延迟；approve 即落盘 + 两层内容审查） | 中 |
+| **Plan** | `rdd-builder` | 变更生成（scan、propose、deps） | 中 |
+| **Ship** | `rdd-builder` | 变更执行（worktree、execute、archive） | 低 |
 | **Verify** | `rdd-verifier` | 验证回环（批量 AC 验证 + 启发式分类 + 失败回 plan/ship，per ADR-0034） | 低 |
 
 > **v4.0+ 变更**: 五阶段架构压缩为四阶段，v4 stage-merge (per ADR-0043)。AC 验证保留为独立 rdd-verifier 阶段（per ADR-0034）。
-> **v2.1 历史**（已废弃于 v3.0+）: 提案管理原在 guide-design 阶段；v4.0 wave3 hard removal（ADR-0044）已删除该 skill，由 rdd-builder P0 接管审批。
-> `guide-spec` 别名已在 v2.0 移除。请直接使用 `rdd-arch` → `guide-design` → `guide-plan` → `guide-ship` → `rdd-verifier`。
+> **v2.1 历史**（已废弃于 v3.0+）: 提案管理原在 rdd-builder 阶段；v4.0 wave3 hard removal（ADR-0044）已删除该 skill，由 rdd-builder P0 接管审批。
+> `guide-spec` 别名已在 v2.0 移除。请直接使用 `rdd-arch` → `rdd-builder` → `rdd-builder` → `rdd-builder` → `rdd-verifier`。
 
 ### Guide-Ship 执行契约 (v2.0.7+)
 
-`tasks.md` 是 OpenSpec 的范围与完成清单;`.rddf/plans/<change>.md` 是 **唯一** 可执行实现契约;`execute` 消费 plan 并把进度回写到 `tasks.md`;`guide-ship` 不直接执行 `tasks.md`。
+`tasks.md` 是 OpenSpec 的范围与完成清单;`.rddf/plans/<change>.md` 是 **唯一** 可执行实现契约;`execute` 消费 plan 并把进度回写到 `tasks.md`;`rdd-builder` 不直接执行 `tasks.md`。
 
-详细契约见 [`docs/superpowers/specs/2026-08-05-guide-ship-execution-contract.md`](docs/superpowers/specs/2026-08-05-guide-ship-execution-contract.md)。要点:
+详细契约见 [`docs/superpowers/specs/2026-08-05-rdd-builder-execution-contract.md`](docs/superpowers/specs/2026-08-05-rdd-builder-execution-contract.md)。要点:
 
-- `guide-ship` Phase 1 通过 `rddf discover-ship-changes` 统一发现候选,单 change 自动选择;多 change 显示菜单。
-- `guide-ship::setup_execution_workspace` 通过 `$RDDF_EXECUTION_ROOT` 把选定工作区交给 `execute`,`execute` 不再自行探测。
+- `rdd-builder` Phase 1 通过 `rddf discover-ship-changes` 统一发现候选,单 change 自动选择;多 change 显示菜单。
+- `rdd-builder::setup_execution_workspace` 通过 `$RDDF_EXECUTION_ROOT` 把选定工作区交给 `execute`,`execute` 不再自行探测。
 - `SKIP_PROMETHEUS_PLANNING=yes` 必须配 `QUICK_FINISH_DETECTED=yes` 才能跳过 plan 生成(否则 fail closed)。
 - `archive_gate_check` 在 worktree 和 lightweight 两种模式都生效;lightweight 模式 0 新提交是硬阻断;`archive_change` 路径调用 `check_worktree_commits` 作为 worktree merge 前置 gate。
 
@@ -131,7 +131,7 @@ verification:
 `guide` 推荐器现在支持五阶段扫描：
 
 ```
-💡 Recommended: skill_use("guide-plan")
+💡 Recommended: skill_use("rdd-builder")
    Reason: 架构定义已完成 → 进入变更生成
 ```
 
@@ -193,7 +193,7 @@ RDDF_HUB_REPO=org/rdd-hub rddf watch-hub --once --owner=org/rdd-hub
 `category: cross-repo-federation` 的提案**不可** `--auto-accept`,必须:
 
 ```bash
-bash skills/guide-design/scripts/approve_proposal.sh <proposal> \
+bash skills/rdd-builder/scripts/approve_proposal.sh <proposal> \
   --manual --hub-issue "org/rdd-hub#N"
 ```
 
@@ -326,7 +326,7 @@ graph TD
 
 ```bash
 export STRICT_DEPS_GATE=yes
-skill_use("guide-plan")  # 触发 plan_done_gate
+skill_use("rdd-builder")  # 触发 plan_done_gate
 # 遇到跨仓库 blocker 时 plan-done 被阻断,stderr 输出 ❌ STRICT_DEPS_GATE
 ```
 
@@ -377,19 +377,19 @@ rdd-workflow/
     ├── INSTALL.md                       # 安装程序（第一入口）
     ├── guide/SKILL.md                   # 推荐器入口
     ├── rdd-arch/SKILL.md              # Arch 阶段状态机(v2.0+)
-    ├── guide-design/SKILL.md            # Design 阶段状态机(v2.1+, 提案管理)
-    ├── guide-plan/SKILL.md              # Plan 阶段状态机(v2.0+)
-    ├── guide-ship/SKILL.md              # Ship 端状态机
+    ├── rdd-builder/SKILL.md            # Design 阶段状态机(v2.1+, 提案管理)
+    ├── rdd-builder/SKILL.md              # Plan 阶段状态机(v2.0+)
+    ├── rdd-builder/SKILL.md              # Ship 端状态机
     ├── rdd-verifier/SKILL.md            # Verify 阶段状态机(v3.0+, 批量 AC 验证, ADR-0034)
     ├── ac-verifier/SKILL.md             # AC 验证底层(被 rdd-verifier 调用)
     ├── feature/SKILL.md                 # feature 管理 (v2.0+)
     ├── rddf-session/SKILL.md            # 跨 OpenCode session 恢复 (ADR-0017)
-    ├── propose/SKILL.md                 # 子技能(被 guide-plan 调用)
-    ├── execute/SKILL.md                 # 子技能(被 guide-ship 调用, TDD 5 步)
+    ├── propose/SKILL.md                 # 子技能(被 rdd-builder 调用)
+    ├── execute/SKILL.md                 # 子技能(被 rdd-builder 调用, TDD 5 步)
     ├── roadmap/SKILL.md                 # 子技能(被 rdd-arch 调用)
-    ├── deps/SKILL.md                    # 子技能(被 guide-plan 调用)
-    ├── status/SKILL.md                  # 子技能(被 guide-ship 调用或独立使用)
-    ├── add-improve/SKILL.md             # 提案创建入口(被 guide-design 调用)
+    ├── deps/SKILL.md                    # 子技能(被 rdd-builder 调用)
+    ├── status/SKILL.md                  # 子技能(被 rdd-builder 调用或独立使用)
+    ├── add-improve/SKILL.md             # 提案创建入口(被 rdd-builder 调用)
     ├── rdd-workflow-writing-plans/SKILL.md  # 实施计划生成器(v2.0 自包含)
     ├── rdd-workflow-brainstorm/SKILL.md # 提案头脑风暴 helper
     ├── rdd-env-check/SKILL.md           # 独立环境健康检查(各 phase 首屏)
@@ -501,7 +501,7 @@ v2.0 重构后,实施计划生成器**完全自包含**于 rdd-workflow,**无任
 - ✅ `rdd-workflow-writing-plans` — 内置 TDD 5 步结构 plan 生成器(fork 自 superpowers/writing-plans,适配 OpenSpec change 上下文)
 - ✅ `execute` — 内置 plan 执行器,强制 TDD 5 步纪律(整合原 rdd-workflow/executing-plans)
 
-**调用流程**(`guide-ship` Phase 1):
+**调用流程**(`rdd-builder` Phase 1):
 
 ```bash
 cd "$WT_PATH"

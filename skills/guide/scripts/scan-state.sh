@@ -152,12 +152,12 @@ scan_state() {
     fi
     # 1b: design-handoff present → guide-plan
     if [ -f "$DESIGN_HANDOFF" ]; then
-      RECOMMEND="guide-plan"
+      RECOMMEND="rdd-builder"
       REASON="design-done 已完成 → 进入变更生成"
       return 0
     fi
     # 1c: design-handoff missing → guide-design
-    RECOMMEND="guide-design"
+    RECOMMEND="rdd-builder"
     REASON="arch-done 已完成 → 进入设计阶段"
     return 0
   fi
@@ -170,7 +170,7 @@ scan_state() {
       ACTIVE_COUNT=$(python3 -c "import json; d=json.load(open('$PLAN_HANDOFF')); v=d.get('active_changes',0); print(v if isinstance(v,int) else len(v))" 2>/dev/null || echo 0)
     fi
     if [ "$ACTIVE_COUNT" -eq 0 ]; then
-      RECOMMEND="guide-ship"
+      RECOMMEND="rdd-builder"
       REASON="plan-handoff 残留 (无活跃 change -> 进入 ship 清理/归档)"
       return 0
     fi
@@ -182,7 +182,7 @@ scan_state() {
       REASON="plan-handoff stale (says $ACTIVE_COUNT active, but 0 in filesystem -> all archived)"
       return 0
     fi
-    RECOMMEND="guide-ship"
+    RECOMMEND="rdd-builder"
     REASON="变更生成已完成 → 进入变更执行"
     return 0
   fi
@@ -201,7 +201,7 @@ scan_state() {
     done
   done
   if [ -n "$WORKTREE_IN_PROGRESS" ]; then
-    RECOMMEND="guide-ship"
+    RECOMMEND="rdd-builder"
     REASON="worktree 存在,任务未完成 → 继续执行"
     return 0
   fi
@@ -210,14 +210,14 @@ scan_state() {
   local DETACHED
   DETACHED=$(git worktree list 2>/dev/null | awk 'index($3, "[openspec/") == 1' | wc -l | tr -d '[:space:]')
   if [ "$DETACHED" -gt 0 ]; then
-    RECOMMEND="guide-ship"
+    RECOMMEND="rdd-builder"
     REASON="$DETACHED 个 worktree 在跑（可能在分离终端）"
     return 0
   fi
 
   # 5. worktree tasks all completed → guide-ship (archive)
   if git worktree list 2>/dev/null | awk 'index($3, "[openspec/") == 1' | grep -q .; then
-    RECOMMEND="guide-ship"
+    RECOMMEND="rdd-builder"
     REASON="worktree 存在,任务已完成 → 进入 archive"
     return 0
   fi
@@ -231,7 +231,7 @@ scan_state() {
       exit 0
     fi
   done; exit 1); then
-    RECOMMEND="guide-ship"
+    RECOMMEND="rdd-builder"
     REASON="有已 commit 的 change 待建 worktree"
     return 0
   fi
@@ -254,7 +254,7 @@ scan_state() {
 
   # 8. no openspec/changes/ directory → guide-plan
   if [ ! -d "$PROJECT_ROOT/openspec/changes" ]; then
-    RECOMMEND="guide-plan"
+    RECOMMEND="rdd-builder"
     REASON="无 change → 进入变更生成"
     return 0
   fi
@@ -293,7 +293,7 @@ print("yes" if names else "no")
 ' 2>/dev/null)
   
   if [ "$HAS_APPROVED" = "yes" ]; then
-    RECOMMEND="guide-plan"
+    RECOMMEND="rdd-builder"
     REASON="有已批准 change 待创建 -> 进入 plan"
     return 0
   fi
@@ -324,17 +324,17 @@ except Exception:
 ' 2>/dev/null)
   
   if [ "$HAS_PENDING" = "yes" ]; then
-    RECOMMEND="guide-design"
+    RECOMMEND="rdd-builder"
     REASON="有待讨论提案 -> 进入设计阶段审查"
   else
     # filter-guide-ship: skip guide-ship when no active changes in filesystem
     local FS_ACTIVE_COUNT_DEFAULT
     FS_ACTIVE_COUNT_DEFAULT=$(cd "$PROJECT_ROOT" 2>/dev/null && ls -d openspec/changes/*/ 2>/dev/null | grep -v 'archive/' | wc -l || echo 0)
     if [ "$FS_ACTIVE_COUNT_DEFAULT" -eq 0 ]; then
-      RECOMMEND="guide-plan"
+      RECOMMEND="rdd-builder"
       REASON="无活跃 change -> 进入变更生成 (跳过 guide-ship)"
     else
-      RECOMMEND="guide-ship"
+      RECOMMEND="rdd-builder"
       REASON="无待讨论提案 -> 准备 ship"
     fi
   fi
