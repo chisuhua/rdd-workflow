@@ -49,7 +49,7 @@ def test_priority_1_arch_done_plan_undone_recommends_guide_design(git_repo, caps
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()
     assert rc == 0
-    assert "guide-design" in captured.out
+    assert "rdd-builder" in captured.out
     assert "进入设计阶段" in captured.out
 
 
@@ -61,7 +61,7 @@ def test_priority_2_arch_done_zero_adrs_recommends_guide_arch_recover(git_repo, 
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()
     assert rc == 0
-    assert "guide-arch" in captured.out
+    assert "rdd-arch" in captured.out
     assert "未完成" in captured.out or "回到" in captured.out
 
 
@@ -84,7 +84,7 @@ def test_priority_3_plan_done_recommends_guide_ship(git_repo, capsys):
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()
     assert rc == 0
-    assert "guide-ship" in captured.out
+    assert "rdd-builder" in captured.out
     assert "变更执行" in captured.out
 
 
@@ -99,7 +99,7 @@ def test_priority_4_plan_done_zero_active_recommends_guide_ship_cleanup(git_repo
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()
     assert rc == 0
-    assert "guide-ship" in captured.out
+    assert "rdd-builder" in captured.out
     assert "残留" in captured.out or "清理" in captured.out
 
 
@@ -118,7 +118,7 @@ def test_priority_6_no_roadmap_recommends_guide_arch(git_repo, capsys):
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()
     assert rc == 0
-    assert "guide-arch" in captured.out
+    assert "rdd-arch" in captured.out
     assert "roadmap" in captured.out.lower() or "架构" in captured.out
 
 
@@ -131,7 +131,7 @@ def test_priority_7_no_changes_dir_recommends_guide_plan(git_repo, capsys):
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()
     assert rc == 0
-    assert "guide-plan" in captured.out
+    assert "rdd-builder" in captured.out
 
 
 def test_priority_8_pending_proposal_recommends_guide_plan(git_repo, capsys):
@@ -149,7 +149,7 @@ def test_priority_8_pending_proposal_recommends_guide_plan(git_repo, capsys):
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()
     assert rc == 0
-    assert "guide-design" in captured.out
+    assert "rdd-builder" in captured.out
     assert "未审查提案" in captured.out or "设计阶段" in captured.out.lower()
 
 
@@ -168,7 +168,7 @@ def test_priority_9_no_pending_proposal_recommends_guide_ship(git_repo, capsys):
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()
     assert rc == 0
-    assert "guide-ship" in captured.out
+    assert "rdd-builder" in captured.out
     assert "准备 ship" in captured.out or "ship" in captured.out.lower()
 
 
@@ -207,4 +207,4 @@ def test_cmd_guide_works_outside_git_repo(tmp_path, monkeypatch, capsys):
     captured = capsys.readouterr()
     assert rc == 0
     # Should recommend guide-arch (no roadmap)
-    assert "guide-arch" in captured.out
+    assert "rdd-arch" in captured.out

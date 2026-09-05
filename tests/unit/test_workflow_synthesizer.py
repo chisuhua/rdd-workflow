@@ -127,7 +127,7 @@ class TestDataclassShape:
     def test_workflow_recommendation_fields(self):
         """WorkflowRecommendation MUST expose all required fields."""
         r = WorkflowRecommendation(
-            suggested_action="guide-plan",
+            suggested_action="rdd-builder",
             reason="arch done",
             confidence="high",
             phase_status=(PhaseStatus("arch", True, "ok"),),
@@ -137,7 +137,7 @@ class TestDataclassShape:
             all_options=(),
             wt_issues=(),
         )
-        assert r.suggested_action == "guide-plan"
+        assert r.suggested_action == "rdd-builder"
         assert r.confidence == "high"
         assert r.unblocked_changes == ("c1", "c2")
         assert r.active_session == "rds_abc123def456"
@@ -161,7 +161,7 @@ class TestPathArchMissing:
     def test_arch_missing_recommends_guide_arch(self, project_root):
         """Path 1: no .arch-handoff.json -> guide-arch, confidence=high."""
         r = synthesize(project_root)
-        assert r.suggested_action == "guide-arch"
+        assert r.suggested_action == "rdd-arch"
         assert r.confidence == "high"
         assert "arch" in r.reason.lower() or "架构" in r.reason
 
@@ -169,7 +169,7 @@ class TestPathArchMissing:
         """Path 1 also fires when .rddf/state/ exists but is empty."""
         (tmp_path / ".rddf" / "state").mkdir(parents=True)
         r = synthesize(str(tmp_path))
-        assert r.suggested_action == "guide-arch"
+        assert r.suggested_action == "rdd-arch"
         assert r.confidence == "high"
 
 
@@ -183,7 +183,7 @@ class TestPathArchIncomplete:
         """Path 2: arch-handoff exists but adr_count=0 -> guide-arch."""
         _write_arch_handoff(project_root, adr_count=0)
         r = synthesize(project_root)
-        assert r.suggested_action == "guide-arch"
+        assert r.suggested_action == "rdd-arch"
         assert r.confidence == "high"
 
     def test_adr_count_missing_recommends_guide_arch(self, project_root):
@@ -191,7 +191,7 @@ class TestPathArchIncomplete:
         path = Path(project_root) / ".rddf" / "state" / ".arch-handoff.json"
         path.write_text(json.dumps({"version": 1, "arch_complete_at": "x"}))
         r = synthesize(project_root)
-        assert r.suggested_action == "guide-arch"
+        assert r.suggested_action == "rdd-arch"
 
 
 # ---------------------------------------------------------------------------
@@ -204,7 +204,7 @@ class TestPathArchDoneDesignMissing:
         """Path 3: arch-handoff ok, no design-handoff -> guide-design."""
         _write_arch_handoff(project_root, adr_count=5)
         r = synthesize(project_root)
-        assert r.suggested_action == "guide-design"
+        assert r.suggested_action == "rdd-builder"
         assert r.confidence == "high"
 
 
@@ -219,7 +219,7 @@ class TestPathArchDoneDesignDonePlanMissing:
         _write_arch_handoff(project_root, adr_count=5)
         _write_design_handoff(project_root, proposals_reviewed=3)
         r = synthesize(project_root)
-        assert r.suggested_action == "guide-plan"
+        assert r.suggested_action == "rdd-builder"
         assert r.confidence == "high"
 
 
@@ -237,7 +237,7 @@ class TestPathPlanHandoffZeroActive:
         _write_design_handoff(project_root, proposals_reviewed=3)
         _write_plan_handoff(project_root, active_changes=0)
         r = synthesize(project_root)
-        assert r.suggested_action == "guide-ship"
+        assert r.suggested_action == "rdd-builder"
         assert r.confidence == "high"
 
 
@@ -259,7 +259,7 @@ class TestPathPlanHandoffActiveChanges:
         monkeypatch.setattr(ws, "_list_worktrees", lambda pr: [])
         monkeypatch.setattr(ws, "_committed_change_in_head", lambda pr: False)
         r = synthesize(project_root)
-        assert r.suggested_action == "guide-ship"
+        assert r.suggested_action == "rdd-builder"
         assert r.confidence == "high"
 
 
@@ -286,7 +286,7 @@ class TestPathWorktreeInProgress:
         ])
         monkeypatch.setattr(ws, "_worktree_has_incomplete_tasks", lambda wt: True)
         r = synthesize(project_root)
-        assert r.suggested_action == "guide-ship"
+        assert r.suggested_action == "rdd-builder"
         assert r.confidence == "medium"
 
 
@@ -313,7 +313,7 @@ class TestPathDetachedWorktrees:
         ])
         monkeypatch.setattr(ws, "_worktree_has_incomplete_tasks", lambda wt: False)
         r = synthesize(project_root)
-        assert r.suggested_action == "guide-ship"
+        assert r.suggested_action == "rdd-builder"
         assert r.confidence == "medium"
         assert "worktree" in r.reason or "分离" in r.reason
 
@@ -352,7 +352,7 @@ class TestPathCommittedChangeInHead:
         monkeypatch.setattr(ws, "_list_worktrees", lambda pr: [])
         monkeypatch.setattr(ws, "_committed_change_in_head", lambda pr: True)
         r = synthesize(project_root)
-        assert r.suggested_action == "guide-ship"
+        assert r.suggested_action == "rdd-builder"
         assert r.confidence == "medium"
 
 
@@ -630,7 +630,7 @@ class TestNeverRaises:
         sessions_path.write_text("{not valid json")
         r = synthesize(project_root)
         # state_reader returns None for corrupt JSON, so synthesizer proceeds
-        assert r.suggested_action in ("guide-plan", "guide-ship", "guide-arch", "guide-design")
+        assert r.suggested_action in ("rdd-builder", "rdd-builder", "rdd-arch", "rdd-builder")
 
     def test_corrupt_iteration_json_does_not_raise(self, project_root):
         """synthesize MUST NOT raise on corrupt iteration.json."""
@@ -640,7 +640,7 @@ class TestNeverRaises:
         )
         iteration_path.write_text("{broken json")
         r = synthesize(project_root)
-        assert r.suggested_action in ("guide-plan", "guide-ship", "guide-arch", "guide-design")
+        assert r.suggested_action in ("rdd-builder", "rdd-builder", "rdd-arch", "rdd-builder")
 
     def test_missing_state_dir_returns_recommendation(self, tmp_path):
         """synthesize MUST NOT raise when .rddf/state/ doesn't exist."""
@@ -648,7 +648,7 @@ class TestNeverRaises:
         # No .rddf/state/ created
         r = synthesize(project_root)
         # All reads return None -> path 1 fires -> guide-arch
-        assert r.suggested_action == "guide-arch"
+        assert r.suggested_action == "rdd-arch"
         assert r.confidence == "high"
 
     def test_exception_returns_fallback_recommendation(
@@ -663,7 +663,7 @@ class TestNeverRaises:
 
         monkeypatch.setattr(ws.state_reader, "read_arch_handoff", boom)
         r = synthesize(project_root)
-        assert r.suggested_action == "guide-ship"
+        assert r.suggested_action == "rdd-builder"
         assert r.confidence == "low"
         assert "fallback" in r.reason.lower()
 
@@ -761,23 +761,23 @@ class TestDecisionTreeAllPaths:
         "has_committed_change,expected_action,expected_confidence",
         [
             # Path 1: no arch-handoff
-            ("p1-no-arch", None, False, False, 0, False, False, False, "guide-arch", "high"),
+            ("p1-no-arch", None, False, False, 0, False, False, False, "rdd-arch", "high"),
             # Path 2: arch-handoff exists, adr_count < 1
-            ("p2-adr-zero", 0, False, False, 0, False, False, False, "guide-arch", "high"),
+            ("p2-adr-zero", 0, False, False, 0, False, False, False, "rdd-arch", "high"),
             # Path 3: arch done, no design-handoff
-            ("p3-no-design", 5, False, False, 0, False, False, False, "guide-design", "high"),
+            ("p3-no-design", 5, False, False, 0, False, False, False, "rdd-builder", "high"),
             # Path 4: arch + design done, no plan-handoff
-            ("p4-no-plan", 5, True, False, 0, False, False, False, "guide-plan", "high"),
+            ("p4-no-plan", 5, True, False, 0, False, False, False, "rdd-builder", "high"),
             # Path 5: plan-handoff exists, 0 active
-            ("p5-plan-zero", 5, True, True, 0, False, False, False, "guide-ship", "high"),
+            ("p5-plan-zero", 5, True, True, 0, False, False, False, "rdd-builder", "high"),
             # Path 6: plan-handoff, active>0, no worktree
-            ("p6-plan-active", 5, True, True, 1, False, False, False, "guide-ship", "high"),
+            ("p6-plan-active", 5, True, True, 1, False, False, False, "rdd-builder", "high"),
             # Path 7: worktree with incomplete tasks
-            ("p7-wt-incomplete", 5, True, True, 1, True, True, False, "guide-ship", "medium"),
+            ("p7-wt-incomplete", 5, True, True, 1, True, True, False, "rdd-builder", "medium"),
             # Path 8: detached worktrees (no incomplete)
-            ("p8-detached-wt", 5, True, True, 1, True, False, False, "guide-ship", "medium"),
+            ("p8-detached-wt", 5, True, True, 1, True, False, False, "rdd-builder", "medium"),
             # Path 10: committed change, no worktree
-            ("p10-committed", 5, True, True, 1, False, False, True, "guide-ship", "medium"),
+            ("p10-committed", 5, True, True, 1, False, False, True, "rdd-builder", "medium"),
         ],
     )
     def test_decision_path(
