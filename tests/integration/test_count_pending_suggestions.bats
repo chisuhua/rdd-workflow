@@ -1,12 +1,12 @@
 #!/usr/bin/env bats
 # tests/integration/test_count_pending_suggestions.bats
 # P3-3b regression: 'count pending proposals' Python heredoc was inlined
-# in 3 files (propose.md:891-903, status.md:413-425, guide-plan.md:317-366).
+# in 3 files (propose.md:891-903, status.md:413-425, rdd-planner.md:317-366).
 # Extracted to _lib/state.sh::count_pending_suggestions.
 #
 # These tests lock:
 #   1. state.sh defines count_pending_suggestions
-#   2. propose.md, status.md, guide-plan.md no longer inline the algorithm
+#   2. propose.md, status.md, rdd-planner.md no longer inline the algorithm
 #   3. Runtime: returns 0 for missing file, 0 for empty list, N for valid list
 
 load ../test_helper
@@ -26,9 +26,9 @@ load ../test_helper
   ! grep -qE "sum\(1 for e in entries.*e\.get\(.status.\) == .待创建" "$REPO_ROOT/skills/status/SKILL.md"
 }
 
-@test "guide-plan.md no longer inlines count pending proposals algorithm" {
-  [ -f "$REPO_ROOT/skills/guide-plan/SKILL.md" ]
-  ! grep -qE "sum\(1 for e in entries.*e\.get\(.status.\) == .待创建" "$REPO_ROOT/skills/guide-plan/SKILL.md"
+@test "rdd-planner.md no longer inlines count pending proposals algorithm" {
+  [ -f "$REPO_ROOT/skills/rdd-planner/SKILL.md" ]
+  ! grep -qE "sum\(1 for e in entries.*e\.get\(.status.\) == .待创建" "$REPO_ROOT/skills/rdd-planner/SKILL.md"
 }
 
 @test "count_pending_suggestions returns 0 when proposal-suggestions.md missing" {

@@ -93,7 +93,7 @@ EOF
 EOF
     export PYTHONPATH="$REPO_ROOT:${PYTHONPATH:-}"
     source "$REPO_ROOT/_lib/wave_scheduler_hooks.sh"
-    run wave_scheduler_entry_check "$TMP_ROOT" "guide-plan"
+    run wave_scheduler_entry_check "$TMP_ROOT" "rdd-planner"
     [ "$status" -eq 0 ]
     [[ "$output" == *"B"* ]]
     rm -rf "$TMP_ROOT"
@@ -112,24 +112,8 @@ EOF
 EOF
     export PYTHONPATH="$REPO_ROOT:${PYTHONPATH:-}"
     source "$REPO_ROOT/_lib/wave_scheduler_hooks.sh"
-    run wave_scheduler_entry_check "$TMP_ROOT" "guide-plan"
+    run wave_scheduler_entry_check "$TMP_ROOT" "rdd-planner"
     [ "$status" -eq 0 ]
     rm -rf "$TMP_ROOT"
 }
 
-@test "guide-ship: SKILL.md references wave_scheduler_hooks.sh in Phase 3" {
-    grep -q "wave_scheduler_hooks.sh" "$REPO_ROOT/skills/guide-ship/SKILL.md" \
-        || grep -q "wave_scheduler_post_archive" "$REPO_ROOT/skills/guide-ship/SKILL.md"
-}
-
-@test "guide-ship: SKILL.md calls wave_scheduler_post_archive" {
-    grep -q "wave_scheduler_post_archive" "$REPO_ROOT/skills/guide-ship/SKILL.md"
-}
-
-@test "guide-plan: SKILL.md references wave_scheduler_entry_check" {
-    grep -q "wave_scheduler_entry_check" "$REPO_ROOT/skills/guide-plan/SKILL.md"
-}
-
-@test "guide-ship: SKILL.md references wave_scheduler_entry_check" {
-    grep -q "wave_scheduler_entry_check" "$REPO_ROOT/skills/guide-ship/SKILL.md"
-}

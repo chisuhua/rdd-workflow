@@ -2,9 +2,9 @@
 
 load ../test_helper
 
-# P1-13: guide-ship.md pre-merge check for new commits.
+# P1-13: rdd-builder.md pre-merge check for new commits.
 # After T21 refactor (_lib/archive.sh::check_worktree_commits),
-# the markers may live in archive.sh instead of guide-ship.md.
+# the markers may live in archive.sh instead of rdd-builder.md.
 # Tests accept EITHER location to be forward-compatible with the refactor.
 
 setup() {
@@ -23,10 +23,10 @@ teardown() {
 }
 
 # _premerge_marker_present <pattern>
-#   Asserts <pattern> is present in guide-ship.md OR _lib/archive.sh.
+#   Asserts <pattern> is present in rdd-builder.md OR _lib/archive.sh.
 _premerge_marker_present() {
   local pattern="$1"
-  for f in "$REPO_ROOT/skills/guide-ship/SKILL.md" "$REPO_ROOT/_lib/archive.sh"; do
+  for f in "$REPO_ROOT/skills/rdd-builder/SKILL.md" "$REPO_ROOT/_lib/archive.sh"; do
     [ -f "$f" ] && grep -q "$pattern" "$f" && return 0
   done
   return 1
