@@ -81,7 +81,7 @@ bats tests/integration/test_global_install_external_project.bats   # 11/11 pass
 
 ## 架构
 
-**五阶段架构** (v3.0+): `arch → design → plan → ship → verify`
+**四阶段架构** (v4.0+): `rdd-arch → rdd-planner → rdd-builder → rdd-verifier`
 
 > ⚠️ **v2.0.6+ 变更 (move-proposal-creation-to-design)**: design 阶段升级为「批准即创建 + 内容审查」(approve 后生成完整 proposal.md → 用户确认 → 落盘 + 状态写入)。详见 ADR-0025。
 

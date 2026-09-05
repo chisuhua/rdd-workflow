@@ -190,8 +190,8 @@ print(_lib.__file__)
   # Sanity: count global symlinks and verify each resolves to a real SKILL.md.
   # This catches 'install.sh --global partially failed' regressions.
   [ -d "${HOME}/.agents/skills" ] || skip "global skills dir missing"
-  expected_skills=(add-improve deps execute feature guide guide-arch \
-    guide-design guide-plan guide-ship propose rdd-env-check \
+  expected_skills=(add-improve deps execute feature guide guide-arch rdd-arch rdd-planner rdd-builder rdd-verifier \
+    propose rdd-env-check \
     rdd-workflow-brainstorm rdd-workflow-writing-plans rddf-session roadmap status)
   for s in "${expected_skills[@]}"; do
     link="${HOME}/.agents/skills/$s"
