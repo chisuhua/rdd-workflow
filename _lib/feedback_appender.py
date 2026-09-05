@@ -31,7 +31,7 @@ __all__ = [
     "COUNTERS_FILE",
 ]
 
-VALID_SOURCES = {"guide-design", "guide-plan", "guide-ship", "rdd-verifier", "human"}
+VALID_SOURCES = {"rdd-builder", "rdd-planner", "rdd-arch", "rdd-verifier", "guide-design", "guide-plan", "guide-ship", "human"}
 VALID_KINDS = {"needs-revision", "ac-fail", "rejected", "blocked", "noted"}
 REVISION_KINDS = {"needs-revision", "ac-fail"}  # kinds that bump revision_count
 COUNTERS_FILE = ".rddf/state/.feedback-counters.json"
