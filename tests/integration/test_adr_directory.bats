@@ -45,8 +45,8 @@ setup() {
 @test "ADR-0000-template.md has the required frontmatter fields" {
   f="$ADR_DIR/ADR-0000-template.md"
   head -1 "$f" | grep -qE '^# ADR-0000:'
-  grep -qE '^>? ?\*\*状态\*\*:' "$f"
-  grep -qE '^>? ?\*\*日期\*\*:' "$f"
+  grep -qE '^>? ?\*\*(状态|Status)\*\*:' "$f"
+  grep -qE '^>? ?\*\*(日期|Date)\*\*:' "$f"
   grep -qE '^>? ?\*\*决策者\*\*:' "$f"
 }
 
@@ -95,11 +95,11 @@ setup() {
 @test "every real ADR has status and date fields" {
   for f in "$ADR_DIR"/ADR-[0-9][0-9][0-9][0-9]-*.md; do
     [ -f "$f" ] || continue
-    grep -qE '^>? ?\*\*状态\*\*:' "$f" || {
+    grep -qE '^>? ?\*\*(状态|Status)\*\*:' "$f" || {
       echo "missing status field in: $f" >&2
       return 1
     }
-    grep -qE '^>? ?\*\*日期\*\*:' "$f" || {
+    grep -qE '^>? ?\*\*(日期|Date)\*\*:' "$f" || {
       echo "missing date field in: $f" >&2
       return 1
     }

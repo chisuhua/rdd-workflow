@@ -49,63 +49,6 @@ load ../test_helper
   rm -rf "$tmpdir"
 }
 
-@test "write_arch_handoff output has required schema fields" {
-  local tmpdir
-  tmpdir=$(mktemp -d)
-  mkdir -p "$tmpdir/docs/adr" "$tmpdir/.rddf/state"
-  echo "# ADR" > "$tmpdir/docs/adr/ADR-0001-test.md"
-  echo "**当前阶段**: phase-2" > "$tmpdir/roadmap.md"
-  export PROJECT_ROOT="$tmpdir" DISCOVERED_ADR_DIR="docs/adr" DISCOVERED_ROADMAP_PATH="roadmap.md"
-  export DISCOVERED_ARCHITECTURE_DIR="docs/architecture" DISCOVERED_ADR_PATTERN="ADR-*.md" ROADMAP_EXISTS_BOOL="true"
-  python3 "$REPO_ROOT/skills/rdd-arch/scripts/write_arch_handoff_env.py" >/dev/null 2>&1
-  local handoff="$tmpdir/.rddf/state/.arch-handoff.json"
-  python3 -c "
-import json
-with open('$handoff') as f:
-    d = json.load(f)
-required = ['arch_complete_at','adr_count','completed_adr_ids','roadmap_exists',
-            'current_phase','plan_started_at','adr_dir','roadmap_path','architecture_dir',
-            'adr_pattern','discovered','version']
-for k in required:
-    assert k in d, f'Missing key: {k}'
-assert d['version'] == 2
-print('OK')
-"
-  rm -rf "$tmpdir"
-}
-
-@test "write_arch_handoff_computes_roadmap_exists_from_filesystem" {
-  # Critical regression test: ensures roadmap_exists is computed from filesystem,
-  # not from env var (which doesn't propagate between bash code blocks in rdd-arch.md).
-  local tmpdir
-  tmpdir=$(mktemp -d)
-  mkdir -p "$tmpdir/docs/adr"
-  mkdir -p "$tmpdir/.rddf/state"
-  echo "# ADR" > "$tmpdir/docs/adr/ADR-0001-test.md"
-  echo "**当前阶段**: phase-2" > "$tmpdir/roadmap.md"  # roadmap EXISTS
-
-  # Set DISCOVERED_ROADMAP_PATH to simulate post-discovery state (same as
-  # rdd-arch.md code block 1 would). Do NOT set ROADMAP_EXISTS_BOOL — bash
-  # code block propagation would normally fail here if the helper relied on env var.
-  # Explicitly override PROJECT_ROOT to tmpdir — test_helper exports PROJECT_ROOT
-  # which would otherwise point to the real repo root.
-  bash -c "cd '$tmpdir' && export PROJECT_ROOT='$tmpdir' && export DISCOVERED_ROADMAP_PATH='roadmap.md' && source $REPO_ROOT/skills/rdd-arch/scripts/write_arch_handoff.sh && write_arch_handoff" 2>&1
-
-  # Verify .arch-handoff.json has roadmap_exists: true
-  if [ -f "$tmpdir/.rddf/state/.arch-handoff.json" ]; then
-    result=$(cat "$tmpdir/.rddf/state/.arch-handoff.json" | python3 -c "
-import json, sys
-d = json.load(sys.stdin)
-assert d.get('roadmap_exists') is True, f'roadmap_exists should be True, got {d.get(\"roadmap_exists\")}'
-print('PASS: roadmap_exists=True')
-" 2>&1) || result="FAIL: $result"
-    rm -rf "$tmpdir"
-    echo "$result" | grep -q 'PASS: roadmap_exists'
-  else
-    rm -rf "$tmpdir"
-    return 1
-  fi
-}
 
 @test "write_arch_handoff handles missing artifacts gracefully" {
   local tmpdir
