@@ -88,12 +88,12 @@ bats tests/integration/test_global_install_external_project.bats   # 11/11 pass
 | 阶段 | Skill | 职责 |
 |------|-------|------|
 | arch | `rdd-arch` | 架构定义: ADR, 差距分析, roadmap |
-| design | `guide-design` | 设计管理 + 内容审查: 提案创建, 审查, 批准/拒绝/延迟; approve 即落盘完整 proposal.md |
-| plan | `guide-plan` | 变更生成: intake (含 changes_pre_created 跳过), fill (specs/design/tasks), deps |
-| ship | `guide-ship` | 变更执行: worktree/轻量, execute, archive, cleanup |
+| design | v4: `rdd-planner` (was `guide-design`) | 设计管理 + 内容审查: 提案创建, 审查, 批准/拒绝/延迟; approve 即落盘完整 proposal.md |
+| plan | v4: `rdd-builder` (was `guide-plan`) | 变更生成: intake (含 changes_pre_created 跳过), fill (specs/design/tasks), deps |
+| ship | v4: `rdd-builder` P2 (was `guide-ship`) | 变更执行: worktree/轻量, execute, archive, cleanup |
 | verify | `rdd-verifier` | 验证回环: 批量调 ac-verifier, 启发式分类 AC pass/fail, 失败回 plan/ship, 最多 3 次 (ADR-0034) |
 
-`guide-ship` 自动检测并行冲突:
+`rdd-builder` 自动检测并行冲突:
 - 无其他 worktree **且** 仅此一个 change → ⚡ **轻量模式** (创建 branch, 直接在主仓库执行, 跳过 worktree)
 - 有活跃 worktree **或** 多个 change → 🔀 **worktree 模式** (创建隔离 worktree)
 
@@ -119,9 +119,9 @@ skills/                        # Markdown skills (27 SKILL.md + INSTALL.md) + pe
   INSTALL.md                   # 第一入口 (v1.1.0)
   guide/SKILL.md               # 推荐器
   rdd-arch/SKILL.md          # arch 阶段 (v2.0.8 Phase 2 重组)
-  guide-design/SKILL.md        # design 阶段 (v2.1 新增)
-  guide-plan/SKILL.md          # plan 阶段
-  guide-ship/SKILL.md          # ship 阶段 (v2.0)
+  rdd-planner/SKILL.md (was guide-design)        # design 阶段 (v2.1 新增)
+  rdd-builder/SKILL.md (was guide-plan)          # plan 阶段
+  rdd-builder/SKILL.md (was guide-ship)          # ship 阶段 (v2.0)
   propose/SKILL.md / execute/SKILL.md / status/SKILL.md / roadmap/SKILL.md / deps/SKILL.md / feature/SKILL.md / rddf-session/SKILL.md  # 子技能
   rdd-workflow-writing-plans/SKILL.md  # 内置 TDD 5 步 plan 生成器
   loop_engine.py               # v2.0 Loop 引擎入口（向后兼容 shim）
@@ -130,8 +130,8 @@ skills/                        # Markdown skills (27 SKILL.md + INSTALL.md) + pe
     core/loop/schedulers/...   # 4 行 __init__.py path-widening shim (向后兼容历史 import)
     adr_catalog.py ... hub_issue.py  # 10 个 P1-1a 迁移模块的 identity-merge shim (做 `sys.modules[__name__] = _lib.X`)
   rdd-arch/scripts/          # arch 阶段辅助脚本 (arch_env_check, write_arch_handoff, arch_gap_analysis 等)
-  guide-plan/scripts/          # plan 阶段辅助脚本 (plan_intake, plan_done_gate, plan_deps_candidates 等)
-  guide-ship/scripts/          # ship 阶段辅助脚本 (ship_plan, ship_review, ship_archive, ship_monitor 等)
+  rdd-builder/scripts/          # plan 阶段辅助脚本 (plan_intake, plan_done_gate, plan_deps_candidates 等)
+  rdd-builder/scripts/          # ship 阶段辅助脚本 (ship_plan, ship_review, ship_archive, ship_monitor 等)
   execute/scripts/             # execute 辅助脚本 (select_worktree, tasks_writeback, execute_step7 等)
   deps/scripts/                # deps 辅助脚本 (deps_output, deps_render_report 等)
   propose/scripts/             # propose 辅助脚本 (propose_change 等)
@@ -145,7 +145,7 @@ tests/
   integration/                # 281 bats + 15 py 集成测试 (~1789 bats 测试用例)
   _lib/                       # bash helpers (skill.bash, deps-subagent.bash 等)
 docs/adr/                     # ADR-0000 模板 + ADR-0001~0035 (35 个唯一编号, 36 个实体文件; v2.0.2 重编号 ADR-0013 → ADR-0020; v2.0.8+ 持续追加)
-                             # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0016 arch 发现契约 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment / ADR-0022 manual_deps 字段 / ADR-0024 deps-driven execution mode / ADR-0025 design 阶段独立化 / ADR-0027 continuous evolution / ADR-0028 role-model / ADR-0029 issue-driven / ADR-0030 hub-spoke / ADR-0031 cross-repo human-in-loop / ADR-0032 hub deepening / ADR-0033 submodule-aware / ADR-0034 rdd-verifier / ADR-0035 verifier-archive-gate boundary
+                             # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0016 arch 发现契约 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment / ADR-0022 manual_deps 字段 / ADR-0024 deps-driven execution mode / ADR-0025 design 阶段独立化 / ADR-0027 continuous evolution / ADR-0028 role-model / ADR-0029 issue-driven / ADR-0030 hub-spoke / ADR-0031 cross-repo human-in-loop / ADR-0032 hub deepening / ADR-0033 submodule-aware / ADR-0034 rdd-verifier / ADR-0044 v4 stage-merge Wave 3 hard removal
                              # **Note**: 此关键 ADR 列表人工维护(策展判断,只列"已实施"+"已采纳"的 ADR)。
                              # 完整 ADR 索引由 `_lib/adr_index_generator.py` 自动生成,见 `docs/adr/README.md` 中
                              # `<!-- ADR_INDEX_START --> ... <!-- ADR_INDEX_END -->` 段 (per adr-index-auto-sync change 2026-08-28)。
@@ -199,7 +199,7 @@ Feature fragments (`rddf roadmap add-feature`) 跨阶段追踪多 phase 改进�
 
 ### Skill 角色模型 (ADR-0028)
 
-5 个阶段技能 (`rdd-arch`, `guide-design`, `guide-plan`, `guide-ship`, `rdd-verifier`) 的 frontmatter 包含 `role:` 字段（per ADR-0028 + ADR-0034 §10），定义角色、视角、边界：
+4 个阶段技能 (`rdd-arch`, `rdd-planner`, `rdd-builder`, `rdd-verifier`) 的 frontmatter 包含 `role:` 字段（per ADR-0028 + ADR-0034 §10），定义角色、视角、边界：
 - `role.title`: 双语角色名（如 "Architect (架构治理者)"）
 - `role.perspective`: 思考视角（1-2 句）
 - `role.boundaries.owns`: 文件路径清单（此阶段拥有）
@@ -212,15 +212,15 @@ Feature fragments (`rddf roadmap add-feature`) 跨阶段追踪多 phase 改进�
 
 | 文件 | 用途 | 写入方 |
 |------|------|--------|
-| `.rddf/state/.arch-handoff.json` | arch→plan 交接 + **ADR-0016 发现契约** v1 (adr_dir/roadmap_path/architecture_dir/adr_pattern/discovered/version) | `rdd-arch` (arch-done) / `guide-plan` (Phase 0 intake) + `propose`/`roadmap`/`gate.py`/`detectors.py`/`actions.py`/`scan-state.sh` (handoff readers, fallback to defaults) |
-| `.rddf/state/.plan-handoff.json` | plan→ship 交接 + **execution_mode_decisions** (ADR-0024) | `guide-plan` (plan-done 写入) / `guide-ship` (ship-start 读取) |
-| `.rddf/state/sessions.json` | **rddf-session 生命周期** (ADR-0017) — 跨 OpenCode session 工作流恢复 | `rdd-arch`/`guide-plan`/`guide-ship` 入口 + `rddf-session` skill 5 子命令 |
+| `.rddf/state/.arch-handoff.json` | arch→plan 交接 + **ADR-0016 发现契约** v1 (adr_dir/roadmap_path/architecture_dir/adr_pattern/discovered/version) | `rdd-arch` (arch-done) / `rdd-planner` (stage entry) + `propose`/`roadmap`/`gate.py`/`detectors.py`/`actions.py`/`scan-state.sh` (handoff readers, fallback to defaults) |
+| `.rddf/state/.plan-handoff.json` | plan→ship 交接 + **execution_mode_decisions** (ADR-0024) | `rdd-planner` (stage exit) / `rdd-builder` (stage entry) |
+| `.rddf/state/sessions.json` | **rddf-session 生命周期** (ADR-0017) — 跨 OpenCode session 工作流恢复 | `rdd-arch`/`rdd-planner`/`rdd-builder` 入口 + `rddf-session` skill 5 子命令 |
 | `.rddf/state/deps-analysis.json` | **结构化** deps 输出 (v2.0.1) + **execution_mode_recommendations** (ADR-0024) | `deps` Step 5b 优先写; Step 6 markdown-fallback 时也写 |
-| `.rddf/state/deps-candidates.json` | deps 候选列表 | `guide-plan` (deps 阶段) |
+| `.rddf/state/deps-candidates.json` | deps 候选列表 | `rdd-builder` (Phase 1.5) |
 | `.rddf/state/deps-output.md` | deps 人类可读报告 | `deps` Step 5 |
 | `.rddf/state/iteration.json` | **当前 sprint 视图** (v2.0.1) | propose/guide-ship/execute/deps/archive hooks |
 | `.rddf/state/roadmap-state.json` | roadmap 阶段/category 计数 | `propose` (status 改时) |
-| `.rddf/state/index.md` | change 索引 | `rdd-arch` / `guide-plan` |
+| `.rddf/state/index.md` | change 索引 | `rdd-arch` / `rdd-planner` |
 | `.rddf/state/.deps-output.md` | deps 旧路径 (开头有 `.`) | `deps` Step 5 (兼容保留) |
 | `roadmap-meta.yaml` (in `openspec/changes/<name>/`) | Per-change metadata (含 `manual_deps`/`manual_blocks` 字段, ADR-0022) | `propose` (change creation) | `deps` (manual_deps merge), iteration sync |
 
@@ -237,7 +237,7 @@ Feature fragments (`rddf roadmap add-feature`) 跨阶段追踪多 phase 改进�
 将发现的 ADR 目录、roadmap 文件、architecture 目录写入 `.arch-handoff.json` 的
 `adr_dir` / `roadmap_path` / `architecture_dir` / `adr_pattern` / `discovered` 字段.
 
-**下游消费者** (`guide-plan`, `propose`, `roadmap`, `gate.py`, `detectors.py`,
+**下游消费者** (`rdd-builder`, `propose`, `roadmap`, `gate.py`, `detectors.py`,
 `actions.py`, `scan-state.sh`) 优先读 handoff, 缺失时回退到 v2.0 默认约定:
 
 | 字段 | 默认 fallback |
@@ -263,7 +263,7 @@ Feature fragments (`rddf roadmap add-feature`) 跨阶段追踪多 phase 改进�
 
 ### Session Binding Policy (ADR-0017 + spec 2026-07-14)
 
-Every workflow session generated by `rdd-arch`/`guide-plan`/`guide-ship` MUST bind to a rddf-session via `owner_opencode_session_id`. The `guide` recommender surfaces this binding via `BINDING_LINES` (no state mutation). Users running raw skills can check their binding via `skill_use("rddf-session current")`. Manual skill invocation without binding is allowed but the user is responsible for resolving any cross-session conflicts (4-option soft prompt per ADR-0017 §3).
+Every workflow session generated by `rdd-arch`/`rdd-planner`/`rdd-builder` MUST bind to a rddf-session via `owner_opencode_session_id`. The `guide` recommender surfaces this binding via `BINDING_LINES` (no state mutation). Users running raw skills can check their binding via `skill_use("rddf-session current")`. Manual skill invocation without binding is allowed but the user is responsible for resolving any cross-session conflicts (4-option soft prompt per ADR-0017 §3).
 
 ### Skill 文件规范
 
@@ -290,7 +290,7 @@ Every workflow session generated by `rdd-arch`/`guide-plan`/`guide-ship` MUST bi
 - 状态生命周期: `待定 → 已采纳 → 已弃用 / 已替代为 ADR-NNNN`
 - 引用格式: `ADR-NNN §N.M` (例如 `ADR-0003 §2.1`)
 - 模板: `docs/adr/ADR-0000-template.md` (不要给真实 ADR 分配 0000)
-- 当前最新编号: **ADR-0035** (verifier-archive-gate boundary, 2026-08-28; `docs/adr/` 取最大值)
+- 当前最新编号: **ADR-0044** (v4 stage-merge Wave 3 hard removal, 2026-09-04; `docs/adr/` 取最大值)
 - **架构指针 (P1-2 sync, 2026-08-28)**: 较新的关键 ADR 包括 ADR-0023 (rename spec-workflow→rdd-workflow)、ADR-0024 (deps-driven execution mode)、ADR-0025 (design proposal creation)、ADR-0028 (role model per phase)、ADR-0030 (hub-and-spoke federation)、ADR-0033 (submodule-aware)、ADR-0034 (rdd-verifier 5th phase)、ADR-0035 (verifier-archive-gate 双轨边界)。任何 agent 在做架构决策前应至少扫读这三篇。
 
 ### 测试约定
@@ -369,7 +369,7 @@ Every workflow session generated by `rdd-arch`/`guide-plan`/`guide-ship` MUST bi
 
 ### Guide-Ship 执行契约 (v2.0.7+ 固化)
 
-`tasks.md` 是 OpenSpec 的范围与完成清单;`.rddf/plans/<change>.md` 是 **唯一** 可执行实现契约;`execute` 消费 plan 并把进度回写到 `tasks.md`;`guide-ship` 不直接执行 `tasks.md`。
+`tasks.md` 是 OpenSpec 的范围与完成清单;`.rddf/plans/<change>.md` 是 **唯一** 可执行实现契约;`execute` 消费 plan 并把进度回写到 `tasks.md`;`rdd-builder` 不直接执行 `tasks.md` (via execute sub-skill)。
 
 完整契约见 `docs/superpowers/specs/2026-08-05-guide-ship-execution-contract.md`。要点:
 
