@@ -97,5 +97,13 @@ def increment_retry(
         "verifier_kind": verifier_kind,
         "at": datetime.now(timezone.utc).isoformat(),
     })
-    write_builder_handoff(project_root, change_name, **data)
+    valid_kwargs = {
+        "current_phase", "approval_status", "plan_quality_status",
+        "execution_mode_decision", "deps_status", "worktree_path", "branch",
+        "execution_status", "review_status", "archive_status",
+        "verifier_report_path", "retry_count", "max_retries",
+        "retry_history", "phase_pause_history",
+    }
+    filtered = {k: v for k, v in data.items() if k in valid_kwargs}
+    write_builder_handoff(project_root, change_name, **filtered)
     return data
