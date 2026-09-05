@@ -23,7 +23,7 @@ load ../test_helper
     PROJECT_ROOT=$(git rev-parse --show-toplevel)
     TMP_LIST=$(mktemp)
     echo "rdd-workflow/skills/guide" > "$TMP_LIST"
-    echo "rdd-workflow/skills/guide-ship" >> "$TMP_LIST"
+    echo "rdd-workflow/skills/rdd-builder" >> "$TMP_LIST"
 
     source "$PROJECT_ROOT/_lib/resolve_skill_name.sh"
     run resolve_skill_name "nonexistent" "$TMP_LIST"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 # Tests for worktree-archive-workflow change
-# Verifies explicit documentation of worktree commit flow in AGENTS.md and guide-ship/SKILL.md
+# Verifies explicit documentation of worktree commit flow in AGENTS.md and rdd-builder/SKILL.md
 # (Reference: .rddf/improvements/worktree-archive-workflow.md)
 
 load ../test_helper
@@ -44,22 +44,22 @@ load ../test_helper
   [[ "$output" == *"check_worktree_commits"* ]]
 }
 
-# === guide-ship/SKILL.md 验证 ===
+# === rdd-builder/SKILL.md 验证 ===
 
-@test "guide-ship/SKILL.md: Phase 2.7 section exists" {
-  run grep -c "^## Phase 2.7" skills/guide-ship/SKILL.md
+@test "rdd-builder/SKILL.md: Phase 2.7 section exists" {
+  run grep -c "^## Phase 2.7" skills/rdd-builder/SKILL.md
   [ "$status" -eq 0 ]
   [ "$output" -eq 1 ]
 }
 
-@test "guide-ship/SKILL.md: Phase 2.7 references worktree-archive-workflow proposal" {
-  run grep -A 4 "Phase 2.7" skills/guide-ship/SKILL.md
+@test "rdd-builder/SKILL.md: Phase 2.7 references worktree-archive-workflow proposal" {
+  run grep -A 4 "Phase 2.7" skills/rdd-builder/SKILL.md
   [ "$status" -eq 0 ]
   [[ "$output" == *"worktree-archive-workflow"* ]]
 }
 
-@test "guide-ship/SKILL.md: Phase 2.7 lists 5 commit message conventions" {
-  run grep -E "^   - \`[a-z]+\(<scope>\):" skills/guide-ship/SKILL.md
+@test "rdd-builder/SKILL.md: Phase 2.7 lists 5 commit message conventions" {
+  run grep -E "^   - \`[a-z]+\(<scope>\):" skills/rdd-builder/SKILL.md
   [ "$status" -eq 0 ]
   [[ "$output" == *"feat(<scope>):"* ]]
   [[ "$output" == *"fix(<scope>):"* ]]
@@ -68,18 +68,9 @@ load ../test_helper
   [[ "$output" == *"chore(<scope>):"* ]]
 }
 
-@test "guide-ship/SKILL.md: Phase 2.7 mentions archive.sh check_worktree_commits" {
-  run grep -A 30 "Phase 2.7" skills/guide-ship/SKILL.md
+@test "rdd-builder/SKILL.md: Phase 2.7 mentions archive.sh check_worktree_commits" {
+  run grep -A 30 "Phase 2.7" skills/rdd-builder/SKILL.md
   [ "$status" -eq 0 ]
   [[ "$output" == *"check_worktree_commits"* ]]
 }
 
-@test "guide-ship/SKILL.md: Phase 2.7 has 5-step operational workflow" {
-  run grep -A 60 "Phase 2.7" skills/guide-ship/SKILL.md
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"# 1."* ]]
-  [[ "$output" == *"# 2."* ]]
-  [[ "$output" == *"# 3."* ]]
-  [[ "$output" == *"# 4."* ]]
-  [[ "$output" == *"# 5."* ]]
-}

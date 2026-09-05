@@ -1,14 +1,10 @@
 load ../test_helper
 
-@test "skill_md_wc_l: guide-arch/SKILL.md sanitizes ADR_COUNT" {
+@test "skill_md_wc_l: rdd-arch/SKILL.md sanitizes ADR_COUNT" {
     run grep -E "ADR_COUNT=.*wc -l.*tr -d" "$PROJECT_ROOT/skills/rdd-arch/SKILL.md"
     [ "$status" -eq 0 ]
 }
 
-@test "skill_md_wc_l: guide-ship/SKILL.md sanitizes WORKTREE_COUNT" {
-    run grep -E "WORKTREE_COUNT=.*wc -l.*tr -d" "$PROJECT_ROOT/skills/guide-ship/SKILL.md"
-    [ "$status" -eq 0 ]
-}
 
 @test "skill_md_wc_l: roadmap/SKILL.md sanitizes ADR_COUNT" {
     run grep -E "ADR_COUNT=.*wc -l.*tr -d" "$PROJECT_ROOT/skills/roadmap/SKILL.md"

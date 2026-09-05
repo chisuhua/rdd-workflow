@@ -5,7 +5,7 @@
 #   - rdd-workflow-writing-plans 存在 + 元数据 + TDD 5 步结构
 #   - execute.md 整合 TDD 5 步纪律
 #   - prometheus-planning.md 已删除
-#   - guide-ship.md 直接调用 rdd-workflow-writing-plans (无中间检测层)
+#   - rdd-builder.md 直接调用 rdd-workflow-writing-plans (无中间检测层)
 #   - package.json 不再依赖 oh-my-opencode / superpowers / prometheus-start-work
 #   - README.md 反映 v2.0 自包含架构
 #   - 执行契约保留:.rddf/plans/<name>.md
@@ -86,13 +86,13 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     done
 }
 
-# === 3. guide-ship.md 直接调用 (无中间层) ===
+# === 3. rdd-builder.md 直接调用 (无中间层) ===
 
-@test "guide-ship.md directly calls skill_use('rdd-workflow-writing-plans')" {
+@test "rdd-builder.md directly calls skill_use('rdd-workflow-writing-plans')" {
     # v3.0: skill_use call moved to ship_plan.sh helper script
     # Accept either inline in .md or in scripts/ship_plan.sh
-    local md_file="$REPO_ROOT_ORIGIN/skills/guide-ship/SKILL.md"
-    local sh_file="$REPO_ROOT_ORIGIN/skills/guide-ship/scripts/ship_plan.sh"
+    local md_file="$REPO_ROOT_ORIGIN/skills/rdd-builder/SKILL.md"
+    local sh_file="$REPO_ROOT_ORIGIN/skills/rdd-builder/scripts/ship_plan.sh"
 
     if grep -qE 'skill_use.*rdd-workflow-writing-plans' "$md_file" 2>/dev/null; then
         return 0
@@ -102,20 +102,20 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
         return 0
     fi
 
-    echo "skill_use('rdd-workflow-writing-plans') not found in guide-ship/SKILL.md or scripts/ship_plan.sh"
+    echo "skill_use('rdd-workflow-writing-plans') not found in rdd-builder/SKILL.md or scripts/ship_plan.sh"
     return 1
 }
 
-@test "guide-ship.md no longer has detection chain (no PROMETHEUS_MODE builtin/external/none)" {
-    local f="$REPO_ROOT_ORIGIN/skills/guide-ship/SKILL.md"
+@test "rdd-builder.md no longer has detection chain (no PROMETHEUS_MODE builtin/external/none)" {
+    local f="$REPO_ROOT_ORIGIN/skills/rdd-builder/SKILL.md"
     ! grep -qE 'PROMETHEUS_MODE.*builtin|PROMETHEUS_MODE.*external|PROMETHEUS_MODE.*none' "$f" || {
-        echo "guide-ship.md still references PROMETHEUS_MODE (v2.0 should be removed)"
+        echo "rdd-builder.md still references PROMETHEUS_MODE (v2.0 should be removed)"
         return 1
     }
 }
 
-@test "guide-ship.md version is at least 3.0 (v3.0 rename per ADR-0023)" {
-    local f="$REPO_ROOT_ORIGIN/skills/guide-ship/SKILL.md"
+@test "rdd-builder.md version is at least 3.0 (v3.0 rename per ADR-0023)" {
+    local f="$REPO_ROOT_ORIGIN/skills/rdd-builder/SKILL.md"
     local ver
     ver=$(skill_meta_field "$f" version)
     # v3.0.0 renamed from spec-workflow to rdd-workflow (ADR-0023)

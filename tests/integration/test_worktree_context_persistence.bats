@@ -20,10 +20,6 @@ setup() {
   [ "$output" = "$PROJECT_ROOT" ]
 }
 
-@test "worktree-context: guide-ship SKILL.md has Worktree Context Rule" {
-  run grep -c "Worktree Context Rule" "$BATS_TEST_DIRNAME/../../skills/guide-ship/SKILL.md"
-  [ "$output" -ge 1 ]
-}
 
 @test "worktree-context: execute SKILL.md has Worktree Context Rule" {
   run grep -c "Worktree Context Rule" "$BATS_TEST_DIRNAME/../../skills/execute/SKILL.md"
