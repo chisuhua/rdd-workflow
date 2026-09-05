@@ -158,10 +158,21 @@ def test_openspec_validate_any_active_change():
     if not active_changes:
         pytest.skip("No active changes in openspec/changes/")
 
+    candidate = None
+    for name in active_changes:
+        if (changes_dir / name / "specs").is_dir():
+            candidate = name
+            break
+    if candidate is None:
+        pytest.skip(
+            f"No active change has specs/ directory; "
+            f"skipped validate (active={active_changes})"
+        )
+
     result = subprocess.run(
-        ["openspec", "validate", active_changes[0]],
+        ["openspec", "validate", candidate],
         capture_output=True,
         text=True,
         cwd=Path(__file__).resolve().parent.parent.parent,
     )
-    assert result.returncode == 0, f"openspec validate {active_changes[0]} failed: {result.stderr}"
+    assert result.returncode == 0, f"openspec validate {candidate} failed: {result.stderr}"

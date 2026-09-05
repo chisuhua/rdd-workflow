@@ -67,7 +67,7 @@ Exit codes:
 """
 
 
-def cmd_builder(args, project_root=None, **kwargs):
+def cmd_builder(args, project_root=None, **kwargs) -> int:
     project_root = project_root or os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
     if not args or args[0] in ("--help", "-h"):
         print(_help_text())

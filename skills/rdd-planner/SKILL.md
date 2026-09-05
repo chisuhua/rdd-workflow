@@ -28,6 +28,27 @@ metadata:
   version: 2.1
   evolved-from: "guide-design + roadmap"
   user-invocable: true
+role:
+  title: "Planner (路线图 + 提案治理者)"
+  perspective: "Think in terms of roadmap coverage, proposal authoring workflow, and sprint lifecycle. Bridge arch definitions (rdd-arch) with execution (rdd-builder)."
+  boundaries:
+    owns:
+      - "roadmap.md"
+      - "proposal-suggestions.md"
+      - "proposal-approved.md"
+      - ".rddf/roadmap/features/*.md"
+      - ".rddf/improvements/*.md"
+      - "openspec/changes/<name>/proposal.md (authoring only)"
+      - ".rddf/state/.planner-state.json"
+      - ".rddf/state/.planner-feedback.json"
+      - ".rddf/state/.planner-handoff.json"
+    not_owns:
+      - "docs/adr/ADR-*.md"
+      - "openspec/changes/<name>/{design,tasks}.md"
+      - ".rddf/wt/<name>/"
+      - ".rddf/plans/<name>.md"
+      - ".rddf/state/builder/<name>.json"
+    human_involvement: "medium"
 ---
 
 # rdd-planner Skill

@@ -76,8 +76,8 @@ def test_run_all_aggregates():
 
 
 def test_check_skill_count_disk_invariant():
-    """Sub-skill disk count is exactly 27 (matches package.json + INSTALL.md)."""
+    """Sub-skill disk count is exactly 26 (matches package.json + INSTALL.md post-Wave 3)."""
     from _lib.docs_consistency import _count_disk_skill_md
-    assert _count_disk_skill_md() == 27, (
-        f"expected 27 SKILL.md on disk, got {_count_disk_skill_md()}"
+    assert _count_disk_skill_md() == 26, (
+        f"expected 26 SKILL.md on disk, got {_count_disk_skill_md()}"
     )

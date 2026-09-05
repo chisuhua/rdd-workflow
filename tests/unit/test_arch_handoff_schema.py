@@ -30,7 +30,7 @@ def validator(schema):
 
 def test_schema_contract_accepts_v1_and_v2(schema):
     """Schema must pin version 1 for ADR-0016 contract."""
-    assert "enum" in schema["properties"]["version"] and schema["properties"]["version"]["enum"] == [1, 2]
+    assert "enum" in schema["properties"]["version"] and schema["properties"]["version"]["enum"] == [1, 2, 3]
 
 
 def test_valid_v1_payload_passes(validator):

@@ -1,9 +1,9 @@
 # OpenSpec 工作流技能使用指南
 
-> 基于 `guide` 推荐器（arch-side 调 `rdd-arch`，plan-side 调 `guide-plan`，ship-side 调 `guide-ship`），覆盖从提案到归档的完整生命周期。
+> 基于 `guide` 推荐器（arch-side 调 `rdd-arch`，plan-side 调 `rdd-planner`，ship-side 调 `rdd-builder`），覆盖从提案到归档的完整生命周期。
 > 支持多 change 并行执行，可分离到不同终端同时运行。
 <!-- VERSION_BANNER_START -->
-> 当前版本: **v3.0+ (2026-08-26)**（五阶段架构 arch → design → plan → ship → verify + Loop 引擎 + `rdd-workflow-writing-plans` 自包含计划生成器 + `iteration.json` sprint 视图 + 结构化 deps 输出 + `rddf-session` 跨 OpenCode session 恢复 + `rdd-verifier` 阶段验证 + Hub-Spoke 联邦）。`package.json` 标 `3.0.0`，文档与状态契约以 v3.0 为准。
+> 当前版本: **v4.0+ (2026-09-04)**（四阶段架构 rdd-arch → rdd-planner → rdd-builder → rdd-verifier + Loop 引擎 + `rdd-workflow-writing-plans` 自包含计划生成器 + `iteration.json` sprint 视图 + 结构化 deps 输出 + `rddf-session` 跨 OpenCode session 恢复 + `rdd-verifier` 阶段验证 + Hub-Spoke 联邦）。`package.json` 标 `4.0.0`，文档与状态契约以 v4.0 为准（per ADR-0043/0044）。
 <!-- VERSION_BANNER_END -->
 
 > 📋 **v2.0.2 changelog（sync-workflow-contracts 已落地，2026-07-13）**：

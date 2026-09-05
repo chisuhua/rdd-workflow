@@ -1,16 +1,16 @@
 ---
 name: INSTALL
-description: 安装 RDD Workflow 技能——支持全局安装（~/.agents/skills/，跨项目可用）和项目安装（.opencode/skills/rdd-workflow/）。全局安装后从 1 个顶层 INSTALL.md 加 26 个 per-skill 子目录复制全部 27 个子技能到目标位置；自动安装 Python 依赖和 rddf CLI。
+description: 安装 RDD Workflow 技能——支持全局安装（~/.agents/skills/，跨项目可用）和项目安装（.opencode/skills/rdd-workflow/）。全局安装后从 1 个顶层 INSTALL.md 加 26 个 per-skill 子目录复制全部 26 个子技能到目标位置；自动安装 Python 依赖和 rddf CLI。
 alias: install
-version: "3.0"
+version: "4.0"
 author: sisyphus
 ---
 
-> v3.0.0 (2026-08-26): 五阶段架构（arch → design → plan → ship → verify），27 个子技能
+> v4.0.0 (2026-09-04): 四阶段架构（rdd-arch → rdd-planner → rdd-builder → rdd-verifier），26 个子技能
 
 # RDD Workflow 安装程序
 
-本技能将 RDD Workflow 的 27 个子技能安装到当前项目目录。
+本技能将 RDD Workflow 的 26 个子技能安装到当前项目目录。
 
 ## 包含的子技能
 
@@ -21,14 +21,13 @@ author: sisyphus
 | `guide` | 推荐器入口（扫描项目状态，建议下一步） |
 | `rdd-arch` | Arch 阶段状态机（setup → roadmap → arch-done；v4 slim:移除 roadmap 注入） |
 | `rdd-planner` | v4 新增：roadmap + 提案编排器（Stage 2）；包装 `_lib/planner_*.py` + stage entry/exit 契约 |
-| `guide-design` | Design 阶段状态机（v2.1 新增；提案审查 + 内容审查 + 批准/拒绝/延迟） |
-| `guide-plan` | Plan 阶段状态机（scan → propose → deps → plan-done） |
-| `guide-ship` | Ship 阶段状态机（plan → execute → archive → cleanup） |
-| `rdd-builder` | v4 新增：6-phase 状态机（P0/P1/P1.5/P2/P2.5/P3）+ verifier 重试环；替代 guide-design/plan/ship 三合一 |
-| `rdd-verifier` | Verify 阶段状态机（v3.0 新增；批量 AC 验证 + 启发式分类 + 失败回 plan/ship） |
-| `propose` | 变更提案生成（被 guide-plan 调用） |
-| `execute` | 实施计划执行（被 guide-ship 调用） |
-| `status` | 状态查看和归档（被 guide-ship 调用或独立使用） |
+| `rdd-arch` | v4 Stage 1: 架构定义（ADR + 差距分析 + roadmap），slim v3 |
+| `rdd-planner` | v4 Stage 2: 路线图 + 提案管理（status/sync/feedback/audit/attach） |
+| `rdd-builder` | v4 Stage 3: 6-phase 状态机（P0/P1/P1.5/P2/P2.5/P3）+ verifier 重试环 |
+| `rdd-verifier` | v4 Stage 4: 批量 AC 验证（per ADR-0034） |
+| `propose` | 变更提案生成（被 rdd-builder Phase 1 调用） |
+| `execute` | 实施计划执行（被 rdd-builder Phase 2 调用） |
+| `status` | 状态查看和归档（被 rdd-builder Phase 3 调用或独立使用） |
 | `feature` | Feature 管理视图（summary/graph/status/order） |
 | `rddf-session` | 跨 OpenCode session 恢复（ADR-0017） |
 | `roadmap` | 路线图管理（被 rdd-arch 调用） |
@@ -63,7 +62,7 @@ bash install.sh --global
 ```
 
 执行后：
-- 27 个子技能 symlink 到 `~/.agents/skills/` → **所有项目**的 OpenCode 自动发现（具体清单见 `package.json::skills[]`，与磁盘同步）
+- 26 个子技能 symlink 到 `~/.agents/skills/` → **所有项目**的 OpenCode 自动发现（具体清单见 `package.json::skills[]`，与磁盘同步）
 - Python 依赖自动安装 (`pip install --user -r requirements.txt`)
 - `_lib/` 路径写入 Python `.pth` 文件 → 任何项目 `from skills._lib.xxx import yyy` 可用
 - `rddf` CLI 命令创建到 `~/.local/bin/rddf` → 终端直接运行 `rddf status`
@@ -347,7 +346,7 @@ rm -f "$PROJECT_ROOT/install-rdd-workflow.sh"
 |------|-----|
 | 包名称 | rdd-workflow |
 | 别名 | workflow, install |
-| 版本 | 3.0.0（与 `package.json` 同步；npm 注册版本仍为 2.0.0-beta） |
+| 版本 | 4.0.0（与 package.json 同步；v4 stage-merge 完整发布，ADR-0043/0044） |
 | 作者 | sisyphus |
 
 ## npm test vs pytest（v3.0+ 已修正）

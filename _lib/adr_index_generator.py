@@ -11,7 +11,7 @@ import re
 ADR_PATTERN = re.compile(r"ADR-(\d{4})-(.+)\.md$")
 
 _META_PATTERN = re.compile(
-    r"^>\s*\*\*(状态|日期|决策者)\*\*:\s*(.+?)\s*$",
+    r"^>\s*\*\*(状态|Status|日期|Date|决策者|Decider|Decided by)\*\*:\s*(.+?)\s*$",
     re.MULTILINE,
 )
 
@@ -56,11 +56,11 @@ def extract_metadata(adr_path: Path) -> dict | None:
         return None
     metadata = {"is_template": "template" in adr_path.name}
     for key, value in matches:
-        if key == "状态":
+        if key in ("状态", "Status"):
             metadata["status"] = value.strip()
-        elif key == "日期":
+        elif key in ("日期", "Date"):
             metadata["date"] = value.strip()
-        elif key == "决策者":
+        elif key in ("决策者", "Decider", "Decided by"):
             metadata["decider"] = value.strip()
     return metadata
 

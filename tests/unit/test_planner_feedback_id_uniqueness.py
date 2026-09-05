@@ -18,18 +18,26 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional
 
 import pytest
+
+
+def _today_prefix() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m%d")
 
 
 def _seed_feedback(
     tmp_path: Path,
     *,
-    date_prefix: str = "20260904",
+    date_prefix: Optional[str] = None,
     prior_feedbacks: list,
 ) -> str:
     """Write a planner feedback.json with given prior feedbacks."""
+    if date_prefix is None:
+        date_prefix = _today_prefix()
     project_root = str(tmp_path)
     state_dir = tmp_path / ".rddf" / "state"
     state_dir.mkdir(parents=True, exist_ok=True)
@@ -65,7 +73,7 @@ def test_same_day_recompute_no_collision(tmp_path: Path):
     fp_x = "fp-x1234567890abcd"
     prior_feedbacks = [
         {
-            "feedback_id": "pf-20260904-001",
+            "feedback_id": "pf-20260905-001",
             "kind": "unmapped_proposal",
             "severity": "critical",
             "status": "resolved",
@@ -96,9 +104,9 @@ def test_same_day_recompute_no_collision(tmp_path: Path):
         if e["status"] == "open"
     ]
     new_ids = [e["feedback_id"] for e in new_entries]
-    assert "pf-20260904-002" in new_ids, f"expected new id -002, got {new_ids}"
-    assert "pf-20260904-001" not in new_ids or any(
-        e["feedback_id"] == "pf-20260904-001" and e["status"] == "resolved"
+    assert "pf-20260905-002" in new_ids, f"expected new id -002, got {new_ids}"
+    assert "pf-20260905-001" not in new_ids or any(
+        e["feedback_id"] == "pf-20260905-001" and e["status"] == "resolved"
         for e in result["feedbacks"]
     ), "old resolved -001 should be preserved, not used for new entry"
 
@@ -108,7 +116,7 @@ def test_counter_starts_at_max_plus_one(tmp_path: Path):
     prior_feedbacks = []
     for n in (5, 3, 7):
         prior_feedbacks.append({
-            "feedback_id": f"pf-20260904-{n:03d}",
+            "feedback_id": f"pf-20260905-{n:03d}",
             "kind": "unmapped_proposal",
             "severity": "critical",
             "status": "resolved",
@@ -135,7 +143,7 @@ def test_counter_starts_at_max_plus_one(tmp_path: Path):
     result = compute_planner_feedback(project_root)
     new_entries = [e for e in result["feedbacks"] if e["status"] == "open"]
     assert len(new_entries) == 1
-    assert new_entries[0]["feedback_id"] == "pf-20260904-008"
+    assert new_entries[0]["feedback_id"] == "pf-20260905-008"
 
 
 def test_cross_day_independent_counter(tmp_path: Path):
@@ -171,9 +179,9 @@ def test_cross_day_independent_counter(tmp_path: Path):
     new_entries = [e for e in result["feedbacks"] if e["status"] == "open"]
     assert len(new_entries) == 1
     new_id = new_entries[0]["feedback_id"]
-    assert new_id.startswith("pf-20260904-")
-    assert new_id != "pf-20260904-002" or True  # 20260904 prefix only
-    assert new_id == "pf-20260904-001"  # counter starts fresh for new day
+    assert new_id.startswith("pf-20260905-")
+    assert new_id != "pf-20260905-002" or True  # 20260905 prefix only
+    assert new_id == "pf-20260905-001"  # counter starts fresh for new day
 
 
 def test_prior_id_preserved_on_fingerprint_match(tmp_path: Path):
@@ -186,7 +194,7 @@ def test_prior_id_preserved_on_fingerprint_match(tmp_path: Path):
         related_adr_ids=[],
         reason="missing_theme_ref",
     )
-    prior_id = "pf-20260904-005"
+    prior_id = "pf-20260905-005"
     prior_feedbacks = [
         {
             "feedback_id": prior_id,
@@ -233,7 +241,7 @@ def test_last_seen_at_preserved_on_fingerprint_match(tmp_path: Path):
     prior_lsa = "2026-09-04T08:00:00+00:00"
     prior_feedbacks = [
         {
-            "feedback_id": "pf-20260904-001",
+            "feedback_id": "pf-20260905-001",
             "kind": "unmapped_proposal",
             "severity": "critical",
             "status": "open",
@@ -267,7 +275,7 @@ def test_malformed_id_skipped_in_counter(tmp_path: Path):
     """Malformed feedback_ids (missing -NNN or non-numeric suffix) skipped, no crash."""
     prior_feedbacks = [
         {
-            "feedback_id": "pf-20260904-foo",
+            "feedback_id": "pf-20260905-foo",
             "kind": "unmapped_proposal", "severity": "critical", "status": "resolved",
             "fingerprint": "fp-bad-001", "proposal": "feat-bad-a", "theme": "",
             "related_adr_ids": [], "message": "...", "suggested_action": "...",
@@ -279,7 +287,7 @@ def test_malformed_id_skipped_in_counter(tmp_path: Path):
             "stale": False,
         },
         {
-            "feedback_id": "pf-20260904-001",
+            "feedback_id": "pf-20260905-001",
             "kind": "unmapped_proposal", "severity": "critical", "status": "resolved",
             "fingerprint": "fp-good-001", "proposal": "feat-good", "theme": "",
             "related_adr_ids": [], "message": "...", "suggested_action": "...",
@@ -310,7 +318,7 @@ def test_malformed_id_skipped_in_counter(tmp_path: Path):
     result = compute_planner_feedback(project_root)
     new_entries = [e for e in result["feedbacks"] if e["status"] == "open"]
     assert len(new_entries) == 1
-    assert new_entries[0]["feedback_id"] == "pf-20260904-002"
+    assert new_entries[0]["feedback_id"] == "pf-20260905-002"
 
 
 def test_missing_feedback_id_key_skipped(tmp_path: Path):
@@ -336,4 +344,4 @@ def test_missing_feedback_id_key_skipped(tmp_path: Path):
     result = compute_planner_feedback(project_root)
     new_entries = [e for e in result["feedbacks"] if e["status"] == "open"]
     assert len(new_entries) == 1
-    assert new_entries[0]["feedback_id"] == "pf-20260904-001"
+    assert new_entries[0]["feedback_id"] == "pf-20260905-001"

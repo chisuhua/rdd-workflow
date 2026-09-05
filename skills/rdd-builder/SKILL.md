@@ -13,6 +13,22 @@ metadata:
   version: 1.0
   evolved-from: "guide-design + guide-plan + guide-ship"
   user-invocable: true
+role:
+  title: "Builder (审批 + 执行 + 归档治理者)"
+  perspective: "Think in terms of phase state machine progression, TDD discipline, and verifier retry routing. Owns the actual change implementation lifecycle from approval to archive."
+  boundaries:
+    owns:
+      - "openspec/changes/<name>/{tasks,design}.md"
+      - ".rddf/wt/<name>/"
+      - ".rddf/plans/<name>.md"
+      - ".rddf/state/builder/<name>.json"
+      - "openspec/specs/<name>/spec.md"
+    not_owns:
+      - "docs/adr/ADR-*.md"
+      - "openspec/changes/<name>/proposal.md (authoring)"
+      - "roadmap.md"
+      - ".rddf/state/.planner-feedback.json"
+    human_involvement: "medium"
 ---
 
 # rdd-builder Skill

@@ -111,7 +111,7 @@ def check_skill_count() -> list[dict]:
 
 
 def check_stage_count() -> list[dict]:
-    """Stage architecture mentions are consistent (5 阶段 / five-stage).
+    """Stage architecture mentions are consistent (4 阶段 / 4-stage as of v4.0).
 
     Only reports WARNING for stage count mentions in the document's
     "frontmatter banner" (first 10 lines) — inline / changelog mentions
@@ -129,8 +129,7 @@ def check_stage_count() -> list[dict]:
         # Only inspect the first 10 lines (banner / frontmatter)
         banner = "\n".join(text.splitlines()[:10])
 
-        # Disallowed (post v3.0+): 三阶段 / 四阶段 in the banner
-        anti_patterns = re.findall(r"[三四](?=\s*阶段)", banner)
+        anti_patterns = re.findall(r"[三五](?=\s*阶段)", banner)
         if anti_patterns:
             issues.append({
                 "severity": "WARNING",
@@ -138,9 +137,11 @@ def check_stage_count() -> list[dict]:
                 "detail": (
                     f"{doc} banner (first 10 lines) contains {len(anti_patterns)} "
                     f"outdated stage count mention(s): {[a + '阶段' for a in anti_patterns]}. "
-                    f"v3.0+ is 五阶段架构 (arch → design → plan → ship → verify)."
+                    f"v4.0+ is 四阶段架构 (rdd-arch → rdd-planner → rdd-builder → rdd-verifier)."
                 ),
-                "fix_command": f"update {doc} banner to reference 五阶段 / 5-stage architecture",
+                "fix_command": (
+                    f"update {doc} banner to reference 四阶段 / 4-stage architecture"
+                ),
             })
 
     return issues
@@ -299,9 +300,8 @@ def check_role_frontmatter() -> list[dict]:
     issues = []
     phase_skills = (
         "rdd-arch",
-        "guide-design",
-        "guide-plan",
-        "guide-ship",
+        "rdd-planner",
+        "rdd-builder",
         "rdd-verifier",
     )
 

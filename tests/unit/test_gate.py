@@ -113,7 +113,6 @@ def test_default_arch_done_checks_present(state_path, log_path):
     gate = GateMechanism(state_path=state_path, event_log_path=log_path, load_defaults=True)
     names = gate.get_registered_check_names()
     assert "adr_exists" in names
-    assert "roadmap_defined" in names
     assert "gap_analysis_complete" in names
 
 

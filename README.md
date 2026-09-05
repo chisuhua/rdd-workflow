@@ -1,6 +1,6 @@
 # RDD Workflow
 
-> ⚠️ **v3.0+ (2026-08-26): 工作流采用五阶段架构 (arch → design → plan → ship → verify)**
+> ⚠️ **v4.0+ (2026-09-04): 工作流采用四阶段架构 (rdd-arch → rdd-planner → rdd-builder → rdd-verifier)**
 >
 > 提案管理（创建、审查、批准/拒绝/延迟）已从 `rdd-arch` Phase 5.5 迁移到独立的 `guide-design` 阶段。
 > AC 验证从 archive 内嵌 ac-verifier 升级为独立的 `rdd-verifier` 阶段（per ADR-0034）。
@@ -111,8 +111,8 @@ verification:
 | **Ship** | `guide-ship` | 变更执行（worktree、execute、archive） | 低 |
 | **Verify** | `rdd-verifier` | 验证回环（批量 AC 验证 + 启发式分类 + 失败回 plan/ship，per ADR-0034） | 低 |
 
-> **v3.0+ 变更**: 从四阶段扩展为五阶段架构。AC 验证从 `archive_gate_check` 内嵌 ac-verifier 升级为独立的 `rdd-verifier` 阶段（per ADR-0034）。
-> **v2.1 历史**: 提案管理（创建、审查、批准/拒绝/延迟）从 `rdd-arch` Phase 5.5 迁移到独立的 `guide-design` 阶段。
+> **v4.0+ 变更**: 五阶段架构压缩为四阶段，v4 stage-merge (per ADR-0043)。AC 验证保留为独立 rdd-verifier 阶段（per ADR-0034）。
+> **v2.1 历史**（已废弃于 v3.0+）: 提案管理原在 guide-design 阶段；v4.0 wave3 hard removal（ADR-0044）已删除该 skill，由 rdd-builder P0 接管审批。
 > `guide-spec` 别名已在 v2.0 移除。请直接使用 `rdd-arch` → `guide-design` → `guide-plan` → `guide-ship` → `rdd-verifier`。
 
 ### Guide-Ship 执行契约 (v2.0.7+)

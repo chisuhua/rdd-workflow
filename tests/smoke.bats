@@ -22,12 +22,13 @@ load test_helper
   done
 }
 
-@test "v1.x baseline skills still present (regression)" {
+@test "v4.x baseline skills still present (regression)" {
   [ -f "skills/INSTALL.md" ]
   [ -f "skills/guide/SKILL.md" ]
-  [ -f "skills/guide-arch/SKILL.md" ]
-  [ -f "skills/guide-plan/SKILL.md" ]
-  [ -f "skills/guide-ship/SKILL.md" ]
+  [ -f "skills/rdd-arch/SKILL.md" ]
+  [ -f "skills/rdd-planner/SKILL.md" ]
+  [ -f "skills/rdd-builder/SKILL.md" ]
+  [ -f "skills/rdd-verifier/SKILL.md" ]
   [ -f "skills/propose/SKILL.md" ]
   [ -f "skills/execute/SKILL.md" ]
   [ -f "skills/status/SKILL.md" ]
