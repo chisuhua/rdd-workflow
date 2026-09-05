@@ -1,4 +1,8 @@
 ---
+> **⚠️ DEPRECATED**: This skill is deprecated since v4.0 (Wave 1, 2026-09-04). It continues to work but routes through `rdd-builder` shim. Please migrate to `rdd-builder` (Stage 3 of v4 architecture). Hard removal planned for Wave 3 (~v4.x.2, ≥4 weeks after Wave 1, zero shim usage for ≥7 days).
+> Use: `skill_use("rdd-builder")` instead. See `docs/migration-v3-to-v4.md` for migration guide.
+> Shim telemetry: each invocation appends to `.rddf/state/.shim-usage.jsonl`.
+
 name: guide-plan
 description: Change generation phase state machine for OpenSpec workflow — guides user through proposal-approved consumption, propose, deps, and emits plan-done handoff. Called after arch-done or when creating new changes. Owns openspec/changes/<name>/ artifacts.
 license: MIT

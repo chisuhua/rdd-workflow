@@ -1,4 +1,8 @@
 ---
+> **⚠️ DEPRECATED**: This skill is deprecated since v4.0 (Wave 1, 2026-09-04). It continues to work but routes through `rdd-builder` shim. Please migrate to `rdd-builder` (Stage 3 of v4 architecture). Hard removal planned for Wave 3 (~v4.x.2, ≥4 weeks after Wave 1, zero shim usage for ≥7 days).
+> Use: `skill_use("rdd-builder")` instead. See `docs/migration-v3-to-v4.md` for migration guide.
+> Shim telemetry: each invocation appends to `.rddf/state/.shim-usage.jsonl`.
+
 name: guide-ship
 description: Ship-side state machine for OpenSpec workflow — guides user from committed changes through worktree creation, rdd-workflow plan generation, execution, archive, and cleanup. Owns git worktrees and tasks.md progress. Called by user when starting work on a committed change.
 license: MIT
