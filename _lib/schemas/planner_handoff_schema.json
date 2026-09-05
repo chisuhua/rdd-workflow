@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rdd-workflow.local/schemas/planner_handoff_schema.json",
+  "title": "Planner Handoff (rdd-planner stage exit)",
+  "description": "Schema for .rddf/state/.planner-handoff.json emitted by rdd-planner stage exit. Consumed by rdd-builder Phase 0 (approval gate reads proposals_authored) and rdd-arch advisory (via .planner-feedback.json). Per spec §3.3, §6.1. Backward compat: coexists with .planner-state.json (Stage 2, current sprint view) and .planner-feedback.json (ADR-0042, persistent review tasks); each has its own FileLock.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema", "version", "owner", "planner_complete_at", "current_sprint"],
+  "properties": {
+    "schema": {"const": "planner-handoff-v1"},
+    "version": {"const": 1},
+    "owner": {"const": "rdd-planner"},
+    "planner_complete_at": {"type": "string", "format": "date-time"},
+    "current_sprint": {"type": "string"},
+    "proposals_authored": {"type": "array", "items": {"type": "string"}},
+    "proposals_approved_count": {"type": "integer", "minimum": 0},
+    "features_active": {"type": "array", "items": {"type": "string"}},
+    "awaiting_builder": {"type": "array", "items": {"type": "string"}}
+  }
+}

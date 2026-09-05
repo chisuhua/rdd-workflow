@@ -13,11 +13,9 @@
     "arch_complete_at",
     "adr_count",
     "completed_adr_ids",
-    "roadmap_exists",
     "current_phase",
     "plan_started_at",
     "adr_dir",
-    "roadmap_path",
     "architecture_dir",
     "adr_pattern",
     "discovered",
@@ -107,26 +105,6 @@
             }
           }
         },
-        "roadmap_path": {
-          "type": "object",
-          "required": [
-            "found",
-            "created",
-            "candidates_tried"
-          ],
-          "properties": {
-            "found": {
-              "type": "boolean"
-            },
-            "created": {
-              "type": "boolean"
-            },
-            "candidates_tried": {
-              "type": "integer",
-              "minimum": 0
-            }
-          }
-        },
         "architecture_dir": {
           "type": "object",
           "required": [
@@ -148,11 +126,11 @@
           }
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "version": {
       "type": "integer",
-      "enum": [1, 2],
+      "enum": [1, 2, 3],
       "description": "Contract version. v1 adds adr_dir/roadmap_path/architecture_dir/adr_pattern/discovered fields (ADR-0016). v2 adds optional roadmap_fragments_dir (additive) + optional adr_regex field for Python regex passthrough (complete-project-yaml-config-gaps M4 Task 4.5). v1 payloads remain valid under v2 schema (backward compat)."
     },
     "adr_regex": {

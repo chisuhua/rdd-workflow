@@ -19,10 +19,12 @@ author: sisyphus
 | 技能名称 | 用途 |
 |---------|------|
 | `guide` | 推荐器入口（扫描项目状态，建议下一步） |
-| `rdd-arch` | Arch 阶段状态机（setup → roadmap → arch-done） |
+| `rdd-arch` | Arch 阶段状态机（setup → roadmap → arch-done；v4 slim:移除 roadmap 注入） |
+| `rdd-planner` | v4 新增：roadmap + 提案编排器（Stage 2）；包装 `_lib/planner_*.py` + stage entry/exit 契约 |
 | `guide-design` | Design 阶段状态机（v2.1 新增；提案审查 + 内容审查 + 批准/拒绝/延迟） |
 | `guide-plan` | Plan 阶段状态机（scan → propose → deps → plan-done） |
 | `guide-ship` | Ship 阶段状态机（plan → execute → archive → cleanup） |
+| `rdd-builder` | v4 新增：6-phase 状态机（P0/P1/P1.5/P2/P2.5/P3）+ verifier 重试环；替代 guide-design/plan/ship 三合一 |
 | `rdd-verifier` | Verify 阶段状态机（v3.0 新增；批量 AC 验证 + 启发式分类 + 失败回 plan/ship） |
 | `propose` | 变更提案生成（被 guide-plan 调用） |
 | `execute` | 实施计划执行（被 guide-ship 调用） |

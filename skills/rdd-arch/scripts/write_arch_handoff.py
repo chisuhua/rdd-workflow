@@ -163,11 +163,9 @@ def write_arch_handoff(
         "arch_complete_at": datetime.now(timezone.utc).isoformat(),
         "adr_count": adr_count,
         "completed_adr_ids": completed_adr_ids,
-        "roadmap_exists": _to_bool(roadmap_exists_bool),
         "current_phase": current_phase,
         "plan_started_at": None,
         "adr_dir": discovered_adr_dir,
-        "roadmap_path": discovered_roadmap_path,
         "architecture_dir": discovered_architecture_dir,
         "adr_pattern": discovered_adr_pattern,
         "discovered": {
@@ -176,18 +174,13 @@ def write_arch_handoff(
                 "created": False,
                 "candidates_tried": _to_int(discovered_adr_dir_tried),
             },
-            "roadmap_path": {
-                "found": _to_bool(discovered_roadmap_found),
-                "created": False,
-                "candidates_tried": _to_int(discovered_roadmap_tried),
-            },
             "architecture_dir": {
                 "found": _to_bool(discovered_arch_found),
                 "created": False,
                 "candidates_tried": _to_int(discovered_arch_tried),
             },
         },
-        "version": 2,
+        "version": 3,
     }
     # v2: add adr_regex from .rddf/project.yaml (Python regex passthrough
     # for populate_lib). Distinct from adr_pattern (glob). Optional.

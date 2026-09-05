@@ -98,6 +98,7 @@ _ROUTES: Dict[str, str] = {
     "l2-trend": "skills._lib.cli.l2_trend_cmd:cmd_l2_trend",
     "planner": "skills._lib.cli.planner_cmd:cmd_planner",
     "arch": "skills._lib.cli.rdd_arch_cmd:cmd_arch",
+    "builder": "skills._lib.cli.builder_cmd:cmd_builder",
     "monitor": "skills._lib.cli.monitor_cmd:cmd_monitor",
     "roadmap": "skills._lib.cli.roadmap_cmd:cmd_roadmap",
     "scheduler": "skills._lib.cli.scheduler_cmd:cmd_scheduler",

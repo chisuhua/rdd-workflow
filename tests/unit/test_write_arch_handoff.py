@@ -38,7 +38,9 @@ class TestWriteArchHandoff:
         assert isinstance(result, dict)
         assert "arch_complete_at" in result
         assert result["adr_count"] == 3  # excludes template
-        assert result["version"] == 2
+        assert result["version"] == 3
+        assert "roadmap_path" not in result, "v3 must not emit roadmap_path"
+        assert "roadmap_exists" not in result, "v3 must not emit roadmap_exists"
         # File should exist on disk
         path = os.path.join(tmp_repo, ".rddf", "state", ".arch-handoff.json")
         assert os.path.exists(path)
@@ -169,14 +171,13 @@ class TestWriteArchHandoff:
             discovered_arch_tried="1",
         )
         assert result["discovered"]["adr_dir"]["found"] is True
-        assert result["discovered"]["roadmap_path"]["found"] is True
+        assert "roadmap_path" not in result["discovered"], "v3 must not emit discovered.roadmap_path"
         assert result["discovered"]["architecture_dir"]["found"] is False
         assert result["discovered"]["adr_dir"]["candidates_tried"] == 3
-        assert result["discovered"]["roadmap_path"]["candidates_tried"] == 2
         assert result["discovered"]["architecture_dir"]["candidates_tried"] == 1
 
     def test_version_field(self, tmp_repo):
-        """Sets version: 2 (matches v2 schema with adr_regex passthrough)."""
+        """Sets version: 3 (per spec §6.2 batch 2: roadmap fields removed)."""
         result = wah.write_arch_handoff(
             project_root=tmp_repo,
             discovered_adr_dir="docs/adr",
@@ -184,7 +185,7 @@ class TestWriteArchHandoff:
             discovered_architecture_dir="docs/architecture",
             discovered_adr_pattern="ADR-*.md",
         )
-        assert result["version"] == 2
+        assert result["version"] == 3
 
     def test_arch_complete_at_iso_timestamp(self, tmp_repo):
         """Sets arch_complete_at to ISO timestamp."""
@@ -200,9 +201,8 @@ class TestWriteArchHandoff:
         assert "T" in result["arch_complete_at"]
         assert len(result["arch_complete_at"]) >= 19  # "YYYY-MM-DDTHH:MM:SS"
 
-    def test_roadmap_exists_bool(self, tmp_repo):
-        """Sets roadmap_exists boolean based on parameter."""
-        # Path exists
+    def test_v3_no_roadmap_exists_field(self, tmp_repo):
+        """Per spec §6.2 batch 2: v3 handoff must NOT contain roadmap_exists field."""
         result = wah.write_arch_handoff(
             project_root=tmp_repo,
             discovered_adr_dir="docs/adr",
@@ -211,9 +211,10 @@ class TestWriteArchHandoff:
             discovered_adr_pattern="ADR-*.md",
             roadmap_exists_bool="true",
         )
-        assert result["roadmap_exists"] is True
+        assert "roadmap_exists" not in result
+        assert "roadmap_path" not in result
 
-        # Path doesn't exist
+        # Argument accepted for backward compat with v2 callers but ignored
         result = wah.write_arch_handoff(
             project_root=tmp_repo,
             discovered_adr_dir="docs/adr",
@@ -222,7 +223,7 @@ class TestWriteArchHandoff:
             discovered_adr_pattern="ADR-*.md",
             roadmap_exists_bool="false",
         )
-        assert result["roadmap_exists"] is False
+        assert "roadmap_exists" not in result
 
 
 class TestWriteArchHandoffLocked:
@@ -307,4 +308,74 @@ class TestWriteArchHandoffLocked:
         with open(handoff_path) as f:
             data = json.load(f)
         assert data["adr_count"] == 3
-        assert data["version"] == 2
+        assert data["version"] == 3
+
+# ──────────────────────────────────────────────────────────────────────────
+# v3 contract tests (per §6.2 batch 2 + Oracle H1)
+# rdd-arch slim: stop emitting roadmap_path / roadmap_exists /
+# discovered.roadmap_path; bump version 2 → 3.
+# ──────────────────────────────────────────────────────────────────────────
+
+
+class TestWriteArchHandoffV3:
+    def test_v3_writer_outputs_version_3(self, tmp_repo):
+        """Per spec §6.2 batch 2: writer outputs version 3 (not v2)."""
+        result = wah.write_arch_handoff(
+            project_root=tmp_repo,
+            discovered_adr_dir="docs/adr",
+            discovered_roadmap_path="roadmap.md",
+            discovered_architecture_dir="docs/architecture",
+            discovered_adr_pattern="ADR-*.md",
+        )
+        assert result["version"] == 3, f"Expected version 3, got {result['version']}"
+
+    def test_v3_writer_omits_top_level_roadmap_path(self, tmp_repo):
+        """Per spec §6.2: rdd-arch no longer writes roadmap_path."""
+        result = wah.write_arch_handoff(
+            project_root=tmp_repo,
+            discovered_adr_dir="docs/adr",
+            discovered_roadmap_path="roadmap.md",
+            discovered_architecture_dir="docs/architecture",
+            discovered_adr_pattern="ADR-*.md",
+        )
+        assert "roadmap_path" not in result, "v3 must NOT emit roadmap_path"
+
+    def test_v3_writer_omits_top_level_roadmap_exists(self, tmp_repo):
+        """Per spec §6.2: rdd-arch no longer writes roadmap_exists."""
+        result = wah.write_arch_handoff(
+            project_root=tmp_repo,
+            discovered_adr_dir="docs/adr",
+            discovered_roadmap_path="roadmap.md",
+            discovered_architecture_dir="docs/architecture",
+            discovered_adr_pattern="ADR-*.md",
+        )
+        assert "roadmap_exists" not in result, "v3 must NOT emit roadmap_exists"
+
+    def test_v3_writer_omits_discovered_roadmap_path(self, tmp_repo):
+        """Per spec §6.2: discovered.roadmap_path removed (rdd-arch no longer does roadmap discovery)."""
+        result = wah.write_arch_handoff(
+            project_root=tmp_repo,
+            discovered_adr_dir="docs/adr",
+            discovered_roadmap_path="roadmap.md",
+            discovered_architecture_dir="docs/architecture",
+            discovered_adr_pattern="ADR-*.md",
+        )
+        discovered = result.get("discovered", {})
+        assert "roadmap_path" not in discovered, "v3 discovered.roadmap_path must be absent"
+
+    def test_v3_handoff_retained_fields(self, tmp_repo):
+        """Per spec §6.2: config schemas (roadmap_fragments_dir, adr_regex) retained if present."""
+        result = wah.write_arch_handoff(
+            project_root=tmp_repo,
+            discovered_adr_dir="docs/adr",
+            discovered_roadmap_path="roadmap.md",
+            discovered_architecture_dir="docs/architecture",
+            discovered_adr_pattern="ADR-*.md",
+        )
+        # adr_dir / adr_pattern / architecture_dir / arch_complete_revision retained
+        assert "adr_dir" in result
+        assert "adr_pattern" in result
+        assert "architecture_dir" in result
+        assert "arch_complete_revision" in result
+        # roadmap_fragments_dir + adr_regex are config-only (not emitted by writer; consumed from .rddf/project.yaml)
+        # These are validated by readers, not writer. Writer test stops.

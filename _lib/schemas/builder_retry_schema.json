@@ -1,0 +1,6 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rdd-workflow.local/schemas/builder_retry_schema.json",
+  "title": "Builder Retry Verdict (verifier routing, ADR-0034)",
+  "description": "Per spec §3.4 Phase 3: verifier verdict 0-4 routing. Capped at retry_count > max_retries (default 3, per ADR-0034 §8)."
+}

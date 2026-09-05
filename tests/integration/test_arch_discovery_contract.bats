@@ -263,14 +263,12 @@ EOF
   python3 -c "
 import sys
 sys.path.insert(0, '$REPO_ROOT_HERE')
-from skills._lib.gate import _check_adr_exists, _check_roadmap_defined, _check_arch_handoff_exists
+from skills._lib.gate import _check_adr_exists, _check_arch_handoff_exists
 ctx = {'project_root': '$REPO_TMP'}
 a_passed, _ = _check_adr_exists(ctx)
-r_passed, _ = _check_roadmap_defined(ctx)
 h_passed, _ = _check_arch_handoff_exists(ctx)
-print(f'adr={a_passed} roadmap={r_passed} handoff={h_passed}')
+print(f'adr={a_passed} handoff={h_passed}')
 assert a_passed, 'ADR gate failed'
-assert r_passed, 'Roadmap gate failed'
 assert h_passed, 'Handoff gate failed'
 "
   unset PYTHONPATH
