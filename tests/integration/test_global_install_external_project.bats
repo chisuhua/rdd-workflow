@@ -186,7 +186,7 @@ print(_lib.__file__)
   [[ "$output" == *"STATE_SH_OK"* ]]
 }
 
-@test "global_install: ~14 sub-skill symlinks exist and resolve to source" {
+@test "global_install: ~18 sub-skill symlinks exist and resolve to source" {
   # Sanity: count global symlinks and verify each resolves to a real SKILL.md.
   # This catches 'install.sh --global partially failed' regressions.
   [ -d "${HOME}/.agents/skills" ] || skip "global skills dir missing"

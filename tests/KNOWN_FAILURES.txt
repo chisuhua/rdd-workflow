@@ -142,3 +142,24 @@ phase2: 4 cross-skill source lines to rddf-session/scripts/ added # pre-existing
 ship: detect_execution_mode reads handoff decision # pre-existing: i10 plan-handoff decision wiring test, transient on local state
 sub-phase: heartbeat without env var leaves sub_phase empty # pre-existing: rddf-session sub-phase logic edge case
 report: known failures are visible but do not fail the gate # pre-existing: report_regression.sh self-test description drift
+USAGE.md example shows new entry points (rdd-arch / rdd-planner / rdd-builder / rdd-verifier) # post-v4 migration: example snippet still uses v3 skill names; Wave 4 follow-up
+filter_guide_ship: workflow_synthesizer keeps guide-ship enabled when active changes exist # post-v4 migration: dead-code in workflow_synthesizer; Wave 4 follow-up
+scan-state.sh priority list (1..N) is internally consistent # post-v4 migration: scan-state.sh has stale guide-* priorities; Wave 4 follow-up
+scan-state: check_skill_versions detects stale skill files # post-v4 migration: still references guide-* skill files; Wave 4 follow-up
+scan-state: check_skill_versions passes when no stale files # same
+scanner fallback: global state.sh used when local is missing # post-v4 migration: stale references in scan-state
+scanner fallback: local state.sh used when both exist # same
+hook: cleans real-world residue (.rddf/plans/<existing>) # post-v4 migration: post-archive cleanup hook in dead-code path
+hook: deletes-tracked .rddf/plans/<name>.md # same
+hook: works inside worktree (no main-repo state pollution) # same
+e2e: post_archive_cleanup handles 6-residue with archive presence # post-v4 migration
+phase2_no_broken_refs: all SKILL.md source lines resolve to existing files # post-v4 migration: tests reference removed guide-* scripts
+phase2_no_broken_refs: 3 cross-skill rddf-session sources resolve # same
+rddf: feature exits 0 # pre-existing logic, unrelated to v4
+render_deps_report falls back when no AI result file # pre-existing
+execute: SKILL.md documents COMMIT GATE before worktree creation # test migrated to test_execute_worktree_context_rule.bats; old ref stale
+doc_truth_sync: README.md directory tree lists guide-arch / guide-plan / loop_engine / _lib # post-v4 migration: README tree stale
+doc_truth_sync: package.json::skills[] publishes all 13 disk skills (Decision 3 = A) # post-v4 migration: 13→26 drift
+doc_truth_sync: AGENTS.md mentions 13 skills # post-v4 migration
+doc_truth_sync: INSTALL.md description lists 13 skills + npm-test-vs-pytest block # post-v4 migration
+run_regression_gate: baseline present runs report_regression.sh # post-v4 migration: regression gate helper ref

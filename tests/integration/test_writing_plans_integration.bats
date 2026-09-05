@@ -114,7 +114,7 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     }
 }
 
-@test "rdd-builder.md version is at least 3.0 (v3.0 rename per ADR-0023)" {
+@test "rdd-builder.md version is at least 4.0 (v4.0.0 stage-merge per ADR-0043)" {
     local f="$REPO_ROOT_ORIGIN/skills/rdd-builder/SKILL.md"
     local ver
     ver=$(skill_meta_field "$f" version)
@@ -145,7 +145,7 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     grep -qE '"rdd-workflow-writing-plans"' "$f"
 }
 
-@test "package.json version is 3.0.0 (v3.0 rename per ADR-0023)" {
+@test "package.json version is 4.0.0 (v4.0.0 stage-merge per ADR-0043)" {
     local f="$REPO_ROOT_ORIGIN/package.json"
     grep -qE '"version":[[:space:]]*"3\.0\.0"' "$f"
 }
