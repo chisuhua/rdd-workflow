@@ -144,6 +144,7 @@ verification:
 - **57 个 Python 单元测试**：覆盖状态向量、事件日志、门控机制、Loop 引擎等
 - **10 个 Python 集成测试**：覆盖 Loop 流程、门控切换、阶段切换
 - **测试框架**：pytest (Python) + bats (shell)
+- **外部 E2E 测试床**：[chisuhua/rdd-workflow-e2e](https://github.com/chisuhua/rdd-workflow-e2e) — 以第三方项目视角安装 `rdd-workflow`，验证 `arch → planner → builder → archive` 全工作流与 36 个 `rddf` 子命令。Nightly cron 在最新 `master` 上自动跑（无需 GitHub App）。本地复制该仓库即可手动触发： `./install_testbed.sh --clone && RDD_WORKFLOW_REPO=~/.agents/skills/rdd-workflow bats tests/`
 
 ### 跨项目协同 (ADR-0030)
 
