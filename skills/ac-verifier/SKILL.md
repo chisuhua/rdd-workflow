@@ -1,16 +1,49 @@
 ---
 name: ac-verifier
-description: Verify OpenSpec change acceptance criteria against committed code via AI semantic check + tools. Used standalone (`rddf ac-verify <name>`) or automatically invoked before archive.
+description: ⚠️ DEPRECATED — replaced by `rdd-verifier` v2.0 which self-contains LLM verification. Thin shim kept for backward compatibility (1-2 release cycles); new code MUST use `rdd-verifier` directly.
 license: MIT
 compatibility: requires openspec CLI v1.3.1+, Python 3.11+, ANTHROPIC_API_KEY or OPENAI_API_KEY
 metadata:
   author: rdd-workflow
   version: 1.0
   evolved-from: ""
-  user-invocable: true
+  user-invocable: false  # deprecated, use rdd-verifier
+  deprecated:
+    deprecated_in: "rdd-verifier v2.0 (2026-09-07)"
+    deprecated_by: "skills/rdd-verifier/SKILL.md"
+    reason: "rdd-verifier v2.0 self-contains LLM verification — no longer needs to shell out to this skill"
+    removal_target: "next minor release after 2.0"
+    migration: "Replace skill_use('ac-verifier', '<name>') with skill_use('rdd-verifier', '<name>')"
 ---
 
-# AC Verifier Skill
+# ⚠️ DEPRECATED — Use `rdd-verifier` instead
+
+> **This skill is deprecated as of rdd-verifier v2.0 (2026-09-07).**
+>
+> `rdd-verifier` v2.0 **no longer calls this skill**. LLM verification logic has been inlined into the rdd-verifier SKILL.md instruction block (see `skills/rdd-verifier/SKILL.md` § "LLM Verification Protocol"). The executing AI agent IS the LLM — no external provider config needed.
+>
+> **This skill is kept as a thin backward-compatibility shim** for `rddf ac-verify` CLI users and `_lib/archive.sh::archive_gate_check` fallback path. **It will be removed in the next minor release after 2.0**.
+>
+> **New code MUST use `rdd-verifier` directly.**
+
+## Migration
+
+| Old (this skill) | New (rdd-verifier v2.0) |
+|---|---|
+| `skill_use("ac-verifier", "<name>")` | `skill_use("rdd-verifier", "<name>")` |
+| `rddf ac-verify <name>` | `rddf rdd-verify <name>` (auto-redirect) |
+| `AC_LLM_PROVIDER=openai` | not needed (agent IS the LLM) |
+| `AC_LLM_API_KEY=...` | not needed |
+| `AC_LLM_MOCK=yes` | not needed |
+| Exit 3 = "ac-verifier internal error" | Exit 3 = "LLM verification error" |
+
+See `skills/rdd-verifier/SKILL.md` for full v2.0 design.
+
+---
+
+# AC Verifier Skill (v1.0, deprecated — kept for backward compat)
+
+> ⚠️ 以下文档保留用于向后兼容。**新代码请使用 `rdd-verifier`。**
 
 Verifies that each `## 验收标准` bullet in an OpenSpec change's `proposal.md` is genuinely satisfied in the committed code, using an AI agent with code investigation tools.
 
