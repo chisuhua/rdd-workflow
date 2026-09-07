@@ -348,7 +348,7 @@ def test_detect_verification_provider_falls_back_on_corrupt_yaml(tmp_path):
 
 # ============================================================================
 # M2 Task 2.2 (complete-project-yaml-config-gaps M2):
-# _hook_runner maps hook verdict → _default_runner return format
+# _hook_runner maps hook verdict → _stage_context_runner return format
 # ============================================================================
 
 
@@ -457,8 +457,8 @@ def test_cmd_rdd_verify_uses_hook_runner_when_provider_hook(tmp_path, monkeypatc
     assert rc == 0, f"hook provider exit 0 should yield rc 0, got {rc}"
 
 
-def test_cmd_rdd_verify_default_runner_when_no_provider(tmp_path, monkeypatch):
-    """cmd_rdd_verify without provider override → uses _default_runner (LLM)."""
+def test_cmd_rdd_verify_stage_context_runner_when_no_provider(tmp_path, monkeypatch):
+    """cmd_rdd_verify without provider override → uses _stage_context_runner (LLM)."""
     import yaml
     # Setup: project.yaml WITHOUT verification.provider
     project_dir = tmp_path / ".rddf"

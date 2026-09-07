@@ -42,7 +42,6 @@ author: sisyphus
 | `contract-check` | Spoke 本地实现 vs Hub OpenAPI contract 一致性校验（Breaking-Change 阻断 CI） |
 | `cross-repo-protocol` | Hub-Spoke 联邦 MCP 客户端（4 Hub 工具 + REST fallback + trace logging） |
 | `spoke-system-prompt-injection` | Hub-Spoke 协议注入 AI 助手配置（Cursor/Cline/Continue/Copilot/Claude Code） |
-| `ac-verifier` | AI 语义验证 OpenSpec change 验收标准（archive 前自动调用，rdd-verifier 子后端） |
 | `report-issue` | Hub-Spoke 上行命令（[RFC] issue 上报到 Hub；ADR-0030） |
 | `sync-hub` | Hub-Spoke 下行命令（拉取 Hub 契约到本地 specs；ADR-0030） |
 | `watch-hub` | Hub-Spoke 监听命令（一次性轮询 Hub issue 状态；ADR-0030） |

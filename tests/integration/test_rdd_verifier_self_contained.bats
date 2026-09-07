@@ -127,13 +127,11 @@ assert v['route'] == 'guide-plan', v
 }
 
 @test "self-contained: no AC section → pass-through exit 0" {
-  _make_change "ch-noac"
-  printf '# Proposal\n\nNo AC section here.\n' > "openspec/changes/ch-noac/proposal.md"
-  git add . && git commit -q -m "impl"
-  _setup_iteration "ch-noac"
-
-  # ac-verify shim: proposal exists but no AC section → pass-through (exit 0)
-  run rddf ac-verify ch-noac
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"pass-through"* ]]
+  skip "Pass-through semantic for AC-less proposals is now exercised by \
+`test_ac_verify_removed.bats` (exit 4 friendly-error stub) and by the \
+rdd-verifier v2.0 stage protocol (`stage_verification_context` returns \
+ac_count=0). Per remove-ac-verifier-completely (2026-09-07), the legacy \
+`rddf ac-verify` shim was removed; this test's pass-through assertion \
+no longer has a working code path. Tracked as legacy test, not deleted, \
+to preserve historical context."
 }

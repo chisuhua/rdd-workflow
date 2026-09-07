@@ -4,6 +4,7 @@
 > **日期**: 2026-08-26
 > **修订**: 2026-08-26 — fix-rdd-verifier-lifecycle-dashboard 落地后补充存储契约、branch-identity、bypass 审计
 > **决策者**: sisyphus
+> **修订**: 2026-09-07 — `ac-verifier` skill (subprocess) referenced in §"State Machine" was removed via `remove-ac-verifier-completely`; rdd-verifier v2.0 (ADR-0045) is now the sole verification path.
 
 ## 问题
 
