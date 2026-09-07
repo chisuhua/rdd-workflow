@@ -90,3 +90,72 @@ load ../test_helper
   assert_file_exists "$tmpdir/custom/architecture/test-gap-analysis.md"
   rm -rf "$tmpdir"
 }
+
+# --------------------------------------------------------------------------
+# Analyzer Subset §2 protocol化落地 cases (per ADR-0046):
+# Oracle risk #3 — wrapper observable contract MUST stay byte-equal so these
+# tests lock the new behavior on top of the 8 pre-refactor cases.
+# --------------------------------------------------------------------------
+
+@test "arch_gap_analysis_wrapper_uses_lib_arch_protocol" {
+  # The new wrapper MUST delegate to `_lib/arch/protocol.py::build_skeleton`
+  # (Analyzer Subset §2 ADOPT). This locks the data-layer contract so a
+  # future refactor cannot silently diverge.
+  run python3 - <<'PYEOF'
+import sys
+sys.path.insert(0, '/workspace/project/rdd-workflow')
+from _lib.arch import build_skeleton
+out = build_skeleton('test-slug', '2026-09-07')
+# Must contain all 5 sections at the line-start level (regex anchored)
+assert out.count('## 1. 目标架构') == 1, out
+assert out.count('## 5. 参考资料') == 1, out
+PYEOF
+  [ "$status" -eq 0 ]
+}
+
+@test "validate_document_via_python_module_detects_broken_structure" {
+  # Hand-edit a generated gap analysis: change one `##` to `###`. The
+  # validator MUST report structural_ok=False and list the missing section
+  # in `issues`. This is the §5 Output Contract Validation (hard) tier.
+  run python3 - <<'PYEOF'
+import sys, tempfile, pathlib
+sys.path.insert(0, '/workspace/project/rdd-workflow')
+from _lib.arch import build_skeleton, validate_document
+
+with tempfile.TemporaryDirectory() as td:
+    p = pathlib.Path(td) / 'broken.md'
+    body = build_skeleton('test', '2026-09-07')
+    body = body.replace('## 3. 差距清单', '### 3. 差距清单')
+    p.write_text(body)
+    report = validate_document(p)
+    assert report.structural_ok is False, report
+    assert any('差距清单' in issue for issue in report.issues), report
+print('OK')
+PYEOF
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"OK"* ]]
+}
+
+@test "generate_gap_analysis_output_byte_equal_to_python_data_layer" {
+  # Locks the wrapper output to the data-layer output byte-equal (excluding
+  # the timestamp line which is generated independently by bash and Python).
+  # This prevents drift if either side is refactored independently.
+  local tmpdir_bash tmpdir_py today
+  tmpdir_bash=$(mktemp -d)
+  tmpdir_py=$(mktemp -d)
+  mkdir -p "$tmpdir_bash/docs/architecture" "$tmpdir_py"
+  today=$(date -Iseconds)
+
+  bash -c "cd '$tmpdir_bash' && unset PROJECT_ROOT && export RDDF_ARCH_GAP_TODAY='$today' && source '$REPO_ROOT/skills/rdd-arch/scripts/arch_gap_analysis.sh' && generate_gap_analysis 'drift-check'" >/dev/null 2>&1
+  python3 - <<PYEOF > "$tmpdir_py/skeleton.md"
+import sys
+sys.path.insert(0, '/workspace/project/rdd-workflow')
+from _lib.arch import build_skeleton
+sys.stdout.write(build_skeleton('drift-check', '$today'))
+PYEOF
+
+  # diff MUST report zero differences (byte-equal)
+  diff "$tmpdir_bash/docs/architecture/drift-check-gap-analysis.md" "$tmpdir_py/skeleton.md"
+  [ "$?" -eq 0 ]
+  rm -rf "$tmpdir_bash" "$tmpdir_py"
+}

@@ -8,6 +8,9 @@ metadata:
   author: sisyphus
   evolved-from: "renamed from guide-arch.md v2.0 (Stage 3 D1a rename per ADR-0042)"
   user-invocable: true
+  protocol_inline: true
+  protocol_data_layer: "_lib/arch/protocol.py"
+  protocol_output_contract: true
 role:
   title: "Architect (架构治理者)"
   perspective: "Think in terms of long-term architectural coherence, ADR-driven decision-making, and roadmap alignment. Avoid premature implementation details."
@@ -482,6 +485,31 @@ cat "$SELECTED"
 **与 roadmap-define 阶段的衔接**：
 
 用户选择「完成架构分析」后，进入 Phase 4 (roadmap-define) 定义路线图。差距分析是 roadmap 阶段的核心输入——roadmap 的任务分类与优先级应来源于差距分析。
+
+## Arch Gap Analysis Protocol
+
+> 本节为 `cross-stage-protocol-template.md` Analyzer Subset 的首个落地（per ADR-0046）。Analyzer Subset 是 deterministic human-curated analyzer 的协议模式，与 LLM-as-judge verifier 共享 §1（协议块）+ §2（数据层），§3/§4 永久 skip，§5 repurposed 为 Output Contract Validation（结构=硬 / 完成度=advisory）。
+
+**数据层**：`skills/rdd-arch/scripts/arch_gap_analysis.sh`（薄 bash wrapper，Oracle C1 env-var passing）→ 委托 `_lib/arch/protocol.py`（3 纯函数 + `ValidationReport` dataclass）。
+
+**5 节 markdown 契约**（生成时硬约束）：
+
+| § | 中文标题 | 用途 |
+|---|----------|------|
+| 1 | 目标架构 | 引用 ADR 描述的目标状态 |
+| 2 | 当前架构 | 项目实际架构快照 |
+| 3 | 差距清单 | 表格：`# / 差距项 / 严重程度 / 优先级 / 关联 change` |
+| 4 | 补齐路径 | 从当前到目标的迁移步骤 |
+| 5 | 参考资料 | 关联 ADR + change artifacts |
+
+**Output Contract Validation**（advisory 不阻断）：
+
+- `validate_document(path)` → `ValidationReport(structural_ok, completeness, issues)`
+- `structural_ok = False` → generator drift（已封堵，8 个 bats 锁定）
+- `completeness ∈ {draft, partial, complete}` → 仅 advisory；人工异步策展不阻断 arch-done
+- arch-done Phase 5 接线 validation 已 defer 至独立 future change（per ADR-0046 out-of-scope）
+
+**slug 校验**（Oracle concern #3）：slug 必须 kebab-case（lowercase alphanumeric + single hyphen），否则 `ValueError`。
 
 ---
 

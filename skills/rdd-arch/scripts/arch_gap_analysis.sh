@@ -1,86 +1,125 @@
 #!/usr/bin/env bash
-# _lib/arch_gap_analysis.sh — extracted from guide-arch.md L343-L431
-# Exports:
-#   - generate_gap_analysis <slug> — creates docs/architecture/<slug>-gap-analysis.md
-#   - list_gap_analyses           — prints numbered list of existing gap analyses
+# skills/rdd-arch/scripts/arch_gap_analysis.sh — thin bash wrapper over
+# `_lib/arch/protocol.py` (Analyzer Subset §2, per ADR-0046 + the
+# cross-stage protocol template).
 #
-# Honors env vars:
-#   DISCOVERED_ARCHITECTURE_DIR — architecture directory path (from arch_env_check.sh)
-#   PROJECT_ROOT               — project root (auto-detected if not set)
+# Oracle C1: bash NEVER interpolates env vars into `python3 -c "..."` strings.
+# All values are passed via `os.environ` in `_lib/arch/protocol.py`.
+#
+# This wrapper preserves the PRE-REFACTOR bash wrapper contract byte-identically
+# so the 8 existing bats tests in `tests/integration/test_arch_gap_analysis_extraction.bats`
+# stay green (Oracle risk #3).
+#
+# Exported bash functions:
+#   generate_gap_analysis <slug>  — writes <arch_dir>/<slug>-gap-analysis.md
+#   list_gap_analyses              — enumerates existing gap analyses
+#
+# Env vars:
+#   PROJECT_ROOT                    optional; auto-detect if unset
+#   DISCOVERED_ARCHITECTURE_DIR     optional; default `docs/architecture`
+#   RDDF_ARCH_GAP_TODAY            optional; ISO-8601 timestamp (default: now)
 
-generate_gap_analysis() {
-  local SLUG="${1:-}"
-  local PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  local ARCH_DIR="$PROJECT_ROOT/${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}"
+set -euo pipefail
 
-  if [ -z "$SLUG" ]; then
+# Resolve the Python data layer path. Per AGENTS.md rule 25, new code imports
+# `_lib.X` (canonical). The repo-root `_lib/` is on sys.path via `tests/conftest.py`
+# or the global-install `.pth` file (see install.sh).
+#
+# Fallback chain (Oracle C1 compatible — never bash-string-interpolate):
+#   1. RDDF_LIB_ROOT env var (caller override)
+#   2. Read this file's real path via `readlink -f` and resolve relative to it
+#   3. git rev-parse --show-superproject-working-tree (submodule-aware)
+#   4. git rev-parse --show-toplevel (main repo)
+if [ -z "${RDDF_LIB_ROOT:-}" ]; then
+  _WRAPPER_REAL="$(readlink -f "${BASH_SOURCE[0]:-$0}" 2>/dev/null || echo "${BASH_SOURCE[0]:-$0}")"
+  _WRAPPER_DIR="$(cd "$(dirname "$_WRAPPER_REAL")/../.." 2>/dev/null && pwd || true)"
+  if [ -n "$_WRAPPER_DIR" ] && [ -d "$_WRAPPER_DIR/_lib" ]; then
+    RDDF_LIB_ROOT="$_WRAPPER_DIR"
+  else
+    RDDF_LIB_ROOT="$(git rev-parse --show-superproject-working-tree 2>/dev/null \
+      || git rev-parse --show-toplevel 2>/dev/null \
+      || pwd)"
+  fi
+fi
+export RDDF_LIB_ROOT
+unset _WRAPPER_REAL _WRAPPER_DIR
+
+_validate_arch_gap_env() {
+  local slug="${1:-}"
+  local project_root="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  local arch_dir="${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}"
+
+  if [ -z "$slug" ]; then
     echo "❌ 主题不能为空"
     return 1
   fi
 
-  mkdir -p "$ARCH_DIR" || { echo "❌ 无法创建目录: $ARCH_DIR"; return 1; }
+  export RDDF_ARCH_GAP_SLUG="$slug"
+  export RDDF_ARCH_GAP_PROJECT_ROOT="$project_root"
+  export RDDF_ARCH_GAP_ARCH_DIR="$arch_dir"
+  export RDDF_ARCH_GAP_TODAY="${RDDF_ARCH_GAP_TODAY:-$(date -Iseconds)}"
+  export RDDF_ARCH_GAP_ACTION="generate"
+  return 0
+}
+
+generate_gap_analysis() {
+  local SLUG="${1:-}"
+  if ! _validate_arch_gap_env "$SLUG"; then
+    return 1
+  fi
+
+  local PROJECT_ROOT_VAL="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  local ARCH_DIR="$PROJECT_ROOT_VAL/${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}"
   local NEW_GAP="$ARCH_DIR/${SLUG}-gap-analysis.md"
+
+  mkdir -p "$ARCH_DIR" || { echo "❌ 无法创建目录: $ARCH_DIR"; return 1; }
   if [ -f "$NEW_GAP" ]; then
     echo "❌ 差距分析已存在: $NEW_GAP"
     return 1
   fi
 
-  cat > "$NEW_GAP" << EOF
-# 架构差距分析: ${SLUG}
-
-> **生成日期**: $(date -Iseconds)
-> **状态**: 草案
-> **关联 ADR**: (待补充)
-
-## 1. 目标架构
-
-(描述 ADR 中定义的目标架构)
-
-## 2. 当前架构
-
-(描述项目当前实际架构)
-
-## 3. 差距清单
-
-| # | 差距项 | 严重程度 | 优先级 | 关联 change |
-|---|--------|---------|--------|------------|
-| 1 | ... | 高/中/低 | P0/P1/P2 | ... |
-
-## 4. 补齐路径
-
-(描述从当前架构迁移到目标架构的步骤、顺序、依赖)
-
-## 5. 参考资料
-
-- 相关 ADR
-- 相关 change artifacts
-EOF
+  # Delegate body generation to `_lib/arch/protocol.py::build_skeleton`
+  # (Oracle C1: env vars only — never `python3 -c "$VAR" ...` interpolation).
+  local skeleton
+  skeleton="$(python3 - <<'PYEOF' 2>&1
+import os, sys
+sys.path.insert(0, os.environ["RDDF_LIB_ROOT"])
+from _lib.arch import build_skeleton
+sys.stdout.write(build_skeleton(
+    os.environ["RDDF_ARCH_GAP_SLUG"],
+    os.environ.get("RDDF_ARCH_GAP_TODAY", ""),
+))
+PYEOF
+)"
+  printf '%s\n' "$skeleton" > "$NEW_GAP"
 
   echo "✅ 已创建: $NEW_GAP"
   echo "   请编辑该文件补全差距分析内容"
 }
 
 list_gap_analyses() {
-  local PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  local ARCH_DIR="$PROJECT_ROOT/${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}"
+  local PROJECT_ROOT_VAL="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  local ARCH_DIR_VAL="$PROJECT_ROOT_VAL/${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}"
 
-  local GAP_DOCS GAP_COUNT
-  GAP_DOCS=$(ls "$ARCH_DIR/"*-gap-analysis.md 2>/dev/null || true)
+  local gap_paths
+  gap_paths="$(python3 - <<PYEOF 2>&1
+import os, sys
+sys.path.insert(0, os.environ["RDDF_LIB_ROOT"])
+from pathlib import Path
+from _lib.arch import list_analyses
+for p in list_analyses(Path(os.environ.get("RDDF_ARCH_GAP_ARCH_DIR", "docs/architecture"))):
+    print(p.name)
+PYEOF
+)"
 
-  if [ -z "$GAP_DOCS" ]; then
-    GAP_COUNT=0
-  else
-    GAP_COUNT=$(echo "$GAP_DOCS" | wc -l | tr -d '[:space:]')
-  fi
-
-  if [ "$GAP_COUNT" -eq 0 ]; then
+  if [ -z "$gap_paths" ]; then
     echo "⚠️  暂无差距分析"
     return 1
   fi
 
   echo "现有差距分析列表:"
-  echo "$GAP_DOCS" | nl -w2 -s". " | while read -r line; do
-      echo "  $line"
+  echo "$gap_paths" | nl -w2 -s". " | while IFS= read -r line; do
+    echo "  $line"
   done
   return 0
 }
