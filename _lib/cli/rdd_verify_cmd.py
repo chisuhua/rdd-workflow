@@ -1,11 +1,13 @@
 """``rddf rdd-verify`` subcommand — batch verifier orchestration.
 
-Per fix-rdd-verifier-lifecycle-dashboard Tasks 7-10 + ADR-0034 §7.1:
+Per fix-rdd-verifier-lifecycle-dashboard Tasks 7-10 + ADR-0034 §7.1,
+amended by ADR-0045 (inline-ac-verifier-into-rdd-verifier):
 - Discover eligible changes via real iteration lifecycle (not 'ship-done')
 - Resolve implementation commit from openspec/<change> branch tip
-- Read cache or invoke ac-verifier (pluggable runner)
+- Read cache or stage agent verification context (v2.0: the executing AI
+  agent IS the LLM; the CLI no longer shells out to ac-verifier)
 - Persist per-change loop state, verdict cache, iteration summary, audit log
-- Aggregate exit: halted(4) > error(3) > failed(1) > bypassed/passed(0)
+- Aggregate exit: halted(4) > error(3) > failed(1) > pending/bypassed/passed(0)
 - SKIP_RDD_VERIFIER=yes audited bypass requires RDDF_VERIFIER_BYPASS_REASON
 """
 from __future__ import annotations
@@ -13,7 +15,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -128,41 +129,36 @@ def update_iteration_summary(project_root: Path, change_name: str,
     _save_iteration_doc(project_root, doc)
 
 
-def _default_runner(change_name: str, project_root: Path) -> dict:
-    """Default verifier runner — shells out to ac-verifier via bash."""
-    script = project_root / "skills" / "ac-verifier" / "scripts" / "ac_verifier.sh"
-    if not script.is_file():
-        return {"exit_code": 3, "verdict": [], "verdict_json": None,
-                "failed_acs": [], "error": "ac-verifier script not found"}
-    try:
-        proc = subprocess.run(
-            ["bash", str(script), change_name],
-            capture_output=True, text=True, cwd=str(project_root),
-            env={**os.environ, "PROJECT_ROOT": str(project_root)},
-            timeout=600,
-        )
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
-        return {"exit_code": 3, "verdict": [], "verdict_json": None,
-                "failed_acs": [], "error": str(e)}
+def _stage_context_runner(change_name: str, project_root: Path) -> dict:
+    """v2.0 default verifier runner — stages agent verification context.
 
-    verdict_json = None
-    if proc.stdout:
-        try:
-            verdict_json = json.loads(proc.stdout)
-        except json.JSONDecodeError:
-            verdict_json = None
+    Per ADR-0045: the executing AI agent IS the LLM. Instead of shelling out
+    to the deprecated ac-verifier skill, the CLI writes a structured context
+    file (.rddf/state/rdd-verify-context-<change>.json) describing what the
+    agent should verify. The agent performs verification per
+    skills/rdd-verifier/SKILL.md § "LLM Verification Protocol" and writes
+    the verdict cache + audit log directly. A subsequent ``rddf rdd-verify``
+    invocation picks up the cache.
 
-    failed_acs = []
-    if isinstance(verdict_json, dict):
-        for v in verdict_json.get("verdict", []):
-            if v.get("status") == "fail":
-                failed_acs.append(v.get("ac_id", "?"))
-    return {
-        "exit_code": proc.returncode,
-        "verdict": verdict_json.get("verdict", []) if isinstance(verdict_json, dict) else [],
-        "verdict_json": verdict_json,
-        "failed_acs": failed_acs,
-    }
+    Exit semantics: staged context → exit 0 with staged=True (state resolves
+    to "pending" in run_one_change). Missing proposal.md → exit 2 (skip).
+    """
+    from _lib.verifier.protocol import stage_verification_context
+
+    ctx_path = stage_verification_context(change_name, project_root)
+    if ctx_path is None:
+        return {"exit_code": 2, "verdict": [], "verdict_json": None,
+                "failed_acs": [],
+                "note": f"proposal.md not found for {change_name}; skipped"}
+    return {"exit_code": 0, "verdict": [], "verdict_json": None,
+            "failed_acs": [], "staged": True,
+            "context_path": str(ctx_path), "provider": "agent-context"}
+
+
+# Backward-compat alias during the ADR-0045 shim window. The old name
+# described shell-out semantics that no longer exist; new code must use
+# _stage_context_runner. Removal targeted for the next minor release.
+_default_runner = _stage_context_runner
 
 
 def _classify_route(failed_acs: list, verdict: list) -> str:
@@ -221,6 +217,24 @@ def run_one_change(project_root: Path, change_name: str,
 
     write_event(project_root, change_name, "running", commit=impl_sha)
     result = runner(change_name, project_root)
+
+    # v2.0 (ADR-0045): staged context means the agent will verify asynchronously.
+    # Persist loop state as "pending"; do NOT write a verdict cache (no verdict
+    # exists yet). The agent writes the cache per SKILL.md § LLM Verification
+    # Protocol; the next rdd-verify invocation picks it up.
+    if result.get("staged"):
+        state["verification_state"] = "pending"
+        state["codebase_commit_at_last_run"] = impl_sha
+        state["route"] = "pending-agent"
+        save_loop_state(project_root, state, change_name)
+        write_event(project_root, change_name, "pending",
+                    commit=impl_sha, route="pending-agent")
+        return {"state": "pending", "verdict_sha": impl_sha,
+                "archive_ready": False, "route": "pending-agent",
+                "failed_acs": [], "halt_reason": None,
+                "loop_count": state["loop_count"],
+                "context_path": result.get("context_path")}
+
     exit_code = result.get("exit_code", 3)
     verdict = result.get("verdict") or []
     failed_acs = result.get("failed_acs") or []
@@ -261,8 +275,14 @@ def run_one_change(project_root: Path, change_name: str,
 
 
 def aggregate_exit(states: list) -> int:
-    """Compute aggregate exit code. halted(4) > error(3) > failed(1) > bypassed/passed(0)."""
-    priority = {"halted": 4, "error": 3, "failed": 1, "skipped": 4, "bypassed": 0, "passed": 0}
+    """Compute aggregate exit code. halted(4) > error(3) > failed(1) > pending/bypassed/passed(0).
+
+    "pending" (staged for agent verification per ADR-0045) does not fail the
+    batch — the caller (AI agent) is expected to perform the staged
+    verifications and re-run rdd-verify.
+    """
+    priority = {"halted": 4, "error": 3, "failed": 1, "skipped": 4,
+                "bypassed": 0, "passed": 0, "pending": 0}
     worst = 0
     for s in states:
         score = priority.get(s, 0)
@@ -273,10 +293,13 @@ def aggregate_exit(states: list) -> int:
 
 def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
     parser = argparse.ArgumentParser(prog="rddf rdd-verify",
-                                     description="Batch verify changes via ac-verifier")
+                                     description="Batch verify changes via the agent LLM protocol (ADR-0045)")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--max-changes", type=int, default=None)
     parser.add_argument("--loop", action="store_true")
+    parser.add_argument("--stage", type=str, default=None, metavar="CHANGE",
+                        help="Stage agent verification context for one change "
+                             "and exit (per ADR-0045; used by run_verification.sh)")
     parser.add_argument("--re-verify-archived", action="store_true",
                         help="Re-verify archived changes (post-archive audit)")
     parser.add_argument("--archived-since", type=str, default=None,
@@ -291,6 +314,19 @@ def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
         print("❌ SKIP_RDD_VERIFIER=yes requires RDDF_VERIFIER_BYPASS_REASON (fail closed)",
               file=sys.stderr)
         return 3
+
+    # v2.0 --stage mode: write context file only (no batch orchestration).
+    if parsed.stage:
+        from _lib.verifier.protocol import stage_verification_context
+        ctx_path = stage_verification_context(parsed.stage, project_root)
+        if ctx_path is None:
+            print(f"⚠️  proposal.md not found for {parsed.stage}; nothing to stage",
+                  file=sys.stderr)
+            return 2
+        print(f"📌 Staged verification context: {ctx_path}")
+        print("   Agent: perform verification per skills/rdd-verifier/SKILL.md "
+              "§ LLM Verification Protocol, then write the verdict cache.")
+        return 0
 
     if parsed.re_verify_archived:
         from skills._lib.verifier.discovery import discover_archived
@@ -351,13 +387,15 @@ def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
             states.append("bypassed")
             continue
 
-        # Provider routing per design.md Decision 8: explicit runner wins;
-        # otherwise detect verification.provider from .rddf/project.yaml.
+        # Provider routing per design.md Decision 8 (amended by ADR-0045):
+        # explicit runner wins; otherwise detect verification.provider from
+        # .rddf/project.yaml. provider=llm now stages agent context instead
+        # of shelling out to ac-verifier.
         if runner is not None:
             active_runner = runner
         else:
             provider = _detect_verification_provider(project_root)
-            active_runner = _hook_runner if provider == "hook" else _default_runner
+            active_runner = _hook_runner if provider == "hook" else _stage_context_runner
         result = run_one_change(project_root, change, runner=active_runner)
         update_iteration_summary(project_root, change, {
             "state": result["state"],
@@ -373,6 +411,12 @@ def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
         states.append(result["state"])
 
     rc = aggregate_exit(states)
+    pending = [s for s in states if s == "pending"]
+    if pending:
+        print(f"⏳ {len(pending)} change(s) staged for agent verification "
+              f"(state=pending). Agent: read .rddf/state/rdd-verify-context-<change>.json, "
+              f"verify per skills/rdd-verifier/SKILL.md, write the verdict cache, "
+              f"then re-run rddf rdd-verify.")
     print(f"✅ rdd-verifier: aggregate exit {rc} (states: {states})")
     return rc
 

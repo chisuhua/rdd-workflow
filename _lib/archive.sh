@@ -394,83 +394,78 @@ archive_gate_check() {
     return 1
   fi
 
-  # AC verification step (ac-verifier skill, Task 10) + SHA cache check (ADR-0034 §7.2)
+  # AC verification step — SHA-bound verdict cache only (ADR-0045).
+  # v2.0: the ac-verifier subprocess fallback is removed; the canonical
+  # cache is written by rdd-verifier (agent LLM protocol per
+  # skills/rdd-verifier/SKILL.md). Missing/stale cache fails closed unless
+  # the audited bypass (SKIP_RDD_VERIFIER=yes + RDDF_VERIFIER_BYPASS_REASON)
+  # is set. SKIP_AC_VERIFICATION=yes skips this gate entirely (exit 0).
   if [ "${SKIP_AC_VERIFICATION:-no}" != "yes" ]; then
     local proposal_file="$tasks_root/openspec/changes/$change_name/proposal.md"
     if [ -f "$proposal_file" ]; then
-      local ac_script
-      ac_script="$(git rev-parse --show-toplevel 2>/dev/null)/skills/ac-verifier/scripts/ac_verifier.sh"
-      if [ -x "$ac_script" ]; then
-        # SHA-fingerprint verdict cache check (Per ADR-0034 §7.2 + Oracle §C)
-        # Avoids redundant LLM call when rdd-verifier already ran at same commit.
-        local verdict_cache="$tasks_root/.rddf/state/.ac-verdict-${change_name}.json"
-        local current_sha
-        current_sha=$(git -C "$tasks_root" rev-parse HEAD 2>/dev/null || echo "unknown")
+      local verdict_cache_file="$tasks_root/.rddf/state/.ac-verdict-${change_name}.json"
+      local current_sha
+      current_sha=$(git -C "$tasks_root" rev-parse HEAD 2>/dev/null || echo "unknown")
 
-        local cache_hit="no"
-        if [ -f "$verdict_cache" ]; then
-          local cached_sha
-          cached_sha=$(python3 -c "import json,sys; print(json.load(open('$verdict_cache')).get('codebase_commit',''))" 2>/dev/null || echo "")
-          if [ -n "$cached_sha" ] && [ "$cached_sha" = "$current_sha" ]; then
-            cache_hit="yes"
-            echo "♻️  Reusing ac-verifier verdict cache (commit $cached_sha)"
-          else
-            echo "⚠️  ac-verifier verdict cache stale (cached: ${cached_sha:-none}, current: $current_sha)"
-          fi
-        fi
-
-        if [ "$cache_hit" = "yes" ]; then
-          # Evaluate cached verdict for STRICT_AC_GATE
-          if [ "${STRICT_AC_GATE:-no}" = "yes" ]; then
-            local cached_has_fail
-            cached_has_fail=$(python3 -c "
-import json,sys
+      local cache_sha="" cache_has_fail="no"
+      if [ -f "$verdict_cache_file" ]; then
+        local cache_info
+        cache_info=$(VERDICT_CACHE_FILE="$verdict_cache_file" python3 -c '
+import json, os, sys
 try:
-    d = json.load(open('$verdict_cache'))
-    fails = [v for v in d.get('verdict', []) if v.get('status') == 'fail']
-    sys.exit(1 if fails else 0)
+    d = json.load(open(os.environ["VERDICT_CACHE_FILE"]))
 except Exception:
+    print("|no")
     sys.exit(0)
-" 2>/dev/null)
-            if [ "$?" -ne 0 ] || [ "$cached_has_fail" = "1" ]; then
+sha = d.get("codebase_commit", "")
+has_fail = any(v.get("status") == "fail" for v in (d.get("verdict") or []))
+print(sha + "|no" if not has_fail else sha + "|yes")
+' 2>/dev/null || echo "|no")
+        cache_sha="${cache_info%%|*}"
+        cache_has_fail="${cache_info##*|}"
+
+        if [ -n "$cache_sha" ] && [ "$cache_sha" = "$current_sha" ]; then
+          echo "♻️  Reusing verifier verdict cache (commit $cache_sha)"
+          if [ "$cache_has_fail" = "yes" ]; then
+            if [ "${STRICT_AC_GATE:-no}" = "yes" ]; then
               echo "❌ archive_gate_check: AC verification failed under STRICT_AC_GATE (cached)"
-              python3 -c "
-import json
+              VERDICT_CACHE_FILE="$verdict_cache_file" python3 -c '
+import json, os
 try:
-    d = json.load(open('$verdict_cache'))
-    for v in d.get('verdict', []):
-        if v.get('status') == 'fail':
-            print(f'  {v.get(\"ac_id\", \"?\")}: {v.get(\"reasoning\", \"no reasoning\")}')
+    d = json.load(open(os.environ["VERDICT_CACHE_FILE"]))
+    for v in d.get("verdict", []):
+        if v.get("status") == "fail":
+            print("  " + str(v.get("ac_id", "?")) + ": " + str(v.get("reasoning", "no reasoning")))
 except Exception:
     pass
-" 2>/dev/null
+' 2>/dev/null
               return 1
             fi
+            echo "⚠️  archive_gate_check: cached verdict has failed ACs (set STRICT_AC_GATE=yes to block)"
           fi
-          # Non-strict + cache hit = pass; skip LLM
         else
-          # Original ac-verifier invocation (cache miss or stale)
-          local ac_output ac_exit
-          ac_output=$(PROJECT_ROOT="$tasks_root" bash "$ac_script" "$change_name" 2>&1)
-          ac_exit=$?
-          case $ac_exit in
-            0) ;;  # all pass — continue
-            1)
-              if [ "${STRICT_AC_GATE:-no}" = "yes" ]; then
-                echo "❌ archive_gate_check: AC verification failed under STRICT_AC_GATE"
-                echo "$ac_output" | tail -30
-                return 1
-              else
-                echo "⚠️  archive_gate_check: AC verification warning (set STRICT_AC_GATE=yes to block)"
-                echo "$ac_output" | tail -30
-              fi
-              ;;
-            2) ;;  # skipped — continue silently
-            3)
-              echo "⚠️  AC verification errored; treating as warning (set SKIP_AC_VERIFICATION=yes to suppress)"
-              echo "$ac_output" | tail -10
-              ;;
-          esac
+          echo "⚠️  verifier verdict cache stale (cached: ${cache_sha:-none}, current: $current_sha)"
+          cache_sha=""
+        fi
+      fi
+
+      if [ -z "$cache_sha" ]; then
+        # No fresh cache → no ac-verifier fallback (ADR-0045). Fail closed
+        # unless the audited bypass path is taken.
+        if [ "${SKIP_RDD_VERIFIER:-no}" = "yes" ]; then
+          if [ -n "${RDDF_VERIFIER_BYPASS_REASON:-}" ]; then
+            echo "⏭️  archive_gate_check: verification bypassed (SKIP_RDD_VERIFIER=yes; reason: $RDDF_VERIFIER_BYPASS_REASON)"
+          else
+            echo "❌ archive_gate_check: SKIP_RDD_VERIFIER=yes requires RDDF_VERIFIER_BYPASS_REASON (fail closed)"
+            return 1
+          fi
+        else
+          echo "❌ archive_gate_check: no valid verdict cache for '$change_name' (current commit $current_sha)"
+          echo "   Run 'rddf rdd-verify' first — the AI agent verifies ACs per"
+          echo "   skills/rdd-verifier/SKILL.md § LLM Verification Protocol and"
+          echo "   writes .rddf/state/.ac-verdict-${change_name}.json."
+          echo "   Or set SKIP_RDD_VERIFIER=yes + RDDF_VERIFIER_BYPASS_REASON to bypass."
+          return 1
         fi
       fi
     fi

@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # ac_verifier.sh — bash wrapper for skills/ac-verifier/scripts/ac_verifier.py
 #
+# ⚠️ DEPRECATED per ADR-0045 (inline-ac-verifier-into-rdd-verifier).
+# rdd-verifier v2.0 no longer invokes this script; the executing AI agent IS
+# the LLM. Kept as a backward-compatibility shim for one release cycle.
+# New code MUST use `rddf rdd-verify` /
+# skills/rdd-verifier/SKILL.md § "LLM Verification Protocol".
+#
 # Usage: ac_verifier.sh <change-name> [--dry-run] [--strict] [--skip]
 #
 # Exit codes:

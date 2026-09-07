@@ -13,7 +13,7 @@ from typing import Optional
 
 VALID_EVENTS = frozenset({
     "running", "failed", "halted", "bypassed", "archive-ready",
-    "error", "skipped",
+    "error", "skipped", "pending",
 })
 
 

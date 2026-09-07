@@ -27,13 +27,13 @@ The verifier queue SHALL use the canonical iteration lifecycle and SHALL NOT dep
 
 ### Requirement: rddf rdd-verify SHALL execute real batch verification
 
-The `rddf rdd-verify` command SHALL invoke the ac-verifier backend for each eligible change unless a current valid verdict cache exists. It SHALL persist the verdict and verification state, classify failed acceptance criteria, and return a non-success exit code when any change fails, errors, or reaches the retry limit. An empty queue SHALL be a successful no-op only when the queue is genuinely empty.
+The `rddf rdd-verify` command SHALL perform AC verification for each eligible change — via the self-contained agent LLM protocol (per ADR-0045: stage context, agent verifies per `skills/rdd-verifier/SKILL.md` § LLM Verification Protocol, verdict cache write-back) — unless a current valid verdict cache exists. It SHALL persist the verdict and verification state, classify failed acceptance criteria, and return a non-success exit code when any change fails, errors, or reaches the retry limit. An empty queue SHALL be a successful no-op only when the queue is genuinely empty.
 
 #### Scenario: Eligible change is verified
 - **GIVEN** the queue contains one eligible change
 - **AND** no current verdict cache exists
 - **WHEN** `rddf rdd-verify` runs
-- **THEN** it invokes ac-verifier
+- **THEN** it stages the agent verification context and records `pending` state (per ADR-0045; the agent performs the LLM verification per the SKILL.md protocol)
 - **AND** writes a verdict cache bound to the implementation commit
 - **AND** writes verification state for the change
 

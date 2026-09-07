@@ -71,6 +71,7 @@
 | [ADR-0042](ADR-0042-rdd-arch-rdd-planner-bidirectional-feedback.md) | ADR-0042: rdd-arch rename + rdd-arch ↔ rdd-planner 双向反馈闭环 | 已采纳 (2026-09-03) | 2026-09-03 |
 | [ADR-0043](ADR-0043-rdd-workflow-v4-stage-merge.md) | ADR-0043: rdd-workflow v4 stage-merge architecture | 已采纳 (2026-09-04) | 2026-09-04 |
 | [ADR-0044](ADR-0044-v4-stage-merge-wave3-hard-removal.md) | ADR-0044: v4 Stage Merge Wave 3 — Hard Removal of guide-* Skills | 已采纳 (2026-09-04) | 2026-09-04 |
+| [ADR-0045](ADR-0045-inline-ac-verifier-into-rdd-verifier.md) | ADR-0045: 内联 ac-verifier 到 rdd-verifier（v2.0 自包含 LLM 验证） | 已采纳 | 2026-09-07 |
 <!-- ADR_INDEX_END -->
 
 ## 架构演进

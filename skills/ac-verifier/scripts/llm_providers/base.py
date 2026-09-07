@@ -1,4 +1,8 @@
-"""LLM error hierarchy + BaseHTTPProvider shared logic."""
+"""
+⚠️ DEPRECATED per ADR-0045 (inline-ac-verifier-into-rdd-verifier).
+rdd-verifier v2.0 no longer invokes this module; the executing AI agent IS
+the LLM. Kept as a backward-compatibility shim for one release cycle.
+LLM error hierarchy + BaseHTTPProvider shared logic."""
 from __future__ import annotations
 
 import os

@@ -1,4 +1,9 @@
 """Unit tests for ac_verifier module."""
+
+# ⚠️ DEPRECATED per ADR-0045 (inline-ac-verifier-into-rdd-verifier).
+# ac-verifier is a backward-compatibility shim for one release cycle; this
+# suite asserts the shim surface. Replaced by tests/unit/test_rdd_verifier_protocol.py
+# after the shim window closes. Do not extend; schedule for removal.
 from pathlib import Path
 import pytest
 from skills.ac_verifier.scripts.ac_verifier import parse_acs

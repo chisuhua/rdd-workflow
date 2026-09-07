@@ -1,4 +1,8 @@
-"""Mock LLM responses for AC verifier tests.
+"""
+⚠️ DEPRECATED per ADR-0045 (inline-ac-verifier-into-rdd-verifier).
+rdd-verifier v2.0 no longer invokes this module; the executing AI agent IS
+the LLM. Kept as a backward-compatibility shim for one release cycle.
+Mock LLM responses for AC verifier tests.
 
 Activated when AC_LLM_MOCK=yes. Provides 5 canned scenarios:
 - mock_pass_all

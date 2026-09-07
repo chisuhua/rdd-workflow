@@ -1,66 +1,56 @@
 #!/usr/bin/env bash
-# run_verification.sh <change_name> — Invoke ac-verifier skill for one change
+# run_verification.sh <change_name> — Stage agent verification context (v2.0)
+#
+# Per ADR-0045 (inline-ac-verifier-into-rdd-verifier): the executing AI agent
+# IS the LLM. This script no longer shells out to the deprecated ac-verifier
+# skill. Instead it stages a structured context file at
+#   .rddf/state/rdd-verify-context-<change>.json
+# describing what the agent should verify (proposal path, AC list, cache path,
+# audit log path, expected verdict schema, reasoning-keyword contract).
+#
+# The agent then performs verification per
+#   skills/rdd-verifier/SKILL.md § "LLM Verification Protocol"
+# writes the verdict cache + audit log, and re-runs `rddf rdd-verify` to pick
+# up the cache.
 #
 # Usage: bash run_verification.sh <change_name>
-# Exit: ac-verifier exit code (0=pass, 1=fail, 2=skip, 3=error)
-#
-# Per ADR-0034 §4.1: wraps ac-verifier skill invocation for one change.
+# Exit:  0 = context staged (agent verification pending)
+#        2 = proposal.md missing (skip)
+#        3 = staging error
 set -euo pipefail
 
 CHANGE_NAME="${1:-}"
 [ -z "$CHANGE_NAME" ] && {
     echo "❌ usage: run_verification.sh <change_name>" >&2
-    exit 2
+    exit 3
 }
 
 PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-AC_SCRIPT="$PROJECT_ROOT/skills/ac-verifier/scripts/ac_verifier.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 
-if [ ! -f "$AC_SCRIPT" ]; then
-    echo "❌ ac-verifier skill not found at $AC_SCRIPT" >&2
+# Resolve the CLI backend across install layouts:
+#   1. repo checkout: skills/rdd-verifier/scripts → repo-root/_lib/cli/
+#   2. global install (symlink): realpath lands in repo; same as (1)
+#   3. global install (copied): ~/.agents/skills/rdd-workflow/_lib/cli/
+RESOLVED_CLI=""
+for CAND in \
+    "$SCRIPT_DIR/../../../_lib/cli/rdd_verify_cmd.py" \
+    "$HOME/.agents/skills/rdd-workflow/_lib/cli/rdd_verify_cmd.py"; do
+  if [ -f "$CAND" ]; then
+    RESOLVED_CLI="$CAND"
+    break
+  fi
+done
+
+if [ -z "$RESOLVED_CLI" ]; then
+    echo "❌ rdd_verify_cmd.py not found (looked in repo layout and ~/.agents/skills)" >&2
     exit 3
 fi
 
 set +e
-AC_OUTPUT=$(PROJECT_ROOT="$PROJECT_ROOT" bash "$AC_SCRIPT" "$CHANGE_NAME" 2>&1)
-AC_EXIT=$?
+RDDF_PROJECT_ROOT="$PROJECT_ROOT" \
+    python3 "$RESOLVED_CLI" --stage "$CHANGE_NAME"
+STAGE_EXIT=$?
 set -e
 
-printf '%s\n' "$AC_OUTPUT"
-
-if [ "$AC_EXIT" -eq 0 ] || [ "$AC_EXIT" -eq 1 ]; then
-    PROJECT_ROOT="$PROJECT_ROOT" VERIFIER_CHANGE_NAME="$CHANGE_NAME" \
-        VERIFIER_EXIT_CODE="$AC_EXIT" VERIFIER_OUTPUT="$AC_OUTPUT" \
-        python3 - <<'PY'
-import json
-import os
-from pathlib import Path
-
-from _lib.verifier.branch import resolve_implementation_commit
-from _lib.verifier.cache import verdict_cache
-
-root = Path(os.environ["PROJECT_ROOT"])
-change = os.environ["VERIFIER_CHANGE_NAME"]
-exit_code = int(os.environ["VERIFIER_EXIT_CODE"])
-output = os.environ.get("VERIFIER_OUTPUT", "")
-try:
-    payload = json.loads(output)
-except json.JSONDecodeError:
-    payload = {}
-verdict = payload.get("verdict", []) if isinstance(payload, dict) else []
-failed = [item.get("ac_id", "?") for item in verdict if item.get("status") == "fail"]
-commit = resolve_implementation_commit(root, change) or "unknown"
-verdict_cache(
-    root,
-    change,
-    payload.get("codebase_commit", commit) if isinstance(payload, dict) else commit,
-    verdict,
-    ran_by="rdd-verifier",
-    verification_state="passed" if exit_code == 0 else "failed",
-    failed_acs=failed,
-    implementation_ref=f"openspec/{change}",
-)
-PY
-fi
-
-exit "$AC_EXIT"
+exit "$STAGE_EXIT"

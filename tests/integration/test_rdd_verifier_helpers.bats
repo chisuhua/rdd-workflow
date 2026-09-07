@@ -73,18 +73,24 @@ EOF
     unset RDDF_VERIFIER_MAX_CHANGES
 }
 
-# === run_verification.sh ===
+# === run_verification.sh (v2.0 per ADR-0045) ===
 
-@test "run_verification.sh: missing change_name exits 2" {
+@test "run_verification.sh: missing change_name exits 3 with usage" {
+    # ADR-0045 v2.0: missing arg → exit 3 + usage hint (was exit 2 pre-v2.0).
     run bash "$REPO_ROOT/skills/rdd-verifier/scripts/run_verification.sh"
-    [ "$status" -eq 2 ]
+    [ "$status" -eq 3 ]
+    [[ "$output" == *"usage"* ]]
 }
 
-@test "run_verification.sh: missing ac-verifier skill (in TEST_TMP) exits 3" {
-    # TEST_TMP has no skills/, so ac-verifier not found → exit 3
+@test "run_verification.sh: missing proposal.md (in TEST_TMP) exits 2" {
+    # ADR-0045 v2.0: CLI backend resolves via script-relative path; if proposal.md
+    # is absent, stage_verification_context returns None → exit 2 (skip).
+    # Note: TEST_TMP has no repo layout so neither symlinked skills/ nor
+    # ~/.agents path matters — the script's first lookup (SCRIPT_DIR/../../
+    # _lib/cli/rdd_verify_cmd.py) finds the real repo CLI.
     run bash "$REPO_ROOT/skills/rdd-verifier/scripts/run_verification.sh" nonexistent-change
-    [ "$status" -eq 3 ]
-    [[ "$output" == *"ac-verifier skill not found"* ]]
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"proposal.md"* ]]
 }
 
 # === classify_failure.sh ===

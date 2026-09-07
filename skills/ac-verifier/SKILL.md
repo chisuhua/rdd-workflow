@@ -9,18 +9,18 @@ metadata:
   evolved-from: ""
   user-invocable: false  # deprecated, use rdd-verifier
   deprecated:
-    deprecated_in: "rdd-verifier v2.0 (2026-09-07)"
+    deprecated_in: "rdd-verifier v2.0 (2026-09-07, per ADR-0045)"
     deprecated_by: "skills/rdd-verifier/SKILL.md"
-    reason: "rdd-verifier v2.0 self-contains LLM verification — no longer needs to shell out to this skill"
+    reason: "rdd-verifier v2.0 self-contains LLM verification (ADR-0045) — no longer needs to shell out to this skill"
     removal_target: "next minor release after 2.0"
     migration: "Replace skill_use('ac-verifier', '<name>') with skill_use('rdd-verifier', '<name>')"
 ---
 
 # ⚠️ DEPRECATED — Use `rdd-verifier` instead
 
-> **This skill is deprecated as of rdd-verifier v2.0 (2026-09-07).**
+> **This skill is deprecated as of rdd-verifier v2.0 (2026-09-07, per ADR-0045).**
 >
-> `rdd-verifier` v2.0 **no longer calls this skill**. LLM verification logic has been inlined into the rdd-verifier SKILL.md instruction block (see `skills/rdd-verifier/SKILL.md` § "LLM Verification Protocol"). The executing AI agent IS the LLM — no external provider config needed.
+> `rdd-verifier` v2.0 **no longer calls this skill** (per ADR-0045 inline-ac-verifier-into-rdd-verifier). LLM verification logic has been inlined into the rdd-verifier SKILL.md instruction block (see `skills/rdd-verifier/SKILL.md` § "LLM Verification Protocol"). The executing AI agent IS the LLM — no external provider config needed.
 >
 > **This skill is kept as a thin backward-compatibility shim** for `rddf ac-verify` CLI users and `_lib/archive.sh::archive_gate_check` fallback path. **It will be removed in the next minor release after 2.0**.
 >

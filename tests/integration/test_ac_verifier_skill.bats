@@ -1,4 +1,13 @@
 #!/usr/bin/env bats
+# test_ac_verifier_skill.bats — ac-verifier skill structural tests
+#
+# ⚠️ DEPRECATED suite per ADR-0045 (inline-ac-verifier-into-rdd-verifier).
+# ac-verifier is a backward-compatibility shim for one release cycle; these
+# tests assert the shim surface. Replaced by test_rdd_verifier_protocol.py +
+# test_rdd_verifier_self_contained.bats after the shim window closes.
+#
+# Updated for v2.0: the skill is user-invocable: false with a deprecation
+# notice; CLI shims map old exit semantics onto the agent protocol.
 
 setup() {
   REPO_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
@@ -7,9 +16,11 @@ setup() {
 
 # === Skill Registration ===
 
-@test "ac-verifier: SKILL.md exists with user-invocable: true" {
+@test "ac-verifier: SKILL.md is deprecated (user-invocable: false + ADR-0045 notice)" {
   [ -f "$REPO_ROOT/skills/ac-verifier/SKILL.md" ]
-  run grep "user-invocable: true" "$REPO_ROOT/skills/ac-verifier/SKILL.md"
+  run grep "user-invocable: false" "$REPO_ROOT/skills/ac-verifier/SKILL.md"
+  [ "$status" -eq 0 ]
+  run grep "ADR-0045" "$REPO_ROOT/skills/ac-verifier/SKILL.md"
   [ "$status" -eq 0 ]
 }
 

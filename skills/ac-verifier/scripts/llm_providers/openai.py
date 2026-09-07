@@ -1,4 +1,8 @@
-"""OpenAI provider — native OpenAI chat completions protocol."""
+"""
+⚠️ DEPRECATED per ADR-0045 (inline-ac-verifier-into-rdd-verifier).
+rdd-verifier v2.0 no longer invokes this module; the executing AI agent IS
+the LLM. Kept as a backward-compatibility shim for one release cycle.
+OpenAI provider — native OpenAI chat completions protocol."""
 from __future__ import annotations
 
 from .base import BaseHTTPProvider

@@ -91,7 +91,7 @@ bats tests/integration/test_global_install_external_project.bats   # 11/11 pass
 | design | v4: `rdd-planner` (was `guide-design`) | 设计管理 + 内容审查: 提案创建, 审查, 批准/拒绝/延迟; approve 即落盘完整 proposal.md |
 | plan | v4: `rdd-builder` (was `guide-plan`) | 变更生成: intake (含 changes_pre_created 跳过), fill (specs/design/tasks), deps |
 | ship | v4: `rdd-builder` P2 (was `guide-ship`) | 变更执行: worktree/轻量, execute, archive, cleanup |
-| verify | `rdd-verifier` | 验证回环: 批量调 ac-verifier, 启发式分类 AC pass/fail, 失败回 plan/ship, 最多 3 次 (ADR-0034) |
+| verify | `rdd-verifier` | 验证回环: self-contained LLM verification (LLM Verification Protocol 内联于 SKILL.md, per ADR-0045), 启发式分类 AC pass/fail, 失败回 plan/ship, 最多 3 次 (ADR-0034) |
 
 `rdd-builder` 自动检测并行冲突:
 - 无其他 worktree **且** 仅此一个 change → ⚡ **轻量模式** (创建 branch, 直接在主仓库执行, 跳过 worktree)

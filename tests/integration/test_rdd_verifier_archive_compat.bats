@@ -1,11 +1,11 @@
 #!/usr/bin/env bats
 # test_rdd_verifier_archive_compat.bats — Verify SHA-fingerprint verdict cache
-# integration with archive_gate_check (Per ADR-0034 §7.2 + Oracle §C)
+# integration with archive_gate_check (per ADR-0034 §7.2, amended by ADR-0045)
 #
-# Test cases:
-#   1. Cache hit (codebase_commit matches HEAD) → no LLM re-run, cache reused
-#   2. Cache stale (new commit after cache) → re-run ac-verifier
-#   3. Cache missing → fall through to original ac-verifier invocation
+# v2.0 semantics (ADR-0045): the ac-verifier subprocess fallback is removed.
+#   1. Cache hit (codebase_commit matches HEAD) → cache reused, no LLM call
+#   2. Cache stale (new commit after cache) → fail closed
+#   3. Cache missing → fail closed (run rdd-verify first, or audited bypass)
 #   4. SKIP_AC_VERIFICATION=yes → bypass entire AC step (existing behavior)
 load test_helper
 
@@ -37,7 +37,7 @@ teardown() {
     rm -rf "$TEST_TMP"
 }
 
-# Symlink skills/ so ac-verifier script is discoverable
+# Symlink skills/ so verifier helpers are discoverable
 _setup_skills_symlink() {
     ln -s "$REPO_ROOT/skills" "$TEST_TMP/skills"
 }
@@ -58,14 +58,14 @@ EOF
 
     # STRICT_AC_GATE=yes would normally fail on mock-pass; with cache hit,
     # the cached pass verdict should override and exit 0
-    AC_LLM_MOCK=yes STRICT_AC_GATE=yes \
+    STRICT_AC_GATE=yes \
         run archive_gate_check test-change "$TEST_TMP"
 
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Reusing ac-verifier verdict cache"* ]]
+    [[ "$output" == *"Reusing verifier verdict cache"* ]]
 }
 
-@test "archive_gate_check: stale cache (different SHA) triggers re-run" {
+@test "archive_gate_check: stale cache (different SHA) fails closed (no fallback)" {
     _setup_skills_symlink
     OLD_SHA=$(git rev-parse HEAD)
 
@@ -80,26 +80,27 @@ EOF
 
     source "$REPO_ROOT/_lib/archive.sh"
 
-    # Cache is stale → falls through to fresh ac-verifier invocation
-    AC_LLM_MOCK=yes STRICT_AC_GATE=no \
+    # Cache is stale → no ac-verifier fallback → fail closed (ADR-0045)
+    STRICT_AC_GATE=no \
         run archive_gate_check test-change "$TEST_TMP"
 
-    [ "$status" -eq 0 ]
+    [ "$status" -eq 1 ]
     [[ "$output" == *"stale"* ]]
+    [[ "$output" == *"no valid verdict cache"* ]]
 }
 
-@test "archive_gate_check: missing cache → original ac-verifier flow" {
+@test "archive_gate_check: missing cache fails closed (run rdd-verify first)" {
     _setup_skills_symlink
-    # No cache file → should invoke fresh ac-verifier
+    # No cache file → fail closed per ADR-0045 (no ac-verifier fallback)
     source "$REPO_ROOT/_lib/archive.sh"
 
-    AC_LLM_MOCK=yes STRICT_AC_GATE=no \
+    STRICT_AC_GATE=no \
         run archive_gate_check test-change "$TEST_TMP"
 
-    [ "$status" -eq 0 ]
-    # No "Reusing" or "stale" message in output
-    [[ ! "$output" == *"Reusing ac-verifier verdict cache"* ]]
-    [[ ! "$output" == *"verdict cache stale"* ]]
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"no valid verdict cache"* ]]
+    [[ "$output" == *"rddf rdd-verify"* ]]
+    [[ ! "$output" == *"Reusing verifier verdict cache"* ]]
 }
 
 @test "archive_gate_check: SKIP_AC_VERIFICATION=yes bypasses AC step" {
