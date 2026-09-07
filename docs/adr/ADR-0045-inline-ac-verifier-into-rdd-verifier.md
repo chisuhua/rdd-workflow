@@ -76,3 +76,33 @@
 - Superseded: ADR-0034 §"State Machine" Step 2a-c、§"Sub-Skills Referenced" 的 ac-verifier 行
 - 保留: ADR-0034 其余章节（5 阶段定位、loop state、审计）
 - 新测试: `tests/unit/test_rdd_verifier_protocol.py`、`tests/integration/test_rdd_verifier_self_contained.bats`、`tests/integration/test_archive_gate_no_ac_fallback.bats`
+
+---
+
+## v2.0 closure fix addendum
+
+This addendum is appended by change `verifier-v2-hardening` (oracle
+review session `ses_f8610cbf6ffeVLcEjlRw3s2COt`).
+
+After archiving v1.0 → v2.0, oracle scored 84/100 and listed 5 risks
+that constitute the v2.0 closure:
+
+- **P1**: `verdict_length == ac_count` is now CODE-enforced via
+  `_lib/verifier/protocol.py::`validate_verdict_completeness`.
+  Without this, an agent writing [AC-1 pass] for a 5-AC proposal would
+  have silently passed `archive_gate_check`.
+- **P2**: `VERDICT_ITEM_SCHEMA` strict: `evidence` `minItems:1`,
+  `reasoning` `minLength:1`, fail/partial reasoning MUST contain a
+  drift/gap keyword.
+- **P2**: `_lib/cli/rdd_verify_cmd.py:332` `skills._lib` import replaced
+  with `_lib.verifier` per AGENTS.md rule 25.
+- **P2**: `run_one_change` exit-2 now maps to `pending` (was
+  `skipped/halted`), aligned with `rddf ac-verify` shim semantics.
+- **P3**: `stage_verification_context` is now atomic (temp + rename).
+  `read_verdict_cache` rejects `schema_version != 2` with None.
+  `validate_verdict_items` no longer silently degrades when `jsonschema`
+  is missing.
+
+The next step is `remove-ac-verifier-completely` (scheduled via
+manual_deps in `roadmap-meta.yaml`) which deletes the `ac-verifier`
+skill after the shim window closes.

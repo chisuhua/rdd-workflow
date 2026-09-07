@@ -23,6 +23,7 @@ from _lib.verifier.protocol import (
     build_verification_context,
     parse_acs,
     stage_verification_context,
+    validate_verdict_completeness,
     validate_verdict_items,
 )
 from _lib.verifier.cache import read_verdict_cache, verdict_cache, is_cache_fresh
@@ -89,24 +90,68 @@ def test_parse_acs_missing_file_returns_empty(tmp_path):
 
 
 def test_validate_verdict_items_accepts_valid():
-    items = [{"ac_id": "AC-1", "status": "pass", "confidence": 0.9}]
+    # verifier-v2-hardening Phase 2: pass requires evidence ≥1 + reasoning ≥1.
+    items = [{"ac_id": "AC-1", "status": "pass", "confidence": 0.9,
+              "evidence": [{"tool": "Grep", "query": "x", "result_summary": "y"}],
+              "reasoning": "Handler found in api.py"}]
     valid, problems = validate_verdict_items(items)
     assert problems == []
     assert len(valid) == 1
 
 
 def test_validate_verdict_items_flags_invalid_status():
-    items = [{"ac_id": "AC-1", "status": "uncertain", "confidence": 0.5}]
+    items = [{"ac_id": "AC-1", "status": "uncertain", "confidence": 0.5,
+              "evidence": [{"tool": "Grep", "query": "x", "result_summary": "y"}],
+              "reasoning": "test"}]
     valid, problems = validate_verdict_items(items)
     assert len(problems) == 1
     assert "AC-1" in problems[0]
 
 
 def test_validate_verdict_items_flags_bad_ac_id():
-    items = [{"ac_id": "ac1", "status": "pass", "confidence": 0.5}]
+    items = [{"ac_id": "ac1", "status": "pass", "confidence": 0.5,
+              "evidence": [{"tool": "Grep", "query": "x", "result_summary": "y"}],
+              "reasoning": "test"}]
     _, problems = validate_verdict_items(items)
     assert len(problems) == 1
     assert "ac1" in problems[0]
+
+
+def test_validate_verdict_items_pass_requires_evidence():
+    items = [{"ac_id": "AC-1", "status": "pass", "confidence": 0.9,
+              "evidence": [], "reasoning": "ok"}]
+    _, problems = validate_verdict_items(items)
+    assert any("evidence empty" in p for p in problems)
+
+
+def test_validate_verdict_items_fail_requires_keyword():
+    items = [{"ac_id": "AC-1", "status": "fail", "confidence": 0.9,
+              "evidence": [{"tool": "Grep", "query": "x", "result_summary": "y"}],
+              "reasoning": "Handler is broken"}]
+    _, problems = validate_verdict_items(items)
+    assert any("drift/gap keyword" in p for p in problems)
+
+
+def test_validate_verdict_items_partial_requires_evidence_and_keyword():
+    items = [{"ac_id": "AC-1", "status": "partial", "confidence": 0.9,
+              "evidence": [], "reasoning": "almost works"}]
+    _, problems = validate_verdict_items(items)
+    assert any("evidence empty" in p for p in problems)
+    assert any("drift/gap keyword" in p for p in problems)
+
+
+def test_validate_verdict_items_fail_with_drift_keyword_ok():
+    items = [{"ac_id": "AC-1", "status": "fail", "confidence": 0.9,
+              "evidence": [{"tool": "Read", "query": "x", "result_summary": "y"}],
+              "reasoning": "Code exists but does not match AC"}]
+    _, problems = validate_verdict_items(items)
+    assert problems == []
+
+
+def test_validate_verdict_items_required_fields_missing():
+    items = [{"ac_id": "AC-1", "status": "pass"}]  # no confidence, reasoning, no evidence
+    _, problems = validate_verdict_items(items)
+    assert len(problems) >= 2
 
 
 def test_validate_verdict_items_non_array():
@@ -116,8 +161,12 @@ def test_validate_verdict_items_non_array():
 
 
 def test_verdict_schema_requires_core_fields():
+    # verifier-v2-hardening Phase 2: reasoning now required (was optional).
     required = set(VERDICT_SCHEMA["items"]["required"])
-    assert required == {"ac_id", "status", "confidence"}
+    assert required == {"ac_id", "status", "confidence", "reasoning"}
+    # evidence must have minItems=1
+    assert VERDICT_SCHEMA["items"]["properties"]["evidence"]["minItems"] == 1
+    assert VERDICT_SCHEMA["items"]["properties"]["reasoning"]["minLength"] == 1
 
 
 # ============================================================================
@@ -174,6 +223,32 @@ def test_cache_read_corrupt_returns_none(tmp_path):
     assert read_verdict_cache(tmp_path, "ch-x") is None
 
 
+def test_read_verdict_cache_v1_returns_none(tmp_path):
+    """verifier-v2-hardening Phase 5 (oracle risk #5): v1 cache fail-closed."""
+    (tmp_path / ".rddf" / "state").mkdir(parents=True)
+    (tmp_path / ".rddf" / "state" / ".ac-verdict-ch-x.json").write_text(
+        json.dumps({"version": 1, "change": "ch-x", "codebase_commit": "abc",
+                    "verdict": []})
+    )
+    assert read_verdict_cache(tmp_path, "ch-x") is None
+
+
+def test_read_verdict_cache_unknown_version_returns_none(tmp_path):
+    (tmp_path / ".rddf" / "state").mkdir(parents=True)
+    (tmp_path / ".rddf" / "state" / ".ac-verdict-ch-x.json").write_text(
+        json.dumps({"schema_version": 99, "change": "ch-x", "codebase_commit": "abc"})
+    )
+    assert read_verdict_cache(tmp_path, "ch-x") is None
+
+
+def test_read_verdict_cache_missing_version_returns_none(tmp_path):
+    (tmp_path / ".rddf" / "state").mkdir(parents=True)
+    (tmp_path / ".rddf" / "state" / ".ac-verdict-ch-x.json").write_text(
+        json.dumps({"change": "ch-x", "codebase_commit": "abc"})
+    )
+    assert read_verdict_cache(tmp_path, "ch-x") is None
+
+
 # ============================================================================
 # Audit log JSONL append semantics
 # ============================================================================
@@ -225,3 +300,74 @@ def test_stage_verification_context_writes_file(tmp_path):
     doc = json.loads(out.read_text(encoding="utf-8"))
     assert doc["change"] == "ch-p"
     assert out.name == "rdd-verify-context-ch-p.json"
+
+
+def test_stage_verification_context_atomic_no_tmp_leftover(tmp_path):
+    """verifier-v2-hardening Phase 5 (oracle risk #5): temp + rename atomicity."""
+    _write_proposal(tmp_path, "## 验收标准\n- AC one\n")
+    stage_verification_context("ch-p", tmp_path)
+    # The .tmp sibling must NOT exist (atomic replace ate it).
+    leftover = tmp_path / ".rddf" / "state" / "rdd-verify-context-ch-p.json.tmp"
+    assert not leftover.exists()
+
+
+def test_zero_ac_context_pass_through(tmp_path):
+    """verifier-v2-hardening Phase 6 (oracle Q2 #5): AC section but no bullets."""
+    body = "## 验收标准\n\n(no bullets here)\n"
+    p = _write_proposal(tmp_path, body)
+    result = parse_acs(p)
+    assert result == []
+    assert build_verification_context("ch-p", tmp_path)["ac_count"] == 0
+
+
+# ============================================================================
+# verifier-v2-hardening Phase 6 (oracle Q2): verdict completeness + staged→pending
+# ============================================================================
+
+
+def test_validate_verdict_completeness_length_mismatch():
+    acs = [{"ac_id": "AC-1"}, {"ac_id": "AC-2"}, {"ac_id": "AC-3"}]
+    verdict = [{"ac_id": "AC-1", "status": "pass", "confidence": 0.9,
+                "evidence": [{"tool": "x", "query": "y", "result_summary": "z"}],
+                "reasoning": "ok"}]
+    _, problems = validate_verdict_completeness(verdict, acs)
+    assert any("missing AC-2" in p for p in problems)
+    assert any("missing AC-3" in p for p in problems)
+
+
+def test_validate_verdict_completeness_unknown_ac_id():
+    acs = [{"ac_id": "AC-1"}]
+    verdict = [{"ac_id": "AC-9", "status": "pass", "confidence": 0.9,
+                "evidence": [{"tool": "x", "query": "y", "result_summary": "z"}],
+                "reasoning": "ok"}]
+    _, problems = validate_verdict_completeness(verdict, acs)
+    assert any("AC-9: unknown" in p for p in problems)
+    assert any("missing AC-1" in p for p in problems)
+
+
+def test_validate_verdict_completeness_duplicate_ac_id():
+    acs = [{"ac_id": "AC-1"}, {"ac_id": "AC-2"}]
+    verdict = [
+        {"ac_id": "AC-1", "status": "pass", "confidence": 0.9,
+         "evidence": [{"tool": "x", "query": "y", "result_summary": "z"}],
+         "reasoning": "ok"},
+        {"ac_id": "AC-1", "status": "pass", "confidence": 0.9,
+         "evidence": [{"tool": "x", "query": "y", "result_summary": "z"}],
+         "reasoning": "ok"},
+    ]
+    _, problems = validate_verdict_completeness(verdict, acs)
+    assert any("duplicate" in p and "AC-1" in p for p in problems)
+
+
+def test_validate_verdict_completeness_full_match_ok():
+    acs = [{"ac_id": "AC-1"}, {"ac_id": "AC-2"}]
+    verdict = [
+        {"ac_id": "AC-1", "status": "pass", "confidence": 0.9,
+         "evidence": [{"tool": "x", "query": "y", "result_summary": "z"}],
+         "reasoning": "ok"},
+        {"ac_id": "AC-2", "status": "pass", "confidence": 0.9,
+         "evidence": [{"tool": "x", "query": "y", "result_summary": "z"}],
+         "reasoning": "ok"},
+    ]
+    _, problems = validate_verdict_completeness(verdict, acs)
+    assert problems == []

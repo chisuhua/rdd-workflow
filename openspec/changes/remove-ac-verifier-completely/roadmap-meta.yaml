@@ -1,0 +1,9 @@
+# Per-change metadata for remove-ac-verifier-completely
+
+phase: phase-5
+category: refactor
+priority: P1
+
+manual_deps:
+  - inline-ac-verifier-into-rdd-verifier
+  - verifier-v2-hardening

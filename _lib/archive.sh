@@ -426,6 +426,40 @@ print(sha + "|no" if not has_fail else sha + "|yes")
 
         if [ -n "$cache_sha" ] && [ "$cache_sha" = "$current_sha" ]; then
           echo "♻️  Reusing verifier verdict cache (commit $cache_sha)"
+          # verifier-v2-hardening (oracle risk #1): fail closed on incomplete
+          # verdict (length mismatch / unknown ac_id / duplicate). Calls the
+          # Python helper via subprocess with env-var passing (Oracle C1).
+          local integrity_result main_root
+          # Resolve main repo root from this script's location (works in test
+          # fixtures where tasks_root is an unrelated tmp dir).
+          local script_dir
+          script_dir="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+          main_root="$(cd "$script_dir/.." && pwd)"
+          integrity_result=$(RDDF_PROJECT_ROOT="$tasks_root" \
+            CHANGE_NAME_FOR_INTEGRITY="$change_name" \
+            python3 "$main_root/_lib/cli/rdd_verify_cmd.py" --validate-cache-for-archive 2>/dev/null || echo '{"complete":false,"problems":["helper invocation failed"]}')
+          local incomplete
+          incomplete=$(printf '%s' "$integrity_result" | python3 -c '
+import json, sys
+try:
+    d = json.loads(sys.stdin.read())
+except Exception:
+    print("yes"); sys.exit(0)
+print("no" if d.get("complete") else "yes")
+')
+          if [ "$incomplete" = "yes" ]; then
+            echo "❌ archive_gate_check: cached verdict is incomplete; refusing to archive"
+            printf '%s' "$integrity_result" | python3 -c '
+import json, sys
+try:
+    d = json.loads(sys.stdin.read())
+    for p in d.get("problems", []):
+        print("  - " + str(p))
+except Exception:
+    pass
+' 2>/dev/null
+            return 1
+          fi
           if [ "$cache_has_fail" = "yes" ]; then
             if [ "${STRICT_AC_GATE:-no}" = "yes" ]; then
               echo "❌ archive_gate_check: AC verification failed under STRICT_AC_GATE (cached)"

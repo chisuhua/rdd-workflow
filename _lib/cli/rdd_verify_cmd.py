@@ -196,24 +196,40 @@ def run_one_change(project_root: Path, change_name: str,
     if is_cache_fresh(project_root, change_name, impl_sha):
         cached = read_verdict_cache(project_root, change_name)
         if cached is not None:
-            vstate = cached.get("verification_state") or "passed"
-            failed_acs = cached.get("failed_acs") or []
-            if any(v.get("status") == "fail" for v in cached.get("verdict", [])):
-                failed_acs = failed_acs or [v.get("ac_id", "?") for v in cached["verdict"]
-                                              if v.get("status") == "fail"]
-            archive_ready = vstate == "passed"
-            route = "archive-ready" if archive_ready else _classify_route(failed_acs, cached.get("verdict", []))
-            state["verification_state"] = vstate
-            state["codebase_commit_at_last_run"] = impl_sha
-            state["route"] = route
-            save_loop_state(project_root, state, change_name)
-            write_event(project_root, change_name,
-                        "archive-ready" if archive_ready else vstate,
-                        commit=impl_sha, route=route)
-            return {"state": vstate, "verdict_sha": impl_sha,
-                    "archive_ready": archive_ready, "route": route,
-                    "failed_acs": failed_acs, "halt_reason": None,
-                    "loop_count": state["loop_count"]}
+            # verifier-v2-hardening (oracle risk #1): reject incomplete
+            # cached verdicts as stale to force re-run, otherwise archive
+            # gate could pass a partial verdict (e.g. agent wrote 1 of N ACs).
+            from _lib.verifier.protocol import parse_acs, validate_verdict_completeness
+            proposal_path = (project_root / "openspec" / "changes"
+                             / change_name / "proposal.md")
+            acs = parse_acs(proposal_path) if proposal_path.is_file() else []
+            _, integrity_problems = validate_verdict_completeness(
+                cached.get("verdict", []), acs,
+            )
+            if integrity_problems:
+                cached_sha = cached.get("codebase_commit", "")
+                print(f"⚠️  cached verdict incomplete ({len(integrity_problems)} issues); treating as stale: "
+                      f"{', '.join(integrity_problems[:3])}", file=sys.stderr)
+                # fall through to fresh verify
+            else:
+                vstate = cached.get("verification_state") or "passed"
+                failed_acs = cached.get("failed_acs") or []
+                if any(v.get("status") == "fail" for v in cached.get("verdict", [])):
+                    failed_acs = failed_acs or [v.get("ac_id", "?") for v in cached["verdict"]
+                                                  if v.get("status") == "fail"]
+                archive_ready = vstate == "passed"
+                route = "archive-ready" if archive_ready else _classify_route(failed_acs, cached.get("verdict", []))
+                state["verification_state"] = vstate
+                state["codebase_commit_at_last_run"] = impl_sha
+                state["route"] = route
+                save_loop_state(project_root, state, change_name)
+                write_event(project_root, change_name,
+                            "archive-ready" if archive_ready else vstate,
+                            commit=impl_sha, route=route)
+                return {"state": vstate, "verdict_sha": impl_sha,
+                        "archive_ready": archive_ready, "route": route,
+                        "failed_acs": failed_acs, "halt_reason": None,
+                        "loop_count": state["loop_count"]}
 
     write_event(project_root, change_name, "running", commit=impl_sha)
     result = runner(change_name, project_root)
@@ -239,7 +255,29 @@ def run_one_change(project_root: Path, change_name: str,
     verdict = result.get("verdict") or []
     failed_acs = result.get("failed_acs") or []
 
-    if exit_code == 0:
+    # verifier-v2-hardening (oracle risk #1): reject incomplete verdict before
+    # writing cache. Without this, an incomplete cache would pass
+    # archive_gate_check silently.
+    from _lib.verifier.protocol import parse_acs, validate_verdict_completeness
+    proposal_path = (project_root / "openspec" / "changes"
+                     / change_name / "proposal.md")
+    acs = parse_acs(proposal_path) if proposal_path.is_file() else []
+    _, integrity_problems = validate_verdict_completeness(verdict, acs)
+
+    if exit_code == 2:
+        # verifier-v2-hardening (oracle risk #4): align with ac-verify shim
+        # semantics — benign skip (proposal missing / no AC section) maps to
+        # pending, NOT halted. Aggregator keeps pending at priority 0.
+        vstate = "pending"
+        archive_ready = False
+        route = "pending-agent"
+    elif integrity_problems and exit_code == 0:
+        # Agent returned 0 but verdict is incomplete — force failed.
+        vstate = "failed"
+        archive_ready = False
+        route = "archive-ready"  # not archive-ready, but route the failure
+        failed_acs = integrity_problems  # surface completeness problems
+    elif exit_code == 0:
         vstate = "passed"
         archive_ready = True
         route = "archive-ready"
@@ -247,20 +285,21 @@ def run_one_change(project_root: Path, change_name: str,
         vstate = "failed"
         archive_ready = False
         route = _classify_route(failed_acs, verdict)
-    elif exit_code == 2:
-        vstate = "skipped"
-        archive_ready = False
-        route = "halted"
     else:
         vstate = "error"
         archive_ready = False
         route = "halted"
 
-    verdict_cache(project_root, change_name, impl_sha, verdict,
-                  ran_by="rdd-verifier",
-                  verification_state=vstate,
-                  failed_acs=failed_acs,
-                  implementation_ref=f"openspec/{change_name}")
+    # Pending state does not write a verdict cache (no verdict yet).
+    # Incomplete verdict (integrity_problems non-empty) also does NOT write
+    # cache — the runner claimed success but emitted a partial verdict, so
+    # the cache must be skipped to force re-run (oracle risk #1).
+    if vstate != "pending" and not integrity_problems:
+        verdict_cache(project_root, change_name, impl_sha, verdict,
+                      ran_by="rdd-verifier",
+                      verification_state=vstate,
+                      failed_acs=failed_acs,
+                      implementation_ref=f"openspec/{change_name}")
     state["verification_state"] = vstate
     state["codebase_commit_at_last_run"] = impl_sha
     state["route"] = route
@@ -289,6 +328,35 @@ def aggregate_exit(states: list) -> int:
         if score > worst:
             worst = score
     return worst
+
+
+def validate_cache_for_archive(
+    project_root: Path,
+    change_name: str,
+) -> dict:
+    """Validate cached verdict completeness for archive_gate_check.
+
+    Returns a JSON-serializable dict for shell consumption:
+      {"complete": bool, "problems": list[str], "schema_version": int|None}
+
+    archive_gate_check calls this via Python subprocess (env-var passing per
+    Oracle C1 + AGENTS.md common-pitfall #18) to fail closed on incomplete
+    cached verdicts. If complete=True, archive proceeds.
+    """
+    from _lib.verifier.cache import read_verdict_cache
+    from _lib.verifier.protocol import parse_acs, validate_verdict_completeness
+    proposal = project_root / "openspec" / "changes" / change_name / "proposal.md"
+    acs = parse_acs(proposal) if proposal.is_file() else []
+    cached = read_verdict_cache(project_root, change_name)
+    if cached is None:
+        return {"complete": False, "problems": ["cache missing or unreadable"],
+                "schema_version": None}
+    _, problems = validate_verdict_completeness(cached.get("verdict", []), acs)
+    return {
+        "complete": not problems,
+        "problems": problems,
+        "schema_version": cached.get("schema_version"),
+    }
 
 
 def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
@@ -329,7 +397,7 @@ def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
         return 0
 
     if parsed.re_verify_archived:
-        from skills._lib.verifier.discovery import discover_archived
+        from _lib.verifier.discovery import discover_archived
         archived = discover_archived(Path(project_root), since=parsed.archived_since)
         max_changes = (parsed.max_changes
                        if parsed.max_changes is not None
@@ -422,4 +490,13 @@ def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
 
 
 if __name__ == "__main__":
+    # archive_gate_check invokes this entry via env-var (Oracle C1):
+    # RDDF_PROJECT_ROOT + CHANGE_NAME_FOR_INTEGRITY → JSON validation result.
+    # No `from _lib.cli.rdd_verify_cmd import` (would recurse into __main__).
+    if "--validate-cache-for-archive" in sys.argv:
+        proj_root = Path(os.environ.get("RDDF_PROJECT_ROOT", "."))
+        change = os.environ.get("CHANGE_NAME_FOR_INTEGRITY", "")
+        result = validate_cache_for_archive(proj_root, change)
+        print(json.dumps(result, ensure_ascii=False))
+        sys.exit(0 if result.get("complete") else 1)
     sys.exit(cmd_rdd_verify(sys.argv[1:]))

@@ -32,7 +32,7 @@ _seed_cache_at_head() {
   sha=$(git rev-parse HEAD)
   cat > .rddf/state/.ac-verdict-test-change.json <<EOF
 {"schema_version":2,"change":"test-change","codebase_commit":"$sha","verdict":[
-  {"ac_id":"AC-1","status":"pass","confidence":0.9,"evidence":[],"reasoning":"ok"}
+  {"ac_id":"AC-1","status":"pass","confidence":0.9,"evidence":[{"tool":"Grep","query":"x","result_summary":"y"}],"reasoning":"ok"}
 ],"ran_at":"2026-09-07T00:00:00Z","ran_by":"rdd-verifier","verification_state":"passed"}
 EOF
 }

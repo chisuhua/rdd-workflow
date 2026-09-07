@@ -58,7 +58,8 @@ def test_cache_archive_gate_fallback_source(tmp_path):
     assert cached["source"] == "archive_gate_check"
 
 
-def test_cache_v1_legacy_reads_as_v1(tmp_path):
+def test_cache_v1_legacy_returns_none(tmp_path):
+    """verifier-v2-hardening Phase 5 (oracle risk #5): v1 fails closed."""
     legacy = {
         "version": 1,
         "change": "ch-x",
@@ -71,10 +72,21 @@ def test_cache_v1_legacy_reads_as_v1(tmp_path):
     cache_dir.mkdir(parents=True)
     (_cache_path(tmp_path, "ch-x")).write_text(json.dumps(legacy))
     cached = read_verdict_cache(tmp_path, "ch-x")
-    assert cached is not None
-    assert cached["version"] == 1
-    assert cached.get("schema_version") is None
-    assert "verification_state" not in cached
+    assert cached is None  # fail-closed: legacy v1 unreadable
+
+
+def test_cache_unknown_schema_version_returns_none(tmp_path):
+    (tmp_path / ".rddf" / "state").mkdir(parents=True)
+    (_cache_path(tmp_path, "ch-x")).write_text(json.dumps(
+        {"schema_version": 99, "change": "ch-x", "verdict": []}))
+    assert read_verdict_cache(tmp_path, "ch-x") is None
+
+
+def test_cache_missing_schema_version_returns_none(tmp_path):
+    (tmp_path / ".rddf" / "state").mkdir(parents=True)
+    (_cache_path(tmp_path, "ch-x")).write_text(json.dumps(
+        {"change": "ch-x", "verdict": []}))
+    assert read_verdict_cache(tmp_path, "ch-x") is None
 
 
 def test_is_cache_fresh_when_sha_matches(tmp_path):

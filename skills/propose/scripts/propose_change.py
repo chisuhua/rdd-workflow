@@ -70,6 +70,20 @@ def create_skeleton_change(
     priority: str,
     parent_feature: Optional[str] = None,
 ) -> bool:
+    # verifier-v2-hardening Phase 7 (oracle Q3): surface scheduled-removal
+    # skills so proposers see the deprecation timeline before drafting.
+    # Non-blocking — informational only. Use sys.stdout to keep output
+    # visible in subprocess contexts where bats captures stderr.
+    try:
+        from _lib.planner_deprecation import scan_deprecated_skills, render_suggestion_block
+        skills_dir = Path(project_root) / "skills"
+        deprecated = scan_deprecated_skills(skills_dir)
+        if deprecated:
+            sys.stdout.write(render_suggestion_block(deprecated))
+            sys.stdout.flush()
+    except Exception:  # noqa: BLE001 — never block propose on deprecation scan
+        pass
+        print(f"⚠️  deprecation scan failed: {e}", file=sys.stderr)
     """Create minimal skeleton artifacts for a change (propose.md lines 486-551).
 
     Writes:
@@ -90,7 +104,6 @@ def create_skeleton_change(
     """
     import os
     import subprocess
-    import sys
 
     if parent_feature == "__ungrouped__":
         raise ValueError(
