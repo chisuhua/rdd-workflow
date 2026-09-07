@@ -15,6 +15,13 @@ Adds the 5th phase `rdd-verifier` (arch → design → plan → ship → **verif
 - **ADR-0034**: new ADR documenting 5th phase architecture.
 - **Tests**: 8 new test files (3 unit + 5 integration), 47 new test cases total. All pass.
 
+### verifier-v2-hardening (oracle follow-up, ses_f8610cbf6ffeVLcEjlRw3s2COt)
+
+Closes v2.0 closure gaps surfaced by oracle review (84/100): verdict completeness is now a code-enforced hard constraint (no more silent-corruption via [AC-1 pass] for 5-AC proposals); verdict schema is strict (`evidence` minItems=1, `reasoning` required, fail must embed drift/gap keyword); exit-2 maps to `pending` (was `halted`, aligned with ac-verify shim); atomic write for staged context; `schema_version !=2` rejected by `read_verdict_cache`. Adds `validate_verdict_completeness`, `_lib/planner_deprecation.scan_deprecated_skills`, `docs/superpowers/specs/verifier-protocol-template.md` (cross-stage template spec), and schedules `remove-ac-verifier-completely` for next minor release.
+
+- **Components**: `_lib/verifier/protocol.py` (`validate_verdict_completeness`, strict `VERDICT_ITEM_SCHEMA`, atomic stage write), `_lib/cli/rdd_verify_cmd.py` (integrity check + exit-2 pending + `--validate-cache-for-archive` CLI mode), `_lib/archive.sh` (cache integrity gate via Python helper), `_lib/planner_deprecation.py` (new), `_lib/schemas/{iteration_schema,verifier_loop_schema}.json` (pending-agent in enum).
+- **Tests**: 11 new test cases (`test_run_one_change_staged_to_pending_mapping`, `test_run_one_change_exit2_maps_to_pending`, `test_run_one_change_incomplete_verdict_marks_failed`, `test_run_one_change_stale_incomplete_cache_triggers_rerun`, `test_aggregate_exit_pending_does_not_block`, `test_validate_verdict_completeness_{length_mismatch,unknown_ac_id,duplicate_ac_id,full_match_ok}`, `test_validate_verdict_items_{pass_requires_evidence,fail_requires_keyword,partial_requires_evidence_and_keyword,fail_with_drift_keyword_ok,required_fields_missing}`, `test_read_verdict_cache_{v1_returns_one,unknown_version_returns_one,missing_version_returns_one}`, `test_cache_v1_legacy_returns_one`, `test_cache_{unknown,missing}_schema_version_returns_one`, `test_stage_verification_context_atomic_no_tmp_leftover`, `test_zero_ac_context_pass_through`).
+
 ### add-feature-fragment-command (rddf roadmap add-feature primitive)
 
 ### add-feature-fragment-command (rddf roadmap add-feature primitive)

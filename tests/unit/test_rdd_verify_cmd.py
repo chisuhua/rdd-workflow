@@ -142,8 +142,16 @@ def test_run_one_change_error_returns_error_state(tmp_path):
 
 def test_run_one_change_uses_cache_when_fresh(tmp_path):
     sha = _commit_branch(tmp_path, "ch-c")
+    # Provide a complete proposal + verdict so integrity check passes (v2.0
+    # verifier-v2-hardening Phase 1 / oracle risk #1).
+    (tmp_path / "openspec" / "changes" / "ch-c").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "openspec" / "changes" / "ch-c" / "proposal.md").write_text(
+        "## 验收标准\n- AC one\n", encoding="utf-8")
     from _lib.verifier.cache import verdict_cache
-    verdict_cache(tmp_path, "ch-c", sha, [{"ac_id": "AC-1", "status": "pass"}],
+    verdict_cache(tmp_path, "ch-c", sha,
+                  [{"ac_id": "AC-1", "status": "pass", "confidence": 0.9,
+                    "evidence": [{"tool": "Grep", "query": "x", "result_summary": "y"}],
+                    "reasoning": "ok"}],
                   ran_by="rdd-verifier", verification_state="passed", failed_acs=[])
     _setup_state(tmp_path, [{"name": "ch-c", "status": "completed",
                               "tasks_done": 1, "tasks_total": 1}])
@@ -154,6 +162,114 @@ def test_run_one_change_uses_cache_when_fresh(tmp_path):
     result = run_one_change(tmp_path, "ch-c", fake_runner)
     assert called == []
     assert result["state"] == "passed"
+
+
+def test_run_one_change_staged_to_pending_mapping(tmp_path):
+    """verifier-v2-hardening Phase 6 (oracle Q2 #1): v2.0 staged→pending path.
+
+    Mock runner returns staged=True with a context_path; asserts:
+    - state == "pending"
+    - route == "pending-agent"
+    - NO verdict cache written
+    - audit "pending" event emitted
+    """
+    sha = _commit_branch(tmp_path, "ch-staged")
+    (tmp_path / "openspec" / "changes" / "ch-staged").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "openspec" / "changes" / "ch-staged" / "proposal.md").write_text(
+        "## 验收标准\n- AC one\n", encoding="utf-8")
+    _setup_state(tmp_path, [{"name": "ch-staged", "status": "completed",
+                              "tasks_done": 1, "tasks_total": 1}])
+    def fake_runner(change_name, project_root):
+        return {"exit_code": 0, "verdict": [], "verdict_json": None,
+                "failed_acs": [], "staged": True,
+                "context_path": "/tmp/rdd-verify-context-ch-staged.json"}
+    result = run_one_change(tmp_path, "ch-staged", fake_runner)
+    assert result["state"] == "pending"
+    assert result["route"] == "pending-agent"
+    assert result["archive_ready"] is False
+    # No verdict cache should be written (agent has not verified yet).
+    cache_file = tmp_path / ".rddf" / "state" / ".ac-verdict-ch-staged.json"
+    assert not cache_file.exists()
+
+
+def test_run_one_change_exit2_maps_to_pending(tmp_path):
+    """verifier-v2-hardening Phase 4 (oracle risk #4): exit 2 = pending, not halted."""
+    _commit_branch(tmp_path, "ch-noac")
+    _setup_state(tmp_path, [{"name": "ch-noac", "status": "completed",
+                              "tasks_done": 1, "tasks_total": 1}])
+    def fake_runner(change_name, project_root):
+        return {"exit_code": 2, "verdict": [], "verdict_json": None,
+                "failed_acs": [], "note": "proposal.md missing"}
+    result = run_one_change(tmp_path, "ch-noac", fake_runner)
+    assert result["state"] == "pending"
+    assert result["route"] == "pending-agent"
+
+
+def test_run_one_change_incomplete_verdict_marks_failed(tmp_path):
+    """verifier-v2-hardening Phase 1 (oracle risk #1): incomplete verdict fails."""
+    sha = _commit_branch(tmp_path, "ch-inc")
+    (tmp_path / "openspec" / "changes" / "ch-inc").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "openspec" / "changes" / "ch-inc" / "proposal.md").write_text(
+        "## 验收标准\n- AC one\n- AC two\n- AC three\n", encoding="utf-8")
+    _setup_state(tmp_path, [{"name": "ch-inc", "status": "completed",
+                              "tasks_done": 1, "tasks_total": 1}])
+    def fake_runner(change_name, project_root):
+        # Agent only verified 1 of 3 ACs.
+        return {"exit_code": 0, "verdict": [
+            {"ac_id": "AC-1", "status": "pass", "confidence": 0.9,
+             "evidence": [{"tool": "x", "query": "y", "result_summary": "z"}],
+             "reasoning": "ok"}
+        ], "verdict_json": None, "failed_acs": []}
+    result = run_one_change(tmp_path, "ch-inc", fake_runner)
+    assert result["state"] == "failed"
+    assert result["archive_ready"] is False
+    # No verdict cache (incomplete verdict rejected).
+    cache_file = tmp_path / ".rddf" / "state" / ".ac-verdict-ch-inc.json"
+    assert not cache_file.exists()
+    assert any("missing" in f for f in result["failed_acs"])
+
+
+def test_run_one_change_stale_incomplete_cache_triggers_rerun(tmp_path):
+    """Incomplete cached verdict (1 of 3 ACs) must be treated as stale."""
+    sha = _commit_branch(tmp_path, "ch-stale")
+    (tmp_path / "openspec" / "changes" / "ch-stale").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "openspec" / "changes" / "ch-stale" / "proposal.md").write_text(
+        "## 验收标准\n- AC one\n- AC two\n- AC three\n", encoding="utf-8")
+    from _lib.verifier.cache import verdict_cache
+    verdict_cache(tmp_path, "ch-stale", sha,
+                  [{"ac_id": "AC-1", "status": "pass", "confidence": 0.9,
+                    "evidence": [{"tool": "x", "query": "y", "result_summary": "z"}],
+                    "reasoning": "ok"}],
+                  ran_by="rdd-verifier", verification_state="passed", failed_acs=[])
+    _setup_state(tmp_path, [{"name": "ch-stale", "status": "completed",
+                              "tasks_done": 1, "tasks_total": 1}])
+    called = []
+    def fake_runner(change_name, project_root):
+        called.append(change_name)
+        # Return complete verdict on re-run.
+        return {"exit_code": 0, "verdict": [
+            {"ac_id": "AC-1", "status": "pass", "confidence": 0.9,
+             "evidence": [{"tool": "x", "query": "y", "result_summary": "z"}],
+             "reasoning": "ok"},
+            {"ac_id": "AC-2", "status": "pass", "confidence": 0.9,
+             "evidence": [{"tool": "x", "query": "y", "result_summary": "z"}],
+             "reasoning": "ok"},
+            {"ac_id": "AC-3", "status": "pass", "confidence": 0.9,
+             "evidence": [{"tool": "x", "query": "y", "result_summary": "z"}],
+             "reasoning": "ok"},
+        ], "verdict_json": None, "failed_acs": []}
+    result = run_one_change(tmp_path, "ch-stale", fake_runner)
+    assert len(called) == 1  # cache hit was rejected, runner invoked
+    assert result["state"] == "passed"
+
+
+def test_aggregate_exit_pending_does_not_block(tmp_path):
+    """verifier-v2-hardening Phase 4 (oracle risk #4): pending stays at 0."""
+    from _lib.cli.rdd_verify_cmd import aggregate_exit
+    assert aggregate_exit(["pending", "passed"]) == 0
+    assert aggregate_exit(["pending", "failed"]) == 1
+    assert aggregate_exit(["pending", "error"]) == 3
+    assert aggregate_exit(["pending", "halted"]) == 4
 
 
 def test_run_one_change_branch_missing_returns_halted(tmp_path):

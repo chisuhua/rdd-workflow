@@ -107,14 +107,25 @@ def verdict_cache(
 
 
 def read_verdict_cache(project_root: Path, change_name: str) -> Optional[dict]:
-    """Read verdict cache. Returns None if missing or corrupt."""
+    """Read verdict cache. Returns None if missing or corrupt.
+
+    verifier-v2-hardening (oracle risk #5): returns None when schema_version
+    is missing, == 1 (ac-verifier era, deprecated by ADR-0034, superseded
+    by ADR-0045), or unknown. This is fail-closed — readers must treat the
+    cache as unusable and re-run `rddf rdd-verify` to populate a v2 cache.
+    """
     path = _cache_path(Path(project_root), change_name)
     if not path.is_file():
         return None
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        doc = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError, UnicodeDecodeError):
         return None
+    sv = doc.get("schema_version")
+    if sv != _SCHEMA_VERSION:
+        # Fail closed: unknown / legacy / missing schema_version.
+        return None
+    return doc
 
 
 def is_cache_fresh(project_root: Path, change_name: str, current_commit: str) -> bool:

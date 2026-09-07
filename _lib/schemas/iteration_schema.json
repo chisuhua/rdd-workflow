@@ -163,7 +163,7 @@
               },
               "route": {
                 "type": ["string", "null"],
-                "enum": ["archive-ready", "guide-ship", "guide-plan", "halted", null],
+                "enum": ["archive-ready", "guide-ship", "guide-plan", "halted", "pending-agent", null],
                 "description": "Where to send the user based on classification. archive-ready → ship, guide-ship → fix implementation_gap, guide-plan → fix proposal_drift, halted → manual review."
               },
               "loop_count": {

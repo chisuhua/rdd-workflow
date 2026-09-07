@@ -91,7 +91,7 @@ bats tests/integration/test_global_install_external_project.bats   # 11/11 pass
 | design | v4: `rdd-planner` (was `guide-design`) | 设计管理 + 内容审查: 提案创建, 审查, 批准/拒绝/延迟; approve 即落盘完整 proposal.md |
 | plan | v4: `rdd-builder` (was `guide-plan`) | 变更生成: intake (含 changes_pre_created 跳过), fill (specs/design/tasks), deps |
 | ship | v4: `rdd-builder` P2 (was `guide-ship`) | 变更执行: worktree/轻量, execute, archive, cleanup |
-| verify | `rdd-verifier` | 验证回环: self-contained LLM verification (LLM Verification Protocol 内联于 SKILL.md, per ADR-0045), 启发式分类 AC pass/fail, 失败回 plan/ship, 最多 3 次 (ADR-0034) |
+| verify | `rdd-verifier` | 验证回环: self-contained LLM verification (LLM Verification Protocol 内联于 SKILL.md, per ADR-0045 + verifier-v2-hardening closure), 启发式分类 AC pass/fail, 失败回 plan/ship, 最多 3 次 (ADR-0034) |
 
 `rdd-builder` 自动检测并行冲突:
 - 无其他 worktree **且** 仅此一个 change → ⚡ **轻量模式** (创建 branch, 直接在主仓库执行, 跳过 worktree)
@@ -145,7 +145,7 @@ tests/
   integration/                # 281 bats + 15 py 集成测试 (~1789 bats 测试用例)
   _lib/                       # bash helpers (skill.bash, deps-subagent.bash 等)
 docs/adr/                     # ADR-0000 模板 + ADR-0001~0035 (35 个唯一编号, 36 个实体文件; v2.0.2 重编号 ADR-0013 → ADR-0020; v2.0.8+ 持续追加)
-                             # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0016 arch 发现契约 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment / ADR-0022 manual_deps 字段 / ADR-0024 deps-driven execution mode / ADR-0025 design 阶段独立化 / ADR-0027 continuous evolution / ADR-0028 role-model / ADR-0029 issue-driven / ADR-0030 hub-spoke / ADR-0031 cross-repo human-in-loop / ADR-0032 hub deepening / ADR-0033 submodule-aware / ADR-0034 rdd-verifier / ADR-0044 v4 stage-merge Wave 3 hard removal
+                             # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0016 arch 发现契约 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment / ADR-0022 manual_deps 字段 / ADR-0024 deps-driven execution mode / ADR-0025 design 阶段独立化 / ADR-0027 continuous evolution / ADR-0028 role-model / ADR-0029 issue-driven / ADR-0030 hub-spoke / ADR-0031 cross-repo human-in-loop / ADR-0032 hub deepening / ADR-0033 submodule-aware / ADR-0034 rdd-verifier / ADR-0044 v4 stage-merge Wave 3 hard removal / ADR-0045 inline-ac-verifier-into-rdd-verifier (verifier-v2-hardening scheduled remove-ac-verifier-completely for next minor)
                              # **Note**: 此关键 ADR 列表人工维护(策展判断,只列"已实施"+"已采纳"的 ADR)。
                              # 完整 ADR 索引由 `_lib/adr_index_generator.py` 自动生成,见 `docs/adr/README.md` 中
                              # `<!-- ADR_INDEX_START --> ... <!-- ADR_INDEX_END -->` 段 (per adr-index-auto-sync change 2026-08-28)。

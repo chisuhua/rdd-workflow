@@ -1,12 +1,16 @@
 """LLM Verification Protocol data layer for rdd-verifier v2.0.
 
-Per ADR-0045 (inline-ac-verifier-into-rdd-verifier):
+Per ADR-0045 (inline-ac-verifier-into-rdd-verifier) + change verifier-v2-hardening
+(oracle follow-up, ses_f8610cbf6ffeVLcEjlRw3s2COt):
 - AC extraction rules migrated from skills/ac-verifier/scripts/ac_verifier.py
   (parse_acs) so the protocol lives in the verifier data layer, not in the
   deprecated ac-verifier skill.
 - build_verification_context() stages a JSON context file that the executing
   AI agent reads before performing verification per
   skills/rdd-verifier/SKILL.md § "LLM Verification Protocol".
+- validate_verdict_completeness() enforces verdict-length-equals-AC-count
+  (P1 fix per oracle risk #1; without this, agent writing [AC-1 pass] for a
+  5-AC proposal silently passes archive_gate_check).
 
 The executing AI agent IS the LLM (v2.0 core design decision). This module
 only prepares structured inputs; it never invokes an LLM.
@@ -33,17 +37,21 @@ _BULLET_LINE = re.compile(r"^- (?:\[([ x])\]\s+)?(.+)$")
 DRIFT_KEYWORDS = ("exists but", "discrepan", "mismatch", "differs from ac")
 GAP_KEYWORDS = ("not implement", "missing", "absent", "todo: implement")
 
-# Verdict item schema (documented in SKILL.md § LLM Verification Protocol Step 3)
+# Verdict item schema (verifier-v2-hardening Phase 2: strict per oracle risk #2).
+# Per ADR-0045 + SKILL.md § LLM Verification Protocol Step 3:
+# - evidence non-empty (≥1 tool-call record per AC)
+# - reasoning non-empty (mandatory explanation)
+# - status enum unchanged
 VERDICT_ITEM_SCHEMA = {
     "type": "object",
-    "required": ["ac_id", "status", "confidence"],
+    "required": ["ac_id", "status", "confidence", "reasoning"],
     "properties": {
         "ac_id": {"type": "string", "pattern": r"^AC-\d+$"},
         "description": {"type": "string"},
         "status": {"enum": ["pass", "fail", "partial"]},
         "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
-        "evidence": {"type": "array"},
-        "reasoning": {"type": "string"},
+        "evidence": {"type": "array", "minItems": 1},
+        "reasoning": {"type": "string", "minLength": 1},
     },
 }
 VERDICT_SCHEMA = {"type": "array", "items": VERDICT_ITEM_SCHEMA}
@@ -157,6 +165,10 @@ def stage_verification_context(
     """Write the context doc to .rddf/state/rdd-verify-context-<change>.json.
 
     Returns the written path, or None when proposal.md is missing.
+
+    Atomic write (verifier-v2-hardening Phase 5 / oracle risk #5): temp file +
+    rename prevents interleaving when two processes stage the same change
+    concurrently. POSIX `Path.replace` is atomic on the same filesystem.
     """
     doc = build_verification_context(
         change_name, project_root, codebase_commit=codebase_commit,
@@ -165,7 +177,11 @@ def stage_verification_context(
         return None
     out = Path(project_root) / ".rddf" / "state" / f"rdd-verify-context-{change_name}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(doc, indent=2, ensure_ascii=False))
+    # Atomic: write to temp, then rename. Concurrent stagings can race on the
+    # write but only one rename will land as the final file content.
+    tmp = out.with_suffix(out.suffix + ".tmp")
+    tmp.write_text(json.dumps(doc, indent=2, ensure_ascii=False))
+    tmp.replace(out)
     return out
 
 
@@ -173,14 +189,20 @@ def validate_verdict_items(items: list) -> tuple[list, list]:
     """Best-effort schema check of a verdict array.
 
     Returns (valid_items, problems) where problems is a list of
-    "<ac_id>: <reason>" strings. Never raises — validation is advisory per
-    ac_verifier.py precedent, and invalid entries are treated as fail by
-    the caller (SKILL.md § Step 3 hard constraints).
+    "<ac_id>: <reason>" strings. Never raises — invalid entries are
+    treated as fail by the caller (SKILL.md § Step 3 hard constraints).
+
+    Per oracle risk #2 (verifier-v2-hardening Phase 2): enforces evidence
+    non-empty (≥1 tool-call record per AC) and, for fail/partial status,
+    reasoning MUST contain at least one drift/gap keyword so that
+    _lib/verifier/classify.py::classify_failure routes correctly.
+    Pass status does not require keyword (passes don't route).
     """
     problems: list[str] = []
     valid: list = []
     if not isinstance(items, list):
         return [], ["verdict: not a JSON array"]
+    structural_only = False
     try:
         import jsonschema
         from jsonschema.exceptions import ValidationError as _JsonschemaError
@@ -195,7 +217,10 @@ def validate_verdict_items(items: list) -> tuple[list, list]:
                 # keep the item; caller downgrades to fail
                 valid.append(item)
     except ImportError:
-        # jsonschema not installed — structural checks only
+        structural_only = True
+        # jsonschema not installed — structural checks only (oracle risk #5:
+        # never silently accept; the warning is appended at the end so the
+        # caller is informed the strict schema was bypassed).
         for idx, item in enumerate(items):
             if not isinstance(item, dict):
                 problems.append(f"index-{idx}: not an object")
@@ -205,4 +230,71 @@ def validate_verdict_items(items: list) -> tuple[list, list]:
             if item.get("status") not in ("pass", "fail", "partial"):
                 problems.append(f"{item.get('ac_id', f'index-{idx}')}: invalid status")
             valid.append(item)
+
+    # Enforce semantic constraints beyond schema: pass/partial need ≥1 evidence;
+    # fail/partial need reasoning with at least one drift/gap keyword.
+    # (pass does not require keyword; partial and fail do for routing.)
+    for item in valid:
+        if not isinstance(item, dict):
+            continue
+        ac_id = item.get("ac_id", "?")
+        status = item.get("status")
+        evidence = item.get("evidence") or []
+        reasoning = (item.get("reasoning") or "").lower()
+        if not isinstance(evidence, list) or len(evidence) < 1:
+            problems.append(f"{ac_id}: evidence empty (requires ≥1 tool-call record)")
+        if status in ("fail", "partial"):
+            kw_match = any(kw in reasoning for kw in DRIFT_KEYWORDS) or \
+                       any(kw in reasoning for kw in GAP_KEYWORDS)
+            if not kw_match:
+                problems.append(
+                    f"{ac_id}: {status} reasoning must contain a drift/gap keyword"
+                )
+
+    if structural_only:
+        problems.append(
+            "schema validator unavailable; structural-only check applied"
+        )
     return valid, problems
+
+
+def validate_verdict_completeness(
+    verdict: list, acs: list
+) -> tuple[list, list]:
+    """Enforce verdict array covers exactly the proposal's AC set (P1 oracle risk #1).
+
+    Returns (valid_items, problems). Empty problems list means the verdict is
+    complete: length matches len(acs), every AC is covered exactly once with
+    no missing/unknown/duplicate ac_id entries.
+
+    Without this guard, an agent that emits [AC-1 pass] for a 5-AC proposal
+    silently passes is_cache_fresh and is consumed by archive_gate_check. This
+    function closes that silent-corruption gap.
+    """
+    problems: list[str] = []
+    if not isinstance(verdict, list):
+        return [], ["verdict: not a JSON array"]
+    expected_ids = [ac["ac_id"] for ac in acs if isinstance(ac, dict)]
+    expected_set = set(expected_ids)
+    seen_ids: list[str] = []
+    for item in verdict:
+        if not isinstance(item, dict):
+            continue
+        ac_id = item.get("ac_id")
+        if not isinstance(ac_id, str) or not re.match(r"^AC-\d+$", ac_id):
+            continue
+        seen_ids.append(ac_id)
+    seen_set = set(seen_ids)
+    missing = expected_set - seen_set
+    for ac_id in sorted(missing):
+        problems.append(f"missing {ac_id}")
+    unknown = seen_set - expected_set
+    for ac_id in sorted(unknown):
+        problems.append(f"{ac_id}: unknown ac_id")
+    seen_counts: dict[str, int] = {}
+    for ac_id in seen_ids:
+        seen_counts[ac_id] = seen_counts.get(ac_id, 0) + 1
+    for ac_id, count in sorted(seen_counts.items()):
+        if count > 1:
+            problems.append(f"{ac_id}: duplicate ac_id ({count}x)")
+    return verdict, problems

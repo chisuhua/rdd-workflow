@@ -374,3 +374,10 @@
 | [complete-third-party-replay-and-upstream-reporting](.rddf/improvements/complete-third-party-replay-and-upstream-reporting.md) | P0 | 2026-08-13 | 已实施 |
 | [add-feature-fragment-command](.rddf/improvements/add-feature-fragment-command.md) | P1 | 2026-08-25 | 已实施 |
 | [reduce-archive-commit-noise](.rddf/improvements/reduce-archive-commit-noise.md) | P2 | 2026-09-01 | guide-arch |
+
+> **附注 (verifier-v2-hardening Phase 7 / oracle Q3)**: 跨阶段外部-LLM/hook 耦合审计建议（advisory, 不实施）：
+> 1. **审计 `propose_quality_check.py`** —— 检查是否埋了外部 LLM/hook 假设，按 ADR-0045 模式内联（如有）
+> 2. **审计 `arch_quality_gate.py`** —— 同上
+> 3. **首个跨阶段协议模板落地** —— 见 `docs/superpowers/specs/verifier-protocol-template.md`，建议首个应用为 `rdd-arch` 的 gap analysis（oracle Q3 建议）
+>
+> 以上三项不纳入本 change 实施，作为下个 release 决策输入。
