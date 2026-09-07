@@ -1,4 +1,8 @@
-"""Ollama provider — OpenAI-compatible endpoint at localhost:11434.
+"""
+⚠️ DEPRECATED per ADR-0045 (inline-ac-verifier-into-rdd-verifier).
+rdd-verifier v2.0 no longer invokes this module; the executing AI agent IS
+the LLM. Kept as a backward-compatibility shim for one release cycle.
+Ollama provider — OpenAI-compatible endpoint at localhost:11434.
 
 Ollama ignores the Authorization header; we still require AC_LLM_API_KEY
 to be set because BaseHTTPProvider's __init__ rejects empty keys. Users

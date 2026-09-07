@@ -28,8 +28,7 @@ When `STRICT_AC_GATE=yes`, the `SKIP_RDD_VERIFIER=yes` bypass SHALL be ignored a
 #### Scenario: STRICT_AC_GATE absent permits bypass
 
 - **WHEN** only `SKIP_RDD_VERIFIER=yes` is set (default STRICT_AC_GATE=no)
-- **THEN** archive proceeds via fallback ac-verifier path
-- **AND** cache is written with `ran_by=archive_gate_check` field
+- **THEN** archive proceeds via the audited bypass (per ADR-0045: no ac-verifier fallback; missing cache + bypass reason → `verification.state=bypassed`)
 
 ### Requirement: archive_gate_check top-of-file reference
 

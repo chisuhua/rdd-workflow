@@ -3,7 +3,7 @@
 > ⚠️ **v4.0+ (2026-09-04): 工作流采用四阶段架构 (rdd-arch → rdd-planner → rdd-builder → rdd-verifier)**
 >
 > 提案管理（创建、审查、批准/拒绝/延迟）已从 `rdd-arch` Phase 5.5 迁移到独立的 `rdd-builder` 阶段。
-> AC 验证从 archive 内嵌 ac-verifier 升级为独立的 `rdd-verifier` 阶段（per ADR-0034）。
+> AC 验证从 archive 内嵌 ac-verifier 升级为独立的 `rdd-verifier` 阶段（per ADR-0034），并在 v2.0 内联为自包含 LLM 验证协议（per ADR-0045，执行 agent 自身即 LLM，无需 `AC_LLM_*` 配置）。
 > 存量项目请先运行 `skill_use("rdd-builder")` 审查提案，再运行 `skill_use("rdd-verifier")` 补做验证。
 
 [![npm version](https://img.shields.io/npm/v/rdd-workflow.svg)](https://www.npmjs.com/package/rdd-workflow)
@@ -382,7 +382,7 @@ rdd-workflow/
     ├── rdd-builder/SKILL.md              # Plan 阶段状态机(v2.0+)
     ├── rdd-builder/SKILL.md              # Ship 端状态机
     ├── rdd-verifier/SKILL.md            # Verify 阶段状态机(v3.0+, 批量 AC 验证, ADR-0034)
-    ├── ac-verifier/SKILL.md             # AC 验证底层(被 rdd-verifier 调用)
+    ├── ac-verifier/SKILL.md             # ⚠️ deprecated shim (ADR-0045; rdd-verifier v2.0 self-contained)
     ├── feature/SKILL.md                 # feature 管理 (v2.0+)
     ├── rddf-session/SKILL.md            # 跨 OpenCode session 恢复 (ADR-0017)
     ├── propose/SKILL.md                 # 子技能(被 rdd-builder 调用)

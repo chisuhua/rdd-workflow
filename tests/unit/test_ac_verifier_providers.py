@@ -1,4 +1,9 @@
 """Tests for ac-verifier LLM provider layer."""
+
+# ⚠️ DEPRECATED per ADR-0045 (inline-ac-verifier-into-rdd-verifier).
+# ac-verifier is a backward-compatibility shim for one release cycle; this
+# suite asserts the shim surface. Replaced by tests/unit/test_rdd_verifier_protocol.py
+# after the shim window closes. Do not extend; schedule for removal.
 from __future__ import annotations
 
 import pytest

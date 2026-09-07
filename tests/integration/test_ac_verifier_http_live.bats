@@ -1,4 +1,9 @@
 #!/usr/bin/env bats
+# ⚠️ DEPRECATED suite per ADR-0045 (inline-ac-verifier-into-rdd-verifier).
+# ac-verifier is a backward-compatibility shim for one release cycle; this
+# suite asserts the shim surface. Replaced by
+# tests/integration/test_rdd_verifier_self_contained.bats after the shim
+# window closes.
 #
 # Integration test: real requests.post hits a local Python HTTP mock server.
 # Validates full invoke_ai_agent() dispatch path through the bash wrapper

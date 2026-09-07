@@ -1,4 +1,8 @@
-"""MiniMax provider — OpenAI-compatible PLACEHOLDER.
+"""
+⚠️ DEPRECATED per ADR-0045 (inline-ac-verifier-into-rdd-verifier).
+rdd-verifier v2.0 no longer invokes this module; the executing AI agent IS
+the LLM. Kept as a backward-compatibility shim for one release cycle.
+MiniMax provider — OpenAI-compatible PLACEHOLDER.
 
 ⚠️  No real MiniMax API endpoint is hardcoded. Users MUST set
     AC_LLM_BASE_URL to a real OpenAI-compatible endpoint (e.g. a local

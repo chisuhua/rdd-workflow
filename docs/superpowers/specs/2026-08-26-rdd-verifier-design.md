@@ -1,3 +1,12 @@
+# ⚠️ ADR-0045 Update Note (2026-09-07)
+
+> **Deprecated sections**: This document predates ADR-0045
+> (inline-ac-verifier-into-rdd-verifier). Sections describing the
+> ac-verifier subprocess invocation, `AC_LLM_*` environment variables, or
+> the external LLM provider layer are superseded — `rdd-verifier` v2.0
+> self-contains the LLM Verification Protocol in
+> `skills/rdd-verifier/SKILL.md`. Preserved below for historical reference.
+
 # rdd-verifier: 5 阶段架构的验证回环阶段设计
 
 > **日期**: 2026-08-26

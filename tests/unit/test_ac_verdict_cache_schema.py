@@ -3,6 +3,11 @@
 Per ADR-0034 §7.2 + Oracle §C: SHA-fingerprint verdict cache to avoid
 double LLM calls between rdd-verifier and archive_gate_check.
 """
+
+# ⚠️ DEPRECATED per ADR-0045 (inline-ac-verifier-into-rdd-verifier).
+# ac-verifier is a backward-compatibility shim for one release cycle; this
+# suite asserts the shim surface. Replaced by tests/unit/test_rdd_verifier_protocol.py
+# after the shim window closes. Do not extend; schedule for removal.
 import json
 from pathlib import Path
 
