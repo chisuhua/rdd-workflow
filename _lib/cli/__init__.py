@@ -75,11 +75,12 @@ for _dash, _us in _DASH_SKILLS:
 # Subcommand -> fully-qualified handler import path.
 # Each handler has signature ``cmd_<name>(args: list[str]) -> int`` and
 # returns a process exit code (0 = success, non-zero = error).
+#
+# NOTE on `ac-verify`: Removed per ADR-0045 + `remove-ac-verifier-completely`
+# (2026-09-07). The `ac_verify_cmd` module is retained as a friendly-error
+# stub (exit 4 + migration hint) but is NOT registered in `_ROUTES` so it
+# does not appear in `rddf --help` as an active subcommand.
 _ROUTES: Dict[str, str] = {
-    # ⚠️ DEPRECATED per ADR-0045 (inline-ac-verifier-into-rdd-verifier):
-    # ac-verify is a backward-compatibility shim for one release cycle; new
-    # code MUST use `rdd-verify` directly. Entry retained for backward compat.
-    "ac-verify": "skills._lib.cli.ac_verify_cmd:cmd_ac_verify",
     "archive": "skills._lib.cli.archive_cmd:cmd_archive",
     "archive-sync": "skills._lib.cli.archive_sync_cmd:cmd_archive_sync",
     "cleanup": "skills._lib.cli.cleanup_cmd:cmd_cleanup",

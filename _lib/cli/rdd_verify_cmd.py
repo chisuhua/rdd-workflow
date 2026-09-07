@@ -60,7 +60,7 @@ def _hook_runner(change_name: str, project_root: Path, *, hook_path: Optional[Pa
     """External verification hook runner (provider=hook).
 
     Per design.md Decision 2: invokes _lib/verifier/hook_runner.run_verification_hook
-    and maps exit codes to verdict dict in the same shape as _default_runner.
+    and maps exit codes to verdict dict in the same shape as _stage_context_runner.
 
     Exit code mapping:
         0 → passed (exit_code=0, verdict=[{status: pass}], failed_acs=[])
@@ -155,10 +155,9 @@ def _stage_context_runner(change_name: str, project_root: Path) -> dict:
             "context_path": str(ctx_path), "provider": "agent-context"}
 
 
-# Backward-compat alias during the ADR-0045 shim window. The old name
-# described shell-out semantics that no longer exist; new code must use
-# _stage_context_runner. Removal targeted for the next minor release.
-_default_runner = _stage_context_runner
+# Note: the prior `_default_runner` alias (used during the ADR-0045 shim
+# window) was removed in `remove-ac-verifier-completely` (2026-09-07).
+# Callers MUST use `_stage_context_runner` directly.
 
 
 def _classify_route(failed_acs: list, verdict: list) -> str:
@@ -178,7 +177,7 @@ def run_one_change(project_root: Path, change_name: str,
                    runner: Optional[Callable] = None,
                    max_loops: int = 3) -> dict:
     """Run verification for one change. Returns a verification summary dict."""
-    runner = runner or _default_runner
+    runner = runner or _stage_context_runner
     state = init_loop_state(project_root, change_name, max_loops=max_loops)
     impl_sha = resolve_implementation_commit(project_root, change_name)
     if impl_sha is None:

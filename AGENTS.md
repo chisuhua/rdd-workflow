@@ -145,10 +145,7 @@ tests/
   integration/                # 281 bats + 15 py 集成测试 (~1789 bats 测试用例)
   _lib/                       # bash helpers (skill.bash, deps-subagent.bash 等)
 docs/adr/                     # ADR-0000 模板 + ADR-0001~0035 (35 个唯一编号, 36 个实体文件; v2.0.2 重编号 ADR-0013 → ADR-0020; v2.0.8+ 持续追加)
-                             # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0016 arch 发现契约 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment / ADR-0022 manual_deps 字段 / ADR-0024 deps-driven execution mode / ADR-0025 design 阶段独立化 / ADR-0027 continuous evolution / ADR-0028 role-model / ADR-0029 issue-driven / ADR-0030 hub-spoke / ADR-0031 cross-repo human-in-loop / ADR-0032 hub deepening / ADR-0033 submodule-aware / ADR-0034 rdd-verifier / ADR-0044 v4 stage-merge Wave 3 hard removal / ADR-0045 inline-ac-verifier-into-rdd-verifier (verifier-v2-hardening scheduled remove-ac-verifier-completely for next minor)
-                             # **Note**: 此关键 ADR 列表人工维护(策展判断,只列"已实施"+"已采纳"的 ADR)。
-                             # 完整 ADR 索引由 `_lib/adr_index_generator.py` 自动生成,见 `docs/adr/README.md` 中
-                             # `<!-- ADR_INDEX_START --> ... <!-- ADR_INDEX_END -->` 段 (per adr-index-auto-sync change 2026-08-28)。
+                             # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0016 arch 发现契约 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment / ADR-0022 manual_deps 字段 / ADR-0024 deps-driven execution mode / ADR-0025 design 阶段独立化 / ADR-0027 continuous evolution / ADR-0028 role-model / ADR-0029 issue-driven / ADR-0030 hub-spoke / ADR-0031 cross-repo human-in-loop / ADR-0032 hub deepening / ADR-0033 submodule-aware / ADR-0034 rdd-verifier / ADR-0044 v4 stage-merge Wave 3 hard removal / ADR-0045 inline-ac-verifier-into-rdd-verifier (remove-ac-verifier-completely 已完成 2026-09-07)
 docs/change-quality-guide.md  # change 质量等级指南 (Bronze/Silver/Gold); 阈值与 Plan B `propose_quality_check.py` 对齐, 反模式以 ADR-0019 为准
 openspec/                     # OpenSpec CLI 数据 (随项目走)
   changes/                    # active changes + archive/

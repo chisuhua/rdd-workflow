@@ -381,8 +381,7 @@ rdd-workflow/
     ├── rdd-builder/SKILL.md            # Design 阶段状态机(v2.1+, 提案管理)
     ├── rdd-builder/SKILL.md              # Plan 阶段状态机(v2.0+)
     ├── rdd-builder/SKILL.md              # Ship 端状态机
-    ├── rdd-verifier/SKILL.md            # Verify 阶段状态机(v3.0+, 批量 AC 验证, ADR-0034)
-    ├── ac-verifier/SKILL.md             # ⚠️ deprecated shim (ADR-0045; rdd-verifier v2.0 self-contained)
+    ├── rdd-verifier/SKILL.md            # Verify 阶段状态机(v3.0+, 批量 AC 验证, ADR-0034; v2.0 内联自包含 LLM 验证, ADR-0045)
     ├── feature/SKILL.md                 # feature 管理 (v2.0+)
     ├── rddf-session/SKILL.md            # 跨 OpenCode session 恢复 (ADR-0017)
     ├── propose/SKILL.md                 # 子技能(被 rdd-builder 调用)

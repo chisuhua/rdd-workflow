@@ -49,7 +49,6 @@
     "contract-check",
     "cross-repo-protocol",
     "spoke-system-prompt-injection",
-    "ac-verifier",
     "rdd-verifier",
     "report-issue",
     "sync-hub",

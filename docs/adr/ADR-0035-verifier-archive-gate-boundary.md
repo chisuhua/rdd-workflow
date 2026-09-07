@@ -4,6 +4,7 @@
 > **日期**: 2026-08-28
 > **决策者**: sisyphus
 > **关联**: ADR-0034 (rdd-verifier 阶段架构), ADR-0027 (L2 上报)
+> **修订**: 2026-09-07 — The `ac-verifier` subprocess fallback (mentioned in §"Decision" branch 1) was removed via `remove-ac-verifier-completely`; the archive gate now exclusively consumes the `rdd-verifier` verdict cache (per ADR-0045).
 
 ## 背景
 

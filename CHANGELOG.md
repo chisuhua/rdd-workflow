@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### remove-ac-verifier-completely (delete ac-verifier skill + ac-verify CLI)
+
+Per `inline-ac-verifier-into-rdd-verifier` (ADR-0045) and `verifier-v2-hardening` Phase 7 closure: the `ac-verifier` skill was deprecated in v2.0 and scheduled for removal. This change executes that removal.
+
+- **`skills/ac-verifier/` deleted** (full subtree: SKILL.md, scripts/ac_verifier.{sh,py}, scripts/ac_verifier_mocks.py, scripts/llm_providers/{base,openai,anthropic,ollama,minimax}.py).
+- **`rddf ac-verify` is now a friendly-error stub**: any invocation prints a migration hint and exits 4 ("removed per ADR-0045; use `rddf rdd-verify`"). The command no longer appears in `rddf --help` as an active subcommand.
+- **`_default_runner` alias removed** from `_lib/cli/rdd_verify_cmd.py`; all callers migrated to `_stage_context_runner`.
+- **5 deprecated test files deleted**: `tests/unit/test_ac_verifier.py`, `tests/unit/test_ac_verifier_providers.py`, `tests/integration/test_ac_verifier_{e2e,http_live,skill}.bats`. The 2 archive-gate tests (`test_ac_verifier_archive_gate.bats`, `test_rdd_verifier_archive_compat.bats`) and `test_ac_verdict_cache_schema.py` are **preserved** (they test `rdd-verifier` v2.0 cache, not the ac-verifier skill).
+- **3 ADR files carry removal status notes**: ADR-0034, ADR-0035, ADR-0045 each gain a single-line "removed in `remove-ac-verifier-completely`" pointer for historical traceability.
+- **Migration**: All `skill_use("ac-verifier", ...)` and `rddf ac-verify ...` calls MUST migrate to `skill_use("rdd-verifier", ...)` and `rddf rdd-verify ...`.
+
 ### rdd-verifier (5th phase: 验证回环)
 
 Adds the 5th phase `rdd-verifier` (arch → design → plan → ship → **verify** → archive). Runs ac-verifier skill on ship-done changes in batch, classifies failures heuristically (implementation_gap vs proposal_drift), and routes failures back to plan/ship with 3-retry max. See `docs/superpowers/specs/2026-08-26-rdd-verifier-design.md` and ADR-0034.

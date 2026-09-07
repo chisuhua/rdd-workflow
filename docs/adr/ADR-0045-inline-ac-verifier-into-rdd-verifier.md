@@ -4,6 +4,7 @@
 > **日期**: 2026-09-07
 > **决策者**: rdd-workflow maintainer
 > **替代**: ADR-0034 §"State Machine" Step 2a-c（ac-verifier subprocess 调用部分）
+> **修订**: 2026-09-07 — The deprecated `ac-verifier` skill + `rddf ac-verify` CLI subcommand referenced in §"Migration" have been hard-removed via `remove-ac-verifier-completely` (2026-09-07 archive). All call sites MUST use `rdd-verifier` v2.0 (this ADR).
 
 ## Context
 
