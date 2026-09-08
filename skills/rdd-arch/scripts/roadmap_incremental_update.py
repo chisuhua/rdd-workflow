@@ -45,7 +45,7 @@ def _import_dependencies():
             scan_adr_catalog,
             _resolve_adr_pattern_for_caller,
         )
-        from skills.populate_roadmap_from_arch.scripts.populate_lib import (
+        from skills._lib.populate_lib import (  # type: ignore[no-redef]
             decide_update_mode,
             detect_adr_changes,
             detect_code_changes,
@@ -71,11 +71,7 @@ def _import_dependencies():
             scan_adr_catalog,
             _resolve_adr_pattern_for_caller,
         )
-
-        scripts_dir = str(_HERE.parents[2] / "populate-roadmap-from-arch" / "scripts")
-        if scripts_dir not in sys.path:
-            sys.path.insert(0, scripts_dir)
-        from populate_lib import (  # type: ignore[no-redef]
+        from _lib.populate_lib import (  # type: ignore[no-redef]
             decide_update_mode,
             detect_adr_changes,
             detect_code_changes,
@@ -127,7 +123,7 @@ def _maybe_save_supplementary(records, project_root: Path) -> None:
     if not records:
         return
     try:
-        from skills.populate_roadmap_from_arch.scripts.populate_lib import (
+        from skills._lib.populate_lib import (  # type: ignore[no-redef]
             save_supplementary,
         )
     except ImportError:

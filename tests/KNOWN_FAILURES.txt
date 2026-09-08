@@ -39,15 +39,7 @@ global_install: resolve_rdd_skill_dir falls back to ~/.agents/skills/<name> # pr
 propose.md uses json.load (P1-7 format migration) # historical Python contract
  propose.md wraps json.load in try/except FileNotFoundError + JSONDecodeError (P0-4 / P1-7) # historical Python contract
 render_deps_report falls back when no AI result file # pre-existing
-roadmap_incremental_update: T10 Phase-6-style repeat call exits 0, verifies 0 ADRs, state commit == HEAD # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: T10 cross-call chain (--incremental=off forces full mode) # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: T11 --roadmap-update=off leaves an existing state file untouched # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: T12 --roadmap-update=force forces full mode even with a valid baseline # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: T17 first run without baseline reports reason 'no baseline' # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: T18 stale codebase_commit auto-resets to full mode and rewrites state with HEAD # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: edge third consecutive run is still mode=skip (T1 stability) # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: full run on empty state.json writes baseline state # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
- roadmap_incremental_update: idempotent — second run detects no changes → mode=skip # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+
  skip: --max-changes 2 limits scan output to 2 changes # pre-existing: rdd_verifier_skip tests added by verifier-re-verify-archived-flag
 skip: --max-changes CLI flag overrides env var # pre-existing: rdd_verifier_skip tests added post-baseline
 skip: RDDF_VERIFIER_MAX_CHANGES env var honored as default # pre-existing: rdd_verifier_skip tests added post-baseline
