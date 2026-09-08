@@ -24,23 +24,32 @@ teardown() {
     rm -rf "$TEST_TMP"
 }
 
-@test "skip: SKIP_RDD_VERIFIER=yes returns exit 2" {
+@test "skip: SKIP_RDD_VERIFIER=yes returns exit 3 (fail closed bypass)" {
+    # v4 ADR-0034 §7.1 amended by ADR-0045: SKIP without RDDF_VERIFIER_BYPASS_REASON
+    # is fail-closed (exit 3, requires audited bypass reason). v3 expected exit 2.
     SKIP_RDD_VERIFIER=yes run python3 "$REPO_ROOT/_lib/cli/rdd_verify_cmd.py"
-    [ "$status" -eq 2 ]
+    [ "$status" -eq 3 ]
     [[ "$output" == *"SKIP_RDD_VERIFIER"* ]]
+    [[ "$output" == *"RDDF_VERIFIER_BYPASS_REASON"* ]]
 }
 
 @test "skip: SKIP_RDD_VERIFIER=yes overrides --max-changes and other args" {
     cat > .rddf/state/iteration.json <<'EOF'
-{"changes": [{"name": "a", "status": "ship-done"}]}
+{"changes": [{"name": "a", "status": "completed", "tasks_done": 1, "tasks_total": 1}]}
 EOF
     SKIP_RDD_VERIFIER=yes run python3 "$REPO_ROOT/_lib/cli/rdd_verify_cmd.py" --max-changes 5
-    [ "$status" -eq 2 ]
+    [ "$status" -eq 3 ]
     [[ "$output" == *"SKIP_RDD_VERIFIER"* ]]
 }
 
-@test "skip: SKIP_RDD_VERIFIER=yes=No (lowercase) honored" {
-    SKIP_RDD_VERIFIER=no run python3 "$REPO_ROOT/_lib/cli/rdd_verify_cmd.py"
+@test "skip: SKIP_RDD_VERIFIER=yes with BYPASS_REASON exits 0" {
+    # v4 fail-closed bypass: when SKIP_RDD_VERIFIER=yes AND RDDF_VERIFIER_BYPASS_REASON
+    # is set, the verifier logs an audited bypass and returns 0 (no work to verify).
+    cat > .rddf/state/iteration.json <<'EOF'
+{"changes": [{"name": "a", "status": "completed", "tasks_done": 1, "tasks_total": 1}]}
+EOF
+    SKIP_RDD_VERIFIER=yes RDDF_VERIFIER_BYPASS_REASON="Wave X2 test" \
+        run python3 "$REPO_ROOT/_lib/cli/rdd_verify_cmd.py"
     [ "$status" -eq 0 ]
 }
 
@@ -48,57 +57,60 @@ EOF
     echo '{"changes": []}' > .rddf/state/iteration.json
     run python3 "$REPO_ROOT/_lib/cli/rdd_verify_cmd.py"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"No ship-done"* ]]
+    [[ "$output" == *"No eligible"* ]]
 }
 
 @test "skip: --max-changes 2 limits scan output to 2 changes" {
     cat > .rddf/state/iteration.json <<'EOF'
 {"changes": [
-  {"name": "c1", "status": "ship-done"},
-  {"name": "c2", "status": "ship-done"},
-  {"name": "c3", "status": "ship-done"},
-  {"name": "c4", "status": "ship-done"},
-  {"name": "c5", "status": "ship-done"}
+  {"name": "c1", "status": "completed", "tasks_done": 1, "tasks_total": 1},
+  {"name": "c2", "status": "completed", "tasks_done": 1, "tasks_total": 1},
+  {"name": "c3", "status": "completed", "tasks_done": 1, "tasks_total": 1},
+  {"name": "c4", "status": "completed", "tasks_done": 1, "tasks_total": 1},
+  {"name": "c5", "status": "completed", "tasks_done": 1, "tasks_total": 1}
 ]}
 EOF
     run python3 "$REPO_ROOT/_lib/cli/rdd_verify_cmd.py" --dry-run --max-changes 2
     [ "$status" -eq 0 ]
-    # Exactly 2 changes listed
-    [[ "$output" == *"c1"* ]]
-    [[ "$output" == *"c2"* ]]
-    [[ ! "$output" == *"c3"* ]]
-    [[ ! "$output" == *"c5"* ]]
+    # v4 dry-run output: "[dry-run] Would verify N change(s):" then "  - <name>"
+    [[ "$output" == *"Would verify 2 change"* ]]
+    [[ "$output" == *"  - c1"* ]]
+    [[ "$output" == *"  - c2"* ]]
+    [[ ! "$output" == *"  - c3"* ]]
+    [[ ! "$output" == *"  - c5"* ]]
 }
 
 @test "skip: RDDF_VERIFIER_MAX_CHANGES env var honored as default" {
     cat > .rddf/state/iteration.json <<'EOF'
 {"changes": [
-  {"name": "x1", "status": "ship-done"},
-  {"name": "x2", "status": "ship-done"},
-  {"name": "x3", "status": "ship-done"}
+  {"name": "x1", "status": "completed", "tasks_done": 1, "tasks_total": 1},
+  {"name": "x2", "status": "completed", "tasks_done": 1, "tasks_total": 1},
+  {"name": "x3", "status": "completed", "tasks_done": 1, "tasks_total": 1}
 ]}
 EOF
     RDDF_VERIFIER_MAX_CHANGES=2 run python3 "$REPO_ROOT/_lib/cli/rdd_verify_cmd.py" --dry-run
     [ "$status" -eq 0 ]
-    [[ "$output" == *"x1"* ]]
-    [[ "$output" == *"x2"* ]]
-    [[ ! "$output" == *"x3"* ]]
+    [[ "$output" == *"Would verify 2 change"* ]]
+    [[ "$output" == *"  - x1"* ]]
+    [[ "$output" == *"  - x2"* ]]
+    [[ ! "$output" == *"  - x3"* ]]
 }
 
 @test "skip: --max-changes CLI flag overrides env var" {
     cat > .rddf/state/iteration.json <<'EOF'
 {"changes": [
-  {"name": "y1", "status": "ship-done"},
-  {"name": "y2", "status": "ship-done"},
-  {"name": "y3", "status": "ship-done"}
+  {"name": "y1", "status": "completed", "tasks_done": 1, "tasks_total": 1},
+  {"name": "y2", "status": "completed", "tasks_done": 1, "tasks_total": 1},
+  {"name": "y3", "status": "completed", "tasks_done": 1, "tasks_total": 1}
 ]}
 EOF
     RDDF_VERIFIER_MAX_CHANGES=5 run python3 "$REPO_ROOT/_lib/cli/rdd_verify_cmd.py" \
         --dry-run --max-changes 1
     [ "$status" -eq 0 ]
-    [[ "$output" == *"y1"* ]]
-    [[ ! "$output" == *"y2"* ]]
-    [[ ! "$output" == *"y3"* ]]
+    [[ "$output" == *"Would verify 1 change"* ]]
+    [[ "$output" == *"  - y1"* ]]
+    [[ ! "$output" == *"  - y2"* ]]
+    [[ ! "$output" == *"  - y3"* ]]
 }
 
 @test "skip: --help shows expected flags" {
