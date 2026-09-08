@@ -62,22 +62,27 @@ analysis = build_analysis([{'name': 'c1', 'blocker': None, 'parallel_group': 0, 
 write_analysis('$TEST_REPO', analysis)
 print('pre-analysis written')
 "
-  # Create iteration.json so sync has something to update
+  # Create iteration.json with c1 already present (deps is read-only on
+  # lifecycle — it does NOT create new entries; propose.md owns that).
   python3 -c "
 import sys
 sys.path.insert(0, '$TEST_REPO')
 from skills._lib import iteration as it
-it.save('$TEST_REPO', it.create_empty())
+state = it.create_empty()
+state['changes'].append({'name': 'c1', 'status': 'completed'})
+it.save('$TEST_REPO', state)
 "
   source "$REPO_ROOT/skills/deps/scripts/deps_iteration_sync.sh"
   deps_iteration_sync 2>&1
-  # iteration.json should have c1 entry now
+  # c1 entry should have deps metadata (blocker, parallel_group) updated
   python3 -c "
 import json
 with open('.rddf/state/iteration.json') as f:
     data = json.load(f)
-changes = [c for c in data['changes'] if c['name'] == 'c1']
-assert len(changes) >= 1, f'Expected c1 in iteration.json, got: {data[\"changes\"]}'
+by_name = {c['name']: c for c in data['changes']}
+assert 'c1' in by_name, f'Expected c1 in iteration.json, got: {list(by_name.keys())}'
+assert by_name['c1'].get('blocker') is None, f'c1 blocker: {by_name[\"c1\"].get(\"blocker\")}'
+assert by_name['c1'].get('parallel_group') == 0, f'c1 group: {by_name[\"c1\"].get(\"parallel_group\")}'
 print('OK')
 "
   rm -rf "$TEST_REPO"
@@ -139,11 +144,18 @@ analysis = build_analysis([
 ])
 write_analysis('$TEST_REPO', analysis)
 "
+  # iteration.json must already have c1/c2 entries (deps is read-only on
+  # lifecycle — it does NOT create new entries; propose.md owns that).
   python3 -c "
 import sys
 sys.path.insert(0, '$TEST_REPO')
 from skills._lib import iteration as it
-it.save('$TEST_REPO', it.create_empty())
+state = it.create_empty()
+state['changes'].extend([
+    {'name': 'c1', 'status': 'completed'},
+    {'name': 'c2', 'status': 'completed'},
+])
+it.save('$TEST_REPO', state)
 "
   source "$REPO_ROOT/skills/deps/scripts/deps_iteration_sync.sh"
   deps_iteration_sync 2>&1

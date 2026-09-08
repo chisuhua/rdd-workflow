@@ -30,8 +30,6 @@ _backup_corrupt_file: writes .reason.txt sidecar alongside .corrupt.<ts> # pre-e
 archive_change: creates tasks.md.archived-snapshot sidecar # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 archive_change: idempotent — second run does not overwrite sidecar # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 archive_change: tasks_done in iteration.json derived from sidecar [x] count # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-deps_iteration_sync: updates iteration.json deps fields # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-deps_iteration_sync: uses deps-analysis.json when present # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 e2e: post_archive_cleanup handles 6-residue with archive presence # post-v4 migration
 global_install: resolve_rdd_skill_dir falls back to ~/.agents/skills/<name> # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
  global_install: ~18 sub-skill symlinks exist and resolve to source # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
