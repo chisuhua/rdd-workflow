@@ -64,20 +64,21 @@ _run_scan() {
   )
 }
 
-@test "scan_state: arch-handoff + no design-handoff → guide-design (branch 1c)" {
+@test "scan_state: arch-handoff + no design-handoff → rdd-builder (设计阶段, branch 1c)" {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo x > a && git add a && git commit -q -m init
   mkdir -p .rddf/state
   # adr_count >= 1 means arch-done is complete; without it scan_state falls
-  # through to priority 1.5 (guide-arch recover) per current contract.
+  # through to priority 1.5 (rdd-arch recover) per current contract.
   echo '{"adr_count":1,"arch_done_at":"2026-07-01"}' > .rddf/state/.arch-handoff.json
   # no .design-handoff.json, no .plan-handoff.json
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
-  echo "$out" | grep -q "RECOMMEND=guide-design"
+  echo "$out" | grep -q "RECOMMEND=rdd-builder"
+  echo "$out" | grep -q "进入设计阶段"
 }
 
-@test "scan_state: arch-handoff + design-handoff + no plan-handoff → guide-plan (branch 1b)" {
+@test "scan_state: arch-handoff + design-handoff + no plan-handoff → rdd-builder (规范生成, branch 1b)" {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo x > a && git add a && git commit -q -m init
@@ -86,18 +87,20 @@ _run_scan() {
   echo '{"version":1,"design_complete_at":"2026-07-01","proposals_reviewed":3,"all_proposals_have_decision":true}' > .rddf/state/.design-handoff.json
   # no .plan-handoff.json
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
-  echo "$out" | grep -q "RECOMMEND=guide-plan"
+  echo "$out" | grep -q "RECOMMEND=rdd-builder"
+  echo "$out" | grep -q "进入变更生成"
 }
 
-@test "scan_state: plan-handoff exists → guide-ship (branch 2)" {
+@test "scan_state: plan-handoff exists → rdd-builder (变更执行, branch 2)" {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo x > a && git add a && git commit -q -m init
   mkdir -p .rddf/state openspec/changes/add-x
-  # active_changes >= 1 + filesystem dir exists → guide-ship
+  # active_changes >= 1 + filesystem dir exists → rdd-builder (ship)
   echo '{"active_changes":1,"current_change":"add-x"}' > .rddf/state/.plan-handoff.json
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
-  echo "$out" | grep -q "RECOMMEND=guide-ship"
+  echo "$out" | grep -q "RECOMMEND=rdd-builder"
+  echo "$out" | grep -q "进入变更执行"
 }
 
 @test "scan_state: no worktree + no handoff + no roadmap → guide-arch (branch 8)" {
@@ -108,46 +111,47 @@ _run_scan() {
   echo "$out" | grep -q "RECOMMEND=rdd-arch"
 }
 
-@test "scan_state: roadmap + no changes dir → guide-plan (branch 9)" {
+@test "scan_state: roadmap + no changes dir → rdd-builder (branch 9)" {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo "# Roadmap" > roadmap.md && git add . && git commit -q -m init
   # no openspec/ at all
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
-  echo "$out" | grep -q "RECOMMEND=guide-plan"
+  echo "$out" | grep -q "RECOMMEND=rdd-builder"
+  echo "$out" | grep -q "进入变更生成"
 }
 
-@test "scan_state: roadmap + changes dir + no pending proposals → filter-guide-ship kicks in" {
+@test "scan_state: roadmap + changes dir + no pending proposals → rdd-builder (无活跃 change)" {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo "# Roadmap" > roadmap.md
   mkdir -p openspec/changes && touch openspec/changes/.keep
   git add . && git commit -q -m init
   # proposal-approved.md / .rddf/improvements/ absent → HAS_APPROVED=no, HAS_PENDING=no
-  # filter-guide-ship: 0 active changes → guide-plan (not guide-ship)
+  # filter: 0 active changes → rdd-builder (not ship)
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
-  echo "$out" | grep -q "RECOMMEND=guide-plan"
+  echo "$out" | grep -q "RECOMMEND=rdd-builder"
   echo "$out" | grep -q "无活跃 change"
 }
 
-@test "scan_state: proposal-approved.md with entry → guide-plan (branch 10)" {
+@test "scan_state: proposal-approved.md with entry → rdd-builder (branch 10)" {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo "# Roadmap" > roadmap.md
   mkdir -p openspec/changes && touch openspec/changes/.keep
-  # dual-index model: approved entry in proposal-approved.md → guide-plan
+  # dual-index model: approved entry in proposal-approved.md → rdd-builder (plan)
   mkdir -p .rddf/improvements && echo "# x" > .rddf/improvements/x.md
   printf '| [x](.rddf/improvements/x.md) | P0 | 2026-07-24 | t |\n' > proposal-approved.md
   git add . && git commit -q -m init
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
-  echo "$out" | grep -q "RECOMMEND=guide-plan"
+  echo "$out" | grep -q "RECOMMEND=rdd-builder"
   echo "$out" | grep -q "有已批准 change 待创建"
 }
 
 @test "scan_state: Python parser reads proposal-approved.md via PROJECT_ROOT, not cwd (P1-7)" {
   # If buggy: scan_state is invoked from a cwd that does NOT contain
   # proposal-approved.md → python FileNotFoundError → HAS_APPROVED="" →
-  # falls through to the guide-ship default. Correct behavior:
+  # falls through to the rdd-builder default. Correct behavior:
   # scan_state must locate the file via PROJECT_ROOT regardless of cwd.
   local r; r=$(mktemp -d); cd /tmp || return 1   # deliberately NOT $r
   mkdir -p "$r"
@@ -158,7 +162,7 @@ _run_scan() {
    printf '| [x](.rddf/improvements/x.md) | P0 | 2026-07-24 | t |\n' > proposal-approved.md
    git add . && git commit -q -m init)
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
-  echo "$out" | grep -q "RECOMMEND=guide-plan"
+  echo "$out" | grep -q "RECOMMEND=rdd-builder"
 }
 @test "scan_state: sources check_project_setup and removes legacy LARGE_DIRS block" {
   grep -q 'check_project_setup' "$REPO_ROOT/skills/guide/scripts/scan-state.sh"

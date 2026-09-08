@@ -74,7 +74,6 @@ deps_iteration_sync: updates iteration.json deps fields # pre-existing: integrat
 deps_iteration_sync: uses deps-analysis.json when present # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 doc_truth_sync: package.json::skills[] publishes all 13 disk skills (Decision 3 = A) # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 fix_doc_truth_sync: package.json skills[] count matches disk count # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-populate_wrapper: --standalone flag forces full mode (v1.1 compat) # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 roadmap_incremental_update: T10 Phase-6-style repeat call exits 0, verifies 0 ADRs, state commit == HEAD # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 roadmap_incremental_update: T10 cross-call chain (--incremental=off forces full mode) # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 roadmap_incremental_update: T11 --roadmap-update=off leaves an existing state file untouched # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
@@ -89,39 +88,16 @@ roadmap_incremental_update: idempotent — second run detects no changes → mod
 # These failures predate the Phase A1 archived-proposal regeneration (commit
 # 6e0a538) and are NOT regressions from that commit. They accumulated since
 # the 2026-08-25 P0+P1 cleanup entry above:
-# - 16 populate-roadmap-from_arch.bats failures: sync-package-skills-to-disk
-#   (archived 2026-08-27) removed the deprecated skill from package.json but
-#   left a partial directory at skills/populate-roadmap-from-arch/ (no SKILL.md,
-#   no populate.sh, only __pycache__ residue). Tests reference the missing
-#   populate.sh binary. Recommend follow-up: either fully delete the skill
-#   directory + tests, or restore SKILL.md + populate.sh.
-# - 5 populate_wrapper.bats failures: same root cause as above.
 # - 5 rdd_verifier_skip.bats failures: introduced by verifier-re-verify-archived-flag
 #   (archived 2026-08-27) which added new --skip behavior tests.
 # - 1 roadmap_skill.bats failure: v2.0.3 removed gate-report, command count
 #   changed but baseline not updated.
 # - 1 adr_directory.bats failure: ADR status+date field check added post-baseline.
-code_verify_off_dry_run_skips_supplementary # pre-existing: populate-roadmap-from-arch partial directory (no populate.sh); tests reference missing script
-code_verify_on_RDD_NO_MCP_fallback_writes # pre-existing: populate-roadmap-from-arch partial directory
-code_verify_on_render_supports_new_badges # pre-existing: populate-roadmap-from-arch partial directory
-code_verify_on_writes_supplementary_v1 # pre-existing: populate-roadmap-from-arch partial directory
-code_verify_strict_exits_2_on_discrepancy # pre-existing: populate-roadmap-from-arch partial directory
+# Note (2026-09-08): populate-roadmap-from-arch tests (test_populate_roadmap_from_arch.bats,
+# test_populate_wrapper.bats) were DELETED as outdated — the skill was removed by
+# sync-package-skills-to-disk (archived 2026-08-27), leaving only __pycache__ residue.
+# Their 21 baseline entries were removed accordingly.
 every real ADR has status and date fields # pre-existing: adr_directory test added post-baseline
-populate: --no-backup skips backup # pre-existing: populate-roadmap-from-arch partial directory (no populate.sh)
-populate: --phase flag scopes to single phase # pre-existing: populate-roadmap-from-arch partial directory
-populate: --yes populates all 4 phase fragments # pre-existing: populate-roadmap-from-arch partial directory
-populate: creates backup before write # pre-existing: populate-roadmap-from-arch partial directory
-populate: dry-run does not modify fragments # pre-existing: populate-roadmap-from-arch partial directory
-populate: includes ADR links in generated body # pre-existing: populate-roadmap-from-arch partial directory
-populate: preflight fails if main doc missing Phase Skeleton # pre-existing: populate-roadmap-from-arch partial directory
-populate: preflight fails if no .arch-handoff.json # pre-existing: populate-roadmap-from-arch partial directory
-populate: preflight fails if no ADR files # pre-existing: populate-roadmap-from-arch partial directory
-populate: preserves fragment frontmatter # pre-existing: populate-roadmap-from-arch partial directory
-populate_wrapper: --roadmap-update=off skips entirely (v1.1 compat) # pre-existing: populate_wrapper test references missing populate.sh
-populate_wrapper: SKILL.md contains deprecation banner mentioning guide-arch # pre-existing: populate_wrapper partial directory
-populate_wrapper: SKILL.md troubleshooting has reset command # pre-existing: populate_wrapper partial directory
-populate_wrapper: populate.sh sources guide-arch's roadmap_incremental_update.sh # pre-existing: populate_wrapper partial directory
-populate_wrapper: v1.2 frontmatter has version 1.2 + evolved-from # pre-existing: populate_wrapper partial directory
 roadmap_skill declares 5 commands (v2.0.3: gate-report removed) # pre-existing: roadmap_skill command count changed post-baseline
 skip: --max-changes 2 limits scan output to 2 changes # pre-existing: rdd_verifier_skip tests added by verifier-re-verify-archived-flag
 skip: --max-changes CLI flag overrides env var # pre-existing: rdd_verifier_skip tests added post-baseline
@@ -175,15 +151,4 @@ rdd-builder/SKILL.md: Phase 2.7 lists 5 commit message conventions # pre-existin
 rdd-builder/SKILL.md: Phase 2.7 mentions archive.sh check_worktree_commits # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 rdd-builder/SKILL.md: Phase 2.7 references worktree-archive-workflow proposal # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 rdd-builder/SKILL.md: Phase 2.7 section exists # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-scan_state: Python parser reads proposal-approved.md via PROJECT_ROOT, not cwd (P1-7) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-scan_state: arch-handoff + design-handoff + no plan-handoff recommends guide-plan # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-scan_state: arch-handoff + design-handoff + no plan-handoff → guide-plan (branch 1b) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-scan_state: arch-handoff + no design-handoff recommends guide-design # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-scan_state: arch-handoff + no design-handoff → guide-design (branch 1c) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-scan_state: plan-handoff exists → guide-ship (branch 2) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-scan_state: plan-handoff present recommends guide-ship # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-scan_state: proposal-approved.md with entry → guide-plan (branch 10) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-scan_state: roadmap + changes dir + no pending proposals → filter-guide-ship kicks in # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-scan_state: roadmap + no changes dir → guide-plan (branch 9) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 planner_feedback_id_uniqueness: 5× baseline failures (test_same_day_recompute_no_collision, test_counter_starts_at_max_plus_one, test_cross_day_independent_counter, test_malformed_id_skipped_in_counter, test_missing_feedback_id_key_skipped) # pre-existing on master; not caused by add-rdd-quick-skill (verified via stash baseline 2026-09-07)
-test_deps_execution_mode: cannot import name 'plan_done_gate' from 'skills.guide_plan.scripts' # pre-existing: v3 guide_plan dir renamed to rdd-planner per ADR-0042 (v4 stage-merge); test not updated; verified via stash baseline 2026-09-08

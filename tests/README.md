@@ -16,8 +16,13 @@ tests/
 │   └── test_worktree.bats      # unit tests for skills/_lib/worktree.sh
 └── integration/       # cross-component / CLI integration tests
     ├── test_<issue-id>.bats    # regression locks for P0/P1/P2/P3 fixes
-    ├── test_*_skill.bats       # structural / metadata coverage per skill (9 files)
+    ├── test_*_skill.bats       # structural / metadata coverage per skill
     ├── test_*_subagent.bats    # subagent integration tests
+    ├── scan_state.bats         # guide recommender routing (rdd-* v4 names)
+    ├── test_rdd_arch_cli.bats  # rdd-arch CLI surface
+    ├── test_rdd_builder_phases.bats  # rdd-builder phase state machine
+    ├── test_rdd_verifier_*.bats      # rdd-verifier (9 files)
+    ├── test_rddf_session_*.bats/.py  # rddf-session lifecycle & concurrency
     └── test_skill_metadata_consistency.bats  # package.json ↔ skills/ ↔ smoke.bats agreement
 ```
 
@@ -83,12 +88,14 @@ metadata drift between `package.json`, `skills/<name>/SKILL.md`, and `smoke.bats
 | Skill            | Test file                                                  |
 |------------------|------------------------------------------------------------|
 | INSTALL          | `tests/integration/test_install_skill.bats`                |
-| guide            | `tests/integration/test_guide_skill.bats`                  |
-| guide-arch       | `tests/integration/test_guide_arch_skill.bats`             |
-| guide-plan       | `tests/integration/test_guide_plan_skill.bats`             |
-| guide-ship       | `tests/integration/test_guide_ship_skill.bats`             |
+| guide            | `tests/integration/scan_state.bats` (routing) + `tests/smoke.bats` (existence) |
+| rdd-arch         | `tests/integration/test_rdd_arch_cli.bats` + `test_arch_*_extraction.bats` |
+| rdd-planner      | `tests/integration/test_planner_cmd.bats` + `test_arch_handoff_extraction.bats` |
+| rdd-builder (plan+ship) | `tests/integration/test_rdd_builder_phases.bats` + `test_filter_guide_ship.bats` |
+| rdd-verifier     | `tests/integration/test_rdd_verifier_*.bats` (9 files)     |
+| rdd-quick        | `tests/integration/test_rdd_quick.bats`                    |
 | feature          | `tests/integration/test_feature_skill.bats`                |
-| rddf-session     | `tests/integration/test_rddf_session_skill.bats`           |
+| rddf-session     | `tests/integration/test_rddf_session_{current,status,auto_archive,owner_stability,hook_required,sub_phase,workflow_group}.bats` + `test_rddf_session_*.py` |
 | propose          | `tests/integration/test_propose_skill.bats`                |
 | execute          | `tests/integration/test_execute_skill.bats`                |
 | status           | `tests/integration/test_status_skill.bats`                 |

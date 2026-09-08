@@ -38,9 +38,9 @@ teardown() {
   # recommends 'guide-ship' (or guide-arch if no roadmap.md)
 }
 
-@test "scan_state: arch-handoff + no design-handoff recommends guide-design {
+@test "scan_state: arch-handoff + no design-handoff recommends rdd-builder (design phase)" {
   # arch-handoff with adr_count >= 1 means arch-done is complete
-  # No design-handoff -> should recommend guide-design (v2.1 four-phase)
+  # No design-handoff -> should recommend rdd-builder (v4 four-phase)
   echo '{"arch_done_at":"2026-07-01","adr_count":1,"current_change":null}' > "$STATE_DIR/.arch-handoff.json"
 
   run bash -c "
@@ -49,10 +49,10 @@ teardown() {
     echo \"RECOMMEND=\$RECOMMEND\"
   "
   [ "$status" -eq 0 ]
-  [[ "$output" == *"guide-design"* ]]
+  [[ "$output" == *"rdd-builder"* ]]
 }
 
-@test "scan_state: arch-handoff + design-handoff + no plan-handoff recommends guide-plan" {
+@test "scan_state: arch-handoff + design-handoff + no plan-handoff recommends rdd-builder" {
   echo '{"arch_done_at":"2026-07-01","adr_count":1,"current_change":null}' > "$STATE_DIR/.arch-handoff.json"
   echo '{"version":1,"design_complete_at":"2026-07-01","proposals_reviewed":3,"all_proposals_have_decision":true}' > "$STATE_DIR/.design-handoff.json"
 
@@ -62,10 +62,10 @@ teardown() {
     echo \"RECOMMEND=\$RECOMMEND\"
   "
   [ "$status" -eq 0 ]
-  [[ "$output" == *"guide-plan"* ]]
+  [[ "$output" == *"rdd-builder"* ]]
 }
 
-@test "scan_state: plan-handoff present recommends guide-ship" {
+@test "scan_state: plan-handoff present recommends rdd-builder (ship phase)" {
   echo '{"arch_done_at":"2026-07-01","adr_count":1,"current_change":null}' > "$STATE_DIR/.arch-handoff.json"
   echo '{"plan_done_at":"2026-07-01","active_changes":1,"current_change":"add-x"}' > "$STATE_DIR/.plan-handoff.json"
   mkdir -p "openspec/changes/add-x"
@@ -76,7 +76,7 @@ teardown() {
     echo \"RECOMMEND=\$RECOMMEND\"
   "
   [ "$status" -eq 0 ]
-  [[ "$output" == *"guide-ship"* ]]
+  [[ "$output" == *"rdd-builder"* ]]
 }
 
 @test "scan_state: no phase-gate-report priority (v2.0.3 removal)" {
