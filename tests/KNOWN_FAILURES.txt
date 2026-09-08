@@ -42,7 +42,6 @@ global_install: resolve_rdd_skill_dir falls back to ~/.agents/skills/<name> # pr
  propose.md uses git rev-parse --show-toplevel for project root (P0-4) # historical shell contract
 propose.md uses json.load (P1-7 format migration) # historical Python contract
  propose.md wraps json.load in try/except FileNotFoundError + JSONDecodeError (P0-4 / P1-7) # historical Python contract
- rddf: feature exits 0 # pre-existing logic, unrelated to v4
 render_deps_report falls back when no AI result file # pre-existing
 roadmap_incremental_update: T10 Phase-6-style repeat call exits 0, verifies 0 ADRs, state commit == HEAD # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 roadmap_incremental_update: T10 cross-call chain (--incremental=off forces full mode) # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
