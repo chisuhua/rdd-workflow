@@ -9,7 +9,7 @@
     "stdout_contains": ["\"status\": \"fail\"", "not implement", "implementation_gap", "phase-2"]
   },
   "mock_output": {
-    "files": {".rddf/state/.ac-verdict-test-gap.json": "{\"ac_id\": \"AC-1\", \"status\": \"fail\", \"reasoning\": \"not implement: helper missing\", \"routing_target\": \"phase-2\"}"},
+    "files": {    ".rddf/state/.ac-verdict-test-gap.json": "{\"ac_id\": \"AC-1\", \"description\": \"function returns 42 for empty\", \"status\": \"fail\", \"confidence\": 0.9, \"evidence\": \"impl returns false\", \"reasoning\": \"not implement: helper missing\", \"routing_target\": \"phase-2\"}"},
     "stdout": "verdict: status=fail\nreasoning: not implement: helper missing\nrouting: implementation_gap → phase-2\n"
   },
   "isolation": {"locked_paths": [".rddf", "openspec"]}
