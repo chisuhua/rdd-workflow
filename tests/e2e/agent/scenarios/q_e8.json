@@ -1,0 +1,28 @@
+{
+  "scenario_id": "Q-E8",
+  "skill": "rdd-quick",
+  "phase": "META",
+  "name": "隔离契约 — 不污染四阶段路径",
+  "input": {
+    "command": "isolation_audit",
+    "args": ["--scenarios", "Q-E1..Q-E7"]
+  },
+  "golden_output": {
+    "files": [
+      {"path": "isolation_audit.json", "must_exist": true}
+    ],
+    "stdout_contains": [
+      "zero_pollution: true",
+      "6/6 locked paths unchanged"
+    ]
+  },
+  "mock_output": {
+    "files": {
+      "isolation_audit.json": "{\"scenario\": \"Q-E8\", \"baseline_sha256\": [\"absent:.rddf\", \"absent:openspec\"], \"after_sha256\": [\"absent:.rddf\", \"absent:openspec\"], \"diff\": [], \"zero_pollution\": true}\n"
+    },
+    "stdout": "Auditing 6 locked paths across $REPO_ROOT\nbaseline: captured before all 7 scenarios\nafter: captured after all 7 scenarios\nresult: zero_pollution: true\n6/6 locked paths unchanged\n"
+  },
+  "isolation": {
+    "locked_paths": [".rddf", "openspec", ".rddf/wt", ".rddf/state/iteration.json", ".rddf/state/sessions.json", ".rddf/state/roadmap-state.json"]
+  }
+}

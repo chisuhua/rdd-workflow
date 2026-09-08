@@ -1,0 +1,35 @@
+{
+  "scenario_id": "Q-E4",
+  "skill": "rdd-quick",
+  "phase": "P2",
+  "name": "P2 TDD 5 步就地执行",
+  "input": {
+    "command": "agent_execute_plan",
+    "args": ["--plan", ".rddf/plans/quick-add-helper-fn.md"]
+  },
+  "golden_output": {
+    "files": [
+      {"path": "tests/test_helper.py", "must_exist": true},
+      {"path": "helper.py", "must_exist": true}
+    ],
+    "stdout_contains": [
+      "Step 1: Write the failing test",
+      "Step 5: Defer commit",
+      "rdd-quick: add-helper-fn"
+    ],
+    "history_jsonl": [
+      {"name": "add-helper-fn", "outcome": "completed", "retry_count": 0}
+    ]
+  },
+  "mock_output": {
+    "files": {
+      "tests/test_helper.py": "def test_is_non_empty():\n    from helper import is_non_empty\n    assert is_non_empty('hello') is True\n",
+      "helper.py": "def is_non_empty(s):\n    return bool(s and s.strip())\n"
+    },
+    "stdout": "Step 1: Write the failing test (tests/test_helper.py)\nStep 2: Verify the test fails (pytest shows 1 failed)\nStep 3: Implement (helper.py)\nStep 4: Verify the test passes (pytest shows 1 passed)\nStep 5: Defer commit (no commit yet)\nGit commit: rdd-quick: add-helper-fn\n",
+    "history_jsonl": {"name": "add-helper-fn", "outcome": "completed", "retry_count": 0, "verdict_summary": "1/1 pass"}
+  },
+  "isolation": {
+    "locked_paths": [".rddf", "openspec", ".rddf/wt"]
+  }
+}

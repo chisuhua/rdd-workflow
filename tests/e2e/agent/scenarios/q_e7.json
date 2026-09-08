@@ -1,0 +1,31 @@
+{
+  "scenario_id": "Q-E7",
+  "skill": "rdd-quick",
+  "phase": "P4",
+  "name": "P4 retry 3/3 仍 fail → escalate",
+  "input": {
+    "command": "agent_verify_ac_with_retry",
+    "args": ["--plan", ".rddf/plans/quick-contradictory.md", "--max-retries", "3"]
+  },
+  "golden_output": {
+    "files": [],
+    "stdout_contains": [
+      "=== Escalation Summary ===",
+      "Original proposal:",
+      "git diff --stat",
+      "Failed ACs:",
+      "Run skill_use(\"rdd-planner\")"
+    ],
+    "history_jsonl": [
+      {"name": "contradictory", "outcome": "escalated", "retry_count": 3, "upgraded_to_change": null}
+    ]
+  },
+  "mock_output": {
+    "files": {},
+    "stdout": "retry 1/3: failed\nretry 2/3: failed\nretry 3/3: failed\nmax retries exceeded, escalating\n=== Escalation Summary ===\nOriginal proposal: Plan has contradictory AC (AC-1 requires true, AC-2 requires false for same input)\ngit diff --stat: 0 files changed\nFailed ACs: AC-1, AC-2\nRun skill_use(\"rdd-planner\") for human review\n",
+    "history_jsonl": {"name": "contradictory", "outcome": "escalated", "retry_count": 3, "upgraded_to_change": null}
+  },
+  "isolation": {
+    "locked_paths": [".rddf", "openspec", ".rddf/wt"]
+  }
+}

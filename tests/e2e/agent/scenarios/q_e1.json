@@ -1,0 +1,34 @@
+{
+  "scenario_id": "Q-E1",
+  "skill": "rdd-quick",
+  "phase": "P0",
+  "name": "P0 简单提案 → 脚手架 plan",
+  "input": {
+    "command": "scaffold_plan.sh",
+    "args": [
+      "--name", "add-helper-fn",
+      "--proposal", "Add a helper function that returns true for non-empty strings"
+    ],
+    "env": {
+      "RDDF_QUICK_PLAN_DIR": ".rddf/plans"
+    }
+  },
+  "golden_output": {
+    "files": [
+      {"path": ".rddf/plans/quick-add-helper-fn.md", "must_exist": true}
+    ],
+    "stdout_contains": [
+      "Step 1: Write the failing test",
+      "Step 5: Defer commit"
+    ]
+  },
+  "mock_output": {
+    "files": {
+      ".rddf/plans/quick-add-helper-fn.md": "# Quick Plan: add-helper-fn\n\n## Acceptance\n- [ ] AC-1: helper returns true for non-empty strings\n\n## Steps\n\n### Step 1: Write the failing test\n\n### Step 2: Verify the test fails\n\n### Step 3: Implement\n\n### Step 4: Verify the test passes\n\n### Step 5: Defer commit\n"
+    },
+    "stdout": "Step 1: Write the failing test\nStep 2: Verify the test fails\nStep 3: Implement\nStep 4: Verify the test passes\nStep 5: Defer commit\nCreated plan: .rddf/plans/quick-add-helper-fn.md\n"
+  },
+  "isolation": {
+    "locked_paths": [".rddf", "openspec", ".rddf/wt"]
+  }
+}

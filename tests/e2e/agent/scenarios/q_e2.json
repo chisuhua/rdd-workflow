@@ -1,0 +1,32 @@
+{
+  "scenario_id": "Q-E2",
+  "skill": "rdd-quick",
+  "phase": "P1",
+  "name": "P1 复杂提案触发 Metis/Oracle 评审",
+  "input": {
+    "command": "scaffold_plan.sh",
+    "args": [
+      "--name", "migrate-pg-v15",
+      "--proposal", "Migrate PostgreSQL from v12 to v15. This includes: schema migration, refactor of connection pooling layer, breaking change to all raw SQL queries, multi-file changes across 50+ files, performance impact analysis required."
+    ]
+  },
+  "golden_output": {
+    "files": [
+      {"path": ".rddf/plans/quick-migrate-pg-v15.md", "must_exist": true}
+    ],
+    "stdout_contains": [
+      "[Metis]",
+      "[Oracle]",
+      "reviewed_by: metis+oracle"
+    ]
+  },
+  "mock_output": {
+    "files": {
+      ".rddf/plans/quick-migrate-pg-v15.md": "# Quick Plan: migrate-pg-v15\n\n**Metadata**\n- reviewed_by: metis+oracle\n- complexity: high\n\n## Acceptance\n- [ ] AC-1: schema migration applied\n- [ ] AC-2: all raw SQL queries updated\n\n## Steps\n\n### Step 1: Write the failing test\n\n### Step 2: Verify the test fails\n\n### Step 3: Implement\n\n### Step 4: Verify the test passes\n\n### Step 5: Defer commit\n"
+    },
+    "stdout": "[Metis] analyzing complexity: high (multi-file + breaking change)\n[Oracle] reviewing plan quality\n[Metis] recommendation: proceed with caution\n[Oracle] verdict: plan needs explicit rollback strategy\nreviewed_by: metis+oracle\nCreated plan: .rddf/plans/quick-migrate-pg-v15.md\n"
+  },
+  "isolation": {
+    "locked_paths": [".rddf", "openspec", ".rddf/wt"]
+  }
+}
