@@ -43,21 +43,41 @@ EOF
     git add -A
     git commit -q -m "init"
 
-    # Run the archive helper directly (it needs the openspec CLI which
-    # may not be present; use a mock that succeeds)
-    mkdir -p .bin
-    cat > .bin/openspec <<'EOF'
+    # archive_change requires an openspec/<name> worktree (see wt_path_for_branch
+    # in _lib/archive.sh). Create one before invoking the helper.
+    git worktree add -q -b openspec/test-change "$BATS_TEST_TMPDIR/wt-test-change" HEAD
+
+    # archive_change's check_worktree_commits gate requires the worktree branch
+    # to have ≥1 commit ahead of default_branch. Add a trivial commit.
+    git -C "$BATS_TEST_TMPDIR/wt-test-change" commit --allow-empty -q -m "worktree commit for archive"
+
+    # Mock openspec CLI that actually creates the archive dir + moves tasks.md
+    # (a stub that just exits 0 is insufficient — archive_change expects
+    # the archive/<date>-<name> dir to exist before the sidecar step runs).
+    mkdir -p "$BATS_TEST_TMPDIR/.bin"
+    cat > "$BATS_TEST_TMPDIR/.bin/openspec" <<'EOF'
 #!/bin/bash
+if [[ "$1" == "archive" ]]; then
+    name="$2"
+    archive_dir="$PWD/openspec/changes/archive/$(date +%Y-%m-%d)-${name}"
+    mkdir -p "$archive_dir"
+    [[ -f "$PWD/openspec/changes/$name/tasks.md" ]] && \
+        cp "$PWD/openspec/changes/$name/tasks.md" "$archive_dir/tasks.md"
+    rm -rf "$PWD/openspec/changes/$name"
+    exit 0
+fi
 exit 0
 EOF
-    chmod +x .bin/openspec
-    PATH="$(pwd)/.bin:$PATH" bash -c "
+    chmod +x "$BATS_TEST_TMPDIR/.bin/openspec"
+    PATH="$BATS_TEST_TMPDIR/.bin:$PATH" bash -c "
         source '$REPO_ROOT/_lib/archive.sh'
         archive_change test-change
     " 2>&1 | tail -5
 
     # The sidecar should exist in the archive directory
     [ -f openspec/changes/archive/*-test-change/tasks.md.archived-snapshot ]
+    git worktree remove -f "$BATS_TEST_TMPDIR/wt-test-change" 2>/dev/null || true
+    git branch -D openspec/test-change 2>/dev/null || true
 }
 
 @test "archive_change: tasks_done in iteration.json derived from sidecar [x] count" {
@@ -86,13 +106,25 @@ EOF
     git add -A
     git commit -q -m "init"
 
-    mkdir -p .bin
-    cat > .bin/openspec <<'EOF'
+    git worktree add -q -b openspec/test-change "$BATS_TEST_TMPDIR/wt-test-change" HEAD
+    git -C "$BATS_TEST_TMPDIR/wt-test-change" commit --allow-empty -q -m "worktree commit for archive"
+
+    mkdir -p "$BATS_TEST_TMPDIR/.bin"
+    cat > "$BATS_TEST_TMPDIR/.bin/openspec" <<'EOF'
 #!/bin/bash
+if [[ "$1" == "archive" ]]; then
+    name="$2"
+    archive_dir="$PWD/openspec/changes/archive/$(date +%Y-%m-%d)-${name}"
+    mkdir -p "$archive_dir"
+    [[ -f "$PWD/openspec/changes/$name/tasks.md" ]] && \
+        cp "$PWD/openspec/changes/$name/tasks.md" "$archive_dir/tasks.md"
+    rm -rf "$PWD/openspec/changes/$name"
+    exit 0
+fi
 exit 0
 EOF
-    chmod +x .bin/openspec
-    PATH="$(pwd)/.bin:$PATH" bash -c "
+    chmod +x "$BATS_TEST_TMPDIR/.bin/openspec"
+    PATH="$BATS_TEST_TMPDIR/.bin:$PATH" bash -c "
         source '$REPO_ROOT/_lib/archive.sh'
         archive_change test-change
     " 2>&1 | tail -5
@@ -104,6 +136,8 @@ c = next(c for c in d['changes'] if c['name'] == 'test-change')
 print(c.get('tasks_done', ''))
 ")
     [ "$tasks_done" = "4" ]
+    git worktree remove -f "$BATS_TEST_TMPDIR/wt-test-change" 2>/dev/null || true
+    git branch -D openspec/test-change 2>/dev/null || true
 }
 
 @test "archive_change: idempotent — second run does not overwrite sidecar" {
@@ -128,13 +162,25 @@ EOF
     git add -A
     git commit -q -m "init"
 
-    mkdir -p .bin
-    cat > .bin/openspec <<'EOF'
+    git worktree add -q -b openspec/test-change "$BATS_TEST_TMPDIR/wt-test-change" HEAD
+    git -C "$BATS_TEST_TMPDIR/wt-test-change" commit --allow-empty -q -m "worktree commit for archive"
+
+    mkdir -p "$BATS_TEST_TMPDIR/.bin"
+    cat > "$BATS_TEST_TMPDIR/.bin/openspec" <<'EOF'
 #!/bin/bash
+if [[ "$1" == "archive" ]]; then
+    name="$2"
+    archive_dir="$PWD/openspec/changes/archive/$(date +%Y-%m-%d)-${name}"
+    mkdir -p "$archive_dir"
+    [[ -f "$PWD/openspec/changes/$name/tasks.md" ]] && \
+        cp "$PWD/openspec/changes/$name/tasks.md" "$archive_dir/tasks.md"
+    rm -rf "$PWD/openspec/changes/$name"
+    exit 0
+fi
 exit 0
 EOF
-    chmod +x .bin/openspec
-    PATH="$(pwd)/.bin:$PATH" bash -c "
+    chmod +x "$BATS_TEST_TMPDIR/.bin/openspec"
+    PATH="$BATS_TEST_TMPDIR/.bin:$PATH" bash -c "
         source '$REPO_ROOT/_lib/archive.sh'
         archive_change test-change
     " 2>&1 | tail -2
@@ -144,6 +190,8 @@ EOF
     [ -n "$snapshot" ]
     sleep 0.1
     [ -f "$snapshot" ]
+    git worktree remove -f "$BATS_TEST_TMPDIR/wt-test-change" 2>/dev/null || true
+    git branch -D openspec/test-change 2>/dev/null || true
 }
 
 @test "archive_change: no tasks.md → no sidecar, no error" {
