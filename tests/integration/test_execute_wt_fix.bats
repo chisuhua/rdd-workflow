@@ -24,15 +24,20 @@ load ../test_helper
   fi
 }
 
-@test "P0-7: execute.md uses \$3 (not \$2) for openspec/ branch matching" {
+@test "P0-7: execute.md uses porcelain-parsed branch field for openspec/ matching" {
   [ -f "skills/execute/SKILL.md" ]
-  # v2.0.8 Phase 2: the awk branch-matching logic moved from execute/SKILL.md
-  # into skills/execute/scripts/select_worktree.sh. Verify the script uses $3
-  # (not $2) for branch field extraction from `git worktree list`.
-  ! grep -nE '\$2[[:space:]]*~[[:space:]]*.*openspec|\$2=="openspec/' "skills/execute/scripts/select_worktree.sh"
-  grep -qE "awk.*\\\$3" "skills/execute/scripts/select_worktree.sh"
-  # The SKILL.md doc table should still reference $3 (not $2)
-  grep -qE '\$3=="openspec/' "skills/execute/SKILL.md"
+  # v4 (post v2.0.8 Phase 2): the awk branch-matching logic in select_worktree.sh
+  # parses `git worktree list --porcelain` (path+branch header lines) via
+  # `substr($0, ...)` — NOT positional $2/$3 columns. AGENTS.md pitfall #1
+  # ("branch in column 3") only applies to the non-porcelain format. Verify
+  # the script uses --porcelain + header-aware parsing, and SKILL.md still
+  # documents the v3 `$3` column reference as a *historical note* (the doc
+  # table may keep the old wording since it describes git's raw column layout).
+  grep -qE "git worktree list --porcelain" "skills/execute/scripts/select_worktree.sh"
+  grep -q "/^branch /" "skills/execute/scripts/select_worktree.sh"
+  grep -q "/^worktree /" "skills/execute/scripts/select_worktree.sh"
+  # No v3-style `$2 == "openspec/"` column match — that was the bug we're fixing.
+  ! grep -nE '\$2[[:space:]]*==[[:space:]]*"openspec/' "skills/execute/scripts/select_worktree.sh"
 }
 
 @test "P0-7: execute.md has inline wt_path_for_branch_inline helper" {

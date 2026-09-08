@@ -107,18 +107,25 @@ simulate_residue() {
   run git status --porcelain
   [[ "$output" == *"D openspec/changes/my-change/.openspec.yaml"* ]]
   [[ "$output" == *"D openspec/changes/my-change/tasks.md"* ]]
+  # Snapshot commit count before the hook
+  before_commits=$(git rev-list --count HEAD)
   # Run the hook
   run post_archive_cleanup "$PROJECT_ROOT" "my-change"
   [ "$status" -eq 0 ]
-  # After hook: chore commit added
-  run git log --oneline
-  [[ "$output" == *"chore(post-archive): clean residue from my-change"* ]]
-  # Files are gone from working tree
-  [ ! -f "openspec/changes/my-change/.openspec.yaml" ]
-  # Status should be clean (the 6 files were git rm-ed and committed)
+  # v2.2.4+ contract (reduce-archive-commit-noise): post_archive_cleanup no
+  # longer commits independently. The cleanup stage (git rm + git add) is
+  # intended to be --amend-ed into the archive_change main commit by the
+  # caller. Verify: NO new commit was added, AND the deletions are
+  # already in the index (staged for the caller to amend).
+  after_commits=$(git rev-list --count HEAD)
+  [ "$before_commits" -eq "$after_commits" ]
+  # The 6 deletions are staged (will be picked up by the next commit).
+  # git status --porcelain emits two-space-aligned columns for staged
+  # changes ("D  path"), so use grep instead of glob match for portability.
   run git status --porcelain
-  # The 6 deletions are now committed, so no remaining D status from them
-  [[ ! "$output" == *"D openspec/changes/my-change" ]]
+  echo "$output" | grep -qE '^D +openspec/changes/my-change'
+  # Files are gone from disk
+  [ ! -f "openspec/changes/my-change/.openspec.yaml" ]
 }
 
 # Task 6: E2E active change protection

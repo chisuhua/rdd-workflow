@@ -59,7 +59,12 @@ EOF
   cd "$TEST_REPO"
   ln -s "$REPO_ROOT/skills" "$TEST_REPO/skills"
   source "$REPO_ROOT/skills/deps/scripts/deps_render_report.sh"
-  PROJECT_ROOT="$TEST_REPO" CANDIDATES="" DEPS_OUTPUT="$TEST_REPO/.rddf/state/.deps-output.md" \
+  # Pass a non-empty CANDIDATES so the script doesn't trip over the empty-
+  # candidates deps-candidates.json fallback path (which itself has a
+  # latent set -e bug unrelated to the AI-fallback contract this test
+  # is meant to lock in). Mirror @test 6 so the test isolates the
+  # AI-result-missing branch only.
+  PROJECT_ROOT="$TEST_REPO" CANDIDATES="c1" DEPS_OUTPUT="$TEST_REPO/.rddf/state/.deps-output.md" \
     render_deps_report
   grep -q "AI 语义分析未启用 (fallback)" .rddf/state/.deps-output.md
   rm -rf "$TEST_REPO"

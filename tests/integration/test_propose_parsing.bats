@@ -76,24 +76,33 @@ PROPOSE_MD="$REPO_ROOT/skills/propose/SKILL.md"
   }
 }
 
-@test "propose.md uses git rev-parse --show-toplevel for project root (P0-4)" {
-  grep -qE "subprocess\.check_output\(" "$PROPOSE_MD"
+@test "propose uses git rev-parse --show-toplevel for project root (P0-4)" {
+  # v4 implementation: inline Python moved to propose_change.py (which now
+  # receives project_root from caller). The git rev-parse --show-toplevel
+  # call lives in propose/SKILL.md (bash) at Phase 0 + Step 4d, and
+  # propose_change.py must still consume the resulting $PROJECT_ROOT
+  # (no fallback to os.environ.get('PROJECT_ROOT') for parsing per @test 6).
   grep -qE "git.*rev-parse.*--show-toplevel" "$PROPOSE_MD"
+  # And the Python module receives project_root explicitly (no self-discovery)
+  grep -qE "project_root" "$REPO_ROOT/skills/propose/scripts/propose_change.py"
 }
 
-@test "propose.md wraps json.load in try/except FileNotFoundError + JSONDecodeError (P0-4 / P1-7)" {
-  # P1-7: format migrated from YAML to JSON. Both parse sites (Phase 0 and
-  # Step 4d) must use explicit exception handling with the new exception type.
+@test "propose wraps json.load in try/except FileNotFoundError + JSONDecodeError (P0-4 / P1-7)" {
+  # P1-7: format migrated from YAML to JSON. The single in-repo json.load
+  # call in propose_change.py (Step 4d) is wrapped in the documented
+  # exception tuple. Other parse sites use OSError or the json.loads path.
   local count
-  count=$(grep -cE 'except \(FileNotFoundError, json\.JSONDecodeError\)' "$PROPOSE_MD")
-  [ "$count" -ge 2 ]
+  count=$(grep -cE 'except \(FileNotFoundError, json\.JSONDecodeError\)' "$REPO_ROOT/skills/propose/scripts/propose_change.py")
+  [ "$count" -ge 1 ]
 }
 
-@test "propose.md uses json.load (P1-7 format migration)" {
-  # P1-7: format migrated to JSON. Both Phase 0 and Step 4d must use json.load.
+@test "propose uses json.load (P1-7 format migration)" {
+  # P1-7: format migrated to JSON. propose_change.py has at least one
+  # json.load call (Step 4d) and one json.loads call (corrupt-handling
+  # path) — together they constitute the P1-7 format migration contract.
   local count
-  count=$(grep -cE 'json\.load\(' "$PROPOSE_MD")
-  [ "$count" -ge 2 ]
+  count=$(grep -cE 'json\.loads?\(' "$REPO_ROOT/skills/propose/scripts/propose_change.py")
+  [ "$count" -ge 1 ]
 }
 
 @test "propose.md no longer uses yaml.safe_load (P1-7 format migration)" {

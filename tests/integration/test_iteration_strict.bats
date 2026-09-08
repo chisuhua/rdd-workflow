@@ -126,6 +126,10 @@ EOF
 
 @test "_backup_corrupt_file: writes .reason.txt sidecar alongside .corrupt.<ts>" {
     mkdir -p .rddf/state
+    # v4 schema: per-change items allow additionalProperties: true, so a
+    # per-change updated_at is no longer a corruption signal. Use a root-level
+    # illegal field to trigger the schema-validation failure path that calls
+    # _backup_corrupt_file.
     cat > .rddf/state/iteration.json <<'EOF'
 {
   "version": 4,
@@ -135,10 +139,10 @@ EOF
     {
       "name": "x",
       "status": "proposed",
-      "added_at": "2026-08-01T00:00:00+00:00",
-      "updated_at": "2026-08-05T11:00:00+00:00"
+      "added_at": "2026-08-01T00:00:00+00:00"
     }
-  ]
+  ],
+  "illegal_root_field": "not in schema's root properties allowlist"
 }
 EOF
     # store.load() looks for .rddf/state/iteration.json under the given
