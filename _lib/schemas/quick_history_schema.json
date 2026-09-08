@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "quick-history-entry",
+  "description": "Audit-log entry for a single rdd-quick run (per ADR-0047 + design.md v1).",
+  "version": 1,
+  "type": "object",
+  "required": [
+    "name",
+    "started_at",
+    "ended_at",
+    "plan_file",
+    "complexity",
+    "reviewed_by",
+    "verdict_summary",
+    "retry_count",
+    "outcome",
+    "commit_sha",
+    "upgraded_to_change"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^quick-[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Kebab-case identifier with mandatory quick- prefix."
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "plan_file": {
+      "type": "string",
+      "pattern": "^\\.rddf/plans/quick-[a-z0-9-]+\\.md$"
+    },
+    "complexity": {
+      "type": "string",
+      "enum": ["simple", "complex"]
+    },
+    "reviewed_by": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["metis", "oracle"]
+      }
+    },
+    "verdict_summary": {
+      "type": "object",
+      "required": ["total", "pass", "fail"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "pass": { "type": "integer", "minimum": 0 },
+        "fail": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "retry_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["completed", "escalated", "unverified"]
+    },
+    "commit_sha": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "upgraded_to_change": {
+      "type": ["string", "null"]
+    }
+  },
+  "additionalProperties": false
+}

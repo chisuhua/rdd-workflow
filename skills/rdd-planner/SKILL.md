@@ -90,3 +90,4 @@ Per spec §3.5.2 (batch 4): rdd-builder Phase 2 ADR-drift can promote feedback
 - `skills/add-improve/` — proposal authoring entry
 - `_lib/planner_*.py` — Stage 1/2 lib (unchanged)
 - `_lib/planner_handoff.py` — NEW in Wave 1: stage handoff r/w
+- `skills/rdd-quick/` — bypass-path orchestration for small changes (per ADR-0047, complements but does not replace this skill)

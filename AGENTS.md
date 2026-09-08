@@ -557,6 +557,32 @@ NOT to run rdd-doctor:
 
 Flags: `--json` (write `.rddf/state/.doctor-report.json`), `--category <name>` (run only one of 5 categories: `state`, `plan-tdd`, `roadmap-meta`, `proposal-table`, `tasks-checkbox`), `--quiet` (single-line output). Exit codes: 0/1/2/3 matching `openspec validate`.
 
+## rdd-quick (bypass-path orchestration, per ADR-0047)
+
+`rdd-quick` 是一条**绕过 openspec change 与 worktree**的快速执行路径，专为小改动设计。`role.boundaries` 严格区分（owns `.rddf/plans/quick-*.md` + `.rddf/state/.quick-history.jsonl`，not_owns `openspec/`、`.rddf/wt/`、四阶段 state 文件）。完整架构决策见 [ADR-0047](docs/adr/ADR-0047-rdd-quick-bypass-path.md)。
+
+### 与三个既有"轻"概念的边界
+
+| 概念 | 位置 | 与 rdd-quick 关系 |
+|------|------|------------------|
+| `execution_mode: lightweight` | `_lib/builder_deps.py::decide_execution_mode` | 仍需完整 openspec change；rdd-quick 完全跳过 change |
+| `git.openspec_tracked: false` | `_lib/archive.sh` L546 分支 | 仍走 `openspec archive`；rdd-quick 不调 archive |
+| serial / parallel | `_lib/ship_execution_mode.sh` | 与 change 存在性无关；rdd-quick 完全无 ship |
+
+### 环境变量（`RDDF_QUICK_` 前缀）
+
+- `RDDF_QUICK_MAX_RETRIES`（默认 `3`）— P4 重试上限
+- `RDDF_QUICK_PLAN_DIR`（默认 `.rddf/plans`）— 计划文件目录
+- `RDDF_QUICK_HISTORY_FILE`（默认 `.rddf/state/.quick-history.jsonl`）— 审计日志路径
+- `RDDF_QUICK_SKIP_REVIEW`（默认 `false`）— 跳过 P1 Metis/Oracle 审查（紧急）
+- `SKIP_RDDF_QUICK_VERIFY`（默认 `false`）— 跳过 P3 验证（紧急）
+
+**禁止**：读写 `QUICK_FINISH_DETECTED` / `SKIP_PROMETHEUS_PLANNING`（已被 rdd-builder 占用，列在 SKILL.md frontmatter `metadata.forbidden_env_vars`）。
+
+### 共存提案
+
+`.rddf/improvements/guide-ship-quick-finish.md`（P2, 未批准）是不同场景（已有 change 快收尾 → 直达 archive），与 rdd-quick（无 change 从头开始 → Oracle 验证）长期共存，**不合并、不修改**。
+
 ## 常见陷阱
 
 1. **git worktree list branch 在第 3 列** — `awk '$3 ~ /openspec\//'` (不是 `$2`, 不是 `$4`)

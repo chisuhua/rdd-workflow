@@ -185,3 +185,4 @@ scan_state: plan-handoff present recommends guide-ship # pre-existing baseline d
 scan_state: proposal-approved.md with entry → guide-plan (branch 10) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 scan_state: roadmap + changes dir + no pending proposals → filter-guide-ship kicks in # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 scan_state: roadmap + no changes dir → guide-plan (branch 9) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
+planner_feedback_id_uniqueness: 5× baseline failures (test_same_day_recompute_no_collision, test_counter_starts_at_max_plus_one, test_cross_day_independent_counter, test_malformed_id_skipped_in_counter, test_missing_feedback_id_key_skipped) # pre-existing on master; not caused by add-rdd-quick-skill (verified via stash baseline 2026-09-07)
