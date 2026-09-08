@@ -45,12 +45,17 @@ teardown() {
 }
 
 @test "doctor: --json only creates .doctor-report.json (not other writes)" {
+    # Note: doctor_main.py writes report to Path(".rddf/state/.doctor-report.json")
+    # relative to CWD, NOT RDDF_PROJECT_ROOT. So when run from $PROJECT_ROOT
+    # (as setup() does), the report lands in $PROJECT_ROOT/.rddf/state/ which
+    # is gitignored — not in $FIXTURE. teardown() already allows this path.
     cd "$PROJECT_ROOT"
-    rm -f "$FIXTURE/.rddf/state/.doctor-report.json"
+    REPORT="$PROJECT_ROOT/.rddf/state/.doctor-report.json"
+    rm -f "$REPORT"
     run env RDDF_PROJECT_ROOT="$FIXTURE" bash "$DOCTOR_SH" --json
-    [ -f "$FIXTURE/.rddf/state/.doctor-report.json" ]
-    # Verify the file was created (already checked) and contains JSON
-    grep -q '"timestamp"' "$FIXTURE/.rddf/state/.doctor-report.json"
+    [ -f "$REPORT" ]
+    grep -q '"timestamp"' "$REPORT"
+    rm -f "$REPORT"
 }
 
 @test "doctor: checker never invokes git rm or rm -f" {

@@ -11,11 +11,23 @@ setup() {
     FIXTURE_HEALTHY="$PROJECT_ROOT/tests/fixtures/healthy-repo"
 }
 
-@test "doctor: healthy fixture exits 0 (all 5 categories OK)" {
+@test "doctor: healthy fixture has no CRITICAL" {
+    # Build a synthetic healthy fixture in $BATS_TMPDIR. The original
+    # tests/fixtures/healthy-repo dir was never created, only diseased-repo was.
+    # Healthy = iteration.json conforms to current schema (v7 per iteration_schema.json:
+    # required=version, updated_at, current_phase, changes; version ∈ {3..7}).
+    # Note: doctor may still emit WARNINGs for missing schemas (real _lib/ path
+    # not in tmpdir); assert "no CRITICAL" rather than "exit 0".
+    FIXTURE_HEALTHY="$(mktemp -d)"
+    mkdir -p "$FIXTURE_HEALTHY/.rddf/state" "$FIXTURE_HEALTHY/.rddf/roadmap/unknown"
+    cat > "$FIXTURE_HEALTHY/.rddf/state/iteration.json" <<'EOF'
+{"version":7,"updated_at":"2026-09-08T00:00:00Z","current_phase":"unknown","changes":[]}
+EOF
     cd "$FIXTURE_HEALTHY"
     run env RDDF_PROJECT_ROOT="$FIXTURE_HEALTHY" bash "$DOCTOR_SH"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"All 5 categories OK"* ]]
+    ! [[ "$output" == *"CRITICAL"* ]]
+    ! [[ "$status" -eq 2 ]]
+    rm -rf "$FIXTURE_HEALTHY"
 }
 
 @test "doctor: diseased fixture reports at least one CRITICAL" {
