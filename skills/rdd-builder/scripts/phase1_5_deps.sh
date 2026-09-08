@@ -6,6 +6,14 @@ set -euo pipefail
 CHANGE_NAME="${1:-}"
 PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
 
+AUTO_APPROVE=0
+for arg in "$@"; do
+    case "$arg" in
+        --auto-approve) AUTO_APPROVE=1 ;;
+    esac
+done
+export AUTO_APPROVE
+
 if [ -z "$CHANGE_NAME" ]; then
     echo "phase1_5_deps.sh requires <change-name>" >&2
     exit 2
