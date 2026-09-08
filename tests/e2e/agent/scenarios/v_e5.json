@@ -1,0 +1,16 @@
+{
+  "scenario_id": "V-E5",
+  "skill": "rdd-verifier",
+  "phase": "P3",
+  "name": "fail → proposal_drift → 回 P1",
+  "input": {"command": "agent_verify_with_routing", "args": ["--name", "test-drift"]},
+  "golden_output": {
+    "files": [{"path": ".rddf/state/.ac-verdict-test-drift.json", "must_exist": true}],
+    "stdout_contains": ["\"status\": \"fail\"", "differs from ac", "proposal_drift", "phase-1"]
+  },
+  "mock_output": {
+    "files": {".rddf/state/.ac-verdict-test-drift.json": "{\"ac_id\": \"AC-1\", \"status\": \"fail\", \"reasoning\": \"differs from ac: impl correct but AC is wrong\", \"routing_target\": \"phase-1\"}"},
+    "stdout": "verdict: status=fail\nreasoning: differs from ac\nrouting: proposal_drift → phase-1\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

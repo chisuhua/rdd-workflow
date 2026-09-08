@@ -1,0 +1,16 @@
+{
+  "scenario_id": "V-E1",
+  "skill": "rdd-verifier",
+  "phase": "P1",
+  "name": "读 plan ## Acceptance → 提取 AC",
+  "input": {"command": "agent_extract_acs", "args": ["--plan", ".rddf/plans/test.md"]},
+  "golden_output": {
+    "files": [],
+    "stdout_contains": ["\"ac_id\": \"AC-1\"", "\"ac_id\": \"AC-2\"", "\"description\":"]
+  },
+  "mock_output": {
+    "files": {},
+    "stdout": "[{\"ac_id\": \"AC-1\", \"description\": \"helper returns true\"}, {\"ac_id\": \"AC-2\", \"description\": \"helper returns false for empty\"}]\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

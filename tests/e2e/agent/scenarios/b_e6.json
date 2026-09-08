@@ -1,0 +1,16 @@
+{
+  "scenario_id": "B-E6",
+  "skill": "rdd-builder",
+  "phase": "P2",
+  "name": "P2 lightweight 模式 → 主仓 commit",
+  "input": {"command": "phase2_execute.sh", "args": ["e2e-b6", "--auto-approve", "--mode", "lightweight"]},
+  "golden_output": {
+    "files": [],
+    "stdout_contains": ["commit created", "feat(e2e-b6)"]
+  },
+  "mock_output": {
+    "files": {},
+    "stdout": "lightweight mode: main repo commit\ncommit created: feat(e2e-b6): add helper\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec", ".rddf/wt"]}
+}

@@ -1,0 +1,16 @@
+{
+  "scenario_id": "A-E8",
+  "skill": "rdd-arch",
+  "phase": "META",
+  "name": "隔离契约 — 不污染下游 planner state",
+  "input": {"command": "isolation_audit", "args": ["--skill", "rdd-arch", "--check", "planner-paths"]},
+  "golden_output": {
+    "files": [],
+    "stdout_contains": ["zero_pollution: true", "no planner handoff"]
+  },
+  "mock_output": {
+    "files": {},
+    "stdout": "Auditing 6 locked paths after 7 scenarios\nresult: zero_pollution: true\nno planner handoff or proposal-suggestions.md modifications\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

@@ -1,0 +1,16 @@
+{
+  "scenario_id": "V-E6",
+  "skill": "rdd-verifier",
+  "phase": "P3",
+  "name": "partial 分类 — 部分通过",
+  "input": {"command": "agent_verify_partial", "args": ["--name", "test-partial"]},
+  "golden_output": {
+    "files": [{"path": ".rddf/state/.ac-verdict-test-partial.json", "must_exist": true}],
+    "stdout_contains": ["pass=2/3", "fail=1/3", "partial"]
+  },
+  "mock_output": {
+    "files": {".rddf/state/.ac-verdict-test-partial.json": "{\"items\": [{\"status\": \"pass\"}, {\"status\": \"pass\"}, {\"status\": \"fail\"}], \"summary\": {\"pass\": 2, \"fail\": 1, \"total\": 3}}"},
+    "stdout": "verdict: pass=2/3, fail=1/3\nstatus: partial\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

@@ -1,0 +1,16 @@
+{
+  "scenario_id": "B-E4",
+  "skill": "rdd-builder",
+  "phase": "P1.5",
+  "name": "P1.5 deps 分析 + execution_mode 决策",
+  "input": {"command": "phase1_5_deps.sh", "args": ["e2e-b4", "--auto-approve"]},
+  "golden_output": {
+    "files": [{"path": ".rddf/state/deps-analysis.json", "must_exist": true}],
+    "stdout_contains": ["execution_mode", "lightweight"]
+  },
+  "mock_output": {
+    "files": {".rddf/state/deps-analysis.json": "{\"schema\": \"deps-v2.0.1\", \"execution_mode\": \"lightweight\"}"},
+    "stdout": "deps analysis complete\nexecution_mode=lightweight (file_count=1, task_count=1)\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

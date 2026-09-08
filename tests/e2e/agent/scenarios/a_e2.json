@@ -1,0 +1,16 @@
+{
+  "scenario_id": "A-E2",
+  "skill": "rdd-arch",
+  "phase": "P2",
+  "name": "ADR 创建 → 4 段格式落地",
+  "input": {"command": "agent_create_adr", "args": ["--id", "0001", "--title", "rdd-quick 引入", "--status", "待定"]},
+  "golden_output": {
+    "files": [{"path": "docs/adr/ADR-0001-rdd-quick.md", "must_exist": true}],
+    "stdout_contains": ["## Status", "## Context", "## Decision", "## Consequences", "**状态**: 待定"]
+  },
+  "mock_output": {
+    "files": {"docs/adr/ADR-0001-rdd-quick.md": "# ADR-0001: rdd-quick 引入\n\n> **状态**: 待定\n\n## Status\n\n## Context\n\n## Decision\n\n## Consequences\n"},
+    "stdout": "ADR created: docs/adr/ADR-0001-rdd-quick.md\n## Status\n## Context\n## Decision\n## Consequences\n**状态**: 待定\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

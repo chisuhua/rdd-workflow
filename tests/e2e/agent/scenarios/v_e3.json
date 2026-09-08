@@ -1,0 +1,16 @@
+{
+  "scenario_id": "V-E3",
+  "skill": "rdd-verifier",
+  "phase": "P3",
+  "name": "pass 分类 → 升 archive 路径",
+  "input": {"command": "agent_complete", "args": ["--name", "test"]},
+  "golden_output": {
+    "files": [],
+    "stdout_contains": ["✓ All ACs passed", "1/1 pass", "archive-ready"]
+  },
+  "mock_output": {
+    "files": {},
+    "stdout": "✓ All ACs passed\nsummary: 1/1 pass\nstatus transition: verifying → archive-ready\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

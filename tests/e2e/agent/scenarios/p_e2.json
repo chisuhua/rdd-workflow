@@ -1,0 +1,16 @@
+{
+  "scenario_id": "P-E2",
+  "skill": "rdd-planner",
+  "phase": "P2",
+  "name": "intake → 扫描 5 类源",
+  "input": {"command": "agent_planner_intake", "args": []},
+  "golden_output": {
+    "files": [{"path": ".rddf/state/.planner-intake.json", "must_exist": true}],
+    "stdout_contains": ["ADR gap", "code TODO", "docs missing", "roadmap theme", "cross-repo"]
+  },
+  "mock_output": {
+    "files": {".rddf/state/.planner-intake.json": "{\"intake_status\": \"scanned\", \"sources_scanned\": [\"ADR gap\", \"code TODO\", \"roadmap theme\"]}"},
+    "stdout": "5 source types scanned:\n- ADR gap (3)\n- code TODO (5)\n- docs missing (2)\n- roadmap theme (1 uncovered)\n- cross-repo (0)\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

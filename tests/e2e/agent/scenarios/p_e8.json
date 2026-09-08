@@ -1,0 +1,16 @@
+{
+  "scenario_id": "P-E8",
+  "skill": "rdd-planner",
+  "phase": "P5",
+  "name": "stage exit → planner-handoff 终态",
+  "input": {"command": "planner_stage_exit.sh", "args": []},
+  "golden_output": {
+    "files": [{"path": ".rddf/state/.planner-handoff.json", "must_exist": true}],
+    "stdout_contains": ["stage_status: exited", "next_sprint", "exited_at"]
+  },
+  "mock_output": {
+    "files": {".rddf/state/.planner-handoff.json": "{\"stage_status\": \"exited\", \"next_sprint\": \"phase-2\", \"exited_at\": \"2026-09-08T13:00:00Z\"}"},
+    "stdout": "stage_status: exited\nnext_sprint: phase-2\nexited_at: 2026-09-08T13:00:00Z\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

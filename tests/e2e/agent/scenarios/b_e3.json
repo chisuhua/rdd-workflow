@@ -1,0 +1,16 @@
+{
+  "scenario_id": "B-E3",
+  "skill": "rdd-builder",
+  "phase": "P1",
+  "name": "P1 plan gen → TDD 5 步 plan 文件",
+  "input": {"command": "phase1_plan.sh", "args": ["e2e-b3", "--auto-approve"]},
+  "golden_output": {
+    "files": [{"path": ".rddf/plans/e2e-b3.md", "must_exist": true}],
+    "stdout_contains": ["Step 1: Write the failing test", "Step 5: Defer commit", "## Acceptance"]
+  },
+  "mock_output": {
+    "files": {".rddf/plans/e2e-b3.md": "# Plan: e2e-b3\n\n## Acceptance\n- [ ] AC-1\n\n## Steps\n\n### Step 1: Write the failing test\n\n### Step 2: Verify the test fails\n\n### Step 3: Implement\n\n### Step 4: Verify the test passes\n\n### Step 5: Defer commit\n"},
+    "stdout": "Plan generated: .rddf/plans/e2e-b3.md\nStep 1: Write the failing test\nStep 2: Verify the test fails\nStep 3: Implement\nStep 4: Verify the test passes\nStep 5: Defer commit\n## Acceptance\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

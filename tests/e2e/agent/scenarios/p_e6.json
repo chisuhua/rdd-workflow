@@ -1,0 +1,16 @@
+{
+  "scenario_id": "P-E6",
+  "skill": "rdd-planner",
+  "phase": "P4",
+  "name": "reject → feedback 写入 + 不落盘 change",
+  "input": {"command": "agent_reject_proposal", "args": ["--name", "P-E3-test", "--reason", "scope 过大"]},
+  "golden_output": {
+    "files": [{"path": "proposal-suggestions.md", "must_exist": true}],
+    "stdout_contains": ["rejected", "scope 过大"]
+  },
+  "mock_output": {
+    "files": {"proposal-suggestions.md": "| 提案 | 优先级 | 来源 | 添加时间 | 状态 |\n|------|--------|------|----------|------|\n| [P-E3-test](.rddf/improvements/p-e3-test.md) | P1 | 2026-09-08 | 2026-09-08 | rejected (scope 过大) |\n"},
+    "stdout": "rejected: P-E3-test\nreason: scope 过大\nno openspec/changes/ created\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

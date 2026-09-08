@@ -1,0 +1,16 @@
+{
+  "scenario_id": "B-E9",
+  "skill": "rdd-builder",
+  "phase": "P3",
+  "name": "P3 archive happy path",
+  "input": {"command": "phase3_archive.sh", "args": ["e2e-b9", "--auto-approve"]},
+  "golden_output": {
+    "files": [{"path": "openspec/specs/e2e-b9/spec.md", "must_exist": true}],
+    "stdout_contains": ["archived", "archive-ready"]
+  },
+  "mock_output": {
+    "files": {"openspec/specs/e2e-b9/spec.md": "## ADDED Requirements\n"},
+    "stdout": "archived: e2e-b9 → openspec/changes/archive/\narchive-ready: status=archived\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

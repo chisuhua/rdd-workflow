@@ -1,0 +1,16 @@
+{
+  "scenario_id": "B-E8",
+  "skill": "rdd-builder",
+  "phase": "P2.5",
+  "name": "P2.5 review 4-option dispatch (merge)",
+  "input": {"command": "phase2_5_review.sh", "args": ["e2e-b8", "--auto-approve", "--action", "merge"]},
+  "golden_output": {
+    "files": [],
+    "stdout_contains": ["review action: merge", "merged into default branch"]
+  },
+  "mock_output": {
+    "files": {},
+    "stdout": "4-option review dispatch\nreview action: merge\nmerged into default branch\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

@@ -1,0 +1,16 @@
+{
+  "scenario_id": "V-E2",
+  "skill": "rdd-verifier",
+  "phase": "P2",
+  "name": "读代码 → 6 字段 verdict JSON 构造",
+  "input": {"command": "agent_verify", "args": ["--name", "test"]},
+  "golden_output": {
+    "files": [{"path": ".rddf/state/.ac-verdict-test.json", "must_exist": true}],
+    "stdout_contains": ["\"ac_id\":", "\"description\":", "\"status\":", "\"confidence\":", "\"evidence\":", "\"reasoning\":"]
+  },
+  "mock_output": {
+    "files": {".rddf/state/.ac-verdict-test.json": "{\"ac_id\": \"AC-1\", \"description\": \"x\", \"status\": \"pass\", \"confidence\": 0.9, \"evidence\": \"test passed\", \"reasoning\": \"matches\"}"},
+    "stdout": "{\"ac_id\": \"AC-1\", \"description\": \"helper returns true\", \"status\": \"pass\", \"confidence\": 0.9, \"evidence\": \"test_helper.py passed\", \"reasoning\": \"impl matches AC\"}\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

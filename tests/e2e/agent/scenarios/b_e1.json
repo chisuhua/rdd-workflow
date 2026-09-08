@@ -1,0 +1,16 @@
+{
+  "scenario_id": "B-E1",
+  "skill": "rdd-builder",
+  "phase": "P0",
+  "name": "P0 approval happy → D3 spec-delta 落盘",
+  "input": {"command": "phase0_approval.sh", "args": ["e2e-b1", "--auto-approve"]},
+  "golden_output": {
+    "files": [{"path": "openspec/changes/e2e-b1/specs/e2e-b1/spec.md", "must_exist": true}],
+    "stdout_contains": ["## ADDED Requirements", "### Requirement:"]
+  },
+  "mock_output": {
+    "files": {"openspec/changes/e2e-b1/specs/e2e-b1/spec.md": "## ADDED Requirements\n\n### Requirement: e2e-b1\n"},
+    "stdout": "D3 spec-delta created\n## ADDED Requirements\n### Requirement: e2e-b1\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

@@ -1,0 +1,16 @@
+{
+  "scenario_id": "A-E4",
+  "skill": "rdd-arch",
+  "phase": "P4",
+  "name": "roadmap 定义 → phase 分配",
+  "input": {"command": "agent_roadmap_define", "args": ["--phases", "phase-1,phase-2,phase-3"]},
+  "golden_output": {
+    "files": [{"path": "roadmap.md", "must_exist": true}],
+    "stdout_contains": ["## Phase 1:", "## Phase 2:", "## Phase 3:", "# AUTO-INDEX"]
+  },
+  "mock_output": {
+    "files": {"roadmap.md": "# Roadmap\n\n## Phase 1: setup\n- theme: init\n\n## Phase 2: build\n- theme: features\n\n## Phase 3: ship\n- theme: release\n\n# AUTO-INDEX\n[phase-1, phase-2, phase-3]\n"},
+    "stdout": "## Phase 1: setup\n## Phase 2: build\n## Phase 3: ship\n# AUTO-INDEX generated\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

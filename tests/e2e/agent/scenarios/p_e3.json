@@ -1,0 +1,16 @@
+{
+  "scenario_id": "P-E3",
+  "skill": "rdd-planner",
+  "phase": "P3",
+  "name": "propose → 5 段格式提案落盘",
+  "input": {"command": "agent_propose", "args": ["--name", "P-E3-test"]},
+  "golden_output": {
+    "files": [{"path": "proposal-suggestions.md", "must_exist": true}],
+    "stdout_contains": ["P-E3-test", "priority", "source", "status"]
+  },
+  "mock_output": {
+    "files": {"proposal-suggestions.md": "| 提案 | 优先级 | 来源 | 添加时间 | 状态 |\n|------|--------|------|----------|------|\n| [P-E3-test](.rddf/improvements/p-e3-test.md) | P1 | 2026-09-08 intake | 2026-09-08 | pending |\n"},
+    "stdout": "proposal added: P-E3-test\npriority: P1\nsource: 2026-09-08 intake\nstatus: pending\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

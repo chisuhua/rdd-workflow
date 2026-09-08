@@ -1,0 +1,16 @@
+{
+  "scenario_id": "A-E3",
+  "skill": "rdd-arch",
+  "phase": "P3",
+  "name": "差距分析 → arch-quality-gate 通过",
+  "input": {"command": "agent_arch_gap_analysis", "args": []},
+  "golden_output": {
+    "files": [{"path": ".rddf/state/.arch-quality-report.json", "must_exist": true}],
+    "stdout_contains": ["gaps", "arch-quality-gate", "passed"]
+  },
+  "mock_output": {
+    "files": {".rddf/state/.arch-quality-report.json": "{\"gaps\": [{\"description\": \"missing 5 ADRs\", \"severity\": \"warn\"}], \"gate_status\": \"passed\"}"},
+    "stdout": "gaps: 1\narch-quality-gate: passed (warn only, STRICT_ARCH_GATE=off)\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

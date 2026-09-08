@@ -1,0 +1,22 @@
+{
+  "scenario_id": "P-E5",
+  "skill": "rdd-planner",
+  "phase": "P4",
+  "name": "approve → 落盘 proposal.md + spec.md (D3)",
+  "input": {"command": "agent_approve_proposal", "args": ["--name", "P-E3-test"]},
+  "golden_output": {
+    "files": [
+      {"path": "openspec/changes/p-e3-test/proposal.md", "must_exist": true},
+      {"path": "openspec/changes/p-e3-test/specs/p-e3-test/spec.md", "must_exist": true}
+    ],
+    "stdout_contains": ["approved", "D3 spec-delta"]
+  },
+  "mock_output": {
+    "files": {
+      "openspec/changes/p-e3-test/proposal.md": "# P-E3-test",
+      "openspec/changes/p-e3-test/specs/p-e3-test/spec.md": "## ADDED Requirements"
+    },
+    "stdout": "approved: P-E3-test\nD3 spec-delta created: openspec/changes/p-e3-test/specs/p-e3-test/spec.md\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

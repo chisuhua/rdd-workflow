@@ -1,0 +1,16 @@
+{
+  "scenario_id": "A-E7",
+  "skill": "rdd-arch",
+  "phase": "META",
+  "name": "arch-handoff stale 检测",
+  "input": {"command": "agent_arch_setup", "args": ["--after-adr-timestamp-change"]},
+  "golden_output": {
+    "files": [{"path": ".rddf/state/.arch-handoff.json", "must_exist": true}],
+    "stdout_contains": ["stale", "fallback full"]
+  },
+  "mock_output": {
+    "files": {".rddf/state/.arch-handoff.json": "{\"stale\": true, \"revision\": 2, \"fallback\": \"full\"}"},
+    "stdout": "stale detected: ADR-0001 timestamp changed\nfallback full (per-worktree state isolation)\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

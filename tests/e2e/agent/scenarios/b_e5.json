@@ -1,0 +1,16 @@
+{
+  "scenario_id": "B-E5",
+  "skill": "rdd-builder",
+  "phase": "P1.5",
+  "name": "P1.5 风险关键词 → worktree 模式",
+  "input": {"command": "phase1_5_deps.sh", "args": ["e2e-b5", "--auto-approve", "--proposal", "refactor: migrate user auth across multi-file"]},
+  "golden_output": {
+    "files": [{"path": ".rddf/state/.plan-handoff.json", "must_exist": true}],
+    "stdout_contains": ["execution_mode=worktree", "risk keyword"]
+  },
+  "mock_output": {
+    "files": {".rddf/state/.plan-handoff.json": "{\"execution_mode_decisions\": [{\"mode\": \"worktree\", \"reason\": \"risk keyword: refactor\"}]}"},
+    "stdout": "deps analysis complete\nexecution_mode=worktree (risk keyword detected: refactor)\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

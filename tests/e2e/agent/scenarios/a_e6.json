@@ -1,0 +1,16 @@
+{
+  "scenario_id": "A-E6",
+  "skill": "rdd-arch",
+  "phase": "P5",
+  "name": "arch-done gate fail — 0 ADR 阻断",
+  "input": {"command": "agent_arch_done_gate", "args": ["--skip", "A-E2"]},
+  "golden_output": {
+    "files": [],
+    "stdout_contains": ["至少需要 1 个 ADR", "exit 1"]
+  },
+  "mock_output": {
+    "files": {},
+    "stdout": "ERROR: arch-done gate failed\n至少需要 1 个 ADR (found 0 in docs/adr/)\nexit 1\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

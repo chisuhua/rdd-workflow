@@ -1,0 +1,16 @@
+{
+  "scenario_id": "A-E5",
+  "skill": "rdd-arch",
+  "phase": "P5",
+  "name": "arch-done gate pass — ≥1 ADR + roadmap 存在",
+  "input": {"command": "agent_arch_done_gate", "args": []},
+  "golden_output": {
+    "files": [{"path": ".rddf/state/.arch-handoff.json", "must_exist": true}],
+    "stdout_contains": ["✓ arch-done", "arch_done_status", "done"]
+  },
+  "mock_output": {
+    "files": {".rddf/state/.arch-handoff.json": "{\"arch_done_status\": \"done\", \"completed_at\": \"2026-09-08T12:00:00Z\"}"},
+    "stdout": "✓ arch-done gate passed\narch_done_status: done\ncompleted_at: 2026-09-08T12:00:00Z\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}
