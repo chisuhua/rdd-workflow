@@ -36,27 +36,15 @@ count_pending_suggestions ignores malformed entries (defensive) # malformed-inpu
 count_pending_suggestions returns N when entries have 待创建 status # locale/status fixture
 deps_iteration_sync: updates iteration.json deps fields # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 deps_iteration_sync: uses deps-analysis.json when present # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-doc_truth_sync: AGENTS.md mentions 13 skills # post-v4 migration
-doc_truth_sync: INSTALL.md description lists 13 skills + npm-test-vs-pytest block # post-v4 migration
-doc_truth_sync: README.md directory tree lists guide-arch / guide-plan / loop_engine / _lib # post-v4 migration: README tree stale
-doc_truth_sync: package.json::skills[] publishes all 13 disk skills (Decision 3 = A) # post-v4 migration: 13→26 drift
 doctor: --json only creates .doctor-report.json (not other writes) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 doctor: healthy fixture exits 0 (all 5 categories OK) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 e2e: post_archive_cleanup handles 6-residue with archive presence # post-v4 migration
-fix_doc_truth_sync: package.json skills[] count matches disk count # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 global_install: resolve_rdd_skill_dir falls back to ~/.agents/skills/<name> # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-global_install: ~18 sub-skill symlinks exist and resolve to source # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-no 'spec-workflow' references remain anywhere in repo (v3.0.0 rename guard) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-phase2_no_broken_refs: 3 cross-skill rddf-session sources resolve # same
-phase2_no_broken_refs: all SKILL.md source lines resolve to existing files # post-v4 migration: tests reference removed guide-* scripts
-propose.md uses git rev-parse --show-toplevel for project root (P0-4) # historical shell contract
+ global_install: ~18 sub-skill symlinks exist and resolve to source # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
+ propose.md uses git rev-parse --show-toplevel for project root (P0-4) # historical shell contract
 propose.md uses json.load (P1-7 format migration) # historical Python contract
-propose.md wraps json.load in try/except FileNotFoundError + JSONDecodeError (P0-4 / P1-7) # historical Python contract
-rdd-builder/SKILL.md: Phase 2.7 lists 5 commit message conventions # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-rdd-builder/SKILL.md: Phase 2.7 mentions archive.sh check_worktree_commits # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-rdd-builder/SKILL.md: Phase 2.7 references worktree-archive-workflow proposal # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-rdd-builder/SKILL.md: Phase 2.7 section exists # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-rddf: feature exits 0 # pre-existing logic, unrelated to v4
+ propose.md wraps json.load in try/except FileNotFoundError + JSONDecodeError (P0-4 / P1-7) # historical Python contract
+ rddf: feature exits 0 # pre-existing logic, unrelated to v4
 render_deps_report falls back when no AI result file # pre-existing
 roadmap_incremental_update: T10 Phase-6-style repeat call exits 0, verifies 0 ADRs, state commit == HEAD # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 roadmap_incremental_update: T10 cross-call chain (--incremental=off forces full mode) # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
@@ -66,9 +54,8 @@ roadmap_incremental_update: T17 first run without baseline reports reason 'no ba
 roadmap_incremental_update: T18 stale codebase_commit auto-resets to full mode and rewrites state with HEAD # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 roadmap_incremental_update: edge third consecutive run is still mode=skip (T1 stability) # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 roadmap_incremental_update: full run on empty state.json writes baseline state # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: idempotent — second run detects no changes → mode=skip # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_skill declares 5 commands (v2.0.3: gate-report removed) # pre-existing: roadmap_skill command count changed post-baseline
-skip: --max-changes 2 limits scan output to 2 changes # pre-existing: rdd_verifier_skip tests added by verifier-re-verify-archived-flag
+ roadmap_incremental_update: idempotent — second run detects no changes → mode=skip # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+ skip: --max-changes 2 limits scan output to 2 changes # pre-existing: rdd_verifier_skip tests added by verifier-re-verify-archived-flag
 skip: --max-changes CLI flag overrides env var # pre-existing: rdd_verifier_skip tests added post-baseline
 skip: RDDF_VERIFIER_MAX_CHANGES env var honored as default # pre-existing: rdd_verifier_skip tests added post-baseline
 skip: SKIP_RDD_VERIFIER=yes overrides --max-changes and other args # pre-existing: rdd_verifier_skip tests added post-baseline

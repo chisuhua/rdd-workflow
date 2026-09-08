@@ -5,16 +5,18 @@ setup() {
   cd "$REPO_ROOT"
 }
 
-@test "doc_truth_sync: package.json::skills[] publishes all 13 disk skills (Decision 3 = A)" {
+@test "doc_truth_sync: package.json::skills[] publishes all 26 disk skills (Decision 3 = A)" {
   run python3 - <<'PY'
 import json, sys
 from pathlib import Path
-# Count both skills/*.md (e.g. INSTALL.md) and skills/*/SKILL.md (12 per-skill files)
-disk = len(list(Path("skills").glob("*.md"))) + len(list(Path("skills").glob("*/SKILL.md")))
+# v4 stage-merge (ADR-0043) doubled 13→26 per-skill SKILL.md. INSTALL.md is the
+# bootstrap entry, NOT a sub-skill, so it lives in skills/*.md but not in
+# package.json::skills[]. Exclude it from the disk count.
+disk = len(list(Path("skills").glob("*/SKILL.md")))
 data = json.load(open("package.json"))
 skills = data.get("skills", [])
 assert len(skills) == disk, (
-    f"package.json declares {len(skills)} skills, disk has {disk}; "
+    f"package.json declares {len(skills)} skills, disk has {disk} */SKILL.md; "
     f"Decision 3 翻 A 后长度必须相等(无 src-only 例外)"
 )
 assert "feature" in skills, f"feature not in skills[]: {skills}"
@@ -27,13 +29,15 @@ PY
   [ "$status" -eq 0 ]
 }
 
-@test "doc_truth_sync: AGENTS.md mentions 13 skills" {
+@test "doc_truth_sync: AGENTS.md mentions 26 skills" {
   disk_root=$(ls skills/*.md 2>/dev/null | wc -l)
   disk_sub=$(ls skills/*/SKILL.md 2>/dev/null | wc -l)
   disk=$((disk_root + disk_sub))
-  # AGENTS.md uses format "13 SKILL.md + INSTALL.md"
-  if ! grep -qE "13 (SKILL\.md|个 .md)" AGENTS.md; then
-    echo "AGENTS.md missing '13 SKILL.md' or '13 个 .md' (disk has $disk: $disk_root root + $disk_sub subdir)"
+  # AGENTS.md uses format "27 SKILL.md + INSTALL.md" (L72) or "27 SKILL.md" (L118)
+  # — both reflect v4 stage-merge: 26 per-skill SKILL.md + 1 INSTALL.md bootstrap.
+  # Accept either 26 (per-skill only) or 27 (per-skill + INSTALL).
+  if ! grep -qE "(26|27) (SKILL\.md|个 .md|个子技能)" AGENTS.md; then
+    echo "AGENTS.md missing 26 or 27 skills (disk has $disk: $disk_root root + $disk_sub subdir)"
     return 1
   fi
 }
@@ -52,19 +56,19 @@ PY
   fi
 }
 
-@test "doc_truth_sync: INSTALL.md description lists 13 skills + npm-test-vs-pytest block" {
-  if ! grep -qE "全部 13 个子技能" skills/INSTALL.md; then
-    echo "INSTALL.md description missing '全部 13 个子技能'"
+@test "doc_truth_sync: INSTALL.md description lists 26 skills + npm-test-vs-pytest block" {
+  if ! grep -qE "全部 26 个子技能" skills/INSTALL.md; then
+    echo "INSTALL.md description missing '全部 26 个子技能'"
     return 1
   fi
-  if ! grep -qE "npm test 只跑 bats" skills/INSTALL.md; then
+  if ! grep -qE "npm test vs pytest" skills/INSTALL.md; then
     echo "INSTALL.md missing 'npm test vs pytest' reminder block"
     return 1
   fi
 }
 
-@test "doc_truth_sync: README.md directory tree lists guide-arch / guide-plan / loop_engine / _lib" {
-  for name in guide-arch guide-plan loop_engine.py "_lib"; do
+@test "doc_truth_sync: README.md directory tree lists rdd-arch / rdd-planner / loop_engine / _lib (v4 names)" {
+  for name in rdd-arch rdd-planner loop_engine.py "_lib"; do
     if ! grep -qE "$name" README.md; then
       echo "README.md missing '$name' in tree or docs"
       return 1

@@ -22,12 +22,14 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     # - ADR v3.0.0 footnotes
     # - ADR-0023 decision document
     # - .rddf/plans/v3-rename-*.md rename plan
+    # - KNOWN_FAILURES.txt self-reference (baseline comment for this very test)
     intentional=$(echo "$result" \
         | grep -v "CHANGELOG\.md:" \
         | grep -v "v3\.0\.0 note" \
         | grep -v "Originally authored" \
         | grep -v "ADR-0023" \
         | grep -v "\.rddf/plans/v3-rename" \
+        | grep -v "KNOWN_FAILURES\.txt:" \
         || true)
 
     [ -z "$intentional" ] || {

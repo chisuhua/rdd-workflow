@@ -20,9 +20,10 @@ resolve_source_line() {
   # Strip leading whitespace and "source"
   # Handle both `source "..."` and `  source "..."` forms, as well as
   # `bash -c 'source "..."'` forms (where source is inside single quotes).
-  # The path may contain nested $(dirname ...) with inner quotes, so we
-  # extract everything between the first and last double-quote on the line.
-  path=$(echo "$line" | sed -E 's/.*source[[:space:]]+"(.*)".*/\1/')
+  # The path is the FIRST double-quoted string after `source` — use non-greedy
+  # `[^"]*` so multi-statement lines (e.g. `source "X"; cmd "$y"`) extract X
+  # not the whole suffix.
+  path=$(echo "$line" | sed -E 's/.*source[[:space:]]+"([^"]*)".*/\1/')
   [ -z "$path" ] && return 1
   # If the sed didn't match (no source + double-quote pattern), skip
   [[ "$path" == "$line" ]] && return 1
@@ -61,6 +62,17 @@ resolve_source_line() {
       [[ "$line" =~ ^[[:space:]]*# ]] && continue
       # Only check lines with `source ... _lib/` or `scripts/`
       [[ "$line" =~ source ]] || continue
+      # Static check can only validate LITERAL paths. Any source line that
+      # contains dynamic expansion must be skipped:
+      # - $HOME / ${PROJECT_ROOT:-...} (install-time resolved)
+      # - $(resolve_rdd_skill_dir ...) / $(resolve_rdd_lib_dir) (resolver call)
+      # - $(dirname "${BASH_SOURCE[0]:-$0}") (per-skill relative)
+      # - chained `|| source ...` fallbacks (resolver picks one)
+      # The runtime rdd-env-check (rdd-env-check skill) is the canonical gate
+      # for dynamic paths; this static check only catches typos in literal ones.
+      if [[ "$line" == *'$'* ]] || [[ "$line" == *'||'* ]]; then
+        continue
+      fi
       path=$(resolve_source_line "$line" "$skill")
       [ -z "$path" ] && continue
       if [ ! -f "$path" ]; then
@@ -76,18 +88,20 @@ resolve_source_line() {
 }
 
 
-@test "phase2_no_broken_refs: 3 cross-skill rddf-session sources resolve" {
-  for skill in guide-arch guide-plan guide-ship; do
-    f="skills/$skill/SKILL.md"
-    line=$(grep -n '\.\./rddf-session/scripts/rddf_session_hooks\.sh' "$f")
-    [ -n "$line" ] || {
-      echo "FAIL: $f missing ../rddf-session/scripts/rddf_session_hooks.sh"
-      return 1
-    }
-    path="$REPO_ROOT/skills/$skill/../rddf-session/scripts/rddf_session_hooks.sh"
-    [ -f "$path" ] || {
-      echo "FAIL: $path doesn't exist"
-      return 1
-    }
-  done
+@test "phase2_no_broken_refs: rdd-arch sources rddf_session_hooks (v4 only one)" {
+  # v4 stage-merge (ADR-0043) consolidated guide-design+plan+ship into rdd-builder,
+  # so only rdd-arch still sources the rddf-session hooks (2 references at L114
+  # entry + L756 close). rdd-planner/rdd-builder use rddf-session via in-process
+  # Python calls (no shell source).
+  f="skills/rdd-arch/SKILL.md"
+  count=$(grep -c '\.\./rddf-session/scripts/rddf_session_hooks\.sh' "$f")
+  [ "$count" -ge 1 ] || {
+    echo "FAIL: $f missing ../rddf-session/scripts/rddf_session_hooks.sh"
+    return 1
+  }
+  path="$REPO_ROOT/skills/rdd-arch/../rddf-session/scripts/rddf_session_hooks.sh"
+  [ -f "$path" ] || {
+    echo "FAIL: $path doesn't exist"
+    return 1
+  }
 }

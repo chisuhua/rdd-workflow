@@ -8,7 +8,7 @@
 
 - **AGENTS.md:9-13** (`.gitignore` 现状契约)：
   ```
-  # spec-workflow runtime state and worktree directories
+  # rdd-workflow runtime state and worktree directories
   # .rddf/plans/ is tracked; .rddf/state/ and .rddf/wt/ are runtime-only
   .rddf/state/
   .rddf/wt/

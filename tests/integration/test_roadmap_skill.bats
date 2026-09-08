@@ -22,14 +22,17 @@ setup() {
 @test "roadmap_skill declares 5 commands (v2.0.3: gate-report removed)" {
   run skill_commands "$f"
   [ "$status" -eq 0 ]
-  [ "${#lines[@]}" -ge 5 ]
-  # Each line must be one of the 5 known commands (gate-report removed in v2.0.3)
+  # skill_commands returns top-level commands + sub-options (e.g. --phase-refs).
+  # Filter to top-level (no -- prefix) for the 5 known command whitelist check.
+  local top_count=0
   for cmd in "${lines[@]}"; do
     case "$cmd" in
-      init|status|edit|validate|advance) ;;
-      *) echo "unexpected command: $cmd" >&2; return 1 ;;
+      --*) ;;  # sub-option, skip
+      init|status|edit|validate|advance) top_count=$((top_count + 1)) ;;
+      *) echo "unexpected top-level command: $cmd" >&2; return 1 ;;
     esac
   done
+  [ "$top_count" -ge 5 ]
 }
 
 @test "roadmap_skill sources _lib/state.sh" {
