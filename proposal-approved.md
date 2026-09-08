@@ -143,6 +143,7 @@
 
 
 ## 已实施
+| [add-e2e-test-plan-phase2](.rddf/improvements/add-e2e-test-plan-phase2.md) | P1 | 2026-09-08 | 已实施 |
 | [add-e2e-test-plan-phase1](.rddf/improvements/add-e2e-test-plan-phase1.md) | P1 | 2026-09-08 | 已实施 |
 | [add-rdd-quick-skill](.rddf/improvements/add-rdd-quick-skill.md) | P1 | 2026-09-07 | 已实施 |
 | [rfc-rddf-project-yaml-config-i10](.rddf/improvements/rfc-rddf-project-yaml-config-i10.md) | P1 | 2026-09-02 | 已实施 |
