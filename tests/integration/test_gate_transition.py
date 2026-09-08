@@ -200,10 +200,15 @@ def test_all_three_transitions_have_default_checks(default_gate, state_vector_sa
 
 
 def test_default_arch_done_has_adr_and_roadmap_checks(default_gate, state_vector_saved):
-    """arch_done default checks include adr_exists + roadmap_defined."""
+    """arch_done default checks include adr_exists + roadmap coverage (v4: gap_analysis_complete).
+
+    roadmap_defined was intentionally removed in v4 stage-merge (0ae2950, rdd-arch slim);
+    roadmap coverage is now carried by gap_analysis_complete / arch_alignment / arch_debt_recorded.
+    """
     names = default_gate.get_registered_check_names()
     assert "adr_exists" in names
-    assert "roadmap_defined" in names
+    assert "gap_analysis_complete" in names
+    assert "roadmap_defined" not in names
 
 
 def test_default_plan_done_has_artifacts_checks(default_gate, state_vector_saved):

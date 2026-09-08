@@ -1,88 +1,9 @@
-17_archive: openspec archive moves change into archive/ + creates spec # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-INSTALL.md registers 13 skills including rdd-workflow-writing-plans # historical documentation contract
-P0-7: execute.md uses $3 (not $2) for openspec/ branch matching # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-README.md no longer mentions 'discover' phase for guide-ship # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-SKILL.md: line count dropped from 340 baseline (v2.1 reduction) # historical documentation line-count contract
-STRICT 模式: STRICT_DEPS_GATE=yes + blocker → exit 1 + STRICT 标记 # reason required
-Scenario 1: first run writes 14 fields including discovered_* # pre-existing: gh_available field added in commit 61a6d2a (15 fields total), test not updated
-_backup_corrupt_file: writes .reason.txt sidecar alongside .corrupt.<ts> # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-adr_index: docs/adr/README.md does NOT reference ADR-NNN beyond 0020 # historical ADR documentation baseline
-adr_index: docs/adr/README.md status table is consistent with disk # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-approve e2e: change dir contains proposal.md >= 500 chars with ADR + In/Out Scope # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-approve e2e: idempotent — second run does not overwrite # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-approve e2e: roadmap-meta.yaml contains change_type # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-approve_proposal: creates change dir with proposal.md and roadmap-meta.yaml # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-archive-proposal-status: archive.sh calls update_proposal_status # archive helper structural baseline
-archive_change: creates tasks.md.archived-snapshot sidecar # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-archive_change: idempotent — second run does not overwrite sidecar # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-archive_change: tasks_done in iteration.json derived from sidecar [x] count # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-bootstrap_fallback: no obsolete $HOME/.agents/_lib/skill_root.sh in SKILL.md surfaces # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-check_arch_done_gate_fails_without_adr # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-check_arch_done_gate_fails_without_roadmap # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-check_arch_done_gate_passes_with_adr_and_roadmap # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-count_pending_suggestions ignores malformed entries (defensive) # malformed-input fixture
-count_pending_suggestions returns N when entries have 待创建 status # locale/status fixture
-doc_truth_sync: AGENTS.md mentions 13 skills # historical documentation contract
-doc_truth_sync: INSTALL.md description lists 13 skills + npm-test-vs-pytest block # historical documentation contract
-doctor: --json only creates .doctor-report.json (not other writes) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-doctor: healthy fixture exits 0 (all 5 categories OK) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-filter_guide_ship: workflow_synthesizer keeps guide-ship enabled when active changes exist # active-change state fixture
-gate 0: 改用 iteration.list_ready_for_ship # iteration state fixture
-guide-ship.md Phase 2.5 case/esac block is now thin (was 173) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-guide_entry --json: untracked .rddf/improvements file is info-only # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-guide_skill delegates only to 3-phase skills (RECOMMEND whitelist) # historical guide contract
-guide_worktree_gate: smoke regression - guide_skill tests still pass # worktree environment fixture
-handle_review_action option 2 creates debt entry in proposal-suggestions.md # review state fixture
-missing change_name: clear usage error, returns nonzero # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-no 'spec-workflow' references remain anywhere in repo (v3.0.0 rename guard) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-phase2: 3 cross-skill source lines to rddf-session/scripts/ added # cross-skill installation fixture
-phase2: _lib/ retains only shared files (~44 or fewer .sh+.py) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-phase2_install: INSTALL.md copy loop populates scripts/ in target # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-phase2_install: install preserves _lib/ shared files (state.sh, worktree.sh) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-phase2_no_broken_refs: 3 cross-skill rddf-session sources resolve # installation layout fixture
-phase2_no_broken_refs: all SKILL.md source lines resolve to existing files # installation layout fixture
-propose.md uses git rev-parse --show-toplevel for project root (P0-4) # historical shell contract
-propose.md uses json.load (P1-7 format migration) # historical Python contract
-propose.md wraps json.load in try/except FileNotFoundError + JSONDecodeError (P0-4 / P1-7) # historical Python contract
-queue overview: 候选计数读 proposal-suggestions.md 的待创建 status # locale/status fixture
-rddf: feature exits 0 # reason required
-rddf_session_hook_entry stage_plan links parent to latest stage_arch # session state fixture
-render_deps_report falls back when no AI result file # optional AI result environment fixture
-review_phase: iteration schema has version 4 and review status # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-review_phase: proposal-suggestions-format.md has type field # documentation fixture
-run_arch_quality_report_creates_json_file # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-scan-state.sh priority list (1..N) is internally consistent # scanner environment fixture
-scan-state: check_skill_versions detects stale skill files # installation environment fixture
-scan-state: check_skill_versions passes when no stale files # installation environment fixture
-ship: detect_execution_mode reads handoff decision # workflow state fixture
-status <name>: corrupt iteration.json → exit 1, corrupt message # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-status: corrupt output must NOT contain 'skill_use("propose"' hint # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-status: schema-invalid iteration.json → 'fails schema validation' message # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-sub-phase: heartbeat records RDDF_SUB_PHASE # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-sub-phase: heartbeat without env var leaves sub_phase empty # session environment fixture
 
 # === 2026-08-25 P0+P1 cleanup: integration tests gather was broken (missing
 # tests/integration/test_helper.bash). Restoring the shim surfaced 19
 # pre-existing failures that were never running before. They predate
 # commit 54b733f and are NOT regressions from the debt cleanup. Future
 # follow-up proposal may address them individually.
-01_single_contract_match_returns_warning_and_report # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-07_approve_proposal_manual_writes_audit_log # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-08_design_gate_passes_after_approval # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-cli-coverage: doctor_help_shows_8_categories # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-deps_iteration_sync: updates iteration.json deps fields # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-deps_iteration_sync: uses deps-analysis.json when present # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-doc_truth_sync: package.json::skills[] publishes all 13 disk skills (Decision 3 = A) # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-fix_doc_truth_sync: package.json skills[] count matches disk count # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: T10 Phase-6-style repeat call exits 0, verifies 0 ADRs, state commit == HEAD # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: T10 cross-call chain (--incremental=off forces full mode) # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: T11 --roadmap-update=off leaves an existing state file untouched # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: T12 --roadmap-update=force forces full mode even with a valid baseline # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: T17 first run without baseline reports reason 'no baseline' # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: T18 stale codebase_commit auto-resets to full mode and rewrites state with HEAD # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: edge third consecutive run is still mode=skip (T1 stability) # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: full run on empty state.json writes baseline state # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-roadmap_incremental_update: idempotent — second run detects no changes → mode=skip # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 
 # === 2026-08-28 baseline sync: 28 pre-existing bats failures registered
 # These failures predate the Phase A1 archived-proposal regeneration (commit
@@ -97,58 +18,75 @@ roadmap_incremental_update: idempotent — second run detects no changes → mod
 # test_populate_wrapper.bats) were DELETED as outdated — the skill was removed by
 # sync-package-skills-to-disk (archived 2026-08-27), leaving only __pycache__ residue.
 # Their 21 baseline entries were removed accordingly.
-every real ADR has status and date fields # pre-existing: adr_directory test added post-baseline
-roadmap_skill declares 5 commands (v2.0.3: gate-report removed) # pre-existing: roadmap_skill command count changed post-baseline
-skip: --max-changes 2 limits scan output to 2 changes # pre-existing: rdd_verifier_skip tests added by verifier-re-verify-archived-flag
-skip: --max-changes CLI flag overrides env var # pre-existing: rdd_verifier_skip tests added post-baseline
-skip: RDDF_VERIFIER_MAX_CHANGES env var honored as default # pre-existing: rdd_verifier_skip tests added post-baseline
-skip: SKIP_RDD_VERIFIER=yes overrides --max-changes and other args # pre-existing: rdd_verifier_skip tests added post-baseline
-skip: SKIP_RDD_VERIFIER=yes returns exit 2 # pre-existing: rdd_verifier_skip tests added post-baseline
-skip: empty iteration.json returns 0 (no work to do) # pre-existing: rdd_verifier_skip tests added post-baseline
-cli_all_subcommands: ALL_SUBCOMMANDS missing hub and scheduler # pre-existing WIP: hub/scheduler 子命令 (hub_retry_cmd.py / scheduler_cmd.py) 已存在但 ALL_SUBCOMMANDS tuple 2026-08-26 后未同步
-adr_index: docs/adr/README.md does NOT reference ADR-NNN beyond 0034 # pre-existing WIP: ADR-0035 (078c471, 2026-08-28) 已加但 README 索引未自动同步 — adr-index-auto-sync change 范围外的 drift
-every real ADR has a ## 决策 or ## Decision section # pre-existing WIP: ADR-0035 (078c471, 2026-08-28) 缺 Decision section
-every real ADR has status and date fields # pre-existing WIP: ADR-0034 缺 **日期** field (有状态但无日期), test_adr_directory.bats 95 行
-setup_file failed # pre-existing WIP: test_cross_repo_e2e_real.bats setup_file flaky due to gh CLI / network (E2E test requiring chisuhua/rdd-hub)
-every real ADR has a # ADR-NNNN: header # pre-existing: ADR-0036-design-handoff-runtime-filter.md uses em-dash separator (# ADR-0036 — design-handoff runtime filter over on-disk cleanup)
-adr_index: docs/adr/README.md references ADR-0036-design-handoff-runtime-filter.md # pre-existing: README index not auto-sync'd for ADR-0036 sibling
-adr_index: docs/adr/README.md references ADR-0036-session-metrics.md # pre-existing: README index not auto-sync'd for new ADR-0036 sibling
-phase2_no_broken_refs: 4 cross-skill rddf-session sources resolve # pre-existing: i10 session hooks phase 2 added extra source line, test not updated
-phase2: 4 cross-skill source lines to rddf-session/scripts/ added # pre-existing: same root cause as phase2_no_broken_refs
-ship: detect_execution_mode reads handoff decision # pre-existing: i10 plan-handoff decision wiring test, transient on local state
-sub-phase: heartbeat without env var leaves sub_phase empty # pre-existing: rddf-session sub-phase logic edge case
-report: known failures are visible but do not fail the gate # pre-existing: report_regression.sh self-test description drift
-USAGE.md example shows new entry points (rdd-arch / rdd-planner / rdd-builder / rdd-verifier) # post-v4 migration: example snippet still uses v3 skill names; Wave 4 follow-up
+
+01_single_contract_match_returns_warning_and_report # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+INSTALL.md registers 13 skills including rdd-workflow-writing-plans # historical documentation contract
+P0-7: execute.md uses $3 (not $2) for openspec/ branch matching # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
+Scenario 1: first run writes 14 fields including discovered_* # pre-existing: gh_available field added in commit 61a6d2a (15 fields total), test not updated
+USAGE.md example shows new entry points (guide / guide-arch / guide-plan / guide-ship) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
+_backup_corrupt_file: writes .reason.txt sidecar alongside .corrupt.<ts> # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
+archive_change: creates tasks.md.archived-snapshot sidecar # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
+archive_change: idempotent — second run does not overwrite sidecar # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
+archive_change: tasks_done in iteration.json derived from sidecar [x] count # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
+count_pending_suggestions ignores malformed entries (defensive) # malformed-input fixture
+count_pending_suggestions returns N when entries have 待创建 status # locale/status fixture
+deps_iteration_sync: updates iteration.json deps fields # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+deps_iteration_sync: uses deps-analysis.json when present # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+doc_truth_sync: AGENTS.md mentions 13 skills # post-v4 migration
+doc_truth_sync: INSTALL.md description lists 13 skills + npm-test-vs-pytest block # post-v4 migration
+doc_truth_sync: README.md directory tree lists guide-arch / guide-plan / loop_engine / _lib # post-v4 migration: README tree stale
+doc_truth_sync: package.json::skills[] publishes all 13 disk skills (Decision 3 = A) # post-v4 migration: 13→26 drift
+doctor: --json only creates .doctor-report.json (not other writes) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
+doctor: healthy fixture exits 0 (all 5 categories OK) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
+e2e: post_archive_cleanup handles 6-residue with archive presence # post-v4 migration
+execute: SKILL.md documents COMMIT GATE before worktree creation # test migrated to test_execute_worktree_context_rule.bats; old ref stale
+filter_guide_ship: guide-ship recommended when active change dir exists # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 filter_guide_ship: workflow_synthesizer keeps guide-ship enabled when active changes exist # post-v4 migration: dead-code in workflow_synthesizer; Wave 4 follow-up
-scan-state.sh priority list (1..N) is internally consistent # post-v4 migration: scan-state.sh has stale guide-* priorities; Wave 4 follow-up
-scan-state: check_skill_versions detects stale skill files # post-v4 migration: still references guide-* skill files; Wave 4 follow-up
-scan-state: check_skill_versions passes when no stale files # same
-scanner fallback: global state.sh used when local is missing # post-v4 migration: stale references in scan-state
-scanner fallback: local state.sh used when both exist # same
+filter_guide_ship: workflow_synthesizer marks guide-ship disabled when no active changes # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
+fix_doc_truth_sync: package.json skills[] count matches disk count # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+global_install: resolve_rdd_skill_dir falls back to ~/.agents/skills/<name> # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
+global_install: ~18 sub-skill symlinks exist and resolve to source # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 hook: cleans real-world residue (.rddf/plans/<existing>) # post-v4 migration: post-archive cleanup hook in dead-code path
 hook: deletes-tracked .rddf/plans/<name>.md # same
 hook: works inside worktree (no main-repo state pollution) # same
-e2e: post_archive_cleanup handles 6-residue with archive presence # post-v4 migration
-phase2_no_broken_refs: all SKILL.md source lines resolve to existing files # post-v4 migration: tests reference removed guide-* scripts
-phase2_no_broken_refs: 3 cross-skill rddf-session sources resolve # same
-rddf: feature exits 0 # pre-existing logic, unrelated to v4
-render_deps_report falls back when no AI result file # pre-existing
-execute: SKILL.md documents COMMIT GATE before worktree creation # test migrated to test_execute_worktree_context_rule.bats; old ref stale
-doc_truth_sync: README.md directory tree lists guide-arch / guide-plan / loop_engine / _lib # post-v4 migration: README tree stale
-doc_truth_sync: package.json::skills[] publishes all 13 disk skills (Decision 3 = A) # post-v4 migration: 13→26 drift
-doc_truth_sync: AGENTS.md mentions 13 skills # post-v4 migration
-doc_truth_sync: INSTALL.md description lists 13 skills + npm-test-vs-pytest block # post-v4 migration
-run_regression_gate: baseline present runs report_regression.sh # post-v4 migration: regression gate helper ref
-USAGE.md example shows new entry points (guide / guide-arch / guide-plan / guide-ship) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-filter_guide_ship: guide-ship recommended when active change dir exists # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-filter_guide_ship: workflow_synthesizer marks guide-ship disabled when no active changes # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-global_install: resolve_rdd_skill_dir falls back to ~/.agents/skills/<name> # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-global_install: ~18 sub-skill symlinks exist and resolve to source # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
+no 'spec-workflow' references remain anywhere in repo (v3.0.0 rename guard) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 package.json version is 4.0.0 (v4.0.0 stage-merge per ADR-0043) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
+phase2_no_broken_refs: 3 cross-skill rddf-session sources resolve # same
+phase2_no_broken_refs: all SKILL.md source lines resolve to existing files # post-v4 migration: tests reference removed guide-* scripts
+propose.md uses git rev-parse --show-toplevel for project root (P0-4) # historical shell contract
+propose.md uses json.load (P1-7 format migration) # historical Python contract
+propose.md wraps json.load in try/except FileNotFoundError + JSONDecodeError (P0-4 / P1-7) # historical Python contract
 rdd-builder.md directly calls skill_use('rdd-workflow-writing-plans') # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 rdd-builder.md version is at least 4.0 (v4.0.0 stage-merge per ADR-0043) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 rdd-builder/SKILL.md: Phase 2.7 lists 5 commit message conventions # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 rdd-builder/SKILL.md: Phase 2.7 mentions archive.sh check_worktree_commits # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 rdd-builder/SKILL.md: Phase 2.7 references worktree-archive-workflow proposal # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 rdd-builder/SKILL.md: Phase 2.7 section exists # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-planner_feedback_id_uniqueness: 5× baseline failures (test_same_day_recompute_no_collision, test_counter_starts_at_max_plus_one, test_cross_day_independent_counter, test_malformed_id_skipped_in_counter, test_missing_feedback_id_key_skipped) # pre-existing on master; not caused by add-rdd-quick-skill (verified via stash baseline 2026-09-07)
+rddf: feature exits 0 # pre-existing logic, unrelated to v4
+render_deps_report falls back when no AI result file # pre-existing
+roadmap_incremental_update: T10 Phase-6-style repeat call exits 0, verifies 0 ADRs, state commit == HEAD # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+roadmap_incremental_update: T10 cross-call chain (--incremental=off forces full mode) # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+roadmap_incremental_update: T11 --roadmap-update=off leaves an existing state file untouched # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+roadmap_incremental_update: T12 --roadmap-update=force forces full mode even with a valid baseline # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+roadmap_incremental_update: T17 first run without baseline reports reason 'no baseline' # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+roadmap_incremental_update: T18 stale codebase_commit auto-resets to full mode and rewrites state with HEAD # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+roadmap_incremental_update: edge third consecutive run is still mode=skip (T1 stability) # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+roadmap_incremental_update: full run on empty state.json writes baseline state # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+roadmap_incremental_update: idempotent — second run detects no changes → mode=skip # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+roadmap_skill declares 5 commands (v2.0.3: gate-report removed) # pre-existing: roadmap_skill command count changed post-baseline
+scan-state.sh priority list (1..N) is internally consistent # post-v4 migration: scan-state.sh has stale guide-* priorities; Wave 4 follow-up
+scan-state: check_skill_versions detects stale skill files # post-v4 migration: still references guide-* skill files; Wave 4 follow-up
+scan-state: check_skill_versions passes when no stale files # same
+scanner fallback: global state.sh used when local is missing # post-v4 migration: stale references in scan-state
+scanner fallback: local state.sh used when both exist # same
+skip: --max-changes 2 limits scan output to 2 changes # pre-existing: rdd_verifier_skip tests added by verifier-re-verify-archived-flag
+skip: --max-changes CLI flag overrides env var # pre-existing: rdd_verifier_skip tests added post-baseline
+skip: RDDF_VERIFIER_MAX_CHANGES env var honored as default # pre-existing: rdd_verifier_skip tests added post-baseline
+skip: SKIP_RDD_VERIFIER=yes overrides --max-changes and other args # pre-existing: rdd_verifier_skip tests added post-baseline
+skip: SKIP_RDD_VERIFIER=yes returns exit 2 # pre-existing: rdd_verifier_skip tests added post-baseline
+skip: empty iteration.json returns 0 (no work to do) # pre-existing: rdd_verifier_skip tests added post-baseline
+status <name>: corrupt iteration.json → exit 1, corrupt message # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
+status: corrupt output must NOT contain 'skill_use("propose"' hint # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
+status: schema-invalid iteration.json → 'fails schema validation' message # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
+sub-phase: heartbeat records RDDF_SUB_PHASE # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
+sub-phase: heartbeat without env var leaves sub_phase empty # pre-existing: rddf-session sub-phase logic edge case

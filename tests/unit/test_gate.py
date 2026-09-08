@@ -107,7 +107,7 @@ def test_suggestion_contains_command(state_path, log_path):
 
 
 def test_default_arch_done_checks_present(state_path, log_path):
-    """Default checks for arch_done include adr_exists, roadmap_defined, gap_analysis_complete."""
+    """Default checks for arch_done include adr_exists + gap_analysis_complete (roadmap coverage)."""
     sv = make_state()
     sv.save(state_path)
     gate = GateMechanism(state_path=state_path, event_log_path=log_path, load_defaults=True)
