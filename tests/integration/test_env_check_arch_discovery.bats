@@ -46,17 +46,23 @@ teardown() {
   [ -n "${SANDBOX:-}" ] && rm -rf "$SANDBOX"
 }
 
-@test "Scenario 1: first run writes 14 fields including discovered_*" {
+@test "Scenario 1: first run writes 15 fields including discovered_* + gh_available" {
+  # v4 added gh_available in commit 61a6d2a (Hub-Spoke readiness check).
+  # 15 fields: timestamp, ttl_s, branch, openspec_ver, git_clean, build_dir,
+  # adr_count, roadmap_exists, gap_count, active_changes, discovered_adr_dir,
+  # discovered_roadmap_path, discovered_architecture_dir, discovered_adr_pattern,
+  # gh_available.
   cd "${SANDBOX:?}"
   unset PROJECT_ROOT
   source skills/rdd-env-check/scripts/env_check.sh
   _run_env_full_check
   [ -f .rddf/state/.env-cache.json ]
   count=$(grep -oE '"[a-z_]+":' .rddf/state/.env-cache.json | wc -l | tr -d '[:space:]')
-  [ "$count" -eq 14 ]
+  [ "$count" -eq 15 ]
   grep -q '"discovered_adr_dir":"doc/adr"' .rddf/state/.env-cache.json
   grep -q '"discovered_roadmap_path":"planning/roadmap.md"' .rddf/state/.env-cache.json
   grep -q '"discovered_architecture_dir":"docs/architecture"' .rddf/state/.env-cache.json
+  grep -q '"gh_available":' .rddf/state/.env-cache.json
   pattern=$(grep -oE '"discovered_adr_pattern":"[^"]*"' .rddf/state/.env-cache.json | sed 's/.*:"//;s/"//')
   [ -n "$pattern" ]
 }

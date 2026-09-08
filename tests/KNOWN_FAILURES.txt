@@ -26,7 +26,6 @@
 
 01_single_contract_match_returns_warning_and_report # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 P0-7: execute.md uses $3 (not $2) for openspec/ branch matching # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-Scenario 1: first run writes 14 fields including discovered_* # pre-existing: gh_available field added in commit 61a6d2a (15 fields total), test not updated
 USAGE.md example shows new entry points (guide / guide-arch / guide-plan / guide-ship) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 _backup_corrupt_file: writes .reason.txt sidecar alongside .corrupt.<ts> # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 archive_change: creates tasks.md.archived-snapshot sidecar # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
