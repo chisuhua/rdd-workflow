@@ -1,0 +1,16 @@
+{
+  "scenario_id": "V-E7",
+  "skill": "rdd-verifier",
+  "phase": "P3",
+  "name": "3 次重试上限 → escal",
+  "input": {"command": "agent_verify_with_retry", "args": ["--name", "test-retry", "--max-retries", "3"]},
+  "golden_output": {
+    "files": [],
+    "stdout_contains": ["retry 3/3", "max retries exceeded", "escal"]
+  },
+  "mock_output": {
+    "files": {},
+    "stdout": "retry 1/3: failed\nretry 2/3: failed\nretry 3/3: failed\nmax retries exceeded, escal\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

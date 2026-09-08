@@ -1,0 +1,16 @@
+{
+  "scenario_id": "P-E7",
+  "skill": "rdd-planner",
+  "phase": "META",
+  "name": "横切命令 — status / sync / feedback / advance-sprint",
+  "input": {"command": "rddf_planner_horizontal", "args": ["--commands", "status,sync,feedback,advance-sprint"]},
+  "golden_output": {
+    "files": [],
+    "stdout_contains": ["status:", "sync:", "feedback:", "advance-sprint:"]
+  },
+  "mock_output": {
+    "files": {},
+    "stdout": "4 horizontal commands:\nstatus: 0 active proposals\nsync: state synced\nfeedback: 0 feedback items\nadvance-sprint: next=phase-2\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

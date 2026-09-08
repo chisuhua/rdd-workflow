@@ -1,0 +1,16 @@
+{
+  "scenario_id": "A-E1",
+  "skill": "rdd-arch",
+  "phase": "P1",
+  "name": "setup → arch discovery contract",
+  "input": {"command": "agent_arch_setup", "args": []},
+  "golden_output": {
+    "files": [{"path": ".rddf/state/.arch-handoff.json", "must_exist": true}],
+    "stdout_contains": ["\"adr_dir\":", "\"roadmap_path\":", "\"architecture_dir\":", "\"adr_pattern\":", "\"discovered\":"]
+  },
+  "mock_output": {
+    "files": {".rddf/state/.arch-handoff.json": "{\"schema\": \"arch-handoff-v3\", \"version\": 1, \"adr_dir\": \"docs/adr\", \"roadmap_path\": \"roadmap.md\", \"architecture_dir\": \"docs/architecture\", \"adr_pattern\": \"ADR-*.md\", \"discovered\": true}"},
+    "stdout": "{\"adr_dir\": \"docs/adr\", \"roadmap_path\": \"roadmap.md\", \"architecture_dir\": \"docs/architecture\", \"adr_pattern\": \"ADR-*.md\", \"discovered\": true}\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

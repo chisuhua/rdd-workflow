@@ -1,0 +1,16 @@
+{
+  "scenario_id": "B-E2",
+  "skill": "rdd-builder",
+  "phase": "P0",
+  "name": "P0 reject → exit 1 + planner-feedback",
+  "input": {"command": "phase0_approval.sh", "args": ["e2e-b2", "--auto-approve", "--proposal", "broken: AC-1 says 42 but AC-2 says 0"]},
+  "golden_output": {
+    "files": [],
+    "stdout_contains": ["reject", "planner-feedback", "kind=reject"]
+  },
+  "mock_output": {
+    "files": {},
+    "stdout": "rejected: contradictory ACs detected\nplanner-feedback written: kind=reject, reason='AC-1 (42) contradicts AC-2 (0)'\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

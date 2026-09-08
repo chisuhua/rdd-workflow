@@ -1,0 +1,16 @@
+{
+  "scenario_id": "V-E8",
+  "skill": "rdd-verifier",
+  "phase": "P0",
+  "name": "离线 / 无 LLM 凭据时 graceful skip",
+  "input": {"command": "agent_verify_with_credentials", "args": ["--name", "test", "--env", "empty"]},
+  "golden_output": {
+    "files": [],
+    "stdout_contains": ["skip", "no LLM credentials"]
+  },
+  "mock_output": {
+    "files": {},
+    "stdout": "skip: no LLM credentials available (ANTHROPIC_API_KEY, OPENAI_API_KEY, local agent)\nverdict not written; iteration unchanged\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

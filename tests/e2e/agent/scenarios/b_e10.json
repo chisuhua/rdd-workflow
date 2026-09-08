@@ -1,0 +1,16 @@
+{
+  "scenario_id": "B-E10",
+  "skill": "rdd-builder",
+  "phase": "P3",
+  "name": "P3 archive gate 阻断 — 0 commits",
+  "input": {"command": "phase3_archive.sh", "args": ["e2e-b10", "--auto-approve"]},
+  "golden_output": {
+    "files": [{"path": "openspec/changes/e2e-b10/proposal.md", "must_exist": true}],
+    "stdout_contains": ["0 new commits", "archive blocked"]
+  },
+  "mock_output": {
+    "files": {"openspec/changes/e2e-b10/proposal.md": "# P10"},
+    "stdout": "ERROR: 0 new commits detected (check_worktree_commits)\narchive blocked: cannot proceed without commits\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

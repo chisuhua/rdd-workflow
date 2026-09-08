@@ -1,0 +1,16 @@
+{
+  "scenario_id": "B-E7",
+  "skill": "rdd-builder",
+  "phase": "P2",
+  "name": "P2 worktree 模式 → 隔离 commit",
+  "input": {"command": "phase2_execute.sh", "args": ["e2e-b7", "--auto-approve", "--mode", "worktree"]},
+  "golden_output": {
+    "files": [{"path": ".rddf/wt/e2e-b7/branch", "must_exist": false}],
+    "stdout_contains": ["worktree created", "openspec/e2e-b7"]
+  },
+  "mock_output": {
+    "files": {},
+    "stdout": "worktree created at .rddf/wt/e2e-b7/\nbranch: openspec/e2e-b7\nisolated commit created\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec", ".rddf/wt"]}
+}

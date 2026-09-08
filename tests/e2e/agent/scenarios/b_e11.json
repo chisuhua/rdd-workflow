@@ -1,0 +1,16 @@
+{
+  "scenario_id": "B-E11",
+  "skill": "rdd-builder",
+  "phase": "P3",
+  "name": "P3 → P1 verifier 失败回环",
+  "input": {"command": "phase3_archive.sh", "args": ["e2e-b11", "--auto-approve"]},
+  "golden_output": {
+    "files": [{"path": ".rddf/state/.plan-handoff.json", "must_exist": true}],
+    "stdout_contains": ["back_routing_trail", "phase-1", "verifier halt"]
+  },
+  "mock_output": {
+    "files": {".rddf/state/.plan-handoff.json": "{\"back_routing_trail\": [\"phase-3\", \"phase-1\"], \"retry_count\": 1}"},
+    "stdout": "verifier halt: AC verification failed\nback_routing_trail: phase-1\nretry_count=1, max=3\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

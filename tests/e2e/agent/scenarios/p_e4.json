@@ -1,0 +1,16 @@
+{
+  "scenario_id": "P-E4",
+  "skill": "rdd-planner",
+  "phase": "P3",
+  "name": "brainstorm 流程 → 改进提案",
+  "input": {"command": "add-improve-brainstorm", "args": ["--name", "P-E4-test"]},
+  "golden_output": {
+    "files": [{"path": ".rddf/improvements/p-e4-test.md", "must_exist": true}],
+    "stdout_contains": ["## 背景", "## 目标", "## 方案", "## 风险", "## 回滚"]
+  },
+  "mock_output": {
+    "files": {".rddf/improvements/p-e4-test.md": "# P-E4-test\n\n## 背景\n\n## 目标\n\n## 方案\n\n## 风险\n\n## 回滚\n"},
+    "stdout": "5-section format created\n## 背景\n## 目标\n## 方案\n## 风险\n## 回滚\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec"]}
+}

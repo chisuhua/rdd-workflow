@@ -1,0 +1,16 @@
+{
+  "scenario_id": "B-E12",
+  "skill": "rdd-builder",
+  "phase": "META",
+  "name": "隔离契约 — 不污染 rdd-quick 路径",
+  "input": {"command": "isolation_audit", "args": ["--skill", "rdd-builder", "--check", "rdd-quick-paths"]},
+  "golden_output": {
+    "files": [],
+    "stdout_contains": ["zero_pollution: true", "no quick-*.md in .rddf/plans"]
+  },
+  "mock_output": {
+    "files": {},
+    "stdout": "Auditing 6 locked paths after 11 scenarios\nresult: zero_pollution: true\nno quick-*.md in .rddf/plans (rdd-quick paths clean)\n"
+  },
+  "isolation": {"locked_paths": [".rddf", "openspec", ".rddf/wt"]}
+}
