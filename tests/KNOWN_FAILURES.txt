@@ -25,9 +25,13 @@
 # check_worktree_commits gate. Baseline entry removed accordingly.
 
 01_single_contract_match_returns_warning_and_report # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
+adr_index: docs/adr/README.md status table is consistent with disk # pre-existing: ADR-0024+ added after ADR README.md status table was last updated; drift in document, not test
+every real ADR has a # ADR-NNNN: header # pre-existing: newer ADRs (ADR-0025+) use different header style; drift in author convention
+every real ADR has a ## 决策 or ## Decision section # pre-existing: English vs 中文 mixed; new ADRs use ## Decision, older use ## 决策
+every real ADR has a ## Context section # pre-existing: some ADRs use ## Background instead; drift in section heading vocabulary
+every real ADR has status and date fields # pre-existing: newer ADRs omit status/date frontmatter; drift in author convention
 global_install: resolve_rdd_skill_dir falls back to ~/.agents/skills/<name> # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
  global_install: ~18 sub-skill symlinks exist and resolve to source # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 
- 
 sub-phase: heartbeat records RDDF_SUB_PHASE # genuine source gap: rddf_session_hook_heartbeat + close/attach/detach tail `[ "$_exit" -ne 0 ] && return "$_exit"` leaks exit 1 on success path (bash semantics: last `[ 0 -ne 0 ]` returns 1); python DOES record sub_phase correctly — not test-side fixable
 sub-phase: heartbeat without env var leaves sub_phase empty # same hook tail-return bug as sub-phase: heartbeat records RDDF_SUB_PHASE; not test-side fixable
