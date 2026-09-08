@@ -26,12 +26,13 @@ teardown() {
     [ -n "$BATS_TEST_TMPDIR" ] && rm -rf "$BATS_TEST_TMPDIR"
 }
 
-# Per-change `updated_at` is rejected by the v5 per-change item schema
-# (additionalProperties: false). It was never a legal field in any
-# version — the writer that injected it is the source of corruption,
-# not the version number on disk. A v5 fixture carrying this field is
-# the canonical "truly corrupt" case.
-_write_corrupt_v5_with_per_change_updated_at() {
+# Per-change items in v4/v5/v6/v7 schema allow additionalProperties: true
+# (per-change metadata is permissive). So per-change `updated_at` is NOT a
+# corruption signal. To trigger schema-validation failure, the root-level
+# object must violate additionalProperties: false (any unknown root key),
+# miss a required field, or have version outside the [3..7] enum.
+# Here we use the simplest reproducer: an unknown root-level key.
+_write_corrupt_v5_with_illegal_root_field() {
     mkdir -p .rddf/state
     cat > .rddf/state/iteration.json <<'EOF'
 {
@@ -42,16 +43,16 @@ _write_corrupt_v5_with_per_change_updated_at() {
     {
       "name": "test-change",
       "status": "proposed",
-      "added_at": "2026-08-01T00:00:00+00:00",
-      "updated_at": "2026-08-05T11:00:00+00:00"
+      "added_at": "2026-08-01T00:00:00+00:00"
     }
-  ]
+  ],
+  "illegal_root_field": "this root key is not in the schema's properties allowlist"
 }
 EOF
 }
 
 @test "status: schema-invalid iteration.json → 'fails schema validation' message" {
-    _write_corrupt_v5_with_per_change_updated_at
+    _write_corrupt_v5_with_illegal_root_field
 
     run env PYTHONPATH="$REPO_ROOT" python3 -m skills._lib.cli status
     [ "$status" -eq 1 ]
@@ -60,7 +61,7 @@ EOF
 }
 
 @test "status: corrupt output must NOT contain 'skill_use(\"propose\"' hint" {
-    _write_corrupt_v5_with_per_change_updated_at
+    _write_corrupt_v5_with_illegal_root_field
 
     run env PYTHONPATH="$REPO_ROOT" python3 -m skills._lib.cli status
     [ "$status" -eq 1 ]
@@ -69,7 +70,7 @@ EOF
 }
 
 @test "status <name>: corrupt iteration.json → exit 1, corrupt message" {
-    _write_corrupt_v5_with_per_change_updated_at
+    _write_corrupt_v5_with_illegal_root_field
 
     run env PYTHONPATH="$REPO_ROOT" python3 -m skills._lib.cli status my-change
     [ "$status" -eq 1 ]
@@ -97,7 +98,7 @@ EOF
 }
 
 @test "status: no .corrupt.<ts> backup written on corrupt read (read-only contract)" {
-    _write_corrupt_v5_with_per_change_updated_at
+    _write_corrupt_v5_with_illegal_root_field
 
     # Redirect both stdout and stderr to avoid bats noise on non-zero exit
     env PYTHONPATH="$REPO_ROOT" python3 -m skills._lib.cli status >/dev/null 2>&1 || true

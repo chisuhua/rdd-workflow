@@ -39,8 +39,5 @@ propose.md uses json.load (P1-7 format migration) # historical Python contract
 render_deps_report falls back when no AI result file # pre-existing
 
  
-status <name>: corrupt iteration.json → exit 1, corrupt message # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-status: corrupt output must NOT contain 'skill_use("propose"' hint # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-status: schema-invalid iteration.json → 'fails schema validation' message # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 sub-phase: heartbeat records RDDF_SUB_PHASE # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-sub-phase: heartbeat without env var leaves sub_phase empty # pre-existing: rddf-session sub-phase logic edge case
+ sub-phase: heartbeat without env var leaves sub_phase empty # pre-existing: rddf-session sub-phase logic edge case
