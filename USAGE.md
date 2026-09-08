@@ -100,34 +100,38 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 # Arch 端（创建新 change：setup → adr-create → architecture → roadmap-define → arch-done）
 用户: skill_use("rdd-arch")
 
-# Plan 端（已有架构：scan → propose → deps → plan-done）
-用户: skill_use("guide-plan")
+# Design 端（已有架构但需提案管理：preflight → review → approve/reject/defer → design-done，v2.1+ 提案管理 + 内容审查）
+用户: skill_use("rdd-planner")
 
-# Ship 端（已提交的 change：plan → verification → execute → review → archive → cleanup → ship-done，含轻量/worktree 自动检测）
-用户: skill_use("guide-ship")
+# Builder 端（已批准 change：plan → verification → execute → review → archive → cleanup，含轻量/worktree 自动检测，整合 plan+ship+design per ADR-0043 stage-merge）
+用户: skill_use("rdd-builder")
+
+# Verifier 端（archive 前批量 AC 验证：discover → batch-verify → classify → route，v3.0+ 第五阶段，ADR-0034）
+用户: skill_use("rdd-verifier")
 ```
 
 `guide` 推荐器会自动检查状态并给出当前合适的选项菜单；如已明确 arch/plan/ship 侧，可直接调对应状态机跳过推荐步骤。
 
 ### 完整 skill 列表
 
-`skills/` 目录当前包含 **13 个 Markdown skill 文件**（`INSTALL` + `guide` + `rdd-arch` + `guide-plan` + `guide-ship` + `feature` + `propose` + `roadmap` + `deps` + `execute` + `status` + `rddf-session` + `rdd-workflow-writing-plans`）外加 `loop_engine.py`。**v2.0.2 起** `package.json::skills[]` 已**完整发布全部 13 个**（含 `feature` + `rddf-session`），与磁盘无差异。
+`skills/` 目录当前包含 **26 个 per-skill 子目录**（v4 stage-merge 后从 13 → 26 per ADR-0043；详见上方"完整 skill 列表"表格）+ 顶层 `INSTALL.md`（安装入口）+ `loop_engine.py`（Loop 引擎入口，向后兼容 shim）。**v4.0.0 起** `package.json::skills[]` 已**完整发布全部 26 个**与磁盘无差异。
 
 | Skill | 用途 | 触发方式 |
 |-------|------|---------|
 | `INSTALL` | 首次安装（将技能复制到项目的 `.opencode/skills/`） | 用户显式调用 |
-| `guide` | 推荐器入口（扫描状态，建议调 rdd-arch、guide-plan 或 guide-ship） | `skill_use("guide")` |
-| `rdd-arch` | **新** 架构定义阶段（5 子阶段：`setup → adr-create → architecture → roadmap-define → arch-done`） | `skill_use("rdd-arch")` |
-| `guide-plan` | **新** 变更生成阶段（4 子阶段：`scan → propose → deps → plan-done`） | `skill_use("guide-plan")` |
-| `guide-ship` | **Ship 端状态机（Phase 1, 1.5, 2, 2.5, 3, 4, 5）**：`plan → verification → execute → review → archive → cleanup → ship-done`，含轻量/worktree 自动检测 | `skill_use("guide-ship")` |
-| `feature` | feature 管理（summary / dependency graph / per-feature status / execution order；feature- 前缀 change 完整性提示） | `skill_use("feature")` |
-| `propose` | 扫描 ADR/代码生成建议列表（`proposal-suggestions.md`，JSON 数组格式） | `guide-plan` 内部 / 单独使用 |
+| `guide` | 推荐器入口（扫描状态，建议调 rdd-arch / rdd-planner / rdd-builder / rdd-verifier） | `skill_use("guide")` |
+| `rdd-arch` | 架构定义阶段（5 子阶段：`setup → adr-create → architecture → roadmap-define → arch-done`） | `skill_use("rdd-arch")` |
+| `rdd-planner` | 设计阶段（preflight → review → approve/reject/defer → design-done，v2.1+ 提案管理 + 内容审查） | `skill_use("rdd-planner")` |
+| `rdd-builder` | **Builder 端状态机（ADR-0043 stage-merge 整合 plan+ship+design）**：`plan → verification → execute → review → archive → cleanup`，含轻量/worktree 自动检测 | `skill_use("rdd-builder")` |
+| `rdd-verifier` | 第五阶段批量 AC 验证（discover → batch-verify → classify → route，ADR-0034，bounded retry 最多 3 次） | `skill_use("rdd-verifier")` |
+| `feature` | feature 管理（summary / dependency graph / per-feature status / execution order） | `skill_use("feature")` |
+| `propose` | 扫描 ADR/代码生成建议列表（`proposal-suggestions.md`） | `rdd-builder` 内部 / 单独使用 |
 | `roadmap` | 路线图管理（phase/category 结构 + AUTO-SPRINT sentinel，v2.0.1） | `rdd-arch` 内部 / 单独使用 |
-| `deps` | 依赖分析（含 subagent Step 3，结构化输出 `deps-analysis.json`，v2.0.1） | `guide-plan` 内部 / 单独使用 |
-| `execute` | 在 worktree（或轻量模式当前分支）内执行任务，写 `tasks.md` 进度 | `guide-ship` 内部 / worktree 内单独使用 |
-| `status` | 状态查看（tasks.md 进度 + iteration.json） | `guide-ship` 内部 / 单独使用 |
+| `deps` | 依赖分析（含 subagent Step 3，结构化输出 `deps-analysis.json`，v2.0.1） | `rdd-builder` 内部 / 单独使用 |
+| `execute` | 在 worktree（或轻量模式当前分支）内执行任务，写 `tasks.md` 进度 | `rdd-builder` 内部 / worktree 内单独使用 |
+| `status` | 状态查看（tasks.md 进度 + iteration.json） | `rdd-builder` 内部 / 单独使用 |
 | `rddf-session` | **跨 OpenCode session 恢复**（ADR-0017）— 5 子命令：list / resume / abandon / heartbeat / status | `skill_use("rddf-session", "<sub>")` |
-| `rdd-workflow-writing-plans` | 实施计划生成器（TDD 5 步结构，自包含，零外部依赖） | `guide-ship` Phase 1 内部 |
+| `rdd-workflow-writing-plans` | 实施计划生成器（TDD 5 步结构，自包含，零外部依赖） | `rdd-builder` Phase 1 内部 |
 
 ### Loop 引擎（v2.0）
 
