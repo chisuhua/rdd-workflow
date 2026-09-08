@@ -1,7 +1,14 @@
 #!/usr/bin/env bats
 # Tests for worktree-archive-workflow change
-# Verifies explicit documentation of worktree commit flow in AGENTS.md and rdd-builder/SKILL.md
+# Verifies explicit documentation of worktree commit flow in AGENTS.md.
 # (Reference: .rddf/improvements/worktree-archive-workflow.md)
+#
+# Note (2026-09-08): the v3 rdd-builder/SKILL.md "Phase 2.7" sub-section tests
+# were removed — v4 rdd-builder SKILL.md (per ADR-0042/0043) was slimmed to a
+# 52-line spec-style doc (P0/P1/P1.5/P2/P2.5/P3 state machine). The Phase 2.7
+# content (5 commit types list, worktree-archive-workflow proposal reference,
+# check_worktree_commits mention) is now consolidated in AGENTS.md and verified
+# by the @test 1-6 above.
 
 load ../test_helper
 
@@ -40,36 +47,6 @@ load ../test_helper
 
 @test "AGENTS.md: 归档流程 cross-references check_worktree_commits" {
   run grep -A 8 "^### 归档流程" AGENTS.md
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"check_worktree_commits"* ]]
-}
-
-# === rdd-builder/SKILL.md 验证 ===
-
-@test "rdd-builder/SKILL.md: Phase 2.7 section exists" {
-  run grep -c "^## Phase 2.7" skills/rdd-builder/SKILL.md
-  [ "$status" -eq 0 ]
-  [ "$output" -eq 1 ]
-}
-
-@test "rdd-builder/SKILL.md: Phase 2.7 references worktree-archive-workflow proposal" {
-  run grep -A 4 "Phase 2.7" skills/rdd-builder/SKILL.md
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"worktree-archive-workflow"* ]]
-}
-
-@test "rdd-builder/SKILL.md: Phase 2.7 lists 5 commit message conventions" {
-  run grep -E "^   - \`[a-z]+\(<scope>\):" skills/rdd-builder/SKILL.md
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"feat(<scope>):"* ]]
-  [[ "$output" == *"fix(<scope>):"* ]]
-  [[ "$output" == *"refactor(<scope>):"* ]]
-  [[ "$output" == *"test(<scope>):"* ]]
-  [[ "$output" == *"chore(<scope>):"* ]]
-}
-
-@test "rdd-builder/SKILL.md: Phase 2.7 mentions archive.sh check_worktree_commits" {
-  run grep -A 30 "Phase 2.7" skills/rdd-builder/SKILL.md
   [ "$status" -eq 0 ]
   [[ "$output" == *"check_worktree_commits"* ]]
 }

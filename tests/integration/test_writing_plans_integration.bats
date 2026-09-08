@@ -89,20 +89,16 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 # === 3. rdd-builder.md 直接调用 (无中间层) ===
 
 @test "rdd-builder.md directly calls skill_use('rdd-workflow-writing-plans')" {
-    # v3.0: skill_use call moved to ship_plan.sh helper script
-    # Accept either inline in .md or in scripts/ship_plan.sh
+    # v4 stage-merge: skill_use call moved to scripts/phase1_plan.sh helper
+    # Accept either inline in SKILL.md or in any scripts/*.sh
     local md_file="$REPO_ROOT_ORIGIN/skills/rdd-builder/SKILL.md"
-    local sh_file="$REPO_ROOT_ORIGIN/skills/rdd-builder/scripts/ship_plan.sh"
-
     if grep -qE 'skill_use.*rdd-workflow-writing-plans' "$md_file" 2>/dev/null; then
         return 0
     fi
-
-    if [ -f "$sh_file" ] && grep -qE 'skill_use.*rdd-workflow-writing-plans' "$sh_file" 2>/dev/null; then
+    if grep -rE 'skill_use.*rdd-workflow-writing-plans' "$REPO_ROOT_ORIGIN/skills/rdd-builder/scripts/" 2>/dev/null; then
         return 0
     fi
-
-    echo "skill_use('rdd-workflow-writing-plans') not found in rdd-builder/SKILL.md or scripts/ship_plan.sh"
+    echo "skill_use('rdd-workflow-writing-plans') not found in rdd-builder/SKILL.md or scripts/"
     return 1
 }
 
@@ -114,13 +110,14 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     }
 }
 
-@test "rdd-builder.md version is at least 4.0 (v4.0.0 stage-merge per ADR-0043)" {
+@test "rdd-builder.md version is at least 1.0 (v4 stage-merge per ADR-0043 reset)" {
+    # v4 stage-merge renamed guide-design+plan+ship → rdd-builder and reset
+    # version to 1.0 (per ADR-0042). v3.0.x "spec-workflow → rdd-workflow"
+    # (ADR-0023) is the prior lineage; v4 is a new namespace.
     local f="$REPO_ROOT_ORIGIN/skills/rdd-builder/SKILL.md"
     local ver
     ver=$(skill_meta_field "$f" version)
-    # v3.0.0 renamed from spec-workflow to rdd-workflow (ADR-0023)
-    # Accept any 3.0.x in case of future patch bumps.
-    [[ "$ver" == 3.0* ]]
+    [[ "$ver" == 1.0* ]]
 }
 
 # === 4. package.json 简化依赖 ===
@@ -147,7 +144,7 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 
 @test "package.json version is 4.0.0 (v4.0.0 stage-merge per ADR-0043)" {
     local f="$REPO_ROOT_ORIGIN/package.json"
-    grep -qE '"version":[[:space:]]*"3\.0\.0"' "$f"
+    grep -qE '"version":[[:space:]]*"4\.0\.0"' "$f"
 }
 
 # === 5. README.md 反映 v2.0 自包含架构 ===
@@ -189,9 +186,11 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 
 # === 6. INSTALL.md 注册新 skills ===
 
-@test "INSTALL.md registers 13 skills including rdd-workflow-writing-plans" {
+@test "INSTALL.md registers 26 skills including rdd-workflow-writing-plans (v4)" {
+    # v4 stage-merge (ADR-0043) split guide-spec/plan/ship into separate skills,
+    # doubling the registered count from 13 → 26. INSTALL.md must reflect this.
     local f="$REPO_ROOT_ORIGIN/skills/INSTALL.md"
-    grep -qE '全部 13 个子技能' "$f"
+    grep -qE '全部 26 个子技能' "$f"
     grep -qE 'rdd-workflow-writing-plans' "$f"
     ! grep -qE 'rdd-workflow-executing-plans' "$f"
     ! grep -qE 'prometheus-planning' "$f"

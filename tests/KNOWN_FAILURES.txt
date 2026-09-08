@@ -25,7 +25,6 @@
 # check_worktree_commits gate. Baseline entry removed accordingly.
 
 01_single_contract_match_returns_warning_and_report # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-INSTALL.md registers 13 skills including rdd-workflow-writing-plans # historical documentation contract
 P0-7: execute.md uses $3 (not $2) for openspec/ branch matching # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 Scenario 1: first run writes 14 fields including discovered_* # pre-existing: gh_available field added in commit 61a6d2a (15 fields total), test not updated
 USAGE.md example shows new entry points (guide / guide-arch / guide-plan / guide-ship) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
@@ -48,14 +47,11 @@ fix_doc_truth_sync: package.json skills[] count matches disk count # pre-existin
 global_install: resolve_rdd_skill_dir falls back to ~/.agents/skills/<name> # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 global_install: ~18 sub-skill symlinks exist and resolve to source # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 no 'spec-workflow' references remain anywhere in repo (v3.0.0 rename guard) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-package.json version is 4.0.0 (v4.0.0 stage-merge per ADR-0043) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 phase2_no_broken_refs: 3 cross-skill rddf-session sources resolve # same
 phase2_no_broken_refs: all SKILL.md source lines resolve to existing files # post-v4 migration: tests reference removed guide-* scripts
 propose.md uses git rev-parse --show-toplevel for project root (P0-4) # historical shell contract
 propose.md uses json.load (P1-7 format migration) # historical Python contract
 propose.md wraps json.load in try/except FileNotFoundError + JSONDecodeError (P0-4 / P1-7) # historical Python contract
-rdd-builder.md directly calls skill_use('rdd-workflow-writing-plans') # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-rdd-builder.md version is at least 4.0 (v4.0.0 stage-merge per ADR-0043) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 rdd-builder/SKILL.md: Phase 2.7 lists 5 commit message conventions # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 rdd-builder/SKILL.md: Phase 2.7 mentions archive.sh check_worktree_commits # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 rdd-builder/SKILL.md: Phase 2.7 references worktree-archive-workflow proposal # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
