@@ -145,7 +145,28 @@ verification:
 - **57 个 Python 单元测试**：覆盖状态向量、事件日志、门控机制、Loop 引擎等
 - **10 个 Python 集成测试**：覆盖 Loop 流程、门控切换、阶段切换
 - **测试框架**：pytest (Python) + bats (shell)
+- **A 层 e2e smoke** (CI 必跑)：10 cases 验证 phase 脚本非交互入口（`./test.sh --e2e-smoke`）
+- **C 层 e2e agent** (nightly 必跑)：53 cases 验证 prose UX 真跑通 5 skill (`./test.sh --e2e-agent`)
 - **外部 E2E 测试床**：[chisuhua/rdd-workflow-e2e](https://github.com/chisuhua/rdd-workflow-e2e) — 以第三方项目视角安装 `rdd-workflow`，验证 `arch → planner → builder → archive` 全工作流与 36 个 `rddf` 子命令。Nightly cron 在最新 `master` 上自动跑（无需 GitHub App）。本地复制该仓库即可手动触发： `./install_testbed.sh --clone && RDD_WORKFLOW_REPO=~/.agents/skills/rdd-workflow bats tests/`
+
+#### 分层 e2e 策略
+
+| 层 | 入口 | 触发 | 必须绿 | 覆盖 |
+|----|------|------|--------|------|
+| A (脚本调用) | `./test.sh --e2e-smoke` | PR/push | ✅ | phase 脚本 + scaffold + isolation 契约 |
+| C (agent 模拟) | `./test.sh --e2e-agent` | nightly | ⚠️ skip-on-missing-credentials | prose UX 5 skill (44 scenarios) |
+| 外部 testbed | `rdd-workflow-e2e` nightly | 第三方 cron | ✅ | 多 stage 全流程 + 36 rddf CLI |
+
+**A 层** (CI 必跑，`tests/e2e/script/`)：跳过 prose 解释层，直接调 `phase*.sh` 验证机械正确性、退出码、文件落盘。
+
+**C 层** (nightly + 手动，`tests/e2e/agent/`)：真读 SKILL.md 走状态机，验证 prose UX 不漂移。三种模式：
+- `validate` (CI 默认)：仅校验 scenarios/*.json schema + golden 字段
+- `mock`：使用 scenario.mock_output 预录数据（CI 安全）
+- `real` (需 `RDDF_AGENT_E2E=1` + `opencode`/`claude`/`codex` CLI)：真调 agent
+
+**外部 testbed** (`chisuhua/rdd-workflow-e2e`)：第三方项目视角，多 stage 全流程集成。本仓 C 层独占 prose UX 覆盖，外部 testbed 独占全 stage 集成。详见 [docs/superpowers/specs/2026-09-08-e2e-test-plan-design.md](docs/superpowers/specs/2026-09-08-e2e-test-plan-design.md) 与协同契约（`docs/superpowers/specs/2026-09-08-rdd-workflow-e2e-coop-contract.md`）。
+
+完整 e2e 计划：1 主策略 spec + 5 scenario spec（per skill）+ 4 plan docs（Phase 1-4），均落 `docs/superpowers/`。
 
 ### 跨项目协同 (ADR-0030)
 
