@@ -62,6 +62,7 @@ bash install.sh /path/to/project
    - `skill_use("rdd-arch")` - Arch 端状态机(setup → roadmap → arch-done)
    - `skill_use("rdd-builder")` - Plan 端状态机(scan → propose → deps → plan-done)
    - `skill_use("rdd-builder")` - Ship 端状态机(plan → execute → archive → cleanup)
+   - `skill_use("rdd-quick")` - **快速执行路径**(per ADR-0047)：绕过 openspec change 与 worktree，就地执行小改动并 Oracle 验证
    - `skill_use("feature")` - feature 管理(summary/graph/status/order)
    - `skill_use("propose")` - 子技能(被 rdd-builder 调用)
    - `skill_use("execute")` - 子技能(被 rdd-builder 调用)

@@ -45,6 +45,7 @@ author: sisyphus
 | `report-issue` | Hub-Spoke 上行命令（[RFC] issue 上报到 Hub；ADR-0030） |
 | `sync-hub` | Hub-Spoke 下行命令（拉取 Hub 契约到本地 specs；ADR-0030） |
 | `watch-hub` | Hub-Spoke 监听命令（一次性轮询 Hub issue 状态；ADR-0030） |
+| `rdd-quick` | 快速执行路径（per ADR-0047）：绕过 openspec change 与 worktree，就地执行小改动并 Oracle 验证 |
 
 ## 两种安装模式
 

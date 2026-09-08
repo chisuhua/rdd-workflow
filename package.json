@@ -54,6 +54,7 @@
     "sync-hub",
     "watch-hub",
     "rdd-builder",
-    "rdd-planner"
+    "rdd-planner",
+    "rdd-quick"
   ]
 }
