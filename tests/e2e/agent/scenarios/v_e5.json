@@ -9,7 +9,7 @@
     "stdout_contains": ["\"status\": \"fail\"", "differs from ac", "proposal_drift", "phase-1"]
   },
   "mock_output": {
-    "files": {".rddf/state/.ac-verdict-test-drift.json": "{\"ac_id\": \"AC-1\", \"status\": \"fail\", \"reasoning\": \"differs from ac: impl correct but AC is wrong\", \"routing_target\": \"phase-1\"}"},
+    "files": {    ".rddf/state/.ac-verdict-test-drift.json": "{\"ac_id\": \"AC-1\", \"description\": \"helper returns true for non-empty\", \"status\": \"fail\", \"confidence\": 0.85, \"evidence\": \"impl correct but AC is wrong\", \"reasoning\": \"differs from ac: impl correct but AC is wrong\", \"routing_target\": \"phase-1\"}"},
     "stdout": "verdict: status=fail\nreasoning: differs from ac\nrouting: proposal_drift → phase-1\n"
   },
   "isolation": {"locked_paths": [".rddf", "openspec"]}

@@ -9,7 +9,7 @@
     "stdout_contains": ["pass=2/3", "fail=1/3", "partial"]
   },
   "mock_output": {
-    "files": {".rddf/state/.ac-verdict-test-partial.json": "{\"items\": [{\"status\": \"pass\"}, {\"status\": \"pass\"}, {\"status\": \"fail\"}], \"summary\": {\"pass\": 2, \"fail\": 1, \"total\": 3}}"},
+    "files": {    ".rddf/state/.ac-verdict-test-partial.json": "{\"items\": [{\"ac_id\": \"AC-1\", \"description\": \"pass case 1\", \"status\": \"pass\", \"confidence\": 0.9, \"evidence\": \"test passed\", \"reasoning\": \"matches\"}, {\"ac_id\": \"AC-2\", \"description\": \"pass case 2\", \"status\": \"pass\", \"confidence\": 0.9, \"evidence\": \"test passed\", \"reasoning\": \"matches\"}, {\"ac_id\": \"AC-3\", \"description\": \"fail case\", \"status\": \"fail\", \"confidence\": 0.85, \"evidence\": \"assertion failed\", \"reasoning\": \"missing impl\"}], \"summary\": {\"pass\": 2, \"fail\": 1, \"total\": 3}}"},
     "stdout": "verdict: pass=2/3, fail=1/3\nstatus: partial\n"
   },
   "isolation": {"locked_paths": [".rddf", "openspec"]}
