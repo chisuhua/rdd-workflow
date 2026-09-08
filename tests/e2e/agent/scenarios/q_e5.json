@@ -1,0 +1,32 @@
+{
+  "scenario_id": "Q-E5",
+  "skill": "rdd-quick",
+  "phase": "P3",
+  "name": "P3 全部 AC pass → completed",
+  "input": {
+    "command": "agent_verify_ac",
+    "args": ["--plan", ".rddf/plans/quick-add-helper-fn.md"]
+  },
+  "golden_output": {
+    "files": [
+      {"path": ".rddf/state/.ac-verdict-quick-add-helper-fn.json", "must_exist": true}
+    ],
+    "stdout_contains": [
+      "verdict: pass",
+      "1/1 pass"
+    ],
+    "history_jsonl": [
+      {"name": "add-helper-fn", "outcome": "completed", "verdict_summary": "1/1 pass"}
+    ]
+  },
+  "mock_output": {
+    "files": {
+      ".rddf/state/.ac-verdict-quick-add-helper-fn.json": "{\"ac_id\": \"AC-1\", \"description\": \"helper returns true for non-empty strings\", \"status\": \"pass\", \"confidence\": 0.95, \"evidence\": \"tests/test_helper.py::test_is_non_empty passed\", \"reasoning\": \"Implementation matches AC requirement\"}\n"
+    },
+    "stdout": "verifying AC-1: helper returns true for non-empty strings\nresult: pass (confidence 0.95)\nverdict: pass\n1/1 pass\n",
+    "history_jsonl": {"name": "add-helper-fn", "outcome": "completed", "verdict_summary": "1/1 pass"}
+  },
+  "isolation": {
+    "locked_paths": [".rddf", "openspec", ".rddf/wt"]
+  }
+}

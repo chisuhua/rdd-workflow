@@ -1,0 +1,30 @@
+{
+  "scenario_id": "Q-E3",
+  "skill": "rdd-quick",
+  "phase": "P1",
+  "name": "P1 简单提案直入 P2（跳过 review）",
+  "input": {
+    "command": "scaffold_plan.sh",
+    "args": [
+      "--name", "fix-typo",
+      "--proposal", "Fix typo in README"
+    ]
+  },
+  "golden_output": {
+    "files": [
+      {"path": ".rddf/plans/quick-fix-typo.md", "must_exist": true}
+    ],
+    "stdout_contains": [
+      "Created plan: .rddf/plans/quick-fix-typo.md"
+    ]
+  },
+  "mock_output": {
+    "files": {
+      ".rddf/plans/quick-fix-typo.md": "# Quick Plan: fix-typo\n\n## Acceptance\n- [ ] AC-1: typo fixed\n\n## Steps\n\n### Step 1: Write the failing test\n\n### Step 2: Verify the test fails\n\n### Step 3: Implement\n\n### Step 4: Verify the test passes\n\n### Step 5: Defer commit\n"
+    },
+    "stdout": "Skipping review (complexity: trivial)\nCreated plan: .rddf/plans/quick-fix-typo.md\n"
+  },
+  "isolation": {
+    "locked_paths": [".rddf", "openspec", ".rddf/wt"]
+  }
+}
