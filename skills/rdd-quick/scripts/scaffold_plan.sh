@@ -13,6 +13,7 @@ set -euo pipefail
 
 NAME=""
 PROPOSAL_TEXT=""
+NO_CONFIRM=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -23,6 +24,10 @@ while [[ $# -gt 0 ]]; do
         --proposal)
             PROPOSAL_TEXT="${2:-}"
             shift 2
+            ;;
+        --no-confirm)
+            NO_CONFIRM=1
+            shift
             ;;
         --help|-h)
             cat <<'EOF'
@@ -47,6 +52,8 @@ if [[ -z "$NAME" ]]; then
     echo "ERROR: --name required" >&2
     exit 2
 fi
+
+export NO_CONFIRM
 
 if ! [[ "$NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
     echo "ERROR: --name must be kebab-case (got: $NAME)" >&2

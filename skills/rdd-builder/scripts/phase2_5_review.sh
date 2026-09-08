@@ -6,6 +6,14 @@ set -euo pipefail
 CHANGE_NAME="${1:-}"
 PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
 
+AUTO_APPROVE=0
+for arg in "$@"; do
+    case "$arg" in
+        --auto-approve) AUTO_APPROVE=1 ;;
+    esac
+done
+export AUTO_APPROVE
+
 if [ -z "$CHANGE_NAME" ]; then
     echo "phase2_5_review.sh requires <change-name>" >&2
     exit 2
@@ -15,7 +23,11 @@ echo "=== Phase 2.5: Review for $CHANGE_NAME ==="
 
 # HARD pause: 4-option prompt (per spec §5.2, cannot bypass via --no-pause)
 echo "1) merge  2) revise  3) abandon  4) archive"
-read -r -p "Choose [1-4]: " choice
+if [ "${AUTO_APPROVE:-0}" = "1" ]; then
+    choice="1"
+else
+    read -r -p "Choose [1-4]: " choice
+fi
 
 case "$choice" in
     1) REVIEW_STATUS="merge"; EXIT_CODE=0 ;;

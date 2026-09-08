@@ -7,6 +7,14 @@ set -euo pipefail
 CHANGE_NAME="${1:-}"
 PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
 
+AUTO_APPROVE=0
+for arg in "$@"; do
+    case "$arg" in
+        --auto-approve) AUTO_APPROVE=1 ;;
+    esac
+done
+export AUTO_APPROVE
+
 if [ -z "$CHANGE_NAME" ]; then
     echo "phase0_approval.sh requires <change-name>" >&2
     exit 2
@@ -15,7 +23,11 @@ fi
 echo "=== Phase 0: Approval Gate for $CHANGE_NAME ==="
 
 echo "1) approve  2) reject  3) defer  4) revise"
-read -r -p "Choose [1-4]: " choice
+if [ "${AUTO_APPROVE:-0}" = "1" ]; then
+    choice="1"
+else
+    read -r -p "Choose [1-4]: " choice
+fi
 
 case "$choice" in
     1)

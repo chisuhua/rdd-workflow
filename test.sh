@@ -8,6 +8,9 @@
 #   ./test.sh --python               pytest unit + integration
 #   ./test.sh --unit                 只跑 pytest unit
 #   ./test.sh --integration          只跑 pytest integration
+#   ./test.sh --e2e-smoke            只跑 A 层 e2e (tests/e2e/script/) — CI 必跑
+#   ./test.sh --e2e-agent            只跑 C 层 e2e (tests/e2e/agent/) — nightly 必跑
+#   ./test.sh --e2e-all              A + C 全跑 (本地选)
 #   ./test.sh <file.bats|file.py>    跑单个测试文件
 #
 # Options (compose with any mode):
@@ -144,6 +147,31 @@ run_pytest_integration() {
   run_step "pytest integration" python3 -m pytest tests/integration/ -q --tb=line "$@"
 }
 
+run_bats_dir() {
+  local dir="$1"
+  if [ -d "$dir" ]; then
+    run_step "bats $dir" bats "$dir"
+  else
+    echo "${YELLOW}SKIP: $dir not found (will be created in later phase)${NC}"
+    return 0
+  fi
+}
+
+run_e2e_smoke() {
+  preflight bats
+  run_bats_dir "tests/e2e/script/"
+}
+
+run_e2e_agent() {
+  if [ "${RDDF_AGENT_E2E:-0}" != "1" ]; then
+    echo "${YELLOW}SKIP: C-layer e2e agent (set RDDF_AGENT_E2E=1 to enable)${NC}"
+    echo "${YELLOW}Hint: nightly cron sets this automatically${NC}"
+    return 0
+  fi
+  preflight bats
+  run_bats_dir "tests/e2e/agent/"
+}
+
 # ── Single-file invocation ─────────────────────────────────────────────
 run_single_file() {
   local file="$1"
@@ -179,6 +207,9 @@ Modes (pick one):
   --python, -p           pytest unit + integration
   --unit                 只跑 pytest unit
   --integration          只跑 pytest integration
+  --e2e-smoke            只跑 A 层 e2e (tests/e2e/script/) — CI 必跑
+  --e2e-agent            只跑 C 层 e2e (tests/e2e/agent/) — nightly 必跑 (需 RDDF_AGENT_E2E=1)
+  --e2e-all              A + C 全跑 (本地选)
 
 Options (compose with any mode):
   --regression           bats 用 report_regression.sh 对比 KNOWN_FAILURES baseline
@@ -210,6 +241,9 @@ parse_args() {
       --python|-p)           MODE="python" ;;
       --unit)                MODE="unit" ;;
       --integration)         MODE="integration" ;;
+      --e2e-smoke)           MODE="e2e-smoke" ;;
+      --e2e-agent)           MODE="e2e-agent" ;;
+      --e2e-all)             MODE="e2e-all" ;;
       --regression)          WITH_REGRESSION=1 ;;
       --stop-on-failure|-x)  STOP_ON_FAILURE=1 ;;
       --no-color)            WITH_COLOR=never ;;
@@ -278,6 +312,16 @@ main() {
     integration)
       preflight python3
       run_pytest_integration
+      ;;
+    e2e-smoke)
+      run_e2e_smoke
+      ;;
+    e2e-agent)
+      run_e2e_agent
+      ;;
+    e2e-all)
+      run_e2e_smoke
+      run_e2e_agent
       ;;
   esac
 
