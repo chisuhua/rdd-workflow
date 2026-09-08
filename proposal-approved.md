@@ -143,6 +143,7 @@
 
 
 ## 已实施
+| [add-e2e-test-plan-phase5](.rddf/improvements/add-e2e-test-plan-phase5.md) | P1 | 2026-09-08 | 已实施 |
 | [add-e2e-test-plan-phase4](.rddf/improvements/add-e2e-test-plan-phase4.md) | P1 | 2026-09-08 | 已实施 |
 | [add-e2e-test-plan-phase3](.rddf/improvements/add-e2e-test-plan-phase3.md) | P1 | 2026-09-08 | 已实施 |
 | [add-e2e-test-plan-phase2](.rddf/improvements/add-e2e-test-plan-phase2.md) | P1 | 2026-09-08 | 已实施 |
