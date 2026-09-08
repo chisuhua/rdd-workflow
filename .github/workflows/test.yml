@@ -78,6 +78,11 @@ jobs:
       - name: Bats smoke (full recursive — v2.0.3)
         run: bats tests/ --recursive
 
+      - name: A-layer e2e smoke (CI必跑 — per 2026-09-08-e2e-test-plan-design.md §3.2)
+        run: |
+          ./test.sh --e2e-smoke
+          echo "✅ A-layer e2e smoke passed"
+
       - name: Incremental Bats regression gate
         run: bash tests/scripts/report_regression.sh
 

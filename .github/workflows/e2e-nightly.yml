@@ -1,0 +1,49 @@
+name: E2E (nightly + manual)
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # 02:00 UTC nightly
+  workflow_dispatch:        # manual trigger
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true  # C-layer is opt-in; missing LLM credentials produce SKIP, not failure
+    env:
+      # C-layer requires agent CLI for real mode; without it, agent_runner falls back to mock mode (CI safe)
+      RDDF_AGENT_E2E: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt -q
+
+      - name: Install bats
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bats
+
+      - name: Run C-layer e2e (agent simulation)
+        run: |
+          ./test.sh --e2e-agent
+          echo "✅ C-layer e2e completed (mock or real mode)"
+
+      - name: Upload result JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-agent-result
+          path: |
+            .rddf/state/.ac-verdict-*.json
+            tests/e2e/agent/scenarios/*.json
+          if-no-files-found: ignore
+          retention-days: 7
