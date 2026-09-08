@@ -50,35 +50,31 @@ load ../test_helper
   rm -rf "$TEST_REPO"
 }
 
-@test "count_pending_suggestions returns N when entries have 待创建 status" {
+@test "count_pending_suggestions returns N when N .md files in .rddf/improvements/" {
+  # v2.0+ API: helper scans `.rddf/improvements/*.md` (not the v3-era
+  # proposal-suggestions.md JSON). Create N improvement files; no approval file
+  # means all count as pending.
   TEST_REPO=$(mktemp -d)
-  cd "$TEST_REPO"
-  cat > proposal-suggestions.md <<'EOF'
-[
-  {"name": "a", "status": "待创建"},
-  {"name": "b", "status": "created"},
-  {"name": "c", "status": "待创建"},
-  {"name": "d", "status": "待创建"}
-]
-EOF
+  mkdir -p "$TEST_REPO/.rddf/improvements"
+  for n in a b c d; do
+    printf '# %s\n' "$n" > "$TEST_REPO/.rddf/improvements/$n.md"
+  done
   source "$REPO_ROOT/_lib/state.sh"
   result=$(count_pending_suggestions "$TEST_REPO")
-  [ "$result" = "3" ]
+  [ "$result" = "4" ]
   rm -rf "$TEST_REPO"
 }
 
-@test "count_pending_suggestions ignores malformed entries (defensive)" {
+@test "count_pending_suggestions tolerates non-md files in improvements/" {
+  # Helper filters to *.md only; other files are ignored (defensive against
+  # editors leaving .swp / .bak around).
   TEST_REPO=$(mktemp -d)
-  cd "$TEST_REPO"
-  # Mix valid entries with malformed ones
-  cat > proposal-suggestions.md <<'EOF'
-[
-  {"name": "a", "status": "待创建"},
-  "not-a-dict",
-  {"name": "b"},
-  {"name": "c", "status": "待创建"}
-]
-EOF
+  mkdir -p "$TEST_REPO/.rddf/improvements"
+  for n in a b; do
+    printf '# %s\n' "$n" > "$TEST_REPO/.rddf/improvements/$n.md"
+  done
+  printf 'leftover\n' > "$TEST_REPO/.rddf/improvements/.a.md.swp"
+  printf 'backup\n' > "$TEST_REPO/.rddf/improvements/b.md.bak"
   source "$REPO_ROOT/_lib/state.sh"
   result=$(count_pending_suggestions "$TEST_REPO")
   [ "$result" = "2" ]

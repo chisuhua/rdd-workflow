@@ -30,8 +30,6 @@ _backup_corrupt_file: writes .reason.txt sidecar alongside .corrupt.<ts> # pre-e
 archive_change: creates tasks.md.archived-snapshot sidecar # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 archive_change: idempotent — second run does not overwrite sidecar # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 archive_change: tasks_done in iteration.json derived from sidecar [x] count # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
-count_pending_suggestions ignores malformed entries (defensive) # malformed-input fixture
-count_pending_suggestions returns N when entries have 待创建 status # locale/status fixture
 deps_iteration_sync: updates iteration.json deps fields # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 deps_iteration_sync: uses deps-analysis.json when present # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 doctor: --json only creates .doctor-report.json (not other writes) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
