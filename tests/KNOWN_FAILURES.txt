@@ -18,6 +18,11 @@
 # test_populate_wrapper.bats) were DELETED as outdated — the skill was removed by
 # sync-package-skills-to-disk (archived 2026-08-27), leaving only __pycache__ residue.
 # Their 21 baseline entries were removed accordingly.
+# Note (2026-09-08): v3 "COMMIT GATE before worktree creation" @test removed from
+# test_execute_worktree_context_rule.bats — v4 execute runs inside an existing
+# worktree (set up by rdd-builder P2), so the "before worktree creation" constraint
+# no longer applies. Worktree commit semantics are now enforced by archive.sh's
+# check_worktree_commits gate. Baseline entry removed accordingly.
 
 01_single_contract_match_returns_warning_and_report # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 INSTALL.md registers 13 skills including rdd-workflow-writing-plans # historical documentation contract
@@ -39,16 +44,9 @@ doc_truth_sync: package.json::skills[] publishes all 13 disk skills (Decision 3 
 doctor: --json only creates .doctor-report.json (not other writes) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 doctor: healthy fixture exits 0 (all 5 categories OK) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 e2e: post_archive_cleanup handles 6-residue with archive presence # post-v4 migration
-execute: SKILL.md documents COMMIT GATE before worktree creation # test migrated to test_execute_worktree_context_rule.bats; old ref stale
-filter_guide_ship: guide-ship recommended when active change dir exists # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-filter_guide_ship: workflow_synthesizer keeps guide-ship enabled when active changes exist # post-v4 migration: dead-code in workflow_synthesizer; Wave 4 follow-up
-filter_guide_ship: workflow_synthesizer marks guide-ship disabled when no active changes # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 fix_doc_truth_sync: package.json skills[] count matches disk count # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 global_install: resolve_rdd_skill_dir falls back to ~/.agents/skills/<name> # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 global_install: ~18 sub-skill symlinks exist and resolve to source # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
-hook: cleans real-world residue (.rddf/plans/<existing>) # post-v4 migration: post-archive cleanup hook in dead-code path
-hook: deletes-tracked .rddf/plans/<name>.md # same
-hook: works inside worktree (no main-repo state pollution) # same
 no 'spec-workflow' references remain anywhere in repo (v3.0.0 rename guard) # pre-existing WIP: not caused by migrate-improvements-to-rddf-namespace
 package.json version is 4.0.0 (v4.0.0 stage-merge per ADR-0043) # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 phase2_no_broken_refs: 3 cross-skill rddf-session sources resolve # same
@@ -74,11 +72,6 @@ roadmap_incremental_update: edge third consecutive run is still mode=skip (T1 st
 roadmap_incremental_update: full run on empty state.json writes baseline state # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 roadmap_incremental_update: idempotent — second run detects no changes → mode=skip # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 roadmap_skill declares 5 commands (v2.0.3: gate-report removed) # pre-existing: roadmap_skill command count changed post-baseline
-scan-state.sh priority list (1..N) is internally consistent # post-v4 migration: scan-state.sh has stale guide-* priorities; Wave 4 follow-up
-scan-state: check_skill_versions detects stale skill files # post-v4 migration: still references guide-* skill files; Wave 4 follow-up
-scan-state: check_skill_versions passes when no stale files # same
-scanner fallback: global state.sh used when local is missing # post-v4 migration: stale references in scan-state
-scanner fallback: local state.sh used when both exist # same
 skip: --max-changes 2 limits scan output to 2 changes # pre-existing: rdd_verifier_skip tests added by verifier-re-verify-archived-flag
 skip: --max-changes CLI flag overrides env var # pre-existing: rdd_verifier_skip tests added post-baseline
 skip: RDDF_VERIFIER_MAX_CHANGES env var honored as default # pre-existing: rdd_verifier_skip tests added post-baseline

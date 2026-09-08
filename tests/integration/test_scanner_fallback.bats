@@ -49,7 +49,7 @@ teardown() {
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"SOURCE=$repo/_lib/state.sh"* ]]
-  [[ "$output" == *"RECOMMEND=guide-arch"* ]]
+  [[ "$output" == *"RECOMMEND=rdd-arch"* ]]
 }
 
 @test "scanner fallback: global state.sh used when local is missing" {
@@ -59,7 +59,7 @@ teardown() {
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"SOURCE=$home/.agents/_lib/state.sh"* ]]
-  [[ "$output" == *"RECOMMEND=guide-arch"* ]]
+  [[ "$output" == *"RECOMMEND=rdd-arch"* ]]
 }
 
 @test "scanner fallback: warning when both copies are missing" {

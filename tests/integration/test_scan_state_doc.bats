@@ -13,13 +13,12 @@ load ../test_helper
 }
 
 @test "scan-state.sh priority list (1..N) is internally consistent" {
-  # Count actual priority bullets in the comment block.
-  # Pattern matches both "1. " (dot-space, for `1.`, `2.`, ... `10.`)
-  # AND "1.5 " (no dot after sub-number, for `1.5`, `2.5`) so the
-  # count is the actual semantic priority count (12 = 1, 1.5, 2, 2.5, 3-10).
-  n=$(awk '/^#[[:space:]]+[0-9]+(\.[0-9]+)?\.?[[:space:]]/ {print}' skills/guide/scripts/scan-state.sh | wc -l)
+  # Count actual semantic priority paths in the comment block (lines with an
+  # arrow). The v4 decision tree has 13 paths (1a, 1b, 1c, 2, 2.5, 3-10)
+  # matching guide.md "13-path". The "1." line is a grouping header, not a path.
+  n=$(awk '/^#[[:space:]]+[0-9]+([abc]?\.?|\.5)?[[:space:]].*→/ {print}' skills/guide/scripts/scan-state.sh | wc -l)
   echo "priority count = $n"
-  [ "$n" -eq 12 ]
+  [ "$n" -eq 13 ]
 }
 
 @test "guide.md path-count comment matches scan-state.sh count" {

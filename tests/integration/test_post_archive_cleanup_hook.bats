@@ -39,13 +39,19 @@ make_modified() {
 
 @test "hook: deletes-tracked .rddf/plans/<name>.md" {
   make_deleted ".rddf/plans/foo.md"
+  local commits_before
+  commits_before=$(git rev-list --count HEAD)
   run post_archive_cleanup "$PROJECT_ROOT" "foo"
   [ "$status" -eq 0 ]
-  # Now git rm-ed; commit lands
-  run git log --oneline
-  [[ "$output" == *"chore(post-archive): clean residue from foo"* ]]
+  # v2.2.4+ (reduce-archive-commit-noise): hook git rm's + stages but does
+  # NOT create an independent commit — archive_change --amends the cleanup
+  # into the main archive commit. So:
+  #   - no new commit lands
+  #   - index shows the delete staged ("D " in porcelain = staged)
+  [ "$(git rev-list --count HEAD)" -eq "$commits_before" ]
+  [[ ! "$(git log --oneline)" == *"chore(post-archive)"* ]]
   run git status --porcelain
-  [ -z "$output" ]
+  [[ "$output" == *"D  .rddf/plans/foo.md"* ]]
 }
 
 @test "hook: idempotent — second run produces no extra commit" {
@@ -84,15 +90,18 @@ make_modified() {
 @test "hook: dirty tasks.md is NOT auto-committed" {
   make_modified "openspec/changes/foo/tasks.md"
   make_deleted ".rddf/plans/foo.md"
+  local commits_before
+  commits_before=$(git rev-list --count HEAD)
   post_archive_cleanup "$PROJECT_ROOT" "foo"
-  # tasks.md still shows as modified (not staged, not committed by us)
+  # tasks.md is NOT in _WHITELIST_MODIFIED_PATTERNS (only proposal-approved/roadmap),
+  # so hook leaves it as worktree-modified (" M"), not staged and not committed.
   run git status --porcelain
   [[ "$output" == *" M openspec/changes/foo/tasks.md"* ]]
-  # chore commit only contains the plan-file delete
-  local head_commit_files
-  head_commit_files=$(git show --name-only --pretty="" HEAD)
-  [[ "$head_commit_files" == *".rddf/plans/foo.md"* ]]
-  [[ "$head_commit_files" != *"tasks.md"* ]]
+  # No independent chore commit (v2.2.4+: hook stages only the rm bucket)
+  [ "$(git rev-list --count HEAD)" -eq "$commits_before" ]
+  [[ ! "$(git log --oneline)" == *"chore(post-archive)"* ]]
+  # The deleted plan file IS staged (in deleted_to_rm bucket)
+  [[ "$output" == *"D  .rddf/plans/foo.md"* ]]
 }
 
 @test "hook: modified proposal-approved.md is staged but not auto-committed" {
@@ -107,23 +116,33 @@ make_modified() {
 }
 
 @test "hook: works inside worktree (no main-repo state pollution)" {
+  local main_commits_before
+  main_commits_before=$(git rev-list --count HEAD)
   git worktree add .rddf/wt/foo -b foo openspec/foo 2>/dev/null || \
     git worktree add .rddf/wt/foo -b foo
   cd .rddf/wt/foo
   make_deleted ".rddf/plans/foo.md"
   post_archive_cleanup "$(pwd)" "foo"
+  # Worktree has the staged delete (expected)
   run git status --porcelain
-  [ -z "$output" ]
+  [[ "$output" == *"D  .rddf/plans/foo.md"* ]]
+  # Main repo must NOT receive a chore commit (v2.2.4+ hook stages only)
+  cd "$PROJECT_ROOT"
+  [ "$(git rev-list --count HEAD)" -eq "$main_commits_before" ]
+  [[ ! "$(git log --oneline)" == *"chore(post-archive)"* ]]
   git worktree remove .rddf/wt/foo --force
 }
 
 @test "hook: cleans real-world residue (.rddf/plans/<existing>)" {
   # Simulates the bug from commit 9f31a68: archive left dangling plan file
   make_deleted ".rddf/plans/fix-rddf-init-broken-layout.md"
+  local commits_before
+  commits_before=$(git rev-list --count HEAD)
   run post_archive_cleanup "$PROJECT_ROOT" "fix-rddf-init-broken-layout"
   [ "$status" -eq 0 ]
-  run git log --oneline
-  [[ "$output" == *"chore(post-archive): clean residue from fix-rddf-init-broken-layout"* ]]
+  # v2.2.4+: no independent chore commit, but residue is staged for amend
+  [ "$(git rev-list --count HEAD)" -eq "$commits_before" ]
+  [[ ! "$(git log --oneline)" == *"chore(post-archive)"* ]]
   run git status --porcelain
-  [ -z "$output" ]
+  [[ "$output" == *"D  .rddf/plans/fix-rddf-init-broken-layout.md"* ]]
 }
