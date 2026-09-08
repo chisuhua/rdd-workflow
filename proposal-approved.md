@@ -143,6 +143,7 @@
 
 
 ## 已实施
+| [add-rdd-quick-skill](.rddf/improvements/add-rdd-quick-skill.md) | P1 | 2026-09-07 | 已实施 |
 | [rfc-rddf-project-yaml-config-i10](.rddf/improvements/rfc-rddf-project-yaml-config-i10.md) | P1 | 2026-09-02 | 已实施 |
 | [complete-project-yaml-config-gaps](.rddf/improvements/complete-project-yaml-config-gaps.md) | P1 | 2026-09-02 | 已实施 |
 | [worktree-context-persistence](.rddf/improvements/worktree-context-persistence.md) | P1 | 2026-09-01 | 已实施 |
