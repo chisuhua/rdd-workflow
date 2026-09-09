@@ -83,11 +83,13 @@
 
 ### Phase D — Tests (extend parent change's bats)
 
-- [ ] **Task 14: Extend `tests/integration/test_v4_doc_drift_contracts.bats` with Test 16-19**
-  - Modify: `tests/integration/test_v4_doc_drift_contracts.bats`
-  - Add: Test 16 (guide skill no active `skill_use("guide-*")`), Test 17 (9 sub-skill SKILL.md no `guide-design`/`guide-plan`/`guide-ship`), Test 18 (`docs/migration/v3-to-v4.md` exists and ≥ 80 lines), Test 19 (`README.md` L13-19 npm install section no `v1.x`/`v2.0-beta`)
-  - Test: AC-5 (all 19 tests pass); AC-6 (pre-patch-fail verification)
-  - Commit: TBD
+- [x] **Task 14: Extend `tests/integration/test_v4_doc_drift_contracts.bats` with Test 17-20** ✅ 2026-09-09
+  - Modified: appended 4 new `@test` cases (Bonus Test 17-20)
+  - Note: parent change (`docs-v4-sync-followup-v2`) added Bonus Test 15 (ONBOARDING) + Test 16 (INSTALL); to avoid collision, this change's tests are numbered 17-20 (per plan naming "Test 16-19" was shifted)
+  - Coverage: Test 17 = AC-1 (guide skill), Test 18 = AC-2 (9 sub-skill SKILL.md), Test 19 = AC-3 (v3-to-v4.md), Test 20 = AC-4 (README install section)
+  - Pre-patch-fail verification: removed `v3-to-v4.md` → Test 19 fails; restored → all 20 pass
+  - Test: AC-5 ✓ (20/20 pass); AC-6 ✓ (pre-patch-fail verified)
+  - Commit: pending (with Phase E)
 
 ### Phase E — Final regression gate
 

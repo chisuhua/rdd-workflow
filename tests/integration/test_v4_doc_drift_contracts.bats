@@ -295,3 +295,63 @@ setup() {
     return 1
   fi
 }
+
+# -----------------------------------------------------------------------------
+# fix-doc-drift-followup-3 Bonus Test 17: AC-1 — skills/guide/SKILL.md
+# recommender has no active skill_use("guide-*") invocations.
+# Corresponds to: AC-1 of fix-doc-drift-followup-3.
+# Audit 2026-09-09: 30+ stale invocations sent agents to Wave-3-deleted skills.
+# Numbering note: this is "Test 16" in the change proposal; the parent change's
+# Bonus Test 16 (skills/INSTALL.md) was added earlier in this file, so we use 17.
+# -----------------------------------------------------------------------------
+@test "doc_drift_v4: skills/guide/SKILL.md has no active skill_use(\"guide-*\") invocations (AC-1 follow-up)" {
+  hits=$(grep -nE 'skill_use\("(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)"\)' skills/guide/SKILL.md 2>/dev/null || true)
+  if [ -n "$hits" ]; then
+    echo "AC-1 follow-up violation: live skill_use(\"guide-*\") in skills/guide/SKILL.md:"
+    echo "$hits" | head -5
+    return 1
+  fi
+}
+
+# -----------------------------------------------------------------------------
+# fix-doc-drift-followup-3 Bonus Test 18: AC-2 — 9 sub-skill SKILL.md files
+# have no active skill_use("guide-*") invocations.
+# Corresponds to: AC-2 of fix-doc-drift-followup-3.
+# -----------------------------------------------------------------------------
+@test "doc_drift_v4: 9 sub-skill SKILL.md files have no live skill_use(\"guide-*\") invocations (AC-2 follow-up)" {
+  for f in skills/execute/SKILL.md skills/status/SKILL.md skills/deps/SKILL.md \
+           skills/add-improve/SKILL.md skills/feature/SKILL.md skills/sync-hub/SKILL.md \
+           skills/rddf-session/SKILL.md skills/openspec-gate/SKILL.md skills/rdd-env-check/SKILL.md; do
+    hits=$(grep -nE 'skill_use\("(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)"\)' "$f" 2>/dev/null || true)
+    if [ -n "$hits" ]; then
+      echo "AC-2 follow-up violation in $f:"
+      echo "$hits" | head -5
+      return 1
+    fi
+  done
+}
+
+# -----------------------------------------------------------------------------
+# fix-doc-drift-followup-3 Bonus Test 19: AC-3 — docs/migration/v3-to-v4.md
+# exists with ≥ 80 lines and all required H2 sections.
+# Corresponds to: AC-3 of fix-doc-drift-followup-3.
+# -----------------------------------------------------------------------------
+@test "doc_drift_v4: docs/migration/v3-to-v4.md exists, ≥80 lines, has 7 required sections (AC-3 follow-up)" {
+  test -f docs/migration/v3-to-v4.md || { echo "AC-3 follow-up violation: docs/migration/v3-to-v4.md missing"; return 1; }
+  lines=$(wc -l < docs/migration/v3-to-v4.md)
+  [ "$lines" -ge 80 ] || { echo "AC-3 follow-up violation: docs/migration/v3-to-v4.md has $lines lines, expected ≥80"; return 1; }
+  for section in "## 阶段数变化" "## Skill 重命名映射" "## Removed skills" "## 工作流变更" "## 升级步骤" "## FAQ" "## 参考"; do
+    grep -qF "$section" docs/migration/v3-to-v4.md || { echo "AC-3 follow-up violation: section missing: $section"; return 1; }
+  done
+}
+
+# -----------------------------------------------------------------------------
+# fix-doc-drift-followup-3 Bonus Test 20: AC-4 — README.md L13-19 npm install
+# section has no v1.x or v2.0-beta; labels v4.0+ as latest stable.
+# Corresponds to: AC-4 of fix-doc-drift-followup-3.
+# -----------------------------------------------------------------------------
+@test "doc_drift_v4: README.md L13-19 npm install section has v4.0+ and no v1.x/v2.0-beta (AC-4 follow-up)" {
+  section=$(sed -n '13,19p' README.md)
+  echo "$section" | grep -qE 'v1\.x|v2\.0-beta' && { echo "AC-4 follow-up violation: v1.x or v2.0-beta still in install section"; echo "$section"; return 1; }
+  echo "$section" | grep -qE 'v4' || { echo "AC-4 follow-up violation: v4.0+ label missing from install section"; echo "$section"; return 1; }
+}
