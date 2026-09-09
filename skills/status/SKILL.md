@@ -1,6 +1,6 @@
 ---
 name: status
-description: 查看 OpenSpec change 状态、归档已完成的 change、清理 worktree 和 branch。可被 guide-ship 调用（archive 阶段），也可独立调用查看状态。
+description: 查看 OpenSpec change 状态、归档已完成的 change、清理 worktree 和 branch。可被 rdd-builder 调用（archive 阶段），也可独立调用查看状态。
 license: MIT
 compatibility: Requires openspec CLI
 metadata:
@@ -170,7 +170,7 @@ handle_status_archive_menu "$choice"
 PLAN_FILE="$PROJECT_ROOT/.rddf/plans/<name>.md"
 if [ ! -f "$PLAN_FILE" ]; then
     echo "⏳ Change <name> 已 propose 但尚未 plan"
-    echo "   请先执行: skill_use(\"guide-ship\")   # 内部选择 <name>"
+    echo "   请先执行: skill_use(\"rdd-builder\")   # 内部选择 <name>"
     exit 0
 fi
 
@@ -318,7 +318,7 @@ fi
 
 ```bash
 # P1-14: archive 流程（worktree 查找 → 脏检查 → merge → archive → cleanup）
-# 提取到 _lib/archive.sh,与 guide-ship.md Phase 3 共享同一份实现。
+# 提取到 _lib/archive.sh,与 rdd-builder Phase 3 共享同一份实现。
 # 源文件: _lib/archive.sh::archive_change
 source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
 SCRIPT_DIR="$(resolve_rdd_skill_dir status)"
@@ -444,7 +444,7 @@ esac
 
 ## 模式 E：当前迭代（v2.0 新增）
 
-读取 `.rddf/state/iteration.json` 渲染当前 sprint 视图，列出**所有 active change** 的状态、阻塞关系、任务进度、计划文件路径。供 `propose → guide-ship → execute → archive` 流程中的快速概览。
+读取 `.rddf/state/iteration.json` 渲染当前 sprint 视图，列出**所有 active change** 的状态、阻塞关系、任务进度、计划文件路径。供 `propose → rdd-builder → execute → archive` 流程中的快速概览。
 
 ### Step 1：读取 iteration.json
 
@@ -476,7 +476,7 @@ planned 列表由 `print_view(show_planned=True)` 统一渲染 (默认 True)。�
 ```
 请选择:
 1. 🔄 刷新视图 (重新读取 iteration.json)
-2. 🚀 进入 guide-ship (处理 active change)
+2. 🚀 进入 rdd-builder (处理 active change)
 3. 📊 查看完整依赖图 (.rddf/state/deps-output.md)
 4. ↩️ 返回主菜单
 i. 其他输入
@@ -489,7 +489,7 @@ i. 其他输入
 | 用户输入 | 动作 |
 |---------|------|
 | `1` 或 `refresh` | 重新读取 iteration.json 并渲染 |
-| `2` | `skill_use("guide-ship")` 进入 ship 流 |
+| `2` | `skill_use("rdd-builder")` 进入 builder 流 |
 | `3` | `cat $PROJECT_ROOT/.rddf/state/deps-output.md` （如存在） |
 | `4` 或 `back` | 返回 Mode A 概览 |
 | `q` / `quit` / `exit` | 退出 status |

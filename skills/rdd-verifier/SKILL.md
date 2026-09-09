@@ -1,6 +1,6 @@
 ---
 name: rdd-verifier
-description: 5th phase batch verifier — directly instructs the AI agent to semantically verify OpenSpec acceptance criteria against committed code, classifies failures heuristically (implementation_gap vs proposal_drift), routes failures back to guide-plan or guide-ship with a bounded retry loop. Called before archive after guide-ship execution (Per ADR-0034).
+description: 5th phase batch verifier — directly instructs the AI agent to semantically verify OpenSpec acceptance criteria against committed code, classifies failures heuristically (implementation_gap vs proposal_drift), routes failures back to rdd-builder (P1/P2 retry loop). Called before archive after rdd-builder execution (Per ADR-0034).
 license: MIT
 compatibility: requires openspec CLI v1.3.1+, Python 3.11+, git 2.25+. No external LLM provider env vars needed — the executing AI agent IS the LLM.
 metadata:
@@ -29,7 +29,7 @@ role:
 
 # OpenSpec 工作流 — rdd-verifier (5th Phase, v2.0 自包含验证)
 
-本技能是 OpenSpec 工作流的**第 5 阶段**（验证回环），位于 `guide-ship` 完成、`archive` 之前。
+本技能是 OpenSpec 工作流的**第 5 阶段**（验证回环），位于 `rdd-builder` 完成、`archive` 之前。
 
 ## v2.0 重大变更（自包含 LLM 验证）
 
@@ -85,7 +85,7 @@ skill_use("rdd-verifier")
 ## State Machine (State Diagram)
 
 ```
-[ENTRY: guide-ship done]
+[ENTRY: rdd-builder done]
     ↓
 [1] scan_queue.sh → list `in_worktree`/`completed` changes with `tasks_done == tasks_total > 0` from .rddf/state/iteration.json
     ↓ (queue = ["change-a", "change-b", ...])
@@ -98,9 +98,9 @@ skill_use("rdd-verifier")
     ├─ [2b] If verdict all PASS → mark loop_state.route="archive-ready"
     │
     └─ [2c] If any FAIL → classify_failure:
-        ├─ implementation_gap → user_confirm → route="guide-ship"
+        ├─ implementation_gap → user_confirm → route="rdd-builder P2"
         │   (re-execute code in worktree → commit → re-enter verify)
-        ├─ proposal_drift → user_confirm → route="guide-plan"
+        ├─ proposal_drift → user_confirm → route="rdd-builder P1"
         │   (rewrite proposal/specs → plan → ship → verify again)
         └─ ambiguous → default = implementation_gap (conservative)
             │
@@ -210,14 +210,14 @@ skill_use("rdd-verifier")
 
 为了 Step 5 的启发式分类能正常工作，**reasoning 字段必须包含以下关键词之一**（按优先级）：
 
-**Drift keywords（→ `proposal_drift` → 路由 guide-plan）**：
+**Drift keywords（→ `proposal_drift` → 路由 rdd-builder P1）**：
 
 - `exists but` — 代码存在但与 AC 不符
 - `discrepan` — AC 与实现有差异
 - `mismatch` — AC 与实现不匹配
 - `differs from ac` — 不同于 AC 描述
 
-**Gap keywords（→ `implementation_gap` → 路由 guide-ship）**：
+**Gap keywords（→ `implementation_gap` → 路由 rdd-builder P2）**：
 
 - `not implement` — 未实现
 - `missing` — 缺失
@@ -325,7 +325,7 @@ Per Oracle §E + ADR-0034 §5.1：
 - **Gap keywords** → `implementation_gap`
 - **Ambiguous** → conservative default = `implementation_gap`
 
-Rationale: `implementation_gap` → `guide-ship` re-run cost < `proposal_drift` → `guide-plan` rewrite cost.
+Rationale: `implementation_gap` → `rdd-builder` P2 re-run cost < `proposal_drift` → `rdd-builder` P1 rewrite cost.
 
 ### Step 4: User Confirmation + Route
 
@@ -350,7 +350,7 @@ User options：
 ```bash
 bash skills/rdd-verifier/scripts/route_loop.sh "$CHANGE_NAME" "$LABEL"
 # Updates `.rddf/state/verifier/<change>.json`: append classification + route
-# Exit 0: routed (guide-ship / guide-plan)
+# Exit 0: routed (rdd-builder P1/P2)
 # Exit 1: halted (max_loops reached, audit log written)
 ```
 

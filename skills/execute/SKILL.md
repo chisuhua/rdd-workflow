@@ -1,6 +1,6 @@
 ---
 name: execute
-description: 在 worktree 隔离环境执行 OpenSpec change 的实施计划。基于 .rddf/plans/ 执行,强制 TDD 5 步结构(Write failing test → Verify fail → Implement → Verify pass → Commit)。被 guide-ship 在 plan 阶段后调用。v2.0 整合原 rdd-workflow/executing-plans 的 TDD 纪律。
+description: 在 worktree 隔离环境执行 OpenSpec change 的实施计划。基于 .rddf/plans/ 执行,强制 TDD 5 步结构(Write failing test → Verify fail → Implement → Verify pass → Commit)。被 rdd-builder 在 P1 plan 阶段后调用。v2.0 整合原 rdd-workflow/executing-plans 的 TDD 纪律。
 license: MIT
 compatibility: Requires openspec CLI and git worktree.
 metadata:
@@ -45,12 +45,12 @@ worktree (openspec/<name>): 本技能在此执行
 ## 工作模式
 
 ```
-执行环境由 guide-ship 通过 $RDDF_EXECUTION_ROOT 决定:worktree
+执行环境由 rdd-builder 通过 $RDDF_EXECUTION_ROOT 决定:worktree
 (.rddf/wt/<name>/) 或 lightweight (主仓库的 openspec/<name> 分支)。
 execute 仅消费该环境变量,不再自行探测工作区。
 ```
 
-详细契约见 `docs/superpowers/specs/2026-08-05-guide-ship-execution-contract.md`。
+详细契约见 `docs/superpowers/specs/2026-08-05-guide-ship-execution-contract.md`（注：文件名保留 v3 历史命名，内容描述 v4 rdd-builder 行为）。
 
 ### 模式自动识别
 
@@ -143,7 +143,7 @@ test -f "$PLAN_FILE" || { echo "❌ 计划文件不存在"; exit 1; }
 3. **类型一致性**：后序 Task 中使用的类型/函数名是否与前面定义的一致？
 4. **文件路径**：每个 `**Files:**` 中的路径是否合理？（不要求文件已存在，但路径要有意义）
 
-**发现问题** → STOP，回到 guide-ship 重新 `skill_use("rdd-workflow-writing-plans")`。
+**发现问题** → STOP，回到 rdd-builder 重新 `skill_use("rdd-workflow-writing-plans")`。
 
 **无问题** → 继续 Step 4。
 
