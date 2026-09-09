@@ -28,7 +28,7 @@ class TestWriteReadRoundtrip:
         assert read_back["version"] == 1
         assert read_back["owner"] == "rdd-planner"
         assert read_back["current_sprint"] == "sprint-2026-09"
-        assert read_back["proposals_authored"] == proposals
+        assert read_back["proposals_ready"] == proposals
         assert read_back["proposals_approved_count"] == 3
         assert read_back["features_active"] == features
         assert "planner_complete_at" in read_back
@@ -57,11 +57,11 @@ class TestEmptyEdgeCases:
             [],
             "sprint-empty",
         )
-        assert result["proposals_authored"] == []
+        assert result["proposals_ready"] == []
         assert result["features_active"] == []
         assert result["proposals_approved_count"] == 0
         read_back = read_planner_handoff(str(tmp_path))
-        assert read_back["proposals_authored"] == []
+        assert read_back["proposals_ready"] == []
         assert read_back["features_active"] == []
         assert read_back["proposals_approved_count"] == 0
 
@@ -106,7 +106,7 @@ class TestOverwrite:
             "sprint-2",
         )
         read_back = read_planner_handoff(str(tmp_path))
-        assert read_back["proposals_authored"] == ["p1", "p2", "p3"]
+        assert read_back["proposals_ready"] == ["p1", "p2", "p3"]
         assert read_back["proposals_approved_count"] == 5
         assert read_back["features_active"] == ["f1", "f2"]
         assert read_back["current_sprint"] == "sprint-2"
@@ -122,7 +122,7 @@ class TestEnvVarPattern:
     def test_env_var_pattern(self, tmp_path):
         env = {
             "PROJECT_ROOT": str(tmp_path),
-            "PROPOSALS_AUTHORED": "prop-a,prop-b,prop-c",
+            "PROPOSALS_READY": "prop-a,prop-b,prop-c",
             "PROPOSALS_APPROVED_COUNT": "7",
             "FEATURES_ACTIVE": "feat-m,feat-n",
             "CURRENT_SPRINT": "sprint-env-test",
@@ -134,13 +134,13 @@ import sys
 sys.path.insert(0, '/workspace/project/rdd-workflow')
 from _lib.planner_handoff import write_planner_handoff, read_planner_handoff
 project_root = os.environ.get('PROJECT_ROOT')
-proposals_authored = [p for p in os.environ.get('PROPOSALS_AUTHORED', '').split(',') if p.strip()]
+proposals_ready = [p for p in os.environ.get('PROPOSALS_READY', '').split(',') if p.strip()]
 proposals_approved_count = int(os.environ.get('PROPOSALS_APPROVED_COUNT', '0'))
 features_active = [p for p in os.environ.get('FEATURES_ACTIVE', '').split(',') if p.strip()]
 current_sprint = os.environ.get('CURRENT_SPRINT')
-write_planner_handoff(project_root, proposals_authored, proposals_approved_count, features_active, current_sprint)
+write_planner_handoff(project_root, proposals_ready, proposals_approved_count, features_active, current_sprint)
 read_back = read_planner_handoff(project_root)
-assert read_back['proposals_authored'] == ['prop-a', 'prop-b', 'prop-c'], f'proposals mismatch: {read_back}'
+assert read_back['proposals_ready'] == ['prop-a', 'prop-b', 'prop-c'], f'proposals mismatch: {read_back}'
 assert read_back['proposals_approved_count'] == 7, f'count mismatch: {read_back}'
 assert read_back['features_active'] == ['feat-m', 'feat-n'], f'features mismatch: {read_back}'
 assert read_back['current_sprint'] == 'sprint-env-test', f'sprint mismatch: {read_back}'
@@ -169,6 +169,6 @@ class TestFieldPreservation:
             assert read_back["version"] == original["version"]
             assert read_back["owner"] == original["owner"]
             assert read_back["current_sprint"] == original["current_sprint"]
-            assert read_back["proposals_authored"] == original["proposals_authored"]
+            assert read_back["proposals_ready"] == original["proposals_ready"]
             assert read_back["proposals_approved_count"] == original["proposals_approved_count"]
             assert read_back["features_active"] == original["features_active"]

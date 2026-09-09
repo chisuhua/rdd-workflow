@@ -15,14 +15,20 @@ if [ ! -d "openspec/changes/$CHANGE_NAME" ]; then
     exit 2
 fi
 
-# Re-emit planner handoff with awaiting_builder list (changes ready for rdd-builder)
-PROPOSALS=$(rddf roadmap list 2>/dev/null | grep -oE 'add-[a-zA-Z0-9-]+' | head -20 || true)
+PROPOSALS=$(python3 -c "
+import json
+from pathlib import Path
+state = Path('.rddf/state/.planner-state.json')
+if state.exists():
+    d = json.loads(state.read_text())
+    print('\n'.join(d.get('active_projects', [])))
+" 2>/dev/null || true)
 FEATURES=$(rddf roadmap list-features 2>/dev/null | grep -oE 'feat-[a-zA-Z0-9-]+' | head -10 || true)
 CURRENT_SPRINT="sprint-$(date -u +%Y-%m)"
 APPROVED=$(rddf status --json 2>/dev/null | python3 -c "import sys, json; d=json.load(sys.stdin); print(sum(1 for c in d.get('changes', []) if c.get('status')=='approved'))" 2>/dev/null || echo "0")
 AWAITING="add-$CHANGE_NAME"
 
-export PROJECT_ROOT PROPOSALS_AUTHORED="$PROPOSALS" PROPOSALS_APPROVED_COUNT="$APPROVED" FEATURES_ACTIVE="$FEATURES" CURRENT_SPRINT
+export PROJECT_ROOT PROPOSALS_READY="$PROPOSALS" PROPOSALS_APPROVED_COUNT="$APPROVED" FEATURES_ACTIVE="$FEATURES" CURRENT_SPRINT AWAITING_BUILDER="$AWAITING"
 
 python3 -m _lib.planner_handoff
 echo "planner stage exit complete: $AWAITING -> rdd-builder"
