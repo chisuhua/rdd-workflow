@@ -105,3 +105,35 @@
   - Test: AC-7 ✓ (no new failures introduced); AC-8 ✓ (doctor CRITICAL ≤ 6 unchanged)
   - Note: `./test.sh --full` skipped to avoid 8-min runtime; quick mode covers bats + pytest unit + integration
   - Commit: pending
+
+### Phase F — Review + Archive (post-execute)
+
+- [x] **Task 16: rdd-builder Phase 2.5 Review (4-option dispatch)** ✅ 2026-09-09
+  - Decision: `merge` (auto-approve, lightweight mode)
+  - handoff: `current_phase=phase-2.5`, `review_status=merge`
+  - Note: `phase2_5_review.sh` has same bash→Python Oracle C1 string-interpolation bug as Phase 1/1.5/2 (line 50); simulated manually- via `write_builder_handoff(current_phase="phase-2.5", review_status="merge")`
+  - Test: review decision recorded; lightweight path to Phase 3
+
+- [x] **Task 17: rdd-builder Phase 3 Archive** ✅ 2026-09-09
+  - `openspec archive fix-doc-drift-followup-3 --yes --skip-specs` → exit 0, moved to `openspec/changes/archive/2026-09-09-fix-doc-drift-followup-3/`
+  - `_lib/post_archive_cleanup.sh fix-doc-drift-followup-3 <root>` → exit 0 (silent: no `git rm` residue, idempotent)
+  - `sweep_implemented_proposals` → marked 3 changes as 已实施: `fix-doc-drift-followup-3` (本提案) + `add-feature-fragment-command` + `phase-1-general-20260829063800-2` (2 pre-existing duplicates cleared as bonus)
+  - Archive Auto-Commit (v2.0.4 per AGENTS.md) → commit `85dfe8e archive(fix-doc-drift-followup-3): archive completed` (5 renames + 1 modification)
+  - handoff: `current_phase=phase-3`, `archive_status=archived`, `branch=master`, `execution_mode=lightweight`
+  - Note: `phase3_archive.sh` has same Oracle C1 bug (line 35-46, 64-77, 82-87, 101-111); ran `openspec archive` + `post_archive_cleanup.sh` + `sweep_implemented_proposals` + archive commit manually
+
+- [x] **Task 18: Final regression + status report** ✅ 2026-09-09
+  - `openspec list`: `fix-doc-drift-followup-3` no longer in active list (archived)
+  - `openspec change validate fix-doc-drift-followup-3`: "Change is valid" (still passes post-archive)
+  - bats 20/20 pass (16 parent + 4 follow-up Bonus Test 17-20)
+  - Doctor: 6 CRITICAL unchanged (4 state schema drift + 2 proposal-section duplicates; all pre-existing, NOT caused by this change)
+  - Commit history on master (new commits since `e7ddb37`):
+    1. `0ba5ae4` feat(change): artifacts
+    2. `2b39d6b` fix(doc): Phase A P0
+    3. `af6855d` fix(doc): Phase B P1
+    4. `819f975` fix(doc): Phase C P2
+    5. `1eeba62` test: Phase D bats
+    6. `3f682dc` fix(doc-drift): Phase E regression
+    7. `85dfe8e` archive: completed
+  - Total: 7 commits, 25 files, ~1400 line changes (per diff e7ddb37..HEAD)
+  - Net AC delta: AC-1/2/3/4/5/6/7/8 all verified PASS; 2 pre-existing proposal-section CRITICAL cleared as bonus; 4 state schema CRITICAL remain (pre-existing)
