@@ -41,6 +41,11 @@
       "type": "array",
       "items": {"type": "string"},
       "description": "Unmapped proposal names captured at the previous sync (additive v1)."
+    },
+    "recommended_route": {
+      "type": "string",
+      "enum": ["simple", "complex", "unknown"],
+      "description": "Advisory complexity hint for user discovery of rdd-quick. Not enforced (per Oracle review: rdd-planner is not a routing authority). rdd-quick SKILL.md P1 self-triages regardless. Added in v1.1 per fix-v4-rdd-planner-scope-over-assignment B4 (optional)."
     }
   },
   "additionalProperties": false
