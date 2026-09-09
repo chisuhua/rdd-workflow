@@ -162,8 +162,8 @@ If any condition fails, D2b is reverted to D2a and Stage 1/2 path continues.
 | Component | Files owned | Reads | Writes | Human-in-loop |
 |---|---|---|---|---|
 | **rdd-arch** | `docs/adr/*.md`, `docs/architecture/*.md`, `.arch-handoff.json` (per ADR-0016 v2) | (none) | `.arch-handoff.json` (ADR-0016 v2 fields only, **no roadmap_path** in v3) | High (Phase 2 ADR confirmation) |
-| **rdd-planner** | `roadmap.md`, `proposal-suggestions.md`, `proposal-approved.md`, `.rddf/roadmap/features/*.md`, `.rddf/improvements/*.md` (via `add-improve`), `openspec/changes/<name>/proposal.md` (authoring only, no checkbox), `.planner-handoff.json` (NEW) | `.arch-handoff.json`, `_lib/planner_state.py` (via Stage 1/2 lib) | All roadmap files (via dual-zone strategy from ADR-0038 §6), `proposal.md` content | Medium (Phase 1 approval = "approve proposal creation") |
-| **rdd-builder** | `openspec/changes/<name>/tasks.md`, `.rddf/plans/<name>.md`, worktree, branches, `.rddf/state/builder/<change>.json` (per-change per Oracle H3) | `proposal.md`, `tasks.md`, `.arch-handoff.json`, `.planner-handoff.json`, `plan_quality.py::evaluate_plan` | `tasks.md`, `.rddf/plans/*.md`, worktree files, branch commits, archive, **feedback via `rddf feedback add` only** (NOT direct `proposal-suggestions.md` write — single-writer per ADR-0037, Oracle M2) | High (Phase 0 approval, Phase 2.5 review 4-option) |
+| **rdd-planner** | `roadmap.md`, `proposal-suggestions.md`, `proposal-approved.md`, `.rddf/roadmap/features/*.md`, `.rddf/improvements/*.md` (via `add-improve`), `.planner-handoff.json` (NEW) | `.arch-handoff.json`, `_lib/planner_state.py` (via Stage 1/2 lib) | All roadmap files (via dual-zone strategy from ADR-0038 §6) | Medium (proposal lifecycle review / sprint governance) |
+| **rdd-builder** | `openspec/changes/<name>/proposal.md (authoring via P0 approve, per ADR-0025)`, `openspec/changes/<name>/tasks.md`, `.rddf/plans/<name>.md`, worktree, branches, `.rddf/state/builder/<change>.json` (per-change per Oracle H3) | `proposal.md`, `tasks.md`, `.arch-handoff.json`, `.planner-handoff.json`, `plan_quality.py::evaluate_plan` | `tasks.md`, `.rddf/plans/*.md`, worktree files, branch commits, archive, **feedback via `rddf feedback add` only** (NOT direct `proposal-suggestions.md` write — single-writer per ADR-0037, Oracle M2) | High (Phase 0 approval, Phase 2.5 review 4-option) |
 | **rdd-verifier** | `.rddf/state/.verifier-report.json` (per ADR-0034) | worktree branches (diff vs main), `tasks.md`, `.rddf/plans/*.md` | `.rddf/state/.verifier-report.json` | Low (retry loop bounded to 3 per ADR-0034) |
 
 ### 3.3 `rdd-planner` promotion: from horizontal orchestrator to full stage
@@ -210,7 +210,7 @@ rdd-builder
    │
    ▼
 Phase 0: Approval Gate
-   ├─ input:  openspec/changes/<name>/proposal.md (from rdd-planner)
+   ├─ input:  openspec/changes/<name>/proposal.md (authored at P0 approve per ADR-0025 D1/D2; or propose sub-skill skeleton)
    ├─ prompt:  4-option (approve / reject / defer / revise)
    ├─ reject → rddf feedback add <proposal> --kind rejected, exit 0 (no archive)
    ├─ defer  → rddf feedback add <proposal> --kind blocked, exit 0 (no archive)
@@ -902,25 +902,22 @@ $ rddf arch status
 # === Phase 2: rdd-planner ===
 $ rddf planner status
 # Sprint: sprint-2026-09
-# Active: 0
-# Unmapped: 0
+# Active: 1 (demo-change)
+# Unmapped: 232
 
-# Author a new proposal
-$ rddf planner new --theme "demo" --priority P2
-# ✓ Created proposal-suggestions.md entry: demo-change
+$ rddf planner attach demo-change \
+    --project-id "demo" --phase phase-2 --theme "demo theme"
+# ✓ attached; planner-state active_projects updated
 
-# Brainstorm + accept
-$ rddf planner brainstorm demo-change
-# (interactive Q&A)
-
-$ rddf planner accept demo-change
-# ✓ proposal.md written
-# ✓ tasks.md scaffolded (no checkboxes yet)
-# ✓ .planner-handoff.json emitted
+$ bash skills/rdd-planner/scripts/planner_stage_exit.sh demo-change
+# planner-handoff v1.1 written: 2026-09-04T10:00:00Z
+# planner stage exit complete: add-demo-change -> rdd-builder
 
 # === Phase 3: rdd-builder ===
 $ rddf builder run demo-change
 # Phase 0: 4-option prompt → approve
+#   ✅ proposal.md populated from improvement 5-段 content (generate_full_proposal.py)
+#   ✅ D3 spec-delta written: openspec/specs/demo-change/spec.md
 # Phase 1: plan generated, plan_quality PASS
 # Phase 2: worktree created, TDD 5-step completed
 # Phase 2.5: review → merge
