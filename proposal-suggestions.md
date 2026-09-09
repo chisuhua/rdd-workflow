@@ -10,3 +10,4 @@
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
 | [bypass-audit-mechanism](.rddf/improvements/bypass-audit-mechanism.md) | P2 | 2026-08-26 流程设计 review | 2026-08-26 | 延迟 (2026-08-28, 维持 v3.2 deferred 决策)  |
+| [fix-v4-rdd-planner-scope-over-assignment](.rddf/improvements/fix-v4-rdd-planner-scope-over-assignment.md) | P1 | 2026-09-09 Oracle 架构审查 (ses_f7a9e01dbffe2Lqu8jYjg4YvL2) | 2026-09-09 | 待 rdd-planner 审查 |
