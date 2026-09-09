@@ -2,17 +2,19 @@
 
 ### Phase A — P0 doc edits (must land)
 
-- [ ] **Task 1: `skills/guide/SKILL.md` (CRITICAL — 30+ sites)**
-  - Modify: `skills/guide/SKILL.md` L96, L143-145, L175-177, L188, L194, L199, L225-227, L238, L246-247, L249, L264, L266, L273, L275, L285, L295, L297, L311-312
-  - Diff: replace all `guide-design`/`guide-plan`/`guide-ship` → `rdd-planner`/`rdd-builder`/`rdd-builder`; add `rdd-quick` row 5 (per ADR-0047); update stage list 5→4 + bypass
-  - Test: AC-1 (grep `skill_use("guide-...")` returns 0 hits)
-  - Commit: TBD
+- [x] **Task 1: `skills/guide/SKILL.md` (CRITICAL — 30+ sites)** ✅ 2026-09-09
+  - Modified: `skills/guide/SKILL.md` L62, L96, L120, L143-145, L175-177, L188, L194, L199, L222-230, L238, L246-249, L257, L262-266, L273-275, L285, L295, L311-312
+  - Diff applied: 11 batch replacements + 14 line edits
+  - Added: rdd-verifier + rdd-quick as new stage commands (per ADR-0034 + ADR-0047)
+  - Remaining: 3 backward-compat mapping notes (L225-227) — legitimate migration documentation
+  - Test: AC-1 ✓ (0 hits for `skill_use("guide-...")`)
+  - Commit: pending (consolidated with Task 2)
 
-- [ ] **Task 2: Create `docs/migration/v3-to-v4.md`**
-  - Modify: `docs/migration/v3-to-v4.md` (NEW file)
-  - Diff: ≥ 80 lines with 5 H2 sections (阶段数变化 / Skill 重命名映射 / Removed skills / 工作流变更 / 升级步骤) + FAQ + 参考 (ADR-0043/0044/0047)
-  - Test: AC-3 (file exists, ≥ 80 lines, contains all 7 required sections)
-  - Commit: TBD
+- [x] **Task 2: Create `docs/migration/v3-to-v4.md`** ✅ 2026-09-09
+  - Created: `docs/migration/v3-to-v4.md` (191 lines, 7 H2 sections: 阶段数变化 / Skill 重命名映射 / Removed skills / 工作流变更 / 升级步骤 / FAQ / 参考)
+  - Cross-reference: docs/ONBOARDING.md:375 link now resolves (was 404 before)
+  - Test: AC-3 ✓ (file exists, ≥ 80 lines, all 7 required sections present)
+  - Commit: pending (consolidated with Task 1)
 
 ### Phase B — P1 doc edits (should land)
 
