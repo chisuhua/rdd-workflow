@@ -16,19 +16,19 @@
 
 ## 核心概念
 
-### 五阶段架构 (arch → design → plan → ship → verify)
+### 四阶段架构 (rdd-arch → rdd-planner → rdd-builder → rdd-verifier) + rdd-quick 旁路
 
-`git commit artifacts` 是 plan → ship 的**工作产物切换点**；形式化的交接由 `.rddf/state/.arch-handoff.json` / `.rddf/state/.plan-handoff.json` 分布在 arch→plan、plan→ship 边界（两个文件都以 `.` 前缀，被 `.gitignore` 排除）。`rdd-verifier` 作为 v3.0+ 第五阶段（per ADR-0034），在 archive 前批量跑 AC 验证。
+`git commit artifacts` 是 planner → builder 的**工作产物切换点**；形式化的交接由 `.rddf/state/.arch-handoff.json` / `.rddf/state/.planner-handoff.json` / `.rddf/state/.plan-handoff.json` 分布在 3 个边界（都以 `.` 前缀，被 `.gitignore` 排除）。`rdd-verifier` 作为第四阶段（per ADR-0034 + v2.0 自包含 LLM 验证 per ADR-0045），在 archive 前批量跑 AC 验证。`rdd-quick` 是 2026-09-07 新增的小改动旁路（per ADR-0047），与主四阶段流水线并行。
 
 | 端 | 职责 | 关键产物 |
 |----|------|---------|
 | **arch 端** (`rdd-arch`) | `setup → adr-create → architecture → roadmap-define → arch-done`（5 子阶段） | `roadmap.md`（默认，可由 ADR-0016 discovery 重新发现）、`docs/adr/ADR-*.md`、`docs/architecture/*-gap-analysis.md`（可选）、`.rddf/state/.arch-handoff.json` |
-| **design 端** (`rdd-planner`) | `preflight → review → approve/reject/defer → design-done`（v2.1+ 提案管理 + 内容审查） | `.rddf/improvements/<name>.md`、`proposal-approved.md` 更新、`.rddf/state/.planner-handoff.json` |
-| **plan 端** (`rdd-builder`) | `plan → verification → execute → review → archive → cleanup`（v4 stage-merge 整合 plan+ship+design per ADR-0043） | `openspec/changes/<name>/{proposal,design,tasks}.md` 已提交、`.rddf/state/.plan-handoff.json`、`.rddf/state/.deps-analysis.json` |
-| **ship 端** (`rdd-builder`) | `plan → verification → execute → review → archive → cleanup → ship-done`（整合进 builder 阶段，详见上方 design/plan 端） | worktree 目录或当前分支（轻量模式）、`.rddf/plans/<name>.md`、归档记录、`.rddf/state/iteration.json` |
-| **verify 端** (`rdd-verifier`) | `discover → batch-verify → classify → route`（v3.0+ 第五阶段，ADR-0034，bounded retry 最多 3 次） | rdd-verifier v2.0 自包含 LLM 验证 + 失败分类（implementation_gap / proposal_drift）+ 回 plan/ship 路由决策（per ADR-0045） |
+| **planner 端** (`rdd-planner`) | `preflight → review → approve/reject/defer → design-done`（v4.0+ 路线图 + 提案治理，per ADR-0038/0042） | `.rddf/improvements/<name>.md`、`proposal-approved.md` 更新、`.rddf/state/.planner-handoff.json` |
+| **builder 端** (`rdd-builder`) | 6-phase 内部状态机 `P0 (approval) → P1 (plan) → P1.5 (deps+exec_mode) → P2 (execute) → P2.5 (review) → P3 (archive)`（v4.0+ 整合 v3.0 plan+ship+design per ADR-0043） | `openspec/changes/<name>/{design,tasks}.md` 已提交、`.rddf/state/.plan-handoff.json`、`.rddf/state/.deps-analysis.json`、worktree 或轻量分支、`.rddf/plans/<name>.md`、`.rddf/state/iteration.json`、归档记录 |
+| **verifier 端** (`rdd-verifier`) | `discover → batch-verify → classify → route`（第四阶段，per ADR-0034，bounded retry 最多 3 次，v2.0 自包含 LLM 验证 per ADR-0045） | `.rddf/state/verifier/<change>.json`（loop state + 分类历史）、`.rddf/state/.ac-verdict-<name>.json`（SHA-fingerprint verdict cache）、`.rddf/state/verifier/<change>.audit.jsonl`（append-only audit log）、失败分类（implementation_gap / proposal_drift）+ 回 builder/planner 路由决策 |
+| **quick 旁路** (`rdd-quick`) | P0-P4 prose 状态机：plan gen → complexity triage → in-place execute → AC verify → complete/retry/escalate（v4.0+ per ADR-0047，绕过 openspec change + worktree） | `.rddf/plans/quick-<name>.md`、`.rddf/state/.quick-history.jsonl`（11 字段原子追加审计日志） |
 
-详细架构决策见 [ADR-0003（奠基：三阶段 arch → plan → ship）](./docs/adr/ADR-0003-three-phase-architecture.md)、[ADR-0025（设计阶段独立化）](./docs/adr/ADR-0025-design-proposal-creation.md)、[ADR-0034（第五阶段 verify 架构）](./docs/adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)、[ADR-0043（v4 stage-merge：plan+ship+design 三合一进 rdd-builder）](./docs/adr/ADR-0043-v4-stage-merge.md)。
+详细架构决策见 [ADR-0003（奠基：三阶段 arch → plan → ship）](./docs/adr/ADR-0003-three-phase-architecture.md)、[ADR-0025（设计阶段独立化）](./docs/adr/ADR-0025-design-proposal-creation.md)、[ADR-0034（第五阶段 verify 架构，v3.0 时期）](./docs/adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)、[ADR-0043（v4 stage-merge：plan+ship+design 三合一进 rdd-builder）](./docs/adr/ADR-0043-v4-stage-merge.md)、[ADR-0044（Wave 3 硬移除 guide-*）](./docs/adr/ADR-0044-v4-stage-merge-wave3-hard-removal.md)、[ADR-0047（rdd-quick 旁路）](./docs/adr/ADR-0047-rdd-quick-bypass-path.md)。
 
 ### Ship 端两种执行模式（worktree 选择）
 
@@ -61,13 +61,14 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 
 | 文件 | 位置 | 用途 | 写入方 |
 |------|------|------|--------|
-| `proposal-suggestions.md` | 项目根目录 | 扫描出的建议列表（JSON 数组格式），随 git 版本控制 | `propose` / `roadmap` / `status` / `rdd-arch` / `guide-plan` |
-| `openspec/changes/<name>/tasks.md` | change 目录 | Execute 阶段任务清单（权威进度来源） | `execute` / `guide-ship` |
+| `proposal-suggestions.md` | 项目根目录 | 扫描出的建议列表（JSON 数组格式），随 git 版本控制 | `propose` / `roadmap` / `status` / `rdd-arch` / `rdd-planner` |
+| `openspec/changes/<name>/tasks.md` | change 目录 | Builder 阶段任务清单（权威进度来源） | `execute` / `rdd-builder` |
 | `docs/adr/ADR-*.md` | ADR 目录 | 架构决策记录（propose 扫描 + 引用源） | 用户手工编写（待 propose 扫描拾取） |
-| `.rddf/plans/<name>.md` | worktree 内或主仓库（轻量模式） | Prometheus 计划文件（ship 端产物，git tracked） | `rdd-workflow-writing-plans` / `guide-ship` |
-| `.rddf/state/.arch-handoff.json` | `.rddf/state/`（gitignored） | arch → plan 阶段交接状态（arch_complete_at / arch_artifacts / adr_dir / roadmap_path / discovered）+ ADR-0016 发现契约 v1 | `rdd-arch`（arch-done 写入）/ `guide-plan`（Phase 0 读取+fallback defaults） |
-| `.rddf/state/.plan-handoff.json` | `.rddf/state/`（gitignored） | plan → ship 阶段交接状态（plan_complete_at / committed_changes / ship_started_at） | `guide-plan`（plan-done 写入）/ `guide-ship`（ship-start 读取） |
-| `.rddf/state/sessions.json` | `.rddf/state/`（gitignored） | **rddf-session 生命周期**（ADR-0017）— 跨 OpenCode session 工作流恢复（stage_arch / stage_plan / stage_ship + heartbeat + 4 选项冲突处理） | `rdd-arch` / `guide-plan` / `guide-ship` 入口 + `rddf-session` 技能 5 子命令 |
+| `.rddf/plans/<name>.md` | worktree 内或主仓库（轻量模式） | TDD 5 步结构计划文件（builder P1 产物，git tracked） | `rdd-workflow-writing-plans` / `rdd-builder` |
+| `.rddf/state/.arch-handoff.json` | `.rddf/state/`（gitignored） | arch → planner 阶段交接状态（arch_complete_at / arch_artifacts / adr_dir / roadmap_path / discovered）+ ADR-0016 发现契约 v1 | `rdd-arch`（arch-done 写入）/ `rdd-planner`（intake 读取+fallback defaults） |
+| `.rddf/state/.planner-handoff.json` | `.rddf/state/`（gitignored） | planner → builder 阶段交接状态（per ADR-0043） | `rdd-planner`（design-done 写入）/ `rdd-builder`（入口读取） |
+| `.rddf/state/.plan-handoff.json` | `.rddf/state/`（gitignored） | builder → verifier 阶段交接状态（plan_complete_at / committed_changes / archive_started_at） | `rdd-builder`（plan-done 写入）/ `rdd-verifier`（scan_queue 读取） |
+| `.rddf/state/sessions.json` | `.rddf/state/`（gitignored） | **rddf-session 生命周期**（ADR-0017）— 跨 OpenCode session 工作流恢复（stage_arch / stage_planner / stage_builder / stage_verifier + heartbeat + 4 选项冲突处理） | `rdd-arch` / `rdd-planner` / `rdd-builder` / `rdd-verifier` 入口 + `rddf-session` 技能 5 子命令 |
 | `.rddf/state/iteration.json` | `.rddf/state/`（gitignored） | **当前 sprint 视图**（v2.0.1）— change 状态机：proposed → planned → in_worktree → completed → archived；multi-hook 写入 | `propose` / `guide-ship` / `execute` / `deps` / `archive` hooks（集中由 `skills/_lib/iteration.py` 管理） |
 | `.rddf/state/deps-analysis.json` | `.rddf/state/`（gitignored） | **结构化** deps 输出（v2.0.1）— 依赖图 + 执行顺序 JSON（schema 见 `skills/_lib/schemas/deps_analysis_schema.json`） | `deps` Step 5b 优先写；Step 6 markdown-fallback 时也写 |
 | `.rddf/state/.deps-candidates.json` | `.rddf/state/`（gitignored） | deps 阶段候选 change 列表（机器可读） | `guide-plan`（deps 阶段）/ `review-phase` 自动增量 |
@@ -168,9 +169,9 @@ from skills import loop_engine
 
 ---
 
-## 完整流程：Arch + Plan 端
+## 完整流程：Arch + Planner 端
 
-Arch 端 5 子阶段（`rdd-arch`）+ Plan 端 4 子阶段（`guide-plan`），跨阶段通过 `.rddf/state/.arch-handoff.json` 软交接。**下面 5 个 `### Phase X` 小节是一个精简的用户视角 5 段流程**（Setup → Roadmap-define → Propose → Deps → Handoff），合并呈现 Arch Phase 1、Arch Phase 4、Plan Phase 2、Plan Phase 3、Plan Phase 4 这五个**最常用户操作**的节点；**完整的 9 阶段子模型**参考下方的存档列表（含 Arch Phase 2 ADR Create、Arch Phase 3 Architecture、Plan Phase 1 Scan）。
+Arch 端 5 子阶段（`rdd-arch`）+ Planner 端 4 子阶段（`rdd-planner`，v4.0+ 路线图 + 提案治理）+ Builder 端 6-phase 内部状态机（`rdd-builder`，v4.0+ 整合 v3.0 plan+ship），跨阶段通过 `.rddf/state/.arch-handoff.json` / `.planner-handoff.json` / `.plan-handoff.json` 软交接。**下面 5 个 `### Phase X` 小节是一个精简的用户视角 5 段流程**（Setup → Roadmap-define → Propose → Deps → Handoff），合并呈现 Arch Phase 1、Arch Phase 4、Planner Phase 2、Planner Phase 3、Builder Phase 1 这五个**最常用户操作**的节点；**完整的 Arch 5 + Planner 4 + Builder 6 子阶段模型**参考下方的存档列表。
 
 **精简 5 段用户视角（下面 5 个 `### Phase X` 小节逐一展开）：**
 

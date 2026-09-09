@@ -2,10 +2,10 @@
 
 ## What rdd-workflow Is
 
-rdd-workflow is an **OpenSpec-compatible AI development workflow package**. It manages changes via a five-stage lifecycle (`propose → plan → execute → status → archive`), wrapped in a five-phase architecture (`arch → design → plan → ship → verify`, per ADR-0034). It runs on any OpenSpec-aware AI coding assistant (opencode, Claude Code, Cursor, Aider, etc.) via the Skill discovery mechanism, with no runtime dependency on a specific vendor.
+rdd-workflow is an **OpenSpec-compatible AI development workflow package**. It manages changes via a 5-stage lifecycle (`propose → plan → execute → status → archive`), wrapped in a **four-stage v4 architecture** (`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`, per ADR-0043), with a `rdd-quick` small-change bypass path (per ADR-0047). It runs on any OpenSpec-aware AI coding assistant (opencode, Claude Code, Cursor, Aider, etc.) via the Skill discovery mechanism, with no runtime dependency on a specific vendor.
 
 The package ships:
-- **27 user-invocable skills** (5 phase guides + 22 sub-skills), each a `SKILL.md` with structured frontmatter.
+- **5 stage skills** (`rdd-arch`, `rdd-planner`, `rdd-builder`, `rdd-verifier` + `rdd-quick` bypass) + **22 sub-skills** = 27 user-invocable skills total, each a `SKILL.md` with structured frontmatter.
 - A **shared `_lib/`** of 60+ Python modules and bash helpers implementing state, gate, tribunal, session, loop engine, etc.
 - A **`rddf` CLI** (`rddf status`, `rddf session ...`, `rddf discover-ship-changes`, etc.) for scripting and dashboards.
 
@@ -13,18 +13,21 @@ The package ships:
 
 ```mermaid
 graph TB
-    subgraph Phases[Five Phases]
-    A[arch<br/>guide-arch]
-    D[design<br/>guide-design]
-    P[plan<br/>guide-plan]
-    S[ship<br/>guide-ship]
-    V[verify<br/>rdd-verifier<br/>ADR-0034]
+    subgraph Stages[Four Stages v4.0+ per ADR-0043]
+    A[arch<br/>rdd-arch]
+    P[planner<br/>rdd-planner<br/>ADR-0038/0042]
+    B[builder<br/>rdd-builder<br/>6-phase P0-P3]
+    V[verifier<br/>rdd-verifier<br/>ADR-0034]
+    end
+
+    subgraph Bypass[Bypass Path per ADR-0047]
+    Q[rdd-quick<br/>in-place execute]
     end
 
     subgraph Lib[_lib/ Shared Modules]
     SV[state_vector]
     EL[event_log]
-    HO[arch/design/plan-handoff<br/>files]
+    HO[arch/planner/builder-handoff<br/>files]
     GT[gate]
     TR[tribunal]
     LO[loop_engine]
@@ -37,37 +40,38 @@ graph TB
     end
 
     A --> HO
-    D --> HO
     P --> HO
-    S --> HO
-    V -. ac-verifier .-> S
+    B --> HO
+    V -. bounded retry .-> B
+    Q -. bypasses ceremony .-> A
     A --> GT
-    D --> GT
     P --> GT
-    S --> GT
+    B --> GT
+    V --> GT
     LO --> SV
     LO --> EL
     LO --> TR
     LO --> SE
     SK -. invokes .-> A
-    SK -. invokes .-> D
     SK -. invokes .-> P
-    SK -. invokes .-> S
+    SK -. invokes .-> B
+    SK -. invokes .-> V
+    SK -. invokes .-> Q
     CLI -. reads/writes .-> SV
     CLI -. reads .-> HO
 ```
 
 ## Module Map
 
-### Phase guides (skills/)
+### Stage skills (skills/)
 
-| Skill | One-liner |
-|-------|-----------|
-| `guide-arch` | Define architecture: ADR creation, gap analysis, roadmap. |
-| `guide-design` | Manage improvement proposals: create, review (approve/reject/defer), content gate. |
-| `guide-plan` | Generate change artefacts: proposal, specs, design.md, tasks.md; run deps. |
-| `guide-ship` | Execute changes: worktree setup, plan generation, run, archive, cleanup. |
-| `rdd-verifier` | v3.0+ 5th phase: batch AC verification before archive; routes failures back to plan/ship (per ADR-0034). |
+| Skill | Stage | One-liner |
+|-------|-------|-----------|
+| `rdd-arch` | Stage 1 — arch | Define architecture: ADR creation, gap analysis, roadmap. |
+| `rdd-planner` | Stage 2 — planner | Roadmap + proposal authoring orchestrator (per ADR-0038/0042); v3.0 design+plan merged. |
+| `rdd-builder` | Stage 3 — builder | Approval + plan + execute + archive; 6-phase internal state machine (per ADR-0043). |
+| `rdd-verifier` | Stage 4 — verifier | Batch AC verification before archive; routes failures back to builder (per ADR-0034); v2.0 self-contained LLM verification (per ADR-0045). |
+| `rdd-quick` | Bypass (ADR-0047) | Small-change in-place execute; skips openspec change + worktree ceremony. |
 
 ### Sub-skills (called by phase guides)
 
@@ -112,15 +116,17 @@ graph TB
 | `rddf discover-arch-artifacts` | Re-scan ADR/roadmap/architecture dirs. |
 | `rddf env-check` | Print env snapshot (CLI / git / branch). |
 
-## Why Five Phases, Not Three
+## Why Four Stages, Not Three or Five
 
 v1.x used a single `guide.md` with 10 phases (ADR-0001 refactored this into two phases: spec/ship). v2.0 (ADR-0003) refactored again into **three** phases (arch / plan / ship) — splitting at the natural break between "what we want to build" (plan) and "how we build it" (ship).
 
-In practice, **arch** accumulated two distinct responsibilities: defining the **architecture itself** (ADRs, roadmap) and **managing improvement proposals** against that architecture. By v2.0.6 the proposal-review load was heavy enough that a second gate, a content review pass, and a defer mechanism all crowded into arch's Phase 5.5. **ADR-0025** split those responsibilities: `guide-arch` keeps architecture definition; `guide-design` owns proposal lifecycle (create → review → approve/reject/defer → two-tier content review).
+In practice, **arch** accumulated two distinct responsibilities: defining the **architecture itself** (ADRs, roadmap) and **managing improvement proposals** against that architecture. By v2.0.6 the proposal-review load was heavy enough that a second gate, a content review pass, and a defer mechanism all crowded into arch's Phase 5.5. **ADR-0025** split those responsibilities: `rdd-arch` keeps architecture definition; `rdd-planner` (formerly `guide-design`) owns proposal lifecycle (create → review → approve/reject/defer → two-tier content review). In v4.0 this became a full second stage (per ADR-0038/0042/0043).
 
-In v3.0, AC verification was extracted from the inline `archive_gate_check` (which embedded `ac-verifier`) into a separate fifth phase. **ADR-0034** elevates `rdd-verifier` to its own phase (`discover → batch-verify → classify → route`), giving bounded retry (max 3) and heuristic failure classification (implementation_gap vs proposal_drift) before archive.
+In v3.0, AC verification was extracted from the inline `archive_gate_check` (which embedded `ac-verifier`) into a separate fifth phase. **ADR-0034** elevates `rdd-verifier` to its own phase (`discover → batch-verify → classify → route`), giving bounded retry (max 3) and heuristic failure classification (implementation_gap vs proposal_drift) before archive. v2.0 further inlined the LLM verification protocol into the agent itself (per ADR-0045), removing the external `ac-verifier` subprocess.
 
-This is why the current architecture is **five phases** (arch → design → plan → ship → verify), and any doc that still says "three phases" or "four phases" is stale.
+In v4.0, the design + plan + ship stages were merged into a single `rdd-builder` 6-phase internal state machine (per **ADR-0043** §3.4): approval → plan → deps → execute → review → archive. This collapsed the 5-stage pipeline to 4 stages and added `rdd-quick` as a parallel bypass path (per **ADR-0047**).
+
+This is why the current architecture is **four stages** (`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`) plus a `rdd-quick` bypass path. Any doc that still says "three stages" (the v2.0 model) or "five stages" (the v3.0 model) is stale.
 
 ## Why a Loop Engine
 

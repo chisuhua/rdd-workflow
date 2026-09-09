@@ -31,15 +31,15 @@ role:
     human_involvement: "high"
 ---
 
-> **Stage 3 (2026-09-03)**: 此 skill 从 `rdd-arch` 重命名为 `rdd-arch`（per D1a 渐进策略）。旧名称 `rdd-arch` 通过 `skills/rdd-arch/SKILL.md` 的 5 行 shim 兼容至 v3.x + 2 minor release。
+> **Stage 3 (2026-09-03)**: 此 skill 从 `guide-arch` 重命名为 `rdd-arch`（per D1a 渐进策略）。旧名称 `guide-arch` 通过 `skills/rdd-arch/SKILL.md` 的 5 行 shim 兼容至 v3.x + 2 minor release。
 > `rdd-arch` 是 canonical name；本 skill 与 `rdd-planner`、`rdd-verifier` 命名对齐。
-> 提案审批（v2.1 之前在 rdd-arch Phase 5.5）已迁移到 `guide-design` 阶段。
+> 提案审批（v2.1 之前在 rdd-arch Phase 5.5）已迁移到 `rdd-planner` 阶段。
 
 # rdd-workflow 工作流 — Arch-Side Guide
 
-本技能是 rdd-workflow 工作流 v3.0+ 的 **arch 端状态机**：负责在生成 OpenSpec change artifacts 之前的**架构定义**工作——环境检测、ADR 文档管理、架构差距分析、路线图定义。arch 阶段是**五阶段架构**（arch → design → plan → ship → verify，per [ADR-0034](../adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)）的第一阶段，专为高人工介入、低频执行的架构治理工作而设计。
+本技能是 rdd-workflow 工作流 v4.0+ 的 **arch 端状态机**：负责在生成 OpenSpec change artifacts 之前的**架构定义**工作——环境检测、ADR 文档管理、架构差距分析、路线图定义。arch 阶段是**四阶段架构**（`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`，per [ADR-0043](../adr/ADR-0043-rdd-workflow-v4-stage-merge.md)）的第一阶段，专为高人工介入、低频执行的架构治理工作而设计。
 
-> **演进历史**：v2.0 三阶段架构（arch → plan → ship，per ADR-0003）→ v2.1 扩展为四阶段（+ design，per ADR-0025）→ v3.0+ 扩展为五阶段（+ verify，per ADR-0034）。
+> **演进历史**：v2.0 三阶段架构（arch → plan → ship，per ADR-0003）→ v2.1 扩展为四阶段（+ design，per ADR-0025）→ v3.0+ 扩展为 5-stage（+ verify，per ADR-0034）→ v4.0+ 合并为四阶段（per ADR-0043）。
 
 **职责边界**：
 - **角色定义**：见 frontmatter `role:` 字段（ADR-0028）
@@ -55,28 +55,32 @@ skill_use("rdd-arch")   # 无参数版本
 
 ---
 
-## Architecture: v3.0+ 五阶段拆分（per ADR-0034）
+## Architecture: v4.0+ 四阶段拆分（per ADR-0043，supersedes v3.0+ 5-stage per ADR-0034）
 
-本技能是 OpenSpec 工作流 v3.0+ 重构后的 **arch 端**实现。在 v3.0+ 重构前，v2.1 已拆分为四个职责清晰的子技能（per ADR-0025）；v3.0+ 再拆出独立的第五阶段 `rdd-verifier`（per ADR-0034）。按**人工介入程度**和**职责类型**切分：
+本技能是 OpenSpec 工作流 v4.0+ 重构后的 **arch 端**实现。在 v4.0+ 重构前，v3.0+ 历经五个职责清晰的子技能（per ADR-0025 + ADR-0034）；v4.0+ 合并为四阶段 + 1 旁路（per ADR-0043 + ADR-0047）。按**人工介入程度**和**职责类型**切分：
 
 | 子技能 | 阶段 | 职责 | 人工介入 |
 |--------|------|------|---------|
-| `rdd-arch`（本技能） | arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-validation → arch-done | **高** |
-| `guide-design` | design | 设计管理：提案创建 → 审查 → 批准/拒绝/延迟 → design-done | **中** |
-| `guide-plan` | plan | 变更生成：审批提案消费 → propose → deps → plan-done | **中** |
-| `guide-ship` | ship | 变更执行：plan → execute → archive → cleanup → ship-done | **低** |
-| `rdd-verifier` | verify | 验证回环：批量 AC 验证 + 启发式分类 + bounded retry → verify-done（v3.0+ 新增，per ADR-0034） | **低** |
-| `guide`（无状态推荐器） | — | 扫描五阶段状态，推荐下一步 | — |
+| `rdd-arch`（本技能） | Stage 1 — arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-validation → arch-done | **高** |
+| `rdd-planner` | Stage 2 — planner | 路线图 + 提案治理：proposal authoring → review → approve/reject/defer → design-done（v3.0 design+plan 合并，per ADR-0038/0042/0043） | **中** |
+| `rdd-builder` | Stage 3 — builder | 审批 + 执行 + 归档：6-phase 内部状态机 P0 (approval) → P1 (plan) → P1.5 (deps+exec_mode) → P2 (execute) → P2.5 (review) → P3 (archive with verifier retry)，per ADR-0043 stage-merge | **中→低** |
+| `rdd-verifier` | Stage 4 — verifier | 验证回环：批量 AC 验证 + 启发式分类（implementation_gap vs proposal_drift） + bounded retry → verify-done（per ADR-0034；v2.0 自包含 LLM 验证 per ADR-0045） | **低** |
+| `rdd-quick` | **旁路路径**（Bypass, per ADR-0047） | 小改动的快速执行：P0 (plan gen) → P1 (complexity triage) → P2 (in-place execute) → P3 (AC verify) → P4 (complete/retry/escalate)。跳过 openspec change + worktree | **中** |
+| `guide`（无状态推荐器） | — | 扫描四阶段 + 旁路状态，推荐下一步 | — |
 
 **核心边界（arch-done 即切换点）**：
 
 ```
-[rdd-arch]  --(arch-done: ADR ≥ 1 + roadmap.md)-->  [guide-design]  --(design-done: 所有提案有决策)-->  [guide-plan]
-   arch 端                                              design 端                                           plan 端
-   owns: docs/adr/ADR-*.md, roadmap.md,               owns: .rddf/improvements/, proposal-                     owns: openspec/changes/<name>/
-         docs/architecture/*-gap-analysis.md                 suggestions.md, proposal-approved.md                {proposal,design,tasks}.md
-   exits: .rddf/state/.arch-handoff.json                     exits: .rddf/state/.design-handoff.json             exits: .rddf/state/.plan-handoff.json
-       --(plan-done)--> [guide-ship] --(ship-done)--> [rdd-verifier] --(verify-done)--> [archive]
+[rdd-arch]  --(arch-done: ADR ≥ 1 + roadmap.md)-->  [rdd-planner]  --(design-done: 所有提案有决策)-->  [rdd-builder]
+   arch 端                                                planner 端                                          builder 端
+   owns: docs/adr/ADR-*.md, roadmap.md,               owns: roadmap.md, proposal-suggestions.md,             owns: openspec/changes/<name>/
+        docs/architecture/*-gap-analysis.md                 proposal-approved.md,                              {design,tasks}.md, .rddf/wt/<name>/,
+        .rddf/roadmap/phases/*.md,                         .rddf/improvements/*.md                            .rddf/plans/<name>.md,
+        .rddf/roadmap/features/*.md                        (proposal.md authoring only)                        .rddf/state/builder/<name>.json
+   exits: .rddf/state/.arch-handoff.json                     exits: .rddf/state/.planner-handoff.json       exits: .rddf/state/.plan-handoff.json
+       --(plan-done)--> [rdd-builder P0-P3] --(archive)--> [rdd-verifier] --(verify-done)--> [openspec archive]
+
+[rrd-quick]  --(P0-P4 in-place, no worktree)--> [git commit on current branch]  (bypass, per ADR-0047)
 ```
 
 **为什么这样切**（节选自 ADR-0003）：
@@ -219,7 +223,7 @@ fi
 
 当前 ADR 数量: 3
 最新 ADR:
-  - ADR-0003: 三阶段架构重构 (arch → plan → ship) [已采纳, v3.0+ 已演进为五阶段 per ADR-0034]
+  - ADR-0003: 三阶段架构重构 (arch → plan → ship) [已采纳, v3.0+ 已演进为 5-stage per ADR-0034]
   - ADR-0002: 目标驱动接口与交互模式配置 [已采纳]
   - ADR-0001: rdd-workflow 状态机分相 [已替代为 ADR-0002+0003]
 
@@ -848,7 +852,7 @@ ls roadmap.md
 
 ## 参考资料
 
-- **ADR-0003** — v2.0 三阶段架构（arch → plan → ship）的奠基 ADR；v2.1 扩展为四阶段（+ design）见 ADR-0025；v3.0+ 扩展为五阶段（+ verify）见 ADR-0034
+- **ADR-0003** — v2.0 三阶段架构（arch → plan → ship）的奠基 ADR；v2.1 扩展为四阶段（+ design）见 ADR-0025；v3.0+ 扩展为 5-stage（+ verify）见 ADR-0034；v4.0+ 合并为四阶段见 ADR-0043
 - **ADR-0001** — 双阶段状态机分离（v1.x 架构，guide-spec 的来源）
 - **ADR-0007** — 门控机制（arch-done 双重门控的设计依据）
 - **ADR-0010** — 多会话管理（arch 阶段的人工介入设计）

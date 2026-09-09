@@ -58,10 +58,11 @@ bash install.sh /path/to/project
 
 1. **安装到项目**：执行 `skill_use("INSTALL")` 将技能复制到项目目录
 2. **使用子技能**：
-   - `skill_use("guide")` - 推荐器入口(扫描状态,建议调 arch、plan 或 ship)
-   - `skill_use("rdd-arch")` - Arch 端状态机(setup → roadmap → arch-done)
-   - `skill_use("rdd-builder")` - Plan 端状态机(scan → propose → deps → plan-done)
-   - `skill_use("rdd-builder")` - Ship 端状态机(plan → execute → archive → cleanup)
+   - `skill_use("guide")` - 推荐器入口(扫描状态,建议调 arch、planner、builder 或 verifier)
+   - `skill_use("rdd-arch")` - Arch 端状态机(setup → adr → roadmap → arch-done)
+   - `skill_use("rdd-planner")` - Planner 端状态机(proposal authoring → review → approve/reject/defer → design-done, per ADR-0038/0042)
+   - `skill_use("rdd-builder")` - Builder 端状态机(6-phase 内部 P0→P3: approval → plan → deps → execute → review → archive, per ADR-0043 stage-merge)
+   - `skill_use("rdd-verifier")` - Verifier 端(批量 AC 验证 + 启发式分类 + bounded retry, per ADR-0034 + ADR-0045 自包含 LLM 验证)
    - `skill_use("rdd-quick")` - **快速执行路径**(per ADR-0047)：绕过 openspec change 与 worktree，就地执行小改动并 Oracle 验证
    - `skill_use("feature")` - feature 管理(summary/graph/status/order)
    - `skill_use("propose")` - 子技能(被 rdd-builder 调用)
@@ -100,21 +101,22 @@ verification:
 
 详见 [ADR-0036](docs/adr/ADR-0036-rddf-project-yaml-config.md) 与 [proposal #10](https://github.com/chisuhua/rdd-workflow/issues/10)。
 
-## v3.0 新特性
+## v4.0+ 当前架构
 
-### 五阶段架构 (arch → design → plan → ship → verify)
+### 四阶段架构 (rdd-arch → rdd-planner → rdd-builder → rdd-verifier) + rdd-quick 旁路
 
 | 阶段 | 技能 | 职责 | 人工介入 |
 |------|------|------|---------|
 | **Arch** | `rdd-arch` | 架构定义（ADR、roadmap、差距分析） | 高 |
-| **Design** | `rdd-builder` | 设计管理 + 内容审查（提案创建、审查、批准/拒绝/延迟；approve 即落盘 + 两层内容审查） | 中 |
-| **Plan** | `rdd-builder` | 变更生成（scan、propose、deps） | 中 |
-| **Ship** | `rdd-builder` | 变更执行（worktree、execute、archive） | 低 |
-| **Verify** | `rdd-verifier` | 验证回环（批量 AC 验证 + 启发式分类 + 失败回 plan/ship，per ADR-0034） | 低 |
+| **Planner** | `rdd-planner` | 路线图 + 提案治理（proposal authoring、review、approve/reject/defer；per ADR-0038/0042） | 中 |
+| **Builder** | `rdd-builder` | 审批 + 执行 + 归档（6-phase 内部状态机 P0→P3 整合 approval+plan+execute+archive per ADR-0043 stage-merge） | 中→低 |
+| **Verifier** | `rdd-verifier` | 验证回环（批量 AC 验证 + 启发式分类 + 失败回 builder，per ADR-0034；v2.0 自包含 LLM 验证 per ADR-0045） | 低 |
+| **Quick** (旁路) | `rdd-quick` | 小改动的快速执行（绕过 openspec change + worktree，就地 TDD 5 步 + Oracle 验证，per ADR-0047） | 中 |
 
-> **v4.0+ 变更**: 五阶段架构压缩为四阶段，v4 stage-merge (per ADR-0043)。AC 验证保留为独立 rdd-verifier 阶段（per ADR-0034）。
-> **v2.1 历史**（已废弃于 v3.0+）: 提案管理原在 rdd-builder 阶段；v4.0 wave3 hard removal（ADR-0044）已删除该 skill，由 rdd-builder P0 接管审批。
-> `guide-spec` 别名已在 v2.0 移除。请直接使用 `rdd-arch` → `rdd-builder` → `rdd-builder` → `rdd-builder` → `rdd-verifier`。
+> **v4.0+ 架构（2026-09-04 起）**: 三阶段（v2.0）和 5-stage（v3.0）历史模型已合并为四阶段（per ADR-0043/0044）。AC 验证保留为独立 `rdd-verifier` 阶段（per ADR-0034）。`rdd-quick` 是 2026-09-07 新增的小改动旁路（per ADR-0047），与主四阶段流水线并行。
+> **v3.0+ 历史**（已废弃于 v4.0+）: 5-stage 架构（`arch → design → plan → ship → verify`）在 v4.0+ 已合并为四阶段；Wave 3 hard removal（ADR-0044）已删除 `guide-design`/`guide-plan`/`guide-ship` 三个 skill。
+> **v2.1 历史**（已废弃于 v3.0+）: 提案管理原在 `rdd-arch` Phase 5.5，已迁移到 `rdd-planner` 阶段（per ADR-0025）。
+> `guide-spec` 别名已在 v2.0 移除。请直接使用 v4 四阶段流程：`rdd-arch` → `rdd-planner` → `rdd-builder` → `rdd-verifier`（或 `rdd-quick` 旁路）。
 
 ### Guide-Ship 执行契约 (v2.0.7+)
 
@@ -129,7 +131,7 @@ verification:
 
 ### 推荐器升级
 
-`guide` 推荐器现在支持五阶段扫描：
+`guide` 推荐器现在支持四阶段 + 旁路扫描：
 
 ```
 💡 Recommended: skill_use("rdd-builder")
@@ -399,11 +401,11 @@ rdd-workflow/
 └── skills/
     ├── INSTALL.md                       # 安装程序（第一入口）
     ├── guide/SKILL.md                   # 推荐器入口
-    ├── rdd-arch/SKILL.md              # Arch 阶段状态机(v2.0+)
-    ├── rdd-builder/SKILL.md            # Design 阶段状态机(v2.1+, 提案管理)
-    ├── rdd-builder/SKILL.md              # Plan 阶段状态机(v2.0+)
-    ├── rdd-builder/SKILL.md              # Ship 端状态机
-    ├── rdd-verifier/SKILL.md            # Verify 阶段状态机(v3.0+, 批量 AC 验证, ADR-0034; v2.0 内联自包含 LLM 验证, ADR-0045)
+    ├── rdd-arch/SKILL.md              # Arch 阶段状态机(v2.0+; Stage 3 rename per ADR-0042)
+    ├── rdd-planner/SKILL.md           # Planner 阶段状态机(v4.0+, 路线图 + 提案治理, per ADR-0038/0042)
+    ├── rdd-builder/SKILL.md           # Builder 阶段状态机(v4.0+, 6-phase P0-P3 整合 approval+plan+execute+archive per ADR-0043)
+    ├── rdd-verifier/SKILL.md          # Verifier 阶段状态机(v3.0+ 第4阶段, 批量 AC 验证 per ADR-0034; v2.0 内联自包含 LLM 验证 per ADR-0045)
+    ├── rdd-quick/SKILL.md             # 快速执行旁路(v4.0+ per ADR-0047, 跳过 openspec change + worktree)
     ├── feature/SKILL.md                 # feature 管理 (v2.0+)
     ├── rddf-session/SKILL.md            # 跨 OpenCode session 恢复 (ADR-0017)
     ├── propose/SKILL.md                 # 子技能(被 rdd-builder 调用)

@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### fix-doc-drift-v4-architecture (sync docs to v4 4-stage + rdd-quick bypass, 2026-09-09)
+
+Per ADR-0043 (v4 stage-merge), ADR-0044 (Wave 3 hard removal of `guide-*` skills), and ADR-0047 (`rdd-quick` bypass path). Closes the documentation drift surfaced by 2026-09-09 code-vs-doc audit: 13 drift sites across 7 files where user-facing and architectural documentation still described the pre-v4 5-phase model.
+
+- **`README.md`**: "使用流程" sublist split `rdd-builder` into `rdd-planner` (Planner 端) + `rdd-builder` (Builder 端); "v3.0 新特性" section renamed to "v4.0+ 当前架构"; phase table collapsed to 4 rows + 1 bypass; skill chain `rdd-arch → rdd-planner → rdd-builder → rdd-verifier`; directory tree includes `rdd-planner` and `rdd-quick`.
+- **`docs/architecture/overview.md`**: "five-phase" → "four-stage"; phase guides table rewritten with 4 stage entries + 1 bypass; mermaid diagram updated to 4 nodes + bypass arrow; "Why Five Phases" section renamed to "Why Four Stages" with corrected v3/v4 history; **inverted rule at L123 fixed** (was warning that "four phases" is stale; v4 IS four stages).
+- **`docs/architecture/workflow-phases.md`**: full rewrite reflecting 4-stage v4 + `rdd-quick` bypass; entry skills renamed to `rdd-*`; State file path corrected to canonical `.rddf/state/verifier/<change>.json` (was `.rdd-verifier-state.json`); deprecated `ac-verifier` reference removed.
+- **`skills/rdd-arch/SKILL.md`**: **L34 self-reference bug fixed** (was `从 rdd-arch 重命名为 rdd-arch`, should be `从 guide-arch 重命名为 rdd-arch`); L40 "五阶段" → "四阶段"; sub-skill table 5 → 4 stage rows + 1 bypass; workflow diagram updated.
+- **`USAGE.md`** (P1): H2 header "五阶段架构" → "四阶段架构 + rdd-quick 旁路"; phase responsibility table rewritten with 4 端 + 1 旁路; L173 phase numbering notes Builder 6-phase instead of "Plan 4 + Ship 7".
+- **`docs/architecture/README.md`** (P1): "Five-phase" → "Four-stage" with ADR-0043/0044/0047 references.
+- **`AGENTS.md`** (P1): Round A/B/C inline-bash extraction sections — `guide-plan.md` / `guide-ship.md` references annotated with v4 canonical names (`rdd-planner.md` / `rdd-builder.md`); D3 design-pre-created section clarifies `rdd-planner` is current owner.
+- **New `tests/integration/test_v4_doc_drift_contracts.bats`** (10 cases): locks the v4 state; any regression to v3 5-phase descriptions or reintroduction of `guide-*` skill names in cited files fails CI.
+
 ### remove-ac-verifier-completely (delete ac-verifier skill + ac-verify CLI)
 
 Per `inline-ac-verifier-into-rdd-verifier` (ADR-0045) and `verifier-v2-hardening` Phase 7 closure: the `ac-verifier` skill was deprecated in v2.0 and scheduled for removal. This change executes that removal.
