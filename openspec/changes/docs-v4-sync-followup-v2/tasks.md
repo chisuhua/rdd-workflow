@@ -61,14 +61,31 @@
 
 - [ ] **Task 11: improvement-check-mechanisms.md L46, L465 (duplicate)**
   - Modify: same file L46 + L465
-  - Diff: `skills/guide-ship/scripts/ship_review.sh` → `skills/rdd-builder/scripts/ship_review.sh`
+  - Diff: `skills/guide-ship/scripts/ship_review.sh` → **`skills/rdd-builder/scripts/phase2_5_review.sh`** (v4 renamed; `ship_review.sh` was deleted in Wave 3 — Oracle P0 catch)
   - Test: AC-4
   - Commit: TBD
 
 - [ ] **Task 12: improvement-check-mechanisms.md L138, L466 (duplicate)**
   - Modify: same file L138 + L466
-  - Diff: `skills/guide-ship/scripts/ship_archive.sh:239` → `skills/rdd-builder/scripts/ship_archive.sh:239`
+  - Diff: `skills/guide-ship/scripts/ship_archive.sh:239` → **`skills/rdd-builder/scripts/phase3_archive.sh`** (v4 renamed; `ship_archive.sh` was deleted in Wave 3 — Oracle P0 catch)
   - Test: AC-4
+  - Commit: TBD
+
+- [ ] **Task 12b: improvement-check-mechanisms.md L81 (Oracle P1 catch)**
+  - Modify: same file L81
+  - Diff: `guide-arch/scripts/arch_env_check.sh` → `rdd-arch/scripts/arch_env_check.sh` (inline code reference, no `skills/` prefix)
+  - Test: AC-3 (covered by Test 12 3-pattern via `skill_use`/`Entry skill`/`skills/`)
+  - Commit: TBD
+
+- [ ] **Task 8b: ONBOARDING.md L105 ac-verifier dead link (Oracle P1 catch)**
+  - Modify: `docs/ONBOARDING.md` L105
+  - Diff: `ac-verifier.md` → remove (skill was deleted 2026-09-07 per ADR-0045); reword transition line
+  - Test: AC-7 indirectly (this is the same drift class)
+  - Commit: TBD
+
+- [ ] **Task 8c: ONBOARDING.md L370 `guide-*.md` instruction (Oracle P1 catch)**
+  - Modify: `docs/ONBOARDING.md` L370
+  - Diff: "更新对应的 `guide-*.md` 文件" → "更新对应的 `rdd-*.md/SKILL.md` 文件" or "更新对应的 skill SKILL.md"
   - Commit: TBD
 
 ### Phase C — P1 doc edits
@@ -85,15 +102,20 @@
   - Test: AC-6
   - Commit: TBD
 
-- [ ] **Task 15: skills-and-handoff.md L33-36**
-  - Modify: `docs/architecture/skills-and-handoff.md` L33-36
-  - Diff: 4 `skills/guide-arch/SKILL.md` discovery paths → `skills/rdd-arch/SKILL.md`
+- [ ] **Task 15: skills-and-handoff.md L31 + L33-36 (5 lines, Oracle caught L31 miss)**
+  - Modify: `docs/architecture/skills-and-handoff.md` L31 + L33-36
+  - Diff:
+    - L31: `skill_use("guide-arch")` → `skill_use("rdd-arch")` (live invocation, **Oracle P1 catch — user would 404**)
+    - L33-36: 4 `skills/guide-arch/SKILL.md` discovery paths → `skills/rdd-arch/SKILL.md`
   - Test: AC-5
   - Commit: TBD
 
-- [ ] **Task 16: multi-project-ai-collaborative-development-gap-analysis.md L63**
-  - Modify: `docs/architecture/multi-project-ai-collaborative-development-gap-analysis.md` L63
-  - Diff: skill column list `guide-arch/guide-design/guide-plan/guide-ship` → `rdd-arch/rdd-planner/rdd-builder`
+- [ ] **Task 16: multi-project-ai-collaborative-development-gap-analysis.md L52, L63, L148 (3 lines, Oracle caught 2 misses)**
+  - Modify: `docs/architecture/multi-project-ai-collaborative-development-gap-analysis.md` L52 + L63 + L148
+  - Diff:
+    - L52: "AI 在 guide-design 阶段" → "AI 在 rdd-planner 阶段" (live prose)
+    - L63: skill column list `guide-arch/guide-design/guide-plan/guide-ship` → `rdd-arch/rdd-planner/rdd-builder`
+    - L148: "升级 guide-plan deps 阶段" → "升级 rdd-planner deps 阶段" (live prose)
   - Test: AC-3
   - Commit: TBD
 
@@ -136,9 +158,9 @@
   - Test: AC-10
   - Commit: not applicable
 
-- [ ] **Task 23: AC-3 grep verification**
-  - Run: `grep -rn "guide-design\|guide-plan\|guide-ship" docs/architecture/`
-  - Expect: 0 hits
+- [ ] **Task 23: AC-3 grep verification (Test 12 3-pattern with shim exclusion)**
+  - Run: `grep -rnE 'skill_use\(\"(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)\"\)|\*\*?Entry skill\*\*?: \`(guide-arch|guide-design|guide-plan|guide-ship)\`|skills/(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)/' docs/architecture/ | grep -v 'shim\|DEPRECATED\|compat'`
+  - Expect: 0 hits (after Task 18 extends Test 12 to all docs/architecture/*.md with shim exclusion; shim exclusion is required to avoid false-positive on rdd-arch-rdd-planner-integration.md L337/340 which legitimately document the compat shim)
   - Test: AC-3
   - Commit: not applicable
 

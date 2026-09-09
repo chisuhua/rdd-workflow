@@ -40,10 +40,11 @@ The parent change `fix-doc-drift-v4-architecture` (commit f4d675b) shipped 8 P0/
    - L322-324 directory tree: rdd-* names
    - L373 history paragraph: add v4 line, mark v3 as historical
 
-2. **`docs/architecture/improvement-check-mechanisms.md`** (5 dead link fixes)
-   - L45: `skills/guide-ship/SKILL.md:387-475` → `skills/rdd-builder/SKILL.md` (Phase 2.5 review section)
-   - L46: `skills/guide-ship/scripts/ship_review.sh` → `skills/rdd-builder/scripts/ship_review.sh`
-   - L138: `skills/guide-ship/scripts/ship_archive.sh:239` → `skills/rdd-builder/scripts/ship_archive.sh:239`
+2. **`docs/architecture/improvement-check-mechanisms.md`** (6 dead link fixes — Oracle review caught 1 missed)
+   - L45: `skills/guide-ship/SKILL.md:387-475` → `skills/rdd-builder/SKILL.md` (Phase 2.5 review section; rdd-builder/SKILL.md has the Phase 2.5 section)
+   - L46: `skills/guide-ship/scripts/ship_review.sh` → **`skills/rdd-builder/scripts/phase2_5_review.sh`** (v4 renamed; `ship_review.sh` was deleted)
+   - L81: `guide-arch/scripts/arch_env_check.sh` → **`rdd-arch/scripts/arch_env_check.sh`** (no `skills/` prefix in inline reference; v4 renamed guide-arch → rdd-arch)
+   - L138: `skills/guide-ship/scripts/ship_archive.sh:239` → **`skills/rdd-builder/scripts/phase3_archive.sh`** (v4 renamed; `ship_archive.sh` was deleted)
    - L465: same as L46
    - L466: same as L138
 
@@ -51,11 +52,14 @@ The parent change `fix-doc-drift-v4-architecture` (commit f4d675b) shipped 8 P0/
    - L34: "被 guide-plan 调用" → "被 rdd-planner 调用"
    - L186: "guide-ship.md (source _lib/archive.sh)" → "rdd-builder.md (source _lib/archive.sh)"
 
-4. **`docs/architecture/skills-and-handoff.md`** (4 line fixes)
+4. **`docs/architecture/skills-and-handoff.md`** (5 line fixes — Oracle review caught 1 missed)
+   - L31: `skill_use("guide-arch")` (live invocation) → `skill_use("rdd-arch")` (**Oracle P1 miss** — user following this would 404)
    - L33-36: 4 `skills/guide-arch/SKILL.md` discovery paths → `skills/rdd-arch/SKILL.md`
 
-5. **`docs/architecture/multi-project-ai-collaborative-development-gap-analysis.md`** (1 line fix)
+5. **`docs/architecture/multi-project-ai-collaborative-development-gap-analysis.md`** (3 line fixes — Oracle review caught 2 missed)
+   - L52: live prose "AI 在 guide-design 阶段…" → "AI 在 rdd-planner 阶段…"
    - L63: skill column list `guide-arch/guide-design/guide-plan/guide-ship` → `rdd-arch/rdd-planner/rdd-builder`
+   - L148: live prose "升级 guide-plan deps 阶段" → "升级 rdd-planner deps 阶段"
 
 6. **`docs/architecture/extension-points.md`** (1 line fix)
    - L13: `skills/guide-arch/SKILL.md` → `skills/rdd-arch/SKILL.md`
@@ -68,12 +72,14 @@ The parent change `fix-doc-drift-v4-architecture` (commit f4d675b) shipped 8 P0/
    - Add Test 14: check `docs/ONBOARDING.md` for live `skill_use("guide-*")` invocations
    - Add Test 15: check `skills/INSTALL.md` for guide-* skill name references
 
-### Out of Scope
+### Out of Scope (deferred to future cleanup, per Oracle review)
 
-- No code logic changes
-- No skill frontmatter / metadata changes
-- No new ADR (parent change's ADR references are sufficient)
-- No archived historical mentions — only LIVE references fixed
+- **USAGE.md 14 prose guide-* mentions** (L317/430/447/476/537/597/619/663/755/896/933/950/986/1006): parent change fixed the 5 user-blocking active `skill_use` invocations; remaining 14 are descriptive prose that don't break user workflows. Cost: careful sentence rephrasing, not find-replace. Tracked for a future `clean-usage-md-prose` change.
+- **docs/architecture/{overview,multi-session,state-and-events}.md prose drift**: 12 prose guide-* mentions in live contract docs (overview table L81-88, multi-session L60, state-and-events L53-55/87). These would force scope expansion to fix AC-3 with the old grep pattern. The Test 12 3-pattern (per AC-3 above) naturally excludes them; if a stricter AC is needed, a future `cleanup-arch-docs-prose` change can address them.
+- **Prose drift within the 6-file scope itself (13 hits, deferred prose class)**: `improvement-check-mechanisms.md` L16/19/20/33/39/105/127/128/130/341 (10 prose mentions, including the `guide-arch/scripts/arch_env_check.sh` glob at L105 which is functionally descriptive rather than a live path reference — already excluded by the 3-pattern), `skills-and-handoff.md` L83/104 (2 prose mentions in contract-flow and execution_mode_decisions narrative), `extension-points.md` L11 (1 naming-example mention). All 13 are excluded by the Test 12 3-pattern (no AC failure) but are neither covered by a task nor previously documented as Out of Scope. Same deferred-prose class as overview/multi-session/state-and-events; tracked for a future `cleanup-arch-docs-prose` change.
+- **Code-side drift**: `_lib/gate.py:338`, `_lib/review_debt_checker.py:6`, `_lib/close_issues.py:4`, `_lib/cleanup_plan_handoff.py:4`, `_lib/post_archive_cleanup.sh:28` all reference `skills/guide-ship/scripts/ship_*.sh` paths in docstrings/comments. Out of scope: "No code logic changes" in this change. Track for `code-docstring-cleanup-v4-rename`.
+- **historical-evolution.md 4 mentions**: All 4 are historical record of v3.0 five-phase architecture. Should NOT be rewritten; the doc's purpose is to record the evolution.
+- **rdd-arch-rdd-planner-integration.md L337/340**: Documents the compat shim for `skill_use("guide-arch")` → forwards to `rdd-arch`. Legitimate mention; Test 12 will exclude via `grep -v 'shim\|DEPRECATED'`.
 
 ## Capabilities
 
@@ -83,7 +89,7 @@ The parent change `fix-doc-drift-v4-architecture` (commit f4d675b) shipped 8 P0/
 
 - AC-1: `docs/ONBOARDING.md` directory tree lists `rdd-arch.md` / `rdd-planner.md` / `rdd-builder.md` (NOT `guide-*`)
 - AC-2: `docs/ONBOARDING.md` L194 "💡 Recommended" line uses `skill_use("rdd-planner")` (not `guide-plan`)
-- AC-3: `grep -rn "guide-design\|guide-plan\|guide-ship" docs/architecture/` returns 0 hits across ALL `.md` files
+- AC-3: `grep -rnE 'skill_use\(\"(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)\"\)|\*\*?Entry skill\*\*?: \`(guide-arch|guide-design|guide-plan|guide-ship)\`|skills/(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)/' docs/architecture/ | grep -v 'shim\|DEPRECATED\|compat'` returns 0 hits (uses Test 12 3-pattern from parent change, with shim exclusion to allow `rdd-arch-rdd-planner-integration.md` L337/340 shim-documentation mentions of `skill_use("guide-arch")`; naturally excludes prose-only mentions and historical-evolution.md that legitimately document deleted skill names)
 - AC-4: `grep -rn "skills/guide-ship" docs/architecture/` returns 0 hits
 - AC-5: `grep -rn "skills/guide-arch" docs/architecture/skills-and-handoff.md` returns 0 hits
 - AC-6: `grep -rn "guide-design\|guide-plan\|guide-ship" skills/INSTALL.md` returns 0 hits
