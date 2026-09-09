@@ -76,6 +76,20 @@ plan_done 既有 5 项行为不变。
 - Phase 2.5 fill 范围收缩为 specs / design.md / tasks.md（proposal 已完成）
 - `SKIP_DESIGN_HANDOFF=yes` 存量路径行为不变；骨架模式保留为 fallback
 
+## Evolution
+
+### v4 (2026-09-04, ADR-0043 stage-merge)
+
+- **Stage merger**: `design` stage merged into `rdd-builder` 6-phase internal state machine.
+- **Approver change**: The 4-option approval gate that originally lived in `guide-design` Phase 3 is now `rdd-builder` Phase 0 (per spec `2026-09-04-rdd-workflow-v4-architecture-stage-merge.md` §3.4).
+- **D1/D2 contract continues**: 5-段 improvement → full proposal.md conversion (via `generate_full_proposal.py`) is still required.
+- **D3 contract continues**: approval → `openspec/specs/<name>/spec.md` spec-delta is still emitted at Phase 0 approve.
+- **D4 contract continues**: 4-layer content review (capability / acceptance / consistency / completeness) is now absorbed into `rdd-builder` Phase 0's quality gate + post-execute verifier (rdd-verifier).
+
+### Restore action (2026-09-09, fix-v4-rdd-planner-scope-over-assignment B1)
+
+- **`generate_full_proposal.py` was destroyed** in Wave 3 hard removal of `guide-design/` (commit `1095cec`) and never ported. Restored in `skills/rdd-builder/scripts/generate_full_proposal.py` and wired into `phase0_approval.sh` approve branch. rdd-planner does NOT own proposal.md authoring (per spec §3.2 row 165 cleanup); rdd-builder P0 owns it.
+
 ## Consequences
 
 **正面**:

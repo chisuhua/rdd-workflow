@@ -9,6 +9,21 @@
 Accepted (2026-09-03) — Stage 2 of `rdd-planner` design, implemented per
 `docs/superpowers/specs/2026-09-03-rdd-planner-stage2-design.md`.
 
+> **AMENDMENT (2026-09-09, fix-v4-rdd-planner-scope-over-assignment A9)**:
+> Per v4 stage-merge (ADR-0043) and spec `2026-09-04-rdd-workflow-v4-architecture-stage-merge.md` §3.3,
+> `rdd-planner` is **promoted from horizontal orchestrator to a full sequential stage** in the
+> 4-stage pipeline (`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`).
+>
+> The "NOT a sixth phase" clause below is **superseded**. `rdd-planner` retains its horizontal
+> orchestrator capabilities (status / sync / feedback / attach / audit / history / advance-sprint)
+> as **cross-cutting** behaviors, but is now ALSO a sequential stage between `rdd-arch` and
+> `rdd-builder`. This is the **双重身份 (dual identity)** explicitly defined in ADR-0043 §2.
+>
+> Forward handoff: `.arch-handoff.json` (rdd-arch) → `.planner-handoff.json` (rdd-planner) → `.rddf/state/builder/<change>.json` (rdd-builder).
+> Backward feedback: `rddf feedback add` (per ADR-0037 single-writer) + `.planner-feedback.json` (per ADR-0042) + verifier retry loop (per ADR-0034).
+>
+> **Out of scope per this amendment**: rdd-planner does NOT author `openspec/changes/<name>/proposal.md` content (corrected by ADR-0025 evolution note + spec §3.2 row 165 ownership cleanup). Proposal.md authoring lives in `rdd-builder` Phase 0 approve via `skills/rdd-builder/scripts/generate_full_proposal.py`.
+
 > **Stage 2.5 (2026-09-03): P0-1 single AUTO-SPRINT writer.**
 > `_lib/roadmap_sprint.update_roadmap` is the sole writer of the
 > AUTO-SPRINT block. Planner sync (`_lib.planner_sync.apply_state`)
