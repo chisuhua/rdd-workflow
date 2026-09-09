@@ -18,6 +18,7 @@ role:
   perspective: "Think in terms of phase state machine progression, TDD discipline, and verifier retry routing. Owns the actual change implementation lifecycle from approval to archive."
   boundaries:
     owns:
+      - "openspec/changes/<name>/proposal.md (authoring via P0 approve, per ADR-0025)"
       - "openspec/changes/<name>/{tasks,design}.md"
       - ".rddf/wt/<name>/"
       - ".rddf/plans/<name>.md"
@@ -25,7 +26,6 @@ role:
       - "openspec/specs/<name>/spec.md"
     not_owns:
       - "docs/adr/ADR-*.md"
-      - "openspec/changes/<name>/proposal.md (authoring)"
       - "roadmap.md"
       - ".rddf/state/.planner-feedback.json"
     human_involvement: "medium"

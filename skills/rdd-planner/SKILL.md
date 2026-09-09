@@ -1,7 +1,7 @@
 ---
 name: rdd-planner
 description: |
-  Roadmap + proposal authoring orchestrator (Stage 2 of v4 architecture).
+  Roadmap + sprint proposal orchestrator (Stage 2 of v4 architecture).
   Wraps existing `_lib/planner_*.py` lib (per ADR-0037/0038/0042) and adds
   stage entry/exit contract. Per spec 2026-09-04-rdd-workflow-v4-architecture-stage-merge.md
   §3.3 (promotion from horizontal orchestrator to full stage).
@@ -11,7 +11,6 @@ description: |
   - proposal-suggestions.md / proposal-approved.md
   - .rddf/roadmap/features/*.md
   - .rddf/improvements/*.md (via add-improve)
-  - openspec/changes/<name>/proposal.md (authoring only)
 
   Existing horizontal-orchestrator commands remain available:
   status / sync / feedback / attach / audit / history / advance-sprint
@@ -38,12 +37,12 @@ role:
       - "proposal-approved.md"
       - ".rddf/roadmap/features/*.md"
       - ".rddf/improvements/*.md"
-      - "openspec/changes/<name>/proposal.md (authoring only)"
       - ".rddf/state/.planner-state.json"
       - ".rddf/state/.planner-feedback.json"
       - ".rddf/state/.planner-handoff.json"
     not_owns:
       - "docs/adr/ADR-*.md"
+      - "openspec/changes/<name>/proposal.md"
       - "openspec/changes/<name>/{design,tasks}.md"
       - ".rddf/wt/<name>/"
       - ".rddf/plans/<name>.md"
