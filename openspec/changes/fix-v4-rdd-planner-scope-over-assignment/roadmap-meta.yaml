@@ -1,0 +1,13 @@
+roadmap:
+  phase: "phase-3"
+  category: "architecture-governance"
+  priority: "P1"
+  change_type: "improvement"
+  gate_checklist: []
+  cross_phase_deps: []
+  manual_deps: []
+  manual_blocks: []
+  parent_feature: "feat-fix-archive-gaps-v2"
+  category_validation:
+    valid: true
+    reason: ""
