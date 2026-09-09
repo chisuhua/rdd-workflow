@@ -26,3 +26,23 @@
 ### Features
 - `feat-fix-audit-findings` — 2026-08-26 文档与代码一致性审计后续修复 (refs: phase-1, phase-2, phase-3, phase-4)
 
+
+<!-- AUTO-SPRINT-START -->
+## Current Sprint: sprint-2026-09
+
+_No active projects in current sprint._
+
+### Unmapped (233)
+- RDDF-0001-fix-rddf-session-import-path
+- add-archive-post-commit-hook-and-force-flag
+- add-auto-rfc-from-approve
+- add-brainstorm-hardgate-enforcement
+- add-change-content-review
+- add-cli-coverage-rdd-doctor-roadmap-rdd-hub
+- add-config-validation
+- add-contract-lint-ci-gate
+- add-cross-repo-deps-orchestration
+- add-cross-repo-impact-detection
+- ... and 223 more
+
+<!-- AUTO-SPRINT-END -->

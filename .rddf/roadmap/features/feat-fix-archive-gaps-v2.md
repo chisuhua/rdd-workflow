@@ -2,8 +2,8 @@
 id: feat-fix-archive-gaps-v2
 kind: feature
 status: proposed
-phase_refs: [phase-1, phase-2, phase-3]
-主题: 第二波归档治理改进（ADR 索引自动同步 / CHANGELOG-USAGE 同步 / verifier-archive-gate 边界明确化）
+phase_refs: [phase-1, phase-2, phase-3, phase-4]
+主题: 第二波归档治理改进（ADR 索引自动同步 / CHANGELOG-USAGE 同步 / verifier-archive-gate 边界明确化 / 第 3 波 doc drift 清理）
 ---
 
 ## 概述
@@ -46,21 +46,38 @@ bypass-audit-mechanism（统一 audit log）维持 deferred，价值清晰但当
 - 修 `skills/ac-verifier/scripts/ac_verifier.sh:71`：支持 archive 目录 proposal.md 路径
 - docs/adr/README.md ADR 列表更新（依赖 phase-1 的 adr-index-auto-sync）
 
+### phase-4: fix-doc-drift-followup-3（2026-09-09 第 3 波审计新增）
+
+> 来源：2026-09-09 rdd-doctor + 3 agent 并行审计。前两批（`fix-doc-drift-v4-architecture` 已 archived，`docs-v4-sync-followup-v2` 待归档）覆盖后仍有 12 文件、35 处 active skill_use 或 stage list 漂移未处理。
+> **优先级**: P1（**依赖 `docs-v4-sync-followup-v2` 待归档**）
+
+- 详见 `.rddf/improvements/fix-doc-drift-followup-3.md` §验收（8 项 AC）
+- 核心修复：
+  - **`skills/guide/SKILL.md`** 30+ 处 stale `guide-*` invocations（推荐器坏掉，**CRITICAL**）
+  - 创建 **`docs/migration/v3-to-v4.md`**（被 `docs/ONBOARDING.md:375` 显式引用但文件缺失）
+  - 9 个子技能 SKILL.md：`execute`/`status`/`rddf-session`/`rdd-verifier`/`rdd-env-check`/`add-improve`/`feature`/`deps`/`sync-hub`/`openspec-gate` 的描述漂移
+  - `README.md` L13-19 npm install v1.x/v2.0-beta → v4.0.0
+- Test：扩展 `tests/integration/test_v4_doc_drift_contracts.bats` 新增 Test 16-19
+- 验收：8 项 AC（含 doctor CRITICAL ≤ 6 regression gate）
+
 ## 验收标准
 
 - [ ] phase-1 全部 AC：见 `.rddf/improvements/adr-index-auto-sync.md` §验收（8 项）
 - [ ] phase-2 全部 AC：见 `.rddf/improvements/changelog-usage-sync.md` §验收（5 项）
 - [ ] phase-3 全部 AC：见 `.rddf/improvements/verifier-archive-gate-clarification.md` §验收（5 项）
+- [ ] phase-4 全部 AC：见 `.rddf/improvements/fix-doc-drift-followup-3.md` §验收（8 项）
 - [ ] `./test.sh --full --regression` 通过（bypass-audit-mechanism 仍为 deferred 不影响本 feature）
 - [ ] `rddf rdd-verify --re-verify-archived` 对所有 archived changes 真实验证（不再 print-only）
 
 ## 与其他 feature 的关系
 
 - **feat-fix-audit-findings**（active，phase-1..4）：本 feature 是其后的第二波归档治理改进。两者合并形成"2026-08-26 audit 全套 follow-up"覆盖
+- **fix-doc-drift-v4-architecture**（f4d675b，已 archived）+ **docs-v4-sync-followup-v2**（Oracle-approved，待归档）：phase-4 的依赖前置；本提案不与前两批重叠
 - **bypass-audit-mechanism**：维持 deferred（v3.2 follow-up），与 hub-federation governance 一起做
 
 ## 备注
 
-- 3 个提案已在 `.rddf/improvements/` 中存在（升级 P2→P1）
-- 用户在 HANDOFF.md Phase D 评估后批准升级（2026-08-28）
-- 预计 ship 时序：phase-1 → phase-2 → phase-3（顺序由依赖关系决定）
+- 4 个提案已在 `.rddf/improvements/` 中存在（phase-1/2/3 升级 P2→P1；phase-4 新增 P1）
+- 用户在 HANDOFF.md Phase D 评估后批准 phase-1/2/3 升级（2026-08-28）
+- phase-4（fix-doc-drift-followup-3）由 2026-09-09 第 3 波 audit 新增，待 `rdd-planner` 审查
+- 预计 ship 时序：phase-1 → phase-2 → phase-3 → phase-4（顺序由依赖关系决定）
