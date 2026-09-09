@@ -11,11 +11,11 @@
 ## Install
 
 ```bash
-# Latest stable (v1.x)
-npm install rdd-workflow
+# Latest stable (v4.0+)
+npm install rdd-workflow@latest
 
-# v2.0 beta
-npm install rdd-workflow@2.0.0-beta
+# v4 specific (recommended for new projects)
+npm install rdd-workflow@4
 ```
 
 OpenSpec 工作流技能包 - manage changes via propose → plan → execute → status → archive lifecycle.

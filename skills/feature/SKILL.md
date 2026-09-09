@@ -2,7 +2,7 @@
 name: feature
 description: View and manage features (groups of related changes). Provides summary table, Mermaid dependency graph, per-feature change status, and recommended wave execution order. Pure derived view from iteration.json + deps-analysis.json.
 license: MIT
-compatibility: Requires iteration.json (run `guide-plan` once first) and ideally deps-analysis.json (run `deps` first for full graph).
+compatibility: Requires iteration.json (run `rdd-builder` once first) and ideally deps-analysis.json (run `deps` first for full graph).
 metadata:
   version: "2.0"
   author: sisyphus

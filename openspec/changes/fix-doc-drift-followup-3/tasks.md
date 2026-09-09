@@ -51,41 +51,35 @@
 
 ### Phase C — P2 doc edits (should land)
 
-- [ ] **Task 8: `skills/add-improve/SKILL.md` (L96)**
-  - Modify: L96
-  - Diff: `skill_use("guide-design")` → `skill_use("rdd-planner")`
-  - Test: AC-2
-  - Commit: TBD
+- [x] **Task 8: `skills/add-improve/SKILL.md` (L96)** ✅ 2026-09-09
+  - Modified: L96 (`guide-design` → `rdd-planner`)
+  - Test: AC-2 ✓
+  - Commit: pending (consolidated with Task 9-13)
 
-- [ ] **Task 9: `skills/feature/SKILL.md` (L5)**
-  - Modify: L5
-  - Diff: "run guide-plan once first" → "run rdd-builder once first"
-  - Test: AC-2
-  - Commit: TBD
+- [x] **Task 9: `skills/feature/SKILL.md` (L5)** ✅ 2026-09-09
+  - Modified: L5 (`guide-plan` → `rdd-builder`)
+  - Test: AC-2 ✓
+  - Commit: pending
 
-- [ ] **Task 10: `skills/deps/SKILL.md` (L3)**
-  - Modify: L3
-  - Diff: "被 guide-plan 调用" → "被 rdd-builder 调用"
-  - Test: AC-2
-  - Commit: TBD
+- [x] **Task 10: `skills/deps/SKILL.md` (L3)** ✅ 2026-09-09
+  - Modified: L3 (`guide-plan` → `rdd-builder`)
+  - Test: AC-2 ✓
+  - Commit: pending
 
-- [ ] **Task 11: `skills/sync-hub/SKILL.md` (L3)**
-  - Modify: L3
-  - Diff: "被 guide-design 在 contract refresh 时调用" → "被 rdd-planner 在 contract refresh 时调用"
-  - Test: AC-2
-  - Commit: TBD
+- [x] **Task 11: `skills/sync-hub/SKILL.md` (L3)** ✅ 2026-09-09
+  - Modified: L3 (`guide-design` → `rdd-planner`)
+  - Test: AC-2 ✓
+  - Commit: pending
 
-- [ ] **Task 12: `skills/openspec-gate/SKILL.md` (L56)**
-  - Modify: L56
-  - Diff: `skill_use("guide-plan")` → `skill_use("rdd-builder")`
-  - Test: AC-2
-  - Commit: TBD
+- [x] **Task 12: `skills/openspec-gate/SKILL.md` (L56)** ✅ 2026-09-09
+  - Modified: L56 (`guide-plan` → `rdd-builder`)
+  - Test: AC-2 ✓
+  - Commit: pending
 
-- [ ] **Task 13: `README.md` (L13-19)**
-  - Modify: L13-19
-  - Diff: replace `v1.x` and `v2.0-beta` install commands with `v4.0.0` (latest stable)
-  - Test: AC-4
-  - Commit: TBD
+- [x] **Task 13: `README.md` (L13-19)** ✅ 2026-09-09
+  - Modified: L13-19 (npm install v1.x/v2.0-beta → v4.0+)
+  - Test: AC-4 ✓
+  - Commit: pending
 
 ### Phase D — Tests (extend parent change's bats)
 

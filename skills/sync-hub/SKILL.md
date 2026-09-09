@@ -1,6 +1,6 @@
 ---
 name: sync-hub
-description: Hub-Spoke 下行命令 — 从 rdd-hub 拉取 contract 到本地 openspec/specs/<name>/spec.md。Hub Spoke 联邦的下行同步通道,被 contract-check 和 guide-design 在 contract refresh 时调用。ADR-0030 §Hub-Spoke 联邦。
+description: Hub-Spoke 下行命令 — 从 rdd-hub 拉取 contract 到本地 openspec/specs/<name>/spec.md。Hub Spoke 联邦的下行同步通道,被 contract-check 和 rdd-planner 在 contract refresh 时调用。ADR-0030 §Hub-Spoke 联邦。
 license: MIT
 compatibility: Requires Python 3.11+, gh CLI v2.0+, GITHUB_TOKEN env var (read access)
 metadata:

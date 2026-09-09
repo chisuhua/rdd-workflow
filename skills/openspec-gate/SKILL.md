@@ -53,5 +53,5 @@ Default behavior is `warn` (exit 0, print warning). Set `OPENSPEC_GATE_MODE=bloc
 ## Common Mistakes
 
 - **Expecting blocking by default**: the default mode is `warn`. Set `OPENSPEC_GATE_MODE=block` for CI hard gates.
-- **Forgetting to create the change first**: run `skill_use("guide-plan")` or `propose` before committing code.
+- **Forgetting to create the change first**: run `skill_use("rdd-builder")` or `propose` before committing code.
 - **Active change name does not match path**: the gate links by change name substring, so organize files under a directory matching the change name.
