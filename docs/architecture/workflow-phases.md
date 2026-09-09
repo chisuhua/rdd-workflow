@@ -101,7 +101,7 @@ Each stage:
 
 **Human load**: low. The executing AI agent is the LLM verifier (per ADR-0045). Human only intervenes when classification is ambiguous or retry budget exhausted.
 
-**Sub-skills**: `rdd-doctor --category state` (cross-check handoff consistency). The deprecated `ac-verifier` skill is gone (removed 2026-09-07 per ADR-0045).
+**Sub-skills**: `rdd-doctor --category state` (cross-check handoff consistency).
 
 ## Bypass — `rdd-quick` (per [ADR-0047](../adr/ADR-0047-rdd-quick-bypass-path.md))
 

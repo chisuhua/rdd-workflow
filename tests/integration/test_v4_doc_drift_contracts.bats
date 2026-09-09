@@ -108,9 +108,11 @@ setup() {
 # Corresponds to: AC-3, AC-10
 # -----------------------------------------------------------------------------
 @test "doc_drift_v4: docs/architecture/workflow-phases.md does not reference guide-* skill names" {
-  # Exclude historical 'guide-spec' reference which is a valid historical note
+  # Match both `Entry skill:` and `**Entry skill**:` (markdown bold variants).
+  # Pre-patch workflow-phases.md used `**Entry skill**: \`guide-*\`` (bold) which
+  # the previous regex missed — fixed 2026-09-09 per Oracle review.
   for skill in guide-arch guide-design guide-plan guide-ship; do
-    if grep -nE "skill_use.*\"$skill\"|entry skill.*$skill|Entry skill: \`$skill\`" docs/architecture/workflow-phases.md > /dev/null 2>&1; then
+    if grep -nE "\*\*?Entry skill\*\*?: \`$skill\`|skill_use.*\"$skill\"" docs/architecture/workflow-phases.md > /dev/null 2>&1; then
       echo "docs/architecture/workflow-phases.md still references $skill"
       grep -n "$skill" docs/architecture/workflow-phases.md | head -3
       return 1
@@ -191,9 +193,58 @@ setup() {
 # Bonus Test 11: ac-verifier is not cited as a sub-skill in workflow-phases.md
 # Corresponds to: AC-3 (deprecation per ADR-0045)
 # -----------------------------------------------------------------------------
-@test "doc_drift_v4: docs/architecture/workflow-phases.md does not reference deprecated ac-verifier" {
-  if grep -nE "Sub-skills:.*ac-verifier" docs/architecture/workflow-phases.md > /dev/null 2>&1; then
-    echo "docs/architecture/workflow-phases.md still cites ac-verifier as a sub-skill (deprecated per ADR-0045)"
+@test "doc_drift_v4: docs/architecture/workflow-phases.md does not reference deprecated ac-verifier as a sub-skill" {
+  # Match `**Sub-skills**: <content>` lines that include ac-verifier as a LIVE
+  # sub-skill (not in a "deprecated/gone" historical note).
+  # Pre-patch had `**Sub-skills**: \`ac-verifier\`` (live reference); the post-patch
+  # prose mention in a "The deprecated ac-verifier" sentence is allowed.
+  # Use `|| true` to prevent bats `set -e` from mis-reporting empty grep as failure.
+  hits=$(grep -nE '\*\*Sub-skills\*\*:' docs/architecture/workflow-phases.md | grep 'ac-verifier' | { grep -v 'deprecated\|gone\|removed' || true; })
+  if [ -n "$hits" ]; then
+    echo "docs/architecture/workflow-phases.md still cites ac-verifier as a live sub-skill:"
+    echo "$hits"
     return 1
   fi
+}
+
+# -----------------------------------------------------------------------------
+# Bonus Test 12: AC-10 enforcement — no guide-* skill references in
+# docs/architecture/ files modified by this change.
+# Corresponds to: AC-10 (scoped to this change's file set)
+# Oracle review 2026-09-09: previously the test only checked workflow-phases.md
+# in isolation. This test extends to the other 2 docs/architecture/ files
+# this change edits (overview.md, README.md). The remaining docs/architecture/
+# files (extension-points.md, improvement-check-mechanisms.md, etc.) are
+# deferred to the follow-up change `docs-v4-sync-followup-v2`.
+# -----------------------------------------------------------------------------
+@test "doc_drift_v4: docs/architecture/ files in this change's scope have no live guide-* skill references (AC-10 scoped)" {
+  for file in docs/architecture/overview.md docs/architecture/workflow-phases.md docs/architecture/README.md; do
+    [ -f "$file" ] || continue
+    hits=$(grep -nE "skill_use\(\"(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)\"\)|Entry skill\*\*?: \`(guide-arch|guide-design|guide-plan|guide-ship)\`|skills/(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)/" "$file" 2>/dev/null || true)
+    if [ -n "$hits" ]; then
+      echo "AC-10 violation in $file:"
+      echo "$hits" | head -5
+      return 1
+    fi
+  done
+}
+
+# -----------------------------------------------------------------------------
+# Bonus Test 13: AC-11 enforcement — no live guide-* skill invocations
+# in README.md + USAGE.md (both modified by this change).
+# Corresponds to: AC-11
+# Oracle review 2026-09-09: USAGE.md L328/708/709/724/765 had 5 active
+# `skill_use("guide-ship")` / `skill_use("guide-plan")` invocations that would
+# fail for users reading the docs. This test enforces the invariant.
+# -----------------------------------------------------------------------------
+@test "doc_drift_v4: README.md + USAGE.md have no live guide-* skill invocations (AC-11)" {
+  # Look for skill_use("guide-*") invocations inside code blocks (live commands).
+  # Use perl with multi-line mode to handle markdown ``` blocks.
+  for file in README.md USAGE.md; do
+    hits=$(perl -0777 -ne 'while (/```.*?\n(.*?)\n```/gs) { my $block = $1; while ($block =~ /\bskill_use\(["\x27](guide-arch|guide-design|guide-plan|guide-ship|guide-spec)["\x27]\)/g) { print "AC-11 violation: live skill_use(\"$1\") in code block of $ARGV\n"; } }' "$file" 2>/dev/null)
+    if [ -n "$hits" ]; then
+      echo "$hits"
+      return 1
+    fi
+  done
 }

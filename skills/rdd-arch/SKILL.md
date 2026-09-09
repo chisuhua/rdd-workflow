@@ -80,7 +80,7 @@ skill_use("rdd-arch")   # 无参数版本
    exits: .rddf/state/.arch-handoff.json                     exits: .rddf/state/.planner-handoff.json       exits: .rddf/state/.plan-handoff.json
        --(plan-done)--> [rdd-builder P0-P3] --(archive)--> [rdd-verifier] --(verify-done)--> [openspec archive]
 
-[rrd-quick]  --(P0-P4 in-place, no worktree)--> [git commit on current branch]  (bypass, per ADR-0047)
+[rdd-quick]  --(P0-P4 in-place, no worktree)--> [git commit on current branch]  (bypass, per ADR-0047)
 ```
 
 **为什么这样切**（节选自 ADR-0003）：

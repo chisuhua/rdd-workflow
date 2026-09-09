@@ -5,7 +5,7 @@
 rdd-workflow is an **OpenSpec-compatible AI development workflow package**. It manages changes via a 5-stage lifecycle (`propose → plan → execute → status → archive`), wrapped in a **four-stage v4 architecture** (`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`, per ADR-0043), with a `rdd-quick` small-change bypass path (per ADR-0047). It runs on any OpenSpec-aware AI coding assistant (opencode, Claude Code, Cursor, Aider, etc.) via the Skill discovery mechanism, with no runtime dependency on a specific vendor.
 
 The package ships:
-- **5 stage skills** (`rdd-arch`, `rdd-planner`, `rdd-builder`, `rdd-verifier` + `rdd-quick` bypass) + **22 sub-skills** = 27 user-invocable skills total, each a `SKILL.md` with structured frontmatter.
+- **5 stage skills** (`rdd-arch`, `rdd-planner`, `rdd-builder`, `rdd-verifier` + `rdd-quick` bypass, v4.0+ per ADR-0043) + **22 sub-skills** = 27 user-invocable skills total, each a `SKILL.md` with structured frontmatter.
 - A **shared `_lib/`** of 60+ Python modules and bash helpers implementing state, gate, tribunal, session, loop engine, etc.
 - A **`rddf` CLI** (`rddf status`, `rddf session ...`, `rddf discover-ship-changes`, etc.) for scripting and dashboards.
 
@@ -126,7 +126,7 @@ In v3.0, AC verification was extracted from the inline `archive_gate_check` (whi
 
 In v4.0, the design + plan + ship stages were merged into a single `rdd-builder` 6-phase internal state machine (per **ADR-0043** §3.4): approval → plan → deps → execute → review → archive. This collapsed the 5-stage pipeline to 4 stages and added `rdd-quick` as a parallel bypass path (per **ADR-0047**).
 
-This is why the current architecture is **four stages** (`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`) plus a `rdd-quick` bypass path. Any doc that still says "three stages" (the v2.0 model) or "five stages" (the v3.0 model) is stale.
+This is why the current architecture is **four stages** (`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`, v4.0+ per ADR-0043) plus a `rdd-quick` bypass path. Any doc that still says "three stages" (the v2.0 model) or "five stages" (the v3.0 model) is stale; v4 is four-stage per ADR-0043.
 
 ## Why a Loop Engine
 

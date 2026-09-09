@@ -13,7 +13,7 @@ Per ADR-0043 (v4 stage-merge), ADR-0044 (Wave 3 hard removal of `guide-*` skills
 - **`USAGE.md`** (P1): H2 header "五阶段架构" → "四阶段架构 + rdd-quick 旁路"; phase responsibility table rewritten with 4 端 + 1 旁路; L173 phase numbering notes Builder 6-phase instead of "Plan 4 + Ship 7".
 - **`docs/architecture/README.md`** (P1): "Five-phase" → "Four-stage" with ADR-0043/0044/0047 references.
 - **`AGENTS.md`** (P1): Round A/B/C inline-bash extraction sections — `guide-plan.md` / `guide-ship.md` references annotated with v4 canonical names (`rdd-planner.md` / `rdd-builder.md`); D3 design-pre-created section clarifies `rdd-planner` is current owner.
-- **New `tests/integration/test_v4_doc_drift_contracts.bats`** (10 cases): locks the v4 state; any regression to v3 5-phase descriptions or reintroduction of `guide-*` skill names in cited files fails CI.
+- **New `tests/integration/test_v4_doc_drift_contracts.bats`** (13 cases): locks the v4 state; any regression to v3 5-phase descriptions or reintroduction of `guide-*` skill names in cited files fails CI. Includes AC-10 scoped test (3 docs/architecture/ files modified by this change) and AC-11 test (live `skill_use("guide-*")` invocations in README.md + USAGE.md).
 
 ### remove-ac-verifier-completely (delete ac-verifier skill + ac-verify CLI)
 

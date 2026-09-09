@@ -69,11 +69,11 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 | `.rddf/state/.planner-handoff.json` | `.rddf/state/`（gitignored） | planner → builder 阶段交接状态（per ADR-0043） | `rdd-planner`（design-done 写入）/ `rdd-builder`（入口读取） |
 | `.rddf/state/.plan-handoff.json` | `.rddf/state/`（gitignored） | builder → verifier 阶段交接状态（plan_complete_at / committed_changes / archive_started_at） | `rdd-builder`（plan-done 写入）/ `rdd-verifier`（scan_queue 读取） |
 | `.rddf/state/sessions.json` | `.rddf/state/`（gitignored） | **rddf-session 生命周期**（ADR-0017）— 跨 OpenCode session 工作流恢复（stage_arch / stage_planner / stage_builder / stage_verifier + heartbeat + 4 选项冲突处理） | `rdd-arch` / `rdd-planner` / `rdd-builder` / `rdd-verifier` 入口 + `rddf-session` 技能 5 子命令 |
-| `.rddf/state/iteration.json` | `.rddf/state/`（gitignored） | **当前 sprint 视图**（v2.0.1）— change 状态机：proposed → planned → in_worktree → completed → archived；multi-hook 写入 | `propose` / `guide-ship` / `execute` / `deps` / `archive` hooks（集中由 `skills/_lib/iteration.py` 管理） |
+| `.rddf/state/iteration.json` | `.rddf/state/`（gitignored） | **当前 sprint 视图**（v2.0.1）— change 状态机：proposed → planned → in_worktree → completed → archived；multi-hook 写入 | `propose` / `rdd-builder` / `execute` / `deps` / `archive` hooks（集中由 `skills/_lib/iteration.py` 管理） |
 | `.rddf/state/deps-analysis.json` | `.rddf/state/`（gitignored） | **结构化** deps 输出（v2.0.1）— 依赖图 + 执行顺序 JSON（schema 见 `skills/_lib/schemas/deps_analysis_schema.json`） | `deps` Step 5b 优先写；Step 6 markdown-fallback 时也写 |
-| `.rddf/state/.deps-candidates.json` | `.rddf/state/`（gitignored） | deps 阶段候选 change 列表（机器可读） | `guide-plan`（deps 阶段）/ `review-phase` 自动增量 |
-| `.rddf/state/.deps-output.md` | `.rddf/state/`（gitignored） | deps 阶段依赖图 + 推荐执行顺序（人类可读报告；旧 `.rddf/state/deps-output.md` 仅作兼容引用） | `deps` Step 5 / `guide-plan`（deps 阶段） |
-| `.rddf/state/index.md` | `.rddf/state/`（gitignored） | change 索引（自动维护） | `rdd-arch` / `guide-plan` |
+| `.rddf/state/.deps-candidates.json` | `.rddf/state/`（gitignored） | deps 阶段候选 change 列表（机器可读） | `rdd-planner`（deps 阶段）/ `review-phase` 自动增量 |
+| `.rddf/state/.deps-output.md` | `.rddf/state/`（gitignored） | deps 阶段依赖图 + 推荐执行顺序（人类可读报告；旧 `.rddf/state/deps-output.md` 仅作兼容引用） | `deps` Step 5 / `rdd-planner`（deps 阶段） |
+| `.rddf/state/index.md` | `.rddf/state/`（gitignored） | change 索引（自动维护） | `rdd-arch` / `rdd-planner` |
 
 > 重要：`.rddf/state/`、`.rddf/wt/`、`.rddf/detectors/`、`.rddf/actions/` 全部 gitignored；只有 `.rddf/plans/` **随 git 版本控制**（执行契约路径）。
 
@@ -325,7 +325,7 @@ i. 手动输入 change 名称
   - init-adr-directory
 
 请选择:
-1. 🚀 进入 Ship 端 (skill_use("guide-ship"))
+1. 🚀 进入 Builder 端 (skill_use("rdd-builder"))
 2. ⏸️ 稍后手动进入
 ```
 
@@ -705,8 +705,8 @@ fi
 
 ```
 请选择:
-1. 继续处理 (skill_use("guide-ship")) — 还有 worktree 要处理
-2. 回到 plan 端 (skill_use("guide-plan")) — 创建更多 changes
+1. 继续处理 (skill_use("rdd-builder")) — 还有 worktree 要处理
+2. 回到 planner 端 (skill_use("rdd-planner")) — 创建更多 changes
 3. 本次 session 结束 — 退出 ship-done，稍后继续
 4. 项目完成 — 不再做任何 change（此项目归档）
 i. 其他输入
@@ -721,7 +721,7 @@ i. 其他输入
 **Terminal A（主控 session）**：
 
 ```
-skill_use("guide-ship")
+skill_use("rdd-builder")
 → Plan 阶段 → Phase 1 自动检测 → 2 个 change，无其他 worktree → 🔀 worktree 模式
 → 创建 fix-ns-pollution worktree
 → 选择 🔓 分离执行
@@ -762,7 +762,7 @@ skill_use("execute")
 **回到 Terminal A**：
 
 ```
-skill_use("guide-ship")
+skill_use("rdd-builder")
 → Execute 监控模式检测到 tasks.md 进度已更新
 → 显示最新进度
 → 可选择归档或继续监控
