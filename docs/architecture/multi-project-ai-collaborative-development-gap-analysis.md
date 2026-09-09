@@ -49,7 +49,7 @@ rdd-hub/
 
 | 阶段 | Spoke 动作 | Hub 协同 |
 |------|-----------|---------|
-| **Propose** | AI 在 guide-design 阶段发现提案涉及跨项目契约 | 通过 MCP 在 Hub 创建 `[RFC]` Issue，挂起本地 design 门控 |
+| **Propose** | AI 在 rdd-planner 阶段发现提案涉及跨项目契约 | 通过 MCP 在 Hub 创建 `[RFC]` Issue，挂起本地 design 门控 |
 | **Review** | 各 Stakeholder 仓库 AI 通过 MCP 监听指派给自己的 RFC | 在 Hub Issue 下发表结构化 `## 🤖 [repo-x] 审查意见` Comment |
 | **Resolve** | 等待人类架构师裁决（AI 禁止修改 Status 为 Approved） | 修改 contracts/ 并合并 PR，更新 Status 为 ✅ Approved |
 | **Sync-back** | AI 监听 Approved 状态，拉取最新契约 | 解除本地挂起，自动执行 approve_proposal.sh |
@@ -60,7 +60,7 @@ rdd-hub/
 
 | 能力 | 实现 | 文件 |
 |------|------|------|
-| 单仓库 RDD 状态机 | arch → design → plan → ship → verify 五阶段（v3.0+ per ADR-0034） | `skills/guide-arch/`, `guide-design/`, `guide-plan/`, `guide-ship/`, `skills/rdd-verifier/` |
+| 单仓库 RDD 状态机 | arch → design → plan → ship → verify 五阶段（v3.0+ per ADR-0034；v4.0+ 合并为四阶段 per ADR-0043） | `skills/rdd-arch/`, `skills/rdd-planner/`, `skills/rdd-builder/`, `skills/rdd-verifier/` |
 | 全局技能安装 | `install.sh --global` 复制到 `~/.agents/skills/` | `install.sh`, AGENTS.md §全局安装模式 |
 | 跨 OpenCode session 恢复 | `rddf-session` skill 5 子命令 | `skills/rddf-session/`, ADR-0017 |
 | 工件发现契约 | Arch-handoff 软状态文件 | ADR-0016, `.rddf/state/.arch-handoff.json` |
@@ -145,7 +145,7 @@ rdd-hub/
 
 1. 新增 `rddf deps cross-repo`：扫描各 Spoke 仓库的 iteration.json，生成跨仓库依赖图
 2. 新增 `rddf hub issue --deps`：在 Hub 创建 `[Dependency]` Issue，指派给上游 Spoke
-3. 升级 `guide-plan` deps 阶段：识别跨仓库强依赖，自动挂起 plan-done 门控
+3. 升级 `rdd-planner` deps 阶段：识别跨仓库强依赖，自动挂起 plan-done 门控
 
 ## 5. 参考资料
 

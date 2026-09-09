@@ -10,7 +10,7 @@ Skills are first-class extensions — the project ships 17 and grows over time.
 
 1. **Pick a name** that is unique, kebab-case, descriptive (`guide-arch`, `add-improve`, `rdd-env-check`).
 2. **Copy the frontmatter** from a similar skill (e.g. `skills/<existing-skill>/SKILL.md`). Fill in `name`, `description`, `license`, `compatibility`, and `metadata.{author, version, evolved-from, user-invocable}`. Set `version: 1.0` for new skills.
-3. **Write the body** following the "state machine" pattern: numbered phases, each with a clear gate. Match the style of `skills/guide-arch/SKILL.md`.
+3. **Write the body** following the "state machine" pattern: numbered phases, each with a clear gate. Match the style of `skills/rdd-arch/SKILL.md`.
 4. **Add `scripts/`** under the skill dir if any block exceeds ~50 lines (ADR-0021). Bash + Python mixed, with `*.sh` orchestrators and `*.py` business logic. Each script is wrapped in a `main()` function.
 5. **Write tests** in `tests/integration/test_<skill>.bats` (bats for shell) or `tests/unit/test_<module>.py` (pytest for Python).
 6. **Register in install.sh** if the skill needs project-wide discovery (mostly for skills that aren't auto-discovered).

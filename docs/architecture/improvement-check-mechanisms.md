@@ -42,8 +42,8 @@
 
 | 组件 | 路径 | 行数 | 状态 |
 |------|------|------|------|
-| SKILL.md Phase 2.5 文档 | [`skills/guide-ship/SKILL.md:387-475`](../../skills/guide-ship/SKILL.md) | ~89 行 | ✅ |
-| 已提取 helper(`handle_review_action`) | [`skills/guide-ship/scripts/ship_review.sh`](../../skills/guide-ship/scripts/ship_review.sh) | ~175 行 | ✅ |
+| SKILL.md Phase 2.5 文档 | [`skills/rdd-builder/SKILL.md`](../../skills/rdd-builder/SKILL.md) (Phase 2.5 section) | ~89 行 | ✅ |
+| 已提取 helper(`handle_review_action` 重命名至 `phase2_5_review.sh`) | [`skills/rdd-builder/scripts/phase2_5_review.sh`](../../skills/rdd-builder/scripts/phase2_5_review.sh) | ~175 行 | ✅ |
 | Gate 检查 `review_debt_recorded` (warning 级) | [`_lib/gate.py:341-370`](../../_lib/gate.py) | 30 行 | ✅ |
 | 实际 issue 记录已存在(8 个 `.rddf/improvements/*.md` 含 `**类型**: debt`) | `.rddf/improvements/` | — | ✅ |
 
@@ -78,7 +78,7 @@ def _check_review_debt_recorded(ctx: dict) -> tuple[bool, Optional[str]]:
    - **建议**: Gate 应检查 debt 文件名包含 `<current_change_name>` 或文件 mtime 在 execute 时间之后
 
 3. **架构漂移(选项 3)未真正实现**(SKILL.md:451 仅占位)
-   - `guide-arch/scripts/arch_env_check.sh` 等未调用 drift detector
+   - `rdd-arch/scripts/arch_env_check.sh` 等未调用 drift detector
    - **影响**: 选项 3 选中后实际不生成 drift-analysis.md
    - **建议**: 关联 `.rddf/improvements/structural-drift-detector.md` P0 提案
 
@@ -135,7 +135,7 @@ def _check_review_debt_recorded(ctx: dict) -> tuple[bool, Optional[str]]:
 |------|------|------|------|
 | Close hook 业务逻辑 | [`_lib/close_issues.py::close_issues_for_change`](../../_lib/close_issues.py) | 259 | ✅ |
 | Worktree 模式 hook | [`_lib/archive.sh:428,657,662`](../../_lib/archive.sh) | inline | ✅ |
-| Lightweight 模式 hook | [`skills/guide-ship/scripts/ship_archive.sh:239`](../../skills/guide-ship/scripts/ship_archive.sh) | inline | ✅ |
+| Lightweight 模式 hook | [`skills/rdd-builder/scripts/phase3_archive.sh`](../../skills/rdd-builder/scripts/phase3_archive.sh) | inline | ✅ |
 | `issue_refs` 字段扩展 | `openspec/changes/<name>/roadmap-meta.yaml` | — | ✅ |
 | PR 探测 + 6 个 CI 标识探测 | `_lib/issue_reporter.py::is_ci_environment` | — | ✅ |
 
@@ -462,8 +462,8 @@ extensions = {'.go', '.rs', '.java', '.rb', '.sh', '.cpp', '.h', '.hpp',
 - [`_lib/close_issues.py`](../../_lib/close_issues.py) — Close hook 业务逻辑(259 行)
 - [`_lib/cli/report_issue_cmd.py`](../../_lib/cli/report_issue_cmd.py) — `rddf report-issue` CLI(62 行)
 - [`_lib/cli/issue_cmd.py`](../../_lib/cli/issue_cmd.py) — `rddf issue` 子命令(150 行)
-- [`skills/guide-ship/scripts/ship_review.sh`](../../skills/guide-ship/scripts/ship_review.sh) — Phase 2.5 helper
-- [`skills/guide-ship/scripts/ship_archive.sh:239`](../../skills/guide-ship/scripts/ship_archive.sh) — Lightweight close hook
+- [`skills/rdd-builder/scripts/phase2_5_review.sh`](../../skills/rdd-builder/scripts/phase2_5_review.sh) — Phase 2.5 helper
+- [`skills/rdd-builder/scripts/phase3_archive.sh`](../../skills/rdd-builder/scripts/phase3_archive.sh) — Lightweight close hook
 - [`.rddf/issues/`](../../.rddf/issues/) — 实际捕获的 8 个 issue 样本
 
 **Oracle 复核记录**: 2026-08-24, 9m32s 深度审计 (含 G1-G8 验证 + 6-PR 序列 + 3 架构风险)。

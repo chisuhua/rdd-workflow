@@ -31,7 +31,7 @@ author: sisyphus
 | `feature` | Feature 管理视图（summary/graph/status/order） |
 | `rddf-session` | 跨 OpenCode session 恢复（ADR-0017） |
 | `roadmap` | 路线图管理（被 rdd-arch 调用） |
-| `deps` | 依赖分析（被 guide-plan 调用） |
+| `deps` | 依赖分析（被 rdd-planner 调用） |
 | `rdd-workflow-writing-plans` | 实施计划生成器（v2.0 自包含 TDD 5 步结构） |
 | `rdd-env-check` | 环境健康检查（openspec/git/build + cache 快照，被 4 个 phase 调用） |
 | `rdd-doctor` | 手动触发的只读诊断工具（5 类结构化文件 schema/格式校验，输出分级报告） |
@@ -183,7 +183,7 @@ cp -f "$PACKAGE_DIR/skills/INSTALL.md" "$SKILLS_DIR/skills/"
 
 # 复制 _lib/ 运行时所需 Python 模块、schemas 和 bash helper
 # 这样 feature.md (depends-on: [iteration, deps_output])、rddf-session.md (depends-on: [rddf_session])
-# 以及 status.md (source _lib/status_helpers.sh)、guide-ship.md (source _lib/archive.sh) 等
+# 以及 status.md (source _lib/status_helpers.sh)、rdd-builder.md (source _lib/archive.sh) 等
 # 在目标项目里也能正常 import / source
 if [ -d "$PACKAGE_DIR/skills/_lib" ]; then
     mkdir -p "$SKILLS_DIR/_lib/schemas"

@@ -248,3 +248,50 @@ setup() {
     fi
   done
 }
+
+# -----------------------------------------------------------------------------
+# Bonus Test 14: AC-3 extended — no live guide-* skill references in ANY
+# docs/architecture/*.md file (extended scope per follow-up change).
+# Corresponds to: AC-3 of docs-v4-sync-followup-v2.
+# Oracle review 2026-09-09: extends Test 12 to all docs/architecture/ files
+# (parent change only checked 3 files; this catches drift in unchanged files).
+# Excludes rdd-arch-rdd-planner-integration.md shim-doc mentions via grep -v.
+# -----------------------------------------------------------------------------
+@test "doc_drift_v4: ALL docs/architecture/*.md have no live guide-* skill references (AC-3 follow-up)" {
+  hits=$(grep -rnE 'skill_use\(\"(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)\"\)|\*\*?Entry skill\*\*?: \`(guide-arch|guide-design|guide-plan|guide-ship)\`|skills/(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)/' docs/architecture/ 2>/dev/null | grep -v 'shim\|DEPRECATED\|compat' || true)
+  if [ -n "$hits" ]; then
+    echo "AC-3 follow-up violation (live guide-* in docs/architecture/):"
+    echo "$hits" | head -10
+    return 1
+  fi
+}
+
+# -----------------------------------------------------------------------------
+# Bonus Test 15: AC-7 cross-user-facing — no live skill_use("guide-*")
+# invocations in ONBOARDING.md (new user entry point).
+# Corresponds to: AC-7 of docs-v4-sync-followup-v2.
+# Oracle review 2026-09-09: ONBOARDING.md L194 had live
+# `skill_use("guide-plan")` that would 404 new users. This test enforces.
+# -----------------------------------------------------------------------------
+@test "doc_drift_v4: ONBOARDING.md has no live guide-* skill invocations (AC-7 follow-up)" {
+  hits=$(perl -0777 -ne 'while (/```.*?\n(.*?)\n```/gs) { my $block = $1; while ($block =~ /\bskill_use\(["\x27](guide-arch|guide-design|guide-plan|guide-ship|guide-spec)["\x27]\)/g) { print "AC-7 follow-up violation: live skill_use(\"$1\") in ONBOARDING.md code block\n"; } }' docs/ONBOARDING.md 2>/dev/null)
+  if [ -n "$hits" ]; then
+    echo "$hits"
+    return 1
+  fi
+}
+
+# -----------------------------------------------------------------------------
+# Bonus Test 16: AC-6 — no guide-* skill name references in skills/INSTALL.md.
+# Corresponds to: AC-6 of docs-v4-sync-followup-v2.
+# Oracle review 2026-09-09: INSTALL.md L34/L186 had `guide-plan`/`guide-ship`
+# references that misdirected install-step documentation.
+# -----------------------------------------------------------------------------
+@test "doc_drift_v4: skills/INSTALL.md has no guide-* skill name references (AC-6 follow-up)" {
+  hits=$(grep -nE 'guide-design|guide-plan|guide-ship|guide-arch|guide-spec' skills/INSTALL.md 2>/dev/null || true)
+  if [ -n "$hits" ]; then
+    echo "AC-6 follow-up violation in skills/INSTALL.md:"
+    echo "$hits" | head -5
+    return 1
+  fi
+}

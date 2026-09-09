@@ -28,12 +28,12 @@ Every skill's first line is `---` (YAML start); the frontmatter block closes wit
 
 ## Discovery and Resolution
 
-When the user types `skill_use("guide-arch")`, resolution runs in this order:
+When the user types `skill_use("rdd-arch")`, resolution runs in this order:
 
-1. `${PROJECT_ROOT}/.opencode/skills/rdd-workflow/skills/guide-arch/SKILL.md`
-2. `${PROJECT_ROOT}/skills/guide-arch/SKILL.md`
-3. `~/.agents/skills/guide-arch/SKILL.md` (global install)
-4. `~/.agents/skills/rdd-workflow/skills/guide-arch/SKILL.md` (global install, vendored)
+1. `${PROJECT_ROOT}/.opencode/skills/rdd-workflow/skills/rdd-arch/SKILL.md`
+2. `${PROJECT_ROOT}/skills/rdd-arch/SKILL.md`
+3. `~/.agents/skills/rdd-arch/SKILL.md` (global install)
+4. `~/.agents/skills/rdd-workflow/skills/rdd-arch/SKILL.md` (global install, vendored)
 
 Resolution code lives in `_lib/skill_root.sh::resolve_rdd_skill_dir`. If both PROJECT paths and global paths miss, the skill is reported as not-installed.
 
