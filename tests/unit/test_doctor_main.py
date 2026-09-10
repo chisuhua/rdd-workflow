@@ -13,19 +13,36 @@ from doctor_render import Severity  # noqa: E402
 from doctor_main import aggregate_findings, _CHECKERS  # noqa: E402
 
 
-def test_aggregate_runs_all_10_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """aggregate_findings invokes all 10 checker modules and combines results.
+_CATEGORY_NAMES = frozenset({
+    "state", "plan-tdd", "roadmap-meta", "proposal-table",
+    "proposal-section", "tasks-checkbox", "migration-residue",
+    "orphan-gates", "roadmap-refs", "docs-consistency", "gitignore",
+})
 
-    Per rdd-doctor-docs-consistency change (2026-08-27): adds the
-    docs-consistency category (10th) to the public contract.
+
+def test_category_names_constant_matches_disk():
+    """Lock invariant: directory file count == wired category count.
+
+    Per fix-update-doctor-main-category-count (Wave 1 P2): prevent future
+    drift between source code and the _CATEGORY_NAMES set.
+    """
+    checks_dir = _SCRIPTS_DIR / "checks"
+    files = [f for f in checks_dir.glob("*.py") if f.stem != "__init__"]
+    assert len(_CATEGORY_NAMES) == len(files), (
+        f"_CATEGORY_NAMES has {len(_CATEGORY_NAMES)} entries but {checks_dir} "
+        f"has {len(files)} check files. Update _CATEGORY_NAMES."
+    )
+
+
+def test_aggregate_runs_all_11_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """aggregate_findings invokes all 11 checker modules and combines results.
+
+    Per rdd-doctor-docs-consistency change (2026-08-27, 10th category) and
+    add-gitignore-hard-protection change (2026-09-10, 11th category).
     """
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
     findings, categories_checked = aggregate_findings(category=None)
-    assert set(categories_checked) == {
-        "state", "plan-tdd", "roadmap-meta", "proposal-table",
-        "proposal-section", "tasks-checkbox", "migration-residue",
-        "orphan-gates", "roadmap-refs", "docs-consistency",
-    }
+    assert set(categories_checked) == _CATEGORY_NAMES
 
 
 def test_aggregate_with_category_filter(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -58,6 +75,10 @@ def test_aggregate_no_category_no_match_returns_empty(tmp_path: Path, monkeypatc
     assert categories_checked == []
 
 
-def test_checkers_dict_has_10_entries():
-    """Lock the public contract: exactly 10 categories wired (9 + docs-consistency)."""
-    assert len(_CHECKERS) == 10
+def test_checkers_dict_has_11_entries():
+    """Lock the public contract: exactly 11 categories wired (10 baseline + gitignore).
+
+    Baseline 10 (per rdd-doctor-docs-consistency 2026-08-27) + gitignore
+    (per add-gitignore-hard-protection 2026-09-10).
+    """
+    assert len(_CHECKERS) == 11
