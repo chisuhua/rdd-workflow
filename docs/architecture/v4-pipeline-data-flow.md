@@ -287,10 +287,27 @@ This section walks through the **happy path** end-to-end, step by step. All file
           - case 2: rejected (exit 0, no archive)
           - case 3: blocked   (exit 0, no archive)
           - case 4: needs-revision (exit 1)
+          - **NEW per ADR-0049**: AI agent reads .rddf/improvements/<change>.md 5 段,
+            generates LLM feedback body with Concern/Severity/Suggested action/Related ADR,
+            then invokes rddf feedback add --body "<LLM-generated>"
 [Step 3.5] P0 case 5 (dispatch-quick, NEW per ADR-0048 §Decision 3):
           - bash phase0_approval.sh change-foo --dispatch-quick
           - read .planner-handoff.json::recommended_route
             warn-but-continue if != "simple" (user override path)
+          - **NEW per ADR-0049**: AI agent reads .rddf/improvements/<change>.md 5 段,
+            generates LLM dispatch_quick_review JSON:
+              {
+                complexity_confirmed: "simple|complex|unknown",
+                concerns: ["bullet", ...],
+                suggested_action: "proceed|escalate",
+                reviewed_at: <ISO>,
+                data_source: "<absolute path of improvement file>"
+              }
+            Writes to .rddf/state/builder/change-foo.json::dispatch_quick_review
+            (via env-var pattern, per Oracle C1)
+          - phase0_approval.sh reads dispatch_quick_review from builder-handoff,
+            emits warning if complexity_confirmed=="complex" but does NOT block
+            (HARD pause = user is final decision-maker)
           - NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           - write .rddf/state/rdd-quick-context.json:
               {
@@ -302,6 +319,11 @@ This section walks through the **happy path** end-to-end, step by step. All file
                 "planner_advisory": {
                   "recommended_route": "simple",
                   "rationale": "planner-handoff.json::recommended_route at dispatch time"
+                },
+                "llm_advisory": {                    // NEW per ADR-0049
+                  "complexity_confirmed": "complex",
+                  "concerns": "data migration",
+                  "rationale": "builder-handoff::dispatch_quick_review at dispatch time"
                 },
                 "ac_count": 2
               }
@@ -583,6 +605,9 @@ rdd-quick P1 (mode a, reads planner-handoff.json::recommended_route)
 | rdd-planner: recommended_route=unknown | Phase 5 gate 2 fails | user runs `rddf planner sync --apply` to recompute |
 | rdd-planner: roadmap exists but planner-state missing | Phase 5 gate 1 passes, gate 2 fails (no planner-state at all) | user runs `rddf planner status` to bootstrap empty state with `recommended_route=unknown` |
 | rdd-builder P0: recommended_route != simple but user picks 5 | warn-but-continue | `.rddf-quick-context.json.planner_advisory.rationale` records user override |
+| rdd-builder P0 (per ADR-0049): LLM dispatch_quick_review detects "complex" | phase0_approval.sh case 5 emits warning | user already chose 5; HARD pause preserved; `forced_by_user=true` recorded |
+| rdd-builder P0 (per ADR-0049): LLM disagrees with planner advisory | prose marks `Agreement: no` | routing unchanged (advisory priority); user reviews LLM concerns before decision |
+| rdd-builder P0 (per ADR-0049): improvement file missing | AI agent reports missing primary data source | user must run `rddf planner attach <change>` first to create improvement 5-段 |
 | rdd-quick P1: planner-handoff missing | mode (a) entry | falls back to mode (b) self-triage |
 | rdd-quick P2: needs worktree but can't | TDD step fails | abort, escalate to builder P0 |
 | rdd-verifier: implementation_gap | verdict = 1 | back-route to builder P2 (retry, max 3) |
@@ -602,5 +627,6 @@ rdd-quick P1 (mode a, reads planner-handoff.json::recommended_route)
 - **Multi-session**: [multi-session.md](multi-session.md) — rddf-session lifecycle
 - **Extension points**: [extension-points.md](extension-points.md) — how to add new skills/ADRs
 - **ADR-0048**: [../adr/ADR-0048-v4-stage-merge-revision.md](../adr/ADR-0048-v4-stage-merge-revision.md)
+- **ADR-0049**: [../adr/ADR-0049-rdd-builder-phase0-llm-integration.md](../adr/ADR-0049-rdd-builder-phase0-llm-integration.md) (LLM-augmented P0)
 - **ADR-0043**: [../adr/ADR-0043-rdd-workflow-v4-stage-merge.md](../adr/ADR-0043-rdd-workflow-v4-stage-merge.md) (baseline v4 architecture)
 - **ADR-0047**: [../adr/ADR-0047-rdd-quick-bypass-path.md](../adr/ADR-0047-rdd-quick-bypass-path.md) (rdd-quick original design, AMENDED per ADR-0048)

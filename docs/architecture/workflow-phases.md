@@ -167,33 +167,77 @@ The P0 approval gate now offers 5 choices (was 4 in v4.0):
 
 ```
 ══════════════════════════════════════════════
-rdd-builder Phase 0: Approval Gate (HARD pause, per ADR-0048)
+rdd-builder Phase 0: Approval Gate (HARD pause, LLM-augmented per ADR-0049)
 ══════════════════════════════════════════════
 变更: <change-name>
 Planner advisory: recommended_route = simple|complex|unknown
-AC 数量: N 个
+LLM assessment: simple|complex|unknown (per ADR-0049 Pre-flight Reasoning)
+AC 数量: N 个 (from .rddf/improvements/<change>.md ## Acceptance, primary data source)
 
-💡 推荐选项 (per planner advisory):
-   recommended_route=simple AND AC ≤ 2 AND files ≤ 2 AND 无 public interface
-   → 💡 推荐选项 5 (dispatch-to-quick)
+💡 推荐选项 (per planner advisory + LLM agreement):
+   - 三者一致 (advisory=simple AND LLM=simple AND AC ≤ 2)
+     → 💡 推荐选项 5 (dispatch-to-quick)
+   - LLM=complex 或 advisory=complex
+     → 选项 1 (approve) 是常规路径, 仔细评估 LLM concerns
+   - LLM 标记 conflict (Agreement: no)
+     → 用户应仔细 review LLM concerns 后再决策
 
 1. ✅ approve       → 继续 Phase 1 plan gen
-2. ❌ reject        → rddf feedback add --kind rejected, exit 0
-3. ⏸ defer         → rddf feedback add --kind blocked, exit 0
-4. 🔄 revise        → rddf feedback add --kind needs-revision, exit 1
+2. ❌ reject        → rddf feedback add --kind rejected (LLM-generated body), exit 0
+3. ⏸ defer         → rddf feedback add --kind blocked (LLM-generated body), exit 0
+4. 🔄 revise        → rddf feedback add --kind needs-revision (LLM-generated body), exit 1
 5. ⚡ dispatch-quick → 转 rdd-quick (per ADR-0047 + ADR-0048)
+   + LLM hidden complexity check (per ADR-0049)
    仅当 recommended_route=simple 时启用 (会警告但允许 user override)
 ══════════════════════════════════════════════
 ```
+
+### v4.0.2 (planned) — LLM-augmented P0 (per ADR-0049)
+
+Per [ADR-0049](../adr/ADR-0049-rdd-builder-phase0-llm-integration.md), P0 引入 LLM Pre-flight Reasoning：
+
+**LLM 数据源** (per ADR-0049 Decision 4)：
+- **PRIMARY**: `.rddf/improvements/<change>.md` 5 段 (Why/What/How/Acceptance/Capabilities)
+- **SECONDARY**: `.rddf/state/.planner-handoff.json::recommended_route`
+- **TERTIARY**: `.rddf/state/.planner-state.json::active_projects`
+- **FALLBACK**: `openspec/changes/<change>/proposal.md` (仅当 improvement 缺失)
+- **ALWAYS**: `docs/adr/ADR-*.md` (架构约束检查)
+
+**触发边界** (Decision 1)：
+- case 1 approve → ❌ 不调 LLM (用户已显式选择)
+- case 2/3/4 → ✅ 调 LLM 生成 feedback body
+- case 5 dispatch-quick → ✅ 调 LLM hidden complexity check
+
+**Conflict 兜底** (Decision 3)：
+- planner advisory > LLM assessment (advisory 优先)
+- `--dispatch-quick` CLI flag 仍要求 `recommended_route=simple` (不变)
+- LLM 与 advisory 冲突时 prose 显式标记但不改变 routing
+- 用户始终是最终决策者 (HARD pause 不变)
+
+**LLM 输出落点** (Decision 5)：
+- Pre-flight → prose 展示 (不入文件)
+- case 2/3/4 → `rddf feedback add --body "<LLM-generated>"` → `.rddf/state/.planner-feedback.json`
+- case 5 → `.rddf/state/builder/<change>.json::dispatch_quick_review` → rdd-quick P1 读取
+
+**LLM 架构** (Decision 2)：
+- executing AI agent IS the LLM (per ADR-0045 模式)
+- 无 ANTHROPIC_API_KEY / OPENAI_API_KEY env var
+- 无 llm_client 模块 / SDK 依赖
+- SKILL.md 用自然语言指示 AI 代理执行 LLM 推理
 
 ### Option 5 (dispatch-quick) behavior
 
 When user picks option 5:
 
-1. **Write context**: `.rddf/state/rdd-quick-context.json` (NEW schema, contains `change_name`, `proposal_path`, `from_builder=true`, `planner_advisory`, etc.)
-2. **Write handoff**: `.rddf/state/builder/<change>.json::approval_status="dispatched_to_quick"` + `dispatch_quick_at` timestamp
-3. **Delegate**: emit `DISPATCH_TO_QUICK=1 CHANGE_NAME=<change>` marker; orchestrator calls `skill_use("rdd-quick") --from-builder`
-4. **Outcome handling** (rdd-quick P4):
+1. **Pre-flight LLM hidden complexity check** (per ADR-0049):
+   - AI 代理读 `.rddf/improvements/<change>.md` 5 段
+   - 检查 `_lib/core/` / `_lib/schemas/` 路径、跨模块、AC 数量、env 依赖
+   - 写入 `.rddf/state/builder/<change>.json::dispatch_quick_review`
+   - 若 `complexity_confirmed == "complex"`, echo warning 但不阻断
+2. **Write context**: `.rddf/state/rdd-quick-context.json` (NEW schema, contains `change_name`, `proposal_path`, `from_builder=true`, `planner_advisory`, `llm_advisory`, etc.)
+3. **Write handoff**: `.rddf/state/builder/<change>.json::approval_status="dispatched_to_quick"` + `dispatch_quick_at` timestamp
+4. **Delegate**: emit `DISPATCH_TO_QUICK=1 CHANGE_NAME=<change>` marker; orchestrator calls `skill_use("rdd-quick") --from-builder`
+5. **Outcome handling** (rdd-quick P4):
    - `completed` → directly `openspec archive <change> --yes` (skipping builder P1-P3)
    - `escalated` → return to builder P0 with options 1-4 (per ADR-0048 amendment; was rdd-planner in pre-amendment ADR-0047)
    - `unverified` → return to builder P0 (similar to escalated)
