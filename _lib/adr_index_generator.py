@@ -25,6 +25,9 @@ def scan_adrs(adr_dir: Path) -> list[dict]:
             continue
         number, slug = m.groups()
         title = _extract_title(path)
+        # Skip touch-test fixture ADR-0001-x.md (per fix-rebuild-adr-index-for-0049-0050): no real ADR content.
+        if path.name in ("ADR-0001-x.md",):
+            continue
         adrs.append({
             "number": number,
             "slug": slug,

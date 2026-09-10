@@ -75,6 +75,10 @@
 | [ADR-0046](ADR-0046-arch-analyzer-protocol-subset.md) | ADR-0046: arch-analyzer protocol subset | 已采纳 | 2026-09-07 |
 | [ADR-0047](ADR-0047-rdd-quick-bypass-path.md) | ADR-0047: rdd-quick bypass path — 无 openspec change 的快速执行路径 | 已采纳 + AMENDED (per ADR-0048, 2026-09-09) | 2026-09-07 (original); 2026-09-09 (amended) |
 | [ADR-0048](ADR-0048-v4-stage-merge-revision.md) | ADR-0048: v4 stage-merge 修订 — rdd-arch 完全脱离 roadmap + rdd-builder P0 触发 rdd-quick | 已采纳 (2026-09-09) | 2026-09-09 |
+| [ADR-0049](ADR-0049-rdd-builder-phase0-llm-integration.md) | ADR-0049: rdd-builder Phase 0 LLM Integration (Pre-flight Reasoning + Feedback Generation + Hidden Complexity Check) | 待采纳 | 2026-09-10 |
+| [ADR-0050](ADR-0050-rdd-builder-auto-pick-mode.md) | ADR-0050: rdd-builder / rdd-quick 全自动决策模式 (per 用户 UX 需求) | 待采纳 | 2026-09-10 |
+
+
 <!-- ADR_INDEX_END -->
 
 ## 架构演进
