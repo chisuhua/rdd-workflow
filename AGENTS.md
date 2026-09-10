@@ -631,6 +631,11 @@ Flags: `--json` (write `.rddf/state/.doctor-report.json`), `--category <name>` (
 23. **codegraph signal 必须 env-var 注入**: Python subprocess 上下文无法访问 MCP session — populate_lib 内部**禁止**调 MCP；agent 侧通过 `RDDF_CODEGRAPH_FINGERPRINT` env var 注入 signal
 24. **reset roadmap 增量 state**: `rm .rddf/state/.populate-state.json` (无 baseline → 下次 full)；用于分支切换残留、codegraph 索引陈旧、人工强制全量
 25. **`_lib/` vs `skills/_lib/` 双路由 (P1-1b, 2026-08-25)**: 真实代码在仓库根 `_lib/`；`skills/_lib/` 是 shim 层 (15 个 6 行 bash shim 优先本地路径、10 个 identity-merge Python shim、若干 path-widening `__init__.py`)。`import skills._lib.X is _lib.X` 为 True（10 个迁移模块已锁定，详见 `tests/unit/test_p1_1_identity_merge.py`）；其余子模块身份仍分裂（已记入 P2 follow-up）。新增代码 **必须 import `_lib.X`** (canonical, 真正实现)，历史 `skills._lib.X` 调用继续兼容。
+26. **E2E 测试三模式 (C 层)** — `tests/e2e/agent/` 下的场景支持 3 种模式，按优先级自动选择：
+    - **real** (`RDDF_AGENT_E2E=1` + opencode/claude/codex 在 PATH) — 真调 LLM agent。CI/nightly 默认,**本地会超时** (5+ 分钟/场景)。
+    - **mock** (`AGENT_RUNNER_MODE=mock`) — 使用 scenario 里的 `mock_output` 预录数据。**本地快速验证推荐**,~1 秒/场景。
+    - **validate** (默认 / `AGENT_RUNNER_MODE=validate`) — 只校验 scenario schema + golden 字段,不调 agent,不快也不慢,纯 schema 检查。
+    - 决策代码: `tests/e2e/_lib/agent_runner.bash::agent_runner::detect_mode`。本地常用 `AGENT_RUNNER_MODE=mock bats tests/e2e/agent/test_*.bats`。
 
 ## 关键术语对照表 (improvement vs openspec proposal)
 
