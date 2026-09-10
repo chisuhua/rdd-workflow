@@ -58,6 +58,7 @@ _SEMANTIC_HASH_EXCLUDE = frozenset({
     "last_sync_at",
     "last_sync_status",
     "sprint_started_at",
+    "recommended_route",
 })
 
 
@@ -65,6 +66,10 @@ def _planner_state_semantic_hash(state: Dict[str, Any]) -> str:
     """SHA-256[:16] of semantic fields (excludes timestamps + revision itself).
 
     Used by write_state/update_state to decide whether to bump state_revision.
+    recommended_route excluded because it is a derived advisory signal (per
+    ADR-0048 §Decision 2) — when the underlying active_projects changes, the
+    heuristic recomputes it; we don't want the heuristic change alone to
+    bump state_revision.
     """
     semantic = {
         k: v for k, v in state.items()
@@ -76,13 +81,19 @@ def _planner_state_semantic_hash(state: Dict[str, Any]) -> str:
 
 
 def _default_state() -> Dict[str, Any]:
-    """Return a fresh, empty state dict."""
+    """Return a fresh, empty state dict.
+
+    ADR-0048 §Decision 2: recommended_route now REQUIRED (was optional).
+    Default "unknown" means planner has not yet computed an advisory signal;
+    rdd-planner sync must compute and update before planner-done gate.
+    """
     return {
         "version": SCHEMA_VERSION,
         "state_revision": 0,
         "current_sprint": current_sprint_id(),
         "last_sync_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
         "last_sync_status": "ok",
+        "recommended_route": "unknown",
         "active_projects": [],
         "unmapped_proposals": [],
         "synced_proposals": [],
@@ -146,6 +157,13 @@ def write_state(project_root: Path, state: Dict[str, Any], *, validate: bool = T
     Raises:
         PlannerStateError: Validation failure.
     """
+    # ADR-0048 §Decision 2: recommended_route is REQUIRED in schema v1.1.
+    # Inject "unknown" default for callers that pre-date this ADR; the value
+    # is recomputed by planner_sync.render_state() anyway and excluded from
+    # state_revision semantic hash, so no behavioral impact.
+    if "recommended_route" not in state:
+        state = dict(state)
+        state["recommended_route"] = "unknown"
     if validate:
         schema = json.loads(STATE_SCHEMA_PATH.read_text())
         try:

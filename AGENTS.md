@@ -210,7 +210,7 @@ Feature fragments (`rddf roadmap add-feature`) 跨阶段追踪多 phase 改进�
 | 文件 | 用途 | 写入方 |
 |------|------|--------|
 | `.rddf/state/.arch-handoff.json` | arch→plan 交接 + **ADR-0016 发现契约** v1 (adr_dir/roadmap_path/architecture_dir/adr_pattern/discovered/version) | `rdd-arch` (arch-done) / `rdd-planner` (stage entry) + `propose`/`roadmap`/`gate.py`/`detectors.py`/`actions.py`/`scan-state.sh` (handoff readers, fallback to defaults) |
-| `.rddf/state/.plan-handoff.json` | plan→ship 交接 + **execution_mode_decisions** (ADR-0024) | `rdd-planner` (stage exit) / `rdd-builder` (stage entry) |
+| `.rddf/state/.plan-handoff.json` | plan→ship 交接 + **execution_mode_decisions** (ADR-0024) | **【已 RETIRE per v4 spec §6.1 + ADR-0044 Wave 3】** rdd-planner stage exit 现写 `.planner-handoff.json`; rdd-builder 用 `.rddf/state/builder/<change>.json` (per-change) |
 | `.rddf/state/sessions.json` | **rddf-session 生命周期** (ADR-0017) — 跨 OpenCode session 工作流恢复 | `rdd-arch`/`rdd-planner`/`rdd-builder` 入口 + `rddf-session` skill 5 子命令 |
 | `.rddf/state/deps-analysis.json` | **结构化** deps 输出 (v2.0.1) + **execution_mode_recommendations** (ADR-0024) | `deps` Step 5b 优先写; Step 6 markdown-fallback 时也写 |
 | `.rddf/state/deps-candidates.json` | deps 候选列表 | `rdd-builder` (Phase 1.5) |
@@ -594,7 +594,7 @@ Flags: `--json` (write `.rddf/state/.doctor-report.json`), `--category <name>` (
    - 详细流程见上方 "Worktree Commit Flow" (3 步: execute → worktree-internal commit → archive)
    - `rdd-workflow-writing-plans` 生成的 plan 默认在 Step 5 不执行 commit；如需逐任务 commit，设置 `COMMIT_IN_EXECUTE=yes`（不推荐）
    - **冲突来源**: AGENTS.md 历史上写"execute 不 commit"但 `_lib/archive.sh::check_worktree_commits` 又要求 commits — 本提案显式规则化解此矛盾
-7. **`rdd-arch` 不调用 `rdd-planner`** — arch-done 后用户必须手动切换；v4.0+ 阶段切换是 `rdd-arch` → `rdd-planner` → `rdd-builder` → `rdd-verifier`
+7. **`rdd-arch` 不调用 `rdd-planner`** — arch-done 后用户必须手动切换；v4.0+ 阶段切换是 `rdd-arch` → `rdd-planner` → `rdd-builder` → `rdd-verifier`（**per ADR-0048** rdd-arch 不再管 roadmap, 完全依赖 planner feedback advisory 了解 roadmap 治理；rdd-planner 通过 `.planner-handoff.json::recommended_route` advisory 输出到 rdd-builder P0 触发 dispatch-quick 决策）
 8. **`guide-spec` 已移除** — v2.0 中删除（原为 60 行别名），请直接使用 v4 四阶段流程：`rdd-arch` → `rdd-planner` → `rdd-builder` → `rdd-verifier`（或 `rdd-quick` 旁路）
 9. **Loop 引擎 max_iterations: 100, max_retries: 3** — 配置在 `interaction` 模式配置中
 10. **proposal-suggestions.md 格式为 Markdown 表格** — 索引到 `.rddf/improvements/*.md`, 用 `list_improvements()` 或 `read_improvement_entries()` 读取, 审查通过后添加到 `proposal-approved.md`

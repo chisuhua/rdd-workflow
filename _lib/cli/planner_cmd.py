@@ -103,6 +103,14 @@ def cmd_planner(args: List[str]) -> int:
             sys.stdout.write(f"Active projects: {len(state['active_projects'])}\n")
             sys.stdout.write(f"Unmapped proposals: {len(state['unmapped_proposals'])}\n")
             sys.stdout.write(f"Status: {state.get('last_sync_status', 'unknown')}\n")
+            # ADR-0048 §Decision 2: surface recommended_route advisory signal
+            route = state.get("recommended_route", "unknown")
+            route_hint = {
+                "simple": "→ 💡 rdd-builder P0 may recommend option 5 (dispatch-quick)",
+                "complex": "→ ⚠️  rdd-builder P0 should stay with options 1-4 (full pipeline)",
+                "unknown": "→ ❓ run `rddf planner sync --apply` to compute advisory",
+            }.get(route, "")
+            sys.stdout.write(f"Recommended route: {route}  {route_hint}\n")
             return 0
 
         if ns.subcommand == "sync":

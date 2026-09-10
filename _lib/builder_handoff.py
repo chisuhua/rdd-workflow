@@ -33,7 +33,17 @@ def write_builder_handoff(
     max_retries: int = 3,
     retry_history=None,
     phase_pause_history=None,
+    dispatch_quick_at=None,
+    dispatch_quick_outcome=None,
 ) -> dict:
+    """Write per-change builder-handoff v1.1 (per ADR-0048, dispatch-quick fields).
+
+    approval_status enum (per spec §6.3 + ADR-0048):
+        pending | approved | rejected | deferred | revising | dispatched_to_quick
+
+    dispatch_quick_at: ISO timestamp when P0 选项 5 触发 (per ADR-0048 §Decision 3)
+    dispatch_quick_outcome: enum completed | escalated | unverified (after rdd-quick P4)
+    """
     if execution_mode_decision is None:
         execution_mode_decision = {}
     if deps_status is None:
@@ -42,6 +52,13 @@ def write_builder_handoff(
         retry_history = []
     if phase_pause_history is None:
         phase_pause_history = []
+
+    # ADR-0048: validate approval_status enum; backward compat: existing values allowed
+    valid_approval = {"pending", "approved", "rejected", "deferred", "revising", "dispatched_to_quick"}
+    if approval_status not in valid_approval:
+        raise ValueError(
+            f"approval_status must be one of {valid_approval}, got {approval_status!r}"
+        )
 
     handoff = {
         "schema": "builder-handoff-v1",
@@ -65,6 +82,17 @@ def write_builder_handoff(
         "verifier_report_path": verifier_report_path,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
+    # ADR-0048 §Decision 3: dispatch-quick tracking fields (optional; only set when used)
+    if dispatch_quick_at is not None:
+        handoff["dispatch_quick_at"] = dispatch_quick_at
+    if dispatch_quick_outcome is not None:
+        if dispatch_quick_outcome not in {"completed", "escalated", "unverified"}:
+            raise ValueError(
+                f"dispatch_quick_outcome must be completed|escalated|unverified, "
+                f"got {dispatch_quick_outcome!r}"
+            )
+        handoff["dispatch_quick_outcome"] = dispatch_quick_outcome
+
     handoff_path = _handoff_path(project_root, change_name)
     handoff_path.parent.mkdir(parents=True, exist_ok=True)
     with FileLock(str(handoff_path) + ".lock", timeout=10):

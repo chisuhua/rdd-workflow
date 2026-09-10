@@ -170,6 +170,60 @@ def discover_projects(project_root: Path) -> List[Dict[str, Any]]:
     return records
 
 
+_COMPLEX_KEYWORDS = frozenset({
+    "public interface", "public api", "breaking change", "breaking-change",
+    "data migration", "data-migration", "rollback", "cross-module",
+    "cross_module", "library api", "library-api",
+    "_lib/core/", "_lib/schemas/", "_lib/core", "_lib/schemas",
+})
+
+_SIMPLE_KEYWORDS = frozenset({
+    "typo", "comment", "rename internal", "log line", "log statement",
+    "readme", "documentation", "docstring", "type hint", "doc-only",
+    "no behavior", "no-behavior", "internal variable",
+})
+
+
+def _compute_recommended_route(active_projects: List[Dict[str, Any]]) -> str:
+    """Heuristic advisory signal for rdd-builder P0 dispatch-quick decision.
+
+    Per ADR-0048 §Decision 2. Logic:
+      - "simple": ALL active_projects have priority == "P3" AND no complex keyword
+                  AND no _lib/core/_lib/schemas/ involvement detected.
+      - "complex": ANY active_project has priority in {"P0", "P1"} OR complex keyword.
+      - "unknown": no active projects (nothing to advise on) OR mixed signals.
+
+    Note: This is a SIGNAL, not a routing authority. rdd-builder P0 retains
+    HARD pause user override; user can always choose options 1-4 regardless
+    of this advisory.
+    """
+    if not active_projects:
+        return "unknown"
+
+    has_complex = False
+    for p in active_projects:
+        priority = p.get("priority", "P2")
+        if priority in {"P0", "P1"}:
+            has_complex = True
+            break
+
+        # Heuristic: scan theme + proposal name for complex/simple keywords
+        text = " ".join([
+            str(p.get("theme", "") or ""),
+            str(p.get("proposal", "") or ""),
+            str(p.get("project_id", "") or ""),
+        ]).lower()
+
+        if any(kw in text for kw in _COMPLEX_KEYWORDS):
+            has_complex = True
+            break
+
+    if has_complex:
+        return "complex"
+
+    return "simple"
+
+
 def render_state(
     project_root: Path,
     *,
@@ -178,7 +232,8 @@ def render_state(
 ) -> Dict[str, Any]:
     """Compute planner state from project_root.
 
-    Returns a dict conforming to planner_state_schema.json.
+    Returns a dict conforming to planner_state_schema.json v1.1.
+    Includes recommended_route (REQUIRED per ADR-0048 §Decision 2).
     """
     projects = discover_projects(project_root)
     active = []
@@ -206,6 +261,7 @@ def render_state(
         "sprint_started_at": sprint_started_at or now,
         "last_sync_at": now,
         "last_sync_status": "ok" if not unmapped else "warn",
+        "recommended_route": _compute_recommended_route(active),
         "active_projects": active,
         "unmapped_proposals": unmapped,
         "synced_proposals": synced,
