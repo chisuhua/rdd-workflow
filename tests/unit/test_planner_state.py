@@ -33,7 +33,13 @@ def test_read_state_returns_empty_when_missing(tmp_path):
 
 
 def test_write_then_read_state_roundtrip(tmp_path):
-    """write_state then read_state returns identical dict."""
+    """write_state then read_state returns identical dict (after ADR-0048 default injection).
+
+    Per ADR-0048 §Decision 2, recommended_route is REQUIRED in schema v1.1.
+    write_state injects "unknown" default when caller omits it; state_revision
+    may also bump from 0 to 1 if semantic content changed. Both fields are
+    added to the round-trip expectation here.
+    """
     sample = {
         "version": 1,
         "current_sprint": "sprint-2026-09",
@@ -51,7 +57,13 @@ def test_write_then_read_state_roundtrip(tmp_path):
     }
     write_state(tmp_path, sample)
     loaded = read_state(tmp_path)
-    assert loaded == sample
+    expected = dict(sample)
+    expected["recommended_route"] = "unknown"
+    # state_revision may be bumped (0 -> 1) on first write because the injected
+    # recommended_route field changes the semantic hash; just confirm it's >= 1.
+    assert loaded.get("state_revision", 0) >= 1
+    loaded_without_rev = {k: v for k, v in loaded.items() if k != "state_revision"}
+    assert loaded_without_rev == expected
 
 
 def test_write_state_validates_against_schema(tmp_path):

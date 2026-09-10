@@ -171,3 +171,67 @@ teardown() {
     diff /tmp/expected_a /tmp/actual_a
     diff /tmp/expected_b /tmp/actual_b
 }
+
+# ---------- ADR-0048 upgrade contract: rdd-builder (NOT rdd-planner) ----------
+# Per ADR-0048 §Decision 3, the original upgrade path was "skill_use('rdd-planner')".
+# After amendment, escalated retries must go to skill_use('rdd-builder') to avoid
+# a planner → builder → quick → planner loop. These tests lock that contract.
+
+@test "rdd-quick: SKILL.md upgrade contract now points to rdd-builder (per ADR-0048)" {
+    [ -f "$SKILL_FILE" ]
+    body="$(awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$SKILL_FILE")"
+    # The original contract referenced "skill_use(\"rdd-planner\")" as the
+    # upgrade recommendation. After ADR-0048 amendment, this MUST be
+    # replaced with "skill_use(\"rdd-builder\")".
+    # We require the new recommendation is present; we explicitly check the
+    # legacy single-line recommendation ("re-frame as an openspec change by
+    # running skill_use('rdd-planner')") is gone.
+    echo "$body" | grep -F "skill_use(\"rdd-builder\")" | grep -qiE "升级|回到|re-frame|回到 P0"
+    # Legacy recommendation (skill_use rdd-planner alone) must NOT appear as
+    # the standalone upgrade suggestion. We check by string absence in the
+    # escalation summary block.
+    ! echo "$body" | grep -F 'running skill_use("rdd-planner")' | grep -q '升级'
+}
+
+@test "rdd-quick: SKILL.md body documents both entry modes (a) from-builder and (b) direct" {
+    [ -f "$SKILL_FILE" ]
+    body="$(awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$SKILL_FILE")"
+    echo "$body" | grep -qF "from-builder"
+    echo "$body" | grep -qE "direct|guide"
+}
+
+@test "rdd-quick: SKILL.md P1 complexity triage now reads planner advisory (per ADR-0048)" {
+    [ -f "$SKILL_FILE" ]
+    body="$(awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$SKILL_FILE")"
+    # Per ADR-0048, P1 must read .planner-handoff.json::recommended_route as
+    # primary signal in mode (a); fallback to self-triage only.
+    echo "$body" | grep -qF "planner-handoff"
+    echo "$body" | grep -qiE "advisory|recommended_route"
+    # The legacy "self-triages regardless" wording from ADR-0047 D1 original
+    # must be amended; ADR-0048 requires it now reads from planner-handoff
+    # when invoked from builder P0.
+    ! echo "$body" | grep -F "self-triages regardless"
+}
+
+@test "rdd-quick: SKILL.md role.boundaries.owns includes rdd-quick-context.json (per ADR-0048)" {
+    [ -f "$SKILL_FILE" ]
+    frontmatter="$(awk 'BEGIN{c=0} /^---$/{c++; next} c==1{print} c==2{exit}' "$SKILL_FILE")"
+    echo "$frontmatter" | grep -A 10 "owns:" | grep -F "rdd-quick-context.json"
+}
+
+@test "rdd-quick: SKILL.md mentions ADR-0048 (decision traceability)" {
+    [ -f "$SKILL_FILE" ]
+    run grep -c "ADR-0048" "$SKILL_FILE"
+    [ "$status" -eq 0 ]
+    [ "$output" -ge 1 ]
+}
+
+@test "rdd-quick: SKILL.md env var list uses RDDF_QUICK_ prefix (backward compat)" {
+    [ -f "$SKILL_FILE" ]
+    body="$(awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$SKILL_FILE")"
+    # All env vars in the doc table should use RDDF_QUICK_ prefix
+    echo "$body" | grep -E "^\| \`?RDDF_QUICK_" | wc -l | grep -qE "[1-9]"
+    # No rdd-builder reserved env vars leaked into body
+    ! echo "$body" | grep -E "^\| \`?QUICK_FINISH_DETECTED"
+    ! echo "$body" | grep -E "^\| \`?SKIP_PROMETHEUS_PLANNING"
+}

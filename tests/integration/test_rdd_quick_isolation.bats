@@ -22,7 +22,11 @@ LOCKED_TASKS_WRITEBACK_SH="e9e0065de4f65fbeef763be3b3eb09626c99920744e6bb2585311
 LOCKED_ARCHIVE_SH="d90b32f0729e4b431a1cfff8e620f697f7c1c022ae49ddf8d0df594561b53b97"
 # Role block of rdd-planner/SKILL.md (from `role:` through closing `---`).
 # This is the structural-only hash that MUST be byte-identical after rdd-quick lands.
-LOCKED_RDD_PLANNER_ROLE_BLOCK="96f9132d4fe339ef903028aba7bacec584526ba6ac93033ea0b8e72fb1b41381"
+# LOCKED_RDD_PLANNER_ROLE_BLOCK: role: ... --- block sha256, captured post-ADR-0048
+# (per ADR-0048 §Decision 2: planner 完全独占 roadmap, owns 块添加 features/phases/populate-state,
+#  not_owns 块保持稳定). DRIFT after ADR-0048 implementation is EXPECTED; the
+# baseline was recaptured after the planner-bootstrap code changes landed.
+LOCKED_RDD_PLANNER_ROLE_BLOCK="69653d7eea5e78e90de00fdd478ab68e6edf80b23e26e9d10a9477c8d5cc0e45"
 
 @test "rdd-quick: select_worktree.sh sha256 unchanged" {
     [ -f "$PROJECT_ROOT/skills/execute/scripts/select_worktree.sh" ]

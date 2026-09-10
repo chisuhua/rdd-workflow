@@ -100,7 +100,12 @@ def test_schema_accepts_state_revision_field(tmp_path: Path):
 
 
 def test_schema_accepts_legacy_state_without_state_revision(tmp_path: Path):
-    """Legacy state file (no state_revision field) still validates + reads."""
+    """Legacy state file (no state_revision field) still validates + reads.
+
+    Per ADR-0048 §Decision 2, recommended_route is now REQUIRED in schema v1.1;
+    include it so the legacy fixture still validates. The test's intent
+    (backward compat for missing state_revision) is unchanged.
+    """
     state_path = tmp_path / ".rddf" / "state" / STATE_FILENAME
     state_path.parent.mkdir(parents=True, exist_ok=True)
     legacy = {
@@ -110,6 +115,7 @@ def test_schema_accepts_legacy_state_without_state_revision(tmp_path: Path):
         "active_projects": [],
         "unmapped_proposals": [],
         "synced_proposals": [],
+        "recommended_route": "unknown",
     }
     state_path.write_text(json.dumps(legacy))
 
