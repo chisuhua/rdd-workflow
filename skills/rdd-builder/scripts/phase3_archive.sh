@@ -34,7 +34,7 @@ fi
 # Route verifier verdict
 DECISION_JSON=$(python3 -c "
 import sys, json
-sys.path.insert(0 '$PROJECT_ROOT')
+sys.path.insert(0, '$PROJECT_ROOT')
 from _lib.builder_retry import route_verifier_verdict
 d = route_verifier_verdict(verifier_exit_code=$VERIFIER_EXIT)
 print(json.dumps(d))
@@ -81,7 +81,7 @@ fi
 # Verifier passed → archive
 EXEC_MODE=$(python3 -c "
 import sys
-sys.path.insert(0 '$PROJECT_ROOT')
+sys.path.insert(0, '$PROJECT_ROOT')
 from _lib.builder_handoff import read_builder_handoff
 print(read_builder_handoff('$PROJECT_ROOT', '$CHANGE_NAME').get('execution_mode_decision', {}).get('mode', 'worktree'))
 " 2>/dev/null || echo "worktree")
