@@ -11,10 +11,6 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [fix-parametrize-planner-feedback-id-date](.rddf/improvements/fix-parametrize-planner-feedback-id-date.md) | P2 | 2026-09-10 | rdd-planner |
-| [fix-rebuild-adr-index-for-0049-0050](.rddf/improvements/fix-rebuild-adr-index-for-0049-0050.md) | P2 | 2026-09-10 | rdd-planner |
-| [fix-update-doctor-main-category-count](.rddf/improvements/fix-update-doctor-main-category-count.md) | P2 | 2026-09-10 | rdd-planner |
-| [fix-remove-stale-filled-at-regression-test](.rddf/improvements/fix-remove-stale-filled-at-regression-test.md) | P3 | 2026-09-10 | rdd-planner |
 
 > **批次说明 (2026-09-10 design-done)**: 本批 4 项提案 (本次批准) 为 KNOWN_FAILURES baseline 衍生, 全部为 test-fix / docs-fix 小修, 低风险独立可并行. 计划按下列顺序实施 (合并到 single feature: feat-fix-audit-findings):
 > 1. **`fix-parametrize-planner-feedback-id-date`** (P2) — first: 重构 5 个 hardcode 日期测试为 tmp_path fixture, 解决时间炸弹
@@ -183,6 +179,10 @@
 | [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-08-30 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-remove-stale-filled-at-regression-test](.rddf/improvements/fix-remove-stale-filled-at-regression-test.md) | P3 | 2026-09-10 | 已实施 |
+| [fix-update-doctor-main-category-count](.rddf/improvements/fix-update-doctor-main-category-count.md) | P2 | 2026-09-10 | 已实施 |
+| [fix-rebuild-adr-index-for-0049-0050](.rddf/improvements/fix-rebuild-adr-index-for-0049-0050.md) | P2 | 2026-09-10 | 已实施 |
+| [fix-parametrize-planner-feedback-id-date](.rddf/improvements/fix-parametrize-planner-feedback-id-date.md) | P2 | 2026-09-10 | 已实施 |
 | [fix-doc-drift-followup-3](.rddf/improvements/fix-doc-drift-followup-3.md) | P1 | 2026-09-09 | 已实施 |
 | [fix-plan-intake-stale-pre-created-changes](.rddf/improvements/fix-plan-intake-stale-pre-created-changes.md) | P1 | 2026-09-01 | 已实施 |
 | [add-regression-gate-timeout-protection](.rddf/improvements/add-regression-gate-timeout-protection.md) | P2 | 2026-09-01 | 已实施 |
