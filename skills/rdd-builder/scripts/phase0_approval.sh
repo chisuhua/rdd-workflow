@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
-# Phase 0: 5-option approval gate (HARD pause), per ADR-0048 §Decision 3.
+# Phase 0: 5-option approval gate (auto-pick by default per 用户 UX 需求)
 # - 1 approve: continue to Phase 1 plan gen (writes proposal.md + spec-delta per ADR-0025)
 # - 2 reject / 3 defer / 4 revise: route via rddf feedback add (single-writer, per ADR-0037)
 # - 5 dispatch-quick: NEW per ADR-0048; reads .planner-handoff.json::recommended_route;
 #   creates .rddf/state/rdd-quick-context.json and delegates to skill_use("rdd-quick").
+#
+# 默认 auto-pick (per 用户 UX 需求 2026-09-10): AI 代理基于
+# planner advisory + AC count 自动选择 1 或 5, 不需要用户输入.
+# 仅在 RDDF_REQUIRE_USER_CONFIRM=yes 或低置信度场景下问用户.
 set -euo pipefail
 
 CHANGE_NAME="${1:-}"
@@ -13,20 +17,22 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 AUTO_APPROVE=0
 DISPATCH_QUICK=0
+REQUIRE_CONFIRM="${RDDF_REQUIRE_USER_CONFIRM:-no}"
 for arg in "$@"; do
     case "$arg" in
         --auto-approve) AUTO_APPROVE=1 ;;
         --dispatch-quick) DISPATCH_QUICK=1 ;;
+        --require-confirm) REQUIRE_CONFIRM="yes" ;;
     esac
 done
-export AUTO_APPROVE DISPATCH_QUICK
+export AUTO_APPROVE DISPATCH_QUICK REQUIRE_CONFIRM
 
 if [ -z "$CHANGE_NAME" ]; then
     echo "phase0_approval.sh requires <change-name>" >&2
     exit 2
 fi
 
-echo "=== Phase 0: Approval Gate for $CHANGE_NAME ==="
+echo "=== Phase 0: Approval Gate for $CHANGE_NAME (auto-pick mode) ==="
 
 # Read planner advisory (per ADR-0048 §Decision 3)
 PLANNER_ROUTE="unknown"
@@ -44,19 +50,21 @@ except Exception:
 fi
 echo "Planner advisory: recommended_route = $PLANNER_ROUTE"
 
-# Count AC checkboxes in proposal.md
+# Count AC checkboxes in proposal.md (primary) or improvement file (fallback per ADR-0049)
 AC_COUNT=0
 PROPOSAL_FILE="$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/proposal.md"
+IMPROVEMENT_FILE="$PROJECT_ROOT/.rddf/improvements/$CHANGE_NAME.md"
 if [ -f "$PROPOSAL_FILE" ]; then
-    # grep -c exits 1 on zero matches; combined with set -e + set -o pipefail
-    # this would abort the script silently. Use `|| echo 0` at assignment level
-    # (not inside pipeline) so the substitution's exit code becomes 0.
     AC_COUNT=$(grep -cE '^- \[[ x]\]' "$PROPOSAL_FILE" 2>/dev/null || echo 0)
     AC_COUNT="${AC_COUNT:-0}"
+    echo "AC count: $AC_COUNT (from proposal.md ## 验收标准)"
+elif [ -f "$IMPROVEMENT_FILE" ]; then
+    AC_COUNT=$(grep -cE '^- \[[ x]\]' "$IMPROVEMENT_FILE" 2>/dev/null || echo 0)
+    AC_COUNT="${AC_COUNT:-0}"
+    echo "AC count: $AC_COUNT (from .rddf/improvements/<change>.md ## Acceptance, primary per ADR-0049)"
 fi
-echo "AC count: $AC_COUNT (from proposal.md ## 验收标准)"
 
-# Show 5-option prompt with advisory hint (per ADR-0048 §Decision 3)
+# Show 5-option context (always, for human review)
 echo ""
 echo "1) approve       2) reject       3) defer       4) revise       5) dispatch-quick"
 if [ "$PLANNER_ROUTE" = "simple" ] && [ "$AC_COUNT" -le 2 ]; then
@@ -64,16 +72,37 @@ if [ "$PLANNER_ROUTE" = "simple" ] && [ "$AC_COUNT" -le 2 ]; then
 fi
 echo ""
 
+# Decision logic (per 用户 UX 需求 + ADR-0049):
+# - --auto-approve CLI flag → case 1 (existing)
+# - --dispatch-quick CLI flag → case 5 (existing, still hard-validates recommended_route=simple)
+# - RDDF_REQUIRE_USER_CONFIRM=yes OR auto-pick disabled → ask user
+# - DEFAULT auto-pick: advisory=simple + AC ≤ 2 → case 5; else → case 1
 if [ "${AUTO_APPROVE:-0}" = "1" ]; then
     choice="1"
+    echo "🤖 Auto-pick (--auto-approve CLI): option 1 (approve)"
 elif [ "${DISPATCH_QUICK:-0}" = "1" ]; then
     if [ "$PLANNER_ROUTE" != "simple" ]; then
         echo "ERROR: --dispatch-quick requires recommended_route=simple, got $PLANNER_ROUTE" >&2
         exit 2
     fi
     choice="5"
-else
+    echo "🤖 Auto-pick (--dispatch-quick CLI): option 5 (dispatch-quick)"
+elif [ "$REQUIRE_CONFIRM" = "yes" ]; then
+    # User explicitly requires confirmation
+    echo "🤔 RDDF_REQUIRE_USER_CONFIRM=yes — asking user"
     read -r -p "Choose [1-5]: " choice
+else
+    # DEFAULT: auto-pick based on planner advisory + AC count (per 用户 UX 需求)
+    if [ "$PLANNER_ROUTE" = "simple" ] && [ "$AC_COUNT" -le 2 ]; then
+        choice="5"
+        echo "🤖 Auto-pick (default): option 5 (dispatch-quick)"
+        echo "   理由: advisory=simple + AC ≤ 2 → 走 rdd-quick 路径"
+    else
+        choice="1"
+        echo "🤖 Auto-pick (default): option 1 (approve)"
+        echo "   理由: advisory=$PLANNER_ROUTE, AC=$AC_COUNT → 走完整 P1-P3 路径"
+    fi
+    echo "   (如需用户介入, 设 RDDF_REQUIRE_USER_CONFIRM=yes)"
 fi
 
 case "$choice" in

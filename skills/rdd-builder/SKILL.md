@@ -117,11 +117,76 @@ Agreement with advisory: yes | no (<advisory_value>)
 
 - case 5 `--dispatch-quick` CLI 硬验证仍要求 `recommended_route=simple`（不变）
 - LLM 与 advisory 冲突时 prose 显式标记但不改变 routing
-- 用户始终是最终决策者（HARD pause 不变）
+- **冲突时暂停问用户**（per 用户 UX 需求，见 阶段 0.0.5 用户介入门控）
 
 ---
 
-## 阶段 0.1 — 5-option 菜单展示（HARD pause）
+## 阶段 0.0.5 — 全自动决策逻辑 (NEW, 默认 ON, per 用户 UX 需求)
+
+**默认行为**: AI 代理基于 LLM Pre-flight Reasoning + planner advisory + AC count **自动选择 1-5**，**不需要用户输入**。
+
+rdd-builder / rdd-quick 默认是 **全自动推进** 模式。用户只在低置信度场景才介入（见下方"用户介入门控"）。
+
+### 自动决策表（无需用户输入）
+
+| Planner advisory | LLM assessment | AC count | 隐含复杂度 | AI 自动选 | 备注 |
+|---|---|---|---|---|---|
+| `simple` | `simple` | ≤ 2 | 无 | **case 5 (dispatch-quick)** | 全自动走 rdd-quick |
+| `simple` | `simple` | > 2 | 无 | **case 1 (approve)** | 走完整 P1-P3 |
+| `simple` | `complex` | 任意 | 有 | **case 1 (approve)** | LLM 警告但仍 approve（advisory 优先） |
+| `simple` | `unknown` | 任意 | 未知 | **case 1 (approve)** | 保守走完整路径 |
+| `complex` | 任意 | 任意 | 高 | **case 1 (approve)** | 走完整路径 |
+| `unknown` | `unknown` | 任意 | 未知 | **暂停问用户** | 信号不足，需人工判断 |
+| 任意 | `complex` AND advisory 不一致 | 任意 | 冲突 | **暂停问用户** | LLM 与 advisory 冲突，需人工 review |
+| 任意 | `simple` 但 advisor=complex | 任意 | 冲突 | **暂停问用户** | advisor 提示 complex 不可 dispatch |
+| `unknown` | `simple` | 任意 | 不一致 | **暂停问用户** | planner 信号缺失，需人工 |
+
+### 用户介入门控（仅低置信度触发）
+
+**默认 OFF**: AI 代理全自动推进
+
+**触发用户介入的条件**（任一满足）：
+- `planner-handoff.json::recommended_route == "unknown"`（planner 信号缺失）
+- `LLM assessment == "unknown"`（LLM 也不能判定）
+- LLM 与 planner advisory 冲突 (`Agreement: no`)
+- LLM 检测到 `complexity_confirmed == "complex"` AND 与 advisory 不一致
+- 环境变量 `RDDF_REQUIRE_USER_CONFIRM=yes`（强制用户确认）
+
+**介入方式**（prose 中）：
+```
+🤔 AI 决策置信度低，需要用户确认:
+  原因: <具体原因>
+  Planner advisory: <value>
+  LLM assessment: <value> (Agreement: no)
+  LLM concerns: <list>
+
+请选择:
+  1) approve      2) reject       3) defer       4) revise       5) dispatch-quick
+  或输入自定义 (例如: 'override to dispatch-quick because ...')
+```
+
+### 自动决策的 prose 展示（让用户能跟上）
+
+即使全自动，AI 代理仍在 prose 中输出一段决策说明（让用户能 review）：
+
+```
+=== AI Auto-decision (per ADR-0049 + 用户 UX 需求) ===
+变更: <change-name>
+Planner advisory: simple
+LLM assessment: simple (Agreement: yes)
+AC count: 2
+LLM concerns: none
+
+🤖 AI 自动选择: option 5 (dispatch-quick)
+理由: 三者一致 (advisory=simple + LLM=simple + AC=2) → 走 rdd-quick 路径
+下一步: 委托 skill_use("rdd-quick") --from-builder
+```
+
+---
+
+## 阶段 0.1 — 5-option 决策上下文（仅低置信度展示）
+
+> **NOTE**: 默认情况下 AI 已自动决策 1-5, 此节仅在低置信度场景下展示给用户。
 
 展示格式（在 LLM assessment 之后）：
 
@@ -159,7 +224,9 @@ AC 数量: N 个 (from .rddf/improvements/<change>.md ## Acceptance, 或 fallbac
 
 > **Decision 1 note**: case 1 approve **不调 LLM**（用户已显式 approve；LLM 重新评估无信息增益；省 token）。仅 case 2/3/4/5 触发 LLM 推理（4 case）。
 
-当用户选 2/3/4 时, AI 代理必须生成 actionable feedback body 传给 rdd-planner：
+> **全自动 note (per 用户 UX 需求)**: 默认情况下, AI 代理在 阶段 0.0.5 自动决策表中已根据信号自动选择 2/3/4（reject / defer / revise）。用户不再需要输入。本节描述 AI 选 2/3/4 时生成的 feedback body 格式。
+
+AI 自动选 2/3/4 时, AI 代理必须生成 actionable feedback body 传给 rdd-planner：
 
 ### 推理步骤
 
@@ -193,7 +260,9 @@ LLM 生成的 feedback body 经 `rddf feedback add` 写入 `.rddf/state/.planner
 
 ## 阶段 0.3 — Case 5: dispatch-quick + LLM hidden complexity check (NEW per ADR-0049 Decision 5)
 
-当用户选 5 时（含 `--dispatch-quick` CLI flag），AI 代理必须执行 hidden complexity check 生成 review_note：
+> **全自动 note (per 用户 UX 需求)**: 默认情况下, AI 代理在 阶段 0.0.5 自动决策表中已根据信号（advisory=simple + LLM=simple + AC ≤ 2）自动选 case 5 (dispatch-quick)。本节描述 AI 自动选 5 时执行的 hidden complexity check + review_note 生成。
+
+AI 自动选 case 5 时（含 `--dispatch-quick` CLI flag），AI 代理必须执行 hidden complexity check 生成 review_note：
 
 ### 推理步骤
 
