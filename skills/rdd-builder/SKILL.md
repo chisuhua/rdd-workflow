@@ -35,6 +35,8 @@ role:
     human_involvement: "medium"
 ---
 
+> 📖 **术语澄清**: P0 approval 阶段读取 **improvement**(`.rddf/improvements/<name>.md` 5 段),经 `generate_full_proposal.py` 转换为完整 **openspec proposal**(`openspec/changes/<name>/proposal.md`)。这是 v4 创建 openspec change 的 **canonical 路径** (per ADR-0025 D1/D2)。`propose` 技能仍存在作为 legacy/alternative path。详见 [AGENTS.md 关键术语对照表](../../AGENTS.md)。
+
 # rdd-builder Skill
 
 Stage 3 of v4 architecture (per spec §3.4). 6-phase internal state machine:

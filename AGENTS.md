@@ -632,6 +632,34 @@ Flags: `--json` (write `.rddf/state/.doctor-report.json`), `--category <name>` (
 24. **reset roadmap 增量 state**: `rm .rddf/state/.populate-state.json` (无 baseline → 下次 full)；用于分支切换残留、codegraph 索引陈旧、人工强制全量
 25. **`_lib/` vs `skills/_lib/` 双路由 (P1-1b, 2026-08-25)**: 真实代码在仓库根 `_lib/`；`skills/_lib/` 是 shim 层 (15 个 6 行 bash shim 优先本地路径、10 个 identity-merge Python shim、若干 path-widening `__init__.py`)。`import skills._lib.X is _lib.X` 为 True（10 个迁移模块已锁定，详见 `tests/unit/test_p1_1_identity_merge.py`）；其余子模块身份仍分裂（已记入 P2 follow-up）。新增代码 **必须 import `_lib.X`** (canonical, 真正实现)，历史 `skills._lib.X` 调用继续兼容。
 
+## 关键术语对照表 (improvement vs openspec proposal)
+
+> **目的**: 消除"改进提案"和"openspec proposal"两个易混概念的歧义。两者生命周期不同,落盘位置不同,创建者不同。
+
+| 中文 | 英文 | 落盘位置 | 创建者 | 阶段 |
+|------|------|---------|--------|------|
+| **改进提案** | improvement | `.rddf/improvements/<name>.md` (5 段草稿) | `add-improve` skill (经 brainstorm) | rdd-planner 治理 |
+| **改进建议索引** | improvement-suggestions | `improvement-suggestions.md` | rdd-planner 自动登记 | rdd-planner |
+| **已批准改进** | improvement-approved | `improvement-approved.md` | rdd-planner approve 时迁移 | rdd-planner |
+| **openspec 提案** | openspec proposal | `openspec/changes/<name>/proposal.md` (正式) | **rdd-builder P0 approve** (经 `generate_full_proposal.py`) | rdd-builder |
+| **openspec change** | openspec change | `openspec/changes/<name>/` 整个目录 | rdd-builder P0 (case 1) 或 `propose` 技能 (legacy skeleton) | rdd-builder |
+
+**核心区分**:
+
+- **improvement 是设计草稿** (`.rddf/improvements/<name>.md`):由 `add-improve` 经 brainstorm 5 段 (`## Why` / `## What` / `## How` / `## Acceptance` / `## Capabilities`)生成。**可改**, 修改后通过 `rddf planner attach <name>` 同步状态。
+- **openspec proposal 是正式提案** (`openspec/changes/<name>/proposal.md`):由 rdd-builder P0 的 `generate_full_proposal.py` (per ADR-0025 D1/D2)把 improvement 5 段映射成完整 proposal.md (含 `## Capabilities` / `## Impact` / `## Acceptance` checkbox)。**修改要走 openspec change 自身的归档流程**。
+- **索引文件命名**: `proposal-suggestions.md` 和 `proposal-approved.md` 已重命名为 `improvement-suggestions.md` 和 `improvement-approved.md` (2026-09-10),因为它们索引的是 improvements,不是 openspec proposals。
+
+**反例 / 常见误读**:
+
+| 误读 | 实际 |
+|------|------|
+| "rdd-planner 创建 openspec proposal" | ❌ rdd-planner 只管理 improvement 生命周期 (`not_owns: openspec/changes/<name>/proposal.md` per `rdd-planner/SKILL.md` line 47-50) |
+| "rdd-planner 调用 propose 技能" | ❌ `propose` 技能描述"被 guide-plan 调用"是过期文档;v4 由 `rdd-builder P0` (per ADR-0025 D1/D2 + restore action) 创建 openspec proposal |
+| "proposal-suggestions 索引 openspec proposals" | ❌ 该文件索引 `.rddf/improvements/*.md`,与 openspec 无关 |
+
+**详见**: [docs/architecture/v4-pipeline-data-flow.md §Stage 3 — rdd-builder P0 case 1](docs/architecture/v4-pipeline-data-flow.md), [ADR-0025 §Decision D1/D2](docs/adr/ADR-0025-design-proposal-creation.md), [ADR-0025 §Evolution v4 (2026-09-04)](docs/adr/ADR-0025-design-proposal-creation.md)。
+
 ## 前置条件
 
 - `openspec` CLI v1.3.1+ (package.json `engines.openspec-cli`)

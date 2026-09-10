@@ -10,6 +10,8 @@ metadata:
   user-invocable: true
 ---
 
+> 📖 **术语澄清**: 本 skill 创建的是 **improvement**(改进提案,`.rddf/improvements/<name>.md` 5 段草稿)和注册到 `improvement-suggestions.md`,**不是 openspec proposal**。`openspec/changes/<name>/` 由 rdd-builder P0 创建。详见 [AGENTS.md 关键术语对照表](../../AGENTS.md)。
+
 # Add Improve — 添加改进提案
 
 创建格式规范的改进提案。流程：

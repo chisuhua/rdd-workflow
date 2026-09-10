@@ -10,6 +10,8 @@ metadata:
   replaces-step: "step1-manual"  # 替代原工作流 Step 1 的手动 openspec new/propose 操作
 ---
 
+> 📖 **术语澄清**: 本 skill 的 `create_skeleton_change` 创建 openspec change **骨架**(空 proposal.md + roadmap-meta.yaml),是 v4 的 **legacy/alternative 路径**;canonical 路径是 rdd-builder P0 + `generate_full_proposal.py` (per ADR-0025 D1/D2)。SKILL.md 描述"被 guide-plan 调用"已过期 — v4 不存在 guide-plan (Wave 3 hard removal, ADR-0044)。详见 [AGENTS.md 关键术语对照表](../../AGENTS.md)。
+
 # OpenSpec 工作流 — Propose
 
 分析项目文档与代码之间的对齐情况，生成 propose 建议，用户选择后执行 openspec-propose 命令序列创建 artifacts。
