@@ -354,3 +354,159 @@ print('OK: approval_status = approved')
     [ "$status" -eq 0 ]
     [ "$output" -ge 1 ]
 }
+
+
+# --- GAP-1/4 fixes: RDDF_LLM_DECISION env var (NEW per ADR-0050 GAP-1 fix) ---
+
+@test "RDDF_LLM_DECISION=ask-user: forces ASK USER (per SKILL.md 阶段 0.0.5 用户介入门控)" {
+    write_planner_handoff "simple"
+    write_proposal_ac_count 1
+
+    run env -u PROJECT_ROOT PROJECT_ROOT="$WORK_TMP" \
+        RDDF_LLM_DECISION=ask-user \
+        bash "$PHASE0" test-change <<< "5"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"LLM signals low confidence (RDDF_LLM_DECISION=ask-user) — asking user"* ]]
+    [[ "$output" == *"Planner advisory: simple"* ]]
+    [[ "$output" == *"DISPATCH_TO_QUICK=1"* ]]
+}
+
+@test "RDDF_LLM_DECISION=approve: forces case 1 (overrides default auto-pick)" {
+    write_planner_handoff "simple"
+    write_proposal_ac_count 1
+
+    # advisory=simple + AC=1 → would normally auto-pick case 5
+    # but RDDF_LLM_DECISION=approve forces case 1
+    run env -u PROJECT_ROOT PROJECT_ROOT="$WORK_TMP" \
+        env -u RDDF_REQUIRE_USER_CONFIRM \
+        RDDF_LLM_DECISION=approve \
+        bash "$PHASE0" test-change
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"🤖 Auto-pick (LLM=approve): option 1 (approve)"* ]]
+    [[ "$output" != *"DISPATCH_TO_QUICK=1"* ]]
+}
+
+@test "RDDF_LLM_DECISION=dispatch-quick: forces case 5 (still hard-validates simple)" {
+    write_planner_handoff "simple"
+    write_proposal_ac_count 5  # > 2, default would pick case 1
+
+    run env -u PROJECT_ROOT PROJECT_ROOT="$WORK_TMP" \
+        env -u RDDF_REQUIRE_USER_CONFIRM \
+        RDDF_LLM_DECISION=dispatch-quick \
+        bash "$PHASE0" test-change
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"🤖 Auto-pick (LLM=dispatch-quick): option 5 (dispatch-quick)"* ]]
+    [[ "$output" == *"DISPATCH_TO_QUICK=1"* ]]
+}
+
+@test "RDDF_LLM_DECISION=dispatch-quick: fails when advisory=complex (hard-validate)" {
+    write_planner_handoff "complex"
+    write_proposal_ac_count 1
+
+    run env -u PROJECT_ROOT PROJECT_ROOT="$WORK_TMP" \
+        env -u RDDF_REQUIRE_USER_CONFIRM \
+        RDDF_LLM_DECISION=dispatch-quick \
+        bash "$PHASE0" test-change
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"requires recommended_route=simple"* ]]
+}
+
+@test "RDDF_LLM_DECISION=reject: forces case 2" {
+    write_planner_handoff "simple"
+    write_proposal_ac_count 1
+
+    run env -u PROJECT_ROOT PROJECT_ROOT="$WORK_TMP" \
+        env -u RDDF_REQUIRE_USER_CONFIRM \
+        RDDF_LLM_DECISION=reject \
+        bash "$PHASE0" test-change
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"🤖 Auto-pick (LLM=reject): option 2 (reject)"* ]]
+}
+
+@test "RDDF_LLM_DECISION=defer: forces case 3" {
+    write_planner_handoff "simple"
+    write_proposal_ac_count 1
+
+    run env -u PROJECT_ROOT PROJECT_ROOT="$WORK_TMP" \
+        env -u RDDF_REQUIRE_USER_CONFIRM \
+        RDDF_LLM_DECISION=defer \
+        bash "$PHASE0" test-change
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"🤖 Auto-pick (LLM=defer): option 3 (defer)"* ]]
+}
+
+@test "RDDF_LLM_DECISION=revise: forces case 4 (exit 1 per ADR-0048 needs-revision)" {
+    write_planner_handoff "simple"
+    write_proposal_ac_count 1
+
+    run env -u PROJECT_ROOT PROJECT_ROOT="$WORK_TMP" \
+        env -u RDDF_REQUIRE_USER_CONFIRM \
+        RDDF_LLM_DECISION=revise \
+        bash "$PHASE0" test-change
+    # case 4 (revise) per ADR-0048: rddf feedback add --kind needs-revision → exit 1
+    # so phase0 script also exits 1 (set -e + rddf exit 1)
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"🤖 Auto-pick (LLM=revise): option 4 (revise)"* ]]
+    [[ "$output" == *"revising"* ]]
+}
+
+@test "RDDF_LLM_DECISION=auto: explicit auto means use bash default" {
+    write_planner_handoff "simple"
+    write_proposal_ac_count 1
+
+    run env -u PROJECT_ROOT PROJECT_ROOT="$WORK_TMP" \
+        env -u RDDF_REQUIRE_USER_CONFIRM \
+        RDDF_LLM_DECISION=auto \
+        bash "$PHASE0" test-change
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"🤖 Auto-pick (default): option 5 (dispatch-quick)"* ]]
+    [[ "$output" == *"DISPATCH_TO_QUICK=1"* ]]
+}
+
+@test "RDDF_LLM_DECISION=invalid: errors with exit 2" {
+    write_planner_handoff "simple"
+    write_proposal_ac_count 1
+
+    run env -u PROJECT_ROOT PROJECT_ROOT="$WORK_TMP" \
+        env -u RDDF_REQUIRE_USER_CONFIRM \
+        RDDF_LLM_DECISION=garbage \
+        bash "$PHASE0" test-change
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"RDDF_LLM_DECISION must be approve|dispatch-quick|reject|defer|revise|ask-user|auto"* ]]
+}
+
+@test "RDDF_LLM_DECISION precedence: CLI --auto-approve overrides LLM env var" {
+    write_planner_handoff "simple"
+    write_proposal_ac_count 1
+
+    # --auto-approve should beat RDDF_LLM_DECISION=reject
+    run env -u PROJECT_ROOT PROJECT_ROOT="$WORK_TMP" \
+        env -u RDDF_REQUIRE_USER_CONFIRM \
+        RDDF_LLM_DECISION=reject \
+        bash "$PHASE0" test-change --auto-approve
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"🤖 Auto-pick (--auto-approve CLI): option 1 (approve)"* ]]
+}
+
+
+# --- GAP-2 fix: SKILL.md 阶段 0.1 NOTE declaration ---
+
+@test "SKILL.md 阶段 0.1 contains NOTE about default auto-decision" {
+    SKILL_FILE="$REPO_ROOT/skills/rdd-builder/SKILL.md"
+    run bash -c '
+        awk "/## 阶段 0\.1/,/^---$/" "$1" | grep -c "NOTE.*AI.*已自动决策\|默认情况下 AI 已自动决策"
+    ' _ "$SKILL_FILE"
+    [ "$status" -eq 0 ]
+    [ "$output" -ge 1 ]
+}
+
+@test "SKILL.md phase0_approval prose shows '🤖 Auto-pick' format (consistent with script)" {
+    SKILL_FILE="$REPO_ROOT/skills/rdd-builder/SKILL.md"
+    # GAP-3 fix: SKILL.md should use '🤖 Auto-pick' (matching phase0_approval.sh output)
+    # not '🤖 AI 自动选择' (the old format that didn't match script)
+    run bash -c '
+        grep -c "🤖 Auto-pick (default)" "$1"
+    ' _ "$SKILL_FILE"
+    [ "$status" -eq 0 ]
+    [ "$output" -ge 1 ]
+}
