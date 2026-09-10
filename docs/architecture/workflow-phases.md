@@ -244,9 +244,14 @@ Per [ADR-0049](../adr/ADR-0049-rdd-builder-phase0-llm-integration.md), P0 引入
 - `skills/rdd-builder/scripts/phase0_approval.sh`: 默认 auto-pick（`AUTO_APPROVE` 和 `DISPATCH_QUICK` 默认 0；无 user input）
 - `--auto-approve` / `--dispatch-quick` / `--require-confirm` CLI flags 仍可用（per 阶段 0.0.5）
 - `RDDF_REQUIRE_USER_CONFIRM=yes` env var 强制询问用户
+- `RDDF_LLM_DECISION` env var (NEW per GAP-1 fix): AI 代理在 prose 推理后注入 LLM 决策信号
+  - `approve` / `dispatch-quick` / `reject` / `defer` / `revise` → 强制 case X
+  - `ask-user` → 强制 ASK USER（per SKILL.md 阶段 0.0.5 用户介入门控 5 条件）
+  - `auto` → 用 bash 默认 auto-pick 逻辑
+  - bash 脚本不实现 LLM（保持 determinism），LLM 信号通过 env var 注入
 
 **测试**:
-- `tests/integration/test_rdd_builder_phase0_auto_pick.bats` (24 cases)
+- `tests/integration/test_rdd_builder_phase0_auto_pick.bats` (36 cases, 含 12 个 GAP-1/3/4 fix 测试)
 
 **LLM 输出落点** (Decision 5)：
 - Pre-flight → prose 展示 (不入文件)

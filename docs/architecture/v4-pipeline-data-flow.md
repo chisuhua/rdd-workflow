@@ -277,6 +277,7 @@ This section walks through the **happy path** end-to-end, step by step. All file
           - Default (RDDF_REQUIRE_USER_CONFIRM=no): AI 代理基于 advisory + LLM + AC 自动选 1/5
           - Manual: user picks 1-5 (set RDDF_REQUIRE_USER_CONFIRM=yes)
           - Override: --auto-approve / --dispatch-quick / --require-confirm CLI flags
+          - AI 代理注入: RDDF_LLM_DECISION env var (approve/dispatch-quick/reject/defer/revise/ask-user/auto)
 
 [Step 3.3] P0 case 1 (approve):
           - bash phase0_approval.sh change-foo
