@@ -72,11 +72,16 @@ if [ "$PLANNER_ROUTE" = "simple" ] && [ "$AC_COUNT" -le 2 ]; then
 fi
 echo ""
 
-# Decision logic (per 用户 UX 需求 + ADR-0049):
+# Decision logic (per 用户 UX 需求 + ADR-0049 + ADR-0050):
 # - --auto-approve CLI flag → case 1 (existing)
 # - --dispatch-quick CLI flag → case 5 (existing, still hard-validates recommended_route=simple)
-# - RDDF_REQUIRE_USER_CONFIRM=yes OR auto-pick disabled → ask user
+# - RDDF_LLM_DECISION env var (NEW per ADR-0050 GAP-1 fix): AI 代理 LLM 推理结果
+#     approve / dispatch-quick / reject / defer / revise → 强制 case X
+#     ask-user → 强制 ASK USER (per SKILL.md 阶段 0.0.5 用户介入门控 5 条件)
+#     auto → 用 bash 默认 auto-pick 逻辑
+# - RDDF_REQUIRE_USER_CONFIRM=yes → ask user (per 用户 UX 需求)
 # - DEFAULT auto-pick: advisory=simple + AC ≤ 2 → case 5; else → case 1
+LLM_DECISION="${RDDF_LLM_DECISION:-auto}"
 if [ "${AUTO_APPROVE:-0}" = "1" ]; then
     choice="1"
     echo "🤖 Auto-pick (--auto-approve CLI): option 1 (approve)"
@@ -87,6 +92,37 @@ elif [ "${DISPATCH_QUICK:-0}" = "1" ]; then
     fi
     choice="5"
     echo "🤖 Auto-pick (--dispatch-quick CLI): option 5 (dispatch-quick)"
+elif [ "$LLM_DECISION" = "ask-user" ]; then
+    # LLM signals low confidence (4 conditions per SKILL.md 阶段 0.0.5):
+    # - planner advisory=unknown
+    # - LLM assessment=unknown
+    # - LLM 与 planner advisory 冲突
+    # - LLM 检测到 complex + 与 advisory 不一致
+    echo "🤔 LLM signals low confidence (RDDF_LLM_DECISION=ask-user) — asking user"
+    echo "   Planner advisory: $PLANNER_ROUTE"
+    read -r -p "Choose [1-5]: " choice
+elif [ "$LLM_DECISION" = "approve" ]; then
+    choice="1"
+    echo "🤖 Auto-pick (LLM=approve): option 1 (approve)"
+elif [ "$LLM_DECISION" = "dispatch-quick" ]; then
+    if [ "$PLANNER_ROUTE" != "simple" ]; then
+        echo "ERROR: LLM=dispatch-quick requires recommended_route=simple, got $PLANNER_ROUTE" >&2
+        exit 2
+    fi
+    choice="5"
+    echo "🤖 Auto-pick (LLM=dispatch-quick): option 5 (dispatch-quick)"
+elif [ "$LLM_DECISION" = "reject" ]; then
+    choice="2"
+    echo "🤖 Auto-pick (LLM=reject): option 2 (reject)"
+elif [ "$LLM_DECISION" = "defer" ]; then
+    choice="3"
+    echo "🤖 Auto-pick (LLM=defer): option 3 (defer)"
+elif [ "$LLM_DECISION" = "revise" ]; then
+    choice="4"
+    echo "🤖 Auto-pick (LLM=revise): option 4 (revise)"
+elif [ "$LLM_DECISION" != "auto" ]; then
+    echo "ERROR: RDDF_LLM_DECISION must be approve|dispatch-quick|reject|defer|revise|ask-user|auto, got '$LLM_DECISION'" >&2
+    exit 2
 elif [ "$REQUIRE_CONFIRM" = "yes" ]; then
     # User explicitly requires confirmation
     echo "🤔 RDDF_REQUIRE_USER_CONFIRM=yes — asking user"

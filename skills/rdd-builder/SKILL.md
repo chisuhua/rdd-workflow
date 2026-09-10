@@ -177,7 +177,7 @@ LLM assessment: simple (Agreement: yes)
 AC count: 2
 LLM concerns: none
 
-🤖 AI 自动选择: option 5 (dispatch-quick)
+🤖 Auto-pick (default): option 5 (dispatch-quick)
 理由: 三者一致 (advisory=simple + LLM=simple + AC=2) → 走 rdd-quick 路径
 下一步: 委托 skill_use("rdd-quick") --from-builder
 ```
