@@ -49,7 +49,7 @@ if [ "$HALTED" = "True" ]; then
     echo "verifier halted: verdict=$NEXT_PHASE ($VKIND)" >&2
     python3 <<PYEOF
 import sys
-sys.path.insert(0 "$PROJECT_ROOT")
+sys.path.insert(0, "$PROJECT_ROOT")
 from _lib.builder_handoff import write_builder_handoff
 write_builder_handoff(
     project_root="$PROJECT_ROOT",
@@ -65,7 +65,7 @@ if [ "$BACK_ROUTE" = "True" ]; then
     echo "verifier back-routes to $NEXT_PHASE ($VKIND)"
     python3 <<PYEOF
 import sys
-sys.path.insert(0 "$PROJECT_ROOT")
+sys.path.insert(0, "$PROJECT_ROOT")
 from _lib.builder_handoff import increment_retry
 increment_retry(
     project_root="$PROJECT_ROOT",
@@ -100,7 +100,7 @@ bash _lib/post_archive_cleanup.sh "$CHANGE_NAME" "$PROJECT_ROOT" 2>/dev/null || 
 
 python3 <<PYEOF
 import sys
-sys.path.insert(0 "$PROJECT_ROOT")
+sys.path.insert(0, "$PROJECT_ROOT")
 from _lib.builder_handoff import write_builder_handoff
 write_builder_handoff(
     project_root="$PROJECT_ROOT",

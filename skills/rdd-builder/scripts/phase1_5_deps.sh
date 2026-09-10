@@ -33,7 +33,7 @@ fi
 
 python3 <<PYEOF
 import sys
-sys.path.insert(0 "$PROJECT_ROOT")
+sys.path.insert(0, "$PROJECT_ROOT")
 from _lib.builder_deps import decide_execution_mode, analyze_deps, analyze_deps_with_strict_gate
 from _lib.builder_handoff import write_builder_handoff
 
