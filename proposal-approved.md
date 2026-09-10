@@ -382,6 +382,7 @@
 | [add-feature-fragment-command](.rddf/improvements/add-feature-fragment-command.md) | P1 | 2026-08-25 | 已实施 |
 | [reduce-archive-commit-noise](.rddf/improvements/reduce-archive-commit-noise.md) | P2 | 2026-09-01 | guide-arch |
 | [fix-v4-rdd-planner-scope-over-assignment](.rddf/improvements/fix-v4-rdd-planner-scope-over-assignment.md) | P1 | 2026-09-09 | 已实施 |
+| [adr-0048-v4-stage-merge-revision](.rddf/improvements/adr-0048-v4-stage-merge-revision.md) | P0 | 2026-09-09 | 已实施 |
 
 > **附注 (verifier-v2-hardening Phase 7 / oracle Q3)**: 跨阶段外部-LLM/hook 耦合审计建议（advisory, 不实施）：
 > 1. **审计 `propose_quality_check.py`** —— 检查是否埋了外部 LLM/hook 假设，按 ADR-0045 模式内联（如有）
