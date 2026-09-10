@@ -30,9 +30,12 @@
 <!-- AUTO-SPRINT-START -->
 ## Current Sprint: sprint-2026-09
 
-_No active projects in current sprint._
+| Project | Phase | Priority | Feedback | Proposal |
+|---------|-------|----------|----------|----------|
+| rdd-workflow | phase-3 | P1 | none | rdd-builder-auto-pick-mode |
+| rdd-workflow | phase-3 | P2 | none | rdd-builder-phase0-llm-integration |
 
-### Unmapped (233)
+### Unmapped (239)
 - RDDF-0001-fix-rddf-session-import-path
 - add-archive-post-commit-hook-and-force-flag
 - add-auto-rfc-from-approve
@@ -43,6 +46,7 @@ _No active projects in current sprint._
 - add-contract-lint-ci-gate
 - add-cross-repo-deps-orchestration
 - add-cross-repo-impact-detection
-- ... and 223 more
+- ... and 229 more
 
 <!-- AUTO-SPRINT-END -->
+

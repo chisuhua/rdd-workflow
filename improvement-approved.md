@@ -11,6 +11,20 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
+| [fix-parametrize-planner-feedback-id-date](.rddf/improvements/fix-parametrize-planner-feedback-id-date.md) | P2 | 2026-09-10 | rdd-planner |
+| [fix-rebuild-adr-index-for-0049-0050](.rddf/improvements/fix-rebuild-adr-index-for-0049-0050.md) | P2 | 2026-09-10 | rdd-planner |
+| [fix-update-doctor-main-category-count](.rddf/improvements/fix-update-doctor-main-category-count.md) | P2 | 2026-09-10 | rdd-planner |
+| [fix-remove-stale-filled-at-regression-test](.rddf/improvements/fix-remove-stale-filled-at-regression-test.md) | P3 | 2026-09-10 | rdd-planner |
+
+> **批次说明 (2026-09-10 design-done)**: 本批 4 项提案 (本次批准) 为 KNOWN_FAILURES baseline 衍生, 全部为 test-fix / docs-fix 小修, 低风险独立可并行. 计划按下列顺序实施 (合并到 single feature: feat-fix-audit-findings):
+> 1. **`fix-parametrize-planner-feedback-id-date`** (P2) — first: 重构 5 个 hardcode 日期测试为 tmp_path fixture, 解决时间炸弹
+> 2. **`fix-rebuild-adr-index-for-0049-0050`** (P2) — independent: 重生成 docs/adr/README.md 索引 (缺 ADR-0049/0050)
+> 3. **`fix-update-doctor-main-category-count`** (P2) — independent: 测试断言 10→11 (新 gitignore category), 提取 _CATEGORY_NAMES 常量
+> 4. **`fix-remove-stale-filled-at-regression-test`** (P3) — independent: 改 TestFilledAtRegression 用 tmp_path fixture (推荐选项 B, 保留意图)
+>
+> **依赖说明**: 4 项之间**无依赖**, 可并行实施. 唯一共享上下文: 同属 `feat-fix-audit-findings` feature (refs phase-1~4), 实施后合并 KNOWN_FAILURES baseline 减 10 项 (5+2+2+1).
+>
+> **重叠检查**: 无. 每个 proposal 触及不同测试文件 (`test_planner_feedback_id_uniqueness.py` / `test_adr_index_gate.py` / `test_doctor_main.py` / `test_cli_all_subcommands.py`), 无 file conflict.
 
 > **依赖声明 (2026-08-05 design-done)**: 本批 7 项提案 (本次批准) 形成强依赖链, 计划按下列顺序实施:
 > 1. **`fix-archive-iteration-sync`** (P0) — first: 定义 `sync_iteration_after_archive` helper, 装到 `archive.sh::archive_change()` + `archive_on_main.sh` + `rddf status --archive` 3 个入口

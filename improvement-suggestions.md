@@ -10,8 +10,3 @@
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
 | [bypass-audit-mechanism](.rddf/improvements/bypass-audit-mechanism.md) | P2 | 2026-08-26 流程设计 review | 2026-08-26 | 延迟 (2026-08-28, 维持 v3.2 deferred 决策)  |
-| [fix-v4-rdd-planner-scope-over-assignment](.rddf/improvements/fix-v4-rdd-planner-scope-over-assignment.md) | P1 | 2026-09-09 Oracle 架构审查 (ses_f7a9e01dbffe2Lqu8jYjg4YvL2) | 2026-09-09 | 待 rdd-planner 审查 |
-| [fix-parametrize-planner-feedback-id-date](.rddf/improvements/fix-parametrize-planner-feedback-id-date.md) | P2 | 2026-09-10 KNOWN_FAILURES baseline (5 个 pytest unit 失败) | 2026-09-10 | 待 rdd-planner 审查 |
-| [fix-rebuild-adr-index-for-0049-0050](.rddf/improvements/fix-rebuild-adr-index-for-0049-0050.md) | P2 | 2026-09-10 KNOWN_FAILURES baseline (2 个 pytest unit 失败) | 2026-09-10 | 待 rdd-planner 审查 |
-| [fix-update-doctor-main-category-count](.rddf/improvements/fix-update-doctor-main-category-count.md) | P2 | 2026-09-10 KNOWN_FAILURES baseline (2 个 pytest unit 失败) | 2026-09-10 | 待 rdd-planner 审查 |
-| [fix-remove-stale-filled-at-regression-test](.rddf/improvements/fix-remove-stale-filled-at-regression-test.md) | P3 | 2026-09-10 KNOWN_FAILURES baseline (1 个 pytest unit 失败) | 2026-09-10 | 待 rdd-planner 审查 |
