@@ -64,16 +64,17 @@
 | [ADR-0035](ADR-0035-verifier-archive-gate-boundary.md) | ADR-0035: rdd-verifier ↔ archive_gate_check 双轨设计边界 | 已采纳 | 2026-08-28 |
 | [ADR-0036](ADR-0036-rddf-project-yaml-config.md) | ADR-0036: .rddf/project.yaml 项目级配置源 | 已采纳 (2026-09-02) | 2026-09-02 |
 | [ADR-0037](ADR-0037-feedback-contract.md) | ADR-0037: Feedback Contract for `.rddf/improvements/*.md` | 已采纳 (2026-09-03) | 2026-09-03 |
-| [ADR-0038](ADR-0038-rdd-planner-crosscutting.md) | ADR-0038: rdd-planner Horizontal Orchestrator (Stage 2) | 已采纳 (2026-09-03) | 2026-09-03 |
+| [ADR-0038](ADR-0038-rdd-planner-crosscutting.md) | ADR-0038: rdd-planner Horizontal Orchestrator (Stage 2) | 已采纳 + DOUBLE-AMENDED (per ADR-0042 2026-09-03; per ADR-0048 2026-09-09) | 2026-09-03 (original); 2026-09-03 (AMENDMENT #1); 2026-09-09 (AMENDMENT #2) |
 | [ADR-0039](ADR-0039-design-handoff-runtime-filter.md) | ADR-0039: design-handoff runtime filter over on-disk cleanup | 已采纳 (2026-09-01) | 2026-09-01 |
 | [ADR-0040](ADR-0040-session-metrics.md) | ADR-0040: schema v3 add session metrics opt-in 字段 | 已采纳 (2026-09-01) | 2026-09-01 |
 | [ADR-0041](ADR-0041-planner-sprint-lifecycle-and-history.md) | ADR-0041: Planner Sprint Lifecycle and History Storage | 已采纳 (2026-09-03) | 2026-09-03 |
-| [ADR-0042](ADR-0042-rdd-arch-rdd-planner-bidirectional-feedback.md) | ADR-0042: rdd-arch rename + rdd-arch ↔ rdd-planner 双向反馈闭环 | 已采纳 (2026-09-03) | 2026-09-03 |
+| [ADR-0042](ADR-0042-rdd-arch-rdd-planner-bidirectional-feedback.md) | ADR-0042: rdd-arch rename + rdd-arch ↔ rdd-planner 双向反馈闭环 | 已采纳 + AMENDED (per ADR-0048, 2026-09-09) | 2026-09-03 (original); 2026-09-09 (amended) |
 | [ADR-0043](ADR-0043-rdd-workflow-v4-stage-merge.md) | ADR-0043: rdd-workflow v4 stage-merge architecture | 已采纳 (2026-09-04) | 2026-09-04 |
 | [ADR-0044](ADR-0044-v4-stage-merge-wave3-hard-removal.md) | ADR-0044: v4 Stage Merge Wave 3 — Hard Removal of guide-* Skills | 已采纳 (2026-09-04) | 2026-09-04 |
 | [ADR-0045](ADR-0045-inline-ac-verifier-into-rdd-verifier.md) | ADR-0045: 内联 ac-verifier 到 rdd-verifier（v2.0 自包含 LLM 验证） | 已采纳 | 2026-09-07 |
 | [ADR-0046](ADR-0046-arch-analyzer-protocol-subset.md) | ADR-0046: arch-analyzer protocol subset | 已采纳 | 2026-09-07 |
-| [ADR-0047](ADR-0047-rdd-quick-bypass-path.md) | ADR-0047: rdd-quick bypass path — 无 openspec change 的快速执行路径 | 已采纳 | 2026-09-07 |
+| [ADR-0047](ADR-0047-rdd-quick-bypass-path.md) | ADR-0047: rdd-quick bypass path — 无 openspec change 的快速执行路径 | 已采纳 + AMENDED (per ADR-0048, 2026-09-09) | 2026-09-07 (original); 2026-09-09 (amended) |
+| [ADR-0048](ADR-0048-v4-stage-merge-revision.md) | ADR-0048: v4 stage-merge 修订 — rdd-arch 完全脱离 roadmap + rdd-builder P0 触发 rdd-quick | 已采纳 (2026-09-09) | 2026-09-09 |
 <!-- ADR_INDEX_END -->
 
 ## 架构演进
@@ -112,6 +113,13 @@ v3.0+ (2026-08-26)
 rdd-verifier 第五阶段（批量 AC 验证 + bounded retry）
    ↓
 双轨设计边界（rdd-verifier ↔ archive_gate_check，per ADR-0035）
+
+v4.0 (2026-09-04) → v4.0.1 (2026-09-09, ADR-0048)
+──────────────────   ─────────────────────────────
+四阶段 rdd-arch/rdd-planner/   rdd-arch 完全脱离 roadmap
+rdd-builder/rdd-verifier       rdd-planner 完全独占 roadmap
+(ADR-0043 + ADR-0044)         rdd-builder P0 触发 rdd-quick
+                              recommended_route 升级为 required
 ```
 
 ## 决策依赖关系（v3.0+ 视角）

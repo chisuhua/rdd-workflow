@@ -1,13 +1,31 @@
 # ADR-0038: rdd-planner Horizontal Orchestrator (Stage 2)
 
-> **状态**: 已采纳 (2026-09-03)
-> **日期**: 2026-09-03
-> **决策者**: sisyphus
+> **状态**: 已采纳 + DOUBLE-AMENDED (per ADR-0042 2026-09-03; per ADR-0048 2026-09-09)
+> **日期**: 2026-09-03 (original); 2026-09-03 (AMENDMENT #1); 2026-09-09 (AMENDMENT #2)
+> **决策者**: sisyphus + user override (AMENDMENT #2 per ADR-0048)
+> **关联**: ADR-0042 (bidirectional feedback), ADR-0048 (v4 stage-merge revision: planner 完全独占 roadmap)
 
 ## Status
 
 Accepted (2026-09-03) — Stage 2 of `rdd-planner` design, implemented per
 `docs/superpowers/specs/2026-09-03-rdd-planner-stage2-design.md`.
+
+> **AMENDMENT #2 (2026-09-09, per ADR-0048 §Decision 1+2)**:
+> Per v4 stage-merge revision (ADR-0048), `rdd-planner` 升级为**完全独占 roadmap** 治理权:
+> - 新增 Phase 0 roadmap-bootstrap: 检测 `.rddf/roadmap.md` 缺失 → 引导 `rddf roadmap init`
+> - `rdd-arch` 完全脱离 roadmap (per ADR-0048 §Decision 1): 删除 Phase 4 roadmap-define, arch-done 单门控, 不再 owns `roadmap.md`
+> - `rdd-planner` Phase 5 双门控: ① `.rddf/roadmap.md` 存在 ② `.planner-state.json::state_revision` 已 bump (含 `recommended_route`)
+> - `recommended_route` 字段从 optional → required (per ADR-0048 §Decision 2 + fix-v4-rdd-planner-scope-over-assignment AC-13 升级)
+> - rdd-arch 与 rdd-planner 的 roadmap 边界彻底分离: 角色边界无重叠, 角色模型 (ADR-0028) 完全贯彻
+>
+> **rdd-arch 完全脱离 roadmap** 边界:
+> - `roadmap.md` → rdd-planner 独占 (was: rdd-arch + rdd-planner)
+> - `.rddf/roadmap/features/*.md` → rdd-planner 独占 (was: rdd-arch owns, rdd-planner 写)
+> - `.rddf/roadmap/phases/*.md` → rdd-planner 独占 (was: rdd-arch owns)
+>
+> **rdd-arch 不写** 的文件 (修订 per ADR-0048):
+> - `.rddf/state/.populate-state.json` → 改由 rdd-planner 维护
+> - `.rddf/state/.arch-handoff.json` 仍由 arch-done 写, 但不再包含 roadmap 字段 (per ADR-0043 v3 schema)
 
 > **AMENDMENT (2026-09-09, fix-v4-rdd-planner-scope-over-assignment A9)**:
 > Per v4 stage-merge (ADR-0043) and spec `2026-09-04-rdd-workflow-v4-architecture-stage-merge.md` §3.3,

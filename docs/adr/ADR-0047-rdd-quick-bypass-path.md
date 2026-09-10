@@ -1,9 +1,27 @@
 # ADR-0047: rdd-quick bypass path — 无 openspec change 的快速执行路径
 
-> **状态**: 已采纳
-> **日期**: 2026-09-07
-> **决策者**: rdd-workflow maintainer
-> **关联**: ADR-0028 (role model), ADR-0045 (verifier self-contained pattern)
+> **状态**: 已采纳 + AMENDED (per ADR-0048, 2026-09-09)
+> **日期**: 2026-09-07 (original); 2026-09-09 (amended)
+> **决策者**: rdd-workflow maintainer + user override (D1 amendment per ADR-0048)
+> **关联**: ADR-0028 (role model), ADR-0045 (verifier self-contained pattern), ADR-0048 (v4 stage-merge revision)
+
+> **AMENDMENT (2026-09-09, per ADR-0048 §Decision 3)**:
+> D1 立场从 "rdd-quick self-triages regardless" 反转为 "**rdd-builder P0 触发为主路径, self-triage 仅 fallback**":
+>
+> **原 D1**: rdd-quick 独立 skill, 不挂在 rdd-planner 之下. rdd-quick self-triages regardless.
+>
+> **新 D1 (per ADR-0048)**:
+> - rdd-quick **仍是独立 skill** (不挂在 rdd-planner 之下) — 立场 1 不变
+> - **入口分两种** (NEW per ADR-0048):
+>   - **从 rdd-builder P0 触发** (主路径, 选项 5): 通过 `.planner-handoff.json::recommended_route` 获取结构化 advisory
+>   - **从 guide 推荐器直接调用** (旁路, 紧急): self-triage per 原 D1
+> - **P1 complexity triage 修订**: 优先读 planner-handoff::recommended_route, 仅在 `unknown` 时 fallback 到原 5 维度信号判定
+> - **升级契约修订** (SKILL.md L200): 从 `skill_use("rdd-planner")` 改为 `skill_use("rdd-builder")` 回 P0 重新决策 (避免 planner→builder→quick→planner 循环)
+>
+> **forward handoff**: planner → builder P0 (选项 5) → rdd-quick → openspec archive
+> **backward feedback**: rdd-quick → rdd-builder P0 (升级, 不再回 planner)
+>
+> rdd-quick 的"独立 skill"+"无 openspec change"+"无 worktree"三大立场**全部保留**. 仅修订决策点位置和升级契约.
 
 ## 背景
 
@@ -23,9 +41,26 @@ rdd-verifier   → AC 从 proposal.md 的 ## 验收标准 段提取
 
 新增独立 skill `skills/rdd-quick/`，提供一条**不以 openspec change 为载体、但仍保留 TDD 纪律与 AC 验证**的快速执行路径。
 
-### D1 — 归属：独立 skill `rdd-quick`
+### D1 — 归属：独立 skill `rdd-quick`（AMENDED per ADR-0048, 2026-09-09）
 
-**新建独立 skill**，不挂在 `rdd-planner` 之下。理由：`rdd-planner` frontmatter `role.boundaries.not_owns` 显式列出 `.rddf/plans/<name>.md` 与 `.rddf/state/builder/<name>.json`。rdd-quick 的核心动作（生成计划 + 执行 + 验证）全部落在 rdd-planner 的 not_owns 范围内，按 ADR-0028 角色模型必须独立。
+**rdd-quick 是独立 skill**，不挂在 `rdd-planner` 之下。理由：`rdd-planner` frontmatter `role.boundaries.not_owns` 显式列出 `.rddf/plans/<name>.md` 与 `.rddf/state/builder/<name>.json`。rdd-quick 的核心动作（生成计划 + 执行 + 验证）全部落在 rdd-planner 的 not_owns 范围内，按 ADR-0028 角色模型必须独立。
+
+**入口分两种**（NEW per ADR-0048 §Decision 3）：
+
+1. **从 `rdd-builder` P0 触发（主路径，选项 5）**：
+   - 用户在 rdd-builder P0 approval gate 选 5. dispatch-quick
+   - rdd-builder P0 读 `.planner-handoff.json::recommended_route` 作为主信号
+   - 创建 `.rddf/state/rdd-quick-context.json` 临时文件，传递 proposal.md 内容
+   - 委托 `skill_use("rdd-quick") --from-builder` 进入快速通道
+
+2. **从 `guide` 推荐器直接调用（旁路，紧急）**：
+   - 用户在 guide 菜单选 5. rdd-quick
+   - 保留原 D1 self-triage 逻辑（仅 natural language + AI 综合判定）
+   - 适用于：紧急修复 + 调试 + 一次性补丁
+
+**P1 complexity triage 修订**：优先读 planner-handoff::recommended_route；仅 `unknown` 时 fallback 到原 5 维度信号判定。
+
+**升级契约修订**（SKILL.md L200）：失败时 `skill_use("rdd-builder")` 回 P0 重新决策（而非 `skill_use("rdd-planner")`），避免 planner→builder→quick→planner 循环。
 
 ### D2 — 计划文件路径：`.rddf/plans/quick-<name>.md`
 

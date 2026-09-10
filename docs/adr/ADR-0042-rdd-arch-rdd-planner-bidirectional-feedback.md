@@ -1,9 +1,18 @@
 # ADR-0042: rdd-arch rename + rdd-arch ↔ rdd-planner 双向反馈闭环
 
-> **状态**: 已采纳 (2026-09-03)
-> **日期**: 2026-09-03
-> **决策者**: sisyphus
+> **状态**: 已采纳 + AMENDED (per ADR-0048, 2026-09-09)
+> **日期**: 2026-09-03 (original); 2026-09-09 (amended)
+> **决策者**: sisyphus + user override (amendment per ADR-0048)
 > **替代**: ADR-0016 §v2 additive（planner 反馈通道独立化）、ADR-0028 role.boundaries.owns（新增 planner owns `.planner-feedback.json`）
+
+> **AMENDMENT (2026-09-09, per ADR-0048 §Decision 1+3)**:
+> `rdd-arch` 完全脱离 roadmap 后, 双向反馈通道角色升级:
+> - **rdd-arch → rdd-planner 方向 (advisory)**: rdd-arch 不再关心 roadmap 细节, 仅从 `.planner-feedback.json` 读 advisory 信号 (unmapped_proposal / coverage_gap / adr_drift / roadmap_staleness). 与 ADR-0048 决策 1 一致 (rdd-arch 与 roadmap 解耦).
+> - **rdd-planner → rdd-arch 方向 (NEW per ADR-0048)**: `recommended_route` advisory 通过 `.planner-handoff.json` 流向 rdd-builder P0; rdd-arch 不再消费此信号 (因 arch 不再管 change 路由).
+> - **`recommended_route` 字段升级** (per fix-v4-rdd-planner-scope-over-assignment AC-13 升级): 从 optional → required, 作为 rdd-builder P0 dispatch-quick 决策的结构化输入 (per ADR-0048 §Decision 3).
+> - **跨阶段反馈通道角色不变**: 仍按 §2 lifecycle (open → acknowledged → resolved/dismissed) + 2-revision stale detection + fingerprint 去重. 仅扩大消费者 (新增 rdd-builder P0).
+>
+> rdd-arch 不调用 rdd-planner 的立场保持 (per AGENTS.md L597), 但 rdd-arch 现在**完全依赖** rdd-planner 的 feedback 来了解 roadmap 治理进展 (因 rdd-arch 不再直接同步 roadmap).
 
 ## Context
 
