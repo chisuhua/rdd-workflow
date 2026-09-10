@@ -12,7 +12,7 @@
     "owner": {"const": "rdd-builder"},
     "change_name": {"type": "string"},
     "current_phase": {"enum": ["phase-0", "phase-1", "phase-1.5", "phase-2", "phase-2.5", "phase-3"]},
-    "approval_status": {"enum": ["pending", "approved", "rejected", "deferred", "revising"]},
+    "approval_status": {"enum": ["pending", "approved", "rejected", "deferred", "revising", "dispatched_to_quick"]},
     "plan_quality_status": {"enum": ["pending", "valid", "invalid"]},
     "execution_mode_decision": {
       "type": "object",
@@ -41,6 +41,18 @@
     "phase_pause_history": {"type": "array", "items": {"type": "object"}},
     "archive_status": {"enum": ["pending", "verifying", "archived", "failed"]},
     "verifier_report_path": {"type": "string"},
-    "updated_at": {"type": "string", "format": "date-time"}
+    "updated_at": {"type": "string", "format": "date-time"},
+    "dispatch_quick_review": {
+      "type": "object",
+      "description": "LLM-generated hidden complexity check (per ADR-0049 Decision 5). Written by rdd-builder Phase 0 case 5 after LLM Pre-flight Reasoning. Consumed by rdd-quick P1 as additional advisory signal.",
+      "properties": {
+        "complexity_confirmed": {"enum": ["simple", "complex", "unknown"]},
+        "concerns": {"type": "array", "items": {"type": "string"}},
+        "suggested_action": {"enum": ["proceed", "escalate"]},
+        "reviewed_at": {"type": "string", "format": "date-time"},
+        "data_source": {"type": "string", "description": "Absolute path of .rddf/improvements/<change>.md"},
+        "forced_by_user": {"type": "boolean", "description": "True if user overrode 'complex' warning and chose dispatch-quick anyway"}
+      }
+    }
   }
 }

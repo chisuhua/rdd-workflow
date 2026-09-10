@@ -57,18 +57,87 @@ P0 (approval, 5-option per ADR-0048) → P1 (plan) → P1.5 (deps + exec_mode)
 **P0 prompt (HARD pause, 5-option)**:
 
 ```
+ ══════════════════════════════════════════════
+rdd-builder Phase 0: Approval Gate (HARD pause, LLM-augmented per ADR-0049)
 ══════════════════════════════════════════════
-rdd-builder Phase 0: Approval Gate (HARD pause)
-══════════════════════════════════════════════
-变更: <change-name>
-Planner advisory: recommended_route = simple|complex|unknown
-AC 数量: N 个 (from proposal.md ## 验收标准)
 
-💡 推荐选项 (per planner advisory):
-   - recommended_route=simple AND AC ≤ 2 AND files ≤ 2 AND 无 public interface 改动
+## 阶段 0.0 — LLM Pre-flight Reasoning (NEW per ADR-0049 Decision 1,2,4)
+
+在显示 5-option 菜单之前, AI 代理（executing AI agent IS the LLM, per ADR-0045）必须执行以下推理：
+
+### 数据源读取（按优先级）
+
+1. **PRIMARY（必读）**: `.rddf/improvements/<change>.md` 5 段结构
+   - `## Why` — 动机 / 问题
+   - `## What` — 具体变更
+   - `## How` — 实现路径 / 步骤
+   - `## Acceptance` — 可验证标准
+   - `## Capabilities` — MUST / MUST NOT
+   - **若文件不存在 → 立即报错** (rdd-builder 入口保证 improvement 存在, 缺失是数据契约破坏)
+
+2. **SECONDARY（必读）**: `.rddf/state/.planner-handoff.json`（若存在）
+   - 关注 `recommended_route` 字段 (simple | complex | unknown)
+   - 关注 `awaiting_builder` 数组确认 change 在列
+
+3. **TERTIARY（选读）**: `.rddf/state/.planner-state.json`（若存在）
+   - `active_projects[]` 数组提供 priority + theme 上下文
+
+4. **FALLBACK（仅当 1 缺失时）**: `openspec/changes/<change>/proposal.md`（若存在）
+   - 仅在 P0 入口前用户已用 `openspec init` 创建骨架时存在
+   - 按 ADR-0025 D1/D2, P0 case 1 approve 时才会正式生成完整 proposal.md
+
+5. **ALWAYS**: `docs/adr/ADR-*.md`（始终存在）
+   - 检查 change 是否触碰已声明的架构约束（如 _lib/core/、_lib/schemas/）
+
+### LLM 推理任务
+
+AI 代理对上述数据源做以下推理：
+
+- **复杂度评估**: 输出 `simple | complex | unknown`
+- **Hidden complexity 检查**:
+  - 是否触碰 `_lib/core/` 或 `_lib/schemas/` 路径？（查 `## What`）
+  - 跨模块影响？（查 `theme` / ADR 引用）
+  - Acceptance 数量 > 2 且每条都需要环境依赖（数据库 / docker / 网络）？
+  - 数据迁移 / public interface / breaking change 关键词？
+- **Acceptance 可量化性**: 是否 `- [ ] checkbox` 形式？是否能自动验证？
+- **Capabilities MUST NOT 约束**: 是否清晰且可执行？
+- **Conflict 检测**: LLM 结论 vs planner advisory 是否一致？
+
+### 输出格式（prose 展示，不入文件）
+
+AI 代理在 prose 中输出 **一行 LLM assessment**（在 5-option 菜单前）：
+
+```
+LLM assessment: simple | complex | unknown
+LLM concerns: <bullet list or "none">
+Agreement with advisory: yes | no (<advisory_value>)
+```
+
+### Decision 3 (Conflict 兜底): planner advisory 优先
+
+- case 5 `--dispatch-quick` CLI 硬验证仍要求 `recommended_route=simple`（不变）
+- LLM 与 advisory 冲突时 prose 显式标记但不改变 routing
+- 用户始终是最终决策者（HARD pause 不变）
+
+---
+
+## 阶段 0.1 — 5-option 菜单展示（HARD pause）
+
+展示格式（在 LLM assessment 之后）：
+
+```
+变更: <change-name>
+Planner advisory: recommended_route = <value>
+LLM assessment: <value> (Agreement: yes | no)
+AC 数量: N 个 (from .rddf/improvements/<change>.md ## Acceptance, 或 fallback proposal.md)
+
+💡 推荐选项 (per advisor advisory + LLM agreement):
+   - 三者一致 (advisory=simple AND LLM=simple AND AC ≤ 2)
      → 💡 推荐选项 5 (dispatch-to-quick)
-   - 其他情况
-     → 选项 1 (approve) 是常规路径
+   - LLM=complex 或 advisory=complex
+     → 选项 1 (approve) 是常规路径, 仔细评估 LLM concerns
+   - LLM 标记 conflict (Agreement: no)
+     → 用户应仔细 review LLM concerns 后再决策
 
 请选择:
   1. ✅ approve       → 继续 Phase 1 plan gen
@@ -82,6 +151,121 @@ AC 数量: N 个 (from proposal.md ## 验收标准)
                        → rdd-quick 完成后: 直接 openspec archive (跳过 P1-P3)
                                           或回 P0 重新决策 (用户选择)
 ══════════════════════════════════════════════
+```
+
+---
+
+## 阶段 0.2 — Case 2/3/4: LLM-generated feedback body (NEW per ADR-0049 Decision 5)
+
+> **Decision 1 note**: case 1 approve **不调 LLM**（用户已显式 approve；LLM 重新评估无信息增益；省 token）。仅 case 2/3/4/5 触发 LLM 推理（4 case）。
+
+当用户选 2/3/4 时, AI 代理必须生成 actionable feedback body 传给 rdd-planner：
+
+### 推理步骤
+
+1. **READ** `.rddf/improvements/<change>.md` 5 段
+2. **REASON**: 为什么这个 change 被 reject / defer / revise？
+   - 引用具体段落（`## Why` / `## What` / `## How` / `## Acceptance` / `## Capabilities`）
+   - 生成 actionable reason（rdd-planner 收到后能照做）
+3. **GENERATE** feedback body 格式（3-5 行 markdown）：
+
+```
+## LLM-generated feedback
+Concern: <引用 improvement 段落>
+Severity: critical | warning | info
+Suggested action: <具体下一步, rdd-planner 可执行>
+Related ADR: <ADR-NNNN if applicable>
+```
+
+### 执行步骤
+
+4. **EXECUTE**（不调 bash, AI 代理在 prose 中直接调 rddf CLI）:
+   - case 2 reject: `rddf feedback add <change> --from rdd-builder --kind rejected --body "<LLM-generated>"`
+   - case 3 defer: `rddf feedback add <change> --from rdd-builder --kind blocked --body "<LLM-generated>"`
+   - case 4 revise: `rddf feedback add <change> --from rdd-builder --kind needs-revision --body "<LLM-generated>"`
+5. **EXIT** 0 (case 2/3) 或 EXIT 1 (case 4 per ADR-0048)
+
+### 落点
+
+LLM 生成的 feedback body 经 `rddf feedback add` 写入 `.rddf/state/.planner-feedback.json`（现有字段，无需 schema 改动）。rdd-planner 下次 stage entry 通过 `_lib/planner_feedback.compute_planner_feedback` 立即可见。
+
+---
+
+## 阶段 0.3 — Case 5: dispatch-quick + LLM hidden complexity check (NEW per ADR-0049 Decision 5)
+
+当用户选 5 时（含 `--dispatch-quick` CLI flag），AI 代理必须执行 hidden complexity check 生成 review_note：
+
+### 推理步骤
+
+1. **READ** `.rddf/improvements/<change>.md` 5 段
+2. **CHECK**:
+   - 是否触碰 `_lib/core/` 或 `_lib/schemas/` 路径？（查 `## What`）
+   - 跨模块影响？（查 theme / ADR 引用）
+   - Acceptance 数量 > 2 且每条都需要环境依赖？
+   - 数据迁移 / public interface / breaking change 关键词？
+3. **EMIT** review_note JSON：
+
+```json
+{
+  "complexity_confirmed": "simple | complex | unknown",
+  "concerns": ["<bullet>", "<bullet>"],
+  "suggested_action": "proceed | escalate",
+  "reviewed_at": "<ISO timestamp>",
+  "data_source": "<绝对路径 of improvement file>"
+}
+```
+
+### 执行步骤
+
+4. **EXECUTE**（env-var pattern, 避免 bash 字符串插值, per Oracle C1）:
+
+```bash
+DISPATCH_QUICK_REVIEW_JSON='<JSON above>' \
+DISPATCH_QUICK_REVIEW_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+python3 -c "
+import json, os, sys
+sys.path.insert(0, '<repo_root>')
+from _lib.builder_handoff import write_builder_handoff, read_builder_handoff
+
+project_root = os.environ['PROJECT_ROOT']
+change_name = os.environ['CHANGE_NAME']
+review = json.loads(os.environ['DISPATCH_QUICK_REVIEW_JSON'])
+review['reviewed_at'] = os.environ['DISPATCH_QUICK_REVIEW_AT']
+
+# Preserve existing fields (approval_status, current_phase 等)
+existing = read_builder_handoff(project_root, change_name)
+write_builder_handoff(
+    project_root=project_root,
+    change_name=change_name,
+    current_phase=existing.get('current_phase', 'phase-0'),
+    approval_status=existing.get('approval_status', 'dispatched_to_quick'),
+    dispatch_quick_review=review,
+)
+print('dispatch_quick_review written')
+"
+```
+
+5. **IF** `complexity_confirmed == "complex"`:
+   - **ECHO** warning 给用户:
+     ```
+     ⚠️ LLM 检测到 hidden complexity (concerns: <list>)
+     但用户已显式选择 dispatch-quick, 按用户选择执行 (HARD pause 保持)
+     ```
+   - **不阻断** — HARD pause 是用户决策, LLM 仅提示
+   - 可选: `dispatch_quick_review.forced_by_user = true` 标记覆盖意图
+
+6. **CONTINUE** to 原有 case 5 逻辑（per ADR-0048）:
+   - 写 `rdd-quick-context.json`
+   - 写 `builder-handoff::approval_status=dispatched_to_quick`
+   - emit `DISPATCH_TO_QUICK=1 CHANGE_NAME=<change>` marker
+   - 委托 `skill_use("rdd-quick") --from-builder`
+
+### 消费者
+
+- rdd-quick P1 读 `.planner-handoff.json::recommended_route` 作为主 advisory
+- rdd-quick P1 也读 `.rddf/state/builder/<change>.json::dispatch_quick_review.concerns` 作为额外 advisory
+- 若 `complexity_confirmed == "complex"` AND `forced_by_user == true`:
+  - rdd-quick P1 仍按 `complex` 走强制 Metis/Oracle 审查（per ADR-0048 amendment）
 ```
 
 **P0 选项 5 (dispatch-quick) 触发逻辑** (per ADR-0048 §Decision 3):

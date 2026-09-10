@@ -35,6 +35,7 @@ def write_builder_handoff(
     phase_pause_history=None,
     dispatch_quick_at=None,
     dispatch_quick_outcome=None,
+    dispatch_quick_review=None,
 ) -> dict:
     """Write per-change builder-handoff v1.1 (per ADR-0048, dispatch-quick fields).
 
@@ -43,6 +44,14 @@ def write_builder_handoff(
 
     dispatch_quick_at: ISO timestamp when P0 选项 5 触发 (per ADR-0048 §Decision 3)
     dispatch_quick_outcome: enum completed | escalated | unverified (after rdd-quick P4)
+    dispatch_quick_review: LLM hidden complexity check (per ADR-0049 §Decision 5)
+        dict with fields:
+          complexity_confirmed: simple | complex | unknown
+          concerns: list[str]
+          suggested_action: proceed | escalate
+          reviewed_at: ISO timestamp
+          data_source: absolute path of improvement file
+          forced_by_user: bool (optional, true if user overrode complex warning)
     """
     if execution_mode_decision is None:
         execution_mode_decision = {}
@@ -92,12 +101,69 @@ def write_builder_handoff(
                 f"got {dispatch_quick_outcome!r}"
             )
         handoff["dispatch_quick_outcome"] = dispatch_quick_outcome
+    # ADR-0049 §Decision 5: LLM hidden complexity check (optional; only set when LLM review ran)
+    if dispatch_quick_review is not None:
+        _validate_dispatch_quick_review(dispatch_quick_review)
+        handoff["dispatch_quick_review"] = dispatch_quick_review
 
     handoff_path = _handoff_path(project_root, change_name)
     handoff_path.parent.mkdir(parents=True, exist_ok=True)
     with FileLock(str(handoff_path) + ".lock", timeout=10):
         atomic_write_json(str(handoff_path), handoff)
     return handoff
+
+
+def _validate_dispatch_quick_review(review) -> None:
+    """Validate dispatch_quick_review schema (per ADR-0049).
+
+    Raises ValueError on invalid fields. The review dict is mutated to
+    normalize reviewed_at if absent.
+    """
+    if not isinstance(review, dict):
+        raise ValueError(
+            f"dispatch_quick_review must be dict, got {type(review).__name__}"
+        )
+
+    valid_complexity = {"simple", "complex", "unknown"}
+    valid_action = {"proceed", "escalate"}
+
+    complexity = review.get("complexity_confirmed")
+    if complexity is None:
+        raise ValueError(
+            "dispatch_quick_review requires complexity_confirmed field "
+            f"(one of {valid_complexity})"
+        )
+    if complexity not in valid_complexity:
+        raise ValueError(
+            f"dispatch_quick_review.complexity_confirmed must be one of "
+            f"{valid_complexity}, got {complexity!r}"
+        )
+
+    action = review.get("suggested_action")
+    if action is None:
+        raise ValueError(
+            "dispatch_quick_review requires suggested_action field "
+            f"(one of {valid_action})"
+        )
+    if action not in valid_action:
+        raise ValueError(
+            f"dispatch_quick_review.suggested_action must be one of "
+            f"{valid_action}, got {action!r}"
+        )
+
+    concerns = review.get("concerns", [])
+    if not isinstance(concerns, list):
+        raise ValueError(
+            f"dispatch_quick_review.concerns must be list, got {type(concerns).__name__}"
+        )
+    for i, c in enumerate(concerns):
+        if not isinstance(c, str):
+            raise ValueError(
+                f"dispatch_quick_review.concerns[{i}] must be str, got {type(c).__name__}"
+            )
+
+    if "reviewed_at" not in review:
+        review["reviewed_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 def read_builder_handoff(project_root: str, change_name: str) -> dict:

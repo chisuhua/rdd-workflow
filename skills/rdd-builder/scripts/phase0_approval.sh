@@ -149,7 +149,43 @@ print('builder-handoff v1.1: approval_status=approved written')
 
         NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-        # Write rdd-quick-context.json (per ADR-0048 §Decision 3)
+        # Read LLM dispatch_quick_review if present (per ADR-0049)
+        # Warning-only; does NOT block dispatch (HARD pause = user is final decision)
+        LLM_COMPLEXITY="unset"
+        LLM_CONCERNS=""
+        BUILDER_HANDOFF="$PROJECT_ROOT/.rddf/state/builder/$CHANGE_NAME.json"
+        if [ -f "$BUILDER_HANDOFF" ]; then
+            LLM_COMPLEXITY=$(python3 -c "
+import json
+try:
+    with open('$BUILDER_HANDOFF') as f:
+        d = json.load(f)
+    review = d.get('dispatch_quick_review') or {}
+    print(review.get('complexity_confirmed', 'unset'))
+except Exception:
+    print('unset')
+" 2>/dev/null || echo "unset")
+            if [ "$LLM_COMPLEXITY" = "complex" ]; then
+                LLM_CONCERNS=$(python3 -c "
+import json
+try:
+    with open('$BUILDER_HANDOFF') as f:
+        d = json.load(f)
+    review = d.get('dispatch_quick_review') or {}
+    concerns = review.get('concerns', [])
+    print('; '.join(concerns) if concerns else '(no concerns listed)')
+except Exception:
+    print('')
+" 2>/dev/null || echo "")
+                echo ""
+                echo "⚠️  LLM hidden complexity check detected 'complex' (per ADR-0049)"
+                echo "    Concerns: $LLM_CONCERNS"
+                echo "    User already chose option 5; continuing per HARD pause contract"
+                echo ""
+            fi
+        fi
+
+        # Write rdd-quick-context.json (per ADR-0048 §Decision 3 + ADR-0049 LLM signal)
         python3 -c "
 import json
 from pathlib import Path
@@ -162,6 +198,11 @@ ctx = {
     'planner_advisory': {
         'recommended_route': '$PLANNER_ROUTE',
         'rationale': 'planner-handoff.json::recommended_route at dispatch time',
+    },
+    'llm_advisory': {
+        'complexity_confirmed': '$LLM_COMPLEXITY',
+        'concerns': '$LLM_CONCERNS',
+        'rationale': 'builder-handoff::dispatch_quick_review at dispatch time (per ADR-0049)',
     },
     'ac_count': $AC_COUNT,
 }
