@@ -15,7 +15,8 @@ _load_project_config_python() {
     local project_root="${1:-$PROJECT_ROOT}"
     local config_file="$project_root/.rddf/project.yaml"
     if [ ! -f "$config_file" ]; then
-        echo ""
+        # Valid empty JSON so a later `json.loads` of the cache never crashes.
+        echo "{}"
         return 0
     fi
     PROJECT_CONFIG_FILE="$config_file" PYTHONPATH="${project_root}:${PYTHONPATH:-}" \
@@ -38,20 +39,30 @@ project_yaml_get() {
 
     if [ -z "$PROJECT_CONFIG_CACHE" ]; then
         local cache_file="$project_root/.rddf/state/.project-config-cache.json"
+        local cached=""
         if [ -f "$cache_file" ] && [ -z "${PROJECT_CONFIG_NO_CACHE:-}" ]; then
-            PROJECT_CONFIG_CACHE=$(cat "$cache_file" 2>/dev/null || echo "{}")
-        else
-            PROJECT_CONFIG_CACHE=$(_load_project_config_python "$project_root")
-            mkdir -p "$(dirname "$cache_file")" 2>/dev/null
-            echo "$PROJECT_CONFIG_CACHE" > "$cache_file" 2>/dev/null || true
+            cached=$(cat "$cache_file" 2>/dev/null || echo "")
         fi
+        # whitespace-only / missing cache = stale miss → reload from yaml + rewrite.
+        # (a stale 1-byte "\n" cache from a pre-project.yaml run previously
+        #  crashed json.loads and shadowed the real config forever)
+        if ! printf '%s' "$cached" | grep -q '[^[:space:]]'; then
+            cached=$(_load_project_config_python "$project_root")
+            mkdir -p "$(dirname "$cache_file")" 2>/dev/null
+            echo "$cached" > "$cache_file" 2>/dev/null || true
+        fi
+        PROJECT_CONFIG_CACHE="$cached"
     fi
 
     local value
     value=$(PROJECT_CONFIG_JSON="$PROJECT_CONFIG_CACHE" PROJECT_CONFIG_KEY="$key" \
         python3 -c '
 import os, json
-cfg = json.loads(os.environ["PROJECT_CONFIG_JSON"])
+raw = os.environ["PROJECT_CONFIG_JSON"].strip()
+try:
+    cfg = json.loads(raw) if raw else {}
+except json.JSONDecodeError:
+    cfg = {}
 key = os.environ["PROJECT_CONFIG_KEY"]
 parts = key.split(".")
 cur = cfg

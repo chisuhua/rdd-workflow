@@ -37,3 +37,6 @@ pnpm-lock.yaml
 .rddf/.roadmap-migrate-backup-*
 # .rddf/roadmap/.backup/ 是 populate-roadmap-from-arch 的 backup 目录
 .rddf/roadmap/.backup/
+
+# rdd-workflow: git.openspec_tracked=false — keep openspec/ out of git
+openspec/

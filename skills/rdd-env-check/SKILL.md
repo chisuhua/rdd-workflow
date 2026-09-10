@@ -36,6 +36,19 @@ _run_env_full_check     # 强制全量检查 (写 cache + 输出 10 字段 JSON)
 - openspec CLI 缺失 → 打印修复指引 (`npm install -g openspec-cli`), 退出码非 0 (阻断 phase 进入)
 - 任何失效/缺失 → 降级现场全量检查, 对直接调用用户透明
 
+## .gitignore 硬防护检测 (add-gitignore-hard-protection)
+
+全量检查 (`_run_env_full_check`) 额外跑 `_check_gitignore`（非阻塞, 不影响 15 字段 cache 契约）:
+
+| `.rddf/project.yaml` `git.openspec_tracked` | `.gitignore` 含 `openspec/` | 行为 |
+|---|---|---|
+| `false` | 缺失 | ⚠️ warn "gitignore guard missing"（`git add -A` 会把 openspec/ 重新拉进 git） |
+| `false` | 有 | ✅ 静默 (`_GITIGNORE_PROTECTED=yes`) |
+| `true`/缺省 | 有 | ⚠️ 反向不一致（commit_archive_moves 会 git add 被 ignore 的路径 → 空 commit） |
+| 缺省 | 缺失 | 静默（传统 tracked 项目） |
+
+Auto-fix (opt-in): `RDDF_ENV_FIX_GITIGNORE=yes` → 幂等追加 `openspec/` 到 `.gitignore`（仅 false+缺失场景）。默认只报告不改文件。
+
 ## 边界
 
 - 自动缓存 ADR-0016 工件发现 (opt-out via `SKIP_AUTO_DISCOVERY=yes`)

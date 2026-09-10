@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### add-gitignore-hard-protection (env-check + doctor .gitignore 一致性守卫, 2026-09-10)
+
+`fix-archive-openspec-tracked-commit` 的后续加固：`git.openspec_tracked: false` 挡住了 rdd-workflow 自身的 commit 路径，但用户/CI 一次 `git add -A` 仍会把 `openspec/` 重新拉进 git。本次把检测接入两个既有诊断入口。
+
+- **`_lib/env_checks.sh::_check_gitignore()`**（新）：读 `.rddf/project.yaml` `git.openspec_tracked` × `.gitignore`。false+缺失 → 非阻塞 warning（含混合状态 `git rm -r --cached openspec/` 提示）；true+有 → 反向不一致 warning；其余静默。Auto-fix opt-in：`RDDF_ENV_FIX_GITIGNORE=yes` 幂等追加 `openspec/`。已接入 `_run_env_full_check`，不触碰 15 字段 cache 契约。
+- **rdd-doctor `gitignore` category**（新，第 11 类）：`checks/gitignore_check.py` 只读 findings（WARNING + fix_hint），注册于 `doctor_main.py::_CHECKERS`，`--category gitignore` 可单跑。
+- **测试**：`tests/integration/test_gitignore_protection.bats` 9 cases（env-check 4 场景 + auto-fix 幂等 + doctor 3 场景 + 只读守卫）。
+- **文档**：rdd-env-check SKILL.md 规则表、rdd-doctor SKILL.md 类别表、AGENTS.md doctor flags 行。
+
 ### fix-archive-openspec-tracked-commit (close spec-implementation gap on ADR-0036 M3, 2026-09-10)
 
 Per `complete-project-yaml-config-gaps` spec §archive-openspec-tracked-skip-git L246-262 (ratified in ADR-0036 M3 on 2026-09-02). Closes the implementation gap where `git.openspec_tracked: false` skipped `git merge` but did NOT skip `commit_archive_moves`, allowing `openspec/changes/archive/<name>/` and `openspec/specs/<name>/` to enter git commits in mixed-state projects.

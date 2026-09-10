@@ -556,7 +556,9 @@ NOT to run rdd-doctor:
 - To fix files (doctor is read-only; for fixes use the relevant skill like `rdd-arch` or `guide-plan`)
 - To replace any existing gate (`rdd-env-check`, `arch-quality-gate`, etc.)
 
-Flags: `--json` (write `.rddf/state/.doctor-report.json`), `--category <name>` (run only one of 5 categories: `state`, `plan-tdd`, `roadmap-meta`, `proposal-table`, `tasks-checkbox`), `--quiet` (single-line output). Exit codes: 0/1/2/3 matching `openspec validate`.
+Flags: `--json` (write `.rddf/state/.doctor-report.json`), `--category <name>` (run only one of 11 categories: `state`, `plan-tdd`, `roadmap-meta`, `proposal-table`, `proposal-section`, `tasks-checkbox`, `migration-residue`, `orphan-gates`, `roadmap-refs`, `docs-consistency`, `gitignore`), `--quiet` (single-line output). Exit codes: 0/1/2/3 matching `openspec validate`.
+
+`gitignore` category (add-gitignore-hard-protection, 2026-09-10): checks `.rddf/project.yaml` `git.openspec_tracked` × `.gitignore` `openspec/` consistency. false+缺失 → WARNING（建议追加；混合状态提示 `git rm -r --cached openspec/` 一次性切换）；true+有 → 反向不一致 WARNING。同款检查已接入 `rdd-env-check`（非阻塞 stdout warning，auto-fix opt-in `RDDF_ENV_FIX_GITIGNORE=yes`）。
 
 ## rdd-quick (bypass-path orchestration, per ADR-0047)
 

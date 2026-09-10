@@ -49,6 +49,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category state|plan-tdd|roa
 | `proposal-table` | `proposal-suggestions.md` / `proposal-approved.md` Markdown 表格列数 + 链接有效性 |
 | `tasks-checkbox` | `openspec/changes/*/tasks.md` checkbox 计数（独立于 openspec CLI） |
 | `migration-residue` | `AGENTS.md` / `README.md` / `USAGE.md` / `docs/proposal-*-format.md` 里的 stale `improvements/X` 引用和 `.rddf/.rddf/improvements/X` 双前缀 bug（WARNING）。`Fix:` 行直接给出 `rddf migrate-improvements --include-docs [--allow-source-repo]` 完整命令 |
+| `gitignore` | `.rddf/project.yaml` `git.openspec_tracked` × `.gitignore` `openspec/` 一致性（add-gitignore-hard-protection）：false+缺失 → WARNING（建议追加 + 混合状态提示 `git rm -r --cached`）；true+有 → 反向不一致 WARNING |
 
 ## 路径解析（MUST 行为）
 
