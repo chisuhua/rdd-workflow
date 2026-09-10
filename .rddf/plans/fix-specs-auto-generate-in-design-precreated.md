@@ -32,7 +32,7 @@
 |---|---|
 | `AGENTS.md` | 更新 D3 design-pre-created 协同段 |
 | `skills/guide-design/SKILL.md` | D1 编排段补 specs/ 输出说明 |
-| `docs/proposal-approved-format.md` | 新章节:specs/ 与 proposal.md 对应关系 |
+| `docs/improvement-approved-format.md` | 新章节:specs/ 与 proposal.md 对应关系 |
 
 ---
 
@@ -343,7 +343,7 @@ EOF
 source skills/guide-design/scripts/approve_proposal.sh test-regression-fix P1
 python3 -c "
 import json
-d = json.load(open('proposal-approved.md'))  # smoke check
+d = json.load(open('improvement-approved.md'))  # smoke check
 "
 ```
 
@@ -370,7 +370,7 @@ Expected: spec.md 存在且第一行含 "## ADDED Requirements"
 **Files:**
 - Modify: `AGENTS.md` (D3 design-pre-created 协同段)
 - Modify: `skills/guide-design/SKILL.md` (D1 编排段)
-- Modify: `docs/proposal-approved-format.md` (新章节)
+- Modify: `docs/improvement-approved-format.md` (新章节)
 
 - [ ] **Step 1: 更新 AGENTS.md D3 段**
 
@@ -389,7 +389,7 @@ Expected: spec.md 存在且第一行含 "## ADDED Requirements"
 - 新增 `write_specs_file()` 步骤 (v2.2):调用 `generate_spec_delta()` 生成 `specs/<name>/spec.md`,在 `mkdir openspec/changes/<name>/` 之后、`proposal.md` 写入之前
 ```
 
-- [ ] **Step 3: 新增 docs/proposal-approved-format.md 章节**
+- [ ] **Step 3: 新增 docs/improvement-approved-format.md 章节**
 
 在末尾追加:
 ```markdown

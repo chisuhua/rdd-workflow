@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # Tests for propose.md name-pattern skeleton branching (v2.0.1)
 # - debt/fix-/prefix- 前缀→自动 skeleton 模式
-# - proposal-suggestions.md status 更新
+# - improvement-suggestions.md status 更新
 
 @test "phase 4: 包含 name-pattern skeleton 分流逻辑" {
     # v2.0.6+: skeleton branching uses --skeleton flag parsing + SKELETON_MODE variable.
@@ -22,13 +22,13 @@
     return 0
 }
 
-@test "skeleton branch: 更新 proposal-suggestions.md status 为 skeleton" {
+@test "skeleton branch: 更新 improvement-suggestions.md status 为 skeleton" {
     grep -A 3 "待创建.*→.*skeleton" "$BATS_TEST_DIRNAME/../../skills/propose/SKILL.md" || return 1
     return 0
 }
 
-@test "skeleton branch: proposal-suggestions 更新使用 json.load" {
-    grep -q "proposal-suggestions.md" "$BATS_TEST_DIRNAME/../../skills/propose/SKILL.md" || return 1
+@test "skeleton branch: improvement-suggestions 更新使用 json.load" {
+    grep -q "improvement-suggestions.md" "$BATS_TEST_DIRNAME/../../skills/propose/SKILL.md" || return 1
     grep -q 'json.load\|json.dump' "$BATS_TEST_DIRNAME/../../skills/propose/SKILL.md" || return 1
     return 0
 }

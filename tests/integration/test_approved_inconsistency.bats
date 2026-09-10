@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # tests/integration/test_approved_inconsistency.bats
-# Regression: detect suggestions marked "completed" in proposal-suggestions.md
-# that have no corresponding entry in proposal-approved.md.
+# Regression: detect suggestions marked "completed" in improvement-suggestions.md
+# that have no corresponding entry in improvement-approved.md.
 #
 # bats-assert is NOT loaded. Assertions use bash builtins:
 #   - assert_success  -> [ "$status" -eq 0 ]
@@ -35,7 +35,7 @@ teardown() {
 }
 
 @test "approved_inconsistency: completed suggestion with no approved record shows warning" {
-    cat > proposal-suggestions.md << 'EOF'
+    cat > improvement-suggestions.md << 'EOF'
 # Pool
 | 提案 | 优先级 | 来源 | 添加时间 |
 |------|--------|------|----------|
@@ -50,13 +50,13 @@ EOF
 }
 
 @test "approved_inconsistency: completed suggestion with approved record shows no warning" {
-    cat > proposal-suggestions.md << 'EOF'
+    cat > improvement-suggestions.md << 'EOF'
 # Pool
 | 提案 | 优先级 | 来源 | 添加时间 |
 |------|--------|------|----------|
 | [covered](.rddf/improvements/covered.md) | P1 | test | completed |
 EOF
-    cat > proposal-approved.md << 'EOF'
+    cat > improvement-approved.md << 'EOF'
 # Approved
 ## 已批准提案
 | 提案 | 优先级 |
@@ -70,7 +70,7 @@ EOF
     [[ "$output" != *"⚠️"* ]]
 }
 
-@test "approved_inconsistency: missing proposal-suggestions.md is silent" {
+@test "approved_inconsistency: missing improvement-suggestions.md is silent" {
     source "$REPO_ROOT/_lib/state.sh"
     run detect_approved_inconsistency "$TEST_DIR"
     [ "$status" -eq 0 ]
@@ -78,7 +78,7 @@ EOF
 }
 
 @test "approved_inconsistency: no completed entries is silent" {
-    cat > proposal-suggestions.md << 'EOF'
+    cat > improvement-suggestions.md << 'EOF'
 # Pool
 | 提案 | 优先级 | 来源 | 添加时间 |
 |------|--------|------|----------|
@@ -110,7 +110,7 @@ EOF
 # ---------------------------------------------------------------------------
 
 @test "approved_inconsistency: smoke regression - no false positive on clean project" {
-    # Empty repo, no proposal-suggestions.md -> silent
+    # Empty repo, no improvement-suggestions.md -> silent
     source "$REPO_ROOT/_lib/state.sh"
     run detect_approved_inconsistency "$TEST_DIR"
     [ "$status" -eq 0 ]

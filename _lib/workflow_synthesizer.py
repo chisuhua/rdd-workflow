@@ -45,7 +45,7 @@ Priority order (highest first):
     10. committed change in HEAD, no worktree    -> rdd-builder (medium)
     11. no roadmap.md                            -> rdd-builder (low)
     12. no openspec/changes/                     -> rdd-builder (low)
-    13. proposal-approved.md has approved entries -> rdd-builder (high)
+    13. improvement-approved.md has approved entries -> rdd-builder (high)
     14. default                                  -> rdd-builder (low)
 
 Paths 11-14 are implicitly unreachable because earlier paths (1, 3-6)
@@ -815,7 +815,7 @@ def _detect_working_tree_issues(project_root: str) -> Tuple[WorkingTreeIssue, ..
                 if os.path.isfile(full):
                     issues.append(WorkingTreeIssue(
                         "untracked_file", entry,
-                        "未跟踪的新文件 (考虑 git add 或登记到 proposal-suggestions.md)",
+                        "未跟踪的新文件 (考虑 git add 或登记到 improvement-suggestions.md)",
                         severity="info",
                     ))
     except (subprocess.TimeoutExpired, OSError):

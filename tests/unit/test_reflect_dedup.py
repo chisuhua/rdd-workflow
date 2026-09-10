@@ -16,8 +16,8 @@ class TestDedupMatcher:
         self.tmpdir = str(tmp_path)
         self.improvements_dir = os.path.join(self.tmpdir, ".rddf/improvements")
         os.makedirs(self.improvements_dir, exist_ok=True)
-        self.suggestions_file = os.path.join(self.tmpdir, "proposal-suggestions.md")
-        self.approved_file = os.path.join(self.tmpdir, "proposal-approved.md")
+        self.suggestions_file = os.path.join(self.tmpdir, "improvement-suggestions.md")
+        self.approved_file = os.path.join(self.tmpdir, "improvement-approved.md")
         self.matcher = DedupMatcher(
             improvements_dir=self.improvements_dir,
             suggestions_file=self.suggestions_file,

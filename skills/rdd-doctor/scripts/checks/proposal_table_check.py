@@ -1,4 +1,4 @@
-"""Cat 4 — Validate proposal-suggestions.md and proposal-approved.md Markdown tables.
+"""Cat 4 — Validate improvement-suggestions.md and improvement-approved.md Markdown tables.
 
 Uses a lightweight inline parser to avoid circular dependency on
 _lib/parse_approved.py (which lives in a separate worktree change
@@ -15,10 +15,10 @@ from typing import List
 from doctor_render import Finding, Severity
 
 
-_FILES = ["proposal-suggestions.md", "proposal-approved.md"]
+_FILES = ["improvement-suggestions.md", "improvement-approved.md"]
 _EXPECTED_COLUMNS = {
-    "proposal-suggestions.md": 5,
-    "proposal-approved.md": 4,
+    "improvement-suggestions.md": 5,
+    "improvement-approved.md": 4,
 }
 _ROW_PATTERN = re.compile(r"^\|\s*\[([^\]]+)\]\(([^)]+)\)\s*\|")
 

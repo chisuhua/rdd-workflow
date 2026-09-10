@@ -15,7 +15,7 @@ load ../test_helper
 @test "mark-approved-completed: idempotent call preserves original completion date" {
     TEST_DIR=$(mktemp -d)
     mkdir -p "$TEST_DIR/.rddf/improvements"
-    cat > "$TEST_DIR/proposal-approved.md" <<'MD'
+    cat > "$TEST_DIR/improvement-approved.md" <<'MD'
 # 已批准提案
 
 | Proposal | Priority | Approved |
@@ -37,7 +37,7 @@ MD
     [ "$status" -eq 0 ]
 
     # Original date must still be present.
-    run grep -F '2026-07-23' "$TEST_DIR/proposal-approved.md"
+    run grep -F '2026-07-23' "$TEST_DIR/improvement-approved.md"
     [ "$status" -eq 0 ]
 
     # Today's UTC date must NOT have been introduced.
@@ -45,7 +45,7 @@ MD
     if [ "$today" = "2026-07-23" ]; then
         skip "today == 2026-07-23 (fixture date); cannot prove drift suppression"
     fi
-    run grep -F "$today" "$TEST_DIR/proposal-approved.md"
+    run grep -F "$today" "$TEST_DIR/improvement-approved.md"
     [ "$status" -ne 0 ]
 
     rm -rf "$TEST_DIR"
@@ -54,7 +54,7 @@ MD
 @test "mark-approved-completed: first-time archive uses today's date" {
     TEST_DIR=$(mktemp -d)
     mkdir -p "$TEST_DIR/.rddf/improvements"
-    cat > "$TEST_DIR/proposal-approved.md" <<'MD'
+    cat > "$TEST_DIR/improvement-approved.md" <<'MD'
 # 已批准提案
 
 | Proposal | Priority | Approved |
@@ -75,7 +75,7 @@ MD
     [ "$status" -eq 0 ]
 
     today=$(date -u +%Y-%m-%d)
-    run grep -F "$today" "$TEST_DIR/proposal-approved.md"
+    run grep -F "$today" "$TEST_DIR/improvement-approved.md"
     [ "$status" -eq 0 ]
 
     rm -rf "$TEST_DIR"

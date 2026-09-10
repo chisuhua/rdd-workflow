@@ -80,7 +80,7 @@ AND   旧项目的 `from skills._lib import X` 通过兼容 shim 仍能工作
 ```
 
 ```gherkin
-GIVEN PTX-EMU（已 arch-done + plan-done，~150 行 proposal-approved.md）
+GIVEN PTX-EMU（已 arch-done + plan-done，~150 行 improvement-approved.md）
 WHEN  在 PTX-EMU 跑 `rddf guide / dashboard / status / feature / sessions / monitor / validate / cleanup`
 THEN  12 个子命令输出与本次验证（2026-08-05）的快照完全一致
 AND   仅 init 子命令从"失败"变为"成功"
@@ -103,7 +103,7 @@ AND   仅 init 子命令从"失败"变为"成功"
 - MUST NOT 删除 `skills/_lib/` 旧位置（保留为空 shim）
 - MUST NOT 改变 `package.json` 的 `"name"`、`"version"`、`"author"` 字段
 - MUST NOT 改变任何 ADR 编号或内容（仅可能新增 ADR-00XX-init-layout-decision.md）
-- MUST NOT 合并本提案到已有 `proposal-approved.md` 行（独立 PR）
+- MUST NOT 合并本提案到已有 `improvement-approved.md` 行（独立 PR）
 
 ### SHOULD
 

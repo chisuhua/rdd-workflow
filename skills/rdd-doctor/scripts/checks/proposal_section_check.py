@@ -1,4 +1,4 @@
-"""Cat 9 — Detect proposal drift between proposal-approved.md "## 已批准提案"
+"""Cat 9 — Detect proposal drift between improvement-approved.md "## 已批准提案"
 section and openspec/changes/archive/ directory.
 
 Bug fixed: fix-proposal-approved-sync (P2, 2026-08-21). Before this check,
@@ -65,7 +65,7 @@ def run(project_root: Path | None = None) -> List[Finding]:
         project_root = Path(os.environ.get("RDDF_PROJECT_ROOT", "."))
     findings: List[Finding] = []
 
-    approved_path = project_root / "proposal-approved.md"
+    approved_path = project_root / "improvement-approved.md"
     if not approved_path.is_file():
         return findings
 
@@ -78,7 +78,7 @@ def run(project_root: Path | None = None) -> List[Finding]:
             findings.append(Finding(
                 severity=Severity.CRITICAL,
                 category="proposal-section",
-                file="proposal-approved.md",
+                file="improvement-approved.md",
                 line=None,
                 snippet=(
                     f"'{name}' is in '## 已批准提案' but "

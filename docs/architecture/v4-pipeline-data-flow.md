@@ -202,7 +202,7 @@ This section walks through the **happy path** end-to-end, step by step. All file
           - rddf planner attach <name> --project-id X --phase Y [--theme Z]
             (single-file, idempotent; per ADR-0038 Stage 2.5 P0-3)
           - writes .rddf/improvements/<name>.md frontmatter
-          - writes proposal-suggestions.md / proposal-approved.md tables
+          - writes improvement-suggestions.md / improvement-approved.md tables
           - optional: rddf feedback add <name> --kind ...
 [Step 2.6] Phase 4 audit / sync:
           - rddf planner sync --apply
@@ -231,7 +231,7 @@ This section walks through the **happy path** end-to-end, step by step. All file
 - `.rddf/roadmap.md` (NEW in v4.0.1 — was arch's job)
 - `.rddf/roadmap/features/*.md` (NEW in v4.0.1)
 - `.rddf/improvements/<name>.md` (new / updated via planner_attach)
-- `proposal-suggestions.md` / `proposal-approved.md`
+- `improvement-suggestions.md` / `improvement-approved.md`
 - `.rddf/state/.planner-state.json` (schema v1.1, includes `recommended_route`)
 - `.rddf/state/.planner-history.jsonl`
 - `.rddf/state/.planner-feedback.json` (optional, per ADR-0042)

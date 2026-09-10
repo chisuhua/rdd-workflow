@@ -40,7 +40,7 @@ ADR-0014 §决策 5 规定 `gate.py` 注册 `review_debt_recorded`(warning 级)�
 
 - **不**改 `guide-ship/SKILL.md:387-475` Phase 2.5 既有菜单(只让 helper 在 Phase 2.5 commit 前介入)
 - **不**重写 `ship_review.sh` 整个脚本(只增加 1 行 helper 调用)
-- **不**改 `proposal-suggestions.md` 表格 schema
+- **不**改 `improvement-suggestions.md` 表格 schema
 - **不**为 helper 引入新依赖
 
 ## 关键场景
@@ -169,7 +169,7 @@ DEFAULT_EXTENSIONS = frozenset({
 ### 不变量
 
 - `_lib/gate.py:341-370` 函数可保留为 shim,1 版本内删除(留 `@deprecated` docstring)
-- 不改 `proposal-suggestions.md` schema
+- 不改 `improvement-suggestions.md` schema
 - 不改 `archive.sh::archive_change` 任何逻辑
 
 ## 依赖

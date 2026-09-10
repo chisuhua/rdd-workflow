@@ -18,7 +18,7 @@
 |---|---|
 | `improvements/*` (133 files) | 迁移到 `.rddf/improvements/*` |
 | `.rddf/improvements/*` (133 files) | 提案池新位置,git tracked |
-| `proposal-approved.md` | 134 个 markdown 链接更新 |
+| `improvement-approved.md` | 134 个 markdown 链接更新 |
 | `skills/**/SKILL.md` (~10 files) | 路径常量更新 |
 | `skills/**/scripts/*.sh` (~10 files) | glob 路径更新 |
 | `skills/**/scripts/*.py` (~10 files) | Python 路径常量更新 |
@@ -52,9 +52,9 @@
 Run: `git ls-files improvements/ | wc -l`
 Expected: 133
 
-- [ ] **Step 2: Verify proposal-approved.md has 134 markdown links to improvements/**
+- [ ] **Step 2: Verify improvement-approved.md has 134 markdown links to improvements/**
 
-Run: `grep -c '](improvements/' proposal-approved.md`
+Run: `grep -c '](improvements/' improvement-approved.md`
 Expected: 134 (all links pointing to old path)
 
 - [ ] **Step 3: Snapshot baseline — this is what we expect to migrate away from**
@@ -97,24 +97,24 @@ Expected: shows full history (rename detected)
 
 ---
 
-### Task 3: Update proposal-approved.md links (134 sed replacements)
+### Task 3: Update improvement-approved.md links (134 sed replacements)
 
 **Files:**
-- Modify: `proposal-approved.md` (134 links)
+- Modify: `improvement-approved.md` (134 links)
 
 - [ ] **Step 1: Run failing verification — old links should be 134, new 0**
 
-Run: `echo "old=$(grep -c '](improvements/' proposal-approved.md) new=$(grep -c '](.rddf/improvements/' proposal-approved.md)"`
+Run: `echo "old=$(grep -c '](improvements/' improvement-approved.md) new=$(grep -c '](.rddf/improvements/' improvement-approved.md)"`
 Expected: old=134 new=0
 
 - [ ] **Step 2: Apply sed replacement**
 
-Run: `sed -i 's|](improvements/|](.rddf/improvements/|g' proposal-approved.md`
+Run: `sed -i 's|](improvements/|](.rddf/improvements/|g' improvement-approved.md`
 Expected: 134 substitutions, exit 0
 
 - [ ] **Step 3: Verify AC-3: all 134 links now use new path**
 
-Run: `[ "$(grep -c '](.rddf/improvements/' proposal-approved.md)" = "134" ] && [ "$(grep -c '](improvements/' proposal-approved.md)" = "0" ] && echo PASS || echo FAIL`
+Run: `[ "$(grep -c '](.rddf/improvements/' improvement-approved.md)" = "134" ] && [ "$(grep -c '](improvements/' improvement-approved.md)" = "0" ] && echo PASS || echo FAIL`
 Expected: PASS
 
 - [ ] **Step 4: Verify AC-3 (deep): each link resolves to an existing file**
@@ -122,7 +122,7 @@ Expected: PASS
 Run:
 ```python
 import re, os
-with open('proposal-approved.md') as f: content = f.read()
+with open('improvement-approved.md') as f: content = f.read()
 links = re.findall(r'\]\(\.rddf/improvements/([^)]+)\)', content)
 missing = [l for l in links if not os.path.exists(f'.rddf/improvements/{l}')]
 print(f'OK: {len(links)} links, {len(missing)} missing')
@@ -178,8 +178,8 @@ Expected: first empty, second has entries
 ### Task 5: Update docs (proposal format guides + INSTALL + USAGE + README + ADR-0024/0025)
 
 **Files:**
-- Modify: `docs/proposal-suggestions-format.md`
-- Modify: `docs/proposal-approved-format.md`
+- Modify: `docs/improvement-suggestions-format.md`
+- Modify: `docs/improvement-approved-format.md`
 - Modify: `docs/adr/ADR-0024-deps-driven-execution-mode.md`
 - Modify: `docs/adr/ADR-0025-design-proposal-creation.md`
 - Modify: `docs/architecture/workflow-phases.md`
@@ -237,7 +237,7 @@ Expected: PASS
 ### Task 7: Update tests/ fixtures and bats assertions
 
 **Files:**
-- Modify: `tests/fixtures/diseased-repo/proposal-suggestions.md`
+- Modify: `tests/fixtures/diseased-repo/improvement-suggestions.md`
 - Modify: `tests/integration/fixtures/guide_entry_clean.json`
 - Modify: `tests/integration/scan_state.bats`
 - Modify: `tests/integration/test_approve_*.bats` (~5 files)
@@ -322,7 +322,7 @@ done
 # AC-3 (link resolution)
 python3 -c "
 import re, os
-with open('proposal-approved.md') as f: content = f.read()
+with open('improvement-approved.md') as f: content = f.read()
 links = re.findall(r'\]\(\.rddf/improvements/([^)]+)\)', content)
 missing = [l for l in links if not os.path.exists(f'.rddf/improvements/{l}')]
 print('AC-3', 'PASS' if len(missing) == 0 else f'FAIL ({len(missing)} missing)')
@@ -364,7 +364,7 @@ Expected: should match expected file count (134 moves + ~50 modifications + 1 ne
 Run: `git commit -m "refactor(rdd-workflow): migrate improvements/ → .rddf/improvements/ for plugin filter (saves ~4,887 tokens)
 
 - 133 improvement files moved to .rddf/improvements/ (git rename preserves history)
-- 134 markdown links in proposal-approved.md updated
+- 134 markdown links in improvement-approved.md updated
 - 37 skills/_lib/ path constants updated
 - 11 test fixture files updated
 - 5 docs/ files updated

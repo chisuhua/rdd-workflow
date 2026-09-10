@@ -8,9 +8,9 @@
 load ../test_helper
 
 setup() {
-    # Create a minimal proposal-approved.md fixture with approved table
+    # Create a minimal improvement-approved.md fixture with approved table
     FIXTURE_DIR=$(mktemp -d)
-    cat > "$FIXTURE_DIR/proposal-approved.md" << 'EOF'
+    cat > "$FIXTURE_DIR/improvement-approved.md" << 'EOF'
 # 已批准提案（Plan 阶段输入）
 
 | 提案 | 优先级 | 批准时间 | 批准人 |
@@ -46,5 +46,5 @@ teardown() {
 @test "append_approved: appends row to approved table" {
     source "$REPO_ROOT/_lib/state.sh"
     append_approved "$FIXTURE_DIR" 'test-verify-row' 'P2'
-    grep -q '\[test-verify-row\]' "$FIXTURE_DIR/proposal-approved.md"
+    grep -q '\[test-verify-row\]' "$FIXTURE_DIR/improvement-approved.md"
 }

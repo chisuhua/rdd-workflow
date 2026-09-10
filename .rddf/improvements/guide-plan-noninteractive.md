@@ -11,7 +11,7 @@
 - **In Scope**:
   - guide-plan.md 入口检测 `--non-interactive` 或 `SKIP_GUIDE_PLAN_MENU=yes` env var
   - non-interactive 模式跳过菜单，执行默认流程（scan→propose→deps→plan-done）
-  - propose 增加 `--batch-create` 批量从 proposal-suggestions.md 创建 skeleton
+  - propose 增加 `--batch-create` 批量从 improvement-suggestions.md 创建 skeleton
   - 测试覆盖两种模式
 - **Out Scope**:
   - 不修改人际交互菜单（向后兼容）

@@ -12,7 +12,7 @@
 #   4. Refuses (exit 1) when .rddf/improvements/ already exists
 #   5. Help flag prints usage and returns 0 without touching anything
 #   6. --dry-run reports the plan without modifying any files
-#   7. Updates markdown links in proposal-approved.md + proposal-suggestions.md
+#   7. Updates markdown links in improvement-approved.md + improvement-suggestions.md
 #   8. Updates iteration.json path fields
 
 load ../test_helper
@@ -34,13 +34,13 @@ make_fake_third_party_project() {
     mkdir -p "$proj/improvements" "$proj/.rddf/state"
     echo "# Foo"   > "$proj/improvements/foo.md"
     echo "# Bar"   > "$proj/improvements/bar.md"
-    cat > "$proj/proposal-approved.md" <<'EOF'
+    cat > "$proj/improvement-approved.md" <<'EOF'
 | name | link |
 |------|------|
 | foo | [foo](improvements/foo.md) |
 | bar | [bar](improvements/bar.md) |
 EOF
-    cat > "$proj/proposal-suggestions.md" <<'EOF'
+    cat > "$proj/improvement-suggestions.md" <<'EOF'
 | name | link |
 |------|------|
 | foo | [foo](improvements/foo.md) |
@@ -124,11 +124,11 @@ run_migrate() {
 @test "migrate-improvements: updates markdown links in proposal files" {
     run_migrate
     [ "$status" -eq 0 ]
-    grep -q "\[foo\](.rddf/improvements/foo.md)" "$PROJECT_ROOT/proposal-approved.md"
-    grep -q "\[bar\](.rddf/improvements/bar.md)" "$PROJECT_ROOT/proposal-approved.md"
-    ! grep -q "](improvements/" "$PROJECT_ROOT/proposal-approved.md"
-    grep -q "\[foo\](.rddf/improvements/foo.md)" "$PROJECT_ROOT/proposal-suggestions.md"
-    ! grep -q "](improvements/" "$PROJECT_ROOT/proposal-suggestions.md"
+    grep -q "\[foo\](.rddf/improvements/foo.md)" "$PROJECT_ROOT/improvement-approved.md"
+    grep -q "\[bar\](.rddf/improvements/bar.md)" "$PROJECT_ROOT/improvement-approved.md"
+    ! grep -q "](improvements/" "$PROJECT_ROOT/improvement-approved.md"
+    grep -q "\[foo\](.rddf/improvements/foo.md)" "$PROJECT_ROOT/improvement-suggestions.md"
+    ! grep -q "](improvements/" "$PROJECT_ROOT/improvement-suggestions.md"
 }
 
 @test "migrate-improvements: updates iteration.json path fields" {

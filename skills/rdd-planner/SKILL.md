@@ -10,7 +10,7 @@ name: rdd-planner
     - roadmap.md (完全独占 per ADR-0048, 从 rdd-arch 移交)
     - .rddf/roadmap/{features,phases}/*.md
     - .rddf/state/.populate-state.json
-    - proposal-suggestions.md / proposal-approved.md
+    - improvement-suggestions.md / improvement-approved.md
     - .rddf/improvements/*.md (via add-improve)
 
     Existing horizontal-orchestrator commands remain available:
@@ -38,8 +38,8 @@ role:
       - ".rddf/roadmap/features/*.md"
       - ".rddf/roadmap/phases/*.md"
       - ".rddf/state/.populate-state.json"
-      - "proposal-suggestions.md"
-      - "proposal-approved.md"
+      - "improvement-suggestions.md"
+      - "improvement-approved.md"
       - ".rddf/improvements/*.md"
       - ".rddf/state/.planner-state.json"
       - ".rddf/state/.planner-feedback.json"

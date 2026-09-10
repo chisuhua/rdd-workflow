@@ -5,14 +5,14 @@
 **类型**: feature
 
 ## 架构依据
-- 复盘发现：`add-cudart-unit-tests` 仅剩 1 个 trivial 任务（更新 proposal-suggestions.md 状态），但 guide-ship Phase 1 仍假设 worktree 创建 → plan 生成 → execute 三步走
+- 复盘发现：`add-cudart-unit-tests` 仅剩 1 个 trivial 任务（更新 improvement-suggestions.md 状态），但 guide-ship Phase 1 仍假设 worktree 创建 → plan 生成 → execute 三步走
 - AI 不得不绕过整个 Phase 1 手动处理，暴露了"near-complete change"的快捷路径缺失
 - 类似的"大部分已完成、仅剩文档/状态更新"模式在项目后期会频繁出现
 
 ## 范围
 - **In Scope**:
   - `ship_plan.sh` 中增加快速完成检测逻辑：Phase 1 扫描时判断是否满足 quick-finish 条件
-  - quick-finish 条件：剩余任务 ≤ 2 且均为文档/状态更新类型（`[ ] update proposal-suggestions.md` 等），且所有代码变更已提交
+  - quick-finish 条件：剩余任务 ≤ 2 且均为文档/状态更新类型（`[ ] update improvement-suggestions.md` 等），且所有代码变更已提交
   - quick-finish 流程：跳过 worktree 创建、plan 生成、execute 三件套，直接进入 review → archive
   - 用户交互：展示 quick-finish 与标准模式两个选项，附带剩余任务详情
 - **Out Scope**:
@@ -20,7 +20,7 @@
   - 不自动判断"trivial"的类型定义（由 AI 在 prompt 中展示判断依据给用户确认）
 
 ## 关键场景
-- GIVEN change 仅剩 1 个"更新 proposal-suggestions.md 状态"任务, WHEN 进入 guide-ship, THEN 展示 Quick Finish 选项
+- GIVEN change 仅剩 1 个"更新 improvement-suggestions.md 状态"任务, WHEN 进入 guide-ship, THEN 展示 Quick Finish 选项
 - GIVEN change 剩余 3 个功能实现任务, WHEN 进入 guide-ship, THEN 不触发 quick-finish 检测
 - GIVEN quick-finish 选中, WHEN 执行, THEN 跳过 worktree/plan/execute, 直接进入 review → archive
 

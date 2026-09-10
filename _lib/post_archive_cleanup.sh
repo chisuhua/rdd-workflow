@@ -5,7 +5,7 @@
 #
 # Idempotent post-archive cleanup. After openspec archive <change_name>
 # finishes moving files, this hook:
-#   1. Syncs proposal-approved.md — moves any approved entry whose
+#   1. Syncs improvement-approved.md — moves any approved entry whose
 #      matching archive/<date>-<name>/ dir exists into the
 #      "## 已实施" section (delegates to state.sh::sweep_implemented_proposals).
 #   2. Scans `git status --porcelain` for residue
@@ -29,7 +29,7 @@
 #   2. _lib/archive.sh:515 commit_archive_moves() only stages 3 paths, misses .rddf/
 #   3. _lib/state.sh:452 check_dirty_key_files() is a sentinel that only warns
 #   4. sweep_implemented_proposals is defined but no caller wired it
-#      → proposal-approved.md drifts away from openspec/changes/archive/
+#      → improvement-approved.md drifts away from openspec/changes/archive/
 
 set -uo pipefail
 
@@ -43,8 +43,8 @@ _WHITELIST_DELETED_PATTERNS=(
 
 # Whitelist: modified-critical paths to git add (staged, not committed)
 _WHITELIST_MODIFIED_PATTERNS=(
-  "proposal-approved.md"
-  "proposal-suggestions.md"
+  "improvement-approved.md"
+  "improvement-suggestions.md"
   "roadmap.md"
 )
 
@@ -72,7 +72,7 @@ post_archive_cleanup() {
 
   cd "$project_root" || { echo "❌ post_archive_cleanup: cannot cd to $project_root" >&2; return 1; }
 
-  # Sync proposal-approved.md with archive/ tree. Idempotent + non-blocking.
+  # Sync improvement-approved.md with archive/ tree. Idempotent + non-blocking.
   if [ -f "$project_root/_lib/state.sh" ]; then
     # shellcheck source=/dev/null
     source "$project_root/_lib/state.sh" 2>/dev/null || true

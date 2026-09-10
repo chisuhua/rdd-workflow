@@ -272,7 +272,7 @@
 
 - **AC-3.1**: Change 2 显式声明依赖 Change 1（plan 阶段必须先 ship Change 1）
 - **AC-3.2**: Change 1 自家仓库执行迁移后产出 1+ commit（tracked `.rddf/roadmap*`）
-- **AC-3.3**: 提案批准后从 `proposal-suggestions.md` 移除（由 `sync_suggestions()` 自动）
+- **AC-3.3**: 提案批准后从 `improvement-suggestions.md` 移除（由 `sync_suggestions()` 自动）
 - **AC-3.4**: `skills/roadmap/SKILL.md` 新增 `migrate` / `validate-fragments` 子命令章节
 - **AC-3.5**: `openspec/specs/roadmap-hierarchy/spec.md` 新增（与 roadmap-proposal-guidance spec 并列）
 

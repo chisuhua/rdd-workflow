@@ -34,7 +34,7 @@ Bronze 是**唯一被强制执行**的等级。设置 `STRICT_PROPOSE_GATE=yes`
 在 Silver 基础上附加：
 
 - 变更包含集成测试
-- proposal-suggestions.md 条目已更新
+- improvement-suggestions.md 条目已更新
 - deps 分析已运行且 blocker 已标注
 
 ## 阈值速查表

@@ -738,7 +738,7 @@ class TestPathNoOpenspecChanges:
 
 class TestPathProposalSuggestionsPending:
     def test_pending_proposal_recommends_guide_plan(self, project_root, monkeypatch):
-        """Path 12: proposal-suggestions.md has pending -> guide-plan.
+        """Path 12: improvement-suggestions.md has pending -> guide-plan.
         Path 3 catches first (no plan-handoff). Verify path 3."""
         _write_arch_handoff(project_root, adr_count=5)
         from skills._lib import workflow_synthesizer import synthesize
@@ -757,8 +757,8 @@ class TestPathDefault:
         # No plan-handoff -> path 3 fires (guide-plan), but let's test default
         # via direct decision_tree call with plan_handoff present + active_changes > 0
         _write_plan_handoff(project_root, active_changes=1)
-        # Add a proposal-suggestions.md with no pending entries to test default
-        (Path(project_root) / "proposal-suggestions.md").write_text("[]")
+        # Add a improvement-suggestions.md with no pending entries to test default
+        (Path(project_root) / "improvement-suggestions.md").write_text("[]")
         r = ws.synthesize(project_root)
         # Path 5 fires (plan-handoff active_changes=1, no worktree)
         assert r.suggested_action == "guide-ship"

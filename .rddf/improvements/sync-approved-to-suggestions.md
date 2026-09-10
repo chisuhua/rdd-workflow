@@ -6,18 +6,18 @@
 
 ## 架构依据
 
-- `proposal-approved.md` 有 42 个批准条目，但 `proposal-suggestions.md` 中对应条目未更新状态
+- `improvement-approved.md` 有 42 个批准条目，但 `improvement-suggestions.md` 中对应条目未更新状态
 - `append_approved` 只写 approved.md，不更新 suggestions.md
 - 双索引缺乏自动同步机制，人工维护成本高
 
 ## 范围
 
 - **In Scope**:
-  - `append_approved` 函数中增加：同步更新 `proposal-suggestions.md` 中对应条目，添加"已审批"标记或移到 `## 已批准` 表格
+  - `append_approved` 函数中增加：同步更新 `improvement-suggestions.md` 中对应条目，添加"已审批"标记或移到 `## 已批准` 表格
   - `mark_approved_completed` 中增加：同步更新 suggestions.md
   - 或：新增 `sync_suggestions_index` 函数，按 approved.md 状态批量更新 suggestions.md
 - **Out Scope**:
-  - 不修改 proposal-suggestions.md 的表格格式
+  - 不修改 improvement-suggestions.md 的表格格式
 
 ## 关键场景
 

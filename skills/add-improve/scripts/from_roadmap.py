@@ -3,7 +3,7 @@
 
 Reads validated env-vars (from from_roadmap.env.py), writes proposal file
 with **主题**: field populated. HARD-GATE: does NOT auto-approve or modify
-proposal-suggestions.md — user must still go through rdd-workflow-brainstorm
+improvement-suggestions.md — user must still go through rdd-workflow-brainstorm
 for section approval.
 
 Naming flexibility (improve-from-roadmap-naming-flexibility, 2026-08-28):

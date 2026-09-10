@@ -25,7 +25,7 @@
     },
     "all_proposals_have_decision": {
       "type": "boolean",
-      "description": "True if every entry in proposal-suggestions.md has a decision"
+      "description": "True if every entry in improvement-suggestions.md has a decision"
     },
     "version": {
       "type": "integer",

@@ -914,7 +914,7 @@ Apply edits to the **base** general spec file (not the change copy) so the test 
 
 ```markdown
 #### Scenario: proposal-suggestions-format lists current consumers
-- **WHEN** `docs/proposal-suggestions-format.md` is read
+- **WHEN** `docs/improvement-suggestions-format.md` is read
 - **THEN** the consumer list SHALL include `propose`, `guide-arch`,
   `guide-plan`, `guide`, `status`, and `deps`
 - **AND** it SHALL NOT list `guide-spec` (removed in v2.0)

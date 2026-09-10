@@ -1,6 +1,6 @@
 # add-propose-content-review
 
-**优先级**: P1 | **来源**: Oracle 架构分析 2026-07-21 — arch 阶段 proposal-suggestions.md → proposal-approved.md 迁移的内容审查
+**优先级**: P1 | **来源**: Oracle 架构分析 2026-07-21 — arch 阶段 improvement-suggestions.md → improvement-approved.md 迁移的内容审查
 **阶段**: v2.1 | **分类**: quality
 **类型**: feature
 

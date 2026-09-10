@@ -8,7 +8,7 @@
 | 改进 | 文件 | 操作 | 优先级 | 预估行数 |
 |------|------|------|--------|---------|
 | 新增 Phase 2.5 review | `skills/guide-ship.md` | INSERT @ L590 | P0 | +120 |
-| 加 `type` 字段 | `docs/proposal-suggestions-format.md` | MODIFY @ L44 | P1 | +3 |
+| 加 `type` 字段 | `docs/improvement-suggestions-format.md` | MODIFY @ L44 | P1 | +3 |
 | | `skills/propose.md` | MODIFY @ L301 | P1 | +25 |
 | ship_done 新增 gate check | `skills/_lib/gate.py` | MODIFY @ L128 | P1 | +15 |
 | iteration.py 加 review status | `skills/_lib/iteration.py` | MODIFY @ L46 | P2 | +3 |
@@ -36,7 +36,7 @@ Phase 2.5: review
     ├── 采集债务 (git diff + TODO/FIXME + ctest 回归)
     ├── 展示结果 → 用户交互
     │   ├── 选项 1: 范围內债务 → 追加 tasks.md → 返回 execute
-    │   ├── 选项 2: 旁效应债务 → 创建新 change (type=debt) → proposal-suggestions.md
+    │   ├── 选项 2: 旁效应债务 → 创建新 change (type=debt) → improvement-suggestions.md
     │   │                     → 检查文件冲突 → 有冲突则 offer re-deps
     │   ├── 选项 3: 架构漂移 → 回注 guide-arch (生成 drift-analysis.md)
     │   ├── 选项 4: 跳过 (默认) → 直接进入 archive
@@ -55,7 +55,7 @@ Phase 2.5: review
 
 ### 改进 2：proposal-suggestions 加 `type` 字段（P1，~28 行）
 
-**文件 1**: `docs/proposal-suggestions-format.md` @ L44 后
+**文件 1**: `docs/improvement-suggestions-format.md` @ L44 后
 
 新增一行字段表：
 
@@ -97,7 +97,7 @@ Check("review_debt_recorded", _check_review_debt_recorded,
       "execute 后债务未记录", "运行 Phase 2.5 review 或选择跳过", "warning"),
 ```
 
-**检查函数**: `_check_review_debt_recorded(ctx)` —— 检查 proposal-suggestions.md 中是否有 `type=debt` 条目与新产生的 TODO 标记一一对应。
+**检查函数**: `_check_review_debt_recorded(ctx)` —— 检查 improvement-suggestions.md 中是否有 `type=debt` 条目与新产生的 TODO 标记一一对应。
 
 **级别**: warning（不阻断 archive，因为 debt 可 deferred）。
 

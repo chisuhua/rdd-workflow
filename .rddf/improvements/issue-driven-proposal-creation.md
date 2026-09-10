@@ -19,7 +19,7 @@
 - **ADR-0027 §5/§7**：`_lib/issue_reporter.py`（上游 bug 上报）、`_lib/close_issues.py`（archive close hook）、`gh_repo` schema 字段、`issue_refs` 字段均已实现并测试
 - **`add-improve` skill**：已有 `free` 与 `from-roadmap`（v2.2）两种 scaffold 模式，结构可直接复用（bash wrapper + Python 主逻辑 + env-var 契约）
 - **`guide-design` Phase 2 菜单结构**：稳定且有扩展空间（ADR-0025）
-- **proposal-suggestions.md / proposal-approved.md 双索引**：可追加新提案
+- **improvement-suggestions.md / improvement-approved.md 双索引**：可追加新提案
 
 **Oracle 评估**（2026-08-13）：
 - 阶段归属：✅ `guide-design` Phase 2（与用户直觉一致）
@@ -67,7 +67,7 @@
 **场景 1 — 第三方项目 dogfooding**：
 - GIVEN: 用户在第三方项目 X 跑 rdd-workflow，X 有 GitHub repo + 开放 issue
 - WHEN: 用户在 guide-design Phase 2 选择"从 GitHub issue 创建提案"
-- THEN: gh auth status 前置检查通过 → `gh repo view` 检测 X → 列出 open issues（限 30）→ 用户选 N → dedup 通过（双位置扫描）→ 预填 scaffold（title/body 截断 4k/issue_ref/gh_repo）→ brainstorm HARD-GATE 完成 → 落 `.rddf/improvements/<slug>-i<N>.md` + 注册 proposal-suggestions.md
+- THEN: gh auth status 前置检查通过 → `gh repo view` 检测 X → 列出 open issues（限 30）→ 用户选 N → dedup 通过（双位置扫描）→ 预填 scaffold（title/body 截断 4k/issue_ref/gh_repo）→ brainstorm HARD-GATE 完成 → 落 `.rddf/improvements/<slug>-i<N>.md` + 注册 improvement-suggestions.md
 
 **场景 2 — rdd-workflow self-use**：
 - GIVEN: 用户在 rdd-workflow 自身跑 add-improve，看到 `chisuhua/rdd-workflow` 的开放 issue

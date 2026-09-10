@@ -25,7 +25,7 @@
 #     so the regex must include the opening '[' to avoid matching on path
 #     substrings (this P1-3 bracket fix is part of the extraction)
 #   - git show HEAD:<path> requires repo-relative path; cd into PROJECT_ROOT
-#   - json.load (not grep) on proposal-suggestions.md to avoid matching the
+#   - json.load (not grep) on improvement-suggestions.md to avoid matching the
 #     literal word "待创建" inside description fields (P1-7)
 #   - PY_PROJECT_ROOT env var (not cwd-relative open) to keep python safe
 #     regardless of caller's cwd (pattern from archive.sh:mark_iteration_archived)
@@ -33,7 +33,7 @@
 # State files read (gitignored under .rddf/state/):
 #   - .rddf/state/.arch-handoff.json   — arch phase done sentinel
 #   - .rddf/state/.plan-handoff.json   — plan phase done sentinel
-#   - proposal-suggestions.md          — JSON array with status field
+#   - improvement-suggestions.md          — JSON array with status field
 #   - roadmap.md                       — arch artifact (committed)
 
 # scan_binding_lines <sessions_file> <owner_id>
@@ -104,7 +104,7 @@ PYEOF
 #     6.  committed change in HEAD (no worktree)   → "rdd-builder (建 worktree)"
 #     7.  no roadmap.md                            → "rdd-arch"
 #     8.  no openspec/changes/                     → "rdd-builder (变更生成)"
-#     9.  proposal-suggestions.md has pending entry  → "rdd-builder (设计审查)"
+#     9.  improvement-suggestions.md has pending entry  → "rdd-builder (设计审查)"
 #    10. default: no active change                 → "rdd-builder (变更生成)"
 #         default: active change present           → "rdd-builder (ship)"
 scan_state() {
@@ -260,7 +260,7 @@ scan_state() {
     return 0
   fi
 
-  # 9/10. Dual-index scan: proposal-suggestions.md + proposal-approved.md
+  # 9/10. Dual-index scan: improvement-suggestions.md + improvement-approved.md
   # Check approved proposals first (ready for plan)
   # cwd safety: PY_PROJECT_ROOT env var
   local HAS_APPROVED
@@ -285,7 +285,7 @@ try:
 except Exception:
     print("no")
     sys.exit(0)
-approved_path = os.path.join(os.environ["PY_PROJECT_ROOT"], "proposal-approved.md")
+approved_path = os.path.join(os.environ["PY_PROJECT_ROOT"], "improvement-approved.md")
 try:
     names = parse_approved_proposals(approved_path)
 except Exception:
@@ -305,13 +305,13 @@ print("yes" if names else "no")
 import os
 try:
     imp_dir = os.path.join(os.environ["PY_PROJECT_ROOT"], ".rddf/improvements")
-    suggestions_path = os.path.join(os.environ["PY_PROJECT_ROOT"], "proposal-suggestions.md")
+    suggestions_path = os.path.join(os.environ["PY_PROJECT_ROOT"], "improvement-suggestions.md")
     if not os.path.isdir(imp_dir) or not os.path.exists(suggestions_path):
         print("no")
         raise SystemExit(0)
     # Check if suggestions.md references any improvement that is NOT in approved.md
     approved_names = set()
-    approved_path = os.path.join(os.environ["PY_PROJECT_ROOT"], "proposal-approved.md")
+    approved_path = os.path.join(os.environ["PY_PROJECT_ROOT"], "improvement-approved.md")
     if os.path.exists(approved_path):
         import re
         with open(approved_path) as f:

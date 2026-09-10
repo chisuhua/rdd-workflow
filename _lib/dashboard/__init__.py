@@ -201,7 +201,7 @@ class FeatureSummary:
 class SuggestionEntry:
     """One row in the Pending (proposal suggestions) section of the dashboard.
 
-    Mirrors the fields from proposal-suggestions.md entries that are
+    Mirrors the fields from improvement-suggestions.md entries that are
     relevant for dashboard display. The full ``description`` field is
     omitted because it is too long for a table row.
     """
@@ -219,7 +219,7 @@ class SuggestionEntry:
 class ApprovedProposalEntry:
     """One row in the Approved section of the dashboard.
 
-    Mirrors a parsed ``proposal-approved.md`` table row. ``section`` is
+    Mirrors a parsed ``improvement-approved.md`` table row. ``section`` is
     ``"approved"`` when the row lives under ``## 已批准提案`` (尚未
     实施) or ``"implemented"`` when it lives under ``## 已实施``.
     """
@@ -459,12 +459,12 @@ def collect(project_root: str) -> DashboardData:
         # is absent (common in projects that never ran `roadmap init`).
         data.roadmap_phase = data.arch.current_phase
 
-    # ---- Section 7: Pending (.rddf/improvements/ + proposal-approved.md + archive bypass) ----
+    # ---- Section 7: Pending (.rddf/improvements/ + improvement-approved.md + archive bypass) ----
     try:
         from skills._lib.parse_approved import parse_approved_proposals_detailed
 
         approved_rows = parse_approved_proposals_detailed(
-            os.path.join(project_root, "proposal-approved.md")
+            os.path.join(project_root, "improvement-approved.md")
         )
         approved = {row.name for row in approved_rows}
         for row in approved_rows:
@@ -538,7 +538,7 @@ def collect(project_root: str) -> DashboardData:
             f"but iteration.json has no entry for it"
         )
 
-    # 3. proposal-approved.md "approved" section has matching archive/<date>-name/
+    # 3. improvement-approved.md "approved" section has matching archive/<date>-name/
     # but the entry was not moved to "implemented" section. This drift was
     # historically caused by sweep_implemented_proposals not being wired into
     # the archive flow (fix-proposal-approved-sync, P0 2026-08-21).
@@ -553,7 +553,7 @@ def collect(project_root: str) -> DashboardData:
     for row in data.approved_proposals:
         if row.section == "approved" and row.name in archive_names:
             data.divergence_warnings.append(
-                f"proposal-approved.md lists '{row.name}' as approved "
+                f"improvement-approved.md lists '{row.name}' as approved "
                 f"but openspec/changes/archive/ shows it archived "
                 f"(re-run sweep_implemented_proposals to fix)"
             )

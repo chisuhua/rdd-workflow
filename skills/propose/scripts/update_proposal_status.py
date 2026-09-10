@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Update a change's completed status in proposal-approved.md."""
+"""Update a change's completed status in improvement-approved.md."""
 import sys
 import os
 
 
 def update_proposal_status(change_name: str, project_root: str) -> bool:
-    """Mark a proposal as completed in proposal-approved.md.
+    """Mark a proposal as completed in improvement-approved.md.
     
     Moves the entry from the '## 已批准提案' table to '## 已实施' table.
     """
     import re
-    path = os.path.join(project_root, "proposal-approved.md")
+    path = os.path.join(project_root, "improvement-approved.md")
     if not os.path.exists(path):
         return False
     

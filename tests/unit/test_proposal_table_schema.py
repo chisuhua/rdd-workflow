@@ -1,7 +1,7 @@
-"""Regression: every linked row in proposal-approved.md has 4 columns.
+"""Regression: every linked row in improvement-approved.md has 4 columns.
 
 Fix-adr-0027-skill-count-and-table-schema: rdd-doctor's
-proposal_table_check.py enforces 4 columns for proposal-approved.md
+proposal_table_check.py enforces 4 columns for improvement-approved.md
 (提案 | 优先级 | 完成时间 | 状态). Previously, 9 rows in lines 108-116
 were 3 columns, generating 16 WARNINGs (1 header + some data rows).
 
@@ -24,10 +24,10 @@ def _count_columns(line: str) -> int:
 
 
 def test_proposal_approved_data_rows_have_four_columns() -> None:
-    """Every linked data row in proposal-approved.md must have 4 columns."""
-    path = REPO_ROOT / "proposal-approved.md"
+    """Every linked data row in improvement-approved.md must have 4 columns."""
+    path = REPO_ROOT / "improvement-approved.md"
     if not path.is_file():
-        pytest.skip("proposal-approved.md not found")
+        pytest.skip("improvement-approved.md not found")
     text = path.read_text()
     in_data = False
     offenders = []
@@ -44,15 +44,15 @@ def test_proposal_approved_data_rows_have_four_columns() -> None:
         if cols != 4:
             offenders.append(f"  line {line_no}: {cols} columns: {stripped[:80]}")
     assert not offenders, (
-        "proposal-approved.md has non-4-column linked rows:\n" + "\n".join(offenders)
+        "improvement-approved.md has non-4-column linked rows:\n" + "\n".join(offenders)
     )
 
 
 def test_proposal_approved_status_column_populated() -> None:
     """The 4th column (status) must be non-empty for every linked row."""
-    path = REPO_ROOT / "proposal-approved.md"
+    path = REPO_ROOT / "improvement-approved.md"
     if not path.is_file():
-        pytest.skip("proposal-approved.md not found")
+        pytest.skip("improvement-approved.md not found")
     text = path.read_text()
     in_data = False
     empty_status = []
@@ -69,6 +69,6 @@ def test_proposal_approved_status_column_populated() -> None:
         if len(cells) < 4 or not cells[3]:
             empty_status.append(f"  line {line_no}: {stripped[:80]}")
     assert not empty_status, (
-        "proposal-approved.md rows with empty status column:\n"
+        "improvement-approved.md rows with empty status column:\n"
         + "\n".join(empty_status)
     )

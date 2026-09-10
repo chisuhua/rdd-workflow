@@ -298,7 +298,7 @@ esac
 - **Concurrency**: file lock via `fcntl.flock`; atomic write via tmp+rename
 - **Stage-level singleton** (default): at most ONE active session across all
   stage kinds. Cross-stage concurrent runs race on unlocked project
-  singletons (`proposal-approved.md`, handoffs), so `create_session` raises
+  singletons (`improvement-approved.md`, handoffs), so `create_session` raises
   `ConflictError` when any other-kind session is active. Set
   `RDDF_ALLOW_CROSS_STAGE_PARALLEL=yes` to opt into legacy cross-stage
   parallelism.

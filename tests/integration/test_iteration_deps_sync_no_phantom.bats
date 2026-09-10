@@ -7,7 +7,7 @@
 #        for every change in deps-analysis.json. If the change name is
 #        not in iteration.json, set_deps_info auto-creates an entry with
 #        status="proposed". When deps-analysis.json contains names from
-#        proposal-approved.md that were never actually proposed via
+#        improvement-approved.md that were never actually proposed via
 #        OpenSpec CLI, this creates phantom entries that diverge from
 #        disk state.
 #

@@ -24,7 +24,7 @@
 | `skills/rdd-doctor/scripts/checks/state_schema_check.py` | Cat 1 — validates 4 `.rddf/state/*.json` files against `_lib/schemas/*.json` using `jsonschema`. |
 | `skills/rdd-doctor/scripts/checks/plan_tdd_check.py` | Cat 2 — verifies `.rddf/plans/*.md` contains 5 TDD step markers (loose string match). WARNING only. |
 | `skills/rdd-doctor/scripts/checks/roadmap_meta_check.py` | Cat 3 — validates `openspec/changes/*/roadmap-meta.yaml` field completeness + `manual_deps`/`manual_blocks` types. |
-| `skills/rdd-doctor/scripts/checks/proposal_table_check.py` | Cat 4 — validates `proposal-suggestions.md` + `proposal-approved.md` Markdown table column counts + required columns. |
+| `skills/rdd-doctor/scripts/checks/proposal_table_check.py` | Cat 4 — validates `improvement-suggestions.md` + `improvement-approved.md` Markdown table column counts + required columns. |
 | `skills/rdd-doctor/scripts/checks/tasks_checkbox_check.py` | Cat 5 — counts `- [ ]` / `- [x]` in `openspec/changes/*/tasks.md`. Verifies file existence. Emits INFO if `openspec` not on PATH. |
 
 ### Tests
@@ -798,7 +798,7 @@ from skills.rdd_doctor.scripts.doctor_render import Severity
 
 
 def test_welllyformed_proposal_suggestions_returns_no_findings(tmp_path: Path):
-    (tmp_path / "proposal-suggestions.md").write_text(
+    (tmp_path / "improvement-suggestions.md").write_text(
         "# 提案池\n\n"
         "| 提案 | 优先级 | 来源 | 添加时间 | 状态 |\n"
         "|------|--------|------|----------|------|\n"
@@ -809,7 +809,7 @@ def test_welllyformed_proposal_suggestions_returns_no_findings(tmp_path: Path):
 
 
 def test_column_count_drift_reports_warning(tmp_path: Path):
-    (tmp_path / "proposal-suggestions.md").write_text(
+    (tmp_path / "improvement-suggestions.md").write_text(
         "| 提案 | 优先级 | 来源 | 添加时间 |\n"  # missing 状态 column
         "|------|--------|------|----------|\n"
         "| [foo](improvements/foo.md) | P1 | src | 2026-08-07 |\n"
@@ -820,7 +820,7 @@ def test_column_count_drift_reports_warning(tmp_path: Path):
 
 
 def test_broken_link_reports_warning(tmp_path: Path):
-    (tmp_path / "proposal-suggestions.md").write_text(
+    (tmp_path / "improvement-suggestions.md").write_text(
         "| 提案 | 优先级 | 来源 | 添加时间 | 状态 |\n"
         "|------|--------|------|----------|------|\n"
         "| [foo](improvements/nonexistent.md) | P1 | src | 2026-08-07 | 待审 |\n"
@@ -843,7 +843,7 @@ Run: `pytest tests/unit/test_proposal_table_check.py -v`
 
 ```python
 # skills/rdd-doctor/scripts/checks/proposal_table_check.py
-"""Cat 4 — Validate proposal-suggestions.md and proposal-approved.md Markdown tables.
+"""Cat 4 — Validate improvement-suggestions.md and improvement-approved.md Markdown tables.
 
 Note: This module uses a lightweight inline parser to avoid circular dependency
 on _lib/parse_approved.py (which lives in a separate worktree change
@@ -860,10 +860,10 @@ from typing import List
 from skills.rdd_doctor.scripts.doctor_render import Finding, Severity
 
 
-_FILES = ["proposal-suggestions.md", "proposal-approved.md"]
+_FILES = ["improvement-suggestions.md", "improvement-approved.md"]
 _EXPECTED_COLUMNS = {
-    "proposal-suggestions.md": 5,
-    "proposal-approved.md": 3,
+    "improvement-suggestions.md": 5,
+    "improvement-approved.md": 3,
 }
 _ROW_PATTERN = re.compile(r"^\|\s*\[([^\]]+)\]\(([^)]+)\)\s*\|")
 
@@ -1613,7 +1613,7 @@ cat > tests/fixtures/diseased-repo/.rddf/plans/bad-plan.md <<EOF
 EOF
 
 # Proposal with column drift
-cat > tests/fixtures/diseased-repo/proposal-suggestions.md <<EOF
+cat > tests/fixtures/diseased-repo/improvement-suggestions.md <<EOF
 | 提案 | 优先级 | 来源 | 添加时间 |
 |------|--------|------|----------|
 | [foo](improvements/foo.md) | P1 | src | 2026-08-07 |

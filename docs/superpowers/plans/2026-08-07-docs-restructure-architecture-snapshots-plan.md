@@ -50,7 +50,7 @@ docs/v2-workflow-overview.md
 
 ### Untouched (preserved)
 
-`docs/ONBOARDING.md`, `docs/change-quality-guide.md`, `docs/proposal-approved-format.md`, `docs/proposal-suggestions-format.md`, `docs/loop-engineering-research.md`, `docs/audit/`, `docs/migration/`, `docs/legacy/`, `docs/superpowers/specs/`, `docs/superpowers/plans/`, all `docs/adr/ADR-*.md`, and all of `skills/`, `_lib/`, `openspec/`.
+`docs/ONBOARDING.md`, `docs/change-quality-guide.md`, `docs/improvement-approved-format.md`, `docs/improvement-suggestions-format.md`, `docs/loop-engineering-research.md`, `docs/audit/`, `docs/migration/`, `docs/legacy/`, `docs/superpowers/specs/`, `docs/superpowers/plans/`, all `docs/adr/ADR-*.md`, and all of `skills/`, `_lib/`, `openspec/`.
 
 ---
 
@@ -71,7 +71,7 @@ docs/v2-workflow-overview.md
 Run:
 ```bash
 cd /workspace/project/rdd-workflow
-git status --porcelain | grep -v 'docs/superpowers/specs/2026-08-07-docs-restructure-architecture-snapshots-design.md' | grep -v 'proposal-suggestions.md' | grep -v '_lib/parse_approved.py' | grep -v '.rddf/improvements/add-rdd-doctor-skill.md'
+git status --porcelain | grep -v 'docs/superpowers/specs/2026-08-07-docs-restructure-architecture-snapshots-design.md' | grep -v 'improvement-suggestions.md' | grep -v '_lib/parse_approved.py' | grep -v '.rddf/improvements/add-rdd-doctor-skill.md'
 ```
 Expected: empty. If not empty, the user's prior in-progress work conflicts — STOP and ask the user how to proceed.
 
@@ -443,7 +443,7 @@ These have held since v2.0 and are unlikely to change without a major version bu
 
 ## What's Still Open
 
-Tracked under `../proposal-suggestions.md` and `../proposal-approved.md`:
+Tracked under `../improvement-suggestions.md` and `../improvement-approved.md`:
 - v3.0+ candidate: declarative flow DSL (ADR-0011, 0012 — adopted but not implemented).
 - v3.0+ candidate: scheduled triggers (ADR-0009 — placeholder).
 ```
@@ -813,7 +813,7 @@ Plugin extension: drop a Python module under `_lib/plugins/` and the loader pick
 Multi-agent cross-validation. Given an artefact (proposal, design.md, etc.), it runs N reviewer agents and aggregates weighted scores. Sensitive content (paths, env vars, secrets) is sanitised via `_lib/sanitizer.py` before review.
 
 Use cases:
-- Verifying an improvement proposal's quality before it enters `proposal-approved.md`.
+- Verifying an improvement proposal's quality before it enters `improvement-approved.md`.
 - Cross-checking a generated implementation plan against its source design.md.
 
 Tribunal scores are advisory unless explicitly wired into a hard gate.
@@ -976,11 +976,11 @@ Each phase:
 
 **Why split from arch** (ADR-0025): proposal-review load grew heavy enough that a second gate, content review, and defer mechanism all crowded into arch's Phase 5.5. Splitting these responsibilities makes each phase single-purpose.
 
-**Inputs**: `proposal-suggestions.md`, `proposal-approved.md`, current `roadmap-meta.yaml` files for context.
+**Inputs**: `improvement-suggestions.md`, `improvement-approved.md`, current `roadmap-meta.yaml` files for context.
 
 **Outputs**:
 - New `.rddf/improvements/<name>.md` files.
-- Updated `proposal-suggestions.md` / `proposal-approved.md`.
+- Updated `improvement-suggestions.md` / `improvement-approved.md`.
 - `.rddf/state/.design-handoff.json`.
 
 **Two-tier content review**:

@@ -63,12 +63,12 @@ Total: 7 files, 10 distinct fixes (some commits bundle multiple sites of the sam
 - Pragmatic fix: update the comment to match reality — the `cd` is intentional (we need to change directory in this shell), the subshell pattern was already used in earlier blocks.
 
 **Task A4 — Logic #36:** 3 files
-- `skills/guide.md:1193`: `grep -c "status: 待创建" "proposal-suggestions.md" ...`
+- `skills/guide.md:1193`: `grep -c "status: 待创建" "improvement-suggestions.md" ...`
 - `skills/propose.md:657`: same pattern
 - `skills/status.md:397`: same pattern
 - New pattern (more robust to whitespace / `:` vs `=` separators):
   ```bash
-  REMAINING=$(grep -ciE "status\s*[:=]\s*待创建" "proposal-suggestions.md" 2>/dev/null || echo "0")
+  REMAINING=$(grep -ciE "status\s*[:=]\s*待创建" "improvement-suggestions.md" 2>/dev/null || echo "0")
   ```
 - Same commit covers all 3 sites (they're the same pattern in 3 files).
 

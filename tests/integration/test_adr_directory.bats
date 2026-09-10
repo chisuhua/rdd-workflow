@@ -5,7 +5,7 @@
 # the discoverable target for:
 #   - skills/propose/SKILL.md Phase 1a (`ls docs/adr/ADR-*.md`)
 #   - skills/deps/SKILL.md Step 1b (`adr_refs` extraction)
-#   - proposal-suggestions.md `source` field (`ADR-NNN §N.M`)
+#   - improvement-suggestions.md `source` field (`ADR-NNN §N.M`)
 #
 # Hard constraint (verified by test 14): no file under skills/ may be
 # modified as part of this change.
@@ -58,7 +58,7 @@ setup() {
   grep -qE '^## References' "$f"
 }
 
-@test "ADR-0000-template.md cites docs/proposal-suggestions-format.md" {
+@test "ADR-0000-template.md cites docs/improvement-suggestions-format.md" {
   grep -qE 'docs/proposal-suggestions-format\.md' "$ADR_DIR/ADR-0000-template.md"
 }
 

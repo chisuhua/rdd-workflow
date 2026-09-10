@@ -43,7 +43,7 @@ load ../test_helper
   grep -q "PY_PROJECT_ROOT" "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
   grep -q 'os.environ\[.PY_PROJECT_ROOT.\]' "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
   # Negative: must NOT rely on cwd relative open
-  ! grep -qE "open\(['\"]proposal-suggestions.md['\"]" "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
+  ! grep -qE "open\(['\"]improvement-suggestions.md['\"]" "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
 }
 
 # ---- Runtime tests (Pattern C: mktemp -d in @test body) ------------------
@@ -127,30 +127,30 @@ _run_scan() {
   echo "# Roadmap" > roadmap.md
   mkdir -p openspec/changes && touch openspec/changes/.keep
   git add . && git commit -q -m init
-  # proposal-approved.md / .rddf/improvements/ absent → HAS_APPROVED=no, HAS_PENDING=no
+  # improvement-approved.md / .rddf/improvements/ absent → HAS_APPROVED=no, HAS_PENDING=no
   # filter: 0 active changes → rdd-builder (not ship)
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=rdd-builder"
   echo "$out" | grep -q "无活跃 change"
 }
 
-@test "scan_state: proposal-approved.md with entry → rdd-builder (branch 10)" {
+@test "scan_state: improvement-approved.md with entry → rdd-builder (branch 10)" {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo "# Roadmap" > roadmap.md
   mkdir -p openspec/changes && touch openspec/changes/.keep
-  # dual-index model: approved entry in proposal-approved.md → rdd-builder (plan)
+  # dual-index model: approved entry in improvement-approved.md → rdd-builder (plan)
   mkdir -p .rddf/improvements && echo "# x" > .rddf/improvements/x.md
-  printf '| [x](.rddf/improvements/x.md) | P0 | 2026-07-24 | t |\n' > proposal-approved.md
+  printf '| [x](.rddf/improvements/x.md) | P0 | 2026-07-24 | t |\n' > improvement-approved.md
   git add . && git commit -q -m init
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=rdd-builder"
   echo "$out" | grep -q "有已批准 change 待创建"
 }
 
-@test "scan_state: Python parser reads proposal-approved.md via PROJECT_ROOT, not cwd (P1-7)" {
+@test "scan_state: Python parser reads improvement-approved.md via PROJECT_ROOT, not cwd (P1-7)" {
   # If buggy: scan_state is invoked from a cwd that does NOT contain
-  # proposal-approved.md → python FileNotFoundError → HAS_APPROVED="" →
+  # improvement-approved.md → python FileNotFoundError → HAS_APPROVED="" →
   # falls through to the rdd-builder default. Correct behavior:
   # scan_state must locate the file via PROJECT_ROOT regardless of cwd.
   local r; r=$(mktemp -d); cd /tmp || return 1   # deliberately NOT $r
@@ -159,7 +159,7 @@ _run_scan() {
    echo "# Roadmap" > roadmap.md
    mkdir -p openspec/changes && touch openspec/changes/.keep
    mkdir -p .rddf/improvements && echo "# x" > .rddf/improvements/x.md
-   printf '| [x](.rddf/improvements/x.md) | P0 | 2026-07-24 | t |\n' > proposal-approved.md
+   printf '| [x](.rddf/improvements/x.md) | P0 | 2026-07-24 | t |\n' > improvement-approved.md
    git add . && git commit -q -m init)
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=rdd-builder"

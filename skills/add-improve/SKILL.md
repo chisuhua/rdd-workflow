@@ -1,8 +1,8 @@
 ---
 name: add-improve
-description: "交互式创建 rdd-workflow 改进提案。调用 rdd-workflow-brainstorm 进行头脑风暴，生成 .rddf/improvements/<name>.md 并注册到 proposal-suggestions.md。"
+description: "交互式创建 rdd-workflow 改进提案。调用 rdd-workflow-brainstorm 进行头脑风暴，生成 .rddf/improvements/<name>.md 并注册到 improvement-suggestions.md。"
 license: MIT
-compatibility: Requires rdd-workflow 项目结构（.rddf/improvements/ 目录、proposal-suggestions.md）
+compatibility: Requires rdd-workflow 项目结构（.rddf/improvements/ 目录、improvement-suggestions.md）
 metadata:
   version: "1.0"
   author: sisyphus
@@ -18,7 +18,7 @@ metadata:
 add-improve
   └─→ rdd-workflow-brainstorm  — 探索需求、设计方案、输出 5 段内容
   └─→ 创建 .rddf/improvements/<name>.md
-  └─→ 注册到 proposal-suggestions.md
+  └─→ 注册到 improvement-suggestions.md
   └─→ 引导下一步
 ```
 
@@ -26,7 +26,7 @@ add-improve
 
 确认项目根目录存在以下文件/目录，如缺失则提示创建：
 - <a href=".rddf/improvements/` 目录
-- `proposal-suggestions.md`（或自动创建索引模版）
+- `improvement-suggestions.md`（或自动创建索引模版）
 
 ## 使用方式
 
@@ -70,7 +70,7 @@ skill_use("add-improve")
 **在 Phase 1 完成前，不得进入 Phase 2。**
 
 <HARD-GATE>
-在 rdd-workflow-brainstorm 完成且用户批准设计之前，不得创建 proposal-suggestions.md 或 .rddf/improvements/<name>.md。
+在 rdd-workflow-brainstorm 完成且用户批准设计之前，不得创建 improvement-suggestions.md 或 .rddf/improvements/<name>.md。
 </HARD-GATE>
 
 ### Phase 2：创建提案文件
@@ -81,11 +81,11 @@ rdd-workflow-brainstorm 的设计获得批准后：
 `bash skills/rdd-workflow-brainstorm/scripts/pre_create_brainstorm_check.sh <proposal> --project-root <root>`
 校验草案满足 brainstorm HARD-GATE（5 段 section + `## Why`/`## What Changes` +
 `## Acceptance` 复选框 ≥3 + `**主题**:` 匹配 roadmap 主题）。校验失败则禁止注册到
-`proposal-suggestions.md`，强制先完成 brainstorm。
+`improvement-suggestions.md`，强制先完成 brainstorm。
 
 1. 确定提案名称（kebab-case）— 如果用户未提前指定，从上一步的设计内容中提取
 2. 用批准的 5 段内容创建 <a href=".rddf/improvements/<name>.md`
-3. 在 `proposal-suggestions.md` 表格末尾追加行
+3. 在 `improvement-suggestions.md` 表格末尾追加行
 4. 展示最终成果
 
 ### Phase 3：引导下一步
@@ -114,7 +114,7 @@ rdd-workflow-brainstorm 的设计获得批准后：
 ...
 ```
 
-### `proposal-suggestions.md` 新增行
+### `improvement-suggestions.md` 新增行
 
 ```
 | [fix-login-timeout](.rddf/improvements/fix-login-timeout.md) | P1 | 用户反馈 | 2026-07-25 |
@@ -125,7 +125,7 @@ rdd-workflow-brainstorm 的设计获得批准后：
 | 情况 | 处理方式 |
 |------|----------|
 | <a href=".rddf/improvements/` 目录不存在 | 自动创建 |
-| `proposal-suggestions.md` 不存在 | 创建带标准表头的索引文件 |
+| `improvement-suggestions.md` 不存在 | 创建带标准表头的索引文件 |
 | 提案名称已存在 | 提示用户并用不同的名称、或者确认覆盖 |
 | 用户中途放弃 | 不创建任何文件，保持项目状态不变 |
 

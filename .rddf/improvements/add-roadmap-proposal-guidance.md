@@ -14,7 +14,7 @@
 
 1. **roadmap 与 proposal 之间无结构化连接**:
    - `roadmap.md` 定义 phase + category 树 (例: `phase-1/arch-design`)
-   - `proposal-suggestions.md` 列出待创建提案,但不引用任何 roadmap 节点
+   - `improvement-suggestions.md` 列出待创建提案,但不引用任何 roadmap 节点
    - 用户需要"心智映射"两者,深度介入但容易遗漏
    - 无 reconciliation 机制 — 用户可能为某个 roadmap 分类创建 3 个提案,而另一个分类 0 个
 
@@ -54,7 +54,7 @@
 **B. proposal 模板扩展 (add-improve/brainstorm 域)**:
 - `rdd-workflow-brainstorm/SKILL.md` 5 段元数据模板新增 `**主题**: <theme-name> | 不适用` 字段
 - 提案 front matter 新增 `主题:` 字段,精确记录该提案绑定的 roadmap 主题 (可空 → 自由模式提案)
-- `proposal-suggestions.md` 表格可选用第 6 列"主题"(向后兼容 — 旧项目缺列时按"未标注"统计)
+- `improvement-suggestions.md` 表格可选用第 6 列"主题"(向后兼容 — 旧项目缺列时按"未标注"统计)
 
 **C. add-improve 约束注入模式 (add-improve 域)**:
 - 新增 CLI 参数 `skill_use("add-improve", "--from-roadmap", "<phase_id>/<category_id>", "--theme", "<theme_name>")`
@@ -195,7 +195,7 @@
 - **SHOULD 在 env-var 传参时同时记录 invocation log**: `improvements/<name>.md` front matter 加 `**来源模式**: from-roadmap | free-form`, 便于审计
 - **SHOULD 兼容 4 列 / 5 列混合表格**: 旧 phase 表格保持 4 列 (无主题), 新 phase 表格带 5 列, 共存不报错
 - **SHOULD 给旧 proposal 提供 backfill 工具**: `rddf improvements backfill-themes --interactive` 帮助用户补字段 (可选, 非强制)
-- **SHOULD coverage 显示附 `proposal-suggestions.md` 直链**: 用户可一键跳转到未覆盖主题对应的提案创建入口
+- **SHOULD coverage 显示附 `improvement-suggestions.md` 直链**: 用户可一键跳转到未覆盖主题对应的提案创建入口
 
 ## 验收标准
 
@@ -214,7 +214,7 @@
 
 - [ ] **解析兼容**: 4 列旧表格 → `roadmap validate/status/advance` 行为零变化
 - [ ] **迁移兼容**: 旧 v1 handoff + 无主题字段的旧提案 → preflight exit 0, 显示"未标注主题 K 个", 不报 0/M 假警
-- [ ] **HARD-GATE**: `--from-roadmap` 模式下用户拒绝某段 → 无文件创建, `proposal-suggestions.md` 不变
+- [ ] **HARD-GATE**: `--from-roadmap` 模式下用户拒绝某段 → 无文件创建, `improvement-suggestions.md` 不变
 - [ ] **注入测试**: rationale 含 `$()`, 反引号, `"; rm -rf #`, 换行符 → 原样写入, 无 shell 展开
 - [ ] **覆盖率算法**: 主题精确匹配; 跨 category 同名独立计数; `~skipped~` 排除
 - [ ] **off-roadmap 路径**: 选项 1 自由模式在 `STRICT_PROPOSAL_COVERAGE=yes` 下仍可用, 仅 design-done 门控警告

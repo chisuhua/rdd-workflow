@@ -5,7 +5,7 @@ from skills.propose.scripts import propose_change as pc
 
 
 def _write_approved(tmp_path, rows=None):
-    """Write a proposal-approved.md with given rows in the approved table."""
+    """Write a improvement-approved.md with given rows in the approved table."""
     lines = [
         "# 已批准提案",
         "",
@@ -21,7 +21,7 @@ def _write_approved(tmp_path, rows=None):
         "| 提案 | 优先级 | 完成日期 |",
         "|------|--------|----------|",
     ]
-    (tmp_path / "proposal-approved.md").write_text("\n".join(lines) + "\n")
+    (tmp_path / "improvement-approved.md").write_text("\n".join(lines) + "\n")
 
 
 @pytest.fixture
@@ -43,7 +43,7 @@ class TestSetSuggestionStatus:
     def test_updates_status_for_matching_name(self, project_with_suggestions):
         result = pc.set_suggestion_status(project_with_suggestions, "c1", "in_progress")
         assert result is True
-        with open(f"{project_with_suggestions}/proposal-approved.md") as f:
+        with open(f"{project_with_suggestions}/improvement-approved.md") as f:
             content = f.read()
         assert "c1" in content and "(in_progress)" in content
 
@@ -58,7 +58,7 @@ class TestSetSuggestionStatus:
     def test_completed_moves_to_completed_section(self, project_with_suggestions):
         result = pc.set_suggestion_status(project_with_suggestions, "c1", "completed")
         assert result is True
-        with open(f"{project_with_suggestions}/proposal-approved.md") as f:
+        with open(f"{project_with_suggestions}/improvement-approved.md") as f:
             content = f.read()
         sections = content.split("## 已实施")
         approved_part = sections[0]
@@ -67,7 +67,7 @@ class TestSetSuggestionStatus:
         assert "[c1]" in completed_part
 
     def test_returns_false_on_malformed_file(self, tmp_path):
-        bad_file = tmp_path / "proposal-approved.md"
+        bad_file = tmp_path / "improvement-approved.md"
         bad_file.write_text("not valid markdown table {{{")
         result = pc.set_suggestion_status(str(tmp_path), "c1", "in_progress")
         assert result is False
@@ -175,7 +175,7 @@ class TestCreateSkeletonChange:
 
 class TestUpdateRoadmapMeta:
     """update_roadmap_meta encapsulates lines 617-686 of propose.md:
-    - Lookup phase/category from proposal-suggestions.md (or fallback)
+    - Lookup phase/category from improvement-suggestions.md (or fallback)
     - Validate category against valid_categories list
     - Write roadmap-meta.yaml
 
@@ -185,9 +185,9 @@ class TestUpdateRoadmapMeta:
 
     def test_writes_yaml_with_phase_and_category(self, tmp_path):
         (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
-        # Set up proposal-suggestions.md with explicit phase/category
+        # Set up improvement-suggestions.md with explicit phase/category
         entries = [{"name": "c1", "phase": "phase-2", "category": "core-impl"}]
-        (tmp_path / "proposal-suggestions.md").write_text(json.dumps(entries))
+        (tmp_path / "improvement-suggestions.md").write_text(json.dumps(entries))
         result = pc.update_roadmap_meta(
             str(tmp_path), "c1",
             current_phase="phase-1",
@@ -210,7 +210,7 @@ class TestUpdateRoadmapMeta:
 
     def test_falls_back_to_arguments_when_suggestions_missing(self, tmp_path):
         (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
-        # No proposal-suggestions.md
+        # No improvement-suggestions.md
         result = pc.update_roadmap_meta(
             str(tmp_path), "c1",
             current_phase="phase-3",
@@ -226,7 +226,7 @@ class TestUpdateRoadmapMeta:
     def test_always_falls_back_to_general_when_category_invalid(self, tmp_path):
         (tmp_path / "openspec" / "changes" / "c1").mkdir(parents=True)
         entries = [{"name": "c1", "category": "nonexistent"}]
-        (tmp_path / "proposal-suggestions.md").write_text(json.dumps(entries))
+        (tmp_path / "improvement-suggestions.md").write_text(json.dumps(entries))
         result = pc.update_roadmap_meta(
             str(tmp_path), "c1",
             current_phase="phase-1",
@@ -437,7 +437,7 @@ class TestUpdateIterationProposed:
 
 
 class TestBatchCreatePending:
-    """batch_create_pending reads proposal-approved.md and creates skeleton
+    """batch_create_pending reads improvement-approved.md and creates skeleton
     changes for all pending entries. Returns list of created names.
     """
 
@@ -463,13 +463,13 @@ class TestBatchCreatePending:
         assert (tmp_path / "openspec" / "changes" / "c3" / "proposal.md").exists()
 
     def test_handles_empty_list_gracefully(self, tmp_path):
-        """When proposal-approved.md has no pending entries, return empty list."""
+        """When improvement-approved.md has no pending entries, return empty list."""
         _write_approved(tmp_path, rows=[])
         created = pc.batch_create_pending(str(tmp_path))
         assert created == []
 
     def test_returns_empty_when_file_missing(self, tmp_path):
-        """When proposal-approved.md doesn't exist, return empty list."""
+        """When improvement-approved.md doesn't exist, return empty list."""
         created = pc.batch_create_pending(str(tmp_path))
         assert created == []
 

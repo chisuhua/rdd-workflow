@@ -6,7 +6,7 @@ Covers:
 3. Dedup against .rddf/improvements/<existing>.md frontmatter issue_ref.
 4. Dedup against openspec/changes/<other>/roadmap-meta.yaml issue_refs.
 5. Body truncation at 4000 chars with reference URL preserved.
-6. HARD-GATE: never writes proposal-suggestions.md.
+6. HARD-GATE: never writes improvement-suggestions.md.
 """
 import os
 import subprocess
@@ -175,7 +175,7 @@ def test_write_scaffold_slug_collision(tmp_path):
 
 
 def test_write_scaffold_never_touches_proposal_suggestions(tmp_path):
-    """HARD-GATE: write_scaffold does not create proposal-suggestions.md."""
+    """HARD-GATE: write_scaffold does not create improvement-suggestions.md."""
     _setup_tmp_project(tmp_path)
     write_scaffold(
         project_root=tmp_path,
@@ -184,4 +184,4 @@ def test_write_scaffold_never_touches_proposal_suggestions(tmp_path):
         title="Fix",
         body="...",
     )
-    assert not (tmp_path / "proposal-suggestions.md").exists()
+    assert not (tmp_path / "improvement-suggestions.md").exists()

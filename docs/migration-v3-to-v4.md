@@ -84,7 +84,7 @@ state (managed by `rdd-planner`).
 
 v1/v2 files still parse via `additionalProperties: true` (backward compat).
 
-### 5. Update proposal-suggestions.md workflow (if applicable)
+### 5. Update improvement-suggestions.md workflow (if applicable)
 
 The `.rddf/improvements/*.md` workflow is unchanged. The `## Feedback` section
 and `rddf feedback add` CLI work the same way. Only the source field

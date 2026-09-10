@@ -117,7 +117,7 @@ def scan_deprecated_skills(skills_dir: Path) -> list[DeprecatedSkill]:
 
 
 def render_suggestion_block(skills: Iterable[DeprecatedSkill]) -> str:
-    """Render a markdown suggestion block for proposal-suggestions.md."""
+    """Render a markdown suggestion block for improvement-suggestions.md."""
     skills = list(skills)
     if not skills:
         return ""

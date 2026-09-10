@@ -10,12 +10,12 @@
 - **ADR-0017 rddf-session** (已采纳): session lifecycle 包含 `attached_changes`，但 `plan_intake.sh` 未校验这些 change 是否仍"未实施"
 - **add-full-regression-gate** (P0, 2026-07-27, proposal-approved): 已计划新增 `scripts/hooks/pre-commit`，本提案与其分工合作 —— 它管"build 文件 → ctest"，本提案管"代码路径 → openspec change 联动"
 - **add-config-validation** (P0, 2026-07-23, proposal-approved): 强化 `config.yaml` schema 校验，本提案的 glob 配置通过 `openspec_gate:` 节扩展 `config_schema.json`
-- **事件复盘 2026-07-26/27**: UsrLinuxEmu 的 `stage4-1-bar-ioremap` 提案被批准但开发者直接 commit 3 个 TDD 实现（571f9af / 556b647 / 116ca8c），proposal 滞留 `proposal-approved.md` 直到 `guide-plan` 触发才发现 → backfill 模式补追溯
+- **事件复盘 2026-07-26/27**: UsrLinuxEmu 的 `stage4-1-bar-ioremap` 提案被批准但开发者直接 commit 3 个 TDD 实现（571f9af / 556b647 / 116ca8c），proposal 滞留 `improvement-approved.md` 直到 `guide-plan` 触发才发现 → backfill 模式补追溯
 
 ### 反向论证（为什么这是 workflow gap 而非流程问题）
 - rdd-workflow 的 pre-commit hook (`scripts/hooks/pre-commit` 由 docs-audit 驱动) 只检查文档漂移
 - 没有检查"代码变更 ↔ `openspec/changes/` 关联"的机制
-- `plan_intake.sh` 不做 staleness 检测，`proposal-approved.md` 可长期滞留
+- `plan_intake.sh` 不做 staleness 检测，`improvement-approved.md` 可长期滞留
 - 因此 backfill-traceability mode 频繁发生，但缺少"阻止问题发生"的能力
 - 流程优化（"开发者要自觉走流程"）已经多次失败（事件复盘显示），必须用机制保障而非靠自觉
 
@@ -23,12 +23,12 @@
 - **挂载点**（3 层）:
   - **仓库层（预防）**: `scripts/hooks/pre-commit` 串联 openspec-gate（~50ms 检测 + 200ms 总上限）+ add-full-regression-gate 的 quick 段
   - **skill 层（检测）**: 新建 `skills/openspec-gate/SKILL.md` + `skills/openspec-gate/scripts/openspec-gate.sh` + `tests/integration/test_openspec_gate.bats`（按 v2.0.8 Phase 2 提取约定）
-  - **workflow 层（联动）**: `plan_intake.sh` 检测 `proposal-approved.md` staleness；`skills/_lib/gate.py` 注册 `gate_check_openspec_change_active` 到 `ship_done` gate
+  - **workflow 层（联动）**: `plan_intake.sh` 检测 `improvement-approved.md` staleness；`skills/_lib/gate.py` 注册 `gate_check_openspec_change_active` 到 `ship_done` gate
 - **In Scope**:
   - 默认 glob 集合：`include/`、`plugins/`、`src/`、`drivers/`、扩展名 `*.cpp` / `*.h` / `*.c` / `*.hpp` / `*.cu` / `*.S` / `*.py` / `*.ts`
   - `config.yaml` 增加 `openspec_gate:` 节（`paths` / `extensions` / `exclude` / `mode`）+ `config_schema.json` 同步
   - `scripts/hooks/pre-commit` 串联 openspec-gate + add-full-regression-gate 各自职责段（与 full-regression 提案共享 hook 文件）
-  - `plan_intake.sh` 调用 openspec-gate 检测 `proposal-approved.md` staleness（warning 级）
+  - `plan_intake.sh` 调用 openspec-gate 检测 `improvement-approved.md` staleness（warning 级）
   - `skills/_lib/gate.py` 注册 `gate_check_openspec_change_active`（warning 级，`ship_done` gate）
   - 文档同步：`USAGE.md` 增加 "OpenSpec Gate" 节；`INSTALL.md` 增加 hooks 安装说明；新建 `SKILL.md` 含 5 个场景的 GIVEN / WHEN / THEN
 - **Out Scope**:
@@ -55,7 +55,7 @@
 - **THEN** pre-commit hook 输出警告："⚠️  staged code paths lack active OpenSpec change"，提示运行 `openspec new change <name>` 或输入 `w` 跳过
 
 ### 场景 B — proposal-approved 滞留检测（workflow 层）
-- **GIVEN** `proposal-approved.md` 含 `stage4-1-bar-ioremap`，git log 已含 commits 571f9af / 556b647 / 116ca8c
+- **GIVEN** `improvement-approved.md` 含 `stage4-1-bar-ioremap`，git log 已含 commits 571f9af / 556b647 / 116ca8c
 - **WHEN** 用户运行 `guide-plan`
 - **THEN** `plan_intake.sh` 调用 openspec-gate 检测，输出 "⚠️  proposal 'stage4-1-bar-ioremap' 已被 commit 571f9af/556b647/116ca8c 实现，建议 backfill-traceability mode"
 
@@ -111,7 +111,7 @@
 
 ### 集成
 - `scripts/hooks/pre-commit` 安装后含 openspec-gate + regression-gate 两段，互不干扰
-- `plan_intake.sh` 调用 openspec-gate 检测 `proposal-approved.md` staleness
+- `plan_intake.sh` 调用 openspec-gate 检测 `improvement-approved.md` staleness
 - `gate.py::register_gate_check("ship_done", gate_check_openspec_change_active)` 注册成功
 
 ### 用户体验

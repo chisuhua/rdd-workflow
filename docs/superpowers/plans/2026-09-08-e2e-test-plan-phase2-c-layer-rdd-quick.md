@@ -148,7 +148,7 @@ Plan 1 已落 A-layer（CI 必跑，10 cases）。A-layer 验证 phase 脚本的
 - `openspec/changes/add-e2e-test-plan-phase2/{proposal,tasks}.md` + `specs/c-layer-agent-runner/spec.md`
 - merge branch to master (聚合 1 commit)
 - `openspec archive add-e2e-test-plan-phase2 --yes`
-- proposal-approved.md 加 add-e2e-test-plan-phase2 entry
+- improvement-approved.md 加 add-e2e-test-plan-phase2 entry
 - `git branch -d openspec/add-e2e-test-plan-phase2`
 
 **验证**: master log 含 Plan 2 commit + 1 archive commit + 1 index commit
@@ -180,7 +180,7 @@ Plan 1 已落 A-layer（CI 必跑，10 cases）。A-layer 验证 phase 脚本的
 - `tests/e2e/agent/test_rdd_quick_e2e.bats` (1 文件 / 8 cases)
 - `test.sh` 扩展 --e2e-agent 实现（Plan 1 仅 stub）
 - `openspec/changes/archive/2026-09-08-add-e2e-test-plan-phase2/` (proposal + tasks + spec)
-- `proposal-approved.md` 加 entry
+- `improvement-approved.md` 加 entry
 - `.rddf/improvements/add-e2e-test-plan-phase2.md`
 
 ## 7. 后续 Plan 入口

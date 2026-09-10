@@ -6,7 +6,7 @@
 # - Successful scaffold creation with 主题 field
 # - Rejection of shell injection in theme
 # - Missing required args
-# - HARD-GATE: does NOT modify proposal-suggestions.md
+# - HARD-GATE: does NOT modify improvement-suggestions.md
 
 setup() {
     load ../test_helper
@@ -88,9 +88,9 @@ teardown() {
     [[ "$output" == *"required"* ]] || [[ "$output" == *"Usage"* ]]
 }
 
-@test "from_roadmap HARD-GATE: does NOT modify proposal-suggestions.md" {
-    # proposal-suggestions.md should not be created or modified by from_roadmap
-    [ ! -f "$TEST_PROJECT_ROOT/proposal-suggestions.md" ]
+@test "from_roadmap HARD-GATE: does NOT modify improvement-suggestions.md" {
+    # improvement-suggestions.md should not be created or modified by from_roadmap
+    [ ! -f "$TEST_PROJECT_ROOT/improvement-suggestions.md" ]
 
     run bash "$SCRIPT" \
         --from-roadmap "phase-1/arch-design" \
@@ -98,8 +98,8 @@ teardown() {
         --project-root "$TEST_PROJECT_ROOT"
 
     [ "$status" -eq 0 ]
-    # After successful run, proposal-suggestions.md still should NOT exist
-    [ ! -f "$TEST_PROJECT_ROOT/proposal-suggestions.md" ]
+    # After successful run, improvement-suggestions.md still should NOT exist
+    [ ! -f "$TEST_PROJECT_ROOT/improvement-suggestions.md" ]
 }
 
 @test "from_roadmap output mentions HARD-GATE explicitly" {

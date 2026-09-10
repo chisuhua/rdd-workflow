@@ -121,7 +121,7 @@ All must be updated in lockstep with the rename.
 | 2.17 | `tests/integration/test_frontmatter_dupkey.bats`, `test_hook_boundary.py` | Comments, skill list references |
 | 2.18 | `tests/unit/test_cli_init.py`, `test_cli_version.py`, `test_doc_contracts.py` | Update test assertions to match new INSTALL.md description |
 | 2.19 | `requirements.txt`, `config.yaml` | Comments |
-| 2.20 | `proposal-suggestions.md` | **JSON-aware rename**: parse JSON, rename `description` fields containing "rdd-workflow", keep `name`/`id` fields unchanged, write back with `indent=2` + `ensure_ascii=False` |
+| 2.20 | `improvement-suggestions.md` | **JSON-aware rename**: parse JSON, rename `description` fields containing "rdd-workflow", keep `name`/`id` fields unchanged, write back with `indent=2` + `ensure_ascii=False` |
 
 **R1 fix in Stage 2**: When rewriting `skills/INSTALL.md` description, ensure it contains the literal string `"全部 N 个子技能"` (where N matches disk count). This fixes the pre-existing `test_install_description_skill_count_matches_disk` failure.
 
@@ -146,7 +146,7 @@ All must be updated in lockstep with the rename.
 | 3.2 | `USAGE.md`, `CHANGELOG.md`, `AGENTS.md` | All `rdd-workflow` strings |
 | 3.3 | `CHANGELOG.md` | **ADD** v3.0.0 entry: "BREAKING: Renamed `spec-workflow` → `rdd-workflow`. No backward compatibility. See ADR-NNNN for migration notes." |
 | 3.4 | `docs/v2-*.md` (8 files: api-reference, architecture-refactor-plan, config-schema, developer-guide, gate-mechanism-guide, implementation-plan, loop-engine-guide, loop-engine, memory-system-guide, multi-session-guide, tribunal-guide, workflow-overview, adr-summary) | All references |
-| 3.5 | `docs/ONBOARDING.md`, `docs/proposal-suggestions-format.md` | All references |
+| 3.5 | `docs/ONBOARDING.md`, `docs/improvement-suggestions-format.md` | All references |
 | 3.6 | `docs/migration/v1-to-v2.md` | Update (historical but user-facing) |
 | 3.7 | `docs/loop-engineering-research.md` | All references |
 | 3.8 | `.rddf/plans/*.md` (active plans, not all 26) | All references |
@@ -154,7 +154,7 @@ All must be updated in lockstep with the rename.
 | 3.10 | `.github/ISSUE_TEMPLATE/beta-feedback.md`, `bug-report.md` | All references |
 
 **Acceptance:**
-- `grep -rn "rdd-workflow" README.md USAGE.md CHANGELOG.md AGENTS.md docs/v2-*.md docs/ONBOARDING.md docs/proposal-suggestions-format.md .rddf/plans/ .rddf/state/index.md .github/ISSUE_TEMPLATE/` returns **0 matches**
+- `grep -rn "rdd-workflow" README.md USAGE.md CHANGELOG.md AGENTS.md docs/v2-*.md docs/ONBOARDING.md docs/improvement-suggestions-format.md .rddf/plans/ .rddf/state/index.md .github/ISSUE_TEMPLATE/` returns **0 matches**
 - `head -1 README.md` shows `# RDD Workflow` not `# RDD Workflow`
 
 ---
@@ -339,7 +339,7 @@ Plan was reviewed against actual codebase state. **3 critical issues** fixed, **
 |----|-------|-----------|
 | **C1** | Naming collision (`rdd-workflow` vs `rddf` CLI / `rdd-session` skill / `.rddf/` dir) | User confirmed `rdd-workflow` is the chosen name. Documented in ADR-0023 (Stage 4.9). Acknowledged as accepted risk. |
 | **C2** | JSON schema `$id` URI references (`rdd-workflow.local`, `rdd-workflow.dev`) — would break schema resolution | Stage 2.10 upgraded from "check" to **mandatory rename** of all 8 schema files |
-| **C3** | `proposal-suggestions.md` is JSON not Markdown — bulk sed would corrupt | Stage 2.20 upgraded to **JSON-aware rename** via Python `json.load/dump` |
+| **C3** | `improvement-suggestions.md` is JSON not Markdown — bulk sed would corrupt | Stage 2.20 upgraded to **JSON-aware rename** via Python `json.load/dump` |
 
 ### Recommended improvements incorporated
 
@@ -356,7 +356,7 @@ Plan was reviewed against actual codebase state. **3 critical issues** fixed, **
 | ID | Item | Stage |
 |----|------|-------|
 | M1-M2 | 8 JSON schema files `$id` and `description` fields | Stage 2.10 |
-| M3 | `proposal-suggestions.md` JSON format | Stage 2.20 |
+| M3 | `improvement-suggestions.md` JSON format | Stage 2.20 |
 | M4 | `package.json` keywords/alias updates | Stage 2.1 |
 | M6 | `tests/integration/test_hook_boundary.py` | Stage 2.17 |
 | M7 | `tests/unit/test_cli_init.py`, `test_cli_version.py` | Stage 2.18 |

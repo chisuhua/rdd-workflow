@@ -37,7 +37,7 @@
 ```bash
 @test "sync: append_approved updates suggestions.md" {
   run append_approved "/project" "test-change" "P1"
-  grep -q "test-change" proposal-suggestions.md
+  grep -q "test-change" improvement-suggestions.md
 }
 ```
 
@@ -54,7 +54,7 @@ sync_suggestions() {
   local name="$2"
   local status="$3"  # approved/completed
   
-  local suggestions_file="$project_root/proposal-suggestions.md"
+  local suggestions_file="$project_root/improvement-suggestions.md"
   [ ! -f "$suggestions_file" ] && return 0
   
   python3 -c "

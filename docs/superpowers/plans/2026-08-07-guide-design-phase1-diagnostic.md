@@ -939,10 +939,10 @@ git commit -m "docs(adr-0016): document reconstruction as legitimate handoff rec
 
 ---
 
-### Task 12: Update proposal-approved.md entry (after plan execution)
+### Task 12: Update improvement-approved.md entry (after plan execution)
 
 **Files:**
-- Modify: `proposal-approved.md`
+- Modify: `improvement-approved.md`
 
 - [ ] **Step 1: Skip if not using proposal-approved workflow**
 
@@ -950,7 +950,7 @@ This task only applies if the user is running this plan via the formal guide-des
 
 - [ ] **Step 2: Add entry referencing the plan**
 
-Follow `docs/proposal-approved-format.md` (Markdown table format). Entry should reference:
+Follow `docs/improvement-approved-format.md` (Markdown table format). Entry should reference:
 - `.rddf/improvements/add-guide-design-phase1-diagnostic.md` (created separately via brainstorming)
 - Plan file: `docs/superpowers/plans/2026-08-07-guide-design-phase1-diagnostic.md`
 - Status: 已批准
@@ -959,7 +959,7 @@ Follow `docs/proposal-approved-format.md` (Markdown table format). Entry should 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add proposal-approved.md
+git add improvement-approved.md
 git commit -m "docs: register guide-design-phase1-diagnostic as approved improvement"
 ```
 

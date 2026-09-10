@@ -96,7 +96,7 @@
 
 - 8.1: `openspec validate add-proposal-how-leakage-warning --type change --json` → no errors
 - 8.2: 现有测试套件 PASS，无新增 LLM/向量 DB 依赖
-- 8.3: git diff 确认 `proposal-suggestions.md` / 其他 proposals / ADR / 历史未受影响
+- 8.3: git diff 确认 `improvement-suggestions.md` / 其他 proposals / ADR / 历史未受影响
 
 ## 验收标准
 

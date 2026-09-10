@@ -184,7 +184,7 @@ sed -nE 's/^not ok [0-9]+ (.*)$/\1/p' "$TMP_DIR/bats-output" \
 
 - MUST: `report_regression.sh` 解析逻辑改动不改变退出码语义（0 = 无新增 = pass）
 - MUST: 单元测试覆盖 strip 规则变更，防止未来回归
-- SHOULD: 与 `bypass-audit-mechanism` (P2 延迟提案) 无交互：不触碰 proposal-suggestions.md
+- SHOULD: 与 `bypass-audit-mechanism` (P2 延迟提案) 无交互：不触碰 improvement-suggestions.md
 - MUST NOT: 在 KNOWN_FAILURES.txt 添加本 bug 的 workaround 条目（应修根因而非加 baseline）
 
 ## Acceptance

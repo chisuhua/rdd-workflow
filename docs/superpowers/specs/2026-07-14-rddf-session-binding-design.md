@@ -23,7 +23,7 @@ What's missing is the **discovery layer**:
 
 1. The `guide` recommender cannot answer *"which rddf-session am I currently
    bound to?"* — it scans `.arch-handoff.json` / `.plan-handoff.json` /
-   `proposal-suggestions.md` but ignores `.rddf/state/sessions.json`.
+   `improvement-suggestions.md` but ignores `.rddf/state/sessions.json`.
 2. There is no single command that says *"you have no current binding;
    the next orphaned session you should resume is `rds_xxx`."*
 3. Users running `rddf-session list` see all sessions but must read

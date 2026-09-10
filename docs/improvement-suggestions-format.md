@@ -1,11 +1,11 @@
-# `proposal-suggestions.md` Format
+# `improvement-suggestions.md` Format
 
 > **Status**: canonical (proposal-approval-pipeline, replaced the legacy JSON-only format).
 > 
 > **Updated**: 2026-07-24 — Changed from JSON array to Markdown table (index-only).
 
 This document is the single source of truth for how the
-`proposal-suggestions.md` file is structured, read, and written by the
+`improvement-suggestions.md` file is structured, read, and written by the
 rdd-workflow skills (`guide-design`, `guide-plan`, `propose`, `dashboard`).
 
 ---
@@ -21,7 +21,7 @@ the full proposal content — that lives in `.rddf/improvements/<name>.md`.
 ```markdown
 # 提案池（待设计审查）
 
-> design 阶段输入。`guide-design` 逐个审查（approve/reject/defer），批准后**直接落盘** `openspec/changes/<name>/proposal.md` 并添加一行到 `proposal-approved.md`。
+> design 阶段输入。`guide-design` 逐个审查（approve/reject/defer），批准后**直接落盘** `openspec/changes/<name>/proposal.md` 并添加一行到 `improvement-approved.md`。
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
@@ -78,7 +78,7 @@ Each improvement file has this structure:
 ...
 ```
 
-The `proposal-suggestions.md` file **only** contains links to these files —
+The `improvement-suggestions.md` file **only** contains links to these files —
 it never duplicates the proposal content. This keeps the index file small
 and ensures a single source of truth for each proposal's details.
 
@@ -94,15 +94,15 @@ proposal content.
 
 ### 2. Index update
 
-When a new proposal is added to the pool, `proposal-suggestions.md` is updated
+When a new proposal is added to the pool, `improvement-suggestions.md` is updated
 with a new table row linking to the improvement file.
 
 ### 3. Review flow (`guide-design` Phase 3)
 
-1. `guide-design` reads `proposal-suggestions.md` via `list_improvements()`.
+1. `guide-design` reads `improvement-suggestions.md` via `list_improvements()`.
 2. For each entry, it follows the link to `.rddf/improvements/<name>.md` to display
    the full content for review.
-3. Approved proposals are added to `proposal-approved.md` AND design approval
+3. Approved proposals are added to `improvement-approved.md` AND design approval
    directly creates `openspec/changes/<name>/{proposal.md, .openspec.yaml,
    roadmap-meta.yaml}` (Path A — move-proposal-creation-to-design).
 4. Rejected proposals remain in `.rddf/improvements/` but never appear in the
@@ -110,7 +110,7 @@ with a new table row linking to the improvement file.
 
 ### 4. Consumption flow (`guide-plan` propose)
 
-1. `guide-plan` reads `proposal-approved.md` via `list_approved()`.
+1. `guide-plan` reads `improvement-approved.md` via `list_approved()`.
 2. For each approved entry, it follows the link to `.rddf/improvements/<name>.md`.
 3. It creates an OpenSpec change using the 5-section content.
 
@@ -156,13 +156,13 @@ and storing content in individual files.
 
 ## Consumers
 
-All skills that touch `proposal-suggestions.md` MUST read it as a Markdown
+All skills that touch `improvement-suggestions.md` MUST read it as a Markdown
 table and follow the links to `.rddf/improvements/*.md`:
 
 | Skill             | Where the format matters                                       |
 |-------------------|----------------------------------------------------------------|
-| `guide-design.md` | Phase 3 (review proposals, approve/reject/defer); also writes `proposal-approved.md` and `openspec/changes/<name>/proposal.md` on approval |
-| `guide-plan.md`   | Phase 0 intake (read `proposal-approved.md` and `.design-handoff.json`'s `changes_pre_created` to identify pre-created changes) |
+| `guide-design.md` | Phase 3 (review proposals, approve/reject/defer); also writes `improvement-approved.md` and `openspec/changes/<name>/proposal.md` on approval |
+| `guide-plan.md`   | Phase 0 intake (read `improvement-approved.md` and `.design-handoff.json`'s `changes_pre_created` to identify pre-created changes) |
 | `propose.md`      | Legacy direct-create fallback for projects not yet migrated to Path A (Phase 4d lookup of phase/category from improvement file) |
 | `dashboard`       | Pending section (count unapproved proposals)                   |
 
@@ -220,7 +220,7 @@ Reset command: `rm .rddf/state/.populate-state.json` (next run falls back to ful
 
 ## See also
 
-- `docs/proposal-approved-format.md` — format for the approved proposals index
+- `docs/improvement-approved-format.md` — format for the approved proposals index
 - `skills/_lib/state.sh::list_improvements()` — shell helper for reading the table
 - `skills/_lib/state_reader.py::read_improvement_entries()` — Python helper for reading all improvement files
 - `skills/_lib/migrate_proposals.py` — migration script from JSON to individual files

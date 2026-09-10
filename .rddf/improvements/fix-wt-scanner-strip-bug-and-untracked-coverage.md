@@ -8,7 +8,7 @@
 
 - **ADR-0013**（已采纳）: scan-state 提取到 `skills/_lib/scan-state.sh` + Python synthesizer 在 `skills/_lib/workflow_synthesizer.py`
 - **ADR-0018**（已采纳）: arch-quality-gate 强调 "正确性优先于覆盖率" — 错误/截断数据比"漏报"更具误导性
-- **触发事件**: session 2026-08-01,主仓库 master (`34b9a95` 之前) 有 ` M proposal-suggestions.md` + `?? improvements/check-project-setup.md` (124 行) + `?? improvements/fix-scanner-fallback-and-orphan-archival.md` (94 行). Scanner `wt_issues` 仅返回 1 条且 category=`staged`、path=`"roposal-suggestions.md"` (缺首字符 `p`); 2 个新 untracked 文件完全未提及
+- **触发事件**: session 2026-08-01,主仓库 master (`34b9a95` 之前) 有 ` M improvement-suggestions.md` + `?? improvements/check-project-setup.md` (124 行) + `?? improvements/fix-scanner-fallback-and-orphan-archival.md` (94 行). Scanner `wt_issues` 仅返回 1 条且 category=`staged`、path=`"roposal-suggestions.md"` (缺首字符 `p`); 2 个新 untracked 文件完全未提及
 - **复现脚本** (主仓库当前已修复,因为工作树干净,但代码仍在):
   ```bash
   cd /workspace/project/rdd-workflow
@@ -80,7 +80,7 @@ for entry in untracked.stdout.splitlines():
     if os.path.isfile(os.path.join(project_root, entry)):
         issues.append(WorkingTreeIssue(
             "untracked_file", entry,
-            "未跟踪的新文件 (考虑 git add 或登记到 proposal-suggestions.md)",
+            "未跟踪的新文件 (考虑 git add 或登记到 improvement-suggestions.md)",
             severity="info",  # 不阻塞入口
         ))
 ```

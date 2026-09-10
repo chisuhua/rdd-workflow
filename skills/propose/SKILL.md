@@ -20,12 +20,12 @@ metadata:
 3. 循环 `openspec instructions "<artifact>" --change "<name>" --json` — 获取每个 artifact 的模板、上下文、输出路径
 4. 按依赖顺序创建 artifact 文件（proposal.md → design.md → tasks.md 等）
 
-`proposal-suggestions.md` 是提案索引文件（Markdown 表格格式，随 git 版本控制），索引到 <a href=".rddf/improvements/` 目录下的完整提案内容。每次扫描发现新建议时，创建 <a href=".rddf/improvements/<name>.md` 文件并更新索引。审查通过后添加到 `proposal-approved.md`。
+`improvement-suggestions.md` 是提案索引文件（Markdown 表格格式，随 git 版本控制），索引到 <a href=".rddf/improvements/` 目录下的完整提案内容。每次扫描发现新建议时，创建 <a href=".rddf/improvements/<name>.md` 文件并更新索引。审查通过后添加到 `improvement-approved.md`。
 
 ## 工作流位置
 
 ```
-本技能：扫描文档/代码 → 读取 roadmap → 合并现有建议 → 分类验证 → 用户选择 → 串行创建 propose → 更新 proposal-suggestions.md
+本技能：扫描文档/代码 → 读取 roadmap → 合并现有建议 → 分类验证 → 用户选择 → 串行创建 propose → 更新 improvement-suggestions.md
                                                                                                                   ↓
 guide-ship.worktree: COMMIT GATE → 创建 worktree → 生成 Prometheus 计划
 ```
@@ -129,11 +129,11 @@ if [ -d "$PROJECT_ROOT/.rddf/improvements" ]; then
     [ -f "$imp_file" ] || continue
     name=$(basename "$imp_file" .md)
     
-    # 如果已存在对应的 change 目录，从 proposal-suggestions.md 移除索引
+    # 如果已存在对应的 change 目录，从 improvement-suggestions.md 移除索引
     if [ -d "$PROJECT_ROOT/openspec/changes/$name" ]; then
       # 从索引中移除（如果存在）
-      if [ -f "$PROJECT_ROOT/proposal-suggestions.md" ]; then
-        sed -i "/\[$name\](.rddf/improvements\/$name.md)/d" "$PROJECT_ROOT/proposal-suggestions.md"
+      if [ -f "$PROJECT_ROOT/improvement-suggestions.md" ]; then
+        sed -i "/\[$name\](.rddf/improvements\/$name.md)/d" "$PROJECT_ROOT/improvement-suggestions.md"
         echo "  已从索引移除: $name (change 已存在)"
       fi
     fi
@@ -309,7 +309,7 @@ else:
 
 每条建议包含以下字段。其中 `description` 字段使用 `/opsx:propose` 格式，这是后续传递给 openspec-propose 的完整需求描述：
 
-**P1-7 容器格式**：建议以 JSON 数组形式写入 `proposal-suggestions.md`（替换旧的 YAML+Markdown 混合格式）。完整 schema 见 `docs/proposal-suggestions-format.md`。
+**P1-7 容器格式**：建议以 JSON 数组形式写入 `improvement-suggestions.md`（替换旧的 YAML+Markdown 混合格式）。完整 schema 见 `docs/improvement-suggestions-format.md`。
 
 ```json
 {
@@ -339,7 +339,7 @@ else:
 **写入文件**：
 
 ```bash
-# 写入 proposal-suggestions.md（覆盖写入）
+# 写入 improvement-suggestions.md（覆盖写入）
 # 格式为 JSON 数组（P1-7 规范）
 # 此文件将随 git 版本控制
 # 实际写入委托给 _lib/state.sh::write_suggestions
@@ -460,7 +460,7 @@ SKELETON_MODE="${SKELETON_MODE:-false}"
 
 # --- batch-create mode (guide-plan-noninteractive change) ---
 # When --batch-create is set, create skeleton changes for ALL pending
-# entries in proposal-approved.md without user interaction.
+# entries in improvement-approved.md without user interaction.
 # Enables AI orchestrators to auto-create all approved proposals.
 if [ "${BATCH_CREATE:-}" = "true" ]; then
     echo "📦 Batch-create mode: creating skeleton changes for all pending proposals"
@@ -489,11 +489,11 @@ if [ "$SKELETON_MODE" = "true" ]; then
     # When unset, behavior is unchanged (backward compatible).
     # Example: PARENT_FEATURE="feature-rddf" propose_create_change ...
     propose_create_change <name> --skeleton "$CURRENT_PHASE" "$CHANGE_CATEGORY" "$PRIORITY"
-    # Update proposal-suggestions.md: status "待创建" → "skeleton"
-    if [ -f "$PROJECT_ROOT/proposal-suggestions.md" ]; then
+    # Update improvement-suggestions.md: status "待创建" → "skeleton"
+    if [ -f "$PROJECT_ROOT/improvement-suggestions.md" ]; then
         PROJECT_ROOT="$PROJECT_ROOT" NAME="<name>" NEW_STATUS="skeleton" python3 <<PYEOF
 import os, json
-p = os.path.join(os.environ.get("PROJECT_ROOT", "."), "proposal-suggestions.md")
+p = os.path.join(os.environ.get("PROJECT_ROOT", "."), "improvement-suggestions.md")
 target = os.environ.get("NAME", "")
 new_status = os.environ.get("NEW_STATUS", "skeleton")
 try:
@@ -584,11 +584,11 @@ fi
 
 ---
 
-### Phase 5：更新 proposal-suggestions.md + 汇总输出
+### Phase 5：更新 improvement-suggestions.md + 汇总输出
 
 **5a. 从建议列表中移除已创建的 propose**
 
-从 proposal-suggestions.md 中删除已成功创建的条目（按 name 匹配）。保留未选中和跳过的条目供下次使用。
+从 improvement-suggestions.md 中删除已成功创建的条目（按 name 匹配）。保留未选中和跳过的条目供下次使用。
 
 **5b. 汇总输出 + 自动提交**
 
@@ -636,7 +636,7 @@ if [ ${#THIS_SESSION_CREATED[@]} -gt 0 ]; then
             git add "openspec/changes/$name/tasks.md"
         fi
     done
-    git add proposal-suggestions.md
+    git add improvement-suggestions.md
 
     # 提交信息使用数组中实际创建的名称
     git commit -m "feat: propose ${THIS_SESSION_CREATED[*]}"
@@ -649,7 +649,7 @@ fi
 
 **【重要】自动提交触发条件**：
 - 检测到 `openspec/changes/<name>/` 目录有新建或修改的文件
-- 检测到 `proposal-suggestions.md` 有更新
+- 检测到 `improvement-suggestions.md` 有更新
 - 只在用户选择「完成 Propose 阶段」时触发，不是每次创建 change 都触发
 
 ---
@@ -671,7 +671,7 @@ fi
 
 ```bash
 # 检查是否还有剩余建议
-if [ -f "proposal-suggestions.md" ]; then
+if [ -f "improvement-suggestions.md" ]; then
     # P1-7: 文件格式已规范化为 JSON 列表
     #       用 json.load 解析后筛选 status == "待创建" 的条目
     #       旧实现的 grep 在 JSON 字符串中会误匹配 description 字段里的"待创建"字面量
@@ -681,7 +681,7 @@ if [ -f "proposal-suggestions.md" ]; then
     REMAINING=${REMAINING:-0}
     if [ "$REMAINING" -gt 0 ]; then
         echo ""
-        echo "📋 proposal-suggestions.md 中还有 $REMAINING 个未创建的 change"
+        echo "📋 improvement-suggestions.md 中还有 $REMAINING 个未创建的 change"
         echo ""
         echo "请选择:"
         echo "1. 继续创建其他 change（返回 Phase 3 选择）"
@@ -710,12 +710,12 @@ esac
 
 本技能可以反复调用，每次调用：
 
-1. **Phase 0**：读取已有的 `proposal-suggestions.md`，移除已创建为 change 的条目
+1. **Phase 0**：读取已有的 `improvement-suggestions.md`，移除已创建为 change 的条目
 2. **Phase 1-2**：扫描是否有新产生的建议（新 ADR、新 TODO），与新发现合并
 3. **Phase 3-4**：只展示尚未被创建的 propose
-4. **Phase 5**：更新 proposal-suggestions.md（移除已创建的）
+4. **Phase 5**：更新 improvement-suggestions.md（移除已创建的）
 
-这样 `proposal-suggestions.md` 成为持续的待办清单，多次调用逐步消耗。
+这样 `improvement-suggestions.md` 成为持续的待办清单，多次调用逐步消耗。
 
 ---
 
@@ -724,7 +724,7 @@ esac
 1. **只读不写代码**：本技能只分析文档和创建 artifacts，不修改源代码
 2. **串行执行**：每个 propose 依次创建，不并行
 3. **建议 vs 决定**：建议列表只是参考，用户决定最终创建哪些
-4. **proposal-suggestions.md 是持久化文件**：随 git 版本控制，每次执行时增量更新
+4. **improvement-suggestions.md 是持久化文件**：随 git 版本控制，每次执行时增量更新
 5. **错误容错**：单个 propose 创建失败不影响后续（skip 继续）
 6. **Roadmap 兼容**：无 roadmap.md 时以兼容模式运行（所有 change 归为 default 阶段）
 7. **分类验证**：roadmap 模式下，change 的分类必须在当前阶段的有效分类中

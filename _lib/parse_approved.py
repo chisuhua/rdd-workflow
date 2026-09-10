@@ -1,4 +1,4 @@
-"""Centralized parser for proposal-approved.md.
+"""Centralized parser for improvement-approved.md.
 
 Reads BOTH the `## 已批准提案` and `## 已实施` sections and returns
 approved proposal names, deduplicated, in file-appearance order.
@@ -17,7 +17,7 @@ itself).
 
 CLI mode (for bash invocation):
 
-    python3 _lib/parse_approved.py <path-to-proposal-approved.md>
+    python3 _lib/parse_approved.py <path-to-improvement-approved.md>
 
 prints each name on its own line, in file-appearance order, deduplicated.
 """
@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import NamedTuple, Optional
 
 # Match a markdown table row like `| [name](.rddf/improvements/<file>.md) | ...`.
-# Only used inside proposal-approved.md (and similar tables), so the
+# Only used inside improvement-approved.md (and similar tables), so the
 # <a href=".rddf/improvements/` anchor is enough to avoid false positives in body prose.
 _ROW_RE = re.compile(r"\|\s*\[([^\]]+)\]\(\s*.rddf/improvements/[^)]+\)")
 
@@ -41,7 +41,7 @@ _IMPLEMENTED_SECTION = "已实施"
 
 
 class ApprovedRow(NamedTuple):
-    """One parsed row from proposal-approved.md.
+    """One parsed row from improvement-approved.md.
 
     Fields:
         name: Proposal name (from the markdown link text).
@@ -59,10 +59,10 @@ class ApprovedRow(NamedTuple):
 
 
 def parse_approved_proposals(path: str) -> list[str]:
-    """Return approved proposal names from both sections of proposal-approved.md.
+    """Return approved proposal names from both sections of improvement-approved.md.
 
     Args:
-        path: Filesystem path to proposal-approved.md.
+        path: Filesystem path to improvement-approved.md.
 
     Returns:
         Proposal names in file-appearance order, deduplicated. Empty list
@@ -103,7 +103,7 @@ def parse_approved_proposals_detailed(path: str) -> list[ApprovedRow]:
     captures whichever cells exist; missing cells become ``None``.
 
     Args:
-        path: Filesystem path to proposal-approved.md.
+        path: Filesystem path to improvement-approved.md.
 
     Returns:
         List of ``ApprovedRow`` in file-appearance order, deduplicated by
@@ -183,7 +183,7 @@ def parse_approved_proposals_detailed(path: str) -> list[ApprovedRow]:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("usage: parse_approved.py <path-to-proposal-approved.md>", file=sys.stderr)
+        print("usage: parse_approved.py <path-to-improvement-approved.md>", file=sys.stderr)
         sys.exit(2)
     for name in parse_approved_proposals(sys.argv[1]):
         print(name)

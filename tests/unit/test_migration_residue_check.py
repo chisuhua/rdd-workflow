@@ -53,7 +53,7 @@ def test_agents_md_legacy_link_reports_warning(tmp_path: Path):
 
 def test_double_prefix_in_format_docs_reports_warning(tmp_path: Path):
     """`](.rddf/.rddf/improvements/X)` in format docs → WARNING."""
-    _write_doc(tmp_path, "docs/proposal-suggestions-format.md",
+    _write_doc(tmp_path, "docs/improvement-suggestions-format.md",
         "| [foo](.rddf/.rddf/improvements/foo.md) | P1 |\n")
 
     findings = run_check(project_root=tmp_path)
@@ -116,10 +116,10 @@ def test_double_prefix_in_agents_md_detected(tmp_path: Path):
 
 def test_format_docs_detected(tmp_path: Path):
     """Both format docs are scanned."""
-    _write_doc(tmp_path, "docs/proposal-approved-format.md",
+    _write_doc(tmp_path, "docs/improvement-approved-format.md",
         "[foo](improvements/foo.md)\n"
     )
-    _write_doc(tmp_path, "docs/proposal-suggestions-format.md",
+    _write_doc(tmp_path, "docs/improvement-suggestions-format.md",
         "[bar](improvements/bar.md)\n"
     )
 

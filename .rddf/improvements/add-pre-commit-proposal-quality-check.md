@@ -20,14 +20,14 @@
 - 直到 guide-design 阶段 review 才被发现
 - 178 个 unmapped legacy proposal 中可能有格式缺陷未被捕获
 
-期望行为: proposal 创建后(无论 AI agent 还是 manual)立即自动运行 quality check,失败时阻止 proposal-suggestions.md 注册。
+期望行为: proposal 创建后(无论 AI agent 还是 manual)立即自动运行 quality check,失败时阻止 improvement-suggestions.md 注册。
 
 ## 范围
 
 **In Scope**:
 
 - 新增 `.git/hooks/pre-commit`(or `.githooks/pre-commit`)包含 proposal quality check:
-  - 检测 staged changes 是否包含 `.rddf/improvements/*.md` 或 `proposal-suggestions.md`
+  - 检测 staged changes 是否包含 `.rddf/improvements/*.md` 或 `improvement-suggestions.md`
   - 若是,运行 `python3 skills/propose/scripts/propose_quality_check.py --all` (或每个 file)
   - 失败时 exit 1,阻止 commit
 - 在 `add-improve` 脚本出口自动调用 quality check

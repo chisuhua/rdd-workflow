@@ -2562,7 +2562,7 @@ Create `skills/_lib/sync_state.py`:
 
 Sync targets (v1.x files):
 - .rddf/state/roadmap-state.json — roadmap state cache
-- proposal-suggestions.md — proposal suggestions
+- improvement-suggestions.md — proposal suggestions
 - openspec/changes/<name>/.openspec.yaml — per-change metadata
 
 Sync rules:
@@ -2613,7 +2613,7 @@ def sync_state_vector_to_legacy(project_root: str = ".") -> bool:
 
     Writes:
     - .rddf/state/roadmap-state.json
-    - proposal-suggestions.md (header only, if not present)
+    - improvement-suggestions.md (header only, if not present)
     - openspec/changes/<active>/.openspec.yaml (updates phase field)
     """
     if not is_sync_enabled():
@@ -2755,7 +2755,7 @@ Expected: All 6 tests pass.
 cd /workspace/project/rdd-workflow/.rddf/state/v2-core-foundation-wt
 sed -i \
   -e 's/- \[ \] 5.1 Create `skills/_lib\/sync_state.py`/- [x] 5.1 Create `skills/_lib\/sync_state.py`/' \
-  -e 's/- \[ \] 5.2 Sync targets: `.zcf\/.roadmap-state.json`, `proposal-suggestions.md`, `openspec\/changes\/<name>\/.openspec.yaml`/- [x] 5.2 Sync targets: `.zcf\/.roadmap-state.json`, `proposal-suggestions.md`, `openspec\/changes\/<name>\/.openspec.yaml`/' \
+  -e 's/- \[ \] 5.2 Sync targets: `.zcf\/.roadmap-state.json`, `improvement-suggestions.md`, `openspec\/changes\/<name>\/.openspec.yaml`/- [x] 5.2 Sync targets: `.zcf\/.roadmap-state.json`, `improvement-suggestions.md`, `openspec\/changes\/<name>\/.openspec.yaml`/' \
   -e 's/- \[ \] 5.3 Implement conflict detection via mtime; state vector wins on conflict/- [x] 5.3 Implement conflict detection via mtime; state vector wins on conflict/' \
   -e 's/- \[ \] 5.4 Log conflicts to event log/- [x] 5.4 Log conflicts to event log/' \
   -e 's/- \[ \] 5.5 Write unit tests: state vector update triggers v1.x sync, v1.x change triggers state update, latency < 50ms, conflict resolution correct/- [x] 5.5 Write unit tests: state vector update triggers v1.x sync, v1.x change triggers state update, latency < 50ms, conflict resolution correct/' \

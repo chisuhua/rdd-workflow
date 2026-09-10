@@ -75,7 +75,7 @@ After 1 day of observation + user's 2026-09-04 architectural review, the user id
 
 1. **Approval gate does not need its own skill** — a 4-option prompt (`approve / reject / defer / revise`) is a sub-step, not a stage.
 2. **Plan quality gate (`evaluate_plan` in `_lib/plan_quality.py`) can run inside builder's Phase 1** — it doesn't need a separate skill invocation; the user is already in the skill when plan quality is validated.
-3. **The 3 skills share too much plumbing** — `iteration.json` read/write, `proposal.md` parse, `proposal-suggestions.md` table edits are duplicated across `guide-design`/`guide-plan`/`guide-ship`. Merging collapses the duplication.
+3. **The 3 skills share too much plumbing** — `iteration.json` read/write, `proposal.md` parse, `improvement-suggestions.md` table edits are duplicated across `guide-design`/`guide-plan`/`guide-ship`. Merging collapses the duplication.
 4. **`rdd-arch` slimming + planner promotion together** create a cleaner 4-stage boundary than the current 5-phase.
 
 User explicitly chose "塞进 rdd-builder" for the approval gate (Q1 answer), accepting that the merged builder owns all 3 former responsibilities.
@@ -111,7 +111,7 @@ This is a **deliberate supersession of D2a** and is recorded as such in this spe
 | 3 | `rdd-verifier` integration point is well-defined | ✅ ADR-0035 documents boundary; builder.archive calls verifier pre-archive; verifier 5-value verdict routing table in §3.4 (per batch 1) |
 | 4 | New coexistence migration strategy approved | ✅ Per user Q3 = "新并存" |
 | 5 | D2b checkpoint loss mitigated | ✅ §2.2 item 5 pause contract; `run` pauses at Phase 0/2.5 HARD, Phase 1/1.5 SOFT; per-phase CLI preserves full granularity |
-| 6 | ADR-0028 role boundaries respected | ✅ Phase 0 reject/defer/revise paths use `rddf feedback add` (single-writer contract per ADR-0037); builder does NOT directly write `proposal-suggestions.md` (per Oracle M2) |
+| 6 | ADR-0028 role boundaries respected | ✅ Phase 0 reject/defer/revise paths use `rddf feedback add` (single-writer contract per ADR-0037); builder does NOT directly write `improvement-suggestions.md` (per Oracle M2) |
 | 7 | D2b reversion path | ⚠ If any condition 1-6 regresses (e.g., feedback appenter fails), D2b is reverted to D2a and Stage 1/2 path continues |
 
 If any condition fails, D2b is reverted to D2a and Stage 1/2 path continues.
@@ -162,8 +162,8 @@ If any condition fails, D2b is reverted to D2a and Stage 1/2 path continues.
 | Component | Files owned | Reads | Writes | Human-in-loop |
 |---|---|---|---|---|
 | **rdd-arch** | `docs/adr/*.md`, `docs/architecture/*.md`, `.arch-handoff.json` (per ADR-0016 v2) | (none) | `.arch-handoff.json` (ADR-0016 v2 fields only, **no roadmap_path** in v3) | High (Phase 2 ADR confirmation) |
-| **rdd-planner** | `roadmap.md`, `proposal-suggestions.md`, `proposal-approved.md`, `.rddf/roadmap/features/*.md`, `.rddf/improvements/*.md` (via `add-improve`), `.planner-handoff.json` (NEW) | `.arch-handoff.json`, `_lib/planner_state.py` (via Stage 1/2 lib) | All roadmap files (via dual-zone strategy from ADR-0038 §6) | Medium (proposal lifecycle review / sprint governance) |
-| **rdd-builder** | `openspec/changes/<name>/proposal.md (authoring via P0 approve, per ADR-0025)`, `openspec/changes/<name>/tasks.md`, `.rddf/plans/<name>.md`, worktree, branches, `.rddf/state/builder/<change>.json` (per-change per Oracle H3) | `proposal.md`, `tasks.md`, `.arch-handoff.json`, `.planner-handoff.json`, `plan_quality.py::evaluate_plan` | `tasks.md`, `.rddf/plans/*.md`, worktree files, branch commits, archive, **feedback via `rddf feedback add` only** (NOT direct `proposal-suggestions.md` write — single-writer per ADR-0037, Oracle M2) | High (Phase 0 approval, Phase 2.5 review 4-option) |
+| **rdd-planner** | `roadmap.md`, `improvement-suggestions.md`, `improvement-approved.md`, `.rddf/roadmap/features/*.md`, `.rddf/improvements/*.md` (via `add-improve`), `.planner-handoff.json` (NEW) | `.arch-handoff.json`, `_lib/planner_state.py` (via Stage 1/2 lib) | All roadmap files (via dual-zone strategy from ADR-0038 §6) | Medium (proposal lifecycle review / sprint governance) |
+| **rdd-builder** | `openspec/changes/<name>/proposal.md (authoring via P0 approve, per ADR-0025)`, `openspec/changes/<name>/tasks.md`, `.rddf/plans/<name>.md`, worktree, branches, `.rddf/state/builder/<change>.json` (per-change per Oracle H3) | `proposal.md`, `tasks.md`, `.arch-handoff.json`, `.planner-handoff.json`, `plan_quality.py::evaluate_plan` | `tasks.md`, `.rddf/plans/*.md`, worktree files, branch commits, archive, **feedback via `rddf feedback add` only** (NOT direct `improvement-suggestions.md` write — single-writer per ADR-0037, Oracle M2) | High (Phase 0 approval, Phase 2.5 review 4-option) |
 | **rdd-verifier** | `.rddf/state/.verifier-report.json` (per ADR-0034) | worktree branches (diff vs main), `tasks.md`, `.rddf/plans/*.md` | `.rddf/state/.verifier-report.json` | Low (retry loop bounded to 3 per ADR-0034) |
 
 ### 3.3 `rdd-planner` promotion: from horizontal orchestrator to full stage
@@ -280,7 +280,7 @@ Phase 3: Archive [with Verifier Retry Loop per Oracle C1]
 
 1. **Phase 1.5 inserted** to absorb guide-plan's deps + execution_mode responsibilities (per ADR-0024). Without this, Wave 3 retirement of `.plan-handoff.json` orphans the execution_mode_decisions field that drives worktree vs lightweight selection in Phase 2.
 
-2. **Phase 0 reject/defer/revise paths now route through `rddf feedback add`** (per ADR-0037 single-writer contract). Removes builder→`proposal-suggestions.md` direct write, fixing the ADR-0028 role boundary violation (Oracle M2 — addressed in batch 3).
+2. **Phase 0 reject/defer/revise paths now route through `rddf feedback add`** (per ADR-0037 single-writer contract). Removes builder→`improvement-suggestions.md` direct write, fixing the ADR-0028 role boundary violation (Oracle M2 — addressed in batch 3).
 
 3. **Verifier verdict routing table** (Phase 3) preserves ADR-0034's 5-value exit semantics (0/1/2/3/4) instead of collapsing to a single exit 6. Each verdict has a deterministic destination:
    - `implementation_gap` (verifier exit 1) → Phase 2 (re-execute)
@@ -863,11 +863,11 @@ Wave 1 is **done** when all are true:
 
 ### Oracle M2 — Feedback single-writer contract (5 items, addressed in batch 3)
 
-- [ ] §3.2 ownership matrix updated: rdd-builder does NOT directly write `proposal-suggestions.md` (single-writer contract per ADR-0037)
+- [ ] §3.2 ownership matrix updated: rdd-builder does NOT directly write `improvement-suggestions.md` (single-writer contract per ADR-0037)
 - [ ] Phase 0 reject path: `rddf feedback add <proposal> --kind rejected --from rdd-builder` (NOT direct file write)
 - [ ] Phase 0 defer path: `rddf feedback add <proposal> --kind blocked --from rdd-builder` (NOT direct file write)
 - [ ] Phase 0 revise path: `rddf feedback add <proposal> --kind needs-revision --from rdd-builder` (NOT direct file write)
-- [ ] `tests/unit/test_builder_phase0.py` updated: Phase 0 reject/defer/revise assert `rddf feedback add` is invoked exactly once per decision (no direct write to proposal-suggestions.md)
+- [ ] `tests/unit/test_builder_phase0.py` updated: Phase 0 reject/defer/revise assert `rddf feedback add` is invoked exactly once per decision (no direct write to improvement-suggestions.md)
 
 ### Oracle H4 — Exit code 5-value preservation (3 items, addressed in batch 3 §5.2)
 
@@ -946,7 +946,7 @@ $ rddf verifier run --change demo-change
 - ❌ Removing `rdd-verifier` (per user Q2 = "保持独立第 4 阶段").
 - ❌ Removing `_lib/planner_*.py` (Stage 1/2 contracts stay; only `SKILL.md` wrapper added).
 - ❌ Renaming `rdd-arch` (already renamed per ADR-0042).
-- ❌ Changing `proposal-suggestions.md` or `proposal-approved.md` table format.
+- ❌ Changing `improvement-suggestions.md` or `improvement-approved.md` table format.
 - ❌ Auto-resolving feedback on approval (still manual per ADR-0042 lifecycle).
 - ❌ Touching `rdd-env-check` / `rdd-doctor` / `rddf-session` (orthogonal).
 - ❌ Cross-repo / Hub-Spoke federation changes.

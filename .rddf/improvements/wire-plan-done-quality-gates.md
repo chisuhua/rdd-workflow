@@ -41,4 +41,4 @@
 - 设置 `STRICT_CHANGE_GATE=yes` 时，任一 `change_alignment` 失败都显示为 error 并使 plan-done gate 返回非零或等价失败状态。
 - 设置严格模式只影响 `change_alignment` 的升级行为，不改变 `run_plan_checks` 及现有 error checks 的既有语义。
 - Gate 输出或事件记录包含 `run_plan_checks`、`change_alignment` 的检查名称、通过状态和失败原因，覆盖通过、warning、strict error 三类结果。
-- 现有 plan-done、proposal quality、change content review 相关测试保持通过，且未修改 proposal-suggestions.md、现有 proposals、ADR 或 git 历史。
+- 现有 plan-done、proposal quality、change content review 相关测试保持通过，且未修改 improvement-suggestions.md、现有 proposals、ADR 或 git 历史。

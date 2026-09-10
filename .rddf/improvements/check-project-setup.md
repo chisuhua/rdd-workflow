@@ -117,8 +117,8 @@
 - [ ] **AC3**: `npm test`（bats 全量）全绿
 - [ ] **AC4**: 手工 e2e：3 个 fixture 项目（正确 / 缺 state / 误含 plans）跑 `skill_use("guide-arch")` Phase 1，行为符合 §3 关键场景描述
 - [ ] **AC5**: helper 单次执行 `time check_project_setup /tmp/test` < 50ms（在 SSD 上）
-- [ ] **AC6**: `improvements/check-project-setup.md` 和 `proposal-suggestions.md` 注册行均存在；后者格式匹配 `docs/proposal-suggestions-format.md:26-30` 示例
+- [ ] **AC6**: `improvements/check-project-setup.md` 和 `improvement-suggestions.md` 注册行均存在；后者格式匹配 `docs/improvement-suggestions-format.md:26-30` 示例
 - [ ] **AC7**: `USAGE.md` / `INSTALL.md` / `docs/v2-workflow-overview.md` 文档更新提到"项目设置检查何时触发 + 用户期望什么"
-- [ ] **AC8**: 实施 commit 至少包含：① helper 文件 + bats 测试；② `arch_env_check.sh` 集成；③ `scan-state.sh` 集成；④ `INSTALL.md` Section 5；⑤ `proposal-suggestions.md` 注册（合并到第 ① 个 commit 也可）
+- [ ] **AC8**: 实施 commit 至少包含：① helper 文件 + bats 测试；② `arch_env_check.sh` 集成；③ `scan-state.sh` 集成；④ `INSTALL.md` Section 5；⑤ `improvement-suggestions.md` 注册（合并到第 ① 个 commit 也可）
 - [ ] **AC9**: `git diff --stat` 净增行 ≤ 400 行（与 Round A/B 提取纪律一致）
 - [ ] **AC10**: 无新 ADR 写入（属于增量改进，不构成架构变更）

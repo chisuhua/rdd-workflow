@@ -175,12 +175,12 @@ D3 模式（D2 映射）只覆盖 `proposal.md`，缺 `specs/<sub>/spec.md` 这�
 
 - [ ] AGENTS.md "D3 design-pre-created 协同" 段更新，明确 specs/ 现在由 design 阶段自动生成（含 commit 示例）
 - [ ] `skills/guide-design/SKILL.md` D1 编排段补 specs/ 输出说明（在 proposal.md 描述后）
-- [ ] `docs/proposal-approved-format.md` 加新章节描述 specs/ 与 proposal.md 的对应关系
+- [ ] `docs/improvement-approved-format.md` 加新章节描述 specs/ 与 proposal.md 的对应关系
 
 ### 兼容性验证
 
 - [ ] 复测 history 8 个 archived `phase-X-general-*` change：openspec validate 不参与 archive 目录，回归门 baseline 不变
-- [ ] 复测现有 `bypass-audit-mechanism`（延迟状态）：proposal-suggestions.md 行为不变
+- [ ] 复测现有 `bypass-audit-mechanism`（延迟状态）：improvement-suggestions.md 行为不变
 - [ ] 与 `move-proposal-creation-to-design` (ADR-0025) 不冲突：D3 路径仍然只有 design 阶段落盘
 
 ### 副作用监测
@@ -203,7 +203,7 @@ D3 模式（D2 映射）只覆盖 `proposal.md`，缺 `specs/<sub>/spec.md` 这�
 - `tests/integration/test_propose_quality.py`: 扩展 design-level checks 覆盖 specs/
 - AGENTS.md: 更新"D3 design-pre-created 协同"段
 - `skills/guide-design/SKILL.md`: 更新 D1 编排段（含 specs/ 输出说明）
-- `docs/proposal-approved-format.md`: 新增 specs/ 与 proposal.md 对应关系章节
+- `docs/improvement-approved-format.md`: 新增 specs/ 与 proposal.md 对应关系章节
 
 ## Capabilities
 
@@ -215,7 +215,7 @@ D3 模式（D2 映射）只覆盖 `proposal.md`，缺 `specs/<sub>/spec.md` 这�
 
 - MUST: design 阶段 approve_proposal.sh 流程时间增加 ≤ 100ms（spec 生成仅字符串处理）
 - MUST: 输出 specs/<sub>/spec.md 含 frontmatter 注释标识由 guide-design D3 生成（便于未来追溯）
-- SHOULD: 与 `bypass-audit-mechanism` (P2 延迟提案) 不冲突：proposal-suggestions.md 状态机不变
+- SHOULD: 与 `bypass-audit-mechanism` (P2 延迟提案) 不冲突：improvement-suggestions.md 状态机不变
 - SHOULD: 8 个历史 archived change 行为不变（archive 不参与 validate）
 
 ## Acceptance

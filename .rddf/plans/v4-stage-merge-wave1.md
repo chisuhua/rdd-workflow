@@ -457,7 +457,7 @@ metadata:
 
 Stage 2 of v4 architecture (per spec §3.3). Owns:
 - `roadmap.md`
-- `proposal-suggestions.md` / `proposal-approved.md`
+- `improvement-suggestions.md` / `improvement-approved.md`
 - `.rddf/roadmap/features/*.md`
 - `.rddf/improvements/*.md` (via `add-improve`)
 - `openspec/changes/<name>/proposal.md` (authoring only)
@@ -3252,9 +3252,9 @@ Edit `openspec/changes/v4-stage-merge-wave1/tasks.md`:
 
 The plan is now ready for `skill_use("execute")` invocation. Each Task in in this plan can be executed task-by-task.
 
-- [ ] **Step 4: Update proposal-suggestions.md**
+- [ ] **Step 4: Update improvement-suggestions.md**
 
-Edit `proposal-suggestions.md`:
+Edit `improvement-suggestions.md`:
 - Move v4-stage-merge-wave1 entry to approved status
 
 - [ ] **Step 5: Single commit (per worktree discipline)**

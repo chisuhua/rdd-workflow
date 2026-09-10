@@ -14,7 +14,7 @@
 - handoff 契约：`.rddf/state/.planner-handoff.json` v1 schema（per spec §3.3）
 - 入口脚本：`planner_stage_entry.sh`（emit planner-handoff）
 - 出口脚本：`planner_stage_exit.sh`（consume arch-handoff + emit planner-handoff）
-- 协作文件：`proposal-suggestions.md` / `proposal-approved.md` / `.rddf/roadmap/features/*.md` / `.rddf/improvements/*.md`
+- 协作文件：`improvement-suggestions.md` / `improvement-approved.md` / `.rddf/roadmap/features/*.md` / `.rddf/improvements/*.md`
 - 横切命令（保留向后兼容）：status / sync / feedback / attach / audit / history / advance-sprint
 - 状态机阶段：stage entry → intake → propose → review → approve/reject/defer → stage exit
 
@@ -45,7 +45,7 @@
 | 字段 | 内容 |
 |------|------|
 | 入口 | 接 P-E2；agent prompt：`请为 "P-E3 测试提案" 写一份建议提案` |
-| 预期产物 | `proposal-suggestions.md` 新增 1 行（per docs/proposal-suggestions-format.md 表格格式）；含 priority / source / date / status |
+| 预期产物 | `improvement-suggestions.md` 新增 1 行（per docs/improvement-suggestions-format.md 表格格式）；含 priority / source / date / status |
 | 必清状态 | 表格行 schema 正确；status 初始 `pending` |
 | AC 断言 | 1 行新 entry；列名匹配 `proposal-suggestions-format.md` 模板 |
 | 隔离规则 | 同 P-E1 |
@@ -68,7 +68,7 @@
 |------|------|
 | 入口 | 接 P-E3 + P-E4；agent prompt：`请批准 "P-E3 测试提案"` |
 | 预期产物 | `openspec/changes/<n>/proposal.md` 存在；`openspec/changes/<n>/specs/<n>/spec.md` 存在（D3 协同） |
-| 必清状态 | `proposal-suggestions.md` 移除该 entry；`proposal-approved.md` 新增该 entry |
+| 必清状态 | `improvement-suggestions.md` 移除该 entry；`improvement-approved.md` 新增该 entry |
 | AC 断言 | 2 个产物文件齐全；表格行迁移正确；spec.md 段头 `## ADDED Requirements` |
 | 隔离规则 | 同 P-E1 |
 | 备注 | per `skills/guide-design/scripts/approve_proposal.sh`（v2.0.6+ D3 协同）；与 `test_approve_proposal.bats` 互补 |
@@ -78,11 +78,11 @@
 | 字段 | 内容 |
 |------|------|
 | 入口 | 接 P-E3；agent prompt：`请拒绝该提案，理由：scope 过大` |
-| 预期产物 | `proposal-suggestions.md` 标记 `status=rejected`（不删除，per proposal-suggestions-format 状态词汇表）；不创建 `openspec/changes/<n>/` |
+| 预期产物 | `improvement-suggestions.md` 标记 `status=rejected`（不删除，per proposal-suggestions-format 状态词汇表）；不创建 `openspec/changes/<n>/` |
 | 必清状态 | rejected 状态行写入；change 目录不存在 |
 | AC 断言 | status 字段非空 ∈ {rejected, deferred}；`openspec/changes/` 不增 |
 | 隔离规则 | 同 P-E1 |
-| 备注 | 状态词汇 per docs/proposal-suggestions-format.md |
+| 备注 | 状态词汇 per docs/improvement-suggestions-format.md |
 
 ## P-E7: 横切命令 — status / sync / feedback / advance-sprint
 

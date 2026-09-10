@@ -15,7 +15,7 @@
 - **In Scope**:
   - `guide-arch/scripts/approve_proposal.sh` 或 Phase 5.5 入口增加 archive 检测
   - 自动检查 `openspec/changes/archive/<date>-<name>/` 是否存在
-  - 已归档的提案自动追加到 proposal-approved.md 的 `## 已实施` 表格
+  - 已归档的提案自动追加到 improvement-approved.md 的 `## 已实施` 表格
   - 输出汇总：`N 个已归档自动批准 | M 个待审查`
 - **Out Scope**:
   - 不修改 Oracle 审查逻辑

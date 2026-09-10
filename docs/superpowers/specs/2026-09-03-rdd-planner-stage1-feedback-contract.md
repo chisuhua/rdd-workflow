@@ -14,7 +14,7 @@
 After auditing the codebase (see `bash` checks during brainstorming):
 
 1. **Zero `roadmap_ref` in 226 existing improvement files** — proposal↔roadmap mapping is currently name-based or absent.
-2. **Zero `## Feedback` sections** — no downstream consumer writes back to improvement files; current "approval" happens only via `proposal-suggestions.md` table edit.
+2. **Zero `## Feedback` sections** — no downstream consumer writes back to improvement files; current "approval" happens only via `improvement-suggestions.md` table edit.
 3. **Zero `feedback` CLI** — `_lib/cli/` has 28 subcommands; none touches proposal feedback.
 4. **30+ `iteration.corrupt.*` residual files** in `.rddf/state/` — direct evidence that multi-writer state files corrupt under concurrent writes.
 5. **No stable ID linking improvement ↔ OpenSpec change ↔ AC verdict** — verifier currently key by name, which drifts after rename/archive.
@@ -34,8 +34,8 @@ This is the **smallest deliverable** that:
 - ❌ `guide-arch → rdd-arch` rename or roadmap handover (Stage 3).
 - ❌ `guide-design + guide-plan → rdd-builder` merge (Stage 4 — not happening per D2a).
 - ❌ Modifying any existing `.rddf/improvements/*.md` file.
-- ❌ Changing `proposal-suggestions.md` table format.
-- ❌ Changing `proposal-approved.md` workflow.
+- ❌ Changing `improvement-suggestions.md` table format.
+- ❌ Changing `improvement-approved.md` workflow.
 
 ## 2. Design Decisions
 
@@ -417,7 +417,7 @@ $ rddf feedback list demo-improvements
 - ❌ Renaming `guide-arch` to `rdd-arch` (Stage 3).
 - ❌ Implementing `rdd-planner` (Stage 2).
 - ❌ Modifying `.rddf/state/iteration.json` schema.
-- ❌ Touching `proposal-suggestions.md` or `proposal-approved.md`.
+- ❌ Touching `improvement-suggestions.md` or `improvement-approved.md`.
 - ❌ Auto-resolving feedback on approval (deferred; Stage 2 planner will own this).
 
 ## 10. Open Questions

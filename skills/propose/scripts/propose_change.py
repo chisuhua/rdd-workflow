@@ -17,14 +17,14 @@ from typing import Optional
 def set_suggestion_status(
     project_root: str, name: str, new_status: str
 ) -> bool:
-    """Update status field for matching entry in proposal-approved.md.
+    """Update status field for matching entry in improvement-approved.md.
     
-    proposal-approved.md is a Markdown table. Status update modifies
+    improvement-approved.md is a Markdown table. Status update modifies
     the table row to reflect the new status.
     Returns True if updated, False if file missing or name not found.
     """
     import re
-    path = os.path.join(project_root, "proposal-approved.md")
+    path = os.path.join(project_root, "improvement-approved.md")
     if not os.path.exists(path):
         return False
     
@@ -279,7 +279,7 @@ def update_roadmap_meta(
 ) -> bool:
     """Update roadmap-meta.yaml for a change (propose.md lines 617-686).
 
-    Looks up phase/category from proposal-suggestions.md, falls back to
+    Looks up phase/category from improvement-suggestions.md, falls back to
     arguments. ALWAYS falls back to 'general' on invalid category (matches
     original inline behavior at line 671 which hard-codes
     CHANGE_CATEGORY='general' regardless of valid_categories).
@@ -297,8 +297,8 @@ def update_roadmap_meta(
     if not os.path.isdir(change_dir):
         return False
 
-    # Lookup phase/category from proposal-suggestions.md (matches lines 622-658)
-    suggestions_path = os.path.join(project_root, "proposal-suggestions.md")
+    # Lookup phase/category from improvement-suggestions.md (matches lines 622-658)
+    suggestions_path = os.path.join(project_root, "improvement-suggestions.md")
     lookup_phase = current_phase
     lookup_category = change_category
     try:
@@ -485,7 +485,7 @@ def _change_is_archived(project_root: str, name: str) -> bool:
 
 
 def batch_create_pending(project_root: str) -> list[str]:
-    """Create skeleton changes for all pending suggestions in proposal-approved.md.
+    """Create skeleton changes for all pending suggestions in improvement-approved.md.
 
     Idempotent: entries whose change already exists under openspec/changes/
     (active) or openspec/changes/archive/ (completed) are skipped, so
@@ -498,7 +498,7 @@ def batch_create_pending(project_root: str) -> list[str]:
     """
     from skills._lib.parse_approved import parse_approved_proposals
 
-    approved_file = os.path.join(project_root, "proposal-approved.md")
+    approved_file = os.path.join(project_root, "improvement-approved.md")
     rows = [(name, "") for name in parse_approved_proposals(approved_file)]
     created = []
     skipped = []

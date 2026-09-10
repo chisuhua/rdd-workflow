@@ -87,7 +87,7 @@
 ### Group 7: Final Verification (Tasks 7.1-7.2)
 
 - 7.1 `openspec validate wire-design-content-review-gate --type change --json` → no errors
-- 7.2 git diff 确认 `proposal-suggestions.md` / 其他 proposals / ADR / 历史未受影响
+- 7.2 git diff 确认 `improvement-suggestions.md` / 其他 proposals / ADR / 历史未受影响
 
 ## 验收标准
 

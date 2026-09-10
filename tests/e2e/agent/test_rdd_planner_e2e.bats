@@ -51,7 +51,7 @@ run_scenario() {
 @test "rdd-planner: P-E3 propose → 5 段格式提案落盘" {
     run run_scenario "p_e3"
     [ "$status" -eq 0 ]
-    [ -f "$OUTPUT_DIR/proposal-suggestions.md" ]
+    [ -f "$OUTPUT_DIR/improvement-suggestions.md" ]
 }
 
 @test "rdd-planner: P-E4 brainstorm 流程 → 改进提案" {
@@ -70,7 +70,7 @@ run_scenario() {
 @test "rdd-planner: P-E6 reject → feedback 写入 + 不落盘 change" {
     run run_scenario "p_e6"
     [ "$status" -eq 0 ]
-    grep -q "rejected" "$OUTPUT_DIR/proposal-suggestions.md"
+    grep -q "rejected" "$OUTPUT_DIR/improvement-suggestions.md"
 }
 
 @test "rdd-planner: P-E7 横切命令 — status/sync/feedback/advance-sprint" {

@@ -104,12 +104,12 @@ make_modified() {
   [[ "$output" == *"D  .rddf/plans/foo.md"* ]]
 }
 
-@test "hook: modified proposal-approved.md is staged but not auto-committed" {
-  make_modified "proposal-approved.md"
+@test "hook: modified improvement-approved.md is staged but not auto-committed" {
+  make_modified "improvement-approved.md"
   post_archive_cleanup "$PROJECT_ROOT" "foo"
   run git status --porcelain
   # 'M ' (second col space) means: index staged, worktree unchanged
-  [[ "$output" == *"M  proposal-approved.md"* ]]
+  [[ "$output" == *"M  improvement-approved.md"* ]]
   # No chore commit at all (rm bucket empty)
   run git log --oneline
   [[ "$output" != *"chore(post-archive)"* ]]

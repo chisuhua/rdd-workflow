@@ -19,7 +19,7 @@
 | `skills/_lib/cli/version_cmd.py` | `rddf version` — read `package.json`, print `rddf v<X.Y.Z> — rdd-workflow CLI` |
 | `skills/_lib/cli/init_cmd.py` | `rddf init [target]` — copy `skills/`, `_lib/`, `package.json`, and the `skills/cli/rddf.sh` shim to `<target>/.opencode/skills/rdd-workflow/` |
 | `skills/_lib/cli/archive_cmd.py` | `rddf archive <name>` — subprocess to `archive.sh` `archive_change` (thin wrapper, not a reimplementation) |
-| `skills/_lib/cli/guide_cmd.py` | `rddf guide` — port of `scan-state.sh::scan_state` 10-priority ladder; reads `.arch-handoff.json`, `.plan-handoff.json`, `openspec/changes/`, `proposal-suggestions.md`, `roadmap.md`; emits `RECOMMEND` + `REASON` |
+| `skills/_lib/cli/guide_cmd.py` | `rddf guide` — port of `scan-state.sh::scan_state` 10-priority ladder; reads `.arch-handoff.json`, `.plan-handoff.json`, `openspec/changes/`, `improvement-suggestions.md`, `roadmap.md`; emits `RECOMMEND` + `REASON` |
 
 ### Production Code (modified)
 
@@ -710,7 +710,7 @@ The `guide` command's display logic is currently in `rddf_guide()` (lines 175-20
 8. committed change in HEAD (no worktree) → `guide-ship`
 9. no roadmap.md → `guide-arch`
 10. no openspec/changes/ → `guide-plan`
-11. proposal-suggestions.md has pending entry → `guide-plan`
+11. improvement-suggestions.md has pending entry → `guide-plan`
 12. default → `guide-ship`
 
 - [ ] **Step 4.1: Write the failing test**
@@ -857,9 +857,9 @@ def test_priority_7_no_changes_dir_recommends_guide_plan(git_repo, capsys):
 
 
 def test_priority_8_pending_proposal_recommends_guide_plan(git_repo, capsys):
-    """roadmap + changes dir, but proposal-suggestions.md has '待创建' entry → 'guide-plan'."""
+    """roadmap + changes dir, but improvement-suggestions.md has '待创建' entry → 'guide-plan'."""
     (git_repo / "roadmap.md").write_text("# Roadmap\n")
-    (git_repo / "proposal-suggestions.md").write_text(
+    (git_repo / "improvement-suggestions.md").write_text(
         json.dumps([{"name": "x", "status": "待创建"}])
     )
     rc = guide_cmd.cmd_guide([])
@@ -872,7 +872,7 @@ def test_priority_8_pending_proposal_recommends_guide_plan(git_repo, capsys):
 def test_priority_9_no_pending_proposal_recommends_guide_ship(git_repo, capsys):
     """All prior checks pass and no pending proposals → default 'guide-ship'."""
     (git_repo / "roadmap.md").write_text("# Roadmap\n")
-    (git_repo / "proposal-suggestions.md").write_text(json.dumps([]))
+    (git_repo / "improvement-suggestions.md").write_text(json.dumps([]))
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()
     assert rc == 0
@@ -942,7 +942,7 @@ Priority order (highest first; matches scan-state.sh lines 41-53):
     6.  committed change in HEAD, no worktree             → "guide-ship"
     7.  no roadmap.md                                      → "guide-arch"
     8.  no openspec/changes/                               → "guide-plan"
-    9.  proposal-suggestions.md has pending entry         → "guide-plan"
+    9.  improvement-suggestions.md has pending entry         → "guide-plan"
     10. default                                            → "guide-ship"
 
 Stale ``workflow-state.md`` (pre-refactor format) emits a one-line
@@ -1136,8 +1136,8 @@ def _scan_state(project_root: str) -> Tuple[str, str]:
     if not (Path(project_root) / "openspec" / "changes").is_dir():
         return ("guide-plan", "无 change → 进入变更生成")
 
-    # 9-10. proposal-suggestions.md
-    suggestions_path = Path(project_root) / "proposal-suggestions.md"
+    # 9-10. improvement-suggestions.md
+    suggestions_path = Path(project_root) / "improvement-suggestions.md"
     pending = False
     if suggestions_path.is_file():
         try:

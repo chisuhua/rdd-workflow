@@ -723,7 +723,7 @@ def set_deps_info(
         step; lifecycle status is the responsibility of propose.md /
         archive.sh, not deps.md. Auto-creating phantom "proposed"
         entries here caused iteration.json to diverge from disk state
-    when deps-analysis.json contained names from proposal-approved.md
+    when deps-analysis.json contained names from improvement-approved.md
     that were never actually proposed via OpenSpec CLI (P0 fix-iteration-
     phantom-from-deps, 2026-08-25).
     """

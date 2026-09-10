@@ -137,10 +137,10 @@ Excluded from `state_revision` semantic hash (advisory recompute alone must not 
 
 ### Inputs / Outputs
 
-- **Inputs**: `.arch-handoff.json` + `proposal-suggestions.md` / `proposal-approved.md`.
+- **Inputs**: `.arch-handoff.json` + `improvement-suggestions.md` / `improvement-approved.md`.
 - **Outputs**:
   - New `.rddf/improvements/<name>.md` files.
-  - Updated `proposal-suggestions.md` / `proposal-approved.md`.
+  - Updated `improvement-suggestions.md` / `improvement-approved.md`.
   - Updated `roadmap.md` + `.rddf/roadmap/features/*.md` (NEW in v4.0.1).
   - `.rddf/state/.planner-state.json` (schema v1.1, includes `recommended_route`).
   - `.rddf/state/.planner-handoff.json` (schema v1.1, includes `recommended_route` + `awaiting_builder`).

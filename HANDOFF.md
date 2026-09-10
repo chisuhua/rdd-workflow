@@ -25,7 +25,7 @@ WORK COMPLETED
 - **Phase 3: guide-ship** — Per-change worktree mode (串行 + per-change worktree, user choice); executed all 3 changes with TDD 5-step plans; commits 98ed925 (sync-package-skills-to-disk), 553c274 (sync-agents-md-five-stage), 9c636f2 (rdd-doctor-docs-consistency); archive commits c7867be, 972d024, 6697aa3.
 - **Phase 4: rdd-verifier** — Manual verification (all 18 ACs satisfied via test runs); scan_queue returned empty due to pre-existing bug (later fixed).
 - **Phase 5: Hybrid Roadmap Path** — Created feat-fix-audit-findings feature fragment (.rddf/roadmap/features/feat-fix-audit-findings.md with phase_refs [phase-1..4]); added theme row to .rddf/roadmap.md Phase Skeleton table; registered 9 audit-followup proposals (commit c4e2f94) covering P0 reconcile + iteration fix, P1 bugs/improvements, P2 process improvements.
-- **Phase 1 Metadata Correction** — Fixed phase/category + source descriptions for 9 audit proposals (commit 5f894d4); updated proposal-suggestions.md table to match.
+- **Phase 1 Metadata Correction** — Fixed phase/category + source descriptions for 9 audit proposals (commit 5f894d4); updated improvement-suggestions.md table to match.
 - **Phase 2+3 Process Proposals** — Created 5 additional proposals covering HARD-GATE enforcement, pre-commit quality check, source tracking, from-roadmap naming flexibility, roadmap feature discovery (commit 302dd3a).
 - **Cross-session implementation** — Between 2026-08-27 and 2026-08-28, another Sisyphus session (background agent, author "clio-agent@sisyphuslabs.ai") automatically implemented ALL 14 audit-followup proposals + 4 additional batch-tool proposals (auto-archive-iteration-and-commit, design-approve-batch-tool, plan-batch-fill-tool, verifier-re-verify-archived-flag). These are now ALL archived (~30 commits since my last manual commit 302dd3a).
 
@@ -36,7 +36,7 @@ CURRENT STATE
 - **iteration.json**: 21 changes, ALL status='archived' (sync from archive hook now works due to fix-iteration-archive-sync)
 - **openspec/changes/archive/**: 270 archived changes (cumulative)
 - **openspec/changes/**: empty (no active changes)
-- **proposal-suggestions.md**: 16 rows total, 4 deferred (adr-index-auto-sync, bypass-audit-mechanism, changelog-usage-sync, verifier-archive-gate-clarification — all 2026-08-26 audit leftovers); my 14 audit proposals all auto-removed by sync_suggestions() after archive
+- **improvement-suggestions.md**: 16 rows total, 4 deferred (adr-index-auto-sync, bypass-audit-mechanism, changelog-usage-sync, verifier-archive-gate-clarification — all 2026-08-26 audit leftovers); my 14 audit proposals all auto-removed by sync_suggestions() after archive
 - **.rddf/roadmap/features/feat-fix-audit-findings.md**: exists, marked active
 - **.rddf/roadmap.md**: contains 10 themes (1 covered by my audit proposals, 9 uncovered legacy)
 - **theme coverage**: 10% (1/10) due to fix-design-preflight-roadmap-format implemented (works) but 178 legacy proposals lack **主题** field
@@ -52,11 +52,11 @@ PENDING TASKS
 - **Phase B3**: Verify each archived change has AC bullets in proposal.md (≥6 for sync-package, ≥4 for sync-agents-md, ≥7 for rdd-doctor) — currently all show "1 AC bullet" which is just the TBD placeholder
 - **Phase C1**: Update AGENTS.md per improve-roadmap-feature-discovery proposal (add Active Feature Fragments section referencing feat-fix-audit-findings)
 - **Phase C2**: CHANGELOG.md entry for v3.1 (feat-fix-audit-findings: 18 audit improvements)
-- **Phase D** (optional, planning only): Evaluate 4 P2 deferred proposals in proposal-suggestions.md (adr-index-auto-sync, bypass-audit-mechanism, changelog-usage-sync, verifier-archive-gate-clarification)
+- **Phase D** (optional, planning only): Evaluate 4 P2 deferred proposals in improvement-suggestions.md (adr-index-auto-sync, bypass-audit-mechanism, changelog-usage-sync, verifier-archive-gate-clarification)
 
 KEY FILES
 ---------
-- `/workspace/project/rdd-workflow/proposal-suggestions.md` - 16 rows (4 P2 deferred only; 14 audit proposals auto-removed)
+- `/workspace/project/rdd-workflow/improvement-suggestions.md` - 16 rows (4 P2 deferred only; 14 audit proposals auto-removed)
 - `/workspace/project/rdd-workflow/.rddf/state/iteration.json` - 21 changes, all archived
 - `/workspace/project/rdd-workflow/.rddf/roadmap/features/feat-fix-audit-findings.md` - feature fragment (kind=feature, refs phase-1..4)
 - `/workspace/project/rdd-workflow/.rddf/roadmap.md` - main table with 10 themes
@@ -90,6 +90,6 @@ CONTEXT FOR CONTINUATION
 - Remaining work is data cleanup (re-generate 3 archived proposal.md) + validation (full regression test + rdd-verify re-verify).
 - CRITICAL WARNING: 3 archived proposal.md files still show `(TBD — 验收标准 from .rddf/improvements 头部未提供)` despite fix-proposal-ac-section-mapping being implemented. The fix only changed generation logic, not retroactive regeneration. If user wants verifiable ACs in archived proposal.md, manual regeneration needed (can use `python3 skills/guide-design/scripts/generate_full_proposal.py <name> --proposal .rddf/improvements/<name>.md --project-root $(pwd) > /tmp/p.md` then copy to archive).
 - rdd-verifier default behavior unchanged: still requires `--re-verify-archived` flag to scan archived changes. Default scan_queue.sh only filters `status in {"in_worktree", "completed"}`.
-- 4 P2 deferred proposals in proposal-suggestions.md are leftover from 2026-08-26 audit (adr-index-auto-sync, bypass-audit-mechanism, changelog-usage-sync, verifier-archive-gate-clarification) — user has not yet decided whether to escalate these.
+- 4 P2 deferred proposals in improvement-suggestions.md are leftover from 2026-08-26 audit (adr-index-auto-sync, bypass-audit-mechanism, changelog-usage-sync, verifier-archive-gate-clarification) — user has not yet decided whether to escalate these.
 - tests/integration/test_rdd_doctor.bats was deleted by fix-disk-count-semantic-conflict implementation; rdd-doctor unit tests remain in tests/unit/.
 - The .rddf/plans/<name>.md files from my session (created during ship execution) were never merged to master — they exist only in ephemeral worktrees that have been cleaned up.

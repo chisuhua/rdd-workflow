@@ -312,7 +312,7 @@ install.sh                          — 安装脚本
 .rdd-workflow/flow.yaml.example    — 流程 YAML 配置示例
 project-organization-plan.md        — 项目整理计划
 project-organization.md             — 执行计划
-proposal-suggestions.md             — 改进建议占位
+improvement-suggestions.md             — 改进建议占位
 roadmap.md                          — 版本路线图
 ```
 

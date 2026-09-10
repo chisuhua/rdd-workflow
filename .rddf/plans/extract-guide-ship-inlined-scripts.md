@@ -574,7 +574,7 @@ load ../test_helper
   [ -f "$REPO_ROOT/skills/guide-ship.md" ]
   # Branch 1 (in-scope append)
   ! grep -nE '追加到 tasks.md' "$REPO_ROOT/skills/guide-ship.md"
-  # Branch 2 (side-effect debt change → proposal-suggestions.md)
+  # Branch 2 (side-effect debt change → improvement-suggestions.md)
   ! grep -nE 'type.: .debt.' "$REPO_ROOT/skills/guide-ship.md"
   # Branch 3 (arch drift doc)
   ! grep -nE 'drift-analysis\.md' "$REPO_ROOT/skills/guide-review.sh" 2>/dev/null
@@ -606,7 +606,7 @@ load ../test_helper
   rm -f /tmp/review_new_todos.txt
 }
 
-@test "handle_review_action option 2 creates debt entry in proposal-suggestions.md" {
+@test "handle_review_action option 2 creates debt entry in improvement-suggestions.md" {
   TEST_REPO=$(mktemp -d)
   cd "$TEST_REPO"
   git init -q -b master
@@ -615,9 +615,9 @@ load ../test_helper
   mkdir -p openspec/changes/parent-change
   source "$REPO_ROOT/skills/_lib/ship_review.sh"
   handle_review_action "$TEST_REPO" "parent-change" "$TEST_REPO" "2"
-  [ -f "$TEST_REPO/proposal-suggestions.md" ]
-  grep -q '"type": "debt"' "$TEST_REPO/proposal-suggestions.md"
-  grep -q 'cleanup-parent-change-debt' "$TEST_REPO/proposal-suggestions.md"
+  [ -f "$TEST_REPO/improvement-suggestions.md" ]
+  grep -q '"type": "debt"' "$TEST_REPO/improvement-suggestions.md"
+  grep -q 'cleanup-parent-change-debt' "$TEST_REPO/improvement-suggestions.md"
   rm -rf "$TEST_REPO"
 }
 
@@ -693,7 +693,7 @@ _review_append_in_scope_tasks() {
 }
 
 # _review_create_debt_change <project_root> <change_name>
-#   Action 2: append a debt entry to proposal-suggestions.md, create a new
+#   Action 2: append a debt entry to improvement-suggestions.md, create a new
 #   openspec change, run conflict-driven auto-deps if file conflicts exist.
 _review_create_debt_change() {
   local project_root="$1"
@@ -702,7 +702,7 @@ _review_create_debt_change() {
 
   echo "🔖 创建新 debt change: $debt_name"
 
-  # Append to proposal-suggestions.md (type=debt)
+  # Append to improvement-suggestions.md (type=debt)
   PY_PROJECT_ROOT="$project_root" python3 -c "
 import os, json
 try:
@@ -717,7 +717,7 @@ try:
         'description': '## 架构依据\n- $change_name 执行后审查发现\n## 范围\n- 见 TODO 扫描结果\n## 关键场景\n- 常规清理\n## 技术约束\n- MUST NOT 影响已有功能\n## 验收标准\n- 新增测试通过\n',
         'effort': '1天'
     }
-    path = os.path.join(os.environ['PY_PROJECT_ROOT'], 'proposal-suggestions.md')
+    path = os.path.join(os.environ['PY_PROJECT_ROOT'], 'improvement-suggestions.md')
     if os.path.isfile(path):
         with open(path) as f:
             entries = json.load(f)
@@ -726,7 +726,7 @@ try:
     entries.append(debt)
     with open(path, 'w') as f:
         json.dump(entries, f, ensure_ascii=False, indent=2)
-    print(f'✅ 已追加到 proposal-suggestions.md: {debt[\"name\"]}')
+    print(f'✅ 已追加到 improvement-suggestions.md: {debt[\"name\"]}')
 except Exception as e:
     print(f'⚠️  追加失败: {e}')
 "

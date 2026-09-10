@@ -23,7 +23,7 @@
 archive_change (worktree mode)        archive_change_for_mode (lightweight mode)
   └→ openspec archive <name> --yes      └→ openspec archive <name> --yes
   └→ cleanup_worktree_and_branch        └→ cleanup_worktree_and_branch
-  └→ commit_archive_moves (3 paths)     └→ update_proposal_status (proposal-approved.md touched)
+  └→ commit_archive_moves (3 paths)     └→ update_proposal_status (improvement-approved.md touched)
   └→ cleanup_plan_handoff               └→ cleanup_plan_handoff
   └→ cleanup_plan_file                  └→ cleanup_plan_file
 ```
@@ -34,7 +34,7 @@ archive_change (worktree mode)        archive_change_for_mode (lightweight mode)
 2. `_lib/archive.sh:515 commit_archive_moves` 仅 `git add` 3 个路径,不处理 `.rddf/` → 即使 plan file 已 `rm` 也没人 stage 这个删除
 3. `_lib/state.sh:452 check_dirty_key_files` 是 **sentinel**(只警告不阻断不修复)——不替代自动 cleanup
 
-用户痛点:**今天 `archive(fix-rddf-init-broken-layout)` commit 9f31a68 之后**,残留 `.rddf/plans/fix-rddf-init-broken-layout.md` (deleted - 未提交),下次启动 `guide` 时看到 `⚠️ 关键文件有未提交更改: proposal-approved.md` + working tree 2 issues 的警告。
+用户痛点:**今天 `archive(fix-rddf-init-broken-layout)` commit 9f31a68 之后**,残留 `.rddf/plans/fix-rddf-init-broken-layout.md` (deleted - 未提交),下次启动 `guide` 时看到 `⚠️ 关键文件有未提交更改: improvement-approved.md` + working tree 2 issues 的警告。
 
 ## 范围
 
@@ -42,7 +42,7 @@ archive_change (worktree mode)        archive_change_for_mode (lightweight mode)
   - 新增 `_lib/post_archive_cleanup.sh`(bash,与 `_lib/archive.sh` 同风格),导出公开函数 `post_archive_cleanup <project_root> [change_name]`
   - 单一 idempotent pass:`git status --porcelain` 全扫,按白名单分类处理 3 类残留:
     - **deleted tracked**:`git rm -f` 白名单内路径(`.rddf/plans/`、`.rddf/state/<change_name>*.json`、`openspec/changes/<change_name>/`)
-    - **modified critical files**:`git add` 白名单(`proposal-approved.md`、`proposal-suggestions.md`、`roadmap.md`)— 不自动 commit,留待用户
+    - **modified critical files**:`git add` 白名单(`improvement-approved.md`、`improvement-suggestions.md`、`roadmap.md`)— 不自动 commit,留待用户
     - **deleted critical tracking files**:`git rm` 同上
   - 双路径接入:`_lib/archive.sh::archive_change` 和 `skills/guide-ship/scripts/ship_archive.sh::archive_change_for_mode` 都调用 hook(在 archive 主体成功后、`commit_archive_moves` 之后)
   - 自动 commit 已 `git rm` 的删除项,commit message 格式:`chore(post-archive): clean residue from <change-name>`(idempotent:无残留即 no-op,不创建空 commit)
@@ -57,7 +57,7 @@ archive_change (worktree mode)        archive_change_for_mode (lightweight mode)
 
 - GIVEN archive 主体成功完成, WHEN `post_archive_cleanup <project_root> <change>` 触发, THEN `openspec/changes/<change>/` 已 `git rm`(残留索引条目消失)
 - GIVEN `.rddf/plans/<change>.md` 是 ` D ` (deleted) 状态, WHEN hook 触发, THEN 该文件已 `git rm -f`,且在下一 commit 包含 `chore(post-archive)` 类型 commit
-- GIVEN `proposal-approved.md` 在 archive 期间被 `update_proposal_status` 改动, WHEN hook 触发, THEN 文件已 `git add`(索引已更新),但不在 hook 自己的 commit 里
+- GIVEN `improvement-approved.md` 在 archive 期间被 `update_proposal_status` 改动, WHEN hook 触发, THEN 文件已 `git add`(索引已更新),但不在 hook 自己的 commit 里
 - GIVEN 已 archive 后再调 hook(no-op 场景), WHEN 触发, THEN exit 0 且不创建空 commit
 - GIVEN worktree mode, WHEN hook 在 `main_root` 跑, THEN 不污染 worktree 当前分支
 - GIVEN lightweight mode, WHEN hook 在 `current_branch` 跑, THEN working tree clean
@@ -70,7 +70,7 @@ archive_change (worktree mode)        archive_change_for_mode (lightweight mode)
 - MUST 仅处理白名单内路径(避免污染 `tasks.md`/其他 dirty 文件)
 - MUST 双 mode 都接入(`archive_change` + `archive_change_for_mode`)
 - MUST auto commit 仅限已 `git rm` 的删除项,不自动 commit modified untracked
-- MUST **NOT** 自动 commit 用户手工修改文件(只 stage `proposal-approved.md` 等已知 hook-owns 文件)
+- MUST **NOT** 自动 commit 用户手工修改文件(只 stage `improvement-approved.md` 等已知 hook-owns 文件)
 - MUST **NOT** 删除 untracked 文件(避免误删用户工作)
 - SHOULD 提供 `SKIP_POST_ARCHIVE_CLEANUP=yes` 旁路(测试/紧急 escape)
 - SHOULD 提供 `DRY_RUN_POST_ARCHIVE_CLEANUP=yes` 模式(只 echo 不执行任何 git 操作)

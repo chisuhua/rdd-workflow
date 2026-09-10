@@ -46,7 +46,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category state|plan-tdd|roa
 | `state` | `.rddf/state/*.json` 对 `_lib/schemas/*.json` schema |
 | `plan-tdd` | `.rddf/plans/*.md` 含 5 个 TDD step markers |
 | `roadmap-meta` | `openspec/changes/*/roadmap-meta.yaml` 字段 + 类型（**manual_deps 漂移会静默忽略**，doctor 报 CRITICAL） |
-| `proposal-table` | `proposal-suggestions.md` / `proposal-approved.md` Markdown 表格列数 + 链接有效性 |
+| `proposal-table` | `improvement-suggestions.md` / `improvement-approved.md` Markdown 表格列数 + 链接有效性 |
 | `tasks-checkbox` | `openspec/changes/*/tasks.md` checkbox 计数（独立于 openspec CLI） |
 | `migration-residue` | `AGENTS.md` / `README.md` / `USAGE.md` / `docs/proposal-*-format.md` 里的 stale `improvements/X` 引用和 `.rddf/.rddf/improvements/X` 双前缀 bug（WARNING）。`Fix:` 行直接给出 `rddf migrate-improvements --include-docs [--allow-source-repo]` 完整命令 |
 | `gitignore` | `.rddf/project.yaml` `git.openspec_tracked` × `.gitignore` `openspec/` 一致性（add-gitignore-hard-protection）：false+缺失 → WARNING（建议追加 + 混合状态提示 `git rm -r --cached`）；true+有 → 反向不一致 WARNING |

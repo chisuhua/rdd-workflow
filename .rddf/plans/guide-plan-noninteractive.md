@@ -143,11 +143,11 @@ Find the code block that starts with the menu display (around line 242: `请选�
 # --- Non-interactive mode: skip menu, auto-select all pending ---
 if [ "$NON_INTERACTIVE" = true ]; then
     echo "🔇 Non-interactive mode: 自动选择所有待创建建议"
-    # Auto-select: iterate proposal-approved.md and create all pending changes
+    # Auto-select: iterate improvement-approved.md and create all pending changes
     SELECTED_NAMES=($(python3 -c "
 import re, sys
 try:
-    with open('proposal-approved.md') as f:
+    with open('improvement-approved.md') as f:
         content = f.read()
     section = re.split(r'## 已实施', content)[0]
     rows = re.findall(r'\[\s*([^\]]+)\]\s*\(improvements/([^)]+)\)', section)
@@ -173,7 +173,7 @@ The key is wrapping the interactive menu display and user input reading inside t
 The menu display (lines 222-250) is followed by a `case` handler (lines 252-280). The `read -r target_name` at line 258 and subsequent `if` at line 261 are the interactive part. The approach is:
 
 1. Before the Phase 2 menu display (line 220), add the non-interactive guard
-2. In non-interactive mode, parse `proposal-approved.md`, get all names, call `skill_use("propose", "--create", "$name")` for each, then set `choice=6` to proceed to deps
+2. In non-interactive mode, parse `improvement-approved.md`, get all names, call `skill_use("propose", "--create", "$name")` for each, then set `choice=6` to proceed to deps
 3. In interactive mode, show the existing menu unchanged
 
 - [x] **Step 4: Run test to verify it passes**
@@ -289,7 +289,7 @@ Add to `tests/unit/test_propose_change.py`:
 ```python
 class TestBatchCreatePending:
     def test_batch_create_pending_iterates_all(self, tmp_path):
-        """Create a temp proposal-suggestions.md with 3 pending + 1 completed,
+        """Create a temp improvement-suggestions.md with 3 pending + 1 completed,
         call batch_create_pending(), assert 3 skeleton changes created."""
         suggestions = [
             {"name": "c1", "status": "待创建", "phase": "phase-1", "category": "general", "priority": "P1"},
@@ -297,7 +297,7 @@ class TestBatchCreatePending:
             {"name": "c3", "status": "待创建", "phase": "phase-2", "category": "refactor", "priority": "P1"},
             {"name": "c4", "status": "completed", "phase": "phase-1", "category": "general", "priority": "P2"},
         ]
-        (tmp_path / "proposal-suggestions.md").write_text(json.dumps(suggestions, indent=2) + "\n")
+        (tmp_path / "improvement-suggestions.md").write_text(json.dumps(suggestions, indent=2) + "\n")
         result = pc.batch_create_pending(str(tmp_path))
         assert result == 3
         # Verify skeleton changes were created
@@ -320,9 +320,9 @@ Add to `skills/propose/scripts/propose_change.py` (after the last function, befo
 
 ```python
 def batch_create_pending(project_root: str) -> int:
-    """Create skeleton changes for all pending suggestions in proposal-suggestions.md.
+    """Create skeleton changes for all pending suggestions in improvement-suggestions.md.
     
-    Reads proposal-suggestions.md, filters entries with status='待创建',
+    Reads improvement-suggestions.md, filters entries with status='待创建',
     and calls create_skeleton_change() for each. Returns the count of
     successfully created skeleton changes.
     
@@ -332,7 +332,7 @@ def batch_create_pending(project_root: str) -> int:
     import os
     import json
     
-    suggestions_path = os.path.join(project_root, "proposal-suggestions.md")
+    suggestions_path = os.path.join(project_root, "improvement-suggestions.md")
     if not os.path.exists(suggestions_path):
         return 0
     
@@ -384,13 +384,13 @@ Add to `TestBatchCreatePending` class in `tests/unit/test_propose_change.py`:
 
 ```python
     def test_batch_create_pending_empty_list(self, tmp_path):
-        """Create a temp proposal-suggestions.md with 0 pending entries,
+        """Create a temp improvement-suggestions.md with 0 pending entries,
         call batch_create_pending(), assert returns 0 and no changes created."""
         suggestions = [
             {"name": "c1", "status": "completed", "phase": "phase-1", "category": "general", "priority": "P1"},
             {"name": "c2", "status": "skeleton", "phase": "phase-1", "category": "general", "priority": "P2"},
         ]
-        (tmp_path / "proposal-suggestions.md").write_text(json.dumps(suggestions, indent=2) + "\n")
+        (tmp_path / "improvement-suggestions.md").write_text(json.dumps(suggestions, indent=2) + "\n")
         result = pc.batch_create_pending(str(tmp_path))
         assert result == 0
         # Verify no skeleton directories were created

@@ -14,7 +14,7 @@ Priority order (highest first; matches scan-state.sh lines 41-53):
     6.  committed change in HEAD, no worktree                → "rdd-builder"
     7.  no roadmap.md                                         → "rdd-arch"
     8.  no openspec/changes/                                  → "rdd-builder"
-    9.  proposal-suggestions.md has pending entry            → "rdd-builder"
+    9.  improvement-suggestions.md has pending entry            → "rdd-builder"
     10. default                                               → "rdd-builder"
 
 Stale ``workflow-state.md`` (pre-refactor format) emits a one-line
@@ -212,10 +212,10 @@ def _scan_state(project_root: str) -> Tuple[str, str]:
     if not (Path(project_root) / "openspec" / "changes").is_dir():
         return ("rdd-builder", "无 change → 进入变更生成")
 
-    # 9-10. proposal-suggestions.md (current format: Markdown table)
+    # 9-10. improvement-suggestions.md (current format: Markdown table)
     # Check if there are unapproved proposals in .rddf/improvements/
     improvements_dir = Path(project_root) / ".rddf/improvements"
-    approved_path = Path(project_root) / "proposal-approved.md"
+    approved_path = Path(project_root) / "improvement-approved.md"
     
     pending = False
     if improvements_dir.is_dir():
@@ -224,7 +224,7 @@ def _scan_state(project_root: str) -> Tuple[str, str]:
         for f in improvements_dir.glob("*.md"):
             all_improvements.add(f.stem)
         
-        # Get approved .rddf/improvements from proposal-approved.md
+        # Get approved .rddf/improvements from improvement-approved.md
         approved = set()
         if approved_path.is_file():
             try:

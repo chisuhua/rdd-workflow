@@ -12,7 +12,7 @@
    - `update_roadmap_meta(project_root, name, current_phase, change_category, priority, valid_categories)` — encapsulates roadmap-meta.yaml creation + phase/category lookup (lines 617-686)
    - `update_roadmap_state(project_root, name, change_phase, change_category)` — encapsulates roadmap-state.json update (lines 688-711)
    - `update_iteration_proposed(project_root, name, phase, category, priority)` — encapsulates iteration.json sync (lines 713-760)
-   - `set_suggestion_status(project_root, name, status)` — encapsulates proposal-suggestions.md status update (lines 531-548)
+   - `set_suggestion_status(project_root, name, status)` — encapsulates improvement-suggestions.md status update (lines 531-548)
 
 2. **New bash wrapper `skills/_lib/propose_change.sh`** with 2 public functions:
    - `propose_create_change <name> [--skeleton|--full] <current_phase> <category> <priority>` — main entry, handles env vars + openspec CLI + baseline validation
@@ -101,7 +101,7 @@ from skills._lib import propose_change as pc
 
 @pytest.fixture
 def project_root(tmp_path):
-    (tmp_path / "proposal-suggestions.md").write_text("[]")
+    (tmp_path / "improvement-suggestions.md").write_text("[]")
     return str(tmp_path)
 
 
@@ -111,7 +111,7 @@ def project_with_suggestions(tmp_path):
         {"name": "c1", "status": "待创建"},
         {"name": "c2", "status": "created"},
     ]
-    (tmp_path / "proposal-suggestions.md").write_text(
+    (tmp_path / "improvement-suggestions.md").write_text(
         json.dumps(entries, ensure_ascii=False, indent=2)
     )
     return str(tmp_path)
@@ -121,7 +121,7 @@ class TestSetSuggestionStatus:
     def test_updates_status_for_matching_name(self, project_with_suggestions):
         result = pc.set_suggestion_status(project_with_suggestions, "c1", "skeleton")
         assert result is True
-        with open(f"{project_with_suggestions}/proposal-suggestions.md") as f:
+        with open(f"{project_with_suggestions}/improvement-suggestions.md") as f:
             entries = json.load(f)
         assert entries[0]["status"] == "skeleton"
         assert entries[1]["status"] == "created"  # unchanged
@@ -133,20 +133,20 @@ class TestSetSuggestionStatus:
     def test_no_op_when_file_missing(self, project_root):
         # tmp_path has file but with empty list — remove it
         import os
-        os.remove(f"{project_root}/proposal-suggestions.md")
+        os.remove(f"{project_root}/improvement-suggestions.md")
         result = pc.set_suggestion_status(project_root, "c1", "skeleton")
         assert result is False
 
     def test_preserves_other_fields(self, project_with_suggestions):
         pc.set_suggestion_status(project_with_suggestions, "c1", "skeleton")
-        with open(f"{project_with_suggestions}/proposal-suggestions.md") as f:
+        with open(f"{project_with_suggestions}/improvement-suggestions.md") as f:
             entries = json.load(f)
         # c1 had "status": "待创建" only — other fields preserved
         assert entries[0]["status"] == "skeleton"
         assert entries[0]["name"] == "c1"
 
     def test_returns_false_on_malformed_json(self, tmp_path):
-        bad_file = tmp_path / "proposal-suggestions.md"
+        bad_file = tmp_path / "improvement-suggestions.md"
         bad_file.write_text("not valid json {{{")
         result = pc.set_suggestion_status(str(tmp_path), "c1", "skeleton")
         assert result is False
@@ -179,12 +179,12 @@ from typing import Optional
 def set_suggestion_status(
     project_root: str, name: str, new_status: str
 ) -> bool:
-    """Update status field for matching entry in proposal-suggestions.md.
+    """Update status field for matching entry in improvement-suggestions.md.
 
     Returns True if updated, False if file missing / malformed / name not found.
     Preserves all other fields. Matches original lines 531-548 inline behavior.
     """
-    path = os.path.join(project_root, "proposal-suggestions.md")
+    path = os.path.join(project_root, "improvement-suggestions.md")
     try:
         with open(path) as f:
             entries = json.load(f)
@@ -222,7 +222,7 @@ cd /workspace/project/rdd-workflow
 git add skills/_lib/propose_change.py tests/unit/test_propose_change.py
 git commit -m "feat(propose): add set_suggestion_status helper + unit tests (P0-1a)
 
-Extract proposal-suggestions.md status update logic from propose.md
+Extract improvement-suggestions.md status update logic from propose.md
 lines 531-548 inline heredoc into _lib/propose_change.py.
 
 Function signature:
@@ -455,16 +455,16 @@ Append to `tests/unit/test_propose_change.py`:
 ```python
 class TestUpdateRoadmapMeta:
     """update_roadmap_meta encapsulates lines 617-686 of propose.md:
-    - Lookup phase/category from proposal-suggestions.md (or fallback)
+    - Lookup phase/category from improvement-suggestions.md (or fallback)
     - Validate category against valid_categories list
     - Write roadmap-meta.yaml
     """
 
     def test_writes_yaml_with_phase_and_category(self, tmp_path):
         from skills._lib import state as state_mod
-        # Set up proposal-suggestions.md with explicit phase/category
+        # Set up improvement-suggestions.md with explicit phase/category
         entries = [{"name": "c1", "phase": "phase-2", "category": "core"}]
-        (tmp_path / "proposal-suggestions.md").write_text(json.dumps(entries))
+        (tmp_path / "improvement-suggestions.md").write_text(json.dumps(entries))
         result = pc.update_roadmap_meta(
             str(tmp_path), "c1",
             current_phase="phase-1",
@@ -481,7 +481,7 @@ class TestUpdateRoadmapMeta:
         assert 'category: "core"' in content
 
     def test_falls_back_to_current_phase_when_suggestions_missing(self, tmp_path):
-        # No proposal-suggestions.md
+        # No improvement-suggestions.md
         result = pc.update_roadmap_meta(
             str(tmp_path), "c1",
             current_phase="phase-3",
@@ -498,7 +498,7 @@ class TestUpdateRoadmapMeta:
         # Use REAL valid_categories from init_state('phase-1') defaults:
         # arch-design, infra-setup, core-impl, core-test (NOT 'general')
         entries = [{"name": "c1", "category": "nonexistent"}]
-        (tmp_path / "proposal-suggestions.md").write_text(json.dumps(entries))
+        (tmp_path / "improvement-suggestions.md").write_text(json.dumps(entries))
         result = pc.update_roadmap_meta(
             str(tmp_path), "c1",
             current_phase="phase-1",
@@ -563,7 +563,7 @@ def update_roadmap_meta(
 ) -> bool:
     """Update roadmap-meta.yaml for a change (propose.md lines 617-686).
 
-    Looks up phase/category from proposal-suggestions.md, falls back to
+    Looks up phase/category from improvement-suggestions.md, falls back to
     arguments. Validates category against valid_categories; falls back to
     'general' on mismatch. Returns False if openspec/changes/<name>/ doesn't
     exist or yaml write fails.
@@ -573,8 +573,8 @@ def update_roadmap_meta(
     if not os.path.isdir(change_dir):
         return False
 
-    # Lookup phase/category from proposal-suggestions.md (matches lines 622-658)
-    suggestions_path = os.path.join(project_root, "proposal-suggestions.md")
+    # Lookup phase/category from improvement-suggestions.md (matches lines 622-658)
+    suggestions_path = os.path.join(project_root, "improvement-suggestions.md")
     lookup_phase = current_phase
     lookup_category = change_category
     try:
@@ -652,7 +652,7 @@ Function signature:
                       priority, valid_categories) -> bool
 
 Encapsulates:
-- Phase/category lookup from proposal-suggestions.md
+- Phase/category lookup from improvement-suggestions.md
 - Fallback to current_phase/general when missing/invalid
 - Category validation against valid_categories list
 - roadmap-meta.yaml write with proper YAML structure
@@ -1187,7 +1187,7 @@ name = "$name"
 project_root = os.environ["PROJECT_ROOT"]
 current_phase = os.environ["CURRENT_PHASE"]
 valid_categories = os.environ.get("VALID_CATEGORIES", "")
-# update_roadmap_meta looks up phase/category from proposal-suggestions.md
+# update_roadmap_meta looks up phase/category from improvement-suggestions.md
 pc.update_roadmap_meta(project_root, name, current_phase, category, priority, valid_categories)
 pc.update_roadmap_state(project_root, name, current_phase, category)
 pc.update_iteration_proposed(project_root, name, current_phase, category, priority)
@@ -1334,7 +1334,7 @@ Append after the `_lib/ship_*.sh` extraction section (around line 100):
 
 | Python function | Source lines | Responsibility |
 |------------------|--------------|----------------|
-| `set_suggestion_status` | 531-548 | Update proposal-suggestions.md entry status |
+| `set_suggestion_status` | 531-548 | Update improvement-suggestions.md entry status |
 | `create_skeleton_change` | 486-551 | Write proposal.md + roadmap-meta.yaml + iteration.json (planned) |
 | `update_roadmap_meta` | 617-686 | Lookup phase/category + validate + write yaml |
 | `update_roadmap_state` | 688-711 | Append change to roadmap-state.json via update_change_count |

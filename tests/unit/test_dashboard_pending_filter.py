@@ -16,7 +16,7 @@ def test_archived_change_excluded_from_pending(tmp_path):
     (tmp / ".rddf/improvements").mkdir(parents=True)
     (tmp / "openspec/changes/archive/2026-08-08-foo").mkdir(parents=True)
     (tmp / ".rddf/improvements/foo.md").write_text("# foo")
-    (tmp / "proposal-approved.md").write_text("| header |\n|--|\n")
+    (tmp / "improvement-approved.md").write_text("| header |\n|--|\n")
     sys.path.insert(0, PROJECT_ROOT)
     sys.path.insert(0, SKILLS_ROOT)
     from _lib.dashboard import collect
@@ -27,11 +27,11 @@ def test_archived_change_excluded_from_pending(tmp_path):
 
 
 def test_approved_change_excluded_from_pending(tmp_path):
-    """Approved changes (proposal-approved.md main table) MUST NOT show as pending."""
+    """Approved changes (improvement-approved.md main table) MUST NOT show as pending."""
     tmp = tmp_path
     (tmp / ".rddf/improvements").mkdir(parents=True)
     (tmp / ".rddf/improvements/bar.md").write_text("# bar")
-    (tmp / "proposal-approved.md").write_text(
+    (tmp / "improvement-approved.md").write_text(
         "| [bar](.rddf/improvements/bar.md) | P1 | 2026-01-01 |\n"
     )
     sys.path.insert(0, PROJECT_ROOT)
@@ -43,11 +43,11 @@ def test_approved_change_excluded_from_pending(tmp_path):
 
 
 def test_pending_improvement_still_in_pending(tmp_path):
-    """Improvements not in proposal-approved.md AND not archived MUST show as pending."""
+    """Improvements not in improvement-approved.md AND not archived MUST show as pending."""
     tmp = tmp_path
     (tmp / ".rddf/improvements").mkdir(parents=True)
     (tmp / ".rddf/improvements/draft.md").write_text("# draft")
-    (tmp / "proposal-approved.md").write_text("| header |\n|--|\n")
+    (tmp / "improvement-approved.md").write_text("| header |\n|--|\n")
     sys.path.insert(0, PROJECT_ROOT)
     sys.path.insert(0, SKILLS_ROOT)
     from _lib.dashboard import collect

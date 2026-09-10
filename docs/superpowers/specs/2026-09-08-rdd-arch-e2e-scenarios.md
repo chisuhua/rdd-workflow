@@ -100,7 +100,7 @@
 |------|------|
 | 入口 | 真跑 A-E1..A-E7 后，扫下游 planner 预期写的 state 文件 |
 | 预期产物 | 7 scenario 全部不写 `.rddf/state/.planner-handoff.json` |
-| 必清状态 | planner 路径专属文件 unchanged：`.planner-handoff.json` / `.design-handoff.json` / `proposal-suggestions.md` |
+| 必清状态 | planner 路径专属文件 unchanged：`.planner-handoff.json` / `.design-handoff.json` / `improvement-suggestions.md` |
 | AC 断言 | `find .rddf/state -name "*handoff*.json"` 仅含 `.arch-handoff.json`；plan/suggest/approved md 不变 |
 | 隔离规则 | meta-测试 |
 | 备注 | 跨阶段零污染；与 `2026-09-08-rdd-planner-e2e-scenarios.md` 互锁 |

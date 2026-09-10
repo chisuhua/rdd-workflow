@@ -143,7 +143,7 @@ While fixing the audit, the following pre-existing issues were discovered and **
 1. **RddfSessionCoordinator** is still 491 lines / 16 methods. Full god-class split deferred to follow-up change.
 2. **`state_vector.py::save()`** uses `tempfile.mkstemp` + `FileLock` — different pattern from `atomic_write_json` (the FileLock is correctly not part of the helper). The unique 5th pattern was intentionally left alone.
 3. **Other large files** (iteration.py 614 lines, gate.py 459 lines, etc.) have similar complexity but are working as designed.
-4. **`docs/proposal-suggestions-format.md`** still describes v1.x legacy format — was kept for historical reference per Decision 5.
+4. **`docs/improvement-suggestions-format.md`** still describes v1.x legacy format — was kept for historical reference per Decision 5.
 
 ## 6. Validation Commands
 

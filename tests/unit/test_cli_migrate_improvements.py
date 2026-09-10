@@ -8,8 +8,8 @@ globally-installed rdd-workflow:
   3. Refuse (exit 1) when ``.rddf/improvements/`` already exists.
   4. ``git mv`` migration when inside a git repo.
   5. ``mv`` fallback when outside a git repo.
-  6. Update markdown links in ``proposal-approved.md``.
-  7. Update markdown links in ``proposal-suggestions.md``.
+  6. Update markdown links in ``improvement-approved.md``.
+  7. Update markdown links in ``improvement-suggestions.md``.
   8. Update ``path`` fields in ``.rddf/state/iteration.json``.
   9. ``--help`` / ``-h`` prints usage and returns 0 without writing.
 
@@ -51,8 +51,8 @@ def fake_project(tmp_path, monkeypatch):
             improvements/
                 foo.md
                 bar.md
-            proposal-approved.md        (with old-style links)
-            proposal-suggestions.md     (with old-style links)
+            improvement-approved.md        (with old-style links)
+            improvement-suggestions.md     (with old-style links)
             .rddf/
                 state/
                     iteration.json      (with old-style paths)
@@ -62,12 +62,12 @@ def fake_project(tmp_path, monkeypatch):
     (proj / "improvements" / "foo.md").write_text("# Foo\n")
     (proj / "improvements" / "bar.md").write_text("# Bar\n")
 
-    (proj / "proposal-approved.md").write_text(
+    (proj / "improvement-approved.md").write_text(
         "| name | link |\n|------|------|\n"
         "| foo | [foo](improvements/foo.md) |\n"
         "| bar | [bar](improvements/bar.md) |\n"
     )
-    (proj / "proposal-suggestions.md").write_text(
+    (proj / "improvement-suggestions.md").write_text(
         "| name | link |\n|------|------|\n"
         "| foo | [foo](improvements/foo.md) |\n"
     )
@@ -208,14 +208,14 @@ def test_cmd_migrate_improvements_mv_fallback_outside_git_repo(
     # improvements/ should be removed (was empty after mv *.md)
     assert not (fake_project / "improvements").exists()
 
-    # Links updated in proposal-approved.md
-    pa_text = (fake_project / "proposal-approved.md").read_text()
+    # Links updated in improvement-approved.md
+    pa_text = (fake_project / "improvement-approved.md").read_text()
     assert "[foo](.rddf/improvements/foo.md)" in pa_text
     assert "[bar](.rddf/improvements/bar.md)" in pa_text
     assert "](improvements/" not in pa_text
 
-    # Links updated in proposal-suggestions.md
-    ps_text = (fake_project / "proposal-suggestions.md").read_text()
+    # Links updated in improvement-suggestions.md
+    ps_text = (fake_project / "improvement-suggestions.md").read_text()
     assert "[foo](.rddf/improvements/foo.md)" in ps_text
     assert "](improvements/" not in ps_text
 
@@ -233,7 +233,7 @@ def test_cmd_migrate_improvements_mv_fallback_outside_git_repo(
 def test_cmd_migrate_improvements_handles_missing_optional_files(
     tmp_path, monkeypatch, capsys
 ):
-    """When proposal-approved.md / proposal-suggestions.md / iteration.json are absent,
+    """When improvement-approved.md / improvement-suggestions.md / iteration.json are absent,
     the migration still succeeds (they are optional)."""
     proj = tmp_path / "minimal"
     proj.mkdir()
@@ -279,7 +279,7 @@ def test_cmd_migrate_improvements_include_docs_rewrites_agents_md(
         "Also [bar](improvements/bar.md) is referenced.\n"
     )
     (fake_project / "docs").mkdir()
-    (fake_project / "docs" / "proposal-suggestions-format.md").write_text(
+    (fake_project / "docs" / "improvement-suggestions-format.md").write_text(
         "| [foo](improvements/foo.md) | P1 | source | 2026-01-01 |\n"
     )
 
@@ -291,7 +291,7 @@ def test_cmd_migrate_improvements_include_docs_rewrites_agents_md(
     assert "[bar](.rddf/improvements/bar.md)" in agents_text
     assert "](improvements/" not in agents_text
 
-    docs_text = (fake_project / "docs" / "proposal-suggestions-format.md").read_text()
+    docs_text = (fake_project / "docs" / "improvement-suggestions-format.md").read_text()
     assert "[foo](.rddf/improvements/foo.md)" in docs_text
     assert "](improvements/" not in docs_text
 
@@ -307,7 +307,7 @@ def test_cmd_migrate_improvements_include_docs_fixes_double_prefix_bug(
     The command must collapse this to the correct single-prefix form.
     """
     (fake_project / "docs").mkdir()
-    (fake_project / "docs" / "proposal-approved-format.md").write_text(
+    (fake_project / "docs" / "improvement-approved-format.md").write_text(
         "| [foo](.rddf/.rddf/improvements/foo.md) | P1 | date |\n"
         "| [bar](.rddf/.rddf/improvements/bar.md) | P2 | date |\n"
     )
@@ -315,7 +315,7 @@ def test_cmd_migrate_improvements_include_docs_fixes_double_prefix_bug(
     rc = mig.cmd_migrate_improvements(["--include-docs"])
     assert rc == 0
 
-    docs_text = (fake_project / "docs" / "proposal-approved-format.md").read_text()
+    docs_text = (fake_project / "docs" / "improvement-approved-format.md").read_text()
     assert "[foo](.rddf/improvements/foo.md)" in docs_text
     assert "[bar](.rddf/improvements/bar.md)" in docs_text
     assert ".rddf/.rddf/" not in docs_text

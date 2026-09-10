@@ -68,12 +68,12 @@ except Exception:
 }
 
 # count_pending_suggestions [project_root]
-# Counts proposals in .rddf/improvements/ that are NOT in proposal-approved.md.
+# Counts proposals in .rddf/improvements/ that are NOT in improvement-approved.md.
 # Returns 0 if no pending proposals or files are missing.
 count_pending_suggestions() {
   local project_root="${1:-.}"
   local imp_dir="$project_root/.rddf/improvements"
-  local approved_file="$project_root/proposal-approved.md"
+  local approved_file="$project_root/improvement-approved.md"
   
   if [ ! -d "$imp_dir" ]; then
     echo 0
@@ -126,11 +126,11 @@ list_improvements() {
 }
 
 # list_approved <project_root>
-# Parses proposal-approved.md Markdown table and returns approved entries.
+# Parses improvement-approved.md Markdown table and returns approved entries.
 # Returns newline-separated "name|priority|time|approver" entries.
 list_approved() {
   local project_root="${1:-.}"
-  local approved_file="$project_root/proposal-approved.md"
+  local approved_file="$project_root/improvement-approved.md"
   if [ ! -f "$approved_file" ]; then
     echo ""
     return
@@ -152,16 +152,16 @@ if len(section) > 1:
 }
 
 # append_approved <project_root> <name> <priority>
-# Appends a row to the approved proposals table in proposal-approved.md.
+# Appends a row to the approved proposals table in improvement-approved.md.
 append_approved() {
   local project_root="$1"
   local name="$2"
   local priority="$3"
-  local approved_file="$project_root/proposal-approved.md"
+  local approved_file="$project_root/improvement-approved.md"
   local timestamp=$(date -u +%Y-%m-%d)
   
   if [ ! -f "$approved_file" ]; then
-    echo "❌ proposal-approved.md not found" >&2
+    echo "❌ improvement-approved.md not found" >&2
     return 1
   fi
   
@@ -198,11 +198,11 @@ with open(sys.argv[1], 'w') as f:
 }
 
 # mark_approved_completed <project_root> <name>
-# Updates proposal-approved.md: moves entry from "已批准提案" to "已实施" table.
+# Updates improvement-approved.md: moves entry from "已批准提案" to "已实施" table.
 mark_approved_completed() {
   local project_root="$1"
   local name="$2"
-  local approved_file="$project_root/proposal-approved.md"
+  local approved_file="$project_root/improvement-approved.md"
   local timestamp=$(date -u +%Y-%m-%d)
 
   if [ ! -f "$approved_file" ]; then
@@ -268,7 +268,7 @@ if approved_idx is None:
             with open(approved_file, 'w') as f:
                 f.writelines(lines)
             sys.exit(0)
-    print(f'⚠️ mark_approved_completed: {name} not found in proposal-approved.md and no archive/ detected', file=sys.stderr)
+    print(f'⚠️ mark_approved_completed: {name} not found in improvement-approved.md and no archive/ detected', file=sys.stderr)
     sys.exit(1)
 
 priority = '?'
@@ -309,7 +309,7 @@ PYEOF
 }
 
 # sync_suggestions <project_root> <name> <status>
-#   Syncs a change's status between proposal-suggestions.md and proposal-approved.md.
+#   Syncs a change's status between improvement-suggestions.md and improvement-approved.md.
 #   - "approved" / "completed": removes the row from suggestions entirely (prevents
 #     ghost entries that show as "pending review" when they are already done).
 #   - "deferred" / "rejected": updates the status column in place (keeps row visible).
@@ -321,7 +321,7 @@ sync_suggestions() {
   local status="${3:-approved}"
   local timestamp="${4:-$(date -u +%Y-%m-%d)}"
   
-  local suggestions_file="$project_root/proposal-suggestions.md"
+  local suggestions_file="$project_root/improvement-suggestions.md"
   [ ! -f "$suggestions_file" ] && return 0
   
   REMOVE_ROW=false
@@ -370,13 +370,13 @@ if removed:
 }
 
 # sweep_implemented_proposals <project_root>
-# Scans proposal-approved.md pending table against openspec/changes/archive/.
+# Scans improvement-approved.md pending table against openspec/changes/archive/.
 # For each pending entry with a matching archive dir (suffix match),
 # calls mark_approved_completed to move it to the "已实施" section.
 # Idempotent: safe to run repeatedly.
 sweep_implemented_proposals() {
   local project_root="$1"
-  local approved_file="$project_root/proposal-approved.md"
+  local approved_file="$project_root/improvement-approved.md"
 
   if [ ! -f "$approved_file" ]; then
     return 0
@@ -390,7 +390,7 @@ sweep_implemented_proposals() {
   echo "🔍 扫描已实现提案 (sweep_implemented_proposals)..."
   local moved=0
 
-  # Parse pending proposals from proposal-approved.md (before ## 已实施)
+  # Parse pending proposals from improvement-approved.md (before ## 已实施)
   # Extract [name](.rddf/improvements/name.md) entries, check archive dir
   while IFS='|' read -r name rest; do
     [ -z "$name" ] && continue
@@ -420,14 +420,14 @@ for m in re.finditer(r'\|\s*\[([^\]]+)\]\(.rddf/improvements/([^)]+)\)\s*\|', se
 }
 
 # sweep_stale_suggestions <project_root>
-#   Scans proposal-suggestions.md for entries that are already listed in
-#   proposal-approved.md (either approved or completed sections) and removes
+#   Scans improvement-suggestions.md for entries that are already listed in
+#   improvement-approved.md (either approved or completed sections) and removes
 #   them. Prevents ghost entries where a proposal is already done but the
 #   suggestions table still shows "pending review". Idempotent.
 sweep_stale_suggestions() {
   local project_root="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  local suggestions_file="$project_root/proposal-suggestions.md"
-  local approved_file="$project_root/proposal-approved.md"
+  local suggestions_file="$project_root/improvement-suggestions.md"
+  local approved_file="$project_root/improvement-approved.md"
 
   [ ! -f "$suggestions_file" ] && return 0
   [ ! -f "$approved_file" ] && return 0
@@ -441,7 +441,7 @@ approved_file = os.environ["PY_APPROVED"]
 with open(approved_file) as f:
     approved_content = f.read()
 
-# Collect all names in proposal-approved.md (both approved and completed sections)
+# Collect all names in improvement-approved.md (both approved and completed sections)
 approved_names = set()
 for m in re.finditer(r"\[([^\]]+)\]\(.rddf/improvements/([^)]+)\)", approved_content):
     approved_names.add(m.group(1))
@@ -471,8 +471,8 @@ if removed > 0:
 }
 
 # check_dirty_key_files [project_root]
-#   Detects uncommitted (unstaged) changes to proposal-suggestions.md and
-#   proposal-approved.md via `git diff --name-only`. Emits a warning block
+#   Detects uncommitted (unstaged) changes to improvement-suggestions.md and
+#   improvement-approved.md via `git diff --name-only`. Emits a warning block
 #   listing the dirty files and a recovery hint when any are dirty.
 #   Non-blocking: always returns 0.
 #   Used by guide/scan-state.sh before destructive git operations.
@@ -480,7 +480,7 @@ check_dirty_key_files() {
   local project_root="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
   local dirty_files=""
 
-  for f in "proposal-suggestions.md" "proposal-approved.md"; do
+  for f in "improvement-suggestions.md" "improvement-approved.md"; do
     if [ -f "$project_root/$f" ] && \
        git -C "$project_root" diff --name-only -- "$f" 2>/dev/null | grep -q "^$f$"; then
       dirty_files="$dirty_files $f"
@@ -496,15 +496,15 @@ check_dirty_key_files() {
 }
 
 # detect_approved_inconsistency <project_root>
-# Detect suggestions marked "completed" in proposal-suggestions.md that have
-# no corresponding entry in proposal-approved.md. Outputs a warning if
+# Detect suggestions marked "completed" in improvement-suggestions.md that have
+# no corresponding entry in improvement-approved.md. Outputs a warning if
 # inconsistent. Non-blocking: always returns 0.
 # Uses env-var passing (PY_SUGGESTIONS / PY_APPROVED) per Oracle C1 fix to
 # avoid bash string-interpolation injection.
 detect_approved_inconsistency() {
     local project_root="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-    local suggestions_file="$project_root/proposal-suggestions.md"
-    local approved_file="$project_root/proposal-approved.md"
+    local suggestions_file="$project_root/improvement-suggestions.md"
+    local approved_file="$project_root/improvement-approved.md"
 
     [ ! -f "$suggestions_file" ] && return 0
 

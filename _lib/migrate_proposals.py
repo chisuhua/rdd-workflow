@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Migrate legacy JSON proposal-suggestions.md to individual .rddf/improvements/*.md files.
+"""Migrate legacy JSON improvement-suggestions.md to individual .rddf/improvements/*.md files.
 
 Usage:
     python3 skills/_lib/migrate_proposals.py <project_root>
 
 Steps:
-1. Reads the OLD JSON content from ``git show HEAD:proposal-suggestions.md``
+1. Reads the OLD JSON content from ``git show HEAD:improvement-suggestions.md``
    (the current working-tree file has been rewritten as a Markdown index).
-2. Backs up the old JSON to ``proposal-suggestions.json.bak``.
+2. Backs up the old JSON to ``improvement-suggestions.json.bak``.
 3. For each JSON entry, creates `<a href=".rddf/improvements/<name>.md`` with a structured
    template extracting the five ``## `` sections from the ``description`` field.
 4. Skips entries whose target file already exists (idempotent).
@@ -81,12 +81,12 @@ def build_md_content(entry: dict) -> str:
 def get_old_json(project_root: str) -> list[dict]:
     """Retrieve the old JSON content from git HEAD.
 
-    Falls back to reading proposal-suggestions.md directly if it still
+    Falls back to reading improvement-suggestions.md directly if it still
     contains valid JSON (pre-rewrite state).
     """
     try:
         result = subprocess.run(
-            ["git", "show", "HEAD:proposal-suggestions.md"],
+            ["git", "show", "HEAD:improvement-suggestions.md"],
             capture_output=True,
             text=True,
             cwd=project_root,
@@ -100,7 +100,7 @@ def get_old_json(project_root: str) -> list[dict]:
         pass
 
     # Fallback: try reading the file directly (in case git show failed)
-    ps_path = os.path.join(project_root, "proposal-suggestions.md")
+    ps_path = os.path.join(project_root, "improvement-suggestions.md")
     try:
         with open(ps_path, "r", encoding="utf-8") as f:
             content = f.read().strip()
@@ -125,18 +125,18 @@ def main() -> int:
     # Step 1: Get old JSON from git HEAD
     entries = get_old_json(project_root)
     if not entries:
-        print("❌ No JSON entries found in git HEAD or proposal-suggestions.md",
+        print("❌ No JSON entries found in git HEAD or improvement-suggestions.md",
               file=sys.stderr)
         return 1
 
     print(f"Found {len(entries)} entries to migrate")
 
     # Step 2: Backup old JSON
-    bak_path = os.path.join(project_root, "proposal-suggestions.json.bak")
+    bak_path = os.path.join(project_root, "improvement-suggestions.json.bak")
     # Write the raw JSON from git to the backup file
     try:
         result = subprocess.run(
-            ["git", "show", "HEAD:proposal-suggestions.md"],
+            ["git", "show", "HEAD:improvement-suggestions.md"],
             capture_output=True,
             text=True,
             cwd=project_root,
@@ -154,7 +154,7 @@ def main() -> int:
             print(f"✅ Backup written to {bak_path}")
     except subprocess.SubprocessError:
         # Fallback: backup from the file itself if it's still JSON
-        ps_path = os.path.join(project_root, "proposal-suggestions.md")
+        ps_path = os.path.join(project_root, "improvement-suggestions.md")
         try:
             with open(ps_path, "r", encoding="utf-8") as f:
                 content = f.read()

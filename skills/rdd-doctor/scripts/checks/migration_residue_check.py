@@ -34,8 +34,8 @@ _DOC_FILES = (
     "AGENTS.md",
     "README.md",
     "USAGE.md",
-    "docs/proposal-suggestions-format.md",
-    "docs/proposal-approved-format.md",
+    "docs/improvement-suggestions-format.md",
+    "docs/improvement-approved-format.md",
 )
 
 

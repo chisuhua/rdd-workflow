@@ -9,7 +9,7 @@
 # - Dedup against openspec/changes/*/roadmap-meta.yaml::issue_refs
 # - gh missing → exit 2 + clear error
 # - Rejection of shell injection in title
-# - HARD-GATE: does NOT modify proposal-suggestions.md
+# - HARD-GATE: does NOT modify improvement-suggestions.md
 # - Env-var cleanup on exit (no shell pollution)
 
 setup() {
@@ -150,8 +150,8 @@ EOF
     [ "$status" -ne 0 ]
 }
 
-@test "from_issue HARD-GATE: does NOT modify proposal-suggestions.md" {
-    [ ! -f "$TEST_PROJECT_ROOT/proposal-suggestions.md" ]
+@test "from_issue HARD-GATE: does NOT modify improvement-suggestions.md" {
+    [ ! -f "$TEST_PROJECT_ROOT/improvement-suggestions.md" ]
 
     run bash "$SCRIPT" \
         --from-issue 42 \
@@ -160,8 +160,8 @@ EOF
         --project-root "$TEST_PROJECT_ROOT"
 
     [ "$status" -eq 0 ]
-    # After successful run, proposal-suggestions.md still should NOT exist
-    [ ! -f "$TEST_PROJECT_ROOT/proposal-suggestions.md" ]
+    # After successful run, improvement-suggestions.md still should NOT exist
+    [ ! -f "$TEST_PROJECT_ROOT/improvement-suggestions.md" ]
 }
 
 @test "from_issue unsets env-vars on exit (no shell pollution)" {

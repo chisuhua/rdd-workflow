@@ -1,7 +1,7 @@
 # skills/_lib/reflect_dedup.py
 """Fuzzy dedup matching for reflect_engine.
 
-Searches .rddf/improvements/*.md, proposal-suggestions.md, and proposal-approved.md
+Searches .rddf/improvements/*.md, improvement-suggestions.md, and improvement-approved.md
 for existing proposals that match a given error signature/fingerprint.
 """
 
@@ -19,8 +19,8 @@ class DedupMatcher:
                  approved_file=None, project_root=None):
         root = project_root or self._find_project_root()
         self.improvements_dir = improvements_dir or os.path.join(root, ".rddf/improvements")
-        self.suggestions_file = suggestions_file or os.path.join(root, "proposal-suggestions.md")
-        self.approved_file = approved_file or os.path.join(root, "proposal-approved.md")
+        self.suggestions_file = suggestions_file or os.path.join(root, "improvement-suggestions.md")
+        self.approved_file = approved_file or os.path.join(root, "improvement-approved.md")
 
     @staticmethod
     def _find_project_root():
@@ -61,7 +61,7 @@ class DedupMatcher:
         return None
 
     def _scan_suggestions(self, keywords):
-        """Scan proposal-suggestions.md JSON for matching proposals."""
+        """Scan improvement-suggestions.md JSON for matching proposals."""
         if not os.path.isfile(self.suggestions_file):
             return None
         try:
@@ -82,7 +82,7 @@ class DedupMatcher:
         return None
 
     def _scan_approved(self, keywords):
-        """Scan proposal-approved.md markdown table for matching proposals."""
+        """Scan improvement-approved.md markdown table for matching proposals."""
         if not os.path.isfile(self.approved_file):
             return None
         try:

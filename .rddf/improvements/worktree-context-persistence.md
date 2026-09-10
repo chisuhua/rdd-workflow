@@ -26,7 +26,7 @@
 - GIVEN Agent 想在 worktree wt-X 内运行 pytest
   WHEN 上下文已经在 wt-X (前一条命令已 cd)
   THEN 不需要重复 `cd wt-X`,可直接 `pytest`
-- GIVEN Agent 想从 worktree wt-X 切回 master 看 proposal-approved.md
+- GIVEN Agent 想从 worktree wt-X 切回 master 看 improvement-approved.md
   WHEN 显示 `cd master` 显式切换
   THEN 工具框架维护 worktree 栈,Agent 用 `cd master` 显式标记切换
 - GIVEN Agent 完成 archive

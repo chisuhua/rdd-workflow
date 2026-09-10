@@ -637,36 +637,36 @@ echo "=== status.md:397 ==="; sed -n '395,399p' skills/status.md
 
 Old:
 ```bash
-        REMAINING_SUGGESTIONS=$(grep -c "status: 待创建" "proposal-suggestions.md" 2>/dev/null || echo "0")
+        REMAINING_SUGGESTIONS=$(grep -c "status: 待创建" "improvement-suggestions.md" 2>/dev/null || echo "0")
 ```
 
 New:
 ```bash
-        REMAINING_SUGGESTIONS=$(grep -ciE "status\s*[:=]\s*待创建" "proposal-suggestions.md" 2>/dev/null || echo "0")
+        REMAINING_SUGGESTIONS=$(grep -ciE "status\s*[:=]\s*待创建" "improvement-suggestions.md" 2>/dev/null || echo "0")
 ```
 
 - [ ] **Step 3: Replace `propose.md:657`**
 
 Old:
 ```bash
-    REMAINING=$(grep -c "status: 待创建" "proposal-suggestions.md" 2>/dev/null || echo "0")
+    REMAINING=$(grep -c "status: 待创建" "improvement-suggestions.md" 2>/dev/null || echo "0")
 ```
 
 New:
 ```bash
-    REMAINING=$(grep -ciE "status\s*[:=]\s*待创建" "proposal-suggestions.md" 2>/dev/null || echo "0")
+    REMAINING=$(grep -ciE "status\s*[:=]\s*待创建" "improvement-suggestions.md" 2>/dev/null || echo "0")
 ```
 
 - [ ] **Step 4: Replace `status.md:397`**
 
 Old:
 ```bash
-        REMAINING=$(grep -c "status: 待创建" "proposal-suggestions.md" 2>/dev/null || echo "0")
+        REMAINING=$(grep -c "status: 待创建" "improvement-suggestions.md" 2>/dev/null || echo "0")
 ```
 
 New:
 ```bash
-        REMAINING=$(grep -ciE "status\s*[:=]\s*待创建" "proposal-suggestions.md" 2>/dev/null || echo "0")
+        REMAINING=$(grep -ciE "status\s*[:=]\s*待创建" "improvement-suggestions.md" 2>/dev/null || echo "0")
 ```
 
 - [ ] **Step 5: Verify bash syntax on all 3 files**

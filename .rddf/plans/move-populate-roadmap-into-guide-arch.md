@@ -55,7 +55,7 @@ Key design constraints (from design.md): gate is **warning-level only** (not blo
 | File | Responsibility |
 |---|---|
 | `AGENTS.md` | "常见陷阱" section: add 3 new entries |
-| `docs/proposal-suggestions-format.md` | Add v2 schema example |
+| `docs/improvement-suggestions-format.md` | Add v2 schema example |
 | `README.md` | "v2.2 新特性" section: add roadmap incremental section |
 
 ---
@@ -729,7 +729,7 @@ Expected: ≥12 bats + ≥18 pytest all pass.
 
 ### Task H: Documentation updates — TDD-light (manual verification)
 
-**Files:** `AGENTS.md` (MODIFY), `docs/proposal-suggestions-format.md` (MODIFY), `README.md` (MODIFY)
+**Files:** `AGENTS.md` (MODIFY), `docs/improvement-suggestions-format.md` (MODIFY), `README.md` (MODIFY)
 
 - [ ] **Step H.1: AGENTS.md "常见陷阱" — add 3 entries**
 
@@ -741,7 +741,7 @@ Locate "## 常见陷阱" section (line ~370). Append after existing 21 entries:
 24. **reset roadmap 增量 state**: `rm .rddf/state/.populate-state.json` (无 baseline → 下次 full); 用于分支切换残留、codegraph 索引陈旧、人工强制全量
 ```
 
-- [ ] **Step H.2: `docs/proposal-suggestions-format.md` — add v2 schema example**
+- [ ] **Step H.2: `docs/improvement-suggestions-format.md` — add v2 schema example**
 
 Add a new section after v1 example:
 ```markdown
@@ -782,7 +782,7 @@ Reset 命令: `rm .rddf/state/.populate-state.json`
 ```bash
 cd /workspace/project/rdd-workflow
 grep -c "^## " AGENTS.md
-grep -c "^## " docs/proposal-suggestions-format.md
+grep -c "^## " docs/improvement-suggestions-format.md
 grep -c "^## " README.md
 ```
 Expected: counts consistent with previous values (heading hierarchy preserved).
@@ -912,7 +912,7 @@ Expected: 1 commit ahead of `master`; working tree clean.
 - [ ] T1 (zero-change) benchmark: `< 0.1s`
 - [ ] T13/T17/T18 benchmark: `< 4s` (full fallback)
 - [ ] AGENTS.md "常见陷阱" has 24 entries (was 21)
-- [ ] `docs/proposal-suggestions-format.md` has v2 schema example
+- [ ] `docs/improvement-suggestions-format.md` has v2 schema example
 - [ ] `README.md` "v2.2 新特性" has roadmap incremental section
 - [ ] Worktree branch has 1+ commits (required for archive gate)
 - [ ] `./test.sh --full --regression` returns 0 new failures

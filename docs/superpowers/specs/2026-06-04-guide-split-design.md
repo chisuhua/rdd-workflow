@@ -27,7 +27,7 @@ This conflation creates three concrete problems:
    - `guide-ship`: owns the ship-side state machine (discover → worktree → plan → execute → archive → ship-done)
    - `guide`: a stateless recommender that scans project state and suggests which sub-skill to run
 2. Delete `plan.md` and distribute its responsibilities to both sides (no cross-boundary skill).
-3. Eliminate `workflow-state.md` and `workflow-progress.md`; each side persists its own state in already-existing files (`proposal-suggestions.md` for spec, `tasks.md` for ship). `guide` recommender does on-the-fly scanning.
+3. Eliminate `workflow-state.md` and `workflow-progress.md`; each side persists its own state in already-existing files (`improvement-suggestions.md` for spec, `tasks.md` for ship). `guide` recommender does on-the-fly scanning.
 4. Make the handoff between spec and ship a **git commit boundary**: spec-side ends when `openspec/changes/<name>/{proposal,design,tasks}.md` are all reachable via `git show HEAD:...`. Ship-side starts by scanning committed changes only.
 5. Keep the public command surface minimal: only the three skill names.
 
@@ -83,7 +83,7 @@ Total: 1 deleted, 2 created, 1 rewritten, 8 edited.
 │                            │ calls: roadmap, propose, deps         │
 │                            │ reads: docs/adr/, roadmap.md          │
 │                            │ writes: openspec/changes/<name>/,     │
-│                            │         proposal-suggestions.md       │
+│                            │         improvement-suggestions.md       │
 │                            │                                        │
 │                            ▼                                        │
 │                   spec-done = git commit of three artifacts       │
@@ -111,15 +111,15 @@ Total: 1 deleted, 2 created, 1 rewritten, 8 edited.
 |---|---|---|---|
 | `setup` | No `roadmap.md` or first invocation | Check openspec CLI, git, ADR directories | Tools available |
 | `roadmap` | `setup` done | Init/read/edit `roadmap.md`, set current phase | `roadmap.md` exists with current phase |
-| `propose` | `roadmap` phase set | Scan ADR + code TODOs → `proposal-suggestions.md`; user picks → `openspec new` + `openspec instructions` → git commit artifacts | ≥1 change has all three artifacts (proposal, design, tasks) committed |
+| `propose` | `roadmap` phase set | Scan ADR + code TODOs → `improvement-suggestions.md`; user picks → `openspec new` + `openspec instructions` → git commit artifacts | ≥1 change has all three artifacts (proposal, design, tasks) committed |
 | `deps` | `propose` done | Read all committed changes → generate `.rddf/state/deps-output.md` (Mermaid dep graph + recommended execution order) | User confirms (or skips) |
 | `spec-done` | `deps` confirmed | Print "run `guide-ship` to proceed"; do NOT auto-invoke | Recommendation printed |
 
-**Files managed (writes):** `openspec/changes/<name>/{proposal,design,tasks}.md`, `proposal-suggestions.md`, `.rddf/state/deps-output.md`, git commits on main.
+**Files managed (writes):** `openspec/changes/<name>/{proposal,design,tasks}.md`, `improvement-suggestions.md`, `.rddf/state/deps-output.md`, git commits on main.
 
 **Files read:** `roadmap.md`, `docs/adr/*`, `docs/architecture/*`, `docs/developer_guide/*`.
 
-**Recovery points** (persisted as inline markdown status markers in `proposal-suggestions.md` — e.g. `status: scan_done`, `status: change_committed` — matching the pattern already used in the current `propose` skill at line ~1201 of `guide.md`): `setup.env_check`, `roadmap.phase_set`, `propose.scan_done`, `propose.change_committed`, `deps.analysis_done`, `spec-done`.
+**Recovery points** (persisted as inline markdown status markers in `improvement-suggestions.md` — e.g. `status: scan_done`, `status: change_committed` — matching the pattern already used in the current `propose` skill at line ~1201 of `guide.md`): `setup.env_check`, `roadmap.phase_set`, `propose.scan_done`, `propose.change_committed`, `deps.analysis_done`, `spec-done`.
 
 **Refactored from current `guide.md`:** the `setup` (lines 244-339), `roadmap` (lines 343-445), `propose` (lines 448-555), `deps` (lines 559-653) sections. Total ~520 lines lifted with these light edits applied uniformly:
 
@@ -220,8 +220,8 @@ User → guide-spec
   ├─[roadmap]──→  read/write roadmap.md
   │
   ├─[propose]──→  reads:  docs/adr/, docs/architecture/, code TODOs,
-  │                       proposal-suggestions.md
-  │              writes: proposal-suggestions.md
+  │                       improvement-suggestions.md
+  │              writes: improvement-suggestions.md
   │              user picks change name
   │              → calls `propose` skill
   │              → openspec new + openspec instructions

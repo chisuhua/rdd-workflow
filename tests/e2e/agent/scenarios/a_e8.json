@@ -10,7 +10,7 @@
   },
   "mock_output": {
     "files": {},
-    "stdout": "Auditing 6 locked paths after 7 scenarios\nresult: zero_pollution: true\nno planner handoff or proposal-suggestions.md modifications\n"
+    "stdout": "Auditing 6 locked paths after 7 scenarios\nresult: zero_pollution: true\nno planner handoff or improvement-suggestions.md modifications\n"
   },
   "isolation": {"locked_paths": [".rddf", "openspec"]}
 }

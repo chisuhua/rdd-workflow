@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use skill_use("execute") to implement this plan task-by-task.
 
-**Goal:** proposal-approved.md 不存在时提供直接创建 change 的后备路径
+**Goal:** improvement-approved.md 不存在时提供直接创建 change 的后备路径
 
-**Architecture:** 在 plan_intake.sh 中检测 proposal-approved.md 缺失，提供后备选项
+**Architecture:** 在 plan_intake.sh 中检测 improvement-approved.md 缺失，提供后备选项
 
 **Tech Stack:** Bash
 
@@ -36,8 +36,8 @@
 - [ ] **Step 1: Write the failing test**
 
 ```bash
-@test "plan_intake: offers direct-create when no proposal-approved.md" {
-  rm -f proposal-approved.md
+@test "plan_intake: offers direct-create when no improvement-approved.md" {
+  rm -f improvement-approved.md
   run run_plan_intake
   [[ "$output" =~ "直接创建" ]]
 }
@@ -53,14 +53,14 @@ Expected: FAIL
 ```bash
 check_direct_create_fallback() {
   local project_root="$1"
-  local approved_file="$project_root/proposal-approved.md"
+  local approved_file="$project_root/improvement-approved.md"
   
   if [ ! -f "$approved_file" ]; then
     local archived_count=$(ls -d "$project_root"/openspec/changes/archive/*/ 2>/dev/null | wc -l)
     if [ "$archived_count" -gt 0 ]; then
-      echo "🆕 未发现 proposal-approved.md — 检测到 $archived_count 个历史归档"
+      echo "🆕 未发现 improvement-approved.md — 检测到 $archived_count 个历史归档"
       echo "   后备模式: 跳过提案审批，直接创建新 change"
-      echo "   后续可手动追加 proposal-approved.md 作为审计追溯"
+      echo "   后续可手动追加 improvement-approved.md 作为审计追溯"
       return 0
     fi
   fi

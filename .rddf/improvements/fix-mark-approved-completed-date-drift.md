@@ -18,7 +18,7 @@
   - `tests/unit/` 或 `tests/integration/` — 补充幂等日期保留测试
 - **Out Scope**:
   - 不修改 `update_proposal_status.py`（另一个归档写入路径，由 fix-update-proposal-status-data-loss 提案覆盖）
-  - 不修改 proposal-approved.md 格式
+  - 不修改 improvement-approved.md 格式
   - 不涉及 priority 提取逻辑（L239-244 已正确提取）
 
 ## 关键场景

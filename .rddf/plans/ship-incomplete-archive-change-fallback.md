@@ -4,7 +4,7 @@
 
 **Goal:** 归档时自动将未完成任务转为 change 候选，防止任务丢失
 
-**Architecture:** 在 archive 流程中增加 pre-archive check，扫描 tasks.md 未完成任务，自动生成 proposal-suggestions.md 条目
+**Architecture:** 在 archive 流程中增加 pre-archive check，扫描 tasks.md 未完成任务，自动生成 improvement-suggestions.md 条目
 
 **Tech Stack:** Bash, Python, OpenSpec CLI
 
@@ -75,7 +75,7 @@ git commit -m "feat: add pre-archive incomplete tasks check"
 
 ---
 
-### Task 2: 实现 proposal-suggestions.md 自动追加
+### Task 2: 实现 improvement-suggestions.md 自动追加
 
 **Files:**
 - Modify: `skills/guide-ship/scripts/ship_archive.sh`
@@ -84,9 +84,9 @@ git commit -m "feat: add pre-archive incomplete tasks check"
 - [ ] **Step 1: Write the failing test**
 
 ```bash
-@test "archive: appends incomplete tasks to proposal-suggestions.md" {
+@test "archive: appends incomplete tasks to improvement-suggestions.md" {
   run archive_change "test-incomplete"
-  grep -q "test-incomplete" proposal-suggestions.md
+  grep -q "test-incomplete" improvement-suggestions.md
 }
 ```
 
@@ -102,7 +102,7 @@ Expected: FAIL
 append_to_suggestions() {
   local change_name="$1"
   local task_desc="$2"
-  echo "| $change_name | P2 | $(date +%Y-%m-%d) | 待讨论 |" >> proposal-suggestions.md
+  echo "| $change_name | P2 | $(date +%Y-%m-%d) | 待讨论 |" >> improvement-suggestions.md
 }
 ```
 
@@ -114,6 +114,6 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add skills/guide-ship/scripts/ship_archive.sh proposal-suggestions.md
+git add skills/guide-ship/scripts/ship_archive.sh improvement-suggestions.md
 git commit -m "feat: auto-append incomplete tasks to proposal-suggestions"
 ```

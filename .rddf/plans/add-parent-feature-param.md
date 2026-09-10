@@ -378,8 +378,8 @@ load test_helper
   # Setup: tmp project root
   tmp_proj="$BATS_TMPDIR/pf-test-$$"
   mkdir -p "$tmp_proj"
-  # Minimal proposal-suggestions.md
-  echo "[]" > "$tmp_proj/proposal-suggestions.md"
+  # Minimal improvement-suggestions.md
+  echo "[]" > "$tmp_proj/improvement-suggestions.md"
 
   # Source the wrapper
   source "$REPO_ROOT/skills/propose/scripts/propose_change.sh"
@@ -407,7 +407,7 @@ assert match.get('parent_feature') == 'feature-x', f'parent_feature mismatch: {m
 @test "propose: bash wrapper passes PARENT_FEATURE to finalize_change" {
   tmp_proj="$BATS_TMPDIR/pf-finalize-$$"
   mkdir -p "$tmp_proj/openspec/changes/c1"
-  echo "[]" > "$tmp_proj/proposal-suggestions.md"
+  echo "[]" > "$tmp_proj/improvement-suggestions.md"
   # Pre-create iteration.json so update_iteration_proposed can load
   mkdir -p "$tmp_proj/.rddf/state"
   python3 -c "
@@ -440,7 +440,7 @@ assert match.get('parent_feature') == 'feature-y', f'expected feature-y, got {ma
 @test "propose: bash wrapper without PARENT_FEATURE is backward compatible" {
   tmp_proj="$BATS_TMPDIR/pf-noenv-$$"
   mkdir -p "$tmp_proj"
-  echo "[]" > "$tmp_proj/proposal-suggestions.md"
+  echo "[]" > "$tmp_proj/improvement-suggestions.md"
 
   source "$REPO_ROOT/skills/propose/scripts/propose_change.sh"
 

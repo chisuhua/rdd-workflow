@@ -1,6 +1,6 @@
 # add-brainstorm-hardgate-enforcement
 
-**优先级**: P1 | **来源**: 2026-08-27 Hybrid path reflection (本次会话中 AI agent 直接创建 9 个 .md proposal 文件 + 修改 proposal-suggestions.md, 绕过了 rdd-workflow-brainstorm SKILL.md 的 HARD-GATE 规则)
+**优先级**: P1 | **来源**: 2026-08-27 Hybrid path reflection (本次会话中 AI agent 直接创建 9 个 .md proposal 文件 + 修改 improvement-suggestions.md, 绕过了 rdd-workflow-brainstorm SKILL.md 的 HARD-GATE 规则)
 **阶段**: phase-2 | **分类**: governance
 **类型**: improvement
 
@@ -10,12 +10,12 @@
 
 `skills/rdd-workflow-brainstorm/SKILL.md` 明确规定了 HARD-GATE:
 
-> `<HARD-GATE>` 在用户批准设计之前,不得创建任何文件、写入任何提案、修改 proposal-suggestions.md 或采取任何实施行动。此规则适用于所有提案,无论看起来多么简单。`
+> `<HARD-GATE>` 在用户批准设计之前,不得创建任何文件、写入任何提案、修改 improvement-suggestions.md 或采取任何实施行动。此规则适用于所有提案,无论看起来多么简单。`
 
 但 SKILL.md 只在文档里规定,没有强制执行机制。2026-08-27 Hybrid path 中:
 - AI agent 跳过 brainstorm 5 段澄清过程
 - 直接创建 9 个 `.rddf/improvements/*.md` 文件
-- 直接修改 `proposal-suggestions.md` 表格
+- 直接修改 `improvement-suggestions.md` 表格
 - 所有操作未经用户对每个提案的 brainstorming 确认
 
 后果:
@@ -23,7 +23,7 @@
 - 9 个 proposal 文件虽然 5 段格式正确,但用户没有机会回答 brainstorming 澄清问题
 - 无法追溯每个提案的创建上下文(谁、为什么、何种决策路径)
 
-期望行为: 在 proposal 文件创建和 proposal-suggestions.md 修改前,必须有明确的 brainstorming 完成证据(如 user confirmation log 或 HARD-GATE token)。
+期望行为: 在 proposal 文件创建和 improvement-suggestions.md 修改前,必须有明确的 brainstorming 完成证据(如 user confirmation log 或 HARD-GATE token)。
 
 ## 范围
 
@@ -48,7 +48,7 @@
 
 - GIVEN AI agent 已完成 brainstorm 5 段对话
   WHEN 调用 `add-improve` 创建 proposal 文件
-  THEN HARD-GATE token 通过,正常写入 `.rddf/improvements/<name>.md` 并注册到 `proposal-suggestions.md`
+  THEN HARD-GATE token 通过,正常写入 `.rddf/improvements/<name>.md` 并注册到 `improvement-suggestions.md`
 
 ## 技术约束
 

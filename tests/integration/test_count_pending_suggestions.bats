@@ -31,7 +31,7 @@ load ../test_helper
   ! grep -qE "sum\(1 for e in entries.*e\.get\(.status.\) == .待创建" "$REPO_ROOT/skills/rdd-planner/SKILL.md"
 }
 
-@test "count_pending_suggestions returns 0 when proposal-suggestions.md missing" {
+@test "count_pending_suggestions returns 0 when improvement-suggestions.md missing" {
   TEST_REPO=$(mktemp -d)
   cd "$TEST_REPO"
   source "$REPO_ROOT/_lib/state.sh"
@@ -43,7 +43,7 @@ load ../test_helper
 @test "count_pending_suggestions returns 0 when entries list is empty" {
   TEST_REPO=$(mktemp -d)
   cd "$TEST_REPO"
-  echo "[]" > proposal-suggestions.md
+  echo "[]" > improvement-suggestions.md
   source "$REPO_ROOT/_lib/state.sh"
   result=$(count_pending_suggestions "$TEST_REPO")
   [ "$result" = "0" ]
@@ -52,7 +52,7 @@ load ../test_helper
 
 @test "count_pending_suggestions returns N when N .md files in .rddf/improvements/" {
   # v2.0+ API: helper scans `.rddf/improvements/*.md` (not the v3-era
-  # proposal-suggestions.md JSON). Create N improvement files; no approval file
+  # improvement-suggestions.md JSON). Create N improvement files; no approval file
   # means all count as pending.
   TEST_REPO=$(mktemp -d)
   mkdir -p "$TEST_REPO/.rddf/improvements"

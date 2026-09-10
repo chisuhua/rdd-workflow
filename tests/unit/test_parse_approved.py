@@ -9,7 +9,7 @@ from _lib.parse_approved import parse_approved_proposals
 
 
 def _write(tmp_path: Path, content: str) -> Path:
-    p = tmp_path / "proposal-approved.md"
+    p = tmp_path / "improvement-approved.md"
     p.write_text(content, encoding="utf-8")
     return p
 
@@ -60,11 +60,11 @@ def test_both_sections_dedup_keep_order(tmp_path: Path) -> None:
 
 
 def test_real_repo_proposal_approved(tmp_path: Path) -> None:
-    # Sanity check against the actual proposal-approved.md at repo root.
+    # Sanity check against the actual improvement-approved.md at repo root.
     repo_root = Path(__file__).resolve().parents[2]
-    target = repo_root / "proposal-approved.md"
+    target = repo_root / "improvement-approved.md"
     if not target.exists():
-        pytest.skip("proposal-approved.md not present in this checkout")
+        pytest.skip("improvement-approved.md not present in this checkout")
     names = parse_approved_proposals(str(target))
     # Must include entries that previously returned 0 (all entries were in ## 已实施)
     assert "fix-design-proposal-review-approved-parsing" in names

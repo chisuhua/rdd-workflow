@@ -16,7 +16,7 @@ v1.x 用户升级到 v2.0 最快只需两步：
 npm update rdd-workflow
 
 # 2. 手动验证 v1.x 状态文件存在（可选；CLI `rdd-workflow migrate` 规划中，v2.1 实现）
-ls -la .rddf/state/ .openspec/ proposal-suggestions.md
+ls -la .rddf/state/ .openspec/ improvement-suggestions.md
 ```
 
 **无需修改现有技能文件**。`guide-spec` 调用将自动变更为 `guide-arch` → `guide-plan`。所有现有 worktree 和变化不受影响。
@@ -78,7 +78,7 @@ rdd-workflow v2.0 是一次**重大架构升级**，从状态机驱动升级到 
 | v1.x 接口 | v2.0 行为 | 说明 |
 |-----------|----------|------|
 | `.rddf/state/roadmap-state.json` | 通过同步层自动更新 | v3.0 移除 |
-| `proposal-suggestions.md` | 通过同步层自动更新 | v3.0 移除 |
+| `improvement-suggestions.md` | 通过同步层自动更新 | v3.0 移除 |
 | `.rddf/plans/*.md` | 保持不变 | 长期支持 |
 
 ### ❌ 不兼容（需要迁移）
@@ -114,7 +114,7 @@ v1.x 用户
 
 - [ ] 备份现有项目（`git commit` 或 `git tag v1-backup`）
 - [ ] 安装 rdd-workflow v2.0
-- [ ] 手动验证 v1.x 状态文件存在（`ls -la .rddf/state/ .openspec/ proposal-suggestions.md`；CLI `migrate --check` 规划中，v2.1 实现）
+- [ ] 手动验证 v1.x 状态文件存在（`ls -la .rddf/state/ .openspec/ improvement-suggestions.md`；CLI `migrate --check` 规划中，v2.1 实现）
 - [ ] 手动预览迁移范围（`git diff --stat v1-backup -- .rddf/state/ .openspec/ .rddf/`；CLI `migrate --dry-run` 规划中，v2.1 实现）
 - [ ] 手动执行迁移（参见下方『手动迁移』章节；CLI `migrate --apply` 规划中，v2.1 实现）
 - [ ] 验证状态向量（`cat .rddf/state/state-vector.json`；当前版本未使用此路径，状态存储于 Python 库层）
@@ -316,7 +316,7 @@ skill_use("loop", {
 
 > **⚠️ 当前版本（v2.0）实现状态**
 > - `.rddf/state/state-vector.json` 和 `.rddf/state/event-log.jsonl` **当前版本未使用此路径，状态存储于 Python 库层**（`skills/_lib/state_vector.py`、`skills/_lib/event_log.py`，内存中维护）
-> - 本节中 `cat .rddf/state/state-vector.json`、`tail -f .rddf/state/event-log.jsonl` 等命令展示的是 v2.0 完整设计下的预期行为；当前请使用下方表格中映射的源文件（`.rddf/state/roadmap-state.json`、`proposal-suggestions.md`、`openspec/changes/*/ .openspec.yaml`、`.rddf/plans/*.md`）作为状态查询入口
+> - 本节中 `cat .rddf/state/state-vector.json`、`tail -f .rddf/state/event-log.jsonl` 等命令展示的是 v2.0 完整设计下的预期行为；当前请使用下方表格中映射的源文件（`.rddf/state/roadmap-state.json`、`improvement-suggestions.md`、`openspec/changes/*/ .openspec.yaml`、`.rddf/plans/*.md`）作为状态查询入口
 > - 统一 CLI 工具 `rdd-workflow migrate / sync / report` 规划中，v2.1 实现
 
 ### 自动迁移
@@ -328,7 +328,7 @@ $ skill_use("guide-spec")
 
 🔄 检测到 v1.x 状态文件，开始迁移...
 ✅ 迁移 .rddf/state/roadmap-state.json → 状态向量（Python 库层）
-✅ 迁移 proposal-suggestions.md → 状态向量（Python 库层）
+✅ 迁移 improvement-suggestions.md → 状态向量（Python 库层）
 ✅ 迁移 openspec/changes/*/ .openspec.yaml → 状态向量（Python 库层）
 ✅ 迁移 .rddf/plans/*.md → 状态向量（Python 库层）
 ✅ 初始化事件流（内存中维护，event-log.py 写入时点：loop 启动/节点完成/门控切换）
@@ -346,7 +346,7 @@ git tag v1-backup
 
 # 2. 验证源文件完整（手动迁移的"就绪检查"）
 ls -la .rddf/state/roadmap-state.json
-ls -la proposal-suggestions.md
+ls -la improvement-suggestions.md
 ls openspec/changes/
 ls .rddf/plans/
 
@@ -368,13 +368,13 @@ wc -l .rddf/state/event-log.jsonl  # 应该有迁移事件
 
 # 当前可用的状态查询入口（手动读取源文件）
 cat .rddf/state/roadmap-state.json | jq '.'
-cat proposal-suggestions.md
+cat improvement-suggestions.md
 ls openspec/changes/ | wc -l
 ls .rddf/plans/ | wc -l
 
 # 检查向后兼容文件
 ls -la .rddf/state/roadmap-state.json  # 应该仍然存在（同步层维护）
-ls -la proposal-suggestions.md   # 应该仍然存在（同步层维护）
+ls -la improvement-suggestions.md   # 应该仍然存在（同步层维护）
 ```
 
 ### 状态文件映射
@@ -382,7 +382,7 @@ ls -la proposal-suggestions.md   # 应该仍然存在（同步层维护）
 | v1.x 文件 | v2.0 状态向量字段 | 同步层 |
 |----------|------------------|--------|
 | `.rddf/state/roadmap-state.json` | `arch_side.roadmap` | ✅ 双向同步 |
-| `proposal-suggestions.md` | `plan_side.active_changes` | ✅ 双向同步 |
+| `improvement-suggestions.md` | `plan_side.active_changes` | ✅ 双向同步 |
 | `openspec/changes/*/ .openspec.yaml` | `plan_side.active_changes[].artifacts` | ✅ 单向读取 |
 | `.rddf/plans/*.md` | `ship_side.worktrees[].plan` | ✅ 单向读取 |
 | `git worktree list` | `ship_side.worktrees` | ✅ 实时扫描 |
@@ -491,7 +491,7 @@ tail -f .rddf/state/event-log.jsonl | jq '.'
 
 # 方式 4: 生成进度报告（CLI `rdd-workflow report` 规划中，v2.1 实现）
 # 当前手动生成报告：组合方式 1-3 的输出，或：
-cat .rddf/state/roadmap-state.json proposal-suggestions.md  # 综合源文件
+cat .rddf/state/roadmap-state.json improvement-suggestions.md  # 综合源文件
 ls openspec/changes/ .rddf/plans/                  # 列出活跃工作
 ```
 
@@ -533,7 +533,7 @@ cat .rddf/state/migration-error.log 2>/dev/null || echo "无错误日志文件�
 
 # 2. 检查 v1.x 状态文件完整性（手动就绪检查；CLI `migrate --check` 规划中，v2.1 实现）
 ls -la .rddf/state/roadmap-state.json
-ls -la proposal-suggestions.md
+ls -la improvement-suggestions.md
 ls openspec/changes/
 ls .rddf/plans/
 
@@ -547,7 +547,7 @@ skill_use("guide-spec")  # 首次调用时自动完成迁移
 
 ### 问题 2: 状态向量与现有文件不一致
 
-**症状**: 状态向量显示 change 已完成，但 `proposal-suggestions.md` 显示未完成
+**症状**: 状态向量显示 change 已完成，但 `improvement-suggestions.md` 显示未完成
 
 > **v2.0.3 (fix-debt-audit-2026-07-14) 说明**：`skills/_lib/sync_state.py` 已被删除。
 > v1.x → v2.0 双向迁移只在 2026-06 至 2026-07 v2.0 过渡期使用。v2.0 是唯一权威状态层;
@@ -559,13 +559,13 @@ skill_use("guide-spec")  # 首次调用时自动完成迁移
 **解决** (v2.0.3 当前):
 ```bash
 # 1. 检查状态层一致性
-git status .rddf/state/ proposal-suggestions.md openspec/ .rddf/
+git status .rddf/state/ improvement-suggestions.md openspec/ .rddf/
 
 # 2. 状态向量是权威 (v2.0+ 设计)
 #     .rddf/state/roadmap-state.json / iteration.json / sessions.json 是单一真相。
-#     proposal-suggestions.md 仅作为 v1.x 历史快照保留,不再自动同步。
+#     improvement-suggestions.md 仅作为 v1.x 历史快照保留,不再自动同步。
 #     修复一致性:直接编辑 .rddf/state/ 下的文件,然后:
-#     rm proposal-suggestions.md   # 删除历史快照
+#     rm improvement-suggestions.md   # 删除历史快照
 #     # 下次 propose/deps 步骤会从 .rddf/state/ 重建内容
 ```
 

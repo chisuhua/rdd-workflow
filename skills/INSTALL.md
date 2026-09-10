@@ -36,7 +36,7 @@ author: sisyphus
 | `rdd-env-check` | 环境健康检查（openspec/git/build + cache 快照，被 4 个 phase 调用） |
 | `rdd-doctor` | 手动触发的只读诊断工具（5 类结构化文件 schema/格式校验，输出分级报告） |
 | `rdd-hub-bootstrap` | Hub 仓库一键初始化（目录结构 + Projects V2 看板 + CI 工作流模板，ADR-0030 Step 1） |
-| `add-improve` | 交互式创建 rdd-workflow 改进提案（注册到 proposal-suggestions.md） |
+| `add-improve` | 交互式创建 rdd-workflow 改进提案（注册到 improvement-suggestions.md） |
 | `openspec-gate` | Stage 守卫（未关联 active change 时阻止 commit） |
 | `rdd-workflow-brainstorm` | 提案头脑风暴（5 段格式输出至 .rddf/improvements/） |
 | `contract-check` | Spoke 本地实现 vs Hub OpenAPI contract 一致性校验（Breaking-Change 阻断 CI） |

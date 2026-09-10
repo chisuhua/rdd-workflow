@@ -1,9 +1,9 @@
-# `proposal-approved.md` Format
+# `improvement-approved.md` Format
 
 > **Status**: canonical (proposal-approval-pipeline, replaces the legacy JSON-only flow).
 
 This document is the single source of truth for how the
-`proposal-approved.md` file is structured, read, and written by the
+`improvement-approved.md` file is structured, read, and written by the
 rdd-workflow skills (`guide-design`, `guide-plan`, `propose`, `archive`).
 
 ---
@@ -71,11 +71,11 @@ Table columns:
    - **Directly creates** `openspec/changes/<name>/{proposal.md, .openspec.yaml, roadmap-meta.yaml}` with the complete 5-section content.
    - Adds the change name to `.rddf/state/.design-handoff.json` v2's `changes_pre_created` array.
 3. Rejected proposals are simply not added - they remain in `.rddf/improvements/`
-   but never appear in `proposal-approved.md`.
+   but never appear in `improvement-approved.md`.
 
 ### Consumption flow (`guide-plan` propose)
 
-1. `guide-plan` reads `proposal-approved.md` via `list_approved()` or
+1. `guide-plan` reads `improvement-approved.md` via `list_approved()` or
    `read_improvement_entries()`.
 2. For each approved entry, it follows the link to `.rddf/improvements/<name>.md`
    to read the full 5-section content.
@@ -128,22 +128,22 @@ Each improvement file has this structure:
 ...
 ```
 
-The `proposal-approved.md` file **only** contains links to these files -
+The `improvement-approved.md` file **only** contains links to these files -
 it never duplicates the proposal content. This keeps the index file small
 and ensures a single source of truth for each proposal's details.
 
 ---
 
-## Relationship to `proposal-suggestions.md`
+## Relationship to `improvement-suggestions.md`
 
 | File                        | Role                                      | Format              |
 |-----------------------------|-------------------------------------------|---------------------|
-| `proposal-suggestions.md`   | Index of ALL proposals (pre-approval)     | Markdown table      |
-| `proposal-approved.md`      | Index of APPROVED proposals (post-arch)   | Markdown table      |
+| `improvement-suggestions.md`   | Index of ALL proposals (pre-approval)     | Markdown table      |
+| `improvement-approved.md`      | Index of APPROVED proposals (post-arch)   | Markdown table      |
 | `.rddf/improvements/*.md`         | Full proposal content (one file each)     | Structured Markdown |
 
-`proposal-suggestions.md` lists every proposal for `guide-design` to review.
-`proposal-approved.md` lists only those that have been approved and is the
+`improvement-suggestions.md` lists every proposal for `guide-design` to review.
+`improvement-approved.md` lists only those that have been approved and is the
 input for `guide-plan` intake (combined with `.design-handoff.json`
 `changes_pre_created` array to identify pre-created changes that need fill only).
 
@@ -170,7 +170,7 @@ input for `guide-plan` intake (combined with `.design-handoff.json`
 
 ## See also
 
-- `docs/proposal-suggestions-format.md` - format for the pending proposals index
+- `docs/improvement-suggestions-format.md` - format for the pending proposals index
 - `skills/_lib/state.sh` - shell helpers for reading/writing the index files
 - `skills/_lib/state_reader.py` - Python read-only data layer
 - `.rddf/improvements/proposal-approval-pipeline.md` - the proposal that designed this format

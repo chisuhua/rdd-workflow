@@ -4,7 +4,7 @@
 #
 # Enforces the <HARD-GATE> rule from rdd-workflow-brainstorm/SKILL.md at the
 # file level: a proposal may only be created / re-created / registered in
-# proposal-suggestions.md when the draft carries complete brainstorm output.
+# improvement-suggestions.md when the draft carries complete brainstorm output.
 #
 # A passing draft must satisfy ALL of:
 #   1. 5 core sections : ## 架构依据 / ## 范围 / ## Capabilities / ## Impact / ## 验收标准

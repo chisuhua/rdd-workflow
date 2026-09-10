@@ -23,7 +23,7 @@
 | 端 | 职责 | 关键产物 |
 |----|------|---------|
 | **arch 端** (`rdd-arch`) | `setup → adr-create → architecture → roadmap-define → arch-done`（5 子阶段） | `roadmap.md`（默认，可由 ADR-0016 discovery 重新发现）、`docs/adr/ADR-*.md`、`docs/architecture/*-gap-analysis.md`（可选）、`.rddf/state/.arch-handoff.json` |
-| **planner 端** (`rdd-planner`) | `preflight → review → approve/reject/defer → design-done`（v4.0+ 路线图 + 提案治理，per ADR-0038/0042） | `.rddf/improvements/<name>.md`、`proposal-approved.md` 更新、`.rddf/state/.planner-handoff.json` |
+| **planner 端** (`rdd-planner`) | `preflight → review → approve/reject/defer → design-done`（v4.0+ 路线图 + 提案治理，per ADR-0038/0042） | `.rddf/improvements/<name>.md`、`improvement-approved.md` 更新、`.rddf/state/.planner-handoff.json` |
 | **builder 端** (`rdd-builder`) | 6-phase 内部状态机 `P0 (approval) → P1 (plan) → P1.5 (deps+exec_mode) → P2 (execute) → P2.5 (review) → P3 (archive)`（v4.0+ 整合 v3.0 plan+ship+design per ADR-0043） | `openspec/changes/<name>/{design,tasks}.md` 已提交、`.rddf/state/.plan-handoff.json`、`.rddf/state/.deps-analysis.json`、worktree 或轻量分支、`.rddf/plans/<name>.md`、`.rddf/state/iteration.json`、归档记录 |
 | **verifier 端** (`rdd-verifier`) | `discover → batch-verify → classify → route`（第四阶段，per ADR-0034，bounded retry 最多 3 次，v2.0 自包含 LLM 验证 per ADR-0045） | `.rddf/state/verifier/<change>.json`（loop state + 分类历史）、`.rddf/state/.ac-verdict-<name>.json`（SHA-fingerprint verdict cache）、`.rddf/state/verifier/<change>.audit.jsonl`（append-only audit log）、失败分类（implementation_gap / proposal_drift）+ 回 builder/planner 路由决策 |
 | **quick 旁路** (`rdd-quick`) | P0-P4 prose 状态机：plan gen → complexity triage → in-place execute → AC verify → complete/retry/escalate（v4.0+ per ADR-0047，绕过 openspec change + worktree） | `.rddf/plans/quick-<name>.md`、`.rddf/state/.quick-history.jsonl`（11 字段原子追加审计日志） |
@@ -61,7 +61,7 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 
 | 文件 | 位置 | 用途 | 写入方 |
 |------|------|------|--------|
-| `proposal-suggestions.md` | 项目根目录 | 扫描出的建议列表（JSON 数组格式），随 git 版本控制 | `propose` / `roadmap` / `status` / `rdd-arch` / `rdd-planner` |
+| `improvement-suggestions.md` | 项目根目录 | 扫描出的建议列表（JSON 数组格式），随 git 版本控制 | `propose` / `roadmap` / `status` / `rdd-arch` / `rdd-planner` |
 | `openspec/changes/<name>/tasks.md` | change 目录 | Builder 阶段任务清单（权威进度来源） | `execute` / `rdd-builder` |
 | `docs/adr/ADR-*.md` | ADR 目录 | 架构决策记录（propose 扫描 + 引用源） | 用户手工编写（待 propose 扫描拾取） |
 | `.rddf/plans/<name>.md` | worktree 内或主仓库（轻量模式） | TDD 5 步结构计划文件（builder P1 产物，git tracked） | `rdd-workflow-writing-plans` / `rdd-builder` |
@@ -126,7 +126,7 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 | `rdd-builder` | **Builder 端状态机（ADR-0043 stage-merge 整合 plan+ship+design）**：`plan → verification → execute → review → archive → cleanup`，含轻量/worktree 自动检测 | `skill_use("rdd-builder")` |
 | `rdd-verifier` | 第五阶段批量 AC 验证（discover → batch-verify → classify → route，ADR-0034，bounded retry 最多 3 次） | `skill_use("rdd-verifier")` |
 | `feature` | feature 管理（summary / dependency graph / per-feature status / execution order） | `skill_use("feature")` |
-| `propose` | 扫描 ADR/代码生成建议列表（`proposal-suggestions.md`） | `rdd-builder` 内部 / 单独使用 |
+| `propose` | 扫描 ADR/代码生成建议列表（`improvement-suggestions.md`） | `rdd-builder` 内部 / 单独使用 |
 | `roadmap` | 路线图管理（phase/category 结构 + AUTO-SPRINT sentinel，v2.0.1） | `rdd-arch` 内部 / 单独使用 |
 | `deps` | 依赖分析（含 subagent Step 3，结构化输出 `deps-analysis.json`，v2.0.1） | `rdd-builder` 内部 / 单独使用 |
 | `execute` | 在 worktree（或轻量模式当前分支）内执行任务，写 `tasks.md` 进度 | `rdd-builder` 内部 / worktree 内单独使用 |
@@ -257,7 +257,7 @@ i. 其他操作
 1. 扫描 `docs/adr/ADR-*.md`（路径可由 ADR-0016 discovery 或 `SPEC_WORKFLOW_ADR_DIR` 覆盖）—— 找到已采纳但未实现的 ADR 项
 2. 扫描 `docs/architecture/*-gap-analysis.md`（**默认 discovery 路径**，如不存在则跳过）—— 找到功能缺口
 3. 扫描代码中的 `TODO`/`FIXME` 标记
-4. 生成 `proposal-suggestions.md` 建议列表（**JSON 数组格式**，由 `json.load()` 解析，非 grep）
+4. 生成 `improvement-suggestions.md` 建议列表（**JSON 数组格式**，由 `json.load()` 解析，非 grep）
 
 **菜单示例**：
 
@@ -296,7 +296,7 @@ i. 手动输入 change 名称
 对刚创建（或已有）的 change 进行依赖分析：识别阻塞依赖、规划执行顺序。
 
 **职责**：
-- 检测 candidate change 之间的代码依赖（`docs/proposal-suggestions-format.md` 规则）
+- 检测 candidate change 之间的代码依赖（`docs/improvement-suggestions-format.md` 规则）
 - 运行 `deps` 技能（含 subagent Step 3 语义分析 + fallback）
 - 输出 `.rddf/state/.deps-candidates.json`（机器可读）+ `.rddf/state/.deps-output.md`（人类可读）
 - 标注"可并行"vs"需串行"vs"被阻塞"
@@ -570,7 +570,7 @@ i. 其他输入
 
 请选择:
 1. 🏠 范围内债务 → 追加到当前 change tasks.md（返回 execute）
-2. 🔖 创建新 debt change → 加入 proposal-suggestions.md (type=debt)
+2. 🔖 创建新 debt change → 加入 improvement-suggestions.md (type=debt)
 3. 📐 架构漂移 → 回注 rdd-arch (生成差距分析)
 4. ⏭️  跳过 → 直接进入 archive（默认）
 5. 📋 查看详细债务内容

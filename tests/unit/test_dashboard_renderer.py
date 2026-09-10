@@ -928,24 +928,24 @@ class TestCollectCurrentSession:
 
 
 # ---------------------------------------------------------------------------
-# Content: divergence warnings — proposal-approved.md vs archive/ consistency
+# Content: divergence warnings — improvement-approved.md vs archive/ consistency
 # ---------------------------------------------------------------------------
 
 
 class TestProposalApprovedArchiveDivergence:
     """Regression coverage for fix-proposal-approved-sync (P1, 2026-08-21):
 
-    When a proposal is in `proposal-approved.md` "## 已批准提案" section but
+    When a proposal is in `improvement-approved.md` "## 已批准提案" section but
     a matching `openspec/changes/archive/<date>-<name>/` directory exists,
     the dashboard MUST emit a divergence warning so the user notices the
     drift before the dashboard '7b. Approved proposals' count lies.
     """
 
     def _seed_collect_env(self, monkeypatch, tmp_path, *, proposal_md_text, archive_dirs):
-        """Provision a minimal collect() environment with custom proposal-approved.md
+        """Provision a minimal collect() environment with custom improvement-approved.md
         and openspec/changes/archive/ contents."""
         # Approved file
-        (tmp_path / "proposal-approved.md").write_text(proposal_md_text, encoding="utf-8")
+        (tmp_path / "improvement-approved.md").write_text(proposal_md_text, encoding="utf-8")
         # Archive dirs
         archive_root = tmp_path / "openspec" / "changes" / "archive"
         for d in archive_dirs:
@@ -989,7 +989,7 @@ class TestProposalApprovedArchiveDivergence:
         data = collect(str(tmp_path))
         warnings = data.divergence_warnings
         assert any(
-            "fix-drift-1" in w and "proposal-approved.md" in w
+            "fix-drift-1" in w and "improvement-approved.md" in w
             for w in warnings
         ), f"missing divergence warning for fix-drift-1, got: {warnings}"
 
@@ -1052,6 +1052,6 @@ class TestProposalApprovedArchiveDivergence:
             ],
         )
         data = collect(str(tmp_path))
-        names_warned = {w for w in data.divergence_warnings if "proposal-approved.md" in w}
+        names_warned = {w for w in data.divergence_warnings if "improvement-approved.md" in w}
         assert any("fix-drift-a" in w for w in names_warned)
         assert any("fix-drift-b" in w for w in names_warned)

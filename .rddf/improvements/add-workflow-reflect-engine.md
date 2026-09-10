@@ -17,7 +17,7 @@
 
 设计原则：
 - 反思引擎读取但不修改现有状态文件，遵循 Oracle 模式的只读原则
-- 去重机制复用 `proposal-suggestions.md` 的已有 improvements 索引（53 条待审批 + 已批准列表），不做全仓库扫描
+- 去重机制复用 `improvement-suggestions.md` 的已有 improvements 索引（53 条待审批 + 已批准列表），不做全仓库扫描
 - Issue 创建走 GitHub API（`gh issue create`），自动填入模板化的标题和正文
 - 冷却记录写入 `.rddf/state/reflect-cooldown.json`（fingerprint → last_triggered_at）
 
@@ -38,7 +38,7 @@ guide-ship:  Phase 3 archive →  archive完成 →  reflect_engine(ship)
 | 3 个 gate hook 点 | `write_arch_handoff`、`plan_done_gate`、`archive()` 末尾追加调用 |
 | 错误触发 | `execute` 步骤不可恢复失败（max_retries 耗尽、gate error 级失败） |
 | 分层阈值 | ship=任何不可恢复失败，plan=同一根因≥2次，arch=仅日志 |
-| 去重匹配 | 模糊匹配 `improvements/` 目录 + `proposal-suggestions.md` + `proposal-approved.md` |
+| 去重匹配 | 模糊匹配 `improvements/` 目录 + `improvement-suggestions.md` + `improvement-approved.md` |
 | GitHub issue 创建 | `gh issue create` 走 GitHub CLI，自动填入标题/正文模板 |
 | 冷却记录 | `.rddf/state/reflect-cooldown.json`，按 fingerprint 24h |
 | `--no-reflect` 开关 | 环境变量 `SKIP_WORKFLOW_REFLECTION=1` |
@@ -86,7 +86,7 @@ guide-ship:  Phase 3 archive →  archive完成 →  reflect_engine(ship)
 - 反思引擎必须只读——不修改任何状态文件（`event_log`、`tasks.md`、`sessions.json` 等）
 - gate 非阻塞——反思失败不得阻止 gate 通过
 - fingerprint 格式固定为 `{phase}:{gate_name}:{error_category}`（如 `plan:plan-done:quality-gate-fail`）
-- 去重必须覆盖 `improvements/` 目录 + `proposal-suggestions.md` + `proposal-approved.md`
+- 去重必须覆盖 `improvements/` 目录 + `improvement-suggestions.md` + `improvement-approved.md`
 - `gh issue create` 必须可退出——用户拒绝确认时不得创建 issue
 - 输入必须从现有数据源获取（event log + tasks.md + session 状态），不做全仓库扫描
 

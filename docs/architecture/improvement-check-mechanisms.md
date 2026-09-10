@@ -338,7 +338,7 @@ if not parsed.no_submit:
 | rdd-doctor 不触发 reporter | ✅ doctor_cmd.py 无 issue_reporter 引用,test_doctor_no_issue_write.py 存在 |
 | orchestrator race condition | ✅ 无竞态(trap 默认 defer + `\|\| true` + `"$@"` fallback) |
 | `RDDF_USE_ORCHESTRATOR=no` 逃生舱 | ✅ 有测试(`test_orchestrator_default_on.bats` T4 + `test_env_var_toggle.bats`) |
-| `phase.review_validation` state handoff | ✅ 抽样路径未发现 gap(debt 通过文件流转 `.rddf/improvements/` + `proposal-suggestions.md` 给 guide-design,与 ADR-0025 一致) |
+| `phase.review_validation` state handoff | ✅ 抽样路径未发现 gap(debt 通过文件流转 `.rddf/improvements/` + `improvement-suggestions.md` 给 guide-design,与 ADR-0025 一致) |
 
 ### 5.5 修订后的优先级
 

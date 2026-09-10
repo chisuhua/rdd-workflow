@@ -9,7 +9,7 @@ load ../test_helper
 @test "propose: bash wrapper passes PARENT_FEATURE to create_skeleton_change" {
   tmp_proj="$BATS_TMPDIR/pf-test-$$"
   mkdir -p "$tmp_proj"
-  echo "[]" > "$tmp_proj/proposal-suggestions.md"
+  echo "[]" > "$tmp_proj/improvement-suggestions.md"
 
   source "$REPO_ROOT/skills/propose/scripts/propose_change.sh"
 
@@ -35,7 +35,7 @@ assert match.get('parent_feature') == 'feature-x', f'parent_feature mismatch: {m
 @test "propose: bash wrapper passes PARENT_FEATURE to finalize_change" {
   tmp_proj="$BATS_TMPDIR/pf-finalize-$$"
   mkdir -p "$tmp_proj/openspec/changes/c1"
-  echo "[]" > "$tmp_proj/proposal-suggestions.md"
+  echo "[]" > "$tmp_proj/improvement-suggestions.md"
 
   # Pre-create iteration.json so update_iteration_proposed can load
   mkdir -p "$tmp_proj/.rddf/state"
@@ -69,7 +69,7 @@ assert match.get('parent_feature') == 'feature-y', f'expected feature-y, got {ma
 @test "propose: bash wrapper without PARENT_FEATURE is backward compatible" {
   tmp_proj="$BATS_TMPDIR/pf-noenv-$$"
   mkdir -p "$tmp_proj"
-  echo "[]" > "$tmp_proj/proposal-suggestions.md"
+  echo "[]" > "$tmp_proj/improvement-suggestions.md"
 
   source "$REPO_ROOT/skills/propose/scripts/propose_change.sh"
 
@@ -91,7 +91,7 @@ assert match.get('parent_feature') is None, f'expected None, got {match.get(\"pa
 @test "propose: --parent-feature CLI arg parsed by propose_create_change" {
   tmp_proj="$BATS_TMPDIR/pf-cli-$$"
   mkdir -p "$tmp_proj"
-  echo "[]" > "$tmp_proj/proposal-suggestions.md"
+  echo "[]" > "$tmp_proj/improvement-suggestions.md"
 
   source "$REPO_ROOT/skills/propose/scripts/propose_change.sh"
 
@@ -119,7 +119,7 @@ assert match.get('parent_feature') == 'feature-cli', f'parent_feature mismatch: 
 @test "propose: --parent-feature CLI arg overrides PARENT_FEATURE env var" {
   tmp_proj="$BATS_TMPDIR/pf-override-$$"
   mkdir -p "$tmp_proj"
-  echo "[]" > "$tmp_proj/proposal-suggestions.md"
+  echo "[]" > "$tmp_proj/improvement-suggestions.md"
 
   source "$REPO_ROOT/skills/propose/scripts/propose_change.sh"
 
@@ -141,7 +141,7 @@ assert match.get('parent_feature') == 'feature-cli', f'CLI should override env; 
 @test "propose: --parent-feature CLI arg parsed by propose_finalize_change" {
   tmp_proj="$BATS_TMPDIR/pf-finalize-cli-$$"
   mkdir -p "$tmp_proj/openspec/changes/c1"
-  echo "[]" > "$tmp_proj/proposal-suggestions.md"
+  echo "[]" > "$tmp_proj/improvement-suggestions.md"
 
   # Pre-create iteration.json
   mkdir -p "$tmp_proj/.rddf/state"

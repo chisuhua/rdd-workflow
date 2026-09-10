@@ -34,13 +34,13 @@ import sys
 from pathlib import Path
 
 
-_MARKDOWN_LINK_FILES = ("proposal-approved.md", "proposal-suggestions.md")
+_MARKDOWN_LINK_FILES = ("improvement-approved.md", "improvement-suggestions.md")
 _DOC_LINK_FILES = (
     "AGENTS.md",
     "README.md",
     "USAGE.md",
-    "docs/proposal-suggestions-format.md",
-    "docs/proposal-approved-format.md",
+    "docs/improvement-suggestions-format.md",
+    "docs/improvement-approved-format.md",
 )
 _ITERATION_STATE_FILE = ".rddf/state/iteration.json"
 _LINK_REGEX = re.compile(r"\]\(improvements/([^)\s]+)\)")
@@ -75,7 +75,7 @@ def _print_help() -> None:
     print("  - Refuses (exit 1) if .rddf/improvements/ already exists")
     print("  - Uses git mv inside git repos (preserves rename history)")
     print("  - Falls back to plain mv outside git repos")
-    print("  - Updates markdown links in proposal-approved.md / proposal-suggestions.md")
+    print("  - Updates markdown links in improvement-approved.md / improvement-suggestions.md")
     print("  - Updates path fields in .rddf/state/iteration.json")
     print("  - With --include-docs: also rewrites AGENTS.md + format docs")
     print("    (single-prefix improvements/ → .rddf/improvements/, plus fixes")
@@ -362,7 +362,7 @@ def cmd_migrate_improvements(args: list[str]) -> int:
         for fname, n in link_counts.items():
             print(f"{prefix}   ✓ 更新 {fname}: {n} 个链接")
     else:
-        print(f"{prefix}   · 无 proposal-*.md markdown 链接需要更新")
+        print(f"{prefix}   · 无 improvement-*.md markdown 链接需要更新")
 
     # ── Step 3: rewrite iteration.json paths ──
     n_paths = _rewrite_iteration_paths(proj_root, dry_run=dry_run)

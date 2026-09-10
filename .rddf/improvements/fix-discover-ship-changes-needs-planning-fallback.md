@@ -14,7 +14,7 @@
 **复现证据**（2026-08-21 session）：
 
 - `ship_candidates_json` 报 10 个候选 flag=`"missing_disk"` + `"needs_planning"`
-- 全部 10 个 proposal 在 `proposal-approved.md` 中标记为"已实施"(2026-08-16)
+- 全部 10 个 proposal 在 `improvement-approved.md` 中标记为"已实施"(2026-08-16)
 - 真实的优先级 3（needs_planning）使这些条目排在 ship menu 顶部，掩盖了真正的待处理 work
 
 **根因**（`/home/ubuntu/.agents/skills/_lib/discover_ship_changes.py`）：

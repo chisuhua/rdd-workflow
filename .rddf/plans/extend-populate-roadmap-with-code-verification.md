@@ -1337,9 +1337,9 @@ After all 12 tasks complete:
 3. **Merge worktree branch**: `git merge --no-ff openspec/extend-populate-roadmap-with-code-verification`
 4. **Run openspec archive**: `openspec archive extend-populate-roadmap-with-code-verification --yes`
 5. **Cleanup worktree**: `git worktree remove .rddf/wt/extend-populate-roadmap-with-code-verification && git branch -d openspec/extend-populate-roadmap-with-code-verification`
-6. **Restore proposal-suggestions.md stash** (from pre-worktree step):
+6. **Restore improvement-suggestions.md stash** (from pre-worktree step):
    `git stash pop` (in master, after archive)
-   Then commit: `git add proposal-suggestions.md && git commit -m "chore(proposal-suggestions): remove entry after design-phase approval"`
+   Then commit: `git add improvement-suggestions.md && git commit -m "chore(proposal-suggestions): remove entry after design-phase approval"`
 
 ---
 

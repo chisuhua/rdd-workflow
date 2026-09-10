@@ -4,7 +4,7 @@
 Reads validated env-vars (from from_issue.env.py), reads pre-fetched issue
 metadata, writes a proposal scaffold with **issue_ref** + **gh_repo** frontmatter.
 
-HARD-GATE: does NOT auto-approve or modify proposal-suggestions.md — user must
+HARD-GATE: does NOT auto-approve or modify improvement-suggestions.md — user must
 still run rdd-workflow-brainstorm for section approval.
 
 Usage:

@@ -75,7 +75,7 @@
 | 概念 | 说明 | 当前实现 |
 |------|------|---------|
 | Spec/Ship 切分点 | `git commit artifacts` | 清晰,以 `.openspec.yaml` 在 HEAD 中存在为探针 |
-| 状态持久化 | 文件分层 | `proposal-suggestions.md` (git) + `.rddf/state/*` (gitignore) |
+| 状态持久化 | 文件分层 | `improvement-suggestions.md` (git) + `.rddf/state/*` (gitignore) |
 | 执行隔离 | `git worktree` | `.rddf/wt/<name>/` |
 | 进度同步 | tasks.md 单一事实源 | `grep -c "^- \[x\]"` 实时读取 |
 | 并行执行 | 🔒 阻塞 vs 🔓 分离 | 灵活但有状态分歧(见 10.2) |
@@ -146,7 +146,7 @@ fi
 | `cmake` | 2 | `execute.md:177,192` |
 | `git` | 50+ | 全部 skill |
 
-**问题**:INSTALL.md 自称"前置条件检查"但只检查 1/5 外部依赖。`python3` 缺失会直接破坏 `proposal-suggestions.md` 解析、`roadmap-state.json` 更新等关键路径。
+**问题**:INSTALL.md 自称"前置条件检查"但只检查 1/5 外部依赖。`python3` 缺失会直接破坏 `improvement-suggestions.md` 解析、`roadmap-state.json` 更新等关键路径。
 
 **修复建议**:在 `INSTALL.md` 步骤 1 添加:
 
@@ -198,7 +198,7 @@ done
 3. committed change 但无 worktree
 4. 无 `roadmap.md`
 5. 无 committed change
-6. `proposal-suggestions.md` 状态
+6. `improvement-suggestions.md` 状态
 
 **未检测**:
 
@@ -351,7 +351,7 @@ except (FileNotFoundError, json.JSONDecodeError):
 
 ```bash
 git add openspec/changes/*/
-git add proposal-suggestions.md
+git add improvement-suggestions.md
 ```
 
 **风险**:
@@ -367,10 +367,10 @@ git add proposal-suggestions.md
 for name in $THIS_SESSION_CREATED; do
   git add "openspec/changes/$name/"
 done
-git add proposal-suggestions.md
+git add improvement-suggestions.md
 ```
 
-### 6.3 🔴 P0-4:`proposal-suggestions.md` 解析错位
+### 6.3 🔴 P0-4:`improvement-suggestions.md` 解析错位
 
 **证据** (`propose.md:111-162`):
 
@@ -382,7 +382,7 @@ git add proposal-suggestions.md
 
 1. `PROJECT_ROOT` env var 在 bash 调用 Python 时**不一定传递**
 2. `propose.md:144` 用 `os.path.isdir(f'{project_root}/openspec/changes/{name}/')` — 路径前缀若空 → 永远 False → 不会移除已创建条目 → 列表无限增长
-3. 行级解析对缩进敏感,如果 `proposal-suggestions.md` 中含代码块示例(如 `- name: "foo"`)会被误识别
+3. 行级解析对缩进敏感,如果 `improvement-suggestions.md` 中含代码块示例(如 `- name: "foo"`)会被误识别
 
 **修复建议**:
 
@@ -398,7 +398,7 @@ project_root = subprocess.check_output(
 ).strip()
 ```
 
-### 6.4 🟡 P1-7:`proposal-suggestions.md` 格式未规范化
+### 6.4 🟡 P1-7:`improvement-suggestions.md` 格式未规范化
 
 **问题**:YAML 列表 + Markdown 注释(描述中含 `## 架构依据` 等) + 字段顺序自由。跨文件读取时(`guide.md:68`、`guide-spec.md:278`、`status.md:396`)、跨格式。
 
@@ -900,7 +900,7 @@ fi
 
 | 状态文件 | git 跟踪 | 写入者 | 读取者 |
 |---------|---------|-------|-------|
-| `proposal-suggestions.md` | ✅ | propose.md | guide.md, guide-spec.md, status.md |
+| `improvement-suggestions.md` | ✅ | propose.md | guide.md, guide-spec.md, status.md |
 | `roadmap.md` | ✅ | roadmap.md | propose.md, guide-spec.md, status.md |
 | `openspec/changes/<n>/proposal.md` | ✅ | propose.md (via openspec CLI) | deps.md, status.md |
 | `openspec/changes/<n>/design.md` | ✅ | 同上 | deps.md |
@@ -918,7 +918,7 @@ fi
 - 13 个状态文件,跨 4 个不同所有者(persist/ephemeral × user/cli)
 - `.rddf/state/phase-gate-report.md` 写但从不读(roadmap.md:562-612 写,grep 全仓 0 读)
 - `.rddf/state/deps-output.md` 写但 P0-5 实际不写内容
-- `proposal-suggestions.md` 跨 5 个文件读写,但格式不规范(见 P1-7)
+- `improvement-suggestions.md` 跨 5 个文件读写,但格式不规范(见 P1-7)
 
 **修复建议**:
 
@@ -960,7 +960,7 @@ fi
 | P0-1 | `read` 阻塞 stdin(AI 环境) | `INSTALL.md:39` | 15 min |
 | P0-2 | 硬编码 `/home/ubuntu/.npm-global/bin/openspec` | `guide-spec.md:80,159` | 30 min |
 | P0-3 | `git add openspec/changes/*/` glob 风险 | `propose.md:619` | 30 min |
-| P0-4 | `proposal-suggestions.md` 解析依赖 env var | `propose.md:135,144` | 1 hr |
+| P0-4 | `improvement-suggestions.md` 解析依赖 env var | `propose.md:135,144` | 1 hr |
 | P0-5 | `deps.md Step 5` heredoc 是占位符 | `deps.md:391-398` | 1 hr |
 | P0-6 | `prometheus-start-work` 未声明 | `package.json:17` + 多文件 | 1 hr |
 | P0-7 | `git worktree list $2` BUG | `status.md:144,281,387` + `execute.md:283,287,411` | 30 min |
@@ -979,7 +979,7 @@ fi
 | P1-4 | `grep "openspec/"` 误匹配 | `guide.md:50` | 15 min |
 | P1-5 | 4 个 roadmap 模板 3 个空头 | `roadmap.md:66-72` | 2 hr |
 | P1-6 | roadmap.md 删除/损坏无警告 | `propose.md:65` | 1 hr |
-| P1-7 | `proposal-suggestions.md` 格式未规范化 | 多文件 | 2 hr |
+| P1-7 | `improvement-suggestions.md` 格式未规范化 | 多文件 | 2 hr |
 | P1-8 | deps 候选用 `os.path.isfile` 而非 git HEAD | `guide-spec.md:386` | 30 min |
 | P1-9 | deps 与 `roadmap-meta.yaml` 脱节 | `deps.md` | 1 hr |
 | P1-10 | 零 change 时 spec-done 直接通过 | `guide-spec.md:432-446` | 15 min |

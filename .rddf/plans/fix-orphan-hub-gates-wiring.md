@@ -173,13 +173,13 @@ The proposal's 5 key scenarios drive the implementation:
 - [x] 4. Verify test passes (GREEN)
 - [x] 5. Refactor if needed + update tasks.md checkbox
 
-### Task 13: **依赖记录**: proposal-suggestions.md 表头注明 "阻塞: fix-adr-0031-safety-gate-substantiation"
+### Task 13: **依赖记录**: improvement-suggestions.md 表头注明 "阻塞: fix-adr-0031-safety-gate-substantiation"
 
 **Files:**
 
 **Steps (TDD 5-step):**
 
-- [x] 1. Write failing test for **依赖记录**: proposal-suggestions.md 表头注明 "阻塞: fix-adr-0031-saf...
+- [x] 1. Write failing test for **依赖记录**: improvement-suggestions.md 表头注明 "阻塞: fix-adr-0031-saf...
 - [x] 2. Verify test fails (RED)
 - [x] 3. Implement minimal code to pass
 - [x] 4. Verify test passes (GREEN)

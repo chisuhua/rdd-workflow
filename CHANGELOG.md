@@ -351,7 +351,7 @@ No data migration: `.rddf/state/` content unchanged. Existing rddf-sessions, ite
 - `guide-arch` Phase 5.5 脚本路径替换为 deprecated shim (包装函数转发到 `guide-design/scripts/`), v2.2.0 移除
 
 ### Docs
-- `README.md` / `AGENTS.md` 顶部 banner 新增四阶段说明; `README.md` 架构表改为四阶段; `proposal-suggestions.md` 头注释更新
+- `README.md` / `AGENTS.md` 顶部 banner 新增四阶段说明; `README.md` 架构表改为四阶段; `improvement-suggestions.md` 头注释更新
 - `INSTALL.md` 子技能计数更新为 14
 
 - **JSON Schema**: `skills/_lib/schemas/arch_handoff_schema.json` (v1)

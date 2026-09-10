@@ -79,7 +79,7 @@ class RddfSessionCommands:
                     return existing["session_id"]
 
             # Stage-level singleton: cross-stage concurrent runs race on
-            # unlocked project singletons (proposal-approved.md, handoffs).
+            # unlocked project singletons (improvement-approved.md, handoffs).
             # RDDF_ALLOW_CROSS_STAGE_PARALLEL=yes restores legacy behavior.
             if os.environ.get("RDDF_ALLOW_CROSS_STAGE_PARALLEL", "").lower() not in ("yes", "true", "1"):
                 for existing in data["sessions"]:

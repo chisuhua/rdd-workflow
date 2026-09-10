@@ -3,7 +3,7 @@
 #
 # Regression coverage for fix-proposal-approved-sync (P2, 2026-08-21):
 # rdd-doctor MUST have a "proposal-section" category that detects
-# proposal-approved.md "## 已批准提案" entries with matching
+# improvement-approved.md "## 已批准提案" entries with matching
 # openspec/changes/archive/<date>-<name>/ directories.
 #
 # The original bug (2026-08-21): the sync never happened, so the
@@ -23,7 +23,7 @@ setup() {
 
 teardown() { rm -rf "$TEST_TMPDIR"; }
 
-# Build a minimal proposal-approved.md string for a list of approved entries.
+# Build a minimal improvement-approved.md string for a list of approved entries.
 _mk_approved_file() {
     local body="## 已批准提案
 
@@ -40,7 +40,7 @@ _mk_approved_file() {
 
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|"
-    printf '%s' "$body" > proposal-approved.md
+    printf '%s' "$body" > improvement-approved.md
 }
 
 @test "proposal-section: approved entry + matching archive dir -> CRITICAL" {
@@ -83,7 +83,7 @@ _mk_approved_file() {
 }
 
 @test "proposal-section: implemented entry + matching archive dir -> clean" {
-    cat > proposal-approved.md <<'EOF'
+    cat > improvement-approved.md <<'EOF'
 ## 已批准提案
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
@@ -104,7 +104,7 @@ EOF
     [ "$status" -eq 0 ]
 }
 
-@test "proposal-section: missing proposal-approved.md -> clean (degraded)" {
+@test "proposal-section: missing improvement-approved.md -> clean (degraded)" {
     cd "$TEST_TMPDIR"
     run python3 "$TEST_TMPDIR/rdd-doctor/scripts/doctor_main.py" \
         --category proposal-section --quiet

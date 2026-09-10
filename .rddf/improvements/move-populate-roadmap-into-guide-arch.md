@@ -136,7 +136,7 @@
 
 #### F. 文档
 
-- `docs/proposal-suggestions-format.md` 加示例（增量 state schema）
+- `docs/improvement-suggestions-format.md` 加示例（增量 state schema）
 - `AGENTS.md` "常见陷阱" 节加一条："切分支后第一次 arch-done 会自动 fallback full（state 绑 codebase_commit）"
 - `README.md` "v2.2 新特性" 节加 roadmap incremental 节
 

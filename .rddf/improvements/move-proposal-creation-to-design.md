@@ -7,7 +7,7 @@
 
 ## 架构依据
 
-1. **v2.1 四阶段架构（arch → design → plan → ship）后，guide-design 是"哑管道"**：批准动作仅向 `proposal-approved.md` 追加一行表格（`skills/guide-design/scripts/approve_proposal.sh` → `state.sh::append_approved`），无内容审查、不触碰 openspec。审批与 change 实体创建脱节。
+1. **v2.1 四阶段架构（arch → design → plan → ship）后，guide-design 是"哑管道"**：批准动作仅向 `improvement-approved.md` 追加一行表格（`skills/guide-design/scripts/approve_proposal.sh` → `state.sh::append_approved`），无内容审查、不触碰 openspec。审批与 change 实体创建脱节。
 2. **openspec proposal 的实质内容在 design 审批时已全部具备**：`improvements/<name>.md` 的 5 段（架构依据/范围/关键场景/技术约束/验收标准）经 brainstorm 逐段确认，信息量足以转换为完整 openspec `proposal.md`（Why / What Changes / Capabilities / Impact）。当前流程把它降级为占位骨架（`<skeleton motivation>`），到 plan 阶段才填实——审批时无实质 proposal 可审，反馈链路过长。
 3. **design-done 门控只查状态列枚举**（`skills/guide-design/SKILL.md` Phase 4）。已归档的 `add-propose-content-review` change 提供了 4 维 Oracle 内容审查原型（scope 清晰度 / ADR 引用 / 验收可测试性 / 边界），可作为审查机制参考。
 4. **openspec v1.7.0 原生提供 `openspec new change <name>` 脚手架**（实测 v1.4.1 已可用），design 阶段调用无版本障碍；`openspec validate <name> --json` 可对完整 proposal 做原生结构校验。
@@ -32,7 +32,7 @@
   - design 阶段**不生成** tasks.md / design.md / specs（留在 plan Phase 2.5 fill；`propose_quality_check` 的 tasks ≥2、roadmap 对齐 2 项因此也留在 plan——已在 `skills/_lib/gate.py` plan_done 注册，不后移）
   - 不动 `update_roadmap_meta` 完整分支 / `update_iteration_proposed`（status=proposed 语义绑定 deps 分析，留在 plan）
   - 不动 Phase 3 deps / plan-done 门控 / `.plan-handoff.json`
-  - 不改 `proposal-suggestions.md` / `proposal-approved.md` 表格格式
+  - 不改 `improvement-suggestions.md` / `improvement-approved.md` 表格格式
   - 不在 `iteration.json` 引入新状态值（design 阶段只写 `planned`）
   - `create_skeleton_change()` 骨架模式保留，作为 `SKIP_DESIGN_HANDOFF=yes` 存量路径的 fallback（不在本提案删除）
   - 不修改 ADR-0003

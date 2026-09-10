@@ -84,7 +84,7 @@ This is a docs-only change. No `skills/`, `_lib/`, or `openspec/` files are modi
 
 ### Untouched (preserved)
 
-`docs/ONBOARDING.md`, `docs/change-quality-guide.md`, `docs/proposal-approved-format.md`, `docs/proposal-suggestions-format.md`, `docs/loop-engineering-research.md`, `docs/audit/`, `docs/migration/`, `docs/legacy/`, `docs/superpowers/specs/`, `docs/superpowers/plans/`, all `docs/adr/ADR-*.md`.
+`docs/ONBOARDING.md`, `docs/change-quality-guide.md`, `docs/improvement-approved-format.md`, `docs/improvement-suggestions-format.md`, `docs/loop-engineering-research.md`, `docs/audit/`, `docs/migration/`, `docs/legacy/`, `docs/superpowers/specs/`, `docs/superpowers/plans/`, all `docs/adr/ADR-*.md`.
 
 ## Design — Each `architecture/` File
 

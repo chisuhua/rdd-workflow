@@ -73,8 +73,8 @@ skill_use("rdd-arch")   # 无参数版本
 ```
 [rdd-arch]  --(arch-done: ADR ≥ 1, 单门控 per ADR-0048)-->  [rdd-planner]  --(planner-done: roadmap存在 + recommended_route)-->  [rdd-builder]
    arch 端                                                planner 端                                          builder 端
-   owns: docs/adr/ADR-*.md,                              owns: roadmap.md, proposal-suggestions.md,             owns: openspec/changes/<name>/
-        docs/architecture/*-gap-analysis.md,                  proposal-approved.md,                              proposal.md (authoring via P0 approve),
+   owns: docs/adr/ADR-*.md,                              owns: roadmap.md, improvement-suggestions.md,             owns: openspec/changes/<name>/
+        docs/architecture/*-gap-analysis.md,                  improvement-approved.md,                              proposal.md (authoring via P0 approve),
         .rddf/state/.arch-handoff.json                        .rddf/roadmap/{features,phases}/*.md,             {design,tasks}.md, .rddf/wt/<name>/,
         (roadmap 完全不写 per ADR-0048)                       .rddf/improvements/*.md,                          .rddf/plans/<name>.md,
                                                               .rddf/state/.planner-{state,feedback,handoff}.json  .rddf/state/builder/<change>.json

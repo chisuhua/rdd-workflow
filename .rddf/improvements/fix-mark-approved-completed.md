@@ -1,6 +1,6 @@
 # fix-mark-approved-completed
 
-**优先级**: P1 | **来源**: 会话复盘 2026-07-23 — proposal-approved.md 表头重复 bug
+**优先级**: P1 | **来源**: 会话复盘 2026-07-23 — improvement-approved.md 表头重复 bug
 **阶段**: v2.1 | **分类**: core
 **类型**: feature
 
@@ -18,7 +18,7 @@
   - 增加单元测试覆盖
 - **Out Scope**:
   - 不修改 `append_approved` 函数
-  - 不修改 proposal-approved.md 格式
+  - 不修改 improvement-approved.md 格式
 
 ## 关键场景
 

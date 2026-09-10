@@ -16,7 +16,7 @@ rddf-session owner identity 通过 `$(hostname -s)_$PPID` 推断 (SKILL.md L251 
   - 用户难以分辨"我自己同一会话创建的多个 sessions"和"被遗忘的孤儿 sessions"
 - 31 个 archived 历史 session 中,16 个 abandoned + 3 个 orphaned 主要是用户主动关闭未触发 archive-history,部分可能是此 bug 的表征
 
-**Refine 而非新开 change**: 此 bug 与已实施的 `fix-rddf-session-owner-cross-call` (P1, 2026-07-29, 详见 `proposal-approved.md` 第 1 节) 是**同根因的回归**——后者把 fallback 从 `$$`(子 shell PID)改为 `$PPID`(父 shell PID),但原 PR 仅承诺"stable across bash tool calls",实际证明 `$PPID` 同样不可靠(实证见上)。本提案是 v2 升级版,设计阶段应创建 `refine-rddf-session-owner-detection` 增量 PR(而非开新 change),合并时引用本改进为根因证据链。
+**Refine 而非新开 change**: 此 bug 与已实施的 `fix-rddf-session-owner-cross-call` (P1, 2026-07-29, 详见 `improvement-approved.md` 第 1 节) 是**同根因的回归**——后者把 fallback 从 `$$`(子 shell PID)改为 `$PPID`(父 shell PID),但原 PR 仅承诺"stable across bash tool calls",实际证明 `$PPID` 同样不可靠(实证见上)。本提案是 v2 升级版,设计阶段应创建 `refine-rddf-session-owner-detection` 增量 PR(而非开新 change),合并时引用本改进为根因证据链。
 
 依据:ADR-0017 (rddf-session 设计 §2.1 owner identity)。
 

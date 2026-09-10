@@ -241,7 +241,7 @@ metadata:
 
 - [ ] **Step 2: Write Phase 1 (scan) — change candidate scanning**
 
-Copy the scan logic from `guide-spec.md` Phase 2 (lines 297-369). This includes the `skill_use("propose")` delegation, `proposal-suggestions.md` reading, and ADR scanning patterns.
+Copy the scan logic from `guide-spec.md` Phase 2 (lines 297-369). This includes the `skill_use("propose")` delegation, `improvement-suggestions.md` reading, and ADR scanning patterns.
 
 ```bash
 # Phase 1: scan — 扫描变更候选
@@ -458,7 +458,7 @@ elif [ ! -f "$PROJECT_ROOT/roadmap.md" ]; then
 elif [ -z "$(ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/)" ]; then
     RECOMMEND="guide-plan"; REASON="无 change → 进入变更生成"
 else
-    # Check proposal-suggestions.md for pending changes
+    # Check improvement-suggestions.md for pending changes
     HAS_PENDING=$(python3 -c ...)
     if [ "$HAS_PENDING" = "yes" ]; then
       RECOMMEND="guide-plan"; REASON="有 change 待创建 → 继续 propose"

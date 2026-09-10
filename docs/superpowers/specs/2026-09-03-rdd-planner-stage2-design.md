@@ -40,7 +40,7 @@ Per Oracle review (Stage 1 deliverable), `rdd-planner` MUST be:
 - ❌ `rddf planner advance-sprint --auto` auto-trigger logic (manual only in Stage 2).
 - ❌ `guide-arch → rdd-arch` rename (Stage 3).
 - ❌ Modifying any of the 226 existing `.rddf/improvements/*.md` files.
-- ❌ Changing `proposal-suggestions.md` / `proposal-approved.md` format.
+- ❌ Changing `improvement-suggestions.md` / `improvement-approved.md` format.
 - ❌ Cross-repo / Hub-Spoke federation impact.
 
 ## 2. Design Decisions
@@ -409,7 +409,7 @@ $ grep -A 5 "AUTO-SPRINT-START" .rddf/roadmap.md
 - ❌ Implementing `planner revise` (Stage 2.5).
 - ❌ Implementing `planner audit` (Stage 2.5).
 - ❌ Auto-advance sprint based on completion detection.
-- ❌ Reading `proposal-suggestions.md` / `proposal-approved.md`.
+- ❌ Reading `improvement-suggestions.md` / `improvement-approved.md`.
 - ❌ Modifying any `.rddf/improvements/*.md` file.
 - ❌ Cross-repo / Hub-Spoke integration.
 - ❌ Modifying 28 existing CLI subcommands.

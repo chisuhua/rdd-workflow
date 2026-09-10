@@ -19,12 +19,12 @@ These gates are confirmed as of `2026-07-07`; **re-verify before execution**:
 - [x] `skills/_lib/worktree.sh` and `archive.sh` establish the convention: no shebang (sourced only), no `set -euo pipefail`, no `main()`, `snake_case` functions, `_LIB_DIR` self-discovery (`archive.sh:54-58`).
 - [x] `load_lib scan-state` resolves through `tests/test_helper.bash:22-37` → `skills/_lib/scan-state.sh`. New file is automatically bats-discoverable.
 - [x] `test_helper.bash` exposes `$REPO_ROOT`. No env var setup needed.
-- [x] `archive.sh:mark_iteration_archived` (lines 329-350, see confirmation in header) uses the `os.environ["KEY"]` safety pattern for passing paths to Python — this is the replacement idiom for guide.md's current heredoc that interpolates `proposal-suggestions.md` relative to cwd.
+- [x] `archive.sh:mark_iteration_archived` (lines 329-350, see confirmation in header) uses the `os.environ["KEY"]` safety pattern for passing paths to Python — this is the replacement idiom for guide.md's current heredoc that interpolates `improvement-suggestions.md` relative to cwd.
 
 **Pre-existing bugs we'll fix in this PR** (only because they are surfaced by extraction):
 
 1. **Bracket format bug** (`$3 ~ /^openspec\//`): `git worktree list` default format prints branches as `[openspec/foo]` (brackets included). The current `awk '$3 ~ /^openspec\//'` should be `awk '$3 ~ /^\[openspec\//`. Confirmed by `tests/integration/test_execute_wt_fix.bats:99` and `test_status_worktree_lookup.bats:74` which use `awk -v br="[openspec/$branch]"`. **Fix: every `openspec/` match in scan-state.sh now uses `[openspec/`.**
-2. **CWD-relative Python heredoc** (`guide.md:92` `with open('proposal-suggestions.md')`): relies on cwd being `$PROJECT_ROOT`. Refactor to read from `os.environ['PY_PROJECT_ROOT']`.
+2. **CWD-relative Python heredoc** (`guide.md:92` `with open('improvement-suggestions.md')`): relies on cwd being `$PROJECT_ROOT`. Refactor to read from `os.environ['PY_PROJECT_ROOT']`.
 
 **Pre-existing bugs we'll NOT fix in this PR** (out of scope; tracked separately):
 
@@ -120,7 +120,7 @@ load ../test_helper
   grep -q "PY_PROJECT_ROOT" "$REPO_ROOT/skills/_lib/scan-state.sh"
   grep -q 'os.environ\[.PY_PROJECT_ROOT.\]' "$REPO_ROOT/skills/_lib/scan-state.sh"
   # Negative: must NOT rely on cwd relative open
-  ! grep -qE "open\(['\"]proposal-suggestions.md['\"]" "$REPO_ROOT/skills/_lib/scan-state.sh"
+  ! grep -qE "open\(['\"]improvement-suggestions.md['\"]" "$REPO_ROOT/skills/_lib/scan-state.sh"
 }
 
 # ---- Runtime tests (Pattern C: mktemp -d in @test body) ------------------
@@ -185,28 +185,28 @@ _run_scan() {
   echo "# Roadmap" > roadmap.md
   mkdir -p openspec/changes && touch openspec/changes/.keep
   git add . && git commit -q -m init
-  # proposal-suggestions.md absent → HAS_PENDING=no → guide-ship default
+  # improvement-suggestions.md absent → HAS_PENDING=no → guide-ship default
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=guide-ship"
   echo "$out" | grep -q "无待创建 change"
 }
 
-@test "scan_state: proposal-suggestions.md with status=待创建 → guide-plan (branch 10)" {
+@test "scan_state: improvement-suggestions.md with status=待创建 → guide-plan (branch 10)" {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo "# Roadmap" > roadmap.md
   mkdir -p openspec/changes && touch openspec/changes/.keep
-  # proposal-suggestions.md is a JSON array (P1-7 requires json.load, not grep)
-  printf '[{"title":"x","status":"待创建"}]' > proposal-suggestions.md
+  # improvement-suggestions.md is a JSON array (P1-7 requires json.load, not grep)
+  printf '[{"title":"x","status":"待创建"}]' > improvement-suggestions.md
   git add . && git commit -q -m init
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=guide-plan"
   echo "$out" | grep -q "待创建"
 }
 
-@test "scan_state: Python parser reads proposal-suggestions.md via PROJECT_ROOT, not cwd (P1-7)" {
+@test "scan_state: Python parser reads improvement-suggestions.md via PROJECT_ROOT, not cwd (P1-7)" {
   # If buggy: scan_state is invoked from a cwd that does NOT contain
-  # proposal-suggestions.md → python FileNotFoundError → HAS_PENDING="" →
+  # improvement-suggestions.md → python FileNotFoundError → HAS_PENDING="" →
   # falls through to default branch 11 → guide-ship. Correct behavior:
   # scan_state must locate the file via PROJECT_ROOT regardless of cwd.
   local r; r=$(mktemp -d); cd /tmp || return 1   # deliberately NOT $r
@@ -214,7 +214,7 @@ _run_scan() {
   (cd "$r" && git init -q -b master && git config user.email t@t && git config user.name t
    echo "# Roadmap" > roadmap.md
    mkdir -p openspec/changes && touch openspec/changes/.keep
-   printf '[{"status":"待创建"}]' > proposal-suggestions.md
+   printf '[{"status":"待创建"}]' > improvement-suggestions.md
    git add . && git commit -q -m init)
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=guide-plan"
@@ -273,7 +273,7 @@ Write `skills/_lib/scan-state.sh` with this exact content (zero modifications �
 #     so the regex must include the opening '[' to avoid matching on path
 #     substrings (this P1-3 bracket fix is part of the extraction)
 #   - git show HEAD:<path> requires repo-relative path; cd into PROJECT_ROOT
-#   - json.load (not grep) on proposal-suggestions.md to avoid matching the
+#   - json.load (not grep) on improvement-suggestions.md to avoid matching the
 #     literal word "待创建" inside description fields (P1-7)
 #   - PY_PROJECT_ROOT env var (not cwd-relative open) to keep python safe
 #     regardless of caller's cwd (pattern from archive.sh:mark_iteration_archived)
@@ -282,7 +282,7 @@ Write `skills/_lib/scan-state.sh` with this exact content (zero modifications �
 #   - .rddf/state/.arch-handoff.json   — arch phase done sentinel
 #   - .rddf/state/.plan-handoff.json   — plan phase done sentinel
 #   - .rddf/state/.phase-gate-report.md — pending review
-#   - proposal-suggestions.md          — JSON array with status field
+#   - improvement-suggestions.md          — JSON array with status field
 #   - roadmap.md                       — arch artifact (committed)
 
 # scan_state
@@ -297,7 +297,7 @@ Write `skills/_lib/scan-state.sh` with this exact content (zero modifications �
 #     7. committed change in HEAD (no worktree)     → "guide-ship"
 #     8. no roadmap.md                              → "guide-arch"
 #     9. no openspec/changes/                       → "guide-plan"
-#    10. proposal-suggestions.md has pending entry  → "guide-plan"
+#    10. improvement-suggestions.md has pending entry  → "guide-plan"
 #    11. default                                    → "guide-ship"
 scan_state() {
   local PROJECT_ROOT="$1"
@@ -394,14 +394,14 @@ scan_state() {
     return 0
   fi
 
-  # 10/11. proposal-suggestions.md JSON parse
+  # 10/11. improvement-suggestions.md JSON parse
   # P1-7: json.load not grep (description field may also contain "待创建" text)
   # cwd safety: PY_PROJECT_ROOT env var (archive.sh:mark_iteration_archived pattern)
   local HAS_PENDING
   HAS_PENDING=$(PY_PROJECT_ROOT="$PROJECT_ROOT" python3 -c '
 import os, json, sys
 try:
-    with open(os.path.join(os.environ["PY_PROJECT_ROOT"], "proposal-suggestions.md")) as f:
+    with open(os.path.join(os.environ["PY_PROJECT_ROOT"], "improvement-suggestions.md")) as f:
         entries = json.load(f)
     if not isinstance(entries, list):
         print("no")
@@ -433,7 +433,7 @@ bats tests/integration/scan_state.bats
 
 **If static test 4 fails** ("uses fixed bracket format"): verify the awk regex contains `\[openspec/` literally — paste from Step 2.1 if needed.
 
-**If static test 5 fails** ("Python heredoc uses env var"): verify the Python code uses `os.environ["PY_PROJECT_ROOT"]` and NOT `open("proposal-suggestions.md")` or `open('proposal-suggestions.md')`.
+**If static test 5 fails** ("Python heredoc uses env var"): verify the Python code uses `os.environ["PY_PROJECT_ROOT"]` and NOT `open("improvement-suggestions.md")` or `open('improvement-suggestions.md')`.
 
 - [ ] **Step 2.3: Run the existing static-grep tests to confirm we have NOT broken them yet**
 

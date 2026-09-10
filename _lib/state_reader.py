@@ -1,7 +1,7 @@
 """Shared read-only data layer for all CLI subcommands.
 
 This module provides 8 fine-grained functions that each read from a
-specific state source (``.rddf/state/*.json``, `<a href=".rddf/improvements/*.md + proposal-approved.md``,
+specific state source (``.rddf/state/*.json``, `<a href=".rddf/improvements/*.md + improvement-approved.md``,
 ``git worktree list``, ``openspec/changes/``). All functions are strictly
 read-only: they never write, backup, or mutate any file. All return
 ``None`` (or ``[]`` for list-returning functions) for missing or corrupt

@@ -124,7 +124,7 @@ PROPOSE_MD="$REPO_ROOT/skills/propose/SKILL.md"
 }
 
 @test "runtime: PROJECT_ROOT env var unset still lets JSON parsing succeed" {
-  # P1-7 / P0-4: build a temp git repo with proposal-suggestions.md in the
+  # P1-7 / P0-4: build a temp git repo with improvement-suggestions.md in the
   # NEW JSON format, then run the EXACT Python parsing block from propose.md
   # Phase 0 with PROJECT_ROOT unset. Expects: the script reports
   # "剩余 0 个建议" without crashing.
@@ -136,7 +136,7 @@ PROPOSE_MD="$REPO_ROOT/skills/propose/SKILL.md"
   git config user.name "test"
   echo "x" > a && git add a && git commit -q -m init
   mkdir -p openspec/changes
-  cat > proposal-suggestions.md <<'JSON'
+  cat > improvement-suggestions.md <<'JSON'
 [
   {
     "name": "fix-ns-pollution",
@@ -149,7 +149,7 @@ PROPOSE_MD="$REPO_ROOT/skills/propose/SKILL.md"
   }
 ]
 JSON
-  git add proposal-suggestions.md && git commit -q -m add_suggestions
+  git add improvement-suggestions.md && git commit -q -m add_suggestions
 
   # Create a matching change directory so the filter will REMOVE the entry
   mkdir -p openspec/changes/fix-ns-pollution
@@ -167,7 +167,7 @@ project_root = subprocess.check_output(
 ).strip()
 
 try:
-    with open('proposal-suggestions.md') as f:
+    with open('improvement-suggestions.md') as f:
         entries = json.load(f)
 
     if not isinstance(entries, list):

@@ -111,4 +111,4 @@ $ rdd-doctor --category state --check orphan-gates
 - [ ] `README.md` §"紧急跳过 `SKIP_HUB_CHECK=true`" 章节明确"默认 OFF, 紧急时 ON"语义
 - [ ] **既有回归**: `./test.sh --full --regression` 通过
 - [ ] **审计 trail**: `git log --grep='fix-orphan-hub-gates'` 含清晰 conventional commit
-- [ ] **依赖记录**: proposal-suggestions.md 表头注明 "阻塞: fix-adr-0031-safety-gate-substantiation"
+- [ ] **依赖记录**: improvement-suggestions.md 表头注明 "阻塞: fix-adr-0031-safety-gate-substantiation"

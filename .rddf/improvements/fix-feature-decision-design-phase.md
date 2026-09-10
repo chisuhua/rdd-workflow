@@ -7,7 +7,7 @@
 ## 架构依据
 
 - `add-proposal-deps-and-features` (P1，已批准并归档于 commit `2a15ba9`) 定义了 `**特性**` 字段为 design 阶段的 feature 标签，明确承诺 "feature 标签自动写入 iteration.json 的 parent_feature"
-- 该字段在 `proposal-approved.md` 表格中已有 `特性` 列，但**没有任何生产代码路径解析这个字段**：
+- 该字段在 `improvement-approved.md` 表格中已有 `特性` 列，但**没有任何生产代码路径解析这个字段**：
   - `skills/guide-design/scripts/approve_proposal.sh:142` 只读 `PARENT_FEATURE` 环境变量，不读 improvements 文件
   - `skills/propose/scripts/propose_change.py::create_skeleton_change` 只接受函数参数 `parent_feature`，不读 improvements 文件
 - 影响：用户在 `improvements/<name>.md` 头部写 `**特性**: wave-core` 后，feature 视图（`feature` skill）不识别，只能回退到命名约定（`feature-<name>-<sub>` 前缀）或手动传 env var
@@ -25,7 +25,7 @@
   - 不修 `**类型**` / `**阶段**` / `**分类**` 的 `\s*` 跨行 latent bug（独立提案，避免本次范围扩散）
   - 不改 `approve_proposal.sh` 里 `iteration.json` 写入部分（独立 bug — 已存在但未写入 parent_feature；超出本 fix 范围）
   - 不做 guide-design 阶段 feature preview UX 增强（B 方案）— 等本 fix 稳定且被使用后再评估
-  - 不改 schema，不写 ADR，不改 proposal-suggestions.md 格式
+  - 不改 schema，不写 ADR，不改 improvement-suggestions.md 格式
 
 ## 关键场景
 

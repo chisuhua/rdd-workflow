@@ -32,7 +32,7 @@ Plugin extension: drop a Python module under `_lib/plugins/` that calls `registe
 Multi-agent cross-validation. Given an artefact (proposal, design.md, etc.), it runs N reviewer agents and aggregates weighted scores. Sensitive content (paths, env vars, secrets) is sanitised via `_lib/loop/sanitizer.py` (imported as `skills._lib.loop.sanitizer`) before review.
 
 Use cases:
-- Verifying an improvement proposal's quality before it enters `proposal-approved.md`.
+- Verifying an improvement proposal's quality before it enters `improvement-approved.md`.
 - Cross-checking a generated implementation plan against its source design.md.
 
 Tribunal scores are advisory unless explicitly wired into a hard gate.

@@ -77,7 +77,7 @@ grep -rn 'attach_change\|detach_change' skills/ tests/ docs/ \
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: 扫描完成后, 确认清单完整 (覆盖 rddf_session.py / rddf_session_hooks.sh / test_rddf_session.py / proposal.md / proposal-suggestions.md / archived tasks.md)
+Run: 扫描完成后, 确认清单完整 (覆盖 rddf_session.py / rddf_session_hooks.sh / test_rddf_session.py / proposal.md / improvement-suggestions.md / archived tasks.md)
 Expected: ≥6 个文件被记录
 
 - [ ] **Step 5: Commit**

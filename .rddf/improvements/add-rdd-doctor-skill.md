@@ -14,7 +14,7 @@ rdd-workflow v2.1 工作流涉及多类**结构化状态文件**，分布在 git
 | `.rddf/state/*.json`（state_vector / sessions / iteration / deps-analysis） | gitignored | 分散在各 reader，无统一校验 |
 | `.rddf/plans/*.md`（TDD 5 步契约） | tracked | `execute` 读时假设格式正确，无前置 schema 校验 |
 | `openspec/changes/*/roadmap-meta.yaml`（含 manual_deps ADR-0022） | tracked | deps 阶段 schema 漂移**会静默跳过**，无可见告警 |
-| `proposal-suggestions.md` / `proposal-approved.md`（Markdown 表格索引） | tracked | `propose` / `guide-design` reader 自己解析，parser 改 doctor 没改就漏报 |
+| `improvement-suggestions.md` / `improvement-approved.md`（Markdown 表格索引） | tracked | `propose` / `guide-design` reader 自己解析，parser 改 doctor 没改就漏报 |
 | `openspec/changes/*/tasks.md`（checkbox 进度） | tracked | `execute` 写回时假设一致，无外部审计 |
 
 **已有相关基础设施（不能重复造轮子）**
@@ -64,7 +64,7 @@ rdd-workflow v2.1 工作流涉及多类**结构化状态文件**，分布在 git
 | 1 | `.rddf/state/*.json` schema | 校验 `state_vector` / `sessions` / `iteration` / `deps-analysis` 4 个 JSON file 对其 schema（`_lib/schemas/`） | **复用**现有 schema + **新写** checker |
 | 2 | `.rddf/plans/*.md` TDD 5 步结构 | 校验 `rdd-workflow-writing-plans` 输出的契约结构（Write failing test / Verify fail / Implement / Verify pass / Commit） | **新写**（无现成 schema） |
 | 3 | `openspec/changes/*/roadmap-meta.yaml` | 校验字段 + `manual_deps` / `manual_blocks` 类型（ADR-0022） | **新写**（deps 阶段静默跳过的根因防线） |
-| 4 | `proposal-suggestions.md` / `proposal-approved.md` 表格格式 | 列数 + 必填字段 + 链接有效性 | **新写** |
+| 4 | `improvement-suggestions.md` / `improvement-approved.md` 表格格式 | 列数 + 必填字段 + 链接有效性 | **新写** |
 | 5 | `openspec/changes/*/tasks.md` checkbox 一致性 | `- [ ]` / `- [x]` 计数 + 文件存在性 | **新写**（v1 故意不交叉验证 openspec status：openspec CLI v1.4.1 `status --change X --json` 对缺少 `schema` 字段的 change 直接报 "Invalid metadata"，且 `isComplete` 实际由 artifact 存在性而非 checkbox 进度决定，交叉验证**实质 vacuous**） |
 
 **C. 输出模式（双模式，对标 rdd-env-check）**
@@ -98,7 +98,7 @@ rdd-workflow v2.1 工作流涉及多类**结构化状态文件**，分布在 git
 | **检查未提交 working tree dirty** | `_lib/state.sh::check_dirty_key_files` 已是 sentinel 警告层 |
 | **替代现有 `plan_done_gate` / `arch_done_gate`** | gate = 阻断，doctor = 诊断，职责分明 |
 | **跨 repo / 全局状态**（如 `~/.rddf/`） | v1 只查 `$PROJECT_ROOT`；全局诊断留 follow-up |
-| **`add`（加新条目到 proposal-suggestions.md）能力** | doctor 只**读**这两个文件验证格式，不修改 |
+| **`add`（加新条目到 improvement-suggestions.md）能力** | doctor 只**读**这两个文件验证格式，不修改 |
 
 ## 关键场景
 
@@ -123,7 +123,7 @@ rdd-workflow v2.1 工作流涉及多类**结构化状态文件**，分布在 git
 - THEN 该 finding 标 **CRITICAL**（deps 阶段会**静默跳过**这种漂移，无任何日志）；提示"deps-driven execution mode will silently ignore this change"；退出码 2
 
 **S5 — proposal 表格列数漂移**
-- GIVEN `proposal-approved.md` 新增一行但漏写 `| date |` 列
+- GIVEN `improvement-approved.md` 新增一行但漏写 `| date |` 列
 - WHEN 跑 doctor
 - THEN WARNING，输出 "Row N has 4 columns, expected 5" + 行号；退出码 1
 

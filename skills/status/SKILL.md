@@ -366,17 +366,17 @@ if [ "$REMAINING_WT" -gt 0 ]; then
     echo "1. 继续处理其他 worktree"
     echo "2. 返回 guide: skill_use(\"guide\")"
 else
-    # 检查 proposal-suggestions.md
+    # 检查 improvement-suggestions.md
     # P1-7: 文件格式已规范化为 JSON 列表
     #       用 json.load 解析后统计 status == "待创建" 的条目数
-    if [ -f "proposal-suggestions.md" ]; then
+    if [ -f "improvement-suggestions.md" ]; then
         source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
         source "$(resolve_rdd_lib_dir)/state.sh"
         REMAINING=$(count_pending_suggestions "$PROJECT_ROOT")
         REMAINING=${REMAINING:-0}
         if [ "$REMAINING" -gt 0 ]; then
             echo ""
-            echo "📋 proposal-suggestions.md 中还有 $REMAINING 个未创建的 change"
+            echo "📋 improvement-suggestions.md 中还有 $REMAINING 个未创建的 change"
             echo "建议运行: skill_use(\"guide\") 回到 propose 阶段"
         fi
     fi

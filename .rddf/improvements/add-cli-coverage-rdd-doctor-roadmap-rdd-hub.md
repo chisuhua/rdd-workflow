@@ -162,11 +162,11 @@ fi
 ### 1. Proposal creation
 
 提案创建在 `.rddf/improvements/add-cli-coverage-rdd-doctor-roadmap-rdd-hub.md`（本文件）。
-注册到 `proposal-suggestions.md` 表格。
+注册到 `improvement-suggestions.md` 表格。
 
 ### 2. Design review (`guide-design`)
 
-按 `guide-design` Phase 3 流程审查。批准后移至 `proposal-approved.md` 并创建 `openspec/changes/add-cli-coverage-rdd-doctor-roadmap-rdd-hub/`。
+按 `guide-design` Phase 3 流程审查。批准后移至 `improvement-approved.md` 并创建 `openspec/changes/add-cli-coverage-rdd-doctor-roadmap-rdd-hub/`。
 
 ### 3. Plan (`guide-plan`)
 

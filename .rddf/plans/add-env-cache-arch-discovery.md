@@ -641,7 +641,7 @@ The `mark_approved_completed` helper should auto-trigger when the change moves t
 
 ```bash
 cd /workspace/project/rdd-workflow
-grep "add-env-cache-arch-discovery" proposal-approved.md
+grep "add-env-cache-arch-discovery" improvement-approved.md
 ```
 
 Expected: entry moved to `## 已实施` section.

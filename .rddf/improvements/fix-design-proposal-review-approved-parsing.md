@@ -1,6 +1,6 @@
 # fix-design-proposal-review-approved-parsing
 
-**优先级**: P0 | **来源**: Session 复盘 2026-08-07 — guide-design 双源扫描误判已批准 proposal 为待审（可能导致重复批准 / 重复创建 openspec/changes/<name>/ / 污染 proposal-approved.md）
+**优先级**: P0 | **来源**: Session 复盘 2026-08-07 — guide-design 双源扫描误判已批准 proposal 为待审（可能导致重复批准 / 重复创建 openspec/changes/<name>/ / 污染 improvement-approved.md）
 **阶段**: v2.1 | **分类**: planning
 **类型**: refactor
 
@@ -11,7 +11,7 @@
   - design phase 把 3 个已批准 P1 proposal 误判为"待审"（2026-08-07 会话实际遇到：`RDDF-0001-fix-rddf-session-import-path` / `fix-rddf-session-owner-cross-call` / `ship-delete-branch-safety` 都已批准 + 已实施 2026-07-29，但被列为待审）
   - dashboard 显示 `approved: 0`（实际 122+ 个）
   - propose 阶段检查 approved 状态误判
-- **根因分析**：`proposal-approved.md` 设计为 `## 已批准提案`（已批准待实施）+ `## 已实施`（已批准 + 已实施）两段。历史 proposals 直接 archive，从未经过"approved"段滞留——导致 `## 已批准提案` 段实际为空，3 个脚本的"## 已实施 之前"读取永远是空集
+- **根因分析**：`improvement-approved.md` 设计为 `## 已批准提案`（已批准待实施）+ `## 已实施`（已批准 + 已实施）两段。历史 proposals 直接 archive，从未经过"approved"段滞留——导致 `## 已批准提案` 段实际为空，3 个脚本的"## 已实施 之前"读取永远是空集
 - **关联 improvement**：`detect-suggestions-approved-inconsistency`（P3 已实施 2026-07-29）解决 suggestions ↔ approved **数据视角一致性**，**不修解析逻辑本身**。本次提案与它互补（一个修数据视角，一个修解析视角）
 - **设计依据**：ADR-0016 (arch-artifact-discovery-contract) 强调 artifacts 的发现契约应跨脚本一致；Oracle C1 safe 模式（env var 传递路径）已用于其他 `_lib/` helpers，是 v2.0+ 的标准模式
 - **修复策略**：提取 helper 集中解析逻辑，3 处调用点统一调用，消除"一处改一处忘"的脆弱模式
@@ -26,7 +26,7 @@
   - 新增 `tests/unit/test_parse_approved.py`（pytest，覆盖 helper 4 个 case）
   - 新增 `tests/integration/test_approved_parsing_fix.bats`（bats，覆盖 3 个调用点的修复）
 - **Out Scope**：
-  - 不修改 `proposal-approved.md` 数据结构（保持 git tracked 历史不变）
+  - 不修改 `improvement-approved.md` 数据结构（保持 git tracked 历史不变）
   - 不修改 `## 已批准提案` vs `## 已实施` 语义定义（保留两段含义）
   - 不动 `detect-suggestions-approved-inconsistency`（已实施，互补关系）
   - 不动 `skills/propose/scripts/update_proposal_status.py` 的迁移逻辑
@@ -35,14 +35,14 @@
 
 ## 关键场景
 
-- GIVEN `proposal-approved.md` 有 122 个 approved entries（全部位于 `## 已实施` 段）WHEN `guide-design` Phase 3 调用 `design_proposal_review.sh` THEN 列出 **0 个**待审查条目（修复前误列 ≥3 个）
+- GIVEN `improvement-approved.md` 有 122 个 approved entries（全部位于 `## 已实施` 段）WHEN `guide-design` Phase 3 调用 `design_proposal_review.sh` THEN 列出 **0 个**待审查条目（修复前误列 ≥3 个）
 - GIVEN 用户调用 `rddf dashboard` WHEN `scan-state.sh` 检测 approved 数量 THEN 返回 **122**（修复前返回 0）
 - GIVEN `propose_change.py` 在 propose 阶段检查某 proposal 是否已批准 WHEN helper 调用 THEN 正确识别（修复前总是返回 false）
-- GIVEN `proposal-approved.md` 文件不存在 WHEN helper 调用 THEN 返回空 list（不抛异常）
-- GIVEN `proposal-approved.md` 为空文件 WHEN helper 调用 THEN 返回空 list（不抛异常）
-- GIVEN `proposal-approved.md` 只有 `## 已批准提案` 段（有内容）WHEN helper 调用 THEN 返回该段全部 entries（不漏）
-- GIVEN `proposal-approved.md` 只有 `## 已实施` 段（当前实际状态）WHEN helper 调用 THEN 返回该段全部 entries（修复点）
-- GIVEN `proposal-approved.md` 两段都有内容 WHEN helper 调用 THEN 返回两段合并去重后的 entries（不重复）
+- GIVEN `improvement-approved.md` 文件不存在 WHEN helper 调用 THEN 返回空 list（不抛异常）
+- GIVEN `improvement-approved.md` 为空文件 WHEN helper 调用 THEN 返回空 list（不抛异常）
+- GIVEN `improvement-approved.md` 只有 `## 已批准提案` 段（有内容）WHEN helper 调用 THEN 返回该段全部 entries（不漏）
+- GIVEN `improvement-approved.md` 只有 `## 已实施` 段（当前实际状态）WHEN helper 调用 THEN 返回该段全部 entries（修复点）
+- GIVEN `improvement-approved.md` 两段都有内容 WHEN helper 调用 THEN 返回两段合并去重后的 entries（不重复）
 
 ## 技术约束
 
@@ -50,7 +50,7 @@
 - MUST helper 放 `skills/_lib/parse_approved.py`（与 `_lib/state.sh` 风格一致）
 - MUST 3 个调用点使用 Oracle C1 safe 模式（env var 传递文件路径，不用 bash `$VAR` 字符串插值）
 - MUST helper 路径在 3 个脚本中保持一致（避免路径漂移，参考 AGENTS.md Round A 修复 `roadmap_exists` 失效教训）
-- MUST NOT 修改 `proposal-approved.md` 文件结构（保持 git tracked 历史兼容）
+- MUST NOT 修改 `improvement-approved.md` 文件结构（保持 git tracked 历史兼容）
 - MUST NOT 改变 `## 已批准提案` vs `## 已实施` 语义定义
 - MUST NOT 在 helper 内部打开文件写入（只读 helper）
 - SHOULD 加 docstring 说明 helper 的意图 + 当前为全文匹配的设计选择 + 与 `detect-suggestions-approved-inconsistency` 的关系
@@ -78,7 +78,7 @@ helper 的 Python 实现大致如下（最终由 execute 阶段细化）：
 
 ```python
 # skills/_lib/parse_approved.py
-"""Parse approved proposal names from proposal-approved.md.
+"""Parse approved proposal names from improvement-approved.md.
 
 Centralizes the buggy inline `re.split(r"## 已实施", content)[0]` pattern that
 appears in 3 scripts (design_proposal_review.sh, scan-state.sh, propose_change.py).
@@ -99,12 +99,12 @@ _APPROVED_RE = re.compile(r"\|\s*\[([^\]]+)\]\(improvements/[^)]+\)")
 def parse_approved_proposals(approved_file: str) -> list[str]:
     """Return all approved proposal names from the file (any section).
     
-    Reads `proposal-approved.md` and extracts every `| [name](improvements/...) |`
+    Reads `improvement-approved.md` and extracts every `| [name](improvements/...) |`
     row, regardless of whether it lives under `## 已批准提案` (pending impl) or
     `## 已实施` (already shipped). Returns deduped names in file order.
     
     Args:
-        approved_file: Absolute path to proposal-approved.md. Caller MUST pass
+        approved_file: Absolute path to improvement-approved.md. Caller MUST pass
             via env var (Oracle C1 safe pattern), not bash string interpolation.
     
     Returns:

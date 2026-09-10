@@ -90,7 +90,7 @@ Search the lifted content for any of:
 - "更新 state 文件" / "更新 state 进度" comments
 - Recovery point persistence code (e.g. `awk '/\*\*当前阶段\*\*/{getline...}' "$STATE_FILE"`)
 
-For each match, **remove the corresponding logic**. The `guide-spec` skill does NOT persist state via these files (it uses `proposal-suggestions.md` status markers only).
+For each match, **remove the corresponding logic**. The `guide-spec` skill does NOT persist state via these files (it uses `improvement-suggestions.md` status markers only).
 
 - [ ] **Step 8: Apply light edit #2 — strip cross-skill recovery references**
 

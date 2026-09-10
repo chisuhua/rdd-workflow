@@ -5,7 +5,7 @@
 **Goal:** Correct rdd-planner's over-assigned scope (per Oracle review `ses_f7a9e01dbffe2Lqu8jYjg4YvL2`): remove phantom "authoring" responsibility from planner, restore ADR-0025's proposal.md generation pipeline into rdd-builder Phase 0, align all docs/SKILL.md/ADRs with the maintainer's model (planner = metadata/index orchestrator; builder P0 = proposal.md author + approver).
 
 **Architecture:**
-- **rdd-planner** owns roadmap + sprint proposals (`.rddf/roadmap.md`, `proposal-suggestions.md`, `proposal-approved.md`, `.rddf/roadmap/features/*.md`, `.rddf/improvements/*.md` via attach, `.planner-handoff.json`, `.planner-feedback.json`).
+- **rdd-planner** owns roadmap + sprint proposals (`.rddf/roadmap.md`, `improvement-suggestions.md`, `improvement-approved.md`, `.rddf/roadmap/features/*.md`, `.rddf/improvements/*.md` via attach, `.planner-handoff.json`, `.planner-feedback.json`).
 - **rdd-builder** Phase 0 approve owns `openspec/changes/<name>/proposal.md` authoring (per ADR-0025 D1/D2 "生成→确认→落盘"). Plan-gen (P1), execute (P2), review (P2.5), archive (P3) follow.
 - **Handoff**: forward chain `.arch-handoff.json` → `.planner-handoff.json` → `.rddf/state/builder/<change>.json`. Backward: `rddf feedback add` (ADR-0037), verifier retry loop (ADR-0034), `.planner-feedback.json` (ADR-0042).
 - **rdd-quick**: independent skill with self-triage; rdd-planner NOT a routing authority (advisory only via optional `recommended_route`).

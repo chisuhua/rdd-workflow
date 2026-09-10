@@ -5,11 +5,11 @@
 **类型**: bugfix / 状态机防腐
 
 > **症状**：guide-plan Phase 1 环境检查输出
-> `⚠️  proposal-approved.md 中有 225 个已批准提案但无活跃 change（可能需运行 propose）`
+> `⚠️  improvement-approved.md 中有 225 个已批准提案但无活跃 change（可能需运行 propose）`
 > —— 把 223 个已归档的提案（`## 已实施` 区）误算进 pending，导致 agent 试图创建 19 个早已归档到 `openspec/changes/archive/` 的 changes。
 >
 > **根因**：双重问题：
-> 1. `PENDING_PROPOSALS=$(grep -c '| \[' proposal-approved.md)` 统计整个文件，**包括 `## 已实施` 分区**
+> 1. `PENDING_PROPOSALS=$(grep -c '| \[' improvement-approved.md)` 统计整个文件，**包括 `## 已实施` 分区**
 > 2. `.design-handoff.json` 的 `changes_pre_created` 是 design 阶段写死的快照，**永不过期**；`check_design_handoff()` 读入时不做归档/创建检查
 
 ## 架构依据
@@ -18,10 +18,10 @@
 
 - 调用 `guide-plan`，plan_intake 输出：
   - `📋 当前活跃 changes: 0`
-  - `⚠️  proposal-approved.md 中有 225 个已批准提案但无活跃 change（可能需运行 propose）`
+  - `⚠️  improvement-approved.md 中有 225 个已批准提案但无活跃 change（可能需运行 propose）`
   - `✅ design-done handoff 已验证 (v2 schema, 19 个预建 changes)`
 - 用户（AI agent）看到 19 个预建 changes + 0 活跃 change，判定"需要 propose 创建"，对 19 个名字批量调用 `propose --create`
-- 实际验证后发现：**这 19 个全部位于 `proposal-approved.md` 的 `## 已实施` 分区**，且**全部已归档**到 `openspec/changes/archive/2026-{08,09}-*` 下
+- 实际验证后发现：**这 19 个全部位于 `improvement-approved.md` 的 `## 已实施` 分区**，且**全部已归档**到 `openspec/changes/archive/2026-{08,09}-*` 下
 - 真正待创建的提案数：**0**
 
 **根因分析**:
@@ -29,13 +29,13 @@
 `skills/guide-plan/scripts/plan_intake.sh` 第 200-204 行：
 
 ```bash
-PENDING_PROPOSALS=$(grep -c '| \[' "$PROJECT_ROOT/proposal-approved.md" 2>/dev/null || echo 0)
+PENDING_PROPOSALS=$(grep -c '| \[' "$PROJECT_ROOT/improvement-approved.md" 2>/dev/null || echo 0)
 if [ "$PENDING_PROPOSALS" -gt 0 ] && [ "$ACTIVE_CHANGES" -eq 0 ]; then
-    echo "⚠️  proposal-approved.md 中有 $PENDING_PROPOSALS 个已批准提案但无活跃 change（可能需运行 propose）"
+    echo "⚠️  improvement-approved.md 中有 $PENDING_PROPOSALS 个已批准提案但无活跃 change（可能需运行 propose）"
 fi
 ```
 
-- `grep -c '| \['` 统计**整个 `proposal-approved.md`** 中 `| [` 开头的表格行
+- `grep -c '| \['` 统计**整个 `improvement-approved.md`** 中 `| [` 开头的表格行
 - 文件包含 `## 已批准提案`（仅已批准待实施的）和 `## 已实施`（已归档的）两个分区
 - 本 session 文件中已实施区 223 行 + 已批准区 2 行 ≈ 225，**全部被算成 pending**
 
@@ -97,7 +97,7 @@ mapfile -t CHANGES_PRE_CREATED < <(jq -r '.changes_pre_created // [] | .[]' "$ha
 
 - **不修改** `.design-handoff.json` 的 schema（v2 仍然记录"当时预建了哪些"，是历史审计所需）
 - **不删除** 已归档 change 在 `changes_pre_created` 中的记录（保留"设计阶段曾经预建过"的审计线索）
-- **不修改** proposal-approved.md 的 `## 已实施` 区结构（这是 `archive_change()` 的契约）
+- **不修改** improvement-approved.md 的 `## 已实施` 区结构（这是 `archive_change()` 的契约）
 - **不修改** `propose` 的幂等保护（已有，按设计工作）
 - **不引入** 自动清理/截断 `.design-handoff.json` 的机制（archive 阶段不触达 design handoff 是设计选择，保留这一边界）
 
@@ -107,7 +107,7 @@ mapfile -t CHANGES_PRE_CREATED < <(jq -r '.changes_pre_created // [] | .[]' "$ha
 
 - **GIVEN** `.design-handoff.json` v2 schema，`changes_pre_created: [A, B, C]` 3 个名字
 - **AND** `openspec/changes/archive/*-A` / `*-B` / `*-C` 全部存在
-- **AND** `proposal-approved.md` 包含 `## 已实施` 区有 A/B/C 3 行
+- **AND** `improvement-approved.md` 包含 `## 已实施` 区有 A/B/C 3 行
 - **WHEN** 调用 `run_plan_intake`
 - **THEN**
   - 不再输出"X 个已批准提案但无活跃 change"误导警告
@@ -141,7 +141,7 @@ mapfile -t CHANGES_PRE_CREATED < <(jq -r '.changes_pre_created // [] | .[]' "$ha
   - 行为与现状完全一致：`✅ design-done handoff 已验证 (v1 schema)` 或 `✅ ... (v2 schema, 0 个预建 changes)`
   - 不影响 `is_design_pre_created` 等既有 helper
 
-### 场景 5: `proposal-approved.md` 计数修正
+### 场景 5: `improvement-approved.md` 计数修正
 
 - **GIVEN** 文件含 223 行 `## 已实施` + 2 行 `## 已批准提案`
 - **AND** 2 个已批准提案都不在 `openspec/changes/` 中（也未归档）
@@ -240,7 +240,7 @@ mapfile -t CHANGES_PRE_CREATED < <(jq -r '.changes_pre_created // [] | .[]' "$ha
 - MUST: v1 schema + SKIP_DESIGN_HANDOFF=yes + 空数组 三种兼容路径保持原行为
 - SHOULD: AI agent 决策正确性提升（不再盲目创建已归档 change）
 - MUST NOT: 引入新依赖
-- MUST NOT: 改变 proposal-approved.md 文件结构
+- MUST NOT: 改变 improvement-approved.md 文件结构
 
 ## Acceptance
 

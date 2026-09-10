@@ -142,8 +142,8 @@ def test_priority_8_pending_proposal_recommends_guide_plan(git_repo, capsys):
     (git_repo / ".rddf/improvements" / "test-prop.md").write_text(
         "# test-prop\n\n**优先级**: P0 | **来源**: test\n"
     )
-    # proposal-approved.md is empty (no approved proposals)
-    (git_repo / "proposal-approved.md").write_text(
+    # improvement-approved.md is empty (no approved proposals)
+    (git_repo / "improvement-approved.md").write_text(
         "# 已批准提案\n\n| 提案 | 优先级 | 批准时间 | 批准者 |\n|------|--------|----------|--------|\n"
     )
     rc = guide_cmd.cmd_guide([])
@@ -161,8 +161,8 @@ def test_priority_9_no_pending_proposal_recommends_guide_ship(git_repo, capsys):
     (git_repo / ".rddf/improvements" / "test-prop.md").write_text(
         "# test-prop\n\n**优先级**: P0 | **来源**: test\n"
     )
-    # proposal-approved.md contains the proposal (already approved)
-    (git_repo / "proposal-approved.md").write_text(
+    # improvement-approved.md contains the proposal (already approved)
+    (git_repo / "improvement-approved.md").write_text(
         "# 已批准提案\n\n| 提案 | 优先级 | 批准时间 | 批准者 |\n|------|--------|----------|--------|\n| [test-prop](.rddf/improvements/test-prop.md) | P0 | 2026-07-24 | test |\n"
     )
     rc = guide_cmd.cmd_guide([])
