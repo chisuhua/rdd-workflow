@@ -40,6 +40,9 @@ setup() {
   missing=""
   for adr in $(find docs/adr -maxdepth 1 -name 'ADR-*.md' | sort); do
     base=$(basename "$adr")
+    # Skip touch-test fixture ADR-0001-x.md (per fix-rebuild-adr-index-for-0049-0050):
+    # referenced by docs/superpowers/plans/2026-08-07-guide-design-phase1-diagnostic.md.
+    [ "$base" = "ADR-0001-x.md" ] && continue
     if ! grep -qF "$base" docs/adr/README.md; then
       missing="${missing}${base} "
     fi

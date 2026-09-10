@@ -153,6 +153,8 @@
 
 
 ## 已实施
+| [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | P1 | 2026-09-10 | 已实施 |
+| [changelog-usage-sync](.rddf/improvements/changelog-usage-sync.md) | P1 | 2026-09-10 | 已实施 |
 | [add-e2e-test-plan-phase5](.rddf/improvements/add-e2e-test-plan-phase5.md) | P1 | 2026-09-08 | 已实施 |
 | [add-e2e-test-plan-phase4](.rddf/improvements/add-e2e-test-plan-phase4.md) | P1 | 2026-09-08 | 已实施 |
 | [add-e2e-test-plan-phase3](.rddf/improvements/add-e2e-test-plan-phase3.md) | P1 | 2026-09-08 | 已实施 |
@@ -164,8 +166,6 @@
 | [worktree-context-persistence](.rddf/improvements/worktree-context-persistence.md) | P1 | 2026-09-01 | 已实施 |
 | [reduce-rdd-workflow-tool-call-friction](.rddf/improvements/reduce-rdd-workflow-tool-call-friction.md) | P1 | 2026-09-01 | 已实施 |
 | [verifier-archive-gate-clarification](.rddf/improvements/verifier-archive-gate-clarification.md) | P1 | 2026-08-28 | guide-arch |
-| [changelog-usage-sync](.rddf/improvements/changelog-usage-sync.md) | P1 | 2026-08-28 | guide-arch |
-| [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | P1 | 2026-08-28 | guide-arch |
 | [submodule-aware-project-root](.rddf/improvements/submodule-aware-project-root.md) | P0 | 2026-08-25 | 已实施 |
 | [clean-stale-plan-handoff-on-ship-done](.rddf/improvements/clean-stale-plan-handoff-on-ship-done.md) | P1 | 2026-08-25 | 已实施 |
 | [clean-adr-0027-section-5-supersede](.rddf/improvements/clean-adr-0027-section-5-supersede.md) | P2 | 2026-08-25 | 已实施 |
