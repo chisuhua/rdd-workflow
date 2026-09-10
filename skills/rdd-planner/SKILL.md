@@ -1,6 +1,6 @@
 ---
 name: rdd-planner
-  description: |
+description: |
     Roadmap + sprint proposal orchestrator (Stage 2 of v4 architecture).
     Wraps existing `_lib/planner_*.py` lib (per ADR-0037/0038/0042) and adds
     stage entry/exit contract. Per spec 2026-09-04-rdd-workflow-v4-architecture-stage-merge.md
