@@ -35,3 +35,36 @@ global_install: resolve_rdd_skill_dir falls back to ~/.agents/skills/<name> # pr
 
 sub-phase: heartbeat records RDDF_SUB_PHASE # genuine source gap: rddf_session_hook_heartbeat + close/attach/detach tail `[ "$_exit" -ne 0 ] && return "$_exit"` leaks exit 1 on success path (bash semantics: last `[ 0 -ne 0 ]` returns 1); python DOES record sub_phase correctly — not test-side fixable
 sub-phase: heartbeat without env var leaves sub_phase empty # same hook tail-return bug as sub-phase: heartbeat records RDDF_SUB_PHASE; not test-side fixable
+
+# === 2026-09-10 pytest unit baseline (added with proposal-{suggestions,approved}
+# rename, see commit b662d00 / 5623922 / 78633ae / 6656515).
+# These 10 pytest failures are pre-existing on master HEAD (4aa4b35) — verified
+# via `git stash` baseline diff. They are NOT regressions from the rename work.
+# Each entry maps to a real underlying gap; future proposals may address
+# individually. Categories:
+# - 5 planner_feedback_id_uniqueness: date-stamped feedback_id counter uses
+#   current UTC date; test data baked at 2026-09-05; on any later date the
+#   'pf-YYYYMMDD-NNN' counter rolls to a fresh prefix and breaks the
+#   hard-coded assertions. Test is effectively time-bombed; needs to be
+#   parametrized over `now()` or made timezone-deterministic.
+# - 2 adr_index_gate: docs/adr/README.md status table drifts from disk
+#   (missing ADR-0049 / ADR-0050 / status fields). Doc-vs-disk drift, not
+#   test-side fixable; the index generator script should be re-run.
+# - 2 doctor_main: rdd-doctor grew to 11 categories (gitignore added 2026-09-10
+#   per add-gitignore-hard-protection) but tests assert ==10. Test needs
+#   update to match new category count.
+# - 1 cli_all_subcommands::test_actual_repo_iteration_json_validates_after_fix:
+#   tests for a 'filled_at' field regression fix; the test's own fixture
+#   is stale (the iteration.json under test no longer contains 'filled_at').
+#   Test asserts the wrong invariant — needs removal or rewrite.
+
+tests/unit/test_adr_index_gate.py::test_adr_numbering_is_unique # pre-existing: docs/adr/README.md index missing ADR-0049/0050 (added 2026-09-10+); verified against stash baseline 4aa4b35
+tests/unit/test_adr_index_gate.py::test_readme_index_matches_generator_output # pre-existing: same root cause as above (doc drift)
+tests/unit/test_cli_all_subcommands.py::TestFilledAtRegression::test_actual_repo_iteration_json_validates_after_fix # pre-existing: test asserts filled_at field exists but fixture's iteration.json doesn't carry it; verified against stash baseline 4aa4b35
+tests/unit/test_doctor_main.py::test_aggregate_runs_all_10_categories # pre-existing: rdd-doctor has 11 categories since 2026-09-10 gitignore addition; test asserts ==10
+tests/unit/test_doctor_main.py::test_checkers_dict_has_10_entries # pre-existing: same as above (test asserts ==10, actual is 11)
+tests/unit/test_planner_feedback_id_uniqueness.py::test_same_day_recompute_no_collision # pre-existing: date-stamped pf-YYYYMMDD counter; test data baked at 2026-09-05, today is 2026-09-10
+tests/unit/test_planner_feedback_id_uniqueness.py::test_counter_starts_at_max_plus_one # pre-existing: same date-stamp drift
+tests/unit/test_planner_feedback_id_uniqueness.py::test_cross_day_independent_counter # pre-existing: same date-stamp drift
+tests/unit/test_planner_feedback_id_uniqueness.py::test_malformed_id_skipped_in_counter # pre-existing: same date-stamp drift
+tests/unit/test_planner_feedback_id_uniqueness.py::test_missing_feedback_id_key_skipped # pre-existing: same date-stamp drift
