@@ -126,8 +126,8 @@ def test_format_docs_detected(tmp_path: Path):
     findings = run_check(project_root=tmp_path)
     assert len(findings) == 2
     files = {f.file for f in findings}
-    assert any("proposal-approved-format.md" in f for f in files)
-    assert any("proposal-suggestions-format.md" in f for f in files)
+    assert any("improvement-approved-format.md" in f for f in files)
+    assert any("improvement-suggestions-format.md" in f for f in files)
 
 
 def test_no_findings_when_legitimate_prose_only(tmp_path: Path):
