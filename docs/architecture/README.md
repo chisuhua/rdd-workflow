@@ -12,7 +12,7 @@ For **decisions** behind the design, see [`../adr/README.md`](../adr/README.md).
 |-----|-------|--------------|
 | [overview.md](overview.md) | System overview, module map, design principles | 0003, 0025, 0034 |
 | [workflow-phases.md](workflow-phases.md) | Four-stage arch → planner → builder → verifier + handoffs (v4.0.1 per ADR-0043 + ADR-0048; supersedes v3.0 five-phase) + `rdd-quick` bypass (per ADR-0047, AMENDED per ADR-0048) | 0003, 0024, 0025, 0034, 0043, 0044, 0047, 0048 |
-| [adr-0048-path-diagram.md](adr-0048-path-diagram.md) | **NEW (v4.0.1)** Complete path topology + data flow timeline + `recommended_route` advisory signal pipeline (companion to workflow-phases.md) | 0048 |
+| [v4-pipeline-data-flow.md](v4-pipeline-data-flow.md) | **NEW (v4.0.1)** Complete path topology + data flow timeline + `recommended_route` advisory signal pipeline (companion to workflow-phases.md) | 0048 |
 | [loop-engine.md](loop-engine.md) | 5 building blocks + loop/menu/hybrid modes | 0002, 0004 |
 | [state-and-events.md](state-and-events.md) | 3-layer state model | 0006, 0016 |
 | [gates-and-quality.md](gates-and-quality.md) | gate / tribunal / arch_quality_gate / change_alignment | 0007, 0008, 0018, 0019 |

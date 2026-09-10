@@ -9,7 +9,7 @@ rdd-workflow v4.0+ runs every change through **four stages** in order (per [ADR-
 
 Plus **rdd-quick** as a parallel bypass path (per [ADR-0047](../adr/ADR-0047-rdd-quick-bypass-path.md), AMENDED per ADR-0048).
 
-For the complete path diagram and data-flow timeline, see **[adr-0048-path-diagram.md](adr-0048-path-diagram.md)** — this doc focuses on role + ownership + gate semantics per stage.
+For the complete path diagram and data-flow timeline, see **[v4-pipeline-data-flow.md](v4-pipeline-data-flow.md)** — this doc focuses on role + ownership + gate semantics per stage.
 
 ## High-Level Stage Flow (v4.0.1)
 
@@ -347,7 +347,7 @@ The `rdd-quick` bypass deliberately skips the stage chain — it has its own ent
 
 ## Cross-references
 
-- **Complete path diagram + data flow timeline**: [adr-0048-path-diagram.md](adr-0048-path-diagram.md)
+- **Complete path diagram + data flow timeline**: [v4-pipeline-data-flow.md](v4-pipeline-data-flow.md)
 - Loop engine: [loop-engine.md](loop-engine.md) — explains how stages are orchestrated.
 - State and events: [state-and-events.md](state-and-events.md) — handoff file format.
 - Skills + handoff protocol: [skills-and-handoff.md](skills-and-handoff.md).

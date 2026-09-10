@@ -1,4 +1,4 @@
-# ADR-0048 Path Diagram & Data Flow Timeline
+# v4 Pipeline Data Flow Timeline (ADR-0048)
 
 > **Source of truth** for the v4.0.1 four-stage pipeline + bypass path, post [ADR-0048](../adr/ADR-0048-v4-stage-merge-revision.md) (2026-09-09).
 >
