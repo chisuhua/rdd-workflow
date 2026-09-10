@@ -1,3 +1,0 @@
-schema: spec-driven
-created: 2026-08-02
-goal: RDDF_WORKFLOW_GROUP env var + workflow_group field (schema v2 batched with sub-phase-heartbeat).

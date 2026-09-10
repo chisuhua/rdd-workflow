@@ -1,7 +1,0 @@
-change:
-  name: submodule-aware-project-root
-  schema: spec-driven
-roadmap:
-  phase: v2.2
-  category: core-impl
-  priority: P0

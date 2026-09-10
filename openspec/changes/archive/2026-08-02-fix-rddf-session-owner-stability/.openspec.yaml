@@ -1,3 +1,0 @@
-schema: spec-driven
-created: 2026-08-02
-goal: Stabilize rddf-session owner detection across bash invocations (3-layer fallback + cache).

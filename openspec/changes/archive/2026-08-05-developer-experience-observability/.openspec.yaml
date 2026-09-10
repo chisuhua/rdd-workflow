@@ -1,5 +1,0 @@
-schema: spec-driven
-created: '2026-08-05'
-goal: 为 rdd-workflow hook 系统增加必要注释白名单 + 工具调用统计基础设施
-affected_areas:
-- tooling
