@@ -53,9 +53,7 @@ sub-phase: heartbeat without env var leaves sub_phase empty # same hook tail-ret
 # - 2 doctor_main: rdd-doctor grew to 11 categories (gitignore added 2026-09-10
 #   per add-gitignore-hard-protection) but tests assert ==10. Test needs
 #   update to match new category count.
-# - 1 cli_all_subcommands::test_actual_repo_iteration_json_validates_after_fix:
 #   tests for a 'filled_at' field regression fix; the test's own fixture
 #   is stale (the iteration.json under test no longer contains 'filled_at').
 #   Test asserts the wrong invariant — needs removal or rewrite.
 
-tests/unit/test_cli_all_subcommands.py::TestFilledAtRegression::test_actual_repo_iteration_json_validates_after_fix # pre-existing: test asserts filled_at field exists but fixture's iteration.json doesn't carry it; verified against stash baseline 4aa4b35

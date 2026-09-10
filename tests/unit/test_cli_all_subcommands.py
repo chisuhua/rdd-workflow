@@ -389,40 +389,27 @@ class TestFilledAtRegression:
         # Must not raise.
         _validate(good)
 
-    def test_actual_repo_iteration_json_validates_after_fix(self, schema):
-        """The repo's own ``.rddf/state/iteration.json`` validates.
+    def test_actual_repo_iteration_json_validates_after_fix(self, tmp_path, schema):
+        """A ``tmp_path`` iteration.json with ``filled_at`` validates against v6 schema.
 
-        This is the headline scenario from fix-iteration-schema-filled-at:
-        the live iteration.json in the rdd-workflow repo had ``filled_at``
-        injected and was rejected by the strict v5 schema. The v6 schema
-        must accept it as-is. This test will fail if someone deletes
-        ``filled_at`` from the schema without bumping the migration first.
+        Per fix-remove-stale-filled-at-regression-test (Wave 1 P2): replace
+        the dependency on the real repo ``.rddf/state/iteration.json``
+        (which no longer contains ``filled_at``) with a deterministic
+        ``tmp_path`` fixture. The intent — v6 schema accepts ``filled_at``
+        — is preserved (per proposal Option B).
         """
-        repo_iteration = (
-            Path(__file__).resolve().parents[2]
-            / ".rddf"
-            / "state"
-            / "iteration.json"
-        )
-        if not repo_iteration.is_file():
-            pytest.skip(
-                "Repo iteration.json not present in this checkout "
-                "(likely running outside the rdd-workflow repo)"
-            )
-        with open(repo_iteration) as f:
-            data = json.load(f)
-        # Sanity: the file should actually contain filled_at somewhere —
-        # otherwise this test isn't actually exercising the regression.
-        has_filled_at = any(
-            "filled_at" in change for change in data.get("changes", [])
-        )
-        assert has_filled_at, (
-            "Repo iteration.json no longer contains filled_at — "
-            "this test has lost its purpose; remove or update it."
-        )
-        # And critically, it must validate now. Use the local-ref-resolving
-        # validator (the raw jsonschema.validate() cannot resolve the schema's
-        # $ref to feature_view_schema.json without network access).
+        data = {
+            "version": 6,
+            "updated_at": "2026-09-10T10:00:00+00:00",
+            "current_phase": "phase-3",
+            "changes": [
+                {
+                    "name": "feat-with-filled-at",
+                    "status": "completed",
+                    "filled_at": "2026-09-10T10:00:00+00:00",
+                }
+            ],
+        }
         _validate(data)
 
 
