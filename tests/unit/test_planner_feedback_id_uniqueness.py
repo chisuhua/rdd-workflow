@@ -25,8 +25,46 @@ from typing import Optional
 import pytest
 
 
-def _today_prefix() -> str:
-    return datetime.now(timezone.utc).strftime("%Y%m%d")
+# Module-level autouse fixture: pin `datetime.now(timezone.utc)` to a fixed
+# reference date (2026-09-05) so test assertions against hardcoded
+# `pf-20260905-NNN` IDs are stable on any UTC date the test runs.
+# Per fix-parametrize-planner-feedback-id-date (Wave 1 P2).
+_FIXED_REF_DT = datetime(2026, 9, 5, 10, 0, 0, tzinfo=timezone.utc)
+
+
+@pytest.fixture(autouse=True)
+def _fixed_utc_now(monkeypatch):
+    """Patch `_lib.planner_feedback.datetime.now` to return 2026-09-05.
+
+    The product code uses `datetime.now(timezone.utc)` directly (not via a
+    module-level indirection), so we patch the symbol *inside* the
+    `_lib.planner_feedback` module namespace. After this fixture, the
+    module's `datetime` is a stub whose `now()` returns _FIXED_REF_DT.
+    """
+    import _lib.planner_feedback as pf
+
+    class _FixedDateTime:
+        @staticmethod
+        def now(tz=None):
+            if tz is None:
+                return _FIXED_REF_DT.replace(tzinfo=None)
+            return _FIXED_REF_DT
+
+        @staticmethod
+        def utcnow():
+            return _FIXED_REF_DT.replace(tzinfo=None)
+
+        @staticmethod
+        def fromtimestamp(ts, tz=None):
+            return _FIXED_REF_DT
+
+    monkeypatch.setattr(pf, "datetime", _FixedDateTime)
+    yield
+
+
+# Remove the now-unused `_today_prefix` helper (was the source of test
+# instability per the proposal).
+
 
 
 def _seed_feedback(
@@ -37,7 +75,9 @@ def _seed_feedback(
 ) -> str:
     """Write a planner feedback.json with given prior feedbacks."""
     if date_prefix is None:
-        date_prefix = _today_prefix()
+        # Use fixed reference date matching the autouse fixture (2026-09-05).
+        # Per fix-parametrize-planner-feedback-id-date (Wave 1 P2).
+        date_prefix = "20260905"
     project_root = str(tmp_path)
     state_dir = tmp_path / ".rddf" / "state"
     state_dir.mkdir(parents=True, exist_ok=True)

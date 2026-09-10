@@ -63,8 +63,3 @@ tests/unit/test_adr_index_gate.py::test_readme_index_matches_generator_output # 
 tests/unit/test_cli_all_subcommands.py::TestFilledAtRegression::test_actual_repo_iteration_json_validates_after_fix # pre-existing: test asserts filled_at field exists but fixture's iteration.json doesn't carry it; verified against stash baseline 4aa4b35
 tests/unit/test_doctor_main.py::test_aggregate_runs_all_10_categories # pre-existing: rdd-doctor has 11 categories since 2026-09-10 gitignore addition; test asserts ==10
 tests/unit/test_doctor_main.py::test_checkers_dict_has_10_entries # pre-existing: same as above (test asserts ==10, actual is 11)
-tests/unit/test_planner_feedback_id_uniqueness.py::test_same_day_recompute_no_collision # pre-existing: date-stamped pf-YYYYMMDD counter; test data baked at 2026-09-05, today is 2026-09-10
-tests/unit/test_planner_feedback_id_uniqueness.py::test_counter_starts_at_max_plus_one # pre-existing: same date-stamp drift
-tests/unit/test_planner_feedback_id_uniqueness.py::test_cross_day_independent_counter # pre-existing: same date-stamp drift
-tests/unit/test_planner_feedback_id_uniqueness.py::test_malformed_id_skipped_in_counter # pre-existing: same date-stamp drift
-tests/unit/test_planner_feedback_id_uniqueness.py::test_missing_feedback_id_key_skipped # pre-existing: same date-stamp drift
