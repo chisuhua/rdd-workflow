@@ -4,6 +4,13 @@
 # Task D). Called by guide-arch Phase 6 (Roadmap Sync) and by the deprecated
 # populate-roadmap-from-arch thin wrapper.
 #
+# DEPRECATED per ADR-0048, 2026-09-09: No longer called by rdd-arch Phase 5
+# (arch-done). Roadmap sync is now exclusively handled by rdd-planner via
+# `_lib/planner_sync.py::apply_state` → `_lib/roadmap_sprint.update_roadmap`.
+# This script is kept for backward compat with `populate-roadmap-from-arch`
+# thin wrapper only. Safe to delete in v4.x.2+ after confirming no external
+# callers.
+#
 # Oracle C1: env-var only passing. All RDDF_* values are already in the
 # environment (exported by the caller); this script never interpolates bash
 # $VAR into `python3 -c "..."` strings.

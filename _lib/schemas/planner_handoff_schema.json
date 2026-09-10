@@ -2,10 +2,10 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://rdd-workflow.local/schemas/planner_handoff_schema.json",
   "title": "Planner Handoff (rdd-planner stage exit)",
-  "description": "Schema for .rddf/state/.planner-handoff.json emitted by rdd-planner stage exit. Consumed by rdd-builder Phase 0 (approval gate reads proposals_ready) and rdd-arch advisory (via .planner-feedback.json). Per spec §3.3, §6.1. v1.1 rename: proposals_authored → proposals_ready (per fix-v4-rdd-planner-scope-over-assignment A3+B3); planner never authors, so the field is renamed to reflect the actual semantics (attached improvements ready for builder consumption). Backward compat: coexists with .planner-state.json (Stage 2, current sprint view) and .planner-feedback.json (ADR-0042, persistent review tasks); each has its own FileLock.",
+  "description": "Schema for .rddf/state/.planner-handoff.json emitted by rdd-planner stage exit. Consumed by rdd-builder Phase 0 (approval gate reads proposals_ready + recommended_route) and rdd-arch advisory (via .planner-feedback.json). Per spec §3.3, §6.1, ADR-0048 §Decision 2. v1.1 (per ADR-0048): added recommended_route field as REQUIRED for rdd-builder P0 dispatch-quick decision. v1.0 (per fix-v4-rdd-planner-scope-over-assignment): proposals_authored → proposals_ready rename. Backward compat: coexists with .planner-state.json (Stage 2, current sprint view) and .planner-feedback.json (ADR-0042, persistent review tasks); each has its own FileLock.",
   "type": "object",
   "additionalProperties": true,
-  "required": ["schema", "version", "owner", "planner_complete_at", "current_sprint"],
+  "required": ["schema", "version", "owner", "planner_complete_at", "current_sprint", "recommended_route"],
   "properties": {
     "schema": {"const": "planner-handoff-v1"},
     "version": {"const": 1},
@@ -15,6 +15,11 @@
     "proposals_ready": {"type": "array", "items": {"type": "string"}, "description": "Improvements attached for builder consumption; not an authoring product (planner never authors proposal.md). Renamed from proposals_authored in v1.1 per fix-v4-rdd-planner-scope-over-assignment A3."},
     "proposals_approved_count": {"type": "integer", "minimum": 0},
     "features_active": {"type": "array", "items": {"type": "string"}},
-    "awaiting_builder": {"type": "array", "items": {"type": "string"}, "description": "List of change names awaiting builder P0 (added by planner_stage_exit.sh, consumed by rdd-builder to know which changes to pick up next)."}
+    "awaiting_builder": {"type": "array", "items": {"type": "string"}, "description": "List of change names awaiting builder P0 (added by planner_stage_exit.sh, consumed by rdd-builder to know which changes to pick up next)."},
+    "recommended_route": {
+      "type": "string",
+      "enum": ["simple", "complex", "unknown"],
+      "description": "REQUIRED per ADR-0048 (2026-09-09) §Decision 2. Planner advisory signal consumed by rdd-builder P0 dispatch-quick decision (option 5). Heuristic computed by _lib.planner_sync._compute_recommended_route from active_projects. Not authoritative — rdd-builder P0 retains HARD pause user override (options 1-4 always available)."
+    }
   }
 }

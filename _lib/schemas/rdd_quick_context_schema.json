@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rdd-workflow.local/schemas/rdd_quick_context_schema.json",
+  "title": "RddQuickContext (per ADR-0048)",
+  "description": "Temporary context file passed from rdd-builder P0 选项 5 to rdd-quick. Per ADR-0048 §Decision 3, this file is created when dispatch-quick is triggered, consumed by rdd-quick during execution, and deleted by rdd-quick on completion (escalated/completed/unverified).",
+  "type": "object",
+  "required": ["change_name", "proposal_path", "from_builder", "dispatched_at"],
+  "properties": {
+    "change_name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,127}$"},
+    "proposal_path": {"type": "string", "description": "Relative path from project_root to openspec/changes/<change>/proposal.md"},
+    "from_builder": {"const": true, "description": "Always true; distinguishes builder-dispatched quick from direct guide-recommended quick (which doesn't create this file)."},
+    "dispatched_at": {"type": "string", "format": "date-time"},
+    "expected_outcome": {"type": "string", "enum": ["completed", "escalated", "unverified"]},
+    "planner_advisory": {
+      "type": "object",
+      "description": "Snapshot of .planner-handoff.json::recommended_route at dispatch time (audit trail).",
+      "properties": {
+        "recommended_route": {"type": "string", "enum": ["simple", "complex", "unknown"]},
+        "rationale": {"type": "string"}
+      }
+    },
+    "ac_count": {"type": "integer", "minimum": 0, "description": "Number of acceptance criteria in proposal.md ## 验收标准 (for audit; rdd-quick may use for P1 fallback triage)."}
+  },
+  "additionalProperties": false
+}

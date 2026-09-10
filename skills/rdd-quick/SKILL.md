@@ -1,21 +1,25 @@
 ---
 name: rdd-quick
 description: |
-  Bypass-path orchestration skill for small, well-scoped changes (per ADR-0047).
-  Generates .rddf/plans/quick-<name>.md with TDD 5-step structure, executes in-place
-  on the current branch (no worktree, no openspec change), and verifies against the
-  rdd-verifier verdict JSON contract. AI agent is the executor/verifier (self-contained
-  pattern, per ADR-0045).
+  Bypass-path orchestration skill for small, well-scoped changes (per ADR-0047
+  + ADR-0048 §Decision 3). Generates .rddf/plans/quick-<name>.md with TDD 5-step
+  structure, executes in-place on the current branch (no worktree, no openspec
+  change), and verifies against the rdd-verifier verdict JSON contract. AI agent
+  is the executor/verifier (self-contained pattern, per ADR-0045).
 
-  Owns: .rddf/plans/quick-*.md, .rddf/state/.quick-history.jsonl
+  Entry modes (per ADR-0048 amendment):
+  - (a) from rdd-builder P0 dispatch-quick (主路径): reads .planner-handoff.json::recommended_route
+  - (b) from guide recommender direct (旁路, self-triage fallback)
+
+  Owns: .rddf/plans/quick-*.md, .rddf/state/.quick-history.jsonl, .rddf/state/rdd-quick-context.json (per ADR-0048, when invoked from builder)
   Not owns: openspec/changes/, .rddf/wt/, iteration.json, sessions.json,
             .rddf/state/roadmap-state.json, .rddf/plans/<name>.md (formal path)
 license: MIT
 compatibility: requires Python 3.11+, bash 4+, git 2.25+. No external skill deps.
 metadata:
   author: rdd-workflow
-  version: "1.0"
-  evolved-from: "rdd-verifier v2.0 self-contained pattern (ADR-0045)"
+  version: "1.1"
+  evolved-from: "rdd-verifier v2.0 self-contained pattern (ADR-0045) + ADR-0048 amendment"
   user-invocable: true
   forbidden_env_vars:
     - "QUICK_FINISH_DETECTED"
@@ -23,11 +27,12 @@ metadata:
   forbidden_env_vars_rationale: "These are reserved by rdd-builder. rdd-quick MUST NOT read or write them. The literal names are kept in frontmatter only and NEVER appear in the SKILL.md body to prevent accidental code generation that references them."
 role:
   title: "Quick Executor (快速执行者)"
-  perspective: "Bypass openspec change ceremony for small, well-scoped changes while preserving TDD discipline and AC verification."
+  perspective: "Bypass openspec change ceremony for small, well-scoped changes while preserving TDD discipline and AC verification. Per ADR-0048: complexity triage reads planner advisory when invoked from builder P0."
   boundaries:
     owns:
       - ".rddf/plans/quick-*.md"
       - ".rddf/state/.quick-history.jsonl"
+      - ".rddf/state/rdd-quick-context.json (临时, per ADR-0048)"
     not_owns:
       - "openspec/changes/<name>/"
       - "openspec/specs/<name>/"
@@ -48,7 +53,16 @@ AI agent IS the executor and verifier. No external LLM provider is invoked.
 
 ## Entry / Exit Contract
 
-**Entry** (human invokes):
+**Entry Mode (a) — from rdd-builder P0 (主路径, per ADR-0048)**:
+
+```bash
+# 由 rdd-builder P0 选项 5 触发:
+skill_use("rdd-quick") --from-builder
+# 读取 .rddf/state/rdd-quick-context.json (传递 proposal.md 内容)
+# 读取 .planner-handoff.json::recommended_route (作为 P1 主信号)
+```
+
+**Entry Mode (b) — direct from guide recommender (旁路, per ADR-0048)**:
 
 ```bash
 # Run from the project root (any branch, no worktree required).
@@ -56,19 +70,27 @@ skill_use("rdd-quick")
 # Then describe the change in natural language.
 ```
 
-The agent MUST:
+The agent MUST (mode b):
 
 1. Confirm a `<kebab-case-name>` with the user.
 2. Run `bash skills/rdd-quick/scripts/scaffold_plan.sh --name <name> --proposal "<text>"`.
 3. Edit the generated `.rddf/plans/quick-<name>.md` to fill in concrete TDD step bodies and the `## Acceptance` checkboxes.
 4. Proceed to P1.
 
+The agent MUST (mode a — invoked from builder P0):
+
+1. 从 `.rddf/state/rdd-quick-context.json` 读取 change_name + proposal_path
+2. 复用 rdd-builder 已生成的 `openspec/changes/<change>/proposal.md`（不重新生成）
+3. 跳过 scaffold 步骤, 直接 `quick-<change>.md` 模板填充（从 proposal.md ## Acceptance 段提取 AC）
+4. Proceed to P1
+
 **Exit**:
 
 - **Completion**: one JSONL line appended to `.rddf/state/.quick-history.jsonl` via
   `python3 skills/rdd-quick/scripts/append_history.py` with `outcome: "completed"`.
-- **Escalation**: one JSONL line appended with `outcome: "escalated"` plus a stdout
-  upgrade summary. No file is created under `openspec/changes/` or `openspec/specs/`.
+  - If invoked from builder (mode a): completion triggers `openspec archive <change> --yes` (skipping rdd-builder P1-P3)
+  - If invoked directly (mode b): completion is final
+- **Escalation** (per ADR-0048 AMENDMENT): one JSONL line appended with `outcome: "escalated"` plus a stdout upgrade summary. **升级契约修订**: `skill_use("rdd-builder")` 回 P0 重新决策 (而非 `skill_use("rdd-planner")`, 避免 planner→builder→quick→planner 循环). No file is created under `openspec/changes/` or `openspec/specs/`.
 
 ## P0 — Plan Generation
 
@@ -85,12 +107,43 @@ The `quick-` prefix is mandatory and is enforced by `scaffold_plan.sh` (kebab-ca
 validated, target file existence check, regex `^quick-[a-z0-9-]+$` enforced by the
 audit-log schema).
 
-## P1 — Complexity Triage
+## P1 — Complexity Triage (REVISED per ADR-0048)
+
+The AI agent MUST determine complexity by **优先读 planner advisory** (mode a) 或 fallback to self-triage (mode b).
+
+### Mode (a) from rdd-builder P0 (主路径, per ADR-0048)
+
+```bash
+# 读取 .planner-handoff.json
+RECOMMENDED=$(jq -r .recommended_route .rddf/state/.planner-handoff.json)
+
+case "$RECOMMENDED" in
+  simple)
+    # planner 已判定为 simple → 仅向用户确认
+    echo "Planner advisory: simple"
+    echo "⚡ 推荐进入 P2 (跳过 Metis/Oracle 审查)"
+    read -p "确认? (y/n) "
+    ;;
+  complex)
+    # planner 已判定为 complex → 必须双审 (不能跳过)
+    echo "Planner advisory: complex"
+    echo "⚠️ 必须 Metis + Oracle 双审 + 用户确认"
+    # fallthrough to complex branch
+    ;;
+  unknown|*)
+    # planner 未给出 advisory (mode b 或 edge case) → fallback to self-triage
+    echo "Planner advisory: unknown, fallback to self-triage"
+    # fallthrough to original 5-signal heuristic
+    ;;
+esac
+```
+
+### Mode (b) direct (旁路, fallback) — 原 5-signal heuristic
 
 The AI agent MUST determine complexity by reasoning about ALL of the following
 signals. There is NO hardcoded numeric threshold — judgement is by synthesis.
 
-### Complex signals (any ONE is sufficient to warrant review)
+#### Complex signals (any ONE is sufficient to warrant review)
 
 - The change touches a public interface, cross-module contract, or library API.
 - The change modifies or extends an existing gate, handoff schema, or state-file schema.
@@ -98,14 +151,14 @@ signals. There is NO hardcoded numeric threshold — judgement is by synthesis.
 - The change spans 3 or more modules OR touches `_lib/core/` / `_lib/schemas/`.
 - The user's description admits multiple plausible interpretations.
 
-### Simple signals (ALL must hold to skip review)
+#### Simple signals (ALL must hold to skip review)
 
 - The change is contained within a single module.
 - The change has no public-interface impact.
 - The change has clear, automatically verifiable success criteria.
 - The change is fully reversible via `git checkout` with no side effects.
 
-### Complex branch
+### Complex branch (both modes)
 
 When any complex signal is detected, the AI agent MUST (prose spawn instructions,
 no programmatic subagent exists for Metis/Oracle):
@@ -197,14 +250,18 @@ Files modified: <git diff --stat against the starting commit>
 Failing ACs:
   - AC-<n>: <status> | <reasoning excerpt>
   - ...
-Recommendation: re-frame as an openspec change by running skill_use("rdd-planner").
+Recommendation: re-frame by running skill_use("rdd-builder") — 回到 P0 重新决策
+                (per ADR-0048 §Decision 3 amended D1; 不再回到 rdd-planner,
+                 避免 planner→builder→quick→planner 循环).
                 Provide the proposal text above plus the failing ACs as the
-                initial design input.
+                initial design input for rdd-builder P0 选项 5 重新决策.
 === rdd-quick: escalation summary end ===
 ```
 
 The agent MUST NOT create any file under `openspec/changes/` or `openspec/specs/`
 during escalation. Escalation is guidance-only.
+
+> **变更说明 (per ADR-0048, 2026-09-09)**: 原升级契约 `skill_use("rdd-planner")` 已修订为 `skill_use("rdd-builder")` 回 P0 重新决策. 原因: (a) rdd-planner 阶段已完成, 不再接收从 quick 升级的 change; (b) rdd-builder P0 是变更执行的权威决策点, 用户在 5-option 中重新选择 (1-5).
 
 ## Environment Variables
 
@@ -236,7 +293,9 @@ and the forbidden list is mirrored in `tests/integration/test_rdd_quick.bats`.
 ## See also
 
 - `skills/rdd-verifier/SKILL.md` — verdict JSON contract source (AC verbatim + scoring)
-- `docs/adr/ADR-0047-rdd-quick-bypass-path.md` — decision record
+- `skills/rdd-builder/SKILL.md` — P0 dispatch-quick 触发方 (per ADR-0048 §Decision 3)
+- `docs/adr/ADR-0047-rdd-quick-bypass-path.md` — decision record (AMENDED per ADR-0048)
+- `docs/adr/ADR-0048-v4-stage-merge-revision.md` — v4 stage-merge revision (D1 立场反转)
 - `.rddf/improvements/add-rdd-quick-skill.md` — design rationale
 - `.rddf/improvements/guide-ship-quick-finish.md` — coexistence boundary (different scenario)
 - `_lib/quick_history.py` + `_lib/schemas/quick_history_schema.json` — audit log data layer

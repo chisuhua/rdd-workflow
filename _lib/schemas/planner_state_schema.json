@@ -2,11 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://rdd-workflow.local/schemas/planner_state_schema.json",
   "title": "PlannerState",
+  "description": "Schema v1.1 per ADR-0048 (2026-09-09). recommended_route promoted from optional to required field. Consumed by rdd-builder P0 dispatch-quick decision.",
   "type": "object",
-  "required": ["version", "current_sprint", "last_sync_at"],
+  "required": ["version", "current_sprint", "last_sync_at", "recommended_route"],
   "properties": {
     "version": {"const": 1},
-    "state_revision": {"type": "integer", "minimum": 0, "description": "Wave 4 Sub-task 0.0: increments when semantic content changes (excluding last_sync_at/last_sync_status/sprint_started_at/state_revision itself)."},
+    "state_revision": {"type": "integer", "minimum": 0, "description": "Wave 4 Sub-task 0.0: increments when semantic content changes (excluding last_sync_at/last_sync_status/sprint_started_at/state_revision/recommended_route itself)."},
     "current_sprint": {"type": "string", "pattern": "^sprint-[0-9]{4}-[0-9]{2}$"},
     "sprint_started_at": {"type": "string", "format": "date-time"},
     "last_sync_at": {"type": "string", "format": "date-time"},
@@ -45,7 +46,7 @@
     "recommended_route": {
       "type": "string",
       "enum": ["simple", "complex", "unknown"],
-      "description": "Advisory complexity hint for user discovery of rdd-quick. Not enforced (per Oracle review: rdd-planner is not a routing authority). rdd-quick SKILL.md P1 self-triages regardless. Added in v1.1 per fix-v4-rdd-planner-scope-over-assignment B4 (optional)."
+      "description": "REQUIRED per ADR-0048 (2026-09-09) §Decision 2. Planner advisory signal consumed by rdd-builder P0 dispatch-quick decision. Heuristic: simple if all active_projects for this change have priority=P3 AND file_count<=2 AND no public-interface change keyword; complex if priority in {P0,P1} OR touches _lib/core/_lib/schemas/ OR breaking-change keyword; unknown otherwise. Not authoritative — rdd-builder P0 retains HARD pause user override."
     }
   },
   "additionalProperties": false

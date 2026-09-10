@@ -17,18 +17,18 @@ role:
   boundaries:
     owns:
       - "docs/adr/ADR-*.md"
-      - "roadmap.md"
       - "docs/architecture/*-gap-analysis.md"
       - ".rddf/state/.arch-handoff.json"
-      - ".rddf/state/.populate-state.json"
-      - ".rddf/roadmap/phases/*.md"
-      - ".rddf/roadmap/features/*.md"
     not_owns:
       - "openspec/changes/<name>/{proposal,design,tasks}.md"
       - ".rddf/wt/<name>/"
       - ".rddf/plans/<name>.md"
       - ".rddf/state/.planner-feedback.json"
-    human_involvement: "high"
+      - "roadmap.md"
+      - ".rddf/roadmap/phases/*.md"
+      - ".rddf/roadmap/features/*.md"
+      - ".rddf/state/.populate-state.json"
+  human_involvement: "high"
 ---
 
 > **Stage 3 (2026-09-03)**: 此 skill 从 `guide-arch` 重命名为 `rdd-arch`（per D1a 渐进策略）。旧名称 `guide-arch` 通过 `skills/rdd-arch/SKILL.md` 的 5 行 shim 兼容至 v3.x + 2 minor release。
@@ -71,38 +71,44 @@ skill_use("rdd-arch")   # 无参数版本
 **核心边界（arch-done 即切换点）**：
 
 ```
-[rdd-arch]  --(arch-done: ADR ≥ 1 + roadmap.md)-->  [rdd-planner]  --(design-done: 所有提案有决策)-->  [rdd-builder]
+[rdd-arch]  --(arch-done: ADR ≥ 1, 单门控 per ADR-0048)-->  [rdd-planner]  --(planner-done: roadmap存在 + recommended_route)-->  [rdd-builder]
    arch 端                                                planner 端                                          builder 端
-   owns: docs/adr/ADR-*.md, roadmap.md,               owns: roadmap.md, proposal-suggestions.md,             owns: openspec/changes/<name>/
-        docs/architecture/*-gap-analysis.md                 proposal-approved.md,                              {design,tasks}.md, .rddf/wt/<name>/,
-        .rddf/roadmap/phases/*.md,                         .rddf/improvements/*.md                            .rddf/plans/<name>.md,
-        .rddf/roadmap/features/*.md                        (proposal.md authoring only)                        .rddf/state/builder/<name>.json
-   exits: .rddf/state/.arch-handoff.json                     exits: .rddf/state/.planner-handoff.json       exits: .rddf/state/.plan-handoff.json
-       --(plan-done)--> [rdd-builder P0-P3] --(archive)--> [rdd-verifier] --(verify-done)--> [openspec archive]
+   owns: docs/adr/ADR-*.md,                              owns: roadmap.md, proposal-suggestions.md,             owns: openspec/changes/<name>/
+        docs/architecture/*-gap-analysis.md,                  proposal-approved.md,                              proposal.md (authoring via P0 approve),
+        .rddf/state/.arch-handoff.json                        .rddf/roadmap/{features,phases}/*.md,             {design,tasks}.md, .rddf/wt/<name>/,
+        (roadmap 完全不写 per ADR-0048)                       .rddf/improvements/*.md,                          .rddf/plans/<name>.md,
+                                                              .rddf/state/.planner-{state,feedback,handoff}.json  .rddf/state/builder/<change>.json
+   exits: .rddf/state/.arch-handoff.json                 exits: .rddf/state/.planner-handoff.json              exits: .rddf/state/builder/<change>.json
+       --(user manual switch)--> [rdd-planner]         --(user manual switch)--> [rdd-builder P0-P3] --(archive)--> [rdd-verifier]
 
-[rdd-quick]  --(P0-P4 in-place, no worktree)--> [git commit on current branch]  (bypass, per ADR-0047)
+[rdd-quick]  --(P0-P4 in-place, no worktree)-->  [git commit on current branch]  (bypass, per ADR-0047 + ADR-0048 §Decision 3)
+   ↑ 入口分两种: (a) rdd-builder P0 选项 5 (主路径, per ADR-0048)  (b) guide 推荐器直接调用 (旁路, self-triage)
 ```
 
-**为什么这样切**（节选自 ADR-0003）：
+**为什么这样切**（节选自 ADR-0003 + ADR-0048）：
 
-- **职责单一**：arch 不需要懂 change artifacts，plan 不需要懂架构治理
+- **职责单一**：arch 不需要懂 change artifacts，plan 不需要懂架构治理；roadmap 完全归 planner（per ADR-0048）
 - **人工介入匹配**：高介入（arch，需要架构师审查）→ 中介入（plan，AI 辅助生成）→ 低介入（ship，自动执行）
 - **架构治理前置**：v2.0 要求"先定义架构，再生成变更"，避免"跳过架构直接编码"
-- **可独立演进**：修改 ADR 格式不影响 change 生成流程
-- **可独立测试**：arch-done 是清晰契约（用 ADR 数量 + roadmap.md 存在性验证）
+- **可独立演进**：修改 ADR 格式不影响 change 生成流程；roadmap 演进由 planner 全权负责
+- **可独立测试**：arch-done 是清晰契约（用 ADR 数量验证，单门控 per ADR-0048）
+- **角色边界严格**（per ADR-0028 + ADR-0048）：rdd-arch 与 roadmap 完全解耦；rdd-planner 通过 `.planner-handoff.json::recommended_route` 向 rdd-builder P0 输出复杂度 advisory
 
 **arch 端不写的文件**：
 
-- 不写 `openspec/changes/<name>/` 下任何 artifact（属于 `guide-plan`）
-- 不创建 worktree（属于 `guide-ship`）
-- 不调用 `openspec new` / `openspec propose` 等执行类命令（属于 `guide-plan`）
-- 不做归档/清理（属于 `guide-ship`）
+- 不写 `openspec/changes/<name>/` 下任何 artifact（属于 `rdd-builder`）
+- 不创建 worktree（属于 `rdd-builder`）
+- 不调用 `openspec new` / `openspec propose` 等执行类命令（属于 `rdd-builder`）
+- 不做归档/清理（属于 `rdd-builder` + `rdd-verifier`）
+- **不写 `roadmap.md`** (per ADR-0048, 移交给 `rdd-planner` Phase 0)
+- **不写 `.rddf/roadmap/{features,phases}/*.md`** (per ADR-0048, 移交给 `rdd-planner`)
+- **不写 `.rddf/state/.populate-state.json`** (per ADR-0048, 移交给 `rdd-planner`)
+- **不写 `.rddf/state/.planner-feedback.json`** (per ADR-0042, 由 `rdd-planner` owns)
 
 **arch 端必须写的文件**：
 
 - 通过 adr-create 阶段生成/更新 `docs/adr/ADR-*.md`
 - 通过 architecture 阶段生成/更新 `docs/architecture/*-gap-analysis.md`
-- 通过 roadmap-define 阶段生成/更新 `roadmap.md` + `roadmap-meta.yaml`（委托给 `roadmap` 技能）
 - arch-done 时写入 `.rddf/state/.arch-handoff.json`
 
 ---
@@ -517,171 +523,33 @@ cat "$SELECTED"
 
 ---
 
-## Phase 4: roadmap-define
+## Phase 4: arch validation (门控检查) (renumbered per ADR-0048)
 
-**入口条件**：architecture 阶段完成（或用户跳过此阶段直接进入）。
+**入口条件**：adr-create、architecture 两个阶段都已完成（或用户主动跳过非必要阶段）。
 
-**行为**：
-
-定义/更新项目路线图。本阶段将所有路线图管理逻辑**委托给 `roadmap` 技能**，rdd-arch 只负责调用入口与状态展示。
-
-**检测现有路线图**：
-
-```bash
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-# ADR-0016: read DISCOVERED_ROADMAP_PATH set by Phase 1 Step 5; fallback to roadmap.md
-ROADMAP_FILE="$PROJECT_ROOT/${DISCOVERED_ROADMAP_PATH:-roadmap.md}"
-STATE_FILE="$PROJECT_ROOT/.rddf/state/.roadmap-state.json"
-
-echo "=== 路线图定义 ==="
-echo ""
-
-if [ -f "$ROADMAP_FILE" ]; then
-    echo "✅ roadmap.md 已存在"
-    echo "   位置: $ROADMAP_FILE"
-    echo ""
-    # 读取当前阶段
-    CURRENT_PHASE=$(grep -m1 "当前阶段" "$ROADMAP_FILE" 2>/dev/null | head -c 80 || echo "(未指定)")
-    echo "   当前阶段: $CURRENT_PHASE"
-else
-    echo "⚠️  未发现 roadmap.md"
-    echo "   路线图用于管理项目阶段和 change 分类。"
-    echo "   如果没有路线图，所有 change 将被标记为'未分类'。"
-    echo ""
-    echo "→ 自动调用 skill_use(\"roadmap\", \"init\") 进入模板选择..."
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    skill_use("roadmap", "init")
-fi
-
-# P1-6 兼容模式检测：当 roadmap.md 不存在但 .rddf/state/.roadmap-state.json 仍存在
-# 说明: 之前启用过 roadmap,后来切换到兼容模式;或 roadmap.md 被误删/未提交
-# 此时不自动恢复,只提示用户,避免误覆盖用户数据
-if [ ! -f "$ROADMAP_FILE" ] && [ -f "$STATE_FILE" ]; then
-    echo ""
-    echo "⚠️  roadmap.md 已不存在，但 .rddf/state/.roadmap-state.json 存在"
-    echo "   推测：roadmap 模式已切换为兼容模式"
-    echo "   已有的 roadmap-meta.yaml 不会自动更新 .roadmap-state.json"
-    echo "   如需重新启用 roadmap，请运行：skill_use(\"roadmap\", \"init\")"
-fi
-```
-
-**菜单示例**：
-
-```
-=== 路线图定义 ===
-
-当前状态: phase-1 (基础架构)
-进度:
-  - arch-design: 1/2 ✅
-  - infra-setup: 0/1 ⏳
-  - core-impl: 0/0
-
-请选择:
-  1. ✏️  编辑路线图（修改阶段或任务分类）
-  2. 📊 查看路线图状态
-  3. 📈 查看阶段门控报告
-  4. ⏭️  强制推进到下一阶段
-  5. ✨ 添加 feature fragment
-  6. ✅ 完成路线图定义 → 进入 arch validation
-  0. 💾 保存并退出
-  i. 其他输入
-```
-
-**用户输入处理（case handler）**：
-
-```bash
-# Phase 4 roadmap-define menu - shared handler (extracted from inline case block)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_roadmap_menu.sh"
-handle_arch_menu "$choice"
-[ $? -eq 2 ] && continue  # r|refresh -> 重新展示菜单
-```
-
-**选项 1（编辑路线图）执行内容**：
-
-```bash
-# 委托给 roadmap 技能
-skill_use("roadmap", "edit")
-```
-
-**选项 2（查看路线图状态）执行内容**：
-
-```bash
-# 委托给 roadmap 技能
-skill_use("roadmap", "status")
-```
-
-**选项 3（查看阶段门控报告）执行内容**：
-
-```bash
-# 委托给 roadmap 技能
-skill_use("roadmap", "gate-report")
-```
-
-**选项 4（强制推进到下一阶段）执行内容**：
-
-```bash
-# 委托给 roadmap 技能
-skill_use("roadmap", "advance")
-```
-
-**选项 5（添加 feature fragment）执行内容**：
-
-```bash
-# 4 步强制交互（任一步失败 → 返回菜单，不写盘）:
-# 1. 输入 name: kebab-case（CLI 自动 feat- 前缀）；非空校验
-# 2. 输入 theme: 单行中文短句（≤ 50 字）；非空校验
-# 3. 多选 phase_refs: 从 list_active_fragments(kind="phase") 渲染编号列表;
-#    用户输入逗号分隔索引 → phase IDs; 校验所有存在
-# 4. Preview + confirm: 渲染 frontmatter + 3 段骨架到 stderr;
-#    用户输入 y 才落盘（n 返回菜单）
-# 落盘动作委托给 rddf roadmap add-feature:
-rddf roadmap add-feature <name> \
-    --phase-refs <p1,p2,...> \
-    --theme "<theme>" \
-    [--status a|d|x] [--force]
-```
-
-**roadmap.md 缺失时的特殊行为**：
-
-如果 `roadmap.md` 不存在，本阶段会自动调用 `skill_use("roadmap", "init")` 引导用户通过 4 个模板创建初始路线图：
-
-1. C++ 库项目（基础 → 核心 → 高级）
-2. Web 应用（MVP → 功能 → 优化）
-3. 空白模板（自定义）
-4. 基于现有 ADR 生成
-
-详细模板内容见 `skills/roadmap.md` §命令：init。
-
-**与 Phase 5 的衔接**：
-
-用户选择「完成路线图定义」后，进入 Phase 5 (arch validation) 执行最终验证 + 写 handoff。roadmap.md 是 arch-done 门控检查的两个关键文件之一（另一个是 ADR ≥ 1）。
-
----
-
-## Phase 5: arch validation (门控检查)
-
-**入口条件**：adr-create、architecture、roadmap-define 三个阶段都已完成（或用户主动跳过非必要阶段）。
+> **变更 (per ADR-0048, 2026-09-09)**: 原 Phase 4 roadmap-define 已**完全删除**. Roadmap 创建与管理职责已移交至 `rdd-planner` Phase 0 roadmap-bootstrap + `roadmap` 技能. arch-done 门控从双重降为单重 (仅 ADR ≥ 1, 不再检查 `roadmap.md` 存在).
 
 **行为**：
 
-执行 arch-done 双重门控检查，验证架构定义是否完整。门控通过后进入 Phase 6 arch-done 退出。
+执行 arch-done 单门控检查，验证架构定义是否完整。门控通过后进入 Phase 5 arch-done 退出。
 
 **门控检查**：
 
-arch-done 必须满足**双重门控**才能通过：
+arch-done 必须满足**单门控**才能通过 (per ADR-0048 §Decision 1):
 
-1. **ADR 数量 ≥ 1**（必须创建至少一个架构决策记录）
-2. **roadmap.md 存在**（必须定义项目路线图）
+1. **ADR 数量 ≥ 1** (必须创建至少一个架构决策记录)
+
+> **Roadmap 检查已移除**: `.rddf/roadmap.md` 存在性检查由 `rdd-planner` Phase 5 双门控接管 (per ADR-0048 §Decision 2). arch-done 不再关心 roadmap.
 
 ```bash
-# Round B: extracted to _lib/arch_done_gate.sh (L522-L559, ~38 lines)
+# Round B: extracted to _lib/arch_done_gate.sh (L522-L559, ~38 lines, ADR-0048: 移除 roadmap 检查)
 source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_done_gate.sh"
 check_arch_done_gate || exit 1
 ```
 
 **门控通过后**：
 
-门控检查通过后，直接进入 Phase 6 arch-done 写入 handoff 状态并退出。
+门控检查通过后，直接进入 Phase 5 arch-done 写入 handoff 状态并退出。
 
 门控失败时提供回退选项。
 
@@ -694,8 +562,7 @@ check_arch_done_gate || exit 1
 
 请选择:
   1. ↩️  回到 adr-create 阶段创建 ADR
-  2. ↩️  回到 roadmap-define 阶段定义路线图（如果 roadmap 缺失）
-  3. 🔄 重新执行门控检查
+  2. 🔄 重新执行门控检查
   0. 💾 保存并退出
   i. 其他输入
 ```
@@ -714,36 +581,11 @@ esac
 
 ---
 
-## Phase 6: arch-done (Exit)
+## Phase 5: arch-done (Exit) (renumbered per ADR-0048)
 
-**入口条件**：Phase 5 门控检查通过。arch-done 不再依赖提案审批结果。
+**入口条件**：Phase 4 门控检查通过。arch-done 不再依赖提案审批结果。
 
-#### Step X: Roadmap Sync (internal)
-
-> **Trigger**: arch-done gate passed. Auto-call (no opt-out flag for now; roadmap update is part of arch-done semantics).
-
-Run:
-
-```bash
-RDDF_PROJECT_ROOT="$PROJECT_ROOT" \
-RDDF_CODEBASE_COMMIT="$(git rev-parse HEAD)" \
-RDDF_ROADMAP_UPDATE=on \
-RDDF_INCREMENTAL=on \
-bash "${GUIDE_ARCH_SCRIPTS}/roadmap_incremental_update.sh"
-```
-
-Behavior:
-- Exit 0 + stderr `Mode: skip` when no changes detected (T1)
-- Exit 0 + writes `.rddf/state/.populate-state.json` when changes (T2-T6)
-- Warning written to `.rddf/quality-reports/.arch-quality-report.json` when roadmap is stale (T9)
-- **NOT blocking**: arch-done gate still only checks ADR ≥ 1 + roadmap.md exists (unchanged from ADR-0018)
-
-Override env vars:
-- `RDDF_ROADMAP_UPDATE=off` — skip roadmap sync entirely (escape hatch)
-- `RDDF_ROADMAP_UPDATE=force` — force full rebuild (reset state)
-- `RDDF_INCREMENTAL=off` — equivalent to force (alias for clarity)
-
-> **Note**: 既有 `rddf_env_check_cache` 集成保持不变 — 本步骤不影响 Phase 1 env-check 流程，也不修改 `.rddf/state/.env-cache.json`。
+> **变更 (per ADR-0048, 2026-09-09)**: 原 Phase X Roadmap Sync 已**完全删除**. 不再调用 `roadmap_incremental_update.sh`. `.rddf/state/.populate-state.json` 改由 `rdd-planner` 维护.
 
 **写入 handoff 状态**：
 
@@ -768,14 +610,15 @@ rddf_session_hook_close stage_arch arch-done rdd-arch
 
 📋 架构定义交付物:
   - ADR 文档: N 个 (最新: ADR-XXXX)
-  - Roadmap: 已定义 (当前阶段: ...)
-  - 架构差距分析: M 个 (待 roadmap 阶段补齐)
+  - 架构差距分析: M 个 (待 planner 阶段补齐)
 
-💡 Next: skill_use("guide-design")
-   This will review pending proposals and prepare for change generation (propose -> deps -> plan-done).
+💡 Next: skill_use("rdd-planner")
+   This will bootstrap the roadmap (if missing), manage sprint proposals, and prepare
+   for builder execution. Per ADR-0048, rdd-arch no longer owns roadmap — rdd-planner
+   Phase 0 will guide you through roadmap creation if needed.
 ```
 
-Do NOT auto-invoke `guide-plan` - the user must explicitly transition to the plan side.
+Do NOT auto-invoke `rdd-planner` - the user must explicitly transition. (per ADR-0048)
 
 **架构质量门（ADR-0018）**：
 
@@ -797,22 +640,24 @@ arch 阶段内部支持**循环迭代**（细化架构）：
 
 ```
 arch 内部循环:
-  adr-create → architecture → roadmap-define → adr-create (循环细化)
+  adr-create ↔ architecture  (细化架构; roadmap 已移交给 planner per ADR-0048)
 ```
 
-arch → design 的**前向切换**：
+arch → planner 的**前向切换**：
 
 ```
-arch → design: arch-done 验证通过 (ADR ≥ 1 + roadmap.md 存在)
+arch → planner: arch-done 验证通过 (单门控: ADR ≥ 1, per ADR-0048)
+                  roadmap 由 rdd-planner Phase 0 bootstrap (如缺失)
 ```
 
 plan → arch 的**反向切换**（v2.0 后续支持）：
 
 ```
 plan → arch: plan 阶段选择"返回 Arch 阶段" (需要更新架构)
+           rdd-planner 通过 .planner-feedback.json 提供 advisory 信号 (per ADR-0042)
 ```
 
-详细切换条件见 `docs/adr/ADR-0003-three-phase-architecture.md` §"阶段间循环与切换"。
+详细切换条件见 `docs/adr/ADR-0003-three-phase-architecture.md` §"阶段间循环与切换" + `docs/adr/ADR-0048-v4-stage-merge-revision.md` §Decision 1。
 
 ---
 

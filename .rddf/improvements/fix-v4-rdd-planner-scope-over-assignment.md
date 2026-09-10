@@ -78,7 +78,9 @@ A9. **`docs/adr/ADR-0038-rdd-planner-crosscutting.md`**：amend "NOT a sixth pha
 B1. **移植 `generate_full_proposal.py`**：从 git 历史 `1095cec^` 或 `6587b98` era 恢复 → 进 `skills/rdd-builder/scripts/` → 挂接 `phase0_approval.sh` 的 approve 分支 → 替换现 D3 占位 stub
 B2. **修复/删除 `skills/rdd-arch/scripts/approve_proposal.sh`**（当前指向已删除路径的坏 shim）
 B3. **`skills/rdd-planner/scripts/planner_stage_entry.sh` + `planner_stage_exit.sh`**：`proposals_authored` 改为从 planner state / 已 attach 的 improvement 派生（删 grep 假值，与 schema 改名 `proposals_ready` 对齐）
-B4. **（可选）planner-state schema v1.1** 增 `recommended_route` advisory 字段（**不动** planner-handoff schema）；planner `status` 输出展示 advisory 信号
+B4. **（可选 → 必要 per ADR-0048）planner-state schema v1.1** 增 `recommended_route` advisory 字段（**不动** planner-handoff schema）；planner `status` 输出展示 advisory 信号
+
+> **升级说明 (2026-09-09, per ADR-0048 §Decision 2)**: 本项从 optional 升级为 **required**. `recommended_route` 字段成为 rdd-builder P0 dispatch-quick 决策的核心输入, schema v1 → v1.1; planner-handoff schema 同步增加该字段 (per ADR-0048).
 
 ### Out of Scope
 
@@ -129,7 +131,7 @@ B4. **（可选）planner-state schema v1.1** 增 `recommended_route` advisory �
 - [ ] AC-10: `generate_full_proposal.py` 从 git 历史恢复并挂接 builder P0
 - [ ] AC-11: `skills/rdd-arch/scripts/approve_proposal.sh` 坏 shim 被删除或重定向
 - [ ] AC-12: `planner_stage_entry.sh` + `planner_stage_exit.sh` `proposals_authored` 字段消失
-- [ ] AC-13: (可选) planner-state schema v1.1 `recommended_route` 字段存在
+- [ ] AC-13: planner-state schema v1.1 `recommended_route` 字段存在 (per ADR-0048 升级: required, 含 planner-handoff + builder_deps 联动)
 - [ ] AC-14: `./test.sh --full --regression` 不引入新失败
 - [ ] AC-15: `rdd-doctor` CRITICAL 数不增加
 
@@ -186,9 +188,18 @@ B4. **（可选）planner-state schema v1.1** 增 `recommended_route` advisory �
 - `grep -n "proposals_authored" skills/rdd-planner/scripts/planner_stage_*.sh` 返回 0 hits
 - `grep -n "proposals_ready" skills/rdd-planner/scripts/planner_stage_*.sh` 返回 ≥2 hits
 
-### AC-13: (可选) planner-state schema v1.1 `recommended_route` 字段存在
+### AC-13: planner-state schema v1.1 `recommended_route` 字段存在 (per ADR-0048, 升级: required)
 
 `grep -n "recommended_route" _lib/schemas/planner_state_schema.json` 返回 ≥1 hit。
+
+`.planner-handoff.json` schema v1.1 同步含 `recommended_route` 字段 (enum `simple|complex|unknown`):
+`grep -n "recommended_route" _lib/schemas/planner_handoff_schema.json` 返回 ≥1 hit。
+
+`rddf planner status` 输出展示 advisory 信号:
+`rddf planner status | grep "Recommended route"` 返回 1 hit。
+
+rdd-builder P0 dispatch-quick 决策依据 planner-handoff::recommended_route:
+`grep -n "recommended_route" _lib/builder_deps.py` 返回 ≥1 hit。
 
 ### AC-14: 全量回归测试通过
 
@@ -237,7 +248,7 @@ Per D3 spec-delta 协同（per ADR-0025），spec.md 落 `openspec/changes/fix-v
 - [ ] AC-10: `generate_full_proposal.py` 从 git 历史恢复并挂接 builder P0
 - [ ] AC-11: `skills/rdd-arch/scripts/approve_proposal.sh` 坏 shim 被删除或重定向
 - [ ] AC-12: `planner_stage_entry.sh` + `planner_stage_exit.sh` `proposals_authored` 字段消失
-- [ ] AC-13: (可选) planner-state schema v1.1 `recommended_route` 字段存在
+- [ ] AC-13: planner-state schema v1.1 `recommended_route` 字段存在 (per ADR-0048 升级: required, 含 planner-handoff + builder_deps 联动)
 - [ ] AC-14: `./test.sh --full --regression` 不引入新失败
 - [ ] AC-15: `rdd-doctor` CRITICAL 数不增加
 
