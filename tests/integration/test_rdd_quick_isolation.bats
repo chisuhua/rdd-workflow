@@ -19,7 +19,15 @@ setup() {
 # These are the pre-implementation state hashes.
 LOCKED_SELECT_WORKTREE_SH="478eadec2dcba30ab37a2c20e2e21409031879dae509d7393b6b67d064c9e9f0"
 LOCKED_TASKS_WRITEBACK_SH="e9e0065de4f65fbeef763be3b3eb09626c99920744e6bb2585311a2b21483264"
-LOCKED_ARCHIVE_SH="d90b32f0729e4b431a1cfff8e620f697f7c1c022ae49ddf8d0df594561b53b97"
+# Note (2026-09-10): LOCKED_ARCHIVE_SH recaptured after fix-archive-openspec-tracked-commit.
+# Per the change: _lib/archive.sh::commit_archive_moves() now honors .rddf/project.yaml
+# git.openspec_tracked field (defense-in-depth guard per complete-project-yaml-config-gaps
+# spec §archive-openspec-tracked-skip-git L246-262). Also fixed pre-existing typo
+# `cd "$MAIN_REPO_ROOT"` → `cd "$main_root"` at L681. The rdd-quick zero-pollution
+# invariant (this test) is preserved: rdd-quick does NOT invoke commit_archive_moves
+# (rdd-quick is bypass-path per ADR-0047), so the byte change here is an additive
+# guard with zero impact on rdd-quick's execution semantics.
+LOCKED_ARCHIVE_SH="f6cab8eee9328532e4f5e381043d8b3cae72288e2b97af9e101e446f6550e882"
 # Role block of rdd-planner/SKILL.md (from `role:` through closing `---`).
 # This is the structural-only hash that MUST be byte-identical after rdd-quick lands.
 # LOCKED_RDD_PLANNER_ROLE_BLOCK: role: ... --- block sha256, captured post-ADR-0048

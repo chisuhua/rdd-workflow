@@ -73,7 +73,7 @@ runtime_overrides > project.yaml > loop.yaml > env vars > .rddf.json > defaults
 |---|------|------|
 | M1 | 配置基础设施（project_config.sh + config.py merge + schema + defaults） | ✅ 已实施 |
 | M2 | ADR 发现可配置（pattern 参数化） | ✅ 部分实施（2/6 task） |
-| M3 | openspec_tracked / 轻量模式（archive.sh 分支） | ✅ 已实施 |
+| M3 | openspec_tracked / 轻量模式（archive.sh 分支 + commit_archive_moves 守卫） | ✅ 已实施（per `fix-archive-openspec-tracked-commit`, 2026-09-10） |
 | M4 | verification hook（hook_runner.py） | ✅ 已实施 |
 | M5 | 文档 + 全量测试 + ADR（本 ADR） | ✅ 已实施 |
 

@@ -557,8 +557,11 @@ archive_change() {
       echo "❌ openspec archive 失败"
       return 1
     fi
+    # NOTE: Per complete-project-yaml-config-gaps spec
+    # §archive-openspec-tracked-skip-git L254, the false branch SHALL NOT
+    # call commit_archive_moves. Defense-in-depth: commit_archive_moves
+    # itself also short-circuits when openspec_tracked=false (see L795+).
     cleanup_worktree_and_branch "$name" "$main_root" "$wt_path" "$branch" || true
-    commit_archive_moves "$name" "$main_root" || true
     mark_iteration_archived "$name" "$main_root" ""
     return 0
   fi
@@ -675,7 +678,7 @@ except Exception:
 
   # worktree-context-persistence: always land back in main repo so the
   # next bash call doesn't need a redundant `cd`.
-  cd "$MAIN_REPO_ROOT" 2>/dev/null || true
+  cd "$main_root" 2>/dev/null || true
 
   return 0
 }
@@ -795,6 +798,22 @@ commit_archive_moves() {
   if [ "${SKIP_ARCHIVE_AUTO_COMMIT:-no}" = "yes" ]; then
     echo "ℹ️  commit_archive_moves: SKIPPED (SKIP_ARCHIVE_AUTO_COMMIT=yes)"
     return 0
+  fi
+
+  # Honor git.openspec_tracked=false from .rddf/project.yaml (defense-in-depth:
+  # any caller that invokes commit_archive_moves in a openspec_tracked=false
+  # project will be safe even if the caller's own logic forgets to skip).
+  # Per ADR-0036 M3 + complete-project-yaml-config-gaps spec
+  # §archive-openspec-tracked-skip-git L246-262.
+  if [ -f "$main_root/.rddf/project.yaml" ] && [ -f "$main_root/_lib/project_config.sh" ]; then
+    # shellcheck disable=SC1090
+    source "$main_root/_lib/project_config.sh"
+    local _openspec_tracked
+    _openspec_tracked=$(project_yaml_get "git.openspec_tracked" "true")
+    if [ "$_openspec_tracked" = "false" ] || [ "$_openspec_tracked" = "False" ]; then
+      echo "ℹ️  commit_archive_moves: SKIPPED (git.openspec_tracked=false)"
+      return 0
+    fi
   fi
 
   if [ -z "$(git status --porcelain 2>/dev/null)" ]; then

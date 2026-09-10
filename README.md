@@ -96,7 +96,7 @@ verification:
 | 字段 | 作用 |
 |------|------|
 | `adr.pattern` | ADR 编号正则（默认 4 位） |
-| `git.openspec_tracked` | false 强制 rdd-builder 轻量模式 |
+| `git.openspec_tracked` | false → 强制轻量模式 + archive 不产生 git commit |
 | `verification.provider` | `hook` 调 `tools/verify_change.sh` 替代 LLM |
 
 详见 [ADR-0036](docs/adr/ADR-0036-rddf-project-yaml-config.md) 与 [proposal #10](https://github.com/chisuhua/rdd-workflow/issues/10)。

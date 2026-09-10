@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### fix-archive-openspec-tracked-commit (close spec-implementation gap on ADR-0036 M3, 2026-09-10)
+
+Per `complete-project-yaml-config-gaps` spec §archive-openspec-tracked-skip-git L246-262 (ratified in ADR-0036 M3 on 2026-09-02). Closes the implementation gap where `git.openspec_tracked: false` skipped `git merge` but did NOT skip `commit_archive_moves`, allowing `openspec/changes/archive/<name>/` and `openspec/specs/<name>/` to enter git commits in mixed-state projects.
+
+- **`_lib/archive.sh`**: `archive_change` false branch no longer calls `commit_archive_moves` (per spec L254); `commit_archive_moves` itself now reads `.rddf/project.yaml` and self-skips when `git.openspec_tracked=false` (defense-in-depth, single point of truth protecting all current/future callers). Also fixes pre-existing typo `cd "$MAIN_REPO_ROOT"` → `cd "$main_root"` at L681.
+- **Tests**: `test_archive_with_openspec_tracked_false.bats` upgraded from grep-source-text to 3 behavioral cases (false-mode no-commit, true-mode commit produced, source-text guard); `test_commit_archive_moves.bats` adds 2 new cases (mixed-state defense-in-depth, dirty-tree precedence).
+- **Docs**: AGENTS.md "Archive Auto-Commit" section + "概念边界" table; README.md `git.openspec_tracked` field row; ADR-0036 §Implementation M3 row note.
+
 ### fix-doc-drift-v4-architecture (sync docs to v4 4-stage + rdd-quick bypass, 2026-09-09)
 
 Per ADR-0043 (v4 stage-merge), ADR-0044 (Wave 3 hard removal of `guide-*` skills), and ADR-0047 (`rdd-quick` bypass path). Closes the documentation drift surfaced by 2026-09-09 code-vs-doc audit: 13 drift sites across 7 files where user-facing and architectural documentation still described the pre-v4 5-phase model.
