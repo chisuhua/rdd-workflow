@@ -212,7 +212,41 @@ Per [ADR-0049](../adr/ADR-0049-rdd-builder-phase0-llm-integration.md), P0 引入
 - planner advisory > LLM assessment (advisory 优先)
 - `--dispatch-quick` CLI flag 仍要求 `recommended_route=simple` (不变)
 - LLM 与 advisory 冲突时 prose 显式标记但不改变 routing
-- 用户始终是最终决策者 (HARD pause 不变)
+- 冲突时**暂停问用户**（per 用户 UX 需求）
+
+### v4.0.2.1 (planned) — 全自动决策模式 (per 用户 UX 需求 2026-09-10)
+
+**用户诉求**: rdd-builder / rdd-quick **用户不接入，全程自动推进**。AI 代理基于所有信号自动选 1-5。
+
+**默认行为**: AI 代理在 P0 入口自动决策 1-5，**不展示菜单给用户**，不需要用户输入。
+
+**自动决策表** (per SKILL.md 阶段 0.0.5)：
+
+| Planner advisory | LLM assessment | AC count | 隐含复杂度 | AI 自动选 |
+|---|---|---|---|---|
+| `simple` | `simple` | ≤ 2 | 无 | **case 5 (dispatch-quick)** |
+| `simple` | `simple` | > 2 | 无 | **case 1 (approve)** |
+| `simple` | `complex` | 任意 | 有 | **case 1 (approve)** |
+| `simple` | `unknown` | 任意 | 未知 | **case 1 (approve)** |
+| `complex` | 任意 | 任意 | 高 | **case 1 (approve)** |
+| `unknown` | `unknown` | 任意 | 未知 | **暂停问用户** |
+| 任意 | `complex` AND advisory 不一致 | 任意 | 冲突 | **暂停问用户** |
+| `unknown` | `simple` | 任意 | 不一致 | **暂停问用户** |
+
+**用户介入门控**（仅低置信度触发）：
+- `planner-handoff.json::recommended_route == "unknown"`
+- `LLM assessment == "unknown"`
+- LLM 与 planner advisory 冲突 (`Agreement: no`)
+- LLM 检测到 `complex` AND 与 advisory 不一致
+- 环境变量 `RDDF_REQUIRE_USER_CONFIRM=yes`（强制用户确认）
+
+**实现**:
+- `skills/rdd-builder/scripts/phase0_approval.sh`: 默认 auto-pick（`AUTO_APPROVE` 和 `DISPATCH_QUICK` 默认 0；无 user input）
+- `--auto-approve` / `--dispatch-quick` / `--require-confirm` CLI flags 仍可用（per 阶段 0.0.5）
+- `RDDF_REQUIRE_USER_CONFIRM=yes` env var 强制询问用户
+
+**测试**:
+- `tests/integration/test_rdd_builder_phase0_auto_pick.bats` (24 cases)
 
 **LLM 输出落点** (Decision 5)：
 - Pre-flight → prose 展示 (不入文件)

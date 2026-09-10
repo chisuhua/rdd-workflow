@@ -270,10 +270,13 @@ This section walks through the **happy path** end-to-end, step by step. All file
           │                                                                    │
           │ 💡 Planner advisory=simple + AC ≤ 2 → option 5 recommended       │
           │                                                                    │
-          │ 1. approve       2. reject       3. defer       4. revise       5. dispatch-quick │
-          └─────────────────────────────────────────────────────────────────┘
+           │ 1. approve       2. reject       3. defer       4. revise       5. dispatch-quick │
+           └─────────────────────────────────────────────────────────────────┘
 
-          Read input (1-5) from user (or --auto-approve / --dispatch-quick)
+          Read input (1-5) from user OR auto-pick (per 用户 UX 需求 2026-09-10, 默认 ON)
+          - Default (RDDF_REQUIRE_USER_CONFIRM=no): AI 代理基于 advisory + LLM + AC 自动选 1/5
+          - Manual: user picks 1-5 (set RDDF_REQUIRE_USER_CONFIRM=yes)
+          - Override: --auto-approve / --dispatch-quick / --require-confirm CLI flags
 
 [Step 3.3] P0 case 1 (approve):
           - bash phase0_approval.sh change-foo
@@ -583,8 +586,8 @@ rdd-quick P1 (mode a, reads planner-handoff.json::recommended_route)
 | rdd-planner (Phase 0) | entry to planner | bash detection | `.rddf/roadmap.md` exists? | (none, or `roadmap.md` if init) |
 | rdd-planner (Phase 1-5) | internal phases | bash menu + rddf planner * | `.arch-handoff.json`, `.rddf/improvements/*.md` | `.rddf/state/.planner-state.json`, etc. |
 | rdd-planner → rdd-builder | planner-done dual-gate pass | `planner_stage_exit.sh` | `.planner-state.json` (gate check) | `.rddf/state/.planner-handoff.json` |
-| rdd-builder P0 case 1 | user picks 1 (approve) | `phase0_approval.sh` | `openspec/changes/<change>/proposal.md` | `.rddf/state/builder/<change>.json` |
-| rdd-builder P0 case 5 | user picks 5 (dispatch-quick) | `phase0_approval.sh` | `.planner-handoff.json` (recommended_route) | `.rddf/state/rdd-quick-context.json` + builder-handoff |
+| rdd-builder P0 case 1 | user picks 1 (approve) OR AI auto-pick | `phase0_approval.sh` | `openspec/changes/<change>/proposal.md` | `.rddf/state/builder/<change>.json` |
+| rdd-builder P0 case 5 | user picks 5 (dispatch-quick) OR AI auto-pick (advisory=simple + AC ≤ 2) | `phase0_approval.sh` | `.planner-handoff.json` (recommended_route) | `.rddf/state/rdd-quick-context.json` + builder-handoff |
 | rdd-builder P0 → P1 | case 1 (approve) | internal state machine | `.rddf/state/builder/<change>.json` | (same file updated) |
 | rdd-builder P3 → openspec archive | archive_gate pass | `archive.sh` | worktree commits, tasks.md | `openspec/changes/archive/<date>-<name>/` |
 | rdd-builder P3 ↔ rdd-verifier | verifier verdict routing | `_lib/builder_retry.py` | `.rddf/state/verifier/<change>.json` | `.rddf/state/builder/<change>.json::retry_count` |
