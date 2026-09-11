@@ -113,7 +113,7 @@ verification:
 | **Verifier** | `rdd-verifier` | 验证回环（批量 AC 验证 + 启发式分类 + 失败回 builder，per ADR-0034；v2.0 自包含 LLM 验证 per ADR-0045） | 低 |
 | **Quick** (旁路) | `rdd-quick` | 小改动的快速执行（绕过 openspec change + worktree，就地 TDD 5 步 + Oracle 验证，per ADR-0047） | 中 |
 
-> **v4.0+ 架构（2026-09-04 起）**: 三阶段（v2.0）和 5-stage（v3.0）历史模型已合并为四阶段（per ADR-0043/0044）。AC 验证保留为独立 `rdd-verifier` 阶段（per ADR-0034）。`rdd-quick` 是 2026-09-07 新增的小改动旁路（per ADR-0047），与主四阶段流水线并行。
+> **v4.0+ 架构（2026-09-04 起）**: 三阶段（v2.0）和 5-stage（v3.0）历史模型已合并为四阶段（per ADR-0043/0044）。`rdd-arch` 完全脱离 roadmap，`rdd-planner` 独占 roadmap，`rdd-builder` P0 可触发 `rdd-quick` 旁路（per ADR-0048）。AC 验证保留为独立 `rdd-verifier` 阶段（per ADR-0034 + ADR-0045 自包含 LLM 验证）。`rdd-quick` 是 2026-09-07 新增的小改动旁路（per ADR-0047）。
 > **v3.0+ 历史**（已废弃于 v4.0+）: 5-stage 架构（`arch → design → plan → ship → verify`）在 v4.0+ 已合并为四阶段；Wave 3 hard removal（ADR-0044）已删除 `guide-design`/`guide-plan`/`guide-ship` 三个 skill。
 > **v2.1 历史**（已废弃于 v3.0+）: 提案管理原在 `rdd-arch` Phase 5.5，已迁移到 `rdd-planner` 阶段（per ADR-0025）。
 > `guide-spec` 别名已在 v2.0 移除。请直接使用 v4 四阶段流程：`rdd-arch` → `rdd-planner` → `rdd-builder` → `rdd-verifier`（或 `rdd-quick` 旁路）。
