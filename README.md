@@ -213,6 +213,12 @@ RDDF_HUB_REPO=org/rdd-hub rddf watch-hub --once --owner=org/rdd-hub
 
 **语义**: 默认 **OFF**(未设置即严格检查,design-done gate 会调用 `check_hub_pending` / `check_cross_repo_approvals`);仅在紧急 hotfix 时显式设为 `true`(**ON**)临时绕过。绕过会留 audit trail,事后用 `rdd-doctor --check orphan-gates` 巡检确认 gate 未被静默拆除。
 
+##### 紧急跳过与 AC 验证门控 (`STRICT_AC_GATE` / `SKIP_RDD_VERIFIER`)
+
+`STRICT_AC_GATE=yes` 在 archive 前把 AC 验证从 "仅 WARNING" 升级为硬阻断（per [ADR-0035](docs/adr/ADR-0035-verifier-archive-gate-boundary.md) §1）。默认 OFF；CI 流水线建议开启。
+
+`SKIP_RDD_VERIFIER=yes` + `RDDF_VERIFIER_BYPASS_REASON=<reason>` 跳过 rdd-verifier 验证（必须给理由，否则 fail closed）。审计写入 `.rddf/state/.bypass-audit.jsonl`（per `bypass-audit-mechanism`）；`bash skills/rdd-doctor/scripts/doctor.sh --category bypass-audit` 月度统计。
+
 ### 跨项目审批(ADR-0031)
 
 `category: cross-repo-federation` 的提案**不可** `--auto-accept`,必须:
