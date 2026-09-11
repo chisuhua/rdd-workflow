@@ -20,6 +20,8 @@ from _lib.docs_consistency import (  # noqa: E402
     check_role_frontmatter,
     check_skill_count,
     check_stage_count,
+    check_schema_path_canonical,
+    check_schema_readme_drift,
     check_version_consistency,
     run_all,
 )
@@ -55,6 +57,122 @@ def test_adr_list_completeness():
     """AGENTS.md ADR list references all real ADR files on disk."""
     issues = check_adr_list_completeness()
     assert issues == [], f"ADR list drift: {issues}"
+
+
+def test_adr_reverse_drift_no_false_positive():
+    """AGENTS.md declares latest ADR == disk max → no reverse-drift issue.
+
+    Regression guard: after B-1 sync (AGENTS.md claims ADR-0050 == disk ADR-0050),
+    the new reverse-drift check must NOT fire.
+    """
+    from _lib import docs_consistency as dc
+
+    issues = dc.check_adr_list_completeness()
+    reverse = [i for i in issues if i["name"] == "adr-list-reverse-drift"]
+    assert reverse == [], (
+        f"unexpected reverse-drift when AGENTS.md is in sync: {reverse}"
+    )
+
+
+def test_adr_reverse_drift_detects_underclaim(monkeypatch):
+    """AGENTS.md declares 最新编号落后于磁盘最大编号 → emit WARNING."""
+    from _lib import docs_consistency as dc
+
+    real_read_text = dc._read_text
+
+    def fake_read(rel_path: str) -> str:
+        if rel_path == "AGENTS.md":
+            return (
+                "fake preamble\n"
+                "- 当前最新编号: **ADR-0044** (v4 stage-merge Wave 3 hard removal)\n"
+                "fake trailer\n"
+            )
+        return real_read_text(rel_path)
+
+    monkeypatch.setattr(dc, "_read_text", fake_read)
+
+    issues = dc.check_adr_list_completeness()
+    reverse = [i for i in issues if i["name"] == "adr-list-reverse-drift"]
+
+    assert len(reverse) == 1, f"expected exactly 1 reverse-drift issue, got: {issues}"
+    issue = reverse[0]
+    assert issue["severity"] == "WARNING"
+    assert "ADR-0050" in issue["detail"]
+    assert "ADR-0044" in issue["detail"]
+    assert "fix_command" in issue
+    assert "AGENTS.md" in issue["fix_command"]
+
+
+def test_schema_readme_drift_detects_missing_schema(tmp_path, monkeypatch):
+    """docs/schemas/README.md references a _lib/schemas/ file that does NOT exist on disk → WARNING."""
+    from _lib import docs_consistency as dc
+
+    fake_schema_dir = tmp_path / "_lib" / "schemas"
+    fake_schema_dir.mkdir(parents=True)
+    (fake_schema_dir / "real_one_schema.json").write_text("{}")
+    (fake_schema_dir / "real_two_schema.json").write_text("{}")
+
+    fake_readme = (
+        "# Index\n\n"
+        "| Schema | Path |\n"
+        "|---|---|\n"
+        '| [ghost](_lib/schemas/ghost_schema.json) | _lib/schemas/ghost_schema.json |\n'
+        '| [real_one](_lib/schemas/real_one_schema.json) | _lib/schemas/real_one_schema.json |\n'
+    )
+
+    monkeypatch.setattr(dc, "REPO_ROOT", tmp_path)
+
+    (tmp_path / "docs" / "schemas").mkdir(parents=True)
+    (tmp_path / "docs" / "schemas" / "README.md").write_text(fake_readme)
+
+    issues = dc.check_schema_readme_drift()
+    drift = [i for i in issues if i["name"] == "schema-readme-drift"]
+    assert len(drift) == 1
+    issue = drift[0]
+    assert issue["severity"] == "WARNING"
+    assert "ghost_schema.json" in issue["detail"]
+    assert "real_two_schema.json" in issue["detail"]
+
+
+def test_schema_readme_drift_no_false_positive():
+    """Current docs/schemas/README.md in sync with _lib/schemas/ → no drift."""
+    from _lib import docs_consistency as dc
+
+    issues = dc.check_schema_readme_drift()
+    drift = [i for i in issues if i["name"] == "schema-readme-drift"]
+    assert drift == [], f"unexpected schema-readme drift: {drift}"
+
+
+def test_schema_path_canonical_violation(tmp_path, monkeypatch):
+    """skills/_lib/schemas/ outside a shim-context parenthetical → WARNING."""
+    from _lib import docs_consistency as dc
+
+    fake_agents = (
+        "## Heading\n"
+        "打开 schemas/foo.json 在 skills/_lib/schemas/  # violation\n"
+        "(skills/_lib/schemas/ 是向后兼容 shim, 优先用 _lib/schemas/)  # allowed\n"
+    )
+
+    monkeypatch.setattr(dc, "REPO_ROOT", tmp_path)
+    (tmp_path / "AGENTS.md").write_text(fake_agents)
+
+    issues = dc.check_schema_path_canonical()
+    violations = [i for i in issues if i["name"] == "schema-path-canonical-violation"]
+
+    assert len(violations) == 1, f"expected 1 violation, got: {issues}"
+    issue = violations[0]
+    assert issue["severity"] == "WARNING"
+    assert "skills/_lib/schemas/" in issue["detail"]
+    assert "_lib/schemas/" in issue["fix_command"]
+
+
+def test_schema_path_canonical_no_false_positive():
+    """Current AGENTS.md / README.md only mention skills/_lib/schemas/ as shim context."""
+    from _lib import docs_consistency as dc
+
+    issues = dc.check_schema_path_canonical()
+    violations = [i for i in issues if i["name"] == "schema-path-canonical-violation"]
+    assert violations == [], f"unexpected path-canonical violations: {violations}"
 
 
 def test_role_frontmatter_all_phase_skills():

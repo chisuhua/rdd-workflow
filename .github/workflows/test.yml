@@ -75,6 +75,18 @@ jobs:
       - name: Python integration tests
         run: python3 -m pytest tests/integration/ -q --tb=short
 
+      - name: Documentation consistency gate (rdd-doctor, non-blocking)
+        run: |
+          set +e
+          bash skills/rdd-doctor/scripts/doctor.sh --category docs-consistency --quiet
+          EXIT=$?
+          set -e
+          if [ $EXIT -ge 2 ]; then
+            echo "❌ docs-consistency CRITICAL (exit $EXIT)"
+            exit $EXIT
+          fi
+          echo "✅ docs-consistency executed (exit $EXIT, warnings tolerated)"
+
       - name: Bats smoke (full recursive — v2.0.3)
         run: bats tests/ --recursive
 

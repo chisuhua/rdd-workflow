@@ -256,7 +256,9 @@ def check_adr_list_completeness() -> list[dict]:
     """AGENTS.md line 148 ADR list covers all real ADR-NNNN on disk.
 
     Reports WARNING for any ADR referenced in AGENTS.md but missing on
-    disk (stale references).
+    disk (stale references). Also detects reverse drift: when the disk
+    has a higher ADR number than AGENTS.md declares as "当前最新编号"
+    on L291 (the underclaim case).
     """
     issues = []
     try:
@@ -292,7 +294,140 @@ def check_adr_list_completeness() -> list[dict]:
             ),
         })
 
+    # Reverse drift: disk max > AGENTS.md L291 "当前最新编号" claim
+    # Only fire when AGENTS.md makes an explicit claim — silent skip otherwise.
+    # Reverse drift: disk max > AGENTS.md L291 claim
+    if real:
+        max_real = max(int(n) for n in real)
+        m = re.search(r"当前最新编号[:：]\s*\*\*?ADR-(\d{4})", agents)
+        if m:
+            claimed_max = int(m.group(1))
+            if max_real > claimed_max:
+                issues.append({
+                    "severity": "WARNING",
+                    "name": "adr-list-reverse-drift",
+                    "detail": (
+                        f"docs/adr/ has ADR-{max_real:04d} on disk but AGENTS.md "
+                        f"declares 当前最新编号: ADR-{claimed_max:04d}. "
+                        f"Update AGENTS.md L291 (and L148 ADR 范围段) "
+                        f"to reflect ADR-{max_real:04d}."
+                    ),
+                    "fix_command": (
+                        f"edit AGENTS.md L291 to '当前最新编号: "
+                        f"**ADR-{max_real:04d}** (...); docs/adr/ 取最大值' "
+                        f"and bump the L148 range to ~{max_real:04d}"
+                    ),
+                })
+
     return issues
+
+
+def check_schema_readme_drift() -> list[dict]:
+    """docs/schemas/README.md lists every _lib/schemas/*.json (and only those).
+
+    Two-way drift detection:
+      - README references a _lib/schemas/.json not on disk (ghost reference)
+      - disk has a _lib/schemas/.json not referenced in README (missing entry)
+    Either condition emits WARNING. The README is treated as a curated view;
+    drift detection runs without modifying it (per Oracle advice: curatorship
+    is human, drift is automated).
+    """
+    issues: list[dict] = []
+
+    readme_rel = "docs/schemas/README.md"
+    schema_dir = REPO_ROOT / "_lib" / "schemas"
+
+    try:
+        readme = _read_text(readme_rel)
+    except FileNotFoundError:
+        return []
+
+    if not schema_dir.exists():
+        return []
+
+    referenced: set[str] = set(re.findall(r"_lib/schemas/([a-z0-9_]+\.json)", readme))
+    on_disk: set[str] = {p.name for p in schema_dir.glob("*.json")}
+
+    missing_in_disk = referenced - on_disk
+    missing_in_readme = on_disk - referenced
+
+    if missing_in_disk or missing_in_readme:
+        parts: list[str] = []
+        if missing_in_disk:
+            parts.append(
+                f"README references {len(missing_in_disk)} schema file(s) not on disk: "
+                f"{sorted(missing_in_disk)}"
+            )
+        if missing_in_readme:
+            parts.append(
+                f"disk has {len(missing_in_readme)} schema file(s) not listed in README: "
+                f"{sorted(missing_in_readme)}"
+            )
+        issues.append({
+            "severity": "WARNING",
+            "name": "schema-readme-drift",
+            "detail": "docs/schemas/README.md is out of sync with _lib/schemas/. " + " ".join(parts),
+            "fix_command": (
+                "either delete the ghost references from README, or add a row for "
+                "each missing schema (curated additions stay human-driven)"
+            ),
+        })
+
+    return issues
+
+
+def check_schema_path_canonical() -> list[dict]:
+    """AGENTS.md / README.md reference schema paths as `_lib/schemas/` (canonical).
+
+    The string `skills/_lib/schemas/` is allowed ONLY when it appears in a shim
+    explanation (e.g. parenthetical "(skills/_lib/schemas/ 为向后兼容 shim)").
+    Otherwise it is a stale reference (the canonical path is `_lib/schemas/`
+    post P1-1b flatten layout, 2026-08-25).
+    """
+    SHIM_TOKENS = ("shim", "兼容", "向后兼容", "backward")
+    targets = ("AGENTS.md", "README.md")
+
+    violations: list[tuple[str, int, str]] = []
+    for rel in targets:
+        path = REPO_ROOT / rel
+        if not path.exists():
+            continue
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for i, line in enumerate(lines):
+            for m in re.finditer(r"skills/_lib/schemas/", line):
+                start = max(0, m.start() - 40)
+                end = min(len(line), m.end() + 40)
+                context = line[start:end].lower()
+                prev = lines[i - 1] if i > 0 else ""
+                prev_context = prev.lower()
+                combined = context + " " + prev_context
+                if any(tok in combined for tok in SHIM_TOKENS):
+                    continue
+                violations.append((rel, i + 1, line.strip()))
+
+    if not violations:
+        return []
+
+    detail_lines = [
+        f"{rel}:{lineno}: {snippet}" for rel, lineno, snippet in violations[:5]
+    ]
+    if len(violations) > 5:
+        detail_lines.append(f"... and {len(violations) - 5} more")
+    return [{
+        "severity": "WARNING",
+        "name": "schema-path-canonical-violation",
+        "detail": (
+            "Use the canonical schema path `_lib/schemas/` instead of "
+            "`skills/_lib/schemas/`. Allowed only inside shim-compat "
+            "parentheticals. Found " + str(len(violations)) + " stale reference(s):\n"
+            + "\n".join(detail_lines)
+        ),
+        "fix_command": (
+            "replace `skills/_lib/schemas/` with `_lib/schemas/` in the listed "
+            "lines; or wrap the mention in parentheses with a shim note "
+            "(e.g. '`skills/_lib/schemas/` 为向后兼容 shim')"
+        ),
+    }]
 
 
 def check_role_frontmatter() -> list[dict]:
@@ -333,12 +468,14 @@ def check_role_frontmatter() -> list[dict]:
 
 
 def run_all() -> list[dict]:
-    """Aggregate all 6 docs-consistency checks."""
+    """Aggregate all 8 docs-consistency checks."""
     return (
         check_skill_count()
         + check_stage_count()
         + check_npm_test_caveat()
         + check_version_consistency()
         + check_adr_list_completeness()
+        + check_schema_readme_drift()
+        + check_schema_path_canonical()
         + check_role_frontmatter()
     )
