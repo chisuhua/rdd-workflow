@@ -489,6 +489,10 @@ except Exception:
         if [ "${SKIP_RDD_VERIFIER:-no}" = "yes" ]; then
           if [ -n "${RDDF_VERIFIER_BYPASS_REASON:-}" ]; then
             echo "⏭️  archive_gate_check: verification bypassed (SKIP_RDD_VERIFIER=yes; reason: $RDDF_VERIFIER_BYPASS_REASON)"
+            if [ -f "$_LIB_DIR/bypass_audit.sh" ]; then
+              source "$_LIB_DIR/bypass_audit.sh"
+              audit_bypass_log "SKIP_RDD_VERIFIER" "$RDDF_VERIFIER_BYPASS_REASON" "$change_name" "verifier" || true
+            fi
           else
             echo "❌ archive_gate_check: SKIP_RDD_VERIFIER=yes requires RDDF_VERIFIER_BYPASS_REASON (fail closed)"
             return 1

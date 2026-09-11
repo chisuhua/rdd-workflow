@@ -58,6 +58,7 @@ archive change (`rdd-builder` P3)
 - **新失败** (`report_regression.sh` 报的"新增失败") 必须修：可能是新引入的 regression
 - **已知失败**（在 `tests/KNOWN_FAILURES.txt` baseline 中）可放行
 - **紧急跳过**: `SKIP_REGRESSION=1` 仅供 hotfix，且必须在 commit message / change 日志中标注
+- **Bypass 审计**: 所有 SKIP_* 旁路（`SKIP_RDD_VERIFIER` / `SKIP_HUB_CHECK` / `SKIP_*_GATE` / `tools/archive_on_main.sh --confirm-main` 等）会写入 `.rddf/state/.bypass-audit.jsonl`（per `bypass-audit-mechanism` P2 改进）。`bash skills/rdd-doctor/scripts/doctor.sh --category bypass-audit` 月度统计阈值（ARCHIVE_ON_MAIN > 3/月 → WARNING，> 6/月 → CRITICAL）。**禁止**：在不做根本修复的情况下反复使用同一旁路 — 这会触发审计告警。
 
 **实现状态**: 此规则已通过 [`add-full-regression-gate`](.rddf/improvements/add-full-regression-gate.md) 提案（`improvement-approved.md` P0, 2026-07-28）正式批准。当前 `rdd-builder`（v4.0+；v2.x~v3.x 时期为 `guide-ship`）的 `archive_gate_check()`（`_lib/archive.sh`）只检查 `tasks.md` 完成度，**未自动化强制回归门**。在 `rdd-builder` 实施该提案之前，本节作为 agent 的硬性行为约束。
 

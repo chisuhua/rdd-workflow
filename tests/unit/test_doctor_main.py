@@ -17,6 +17,7 @@ _CATEGORY_NAMES = frozenset({
     "state", "plan-tdd", "roadmap-meta", "proposal-table",
     "proposal-section", "tasks-checkbox", "migration-residue",
     "orphan-gates", "roadmap-refs", "docs-consistency", "gitignore",
+    "bypass-audit",
 })
 
 
@@ -34,11 +35,12 @@ def test_category_names_constant_matches_disk():
     )
 
 
-def test_aggregate_runs_all_11_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """aggregate_findings invokes all 11 checker modules and combines results.
+def test_aggregate_runs_all_12_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """aggregate_findings invokes all 12 checker modules and combines results.
 
-    Per rdd-doctor-docs-consistency change (2026-08-27, 10th category) and
-    add-gitignore-hard-protection change (2026-09-10, 11th category).
+    Per rdd-doctor-docs-consistency change (2026-08-27, 10th category),
+    add-gitignore-hard-protection change (2026-09-10, 11th category),
+    and bypass-audit-mechanism change (2026-09-11, 12th category).
     """
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
     findings, categories_checked = aggregate_findings(category=None)
@@ -75,10 +77,11 @@ def test_aggregate_no_category_no_match_returns_empty(tmp_path: Path, monkeypatc
     assert categories_checked == []
 
 
-def test_checkers_dict_has_11_entries():
-    """Lock the public contract: exactly 11 categories wired (10 baseline + gitignore).
+def test_checkers_dict_has_12_entries():
+    """Lock the public contract: exactly 12 categories wired (10 baseline + gitignore + bypass-audit).
 
     Baseline 10 (per rdd-doctor-docs-consistency 2026-08-27) + gitignore
-    (per add-gitignore-hard-protection 2026-09-10).
+    (per add-gitignore-hard-protection 2026-09-10) + bypass-audit
+    (per bypass-audit-mechanism 2026-09-11).
     """
-    assert len(_CHECKERS) == 11
+    assert len(_CHECKERS) == 12

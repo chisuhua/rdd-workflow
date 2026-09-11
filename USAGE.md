@@ -1005,6 +1005,8 @@ mv openspec/changes/archive/2026-08-05-my-change openspec/changes/my-change
 
 **⚠️ 警告**：本旁路是 archive-on-main 流程的 OFF-HAPPY-PATH。标准 ship 流程见 `guide-ship/SKILL.md` Phase 3（worktree 模式）。批量 archive / 自动化场景请用标准流程。
 
+**📊 审计提醒**: 每次 `--confirm-main` 会写入 `.rddf/state/.bypass-audit.jsonl`（per bypass-audit-mechanism 改进）。`bash skills/rdd-doctor/scripts/doctor.sh --category bypass-audit` 会在月使用 > 3 次时告警（WARNING），> 6 次时升级为 CRITICAL。如果你需要多次使用此旁路，请考虑修复根本原因而不是持续绕过。
+
 ---
 
 ## 架构参考
