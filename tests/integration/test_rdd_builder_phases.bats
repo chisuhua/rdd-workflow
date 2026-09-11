@@ -88,8 +88,9 @@ teardown() {
     [ -f "$REPO_ROOT/openspec/specs/test-change/spec.md" ]
 }
 
-@test "phase0: invalid choice (5) exits non-zero" {
-    run bash -c 'echo "5" | bash "$0" "test-change"' "$REPO_ROOT/skills/rdd-builder/scripts/phase0_approval.sh"
+@test "phase0: invalid choice (6) exits non-zero" {
+    # Per ADR-0048: case 5 (dispatch-quick) is now valid; use 6 as invalid choice.
+    run env -u PROJECT_ROOT bash -c "echo '6' | bash '$REPO_ROOT/skills/rdd-builder/scripts/phase0_approval.sh' test-change --require-confirm"
     [ "$status" -ne 0 ]
 }
 

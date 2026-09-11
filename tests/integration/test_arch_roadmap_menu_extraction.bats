@@ -35,12 +35,12 @@ load ../test_helper
   [ "$count" -eq 0 ]
 }
 
-@test "guide_arch_invokes_menu_helper_at_each_phase" {
-  # 4 phases (setup, adr-create, architecture, roadmap-define) all source + call.
+@test "guide_arch_does_not_invoke_roadmap_menu_helper (per ADR-0048)" {
+  # Per ADR-0048: rdd-arch fully decoupled from roadmap; menu_helper for
+  # arch-roadmap no longer invoked at each phase. Helper may still exist for
+  # ADR-only menu options but should not be required.
   count=$(grep -c 'scripts/arch_roadmap_menu.sh' "$REPO_ROOT/skills/rdd-arch/SKILL.md")
-  [ "$count" -ge 4 ]
-  count=$(grep -c 'handle_arch_menu' "$REPO_ROOT/skills/rdd-arch/SKILL.md")
-  [ "$count" -ge 4 ]
+  [ "$count" -lt 4 ]
 }
 
 @test "handle_arch_menu_exits_on_quit" {

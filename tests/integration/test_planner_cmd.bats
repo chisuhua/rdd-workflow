@@ -93,6 +93,7 @@ EOF
 
 @test "planner: status reads stored state" {
     mkdir -p .rddf/state
+    # Per ADR-0048: recommended_route is REQUIRED field in planner-state.json v1.1.
     cat > .rddf/state/.planner-state.json <<'EOF'
 {
   "version": 1,
@@ -100,7 +101,8 @@ EOF
   "last_sync_at": "2026-09-03T10:30:00+08:00",
   "active_projects": [],
   "unmapped_proposals": [],
-  "synced_proposals": []
+  "synced_proposals": [],
+  "recommended_route": "unknown"
 }
 EOF
 

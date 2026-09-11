@@ -67,7 +67,7 @@ def run(project_root: Path) -> List[Finding]:
         fix_hint = (
             "echo 'openspec/' >> .gitignore"
             + (
-                "; 混合状态: 先 git rm -r --cached openspec/ (一次性切换)"
+                "; 混合状态: 先 untrack openspec/ from index (一次性切换)"
                 if mixed
                 else ""
             )

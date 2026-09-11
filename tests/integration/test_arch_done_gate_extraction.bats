@@ -70,7 +70,9 @@ EOF
   grep -q '❌ 失败: 至少需要 1 个 ADR' "$BATS_TMPDIR/gate.out"
 }
 
-@test "check_arch_done_gate_fails_without_roadmap" {
+@test "check_arch_done_gate_passes_without_roadmap (per ADR-0048)" {
+  # Per ADR-0048 (v4 stage-merge revision, 2026-09-09): rdd-arch fully decoupled
+  # from roadmap; arch-done gate must PASS without roadmap (only ADR required).
   local tmpdir
   tmpdir=$(mktemp -d)
   mkdir -p "$tmpdir/docs/adr" "$tmpdir/_lib"
@@ -85,7 +87,9 @@ discover_all() {
   export DISCOVERED_ADR_DIR DISCOVERED_ROADMAP_PATH DISCOVERED_ADR_PATTERN
 }
 EOF
-  bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/rdd-arch/scripts/arch_done_gate.sh' && check_arch_done_gate" >"$BATS_TMPDIR/gate.out" 2>&1 || true
+  bash -c "cd '$tmpdir' && source '$REPO_ROOT/skills/rdd-arch/scripts/arch_done_gate.sh' && check_arch_done_gate" >"$BATS_TMPDIR/gate.out" 2>&1
+  local rc=$?
   rm -rf "$tmpdir"
-  grep -q '❌ 失败: roadmap 不存在' "$BATS_TMPDIR/gate.out"
+  [ "$rc" -eq 0 ]
+  ! grep -q '失败: roadmap 不存在' "$BATS_TMPDIR/gate.out"
 }

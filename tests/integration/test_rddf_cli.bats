@@ -28,13 +28,19 @@ setup() {
 }
 
 @test "rddf: feature exits 1 when iteration.json missing" {
-  # rddf feature reads .rddf/state/iteration.json (gitignored). In the rdd-workflow
-  # source repo itself that file is intentionally absent — running `rddf feature`
-  # without first seeding an iteration.json should exit non-zero with a clear
-  # "run guide-plan first" hint. v3-era assertion expected exit=0; v4 changed to
-  # exit=1 because the no-data case is now an explicit user error.
-  run ./rddf feature
-  [ "$status" -eq 1 ]
+  # rddf feature reads .rddf/state/iteration.json (gitignored). In a fresh
+  # rdd-workflow project (state_dir exists) without iteration.json, running
+  # `rddf feature` should exit non-zero with a clear "iteration.json not
+  # found" hint. Per ADR-0048, no-data case is now an explicit user error.
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  mkdir -p "$tmpdir/.rddf/state"  # create state_dir but no iteration.json
+  pushd "$tmpdir" >/dev/null
+  run "$REPO_ROOT/rddf" feature
+  local rc=$status
+  popd >/dev/null
+  rm -rf "$tmpdir"
+  [ "$rc" -eq 1 ]
   [[ "$output" == *"iteration.json not found"* ]]
 }
 

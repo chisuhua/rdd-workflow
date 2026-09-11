@@ -36,12 +36,12 @@ extract_role_boundaries() {
         /^role:/ { in_role = 1; next }
         in_role && /^---$/ { exit }
         # Match `owns:` or `not_owns:` at start of line (with optional space).
-        in_role && /^  owns:/ { in_owns = 1; in_not_owns = 0; next }
-        in_role && /^  not_owns:/ { in_owns = 0; in_not_owns = 1; next }
+        in_role && /^    owns:$/ { in_owns = 1; in_not_owns = 0; next }
+        in_role && /^    not_owns:$/ { in_owns = 0; in_not_owns = 1; next }
         # Any other role:* key resets both flags.
-        in_role && /^  [a-z_]+:/ { in_owns = 0; in_not_owns = 0 }
-        in_role && in_owns && /^    - / { print "owns:", $0 }
-        in_role && in_not_owns && /^    - / { print "not_owns:", $0 }
+        in_role && /^    [a-z_]+:$/ { in_owns = 0; in_not_owns = 0 }
+        in_role && in_owns && /^      -/ { print "owns:", $0 }
+        in_role && in_not_owns && /^      -/ { print "not_owns:", $0 }
     ' "$skill_file"
 }
 
@@ -82,14 +82,14 @@ extract_role_boundaries() {
     run extract_role_boundaries "$ARCH_SKILL"
     [ "$status" -eq 0 ]
     # Use grep -F (fixed string) for robust matching of quoted path
-    echo "$output" | grep -qF 'not_owns:     - "roadmap.md"'
+    echo "$output" | grep -qF 'not_owns:       - "roadmap.md"'
 }
 
 @test "rdd-arch: role.boundaries.not_owns contains .rddf/roadmap/features/*.md (explicit denial)" {
     [ -f "$ARCH_SKILL" ]
     run extract_role_boundaries "$ARCH_SKILL"
     [ "$status" -eq 0 ]
-    echo "$output" | grep -qF 'not_owns:     - ".rddf/roadmap/features/*.md"'
+    echo "$output" | grep -qF 'not_owns:       - ".rddf/roadmap/features/*.md"'
 }
 
 # ---------------------------------------------------------------------------

@@ -178,7 +178,9 @@ print('OK')
 
 @test "phase0 case 5: warns but continues when recommended_route != simple" {
     write_handoff "complex"
-    run_phase0 "5"
+    # Use --require-confirm to ensure user choice is respected (default is auto-pick
+    # which picks 1 when advisory=complex; user explicitly picks 5 to bypass)
+    run env -u PROJECT_ROOT bash -c "cd '$WORK_TMP' && bash '$PHASE0' test-change --require-confirm" <<< "5"
     [ "$status" -eq 0 ]
     [[ "$output" =~ "explicitly bypassed" ]]
     [ -f .rddf/state/rdd-quick-context.json ]

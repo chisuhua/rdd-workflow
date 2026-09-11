@@ -101,8 +101,9 @@ teardown() {
   [ -f "$RDDF_GLOBAL_LIB/skill_root.sh" ] || skip "global skill_root.sh missing"
   # shellcheck source=/dev/null
   source "$RDDF_GLOBAL_LIB/skill_root.sh"
-  result="$(resolve_rdd_skill_dir guide-arch)"
-  [ "$result" = "$HOME/.agents/skills/guide-arch" ]
+  # Per ADR-0044 (Wave 3 hard removal): guide-* skills removed. Use rdd-arch.
+  result="$(resolve_rdd_skill_dir rdd-arch)"
+  [ "$result" = "$HOME/.agents/skills/rdd-arch" ]
   [ -d "$result" ]
   [ -f "$result/SKILL.md" ]
 }
@@ -190,8 +191,9 @@ print(_lib.__file__)
   # Sanity: count global symlinks and verify each resolves to a real SKILL.md.
   # This catches 'install.sh --global partially failed' regressions.
   [ -d "${HOME}/.agents/skills" ] || skip "global skills dir missing"
-  expected_skills=(add-improve deps execute feature guide guide-arch rdd-arch rdd-planner rdd-builder rdd-verifier \
-    propose rdd-env-check \
+  # Per ADR-0044 (Wave 3 hard removal): guide-arch removed. Replaced by rdd-arch.
+  expected_skills=(add-improve deps execute feature guide rdd-arch rdd-planner rdd-builder rdd-verifier rdd-quick \
+    propose rdd-env-check rdd-doctor \
     rdd-workflow-brainstorm rdd-workflow-writing-plans rddf-session roadmap status)
   for s in "${expected_skills[@]}"; do
     link="${HOME}/.agents/skills/$s"

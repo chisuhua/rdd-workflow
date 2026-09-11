@@ -214,12 +214,12 @@ PYEOF
 
 # --- Task E: guide-arch/SKILL.md Phase 6 integration ---
 
-@test "guide_arch_phase6: contains Roadmap Sync internal step" {
-    grep -q "Roadmap Sync (internal)" "$REPO_ROOT/skills/rdd-arch/SKILL.md"
-    grep -q "roadmap_incremental_update.sh" "$REPO_ROOT/skills/rdd-arch/SKILL.md"
-}
-
-@test "guide_arch_phase6: frontmatter owns .populate-state.json (ADR-0028)" {
-    grep -q '\.rddf/state/\.populate-state\.json' "$REPO_ROOT/skills/rdd-arch/SKILL.md"
-    grep -q '\.rddf/roadmap/phases/\*\.md' "$REPO_ROOT/skills/rdd-arch/SKILL.md"
+@test "rdd-arch SKILL.md does NOT contain Phase 6 Roadmap Sync (per ADR-0048)" {
+    # Per ADR-0048: rdd-arch no longer has phase 6 Roadmap Sync step;
+    # roadmap_incremental_update.sh is now invoked by rdd-planner.
+    # Note: SKILL.md may mention these in commentary (e.g. "已删除"), which is fine.
+    # We verify by extracting only the role.boundaries.owns frontmatter section.
+    owns_section=$(awk '/^role:/{f=1;next} f && /^---/{exit} f && /^    owns:$/{o=1;next} f && /^    [a-z_]+:$/{o=0} f && o{print}' "$REPO_ROOT/skills/rdd-arch/SKILL.md")
+    ! echo "$owns_section" | grep -q '\.rddf/state/\.populate-state\.json'
+    ! echo "$owns_section" | grep -q '\.rddf/roadmap/phases/\*\.md'
 }

@@ -114,10 +114,14 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     # v4 stage-merge renamed guide-design+plan+ship → rdd-builder and reset
     # version to 1.0 (per ADR-0042). v3.0.x "spec-workflow → rdd-workflow"
     # (ADR-0023) is the prior lineage; v4 is a new namespace.
+    # v2.1+ incremented to 1.1 (per ADR-0050 auto-pick mode); accept 1.0+.
     local f="$REPO_ROOT_ORIGIN/skills/rdd-builder/SKILL.md"
     local ver
     ver=$(skill_meta_field "$f" version)
-    [[ "$ver" == 1.0* ]]
+    # Numeric major.minor comparison: ver >= 1.0
+    local major minor
+    IFS=. read -r major minor <<< "$ver"
+    [ "$major" -ge 1 ]
 }
 
 # === 4. package.json 简化依赖 ===

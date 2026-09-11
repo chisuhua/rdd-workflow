@@ -101,12 +101,16 @@ teardown() {
     [ "$status" -eq 2 ]
 }
 
-@test "guide-arch SKILL.md contains 添加 feature fragment menu option" {
-    grep -q "添加 feature fragment" "$REPO_ROOT/skills/rdd-arch/SKILL.md"
+@test "rdd-arch SKILL.md does NOT contain feature fragment menu (per ADR-0048)" {
+    # Per ADR-0048: feature fragment menu moved from rdd-arch to rdd-planner.
+    ! grep -q "添加 feature fragment" "$REPO_ROOT/skills/rdd-arch/SKILL.md"
 }
 
-@test "guide-arch SKILL.md role.boundaries.owns includes features/*.md" {
-    grep -q "\.rddf/roadmap/features/\*\.md" "$REPO_ROOT/skills/rdd-arch/SKILL.md"
+@test "rdd-arch SKILL.md role.boundaries.owns does NOT include features/*.md (per ADR-0048)" {
+    # Per ADR-0048: features/*.md ownership transferred to rdd-planner.
+    # Note: SKILL.md mentions it in not_owns: which is correct. Verify only owns: section.
+    owns_section=$(awk '/^role:/{f=1;next} f && /^---/{exit} f && /^    owns:$/{o=1;next} f && /^    [a-z_]+:$/{o=0} f && o{print}' "$REPO_ROOT/skills/rdd-arch/SKILL.md")
+    ! echo "$owns_section" | grep -q "\.rddf/roadmap/features/\*\.md"
 }
 
 @test "roadmap SKILL.md documents add-feature subcommand" {

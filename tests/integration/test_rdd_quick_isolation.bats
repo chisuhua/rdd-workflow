@@ -34,7 +34,7 @@ LOCKED_ARCHIVE_SH="f6cab8eee9328532e4f5e381043d8b3cae72288e2b97af9e101e446f6550e
 # (per ADR-0048 §Decision 2: planner 完全独占 roadmap, owns 块添加 features/phases/populate-state,
 #  not_owns 块保持稳定). DRIFT after ADR-0048 implementation is EXPECTED; the
 # baseline was recaptured after the planner-bootstrap code changes landed.
-LOCKED_RDD_PLANNER_ROLE_BLOCK="69653d7eea5e78e90de00fdd478ab68e6edf80b23e26e9d10a9477c8d5cc0e45"
+LOCKED_RDD_PLANNER_ROLE_BLOCK="58ef8cd7c907dbf8520d83face0f2d0b475df72caf0a52dbe80fa0670132c70a"
 
 @test "rdd-quick: select_worktree.sh sha256 unchanged" {
     [ -f "$PROJECT_ROOT/skills/execute/scripts/select_worktree.sh" ]

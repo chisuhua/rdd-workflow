@@ -16,9 +16,10 @@ load ../test_helper
   ! grep -E "guide-ship.*discover|discover.*worktree.*plan.*execute.*archive" README.md
 }
 
-@test "README.md has new phase sequence: plan -> execute -> archive -> cleanup" {
+@test "README.md has v4 phase sequence: rdd-arch → rdd-planner → rdd-builder → rdd-verifier" {
+  # Per ADR-0043/0048: v4 is 4 stages (no v3 'cleanup' phase).
   [ -f "README.md" ]
-  grep -E "plan.*execute.*archive.*cleanup" README.md
+  grep -E "rdd-arch.*rdd-planner.*rdd-builder.*rdd-verifier" README.md
 }
 
 @test "USAGE.md no longer mentions 'discover' phase" {
