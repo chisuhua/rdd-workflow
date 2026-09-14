@@ -130,6 +130,33 @@ invoke_arch_stage() {
         python3 -m skills.rdd_arch.scripts.write_arch_handoff_env
 }
 
+# Invoke rdd-arch stage WITH reflect hook enabled.
+# Same as invoke_arch_stage, but does NOT set SKIP_WORKFLOW_REFLECTION=1
+# or SKIP_AUTO_PLANNER_FEEDBACK=1 — so the post-handoff reflect_engine hook
+# in skills/rdd-arch/scripts/write_arch_handoff.sh:48-66 actually runs.
+# Arch phase passes failures=[] (log-only) → no friction log written, no
+# state mutation. Used by test_full_workflow_e2e 8/8 case to lock the
+# "reflect is non-blocking" contract.
+# Args: $1 = fake project root
+invoke_arch_stage_with_reflect() {
+    local root="$1"
+    cd "$root" || return 1
+
+    PROJECT_ROOT="$root" \
+    DISCOVERED_ADR_DIR=docs/adr \
+    DISCOVERED_ADR_PATTERN='ADR-*.md' \
+    DISCOVERED_ADR_DIR_FOUND=true \
+    DISCOVERED_ROADMAP_FOUND=true \
+    DISCOVERED_ARCH_FOUND=false \
+    DISCOVERED_ADR_DIR_TRIED=3 \
+    DISCOVERED_ROADMAP_TRIED=2 \
+    DISCOVERED_ARCH_TRIED=3 \
+    DISCOVERED_ROADMAP_PATH=roadmap.md \
+    DISCOVERED_ARCHITECTURE_DIR=docs/architecture \
+    ROADMAP_EXISTS_BOOL=true \
+        python3 -m skills.rdd_arch.scripts.write_arch_handoff_env
+}
+
 # Invoke rdd-arch gate: real check_arch_done_gate (error path test)
 # Sources skills/rdd-arch/scripts/arch_done_gate.sh, calls check_arch_done_gate
 # Args: $1 = fake project root
@@ -163,6 +190,23 @@ invoke_planner_stage() {
     FEATURES_ACTIVE="feat-e2e-fixture" \
     CURRENT_SPRINT="sprint-2026-09" \
         python3 -m _lib.planner_handoff
+}
+
+# Invoke rdd-planner stage exit script WITH reflect hook enabled.
+# Goes through the real skills/rdd-planner/scripts/planner_stage_exit.sh
+# (which contains the inline reflect_engine(plan) hook added in
+# add-plan-done-reflect-hook). Does NOT set SKIP_WORKFLOW_REFLECTION=1.
+# Requires a real change in openspec/changes/<name>/ + .rddf/roadmap.md +
+# .rddf/state/.planner-state.json::recommended_route != "unknown" to pass
+# planner-done 双门控.
+# Args: $1 = fake project root, $2 = change name
+invoke_planner_stage_with_reflect() {
+    local root="$1"
+    local change_name="$2"
+    cd "$root" || return 1
+
+    PROJECT_ROOT="$root" \
+        bash "$REPO_ROOT/skills/rdd-planner/scripts/planner_stage_exit.sh" "$change_name"
 }
 
 # Invoke rdd-builder handoff: writes .rddf/state/builder/<change>.json via env-py shim
