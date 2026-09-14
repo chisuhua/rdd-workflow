@@ -1,0 +1,50 @@
+name: issue-auto-handler
+
+on:
+  issues:
+    types: [opened, reopened, labeled]
+  schedule:
+    - cron: '0 */6 * * *'  # every 6h catch-up (label not set at open → event-based handle missed)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: issue-auto-handler-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  auto-handle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run issue auto-handler
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_HANDLER_ALLOWLIST: ${{ vars.ISSUE_HANDLER_ALLOWLIST || 'chisuhua/rdd-workflow' }}
+          ISSUE_HANDLER_DAILY_MAX: ${{ vars.ISSUE_HANDLER_DAILY_MAX || '10' }}
+        run: |
+          python3 tools/issue_auto_handler.py \
+            --repo "${{ github.repository }}" \
+            --json
+
+      - name: Commit auto-generated proposals
+        run: |
+          if ! git diff --quiet -- .rddf/improvements/ improvement-suggestions.md; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .rddf/improvements/ improvement-suggestions.md
+            git commit -m "chore(proposals): auto-generate proposal scaffolds from auto-reported issues"
+            git push
+          else
+            echo "no proposal changes to commit"
+          fi
