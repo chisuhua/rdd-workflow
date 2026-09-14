@@ -60,3 +60,35 @@ fi
 
 python3 -m _lib.planner_handoff
 echo "planner stage exit complete: $AWAITING -> rdd-builder (recommended_route=$RECOMMENDED)"
+
+# ── reflect_engine(plan): post-stage-exit reflection hook ──
+# Non-blocking: failures here never affect the planner-handoff.json write result.
+# Mirrors skills/rdd-arch/scripts/write_arch_handoff.sh:48-66 and
+# _lib/archive.sh:642-670 (both wired per ADR-0027 §1.0). Plan phase
+# thresholds: same gate+error >=2 OR any unrecovered_failure → propose_issue.
+# Reads event_log.json last 20 events filtered to unrecovered_failure/execute_error
+# (same pattern as ship hook — arch hook is log-only with empty failures).
+if [ "${SKIP_WORKFLOW_REFLECTION:-}" != "1" ]; then
+    PROJECT_ROOT="$PROJECT_ROOT" python3 -c "
+import os, sys, json
+root = os.environ.get('PROJECT_ROOT', '.')
+sys.path.insert(0, root)
+try:
+    from skills._lib.reflect_engine import ReflectEngine
+    failures = []
+    event_log_path = os.path.join(root, '.rddf', 'state', 'event_log.json')
+    if os.path.isfile(event_log_path):
+        with open(event_log_path) as f:
+            events = json.load(f)
+        for ev in events[-20:]:
+            if ev.get('type') in ('unrecovered_failure', 'execute_error'):
+                failures.append(ev)
+    engine = ReflectEngine(phase='plan', project_root=root, timeout=10)
+    result = engine.analyze(failures=failures)
+    if result.action == 'propose_issue':
+        print(f'🔍 Reflect: Plan phase detected failures.')
+        print(f'   Fingerprint: {result.fingerprint}')
+except Exception:
+    pass  # non-blocking
+" 2>/dev/null || true
+fi

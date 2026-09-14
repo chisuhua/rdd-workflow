@@ -140,3 +140,25 @@ Per spec §3.5.2 (batch 4): rdd-builder Phase 2 ADR-drift can promote feedback
 - `_lib/planner_*.py` — Stage 1/2 lib (unchanged)
 - `_lib/planner_handoff.py` — NEW in Wave 1: stage handoff r/w
 - `skills/rdd-quick/` — bypass-path orchestration for small changes (per ADR-0047, complements but does not replace this skill)
+
+## Phase Exit — Post-Flow Analysis (Agent 平面, ADR-0027 §1.0)
+
+### Checklist (must satisfy exactly one)
+
+- [ ] **Normal exit** → call `orchestrator_finalize` (always, on every exit)
+- [ ] **Abnormal exit** → call `orchestrator_finalize` + `rddf report-issue --phase rdd-planner --exit-code <code> "<one-line>"`
+
+### Triggers for "abnormal exit" (non-exhaustive)
+
+- planner-done 双门控失败（`.rddf/roadmap.md` 缺失或 `recommended_route=unknown`）且修复失败
+- proposal 反复被同一质量门拒，跨多 phase 阻塞
+- state machine branch enters an unexpected case (e.g. recommended_route 状态翻转异常)
+- agent cannot continue after 3 retries on the same step
+- user explicitly says "this is wrong" while phase reports success
+
+### NOT abnormal (do NOT report-issue)
+
+- User-initiated SIGINT / SIGTERM (exit 130/143)
+- Missing tools, network errors, permission errors (environment-error)
+- Bad CLI flags, missing required arguments (usage-error)
+- planner-done 双门控失败的**首次**失败（提示用户回 Phase 3 调整即可，不立即上报）
