@@ -183,3 +183,32 @@ EOF
     [[ "$output" == *"tasks.md 缺失"* ]] || [[ "$stderr" == *"tasks.md 缺失"* ]]
     [ -d "$FAKE_ROOT/openspec/changes/e2e-fixture" ]
 }
+
+# ─── Reflect hook integration (8/8) ────────────────────────────────────────
+# Spec: docs/superpowers/specs/2026-09-14-reflect-e2e-coverage-design.md §7.1
+# Verifies the arch post-handoff reflect_engine hook in
+# skills/rdd-arch/scripts/write_arch_handoff.sh:48-66 is NON-BLOCKING and
+# runs alongside the real handoff write. Arch phase passes failures=[]
+# → reflect returns action=none → no friction log, no cooldown mutation,
+# no openspec/changes/* creation.
+
+@test "full-workflow 8/8: arch post-handoff reflect hook is non-blocking (no friction log on cold start)" {
+    write_arch_fixture "$FAKE_ROOT"
+
+    # invoke_arch_stage_with_reflect does NOT set SKIP_WORKFLOW_REFLECTION=1,
+    # so the inline reflect call in write_arch_handoff.sh:48-66 actually runs.
+    invoke_arch_stage_with_reflect "$FAKE_ROOT"
+
+    # Handoff write succeeded (reflect did not block the python call)
+    assert_state "$FAKE_ROOT" ".arch-handoff.json" \
+        "version:3|adr_dir:docs/adr|current_phase:phase-1"
+
+    # Reflect cold start (failures=[]) → no friction log written
+    [ ! -f "$FAKE_ROOT/.rddf/state/reflect-friction.log" ]
+
+    # No cooldown file mutation (failures=[] short-circuits at L123-124)
+    [ ! -f "$FAKE_ROOT/.rddf/state/reflect-cooldown.json" ]
+
+    # No openspec/changes/* pollution from reflect side-effects
+    [ -z "$(find "$FAKE_ROOT/openspec/changes" -name '*.md' 2>/dev/null)" ]
+}
