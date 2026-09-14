@@ -11,4 +11,3 @@
 |------|--------|------|----------|------|
 | [bypass-audit-mechanism](.rddf/improvements/bypass-audit-mechanism.md) | P2 | 2026-08-26 流程设计 review | 2026-08-26 | 延迟 (2026-08-28, 维持 v3.2 deferred 决策)  |
 | [add-plan-done-reflect-hook](.rddf/improvements/add-plan-done-reflect-hook.md) | P1 | 2026-09-14 reflect e2e coverage audit | 2026-09-14 | proposed (本会话开发中, 见 FU-3..FU-7) |
-| [test-auto-handler-end-to-end-verification-auto-reported-path-i12](.rddf/improvements/test-auto-handler-end-to-end-verification-auto-reported-path-i12.md) | P1 | auto-handler from-issue (chisuhua/rdd-workflow#12) | 2026-09-14 | proposed (auto-handler) |
