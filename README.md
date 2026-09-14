@@ -149,7 +149,7 @@ verification:
 - **测试框架**：pytest (Python) + bats (shell)
 - **A 层 e2e smoke** (CI 必跑)：10 cases 验证 phase 脚本非交互入口（`./test.sh --e2e-smoke`）
 - **C 层 e2e agent** (nightly 必跑)：53 cases 验证 prose UX 真跑通 5 skill (`./test.sh --e2e-agent`)
-- **外部 E2E 测试床**：[chisuhua/rdd-workflow-e2e](https://github.com/chisuhua/rdd-workflow-e2e) — 以第三方项目视角安装 `rdd-workflow`，验证 `arch → planner → builder → archive` 全工作流与 36 个 `rddf` 子命令。Nightly cron 在最新 `master` 上自动跑（无需 GitHub App）。本地复制该仓库即可手动触发： `./install_testbed.sh --clone && RDD_WORKFLOW_REPO=~/.agents/skills/rdd-workflow bats tests/`
+- **外部 E2E 测试床**：[chisuhua/rdd-workflow-e2e](https://github.com/chisuhua/rdd-workflow-e2e) — 以第三方项目视角安装 `rdd-workflow`，验证 `arch → planner → builder → archive` 全工作流与 36 个 `rddf` 子命令。Nightly cron 在最新 `master` 上自动跑（无需 GitHub App）。本地入口：`./test.sh --external-e2e`（auto-clone 到 `$RDD_E2E_DIR` 默认 `/workspace/project/rdd-workflow-e2e`，已存在则复用）。
 
 #### 分层 e2e 策略
 
@@ -157,6 +157,7 @@ verification:
 |----|------|------|--------|------|
 | A (脚本调用) | `./test.sh --e2e-smoke` | PR/push | ✅ | phase 脚本 + scaffold + isolation 契约 |
 | C (agent 模拟) | `./test.sh --e2e-agent` | nightly | ⚠️ skip-on-missing-credentials | prose UX 5 skill (44 scenarios) |
+| 外部 testbed | `./test.sh --external-e2e` | 手动 / nightly 第三方 cron | ✅ | 多 stage 全流程 + 36 rddf CLI |
 | 外部 testbed | `rdd-workflow-e2e` nightly | 第三方 cron | ✅ | 多 stage 全流程 + 36 rddf CLI |
 
 **A 层** (CI 必跑，`tests/e2e/script/`)：跳过 prose 解释层，直接调 `phase*.sh` 验证机械正确性、退出码、文件落盘。

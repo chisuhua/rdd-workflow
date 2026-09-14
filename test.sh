@@ -172,6 +172,14 @@ run_e2e_agent() {
   run_bats_dir "tests/e2e/agent/"
 }
 
+run_e2e_external() {
+  preflight git bats
+  local repo_root
+  repo_root="$(cd "$(dirname "$0")" && pwd)"
+  run_step "external testbed (chisuhua/rdd-workflow-e2e)" \
+    bash "$repo_root/tests/e2e/run_external_testbed.sh" "$@"
+}
+
 # ── Single-file invocation ─────────────────────────────────────────────
 run_single_file() {
   local file="$1"
@@ -210,6 +218,7 @@ Modes (pick one):
   --e2e-smoke            只跑 A 层 e2e (tests/e2e/script/) — CI 必跑
   --e2e-agent            只跑 C 层 e2e (tests/e2e/agent/) — nightly 必跑 (需 RDDF_AGENT_E2E=1)
   --e2e-all              A + C 全跑 (本地选)
+  --external-e2e         跑外部 testbed (chisuhua/rdd-workflow-e2e)；auto-clone 到 $RDD_E2E_DIR
 
 Options (compose with any mode):
   --regression           bats 用 report_regression.sh 对比 KNOWN_FAILURES baseline
@@ -244,6 +253,7 @@ parse_args() {
       --e2e-smoke)           MODE="e2e-smoke" ;;
       --e2e-agent)           MODE="e2e-agent" ;;
       --e2e-all)             MODE="e2e-all" ;;
+      --external-e2e)        MODE="external-e2e" ;;
       --regression)          WITH_REGRESSION=1 ;;
       --stop-on-failure|-x)  STOP_ON_FAILURE=1 ;;
       --no-color)            WITH_COLOR=never ;;
@@ -322,6 +332,9 @@ main() {
     e2e-all)
       run_e2e_smoke
       run_e2e_agent
+      ;;
+    external-e2e)
+      run_e2e_external
       ;;
   esac
 
