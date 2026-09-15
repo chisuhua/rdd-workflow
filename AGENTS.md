@@ -224,6 +224,7 @@ Feature fragments (`rddf roadmap add-feature`) 跨阶段追踪多 phase 改进�
 | `.rddf/state/deps-candidates.json` | deps 候选列表 | `rdd-builder` (Phase 1.5) |
 | `.rddf/state/deps-output.md` | deps 人类可读报告 | `deps` Step 5 |
 | `.rddf/state/iteration.json` | **当前 sprint 视图** (v2.0.1) | propose/rdd-builder/execute/deps/archive hooks |
+| `.rddf/state/.plan-reflect-result.json` | **plan-done reflect hook** (ADR-0027 §1.0 dual-plane closure) — planner_stage_exit.sh 末尾 inline hook, mirror write_arch_handoff.sh:48-66 + rdd-arch/SKILL.md:712-730 | `rdd-planner` (stage exit) — SKIP via `SKIP_WORKFLOW_REFLECTION=1` |
 | `.rddf/state/roadmap-state.json` | roadmap 阶段/category 计数 | `propose` (status 改时) |
 | `.rddf/state/index.md` | change 索引 | `rdd-arch` / `rdd-planner` |
 | `.rddf/state/.deps-output.md` | deps 旧路径 (开头有 `.`) | `deps` Step 5 (兼容保留) |

@@ -12,6 +12,7 @@
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
 | [apply-adr-0051-skill-description-convention-bulk-rewrite](.rddf/improvements/apply-adr-0051-skill-description-convention-bulk-rewrite.md) | P0 | 2026-09-15 | rdd-planner |
+| [add-plan-done-reflect-hook](.rddf/improvements/add-plan-done-reflect-hook.md) | P1 | 2026-09-15 | rdd-planner (entered rdd-builder P0) |
 
 > **批次说明 (2026-09-10 design-done)**: 本批 4 项提案 (本次批准) 为 KNOWN_FAILURES baseline 衍生, 全部为 test-fix / docs-fix 小修, 低风险独立可并行. 计划按下列顺序实施 (合并到 single feature: feat-fix-audit-findings):
 > 1. **`fix-parametrize-planner-feedback-id-date`** (P2) — first: 重构 5 个 hardcode 日期测试为 tmp_path fixture, 解决时间炸弹
