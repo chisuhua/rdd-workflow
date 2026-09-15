@@ -10,4 +10,3 @@
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
 | [bypass-audit-mechanism](.rddf/improvements/bypass-audit-mechanism.md) | P2 | 2026-08-26 流程设计 review | 2026-08-26 | 延迟 (2026-08-28, 维持 v3.2 deferred 决策)  |
-| [add-plan-done-reflect-hook](.rddf/improvements/add-plan-done-reflect-hook.md) | P1 | 2026-09-14 reflect e2e coverage audit | 2026-09-14 | approved (2026-09-15, rdd-planner approve; awaiting rdd-builder P0) |
