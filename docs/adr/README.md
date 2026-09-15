@@ -77,6 +77,7 @@
 | [ADR-0048](ADR-0048-v4-stage-merge-revision.md) | ADR-0048: v4 stage-merge 修订 — rdd-arch 完全脱离 roadmap + rdd-builder P0 触发 rdd-quick | 已采纳 (2026-09-09) | 2026-09-09 |
 | [ADR-0049](ADR-0049-rdd-builder-phase0-llm-integration.md) | ADR-0049: rdd-builder Phase 0 LLM Integration (Pre-flight Reasoning + Feedback Generation + Hidden Complexity Check) | 待采纳 | 2026-09-10 |
 | [ADR-0050](ADR-0050-rdd-builder-auto-pick-mode.md) | ADR-0050: rdd-builder / rdd-quick 全自动决策模式 (per 用户 UX 需求) | 待采纳 | 2026-09-10 |
+| [ADR-0051](ADR-0051-skill-description-convention.md) | ADR-0051: Skill `description` 字段约定 — 正向触发条件 + 单一职责 | 待采纳 | 2026-09-15 |
 
 
 <!-- ADR_INDEX_END -->

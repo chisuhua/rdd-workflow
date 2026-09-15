@@ -1,12 +1,24 @@
 ---
 name: rdd-builder
 description: |
-  Proposal approval + plan + execute + archive. Stage 3 of v4 architecture.
-  Implements 6-phase internal state machine: P0 (approval, 5-option per ADR-0048),
-  P1 (plan gen), P1.5 (deps + execution_mode), P2 (worktree + execute),
-  P2.5 (review), P3 (archive with verifier retry loop). Per spec §3.4.
-  P0 5-option includes **dispatch-quick** (per ADR-0048 §Decision 3) which
-  routes the change to `rdd-quick` fast-path when `recommended_route=simple`.
+  Stage 3 of v4 architecture (rdd-arch → rdd-planner → rdd-builder → rdd-verifier).
+  6-phase state machine: P0 (5-option approval gate, auto-decision per
+  ADR-0049) → P1 (plan gen) → P1.5 (deps + execution_mode) →
+  P2 (worktree + 编排 execute 子技能) → P2.5 (review) →
+  P3 (archive + verifier retry loop).
+
+  Invoke when BOTH canonical preconditions hold:
+    1. .rddf/improvements/<change>.md exists (5-segment draft)
+    2. .rddf/state/.planner-handoff.json exists (written by rdd-planner
+       stage exit, schema planner-handoff-v1)
+
+  At P0, openspec/changes/<change>/proposal.md may already exist as input;
+  if absent, P0 case 1 approve generates it from the improvement draft
+  per ADR-0025 D1/D2. design.md and tasks.md are P1 fill outputs, not P0.
+
+  Boundary ownership: see role.boundaries.owns / not_owns. Anti-routing
+  guidance (when NOT to invoke this skill) lives in `guide` recommender,
+  not here.
 license: MIT
 compatibility: requires openspec CLI v1.3.1+, Python 3.11+, git 2.25+
   + rddf planner + rddf-verifier installed
