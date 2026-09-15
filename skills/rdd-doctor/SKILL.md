@@ -1,6 +1,15 @@
 ---
 name: rdd-doctor
-description: 手动触发的只读诊断工具 — 校验 5 类结构化文件（`.rddf/state/*.json` schema / `.rddf/plans/*.md` TDD 5 步 / `openspec/changes/*/roadmap-meta.yaml` / `proposal-*.md` 表格 / `openspec/changes/*/tasks.md` checkbox）。输出分级报告（CRITICAL/WARNING/INFO）+ 可选 JSON 写入 `.rddf/state/.doctor-report.json`。退出码对齐 `openspec validate` (0/1/2/3)。**手动触发 only**，不修改任何 tracked / gitignored 文件（除了 `--json` 输出）。
+description: |
+  Manual read-only diagnostic tool for 11 file categories.
+
+  Invoke when BOTH:
+    1. Workflow "feels broken" but no specific error
+    2. Need drift detection across `.rddf/state/` / plans / ADR / docs
+
+  Default: read-only; 11 categories; exit codes 0/1/2/3 matching `openspec validate`.
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires bash + git + python3.11+ + jsonschema + pyyaml
 metadata:

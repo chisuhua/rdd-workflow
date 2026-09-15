@@ -1,6 +1,15 @@
 ---
 name: openspec-gate
-description: Use when staged source files may not be linked to an active OpenSpec change and you need to warn or block the commit.
+description: |
+  Pre-commit guard warning/blocks if staged files are unlinked to active OpenSpec change.
+
+  Invoke when BOTH:
+    1. `git commit` invoked + staged files present
+    2. `.rddf/state/` shows active change with uncommitted scope
+
+  Default: warn by default; `STRICT_OPENSPEC_GATE=yes` upgrades to block.
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires rdd-workflow v3+ and git 2.25+
 metadata:

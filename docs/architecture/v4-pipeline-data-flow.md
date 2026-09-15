@@ -634,3 +634,17 @@ rdd-quick P1 (mode a, reads planner-handoff.json::recommended_route)
 - **ADR-0049**: [../adr/ADR-0049-rdd-builder-phase0-llm-integration.md](../adr/ADR-0049-rdd-builder-phase0-llm-integration.md) (LLM-augmented P0)
 - **ADR-0043**: [../adr/ADR-0043-rdd-workflow-v4-stage-merge.md](../adr/ADR-0043-rdd-workflow-v4-stage-merge.md) (baseline v4 architecture)
 - **ADR-0047**: [../adr/ADR-0047-rdd-quick-bypass-path.md](../adr/ADR-0047-rdd-quick-bypass-path.md) (rdd-quick original design, AMENDED per ADR-0048)
+
+## Skill Description Convention (per ADR-0051)
+
+Every `skills/*/SKILL.md` and `skills/INSTALL.md` frontmatter `description:` field follows the ADR-0051 single-responsibility convention:
+
+1. **Single responsibility**: only describes "when to invoke this skill" — never anti-routing
+2. **Token budget**: ≤ 200 tokens (counted by description block content only, not full frontmatter)
+3. **Boundary ownership**: references `role.boundaries.owns / not_owns` (per ADR-0028), never duplicates the list
+4. **No deprecated-path guidance**: does not direct to legacy fallback paths
+5. **Enforcement**: `tests/integration/test_skill_description_convention.bats` — 3 assertions (≤200 tokens / no anti-trigger / references `role.boundaries`)
+
+Anti-routing judgments are centralized in `skills/guide/SKILL.md` — see "Anti-Routing Centralization (per ADR-0051)" section in that file. Per-skill descriptions no longer carry anti-trigger paragraphs (`**DO NOT use**` / `**Prefer ... instead**` / `**Legacy entry**`).
+
+See [ADR-0051](../../adr/ADR-0051-skill-description-convention.md) for the full 5 Decision specification.

@@ -1,19 +1,12 @@
 ---
 name: rdd-quick
 description: |
-  Bypass-path orchestration skill for small, well-scoped changes (per ADR-0047
-  + ADR-0048 §Decision 3). Generates .rddf/plans/quick-<name>.md with TDD 5-step
-  structure, executes in-place on the current branch (no worktree, no openspec
-  change), and verifies against the rdd-verifier verdict JSON contract. AI agent
-  is the executor/verifier (self-contained pattern, per ADR-0045).
+  Bypass path per ADR-0047: in-place execution, no openspec change, no worktree.
+  TDD 5-step plan + Oracle self-contained verification.
 
-  Entry modes (per ADR-0048 amendment):
-  - (a) from rdd-builder P0 dispatch-quick (主路径): reads .planner-handoff.json::recommended_route
-  - (b) from guide recommender direct (旁路, self-triage fallback)
-
-  Owns: .rddf/plans/quick-*.md, .rddf/state/.quick-history.jsonl, .rddf/state/rdd-quick-context.json (per ADR-0048, when invoked from builder)
-  Not owns: openspec/changes/, .rddf/wt/, iteration.json, sessions.json,
-            .rddf/state/roadmap-state.json, .rddf/plans/<name>.md (formal path)
+  Invoke when: Change scope ≤ 2 files AND ≤ 3 tasks AND no public API change.
+  Default: TDD 5-step + P4 retry up to `RDDF_QUICK_MAX_RETRIES` (default 3).
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: requires Python 3.11+, bash 4+, git 2.25+. No external skill deps.
 metadata:

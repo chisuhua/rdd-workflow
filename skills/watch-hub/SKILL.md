@@ -1,6 +1,15 @@
 ---
 name: watch-hub
-description: Hub-Spoke 监听命令 — 一次性轮询 Hub issue 状态。由 cron/CI 以 ≤5 分钟间隔调度(不在 CLI 内维护长驻 daemon)。Hub-Spoke 联邦的状态同步通道。ADR-0030 §Hub-Spoke 联邦。
+description: |
+    Hub-Spoke one-shot Hub issue status poll (cron/CI scheduled).
+
+    Invoke when BOTH:
+      1. Hub status sync needed (≤ 5 min interval per ADR-0030)
+      2. Cron / CI scheduler invokes with `--once` flag
+
+    Default: no daemon in CLI; expects external scheduler.
+
+    Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires Python 3.11+, gh CLI v2.0+, GITHUB_TOKEN env var (read access)
 metadata:

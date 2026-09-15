@@ -1,6 +1,15 @@
 ---
 name: spoke-system-prompt-injection
-description: Injects Hub-and-Spoke federation protocol into AI assistant tool configuration files (Cursor, Cline, Continue, GitHub Copilot, Claude Code). Provides deploy.sh for idempotent injection, backup, and uninstall.
+description: |
+  Hub-Spoke federation protocol injector for AI assistant config files (Cursor / Cline / Continue / GitHub Copilot / Claude Code).
+
+  Invoke when BOTH:
+    1. AI assistant config needs federation protocol
+    2. `deploy.sh` invoked with target tools (default: all)
+
+  Default: idempotent deploy + backup + uninstall; `install.sh --spoke-init` shortcut.
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires bash, git
 metadata:

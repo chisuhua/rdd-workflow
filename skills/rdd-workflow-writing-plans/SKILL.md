@@ -1,6 +1,15 @@
 ---
 name: rdd-workflow-writing-plans
-description: 自包含的 OpenSpec 实施计划生成器。为 OpenSpec change 生成 TDD 5 步结构的实施计划(.rddf/plans/<name>.md)。基于 superpowers/writing-plans 改写,完全自包含于 rdd-workflow,不依赖任何外部 skill。被 guide-ship 在 Phase 1 plan 阶段调用。
+description: |
+  TDD 5-step plan generator for OpenSpec changes (self-contained, no external skill dep).
+
+  Invoke when BOTH:
+    1. rdd-builder P1 plan-gen phase reached
+    2. `.rddf/plans/<name>.md` does NOT exist yet
+
+  Default: auto-generate plan file with bite-sized 2-5 min tasks.
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires git 2.25+, openspec CLI 1.3.1+. 无外部 skill 依赖。
 metadata:

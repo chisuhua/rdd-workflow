@@ -1,6 +1,15 @@
 ---
 name: feature
-description: View and manage features (groups of related changes). Provides summary table, Mermaid dependency graph, per-feature change status, and recommended wave execution order. Pure derived view from iteration.json + deps-analysis.json.
+description: |
+  Feature fragment management (`.rddf/roadmap/features/*.md`).
+
+  Invoke when BOTH:
+    1. `.rddf/roadmap/features/<name>.md` exists OR user wants sprint view
+    2. Need summary / Mermaid dependency graph / execution order
+
+  Default: pure derived view from `iteration.json` + `deps-analysis.json`.
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires iteration.json (run `rdd-builder` once first) and ideally deps-analysis.json (run `deps` first for full graph).
 metadata:

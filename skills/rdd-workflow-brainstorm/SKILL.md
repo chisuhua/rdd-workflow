@@ -1,6 +1,15 @@
 ---
 name: rdd-workflow-brainstorm
-description: "为 rdd-workflow 改进提案（.rddf/improvements/*.md）提供结构化头脑风暴流程。探索需求、约束、方案，输出符合 5 段格式的提案文件。"
+description: |
+    Structured brainstorm helper for improvement 5-segment format.
+
+    Invoke when BOTH:
+      1. Improvement creation in progress
+      2. Need 5-segment exploration (Why / What Changes / Acceptance / Capabilities / Impact)
+
+    Default: HARD-GATE enforced (no file write before user approves design).
+
+    Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires rdd-workflow 项目结构（.rddf/improvements/ 目录、improvement-suggestions.md）
 metadata:

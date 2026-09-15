@@ -1,6 +1,15 @@
 ---
 name: add-improve
-description: "交互式创建 rdd-workflow 改进提案。调用 rdd-workflow-brainstorm 进行头脑风暴，生成 .rddf/improvements/<name>.md 并注册到 improvement-suggestions.md。"
+description: |
+  Improvement (`.rddf/improvements/<name>.md` 5-segment draft) creation entry.
+
+  Invoke when BOTH:
+    1. No `.rddf/improvements/<name>.md` exists
+    2. 5-segment draft needed (Why / What Changes / Acceptance / Capabilities / Impact)
+
+  Default: HARD-GATE brainstorm enforced via `pre_create_brainstorm_check.sh`.
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires rdd-workflow 项目结构（.rddf/improvements/ 目录、improvement-suggestions.md）
 metadata:

@@ -1,6 +1,15 @@
 ---
 name: INSTALL
-description: 安装 RDD Workflow 技能——支持全局安装（~/.agents/skills/，跨项目可用）和项目安装（.opencode/skills/rdd-workflow/）。全局安装后从 1 个顶层 INSTALL.md 加 26 个 per-skill 子目录复制全部 26 个子技能到目标位置；自动安装 Python 依赖和 rddf CLI。
+description: |
+  First-entry install skill (v4.0+). Copies 全部 26 个子技能 to project via symlink or copy.
+
+  Invoke when BOTH:
+    1. Project has no rdd-workflow + user wants install
+    2. `install.sh` / `npx skills add` available
+
+  Default: project-local install; `--global` for cross-project.
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 alias: install
 version: "4.0"
 author: sisyphus

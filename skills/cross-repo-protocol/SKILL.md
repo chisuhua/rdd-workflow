@@ -1,6 +1,15 @@
 ---
 name: cross-repo-protocol
-description: MCP (Model Context Protocol) client for Hub-Spoke federation — wraps 4 Hub tools (read/create/update issue, sync contract) with REST fallback and trace logging.
+description: |
+    Hub-Spoke federation MCP client wrapping 4 Hub tools (read/create/update issue, sync contract).
+
+    Invoke when BOTH:
+      1. Spoke AI needs Hub tools (cross-repo federation per ADR-0030)
+      2. MCP server available OR REST fallback enabled
+
+    Default: REST fallback + trace logging.
+
+    Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires Python 3.11+, mcp SDK, requests, GITHUB_TOKEN env var.
 metadata:

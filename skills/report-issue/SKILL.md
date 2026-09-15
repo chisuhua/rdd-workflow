@@ -1,6 +1,15 @@
 ---
 name: report-issue
-description: Hub-Spoke 上行命令 — 在 rdd-hub 创建 [RFC] issue 并记录到本地 .rddf/state/.cross-repo-pending.json。被 OpenSpec 工作流各阶段（arch / plan / ship / verify）的 phase-exit hooks 调用以上报 agent-plane 异常。ADR-0030 §Hub-Spoke 联邦 + ADR-0027 L2 上报契约。
+description: |
+  Hub-Spoke [RFC] issue creator (upstream command per ADR-0030).
+
+  Invoke when BOTH:
+    1. Phase-exit hook fires (arch/plan/ship/verify) + L2 reporting needed
+    2. `RDDF_REPORT_ENABLED=yes` + `RDDF_REPORT_AUTO_SUBMIT=yes` + categories configured
+
+  Default: opt-in triple gate; CI auto-disables L2 submission.
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires Python 3.11+, gh CLI v2.0+, GitHub Org membership (or GITHUB_TOKEN env var)
 metadata:

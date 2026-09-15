@@ -1,6 +1,15 @@
 ---
 name: propose
-description: 分析项目文档与代码的差距，生成 propose 建议列表，用户选择后执行 openspec-propose 命令序列创建 artifacts。被 guide-plan 调用（不在 archive/ 阶段直接调用）。
+description: |
+  Legacy proposal skeleton creator for openspec/changes/<name>/.
+
+  Invoke when BOTH:
+    1. No rdd-planner stage exit yet
+    2. User wants to bypass planner and create change skeleton directly
+
+  Legacy path per ADR-0025; canonical path is rdd-planner stage entry.
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+. Reads docs/adr/, docs/architecture/, docs/developer_guide/, roadmap.md.
 metadata:

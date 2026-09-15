@@ -97,7 +97,7 @@ def test_adr_reverse_drift_detects_underclaim(monkeypatch):
     assert len(reverse) == 1, f"expected exactly 1 reverse-drift issue, got: {issues}"
     issue = reverse[0]
     assert issue["severity"] == "WARNING"
-    assert "ADR-0050" in issue["detail"]
+    assert "ADR-0051" in issue["detail"]
     assert "ADR-0044" in issue["detail"]
     assert "fix_command" in issue
     assert "AGENTS.md" in issue["fix_command"]

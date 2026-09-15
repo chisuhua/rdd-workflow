@@ -1,6 +1,15 @@
 ---
 name: contract-check
-description: 校验 Spoke 本地实现 vs Hub OpenAPI contract 一致性。Breaking-Change 阻断 CI。
+description: |
+  Spoke local implementation vs Hub OpenAPI contract validator (Breaking-Change blocks CI).
+
+  Invoke when BOTH:
+    1. Contract drift suspected OR CI integration needed
+    2. Hub contract path + local implementation path provided
+
+  Default: breaking-change exits 1; push warns (SKIP_CONTRACT_GATE); PR blocks (STRICT_CONTRACT_GATE).
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Python 3.11+
 metadata:

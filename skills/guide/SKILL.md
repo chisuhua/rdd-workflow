@@ -1,6 +1,17 @@
 ---
 name: guide
-description: 交互式工作流入口——扫描项目当前状态，展示可选菜单（含 rddf-session 管理），用户可选菜单项执行或进入自由讨论模式咨询后再决定。详见 ADR-0017 (rddf-session)、ADR-0003 (v2.0 三阶段架构奠基)、ADR-0025 (v2.1 设计阶段独立化) 和 ADR-0034 (v3.0+ 五阶段架构 / `rdd-verifier` 第五阶段)。
+description: |
+  Interactive workflow entry point. Scans project state and recommends next skill.
+
+  Invoke when BOTH:
+    1. User asks "what should I do next?" OR opens a new session
+    2. No active rdd-builder/verifier in progress
+
+  Default: read-only scan via `guide_entry.sh`; no state mutation.
+
+  Anti-routing centralized here per ADR-0051 (see ## Anti-Routing Centralization).
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires git 2.25+
 metadata:
@@ -332,6 +343,23 @@ AI: "检测到执行 change 意图，路由到 rdd-builder →"
 ## 过期状态检测
 
 `scan_state()` 末尾自动调用 `check_stale_workflow_state()`（在 `scan-state.sh` 中），检测遗留的 `workflow-state.md`。
+
+## Anti-Routing Centralization (per ADR-0051)
+
+When the recommender considers a skill, consult this table for "do NOT invoke" cases. This is the canonical anti-routing source; per-skill descriptions no longer carry anti-trigger paragraphs.
+
+| If user wants to... | DON'T invoke | DO invoke instead |
+|---|---|---|
+| Just inspect change state | `rdd-builder` | `status` |
+| Pure AC verification of executed change | `rdd-builder` | `rdd-verifier` |
+| Already-approved change needing pure execution | `rdd-builder` | `rdd-workflow-writing-plans` + `execute` |
+| Create openspec change skeleton (legacy path) | — | `rdd-planner` (canonical) or `propose` (legacy per ADR-0025) |
+| Small/well-scoped change | (main-stage skills) | `rdd-quick` (still auto-routes through builder P0 dispatch-quick per ADR-0048 §Decision 3 when builder is called) |
+| Bypass state mutation but need recs | `rdd-builder` (would mutate) | `rdd-arch` or `rdd-planner` (read-only states) |
+| Get session lifecycle help | (any main-stage skill) | `rddf-session` (5 subcommands per ADR-0017) |
+| Diagnose drift / file schema issues | (manual agents) | `rdd-doctor` (11 categories, read-only) |
+
+**Enforcement**: `tests/integration/test_skill_description_convention.bats` (3 assertions) gates all 27 SKILL.md / INSTALL.md files against this convention. Per ADR-0051 Decision 1, descriptions only carry positive triggers.
 
 ## Cross-Reference
 

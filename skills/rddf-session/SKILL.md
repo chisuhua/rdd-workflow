@@ -1,6 +1,15 @@
 ---
 name: rddf-session
-description: User-perspective workflow session management. Persists rddf-session lifecycle to .rddf/state/sessions.json and provides cross-opencode-session recovery via 5 subcommands (list/show/resume/abandon/archive-history). See ADR-0017.
+description: |
+    User-perspective workflow session management (5 subcommands: list/show/resume/abandon/archive-history).
+
+    Invoke when BOTH:
+      1. Cross-opencode-session workflow recovery needed
+      2. `.rddf/state/sessions.json` exists (per ADR-0017)
+
+    Default: 5 subcommands; no state mutation outside the file.
+
+    Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires Python 3.11+ and the rddf_session.py module (installed via this skill pack).
 metadata:

@@ -1,6 +1,15 @@
 ---
 name: status
-description: 查看 OpenSpec change 状态、归档已完成的 change、清理 worktree 和 branch。可被 rdd-builder 调用（archive 阶段），也可独立调用查看状态。
+description: |
+  Change status viewer + archive runner for OpenSpec changes.
+
+  Invoke when BOTH:
+    1. OpenSpec change exists in `openspec/changes/`
+    2. User wants to inspect, archive, or run `openspec archive <name>`
+
+  Default: status / archive helper; not a workflow entry.
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires openspec CLI
 metadata:

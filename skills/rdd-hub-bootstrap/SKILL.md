@@ -1,6 +1,15 @@
 ---
 name: rdd-hub-bootstrap
-description: 引导式初始化 rdd-hub 仓库 — 创建目录结构、Projects V2 看板、CI 工作流模板。幂等且支持 dry-run。
+description: |
+  Hub repo (rdd-hub) bootstrap: dir structure + Projects V2 board + CI templates.
+
+  Invoke when BOTH:
+    1. GitHub Org exists + need Projects V2 board for cross-repo federation
+    2. Hub repo does not exist OR needs re-bootstrap
+
+  Default: idempotent + dry-run capable; requires `gh` CLI v2.0+.
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires gh CLI v2.0+ and GitHub Org membership.
 metadata:

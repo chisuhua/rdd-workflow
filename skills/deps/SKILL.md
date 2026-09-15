@@ -1,6 +1,15 @@
 ---
 name: deps
-description: 分析 OpenSpec change 之间的依赖关系，生成 Mermaid 依赖图和推荐执行顺序。被 rdd-builder 在 P1 plan 阶段后自动调用。
+description: |
+  Dependency analysis sub-skill: Mermaid graph + recommended execution order.
+
+  Invoke when BOTH:
+    1. rdd-builder P1.5 reached OR user wants change dependency visualization
+    2. Multiple OpenSpec changes in `openspec/changes/` exist
+
+  Default: 24h TTL cache; lightweight vs worktree mode per ADR-0024.
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+. Reads proposal.md/design.md/specs/*.md from openspec/changes/.
 metadata:

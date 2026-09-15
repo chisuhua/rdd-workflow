@@ -1,6 +1,16 @@
 ---
 name: rdd-verifier
-description: 5th phase batch verifier — directly instructs the AI agent to semantically verify OpenSpec acceptance criteria against committed code, classifies failures heuristically (implementation_gap vs proposal_drift), routes failures back to rdd-builder (P1/P2 retry loop). Called before archive after rdd-builder execution (Per ADR-0034).
+description: |
+  Stage 4 of v4 architecture (rdd-arch → rdd-planner → rdd-builder → rdd-verifier).
+  AC verification + bounded retry loop (max 3 per ADR-0034).
+
+  Invoke when canonical preconditions hold:
+    1. rdd-builder P3 archive_gate_check triggered
+    2. OpenSpec change has `## Acceptance` checkboxes to verify
+
+  Default: self-contained LLM verification per ADR-0045 (executing AI agent IS the LLM).
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: requires openspec CLI v1.3.1+, Python 3.11+, git 2.25+. No external LLM provider env vars needed — the executing AI agent IS the LLM.
 metadata:

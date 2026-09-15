@@ -1,6 +1,16 @@
 ---
 name: rdd-arch
-description: Architecture definition phase state machine for OpenSpec workflow — guides user through setup, ADR creation, architecture analysis, roadmap definition, and emits arch-done handoff. Called when starting architecture work or after arch-done gate. Stage 3 rename from rdd-arch; canonical Stage 3+ identity per ADR-0042.
+description: |
+  Stage 1 of v4 architecture (rdd-arch → rdd-planner → rdd-builder → rdd-verifier).
+  ADR + roadmap authoring + arch quality gate.
+
+  Invoke when canonical preconditions hold:
+    1. Project has ADR directory (default `docs/adr/`)
+    2. No `.rddf/roadmap.md` yet OR new ADR planned
+
+  Default: interactive setup (no auto-pick); produces `.rddf/state/.arch-handoff.json`.
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+, git 2.25+
 metadata:

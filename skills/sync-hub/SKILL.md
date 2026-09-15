@@ -1,6 +1,15 @@
 ---
 name: sync-hub
-description: Hub-Spoke 下行命令 — 从 rdd-hub 拉取 contract 到本地 openspec/specs/<name>/spec.md。Hub Spoke 联邦的下行同步通道,被 contract-check 和 rdd-planner 在 contract refresh 时调用。ADR-0030 §Hub-Spoke 联邦。
+description: |
+    Hub-Spoke contract pull: writes `openspec/specs/<name>/spec.md` from Hub.
+
+    Invoke when BOTH:
+      1. Contract refresh needed (rdd-planner stage entry)
+      2. `RDDF_HUB_REPO` env var set OR hub repo configured
+
+    Default: writes openspec/specs/<name>/spec.md; no git commit.
+
+    Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires Python 3.11+, gh CLI v2.0+, GITHUB_TOKEN env var (read access)
 metadata:

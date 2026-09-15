@@ -1,27 +1,16 @@
 ---
 name: rdd-planner
 description: |
-    Roadmap + sprint proposal orchestrator (Stage 2 of v4 architecture).
-    Wraps existing `_lib/planner_*.py` lib (per ADR-0037/0038/0042) and adds
-    stage entry/exit contract. Per spec 2026-09-04-rdd-workflow-v4-architecture-stage-merge.md
-    §3.3 (promotion from horizontal orchestrator to full stage).
+  Stage 2 of v4 architecture (rdd-arch → rdd-planner → rdd-builder → rdd-verifier).
+  Improvement authoring / review / approve + proposal lifecycle.
 
-    Owns:
-    - roadmap.md (完全独占 per ADR-0048, 从 rdd-arch 移交)
-    - .rddf/roadmap/{features,phases}/*.md
-    - .rddf/state/.populate-state.json
-    - improvement-suggestions.md / improvement-approved.md
-    - .rddf/improvements/*.md (via add-improve)
+  Invoke when canonical preconditions hold:
+    1. rdd-arch arch-done emitted `.rddf/state/.arch-handoff.json`
+    2. New improvement needed OR existing improvement in `improvement-suggestions.md` to review
 
-    Existing horizontal-orchestrator commands remain available:
-    status / sync / feedback / attach / audit / history / advance-sprint
+  Default: auto-decision per ADR-0050; writes `.rddf/state/.planner-handoff.json` at stage exit.
 
-    Stage entry: planner_stage_entry.sh (emits .planner-handoff.json)
-    Stage exit: planner_stage_exit.sh (consumes arch-handoff, emits planner-handoff
-                with required `recommended_route` field per ADR-0048 §Decision 2)
-
-    Backward compat: legacy .plan-handoff.json::execution_mode_decisions
-    is read as fallback in rdd-builder Phase 1.5 during Wave 1 coexistence.
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: requires openspec CLI v1.3.1+, Python 3.11+, git 2.25+
 metadata:

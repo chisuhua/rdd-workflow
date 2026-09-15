@@ -1,6 +1,15 @@
 ---
 name: execute
-description: 在 worktree 隔离环境执行 OpenSpec change 的实施计划。基于 .rddf/plans/ 执行,强制 TDD 5 步结构(Write failing test → Verify fail → Implement → Verify pass → Commit)。被 rdd-builder 在 P1 plan 阶段后调用。v2.0 整合原 rdd-workflow/executing-plans 的 TDD 纪律。
+description: |
+  Plan execution sub-skill (called by rdd-builder P2).
+
+  Invoke when BOTH:
+    1. `.rddf/plans/<name>.md` exists with TDD 5-step structure
+    2. Worktree context set (or lightweight mode per project.yaml)
+
+  TDD 5-step discipline; writes tasks.md checkboxes; defer commit to archive.
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires openspec CLI and git worktree.
 metadata:

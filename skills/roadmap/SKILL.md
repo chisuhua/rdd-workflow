@@ -1,6 +1,15 @@
 ---
 name: roadmap
-description: 路线图管理技能——初始化、编辑、验证项目路线图。被 rdd-arch 调用执行 init/status/edit/validate/advance 命令。
+description: |
+  Roadmap CRUD: init / status / edit / validate / advance.
+
+  Invoke when BOTH:
+    1. `.rddf/roadmap.md` missing OR needs edit
+    2. rdd-arch Phase 4 menu option OR rdd-planner referenced
+
+  Default: 4 init templates (C++ lib / Web app / blank / from-ADR).
+
+  Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires rdd-workflow v3.0+
 metadata:
