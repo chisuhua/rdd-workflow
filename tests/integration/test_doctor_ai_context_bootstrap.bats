@@ -18,7 +18,8 @@ teardown() {
 @test "doctor ai-context-bootstrap: warns when no AI config files exist" {
   cd "$TMPDIR"
   run python3 -m _lib.cli doctor --category ai-context-bootstrap
-  [ "$status" -eq 0 ]
+  # WARNING findings map to exit 1 (per exit_code_for)
+  [ "$status" -eq 1 ]
   echo "$output" | grep -qi "未找到\|WARNING\|ai-context"
 }
 
@@ -26,6 +27,7 @@ teardown() {
   cd "$TMPDIR"
   python3 -m _lib.cli setup ai-context --yes --target "$TMPDIR"
   run python3 -m _lib.cli doctor --category ai-context-bootstrap
+  # Healthy (no findings) → exit 0
   [ "$status" -eq 0 ]
 }
 
@@ -33,11 +35,14 @@ teardown() {
   echo "some content" > "$TMPDIR/AGENTS.md"
   cd "$TMPDIR"
   run python3 -m _lib.cli doctor --category ai-context-bootstrap
-  [ "$status" -eq 0 ]
+  # WARNING findings map to exit 1 (per exit_code_for)
+  [ "$status" -eq 1 ]
 }
 
 @test "doctor ai-context-bootstrap: runs from rddf CLI path" {
   cd "$TMPDIR"
   run bash "$REPO_ROOT/skills/cli/rddf.sh" doctor --category ai-context-bootstrap
-  [ "$status" -eq 0 ]
+  # WARNING findings in empty dir map to exit 1
+  [ "$status" -eq 1 ]
+  echo "$output" | grep -qi "ai-context\|未找到\|WARNING"
 }

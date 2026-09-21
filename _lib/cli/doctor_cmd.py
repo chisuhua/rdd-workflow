@@ -30,7 +30,8 @@ def cmd_doctor(args: list[str]) -> int:
     project_root = Path(
         os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
     )
-    script = project_root / "skills" / "rdd-doctor" / "scripts" / "doctor.sh"
+    repo_root = Path(__file__).resolve().parents[2]
+    script = repo_root / "skills" / "rdd-doctor" / "scripts" / "doctor.sh"
 
     if not script.is_file():
         print(

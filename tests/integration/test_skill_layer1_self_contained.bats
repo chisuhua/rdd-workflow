@@ -9,7 +9,7 @@ bats_require_minimum_version 1.5.0
 @test "skill-layer1: no SKILL.md references ../docs/ or ../../docs/" {
   local violations=0
   while IFS= read -r -d '' f; do
-    if grep -q '../docs/\|../../docs/' "$f" 2>/dev/null; then
+    if grep -q '\.\./docs/\|\.\./\.\./docs/' "$f" 2>/dev/null; then
       echo "VIOLATION: $f references external docs/"
       violations=$((violations + 1))
     fi

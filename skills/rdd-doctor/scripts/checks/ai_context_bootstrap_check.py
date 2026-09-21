@@ -104,13 +104,8 @@ def run(project_root: Path | None = None) -> List[Finding]:
             ),
         ))
     else:
-        findings.append(Finding(
-            severity=Severity.INFO,
-            category="ai-context-bootstrap",
-            file="(repo-wide)",
-            line=None,
-            snippet="✅ Layer 0 已部署到所有检测到的 AI 配置文件",
-            fix_hint="无需操作。运行 `rddf doctor --category ai-context-bootstrap` 再次检查。",
-        ))
+        # All detected config files have the Layer 0 block — healthy.
+        # No findings means exit code 0 (per exit_code_for).
+        pass
 
     return findings
