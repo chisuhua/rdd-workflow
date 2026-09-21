@@ -69,7 +69,10 @@ teardown() {
   python3 -m _lib.cli setup ai-context --yes --target "$TMPDIR"
   grep -q "rdd-workflow" "$TMPDIR/AGENTS.md"
   grep -q "skill_use.*guide" "$TMPDIR/AGENTS.md"
-  grep -q "rdd-arch.*rdd-planner.*rdd-builder.*rdd-verifier" "$TMPDIR/AGENTS.md"
+  grep -q "rdd-arch" "$TMPDIR/AGENTS.md"
+  grep -q "rdd-planner" "$TMPDIR/AGENTS.md"
+  grep -q "rdd-builder" "$TMPDIR/AGENTS.md"
+  grep -q "rdd-verifier" "$TMPDIR/AGENTS.md"
   grep -q "rdd-quick" "$TMPDIR/AGENTS.md"
   grep -q "ai-context-bootstrap" "$TMPDIR/AGENTS.md"
 }
