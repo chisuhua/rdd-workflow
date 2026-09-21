@@ -108,7 +108,14 @@ def cmd_init(args: list[str]) -> int:
     print(f"   工具库:   _lib ({lib_count} 文件)")
     print(f"   CLI:      {target}/rddf.sh")
     print("✅ 安装完成!")
+    _print_setup_hint()
     return 0
+
+
+def _print_setup_hint() -> None:
+    """Print a hint about the next recommended step after init."""
+    print()
+    print("💡 下一步: 运行 `rddf setup ai-context` 让 AI agent 启动时知道本项目装了 rdd-workflow")
 
 
 def _print_help() -> None:

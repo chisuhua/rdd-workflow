@@ -10,6 +10,7 @@ from typing import List, Tuple
 from doctor_render import Finding, Severity, exit_code_for, render_human, render_json, render_quiet
 
 from checks import (
+    ai_context_bootstrap_check,
     bypass_audit_check,
     docs_consistency_check,
     gitignore_check,
@@ -37,6 +38,7 @@ _CHECKERS = {
     "orphan-gates": orphan_gates_check.run,
     "roadmap-refs": roadmap_refs_check.run,
     "docs-consistency": docs_consistency_check.run,
+    "ai-context-bootstrap": ai_context_bootstrap_check.run,
     "gitignore": gitignore_check.run,
     "bypass-audit": bypass_audit_check.run,
     "improvement-frontmatter-consistency": improvement_frontmatter_check.run,

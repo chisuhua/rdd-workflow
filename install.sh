@@ -310,6 +310,24 @@ fi
 SCRIPT
     chmod +x "$TARGET_DIR/install-rdd-workflow.sh"
 
+    # --with-docs: 复制被 SKILL.md 引用的文档子集到工具子目录
+    if [ "${WITH_DOCS:-0}" = "1" ]; then
+        local DOCS_TARGET="$SKILLS_TARGET/docs"
+        mkdir -p "$DOCS_TARGET/architecture"
+        echo ""
+        echo "📖 安装引用文档 (--with-docs)..."
+        # 只复制被 SKILL.md 引用的文件子集
+        if [ -f "$PACKAGE_DIR/docs/architecture/roadmap-organization.md" ]; then
+            cp -f "$PACKAGE_DIR/docs/architecture/roadmap-organization.md" "$DOCS_TARGET/architecture/"
+            echo "   - docs/architecture/roadmap-organization.md"
+        fi
+        if [ -f "$PACKAGE_DIR/docs/rdd-hub-bootstrap.md" ]; then
+            cp -f "$PACKAGE_DIR/docs/rdd-hub-bootstrap.md" "$DOCS_TARGET/"
+            echo "   - docs/rdd-hub-bootstrap.md"
+        fi
+        echo "✅ 引用文档已安装到 $DOCS_TARGET"
+    fi
+
     echo ""
     echo "========================================"
     echo " ✅ 安装完成！"
@@ -339,7 +357,7 @@ _do_spoke_init() {
             -*)
                 shift
                 ;;
-            *)
+    *)
                 target_dir="${1:-$(pwd)}"
                 shift
                 ;;
@@ -366,11 +384,17 @@ case "${1:-}" in
     --global|-g)
         install_global_symlinks
         ;;
+    --with-docs)
+        WITH_DOCS=1
+        TARGET_DIR="${2:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+        install_per_project "$TARGET_DIR"
+        ;;
     --help|-h)
         echo "用法: bash install.sh [选项] [目标目录]"
         echo ""
         echo "选项:"
         echo "  --global, -g      全局安装到 ~/.agents/skills/ + Python deps + rddf CLI"
+        echo "  --with-docs       仅项目安装时，同时复制被 SKILL.md 引用的文档文件到工具子目录"
         echo "  --spoke-init [--tools TOOLS]  为 Spoke AI 安装协议模板到配置文件"
         echo "                          TOOLS: all|cursor,cline,continue,copilot,claude (默认: all)"
         echo "  --help, -h        显示此帮助"

@@ -111,6 +111,7 @@ _ROUTES: Dict[str, str] = {
     "report-issue": "skills._lib.cli.report_issue_cmd:cmd_report_issue",
     "status": "skills._lib.cli.status_cmd:cmd_status",
     "sessions": "skills._lib.cli.sessions_cmd:cmd_sessions",
+    "setup": "skills._lib.cli.setup_cmd:cmd_setup",
     "sync-hub": "skills._lib.cli.sync_hub_cmd:cmd_sync_hub",
     "validate": "skills._lib.cli.validate_cmd:cmd_validate",
     "version": "skills._lib.cli.version_cmd:cmd_version",

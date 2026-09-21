@@ -467,8 +467,34 @@ def check_role_frontmatter() -> list[dict]:
     return issues
 
 
+def check_skill_external_docs_refs() -> list[dict]:
+    """Check that all skills/*/SKILL.md have no external docs/ references.
+
+    Scans for ``../docs/`` and ``../../docs/`` patterns that would 404
+    after ``install.sh`` (which does not distribute the ``docs/``
+    directory). CRITICAL if any are found.
+    """
+    issues: list[dict] = []
+    for skill_md in sorted(REPO_ROOT.glob("skills/*/SKILL.md")):
+        text = skill_md.read_text(encoding="utf-8", errors="replace")
+        for lineno, line in enumerate(text.splitlines(), 1):
+            if "../docs/" in line or "../../docs/" in line:
+                rel = skill_md.relative_to(REPO_ROOT)
+                issues.append({
+                    "severity": "CRITICAL",
+                    "name": f"skill-ext-docs-ref",
+                    "detail": (
+                        f"{rel}:{lineno} 包含外部 docs/ 引用: {line.strip()[:80]}"
+                    ),
+                    "fix_command": (
+                        "重写该 SKILL.md 段落为自包含版本，移除对 docs/ 目录的相对引用"
+                    ),
+                })
+    return issues
+
+
 def run_all() -> list[dict]:
-    """Aggregate all 8 docs-consistency checks."""
+    """Aggregate all 9 docs-consistency checks."""
     return (
         check_skill_count()
         + check_stage_count()
@@ -478,4 +504,5 @@ def run_all() -> list[dict]:
         + check_schema_readme_drift()
         + check_schema_path_canonical()
         + check_role_frontmatter()
+        + check_skill_external_docs_refs()
     )
