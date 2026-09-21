@@ -1,5 +1,10 @@
-# plan-execute-commit-policy-consistency
-
+---
+优先级: P1
+来源: Session 复盘 2026-08-04 — 三 change guide-ship 全流程
+阶段: v2.1
+分类: planning
+类型: fix
+---
 **优先级**: P1 | **来源**: Session 复盘 2026-08-04 — 三 change guide-ship 全流程
 **阶段**: v2.1 | **分类**: planning
 **类型**: fix

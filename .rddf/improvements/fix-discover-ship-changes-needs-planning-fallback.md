@@ -1,5 +1,11 @@
-# fix-discover-ship-changes-needs-planning-fallback
-
+---
+优先级: P1
+来源: 本会话 view bug 调查 (2026-08-21)
+阶段: v2.2
+分类: core-impl
+类型: bug
+依赖 ADR: ADR-0030 (跨项目联邦状态模型)
+---
 **优先级**: P1 | **来源**: 本会话 view bug 调查 (2026-08-21)
 **阶段**: v2.2 | **分类**: core-impl
 **类型**: bug

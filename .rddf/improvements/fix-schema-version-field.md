@@ -1,5 +1,10 @@
-# fix-schema-version-field
-
+---
+优先级: P1
+来源: "审计 `add-cross-repo-state-schemas` change 验收时发现"
+阶段: default
+分类: quality
+类型: debt
+---
 **优先级**: P1 | **来源**: 审计 `add-cross-repo-state-schemas` change 验收时发现
 **阶段**: default | **分类**: quality
 **类型**: debt

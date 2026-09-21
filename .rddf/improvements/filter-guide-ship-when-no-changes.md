@@ -1,5 +1,10 @@
-# filter-guide-ship-when-no-changes
-
+---
+优先级: P2
+来源: Session 复盘 2026-07-26 — guide-ship 空转
+阶段: v2.1
+分类: planning
+类型: improvement
+---
 **优先级**: P2 | **来源**: Session 复盘 2026-07-26 — guide-ship 空转
 **阶段**: v2.1 | **分类**: planning
 **类型**: improvement

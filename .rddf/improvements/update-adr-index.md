@@ -1,5 +1,10 @@
-# update-adr-index
-
+---
+优先级: P2
+来源: 复盘遗留 — ADR 索引表与 README 不同步
+阶段: v2.1
+分类: docs
+类型: test-only
+---
 **优先级**: P2 | **来源**: 复盘遗留 — ADR 索引表与 README 不同步
 **阶段**: v2.1 | **分类**: docs
 **类型**: test-only

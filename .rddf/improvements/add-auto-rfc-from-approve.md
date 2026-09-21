@@ -1,5 +1,9 @@
-# add-auto-rfc-from-approve
-
+---
+阶段: v2.2
+分类: core-impl
+类型: feature
+特性: __ungrouped__
+---
 **阶段**: v2.2
 **分类**: core-impl
 **类型**: feature

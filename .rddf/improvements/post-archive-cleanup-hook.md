@@ -1,5 +1,10 @@
-# post-archive-cleanup-hook
-
+---
+优先级: P0
+来源: 用户反馈 2026-08-06 — archive 后工作树残留导致 guide 警告
+阶段: v2.1
+分类: core
+类型: feature
+---
 **优先级**: P0 | **来源**: 用户反馈 2026-08-06 — archive 后工作树残留导致 guide 警告
 **阶段**: v2.1 | **分类**: core | **类型**: feature
 

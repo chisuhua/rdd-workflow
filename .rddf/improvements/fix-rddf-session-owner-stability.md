@@ -1,5 +1,10 @@
-# fix-rddf-session-owner-stability
-
+---
+优先级: P0
+来源: 2026-08-02 ship 复盘
+阶段: v2.1
+分类: core
+类型: bugfix
+---
 **优先级**: P0 | **来源**: 2026-08-02 ship 复盘
 **阶段**: v2.1 | **分类**: core
 **类型**: bugfix

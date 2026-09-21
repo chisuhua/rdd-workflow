@@ -1,5 +1,11 @@
-# fix-feature-decision-design-phase
-
+---
+优先级: P1
+来源: 用户讨论 2026-08-10 — feature 决策应在 design 阶段完成
+阶段: v2.1
+分类: planning
+类型: fix
+依赖: "| **特性**:"
+---
 **优先级**: P1 | **来源**: 用户讨论 2026-08-10 — feature 决策应在 design 阶段完成
 **阶段**: v2.1 | **分类**: planning | **类型**: fix
 **依赖**: | **特性**:

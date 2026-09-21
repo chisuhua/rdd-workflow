@@ -1,5 +1,10 @@
-# relocate-loop-engine
-
+---
+优先级: P2
+来源: "Oracle 代码审查 2026-07-19 遗漏 #2"
+阶段: default
+分类: general
+类型: feature
+---
 **优先级**: P2 | **来源**: Oracle 代码审查 2026-07-19 遗漏 #2
 **阶段**: default | **分类**: general
 **类型**: feature

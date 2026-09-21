@@ -1,5 +1,11 @@
-# add-pre-commit-proposal-quality-check
-
+---
+优先级: P1
+来源: 2026-08-27 Hybrid path reflection (创建 9 个 proposal 文件后未运行 propose_quality_check.py 验证,直到后期才补救)
+阶段: phase-3
+分类: governance
+类型: improvement
+主题: 2026-08-27 Hybrid path reflection (流程改进)
+---
 **优先级**: P1 | **来源**: 2026-08-27 Hybrid path reflection (创建 9 个 proposal 文件后未运行 propose_quality_check.py 验证,直到后期才补救)
 **阶段**: phase-3 | **分类**: governance
 **类型**: improvement

@@ -1,5 +1,11 @@
-# design-approve-batch-tool
-
+---
+优先级: P1
+来源: 2026-08-27 ship audit (9 个 audit-fixup proposal 审批时, 每次 approve_proposal.sh 单独调用 + 每次 D1 编排的 y/N 确认, 9 次 round-trip 浪费时间)
+阶段: phase-2
+分类: governance
+类型: improvement
+主题: 2026-08-27 文档与代码一致性审计后续修复
+---
 **优先级**: P1 | **来源**: 2026-08-27 ship audit (9 个 audit-fixup proposal 审批时, 每次 approve_proposal.sh 单独调用 + 每次 D1 编排的 y/N 确认, 9 次 round-trip 浪费时间)
 **阶段**: phase-2 | **分类**: governance
 **类型**: improvement

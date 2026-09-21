@@ -1,5 +1,11 @@
-# move-populate-roadmap-into-guide-arch
-
+---
+优先级: P2
+来源: "`extend-populate-roadmap-with-code-verification` 实施复盘 (commit 68d00df, 2026-08-21) — 当前 `populate-roadmap-from-arch` v1.1 是独立 skill，需手动调用；33 ADR 全量 grep 4s，每次 ADR 微改都要重跑"
+阶段: v2.2+
+分类: arch-design
+类型: refactor + feature
+依赖: "`extend-populate-roadmap-with-code-verification` (v1.1, 已归档)"
+---
 **优先级**: P2 | **来源**: `extend-populate-roadmap-with-code-verification` 实施复盘 (commit 68d00df, 2026-08-21) — 当前 `populate-roadmap-from-arch` v1.1 是独立 skill，需手动调用；33 ADR 全量 grep 4s，每次 ADR 微改都要重跑
 **阶段**: v2.2+ | **分类**: arch-design
 **类型**: refactor + feature

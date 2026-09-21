@@ -13,6 +13,7 @@ from checks import (
     bypass_audit_check,
     docs_consistency_check,
     gitignore_check,
+    improvement_frontmatter_check,
     migration_residue_check,
     orphan_gates_check,
     plan_tdd_check,
@@ -38,6 +39,7 @@ _CHECKERS = {
     "docs-consistency": docs_consistency_check.run,
     "gitignore": gitignore_check.run,
     "bypass-audit": bypass_audit_check.run,
+    "improvement-frontmatter-consistency": improvement_frontmatter_check.run,
 }
 
 

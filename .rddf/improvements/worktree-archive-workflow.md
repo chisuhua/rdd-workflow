@@ -1,5 +1,10 @@
-# worktree-archive-workflow
-
+---
+优先级: P0
+来源: 2026-08-04 session 复盘
+阶段: default
+分类: core-impl
+类型: improvement
+---
 **优先级**: P0 | **来源**: 2026-08-04 session 复盘
 **阶段**: default | **分类**: core-impl
 **类型**: improvement

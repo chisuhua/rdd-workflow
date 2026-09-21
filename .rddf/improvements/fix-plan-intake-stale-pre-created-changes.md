@@ -1,5 +1,10 @@
-# fix-plan-intake-stale-pre-created-changes
-
+---
+优先级: P1
+来源: "2026-09-01 guide-plan session — `plan_intake.sh` 误导性计数 + `.design-handoff.json` `changes_pre_created` 永不过期，导致 agent 把已归档 change 当待创建"
+阶段: v2.2
+分类: core-impl / workflow-correctness
+类型: bugfix / 状态机防腐
+---
 **优先级**: P1 | **来源**: 2026-09-01 guide-plan session — `plan_intake.sh` 误导性计数 + `.design-handoff.json` `changes_pre_created` 永不过期，导致 agent 把已归档 change 当待创建
 **阶段**: v2.2 | **分类**: core-impl / workflow-correctness
 **类型**: bugfix / 状态机防腐

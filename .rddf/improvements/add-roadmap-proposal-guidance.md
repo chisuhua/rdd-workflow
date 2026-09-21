@@ -1,5 +1,10 @@
-# add-roadmap-proposal-guidance
-
+---
+优先级: P1
+来源: "用户会话 2026-08-13 — \"路线图定义阶段生成的 roadmap 应能约束后续 proposal 创建,减少人工映射成本\""
+阶段: v3.0
+分类: arch-design
+类型: feature
+---
 **优先级**: P1 | **来源**: 用户会话 2026-08-13 — "路线图定义阶段生成的 roadmap 应能约束后续 proposal 创建,减少人工映射成本"
 **阶段**: v3.0 | **分类**: arch-design
 **类型**: feature

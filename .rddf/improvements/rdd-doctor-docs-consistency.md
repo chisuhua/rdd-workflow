@@ -1,5 +1,10 @@
-# rdd-doctor-docs-consistency
-
+---
+优先级: P1
+来源: 2026-08-26 文档与代码一致性审计
+阶段: default
+分类: governance
+类型: feature
+---
 **优先级**: P1 | **来源**: 2026-08-26 文档与代码一致性审计
 **阶段**: default | **分类**: governance
 **类型**: feature

@@ -1,5 +1,10 @@
-# rddf-iteration-strict-schema
-
+---
+优先级: P1
+来源: "Session 复盘 2026-08-05 UsrLinuxEmu — AI 助手向 `.rddf/state/iteration.json` 写入 `archive_commit` / `feat_commit` / `tasks_note` 三个未声明字段，rddf 校验器静默把文件改名为 `.corrupt.<ts>` 并替换为空文件；用户无任何 stderr 提示"
+阶段: v2.1
+分类: infra-setup
+类型: bug
+---
 **优先级**: P1 | **来源**: Session 复盘 2026-08-05 UsrLinuxEmu — AI 助手向 `.rddf/state/iteration.json` 写入 `archive_commit` / `feat_commit` / `tasks_note` 三个未声明字段，rddf 校验器静默把文件改名为 `.corrupt.<ts>` 并替换为空文件；用户无任何 stderr 提示
 **阶段**: v2.1 | **分类**: infra-setup
 **类型**: bug

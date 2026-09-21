@@ -1,5 +1,11 @@
-# add-brainstorm-hardgate-enforcement
-
+---
+优先级: P1
+来源: 2026-08-27 Hybrid path reflection (本次会话中 AI agent 直接创建 9 个 .md proposal 文件 + 修改 improvement-suggestions.md, 绕过了 rdd-workflow-brainstorm SKILL.md 的 HARD-GATE 规则)
+阶段: phase-2
+分类: governance
+类型: improvement
+主题: 2026-08-27 Hybrid path reflection (流程改进)
+---
 **优先级**: P1 | **来源**: 2026-08-27 Hybrid path reflection (本次会话中 AI agent 直接创建 9 个 .md proposal 文件 + 修改 improvement-suggestions.md, 绕过了 rdd-workflow-brainstorm SKILL.md 的 HARD-GATE 规则)
 **阶段**: phase-2 | **分类**: governance
 **类型**: improvement

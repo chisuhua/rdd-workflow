@@ -1,5 +1,10 @@
-# fix-mark-approved-completed-date-drift
-
+---
+优先级: P2
+来源: 会话复盘 2026-07-31 — 幂等调用 mark_approved_completed 覆盖原完成日期
+阶段: v2.1
+分类: core-impl
+类型: fix
+---
 **优先级**: P2 | **来源**: 会话复盘 2026-07-31 — 幂等调用 mark_approved_completed 覆盖原完成日期
 **阶段**: v2.1 | **分类**: core-impl
 **类型**: fix

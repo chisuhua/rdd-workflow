@@ -1,5 +1,12 @@
-# add-plan-done-reflect-hook
-
+---
+优先级: P1
+来源: 反思工作流 e2e 覆盖分析（rdd-workflow-e2e 集成验证）
+阶段: default
+分类: core-impl
+类型: feature
+关联 ADR: ADR-0027 §1.0 双平面架构, ADR-0029 issue-driven proposal, ADR-0048 §Decision 2
+关联变更: add-workflow-reflect-engine (原提案，遗漏 plan-done hook)
+---
 **优先级**: P1 | **来源**: 反思工作流 e2e 覆盖分析（rdd-workflow-e2e 集成验证）
 **阶段**: default | **分类**: core-impl
 **类型**: feature

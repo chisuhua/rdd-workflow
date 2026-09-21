@@ -1,5 +1,12 @@
-# clean-stale-plan-handoff-on-ship-done
-
+---
+优先级: P1
+来源: 本会话 view bug 调查 (2026-08-22)
+阶段: v2.2
+分类: core-impl
+类型: bug
+依赖 ADR: —
+后续提案: "`fix-discover-ship-changes-needs-planning-fallback`（已实施但未触及此根因）"
+---
 **优先级**: P1 | **来源**: 本会话 view bug 调查 (2026-08-22)
 **阶段**: v2.2 | **分类**: core-impl
 **类型**: bug

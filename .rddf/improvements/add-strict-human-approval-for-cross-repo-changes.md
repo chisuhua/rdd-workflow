@@ -1,5 +1,13 @@
-# add-strict-human-approval-for-cross-repo-changes
-
+---
+优先级: P1
+来源: 架构差距分析 ADR-0030 / multi-project-ai-collaborative-development Step 1.5
+阶段: v2.2
+分类: cross-repo-federation
+类型: security-fix
+依赖 ADR: ADR-0030, ADR-0025 (design 阶段提案创建), ADR-0027 (持续演进反馈环 L2 上报)
+状态: 已批准 (2026-08-15)
+关联差距: "multi-project-ai-collaborative-development §3 差距 #5"
+---
 **优先级**: P1 | **来源**: 架构差距分析 ADR-0030 / multi-project-ai-collaborative-development Step 1.5
 **阶段**: v2.2 | **分类**: cross-repo-federation | **类型**: security-fix
 **依赖 ADR**: ADR-0030, ADR-0025 (design 阶段提案创建), ADR-0027 (持续演进反馈环 L2 上报)

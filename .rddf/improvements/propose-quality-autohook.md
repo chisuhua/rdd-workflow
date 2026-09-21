@@ -1,5 +1,10 @@
-# propose-quality-autohook
-
+---
+优先级: P0
+来源: Oracle 架构分析 2026-07-21 — Proposal 审查机制 (P0 升级)
+阶段: v2.1
+分类: quality
+类型: feature
+---
 **优先级**: P0 | **来源**: Oracle 架构分析 2026-07-21 — Proposal 审查机制 (P0 升级)
 **阶段**: v2.1 | **分类**: quality
 **类型**: feature

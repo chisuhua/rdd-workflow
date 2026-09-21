@@ -1,5 +1,11 @@
-# apply-adr-0051-skill-description-convention-bulk-rewrite
-
+---
+优先级: P0
+来源: "ADR-0051 (commit a65c243) + Oracle review `ses_f5bf53e0bffemcDQZvdcZQmweW`"
+阶段: phase-3
+分类: governance
+类型: refactor
+主题: 流程定制层
+---
 **优先级**: P0 | **来源**: ADR-0051 (commit a65c243) + Oracle review `ses_f5bf53e0bffemcDQZvdcZQmweW`
 **阶段**: phase-3 | **分类**: governance | **类型**: refactor
 **主题**: 流程定制层

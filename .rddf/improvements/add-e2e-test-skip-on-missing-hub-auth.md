@@ -1,5 +1,10 @@
-# add-e2e-test-skip-on-missing-hub-auth
-
+---
+优先级: P1
+来源: "2026-08-31 ship 阶段回归门发现 — `test_cross_repo_e2e_real.bats` setup_file 因网络/gh 认证偶发失败"
+阶段: v2.2
+分类: infra-setup / 测试基建
+类型: bug fix / robustness
+---
 **优先级**: P1 | **来源**: 2026-08-31 ship 阶段回归门发现 — `test_cross_repo_e2e_real.bats` setup_file 因网络/gh 认证偶发失败
 **阶段**: v2.2 | **分类**: infra-setup / 测试基建
 **类型**: bug fix / robustness

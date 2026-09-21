@@ -1,5 +1,10 @@
-# fix-arch-handoff-stale-detection
-
+---
+优先级: P1
+来源: Session 复盘 2026-07-26 — PTX-EMU ADR 检测失效
+阶段: v2.1
+分类: planning
+类型: feature
+---
 **优先级**: P1 | **来源**: Session 复盘 2026-07-26 — PTX-EMU ADR 检测失效
 **阶段**: v2.1 | **分类**: planning
 **类型**: feature

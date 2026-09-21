@@ -1,5 +1,11 @@
-# extend-populate-roadmap-with-code-verification
-
+---
+优先级: P1
+来源: "用户反馈 — `populate-roadmap-from-arch` v1.0 (commit 2b0991a) 仅读 ADR 自报实施状态，未交叉验证代码；存在\"自报但代码不存在\"风险导致 fragment body 误导读者"
+阶段: v2.2
+分类: arch-design
+类型: feature
+特性: "`extend-populate-roadmap-from-arch`（单 change 提案，扩展 v1.0 不破坏现有契约）"
+---
 **优先级**: P1 | **来源**: 用户反馈 — `populate-roadmap-from-arch` v1.0 (commit 2b0991a) 仅读 ADR 自报实施状态，未交叉验证代码；存在"自报但代码不存在"风险导致 fragment body 误导读者
 **阶段**: v2.2 | **分类**: arch-design
 **类型**: feature

@@ -32,10 +32,11 @@
 
 | Project | Phase | Priority | Feedback | Proposal |
 |---------|-------|----------|----------|----------|
+| 流程定制层 | phase-3 | P1 | none | fix-skill-post-install-discoverability |
 | rdd-workflow | phase-3 | P1 | none | rdd-builder-auto-pick-mode |
 | rdd-workflow | phase-3 | P2 | none | rdd-builder-phase0-llm-integration |
 
-### Unmapped (239)
+### Unmapped (242)
 - RDDF-0001-fix-rddf-session-import-path
 - add-archive-post-commit-hook-and-force-flag
 - add-auto-rfc-from-approve
@@ -46,7 +47,8 @@
 - add-contract-lint-ci-gate
 - add-cross-repo-deps-orchestration
 - add-cross-repo-impact-detection
-- ... and 229 more
+- ... and 232 more
 
 <!-- AUTO-SPRINT-END -->
+
 

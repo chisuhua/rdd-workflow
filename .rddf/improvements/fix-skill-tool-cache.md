@@ -1,5 +1,10 @@
-# fix-skill-tool-cache
-
+---
+优先级: P1
+来源: 会话复盘 2026-07-23 — skill 工具加载过期内容
+阶段: v2.1
+分类: developer-experience
+类型: feature
+---
 **优先级**: P1 | **来源**: 会话复盘 2026-07-23 — skill 工具加载过期内容
 **阶段**: v2.1 | **分类**: developer-experience
 **类型**: feature

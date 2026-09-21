@@ -1,5 +1,10 @@
-# test-isolation-from-repo-state
-
+---
+优先级: P2
+来源: Session 复盘 2026-08-04 — test_select_worktree 测试改写 3 次
+阶段: v2.1
+分类: core-test
+类型: fix
+---
 **优先级**: P2 | **来源**: Session 复盘 2026-08-04 — test_select_worktree 测试改写 3 次
 **阶段**: v2.1 | **分类**: core-test
 **类型**: fix

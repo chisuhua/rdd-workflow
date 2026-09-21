@@ -1,5 +1,10 @@
-# enforce-plan-tdd-5step-new
-
+---
+优先级: P2
+来源: rdd-doctor 诊断 2026-08-16 — plan-tdd 类别 63 WARNING(全是 06-08 月老 plans)
+阶段: v2.2
+分类: quality
+类型: debt
+---
 **优先级**: P2 | **来源**: rdd-doctor 诊断 2026-08-16 — plan-tdd 类别 63 WARNING(全是 06-08 月老 plans)
 **阶段**: v2.2 | **分类**: quality
 **类型**: debt

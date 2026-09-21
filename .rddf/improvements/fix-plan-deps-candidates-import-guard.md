@@ -1,5 +1,10 @@
-# fix-plan-deps-candidates-import-guard
-
+---
+优先级: P0
+来源: 会话复盘 2026-07-31 — 端到端工作流执行中发现 2 个运行时缺陷
+阶段: default
+分类: core-impl
+类型: fix
+---
 **优先级**: P0 | **来源**: 会话复盘 2026-07-31 — 端到端工作流执行中发现 2 个运行时缺陷
 **阶段**: default | **分类**: core-impl
 **类型**: fix

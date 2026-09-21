@@ -1,5 +1,10 @@
-# submodule-aware-project-root
-
+---
+优先级: P0
+来源: "用户实战 2026-08-25 — `rddf dashboard` 在 git submodule 内解析到 superproject 的 `.git/modules/<name>` 路径,显示 `not a rdd-workflow project`,即使 submodule 自身的 `.rddf/state/` 实际存在"
+阶段: v2.2
+分类: core-impl
+类型: fix
+---
 **优先级**: P0 | **来源**: 用户实战 2026-08-25 — `rddf dashboard` 在 git submodule 内解析到 superproject 的 `.git/modules/<name>` 路径,显示 `not a rdd-workflow project`,即使 submodule 自身的 `.rddf/state/` 实际存在
 **阶段**: v2.2 | **分类**: core-impl
 **类型**: fix

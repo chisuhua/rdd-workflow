@@ -1,5 +1,10 @@
-# fix-scan-state-binding
-
+---
+优先级: P0
+来源: "设计规范前置依赖: docs/superpowers/specs/2026-07-20-dashboard-design.md §Prerequisite"
+阶段: v2.1
+分类: core
+类型: feature
+---
 **优先级**: P0 | **来源**: 设计规范前置依赖: docs/superpowers/specs/2026-07-20-dashboard-design.md §Prerequisite
 **阶段**: v2.1 | **分类**: core
 **类型**: feature

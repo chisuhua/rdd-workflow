@@ -10,3 +10,4 @@
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
 | [bypass-audit-mechanism](.rddf/improvements/bypass-audit-mechanism.md) | P2 | 2026-08-26 流程设计 review | 2026-08-26 | 延迟 (2026-08-28, 维持 v3.2 deferred 决策)  |
+| [fix-skill-post-install-discoverability](.rddf/improvements/fix-skill-post-install-discoverability.md) | P1 | 2026-09-21 对话发现(roadmap-organization.md 沉淀触发) + add-spoke-system-prompt-injection 复用 | 2026-09-21 | 待审查 |

@@ -1,5 +1,10 @@
-# fix-tasks-md-archive-residue
-
+---
+优先级: P1
+来源: "Session 复盘 2026-08-05 UsrLinuxEmu — archive 后的 change 留下 `openspec/changes/archive/<date>-<change>/tasks.md` 静态文件，但其 `[ ]` / `[x]` 状态从来不被更新；导致 \"archived 但 0/total\" 这种自相矛盾的状态（例如 `stage4-l2-foundation-removal-mem-pool: status=archived tasks_done=0/18`），单一真相源混乱"
+阶段: v2.1
+分类: planning
+类型: refactor
+---
 **优先级**: P1 | **来源**: Session 复盘 2026-08-05 UsrLinuxEmu — archive 后的 change 留下 `openspec/changes/archive/<date>-<change>/tasks.md` 静态文件，但其 `[ ]` / `[x]` 状态从来不被更新；导致 "archived 但 0/total" 这种自相矛盾的状态（例如 `stage4-l2-foundation-removal-mem-pool: status=archived tasks_done=0/18`），单一真相源混乱
 **阶段**: v2.1 | **分类**: planning
 **类型**: refactor

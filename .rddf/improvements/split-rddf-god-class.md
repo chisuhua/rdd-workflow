@@ -1,5 +1,10 @@
-# split-rddf-god-class
-
+---
+优先级: P2
+来源: .omo/plans/rddf-session-improvement-plan.md — W2-1
+阶段: v2.1
+分类: refactor
+类型: refactor-only
+---
 **优先级**: P2 | **来源**: .omo/plans/rddf-session-improvement-plan.md — W2-1
 **阶段**: v2.1 | **分类**: refactor
 **类型**: refactor-only

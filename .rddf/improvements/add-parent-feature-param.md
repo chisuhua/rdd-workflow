@@ -1,5 +1,10 @@
-# add-parent-feature-param
-
+---
+优先级: P0
+来源: Oracle 架构分析 2026-07-21 — --parent-feature 参数设计
+阶段: v2.1
+分类: core
+类型: feature
+---
 **优先级**: P0 | **来源**: Oracle 架构分析 2026-07-21 — --parent-feature 参数设计
 **阶段**: v2.1 | **分类**: core
 **类型**: feature

@@ -1,5 +1,10 @@
-# complete-add-contract-lint-ci-gate
-
+---
+优先级: P1
+来源: "审计 `add-contract-lint-ci-gate` change 验收时发现 3 个 AC 未实现"
+阶段: v2.2
+分类: cross-repo-federation
+类型: debt
+---
 **优先级**: P1 | **来源**: 审计 `add-contract-lint-ci-gate` change 验收时发现 3 个 AC 未实现
 **阶段**: v2.2 | **分类**: cross-repo-federation
 **类型**: debt

@@ -1,5 +1,10 @@
-# add-config-validation
-
+---
+优先级: P0
+来源: "Oracle 代码审查 2026-07-19 #8"
+阶段: default
+分类: general
+类型: feature
+---
 **优先级**: P0 | **来源**: Oracle 代码审查 2026-07-19 #8
 **阶段**: default | **分类**: general
 **类型**: feature

@@ -1,5 +1,10 @@
-# fix-scan-state-bats
-
+---
+优先级: P2
+来源: "深度分析 2026-07-23 #2"
+阶段: default
+分类: infra-setup
+类型: feature
+---
 **优先级**: P2 | **来源**: 深度分析 2026-07-23 #2
 **阶段**: default | **分类**: infra-setup
 **类型**: feature

@@ -1,5 +1,10 @@
-# add-proposal-how-leakage-warning
-
+---
+优先级: P1
+来源: 质量设计审查 — improvement/proposal 的 WHY/WHAT 与 design/plan HOW 边界缺少语义提示
+阶段: v2.1
+分类: quality
+类型: feature
+---
 **优先级**: P1 | **来源**: 质量设计审查 — improvement/proposal 的 WHY/WHAT 与 design/plan HOW 边界缺少语义提示
 **阶段**: v2.1 | **分类**: quality
 **类型**: feature

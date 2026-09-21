@@ -1,5 +1,11 @@
-# verifier-archive-gate-clarification
-
+---
+优先级: P1 (↑ from P2, 2026-08-28 per feat-fix-archive-gaps-v2)
+来源: 2026-08-26 流程设计 review
+阶段: default
+分类: governance
+类型: improvement
+状态: ✅ 已实施 (2026-09-11, commit c5b45b4 + verifier README docs)
+---
 **优先级**: P1 (↑ from P2, 2026-08-28 per feat-fix-archive-gaps-v2) | **来源**: 2026-08-26 流程设计 review
 **阶段**: default | **分类**: governance
 **类型**: improvement

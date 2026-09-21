@@ -1,5 +1,10 @@
-# fix-scan-state-integer-comparison
-
+---
+优先级: P2
+来源: Session 复盘 2026-07-26 — guide-entry 实操
+阶段: v2.1
+分类: infra-fix
+类型: fix
+---
 **优先级**: P2 | **来源**: Session 复盘 2026-07-26 — guide-entry 实操
 **阶段**: v2.1 | **分类**: infra-fix
 **类型**: fix

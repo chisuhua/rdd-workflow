@@ -1,5 +1,11 @@
-# add-phase-role-model
-
+---
+优先级: P1
+来源: 本次讨论 + 角色边界缺口
+阶段: default
+分类: arch-design
+类型: functional
+主题: 不适用
+---
 **优先级**: P1 | **来源**: 本次讨论 + 角色边界缺口
 **阶段**: default | **分类**: arch-design
 **类型**: functional

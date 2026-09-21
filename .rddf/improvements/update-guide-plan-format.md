@@ -1,5 +1,10 @@
-# update-guide-plan-format
-
+---
+优先级: P1
+来源: 会话复盘 2026-07-23 — guide-plan SKILL.md 仍引用旧 JSON 格式
+阶段: v2.1
+分类: docs
+类型: feature
+---
 **优先级**: P1 | **来源**: 会话复盘 2026-07-23 — guide-plan SKILL.md 仍引用旧 JSON 格式
 **阶段**: v2.1 | **分类**: docs
 **类型**: feature

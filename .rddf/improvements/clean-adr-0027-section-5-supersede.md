@@ -1,5 +1,10 @@
-# clean-adr-0027-section-5-supersede
-
+---
+优先级: P2
+来源: Oracle 复核 2026-08-24(初版 P2-D + G6 + G7 + G8 文档对齐包)
+阶段: v2.1.x
+分类: docs
+类型: chore
+---
 **优先级**: P2 | **来源**: Oracle 复核 2026-08-24(初版 P2-D + G6 + G7 + G8 文档对齐包)
 **阶段**: v2.1.x | **分类**: docs | **类型**: chore
 

@@ -1,5 +1,11 @@
-# preserve-orchestrator-command-stdout
-
+---
+优先级: P1
+来源: Oracle 审查（ADR-0027 follow-up）
+阶段: v2.1
+分类: core-impl
+类型: functional
+主题: 不适用
+---
 **优先级**: P1 | **来源**: Oracle 审查（ADR-0027 follow-up）
 **阶段**: v2.1 | **分类**: core-impl
 **类型**: functional

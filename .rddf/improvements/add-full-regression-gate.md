@@ -1,5 +1,10 @@
-# add-full-regression-gate
-
+---
+优先级: P0
+来源: UsrLinuxEmu 回归复盘 2026-07-27 — ctest 全量回归门缺失
+阶段: v2.1
+分类: quality
+类型: fix
+---
 **优先级**: P0 | **来源**: UsrLinuxEmu 回归复盘 2026-07-27 — ctest 全量回归门缺失
 **阶段**: v2.1 | **分类**: quality
 **类型**: fix

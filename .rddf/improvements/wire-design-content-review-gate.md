@@ -1,5 +1,10 @@
-# wire-design-content-review-gate
-
+---
+优先级: P1
+来源: 2026-08-10 评估，guide-design approve 执行路径可能未可靠调用既有内容审查
+阶段: v2.1
+分类: core-impl
+类型: feature
+---
 **优先级**: P1 | **来源**: 2026-08-10 评估，guide-design approve 执行路径可能未可靠调用既有内容审查
 **阶段**: v2.1 | **分类**: core-impl
 **类型**: feature

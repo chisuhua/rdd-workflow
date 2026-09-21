@@ -1,5 +1,10 @@
-# fix-add-improve-initial-prompt-ux
-
+---
+优先级: P1
+来源: 会话复盘 2026-07-31 — add-improve 无参数模式交互阻塞
+阶段: default
+分类: core-impl
+类型: feature
+---
 **优先级**: P1 | **来源**: 会话复盘 2026-07-31 — add-improve 无参数模式交互阻塞
 **阶段**: default | **分类**: core-impl
 **类型**: feature

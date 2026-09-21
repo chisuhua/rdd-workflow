@@ -1,5 +1,11 @@
-# refine-plan-openspec-integration
-
+---
+优先级: P1
+来源: 架构评审讨论 2026-08-01
+阶段: v2.1
+分类: planning
+类型: feature
+依赖: "| **特性**:"
+---
 **优先级**: P1 | **来源**: 架构评审讨论 2026-08-01
 **阶段**: v2.1 | **分类**: planning
 **类型**: feature

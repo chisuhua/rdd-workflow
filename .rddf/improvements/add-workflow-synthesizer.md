@@ -1,5 +1,10 @@
-# add-workflow-synthesizer
-
+---
+优先级: P0
+来源: .omo/plans/rddf-session-improvement-plan.md — W3-1
+阶段: v2.1
+分类: core
+类型: feature
+---
 **优先级**: P0 | **来源**: .omo/plans/rddf-session-improvement-plan.md — W3-1
 **阶段**: v2.1 | **分类**: core
 **类型**: feature

@@ -90,45 +90,77 @@ rdd-workflow-brainstorm 的设计获得批准后：
 
 **<HARD-GATE>**：写入 `.rddf/improvements/<name>.md` 后，先运行
 `bash skills/rdd-workflow-brainstorm/scripts/pre_create_brainstorm_check.sh <proposal> --project-root <root>`
-校验草案满足 brainstorm HARD-GATE（5 段 section + `## Why`/`## What Changes` +
-`## Acceptance` 复选框 ≥3 + `**主题**:` 匹配 roadmap 主题）。校验失败则禁止注册到
-`improvement-suggestions.md`，强制先完成 brainstorm。
+校验草案满足 brainstorm HARD-GATE：
 
-1. 确定提案名称（kebab-case）— 如果用户未提前指定，从上一步的设计内容中提取
-2. 用批准的 5 段内容创建 <a href=".rddf/improvements/<name>.md`
+1. **YAML frontmatter**(必须以 `---` 开头 + `---` 闭合,per `_lib/planner_attach.py` L158-160 强制)— 缺失则 `rddf planner attach` 必然失败
+2. 7 段 section:`## 架构依据` / `## 范围` / `## Why` / `## What Changes` / `## Acceptance`(≥3 复选框)/ `## Capabilities` / `## Impact`
+3. `**主题**:` 字段精确匹配 `.rddf/roadmap.md` ## Phase Skeleton 表格 Theme 列
+
+校验失败则禁止注册到 `improvement-suggestions.md`,强制先完成 brainstorm。
+
+1. 确定提案名称(kebab-case)— 如果用户未提前指定,从上一步的设计内容中提取
+2. 用批准的 7 段内容创建 `.rddf/improvements/<name>.md`(必须含 YAML frontmatter)
 3. 在 `improvement-suggestions.md` 表格末尾追加行
 4. 展示最终成果
 
 ### Phase 3：引导下一步
 
-建议用户后续操作：
+建议用户后续操作:
 
-1. **审查提案** — 检查 <a href=".rddf/improvements/<name>.md` 内容是否完整准确
-2. **批准流程** — 运行 `rdd-planner` 审查该提案
-3. **跳转到 guide** — `skill_use("guide")` 查看当前项目状态
+1. **审查提案** — 检查 `.rddf/improvements/<name>.md` 内容是否完整准确(YAML frontmatter + 7 段)
+2. **attach 到 phase**:`rddf planner attach <name> --project-id "<Theme 列字符串>" --phase <phase-id>`(per `_lib/planner_attach.py` L136 校验)
+3. **批准流程** — 运行 `rdd-planner` 审查该提案
+4. **跳转到 guide** — `skill_use("guide")` 查看当前项目状态
 
 ## 输出示例
 
-### <a href=".rddf/improvements/fix-login-timeout.md`
+### `.rddf/improvements/fix-login-timeout.md`(YAML frontmatter + 7 段)
 
 ```markdown
+---
+name: fix-login-timeout
+priority: P1
+phase: phase-1
+category: core-impl
+type: feature
+状态: pending
+主题: 核心实现                # 必须从 .rddf/roadmap.md ## Phase Skeleton Theme 列精确匹配
+依赖: ADR-0010                # 逗号分隔的 ADR 编号列表
+来源: 用户反馈
+生成时间: 2026-XX-XX
+---
+
 # fix-login-timeout
 
-**优先级**: P1 | **来源**: 用户反馈
-**阶段**: default | **分类**: core-impl
-**类型**: feature
-
 ## 架构依据
-...
+...                          # 为什么需要修复
 
 ## 范围
-...
+- In Scope: ...
+- Out Scope: ...
+
+## Why
+...                          # 与"架构依据"互补的 WHY 视角
+
+## What Changes
+...                          # 具体变更范围
+
+## Acceptance
+- [ ] 验收项 1
+- [ ] 验收项 2
+- [ ] 验收项 3                # 至少 3 个 checkbox
+
+## Capabilities
+...                          # 新增能力清单
+
+## Impact
+...                          # 对系统的影响评估
 ```
 
 ### `improvement-suggestions.md` 新增行
 
 ```
-| [fix-login-timeout](.rddf/improvements/fix-login-timeout.md) | P1 | 用户反馈 | 2026-07-25 |
+| [fix-login-timeout](.rddf/improvements/fix-login-timeout.md) | P1 | 用户反馈 | 2026-XX-XX |
 ```
 
 ## 错误处理

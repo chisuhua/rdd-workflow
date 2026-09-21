@@ -1,5 +1,10 @@
-# fix-wt-scanner-strip-bug-and-untracked-coverage
-
+---
+优先级: P1
+来源: "session 2026-08-01 `skill_use(\"guide\")` — `_detect_working_tree_issues()` 把工作树修改 (` M` 前缀) 误判为 staged (`M `),并截断 path 首字符; 小型 untracked 文件 (improvements/*.md 类) 完全未上报"
+阶段: default
+分类: infra-setup
+类型: bug
+---
 **优先级**: P1 | **来源**: session 2026-08-01 `skill_use("guide")` — `_detect_working_tree_issues()` 把工作树修改 (` M` 前缀) 误判为 staged (`M `),并截断 path 首字符; 小型 untracked 文件 (improvements/*.md 类) 完全未上报
 **阶段**: default | **分类**: infra-setup
 **类型**: bug

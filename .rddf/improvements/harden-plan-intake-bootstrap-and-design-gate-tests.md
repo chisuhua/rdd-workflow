@@ -1,5 +1,11 @@
-# harden-plan-intake-bootstrap-and-design-gate-tests
-
+---
+优先级: P1
+来源: Oracle 审查（ADR-0016/ADR-0025 follow-up）
+阶段: v2.1
+分类: core-test
+类型: functional
+主题: 不适用
+---
 **优先级**: P1 | **来源**: Oracle 审查（ADR-0016/ADR-0025 follow-up）
 **阶段**: v2.1 | **分类**: core-test
 **类型**: functional

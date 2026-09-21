@@ -1,5 +1,10 @@
-# fix-design-proposal-review-approved-parsing
-
+---
+优先级: P0
+来源: "Session 复盘 2026-08-07 — guide-design 双源扫描误判已批准 proposal 为待审（可能导致重复批准 / 重复创建 openspec/changes/<name>/ / 污染 improvement-approved.md）"
+阶段: v2.1
+分类: planning
+类型: refactor
+---
 **优先级**: P0 | **来源**: Session 复盘 2026-08-07 — guide-design 双源扫描误判已批准 proposal 为待审（可能导致重复批准 / 重复创建 openspec/changes/<name>/ / 污染 improvement-approved.md）
 **阶段**: v2.1 | **分类**: planning
 **类型**: refactor

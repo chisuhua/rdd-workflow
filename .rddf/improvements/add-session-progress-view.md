@@ -1,5 +1,10 @@
-# add-session-progress-view
-
+---
+优先级: P1
+来源: "改进分析报告 #4"
+阶段: default
+分类: developer-experience
+类型: feature
+---
 **优先级**: P1 | **来源**: 改进分析报告 #4
 **阶段**: default | **分类**: developer-experience
 **类型**: feature

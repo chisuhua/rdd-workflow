@@ -1,5 +1,10 @@
-# adr-create-interactive-drafting
-
+---
+优先级: P1
+来源: 用户需求 2026-08-03 — 借鉴 grill-me 改进 adr-create (Oracle 审查修订 2026-08-03)
+阶段: v2.1
+分类: arch-design
+类型: feature
+---
 **优先级**: P1 | **来源**: 用户需求 2026-08-03 — 借鉴 grill-me 改进 adr-create (Oracle 审查修订 2026-08-03)
 **阶段**: v2.1 | **分类**: arch-design
 **类型**: feature

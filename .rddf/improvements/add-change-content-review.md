@@ -1,5 +1,10 @@
-# add-change-content-review
-
+---
+优先级: P1
+来源: add-propose-content-review 讨论 — plan 阶段 change artifact 内容审查缺位
+阶段: v2.1
+分类: quality
+类型: feature
+---
 **优先级**: P1 | **来源**: add-propose-content-review 讨论 — plan 阶段 change artifact 内容审查缺位
 **阶段**: v2.1 | **分类**: quality
 **类型**: feature

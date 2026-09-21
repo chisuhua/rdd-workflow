@@ -12,6 +12,7 @@ For **decisions** behind the design, see [`../adr/README.md`](../adr/README.md).
 |-----|-------|--------------|
 | [overview.md](overview.md) | System overview, module map, design principles | 0003, 0025, 0034 |
 | [workflow-phases.md](workflow-phases.md) | Four-stage arch → planner → builder → verifier + handoffs (v4.0.1 per ADR-0043 + ADR-0048; supersedes v3.0 five-phase) + `rdd-quick` bypass (per ADR-0047, AMENDED per ADR-0048) + **LLM-augmented P0** (per ADR-0049) | 0003, 0024, 0025, 0034, 0043, 0044, 0047, 0048, 0049 |
+| [roadmap-organization.md](roadmap-organization.md) | **NEW** Roadmap 内容组织:三层文件结构 + 主文档三大 sentinel 区域 + 唯一写入方矩阵 + Sprint/Phase 正交关系 + 主题状态词汇(roadmap 概念入门,2026-09-21 沉淀) | 0038, 0041, 0048 |
 | [v4-pipeline-data-flow.md](v4-pipeline-data-flow.md) | **NEW (v4.0.1)** Complete path topology + data flow timeline + `recommended_route` advisory signal pipeline (companion to workflow-phases.md) | 0048 |
 | [loop-engine.md](loop-engine.md) | 5 building blocks + loop/menu/hybrid modes | 0002, 0004 |
 | [state-and-events.md](state-and-events.md) | 3-layer state model | 0006, 0016 |

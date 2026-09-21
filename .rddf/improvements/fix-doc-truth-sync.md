@@ -1,5 +1,10 @@
-# fix-doc-truth-sync
-
+---
+优先级: P2
+来源: "会话深度分析 2026-07-23 #3"
+阶段: default
+分类: infra-setup
+类型: feature
+---
 **优先级**: P2 | **来源**: 会话深度分析 2026-07-23 #3
 **阶段**: default | **分类**: infra-setup
 **类型**: feature

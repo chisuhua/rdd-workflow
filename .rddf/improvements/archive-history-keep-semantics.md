@@ -1,5 +1,10 @@
-# archive-history-keep-semantics
-
+---
+优先级: P2
+来源: Session 复盘 2026-08-04 — orphaned session 清理受阻
+阶段: v2.1
+分类: core
+类型: fix
+---
 **优先级**: P2 | **来源**: Session 复盘 2026-08-04 — orphaned session 清理受阻
 **阶段**: v2.1 | **分类**: core
 **类型**: fix

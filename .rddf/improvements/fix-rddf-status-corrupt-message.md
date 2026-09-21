@@ -1,5 +1,10 @@
-# fix-rddf-status-corrupt-message
-
+---
+优先级: P1
+来源: "session 2026-08-05 `rddf status` — `.rddf/state/iteration.json` 存在且为合法 JSON, 但 schema 校验失败, CLI 误报 \"📭 iteration.json not found\" 并建议 `skill_use(\"propose\", ...)` (该建议无法修复 corruption)"
+阶段: default
+分类: infra-setup
+类型: bug
+---
 **优先级**: P1 | **来源**: session 2026-08-05 `rddf status` — `.rddf/state/iteration.json` 存在且为合法 JSON, 但 schema 校验失败, CLI 误报 "📭 iteration.json not found" 并建议 `skill_use("propose", ...)` (该建议无法修复 corruption)
 **阶段**: default | **分类**: infra-setup
 **类型**: bug

@@ -1,5 +1,10 @@
-# fix-ship-archive-resolve-lib-path
-
+---
+优先级: P1
+来源: 隔离 playground 全流程验证 — lightweight archive global install failure
+阶段: v2.1
+分类: ship
+类型: fix
+---
 **优先级**: P1 | **来源**: 隔离 playground 全流程验证 — lightweight archive global install failure
 **阶段**: v2.1 | **分类**: ship
 **类型**: fix

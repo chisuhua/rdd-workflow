@@ -1,5 +1,10 @@
-# sync-agents-md-five-stage
-
+---
+优先级: P1
+来源: 2026-08-26 文档与代码一致性审计
+阶段: default
+分类: docs
+类型: improvement
+---
 **优先级**: P1 | **来源**: 2026-08-26 文档与代码一致性审计
 **阶段**: default | **分类**: docs
 **类型**: improvement

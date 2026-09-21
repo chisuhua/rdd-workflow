@@ -1,5 +1,10 @@
-# add-env-cache-arch-discovery
-
+---
+优先级: P2
+来源: 第三方项目集成实务 — ADR 路径 / 命名差异处理
+阶段: default
+分类: general
+类型: feature
+---
 **优先级**: P2 | **来源**: 第三方项目集成实务 — ADR 路径 / 命名差异处理
 **阶段**: default | **分类**: general
 **类型**: feature

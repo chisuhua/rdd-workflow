@@ -1,5 +1,10 @@
-# update-agents-module-map
-
+---
+优先级: P1
+来源: "Oracle 代码审查 2026-07-19 遗漏 #3"
+阶段: default
+分类: general
+类型: feature
+---
 **优先级**: P1 | **来源**: Oracle 代码审查 2026-07-19 遗漏 #3
 **阶段**: default | **分类**: general
 **类型**: feature

@@ -1,5 +1,10 @@
-# add-hierarchical-roadmap-structure
-
+---
+优先级: P1
+来源: "Oracle 二轮咨询（6 维度发现）+ 用户动机澄清（跨阶段特性维护 + sub-phase 独立编辑）+ `rdd-doctor` 子技能提议"
+阶段: "v2.2 规划中（fallback v2.3）| **分类**: arch-design"
+类型: refactor
+主题: 不适用（本提案为后续 roadmap 主题机制的前置基础）
+---
 **优先级**: P1 | **来源**: Oracle 二轮咨询（6 维度发现）+ 用户动机澄清（跨阶段特性维护 + sub-phase 独立编辑）+ `rdd-doctor` 子技能提议
 **阶段**: v2.2 规划中（fallback v2.3）| **分类**: arch-design
 **类型**: refactor

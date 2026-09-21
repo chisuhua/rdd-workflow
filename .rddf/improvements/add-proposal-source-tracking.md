@@ -1,5 +1,11 @@
-# add-proposal-source-tracking
-
+---
+优先级: P2
+来源: 2026-08-27 Hybrid path reflection (本次会话 9 个 proposal 缺乏 session_id / audit_source 字段,无法追溯谁、何时、何种 session 创建)
+阶段: phase-2
+分类: governance
+类型: improvement
+主题: 2026-08-27 Hybrid path reflection (流程改进)
+---
 **优先级**: P2 | **来源**: 2026-08-27 Hybrid path reflection (本次会话 9 个 proposal 缺乏 session_id / audit_source 字段,无法追溯谁、何时、何种 session 创建)
 **阶段**: phase-2 | **分类**: governance
 **类型**: improvement

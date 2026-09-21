@@ -1,5 +1,11 @@
-# fix-rebuild-adr-index-for-0049-0050
-
+---
+优先级: P2
+来源: 2026-09-10 KNOWN_FAILURES baseline (2 个 pytest unit 失败)
+阶段: v4.x
+分类: docs-fix
+类型: bugfix
+主题: 第二波归档治理改进（ADR 索引自动同步 / CHANGELOG-USAGE 同步 / verifier-archive-gate 边界明确化 / 第 3 波 doc drift 清理）
+---
 **优先级**: P2 | **来源**: 2026-09-10 KNOWN_FAILURES baseline (2 个 pytest unit 失败)
 **阶段**: v4.x | **分类**: docs-fix | **类型**: bugfix
 **主题**: 第二波归档治理改进（ADR 索引自动同步 / CHANGELOG-USAGE 同步 / verifier-archive-gate 边界明确化 / 第 3 波 doc drift 清理）

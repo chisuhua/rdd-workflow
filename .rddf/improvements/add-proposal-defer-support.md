@@ -1,5 +1,10 @@
-# add-proposal-defer-support
-
+---
+优先级: P1
+来源: PTX-EMU 2026-07-28 实战 — split-cpptlm-core-minimal 已评估推迟但 guide-arch 无法跳过
+阶段: default
+分类: general
+类型: feature
+---
 **优先级**: P1 | **来源**: PTX-EMU 2026-07-28 实战 — split-cpptlm-core-minimal 已评估推迟但 guide-arch 无法跳过
 **阶段**: default | **分类**: general
 **类型**: feature

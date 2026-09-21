@@ -1,5 +1,11 @@
-# move-proposal-creation-to-design
-
+---
+优先级: P1
+来源: 架构评审讨论 2026-08-01
+阶段: v2.1
+分类: arch-design
+类型: refactor
+依赖: "| **特性**:"
+---
 **优先级**: P1 | **来源**: 架构评审讨论 2026-08-01
 **阶段**: v2.1 | **分类**: arch-design
 **类型**: refactor

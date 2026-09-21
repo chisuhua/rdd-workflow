@@ -1,5 +1,11 @@
-# fix-parametrize-planner-feedback-id-date
-
+---
+优先级: P2
+来源: 2026-09-10 KNOWN_FAILURES baseline (5 个 pytest unit 失败)
+阶段: v4.x
+分类: test-fix
+类型: bugfix
+主题: 多方对称 + 回归
+---
 **优先级**: P2 | **来源**: 2026-09-10 KNOWN_FAILURES baseline (5 个 pytest unit 失败)
 **阶段**: v4.x | **分类**: test-fix | **类型**: bugfix
 **主题**: 多方对称 + 回归

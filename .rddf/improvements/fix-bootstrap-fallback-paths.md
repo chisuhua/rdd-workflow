@@ -1,5 +1,10 @@
-# fix-bootstrap-fallback-paths
-
+---
+优先级: P1
+来源: 隔离 playground 全流程验证 — 第三方项目 global install fallback
+阶段: v2.1
+分类: integration
+类型: fix
+---
 **优先级**: P1 | **来源**: 隔离 playground 全流程验证 — 第三方项目 global install fallback
 **阶段**: v2.1 | **分类**: integration
 **类型**: fix

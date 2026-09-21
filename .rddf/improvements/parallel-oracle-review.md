@@ -1,5 +1,10 @@
-# parallel-oracle-review
-
+---
+优先级: P1
+来源: 会话复盘 2026-07-23 — arch Phase 5.5 Oracle 审查串行瓶颈
+阶段: v2.1
+分类: performance
+类型: feature
+---
 **优先级**: P1 | **来源**: 会话复盘 2026-07-23 — arch Phase 5.5 Oracle 审查串行瓶颈
 **阶段**: v2.1 | **分类**: performance
 **类型**: feature

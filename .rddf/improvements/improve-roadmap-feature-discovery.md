@@ -1,5 +1,11 @@
-# improve-roadmap-feature-discovery
-
+---
+优先级: P2
+来源: 2026-08-27 Hybrid path reflection (创建 feat-fix-audit-findings 后, AGENTS.md 没有引用, 未来 agent 不知道此 feature 存在)
+阶段: phase-1
+分类: governance
+类型: improvement
+主题: 2026-08-27 Hybrid path reflection (流程改进)
+---
 **优先级**: P2 | **来源**: 2026-08-27 Hybrid path reflection (创建 feat-fix-audit-findings 后, AGENTS.md 没有引用, 未来 agent 不知道此 feature 存在)
 **阶段**: phase-1 | **分类**: governance
 **类型**: improvement

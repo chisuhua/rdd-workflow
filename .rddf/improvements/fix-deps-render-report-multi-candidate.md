@@ -1,5 +1,10 @@
-# fix-deps-render-report-multi-candidate
-
+---
+优先级: P1
+来源: 会话复盘 2026-07-31 — 3 个候选 change 渲染成单个拼接字符串
+阶段: v2.1
+分类: core-impl
+类型: fix
+---
 **优先级**: P1 | **来源**: 会话复盘 2026-07-31 — 3 个候选 change 渲染成单个拼接字符串
 **阶段**: v2.1 | **分类**: core-impl
 **类型**: fix

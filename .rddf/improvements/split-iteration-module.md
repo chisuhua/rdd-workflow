@@ -1,5 +1,10 @@
-# split-iteration-module
-
+---
+优先级: P1
+来源: "Oracle 代码审查 2026-07-19 #7"
+阶段: default
+分类: general
+类型: refactor-only
+---
 **优先级**: P1 | **来源**: Oracle 代码审查 2026-07-19 #7
 **阶段**: default | **分类**: general
 **类型**: refactor-only

@@ -1,5 +1,10 @@
-# improve-ship-done-cleanup-orphan-sessions
-
+---
+优先级: P2
+来源: "session 2026-08-01 — `guide-ship` Phase 5 (ship-done) 菜单未提示存在的 orphaned rddf-sessions (本会话发现 3 个: `rds_a1b5` / `rds_1221` / `rds_0569`),用户关闭 session 后才知道 session 残留"
+阶段: default
+分类: ux
+类型: ux-improvement
+---
 **优先级**: P2 | **来源**: session 2026-08-01 — `guide-ship` Phase 5 (ship-done) 菜单未提示存在的 orphaned rddf-sessions (本会话发现 3 个: `rds_a1b5` / `rds_1221` / `rds_0569`),用户关闭 session 后才知道 session 残留
 **阶段**: default | **分类**: ux
 **类型**: ux-improvement

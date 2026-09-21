@@ -1,5 +1,11 @@
-# verifier-re-verify-archived-flag
-
+---
+优先级: P1
+来源: "2026-08-27 ship audit (rdd-verifier 默认扫描 `in_worktree/completed`, archived changes 自动排除; 但 AI agent ship 9 个 change 后想 \"复盘 AC 是否满足\" 时, verifier 无事后审计能力)"
+阶段: phase-5
+分类: governance
+类型: improvement
+主题: 2026-08-26 文档与代码一致性审计后续修复
+---
 **优先级**: P1 | **来源**: 2026-08-27 ship audit (rdd-verifier 默认扫描 `in_worktree/completed`, archived changes 自动排除; 但 AI agent ship 9 个 change 后想 "复盘 AC 是否满足" 时, verifier 无事后审计能力)
 **阶段**: phase-5 | **分类**: governance
 **类型**: improvement

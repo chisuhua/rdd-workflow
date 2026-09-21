@@ -1,5 +1,10 @@
-# fix-update-proposal-status-data-loss
-
+---
+优先级: P0
+来源: 会话复盘 2026-07-31 — 归档 3 个 change 后 improvement-approved.md 已实施表从 83 条坍缩到 1 条
+阶段: v2.1
+分类: core-impl
+类型: fix
+---
 **优先级**: P0 | **来源**: 会话复盘 2026-07-31 — 归档 3 个 change 后 improvement-approved.md 已实施表从 83 条坍缩到 1 条
 **阶段**: v2.1 | **分类**: core-impl
 **类型**: fix

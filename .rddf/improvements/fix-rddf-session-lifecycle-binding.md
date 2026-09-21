@@ -1,5 +1,10 @@
-# fix-rddf-session-lifecycle-binding
-
+---
+优先级: P1
+来源: 会话复盘 2026-07-31 — 4 阶段工作流执行中缺少 session 生命周期管理
+阶段: default
+分类: core-impl
+类型: fix
+---
 **优先级**: P1 | **来源**: 会话复盘 2026-07-31 — 4 阶段工作流执行中缺少 session 生命周期管理
 **阶段**: default | **分类**: core-impl
 **类型**: fix

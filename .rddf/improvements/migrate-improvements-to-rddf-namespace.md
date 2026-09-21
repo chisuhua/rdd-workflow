@@ -1,5 +1,10 @@
-# migrate-improvements-to-rddf-namespace
-
+---
+优先级: P0
+来源: skill-context-audit POC 2026-08-11
+阶段: v2.1
+分类: arch-design
+类型: refactor
+---
 **优先级**: P0 | **来源**: skill-context-audit POC 2026-08-11
 **阶段**: v2.1 | **分类**: arch-design
 **类型**: refactor

@@ -1,5 +1,12 @@
-# add-mcp-cross-repo-protocol
-
+---
+优先级: P1
+来源: 架构差距分析 ADR-0030 / multi-project-ai-collaborative-development Step 3
+阶段: v2.2
+分类: cross-repo-federation
+类型: feature
+依赖 ADR: ADR-0030, add-rdd-hub-cross-repo-federation
+状态: 已批准 (2026-08-15)
+---
 **优先级**: P1 | **来源**: 架构差距分析 ADR-0030 / multi-project-ai-collaborative-development Step 3
 **阶段**: v2.2 | **分类**: cross-repo-federation | **类型**: feature
 **依赖 ADR**: ADR-0030, add-rdd-hub-cross-repo-federation

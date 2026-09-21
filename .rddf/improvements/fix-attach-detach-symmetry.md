@@ -1,5 +1,10 @@
-# fix-attach-detach-symmetry
-
+---
+优先级: P1
+来源: .omo/plans/rddf-session-improvement-plan.md — W1-3
+阶段: v2.1
+分类: core
+类型: feature
+---
 **优先级**: P1 | **来源**: .omo/plans/rddf-session-improvement-plan.md — W1-3
 **阶段**: v2.1 | **分类**: core
 **类型**: feature

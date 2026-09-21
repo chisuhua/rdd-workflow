@@ -1,5 +1,10 @@
-# fix-scanner-fallback-and-orphan-archival
-
+---
+优先级: P1
+来源: "HydraForge 案例 2026-07-31 — 消费方项目调用 `skill_use(\"guide\")` 时 scanner 静默失败, 用户被迫手工绕过; rddf-session archive-history 不能清理孤儿 session"
+阶段: default
+分类: infra-setup
+类型: debt
+---
 **优先级**: P1 | **来源**: HydraForge 案例 2026-07-31 — 消费方项目调用 `skill_use("guide")` 时 scanner 静默失败, 用户被迫手工绕过; rddf-session archive-history 不能清理孤儿 session
 **阶段**: default | **分类**: infra-setup
 **类型**: debt

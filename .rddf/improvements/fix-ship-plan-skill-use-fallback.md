@@ -1,5 +1,10 @@
-# fix-ship-plan-skill-use-fallback
-
+---
+优先级: P1
+来源: 会话复盘 2026-07-31 — 3 次 worktree 创建后实施计划生成全部失败
+阶段: v2.1
+分类: core-impl
+类型: fix
+---
 **优先级**: P1 | **来源**: 会话复盘 2026-07-31 — 3 次 worktree 创建后实施计划生成全部失败
 **阶段**: v2.1 | **分类**: core-impl
 **类型**: fix

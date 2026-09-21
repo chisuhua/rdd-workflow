@@ -1,5 +1,10 @@
-# improve-openspec-test-change-support
-
+---
+优先级: P0
+来源: "改进分析报告 #2"
+阶段: default
+分类: developer-experience
+类型: test-only
+---
 **优先级**: P0 | **来源**: 改进分析报告 #2
 **阶段**: default | **分类**: developer-experience
 **类型**: test-only

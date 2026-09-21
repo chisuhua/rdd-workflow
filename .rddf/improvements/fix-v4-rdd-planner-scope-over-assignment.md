@@ -1,5 +1,12 @@
-# fix-v4-rdd-planner-scope-over-assignment
-
+---
+优先级: P1
+来源: "2026-09-09 rdd-planner 流程回归审查 + Oracle 架构审查（`ses_f7a9e01dbffe2Lqu8jYjg4YvL2`）"
+阶段: phase-3
+分类: architecture-governance
+类型: improvement
+主题: 2026-08-26 文档与代码一致性审计后续修复（架构级）
+依赖: 无（独立）
+---
 **优先级**: P1 | **来源**: 2026-09-09 rdd-planner 流程回归审查 + Oracle 架构审查（`ses_f7a9e01dbffe2Lqu8jYjg4YvL2`）
 **阶段**: phase-3 | **分类**: architecture-governance
 **类型**: improvement

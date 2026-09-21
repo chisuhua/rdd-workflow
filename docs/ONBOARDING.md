@@ -220,6 +220,7 @@ skill_use("rdd-workflow-writing-plans")
 |---|---|---|
 | **1** | 从 README 出发 — 项目全景认知 | `README.md` |
 | **2** | USAGE.md — 完整使用指南与核心概念 | `USAGE.md` |
+| **2.5** | **Roadmap 内容组织(roadmap 概念入门)** — Phase/Sub-phase/Feature/Theme/Sprint 5 维模型 + 主文档 sentinel 区域 + 唯一写入方矩阵 | `docs/architecture/roadmap-organization.md` |
 | **3** | INSTALL.md + install.sh — 技能如何进入项目 | `INSTALL.md`, `install.sh`, `package.json` |
 | **4** | guide.md — 工作流推荐器 | `guide.md` |
 | **5** | 四阶段状态机总览 | `skills/rdd-arch/SKILL.md`, `skills/rdd-planner/SKILL.md`, `skills/rdd-builder/SKILL.md`, `skills/rdd-verifier/SKILL.md`, `skills/rdd-quick/SKILL.md` |

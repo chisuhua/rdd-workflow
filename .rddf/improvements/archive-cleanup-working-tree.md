@@ -1,5 +1,10 @@
-# archive-cleanup-working-tree
-
+---
+优先级: P1
+来源: 会话复盘 2026-07-23 — plan 归档后残留 deleted 文件
+阶段: v2.1
+分类: core
+类型: feature
+---
 **优先级**: P1 | **来源**: 会话复盘 2026-07-23 — plan 归档后残留 deleted 文件
 **阶段**: v2.1 | **分类**: core
 **类型**: feature

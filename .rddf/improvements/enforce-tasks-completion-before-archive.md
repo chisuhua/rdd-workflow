@@ -1,5 +1,10 @@
-# enforce-tasks-completion-before-archive
-
+---
+优先级: P2
+来源: 审计 9 个归档 change 时发现 tasks.md 完成度参差不齐
+阶段: default
+分类: quality
+类型: debt
+---
 **优先级**: P2 | **来源**: 审计 9 个归档 change 时发现 tasks.md 完成度参差不齐
 **阶段**: default | **分类**: quality
 **类型**: debt

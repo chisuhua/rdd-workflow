@@ -1,5 +1,10 @@
-# add-rdd-doctor-skill
-
+---
+优先级: P1
+来源: 用户提议 + brainstorm 2026-08-07
+阶段: v2.1
+分类: infra-setup
+类型: feature
+---
 **优先级**: P1 | **来源**: 用户提议 + brainstorm 2026-08-07
 **阶段**: v2.1 | **分类**: infra-setup | **类型**: feature
 

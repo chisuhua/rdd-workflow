@@ -1,5 +1,10 @@
-# fix-lsp-dash-bridge
-
+---
+优先级: P0
+来源: "改进分析报告 #1"
+阶段: default
+分类: developer-experience
+类型: test-only
+---
 **优先级**: P0 | **来源**: 改进分析报告 #1
 **阶段**: default | **分类**: developer-experience
 **类型**: test-only

@@ -1,5 +1,11 @@
-# fix-generator-scope-extraction
-
+---
+优先级: P1
+来源: Oracle 审查 + dogfooding 实战发现
+阶段: v2.1
+分类: core-impl
+类型: bug-fix
+主题: 不适用
+---
 **优先级**: P1 | **来源**: Oracle 审查 + dogfooding 实战发现
 **阶段**: v2.1 | **分类**: core-impl
 **类型**: bug-fix

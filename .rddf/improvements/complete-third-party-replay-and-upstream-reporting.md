@@ -1,5 +1,11 @@
-# complete-third-party-replay-and-upstream-reporting
-
+---
+优先级: P0
+来源: Oracle 审查 + 第三方项目使用场景复盘
+阶段: v2.1
+分类: core-impl
+类型: functional
+主题: 第三方项目运行可观测性与上游反馈闭环
+---
 **优先级**: P0 | **来源**: Oracle 审查 + 第三方项目使用场景复盘
 **阶段**: v2.1 | **分类**: core-impl
 **类型**: functional

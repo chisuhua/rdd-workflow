@@ -1,5 +1,10 @@
-# validate-feature-name
-
+---
+优先级: P1
+来源: 用户讨论 2026-08-10 — feature 视图 typo 风险（评估改进点时确认 high ROI）
+阶段: v2.1
+分类: planning
+类型: feature
+---
 **优先级**: P1 | **来源**: 用户讨论 2026-08-10 — feature 视图 typo 风险（评估改进点时确认 high ROI）
 **阶段**: v2.1 | **分类**: planning | **类型**: feature
 

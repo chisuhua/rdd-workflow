@@ -1,5 +1,10 @@
-# fix-archive-iteration-sync
-
+---
+优先级: P0
+来源: "Session 复盘 2026-08-05 — 在 UsrLinuxEmu 上 sync `stage4-l2-foundation-removal-*` 5 个 change 的 iteration.json 状态时，发现 archive commit 没有自动 patch iteration.json"
+阶段: v2.1
+分类: infra-setup
+类型: bug
+---
 **优先级**: P0 | **来源**: Session 复盘 2026-08-05 — 在 UsrLinuxEmu 上 sync `stage4-l2-foundation-removal-*` 5 个 change 的 iteration.json 状态时，发现 archive commit 没有自动 patch iteration.json
 **阶段**: v2.1 | **分类**: infra-setup
 **类型**: bug

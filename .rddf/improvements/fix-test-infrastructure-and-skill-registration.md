@@ -1,5 +1,10 @@
-# fix-test-infrastructure-and-skill-registration
-
+---
+优先级: P2
+来源: 会话复盘 2026-07-31 — bats 基础设施损坏 + 9 个 Python 测试持续失败
+阶段: default
+分类: core-test
+类型: fix
+---
 **优先级**: P2 | **来源**: 会话复盘 2026-07-31 — bats 基础设施损坏 + 9 个 Python 测试持续失败
 **阶段**: default | **分类**: core-test
 **类型**: fix

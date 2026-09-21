@@ -1,5 +1,10 @@
-# guide-plan-fallback-direct-create
-
+---
+优先级: P1
+来源: Session 复盘 2026-07-26 — 成熟项目 dead-end
+阶段: v2.1
+分类: planning
+类型: feature
+---
 **优先级**: P1 | **来源**: Session 复盘 2026-07-26 — 成熟项目 dead-end
 **阶段**: v2.1 | **分类**: planning
 **类型**: feature

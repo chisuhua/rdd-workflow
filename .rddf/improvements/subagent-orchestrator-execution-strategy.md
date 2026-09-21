@@ -1,5 +1,10 @@
-# subagent-orchestrator-execution-strategy
-
+---
+优先级: P0
+来源: 2026-08-04 session 复盘(5 changes ship 时子代理配额耗尽)
+阶段: default
+分类: core-impl
+类型: refactor
+---
 **优先级**: P0 | **来源**: 2026-08-04 session 复盘(5 changes ship 时子代理配额耗尽)
 **阶段**: default | **分类**: core-impl
 **类型**: refactor

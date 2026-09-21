@@ -1,5 +1,10 @@
-# fix-post-flow-classifier-ordering
-
+---
+优先级: P2
+来源: Oracle 复核 2026-08-24(G5)
+阶段: v2.1.x
+分类: infra-quality
+类型: fix
+---
 **优先级**: P2 | **来源**: Oracle 复核 2026-08-24(G5)
 **阶段**: v2.1.x | **分类**: infra-quality | **类型**: fix
 

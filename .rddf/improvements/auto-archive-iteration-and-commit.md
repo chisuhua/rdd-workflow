@@ -1,5 +1,11 @@
-# auto-archive-iteration-and-commit
-
+---
+优先级: P0
+来源: 2026-08-27 ship audit (AI agent 调用手工 archive 路径而非 archive_change_for_mode, 需手工更新 iteration.json + 手工 commit archive moves)
+阶段: phase-3
+分类: governance
+类型: improvement
+主题: 2026-08-27 文档与代码一致性审计后续修复
+---
 **优先级**: P0 | **来源**: 2026-08-27 ship audit (AI agent 调用手工 archive 路径而非 archive_change_for_mode, 需手工更新 iteration.json + 手工 commit archive moves)
 **阶段**: phase-3 | **分类**: governance
 **类型**: improvement

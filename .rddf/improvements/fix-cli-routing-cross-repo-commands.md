@@ -1,5 +1,13 @@
-# fix-cli-routing-cross-repo-commands
-
+---
+优先级: P1
+来源: Oracle 审查 ADR-0030/ADR-0031 (ses_fecf9715affebqMTQnuYJMEEL7) / HIGH
+阶段: v2.1.x patch
+分类: cross-repo-federation
+类型: bugfix
+依赖 ADR: ADR-0030
+状态: Proposed (2026-08-18)
+关系: "与 `complete-add-contract-lint-ci-gate` 同模式（已修 `rddf contract-check`, 本 change 修剩余 3 个 cross-repo CLI）"
+---
 **优先级**: P1 | **来源**: Oracle 审查 ADR-0030/ADR-0031 (ses_fecf9715affebqMTQnuYJMEEL7) / HIGH
 **阶段**: v2.1.x patch | **分类**: cross-repo-federation | **类型**: bugfix
 **依赖 ADR**: ADR-0030

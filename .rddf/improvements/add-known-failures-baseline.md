@@ -1,5 +1,10 @@
-# add-known-failures-baseline
-
+---
+优先级: P3
+来源: 2026-08-03 HydraForge guide-ship 会话复盘
+阶段: default
+分类: core-test
+类型: refactor
+---
 **优先级**: P3 | **来源**: 2026-08-03 HydraForge guide-ship 会话复盘
 **阶段**: default | **分类**: core-test
 **类型**: refactor

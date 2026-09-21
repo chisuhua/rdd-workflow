@@ -1,5 +1,12 @@
-# fix-doc-drift-followup-3
-
+---
+优先级: P1
+来源: 2026-09-09 文档与代码一致性审计（第 3 波）
+阶段: default
+分类: docs
+类型: improvement
+状态: "⏳ 待 `rdd-planner` 审查"
+依赖: "本提案建立在已完成 `fix-doc-drift-v4-architecture` (commit f4d675b, 已 archived) + 待归档 `docs-v4-sync-followup-v2` 之上；不与前两批重叠。"
+---
 **优先级**: P1 | **来源**: 2026-09-09 文档与代码一致性审计（第 3 波）
 **阶段**: default | **分类**: docs
 **类型**: improvement

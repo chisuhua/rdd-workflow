@@ -1,5 +1,10 @@
-# execute-gate-unified-regression
-
+---
+优先级: P2
+来源: Session 复盘 2026-08-04 — Execute gate 回归覆盖不均
+阶段: v2.1
+分类: quality
+类型: feature
+---
 **优先级**: P2 | **来源**: Session 复盘 2026-08-04 — Execute gate 回归覆盖不均
 **阶段**: v2.1 | **分类**: quality
 **类型**: feature

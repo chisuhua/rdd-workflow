@@ -1,5 +1,11 @@
-# archive-cleanup-plan-files-extension
-
+---
+优先级: P2
+来源: add-rdd-doctor-skill archive 复盘 2026-08-08
+阶段: v2.2
+分类: core
+类型: bugfix
+evolved-from: "\"archive-cleanup-plan-files\"（P2, 2026-07-24 已落地）"
+---
 **优先级**: P2 | **来源**: add-rdd-doctor-skill archive 复盘 2026-08-08
 **阶段**: v2.2 | **分类**: core | **类型**: bugfix
 **evolved-from**: "archive-cleanup-plan-files"（P2, 2026-07-24 已落地）

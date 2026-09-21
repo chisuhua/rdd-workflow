@@ -1,5 +1,10 @@
-# auto-wave-scheduler
-
+---
+优先级: P0
+来源: "复盘改进 #3 + #4 — 自动 Wave 调度 + iteration 状态自动化"
+阶段: v2.1
+分类: core
+类型: feature
+---
 **优先级**: P0 | **来源**: 复盘改进 #3 + #4 — 自动 Wave 调度 + iteration 状态自动化
 **阶段**: v2.1 | **分类**: core
 **类型**: feature

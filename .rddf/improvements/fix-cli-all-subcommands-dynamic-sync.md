@@ -1,5 +1,10 @@
-# fix-cli-all-subcommands-dynamic-sync
-
+---
+优先级: P1
+来源: "2026-08-31 ship 阶段回归门发现 — `test_cli_all_subcommands.py::ALL_SUBCOMMANDS` tuple 未包含新加的子命令 `hub` / `scheduler`"
+阶段: v2.2
+分类: infra-setup / 测试基建
+类型: bug fix
+---
 **优先级**: P1 | **来源**: 2026-08-31 ship 阶段回归门发现 — `test_cli_all_subcommands.py::ALL_SUBCOMMANDS` tuple 未包含新加的子命令 `hub` / `scheduler`
 **阶段**: v2.2 | **分类**: infra-setup / 测试基建
 **类型**: bug fix

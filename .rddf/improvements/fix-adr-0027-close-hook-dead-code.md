@@ -1,5 +1,10 @@
-# fix-adr-0027-close-hook-dead-code
-
+---
+优先级: P1
+来源: Oracle 复核 2026-08-24(G1 + G2)
+阶段: v2.1.x
+分类: infra-quality
+类型: fix
+---
 **优先级**: P1 | **来源**: Oracle 复核 2026-08-24(G1 + G2)
 **阶段**: v2.1.x | **分类**: infra-quality | **类型**: fix
 

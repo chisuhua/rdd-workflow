@@ -1,5 +1,11 @@
-# reconcile-iteration-after-archive
-
+---
+优先级: P0
+来源: 2026-08-27 ship audit (3 P1 docs-consistency changes 已 archive 但 iteration 仍 proposed, rdd-verifier 扫描空队列)
+阶段: phase-3
+分类: docs
+类型: data-fixup
+主题: 2026-08-26 文档与代码一致性审计后续修复
+---
 **优先级**: P0 | **来源**: 2026-08-27 ship audit (3 P1 docs-consistency changes 已 archive 但 iteration 仍 proposed, rdd-verifier 扫描空队列)
 **阶段**: phase-3 | **分类**: docs
 **类型**: data-fixup

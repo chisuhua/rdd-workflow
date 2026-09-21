@@ -1,5 +1,10 @@
-# fix-arch-env-check-adr-count-bug
-
+---
+优先级: P2
+来源: 2026-07-27 会话复盘
+阶段: default
+分类: core-impl
+类型: bug
+---
 **优先级**: P2 | **来源**: 2026-07-27 会话复盘
 **阶段**: default | **分类**: core-impl
 **类型**: bug

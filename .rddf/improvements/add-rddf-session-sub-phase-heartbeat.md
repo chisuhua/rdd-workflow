@@ -1,5 +1,10 @@
-# add-rddf-session-sub-phase-heartbeat
-
+---
+优先级: P1
+来源: 2026-08-02 ship 复盘
+阶段: v2.1
+分类: observability
+类型: feature
+---
 **优先级**: P1 | **来源**: 2026-08-02 ship 复盘
 **阶段**: v2.1 | **分类**: observability
 **类型**: feature

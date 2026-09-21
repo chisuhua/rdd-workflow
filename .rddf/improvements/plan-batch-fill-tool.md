@@ -1,5 +1,11 @@
-# plan-batch-fill-tool
-
+---
+优先级: P1
+来源: 2026-08-27 ship audit (9 个 design-pre-created change 时, AI agent 创建 tmp_batch_fill.py 手写批量逻辑 fill 9 个 change, 应提供原生工具)
+阶段: phase-2
+分类: governance
+类型: improvement
+主题: 2026-08-27 文档与代码一致性审计后续修复
+---
 **优先级**: P1 | **来源**: 2026-08-27 ship audit (9 个 design-pre-created change 时, AI agent 创建 tmp_batch_fill.py 手写批量逻辑 fill 9 个 change, 应提供原生工具)
 **阶段**: phase-2 | **分类**: governance
 **类型**: improvement

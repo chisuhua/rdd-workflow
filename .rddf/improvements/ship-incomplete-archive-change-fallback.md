@@ -1,5 +1,10 @@
-# ship-incomplete-archive-change-fallback
-
+---
+优先级: P1
+来源: "UsrLinuxEmu hal-iommu-full 执行复盘: 归档时自动将未完成任务转为 change 候选"
+阶段: v2.1
+分类: core
+类型: feature
+---
 **优先级**: P1 | **来源**: UsrLinuxEmu hal-iommu-full 执行复盘: 归档时自动将未完成任务转为 change 候选
 **阶段**: v2.1 | **分类**: core
 **类型**: feature

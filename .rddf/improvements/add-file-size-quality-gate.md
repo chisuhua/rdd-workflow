@@ -1,5 +1,10 @@
-# add-file-size-quality-gate
-
+---
+优先级: P2
+来源: "改进分析报告 #8"
+阶段: default
+分类: code-quality
+类型: feature
+---
 **优先级**: P2 | **来源**: 改进分析报告 #8
 **阶段**: default | **分类**: code-quality
 **类型**: feature

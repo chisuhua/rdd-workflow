@@ -1,5 +1,11 @@
-# add-cli-coverage-rdd-doctor-roadmap-rdd-hub
-
+---
+优先级: P1
+来源: "用户体验反馈（`rddf <skill>` 命名空间不完整，3 个核心 skill 缺 CLI 入口）"
+阶段: v2.2
+分类: core-impl
+类型: feature
+特性: __ungrouped__
+---
 **优先级**: P1 | **来源**: 用户体验反馈（`rddf <skill>` 命名空间不完整，3 个核心 skill 缺 CLI 入口）
 **阶段**: v2.2 | **分类**: core-impl
 **类型**: feature

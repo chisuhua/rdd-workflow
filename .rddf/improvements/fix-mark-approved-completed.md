@@ -1,5 +1,10 @@
-# fix-mark-approved-completed
-
+---
+优先级: P1
+来源: 会话复盘 2026-07-23 — improvement-approved.md 表头重复 bug
+阶段: v2.1
+分类: core
+类型: feature
+---
 **优先级**: P1 | **来源**: 会话复盘 2026-07-23 — improvement-approved.md 表头重复 bug
 **阶段**: v2.1 | **分类**: core
 **类型**: feature

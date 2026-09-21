@@ -1,5 +1,10 @@
-# adr-creation-architecture-gate
-
+---
+优先级: P1
+来源: Oracle 审查 2026-07-25 — ADR 创建缺少架构影响力门控
+阶段: v2.1
+分类: core
+类型: feature
+---
 **优先级**: P1 | **来源**: Oracle 审查 2026-07-25 — ADR 创建缺少架构影响力门控
 **阶段**: v2.1 | **分类**: core
 **类型**: feature

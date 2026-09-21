@@ -1,5 +1,10 @@
-# add-regression-gate-timeout-protection
-
+---
+优先级: P2
+来源: "2026-08-31 ship 阶段复盘 — 回归门 `./test.sh --full --regression` 一次 ~8 分钟，期间无法有效监控/中断"
+阶段: v2.2
+分类: infra-setup / 测试基建
+类型: feature / robustness
+---
 **优先级**: P2 | **来源**: 2026-08-31 ship 阶段复盘 — 回归门 `./test.sh --full --regression` 一次 ~8 分钟，期间无法有效监控/中断
 **阶段**: v2.2 | **分类**: infra-setup / 测试基建
 **类型**: feature / robustness

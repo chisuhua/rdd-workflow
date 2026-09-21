@@ -1,5 +1,11 @@
-# add-feature-fragment-command
-
+---
+优先级: P1
+来源: user request (add-feature 选项) + 2 轮 Oracle 评审 (bg_03696e35, bg_b16179e9) + add-hierarchical-roadmap-structure 场景 3 补全
+阶段: v2.2 规划中
+分类: arch-design
+类型: feat
+主题: 不适用（roadmap 操作原语补全，非 roadmap 主题机制）
+---
 **优先级**: P1 | **来源**: user request (add-feature 选项) + 2 轮 Oracle 评审 (bg_03696e35, bg_b16179e9) + add-hierarchical-roadmap-structure 场景 3 补全
 **阶段**: v2.2 规划中 | **分类**: arch-design
 **类型**: feat

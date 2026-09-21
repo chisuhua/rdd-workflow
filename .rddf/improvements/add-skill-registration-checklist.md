@@ -1,5 +1,10 @@
-# add-skill-registration-checklist
-
+---
+优先级: P2
+来源: 2026-08-03 extract-rdd-env-check-from-guide-arch 会话复盘
+阶段: default
+分类: core-test
+类型: refactor
+---
 **优先级**: P2 | **来源**: 2026-08-03 extract-rdd-env-check-from-guide-arch 会话复盘
 **阶段**: default | **分类**: core-test
 **类型**: refactor

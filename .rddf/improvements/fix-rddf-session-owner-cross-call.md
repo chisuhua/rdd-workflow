@@ -1,5 +1,10 @@
-# fix-rddf-session-owner-cross-call
-
+---
+优先级: P1
+来源: Session 复盘 2026-07-26 — session close owner mismatch
+阶段: v2.1
+分类: planning
+类型: fix
+---
 **优先级**: P1 | **来源**: Session 复盘 2026-07-26 — session close owner mismatch
 **阶段**: v2.1 | **分类**: planning
 **类型**: fix

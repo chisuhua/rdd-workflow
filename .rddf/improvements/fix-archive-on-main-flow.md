@@ -1,5 +1,10 @@
-# fix-archive-on-main-flow
-
+---
+优先级: P0
+来源: "Session 复盘 2026-08-05 UsrLinuxEmu — `archive_on_main.sh` helper (`f56df0d chore(tools): add archive_on_main.sh helper for direct-on-main archive flow`) 被使用 5 次（5 个 `stage4-l2-foundation-removal-*` change 的 archive commit），但每次都没有调用 `sync_iteration_after_archive`；archive 动作与 iteration.json patch 完全解耦"
+阶段: v2.1
+分类: infra-setup
+类型: bug
+---
 **优先级**: P0 | **来源**: Session 复盘 2026-08-05 UsrLinuxEmu — `archive_on_main.sh` helper (`f56df0d chore(tools): add archive_on_main.sh helper for direct-on-main archive flow`) 被使用 5 次（5 个 `stage4-l2-foundation-removal-*` change 的 archive commit），但每次都没有调用 `sync_iteration_after_archive`；archive 动作与 iteration.json patch 完全解耦
 **阶段**: v2.1 | **分类**: infra-setup
 **类型**: bug

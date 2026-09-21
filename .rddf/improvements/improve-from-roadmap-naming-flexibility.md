@@ -1,5 +1,11 @@
-# improve-from-roadmap-naming-flexibility
-
+---
+优先级: P2
+来源: "2026-08-27 Hybrid path reflection (调用 `from_roadmap.sh` 时遇到命名约束 `from-roadmap-<phase>-<category>`, 只能创建 1 个固定命名的 scaffold, 9 个多 proposal batch 创建不适用)"
+阶段: phase-2
+分类: governance
+类型: improvement
+主题: 2026-08-27 Hybrid path reflection (流程改进)
+---
 **优先级**: P2 | **来源**: 2026-08-27 Hybrid path reflection (调用 `from_roadmap.sh` 时遇到命名约束 `from-roadmap-<phase>-<category>`, 只能创建 1 个固定命名的 scaffold, 9 个多 proposal batch 创建不适用)
 **阶段**: phase-2 | **分类**: governance
 **类型**: improvement

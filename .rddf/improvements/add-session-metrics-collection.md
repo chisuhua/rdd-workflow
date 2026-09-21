@@ -1,5 +1,10 @@
-# add-session-metrics-collection
-
+---
+优先级: P2
+来源: 2026-08-31 session 复盘 — 5 阶段工作流无集中式耗时/工具调用/重试指标，无法量化改进效果
+阶段: v2.2
+分类: observability / session
+类型: feature
+---
 **优先级**: P2 | **来源**: 2026-08-31 session 复盘 — 5 阶段工作流无集中式耗时/工具调用/重试指标，无法量化改进效果
 **阶段**: v2.2 | **分类**: observability / session
 **类型**: feature

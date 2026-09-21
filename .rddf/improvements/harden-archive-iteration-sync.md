@@ -1,5 +1,10 @@
-# harden-archive-iteration-sync
-
+---
+优先级: P1
+来源: 2026-08-16 post-archive 验证发现 backfill-proposal-approved-col4 / enforce-plan-tdd-5step-new iteration.json sync 漏写
+阶段: v2.2
+分类: quality
+类型: fix
+---
 **优先级**: P1 | **来源**: 2026-08-16 post-archive 验证发现 backfill-proposal-approved-col4 / enforce-plan-tdd-5step-new iteration.json sync 漏写
 **阶段**: v2.2 | **分类**: quality
 **类型**: fix

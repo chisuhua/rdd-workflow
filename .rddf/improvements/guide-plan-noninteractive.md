@@ -1,5 +1,10 @@
-# guide-plan-noninteractive
-
+---
+优先级: P0
+来源: "复盘改进 #1 — guide-plan 无交互模式"
+阶段: v2.1
+分类: core
+类型: feature
+---
 **优先级**: P0 | **来源**: 复盘改进 #1 — guide-plan 无交互模式
 **阶段**: v2.1 | **分类**: core
 **类型**: feature

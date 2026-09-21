@@ -1,5 +1,9 @@
-# fix-rddf-init-broken-layout
-
+---
+优先级: P1
+阶段: infra-setup
+分类: infra-setup
+类型: refactor + bugfix
+---
 > **状态**: Proposed
 > **日期**: 2026-08-05
 > **来源**: PTX-EMU 全 rddf 子命令验证实战

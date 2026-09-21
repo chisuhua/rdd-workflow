@@ -1,7 +1,7 @@
 ---
 name: rdd-doctor
 description: |
-  Manual read-only diagnostic tool for 11 file categories.
+  Manual read-only diagnostic tool for 12 file categories.
 
   Invoke when BOTH:
     1. Workflow "feels broken" but no specific error

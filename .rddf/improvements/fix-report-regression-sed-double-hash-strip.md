@@ -1,5 +1,10 @@
-# fix-report-regression-sed-double-hash-strip
-
+---
+优先级: P0
+来源: "2026-08-31 ship 阶段回归门发现 — KNOWN_FAILURES 条目 `every real ADR has a ## 决策 or ## Decision section` 无法被报告脚本承认"
+阶段: v2.2
+分类: infra-setup / 测试基建
+类型: bug fix
+---
 **优先级**: P0 | **来源**: 2026-08-31 ship 阶段回归门发现 — KNOWN_FAILURES 条目 `every real ADR has a ## 决策 or ## Decision section` 无法被报告脚本承认
 **阶段**: v2.2 | **分类**: infra-setup / 测试基建
 **类型**: bug fix

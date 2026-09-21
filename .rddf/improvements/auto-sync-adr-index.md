@@ -1,5 +1,10 @@
-# auto-sync-adr-index
-
+---
+优先级: P2
+来源: "改进分析报告 #7"
+阶段: default
+分类: maintenance
+类型: test-only
+---
 **优先级**: P2 | **来源**: 改进分析报告 #7
 **阶段**: default | **分类**: maintenance
 **类型**: test-only

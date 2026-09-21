@@ -1,5 +1,10 @@
-# fix-review-debt-recorded-gate
-
+---
+优先级: P2
+来源: Oracle 复核 2026-08-24(G5 + 初版 P1-B + 初版 P2-C 三合并)
+阶段: v2.1.x
+分类: infra-quality
+类型: fix
+---
 **优先级**: P2 | **来源**: Oracle 复核 2026-08-24(G5 + 初版 P1-B + 初版 P2-C 三合并)
 **阶段**: v2.1.x | **分类**: infra-quality | **类型**: fix
 

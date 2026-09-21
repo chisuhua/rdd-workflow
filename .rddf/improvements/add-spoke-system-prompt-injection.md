@@ -1,5 +1,13 @@
-# add-spoke-system-prompt-injection
-
+---
+优先级: P1
+来源: "架构差距分析 ADR-0030 / multi-project-ai-collaborative-development §3 差距 #8 + Step 3.5"
+阶段: v2.2
+分类: cross-repo-federation
+类型: feature
+依赖 ADR: ADR-0030, add-rdd-hub-bootstrap, add-mcp-cross-repo-protocol
+状态: 已批准 (2026-08-15)
+关联差距: "multi-project-ai-collaborative-development §3 差距 #8"
+---
 **优先级**: P1 | **来源**: 架构差距分析 ADR-0030 / multi-project-ai-collaborative-development §3 差距 #8 + Step 3.5
 **阶段**: v2.2 | **分类**: cross-repo-federation | **类型**: feature
 **依赖 ADR**: ADR-0030, add-rdd-hub-bootstrap, add-mcp-cross-repo-protocol

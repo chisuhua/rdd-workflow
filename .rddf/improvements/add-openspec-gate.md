@@ -1,5 +1,10 @@
-# add-openspec-gate
-
+---
+优先级: P0
+来源: UsrLinuxEmu backfill 事件复盘 2026-07-27 — staged code 缺少 openspec change 联动检测
+阶段: v2.1
+分类: quality
+类型: feature
+---
 **优先级**: P0 | **来源**: UsrLinuxEmu backfill 事件复盘 2026-07-27 — staged code 缺少 openspec change 联动检测
 **阶段**: v2.1 | **分类**: quality
 **类型**: feature

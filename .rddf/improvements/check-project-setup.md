@@ -1,5 +1,10 @@
-# check-project-setup
-
+---
+优先级: P1
+来源: 用户反馈 — 启动无 gitignore 知识门槛 + 硬/软门控不对称
+阶段: v2.2
+分类: infra-setup
+类型: feature
+---
 **优先级**: P1 | **来源**: 用户反馈 — 启动无 gitignore 知识门槛 + 硬/软门控不对称
 **阶段**: v2.2 | **分类**: infra-setup
 **类型**: feature

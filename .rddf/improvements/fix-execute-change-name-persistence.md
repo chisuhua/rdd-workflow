@@ -1,5 +1,10 @@
-# fix-execute-change-name-persistence
-
+---
+优先级: P1
+来源: 2026-08-03 HydraForge guide-ship 会话复盘
+阶段: default
+分类: core-impl
+类型: bugfix
+---
 **优先级**: P1 | **来源**: 2026-08-03 HydraForge guide-ship 会话复盘
 **阶段**: default | **分类**: core-impl
 **类型**: bugfix

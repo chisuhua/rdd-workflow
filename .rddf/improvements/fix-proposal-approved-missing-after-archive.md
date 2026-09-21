@@ -1,5 +1,10 @@
-# fix-proposal-approved-missing-after-archive
-
+---
+优先级: P1
+来源: 2026-08-08 archive-cleanup-plan-files-extension 复盘
+阶段: v2.2
+分类: rdd-workflow
+类型: bugfix
+---
 **优先级**: P1 | **来源**: 2026-08-08 archive-cleanup-plan-files-extension 复盘
 **阶段**: v2.2 | **分类**: rdd-workflow | **类型**: bugfix
 

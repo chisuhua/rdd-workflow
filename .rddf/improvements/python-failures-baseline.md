@@ -1,5 +1,10 @@
-# python-failures-baseline
-
+---
+优先级: P3
+来源: Session 复盘 2026-08-04 — 存量 Python 测试失败无基线
+阶段: v2.1
+分类: quality
+类型: fix
+---
 **优先级**: P3 | **来源**: Session 复盘 2026-08-04 — 存量 Python 测试失败无基线
 **阶段**: v2.1 | **分类**: quality
 **类型**: fix

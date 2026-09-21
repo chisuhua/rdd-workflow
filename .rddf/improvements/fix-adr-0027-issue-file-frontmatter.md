@@ -1,5 +1,10 @@
-# fix-adr-0027-issue-file-frontmatter
-
+---
+优先级: P1
+来源: Oracle 复核 2026-08-24(P1-A 强化)+ initial 4 文档 §4 自检
+阶段: v2.1.x
+分类: infra-quality
+类型: fix
+---
 **优先级**: P1 | **来源**: Oracle 复核 2026-08-24(P1-A 强化)+ initial 4 文档 §4 自检
 **阶段**: v2.1.x | **分类**: infra-quality | **类型**: fix
 

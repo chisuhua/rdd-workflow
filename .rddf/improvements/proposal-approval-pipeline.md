@@ -1,5 +1,8 @@
-# proposal-approval-pipeline
-
+---
+优先级: "P0 &nbsp;|&nbsp; **来源**: 架构改进 — 提案审批管线缺失"
+阶段: "v2.1 &nbsp;|&nbsp; **分类**: core"
+类型: feature
+---
 **优先级**: P0 &nbsp;|&nbsp; **来源**: 架构改进 — 提案审批管线缺失
 **阶段**: v2.1 &nbsp;|&nbsp; **分类**: core
 **类型**: feature

@@ -1,5 +1,10 @@
-# add-rddf-concurrency-tests
-
+---
+优先级: P1
+来源: .omo/plans/rddf-session-improvement-plan.md — W1-2
+阶段: v2.1
+分类: core
+类型: test-only
+---
 **优先级**: P1 | **来源**: .omo/plans/rddf-session-improvement-plan.md — W1-2
 **阶段**: v2.1 | **分类**: core
 **类型**: test-only

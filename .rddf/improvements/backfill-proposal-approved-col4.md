@@ -1,5 +1,10 @@
-# backfill-proposal-approved-col4
-
+---
+优先级: P2
+来源: rdd-doctor 诊断 2026-08-16 — proposal-table 类别 150 WARNING
+阶段: v2.2
+分类: quality
+类型: debt
+---
 **优先级**: P2 | **来源**: rdd-doctor 诊断 2026-08-16 — proposal-table 类别 150 WARNING
 **阶段**: v2.2 | **分类**: quality
 **类型**: debt

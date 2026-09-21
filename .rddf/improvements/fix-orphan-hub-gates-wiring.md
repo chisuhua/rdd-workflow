@@ -1,5 +1,13 @@
-# fix-orphan-hub-gates-wiring
-
+---
+优先级: P1
+来源: Oracle 审查 ADR-0030/ADR-0031 (ses_fecf9715affebqMTQnuYJMEEL7) / CRITICAL C3
+阶段: v2.1.x patch
+分类: core-impl
+类型: bugfix
+依赖 ADR: ADR-0031, ADR-0025
+状态: Proposed (2026-08-18)
+关系: "与 `fix-adr-0031-safety-gate-substantiation` 配对（A1 补 exit-3 实施, 本 change 补 design-done 端 gate 接线）"
+---
 **优先级**: P1 | **来源**: Oracle 审查 ADR-0030/ADR-0031 (ses_fecf9715affebqMTQnuYJMEEL7) / CRITICAL C3
 **阶段**: v2.1.x patch | **分类**: core-impl | **类型**: bugfix
 **依赖 ADR**: ADR-0031, ADR-0025

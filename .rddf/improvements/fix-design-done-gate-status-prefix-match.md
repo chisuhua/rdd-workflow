@@ -1,5 +1,10 @@
-# fix-design-done-gate-status-prefix-match
-
+---
+优先级: P0
+来源: "2026-08-31 design 阶段发现 — `bypass-audit-mechanism` 状态为 `延迟 (2026-08-28, 维持 v3.2 deferred 决策)` 被 design-done gate 误判为\"无决策\""
+阶段: v2.2
+分类: design
+类型: bug fix
+---
 **优先级**: P0 | **来源**: 2026-08-31 design 阶段发现 — `bypass-audit-mechanism` 状态为 `延迟 (2026-08-28, 维持 v3.2 deferred 决策)` 被 design-done gate 误判为"无决策"
 **阶段**: v2.2 | **分类**: design
 **类型**: bug fix

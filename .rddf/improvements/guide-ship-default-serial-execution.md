@@ -1,5 +1,10 @@
-# guide-ship-default-serial-execution
-
+---
+优先级: P1
+来源: Session 复盘限流/配额问题 + 用户决策 2026-08-04
+阶段: v2.1
+分类: core-impl
+类型: refactor
+---
 **优先级**: P1 | **来源**: Session 复盘限流/配额问题 + 用户决策 2026-08-04
 **阶段**: v2.1 | **分类**: core-impl
 **类型**: refactor

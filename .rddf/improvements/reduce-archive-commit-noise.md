@@ -1,5 +1,10 @@
-# reduce-archive-commit-noise
-
+---
+优先级: P2
+来源: 2026-08-31 ship 阶段复盘 — 每个 change archive 产生 4-5 个 commit，git history 噪音大
+阶段: v2.2
+分类: infra-setup / archive
+类型: refactor
+---
 **优先级**: P2 | **来源**: 2026-08-31 ship 阶段复盘 — 每个 change archive 产生 4-5 个 commit，git history 噪音大
 **阶段**: v2.2 | **分类**: infra-setup / archive
 **类型**: refactor

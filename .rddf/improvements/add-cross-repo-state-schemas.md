@@ -1,5 +1,13 @@
-# add-cross-repo-state-schemas
-
+---
+优先级: P1
+来源: "Oracle 审查 ADR-0030 / MEDIUM #12 / 6 个新 state 文件 schema 落地"
+阶段: v2.2
+分类: cross-repo-federation
+类型: infrastructure
+依赖 ADR: ADR-0030, ADR-0016 (arch-handoff schema 模式)
+状态: 已批准 (2026-08-15)
+阻塞: 所有 Hub-and-Spoke 提案（Step 1.5-6）的实施必须先有 schema
+---
 **优先级**: P1 | **来源**: Oracle 审查 ADR-0030 / MEDIUM #12 / 6 个新 state 文件 schema 落地
 **阶段**: v2.2 | **分类**: cross-repo-federation | **类型**: infrastructure
 **依赖 ADR**: ADR-0030, ADR-0016 (arch-handoff schema 模式)

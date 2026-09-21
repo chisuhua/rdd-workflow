@@ -1,5 +1,10 @@
-# extract-rdd-env-check-from-guide-arch
-
+---
+优先级: P1
+来源: 2026-08-03 HydraForge guide-arch 会话
+阶段: default
+分类: arch-design
+类型: refactor
+---
 **优先级**: P1 | **来源**: 2026-08-03 HydraForge guide-arch 会话
 **阶段**: default | **分类**: arch-design
 **类型**: refactor

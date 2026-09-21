@@ -1,5 +1,10 @@
-# add-archive-post-commit-hook-and-force-flag
-
+---
+优先级: P0
+来源: HydraForge 2026-08-05 dashboard divergence 调查 + UsrLinuxEmu 2026-08-05 on-main archive 复盘 — 手工 archive path 完全未被任何现有提案兜底
+阶段: v2.1
+分类: infra-setup
+类型: feature
+---
 **优先级**: P0 | **来源**: HydraForge 2026-08-05 dashboard divergence 调查 + UsrLinuxEmu 2026-08-05 on-main archive 复盘 — 手工 archive path 完全未被任何现有提案兜底
 **阶段**: v2.1 | **分类**: infra-setup
 **类型**: feature

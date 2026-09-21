@@ -1,5 +1,11 @@
-# reduce-rdd-workflow-tool-call-friction
-
+---
+优先级: P1
+来源: opencode session retrospective (ses_fb4e3770dffeCYhR7xxAAQdI9l)
+阶段: ship
+分类: ship
+类型: refactor
+主题: 多方对称与回归
+---
 **优先级**: P1 | **来源**: opencode session retrospective (ses_fb4e3770dffeCYhR7xxAAQdI9l) | **阶段**: ship | **分类**: ship
 **类型**: refactor
 **主题**: 多方对称与回归

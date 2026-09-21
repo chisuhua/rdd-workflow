@@ -1,5 +1,10 @@
-# add-plugin-loader-tests
-
+---
+优先级: P2
+来源: "Oracle 代码审查 2026-07-19 #5 修正版"
+阶段: default
+分类: general
+类型: test-only
+---
 **优先级**: P2 | **来源**: Oracle 代码审查 2026-07-19 #5 修正版
 **阶段**: default | **分类**: general
 **类型**: test-only

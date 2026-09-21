@@ -1,5 +1,12 @@
-# issue-driven-proposal-creation
-
+---
+优先级: P1
+来源: Oracle 评估（2026-08-13，9 维度深度分析）+ 当前 proposal 创建通路缺口
+阶段: v2.1+
+分类: arch-design
+类型: feature
+主题: 不适用（自由模式）
+状态: "已推迟 (2026-08-14) — 等 fix-generator-scope-extraction 落地后重新评估 (generator 当前会产出 Capabilities/Impact 重复 + Out Scope (TBD) 的破损 proposal.md) → **2026-08-14 重新激活**（fix-generator-scope-extraction 已批准，前置解锁）+ ADR 重编号 0028 → 0029（add-phase-role-model 占用 0028）"
+---
 **优先级**: P1 | **来源**: Oracle 评估（2026-08-13，9 维度深度分析）+ 当前 proposal 创建通路缺口
 **阶段**: v2.1+ | **分类**: arch-design
 **类型**: feature

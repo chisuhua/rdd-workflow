@@ -1,5 +1,10 @@
-# fix-stale-suggestions-warning
-
+---
+优先级: P2
+来源: 会话复盘 2026-07-23 — improvement-suggestions.md 过时警告
+阶段: v2.1
+分类: docs
+类型: feature
+---
 **优先级**: P2 | **来源**: 会话复盘 2026-07-23 — improvement-suggestions.md 过时警告
 **阶段**: v2.1 | **分类**: docs
 **类型**: feature

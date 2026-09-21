@@ -1,5 +1,10 @@
-# fix-append-approved-output
-
+---
+优先级: P2
+来源: 会话复盘 2026-07-23 — approve_proposal.sh 双重 echo
+阶段: v2.1
+分类: core
+类型: feature
+---
 **优先级**: P2 | **来源**: 会话复盘 2026-07-23 — approve_proposal.sh 双重 echo
 **阶段**: v2.1 | **分类**: core
 **类型**: feature

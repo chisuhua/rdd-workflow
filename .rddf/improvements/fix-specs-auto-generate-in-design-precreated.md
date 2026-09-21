@@ -1,5 +1,10 @@
-# fix-specs-auto-generate-in-design-precreated
-
+---
+优先级: P0
+来源: "2026-08-31 ship 阶段回归门发现 — design 阶段批准的 change 在 ship 阶段回归门 fail \"No deltas found\""
+阶段: v2.2
+分类: design / plan 协同
+类型: bug fix
+---
 **优先级**: P0 | **来源**: 2026-08-31 ship 阶段回归门发现 — design 阶段批准的 change 在 ship 阶段回归门 fail "No deltas found"
 **阶段**: v2.2 | **分类**: design / plan 协同
 **类型**: bug fix

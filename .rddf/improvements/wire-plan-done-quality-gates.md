@@ -1,5 +1,10 @@
-# wire-plan-done-quality-gates
-
+---
+优先级: P0
+来源: 现有 plan-done 质量检查未接入正常 guide-plan 执行路径
+阶段: default
+分类: core-impl
+类型: improvement
+---
 **优先级**: P0 | **来源**: 现有 plan-done 质量检查未接入正常 guide-plan 执行路径
 **阶段**: default | **分类**: core-impl
 **类型**: improvement

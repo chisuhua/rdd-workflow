@@ -94,8 +94,15 @@ theme_matches() {
 
 FAILURES=()
 
-# Check 1: 5 core sections
-for sec in "架构依据" "范围" "Capabilities" "Impact" "验收标准"; do
+# Check 0: YAML frontmatter (per _lib/planner_attach.py L158-160 hard requirement)
+if ! head -n 1 "$IMPROVEMENT_FILE" 2>/dev/null | grep -q '^---[[:space:]]*$'; then
+    FAILURES+=("missing YAML frontmatter (file must start with '---' on line 1)")
+elif ! head -n 20 "$IMPROVEMENT_FILE" 2>/dev/null | tail -n +2 | grep -q '^---[[:space:]]*$'; then
+    FAILURES+=("malformed YAML frontmatter (no closing '---' within first 20 lines)")
+fi
+
+# Check 1: 7 core sections
+for sec in "架构依据" "范围" "Why" "What Changes" "Acceptance" "Capabilities" "Impact"; do
     if ! section_exists "$IMPROVEMENT_FILE" "$sec"; then
         FAILURES+=("missing section: ## $sec")
     fi

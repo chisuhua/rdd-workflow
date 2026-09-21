@@ -1,5 +1,13 @@
-# fix-adr-0031-safety-gate-substantiation
-
+---
+优先级: P0
+来源: Oracle 审查 ADR-0030/ADR-0031 (ses_fecf9715affebqMTQnuYJMEEL7) / CRITICAL C1+C2
+阶段: v2.1.x patch
+分类: core-impl
+类型: bugfix
+依赖 ADR: ADR-0031, ADR-0030
+状态: Proposed (2026-08-18)
+阻塞: "该 change 修复完成前, ADR-0031 §\"人类兜底\" 承诺为形式合规, 任何 `--manual --hub-issue` 调用均无人类证明即可放行"
+---
 **优先级**: P0 | **来源**: Oracle 审查 ADR-0030/ADR-0031 (ses_fecf9715affebqMTQnuYJMEEL7) / CRITICAL C1+C2
 **阶段**: v2.1.x patch | **分类**: core-impl | **类型**: bugfix
 **依赖 ADR**: ADR-0031, ADR-0030
