@@ -11,6 +11,7 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
+| [add-env-bootstrap-skill](.rddf/improvements/add-env-bootstrap-skill.md) | P1 | 2026-09-22 | rdd-planner (s → y: 5 段审核通过 + AC-1.6/AC-6.5 修正; recommended_route=complex; awaiting rdd-builder P0) |
 | [apply-adr-0051-skill-description-convention-bulk-rewrite](.rddf/improvements/apply-adr-0051-skill-description-convention-bulk-rewrite.md) | P0 | 2026-09-15 | rdd-planner |
 | [add-plan-done-reflect-hook](.rddf/improvements/add-plan-done-reflect-hook.md) | P1 | 2026-09-15 | rdd-planner (entered rdd-builder P0) |
 | [fix-skill-post-install-discoverability](.rddf/improvements/fix-skill-post-install-discoverability.md) | P1 | 2026-09-21 | rdd-planner (5 段审核通过 + Oracle 15 项修正已应用) |
