@@ -4,7 +4,7 @@ priority: P1
 phase: phase-3
 category: infra-setup
 type: debt
-状态: pending
+状态: approved
 依赖: ADR-0021, add-spoke-system-prompt-injection
 主题: 流程定制层
 来源: 2026-09-21 对话发现(roadmap-organization.md 沉淀时触发)+ add-spoke-system-prompt-injection
