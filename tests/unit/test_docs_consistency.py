@@ -6,6 +6,7 @@ sync-agents-md-five-stage + this change have fixed the documented drift).
 """
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -80,11 +81,20 @@ def test_adr_reverse_drift_detects_underclaim(monkeypatch):
 
     real_read_text = dc._read_text
 
+    adr_dir = dc.REPO_ROOT / "docs" / "adr"
+    nums = []
+    for p in adr_dir.glob("ADR-*.md"):
+        m = re.match(r"ADR-(\d{4})", p.stem)
+        if m:
+            nums.append(int(m.group(1)))
+    disk_max = max(nums)
+    stale_claim = disk_max - 8
+
     def fake_read(rel_path: str) -> str:
         if rel_path == "AGENTS.md":
             return (
                 "fake preamble\n"
-                "- 当前最新编号: **ADR-0044** (v4 stage-merge Wave 3 hard removal)\n"
+                f"- 当前最新编号: **ADR-{stale_claim:04d}** (v4 stage-merge Wave 3 hard removal)\n"
                 "fake trailer\n"
             )
         return real_read_text(rel_path)
@@ -97,8 +107,8 @@ def test_adr_reverse_drift_detects_underclaim(monkeypatch):
     assert len(reverse) == 1, f"expected exactly 1 reverse-drift issue, got: {issues}"
     issue = reverse[0]
     assert issue["severity"] == "WARNING"
-    assert "ADR-0051" in issue["detail"]
-    assert "ADR-0044" in issue["detail"]
+    assert f"ADR-{disk_max:04d}" in issue["detail"]
+    assert f"ADR-{stale_claim:04d}" in issue["detail"]
     assert "fix_command" in issue
     assert "AGENTS.md" in issue["fix_command"]
 
