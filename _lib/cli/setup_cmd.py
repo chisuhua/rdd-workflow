@@ -147,28 +147,31 @@ def cmd_setup(args: list[str]) -> int:
 
 def _handle_ai_context(args: argparse.Namespace) -> int:
     """Core logic for ``rddf setup ai-context``."""
-    project_root = Path(
+    # Source root: where the rdd-workflow code (and SSOT template) lives.
+    source_root = Path(__file__).resolve().parents[2]  # _lib/cli/ → project root
+    # Target root: where AI config files will be deployed.
+    target_root = Path(
         args.target
         or os.environ.get("RDDF_PROJECT_ROOT")
         or os.getcwd()
     )
 
-    # Read SSOT template.
-    template = _read_template(project_root)
+    # Read SSOT template from source root (not target root).
+    template = _read_template(source_root)
     if template is None:
         print(
             f"❌ setup ai-context: SSOT template not found at "
-            f"{project_root / _TEMPLATE_REL}",
+            f"{source_root / _TEMPLATE_REL}",
             file=sys.stderr,
         )
         return 1
 
-    # Detect AI config files.
-    existing = _detect_config_files(project_root)
+    # Detect AI config files in target root.
+    existing = _detect_config_files(target_root)
 
     if not existing:
-        # No config files exist → create AGENTS.md.
-        target_path = project_root / "AGENTS.md"
+        # No config files exist → create AGENTS.md in target.
+        target_path = target_root / "AGENTS.md"
         already_has = target_path.is_file() and _has_sentinel(
             target_path.read_text(encoding="utf-8")
         )
