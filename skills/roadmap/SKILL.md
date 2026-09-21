@@ -22,11 +22,13 @@ metadata:
 
 管理项目级路线图，定义阶段和任务分类，验证 change 的阶段归属，支持阶段门控。
 
-## Roadmap 概念模型(快速导览)
+## Roadmap 概念模型(自包含快速导览)
 
-Roadmap 通过 **5 个正交维度** 组织复杂项目的实施路径:**Phase / Sub-phase / Feature / Theme / Sprint**。主文档 `.rddf/roadmap.md` 用 3 个 HTML 注释哨兵切成 3 段:**`## Phase Skeleton`**(用户编辑)→ **`<!-- AUTO-INDEX -->`**(自动索引)→ **`<!-- AUTO-SPRINT -->`**(当前 sprint + unmapped)。**Sprint 与 Phase 是正交的两条线**:phase 是长期能力里程碑,sprint 是当下执行窗口(默认按月 `sprint-YYYY-MM`)。
+Roadmap 通过 **5 个正交维度** 组织复杂项目的实施路径：**Phase**（长期能力里程碑）、**Sub-phase**（Phase 内的子阶段）、**Feature**（跨 Phase 的改进功能组）、**Theme**（分类维度如 RBAC 权限模型）、**Sprint**（当下执行窗口，默认按月 `sprint-YYYY-MM`）。Sprint 与 Phase 是正交的两条线，互不绑定。
 
-> 📖 **完整概念入门**: 见 [`docs/architecture/roadmap-organization.md`](../../docs/architecture/roadmap-organization.md) — 本文档侧重命令参考,该文档侧重概念模型 + 端到端数据流 + 唯一写入方矩阵。
+主文档 `.rddf/roadmap.md` 结构：`## Phase Skeleton` 段（用户编辑的阶段骨架）→ `<!-- AUTO-INDEX -->` 注释哨兵（自动生成的 change 索引）→ `<!-- AUTO-SPRINT -->` 哨兵（当前 sprint 的提案状态 + unmapped 提案列表）。
+
+**唯一写入方矩阵**：roadmap.md 仅由 `rddf roadmap` 子命令写入（init / add-feature / advance），其余技能（rdd-arch / rdd-planner）只读不写。
 
 ## 工作流位置
 

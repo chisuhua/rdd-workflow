@@ -36,6 +36,12 @@ global_install: resolve_rdd_skill_dir falls back to ~/.agents/skills/<name> # pr
 sub-phase: heartbeat records RDDF_SUB_PHASE # genuine source gap: rddf_session_hook_heartbeat + close/attach/detach tail `[ "$_exit" -ne 0 ] && return "$_exit"` leaks exit 1 on success path (bash semantics: last `[ 0 -ne 0 ]` returns 1); python DOES record sub_phase correctly — not test-side fixable
 sub-phase: heartbeat without env var leaves sub_phase empty # same hook tail-return bug as sub-phase: heartbeat records RDDF_SUB_PHASE; not test-side fixable
 
+# === 2026-09-21 pre-existing bats failures (registered by fix-skill-post-install-discoverability
+# full-regression gate; verified failing on master HEAD 0efd9d7 via git worktree baseline).
+# NOT regressions from that change.
+brainstorm-hardgate: complete proposal passes (exit 0) # pre-existing: pre_create_brainstorm_check.sh requires YAML frontmatter (line-1 '---') but test fixture write_complete writes a header-only proposal; test-vs-script mismatch predates change
+no 'spec-workflow' references remain anywhere in repo (v3.0.0 rename guard) # pre-existing: docs/migration/v2-to-v3.md legitimately documents the rename with 20 spec-workflow refs; test whitelist lacks that file
+
 # === 2026-09-10 pytest unit baseline (added with proposal-{suggestions,approved}
 # rename, see commit b662d00 / 5623922 / 78633ae / 6656515).
 # These 10 pytest failures are pre-existing on master HEAD (4aa4b35) — verified

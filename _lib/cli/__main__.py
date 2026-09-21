@@ -189,8 +189,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ℹ️  running from worktree, reading state from {project_root}")
 
     # Non-rdd-workflow project detection.
+    # setup deploys to arbitrary target directories; doctor has standalone
+    # categories like ai-context-bootstrap — both must run outside a
+    # rdd-workflow project.
+    _NO_STATE_CHECK = {"setup", "doctor"}
     state_dir = os.path.join(project_root, ".rddf", "state")
-    if not os.path.isdir(state_dir):
+    if subcommand not in _NO_STATE_CHECK and not os.path.isdir(state_dir):
         print(f"ℹ️  not a rdd-workflow project (no {state_dir})")
         return 0
 

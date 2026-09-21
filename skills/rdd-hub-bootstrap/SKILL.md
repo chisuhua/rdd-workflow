@@ -45,6 +45,16 @@ bash skills/rdd-hub-bootstrap/scripts/init_hub.sh --org <org> --repo rdd-hub
 - `gh auth login` 已认证
 - 当前用户是目标 Org 的 member(不需要 Owner)
 
-## 详细文档
+## 使用说明（自包含快速入门）
 
-参见 [`docs/rdd-hub-bootstrap.md`](../../docs/rdd-hub-bootstrap.md)。
+`rdd-hub-bootstrap` 用于初始化独立的 `rdd-hub` 仓库，作为跨项目协同的 SSOT（Single Source of Truth）。适用场景：多个项目间需要共享 OpenAPI contract、Issue 追踪或跨项目变更协调。
+
+**前置条件**：`gh` CLI v2.0+ 已安装并认证，当前用户是目标 GitHub Org 的 member（不需要 Owner）。
+
+**常用命令**：
+- 引导 Hub 仓库：`bash skills/rdd-hub-bootstrap/scripts/init_hub.sh --org <org> --repo rdd-hub`
+- 干运行（不调 API）：`bash skills/rdd-hub-bootstrap/scripts/init_hub.sh --org <org> --dry-run`
+
+**入口**：`skill_use("rdd-hub-bootstrap")` 等价于上述命令。
+
+安装后可通过 `install.sh --with-docs` 获取完整架构文档（仓库根 `docs/rdd-hub-bootstrap.md`）。
