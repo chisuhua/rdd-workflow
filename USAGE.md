@@ -115,7 +115,7 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 
 ### 完整 skill 列表
 
-`skills/` 目录当前包含 **26 个 per-skill 子目录**（v4 stage-merge 后从 13 → 26 per ADR-0043；详见上方"完整 skill 列表"表格）+ 顶层 `INSTALL.md`（安装入口）+ `loop_engine.py`（Loop 引擎入口，向后兼容 shim）。**v4.0.0 起** `package.json::skills[]` 已**完整发布全部 26 个**与磁盘无差异。
+`skills/` 目录当前包含 **27 个 per-skill 子目录**（v4 stage-merge 后从 13 → 26 per ADR-0043；v4.0+ 增加 rdd-env-bootstrap per ADR-0053 → 27；详见上方"完整 skill 列表"表格）+ 顶层 `INSTALL.md`（安装入口）+ `loop_engine.py`（Loop 引擎入口，向后兼容 shim）。**v4.0.0 起** `package.json::skills[]` 已**完整发布全部 27 个**与磁盘无差异。
 
 | Skill | 用途 | 触发方式 |
 |-------|------|---------|

@@ -30,7 +30,7 @@ bash ~/.agents/skills/rdd-workflow/install.sh --global
 ```
 
 安装后：
-- **27 个子技能** symlink 到 `~/.agents/skills/` → OpenCode 在任何项目下自动发现
+- **28 个子技能** symlink 到 `~/.agents/skills/` → OpenCode 在任何项目下自动发现
 - **Python 依赖** 自动安装（`pip install --user -r requirements.txt`）
 - **`_lib` Python 路径** 写入 `.pth` 文件 → 任何项目 `from _lib.xxx import yyy`（`from skills._lib.xxx import yyy` 仍通过向后兼容 shim 工作）
 - **`rddf` CLI** 创建到 `~/.local/bin/rddf` → 终端直接 `rddf status`
@@ -63,6 +63,7 @@ bash install.sh /path/to/project
    - `skill_use("rdd-planner")` - Planner 端状态机(proposal authoring → review → approve/reject/defer → design-done, per ADR-0038/0042)
    - `skill_use("rdd-builder")` - Builder 端状态机(6-phase 内部 P0→P3: approval → plan → deps → execute → review → archive, per ADR-0043 stage-merge)
    - `skill_use("rdd-verifier")` - Verifier 端(批量 AC 验证 + 启发式分类 + bounded retry, per ADR-0034 + ADR-0045 自包含 LLM 验证)
+   - `skill_use("rdd-env-bootstrap")` - **环境编排器**(per ADR-0053)：4-phase 工作流 (detect → diagnose → suggest → guided-fix), 填补 Layer 0→3 部署后的"一键编排 + 引导式修复"层。对应 CLI: `rddf env-bootstrap [--check-only|--auto-fix|--yes|--target|--report]`
    - `skill_use("rdd-quick")` - **快速执行路径**(per ADR-0047)：绕过 openspec change 与 worktree，就地执行小改动并 Oracle 验证
    - `skill_use("feature")` - feature 管理(summary/graph/status/order)
    - `skill_use("propose")` - 子技能(被 rdd-builder 调用)
@@ -424,6 +425,7 @@ rdd-workflow/
     ├── rdd-workflow-writing-plans/SKILL.md  # 实施计划生成器(v2.0 自包含)
     ├── rdd-workflow-brainstorm/SKILL.md # 提案头脑风暴 helper
     ├── rdd-env-check/SKILL.md           # 独立环境健康检查(各 phase 首屏)
+    ├── rdd-env-bootstrap/SKILL.md       # 环境编排器 (4 phases: detect→diagnose→suggest→guided-fix, per ADR-0053)
     ├── rdd-doctor/SKILL.md              # 手动只读诊断(5 类结构化文件)
     ├── rdd-hub-bootstrap/SKILL.md       # Hub 仓库引导式初始化
     ├── openspec-gate/SKILL.md           # staged 文件→active change 关联守卫

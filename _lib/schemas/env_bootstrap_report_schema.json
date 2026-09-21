@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rdd-workflow.dev/schemas/env_bootstrap_report_schema.json",
+  "title": "env-bootstrap-report",
+  "description": "Schema v1 for rddf env-bootstrap orchestrator reports. Records 4-phase workflow output (detect → diagnose → suggest → guided-fix).",
+  "version": 1,
+  "type": "object",
+  "required": [
+    "version",
+    "generated_at",
+    "project_root",
+    "phase_1_detection",
+    "phase_2_diagnosis",
+    "phase_3_init_suggestion",
+    "phase_4_guided_fix",
+    "exit_code"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. Bump forces migration."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when report was generated."
+    },
+    "project_root": {
+      "type": "string",
+      "description": "Absolute path to the target project root."
+    },
+    "phase_1_detection": {
+      "type": "object",
+      "description": "Phase 1 file-based detection results (read-only).",
+      "required": ["is_git_repo", "has_rddf_dir", "language_hints", "rddf_installed", "ai_config_files_detected"],
+      "properties": {
+        "is_git_repo": {"type": "boolean"},
+        "has_rddf_dir": {"type": "boolean"},
+        "language_hints": {
+          "type": "array",
+          "items": {"type": "string", "enum": ["python", "node", "go", "rust", "unknown"]}
+        },
+        "rddf_installed": {
+          "type": "object",
+          "properties": {
+            "installed": {"type": "boolean"},
+            "version": {"type": ["string", "null"]}
+          }
+        },
+        "ai_config_files_detected": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "phase_2_diagnosis": {
+      "type": "object",
+      "description": "Phase 2 doctor + classification output.",
+      "required": ["doctor_invoked", "total_findings", "auto_fixable", "user_decision", "manual_only", "findings"],
+      "properties": {
+        "doctor_invoked": {"type": "boolean"},
+        "total_findings": {"type": "integer", "minimum": 0},
+        "auto_fixable": {"type": "integer", "minimum": 0},
+        "user_decision": {"type": "integer", "minimum": 0},
+        "manual_only": {"type": "integer", "minimum": 0},
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["category", "severity", "message", "class"],
+            "properties": {
+              "category": {"type": "string"},
+              "severity": {"type": "string", "enum": ["info", "warning", "critical"]},
+              "message": {"type": "string"},
+              "class": {"type": "string", "enum": ["auto-fixable", "user-decision", "manual-only"]}
+            }
+          }
+        }
+      }
+    },
+    "phase_3_init_suggestion": {
+      "type": "array",
+      "description": "Phase 3 suggestion list (commands the user could run).",
+      "items": {"type": "string"}
+    },
+    "phase_4_guided_fix": {
+      "type": "object",
+      "description": "Phase 4 fix execution results.",
+      "required": ["executed", "skipped", "manual_required"],
+      "properties": {
+        "executed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["finding", "command", "status"],
+            "properties": {
+              "finding": {"type": "string"},
+              "command": {"type": "string"},
+              "status": {"type": "string", "enum": ["success", "failed"]},
+              "returncode": {"type": "integer"},
+              "stderr": {"type": "string"}
+            }
+          }
+        },
+        "skipped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "finding": {"type": "string"},
+              "command": {"type": "string"}
+            }
+          }
+        },
+        "manual_required": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "finding": {"type": "string"},
+              "recommendation": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "exit_code": {
+      "type": "integer",
+      "enum": [0, 1, 2, 3],
+      "description": "Process exit code. 0=healthy/auto-fixed, 1=warning auto-fixed, 2=critical or manual-only remaining, 3=environment error."
+    }
+  }
+}

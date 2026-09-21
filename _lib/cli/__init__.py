@@ -90,6 +90,7 @@ _ROUTES: Dict[str, str] = {
     "deps.cross-repo": "skills._lib.cli.deps_cmd:cmd_deps_cross_repo",
     "discover-ship-changes": "skills._lib.cli.discover_ship_changes_cmd:cmd_discover_ship_changes",
     "doctor": "skills._lib.cli.doctor_cmd:cmd_doctor",
+    "env-bootstrap": "skills._lib.cli.env_bootstrap_cmd:cmd_env_bootstrap",
     "feature": "skills._lib.cli.feature_cmd:cmd_feature",
     "feedback": "skills._lib.cli.feedback_cmd:cmd_feedback",
     "guide": "skills._lib.cli.guide_cmd:cmd_guide",

@@ -192,7 +192,7 @@ def main(argv: list[str] | None = None) -> int:
     # setup deploys to arbitrary target directories; doctor has standalone
     # categories like ai-context-bootstrap — both must run outside a
     # rdd-workflow project.
-    _NO_STATE_CHECK = {"setup", "doctor"}
+    _NO_STATE_CHECK = {"setup", "doctor", "env-bootstrap"}
     state_dir = os.path.join(project_root, ".rddf", "state")
     if subcommand not in _NO_STATE_CHECK and not os.path.isdir(state_dir):
         print(f"ℹ️  not a rdd-workflow project (no {state_dir})")
@@ -219,6 +219,7 @@ def _print_help() -> None:
     print("  dashboard    Unified dashboard (7 sections). Flags: --json, --plain")
     print("  deps         Dependency analysis table from deps-analysis.json")
     print("  discover-ship-changes  Unified change candidates for guide-ship")
+    print("  env-bootstrap 4-phase env orchestrator (detect→diagnose→suggest→guided-fix)")
     print("  feature      Feature grouping (summary, graph, status, order)")
     print("  guide        Project state scan + recommendation (guide-arch/guide-plan/guide-ship)")
     print("  init [tgt]   Install rdd-workflow to target's .opencode/skills/")

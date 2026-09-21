@@ -17,7 +17,8 @@
 | [视图与状态](#视图与状态-view) | 6 | 派生视图与多 hook 写入的 state 文件 |
 | [跨 repo / hub](#跨-repo--hub-cross-repo) | 6 | Hub-and-Spoke 联邦通道 |
 | [verifier / quick](#verifier--quick-verification) | 5 | 验证回环 + 旁路审计 |
-| **合计** | **29** | 截至 2026-09-10 |
+| [env-bootstrap](#env-bootstrap) | 1 | 4-phase 环境编排报告 |
+| **合计** | **30** | 截至 2026-09-22 |
 
 ---
 
@@ -95,6 +96,14 @@
 | [`rdd_quick_context_schema.json`](../../_lib/schemas/rdd_quick_context_schema.json) | v1 | `.rddf/state/rdd-quick-context.json` | `rdd-builder` P0 case 5 dispatch-quick | `rdd-quick` entry (per ADR-0048 amendment) |
 
 > ⚠️ `ac_verdict_cache_schema.json` 已从 v1 → v2（per `verifier-v2-hardening` closure）。如果 `.rddf/state/` 残留 v1 文件，`rdd-doctor --category state` 会报警。
+
+---
+
+## env-bootstrap
+
+| Schema | Version | 路径 | 写入方 | 消费者 |
+|---|---|---|---|---|
+| [`env_bootstrap_report_schema.json`](../../_lib/schemas/env_bootstrap_report_schema.json) | v1 | `.rddf/state/.env-bootstrap-report.json` | `rddf env-bootstrap` (4-phase orchestrator) | `rdd-doctor --category state` |
 
 ---
 

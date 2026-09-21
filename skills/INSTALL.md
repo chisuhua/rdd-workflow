@@ -1,7 +1,7 @@
 ---
 name: INSTALL
 description: |
-  First-entry install skill (v4.0+). Copies 全部 26 个子技能 to project via symlink or copy.
+  First-entry install skill (v4.0+). Copies 全部 27 个子技能 to project via symlink or copy.
 
   Invoke when BOTH:
     1. Project has no rdd-workflow + user wants install
@@ -15,11 +15,11 @@ version: "4.0"
 author: sisyphus
 ---
 
-> v4.0.0 (2026-09-04): 四阶段架构（rdd-arch → rdd-planner → rdd-builder → rdd-verifier），26 个子技能
+> v4.0.0 (2026-09-04): 四阶段架构（rdd-arch → rdd-planner → rdd-builder → rdd-verifier），27 个子技能（含 `rdd-env-bootstrap`，per ADR-0053）
 
 # RDD Workflow 安装程序
 
-本技能将 RDD Workflow 的 26 个子技能安装到当前项目目录。
+本技能将 RDD Workflow 的 27 个子技能安装到当前项目目录。
 
 ## 包含的子技能
 
@@ -43,6 +43,7 @@ author: sisyphus
 | `deps` | 依赖分析（被 rdd-planner 调用） |
 | `rdd-workflow-writing-plans` | 实施计划生成器（v2.0 自包含 TDD 5 步结构） |
 | `rdd-env-check` | 环境健康检查（openspec/git/build + cache 快照，被 4 个 phase 调用） |
+| `rdd-env-bootstrap` | 环境编排器（4 phases: detect→diagnose→suggest→guided-fix，per ADR-0053） |
 | `rdd-doctor` | 手动触发的只读诊断工具（5 类结构化文件 schema/格式校验，输出分级报告） |
 | `rdd-hub-bootstrap` | Hub 仓库一键初始化（目录结构 + Projects V2 看板 + CI 工作流模板，ADR-0030 Step 1） |
 | `add-improve` | 交互式创建 rdd-workflow 改进提案（注册到 improvement-suggestions.md） |
@@ -71,7 +72,7 @@ bash install.sh --global
 ```
 
 执行后：
-- 26 个子技能 symlink 到 `~/.agents/skills/` → **所有项目**的 OpenCode 自动发现（具体清单见 `package.json::skills[]`，与磁盘同步）
+- 27 个子技能 symlink 到 `~/.agents/skills/` → **所有项目**的 OpenCode 自动发现（具体清单见 `package.json::skills[]`，与磁盘同步）
 - Python 依赖自动安装 (`pip install --user -r requirements.txt`)
 - `_lib/` 路径写入 Python `.pth` 文件 → 任何项目 `from skills._lib.xxx import yyy` 可用
 - `rddf` CLI 命令创建到 `~/.local/bin/rddf` → 终端直接运行 `rddf status`
