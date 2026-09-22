@@ -394,6 +394,24 @@ archive_gate_check() {
     return 1
   fi
 
+  # Re-archive guard: WARN (or BLOCK if RDDF_REQUIRE_ARCHIVE_UNIQUE=yes) when
+  # the change was previously archived. Re-archiving usually signals a stale
+  # active dir or partial commit rather than intent.
+  local archive_dir="$tasks_root/openspec/changes/archive"
+  if [ -d "$archive_dir" ]; then
+    local prior_archive
+    prior_archive=$(ls -1d "$archive_dir"/*-"$change_name" 2>/dev/null | head -n1 || true)
+    if [ -n "$prior_archive" ]; then
+      if [ "${RDDF_REQUIRE_ARCHIVE_UNIQUE:-no}" = "yes" ]; then
+        echo "❌ archive_gate_check: change '$change_name' already archived at $prior_archive"
+        echo "   (RDDF_REQUIRE_ARCHIVE_UNIQUE=yes). Set to no to allow re-archive."
+        return 1
+      fi
+      echo "⚠️  archive_gate_check: '$change_name' already archived at $(basename "$prior_archive")"
+      echo "   Re-archiving will create a new dated entry. To block: RDDF_REQUIRE_ARCHIVE_UNIQUE=yes"
+    fi
+  fi
+
   # AC verification step — SHA-bound verdict cache only (ADR-0045).
   # v2.0: the ac-verifier subprocess fallback is removed; the canonical
   # cache is written by rdd-verifier (agent LLM protocol per

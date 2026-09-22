@@ -69,6 +69,12 @@ Review the resulting diff before committing. Remove a fixed test from the baseli
   `skill_field`, `skill_meta_field`, `skill_commands`, `skill_has_section`,
   and `skill_frontmatter_block` for parsing skill Markdown files.
 - Test data files belong in `tests/_lib/` (versioned) or `$BATS_TMPDIR` (auto-cleaned, ephemeral).
+- **Bats tmpdir variables** (don't conflate):
+  - `$BATS_TMPDIR` — per-run directory shared by all tests in a run; set by bats-core.
+  - `$BATS_TEST_TMPDIR` — per-test directory auto-cleaned after each test; set by bats-core.
+  - `mktemp -d` — explicit subdir; preferred when a single test needs its own scratch root.
+  - Six legacy tests assume `$BATS_TMPDIR` is per-run (shared); new tests should prefer
+    `mktemp -d` or `$BATS_TEST_TMPDIR` to avoid cross-test contamination.
 - Use bash builtins; **do not add** mocking/coverage frameworks.
 - Tests must be runnable from repo root: `bats tests/`.
 

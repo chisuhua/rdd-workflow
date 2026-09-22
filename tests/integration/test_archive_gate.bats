@@ -48,3 +48,41 @@ load ../test_helper
     run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && archive_gate_check 'worktree-change' '$WT'"
     [ "$status" -eq 0 ]
 }
+
+@test "archive-gate: warns when change was previously archived (default WARN, exit 0)" {
+    TMP="$BATS_TMPDIR/test-gate-rerun"
+    mkdir -p "$TMP/openspec/changes/re-run-change"
+    printf -- '- [x] Task 1\n' > "$TMP/openspec/changes/re-run-change/tasks.md"
+    # Pre-existing archive entry (simulates prior rdd-builder P3 run)
+    mkdir -p "$TMP/openspec/changes/archive/2026-09-21-re-run-change"
+    touch "$TMP/openspec/changes/archive/2026-09-21-re-run-change/proposal.md"
+    run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 're-run-change'"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "already archived" ]]
+    [[ "$output" =~ "2026-09-21-re-run-change" ]]
+}
+
+@test "archive-gate: blocks re-archive when RDDF_REQUIRE_ARCHIVE_UNIQUE=yes" {
+    TMP="$BATS_TMPDIR/test-gate-unique"
+    mkdir -p "$TMP/openspec/changes/uniq-change"
+    printf -- '- [x] Task 1\n' > "$TMP/openspec/changes/uniq-change/tasks.md"
+    mkdir -p "$TMP/openspec/changes/archive/2026-09-15-uniq-change"
+    touch "$TMP/openspec/changes/archive/2026-09-15-uniq-change/proposal.md"
+    RDDF_REQUIRE_ARCHIVE_UNIQUE=yes \
+        run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'uniq-change'"
+    [ "$status" -eq 1 ]
+    [[ "$output" =~ "already archived" ]]
+    [[ "$output" =~ "RDDF_REQUIRE_ARCHIVE_UNIQUE" ]]
+}
+
+@test "archive-gate: re-archive guard does not match different change names" {
+    TMP="$BATS_TMPDIR/test-gate-nomatch"
+    mkdir -p "$TMP/openspec/changes/fresh-change"
+    printf -- '- [x] Task 1\n' > "$TMP/openspec/changes/fresh-change/tasks.md"
+    # Pre-existing archive entry for a DIFFERENT change name
+    mkdir -p "$TMP/openspec/changes/archive/2026-09-10-other-change"
+    touch "$TMP/openspec/changes/archive/2026-09-10-other-change/proposal.md"
+    run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'fresh-change'"
+    [ "$status" -eq 0 ]
+    [[ ! "$output" =~ "already archived" ]]
+}
