@@ -15,6 +15,22 @@
 
 Closes follow-up #2 from Active Feature Fragments (AGENTS.md L207).
 
+### fix-sweep-implemented-proposals-duplicate-entries (state.sh mark_approved_completed bug fix, 2026-09-22)
+
+`_lib/state.sh::mark_approved_completed` 有 2 个 bug，由 `rddf doctor --category proposal-section` 在扫描过程中暴露：
+
+- **`sys.exit(0)` 早退**：第二个 loop 找到 `[name]` 在"已实施"段后立即 `sys.exit(0)`，跳过所有删除逻辑。当 entry 在"已批准"和"已实施"两段都存在时（如 `add-feature-fragment-command` / `phase-1-general-20260829063800-2`），"已批准"段的条目永远删不掉。
+- **`break` 一次匹配**：第一个 loop 找到第一个 `[name]` 就 break，duplicate entries 的后续行完全没处理。
+
+修复：
+- `sys.exit(0)` → `continue`（让 loop 扫完所有候选）
+- `break` → 累计 `duplicate_count`，删除 `approved_idx` 后再 while-loop 删剩余重复
+- 加 `already_in_completed` 守卫：已实施段已有同名行就不重复插入
+
+Sweep 结果：6 个 proposal 从"已批准"移到"已实施"（之前只移 4 个），2 个历史 duplicate 在"已批准"段被清理。`rddf doctor --category proposal-section` 现在 ✅ All OK。
+
+测试：88 unit tests PASS（test_doctor_main + test_doctor_render + test_roadmap_feature_check + test_state_*） + 20 bats integration tests PASS（test_rdd_doctor + test_doctor_ai_context_bootstrap）。
+
 ### add-gitignore-hard-protection (env-check + doctor .gitignore 一致性守卫, 2026-09-10)
 
 `fix-archive-openspec-tracked-commit` 的后续加固：`git.openspec_tracked: false` 挡住了 rdd-workflow 自身的 commit 路径，但用户/CI 一次 `git add -A` 仍会把 `openspec/` 重新拉进 git。本次把检测接入两个既有诊断入口。
