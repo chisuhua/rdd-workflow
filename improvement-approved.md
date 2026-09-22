@@ -11,10 +11,6 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [add-env-bootstrap-skill](.rddf/improvements/add-env-bootstrap-skill.md) | P1 | 2026-09-22 | rdd-planner (s → y: 5 段审核通过 + AC-1.6/AC-6.5 修正; recommended_route=complex; awaiting rdd-builder P0) |
-| [apply-adr-0051-skill-description-convention-bulk-rewrite](.rddf/improvements/apply-adr-0051-skill-description-convention-bulk-rewrite.md) | P0 | 2026-09-15 | rdd-planner |
-| [add-plan-done-reflect-hook](.rddf/improvements/add-plan-done-reflect-hook.md) | P1 | 2026-09-15 | rdd-planner (entered rdd-builder P0) |
-| [fix-skill-post-install-discoverability](.rddf/improvements/fix-skill-post-install-discoverability.md) | P1 | 2026-09-21 | rdd-planner (5 段审核通过 + Oracle 15 项修正已应用) |
 
 > **批次说明 (2026-09-10 design-done)**: 本批 4 项提案 (本次批准) 为 KNOWN_FAILURES baseline 衍生, 全部为 test-fix / docs-fix 小修, 低风险独立可并行. 计划按下列顺序实施 (合并到 single feature: feat-fix-audit-findings):
 > 1. **`fix-parametrize-planner-feedback-id-date`** (P2) — first: 重构 5 个 hardcode 日期测试为 tmp_path fixture, 解决时间炸弹
@@ -110,7 +106,6 @@
 
 
 
-| [add-feature-fragment-command](.rddf/improvements/add-feature-fragment-command.md) | P1 | 2026-08-25 | guide-arch |
 
 
 
@@ -137,7 +132,6 @@
 
 
 
-| [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-08-29 | guide-arch |
 
 
 
@@ -180,9 +174,14 @@
 | [fix-adr-0027-cli-optin-gate](.rddf/improvements/fix-adr-0027-cli-optin-gate.md) | P0 | 2026-08-24 | 已实施 |
 | [add-cli-coverage-rdd-doctor-roadmap-rdd-hub](.rddf/improvements/add-cli-coverage-rdd-doctor-roadmap-rdd-hub.md) | P1 | 2026-08-20 | 已实施 |
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
-| [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-08-30 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-09-22 | 已实施 |
+| [add-feature-fragment-command](.rddf/improvements/add-feature-fragment-command.md) | P1 | 2026-09-22 | 已实施 |
+| [fix-skill-post-install-discoverability](.rddf/improvements/fix-skill-post-install-discoverability.md) | P1 | 2026-09-22 | 已实施 |
+| [add-plan-done-reflect-hook](.rddf/improvements/add-plan-done-reflect-hook.md) | P1 | 2026-09-22 | 已实施 |
+| [apply-adr-0051-skill-description-convention-bulk-rewrite](.rddf/improvements/apply-adr-0051-skill-description-convention-bulk-rewrite.md) | P0 | 2026-09-22 | 已实施 |
+| [add-env-bootstrap-skill](.rddf/improvements/add-env-bootstrap-skill.md) | P1 | 2026-09-22 | 已实施 |
 | [fix-remove-stale-filled-at-regression-test](.rddf/improvements/fix-remove-stale-filled-at-regression-test.md) | P3 | 2026-09-10 | 已实施 |
 | [fix-update-doctor-main-category-count](.rddf/improvements/fix-update-doctor-main-category-count.md) | P2 | 2026-09-10 | 已实施 |
 | [fix-rebuild-adr-index-for-0049-0050](.rddf/improvements/fix-rebuild-adr-index-for-0049-0050.md) | P2 | 2026-09-10 | 已实施 |
@@ -397,7 +396,6 @@
 | [update-guide-plan-format](.rddf/improvements/update-guide-plan-format.md) | P1 | 2026-07-28 | 已实施 |
 | [fix-scan-state-bats](.rddf/improvements/fix-scan-state-bats.md) | P2 | 2026-07-23 | 已实施 |
 | [complete-third-party-replay-and-upstream-reporting](.rddf/improvements/complete-third-party-replay-and-upstream-reporting.md) | P0 | 2026-08-13 | 已实施 |
-| [add-feature-fragment-command](.rddf/improvements/add-feature-fragment-command.md) | P1 | 2026-08-25 | 已实施 |
 | [reduce-archive-commit-noise](.rddf/improvements/reduce-archive-commit-noise.md) | P2 | 2026-09-01 | guide-arch |
 | [fix-v4-rdd-planner-scope-over-assignment](.rddf/improvements/fix-v4-rdd-planner-scope-over-assignment.md) | P1 | 2026-09-09 | 已实施 |
 | [adr-0048-v4-stage-merge-revision](.rddf/improvements/adr-0048-v4-stage-merge-revision.md) | P0 | 2026-09-09 | 已实施 |

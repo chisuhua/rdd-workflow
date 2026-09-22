@@ -230,17 +230,20 @@ for i, line in enumerate(lines):
 for i, line in enumerate(lines):
     if f'[{name}]' in line and line.strip().startswith('|'):
         if completed_section_start is not None and i > completed_section_start:
-            sys.exit(0)
+            continue
 
 approved_idx = None
 approved_line = None
+duplicate_count = 0
 for i, line in enumerate(lines):
     if f'[{name}]' in line and line.strip().startswith('|'):
         if completed_section_start is not None and i > completed_section_start:
             continue
-        approved_idx = i
-        approved_line = line
-        break
+        if approved_idx is None:
+            approved_idx = i
+            approved_line = line
+        else:
+            duplicate_count += 1
 
 if approved_idx is None:
     archive_dir = os.path.join(project_root, 'openspec/changes/archive')
@@ -279,6 +282,29 @@ if approved_line:
 
 if approved_idx is not None:
     del lines[approved_idx]
+
+if duplicate_count > 0:
+    while True:
+        for i, line in enumerate(lines):
+            if f'[{name}]' in line and line.strip().startswith('|'):
+                if completed_section_start is not None and i > completed_section_start:
+                    continue
+                del lines[i]
+                break
+        else:
+            break
+
+already_in_completed = False
+if completed_section_start is not None:
+    for line in lines[completed_section_start + 1:]:
+        if f'[{name}]' in line and line.strip().startswith('|'):
+            already_in_completed = True
+            break
+
+if already_in_completed:
+    with open(approved_file, 'w') as f:
+        f.writelines(lines)
+    sys.exit(0)
 
 completed_row = f'| [{name}](.rddf/improvements/{name}.md) | {priority} | {ts} | 已实施 |\n'
 inserted = False
