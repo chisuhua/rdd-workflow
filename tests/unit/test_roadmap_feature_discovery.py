@@ -120,6 +120,37 @@ def test_list_features_yaml_output_has_required_keys(project_with_features):
     assert "active" in out
 
 
+def test_list_features_yaml_shape_matches_json(project_with_features):
+    """Oracle critical issue #1: YAML and JSON output must have identical shape."""
+    pytest.importorskip("yaml")
+    import json
+    import yaml as _yaml
+
+    fragments_dir = str(project_with_features / ".rddf" / "roadmap")
+    parsed_json = json.loads(list_features(fragments_dir, fmt="json"))
+    parsed_yaml = _yaml.safe_load(list_features(fragments_dir, fmt="yaml"))
+
+    assert isinstance(parsed_json, list)
+    assert isinstance(parsed_yaml, list)
+    assert len(parsed_json) == len(parsed_yaml)
+    assert parsed_json == parsed_yaml, (
+        f"YAML shape diverges from JSON: json={parsed_json!r}, yaml={parsed_yaml!r}"
+    )
+
+
+def test_list_features_yaml_empty_dir(tmp_path):
+    """YAML output for empty fragments dir returns empty string (not a malformed skeleton)."""
+    pytest.importorskip("yaml")
+    import yaml as _yaml
+
+    frags = tmp_path / ".rddf" / "roadmap"
+    for sub in ("phases", "features", "archive"):
+        (frags / sub).mkdir(parents=True)
+    out = list_features(str(frags), fmt="yaml")
+    parsed = _yaml.safe_load(out) if out.strip() else []
+    assert parsed == []
+
+
 def test_list_features_invalid_format_raises():
     """AC-1 edge case: invalid fmt → ValueError."""
     with pytest.raises(ValueError, match="fmt must be table/json/yaml"):

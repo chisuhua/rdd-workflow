@@ -991,16 +991,14 @@ def list_features(
         return json.dumps(rows, ensure_ascii=False, indent=2)
 
     if fmt == "yaml":
-        # Minimal YAML emitter (no external dep). Matches the JSON shape.
-        lines = ["- id:", "  features:"]
+        lines = []
         for f in features:
-            lines.append(f"    - id: {f.id}")
-            lines.append(f"      status: {f.status}")
-            lines.append(f"      phase_refs: [{', '.join(f.phase_refs)}]")
-            theme = f.theme.replace('"', '\\"')
-            lines.append(f'      theme: "{theme}"')
-            lines.append(f"      file: {f.file_path}")
-        return "\n".join(lines) + "\n"
+            lines.append("- id: " + f.id)
+            lines.append("  status: " + f.status)
+            lines.append("  phase_refs: [" + ", ".join(f.phase_refs) + "]")
+            lines.append("  theme: \"" + f.theme.replace('"', '\\"') + "\"")
+            lines.append("  file: " + f.file_path)
+        return "\n".join(lines) + ("\n" if lines else "")
 
     # fmt == "table"
     if not features:

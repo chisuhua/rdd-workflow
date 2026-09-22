@@ -19,20 +19,20 @@ setup() {
   [ "$(skill_field "$f" name)" = "roadmap" ]
 }
 
-@test "roadmap_skill declares 5 commands (v2.0.3: gate-report removed)" {
+@test "roadmap_skill declares 5+ commands (v2.0.3: gate-report removed; v2.2+: list-features + update-agent-md)" {
   run skill_commands "$f"
   [ "$status" -eq 0 ]
   # skill_commands returns top-level commands + sub-options (e.g. --phase-refs).
-  # Filter to top-level (no -- prefix) for the 5 known command whitelist check.
+  # Filter to top-level (no -- prefix) for the known command whitelist check.
   local top_count=0
   for cmd in "${lines[@]}"; do
     case "$cmd" in
       --*) ;;  # sub-option, skip
-      init|status|edit|validate|advance) top_count=$((top_count + 1)) ;;
+      init|status|edit|validate|advance|list-features|update-agent-md) top_count=$((top_count + 1)) ;;
       *) echo "unexpected top-level command: $cmd" >&2; return 1 ;;
     esac
   done
-  [ "$top_count" -ge 5 ]
+  [ "$top_count" -ge 7 ]
 }
 
 @test "roadmap_skill sources _lib/state.sh" {
