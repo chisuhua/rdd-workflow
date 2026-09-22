@@ -61,7 +61,7 @@ fi
 python3 -m _lib.planner_handoff
 echo "planner stage exit complete: $AWAITING -> rdd-builder (recommended_route=$RECOMMENDED)"
 
-# Refresh AUTO-OBJECTIVES sentinel in AGENTS.md (per add-objective-tracking)
+# Refresh AUTO: objectives sentinel in AGENTS.md (per add-objective-tracking)
 # Mirrors the existing AUTO feature fragments / sprint sentinels — same env-var
 # pattern (no bash string interpolation). Non-blocking: failures here never
 # affect the planner-handoff.json write result.
@@ -95,8 +95,8 @@ for f in sorted(obj_dir.glob("*.md")):
         f"| {f.stem} | {fm.get('theme', '?')[:80]} |"
     )
 
-SENTINEL_START = "<!-- AUTO-OBJECTIVES start -->"
-SENTINEL_END = "<!-- AUTO-OBJECTIVES end -->"
+SENTINEL_START = "<!-- AUTO: objectives start -->"
+SENTINEL_END = "<!-- AUTO: objectives end -->"
 text = agents_md.read_text(encoding="utf-8")
 
 new_block = f"{SENTINEL_START}\n"

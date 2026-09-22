@@ -2,7 +2,7 @@
 # tests/integration/test_rdd_planner_objective.bats
 #
 # rdd-planner objective integration (per add-objective-tracking change):
-#   - planner_stage_exit.sh refreshes AGENTS.md <!-- AUTO-OBJECTIVES --> sentinel
+#   - planner_stage_exit.sh refreshes AGENTS.md <!-- AUTO: objectives --> sentinel
 #   - list-objectives shows PoC files after planner run
 #   - revise-objective appends §11 ledger row + bumps last_revised
 #
@@ -18,10 +18,10 @@ setup() {
     AGENTS_MD="$PROJECT_ROOT/AGENTS.md"
 }
 
-@test "planner-objective: AGENTS.md contains AUTO-OBJECTIVES sentinel" {
+@test "planner-objective: AGENTS.md contains AUTO: objectives sentinel" {
     [ -f "$AGENTS_MD" ]
-    grep -q "<!-- AUTO-OBJECTIVES start -->" "$AGENTS_MD"
-    grep -q "<!-- AUTO-OBJECTIVES end -->" "$AGENTS_MD"
+    grep -q "<!-- AUTO: objectives start -->" "$AGENTS_MD"
+    grep -q "<!-- AUTO: objectives end -->" "$AGENTS_MD"
 }
 
 @test "planner-objective: sentinel lists both PoC objectives" {

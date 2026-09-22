@@ -127,7 +127,7 @@ rddf roadmap snapshot-objective <id>      # 把 deps 快照写入 §9.5（仅 sp
 
 ### E. rdd-planner 接入（2 个读写点）
 
-- **planner_stage_exit.sh** 末尾追加：刷新 AGENTS.md `<!-- AUTO-OBJECTIVES -->` 哨兵段（与现有 AUTO feature fragments / sprint 同模式）
+- **planner_stage_exit.sh** 末尾追加：刷新 AGENTS.md `<!-- AUTO: objectives -->` 哨兵段（与现有 AUTO feature fragments / sprint 同模式）
 - 新增 `planner_objective_revise.sh` 子脚本：交互式修订界面（生成 next_sprint_candidates 候选 + 追加台账行）
 - rdd-planner/SKILL.md 在 phase 列表加 §objectives 治理段（含"何时建 feature / 何时建 objective"决策规则）
 
@@ -217,7 +217,7 @@ rddf roadmap snapshot-objective <id>      # 把 deps 快照写入 §9.5（仅 sp
 
 ### Planner 接入
 - [ ] rdd-planner/SKILL.md 含"何时建 feature vs objective"决策规则
-- [ ] `planner_stage_exit.sh` 末尾刷新 AGENTS.md `<!-- AUTO-OBJECTIVES -->` 哨兵段（与 feature fragments 模式一致）
+- [ ] `planner_stage_exit.sh` 末尾刷新 AGENTS.md `<!-- AUTO: objectives -->` 哨兵段（与 feature fragments 模式一致）
 - [ ] `planner_objective_revise.sh` 子脚本：交互式修订界面
 
 ### PoC 双跑（动态覆盖）
@@ -288,7 +288,7 @@ rddf roadmap snapshot-objective <id>      # 把 deps 快照写入 §9.5（仅 sp
 - builder → planner 的反向通道（`.planner-feedback.json`）继续存在但不强制触发 objective 修订
 
 ### SHOULD（治理）
-- 90 天 grace 触发 archive-objective 后，AGENTS.md AUTO-OBJECTIVES 段不再列出
+- 90 天 grace 触发 archive-objective 后，AGENTS.md AUTO: objectives 段不再列出
 - PoC 完成 1 个 sprint 后再做总评：是否需要调整骨架 / 是否需要 evidence 子目录升级
 - 跨 repo objective 的依赖（DAG snapshot 价值最大）需手动标注跨 repo 边（rddf deps 静态分析覆盖不到）
 

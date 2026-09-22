@@ -139,7 +139,7 @@ rdd-planner owns `.rddf/roadmap/objectives/*.md`（**唯一写入方**，per ADR
 ### 写入门控
 
 - objective 文件写入权 **仅 rdd-planner**；builder / execute / verifier **不写** objective 文件
-- stage exit 自动刷新 `AGENTS.md` `<!-- AUTO-OBJECTIVES -->` 哨兵段（planner_stage_exit.sh 内嵌，与 feature fragments 同模式）
+- stage exit 自动刷新 `AGENTS.md` `<!-- AUTO: objectives -->` 哨兵段（planner_stage_exit.sh 内嵌，与 feature fragments 同模式）
 - sprint 复盘仪式: `bash skills/rdd-planner/scripts/planner_objective_revise.sh <id> --kind sprint-review --content "..." --decision "..." --reason "..."`
 - §11 台账 append-only；kind ∈ {deferral-rationale, go-decision, sprint-review, scope-change, adr-amendment}
 - deferred objective 的 §10 允许 `N/A — <理由>`，禁止静默留空

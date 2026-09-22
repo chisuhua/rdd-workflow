@@ -53,7 +53,7 @@ rdd-workflow 现有 roadmap 工件体系 (v2.2+):
 
 ### D3: 写入权归 rdd-planner (per ADR-0028 扩展)
 
-避免 builder/execute 隐式写 objective 侵蚀 rdd-planner 单门控。`planner_stage_exit.sh` 是唯一允许刷新 `AUTO-OBJECTIVES` 哨兵段的入口。
+避免 builder/execute 隐式写 objective 侵蚀 rdd-planner 单门控。`planner_stage_exit.sh` 是唯一允许刷新 `AUTO: objectives` 哨兵段的入口。
 
 ### D4: 协作模式串行
 
@@ -117,7 +117,7 @@ deferred objective 的 §10 必填项允许此格式, 但禁止静默留空 (无
 | `_lib/objective.py` | ~200 | Parser + validator + grace helper + derive stub |
 | `_lib/cli/roadmap_cmd.py` | +50 | 7 objective subcommands 注册 |
 | `skills/roadmap/scripts/objective_*.sh` | 7 × ~30 = ~210 | Bash wrappers (env-var pattern per Oracle C1) |
-| `skills/rdd-planner/scripts/planner_stage_exit.sh` | +30 | AUTO-OBJECTIVES refresh hook |
+| `skills/rdd-planner/scripts/planner_stage_exit.sh` | +30 | AUTO: objectives refresh hook |
 | `skills/rdd-doctor/scripts/checks/objective_lifecycle_check.py` | ~50 | 生命周期 grace check |
 | `skills/rdd-doctor/scripts/checks/objective_structure_check.py` | ~60 | 结构 invariant check |
 
@@ -151,7 +151,7 @@ deferred objective 的 §10 必填项允许此格式, 但禁止静默留空 (无
 1. **新工件增加 cognitive load**: AGENTS.md / SKILL.md / CLI 文档都要解释何时建 feature / 何时建 objective
 2. **PoC 占用 2 个 objective 文件位**: v0.1 限制 2 个, 验证后扩到 3-5 个常用场景
 3. **§9.5 快照有 staleness 风险**: 必须用时间戳 + regenerate 命令强制格式让 reader 知道是派生数据
-4. **AGENTS.md AUTO-OBJECTIVES 段会膨胀**: 每个 objective 1 行, 10 个 = 10 行表格; 超 20 个考虑聚合摘要
+4. **AGENTS.md AUTO: objectives 段会膨胀**: 每个 objective 1 行, 10 个 = 10 行表格; 超 20 个考虑聚合摘要
 
 ## Implementation Status
 
@@ -160,7 +160,7 @@ deferred objective 的 §10 必填项允许此格式, 但禁止静默留空 (无
 | `_lib/objective.py` + schema | ✅ DONE |
 | 7 bash wrappers | ✅ DONE |
 | rdd-doctor 2 categories wired | ✅ DONE |
-| planner_stage_exit AUTO-OBJECTIVES hook | ✅ DONE |
+| planner_stage_exit AUTO: objectives hook | ✅ DONE |
 | PoC #1 (deferred) + PoC #2 (active) | ✅ DONE |
 | 31 unit tests | ✅ ALL PASS |
 | `openspec validate --strict` | ✅ PASS |

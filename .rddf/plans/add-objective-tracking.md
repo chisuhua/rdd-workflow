@@ -13,7 +13,7 @@
 
 **Tech Stack:** Python 3.11+ (stdlib only, no new deps), Bash 4+ (wrappers), JSON Schema (validation), bats-core (integration), pytest (unit).
 
-**Single-writer contract:** Only rdd-planner writes objective files. `planner_stage_exit.sh` is the sole entry that refreshes AGENTS.md `<!-- AUTO-OBJECTIVES -->` sentinel. rdd-builder / rdd-verifier / rdd-arch do NOT touch objective files.
+**Single-writer contract:** Only rdd-planner writes objective files. `planner_stage_exit.sh` is the sole entry that refreshes AGENTS.md `<!-- AUTO: objectives -->` sentinel. rdd-builder / rdd-verifier / rdd-arch do NOT touch objective files.
 
 **PoC gate (per change ## Acceptance):** Both PoC objectives must exist + produce at least 1 sprint-review ledger row + 1 deps snapshot + 1 review_by date set.
 
@@ -38,7 +38,7 @@
 | `skills/roadmap/scripts/objective_snapshot.sh` | Bash wrapper: snapshot-objective (writes §9.5 dated snapshot) |
 | `skills/roadmap/SKILL.md` | Add "objective tracking" concept section + 7 CLI subcommand list |
 | `skills/rdd-planner/scripts/planner_objective_revise.sh` | Interactive revise entrypoint under rdd-planner owns |
-| `skills/rdd-planner/scripts/planner_stage_exit.sh` | Append `<!-- AUTO-OBJECTIVES -->` refresh (after existing AUTO-INDEX refresh) |
+| `skills/rdd-planner/scripts/planner_stage_exit.sh` | Append `<!-- AUTO: objectives -->` refresh (after existing AUTO-INDEX refresh) |
 | `skills/rdd-planner/SKILL.md` | Add objectives governance + feature-vs-objective decision rules |
 | `skills/rdd-doctor/scripts/checks/objective_lifecycle_check.py` | Lifecycle doctor: review_by grace + status consistency |
 | `skills/rdd-doctor/scripts/checks/objective_structure_check.py` | Structure doctor: frontmatter + sections + kind enum + N/A format |
@@ -63,7 +63,7 @@
 | `tests/unit/test_objective_parser.py` | ≥6 tests: parse happy / missing frontmatter / missing section / optional section / N/A detection / derivation |
 | `tests/integration/test_objective_lifecycle.bats` | ≥4 tests: list, show, archive, grace warning |
 | `tests/integration/test_objective_structure.bats` | ≥4 tests: doctor structure check (valid/invalid objective file), kind violation, N/A pattern |
-| `tests/integration/test_rdd_planner_objective.bats` | ≥3 tests: stage_exit refreshes AUTO-OBJECTIVES, list shows PoC files, revise appends ledger row |
+| `tests/integration/test_rdd_planner_objective.bats` | ≥3 tests: stage_exit refreshes AUTO: objectives, list shows PoC files, revise appends ledger row |
 
 ---
 
@@ -76,7 +76,7 @@ See `openspec/changes/add-objective-tracking/tasks.md` for detailed TDD task bre
 | 1 | Schema v1 + `_lib/objective.py` parser/validator | ~280 |
 | 2 | CLI handlers + bash wrappers + route registration | ~500 |
 | 3 | Doctor checks (lifecycle + structure) | ~120 |
-| 4 | rdd-planner integration (AUTO-OBJECTIVES sentinel + revise hook) | ~170 |
+| 4 | rdd-planner integration (AUTO: objectives sentinel + revise hook) | ~170 |
 | 5 | PoC objective files (bypass-audit-hub-governance deferred + onboard-new-skill active) | ~100 |
 | 6 | ADR + AGENTS.md + README | ~190 |
 | 7 | Final regression + archive prep | ~50 |
@@ -114,7 +114,7 @@ Before marking this change complete:
 - [ ] `openspec validate add-objective-tracking --strict` exits 0
 - [ ] `bash skills/rdd-doctor/scripts/doctor.sh` shows zero CRITICAL across 13 categories (11 existing + 2 new)
 - [ ] Both PoC objectives exist + produce ≥1 sprint-review ledger row + ≥1 deps snapshot + ≥1 review_by set
-- [ ] AGENTS.md AUTO-OBJECTIVES segment populated after `planner_stage_exit.sh` run
+- [ ] AGENTS.md AUTO: objectives segment populated after `planner_stage_exit.sh` run
 - [ ] `rddf roadmap list-objectives` shows both PoC objectives with correct status/priority
 
 ---
@@ -126,5 +126,5 @@ Before marking this change complete:
 | Planner single-gate erosion (builder/executor writes objective files) | Enforced via test: `test_lifecycle_check_rejects_unauthorized_writes` (hash check on `_lib/objective.py` + bash wrappers) |
 | §9.5 snapshot staleness | Time stamp + regenerate command mandatory in format; doctor warns on snapshots >30d old (deferred to v0.2) |
 | N/A pattern abuse (planner writes "N/A — TODO" instead of real content) | Doctor regex enforces `N/A — .+` (≥1 char reason after em-dash) |
-| AUTO-OBJECTIVES segment grows unbounded | v0.1 limits to summary table; v0.2 may add aggregate view (per objective) |
+| AUTO: objectives segment grows unbounded | v0.1 limits to summary table; v0.2 may add aggregate view (per objective) |
 | PoC objectives left in active state after change archive | Tasks.md Step 7 explicitly verifies both PoCs are valid + PoC #1 can stay `deferred` (real deferral) |
