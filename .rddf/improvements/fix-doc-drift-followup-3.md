@@ -4,14 +4,14 @@
 阶段: default
 分类: docs
 类型: improvement
-状态: "⏳ 待 `rdd-planner` 审查"
+状态: ✅ 已实施 (2026-09-09, commit 0ba5ae4 "feat(change): fix-doc-drift-followup-3 — planner-approve + plan + tasks artifacts" + commit 2b39d6b "fix(doc): guide recommender + v3-to-v4 migration guide"; per feat-fix-archive-gaps-v2 phase-4 推进)
 依赖: "本提案建立在已完成 `fix-doc-drift-v4-architecture` (commit f4d675b, 已 archived) + 待归档 `docs-v4-sync-followup-v2` 之上；不与前两批重叠。"
 ---
 **优先级**: P1 | **来源**: 2026-09-09 文档与代码一致性审计（第 3 波）
 **阶段**: default | **分类**: docs
 **类型**: improvement
 **依赖**: 本提案建立在已完成 `fix-doc-drift-v4-architecture` (commit f4d675b, 已 archived) + 待归档 `docs-v4-sync-followup-v2` 之上；不与前两批重叠。
-**状态**: ⏳ 待 `rdd-planner` 审查
+**状态**: ✅ 已实施 (2026-09-09, commits 0ba5ae4 + 2b39d6b) — per feat-fix-archive-gaps-v2 phase-4 推进
 
 ## 架构依据
 

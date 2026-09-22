@@ -4,12 +4,12 @@
 阶段: default
 分类: governance
 类型: improvement
-状态: ⏳ 已推迟 → ⬆ P1 升级 2026-08-28 (per feat-fix-archive-gaps-v2 评估; 待 guide-design 重新审查)
+状态: ✅ 已实施 (2026-08-28, commit 4900db4 "feat(adr-index): auto-sync ADR index README + add 3 P1 change specs" + 2026-09-11 commit 73fdff4 "docs(adr): regenerate README index with ADR-0049/0050 entries"; per feat-fix-archive-gaps-v2 phase-1 推进)
 ---
 **优先级**: P1 (↑ from P2, 2026-08-28 per feat-fix-archive-gaps-v2) | **来源**: 2026-08-26 文档与代码一致性审计
 **阶段**: default | **分类**: governance
 **类型**: improvement
-**状态**: ⏳ 已推迟 → ⬆ P1 升级 2026-08-28 (per feat-fix-archive-gaps-v2 评估; 待 guide-design 重新审查)
+**状态**: ✅ 已实施 (2026-08-28, commit 4900db4 + 2026-09-11 commit 73fdff4) — per feat-fix-archive-gaps-v2 phase-1 推进
 
 ## 架构依据
 
