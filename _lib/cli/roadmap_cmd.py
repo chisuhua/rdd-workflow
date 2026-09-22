@@ -5,6 +5,9 @@ scripts based on the first positional argument (subcommand):
 
 - ``migrate`` → ``skills/roadmap/scripts/roadmap_migrate.sh``
 - ``validate-fragments`` → ``skills/roadmap/scripts/roadmap_validate_fragments.sh``
+- ``list-features`` → ``skills/roadmap/scripts/roadmap_list_features.sh``
+- ``update-agent-md`` → ``skills/roadmap/scripts/roadmap_update_agent_md.sh``
+- ``--update-agent-md`` (top-level flag) → ``skills/roadmap/scripts/roadmap_update_agent_md.sh``
 - ``--help`` (or no subcommand) → print help text
 
 Args after the subcommand are forwarded verbatim; exit codes propagate
@@ -23,6 +26,7 @@ def _help_text() -> str:
 
 用法:
   rddf roadmap <subcommand> [args...]
+  rddf roadmap --update-agent-md  (顶层 flag, 等价于 update-agent-md 子命令)
 
 子命令:
   migrate             迁移扁平 roadmap 到 hierarchical 结构
@@ -40,6 +44,17 @@ def _help_text() -> str:
     --status a|d|x           Optional. Default: active
     --force                  Optional. Overwrite existing feat-<name>.md
 
+  list-features         列出所有 feature fragments (rddf roadmap list-features)
+    --format table|json|yaml  Optional. Default: table
+    --no-archived             Optional. Exclude archived features
+    --fragments-dir <path>    Optional. Override default .rddf/roadmap
+
+  update-agent-md       重写 AGENTS.md AUTO 哨兵段 (rddf roadmap update-agent-md)
+    --agents-md <path>        Optional. Override default AGENTS.md
+    --fragments-dir <path>    Optional. Override default .rddf/roadmap
+
+  --update-agent-md    顶层 flag, 等价于 update-agent-md 子命令
+
 使用 env var:
   SPEC_WORKFLOW_ROADMAP_FRAGMENTS_DIR 覆盖默认 .rddf/roadmap
 """
@@ -51,6 +66,8 @@ def cmd_roadmap(args: list[str]) -> int:
     Args:
         args: CLI args. First positional arg is the subcommand,
             remaining args are forwarded to the subcommand script.
+            Special case: ``--update-agent-md`` as first arg maps to
+            ``update-agent-md`` subcommand (per proposal AC top-level flag).
 
     Returns:
         Exit code from the subcommand script, or 0 for ``--help``.
@@ -63,8 +80,14 @@ def cmd_roadmap(args: list[str]) -> int:
         print(_help_text())
         return 0
 
-    subcommand = args[0]
-    sub_args = args[1:]
+    # Top-level flag form: `rddf roadmap --update-agent-md ...`
+    # Maps to update-agent-md subcommand (per proposal AC).
+    if args[0] == "--update-agent-md":
+        subcommand = "update-agent-md"
+        sub_args = args[1:]
+    else:
+        subcommand = args[0]
+        sub_args = args[1:]
 
     _SUBCOMMAND_MAP = {
         "migrate": project_root / "skills" / "roadmap" / "scripts" / "roadmap_migrate.sh",
@@ -74,6 +97,16 @@ def cmd_roadmap(args: list[str]) -> int:
         / "scripts"
         / "roadmap_validate_fragments.sh",
         "add-feature": project_root / "skills" / "roadmap" / "scripts" / "roadmap_add_feature.sh",
+        "list-features": project_root
+        / "skills"
+        / "roadmap"
+        / "scripts"
+        / "roadmap_list_features.sh",
+        "update-agent-md": project_root
+        / "skills"
+        / "roadmap"
+        / "scripts"
+        / "roadmap_update_agent_md.sh",
     }
 
     if subcommand not in _SUBCOMMAND_MAP:

@@ -933,3 +933,200 @@ def add_feature(
         raise
 
     return {"path": str(fragment_path), "main_doc_refreshed": True}
+
+
+# ---------------------------------------------------------------------------
+# Per-ADR improve-roadmap-feature-discovery (P2, 2026-08-27):
+#   - list_features(): scan .rddf/roadmap/features/*.md, render summary
+#   - update_agent_md(): rewrite AGENTS.md AUTO sentinel block
+# ---------------------------------------------------------------------------
+
+AGENTS_AUTO_SENTINEL_START = "<!-- AUTO: feature fragments start -->"
+AGENTS_AUTO_SENTINEL_END = "<!-- AUTO: feature fragments end -->"
+
+
+def list_features(
+    fragments_dir: str,
+    fmt: str = "table",
+    include_archived: bool = True,
+) -> str:
+    """List all feature fragments as a formatted string.
+
+    Per improve-roadmap-feature-discovery proposal AC:
+      rddf roadmap list-features --format {table,json,yaml}
+
+    Args:
+        fragments_dir: Absolute path to .rddf/roadmap (parent of features/).
+        fmt: One of 'table' (default, ASCII table), 'json' (machine-readable),
+            'yaml' (machine-readable).
+        include_archived: If True (default), include status='archived'
+            fragments; if False, only active+done.
+
+    Returns:
+        Formatted string ready to print.
+
+    Raises:
+        ValueError: if fmt not in ('table', 'json', 'yaml').
+    """
+    from pathlib import Path
+
+    if fmt not in ("table", "json", "yaml"):
+        raise ValueError(f"fmt must be table/json/yaml, got: {fmt!r}")
+
+    fragments = load_fragments(fragments_dir, include_archived=include_archived)
+    features = [f for f in fragments if f.kind == "feature"]
+    features.sort(key=lambda x: x.id)
+
+    if fmt == "json":
+        rows = [
+            {
+                "id": f.id,
+                "status": f.status,
+                "phase_refs": f.phase_refs,
+                "theme": f.theme,
+                "file": f.file_path,
+            }
+            for f in features
+        ]
+        return json.dumps(rows, ensure_ascii=False, indent=2)
+
+    if fmt == "yaml":
+        # Minimal YAML emitter (no external dep). Matches the JSON shape.
+        lines = ["- id:", "  features:"]
+        for f in features:
+            lines.append(f"    - id: {f.id}")
+            lines.append(f"      status: {f.status}")
+            lines.append(f"      phase_refs: [{', '.join(f.phase_refs)}]")
+            theme = f.theme.replace('"', '\\"')
+            lines.append(f'      theme: "{theme}"')
+            lines.append(f"      file: {f.file_path}")
+        return "\n".join(lines) + "\n"
+
+    # fmt == "table"
+    if not features:
+        return "(no feature fragments — run `rddf roadmap add-feature ...`)"
+    rows = [("id", "status", "phase_refs", "theme")]
+    for f in features:
+        rows.append((f.id, f.status, ", ".join(f.phase_refs), f.theme))
+    widths = [max(len(r[i]) for r in rows) for i in range(4)]
+    lines = []
+    for i, r in enumerate(rows):
+        line = " | ".join(r[i].ljust(widths[i]) for i in range(4))
+        lines.append(line)
+        if i == 0:
+            lines.append("-+-".join("-" * w for w in widths))
+    return "\n".join(lines) + "\n"
+
+
+def update_agent_md(
+    project_root: str,
+    agents_md_path: str = "AGENTS.md",
+    fragments_dir: str = ".rddf/roadmap",
+) -> dict:
+    """Rewrite the AGENTS.md AUTO feature-fragments sentinel block.
+
+    Per improve-roadmap-feature-discovery proposal AC-2 + AC-9 (MUST markers):
+      - MUST use `<!-- AUTO: feature fragments start/end -->` sentinels
+      - MUST NOT touch other AGENTS.md sections
+      - Idempotent: same input → same output
+
+    If sentinels are absent, inserts the block before the first H1 heading
+    (or at EOF if none). Returns dict with `inserted` (bool) and
+    `feature_count` (int).
+
+    Args:
+        project_root: Repo root.
+        agents_md_path: Path to AGENTS.md (relative or absolute).
+        fragments_dir: Path to fragments dir (relative or absolute).
+
+    Returns:
+        Dict with `inserted: bool`, `feature_count: int`.
+    """
+    from pathlib import Path
+
+    root = Path(project_root)
+    agents = Path(agents_md_path)
+    if not agents.is_absolute():
+        agents = root / agents
+    frags = Path(fragments_dir)
+    if not frags.is_absolute():
+        frags = root / frags
+
+    fragments = load_fragments(str(frags), include_archived=True)
+    features = [f for f in fragments if f.kind == "feature"]
+    features.sort(key=lambda x: x.id)
+
+    # Build the new block
+    new_block_lines = [AGENTS_AUTO_SENTINEL_START, ""]
+    if not features:
+        new_block_lines.append(
+            "_no feature fragments registered — run `rddf roadmap add-feature ...`_"
+        )
+    else:
+        new_block_lines.append("| id | status | phase_refs | theme |")
+        new_block_lines.append("|---|---|---|---|")
+        for f in features:
+            refs = ", ".join(f.phase_refs) if f.phase_refs else "(none)"
+            theme = f.theme.replace("|", "\\|")
+            new_block_lines.append(
+                f"| `{f.id}` | {f.status} | {refs} | {theme} |"
+            )
+    new_block_lines.append("")
+    new_block_lines.append(
+        "_auto-generated by `rddf roadmap --update-agent-md` — DO NOT hand-edit this block_"
+    )
+    new_block_lines.append(AGENTS_AUTO_SENTINEL_END)
+    new_block = "\n".join(new_block_lines) + "\n"
+
+    if not agents.exists():
+        # Create minimal AGENTS.md with the auto block
+        agents.parent.mkdir(parents=True, exist_ok=True)
+        agents.write_text(
+            "# AGENTS.md\n\n" + new_block, encoding="utf-8"
+        )
+        return {"inserted": True, "feature_count": len(features)}
+
+    content = agents.read_text(encoding="utf-8")
+
+    if AGENTS_AUTO_SENTINEL_START in content and AGENTS_AUTO_SENTINEL_END in content:
+        start_idx = content.index(AGENTS_AUTO_SENTINEL_START)
+        end_idx = content.index(AGENTS_AUTO_SENTINEL_END, start_idx) + len(
+            AGENTS_AUTO_SENTINEL_END
+        )
+        before_text = content[:start_idx]
+        after_text = content[end_idx:]
+        before = before_text.rstrip()
+        if before:
+            before = before + "\n\n"
+        after = after_text.lstrip("\n")
+        new_content = before + new_block + ("\n" + after if after else "")
+        inserted = False
+    else:
+        # Insert block: prefer before first H1 heading; else at EOF
+        h1_match = re.search(r"^# .+$", content, re.MULTILINE)
+        if h1_match:
+            insert_at = h1_match.start()
+            new_content = (
+                content[:insert_at]
+                + new_block
+                + "\n"
+                + content[insert_at:]
+            )
+        else:
+            new_content = content.rstrip() + "\n\n" + new_block
+        inserted = True
+
+    # Atomic write
+    fd, tmp_path = tempfile.mkstemp(
+        dir=str(agents.parent), prefix=".agents.md.tmp.", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(new_content)
+        os.replace(tmp_path, agents)
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        raise
+
+    return {"inserted": inserted, "feature_count": len(features)}

@@ -41,11 +41,13 @@ guide → roadmap（本技能）→ propose → deps → plan → execute → st
 
 | 命令 | 说明 |
 |------|------|
-| `init` | 初始化路线图文件 |
+| `init` | 初始化路线图命令 |
 | `status` | 查看路线图状态 |
 | `edit` | 编辑路线图（交互式） |
 | `validate <change-name>` | 验证 change 的分类 |
 | `advance` | 推进到下一阶段 |
+| `list-features` | 列出所有 `.rddf/roadmap/features/*.md`（含 status/phase_refs/theme） |
+| `update-agent-md` | 重写 `AGENTS.md` 顶部 AUTO feature-fragments 哨兵段 |
 
 ---
 
@@ -522,6 +524,91 @@ rddf roadmap add-feature auth-v2 \
 
 `_lib/roadmap_state.py::add_feature`（Python）+ `skills/roadmap/scripts/roadmap_add_feature.sh`（shell wrapper）。
 该 primitive 是 `add-hierarchical-roadmap-structure`（shipped 2026-08-20）"关键场景 3"的操作入口补全。
+
+---
+
+## 命令：list-features — 列出 feature fragments
+
+per `improve-roadmap-feature-discovery`（shipped 2026-09-22）。扫描 `.rddf/roadmap/features/*.md` frontmatter，输出表格/JSON/YAML。
+
+### 用法
+
+```bash
+rddf roadmap list-features [options]
+```
+
+### 选项
+
+| 选项 | 必填 | 说明 |
+|------|------|------|
+| `--format` | 否 | `table`（默认）/ `json` / `yaml` |
+| `--no-archived` | 否 | 排除 `status: archived` 的 features |
+| `--fragments-dir <path>` | 否 | 覆盖默认 `.rddf/roadmap` |
+
+### 示例
+
+```bash
+rddf roadmap list-features                   # table 格式 (默认含 archived)
+rddf roadmap list-features --format json    # JSON 输出, 可被 rdd-doctor / dashboard 消费
+rddf roadmap list-features --no-archived    # 只看 active + done
+```
+
+### 退出码
+
+| Code | 含义 |
+|------|------|
+| 0 | 成功 (有 features / 无 features 都输出友好提示) |
+| 2 | 使用错误（`--format` 非法值） |
+
+### 底层实现
+
+`_lib/roadmap_state.py::list_features` + `skills/roadmap/scripts/roadmap_list_features.sh`。
+被 `skills/rdd-planner/scripts/planner_stage_entry.sh` + `planner_stage_exit.sh` 调用，
+**这是两个脚本 2026-08-27 引入的隐式依赖 — ship 时该 CLI 必须就绪**。
+
+---
+
+## 命令：update-agent-md — 重写 AGENTS.md AUTO 哨兵段
+
+per `improve-roadmap-feature-discovery`。在 `AGENTS.md` 顶部重写
+`<!-- AUTO: feature fragments start/end -->` 哨兵包围的 feature fragments 表格。
+
+### 用法
+
+```bash
+rddf roadmap update-agent-md [options]
+rddf roadmap --update-agent-md           # 顶层 flag (per proposal AC)
+```
+
+### 选项
+
+| 选项 | 必填 | 说明 |
+|------|------|------|
+| `--agents-md <path>` | 否 | 覆盖默认 `AGENTS.md` (相对项目根) |
+| `--fragments-dir <path>` | 否 | 覆盖默认 `.rddf/roadmap` |
+
+### Idempotency
+
+- 没有哨兵 → 插入在文件最前 (在 H1 标题**之前**——H1 之前的"\n"会被替换)
+- 有哨兵 → 替换 in-place，**不**累积空行
+- 二次调用结果与首次调用**完全一致**
+
+### 必须
+
+- 哨兵 start/end 完整闭合（替换模式需要两者都存在）
+- 不能动哨兵外的其他段（已用 frontmatter 测试 lock）
+- 文件无 sentinel 时创建最小有效文件
+
+### 退出码
+
+| Code | 含义 |
+|------|------|
+| 0 | 成功 (inserted 或 updated) |
+| 1 | 写文件失败（IO/atomic write 错误） |
+
+### 底层实现
+
+`_lib/roadmap_state.py::update_agent_md` + `skills/roadmap/scripts/roadmap_update_agent_md.sh`。
 
 ---
 
