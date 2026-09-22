@@ -19,6 +19,7 @@ _CATEGORY_NAMES = frozenset({
     "orphan-gates", "roadmap-refs", "roadmap-feature", "docs-consistency",
     "gitignore", "bypass-audit", "improvement-frontmatter-consistency",
     "ai-context-bootstrap",
+    "objective-lifecycle", "objective-structure",
 })
 
 
@@ -36,15 +37,16 @@ def test_category_names_constant_matches_disk():
     )
 
 
-def test_aggregate_runs_all_15_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """aggregate_findings invokes all 15 checker modules and combines results.
+def test_aggregate_runs_all_17_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """aggregate_findings invokes all 17 checker modules and combines results.
 
     Per rdd-doctor-docs-consistency change (2026-08-27, 10th category),
     add-gitignore-hard-protection change (2026-09-10, 11th category),
     bypass-audit-mechanism change (2026-09-11, 12th category),
     improvement-frontmatter-consistency (2026-09-15, 13th category),
     fix-skill-post-install-discoverability (2026-09-21, 14th category),
-    feat-roadmap-discovery-completion (2026-09-22, 15th category).
+    feat-roadmap-discovery-completion (2026-09-22, 15th category),
+    add-objective-tracking change (2026-09-22, 16th + 17th category).
     """
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
     findings, categories_checked = aggregate_findings(category=None)
@@ -81,11 +83,12 @@ def test_aggregate_no_category_no_match_returns_empty(tmp_path: Path, monkeypatc
     assert categories_checked == []
 
 
-def test_checkers_dict_has_15_entries():
-    """Lock the public contract: exactly 15 categories wired.
+def test_checkers_dict_has_17_entries():
+    """Lock the public contract: exactly 17 categories wired.
 
     Baseline 10 + gitignore + bypass-audit + improvement-frontmatter +
     ai-context-bootstrap + roadmap-feature (feat-roadmap-discovery-completion
-    2026-09-22).
+    2026-09-22) + objective-lifecycle + objective-structure
+    (add-objective-tracking 2026-09-22).
     """
-    assert len(_CHECKERS) == 15
+    assert len(_CHECKERS) == 17

@@ -26,6 +26,7 @@ role:
       - "roadmap.md"
       - ".rddf/roadmap/features/*.md"
       - ".rddf/roadmap/phases/*.md"
+      - ".rddf/roadmap/objectives/*.md"
       - ".rddf/state/.populate-state.json"
       - "improvement-suggestions.md"
       - "improvement-approved.md"
@@ -121,6 +122,33 @@ Per spec §3.5.2 (batch 4): rdd-builder Phase 2 ADR-drift can promote feedback
 (kind=ac-fail + ref_change match) to `.planner-feedback.json` via
 `_lib/builder_feedback_router.py`. Default ON in v4; architect opt-in via
 `rddf planner feedback --accept-builder-source {yes|no}`.
+
+## Objectives 治理（跨 sprint 复杂目标跟踪，per ADR-0054）
+
+rdd-planner owns `.rddf/roadmap/objectives/*.md`（**唯一写入方**，per ADR-0028 role boundary + ADR-0054 D5）。Objective 是跨 sprint 复杂目标（多 feature + 多 openspec change 协同）的 source-of-truth 工件，与 feature fragment（derived view，零手工）互补。
+
+### 何时建 feature vs objective
+
+| 场景 | 用 |
+|------|----|
+| 跨 phase 聚合当前状态（零手工、自动派生） | **feature fragment** (`rddf roadmap add-feature`) |
+| 跨 sprint 目标叙事 + 复盘台账 + deferral rationale | **objective** (`rddf roadmap add-objective`) |
+| 纯单 change 改进 | **improvement** 5 段草稿 → rdd-builder P0 |
+| 单 change 执行视角 | **openspec change** |
+
+### 写入门控
+
+- objective 文件写入权 **仅 rdd-planner**；builder / execute / verifier **不写** objective 文件
+- stage exit 自动刷新 `AGENTS.md` `<!-- AUTO-OBJECTIVES -->` 哨兵段（planner_stage_exit.sh 内嵌，与 feature fragments 同模式）
+- sprint 复盘仪式: `bash skills/rdd-planner/scripts/planner_objective_revise.sh <id> --kind sprint-review --content "..." --decision "..." --reason "..."`
+- §11 台账 append-only；kind ∈ {deferral-rationale, go-decision, sprint-review, scope-change, adr-amendment}
+- deferred objective 的 §10 允许 `N/A — <理由>`，禁止静默留空
+- review_by 默认 created + 90 天；grace 到期由 `rddf doctor --category objective-lifecycle` 告警
+
+### 参考
+
+- `skills/roadmap/` — objective CLI（list/show/add/revise/archive/deps/snapshot）
+- `docs/adr/ADR-0054-objective-tracking.md` — 完整决策 + 4 工件区分矩阵
 
 ## See also
 

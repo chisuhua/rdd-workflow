@@ -398,6 +398,26 @@ rddf roadmap add-feature auth-v2 \
 
 This creates `.rddf/roadmap/features/feat-auth-v2.md` with valid frontmatter + 3-section body skeleton, and refreshes `.rddf/roadmap.md` AUTO-INDEX atomically. Closes the operation gap from `add-hierarchical-roadmap-structure` (scenario 3). Reachable from `rdd-arch` Phase 4 menu option 5. See `skills/roadmap/SKILL.md` for full CLI reference.
 
+### Objective tracking (v2.2+, per ADR-0054)
+
+Track complex cross-sprint targets via objective files in `.rddf/roadmap/objectives/*.md`. Distinct from feature fragments (which are derived views): objectives are planner-maintained source-of-truth for goals that span multiple sprints + features + openspec changes.
+
+```bash
+# Create new objective skeleton
+rddf roadmap add-objective bypass-audit-hub-governance \
+    --theme "统一 bypass audit + hub federation governance"
+
+# List + show + revise + snapshot + archive
+rddf roadmap list-objectives
+rddf roadmap show-objective bypass-audit-hub-governance
+rddf roadmap revise-objective onboard-new-skill \
+    --kind sprint-review --content "..." --decision "..." --reason "..."
+rddf roadmap snapshot-objective bypass-audit-hub-governance
+rddf roadmap archive-objective bypass-audit-hub-governance
+```
+
+7 subcommands (`*-objective`) + 2 doctor categories (`objective-lifecycle` + `objective-structure`). Only `rdd-planner` writes objective files (per ADR-0028 role boundary). Decision rule: feature fragment for derived cross-phase aggregation (free, auto, zero maintenance); objective for cross-sprint target narrative + sprint-review ledger (manual, planner revision). See `docs/adr/ADR-0054-objective-tracking.md` + AGENTS.md "Objective 工件" section.
+
 ## 目录结构
 
 ```

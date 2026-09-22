@@ -16,6 +16,8 @@ from checks import (
     gitignore_check,
     improvement_frontmatter_check,
     migration_residue_check,
+    objective_lifecycle_check,
+    objective_structure_check,
     orphan_gates_check,
     plan_tdd_check,
     proposal_section_check,
@@ -44,6 +46,8 @@ _CHECKERS = {
     "gitignore": gitignore_check.run,
     "bypass-audit": bypass_audit_check.run,
     "improvement-frontmatter-consistency": improvement_frontmatter_check.run,
+    "objective-lifecycle": objective_lifecycle_check.run,
+    "objective-structure": objective_structure_check.run,
 }
 
 

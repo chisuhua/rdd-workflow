@@ -1,7 +1,7 @@
 # JSON Schema 索引
 
 > rdd-workflow 项目所有结构化数据的 JSON Schema 集中索引。
-> Schema 真实落点在仓库根 `_lib/schemas/`（canonical，29 个文件）；
+> Schema 真实落点在仓库根 `_lib/schemas/`（canonical，31 个文件）；
 > `skills/_lib/schemas/` 是向后兼容 shim 层（per P1-1b flatten layout, 2026-08-25）。
 > 改 schema **必须 bump `version` 字段**；schema 消费者拒绝 `version=0` payload。
 
@@ -14,11 +14,11 @@
 | [核心运行时](#核心运行时-core) | 1 | 状态向量原子持久化 |
 | [配置与扩展](#配置与扩展-config) | 4 | 配置 / 插件 / 角色 / 触发器 |
 | [阶段 handoff](#阶段-handoff-stage-handoff) | 7 | 跨阶段交接契约 |
-| [视图与状态](#视图与状态-view) | 6 | 派生视图与多 hook 写入的 state 文件 |
+| [视图与状态](#视图与状态-view) | 7 | 派生视图与多 hook 写入的 state 文件 + objective 跟踪工件 |
 | [跨 repo / hub](#跨-repo--hub-cross-repo) | 6 | Hub-and-Spoke 联邦通道 |
 | [verifier / quick](#verifier--quick-verification) | 5 | 验证回环 + 旁路审计 |
 | [env-bootstrap](#env-bootstrap) | 1 | 4-phase 环境编排报告 |
-| **合计** | **30** | 截至 2026-09-22 |
+| **合计** | **31** | 截至 2026-09-22 |
 
 ---
 
@@ -67,6 +67,7 @@
 | [`deps_analysis_schema.json`](../../_lib/schemas/deps_analysis_schema.json) | v1 | `.rddf/state/deps-analysis.json` | `deps` Step 5b | `rdd-builder` P1.5 execution_mode 决策 |
 | [`feedback_entry_schema.json`](../../_lib/schemas/feedback_entry_schema.json) | v1 | `.rddf/state/.planner-feedback.json` | `rdd-builder` Phase 2 ADR-drift → `_lib/builder_feedback_router.py` | `rdd-planner` advisory feedback |
 | [`improvement_frontmatter_schema.json`](../../_lib/schemas/improvement_frontmatter_schema.json) | v1 | `.rddf/improvements/*.md` frontmatter | `add-improve` | `rdd-builder` P0 pre-flight |
+| [`objective_schema.json`](../../_lib/schemas/objective_schema.json) | v1 | `.rddf/roadmap/objectives/*.md` frontmatter | `rdd-planner` (add-objective) | `_lib.objective.parse_objective/validate_objective` + `rdd-doctor --category objective-structure` |
 
 ---
 

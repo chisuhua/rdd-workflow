@@ -53,6 +53,32 @@ def _help_text() -> str:
     --agents-md <path>        Optional. Override default AGENTS.md
     --fragments-dir <path>    Optional. Override default .rddf/roadmap
 
+  list-objectives       列出所有 objective (rddf roadmap list-objectives)
+    --status active|deferred|completed|archived   Optional. Filter by status
+    --format table|json                            Optional. Default: table
+
+  show-objective        渲染单个 objective (rddf roadmap show-objective <id>)
+    <id>                  Required. Objective ID (without 'objective-' prefix or with)
+
+  add-objective         创建新 objective 骨架 (rddf roadmap add-objective <id> ...)
+    <id>                  Required. Objective ID
+    --theme "<text>"      Required. One-sentence objective
+    --priority P0|P1|P2   Optional. Default: P1
+    --status active|deferred  Optional. Default: active
+    --force               Optional. Overwrite existing objective
+
+  revise-objective      交互式修订 objective (rddf roadmap revise-objective <id>)
+    <id>                  Required. Objective ID
+
+  archive-objective     归档 objective (rddf roadmap archive-objective <id>)
+    <id>                  Required. Objective ID
+
+  deps-objective        派生 §7/§8/§9.5 DAG (rddf roadmap deps-objective <id>)
+    <id>                  Required. Objective ID
+
+  snapshot-objective    写入 §9.5 日期戳 DAG 快照 (rddf roadmap snapshot-objective <id>)
+    <id>                  Required. Objective ID
+
   --update-agent-md    顶层 flag, 等价于 update-agent-md 子命令
 
 使用 env var:
@@ -107,6 +133,21 @@ def cmd_roadmap(args: list[str]) -> int:
         / "roadmap"
         / "scripts"
         / "roadmap_update_agent_md.sh",
+        # objective subcommands (per add-objective-tracking, ADR-NNNN)
+        "list-objectives": project_root
+        / "skills" / "roadmap" / "scripts" / "objective_list.sh",
+        "show-objective": project_root
+        / "skills" / "roadmap" / "scripts" / "objective_show.sh",
+        "add-objective": project_root
+        / "skills" / "roadmap" / "scripts" / "objective_add.sh",
+        "revise-objective": project_root
+        / "skills" / "roadmap" / "scripts" / "objective_revise.sh",
+        "archive-objective": project_root
+        / "skills" / "roadmap" / "scripts" / "objective_archive.sh",
+        "deps-objective": project_root
+        / "skills" / "roadmap" / "scripts" / "objective_deps.sh",
+        "snapshot-objective": project_root
+        / "skills" / "roadmap" / "scripts" / "objective_snapshot.sh",
     }
 
     if subcommand not in _SUBCOMMAND_MAP:

@@ -176,6 +176,7 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [add-objective-tracking](.rddf/improvements/add-objective-tracking.md) | P1 | 2026-09-22 | 已实施 |
 | [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-09-22 | 已实施 |
 | [add-feature-fragment-command](.rddf/improvements/add-feature-fragment-command.md) | P1 | 2026-09-22 | 已实施 |
 | [fix-skill-post-install-discoverability](.rddf/improvements/fix-skill-post-install-discoverability.md) | P1 | 2026-09-22 | 已实施 |

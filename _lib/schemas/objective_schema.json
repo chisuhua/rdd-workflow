@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Objective Tracking Artifact",
+  "version": 1,
+  "type": "object",
+  "required": ["id", "status", "created", "last_revised", "review_by", "owner", "priority", "manual_deps", "theme"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^objective-[a-z0-9][a-z0-9-]{0,63}$",
+      "description": "kebab-case identifier prefixed with objective-"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "deferred", "completed", "archived"],
+      "description": "Lifecycle status (per design D5)"
+    },
+    "created": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO date when objective was created"
+    },
+    "last_revised": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO date of last planner revision"
+    },
+    "review_by": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO date for 90-day grace check trigger"
+    },
+    "owner": {
+      "type": "string",
+      "const": "rdd-planner",
+      "description": "Single-writer constraint: only rdd-planner"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["P0", "P1", "P2"]
+    },
+    "manual_deps": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^objective-[a-z0-9][a-z0-9-]{0,63}$"},
+      "description": "ADR-0022 reuse: list of objective ids this depends on"
+    },
+    "supersedes": {
+      "type": ["string", "null"],
+      "pattern": "^objective-[a-z0-9][a-z0-9-]{0,63}$",
+      "description": "Optional supersession chain (mirrors ADR lifecycle)"
+    },
+    "theme": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "One-sentence objective description"
+    }
+  },
+  "additionalProperties": false
+}

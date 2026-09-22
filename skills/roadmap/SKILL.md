@@ -48,6 +48,51 @@ guide → roadmap（本技能）→ propose → deps → plan → execute → st
 | `advance` | 推进到下一阶段 |
 | `list-features` | 列出所有 `.rddf/roadmap/features/*.md`（含 status/phase_refs/theme） |
 | `update-agent-md` | 重写 `AGENTS.md` 顶部 AUTO feature-fragments 哨兵段 |
+| `list-objectives` | 列出所有 `.rddf/roadmap/objectives/*.md`（含 status/priority/review_by/theme） |
+| `show-objective` | 渲染单个 objective（含 CLI 派生的 §6/§7/§8 derived view） |
+| `add-objective` | 创建 objective 骨架（frontmatter 9 字段 + 6-7 个手写单元） |
+| `revise-objective` | 追加 §11 台账行 + 自动 bump last_revised |
+| `archive-objective` | 90 天 grace 后归档到 `objectives/archive/` |
+| `deps-objective` | 派生 §7/§8/§9.5 DAG（CLI 实时输出） |
+| `snapshot-objective` | 写入 §9.5 日期戳快照（sprint 复盘时） |
+
+---
+
+## Objective 工件（跨 sprint 复杂目标跟踪，per ADR-0054）
+
+> **决策规则**: 纯结构聚合 → **feature fragment**（免费、自动、零维护）；需要跨 sprint 目标叙事 + 复盘台账 → **objective**（手工、planner 修订）。
+
+`.rddf/roadmap/objectives/<name>.md` 是 rdd-planner **唯一写入方**的 source-of-truth 工件（per ADR-0028 role boundary），跟踪跨多个 sprint + 多个 feature + 多个 openspec change 的复杂目标。与 feature fragment 的关键区别：feature 是 derived view（零手工聚合），objective 承载 planner 的手工修订意图（deferral rationale / go-decision / sprint-review）。
+
+### frontmatter（9 字段，schema `_lib/schemas/objective_schema.json` v1）
+
+`id` / `status`（active|deferred|completed|archived）/ `created` / `last_revised` / `review_by` / `owner`（必须 `rdd-planner`）/ `priority`（P0|P1|P2）/ `manual_deps`（数组，ADR-0022 复用）/ `theme`。
+
+### 手写单元（6 个必填 + 1 个可选）
+
+§1 驱动诊断（Why now）· §2 目标愿景 + done-when 判据 · §3 架构依据（引用 ADR **必有**）· §5 反例（可选）· §9 目标依赖与 Decision Gate（含 §9.2 Go/No-Go）· §10 next_sprint_candidates（deferred 时允许 `N/A — <理由>`，禁止静默留空）· §11 跟踪台账（append-only，5 种 kind）。
+
+### §11 台账 kind 枚举（5 项）
+
+`deferral-rationale` | `go-decision` | `sprint-review` | `scope-change` | `adr-amendment`
+
+### 示例
+
+```bash
+# 创建新 objective（frontmatter + 骨架）
+rddf roadmap add-objective bypass-audit-hub-governance \
+    --theme "统一 bypass audit + hub federation governance" --priority P2
+
+# 查看 / 修订 / 快照 / 归档
+rddf roadmap list-objectives
+rddf roadmap show-objective bypass-audit-hub-governance
+rddf roadmap revise-objective onboard-new-skill \
+    --kind sprint-review --content "..." --decision "..." --reason "..."
+rddf roadmap snapshot-objective bypass-audit-hub-governance
+rddf roadmap archive-objective bypass-audit-hub-governance
+```
+
+**边界**: rdd-arch / rdd-builder / rdd-verifier **不写** objective 文件；`rddf doctor --category objective-lifecycle|objective-structure` 做只读巡检。
 
 ---
 

@@ -80,6 +80,7 @@
 | [ADR-0051](ADR-0051-skill-description-convention.md) | ADR-0051: Skill `description` 字段约定 — 正向触发条件 + 单一职责 | 待采纳 | 2026-09-15 |
 | [ADR-0052](ADR-0052-layer-0-progressive-context.md) | ADR-0052: Layer 0 渐进式上下文注入架构 | 已采纳 | 2026-09-21 |
 | [ADR-0053](ADR-0053-rdd-env-bootstrap-orchestrator.md) | ADR-0053: rdd-env-bootstrap 编排层 | 已采纳 | 2026-09-22 |
+| [ADR-0054](ADR-0054-objective-tracking.md) | ADR-0054: Objective 跟踪工件 (cross-sprint complex targets) | 已采纳 | 2026-09-22 |
 <!-- ADR_INDEX_END -->
 
 ## 架构演进
