@@ -75,6 +75,40 @@ setup() {
     [[ "$output" == *"tasks-checkbox"* ]]
     [[ "$output" == *"migration-residue"* ]]
 }
+# --- roadmap-feature category (feat-roadmap-discovery-completion AC-5) ---
+
+@test "doctor: --category roadmap-feature is registered" {
+    run bash "$DOCTOR_SH" --help
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"roadmap-feature"* ]]
+}
+
+@test "doctor: --category roadmap-feature runs without error on master" {
+    cd "$PROJECT_ROOT"
+    run bash "$DOCTOR_SH" --category roadmap-feature
+    # Master state synced in commit 76b9261, so should be exit 0 (no findings)
+    [ "$status" -eq 0 ]
+}
+
+@test "doctor: --category roadmap-feature detects stale AGENTS.md AUTO block" {
+    cd "$PROJECT_ROOT"
+    cp AGENTS.md /tmp/agents.md.bak.rdd-doctor
+    # Insert a fake stale feature into the AUTO block
+    python3 -c "
+import re
+text = open('AGENTS.md').read()
+m = re.search(r'<!-- AUTO: feature fragments start -->(.*?)<!-- AUTO: feature fragments end -->', text, re.DOTALL)
+assert m, 'AUTO block not found'
+block = m.group(0)
+replacement = block.replace('<!-- AUTO: feature fragments end -->', '| \`feat-deleted-feature\` | done | phase-1 | stale |\n<!-- AUTO: feature fragments end -->')
+open('AGENTS.md', 'w').write(text.replace(block, replacement))
+"
+    run bash "$DOCTOR_SH" --category roadmap-feature
+    cp /tmp/agents.md.bak.rdd-doctor AGENTS.md
+    # Should detect stale feature id → CRITICAL → exit 2
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"feat-deleted-feature"* ]]
+}
 # --- docs-consistency category (sync-2: rdd-doctor-docs-consistency) ---
 
 @test "doctor: --category docs-consistency is registered" {

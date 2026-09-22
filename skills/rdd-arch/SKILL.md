@@ -155,6 +155,18 @@ source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_env_check.sh"
 run_arch_env_check || exit 1
 ```
 
+**展示当前 active feature fragments 作为 context**（per `improve-roadmap-feature-discovery` AC-4）：
+
+```bash
+FEATURES=$(rddf roadmap list-features --no-archived 2>/dev/null | grep -oE 'feat-[a-zA-Z0-9-]+' | head -10 || true)
+if [ -n "$FEATURES" ]; then
+    echo ""
+    echo "=== 活跃 Feature Fragments (跨 phase 工作) ==="
+    rddf roadmap list-features --no-archived
+    echo ""
+fi
+```
+
 **展示环境状态 + 选项**：
 
 ```
@@ -167,6 +179,12 @@ run_arch_env_check || exit 1
    ADR 模式:      ADR-*.md
    Roadmap:       roadmap.md (true)
    Architecture:  docs/architecture (true)
+
+=== 活跃 Feature Fragments (跨 phase 工作) ===
+| id | status | phase_refs | theme |
+|---|---|---|---|
+| `feat-fix-archive-gaps-v2` | done | phase-1..4 | 第二波归档治理改进... |
+| `feat-fix-audit-findings`   | done | phase-1..4 | 2026-08-26 文档与代码一致性审计后续修复 |
 
 当前状态: arch 阶段初始化完成
 
