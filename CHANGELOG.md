@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### roadmap-feature-doctor (enhance drift detection 6 invariants, 2026-09-22)
+
+`rdd-doctor --category roadmap-feature` 从 3 个基础检查升级为 6 个不变性检查，覆盖 feature fragment 状态在各视图间的完整漂移检测：
+
+- **`.rddf/roadmap.md` AUTO-INDEX 一致性**（新）：检测 fragment 未出现在 Features 段，或 Features 段引用不存在 fragment。`status=done` 缺失报 CRITICAL。
+- **`iteration.json` 状态对齐**（增强）：新增 fragment `status=done` 但 iteration 视图显示非 `done` 的 WARNING 检测；新增 stale feature entry 检测（__ungrouped__ 除外）。
+- **AGENTS.md 哨兵段完整性**（增强）：新增哨兵段缺失 WARNING 检测；新增磁盘有 fragment 但 AGENTS.md 无记录的 CRITICAL 检测；新增状态字段不一致 WARNING 检测。
+- **`status` 缺失升级 CRITICAL**：fragment frontmatter 缺少 `status` 字段从 WARNING 升级为 CRITICAL。
+- **测试**：`tests/unit/test_roadmap_feature_check.py` 从 4 个测试扩展到 13 个（100% 新增检查覆盖）。
+- **文档**：AGENTS.md `⏳` → `✅` 在 Active Feature Fragments 实现状态段。
+
+Closes follow-up #2 from Active Feature Fragments (AGENTS.md L207).
+
 ### add-gitignore-hard-protection (env-check + doctor .gitignore 一致性守卫, 2026-09-10)
 
 `fix-archive-openspec-tracked-commit` 的后续加固：`git.openspec_tracked: false` 挡住了 rdd-workflow 自身的 commit 路径，但用户/CI 一次 `git add -A` 仍会把 `openspec/` 重新拉进 git。本次把检测接入两个既有诊断入口。

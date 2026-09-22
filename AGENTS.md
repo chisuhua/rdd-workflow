@@ -204,7 +204,7 @@ fix(guide-design): correct inverted git add logic in approve_proposal.sh
 - ✅ `rddf roadmap --update-agent-md` 自动重写 AUTO 哨兵段
 - ✅ AGENTS.md 顶部 AUTO 段（哨兵 `<!-- AUTO: feature fragments start/end -->`）
 - ⏳ `rdd-arch` Phase 1 输出 feature fragments 列表作为 context（待 follow-up）
-- ⏳ `rdd-doctor --category roadmap-feature` 巡检（待 follow-up）
+- ✅ `rdd-doctor --category roadmap-feature` 巡检（已实施）
 
 **注意事项**：
 - 创建新 feature 后跑 `rddf roadmap --update-agent-md` 刷新本段
