@@ -93,3 +93,32 @@ REPLACED_RANGE="92,189p"
   [ "$status" -ne 0 ]
   [[ "$output" == *".rddf/state/"* ]]
 }
+
+# AC-4: improve-roadmap-feature-discovery — display active feature fragments
+# in arch_env_check output (per AGENTS.md L206 follow-up)
+@test "arch_env_check_ac4_prints_feature_fragments_section" {
+  local output
+  output=$(bash -c "cd '$REPO_ROOT' && source skills/rdd-arch/scripts/arch_env_check.sh && run_arch_env_check" 2>&1) || true
+  echo "$output" | grep -q '活跃 Feature Fragments (跨 phase 追踪)'
+}
+
+@test "arch_env_check_ac4_includes_fragment_table" {
+  local output
+  output=$(bash -c "cd '$REPO_ROOT' && source skills/rdd-arch/scripts/arch_env_check.sh && run_arch_env_check" 2>&1) || true
+  # When fragments exist, table row should be visible (feat-fix-archive-gaps-v2 is shipped)
+  echo "$output" | grep -q 'feat-fix-archive-gaps-v2'
+}
+
+@test "arch_env_check_ac4_suppresses_when_no_active_features" {
+  # When --no-archived output is empty, the section should NOT be printed.
+  # Strategy: temporarily move the fragments directory aside so list-features
+  # returns "no features found", then restore.
+  local output tmpdir
+  tmpdir=$(mktemp -d)
+  cp -r "$REPO_ROOT" "$tmpdir/repo"
+  mv "$tmpdir/repo/.rddf/roadmap/features" "$tmpdir/features.bak"
+  output=$(bash -c "cd '$tmpdir/repo' && source skills/rdd-arch/scripts/arch_env_check.sh && run_arch_env_check" 2>&1)
+  rm -rf "$tmpdir"
+  # Section header must NOT appear
+  ! echo "$output" | grep -q '活跃 Feature Fragments (跨 phase 追踪)'
+}

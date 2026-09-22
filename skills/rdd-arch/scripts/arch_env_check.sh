@@ -112,7 +112,20 @@ run_arch_env_check() {
   echo "   ADR 目录:      $DISCOVERED_ADR_DIR ($DISCOVERED_ADR_DIR_FOUND)"
   echo "   ADR 模式:      $DISCOVERED_ADR_PATTERN"
   echo "   Roadmap:       $DISCOVERED_ROADMAP_PATH ($DISCOVERED_ROADMAP_FOUND)"
-  echo "   Architecture:  $DISCOVERED_ARCHITECTURE_DIR ($DISCOVERED_ARCH_FOUND)"
+  echo "   Architecture:   $DISCOVERED_ARCHITECTURE_DIR ($DISCOVERED_ARCH_FOUND)"
+
+  # === AC-4: 展示活跃 feature fragments (per improve-roadmap-feature-discovery)
+  # 重定向必须在命令替换内 ($() 或 backticks), 不能放进字符串赋值
+  local FEATURES_OUTPUT
+  FEATURES_OUTPUT=$(rddf roadmap list-features --format table --no-archived 2>/dev/null || true)
+  # gate: 输出非空 + 不是 "no features" / "no feature fragments" sentinel
+  if [ -n "$FEATURES_OUTPUT" ] \
+     && [ "$FEATURES_OUTPUT" != "no features found" ] \
+     && ! echo "$FEATURES_OUTPUT" | grep -q 'no feature fragments'; then
+    echo ""
+    echo "=== 活跃 Feature Fragments (跨 phase 追踪) ==="
+    echo "$FEATURES_OUTPUT"
+  fi
 }
 
 # Hard gate: check project setup. Returns 1 if any error-severity issue.
