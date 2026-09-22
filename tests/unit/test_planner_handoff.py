@@ -172,3 +172,119 @@ class TestFieldPreservation:
             assert read_back["proposals_ready"] == original["proposals_ready"]
             assert read_back["proposals_approved_count"] == original["proposals_approved_count"]
             assert read_back["features_active"] == original["features_active"]
+
+
+class TestActiveObjectives:
+    """active_objectives field (per add-objective-aware-planner): rdd-planner
+    objective awareness — list of active objectives with id/priority/status/
+    review_by/theme/next_sprint_candidates. Consumed by rdd-planner LLM at
+    stage entry to recommend next tasks based on each objective's §10."""
+
+    def test_basic_roundtrip_with_objectives(self, tmp_path):
+        objectives = [
+            {
+                "id": "objective-onboard-new-skill",
+                "priority": "P1",
+                "status": "active",
+                "review_by": "2026-12-21",
+                "theme": "新增 skill 的标准化 onboarding 流程",
+                "next_sprint_candidates": [
+                    "起草 add-skill-onboarding 入口 SKILL.md + 5 段 improvement 草稿",
+                    "复用 add-improve/SKILL.md 的 pre_create_brainstorm_check.sh HARD-GATE",
+                ],
+            }
+        ]
+        result = write_planner_handoff(
+            str(tmp_path),
+            ["proposal-a"],
+            1,
+            ["feat-x"],
+            "sprint-2026-09",
+            active_objectives=objectives,
+        )
+        assert result["active_objectives"] == objectives
+        read_back = read_planner_handoff(str(tmp_path))
+        assert read_back["active_objectives"] == objectives
+
+    def test_default_empty_list(self, tmp_path):
+        """Backwards compat: callers not yet passing active_objectives get []."""
+        result = write_planner_handoff(
+            str(tmp_path), [], 0, [], "sprint-2026-09"
+        )
+        assert result["active_objectives"] == []
+        read_back = read_planner_handoff(str(tmp_path))
+        assert read_back["active_objectives"] == []
+
+    def test_multiple_objectives_preserved(self, tmp_path):
+        objectives = [
+            {
+                "id": "objective-onboard-new-skill",
+                "priority": "P1",
+                "status": "active",
+                "review_by": "2026-12-21",
+                "theme": "新增 skill 的标准化 onboarding 流程",
+                "next_sprint_candidates": ["cand-A", "cand-B"],
+            },
+            {
+                "id": "objective-bypass-audit-hub-governance",
+                "priority": "P2",
+                "status": "deferred",
+                "review_by": "2026-12-21",
+                "theme": "统一 bypass audit + hub federation governance",
+                "next_sprint_candidates": [],
+            },
+        ]
+        result = write_planner_handoff(
+            str(tmp_path), [], 0, [], "sprint-2026-09",
+            active_objectives=objectives,
+        )
+        assert len(result["active_objectives"]) == 2
+        assert result["active_objectives"][0]["id"] == "objective-onboard-new-skill"
+        assert result["active_objectives"][1]["status"] == "deferred"
+        # §10 N/A → 空 candidates list preserved (per objective D9 N/A format)
+        assert result["active_objectives"][1]["next_sprint_candidates"] == []
+
+    def test_env_var_active_objectives_json(self, tmp_path):
+        """__main__ parses ACTIVE_OBJECTIVES_JSON env var into the field."""
+        import json as _json
+        env_payload = [
+            {
+                "id": "objective-x",
+                "priority": "P1",
+                "status": "active",
+                "review_by": "2026-12-21",
+                "theme": "test theme",
+                "next_sprint_candidates": ["do thing 1", "do thing 2"],
+            }
+        ]
+        env = {
+            "PROJECT_ROOT": str(tmp_path),
+            "PROPOSALS_READY": "",
+            "PROPOSALS_APPROVED_COUNT": "0",
+            "FEATURES_ACTIVE": "",
+            "CURRENT_SPRINT": "sprint-env-obj",
+            "RECOMMENDED_ROUTE": "unknown",
+            "ACTIVE_OBJECTIVES_JSON": _json.dumps(env_payload),
+        }
+        result = subprocess.run(
+            [sys.executable, "-c", """
+import os, sys
+sys.path.insert(0, '/workspace/project/rdd-workflow')
+import json as _json
+from _lib.planner_handoff import write_planner_handoff, read_planner_handoff
+payload = _json.loads(os.environ['ACTIVE_OBJECTIVES_JSON'])
+result = write_planner_handoff(
+    os.environ['PROJECT_ROOT'], [], 0, [], os.environ['CURRENT_SPRINT'],
+    recommended_route=os.environ['RECOMMENDED_ROUTE'],
+    active_objectives=payload,
+)
+read_back = read_planner_handoff(os.environ['PROJECT_ROOT'])
+assert read_back['active_objectives'] == payload
+print('OK')
+"""],
+            env={**os.environ, **env},
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}\nstdout: {result.stdout}"
+        assert "OK" in result.stdout

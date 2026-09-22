@@ -2,7 +2,13 @@
 
 Env-var pattern (Oracle C1): receives PROJECT_ROOT, PROPOSALS_READY,
 PROPOSALS_APPROVED_COUNT, FEATURES_ACTIVE, CURRENT_SPRINT, AWAITING_BUILDER,
-RECOMMENDED_ROUTE via env vars.
+RECOMMENDED_ROUTE, ACTIVE_OBJECTIVES_JSON via env vars.
+
+v1.2 (per add-objective-aware-planner, 2026-09-22): added active_objectives
+field (optional, defaults to []). rdd-planner LLM reads this at stage entry
+to recommend next tasks based on each objective's §10 next_sprint_candidates.
+Prompt-not-auto: planner suggests candidate → user runs add-improve HARD-GATE
+manually (per objective D5 role boundary).
 
 v1.1 (per ADR-0048, 2026-09-09): added recommended_route as REQUIRED field,
 consumed by rdd-builder P0 dispatch-quick decision (option 5).
@@ -32,8 +38,10 @@ def write_planner_handoff(
     current_sprint: str,
     awaiting_builder: list | None = None,
     recommended_route: str = "unknown",
+    active_objectives: list | None = None,
 ) -> dict:
-    """Write .planner-handoff.json v1.1 with REQUIRED recommended_route field.
+    """Write .planner-handoff.json v1.2 with REQUIRED recommended_route +
+    optional active_objectives.
 
     Args:
         project_root: absolute path to project root
@@ -45,6 +53,11 @@ def write_planner_handoff(
         recommended_route: enum "simple"|"complex"|"unknown" (per ADR-0048 §Decision 2)
                           Default "unknown" means planner has not computed advisory;
                           caller (planner_stage_exit.sh) should pass computed value.
+        active_objectives: list of objective dicts (id/priority/status/review_by/
+                          theme/next_sprint_candidates). Defaults to []. Per
+                          add-objective-aware-planner, planner_stage_exit.sh reads
+                          .rddf/roadmap/objectives/*.md and serializes here for LLM
+                          consumption at stage entry.
     """
     handoff = {
         "schema": "planner-handoff-v1",
@@ -57,6 +70,7 @@ def write_planner_handoff(
         "features_active": list(features_active),
         "awaiting_builder": list(awaiting_builder or []),
         "recommended_route": recommended_route,
+        "active_objectives": list(active_objectives or []),
     }
     state_dir = Path(project_root) / ".rddf" / "state"
     state_dir.mkdir(parents=True, exist_ok=True)
@@ -84,9 +98,21 @@ if __name__ == "__main__":
     recommended_route = os.environ.get("RECOMMENDED_ROUTE", "unknown")
     if recommended_route not in {"simple", "complex", "unknown"}:
         raise ValueError(f"RECOMMENDED_ROUTE must be simple|complex|unknown, got {recommended_route!r}")
+    # v1.2: optional ACTIVE_OBJECTIVES_JSON (JSON-encoded list of objective dicts)
+    raw_objectives = os.environ.get("ACTIVE_OBJECTIVES_JSON", "")
+    if raw_objectives.strip():
+        try:
+            active_objectives = json.loads(raw_objectives)
+            if not isinstance(active_objectives, list):
+                raise ValueError(f"ACTIVE_OBJECTIVES_JSON must be a JSON array, got {type(active_objectives).__name__}")
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"ACTIVE_OBJECTIVES_JSON parse error: {exc}") from exc
+    else:
+        active_objectives = []
     result = write_planner_handoff(
         project_root, proposals_ready, proposals_approved_count,
         features_active, current_sprint, awaiting_builder,
         recommended_route=recommended_route,
+        active_objectives=active_objectives,
     )
-    print(f"planner-handoff v1.1 written: {result['planner_complete_at']} (recommended_route={result['recommended_route']})")
+    print(f"planner-handoff v1.2 written: {result['planner_complete_at']} (recommended_route={result['recommended_route']}, active_objectives={len(result['active_objectives'])})")

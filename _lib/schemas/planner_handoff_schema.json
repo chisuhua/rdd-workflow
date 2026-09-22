@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://rdd-workflow.local/schemas/planner_handoff_schema.json",
   "title": "Planner Handoff (rdd-planner stage exit)",
-  "description": "Schema for .rddf/state/.planner-handoff.json emitted by rdd-planner stage exit. Consumed by rdd-builder Phase 0 (approval gate reads proposals_ready + recommended_route) and rdd-arch advisory (via .planner-feedback.json). Per spec §3.3, §6.1, ADR-0048 §Decision 2. v1.1 (per ADR-0048): added recommended_route field as REQUIRED for rdd-builder P0 dispatch-quick decision. v1.0 (per fix-v4-rdd-planner-scope-over-assignment): proposals_authored → proposals_ready rename. Backward compat: coexists with .planner-state.json (Stage 2, current sprint view) and .planner-feedback.json (ADR-0042, persistent review tasks); each has its own FileLock.",
+  "description": "Schema for .rddf/state/.planner-handoff.json emitted by rdd-planner stage exit. Consumed by rdd-builder Phase 0 (approval gate reads proposals_ready + recommended_route) and rdd-arch advisory (via .planner-feedback.json). Per spec §3.3, §6.1, ADR-0048 §Decision 2. v1.1 (per ADR-0048): added recommended_route field as REQUIRED for rdd-builder P0 dispatch-quick decision. v1.0 (per fix-v4-rdd-planner-scope-over-assignment): proposals_authored → proposals_ready rename. Backward compat: coexists with .planner-state.json (Stage 2, current sprint view) and .planner-feedback.json (ADR-0042, persistent review tasks); each has its own FileLock. v1.2 (per add-objective-aware-planner): active_objectives field added for LLM to read at stage entry and recommend next tasks based on each objective's §10 next_sprint_candidates (prompt-not-auto: planner suggests candidate → user runs add-improve HARD-GATE manually).",
   "type": "object",
   "additionalProperties": true,
   "required": ["schema", "version", "owner", "planner_complete_at", "current_sprint", "recommended_route"],
@@ -20,6 +20,27 @@
       "type": "string",
       "enum": ["simple", "complex", "unknown"],
       "description": "REQUIRED per ADR-0048 (2026-09-09) §Decision 2. Planner advisory signal consumed by rdd-builder P0 dispatch-quick decision (option 5). Heuristic computed by _lib.planner_sync._compute_recommended_route from active_projects. Not authoritative — rdd-builder P0 retains HARD pause user override (options 1-4 always available)."
+    },
+    "active_objectives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "priority", "status", "review_by", "theme", "next_sprint_candidates"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^objective-[a-z0-9][a-z0-9-]{0,63}$"},
+          "priority": {"type": "string", "enum": ["P0", "P1", "P2"]},
+          "status": {"type": "string", "enum": ["active", "deferred", "completed", "archived"]},
+          "review_by": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+          "theme": {"type": "string", "maxLength": 200},
+          "next_sprint_candidates": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Per objective §10 checklist items (text rows). Empty list allowed for deferred objectives with N/A — <reason>. Used by rdd-planner LLM to recommend next tasks."
+          }
+        }
+      },
+      "description": "v1.2 (per add-objective-aware-planner): rdd-planner objective awareness. Lists active/deferred objectives with id/priority/status/review_by/theme/next_sprint_candidates (§10). LLM at stage entry reads this and recommends next tasks based on next_sprint_candidates — does NOT auto-generate improvement drafts (user runs add-improve HARD-GATE manually per objective D5). Empty list = no active/deferred objectives in .rddf/roadmap/objectives/."
     }
   }
 }

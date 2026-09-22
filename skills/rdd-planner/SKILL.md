@@ -150,6 +150,55 @@ rdd-planner owns `.rddf/roadmap/objectives/*.md`（**唯一写入方**，per ADR
 - `skills/roadmap/` — objective CLI（list/show/add/revise/archive/deps/snapshot）
 - `docs/adr/ADR-0054-objective-tracking.md` — 完整决策 + 4 工件区分矩阵
 
+## Objective-Aware Planning Guidance（v1.2, per add-objective-aware-planner）
+
+**触发**：进入 rdd-planner Phase 1 setup 时，AI agent 必须先**主动检查活跃 objective 状态**，再决定本阶段的 proposal 起草与推荐。
+
+**数据源（priority order）**：
+1. **PRIMARY**: `.rddf/state/.planner-handoff.json::active_objectives`（每 stage entry/exit 自动写入，含每个 active/deferred objective 的 `id/priority/status/review_by/theme/next_sprint_candidates`）
+2. **FALLBACK**: `bash skills/roadmap/scripts/objective_show.sh <id>`（per-objective 详细视图，含 §10 next_sprint_candidates checklist）
+
+### LLM 推理任务
+
+每个 active objective 的 `next_sprint_candidates` 是 LLM 推荐的**候选任务**——agent 必须：
+- 评估该候选是否对应**用户当前问题/上下文**
+- 评估该候选是否**已部分推进**（读 `.rddf/improvements/` 中是否存在同名草稿）
+- 输出 **recommended_actions** 列表（≤3 个，附 objective id + 候选文本 + 推进建议：起草新草稿 / 复用现有草稿 / 延后）
+
+### 行为契约（prompt-not-auto）
+
+**严禁自动生成 improvement 草稿**——违反 objective D5 role boundary（planner 不写 openspec proposal）。Agent 必须：
+- 推荐候选后**明确提示用户**：「该候选可作为下一个 improvement，建议走 `skill_use("add-improve")` HARD-GATE 起草」
+- 用户确认后，agent **手动委托** `skill_use("add-improve")` —— 这是另一 skill 的入口，不在 rdd-planner 直写路径
+- 若 objective `status: deferred`，提示「deferred 中，跳过；如需激活请先 `skill_use("rdd-planner")` 走 §11 台账登记 deferral-rationale 决策」
+
+### 输出格式（prose 中）
+
+```
+=== Objective-Aware Plan (per add-objective-aware-planner) ===
+Active objectives: N | Deferred: M
+  - [objective-onboard-new-skill] (P1 active, review_by 2026-12-21)
+    主题: 新增 skill 的标准化 onboarding 流程
+    Candidates: 3
+      • 起草 add-skill-onboarding 入口 SKILL.md + 5 段 improvement 草稿 — 推进建议: 起草新草稿 (skill_use("add-improve"))
+      • 复用 add-improve/SKILL.md 的 pre_create_brainstorm_check.sh HARD-GATE — 推进建议: 复用现有草稿
+      • 与 rdd-env-bootstrap 的 guided-fix 阶段对接 — 推进建议: 延后 (依赖 rdd-env-bootstrap v0.x 立项)
+  - [objective-bypass-audit-hub-governance] (P2 deferred, review_by 2026-12-21)
+    主题: 统一 bypass audit + hub federation governance
+    Candidates: 0 (deferred — N/A — 维持 v3.2 deferred 决策)
+
+🤖 Recommended action (this turn): 起草 add-skill-onboarding 草稿 (走 add-improve HARD-GATE)
+```
+
+### 与现有 4 工件区分矩阵的关联
+
+| 维度 | objective | improvement | feature fragment | openspec change |
+|------|-----------|-------------|------------------|-----------------|
+| scope | 跨 sprint 复杂目标 | 单 change 改进提案 | 跨 phase proposal 分组 | 单 change 执行视角 |
+| 数量 | 少（~2） | 多（~248） | 中（~5） | 多（archive 累计） |
+| LLM 推荐 | **prompt-not-auto**（rdd-planner 读 + 推荐） | 直接生成 | 派生视图（无手工） | builder P0 |
+| 写入门控 | rdd-planner（仅） | rdd-planner / add-improve | rdd-arch / rdd-planner | rdd-builder |
+
 ## See also
 
 - `skills/roadmap/` — roadmap CRUD (rddf roadmap add-feature, etc.)
