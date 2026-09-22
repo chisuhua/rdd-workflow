@@ -18,37 +18,12 @@
 ## Fragment Index (auto-generated)
 
 ### Phases
-- `phase-1` — 定时循环与事件触发
+- `phase-1` — 提案生成阶段 — 自动跨仓分析
 - `phase-2` — 阶段步骤化执行
 - `phase-3` — 流程定制层
 - `phase-4` — 多方对称 + 回归 (P1-P3, 后续)
 
 ### Features
+- `feat-fix-archive-gaps-v2` — 第二波归档治理改进（ADR 索引自动同步 / CHANGELOG-USAGE 同步 / verifier-archive-gate 边界明确化 / 第 3 波 doc drift 清理） (refs: phase-1, phase-2, phase-3, phase-4)
 - `feat-fix-audit-findings` — 2026-08-26 文档与代码一致性审计后续修复 (refs: phase-1, phase-2, phase-3, phase-4)
-
-
-<!-- AUTO-SPRINT-START -->
-## Current Sprint: sprint-2026-09
-
-| Project | Phase | Priority | Feedback | Proposal |
-|---------|-------|----------|----------|----------|
-| 流程定制层 | phase-3 | P1 | none | fix-skill-post-install-discoverability |
-| rdd-workflow | phase-3 | P1 | none | rdd-builder-auto-pick-mode |
-| rdd-workflow | phase-3 | P2 | none | rdd-builder-phase0-llm-integration |
-
-### Unmapped (242)
-- RDDF-0001-fix-rddf-session-import-path
-- add-archive-post-commit-hook-and-force-flag
-- add-auto-rfc-from-approve
-- add-brainstorm-hardgate-enforcement
-- add-change-content-review
-- add-cli-coverage-rdd-doctor-roadmap-rdd-hub
-- add-config-validation
-- add-contract-lint-ci-gate
-- add-cross-repo-deps-orchestration
-- add-cross-repo-impact-detection
-- ... and 232 more
-
-<!-- AUTO-SPRINT-END -->
-
 
