@@ -86,3 +86,110 @@ load ../test_helper
     [ "$status" -eq 0 ]
     [[ ! "$output" =~ "already archived" ]]
 }
+
+@test "archive-gate: file-presence warns when improvement.md table declares missing paths" {
+    TMP="$BATS_TMPDIR/test-gate-fpwarn"
+    mkdir -p "$TMP/openspec/changes/fpchange" "$TMP/.rddf/improvements"
+    printf -- '- [x] Task 1\n' > "$TMP/openspec/changes/fpchange/tasks.md"
+    cat > "$TMP/.rddf/improvements/fpchange.md" <<'EOF'
+# fpchange
+## What Changes
+
+| 文件/路径 | 类型 | 行数估算 |
+|-----------|------|----------|
+| `missing/file.py` | 新 | +100 |
+| `also/missing.py` | 改 | +20 |
+EOF
+    run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'fpchange'"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "missing on disk" ]]
+    [[ "$output" =~ "missing/file.py" ]]
+    [[ "$output" =~ "also/missing.py" ]]
+}
+
+@test "archive-gate: file-presence blocks when RDDF_REQUIRE_FILES_PRESENT=yes" {
+    TMP="$BATS_TMPDIR/test-gate-fpblock"
+    mkdir -p "$TMP/openspec/changes/fpblock" "$TMP/.rddf/improvements"
+    printf -- '- [x] Task 1\n' > "$TMP/openspec/changes/fpblock/tasks.md"
+    cat > "$TMP/.rddf/improvements/fpblock.md" <<'EOF'
+# fpblock
+## What Changes
+
+| 文件/路径 | 类型 | 行数估算 |
+|-----------|------|----------|
+| `nonexistent.py` | 新 | +50 |
+EOF
+    RDDF_REQUIRE_FILES_PRESENT=yes \
+        run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'fpblock'"
+    [ "$status" -eq 1 ]
+    [[ "$output" =~ "RDDF_REQUIRE_FILES_PRESENT" ]]
+}
+
+@test "archive-gate: file-presence passes when all declared paths exist" {
+    TMP="$BATS_TMPDIR/test-gate-fppass"
+    mkdir -p "$TMP/openspec/changes/fppass" "$TMP/.rddf/improvements" "$TMP/existing"
+    printf -- '- [x] Task 1\n' > "$TMP/openspec/changes/fppass/tasks.md"
+    touch "$TMP/existing/real.py"
+    cat > "$TMP/.rddf/improvements/fppass.md" <<'EOF'
+# fppass
+## What Changes
+
+| 文件/路径 | 类型 | 行数估算 |
+|-----------|------|----------|
+| `existing/real.py` | 新 | +10 |
+EOF
+    run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'fppass'"
+    [ "$status" -eq 0 ]
+    [[ ! "$output" =~ "missing on disk" ]]
+}
+
+@test "archive-gate: file-presence no-op when improvement.md has no file table" {
+    TMP="$BATS_TMPDIR/test-gate-fpnotable"
+    mkdir -p "$TMP/openspec/changes/fpnotable" "$TMP/.rddf/improvements"
+    printf -- '- [x] Task 1\n' > "$TMP/openspec/changes/fpnotable/tasks.md"
+    cat > "$TMP/.rddf/improvements/fpnotable.md" <<'EOF'
+# fpnotable
+## What Changes
+
+Just a paragraph, no table here.
+EOF
+    run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'fpnotable'"
+    [ "$status" -eq 0 ]
+    [[ ! "$output" =~ "missing on disk" ]]
+}
+
+@test "archive-gate: file-presence skipped when SKIP_FILE_PRESENCE_CHECK=yes" {
+    TMP="$BATS_TMPDIR/test-gate-fpskip"
+    mkdir -p "$TMP/openspec/changes/fpskip" "$TMP/.rddf/improvements"
+    printf -- '- [x] Task 1\n' > "$TMP/openspec/changes/fpskip/tasks.md"
+    cat > "$TMP/.rddf/improvements/fpskip.md" <<'EOF'
+# fpskip
+## What Changes
+
+| 文件/路径 | 类型 | 行数估算 |
+|-----------|------|----------|
+| `nope.py` | 新 | +5 |
+EOF
+    RDDF_REQUIRE_FILES_PRESENT=yes SKIP_FILE_PRESENCE_CHECK=yes \
+        run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'fpskip'"
+    [ "$status" -eq 0 ]
+    [[ ! "$output" =~ "missing on disk" ]]
+}
+
+@test "archive-gate: file-presence ignores 删 (delete) rows" {
+    TMP="$BATS_TMPDIR/test-gate-fpdel"
+    mkdir -p "$TMP/openspec/changes/fpdel" "$TMP/.rddf/improvements"
+    printf -- '- [x] Task 1\n' > "$TMP/openspec/changes/fpdel/tasks.md"
+    cat > "$TMP/.rddf/improvements/fpdel.md" <<'EOF'
+# fpdel
+## What Changes
+
+| 文件/路径 | 类型 | 行数估算 |
+|-----------|------|----------|
+| `dead/code.py` | 删 | -50 |
+EOF
+    RDDF_REQUIRE_FILES_PRESENT=yes \
+        run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && cd '$TMP' && archive_gate_check 'fpdel'"
+    [ "$status" -eq 0 ]
+    [[ ! "$output" =~ "missing on disk" ]]
+}

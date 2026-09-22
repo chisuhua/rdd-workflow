@@ -412,6 +412,38 @@ archive_gate_check() {
     fi
   fi
 
+  # File-presence guard: cross-check .rddf/improvements/<change>.md ## What Changes
+  # file table against actual disk state. Catches the drift pattern where tasks.md
+  # claims files are created/modified but they don't exist on disk.
+  # Default: WARN; RDDF_REQUIRE_FILES_PRESENT=yes escalates to BLOCK.
+  local improvement_file="$tasks_root/.rddf/improvements/$change_name.md"
+  if [ -f "$improvement_file" ] && [ "${SKIP_FILE_PRESENCE_CHECK:-no}" != "yes" ]; then
+    local missing_paths=()
+    local found_table="no"
+    # Extract path from each table row. The regex captures the path between
+    # backticks in a `| \`PATH\` | KIND | ...` row where KIND is 新|扩|改.
+    while IFS= read -r path; do
+      [ -z "$path" ] && continue
+      found_table="yes"
+      local abs="$tasks_root/$path"
+      if [ ! -e "$abs" ]; then
+        missing_paths+=("$path")
+      fi
+    done < <(grep -E '^\| `[^`]+` \| (新|扩|改) \|' "$improvement_file" 2>/dev/null \
+             | sed -n "s/^| \`\([^\`]*\)\` | [新|扩|改] |.*/\1/p")
+    if [ "$found_table" = "yes" ] && [ "${#missing_paths[@]}" -gt 0 ]; then
+      if [ "${RDDF_REQUIRE_FILES_PRESENT:-no}" = "yes" ]; then
+        echo "❌ archive_gate_check: $change_name declares ${#missing_paths[@]} path(s) but missing on disk:"
+        printf '   - %s\n' "${missing_paths[@]}"
+        echo "   (RDDF_REQUIRE_FILES_PRESENT=yes). To skip: SKIP_FILE_PRESENCE_CHECK=yes"
+        return 1
+      fi
+      echo "⚠️  archive_gate_check: $change_name declares ${#missing_paths[@]} path(s) but missing on disk:"
+      printf '   - %s\n' "${missing_paths[@]}"
+      echo "   To block: RDDF_REQUIRE_FILES_PRESENT=yes | To skip: SKIP_FILE_PRESENCE_CHECK=yes"
+    fi
+  fi
+
   # AC verification step — SHA-bound verdict cache only (ADR-0045).
   # v2.0: the ac-verifier subprocess fallback is removed; the canonical
   # cache is written by rdd-verifier (agent LLM protocol per
