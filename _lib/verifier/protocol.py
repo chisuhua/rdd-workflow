@@ -27,7 +27,7 @@ from typing import Optional
 # Section header (Chinese + English variants) — identical to ac_verifier.py
 # so caches and fixtures remain interoperable during the shim window.
 _AC_SECTION_HEADERS = re.compile(
-    r"^##\s+(?:验收标准|Acceptance Criteria)\s*$", re.MULTILINE
+    r"^##\s+(?:验收标准|Acceptance Criteria|Acceptance)\s*$", re.MULTILINE
 )
 _SECTION_END = re.compile(r"^##\s+", re.MULTILINE)
 _BULLET_LINE = re.compile(r"^- (?:\[([ x])\]\s+)?(.+)$")

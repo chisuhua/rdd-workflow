@@ -12,6 +12,10 @@
 roadmap_ref:
   project_id: 完整多会话支持
   phase: phase-1
+revision_count: 1
+last_feedback_id: feedback-20260923-001
+last_feedback_at: '2026-09-23T10:10:44+00:00'
+feedback_status: needs-revision
 ---
 
 **优先级**: P0 | **来源**: 2026-09-23 audit
@@ -365,3 +369,22 @@ trap 'rddf_session_hook_close stage_design design-done rdd-planner' EXIT INT TER
 - 上游：fix-events-log-blocking-lock（已 ship，AC-1 依赖 lock + 唯一 ID）
 - 上游：add-stage-guide-e2e-cross-process-coverage（已 archive，提供 fixture 模板）
 - 同仓：rdd-workflow-e2e（独立仓，需开 PR）
+
+## Feedback
+
+### feedback-20260923-001
+
+- **source**: rdd-builder
+- **kind**: needs-revision
+- **created_at**: 2026-09-23T10:10:44+00:00
+- **resolution**: open
+
+#### Body
+
+## LLM-generated feedback
+Concern: AC-14 (test_concurrent_update_serializes) 未实现 — plan Task 1 用 test_update_unknown_session_raises 替代,但 improvement AC-14 明确要求并发 update 序列化测试。范围漂移。
+Concern: AC-3/4/5 假覆盖 — test_poll_events_render.py 只 grep 函数存在,未测实际 read_since/render/update 行为 (与 improvement 动机 'AC-9 is fake pass' 相悖)。
+Concern: rddf_session_hook_poll_events 未调用 _rddf_resolve_owner — 与其他 hook (entry/close/heartbeat) 的 3-layer owner fallback 不一致。
+Severity: warning
+Suggested action: P2 修复 — (1) 补 test_concurrent_update_serializes; (2) 强化 test_poll_events_render 为真行为测试; (3) poll_events 调 _rddf_resolve_owner。
+Related ADR: ADR-0017 (rddf-session), ADR-0045 (self-contained verification)
