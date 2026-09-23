@@ -135,3 +135,74 @@ def test_default_max_size_constant():
 def test_archive_keep_default():
     """archive_events default keep=1000."""
     assert ARCHIVE_KEEP_DEFAULT == 1000
+
+
+def test_archive_events_resets_stage_guide_last_seen_offset(tmp_path):
+    """AC-15: after archive_events(), all active stage_guide sessions'
+    goal.last_seen_offset is reset to 0 to avoid stale line references
+    (line numbers shift after archive).
+    """
+    import json
+    sessions_file = tmp_path / "sessions.json"
+    sessions_file.write_text(json.dumps({
+        "version": 3,
+        "sessions": [
+            {
+                "session_id": "rds_guide1",
+                "kind": "stage_guide",
+                "owner_opencode_session_id": "ses_A",
+                "parent_session_id": None,
+                "goal": {"intent": "guide-orchestrator", "last_seen_offset": 50},
+                "state": "active",
+                "started_at": "2026-09-22T00:00:00+00:00",
+                "last_heartbeat": "2026-09-22T00:00:00+00:00",
+            },
+            {
+                "session_id": "rds_plan1",
+                "kind": "stage_plan",
+                "owner_opencode_session_id": "ses_B",
+                "parent_session_id": None,
+                "goal": {"intent": "guide-plan"},
+                "state": "active",
+                "started_at": "2026-09-22T00:00:00+00:00",
+                "last_heartbeat": "2026-09-22T00:00:00+00:00",
+            },
+        ],
+    }, indent=2))
+
+    log = EventsLog(str(tmp_path / "events.jsonl"))
+    for i in range(10):
+        log.append_event(
+            event_type="test", severity="info", message=f"e-{i}",
+            session_id=f"rds_{i}", kind="stage_arch",
+            parent_session_id=None, owner_opencode_session_id="ses",
+        )
+    archived = archive_events(
+        str(tmp_path / "events.jsonl"),
+        keep=3,
+        sessions_file=str(sessions_file),
+    )
+    assert archived == 7
+
+    sessions = json.loads(sessions_file.read_text())
+    by_id = {s["session_id"]: s for s in sessions["sessions"]}
+    assert by_id["rds_guide1"]["goal"]["last_seen_offset"] == 0, (
+        "AC-15: stage_guide goal.last_seen_offset must reset to 0 after archive"
+    )
+    assert "last_seen_offset" not in by_id["rds_plan1"]["goal"], (
+        "non-stage_guide sessions must not be touched"
+    )
+
+
+def test_archive_events_without_sessions_file_skips_reset(tmp_path):
+    """AC-15 tolerance: archive_events() with no sessions_file works as before
+    (no crash, just no reset — backwards-compatible)."""
+    log = EventsLog(str(tmp_path / "events.jsonl"))
+    for i in range(10):
+        log.append_event(
+            event_type="test", severity="info", message=f"e-{i}",
+            session_id=f"rds_{i}", kind="stage_arch",
+            parent_session_id=None, owner_opencode_session_id="ses",
+        )
+    archived = archive_events(str(tmp_path / "events.jsonl"), keep=3)
+    assert archived == 7

@@ -245,21 +245,28 @@ class RddfSessionCommands:
         """Mark active sessions with last_heartbeat > timeout as orphaned.
 
         v3 (feat-guide-orchestrator-session-event-bus): readonly variant for
-        scan-state.sh which must NOT mutate sessions.json. Uses per-kind timeout
-        from HEARTBEAT_TIMEOUT_BY_KIND with fallback to config default.
+        scan-state.sh which must NOT mutate sessions.json. Timeout priority:
+        explicit HeartbeatConfig.timeout_seconds (non-default) > per-kind default
+        in HEARTBEAT_TIMEOUT_BY_KIND > module DEFAULT_HEARTBEAT_TIMEOUT_SECONDS.
         """
-        from ._types import HEARTBEAT_TIMEOUT_BY_KIND
+        from ._types import HEARTBEAT_TIMEOUT_BY_KIND, DEFAULT_HEARTBEAT_TIMEOUT_SECONDS
         newly_orphaned: List[str] = []
 
         def _do_check():
             nonlocal newly_orphaned
             data = self._store.read_unlocked()
             now = datetime.datetime.now(datetime.timezone.utc)
+            config_timeout = self._config.timeout_seconds
             for s in data["sessions"]:
                 if s["state"] != "active":
                     continue
                 last_hb = datetime.datetime.fromisoformat(s["last_heartbeat"])
-                timeout = HEARTBEAT_TIMEOUT_BY_KIND.get(s["kind"], self._config.timeout_seconds)
+                if config_timeout != DEFAULT_HEARTBEAT_TIMEOUT_SECONDS:
+                    timeout = config_timeout
+                else:
+                    timeout = HEARTBEAT_TIMEOUT_BY_KIND.get(
+                        s["kind"], DEFAULT_HEARTBEAT_TIMEOUT_SECONDS
+                    )
                 if (now - last_hb).total_seconds() > timeout:
                     if not readonly:
                         s["state"] = "orphaned"

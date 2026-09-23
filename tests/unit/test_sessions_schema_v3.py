@@ -143,3 +143,55 @@ def test_check_heartbeat_timeouts_readonly_does_not_mutate(tmp_path):
     assert before == after, "readonly=True must not write sessions.json"
     # stage_guide with fresh heartbeat: should NOT be in orphaned list
     assert orphaned == []
+
+
+def test_check_heartbeat_timeouts_explicit_config_wins_over_per_kind(tmp_path):
+    """Regression: explicit HeartbeatConfig.timeout_seconds overrides per-kind table.
+
+    Before fix: PR1 made HEARTBEAT_TIMEOUT_BY_KIND primary, so tests using
+    short timeout_seconds (0.3s) for stage_plan were ignored because the kind
+    table has stage_plan=1800s. Fixed by inverting priority: explicit config >
+    per-kind > module default.
+    """
+    import time
+    from skills.rddf_session.scripts.rddf_session import HeartbeatConfig
+
+    sessions_file = tmp_path / "sessions.json"
+    config = HeartbeatConfig(timeout_seconds=0.3, refresh_threshold_seconds=0.15)
+    coord = RddfSessionCoordinator(sessions_file=str(sessions_file), config=config)
+    sid = coord.create_session(
+        kind="stage_plan", owner_opencode_session_id="ses_A",
+        goal={"intent": "guide-plan", "subject": "regression-test"},
+    )
+    time.sleep(0.6)
+    orphaned = coord.check_heartbeat_timeouts()
+    assert sid in orphaned, (
+        "Explicit HeartbeatConfig(timeout_seconds=0.3) must be honored even "
+        "when HEARTBEAT_TIMEOUT_BY_KIND['stage_plan'] is larger"
+    )
+
+
+def test_check_heartbeat_timeouts_per_kind_default_when_config_default(tmp_path):
+    """AC-3: when HeartbeatConfig uses default timeout, per-kind applies.
+
+    Verifies stage_guide gets 8h default when HeartbeatConfig() is constructed
+    without arguments (config.timeout_seconds == DEFAULT_HEARTBEAT_TIMEOUT_SECONDS).
+    """
+    import time
+    from skills.rddf_session.scripts.rddf_session import HeartbeatConfig
+
+    sessions_file = tmp_path / "sessions.json"
+    config = HeartbeatConfig()  # default timeout_seconds=1800
+    coord = RddfSessionCoordinator(sessions_file=str(sessions_file), config=config)
+    sid = coord.create_session(
+        kind="stage_guide", owner_opencode_session_id="ses_A",
+        goal={"intent": "guide-orchestrator", "last_seen_offset": 0},
+    )
+    # After 2 seconds (way past 30min default, but well under 8h stage_guide default),
+    # stage_guide should NOT be marked orphaned.
+    time.sleep(2.0)
+    orphaned = coord.check_heartbeat_timeouts()
+    assert sid not in orphaned, (
+        "stage_guide with default config should use 8h per-kind timeout, "
+        "not 30min module default"
+    )
