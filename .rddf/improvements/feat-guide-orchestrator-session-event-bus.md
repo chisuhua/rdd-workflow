@@ -21,7 +21,7 @@ rdd-workflow v4 实现了四阶段工作流（rdd-arch → rdd-planner → rdd-b
 - 30min 心跳超时对常驻 guide 不适用（修复：8h 分级）
 - 跨 OpenCode 进程**架构性排除** push 机制（opencode `promptAsync` 需同 SDK 客户端句柄）
 
-**OpenSpec change 已完成**：详见 `openspec/changes/feat-guide-orchestrator-session-event-bus/`（proposal + design + tasks + spec，4 文件 863 行，`openspec validate` 通过）
+**OpenSpec change 已完成**：详见 `openspec/changes/archive/2026-09-23-feat-guide-orchestrator-session-event-bus/`（proposal + design + tasks + spec，4 文件 861 行，`openspec validate` 通过；2026-09-23 archive 时段）
 
 ---
 
@@ -109,7 +109,7 @@ rdd-workflow v4 实现了四阶段工作流（rdd-arch → rdd-planner → rdd-b
 
 ## Capabilities 完整性检查（已通过）
 
-- ✅ OpenSpec 变更：`openspec/changes/feat-guide-orchestrator-session-event-bus/`（proposal.md 99 行 / design.md 366 行 / tasks.md 147 行 / spec.md 246 行 = 863 行）
+- ✅ OpenSpec 变更：`openspec/changes/archive/2026-09-23-feat-guide-orchestrator-session-event-bus/`（proposal.md 99 行 / design.md 366 行 / tasks.md 147 行 / spec.md 244 行 = 861 行；已于 2026-09-23 archive，归并为 spec `cross-container-event-bus`）
 - ✅ Oracle 审查通过：APPROVE WITH MINOR REVISIONS（5 CRITICAL 全部修复）
 - ✅ Metis 审查通过：MAJOR REVISIONS REQUIRED（8 HIGH + 1 新严重 BLOCKER 全部修复）
 - ✅ `openspec validate` 通过："Change 'feat-guide-orchestrator-session-event-bus' is valid"
@@ -119,7 +119,7 @@ rdd-workflow v4 实现了四阶段工作流（rdd-arch → rdd-planner → rdd-b
 
 ## Cross-Reference
 
-- **OpenSpec change**: `openspec/changes/feat-guide-orchestrator-session-event-bus/`
+- **OpenSpec change (archived)**: `openspec/changes/archive/2026-09-23-feat-guide-orchestrator-session-event-bus/`（2026-09-23 archive 后归并到 `openspec/specs/cross-container-event-bus/spec.md`）
 - **ADR**: `docs/adr/ADR-0055-guide-orchestrator-session-event-bus.md`（v3, Oracle 修订 + Metis 修复后）
 - **父 ADR**: ADR-0017 (rddf-session), ADR-0034 (rdd-verifier), ADR-0043 (v4 stage-merge), ADR-0048 (rdd-builder P0 5-option 修正)
 - **依赖**: 旧 `event_log.py` 模块（不修改，仅参考 event_id 格式）；现有 `hooks.sh` 的 `_rddf_resolve_owner()`（统一 $PPID）
