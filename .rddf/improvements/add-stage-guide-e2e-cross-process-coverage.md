@@ -1,12 +1,18 @@
 ---
 优先级: P1
-来源: 2026-09-23 review of feat-guide-orchestrator-session-event-bus — 核心架构承诺（跨 OpenCode 进程文件轮询）由 0 个 e2e test 验证；现有 test_guide_cross_container.bats 名为 cross 实为单进程模拟，存在 false confidence 风险
+来源: 2026-09-23 review of feat-guide-orchestrator-session-event-bus — 核心架构承诺（跨 OpenCode
+  进程文件轮询）由 0 个 e2e test 验证；现有 test_guide_cross_container.bats 名为 cross 实为单进程模拟，存在
+  false confidence 风险
 阶段: v4.1 follow-up
 分类: arch-design
 类型: test
 主题: 完整多会话支持
 依赖: feat-guide-orchestrator-session-event-bus (已 ship 2026-09-22, branch feat/guide-orchestrator-session-event-bus)
+roadmap_ref:
+  project_id: 完整多会话支持
+  phase: phase-1
 ---
+
 **优先级**: P1 | **来源**: 2026-09-23 review
 **阶段**: v4.1 follow-up | **分类**: arch-design
 **类型**: test | **主题**: 完整多会话支持
