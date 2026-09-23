@@ -1,12 +1,19 @@
 ---
 优先级: P0
-来源: 2026-09-23 audit of feat-guide-orchestrator-session-event-bus — 8 个核心发现中 5 个 P0（核心轮询循环缺失 / last_seen_offset 无 update API / rdd-* SKILL.md 0 hook 调用）。架构承诺"窗口 A 跑 guide 能看到窗口 B 跑 rdd-builder 的进度"在生产代码层面完全未落地
+来源: 2026-09-23 audit of feat-guide-orchestrator-session-event-bus — 8 个核心发现中 5 个 P0（核心轮询循环缺失
+  / last_seen_offset 无 update API / rdd-* SKILL.md 0 hook 调用）。架构承诺"窗口 A 跑 guide 能看到窗口
+  B 跑 rdd-builder 的进度"在生产代码层面完全未落地
 阶段: v4.1 follow-up
 分类: arch-design
 类型: feature
 主题: 完整多会话支持
-依赖: feat-guide-orchestrator-session-event-bus (已 ship), fix-events-log-blocking-lock (已 ship), add-stage-guide-e2e-cross-process-coverage (已 archive)
+依赖: feat-guide-orchestrator-session-event-bus (已 ship), fix-events-log-blocking-lock
+  (已 ship), add-stage-guide-e2e-cross-process-coverage (已 archive)
+roadmap_ref:
+  project_id: 完整多会话支持
+  phase: phase-1
 ---
+
 **优先级**: P0 | **来源**: 2026-09-23 audit
 **阶段**: v4.1 follow-up | **分类**: arch-design
 **类型**: feature | **主题**: 完整多会话支持
