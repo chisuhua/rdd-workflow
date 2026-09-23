@@ -81,9 +81,13 @@ class RddfSessionCommands:
             # Stage-level singleton: cross-stage concurrent runs race on
             # unlocked project singletons (improvement-approved.md, handoffs).
             # RDDF_ALLOW_CROSS_STAGE_PARALLEL=yes restores legacy behavior.
+            # v3 (feat-guide-orchestrator-session-event-bus): bidirectional
+            # stage_guide exemption per Oracle B1 — guide + builder coexist.
             if os.environ.get("RDDF_ALLOW_CROSS_STAGE_PARALLEL", "").lower() not in ("yes", "true", "1"):
                 for existing in data["sessions"]:
                     if existing["state"] == "active" and existing["kind"] != kind:
+                        if existing["kind"] == "stage_guide" or kind == "stage_guide":
+                            continue
                         from ._types import ConflictError
                         raise ConflictError(
                             f"Active {existing['kind']} session {existing['session_id']} "
@@ -156,11 +160,24 @@ class RddfSessionCommands:
             raise RddfSessionError(f"Unknown session: {session_id}")
         self._store.with_file_lock(_do_update)
 
-    def list_sessions(self, kind: Optional[str] = None) -> List[RddfSession]:
-        """Return all sessions, sorted by started_at desc."""
+    def list_sessions(
+        self,
+        kind: Optional[str] = None,
+        owner_opencode_session_id: Optional[str] = None,
+        state: Optional[str] = None,
+    ) -> List[RddfSession]:
+        """Return sessions filtered by kind/owner/state, sorted by started_at desc.
+
+        v3 (feat-guide-orchestrator-session-event-bus): added owner_opencode_session_id
+        and state filters for owner-scoped parent lookup (Metis B3).
+        """
         if kind is not None and kind not in _VALID_KINDS:
             raise RddfSessionError(
                 f"Invalid kind filter: {kind}. Must be one of {_VALID_KINDS}"
+            )
+        if state is not None and state not in _VALID_STATES:
+            raise RddfSessionError(
+                f"Invalid state filter: {state}. Must be one of {_VALID_STATES}"
             )
 
         def _do_list():
@@ -168,6 +185,10 @@ class RddfSessionCommands:
             sessions = [RddfSession(**s) for s in data["sessions"]]
             if kind:
                 sessions = [s for s in sessions if s.kind == kind]
+            if owner_opencode_session_id is not None:
+                sessions = [s for s in sessions if s.owner_opencode_session_id == owner_opencode_session_id]
+            if state:
+                sessions = [s for s in sessions if s.state == state]
             sessions.sort(key=lambda s: s.started_at, reverse=True)
             return sessions
         return self._store.with_file_lock(_do_list)
@@ -220,8 +241,14 @@ class RddfSessionCommands:
             raise RddfSessionError(f"Unknown session: {session_id}")
         self._store.with_file_lock(_do_refresh)
 
-    def check_heartbeat_timeouts(self) -> List[str]:
-        """Mark active sessions with last_heartbeat > timeout as orphaned."""
+    def check_heartbeat_timeouts(self, readonly: bool = False) -> List[str]:
+        """Mark active sessions with last_heartbeat > timeout as orphaned.
+
+        v3 (feat-guide-orchestrator-session-event-bus): readonly variant for
+        scan-state.sh which must NOT mutate sessions.json. Uses per-kind timeout
+        from HEARTBEAT_TIMEOUT_BY_KIND with fallback to config default.
+        """
+        from ._types import HEARTBEAT_TIMEOUT_BY_KIND
         newly_orphaned: List[str] = []
 
         def _do_check():
@@ -232,12 +259,14 @@ class RddfSessionCommands:
                 if s["state"] != "active":
                     continue
                 last_hb = datetime.datetime.fromisoformat(s["last_heartbeat"])
-                if (now - last_hb).total_seconds() > self._config.timeout_seconds:
-                    s["state"] = "orphaned"
-                    s["ended_at"] = _now()
-                    s["end_reason"] = "heartbeat-timeout"
+                timeout = HEARTBEAT_TIMEOUT_BY_KIND.get(s["kind"], self._config.timeout_seconds)
+                if (now - last_hb).total_seconds() > timeout:
+                    if not readonly:
+                        s["state"] = "orphaned"
+                        s["ended_at"] = _now()
+                        s["end_reason"] = "heartbeat-timeout"
                     newly_orphaned.append(s["session_id"])
-            if newly_orphaned:
+            if newly_orphaned and not readonly:
                 data["updated_at"] = _now()
                 self._store.atomic_write(data)
         self._store.with_file_lock(_do_check)

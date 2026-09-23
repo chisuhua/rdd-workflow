@@ -95,8 +95,13 @@ class RddfSessionCoordinator:
     ) -> None:
         self._commands.update_session_status(session_id, new_state, end_reason)
 
-    def list_sessions(self, kind: Optional[str] = None) -> List[RddfSession]:
-        return self._commands.list_sessions(kind)
+    def list_sessions(
+        self,
+        kind: Optional[str] = None,
+        owner_opencode_session_id: Optional[str] = None,
+        state: Optional[str] = None,
+    ) -> List[RddfSession]:
+        return self._commands.list_sessions(kind, owner_opencode_session_id, state)
 
     def attach_change(self, session_id: str, change_name: str) -> None:
         self._commands.attach_change(session_id, change_name)
@@ -107,8 +112,8 @@ class RddfSessionCoordinator:
     def refresh_heartbeat(self, session_id: str) -> None:
         self._commands.refresh_heartbeat(session_id)
 
-    def check_heartbeat_timeouts(self) -> List[str]:
-        return self._commands.check_heartbeat_timeouts()
+    def check_heartbeat_timeouts(self, readonly: bool = False) -> List[str]:
+        return self._commands.check_heartbeat_timeouts(readonly)
 
     def transfer_ownership(self, session_id: str, new_owner: str) -> None:
         self._commands.transfer_ownership(session_id, new_owner)
