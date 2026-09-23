@@ -135,6 +135,7 @@ EOF
 
   local PROJECT_ROOT
   PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+  export PROJECT_ROOT
 
   # v3: create stage_guide session (long-lived main entry; PR 1 introduced kind).
   if type rddf_session_hook_guide_entry &>/dev/null; then

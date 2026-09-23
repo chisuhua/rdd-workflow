@@ -109,6 +109,15 @@ _rddf_resolve_owner() {
   # 4. shell PID 兜底
   RDDF_OWNER="$(hostname -s)_$$"
   RDDF_OWNER_FROM="shell-pid"
+
+  # 5. (NEW, per fix-guide-close-owner-resolution) trap context 显式 $$ 兜底
+  #    _rddf_resolve_owner 在 trap 上下文被调用时,RDDF_RESOLVE_OWNER_FROM_TRAP=yes
+  #    此时直接用当前 shell 的 $$,跳过 cache/proc-cmdline 等可能 stale 的层
+  if [ "${RDDF_RESOLVE_OWNER_FROM_TRAP:-no}" = "yes" ]; then
+    RDDF_OWNER="$(hostname -s)_$$"
+    RDDF_OWNER_FROM="trap-shell-pid"
+  fi
+
   export RDDF_OWNER RDDF_OWNER_FROM
 }
 
@@ -452,7 +461,7 @@ PYEOF
 
 rddf_session_hook_guide_close() {
   PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  _rddf_resolve_owner
+  RDDF_RESOLVE_OWNER_FROM_TRAP=yes _rddf_resolve_owner
   OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-${RDDF_OWNER:-}}"
   OPENCODE_SESSION_ID_FROM="${OPENCODE_SESSION_ID_FROM:-${RDDF_OWNER_FROM:-shell-pid}}"
   export OPENCODE_SESSION_ID_FROM
