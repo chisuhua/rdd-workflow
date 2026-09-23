@@ -103,7 +103,11 @@ class EventsLog:
     def generate_id(self) -> str:
         now = datetime.datetime.now(datetime.timezone.utc)
         seq = _next_id_seq()
-        return f"evt_{now.strftime('%Y%m%d_%H%M%S')}_{seq:03d}"
+        # Include PID + microseconds to avoid cross-process collision when two
+        # writers start within the same second and both initialize _id_seq=0.
+        pid = os.getpid()
+        us = now.strftime("%f")  # microseconds
+        return f"evt_{now.strftime('%Y%m%d_%H%M%S')}_{pid}_{us}_{seq:03d}"
 
     # ----- Recording -----
 

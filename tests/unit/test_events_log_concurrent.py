@@ -162,3 +162,41 @@ def test_single_process_still_works(tmp_path: Path):
         )
     rows = log.read_since(offset=0)
     assert len(rows) == 5
+
+
+def test_event_id_unique_across_processes(tmp_path: Path):
+    """Regression: generate_id must include PID/microseconds for cross-process uniqueness.
+
+    Before fix: two processes with _id_seq=0 generated identical event_ids.
+    After fix: PID + microseconds differentiate.
+    """
+    def _gen_in_child(ready_event, results_list):
+        from skills.rddf_session.scripts.events_log import EventsLog
+        log = EventsLog(str(tmp_path / "events.jsonl"))
+        ids = [log.generate_id() for _ in range(20)]
+        results_list.extend(ids)
+        ready_event.set()
+
+    from multiprocessing import Manager
+    with Manager() as manager:
+        ready_a = manager.Event()
+        ready_b = manager.Event()
+        results_a = manager.list()
+        results_b = manager.list()
+        proc_a = multiprocessing.Process(
+            target=_gen_in_child, args=(ready_a, results_a)
+        )
+        proc_b = multiprocessing.Process(
+            target=_gen_in_child, args=(ready_b, results_b)
+        )
+        proc_a.start()
+        proc_b.start()
+        proc_a.join(timeout=10)
+        proc_b.join(timeout=10)
+
+        all_ids = list(results_a) + list(results_b)
+        assert len(all_ids) == 40
+        assert len(set(all_ids)) == 40, (
+            f"event_ids collide across processes; "
+            f"got {len(set(all_ids))} unique out of 40"
+        )
