@@ -43,7 +43,7 @@ def test_append_event_writes_correct_format(tmp_path):
 
 
 def test_read_since_filters_by_offset(tmp_path):
-    """AC-5: read_since(offset=N) returns only events at line > N."""
+    """AC-5: read_since(offset=N) skips first N lines, returns rest."""
     log = EventsLog(str(tmp_path / "events.jsonl"))
     for i in range(5):
         log.append_event(
@@ -55,10 +55,14 @@ def test_read_since_filters_by_offset(tmp_path):
             parent_session_id=None,
             owner_opencode_session_id="ses",
         )
+    # offset=2 skips lines 0,1; returns lines 2,3,4 (3 events)
     rows = log.read_since(offset=2)
-    assert len(rows) == 2
-    assert rows[0]["message"] == "event-3"
+    assert len(rows) == 3
+    assert rows[0]["message"] == "event-2"
     assert rows[-1]["message"] == "event-4"
+    # offset=0 returns all 5 events
+    all_rows = log.read_since(offset=0)
+    assert len(all_rows) == 5
 
 
 def test_read_since_returns_empty_when_file_missing(tmp_path):

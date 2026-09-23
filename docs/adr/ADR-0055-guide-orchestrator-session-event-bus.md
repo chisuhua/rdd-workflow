@@ -1,6 +1,6 @@
 # ADR-0055: Guide-as-Orchestrator Session + Cross-Container Event Bus
 
-> **状态**: 待采纳（草案 v2 — Oracle 修订）
+> **状态**: 已采纳 + 已实施（v4.1 release，PR 1-4 / commit f5eb49c / bf6a7fc / 89117dc）
 > **日期**: 2026-09-22
 > **决策者**: sisyphus (受用户委托起草) + Oracle (read-only 架构审查)
 > **依据**: ADR-0017 (rddf-session), ADR-0034 (rdd-verifier), ADR-0043 (v4 stage-merge), ADR-0048 (rdd-builder auto-pick), ADR-0051 (skill description convention), ADR-0040 (schema v2 注释)

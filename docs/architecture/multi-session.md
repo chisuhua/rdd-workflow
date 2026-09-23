@@ -89,7 +89,78 @@ Practical rule:
 - **New session** if you're starting a new change in a new worktree.
 - **Prompt** if you see "active session detected" message on entry — read the 4 options, don't auto-pick.
 
-## Cross-references
+## Cross-Container Event Bus (v4.1+)
+
+Starting v4.1, `guide` can observe rddf-session progress across **multiple OpenCode windows** running on the same machine. This solves the user scenario "I run `guide` in window A and `rdd-builder` in window B; I want A to see B's progress."
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ OpenCode Window A (runs `guide`)                             │
+│   ┌──────────────────────────────────────────────────────┐ │
+│   │ stage_guide session (owner=ses_A)                     │ │
+│   │   goal.last_seen_offset = N                           │ │
+│   └──────────────────────────────────────────────────────┘ │
+│   polling:                                                 │
+│     1. read sessions.json                                  │
+│     2. any active stage_X owned by !=ses_A?              │
+│     3. yes → read events.jsonl since last_seen_offset     │
+│     4. render top of menu                                 │
+│     5. update goal.last_seen_offset = latest line         │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ OpenCode Window B (runs `rdd-builder`)                      │
+│   hook entry → write phase_started event to events.jsonl  │
+│   hook close → write phase_completed event                │
+└─────────────────────────────────────────────────────────────┘
+
+         shared .rddf/state/ (file-based cross-container bus)
+         ├── sessions.json     ← rddf-session state
+         └── events.jsonl      ← workflow event bus (v4.1 new)
+```
+
+### Key Decisions
+
+| Decision | Rationale |
+|---|---|
+| **New `stage_guide` kind** | Long-lived main orchestrator session; 8-hour heartbeat (vs 30min for stages); global singleton per owner |
+| **New `events.jsonl` file** | Existing `event-log.jsonl` does not exist (Metis B4 fact-check); do not couple to legacy v2.0 loop engine module |
+| **per-owner `goal.last_seen_offset`** | NO `seen_by` in event rows (avoids array inflation); per-owner state in sessions.json |
+| **Owner-scoped parent lookup** | `list_sessions(kind, owner_opencode_session_id, state='active')` — replaces `list_sessions()[0]` "newest of kind" wrong behavior |
+| **Bidirectional singleton exemption** | `stage_guide` does NOT block other stages (existing), other stages do NOT block `stage_guide` (new) |
+| **File polling, not push** | opencode `promptAsync` is locked to single SDK client handle → not viable for cross-process; file events.jsonl is the architectural fit |
+| **Polling trigger points** | guide launch + return to main menu (not background poller — no daemon) |
+
+### Event Types (7)
+
+| Type | When |
+|---|---|
+| `phase_started` | stage_arch/design/plan/ship/guide enters |
+| `phase_completed` | exits successfully |
+| `phase_failed` | exits with error |
+| `phase_heartbeat` | long-running sub-phase update |
+| `guide_intent_detected` | guide detects routing intent |
+| `guide_routed` | guide routes to specific skill |
+| `user_message` | user expression in guide |
+
+### Edge Cases (accepted)
+
+- **50MB cap** + `archive_events(keep=1000)` auto-archives oldest to `events.archive.jsonl`. Line numbers shift on archive → all active `stage_guide` sessions' `goal.last_seen_offset` is reset to 0 (one-time re-read accepted).
+- **Cross-process** = file-based only. No IPC, no daemon, no platform requirement beyond POSIX flock (Windows 需 WSL).
+- **Two guides, different owners** = ConflictError on second `create_session` (H7 global singleton — by design).
+
+### Rollback
+
+```bash
+export RDDF_GUIDE_SESSION_ENABLED=false  # disable stage_guide session creation
+export RDDF_EVENTS_LOG_ENABLED=false     # stop event writes
+```
+
+### Cross-references
 
 - State persistence: [state-and-events.md](state-and-events.md)
 - Workflow phases: [workflow-phases.md](workflow-phases.md)
+- ADR: [ADR-0055](../adr/ADR-0055-guide-orchestrator-session-event-bus.md) (Oracle-revised v3)
+- Implementation: `openspec/changes/feat-guide-orchestrator-session-event-bus/`

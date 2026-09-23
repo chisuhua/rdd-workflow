@@ -132,8 +132,9 @@ class EventsLog:
     # ----- Reading -----
 
     def read_since(self, offset: int = 0) -> List[Dict[str, Any]]:
-        """Return events at line > offset (0-indexed).
+        """Return events starting at offset (skip first N lines).
 
+        offset=0 returns all events. offset=2 skips lines 0,1 and returns line 2+.
         Tolerant of malformed lines (skip + continue).
         """
         if not self.path.exists():
@@ -142,7 +143,7 @@ class EventsLog:
         try:
             with open(self.path, "r", encoding="utf-8") as f:
                 for line_no, raw in enumerate(f, 0):
-                    if line_no <= offset:
+                    if line_no < offset:
                         continue
                     line = raw.strip()
                     if not line:
