@@ -5,7 +5,9 @@ Per feat-guide-orchestrator-session-event-bus (ADR-0055 v3, Oracle + Metis revis
 File: <PROJECT_ROOT>/.rddf/state/events.jsonl (append-only JSONL).
 Capacity: 50 MB cap (configurable via RDDF_EVENTS_LOG_MAX_SIZE_MB env var, default 50).
 Archive: .rddf/state/events.archive.jsonl (rows beyond `keep` most recent).
-Locking: fcntl.flock (POSIX), with a 10s lock timeout.
+Locking: fcntl.flock (POSIX), with a 10s lock timeout. Per fix-events-log-blocking-lock,
+        uses retry-with-backoff (LOCK_EX blocking, no LOCK_NB) so concurrent writers
+        serialize properly instead of raising BlockingIOError.
 
 Design notes:
 - events.jsonl is NEW (does NOT reuse existing event-log.jsonl — that file
@@ -22,16 +24,42 @@ import datetime
 import json
 import os
 import threading
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 
 _LOCK_TIMEOUT = 10.0
+_LOCK_RETRY_INTERVAL_S = 0.01  # 10ms between acquire attempts
 _id_lock = threading.Lock()
 _id_seq = 0
 
 DEFAULT_MAX_SIZE_MB = 50
 ARCHIVE_KEEP_DEFAULT = 1000
+
+
+def _acquire_lock_with_timeout(lockf, timeout: float = _LOCK_TIMEOUT) -> None:
+    """Acquire fcntl.flock LOCK_EX with bounded retry (per fix-events-log-blocking-lock).
+
+    Previously used LOCK_EX | LOCK_NB which raised BlockingIOError immediately on
+    contention, causing second concurrent writers to lose all events. This helper
+    retries LOCK_EX | LOCK_NB (non-blocking) with sleep between attempts until the
+    timeout expires, achieving effective serialization across processes.
+
+    Raises EventsLogError if the lock cannot be acquired within `timeout` seconds.
+    """
+    import fcntl
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            fcntl.flock(lockf.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return
+        except BlockingIOError:
+            if time.monotonic() >= deadline:
+                raise EventsLogError(
+                    f"Could not acquire lock within {timeout:.1f}s"
+                )
+            time.sleep(_LOCK_RETRY_INTERVAL_S)
 
 # Event types for the workflow event bus
 EVENT_TYPES = frozenset({
@@ -119,12 +147,12 @@ class EventsLog:
         }
         try:
             with open(self._lock_path, "w") as lockf:
-                import fcntl
-                fcntl.flock(lockf.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                _acquire_lock_with_timeout(lockf)
                 try:
                     with open(self.path, "a", encoding="utf-8") as f:
                         f.write(json.dumps(row, ensure_ascii=False) + "\n")
                 finally:
+                    import fcntl
                     fcntl.flock(lockf.fileno(), fcntl.LOCK_UN)
         except (OSError, IOError) as e:
             raise EventsLogError(f"Could not append event: {e}") from e
@@ -190,12 +218,12 @@ class EventsLog:
             return False
         try:
             with open(self._lock_path, "w") as lockf:
-                import fcntl
-                fcntl.flock(lockf.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                _acquire_lock_with_timeout(lockf)
                 try:
                     with open(self.path, "w", encoding="utf-8") as f:
                         f.writelines(rows)
                 finally:
+                    import fcntl
                     fcntl.flock(lockf.fileno(), fcntl.LOCK_UN)
         except (OSError, IOError) as e:
             raise EventsLogError(f"Could not mark seen: {e}") from e
@@ -238,8 +266,7 @@ def archive_events(
 
     try:
         with open(lock_path, "w") as lockf:
-            import fcntl
-            fcntl.flock(lockf.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            _acquire_lock_with_timeout(lockf)
             try:
                 with open(p, "r", encoding="utf-8") as f:
                     all_lines = [ln for ln in f.readlines() if ln.strip()]
@@ -255,6 +282,7 @@ def archive_events(
                     f.writelines(to_keep)
                 archived_count = len(to_archive)
             finally:
+                import fcntl
                 fcntl.flock(lockf.fileno(), fcntl.LOCK_UN)
     except (OSError, IOError) as e:
         raise EventsLogError(f"Could not archive events: {e}") from e
