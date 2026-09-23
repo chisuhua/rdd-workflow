@@ -164,3 +164,15 @@ export RDDF_EVENTS_LOG_ENABLED=false     # stop event writes
 - Workflow phases: [workflow-phases.md](workflow-phases.md)
 - ADR: [ADR-0055](../adr/ADR-0055-guide-orchestrator-session-event-bus.md) (Oracle-revised v3)
 - Implementation: `openspec/changes/feat-guide-orchestrator-session-event-bus/`
+
+## Polling Loop (v4.1+, add-guide-polling-loop-implementation)
+
+Window A (guide session) → `rddf_session_hook_poll_events` →
+  1. Find active stage_guide session for owner
+  2. Read events.jsonl from `goal.last_seen_offset`
+  3. Render child progress to stdout
+  4. Advance `last_seen_offset` via `RddfSessionCoordinator.update_last_seen_offset`
+
+Window B (rdd-arch / planner / builder / verifier / quick) → SKILL.md mandates
+`rddf_session_hook_entry` + `rddf_session_hook_close` (trap on EXIT INT TERM)
+to write `phase_started` + `phase_completed` events.

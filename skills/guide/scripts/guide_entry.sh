@@ -221,6 +221,12 @@ print(json.dumps({
     scan_session_binding "$PROJECT_ROOT"
   fi
 
+  # v4.1 (add-guide-polling-loop-implementation): surface child session progress
+  # best-effort, never block guide_entry (errors suppressed)
+  if type rddf_session_hook_poll_events &>/dev/null; then
+    rddf_session_hook_poll_events || true
+  fi
+
   # JSON output for scripting consumers
   if [ "$OUTPUT_JSON" -eq 1 ] && [ -n "$RECO_JSON" ]; then
     echo "---BEGIN_RECO_JSON---"

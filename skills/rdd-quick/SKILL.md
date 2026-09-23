@@ -38,6 +38,21 @@ role:
     human_involvement: "medium"
 ---
 
+## Stage 1 Hook（强制前置步骤, per add-guide-polling-loop-implementation AC-10）
+
+进入 rdd-quick 旁路前必须调用 hooks，让 guide session 知晓小改动进度：
+
+```bash
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_hooks.sh"
+
+# 进入前 (写 phase_started)
+rddf_session_hook_entry stage_quick rdd-quick "quick-phase" "quick-done" \
+    .rddf/state/.quick-history.jsonl
+
+# 阶段完成时 (写 phase_completed)
+trap 'rddf_session_hook_close stage_quick quick-done rdd-quick' EXIT INT TERM
+```
+
 # rdd-quick Skill
 
 Bypass-path orchestration for small, well-scoped changes. P0–P4 prose state machine

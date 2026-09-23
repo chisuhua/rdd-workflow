@@ -127,12 +127,17 @@ skill_use("rdd-arch")   # 无参数版本
 
 **入口条件**：用户调用 `skill_use("rdd-arch")` 后立即执行。
 
-**rddf-session 入口 hook**（ADR-0017）：创建或查找当前 opencode session 的 `stage_arch` rddf-session：
+**rddf-session 入口 hook（强制前置步骤, per add-guide-polling-loop-implementation AC-6）**：进入 Arch 阶段前**必须**调用 hooks，写 `phase_started` 到 `events.jsonl` 让 guide session 可观察：
 
 ```bash
 # rddf-session 入口 hook (ADR-0017) — extracted to _lib/rddf_session_hooks.sh
 source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_hooks.sh"
+
+# 进入前 (写 phase_started)
 rddf_session_hook_entry stage_arch rdd-arch arch-phase arch-done .rddf/state/.arch-handoff.json
+
+# 阶段完成时 (写 phase_completed, INT/TERM/EXIT 均触发)
+trap 'rddf_session_hook_close stage_arch arch-done rdd-arch' EXIT INT TERM
 ```
 
 **Stage 3 行为（per ADR-0042）**: 入口后展示 rdd-arch 状态 + planner 反馈摘要。

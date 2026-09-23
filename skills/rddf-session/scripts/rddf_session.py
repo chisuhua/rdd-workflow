@@ -124,6 +124,38 @@ class RddfSessionCoordinator:
     def archive_history(self, keep: int = 20, archive_orphans: bool = False) -> int:
         return self._commands.archive_history(keep, archive_orphans=archive_orphans)
 
+    # ---------- Polling loop (add-guide-polling-loop-implementation) ----------
+
+    def update_last_seen_offset(self, session_id: str, new_offset: int) -> None:
+        """Update goal.last_seen_offset for a stage_guide session (AC-1).
+
+        Used by guide polling loop: after reading events from offset N to
+        current end, advance last_seen_offset to N+len(events). Allows
+        next poll to skip already-read events.
+
+        Raises RddfSessionError if session is not stage_guide or not found.
+        Monotonic invariant: new_offset <= current is silently no-op.
+        """
+        def _do_update():
+            data = self._store.read_unlocked()
+            for s in data["sessions"]:
+                if s.get("session_id") != session_id:
+                    continue
+                if s.get("kind") != "stage_guide":
+                    raise RddfSessionError(
+                        f"Cannot update last_seen_offset on non-stage_guide session "
+                        f"(kind={s.get('kind')!r})"
+                    )
+                current = s.get("goal", {}).get("last_seen_offset", 0)
+                if new_offset <= current:
+                    return  # monotonic, no rollback
+                s.setdefault("goal", {})["last_seen_offset"] = new_offset
+                data["updated_at"] = _now()
+                self._store.atomic_write(data)
+                return
+            raise RddfSessionError(f"Unknown session: {session_id}")
+        self._store.with_file_lock(_do_update)
+
     # ---------- Binding (delegated) ----------
 
     def find_current_binding(

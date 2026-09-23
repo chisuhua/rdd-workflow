@@ -37,6 +37,21 @@ role:
     human_involvement: "high"
 ---
 
+## Stage 1 Hook（强制前置步骤, per add-guide-polling-loop-implementation AC-9）
+
+进入 Verifier 阶段前必须调用 hooks，写 `phase_started` 到 `events.jsonl` 让 guide session 可观察 AC 验证进度：
+
+```bash
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_hooks.sh"
+
+# 进入前 (写 phase_started)
+rddf_session_hook_entry stage_verify rdd-verifier "verifier-phase" "verifier-done" \
+    .rddf/state/.verifier-report.json
+
+# 阶段完成时 (写 phase_completed)
+trap 'rddf_session_hook_close stage_verify verifier-done rdd-verifier' EXIT INT TERM
+```
+
 # OpenSpec 工作流 — rdd-verifier (5th Phase, v2.0 自包含验证)
 
 本技能是 OpenSpec 工作流的**第 5 阶段**（验证回环），位于 `rdd-builder` 完成、`archive` 之前。

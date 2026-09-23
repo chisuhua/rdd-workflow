@@ -1,5 +1,15 @@
 # Changelog
 
+## v4.1 (2026-09-23)
+
+### add-guide-polling-loop-implementation
+
+Close the polling loop between Window A (guide) and Window B (rdd-arch / planner /
+builder / verifier / quick). Adds `RddfSessionCoordinator.update_last_seen_offset`
+API + `rddf_session_hook_poll_events` bash function + mandates hook entry/close
+in 4 SKILL.md (rdd-arch/planner/builder/verifier/quick). Closes 5 P0 findings from
+2026-09-23 audit of `feat-guide-orchestrator-session-event-bus`.
+
 ## [Unreleased]
 
 ### guide-orchestrator-session-event-bus (cross-container event bus, 2026-09-22)

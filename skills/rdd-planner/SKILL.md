@@ -46,6 +46,21 @@ role:
 
 > 📖 **术语澄清**: 本 skill 管理的是 **improvement**(改进提案,`.rddf/improvements/<name>.md` 5 段草稿)和 `improvement-suggestions.md` / `improvement-approved.md` 两个索引文件;**不创建 openspec proposal**。openspec proposal 由 rdd-builder P0 创建。详见 [AGENTS.md 关键术语对照表](../../AGENTS.md)。
 
+## Stage 1 Hook（强制前置步骤, per add-guide-polling-loop-implementation AC-7）
+
+进入 Planner 阶段前必须调用 hooks，写 `phase_started` 到 `events.jsonl` 让 guide session 可观察：
+
+```bash
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_hooks.sh"
+
+# 进入前 (写 phase_started)
+rddf_session_hook_entry stage_design rdd-planner "planner-phase" "design-done" \
+    .rddf/state/.planner-handoff.json
+
+# 阶段完成时 (写 phase_completed, INT/TERM/EXIT 均触发)
+trap 'rddf_session_hook_close stage_design design-done rdd-planner' EXIT INT TERM
+```
+
 # rdd-planner Skill
 
 Stage 2 of v4 architecture (per spec §3.3 + ADR-0048 §Decision 2). 4-stage flow:

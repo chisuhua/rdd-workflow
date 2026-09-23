@@ -49,6 +49,21 @@ role:
 
 > 📖 **术语澄清**: P0 approval 阶段读取 **improvement**(`.rddf/improvements/<name>.md` 5 段),经 `generate_full_proposal.py` 转换为完整 **openspec proposal**(`openspec/changes/<name>/proposal.md`)。这是 v4 创建 openspec change 的 **canonical 路径** (per ADR-0025 D1/D2)。`propose` 技能仍存在作为 legacy/alternative path。详见 [AGENTS.md 关键术语对照表](../../AGENTS.md)。
 
+## Stage 1 Hook（强制前置步骤, per add-guide-polling-loop-implementation AC-8）
+
+进入 Builder 阶段前必须调用 hooks，写 `phase_started` 到 `events.jsonl` 让 guide session 可观察 P0→P3 进度：
+
+```bash
+source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_hooks.sh"
+
+# 进入前 (写 phase_started)
+rddf_session_hook_entry stage_builder rdd-builder "builder-phase" "phase-3-archive" \
+    .rddf/state/builder/${CHANGE_NAME}.json
+
+# 阶段完成时 (写 phase_completed, INT/TERM/EXIT 均触发)
+trap 'rddf_session_hook_close stage_builder phase-3-archive rdd-builder' EXIT INT TERM
+```
+
 # rdd-builder Skill
 
 Stage 3 of v4 architecture (per spec §3.4). 6-phase internal state machine:
