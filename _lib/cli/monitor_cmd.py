@@ -150,16 +150,26 @@ def _render_monitor(project_root: str) -> None:
 
     # Panel 3: Event log (last 5)
     print("── Recent Events ──")
-    event_path = os.path.join(project_root, ".rddf", "state", "event-log.jsonl")
-    if not os.path.isfile(event_path):
-        print("(event-log.jsonl 不存在)")
+    # v3 (feat-guide-orchestrator-session-event-bus): dual-path fallback.
+    # Prefer new events.jsonl; legacy event-log.jsonl kept for backward compat (Oracle B5).
+    events_path = os.path.join(project_root, ".rddf", "state", "events.jsonl")
+    legacy_path = os.path.join(project_root, ".rddf", "state", "event-log.jsonl")
+    chosen_path = None
+    chosen_label = None
+    if os.path.isfile(events_path):
+        chosen_path, chosen_label = events_path, "events.jsonl"
+    elif os.path.isfile(legacy_path):
+        chosen_path, chosen_label = legacy_path, "event-log.jsonl"
+
+    if chosen_path is None:
+        print("(events.jsonl 不存在)")
     else:
         try:
-            with open(event_path, "r", encoding="utf-8") as f:
+            with open(chosen_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
             recent = lines[-5:] if len(lines) >= 5 else lines
             if not recent:
-                print("(empty event log)")
+                print(f"(empty {chosen_label})")
             else:
                 import json as _json
                 for line in recent:
@@ -170,11 +180,12 @@ def _render_monitor(project_root: str) -> None:
                         evt = _json.loads(line)
                     except Exception:
                         continue
-                    ts_short = (evt.get("timestamp") or "?")[:16]
+                    # v3: events.jsonl uses "ts" not "timestamp"; tolerate both
+                    ts_short = (evt.get("ts") or evt.get("timestamp") or "?")[:16]
                     msg = (evt.get("message") or "")[:60]
                     print(f"{ts_short}  {msg}")
         except OSError as e:
-            print(f"(event-log read failed: {e})")
+            print(f"(event log read failed: {e})")
     print()
 
     # Panel 4: Phase status (arch + plan handoffs)
