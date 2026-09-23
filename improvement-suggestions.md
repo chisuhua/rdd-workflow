@@ -10,4 +10,7 @@
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
 | [bypass-audit-mechanism](.rddf/improvements/bypass-audit-mechanism.md) | P2 | 2026-08-26 流程设计 review | 2026-08-26 | 延迟 (2026-08-28, 维持 v3.2 deferred 决策)  |
+| [add-objective-evidence-v02-llm-synthesis](.rddf/improvements/add-objective-evidence-v02-llm-synthesis.md) | P2 | 2026-09-22 用户发起 — objective evidence v0.1 复盘 + 跨 repo 场景语义复杂度缺口补位 | 2026-09-22 | 待审查 |
+| [add-stage-guide-e2e-cross-process-coverage](.rddf/improvements/add-stage-guide-e2e-cross-process-coverage.md) | P1 | 2026-09-23 review of feat-guide-orchestrator-session-event-bus — 核心架构承诺（跨 OpenCode 进程文件轮询）由 0 个 e2e test 验证；现有 test_guide_cross_container.bats 名为 cross 实为单进程模拟，存在 false confidence 风险 | 2026-09-23 | 待审查 |
+| [fix-events-log-blocking-lock](.rddf/improvements/fix-events-log-blocking-lock.md) | P0 | 2026-09-23 add-stage-guide-e2e-cross-process-coverage AC-1 实测 — `events_log.py` 用 `fcntl.flock(LOCK_EX \| LOCK_NB)` 在并发写时抛 BlockingIOError 而非序列化，导致多进程并发 append_event 时第二个进程全部事件丢失。feat-guide-orchestrator-session-event-bus 跨进程架构实际不可用 | 2026-09-23 | 待审查 |
 

@@ -531,8 +531,10 @@ scan_session_binding() {
   BINDING_LINES=()
   [ -f "$SESSIONS_FILE" ] || return 0
   local owner="${OPENCODE_SESSION_ID:-$(hostname -s)_$PPID}"
-  # check_stale_workflow_state() is called automatically at the end of scan_state()
-  check_heartbeat_timeouts "$PROJECT_ROOT"
+  # v3 (feat-guide-orchestrator-session-event-bus): REMOVE check_heartbeat_timeouts call.
+  # scan-state.sh is a read-only scanner per guide/SKILL.md:30 ("纯只读扫描器").
+  # Heartbeat GC is now handled by hooks.sh entry/close (and rddf-session gc subcommand),
+  # using check_heartbeat_timeouts(readonly=False) which preserves the mutating semantics.
   while IFS= read -r line; do
     BINDING_LINES+=("$line")
   done < <(PY_PROJECT_ROOT="$PROJECT_ROOT" \

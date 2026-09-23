@@ -271,10 +271,12 @@ coord = RddfSessionCoordinator(sessions_file=sessions_file)
 coord.check_heartbeat_timeouts()
 
 parent_id = None
-parent_kind_map = {"stage_design": "stage_arch", "stage_plan": "stage_design", "stage_ship": "stage_plan"}
+# v3 (feat-guide-orchestrator-session-event-bus): add stage_arch -> stage_guide
+parent_kind_map = {"stage_arch": "stage_guide", "stage_design": "stage_arch", "stage_plan": "stage_design", "stage_ship": "stage_plan"}
 parent_kind = parent_kind_map.get(kind)
 if parent_kind:
-    parents = coord.list_sessions(kind=parent_kind)
+    # v3: owner-scoped + state-filtered parent lookup (Metis B3 fix)
+    parents = coord.list_sessions(kind=parent_kind, owner_opencode_session_id=opencode_sid, state="active")
     parent_id = parents[0].session_id if parents else None
 
 try:
@@ -293,6 +295,22 @@ try:
                 break
         coord._store.atomic_write(data)
     print(f"rddf-session: {sid} ({kind}, parent={parent_id}, workflow_group={workflow_group})")
+    # v3: write phase_started event (best-effort)
+    try:
+        from skills.rddf_session.scripts.events_log import EventsLog
+        events_log_path = os.path.join(project_root, ".rddf", "state", "events.jsonl")
+        if os.environ.get("RDDF_EVENTS_LOG_ENABLED", "yes").lower() in ("yes", "true", "1"):
+            EventsLog(events_log_path).append_event(
+                event_type="phase_started",
+                severity="info",
+                message=f"rddf-session: {sid} ({kind}, parent={parent_id})",
+                session_id=sid,
+                kind=kind,
+                parent_session_id=parent_id,
+                owner_opencode_session_id=opencode_sid,
+            )
+    except Exception:
+        pass  # best-effort
 except ConflictError as e:
     print(f"CONFLICT: {e}")
     print('  → use skill_use(\'rddf-session\',\'list\') to inspect')
@@ -353,6 +371,22 @@ try:
     )
     coord.update_session_status(sid, "completed", end_reason=end_reason)
     print(f"rddf-session: {sid} -> completed ({end_reason})")
+    # v3: write phase_completed event (best-effort)
+    try:
+        from skills.rddf_session.scripts.events_log import EventsLog
+        events_log_path = os.path.join(project_root, ".rddf", "state", "events.jsonl")
+        if os.environ.get("RDDF_EVENTS_LOG_ENABLED", "yes").lower() in ("yes", "true", "1"):
+            EventsLog(events_log_path).append_event(
+                event_type="phase_completed",
+                severity="info",
+                message=f"rddf-session: {sid} -> completed ({end_reason})",
+                session_id=sid,
+                kind=kind,
+                parent_session_id=None,
+                owner_opencode_session_id=opencode_sid,
+            )
+    except Exception:
+        pass
 except Exception as e:
     print(f"rddf-session close skipped: {e}")
 PYEOF
@@ -362,6 +396,101 @@ PYEOF
 
   # Auto-archive best-effort (P1: add-rddf-session-auto-archive-on-entry)
   _rddf_auto_archive_if_needed "$sessions_file" 2>/dev/null || true
+}
+
+# v3 (feat-guide-orchestrator-session-event-bus): guide_entry/close hooks.
+# guide_entry creates a long-lived stage_guide session (goal.last_seen_offset=0).
+# guide_close marks it completed on user exit.
+# Both gated by RDDF_GUIDE_SESSION_ENABLED (rollback path).
+rddf_session_hook_guide_entry() {
+  PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  _rddf_resolve_owner
+  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-${RDDF_OWNER:-}}"
+  OPENCODE_SESSION_ID_FROM="${OPENCODE_SESSION_ID_FROM:-${RDDF_OWNER_FROM:-shell-pid}}"
+  export OPENCODE_SESSION_ID_FROM
+
+  if [ "${RDDF_GUIDE_SESSION_ENABLED:-yes}" != "yes" ]; then
+    echo "rddf-session guide-entry: skipped (RDDF_GUIDE_SESSION_ENABLED=${RDDF_GUIDE_SESSION_ENABLED:-})"
+    return 0
+  fi
+
+  local sessions_file="${PROJECT_ROOT}/.rddf/state/sessions.json"
+
+  PROJECT_ROOT="$PROJECT_ROOT" \
+  OPENCODE_SESSION_ID="$OPENCODE_SESSION_ID" \
+  python3 <<'PYEOF'
+import os, sys
+sys.path.insert(0, os.environ["PROJECT_ROOT"])
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator, ConflictError
+
+project_root = os.environ["PROJECT_ROOT"]
+opencode_sid = os.environ["OPENCODE_SESSION_ID"]
+sessions_file = os.path.join(project_root, ".rddf", "state", "sessions.json")
+os.makedirs(os.path.dirname(sessions_file), exist_ok=True)
+coord = RddfSessionCoordinator(sessions_file=sessions_file)
+
+try:
+    sid = coord.create_session(
+        kind="stage_guide",
+        owner_opencode_session_id=opencode_sid,
+        goal={
+            "intent": "guide-orchestrator",
+            "subject": "guide main entry",
+            "expected_outcome": "long-running observer",
+            "last_seen_offset": 0,
+        },
+        parent_session_id=None,
+    )
+    print(f"rddf-session guide-entry: {sid} (stage_guide, owner={opencode_sid})")
+except ConflictError as e:
+    print(f"rddf-session guide-entry CONFLICT: {e}")
+    sys.exit(2)
+except Exception as e:
+    print(f"rddf-session guide-entry skipped: {e}")
+PYEOF
+}
+
+rddf_session_hook_guide_close() {
+  PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  _rddf_resolve_owner
+  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-${RDDF_OWNER:-}}"
+  OPENCODE_SESSION_ID_FROM="${OPENCODE_SESSION_ID_FROM:-${RDDF_OWNER_FROM:-shell-pid}}"
+  export OPENCODE_SESSION_ID_FROM
+
+  if [ "${RDDF_GUIDE_SESSION_ENABLED:-yes}" != "yes" ]; then
+    echo "rddf-session guide-close: skipped (RDDF_GUIDE_SESSION_ENABLED=${RDDF_GUIDE_SESSION_ENABLED:-})"
+    return 0
+  fi
+
+  local sessions_file="${PROJECT_ROOT}/.rddf/state/sessions.json"
+  if [ ! -f "$sessions_file" ]; then
+    echo "rddf-session guide-close: sessions.json not found, skipping"
+    return 0
+  fi
+
+  PROJECT_ROOT="$PROJECT_ROOT" \
+  OPENCODE_SESSION_ID="$OPENCODE_SESSION_ID" \
+  python3 <<'PYEOF'
+import os, sys
+sys.path.insert(0, os.environ["PROJECT_ROOT"])
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
+
+project_root = os.environ["PROJECT_ROOT"]
+opencode_sid = os.environ["OPENCODE_SESSION_ID"]
+sessions_file = os.path.join(project_root, ".rddf", "state", "sessions.json")
+
+coord = RddfSessionCoordinator(sessions_file=sessions_file)
+try:
+    sessions = coord.list_sessions(kind="stage_guide", owner_opencode_session_id=opencode_sid, state="active")
+    if not sessions:
+        print(f"rddf-session guide-close: no active stage_guide session for {opencode_sid}, skipping")
+        sys.exit(0)
+    sid = sessions[0].session_id
+    coord.update_session_status(sid, "completed", end_reason="guide-exit")
+    print(f"rddf-session guide-close: {sid} -> completed (guide-exit)")
+except Exception as e:
+    print(f"rddf-session guide-close skipped: {e}")
+PYEOF
 }
 
 # rddf_session_hook_heartbeat <kind> [change_name]

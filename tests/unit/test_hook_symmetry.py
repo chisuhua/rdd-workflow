@@ -12,9 +12,9 @@ def test_hook_function_count():
         capture_output=True, text=True, cwd="/workspace/project/rdd-workflow"
     )
     
-    # Should have: entry, close, heartbeat, attach, detach (5 hooks)
+    # Should have: entry, close, heartbeat, attach, detach, guide_entry, guide_close (7 hooks)
     count = int(result.stdout.strip())
-    assert count == 5, f"Expected 5 hooks, found {count}"
+    assert count == 7, f"Expected 7 hooks, found {count}"
 
 
 def test_attach_detach_symmetry():

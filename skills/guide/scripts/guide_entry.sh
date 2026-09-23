@@ -95,6 +95,13 @@ export SKILL_DIR
 # shellcheck source=scripts/scan-state.sh
 source "$SKILL_DIR/scripts/scan-state.sh"
 
+# v3 (feat-guide-orchestrator-session-event-bus): source hooks.sh for guide_entry/close.
+# Tolerate missing hooks.sh (older setups) — guide falls back to no-op.
+if [ -f "$SKILL_DIR/../rddf-session/scripts/rddf_session_hooks.sh" ]; then
+  # shellcheck source=../../rddf-session/scripts/rddf_session_hooks.sh
+  source "$SKILL_DIR/../rddf-session/scripts/rddf_session_hooks.sh"
+fi
+
 # ---------------------------------------------------------------------------
 # Main entry: scan + synthesize + render
 # ---------------------------------------------------------------------------
@@ -128,6 +135,15 @@ EOF
 
   local PROJECT_ROOT
   PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+
+  # v3: create stage_guide session (long-lived main entry; PR 1 introduced kind).
+  if type rddf_session_hook_guide_entry &>/dev/null; then
+    rddf_session_hook_guide_entry || true  # best-effort; do not fail guide on hook error
+  fi
+  # v3: on exit, mark stage_guide completed via trap (handles SIGINT/SIGTERM too).
+  if type rddf_session_hook_guide_close &>/dev/null; then
+    trap 'rddf_session_hook_guide_close' EXIT INT TERM
+  fi
 
   scan_state "$PROJECT_ROOT"
 

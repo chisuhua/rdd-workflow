@@ -24,12 +24,25 @@ LOCK_TIMEOUT_SECONDS = 5.0
 # v2.1: Accept both naming conventions for better UX
 # - stage_arch / stage_design / stage_plan / stage_ship (internal canonical)
 # - rdd-arch / guide-design / guide-plan / guide-ship (user-friendly, matches skill names)
-_VALID_KINDS = ("stage_arch", "stage_design", "stage_plan", "stage_ship", "rdd-arch", "guide-design", "guide-plan", "guide-ship")
+# v3 (feat-guide-orchestrator-session-event-bus): add stage_guide + guide-orchestrator (Oracle B2 belt-and-suspenders)
+_VALID_KINDS = ("stage_arch", "stage_design", "stage_plan", "stage_ship", "stage_guide",
+               "rdd-arch", "guide-design", "guide-plan", "guide-ship", "guide-orchestrator")
 _KIND_ALIAS = {
     "rdd-arch": "stage_arch",
     "guide-design": "stage_design",
     "guide-plan": "stage_plan",
     "guide-ship": "stage_ship",
+    "guide-orchestrator": "stage_guide",
+}
+
+# v3: Per-kind heartbeat timeout. Defaults to HEARTBEAT_TIMEOUT_BY_KIND per kind;
+# HeartbeatConfig.timeout_seconds acts as fallback for any kind not listed.
+HEARTBEAT_TIMEOUT_BY_KIND = {
+    "stage_arch": 30 * 60,           # 30 min (existing)
+    "stage_design": 30 * 60,
+    "stage_plan": 30 * 60,
+    "stage_ship": 30 * 60,
+    "stage_guide": 8 * 60 * 60,      # 8 hours (long-lived main orchestrator)
 }
 
 

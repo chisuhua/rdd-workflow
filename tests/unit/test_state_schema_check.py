@@ -38,6 +38,7 @@ def _setup_real_lib_with_iteration_schema(tmp_path: Path) -> None:
     real_lib.mkdir(parents=True)
     schema_path = real_lib / "iteration_schema.json"
     schema_path.write_text(json.dumps({
+        "version": {"const": "v1"},
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "required": ["version", "updated_at", "current_phase", "changes"],

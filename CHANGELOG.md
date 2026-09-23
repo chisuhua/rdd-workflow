@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+### guide-orchestrator-session-event-bus (cross-container event bus, 2026-09-22)
+
+`guide` 升级为可跨多个 OpenCode 进程窗口观察 rddf-session 进度的"主入口"。新加 `stage_guide` kind + `events.jsonl` 文件事件总线 + `goal.last_seen_offset` per-owner 进度跟踪：
+
+- **`stage_guide` rddf-session kind**（schema v2→v3）：长生命周期主会话；8 小时心跳超时（vs stage 30 分钟）；全局单例（H7）；新增 `_VALID_KINDS` 双加（stage_guide + guide-orchestrator）。
+- **`.rddf/state/events.jsonl` 文件事件总线**：fcntl.flock + 50MB cap + `archive_events(keep=1000)` 自动归档；7 类事件类型（phase_started/completed/failed/heartbeat + guide_intent/routed/user_message）；`events.jsonl` 不复用不存在的 event-log.jsonl（Metis B4）。
+- **per-owner 进度**：`stage_guide` session 的 `goal.last_seen_offset` 跟踪每个 owner 的读取位置；归档后自动重置避免行号失效（Metis 新严重 B4）。
+- **owner-scoped parent lookup**：`hooks.sh` 父查找改 `list_sessions(kind, owner_opencode_session_id, state='active')`，替代 `list_sessions()[0]` 取"最新"的错误行为（Metis B3 修复）。
+- **stage-level singleton 双向豁免**：guide 不阻塞 builder，builder 也不阻塞 guide 创建（Oracle B1）。
+- **`hooks.sh` 新增** `rddf_session_hook_guide_entry` / `close`：guide_entry.sh 启动时调 entry、trap EXIT 调 close；`RDDF_GUIDE_SESSION_ENABLED` 回滚开关。
+- **`scan-state.sh` 移除** `check_heartbeat_timeouts` 调用 —— 违反 guide "纯只读扫描器"契约；心跳 GC 改由 hooks.sh entry/close 处理（H1）。
+- **`monitor_cmd` 双路径 fallback**：优先读 events.jsonl（新），回退 event-log.jsonl（向后兼容 Oracle B5）。
+- **可读性 backport fix**：`events_log.read_since(offset=N)` 修复 off-by-one（`line_no < offset` 而非 `<=`）；`N=0` 真正返回所有事件。
+
+**回归门控**：4 PR × TDD 5 步；17 单测 + 23 集成测（8 PR2 + 7 PR3 + 3 PR4 doctor + 5 unit events_log）全部通过；`./test.sh --quick` 无新失败。
+
+**Cross-references**：ADR-0055 v3（Oracle 修订 + Metis 6 BLOCKER 修复）；OpenSpec change `openspec/changes/feat-guide-orchestrator-session-event-bus/`（proposal.md 99 行 / design.md 366 行 / tasks.md 147 行 / spec.md 246 行）。
+
+### roadmap-feature-doctor (enhance drift detection 6 invariants, 2026-09-22)
+
 ### roadmap-feature-doctor (enhance drift detection 6 invariants, 2026-09-22)
 
 `rdd-doctor --category roadmap-feature` 从 3 个基础检查升级为 6 个不变性检查，覆盖 feature fragment 状态在各视图间的完整漂移检测：

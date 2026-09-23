@@ -81,6 +81,7 @@
 | [ADR-0052](ADR-0052-layer-0-progressive-context.md) | ADR-0052: Layer 0 渐进式上下文注入架构 | 已采纳 | 2026-09-21 |
 | [ADR-0053](ADR-0053-rdd-env-bootstrap-orchestrator.md) | ADR-0053: rdd-env-bootstrap 编排层 | 已采纳 | 2026-09-22 |
 | [ADR-0054](ADR-0054-objective-tracking.md) | ADR-0054: Objective 跟踪工件 (cross-sprint complex targets) | 已采纳 | 2026-09-22 |
+| [ADR-0055](ADR-0055-guide-orchestrator-session-event-bus.md) | ADR-0055: Guide-as-Orchestrator Session + Cross-Container Event Bus | 已采纳 + 已实施（v4.1 release，PR 1-4 / commit f5eb49c / bf6a7fc / 89117dc） | 2026-09-22 |
 <!-- ADR_INDEX_END -->
 
 ## 架构演进

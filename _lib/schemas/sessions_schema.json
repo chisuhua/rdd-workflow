@@ -10,7 +10,7 @@
     "version": {
       "type": "integer",
       "minimum": 1,
-      "description": "Schema version. v1 original; v2 adds optional sub_phase and workflow_group fields."
+      "description": "Schema version. v1 original; v2 adds optional sub_phase and workflow_group fields; v3 adds stage_guide kind, guide-orchestrator intent, and goal.last_seen_offset (per feat-guide-orchestrator-session-event-bus)."
     },
     "updated_at": {
       "type": "string",
@@ -43,8 +43,8 @@
         },
         "kind": {
           "type": "string",
-          "enum": ["stage_arch", "stage_design", "stage_plan", "stage_ship"],
-          "description": "Stage driver: arch / design / plan / ship (per v2.1 four-phase)."
+          "enum": ["stage_arch", "stage_design", "stage_plan", "stage_ship", "stage_guide"],
+          "description": "Stage driver: arch / design / plan / ship / guide-orchestrator (per v2.1 four-phase; v3 adds stage_guide per feat-guide-orchestrator-session-event-bus)."
         },
         "owner_opencode_session_id": {
           "type": ["string", "null"],
@@ -61,12 +61,13 @@
           "properties": {
             "intent": {
               "type": "string",
-              "enum": ["guide-arch", "guide-design", "guide-plan", "guide-ship"]
+              "enum": ["guide-arch", "guide-design", "guide-plan", "guide-ship", "guide-orchestrator"]
             },
             "subject": { "type": "string" },
-            "expected_outcome": { "type": "string" }
+            "expected_outcome": { "type": "string" },
+            "last_seen_offset": { "type": "integer", "minimum": 0, "description": "Per-owner events.jsonl read offset (only used by stage_guide; v3)." }
           },
-          "description": "Structured goal (intent + subject + expected_outcome)."
+          "description": "Structured goal (intent + subject + expected_outcome + optional last_seen_offset)."
         },
         "state": {
           "type": "string",
