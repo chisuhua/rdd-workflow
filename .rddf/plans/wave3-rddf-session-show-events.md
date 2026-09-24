@@ -34,7 +34,7 @@
 - Modify: `_lib/cli/sessions_cmd.py`
 - Test: `tests/unit/test_session_show_events.py`
 
-- [ ] **Step 1: Write failing test for session_show_cmd filter logic**
+- [x] **Step 1: Write failing test for session_show_cmd filter logic**
 
 Create `tests/unit/test_session_show_events.py`:
 
@@ -141,12 +141,12 @@ def test_empty_events():
     assert result_raw.strip() == ""
 ```
 
-- [ ] **Step 2: Run test to verify it fails (module not found)**
+- [x] **Step 2: Run test to verify it fails (module not found)**
 
 Run: `python3 -m pytest tests/unit/test_session_show_events.py -x --tb=long`
 Expected: FAIL — `ModuleNotFoundError: No module named 'cli.session_show_cmd'` (classic TDD red)
 
-- [ ] **Step 3: Implement session_show_cmd.py**
+- [x] **Step 3: Implement session_show_cmd.py**
 
 Create `_lib/cli/session_show_cmd.py` with ~80 lines:
 
@@ -241,12 +241,12 @@ def register_show_events(subparsers):
     parser.set_defaults(func=handle_show_events)
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_session_show_events.py -x --tb=short`
 Expected: PASS (all 9 tests)
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 ---
 
@@ -256,7 +256,7 @@ Expected: PASS (all 9 tests)
 - Modify: `_lib/cli/sessions_cmd.py`
 - Test: `tests/unit/test_session_show_events.py`
 
-- [ ] **Step 1: Write test for empty events file**
+- [x] **Step 1: Write test for empty events file**
 
 Add to `test_session_show_events.py`:
 
@@ -270,12 +270,12 @@ def test_handle_no_events_file(capsys, tmp_path):
     assert "no events" in captured.out.lower()
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_session_show_events.py::test_handle_no_events_file -xvs`
 Expected: FAIL — `handle_show_events_cmd` not yet wired
 
-- [ ] **Step 3: Implement events file reader and registration**
+- [x] **Step 3: Implement events file reader and registration**
 
 Create `handle_show_events_cmd` function:
 
@@ -346,12 +346,12 @@ if args.events:
     )
 ```
 
-- [ ] **Step 4: Run all tests to verify they pass**
+- [x] **Step 4: Run all tests to verify they pass**
 
 Run: `python3 -m pytest tests/unit/test_session_show_events.py -x --tb=short`
 Expected: PASS (10 tests)
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 ---
 
@@ -360,24 +360,24 @@ Expected: PASS (10 tests)
 **Files:**
 - Existing test infra: `tests/unit/test_rddf_session.py`
 
-- [ ] **Step 1: Run existing rdd-doctor session tests to confirm no regression**
+- [x] **Step 1: Run existing rdd-doctor session tests to confirm no regression**
 
 Run: `python3 -m pytest tests/unit/test_rddf_session.py -x --tb=short -q`
 Expected: PASS (all ~25 tests)
 
-- [ ] **Step 2: Verify `rddf session show --events --help` works**
+- [x] **Step 2: Verify `rddf session show --events --help` works**
 
 Run: `python3 -m _lib.cli.rddf session show --events --help 2>&1 | head -5`
 Expected: Shows arg help
 
-- [ ] **Step 3: Manual smoke — run against empty events.jsonl**
+- [x] **Step 3: Manual smoke — run against empty events.jsonl**
 
 ```bash
 rddf session show --events
 # Expected: "(no events)"
 ```
 
-- [ ] **Step 4-5: Final pass + defer commit**
+- [x] **Step 4-5: Final pass + defer commit**
 
 Run: `python3 -m pytest tests/unit/test_session_show_events.py tests/unit/test_rddf_session.py -x --tb=short -q`
 Expected: All pass
