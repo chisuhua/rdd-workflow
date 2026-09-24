@@ -40,3 +40,7 @@ pnpm-lock.yaml
 
 # rdd-workflow: git.openspec_tracked=false — keep openspec/ out of git
 openspec/
+
+# rdd-workflow: feedback appender + parallel phase race conditions create ephemeral lock files
+.rddf/improvements/*.lock
+.rddf/improvements/.feedback-counters.json
