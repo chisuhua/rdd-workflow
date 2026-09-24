@@ -482,7 +482,7 @@ def _read_events_for_children(
         if not isinstance(ev, dict):
             continue
         event_type = ev.get("event_type")
-        if event_type not in ("phase_started", "phase_completed"):
+        if event_type not in ("phase_started", "phase_completed", "phase_heartbeat"):
             continue
         ctx_raw = ev.get("context")
         ctx: Dict[str, object] = ctx_raw if isinstance(ctx_raw, dict) else {}
@@ -499,12 +499,19 @@ def _read_events_for_children(
                 "started_count": 0,
                 "completed_count": 0,
                 "last_event_at": "",
+                "heartbeat_tasks": None,
             }
         bucket = agg[key]
         if event_type == "phase_started":
             bucket["started_count"] = int(bucket["started_count"]) + 1  # type: ignore[arg-type]
         elif event_type == "phase_completed":
             bucket["completed_count"] = int(bucket["completed_count"]) + 1  # type: ignore[arg-type]
+        elif event_type == "phase_heartbeat":
+            # Prefer latest heartbeat's task-level progress (AC-P2-2-2)
+            tasks_total = ctx.get("tasks_total")
+            tasks_completed = ctx.get("tasks_completed")
+            if isinstance(tasks_total, int) and isinstance(tasks_completed, int):
+                bucket["heartbeat_tasks"] = (tasks_completed, tasks_total)  # type: ignore[assignment]
         if ts > str(bucket["last_event_at"]):  # type: ignore[operator]
             bucket["last_event_at"] = ts
 
@@ -524,6 +531,11 @@ def _read_events_for_children(
             continue
         started = int(bucket["started_count"])  # type: ignore[arg-type]
         completed = int(bucket["completed_count"])  # type: ignore[arg-type]
+        heartbeat_tasks = bucket.get("heartbeat_tasks")
+        if heartbeat_tasks is not None:
+            hb_completed, hb_total = heartbeat_tasks  # type: ignore[misc]
+            started = hb_total
+            completed = hb_completed
         detail = f"{kind} 完成 {completed}/{started}"
         progress_list.append(ChildProgress(
             kind=kind, session_id=sid,

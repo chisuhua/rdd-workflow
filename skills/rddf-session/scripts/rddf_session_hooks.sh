@@ -535,10 +535,13 @@ rddf_session_hook_heartbeat() {
   RDDF_SUB_PHASE="${RDDF_SUB_PHASE:-}" \
   PROJECT_ROOT="$PROJECT_ROOT" \
   OPENCODE_SESSION_ID="$OPENCODE_SESSION_ID" \
+  RDDF_TASKS_TOTAL="${RDDF_TASKS_TOTAL:-}" \
+  RDDF_TASKS_COMPLETED="${RDDF_TASKS_COMPLETED:-}" \
   python3 <<'PYEOF'
 import os, sys
 sys.path.insert(0, os.environ["PROJECT_ROOT"])
 from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.events_log import EventsLog
 
 project_root = os.environ["PROJECT_ROOT"]
 kind = os.environ["KIND"]
@@ -582,6 +585,31 @@ try:
     action = f"(after archive {change_name})" if change_name else ""
     sub_phase_note = f" sub_phase={sub_phase}" if sub_phase else ""
     print(f"rddf-session: {sid} heartbeat refreshed {action}{sub_phase_note}".strip())
+
+    # AC-P2-2-1: Write phase_heartbeat event to events.jsonl (non-blocking)
+    events_path = os.path.join(project_root, ".rddf", "state", "events.jsonl")
+    try:
+        extra = {}
+        tasks_total = os.environ.get("RDDF_TASKS_TOTAL")
+        tasks_completed = os.environ.get("RDDF_TASKS_COMPLETED")
+        if tasks_total:
+            extra["tasks_total"] = int(tasks_total)
+        if tasks_completed:
+            extra["tasks_completed"] = int(tasks_completed)
+        extra["session_id"] = sid
+        extra["kind"] = kind
+
+        events_log = EventsLog(events_path)
+        events_log.append_event(
+            event_type="phase_heartbeat",
+            severity="info",
+            message=f"rddf-session: {sid} heartbeat",
+            session_id=sid,
+            kind=kind,
+            extra_context=extra,
+        )
+    except Exception as e:
+        print(f"rddf-session: phase_heartbeat event write skipped: {e}")
 except Exception as e:
     print(f"rddf-session heartbeat skip: {e}")
 PYEOF

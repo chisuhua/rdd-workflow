@@ -37,6 +37,20 @@ _id_seq = 0
 DEFAULT_MAX_SIZE_MB = 50
 ARCHIVE_KEEP_DEFAULT = 1000
 
+DEFAULT_HEARTBEAT_INTERVAL_SEC = 300
+
+
+def get_heartbeat_interval_sec() -> int:
+    """Return heartbeat interval in seconds (AC-P2-2-4 / M-HB5).
+
+    Reads RDDF_HEARTBEAT_INTERVAL_SEC env var; falls back to 300s default
+    when unset or non-integer.
+    """
+    raw = os.environ.get("RDDF_HEARTBEAT_INTERVAL_SEC", "")
+    if raw.isdigit():
+        return int(raw)
+    return DEFAULT_HEARTBEAT_INTERVAL_SEC
+
 
 def _acquire_lock_with_timeout(lockf, timeout: float = _LOCK_TIMEOUT) -> None:
     """Acquire fcntl.flock LOCK_EX with bounded retry (per fix-events-log-blocking-lock).
@@ -120,6 +134,7 @@ class EventsLog:
         kind: str,
         parent_session_id: Optional[str] = None,
         owner_opencode_session_id: Optional[str] = None,
+        extra_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Append a new event row. Returns the row as a dict.
 
@@ -149,6 +164,8 @@ class EventsLog:
                 "owner_opencode_session_id": owner_opencode_session_id,
             },
         }
+        if extra_context:
+            row["context"].update(extra_context)
         try:
             with open(self._lock_path, "w") as lockf:
                 _acquire_lock_with_timeout(lockf)
