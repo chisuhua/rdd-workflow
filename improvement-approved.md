@@ -167,9 +167,6 @@
 
 
 
-| [wave3-opencode-session-injection](.rddf/improvements/wave3-opencode-session-injection.md) | P1 | 2026-09-24 | guide-design |
-| [wave3-phase-heartbeat-progressing](.rddf/improvements/wave3-phase-heartbeat-progressing.md) | P2 | 2026-09-24 | guide-design |
-| [wave3-rddf-session-show-events](.rddf/improvements/wave3-rddf-session-show-events.md) | P2 | 2026-09-24 | guide-design |
 
 ## 已实施
 | [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | P1 | 2026-09-10 | 已实施 |
@@ -197,6 +194,9 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [wave3-rddf-session-show-events](.rddf/improvements/wave3-rddf-session-show-events.md) | P2 | 2026-09-24 | 已实施 |
+| [wave3-phase-heartbeat-progressing](.rddf/improvements/wave3-phase-heartbeat-progressing.md) | P2 | 2026-09-24 | 已实施 |
+| [wave3-opencode-session-injection](.rddf/improvements/wave3-opencode-session-injection.md) | P1 | 2026-09-24 | 已实施 |
 | [add-objective-tracking](.rddf/improvements/add-objective-tracking.md) | P1 | 2026-09-22 | 已实施 |
 | [phase-1-general-20260829063800-2](.rddf/improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-09-22 | 已实施 |
 | [add-feature-fragment-command](.rddf/improvements/add-feature-fragment-command.md) | P1 | 2026-09-22 | 已实施 |
