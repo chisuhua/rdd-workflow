@@ -45,12 +45,30 @@
 # 跨 bash 调用持久化机制: 探测成功后将 owner+source 写入 ~/.cache/rddf-session-owner
 # (per-host, 0600, TTL 1h). 后续 fallback 在 env var 缺失时优先读此文件.
 _rddf_resolve_owner() {
-  # 1. env var 优先
+  # 1. env var 优先 (平台真值, 方案 A)
   if [ -n "${OPENCODE_SESSION_ID:-}" ]; then
     RDDF_OWNER="$OPENCODE_SESSION_ID"
     RDDF_OWNER_FROM="env"
     export RDDF_OWNER RDDF_OWNER_FROM
     return 0
+  fi
+
+  # 1.5 RDDF_OPENCODE_SESSION_AWARE probe (方案 B, per wave3-opencode-session-injection)
+  #     Reads ~/.opencode/sessions/ for the most recently-modified session dir.
+  #     Enabled only when RDDF_OPENCODE_SESSION_AWARE=yes (opt-in env var).
+  if [ "${RDDF_OPENCODE_SESSION_AWARE:-no}" = "yes" ]; then
+    local opencode_sessions_dir="${HOME}/.opencode/sessions"
+    if [ -d "$opencode_sessions_dir" ]; then
+      local latest_session=""
+      # shellcheck disable=SC2012
+      latest_session=$(ls -1t "$opencode_sessions_dir" 2>/dev/null | head -1)
+      if [ -n "$latest_session" ]; then
+        RDDF_OWNER="$latest_session"
+        RDDF_OWNER_FROM="opencode-session-aware"
+        export RDDF_OWNER RDDF_OWNER_FROM
+        return 0
+      fi
+    fi
   fi
 
   # 2. cache file (per-host, 0600, TTL 1h)
