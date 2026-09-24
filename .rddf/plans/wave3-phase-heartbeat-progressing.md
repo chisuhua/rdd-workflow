@@ -34,7 +34,7 @@
 - Modify: `skills/rddf-session/scripts/rddf_session_hooks.sh` (heartbeat heredoc around line 521)
 - Test: `tests/integration/test_phase_heartbeat_progress.py`
 
-- [ ] **Step 1: Write the failing integration test**
+- [x] **Step 1: Write the failing integration test**
 
 Create `tests/integration/test_phase_heartbeat_progress.py`:
 
@@ -89,12 +89,12 @@ def test_heartbeat_writes_phase_heartbeat_event(tmp_path):
     assert event["context"]["session_id"] == "rds_test_integration_123"
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/integration/test_phase_heartbeat_progress.py::test_heartbeat_writes_phase_heartbeat_event -xvs`
 Expected: `ImportError` or `EventsLog.append_event` not yet exposing `context` params (test fails meaningfully)
 
-- [ ] **Step 3: Add phase_heartbeat write-end to bash hook**
+- [x] **Step 3: Add phase_heartbeat write-end to bash hook**
 
 In `skills/rddf-session/scripts/rddf_session_hooks.sh`, locate `rddf_session_hook_heartbeat()` (around line 521). Currently it updates `last_heartbeat` in the session dict. Add a phase_heartbeat event write using the python heredoc pattern:
 
@@ -122,12 +122,12 @@ events_log.append_event(
 fi
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/integration/test_phase_heartbeat_progress.py::test_heartbeat_writes_phase_heartbeat_event -xvs`
 Expected: PASS (EventsLog.append_event writes the event, read_since returns it with context fields intact)
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 按仓库约定，execute 阶段不逐任务 commit；所有变更将在 archive 阶段统一提交。
 
@@ -139,7 +139,7 @@ Expected: PASS (EventsLog.append_event writes the event, read_since returns it w
 - Modify: `_lib/workflow_synthesizer.py` (`_read_events_for_children` method)
 - Test: `tests/unit/test_workflow_synthesizer_events.py`
 
-- [ ] **Step 1: Write the failing test for heartbeat aggregation**
+- [x] **Step 1: Write the failing test for heartbeat aggregation**
 
 Add 3 new test functions to `tests/unit/test_workflow_synthesizer_events.py`:
 
@@ -184,12 +184,12 @@ def test_synthesizer_missing_heartbeat_fields_graceful():
     assert result is not None
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_workflow_synthesizer_events.py::test_synthesizer_prefers_heartbeat_over_ratio -xvs`
 Expected: FAIL — `_read_events_for_children` doesn't yet consume heartbeat data
 
-- [ ] **Step 3: Implement heartbeat aggregation in workflow_synthesizer**
+- [x] **Step 3: Implement heartbeat aggregation in workflow_synthesizer**
 
 In `_lib/workflow_synthesizer.py`, modify `_read_events_for_children` to:
 
@@ -235,12 +235,12 @@ def _read_events_for_children(events, session_id):
     return {"started": started, "completed": completed, "total": started, "detail": detail}
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_workflow_synthesizer_events.py::test_synthesizer_prefers_heartbeat_over_ratio tests/unit/test_workflow_synthesizer_events.py::test_synthesizer_falls_back_without_heartbeat tests/unit/test_workflow_synthesizer_events.py::test_synthesizer_missing_heartbeat_fields_graceful -xvs`
 Expected: PASS (all 3)
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 ---
 
@@ -250,7 +250,7 @@ Expected: PASS (all 3)
 - Create: `tests/integration/test_phase_heartbeat_e2e.py`
 - Creates a real events.jsonl, simulates multiple heartbeat calls, verifies read
 
-- [ ] **Step 1: Write the e2e test**
+- [x] **Step 1: Write the e2e test**
 
 ```python
 """E2E test: phase_heartbeat via real EventsLog append + read cycle."""
@@ -289,12 +289,12 @@ def test_heartbeat_e2e_roundtrip(tmp_path):
     assert heartbeats[1]["context"]["tasks_total"] == 5
 ```
 
-- [ ] **Step 2: Run test to verify it passes**
+- [x] **Step 2: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/integration/test_phase_heartbeat_e2e.py -xvs`
 Expected: PASS
 
-- [ ] **Step 3-5: Verify, commit-defer**
+- [x] **Step 3-5: Verify, commit-defer**
 
 Run all related tests:
 `python3 -m pytest tests/unit/test_workflow_synthesizer_events.py -x --tb=short` → PASS (existing 14 + 3 new)
