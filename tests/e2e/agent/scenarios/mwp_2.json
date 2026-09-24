@@ -23,7 +23,10 @@
   },
   "golden_output": {
     "files": [
-      {"path": "/tmp/real-poll-test/.rddf/state/sessions.json", "must_exist": true}
+      {
+        "path": "/tmp/real-poll-test/.rddf/state/sessions.json",
+        "must_exist": true
+      }
     ],
     "stdout_contains": [
       "rddf-session guide-entry CONFLICT:",
@@ -46,11 +49,17 @@
     "stdout": "rddf-session guide-entry CONFLICT: Active stage_guide session rds_d9452d378b35 owned by pane-A-host01-1269034-MOCK; caller pane-A-host01-CALLER-MOCK must resolve via 4-option soft prompt\n"
   },
   "isolation": {
-    "locked_paths": ["/tmp/real-poll-test/.rddf"],
-    "side_effect_cleanup": ["rm -f /tmp/real-poll-test/.rddf/state/*.pid"]
+    "locked_paths": [
+      "/tmp/real-poll-test/.rddf"
+    ],
+    "side_effect_cleanup": [
+      "rm -f /tmp/real-poll-test/.rddf/state/*.pid"
+    ]
   },
   "evidence": {
-    "bats_test": "tests/integration/test_real_two_owner_poll.bats::REAL-2P-2",
-    "related_changes": ["feat-guide-orchestrator-session-event-bus"]
+    "bats_test": "tests/e2e/agent/test_multi_window_poll.bats::REAL-2P-2",
+    "related_changes": [
+      "feat-guide-orchestrator-session-event-bus"
+    ]
   }
 }

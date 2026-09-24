@@ -6,7 +6,9 @@
   "description": "Real two-owner cross-process interaction: pane-A runs guide_entry repeatedly to poll events.jsonl while pane-B writes events with a different OPENCODE_SESSION_ID. Validates that last_seen_offset monotonically advances and stage_guide session state transitions to completed on SIGTERM.",
   "input": {
     "command": "guide_entry",
-    "args": ["--no-binding"],
+    "args": [
+      "--no-binding"
+    ],
     "env": {
       "PROJECT_ROOT": "/tmp/real-poll-test",
       "OPENCODE_SESSION_ID": "pane-A-host01-$$",
@@ -32,8 +34,14 @@
   },
   "golden_output": {
     "files": [
-      {"path": "/tmp/real-poll-test/.rddf/state/sessions.json", "must_exist": true},
-      {"path": "/tmp/real-poll-test/.rddf/state/events.jsonl", "must_exist": true}
+      {
+        "path": "/tmp/real-poll-test/.rddf/state/sessions.json",
+        "must_exist": true
+      },
+      {
+        "path": "/tmp/real-poll-test/.rddf/state/events.jsonl",
+        "must_exist": true
+      }
     ],
     "stdout_contains": [
       "rddf-session guide-entry: rds_",
@@ -50,7 +58,9 @@
       },
       "events_jsonl": {
         "total_events": 10,
-        "unique_owners": ["pane-B-host01-"],
+        "unique_owners": [
+          "pane-B-host01-"
+        ],
         "all_events_have_owner_pane_B": true
       },
       "isolation": {
@@ -67,13 +77,22 @@
     "stdout": "rddf-session guide-entry: rds_bc7cd3ab5850 (stage_guide, owner=pane-A-host01-MOCK)\n📍 Current: rds_bc7cd3ab5850 (kind=stage_guide, parent=None, age=0min, changes=(none))\n📊 Child Sessions:\n   2026-09-23 [phase_started] real-B-rdd-arch-event-0\n   2026-09-23 [phase_completed] real-B-rdd-arch-event-1\n   2026-09-23 [phase_started] real-B-rdd-arch-event-2\nrddf-session guide-close: rds_bc7cd3ab5850 -> completed (guide-exit)\n"
   },
   "isolation": {
-    "locked_paths": ["/tmp/real-poll-test/.rddf"],
-    "side_effect_cleanup": ["rm -f /tmp/real-poll-test/.rddf/state/*.pid"]
+    "locked_paths": [
+      "/tmp/real-poll-test/.rddf"
+    ],
+    "side_effect_cleanup": [
+      "rm -f /tmp/real-poll-test/.rddf/state/*.pid"
+    ]
   },
   "evidence": {
-    "bats_test": "tests/integration/test_real_two_owner_poll.bats::REAL-2P-1",
+    "bats_test": "tests/e2e/agent/test_multi_window_poll.bats::REAL-2P-1",
     "manual_test": "/tmp/test_real_poll_v2.sh (validated last_seen_offset=10, state=completed)",
-    "related_adrs": ["ADR-0045 (self-contained LLM verification)"],
-    "related_changes": ["add-stage-guide-e2e-cross-process-coverage", "fix-guide-close-owner-resolution"]
+    "related_adrs": [
+      "ADR-0045 (self-contained LLM verification)"
+    ],
+    "related_changes": [
+      "add-stage-guide-e2e-cross-process-coverage",
+      "fix-guide-close-owner-resolution"
+    ]
   }
 }
