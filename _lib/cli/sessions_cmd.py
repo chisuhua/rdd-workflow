@@ -79,6 +79,8 @@ def cmd_sessions(args: list[str]) -> int:
             print("❌ sessions show: missing <id> argument", file=sys.stderr)
             print("   usage: rddf sessions show <id>", file=sys.stderr)
             return 2
+        if rest[0] == "--events":
+            return _show_events(rest[1:])
         return _show_session(rest[0])
     if sub == "current":
         return _current_session()
@@ -207,6 +209,60 @@ def _list_parallel_sessions() -> int:
             n_changes = len(s.attached_changes or [])
             print(f"{sid:<32} {kind:<14} {state:<10} {n_changes:<8}")
     return 0
+
+
+def _show_events(flags: list[str]) -> int:
+    """``sessions show --events [--owner O] [--session S] [--kind K]
+    [--since T] [--until T] [--format table|json|raw]``.
+
+    Reads events.jsonl under the project root and replays history
+    (AC-P2-4-1~6). Read-only: never mutates events.jsonl (MN-SE3).
+    """
+    from _lib.cli.session_show_cmd import handle_show_events_cmd
+
+    owner = session_id = kind = since = until = None
+    fmt = "table"
+    i = 0
+    while i < len(flags):
+        arg = flags[i]
+        if arg in ("--owner", "--session", "--kind", "--since", "--until", "--format"):
+            if i + 1 >= len(flags):
+                print(f"❌ sessions show --events: {arg} requires a value", file=sys.stderr)
+                return 2
+            value = flags[i + 1]
+            if arg == "--owner":
+                owner = value
+            elif arg == "--session":
+                session_id = value
+            elif arg == "--kind":
+                kind = value
+            elif arg == "--since":
+                since = value
+            elif arg == "--until":
+                until = value
+            else:
+                fmt = value
+            i += 2
+        elif arg in ("-h", "--help"):
+            print("usage: rddf sessions show --events "
+                  "[--owner O] [--session S] [--kind K] "
+                  "[--since T] [--until T] [--format table|json|raw]")
+            return 0
+        else:
+            print(f"❌ sessions show --events: unknown flag {arg!r}", file=sys.stderr)
+            return 2
+
+    project_root = os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+    events_path = os.path.join(project_root, ".rddf", "state", "events.jsonl")
+    return handle_show_events_cmd(
+        events_path=events_path,
+        owner=owner,
+        session_id=session_id,
+        kind=kind,
+        since=since,
+        until=until,
+        format=fmt,
+    )
 
 
 def _show_session(session_id: str) -> int:
