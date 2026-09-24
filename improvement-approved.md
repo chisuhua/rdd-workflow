@@ -12,6 +12,23 @@
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
 
+> **批次说明 (2026-09-24 rdd-planner)**: 本批 3 项 Wave 3 提案 (本次批准) 为 `complete-guide-orchestrator-flow` (Wave 2, 已 ship 2026-09-24) 之后的剩余 gap:
+> 1. **`wave3-opencode-session-injection`** (P1) — Step A.6 多窗口 owner 区分依赖 OpenCode 平台层 `$OPENCODE_SESSION_ID` 真值注入 (依赖 OpenCode 外部项目, R1 高风险; 方案 B 作为 fallback)
+> 2. **`wave3-phase-heartbeat-progressing`** (P2) — Step A.5 `phase_heartbeat` 接入生产路径 + schema context 携带 `tasks_total`/`tasks_completed`, 让 synthesizer 渲染真任务进度 (解决 AC-G3 "0/1" 语义贫弱)
+> 3. **`wave3-rddf-session-show-events`** (P2) — Step A.6 `rddf session show --events` 历史回放 CLI (按 owner/session/kind/time-range 过滤 events.jsonl)
+>
+> **依赖说明**:
+> - P1 (opencode-session-injection) **依赖 OpenCode 平台层 API 改动** — 跟踪 OpenCode 排期, 短期不可 ship 时实施方案 B (rdd-workflow-side fallback)
+> - P2 (phase-heartbeat) 独立可 ship — schema 扩展在 `context` 子键加 optional 字段, 不改 ADR-0055 7 类 event_type 白名单 (MN-HB1)
+> - P2 (rddf-session-show-events) 独立可 ship — 与 P2 heartbeat 软协同 (hard dep on events.jsonl 数据层, 已 ship)
+>
+> **实施建议**:
+> - P2 heartbeat **先 ship** (依赖最少, 独立可测; 提升 AC-G3 体验)
+> - P2 show-events **并行 ship** (与 heartbeat 互补; 共享事件 schema)
+> - P1 opencode 跟踪 OpenCode 排期 — 不可 ship 时实施方案 B (避免长期 blocking)
+>
+> **重叠检查**: 无. 3 项触及不同文件 (`rddf_session_hooks.sh` heartbeat heredoc / `_lib/cli/session_show_cmd.py` 新增 / OpenCode 平台层). P2 心跳 schema 扩展不影响 P2 show-events 读取 (向后兼容 optional 字段).
+
 > **批次说明 (2026-09-10 design-done)**: 本批 4 项提案 (本次批准) 为 KNOWN_FAILURES baseline 衍生, 全部为 test-fix / docs-fix 小修, 低风险独立可并行. 计划按下列顺序实施 (合并到 single feature: feat-fix-audit-findings):
 > 1. **`fix-parametrize-planner-feedback-id-date`** (P2) — first: 重构 5 个 hardcode 日期测试为 tmp_path fixture, 解决时间炸弹
 > 2. **`fix-rebuild-adr-index-for-0049-0050`** (P2) — independent: 重生成 docs/adr/README.md 索引 (缺 ADR-0049/0050)
@@ -149,6 +166,10 @@
 
 
 
+
+| [wave3-opencode-session-injection](.rddf/improvements/wave3-opencode-session-injection.md) | P1 | 2026-09-24 | guide-design |
+| [wave3-phase-heartbeat-progressing](.rddf/improvements/wave3-phase-heartbeat-progressing.md) | P2 | 2026-09-24 | guide-design |
+| [wave3-rddf-session-show-events](.rddf/improvements/wave3-rddf-session-show-events.md) | P2 | 2026-09-24 | guide-design |
 
 ## 已实施
 | [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | P1 | 2026-09-10 | 已实施 |
