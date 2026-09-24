@@ -33,7 +33,7 @@
 - Modify: `skills/rddf-session/scripts/rddf_session_hooks.sh` (~line 55-85, `_rddf_resolve_owner` function)
 - Test: `tests/integration/test_rddf_session_owner.bats`
 
-- [ ] **Step 1: Write the failing bats test**
+- [x] **Step 1: Write the failing bats test**
 
 Add to `tests/integration/test_rddf_session_owner.bats`:
 
@@ -64,12 +64,12 @@ Add to `tests/integration/test_rddf_session_owner.bats`:
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `bats tests/integration/test_rddf_session_owner.bats -f "RDDF_OPENCODE_SESSION_AWARE" -t`
 Expected: FAIL — `_rddf_resolve_owner` doesn't yet handle `RDDF_OPENCODE_SESSION_AWARE`
 
-- [ ] **Step 3: Implement RDDF_OPENCODE_SESSION_AWARE probe**
+- [x] **Step 3: Implement RDDF_OPENCODE_SESSION_AWARE probe**
 
 In `skills/rddf-session/scripts/rddf_session_hooks.sh`, locate `_rddf_resolve_owner()`. Add a new probe at the top of the function (before the existing fallback chain):
 
@@ -94,12 +94,12 @@ Also adjust AC-P1-3-4: when `RDDF_OPENCODE_SESSION_AWARE=yes`, the effective fal
 
 This is ≤3 layers per the acceptance criterion.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `bats tests/integration/test_rddf_session_owner.bats -f "RDDF_OPENCODE_SESSION_AWARE" -t`
 Expected: PASS (2 tests)
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 ---
 
@@ -109,7 +109,7 @@ Expected: PASS (2 tests)
 - Modify: `_lib/rddf_session_pkg/_commands.py` (~lines 50-90, per-owner logic)
 - Test: `tests/integration/test_rddf_session_owner.bats`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `tests/integration/test_rddf_session_owner.bats`:
 
@@ -128,12 +128,12 @@ print(result)
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `bats tests/integration/test_rddf_session_owner.bats -f "simplified" -t`
 Expected: FAIL — `_commands.py` still uses the old 5-layer chain
 
-- [ ] **Step 3: Implement simplified resolve_owner in _commands.py**
+- [x] **Step 3: Implement simplified resolve_owner in _commands.py**
 
 In `_lib/rddf_session_pkg/_commands.py`, find the per-owner check (around lines 67-78). Refactor to:
 
@@ -155,12 +155,12 @@ def _resolve_owner_command(session: dict) -> str:
     return owner_final
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `bats tests/integration/test_rddf_session_owner.bats -f "simplified" -t`
 Expected: PASS
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 ---
 
@@ -170,7 +170,7 @@ Expected: PASS
 - Modify: `tests/integration/test_multi_window_poll.bats` or create `test_real_two_owner_poll.bats`
 - Ensures 2 concurrent registrations produce distinct owner_opencode_session_id
 
-- [ ] **Step 1: Write the failing e2e test**
+- [x] **Step 1: Write the failing e2e test**
 
 ```bash
 @test "REAL-2P-1: Two concurrent registrations produce distinct owners when OPENCODE_SESSION_ID is set" {
@@ -201,22 +201,22 @@ print(ctx.get('owner_opencode_session_id', 'MISSING'))
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `bats tests/integration/test_real_two_owner_poll.bats -t` (or the existing test file)
 Expected: FAIL — old fallback chain produces same owner for both
 
-- [ ] **Step 3: Run test to verify it passes (with OPENCODE_SESSION_ID set)**
+- [x] **Step 3: Run test to verify it passes (with OPENCODE_SESSION_ID set)**
 
 Run: `OPENCODE_SESSION_ID=ses_window_a_test bats tests/integration/test_real_two_owner_poll.bats -t`
 Expected: PASS — with env var set, two registrations produce different owners
 
-- [ ] **Step 4: Run existing owner-related tests to confirm no regression**
+- [x] **Step 4: Run existing owner-related tests to confirm no regression**
 
 Run: `bats tests/integration/test_rddf_session_owner.bats -t`
 Expected: PASS (all owner tests)
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 ---
 
