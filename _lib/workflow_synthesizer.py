@@ -63,7 +63,7 @@ from __future__ import annotations
 import os
 import subprocess
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from skills._lib import state_reader
 
@@ -144,6 +144,31 @@ class WorkingTreeIssue:
 
 
 @dataclass(frozen=True)
+class ChildProgress:
+    """Aggregated progress for one stage_X child session.
+
+    Added in v4.2 (complete-guide-orchestrator-flow W2.2) for guide menu to
+    show "rdd-builder 完成 3/5 tasks" alongside sessions.json state. Reads
+    events.jsonl (zero-IO guard: only when active children exist).
+
+    Fields:
+        kind: e.g. ``"stage_builder"`` (the stage_X kind for this child)
+        session_id: ``rds_xxx`` (the rddf-session id)
+        started_count: number of ``phase_started`` events seen for this session
+        completed_count: number of ``phase_completed`` events seen for this session
+        last_event_at: ISO 8601 timestamp of the latest event (or empty string)
+        detail: human-readable summary, e.g. ``"stage_builder 完成 2/5"``.
+            Empty string when no events yet.
+    """
+    kind: str
+    session_id: str
+    started_count: int
+    completed_count: int
+    last_event_at: str
+    detail: str
+
+
+@dataclass(frozen=True)
 class WorkflowRecommendation:
     """Structured recommendation output from ``synthesize()``.
 
@@ -169,6 +194,10 @@ class WorkflowRecommendation:
             Empty tuple when state is too ambiguous to generate options.
         wt_issues: working tree cleanliness issues detected.
             Empty tuple when tree is clean or git unavailable.
+        child_progress: aggregated per-kind progress from events.jsonl
+            (added in v4.2). Empty tuple when no active stage_X children
+            or events.jsonl missing. Zero-IO guard: events.jsonl is only
+            read when at least one active child exists.
     """
     suggested_action: str
     reason: str
@@ -179,6 +208,7 @@ class WorkflowRecommendation:
     orphaned_sessions: Tuple[str, ...]
     all_options: Tuple[MenuOption, ...]
     wt_issues: Tuple[WorkingTreeIssue, ...]
+    child_progress: Tuple[ChildProgress, ...] = ()
 
 
 # ---------------------------------------------------------------------------
@@ -213,10 +243,17 @@ def synthesize(project_root: str) -> WorkflowRecommendation:
         unblocked = _unblocked_changes(iteration)
         active = _active_session(sessions)
         orphaned = _orphaned_sessions(sessions)
+        # W2.2 (complete-guide-orchestrator-flow): aggregate child progress
+        # from events.jsonl so the menu shows "stage_builder 完成 2/5" etc.
+        # Zero-IO guard: only read events.jsonl when there are active
+        # stage_X children in sessions.json.
+        active_children = _active_stage_x_children(sessions)
+        child_progress = _read_events_for_children(project_root, active_children)
 
         suggested, reason, confidence = _decision_tree(
             project_root, arch_handoff, design_handoff, plan_handoff, iteration
         )
+
         wt_issues = _detect_working_tree_issues(project_root)
         options = _build_all_options(
             suggested, arch_handoff, design_handoff, plan_handoff, iteration, sessions, wt_issues
@@ -231,6 +268,7 @@ def synthesize(project_root: str) -> WorkflowRecommendation:
             orphaned_sessions=orphaned,
             all_options=options,
             wt_issues=wt_issues,
+            child_progress=child_progress,
         )
     except Exception:
         return _fallback_recommendation()
@@ -371,6 +409,130 @@ def _orphaned_sessions(sessions: Optional[list]) -> Tuple[str, ...]:
     ]
     orphaned.sort(key=lambda s: str(s.get("started_at", "")), reverse=True)
     return tuple(s["session_id"] for s in orphaned)
+
+
+# ---------------------------------------------------------------------------
+# Child progress aggregation (W2.2: events.jsonl consumption)
+# ---------------------------------------------------------------------------
+
+
+def _active_stage_x_children(sessions: Optional[list]) -> List[Dict[str, str]]:
+    """Return active stage_X (stage_arch/design/plan/ship/guide/builder/verify/quick) child sessions.
+
+    Returns a list of ``{"kind": ..., "session_id": ...}`` dicts for sessions
+    with ``state="active"`` whose kind starts with ``stage_``. Empty list when
+    no sessions or no active stage_X children.
+
+    This is the zero-IO guard for ``_read_events_for_children()``: only when
+    this list is non-empty do we read events.jsonl (avoiding useless IO when
+    no children are running).
+    """
+    if not sessions:
+        return []
+    children: list = []
+    for s in sessions:
+        if not isinstance(s, dict):
+            continue
+        if s.get("state") != "active":
+            continue
+        kind = str(s.get("kind", ""))
+        sid = s.get("session_id")
+        if not kind.startswith("stage_") or not sid:
+            continue
+        children.append({"kind": kind, "session_id": str(sid)})
+    return children
+
+
+def _read_events_for_children(
+    project_root: str, active_children: List[Dict[str, str]]
+) -> Tuple["ChildProgress", ...]:
+    """Aggregate phase events from events.jsonl for active stage_X children.
+
+    Args:
+        project_root: absolute project root (where .rddf/state/ lives)
+        active_children: output of ``_active_stage_x_children``; when empty,
+            returns empty tuple (zero-IO guard)
+
+    Returns:
+        Tuple of ``ChildProgress``, one per active child session, sorted by
+        ``kind`` then ``session_id`` for determinism. Each entry aggregates
+        ``phase_started`` and ``phase_completed`` counts and the latest event
+        timestamp. When events.jsonl is missing, returns zero-progress entries
+        for each active child (user-facing: "X 尚未产生 events.jsonl").
+
+    Schema-tolerance (MN1: don't change ADR-0055 schema): uses ``.get()`` for
+    every event field. Malformed JSON lines are skipped silently (events_log
+    reader is also tolerant).
+    """
+    if not active_children:
+        return ()
+    events_path = os.path.join(project_root, ".rddf", "state", "events.jsonl")
+    events: List[Dict[str, object]] = []
+    if os.path.exists(events_path):
+        try:
+            from skills.rddf_session.scripts.events_log import EventsLog
+            events = EventsLog(events_path).read_since(offset=0)
+        except Exception:
+            # Defensive: never raise from synthesize (per module docstring)
+            events = []
+
+    # Aggregate per (session_id, kind) so each child gets one ChildProgress
+    agg: Dict[Tuple[str, str], Dict[str, object]] = {}
+    for ev in events:
+        if not isinstance(ev, dict):
+            continue
+        event_type = ev.get("event_type")
+        if event_type not in ("phase_started", "phase_completed"):
+            continue
+        ctx_raw = ev.get("context")
+        ctx: Dict[str, object] = ctx_raw if isinstance(ctx_raw, dict) else {}
+        sid = ctx.get("session_id")
+        kind = ctx.get("kind")
+        ts = str(ev.get("ts", ""))
+        if not sid or not kind:
+            continue
+        key = (str(sid), str(kind))
+        if key not in agg:
+            agg[key] = {
+                "kind": str(kind),
+                "session_id": str(sid),
+                "started_count": 0,
+                "completed_count": 0,
+                "last_event_at": "",
+            }
+        bucket = agg[key]
+        if event_type == "phase_started":
+            bucket["started_count"] = int(bucket["started_count"]) + 1  # type: ignore[arg-type]
+        elif event_type == "phase_completed":
+            bucket["completed_count"] = int(bucket["completed_count"]) + 1  # type: ignore[arg-type]
+        if ts > str(bucket["last_event_at"]):  # type: ignore[operator]
+            bucket["last_event_at"] = ts
+
+    # Build ChildProgress per active child (zero-progress when no events)
+    progress_list: List[ChildProgress] = []
+    for child in active_children:
+        kind = child["kind"]
+        sid = child["session_id"]
+        bucket = agg.get((sid, kind))
+        if bucket is None:
+            progress_list.append(ChildProgress(
+                kind=kind, session_id=sid,
+                started_count=0, completed_count=0,
+                last_event_at="",
+                detail=f"{kind} 尚未产生 events.jsonl",
+            ))
+            continue
+        started = int(bucket["started_count"])  # type: ignore[arg-type]
+        completed = int(bucket["completed_count"])  # type: ignore[arg-type]
+        detail = f"{kind} 完成 {completed}/{started}"
+        progress_list.append(ChildProgress(
+            kind=kind, session_id=sid,
+            started_count=started, completed_count=completed,
+            last_event_at=str(bucket["last_event_at"]),
+            detail=detail,
+        ))
+    progress_list.sort(key=lambda cp: (cp.kind, cp.session_id))
+    return tuple(progress_list)
 
 
 # ---------------------------------------------------------------------------

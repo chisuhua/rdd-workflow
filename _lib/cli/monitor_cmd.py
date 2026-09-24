@@ -210,6 +210,26 @@ def _render_monitor(project_root: str) -> None:
               f"{'s' if n_active != 1 else ''})")
     print()
 
+    # Panel 5 (W2.3: complete-guide-orchestrator-flow): child progress.
+    # Reads events.jsonl via workflow_synthesizer (zero-IO guard: only when
+    # active stage_X children exist). Replaces the need for a separate
+    # guide_entry --watch primitive.
+    print("── Child Progress (W2.3) ──")
+    try:
+        from skills._lib.workflow_synthesizer import synthesize
+        rec = synthesize(project_root)
+        if not rec.child_progress:
+            print("(no active stage_X children)")
+        else:
+            for cp in rec.child_progress:
+                # cp.detail already formatted as "X 完成 N/M" or "X 尚未产生 events.jsonl"
+                print(f"{cp.kind:<14} {cp.detail}")
+                if cp.last_event_at:
+                    print(f"  last event: {cp.last_event_at[:19]}")
+    except Exception as e:
+        print(f"(child progress unavailable: {type(e).__name__}: {e})")
+    print()
+
 
 def _print_help() -> None:
     print("usage: rddf monitor [--watch=N]")

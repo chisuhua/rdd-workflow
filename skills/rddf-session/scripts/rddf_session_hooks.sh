@@ -263,7 +263,7 @@ rddf_session_hook_entry() {
   python3 <<'PYEOF'
 import os, sys
 sys.path.insert(0, os.environ["PROJECT_ROOT"])
-from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator, ConflictError
+from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator, ConflictError, RddfSessionError
 
 project_root = os.environ["PROJECT_ROOT"]
 kind = os.environ["KIND"]
@@ -281,7 +281,7 @@ coord.check_heartbeat_timeouts()
 
 parent_id = None
 # v3 (feat-guide-orchestrator-session-event-bus): add stage_arch -> stage_guide
-parent_kind_map = {"stage_arch": "stage_guide", "stage_design": "stage_arch", "stage_plan": "stage_design", "stage_ship": "stage_plan"}
+parent_kind_map = {"stage_arch": "stage_guide", "stage_design": "stage_arch", "stage_plan": "stage_design", "stage_ship": "stage_plan", "stage_builder": "stage_design", "stage_verify": "stage_builder", "stage_quick": "stage_guide"}
 parent_kind = parent_kind_map.get(kind)
 if parent_kind:
     # v3: owner-scoped + state-filtered parent lookup (Metis B3 fix)
@@ -325,6 +325,14 @@ except ConflictError as e:
     print('  → use skill_use(\'rddf-session\',\'list\') to inspect')
     print('  → then skill_use(\'rddf-session\',\'resume\'|\'abandon\') to resolve')
     sys.exit(2)
+except RddfSessionError as e:
+    # v4 (complete-guide-orchestrator-flow Step A.2): fail-loud for validation
+    # errors (invalid kind, schema violation, etc.) instead of letting the
+    # traceback propagate. ConflictError (above) keeps its resume/abandon
+    # semantics; this branch is for non-conflict session errors that should
+    # be visible to the SKILL.md caller.
+    print(f"ERROR: {type(e).__name__}: {e}", file=sys.stderr)
+    sys.exit(3)
 PYEOF
 
   local _entry_exit=$?

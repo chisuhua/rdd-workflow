@@ -83,10 +83,20 @@ class RddfSessionCommands:
             # RDDF_ALLOW_CROSS_STAGE_PARALLEL=yes restores legacy behavior.
             # v3 (feat-guide-orchestrator-session-event-bus): bidirectional
             # stage_guide exemption per Oracle B1 — guide + builder coexist.
+            # v4 (complete-guide-orchestrator-flow Step A.1 / D6): also exempt
+            # stage_builder/verify/quick among themselves (multi-window: builder
+            # in B + verifier in C can coexist). arch/design/plan/ship still
+            # mutually exclusive AND still blocks builder/verify/quick (they
+            # own project-level state).
+            _V4_NEW_KINDS = ("stage_builder", "stage_verify", "stage_quick")
             if os.environ.get("RDDF_ALLOW_CROSS_STAGE_PARALLEL", "").lower() not in ("yes", "true", "1"):
                 for existing in data["sessions"]:
                     if existing["state"] == "active" and existing["kind"] != kind:
+                        # v3 exemption: stage_guide is bidirectional with any kind
                         if existing["kind"] == "stage_guide" or kind == "stage_guide":
+                            continue
+                        # v4 exemption: stage_builder/verify/quick can mix with each other
+                        if existing["kind"] in _V4_NEW_KINDS and kind in _V4_NEW_KINDS:
                             continue
                         from ._types import ConflictError
                         raise ConflictError(

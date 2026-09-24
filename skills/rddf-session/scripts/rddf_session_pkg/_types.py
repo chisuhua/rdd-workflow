@@ -25,14 +25,23 @@ LOCK_TIMEOUT_SECONDS = 5.0
 # - stage_arch / stage_design / stage_plan / stage_ship (internal canonical)
 # - rdd-arch / guide-design / guide-plan / guide-ship (user-friendly, matches skill names)
 # v3 (feat-guide-orchestrator-session-event-bus): add stage_guide + guide-orchestrator (Oracle B2 belt-and-suspenders)
+# v4 (complete-guide-orchestrator-flow Step A.1 / D6): add stage_builder/verify/quick
+#   + rdd-builder/verifier/quick aliases to fix root cause of empty events.jsonl
+#   (SKILL.md passes these names but kind-enum rejected silently).
 _VALID_KINDS = ("stage_arch", "stage_design", "stage_plan", "stage_ship", "stage_guide",
-               "rdd-arch", "guide-design", "guide-plan", "guide-ship", "guide-orchestrator")
+               "stage_builder", "stage_verify", "stage_quick",
+               "rdd-arch", "guide-design", "guide-plan", "guide-ship", "guide-orchestrator",
+               "rdd-builder", "rdd-verifier", "rdd-quick")
 _KIND_ALIAS = {
     "rdd-arch": "stage_arch",
     "guide-design": "stage_design",
     "guide-plan": "stage_plan",
     "guide-ship": "stage_ship",
     "guide-orchestrator": "stage_guide",
+    # v4 (complete-guide-orchestrator-flow Step A.1 / D6): new aliases
+    "rdd-builder": "stage_builder",
+    "rdd-verifier": "stage_verify",
+    "rdd-quick": "stage_quick",
 }
 
 # v3: Per-kind heartbeat timeout. Defaults to HEARTBEAT_TIMEOUT_BY_KIND per kind;
@@ -43,6 +52,12 @@ HEARTBEAT_TIMEOUT_BY_KIND = {
     "stage_plan": 30 * 60,
     "stage_ship": 30 * 60,
     "stage_guide": 8 * 60 * 60,      # 8 hours (long-lived main orchestrator)
+    # v4 (complete-guide-orchestrator-flow Step A.1 / D6):
+    # stage_builder/stage_verify = 2h (long-running execute loops)
+    # stage_quick = 30min (transient, single-pass)
+    "stage_builder": 2 * 60 * 60,
+    "stage_verify": 2 * 60 * 60,
+    "stage_quick": 30 * 60,
 }
 
 

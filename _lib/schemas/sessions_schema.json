@@ -10,7 +10,7 @@
     "version": {
       "type": "integer",
       "minimum": 1,
-      "description": "Schema version. v1 original; v2 adds optional sub_phase and workflow_group fields; v3 adds stage_guide kind, guide-orchestrator intent, and goal.last_seen_offset (per feat-guide-orchestrator-session-event-bus)."
+      "description": "Schema version. v1 original; v2 adds optional sub_phase and workflow_group fields; v3 adds stage_guide kind, guide-orchestrator intent, and goal.last_seen_offset (per feat-guide-orchestrator-session-event-bus); v4 adds stage_builder/verify/quick kinds and rdd-arch/planner/builder/verifier/quick intents (per complete-guide-orchestrator-flow Step A.1 / D6)."
     },
     "updated_at": {
       "type": "string",
@@ -43,8 +43,8 @@
         },
         "kind": {
           "type": "string",
-          "enum": ["stage_arch", "stage_design", "stage_plan", "stage_ship", "stage_guide"],
-          "description": "Stage driver: arch / design / plan / ship / guide-orchestrator (per v2.1 four-phase; v3 adds stage_guide per feat-guide-orchestrator-session-event-bus)."
+          "enum": ["stage_arch", "stage_design", "stage_plan", "stage_ship", "stage_guide", "stage_builder", "stage_verify", "stage_quick"],
+          "description": "Stage driver: arch / design / plan / ship / guide-orchestrator / builder / verifier / quick (per v2.1 four-phase; v3 adds stage_guide per feat-guide-orchestrator-session-event-bus; v4 adds stage_builder/verify/quick per complete-guide-orchestrator-flow Step A.1 / D6)."
         },
         "owner_opencode_session_id": {
           "type": ["string", "null"],
@@ -61,7 +61,7 @@
           "properties": {
             "intent": {
               "type": "string",
-              "enum": ["guide-arch", "guide-design", "guide-plan", "guide-ship", "guide-orchestrator"]
+              "enum": ["guide-arch", "guide-design", "guide-plan", "guide-ship", "guide-orchestrator", "rdd-arch", "rdd-planner", "rdd-builder", "rdd-verifier", "rdd-quick"]
             },
             "subject": { "type": "string" },
             "expected_outcome": { "type": "string" },
