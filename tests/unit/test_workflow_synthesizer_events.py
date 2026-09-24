@@ -367,3 +367,121 @@ class TestWriterReaderRoundtrip:
         assert cp.started_count == 1
         assert cp.completed_count == 1
         assert cp.detail == "stage_builder 完成 1/1"
+
+
+# --- Heartbeat task-level progress (AC-P2-2-2) ---
+
+class TestHeartbeatTaskProgress:
+    """AC-P2-2-2: workflow_synthesizer renders heartbeat task progress
+    (N/M real task counts) instead of phase-ratio 0/1."""
+
+    def test_heartbeat_preferred_over_phase_ratio(self, tmp_project):
+        """phase_started + phase_completed (1/1 ratio) + phase_heartbeat
+        (3/5 tasks) → detail shows 3/5 (heartbeat wins)."""
+        sessions_file = tmp_project / ".rddf" / "state" / "sessions.json"
+        sessions_file.write_text(json.dumps({
+            "version": 1,
+            "sessions": [
+                {"session_id": "rds_hb1", "kind": "stage_builder",
+                 "owner_opencode_session_id": "hb_owner", "state": "active",
+                 "goal": {"intent": "rdd-builder", "subject": "hb1",
+                          "expected_outcome": "ok"},
+                 "started_at": "2026-09-24T01:00:00+00:00",
+                 "last_heartbeat": "2026-09-24T01:10:00+00:00"},
+            ],
+        }))
+        events_file = tmp_project / ".rddf" / "state" / "events.jsonl"
+        _append_phase_event(events_file, "rds_hb1", "stage_builder",
+                            "phase_started", "2026-09-24T01:00:00+00:00")
+        _append_phase_event(events_file, "rds_hb1", "stage_builder",
+                            "phase_completed", "2026-09-24T01:01:00+00:00")
+        # Heartbeat with real task counts
+        hb_row = {
+            "event_id": "evt_hb_1",
+            "ts": "2026-09-24T01:05:00+00:00",
+            "event_type": "phase_heartbeat",
+            "severity": "info",
+            "message": "heartbeat",
+            "context": {"session_id": "rds_hb1", "kind": "stage_builder",
+                        "tasks_total": 5, "tasks_completed": 3,
+                        "owner_opencode_session_id": "hb_owner"},
+        }
+        with events_file.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(hb_row, ensure_ascii=False) + "\n")
+
+        rec = synthesize(str(tmp_project))
+        assert len(rec.child_progress) == 1
+        cp = rec.child_progress[0]
+        # AC-P2-2-2: heartbeat renders 3/5, not phase ratio 1/1
+        assert cp.detail == "stage_builder 完成 3/5", f"got: {cp.detail}"
+
+    def test_latest_heartbeat_wins(self, tmp_project):
+        """Two heartbeats (2/5 then 4/5) → latest (4/5) renders."""
+        sessions_file = tmp_project / ".rddf" / "state" / "sessions.json"
+        sessions_file.write_text(json.dumps({
+            "version": 1,
+            "sessions": [
+                {"session_id": "rds_hb2", "kind": "stage_builder",
+                 "owner_opencode_session_id": "hb_owner2", "state": "active",
+                 "goal": {"intent": "rdd-builder", "subject": "hb2",
+                          "expected_outcome": "ok"},
+                 "started_at": "2026-09-24T01:00:00+00:00",
+                 "last_heartbeat": "2026-09-24T01:10:00+00:00"},
+            ],
+        }))
+        events_file = tmp_project / ".rddf" / "state" / "events.jsonl"
+        for ts, done in [("2026-09-24T01:02:00+00:00", 2),
+                         ("2026-09-24T01:08:00+00:00", 4)]:
+            hb_row = {
+                "event_id": f"evt_hb_{done}",
+                "ts": ts,
+                "event_type": "phase_heartbeat",
+                "severity": "info",
+                "message": "heartbeat",
+                "context": {"session_id": "rds_hb2", "kind": "stage_builder",
+                            "tasks_total": 5, "tasks_completed": done,
+                            "owner_opencode_session_id": "hb_owner2"},
+            }
+            with events_file.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(hb_row, ensure_ascii=False) + "\n")
+
+        rec = synthesize(str(tmp_project))
+        cp = rec.child_progress[0]
+        assert cp.detail == "stage_builder 完成 4/5", f"got: {cp.detail}"
+
+    def test_heartbeat_without_tasks_falls_back_to_ratio(self, tmp_project):
+        """heartbeat without tasks_total/tasks_completed → phase ratio (MN-HB4)."""
+        sessions_file = tmp_project / ".rddf" / "state" / "sessions.json"
+        sessions_file.write_text(json.dumps({
+            "version": 1,
+            "sessions": [
+                {"session_id": "rds_hb3", "kind": "stage_builder",
+                 "owner_opencode_session_id": "hb_owner3", "state": "active",
+                 "goal": {"intent": "rdd-builder", "subject": "hb3",
+                          "expected_outcome": "ok"},
+                 "started_at": "2026-09-24T01:00:00+00:00",
+                 "last_heartbeat": "2026-09-24T01:10:00+00:00"},
+            ],
+        }))
+        events_file = tmp_project / ".rddf" / "state" / "events.jsonl"
+        _append_phase_event(events_file, "rds_hb3", "stage_builder",
+                            "phase_started", "2026-09-24T01:00:00+00:00")
+        _append_phase_event(events_file, "rds_hb3", "stage_builder",
+                            "phase_completed", "2026-09-24T01:01:00+00:00")
+        # Heartbeat WITHOUT tasks fields
+        hb_row = {
+            "event_id": "evt_hb_no_tasks",
+            "ts": "2026-09-24T01:05:00+00:00",
+            "event_type": "phase_heartbeat",
+            "severity": "info",
+            "message": "heartbeat",
+            "context": {"session_id": "rds_hb3", "kind": "stage_builder",
+                        "owner_opencode_session_id": "hb_owner3"},
+        }
+        with events_file.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(hb_row, ensure_ascii=False) + "\n")
+
+        rec = synthesize(str(tmp_project))
+        cp = rec.child_progress[0]
+        # Falls back to phase ratio 1/1 (original Wave 2 behavior)
+        assert cp.detail == "stage_builder 完成 1/1", f"got: {cp.detail}"
