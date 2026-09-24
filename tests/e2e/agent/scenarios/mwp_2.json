@@ -1,0 +1,56 @@
+{
+  "scenario_id": "MWP-2",
+  "skill": "guide",
+  "phase": "P3",
+  "name": "H7 singleton: two owners cannot both create stage_guide session",
+  "description": "Real two-owner ConflictError verification: when pane-A and pane-B both attempt create_session(kind='stage_guide'), the second caller gets ConflictError. Validates the H7 global singleton invariant from feat-guide-orchestrator-session-event-bus.",
+  "input": {
+    "command": "rddf_session_hook_guide_entry",
+    "args": [],
+    "env": {
+      "PROJECT_ROOT": "/tmp/real-poll-test",
+      "OPENCODE_SESSION_ID": "pane-A-host01-$$",
+      "RDDF_GUIDE_SESSION_ENABLED": "yes"
+    },
+    "side_effects": {
+      "pre_existing_session": {
+        "session_id": "rds_d9452d378b35",
+        "kind": "stage_guide",
+        "owner": "pane-A-host01-1269034",
+        "state": "active"
+      }
+    }
+  },
+  "golden_output": {
+    "files": [
+      {"path": "/tmp/real-poll-test/.rddf/state/sessions.json", "must_exist": true}
+    ],
+    "stdout_contains": [
+      "rddf-session guide-entry CONFLICT:",
+      "Active stage_guide session rds_d9452d378b35 owned by pane-A-host01-1269034",
+      "caller pane-A-host01-",
+      "must resolve via 4-option soft prompt"
+    ],
+    "state_verification": {
+      "sessions_json": {
+        "stage_guide_active_count": 1,
+        "first_session_owner": "pane-A-host01-1269034"
+      },
+      "no_session_created_for_caller": true
+    }
+  },
+  "mock_output": {
+    "files": {
+      "/tmp/real-poll-test/.rddf/state/sessions.json": "{\"version\": 1, \"schema\": \"rddf-session-v2\", \"sessions\": [{\"session_id\": \"rds_d9452d378b35\", \"kind\": \"stage_guide\", \"owner_opencode_session_id\": \"pane-A-host01-1269034-MOCK\", \"state\": \"active\", \"goal\": {\"intent\": \"guide-orchestrator\", \"subject\": \"guide main entry\", \"expected_outcome\": \"long-running observer\", \"last_seen_offset\": 0}}]}"
+    },
+    "stdout": "rddf-session guide-entry CONFLICT: Active stage_guide session rds_d9452d378b35 owned by pane-A-host01-1269034-MOCK; caller pane-A-host01-CALLER-MOCK must resolve via 4-option soft prompt\n"
+  },
+  "isolation": {
+    "locked_paths": ["/tmp/real-poll-test/.rddf"],
+    "side_effect_cleanup": ["rm -f /tmp/real-poll-test/.rddf/state/*.pid"]
+  },
+  "evidence": {
+    "bats_test": "tests/integration/test_real_two_owner_poll.bats::REAL-2P-2",
+    "related_changes": ["feat-guide-orchestrator-session-event-bus"]
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "scenario_id": "MWP-1",
+  "skill": "guide",
+  "phase": "P3",
+  "name": "pane-A (guide_entry polling loop) reads pane-B (writer) events in real time",
+  "description": "Real two-owner cross-process interaction: pane-A runs guide_entry repeatedly to poll events.jsonl while pane-B writes events with a different OPENCODE_SESSION_ID. Validates that last_seen_offset monotonically advances and stage_guide session state transitions to completed on SIGTERM.",
+  "input": {
+    "command": "guide_entry",
+    "args": ["--no-binding"],
+    "env": {
+      "PROJECT_ROOT": "/tmp/real-poll-test",
+      "OPENCODE_SESSION_ID": "pane-A-host01-$$",
+      "RDDF_GUIDE_SESSION_ENABLED": "yes"
+    },
+    "loop": {
+      "iterations": 12,
+      "interval_seconds": 0.7,
+      "termination_signal": "SIGTERM"
+    },
+    "side_effects": {
+      "concurrent_process": {
+        "pid_file": "/tmp/real-poll-test/.rddf/state/pane_b.pid",
+        "owner": "pane-B-host01-$$",
+        "writes": [
+          "phase_started:real-B-rdd-arch-event-{0..9}",
+          "phase_completed:real-B-rdd-arch-event-{1,3,5,7,9}"
+        ],
+        "interval_seconds": 0.5,
+        "total_events": 10
+      }
+    }
+  },
+  "golden_output": {
+    "files": [
+      {"path": "/tmp/real-poll-test/.rddf/state/sessions.json", "must_exist": true},
+      {"path": "/tmp/real-poll-test/.rddf/state/events.jsonl", "must_exist": true}
+    ],
+    "stdout_contains": [
+      "rddf-session guide-entry: rds_",
+      "stage_guide, owner=pane-A-host01-",
+      "kind=stage_guide, parent=None",
+      "rddf-session guide-close: rds_",
+      "guide-exit"
+    ],
+    "state_verification": {
+      "sessions_json": {
+        "stage_guide_session_count_for_pane_A": 1,
+        "stage_guide_state_for_pane_A": "completed",
+        "last_seen_offset_for_pane_A": 10
+      },
+      "events_jsonl": {
+        "total_events": 10,
+        "unique_owners": ["pane-B-host01-"],
+        "all_events_have_owner_pane_B": true
+      },
+      "isolation": {
+        "pane_A_session_owner_unique_across_runs": true,
+        "no_cross_owner_session_conflict": true
+      }
+    }
+  },
+  "mock_output": {
+    "files": {
+      ".rddf/state/sessions.json": "{\"version\": 1, \"schema\": \"rddf-session-v2\", \"sessions\": [{\"session_id\": \"rds_bc7cd3ab5850\", \"kind\": \"stage_guide\", \"owner_opencode_session_id\": \"pane-A-host01-MOCK\", \"state\": \"completed\", \"goal\": {\"intent\": \"guide-orchestrator\", \"subject\": \"guide main entry\", \"expected_outcome\": \"long-running observer\", \"last_seen_offset\": 10}, \"created_at\": \"2026-09-23T10:00:00+00:00\", \"updated_at\": \"2026-09-23T10:01:00+00:00\", \"end_reason\": \"guide-exit\"}]}",
+      ".rddf/state/events.jsonl": "{\"event_type\": \"phase_started\", \"severity\": \"info\", \"message\": \"real-B-rdd-arch-event-0\", \"session_id\": \"rds_B_0\", \"kind\": \"stage_arch\", \"parent_session_id\": null, \"owner_opencode_session_id\": \"pane-B-host01-MOCK\"}\n{\"event_type\": \"phase_completed\", \"severity\": \"info\", \"message\": \"real-B-rdd-arch-event-1\", \"session_id\": \"rds_B_1\", \"kind\": \"stage_arch\", \"parent_session_id\": null, \"owner_opencode_session_id\": \"pane-B-host01-MOCK\"}\n"
+    },
+    "stdout": "rddf-session guide-entry: rds_bc7cd3ab5850 (stage_guide, owner=pane-A-host01-MOCK)\n📍 Current: rds_bc7cd3ab5850 (kind=stage_guide, parent=None, age=0min, changes=(none))\n📊 Child Sessions:\n   2026-09-23 [phase_started] real-B-rdd-arch-event-0\n   2026-09-23 [phase_completed] real-B-rdd-arch-event-1\n   2026-09-23 [phase_started] real-B-rdd-arch-event-2\nrddf-session guide-close: rds_bc7cd3ab5850 -> completed (guide-exit)\n"
+  },
+  "isolation": {
+    "locked_paths": ["/tmp/real-poll-test/.rddf"],
+    "side_effect_cleanup": ["rm -f /tmp/real-poll-test/.rddf/state/*.pid"]
+  },
+  "evidence": {
+    "bats_test": "tests/integration/test_real_two_owner_poll.bats::REAL-2P-1",
+    "manual_test": "/tmp/test_real_poll_v2.sh (validated last_seen_offset=10, state=completed)",
+    "related_adrs": ["ADR-0045 (self-contained LLM verification)"],
+    "related_changes": ["add-stage-guide-e2e-cross-process-coverage", "fix-guide-close-owner-resolution"]
+  }
+}
