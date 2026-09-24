@@ -33,8 +33,12 @@ every real ADR has status and date fields # pre-existing: newer ADRs omit status
 global_install: resolve_rdd_skill_dir falls back to ~/.agents/skills/<name> # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
  global_install: ~18 sub-skill symlinks exist and resolve to source # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 
-sub-phase: heartbeat records RDDF_SUB_PHASE # genuine source gap: rddf_session_hook_heartbeat + close/attach/detach tail `[ "$_exit" -ne 0 ] && return "$_exit"` leaks exit 1 on success path (bash semantics: last `[ 0 -ne 0 ]` returns 1); python DOES record sub_phase correctly — not test-side fixable
-sub-phase: heartbeat without env var leaves sub_phase empty # same hook tail-return bug as sub-phase: heartbeat records RDDF_SUB_PHASE; not test-side fixable
+# Note (2026-09-24): 2 sub-phase heartbeat bats failures previously registered
+# here were resolved (test fixes: skills/rddf-session/scripts/rddf_session_hooks.sh
+# 4 tail-return patterns `[ "$_exit" -ne 0 ] && return "$_exit"` → `if [ ... ]; then
+# return "$_exit"; fi`; ALSO heartbeat heredoc dropped `"sub_phase": null`
+# when env var unset to keep JSON clean; locked by tests/unit/test_hook_exit_codes.py
+# (6 tests)). Removed from baseline via refresh_known_failures.sh after re-running.
 
 # === 2026-09-21 pre-existing bats failures (registered by fix-skill-post-install-discoverability
 # full-regression gate; verified failing on master HEAD 0efd9d7 via git worktree baseline).

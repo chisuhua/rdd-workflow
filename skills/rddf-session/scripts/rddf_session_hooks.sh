@@ -409,7 +409,9 @@ except Exception as e:
 PYEOF
 
   local _exit=$?
-  [ "$_exit" -ne 0 ] && return "$_exit"
+  if [ "$_exit" -ne 0 ]; then
+    return "$_exit"
+  fi
 
   # Auto-archive best-effort (P1: add-rddf-session-auto-archive-on-entry)
   _rddf_auto_archive_if_needed "$sessions_file" 2>/dev/null || true
@@ -568,7 +570,15 @@ try:
                 break
         coord._store.atomic_write(data)
     else:
+        # sub_phase unset (or cleared) — RddfSession default puts None
+        # which JSON encodes as null; for cleaner JSON, drop the key.
         coord.refresh_heartbeat(sid)
+        data = coord._store.read_unlocked()
+        for s in data.get("sessions", []):
+            if s.get("session_id") == sid and "sub_phase" in s:
+                del s["sub_phase"]
+                coord._store.atomic_write(data)
+                break
     action = f"(after archive {change_name})" if change_name else ""
     sub_phase_note = f" sub_phase={sub_phase}" if sub_phase else ""
     print(f"rddf-session: {sid} heartbeat refreshed {action}{sub_phase_note}".strip())
@@ -577,7 +587,9 @@ except Exception as e:
 PYEOF
 
   local _exit=$?
-  [ "$_exit" -ne 0 ] && return "$_exit"
+  if [ "$_exit" -ne 0 ]; then
+    return "$_exit"
+  fi
 }
 
 # rddf_session_hook_attach <kind> <change_name>
@@ -629,7 +641,9 @@ except Exception as e:
 PYEOF
 
   local _exit=$?
-  [ "$_exit" -ne 0 ] && return "$_exit"
+  if [ "$_exit" -ne 0 ]; then
+    return "$_exit"
+  fi
 }
 
 # rddf_session_hook_detach <kind> <change_name>
@@ -680,7 +694,9 @@ except Exception as e:
     print(f"rddf-session detach skip: {e}")
 PYEOF
   local _exit=$?
-  [ "$_exit" -ne 0 ] && return "$_exit"
+  if [ "$_exit" -ne 0 ]; then
+    return "$_exit"
+  fi
 }
 
 # rddf_session_hook_poll_events — Read events.jsonl since last_seen_offset,
