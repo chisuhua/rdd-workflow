@@ -110,6 +110,8 @@ _KIND_ALIAS["guide-orchestrator"] = "stage_guide"   # intent → kind 映射
 
 ### 决策 2: 扩展现有文件事件总线（复用 `.rddf/state/event-log.jsonl`）
 
+> **v3 修订（2026-09-24）**：实际实施**新建** `events.jsonl`（而非扩展 `event-log.jsonl`），且消费端以 `goal.last_seen_offset` per-owner 游标为主而非 `seen_by` 标量。详见文末 v3 修订日志。历史段落保留作决策考古。
+
 **不新建** `events.jsonl`。现有 `_lib/core/event_log.py::EventLog` 已是文件持久化 append-only 日志：
 
 - 文件：`~/.rddf/state/event-log.jsonl`（`defaults.py:68` 常量）
@@ -436,4 +438,16 @@ EventLog('.rddf/state/event-log.jsonl').record(
 | 9 | In Scope 缺消费点迁移 | 显式加 `monitor_cmd.py:153` + `orchestrate_cmd.py` | 字段扩展需同步 |
 | 10 | 决策 5 缺轮询契约 | 补充"先查 sessions.json 再读 events" | 避免无谓 IO |
 
-> **下次审查**: v2 草案提交后 24h 内（无反对则采纳）；采纳后按 Step 1 → Step 4 顺序实施。
+## v3 修订日志（2026-09-24）
+
+> **触发**：complete-guide-orchestrator-flow Wave 2 实施 + archive（commit b3394f7, archive `2026-09-24-complete-guide-orchestrator-flow`）期间，Metis B4 审查与实际落地代码产生 3 项偏离 v2 决策的事实。
+
+| # | 原 v2 内容 | v3 实际落地 | 偏离原因 |
+|---|-----------|-----------|---------|
+| 1 | 扩展 `.rddf/state/event-log.jsonl`（决策 2） | **新建** `.rddf/state/events.jsonl`（`events_log.py:13-14` docstring 自述"ADR-0055 v3"；`monitor_cmd.py:154-165` 优先读 `events.jsonl` + legacy `event-log.jsonl` fallback） | `event-log.jsonl` 是 v1 的 `_lib/core/event_log.py` 路径（不在 Wave 1 ship `skills/rddf-session/scripts/events_log.py` 的 import map 中）；新文件 `events_log.py` 沿用 `events.jsonl` 命名以匹配 Wave 1 的 schema 期望 |
+| 2 | `seen_by` 标量在 events row（决策 5.3） | `goal.last_seen_offset` per-owner 游标在 `sessions.json`（`_lib/schemas/sessions_schema.json:68` `goal.last_seen_offset` 字段；`RddfSessionCoordinator.update_last_seen_offset` API in `_commands.py`；`workflow_synthesizer.py` 聚合 `events.jsonl` 子进度） | guide 不再只读 `events.jsonl`，synthesizer 同时聚合 `sessions.json` state；offset 是 session-per-owner 状态更适合持久化在 session 行 |
+| 3 | 消费端在 `monitor_cmd.py:153` 读 `event-log.jsonl` 尾部 5 行 | `monitor_cmd.py:154-165` 读 `events.jsonl` 优先 + `event-log.jsonl` fallback（双读）；`workflow_synthesizer._read_events_for_children` 全量读 `events.jsonl` 聚合 child_progress | Wave 1 实施路径与 v2 决策建议的"`event-log.jsonl` 复用"路径不一致；监控端以双读兼容旧消费点；synthesizer 端以新文件为主路径 |
+
+**v3 修订理由**：原 v2 修订基于"复用 `_lib/core/event_log.py` 避免双事件源"假设；Wave 1 实施时选择了不同的代码路径（`skills/rddf-session/scripts/events_log.py` 新模块 + `events.jsonl` 命名），保持架构清晰比跨文件耦合更重要。**未来修订方向**：若双事件源（`event-log.jsonl` + `events.jsonl`）长成技术债，单独立项合并；不在既有 Wave 3 候选范围内。
+
+> **下次审查**: v3 段已与 Wave 2 archive 同步提交；不修改 ADR-0055 状态（仍"已实施"），状态列无变更需要。
