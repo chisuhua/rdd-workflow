@@ -11,6 +11,16 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
+| [fix-cmd-help-handling](.rddf/improvements/fix-cmd-help-handling.md) | P1 | 2026-09-25 | rdd-planner |
+
+> **批次说明 (2026-09-25 rdd-planner)**: 本批 1 项 fix-cmd-help-handling 为 rdd-workflow-e2e PR #1 merge (commit 6628bb1) 后 CI regression audit (2026-09-25) 暴露的主仓 CLI 契约 bug:
+> 1. **`fix-cmd-help-handling`** (P1) — 36 个 `rddf <sub>` 中 2 个 `--help` 违反 argparse 标准契约 (`rddf contract-check --help` EXIT=2 因 handler 自定义 store_true 覆盖 argparse 自动 help; `rddf archive-sync --help` 把 `--help` 当 change name EXIT=1)。修复策略选项 B (推荐): 在 `_lib/cli/__init__.py::route()` 入口统一拦截 `--help`/`-h` + 打印 subcommand-specific usage + EXIT 0,与 argparse 默认行为一致,消除整个类 bug 的可能性
+>
+> **依赖说明**: 无；后续 follow-up 建议 `fix-33-handlers-project-root-anti-pattern` (33 handler 用 `RDDF_PROJECT_ROOT or os.getcwd()` 反模式,应统一用 `__main__.resolve_project_root()`)
+>
+> **实施建议**: 走 rdd-builder P0-P3 完整流程。Scope ≤ 2 文件 (`_lib/cli/__init__.py` + `tests/unit/test_route_help_handling.py`)，可能触发 rdd-quick 旁路 per ADR-0048 §Decision 3 (因 scope ≤ 2 + ≤ 3 tasks)
+>
+> **重叠检查**: 无. fix-cmd-help-handling 仅触及 `_lib/cli/__init__.py::route()` 入口 + 新 test file, 不影响具体 handler 业务逻辑 (34 个 subcommand 已正确)。不修改 33 文件的 `RDDF_PROJECT_ROOT or os.getcwd()` 反模式 (那是 follow-up improvement)
 
 > **批次说明 (2026-09-24 rdd-planner)**: 本批 3 项 Wave 3 提案 (本次批准) 为 `complete-guide-orchestrator-flow` (Wave 2, 已 ship 2026-09-24) 之后的剩余 gap:
 > 1. **`wave3-opencode-session-injection`** (P1) — Step A.6 多窗口 owner 区分依赖 OpenCode 平台层 `$OPENCODE_SESSION_ID` 真值注入 (依赖 OpenCode 外部项目, R1 高风险; 方案 B 作为 fallback)
