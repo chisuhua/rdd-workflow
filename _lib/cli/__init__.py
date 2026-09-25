@@ -125,12 +125,97 @@ def list_commands() -> list[str]:
     return sorted(_ROUTES.keys())
 
 
+# Per-subcommand descriptions surfaced via `rddf <sub> --help`.
+# Centralized so the dispatcher can print uniform help without invoking
+# the underlying handler (which may mis-handle --help/-h as a positional
+# argument — see fix-cmd-help-handling).
+_SUBCOMMAND_DESCRIPTION: Dict[str, str] = {
+    "archive": "Archive an executed OpenSpec change",
+    "archive-sync": "Reconcile drift between openspec/changes/<name>/ and openspec/changes/archive/",
+    "cleanup": "Cleanup worktrees and branches for archived changes",
+    "contract-check": "Validate Spoke local implementation vs Hub OpenAPI contract",
+    "dashboard": "Display workflow state dashboard",
+    "deps": "Dependency analysis table from deps-analysis.json",
+    "deps.cross-repo": "Cross-repo dependency analysis for Spoke federation",
+    "discover-ship-changes": "Unified change candidates for guide-ship",
+    "doctor": "Manual read-only diagnostic for workflow state files",
+    "env-bootstrap": "4-phase env orchestrator (detect→diagnose→suggest→guided-fix)",
+    "feature": "Feature fragment summary / graph / status / order",
+    "feedback": "Submit or list user feedback items",
+    "guide": "Project state scan + recommendation (rdd-arch/rdd-planner/rdd-builder/rdd-verifier)",
+    "hub": "Hub retry-failed commands (cross-repo federation)",
+    "init": "Install rdd-workflow to target's .opencode/skills/",
+    "issue": "Submit / list / show issues",
+    "migrate-improvements": "Move legacy improvements/ → .rddf/improvements/",
+    "iteration": "Validate iteration.json (lint, allowed-fields)",
+    "rdd-verify": "Batch verify changes via LLM agent protocol",
+    "l2-trend": "L2 violation count trend for archived changes",
+    "planner": "Stage 2 of v4 architecture (proposal authoring/review/approve)",
+    "arch": "Stage 1 of v4 architecture (ADR + roadmap)",
+    "builder": "Stage 3 of v4 architecture (approval + plan + execute + archive)",
+    "monitor": "Live monitor dashboard (sessions + worktrees + events + phase)",
+    "roadmap": "Roadmap CRUD: init / status / edit / validate / advance",
+    "scheduler": "Cron / fs-watcher / webhook receiver entry point",
+    "rdd-hub-bootstrap": "Hub repo (rdd-hub) bootstrap: dir + Projects V2 board + CI",
+    "orchestrate": "Phase subprocess orchestrator (subprocess/finalize)",
+    "report-issue": "Hub-Spoke [RFC] issue creator",
+    "status": "Change status overview",
+    "sessions": "Session management (read-only). Subcmds: show, current, gc",
+    "setup": "Bootstrap a new project with rdd-workflow",
+    "sync-hub": "Hub-Spoke contract pull",
+    "validate": "Quality gate checks",
+    "version": "Print rddf version",
+    "watch-hub": "Hub-Spoke one-shot Hub issue status poll",
+}
+
+
+def _handle_help(subcommand: str) -> int:
+    """Print uniform --help for ``subcommand`` and return exit code 0.
+
+    Uses argparse's default help action (which prints usage + sys.exit(0))
+    via a lightweight ArgumentParser. This guarantees argparse-style
+    EXIT 0 behavior for every subcommand, regardless of whether the
+    underlying handler's parser is mis-configured (per fix-cmd-help-handling).
+
+    Args:
+        subcommand: Subcommand name (key of _ROUTES).
+
+    Returns:
+        0 always (--help is success).
+    """
+    import argparse
+    description = _SUBCOMMAND_DESCRIPTION.get(subcommand, "")
+    parser = argparse.ArgumentParser(
+        prog=f"rddf {subcommand}",
+        description=description or None,
+        add_help=True,
+    )
+    try:
+        parser.parse_args(["--help"])
+    except SystemExit as e:
+        # argparse calls sys.exit(0) on --help. Capture and return as int.
+        if e.code is None:
+            return 0
+        if isinstance(e.code, int):
+            return int(e.code)
+        return 1
+    return 0
+
+
 def route(subcommand: str, args: list[str]) -> int:
     """Route ``subcommand`` to its handler and invoke with ``args``.
 
     Imports the handler module lazily (only when this function is
     called) so that ``python3 -m skills._lib.cli help`` and similar
     light invocations do not pay the import cost of every subcommand.
+
+    Help-flag short-circuit (per fix-cmd-help-handling): if ``args[0]``
+    is ``--help`` or ``-h``, the dispatcher intercepts and prints uniform
+    usage via :func:`_handle_help`, returning exit code 0 without invoking
+    the underlying handler. This ensures argparse-style ``--help`` behavior
+    across all 36 subcommands, including the four that previously had
+    non-zero exit codes (``archive-sync``, ``contract-check``,
+    ``feature``, ``issue``).
 
     Args:
         subcommand: Subcommand name (e.g. ``"dashboard"``, ``"status"``,
@@ -149,6 +234,9 @@ def route(subcommand: str, args: list[str]) -> int:
     if subcommand not in _ROUTES:
         raise KeyError(subcommand)
 
+    if args and args[0] in ("--help", "-h"):
+        return _handle_help(subcommand)
+
     # Lazy import: "skills._lib.cli.dashboard_cmd:cmd_dashboard"
     module_path, _, func_name = _ROUTES[subcommand].partition(":")
     import importlib
@@ -158,4 +246,4 @@ def route(subcommand: str, args: list[str]) -> int:
     return handler(args)
 
 
-__all__ = ["route", "list_commands"]
+__all__ = ["route", "list_commands", "_SUBCOMMAND_DESCRIPTION"]
