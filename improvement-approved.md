@@ -11,7 +11,6 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [fix-cmd-help-handling](.rddf/improvements/fix-cmd-help-handling.md) | P1 | 2026-09-25 | rdd-planner |
 
 > **批次说明 (2026-09-25 rdd-planner)**: 本批 1 项 fix-cmd-help-handling 为 rdd-workflow-e2e PR #1 merge (commit 6628bb1) 后 CI regression audit (2026-09-25) 暴露的主仓 CLI 契约 bug:
 > 1. **`fix-cmd-help-handling`** (P1) — 36 个 `rddf <sub>` 中 2 个 `--help` 违反 argparse 标准契约 (`rddf contract-check --help` EXIT=2 因 handler 自定义 store_true 覆盖 argparse 自动 help; `rddf archive-sync --help` 把 `--help` 当 change name EXIT=1)。修复策略选项 B (推荐): 在 `_lib/cli/__init__.py::route()` 入口统一拦截 `--help`/`-h` + 打印 subcommand-specific usage + EXIT 0,与 argparse 默认行为一致,消除整个类 bug 的可能性
@@ -204,6 +203,7 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-cmd-help-handling](.rddf/improvements/fix-cmd-help-handling.md) | P1 | 2026-09-25 | 已实施 |
 | [wave3-rddf-session-show-events](.rddf/improvements/wave3-rddf-session-show-events.md) | P2 | 2026-09-24 | 已实施 |
 | [wave3-phase-heartbeat-progressing](.rddf/improvements/wave3-phase-heartbeat-progressing.md) | P2 | 2026-09-24 | 已实施 |
 | [wave3-opencode-session-injection](.rddf/improvements/wave3-opencode-session-injection.md) | P1 | 2026-09-24 | 已实施 |
