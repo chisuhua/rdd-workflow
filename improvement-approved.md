@@ -11,6 +11,16 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
+| [fix-33-handlers-project-root-anti-pattern](.rddf/improvements/fix-33-handlers-project-root-anti-pattern.md) | P2 | 2026-09-25 | rdd-planner |
+
+> **批次说明 (2026-09-25 rdd-planner, 第二批)**: 本批 1 项 fix-33-handlers-project-root-anti-pattern 为 fix-cmd-help-handling (P1, 已 ship commit 200efdd) 实施审计时识别的 follow-up architectural debt:
+> 1. **`fix-33-handlers-project-root-anti-pattern`** (P2) — 32 个 `_lib/cli/*.py` handler 文件重复使用 `os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()` 反模式 (~36 处 occurrences),而 `_lib/cli/__main__.py::resolve_project_root()` (per ADR-0033 submodule-aware git 探测) 已实现但**无 handler 使用**。这是 fix-cmd-help-handling 的根因层修复 (dispatcher-level 拦截只解决了 e2e test 6 symptom,32 handler 业务逻辑仍用 anti-pattern:在 git submodule / worktree 内执行时 cwd 解析错误)。修复策略: `_lib/cli/__init__.py` re-export `resolve_project_root` 单点引用 + 32 handler 把 `RDDF_PROJECT_ROOT or os.getcwd()` 改为 `RDDF_PROJECT_ROOT or resolve_project_root()` (保留 env override 向后兼容)
+>
+> **依赖说明**: fix-cmd-help-handling (shipped)
+>
+> **实施建议**: 走 rdd-builder P0-P3 完整流程（32 文件 > rdd-quick 阈值 ≤ 2 文件 per ADR-0047）。机械化 sed 替换 + 单点 re-export + 新单元测试覆盖 submodule/worktree/非-git edge cases。轻量模式（无 worktree,直接 master commit）
+>
+> **重叠检查**: 无 (refactor + 新 test file)。不修改 `resolve_project_root()` 本身 (per MN-PR-1), 不改 `__main__.py:203` 的 `setdefault` (per MN-PR-2 backward compat)
 
 > **批次说明 (2026-09-25 rdd-planner)**: 本批 1 项 fix-cmd-help-handling 为 rdd-workflow-e2e PR #1 merge (commit 6628bb1) 后 CI regression audit (2026-09-25) 暴露的主仓 CLI 契约 bug:
 > 1. **`fix-cmd-help-handling`** (P1) — 36 个 `rddf <sub>` 中 2 个 `--help` 违反 argparse 标准契约 (`rddf contract-check --help` EXIT=2 因 handler 自定义 store_true 覆盖 argparse 自动 help; `rddf archive-sync --help` 把 `--help` 当 change name EXIT=1)。修复策略选项 B (推荐): 在 `_lib/cli/__init__.py::route()` 入口统一拦截 `--help`/`-h` + 打印 subcommand-specific usage + EXIT 0,与 argparse 默认行为一致,消除整个类 bug 的可能性
