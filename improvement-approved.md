@@ -11,6 +11,16 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
+| [fix-skill-layer-project-root-anti-pattern](.rddf/improvements/fix-skill-layer-project-root-anti-pattern.md) | P2 | 2026-09-26 | rdd-planner |
+
+> **批次说明 (2026-09-26 rdd-planner, 第三批)**: 本批 1 项 fix-skill-layer-project-root-anti-pattern 为 fix-33-handlers-project-root-anti-pattern (P2, 已 ship commit ab5ded7) 显式 scope-out 的 follow-up:
+> 1. **`fix-skill-layer-project-root-anti-pattern`** (P2) — 5 个 `skills/*/scripts/*.py` skill scripts 仍用 `os.getcwd()` 作为 project_root fallback (`propose_quality_check.py` + `propose_quality_hook.py` 用 `PROJECT_ROOT` env var; `report_issue_rfc.py` + `sync_hub.py` + `watch_hub.py` 用 `RDDF_PROJECT_ROOT`)。Skill layer 完全不用 `_lib.cli.__main__.resolve_project_root()` (0 hits grep)。关键发现:skill layer 用 env var 双轨制(`PROJECT_ROOT` 来自 bash scripts,`RDDF_PROJECT_ROOT` 来自 Python `__main__.py:203` setdefault)。修复策略保留双轨制 (不重命名 env var),只把 `os.getcwd()` 替换为 `resolve_project_root()` (env var override 优先)
+>
+> **依赖说明**: fix-33-handlers-project-root-anti-pattern (shipped)
+>
+> **实施建议**: 走 rdd-builder P0-P3 完整流程 (6 files > rdd-quick 阈值 ≤ 2 files per ADR-0047)。机械化 sed 替换 + 新单元测试覆盖双轨制向后兼容。轻量模式 (无 worktree,直接 master commit)。Bash scripts 已正确 (`skills/_lib/orchestrator_entry.sh:33` 已有 `_resolve_project_root` helper),不需要改
+>
+> **重叠检查**: 无 (refactor + 新 test file)。不改 env var 名 (per MN-SL-1 双轨制向后兼容), 不改 bash scripts (per MN-SL-2), 不改 `resolve_project_root()` 本身 (per MN-SL-3)
 
 > **批次说明 (2026-09-25 rdd-planner, 第二批)**: 本批 1 项 fix-33-handlers-project-root-anti-pattern 为 fix-cmd-help-handling (P1, 已 ship commit 200efdd) 实施审计时识别的 follow-up architectural debt:
 > 1. **`fix-33-handlers-project-root-anti-pattern`** (P2) — 32 个 `_lib/cli/*.py` handler 文件重复使用 `os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()` 反模式 (~36 处 occurrences),而 `_lib/cli/__main__.py::resolve_project_root()` (per ADR-0033 submodule-aware git 探测) 已实现但**无 handler 使用**。这是 fix-cmd-help-handling 的根因层修复 (dispatcher-level 拦截只解决了 e2e test 6 symptom,32 handler 业务逻辑仍用 anti-pattern:在 git submodule / worktree 内执行时 cwd 解析错误)。修复策略: `_lib/cli/__init__.py` re-export `resolve_project_root` 单点引用 + 32 handler 把 `RDDF_PROJECT_ROOT or os.getcwd()` 改为 `RDDF_PROJECT_ROOT or resolve_project_root()` (保留 env override 向后兼容)
@@ -212,7 +222,7 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
-| [fix-33-handlers-project-root-anti-pattern](.rddf/improvements/fix-33-handlers-project-root-anti-pattern.md) | P1 | 2026-09-26 | 已实施 |
+| [fix-33-handlers-project-root-anti-pattern](.rddf/improvements/fix-33-handlers-project-root-anti-pattern.md) | P2 | 2026-09-26 | 已实施 |
 | [fix-33-handlers-project-root-anti-pattern](.rddf/improvements/fix-33-handlers-project-root-anti-pattern.md) | P2 | 2026-09-26 | 已实施 |
 | [fix-cmd-help-handling](.rddf/improvements/fix-cmd-help-handling.md) | P1 | 2026-09-25 | 已实施 |
 | [wave3-rddf-session-show-events](.rddf/improvements/wave3-rddf-session-show-events.md) | P2 | 2026-09-24 | 已实施 |
