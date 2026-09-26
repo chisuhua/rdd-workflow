@@ -28,6 +28,7 @@ import re
 import sys
 from pathlib import Path
 from typing import List
+from _lib.cli.__main__ import resolve_project_root  # noqa: E402,F401  (per fix-skill-layer)
 
 # HOW-leakage detector (.rddf/improvements/proposal shared layer).
 # Lives at top-level _lib/ per codebase convention; see shim in
@@ -269,7 +270,7 @@ def main(argv: list[str] | None = None) -> List[str] | None:
     )
     args = parser.parse_args(argv)
 
-    project_root = os.environ.get("PROJECT_ROOT", os.getcwd())
+    project_root = os.environ.get("PROJECT_ROOT") or resolve_project_root()
     strict = args.strict or os.environ.get("STRICT_PROPOSE_GATE") == "yes"
 
     warnings = run_all_checks(args.change, project_root)

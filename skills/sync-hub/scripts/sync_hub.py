@@ -21,6 +21,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "skills", "_lib"))
 from skills._lib.gh_hub_client import GhHubClient, RateLimitError
+from _lib.cli.__main__ import resolve_project_root  # noqa: E402,F401  (per fix-skill-layer)
 
 
 def main() -> int:
@@ -35,7 +36,7 @@ def main() -> int:
         return 2
 
     owner, repo = hub_repo.split("/", 1)
-    project_root = os.environ.get("RDDF_PROJECT_ROOT", os.getcwd())
+    project_root = os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
     contract_name = args.contract.replace(".yaml", "").replace(".yml", "")
     target_path = os.path.join(
         project_root, "openspec", "specs", contract_name, "spec.md"

@@ -18,6 +18,7 @@ if REPO_ROOT not in sys.path:
 
 from skills._lib.arch_quality_gate import is_strict_mode  # noqa: E402
 from skills.propose.scripts.propose_quality_check import run_all_checks  # noqa: E402
+from _lib.cli.__main__ import resolve_project_root  # noqa: E402,F401  (per fix-skill-layer)
 
 
 PROPOSE_QUALITY_SCHEMA_VERSION = 1
@@ -55,7 +56,7 @@ def invoke_from_propose_phase4(change_name: str) -> int:
       - 0 by default, or when strict + no warnings
       - 1 when STRICT_PROPOSE_GATE=yes and there are warnings
     """
-    project_root = os.environ.get("PROJECT_ROOT", os.getcwd())
+    project_root = os.environ.get("PROJECT_ROOT") or resolve_project_root()
     report = run_quality_check(project_root, change_name)
     warnings = report["warnings"]
 

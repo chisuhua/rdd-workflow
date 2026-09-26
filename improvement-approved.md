@@ -11,7 +11,6 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [fix-skill-layer-project-root-anti-pattern](.rddf/improvements/fix-skill-layer-project-root-anti-pattern.md) | P2 | 2026-09-26 | rdd-planner |
 
 > **批次说明 (2026-09-26 rdd-planner, 第三批)**: 本批 1 项 fix-skill-layer-project-root-anti-pattern 为 fix-33-handlers-project-root-anti-pattern (P2, 已 ship commit ab5ded7) 显式 scope-out 的 follow-up:
 > 1. **`fix-skill-layer-project-root-anti-pattern`** (P2) — 5 个 `skills/*/scripts/*.py` skill scripts 仍用 `os.getcwd()` 作为 project_root fallback (`propose_quality_check.py` + `propose_quality_hook.py` 用 `PROJECT_ROOT` env var; `report_issue_rfc.py` + `sync_hub.py` + `watch_hub.py` 用 `RDDF_PROJECT_ROOT`)。Skill layer 完全不用 `_lib.cli.__main__.resolve_project_root()` (0 hits grep)。关键发现:skill layer 用 env var 双轨制(`PROJECT_ROOT` 来自 bash scripts,`RDDF_PROJECT_ROOT` 来自 Python `__main__.py:203` setdefault)。修复策略保留双轨制 (不重命名 env var),只把 `os.getcwd()` 替换为 `resolve_project_root()` (env var override 优先)
@@ -222,6 +221,7 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-skill-layer-project-root-anti-pattern](.rddf/improvements/fix-skill-layer-project-root-anti-pattern.md) | P2 | 2026-09-26 | 已实施 |
 | [fix-33-handlers-project-root-anti-pattern](.rddf/improvements/fix-33-handlers-project-root-anti-pattern.md) | P2 | 2026-09-26 | 已实施 |
 | [fix-33-handlers-project-root-anti-pattern](.rddf/improvements/fix-33-handlers-project-root-anti-pattern.md) | P2 | 2026-09-26 | 已实施 |
 | [fix-cmd-help-handling](.rddf/improvements/fix-cmd-help-handling.md) | P1 | 2026-09-25 | 已实施 |

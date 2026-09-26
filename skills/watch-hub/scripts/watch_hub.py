@@ -21,6 +21,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "skills", "_lib"))
 from skills._lib.gh_hub_client import GhHubClient, RateLimitError
 from skills._lib.cross_repo_state import (
+from _lib.cli.__main__ import resolve_project_root  # noqa: E402,F401  (per fix-skill-layer)
     read_pending_state,
     update_pending_entry,
 )
@@ -44,7 +45,7 @@ def main() -> int:
         return 2
 
     owner, repo = hub_repo.split("/", 1)
-    project_root = os.environ.get("RDDF_PROJECT_ROOT", os.getcwd())
+    project_root = os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
     state_dir = os.path.join(project_root, ".rddf", "state")
 
     state = read_pending_state(state_dir)
