@@ -246,4 +246,14 @@ def route(subcommand: str, args: list[str]) -> int:
     return handler(args)
 
 
-__all__ = ["route", "list_commands", "_SUBCOMMAND_DESCRIPTION"]
+__all__ = ["route", "list_commands", "_SUBCOMMAND_DESCRIPTION", "resolve_project_root"]
+
+
+def __getattr__(name: str):
+    # PEP 562 lazy hook avoids circular import: __main__.py imports
+    # `from skills._lib.cli import list_commands, route` at module load,
+    # which would fail if resolve_project_root were imported eagerly here.
+    if name == "resolve_project_root":
+        from .__main__ import resolve_project_root as _impl
+        return _impl
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

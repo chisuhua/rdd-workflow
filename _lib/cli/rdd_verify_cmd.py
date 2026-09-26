@@ -34,10 +34,11 @@ from _lib.verifier.hook_runner import run_verification_hook
 from _lib.verifier.loop_state import (
     init_loop_state, save_loop_state, load_loop_state,
 )
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def _project_root() -> Path:
-    return Path(os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd())
+    return Path(os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root())
 
 
 def _detect_verification_provider(project_root: Path) -> str:

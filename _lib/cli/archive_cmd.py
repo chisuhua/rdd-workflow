@@ -17,6 +17,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 # Cached path to archive.sh (resolved lazily, monkeypatchable for tests).
 _ARCHIVE_SH: str | None = None
@@ -26,7 +27,7 @@ def _resolve_archive_sh() -> str:
     """Return the absolute path to ``skills/_lib/archive.sh``, cached."""
     global _ARCHIVE_SH
     if _ARCHIVE_SH is None:
-        project_root = os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+        project_root = os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
         _ARCHIVE_SH = str(Path(project_root) / "skills" / "_lib" / "archive.sh")
     return _ARCHIVE_SH
 
@@ -66,7 +67,7 @@ def cmd_archive(args: list[str]) -> int:
     print("━" * 40)
 
     # Spawn bash with the archive.sh sourced and archive_change invoked.
-    project_root = os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+    project_root = os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
     try:
         result = subprocess.run(
             [

@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import os
 import sys
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def cmd_dashboard(args: list[str]) -> int:
@@ -49,7 +50,7 @@ def cmd_dashboard(args: list[str]) -> int:
             print("   usage: rddf dashboard [--json|--plain]", file=sys.stderr)
             return 1
 
-    project_root = os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+    project_root = os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
 
     # Lazy imports so ``rddf help`` and other subcommands don't pay the
     # cost of importing the dashboard package + state_reader + iteration.

@@ -28,6 +28,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def _resolve_target_root(args_target: str | None) -> Path:
@@ -35,7 +36,7 @@ def _resolve_target_root(args_target: str | None) -> Path:
     return Path(
         args_target
         or os.environ.get("RDDF_PROJECT_ROOT")
-        or os.getcwd()
+        or resolve_project_root()
     ).resolve()
 
 

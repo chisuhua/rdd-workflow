@@ -32,6 +32,7 @@ import re
 import subprocess
 from pathlib import Path
 from typing import Optional, Tuple
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def _read_json(path: Path) -> Optional[dict]:
@@ -259,7 +260,7 @@ def cmd_guide(args: list[str]) -> int:
         _print_help()
         return 0
 
-    project_root = os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+    project_root = os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
     state_dir = Path(project_root) / ".rddf" / "state"
 
     recommend, reason = _scan_state(project_root)

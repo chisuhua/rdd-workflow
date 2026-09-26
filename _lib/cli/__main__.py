@@ -33,7 +33,7 @@ import os
 import subprocess
 import sys
 
-from skills._lib.cli import list_commands, route
+from skills._lib.cli import list_commands, route  # noqa: F401
 
 
 def resolve_project_root() -> str:

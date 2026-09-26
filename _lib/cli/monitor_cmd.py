@@ -30,6 +30,7 @@ import os
 import sys
 import time
 from datetime import datetime, timezone
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def cmd_monitor(args: list[str]) -> int:
@@ -81,7 +82,7 @@ def cmd_monitor(args: list[str]) -> int:
             )
             return 2
 
-    project_root = os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+    project_root = os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
 
     if watch_n > 0:
         try:

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import sys
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def cmd_l2_trend(args: list[str]) -> int:
@@ -19,7 +20,7 @@ def cmd_l2_trend(args: list[str]) -> int:
     Returns:
         0 always.
     """
-    project_root = os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+    project_root = os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
     iter_path = os.path.join(project_root, ".rddf", "state", "iteration.json")
 
     if not os.path.isfile(iter_path):

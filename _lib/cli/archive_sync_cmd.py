@@ -29,6 +29,7 @@ import os
 import sys
 from pathlib import Path
 from typing import List
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def _resolve_archive_dirs(project_root: str) -> List[str]:
@@ -68,7 +69,7 @@ def cmd_archive_sync(args: list[str]) -> int:
         0 on full success; 1 if any helper call returned a warning;
         2 on invalid usage.
     """
-    project_root = os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+    project_root = os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
 
     if not args:
         print(

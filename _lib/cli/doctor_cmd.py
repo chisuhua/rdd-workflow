@@ -14,6 +14,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def cmd_doctor(args: list[str]) -> int:
@@ -28,7 +29,7 @@ def cmd_doctor(args: list[str]) -> int:
         Exit code from the ``doctor.sh`` subprocess.
     """
     project_root = Path(
-        os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+        os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
     )
     repo_root = Path(__file__).resolve().parents[2]
     script = repo_root / "skills" / "rdd-doctor" / "scripts" / "doctor.sh"

@@ -15,6 +15,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def cmd_watch_hub(args: list[str]) -> int:
@@ -28,7 +29,7 @@ def cmd_watch_hub(args: list[str]) -> int:
         Exit code from the ``watch_hub.py`` subprocess.
     """
     project_root = Path(
-        os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+        os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
     )
     script = project_root / "skills" / "watch-hub" / "scripts" / "watch_hub.py"
 

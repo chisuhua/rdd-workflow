@@ -17,6 +17,7 @@ import os
 import subprocess
 
 from skills._lib.state_reader import list_worktrees
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def cmd_cleanup(args: list[str]) -> int:
@@ -33,7 +34,7 @@ def cmd_cleanup(args: list[str]) -> int:
         _print_help()
         return 0
 
-    project_root = os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+    project_root = os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
 
     print("🧹 清理孤立 Worktree 和 Branch")
     print("──")

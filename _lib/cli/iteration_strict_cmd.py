@@ -22,6 +22,7 @@ import os
 import sys
 from pathlib import Path
 from typing import List, Tuple
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def _resolve_project_root(arg: str | None) -> str:
@@ -31,7 +32,7 @@ def _resolve_project_root(arg: str | None) -> str:
     """
     if arg and arg != ".":
         return os.path.abspath(arg)
-    return os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+    return os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
 
 
 def _get_per_change_property_names() -> List[str]:

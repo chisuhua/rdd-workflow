@@ -12,6 +12,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def cmd_contract_check(args: list[str]) -> int:
@@ -42,7 +43,7 @@ def cmd_contract_check(args: list[str]) -> int:
     parsed, forwarded = parser.parse_known_args(args)
 
     project_root = Path(
-        os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+        os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
     )
     script = project_root / "skills" / "contract-check" / "scripts" / "contract_check.py"
 

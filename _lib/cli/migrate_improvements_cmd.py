@@ -32,6 +32,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 _MARKDOWN_LINK_FILES = ("improvement-approved.md", "improvement-suggestions.md")
@@ -298,7 +299,7 @@ def cmd_migrate_improvements(args: list[str]) -> int:
             print("   usage: rddf migrate-improvements [--dry-run] [--include-docs] [--allow-source-repo] [--help]", file=sys.stderr)
             return 2
 
-    proj_root = Path(os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd())
+    proj_root = Path(os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root())
 
     # ── Pre-flight check 1: refuse to run in rdd-workflow source repo (unless --allow-source-repo) ──
     if not allow_source_repo and _is_rddwf_source_repo(proj_root):

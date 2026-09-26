@@ -24,6 +24,7 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def _load_data(project_root: str) -> Optional[dict]:
@@ -74,7 +75,7 @@ def cmd_deps_cross_repo(args: list[str]) -> int:
         Exit code from the ``cross_repo_cli.py`` subprocess.
     """
     project_root = Path(
-        os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+        os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
     )
     script = project_root / "skills" / "deps" / "scripts" / "cross_repo_cli.py"
 
@@ -117,7 +118,7 @@ def cmd_deps(args: list[str]) -> int:
     if args and args[0] == "cross-repo":
         return cmd_deps_cross_repo(args[1:])
 
-    project_root = os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+    project_root = os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
 
     analysis = _load_data(project_root)
     if analysis is None:

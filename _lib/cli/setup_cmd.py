@@ -14,6 +14,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 # Sentinel markers — must match the SSOT template exactly.
@@ -153,7 +154,7 @@ def _handle_ai_context(args: argparse.Namespace) -> int:
     target_root = Path(
         args.target
         or os.environ.get("RDDF_PROJECT_ROOT")
-        or os.getcwd()
+        or resolve_project_root()
     )
 
     # Read SSOT template from source root (not target root).

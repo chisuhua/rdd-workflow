@@ -11,7 +11,6 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [fix-33-handlers-project-root-anti-pattern](.rddf/improvements/fix-33-handlers-project-root-anti-pattern.md) | P2 | 2026-09-25 | rdd-planner |
 
 > **批次说明 (2026-09-25 rdd-planner, 第二批)**: 本批 1 项 fix-33-handlers-project-root-anti-pattern 为 fix-cmd-help-handling (P1, 已 ship commit 200efdd) 实施审计时识别的 follow-up architectural debt:
 > 1. **`fix-33-handlers-project-root-anti-pattern`** (P2) — 32 个 `_lib/cli/*.py` handler 文件重复使用 `os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()` 反模式 (~36 处 occurrences),而 `_lib/cli/__main__.py::resolve_project_root()` (per ADR-0033 submodule-aware git 探测) 已实现但**无 handler 使用**。这是 fix-cmd-help-handling 的根因层修复 (dispatcher-level 拦截只解决了 e2e test 6 symptom,32 handler 业务逻辑仍用 anti-pattern:在 git submodule / worktree 内执行时 cwd 解析错误)。修复策略: `_lib/cli/__init__.py` re-export `resolve_project_root` 单点引用 + 32 handler 把 `RDDF_PROJECT_ROOT or os.getcwd()` 改为 `RDDF_PROJECT_ROOT or resolve_project_root()` (保留 env override 向后兼容)
@@ -213,6 +212,8 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-33-handlers-project-root-anti-pattern](.rddf/improvements/fix-33-handlers-project-root-anti-pattern.md) | P1 | 2026-09-26 | 已实施 |
+| [fix-33-handlers-project-root-anti-pattern](.rddf/improvements/fix-33-handlers-project-root-anti-pattern.md) | P2 | 2026-09-26 | 已实施 |
 | [fix-cmd-help-handling](.rddf/improvements/fix-cmd-help-handling.md) | P1 | 2026-09-25 | 已实施 |
 | [wave3-rddf-session-show-events](.rddf/improvements/wave3-rddf-session-show-events.md) | P2 | 2026-09-24 | 已实施 |
 | [wave3-phase-heartbeat-progressing](.rddf/improvements/wave3-phase-heartbeat-progressing.md) | P2 | 2026-09-24 | 已实施 |

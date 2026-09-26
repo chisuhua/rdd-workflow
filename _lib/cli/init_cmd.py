@@ -20,6 +20,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 # Subset of files checked from the source project root before install.
@@ -47,7 +48,7 @@ def cmd_init(args: list[str]) -> int:
             print("   usage: rddf init [target]", file=sys.stderr)
             return 2
 
-    project_root = Path(os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd())
+    project_root = Path(os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root())
     target_str = args[0] if args else str(project_root)
     target = Path(target_str) / ".opencode" / "skills" / "rdd-workflow"
 

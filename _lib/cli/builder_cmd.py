@@ -24,6 +24,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 PHASES_SCRIPT_MAP = {
@@ -68,7 +69,7 @@ Exit codes:
 
 
 def cmd_builder(args, project_root=None, **kwargs) -> int:
-    project_root = project_root or os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+    project_root = project_root or os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
     if not args or args[0] in ("--help", "-h"):
         print(_help_text())
         return 0

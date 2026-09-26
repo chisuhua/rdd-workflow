@@ -13,6 +13,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def _help_text() -> str:
@@ -42,7 +43,7 @@ def cmd_rdd_hub_bootstrap(args: list[str]) -> int:
         Exit code from the subcommand script, or 0 for ``--help``.
     """
     project_root = Path(
-        os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+        os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
     )
 
     if not args or args[0] in ("--help", "-h"):

@@ -18,6 +18,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def cmd_discover_ship_changes(args: list[str]) -> int:
@@ -32,7 +33,7 @@ def cmd_discover_ship_changes(args: list[str]) -> int:
     Returns:
         0 on success, 1 on error.
     """
-    project_root = os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+    project_root = os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
     pretty = False
     i = 0
     while i < len(args):

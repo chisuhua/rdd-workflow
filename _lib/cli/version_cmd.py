@@ -16,6 +16,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def cmd_version(args: list[str]) -> int:
@@ -27,7 +28,7 @@ def cmd_version(args: list[str]) -> int:
     Returns:
         0 on success, 1 if ``package.json`` is missing or unreadable.
     """
-    project_root = os.environ.get("RDDF_PROJECT_ROOT") or os.getcwd()
+    project_root = os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root()
     pkg_path = Path(project_root) / "package.json"
 
     if not pkg_path.is_file():
