@@ -11,13 +11,23 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
+| [add-skill-layer-resolve-project-root-helper](.rddf/improvements/add-skill-layer-resolve-project-root-helper.md) | P2 | 2026-09-27 | rdd-planner |
+
+> **批次说明 (2026-09-27 rdd-planner, 第四批)**: 本批 1 项 add-skill-layer-resolve-project-root-helper 为 fix-skill-layer-project-root-anti-pattern (P2, 已 ship commit c217cde) 实施审计时识别的 layering violation:
+> 1. **`add-skill-layer-resolve-project-root-helper`** (P2) — 5 个 skill scripts 在 fix-skill-layer 实施后都 `from _lib.cli.__main__ import resolve_project_root`(绕开 skills/_lib/),违反 skill layer 自包含约定 (per `skills/_lib/iteration/__init__.py:3-10`)。修复:在 `skills/_lib/_python_resolve_project_root.py` 加 Python wrapper(行为 parity delegate 到 `_lib.cli.__main__.resolve_project_root`),5 个 scripts 改 import 路径。**与 bash 对齐**:bash `_resolve_project_root` 已在 `skills/_lib/orchestrator_entry.sh:33`,Python 端补对应 wrapper 实现双语言对称
+>
+> **依赖说明**: fix-skill-layer-project-root-anti-pattern (shipped commit c217cde), bash `_resolve_project_root` (existing), `_lib.cli.__main__.resolve_project_root` (per ADR-0033)
+>
+> **实施建议**: 走 rdd-builder P0-P3 完整流程 (6 files > rdd-quick 阈值 ≤ 2 files per ADR-0047)。机械化 sed 替换 + 新单元测试覆盖 submodule/worktree/非-git edge cases + bash parity test
+>
+> **重叠检查**: 无 (新 wrapper module + 5 import path 改 + 新 test file)。不修改 `_lib.cli.__main__.resolve_project_root()` (per MN-SLP-3), 不重命名函数 (per MN-SLP-1), 不修改 bash `_resolve_project_root` (per MN-SLP-4)
 
 > **批次说明 (2026-09-26 rdd-planner, 第三批)**: 本批 1 项 fix-skill-layer-project-root-anti-pattern 为 fix-33-handlers-project-root-anti-pattern (P2, 已 ship commit ab5ded7) 显式 scope-out 的 follow-up:
 > 1. **`fix-skill-layer-project-root-anti-pattern`** (P2) — 5 个 `skills/*/scripts/*.py` skill scripts 仍用 `os.getcwd()` 作为 project_root fallback (`propose_quality_check.py` + `propose_quality_hook.py` 用 `PROJECT_ROOT` env var; `report_issue_rfc.py` + `sync_hub.py` + `watch_hub.py` 用 `RDDF_PROJECT_ROOT`)。Skill layer 完全不用 `_lib.cli.__main__.resolve_project_root()` (0 hits grep)。关键发现:skill layer 用 env var 双轨制(`PROJECT_ROOT` 来自 bash scripts,`RDDF_PROJECT_ROOT` 来自 Python `__main__.py:203` setdefault)。修复策略保留双轨制 (不重命名 env var),只把 `os.getcwd()` 替换为 `resolve_project_root()` (env var override 优先)
 >
 > **依赖说明**: fix-33-handlers-project-root-anti-pattern (shipped)
 >
-> **实施建议**: 走 rdd-builder P0-P3 完整流程 (6 files > rdd-quick 阈值 ≤ 2 files per ADR-0047)。机械化 sed 替换 + 新单元测试覆盖双轨制向后兼容。轻量模式 (无 worktree,直接 master commit)。Bash scripts 已正确 (`skills/_lib/orchestrator_entry.sh:33` 已有 `_resolve_project_root` helper),不需要改
+> **实施建议**: 走 rdd-builder P0-P3 完整流程 (6 files > rdd-quick 阈值 ≤ 2 files per ADR-0047)。机械化 sed 替换 + 新单元测试覆盖 submodule/worktree/非-git edge cases。轻量模式 (无 worktree,直接 master commit)。Bash scripts 已正确 (`skills/_lib/orchestrator_entry.sh:33` 已有 `_resolve_project_root` helper),不需要改
 >
 > **重叠检查**: 无 (refactor + 新 test file)。不改 env var 名 (per MN-SL-1 双轨制向后兼容), 不改 bash scripts (per MN-SL-2), 不改 `resolve_project_root()` 本身 (per MN-SL-3)
 
