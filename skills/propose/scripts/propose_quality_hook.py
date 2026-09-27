@@ -18,7 +18,7 @@ if REPO_ROOT not in sys.path:
 
 from skills._lib.arch_quality_gate import is_strict_mode  # noqa: E402
 from skills.propose.scripts.propose_quality_check import run_all_checks  # noqa: E402
-from _lib.cli.__main__ import resolve_project_root  # noqa: E402,F401  (per fix-skill-layer)
+from skills._lib._python_resolve_project_root import resolve_project_root  # noqa: E402,F401  (per add-skill-layer)
 
 
 PROPOSE_QUALITY_SCHEMA_VERSION = 1

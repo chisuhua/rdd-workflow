@@ -28,7 +28,7 @@ import re
 import sys
 from pathlib import Path
 from typing import List
-from _lib.cli.__main__ import resolve_project_root  # noqa: E402,F401  (per fix-skill-layer)
+from skills._lib._python_resolve_project_root import resolve_project_root  # noqa: E402,F401  (per add-skill-layer)
 
 # HOW-leakage detector (.rddf/improvements/proposal shared layer).
 # Lives at top-level _lib/ per codebase convention; see shim in

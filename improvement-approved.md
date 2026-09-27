@@ -11,7 +11,6 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [add-skill-layer-resolve-project-root-helper](.rddf/improvements/add-skill-layer-resolve-project-root-helper.md) | P2 | 2026-09-27 | rdd-planner |
 
 > **批次说明 (2026-09-27 rdd-planner, 第四批)**: 本批 1 项 add-skill-layer-resolve-project-root-helper 为 fix-skill-layer-project-root-anti-pattern (P2, 已 ship commit c217cde) 实施审计时识别的 layering violation:
 > 1. **`add-skill-layer-resolve-project-root-helper`** (P2) — 5 个 skill scripts 在 fix-skill-layer 实施后都 `from _lib.cli.__main__ import resolve_project_root`(绕开 skills/_lib/),违反 skill layer 自包含约定 (per `skills/_lib/iteration/__init__.py:3-10`)。修复:在 `skills/_lib/_python_resolve_project_root.py` 加 Python wrapper(行为 parity delegate 到 `_lib.cli.__main__.resolve_project_root`),5 个 scripts 改 import 路径。**与 bash 对齐**:bash `_resolve_project_root` 已在 `skills/_lib/orchestrator_entry.sh:33`,Python 端补对应 wrapper 实现双语言对称
@@ -231,6 +230,7 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [add-skill-layer-resolve-project-root-helper](.rddf/improvements/add-skill-layer-resolve-project-root-helper.md) | P2 | 2026-09-27 | 已实施 |
 | [fix-skill-layer-project-root-anti-pattern](.rddf/improvements/fix-skill-layer-project-root-anti-pattern.md) | P2 | 2026-09-26 | 已实施 |
 | [fix-33-handlers-project-root-anti-pattern](.rddf/improvements/fix-33-handlers-project-root-anti-pattern.md) | P2 | 2026-09-26 | 已实施 |
 | [fix-33-handlers-project-root-anti-pattern](.rddf/improvements/fix-33-handlers-project-root-anti-pattern.md) | P2 | 2026-09-26 | 已实施 |

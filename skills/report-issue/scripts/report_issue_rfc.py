@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "sk
 
 from skills._lib.gh_hub_client import GhHubClient, RateLimitError
 from skills._lib.cross_repo_state import add_pending_entry
-from _lib.cli.__main__ import resolve_project_root  # noqa: E402,F401  (per fix-skill-layer)
+from skills._lib._python_resolve_project_root import resolve_project_root  # noqa: E402,F401  (per add-skill-layer)
 
 
 def build_contract_draft_block(path: str) -> str:
