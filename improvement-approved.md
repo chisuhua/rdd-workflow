@@ -11,6 +11,16 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
+| [fix-skill-layer-resolution-bash](.rddf/improvements/fix-skill-layer-resolution-bash.md) | P3 | 2026-09-27 | rdd-planner |
+
+> **批次说明 (2026-09-27 rdd-planner, 第五批)**: 本批 1 项 fix-skill-layer-resolution-bash 为 add-skill-layer-resolve-project-root-helper (P2, 已 ship commit 281423d) 实施审计时识别的 bash-side counterpart:
+> 1. **`fix-skill-layer-resolution-bash`** (P3) — `skills/rdd-arch/scripts/roadmap_incremental_update.sh:25-33` 手动重新实现 `RDDF_PROJECT_ROOT` env check + git probe fallback,而不调用 `skills/_lib/orchestrator_entry.sh:33` 的现有 bash helper `_resolve_project_root`。修复策略:让该 script 用现有 bash helper,与 Python wrapper 形成双语言对称(5 Python + 3 bash scripts 共用 source of truth)。**澄清 user 描述**: `RDDF_HUB_REPO` 等只在 Python scripts 用,bash 0 hits (grep 验证)
+>
+> **依赖说明**: skills/_lib/orchestrator_entry.sh::_resolve_project_root (existing), add-skill-layer-resolve-project-root-helper (shipped commit 281423d)
+>
+> **实施建议**: 走 rdd-quick 旁路 (2 files + 3 tasks 符合 ADR-0047 ≤ 2 + ≤ 3 阈值)。轻量模式 (无 worktree,直接 master commit)
+>
+> **重叠检查**: 无 (单一 file refactor + 3-case bash test)
 
 > **批次说明 (2026-09-27 rdd-planner, 第四批)**: 本批 1 项 add-skill-layer-resolve-project-root-helper 为 fix-skill-layer-project-root-anti-pattern (P2, 已 ship commit c217cde) 实施审计时识别的 layering violation:
 > 1. **`add-skill-layer-resolve-project-root-helper`** (P2) — 5 个 skill scripts 在 fix-skill-layer 实施后都 `from _lib.cli.__main__ import resolve_project_root`(绕开 skills/_lib/),违反 skill layer 自包含约定 (per `skills/_lib/iteration/__init__.py:3-10`)。修复:在 `skills/_lib/_python_resolve_project_root.py` 加 Python wrapper(行为 parity delegate 到 `_lib.cli.__main__.resolve_project_root`),5 个 scripts 改 import 路径。**与 bash 对齐**:bash `_resolve_project_root` 已在 `skills/_lib/orchestrator_entry.sh:33`,Python 端补对应 wrapper 实现双语言对称
