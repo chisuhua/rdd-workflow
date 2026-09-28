@@ -11,7 +11,6 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [fix-skill-layer-resolution-bash](.rddf/improvements/fix-skill-layer-resolution-bash.md) | P3 | 2026-09-27 | rdd-planner |
 
 > **批次说明 (2026-09-27 rdd-planner, 第五批)**: 本批 1 项 fix-skill-layer-resolution-bash 为 add-skill-layer-resolve-project-root-helper (P2, 已 ship commit 281423d) 实施审计时识别的 bash-side counterpart:
 > 1. **`fix-skill-layer-resolution-bash`** (P3) — `skills/rdd-arch/scripts/roadmap_incremental_update.sh:25-33` 手动重新实现 `RDDF_PROJECT_ROOT` env check + git probe fallback,而不调用 `skills/_lib/orchestrator_entry.sh:33` 的现有 bash helper `_resolve_project_root`。修复策略:让该 script 用现有 bash helper,与 Python wrapper 形成双语言对称(5 Python + 3 bash scripts 共用 source of truth)。**澄清 user 描述**: `RDDF_HUB_REPO` 等只在 Python scripts 用,bash 0 hits (grep 验证)
@@ -240,6 +239,7 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-skill-layer-resolution-bash](.rddf/improvements/fix-skill-layer-resolution-bash.md) | P3 | 2026-09-28 | 已实施 |
 | [add-skill-layer-resolve-project-root-helper](.rddf/improvements/add-skill-layer-resolve-project-root-helper.md) | P2 | 2026-09-27 | 已实施 |
 | [fix-skill-layer-project-root-anti-pattern](.rddf/improvements/fix-skill-layer-project-root-anti-pattern.md) | P2 | 2026-09-26 | 已实施 |
 | [fix-33-handlers-project-root-anti-pattern](.rddf/improvements/fix-33-handlers-project-root-anti-pattern.md) | P2 | 2026-09-26 | 已实施 |

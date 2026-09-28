@@ -21,16 +21,19 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
 
-# Required env var: project root (must be an existing directory).
-if [ -z "${RDDF_PROJECT_ROOT:-}" ]; then
-  echo "❌ RDDF_PROJECT_ROOT is required but not set" >&2
-  exit 2
-fi
+# Source bash helper for project_root resolution (single source of truth,
+# per fix-skill-layer-resolution-bash). Try local checkout first, then global
+# install fallback (per select_worktree.sh:16 / arch_env_check.sh:21
+# convention).
+# shellcheck source=/dev/null
+source "${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/skills/_lib/orchestrator_entry.sh" 2>/dev/null || \
+  source "$HOME/.agents/skills/_lib/orchestrator_entry.sh" 2>/dev/null || true
+
+export RDDF_PROJECT_ROOT="$(_resolve_project_root)"
 if [ ! -d "$RDDF_PROJECT_ROOT" ]; then
   echo "❌ RDDF_PROJECT_ROOT is not a directory: $RDDF_PROJECT_ROOT" >&2
   exit 2
 fi
-export RDDF_PROJECT_ROOT
 
 # Shared helpers (optional — absent in minimal/global installs).
 # shellcheck source=/dev/null
