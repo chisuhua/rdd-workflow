@@ -235,3 +235,38 @@ teardown() {
     ! echo "$body" | grep -E "^\| \`?QUICK_FINISH_DETECTED"
     ! echo "$body" | grep -E "^\| \`?SKIP_PROMETHEUS_PLANNING"
 }
+
+# ---------- v2.1 fixes (added 2026-09-28, per oracle + Metis dual review) ----------
+
+@test "rdd-quick v2.1: SKILL.md mode a P4 calls generate_tasks_md.py" {
+    [ -f "$SKILL_FILE" ]
+    body="$(awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$SKILL_FILE")"
+    echo "$body" | grep -qF "generate_tasks_md.py"
+}
+
+@test "rdd-quick v2.1: SKILL.md mode a P4 calls sync_ac_to_proposal.py" {
+    [ -f "$SKILL_FILE" ]
+    body="$(awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$SKILL_FILE")"
+    echo "$body" | grep -qF "sync_ac_to_proposal.py"
+}
+
+@test "rdd-quick v2.1: SKILL.md P4 completion AND escalation call cleanup_context.sh" {
+    [ -f "$SKILL_FILE" ]
+    body="$(awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$SKILL_FILE")"
+    echo "$body" | grep -qF "cleanup_context.sh"
+}
+
+@test "rdd-quick v2.1: frontmatter owns rdd-quick-context.json WITHOUT (临时) mark" {
+    [ -f "$SKILL_FILE" ]
+    frontmatter="$(awk 'BEGIN{c=0} /^---$/{c++; next} c==1{print} c==2{exit}' "$SKILL_FILE")"
+    echo "$frontmatter" | grep -A 30 "owns:" | grep -qF "rdd-quick-context.json"
+    ! echo "$frontmatter" | grep -A 30 "owns:" | grep -F "rdd-quick-context.json (临时"
+}
+
+@test "rdd-quick v2.1: SKILL.md has Permission Context subsection documenting mode a expanded write scope" {
+    [ -f "$SKILL_FILE" ]
+    body="$(awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$SKILL_FILE")"
+    echo "$body" | grep -qF "## Permission Context"
+    echo "$body" | grep -qF "tasks.md"
+    echo "$body" | grep -qF "proposal.md"
+}

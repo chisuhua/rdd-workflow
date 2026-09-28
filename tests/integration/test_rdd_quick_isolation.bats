@@ -26,14 +26,22 @@ LOCKED_TASKS_WRITEBACK_SH="e9e0065de4f65fbeef763be3b3eb09626c99920744e6bb2585311
 # rdd-quick does NOT invoke archive_gate_check's SKIP_RDD_VERIFIER branch
 # (rdd-quick is bypass-path per ADR-0047), so the byte change here is an additive
 # audit hook with zero impact on rdd-quick's execution semantics.
-LOCKED_ARCHIVE_SH="12670407979ace43cd990baffb609dd627599f1a102cd4fc7e2ffe7b278474f3"
+# Note (2026-09-28): LOCKED_ARCHIVE_SH + LOCKED_RDD_PLANNER_ROLE_BLOCK recaptured
+# again after a series of additive-only commits (29f1530 file-presence guard,
+# c043e0b re-archive guard, 824b518 guide-polling回路). Per the same principle:
+# rdd-quick zero-pollution invariant preserved (additive audit hooks +
+# new owned boundaries, no rdd-quick execution semantics touched). This is the
+# v2.1-fix-rdd-quick-archive-verifier-gaps baseline sync.
+LOCKED_ARCHIVE_SH="2aa1c04ab1a916438c29f4a0bf73c3d95df1efaa611c7806bda1bd0cfc1a0d8a"
 # Role block of rdd-planner/SKILL.md (from `role:` through closing `---`).
 # This is the structural-only hash that MUST be byte-identical after rdd-quick lands.
 # LOCKED_RDD_PLANNER_ROLE_BLOCK: role: ... --- block sha256, captured post-ADR-0048
 # (per ADR-0048 §Decision 2: planner 完全独占 roadmap, owns 块添加 features/phases/populate-state,
 #  not_owns 块保持稳定). DRIFT after ADR-0048 implementation is EXPECTED; the
 # baseline was recaptured after the planner-bootstrap code changes landed.
-LOCKED_RDD_PLANNER_ROLE_BLOCK="58ef8cd7c907dbf8520d83face0f2d0b475df72caf0a52dbe80fa0670132c70a"
+# Note (2026-09-28): recaptured to current value after 8cd4376 objective-aware
+# planning + 21ff800 AUTO sentinel unify. Additive owns list changes only.
+LOCKED_RDD_PLANNER_ROLE_BLOCK="c033ec89c974c6fec9bfe5bd83a836efbd4a9d3c250b51522c8427b1083e4a92"
 
 @test "rdd-quick: select_worktree.sh sha256 unchanged" {
     [ -f "$PROJECT_ROOT/skills/execute/scripts/select_worktree.sh" ]

@@ -25,7 +25,8 @@ role:
     owns:
       - ".rddf/plans/quick-*.md"
       - ".rddf/state/.quick-history.jsonl"
-      - ".rddf/state/rdd-quick-context.json (临时, per ADR-0048)"
+      - ".rddf/state/rdd-quick-context.json"  # owned lifecycle: created in P0, deleted in P4 via cleanup_context.sh (per ADR-0048 + v2.1 fix)
+      - "openspec/changes/<change>/tasks.md (mode a 最小化生成, per ADR-0048 amendment + v2.1 fix)"
     not_owns:
       - "openspec/changes/<name>/"
       - "openspec/specs/<name>/"
@@ -99,6 +100,46 @@ The agent MUST (mode a — invoked from builder P0):
   - If invoked from builder (mode a): completion triggers `openspec archive <change> --yes` (skipping rdd-builder P1-P3)
   - If invoked directly (mode b): completion is final
 - **Escalation** (per ADR-0048 AMENDMENT): one JSONL line appended with `outcome: "escalated"` plus a stdout upgrade summary. **升级契约修订**: `skill_use("rdd-builder")` 回 P0 重新决策 (而非 `skill_use("rdd-planner")`, 避免 planner→builder→quick→planner 循环). No file is created under `openspec/changes/` or `openspec/specs/`.
+
+### Mode (a) P4 — pre-archive hooks (added 2026-09-28, per ADR-0048 amendment + v2.1 fix)
+
+Before invoking `openspec archive <change> --yes`, the agent MUST run three idempotent hooks in order. None touch tasks.md content beyond minimal one-shot generation, none mutate proposal.md beyond appending `## Acceptance (from rdd-quick plan)` segment.
+
+```bash
+# 1. Generate minimal tasks.md for archive_gate_check compatibility
+python3 skills/rdd-quick/scripts/generate_tasks_md.py \
+    --change "<change_name>" \
+    --plan ".rddf/plans/quick-<change_name>.md" \
+    --proposal "openspec/changes/<change_name>/proposal.md"
+
+# 2. Sync ACs from plan to proposal.md for rdd-verifier compatibility
+python3 skills/rdd-quick/scripts/sync_ac_to_proposal.py \
+    --plan ".rddf/plans/quick-<change_name>.md" \
+    --proposal "openspec/changes/<change_name>/proposal.md"
+
+# 3. (existing) openspec archive <change_name> --yes (skips P1-P3)
+```
+
+### Mode (a/b) P4 — post-audit cleanup hook (added 2026-09-28, per v2.1 fix)
+
+After `append_history.py` writes the outcome entry (completed OR escalated), the agent MUST clean up the transient context file. This prevents stale advisory on subsequent invocations.
+
+```bash
+bash skills/rdd-quick/scripts/cleanup_context.sh --reason completed
+# OR
+bash skills/rdd-quick/scripts/cleanup_context.sh --reason escalated
+```
+
+## Permission Context (added 2026-09-28, per v2.1 fix)
+
+Mode (a) expands rdd-quick's write scope from "no-openspec-touch" to "minimal openspec touch" for two artifacts, both idempotent and documented:
+
+| File | Write mode | Rationale |
+|---|---|---|
+| `openspec/changes/<change>/tasks.md` | One-shot minimal generation (Setup/Implementation/Verification, all `[x]`). Idempotent: skip if exists. | `archive_gate_check` requires tasks.md; rdd-quick retains no-逐任务-writeback spirit. |
+| `openspec/changes/<change>/proposal.md` | Append `## Acceptance (from rdd-quick plan)` segment with `<!-- BEGIN/END rdd-quick-ac -->` markers. Idempotent. | rdd-verifier reads AC from `proposal.md` (per rdd-verifier/SKILL.md); rdd-quick AC source is plan file (per ADR-0047 §D5); sync is the bridge. |
+
+Mode (b) write scope unchanged: zero openspec touch.
 
 ## P0 — Plan Generation
 
