@@ -11,7 +11,6 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [consolidate-resolve-project-root-helpers](.rddf/improvements/consolidate-resolve-project-root-helpers.md) | P3 | 2026-09-28 | rdd-planner |
 
 > **批次说明 (2026-09-28 rdd-planner, 第六批)**: 本批 1 项 consolidate-resolve-project-root-helpers 为 fix-skill-layer-resolution-bash (P3, 已 ship commit 1bcb8a0) 实施审计时识别的跨语言漂移风险:
 > 1. **`consolidate-resolve-project-root-helpers`** (P3) — bash + Python 双语言 helper 现为独立实现,无共享 contract → 行为可能漂移 (如 bash helper 未来支持 RDDF_PROJECT_ROOT override 而 Python 不知道)。修复策略: 单一 contract YAML 文件 (`skills/_lib/_resolve_project_root_contract.yaml`) 定义 4 个 invariant (env override / git probe / cwd fallback / function signature),双语言 helper 都从 contract 推导。比 codegen 更轻量 (不引入 build step),用约束 test (3 impl × 4 invariant = 12 cases) 确保未来修改不破坏 invariant
@@ -249,6 +248,7 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [consolidate-resolve-project-root-helpers](.rddf/improvements/consolidate-resolve-project-root-helpers.md) | P3 | 2026-09-28 | 已实施 |
 | [fix-skill-layer-resolution-bash](.rddf/improvements/fix-skill-layer-resolution-bash.md) | P3 | 2026-09-28 | 已实施 |
 | [add-skill-layer-resolve-project-root-helper](.rddf/improvements/add-skill-layer-resolve-project-root-helper.md) | P2 | 2026-09-27 | 已实施 |
 | [fix-skill-layer-project-root-anti-pattern](.rddf/improvements/fix-skill-layer-project-root-anti-pattern.md) | P2 | 2026-09-26 | 已实施 |

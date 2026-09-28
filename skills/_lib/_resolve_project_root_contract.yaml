@@ -1,0 +1,64 @@
+---
+# Project root resolution contract (per consolidate-resolve-project-root-helpers)
+#
+# Purpose: Single source of truth for project_root resolution invariants
+# across 3 implementations:
+#   - Bash:   skills/_lib/orchestrator_entry.sh::_resolve_project_root
+#   - Python skill layer wrapper: skills/_lib/_python_resolve_project_root.py::resolve_project_root
+#   - Python CLI dispatcher:     _lib/cli/__main__.py::resolve_project_root
+#
+# Each invariant below is enforced by compliance tests in tests/unit/.
+# Contract evolution: bump schema_version + add new test case.
+#
+# Related ADRs:
+#   - ADR-0033: submodule-aware git probe for project_root resolution
+schema_version: 1
+last_updated: "2026-09-28"
+sources:
+  - commit: "281423d"
+    change: "add-skill-layer-resolve-project-root-helper"
+  - commit: "1bcb8a0"
+    change: "fix-skill-layer-resolution-bash"
+
+invariants:
+  - id: invariant_env_override
+    semantics: |
+      If RDDF_PROJECT_ROOT env var is set and non-empty, return its value
+      as the project root path.
+    applies_to: [bash_helper, python_wrapper, python_cli]
+    layer_specific:
+      bash_helper: "Directly supported (orchestrator_entry.sh:34)"
+      python_wrapper: "Directly supported (_python_resolve_project_root.py:18-19)"
+      python_cli: |
+        NOT supported by default. _lib/cli/__main__.py:203 setdefault
+        injects the env var at cli_main.main() entry, so callers using
+        `rddf <sub>` get env override via that path. Direct calls to
+        _lib.cli.__main__.resolve_project_root() do NOT honor env var.
+
+  - id: invariant_git_probe
+    semantics: |
+      If RDDF_PROJECT_ROOT env var unset/empty AND cwd is inside a git
+      repo, return `git rev-parse --show-toplevel` output (submodule-aware
+      per ADR-0033).
+    applies_to: [bash_helper, python_wrapper, python_cli]
+    references: [ADR-0033]
+
+  - id: invariant_cwd_fallback
+    semantics: |
+      If RDDF_PROJECT_ROOT env var unset/empty AND cwd is NOT inside any
+      git repo, return cwd as-is (absolute path).
+    applies_to: [bash_helper, python_wrapper, python_cli]
+
+  - id: invariant_function_signature
+    semantics: |
+      Returns absolute path string (non-empty, starts with /).
+    applies_to: [bash_helper, python_wrapper, python_cli]
+    layer_specific:
+      bash_helper: "_resolve_project_root() function, output via echo"
+      python_wrapper: "resolve_project_root() -> str"
+      python_cli: "resolve_project_root() -> str"
+
+# Compliance tests (run from tests/unit/):
+#   - test_resolve_project_root_contract_bash.sh (3 cases x 1 impl = 3 cases)
+#   - test_resolve_project_root_contract_python.py (4 cases x 2 impls + 1 layer-exception = 10 cases)
+#   Total: 13 contract compliance cases (plus 1 from add-skill-layer-resolve-project-root-helper::test_cross_language_parity_with_bash_helper)
