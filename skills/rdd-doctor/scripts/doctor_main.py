@@ -11,6 +11,7 @@ from doctor_render import Finding, Severity, exit_code_for, render_human, render
 
 from checks import (
     ai_context_bootstrap_check,
+    arch_audit_check,
     bypass_audit_check,
     docs_consistency_check,
     gitignore_check,
@@ -48,6 +49,7 @@ _CHECKERS = {
     "improvement-frontmatter-consistency": improvement_frontmatter_check.run,
     "objective-lifecycle": objective_lifecycle_check.run,
     "objective-structure": objective_structure_check.run,
+    "arch-audit": arch_audit_check.run,
 }
 
 

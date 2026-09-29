@@ -1,20 +1,20 @@
 ---
 name: rdd-doctor
 description: |
-  Manual read-only diagnostic tool for 12 file categories.
+  Manual read-only diagnostic tool for 13 file categories.
 
   Invoke when BOTH:
     1. Workflow "feels broken" but no specific error
-    2. Need drift detection across `.rddf/state/` / plans / ADR / docs
+    2. Need drift detection across `.rddf/state/` / plans / ADR / docs / architecture
 
-  Default: read-only; 11 categories; exit codes 0/1/2/3 matching `openspec validate`.
+  Default: read-only; 13 categories; exit codes 0/1/2/3 matching `openspec validate`.
 
   Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: Requires bash + git + python3.11+ + jsonschema + pyyaml
 metadata:
   author: rdd-workflow
-  version: 0.1.0
+  version: 0.2.0
   user-invocable: true
 ---
 
@@ -23,7 +23,7 @@ metadata:
 ## 调用
 
 ```bash
-bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category state|plan-tdd|roadmap-meta|proposal-table|tasks-checkbox] [--quiet] [--help] [--version]
+bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category state|plan-tdd|roadmap-meta|proposal-table|tasks-checkbox|arch-audit] [--quiet] [--help] [--version]
 ```
 
 ## 何时该跑
@@ -59,6 +59,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category state|plan-tdd|roa
 | `tasks-checkbox` | `openspec/changes/*/tasks.md` checkbox 计数（独立于 openspec CLI） |
 | `migration-residue` | `AGENTS.md` / `README.md` / `USAGE.md` / `docs/proposal-*-format.md` 里的 stale `improvements/X` 引用和 `.rddf/.rddf/improvements/X` 双前缀 bug（WARNING）。`Fix:` 行直接给出 `rddf migrate-improvements --include-docs [--allow-source-repo]` 完整命令 |
 | `gitignore` | `.rddf/project.yaml` `git.openspec_tracked` × `.gitignore` `openspec/` 一致性（add-gitignore-hard-protection）：false+缺失 → WARNING（建议追加 + 混合状态提示 `git rm -r --cached`）；true+有 → 反向不一致 WARNING |
+| `arch-audit` | rdd-arch 产物健康度：gap-analysis structural_ok（per ADR-0046 §5）+ completeness（draft/partial/complete）+ ADR inventory（count / latest / superseded / status 漂移）+ `.arch-handoff.json` sanity。advisory only，不阻断任何 gate。设计动机：把 `check_arch_done_gate.sh` 内嵌的 advisory 检查外提为可独立 query 的 doctor category |
 
 ## 路径解析（MUST 行为）
 
@@ -113,6 +114,7 @@ bash skills/rdd-doctor/scripts/doctor.sh --json
 | `proposal-table`（列数不符） | 提示手工调整表格格式 |
 | `tasks-checkbox` | 提示运行 execute 或手工 fix tasks.md |
 | `roadmap-meta`（manual_deps drift）| 提示手工调整或重跑 plan |
+| `arch-audit`（gap-analysis drift / draft / ADR status 漂移 / arch-handoff 异常） | 全部为 **advisory 无写操作**：gap-analysis 骨架漂移提示手工补全或重跑 rdd-arch Phase 3；gap-analysis draft 提示手工策展；ADR status 漂移提示手工 finalize；arch-handoff 异常提示重跑 rdd-arch。无可执行 `rddf` 命令——落入 Step 5.5 的 `only-no-action` 终止分支 |
 
 **所有写操作必须先 `--dry-run`**，让用户看到会改什么再决定。例如：
 
