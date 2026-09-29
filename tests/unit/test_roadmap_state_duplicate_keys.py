@@ -187,11 +187,17 @@ def test_parse_fragment_array_theme_handles_nested_parens(tmp_path):
 
 
 def test_phase_fragments_use_array_theme():
-    """All .rddf/roadmap/phases/phase-*.md files use 主题: [array] syntax (no duplicate keys)."""
+    """All .rddf/roadmap/phases/phase-*.md files use 主题: [array] syntax (no duplicate keys).
+
+    Skipped when .rddf/roadmap/phases/ does not exist (e.g. fresh install before
+    rdd-planner Phase 0 roadmap-bootstrap has run).
+    """
     phases_dir = PROJECT_ROOT / ".rddf" / "roadmap" / "phases"
-    assert phases_dir.is_dir(), f"phases dir missing: {phases_dir}"
+    if not phases_dir.is_dir():
+        pytest.skip(f"phases dir missing: {phases_dir} (fresh project before roadmap-bootstrap)")
     phase_files = sorted(phases_dir.glob("phase-*.md"))
-    assert len(phase_files) > 0, "no phase files found"
+    if not phase_files:
+        pytest.skip(f"no phase-*.md files in {phases_dir}")
     for phase_md in phase_files:
         content = phase_md.read_text(encoding="utf-8")
         parts = content.split("---", 2)

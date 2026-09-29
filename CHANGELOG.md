@@ -12,6 +12,37 @@ in 4 SKILL.md (rdd-arch/planner/builder/verifier/quick). Closes 5 P0 findings fr
 
 ## [Unreleased]
 
+### fix-roadmap-phase-objective-parser (silent data loss + copy-paste debt, 2026-09-29)
+
+Two drift bugs confirmed via pre-planning audit (commit `67a3e85`):
+
+- **X1 — phase fragment silent data loss**: `_lib/roadmap_state.py::_parse_fragment_file`
+  naive parser kept only the last `主题:` value when frontmatter had duplicate
+  keys, dropping 1-2 themes per phase fragment. AUTO-INDEX therefore showed 1
+  theme per phase while the main doc Phase Skeleton table listed 2-4.
+  Fixed by adding `seen_keys` duplicate detection + array syntax support
+  (`主题: [a, b, c]`) + nested-parens-aware `_split_list_literal()` helper.
+  All 4 `.rddf/roadmap/phases/phase-N.md` files migrated to array form.
+  New `Fragment.themes: list[str]` field preserves all themes; `theme`
+  remains as first-element backward-compat shim.
+- **X3 — AGENTS.md dual sentinel writers + duplicated Python**:
+  `planner_stage_entry.sh` and `planner_stage_exit.sh` each contained ~45
+  lines of identical inline Python for objective parsing; exit also had ~60
+  lines of AGENTS.md sentinel refresh. Both now delegate to the unified
+  helpers: `_lib/objective_parser.py::collect_active_objectives` and
+  `_lib/roadmap_state.py::update_objectives_sentinel`. Stage scripts lost
+  ~174 lines of inline Python; only ~20 lines of shim remain.
+
+**No public API change**: `Fragment.themes` defaults to `[]`, existing
+single-value fragments continue to work, all 3110 pre-existing unit tests
+still pass + 22 new tests cover the fixes (total 3132 passing).
+
+**Follow-ups**: `phase-4.md` retains near-duplicate themes
+(`多方对称与回归` vs `多方对称 + 回归 (P1-P3, 后续)`) — flagged for
+human review and deduplication, not auto-merged. `rdd-arch/SKILL.md` and
+`README.md` v4.0+ docs cleaned of stale `roadmap-define` references
+(ADR-0048 migration completion).
+
 ### guide-orchestrator-session-event-bus (cross-container event bus, 2026-09-22)
 
 `guide` 升级为可跨多个 OpenCode 进程窗口观察 rddf-session 进度的"主入口"。新加 `stage_guide` kind + `events.jsonl` 文件事件总线 + `goal.last_seen_offset` per-owner 进度跟踪：

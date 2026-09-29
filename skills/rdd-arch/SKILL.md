@@ -71,7 +71,7 @@ skill_use("rdd-arch")   # 无参数版本
 
 | 子技能 | 阶段 | 职责 | 人工介入 |
 |--------|------|------|---------|
-| `rdd-arch`（本技能） | Stage 1 — arch | 架构定义：setup → adr-create → architecture → roadmap-define → arch-validation → arch-done | **高** |
+| `rdd-arch`（本技能） | Stage 1 — arch | 架构定义：setup → adr-create → architecture → arch-validation → arch-done（per ADR-0048 单门控；roadmap 由 rdd-planner Phase 0 接管） | **高** |
 | `rdd-planner` | Stage 2 — planner | 路线图 + 提案治理：proposal authoring → review → approve/reject/defer → design-done（v3.0 design+plan 合并，per ADR-0038/0042/0043） | **中** |
 | `rdd-builder` | Stage 3 — builder | 审批 + 执行 + 归档：6-phase 内部状态机 P0 (approval) → P1 (plan) → P1.5 (deps+exec_mode) → P2 (execute) → P2.5 (review) → P3 (archive with verifier retry)，per ADR-0043 stage-merge | **中→低** |
 | `rdd-verifier` | Stage 4 — verifier | 验证回环：批量 AC 验证 + 启发式分类（implementation_gap vs proposal_drift） + bounded retry → verify-done（per ADR-0034；v2.0 自包含 LLM 验证 per ADR-0045） | **低** |
@@ -415,7 +415,7 @@ cat "$SELECTED"
 
 **与 architecture 阶段的衔接**：
 
-用户选择「完成 ADR 阶段」后，进入 Phase 3 (architecture) 进行架构差距分析。arch 阶段内部可形成循环：adr-create → architecture → roadmap-define → adr-create（循环细化）。
+用户选择「完成 ADR 阶段」后，进入 Phase 3 (architecture) 进行架构差距分析。arch 阶段内部可形成循环：adr-create → architecture → adr-create（循环细化）。
 
 ---
 
@@ -472,7 +472,7 @@ fi
   1. 生成新的架构差距分析
   2. 查看现有分析报告
   3. 编辑已有差距分析
-  4. ✅ 完成架构分析 → 进入 roadmap-define
+  4. ✅ 完成架构分析 → 进入 arch-done（roadmap 由 rdd-planner Phase 0 接管，per ADR-0048）
   0. 💾 保存并退出
   i. 其他输入
 ```
@@ -525,9 +525,9 @@ fi
 cat "$SELECTED"
 ```
 
-**与 roadmap-define 阶段的衔接**：
+**与 arch-done 阶段的衔接**（per ADR-0048）：
 
-用户选择「完成架构分析」后，进入 Phase 4 (roadmap-define) 定义路线图。差距分析是 roadmap 阶段的核心输入——roadmap 的任务分类与优先级应来源于差距分析。
+用户选择「完成架构分析」后，arch 阶段进入 **arch-done**（单门控：ADR ≥ 1）。**Roadmap 创建由 `rdd-planner` Phase 0 接管**（rdd-arch 不再编写 roadmap）。差距分析是 `rdd-planner` Phase 1 的输入——roadmap 的任务分类与优先级应来源于此分析，但归 planner 维护。
 
 ## Arch Gap Analysis Protocol
 

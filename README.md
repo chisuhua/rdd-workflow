@@ -108,7 +108,7 @@ verification:
 
 | 阶段 | 技能 | 职责 | 人工介入 |
 |------|------|------|---------|
-| **Arch** | `rdd-arch` | 架构定义（ADR、roadmap、差距分析） | 高 |
+| **Arch** | `rdd-arch` | 架构定义（ADR + 差距分析；roadmap 已移交 rdd-planner per ADR-0048） | 高 |
 | **Planner** | `rdd-planner` | 路线图 + 提案治理（proposal authoring、review、approve/reject/defer；per ADR-0038/0042） | 中 |
 | **Builder** | `rdd-builder` | 审批 + 执行 + 归档（6-phase 内部状态机 P0→P3 整合 approval+plan+execute+archive per ADR-0043 stage-merge） | 中→低 |
 | **Verifier** | `rdd-verifier` | 验证回环（批量 AC 验证 + 启发式分类 + 失败回 builder，per ADR-0034；v2.0 自包含 LLM 验证 per ADR-0045） | 低 |
@@ -371,20 +371,7 @@ export SKIP_DEPS_GATE=yes  # plan-done 跳过 gate 5
 
 依赖分析使用 24h TTL 缓存(`.rddf/state/.cross-repo-deps-cache.json`),同一 plan-done 流程内多次 gate 调用只计算一次。
 
-### Roadmap Incremental Update (v2.2+)
-
-`rdd-arch` Phase 6 自动调用 `roadmap_incremental_update.sh`，基于 git HEAD + ADR file hash + reverse index 三源判定增量更新模式：
-
-- **skip** (零变更) — `< 0.1s`
-- **adr_only** (仅 ADR 改) — `< 1s`，仅重写受影响 phase fragment
-- **code_only** (仅代码改) — `< 1.5s`，仅重验证受影响 ADR
-- **full** (两方皆改 / 无 baseline / 陈旧) — `~4s`
-
-State 文件：`.rddf/state/.populate-state.json`（gitignored，独立于 v1.1 `.populate-supplementary.json`）
-
-Reset 命令：`rm .rddf/state/.populate-state.json`
-
-`populate-roadmap-from-arch` skill 已 v1.2 标记 deprecated（thin wrapper），新项目直接用 `skill_use("rdd-arch")`。
+> **Roadmap Incremental Update (v2.2+) 已废弃于 v4.0+**：原 `rdd-arch` Phase 6 自动调用 `roadmap_incremental_update.sh` 的机制已删除（per ADR-0048）。Roadmap 增量更新职责移交至 `rdd-planner` 维护 `.rddf/state/.populate-state.json`（per [rdd-arch SKILL.md](skills/rdd-arch/SKILL.md) §"变更说明"）。`populate-roadmap-from-arch` skill 已 v1.2 标记 deprecated（thin wrapper），新项目直接用 `skill_use("rdd-arch")`。
 
 ### Roadmap feature fragments (v2.2+)
 
