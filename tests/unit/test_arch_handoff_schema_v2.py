@@ -99,19 +99,21 @@ def test_v2_payload_with_adr_regex_validates(schema):
 
 # ============================================================================
 # M4 Task 4.2 (complete-project-yaml-config-gaps M4):
-# roadmap_incremental_update passes adr_regex from arch-handoff to scan_adr_catalog
+# adr_regex priority chain: explicit > arch-handoff > project.yaml > default.
+# Originally motivated by roadmap_incremental_update passing arch-handoff adr_regex
+# to scan_adr_catalog. After ADR-0048 the roadmap_incremental_update scripts
+# were deleted (Sep 2026), but the resolver priority chain itself is still
+# canonical for any future caller — kept verbatim.
 # ============================================================================
 
 
 def test_resolve_adr_pattern_priority_chain(tmp_path):
     """Priority: explicit > arch-handoff > project.yaml > default.
 
-    Per complete-project-yaml-config-gaps M4 Task 4.2: roadmap_incremental_update
-    must read arch-handoff adr_regex and pass it through to scan_adr_catalog
-    so 3-digit projects (ChipForge) work end-to-end.
-
-    This test verifies the resolver logic that the caller
-    (roadmap_incremental_update) will use.
+    Originally added for the (now-removed) roadmap_incremental_update caller
+    passing arch-handoff adr_regex through to scan_adr_catalog so 3-digit
+    projects (ChipForge) work end-to-end. The resolver contract is still
+    canonical for any caller needing a deterministic priority chain.
     """
     import json
     import yaml

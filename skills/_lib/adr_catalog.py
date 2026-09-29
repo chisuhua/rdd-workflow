@@ -4,10 +4,12 @@
 #
 # Wave X1 fix: load the real module by exec'ing its source directly, instead of
 # `import _lib.adr_catalog`. The plain import fails when the caller's sys.path
-# includes this shim's directory (e.g. when roadmap_incremental_update.py does
-# `sys.path.insert(0, skills/)` — Python then resolves `import _lib` to
-# `skills/_lib/` (this shim) and returns a partially-initialised module object
-# without the real module's attributes).
+# includes this shim's directory (e.g. when a caller does `sys.path.insert(0,
+# skills/)` — Python then resolves `import _lib` to `skills/_lib/` (this shim)
+# and returns a partially-initialised module object without the real module's
+# attributes). Historically this affected roadmap_incremental_update.py
+# (deleted Sep 2026 per ADR-0048); the exec-based fix remains correct for any
+# future caller that does the same sys.path mutation.
 import os as _os
 import sys as _sys
 import types as _types
