@@ -44,11 +44,29 @@ def test_rdd_arch_evolved_from_documents_rename():
 
 
 def test_rdd_arch_has_required_sections():
+    """Lock the 5 actual phase headings (per ADR-0048: roadmap-define removed).
+
+    Prior version checked 'roadmap-define' as a required section, which produced
+    a false-positive pass — the string appeared only inside a changelog note
+    ("原 Phase 4 roadmap-define 已**完全删除**"). This version checks the actual
+    `## Phase N: <name>` headings to guard against section drift. Uses prefix
+    match so trailing annotations like "(Exit) (renumbered per ADR-0048)" pass.
+    """
+    import re
     with open(SKILL_PATH) as f:
         content = f.read()
-    required = ["setup", "adr-create", "architecture", "roadmap-define", "arch-done"]
-    for section in required:
-        assert section in content, f"rdd-arch.md must contain section for {section}"
+    headings = re.findall(r"^## Phase \d+: (.+)$", content, re.MULTILINE)
+    required_prefixes = ["setup", "adr-create", "architecture", "arch validation", "arch-done"]
+    for prefix in required_prefixes:
+        assert any(h.startswith(prefix) for h in headings), (
+            f"rdd-arch.md must contain a Phase heading starting with {prefix!r}; "
+            f"found: {headings}"
+        )
+    # Per ADR-0048: roadmap-define removed; guard against accidental re-add
+    assert not any("roadmap-define" in h for h in headings), (
+        f"roadmap-define must NOT appear as a Phase heading (ADR-0048); "
+        f"found: {headings}"
+    )
 
 
 def test_rdd_arch_has_handoff_path():

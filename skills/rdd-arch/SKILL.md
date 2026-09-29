@@ -2,11 +2,11 @@
 name: rdd-arch
 description: |
   Stage 1 of v4 architecture (rdd-arch → rdd-planner → rdd-builder → rdd-verifier).
-  ADR + roadmap authoring + arch quality gate.
+  ADR authoring + arch quality gate (roadmap authoring migrated to rdd-planner per ADR-0048).
 
   Invoke when canonical preconditions hold:
     1. Project has ADR directory (default `docs/adr/`)
-    2. No `.rddf/roadmap.md` yet OR new ADR planned
+    2. New ADR planned OR current ADRs need review (gap analysis optional)
 
   Default: interactive setup (no auto-pick); produces `.rddf/state/.arch-handoff.json`.
 
@@ -550,7 +550,7 @@ cat "$SELECTED"
 - `validate_document(path)` → `ValidationReport(structural_ok, completeness, issues)`
 - `structural_ok = False` → generator drift（已封堵，8 个 bats 锁定）
 - `completeness ∈ {draft, partial, complete}` → 仅 advisory；人工异步策展不阻断 arch-done
-- arch-done Phase 5 接线 validation 已 defer 至独立 future change（per ADR-0046 out-of-scope）
+- arch-done Phase 5 接线由 `check_arch_done_gate.sh` 调用 `validate_document()`（advisory，不阻断；advisory 警告输出到 `.rddf/state/.arch-quality-report.json`）
 
 **slug 校验**（Oracle concern #3）：slug 必须 kebab-case（lowercase alphanumeric + single hyphen），否则 `ValueError`。
 
@@ -655,7 +655,7 @@ Do NOT auto-invoke `rdd-planner` - the user must explicitly transition. (per ADR
 
 **架构质量门（ADR-0018）**：
 
-arch-done 双重门控（ADR ≥ 1 + roadmap.md 存在）通过后，自动运行 4 个 warning 级质量检查，输出到 `.rddf/state/.arch-quality-report.json`：
+arch-done 单门控（ADR ≥ 1，per ADR-0048 §Decision 1）通过后，自动运行 4 个 warning 级质量检查（含 gap-analysis structural validation，advisory 不阻断），输出到 `.rddf/state/.arch-quality-report.json`：
 
 ```bash
 # Round B: extracted to _lib/arch_quality_report.sh (L564-L595, ~32 lines)
@@ -702,29 +702,26 @@ plan → arch: plan 阶段选择"返回 Arch 阶段" (需要更新架构)
 # 1. 验证 skill 文件存在且 frontmatter 完整
 python3 -c "
 import yaml
-with open('skills/rdd-arch.md') as f:
+with open('skills/rdd-arch/SKILL.md') as f:
     content = f.read()
 assert content.startswith('---')
 meta = yaml.safe_load(content.split('---', 2)[1])
 assert meta['name'] == 'rdd-arch'
 assert meta['metadata']['user-invocable'] is True
-print('✅ rdd-arch.md frontmatter valid')
+print('✅ rdd-arch SKILL.md frontmatter valid')
 "
 
-# 2. 验证子阶段齐全 (Phase 1-6)
-grep -E "^## Phase [0-9]+:" skills/rdd-arch.md
+# 2. 验证子阶段齐全 (Phase 1-5)
+grep -E "^## Phase [0-9]+:" skills/rdd-arch/SKILL.md
 
 # 3. 验证 handoff 文件路径正确
-grep "\.arch-handoff.json" skills/rdd-arch.md
+grep "\.arch-handoff.json" skills/rdd-arch/SKILL.md
 
 # 4. 验证 ADR 模板存在
 ls docs/adr/ADR-0000-template.md
-
-# 5. 验证 roadmap 文件存在
-ls roadmap.md
 ```
 
-<!-- 详细单元测试见 `tests/unit/test_guide_arch.py`（与本技能配套,待后续创建）。 -->
+<!-- 详细单元测试见 `tests/unit/test_rdd_arch_*.py`（与本技能配套）。 -->
 
 ---
 
