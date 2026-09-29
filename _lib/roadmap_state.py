@@ -603,16 +603,47 @@ from typing import List, Optional, Dict, Any
 class Fragment:
     """A roadmap fragment (phase or feature) loaded from .rddf/roadmap/{phases,features}/.
 
-    AC-1.6: contains 8 fields (id, kind, status, phase_refs, theme, file_path, frontmatter, body).
+    AC-1.6: contains 9 fields (id, kind, status, phase_refs, theme, themes, file_path, frontmatter, body).
     """
     id: str
     kind: str  # "phase" | "feature"
     status: str  # "active" | "done" | "archived"
     phase_refs: List[str] = field(default_factory=list)
     theme: str = ""
+    themes: List[str] = field(default_factory=list)
     file_path: str = ""
     frontmatter: Dict[str, Any] = field(default_factory=dict)
     body: str = ""
+
+
+def _split_list_literal(inner: str) -> List[str]:
+    """Split a YAML-like list literal body (without enclosing brackets) on commas
+    that are not inside nested parentheses or brackets.
+
+    Handles `主题: [多方对称与回归, 多方对称 + 回归 (P1-P3, 后续)]` correctly —
+    the comma inside `(P1-P3, 后续)` does NOT split items.
+    """
+    items: List[str] = []
+    depth = 0
+    current: List[str] = []
+    for ch in inner:
+        if ch in "([{":
+            depth += 1
+            current.append(ch)
+        elif ch in ")]}":
+            depth -= 1
+            current.append(ch)
+        elif ch == "," and depth == 0:
+            item = "".join(current).strip().strip("'\"")
+            if item:
+                items.append(item)
+            current = []
+        else:
+            current.append(ch)
+    item = "".join(current).strip().strip("'\"")
+    if item:
+        items.append(item)
+    return items
 
 
 def _parse_fragment_file(path: "Path") -> Optional[Fragment]:
@@ -621,6 +652,9 @@ def _parse_fragment_file(path: "Path") -> Optional[Fragment]:
     Returns None if file missing or not .md or no frontmatter delimiters.
     Naive YAML parser (no nested structures, no multiline scalars) — sufficient
     for the controlled fragment frontmatter schema (id/kind/status/phase_refs/主题).
+
+    Raises ValueError on duplicate frontmatter keys to prevent silent data
+    loss. Use array syntax `主题: [a, b, c]` for multi-value fields.
     """
     if not path.exists() or path.suffix != ".md":
         return None
@@ -635,6 +669,7 @@ def _parse_fragment_file(path: "Path") -> Optional[Fragment]:
         return None
     fm_text, body = parts[1].strip(), parts[2].strip()
     frontmatter: Dict[str, Any] = {}
+    seen_keys: set[str] = set()
     for line in fm_text.splitlines():
         if ":" not in line:
             continue
@@ -642,22 +677,31 @@ def _parse_fragment_file(path: "Path") -> Optional[Fragment]:
         k, v = k.strip(), v.strip()
         if not k:
             continue
+        if k in seen_keys:
+            raise ValueError(
+                f"duplicate frontmatter key {k!r} in {path.name}; "
+                f"use array syntax ({k}: [v1, v2, ...]) for repeated values"
+            )
+        seen_keys.add(k)
         if v.startswith("[") and v.endswith("]"):
-            # List literal: [a, b, c]
-            items: List[str] = []
-            for x in v[1:-1].split(","):
-                x = x.strip().strip("'\"")
-                if x:
-                    items.append(x)
+            items = _split_list_literal(v[1:-1])
             frontmatter[k] = items
         else:
             frontmatter[k] = v
+    theme_value = frontmatter.get("主题", "")
+    if isinstance(theme_value, list):
+        themes_list = theme_value
+    elif theme_value:
+        themes_list = [theme_value]
+    else:
+        themes_list = []
     return Fragment(
         id=frontmatter.get("id", path.stem),
         kind=frontmatter.get("kind", "phase"),
         status=frontmatter.get("status", "active"),
         phase_refs=frontmatter.get("phase_refs", []),
-        theme=frontmatter.get("主题", ""),
+        theme=themes_list[0] if themes_list else "",
+        themes=themes_list,
         file_path=str(path),
         frontmatter=frontmatter,
         body=body,
@@ -1128,3 +1172,89 @@ def update_agent_md(
         raise
 
     return {"inserted": inserted, "feature_count": len(features)}
+
+
+AGENTS_OBJECTIVES_SENTINEL_START = "<!-- AUTO: objectives start -->"
+AGENTS_OBJECTIVES_SENTINEL_END = "<!-- AUTO: objectives end -->"
+
+
+def update_objectives_sentinel(project_root: "str | Path") -> dict:
+    """Rewrite the AGENTS.md AUTO: objectives sentinel block.
+
+    Includes active, deferred, completed statuses; excludes archived.
+    Atomic write via tempfile + os.replace (mirrors update_agent_md).
+    Returns dict with `inserted` (bool) and `objective_count` (int).
+    """
+    from pathlib import Path as _P
+
+    root = _P(project_root)
+    obj_dir = root / ".rddf" / "roadmap" / "objectives"
+    agents = root / "AGENTS.md"
+    if not obj_dir.is_dir() or not agents.exists():
+        return {"inserted": False, "objective_count": 0}
+
+    import sys as _sys
+    _sys.path.insert(0, str(root))
+    try:
+        from _lib.objective import parse_objective
+    except ImportError:
+        return {"inserted": False, "objective_count": 0}
+
+    rows: list[str] = []
+    for f in sorted(obj_dir.glob("*.md")):
+        if f.parent.name == "archive":
+            continue
+        try:
+            data = parse_objective(f)
+        except (ValueError, OSError):
+            continue
+        fm = data.get("frontmatter", {})
+        if fm.get("status") not in ("active", "deferred", "completed"):
+            continue
+        rows.append(
+            f"| `{fm.get('id', f.stem)}` | {fm.get('priority', '?')} | "
+            f"{fm.get('status', '?')} | {fm.get('theme', '')[:80]} | "
+            f"{fm.get('review_by', '')} |"
+        )
+
+    table = (
+        "| ID | Priority | Status | Theme | Review By |\n"
+        "|-----|----------|--------|-------|-----------|"
+        + ("\n" + "\n".join(rows) if rows else "\n_(none)_")
+    )
+    new_block = (
+        f"{AGENTS_OBJECTIVES_SENTINEL_START}\n\n"
+        f"{table}\n\n"
+        f"{AGENTS_OBJECTIVES_SENTINEL_END}"
+    )
+
+    content = agents.read_text(encoding="utf-8")
+    if AGENTS_OBJECTIVES_SENTINEL_START in content and AGENTS_OBJECTIVES_SENTINEL_END in content:
+        start_idx = content.index(AGENTS_OBJECTIVES_SENTINEL_START)
+        end_idx = content.index(AGENTS_OBJECTIVES_SENTINEL_END, start_idx) + len(AGENTS_OBJECTIVES_SENTINEL_END)
+        before = content[:start_idx].rstrip()
+        after = content[end_idx:].lstrip("\n")
+        new_content = (before + "\n\n" if before else "") + new_block + ("\n" + after if after else "")
+        inserted = False
+    else:
+        h1_match = re.search(r"^# .+$", content, re.MULTILINE)
+        if h1_match:
+            insert_at = h1_match.start()
+            new_content = content[:insert_at] + new_block + "\n" + content[insert_at:]
+        else:
+            new_content = content.rstrip() + "\n\n" + new_block
+        inserted = True
+
+    fd, tmp_path = tempfile.mkstemp(
+        dir=str(agents.parent), prefix=".agents.md.tmp.", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(new_content)
+        os.replace(tmp_path, agents)
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        raise
+
+    return {"inserted": inserted, "objective_count": len(rows)}

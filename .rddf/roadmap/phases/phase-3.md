@@ -3,8 +3,7 @@ id: phase-3
 kind: phase
 status: active
 phase_refs: []
-主题: 审批后自动发 RFC
-主题: 流程定制层
+主题: [审批后自动发 RFC, 流程定制层]
 ---
 
 ## phase-3 概览
