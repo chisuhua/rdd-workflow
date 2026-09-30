@@ -220,16 +220,17 @@ Active objectives: N | Deferred: M
 
 **数据源（priority order）**：
 1. **PRIMARY**: `.rddf/state/.arch-handoff.json`（rdd-arch arch-done 时写入，含 `completed_adr_ids` / `architecture_dir` / `adr_count` / `arch_complete_at`）
-2. **FALLBACK**: 若 `.arch-handoff.json` 缺失或陈旧，**直接 glob** `docs/architecture/*.md`（theme doc；per ADR-0057，rdd-arch owns）——这些是当前架构快照，per-Page 包含 Primary ADRs 列
+2. **PRIMARY（交叉引用源）**: `docs/architecture/README.md` Doc Map 表的 **Primary ADRs 列**——这是 rdd-arch 实际维护的"当前架构组成决策"权威索引（per-Page theme doc 不含 `## Primary ADRs` section；该信息集中于 README.md Doc Map）
+3. **FALLBACK**: 若以上两者均缺失或陈旧，**直接 glob** `docs/architecture/*.md`（theme doc；per ADR-0057，rdd-arch owns）并读各 doc 的 `## References` 段（拉取 ADR 编号）
 
 > **重要边界（per ADR-0028 + ADR-0057）**：本节只指导读**本地** `docs/architecture/*.md`（rdd-arch owns 的 theme doc）；**不得**触发任何对远程 Hub repo（`rdd-hub` / `product-sync`）的拉取——那属于 `sync-hub` 技能的工作，不是 rdd-planner 的读路径。
 
 ### LLM 推理任务
 
-每个 theme doc 的 `## Primary ADRs` 表是 rdd-arch 已形式化记录的"当前架构组成决策"。Agent 必须：
-- 读 Primary ADRs 列出的 ADR 编号 → 与 `.arch-handoff.json::completed_adr_ids` 比对，识别**已记录但未在 Primary ADRs 中**的 ADR（可能孤立）或**在 Primary ADRs 中但未 implemented**的 ADR
-- 读 theme doc 的 `## Gap → 实现状态映射` 或 `## References`（如有），识别已被 `.rddf/improvements/*.md` 覆盖的能力 vs 未覆盖的
-- 输出 **recommended_actions** 列表（≤3 个，附 ADR 编号 + 行动建议：起草对应 improvement 草稿 / 主题文档需要补 Primary ADRs 列 / 跨文档链接已陈旧待 doc-drift）
+`docs/architecture/README.md` Doc Map 表的 **Primary ADRs 列**是 rdd-arch 实际维护的"当前架构组成决策"索引（per-Page theme doc 不含此 section）。Agent 必须：
+- 读 Doc Map 各行的 Primary ADRs 编号 → 与 `.arch-handoff.json::completed_adr_ids` 比对，识别**已记录但未在 Doc Map 中**的 ADR（可能孤立）或**在 Doc Map 中但未 implemented**的 ADR
+- 读相关 theme doc 的 `## Gap → 实现状态映射` 或 `## References`（如有），识别已被 `.rddf/improvements/*.md` 覆盖的能力 vs 未覆盖的
+- 输出 **recommended_actions** 列表（≤3 个，附 ADR 编号 + 行动建议：起草对应 improvement 草稿 / 主题文档需要补 Doc Map 入口 / 跨文档链接已陈旧待 doc-drift）
 
 ### 行为契约（prompt-not-auto）
 
@@ -242,13 +243,13 @@ Active objectives: N | Deferred: M
 
 ```
 === Architecture-Aware Plan (per ADR-0058) ===
-Arch context: arch-done at 2026-09-15 | 31 ADRs | theme docs: 17
-  Cross-ref gaps (theme ↔ arch-handoff):
-    - ADR-0014 待定 — theme doc 无 Primary ADRs 引用 — 推进建议: 走 rdd-arch 主题文档同步
-    - ADR-0030 hub-and-spoke-federation — 主题: hub-and-spoke-federation.md (已涵盖) ✓
-    - ADR-0032 hub-federation-deepening — 主题: 未明确 (待定) — 推进建议: 起草 add-hub-federation-deepening 草稿 (走 add-improve HARD-GATE)
+Arch context: arch-done at 2026-09-15 | 31 ADRs | theme docs: 16 (+README.md Doc Map)
+  Cross-ref gaps (Doc Map ↔ arch-handoff):
+    - ADR-0014 待定 — Doc Map 未引用 — 推进建议: 走 rdd-arch 主题文档同步
+    - ADR-0030 hub-and-spoke-federation — Doc Map: hub-and-spoke-federation.md (已涵盖) ✓
+    - ADR-0032 hub-federation-deepening — Doc Map: 未明确 (待定) — 推进建议: 起草 add-hub-federation-deepening 草稿 (走 add-improve HARD-GATE)
   Stale doc links: 0 (per proposal_table_check / migration_residue_check)
-  Theme docs missing Primary ADRs: 2 (overview.md, layer-0-progressive-context.md)
+  Doc Map 未注册 theme docs: 3 (guide-orchestrator-flow.md, rdd-arch-rdd-planner-integration.md, layer-0-progressive-context.md) — 推进建议: doc-drift 批次补全
 
 🤖 Recommended action (this turn): 起草 add-hub-federation-deepening 草稿 (走 add-improve HARD-GATE)
 ```

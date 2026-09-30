@@ -33,6 +33,66 @@ Two drift bugs confirmed via pre-planning audit (commit `67a3e85`):
   `_lib/roadmap_state.py::update_objectives_sentinel`. Stage scripts lost
   ~174 lines of inline Python; only ~20 lines of shim remain.
 
+
+### rdd-arch simplification: gap-analysis removal + theme-doc migration (3 phases, 2026-09-30)
+
+**Phase A** (ADR-0057, v2.2.0): delete gap-analysis artifact type entirely.
+- Removed `_lib/arch/protocol.py` (5-section contract) + `arch_gap_analysis.sh` +
+  `test_arch_protocol.py` + `test_arch_gap_analysis_extraction.bats` + `_lib/arch/__init__.py`
+- Simplified `rdd-arch` SKILL.md 5-phase → 4-phase (delete Phase 3 architecture gap-analysis)
+- Expanded owns to `docs/adr/ADR-*.md` + `docs/architecture/*.md` (theme docs)
+- `arch_quality_gate.py`: removed `arch_debt_recorded`; `arch_alignment` now scans
+  all theme docs (not just `*-gap-analysis.md`)
+- `gate.py`: removed 2 Check registrations (`gap_analysis_complete`, `arch_debt_recorded`)
+- `arch_audit_check.py`: replaced `_check_gap_analyses` with `_check_theme_docs`
+- `rdd-doctor` arch-audit category: 3 sub-checks (theme-doc existence + ADR
+  inventory + arch-handoff sanity), still the 18th doctor category
+- All test updates: version 2.1→2.2, removed `arch_debt` tests, replaced
+  gap-analysis tests with theme-doc tests, fixed false-positive Phase heading
+  check
+- Doc-drift cleanup per Oracle audit: fixed 5 stale references
+  (env_check.sh dead `_GAP_COUNT`, propose SKILL.md scan, rdd-arch
+  SKILL.md `guide-design` reference, arch_audit_check.py
+  `Phase 2.5` fix_hint, ADR-0018 check description)
+
+**Phase B** (ADR-0058): migrate the sole gap-analysis instance.
+- New theme doc `docs/architecture/hub-and-spoke-federation.md` (carries
+  §1+§2+§5 from old gap-analysis; §3 as gap→implementation status table
+  showing 8/10 gaps already covered by approved `.rddf/improvements/*.md`)
+- Deleted `docs/architecture/multi-project-ai-collaborative-development-gap-analysis.md`
+  (git = archive, no `.archive/` dir per YAGNI)
+- New ADR-0058 records the migration decision + gap→implementation mapping
+- `docs/architecture/README.md` Doc Map: added hub-and-spoke-federation.md
+  row with Primary ADRs (0030/0031/0032/0029/0058)
+- ADR-0057 (v2.2.0 decision) created
+- ADR index regenerated via `_lib/adr_index_generator`
+
+**Phase C** (ADR-0058 follow-up): rdd-planner architecture-aware Phase 0.
+- `skills/rdd-planner/SKILL.md`: new "Architecture-Aware Planning Guidance (v1.0,
+  per ADR-0058)" section mirroring the existing "Objective-Aware Planning
+  Guidance (v1.2)" structure (trigger / data source priority order / LLM
+  reasoning task / prompt-not-auto behavior contract / prose output format)
+- 3 wording guards: LOCAL-only (read `docs/architecture/*.md` not remote
+  Hub repo) / Read-only (mirror Objective-Aware's "严禁自动生成" — planner
+  never edits theme docs) / Stale-fallback (glob `docs/architecture/*.md`
+  if `.arch-handoff.json` missing/stale)
+- Data source corrected post-Oracle review: PRIMARY cross-reference source
+  is `docs/architecture/README.md` Doc Map Primary ADRs column (not
+  per-page `## Primary ADRs` sections which don't exist)
+- ADR-0058:67 TODO ticked
+- No new CLI, no schema change, no frontmatter fields (per Metis
+  simplification: C2/C3/C4 dropped, C6 test dropped)
+
+**Result**: rdd-arch simplified from 3 artifacts (ADR + theme-doc + gap-analysis)
+to 2 (ADR + theme-doc only). rdd-planner now consumes arch output as
+prose context. 9 commits ahead of origin/master; all 3126 unit tests
+pass (3 pre-existing skipped, 0 regressions).
+
+YAGNI over completeness: 5 deferred items (rddf arch inventory/supersede/
+generate-index CLIs, stale-ADR enhancement, P-E9 mock scenario, doc-drift
+batch for 3 dangling references, `_lib/phase_templates.yaml` identify_gaps
+step) all correctly scoped to future batches per ADR-0058 §后续待办
++ Metis recommendations.
 **No public API change**: `Fragment.themes` defaults to `[]`, existing
 single-value fragments continue to work, all 3110 pre-existing unit tests
 still pass + 22 new tests cover the fixes (total 3132 passing).
