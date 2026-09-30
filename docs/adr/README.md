@@ -72,7 +72,7 @@
 | [ADR-0043](ADR-0043-rdd-workflow-v4-stage-merge.md) | ADR-0043: rdd-workflow v4 stage-merge architecture | 已采纳 (2026-09-04) | 2026-09-04 |
 | [ADR-0044](ADR-0044-v4-stage-merge-wave3-hard-removal.md) | ADR-0044: v4 Stage Merge Wave 3 — Hard Removal of guide-* Skills | 已采纳 (2026-09-04) | 2026-09-04 |
 | [ADR-0045](ADR-0045-inline-ac-verifier-into-rdd-verifier.md) | ADR-0045: 内联 ac-verifier 到 rdd-verifier（v2.0 自包含 LLM 验证） | 已采纳 | 2026-09-07 |
-| [ADR-0046](ADR-0046-arch-analyzer-protocol-subset.md) | ADR-0046: arch-analyzer protocol subset | 已采纳 | 2026-09-07 |
+| [ADR-0046](ADR-0046-arch-analyzer-protocol-subset.md) | ADR-0046: arch-analyzer protocol subset | 已替代为 ADR-0057（gap-analysis 协议已删除；rdd-arch 简化为 ADR + theme doc 双工件） | 2026-09-07 |
 | [ADR-0047](ADR-0047-rdd-quick-bypass-path.md) | ADR-0047: rdd-quick bypass path — 无 openspec change 的快速执行路径 | 已采纳 + AMENDED (per ADR-0048, 2026-09-09) | 2026-09-07 (original); 2026-09-09 (amended) |
 | [ADR-0048](ADR-0048-v4-stage-merge-revision.md) | ADR-0048: v4 stage-merge 修订 — rdd-arch 完全脱离 roadmap + rdd-builder P0 触发 rdd-quick | 已采纳 (2026-09-09) | 2026-09-09 |
 | [ADR-0049](ADR-0049-rdd-builder-phase0-llm-integration.md) | ADR-0049: rdd-builder Phase 0 LLM Integration (Pre-flight Reasoning + Feedback Generation + Hidden Complexity Check) | 待采纳 | 2026-09-10 |
@@ -83,6 +83,9 @@
 | [ADR-0054](ADR-0054-objective-tracking.md) | ADR-0054: Objective 跟踪工件 (cross-sprint complex targets) | 已采纳 | 2026-09-22 |
 | [ADR-0055](ADR-0055-guide-orchestrator-session-event-bus.md) | ADR-0055: Guide-as-Orchestrator Session + Cross-Container Event Bus | 已采纳 + 已实施（v4.1 release，PR 1-4 / commit f5eb49c / bf6a7fc / 89117dc） | 2026-09-22 |
 | [ADR-0056](ADR-0056-guide-orchestrator-minimal-usage-flow.md) | ADR-0056: Guide Session 作为唯一交互入口的最小用法流程 | 已采纳 | 2026-09-24 |
+| [ADR-0057](ADR-0057-rdd-arch-simplify-delete-gap-analysis.md) | ADR-0057: rdd-arch 简化为 ADR + theme doc 双工件；删除 gap-analysis 协议 | 已采纳 | 2026-09-30 |
+| [ADR-0058](ADR-0058-gap-analysis-migration-to-theme-doc.md) | ADR-0058: gap-analysis 实例迁移到 theme doc（multi-project-ai-collaborative-development） | 已采纳 | 2026-09-30 |
+
 <!-- ADR_INDEX_END -->
 
 ## 架构演进

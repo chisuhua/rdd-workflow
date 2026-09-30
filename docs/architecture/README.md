@@ -21,6 +21,7 @@ For **decisions** behind the design, see [`../adr/README.md`](../adr/README.md).
 | [skills-and-handoff.md](skills-and-handoff.md) | SKILL.md frontmatter, discovery, handoff contracts | 0016 |
 | [multi-session.md](multi-session.md) | rddf-session lifecycle + conflict resolver | 0010, 0017 |
 | [extension-points.md](extension-points.md) | How to add a skill / detector / action / CLI / ADR | 0021 |
+| [hub-and-spoke-federation.md](hub-and-spoke-federation.md) | **NEW (2026-09-30)** Multi-project collaboration: Hub Repo + Projects V2 + cross-repo RFC/MCP/contract/deps via `report-issue`+`watch-hub`+`sync-hub`+`cross-repo-protocol`+`spoke-system-prompt-injection`. Migrated from `multi-project-ai-collaborative-development-gap-analysis.md` (deleted per ADR-0058). | 0030, 0031, 0032, 0029, 0058 |
 | [historical-evolution.md](historical-evolution.md) | v1.0 → v2.0 → v2.1 timeline + per-refactor motivation | — |
 
 ## Update Convention

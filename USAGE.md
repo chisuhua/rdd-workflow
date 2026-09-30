@@ -22,7 +22,7 @@
 
 | 端 | 职责 | 关键产物 |
 |----|------|---------|
-| **arch 端** (`rdd-arch`) | `setup → adr-create → architecture → roadmap-define → arch-done`（5 子阶段） | `roadmap.md`（默认，可由 ADR-0016 discovery 重新发现）、`docs/adr/ADR-*.md`、`docs/architecture/*-gap-analysis.md`（可选）、`.rddf/state/.arch-handoff.json` |
+| **arch 端** (`rdd-arch`) | `setup → adr-create → arch-validation → arch-done`（4 子阶段，per ADR-0048+ADR-0057 简化：删除原 `architecture` 阶段，gap-analysis 工件类型已下线） | `roadmap.md`（默认，可由 ADR-0016 discovery 重新发现）、`docs/adr/ADR-*.md`、`docs/architecture/<topic>.md`（theme doc）、`.rddf/state/.arch-handoff.json` |
 | **planner 端** (`rdd-planner`) | `preflight → review → approve/reject/defer → design-done`（v4.0+ 路线图 + 提案治理，per ADR-0038/0042） | `.rddf/improvements/<name>.md`、`improvement-approved.md` 更新、`.rddf/state/.planner-handoff.json` |
 | **builder 端** (`rdd-builder`) | 6-phase 内部状态机 `P0 (approval) → P1 (plan) → P1.5 (deps+exec_mode) → P2 (execute) → P2.5 (review) → P3 (archive)`（v4.0+ 整合 v3.0 plan+ship+design per ADR-0043） | `openspec/changes/<name>/{design,tasks}.md` 已提交、`.rddf/state/.plan-handoff.json`、`.rddf/state/.deps-analysis.json`、worktree 或轻量分支、`.rddf/plans/<name>.md`、`.rddf/state/iteration.json`、归档记录 |
 | **verifier 端** (`rdd-verifier`) | `discover → batch-verify → classify → route`（第四阶段，per ADR-0034，bounded retry 最多 3 次，v2.0 自包含 LLM 验证 per ADR-0045） | `.rddf/state/verifier/<change>.json`（loop state + 分类历史）、`.rddf/state/.ac-verdict-<name>.json`（SHA-fingerprint verdict cache）、`.rddf/state/verifier/<change>.audit.jsonl`（append-only audit log）、失败分类（implementation_gap / proposal_drift）+ 回 builder/planner 路由决策 |
@@ -255,7 +255,7 @@ i. 其他操作
 
 **行为**：
 1. 扫描 `docs/adr/ADR-*.md`（路径可由 ADR-0016 discovery 或 `SPEC_WORKFLOW_ADR_DIR` 覆盖）—— 找到已采纳但未实现的 ADR 项
-2. 扫描 `docs/architecture/*-gap-analysis.md`（**默认 discovery 路径**，如不存在则跳过）—— 找到功能缺口
+2. 扫描 `docs/architecture/*.md`（theme doc，含 Primary ADRs 列）—— 找到 federation / 跨项目类的功能缺口
 3. 扫描代码中的 `TODO`/`FIXME` 标记
 4. 生成 `improvement-suggestions.md` 建议列表（**JSON 数组格式**，由 `json.load()` 解析，非 grep）
 
