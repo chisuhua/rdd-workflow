@@ -1,8 +1,9 @@
 # ADR-0046: arch-analyzer protocol subset
 
-> **状态**: 已采纳
+> **状态**: 已替代为 ADR-0057（gap-analysis 协议已删除；rdd-arch 简化为 ADR + theme doc 双工件）
 > **日期**: 2026-09-07
 > **决策者**: rdd-workflow maintainer
+> **superseded_by**: ADR-0057（2026-09-30）
 > **关联**: ADR-0045 (verifier 5-section pattern), cross-stage-protocol-template.md
 > **Oracle session**: ses_f84cabe64ffeBiz3XzHmFSSznc
 

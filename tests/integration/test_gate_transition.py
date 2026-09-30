@@ -200,14 +200,22 @@ def test_all_three_transitions_have_default_checks(default_gate, state_vector_sa
 
 
 def test_default_arch_done_has_adr_and_roadmap_checks(default_gate, state_vector_saved):
-    """arch_done default checks include adr_exists + roadmap coverage (v4: gap_analysis_complete).
+    """arch_done default checks include adr_exists + quality checks (per ADR-0018 + ADR-0057).
 
-    roadmap_defined was intentionally removed in v4 stage-merge (0ae2950, rdd-arch slim);
-    roadmap coverage is now carried by gap_analysis_complete / arch_alignment / arch_debt_recorded.
+    CHANGED 2026-09-30 (per ADR-0057):
+      - Removed `gap_analysis_complete` (gap-analysis artifact type deleted)
+      - Removed `arch_debt_recorded` (gap-analysis-specific check)
+      - Retained 3 ADR-0018 quality checks: arch_alignment, adr_no_placeholders, arch_handoff_actionable
+
+    roadmap_defined was intentionally removed in v4 stage-merge (0ae2950, rdd-arch slim).
     """
     names = default_gate.get_registered_check_names()
     assert "adr_exists" in names
-    assert "gap_analysis_complete" in names
+    assert "arch_alignment" in names
+    assert "adr_no_placeholders" in names
+    assert "arch_handoff_actionable" in names
+    assert "gap_analysis_complete" not in names
+    assert "arch_debt_recorded" not in names
     assert "roadmap_defined" not in names
 
 

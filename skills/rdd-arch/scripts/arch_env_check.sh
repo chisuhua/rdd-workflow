@@ -7,8 +7,12 @@
 # - git workspace state check
 # - Current branch display
 # - Build directory detection by project type (Rust/Node/Python/C++/Unknown)
-# - ADR/roadmap/gap-analysis/active-change counts
+# - ADR/theme-doc/roadmap/active-change counts
 # - Delegates to discover-arch-artifacts.sh (ADR-0016 Layer 1)
+#
+# CHANGED 2026-09-30 (per ADR-0057):
+#   - Removed gap-analysis count (gap-analysis artifact type removed per ADR-0057)
+#   - Added theme-doc count to surface rdd-arch's primary composition artifact
 
 # ADR-0027 script-plane trigger (see add-post-flow-analysis change)
 export RDDF_PHASE="${RDDF_PHASE:-guide-arch}"
@@ -96,15 +100,15 @@ run_arch_env_check() {
       DISCOVERED_ARCH_FOUND="false"
   fi
 
-  local ADR_COUNT ROADMAP_EXISTS GAP_COUNT ACTIVE_CHANGES
+  local ADR_COUNT ROADMAP_EXISTS THEME_DOC_COUNT ACTIVE_CHANGES
   ADR_COUNT=$(orchestrator_run ls -d "$PROJECT_ROOT/$DISCOVERED_ADR_DIR/"$DISCOVERED_ADR_PATTERN 2>/dev/null | wc -l | tr -d '[:space:]')
   ROADMAP_EXISTS=$([ -f "$PROJECT_ROOT/$DISCOVERED_ROADMAP_PATH" ] && echo "yes" || echo "no")
-  GAP_COUNT=$(orchestrator_run ls "$PROJECT_ROOT/$DISCOVERED_ARCHITECTURE_DIR/"*-gap-analysis.md 2>/dev/null | wc -l | tr -d '[:space:]')
+  THEME_DOC_COUNT=$(orchestrator_run ls "$PROJECT_ROOT/$DISCOVERED_ARCHITECTURE_DIR/"*.md 2>/dev/null | grep -v -- '-0000-template\.md$' | wc -l | tr -d '[:space:]')
   ACTIVE_CHANGES=$(orchestrator_run ls -d "$PROJECT_ROOT"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l | tr -d '[:space:]')
 
   echo "📋 现有 ADR: $ADR_COUNT"
   echo "📋 Roadmap: $ROADMAP_EXISTS"
-  echo "📋 架构差距分析: $GAP_COUNT"
+  echo "📋 主题架构文档: $THEME_DOC_COUNT"
   echo "📋 活动 changes: $ACTIVE_CHANGES"
 
   echo ""

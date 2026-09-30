@@ -25,12 +25,20 @@ def test_rdd_arch_frontmatter_name_is_rdd_arch():
     assert meta["metadata"]["user-invocable"] is True
 
 
-def test_rdd_arch_version_bumped_to_2_1():
+def test_rdd_arch_version_bumped_to_2_2():
+    """Per ADR-0057 (v2.2.0): gap-analysis artifact type removed; rdd-arch
+    simplified to ADR + theme-doc dual artifact model.
+
+    Version bump rationale:
+    - v2.0: original guide-arch → rdd-arch rename (per ADR-0042)
+    - v2.1: frontmatter / description cleanup (Stage 3)
+    - v2.2: ADR + theme-doc only; gap-analysis deleted (per ADR-0057)
+    """
     with open(SKILL_PATH) as f:
         parts = f.read().split("---", 2)
     meta = yaml.safe_load(parts[1])
-    assert meta["metadata"]["version"] == "2.1.0", (
-        "rdd-arch metadata.version must be 2.1.0 (Stage 3 rename bump)"
+    assert meta["metadata"]["version"] == "2.2.0", (
+        "rdd-arch metadata.version must be 2.2.0 (per ADR-0057: gap-analysis removed)"
     )
 
 
@@ -44,19 +52,20 @@ def test_rdd_arch_evolved_from_documents_rename():
 
 
 def test_rdd_arch_has_required_sections():
-    """Lock the 5 actual phase headings (per ADR-0048: roadmap-define removed).
+    """Lock the 4 actual phase headings (per ADR-0048 + ADR-0057).
 
-    Prior version checked 'roadmap-define' as a required section, which produced
-    a false-positive pass — the string appeared only inside a changelog note
-    ("原 Phase 4 roadmap-define 已**完全删除**"). This version checks the actual
-    `## Phase N: <name>` headings to guard against section drift. Uses prefix
-    match so trailing annotations like "(Exit) (renumbered per ADR-0048)" pass.
+    Prior version checked 5 phases including 'architecture'. Per ADR-0057
+    (v2.2.0), the architecture phase was removed — gap-analysis artifact type
+    deleted; rdd-arch simplified to ADR + theme-doc dual model with 4 phases.
+
+    Uses prefix match so trailing annotations like "(Exit) (renumbered per
+    ADR-0048)" pass. Guards against accidental re-addition of removed phases.
     """
     import re
     with open(SKILL_PATH) as f:
         content = f.read()
     headings = re.findall(r"^## Phase \d+: (.+)$", content, re.MULTILINE)
-    required_prefixes = ["setup", "adr-create", "architecture", "arch validation", "arch-done"]
+    required_prefixes = ["setup", "adr-create", "arch validation", "arch-done"]
     for prefix in required_prefixes:
         assert any(h.startswith(prefix) for h in headings), (
             f"rdd-arch.md must contain a Phase heading starting with {prefix!r}; "
@@ -65,6 +74,11 @@ def test_rdd_arch_has_required_sections():
     # Per ADR-0048: roadmap-define removed; guard against accidental re-add
     assert not any("roadmap-define" in h for h in headings), (
         f"roadmap-define must NOT appear as a Phase heading (ADR-0048); "
+        f"found: {headings}"
+    )
+    # Per ADR-0057: architecture (gap-analysis) phase removed
+    assert not any(h.startswith("architecture") for h in headings), (
+        f"architecture phase must NOT appear (ADR-0057: gap-analysis removed); "
         f"found: {headings}"
     )
 

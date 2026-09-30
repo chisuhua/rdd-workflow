@@ -1,7 +1,7 @@
 """Tests for arch_audit_check (cat-arch-audit).
 
-Covers all 3 sub-checks:
-  1. Gap-analysis structural_ok / completeness (via _lib.arch.protocol.validate_document)
+Covers all 3 sub-checks (per ADR-0057, gap-analysis replaced by theme-doc check):
+  1. Theme-doc inventory summary (per ADR-0057: rdd-arch owns docs/architecture/*.md)
   2. ADR inventory summary + status drift detection
   3. arch-handoff.json sanity
 """
@@ -13,7 +13,6 @@ from pathlib import Path
 
 import pytest
 
-# Mirror the sys.path injection pattern from test_state_schema_check.py
 _SCRIPTS_DIR = Path(__file__).parent.parent.parent / "skills" / "rdd-doctor" / "scripts"
 sys.path.insert(0, str(_SCRIPTS_DIR))
 
@@ -22,107 +21,60 @@ from checks.arch_audit_check import (  # noqa: E402
     _CATEGORY,
     _check_adr_inventory,
     _check_arch_handoff,
-    _check_gap_analyses,
+    _check_theme_docs,
     run as run_check,
 )
 
 
 # ---------------------------------------------------------------------------
-# Gap-analysis sub-check
+# Theme-doc sub-check (per ADR-0057; replaces gap-analysis check)
 # ---------------------------------------------------------------------------
 
-def test_gap_check_no_arch_dir_returns_info(tmp_path: Path):
-    """docs/architecture/ missing → INFO (no-op, not failure)."""
-    findings = _check_gap_analyses(tmp_path)
+def test_theme_check_no_arch_dir_returns_warning(tmp_path: Path):
+    """docs/architecture/ missing → WARNING (rdd-arch owns theme docs per ADR-0057)."""
+    findings = _check_theme_docs(tmp_path)
     assert len(findings) == 1
-    assert findings[0].severity == Severity.INFO
+    assert findings[0].severity == Severity.WARNING
     assert "docs/architecture/ missing" in findings[0].snippet
 
 
-def test_gap_check_empty_dir_returns_info(tmp_path: Path):
-    """docs/architecture/ exists but no gap-analysis files → INFO."""
+def test_theme_check_empty_dir_returns_warning(tmp_path: Path):
+    """docs/architecture/ exists but no theme docs → WARNING (no architecture snapshot)."""
     (tmp_path / "docs" / "architecture").mkdir(parents=True)
-    findings = _check_gap_analyses(tmp_path)
-    assert len(findings) == 1
-    assert findings[0].severity == Severity.INFO
-    assert "0 gap-analyses found" in findings[0].snippet
-
-
-def test_gap_check_complete_returns_info(tmp_path: Path):
-    """Complete gap-analysis (all 5 sections, no placeholders) → INFO."""
-    arch_dir = tmp_path / "docs" / "architecture"
-    arch_dir.mkdir(parents=True)
-    gap = arch_dir / "test-gap-analysis.md"
-    gap.write_text(
-        "# 架构差距分析: test\n\n"
-        "## 1. 目标架构\n\nFilled target.\n\n"
-        "## 2. 当前架构\n\nFilled current.\n\n"
-        "## 3. 差距清单\n\n| 1 | x | 高 | P0 | change |\n\n"
-        "## 4. 补齐路径\n\nSteps.\n\n"
-        "## 5. 参考资料\n\n- ADR-0001\n"
-    )
-    findings = _check_gap_analyses(tmp_path)
-    assert len(findings) == 1
-    assert findings[0].severity == Severity.INFO
-    assert "complete" in findings[0].snippet
-
-
-def test_gap_check_draft_returns_info_with_draft_label(tmp_path: Path):
-    """Skeleton-only (all placeholders intact) → INFO with draft label."""
-    arch_dir = tmp_path / "docs" / "architecture"
-    arch_dir.mkdir(parents=True)
-    gap = arch_dir / "draft-gap-analysis.md"
-    # Mirror the skeleton template from _lib/arch/protocol.py
-    gap.write_text(
-        "# 架构差距分析: draft\n\n"
-        "## 1. 目标架构\n\n(描述 ADR 中定义的目标架构)\n\n"
-        "## 2. 当前架构\n\n(描述项目当前实际架构)\n\n"
-        "## 3. 差距清单\n\n"
-        "| # | 差距项 | 严重程度 | 优先级 | 关联 change |\n"
-        "|---|--------|---------|--------|------------|\n"
-        "| 1 | ... | 高/中/低 | P0/P1/P2 | ... |\n\n"
-        "## 4. 补齐路径\n\n(描述从当前架构迁移到目标架构的步骤、顺序、依赖)\n\n"
-        "## 5. 参考资料\n\n- 相关 ADR\n- 相关 change artifacts\n"
-    )
-    findings = _check_gap_analyses(tmp_path)
-    assert len(findings) == 1
-    assert findings[0].severity == Severity.INFO
-    assert "draft" in findings[0].snippet
-    assert "skeleton" in findings[0].snippet
-
-
-def test_gap_check_structural_drift_returns_warning(tmp_path: Path):
-    """File present but missing required sections → WARNING (structural_ok=False)."""
-    arch_dir = tmp_path / "docs" / "architecture"
-    arch_dir.mkdir(parents=True)
-    gap = arch_dir / "broken-gap-analysis.md"
-    gap.write_text("# Broken\n\n## Random Section\n\nNothing useful.\n")
-    findings = _check_gap_analyses(tmp_path)
+    findings = _check_theme_docs(tmp_path)
     assert len(findings) == 1
     assert findings[0].severity == Severity.WARNING
-    assert "structural drift" in findings[0].snippet
-    # Per ADR-0046 §5, structural_ok failures are HARD; we surface WARNING
-    # because arch-audit is advisory (never blocks gates).
+    assert "0 theme docs found" in findings[0].snippet
 
 
-def test_gap_check_multiple_files(tmp_path: Path):
-    """Multiple gap-analyses: each gets its own finding."""
+def test_theme_check_with_docs_returns_summary(tmp_path: Path):
+    """Multiple theme docs → INFO summary listing up to 5 names."""
     arch_dir = tmp_path / "docs" / "architecture"
     arch_dir.mkdir(parents=True)
-    # File 1: complete
-    (arch_dir / "a-gap-analysis.md").write_text(
-        "# 架构差距分析: a\n\n"
-        "## 1. 目标架构\n\nx\n\n## 2. 当前架构\n\nx\n\n"
-        "## 3. 差距清单\n\n| 1 | x | 高 | P0 | x |\n\n"
-        "## 4. 补齐路径\n\nx\n\n## 5. 参考资料\n\n- x\n"
-    )
-    # File 2: broken
-    (arch_dir / "b-gap-analysis.md").write_text("# B\n\nbroken.\n")
-    findings = _check_gap_analyses(tmp_path)
-    assert len(findings) == 2
-    severities = {f.severity for f in findings}
-    assert Severity.WARNING in severities
-    assert Severity.INFO in severities
+    (arch_dir / "overview.md").write_text("# Overview\n")
+    (arch_dir / "workflow-phases.md").write_text("# Workflow\n")
+    # Template file should be excluded
+    (arch_dir / "README-0000-template.md").write_text("# template\n")
+    findings = _check_theme_docs(tmp_path)
+    assert len(findings) == 1
+    assert findings[0].severity == Severity.INFO
+    assert "2 theme docs" in findings[0].snippet
+    assert "overview" in findings[0].snippet
+    assert "workflow-phases" in findings[0].snippet
+    # Template excluded
+    assert "template" not in findings[0].snippet
+
+
+def test_theme_check_truncates_long_list(tmp_path: Path):
+    """More than 5 theme docs → summary truncates with ellipsis."""
+    arch_dir = tmp_path / "docs" / "architecture"
+    arch_dir.mkdir(parents=True)
+    for i in range(7):
+        (arch_dir / f"topic-{i}.md").write_text(f"# Topic {i}\n")
+    findings = _check_theme_docs(tmp_path)
+    snippet = findings[0].snippet
+    assert "7 theme docs" in snippet
+    assert "…" in snippet
 
 
 # ---------------------------------------------------------------------------
@@ -159,7 +111,6 @@ def test_adr_inventory_with_adrs_returns_summary(tmp_path: Path):
     (adr_dir / "ADR-0003-baz.md").write_text(
         "# ADR-0003\n\n> **状态**: 已采纳\n\nContent.\n"
     )
-    # Template file should be excluded
     (adr_dir / "ADR-0000-template.md").write_text("# template\n")
     findings = _check_adr_inventory(tmp_path)
     summary = next(f for f in findings if "ADRs" in f.snippet and "latest" in f.snippet)
@@ -265,45 +216,35 @@ def test_handoff_v2_valid_returns_info(tmp_path: Path):
 
 def test_run_aggregates_all_three_subchecks(tmp_path: Path):
     """run() returns findings from all 3 sub-checks (none raise)."""
-    # Minimal fixture: ADRs present, no gap-analyses, no handoff
     adr_dir = tmp_path / "docs" / "adr"
     adr_dir.mkdir(parents=True)
     (adr_dir / "ADR-0001-foo.md").write_text("# ADR-0001\n\n> **状态**: 已采纳\n\nx.\n")
     findings = run_check(project_root=tmp_path)
-    # 1 ADR inventory INFO + 1 arch-handoff missing INFO = 2 findings
     categories = {f.category for f in findings}
     assert categories == {_CATEGORY}
     severities = [f.severity for f in findings]
-    # All findings should be INFO (nothing broken)
-    assert all(s == Severity.INFO for s in severities)
+    # Has WARNING (theme-docs missing) + INFO (ADR + handoff)
+    assert Severity.WARNING in severities
+    assert Severity.INFO in severities
 
 
 def test_run_handles_missing_project_root_env(tmp_path: Path, monkeypatch):
     """run() resolves project_root from RDDF_PROJECT_ROOT env var."""
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
-    # Empty tmp_path → all 3 sub-checks return INFO (no failures)
     findings = run_check(project_root=None)
-    assert len(findings) >= 2  # at least ADR inventory + arch-handoff missing
+    assert len(findings) >= 2
 
 
-def test_run_with_complete_project_returns_info_only(tmp_path: Path):
-    """Healthy project → no WARNING/CRITICAL from arch-audit."""
-    # ADRs
+def test_run_with_healthy_project_returns_only_info(tmp_path: Path):
+    """Healthy project (ADR + theme docs + valid handoff) → no WARNING/CRITICAL."""
     adr_dir = tmp_path / "docs" / "adr"
     adr_dir.mkdir(parents=True)
     (adr_dir / "ADR-0001-foo.md").write_text(
         "# ADR-0001\n\n> **状态**: 已采纳\n\nx.\n"
     )
-    # Complete gap-analysis
     arch_dir = tmp_path / "docs" / "architecture"
     arch_dir.mkdir(parents=True)
-    (arch_dir / "test-gap-analysis.md").write_text(
-        "# 架构差距分析: test\n\n"
-        "## 1. 目标架构\n\nx\n\n## 2. 当前架构\n\nx\n\n"
-        "## 3. 差距清单\n\n| 1 | x | 高 | P0 | x |\n\n"
-        "## 4. 补齐路径\n\nx\n\n## 5. 参考资料\n\n- x\n"
-    )
-    # Valid v2 handoff
+    (arch_dir / "overview.md").write_text("# Overview\n\nCurrent state description.\n")
     state = tmp_path / ".rddf" / "state"
     state.mkdir(parents=True)
     (state / ".arch-handoff.json").write_text(json.dumps({
@@ -311,7 +252,6 @@ def test_run_with_complete_project_returns_info_only(tmp_path: Path):
     }))
     findings = run_check(project_root=tmp_path)
     severities = {f.severity for f in findings}
-    # Healthy fixture → only INFO (no WARNING, no CRITICAL)
     assert Severity.CRITICAL not in severities
     assert Severity.WARNING not in severities
     assert Severity.INFO in severities

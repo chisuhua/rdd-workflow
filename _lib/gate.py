@@ -27,7 +27,6 @@ from skills._lib.core.state_vector import StateVector
 from skills._lib.core.defaults import STATE_VECTOR_PATH, EVENT_LOG_PATH
 from skills._lib.arch_quality_gate import (
     _check_arch_alignment,
-    _check_arch_debt,
     _check_adr_clarity,
     _check_handoff_actionable,
     strict_wrap,
@@ -150,10 +149,6 @@ def _check_adr_exists(ctx: dict) -> tuple[bool, Optional[str]]:
         return (False, None)
     matches = list(adr_dir.glob(paths["adr_pattern"]))
     return (len(matches) > 0, None)
-
-
-def _check_gap_analysis_complete(ctx: dict) -> tuple[bool, Optional[str]]:
-    return (True, "warning")  # Warning: gap analysis is optional
 
 
 def _check_arch_handoff_exists(ctx: dict) -> tuple[bool, Optional[str]]:
@@ -371,11 +366,9 @@ def _check_review_debt_recorded(ctx: dict) -> tuple[bool, Optional[str]]:
 _DEFAULT_CHECKS = {
     "arch_done": [
         Check("adr_exists", _check_adr_exists, "ADR directory missing or empty", "Create ADRs: mkdir -p docs/adr && touch docs/adr/ADR-0001.md", "error"),
-        Check("gap_analysis_complete", _check_gap_analysis_complete, "Gap analysis not run", "Run: openspec scan", "warning"),
-        Check("arch_alignment", strict_wrap(_check_arch_alignment), "roadmap/gap-analysis references ADRs that don't exist on disk", "Resolve ghost ADR references, or create the missing ADR files", "warning"),
-        Check("arch_debt_recorded", strict_wrap(_check_arch_debt), "gap-analysis has unresolved high-severity / P0 row", "Either resolve the gap or schedule it as a P0 task in roadmap.md", "warning"),
+        Check("arch_alignment", strict_wrap(_check_arch_alignment), "roadmap/theme-docs references ADRs that don't exist on disk (per ADR-0057, gap-analysis removed)", "Resolve ghost ADR references, or create the missing ADR files", "warning"),
         Check("adr_no_placeholders", strict_wrap(_check_adr_clarity), "ADR file still contains template placeholders (<待补充>, <TBD>, NNNN)", "Complete the ADR content or delete the stub", "warning"),
-        Check("arch_handoff_actionable", strict_wrap(_check_handoff_actionable), ".arch-handoff.json missing actionable fields (current_phase=default or discovered.adr_dir.found=false)", "Re-run guide-arch Phase 5 to regenerate handoff", "warning"),
+        Check("arch_handoff_actionable", strict_wrap(_check_handoff_actionable), ".arch-handoff.json missing actionable fields (current_phase=default or discovered.adr_dir.found=false)", "Re-run skill_use('rdd-arch') Phase 4 to regenerate handoff", "warning"),
     ],
     "plan_done": [
         Check("arch_handoff_exists", _check_arch_handoff_exists, "arch-done handoff 缺失", "请先运行 skill_use('guide-arch') 完成架构定义", "error"),

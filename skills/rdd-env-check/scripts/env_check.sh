@@ -57,7 +57,6 @@ _run_env_full_check() {
 
   _ADR_COUNT=$(ls -d "$project_root/$discovered_adr_dir/"ADR-*.md 2>/dev/null | wc -l | tr -d '[:space:]')
   _ROADMAP_EXISTS=$([ -f "$project_root/$discovered_roadmap" ] && echo "yes" || echo "no")
-  _GAP_COUNT=$(ls "$project_root/$discovered_arch/"*-gap-analysis.md 2>/dev/null | wc -l | tr -d '[:space:]')
   _ACTIVE_CHANGES=$(ls -d "$project_root"/openspec/changes/*/ 2>/dev/null | grep -v archive/ | wc -l | tr -d '[:space:]')
 
   _cache_write

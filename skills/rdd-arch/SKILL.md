@@ -2,11 +2,11 @@
 name: rdd-arch
 description: |
   Stage 1 of v4 architecture (rdd-arch → rdd-planner → rdd-builder → rdd-verifier).
-  ADR authoring + arch quality gate (roadmap authoring migrated to rdd-planner per ADR-0048).
+  ADR authoring + arch quality gate for ADR + theme-doc artifacts (per ADR-0057).
 
   Invoke when canonical preconditions hold:
     1. Project has ADR directory (default `docs/adr/`)
-    2. New ADR planned OR current ADRs need review (gap analysis optional)
+    2. New ADR planned OR current ADRs need review OR theme doc needs sync
 
   Default: interactive setup (no auto-pick); produces `.rddf/state/.arch-handoff.json`.
 
@@ -14,20 +14,17 @@ description: |
 license: MIT
 compatibility: Requires openspec CLI v1.3.1+, git 2.25+
 metadata:
-  version: "2.1.0"
+  version: "2.2.0"
   author: sisyphus
-  evolved-from: "renamed from guide-arch.md v2.0 (Stage 3 D1a rename per ADR-0042)"
+  evolved-from: "renamed from guide-arch.md v2.0 (Stage 3 D1a rename per ADR-0042); v2.2 simplified to ADR + theme-doc dual artifact model per ADR-0057"
   user-invocable: true
-  protocol_inline: true
-  protocol_data_layer: "_lib/arch/protocol.py"
-  protocol_output_contract: true
 role:
   title: "Architect (架构治理者)"
-  perspective: "Think in terms of long-term architectural coherence, ADR-driven decision-making, and roadmap alignment. Avoid premature implementation details."
+  perspective: "Think in terms of long-term architectural coherence, ADR-driven decision-making, and theme-doc composition. Avoid premature implementation details."
   boundaries:
     owns:
       - "docs/adr/ADR-*.md"
-      - "docs/architecture/*-gap-analysis.md"
+      - "docs/architecture/*.md"
       - ".rddf/state/.arch-handoff.json"
     not_owns:
       - "openspec/changes/<name>/{proposal,design,tasks}.md"
@@ -43,13 +40,13 @@ role:
 
 > **Stage 3 (2026-09-03)**: 此 skill 从 `guide-arch` 重命名为 `rdd-arch`（per D1a 渐进策略）。旧名称 `guide-arch` 通过 `skills/rdd-arch/SKILL.md` 的 5 行 shim 兼容至 v3.x + 2 minor release。
 > `rdd-arch` 是 canonical name；本 skill 与 `rdd-planner`、`rdd-verifier` 命名对齐。
-> 提案审批（v2.1 之前在 rdd-arch Phase 5.5）已迁移到 `rdd-planner` 阶段。
+> **v2.2 (2026-09-30, ADR-0057)**: 简化为 ADR + theme-doc 双工件模型；删除 gap-analysis 协议（per ADR-0046 superseded）。rdd-arch 现在只管**两类工件**：(1) ADRs（atomic decision records） + (2) theme docs（docs/architecture/<topic>.md，组合叙事 + 当前架构快照）。迁移路线图能力移交给 `rdd-planner`（`.rddf/roadmap/phases/*.md` + `.rddf/improvements/*.md`）。
 
 # rdd-workflow 工作流 — Arch-Side Guide
 
-本技能是 rdd-workflow 工作流 v4.0+ 的 **arch 端状态机**：负责在生成 OpenSpec change artifacts 之前的**架构定义**工作——环境检测、ADR 文档管理、架构差距分析、路线图定义。arch 阶段是**四阶段架构**（`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`，per [ADR-0043](../adr/ADR-0043-rdd-workflow-v4-stage-merge.md)）的第一阶段，专为高人工介入、低频执行的架构治理工作而设计。
+本技能是 rdd-workflow 工作流 v4.0+ 的 **arch 端状态机**：负责在生成 OpenSpec change artifacts 之前的**架构定义**工作——环境检测、ADR 文档管理、主题架构文档同步。arch 阶段是**四阶段架构**（`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`，per [ADR-0043](../adr/ADR-0043-rdd-workflow-v4-stage-merge.md)）的第一阶段，专为高人工介入、低频执行的架构治理工作而设计。
 
-> **演进历史**：v2.0 三阶段架构（arch → plan → ship，per ADR-0003）→ v2.1 扩展为四阶段（+ design，per ADR-0025）→ v3.0+ 扩展为 5-stage（+ verify，per ADR-0034）→ v4.0+ 合并为四阶段（per ADR-0043）。
+> **演进历史**：v2.0 三阶段架构（arch → plan → ship，per ADR-0003）→ v2.1 扩展为四阶段（+ design，per ADR-0025）→ v3.0+ 扩展为 5-stage（+ verify，per ADR-0034）→ v4.0+ 合并为四阶段（per ADR-0043）。v4.x 简化 rdd-arch 工件集（per ADR-0057）：从 ADR + theme doc + gap-analysis 三类精简到 ADR + theme doc 两类。
 
 **职责边界**：
 - **角色定义**：见 frontmatter `role:` 字段（ADR-0028）
@@ -71,8 +68,8 @@ skill_use("rdd-arch")   # 无参数版本
 
 | 子技能 | 阶段 | 职责 | 人工介入 |
 |--------|------|------|---------|
-| `rdd-arch`（本技能） | Stage 1 — arch | 架构定义：setup → adr-create → architecture → arch-validation → arch-done（per ADR-0048 单门控；roadmap 由 rdd-planner Phase 0 接管） | **高** |
-| `rdd-planner` | Stage 2 — planner | 路线图 + 提案治理：proposal authoring → review → approve/reject/defer → design-done（v3.0 design+plan 合并，per ADR-0038/0042/0043） | **中** |
+| `rdd-arch`（本技能） | Stage 1 — arch | 架构定义：setup → adr-create → arch validation → arch-done（4 phase；per ADR-0057：ADR + theme-doc 双工件；roadmap 由 rdd-planner Phase 0 接管） | **高** |
+| `rdd-planner` | Stage 2 — planner | 路线图 + 提案治理：proposal authoring → review → approve/reject/defer → design-done（v3.0 design+plan 合并，per ADR-0038/0042/0043/0048） | **中** |
 | `rdd-builder` | Stage 3 — builder | 审批 + 执行 + 归档：6-phase 内部状态机 P0 (approval) → P1 (plan) → P1.5 (deps+exec_mode) → P2 (execute) → P2.5 (review) → P3 (archive with verifier retry)，per ADR-0043 stage-merge | **中→低** |
 | `rdd-verifier` | Stage 4 — verifier | 验证回环：批量 AC 验证 + 启发式分类（implementation_gap vs proposal_drift） + bounded retry → verify-done（per ADR-0034；v2.0 自包含 LLM 验证 per ADR-0045） | **低** |
 | `rdd-quick` | **旁路路径**（Bypass, per ADR-0047） | 小改动的快速执行：P0 (plan gen) → P1 (complexity triage) → P2 (in-place execute) → P3 (AC verify) → P4 (complete/retry/escalate)。跳过 openspec change + worktree | **中** |
@@ -84,10 +81,10 @@ skill_use("rdd-arch")   # 无参数版本
 [rdd-arch]  --(arch-done: ADR ≥ 1, 单门控 per ADR-0048)-->  [rdd-planner]  --(planner-done: roadmap存在 + recommended_route)-->  [rdd-builder]
    arch 端                                                planner 端                                          builder 端
    owns: docs/adr/ADR-*.md,                              owns: roadmap.md, improvement-suggestions.md,             owns: openspec/changes/<name>/
-        docs/architecture/*-gap-analysis.md,                  improvement-approved.md,                              proposal.md (authoring via P0 approve),
+        docs/architecture/*.md,                                improvement-approved.md,                              proposal.md (authoring via P0 approve),
         .rddf/state/.arch-handoff.json                        .rddf/roadmap/{features,phases}/*.md,             {design,tasks}.md, .rddf/wt/<name>/,
         (roadmap 完全不写 per ADR-0048)                       .rddf/improvements/*.md,                          .rddf/plans/<name>.md,
-                                                              .rddf/state/.planner-{state,feedback,handoff}.json  .rddf/state/builder/<change>.json
+                                                               .rddf/state/.planner-{state,feedback,handoff}.json  .rddf/state/builder/<change>.json
    exits: .rddf/state/.arch-handoff.json                 exits: .rddf/state/.planner-handoff.json              exits: .rddf/state/builder/<change>.json
        --(user manual switch)--> [rdd-planner]         --(user manual switch)--> [rdd-builder P0-P3] --(archive)--> [rdd-verifier]
 
@@ -95,14 +92,14 @@ skill_use("rdd-arch")   # 无参数版本
    ↑ 入口分两种: (a) rdd-builder P0 选项 5 (主路径, per ADR-0048)  (b) guide 推荐器直接调用 (旁路, self-triage)
 ```
 
-**为什么这样切**（节选自 ADR-0003 + ADR-0048）：
+**为什么这样切**（节选自 ADR-0003 + ADR-0048 + ADR-0057）：
 
-- **职责单一**：arch 不需要懂 change artifacts，plan 不需要懂架构治理；roadmap 完全归 planner（per ADR-0048）
+- **职责单一**：arch 不需要懂 change artifacts，plan 不需要懂架构治理；roadmap 完全归 planner（per ADR-0048）；migration 规划能力归 planner（per ADR-0057）
 - **人工介入匹配**：高介入（arch，需要架构师审查）→ 中介入（plan，AI 辅助生成）→ 低介入（ship，自动执行）
 - **架构治理前置**：v2.0 要求"先定义架构，再生成变更"，避免"跳过架构直接编码"
 - **可独立演进**：修改 ADR 格式不影响 change 生成流程；roadmap 演进由 planner 全权负责
 - **可独立测试**：arch-done 是清晰契约（用 ADR 数量验证，单门控 per ADR-0048）
-- **角色边界严格**（per ADR-0028 + ADR-0048）：rdd-arch 与 roadmap 完全解耦；rdd-planner 通过 `.planner-handoff.json::recommended_route` 向 rdd-builder P0 输出复杂度 advisory
+- **角色边界严格**（per ADR-0028 + ADR-0048 + ADR-0057）：rdd-arch 不写 roadmap；rdd-arch 不写 migration 计划（gap-analysis 工件已删除 per ADR-0057）；rdd-planner 通过 `.planner-handoff.json::recommended_route` 向 rdd-builder P0 输出复杂度 advisory
 
 **arch 端不写的文件**：
 
@@ -114,11 +111,13 @@ skill_use("rdd-arch")   # 无参数版本
 - **不写 `.rddf/roadmap/{features,phases}/*.md`** (per ADR-0048, 移交给 `rdd-planner`)
 - **不写 `.rddf/state/.populate-state.json`** (per ADR-0048, 移交给 `rdd-planner`)
 - **不写 `.rddf/state/.planner-feedback.json`** (per ADR-0042, 由 `rdd-planner` owns)
+- **不写 `.rddf/improvements/*.md`** (per ADR-0057, 由 `rdd-planner` owns)
+- **不写 migration 路线图**（per ADR-0057, 由 `rdd-planner` Phase 0 + `.rddf/roadmap/phases/*.md` 承担）
 
 **arch 端必须写的文件**：
 
 - 通过 adr-create 阶段生成/更新 `docs/adr/ADR-*.md`
-- 通过 architecture 阶段生成/更新 `docs/architecture/*-gap-analysis.md`
+- 通过 theme-doc-sync（在 adr-create 后）生成/更新 `docs/architecture/<topic>.md`（per ADR-0057）
 - arch-done 时写入 `.rddf/state/.arch-handoff.json`
 
 ---
@@ -177,7 +176,7 @@ fi
 ```
 环境检查结果：
 
-✅ Env OK (cached 23m ago) | ADR:63 | Roadmap:✓
+✅ Env OK (cached 23m ago) | ADR:63 | Theme Docs:17 | Roadmap:✓
 
 工件发现 (ADR-0016):
    ADR 目录:      docs/adr (true)
@@ -210,7 +209,7 @@ case "$choice" in
 esac
 ```
 
-> 📌 提案审批（原 Phase 5.5 选项 3）已迁移到 `skill_use("guide-design")`。
+> 📌 提案审批（原 Phase 5.5 选项 3）已迁移到 `skill_use("rdd-planner")`。
 
 **步骤 2：进入对应阶段**
 
@@ -225,6 +224,8 @@ esac
 **行为**：
 
 管理 ADR 文档：创建新 ADR、查看列表、编辑已有 ADR。arch 阶段是**高人工介入**阶段，ADR 创建需要架构师深度思考和审查，本阶段不提供自动化生成。
+
+> **v2.2 简化（per ADR-0057）**：ADR 创建后建议同步更新对应主题架构文档（`docs/architecture/<topic>.md` 的 Primary ADRs 列），保持 ADR ↔ theme doc 双向可追溯。详见 Phase 3 后的"主题文档同步"段。
 
 **展示当前 ADR 状态**：
 
@@ -271,7 +272,7 @@ fi
   2. 查看完整 ADR 列表
   3. 查看指定 ADR 详情
   4. 编辑已有 ADR
-  5. ✅ 完成 ADR 阶段 → 进入 architecture 分析
+  5. ✅ 完成 ADR 阶段 → 进入 arch validation
   0. 💾 保存并退出
   i. 其他输入
 ```
@@ -318,9 +319,9 @@ case "$GATE_CLASS" in
   ARCHITECTURE)
     # ── 段 1: 现状挖掘 (agent 自动, 不向用户提问可查事实) ──
     #   已有相关 ADR: ls "${DISCOVERED_ADR_DIR:-docs/adr}"/${DISCOVERED_ADR_PATTERN:-ADR-*.md} | grep -v 0000-template
-    #   架构文档:     find "${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}" -type f
+    #   主题文档:     ls "${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}"/*.md | grep -v 0000-template
     #   代码模式:     grep -l "$ADR_SLUG" docs/adr/ 2>/dev/null
-    #   输出 3 段式摘要: 已有相关 ADR / 架构文档 / 代码模式
+    #   输出 3 段式摘要: 已有相关 ADR / 主题文档 / 代码模式
 
     # ── 段 2: 决策对话 (严格 3-5 轮, 一次一问 + 附推荐答案) ──
     DIALOGUE_ROUND=0
@@ -372,6 +373,8 @@ case "$GATE_CLASS" in
     sed -i "s/^> \*\*编号\*\*: NNNN/> **编号**: $NEXT_NUM_PADDED/" "${NEW_ADR}.tmp"
     mv "${NEW_ADR}.tmp" "$NEW_ADR"
     echo "✅ 已创建: $NEW_ADR"
+    echo ""
+    echo "📌 下一步: 更新对应主题文档的 Primary ADRs 列表 (per ADR-0057 §Update Convention)"
     ;;
   GOVERNANCE)
     echo "⚠️  该议题偏向治理/流程决策, 更适合: RELEASE.md / ci-cd.md / CONTRIBUTING.md"
@@ -384,7 +387,7 @@ case "$GATE_CLASS" in
     ;;
   IMPLEMENTATION)
     echo "⛔ 该议题是实现类工作, 不应写成 ADR。"
-    echo "   替代路径: docs/ 文档 / .github/ 配置 / tasks.md 任务 / roadmap.md 子任务"
+    echo "   替代路径: docs/ 文档 / .github/ 配置 / tasks.md 任务 / roadmap.md 子任务 / .rddf/improvements/*.md（per ADR-0057）"
     continue
     ;;
 esac
@@ -413,158 +416,55 @@ echo "=== $(basename "$SELECTED") ==="
 cat "$SELECTED"
 ```
 
-**与 architecture 阶段的衔接**：
+**主题文档同步（per ADR-0057 §Update Convention）**：
 
-用户选择「完成 ADR 阶段」后，进入 Phase 3 (architecture) 进行架构差距分析。arch 阶段内部可形成循环：adr-create → architecture → adr-create（循环细化）。
+创建/编辑 ADR 后，**建议**同步更新对应主题架构文档（`docs/architecture/<topic>.md`）的 Primary ADRs 列表。Update Convention：
+
+```
+new ADR created or superseded
+  ↓
+identify theme doc (which topic this ADR belongs to)
+  ↓
+update theme doc Primary ADRs column in Doc Map table
+  ↓
+if no theme doc exists for this topic:
+    create new theme doc with this ADR in Primary ADRs
+```
+
+主题文档模板示例（per `docs/architecture/README.md` Doc Map convention）：
+
+```markdown
+# <Topic> Architecture
+
+## Primary ADRs
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| ADR-0043 | rdd-workflow v4 stage-merge architecture | 已采纳 |
+| ADR-0048 | v4 stage-merge 修订 | 已采纳 |
+
+## 当前架构
+
+（描述当前实现状态）
+
+## 决策依赖关系
+
+（描述 ADR 之间的依赖链）
+```
+
+工具支持（未来）：`rddf arch inventory`（Tier A），`rddf arch supersede <old-id> --by <new-id>`（Tier B），`rddf arch generate-index`（Tier C）——per 之前会话规划的 rdd-arch 工具集。
 
 ---
 
-## Phase 3: architecture
+## Phase 3: arch validation (门控检查)
 
-**入口条件**：adr-create 阶段完成（或用户跳过 ADR 直接进入此阶段）。
+**入口条件**：adr-create 阶段完成（含主题文档同步），且当前阶段为 arch validation。
 
-**行为**：
-
-生成/管理**架构差距分析文档**（`docs/architecture/*-gap-analysis.md`）。差距分析是 arch 阶段的核心交付物之一——通过对比当前架构与目标架构（ADR 中定义的），识别需要补齐的差距。
-
-**展示当前架构文档状态**：
-
-```bash
- PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
- # ADR-0016: read DISCOVERED_ARCHITECTURE_DIR set by Phase 1 Step 5; fallback to docs/architecture
- ARCH_DIR="$PROJECT_ROOT/${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}"
-
- echo "=== 架构差距分析 ==="
- echo ""
-
-# 检查架构目录是否存在
-if [ ! -d "$ARCH_DIR" ]; then
-    echo "⚠️  架构目录不存在: $ARCH_DIR"
-    echo "   将在选项 1 首次生成时创建"
-    mkdir -p "$ARCH_DIR"
-fi
-
-# 列出已有差距分析
-GAP_DOCS=$(ls "$ARCH_DIR/"*-gap-analysis.md 2>/dev/null)
-GAP_COUNT=$(echo "$GAP_DOCS" | grep -c . || true)
-
-echo "现有架构差距分析: $GAP_COUNT"
-if [ "$GAP_COUNT" -gt 0 ]; then
-    echo ""
-    echo "差距分析列表:"
-    echo "$GAP_DOCS" | while read -r gap_file; do
-        name=$(basename "$gap_file" .md)
-        echo "  - $name"
-    done
-fi
-```
-
-**菜单示例**：
-
-```
-=== 架构差距分析 ===
-
-现有架构差距分析: 2
-  - v1-to-v2-migration-gap-analysis
-  - loop-engine-design-gap-analysis
-
-请选择:
-  1. 生成新的架构差距分析
-  2. 查看现有分析报告
-  3. 编辑已有差距分析
-  4. ✅ 完成架构分析 → 进入 arch-done（roadmap 由 rdd-planner Phase 0 接管，per ADR-0048）
-  0. 💾 保存并退出
-  i. 其他输入
-```
-
-**用户输入处理（case handler）**：
-
-```bash
-# Phase 3 architecture menu - shared handler (extracted from inline case block)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_roadmap_menu.sh"
-handle_arch_menu "$choice"
-[ $? -eq 2 ] && continue  # r|refresh -> 重新展示菜单
-```
-
-**选项 1（生成新差距分析）执行内容**：
-
-```bash
-# Round B: extracted to _lib/arch_gap_analysis.sh (L343-L399)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_gap_analysis.sh"
-
-echo "📝 生成新架构差距分析"
-echo ""
-echo "请提供差距分析主题 (kebab-case, ≤ 50 字符):"
-read -r GAP_SLUG
-
-generate_gap_analysis "$GAP_SLUG" || continue
-```
-
-**选项 2（查看现有分析）执行内容**：
-
-```bash
-# Round B: extracted to _lib/arch_gap_analysis.sh (L403-L431)
-source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_gap_analysis.sh"
-list_gap_analyses || continue
-
-# Interactive viewer stays inline
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-ARCH_DIR="$PROJECT_ROOT/${DISCOVERED_ARCHITECTURE_DIR:-docs/architecture}"
-GAP_DOCS=$(ls "$ARCH_DIR/"*-gap-analysis.md 2>/dev/null || true)
-
-echo ""
-echo "请输入要查看的编号 (1-$(echo "$GAP_DOCS" | wc -l)):"
-read -r gap_choice
-
-SELECTED=$(echo "$GAP_DOCS" | sed -n "${gap_choice}p")
-if [ -z "$SELECTED" ]; then
-    echo "❌ 无效选择"
-    continue
-fi
-
-cat "$SELECTED"
-```
-
-**与 arch-done 阶段的衔接**（per ADR-0048）：
-
-用户选择「完成架构分析」后，arch 阶段进入 **arch-done**（单门控：ADR ≥ 1）。**Roadmap 创建由 `rdd-planner` Phase 0 接管**（rdd-arch 不再编写 roadmap）。差距分析是 `rdd-planner` Phase 1 的输入——roadmap 的任务分类与优先级应来源于此分析，但归 planner 维护。
-
-## Arch Gap Analysis Protocol
-
-> 本节为 `cross-stage-protocol-template.md` Analyzer Subset 的首个落地（per ADR-0046）。Analyzer Subset 是 deterministic human-curated analyzer 的协议模式，与 LLM-as-judge verifier 共享 §1（协议块）+ §2（数据层），§3/§4 永久 skip，§5 repurposed 为 Output Contract Validation（结构=硬 / 完成度=advisory）。
-
-**数据层**：`skills/rdd-arch/scripts/arch_gap_analysis.sh`（薄 bash wrapper，Oracle C1 env-var passing）→ 委托 `_lib/arch/protocol.py`（3 纯函数 + `ValidationReport` dataclass）。
-
-**5 节 markdown 契约**（生成时硬约束）：
-
-| § | 中文标题 | 用途 |
-|---|----------|------|
-| 1 | 目标架构 | 引用 ADR 描述的目标状态 |
-| 2 | 当前架构 | 项目实际架构快照 |
-| 3 | 差距清单 | 表格：`# / 差距项 / 严重程度 / 优先级 / 关联 change` |
-| 4 | 补齐路径 | 从当前到目标的迁移步骤 |
-| 5 | 参考资料 | 关联 ADR + change artifacts |
-
-**Output Contract Validation**（advisory 不阻断）：
-
-- `validate_document(path)` → `ValidationReport(structural_ok, completeness, issues)`
-- `structural_ok = False` → generator drift（已封堵，8 个 bats 锁定）
-- `completeness ∈ {draft, partial, complete}` → 仅 advisory；人工异步策展不阻断 arch-done
-- arch-done Phase 5 接线由 `check_arch_done_gate.sh` 调用 `validate_document()`（advisory，不阻断；advisory 警告输出到 `.rddf/state/.arch-quality-report.json`）
-
-**slug 校验**（Oracle concern #3）：slug 必须 kebab-case（lowercase alphanumeric + single hyphen），否则 `ValueError`。
-
----
-
-## Phase 4: arch validation (门控检查) (renumbered per ADR-0048)
-
-**入口条件**：adr-create、architecture 两个阶段都已完成（或用户主动跳过非必要阶段）。
-
-> **变更 (per ADR-0048, 2026-09-09)**: 原 Phase 4 roadmap-define 已**完全删除**. Roadmap 创建与管理职责已移交至 `rdd-planner` Phase 0 roadmap-bootstrap + `roadmap` 技能. arch-done 门控从双重降为单重 (仅 ADR ≥ 1, 不再检查 `roadmap.md` 存在).
+> **v2.2 简化（per ADR-0057）**：删除原 Phase 3 architecture（差距分析）。Phase 3 现在直接是 arch validation 门控检查。
 
 **行为**：
 
-执行 arch-done 单门控检查，验证架构定义是否完整。门控通过后进入 Phase 5 arch-done 退出。
+执行 arch-done 单门控检查，验证架构定义是否完整。门控通过后进入 Phase 4 arch-done 退出。
 
 **门控检查**：
 
@@ -573,16 +473,17 @@ arch-done 必须满足**单门控**才能通过 (per ADR-0048 §Decision 1):
 1. **ADR 数量 ≥ 1** (必须创建至少一个架构决策记录)
 
 > **Roadmap 检查已移除**: `.rddf/roadmap.md` 存在性检查由 `rdd-planner` Phase 5 双门控接管 (per ADR-0048 §Decision 2). arch-done 不再关心 roadmap.
+> **Gap-analysis 检查已移除**: gap-analysis 工件已删除 (per ADR-0057). arch-done 不再检查 gap-analysis 文件.
 
 ```bash
-# Round B: extracted to _lib/arch_done_gate.sh (L522-L559, ~38 lines, ADR-0048: 移除 roadmap 检查)
+# Round B: extracted to _lib/arch_done_gate.sh (L522-L559, ~38 lines, ADR-0048: 移除 roadmap 检查; ADR-0057: 移除 gap-analysis 检查)
 source "$(dirname "${BASH_SOURCE[0]:-$0}")/scripts/arch_done_gate.sh"
 check_arch_done_gate || exit 1
 ```
 
 **门控通过后**：
 
-门控检查通过后，直接进入 Phase 5 arch-done 写入 handoff 状态并退出。
+门控检查通过后，直接进入 Phase 4 arch-done 写入 handoff 状态并退出。
 
 门控失败时提供回退选项。
 
@@ -614,11 +515,12 @@ esac
 
 ---
 
-## Phase 5: arch-done (Exit) (renumbered per ADR-0048)
+## Phase 4: arch-done (Exit)
 
-**入口条件**：Phase 4 门控检查通过。arch-done 不再依赖提案审批结果。
+**入口条件**：Phase 3 门控检查通过。arch-done 不再依赖提案审批结果。
 
 > **变更 (per ADR-0048, 2026-09-09)**: 原 Phase X Roadmap Sync 已**完全删除**. 不再调用 `roadmap_incremental_update.sh`. `.rddf/state/.populate-state.json` 改由 `rdd-planner` 维护.
+> **变更 (per ADR-0057, 2026-09-30)**: 原 Phase 5 check_gap_analyses_advisory() 已**完全删除**. gap-analysis 工件已下线. 迁移规划能力移交 `rdd-planner` Phase 0 (`add-improvement --source-arch-gap` CLI).
 
 **写入 handoff 状态**：
 
@@ -643,7 +545,7 @@ rddf_session_hook_close stage_arch arch-done rdd-arch
 
 📋 架构定义交付物:
   - ADR 文档: N 个 (最新: ADR-XXXX)
-  - 架构差距分析: M 个 (待 planner 阶段补齐)
+  - 主题架构文档: M 个 (待 planner 阶段读取 Primary ADRs)
 
 💡 Next: skill_use("rdd-planner")
    This will bootstrap the roadmap (if missing), manage sprint proposals, and prepare
@@ -653,9 +555,9 @@ rddf_session_hook_close stage_arch arch-done rdd-arch
 
 Do NOT auto-invoke `rdd-planner` - the user must explicitly transition. (per ADR-0048)
 
-**架构质量门（ADR-0018）**：
+**架构质量门（ADR-0018 + ADR-0057）**：
 
-arch-done 单门控（ADR ≥ 1，per ADR-0048 §Decision 1）通过后，自动运行 4 个 warning 级质量检查（含 gap-analysis structural validation，advisory 不阻断），输出到 `.rddf/state/.arch-quality-report.json`：
+arch-done 单门控（ADR ≥ 1，per ADR-0048 §Decision 1）通过后，自动运行 4 个 warning 级质量检查（ADR 对齐、ADR 占位符检测、arch-handoff sanity、文件大小限制），输出到 `.rddf/state/.arch-quality-report.json`：
 
 ```bash
 # Round B: extracted to _lib/arch_quality_report.sh (L564-L595, ~32 lines)
@@ -673,7 +575,7 @@ arch 阶段内部支持**循环迭代**（细化架构）：
 
 ```
 arch 内部循环:
-  adr-create ↔ architecture  (细化架构; roadmap 已移交给 planner per ADR-0048)
+  adr-create ↔ theme-doc-sync  (细化架构; gap-analysis 已删除 per ADR-0057)
 ```
 
 arch → planner 的**前向切换**：
@@ -681,16 +583,17 @@ arch → planner 的**前向切换**：
 ```
 arch → planner: arch-done 验证通过 (单门控: ADR ≥ 1, per ADR-0048)
                   roadmap 由 rdd-planner Phase 0 bootstrap (如缺失)
+                  migration planning 由 rdd-planner Phase 0 + add-improvement --source-arch-gap (如 arch 文档涉及迁移)
 ```
 
-plan → arch 的**反向切换**（v2.0 后续支持）：
+plan → arch 的**反向切换**：
 
 ```
 plan → arch: plan 阶段选择"返回 Arch 阶段" (需要更新架构)
            rdd-planner 通过 .planner-feedback.json 提供 advisory 信号 (per ADR-0042)
 ```
 
-详细切换条件见 `docs/adr/ADR-0003-three-phase-architecture.md` §"阶段间循环与切换" + `docs/adr/ADR-0048-v4-stage-merge-revision.md` §Decision 1。
+详细切换条件见 `docs/adr/ADR-0003-three-phase-architecture.md` §"阶段间循环与切换" + `docs/adr/ADR-0048-v4-stage-merge-revision.md` §Decision 1 + `docs/adr/ADR-0057-rdd-arch-simplify-delete-gap-analysis.md` §Decision。
 
 ---
 
@@ -711,7 +614,7 @@ assert meta['metadata']['user-invocable'] is True
 print('✅ rdd-arch SKILL.md frontmatter valid')
 "
 
-# 2. 验证子阶段齐全 (Phase 1-5)
+# 2. 验证子阶段齐全 (Phase 1-4)
 grep -E "^## Phase [0-9]+:" skills/rdd-arch/SKILL.md
 
 # 3. 验证 handoff 文件路径正确
@@ -719,6 +622,9 @@ grep "\.arch-handoff.json" skills/rdd-arch/SKILL.md
 
 # 4. 验证 ADR 模板存在
 ls docs/adr/ADR-0000-template.md
+
+# 5. 验证 gap-analysis 协议已删除 (per ADR-0057)
+! grep -l "arch_gap_analysis.sh\|protocol.py" skills/rdd-arch/SKILL.md && echo "✅ gap-analysis 协议已删除"
 ```
 
 <!-- 详细单元测试见 `tests/unit/test_rdd_arch_*.py`（与本技能配套）。 -->
@@ -727,17 +633,25 @@ ls docs/adr/ADR-0000-template.md
 
 ## 参考资料
 
-- **ADR-0003** — v2.0 三阶段架构（arch → plan → ship）的奠基 ADR；v2.1 扩展为四阶段（+ design）见 ADR-0025；v3.0+ 扩展为 5-stage（+ verify）见 ADR-0034；v4.0+ 合并为四阶段见 ADR-0043
+- **ADR-0003** — v2.0 三阶段架构（arch → plan → ship）的奠基 ADR；v2.1 扩展为四阶段（+ design）见 ADR-0025；v3.0+ 扩展为 5-stage（+ verify）见 ADR-0034；v4.0+ 合并为四阶段见 ADR-0043；v4.x 简化 rdd-arch 工件集见 ADR-0057
 - **ADR-0001** — 双阶段状态机分离（v1.x 架构，guide-spec 的来源）
 - **ADR-0007** — 门控机制（arch-done 双重门控的设计依据）
 - **ADR-0010** — 多会话管理（arch 阶段的人工介入设计）
 - **ADR-0011** — 阶段步骤化执行模型（arch 阶段的子阶段设计）
-- `skills/guide-design.md` — v2.1 design 端状态机（后续阶段）
-- `skills/guide-plan.md` — plan 端状态机（后续阶段，由 design-done 触发）
-- `skills/guide-ship.md` — ship 端状态机（参考模式）
-- `skills/roadmap.md` — 路线图管理技能（被 arch Phase 4 调用）
-- `docs/adr/ADR-0000-template.md` — ADR 模板（被 arch Phase 2 使用）
+- **ADR-0016** — arch-handoff v1 + 工件发现契约
+- **ADR-0018** — arch_quality_gate（4 个 warning 检查的奠基）
+- **ADR-0042** — rdd-arch rename + rdd-arch ↔ rdd-planner 双向反馈闭环
+- **ADR-0043** — v4 stage-merge architecture
+- **ADR-0046** — arch-analyzer protocol subset（**已替代为 ADR-0057**；gap-analysis 协议删除）
+- **ADR-0048** — v4 stage-merge 修订：rdd-arch 完全脱离 roadmap + rdd-builder P0 触发 rdd-quick
+- **ADR-0057** — rdd-arch 简化为 ADR + theme doc 双工件；删除 gap-analysis 协议（本版本）
+- `docs/adr/ADR-0000-template.md` — ADR 模板（被 rdd-arch Phase 2 使用）
 - `docs/adr/README.md` — ADR 索引与规范
+- `docs/architecture/README.md` — 主题架构文档索引（Doc Map 表 + Update Convention）
+- `skills/roadmap.md` — 路线图管理技能（per ADR-0048 由 rdd-planner 独占）
+- `_lib/schemas/arch_handoff_schema.json` — arch-handoff schema
+
+---
 
 ## Phase Exit — Post-Flow Analysis (Agent 平面, ADR-0027 §1.0)
 

@@ -4,10 +4,10 @@ Existing arch_done gate in `gate.py` only validates structural existence (ADR �
 roadmap.md exists). This module adds four **qualitative** warning-level checks
 that surface arch-level debt without blocking the transition:
 
-  1. `arch_alignment`       — ADR/roadmap/gap-analysis cross-references resolve
-  2. `arch_debt_recorded`   — gap-analysis has no unresolved high-priority rows
-  3. `adr_no_placeholders`  — ADR files are not template stubs
-  4. `arch_handoff_actionable` — .arch-handoff.json carries actionable fields
+  1. `arch_alignment`       — ADR cross-references in roadmap.md + theme docs resolve
+  2. `adr_no_placeholders`  — ADR files are not template stubs
+  3. `arch_handoff_actionable` — .arch-handoff.json carries actionable fields
+  4. `file_size_limit`      — _lib/*.py files do not exceed line cap
 
 Severity model:
   - Default (local dev)         → warning (allows transition, records event)
@@ -15,8 +15,13 @@ Severity model:
 
 This module is consumed by:
   - `skills/_lib/gate.py`    — registers checks in `_DEFAULT_CHECKS["arch_done"]`
-  - `skills/guide-arch.md`   — Phase 5 hook invokes `ArchQualityReport.verify()`
+  - `skills/rdd-arch/SKILL.md` — arch-done hook invokes `ArchQualityReport.verify()`
   - `tests/unit/test_arch_quality_gate.py` — unit tests
+
+CHANGED 2026-09-30 (per ADR-0057):
+  - Removed `arch_debt_recorded` check (gap-analysis artifact type deleted)
+  - `arch_alignment` now scans all theme docs in `docs/architecture/*.md`,
+    not just `*-gap-analysis.md` (theme docs are rdd-arch's composition artifacts)
 """
 from __future__ import annotations
 
@@ -52,16 +57,6 @@ _PLACEHOLDER_PATTERNS = [
     re.compile(r"^>\s*\*\*编号\*\*:\s*NNNN\s*$", re.MULTILINE),
     re.compile(r"^#\s*ADR-NNNN:\s*<", re.MULTILINE),
 ]
-
-
-# --- gap-analysis table row regex: captures `| 严重程度 | 优先级 | 关联 change |` ---
-
-# Format: `| <num> | <gap> | <severity> | <priority> | <change ref> |`
-_GAP_ROW_RE = re.compile(
-    r"^\|\s*\d+\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|",
-    re.MULTILINE,
-)
-_UNRESOLVED_TOKENS = ("(待补充)", "(待补)", "(TBD)", "<待补", "<TBD")
 
 
 # ---------- helpers ----------
@@ -121,13 +116,6 @@ def _extract_adr_refs_in_file(path: Path) -> set[str]:
     return {m.group(1) for m in _ADR_REF_RE.finditer(text)}
 
 
-def _is_unresolved_token(change_ref: str) -> bool:
-    s = change_ref.strip()
-    if not s:
-        return True
-    return any(tok in s for tok in _UNRESOLVED_TOKENS)
-
-
 def _has_placeholder(text: str) -> bool:
     """Stub heuristic: ≥ 2 distinct placeholder patterns match.
 
@@ -181,11 +169,15 @@ def strict_wrap(
 
 
 def _check_arch_alignment(ctx: dict) -> tuple[bool, Optional[str]]:
-    """Pass if all ADR-NNNN references in roadmap.md and gap-analysis docs resolve.
+    """Pass if all ADR-NNNN references in roadmap.md and theme docs resolve.
 
     ADR-0018 §3.1. A "ghost" reference (ADR mentioned in text but no matching
     file in adr_dir) usually means the architect forgot to commit or the
     roadmap drifted from reality. We only warn; humans can override.
+
+    CHANGED 2026-09-30 (per ADR-0057): scans all theme docs (*.md in
+    architecture_dir) instead of *-gap-analysis.md. Theme docs are rdd-arch's
+    primary composition artifacts and contain the same ADR cross-references.
     """
     project_root = ctx.get("project_root", ".")
     paths = _read_handoff(project_root)
@@ -198,44 +190,14 @@ def _check_arch_alignment(ctx: dict) -> tuple[bool, Optional[str]]:
     if roadmap.is_file():
         referenced.update(_extract_adr_refs_in_file(roadmap))
     if arch_dir.is_dir():
-        for gap in arch_dir.glob("*-gap-analysis.md"):
-            referenced.update(_extract_adr_refs_in_file(gap))
+        for theme_doc in arch_dir.glob("*.md"):
+            if theme_doc.name.endswith("-0000-template.md"):
+                continue
+            referenced.update(_extract_adr_refs_in_file(theme_doc))
 
     ghosts = referenced - existing
     if ghosts:
         return (False, "warning")
-    return (True, None)
-
-
-def _check_arch_debt(ctx: dict) -> tuple[bool, Optional[str]]:
-    """Pass if no gap-analysis row is high-severity + P0 + unresolved (ADR-0018 §3.2).
-
-    An unresolved P0/high row in a gap-analysis table signals architecture
-    debt that must be tracked. Detection: row's `严重程度` column contains
-    `高`, `优先级` column contains `P0`, and `关联 change` is empty or contains
-    a placeholder token like `(待补充)`.
-
-    No gap-analysis docs → pass (debt detection is opt-in).
-    """
-    project_root = ctx.get("project_root", ".")
-    paths = _read_handoff(project_root)
-    arch_dir = Path(project_root) / paths["architecture_dir"]
-
-    if not arch_dir.is_dir():
-        return (True, None)
-
-    for gap in arch_dir.glob("*-gap-analysis.md"):
-        try:
-            text = gap.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            continue
-        for line_match in _GAP_ROW_RE.finditer(text):
-            severity_cell = line_match.group(2).strip()
-            priority_cell = line_match.group(3).strip()
-            change_ref = line_match.group(4)
-            if "高" in severity_cell and "P0" in priority_cell and _is_unresolved_token(change_ref):
-                return (False, "warning")
-
     return (True, None)
 
 
@@ -365,7 +327,6 @@ class ArchQualityReport:
         """
         checks: list[tuple[str, Callable[[dict], tuple[bool, Optional[str]]]]] = [
             ("arch_alignment", _check_arch_alignment),
-            ("arch_debt_recorded", _check_arch_debt),
             ("adr_no_placeholders", _check_adr_clarity),
             ("arch_handoff_actionable", _check_handoff_actionable),
             ("file_size_limit", _check_file_size),

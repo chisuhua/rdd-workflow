@@ -107,29 +107,38 @@ def test_suggestion_contains_command(state_path, log_path):
 
 
 def test_default_arch_done_checks_present(state_path, log_path):
-    """Default checks for arch_done include adr_exists + gap_analysis_complete (roadmap coverage)."""
+    """Default checks for arch_done include adr_exists + arch_alignment + adr_no_placeholders + arch_handoff_actionable.
+
+    CHANGED 2026-09-30 (per ADR-0057): removed `gap_analysis_complete` and
+    `arch_debt_recorded` checks (gap-analysis artifact type deleted;
+    migration planning moved to rdd-planner per ADR-0057).
+    """
     sv = make_state()
     sv.save(state_path)
     gate = GateMechanism(state_path=state_path, event_log_path=log_path, load_defaults=True)
     names = gate.get_registered_check_names()
     assert "adr_exists" in names
-    assert "gap_analysis_complete" in names
+    assert "arch_alignment" in names
 
 
 def test_default_arch_done_includes_quality_checks_adr0013(state_path, log_path):
-    """ADR-0018: arch_done must register 4 qualitative checks (warning level by default)."""
+    """ADR-0018 (modified by ADR-0057): arch_done must register qualitative checks (warning level by default).
+
+    Per ADR-0057 (2026-09-30), `arch_debt_recorded` was removed when the
+    gap-analysis artifact type was deleted. Remaining 3 quality checks
+    (per ADR-0018): arch_alignment, adr_no_placeholders, arch_handoff_actionable.
+    """
     sv = make_state()
     sv.save(state_path)
     gate = GateMechanism(state_path=state_path, event_log_path=log_path, load_defaults=True)
     names = gate.get_registered_check_names()
     for required in (
         "arch_alignment",
-        "arch_debt_recorded",
         "adr_no_placeholders",
         "arch_handoff_actionable",
     ):
         assert required in names, (
-            f"arch_done must register {required} per ADR-0018; "
+            f"arch_done must register {required} per ADR-0018+ADR-0057; "
             f"registered: {names}"
         )
 

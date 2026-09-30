@@ -1,141 +1,87 @@
 """Arch-audit check — surfaces arch-side drift and completeness signals.
 
-Read-only diagnostic for architecture artifacts. Closes the gap-analysis
-auditability question raised in the rdd-arch v2.1.0 review (2026-09-29):
-previously arch-quality was only reportable via the inline
-`check_gap_analyses_advisory()` in `arch_done_gate.sh` (ephemeral, only
-runs at arch-done). This check makes the same signals queryable on demand
-via `rddf doctor --category arch-audit`.
+Read-only diagnostic for architecture artifacts. Surfaces arch-quality
+state on demand via `rddf doctor --category arch-audit`.
 
 Checks (all deterministic, no LLM, no code execution):
-  1. Gap-analysis structural_ok (per `_lib.arch.protocol.validate_document`)
-     — WARNING on structural drift, INFO on draft / partial / complete.
-  2. ADR inventory — INFO summary (count, latest ID, status field).
+  1. Theme-doc inventory (per ADR-0057) — INFO summary (count) +
+     WARNING if 0 theme docs found in `docs/architecture/` (signals
+     no architecture snapshot has been written yet).
+  2. ADR inventory — INFO summary (count, latest ID, superseded count,
+     status drift).
   3. `.rddf/state/.arch-handoff.json` sanity — INFO presence, WARNING
      if missing (signals arch-done never ran).
+
+CHANGED 2026-09-30 (per ADR-0057):
+  - Replaced gap-analysis structural check with theme-doc existence check
+    (gap-analysis artifact type deleted; theme docs are now rdd-arch's
+    primary composition artifacts per ADR-0057 §Decision).
+  - Removed `_lib.arch.protocol` dependency (deleted with ADR-0046
+    superseded). No more lazy-import machinery needed.
 
 Design decisions (mirrors existing doctor checks):
   - Always returns `List[Finding]`; never raises. Checker exceptions
     become a single CRITICAL finding at the aggregate layer (see
     `doctor_main.aggregate_findings`).
-  - Uses lazy import for `_lib.arch.protocol` so missing _lib surfaces
-    as INFO (graceful degradation) rather than aborting.
   - All findings are categorised `arch-audit` for filtering.
 """
 from __future__ import annotations
 
-import importlib.util
 import json
 import os
 import re
-import sys
 from pathlib import Path
 from typing import List
 
 from doctor_render import Finding, Severity
 
-_REPO_ROOT = Path(__file__).resolve().parents[4]  # checks/ → repo root
-
 _CATEGORY = "arch-audit"
 
 
-def _load_arch_protocol():
-    """Lazy import to mirror docs_consistency_check._load_docs_consistency().
+def _check_theme_docs(project_root: Path) -> List[Finding]:
+    """Surface theme-doc inventory in docs/architecture/ (per ADR-0057).
 
-    Falls back to `skills/_lib/arch/protocol.py` shim for backward compat
-    (P1-1b identity-merge). Raises ImportError if neither path resolves —
-    caller catches and emits a single INFO finding.
+    Theme docs (`docs/architecture/*.md`) are rdd-arch's primary composition
+    artifacts — they encode current-architecture snapshot + composing ADR
+    references. Zero theme docs signals that arch-create + theme-doc sync
+    has not produced any artifacts yet (pre-Phase-2 state).
 
-    The `sys.modules[name] = module` line is required: Python's
-    `@dataclass` decorator resolves class namespace via
-    `sys.modules[cls.__module__].__dict__`, which raises
-    `AttributeError: 'NoneType' object has no attribute '__dict__'` if the
-    module is loaded via `importlib.util.spec_from_file_location` without
-    being registered first.
+    Skips `*-0000-template.md` placeholder files.
     """
-    candidates = [
-        _REPO_ROOT / "_lib" / "arch" / "protocol.py",
-        _REPO_ROOT / "skills" / "_lib" / "arch" / "protocol.py",
-    ]
-    for path in candidates:
-        if path.is_file():
-            mod_name = "_arch_protocol_loader"
-            spec = importlib.util.spec_from_file_location(mod_name, str(path))
-            if spec and spec.loader:
-                module = importlib.util.module_from_spec(spec)
-                sys.modules[mod_name] = module
-                spec.loader.exec_module(module)
-                return module
-    raise ImportError(
-        f"_lib.arch.protocol not found in {candidates}"
-    )
-
-
-def _check_gap_analyses(project_root: Path) -> List[Finding]:
-    """Validate gap-analysis documents via _lib.arch.protocol.validate_document."""
     arch_dir = project_root / "docs" / "architecture"
     if not arch_dir.is_dir():
-        return [Finding(
-            severity=Severity.INFO,
-            category=_CATEGORY,
-            file=str(arch_dir),
-            line=None,
-            snippet="docs/architecture/ missing (no gap-analyses to audit)",
-            fix_hint="run skill_use('rdd-arch') Phase 3 to create gap analyses",
-        )]
-
-    try:
-        protocol = _load_arch_protocol()
-        analyses = protocol.list_analyses(arch_dir)
-    except ImportError as e:
         return [Finding(
             severity=Severity.WARNING,
             category=_CATEGORY,
             file=str(arch_dir),
             line=None,
-            snippet=f"_lib.arch.protocol import failed: {e}",
-            fix_hint="verify _lib/arch/protocol.py exists (canonical path) or skills/_lib/arch/protocol.py (shim)",
+            snippet="docs/architecture/ missing (rdd-arch owns theme docs per ADR-0057; create first theme doc to anchor architecture snapshot)",
+            fix_hint="create first theme doc (e.g., overview.md or workflow-phases.md) via skill_use('rdd-arch')",
         )]
 
-    if not analyses:
+    theme_files = sorted(
+        p for p in arch_dir.glob("*.md")
+        if "0000-template" not in p.name
+    )
+
+    if not theme_files:
         return [Finding(
-            severity=Severity.INFO,
+            severity=Severity.WARNING,
             category=_CATEGORY,
             file=str(arch_dir),
             line=None,
-            snippet="0 gap-analyses found (gap enforced by optional docs/architecture/*.md convention, not blocking)",
-            fix_hint="optional: generate gap analyses via skill_use('rdd-arch') Phase 3",
+            snippet="0 theme docs found (rdd-arch owns docs/architecture/*.md per ADR-0057; 0 docs means no architecture snapshot committed)",
+            fix_hint="create first theme doc (e.g., overview.md, workflow-phases.md) via skill_use('rdd-arch')",
         )]
 
-    findings: List[Finding] = []
-    for gap_file in analyses:
-        report = protocol.validate_document(gap_file)
-        if not report.structural_ok:
-            findings.append(Finding(
-                severity=Severity.WARNING,
-                category=_CATEGORY,
-                file=str(gap_file),
-                line=None,
-                snippet=f"structural drift: {'; '.join(report.issues)} (per ADR-0046 §5, structural_ok is HARD)",
-                fix_hint="re-generate via skill_use('rdd-arch') Phase 3 or hand-fix the missing section headings",
-            ))
-            continue
-
-        # structural_ok True; surface status (completeness = advisory)
-        label = {
-            "draft": "still in skeleton (no curation done)",
-            "partial": "partially curated (placeholder text remains)",
-            "complete": "fully curated",
-        }.get(report.completeness, f"unknown completeness: {report.completeness}")
-        findings.append(Finding(
-            severity=Severity.INFO,
-            category=_CATEGORY,
-            file=str(gap_file),
-            line=None,
-            snippet=f"{report.completeness} — {label}",
-            fix_hint="no action required; advisory only",
-        ))
-    return findings
+    return [Finding(
+        severity=Severity.INFO,
+        category=_CATEGORY,
+        file=str(arch_dir),
+        line=None,
+        snippet=f"{len(theme_files)} theme docs ({', '.join(p.stem for p in theme_files[:5])}{' …' if len(theme_files) > 5 else ''})",
+        fix_hint="no action required; informational summary",
+    )]
 
 
 def _check_adr_inventory(project_root: Path) -> List[Finding]:
@@ -272,7 +218,7 @@ def run(project_root: Path | None = None) -> List[Finding]:
         os.environ.setdefault("RDDF_PROJECT_ROOT", str(project_root.resolve()))
 
     findings: List[Finding] = []
-    findings.extend(_check_gap_analyses(project_root))
+    findings.extend(_check_theme_docs(project_root))
     findings.extend(_check_adr_inventory(project_root))
     findings.extend(_check_arch_handoff(project_root))
     return findings

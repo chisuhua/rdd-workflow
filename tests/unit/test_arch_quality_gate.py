@@ -1,13 +1,14 @@
 """Tests for arch_quality_gate — qualitative arch-done checks beyond structural existence.
 
 ADR-0018 introduces 4 warning-level checks that run on arch_done transition:
-  - arch_alignment       — ADR/roadmap/gap-analysis cross-references resolve
-  - arch_debt_recorded   — gap-analysis has no unresolved high-priority items
+  - arch_alignment       — ADR cross-references in roadmap.md + theme docs resolve
   - adr_no_placeholders  — ADR files are not template stubs
   - arch_handoff_actionable — .arch-handoff.json carries actionable fields for guide-plan
+  - file_size_limit      — _lib/*.py files do not exceed line cap
 
-These checks default to severity="warning" (allow transition but record).
-STRICT_ARCH_GATE=yes env var upgrades warnings to errors for CI.
+CHANGED 2026-09-30 (per ADR-0057):
+  - Removed `arch_debt_recorded` check (gap-analysis artifact type deleted)
+  - `arch_alignment` now scans theme docs (`docs/architecture/*.md`), not gap-analysis
 """
 from __future__ import annotations
 import json
@@ -18,7 +19,6 @@ import pytest
 
 from skills._lib.arch_quality_gate import (
     _check_arch_alignment,
-    _check_arch_debt,
     _check_adr_clarity,
     _check_handoff_actionable,
     strict_wrap,
@@ -58,16 +58,16 @@ def project_with_clean_arch(tmp_path):
         encoding="utf-8",
     )
 
-    # Gap analysis referencing real ADRs, no unresolved high-priority
+    # Theme doc referencing real ADRs (per ADR-0057; replaces gap-analysis)
     arch_dir = tmp_path / "docs" / "architecture"
     arch_dir.mkdir()
-    (arch_dir / "v2-migration-gap-analysis.md").write_text(
-        "# 架构差距分析: v2 迁移\n\n"
-        "> **关联 ADR**: ADR-0001\n\n"
-        "## 3. 差距清单\n\n"
-        "| # | 差距项 | 严重程度 | 优先级 | 关联 change |\n"
-        "|---|--------|---------|--------|------------|\n"
-        "| 1 | 拆分状态机 | 中 | P1 | openspec/split-statemachine |\n",
+    (arch_dir / "v2-migration.md").write_text(
+        "# v2 Migration Theme\n\n"
+        "## Primary ADRs\n\n"
+        "- ADR-0001 三阶段架构\n"
+        "- ADR-0002 严格模式\n\n"
+        "## 当前状态\n\n"
+        "迁移完成。\n",
         encoding="utf-8",
     )
 
@@ -114,52 +114,6 @@ def project_with_alignment_drift(tmp_path):
     arch_dir.mkdir()
     (arch_dir / "noop-gap-analysis.md").write_text(
         "# 差距分析\n\n## 3. 差距清单\n\n| # | x | 中 | P1 | done |\n",
-        encoding="utf-8",
-    )
-
-    handoff_dir = tmp_path / ".rddf" / "state"
-    handoff_dir.mkdir(parents=True)
-    (handoff_dir / ".arch-handoff.json").write_text(json.dumps({
-        "arch_complete_at": "2026-07-10T10:00:00+08:00",
-        "adr_count": 1,
-        "completed_adr_ids": ["0001"],
-        "roadmap_exists": True,
-        "current_phase": "phase-1",
-        "plan_started_at": None,
-        "adr_dir": "docs/adr",
-        "roadmap_path": "roadmap.md",
-        "architecture_dir": "docs/architecture",
-        "adr_pattern": "ADR-*.md",
-        "discovered": {
-            "adr_dir": {"found": True, "created": False, "candidates_tried": 1},
-            "roadmap_path": {"found": True, "created": False, "candidates_tried": 1},
-            "architecture_dir": {"found": True, "created": False, "candidates_tried": 1},
-        },
-        "version": 1,
-    }), encoding="utf-8")
-
-    return tmp_path
-
-
-@pytest.fixture
-def project_with_unresolved_debt(tmp_path):
-    """gap-analysis has unresolved high-severity / P0 row."""
-    adr_dir = tmp_path / "docs" / "adr"
-    adr_dir.mkdir(parents=True)
-    (adr_dir / "ADR-0001-test.md").write_text("# ADR-0001\n\n## 状态\n\n已采纳\n", encoding="utf-8")
-
-    roadmap = tmp_path / "roadmap.md"
-    roadmap.write_text("**当前阶段**: phase-1\n", encoding="utf-8")
-
-    arch_dir = tmp_path / "docs" / "architecture"
-    arch_dir.mkdir()
-    (arch_dir / "critical-gap-analysis.md").write_text(
-        "# 差距分析\n\n"
-        "> **关联 ADR**: ADR-0001\n\n"
-        "## 3. 差距清单\n\n"
-        "| # | 差距项 | 严重程度 | 优先级 | 关联 change |\n"
-        "|---|--------|---------|--------|------------|\n"
-        "| 1 | 安全关键 | 高 | P0 | (待补充) |\n",
         encoding="utf-8",
     )
 
@@ -282,17 +236,21 @@ def test_arch_alignment_warns_on_ghost_adr_in_roadmap(project_with_alignment_dri
     assert severity == "warning"
 
 
-def test_arch_alignment_warns_on_ghost_adr_in_gap_analysis(tmp_path):
-    """gap-analysis references a non-existent ADR → warning."""
+def test_arch_alignment_warns_on_ghost_adr_in_theme_doc(tmp_path):
+    """theme doc references a non-existent ADR → warning (per ADR-0057).
+
+    Per ADR-0057, arch_alignment now scans all theme docs (*.md in
+    architecture_dir) for ADR cross-references. Ghost ADR references in
+    theme docs should warn (same as roadmap.md behavior).
+    """
     adr_dir = tmp_path / "docs" / "adr"
     adr_dir.mkdir(parents=True)
     (adr_dir / "ADR-0001-real.md").write_text("# ADR-0001\n\n## 状态\n\n已采纳\n", encoding="utf-8")
     (tmp_path / "roadmap.md").write_text("**当前阶段**: phase-1\n", encoding="utf-8")
     arch_dir = tmp_path / "docs" / "architecture"
     arch_dir.mkdir()
-    (arch_dir / "ghost-ref-gap-analysis.md").write_text(
-        "# g\n\n> **关联 ADR**: ADR-1234 (ghost)\n\n"
-        "## 3. 差距清单\n\n| # | x | 中 | P1 | done |\n",
+    (arch_dir / "ghost-ref-theme.md").write_text(
+        "# Theme\n\n## Primary ADRs\n\n- ADR-1234 (ghost)\n\n## 当前状态\n\nx\n",
         encoding="utf-8",
     )
     handoff_dir = tmp_path / ".rddf" / "state"
@@ -353,55 +311,7 @@ def test_arch_alignment_handles_missing_files_gracefully(tmp_path):
     assert severity is None
 
 
-# ---------- 2. debt ----------
-
-def test_arch_debt_passes_when_no_p0_unresolved(project_with_clean_arch):
-    """No unresolved P0/high row in any gap-analysis → pass."""
-    passed, severity = _check_arch_debt(_ctx(project_with_clean_arch))
-    assert passed is True
-    assert severity is None
-
-
-def test_arch_debt_warns_on_p0_unresolved(project_with_unresolved_debt):
-    """A '高 / P0 / (待补充)' row → warning."""
-    passed, severity = _check_arch_debt(_ctx(project_with_unresolved_debt))
-    assert passed is False
-    assert severity == "warning"
-
-
-def test_arch_debt_handles_no_gap_analysis(tmp_path):
-    """When arch_dir empty or missing → pass (debt detection is opt-in)."""
-    adr_dir = tmp_path / "docs" / "adr"
-    adr_dir.mkdir(parents=True)
-    (adr_dir / "ADR-0001.md").write_text("# ADR-0001\n", encoding="utf-8")
-    (tmp_path / "roadmap.md").write_text("**当前阶段**: phase-1\n", encoding="utf-8")
-    handoff_dir = tmp_path / ".rddf" / "state"
-    handoff_dir.mkdir(parents=True)
-    (handoff_dir / ".arch-handoff.json").write_text(json.dumps({
-        "arch_complete_at": "2026-07-10T10:00:00+08:00",
-        "adr_count": 1,
-        "completed_adr_ids": ["0001"],
-        "roadmap_exists": True,
-        "current_phase": "phase-1",
-        "plan_started_at": None,
-        "adr_dir": "docs/adr",
-        "roadmap_path": "roadmap.md",
-        "architecture_dir": "docs/architecture",
-        "adr_pattern": "ADR-*.md",
-        "discovered": {
-            "adr_dir": {"found": True, "created": False, "candidates_tried": 1},
-            "roadmap_path": {"found": True, "created": False, "candidates_tried": 1},
-            "architecture_dir": {"found": True, "created": False, "candidates_tried": 1},
-        },
-        "version": 1,
-    }), encoding="utf-8")
-
-    passed, severity = _check_arch_debt(_ctx(tmp_path))
-    assert passed is True
-    assert severity is None
-
-
-# ---------- 3. clarity ----------
+# ---------- 2. clarity ----------
 
 def test_adr_clarity_passes_when_adrs_have_substance(project_with_clean_arch):
     """Real ADRs with non-trivial content → pass."""
@@ -452,7 +362,7 @@ def test_adr_clarity_ignores_template_file(tmp_path):
     assert severity is None
 
 
-# ---------- 4. handoff actionable ----------
+# ---------- 3. handoff actionable ----------
 
 def test_handoff_actionable_passes_when_fields_complete(project_with_clean_arch):
     """Handoff with real adr_count, current_phase='phase-1', all discovered.found=true → pass."""

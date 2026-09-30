@@ -193,7 +193,6 @@ ls "$PROJECT_ROOT/$ADR_DIR"/$ADR_PATTERN 2>/dev/null
 **1b. 扫描架构文档**
 
 ```bash
-ls "$PROJECT_ROOT/$ARCHITECTURE_DIR/"*-gap-analysis.md 2>/dev/null
 ls "$PROJECT_ROOT/$ARCHITECTURE_DIR/"*-architecture.md 2>/dev/null
 ls "$PROJECT_ROOT/$ARCHITECTURE_DIR/"PHASE*-ARCHITECTURE.md 2>/dev/null
 
