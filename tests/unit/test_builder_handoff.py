@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, '/workspace/project/rdd-workflow')
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from _lib.builder_handoff import (
     write_builder_handoff,
     read_builder_handoff,

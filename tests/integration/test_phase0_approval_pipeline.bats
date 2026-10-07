@@ -58,7 +58,7 @@ teardown() {
 
 @test "phase0_approval.sh --auto-approve populates proposal.md with full 5-段 content" {
     PROJECT_ROOT="$BATS_TMPDIR" \
-    bash /workspace/project/rdd-workflow/skills/rdd-builder/scripts/phase0_approval.sh \
+    bash "$REPO_ROOT/skills/rdd-builder/scripts/phase0_approval.sh" \
         fix-test-phase0 --auto-approve
     # Wait for completion
     [ "$?" -eq 0 ]

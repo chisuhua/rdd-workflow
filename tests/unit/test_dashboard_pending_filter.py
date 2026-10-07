@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 
-PROJECT_ROOT = "/workspace/project/rdd-workflow"
+PROJECT_ROOT = str(Path(__file__).resolve().parents[2])
 SKILLS_ROOT = "/home/ubuntu/.agents/skills"
 
 

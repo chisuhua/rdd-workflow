@@ -1,6 +1,8 @@
 """Unit tests for _lib/builder_deps.py (Oracle P2 #5)."""
 import sys
-sys.path.insert(0, '/workspace/project/rdd-workflow')
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import pytest
 from _lib.builder_deps import (

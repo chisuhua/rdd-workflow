@@ -65,15 +65,29 @@ setup() {
     [ "$status" -ne 0 ]
 }
 
-@test "doctor: --help mentions all 6 categories" {
+@test "doctor: --help mentions all 18 categories" {
     run bash "$DOCTOR_SH" --help
     [ "$status" -eq 0 ]
+    # All 18 categories per doctor_main.py::_CHECKERS (locked by
+    # test_rdd_doctor_skills_md_sync.bats for SKILL.md ↔ _CHECKERS drift).
     [[ "$output" == *"state"* ]]
     [[ "$output" == *"plan-tdd"* ]]
     [[ "$output" == *"roadmap-meta"* ]]
     [[ "$output" == *"proposal-table"* ]]
+    [[ "$output" == *"proposal-section"* ]]
     [[ "$output" == *"tasks-checkbox"* ]]
     [[ "$output" == *"migration-residue"* ]]
+    [[ "$output" == *"orphan-gates"* ]]
+    [[ "$output" == *"roadmap-refs"* ]]
+    [[ "$output" == *"roadmap-feature"* ]]
+    [[ "$output" == *"docs-consistency"* ]]
+    [[ "$output" == *"ai-context-bootstrap"* ]]
+    [[ "$output" == *"gitignore"* ]]
+    [[ "$output" == *"bypass-audit"* ]]
+    [[ "$output" == *"improvement-frontmatter-consistency"* ]]
+    [[ "$output" == *"objective-lifecycle"* ]]
+    [[ "$output" == *"objective-structure"* ]]
+    [[ "$output" == *"arch-audit"* ]]
 }
 # --- roadmap-feature category (feat-roadmap-discovery-completion AC-5) ---
 

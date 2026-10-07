@@ -24,7 +24,7 @@ def test_planner_stage_exit_emits_proposals_ready():
     import subprocess
     result = subprocess.run(
         ["bash", "skills/rdd-planner/scripts/planner_stage_exit.sh", "fix-v4-rdd-planner-scope-over-assignment"],
-        capture_output=True, text=True, cwd="/workspace/project/rdd-workflow"
+        capture_output=True, text=True, cwd=str(Path(__file__).resolve().parents[2])
     )
     handoff_path = Path(".rddf/state/.planner-handoff.json")
     if handoff_path.exists():

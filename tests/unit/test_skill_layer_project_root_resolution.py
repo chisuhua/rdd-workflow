@@ -28,7 +28,7 @@ from unittest import mock
 
 import pytest
 
-PROJECT_ROOT = Path("/workspace/project/rdd-workflow")
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 # Scripts and the env var each one reads (RDDF_PROJECT_ROOT or PROJECT_ROOT).

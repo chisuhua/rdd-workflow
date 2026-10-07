@@ -107,7 +107,7 @@ coord.create_session(kind='stage_guide', owner_opencode_session_id='ses_A',
         set -e
         export PROJECT_ROOT='$TEST_TMPDIR'
         export OPENCODE_SESSION_ID='ses_A'
-        source /workspace/project/rdd-workflow/skills/guide/scripts/scan-state.sh
+        source "$REPO_ROOT/skills/guide/scripts/scan-state.sh"
         scan_session_binding '$TEST_TMPDIR' 2>/dev/null || true
     "
     [ "$status" -eq 0 ]
@@ -139,7 +139,7 @@ assert len(guides) == 1, f'expected 1 guide, got {len(guides)}'
         export PROJECT_ROOT='$TEST_TMPDIR'
         export OPENCODE_SESSION_ID='ses_A'
         export RDDF_GUIDE_SESSION_ENABLED=false
-        source /workspace/project/rdd-workflow/skills/rddf-session/scripts/rddf_session_hooks.sh
+        source "$REPO_ROOT/skills/rddf-session/scripts/rddf_session_hooks.sh"
         rddf_session_hook_guide_entry
     "
     [ "$status" -eq 0 ]

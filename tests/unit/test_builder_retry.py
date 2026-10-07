@@ -1,7 +1,9 @@
 """Tests for _lib/builder_retry (per spec §3.4, ADR-0034)."""
 
 import sys
-sys.path.insert(0, '/workspace/project/rdd-workflow')
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from _lib.builder_retry import (
     route_verifier_verdict,

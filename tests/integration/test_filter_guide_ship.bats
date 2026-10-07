@@ -78,7 +78,7 @@ setup_scan_test() {
 }
 
 teardown_scan_test() {
-    cd /workspace/project/rdd-workflow
+    cd "$REPO_ROOT"
     rm -rf "$TEST_DIR"
 }
 
@@ -113,7 +113,7 @@ teardown_scan_test() {
         source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
         scan_state '$TEST_DIR' > /dev/null 2>&1 || true
     "
-    cd /workspace/project/rdd-workflow
+    cd "$REPO_ROOT"
     rm -rf "$TEST_DIR"
     [ -n "$status" ]
 }
@@ -133,7 +133,7 @@ teardown_scan_test() {
         scan_state '$TEST_DIR'
         echo \"RECOMMEND=\$RECOMMEND\"
     "
-    cd /workspace/project/rdd-workflow
+    cd "$REPO_ROOT"
     rm -rf "$TEST_DIR"
     [[ "$output" == *"RECOMMEND=rdd-builder"* ]]
 }

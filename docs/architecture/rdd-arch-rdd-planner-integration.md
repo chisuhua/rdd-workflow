@@ -93,7 +93,7 @@ Owner: rdd-planner。Schema: planner-feedback-v1（per ADR-0042）。
   "version": 1,
   "owner": "rdd-planner",
   "branch": "master",
-  "worktree_root": "/workspace/project/rdd-workflow",
+  "worktree_root": "<repo_root>",
   "codebase_commit": "abc123",
   "arch_handoff_revision": 12,
   "planner_state_last_sync_at": "2026-09-03T10:00:00Z",

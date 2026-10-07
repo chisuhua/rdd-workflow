@@ -23,7 +23,7 @@ metadata:
 ## 调用
 
 ```bash
-bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category state|plan-tdd|roadmap-meta|proposal-table|tasks-checkbox|arch-audit] [--quiet] [--help] [--version]
+bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,roadmap-meta,proposal-table,proposal-section,tasks-checkbox,migration-residue,orphan-gates,roadmap-refs,roadmap-feature,docs-consistency,ai-context-bootstrap,gitignore,bypass-audit,improvement-frontmatter-consistency,objective-lifecycle,objective-structure,arch-audit}] [--quiet] [--help] [--version]
 ```
 
 ## 何时该跑
@@ -37,7 +37,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category state|plan-tdd|roa
 
 | Code | 含义 |
 |------|------|
-| 0 | 所有 5 类 OK |
+| 0 | 所有 18 类 OK |
 | 1 | 仅 INFO + WARNING，无 CRITICAL |
 | 2 | 至少 1 个 CRITICAL |
 | 3 | checker 内部异常（其他类仍能报告） |
@@ -46,20 +46,43 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category state|plan-tdd|roa
 
 - **只读** — 不修改任何 tracked / gitignored 文件（除了 `--json` 输出 `.rddf/state/.doctor-report.json`）
 - **手动触发 only** — 不接入任何 phase gate / 自动调用
-- **cat-5 独立于 openspec CLI** — `openspec` 缺失时降级为 checkbox-only，输出 INFO 而非 silent skip
+- **cat-N 独立于 openspec CLI** — `openspec` 缺失时降级为 checkbox-only，输出 INFO 而非 silent skip
 
-## 5 类检查概览
+## 18 类检查概览
 
-| 类别 | 检查什么 |
-|------|---------|
-| `state` | `.rddf/state/*.json` 对 `_lib/schemas/*.json` schema |
-| `plan-tdd` | `.rddf/plans/*.md` 含 5 个 TDD step markers |
-| `roadmap-meta` | `openspec/changes/*/roadmap-meta.yaml` 字段 + 类型（**manual_deps 漂移会静默忽略**，doctor 报 CRITICAL） |
-| `proposal-table` | `improvement-suggestions.md` / `improvement-approved.md` Markdown 表格列数 + 链接有效性 |
-| `tasks-checkbox` | `openspec/changes/*/tasks.md` checkbox 计数（独立于 openspec CLI） |
-| `migration-residue` | `AGENTS.md` / `README.md` / `USAGE.md` / `docs/proposal-*-format.md` 里的 stale `improvements/X` 引用和 `.rddf/.rddf/improvements/X` 双前缀 bug（WARNING）。`Fix:` 行直接给出 `rddf migrate-improvements --include-docs [--allow-source-repo]` 完整命令 |
-| `gitignore` | `.rddf/project.yaml` `git.openspec_tracked` × `.gitignore` `openspec/` 一致性（add-gitignore-hard-protection）：false+缺失 → WARNING（建议追加 + 混合状态提示 `git rm -r --cached`）；true+有 → 反向不一致 WARNING |
-| `arch-audit` | rdd-arch 产物健康度：gap-analysis structural_ok（per ADR-0046 §5）+ completeness（draft/partial/complete）+ ADR inventory（count / latest / superseded / status 漂移）+ `.arch-handoff.json` sanity。advisory only，不阻断任何 gate。设计动机：把 `check_arch_done_gate.sh` 内嵌的 advisory 检查外提为可独立 query 的 doctor category |
+| 类别 | 检查什么 | 涉及 `.rddf/roadmap/` ? |
+|------|---------|:---:|
+| `state` | `.rddf/state/*.json` 对 `_lib/schemas/*.json` schema |  |
+| `plan-tdd` | `.rddf/plans/*.md` 含 5 个 TDD step markers |  |
+| `roadmap-meta` | `openspec/changes/*/roadmap-meta.yaml` 字段 + 类型（**manual_deps 漂移会静默忽略**，doctor 报 CRITICAL） |  |
+| `proposal-table` | `improvement-suggestions.md` / `improvement-approved.md` Markdown 表格列数 + 链接有效性 |  |
+| `proposal-section` | `openspec/changes/*/proposal.md` 段头（## Why / ## Capabilities / ## Acceptance）完整性 |  |
+| `tasks-checkbox` | `openspec/changes/*/tasks.md` checkbox 计数（独立于 openspec CLI） |  |
+| `migration-residue` | `AGENTS.md` / `README.md` / `USAGE.md` / `docs/proposal-*-format.md` 里的 stale `improvements/X` 引用和 `.rddf/.rddf/improvements/X` 双前缀 bug（WARNING）。`Fix:` 行直接给出 `rddf migrate-improvements --include-docs [--allow-source-repo]` 完整命令 |  |
+| `orphan-gates` | 孤立 gate（被某 change 引用但无对应 task，或孤立 requirement）|  |
+| `roadmap-refs` | `.rddf/roadmap/` + `.rddf/roadmap.md` 的 R1/R2/R3 cross-ref 完整性（feature.phase_refs 指向存在的 phase 等）| ✅ |
+| `roadmap-feature` | `.rddf/roadmap/features/*.md` frontmatter 必需字段 + done/archived 状态 fragment 是否落入 `.rddf/roadmap.md` AUTO-INDEX Features 段 | ✅ |
+| `docs-consistency` | `package.json` skills 列表 ↔ `skills/` 目录 ↔ `smoke.bats` 注册项 三方一致 |  |
+| `ai-context-bootstrap` | AI 上下文层（AGENTS.md / HANDOFF.md / docs/）的层级 + 链接 sanity |  |
+| `gitignore` | `.rddf/project.yaml` `git.openspec_tracked` × `.gitignore` `openspec/` 一致性（add-gitignore-hard-protection）：false+缺失 → WARNING（建议追加 + 混合状态提示 `git rm -r --cached`）；true+有 → 反向不一致 WARNING |  |
+| `bypass-audit` | `.rddf/state/.bypass-audit.jsonl` 旁路使用统计（per `bypass-audit-mechanism` P2 改进）；ARCHIVE_ON_MAIN > 3/月 → WARNING，> 6/月 → CRITICAL |  |
+| `improvement-frontmatter-consistency` | `.rddf/improvements/*.md` frontmatter 必需字段 + 与 `improvement-suggestions.md` 表格行数一致 |  |
+| `objective-lifecycle` | `.rddf/roadmap/objectives/*.md` 生命周期（active → deferred → completed → archived）；`review_by` 超期 → WARNING（per ADR-0054 + add-objective-tracking）| ✅ |
+| `objective-structure` | `.rddf/roadmap/objectives/*.md` 结构 / frontmatter 必需字段 | ✅ |
+| `arch-audit` | rdd-arch 产物健康度：gap-analysis structural_ok（per ADR-0046 §5）+ completeness（draft/partial/complete）+ ADR inventory（count / latest / superseded / status 漂移）+ `.arch-handoff.json` sanity。advisory only，不阻断任何 gate。设计动机：把 `check_arch_done_gate.sh` 内嵌的 advisory 检查外提为可独立 query 的 doctor category |  |
+
+### `.rddf/roadmap/` 文档诊断速查
+
+如果你的目标是**诊断 `.rddf/roadmap/` 下的文档**（features / objectives / AUTO-INDEX），直接用以下 4 个 category：
+
+```bash
+bash skills/rdd-doctor/scripts/doctor.sh --category roadmap-feature     # .rddf/roadmap/features/*.md frontmatter + AUTO-INDEX 同步
+bash skills/rdd-doctor/scripts/doctor.sh --category roadmap-refs        # .rddf/roadmap.md + .rddf/roadmap/ 内的 cross-ref 完整性
+bash skills/rdd-doctor/scripts/doctor.sh --category objective-lifecycle # .rddf/roadmap/objectives/*.md review_by 超期检查
+bash skills/rdd-doctor/scripts/doctor.sh --category objective-structure # .rddf/roadmap/objectives/*.md 结构校验
+```
+
+完整入口：`bash skills/rdd-doctor/scripts/doctor.sh`（默认跑全部 18 类）。
 
 ## 路径解析（MUST 行为）
 

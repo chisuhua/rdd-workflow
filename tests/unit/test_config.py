@@ -1,6 +1,7 @@
 """Tests for ConfigParser — multi-source priority-merge configuration."""
 import os
 import json
+from pathlib import Path
 import pytest
 import yaml
 from skills._lib.config import ConfigParser, ConfigError
@@ -178,9 +179,10 @@ def test_project_config_sh_helper(tmp_path, clean_env, monkeypatch):
     monkeypatch.setenv("PROJECT_CONFIG_NO_CACHE", "1")
 
     import subprocess
+    repo_root = Path(__file__).resolve().parents[2]
     result = subprocess.run(
         ["bash", "-c", f"source {tmp_path}/../_lib/project_config.sh 2>/dev/null; "
-         f"source /workspace/project/rdd-workflow/_lib/project_config.sh; "
+         f"source {repo_root}/_lib/project_config.sh; "
          f"project_yaml_get adr.pattern"],
         cwd=str(tmp_path), capture_output=True, text=True,
     )

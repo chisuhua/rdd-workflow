@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import List
 
 # Allow importing _lib.roadmap_validate (canonical project-root module)
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 

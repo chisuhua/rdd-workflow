@@ -150,7 +150,7 @@ verification:
 - **测试框架**：pytest (Python) + bats (shell)
 - **A 层 e2e smoke** (CI 必跑)：10 cases 验证 phase 脚本非交互入口（`./test.sh --e2e-smoke`）
 - **C 层 e2e agent** (nightly 必跑)：53 cases 验证 prose UX 真跑通 5 skill (`./test.sh --e2e-agent`)
-- **外部 E2E 测试床**：[chisuhua/rdd-workflow-e2e](https://github.com/chisuhua/rdd-workflow-e2e) — 以第三方项目视角安装 `rdd-workflow`，验证 `arch → planner → builder → archive` 全工作流与 36 个 `rddf` 子命令。Nightly cron 在最新 `master` 上自动跑（无需 GitHub App）。本地入口：`./test.sh --external-e2e`（auto-clone 到 `$RDD_E2E_DIR` 默认 `/workspace/project/rdd-workflow-e2e`，已存在则复用）。
+- **外部 E2E 测试床**：[chisuhua/rdd-workflow-e2e](https://github.com/chisuhua/rdd-workflow-e2e) — 以第三方项目视角安装 `rdd-workflow`，验证 `arch → planner → builder → archive` 全工作流与 36 个 `rddf` 子命令。Nightly cron 在最新 `master` 上自动跑（无需 GitHub App）。本地入口：`./test.sh --external-e2e`（auto-clone 到 `$RDD_E2E_DIR` 默认 `<user_data_dir>/rdd-workflow-e2e`，已存在则复用）。
 
 #### 分层 e2e 策略
 

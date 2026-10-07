@@ -26,7 +26,7 @@ phase_refs: [phase-99]
 body
 EOF
     export RDDF_PROJECT_ROOT="$TMP"
-    DOCTOR="/workspace/project/rdd-workflow/skills/rdd-doctor/scripts/doctor.sh"
+    DOCTOR="$REPO_ROOT/skills/rdd-doctor/scripts/doctor.sh"
 }
 
 teardown() {

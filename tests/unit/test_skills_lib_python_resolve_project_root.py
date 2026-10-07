@@ -20,7 +20,7 @@ from unittest import mock
 
 import pytest
 
-PROJECT_ROOT = Path("/workspace/project/rdd-workflow")
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 # ---------------------------------------------------------------------------

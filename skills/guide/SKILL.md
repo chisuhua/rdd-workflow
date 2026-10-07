@@ -48,7 +48,7 @@ skill_use("guide")
 v2.1 起扫描入口已抽到 `skills/guide/scripts/guide_entry.sh` (含 4-tier 路径解析 fallback,处理 `bash -c` 上下文 BASH_SOURCE 失效)。**AI 不再直接复制 64 行 bash 代码**,改为以下 1 行调用:
 
 ```bash
-SKILL_DIR=/workspace/project/rdd-workflow/skills/guide \
+SKILL_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../.." \
   bash -c 'source "$SKILL_DIR/scripts/guide_entry.sh" && guide_entry'
 ```
 

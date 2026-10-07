@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, '/workspace/project/rdd-workflow')
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from _lib.planner_handoff import read_planner_handoff, write_planner_handoff
 
 
@@ -131,7 +131,7 @@ class TestEnvVarPattern:
             [sys.executable, "-c", """
 import os
 import sys
-sys.path.insert(0, '/workspace/project/rdd-workflow')
+sys.path.insert(0, os.environ['REPO_ROOT'])
 from _lib.planner_handoff import write_planner_handoff, read_planner_handoff
 project_root = os.environ.get('PROJECT_ROOT')
 proposals_ready = [p for p in os.environ.get('PROPOSALS_READY', '').split(',') if p.strip()]
@@ -146,7 +146,7 @@ assert read_back['features_active'] == ['feat-m', 'feat-n'], f'features mismatch
 assert read_back['current_sprint'] == 'sprint-env-test', f'sprint mismatch: {read_back}'
 print('OK')
 """],
-            env={**os.environ, **env},
+            env={**os.environ, **env, "REPO_ROOT": str(Path(__file__).resolve().parents[2])},
             capture_output=True,
             text=True,
         )
@@ -269,7 +269,7 @@ class TestActiveObjectives:
         result = subprocess.run(
             [sys.executable, "-c", """
 import os, sys
-sys.path.insert(0, '/workspace/project/rdd-workflow')
+sys.path.insert(0, os.environ['REPO_ROOT'])
 import json as _json
 from _lib.planner_handoff import write_planner_handoff, read_planner_handoff
 payload = _json.loads(os.environ['ACTIVE_OBJECTIVES_JSON'])
@@ -282,7 +282,7 @@ read_back = read_planner_handoff(os.environ['PROJECT_ROOT'])
 assert read_back['active_objectives'] == payload
 print('OK')
 """],
-            env={**os.environ, **env},
+            env={**os.environ, **env, "REPO_ROOT": str(Path(__file__).resolve().parents[2])},
             capture_output=True,
             text=True,
         )

@@ -1,4 +1,5 @@
 """Test hook symmetry (attach/detach, entry/close)."""
+from pathlib import Path
 import pytest
 
 
@@ -9,7 +10,7 @@ def test_hook_function_count():
     # Count hook functions in rddf_session_hooks.sh
     result = subprocess.run(
         ["grep", "-c", "^rddf_session_hook_", "skills/rddf-session/scripts/rddf_session_hooks.sh"],
-        capture_output=True, text=True, cwd="/workspace/project/rdd-workflow"
+        capture_output=True, text=True, cwd=str(Path(__file__).resolve().parents[2])
     )
     
     # Should have: entry, close, heartbeat, attach, detach, guide_entry, guide_close (7)

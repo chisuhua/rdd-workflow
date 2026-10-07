@@ -25,8 +25,8 @@ phase_refs: [phase-99]
 body
 EOF
     export RDDF_PROJECT_ROOT="$TMP"
-    VALIDATE_SCRIPT="/workspace/project/rdd-workflow/skills/roadmap/scripts/roadmap_validate_fragments.sh"
-    DOCTOR="/workspace/project/rdd-workflow/skills/rdd-doctor/scripts/doctor.sh"
+    VALIDATE_SCRIPT="$REPO_ROOT/skills/roadmap/scripts/roadmap_validate_fragments.sh"
+    DOCTOR="$REPO_ROOT/skills/rdd-doctor/scripts/doctor.sh"
 }
 
 teardown() {

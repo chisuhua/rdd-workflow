@@ -56,16 +56,16 @@ PENDING TASKS
 
 KEY FILES
 ---------
-- `/workspace/project/rdd-workflow/improvement-suggestions.md` - 16 rows (4 P2 deferred only; 14 audit proposals auto-removed)
-- `/workspace/project/rdd-workflow/.rddf/state/iteration.json` - 21 changes, all archived
-- `/workspace/project/rdd-workflow/.rddf/roadmap/features/feat-fix-audit-findings.md` - feature fragment (kind=feature, refs phase-1..4)
-- `/workspace/project/rdd-workflow/.rddf/roadmap.md` - main table with 10 themes
-- `/workspace/project/rdd-workflow/skills/guide-design/scripts/generate_full_proposal.py` - line 142 fixed to accept ["验收", "验收标准"] (was bug)
-- `/workspace/project/rdd-workflow/skills/add-improve/scripts/pre_create_brainstorm_check.sh` - HARD-GATE enforcement (new from add-brainstorm-hardgate-enforcement)
-- `/workspace/project/rdd-workflow/_lib/iteration/store.py` - added proposal_source_tracking fields (session_id, audit_source, created_at_iso, parent_session_id)
-- `/workspace/project/rdd-workflow/skills/rdd-verifier/scripts/scan_queue.sh` - default still filters `in_worktree,completed` only; --re-verify-archived flag added but not default
-- `/workspace/project/rdd-workflow/skills/guide-design/scripts/design_preflight.py` - now supports both `## Phase Skeleton` table and `### Phase N:` section formats (was bug)
-- `/workspace/project/rdd-workflow/openspec/changes/archive/2026-08-27-sync-package-skills-to-disk/proposal.md` - has TBD placeholder, needs regeneration
+- `<repo_root>/improvement-suggestions.md` - 16 rows (4 P2 deferred only; 14 audit proposals auto-removed)
+- `<repo_root>/.rddf/state/iteration.json` - 21 changes, all archived
+- `<repo_root>/.rddf/roadmap/features/feat-fix-audit-findings.md` - feature fragment (kind=feature, refs phase-1..4)
+- `<repo_root>/.rddf/roadmap.md` - main table with 10 themes
+- `<repo_root>/skills/guide-design/scripts/generate_full_proposal.py` - line 142 fixed to accept ["验收", "验收标准"] (was bug)
+- `<repo_root>/skills/add-improve/scripts/pre_create_brainstorm_check.sh` - HARD-GATE enforcement (new from add-brainstorm-hardgate-enforcement)
+- `<repo_root>/_lib/iteration/store.py` - added proposal_source_tracking fields (session_id, audit_source, created_at_iso, parent_session_id)
+- `<repo_root>/skills/rdd-verifier/scripts/scan_queue.sh` - default still filters `in_worktree,completed` only; --re-verify-archived flag added but not default
+- `<repo_root>/skills/guide-design/scripts/design_preflight.py` - now supports both `## Phase Skeleton` table and `### Phase N:` section formats (was bug)
+- `<repo_root>/openspec/changes/archive/2026-08-27-sync-package-skills-to-disk/proposal.md` - has TBD placeholder, needs regeneration
 
 IMPORTANT DECISIONS
 -------------------

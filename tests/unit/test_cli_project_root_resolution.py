@@ -29,7 +29,7 @@ import pytest
 from skills._lib.cli import _ROUTES, resolve_project_root  # noqa: E402
 
 
-PROJECT_ROOT = Path("/workspace/project/rdd-workflow")
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 # ---------------------------------------------------------------------------
@@ -38,7 +38,7 @@ PROJECT_ROOT = Path("/workspace/project/rdd-workflow")
 
 def test_resolve_project_root_returns_git_toplevel_in_repo() -> None:
     """AC-PR-1: resolve_project_root() in git repo cwd returns git toplevel."""
-    # We're in /workspace/project/rdd-workflow which is a git repo.
+    # We're in <repo_root> (project root), which is a git repo.
     result = resolve_project_root()
     assert Path(result).is_absolute(), f"Expected absolute path, got {result}"
     assert (Path(result) / ".git").exists() or (Path(result) / ".git").is_file(), (

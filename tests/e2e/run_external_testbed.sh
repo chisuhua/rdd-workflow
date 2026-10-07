@@ -4,7 +4,7 @@
 # Auto-bootstrap + run chisuhua/rdd-workflow-e2e (external third-party test bed).
 #
 # Behavior:
-#   1. If $RDD_E2E_DIR (= /workspace/project/rdd-workflow-e2e by default) does
+#   1. If $RDD_E2E_DIR (= $HOME/rdd-workflow-e2e by default) does
 #      not exist, git clone --depth 1 chisuhua/rdd-workflow-e2e into it.
 #   2. If the directory already exists, reuse it (no re-clone).
 #   3. Call testbed's ./install_testbed.sh --symlink to point the global install
@@ -14,10 +14,10 @@
 # Exit code: 0 = all green, 1 = bats failures, 2 = setup error, 127 = missing dep.
 #
 # Env vars (with defaults):
-#   RDD_E2E_DIR         testbed directory (default: /workspace/project/rdd-workflow-e2e)
+#   RDD_E2E_DIR         testbed directory (default: $HOME/rdd-workflow-e2e)
 #   RDD_E2E_REPO        testbed GitHub repo (default: chisuhua/rdd-workflow-e2e)
 #   RDD_WORKFLOW_REPO   path to rdd-workflow checkout to test against
-#                       (default: /workspace/project/rdd-workflow)
+#                       (default: this repo, via `git rev-parse --show-toplevel`)
 #
 # Usage:
 #   tests/e2e/run_external_testbed.sh                 # run all bats
@@ -27,9 +27,9 @@
 
 set -euo pipefail
 
-TESTBED_DIR="${RDD_E2E_DIR:-/workspace/project/rdd-workflow-e2e}"
+TESTBED_DIR="${RDD_E2E_DIR:-${HOME}/rdd-workflow-e2e}"
 TESTBED_REPO="${RDD_E2E_REPO:-chisuhua/rdd-workflow-e2e}"
-RDD_REPO_DIR="${RDD_WORKFLOW_REPO:-/workspace/project/rdd-workflow}"
+RDD_REPO_DIR="${RDD_WORKFLOW_REPO:-$(git rev-parse --show-toplevel 2>/dev/null || echo "$HOME/rdd-workflow")}"
 
 # ── Preflight ──────────────────────────────────────────────────────────
 command -v git >/dev/null 2>&1 || { echo "❌ missing: git" >&2; exit 127; }

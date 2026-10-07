@@ -32,7 +32,7 @@ EOF
 setup() {
     TMP=$(mktemp -d)
     setup_test_repo "$TMP"
-    SCRIPT="/workspace/project/rdd-workflow/skills/roadmap/scripts/roadmap_migrate.sh"
+    SCRIPT="$REPO_ROOT/skills/roadmap/scripts/roadmap_migrate.sh"
 }
 
 teardown() {

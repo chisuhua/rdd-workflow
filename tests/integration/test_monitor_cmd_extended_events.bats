@@ -8,7 +8,7 @@ setup() {
     mkdir -p "$PROJECT_ROOT/.rddf/state"
     mkdir -p "$PROJECT_ROOT/openspec/changes"
     echo '{"version": 1, "sessions": []}' > "$PROJECT_ROOT/.rddf/state/sessions.json"
-    cd /workspace/project/rdd-workflow
+    cd "$REPO_ROOT"
 }
 
 teardown() {

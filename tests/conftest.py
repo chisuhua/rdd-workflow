@@ -4,8 +4,7 @@ Tests under tests/unit/ import from `skills._lib.*`, `skills._lib.core.*`,
 and `skills._lib.loop.*`. Because there is no `skills/__init__.py` and
 `skills` is not an installed package, pytest must locate the `skills`
 directory on sys.path. The project root (parent of this `tests/` directory)
-is added so that `import skills._lib.xxx` resolves to
-`/workspace/project/rdd-workflow/_lib/xxx.py`,
+is added so that `import skills._lib.xxx` resolves to `<repo_root>/lib/xxx.py`,
 `import skills._lib.core.xxx` resolves to `…/_lib/core/xxx.py`, and
 `import skills._lib.loop.xxx` resolves to `…/_lib/loop/xxx.py`.
 

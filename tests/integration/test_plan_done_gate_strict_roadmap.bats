@@ -34,7 +34,7 @@ phase_refs: []
 body
 EOF
     export RDDF_PROJECT_ROOT="$TMP"
-    VALIDATE_SCRIPT="/workspace/project/rdd-workflow/skills/roadmap/scripts/roadmap_validate_fragments.sh"
+    VALIDATE_SCRIPT="$REPO_ROOT/skills/roadmap/scripts/roadmap_validate_fragments.sh"
 }
 
 teardown() {

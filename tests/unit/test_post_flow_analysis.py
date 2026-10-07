@@ -149,7 +149,7 @@ def test_flow_bug_f1_traceback_in_lib():
     """Traceback whose last frame is in _lib/ → flow-bug, fine-grained phase-crash."""
     tb = (
         "Traceback (most recent call last):\n"
-        '  File "/workspace/project/rdd-workflow/_lib/issue_reporter.py", line 67, in detect_issue\n'
+        '  File "/<workspace>/<project>/_lib/issue_reporter.py", line 67, in detect_issue\n'
         "    category: One of the ADR-0027 §1 categories\n"
         "KeyError: 'flow-bug'\n"
     )
@@ -240,7 +240,7 @@ def test_report_flow_bug_writes_issue_file(tmp_path, monkeypatch):
     from post_flow_analysis import PhaseOutcome, classify_phase_outcome, report_flow_bug
     tb = (
         "Traceback (most recent call last):\n"
-        '  File "/workspace/project/rdd-workflow/_lib/foo.py", line 10, in bar\n'
+        '  File "/<workspace>/<project>/_lib/foo.py", line 10, in bar\n'
         "    raise RuntimeError('boom')\n"
         "RuntimeError: boom\n"
     )
@@ -335,7 +335,7 @@ def test_report_flow_bug_auto_submits_when_enabled(tmp_path, monkeypatch):
         from post_flow_analysis import PhaseOutcome, classify_phase_outcome, report_flow_bug
         tb = (
             "Traceback (most recent call last):\n"
-            '  File "/workspace/project/rdd-workflow/_lib/foo.py", line 10, in bar\n'
+            '  File "/<workspace>/<project>/_lib/foo.py", line 10, in bar\n'
             "    raise RuntimeError('x')\n"
             "RuntimeError: x\n"
         )
@@ -420,7 +420,7 @@ def test_report_flow_bug_uses_config_gh_repo_when_available(tmp_path, monkeypatc
         from post_flow_analysis import PhaseOutcome, classify_phase_outcome, report_flow_bug
         tb = (
             "Traceback (most recent call last):\n"
-            '  File "/workspace/project/rdd-workflow/_lib/foo.py", line 10, in bar\n'
+            '  File "/<workspace>/<project>/_lib/foo.py", line 10, in bar\n'
             "    raise RuntimeError('boom')\n"
             "RuntimeError: boom\n"
         )
@@ -448,7 +448,7 @@ def test_report_flow_bug_falls_back_to_env_when_config_has_no_gh_repo(tmp_path, 
         from post_flow_analysis import PhaseOutcome, classify_phase_outcome, report_flow_bug
         tb = (
             "Traceback (most recent call last):\n"
-            '  File "/workspace/project/rdd-workflow/_lib/foo.py", line 10, in bar\n'
+            '  File "/<workspace>/<project>/_lib/foo.py", line 10, in bar\n'
             "    raise RuntimeError('boom')\n"
             "RuntimeError: boom\n"
         )
