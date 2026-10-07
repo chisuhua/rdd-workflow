@@ -5,7 +5,9 @@ Read-only diagnostic that validates `.rddf/roadmap.md` markdown structure:
   B2. AUTO-INDEX has all 3 sub-segments (Phases / Features / Objectives)
   B3. Phases segment ↔ .rddf/roadmap/phases/*.md disk sync
   B4. ADR links in table cells resolve to existing docs/adr/*.md
-  B5. (Advisory) AUTO-SPRINT-START Current Sprint phase column ⊆ Phases segment
+  B5. (Advisory) Current Sprint block phase column ⊆ Phases segment
+      (uses START_SENTINEL constant imported from _lib.roadmap_sprint,
+       the single-writer per test_adr_index_gate.py invariant)
 
 Severity: schema violation = CRITICAL; drift = CRITICAL; missing optional = WARNING.
 """
@@ -26,9 +28,9 @@ from _lib.roadmap_md_integrity import (
     validate_adr_links,
     validate_index_segment_sync,
 )
+from _lib.roadmap_sprint import START_SENTINEL as _AUTO_SPRINT_SENTINEL
 
 
-_AUTO_SPRINT_SENTINEL = "<!-- AUTO-SPRINT-START -->"
 _VALID_STATUSES = {"active", "deferred", "completed", "archived"}
 
 

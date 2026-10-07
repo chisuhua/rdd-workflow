@@ -16,7 +16,8 @@ from doctor_main import aggregate_findings, _CHECKERS  # noqa: E402
 _CATEGORY_NAMES = frozenset({
     "state", "plan-tdd", "roadmap-meta", "proposal-table",
     "proposal-section", "tasks-checkbox", "migration-residue",
-    "orphan-gates", "roadmap-refs", "roadmap-feature", "docs-consistency",
+    "orphan-gates", "roadmap-refs", "roadmap-feature",
+    "roadmap-md-integrity", "roadmap-phases", "docs-consistency",
     "gitignore", "bypass-audit", "improvement-frontmatter-consistency",
     "ai-context-bootstrap",
     "objective-lifecycle", "objective-structure",
@@ -38,8 +39,8 @@ def test_category_names_constant_matches_disk():
     )
 
 
-def test_aggregate_runs_all_18_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """aggregate_findings invokes all 18 checker modules and combines results.
+def test_aggregate_runs_all_20_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """aggregate_findings invokes all 20 checker modules and combines results.
 
     Per rdd-doctor-docs-consistency change (2026-08-27, 10th category),
     add-gitignore-hard-protection change (2026-09-10, 11th category),
@@ -48,7 +49,8 @@ def test_aggregate_runs_all_18_categories(tmp_path: Path, monkeypatch: pytest.Mo
     fix-skill-post-install-discoverability (2026-09-21, 14th category),
     feat-roadmap-discovery-completion (2026-09-22, 15th category),
     add-objective-tracking change (2026-09-22, 16th + 17th category),
-    arch-audit (2026-09-29, 18th category per rdd-arch v2.1.0 fix-arch-doc-drift).
+    arch-audit (2026-09-29, 18th category per rdd-arch v2.1.0 fix-arch-doc-drift),
+    add-roadmap-phases-and-md-integrity-category (2026-10-07, 19th + 20th category).
     """
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
     findings, categories_checked = aggregate_findings(category=None)
@@ -85,8 +87,8 @@ def test_aggregate_no_category_no_match_returns_empty(tmp_path: Path, monkeypatc
     assert categories_checked == []
 
 
-def test_checkers_dict_has_18_entries():
-    """Lock the public contract: exactly 18 categories wired.
+def test_checkers_dict_has_20_entries():
+    """Lock the public contract: exactly 20 categories wired.
 
     Baseline 10 + gitignore + bypass-audit + improvement-frontmatter +
     ai-context-bootstrap + roadmap-feature (feat-roadmap-discovery-completion
@@ -94,4 +96,4 @@ def test_checkers_dict_has_18_entries():
     (add-objective-tracking 2026-09-22) + arch-audit (rdd-arch v2.1.0
     fix-arch-doc-drift 2026-09-29).
     """
-    assert len(_CHECKERS) == 18
+    assert len(_CHECKERS) == 20
