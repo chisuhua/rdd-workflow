@@ -1,69 +1,79 @@
-"""Doctor main: single Python process importing all 5 checkers + aggregator."""
+"""Doctor main: aggregator dispatcher with lazy-import check modules.
+
+Per add-rdd-doctor-coverage-completion (2026-10-07):
+  - _CHECKERS dict is now a `name -> import_path` string map (was callable).
+  - aggregate_findings lazy-resolves the callable on first use via _resolve_check.
+  - This eliminates the temp-fixture ModuleNotFoundError (4 check modules
+    depend on _lib imports; tests copy rdd-doctor/ to $BATS_TEST_TMPDIR
+    without _lib/, breaking eager `from checks import ...`).
+
+Module-load cost: 1 sys.path tweak + 0 imports. Per-category first-call:
+  ~1ms importlib overhead. Subsequent calls hit memoized callable.
+"""
 from __future__ import annotations
 
 import argparse
 import os
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import Callable, List, Tuple, Union
 
 from doctor_render import Finding, Severity, exit_code_for, render_human, render_json, render_quiet
 
-from checks import (
-    ai_context_bootstrap_check,
-    arch_audit_check,
-    bypass_audit_check,
-    docs_consistency_check,
-    gitignore_check,
-    improvement_frontmatter_check,
-    migration_residue_check,
-    objective_lifecycle_check,
-    objective_structure_check,
-    orphan_gates_check,
-    plan_tdd_check,
-    proposal_section_check,
-    proposal_table_check,
-    roadmap_feature_check,
-    roadmap_md_integrity_check,
-    roadmap_meta_check,
-    roadmap_phases_check,
-    roadmap_refs_check,
-    state_schema_check,
-    tasks_checkbox_check,
-)
+
+_PROJECT_ROOT = Path(os.environ.get("RDDF_PROJECT_ROOT", Path.cwd())).resolve()
 
 
-_CHECKERS = {
-    "state": state_schema_check.run,
-    "plan-tdd": plan_tdd_check.run,
-    "roadmap-meta": roadmap_meta_check.run,
-    "proposal-table": proposal_table_check.run,
-    "proposal-section": proposal_section_check.run,
-    "tasks-checkbox": tasks_checkbox_check.run,
-    "migration-residue": migration_residue_check.run,
-    "orphan-gates": orphan_gates_check.run,
-    "roadmap-refs": roadmap_refs_check.run,
-    "roadmap-feature": roadmap_feature_check.run,
-    "roadmap-md-integrity": roadmap_md_integrity_check.run,
-    "roadmap-phases": roadmap_phases_check.run,
-    "docs-consistency": docs_consistency_check.run,
-    "ai-context-bootstrap": ai_context_bootstrap_check.run,
-    "gitignore": gitignore_check.run,
-    "bypass-audit": bypass_audit_check.run,
-    "improvement-frontmatter-consistency": improvement_frontmatter_check.run,
-    "objective-lifecycle": objective_lifecycle_check.run,
-    "objective-structure": objective_structure_check.run,
-    "arch-audit": arch_audit_check.run,
+_CHECKERS: dict[str, Union[str, Callable]] = {
+    "state": "checks.state_schema_check.run",
+    "plan-tdd": "checks.plan_tdd_check.run",
+    "roadmap-meta": "checks.roadmap_meta_check.run",
+    "proposal-table": "checks.proposal_table_check.run",
+    "proposal-section": "checks.proposal_section_check.run",
+    "tasks-checkbox": "checks.tasks_checkbox_check.run",
+    "migration-residue": "checks.migration_residue_check.run",
+    "orphan-gates": "checks.orphan_gates_check.run",
+    "roadmap-refs": "checks.roadmap_refs_check.run",
+    "roadmap-feature": "checks.roadmap_feature_check.run",
+    "roadmap-md-integrity": "checks.roadmap_md_integrity_check.run",
+    "roadmap-phases": "checks.roadmap_phases_check.run",
+    "docs-consistency": "checks.docs_consistency_check.run",
+    "ai-context-bootstrap": "checks.ai_context_bootstrap_check.run",
+    "gitignore": "checks.gitignore_check.run",
+    "bypass-audit": "checks.bypass_audit_check.run",
+    "improvement-frontmatter-consistency": "checks.improvement_frontmatter_check.run",
+    "objective-lifecycle": "checks.objective_lifecycle_check.run",
+    "objective-structure": "checks.objective_structure_check.run",
+    "arch-audit": "checks.arch_audit_check.run",
 }
 
 
+def _resolve_check(name: str) -> Callable:
+    """Lazy-resolve `checks.<module>.run` callable for the named category.
+
+    On first invocation: adds _PROJECT_ROOT to sys.path, imports the module
+    via importlib, resolves `.run`, and memoizes back into _CHECKERS.
+    Subsequent calls hit the memoized callable (fast path).
+    """
+    entry = _CHECKERS[name]
+    if isinstance(entry, str):
+        if str(_PROJECT_ROOT) not in sys.path:
+            sys.path.insert(0, str(_PROJECT_ROOT))
+        import importlib
+        module_name, _, attr_name = entry.rpartition(".")
+        module = importlib.import_module(module_name)
+        run_fn = getattr(module, attr_name)
+        _CHECKERS[name] = run_fn
+        return run_fn
+    return entry
+
+
 def aggregate_findings(category: str | None) -> Tuple[List[Finding], List[str]]:
-    """Run all 5 checkers (or filtered subset) and aggregate findings.
+    """Run all 22 checkers (or filtered subset) and aggregate findings.
 
     A checker exception is converted to a single CRITICAL finding rather than
     aborting the whole run.
     """
-    project_root = Path(os.environ.get("RDDF_PROJECT_ROOT", "."))
     findings: List[Finding] = []
     categories_checked: List[str] = []
 
@@ -74,10 +84,11 @@ def aggregate_findings(category: str | None) -> Tuple[List[Finding], List[str]]:
         {category: _CHECKERS[category]} if category else _CHECKERS
     )
 
-    for name, fn in selected.items():
+    for name in selected:
         categories_checked.append(name)
         try:
-            cat_findings = fn(project_root=project_root)
+            run_fn = _resolve_check(name)
+            cat_findings = run_fn(project_root=_PROJECT_ROOT)
             findings.extend(cat_findings)
         except Exception as e:
             findings.append(Finding(
