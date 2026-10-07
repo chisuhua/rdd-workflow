@@ -26,6 +26,7 @@
 ### Features
 - `feat-fix-archive-gaps-v2` — 第二波归档治理改进（ADR 索引自动同步 / CHANGELOG-USAGE 同步 / verifier-archive-gate 边界明确化 / 第 3 波 doc drift 清理） (refs: phase-1, phase-2, phase-3, phase-4)
 - `feat-fix-audit-findings` — 2026-08-26 文档与代码一致性审计后续修复 (refs: phase-1, phase-2, phase-3, phase-4)
+- `feat-rdd-doctor-coverage-completion` — rdd-doctor coverage completion — lazy-import refactor + CI 护送 14/22 + review-debt/roadmap-backup 新 category (refs: phase-2)
 
 
 <!-- AUTO-SPRINT-START -->
