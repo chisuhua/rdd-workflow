@@ -364,6 +364,19 @@ for >=6 months. `rddf init` now works from any source directory when
 - **Strict skill registration contract**: `test_doc_contracts.py` 收紧为精确 `== disk` 匹配，新增 INSTALL.md 子技能表行数断言；`test_skill_metadata_consistency.bats` 改为基于磁盘 glob 的动态校验；`docs/change-quality-guide.md` 增加五项新增 skill 注册 checklist。`package.json` 与 `skills/INSTALL.md` 同步补齐 guide-design、rdd-env-check 等登记项。
 - **Execute CHANGE_NAME auto-derivation**: 共享 `skills/execute/scripts/change_name.sh::ensure_change_name` 在 execute Step 1 与辅助脚本入口补齐运行时上下文，保留显式值并对非 `openspec/*` 分支报出明确的修复指引。
 
+### rdd-doctor coverage completion (22 categories + CI护送 14 + lazy-import fix, 2026-10-07)
+
+Closes 4 rdd-doctor usability gaps:
+
+- **Lazy-import check modules** — `_CHECKERS` dict refactored from `name -> callable` (eager `from checks import ...` at module top) to `name -> import_path` string map. `aggregate_findings` lazy-resolves via `_resolve_check(name)`. Root cause fix for `test_rdd_doctor_proposal_section.bats` 5/5 pre-existing failures (test fixture copies `rdd-doctor/` to `$BATS_TEST_TMPDIR` without `_lib/`; eager `_lib` import fails).
+- **CI护送 14 of 22 categories** — `.github/workflows/test.yml` adds structural gate (10 categories, fail-on-CRITICAL) + advisory gate (4 categories, warn-only). Replaces previous single `docs-consistency` step. Other 8 categories remain available via direct invocation.
+- **`review-debt` category (21st)** — scans `.py/.sh/.bats` for un-ticketed TODO/FIXME/HACK markers. Ticket-referenced form (`TODO(RDDF-123)`) is silent.
+- **`roadmap-backup` category (22nd)** — `.rddf/roadmap/.backup/<timestamp>/` staleness check (>90d), multi-snapshot coexistence, malformed directory names.
+
+Tests: pytest unit 3147+ PASS (excl 2 monitor_watch pre-existing); bats rdd-doctor 41/41 PASS (was 36/41 with 5 proposal-section pre-existing failures fixed). KNOWN_FAILURES baseline net: -5 (proposal-section 5 fixed).
+
+Bonus: CI matrix first run surfaced pre-existing `.rddf/state/.cross-repo-deps-cache.json` schema drift (gitignored; deleted locally; future cross-repo-deps invocations regenerate correctly).
+
 ## [Unreleased] — v3.1
 
 ### feat-fix-audit-findings: 2026-08-26 文档与代码一致性审计后续修复（18 个 audit-followup 提案）
