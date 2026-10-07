@@ -35,8 +35,8 @@ setup() {
 # -----------------------------------------------------------------------------
 # Test 1: SKILL.md "N 类检查概览" heading is the right number (currently 18)
 # -----------------------------------------------------------------------------
-@test "doctor SKILL.md: heading says '20 类检查概览'" {
-    run grep -nE "^[#]+ 20 类检查概览" "$SKILL_MD"
+@test "doctor SKILL.md: heading says '22 类检查概览'" {
+    run grep -nE "^[#]+ 22 类检查概览" "$SKILL_MD"
     [ "$status" -eq 0 ]
 }
 
@@ -55,11 +55,11 @@ setup() {
 # -----------------------------------------------------------------------------
 # Test 3: SKILL.md table has exactly 18 data rows (| `category` | ...)
 # -----------------------------------------------------------------------------
-@test "doctor SKILL.md: 检查概览 table has exactly 20 category rows" {
+@test "doctor SKILL.md: 检查概览 table has exactly 22 category rows" {
     # Extract the section between "## N 类检查概览" and the next "## "
     table_rows=$(sed -n '/^## [0-9]\+ 类检查概览/,/^## /p' "$SKILL_MD" \
         | grep -cE '^\| `\w+(-\w+)*` \|')
-    [ "$table_rows" -eq 20 ]
+    [ "$table_rows" -eq 22 ]
 }
 
 # -----------------------------------------------------------------------------
@@ -76,12 +76,14 @@ setup() {
     py_categories=$(python3 -c "
 import re, sys
 text = open('$DOCTOR_MAIN').read()
-m = re.search(r'_CHECKERS\s*=\s*\{(.+?)\n\}', text, re.DOTALL)
+# Allow type annotation between identifier and = (e.g. _CHECKERS: dict[...] = {...})
+m = re.search(r'_CHECKERS[^=]*=\s*\{(.+?)\n\}', text, re.DOTALL)
 if not m:
     sys.exit(2)
 block = m.group(1)
 # Matches patterns like:  \"state\": state_schema_check.run,
-keys = re.findall(r'\"([\w-]+)\":\s*\w+_check\.run', block)
+#     OR     \"state\": \"checks.state_schema_check.run\",
+keys = re.findall(r'\"([\w-]+)\":\s*(?:\"[\w.]+\"|\w+_check\.run)', block)
 print('\n'.join(sorted(set(keys))))
 ")
 
@@ -106,11 +108,11 @@ print('\n'.join(sorted(set(keys))))
     py_categories=$(python3 -c "
 import re, sys
 text = open('$DOCTOR_MAIN').read()
-m = re.search(r'_CHECKERS\s*=\s*\{(.+?)\n\}', text, re.DOTALL)
+m = re.search(r'_CHECKERS[^=]*=\s*\{(.+?)\n\}', text, re.DOTALL)
 if not m:
     sys.exit(2)
 block = m.group(1)
-keys = re.findall(r'\"([\w-]+)\":\s*\w+_check\.run', block)
+keys = re.findall(r'\"([\w-]+)\":\s*(?:\"[\w.]+\"|\w+_check\.run)', block)
 print('\n'.join(sorted(set(keys))))
 ")
 

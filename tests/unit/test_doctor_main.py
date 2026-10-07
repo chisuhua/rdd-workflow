@@ -22,6 +22,7 @@ _CATEGORY_NAMES = frozenset({
     "ai-context-bootstrap",
     "objective-lifecycle", "objective-structure",
     "arch-audit",
+    "review-debt", "roadmap-backup",
 })
 
 
@@ -39,7 +40,7 @@ def test_category_names_constant_matches_disk():
     )
 
 
-def test_aggregate_runs_all_20_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_aggregate_runs_all_22_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """aggregate_findings invokes all 20 checker modules and combines results.
 
     Per rdd-doctor-docs-consistency change (2026-08-27, 10th category),
@@ -87,7 +88,7 @@ def test_aggregate_no_category_no_match_returns_empty(tmp_path: Path, monkeypatc
     assert categories_checked == []
 
 
-def test_checkers_dict_has_20_entries():
+def test_checkers_dict_has_22_entries():
     """Lock the public contract: exactly 20 categories wired.
 
     Baseline 10 + gitignore + bypass-audit + improvement-frontmatter +
@@ -96,4 +97,4 @@ def test_checkers_dict_has_20_entries():
     (add-objective-tracking 2026-09-22) + arch-audit (rdd-arch v2.1.0
     fix-arch-doc-drift 2026-09-29).
     """
-    assert len(_CHECKERS) == 20
+    assert len(_CHECKERS) == 22

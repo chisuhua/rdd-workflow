@@ -45,6 +45,8 @@ _CHECKERS: dict[str, Union[str, Callable]] = {
     "objective-lifecycle": "checks.objective_lifecycle_check.run",
     "objective-structure": "checks.objective_structure_check.run",
     "arch-audit": "checks.arch_audit_check.run",
+    "review-debt": "checks.review_debt_check.run",
+    "roadmap-backup": "checks.roadmap_backup_check.run",
 }
 
 

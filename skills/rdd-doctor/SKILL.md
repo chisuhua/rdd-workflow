@@ -23,7 +23,7 @@ metadata:
 ## 调用
 
 ```bash
-bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,roadmap-meta,proposal-table,proposal-section,tasks-checkbox,migration-residue,orphan-gates,roadmap-refs,roadmap-feature,roadmap-md-integrity,roadmap-phases,docs-consistency,ai-context-bootstrap,gitignore,bypass-audit,improvement-frontmatter-consistency,objective-lifecycle,objective-structure,arch-audit}] [--quiet] [--help] [--version]
+bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,roadmap-meta,proposal-table,proposal-section,tasks-checkbox,migration-residue,orphan-gates,roadmap-refs,roadmap-feature,roadmap-md-integrity,roadmap-phases,docs-consistency,ai-context-bootstrap,gitignore,bypass-audit,improvement-frontmatter-consistency,objective-lifecycle,objective-structure,arch-audit,review-debt,roadmap-backup}] [--quiet] [--help] [--version]
 ```
 
 ## 何时该跑
@@ -37,7 +37,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 
 | Code | 含义 |
 |------|------|
-| 0 | 所有 20 类 OK |
+| 0 | 所有 22 类 OK |
 | 1 | 仅 INFO + WARNING，无 CRITICAL |
 | 2 | 至少 1 个 CRITICAL |
 | 3 | checker 内部异常（其他类仍能报告） |
@@ -48,7 +48,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 - **手动触发 only** — 不接入任何 phase gate / 自动调用
 - **cat-N 独立于 openspec CLI** — `openspec` 缺失时降级为 checkbox-only，输出 INFO 而非 silent skip
 
-## 20 类检查概览
+## 22 类检查概览
 
 | 类别 | 检查什么 | 涉及 `.rddf/roadmap/` ? |
 |------|---------|:---:|
@@ -72,6 +72,8 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 | `objective-lifecycle` | `.rddf/roadmap/objectives/*.md` 生命周期（active → deferred → completed → archived）；`review_by` 超期 → WARNING（per ADR-0054 + add-objective-tracking）| ✅ |
 | `objective-structure` | `.rddf/roadmap/objectives/*.md` 结构 / frontmatter 必需字段 | ✅ |
 | `arch-audit` | rdd-arch 产物健康度：gap-analysis structural_ok（per ADR-0046 §5）+ completeness（draft/partial/complete）+ ADR inventory（count / latest / superseded / status 漂移）+ `.arch-handoff.json` sanity。advisory only，不阻断任何 gate。设计动机：把 `check_arch_done_gate.sh` 内嵌的 advisory 检查外提为可独立 query 的 doctor category |  |
+| `review-debt` | `.py / .sh / .bats` 源文件中 unticketed TODO/FIXME/HACK 标记（无 ticket id 参考，薄封装 `_lib.review_debt_checker._TODO_PATTERN`）|  |
+| `roadmap-backup` | `.rddf/roadmap/.backup/<timestamp>/` 子目录完整性 + staleness（>90 天）+ 多备份建议合并 |  |
 
 ### `.rddf/roadmap/` 文档诊断速查
 
