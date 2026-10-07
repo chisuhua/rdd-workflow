@@ -23,7 +23,7 @@ metadata:
 ## 调用
 
 ```bash
-bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,roadmap-meta,proposal-table,proposal-section,tasks-checkbox,migration-residue,orphan-gates,roadmap-refs,roadmap-feature,docs-consistency,ai-context-bootstrap,gitignore,bypass-audit,improvement-frontmatter-consistency,objective-lifecycle,objective-structure,arch-audit}] [--quiet] [--help] [--version]
+bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,roadmap-meta,proposal-table,proposal-section,tasks-checkbox,migration-residue,orphan-gates,roadmap-refs,roadmap-feature,roadmap-md-integrity,roadmap-phases,docs-consistency,ai-context-bootstrap,gitignore,bypass-audit,improvement-frontmatter-consistency,objective-lifecycle,objective-structure,arch-audit}] [--quiet] [--help] [--version]
 ```
 
 ## 何时该跑
@@ -37,7 +37,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 
 | Code | 含义 |
 |------|------|
-| 0 | 所有 18 类 OK |
+| 0 | 所有 20 类 OK |
 | 1 | 仅 INFO + WARNING，无 CRITICAL |
 | 2 | 至少 1 个 CRITICAL |
 | 3 | checker 内部异常（其他类仍能报告） |
@@ -48,13 +48,13 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 - **手动触发 only** — 不接入任何 phase gate / 自动调用
 - **cat-N 独立于 openspec CLI** — `openspec` 缺失时降级为 checkbox-only，输出 INFO 而非 silent skip
 
-## 18 类检查概览
+## 20 类检查概览
 
 | 类别 | 检查什么 | 涉及 `.rddf/roadmap/` ? |
 |------|---------|:---:|
 | `state` | `.rddf/state/*.json` 对 `_lib/schemas/*.json` schema |  |
 | `plan-tdd` | `.rddf/plans/*.md` 含 5 个 TDD step markers |  |
-| `roadmap-meta` | `openspec/changes/*/roadmap-meta.yaml` 字段 + 类型（**manual_deps 漂移会静默忽略**，doctor 报 CRITICAL） |  |
+| `roadmap-meta` | `openspec/changes/*/path-map.yaml` 字段 + 类型（**manual_deps 漂移会静默忽略**，doctor 报 CRITICAL） |  |
 | `proposal-table` | `improvement-suggestions.md` / `improvement-approved.md` Markdown 表格列数 + 链接有效性 |  |
 | `proposal-section` | `openspec/changes/*/proposal.md` 段头（## Why / ## Capabilities / ## Acceptance）完整性 |  |
 | `tasks-checkbox` | `openspec/changes/*/tasks.md` checkbox 计数（独立于 openspec CLI） |  |
@@ -62,6 +62,8 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 | `orphan-gates` | 孤立 gate（被某 change 引用但无对应 task，或孤立 requirement）|  |
 | `roadmap-refs` | `.rddf/roadmap/` + `.rddf/roadmap.md` 的 R1/R2/R3 cross-ref 完整性（feature.phase_refs 指向存在的 phase 等）| ✅ |
 | `roadmap-feature` | `.rddf/roadmap/features/*.md` frontmatter 必需字段 + done/archived 状态 fragment 是否落入 `.rddf/roadmap.md` AUTO-INDEX Features 段 | ✅ |
+| `roadmap-md-integrity` | `.rddf/roadmap.md` `## Phase Skeleton` 表 schema + AUTO-INDEX 三段齐全 + ADR 链接有效 + AUTO-SPRINT drift | ✅ |
+| `roadmap-phases` | `.rddf/roadmap/phases/*.md` frontmatter 必需字段 + AUTO-INDEX Phases 段同步 + main doc 一致性 | ✅ |
 | `docs-consistency` | `package.json` skills 列表 ↔ `skills/` 目录 ↔ `smoke.bats` 注册项 三方一致 |  |
 | `ai-context-bootstrap` | AI 上下文层（AGENTS.md / HANDOFF.md / docs/）的层级 + 链接 sanity |  |
 | `gitignore` | `.rddf/project.yaml` `git.openspec_tracked` × `.gitignore` `openspec/` 一致性（add-gitignore-hard-protection）：false+缺失 → WARNING（建议追加 + 混合状态提示 `git rm -r --cached`）；true+有 → 反向不一致 WARNING |  |
@@ -73,16 +75,18 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 
 ### `.rddf/roadmap/` 文档诊断速查
 
-如果你的目标是**诊断 `.rddf/roadmap/` 下的文档**（features / objectives / AUTO-INDEX），直接用以下 4 个 category：
+如果你的目标是**诊断 `.rddf/roadmap/` 下的文档**（phases / features / objectives / 主表完整性），直接用以下 6 个 category：
 
 ```bash
 bash skills/rdd-doctor/scripts/doctor.sh --category roadmap-feature     # .rddf/roadmap/features/*.md frontmatter + AUTO-INDEX 同步
 bash skills/rdd-doctor/scripts/doctor.sh --category roadmap-refs        # .rddf/roadmap.md + .rddf/roadmap/ 内的 cross-ref 完整性
+bash skills/rdd-doctor/scripts/doctor.sh --category roadmap-phases        # .rddf/roadmap/phases/*.md 完整性 + main doc 引用一致
+bash skills/rdd-doctor/scripts/doctor.sh --category roadmap-md-integrity  # .rddf/roadmap.md 表 schema + AUTO-INDEX sync + ADR 链接
 bash skills/rdd-doctor/scripts/doctor.sh --category objective-lifecycle # .rddf/roadmap/objectives/*.md review_by 超期检查
 bash skills/rdd-doctor/scripts/doctor.sh --category objective-structure # .rddf/roadmap/objectives/*.md 结构校验
 ```
 
-完整入口：`bash skills/rdd-doctor/scripts/doctor.sh`（默认跑全部 18 类）。
+完整入口：`bash skills/rdd-doctor/scripts/doctor.sh`（默认跑全部 20 类）。
 
 ## 路径解析（MUST 行为）
 

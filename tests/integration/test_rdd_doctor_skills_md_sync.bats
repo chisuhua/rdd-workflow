@@ -35,8 +35,8 @@ setup() {
 # -----------------------------------------------------------------------------
 # Test 1: SKILL.md "N 类检查概览" heading is the right number (currently 18)
 # -----------------------------------------------------------------------------
-@test "doctor SKILL.md: heading says '18 类检查概览'" {
-    run grep -nE "^[#]+ 18 类检查概览" "$SKILL_MD"
+@test "doctor SKILL.md: heading says '20 类检查概览'" {
+    run grep -nE "^[#]+ 20 类检查概览" "$SKILL_MD"
     [ "$status" -eq 0 ]
 }
 
@@ -55,11 +55,11 @@ setup() {
 # -----------------------------------------------------------------------------
 # Test 3: SKILL.md table has exactly 18 data rows (| `category` | ...)
 # -----------------------------------------------------------------------------
-@test "doctor SKILL.md: 检查概览 table has exactly 18 category rows" {
+@test "doctor SKILL.md: 检查概览 table has exactly 20 category rows" {
     # Extract the section between "## N 类检查概览" and the next "## "
     table_rows=$(sed -n '/^## [0-9]\+ 类检查概览/,/^## /p' "$SKILL_MD" \
         | grep -cE '^\| `\w+(-\w+)*` \|')
-    [ "$table_rows" -eq 18 ]
+    [ "$table_rows" -eq 20 ]
 }
 
 # -----------------------------------------------------------------------------
