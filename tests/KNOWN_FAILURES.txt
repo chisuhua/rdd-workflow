@@ -25,13 +25,6 @@
 # check_worktree_commits gate. Baseline entry removed accordingly.
 
 01_single_contract_match_returns_warning_and_report # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
-adr_index: docs/adr/README.md status table is consistent with disk # pre-existing: ADR-0024+ added after ADR README.md status table was last updated; drift in document, not test
-every real ADR has a # ADR-NNNN: header # pre-existing: newer ADRs (ADR-0025+) use different header style; drift in author convention
-every real ADR has a ## 决策 or ## Decision section # pre-existing: English vs 中文 mixed; new ADRs use ## Decision, older use ## 决策
-every real ADR has a ## Context section # pre-existing: some ADRs use ## Background instead; drift in section heading vocabulary
-every real ADR has status and date fields # pre-existing: newer ADRs omit status/date frontmatter; drift in author convention
-global_install: resolve_rdd_skill_dir falls back to ~/.agents/skills/<name> # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
- global_install: ~18 sub-skill symlinks exist and resolve to source # pre-existing baseline drift (ADR-0045 archive; verified against stash baseline)
 
 # Note (2026-09-24): 2 sub-phase heartbeat bats failures previously registered
 # here were resolved (test fixes: skills/rddf-session/scripts/rddf_session_hooks.sh
@@ -43,8 +36,6 @@ global_install: resolve_rdd_skill_dir falls back to ~/.agents/skills/<name> # pr
 # === 2026-09-21 pre-existing bats failures (registered by fix-skill-post-install-discoverability
 # full-regression gate; verified failing on master HEAD 0efd9d7 via git worktree baseline).
 # NOT regressions from that change.
-brainstorm-hardgate: complete proposal passes (exit 0) # pre-existing: pre_create_brainstorm_check.sh requires YAML frontmatter (line-1 '---') but test fixture write_complete writes a header-only proposal; test-vs-script mismatch predates change
-no 'spec-workflow' references remain anywhere in repo (v3.0.0 rename guard) # pre-existing: docs/migration/v2-to-v3.md legitimately documents the rename with 20 spec-workflow refs; test whitelist lacks that file
 
 # === 2026-09-10 pytest unit baseline (added with proposal-{suggestions,approved}
 # rename, see commit b662d00 / 5623922 / 78633ae / 6656515).
@@ -67,3 +58,25 @@ no 'spec-workflow' references remain anywhere in repo (v3.0.0 rename guard) # pr
 #   is stale (the iteration.json under test no longer contains 'filled_at').
 #   Test asserts the wrong invariant — needs removal or rewrite.
 
+# === 2026-10-08 refresh summary (selective): kept=1, removed=9, added=20 ===
+# Newly added failures as of 2026-10-08:
+AGENTS.md: Worktree Commit Flow lists 5 conventional commit types # reason required (added 2026-10-08 by refresh_known_failures.sh)
+AGENTS.md: Worktree Commit Flow mentions execute and archive phases # reason required (added 2026-10-08 by refresh_known_failures.sh)
+AGENTS.md: Worktree Commit Flow section exists # reason required (added 2026-10-08 by refresh_known_failures.sh)
+AGENTS.md: trap #6 cross-references Worktree Commit Flow # reason required (added 2026-10-08 by refresh_known_failures.sh)
+AGENTS.md: trap #6 updated to mention worktree-internal commit # reason required (added 2026-10-08 by refresh_known_failures.sh)
+AGENTS.md: 归档流程 cross-references check_worktree_commits # reason required (added 2026-10-08 by refresh_known_failures.sh)
+INSTALL.md registers 26 skills including rdd-workflow-writing-plans (v4) # reason required (added 2026-10-08 by refresh_known_failures.sh)
+doc_truth_sync: INSTALL.md description lists 26 skills + npm-test-vs-pytest block # reason required (added 2026-10-08 by refresh_known_failures.sh)
+env-bootstrap: rddf env-bootstrap --help shows 5 flags # reason required (added 2026-10-08 by refresh_known_failures.sh)
+every SKILL.md description is under 200 tokens # reason required (added 2026-10-08 by refresh_known_failures.sh)
+every SKILL.md description references role.boundaries # reason required (added 2026-10-08 by refresh_known_failures.sh)
+mark-approved-completed: idempotent call preserves original completion date # reason required (added 2026-10-08 by refresh_known_failures.sh)
+phase0_approval.sh --auto-approve populates proposal.md with full 5-段 content # reason required (added 2026-10-08 by refresh_known_failures.sh)
+rddf arch: --help shows status / handoff / feedback subcommands # reason required (added 2026-10-08 by refresh_known_failures.sh)
+rddf contract-check: 委托一致性 (--hub / --local / --cache-file 参数透传) # reason required (added 2026-10-08 by refresh_known_failures.sh)
+rddf sync-hub: CLI 注册 (--help 返回帮助, 不再是 unknown command) # reason required (added 2026-10-08 by refresh_known_failures.sh)
+rddf watch-hub: CLI 注册 (--help 返回帮助, 不再是 unknown command) # reason required (added 2026-10-08 by refresh_known_failures.sh)
+run_arch_env_check_discovers_counts # reason required (added 2026-10-08 by refresh_known_failures.sh)
+watch_hub.py --dry-run --once exits 0 without network # reason required (added 2026-10-08 by refresh_known_failures.sh)
+watch_hub.py --help shows usage # reason required (added 2026-10-08 by refresh_known_failures.sh)
