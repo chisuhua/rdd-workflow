@@ -799,9 +799,9 @@ def render_fragment_index(fragments_dir: str, main_doc_path: str) -> None:
     produces the same content.
 
     Per add-refresh-fragments-cli (2026-10-08): preserves content AFTER the
-    AUTO-INDEX block by detecting the next sentinel comment (`<!-- ... -->`)
-    or end-of-file. This avoids deleting follow-on sections like
-    AUTO-SPRINT-START or Unmapped tables when refreshing the index.
+    AUTO-INDEX block by detecting the next sentinel comment or end-of-file.
+    This avoids deleting follow-on sections like the auto-generated sprint
+    block or Unmapped tables when refreshing the index.
 
     Args:
         fragments_dir: Absolute path to the fragments dir (e.g. /path/.rddf/roadmap).
