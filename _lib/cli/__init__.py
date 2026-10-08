@@ -177,6 +177,11 @@ def _handle_help(subcommand: str) -> int:
     EXIT 0 behavior for every subcommand, regardless of whether the
     underlying handler's parser is mis-configured (per fix-cmd-help-handling).
 
+    For subcommands listed in :data:`_SUBCOMMAND_FLAGS`, the dispatcher
+    surfaces their actual flags in --help output (so users can discover
+    required arguments without invoking the underlying handler). Subcommands
+    not listed keep the minimal description-only help.
+
     Args:
         subcommand: Subcommand name (key of _ROUTES).
 
@@ -190,6 +195,9 @@ def _handle_help(subcommand: str) -> int:
         description=description or None,
         add_help=True,
     )
+    for spec in _SUBCOMMAND_FLAGS.get(subcommand, ()):
+        kwargs = {k: v for k, v in spec.items() if k not in ("flags",)}
+        parser.add_argument(*spec["flags"], **kwargs)
     try:
         parser.parse_args(["--help"])
     except SystemExit as e:
@@ -200,6 +208,52 @@ def _handle_help(subcommand: str) -> int:
             return int(e.code)
         return 1
     return 0
+
+
+# Per-subcommand flag surface for --help. Only subcommands whose underlying
+# handler does not run its own argparse (e.g. handlers that forward args
+# verbatim to a sub-script) need entries here. Subcommands with their own
+# argparse parser (e.g. rdd-arch, contract-check) get the help from
+# dispatching to the real handler.
+_SUBCOMMAND_FLAGS: Dict[str, tuple] = {
+    "sync-hub": (
+        {"flags": ["--contract"], "metavar": "CONTRACT",
+         "help": "Contract path in Hub contracts/ (e.g. auth-v2.yaml)"},
+        {"flags": ["--dry-run"], "action": "store_true",
+         "help": "Print planned operations without executing"},
+    ),
+    "watch-hub": (
+        {"flags": ["--once"], "action": "store_true", "required": True,
+         "help": "Required: poll Hub once and exit (no daemon)"},
+        {"flags": ["--owner"], "metavar": "OWNER",
+         "help": "<org>/<repo> of Hub (overrides RDDF_HUB_REPO env)"},
+        {"flags": ["--filter"], "metavar": "FILTER",
+         "help": "Filter expression (e.g. 'Stakeholders:[email protected]')"},
+        {"flags": ["--dry-run"], "action": "store_true",
+         "help": "Print planned operations without network access"},
+    ),
+    "contract-check": (
+        {"flags": ["--hub"], "metavar": "HUB", "required": True,
+         "help": "Path to Hub OpenAPI contract"},
+        {"flags": ["--local"], "metavar": "LOCAL", "required": True,
+         "help": "Path to Spoke local implementation"},
+        {"flags": ["--cache-file"], "metavar": "CACHE_FILE", "default": None,
+         "help": "Path to cross-repo deps cache (24h TTL)"},
+        {"flags": ["--format"], "choices": ["json", "markdown"], "default": "markdown",
+         "help": "Output format (default: markdown)"},
+        {"flags": ["--dry-run"], "action": "store_true",
+         "help": "Print diff without writing state files"},
+    ),
+    "arch": (
+        # arch uses real subparsers in its handler; we surface them here
+        # as a positional-arg choice so --help lists status/handoff/feedback
+        # (matches the rdd_arch_cmd.py subparser spec).
+        {"flags": ["subcommand"], "choices": ["status", "handoff", "feedback"],
+         "help": "Subcommand to execute (status|handoff|feedback)"},
+        {"flags": ["--project-root"], "default": ".",
+         "help": "Project root directory"},
+    ),
+}
 
 
 def route(subcommand: str, args: list[str]) -> int:
