@@ -23,6 +23,14 @@ teardown() {
 write_complete() {
     local dest="$1"
     cat > "$dest" <<'EOF'
+---
+优先级: P1
+来源: test
+阶段: phase-1
+分类: arch-design
+类型: improvement
+主题: 定时循环与事件触发
+---
 # test-prop
 
 **优先级**: P1 | **来源**: test

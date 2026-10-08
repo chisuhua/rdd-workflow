@@ -23,6 +23,8 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     # - ADR-0023 decision document
     # - .rddf/plans/v3-rename-*.md rename plan
     # - KNOWN_FAILURES.txt self-reference (baseline comment for this very test)
+    # - docs/migration/v2-to-v3.md — the rename guide itself must document old names
+    # - .rddf/plans/add-env-bootstrap-skill.md — references the v3-rename plan by id
     intentional=$(echo "$result" \
         | grep -v "CHANGELOG\.md:" \
         | grep -v "v3\.0\.0 note" \
@@ -30,6 +32,8 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
         | grep -v "ADR-0023" \
         | grep -v "\.rddf/plans/v3-rename" \
         | grep -v "KNOWN_FAILURES\.txt:" \
+        | grep -v "docs/migration/v2-to-v3\.md:" \
+        | grep -v "\.rddf/plans/add-env-bootstrap-skill\.md:" \
         || true)
 
     [ -z "$intentional" ] || {

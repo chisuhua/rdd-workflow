@@ -91,7 +91,7 @@ setup() {
   for f in "$ADR_DIR"/ADR-[0-9][0-9][0-9][0-9]-*.md; do
     [ -f "$f" ] || continue
     [ "$(basename "$f")" = "ADR-0001-x.md" ] && continue
-    grep -qE '^## (Context|问题|背景)' "$f" || {
+    grep -qE '^## (Context|问题|背景|Background)' "$f" || {
       echo "missing Context section in: $f" >&2
       return 1
     }
