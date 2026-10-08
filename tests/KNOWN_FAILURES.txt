@@ -24,7 +24,6 @@
 # no longer applies. Worktree commit semantics are now enforced by archive.sh's
 # check_worktree_commits gate. Baseline entry removed accordingly.
 
-01_single_contract_match_returns_warning_and_report # pre-existing: integration gather broken pre-P0+P1, now runnable; failure predates 54b733f
 
 # Note (2026-09-24): 2 sub-phase heartbeat bats failures previously registered
 # here were resolved (test fixes: skills/rddf-session/scripts/rddf_session_hooks.sh
@@ -60,23 +59,22 @@
 
 # === 2026-10-08 refresh summary (selective): kept=1, removed=9, added=20 ===
 # Newly added failures as of 2026-10-08:
-AGENTS.md: Worktree Commit Flow lists 5 conventional commit types # reason required (added 2026-10-08 by refresh_known_failures.sh)
-AGENTS.md: Worktree Commit Flow mentions execute and archive phases # reason required (added 2026-10-08 by refresh_known_failures.sh)
-AGENTS.md: Worktree Commit Flow section exists # reason required (added 2026-10-08 by refresh_known_failures.sh)
-AGENTS.md: trap #6 cross-references Worktree Commit Flow # reason required (added 2026-10-08 by refresh_known_failures.sh)
-AGENTS.md: trap #6 updated to mention worktree-internal commit # reason required (added 2026-10-08 by refresh_known_failures.sh)
-AGENTS.md: 归档流程 cross-references check_worktree_commits # reason required (added 2026-10-08 by refresh_known_failures.sh)
-INSTALL.md registers 26 skills including rdd-workflow-writing-plans (v4) # reason required (added 2026-10-08 by refresh_known_failures.sh)
-doc_truth_sync: INSTALL.md description lists 26 skills + npm-test-vs-pytest block # reason required (added 2026-10-08 by refresh_known_failures.sh)
-env-bootstrap: rddf env-bootstrap --help shows 5 flags # reason required (added 2026-10-08 by refresh_known_failures.sh)
-every SKILL.md description is under 200 tokens # reason required (added 2026-10-08 by refresh_known_failures.sh)
-every SKILL.md description references role.boundaries # reason required (added 2026-10-08 by refresh_known_failures.sh)
-mark-approved-completed: idempotent call preserves original completion date # reason required (added 2026-10-08 by refresh_known_failures.sh)
-phase0_approval.sh --auto-approve populates proposal.md with full 5-段 content # reason required (added 2026-10-08 by refresh_known_failures.sh)
-rddf arch: --help shows status / handoff / feedback subcommands # reason required (added 2026-10-08 by refresh_known_failures.sh)
-rddf contract-check: 委托一致性 (--hub / --local / --cache-file 参数透传) # reason required (added 2026-10-08 by refresh_known_failures.sh)
-rddf sync-hub: CLI 注册 (--help 返回帮助, 不再是 unknown command) # reason required (added 2026-10-08 by refresh_known_failures.sh)
-rddf watch-hub: CLI 注册 (--help 返回帮助, 不再是 unknown command) # reason required (added 2026-10-08 by refresh_known_failures.sh)
-run_arch_env_check_discovers_counts # reason required (added 2026-10-08 by refresh_known_failures.sh)
-watch_hub.py --dry-run --once exits 0 without network # reason required (added 2026-10-08 by refresh_known_failures.sh)
-watch_hub.py --help shows usage # reason required (added 2026-10-08 by refresh_known_failures.sh)
+AGENTS.md: Worktree Commit Flow lists 5 conventional commit types # doc-drift: AGENTS.md missing Worktree Commit Flow section; v2.0.7 worktree convention never documented (tracked in feat-doc-drift-cleanup)
+AGENTS.md: Worktree Commit Flow mentions execute and archive phases # doc-drift: AGENTS.md missing Worktree Commit Flow section (same root cause as 5-commit-types; fix in feat-doc-drift-cleanup)
+AGENTS.md: Worktree Commit Flow section exists # doc-drift: AGENTS.md missing Worktree Commit Flow section entirely (header + 4 subsections); feat-doc-drift-cleanup
+AGENTS.md: trap #6 cross-references Worktree Commit Flow # doc-drift: AGENTS.md trap #6 needs cross-ref to Worktree Commit Flow once section exists (depends on first 3 entries)
+AGENTS.md: trap #6 updated to mention worktree-internal commit # doc-drift: AGENTS.md trap #6 needs worktree-internal commit mention (depends on Worktree Commit Flow section)
+AGENTS.md: 归档流程 cross-references check_worktree_commits # doc-drift: AGENTS.md 归档流程 section needs cross-ref to check_worktree_commits (same feat-doc-drift-cleanup)
+INSTALL.md registers 26 skills including rdd-workflow-writing-plans (v4) # doc-drift: INSTALL.md skill list stuck at 22 (v4 added rdd-workflow-writing-plans; rdd-doctor now 23 categories incl. baseline-freshness); feat-doc-drift-cleanup
+doc_truth_sync: INSTALL.md description lists 26 skills + npm-test-vs-pytest block # doc-drift: INSTALL.md frontmatter description missing '全部 26 个子技能' + 'npm test vs pytest' reminder block; feat-doc-drift-cleanup
+env-bootstrap: rddf env-bootstrap --help shows 5 flags # test-vs-script-drift: rddf env-bootstrap --help renders fewer than 5 flags; check if --check-only/--auto-fix are dropped by _handle_help() interception (track in feat-rdd-env-bootstrap-help-audit)
+every SKILL.md description is under 200 tokens # doc-drift: at least one skills/*/SKILL.md frontmatter description exceeds 200 tokens per ADR-0051; feat-doc-drift-cleanup
+every SKILL.md description references role.boundaries # doc-drift: at least one skills/*/SKILL.md frontmatter description missing role.boundaries reference per ADR-0051; feat-doc-drift-cleanup
+mark-approved-completed: idempotent call preserves original completion date # script-drift: mark_approved_completed.sh overwrites completion date on second call (loses idempotency contract); tracked in feat-rdd-builder-idempotency-audit (TBD)
+phase0_approval.sh --auto-approve populates proposal.md with full 5-段 content # script-drift: phase0_approval.sh --auto-approve doesn't populate all 5 段 (## Why / ## Capabilities / ## Impact / ## 范围 / ## 验收标准); tracked in feat-rdd-builder-5-segment-rewrite (TBD)
+run_arch_env_check_discovers_counts # script-drift: arch_env_check.sh discovers-counts output missing '架构差距分析' marker; tracked in feat-rdd-arch-env-check-output (TBD)
+
+# === 2026-10-08 refresh summary (selective): kept=14, removed=7, added=1 ===
+# Newly added failures as of 2026-10-08:
+
+# === 2026-10-08 refresh summary (selective): kept=14, removed=1, added=0 ===

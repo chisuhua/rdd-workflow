@@ -37,7 +37,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 
 | Code | 含义 |
 |------|------|
-| 0 | 所有 22 类 OK |
+| 0 | 所有 23 类 OK |
 | 1 | 仅 INFO + WARNING，无 CRITICAL |
 | 2 | 至少 1 个 CRITICAL |
 | 3 | checker 内部异常（其他类仍能报告） |
@@ -48,7 +48,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 - **手动触发 only** — 不接入任何 phase gate / 自动调用
 - **cat-N 独立于 openspec CLI** — `openspec` 缺失时降级为 checkbox-only，输出 INFO 而非 silent skip
 
-## 22 类检查概览
+## 23 类检查概览
 
 | 类别 | 检查什么 | 涉及 `.rddf/roadmap/` ? |
 |------|---------|:---:|
@@ -74,6 +74,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 | `arch-audit` | rdd-arch 产物健康度：gap-analysis structural_ok（per ADR-0046 §5）+ completeness（draft/partial/complete）+ ADR inventory（count / latest / superseded / status 漂移）+ `.arch-handoff.json` sanity。advisory only，不阻断任何 gate。设计动机：把 `check_arch_done_gate.sh` 内嵌的 advisory 检查外提为可独立 query 的 doctor category |  |
 | `review-debt` | `.py / .sh / .bats` 源文件中 unticketed TODO/FIXME/HACK 标记（无 ticket id 参考，薄封装 `_lib.review_debt_checker._TODO_PATTERN`）|  |
 | `roadmap-backup` | `.rddf/roadmap/.backup/<timestamp>/` 子目录完整性 + staleness（>90 天）+ 多备份建议合并 |  |
+| `baseline-freshness` | `tests/KNOWN_FAILURES.txt` 最近 refresh 注释日期 + 占位符 reasons（>30 天 → WARNING，>90 天 → CRITICAL）。来源是 refresh 注释日期，不用文件 mtime（git checkout / atomic-rename 不可靠） |  |
 
 ### `.rddf/roadmap/` 文档诊断速查
 

@@ -13,11 +13,14 @@ import os as _os
 import sys as _sys
 import types as _types
 
-_HERE = _os.path.dirname(_os.path.abspath(__file__))
-_REPO_ROOT = _os.path.dirname(_os.path.dirname(_os.path.dirname(_HERE)))
+_HERE = _os.path.dirname(_os.path.abspath(__file__))  # skills/_lib/core
+_REPO_ROOT = _os.path.dirname(_os.path.dirname(_os.path.dirname(_HERE)))  # repo root
 _REAL_PATH = _os.path.join(_REPO_ROOT, "_lib", "core", "atomic_write.py")
+
+# Identity-merge: see skills/_lib/core/lock.py for the rationale on
+# `if _real is None or _real.__file__ == __file__`.
 _real = _sys.modules.get("_lib.core.atomic_write")
-if _real is None:
+if _real is None or getattr(_real, "__file__", None) == __file__:
     _real = _types.ModuleType("_lib.core.atomic_write")
     _real.__file__ = _REAL_PATH
     _real.__name__ = "_lib.core.atomic_write"

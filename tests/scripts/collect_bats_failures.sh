@@ -38,7 +38,17 @@ files_with_failures=0
 hung_files=0
 for f in "${files[@]}"; do
     i=$((i+1))
-    if ! OUTPUT_LINE=$(timeout "$PER_FILE_TIMEOUT" bats "$f" 2>&1); then
+    # Run with per-file timeout; capture both output and exit code.
+    # `timeout` exits 124 on real hang, otherwise the underlying command's
+    # exit code (0 = clean, non-zero = test failures — normal case).
+    # We do NOT use the exit code to decide hang vs failure because bats
+    # returns non-zero on any test failure; instead we only flag a hang
+    # when timeout itself returns 124.
+    set +e
+    OUTPUT_LINE=$(timeout "$PER_FILE_TIMEOUT" bats "$f" 2>&1)
+    rc=$?
+    set -e
+    if [ "$rc" -eq 124 ]; then
         # Hang ≠ test failure: log separately so baseline stays clean.
         echo "$f" >> "$HANG_LOG"
         hung_files=$((hung_files + 1))

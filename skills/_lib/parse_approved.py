@@ -14,7 +14,7 @@ _HERE = _os.path.dirname(_os.path.abspath(__file__))
 _REPO_ROOT = _os.path.dirname(_os.path.dirname(_HERE))
 _REAL_PATH = _os.path.join(_REPO_ROOT, "_lib", "parse_approved.py")
 _real = _sys.modules.get("_lib.parse_approved")
-if _real is None:
+if _real is None or getattr(_real, "__file__", None) == __file__:
     _real = _types.ModuleType("_lib.parse_approved")
     _real.__file__ = _REAL_PATH
     _real.__name__ = "_lib.parse_approved"
