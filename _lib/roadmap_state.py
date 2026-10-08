@@ -798,6 +798,11 @@ def render_fragment_index(fragments_dir: str, main_doc_path: str) -> None:
     stripped before re-rendering, so calling twice with the same fragments_dir
     produces the same content.
 
+    Per add-refresh-fragments-cli (2026-10-08): preserves content AFTER the
+    AUTO-INDEX block by detecting the next sentinel comment (`<!-- ... -->`)
+    or end-of-file. This avoids deleting follow-on sections like
+    AUTO-SPRINT-START or Unmapped tables when refreshing the index.
+
     Args:
         fragments_dir: Absolute path to the fragments dir (e.g. /path/.rddf/roadmap).
         main_doc_path: Absolute path to the main roadmap.md (e.g. /path/.rddf/roadmap.md).
@@ -811,10 +816,14 @@ def render_fragment_index(fragments_dir: str, main_doc_path: str) -> None:
         base = main_path.read_text(encoding="utf-8")
 
     SENTINEL = "<!-- AUTO-INDEX -->"
-    # Strip any previous sentinel block (between SENTINEL and end-of-file).
-    # Preserve single trailing newline; the next join adds SENTINEL on its own line.
+    trailing = ""
     if SENTINEL in base:
-        base = base.split(SENTINEL, 1)[0].rstrip() + "\n"
+        head, _, tail = base.partition(SENTINEL)
+        base = head.rstrip() + "\n"
+        import re as _re
+        tail_sentinel_m = _re.search(r"^<!-- .* -->\s*$", tail, _re.MULTILINE)
+        if tail_sentinel_m:
+            trailing = tail[tail_sentinel_m.start():]
 
     # Build index (phases first, then features)
     fragments = load_fragments(fragments_dir)
@@ -836,7 +845,7 @@ def render_fragment_index(fragments_dir: str, main_doc_path: str) -> None:
             lines.append(f"- `{f.id}` — {theme} (refs: {refs})")
         lines.append("")
 
-    new_content = base + "\n".join(lines) + "\n"
+    new_content = base + "\n".join(lines) + "\n" + trailing
 
     # Atomic write: tmp file in same dir, then os.replace
     fd, tmp_path = tempfile.mkstemp(dir=str(main_path.parent), suffix=".tmp")

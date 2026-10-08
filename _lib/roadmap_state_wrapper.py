@@ -4,10 +4,18 @@ Routes to the appropriate function based on MODE env var set by the shell wrappe
   - MODE=add-feature (default) — calls add_feature()
   - MODE=list-features — calls list_features()
   - MODE=update-agent-md — calls update_agent_md()
+  - MODE=refresh-fragments — calls render_fragment_index + update_agent_md
 """
 import os
 import sys
 import traceback
+from pathlib import Path
+
+# Co-located with _lib/roadmap_state.py; add repo root so `from _lib import` works
+# even when PROJECT_ROOT points at a temp test repo without _lib/.
+_LIB_PARENT = str(Path(__file__).resolve().parent.parent)
+if _LIB_PARENT not in sys.path:
+    sys.path.insert(0, _LIB_PARENT)
 
 
 def _mode_add_feature(project_root: str) -> int:
@@ -94,6 +102,66 @@ def _mode_update_agent_md(project_root: str) -> int:
     return 0
 
 
+def _mode_refresh_fragments(project_root: str) -> int:
+    """Refresh both .rddf/roadmap.md AUTO-INDEX + AGENTS.md AUTO block.
+
+    Per add-refresh-fragments-cli (2026-10-08, post-rdd-doctor-coverage-completion):
+    avoids manual sync drift surfaced by `rdd-doctor roadmap-feature` check.
+
+    Env vars:
+      MAIN_DOC_PATH   override default .rddf/roadmap.md
+      AGENTS_MD_PATH  override default AGENTS.md
+      FRAGMENTS_DIR   override default .rddf/roadmap
+    """
+    from pathlib import Path
+
+    main_doc_path = os.environ.get("MAIN_DOC_PATH") or ".rddf/roadmap.md"
+    agents_md_path = os.environ.get("AGENTS_MD_PATH") or "AGENTS.md"
+    fragments_dir = os.environ.get("FRAGMENTS_DIR") or ".rddf/roadmap"
+
+    if not Path(fragments_dir).is_absolute():
+        fragments_dir = str(Path(project_root) / fragments_dir)
+    if not Path(main_doc_path).is_absolute():
+        main_doc_path = str(Path(project_root) / main_doc_path)
+    if not Path(agents_md_path).is_absolute():
+        agents_md_path = str(Path(project_root) / agents_md_path)
+
+    sys.path.insert(0, project_root)
+    from _lib.roadmap_state import render_fragment_index, update_agent_md
+
+    try:
+        render_fragment_index(fragments_dir, main_doc_path)
+        result = update_agent_md(
+            project_root=project_root,
+            agents_md_path=agents_md_path,
+            fragments_dir=fragments_dir,
+        )
+    except Exception:
+        traceback.print_exc()
+        return 1
+
+    print(f"OK {main_doc_path} refreshed")
+    verb = "inserted" if result["inserted"] else "updated"
+    print(f"OK {agents_md_path} {verb}: {result['feature_count']} feature fragments rendered")
+    return 0
+
+    try:
+        render_fragment_index(fragments_dir, main_doc_path)
+        result = update_agent_md(
+            project_root=project_root,
+            agents_md_path=agents_md_path,
+            fragments_dir=fragments_dir,
+        )
+    except Exception:
+        traceback.print_exc()
+        return 1
+
+    print(f"OK {main_doc_path} refreshed")
+    verb = "inserted" if result["inserted"] else "updated"
+    print(f"OK {agents_md_path} {verb}: {result['feature_count']} feature fragments rendered")
+    return 0
+
+
 def main():
     project_root = os.environ.get("PROJECT_ROOT", ".")
     mode = os.environ.get("MODE", "add-feature")
@@ -102,6 +170,8 @@ def main():
         sys.exit(_mode_list_features(project_root))
     elif mode == "update-agent-md":
         sys.exit(_mode_update_agent_md(project_root))
+    elif mode == "refresh-fragments":
+        sys.exit(_mode_refresh_fragments(project_root))
     else:
         sys.exit(_mode_add_feature(project_root))
 
