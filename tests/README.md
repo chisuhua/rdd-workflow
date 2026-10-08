@@ -57,6 +57,71 @@ bash tests/scripts/refresh_known_failures.sh
 
 Review the resulting diff before committing. Remove a fixed test from the baseline by refreshing after confirming the test is green. CI runs the same report script after the recursive Bats step, so local and CI use one comparison implementation.
 
+### Selective refresh (added 2026-10-08, per add-known-failures-selective-refresh)
+
+The refresh script now operates in **selective** mode by default — it preserves all comment lines verbatim, drops entries that no longer fail, and appends newly-discovered failures with `# reason required (added YYYY-MM-DD by refresh_known_failures.sh)` placeholders. After a refresh, **you must triage the placeholders**: replace each with a real reason (link to a follow-up issue/ADR, or note the doc-drift/script-drift root cause). Use `bash skills/rdd-doctor/scripts/doctor.sh --category baseline-freshness` to detect un-triaged placeholders.
+
+#### Flags
+
+```bash
+# Default: run bats on tests/integration/, then selective diff
+bash tests/scripts/refresh_known_failures.sh
+
+# Preview the diff without writing (safe)
+bash tests/scripts/refresh_known_failures.sh --dry-run
+
+# Use a pre-collected failure set (works around bats-core 1.13.0
+# `bats tests/ --recursive` infinite-loop bug; see collect helper below)
+bash tests/scripts/refresh_known_failures.sh --actual /tmp/actual.txt
+
+# Narrow scope to a single test file (faster iteration)
+bash tests/scripts/refresh_known_failures.sh \
+    --scope tests/integration/test_known_failures_baseline.bats
+```
+
+#### Helper: collect failures (bypasses bats-core 1.13.0 bug)
+
+`bats tests/ --recursive` triggers an infinite loop in bats-core 1.13.0 (`test_list_file.txt: No such file or directory` race). `tests/scripts/collect_bats_failures.sh` works around this by running each `.bats` file individually with a per-file timeout:
+
+```bash
+# Default: 30s timeout per file, output to /tmp/bats-failures.txt
+bash tests/scripts/collect_bats_failures.sh
+
+# Faster (but may miss failures in slow files)
+BATS_TIMEOUT=10 bash tests/scripts/collect_bats_failures.sh tests/integration/ /tmp/actual.txt
+
+# Then feed into the refresh script
+bash tests/scripts/refresh_known_failures.sh --actual /tmp/actual.txt
+```
+
+#### Identity-merge shim pattern
+
+Modules promoted from `skills/_lib/` to top-level `_lib/` need a backward-compat shim so `from skills._lib.X import Y` and `from _lib.X import Y` resolve to the same module object (so `isinstance()` and module-level state — caches, locks, registries — are shared). The pattern:
+
+```python
+# skills/_lib/<X>.py — 28-line identity-merge shim
+import os as _os, sys as _sys, types as _types
+_HERE = _os.path.dirname(_os.path.abspath(__file__))
+_REPO_ROOT = _os.path.dirname(_os.path.dirname(_HERE))  # adjust depth for nested shims
+_REAL_PATH = _os.path.join(_REPO_ROOT, "_lib", "<X>.py")
+_real = _sys.modules.get("_lib.<X>")
+if _real is None or getattr(_real, "__file__", None) == __file__:
+    _real = _types.ModuleType("_lib.<X>")
+    _real.__file__ = _REAL_PATH
+    _real.__name__ = "_lib.<X>"
+    _sys.modules[_real.__name__] = _real
+    with open(_REAL_PATH, encoding="utf-8") as _f:
+        exec(compile(_f.read(), _REAL_PATH, "exec"), _real.__dict__)
+_sys.modules[__name__] = _real
+```
+
+**Critical** — the `if _real is None or _real.__file__ == __file__` check is NOT `if _real is None`. When the shim is loaded via `import _lib.<X>` (rather than `import skills._lib.<X>`), Python adds the shim itself to `sys.modules` BEFORE the shim body runs, so a plain `is None` check would skip the exec and leave the shim empty. The `__file__ == __file__` guard catches this case (per add-shim-coverage-lint 2026-10-08).
+
+The CI lint at `tests/unit/test_skills_lib_shim_coverage.py` enforces:
+1. Every actively-imported `from skills._lib.X` has a shim at `skills/_lib/X.py`
+2. Every imported shim has a real module at `_lib/X.py`
+3. Every imported shim that has a real counterpart performs identity-merge (`sys.modules[__name__] = _real`)
+
 ## Conventions
 
 - All test files use `.bats` extension.
