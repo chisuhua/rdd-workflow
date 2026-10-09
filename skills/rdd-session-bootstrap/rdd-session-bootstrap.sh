@@ -137,8 +137,20 @@ for i, cs in enumerate(customs):
     print(f'CUSTOM_{i}_NAME=\"{cs.get(\"name\", \"\")}\"')
     print(f'CUSTOM_{i}_SCRIPT=\"{cs.get(\"script\", \"\")}\"')
 
+honesty = data.get('honesty_audit', {})
+claim_files = honesty.get('claim_files', [])
+print(f'HONESTY_CLAIM_FILES=(' + ' '.join(f'\"{f}\"' for f in claim_files) + ')')
+ha_families = honesty.get('families', [])
+for i, fam in enumerate(ha_families):
+    print(f'HA_{i}_TAG=\"{fam.get(\"tag\", \"\")}\"')
+    print(f'HA_{i}_EXPORT=\"{fam.get(\"export\", f\"HA{i}\")}\"')
+
 print(f'FAMILY_COUNT={len(families)}')
 print(f'CUSTOM_COUNT={len(customs)}')
+print(f'HA_FAMILY_COUNT={len(ha_families)}')
+
+review = data.get('review', {})
+print(f'REVIEW_SCRIPT=\"{review.get(\"script\", \"\")}\"')
 " 2>&1)
 
     if [ $? -ne 0 ]; then
@@ -285,6 +297,82 @@ print_test_family() {
     export "BOOTSTRAP_${export_name}_TOTAL=$total"
 }
 
+# honesty_audit 原语 (PoC v0.2)
+# Profile 配置: [honesty_audit] claim_files + families
+# 算法: 对每个 family 提取实测 (BOOTSTRAP_<EXPORT>_*) + 声称 (从 claim_files grep)
+# 输出: ## honesty_audit markdown 段, 含对账表
+print_honesty_audit() {
+    echo "## honesty_audit"
+    echo "声明 vs 实测 对账 (防止 AGENTS.md / CHANGELOG.md 数字漂移):"
+    echo ""
+
+    if [ "${HA_FAMILY_COUNT:-0}" -eq 0 ]; then
+        warn "honesty_audit: no families configured (skip)"
+        echo "(no families configured)"
+        return 0
+    fi
+
+    echo "| 指标 | 声称来源 | 声称数字 | 实测 | 一致? |"
+    echo "|------|---------|---------|------|------|"
+
+    for ((i=0; i<HA_FAMILY_COUNT; i++)); do
+        ha_tag_var="HA_${i}_TAG"
+        ha_export_var="HA_${i}_EXPORT"
+        ha_tag="${!ha_tag_var:-}"
+        ha_export="${!ha_export_var:-}"
+
+        local passed_var="BOOTSTRAP_${ha_export}_PASSED"
+        local total_var="BOOTSTRAP_${ha_export}_TOTAL"
+        local failed_var="BOOTSTRAP_${ha_export}_FAILED"
+        measured_passed="${!passed_var:-0}"
+        measured_total="${!total_var:-0}"
+        measured_failed="${!failed_var:-0}"
+        measured="$measured_passed/$measured_total"
+
+        claim="?/?"
+        claim_src="(无显式声称)"
+        for claim_file in "${HONESTY_CLAIM_FILES[@]:-}"; do
+            full_path="$BOOTSTRAP_REPO_ROOT/$claim_file"
+            if [ ! -f "$full_path" ]; then
+                continue
+            fi
+            # 用 python regex 替代 bash 4 段 grep 管道 (v0100 行 360-368 extract_claim)
+            extracted=$(python3 -c "
+import re, sys
+try:
+    with open(sys.argv[1]) as f:
+        content = f.read()
+    tag = sys.argv[2]
+    tag_inner = tag.strip('[]')
+    pattern = r'\[\`?' + re.escape(tag_inner) + r'\`?\][^\n]*?(\d+)/(\d+)'
+    m = re.search(pattern, content)
+    if m:
+        print(f'{m.group(1)}/{m.group(2)}')
+except Exception as e:
+    print(f'ERROR:{e}', file=sys.stderr)
+" "$full_path" "$ha_tag" 2>/dev/null)
+            if [ -n "$extracted" ] && [[ "$extracted" != *ERROR* ]]; then
+                claim="$extracted"
+                claim_src="$claim_file"
+                break
+            fi
+        done
+
+        if [ "$measured_total" = "0" ]; then
+            honesty="❓ 无法判定"
+        elif [ "$measured_failed" = "0" ] && [ "$claim" = "$measured" ]; then
+            honesty="✅"
+        elif [ "$measured_failed" = "0" ] && [ "$claim" != "$measured" ]; then
+            honesty="🟡 文档 stale"
+        else
+            honesty="❌"
+        fi
+
+        echo "| $ha_tag | $claim_src | $claim | $measured | $honesty |"
+    done
+    echo ""
+}
+
 # custom_section 逃生舱
 print_custom_section() {
     local name="$1"
@@ -355,10 +443,7 @@ case "$MODE" in
                     print_workspace_health
                     ;;
                 test_status)
-                    # 跑所有 test families
                     if [ "${FAMILY_COUNT:-0}" -gt 0 ]; then
-                        # Need to get binary from somewhere - profile doesn't have it in v0.1
-                        # For now, use default binary from env or fallback
                         test_binary="${BOOTSTRAP_TEST_BINARY:-./build/bin/chipforge_tests}"
                         for ((i=0; i<FAMILY_COUNT; i++)); do
                             tag_var="FAMILY_${i}_TAG"
@@ -370,6 +455,9 @@ case "$MODE" in
                             fi
                         done
                     fi
+                    ;;
+                honesty_audit)
+                    print_honesty_audit
                     ;;
                 *)
                     # 可能是 custom section name
@@ -396,21 +484,103 @@ case "$MODE" in
         ;;
 
     review)
-        warn "review mode: PoC v0.1 stub (planned v0.2)"
-        echo "## review_mode"
-        echo "(not implemented in PoC v0.1, see SKILL.md K2 known issues)"
+        profile_content=$(load_profile "$BOOTSTRAP_PROFILE")
+        parse_profile "$profile_content"
+
+        review_script_var="REVIEW_SCRIPT"
+        review_script="${!review_script_var:-}"
+        if [ -z "$review_script" ]; then
+            warn "review mode: no [review] script in profile (skipping)"
+            echo "## review_mode"
+            echo "(no [review].script configured in profile)"
+            exit 0
+        fi
+
+        full_review_script="$BOOTSTRAP_REPO_ROOT/$review_script"
+        if [ ! -f "$full_review_script" ]; then
+            warn "review script not found: $review_script"
+            echo "## review_mode"
+            echo "(hook script missing: $review_script)"
+            exit 1
+        fi
+
+        print_header
+        print_workspace_health
+        if [ "${FAMILY_COUNT:-0}" -gt 0 ]; then
+            test_binary="${BOOTSTRAP_TEST_BINARY:-./build/bin/chipforge_tests}"
+            for ((i=0; i<FAMILY_COUNT; i++)); do
+                tag_var="FAMILY_${i}_TAG"
+                export_var="FAMILY_${i}_EXPORT"
+                tag="${!tag_var:-}"
+                export_name="${!export_var:-}"
+                if [ -n "$tag" ]; then
+                    print_test_family "$test_binary" "$tag" "$export_name" >/dev/null
+                fi
+            done
+        fi
+        print_honesty_audit >/dev/null
+        if [ -x "$BOOTSTRAP_REPO_ROOT/tools/bootstrap/sections/gates.sh" ]; then
+            bash "$BOOTSTRAP_REPO_ROOT/tools/bootstrap/sections/gates.sh" >/dev/null 2>&1 || true
+        fi
+        safe_run "$review_script" "bash '$full_review_script' 2>&1" || echo "(review script error)"
         ;;
 
     audit)
-        local audit_file="${1:-}"
+        audit_file="${1:-}"
         if [ -z "$audit_file" ]; then
             warn "audit mode requires file argument: $0 audit <file>"
             exit 1
         fi
-        warn "audit mode: PoC v0.1 stub (planned v0.2)"
-        echo "## audit_mode"
-        echo "(not implemented in PoC v0.1, see SKILL.md K2 known issues)"
-        echo "would audit: $audit_file"
+
+        echo "## audit_report"
+        echo "Auditing: $audit_file"
+        echo ""
+
+        if [ ! -f "$audit_file" ]; then
+            warn "audit target file not found: $audit_file"
+            echo "🔴 FAIL: file not found"
+            exit 1
+        fi
+
+        a1_pass=1
+        a2_pass=1
+
+        file_ts=$(stat -c %Y "$audit_file" 2>/dev/null || echo 0)
+        now_ts=$(date +%s)
+        age_seconds=$((now_ts - file_ts))
+        age_hours=$((age_seconds / 3600))
+        if [ "$age_hours" -gt 4 ]; then
+            echo "🔴 A1 FAIL: timestamp $age_hours hours old (>4h limit)"
+            a1_pass=0
+        else
+            echo "✅ A1 PASS: timestamp $age_hours hours old (≤4h)"
+        fi
+
+        audit_head=$(grep -oE "HEAD: [a-f0-9]+" "$audit_file" | head -1 | grep -oE "[a-f0-9]+")
+        actual_head=$(git rev-parse --short HEAD 2>/dev/null || echo "")
+        if [ -z "$audit_head" ]; then
+            echo "🟡 A2 SKIP: no HEAD marker in file"
+        elif [ "$audit_head" = "$actual_head" ]; then
+            echo "✅ A2 PASS: HEAD $audit_head matches current $actual_head"
+        else
+            echo "🔴 A2 FAIL: HEAD $audit_head != current $actual_head"
+            a2_pass=0
+        fi
+
+        if grep -q "## honesty_audit" "$audit_file" 2>/dev/null; then
+            echo "✅ A3 PASS: honesty_audit section present"
+        else
+            echo "🟡 A3 SKIP: honesty_audit section not present"
+        fi
+
+        echo ""
+        if [ "$a1_pass" = "1" ] && [ "$a2_pass" = "1" ]; then
+            echo "## audit_verdict"
+            echo "✅ Suitable for use (regenerate if state changes)"
+        else
+            echo "## audit_verdict"
+            echo "🔴 NOT suitable, regenerate required"
+        fi
         ;;
 
     *)
