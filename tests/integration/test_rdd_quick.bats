@@ -270,3 +270,39 @@ teardown() {
     echo "$body" | grep -qF "tasks.md"
     echo "$body" | grep -qF "proposal.md"
 }
+
+# ---------- ADR-0047 D3 alignment: no hard file-count threshold (LLM judgment) ----------
+# Per ADR-0047 D3, file count is a hint not a rule. The executing AI agent IS
+# the LLM (per ADR-0045) and is the final judge. Previous hard "≤ 2 files AND
+# ≤ 3 tasks" description text is removed; these tests lock the new behavior.
+
+@test "rdd-quick: SKILL.md description does NOT hardcode ≤ 2 files threshold (per ADR-0047 D3)" {
+    [ -f "$SKILL_FILE" ]
+    frontmatter="$(awk 'BEGIN{c=0} /^---$/{c++; next} c==1{print} c==2{exit}' "$SKILL_FILE")"
+    # The legacy hard threshold text must NOT appear in frontmatter description.
+    # Allow a brief exception only inside the P1 callout that explains the change.
+    ! echo "$frontmatter" | grep -qE "≤ ?2 files? AND ?3 tasks?|≤ ?2 files? AND ?≤ ?3"
+    # A docstring "no hard file-count threshold" must be present (positive check).
+    echo "$frontmatter" | grep -qiE "no hard file-count|no hard.*threshold"
+}
+
+@test "rdd-quick: SKILL.md description defers file-count decision to LLM (per ADR-0047 D3)" {
+    [ -f "$SKILL_FILE" ]
+    frontmatter="$(awk 'BEGIN{c=0} /^---$/{c++; next} c==1{print} c==2{exit}' "$SKILL_FILE")"
+    # Description must mention AI-agent / LLM judgment for the trigger decision.
+    echo "$frontmatter" | grep -qiE "(ai agent|llm).*(judge|final)"
+    # And must cross-reference ADR-0047 D3 (the "no hard threshold" decision).
+    echo "$frontmatter" | grep -qF "ADR-0047"
+    echo "$frontmatter" | grep -qF "D3"
+}
+
+@test "rdd-quick: SKILL.md P1 explicitly states no hard file-count threshold (per ADR-0047 D3)" {
+    [ -f "$SKILL_FILE" ]
+    body="$(awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$SKILL_FILE")"
+    # P1 must contain a callout explicitly stating no hard file-count threshold.
+    echo "$body" | grep -qiE "no hard file-count threshold"
+    # And explicitly allow > 2 files to still qualify.
+    echo "$body" | grep -qiE "(more than 2 files|exceeds 2 files|>2 files|more than 2 files)"
+    # Cross-reference ADR-0047 D3 in the callout for traceability.
+    echo "$body" | grep -qiE "ADR-0047.*D3"
+}

@@ -2,10 +2,13 @@
 name: rdd-quick
 description: |
   Bypass path per ADR-0047: in-place execution, no openspec change, no worktree.
-  TDD 5-step plan + Oracle self-contained verification.
+  TDD 5-step plan + self-contained AC verification (executing AI agent IS the
+  LLM per ADR-0045, no external provider).
 
-  Invoke when: Change scope ≤ 2 files AND ≤ 3 tasks AND no public API change.
-  Default: TDD 5-step + P4 retry up to `RDDF_QUICK_MAX_RETRIES` (default 3).
+  Use when: AI agent judges the change fits rdd-quick (no public API change,
+  no openspec change / worktree required). Per ADR-0047 D3: no hard file-count
+  threshold; the LLM (executing agent) is the final judge. Default: TDD 5-step
+  + P4 retry up to `RDDF_QUICK_MAX_RETRIES` (default 3).
   Boundary ownership: see role.boundaries.owns / not_owns.
 license: MIT
 compatibility: requires Python 3.11+, bash 4+, git 2.25+. No external skill deps.
@@ -159,6 +162,13 @@ audit-log schema).
 ## P1 — Complexity Triage (REVISED per ADR-0048)
 
 The AI agent MUST determine complexity by **优先读 planner advisory** (mode a) 或 fallback to self-triage (mode b).
+
+> **No hard file-count threshold (per ADR-0047 D3)** — File count is a hint, not a
+> rule. Even when the change touches more than 2 files, the executing AI agent
+> (which IS the LLM, per ADR-0045) MAY still judge the change fits rdd-quick if
+> all simple signals hold and no complex signal fires. The previous hard
+> `≤ 2 files AND ≤ 3 tasks` description text is removed; the agent is the final
+> judge.
 
 ### Mode (a) from rdd-builder P0 (主路径, per ADR-0048)
 
