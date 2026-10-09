@@ -1,0 +1,117 @@
+# session-bootstrap profile template (TOML v1.0)
+#
+# 复制此文件到项目的 .rddf/skill-profiles/session-bootstrap.toml, 按需修改.
+# 详细 schema 见 skills/rdd-session-bootstrap/SKILL.md §Architecture.
+
+# ─────────────────────────────────────────────────────────
+# 必填段: [profile]
+# ─────────────────────────────────────────────────────────
+[profile]
+name = "my-project"                              # 项目短名 (用于日志/标识)
+title = "My Project Session Bootstrap"           # 人类可读标题 (出现在 prompt 头部)
+version = "1"                                    # profile schema version (always 1 for v0.1.x)
+
+# ─────────────────────────────────────────────────────────
+# 必填段: [sections]
+# - order: section 执行顺序 (按依赖关系排, header 总是第一个)
+# - test_families: 数组 (空数组表示无 test family 原语)
+# - custom_sections: 数组 (空数组表示无逃生舱)
+# ─────────────────────────────────────────────────────────
+[sections]
+order = [
+  "header",                # 内建: timestamp + HEAD + DO NOT REUSE
+  "active_changes",        # 内建: openspec list
+  "initiative_status",     # 内建: .rddf/sync_strategy_status.sh
+  "recent_commits",        # 内建: git log -5
+  "workspace_health",      # 内建: dirty tree + orphan changes
+  "test_status",           # 原语: 跑 test_families (见下)
+  "preflight_reminders",   # 逃生舱: tools/bootstrap/sections/preflight.sh
+  "hard_prerequisites",    # 逃生舱: tools/bootstrap/sections/gates.sh
+]
+
+# test_families (test_status 原语配置)
+# binary 优先从环境变量 BOOTSTRAP_TEST_BINARY 读取, 兜底用 ./build/bin/<default>
+# families 数组中每项: tag = Catch2 filter, export = env var 前缀
+test_families = [
+  { tag = "[smoke]",        export = "SMOKE" },
+  { tag = "[integration]",  export = "INTEG" },
+  # { tag = "[cpu]", export = "CPU" },  # 注释示例: 启用时取消注释
+]
+
+# custom_sections (逃生舱配置)
+# name = markdown ## 段名, script = 项目根相对路径的 shell 脚本
+# 引擎调 `bash <script>`, 内联 stdout
+custom_sections = [
+  { name = "preflight_reminders",  script = "tools/bootstrap/sections/preflight.sh" },
+  { name = "hard_prerequisites",   script = "tools/bootstrap/sections/gates.sh" },
+  # { name = "review_recommendations", script = "tools/bootstrap/review.sh" },  # PoC v0.2
+]
+
+# ─────────────────────────────────────────────────────────
+# 可选段: [honesty_audit] (PoC v0.1: 暂未实装, planned v0.2)
+# ─────────────────────────────────────────────────────────
+# [honesty_audit]
+# claim_files = ["AGENTS.md", "CHANGELOG.md"]  # 声称来源
+# families = [
+#   { tag = "[smoke]",       export = "SMOKE" },
+#   { tag = "[integration]", export = "INTEG" },
+# ]
+
+# ─────────────────────────────────────────────────────────
+# 可选段: [review] (PoC v0.1: 暂未实装, planned v0.2)
+# ─────────────────────────────────────────────────────────
+# [review]
+# script = "tools/bootstrap/review.sh"  # 消费 BOOTSTRAP_* env vars, 输出 smart recommendations
+
+# ─────────────────────────────────────────────────────────
+# 示例 1: Minimal profile (5 内建 section 零配置)
+# 适用: 简单 spoke 项目, 不需 test family / custom section
+# ─────────────────────────────────────────────────────────
+# [profile]
+# name = "minimal-spoke"
+# title = "Minimal Spoke Bootstrap"
+#
+# [sections]
+# order = ["header", "active_changes", "initiative_status", "recent_commits", "workspace_health"]
+# test_families = []
+# custom_sections = []
+
+# ─────────────────────────────────────────────────────────
+# 示例 2: v0100 风格 (ChipForge v0.10.0 wave5)
+# 完整 v0100-bootstrap 迁移模板
+# ─────────────────────────────────────────────────────────
+# [profile]
+# name = "v0100-wave5"
+# title = "ChipForge v0.10.0 wave5 Session Bootstrap"
+# version = "1"
+#
+# [sections]
+# order = [
+#   "header",
+#   "active_changes",
+#   "initiative_status",
+#   "recent_commits",
+#   "workspace_health",
+#   "test_status",
+#   "preflight_reminders",
+#   "hard_prerequisites",
+# ]
+# test_families = [
+#   { tag = "[cpu-l1-mmu-demo]", export = "DEMO" },
+#   { tag = "[riscv-tests]",     export = "RISCV" },
+# ]
+# custom_sections = [
+#   { name = "preflight_reminders", script = "tools/bootstrap/sections/preflight.sh" },
+#   { name = "hard_prerequisites",  script = "tools/bootstrap/sections/gates.sh" },
+# ]
+#
+# [honesty_audit]
+# claim_files = ["AGENTS.md", "CHANGELOG.md"]
+# families = [
+#   { tag = "[cpu]",              export = "CPU" },
+#   { tag = "[cpu-integration]",  export = "CPUINT" },
+#   { tag = "[cpu-l1-mmu-demo]",  export = "DEMO" },
+# ]
+#
+# [review]
+# script = "tools/bootstrap/review.sh"
