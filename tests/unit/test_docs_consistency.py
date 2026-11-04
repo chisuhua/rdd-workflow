@@ -204,8 +204,22 @@ def test_run_all_aggregates():
 
 
 def test_check_skill_count_disk_invariant():
-    """Sub-skill disk count is exactly 27 (matches package.json + INSTALL.md post-ADR-0053)."""
+    """Sub-skill disk count MUST equal the published manifest size.
+
+    The absolute number is deliberately NOT asserted: it changed with every
+    added skill (26 -> 27 -> 28), and each time this test had to be edited
+    by hand — which is exactly how the manifest drift went unnoticed in the
+    first place. The invariant is that the manifest publishes exactly the
+    canonical skills that exist on disk.
+    """
+    import json
+    from pathlib import Path
+
     from _lib.docs_consistency import _count_disk_skill_md
-    assert _count_disk_skill_md() == 27, (
-        f"expected 27 SKILL.md on disk, got {_count_disk_skill_md()}"
+
+    manifest = json.loads(Path("package.json").read_text(encoding="utf-8"))["skills"]
+    disk = _count_disk_skill_md()
+    assert disk == len(manifest), (
+        f"{disk} canonical SKILL.md on disk but package.json::skills[] "
+        f"publishes {len(manifest)}"
     )

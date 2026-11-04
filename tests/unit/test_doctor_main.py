@@ -13,34 +13,28 @@ from doctor_render import Severity  # noqa: E402
 from doctor_main import aggregate_findings, _CHECKERS  # noqa: E402
 
 
-_CATEGORY_NAMES = frozenset({
-    "state", "plan-tdd", "roadmap-meta", "proposal-table",
-    "proposal-section", "tasks-checkbox", "migration-residue",
-    "orphan-gates", "roadmap-refs", "roadmap-feature",
-    "roadmap-md-integrity", "roadmap-phases", "docs-consistency",
-    "gitignore", "bypass-audit", "improvement-frontmatter-consistency",
-    "ai-context-bootstrap",
-    "objective-lifecycle", "objective-structure",
-    "arch-audit",
-    "review-debt", "roadmap-backup",
-})
+# The category list is owned by the production `_CHECKERS` dict (imported
+# above). A local copy of it was a second source of truth that drifted every
+# time a checker was added — the drift was invisible because the copy was
+# what the tests asserted against.
+_CATEGORY_NAMES = frozenset(_CHECKERS.keys())
 
 
 def test_category_names_constant_matches_disk():
-    """Lock invariant: directory file count == wired category count.
+    """Lock invariant: every check file on disk is wired into _CHECKERS.
 
-    Per fix-update-doctor-main-category-count (Wave 1 P2): prevent future
-    drift between source code and the _CATEGORY_NAMES set.
+    The expected set comes from the production `_CHECKERS` dict, so adding a
+    checker can no longer desynchronise this test from the implementation.
     """
     checks_dir = _SCRIPTS_DIR / "checks"
     files = [f for f in checks_dir.glob("*.py") if f.stem != "__init__"]
     assert len(_CATEGORY_NAMES) == len(files), (
-        f"_CATEGORY_NAMES has {len(_CATEGORY_NAMES)} entries but {checks_dir} "
-        f"has {len(files)} check files. Update _CATEGORY_NAMES."
+        f"_CHECKERS wires {len(_CATEGORY_NAMES)} categories but {checks_dir} "
+        f"has {len(files)} check files."
     )
 
 
-def test_aggregate_runs_all_22_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_aggregate_runs_all_wired_categories(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """aggregate_findings invokes all 20 checker modules and combines results.
 
     Per rdd-doctor-docs-consistency change (2026-08-27, 10th category),
@@ -88,13 +82,13 @@ def test_aggregate_no_category_no_match_returns_empty(tmp_path: Path, monkeypatc
     assert categories_checked == []
 
 
-def test_checkers_dict_has_22_entries():
-    """Lock the public contract: exactly 20 categories wired.
+def test_checkers_dict_has_one_entry_per_check_file():
+    """Lock the public contract: one wired category per check file.
 
-    Baseline 10 + gitignore + bypass-audit + improvement-frontmatter +
-    ai-context-bootstrap + roadmap-feature (feat-roadmap-discovery-completion
-    2026-09-22) + objective-lifecycle + objective-structure
-    (add-objective-tracking 2026-09-22) + arch-audit (rdd-arch v2.1.0
-    fix-arch-doc-drift 2026-09-29).
+    The absolute count is not asserted — it grew with every checker, and
+    each growth required editing this test, which is how the drift between
+    the implementation and the (now removed) local constant went unnoticed.
     """
-    assert len(_CHECKERS) == 22
+    checks_dir = _SCRIPTS_DIR / "checks"
+    files = [f for f in checks_dir.glob("*.py") if f.stem != "__init__"]
+    assert len(_CHECKERS) == len(files)

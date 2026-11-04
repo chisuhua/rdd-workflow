@@ -190,11 +190,19 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 
 # === 6. INSTALL.md 注册新 skills ===
 
-@test "INSTALL.md registers 26 skills including rdd-workflow-writing-plans (v4)" {
-    # v4 stage-merge (ADR-0043) split guide-spec/plan/ship into separate skills,
-    # doubling the registered count from 13 → 26. INSTALL.md must reflect this.
+@test "INSTALL.md registers every disk skill including rdd-workflow-writing-plans (v4)" {
+    # v4 stage-merge (ADR-0043) split guide-spec/plan/ship into separate skills.
+    # The count is parsed from INSTALL.md and compared against the disk, so a
+    # newly added skill does not require editing this test (asserting a
+    # literal count is what let the manifest drift go unnoticed).
     local f="$REPO_ROOT_ORIGIN/skills/INSTALL.md"
-    grep -qE '全部 26 个子技能' "$f"
+    local disk_sub
+    disk_sub=$(ls "$REPO_ROOT_ORIGIN"/skills/*/SKILL.md 2>/dev/null | wc -l)
+    local mentioned
+    mentioned=$(grep -oE '全部 [0-9]+ 个子技能' "$f" | grep -oE '[0-9]+' | head -1)
+    [ -n "$mentioned" ] || { echo "INSTALL.md missing the '全部 N 个子技能' statement"; return 1; }
+    [ "$mentioned" -eq "$disk_sub" ] || {
+        echo "INSTALL.md says '全部 $mentioned 个子技能' but disk has $disk_sub"; return 1; }
     grep -qE 'rdd-workflow-writing-plans' "$f"
     ! grep -qE 'rdd-workflow-executing-plans' "$f"
     ! grep -qE 'prometheus-planning' "$f"

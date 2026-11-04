@@ -27,6 +27,7 @@
 - `feat-fix-agent-interface-contracts` — 对外契约修复（v4 handoff 识别 / owns 可机读 / design.md 归属 / P2 commit gate 删除 / status 暴露 builder phase） (refs: phase-4)
 - `feat-fix-archive-gaps-v2` — 第二波归档治理改进（ADR 索引自动同步 / CHANGELOG-USAGE 同步 / verifier-archive-gate 边界明确化 / 第 3 波 doc drift 清理） (refs: phase-1, phase-2, phase-3, phase-4)
 - `feat-fix-audit-findings` — 2026-08-26 文档与代码一致性审计后续修复 (refs: phase-1, phase-2, phase-3, phase-4)
+- `feat-fix-skill-manifest-drift` — 消除 skill 清单漂移与断言硬编码 —— manifest 三向对齐 + 7 个 identity-merge shim 的 __spec__ + 日期无关的 sprint 断言 (refs: phase-4)
 - `feat-rdd-doctor-coverage-completion` — rdd-doctor coverage completion — lazy-import refactor + CI 护送 14/22 + review-debt/roadmap-backup 新 category (refs: phase-2)
 
 <!-- AUTO-SPRINT-START -->

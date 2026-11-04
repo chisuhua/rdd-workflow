@@ -65,16 +65,23 @@ AGENTS.md: Worktree Commit Flow section exists # doc-drift: AGENTS.md missing Wo
 AGENTS.md: trap #6 cross-references Worktree Commit Flow # doc-drift: AGENTS.md trap #6 needs cross-ref to Worktree Commit Flow once section exists (depends on first 3 entries)
 AGENTS.md: trap #6 updated to mention worktree-internal commit # doc-drift: AGENTS.md trap #6 needs worktree-internal commit mention (depends on Worktree Commit Flow section)
 AGENTS.md: 归档流程 cross-references check_worktree_commits # doc-drift: AGENTS.md 归档流程 section needs cross-ref to check_worktree_commits (same feat-doc-drift-cleanup)
-INSTALL.md registers 26 skills including rdd-workflow-writing-plans (v4) # doc-drift: INSTALL.md skill list stuck at 22 (v4 added rdd-workflow-writing-plans; rdd-doctor now 23 categories incl. baseline-freshness); feat-doc-drift-cleanup
-doc_truth_sync: INSTALL.md description lists 26 skills + npm-test-vs-pytest block # doc-drift: INSTALL.md frontmatter description missing '全部 26 个子技能' + 'npm test vs pytest' reminder block; feat-doc-drift-cleanup
 env-bootstrap: rddf env-bootstrap --help shows 5 flags # test-vs-script-drift: rddf env-bootstrap --help renders fewer than 5 flags; check if --check-only/--auto-fix are dropped by _handle_help() interception (track in feat-rdd-env-bootstrap-help-audit)
 every SKILL.md description is under 200 tokens # doc-drift: at least one skills/*/SKILL.md frontmatter description exceeds 200 tokens per ADR-0051; feat-doc-drift-cleanup
 every SKILL.md description references role.boundaries # doc-drift: at least one skills/*/SKILL.md frontmatter description missing role.boundaries reference per ADR-0051; feat-doc-drift-cleanup
 mark-approved-completed: idempotent call preserves original completion date # script-drift: mark_approved_completed.sh overwrites completion date on second call (loses idempotency contract); tracked in feat-rdd-builder-idempotency-audit (TBD)
 phase0_approval.sh --auto-approve populates proposal.md with full 5-段 content # script-drift: phase0_approval.sh --auto-approve doesn't populate all 5 段 (## Why / ## Capabilities / ## Impact / ## 范围 / ## 验收标准); tracked in feat-rdd-builder-5-segment-rewrite (TBD)
-run_arch_env_check_discovers_counts # script-drift: arch_env_check.sh discovers-counts output missing '架构差距分析' marker; tracked in feat-rdd-arch-env-check-output (TBD)
 
 # === 2026-10-08 refresh summary (selective): kept=14, removed=7, added=1 ===
 # Newly added failures as of 2026-10-08:
 
 # === 2026-10-08 refresh summary (selective): kept=14, removed=1, added=0 ===
+# === 2026-11-04 refresh (fix-skill-manifest-drift): kept=10, removed=3, added=0 ===
+# Removed because they now pass (the gate was being bypassed by leaving them registered):
+#   - "INSTALL.md registers 26 skills ..." → count is now parsed and compared against disk
+#   - "doc_truth_sync: INSTALL.md description lists 26 skills ..." → same
+#   - "run_arch_env_check_discovers_counts" → passes (arch env-check output drift resolved)
+#
+# NOTE: run `bash tests/scripts/refresh_known_failures.sh --dry-run` before using it —
+# its selective mode ABSORBS new failures into this file (which is how the skill-count
+# drift stayed invisible), and its failure-name normalisation does not match
+# report_regression.sh, so a blind refresh can inject duplicate entries.

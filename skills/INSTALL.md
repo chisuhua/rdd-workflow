@@ -1,7 +1,7 @@
 ---
 name: INSTALL
 description: |
-  First-entry install skill (v4.0+). Copies 全部 27 个子技能 to project via symlink or copy.
+  First-entry install skill (v4.0+). Copies 全部 28 个子技能 to project via symlink or copy.
 
   Invoke when BOTH:
     1. Project has no rdd-workflow + user wants install
@@ -30,8 +30,6 @@ author: sisyphus
 | `guide` | 推荐器入口（扫描项目状态，建议下一步） |
 | `rdd-arch` | Arch 阶段状态机（setup → roadmap → arch-done；v4 slim:移除 roadmap 注入） |
 | `rdd-planner` | v4 新增：roadmap + 提案编排器（Stage 2）；包装 `_lib/planner_*.py` + stage entry/exit 契约 |
-| `rdd-arch` | v4 Stage 1: 架构定义（ADR + 差距分析 + roadmap），slim v3 |
-| `rdd-planner` | v4 Stage 2: 路线图 + 提案管理（status/sync/feedback/audit/attach） |
 | `rdd-builder` | v4 Stage 3: 6-phase 状态机（P0/P1/P1.5/P2/P2.5/P3）+ verifier 重试环 |
 | `rdd-verifier` | v4 Stage 4: 批量 AC 验证（per ADR-0034） |
 | `propose` | 变更提案生成（被 rdd-builder Phase 1 调用） |
@@ -55,6 +53,7 @@ author: sisyphus
 | `report-issue` | Hub-Spoke 上行命令（[RFC] issue 上报到 Hub；ADR-0030） |
 | `sync-hub` | Hub-Spoke 下行命令（拉取 Hub 契约到本地 specs；ADR-0030） |
 | `watch-hub` | Hub-Spoke 监听命令（一次性轮询 Hub issue 状态；ADR-0030） |
+| `rdd-session-bootstrap` | 会话引导生成（跨 session 上下文快照，PoC v0.1） |
 | `rdd-quick` | 快速执行路径（per ADR-0047）：绕过 openspec change 与 worktree，就地执行小改动并 Oracle 验证 |
 
 ## 两种安装模式

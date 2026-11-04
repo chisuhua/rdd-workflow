@@ -12,6 +12,7 @@
 import os as _os
 import sys as _sys
 import types as _types
+import importlib.util as _importlib_util
 
 _HERE = _os.path.dirname(_os.path.abspath(__file__))  # skills/_lib/core
 _REPO_ROOT = _os.path.dirname(_os.path.dirname(_os.path.dirname(_HERE)))  # repo root
@@ -30,6 +31,12 @@ if _real is None or getattr(_real, "__file__", None) == __file__:
     _real = _types.ModuleType("_lib.core.lock")
     _real.__file__ = _REAL_PATH
     _real.__name__ = "_lib.core.lock"
+    # A ModuleType built by hand has __spec__ = None, which makes
+    # importlib.util.find_spec(<public name>) raise ValueError. Give it a
+    # real spec so the module is introspectable like any other.
+    _real.__spec__ = _importlib_util.spec_from_file_location(
+        "skills._lib.core.lock", _REAL_PATH
+    )
     _sys.modules[_real.__name__] = _real
     with open(_REAL_PATH, encoding="utf-8") as _f:
         exec(compile(_f.read(), _REAL_PATH, "exec"), _real.__dict__)

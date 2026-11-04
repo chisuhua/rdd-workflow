@@ -239,12 +239,28 @@ EOF
     [[ "$output" =~ '"propro": "z"' ]]
 }
 
+# The current sprint is derived from the wall clock
+# (`sprint-YYYY-MM`), so a hardcoded target sprint breaks as soon as the
+# calendar reaches it — `planner sync --apply` already created the CURRENT
+# sprint, and advancing to it fails with "must move forward from". The
+# target must therefore be computed relative to today.
+_next_sprint() {
+  python3 -c "
+import datetime
+d = datetime.date.today().replace(day=1)
+m = d.month + 1
+y = d.year + (m > 12)
+m = 1 if m > 12 else m
+print(f'sprint-{y:04d}-{m:02d}')
+"
+}
+
 @test "planner: advance-sprint advances sprint and updates history" {
     mkdir -p .rddf/improvements
     printf -- '---\nname: p1\npriority: P2\n---\n# p1\n' > .rddf/improvements/p1.md
     python3 -m _lib.cli planner sync --apply --project-root "$TEST_TMP"
 
-    run python3 -m _lib.cli planner advance-sprint --to-sprint sprint-2026-12 --project-root "$TEST_TMP"
+    run python3 -m _lib.cli planner advance-sprint --to-sprint "$(_next_sprint)" --project-root "$TEST_TMP"
     [ "$status" -eq 0 ]
     [[ "$output" =~ "Sprint advanced" ]]
     [ -f .rddf/state/.planner-history.jsonl ]
@@ -254,7 +270,7 @@ EOF
     mkdir -p .rddf/improvements
     printf -- '---\nname: p1\npriority: P2\n---\n# p1\n' > .rddf/improvements/p1.md
     python3 -m _lib.cli planner sync --apply --project-root "$TEST_TMP"
-    python3 -m _lib.cli planner advance-sprint --to-sprint sprint-2026-11 --project-root "$TEST_TMP"
+    python3 -m _lib.cli planner advance-sprint --to-sprint "$(_next_sprint)" --project-root "$TEST_TMP"
 
     run python3 -m _lib.cli planner history --project-root "$TEST_TMP"
     [ "$status" -eq 0 ]

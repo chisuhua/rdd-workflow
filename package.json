@@ -47,6 +47,7 @@
     "rdd-hub-bootstrap",
     "rdd-planner",
     "rdd-quick",
+    "rdd-session-bootstrap",
     "rdd-verifier",
     "rdd-workflow-brainstorm",
     "rdd-workflow-writing-plans",

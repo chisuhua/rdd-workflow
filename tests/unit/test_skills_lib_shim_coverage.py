@@ -223,3 +223,42 @@ def test_module_shims_are_identity_merge():
         "state break (the state_reader incident pattern).\n\n" +
         "\n".join(bad)
     )
+
+
+def test_identity_merge_shims_declare_a_module_spec() -> None:
+    """Every identity-merge shim MUST set ``__spec__``.
+
+    A module built with ``types.ModuleType()`` has ``__spec__ = None``.
+    ``importlib.util.find_spec()`` raises
+    ``ValueError: <name>.__spec__ is None`` for such a module, so any
+    consumer that introspects ``sys.modules`` (importlib, pkgutil, inspect,
+    pytest's assertion rewriting, IDE tooling) breaks — and only in
+    import-order-dependent ways, which is why it went unnoticed.
+
+    The spec is what makes the shim introspectable like any other module;
+    the identity-merge semantics (same object under both names) are
+    unaffected.
+    """
+    offenders = []
+    for shim in sorted(_SKILLS_LIB.rglob("*.py")):
+        if shim.name == "__init__.py":
+            continue
+        try:
+            text = shim.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if "ModuleType(" not in text:
+            continue
+        # identity-merge shim: it registers itself under the canonical name
+        if "sys.modules[__name__] = _real" not in text and \
+                "sys.modules[__name__]" not in text:
+            continue
+        if "__spec__" not in text:
+            offenders.append(
+                f"{shim.relative_to(_REPO_ROOT).as_posix()}: builds a module "
+                f"with ModuleType() but never sets __spec__ — "
+                f"importlib.util.find_spec() raises ValueError on it"
+            )
+    assert not offenders, (
+        "identity-merge shims must set __spec__.\n\n" + "\n".join(offenders)
+    )

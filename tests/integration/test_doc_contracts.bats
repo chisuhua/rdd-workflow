@@ -5,11 +5,11 @@ setup() {
   cd "$REPO_ROOT"
 }
 
-@test "doc_truth_sync: package.json::skills[] publishes all 26 disk skills (Decision 3 = A)" {
+@test "doc_truth_sync: package.json::skills[] publishes all disk skills (Decision 3 = A)" {
   run python3 - <<'PY'
 import json, sys
 from pathlib import Path
-# v4 stage-merge (ADR-0043) doubled 13→26 per-skill SKILL.md. INSTALL.md is the
+# v4 stage-merge (ADR-0043) doubled the per-skill SKILL.md count. INSTALL.md is the
 # bootstrap entry, NOT a sub-skill, so it lives in skills/*.md but not in
 # package.json::skills[]. Exclude it from the disk count.
 disk = len(list(Path("skills").glob("*/SKILL.md")))
@@ -29,15 +29,23 @@ PY
   [ "$status" -eq 0 ]
 }
 
-@test "doc_truth_sync: AGENTS.md mentions 26 skills" {
-  disk_root=$(ls skills/*.md 2>/dev/null | wc -l)
+@test "doc_truth_sync: AGENTS.md states the actual sub-skill count" {
   disk_sub=$(ls skills/*/SKILL.md 2>/dev/null | wc -l)
-  disk=$((disk_root + disk_sub))
-  # AGENTS.md uses format "27 SKILL.md + INSTALL.md" (L72) or "27 SKILL.md" (L118)
-  # — both reflect v4 stage-merge: 26 per-skill SKILL.md + 1 INSTALL.md bootstrap.
-  # Accept either 26 (per-skill only) or 27 (per-skill + INSTALL).
-  if ! grep -qE "(26|27) (SKILL\.md|个 .md|个子技能)" AGENTS.md; then
-    echo "AGENTS.md missing 26 or 27 skills (disk has $disk: $disk_root root + $disk_sub subdir)"
+  # The count is parsed from AGENTS.md and compared against the disk, so
+  # adding a skill does not require editing this test. Asserting a literal
+  # number here is what let the manifest drift go unnoticed: each new skill
+  # made this test fail, and the fix was to edit the number, not the drift.
+  mentioned=$(grep -oE "[0-9]+ (SKILL\.md|个子技能)" AGENTS.md | grep -oE "^[0-9]+" | sort -u)
+  if [ -z "$mentioned" ]; then
+    echo "AGENTS.md does not state a sub-skill count (disk has $disk_sub sub-skills)"
+    return 1
+  fi
+  ok=0
+  for n in $mentioned; do
+    if [ "$n" -eq "$disk_sub" ]; then ok=1; fi
+  done
+  if [ "$ok" -ne 1 ]; then
+    echo "AGENTS.md states sub-skill count(s): $mentioned — disk has $disk_sub"
     return 1
   fi
 }
@@ -56,9 +64,15 @@ PY
   fi
 }
 
-@test "doc_truth_sync: INSTALL.md description lists 26 skills + npm-test-vs-pytest block" {
-  if ! grep -qE "全部 26 个子技能" skills/INSTALL.md; then
-    echo "INSTALL.md description missing '全部 26 个子技能'"
+@test "doc_truth_sync: INSTALL.md description states the actual sub-skill count + npm-test-vs-pytest block" {
+  disk_sub=$(ls skills/*/SKILL.md 2>/dev/null | wc -l)
+  mentioned=$(grep -oE "全部 [0-9]+ 个子技能" skills/INSTALL.md | grep -oE "[0-9]+" | head -1)
+  if [ -z "$mentioned" ]; then
+    echo "INSTALL.md description missing the '全部 N 个子技能' statement (disk has $disk_sub)"
+    return 1
+  fi
+  if [ "$mentioned" -ne "$disk_sub" ]; then
+    echo "INSTALL.md says '全部 $mentioned 个子技能' but disk has $disk_sub sub-skills"
     return 1
   fi
   if ! grep -qE "npm test vs pytest" skills/INSTALL.md; then

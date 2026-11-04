@@ -178,7 +178,7 @@ diff <(cd /workspace/project/ChipForge && bash tools/v0100-bootstrap.sh 2>/dev/n
      <(cd /workspace/project/ChipForge && bash tools/v0100-bootstrap.sh 2>/dev/null)
 
 # rdd-workflow-e2e 零配置验证 (已 pass)
-cd /workspace/main/rdd-workflow-e2e && bash /workspace/main/rdd-workflow/skills/rdd-session-bootstrap/rdd-session-bootstrap.sh
+cd <rdd-workflow-e2e-repo> && bash <rdd-workflow-repo>/skills/rdd-session-bootstrap/rdd-session-bootstrap.sh
 ```
 
 ## Known Limitations (PoC v0.1)
