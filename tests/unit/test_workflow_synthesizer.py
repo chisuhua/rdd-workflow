@@ -84,6 +84,25 @@ def _write_plan_handoff(project_root, *, active_changes=1):
     }))
 
 
+def _write_planner_handoff(project_root, *, proposals_ready=1):
+    """Write a valid v4 .planner-handoff.json (schema planner-handoff-v1).
+
+    Note: planner-handoff-v1 defines NO `active_changes` field — active
+    change detection falls back to the filesystem.
+    """
+    path = Path(project_root) / ".rddf" / "state" / ".planner-handoff.json"
+    path.write_text(json.dumps({
+        "schema": "planner-handoff-v1",
+        "version": 1,
+        "owner": "rdd-planner",
+        "planner_complete_at": "2026-01-02T00:00:00+00:00",
+        "current_sprint": "sprint-1",
+        "recommended_route": "full",
+        "proposals_ready": [f"change-{i}" for i in range(proposals_ready)],
+        "awaiting_builder": [f"change-{i}" for i in range(proposals_ready)],
+    }))
+
+
 def _write_iteration(project_root, changes):
     """Write a valid iteration.json with the given changes list."""
     path = Path(project_root) / ".rddf" / "state" / "iteration.json"
@@ -200,11 +219,11 @@ class TestPathArchIncomplete:
 
 
 class TestPathArchDoneDesignMissing:
-    def test_arch_done_design_missing_recommends_guide_design(self, project_root):
-        """Path 3: arch-handoff ok, no design-handoff -> guide-design."""
+    def test_arch_done_design_missing_recommends_rdd_planner(self, project_root):
+        """Path 3: arch-handoff ok, no planner-handoff -> rdd-planner (v4)."""
         _write_arch_handoff(project_root, adr_count=5)
         r = synthesize(project_root)
-        assert r.suggested_action == "rdd-builder"
+        assert r.suggested_action == "rdd-planner"
         assert r.confidence == "high"
 
 
@@ -408,15 +427,14 @@ class TestPhaseStatusSummary:
         assert "no handoff" in design_ps.detail
 
     def test_phase_status_plan_done_detail(self, project_root):
-        """phase_status plan entry MUST show active_changes in detail when done."""
+        """phase_status plan entry MUST show proposals_ready in detail when done."""
         _write_arch_handoff(project_root, adr_count=5)
-        _write_design_handoff(project_root, proposals_reviewed=3)
-        _write_plan_handoff(project_root, active_changes=4)
+        _write_planner_handoff(project_root, proposals_ready=4)
         r = synthesize(project_root)
         plan_ps = r.phase_status[2]
         assert plan_ps.phase == "plan"
         assert plan_ps.done is True
-        assert "active_changes=4" in plan_ps.detail
+        assert "proposals_ready=4" in plan_ps.detail
 
     def test_phase_status_ship_detail_with_iteration(self, project_root):
         """phase_status ship entry MUST show change count from iteration."""
@@ -630,7 +648,7 @@ class TestNeverRaises:
         sessions_path.write_text("{not valid json")
         r = synthesize(project_root)
         # state_reader returns None for corrupt JSON, so synthesizer proceeds
-        assert r.suggested_action in ("rdd-builder", "rdd-builder", "rdd-arch", "rdd-builder")
+        assert r.suggested_action in ("rdd-builder", "rdd-planner", "rdd-arch", "rdd-builder")
 
     def test_corrupt_iteration_json_does_not_raise(self, project_root):
         """synthesize MUST NOT raise on corrupt iteration.json."""
@@ -640,7 +658,7 @@ class TestNeverRaises:
         )
         iteration_path.write_text("{broken json")
         r = synthesize(project_root)
-        assert r.suggested_action in ("rdd-builder", "rdd-builder", "rdd-arch", "rdd-builder")
+        assert r.suggested_action in ("rdd-builder", "rdd-planner", "rdd-arch", "rdd-builder")
 
     def test_missing_state_dir_returns_recommendation(self, tmp_path):
         """synthesize MUST NOT raise when .rddf/state/ doesn't exist."""
@@ -765,7 +783,7 @@ class TestDecisionTreeAllPaths:
             # Path 2: arch-handoff exists, adr_count < 1
             ("p2-adr-zero", 0, False, False, 0, False, False, False, "rdd-arch", "high"),
             # Path 3: arch done, no design-handoff
-            ("p3-no-design", 5, False, False, 0, False, False, False, "rdd-builder", "high"),
+            ("p3-no-design", 5, False, False, 0, False, False, False, "rdd-planner", "high"),
             # Path 4: arch + design done, no plan-handoff
             ("p4-no-plan", 5, True, False, 0, False, False, False, "rdd-builder", "high"),
             # Path 5: plan-handoff exists, 0 active

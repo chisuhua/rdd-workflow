@@ -5,7 +5,9 @@ Four modes (per ``docs/superpowers/specs/2026-07-20-dashboard-design.md``
 
   - **Mode A** (default, no args): global change overview table built
     from ``iteration.json`` via :func:`state_reader.read_iteration`.
-    Columns: name, status emoji, tasks_done/tasks_total, plan_path y/n.
+    Columns: name, status emoji, tasks_done/tasks_total, plan_path y/n,
+    builder stage (from ``.rddf/state/builder/<name>.json``; ``-`` when
+    unknown or archived).
 
   - **Mode B** (``<change-name>`` positional arg): single-change
     detail view. Reads ``iteration.json`` and prints name, status,
@@ -36,6 +38,7 @@ from __future__ import annotations
 import os
 import sys
 from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
+from _lib.builder_handoff import read_builder_handoff  # noqa: E402  (per fix-33-handlers)
 
 # Status -> emoji icon (single source of truth for Mode A/B rendering).
 # Kept in sync with ``dashboard/renderer.py::_STATUS_ICON``; duplicated
@@ -168,6 +171,23 @@ def cmd_status(args: list[str]) -> int:
     return _mode_a(project_root)
 
 
+def _builder_phase(project_root: str, change_name: str, status: str) -> str:
+    """Builder stage of a change, or ``-`` when unknown.
+
+    Archived changes always show ``-``: their builder state stays on disk
+    (``phase-3``) and showing it would read as "still in P3". Missing or
+    unparsable builder state also degrades to ``-`` — the status view must
+    never fail because of one broken state file.
+    """
+    if status == "archived":
+        return "-"
+    try:
+        data = read_builder_handoff(project_root, change_name)
+    except (OSError, ValueError):
+        return "-"
+    return data.get("current_phase") or "-"
+
+
 def cmd_status_detail(name: str, project_root: str) -> int:
     """Mode B: single-change detail view.
 
@@ -241,6 +261,7 @@ def cmd_status_detail(name: str, project_root: str) -> int:
     print(f"Change: {name}")
     print(f"Status: {icon} {status}")
     print(f"Phase: {phase_disp}")
+    print(f"Builder phase: {_builder_phase(project_root, name, status)}")
     print(f"Tasks: {tasks_disp}")
     print(f"Plan: {plan_disp}")
     print(f"Blocker: {blocker_disp}")
@@ -353,8 +374,8 @@ def _mode_a(project_root: str) -> int:
         return 0
 
     # Header
-    print(f"{'NAME':<32} {'STATUS':<16} {'TASKS':<10} {'PLAN':<6}")
-    print(f"{'-' * 32} {'-' * 16} {'-' * 10} {'-' * 6}")
+    print(f"{'NAME':<32} {'STATUS':<16} {'TASKS':<10} {'PLAN':<6} {'BUILDER':<10}")
+    print(f"{'-' * 32} {'-' * 16} {'-' * 10} {'-' * 6} {'-' * 10}")
 
     for c in changes:
         name = (c.get("name") or "?")[:32]
@@ -370,8 +391,9 @@ def _mode_a(project_root: str) -> int:
             tasks = "-"
 
         plan = "y" if c.get("plan_path") else "n"
+        builder = _builder_phase(project_root, c.get("name") or "", status)
 
-        print(f"{name:<32} {status_disp:<16} {tasks:<10} {plan:<6}")
+        print(f"{name:<32} {status_disp:<16} {tasks:<10} {plan:<6} {builder:<10}")
 
     return 0
 

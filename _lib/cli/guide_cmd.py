@@ -5,11 +5,14 @@ Port of the 10-priority state-detection ladder from
 of files and emits the same ``RECOMMEND`` / ``REASON`` strings so that
 the AI agent's behavior is unchanged after migration.
 
-Priority order (highest first; matches scan-state.sh lines 41-53):
-    1.  arch-handoff present, plan-handoff absent, ADR >= 1  → "rdd-builder"
-    1b. arch-handoff present, ADR < 1                        → "guide-arch (recover)"
-    2.  plan-handoff present, active_changes > 0             → "rdd-builder"
-    2b. plan-handoff present, active_changes == 0            → "guide-ship (cleanup)"
+Priority order (highest first):
+    0.  v3 legacy handoff (.plan/.design-handoff.json, no .planner-handoff.json)
+        → "rdd-builder" + legacy warning (MUST precede branch 1)
+    1.  arch-handoff present, planner-handoff absent, ADR >= 1 → "rdd-planner"
+    1b. arch-handoff present, ADR < 1                        → "rdd-arch (recover)"
+    1c. planner-handoff present but unparsable                → "rdd-planner"
+    2.  planner-handoff present (valid), active change on disk → "rdd-builder"
+    2b. planner-handoff present (valid), no active change      → "rdd-builder"
     3-5. worktree states (incomplete/detached/complete)      → "rdd-builder"
     6.  committed change in HEAD, no worktree                → "rdd-builder"
     7.  no roadmap.md                                         → "rdd-arch"
@@ -30,19 +33,30 @@ import json
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 from typing import Optional, Tuple
 from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 
 
 def _read_json(path: Path) -> Optional[dict]:
-    """Read a JSON file, returning None on missing/invalid."""
+    """Read a JSON file, returning None on missing/invalid.
+
+    The top-level value MUST be a JSON object. A handoff whose content is
+    an array (or any other non-dict) is not a valid handoff — the same
+    rule the library consumers apply (``state_reader.read_*_handoff``) and
+    the same rule the bash consumer applies (``_handoff_valid``). Without
+    this, the three consumers would disagree on such a file.
+    """
     if not path.is_file():
         return None
     try:
-        return json.loads(path.read_text())
+        data = json.loads(path.read_text())
     except (json.JSONDecodeError, OSError):
         return None
+    if not isinstance(data, dict):
+        return None
+    return data
 
 
 def _git_worktree_list(project_root: str) -> list[str]:
@@ -129,56 +143,121 @@ def _check_stale_workflow_state(project_root: str) -> list[str]:
     return warnings
 
 
-def _scan_state(project_root: str) -> Tuple[str, str]:
-    """Run the 10-priority ladder; return (RECOMMEND, REASON).
+def _count_active_changes(project_root: str) -> int:
+    """Number of non-archived change directories on disk.
 
-    This is the Python equivalent of scan-state.sh::scan_state. The
-    return values match the strings emitted by the bash version.
+    Replaces the v3 ``active_changes`` field, which ``planner-handoff-v1``
+    does not define — reading it always resolved to 0 and made every
+    v4 project look like a leftover.
+    """
+    changes_dir = Path(project_root) / "openspec" / "changes"
+    if not changes_dir.is_dir():
+        return 0
+    return sum(
+        1 for d in changes_dir.iterdir() if d.is_dir() and d.name != "archive"
+    )
+
+
+def _scan_state(project_root: str) -> Tuple[str, str]:
+    """Run the priority ladder; return (RECOMMEND, REASON).
+
+    Python equivalent of scan-state.sh::scan_state. Consumes the v4
+    planner handoff (``.planner-handoff.json``); v3 handoff files are
+    read only as a legacy fallback.
     """
     state_dir = Path(project_root) / ".rddf" / "state"
     arch_handoff = state_dir / ".arch-handoff.json"
-    design_handoff = state_dir / ".design-handoff.json"
-    plan_handoff = state_dir / ".plan-handoff.json"
+    planner_handoff = state_dir / ".planner-handoff.json"
+    # v3 legacy handoffs — read ONLY as fallback, never written by v4 stages
+    v3_plan_handoff = state_dir / ".plan-handoff.json"
+    v3_design_handoff = state_dir / ".design-handoff.json"
 
     arch = _read_json(arch_handoff)
-    design = _read_json(design_handoff)
-    plan = _read_json(plan_handoff)
+    planner = _read_json(planner_handoff)
+    v3_plan = _read_json(v3_plan_handoff)
+    v3_design = _read_json(v3_design_handoff)
 
-    # 1. arch-handoff present, plan-handoff absent
-    #    1a. ADR<1 → guide-arch (recover)
-    #    1b. arch present, design absent → guide-design
-    #    1c. arch present, design present → guide-plan
-    if arch is not None and plan is None:
+    # Effective planner marker: the v4 handoff wins; the v3 files are a
+    # read-only legacy fallback (never written by v4 stages). A corrupt file
+    # does not count as a marker.
+    #
+    # The marker KIND matters: a v3 DESIGN handoff means "design done,
+    # change generation next"; a v3 PLAN handoff means "changes exist,
+    # execution/cleanup next". They are different stages and must not
+    # share one code path.
+    planner_effective = planner
+    marker_kind = "v4" if planner is not None else ""
+    if planner_effective is None:
+        if v3_plan is not None:
+            planner_effective = v3_plan
+            marker_kind = "v3-plan"
+        elif v3_design is not None:
+            planner_effective = v3_design
+            marker_kind = "v3-design"
+    if marker_kind and marker_kind != "v4":
+        print(
+            "⚠️  legacy v3 handoff detected (.plan-handoff.json / "
+            ".design-handoff.json); migrate to .planner-handoff.json",
+            file=sys.stderr,
+        )
+
+    # 1c. planner-handoff present but unparsable → planner not complete.
+    #     MUST precede branch 1: branch 1 matches on "arch present + no
+    #     effective marker", and a corrupt file yields no marker — so branch 1
+    #     would always win and this diagnostic would be unreachable.
+    if planner_handoff.is_file() and planner is None and arch is not None:
+        return (
+            "rdd-planner",
+            "planner-handoff 损坏（JSON 无法解析）→ 视为 planner 未完成，回到 planner 阶段",
+        )
+
+    # 1. arch-handoff present, no planner marker → planner stage
+    #    1a. ADR<1 → rdd-arch (recover)
+    if arch is not None and planner_effective is None:
         adr_count = int(arch.get("adr_count", 0) or 0)
         if adr_count < 1:
             return (
                 "rdd-arch",
                 "arch-done 未完成 (ADR 数量不足 → 回到 adr-create 阶段)",
             )
-        if design is None:
-            return ("rdd-builder", "arch-done 已完成 → 进入设计阶段")
-        return ("rdd-builder", "design-done 已完成 → 进入变更生成")
+        return (
+            "rdd-planner",
+            "arch-done 已完成 → 进入 planner 阶段（.planner-handoff.json 尚未生成）",
+        )
 
-    # 2. plan-handoff present
-    if plan is not None:
-        active_count = int(plan.get("active_changes", 0) or 0)
-        if active_count == 0:
-            return (
-                "rdd-builder",
-                "plan-handoff 残留 (无活跃 change -> 进入 ship 清理/归档)",
-            )
-        # Cross-validate: count non-archived change dirs in filesystem
-        changes_dir = Path(project_root) / "openspec" / "changes"
-        fs_active = 0
-        if changes_dir.is_dir():
-            for d in changes_dir.iterdir():
-                if d.is_dir() and d.name != "archive":
-                    fs_active += 1
-        if fs_active == 0:
-            return (
-                "rdd-arch",
-                f"plan-handoff stale (says {active_count} active, but 0 in filesystem -> all archived)",
-            )
+    # 2. planner marker present → builder
+    if planner_effective is not None:
+        if marker_kind == "v3-design":
+            # v3 design semantics (pre-existing behaviour): design reviewed,
+            # changes not generated yet → next is change generation.
+            return ("rdd-builder", "design-done 已完成 → 进入变更生成")
+
+        active_count = 0
+        if marker_kind == "v3-plan":
+            # v3 plan semantics: the handoff carries an `active_changes` count
+            active_count = int(planner_effective.get("active_changes", 0) or 0)
+            if active_count == 0:
+                return (
+                    "rdd-builder",
+                    "plan-handoff 残留 (无活跃 change -> 进入 ship 清理/归档)",
+                )
+        else:
+            # v4 semantics: planner-handoff-v1 defines no `active_changes`
+            # field, so the filesystem is the only reliable source.
+            fs_active = _count_active_changes(project_root)
+            if fs_active == 0:
+                return ("rdd-builder", "planner-handoff 已完成 → 进入变更生成")
+
+        # Cross-validate the v3 handoff against the filesystem: it claims
+        # active changes but none exist on disk.
+        if marker_kind == "v3-plan":
+            fs_active = _count_active_changes(project_root)
+            if fs_active == 0:
+                return (
+                    "rdd-arch",
+                    f"plan-handoff stale (says {active_count} active, "
+                    "but 0 in filesystem -> all archived)",
+                )
         return ("rdd-builder", "变更生成已完成 → 进入变更执行")
 
     # 3-5. worktree states
@@ -272,8 +351,14 @@ def cmd_guide(args: list[str]) -> int:
     print("━" * 40)
     print(f"  roadmap.md:           {'✅ 存在' if (Path(project_root) / 'roadmap.md').is_file() else '❌ 缺失'}")
     print(f"  .arch-handoff.json:   {'✅ 存在' if (state_dir / '.arch-handoff.json').is_file() else '· 缺失'}")
-    print(f"  .design-handoff.json: {'✅ 存在' if (state_dir / '.design-handoff.json').is_file() else '· 缺失'}")
-    print(f"  .plan-handoff.json:   {'✅ 存在' if (state_dir / '.plan-handoff.json').is_file() else '· 缺失'}")
+    print(f"  .planner-handoff.json:{'✅ 存在' if (state_dir / '.planner-handoff.json').is_file() else '· 缺失'}")
+    legacy = [
+        n
+        for n in (".plan-handoff.json", ".design-handoff.json")
+        if (state_dir / n).is_file()
+    ]
+    if legacy:
+        print(f"  ⚠️  legacy v3 handoff: {', '.join(legacy)}（请迁移到 .planner-handoff.json）")
     print(f"  iteration.json:       {'✅ 存在' if (state_dir / 'iteration.json').is_file() else '· 缺失'}")
     worktree_list = _git_worktree_list(project_root)
     print(f"  worktrees:            {len(worktree_list)}")

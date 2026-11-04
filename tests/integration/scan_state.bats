@@ -61,10 +61,10 @@ _run_scan() {
     scan_state
     echo "RECOMMEND=$RECOMMEND"
     echo "REASON=$REASON"
-  )
+  ) 2>&1
 }
 
-@test "scan_state: arch-handoff + no design-handoff → rdd-builder (设计阶段, branch 1c)" {
+@test "scan_state: v4 arch-handoff + no planner-handoff → rdd-planner (branch 1c)" {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo x > a && git add a && git commit -q -m init
@@ -72,35 +72,89 @@ _run_scan() {
   # adr_count >= 1 means arch-done is complete; without it scan_state falls
   # through to priority 1.5 (rdd-arch recover) per current contract.
   echo '{"adr_count":1,"arch_done_at":"2026-07-01"}' > .rddf/state/.arch-handoff.json
-  # no .design-handoff.json, no .plan-handoff.json
+  # no .planner-handoff.json (v4), no v3 handoffs
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
-  echo "$out" | grep -q "RECOMMEND=rdd-builder"
-  echo "$out" | grep -q "进入设计阶段"
+  echo "$out" | grep -q "RECOMMEND=rdd-planner"
+  echo "$out" | grep -q "planner 阶段"
 }
 
-@test "scan_state: arch-handoff + design-handoff + no plan-handoff → rdd-builder (规范生成, branch 1b)" {
+@test "scan_state: v3 design-handoff (legacy) → rdd-builder + legacy warning (branch 0)" {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo x > a && git add a && git commit -q -m init
   mkdir -p .rddf/state
   echo '{"adr_count":1,"arch_done_at":"2026-07-01"}' > .rddf/state/.arch-handoff.json
   echo '{"version":1,"design_complete_at":"2026-07-01","proposals_reviewed":3,"all_proposals_have_decision":true}' > .rddf/state/.design-handoff.json
-  # no .plan-handoff.json
+  # no .plan-handoff.json, no .planner-handoff.json
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=rdd-builder"
-  echo "$out" | grep -q "进入变更生成"
+  echo "$out" | grep -q "legacy"
 }
 
-@test "scan_state: plan-handoff exists → rdd-builder (变更执行, branch 2)" {
+@test "scan_state: v3 plan-handoff (legacy) → rdd-builder + legacy warning (branch 0)" {
   local r; r=$(mktemp -d); cd "$r" || return 1
   git init -q -b master && git config user.email t@t && git config user.name t
   echo x > a && git add a && git commit -q -m init
   mkdir -p .rddf/state openspec/changes/add-x
-  # active_changes >= 1 + filesystem dir exists → rdd-builder (ship)
   echo '{"active_changes":1,"current_change":"add-x"}' > .rddf/state/.plan-handoff.json
   local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
   echo "$out" | grep -q "RECOMMEND=rdd-builder"
-  echo "$out" | grep -q "进入变更执行"
+  echo "$out" | grep -q "legacy"
+}
+
+@test "scan_state: v4 planner-handoff + active change → rdd-builder (变更执行, branch 2)" {
+  local r; r=$(mktemp -d); cd "$r" || return 1
+  git init -q -b master && git config user.email t@t && git config user.name t
+  echo x > a && git add a && git commit -q -m init
+  mkdir -p .rddf/state openspec/changes/add-x
+  echo '{"adr_count":1,"arch_done_at":"2026-07-01"}' > .rddf/state/.arch-handoff.json
+  echo '{"schema":"planner-handoff-v1","version":1,"owner":"rdd-planner","planner_complete_at":"2026-07-01","current_sprint":"s1","recommended_route":"full","awaiting_builder":["add-x"]}' > .rddf/state/.planner-handoff.json
+  # Active change is detected from the FILESYSTEM: planner-handoff-v1 defines
+  # no `active_changes` field, so reading it always yielded 0.
+  local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
+  echo "$out" | grep -q "RECOMMEND=rdd-builder"
+  echo "$out" | grep -q "变更生成已完成 → 进入变更执行"
+  ! echo "$out" | grep -q "残留"
+}
+
+@test "scan_state: v3 design-handoff (legacy) → change generation, NOT ship cleanup" {
+  # The v3 DESIGN handoff means "design reviewed, changes not generated yet".
+  # It must NOT be routed to the "plan-handoff leftover -> ship cleanup"
+  # state, which belongs to the v3 PLAN handoff.
+  local r; r=$(mktemp -d); cd "$r" || return 1
+  git init -q -b master && git config user.email t@t && git config user.name t
+  echo x > a && git add a && git commit -q -m init
+  mkdir -p .rddf/state
+  echo '{"adr_count":1,"arch_done_at":"2026-07-01"}' > .rddf/state/.arch-handoff.json
+  echo '{"version":1,"design_complete_at":"2026-07-01","proposals_reviewed":3}' > .rddf/state/.design-handoff.json
+  local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
+  echo "$out" | grep -q "RECOMMEND=rdd-builder"
+  echo "$out" | grep -q "进入变更生成"
+  ! echo "$out" | grep -q "残留"
+}
+
+@test "scan_state: v3 plan-handoff with active_changes=0 → ship cleanup (v3 semantics)" {
+  local r; r=$(mktemp -d); cd "$r" || return 1
+  git init -q -b master && git config user.email t@t && git config user.name t
+  echo x > a && git add a && git commit -q -m init
+  mkdir -p .rddf/state
+  echo '{"adr_count":1,"arch_done_at":"2026-07-01"}' > .rddf/state/.arch-handoff.json
+  echo '{"active_changes":0}' > .rddf/state/.plan-handoff.json
+  local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
+  echo "$out" | grep -q "RECOMMEND=rdd-builder"
+  echo "$out" | grep -q "残留"
+}
+
+@test "scan_state: corrupt planner-handoff → rdd-planner (not treated as complete)" {
+  local r; r=$(mktemp -d); cd "$r" || return 1
+  git init -q -b master && git config user.email t@t && git config user.name t
+  echo x > a && git add a && git commit -q -m init
+  mkdir -p .rddf/state
+  echo '{"adr_count":1,"arch_done_at":"2026-07-01"}' > .rddf/state/.arch-handoff.json
+  printf '{"schema":"planner-handoff-v1", TRUNCATED' > .rddf/state/.planner-handoff.json
+  local out; out=$(_run_scan "$r"); cd / && rm -rf "$r"
+  echo "$out" | grep -q "RECOMMEND=rdd-planner"
+  echo "$out" | grep -q "损坏"
 }
 
 @test "scan_state: no worktree + no handoff + no roadmap → guide-arch (branch 8)" {

@@ -31,8 +31,10 @@
 #     regardless of caller's cwd (pattern from archive.sh:mark_iteration_archived)
 #
 # State files read (gitignored under .rddf/state/):
-#   - .rddf/state/.arch-handoff.json   — arch phase done sentinel
-#   - .rddf/state/.plan-handoff.json   — plan phase done sentinel
+#   - .rddf/state/.arch-handoff.json      — arch phase done sentinel
+#   - .rddf/state/.planner-handoff.json   — planner phase done sentinel (v4)
+#   - .rddf/state/.plan-handoff.json      — legacy v3 fallback only
+#   - .rddf/state/.design-handoff.json    — legacy v3 fallback only
 #   - improvement-suggestions.md          — JSON array with status field
 #   - roadmap.md                       — arch artifact (committed)
 
@@ -89,34 +91,82 @@ PYEOF
   fi
 }
 
+# handoff_valid <file>
+#   True when the file exists and contains parsable JSON.
+#   A corrupt handoff must NEVER be treated as "stage completed" — a
+#   half-written file would otherwise silently advance the pipeline.
+#   Without python3 we cannot judge; keep historical behavior (file exists = ok).
+_HANDOFF_VALIDATION_DEGRADED=0
+_handoff_valid() {
+  local f="$1"
+  [ -f "$f" ] || return 1
+  if ! command -v python3 >/dev/null 2>&1; then
+    # Without python3 the JSON cannot be parsed, so validity is UNVERIFIED.
+    # The file is accepted (so the pipeline still works), but the result is
+    # marked non-authoritative — a corrupt handoff must never be silently
+    # treated as complete.
+    _HANDOFF_VALIDATION_DEGRADED=1
+    return 0
+  fi
+  # The handoff must be a JSON OBJECT, not just any JSON value — the
+  # Python consumers require a dict (state_reader.read_*_handoff).
+  python3 -c "import json,sys; d=json.load(open(sys.argv[1], encoding='utf-8')); sys.exit(0 if isinstance(d, dict) else 1)" "$f" >/dev/null 2>&1
+}
+
+# count_active_changes <project_root>
+#   Number of non-archived change directories on disk.
+#   This replaces the v3 `active_changes` field, which planner-handoff-v1
+#   does not define (hence always resolved to 0).
+#   The archive directory is excluded EXACTLY (a change literally named
+#   "xxx-archive" is still an active change) — the Python consumers use
+#   `name != "archive"`, so a substring match here would make the two
+#   implementations disagree on the same project.
+_count_active_changes() {
+  local root="$1"
+  # `|| true` on the listing (not on the whole pipeline): if `openspec/changes/`
+  # does not exist, `ls` fails and — under `set -o pipefail` — the pipeline
+  # would fail, making a trailing `|| echo 0` append a SECOND "0" to the
+  # already-printed "0" ("00"). The value must be a single bare integer.
+  ( cd "$root" 2>/dev/null && ls -d openspec/changes/*/ 2>/dev/null || true ) \
+    | sed 's#/$##' | awk -F/ '$NF != "archive"' | wc -l | tr -d '[:space:]'
+}
+
 # scan_state
 #   Mutates caller-namespace globals RECOMMEND and REASON.
 #   Priority order (highest first):
-#     1.  arch-handoff present, plan-handoff absent:
-#     1a.   ADR < 1           → "rdd-arch (recover)"
-#     1b.   design-handoff    → "rdd-builder (design 完成 → 变更生成)"
-#     1c.   design-handoff 缺失 → "rdd-builder (进入设计阶段)"
-#     2.  plan-handoff present                     → "rdd-builder (变更执行)"
-#     2.5 plan-handoff present, active_changes = 0  → "rdd-builder (cleanup)"
-#     3.  worktree with incomplete tasks           → "rdd-builder (继续执行)"
-#     4.  detached worktrees (count > 0)             → "rdd-builder (运行中)"
-#     5.  worktree tasks all completed               → "rdd-builder (archive)"
-#     6.  committed change in HEAD (no worktree)   → "rdd-builder (建 worktree)"
-#     7.  no roadmap.md                            → "rdd-arch"
-#     8.  no openspec/changes/                     → "rdd-builder (变更生成)"
-#     9.  improvement-suggestions.md has pending entry  → "rdd-builder (设计审查)"
-#    10. default: no active change                 → "rdd-builder (变更生成)"
-#         default: active change present           → "rdd-builder (ship)"
-scan_state() {
+#     0.  Effective planner marker: the v4 `.planner-handoff.json` wins;
+#         the v3 `.plan-handoff.json` / `.design-handoff.json` are a
+#         read-only legacy fallback (with a `legacy` warning). A corrupt
+#         file is NOT a marker — a half-written handoff must not advance
+#         the pipeline.
+#     1.  arch-handoff present, no effective marker:
+#     1c.  corrupt `.planner-handoff.json`            → "rdd-planner" (视为未完成)
+#     1a.  ADR < 1                                    → "rdd-arch" (recover)
+#     1b.  arch done, planner 未跑                     → "rdd-planner"
+#     2.  effective marker present:
+#     2.   marker = v4 planner / v3 design / v3 plan   → "rdd-builder" (按 kind 分流)
+#     2.5  marker 有效但 0 活跃 change                 → "rdd-builder" (变更生成 / 残留清理)
+#     3.  worktree with incomplete tasks              → "rdd-builder (继续执行)"
+#     4.  detached worktrees (count > 0)              → "rdd-builder (运行中)"
+#     5.  worktree tasks all completed                → "rdd-builder (archive)"
+#     6.  committed change in HEAD (no worktree)      → "rdd-builder (建 worktree)"
+#     7.  no roadmap.md                               → "rdd-arch"
+#     8.  no openspec/changes/                        → "rdd-builder (变更生成)"
+#     9.  improvement-suggestions.md has pending entry → "rdd-builder (设计审查)"
+#    10.  default: no active change                  → "rdd-builder (变更生成)"
+#         default: active change present             → "rdd-builder (ship)"
+_scan_state_impl() {
   local PROJECT_ROOT="$1"
   if [[ -z "$PROJECT_ROOT" ]]; then
     PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
   fi
 
-  local ARCH_HANDOFF DESIGN_HANDOFF PLAN_HANDOFF
+  local ARCH_HANDOFF PLANNER_HANDOFF V3_PLAN_HANDOFF V3_DESIGN_HANDOFF
   ARCH_HANDOFF="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
-  DESIGN_HANDOFF="$PROJECT_ROOT/.rddf/state/.design-handoff.json"
-  PLAN_HANDOFF="$PROJECT_ROOT/.rddf/state/.plan-handoff.json"
+  PLANNER_HANDOFF="$PROJECT_ROOT/.rddf/state/.planner-handoff.json"
+  # v3 legacy handoffs — read ONLY as fallback, never written by v4 stages
+  V3_PLAN_HANDOFF="$PROJECT_ROOT/.rddf/state/.plan-handoff.json"
+  V3_DESIGN_HANDOFF="$PROJECT_ROOT/.rddf/state/.design-handoff.json"
 
   if ! type -t check_dirty_key_files &>/dev/null; then
     local _state_helper
@@ -139,8 +189,44 @@ scan_state() {
     scan_binding_lines "$PROJECT_ROOT/.rddf/state/sessions.json" "$_binding_owner" || true
   fi
 
-  # 1. arch-handoff present, plan-handoff absent
-  if [ -f "$ARCH_HANDOFF" ] && [ ! -f "$PLAN_HANDOFF" ]; then
+  # 0. Effective planner marker.
+  #    The v4 handoff wins; the v3 files are a read-only legacy fallback
+  #    (never written by v4 stages). A corrupt file does NOT count as a
+  #    marker — a half-written handoff must not advance the pipeline.
+  #    NOTE: this must NOT return early: v3 projects keep their original
+  #    downstream behaviour (worktree / roadmap / proposal checks).
+  #
+  #    The marker KIND matters: a v3 DESIGN handoff means "design done,
+  #    change generation next"; a v3 PLAN handoff means "changes exist,
+  #    execution/cleanup next". They are different stages and must not
+  #    share one code path.
+  local PLANNER_EFFECTIVE="" PLANNER_KIND=""
+  if _handoff_valid "$PLANNER_HANDOFF"; then
+    PLANNER_EFFECTIVE="$PLANNER_HANDOFF"
+    PLANNER_KIND="v4"
+  elif _handoff_valid "$V3_PLAN_HANDOFF"; then
+    PLANNER_EFFECTIVE="$V3_PLAN_HANDOFF"
+    PLANNER_KIND="v3-plan"
+  elif _handoff_valid "$V3_DESIGN_HANDOFF"; then
+    PLANNER_EFFECTIVE="$V3_DESIGN_HANDOFF"
+    PLANNER_KIND="v3-design"
+  fi
+  if [ -n "$PLANNER_KIND" ] && [ "$PLANNER_KIND" != "v4" ]; then
+    echo "⚠️  legacy v3 handoff detected (.plan-handoff.json / .design-handoff.json); migrate to .planner-handoff.json" >&2
+  fi
+
+  # 1c. planner-handoff present but unparsable → treat as planner NOT done.
+  #     MUST precede branch 1: branch 1 matches on "arch present + no
+  #     effective marker", and a corrupt file yields no marker — so branch 1
+  #     would always win and this diagnostic would be unreachable.
+  if [ -f "$PLANNER_HANDOFF" ] && ! _handoff_valid "$PLANNER_HANDOFF" && [ -f "$ARCH_HANDOFF" ]; then
+    RECOMMEND="rdd-planner"
+    REASON="planner-handoff 损坏（JSON 无法解析）→ 视为 planner 未完成，回到 planner 阶段"
+    return 0
+  fi
+
+  # 1. arch-handoff present, no planner marker → planner stage
+  if [ -f "$ARCH_HANDOFF" ] && [ -z "$PLANNER_EFFECTIVE" ]; then
     # 1.5: arch-done incomplete — arch-handoff exists but ADR missing
     local ADR_COUNT=0
     if command -v python3 >/dev/null 2>&1 && [ -f "$ARCH_HANDOFF" ]; then
@@ -151,36 +237,49 @@ scan_state() {
       REASON="arch-done 未完成 (ADR 数量不足 → 回到 adr-create 阶段)"
       return 0
     fi
-    # 1b: design-handoff present → guide-plan
-    if [ -f "$DESIGN_HANDOFF" ]; then
-      RECOMMEND="rdd-builder"
-      REASON="design-done 已完成 → 进入变更生成"
-      return 0
-    fi
-    # 1c: design-handoff missing → guide-design
-    RECOMMEND="rdd-builder"
-    REASON="arch-done 已完成 → 进入设计阶段"
+    # 1b: arch done, planner not yet run → planner stage (v4 四阶段)
+    RECOMMEND="rdd-planner"
+    REASON="arch-done 已完成 → 进入 planner 阶段（.planner-handoff.json 尚未生成）"
     return 0
   fi
 
-  # 2. plan-handoff present → guide-ship
-  if [ -f "$PLAN_HANDOFF" ]; then
-    # 2.5: ghost plan-handoff — file exists but no active changes
+  # 2. planner marker present → builder
+  if [ -n "$PLANNER_EFFECTIVE" ]; then
     local ACTIVE_COUNT=0
-    if command -v python3 >/dev/null 2>&1 && [ -f "$PLAN_HANDOFF" ]; then
-      ACTIVE_COUNT=$(python3 -c "import json; d=json.load(open('$PLAN_HANDOFF')); v=d.get('active_changes',0); print(v if isinstance(v,int) else len(v))" 2>/dev/null || echo 0)
-    fi
-    if [ "$ACTIVE_COUNT" -eq 0 ]; then
+    if [ "$PLANNER_KIND" = "v3-design" ]; then
+      # v3 design semantics (pre-existing behaviour): design reviewed,
+      # changes not generated yet → next is change generation.
       RECOMMEND="rdd-builder"
-      REASON="plan-handoff 残留 (无活跃 change -> 进入 ship 清理/归档)"
+      REASON="design-done 已完成 → 进入变更生成"
       return 0
+    elif [ "$PLANNER_KIND" = "v3-plan" ]; then
+      # v3 plan semantics: the handoff carries an `active_changes` count
+      ACTIVE_COUNT=$(python3 -c "import json; d=json.load(open('$PLANNER_EFFECTIVE')); v=d.get('active_changes',0); print(v if isinstance(v,int) else len(v))" 2>/dev/null || echo 0)
+      if [ "$ACTIVE_COUNT" -eq 0 ]; then
+        RECOMMEND="rdd-builder"
+        REASON="plan-handoff 残留 (无活跃 change -> 进入 ship 清理/归档)"
+        return 0
+      fi
+    else
+      # v4 semantics: planner-handoff-v1 defines no `active_changes` field,
+      # so the filesystem is the only reliable source.
+      ACTIVE_COUNT=$(_count_active_changes "$PROJECT_ROOT")
+      if [ "$ACTIVE_COUNT" -eq 0 ]; then
+        RECOMMEND="rdd-builder"
+        REASON="planner-handoff 已完成 → 进入变更生成"
+        return 0
+      fi
     fi
     # Cross-validate: count non-archived change dirs in filesystem
     local FS_ACTIVE_COUNT
-    FS_ACTIVE_COUNT=$(cd "$PROJECT_ROOT" 2>/dev/null && ls -d openspec/changes/*/ 2>/dev/null | grep -v 'archive/' | wc -l | tr -d '[:space:]' || echo 0)
+    FS_ACTIVE_COUNT=$(_count_active_changes "$PROJECT_ROOT")
     if [ "$FS_ACTIVE_COUNT" -eq 0 ]; then
       RECOMMEND="rdd-arch"
-      REASON="plan-handoff stale (says $ACTIVE_COUNT active, but 0 in filesystem -> all archived)"
+      if [ "$PLANNER_KIND" = "v3-plan" ]; then
+        REASON="plan-handoff stale (says $ACTIVE_COUNT active, but 0 in filesystem -> all archived)"
+      else
+        REASON="planner-handoff stale (says $ACTIVE_COUNT active, but 0 in filesystem -> all archived)"
+      fi
       return 0
     fi
     RECOMMEND="rdd-builder"
@@ -349,6 +448,19 @@ except Exception:
   if [ -n "$binding_owner" ]; then
     scan_binding_lines "$PROJECT_ROOT/.rddf/state/sessions.json" "$binding_owner" || true
   fi
+}
+
+# scan_state (public wrapper)
+#   Calls _scan_state_impl and then marks the result as NON-AUTHORITATIVE
+#   when the handoff JSON could not be validated (python3 unavailable).
+#   A corrupt handoff must never be silently treated as complete, so the
+#   degradation has to be visible in the REASON the agent reads.
+scan_state() {
+  _scan_state_impl "$@"
+  if [ "${_HANDOFF_VALIDATION_DEGRADED:-0}" -eq 1 ]; then
+    REASON="${REASON:-未知} (非权威：python3 不可用，handoff JSON 有效性未校验)"
+  fi
+  return 0
 }
 
 # check_arch_handoff_stale [PROJECT_ROOT]

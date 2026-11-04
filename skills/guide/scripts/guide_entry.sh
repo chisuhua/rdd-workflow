@@ -196,7 +196,10 @@ print(json.dumps({
   echo "   ───────────────────────────────────────────"
   echo "   roadmap.md: $([ -f "$PROJECT_ROOT/roadmap.md" ] && echo '✅' || echo '❌')"
   echo "   .arch-handoff.json: $([ -f "$PROJECT_ROOT/.rddf/state/.arch-handoff.json" ] && echo '✅' || echo '❌')"
-  echo "   .plan-handoff.json: $([ -f "$PROJECT_ROOT/.rddf/state/.plan-handoff.json" ] && echo '✅' || echo '❌')"
+  echo "   .planner-handoff.json: $([ -f "$PROJECT_ROOT/.rddf/state/.planner-handoff.json" ] && echo '✅' || echo '❌')"
+  if [ -f "$PROJECT_ROOT/.rddf/state/.plan-handoff.json" ] || [ -f "$PROJECT_ROOT/.rddf/state/.design-handoff.json" ]; then
+    echo "   ⚠️  legacy v3 handoff: .plan-handoff.json / .design-handoff.json（请迁移到 .planner-handoff.json）"
+  fi
 
   # Ensure state.sh helpers are available (scan-state.sh may have skipped sourcing)
   if ! type -t detect_approved_inconsistency &>/dev/null; then

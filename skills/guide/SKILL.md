@@ -89,7 +89,7 @@ SKILL_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../.." \
 2. **needs_review**（需人工判断）：
    - 例如：修改的配置文件、未暂存的代码变更、未关联归档的删除
    - **AI 行为**：解释为什么需要人工审查（可能丢失工作、可能影响其他流程），不自动执行
-   - 示例输出：`⚠️ 需审查: .rddf/state/.plan-handoff.json 有本地修改 — 可能包含未保存的状态变更`
+   - 示例输出：`⚠️ 需审查: .rddf/state/.planner-handoff.json 有本地修改 — 可能包含未保存的状态变更`
 
 3. **info**（信息提示）：
    - 不需要立即行动的项目
@@ -334,7 +334,7 @@ AI: "检测到执行 change 意图，路由到 rdd-builder →"
    ───────────────────────────────────────────
    roadmap.md: ✅
    .arch-handoff.json: ✅
-   .plan-handoff.json: ❌
+   .planner-handoff.json: ❌
    📍 Current: rds_xxx (kind=stage_arch, started=2026-07-22T...)
 ```
 

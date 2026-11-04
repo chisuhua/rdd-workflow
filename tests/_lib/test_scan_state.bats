@@ -38,9 +38,9 @@ teardown() {
   # recommends 'guide-ship' (or guide-arch if no roadmap.md)
 }
 
-@test "scan_state: arch-handoff + no design-handoff recommends rdd-builder (design phase)" {
-  # arch-handoff with adr_count >= 1 means arch-done is complete
-  # No design-handoff -> should recommend rdd-builder (v4 four-phase)
+@test "scan_state: v4 arch-handoff + no planner-handoff recommends rdd-planner" {
+  # arch-handoff with adr_count >= 1 means arch-done is complete.
+  # No .planner-handoff.json (v4) -> the planner stage is next.
   echo '{"arch_done_at":"2026-07-01","adr_count":1,"current_change":null}' > "$STATE_DIR/.arch-handoff.json"
 
   run bash -c "
@@ -49,10 +49,10 @@ teardown() {
     echo \"RECOMMEND=\$RECOMMEND\"
   "
   [ "$status" -eq 0 ]
-  [[ "$output" == *"rdd-builder"* ]]
+  [[ "$output" == *"rdd-planner"* ]]
 }
 
-@test "scan_state: arch-handoff + design-handoff + no plan-handoff recommends rdd-builder" {
+@test "scan_state: v3 design-handoff (legacy) recommends rdd-builder" {
   echo '{"arch_done_at":"2026-07-01","adr_count":1,"current_change":null}' > "$STATE_DIR/.arch-handoff.json"
   echo '{"version":1,"design_complete_at":"2026-07-01","proposals_reviewed":3,"all_proposals_have_decision":true}' > "$STATE_DIR/.design-handoff.json"
 
@@ -63,9 +63,56 @@ teardown() {
   "
   [ "$status" -eq 0 ]
   [[ "$output" == *"rdd-builder"* ]]
+  [[ "$output" == *"legacy"* ]]
 }
 
-@test "scan_state: plan-handoff present recommends rdd-builder (ship phase)" {
+@test "scan_state: v4 planner-handoff present recommends rdd-builder" {
+  echo '{"arch_done_at":"2026-07-01","adr_count":1,"current_change":null}' > "$STATE_DIR/.arch-handoff.json"
+  echo '{"schema":"planner-handoff-v1","version":1,"owner":"rdd-planner","planner_complete_at":"2026-07-01","current_sprint":"s1","recommended_route":"full","awaiting_builder":["add-x"]}' > "$STATE_DIR/.planner-handoff.json"
+  mkdir -p "openspec/changes/add-x"
+
+  run bash -c "
+    source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
+    scan_state '$TEST_REPO'
+    echo \"RECOMMEND=\$RECOMMEND\"
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"rdd-builder"* ]]
+  [[ "$output" != *"残留"* ]]
+}
+
+@test "scan_state: corrupt planner-handoff is not treated as planner-complete" {
+  echo '{"arch_done_at":"2026-07-01","adr_count":1,"current_change":null}' > "$STATE_DIR/.arch-handoff.json"
+  printf '{"schema":"planner-handoff-v1", TRUNCATED' > "$STATE_DIR/.planner-handoff.json"
+
+  run bash -c "
+    source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
+    scan_state '$TEST_REPO'
+    echo \"RECOMMEND=\$RECOMMEND\"
+    echo \"REASON=\$REASON\"
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"rdd-planner"* ]]
+  [[ "$output" == *"损坏"* ]]
+}
+
+@test "scan_state: v3 design-handoff (legacy) recommends change generation" {
+  echo '{"arch_done_at":"2026-07-01","adr_count":1,"current_change":null}' > "$STATE_DIR/.arch-handoff.json"
+  echo '{"version":1,"design_complete_at":"2026-07-01","proposals_reviewed":3}' > "$STATE_DIR/.design-handoff.json"
+
+  run bash -c "
+    source '$REPO_ROOT/skills/guide/scripts/scan-state.sh'
+    scan_state '$TEST_REPO'
+    echo \"RECOMMEND=\$RECOMMEND\"
+    echo \"REASON=\$REASON\"
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"rdd-builder"* ]]
+  [[ "$output" == *"进入变更生成"* ]]
+  [[ "$output" != *"残留"* ]]
+}
+
+@test "scan_state: v3 plan-handoff present recommends rdd-builder (ship phase)" {
   echo '{"arch_done_at":"2026-07-01","adr_count":1,"current_change":null}' > "$STATE_DIR/.arch-handoff.json"
   echo '{"plan_done_at":"2026-07-01","active_changes":1,"current_change":"add-x"}' > "$STATE_DIR/.plan-handoff.json"
   mkdir -p "openspec/changes/add-x"

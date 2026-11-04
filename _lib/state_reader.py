@@ -112,6 +112,25 @@ def read_plan_handoff(project_root: str) -> Optional[dict]:
     return data
 
 
+def read_planner_handoff(project_root: str) -> Optional[dict]:
+    """Read ``.rddf/state/.planner-handoff.json`` (v4 planner handoff).
+
+    Returns the parsed dict, or ``None`` if the file is missing, contains
+    invalid JSON, or the top-level value is not a dict. A corrupt file is
+    therefore indistinguishable from a missing one — callers MUST treat
+    both as "planner stage not complete" rather than silently advancing.
+    """
+    path = _state_path(project_root, ".planner-handoff.json")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
 def read_iteration(project_root: str) -> Optional[dict]:
     """Read ``.rddf/state/iteration.json`` via ``_read_unlocked``.
 

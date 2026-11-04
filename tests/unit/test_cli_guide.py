@@ -41,16 +41,16 @@ def git_repo(tmp_path, monkeypatch):
     return repo
 
 
-def test_priority_1_arch_done_plan_undone_recommends_guide_design(git_repo, capsys):
-    """arch-handoff present, design-handoff absent → 'guide-design'."""
+def test_priority_1_arch_done_planner_undone_recommends_rdd_planner(git_repo, capsys):
+    """arch-handoff present, planner-handoff absent → 'rdd-planner' (v4)."""
     (git_repo / ".rddf" / "state" / ".arch-handoff.json").write_text(
         json.dumps({"adr_count": 3})
     )
     rc = guide_cmd.cmd_guide([])
     captured = capsys.readouterr()
     assert rc == 0
-    assert "rdd-builder" in captured.out
-    assert "进入设计阶段" in captured.out
+    assert "rdd-planner" in captured.out
+    assert "planner 阶段" in captured.out
 
 
 def test_priority_2_arch_done_zero_adrs_recommends_guide_arch_recover(git_repo, capsys):
