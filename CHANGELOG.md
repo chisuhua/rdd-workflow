@@ -12,6 +12,34 @@ in 4 SKILL.md (rdd-arch/planner/builder/verifier/quick). Closes 5 P0 findings fr
 
 ## [Unreleased]
 
+### fix-v4-residue-contract（2026-11-04）
+
+契约面 v4 残留修复：把「指向已删除 skill」的对外契约收敛到 v4 词汇，并补一个能自动发现同类残留的守卫。行为不变（除 route 目标名）。
+
+- **失败路由统一到 `rdd-builder`**（`skills/rdd-verifier/scripts/route_loop.sh`、
+  `_lib/cli/rdd_verify_cmd.py::_classify_route`）：`implementation_gap` 与 `proposal_drift`
+  都写 `route="rdd-builder"`，P1（改 proposal）/ P2（改实现）的差异由 `classification_history`
+  与打印行承载。依据 `skills/rdd-verifier/SKILL.md:126,128` 的既有状态机与 `ADR-0025:91`
+  （**rdd-builder P0 拥有 proposal.md**，不是 rdd-planner）
+- **schema enum 只增不减**（`_lib/schemas/{verifier_loop,iteration}_schema.json`）：
+  加 `rdd-builder`，保留 `guide-ship` / `guide-plan` —— 后者是**历史兼容输入**，
+  `loop_state.py` save 时强制校验 enum，删掉会让存量 `.rddf/state/verifier/*.json` 加载失败
+- **feedback 对外 schema 与运行时对齐**（`_lib/schemas/feedback_entry_schema.json`）：
+  source enum 补 `rdd-arch` / `rdd-planner` / `rdd-builder`；新增双向漂移守卫
+  `tests/unit/test_feedback_schema_sources.py`（schema enum == `VALID_SOURCES`）
+- **用户可见文案统一 12 处**：`_lib/gate.py`、`_lib/cli/{sessions,__main__,__init__,
+  discover_ship_changes,orchestrate,report_issue}_cmd` 系列、`skills/execute/scripts/execute_step7.py`、
+  `skills/feature/scripts/feature_view.py`。**映射口径以 `AGENTS.md:106-108` 为权威**：
+  `guide-design → rdd-planner`，**`guide-plan → rdd-builder`**（v4 把 plan + ship 合并进 builder），
+  `guide-ship → rdd-builder`
+- **新增 doctor 分类 `v4-residue`**（`skills/rdd-doctor/scripts/checks/v4_residue_check.py`）：
+  R1 路由型 enum 无法表达 v4 路由 → CRITICAL；R2 活代码字符串字面量指向旧 skill → WARNING
+  （`ast` 只取字面量，注释与 docstring 豁免）；R3 SKILL.md frontmatter `name:` → CRITICAL。
+  首跑即抓出 2 处人工清单漏掉的真实残留，证明该守卫必要
+- **`check_schema_path_canonical` 扫描面扩到代码**（`_lib/docs_consistency.py`）：
+  `_lib/**/*.py` + `skills/**/*.py`（跳过 `__pycache__`），并加**自指豁免** ——
+  检查器自身必须写出待查字符串，否则扩展后会自报假阳性
+
 ### fix-test-isolation-and-hygiene（2026-11-04）
 
 修两个会真的写坏数据的 bug + 清理仓库残留。3 个独立 commit。

@@ -1,6 +1,6 @@
 """``rddf discover-ship-changes`` subcommand handler.
 
-Returns the unified candidate set that may need guide-ship action:
+Returns the unified candidate set that may need rdd-builder action:
 the union of disk directories, plan-handoff names, iteration entries
 (not archived), openspec/* branches, and openspec/* worktree branches.
 Each candidate carries normalized fields and a ``flags`` list.

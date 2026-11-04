@@ -141,19 +141,23 @@ EOF
     [ "$status" -eq 2 ]
 }
 
-@test "route_loop.sh: implementation_gap routes to guide-ship" {
+@test "route_loop.sh: implementation_gap routes to rdd-builder (P2)" {
     export RDDF_VERIFIER_MAX_LOOPS=3
     run bash "$REPO_ROOT/skills/rdd-verifier/scripts/route_loop.sh" route-gap-test implementation_gap
     [ "$status" -eq 0 ]
-    [[ "$output" == *"guide-ship"* ]]
+    [[ "$output" == *"rdd-builder"* ]]
+    [[ "$output" == *"P2"* ]]
+    [[ "$output" != *"guide-"* ]]
     unset RDDF_VERIFIER_MAX_LOOPS
 }
 
-@test "route_loop.sh: proposal_drift routes to guide-plan" {
+@test "route_loop.sh: proposal_drift routes to rdd-builder (P1)" {
     export RDDF_VERIFIER_MAX_LOOPS=3
     run bash "$REPO_ROOT/skills/rdd-verifier/scripts/route_loop.sh" route-drift-test proposal_drift
     [ "$status" -eq 0 ]
-    [[ "$output" == *"guide-plan"* ]]
+    [[ "$output" == *"rdd-builder"* ]]
+    [[ "$output" == *"P1"* ]]
+    [[ "$output" != *"guide-"* ]]
     unset RDDF_VERIFIER_MAX_LOOPS
 }
 

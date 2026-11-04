@@ -63,7 +63,7 @@ def cmd_orchestrate(args: list[str]) -> int:
     p_sweep = sub.add_parser("sweep-stale-traces", help="Manually trigger sweep")
 
     p_show = sub.add_parser("show", help="Print trace timeline for a phase")
-    p_show.add_argument("phase", help="Phase name (e.g. guide-arch)")
+    p_show.add_argument("phase", help="Phase name (e.g. rdd-arch)")
     p_show.add_argument("--session", default="", help="Filter by session id")
     p_show.add_argument(
         "--type", dest="event_type", default="",

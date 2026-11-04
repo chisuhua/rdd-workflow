@@ -371,7 +371,7 @@ _DEFAULT_CHECKS = {
         Check("arch_handoff_actionable", strict_wrap(_check_handoff_actionable), ".arch-handoff.json missing actionable fields (current_phase=default or discovered.adr_dir.found=false)", "Re-run skill_use('rdd-arch') Phase 4 to regenerate handoff", "warning"),
     ],
     "plan_done": [
-        Check("arch_handoff_exists", _check_arch_handoff_exists, "arch-done handoff 缺失", "请先运行 skill_use('guide-arch') 完成架构定义", "error"),
+        Check("arch_handoff_exists", _check_arch_handoff_exists, "arch-done handoff 缺失", "请先运行 skill_use('rdd-arch') 完成架构定义", "error"),
         Check("changes_committed", _check_changes_committed, "Change artifacts not committed", "git add openspec/changes/<name>/ && git commit", "error"),
         Check("artifacts_complete", _check_artifacts_complete, "Missing proposal/design/tasks", "Create all three artifacts in openspec/changes/<name>/", "error"),
         Check("openspec_validate", _check_openspec_validate, "Plan fails OpenSpec schema validation", "Run: openspec validate --all --strict --json  and fix reported items", "error"),

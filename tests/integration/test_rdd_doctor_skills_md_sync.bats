@@ -59,7 +59,7 @@ setup() {
     # Extract the section between "## N 类检查概览" and the next "## "
     table_rows=$(sed -n '/^## [0-9]\+ 类检查概览/,/^## /p' "$SKILL_MD" \
         | grep -cE '^\| `\w+(-\w+)*` \|')
-    [ "$table_rows" -eq 23 ]
+    [ "$table_rows" -eq 24 ]
 }
 
 # -----------------------------------------------------------------------------

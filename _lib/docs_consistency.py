@@ -376,16 +376,31 @@ def check_schema_readme_drift() -> list[dict]:
     return issues
 
 
+_SELF_REL_PATH = "_lib/docs_consistency.py"
+
+
 def check_schema_path_canonical() -> list[dict]:
-    """AGENTS.md / README.md reference schema paths as `_lib/schemas/` (canonical).
+    """Schema paths must be referenced as `_lib/schemas/` (canonical) in docs AND code.
 
     The string `skills/_lib/schemas/` is allowed ONLY when it appears in a shim
     explanation (e.g. parenthetical "(skills/_lib/schemas/ 为向后兼容 shim)").
     Otherwise it is a stale reference (the canonical path is `_lib/schemas/`
     post P1-1b flatten layout, 2026-08-25).
+
+    Code directories are scanned too: a docstring/comment telling a human to look
+    at `skills/_lib/schemas/` is exactly as misleading as a doc doing it, and
+    `__pycache__` is skipped.
     """
     SHIM_TOKENS = ("shim", "兼容", "向后兼容", "backward")
-    targets = ("AGENTS.md", "README.md")
+    targets = ["AGENTS.md", "README.md"]
+    for pattern in ("_lib/**/*.py", "skills/**/*.py"):
+        for path in sorted(REPO_ROOT.glob(pattern)):
+            if "__pycache__" in path.parts:
+                continue
+            rel = str(path.relative_to(REPO_ROOT))
+            if rel == _SELF_REL_PATH:
+                continue  # 本模块必须写出待查字符串 —— 自指豁免
+            targets.append(rel)
 
     violations: list[tuple[str, int, str]] = []
     for rel in targets:

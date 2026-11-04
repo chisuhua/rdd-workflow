@@ -177,12 +177,47 @@ def test_schema_path_canonical_violation(tmp_path, monkeypatch):
 
 
 def test_schema_path_canonical_no_false_positive():
-    """Current AGENTS.md / README.md only mention skills/_lib/schemas/ as shim context."""
+    """AGENTS.md / README.md 只以 shim 语境提到旧路径 → 文档面不得报。
+
+    代码面的已知残留（`_lib/iteration/schema.py`）归 `remove-dead-dup-layer`，
+    本用例只看文档面，避免与那个 change 产生顺序耦合。
+    """
     from _lib import docs_consistency as dc
 
     issues = dc.check_schema_path_canonical()
+    doc_violations = [
+        i for i in issues
+        if i["name"] == "schema-path-canonical-violation"
+        and ("AGENTS.md" in i["detail"] or "README.md" in i["detail"])
+    ]
+    assert doc_violations == [], f"unexpected doc violations: {doc_violations}"
+
+
+def test_schema_path_canonical_scans_code_files(tmp_path, monkeypatch):
+    """代码目录也在扫描面内（docstring 里指旧路径同样误导人）。"""
+    from _lib import docs_consistency as dc
+
+    pkg = tmp_path / "_lib"
+    pkg.mkdir()
+    (pkg / "stale.py").write_text(
+        '"""Lives at skills/_lib/schemas/foo.json."""\n', encoding="utf-8")
+
+    monkeypatch.setattr(dc, "REPO_ROOT", tmp_path)
+    issues = dc.check_schema_path_canonical()
     violations = [i for i in issues if i["name"] == "schema-path-canonical-violation"]
-    assert violations == [], f"unexpected path-canonical violations: {violations}"
+    assert len(violations) == 1, issues
+    assert "stale.py" in violations[0]["detail"]
+
+
+def test_schema_path_canonical_skips_itself():
+    """检查器自身必须写出待查字符串 → 自指豁免，不得自报。"""
+    from _lib import docs_consistency as dc
+
+    issues = dc.check_schema_path_canonical()
+    for issue in issues:
+        if issue["name"] != "schema-path-canonical-violation":
+            continue
+        assert "docs_consistency.py" not in issue["detail"], issue
 
 
 def test_role_frontmatter_all_phase_skills():

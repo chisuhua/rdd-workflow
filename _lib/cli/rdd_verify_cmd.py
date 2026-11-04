@@ -28,7 +28,6 @@ if __package__ in (None, ""):
 from _lib.verifier.audit import write_event
 from _lib.verifier.branch import resolve_implementation_commit
 from _lib.verifier.cache import verdict_cache, read_verdict_cache, is_cache_fresh
-from _lib.verifier.classify import classify_failure
 from _lib.verifier.discovery import discover_eligible
 from _lib.verifier.hook_runner import run_verification_hook
 from _lib.verifier.loop_state import (
@@ -162,16 +161,22 @@ def _stage_context_runner(change_name: str, project_root: Path) -> dict:
 
 
 def _classify_route(failed_acs: list, verdict: list) -> str:
-    """Map AC failure pattern to a route."""
+    """Map AC failure pattern to a route.
+
+    Both classifications route to ``rdd-builder`` — the stage that owns both
+    ``proposal.md`` (ADR-0025 restore note: ``rdd-builder`` P0 authors it) and
+    the implementation. The P1 (rewrite proposal) / P2 (fix implementation)
+    distinction is carried by the recorded **classification**, not by the route
+    value: the skill path records it via ``loop_state.append_classification``
+    (``route_loop.sh``) and prints it; this CLI path only records the stage,
+    because appending a classification here would also bump ``loop_count`` and
+    corrupt the retry budget.
+
+    ``verdict`` is kept in the signature for callers that already hold it.
+    """
     if not failed_acs:
         return "archive-ready"
-    for item in verdict:
-        if item.get("ac_id") in failed_acs:
-            label = classify_failure(item)
-            if label == "proposal_drift":
-                return "guide-plan"
-            return "guide-ship"
-    return "guide-ship"
+    return "rdd-builder"
 
 
 def run_one_change(project_root: Path, change_name: str,

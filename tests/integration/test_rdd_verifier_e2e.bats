@@ -69,23 +69,25 @@ EOF
     [[ "$output" == *"RDDF_VERIFIER_BYPASS_REASON"* ]]
 }
 
-@test "e2e: implementation_gap fixture routes to guide-ship" {
+@test "e2e: implementation_gap fixture routes to rdd-builder (P2)" {
     _seed_fixture_cache "implementation_gap" "test-change"
 
     export RDDF_VERIFIER_MAX_LOOPS=3
     run bash "$REPO_ROOT/skills/rdd-verifier/scripts/route_loop.sh" test-change implementation_gap
     [ "$status" -eq 0 ]
-    [[ "$output" == *"guide-ship"* ]]
+    [[ "$output" == *"rdd-builder"* ]]
+    [[ "$output" == *"P2"* ]]
     unset RDDF_VERIFIER_MAX_LOOPS
 }
 
-@test "e2e: proposal_drift fixture routes to guide-plan" {
+@test "e2e: proposal_drift fixture routes to rdd-builder (P1)" {
     _seed_fixture_cache "proposal_drift" "test-change"
 
     export RDDF_VERIFIER_MAX_LOOPS=3
     run bash "$REPO_ROOT/skills/rdd-verifier/scripts/route_loop.sh" test-change proposal_drift
     [ "$status" -eq 0 ]
-    [[ "$output" == *"guide-plan"* ]]
+    [[ "$output" == *"rdd-builder"* ]]
+    [[ "$output" == *"P1"* ]]
     unset RDDF_VERIFIER_MAX_LOOPS
 }
 

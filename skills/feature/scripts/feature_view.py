@@ -295,7 +295,7 @@ def update_iteration_feature_view(project_root):
     data = it_mod.load(project_root)
     if not data or not data.get("changes"):
         raise NoIterationError(
-            "iteration.json missing — run `skill_use('guide-plan')` at least once first."
+            "iteration.json missing — run `skill_use('rdd-builder')` at least once first."
         )
     all_changes = {c["name"]: c for c in data.get("changes", [])}
     changes_list = list(all_changes.values())

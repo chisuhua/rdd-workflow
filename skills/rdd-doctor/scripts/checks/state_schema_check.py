@@ -184,7 +184,7 @@ def run(project_root: Path | None = None) -> List[Finding]:
                             file=str(state_file),
                             line=line_no,
                             snippet=f"invalid JSON: {e.msg}",
-                            fix_hint="re-run guide-plan or restore from backup",
+                            fix_hint="re-run rdd-builder to regenerate state, or restore from backup",
                         ))
             continue
 
@@ -197,7 +197,7 @@ def run(project_root: Path | None = None) -> List[Finding]:
                 file=str(state_file),
                 line=e.lineno,
                 snippet=f"invalid JSON: {e.msg}",
-                fix_hint="re-run guide-plan or restore from backup",
+                fix_hint="re-run rdd-builder to regenerate state, or restore from backup",
             ))
             continue
 
@@ -210,7 +210,7 @@ def run(project_root: Path | None = None) -> List[Finding]:
                 file=str(state_file),
                 line=None,
                 snippet=f"{'/'.join(map(str, error.absolute_path)) or '<root>'}: {error.message}",
-                fix_hint="re-run guide-plan or manually migrate to current schema",
+                fix_hint="re-run rdd-builder to regenerate state, or manually migrate to current schema",
             ))
     return findings
 

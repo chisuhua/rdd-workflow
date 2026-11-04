@@ -126,7 +126,7 @@ def test_run_one_change_failed_writes_failed_state(tmp_path):
     assert result["state"] == "failed"
     assert result["archive_ready"] is False
     assert result["failed_acs"] == ["AC-1"]
-    assert result["route"] in ("guide-ship", "guide-plan")
+    assert result["route"] == "rdd-builder"
 
 
 def test_run_one_change_error_returns_error_state(tmp_path):

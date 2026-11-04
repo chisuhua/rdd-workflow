@@ -137,7 +137,7 @@ _SUBCOMMAND_DESCRIPTION: Dict[str, str] = {
     "dashboard": "Display workflow state dashboard",
     "deps": "Dependency analysis table from deps-analysis.json",
     "deps.cross-repo": "Cross-repo dependency analysis for Spoke federation",
-    "discover-ship-changes": "Unified change candidates for guide-ship",
+    "discover-ship-changes": "Unified change candidates for rdd-builder",
     "doctor": "Manual read-only diagnostic for workflow state files",
     "env-bootstrap": "4-phase env orchestrator (detect→diagnose→suggest→guided-fix)",
     "feature": "Feature fragment summary / graph / status / order",

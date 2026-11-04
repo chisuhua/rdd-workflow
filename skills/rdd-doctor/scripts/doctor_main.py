@@ -48,6 +48,7 @@ _CHECKERS: dict[str, Union[str, Callable]] = {
     "review-debt": "checks.review_debt_check.run",
     "roadmap-backup": "checks.roadmap_backup_check.run",
     "baseline-freshness": "checks.baseline_freshness_check.run",
+    "v4-residue": "checks.v4_residue_check.run",
 }
 
 

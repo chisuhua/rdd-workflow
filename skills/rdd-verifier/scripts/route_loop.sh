@@ -63,13 +63,18 @@ if state["loop_count"] >= state["max_loops"]:
     sys.exit(1)
 
 if label == "implementation_gap":
-    state["route"] = "guide-ship"
+    state["route"] = "rdd-builder"
+    route_detail = "P2 fix implementation"
 elif label == "proposal_drift":
-    state["route"] = "guide-plan"
+    state["route"] = "rdd-builder"
+    route_detail = "P1 rewrite proposal"
+else:
+    route_detail = ""
 
 save_loop_state(project_root, state, change_name)
 print(
     f"→ Route: {state['route']} "
-    f"(loop {state['loop_count']}/{state['max_loops']})"
+    f"({route_detail + ', ' if route_detail else ''}"
+    f"loop {state['loop_count']}/{state['max_loops']})"
 )
 PYEOF

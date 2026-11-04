@@ -61,7 +61,7 @@ def run(project_root: Path | None = None) -> List[Finding]:
                 file=str(tasks),
                 line=None,
                 snippet="tasks.md missing for active change",
-                fix_hint="run guide-plan fill to generate tasks.md",
+                fix_hint="run rdd-builder P1 to generate tasks.md",
             ))
             continue
         text = tasks.read_text()

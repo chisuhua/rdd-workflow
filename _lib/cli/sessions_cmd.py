@@ -148,7 +148,7 @@ def _list_sessions() -> int:
 
     if not sessions:
         print("📭 no sessions recorded")
-        print('   create one via: skill_use("guide-arch"|"guide-plan"|"guide-ship")')
+        print('   create one via: skill_use("rdd-arch"|"rdd-planner"|"rdd-builder")')
         return 0
 
     owner_id = _resolve_owner_id()
@@ -189,7 +189,7 @@ def _list_parallel_sessions() -> int:
 
     if not sessions:
         print("📭 no sessions recorded")
-        print('   create one via: skill_use("guide-arch"|"guide-design"|"guide-plan"|"guide-ship")')
+        print('   create one via: skill_use("rdd-arch"|"rdd-planner"|"rdd-builder")')
         return 0
 
     from collections import defaultdict
@@ -336,7 +336,7 @@ def _current_session() -> int:
 
     if s is None:
         print(f"📭 no active session bound to owner {owner_id}")
-        print('   start one via: skill_use("guide-arch"|"guide-plan"|"guide-ship")')
+        print('   start one via: skill_use("rdd-arch"|"rdd-planner"|"rdd-builder")')
         return 0
 
     print(f"📍 current binding for owner {owner_id}:")

@@ -11,7 +11,8 @@
     },
     "source": {
       "type": "string",
-      "enum": ["guide-design", "guide-plan", "guide-ship", "rdd-verifier", "human"]
+      "enum": ["rdd-arch", "rdd-planner", "rdd-builder", "rdd-verifier",
+               "guide-design", "guide-plan", "guide-ship", "human"]
     },
     "kind": {
       "type": "string",

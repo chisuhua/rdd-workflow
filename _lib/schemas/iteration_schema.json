@@ -163,8 +163,8 @@
               },
               "route": {
                 "type": ["string", "null"],
-                "enum": ["archive-ready", "guide-ship", "guide-plan", "halted", "pending-agent", null],
-                "description": "Where to send the user based on classification. archive-ready → ship, guide-ship → fix implementation_gap, guide-plan → fix proposal_drift, halted → manual review."
+                "enum": ["archive-ready", "rdd-builder", "guide-ship", "guide-plan", "halted", "pending-agent", null],
+                "description": "Where to send the user based on classification. archive-ready → archive, rdd-builder → fix implementation (P2) or rewrite proposal (P1), halted → manual review. guide-ship / guide-plan are legacy v3 values kept only so pre-rename state files still validate."
               },
               "loop_count": {
                 "type": ["integer", "null"],

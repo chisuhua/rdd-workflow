@@ -23,7 +23,7 @@ metadata:
 ## 调用
 
 ```bash
-bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,roadmap-meta,proposal-table,proposal-section,tasks-checkbox,migration-residue,orphan-gates,roadmap-refs,roadmap-feature,roadmap-md-integrity,roadmap-phases,docs-consistency,ai-context-bootstrap,gitignore,bypass-audit,improvement-frontmatter-consistency,objective-lifecycle,objective-structure,arch-audit,review-debt,roadmap-backup}] [--quiet] [--help] [--version]
+bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,roadmap-meta,proposal-table,proposal-section,tasks-checkbox,migration-residue,orphan-gates,roadmap-refs,roadmap-feature,roadmap-md-integrity,roadmap-phases,docs-consistency,ai-context-bootstrap,gitignore,bypass-audit,improvement-frontmatter-consistency,objective-lifecycle,objective-structure,arch-audit,review-debt,roadmap-backup,v4-residue}] [--quiet] [--help] [--version]
 ```
 
 ## 何时该跑
@@ -73,6 +73,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 | `objective-structure` | `.rddf/roadmap/objectives/*.md` 结构 / frontmatter 必需字段 | ✅ |
 | `arch-audit` | rdd-arch 产物健康度：gap-analysis structural_ok（per ADR-0046 §5）+ completeness（draft/partial/complete）+ ADR inventory（count / latest / superseded / status 漂移）+ `.arch-handoff.json` sanity。advisory only，不阻断任何 gate。设计动机：把 `check_arch_done_gate.sh` 内嵌的 advisory 检查外提为可独立 query 的 doctor category |  |
 | `review-debt` | `.py / .sh / .bats` 源文件中 unticketed TODO/FIXME/HACK 标记（无 ticket id 参考，薄封装 `_lib.review_debt_checker._TODO_PATTERN`）|  |
+| `v4-residue` | 契约面上残留的 v3 skill 名：R1 路由型 enum 无法表达 v4 路由（CRITICAL）、R2 活代码字符串字面量指向 `guide-*`（WARNING，注释与 docstring 豁免）、R3 SKILL.md frontmatter `name:`（CRITICAL） |  |
 | `roadmap-backup` | `.rddf/roadmap/.backup/<timestamp>/` 子目录完整性 + staleness（>90 天）+ 多备份建议合并 |  |
 | `baseline-freshness` | `tests/KNOWN_FAILURES.txt` 最近 refresh 注释日期 + 占位符 reasons（>30 天 → WARNING，>90 天 → CRITICAL）。来源是 refresh 注释日期，不用文件 mtime（git checkout / atomic-rename 不可靠） |  |
 

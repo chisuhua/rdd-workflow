@@ -123,14 +123,14 @@ skill_use("rdd-verifier")
     ├─ [2b] If verdict all PASS → mark loop_state.route="archive-ready"
     │
     └─ [2c] If any FAIL → classify_failure:
-        ├─ implementation_gap → user_confirm → route="rdd-builder P2"
+        ├─ implementation_gap → user_confirm → route="rdd-builder"  (P2 fix implementation)
         │   (re-execute code in worktree → commit → re-enter verify)
-        ├─ proposal_drift → user_confirm → route="rdd-builder P1"
+        ├─ proposal_drift → user_confirm → route="rdd-builder"  (P1 rewrite proposal)
         │   (rewrite proposal/specs → plan → ship → verify again)
         └─ ambiguous → default = implementation_gap (conservative)
             │
             └─ append_classification(loop_count += 1)
-                ├─ loop_count < $RDDF_VERIFIER_MAX_LOOPS → route to plan/ship
+                ├─ loop_count < $RDDF_VERIFIER_MAX_LOOPS → route to rdd-builder
                 └─ loop_count >= $RDDF_VERIFIER_MAX_LOOPS → route="halted" + audit log
                     │
                     └─ [EXIT 4] halted: manual review needed
@@ -235,7 +235,7 @@ skill_use("rdd-verifier")
 
 为了 Step 5 的启发式分类能正常工作，**reasoning 字段必须包含以下关键词之一**（按优先级）：
 
-**Drift keywords（→ `proposal_drift` → 路由 rdd-builder P1）**：
+**Drift keywords（→ `proposal_drift` → 路由 rdd-builder，P1 重写 proposal）**：
 
 - `exists but` — 代码存在但与 AC 不符
 - `discrepan` — AC 与实现有差异
@@ -375,7 +375,7 @@ User options：
 ```bash
 bash skills/rdd-verifier/scripts/route_loop.sh "$CHANGE_NAME" "$LABEL"
 # Updates `.rddf/state/verifier/<change>.json`: append classification + route
-# Exit 0: routed (rdd-builder P1/P2)
+# Exit 0: routed (route="rdd-builder"; P1/P2 语义见打印行与 classification_history)
 # Exit 1: halted (max_loops reached, audit log written)
 ```
 

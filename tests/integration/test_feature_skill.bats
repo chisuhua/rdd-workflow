@@ -83,18 +83,18 @@ EOF
     [[ "$output" == *"Wave 0"* ]]
 }
 
-@test "empty project returns error with guide-plan hint" {
+@test "empty project returns error with rdd-builder hint" {
     cat > .rddf/state/iteration.json <<EOF
 {"version": 3, "updated_at": "2026-07-09T00:00:00+00:00", "current_phase": "default", "changes": []}
 EOF
     run_feature summary
     [ "$status" -eq 1 ]
-    [[ "$output" == *"guide-plan"* ]]
+    [[ "$output" == *"rdd-builder"* ]]
 }
 
 @test "missing iteration.json errors with helpful message" {
     rm -f .rddf/state/iteration.json
     run_feature summary
     [ "$status" -eq 1 ]
-    [[ "$output" == *"guide-plan"* ]]
+    [[ "$output" == *"rdd-builder"* ]]
 }

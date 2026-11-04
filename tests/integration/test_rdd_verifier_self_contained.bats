@@ -7,8 +7,8 @@
 #
 # Cases:
 #   1. all-pass verdict → passed + archive-ready, rc 0
-#   2. gap-classified fail → failed, rc 1, route guide-ship
-#   3. drift-classified fail → failed, rc 1, route guide-plan
+#   2. gap-classified fail → failed, rc 1, route rdd-builder (P2)
+#   3. drift-classified fail → failed, rc 1, route rdd-builder (P1)
 #   4. proposal without AC section → stage/skip passthrough
 
 setup() {
@@ -88,7 +88,7 @@ assert v['archive_ready'] is True, v
 "
 }
 
-@test "self-contained: gap-classified fail → failed, route guide-ship, rc 1" {
+@test "self-contained: gap-classified fail → failed, route rdd-builder (P2), rc 1" {
   _make_change "ch-gap"
   printf '%s\n' "## 验收标准" "- AC-1: handler exists" > "openspec/changes/ch-gap/proposal.md"
   git add . && git commit -q -m "impl"
@@ -103,12 +103,12 @@ import json
 d = json.load(open('.rddf/state/iteration.json'))
 v = d['changes'][0]['verification']
 assert v['state'] == 'failed', v
-assert v['route'] == 'guide-ship', v
+assert v['route'] == 'rdd-builder', v
 assert v['failed_acs'] == ['AC-1'], v
 "
 }
 
-@test "self-contained: drift-classified fail → failed, route guide-plan, rc 1" {
+@test "self-contained: drift-classified fail → failed, route rdd-builder (P1), rc 1" {
   _make_change "ch-drift"
   printf '%s\n' "## 验收标准" "- AC-1: handler exists" > "openspec/changes/ch-drift/proposal.md"
   git add . && git commit -q -m "impl"
@@ -122,7 +122,7 @@ assert v['failed_acs'] == ['AC-1'], v
 import json
 d = json.load(open('.rddf/state/iteration.json'))
 v = d['changes'][0]['verification']
-assert v['route'] == 'guide-plan', v
+assert v['route'] == 'rdd-builder', v
 "
 }
 

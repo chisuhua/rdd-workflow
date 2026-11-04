@@ -28,7 +28,7 @@ def _load_feature_view(project_root: str) -> dict:
 
     iteration_path = Path(project_root) / ".rddf" / "state" / "iteration.json"
     if not iteration_path.exists():
-        print("❌ iteration.json not found (run guide-plan first)", file=sys.stderr)
+        print("❌ iteration.json not found (run skill_use('rdd-builder') at least once first)", file=sys.stderr)
         sys.exit(1)
 
     from skills._lib.state_reader import read_iteration_or_corrupt

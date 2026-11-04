@@ -72,11 +72,11 @@ grep -q '"loop_count": 3' .rddf/state/verifier/history-test.json
     unset RDDF_VERIFIER_MAX_LOOPS
 }
 
-@test "loop: non-halted state retains route='guide-ship' or 'guide-plan'" {
+@test "loop: non-halted state retains route='rdd-builder'" {
     export RDDF_VERIFIER_MAX_LOOPS=5
     run bash "$REPO_ROOT/skills/rdd-verifier/scripts/route_loop.sh" non-halt-test implementation_gap
     [ "$status" -eq 0 ]
-grep -q '"route": "guide-ship"' .rddf/state/verifier/non-halt-test.json
+grep -q '"route": "rdd-builder"' .rddf/state/verifier/non-halt-test.json
 grep -q '"halt_reason": null' .rddf/state/verifier/non-halt-test.json
     unset RDDF_VERIFIER_MAX_LOOPS
 }

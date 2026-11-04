@@ -7,7 +7,7 @@ choosing the category explicitly. Default category is ``manual``.
 Usage::
 
     python3 -m skills._lib.cli report-issue "doc typo on line 42"
-    python3 -m skills._lib.cli report-issue --category flow-bug --phase guide-plan "schema drift"
+    python3 -m skills._lib.cli report-issue --category flow-bug --phase rdd-builder "schema drift"
 """
 from __future__ import annotations
 

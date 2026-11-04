@@ -33,7 +33,8 @@
     },
     "codebase_commit_at_last_run": {"type": "string", "minLength": 0, "description": "Empty string means 'not yet run a verification'; valid git SHA ≥7 chars when populated"},
     "route": {
-      "enum": ["archive-ready", "guide-ship", "guide-plan", "halted", "pending-agent"]
+      "enum": ["archive-ready", "rdd-builder", "guide-ship", "guide-plan", "halted", "pending-agent"],
+      "description": "Stage the change is routed to. guide-ship / guide-plan are legacy v3 values kept only so pre-rename state files still validate."
     },
     "halt_reason": {"type": ["string", "null"]},
     "verification_state": {

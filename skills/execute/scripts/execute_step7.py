@@ -71,7 +71,7 @@ def run_step7_report(project_root: str, change_name: str) -> dict:
     print(f"   skill_use(\"status {change_name} --archive\")")
     print("")
     print("3. 继续处理其他 worktree：")
-    print("   skill_use(\"guide-ship\")   # 内部选择 change")
+    print("   skill_use(\"rdd-builder\")   # 内部选择 change")
     print("")
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print("")
