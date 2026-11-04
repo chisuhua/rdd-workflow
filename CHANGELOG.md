@@ -12,6 +12,48 @@ in 4 SKILL.md (rdd-arch/planner/builder/verifier/quick). Closes 5 P0 findings fr
 
 ## [Unreleased]
 
+### fix-agent-interface-contracts（2026-11-03）
+
+对外契约修复，让外部 agent（如 opencode build agent 的角色矩阵）能可靠判定与调用
+rdd-workflow。5 项改动，3 个独立 commit。
+
+- **阶段判定统一到 v4 handoff**（`skills/guide/scripts/scan-state.sh`、
+  `_lib/cli/guide_cmd.py::_scan_state`、`_lib/workflow_synthesizer.py::_decision_tree`）：
+  三处消费端一致消费 `.planner-handoff.json`；arch 完成后推荐 `rdd-planner`（原为
+  v3 残留的 `rdd-builder`）；活跃 change 判定改用文件系统（`planner-handoff-v1`
+  **没有** `active_changes` 字段，旧代码恒读到 0，把每个 v4 项目误报成「残留」）；
+  v3 handoff 作 legacy fallback 且**不提前 return**（否则会截断 worktree 等后续分支）；
+  损坏的 planner handoff 视为 planner 未完成
+- **`rddf status` 增加 `BUILDER` 列**：取自 `.rddf/state/builder/<name>.json::current_phase`；
+  不叫 `PHASE`（同屏已有 iteration roadmap 的 `Phase`，语义不同）；归档行显示 `-`
+- **`role.boundaries.owns` 机读化**：10 处人读括号注释移入正文（路径条目只放路径）；
+  `skill_role_schema.json` 增加 `pattern` 禁止括号注释；`rdd-arch` 的
+  `human_involvement` 缩进错位修正（此前 schema 校验失败）；占位符统一为 `<name>`
+- **`rdd-builder` 不再声明 `design.md`**：P1（`phase1_plan.sh`）只生成 `tasks.md`
+- **删除 P2 COMMIT GATE**：原 gate 用整仓 `git status --porcelain`，任何无关脏文件
+  （含 agent 自己的 `.rddf/state/role.json`）都会阻断 P2，且在
+  `git.openspec_tracked=false` 的项目里对 `openspec/` 恒空转；commit 语义改由
+  `archive.sh::check_worktree_commits` 在归档前强制
+- **顺带修复两处既有缺陷**：`phase2_execute.sh` 的 `sys.path.insert(0 '...')` 缺逗号
+  （Python SyntaxError）与 `_lib` 解析假设 PROJECT_ROOT 含 `_lib/` —— 二者使
+  EXEC_MODE 探测恒失败、永远 worktree 模式；删除 gate 后另加未提交产物带出
+  （`git worktree add` 从 HEAD 建，不含未提交文件）
+- **P2 的 worktree 产物带出**：`git worktree add` 从 HEAD 建，不含未提交产物 →
+  worktree 模式下 plan/change 工件缺失 → `exit 3` "plan file missing"。删除 gate 后
+  补上带出逻辑（拷**内容**而非目录本身；src==dst 时跳过，避免 `cp -R a a` + `set -e`
+  中止 P2，以及 dst 已存在时拷出 `<name>/<name>/` 嵌套目录）
+- **v3 design / plan 分流**：v3 的 `.design-handoff.json`（设计完成 → 变更生成）与
+  `.plan-handoff.json`（变更已生成 → 执行/清理）是**两个不同阶段**，不再共用一条分支；
+  effective marker 引入 kind 区分（v4 / v3-plan / v3-design）
+- **handoff 有效性不可验证时显式降级**：无 `python3` 时 bash 消费端无法解析 handoff
+  JSON，推荐结果会带「非权威」标记，不再静默当作已验证的阶段结论；非 object 的
+  JSON（数组等）在三处消费端统一判为**无效** handoff
+- **Known Residuals**（同类缺陷，本次声明不修）：`_lib/state_reader.py`、
+  `_lib/cli/monitor_cmd.py`、`_lib/cli/validate_cmd.py`、
+  `_lib/discover_ship_changes.py`、`_lib/parallel_executor.py`、
+  `_lib/cleanup_plan_handoff.py`、`skills/rdd-builder/scripts/phase1_5_deps.sh`
+  仍读 v3 handoff 名
+
 ### fix-roadmap-phase-objective-parser (silent data loss + copy-paste debt, 2026-09-29)
 
 Two drift bugs confirmed via pre-planning audit (commit `67a3e85`):

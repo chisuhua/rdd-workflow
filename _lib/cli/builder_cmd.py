@@ -13,7 +13,7 @@ Exit codes (per spec §5.2 / Oracle H4):
 - 0 = success
 - 1 = Phase 0 rejected/deferred
 - 2 = plan quality FAIL
-- 3 = worktree / COMMIT GATE fail
+- 3 = worktree / plan-file fail (no commit gate: archive.sh::check_worktree_commits enforces commit semantics)
 - 4 = verifier halted
 - 5 = review revise/abandon
 - 6 = deps gate FAIL
@@ -60,7 +60,7 @@ Exit codes:
   0 = success
   1 = Phase 0 rejected/deferred
   2 = plan quality FAIL
-  3 = worktree / COMMIT GATE fail
+  3 = worktree / plan-file fail (no commit gate: archive.sh::check_worktree_commits enforces commit semantics)
   4 = verifier halted (retry exceeded or needs_human)
   5 = review revise/abandon
   6 = deps gate FAIL (STRICT_DEPS_GATE)

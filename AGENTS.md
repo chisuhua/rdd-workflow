@@ -2,6 +2,7 @@
 
 | id | status | phase_refs | theme |
 |---|---|---|---|
+| `feat-fix-agent-interface-contracts` | in-progress | phase-4 | 对外契约修复（v4 handoff 识别 / owns 可机读 / design.md 归属 / P2 commit gate 删除 / status 暴露 builder phase） |
 | `feat-fix-archive-gaps-v2` | done | phase-1, phase-2, phase-3, phase-4 | 第二波归档治理改进（ADR 索引自动同步 / CHANGELOG-USAGE 同步 / verifier-archive-gate 边界明确化 / 第 3 波 doc drift 清理） |
 | `feat-fix-audit-findings` | done | phase-1, phase-2, phase-3, phase-4 | 2026-08-26 文档与代码一致性审计后续修复 |
 | `feat-rdd-doctor-coverage-completion` | done | phase-2 | rdd-doctor coverage completion — lazy-import refactor + CI 护送 14/22 + review-debt/roadmap-backup 新 category |

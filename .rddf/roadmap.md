@@ -24,10 +24,10 @@
 - `phase-4` — 多方对称 + 回归 (P1-P3, 后续)
 
 ### Features
+- `feat-fix-agent-interface-contracts` — 对外契约修复（v4 handoff 识别 / owns 可机读 / design.md 归属 / P2 commit gate 删除 / status 暴露 builder phase） (refs: phase-4)
 - `feat-fix-archive-gaps-v2` — 第二波归档治理改进（ADR 索引自动同步 / CHANGELOG-USAGE 同步 / verifier-archive-gate 边界明确化 / 第 3 波 doc drift 清理） (refs: phase-1, phase-2, phase-3, phase-4)
 - `feat-fix-audit-findings` — 2026-08-26 文档与代码一致性审计后续修复 (refs: phase-1, phase-2, phase-3, phase-4)
 - `feat-rdd-doctor-coverage-completion` — rdd-doctor coverage completion — lazy-import refactor + CI 护送 14/22 + review-debt/roadmap-backup 新 category (refs: phase-2)
-
 
 <!-- AUTO-SPRINT-START -->
 ## Current Sprint: sprint-2026-09

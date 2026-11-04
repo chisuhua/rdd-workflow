@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # Phase 2: Worktree + Execute (TDD 5 步).
-# COMMIT GATE enforced before worktree add (per Oracle Q6 finding).
+#
+# No commit gate here: the former repository-wide `git status --porcelain`
+# check rejected Phase 2 whenever ANY unrelated file was dirty (e.g. the
+# agent's own .rddf/state/role.json), and it was inert for `openspec/` in
+# projects where that directory is gitignored (git.openspec_tracked=false).
+# Commit semantics for a change are enforced upstream by
+# _lib/archive.sh::check_worktree_commits before archive.
 set -euo pipefail
 
 CHANGE_NAME="${1:-}"
@@ -21,19 +27,55 @@ fi
 
 echo "=== Phase 2: Worktree + Execute for $CHANGE_NAME ==="
 
-# COMMIT GATE: artifacts must be committed before worktree add (per Oracle Q6)
-if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
-    echo "COMMIT GATE violated: working artifacts not committed" >&2
-    echo "Run: git add openspec/changes/$CHANGE_NAME/ .rddf/plans/ && git commit" >&2
-    exit 3
-fi
+# Resolve the rdd-workflow package root — the directory that CONTAINS
+# `_lib/`. It is NOT the project root: in a user project `_lib/` lives under
+# the installed rdd-workflow package (~/.agents/skills/rdd-workflow or
+# <project>/.opencode/skills/rdd-workflow).
+#
+# Order matters: the package that OWNS this script is checked first. In a
+# dev checkout (or a symlinked global install) that is the running code,
+# whereas a project-local install may shadow it with an older copy.
+_resolve_pkg_root() {
+  local c here
+  here="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"  # package root of this script
+  if [ -d "$here/_lib" ]; then
+    printf '%s' "$here"
+    return 0
+  fi
+  for c in \
+    "$PROJECT_ROOT/.opencode/skills/rdd-workflow" \
+    "$HOME/.agents/skills/rdd-workflow" \
+    "$HOME/.agents/skills"
+  do
+    if [ -n "$c" ] && [ -d "$c/_lib" ]; then
+      printf '%s' "$c"
+      return 0
+    fi
+  done
+  return 1
+}
 
-EXEC_MODE=$(python3 -c "
-import sys
-sys.path.insert(0 '$PROJECT_ROOT')
+PKG_ROOT="$(_resolve_pkg_root || true)"
+
+_EXEC_ERR=$(mktemp)
+EXEC_MODE=$(PKG_ROOT="$PKG_ROOT" PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" python3 -c "
+import os, sys
+root = os.environ.get('PKG_ROOT') or ''
+if root:
+    sys.path.insert(0, root)
 from _lib.builder_handoff import read_builder_handoff
-print(read_builder_handoff('$PROJECT_ROOT', '$CHANGE_NAME').get('execution_mode_decision', {}).get('mode', 'worktree'))
-" 2>/dev/null || echo "worktree")
+print(read_builder_handoff(
+    os.environ['PROJECT_ROOT'], os.environ['CHANGE_NAME']
+).get('execution_mode_decision', {}).get('mode', 'worktree'))
+" 2>"$_EXEC_ERR") || EXEC_MODE=""
+if [ -z "$EXEC_MODE" ]; then
+    # Do not swallow the reason: a missing/corrupt builder state must not
+    # silently downgrade the execution mode.
+    echo "⚠️  could not read execution_mode_decision for '$CHANGE_NAME' — falling back to worktree mode" >&2
+    [ -s "$_EXEC_ERR" ] && sed 's/^/    /' "$_EXEC_ERR" >&2
+    EXEC_MODE="worktree"
+fi
+rm -f "$_EXEC_ERR"
 
 if [ "$EXEC_MODE" = "worktree" ]; then
     WT_PATH=".rddf/wt/$CHANGE_NAME"
@@ -45,6 +87,33 @@ if [ "$EXEC_MODE" = "worktree" ]; then
         }
     fi
     EXEC_DIR="$WT_PATH"
+    # Carry the change's artifacts into the new worktree:
+    # `git worktree add` builds from HEAD, so files that were never
+    # committed are absent there. Without this, P2 fails with
+    # "plan file missing" for exactly the changes that are not committed yet.
+    #
+    # Two edge cases this must handle:
+    #   - dst already exists (the change WAS committed → worktree already
+    #     has it): copy the CONTENTS, not the directory itself — plain
+    #     `cp -R src dst` would create `dst/src` (a nested <name>/<name>/).
+    #   - src == dst (worktree creation fell back to the main repo):
+    #     `cp -R a a` fails with "cannot copy a directory into itself",
+    #     and `set -e` would abort P2.
+    for _rel in "openspec/changes/$CHANGE_NAME" ".rddf/plans/$CHANGE_NAME.md"; do
+        _src="$PROJECT_ROOT/$_rel"
+        _dst="$EXEC_DIR/$_rel"
+        [ -e "$_src" ] || continue
+        if [ "$_src" = "$_dst" ] || { [ -e "$_dst" ] && [ "$_src" -ef "$_dst" ]; }; then
+            continue  # same location — nothing to carry over
+        fi
+        mkdir -p "$(dirname "$_dst")"
+        if [ -d "$_src" ]; then
+            mkdir -p "$_dst"
+            cp -R "$_src/." "$_dst/"
+        else
+            cp -R "$_src" "$_dst"
+        fi
+    done
 else
     EXEC_DIR="$PROJECT_ROOT"
 fi
@@ -59,17 +128,19 @@ fi
 
 cd "$PROJECT_ROOT"
 
-python3 <<PYEOF
-import sys
-sys.path.insert(0, "$PROJECT_ROOT")
+PKG_ROOT="$PKG_ROOT" PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" EXEC_DIR="$EXEC_DIR" python3 <<'PYEOF'
+import os, sys
+root = os.environ.get('PKG_ROOT') or ''
+if root:
+    sys.path.insert(0, root)
 from _lib.builder_handoff import write_builder_handoff
 write_builder_handoff(
-    project_root="$PROJECT_ROOT",
-    change_name="$CHANGE_NAME",
+    project_root=os.environ['PROJECT_ROOT'],
+    change_name=os.environ['CHANGE_NAME'],
     current_phase="phase-2",
     execution_status="completed",
-    worktree_path="$EXEC_DIR",
-    branch="openspec/$CHANGE_NAME",
+    worktree_path=os.environ['EXEC_DIR'],
+    branch="openspec/%s" % os.environ['CHANGE_NAME'],
 )
 PYEOF
 
