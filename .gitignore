@@ -13,6 +13,9 @@
 .rddf/actions/
 .rddf/issues/
 
+# rdd-quick 曾把状态写到 skills/ 下（根解析 bug，已修）；保留兜底
+skills/.rddf/
+
 # Legacy .spec-workflow/ runtime state (migrated to .rddf/ in v2.0)
 .spec-workflow/
 

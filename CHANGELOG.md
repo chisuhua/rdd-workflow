@@ -12,6 +12,35 @@ in 4 SKILL.md (rdd-arch/planner/builder/verifier/quick). Closes 5 P0 findings fr
 
 ## [Unreleased]
 
+### fix-test-isolation-and-hygiene（2026-11-04）
+
+修两个会真的写坏数据的 bug + 清理仓库残留。3 个独立 commit。
+
+- **测试不再污染真实项目状态**（`tests/integration/test_rddf_cross_repo_cli.bats`、
+  `skills/deps/scripts/cross_repo_cli.py`）：`--cache-file` 默认值由 **CWD 相对**改为
+  `<项目根>/.rddf/state/...` 绝对路径；测试一律显式传 `$TMP` 并断言真实 state 未被写入。
+  此前在仓库根跑该 bats 会把 `fake-org/fake-repo` 假数据写进
+  `.rddf/state/.cross-repo-deps-cache.json`，`rddf doctor` 因此报 4 条 CRITICAL
+- **canonical resolver 增加探针锚点**（`_lib/cli/__main__.py`、
+  `_lib/_python_resolve_project_root.py`）：`resolve_project_root(start_dir=None)` ——
+  git 探测从 `start_dir` 起探，不再隐式依赖调用者 CWD。默认 `None` 时行为逐字不变
+  （向后兼容；契约 yaml 的 `invariant_function_signature` 只约束返回绝对路径字符串）。
+  注意相对形态的 `--git-common-dir` 结果也按锚点拼接（原实现按 CWD 拼接，锚点下会拼错）
+- **rdd-quick 历史文件写错目录**（`skills/rdd-quick/scripts/append_history.py`）：
+  「向上走直到找到 `_lib/`」启发式改为 **固定深度锚点 + canonical resolver**。
+  原实现会停在 `<repo>/skills`（因为 `<repo>/skills/_lib/` 本身就是 `_lib` 目录），
+  把审计日志写进 `skills/.rddf/state/`
+- **resolver 实现归位**：`skills/_lib/_python_resolve_project_root.py` →
+  `_lib/_python_resolve_project_root.py`，原路径留 identity-merge shim；契约 yaml 同步搬移
+  （原位置留指针文件）
+- **仓库卫生**：删 48 个 `iteration.corrupt.*` + 2 个 `.before-*` + 14M 孤儿
+  `.rddf/wt/test-change/` + 根目录 2 个 0 字节文件；`.gitignore` 增加 `skills/.rddf/` 兜底
+- **doctor `plan-tdd` 降噪**（`skills/rdd-doctor/scripts/checks/plan_tdd_check.py`）：
+  只查「活跃 change 的 plan」与「近期（<30 天）plan」，历史 plan 跳过。活跃判定取
+  `iteration.json`（非 archived）∪ 未归档 `openspec/changes/<name>/` 目录；git age
+  不可得（非 git 目录 / 单文件无记录 / shallow clone）时按「近期」处理（保守方向）。
+  时间用单次 `git log` 批量取，不按文件循环。WARNING 167 → 71，CRITICAL 4 → 0
+
 ### fix-agent-interface-contracts（2026-11-03）
 
 对外契约修复，让外部 agent（如 opencode build agent 的角色矩阵）能可靠判定与调用

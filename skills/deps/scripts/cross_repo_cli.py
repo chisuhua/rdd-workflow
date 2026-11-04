@@ -6,32 +6,24 @@ Usage:
 """
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 
-# Add project root to path (script is at skills/deps/scripts/, go up 3 levels to skills/, then 1 more to project root)
-# The project root contains 'skills/' which has the _lib package
-_script_dir = os.path.dirname(os.path.abspath(__file__))
-# skills/deps/scripts -> skills/deps -> skills -> project root
-_skills_dir = os.path.dirname(os.path.dirname(_script_dir))  # skills/
-_project_root = os.path.dirname(_skills_dir)  # project root
+# --- import bootstrap ONLY (probe anchor + sys.path) ---
+# skills/deps/scripts/<this file> -> skills/deps/scripts -> skills/deps -> skills -> <repo root>
+_SCRIPT_ROOT = Path(__file__).resolve().parents[3]
+if str(_SCRIPT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_SCRIPT_ROOT))
 
-# Insert project root so 'import skills._lib.X' works
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
+# --- project root resolution (single authority) ---
+# The resolver is the only thing allowed to answer "where is the project root";
+# _SCRIPT_ROOT merely anchors its git probe so the answer does not depend on
+# the caller's working directory.
+from skills._lib._python_resolve_project_root import (  # noqa: E402
+    resolve_project_root,
+)
 
-# Force re-setup of skills._lib to point to worktree's skills/_lib/
-import types
-_worktree_lib = os.path.join(_project_root, "skills", "_lib")
-if "skills._lib" in sys.modules:
-    _mod = sys.modules["skills._lib"]
-    _mod.__path__ = [_worktree_lib]
-else:
-    _mod = types.ModuleType("skills._lib")
-    _mod.__path__ = [_worktree_lib]
-    _mod.__file__ = os.path.join(_worktree_lib, "__init__.py")
-    sys.modules["skills._lib"] = _mod
+PROJECT_ROOT = Path(resolve_project_root(start_dir=_SCRIPT_ROOT))
 
 from skills._lib.cross_repo_deps import (
     parse_spoke_iteration, build_cross_repo_graph,
@@ -41,12 +33,17 @@ from skills._lib.cross_repo_deps import (
 from skills._lib.cross_repo_deps_cache import load_cache, save_cache, is_cache_valid
 
 
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--spokes", required=True, help="Comma-separated org/repo list")
     parser.add_argument("--output-format", choices=["text", "json", "mermaid"], default="text")
     parser.add_argument("--force-refresh", action="store_true")
-    parser.add_argument("--cache-file", default=".rddf/state/.cross-repo-deps-cache.json")
+    parser.add_argument(
+        "--cache-file",
+        default=str(PROJECT_ROOT / ".rddf" / "state" / ".cross-repo-deps-cache.json"),
+        help="Cache path (default: <project root>/.rddf/state/.cross-repo-deps-cache.json)",
+    )
     args = parser.parse_args()
 
     spokes = args.spokes.split(",")

@@ -36,8 +36,14 @@ import sys
 from skills._lib.cli import list_commands, route  # noqa: F401
 
 
-def resolve_project_root() -> str:
+def resolve_project_root(start_dir: str | None = None) -> str:
     """Return the main git repo root, worktree- and submodule-safe.
+
+    ``start_dir`` anchors the git probe (``cwd=`` for every git call). When it
+    is ``None`` the probe runs from the current working directory, which is the
+    historical behavior. Callers that live inside a skill script pass the
+    script's own repository root so that resolution does not depend on where
+    the user happened to run the command from.
 
     Behavior matrix (ADR-0033 / submodule-aware-project-root):
 
@@ -63,6 +69,7 @@ def resolve_project_root() -> str:
             capture_output=True,
             text=True,
             timeout=10,
+            cwd=start_dir,
         )
         if r_super.returncode == 0 and r_super.stdout.strip():
             r_toplevel = subprocess.run(
@@ -70,6 +77,7 @@ def resolve_project_root() -> str:
                 capture_output=True,
                 text=True,
                 timeout=10,
+                cwd=start_dir,
             )
             if r_toplevel.returncode == 0 and r_toplevel.stdout.strip():
                 return os.path.abspath(r_toplevel.stdout.strip())
@@ -83,19 +91,21 @@ def resolve_project_root() -> str:
             capture_output=True,
             text=True,
             timeout=10,
+            cwd=start_dir,
         )
     except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
-        return os.getcwd()
+        return _fallback_root(start_dir)
     if r.returncode != 0:
-        return os.getcwd()
+        return _fallback_root(start_dir)
 
     common_dir = r.stdout.strip()
     if not common_dir:
-        return os.getcwd()
-    # git rev-parse --git-common-dir may return a relative path (e.g. ".git")
-    # when run from the repo root. Resolve to absolute before pattern matching.
+        return _fallback_root(start_dir)
+    # git rev-parse --git-common-dir returns a path relative to the directory
+    # the git call ran in (i.e. ``start_dir``, not our own cwd), so a relative
+    # result must be joined against that same anchor.
     if not os.path.isabs(common_dir):
-        common_dir = os.path.abspath(common_dir)
+        common_dir = os.path.abspath(os.path.join(start_dir or os.getcwd(), common_dir))
 
     if "/.git/worktrees/" in common_dir:
         # common_dir is "<main>/.git/worktrees/<name>"; main root is 3 levels up
@@ -104,6 +114,16 @@ def resolve_project_root() -> str:
         return os.path.abspath(os.path.join(common_dir, ".."))
     # Bare repo or unusual layout - dirname is the best we can do.
     return os.path.dirname(common_dir)
+
+
+def _fallback_root(start_dir: str | None) -> str:
+    """Non-git fallback for :func:`resolve_project_root`.
+
+    Mirrors the historical ``os.getcwd()`` behavior while honouring the probe
+    anchor: when the caller anchored the probe elsewhere, that anchor — not
+    our own cwd — is the best available answer.
+    """
+    return os.path.abspath(start_dir or os.getcwd())
 
 
 def _is_in_worktree() -> bool:
