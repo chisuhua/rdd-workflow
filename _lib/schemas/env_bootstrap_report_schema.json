@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {"const": "v1", "description": "Schema metadata version per ADR-0016. Future bumps require a version-migration flow."},
   "$id": "https://rdd-workflow.dev/schemas/env_bootstrap_report_schema.json",
   "title": "env-bootstrap-report",
   "description": "Schema v1 for rddf env-bootstrap orchestrator reports. Records 4-phase workflow output (detect → diagnose → suggest → guided-fix).",
-  "version": 1,
   "type": "object",
   "required": [
     "version",

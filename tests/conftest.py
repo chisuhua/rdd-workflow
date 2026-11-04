@@ -26,12 +26,7 @@ if _PROJECT_ROOT_STR not in sys.path:
 
 # Phase 2 dash-bridge: map skills.<underscore> to skills/<dash>/ directories
 _DASH_SKILLS = [
-    ("ac-verifier", "ac_verifier"),
-    ("guide-arch", "guide_arch"),
     ("rdd-arch", "rdd_arch"),
-    ("guide-design", "guide_design"),
-    ("guide-plan", "guide_plan"),
-    ("guide-ship", "guide_ship"),
     ("rddf-session", "rddf_session"),
     ("cross-repo-protocol", "cross_repo_protocol"),
 ]

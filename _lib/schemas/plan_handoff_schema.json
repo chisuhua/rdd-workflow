@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {"const": "v1", "description": "Schema metadata version per ADR-0016. Future bumps require a version-migration flow."},
   "$id": "https://rdd-workflow.dev/schemas/plan_handoff_schema.json",
   "title": "Plan Handoff v1",
   "description": "Schema for the plan handoff emitted at plan-done by rdd-builder P1 (phase1_plan.sh); the v4 successor of guide-plan Phase 4. Consumed by rdd-builder P2 (phase2_execute.sh) and P3 (phase3_archive.sh).",

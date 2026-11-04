@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {"const": "v1", "description": "Schema metadata version per ADR-0016. Future bumps require a version-migration flow."},
   "$id": "https://rdd-workflow.local/schemas/mcp_trace_schema.json",
   "title": "MCP Trace v1 (ADR-0030)",
   "description": "Schema for .rddf/state/.mcp-trace.jsonl (newline-delimited JSON). Records every MCP call between Hub and Spokes. Emitted by add-mcp-cross-repo-protocol (Step 3).",

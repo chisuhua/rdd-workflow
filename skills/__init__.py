@@ -3,11 +3,10 @@
 This file exists primarily for LSP (pyright) to recognize module paths.
 The actual dash-bridge logic for test execution is in tests/conftest.py.
 
-Module aliases:
+Module aliases (each target directory must exist):
   - skills.rddf_session → skills/rddf-session/
-  - skills.guide_arch → skills/rdd-arch/
-  - skills.guide_plan → skills/guide-plan/
-  - skills.guide_ship → skills/guide-ship/
+  - skills.rdd_arch → skills/rdd-arch/
+  - skills.rdd_workflow_writing_plans → skills/rdd-workflow-writing-plans/
 """
 from typing import TYPE_CHECKING
 
@@ -17,12 +16,10 @@ if TYPE_CHECKING:
     import sys
     import os
     from pathlib import Path
-    
+
     # The dash-bridge directories
     _dash_map = {
         'rddf_session': 'rddf-session',
-        'guide_arch': 'rdd-arch',
-        'guide_plan': 'guide-plan',
-        'guide_ship': 'guide-ship',
+        'rdd_arch': 'rdd-arch',
         'rdd_workflow_writing_plans': 'rdd-workflow-writing-plans',
     }

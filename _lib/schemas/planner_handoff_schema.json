@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {"const": "v1", "description": "Schema metadata version per ADR-0016. Future bumps require a version-migration flow."},
   "$id": "https://rdd-workflow.local/schemas/planner_handoff_schema.json",
   "title": "Planner Handoff (rdd-planner stage exit)",
   "description": "Schema for .rddf/state/.planner-handoff.json emitted by rdd-planner stage exit. Consumed by rdd-builder Phase 0 (approval gate reads proposals_ready + recommended_route) and rdd-arch advisory (via .planner-feedback.json). Per spec §3.3, §6.1, ADR-0048 §Decision 2. v1.1 (per ADR-0048): added recommended_route field as REQUIRED for rdd-builder P0 dispatch-quick decision. v1.0 (per fix-v4-rdd-planner-scope-over-assignment): proposals_authored → proposals_ready rename. Backward compat: coexists with .planner-state.json (Stage 2, current sprint view) and .planner-feedback.json (ADR-0042, persistent review tasks); each has its own FileLock. v1.2 (per add-objective-aware-planner): active_objectives field added for LLM to read at stage entry and recommend next tasks based on each objective's §10 next_sprint_candidates (prompt-not-auto: planner suggests candidate → user runs add-improve HARD-GATE manually).",

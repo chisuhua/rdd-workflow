@@ -5,7 +5,7 @@ import pytest
 
 def test_schema_v7_includes_cross_repo_deps():
     from pathlib import Path
-    schema_path = Path(__file__).resolve().parent.parent.parent / "skills/_lib/schemas/iteration_schema.json"
+    schema_path = Path(__file__).resolve().parent.parent.parent / "_lib/schemas/iteration_schema.json"
     schema = json.loads(schema_path.read_text())
     assert schema.get("properties", {}).get("version", {}).get("enum") == [3, 4, 5, 6, 7]
     assert "cross_repo_dependencies" in schema.get("properties", {}).get("changes", {}).get("items", {}).get("properties", {})

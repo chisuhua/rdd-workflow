@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": {"const": "v3", "description": "Schema metadata version per ADR-0016. Const v1 = initial baseline; v3 = per-session metrics fields. Future bumps require a version-migration flow."},
   "$id": "https://rdd-workflow.dev/schemas/sessions_schema.json",
   "title": "RddfSessions",
   "description": "rddf-session lifecycle persistence for cross-opencode-session workflow recovery. Written by skills/_lib/rddf_session.py. See ADR-0017.",
@@ -68,6 +69,18 @@
             "last_seen_offset": { "type": "integer", "minimum": 0, "description": "Per-owner events.jsonl read offset (only used by stage_guide; v3)." }
           },
           "description": "Structured goal (intent + subject + expected_outcome + optional last_seen_offset)."
+        },
+        "metrics": {
+          "type": "object",
+          "description": "Optional session metrics (ADR-0036, schema v3).",
+          "additionalProperties": false,
+          "properties": {
+            "started_at": { "type": "string", "format": "date-time" },
+            "ended_at": { "type": "string", "format": "date-time" },
+            "duration_s": { "type": "integer", "minimum": 0 },
+            "user_decisions": { "type": "integer", "minimum": 0 },
+            "retries": { "type": "integer", "minimum": 0 }
+          }
         },
         "state": {
           "type": "string",

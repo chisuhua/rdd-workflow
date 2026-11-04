@@ -1,7 +1,7 @@
 """Schema version field test (fix-schema-version-field, 17 schemas × 1).
 
 Per ADR-0016 + fix-schema-version-field proposal AC:
-- Every schema under skills/_lib/schemas/ must declare a top-level
+- Every schema under _lib/schemas/ (canonical) must declare a top-level
   `"version"` field with `"const": "v1"`.
 - Schema-level `version` is distinct from any `properties.version`
   business field (e.g. sessions_schema.json's properties.version).
@@ -13,9 +13,9 @@ from pathlib import Path
 
 import pytest
 
-SCHEMA_DIR = Path(__file__).parent.parent.parent / "skills" / "_lib" / "schemas"
+SCHEMA_DIR = Path(__file__).parent.parent.parent / "_lib" / "schemas"
 SCHEMAS = sorted(p.name for p in SCHEMA_DIR.glob("*.json"))
-assert len(SCHEMAS) == 20, f"expected 20 schemas, found {len(SCHEMAS)}"
+# 数量不硬编码：canonical 目录是唯一落点，schema 增删由 doctor 的 README 索引检查兜底
 
 
 @pytest.mark.parametrize("schema_name", SCHEMAS)

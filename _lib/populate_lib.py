@@ -199,7 +199,7 @@ def _import_scan_adr_catalog():
     except ModuleNotFoundError:
         pass
     import sys
-    lib_parent = str(Path(__file__).resolve().parents[2])
+    lib_parent = str(Path(__file__).resolve().parents[1])
     if lib_parent not in sys.path:
         sys.path.insert(0, lib_parent)
     try:
@@ -860,7 +860,7 @@ def save_supplementary(
     }
 
     schema_path = (
-        Path(__file__).resolve().parents[2]
+        Path(__file__).resolve().parents[1]
         / "_lib" / "schemas" / "populate_supplementary_schema.json"
     )
     if schema_path.exists():
@@ -917,7 +917,7 @@ _POPULATE_STATE_SCHEMA_VERSION = 2
 def _populate_state_schema_path() -> Path:
     """Locate populate_state_schema.json next to this module's skills/ tree."""
     return (
-        Path(__file__).resolve().parents[2]
+        Path(__file__).resolve().parents[1]
         / "_lib" / "schemas" / "populate_state_schema.json"
     )
 

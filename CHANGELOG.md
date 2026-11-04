@@ -12,6 +12,36 @@ in 4 SKILL.md (rdd-arch/planner/builder/verifier/quick). Closes 5 P0 findings fr
 
 ## [Unreleased]
 
+### remove-dead-dup-layer（2026-11-04）
+
+删除 `skills/_lib/` 下的陈旧重复层，并修掉一处被静默跳过的校验。3 个独立 commit。
+
+- **删 `skills/_lib/iteration/` 7 个陈旧副本**（1524 行）：运行时早已不可达
+  （`__init__.py` 把 `_lib/iteration` 前插进 `__path__`），但肉眼可见 → 改错文件会静默无效
+- **删 `skills/_lib/schemas/` 20 个 JSON 副本**；其中 3 个**活契约**（`populate_state_schema` /
+  `populate_supplementary_schema` / `rfc_draft_schema`）先 `git mv` 进 canonical，内容逐字节不变
+  （JSON 无法 identity-merge，副本会静默分叉）
+- **修 `populate_lib.py` 的路径算术**（3 处 `parents[2]` → `parents[1]`）：原值解析到**仓库的父目录**
+  → `exists()==False` → populate 的 jsonschema 校验**一直被静默跳过**。修好后校验真的执行；
+  实测**读路径本来就是「记录不抛错」**（返回错误字符串 + stderr 提示 + 回退全量模式），
+  唯一会抛的写路径 `save_populate_state` **无任何生产调用方** → 无行为风险
+- **删 3 个失效代理**（`skills/guide_arch.py` / `guide_plan.py` / `populate_roadmap_from_arch.py`）
+  + **清 8 条指向不存在目录的 dash-bridge 注册**（`_lib/cli/__init__.py` 3 条 + `tests/conftest.py` 5 条）
+- **修 `verifier_audit_schema.json` 非法 JSON**（首行 Python docstring 混进了 JSON）
+- **34 个 canonical schema 全部补 ADR-0016 `version` 元数据**；修 5 处**同名重复键**：
+  `env_bootstrap_report` / `objective` / `quick_history` / `verifier_loop` / `ac_verdict_cache`
+  原本顶层有遗留注释 `"version": 1`，与元数据同名 → 后者覆盖前者
+- **补 `iteration_schema.json` 缺失的 `cross_repo_dependencies`**（canonical 缺、只有陈旧副本有）：
+  该 schema 是 `additionalProperties: false`，而运行时 `_lib/iteration/__init__.py:174`
+  每个 change 都写这个字段 → **运行时写出的 iteration.json 校验必失败**（本 change 暴露的 latent bug）
+- **5 个 schema 测试改指 canonical**（原 tasks 只列了 3 个）：`test_arch_handoff_schema_v2`
+  （契约 enum 随 canonical 校正为 [1,2,3]）、`test_iteration_v7`、`test_schema_version_field`
+  （去掉硬编码数量）、`test_rfc_interview_flow`、`test_session_metrics`
+- **新增结构守卫** `tests/unit/test_no_stale_dup_layer.py`（9 条）：shim 层无 JSON、
+  超 50 行的 `.py` 必须命中显式豁免清单（清单规模上界 3）、无旧路径引用、
+  无指向不存在目录的代理、`skills._lib.schemas` 隔离全局回落后不可 import、
+  canonical schema 全部可解析
+
 ### fix-v4-residue-contract（2026-11-04）
 
 契约面 v4 残留修复：把「指向已删除 skill」的对外契约收敛到 v4 词汇，并补一个能自动发现同类残留的守卫。行为不变（除 route 目标名）。

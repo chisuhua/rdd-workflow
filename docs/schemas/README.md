@@ -1,8 +1,9 @@
 # JSON Schema 索引
 
 > rdd-workflow 项目所有结构化数据的 JSON Schema 集中索引。
-> Schema 真实落点在仓库根 `_lib/schemas/`（canonical，31 个文件）；
-> `skills/_lib/schemas/` 是向后兼容 shim 层（per P1-1b flatten layout, 2026-08-25）。
+> Schema **唯一落点**是仓库根 `_lib/schemas/`（canonical，34 个文件）。
+> `skills/_lib/` 只保留 shim（identity-merge），**不再有 schema 副本** ——
+> JSON 无法 identity-merge，副本会静默分叉（per remove-dead-dup-layer）。
 > 改 schema **必须 bump `version` 字段**；schema 消费者拒绝 `version=0` payload。
 
 ---
@@ -13,12 +14,12 @@
 |------|------|------|
 | [核心运行时](#核心运行时-core) | 1 | 状态向量原子持久化 |
 | [配置与扩展](#配置与扩展-config) | 4 | 配置 / 插件 / 角色 / 触发器 |
-| [阶段 handoff](#阶段-handoff-stage-handoff) | 7 | 跨阶段交接契约 |
-| [视图与状态](#视图与状态-view) | 7 | 派生视图与多 hook 写入的 state 文件 + objective 跟踪工件 |
+| [阶段 handoff](#阶段-handoff-stage-handoff) | 8 | 跨阶段交接契约 |
+| [视图与状态](#视图与状态-view) | 9 | 派生视图与多 hook 写入的 state 文件 + objective 跟踪工件 |
 | [跨 repo / hub](#跨-repo--hub-cross-repo) | 6 | Hub-and-Spoke 联邦通道 |
 | [verifier / quick](#verifier--quick-verification) | 5 | 验证回环 + 旁路审计 |
 | [env-bootstrap](#env-bootstrap) | 1 | 4-phase 环境编排报告 |
-| **合计** | **31** | 截至 2026-09-22 |
+| **合计** | **34** | 截至 2026-11-04 |
 
 ---
 
@@ -52,6 +53,7 @@
 | [`planner_state_schema.json`](../../_lib/schemas/planner_state_schema.json) | v1 | `.rddf/state/.planner-state.json` | `rdd-planner` | planner advisor |
 | [`builder_handoff_schema.json`](../../_lib/schemas/builder_handoff_schema.json) | v1 | `.rddf/state/builder/<change>.json` | `rdd-builder` P0-P3 | `rdd-builder` 内 P0/P1/P1.5/P2/P2.5/P3 流转 |
 | [`builder_retry_schema.json`](../../_lib/schemas/builder_retry_schema.json) | v1 | `.rddf/state/builder/<change>.retry.json` | `rdd-verifier` 失败回路由 | `rdd-builder` P1/P2 重试 |
+| [`rfc_draft_schema.json`](../../_lib/schemas/rfc_draft_schema.json) | v1 | RFC draft 工件 | `rdd-planner`（D3 设计产物, per ADR-0032） | `rdd-planner` approve 流程 |
 
 > ⚠️ **ADR-0044 Wave 3 hard removal**：`design_handoff` 和 `plan_handoff` 已 RETIRE，v4 现写 `.planner-handoff.json`（schema v1.1）+ `.rddf/state/builder/<change>.json`。Wave 1 共存期内保留 legacy schema 读取作为 fallback。
 
@@ -68,6 +70,8 @@
 | [`feedback_entry_schema.json`](../../_lib/schemas/feedback_entry_schema.json) | v1 | `.rddf/state/.planner-feedback.json` | `rdd-builder` Phase 2 ADR-drift → `_lib/builder_feedback_router.py` | `rdd-planner` advisory feedback |
 | [`improvement_frontmatter_schema.json`](../../_lib/schemas/improvement_frontmatter_schema.json) | v1 | `.rddf/improvements/*.md` frontmatter | `add-improve` | `rdd-builder` P0 pre-flight |
 | [`objective_schema.json`](../../_lib/schemas/objective_schema.json) | v1 | `.rddf/roadmap/objectives/*.md` frontmatter | `rdd-planner` (add-objective) | `_lib.objective.parse_objective/validate_objective` + `rdd-doctor --category objective-structure` |
+| [`populate_state_schema.json`](../../_lib/schemas/populate_state_schema.json) | v1 | `.rddf/state/.populate-state.json` | `_lib/populate_lib.py::save_populate_state` | `_lib/populate_lib.py::load_populate_state_or_default` + populate 增量比对 |
+| [`populate_supplementary_schema.json`](../../_lib/schemas/populate_supplementary_schema.json) | v1 | populate 补充工件 | `_lib/populate_lib.py` | `_lib/populate_lib.py` |
 
 ---
 
@@ -124,10 +128,12 @@
 
 ### 双路由（per AGENTS.md 25 段）
 
-- **canonical 路径**：仓库根 `_lib/schemas/`
-- **shim 路径**：`skills/_lib/schemas/`（P1-1b flatten layout, 2026-08-25；向后兼容历史 import）
+- **唯一路径**：仓库根 `_lib/schemas/`（canonical）
+- **无 shim 路径**：`skills/_lib/schemas/` 已删除（JSON 无法 identity-merge；
+  副本一旦分叉就静默生效 —— 这正是 `iteration_schema.json` 缺
+  `cross_repo_dependencies` 的成因）
 
-新增代码 **必须 import `_lib.X`**（canonical），历史 `skills._lib.X` 调用继续兼容。
+新增代码 **必须 import `_lib.X`**（canonical）。
 
 ---
 

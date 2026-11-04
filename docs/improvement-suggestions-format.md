@@ -175,7 +175,7 @@ parsing logic so consumers don't re-implement regex extraction.
 
 ### v2 Schema Example (populate-state.json)
 
-`populate-state.json` v2 schema is used by `guide-arch` Phase 6 internal Roadmap Sync step to track incremental roadmap regeneration state. Defined in `skills/_lib/schemas/populate_state_schema.json` (version const=2).
+`populate-state.json` v2 schema is used by `guide-arch` Phase 6 internal Roadmap Sync step to track incremental roadmap regeneration state. Defined in `_lib/schemas/populate_state_schema.json` (version const=2).
 
 ```json
 {

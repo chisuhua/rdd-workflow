@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {"const": "v1", "description": "Schema metadata version per ADR-0016. Future bumps require a version-migration flow."},
   "$id": "https://rdd-workflow.local/schemas/design_handoff_schema.json",
   "title": "Design Handoff v2",
   "description": "Schema v2: adds changes_pre_created (consumed by guide-plan intake). v1 readers must accept v1 payloads as-is (changes_pre_created defaults to empty array).",

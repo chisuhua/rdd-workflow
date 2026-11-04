@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": {"const": "v1", "description": "Schema metadata version per ADR-0016. Future bumps require a version-migration flow."},
   "$id": "https://rdd-workflow.local/schemas/planner_state_schema.json",
   "title": "PlannerState",
   "description": "Schema v1.1 per ADR-0048 (2026-09-09). recommended_route promoted from optional to required field. Consumed by rdd-builder P0 dispatch-quick decision.",

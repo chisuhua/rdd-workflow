@@ -1,10 +1,15 @@
 """Tests for ADR-0016 arch_handoff schema v2 (additive roadmap_fragments_dir)."""
 import json
+from pathlib import Path
+
 import pytest
 from jsonschema import Draft7Validator
 
 
-SCHEMA_PATH = "skills/_lib/schemas/arch_handoff_schema.json"
+SCHEMA_PATH = str(
+    Path(__file__).resolve().parent.parent.parent
+    / "_lib" / "schemas" / "arch_handoff_schema.json"
+)
 
 
 def _full_v1_payload() -> dict:
@@ -45,10 +50,15 @@ def test_schema_metadata_stays_v1_invariant(schema):
     )
 
 
-def test_contract_version_accepts_v1_and_v2(schema):
-    """Contract payload version enum must accept both 1 (v1 payload) and 2 (v2 payload) for backward compat."""
+def test_contract_version_accepts_v1_v2_and_v3(schema):
+    """Contract payload version enum must accept 1/2/3 for backward compat.
+
+    canonical（v2.1 / ADR-0042 Wave 4）已把契约 enum 扩到 [1, 2, 3]；本用例此前
+    钉在 `skills/_lib/schemas/` 的陈旧副本上（那份还是 [1, 2]），故随「测试改指
+    canonical」一并校正 —— canonical 是唯一落点。
+    """
     enum = schema["properties"]["version"].get("enum")
-    assert enum == [1, 2], f"Expected contract enum=[1, 2], got {enum!r}"
+    assert enum == [1, 2, 3], f"Expected contract enum=[1, 2, 3], got {enum!r}"
 
 
 def test_v1_payload_still_accepted(schema):

@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {"const": "v1", "description": "Schema metadata version per ADR-0016. Future bumps require a version-migration flow."},
   "$id": "https://rdd-workflow.local/schemas/builder_handoff_schema.json",
   "title": "Builder Handoff (rdd-builder per-change, ADR-0034 §2 fix)",
   "description": "Schema for .rddf/state/builder/<change>.json (per-change layout per Oracle H3, NOT single file). Prevents global-file serial-write regression. Consumed by rdd-verifier (verdict routing per ADR-0034) and rdd-builder retry loop (per spec §3.4).",

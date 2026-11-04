@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": {"const": "v1", "description": "Schema metadata version per ADR-0016. Future bumps require a version-migration flow."},
   "title": "Objective Tracking Artifact",
-  "version": 1,
   "type": "object",
   "required": ["id", "status", "created", "last_revised", "review_by", "owner", "priority", "manual_deps", "theme"],
   "properties": {

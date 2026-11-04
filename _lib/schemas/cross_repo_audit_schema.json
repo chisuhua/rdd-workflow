@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {"const": "v1", "description": "Schema metadata version per ADR-0016. Future bumps require a version-migration flow."},
   "$id": "https://rdd-workflow.local/schemas/cross_repo_audit_schema.json",
   "title": "Cross-repo Audit v1 (ADR-0030)",
   "description": "Schema for .rddf/state/.cross-repo-audit.jsonl (newline-delimited JSON). Records every cross-repo decision (RFC initiation, approval, rejection, gate block). Emitted by add-strict-human-approval-for-cross-repo-changes (Step 1.5).",

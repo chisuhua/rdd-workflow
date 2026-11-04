@@ -4,9 +4,9 @@ Extracted from ``skills/_lib/iteration.py`` (v2.0.8 split). This module
 holds the JSON-Schema plumbing (path constants, status enums, validation
 helpers) shared by ``store.py`` (CRUD) and ``render.py`` (CLI output).
 
-The schema file itself lives at ``skills/_lib/schemas/iteration_schema.json``
-- the same location it has always been. Because this module now lives at
-``skills/_lib/iteration/schema.py`` (one directory deeper than the old
+The schema file itself lives at ``_lib/schemas/iteration_schema.json``
+- the canonical location (per P1-1b flatten layout). Because this module now lives at
+``_lib/iteration/schema.py`` (one directory deeper than the old
 ``skills/_lib/iteration.py``), ``SCHEMA_PATH`` is computed relative to the
 parent ``_lib/`` directory so the path resolves identically to the
 pre-split module.
@@ -26,8 +26,8 @@ import jsonschema
 import referencing
 from referencing.exceptions import NoSuchResource
 
-# SCHEMA_PATH points at ``skills/_lib/schemas/iteration_schema.json``.
-# This module lives at ``skills/_lib/iteration/schema.py`` (one directory
+# SCHEMA_PATH points at ``_lib/schemas/iteration_schema.json``.
+# This module lives at ``_lib/iteration/schema.py`` (one directory
 # deeper than the original ``skills/_lib/iteration.py``), so we climb one
 # level (``..``) to land on ``_lib/`` before joining ``schemas/...``.
 # The resolved path is byte-identical to the pre-split value.

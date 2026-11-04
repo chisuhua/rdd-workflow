@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-schema = json.loads((REPO_ROOT / "skills" / "_lib" / "schemas" / "sessions_schema.json").read_text())
+schema = json.loads((REPO_ROOT / "_lib" / "schemas" / "sessions_schema.json").read_text())
 SESSION_PROPS = schema["$defs"]["Session"]["properties"]
 
 def test_schema_version_is_v3():

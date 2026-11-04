@@ -30,7 +30,7 @@ def test_schema_v1_exists_and_loads():
     schema_path = PROJECT_ROOT / "_lib" / "schemas" / "env_bootstrap_report_schema.json"
     assert schema_path.is_file(), f"Schema not found: {schema_path}"
     data = json.loads(schema_path.read_text(encoding="utf-8"))
-    assert data.get("version") == 1
+    assert data["version"]["const"] == "v1"
 
 
 def test_build_report_produces_all_required_fields():

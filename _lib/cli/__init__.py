@@ -50,9 +50,6 @@ from typing import Callable, Dict
 # registered module names so re-import is cheap.
 # ---------------------------------------------------------------------------
 _DASH_SKILLS = [
-    ("guide-arch", "guide_arch"),
-    ("guide-plan", "guide_plan"),
-    ("guide-ship", "guide_ship"),
     ("rddf-session", "rddf_session"),
 ]
 _PROJECT_ROOT = os.path.abspath(

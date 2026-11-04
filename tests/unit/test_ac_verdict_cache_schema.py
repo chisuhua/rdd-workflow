@@ -20,7 +20,7 @@ SCHEMA = json.loads(
 
 
 def test_schema_loads():
-    assert SCHEMA["version"] == 1
+    assert SCHEMA["version"]["const"] == "v1"
 
 
 def test_valid_doc():

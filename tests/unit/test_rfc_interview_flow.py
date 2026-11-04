@@ -12,7 +12,7 @@ import pytest
 import jsonschema
 
 
-SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent / "skills" / "_lib" / "schemas" / "rfc_draft_schema.json"
+SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent / "_lib" / "schemas" / "rfc_draft_schema.json"
 
 
 def _valid_draft() -> dict:

@@ -59,9 +59,8 @@ def _check_schema_version_metadata(project_root: Path) -> List[Finding]:
     declare a top-level `"version": {"const": "v1"}` metadata field.
     Missing → CRITICAL.
 
-    Uses resolve_real_lib_path to find the real _lib/schemas/ directory
-    (not the shim at skills/_lib/schemas/), ensuring we don't flag shim
-    schemas that exist only for backward compat.
+    Uses resolve_real_lib_path to find the real schemas directory, ensuring
+    we don't flag schemas that exist only for backward compat.
     """
     findings: List[Finding] = []
     try:

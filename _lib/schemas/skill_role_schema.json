@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": {"const": "v1", "description": "Schema metadata version per ADR-0016. Future bumps require a version-migration flow."},
   "$id": "https://rdd-workflow.dev/schemas/skill_role_schema.json",
   "title": "SkillRoleMetadata",
   "description": "Role metadata for phase skills: title, perspective, ownership boundaries, human involvement level. See ADR-0028.",

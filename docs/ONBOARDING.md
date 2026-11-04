@@ -158,7 +158,7 @@ Schema 定义、状态持久化文件、CI 流水线和 Issue 模板。
 | 文件 | 说明 |
 |---|---|
 | `.github/workflows/test.yml` | GitHub Actions CI — push/PR 触发 pytest + bats |
-| `skills/_lib/schemas/state_vector_schema.json` | 状态向量 JSON Schema（226 行） |
+| `_lib/schemas/state_vector_schema.json` | 状态向量 JSON Schema（226 行） |
 | `skills/_lib/phase_templates.yaml` | 路线图阶段模板（192 行） |
 | `.rddf/state/index.md` | 状态文件目录索引 |
 

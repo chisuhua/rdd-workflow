@@ -49,7 +49,7 @@ def test_schema_v1_exists_and_loads():
     schema_path = _PROJECT_ROOT / "_lib" / "schemas" / "quick_history_schema.json"
     assert schema_path.is_file(), f"schema file missing at {schema_path}"
     data = json.loads(schema_path.read_text())
-    assert data.get("version") == 1
+    assert data["version"]["const"] == "v1"
 
 
 def test_validate_entry_accepts_minimal_valid():

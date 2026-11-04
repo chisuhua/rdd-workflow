@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": {"const": "v1", "description": "Schema metadata version per ADR-0016. Future bumps require a version-migration flow."},
   "$id": "https://rdd-workflow.local/schemas/rdd_quick_context_schema.json",
   "title": "RddQuickContext (per ADR-0048)",
   "description": "Temporary context file passed from rdd-builder P0 选项 5 to rdd-quick. Per ADR-0048 §Decision 3, this file is created when dispatch-quick is triggered, consumed by rdd-quick during execution, and deleted by rdd-quick on completion (escalated/completed/unverified).",

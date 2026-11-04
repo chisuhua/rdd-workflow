@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": {"const": "v1", "description": "Schema metadata version per ADR-0016. Future bumps require a version-migration flow."},
   "$id": "https://rdd-workflow.dev/schemas/feature_view_schema.json",
   "title": "FeatureView",
   "description": "Derived view of features (groups of changes) inside iteration.json. Written by skills/_lib/feature_view.py.",

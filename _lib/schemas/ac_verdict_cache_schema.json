@@ -1,6 +1,6 @@
 {
-  "version": 1,
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": {"const": "v1", "description": "Schema metadata version per ADR-0016. Future bumps require a version-migration flow."},
   "type": "object",
   "required": [
     "version",
