@@ -52,8 +52,8 @@ def test_ac6_planner_skill_md_owns_excludes_proposal_md():
     m = re.match(r"^---\n(.*?)\n---", text, re.DOTALL)
     assert m, "no YAML frontmatter in rdd-planner SKILL.md"
     fm = m.group(1)
-    owns_match = re.search(r"owns:\n((?:\s*-\s*\".*?\"\n)+)", fm)
-    not_owns_match = re.search(r"not_owns:\n((?:\s*-\s*\".*?\"\n)+)", fm)
+    owns_match = re.search(r"owns:\n((?:\s*-\s*\".*?\"[^\n]*\n)+)", fm)
+    not_owns_match = re.search(r"not_owns:\n((?:\s*-\s*\".*?\"[^\n]*\n)+)", fm)
     assert owns_match, "no owns block found"
     assert not_owns_match, "no not_owns block found"
     owns_text = owns_match.group(1)
@@ -70,8 +70,8 @@ def test_ac7_builder_skill_md_owns_includes_proposal_md():
     m = re.match(r"^---\n(.*?)\n---", text, re.DOTALL)
     assert m, "no YAML frontmatter in rdd-builder SKILL.md"
     fm = m.group(1)
-    owns_match = re.search(r"owns:\n((?:\s*-\s*\".*?\"\n)+)", fm)
-    not_owns_match = re.search(r"not_owns:\n((?:\s*-\s*\".*?\"\n)+)", fm)
+    owns_match = re.search(r"owns:\n((?:\s*-\s*\".*?\"[^\n]*\n)+)", fm)
+    not_owns_match = re.search(r"not_owns:\n((?:\s*-\s*\".*?\"[^\n]*\n)+)", fm)
     assert owns_match and not_owns_match, "couldn't find both blocks"
     owns_text = owns_match.group(1)
     not_owns_text = not_owns_match.group(1)

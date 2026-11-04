@@ -24,15 +24,23 @@
       "properties": {
         "owns": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string",
+            "pattern": "^[^()]+$",
+            "description": "Glob path only — no parenthetical notes. Put notes in the SKILL.md body."
+          },
           "minItems": 1,
-          "description": "File paths this phase owns (e.g., 'docs/adr/ADR-*.md')."
+          "description": "File paths this phase owns (e.g., 'docs/adr/ADR-*.md'). Bare globs only."
         },
         "not_owns": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string",
+            "pattern": "^[^()]+$",
+            "description": "Glob path only — no parenthetical notes. Put notes in the SKILL.md body."
+          },
           "minItems": 1,
-          "description": "File paths this phase explicitly does NOT own."
+          "description": "File paths this phase explicitly does NOT own. Bare globs only."
         },
         "human_involvement": {
           "type": "string",

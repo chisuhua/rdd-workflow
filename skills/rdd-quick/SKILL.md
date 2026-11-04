@@ -29,7 +29,7 @@ role:
       - ".rddf/plans/quick-*.md"
       - ".rddf/state/.quick-history.jsonl"
       - ".rddf/state/rdd-quick-context.json"  # owned lifecycle: created in P0, deleted in P4 via cleanup_context.sh (per ADR-0048 + v2.1 fix)
-      - "openspec/changes/<change>/tasks.md (mode a 最小化生成, per ADR-0048 amendment + v2.1 fix)"
+      - "openspec/changes/<name>/tasks.md"  # mode a minimal generation, per ADR-0048 amendment + v2.1 fix
     not_owns:
       - "openspec/changes/<name>/"
       - "openspec/specs/<name>/"

@@ -32,12 +32,12 @@ role:
       - "skills/rdd-session-bootstrap/rdd-session-bootstrap.sh"
       - "skills/rdd-session-bootstrap/templates/profile.toml.example"
     not_owns:
-      - ".rddf/skill-profiles/<name>.toml (project-side profile)"
-      - "tools/bootstrap/sections/*.sh (project-side hooks)"
-      - "tools/v0100-bootstrap.sh (legacy v0100 wrapper, project-side)"
-      - ".opencode/skills/v0100-bootstrap/SKILL.md (legacy project-specific skill)"
-      - "openspec/changes/*/tasks.md (project source of truth)"
-      - "AGENTS.md (project doc, only read)"
+      - ".rddf/skill-profiles/<name>.toml"  # project-side profile
+      - "tools/bootstrap/sections/*.sh"  # project-side hooks
+      - "tools/v0100-bootstrap.sh"  # legacy v0100 wrapper, project-side
+      - ".opencode/skills/v0100-bootstrap/SKILL.md"  # legacy project-specific skill
+      - "openspec/changes/*/tasks.md"  # project source of truth
+      - "AGENTS.md"  # project doc, only read
     human_involvement: "low"
 ---
 

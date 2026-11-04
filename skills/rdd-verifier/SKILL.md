@@ -26,8 +26,8 @@ role:
   perspective: "5th phase state machine — guards archive by enforcing AC pass, classifies failures heuristically, routes loops back to plan/ship. High human involvement (AI classification + user confirm + failure routing decisions)."
   boundaries:
     owns:
-      - ".rddf/state/verifier/<change>.json"
-      - ".rddf/state/verifier/<change>.audit.jsonl"
+      - ".rddf/state/verifier/<name>.json"
+      - ".rddf/state/verifier/<name>.audit.jsonl"
       - ".rddf/state/.ac-verdict-*.json"
       - ".rddf/state/.ac-verification.jsonl"
     not_owns:

@@ -35,7 +35,7 @@ role:
       - ".rddf/roadmap/phases/*.md"
       - ".rddf/roadmap/features/*.md"
       - ".rddf/state/.populate-state.json"
-  human_involvement: "high"
+    human_involvement: "high"
 ---
 
 > **Stage 3 (2026-09-03)**: 此 skill 从 `guide-arch` 重命名为 `rdd-arch`（per D1a 渐进策略）。旧名称 `guide-arch` 通过 `skills/rdd-arch/SKILL.md` 的 5 行 shim 兼容至 v3.x + 2 minor release。

@@ -32,22 +32,27 @@ role:
   perspective: "Think in terms of phase state machine progression, TDD discipline, verifier retry routing, AND dispatch-quick routing (per ADR-0048). Owns the actual change implementation lifecycle from approval to archive."
   boundaries:
     owns:
-      - "openspec/changes/<name>/proposal.md (authoring via P0 approve, per ADR-0025)"
-      - "openspec/changes/<name>/{tasks,design}.md"
+      - "openspec/changes/<name>/proposal.md"  # authoring via P0 approve, per ADR-0025
+      - "openspec/changes/<name>/tasks.md"
       - ".rddf/wt/<name>/"
       - ".rddf/plans/<name>.md"
       - ".rddf/state/builder/<name>.json"
       - "openspec/specs/<name>/spec.md"
-      - ".rddf/state/rdd-quick-context.json (临时, per ADR-0048)"
+      - ".rddf/state/rdd-quick-context.json"  # transient dispatch context, per ADR-0048
     not_owns:
       - "docs/adr/ADR-*.md"
       - "roadmap.md"
       - ".rddf/state/.planner-feedback.json"
-      - ".rddf/plans/quick-*.md (rdd-quick owns, per ADR-0047)"
+      - ".rddf/plans/quick-*.md"  # owned by rdd-quick, per ADR-0047
     human_involvement: "medium"
 ---
 
 > 📖 **术语澄清**: P0 approval 阶段读取 **improvement**(`.rddf/improvements/<name>.md` 5 段),经 `generate_full_proposal.py` 转换为完整 **openspec proposal**(`openspec/changes/<name>/proposal.md`)。这是 v4 创建 openspec change 的 **canonical 路径** (per ADR-0025 D1/D2)。`propose` 技能仍存在作为 legacy/alternative path。详见 [AGENTS.md 关键术语对照表](../../AGENTS.md)。
+
+> 📖 **owns 边界说明**（frontmatter 条目只放路径，括注说明一律用 YAML 行内注释，per ADR-0028）:
+> - `design.md` —— **不由本 skill 生成**（P1 `phase1_plan.sh` 只补 `tasks.md`）；由执行该 change 的 agent 撰写（build agent 角色矩阵的 builder 角色，或 opencode `plan` agent 产出草稿）。
+> - `.rddf/state/rdd-quick-context.json` —— dispatch 到 `rdd-quick` 时的临时上下文，P4 结束时清理。
+> - `.rddf/plans/quick-*.md` —— 归 `rdd-quick` 所有（per ADR-0047），本 skill 只读。
 
 ## Stage 1 Hook（强制前置步骤, per add-guide-polling-loop-implementation AC-8）
 
