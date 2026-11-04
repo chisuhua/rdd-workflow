@@ -8,9 +8,8 @@ description: |
     1. rdd-arch arch-done emitted `.rddf/state/.arch-handoff.json`
     2. New improvement needed OR existing improvement in `improvement-suggestions.md` to review
 
-  Default: auto-decision per ADR-0050; writes `.rddf/state/.planner-handoff.json` at stage exit.
-
   Boundary ownership: see role.boundaries.owns / not_owns.
+
 license: MIT
 compatibility: requires openspec CLI v1.3.1+, Python 3.11+, git 2.25+
 metadata:
