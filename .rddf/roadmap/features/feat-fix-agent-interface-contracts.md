@@ -17,8 +17,8 @@ phase_refs: [phase-4]
 | 批 1 | #1 `scan-state` v4 handoff | `.planner-handoff.json` 识别 + planner 推荐值修正 + v3 fallback | `skills/guide/scripts/scan-state.sh` |
 | 批 1 | #3 `design.md` 归属 | 从 `rdd-builder.owns` 移除（P1 实际不生成） | `skills/rdd-builder/SKILL.md`（1 行） |
 | 批 2 | #2 owns 可机读 | 10 处括号注释去除 + schema `pattern` 校验 | 5 个 SKILL.md + schema |
-| 批 2 | #5 status 暴露 phase | 总览表 `PHASE` 列 + 详情 `Builder phase:` | `_lib/cli/status_cmd.py` |
-| 批 3 | #4 COMMIT GATE 收窄 | 只检查本 change 产物 + staged 放行 + 逃生口 | `phase2_execute.sh` |
+| 批 2 | #5 status 暴露 phase | 总览表 `BUILDER` 列 + 详情 `Builder phase:` | `_lib/cli/status_cmd.py` |
+| 批 3 | #4 **删除** P2 COMMIT GATE | 移除整仓 `git status` 检查（不引入新环境变量）；补 3 处既有缺陷 + worktree 未提交产物带出 | `phase2_execute.sh` |
 
 ## 动机证据
 
@@ -39,7 +39,7 @@ phase_refs: [phase-4]
 
 ## 验收
 
-见 `openspec/changes/fix-agent-interface-contracts/proposal.md` 的 16 条 AC + `specs/` 下两组 delta。
+见 `openspec/changes/fix-agent-interface-contracts/proposal.md` 的 20 条 AC + `specs/` 下两组 delta。
 
 ## 实施批次（2026-11-03）
 
