@@ -168,3 +168,61 @@ ADR-0060 有完整的 ADR + 实现 + 测试，但**没有 openspec change、没�
 - **F-1 必须先修**：`skills/rdd-planner/SKILL.md` 加回 `Boundary ownership` 行（1 行改动）。
 
 修复 F-1 后即可按 A → B → C → D → E 顺序分 5 批提交；每批独立 commit message，不使用 `git add -A`。
+
+## 7. 执行结果（2026-11-04，builder 角色）
+
+F-1 已修（`e066f16`），其余按 A → B → C → D → E 拆成 **8 个 commit** 落地：
+
+| commit | 批次 | 内容 |
+|---|---|---|
+| `2de1ab5` | A | `fix(hygiene): stop tests from writing into real project state` |
+| `da9035e` | B | `fix(v4-residue): point the contract surface at v4 skills, and guard it` |
+| `d31bfb6` | C | `refactor(_lib): delete the stale duplicate layer under skills/_lib` |
+| `4b5a971` | D | `feat(arch): contract the shape of decision documents, demote the keyword gate` |
+| `e066f16` | E1 | `fix(skills): drop the wrong ADR reference from rdd-planner's description`（F-1） |
+| `fcc39c8` | E2 | `docs(roadmap): sync the feature fragment index` |
+| `c8b5be3` | E3 | `docs(review): archive the acceptance reports for the three shipped changes` |
+| `fc608c9` | E4 | `docs(improvement): add the scope-bootstrap proposal draft` |
+
+### 7.1 拆分过程中新发现并修复的两个缺陷
+
+审查阶段只做了**静态**分类，提交阶段每批都在 **linked worktree 的暂存区树**里独立跑测试 —— 暴露出两个静态审查看不到的问题：
+
+1. **F-6｜批 A 的新测试不 worktree-safe**：canonical resolver 按 ADR-0033 设计，linked worktree 下返回**主仓根**（不是 worktree 目录）。`test_project_root_resolution.py` 却断言锚点结果等于 `REPO_ROOT`，在 worktree 模式下必失败。→ 改为与 resolver 自身对同一仓库的答案比对（`e066f16` 之前的 `2de1ab5`）。
+2. **F-7｜批 A 的 cross-repo bats 在 worktree 模式下误判并污染主仓**：该用例把「项目根」硬编码为 `$REPO_ROOT`，而默认 cache 实际落在主仓 `.rddf/state/`（resolver 语义）。结果：用例在 worktree 目录找不到文件（红），同时把缓存留在**主仓**的 state 里（污染）—— 正是本 change 要消灭的那类污染。→ 改为向 resolver 询问项目根，并按真实落点清理。（`2de1ab5`）
+
+> 两者的共同点：**「项目根」在 worktree 语境下有两个答案**（worktree 目录 vs 主仓根），canonical resolver 选后者。凡是拿 `$REPO_ROOT` 当项目根的断言/路径假设，都要改成问 resolver。
+
+另有 2 处**归批错误**在同轮被发现并纠正（都是版本归一化断言，属于批 C 而非 A/B）：`tests/unit/test_quick_history.py`、`tests/unit/test_verifier_loop_schema.py`。
+
+### 7.2 每批的独立验证
+
+每批提交前，把**暂存区树**（`git write-tree`）建成临时 linked worktree 跑测试 —— 不是跑工作区（工作区含全部 5 批，测不出单批是否自洽）：
+
+| 批 | worktree 模式 unit 失败 | 对比 HEAD 基线（11） |
+|---|---|---|
+| A | 11 | 无新增 |
+| B | 11 | 无新增 |
+| C | 11 | 无新增 |
+| D | 11 | 无新增 |
+| E | 11 | 无新增 |
+
+基线 11 个失败是 **HEAD 上既有的 worktree 脆弱性**（6 个 resolver 契约用例 + 4 个 `doc_contracts` 用例因 `openspec/` 被 gitignore 而看不到 change 目录 + 1 个），与本次 5 批无关。
+
+### 7.3 提交后最终回归门
+
+| 项 | 结果 |
+|---|---|
+| bats regression | 已知失败 11 / **新增失败 0** / zombie 0 |
+| pytest unit | **3267 passed, 2 skipped** |
+| pytest integration | **201 passed** |
+| 路径完整性 | 最终 diff 的 21 个新增路径 = 提交前 17 个未跟踪文件 + 4 份报告；3 个 rename = 搬移的 schema/resolver。**无路径丢失，无凭空新增** |
+| 工作区 | `git status` 干净 |
+
+### 7.4 遗留（不在本次范围，已登记）
+
+- **F-2** ADR-0060 未走 change 流程（无 openspec change / 无 improvement 提案 / 无独立验收报告）→ 建议后续补登记。
+- **F-3** ADR-0060 自身被形态检查判为「过程日志标记 4 处」→ 误报（它在 Context 里引用了 "critic / BLOCKER / SHOULD_FIX / NIT" 这些词本身来说明检测什么），ADR 第 72 行已自陈该启发式局限，保持不动。
+- **F-4** 3 个 feature fragment 的 `status:` 仍是 `proposed`，但三者均已实施并验收 → 状态推进属 planner 职责，未改。
+- **F-5** `skills/_lib/gh_repo_detect.py`（138 行完整实现）仍住在 shim 层 → 已在批 C 的守卫豁免清单中显式登记，沿用上一轮结论。
+- **worktree 脆弱性（11 个）** HEAD 既有问题：resolver 契约用例在 linked worktree 下断言 worktree 目录、而 resolver 返回主仓根（与 F-6/F-7 同源）；`doc_contracts` 用例依赖被 gitignore 的 `openspec/`。建议独立立项修，因为它会让 `rdd-builder` 的 worktree 执行模式跑测试时必红。
