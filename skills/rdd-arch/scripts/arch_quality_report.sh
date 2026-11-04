@@ -2,9 +2,14 @@
 # _lib/arch_quality_report.sh — extracted from guide-arch.md L564-L595
 # Exports: run_arch_quality_report()
 #
-# Runs arch quality gate (4 warning-level checks) via ArchQualityReport.verify()
+# Runs arch quality gate (4 default warning-level checks) via ArchQualityReport.verify()
 # and writes .rddf/state/.arch-quality-report.json.
 # Honors STRICT_ARCH_GATE=yes env var to upgrade warnings to failures (exit 1).
+#
+# CHANGED 2026-10-28 (per ADR-0060): a 5th check `adr_shape` is opt-in via
+# ARCH_SHAPE_CHECK=yes — it flags ADRs that outgrew the decision-document shape.
+# Off by default so existing ADRs stay pre-existing debt, not a gate failure.
+# For a standalone run over specific files, use skills/rdd-arch/scripts/adr_shape_check.sh.
 #
 # Oracle C1 safe: python3 - "$PROJECT_ROOT" arg-passing, PYEOF heredoc
 # (no bash string interp into Python code).

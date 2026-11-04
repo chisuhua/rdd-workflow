@@ -21,6 +21,7 @@ from skills._lib.arch_quality_gate import (
     _check_arch_alignment,
     _check_adr_clarity,
     _check_handoff_actionable,
+    _check_adr_shape,
     strict_wrap,
     is_strict_mode,
     ArchQualityReport,
@@ -540,3 +541,133 @@ def test_arch_quality_report_strict_mode_promotes_to_errors(project_with_alignme
     assert report.strict_mode is True
     assert "arch_alignment" in report.warnings
     assert "arch_alignment" not in report.failed_checks
+
+# ---------- 5. ADR shape (opt-in, added 2026-10-28) ----------
+
+_WELL_FORMED_ADR = """# ADR-0007: 单模型双后端
+
+> **状态**: 已采纳
+> **日期**: 2026-10-28
+> **决策者**: architect
+
+## Context
+
+双后端并行导致语义漂移。
+
+## Decision
+
+只保留一种模型，两个后端。
+
+### 备选方案
+
+| 备选 | 结论 | 理由 |
+|---|---|---|
+| A 保留双模 | 拒绝 | 模态开关带来二义 |
+| B 单模双后端 | 接受 | 模型唯一 |
+
+## Consequences
+
+### 正面
+
+后端差异可机器判定。
+
+### 负面 / 风险
+
+CI 需要 build 能力。
+
+## Verification
+
+- [ ] **V-1** 差分门禁首跑为空 ⇒ 通过
+
+## References
+
+- ADR-0001
+"""
+
+
+def _write_adr(tmp_path, name, body):
+    adr_dir = tmp_path / "docs" / "adr"
+    adr_dir.mkdir(parents=True, exist_ok=True)
+    path = adr_dir / name
+    path.write_text(body, encoding="utf-8")
+    return path
+
+
+def test_adr_shape_passes_on_well_formed_adr(tmp_path):
+    _write_adr(tmp_path, "ADR-0007-shape.md", _WELL_FORMED_ADR)
+    passed, severity = _check_adr_shape(_ctx(tmp_path))
+    assert passed is True
+    assert severity is None
+
+
+def test_adr_shape_warns_on_oversized_adr(tmp_path):
+    body = _WELL_FORMED_ADR + "\n".join(f"- 推导行 {i}" for i in range(320))
+    _write_adr(tmp_path, "ADR-0008-big.md", body)
+    passed, severity = _check_adr_shape(_ctx(tmp_path))
+    assert passed is False
+    assert severity == "warning"
+
+
+def test_adr_shape_line_limit_env_override(tmp_path, monkeypatch):
+    body = _WELL_FORMED_ADR + "\n".join(f"- 推导行 {i}" for i in range(40))
+    _write_adr(tmp_path, "ADR-0009-mid.md", body)
+    monkeypatch.setenv("ARCH_ADR_LINE_LIMIT", "10")
+    passed, _ = _check_adr_shape(_ctx(tmp_path))
+    assert passed is False
+    monkeypatch.setenv("ARCH_ADR_LINE_LIMIT", "10000")
+    passed, _ = _check_adr_shape(_ctx(tmp_path))
+    assert passed is True
+
+
+def test_adr_shape_warns_on_missing_section(tmp_path):
+    body = "# ADR-0010: 缺章节\n\n## Context\n\n背景。\n\n## Decision\n\n决定。\n"
+    _write_adr(tmp_path, "ADR-0010-missing.md", body)
+    passed, severity = _check_adr_shape(_ctx(tmp_path))
+    assert passed is False
+    assert severity == "warning"
+
+
+def test_adr_shape_warns_on_process_log_markers(tmp_path):
+    body = _WELL_FORMED_ADR + "\n## 审稿记录\n\n第 2 轮 critic 提出 1 BLOCKER。\n"
+    _write_adr(tmp_path, "ADR-0011-log.md", body)
+    passed, severity = _check_adr_shape(_ctx(tmp_path))
+    assert passed is False
+    assert severity == "warning"
+
+
+def test_adr_shape_warns_on_long_status_line(tmp_path):
+    body = _WELL_FORMED_ADR.replace(
+        "> **状态**: 已采纳",
+        "> **状态**: 已采纳（v1.0 → v1.1 → v1.2 → v1.3 → v1.4）" + "（含逐版裁决摘要）" * 30,
+    )
+    _write_adr(tmp_path, "ADR-0012-status.md", body)
+    passed, severity = _check_adr_shape(_ctx(tmp_path))
+    assert passed is False
+    assert severity == "warning"
+
+
+def test_adr_shape_scopes_to_explicit_files(tmp_path):
+    good = _write_adr(tmp_path, "ADR-0013-good.md", _WELL_FORMED_ADR)
+    _write_adr(tmp_path, "ADR-0014-bad.md", "x\n")
+    ctx = _ctx(tmp_path)
+    ctx["adr_files"] = [str(good)]
+    passed, _ = _check_adr_shape(ctx)
+    assert passed is True
+
+
+def test_adr_shape_not_registered_in_report_by_default(tmp_path, monkeypatch):
+    """Existing ADRs are pre-existing debt — the shape check stays opt-in."""
+    monkeypatch.delenv("ARCH_SHAPE_CHECK", raising=False)
+    body = "# ADR-0015\n\n## Context\n\n背景\n"
+    _write_adr(tmp_path, "ADR-0015-thin.md", body)
+    report = ArchQualityReport.verify(str(tmp_path))
+    assert "adr_shape" not in report.warnings
+    assert "adr_shape" not in report.detail
+
+
+def test_adr_shape_registered_in_report_when_opted_in(tmp_path, monkeypatch):
+    monkeypatch.setenv("ARCH_SHAPE_CHECK", "yes")
+    body = "# ADR-0016\n\n## Context\n\n背景\n"
+    _write_adr(tmp_path, "ADR-0016-thin.md", body)
+    report = ArchQualityReport.verify(str(tmp_path))
+    assert "adr_shape" in report.warnings

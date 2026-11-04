@@ -310,7 +310,28 @@ if [ -z "$ADR_SLUG" ]; then
 fi
 
 # 门禁分类 (adr_gate.sh; SKIP_ADR_GATE=yes 旁路 → 直接按 ARCHITECTURE)
+# ADR_GATE_MODE=advisory (默认): 关键词分类只作提示, 不硬拦 —— 实测 8/8 近期真实架构 ADR
+#   (skid buffer / data forwarding / canonical home / backend retirement / parity gate /
+#    open-core port / coherence-domain ownership / platform charter) 被判成 IMPLEMENTATION,
+#   硬拦会挡掉最该记录的决策。ADR_GATE_MODE=block 恢复硬拦。
 GATE_CLASS=$(bash "$PROJECT_ROOT/skills/rdd-arch/scripts/adr_gate.sh" "$ADR_SLUG")
+if [ "${ADR_GATE_MODE:-advisory}" != "block" ] && [ "$GATE_CLASS" != "ARCHITECTURE" ]; then
+  case "$GATE_CLASS" in
+    GOVERNANCE)
+      echo "⚠️  提示(非拦截): 标题关键词判定为治理/流程类 —— 更适合 RELEASE.md / ci-cd.md / CONTRIBUTING.md"
+      ;;
+    IMPLEMENTATION)
+      echo "⚠️  提示(非拦截): 标题关键词判定为实现类 —— 更适合 docs/ 文档 / tasks.md / .rddf/improvements/*.md（per ADR-0057）"
+      ;;
+  esac
+  echo "   确认仍按 ADR 记录? (y 继续 / n 改用替代路径):"
+  read -r GATE_OVERRIDE
+  if [ "$GATE_OVERRIDE" != "y" ]; then
+    echo "⏭  改用替代路径 — 未写任何文件"
+    continue
+  fi
+  GATE_CLASS="ARCHITECTURE"
+fi
 
 NEW_ADR="$ADR_DIR/ADR-$NEXT_NUM_PADDED-$ADR_SLUG.md"
 trap 'rm -f "${NEW_ADR}.tmp"' EXIT ERR
@@ -354,8 +375,16 @@ case "$GATE_CLASS" in
     #     ## Context (含 **架构依据** 子项)
     #     ## Decision (含 ### 影响范围 + ### 备选方案)
     #     ## Consequences (含 ### 正面 + ### 负面 / 风险 + ### 后续待办)
+    #     ## Verification (前瞻验收判据, checkbox; 不是已跑完的实测日志)
     #     ## References
     #   agent 在对话中逐段呈现完整草稿, 等用户确认
+    #
+    #   ── 形态约束 (草稿与正文都要满足, 缺项 ⇒ 补齐后再落盘) ──
+    #     1. 一文档一决策: 出现第二个独立决策点 → 拆成两篇 ADR
+    #     2. 正文只放决策, 目标 ≤ 250 行; 推导/证据 (时序推导/trace/覆盖率/逐文件裁决表/
+    #        可枚举改动清单) → 移到 openspec/changes/*/design.md 或 tasks.md
+    #     3. 过程日志 (立项/归档/队列号/台账 Entry/KPI 计数/审稿轮次) → 不进 ADR
+    #     4. 必备要素: 元数据 + 选项对比表 (≥3 行, 每行含结论+理由) + 独立后果章 + 前瞻 Verification
 
     if [ "${SKIP_ADR_CONFIRM:-no}" != "yes" ]; then
       echo "确认草稿并写入 $NEW_ADR? (y/n, q/cancel/exit 取消):"

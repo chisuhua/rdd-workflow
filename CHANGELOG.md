@@ -141,6 +141,18 @@ rdd-workflow。5 项改动，3 个独立 commit。
   `_lib/cleanup_plan_handoff.py`、`skills/rdd-builder/scripts/phase1_5_deps.sh`
   仍读 v3 handoff 名
 
+### ADR 形态契约 + 门禁降级（ADR-0060, 2026-10-28）
+
+决策文档只回答「定什么 / 为什么 / 代价」；模板与门禁同步收紧，关键词分类门禁降级为提示。
+
+- **模板**（`docs/adr/ADR-0000-template.md`）：新增 `## Verification`（前瞻判据，非实测日志）；备选方案表改三列（备选 | 结论 | 理由，≥3 行）；顶部加体量与落点提示
+- **门禁**（`skills/rdd-arch/scripts/adr_gate.sh`）：分类逻辑不变；新增 `ADR_GATE_MODE=advisory`（默认，提示走 stderr）/ `block`（恢复硬拦）/ `ADR_GATE_CLASS=<CLASS>`（显式覆盖）。实测 8/8 近期真实架构 ADR 被关键词判成 IMPLEMENTATION，硬拦会挡掉最该记录的决策
+- **SKILL 流程**（`skills/rdd-arch/SKILL.md` Phase 2）：advisory 模式下非 ARCHITECTURE 分类不再硬拦，改为提示 + 用户/agent 确认；草稿锚点补 `## Verification` 与 4 条形态约束
+- **机械检查**（`_lib/arch_quality_gate.py`）：新增 `_check_adr_shape()`——行数预算（默认 300）、必备章节、过程日志标记、Status 行长度（默认 200）。**opt-in**：`ARCH_SHAPE_CHECK=yes` 才进入 `ArchQualityReport.verify()`，存量 ADR 不追溯、不阻断
+- **新增 CLI**：`skills/rdd-arch/scripts/adr_shape_check.sh`（可扫全量或指定文件，`--strict` 时 exit 1）
+- **测试**：`_check_adr_shape` 8 项单元测试 + advisory 模式/形态约束锚点/CLI 的 4 项 bats 测试
+- **ADR-0060** 记录该决策；`docs/adr/README.md` 索引同步（含 ADR-0059 既有漂移一并修正）
+
 ### fix-roadmap-phase-objective-parser (silent data loss + copy-paste debt, 2026-09-29)
 
 Two drift bugs confirmed via pre-planning audit (commit `67a3e85`):

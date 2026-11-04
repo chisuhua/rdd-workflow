@@ -8,6 +8,8 @@ that surface arch-level debt without blocking the transition:
   2. `adr_no_placeholders`  — ADR files are not template stubs
   3. `arch_handoff_actionable` — .arch-handoff.json carries actionable fields
   4. `file_size_limit`      — _lib/*.py files do not exceed line cap
+  5. `adr_shape`            — ADRs stay within the decision-document shape
+                              budget (opt-in via `ARCH_SHAPE_CHECK=yes`)
 
 Severity model:
   - Default (local dev)         → warning (allows transition, records event)
@@ -163,6 +165,108 @@ def strict_wrap(
         return (passed, severity)
 
     return wrapped
+
+
+# --- ADR shape budget (env-tunable) ---
+
+# A decision record that stops answering "what / why / at what cost" and starts
+# answering "how exactly" is no longer a decision record. These budgets encode
+# that boundary. Measured 2026-10-27: recent ADRs reached 435-620 lines with
+# decision statements down to 22% of the body.
+_DEFAULT_ADR_LINE_LIMIT = 300
+_DEFAULT_ADR_STATUS_MAX = 200
+
+# Section presence — bilingual, tolerant of numbered headings ("## 2. 决策").
+_SHAPE_REQUIRED_SECTIONS = {
+    "Context": re.compile(r"^#{2,4}\s*(?:\d+[.)]\s*)?(?:context|背景)\b", re.MULTILINE | re.IGNORECASE),
+    "Decision": re.compile(r"^#{2,4}\s*(?:\d+[.)]\s*)?(?:decision|决策)\b", re.MULTILINE | re.IGNORECASE),
+    "Consequences": re.compile(r"^#{2,4}\s*(?:\d+[.)]\s*)?(?:consequences|后果)\b", re.MULTILINE | re.IGNORECASE),
+    "Alternatives": re.compile(r"^#{2,4}\s*(?:\d+[.)]\s*)?(?:备选方案|替代方案|alternatives)\b", re.MULTILINE | re.IGNORECASE),
+}
+
+# Process-log markers — governance ledger / review history that must not live
+# inside a decision document.
+_PROCESS_LOG_PATTERNS = [
+    re.compile(r"第\s*\d+\s*轮\s*(?:critic|对抗审稿|审稿|复审)"),
+    re.compile(r"\b(?:BLOCKER|SHOULD_FIX|NITS?)\b"),
+    re.compile(r"队列\s*#\d+|台账\s*Entry\s*#\d+"),
+]
+
+
+def _iter_adr_files(project_root: str, paths: dict):
+    """Yield ADR files (excluding the reserved template) under the ADR dir."""
+    adr_dir = Path(project_root) / paths["adr_dir"]
+    if not adr_dir.is_dir():
+        return
+    for f in sorted(adr_dir.glob(paths["adr_pattern"])):
+        if f.name.endswith("-0000-template.md"):
+            continue
+        yield f
+
+
+def _check_adr_shape(ctx: dict) -> tuple[bool, Optional[str]]:
+    """Pass if ADRs stay within the decision-document shape budget.
+
+    CHANGED 2026-10-28 — catches ADRs that grew into design specs / process
+    ledgers. Four signals per file:
+
+      1. body longer than the line budget (default 300, `ARCH_ADR_LINE_LIMIT`)
+      2. a missing required section (Context / Decision / Consequences / Alternatives)
+      3. review-process log markers (审稿轮次 / BLOCKER 清单 / 队列号 / 台账 Entry)
+      4. a Status line carrying a long version history (`ARCH_ADR_STATUS_MAX`)
+
+    Scope: `ctx["adr_files"]` (explicit list of paths) restricts the check to
+    those files; otherwise every ADR in the ADR dir is scanned.
+
+    Warning level only. Opt-in for the aggregate report via
+    `ARCH_SHAPE_CHECK=yes` — existing ADRs are pre-existing debt and are not
+    retroactively blocked.
+    """
+    project_root = ctx.get("project_root", ".")
+    paths = _read_handoff(project_root)
+
+    line_limit = int(os.environ.get("ARCH_ADR_LINE_LIMIT", str(_DEFAULT_ADR_LINE_LIMIT)))
+    status_max = int(os.environ.get("ARCH_ADR_STATUS_MAX", str(_DEFAULT_ADR_STATUS_MAX)))
+
+    explicit = ctx.get("adr_files")
+    if explicit:
+        files = [Path(f) for f in explicit]
+    else:
+        files = list(_iter_adr_files(project_root, paths))
+
+    issues: list[str] = []
+    for f in files:
+        try:
+            text = f.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        lines = text.splitlines()
+        name = f.name
+
+        if len(lines) > line_limit:
+            issues.append(f"{name}: {len(lines)} lines > {line_limit}")
+
+        missing = [
+            sec for sec, pat in _SHAPE_REQUIRED_SECTIONS.items()
+            if not pat.search(text)
+        ]
+        if missing:
+            issues.append(f"{name}: missing section(s) {', '.join(missing)}")
+
+        log_hits = sum(len(pat.findall(text)) for pat in _PROCESS_LOG_PATTERNS)
+        if log_hits:
+            issues.append(f"{name}: {log_hits} process-log marker(s) inside ADR body")
+
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith(">") and re.search(r"状态|status", stripped, re.IGNORECASE):
+                if len(stripped) > status_max:
+                    issues.append(f"{name}: Status line is {len(stripped)} chars (>{status_max})")
+                break
+
+    if issues:
+        return (False, "warning")
+    return (True, None)
 
 
 # ---------- the four checks (all return (passed, severity)) ----------
@@ -331,6 +435,11 @@ class ArchQualityReport:
             ("arch_handoff_actionable", _check_handoff_actionable),
             ("file_size_limit", _check_file_size),
         ]
+        # adr_shape is opt-in: it flags ADRs that outgrew the decision-document
+        # shape. Existing ADRs are pre-existing debt — enabling this must not
+        # retroactively fail an unrelated project's arch_done gate.
+        if os.environ.get("ARCH_SHAPE_CHECK", "").strip().lower() in _STRICT_TRUE:
+            checks.append(("adr_shape", _check_adr_shape))
         ctx = {"project_root": project_root}
         report = cls(strict_mode=is_strict_mode())
         for name, fn in checks:

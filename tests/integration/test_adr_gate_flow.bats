@@ -45,3 +45,46 @@ SKILL_FILE="$REPO_ROOT/skills/rdd-arch/SKILL.md"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "ARCHITECTURE" ]]
 }
+
+@test "adr_gate_flow: SKILL.md demotes the keyword gate to advisory" {
+  assert_file_contains "$SKILL_FILE" 'ADR_GATE_MODE'
+  assert_file_contains "$SKILL_FILE" 'GATE_OVERRIDE'
+  assert_file_contains "$SKILL_FILE" '提示\(非拦截\)'
+}
+
+@test "adr_gate_flow: draft requires Verification + shape constraints" {
+  local block
+  block=$(awk '/\*\*选项 1（创建新 ADR）执行内容\*\*/,/^\*\*选项 [23]/' "$SKILL_FILE")
+  for anchor in '## Verification' '形态约束' '一文档一决策' '过程日志'; do
+    grep -qF "$anchor" <<< "$block" || { echo "missing anchor: $anchor" >&2; return 1; }
+  done
+}
+
+@test "adr_shape_check: CLI flags an oversized ADR" {
+  local adr="$BATS_TMPDIR/ADR-9999-big.md"
+  {
+    echo "# ADR-9999: big"
+    echo
+    echo "## Context"
+    echo
+    echo "bg"
+    echo
+    echo "## Decision"
+    echo
+    echo "d"
+    echo
+    echo "## Consequences"
+    echo
+    echo "c"
+    echo
+    echo "### 备选方案"
+    echo
+    echo "| 备选 | 结论 | 理由 |"
+    echo "|---|---|---|"
+    echo "| A | 拒绝 | x |"
+    for i in $(seq 1 320); do echo "- 推导行 $i"; done
+  } > "$adr"
+  run bash "$PROJECT_ROOT/skills/rdd-arch/scripts/adr_shape_check.sh" "$adr"
+  [ "$status" -eq 1 ]
+  [[ "$output" =~ "行" ]]
+}
