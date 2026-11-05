@@ -1,7 +1,7 @@
 ---
 id: feat-remove-dead-dup-layer
 kind: feature
-status: proposed
+status: done
 phase_refs: [phase-4]
 主题: 删除 skills/_lib 陈旧重复层 — iteration 副本 + 20 个 schema 副本 + 3 个失效代理 + 8 条死 dash 注册 + 修 populate 路径恢复被静默跳过的校验
 ---
@@ -43,19 +43,17 @@ P1-1b（commit c3a90fe）把实现从 `skills/_lib/` 扁平化到仓库根 `_lib
 
 ## 验收标准
 
-- [ ] `skills/_lib/` 下无 `.json`；超过 50 行的 `.py` 全部命中显式豁免清单（清单规模 ≤ 3）
-- [ ] `skills/_lib/iteration/` 只剩 path-widening shim
-- [ ] 3 个活契约在 `_lib/schemas/` 下且与副本逐字节一致
-- [ ] `populate` 的 schema 路径解析到仓库内真实文件；jsonschema 分支**真的执行**
-- [ ] 无指向不存在目录的代理 / dash 注册
-- [ ] 34 个 canonical schema 全部合法 JSON、带 ADR-0016 `version` 元数据、无重复键
-- [ ] `docs/schemas/README.md` 索引与磁盘双向一致
+- [x] `skills/_lib/` 下无 `.json`；超过 50 行的 `.py` 全部命中显式豁免清单（清单规模 ≤ 3）
+- [x] `skills/_lib/iteration/` 只剩 path-widening shim
+- [x] 3 个活契约在 `_lib/schemas/` 下且与副本逐字节一致
+- [x] `populate` 的 schema 路径解析到仓库内真实文件；jsonschema 分支**真的执行**
+- [x] 无指向不存在目录的代理 / dash 注册
+- [x] 34 个 canonical schema 全部合法 JSON、带 ADR-0016 `version` 元数据、无重复键
+- [x] `docs/schemas/README.md` 索引与磁盘双向一致
 
-## 跨阶段拆分
+## 备注
 
-### phase-4
-<TBD - 此阶段内的子任务清单>
-
-
-## 验收标准
-<TBD - markdown checkbox 列表, design/plan 阶段消费>
+- ship：commits `d31bfb6`（`refactor(_lib): delete the stale duplicate layer under skills/_lib`）+ `bef6e1d`（`fix(tests): stop hardcoding skill counts and repair the drift they hid`）
+- 验收：`.rddf/reviews/remove-dead-dup-layer-verify.md`（18/18 AC pass）
+- 归档：`2026-11-05-remove-dead-dup-layer`，verdict cache `passed / archive-ready`
+- **2026-11-05 收尾动作**：frontmatter `status: proposed → done` + 验收标准按实际取证勾选 + 删重复的 TBD 占位段（原文件有两份「跨阶段拆分 / 验收标准」，后一份是未填的模板）+ 补 ship 记录

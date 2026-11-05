@@ -1,7 +1,7 @@
 ---
 id: feat-fix-test-isolation-and-hygiene
 kind: feature
-status: proposed
+status: done
 phase_refs: [phase-4]
 主题: 测试隔离与仓库卫生 — 测试零污染 + 根解析统一到 canonical resolver + 状态快照/worktree 垃圾清理 + doctor plan-tdd 降噪
 ---
@@ -33,11 +33,18 @@ phase_refs: [phase-4]
 
 ## 验收标准
 
-- [ ] `--cache-file` 默认值是绝对路径，落在解析出的项目根下（不是 CWD）
-- [ ] 跑完 `test_rddf_cross_repo_cli.bats` 后仓库内没有缓存文件
-- [ ] `append_history.py` 从任意目录执行，历史仍落在 `<项目根>/.rddf/state/`
-- [ ] 脚本不再出现「向上循环 + 探测特征目录」的根推导
-- [ ] `skills._lib._python_resolve_project_root is _lib._python_resolve_project_root`
-- [ ] `skills/.rddf/` 不存在且被 gitignore 覆盖
-- [ ] 状态快照 / 孤儿 worktree / 根目录 0 字节文件清零，`git worktree list` 不变
-- [ ] `rddf doctor` 的 `plan-tdd` WARNING 从 96 降到 0，state 类 CRITICAL 为 0
+- [x] `--cache-file` 默认值是绝对路径，落在解析出的项目根下（不是 CWD）
+- [x] 跑完 `test_rddf_cross_repo_cli.bats` 后仓库内没有缓存文件
+- [x] `append_history.py` 从任意目录执行，历史仍落在 `<项目根>/.rddf/state/`
+- [x] 脚本不再出现「向上循环 + 探测特征目录」的根推导
+- [x] `skills._lib._python_resolve_project_root is _lib._python_resolve_project_root`
+- [x] `skills/.rddf/` 不存在且被 gitignore 覆盖
+- [x] 状态快照 / 孤儿 worktree / 根目录 0 字节文件清零，`git worktree list` 不变
+- [x] `rddf doctor` 的 `plan-tdd` WARNING 从 96 降到 0，state 类 CRITICAL 为 0
+
+## 备注
+
+- ship：commit `2de1ab5`（`fix(hygiene): stop tests from writing into real project state`）
+- 验收：`.rddf/reviews/fix-test-isolation-and-hygiene-verify.md`（19/19 AC pass）
+- 归档：`2026-11-05-fix-test-isolation-and-hygiene`，verdict cache `passed / archive-ready`
+- **2026-11-05 收尾动作**：frontmatter `status: proposed → done` + 验收标准按实际取证勾选 + 补 ship 记录

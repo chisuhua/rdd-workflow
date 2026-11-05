@@ -1,7 +1,7 @@
 ---
 id: feat-fix-agent-interface-contracts
 kind: feature
-status: in-progress
+status: done
 phase_refs: [phase-4]
 主题: 对外契约修复（v4 handoff 识别 / owns 可机读 / design.md 归属 / P2 commit gate 删除 / status 暴露 builder phase）
 ---
@@ -41,6 +41,8 @@ phase_refs: [phase-4]
 
 见 `openspec/changes/fix-agent-interface-contracts/proposal.md` 的 20 条 AC + `specs/` 下两组 delta。
 
+**验收结论（2026-11-05）**：20/20 AC pass，证据见 `.rddf/reviews/fix-agent-interface-contracts-verify.md`。
+
 ## 实施批次（2026-11-03）
 
 | 批次 | 内容 | 验证 |
@@ -71,3 +73,10 @@ critic 判定 REJECT（5 BLOCKERS，`mergeable: no` / `scope_exceeded: true`）�
 | `_lib` 解析假设 PROJECT_ROOT 含 `_lib/` | `phase2_execute.sh` | 用户项目里必然失败 → EXEC_MODE 恒为 worktree |
 
 删除 COMMIT GATE 后，worktree 模式必须自行带出未提交产物（`git worktree add` 从 HEAD 建，不含未提交文件），否则 P2 会以 "plan file missing" 失败 —— 已加 carry-over 并锁测试。
+
+## 备注
+
+- ship：commits `ab7c3ac`（阶段判定三处一致）+ `bf07943`（owns 可机读）+ `ac96d9f`（删除 P2 COMMIT GATE）+ `078f341`（fragment 校正为实际落地的决策）
+- 验收：`.rddf/reviews/fix-agent-interface-contracts-verify.md`（20/20 AC pass）
+- 归档：`2026-11-05-fix-agent-interface-contracts`，verdict cache `passed / archive-ready`
+- **2026-11-05 收尾动作**：frontmatter `status: in-progress → done` + 验收段补实际结论 + 补 ship 记录

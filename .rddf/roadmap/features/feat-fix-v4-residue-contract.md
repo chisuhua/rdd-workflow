@@ -1,7 +1,7 @@
 ---
 id: feat-fix-v4-residue-contract
 kind: feature
-status: proposed
+status: done
 phase_refs: [phase-4]
 主题: 契约面 v4 残留修复 — 失败路由统一 rdd-builder + feedback schema 对齐 + 用户可见文案 + v4-residue 守卫 + schema 路径扫描扩展到代码
 ---
@@ -44,10 +44,17 @@ v3 → v4 重命名（ADR-0043 / ADR-0044 Wave 3 hard removal）覆盖了**主�
 
 ## 验收标准
 
-- [ ] `route_loop.sh` 两种分类都写 `route="rdd-builder"`，输出不含 `guide-`
-- [ ] `_classify_route` 两种分类都返回 `rdd-builder`
-- [ ] 两个 schema 的 route enum 同时含 `rdd-builder` 与 legacy 值（存量 state 仍可加载）
-- [ ] `feedback` schema 的 source enum 与运行时 `VALID_SOURCES` 完全一致
-- [ ] `rddf --help` 的 `guide-` 计数为 0
-- [ ] doctor 新增 `v4-residue` 分类，且本仓输出 0 CRITICAL / 0 WARNING
-- [ ] `check_schema_path_canonical` 能发现代码 docstring 里的旧路径；不扫 `__pycache__`；不自报
+- [x] `route_loop.sh` 两种分类都写 `route="rdd-builder"`，输出不含 `guide-`
+- [x] `_classify_route` 两种分类都返回 `rdd-builder`
+- [x] 两个 schema 的 route enum 同时含 `rdd-builder` 与 legacy 值（存量 state 仍可加载）
+- [x] `feedback` schema 的 source enum 与运行时 `VALID_SOURCES` 完全一致
+- [x] `rddf --help` 的 `guide-` 计数为 0
+- [x] doctor 新增 `v4-residue` 分类，且本仓输出 0 CRITICAL / 0 WARNING
+- [x] `check_schema_path_canonical` 能发现代码 docstring 里的旧路径；不扫 `__pycache__`；不自报
+
+## 备注
+
+- ship：commit `da9035e`（`fix(v4-residue): point the contract surface at v4 skills, and guard it`）
+- 验收：`.rddf/reviews/fix-v4-residue-contract-verify.md`（15/15 AC pass）
+- 归档：`2026-11-05-fix-v4-residue-contract`，verdict cache `passed / archive-ready`
+- **2026-11-05 收尾动作**：frontmatter `status: proposed → done` + 验收标准按实际取证勾选 + 补 ship 记录
