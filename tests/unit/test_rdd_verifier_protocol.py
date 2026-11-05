@@ -85,6 +85,105 @@ def test_parse_acs_missing_file_returns_empty(tmp_path):
 
 
 # ============================================================================
+# AC extraction — table form (`| AC-N | description |`)
+# ============================================================================
+
+
+def test_parse_acs_table_form(tmp_path):
+    p = _write_proposal(
+        tmp_path,
+        "## 验收标准\n"
+        "| AC | 描述 |\n"
+        "|----|------|\n"
+        "| AC-1 | first criterion |\n"
+        "| AC-2 | second criterion |\n",
+    )
+    acs = parse_acs(p)
+    assert [a["ac_id"] for a in acs] == ["AC-1", "AC-2"]
+    assert [a["description"] for a in acs] == ["first criterion", "second criterion"]
+    assert all(not a["has_checkbox"] for a in acs)
+
+
+def test_parse_acs_table_form_keeps_authored_numbering(tmp_path):
+    """Ids come from the first column verbatim — renumbering would shift them
+    away from the numbering the proposal (and its reviewer report) uses."""
+    p = _write_proposal(
+        tmp_path,
+        "## 验收标准\n"
+        "| AC | 描述 |\n"
+        "|----|------|\n"
+        "| AC-1 | one |\n"
+        "| AC-7 | seven |\n",
+    )
+    acs = parse_acs(p)
+    assert [a["ac_id"] for a in acs] == ["AC-1", "AC-7"]
+
+
+def test_parse_acs_table_form_skips_header_and_separator(tmp_path):
+    p = _write_proposal(
+        tmp_path,
+        "## 验收标准\n"
+        "| AC | 描述 |\n"
+        "|----|------|\n"
+        "| AC-1 | only |\n",
+    )
+    acs = parse_acs(p)
+    assert len(acs) == 1
+    assert acs[0]["ac_id"] == "AC-1"
+    assert acs[0]["description"] == "only"
+
+
+def test_parse_acs_table_form_joins_extra_columns(tmp_path):
+    p = _write_proposal(
+        tmp_path,
+        "## 验收标准\n"
+        "| AC | 描述 | 备注 |\n"
+        "|----|------|------|\n"
+        "| AC-1 | desc | note |\n",
+    )
+    acs = parse_acs(p)
+    assert acs[0]["description"] == "desc note"
+
+
+def test_parse_acs_table_form_duplicate_id_is_skipped(tmp_path):
+    p = _write_proposal(
+        tmp_path,
+        "## 验收标准\n"
+        "| AC | 描述 |\n"
+        "|----|------|\n"
+        "| AC-1 | first |\n"
+        "| AC-1 | duplicate |\n",
+    )
+    acs = parse_acs(p)
+    assert len(acs) == 1
+    assert acs[0]["description"] == "first"
+
+
+def test_parse_acs_table_without_numbered_first_column_yields_nothing(tmp_path):
+    """A table whose first column is not `AC-N` is not an AC table."""
+    p = _write_proposal(
+        tmp_path,
+        "## 验收标准\n"
+        "| 名称 | 值 |\n"
+        "|----|----|\n"
+        "| foo | bar |\n",
+    )
+    assert parse_acs(p) == []
+
+
+def test_parse_acs_mixed_bullet_and_table(tmp_path):
+    p = _write_proposal(
+        tmp_path,
+        "## 验收标准\n"
+        "- bullet one\n"
+        "| AC-2 | table two |\n",
+    )
+    acs = parse_acs(p)
+    assert [a["ac_id"] for a in acs] == ["AC-1", "AC-2"]
+    assert [a["description"] for a in acs] == ["bullet one", "table two"]
+
+
+# ============================================================================
 # Verdict schema validation
 # ============================================================================
 

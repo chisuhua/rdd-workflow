@@ -31,6 +31,12 @@ _AC_SECTION_HEADERS = re.compile(
 )
 _SECTION_END = re.compile(r"^##\s+", re.MULTILINE)
 _BULLET_LINE = re.compile(r"^- (?:\[([ x])\]\s+)?(.+)$")
+# Table-form AC rows: `| AC-1 | description |`. Only rows whose first cell is
+# an explicit `AC-N` identifier are treated as acceptance criteria — the
+# header row (`| AC | 描述 |`) and the separator row (`|----|------|`) are
+# skipped, so a table without explicit AC numbering contributes nothing.
+_TABLE_ROW = re.compile(r"^\|(.+)\|$")
+_AC_ID_CELL = re.compile(r"^AC-(\d+)$", re.IGNORECASE)
 
 # Reasoning keywords the agent MUST embed in verdict reasoning so that
 # _lib/verifier/classify.py::classify_failure continues to work unchanged.
@@ -60,14 +66,22 @@ CONTEXT_SCHEMA_VERSION = 1
 
 
 def parse_acs(proposal_path: Path) -> list[dict]:
-    """Extract AC bullets from `## 验收标准` / `## Acceptance Criteria` section.
+    """Extract AC entries from `## 验收标准` / `## Acceptance Criteria` section.
 
     Returns list of {ac_id: 'AC-N', description: str, has_checkbox: bool}.
-    Empty list if section missing or has no bullets.
+    Empty list if section missing or has no AC entries.
+
+    Two authoring styles are supported:
+      - bullet: `- description` / `- [ ] description` / `- [x] description`
+        → ids are assigned sequentially (AC-1, AC-2, ...)
+      - table: `| AC-1 | description |`
+        → ids are taken verbatim from the first column so the numbering
+          authored in the proposal is preserved.
 
     Behavior-identical to skills/ac-verifier/scripts/ac_verifier.py::parse_acs
-    (kept in sync during the ac-verifier shim window; ac-verifier is the copy
-    scheduled for removal, this module is canonical).
+    for bullet-style proposals (kept in sync during the ac-verifier shim
+    window; ac-verifier is the copy scheduled for removal, this module is
+    canonical). Table-style rows are an extension beyond that legacy parser.
     """
     proposal_path = Path(proposal_path)
     if not proposal_path.is_file():
@@ -84,18 +98,46 @@ def parse_acs(proposal_path: Path) -> list[dict]:
     section_text = text[section_start:section_end]
 
     acs: list[dict] = []
+    seen_ids: set[str] = set()
+    seq = 0
     for line in section_text.splitlines():
-        m = _BULLET_LINE.match(line.strip())
-        if not m:
+        stripped = line.strip()
+        m = _BULLET_LINE.match(stripped)
+        if m:
+            seq += 1
+            marker = m.group(1)
+            description = m.group(2).strip()
+            ac_id = f"AC-{seq}"
+            if ac_id in seen_ids:
+                continue
+            seen_ids.add(ac_id)
+            acs.append({
+                "ac_id": ac_id,
+                "description": description,
+                "has_checkbox": marker in (" ", "x"),
+            })
             continue
-        marker = m.group(1)
-        description = m.group(2).strip()
-        has_checkbox = marker in (" ", "x")
-        acs.append({
-            "ac_id": f"AC-{len(acs) + 1}",
-            "description": description,
-            "has_checkbox": has_checkbox,
-        })
+        # Table form: `| AC-1 | description |` — the AC id is taken verbatim
+        # from the first cell so the numbering authored in the proposal is
+        # preserved (sequential renumbering would silently shift ids).
+        tm = _TABLE_ROW.match(stripped)
+        if tm:
+            cells = [c.strip() for c in tm.group(1).split("|")]
+            if len(cells) >= 2:
+                idm = _AC_ID_CELL.match(cells[0])
+                if idm:
+                    description = " ".join(c for c in cells[1:] if c)
+                    if not description:
+                        continue
+                    ac_id = f"AC-{int(idm.group(1))}"
+                    if ac_id in seen_ids:
+                        continue
+                    seen_ids.add(ac_id)
+                    acs.append({
+                        "ac_id": ac_id,
+                        "description": description,
+                        "has_checkbox": False,
+                    })
     return acs
 
 
