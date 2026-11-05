@@ -1,3 +1,11 @@
+---
+优先级: P1
+来源: 2026-09-22 guide 是无状态冷启动推荐器，感知不到其他 OpenCode 进程窗口的 rddf-session 进度 — 跨窗口 guide
+  主入口 + 事件总线提案
+阶段: v4.1 follow-up
+分类: arch-design
+类型: feature
+---
 # feat-guide-orchestrator-session-event-bus: 跨 OpenCode 窗口的 guide 主入口 + 事件总线
 
 > **状态**: Proposed（待 rdd-builder 批准 → rdd-builder P0 决策）

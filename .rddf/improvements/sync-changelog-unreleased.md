@@ -1,3 +1,10 @@
+---
+优先级: P2
+来源: 2026-08-12 afc369a 之后 CHANGELOG [Unreleased] 段累计 20+ commits 未记录
+阶段: v4.x
+分类: docs
+类型: documentation
+---
 # sync-changelog-unreleased
 
 ## 背景

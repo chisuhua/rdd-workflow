@@ -1,3 +1,10 @@
+---
+优先级: P1
+来源: 2026-07-23 PTX-EMU guide-plan → rddf-session hook 失败实战
+阶段: v3.0
+分类: core-impl
+类型: fix
+---
 # RDDF-0001: 修复 rddf-session 跨运行时导入路径断裂
 
 > **状态**: Proposed

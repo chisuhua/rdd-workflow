@@ -1,3 +1,11 @@
+---
+优先级: P1
+来源: 2026-09-08 e2e-test-plan 主策略（docs/superpowers/specs/2026-09-08-e2e-test-plan-design.md）Phase
+  1 — A-layer e2e 基建
+阶段: v4.1 follow-up
+分类: core-test
+类型: feature
+---
 # add-e2e-test-plan-phase1 (e2e-test-plan Phase 1)
 
 > 提案已实施归档。规格见 `docs/superpowers/specs/2026-09-08-e2e-test-plan-design.md`（主策略 doc）+ 5 个 scenario spec。

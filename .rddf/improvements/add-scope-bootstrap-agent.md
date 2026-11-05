@@ -80,14 +80,12 @@
 
 ### In Scope
 
-**A. improvement 提案文件 (本提案本体)**:
-- 新建 `.rddf/improvements/add-scope-bootstrap-agent.md` (per rdd-workflow 5 段格式, 含 YAML frontmatter + 6 sections)
-- 包含 prompt template (user→LLM 复制用)
-- 包含 fallback reference (ChipForge §Build Agent Work Scope Matrix as exemplar)
-- 包含 mock example (假设新项目 X, 输出长这样)
+**已完成（提案本体，2026-10-19 落盘；不属待实施范围）**:
 
-**B. 落 improvement-suggestions.md 索引行**:
-- append 一行: `| [add-scope-bootstrap-agent](.rddf/improvements/add-scope-bootstrap-agent.md) | P2 | 2026-10-19 ChipForge 治理实战 | 2026-10-19 | 待审查 |`
+- **A. improvement 提案文件**: `.rddf/improvements/add-scope-bootstrap-agent.md` 已存在（本文件，5 段 + frontmatter 6 字段 + prompt template + mock example）
+- **B. improvement-suggestions.md 索引行**: 已落（2026-10-19 行）
+
+> 收窄说明（2026-11-05 planner 评审）：A 与 B 描述的是**提案本身**的落地，已完成。批准后实际待实施的只有 C 与 D —— 即本提案的净交付是「2 处轻量文档编辑 + 1 份 mock 参考文档」，**不含任何 skill**（见 Out of Scope 第 1 条）。
 
 **C. 文档化在 `USAGE.md` / `HANDOFF.md`** (轻量):
 - `USAGE.md` 新增 1 段 "Scope Bootstrap for New Projects" 引用本 proposal
@@ -109,25 +107,27 @@
 
 ### 必达 (Hard)
 
-- [ ] `.rddf/improvements/add-scope-bootstrap-agent.md` 文件已存在
-- [ ] YAML frontmatter 含 优先级/来源/阶段/分类/类型/特性 6 字段
-- [ ] 6 sections (Why / What / Acceptance / Capabilities / Impact) 全写
-- [ ] prompt template 段 (含 8 步 user→LLM 复制脚本) 完整
-- [ ] mock example 段 (假设新项目 X, 含 5 categories 草稿 + AGENTS.md 段落预览) 完整
-- [ ] `improvement-suggestions.md` 含 1 行新条目, 链接 proposal + 来源 + 时间
+- [x] `.rddf/improvements/add-scope-bootstrap-agent.md` 文件已存在
+- [x] YAML frontmatter 含 优先级/来源/阶段/分类/类型/特性 6 字段
+- [x] 6 sections (Why / What / Acceptance / Capabilities / Impact) 全写
+- [x] prompt template 段 (含 8 步 user→LLM 复制脚本) 完整
+- [x] mock example 段 (假设新项目 X, 含 5 categories 草稿 + AGENTS.md 段落预览) 完整
+- [x] `improvement-suggestions.md` 含 1 行新条目, 链接 proposal + 来源 + 时间
+
+> 前 6 条（提案本体）在 **2026-10-19 落盘时即已满足**，2026-11-05 planner 评审逐条复核为真。批准后待实施的是下面 Soft 组的 C 与 D。
 
 ### 应达 (Soft)
 
 - [ ] `USAGE.md` 新增 1 段 "Scope Bootstrap for New Projects" 引用本 proposal
 - [ ] `HANDOFF.md` 新增 1 行 "scope bootstrap: ..." 引用
 - [ ] `docs/example/scope-bootstrap-mock-output.md` mock output 完整 (含 5 categories × 8-10 targets + 物理目录映射 + Mermaid + scope.json state)
-- [ ] proposal 段含与 `add-archive-post-commit-hook-and-force-flag.md` 同等质量的对照表 + 范围定位
+- [x] proposal 段含与 `add-archive-post-commit-hook-and-force-flag.md` 同等质量的对照表 + 范围定位
 
 ### 治理 (Meta)
 
-- [ ] proposal 通过 `rddf validate` 0 fail
-- [ ] proposal 通过 `rddf status` 检查 status 状态 OK
-- [ ] proposal 状态从 `draft` 转 `proposed` (待 rdd-arch / rdd-planner 审查)
+- [x] `rddf validate` 对本提案 0 fail（仓库存量 spec 的 13 个失败与本提案无关 —— 本提案无 openspec change）
+- [x] `rddf status` 检查 status 状态 OK
+- [x] 状态判据（可机检）：本提案在 `improvement-suggestions.md` 的状态列为 `待审查`；批准后从 `improvement-suggestions.md` **移入** `improvement-approved.md`，状态列 = `已批准（planner 2026-11-05）`
 
 ## Capabilities
 

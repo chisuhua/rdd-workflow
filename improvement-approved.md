@@ -484,6 +484,7 @@
 | [adr-0048-v4-stage-merge-revision](.rddf/improvements/adr-0048-v4-stage-merge-revision.md) | P0 | 2026-09-09 | 已实施 |
 | [rdd-builder-phase0-llm-integration](.rddf/improvements/rdd-builder-phase0-llm-integration.md) | P2 | 2026-09-10 | 已实施 |
 | [rdd-builder-auto-pick-mode](.rddf/improvements/rdd-builder-auto-pick-mode.md) | P1 | 2026-09-10 | 已实施 |
+| [add-scope-bootstrap-agent](.rddf/improvements/add-scope-bootstrap-agent.md) | P2 | 2026-11-05 | 已批准（planner 2026-11-05；范围已收窄为 Soft 组 C+D） |
 
 > **附注 (verifier-v2-hardening Phase 7 / oracle Q3)**: 跨阶段外部-LLM/hook 耦合审计建议（advisory, 不实施）：
 > 1. **审计 `propose_quality_check.py`** —— 检查是否埋了外部 LLM/hook 假设，按 ADR-0045 模式内联（如有）

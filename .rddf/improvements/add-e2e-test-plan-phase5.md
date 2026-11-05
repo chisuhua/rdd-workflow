@@ -1,3 +1,11 @@
+---
+优先级: P1
+来源: 2026-09-08 e2e-test-plan 主策略（docs/superpowers/specs/2026-09-08-e2e-test-plan-design.md）Phase
+  5 — 外部 testbed 协同契约
+阶段: v4.1 follow-up
+分类: core-test
+类型: feature
+---
 # add-e2e-test-plan-phase5 (外部 testbed 协同契约)
 
 > 提案已实施归档。规格见 `2026-09-08-e2e-test-plan-design.md` §6 + §9 Phase 5。

@@ -1,3 +1,11 @@
+---
+优先级: P1
+来源: 2026-09-08 e2e-test-plan 主策略（docs/superpowers/specs/2026-09-08-e2e-test-plan-design.md）Phase
+  4 — CI integration
+阶段: v4.1 follow-up
+分类: core-test
+类型: feature
+---
 # add-e2e-test-plan-phase4 (CI integration)
 
 > 提案已实施归档。规格见 `2026-09-08-e2e-test-plan-design.md` §5 + §9 Phase 4。
