@@ -33,6 +33,10 @@
 - `feat-rdd-doctor-coverage-completion` — rdd-doctor coverage completion — lazy-import refactor + CI 护送 14/22 + review-debt/roadmap-backup 新 category (refs: phase-2)
 - `feat-remove-dead-dup-layer` — 删除 skills/_lib 陈旧重复层 — iteration 副本 + 20 个 schema 副本 + 3 个失效代理 + 8 条死 dash 注册 + 修 populate 路径恢复被静默跳过的校验 (refs: phase-4)
 
+### Objectives
+- `objective-bypass-audit-hub-governance` — 统一 bypass audit + hub federation governance (status: deferred, priority: P2)
+- `objective-onboard-new-skill` — 新增 skill 的标准化 onboarding 流程 (status: active, priority: P1)
+
 <!-- AUTO-SPRINT-START -->
 ## Current Sprint: sprint-2026-09
 

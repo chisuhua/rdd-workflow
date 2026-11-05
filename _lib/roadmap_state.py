@@ -788,6 +788,43 @@ from pathlib import Path
 from typing import Tuple  # noqa: E402  (kept near other typing imports)
 
 
+def load_objectives(fragments_dir: str) -> List[dict]:
+    """Load objectives from `<fragments_dir>/objectives/*.md`.
+
+    Objectives are NOT fragments: their frontmatter uses a different schema
+    (`theme` / `priority` / `review_by`, no `kind` / `phase_refs`), so they are
+    parsed with `_lib.objective.parse_objective` rather than
+    `_parse_fragment_file`. Archived objectives and unparsable files are
+    skipped — same policy as `update_objectives_sentinel`.
+
+    Returns a list of frontmatter dicts sorted by objective id.
+    """
+    from pathlib import Path as _P
+
+    obj_dir = _P(fragments_dir) / "objectives"
+    if not obj_dir.is_dir():
+        return []
+
+    try:
+        from _lib.objective import parse_objective
+    except ImportError:
+        return []
+
+    out: List[dict] = []
+    for f in sorted(obj_dir.glob("*.md")):
+        if f.parent.name == "archive":
+            continue
+        try:
+            data = parse_objective(f)
+        except (ValueError, OSError):
+            continue
+        fm = data.get("frontmatter", {}) or {}
+        if fm.get("status") not in ("active", "deferred", "completed"):
+            continue
+        out.append(fm)
+    return sorted(out, key=lambda fm: str(fm.get("id", "")))
+
+
 def render_fragment_index(fragments_dir: str, main_doc_path: str) -> None:
     """Render the AUTO-INDEX sentinel block at the bottom of main_doc.
 
@@ -825,7 +862,7 @@ def render_fragment_index(fragments_dir: str, main_doc_path: str) -> None:
         if tail_sentinel_m:
             trailing = tail[tail_sentinel_m.start():]
 
-    # Build index (phases first, then features)
+    # Build index (phases first, then features, then objectives)
     fragments = load_fragments(fragments_dir)
     phases = [f for f in fragments if f.kind == "phase"]
     features = [f for f in fragments if f.kind == "feature"]
@@ -844,6 +881,21 @@ def render_fragment_index(fragments_dir: str, main_doc_path: str) -> None:
             refs = ", ".join(f.phase_refs) if f.phase_refs else "(no refs)"
             lines.append(f"- `{f.id}` — {theme} (refs: {refs})")
         lines.append("")
+    # The Objectives segment is always emitted — the doctor requires all three
+    # segments (Phases / Features / Objectives) to be present, so omitting it
+    # when a project has no objectives would report a false gap.
+    objectives = load_objectives(fragments_dir)
+    lines.append("### Objectives")
+    if objectives:
+        for obj in objectives:
+            theme = obj.get("theme") or "(no theme)"
+            lines.append(
+                f"- `{obj.get('id', '(unknown)')}` — {theme} "
+                f"(status: {obj.get('status', '?')}, priority: {obj.get('priority', '?')})"
+            )
+    else:
+        lines.append("- _(none)_")
+    lines.append("")
 
     new_content = base + "\n".join(lines) + "\n" + trailing
 
