@@ -24,6 +24,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+from _lib.verifier.cache import (
+    audit_log_path, verdict_cache_path, verify_context_path,
+)
+
 # Section header (Chinese + English variants) — identical to ac_verifier.py
 # so caches and fixtures remain interoperable during the shim window.
 _AC_SECTION_HEADERS = re.compile(
@@ -176,8 +180,8 @@ def build_verification_context(
         "codebase_commit": codebase_commit,
         "ac_count": len(acs),
         "acs": acs,
-        "cache_path": str(project_root / ".rddf" / "state" / f".ac-verdict-{change_name}.json"),
-        "audit_log_path": str(project_root / ".rddf" / "state" / ".ac-verification.jsonl"),
+        "cache_path": str(verdict_cache_path(project_root, change_name)),
+        "audit_log_path": str(audit_log_path(project_root)),
         "expected_verdict_schema": VERDICT_SCHEMA,
         "reasoning_keywords": {
             "drift": list(DRIFT_KEYWORDS),
@@ -204,7 +208,7 @@ def stage_verification_context(
     *,
     codebase_commit: Optional[str] = None,
 ) -> Optional[Path]:
-    """Write the context doc to .rddf/state/rdd-verify-context-<change>.json.
+    """Write the context doc to .rddf/state/verifier/rdd-verify-context-<change>.json.
 
     Returns the written path, or None when proposal.md is missing.
 
@@ -217,7 +221,7 @@ def stage_verification_context(
     )
     if doc is None:
         return None
-    out = Path(project_root) / ".rddf" / "state" / f"rdd-verify-context-{change_name}.json"
+    out = verify_context_path(project_root, change_name)
     out.parent.mkdir(parents=True, exist_ok=True)
     # Atomic: write to temp, then rename. Concurrent stagings can race on the
     # write but only one rename will land as the final file content.

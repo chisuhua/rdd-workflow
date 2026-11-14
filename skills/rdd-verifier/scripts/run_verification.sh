@@ -4,7 +4,7 @@
 # Per ADR-0045 (inline-ac-verifier-into-rdd-verifier): the executing AI agent
 # IS the LLM. This script no longer shells out to the deprecated ac-verifier
 # skill. Instead it stages a structured context file at
-#   .rddf/state/rdd-verify-context-<change>.json
+#   .rddf/state/verifier/rdd-verify-context-<change>.json
 # describing what the agent should verify (proposal path, AC list, cache path,
 # audit log path, expected verdict schema, reasoning-keyword contract).
 #

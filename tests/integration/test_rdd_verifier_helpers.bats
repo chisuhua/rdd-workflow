@@ -107,7 +107,8 @@ EOF
 }
 
 @test "classify_failure.sh: classifies 'missing' as implementation_gap" {
-    cat > .rddf/state/.ac-verdict-test.json <<'EOF'
+    mkdir -p .rddf/state/verifier
+    cat > .rddf/state/verifier/.ac-verdict-test.json <<'EOF'
 {"version":1,"change":"test","codebase_commit":"abc1234","verdict":[
   {"ac_id":"AC-1","status":"fail","confidence":0.9,"evidence":[],"reasoning":"Function is missing from codebase"}
 ],"ran_at":"2026-08-26T00:00:00Z","ran_by":"rdd-verifier"}
@@ -118,7 +119,8 @@ EOF
 }
 
 @test "classify_failure.sh: classifies 'exists but' as proposal_drift" {
-    cat > .rddf/state/.ac-verdict-test.json <<'EOF'
+    mkdir -p .rddf/state/verifier
+    cat > .rddf/state/verifier/.ac-verdict-test.json <<'EOF'
 {"version":1,"change":"test","codebase_commit":"abc1234","verdict":[
   {"ac_id":"AC-1","status":"fail","confidence":0.9,"evidence":[],"reasoning":"Code exists but mismatches the AC"}
 ],"ran_at":"2026-08-26T00:00:00Z","ran_by":"rdd-verifier"}

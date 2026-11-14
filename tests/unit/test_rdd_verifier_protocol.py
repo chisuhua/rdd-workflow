@@ -317,15 +317,15 @@ def test_cache_freshness_matches_commit(tmp_path):
 
 
 def test_cache_read_corrupt_returns_none(tmp_path):
-    (tmp_path / ".rddf" / "state").mkdir(parents=True)
-    (tmp_path / ".rddf" / "state" / ".ac-verdict-ch-x.json").write_text("{broken")
+    (tmp_path / ".rddf" / "state" / "verifier").mkdir(parents=True)
+    (tmp_path / ".rddf" / "state" / "verifier" / ".ac-verdict-ch-x.json").write_text("{broken")
     assert read_verdict_cache(tmp_path, "ch-x") is None
 
 
 def test_read_verdict_cache_v1_returns_none(tmp_path):
     """verifier-v2-hardening Phase 5 (oracle risk #5): v1 cache fail-closed."""
-    (tmp_path / ".rddf" / "state").mkdir(parents=True)
-    (tmp_path / ".rddf" / "state" / ".ac-verdict-ch-x.json").write_text(
+    (tmp_path / ".rddf" / "state" / "verifier").mkdir(parents=True)
+    (tmp_path / ".rddf" / "state" / "verifier" / ".ac-verdict-ch-x.json").write_text(
         json.dumps({"version": 1, "change": "ch-x", "codebase_commit": "abc",
                     "verdict": []})
     )
@@ -333,16 +333,16 @@ def test_read_verdict_cache_v1_returns_none(tmp_path):
 
 
 def test_read_verdict_cache_unknown_version_returns_none(tmp_path):
-    (tmp_path / ".rddf" / "state").mkdir(parents=True)
-    (tmp_path / ".rddf" / "state" / ".ac-verdict-ch-x.json").write_text(
+    (tmp_path / ".rddf" / "state" / "verifier").mkdir(parents=True)
+    (tmp_path / ".rddf" / "state" / "verifier" / ".ac-verdict-ch-x.json").write_text(
         json.dumps({"schema_version": 99, "change": "ch-x", "codebase_commit": "abc"})
     )
     assert read_verdict_cache(tmp_path, "ch-x") is None
 
 
 def test_read_verdict_cache_missing_version_returns_none(tmp_path):
-    (tmp_path / ".rddf" / "state").mkdir(parents=True)
-    (tmp_path / ".rddf" / "state" / ".ac-verdict-ch-x.json").write_text(
+    (tmp_path / ".rddf" / "state" / "verifier").mkdir(parents=True)
+    (tmp_path / ".rddf" / "state" / "verifier" / ".ac-verdict-ch-x.json").write_text(
         json.dumps({"change": "ch-x", "codebase_commit": "abc"})
     )
     assert read_verdict_cache(tmp_path, "ch-x") is None
@@ -382,7 +382,9 @@ def test_build_verification_context_shape(tmp_path):
     assert doc["ac_count"] == 2
     assert doc["codebase_commit"] == "deadbeef"
     assert doc["cache_path"].endswith(".ac-verdict-ch-p.json")
+    assert Path(doc["cache_path"]).parent.name == "verifier"
     assert doc["audit_log_path"].endswith(".ac-verification.jsonl")
+    assert Path(doc["audit_log_path"]).parent.name == "verifier"
     assert "LLM Verification Protocol" in doc["instruction"]
     assert doc["reasoning_keywords"]["drift"] == list(DRIFT_KEYWORDS)
     assert doc["expected_verdict_schema"] == VERDICT_SCHEMA
@@ -399,6 +401,7 @@ def test_stage_verification_context_writes_file(tmp_path):
     doc = json.loads(out.read_text(encoding="utf-8"))
     assert doc["change"] == "ch-p"
     assert out.name == "rdd-verify-context-ch-p.json"
+    assert out.parent.name == "verifier"
 
 
 def test_stage_verification_context_atomic_no_tmp_leftover(tmp_path):
@@ -406,7 +409,7 @@ def test_stage_verification_context_atomic_no_tmp_leftover(tmp_path):
     _write_proposal(tmp_path, "## 验收标准\n- AC one\n")
     stage_verification_context("ch-p", tmp_path)
     # The .tmp sibling must NOT exist (atomic replace ate it).
-    leftover = tmp_path / ".rddf" / "state" / "rdd-verify-context-ch-p.json.tmp"
+    leftover = tmp_path / ".rddf" / "state" / "verifier" / "rdd-verify-context-ch-p.json.tmp"
     assert not leftover.exists()
 
 

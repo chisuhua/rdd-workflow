@@ -149,7 +149,7 @@
           },
           "verification": {
             "type": ["object", "null"],
-            "description": "Independent verification lifecycle for a change. Optional; missing field treated as 'unknown' for active changes, 'legacy' for archived changes. Summary fields only — retry history lives in .rddf/state/verifier/<change>.json, raw verdict in .rddf/state/.ac-verdict-<change>.json, audit log in .rddf/state/verifier/<change>.audit.jsonl. v7 (fix-rdd-verifier-lifecycle-dashboard 2026-08-26).",
+            "description": "Independent verification lifecycle for a change. Optional; missing field treated as 'unknown' for active changes, 'legacy' for archived changes. Summary fields only — retry history lives in .rddf/state/verifier/<change>.json, raw verdict in .rddf/state/verifier/.ac-verdict-<change>.json, audit log in .rddf/state/verifier/<change>.audit.jsonl. v7 (fix-rdd-verifier-lifecycle-dashboard 2026-08-26).",
             "additionalProperties": true,
             "required": ["state", "archive_ready"],
             "properties": {

@@ -325,7 +325,7 @@ Unchanged from v4.0; v2.0 self-contained LLM verification (per [ADR-0045](../adr
 - **Inputs**: scan of `openspec/changes/` for `status=implemented + tasks complete + not archived`, plus `.rddf/state/iteration.json` for cycle context.
 - **Outputs**:
   - Per-change `.rddf/state/verifier/<change>.json` (loop state, classification history, route, halt reason).
-  - Verdict cache at `.rddf/state/.ac-verdict-<name>.json` (SHA-fingerprint, prevents double LLM calls).
+  - Verdict cache at `.rddf/state/verifier/.ac-verdict-<name>.json` (SHA-fingerprint, prevents double LLM calls).
   - Audit log at `.rddf/state/verifier/<change>.audit.jsonl` (append-only).
   - Failure classification (`implementation_gap` → builder retry; `proposal_drift` → planner re-evaluate via feedback channel, per ADR-0042).
   - Bounded retry counter, max 3 iterations per change.

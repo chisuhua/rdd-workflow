@@ -12,6 +12,30 @@ in 4 SKILL.md (rdd-arch/planner/builder/verifier/quick). Closes 5 P0 findings fr
 
 ## [Unreleased]
 
+### consolidate-verifier-state（2026-11-14）
+
+把 verifier 的 4 类状态文件从 `.rddf/state/` **根下**收拢进 `.rddf/state/verifier/`，
+使该目录成为 verifier 状态的**唯一命名空间**（per-change loop state / audit log 本来就在那里）。
+
+- **动机（不只是洁癖）**：**被派发的 verifier 后端**的写集上限是 `.rddf/state/verifier`
+  这个**目录** ⇒ 根下的 verdict cache / 共享 audit log / halted audit / staged context
+  四个文件它**写不进去** ⇒ 消费方只能退化成「后端只跑取证与判决、状态机落盘由主会话代跑」的绕路。
+- **路径表达式只有一个定义点**：新增 `_lib/verifier/cache.py::verdict_cache_path()`；
+  `archive_gate.py` 里那份**从未被调用**的同名 `_cache_path` 改为转调。
+- ⚠ **root 来源不合并**（worktree 陷阱）：archive gate 解析的是**主仓根**（worktree 模式 cache 在主仓），
+  verifier 侧是工程根 —— worktree 下两者不等；合并 root 会让归档门永远 miss。
+- **不做双路读 fallback**：改为 `rddf rdd-verify` 启动时**一次性搬迁**（目标已存在则不覆盖、
+  逐文件 best-effort、失败只告警）。理由：bash 归档门与 python reader 各写一份 fallback，
+  两侧可能对「cache 是否存在」给出不同答案。
+- **`role.owns` 补齐为 6 项**：原先只声明 4 项，其中 2 项（`.ac-verifier-blocked.jsonl`、
+  `rdd-verify-context-*`）是 skill **实际写入但从未声明**的路径。
+- **清掉一个悬空指针**：`builder_handoff.py` 的 `verifier_report_path` 默认值指向
+  `.rddf/state/.verifier-report.json` —— 全仓**无任何写入方**；现改为按 `change_name` 计算的真实路径。
+- **同步面**：verdict cache 6 处 + audit log 2 处 + staged context 4 处 + halted audit 1 处 +
+  CI artifact 1 处 + ADR-0034（storage ownership 表 + §11 修订要点）+ ADR-0045 +
+  `docs/architecture/*` + `docs/schemas/README.md` + `USAGE.md` + 4 个 capability spec 的 delta +
+  6 个 unit 测试文件 + 8 个 bats 文件 + 6 个 e2e scenario。
+
 ### remove-dead-dup-layer（2026-11-04）
 
 删除 `skills/_lib/` 下的陈旧重复层，并修掉一处被静默跳过的校验。3 个独立 commit。

@@ -108,7 +108,7 @@ def test_run_one_change_passed_writes_cache_and_state(tmp_path):
     assert result["verdict_sha"] == sha
     assert result["archive_ready"] is True
 
-    cache_file = tmp_path / ".rddf" / "state" / ".ac-verdict-ch-x.json"
+    cache_file = tmp_path / ".rddf" / "state" / "verifier" / ".ac-verdict-ch-x.json"
     assert cache_file.is_file()
     cached = json.loads(cache_file.read_text())
     assert cached["verification_state"] == "passed"
@@ -188,7 +188,7 @@ def test_run_one_change_staged_to_pending_mapping(tmp_path):
     assert result["route"] == "pending-agent"
     assert result["archive_ready"] is False
     # No verdict cache should be written (agent has not verified yet).
-    cache_file = tmp_path / ".rddf" / "state" / ".ac-verdict-ch-staged.json"
+    cache_file = tmp_path / ".rddf" / "state" / "verifier" / ".ac-verdict-ch-staged.json"
     assert not cache_file.exists()
 
 
@@ -224,7 +224,7 @@ def test_run_one_change_incomplete_verdict_marks_failed(tmp_path):
     assert result["state"] == "failed"
     assert result["archive_ready"] is False
     # No verdict cache (incomplete verdict rejected).
-    cache_file = tmp_path / ".rddf" / "state" / ".ac-verdict-ch-inc.json"
+    cache_file = tmp_path / ".rddf" / "state" / "verifier" / ".ac-verdict-ch-inc.json"
     assert not cache_file.exists()
     assert any("missing" in f for f in result["failed_acs"])
 

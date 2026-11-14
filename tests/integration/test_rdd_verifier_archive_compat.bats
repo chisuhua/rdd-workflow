@@ -48,7 +48,8 @@ _setup_skills_symlink() {
 
     # Seed verdict cache at current commit with valid pass verdict
     # (verifier-v2-hardening: schema_version=2 + evidence minItems=1 + reasoning required)
-    cat > .rddf/state/.ac-verdict-test-change.json <<EOF
+    mkdir -p .rddf/state/verifier
+    cat > .rddf/state/verifier/.ac-verdict-test-change.json <<EOF
 {"schema_version":2,"change":"test-change","codebase_commit":"$SHA","verdict":[
   {"ac_id":"AC-1","status":"pass","confidence":0.95,"evidence":[{"tool":"Grep","query":"x","result_summary":"y"}],"reasoning":"All good"}
 ],"ran_at":"2026-09-07T00:00:00Z","ran_by":"rdd-verifier"}
@@ -71,7 +72,8 @@ EOF
     OLD_SHA=$(git rev-parse HEAD)
 
     # Seed cache with OLD SHA
-    cat > .rddf/state/.ac-verdict-test-change.json <<EOF
+    mkdir -p .rddf/state/verifier
+    cat > .rddf/state/verifier/.ac-verdict-test-change.json <<EOF
 {"version":1,"change":"test-change","codebase_commit":"$OLD_SHA","verdict":[],"ran_at":"x","ran_by":"rdd-verifier"}
 EOF
 
@@ -108,7 +110,8 @@ EOF
     _setup_skills_symlink
     SHA=$(git rev-parse HEAD)
     # Even with cache present, SKIP_AC_VERIFICATION bypasses
-    cat > .rddf/state/.ac-verdict-test-change.json <<EOF
+    mkdir -p .rddf/state/verifier
+    cat > .rddf/state/verifier/.ac-verdict-test-change.json <<EOF
 {"version":1,"change":"test-change","codebase_commit":"$SHA","verdict":[],"ran_at":"x","ran_by":"rdd-verifier"}
 EOF
 
@@ -125,7 +128,8 @@ EOF
     _setup_skills_symlink
     SHA=$(git rev-parse HEAD)
     # Seed cache with FAIL verdict (test scenario: AC failed in rdd-verifier run)
-    cat > .rddf/state/.ac-verdict-test-change.json <<EOF
+    mkdir -p .rddf/state/verifier
+    cat > .rddf/state/verifier/.ac-verdict-test-change.json <<EOF
 {"schema_version":2,"change":"test-change","codebase_commit":"$SHA","verdict":[
   {"ac_id":"AC-1","status":"fail","confidence":0.95,"evidence":[{"tool":"Grep","query":"x","result_summary":"y"}],"reasoning":"missing implementation: function not found in api.py"}
 ],"ran_at":"2026-09-07T00:00:00Z","ran_by":"rdd-verifier"}

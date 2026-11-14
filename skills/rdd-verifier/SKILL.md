@@ -28,8 +28,10 @@ role:
     owns:
       - ".rddf/state/verifier/<name>.json"
       - ".rddf/state/verifier/<name>.audit.jsonl"
-      - ".rddf/state/.ac-verdict-*.json"
-      - ".rddf/state/.ac-verification.jsonl"
+      - ".rddf/state/verifier/.ac-verdict-*.json"
+      - ".rddf/state/verifier/.ac-verification.jsonl"
+      - ".rddf/state/verifier/.ac-verifier-blocked.jsonl"
+      - ".rddf/state/verifier/rdd-verify-context-<name>.json"
     not_owns:
       - "openspec/changes/<name>/"
       - "docs/adr/ADR-*.md"
@@ -46,7 +48,7 @@ source "$(dirname "${BASH_SOURCE[0]:-$0}")/../rddf-session/scripts/rddf_session_
 
 # 进入前 (写 phase_started)
 rddf_session_hook_entry stage_verify rdd-verifier "verifier-phase" "verifier-done" \
-    .rddf/state/.verifier-report.json
+    .rddf/state/verifier/
 
 # 阶段完成时 (写 phase_completed)
 trap 'rddf_session_hook_close stage_verify verifier-done rdd-verifier' EXIT INT TERM
@@ -79,7 +81,7 @@ trap 'rddf_session_hook_close stage_verify verifier-done rdd-verifier' EXIT INT 
 - SHA 指纹 verdict 缓存（与 `archive_gate_check` 共享）
 - 启发式失败分类（implementation_gap vs proposal_drift）
 - 失败回环 + 3 次上限（haled → audit log → 人工）
-- 所有状态文件 schema（`.rddf/state/verifier/*.json`、`*.audit.jsonl`、`.ac-verdict-*.json`、`.ac-verification.jsonl`）
+- 所有状态文件 schema（`.rddf/state/verifier/` 下的 `*.json`、`*.audit.jsonl`、`.ac-verdict-*.json`、`.ac-verification.jsonl`、`.ac-verifier-blocked.jsonl`、`rdd-verify-context-*.json`）
 - 退出码 0/1/2/4 语义不变
 
 **Deprecated**：`skills/ac-verifier/SKILL.md` 标记 deprecated，所有调用方（包括 `_lib/archive.sh` 和 `rddf ac-verify` CLI）将自动重定向到本 skill 的实现。
@@ -115,7 +117,7 @@ skill_use("rdd-verifier")
 [1] scan_queue.sh → list `in_worktree`/`completed` changes with `tasks_done == tasks_total > 0` from .rddf/state/iteration.json
     ↓ (queue = ["change-a", "change-b", ...])
 [2] FOR EACH change (serial, max $RDDF_VERIFIER_MAX_CHANGES):
-    ├─ [2a] Check SHA cache (.ac-verdict-<name>.json):
+    ├─ [2a] Check SHA cache (.rddf/state/verifier/.ac-verdict-<name>.json):
     │   ├─ cache_hit + SHA match → reuse verdict (no LLM call)
     │   ├─ cache_hit + SHA mismatch → "stale", re-run LLM verification
     │   └─ no cache → run LLM verification fresh
@@ -257,7 +259,7 @@ skill_use("rdd-verifier")
 
 ### Step 5: 持久化（verdict cache + audit log）
 
-**写入 verdict cache**（路径 `.rddf/state/.ac-verdict-<change>.json`）：
+**写入 verdict cache**（路径 `.rddf/state/verifier/.ac-verdict-<change>.json`）：
 
 ```json
 {
@@ -277,7 +279,7 @@ skill_use("rdd-verifier")
 
 写入工具：`Read` + `Write`（先 Read 当前内容判断是否覆盖，再 Write 完整 JSON）。
 
-**追加 audit log**（路径 `.rddf/state/.ac-verification.jsonl`，append-only）：
+**追加 audit log**（路径 `.rddf/state/verifier/.ac-verification.jsonl`，append-only）：
 
 ```json
 {"ts": "<ISO 8601 UTC>", "change_name": "<change-name>", "exit_code": 0|1|3, "llm_provider": "agent", "llm_model": "agent", "verdict": [...]}
@@ -322,7 +324,7 @@ Source: `iteration.json` filter `status in (in_worktree, completed)` and `tasks_
 For each change in queue:
 
 1. **`Bash: git rev-parse HEAD`** — 获取当前 commit SHA
-2. **`Read .rddf/state/.ac-verdict-<name>.json`** — 读 SHA cache
+2. **`Read .rddf/state/verifier/.ac-verdict-<name>.json`** — 读 SHA cache
 3. **Cache freshness check**：
    - cache SHA == HEAD SHA → 复用 verdict，**跳过 LLM 验证**
    - cache SHA ≠ HEAD SHA → stale，重跑
@@ -412,7 +414,7 @@ bash skills/rdd-verifier/scripts/route_loop.sh "$CHANGE_NAME" "$LABEL"
 
 ## Audit Log
 
-当 `route="halted"`，append 到 `.rddf/state/.ac-verifier-blocked.jsonl`：
+当 `route="halted"`，append 到 `.rddf/state/verifier/.ac-verifier-blocked.jsonl`：
 
 ```json
 {
@@ -436,12 +438,16 @@ This log is read-only forensic record. `rdd-doctor --category plan-tdd` can chec
 |------|--------|---------|
 | `.rddf/state/verifier/<change>.json` | `verifier_loop_schema.json` v2 | Per-change loop count, classification history, route, halt reason |
 | `.rddf/state/verifier/<change>.audit.jsonl` | `verifier_audit_schema.json` v1 | Append-only running/failed/halted/bypassed/archive-ready events |
-| `.rddf/state/.ac-verdict-<name>.json` | cache schema v2 | SHA-fingerprint verdict cache, verification state, failed ACs, implementation ref |
-| `.rddf/state/.ac-verification.jsonl` | audit log schema v1 | Append-only LLM verification runs (ts, change_name, exit_code, verdict) |
+| `.rddf/state/verifier/.ac-verdict-<name>.json` | cache schema v2 | SHA-fingerprint verdict cache, verification state, failed ACs, implementation ref |
+| `.rddf/state/verifier/.ac-verification.jsonl` | audit log schema v1 | Append-only LLM verification runs (ts, change_name, exit_code, verdict) |
+| `.rddf/state/verifier/.ac-verifier-blocked.jsonl` | audit log schema v1 | Append-only halted-verification records (route=halted) |
+| `.rddf/state/verifier/rdd-verify-context-<name>.json` | context schema v1 | Staged verification context (proposal path, AC list, cache/audit paths) |
 
 All verifier state files are `.rddf/state/` gitignored, per AGENTS.md state file convention. The canonical audit log is `.rddf/state/verifier/<change>.audit.jsonl`.
 
-> **v2.0 变更**：`.rddf/state/.ac-verification.jsonl` 写入方从 `ac_verifier.py::append_audit_log` 改为本 skill 的 Step 5 协议。Schema 保持不变（向后兼容）。
+> **v2.0 变更**：`.rddf/state/verifier/.ac-verification.jsonl` 写入方从 `ac_verifier.py::append_audit_log` 改为本 skill 的 Step 5 协议。Schema 保持不变（向后兼容）。
+>
+> **路径收拢（consolidate-verifier-state）**：`.rddf/state/verifier/` 是 verifier 状态的**唯一命名空间**；此前直接躺在 `.rddf/state/` 根下的 4 类文件（verdict cache / 共享 audit log / halted audit / staged context）已迁入。`rddf rdd-verify` 启动时会自动把遗留文件搬进来（目标已存在则不覆盖）。
 
 ---
 

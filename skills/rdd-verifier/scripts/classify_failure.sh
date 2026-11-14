@@ -15,7 +15,7 @@ CHANGE_NAME="${1:-}"
 }
 
 PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-CACHE="$PROJECT_ROOT/.rddf/state/.ac-verdict-${CHANGE_NAME}.json"
+CACHE="$PROJECT_ROOT/.rddf/state/verifier/.ac-verdict-${CHANGE_NAME}.json"
 
 if [ ! -f "$CACHE" ]; then
     echo "❌ verdict cache missing: $CACHE" >&2

@@ -509,7 +509,7 @@ This section walks through the **happy path** end-to-end, step by step. All file
 [Step 5.2] scan openspec/changes/ for status=implemented + tasks complete + not archived
 [Step 5.3] for each qualifying change:
           - read openspec/changes/<change>/proposal.md ## 验收标准
-          - read .rddf/state/.ac-verdict-<change>.json (SHA-fingerprint cache)
+          - read .rddf/state/verifier/.ac-verdict-<change>.json (SHA-fingerprint cache)
           - if cache miss → run LLM verification (self-contained per ADR-0045)
           - classify: implementation_gap (→P2 retry) | ac_fail (→P1 retry) | needs_human (halt)
           - retry_count += 1; if > max_retries (3) → halt exit 4
@@ -520,7 +520,7 @@ This section walks through the **happy path** end-to-end, step by step. All file
 
 **Files written by rdd-verifier**:
 - `.rddf/state/verifier/<change>.json`
-- `.rddf/state/.ac-verdict-<change>.json` (cache)
+- `.rddf/state/verifier/.ac-verdict-<change>.json` (cache)
 - `.rddf/state/verifier/<change>.audit.jsonl`
 
 ---

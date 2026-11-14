@@ -171,7 +171,7 @@ def test_write_structured_cache_fallback_writes_v2(tmp_path):
                    "verdict": [{"ac_id": "AC-1", "status": "pass"}]}
     write_structured_cache_fallback(tmp_path, "ch-x", verdict_doc,
                                       implementation_ref="openspec/ch-x")
-    cache_path = tmp_path / ".rddf" / "state" / ".ac-verdict-ch-x.json"
+    cache_path = tmp_path / ".rddf" / "state" / "verifier" / ".ac-verdict-ch-x.json"
     cached = json.loads(cache_path.read_text())
     assert cached["schema_version"] == 2
     assert cached["ran_by"] == "archive_gate_check"
@@ -185,7 +185,7 @@ def test_write_structured_cache_fallback_writes_failed(tmp_path):
     verdict_doc = {"codebase_commit": sha,
                    "verdict": [{"ac_id": "AC-1", "status": "fail"}]}
     write_structured_cache_fallback(tmp_path, "ch-x", verdict_doc)
-    cache_path = tmp_path / ".rddf" / "state" / ".ac-verdict-ch-x.json"
+    cache_path = tmp_path / ".rddf" / "state" / "verifier" / ".ac-verdict-ch-x.json"
     cached = json.loads(cache_path.read_text())
     assert cached["verification_state"] == "failed"
     assert cached["failed_acs"] == ["AC-1"]

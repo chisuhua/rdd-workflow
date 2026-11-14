@@ -23,7 +23,7 @@ from _lib.verifier.cache import (
 
 def test_cache_path():
     p = _cache_path(Path("/tmp/proj"), "ch-x")
-    assert p == Path("/tmp/proj/.rddf/state/.ac-verdict-ch-x.json")
+    assert p == Path("/tmp/proj/.rddf/state/verifier/.ac-verdict-ch-x.json")
 
 
 def test_cache_v2_full_fields(tmp_path):
@@ -68,7 +68,7 @@ def test_cache_v1_legacy_returns_none(tmp_path):
         "ran_at": "2026-08-20T00:00:00Z",
         "ran_by": "rdd-verifier",
     }
-    cache_dir = tmp_path / ".rddf" / "state"
+    cache_dir = tmp_path / ".rddf" / "state" / "verifier"
     cache_dir.mkdir(parents=True)
     (_cache_path(tmp_path, "ch-x")).write_text(json.dumps(legacy))
     cached = read_verdict_cache(tmp_path, "ch-x")
@@ -76,14 +76,14 @@ def test_cache_v1_legacy_returns_none(tmp_path):
 
 
 def test_cache_unknown_schema_version_returns_none(tmp_path):
-    (tmp_path / ".rddf" / "state").mkdir(parents=True)
+    (tmp_path / ".rddf" / "state" / "verifier").mkdir(parents=True)
     (_cache_path(tmp_path, "ch-x")).write_text(json.dumps(
         {"schema_version": 99, "change": "ch-x", "verdict": []}))
     assert read_verdict_cache(tmp_path, "ch-x") is None
 
 
 def test_cache_missing_schema_version_returns_none(tmp_path):
-    (tmp_path / ".rddf" / "state").mkdir(parents=True)
+    (tmp_path / ".rddf" / "state" / "verifier").mkdir(parents=True)
     (_cache_path(tmp_path, "ch-x")).write_text(json.dumps(
         {"change": "ch-x", "verdict": []}))
     assert read_verdict_cache(tmp_path, "ch-x") is None

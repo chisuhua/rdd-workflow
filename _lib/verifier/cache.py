@@ -5,12 +5,17 @@ Per fix-rdd-verifier-lifecycle-dashboard Task 3 + ADR-0034 §7.2:
 - v2 schema adds verification_state, failed_acs, schema_version, implementation_ref, source
 - Backward compat: v1 entries are read but not upgraded
 
-Cache file: `.rddf/state/.ac-verdict-<change>.json` (gitignored).
+Cache file: `.rddf/state/verifier/.ac-verdict-<change>.json` (gitignored).
+
+Per consolidate-verifier-state: `.rddf/state/verifier/` is the single namespace
+for verifier state. `verdict_cache_path()` below is the ONLY place that spells
+the cache path; every other module calls it.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -19,9 +24,48 @@ SCHEMA_VERSION_V1 = 1
 SCHEMA_VERSION_V2 = 2
 _SCHEMA_VERSION = SCHEMA_VERSION_V2
 
+# Verifier state namespace (per consolidate-verifier-state / ADR-0034 amendment).
+VERIFIER_STATE_DIRNAME = "verifier"
+
+
+def verdict_cache_path(root: Path, change_name: str) -> Path:
+    """Canonical verdict cache path — the single definition point.
+
+    `root` is the caller's project root. Callers that need the *main* repository
+    root (archive gate, worktree mode) MUST pass their own root: this function
+    resolves no repository root of its own.
+    """
+    return (Path(root) / ".rddf" / "state" / VERIFIER_STATE_DIRNAME
+            / f".ac-verdict-{change_name}.json")
+
+
+def legacy_verdict_cache_path(root: Path, change_name: str) -> Path:
+    """Pre-consolidation cache path (`.rddf/state/.ac-verdict-<change>.json`)."""
+    return Path(root) / ".rddf" / "state" / f".ac-verdict-{change_name}.json"
+
 
 def _cache_path(project_root: Path, change_name: str) -> Path:
-    return Path(project_root) / ".rddf" / "state" / f".ac-verdict-{change_name}.json"
+    # Kept for backward compatibility (tests import this name); the path
+    # expression itself now lives in verdict_cache_path().
+    return verdict_cache_path(project_root, change_name)
+
+
+def audit_log_path(root: Path) -> Path:
+    """Canonical shared verification audit log path."""
+    return (Path(root) / ".rddf" / "state" / VERIFIER_STATE_DIRNAME
+            / ".ac-verification.jsonl")
+
+
+def blocked_audit_log_path(root: Path) -> Path:
+    """Canonical halted-verification audit log path."""
+    return (Path(root) / ".rddf" / "state" / VERIFIER_STATE_DIRNAME
+            / ".ac-verifier-blocked.jsonl")
+
+
+def verify_context_path(root: Path, change_name: str) -> Path:
+    """Canonical staged verification context path."""
+    return (Path(root) / ".rddf" / "state" / VERIFIER_STATE_DIRNAME
+            / f"rdd-verify-context-{change_name}.json")
 
 
 def cache_key(
@@ -151,3 +195,59 @@ def cache_has_failed_ac(project_root: Path, change_name: str) -> bool:
         if v.get("status") == "fail":
             return True
     return False
+
+
+# ── One-shot migration (per consolidate-verifier-state) ─────────────────────
+# Pre-consolidation, four kinds of verifier state lived directly under
+# `.rddf/state/`. They now live under `.rddf/state/verifier/`. The migration is
+# explicit (not a dual-path read fallback) so that exactly ONE path is in play
+# afterwards — a dual-path read would let the bash archive gate and the python
+# reader disagree about whether a cache exists.
+_LEGACY_EXACT_NAMES = (
+    ".ac-verification.jsonl",
+    ".ac-verifier-blocked.jsonl",
+)
+_LEGACY_GLOBS = (
+    ".ac-verdict-*.json",
+    "rdd-verify-context-*.json",
+)
+
+
+def migrate_legacy_state(project_root: Path) -> list[tuple[str, str]]:
+    """Move pre-consolidation verifier state files into `.rddf/state/verifier/`.
+
+    Returns a list of `(action, filename)` tuples where action is one of
+    `moved` / `skipped` / `failed`.
+
+    Conservative rules (mirroring the legacy `.verifier-loop.json` migration):
+      - an existing destination is never overwritten (`skipped`);
+      - each file is handled independently — one failure never aborts the rest
+        and never raises (`failed`);
+      - missing files are not reported.
+    """
+    state_dir = Path(project_root) / ".rddf" / "state"
+    target_dir = state_dir / VERIFIER_STATE_DIRNAME
+    if not state_dir.is_dir():
+        return []
+
+    candidates: list[Path] = []
+    for name in _LEGACY_EXACT_NAMES:
+        candidates.append(state_dir / name)
+    for pattern in _LEGACY_GLOBS:
+        candidates.extend(sorted(state_dir.glob(pattern)))
+
+    results: list[tuple[str, str]] = []
+    for src in candidates:
+        if not src.is_file():
+            continue
+        dest = target_dir / src.name
+        if dest.exists():
+            results.append(("skipped", src.name))
+            continue
+        try:
+            target_dir.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(src), str(dest))
+            results.append(("moved", src.name))
+        except OSError:
+            results.append(("failed", src.name))
+    return results

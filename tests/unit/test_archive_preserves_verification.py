@@ -3,7 +3,7 @@
 Per fix-rdd-verifier-lifecycle-dashboard Task 15:
 - mark_iteration_archived must preserve verification object
 - Only adds archived_at and (conditionally) archive_commit_sha
-- Does NOT touch .rddf/state/verifier/, .ac-verdict-<change>.json, or audit log
+- Does NOT touch .rddf/state/verifier/ (loop state, verdict cache, audit logs)
 """
 import json
 import sys
@@ -59,7 +59,7 @@ def test_archive_preserves_audit_log_and_cache(tmp_path):
     verifier_dir.mkdir(parents=True, exist_ok=True)
     audit = verifier_dir / "ch-y.audit.jsonl"
     audit.write_text('{"ts": "2026-08-25T00:00:00Z", "event": "running"}\n')
-    cache = tmp_path / ".rddf" / "state" / ".ac-verdict-ch-y.json"
+    cache = verifier_dir / ".ac-verdict-ch-y.json"
     cache.write_text('{"schema_version": 2, "verification_state": "passed"}')
 
     sync_iteration_after_archive(str(tmp_path), "ch-y")

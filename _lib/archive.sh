@@ -453,7 +453,7 @@ archive_gate_check() {
   if [ "${SKIP_AC_VERIFICATION:-no}" != "yes" ]; then
     local proposal_file="$tasks_root/openspec/changes/$change_name/proposal.md"
     if [ -f "$proposal_file" ]; then
-      local verdict_cache_file="$tasks_root/.rddf/state/.ac-verdict-${change_name}.json"
+      local verdict_cache_file="$tasks_root/.rddf/state/verifier/.ac-verdict-${change_name}.json"
       local current_sha
       current_sha=$(git -C "$tasks_root" rev-parse HEAD 2>/dev/null || echo "unknown")
 
@@ -551,7 +551,7 @@ except Exception:
           echo "❌ archive_gate_check: no valid verdict cache for '$change_name' (current commit $current_sha)"
           echo "   Run 'rddf rdd-verify' first — the AI agent verifies ACs per"
           echo "   skills/rdd-verifier/SKILL.md § LLM Verification Protocol and"
-          echo "   writes .rddf/state/.ac-verdict-${change_name}.json."
+          echo "   writes .rddf/state/verifier/.ac-verdict-${change_name}.json."
           echo "   Or set SKIP_RDD_VERIFIER=yes + RDDF_VERIFIER_BYPASS_REASON to bypass."
           return 1
         fi

@@ -5,11 +5,11 @@
   "name": "fail → implementation_gap → 回 P2",
   "input": {"command": "agent_verify_with_routing", "args": ["--name", "test-gap"]},
   "golden_output": {
-    "files": [{"path": ".rddf/state/.ac-verdict-test-gap.json", "must_exist": true}],
+    "files": [{"path": ".rddf/state/verifier/.ac-verdict-test-gap.json", "must_exist": true}],
     "stdout_contains": ["\"status\": \"fail\"", "not implement", "implementation_gap", "phase-2"]
   },
   "mock_output": {
-    "files": {    ".rddf/state/.ac-verdict-test-gap.json": "{\"ac_id\": \"AC-1\", \"description\": \"function returns 42 for empty\", \"status\": \"fail\", \"confidence\": 0.9, \"evidence\": \"impl returns false\", \"reasoning\": \"not implement: helper missing\", \"routing_target\": \"phase-2\"}"},
+    "files": {    ".rddf/state/verifier/.ac-verdict-test-gap.json": "{\"ac_id\": \"AC-1\", \"description\": \"function returns 42 for empty\", \"status\": \"fail\", \"confidence\": 0.9, \"evidence\": \"impl returns false\", \"reasoning\": \"not implement: helper missing\", \"routing_target\": \"phase-2\"}"},
     "stdout": "verdict: status=fail\nraw verdict: {\"status\": \"fail\", \"reasoning\": \"not implement: helper missing\"}\nrouting: implementation_gap → phase-2\n"
   },
   "isolation": {"locked_paths": [".rddf", "openspec"]}

@@ -94,8 +94,8 @@
 
 | Schema | Version | 路径 | 写入方 | 消费者 |
 |---|---|---|---|---|
-| [`ac_verdict_cache_schema.json`](../../_lib/schemas/ac_verdict_cache_schema.json) | v2 | `.rddf/state/.ac-verdict-<change>.json` | `rdd-verifier` Step 5 (SHA-fingerprint cache) | archive_gate_check |
-| [`verifier_audit_schema.json`](../../_lib/schemas/verifier_audit_schema.json) | v1 | `.rddf/state/.ac-verification.jsonl` | `rdd-verifier` Step 5 (append-only) | `rdd-doctor --category plan-tdd` |
+| [`ac_verdict_cache_schema.json`](../../_lib/schemas/ac_verdict_cache_schema.json) | v2 | `.rddf/state/verifier/.ac-verdict-<change>.json` | `rdd-verifier` Step 5 (SHA-fingerprint cache) | archive_gate_check |
+| [`verifier_audit_schema.json`](../../_lib/schemas/verifier_audit_schema.json) | v1 | `.rddf/state/verifier/.ac-verification.jsonl` | `rdd-verifier` Step 5 (append-only) | `rdd-doctor --category plan-tdd` |
 | [`verifier_loop_schema.json`](../../_lib/schemas/verifier_loop_schema.json) | v2 | `.rddf/state/verifier/<change>.json` | `rdd-verifier` route_loop.sh | `rdd-builder` retry 决策 |
 | [`quick_history_schema.json`](../../_lib/schemas/quick_history_schema.json) | v1 | `.rddf/state/.quick-history.jsonl` | `rdd-quick` 审计 | `rdd-doctor --category bypass-audit` |
 | [`rdd_quick_context_schema.json`](../../_lib/schemas/rdd_quick_context_schema.json) | v1 | `.rddf/state/rdd-quick-context.json` | `rdd-builder` P0 case 5 dispatch-quick | `rdd-quick` entry (per ADR-0048 amendment) |

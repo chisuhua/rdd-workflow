@@ -44,7 +44,8 @@ teardown() {
 
 @test "archive_gate_check passes when fresh cache has all-pass verdict" {
   SHA=$(git rev-parse HEAD)
-  cat > "$TEST_TMP/.rddf/state/.ac-verdict-test-change.json" <<EOF
+  mkdir -p $TEST_TMP/.rddf/state/verifier
+  cat > "$TEST_TMP/.rddf/state/verifier/.ac-verdict-test-change.json" <<EOF
 {"schema_version":2,"change":"test-change","codebase_commit":"$SHA","verdict":[
   {"ac_id":"AC-1","status":"pass","confidence":0.95,"evidence":[{"tool":"Grep","query":"x","result_summary":"y"}],"reasoning":"ok"},
   {"ac_id":"AC-2","status":"pass","confidence":0.95,"evidence":[{"tool":"Grep","query":"x","result_summary":"y"}],"reasoning":"ok"}
@@ -58,7 +59,8 @@ EOF
 
 @test "archive_gate_check blocks on cached AC fail with STRICT_AC_GATE=yes" {
   SHA=$(git rev-parse HEAD)
-  cat > "$TEST_TMP/.rddf/state/.ac-verdict-test-change.json" <<EOF
+  mkdir -p $TEST_TMP/.rddf/state/verifier
+  cat > "$TEST_TMP/.rddf/state/verifier/.ac-verdict-test-change.json" <<EOF
 {"schema_version":2,"change":"test-change","codebase_commit":"$SHA","verdict":[
   {"ac_id":"AC-1","status":"fail","confidence":0.9,"evidence":[{"tool":"Grep","query":"x","result_summary":"y"}],"reasoning":"missing implementation: function not found"},
   {"ac_id":"AC-2","status":"fail","confidence":0.9,"evidence":[{"tool":"Grep","query":"x","result_summary":"y"}],"reasoning":"missing implementation: module not present"}

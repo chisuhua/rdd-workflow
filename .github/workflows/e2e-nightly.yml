@@ -43,7 +43,7 @@ jobs:
         with:
           name: e2e-agent-result
           path: |
-            .rddf/state/.ac-verdict-*.json
+            .rddf/state/verifier/.ac-verdict-*.json
             tests/e2e/agent/scenarios/*.json
           if-no-files-found: ignore
           retention-days: 7

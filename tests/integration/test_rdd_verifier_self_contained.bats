@@ -43,7 +43,8 @@ _seed_agent_cache() {
   local name="$1" status="$2" reasoning="$3"
   local sha
   sha=$(git rev-parse HEAD)
-  cat > ".rddf/state/.ac-verdict-${name}.json" <<EOF
+  mkdir -p .rddf/state/verifier
+  cat > ".rddf/state/verifier/.ac-verdict-${name}.json" <<EOF
 {"schema_version":2,"change":"$name","codebase_commit":"$sha","verdict":[
   {"ac_id":"AC-1","status":"$status","confidence":0.9,"evidence":[
     {"tool":"Grep","query":"def handler","result_summary":"found in api.py"}
@@ -54,9 +55,10 @@ _seed_agent_cache() {
  "implementation_ref":"openspec/$name"}
 EOF
   # Append agent audit entry (JSONL)
+  mkdir -p .rddf/state/verifier
   printf '{"ts":"2026-09-07T00:00:00Z","change_name":"%s","exit_code":%d,"llm_provider":"agent","verdict":[]}\n' \
     "$name" "$([ "$status" = pass ] && echo 0 || echo 1)" \
-    >> ".rddf/state/.ac-verification.jsonl"
+    >> ".rddf/state/verifier/.ac-verification.jsonl"
 }
 
 _setup_iteration() {
@@ -74,7 +76,7 @@ EOF
   _setup_iteration "ch-pass"
   # Stage context (Task 3 wrapper), then simulate agent writeback
   bash "$REPO_ROOT/skills/rdd-verifier/scripts/run_verification.sh" ch-pass
-  [ -f ".rddf/state/rdd-verify-context-ch-pass.json" ]
+  [ -f ".rddf/state/verifier/rdd-verify-context-ch-pass.json" ]
   _seed_agent_cache "ch-pass" "pass" "Handler found in api.py"
 
   run rddf rdd-verify

@@ -43,8 +43,8 @@ run_scenario() {
 @test "rdd-verifier: V-E2 读代码 → 6 字段 verdict JSON 构造" {
     run run_scenario "v_e2"
     [ "$status" -eq 0 ]
-    [ -f "$OUTPUT_DIR/.rddf/state/.ac-verdict-test.json" ]
-    grep -q '"status":' "$OUTPUT_DIR/.rddf/state/.ac-verdict-test.json"
+    [ -f "$OUTPUT_DIR/.rddf/state/verifier/.ac-verdict-test.json" ]
+    grep -q '"status":' "$OUTPUT_DIR/.rddf/state/verifier/.ac-verdict-test.json"
 }
 
 @test "rdd-verifier: V-E3 pass 分类 → 升 archive 路径" {
@@ -57,7 +57,7 @@ run_scenario() {
     run run_scenario "v_e4"
     [ "$status" -eq 0 ]
     grep -q "implementation_gap" "$OUTPUT_DIR/stdout.txt"
-    [ -f "$OUTPUT_DIR/.rddf/state/.ac-verdict-test-gap.json" ]
+    [ -f "$OUTPUT_DIR/.rddf/state/verifier/.ac-verdict-test-gap.json" ]
 }
 
 @test "rdd-verifier: V-E5 fail → proposal_drift → 回 P1" {

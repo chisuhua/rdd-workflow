@@ -76,7 +76,7 @@ def test_read_cache_missing_returns_none(tmp_path):
 
 def test_read_cache_corrupt_returns_none(tmp_path):
     repo = _make_repo_with_commit(str(tmp_path))
-    state_dir = repo / ".rddf" / "state"
+    state_dir = repo / ".rddf" / "state" / "verifier"
     state_dir.mkdir(parents=True)
     cache_file = state_dir / ".ac-verdict-corrupt.json"
     cache_file.write_text("{invalid json")
@@ -89,7 +89,7 @@ def test_cache_persists_at_correct_path(tmp_path):
     sha = _git(str(repo), "rev-parse", "HEAD")
     (repo / ".rddf" / "state").mkdir(parents=True)
     verdict_cache(repo, "my-change", sha, [], "archive_gate_check")
-    expected = repo / ".rddf" / "state" / ".ac-verdict-my-change.json"
+    expected = repo / ".rddf" / "state" / "verifier" / ".ac-verdict-my-change.json"
     assert expected.is_file()
     cached = read_verdict_cache(repo, "my-change")
     assert cached["ran_by"] == "archive_gate_check"

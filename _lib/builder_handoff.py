@@ -15,6 +15,18 @@ def _handoff_path(project_root: str, change_name: str) -> Path:
     return Path(project_root) / ".rddf" / "state" / "builder" / f"{change_name}.json"
 
 
+def _default_verifier_report_path(change_name: str) -> str:
+    """Where the verifier's verdict for this change will live.
+
+    Per consolidate-verifier-state the previous default
+    (`.rddf/state/.verifier-report.json`) pointed at a file **nobody writes**
+    — it was recorded in the handoff doc and never consumed. The pointer now
+    names the artifact that actually exists after verification: the SHA-bound
+    verdict cache inside the verifier state namespace.
+    """
+    return f".rddf/state/verifier/.ac-verdict-{change_name}.json"
+
+
 def write_builder_handoff(
     project_root: str,
     change_name: str,
@@ -28,7 +40,7 @@ def write_builder_handoff(
     execution_status: str = "pending",
     review_status: str = "pending",
     archive_status: str = "pending",
-    verifier_report_path: str = ".rddf/state/.verifier-report.json",
+    verifier_report_path: str = "",
     retry_count: int = 0,
     max_retries: int = 3,
     retry_history=None,
@@ -88,7 +100,7 @@ def write_builder_handoff(
         "retry_history": retry_history,
         "phase_pause_history": phase_pause_history,
         "archive_status": archive_status,
-        "verifier_report_path": verifier_report_path,
+        "verifier_report_path": verifier_report_path or _default_verifier_report_path(change_name),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     # ADR-0048 §Decision 3: dispatch-quick tracking fields (optional; only set when used)

@@ -134,7 +134,7 @@ def _stage_context_runner(change_name: str, project_root: Path) -> dict:
 
     Per ADR-0045: the executing AI agent IS the LLM. Instead of shelling out
     to the deprecated ac-verifier skill, the CLI writes a structured context
-    file (.rddf/state/rdd-verify-context-<change>.json) describing what the
+    file (.rddf/state/verifier/rdd-verify-context-<change>.json) describing what the
     agent should verify. The agent performs verification per
     skills/rdd-verifier/SKILL.md § "LLM Verification Protocol" and writes
     the verdict cache + audit log directly. A subsequent ``rddf rdd-verify``
@@ -364,6 +364,26 @@ def validate_cache_for_archive(
     }
 
 
+def _migrate_legacy_state(project_root: Path) -> None:
+    """Move legacy verifier state files into `.rddf/state/verifier/` (best effort).
+
+    Never raises: a migration failure must not turn into a verification failure.
+    """
+    try:
+        from _lib.verifier.cache import migrate_legacy_state
+        results = migrate_legacy_state(project_root)
+    except Exception as exc:  # noqa: BLE001 — housekeeping must not break verify
+        print(f"⚠️  legacy verifier state migration skipped: {exc}", file=sys.stderr)
+        return
+    for action, name in results:
+        if action == "moved":
+            print(f"📦 moved legacy verifier state → .rddf/state/verifier/{name}")
+        elif action == "skipped":
+            print(f"📦 kept legacy verifier state (destination exists): {name}")
+        else:
+            print(f"⚠️  failed to migrate legacy verifier state: {name}", file=sys.stderr)
+
+
 def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
     parser = argparse.ArgumentParser(prog="rddf rdd-verify",
                                      description="Batch verify changes via the agent LLM protocol (ADR-0045)")
@@ -382,6 +402,12 @@ def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
     project_root = _project_root()
     skip = os.environ.get("SKIP_RDD_VERIFIER", "").lower() == "yes"
     bypass_reason = os.environ.get("RDDF_VERIFIER_BYPASS_REASON", "").strip()
+
+    # One-shot migration of pre-consolidation verifier state files
+    # (`.rddf/state/` root → `.rddf/state/verifier/`). Best effort: a failure
+    # here is housekeeping, never a verification verdict (per
+    # consolidate-verifier-state §2.2).
+    _migrate_legacy_state(project_root)
 
     if skip and not bypass_reason:
         print("❌ SKIP_RDD_VERIFIER=yes requires RDDF_VERIFIER_BYPASS_REASON (fail closed)",
@@ -487,7 +513,7 @@ def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
     pending = [s for s in states if s == "pending"]
     if pending:
         print(f"⏳ {len(pending)} change(s) staged for agent verification "
-              f"(state=pending). Agent: read .rddf/state/rdd-verify-context-<change>.json, "
+              f"(state=pending). Agent: read .rddf/state/verifier/rdd-verify-context-<change>.json, "
               f"verify per skills/rdd-verifier/SKILL.md, write the verdict cache, "
               f"then re-run rddf rdd-verify.")
     print(f"✅ rdd-verifier: aggregate exit {rc} (states: {states})")

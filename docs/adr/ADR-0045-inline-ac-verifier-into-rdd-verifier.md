@@ -28,7 +28,7 @@
 具体地：
 
 1. SKILL.md 新增 "LLM Verification Protocol" 一节（AC 提取规则、证据收集工具链、verdict JSON schema、reasoning 关键词契约、持久化协议、退出码语义），作为验证协议的唯一事实源。
-2. `rdd-verifier` CLI（`rddf rdd-verify`）的 llm-provider 路径从"shell 调 ac-verifier"改为"stage 上下文文件"（`.rddf/state/rdd-verify-context-<change>.json`），由 agent 按 SKILL.md 协议执行验证并写回 cache。
+2. `rdd-verifier` CLI（`rddf rdd-verify`）的 llm-provider 路径从"shell 调 ac-verifier"改为"stage 上下文文件"（`.rddf/state/verifier/rdd-verify-context-<change>.json`，路径经 `consolidate-verifier-state` 收拢），由 agent 按 SKILL.md 协议执行验证并写回 cache。
 3. `_lib/archive.sh::archive_gate_check` 移除 ac-verifier subprocess fallback，只消费 SHA-bound verdict cache；cache 缺失/过期时 fail closed，除非 audited bypass（`SKIP_RDD_VERIFIER=yes` + `RDDF_VERIFIER_BYPASS_REASON`）。
 4. `rddf ac-verify` 与 `skills/ac-verifier/` 标记 deprecated（`user-invocable: false`），保留 1-2 个 release cycle 作为向后兼容 shim，下个 minor release 移除。
 5. Exit 3 语义从"ac-verifier internal error"重新定义为"LLM verification error"（agent 上下文溢出 / 工具全失败）。

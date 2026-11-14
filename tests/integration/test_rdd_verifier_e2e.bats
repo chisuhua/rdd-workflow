@@ -42,8 +42,9 @@ _seed_fixture_cache() {
     local sha
     sha=$(git rev-parse HEAD)
     local fixture_path="$REPO_ROOT/tests/_lib/verifier_mocks/${fixture_name}.json"
+    mkdir -p .rddf/state/verifier
     sed "s/abc1234567/$sha/g" "$fixture_path" \
-        > ".rddf/state/.ac-verdict-${change_name}.json"
+        > ".rddf/state/verifier/.ac-verdict-${change_name}.json"
 }
 
 @test "e2e: all-pass queue (pass.json fixture) classifies nothing" {

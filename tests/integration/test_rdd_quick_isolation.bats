@@ -32,7 +32,15 @@ LOCKED_TASKS_WRITEBACK_SH="e9e0065de4f65fbeef763be3b3eb09626c99920744e6bb2585311
 # rdd-quick zero-pollution invariant preserved (additive audit hooks +
 # new owned boundaries, no rdd-quick execution semantics touched). This is the
 # v2.1-fix-rdd-quick-archive-verifier-gaps baseline sync.
-LOCKED_ARCHIVE_SH="2aa1c04ab1a916438c29f4a0bf73c3d95df1efaa611c7806bda1bd0cfc1a0d8a"
+# Note (2026-11-14): LOCKED_ARCHIVE_SH recaptured after consolidate-verifier-state.
+# The change touches ONE line group only: the verdict-cache path inside
+# archive_gate_check (`.rddf/state/.ac-verdict-*` → `.rddf/state/verifier/.ac-verdict-*`,
+# plus the matching user-facing message). The rdd-quick zero-pollution invariant is
+# preserved: rdd-quick is the bypass path (per ADR-0047) and never reads a verdict
+# cache — for it the gate's verdict lookup is a miss before and after the change.
+# Pre-consolidation caches are not orphaned: `rddf rdd-verify` moves legacy files
+# into the new namespace before the gate looks for them.
+LOCKED_ARCHIVE_SH="4b97ab3a52c02998a17eb80cd473521180bf8fb90a39a9f78bda58f995ec4ce4"
 # Role block of rdd-planner/SKILL.md (from `role:` through closing `---`).
 # This is the structural-only hash that MUST be byte-identical after rdd-quick lands.
 # LOCKED_RDD_PLANNER_ROLE_BLOCK: role: ... --- block sha256, captured post-ADR-0048

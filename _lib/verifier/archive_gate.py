@@ -13,7 +13,9 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-from _lib.verifier.cache import read_verdict_cache, cache_has_failed_ac
+from _lib.verifier.cache import (
+    read_verdict_cache, cache_has_failed_ac, verdict_cache_path,
+)
 
 
 def _project_root() -> Path:
@@ -40,7 +42,14 @@ def _main_repo_root(cwd: Path) -> Path:
 
 
 def _cache_path(main_root: Path, change_name: str) -> Path:
-    return main_root / ".rddf" / "state" / f".ac-verdict-{change_name}.json"
+    """Cache path for the archive gate.
+
+    The path expression lives in `cache.verdict_cache_path` (single definition
+    point); the ROOT is deliberately NOT unified with the caller's root —
+    the archive gate resolves the main repository root itself (worktree mode
+    keeps the cache in the main repo, not in the worktree).
+    """
+    return verdict_cache_path(main_root, change_name)
 
 
 def load_iteration_doc(project_root: Path) -> dict:

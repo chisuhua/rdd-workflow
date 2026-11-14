@@ -61,7 +61,7 @@
 ## Acceptance
 
 - [ ] `rddf rdd-verify --re-verify-archived` 不报错, 列出 archived change 的 ac-verifier verdict
-- [ ] verdict cache 写入 `.rddf/state/.ac-verdict-<name>.json`
+- [ ] verdict cache 写入 `.rddf/state/verifier/.ac-verdict-<name>.json`
 - [ ] audit log 区分事件类型
 - [ ] 6 个 test 全部通过 (含 CLI flag + scan_queue 模式)
 - [ ] 默认 rdd-verify 行为不变 (向后兼容)

@@ -73,8 +73,8 @@ run_scenario_in_mock_mode() {
 @test "rdd-quick: Q-E5 P3 全部 AC pass → completed" {
     run run_scenario_in_mock_mode "q_e5"
     [ "$status" -eq 0 ]
-    [ -f "$OUTPUT_DIR/.rddf/state/.ac-verdict-quick-add-helper-fn.json" ]
-    grep -q '"status": "pass"' "$OUTPUT_DIR/.rddf/state/.ac-verdict-quick-add-helper-fn.json"
+    [ -f "$OUTPUT_DIR/.rddf/state/verifier/.ac-verdict-quick-add-helper-fn.json" ]
+    grep -q '"status": "pass"' "$OUTPUT_DIR/.rddf/state/verifier/.ac-verdict-quick-add-helper-fn.json"
     grep -q "1/1 pass" "$OUTPUT_DIR/.rddf/state/.quick-history.jsonl"
 }
 

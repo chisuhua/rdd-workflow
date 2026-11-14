@@ -30,7 +30,7 @@ class TestWriteBasicRoundtrip:
             execution_status="in-progress",
             review_status="pending",
             archive_status="pending",
-            verifier_report_path=".rddf/state/.verifier-report.json",
+            verifier_report_path=".rddf/state/verifier/.ac-verdict-test-change.json",
             retry_count=0,
             max_retries=3,
             retry_history=[],
@@ -51,6 +51,8 @@ class TestWriteBasicRoundtrip:
         assert result["max_retries"] == 3
         assert result["retry_history"] == []
         assert result["phase_pause_history"] == []
+        assert result["verifier_report_path"] == (
+            ".rddf/state/verifier/.ac-verdict-test-change.json")
         assert result["schema"] == "builder-handoff-v1"
         assert result["version"] == 1
         assert result["owner"] == "rdd-builder"
@@ -244,3 +246,19 @@ class TestFileLockConcurrentWrites:
         assert "thread" in result
         assert "seq" in result
         assert result["change"] == "concurrent-test"
+
+
+class TestVerifierReportPathDefault:
+    """consolidate-verifier-state: the pointer must name a file that exists.
+
+    The old default (`.rddf/state/.verifier-report.json`) pointed at a file
+    **nobody writes** — it was recorded in the handoff doc and never consumed.
+    """
+
+    def test_default_points_at_the_verdict_cache(self, tmp_path):
+        result = write_builder_handoff(
+            project_root=str(tmp_path),
+            change_name="ch-x",
+        )
+        assert result["verifier_report_path"] == (
+            ".rddf/state/verifier/.ac-verdict-ch-x.json")

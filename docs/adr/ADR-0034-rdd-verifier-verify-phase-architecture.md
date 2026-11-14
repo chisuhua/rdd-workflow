@@ -5,6 +5,7 @@
 > **修订**: 2026-08-26 — fix-rdd-verifier-lifecycle-dashboard 落地后补充存储契约、branch-identity、bypass 审计
 > **决策者**: sisyphus
 > **修订**: 2026-09-07 — `ac-verifier` skill (subprocess) referenced in §"State Machine" was removed via `remove-ac-verifier-completely`; rdd-verifier v2.0 (ADR-0045) is now the sole verification path.
+> **修订**: 2026-11-14 — `consolidate-verifier-state`：verifier 状态收拢进 `.rddf/state/verifier/`（见下方 §11）。
 
 ## 问题
 
@@ -26,7 +27,7 @@ rdd-workflow v2.1+ 4 阶段架构缺独立的验证回环阶段。`_lib/archive.
 - **人工介入**: high（AI 分类 + 用户确认 + 失败回环决策）
 - **失败回环**: 启发式分类（implementation_gap / proposal_drift）+ 用户确认 + 跳回 plan 或 ship，最多重试 3 次
 - **与 ac-verifier 关系**: 复用 sub-skill，不重写 LLM
-- **SHA 指纹 verdict 缓存**: `.rddf/state/.ac-verdict-<name>.json` 绑 `codebase_commit`，避免 archive_gate_check 与 rdd-verifier 双跑 LLM
+- **SHA 指纹 verdict 缓存**: `.rddf/state/verifier/.ac-verdict-<name>.json` 绑 `codebase_commit`，避免 archive_gate_check 与 rdd-verifier 双跑 LLM
 
 ### 修订要点（fix-rdd-verifier-lifecycle-dashboard, 2026-08-26）
 
@@ -98,7 +99,7 @@ Aggregate 优先级: `halted (4) > error (3) > failed (1) > bypassed/passed (0)`
 |-------|------|------|
 | Iteration summary | `.rddf/state/iteration.json` | `verification.{state, verdict_sha, archive_ready, ...}` |
 | Per-change loop | `.rddf/state/verifier/<change>.json` | retry history, classification_history, halt_reason |
-| Cache | `.rddf/state/.ac-verdict-<change>.json` | raw verdict, codebase_commit, ran_by, schema_version |
+| Cache | `.rddf/state/verifier/.ac-verdict-<change>.json` | raw verdict, codebase_commit, ran_by, schema_version |
 | Audit log | `.rddf/state/verifier/<change>.audit.jsonl` | append-only events |
 
 写顺序: loop → cache → iteration summary → audit。任何一步失败：保留 in-progress state，non-zero exit，不提升到 passed。
@@ -115,12 +116,45 @@ Aggregate 优先级: `halted (4) > error (3) > failed (1) > bypassed/passed (0)`
 - `role.owns`:
   - `.rddf/state/verifier/<change>.json`
   - `.rddf/state/verifier/<change>.audit.jsonl`
-  - `.rddf/state/.ac-verdict-<change>.json`
+  - `.rddf/state/verifier/.ac-verdict-<change>.json`
 - `role.not_owns`:
   - `openspec/changes/<name>/`
   - `docs/adr/`
   - merge / archive / branch deletion / worktree cleanup（属于 guide-ship）
 - `role.human_involvement`: `high`
+
+### 修订要点 2（consolidate-verifier-state, 2026-11-14）
+
+#### 11. Verifier 状态收拢进单一命名空间
+
+**问题**：§8 的 storage ownership 表把 verdict cache 放在 `.rddf/state/` **根下**，而 per-change
+loop state / audit log 已在 `.rddf/state/verifier/`。两类文件分处两个命名空间，导致
+「verifier 状态在哪」没有单一答案；更实际的问题是——**被派发的 verifier 后端**（其写集上限是
+`.rddf/state/verifier` 这一**目录**）无法写入根下的 cache / audit / context 三个文件，
+只能退化成「后端只跑取证与判决、状态机落盘由主会话代跑」的过渡期绕路。
+
+**决策**：`.rddf/state/verifier/` 成为 **verifier 状态的唯一命名空间**。四类文件迁入：
+
+| 文件 | 迁入前 | 迁入后 |
+|------|--------|--------|
+| verdict cache | `.rddf/state/.ac-verdict-<change>.json` | `.rddf/state/verifier/.ac-verdict-<change>.json` |
+| 共享 audit log | `.rddf/state/.ac-verification.jsonl` | `.rddf/state/verifier/.ac-verification.jsonl` |
+| halted audit | `.rddf/state/.ac-verifier-blocked.jsonl` | `.rddf/state/verifier/.ac-verifier-blocked.jsonl` |
+| staged context | `.rddf/state/rdd-verify-context-<change>.json` | `.rddf/state/verifier/rdd-verify-context-<change>.json` |
+
+**约束**：
+
+1. **basename 不变**（保留前导点）⇒ `.ac-verdict-*.json` 这类 glob 语义不变、迁移 diff 最小。
+2. **路径表达式只有一个定义点**（`_lib/verifier/cache.py::verdict_cache_path`）；
+   `archive_gate.py` 自带的同名函数改为转调。
+3. **root 来源不合并**：archive gate 解析的是**主仓根**（worktree 模式 cache 在主仓），
+   verifier 侧是工程根 —— 两者在 worktree 下不等，合并 root 会让归档门永远 miss。
+4. **不做双路读 fallback**：改为 `rddf rdd-verify` 启动时**一次性搬迁**（目标已存在则不覆盖）。
+   理由：bash 归档门与 python reader 若各写一份 fallback，两侧可能对「cache 是否存在」给出不同答案。
+5. `role.owns` 补齐为 6 项 —— 原先只声明 4 项，其中 2 项（halted audit / staged context）
+   是 skill **实际写入但从未声明**的路径。
+
+**影响**：已签批的 storage ownership 表在本节被修订；`.rddf/state/verifier/` 的目录语义不变。
 
 ## 后果
 
