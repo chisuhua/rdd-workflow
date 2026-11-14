@@ -12,6 +12,28 @@ in 4 SKILL.md (rdd-arch/planner/builder/verifier/quick). Closes 5 P0 findings fr
 
 ## [Unreleased]
 
+### verifier-owns-block-guard（2026-11-15）
+
+把 `rdd-verifier` skill 的 `owns:` 清单与「**真正写这些文件的代码**」绑定 —— 收拢后清单虽已是
+6 项，却**无任何机械校验**保证它与代码一致（收拢前就出过同类缺陷：声明 4 项、实际写 6 项，
+`.ac-verifier-blocked.jsonl` 与 `rdd-verify-context-<name>.json` 实际写入但从未声明）。
+
+- **新增 `_lib/verifier/state_paths.py`**：`SKILL_OWNS_PATHS`（六条的**单一列表**）+
+  `render_owns_block()`（渲染 `SKILL.md` 那段 `owns:` YAML）+ `pattern_to_regex()` /
+  `matches_any_owns()`（`<name>` = 一个路径段、`*` = 段内任意字符，**均不跨 `/`**，与
+  `classAllowRoots` 的路径段前缀语义一致）。
+- **新增 `tests/unit/test_verifier_owns_block.py`（5 条）**：`SKILL.md` 含规范块**逐字**副本且
+  恰好 1 处；owns 恰 6 项且全在 `.rddf/state/verifier/` 下；**代码实际产出的 6 个路径逐个**
+  匹配 owns 模式；收拢前的 4 个根下路径**不再**被 owns 覆盖；清单逐项一致（防悄悄增删）。
+- **不改任何运行时行为**（只加常量模块 + 一条测试）—— 路径拼接仍由 `cache.py` / `loop_state.py` /
+  `audit.py` 各自负责，由**测试**把两者绑在一起。
+- 变红演练 2 例：owns 块少一项 ⇒ 红；加一项 ⇒ 红（证明断言不是恒真式）。
+- 已知边界：**跨仓那半**（消费侧 opencode 仓的 `VERIFIER_OWNS_PATHS` ↔ 本仓 `SKILL.md`）不可由本仓
+  CI 断言（skill 在用户 home）⇒ 靠两仓清单**逐字一致**（消费侧已把占位符统一为 `<name>`）+ 人工 diff。
+- 回归：`./test.sh --full --regression` ⇒ **0 新增失败**（11 已知失败为 baseline）+ pytest unit
+  **3296 passed** / integration **201 passed**。
+
+
 ### consolidate-verifier-state（2026-11-14）
 
 把 verifier 的 4 类状态文件从 `.rddf/state/` **根下**收拢进 `.rddf/state/verifier/`，
