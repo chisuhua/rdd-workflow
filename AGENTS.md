@@ -169,7 +169,7 @@ docs/schemas/                 # JSON Schema 文档化层 (README 索引 29 个 `
 docs/migration/               # 版本迁移指南 (v1-to-v2 / v2-to-v3 / v3-to-v4)
 docs/superpowers/             # 设计 spec (specs/) + 实施 plan (plans/), v4 stage-merge 主 spec 在此
 docs/audit/                   # 历史审计报告 (2026-06-05 workflow-audit, 2026-07-14 debt-fix-compliance, 2026-09-28 rdd-quick-dual-review)
-docs/operations/              # 运维指南 (archive-state-recovery 等)
+docs/operations/              # 运维指南 (archive-state-recovery / verifier-state-namespace 等)
 docs/legacy/                  # 考古 shim 保留 (rddf-legacy-v2.0.7.sh — v2.0.7 之前的 bash rddf CLI 实现, 已被 Python 实现替代, 保留作考古参考 per "respect user data")
 openspec/                     # OpenSpec CLI 数据 (随项目走)
   changes/                    # active changes + archive/
