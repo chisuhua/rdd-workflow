@@ -1,17 +1,43 @@
 ---
 优先级: P2
 priority: P2
-来源: 2026-11-16 rddf-layout-manifest 验收/归档过程发现（follow-up F-1 残余 + F-2 + F-5）——三处契约/行为漂移：文档正则缺变体、fix_hint 给文件加尾斜杠、--dry-run 仍写盘
+来源: 2026-11-16 rddf-layout-manifest 验收/归档过程发现（follow-up F-1 残余 + F-2 + F-5）——三处契约/行为漂移：文档正则缺变体、fix_hint
+  给文件加尾斜杠、--dry-run 仍写盘
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: pending
+状态: approved
+approved_at: 2026-11-16
+approved_by: rdd-planner
+review_notes: "metis 1 轮（2026-11-16，5 份合并调用，每份 1 轮在预算内）；4 处 P0 采纳并重写草案，逐条处置见正文「## 审稿记录」；7 段 + 主题校验 PASS；已 attach 到 阶段步骤化执行/phase-2"
+
 生成时间: 2026-11-16
+roadmap_ref:
+  project_id: 阶段步骤化执行
+  phase: phase-2
 ---
 
 # fix-flow-drift-batch-1
 
 **主题**: 阶段步骤化执行
+
+## 审稿记录
+
+metis 1 轮（2026-11-16，planner 阶段 gap 分析）。逐条处置：
+
+- **采纳 P1-2（元测试换行为测试）**：原草案要加「文档正则 == 实现正则」的跨文件字符串比对 ——
+  SKILL.md 里是代码块、`protocol.py` 里是 Python 原始字符串，逐字比对会因格式而非语义断裂。已改为
+  三条行为断言（三种段头各一）+ 一条存在性断言。
+- **采纳 P1-3（dry-run 边界写全）**：补 `--dry-run --stage` 的处理（定死为互斥、argparse 报错 exit 2），
+  并要求 dry-run 输出 `Would migrate N ...`（信息不丢、副作用归零），而不是静默跳过。
+- **采纳（glob 条目）**：`layout_check.py` 有 `_is_glob`，但 `RDFF_LAYOUT` 当前只有 `dir`(12) /
+  `file`(2) ⇒ 已注明二元分支现状，若将来加 glob 按「指向目录则加斜杠」补分支。
+- **采纳（既有 dry-run 测试的行数断言风险）**：已注明实施时需确认
+  `test_rdd_verifier_skip.bats:73-75` / `test_rdd_verifier_e2e.bats:115-121` 是否依赖整段输出。
+- **采纳（`--stage` 迁移必要性）**：确认 `--stage` 分支在 dry-run 判断之前（`:418-429`）就 return，
+  迁移对它仍是必要的 ⇒ AC 明确「`--stage` 保留迁移」。
+- **记录**：`protocol.py:33-35` 注释提到与 `ac_verifier` 同源；本项只对齐 SKILL.md 与
+  `protocol.py` 两处，第三份副本（若存在）需另行确认，不并入本项范围。
 
 ## 架构依据
 

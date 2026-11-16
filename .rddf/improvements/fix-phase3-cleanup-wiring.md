@@ -1,17 +1,45 @@
 ---
 优先级: P1
 priority: P1
-来源: 2026-11-16 rddf-layout-manifest 归档过程发现（follow-up F-9 + F-8）——post_archive_cleanup.sh 没有脚本入口却被 bash 执行（函数从未运行），且 source 失败被 2>/dev/null || true 静默吞掉
+来源: 2026-11-16 rddf-layout-manifest 归档过程发现（follow-up F-9 + F-8）——post_archive_cleanup.sh
+  没有脚本入口却被 bash 执行（函数从未运行），且 source 失败被 2>/dev/null || true 静默吞掉
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: pending
+状态: approved
+approved_at: 2026-11-16
+approved_by: rdd-planner
+review_notes: "metis 1 轮（2026-11-16，5 份合并调用，每份 1 轮在预算内）；4 处 P0 采纳并重写草案，逐条处置见正文「## 审稿记录」；7 段 + 主题校验 PASS；已 attach 到 阶段步骤化执行/phase-2"
+
 生成时间: 2026-11-16
+roadmap_ref:
+  project_id: 阶段步骤化执行
+  phase: phase-2
 ---
 
 # fix-phase3-cleanup-wiring
 
 **主题**: 阶段步骤化执行
+
+## 审稿记录
+
+metis 1 轮（2026-11-16，planner 阶段 gap 分析）。逐条处置：
+
+- **采纳 P0-1（根因纠偏，最重要）**：原草案把根因写成「参数顺序反了」——错。实测
+  `bash _lib/post_archive_cleanup.sh "$(pwd)" rddf-layout-manifest` → 零输出 exit 0；该文件
+  155 行只有函数定义、无脚本入口 ⇒ **函数从未被调用**，参数顺序在「函数不执行」时不成症状。
+  「架构依据」与「Why」已整体重写；参数顺序降为次要事实。
+- **采纳（删除 scope creep）**：原草案提议给该库加 `--project-root` / `--change` 键名参数 +
+  位置参数兼容分支。该库只有两个调用点（`archive.sh:725` 正确、`phase3:101` 错误）⇒ 收益为 0，
+  已删除该备选。
+- **采纳 P2-2（严重级一致）**：cleanup 失败**不改变**归档退出码（与 `archive.sh:725` 的 `|| true`
+  一致），只要求 stderr 可见 ⇒ 写入 AC。
+- **采纳（测试写成镜像）**：原 AC「断言第一个参数是含 `/` 的路径」是对实现的镜像 ⇒ 换成行为断言
+  （`improvement-approved.md` 真被同步、`proposal-section` 无 CRITICAL）。
+- **采纳（fixture 假绿风险）**：本仓 `openspec/` 整树 gitignored ⇒ e2e fixture 必须造「archive
+  目录存在但不被 git 跟踪」的形态，已写入 What Changes 第 3 条与 AC。
+- **采纳（双跑）**：与 `fix-worktree-archive-path` 的重叠（phase3 的 cleanup 调用）明确交后者删除；
+  本项 Out Scope 声明不修该调用点。
 
 ## 架构依据
 

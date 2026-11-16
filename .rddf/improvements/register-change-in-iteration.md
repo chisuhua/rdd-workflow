@@ -1,17 +1,47 @@
 ---
 优先级: P2
 priority: P2
-来源: 2026-11-16 rddf-layout-manifest 归档过程发现（follow-up F-6）——rdd-builder 创建的 change 从不注册进 iteration.json，rddf status / 归档 sync 都取不到条目
+来源: 2026-11-16 rddf-layout-manifest 归档过程发现（follow-up F-6）——rdd-builder 创建的 change
+  从不注册进 iteration.json，rddf status / 归档 sync 都取不到条目
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: pending
+状态: approved
+approved_at: 2026-11-16
+approved_by: rdd-planner
+review_notes: "metis 1 轮（2026-11-16，5 份合并调用，每份 1 轮在预算内）；4 处 P0 采纳并重写草案，逐条处置见正文「## 审稿记录」；7 段 + 主题校验 PASS；已 attach 到 阶段步骤化执行/phase-2"
+
 生成时间: 2026-11-16
+roadmap_ref:
+  project_id: 阶段步骤化执行
+  phase: phase-2
 ---
 
 # register-change-in-iteration
 
 **主题**: 阶段步骤化执行
+
+## 审稿记录
+
+metis 1 轮（2026-11-16，planner 阶段 gap 分析）。逐条处置：
+
+- **采纳 P0-5（AC 口径纠偏，最重要）**：原 AC「`rddf doctor --category roadmap-feature` 不再报
+  CRITICAL」不可满足 —— 该 category 的 CRITICAL 判据是
+  `roadmap_feature_check.py:181-197` 的「active feature 不在 `feature_view`」与 `:326-350` 的
+  AGENTS.md 哨兵，与 `changes[]` 无关（实测未注册 change 期间 `All 1 categories OK`）。
+  已改为 `rddf status` 能列出该条目 + `sync_iteration_after_archive` 不再返回 missing warning
+  （两条均经临时 change 目录实测复现）。
+- **采纳（复用既有 API，不新建模块）**：`store.py:677 set_status` 的 docstring 明写
+  「creates the entry if missing」⇒ 删掉新建 `_lib/iteration/register.py` 的提案。
+- **采纳（测试隔离）**：`tests/integration/test_rdd_builder_phases.bats:86-89` 在仓库本体跑 P0
+  approve ⇒ 加注册后会污染真实 `iteration.json`。已把「改造该用例为临时项目根」写入 What Changes，
+  并加 AC「跑完整套 bats 后仓库本体 iteration.json 内容不变」。
+- **采纳（choice=5 不得写）**：`phase0_approval.sh:132-135` 可能 auto-pick dispatch-quick ⇒ 调用点
+  限定在 `case 1)`，并加 AC。
+- **采纳（缺失时不创建半成品）**：`iteration.json` 缺失 / 损坏 / 锁超时 ⇒ 只 WARN，且不得用
+  `store.create_empty` 落半成品文件。
+- **记录未采纳**：`parent_feature` 推断与 `feature_view` 重算 —— 属另一件事（feature 视图层面可见），
+  本项 Out Scope 明示。
 
 ## 架构依据
 

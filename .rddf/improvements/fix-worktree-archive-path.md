@@ -1,17 +1,49 @@
 ---
 优先级: P1
 priority: P1
-来源: 2026-11-16 rddf-layout-manifest 归档过程发现（follow-up F-7）——phase3 在 worktree 里跑 openspec archive，openspec_tracked=false 时记录随 worktree 清理丢失
+来源: 2026-11-16 rddf-layout-manifest 归档过程发现（follow-up F-7）——phase3 在 worktree 里跑 openspec
+  archive，openspec_tracked=false 时记录随 worktree 清理丢失
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: pending
+状态: approved
+approved_at: 2026-11-16
+approved_by: rdd-planner
+review_notes: "metis 1 轮（2026-11-16，5 份合并调用，每份 1 轮在预算内）；4 处 P0 采纳并重写草案，逐条处置见正文「## 审稿记录」；7 段 + 主题校验 PASS；已 attach 到 阶段步骤化执行/phase-2"
+依赖: "必须在 fix-p3-verifier-gate 之后实施（同段代码：前者补 archive.sh 中 openspec_tracked=false 分支的门，后者把归档交给 archive_change，顺序颠倒会让门被提前 return 绕过）"
+
 生成时间: 2026-11-16
+roadmap_ref:
+  project_id: 阶段步骤化执行
+  phase: phase-2
 ---
 
 # fix-worktree-archive-path
 
 **主题**: 阶段步骤化执行
+
+## 审稿记录
+
+metis 1 轮（2026-11-16，planner 阶段 gap 分析）。逐条处置：
+
+- **采纳 P0-3（模式矩阵）**：原草案假设「两模式都由 archive_change 分派」，但
+  `_lib/archive.sh:589-592` 要求 worktree 存在（为空即 `return 1`）⇒ lightweight 会「完全无法归档」。
+  已补「模式矩阵」与「已知缺口」两段：worktree 委托 `archive_change`，lightweight 保留 inline 并
+  写明 gate/cleanup/iteration sync 三项未覆盖。
+- **采纳（AC 组合不可达）**：原 AC 写「`openspec_tracked=false` + worktree 模式」，但未确立该组合
+  真会被选中。已改用 `_lib/builder_deps.py::decide_execution_mode`（files>2 或 tasks>3 或风险词 ⇒
+  worktree，与 `openspec_tracked` 无关）作为矩阵依据并按其写 AC。
+- **采纳 P0-4（顺序依赖）**：与 `fix-p3-verifier-gate` 改同一段代码 ⇒ 声明「verifier-gate 先、
+  archive-path 后」，否则 `archive_change` 的 false 分支会绕过前者修的门。
+- **采纳（返回码映射先写表）**：原草案写「实施时映射」⇒ 已给出 0/1/3 → 0/3/7 的映射表。
+- **采纳（cleanup 双跑）**：`archive_change:725` 已调用 cleanup ⇒ 明确删除 phase3 的调用，并加 AC。
+- **采纳（收尾动作迁移后的字段）**：`mark_iteration_archived` / `archive_commit_sha` 由
+  `archive_change` 侧完成，加 AC 防丢字段。
+- **记录未采纳**：给 `archive_change` 加 lightweight 支持 —— 改动面大（merge/commit 逻辑假设 worktree），
+  另立改善项，不在本提案范围。
+- **记录旁证**：`_lib/archive.sh:626` / `:688` 的注释仍指向已删除的
+  `ship_archive.sh::archive_change_for_mode`（全仓仅历史 improvement 文档残留）⇒ 死引用清理列为
+  Out Scope。
 
 ## 架构依据
 

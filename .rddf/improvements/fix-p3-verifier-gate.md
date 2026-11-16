@@ -1,17 +1,48 @@
 ---
 优先级: P1
 priority: P1
-来源: 2026-11-16 rddf-layout-manifest 归档过程发现（follow-up F-3 + F-4）——P3 的 verifier 预调用既不执行、且退出码语义被误读；叠加 openspec_tracked=false 分支提前 return 跳过 AC 门
+来源: 2026-11-16 rddf-layout-manifest 归档过程发现（follow-up F-3 + F-4）——P3 的 verifier 预调用既不执行、且退出码语义被误读；叠加
+  openspec_tracked=false 分支提前 return 跳过 AC 门
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: pending
+状态: approved
+approved_at: 2026-11-16
+approved_by: rdd-planner
+review_notes: "metis 1 轮（2026-11-16，5 份合并调用，每份 1 轮在预算内）；4 处 P0 采纳并重写草案，逐条处置见正文「## 审稿记录」；7 段 + 主题校验 PASS；已 attach 到 阶段步骤化执行/phase-2"
+
 生成时间: 2026-11-16
+roadmap_ref:
+  project_id: 阶段步骤化执行
+  phase: phase-2
 ---
 
 # fix-p3-verifier-gate
 
 **主题**: 阶段步骤化执行
+
+## 审稿记录
+
+metis 1 轮（2026-11-16，planner 阶段 gap 分析）。逐条处置：
+
+- **采纳 P0-2（删除重复实现）**：原草案准备新写「读 cache + 判 sha + 分类 problems」，而
+  `_lib/archive.sh:360-556 archive_gate_check` 已实现全部判据（sha 绑定 / cache 完整性 /
+  `STRICT_AC_GATE` / bypass 审计 / 三条出路文案）⇒ 改为「P3 调既有门，不新写逻辑」。
+- **采纳（新增更深缺陷）**：`archive_gate_check` 唯一调用点在 `:629`，而
+  `openspec_tracked=false` 分支 `:612-620` 提前 `return 0` ⇒ 本仓归档路径无 AC 门。已写入
+  「架构依据」并在 What Changes 第 2 条单独修。
+- **采纳（隐藏意图：删输入却不给替代）**：`route_verifier_verdict` 的唯一输入被删后，ADR-0034 的
+  「失败回 P2 + 三次上限」会失去执行点 ⇒ What Changes 第 4 条要求把 failed-AC 路由写死。
+- **采纳（fail-closed 语义歧义）**：AC 明确 `STRICT_AC_GATE` 两态各自的期望，避免「验收通过」
+  在未开 strict 时仍可带 failed AC 归档。
+- **采纳（AC-1 不可满足）**：「全局无 `verifier_run` 残留」在 `.rddf/plans/**`、`.rddf/reviews/**`
+  等历史工件上必然为假 ⇒ 收窄到 `skills/` + `_lib/`。
+- **采纳（缺 bats 落点）**：`test_rdd_builder_phase3_archive.bats` 在树中不存在 ⇒ AC 写明「新建」
+  与 fixture 形态（不再写「其 bats」）。
+- **采纳 P1-1（bypass 缺口）**：补 `SKIP_RDD_VERIFIER` 无理由 fail-closed / 有理由写
+  `.bypass-audit.jsonl` 两条 AC；错误文案复用 `:551-555`，不另写。
+- **采纳 P2-1（行号纠偏）**：`:24` → `:26-32`。
+- **记录未改**：不改 `archive_gate_check` 自身判据（Out Scope），否则门有两个真源。
 
 ## 架构依据
 

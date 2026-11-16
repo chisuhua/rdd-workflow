@@ -11,6 +11,28 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
+| [fix-p3-verifier-gate](.rddf/improvements/fix-p3-verifier-gate.md) | P1 | 2026-11-16 | rdd-planner |
+| [fix-phase3-cleanup-wiring](.rddf/improvements/fix-phase3-cleanup-wiring.md) | P1 | 2026-11-16 | rdd-planner |
+| [fix-worktree-archive-path](.rddf/improvements/fix-worktree-archive-path.md) | P1 | 2026-11-16 | rdd-planner |
+| [register-change-in-iteration](.rddf/improvements/register-change-in-iteration.md) | P2 | 2026-11-16 | rdd-planner |
+| [fix-flow-drift-batch-1](.rddf/improvements/fix-flow-drift-batch-1.md) | P2 | 2026-11-16 | rdd-planner |
+
+> **批次说明 (2026-11-16 rdd-planner, 第八批)**: 本批 5 项为 `rddf-layout-manifest`（第七批，同日归档）验收/归档过程暴露的产品侧缺陷（原 9 条 follow-up，合并同类 + 撤回 1 条误报）：
+> 1. **`fix-p3-verifier-gate`** (P1) — `phase3_archive.sh:26-32` 检查不存在的 `verifier_run.sh` ⇒ 预调用恒跳过，`VERIFIER_EXIT` 初值 0 被当作「验收通过」；且 `run_verification.sh` 是 staging 脚本（`Exit 0 = agent 待验证`），改名也修不好。改为调用既有 `_lib/archive.sh:360-556 archive_gate_check`，并修 `openspec_tracked=false` 分支（`:612-620` 提前 `return 0`，早于 `:629` 的 gate ⇒ 本仓归档路径没有 AC 门）
+> 2. **`fix-phase3-cleanup-wiring`** (P1) — `post_archive_cleanup.sh` 155 行只有函数定义、无脚本入口；`phase3_archive.sh:101` 用 `bash` 执行它 ⇒ 函数从未运行（实测零输出 exit 0），`2>/dev/null` 再吞掉一切。原判「参数顺序反」不是症状来源；库被直接执行时改为 fail loud
+> 3. **`fix-worktree-archive-path`** (P1) — phase3 在 worktree 里跑 `openspec archive`；本仓 `openspec_tracked=false` 且 `openspec/` 整树 gitignored，worktree 里是普通拷贝 ⇒ 记录与 spec 合流随 worktree 清理丢失。`archive_change` 的 false 分支（回主仓归档）本就正确但被绕过。附 worktree/lightweight × tracked 四格矩阵 + lightweight 已知缺口
+> 4. **`register-change-in-iteration`** (P2) — `sync_iteration_after_archive` / `force_mark_archived` 只更新已存在条目，全仓无创建时注册路径；实测未注册 change 的 `rddf status` 返回 `not found`、归档 iteration 回写被跳过。`store.set_status` 本就支持创建 ⇒ 只补调用者，不新建模块
+> 5. **`fix-flow-drift-batch-1`** (P2) — `SKILL.md:155` 段头正则缺 `Acceptance`（实现 `protocol.py:34` 已有 ⇒ doc drift，非运行时缺陷）；`layout_check.py:126` 给 file 条目也加尾斜杠（实测 `create .rddf/roadmap.md/`）；`rdd_verify_cmd.py:410` 的 `_migrate_legacy_state` 在 dry-run 判断前无条件执行（fixture 实测真移动文件）
+>
+> **撤回记录**: 原 F-1「`rdd-verifier` 不认 `## Acceptance` ⇒ 假阴性跳过验收」撤回 —— 实测 staged context `ac_count: 18`，`protocol.py:34` 已支持该段头；原判断读取了错误的 dict key（`acceptance_criteria`，实际为 `acs`）。其残余（SKILL.md 文档正则漂移）并入第 5 项
+>
+> **审稿记录**: metis 1 轮（2026-11-16，5 份合并一次调用，每份 1 轮在预算内）。4 处 P0 全部采纳并重写草案：① F-9 根因纠偏（库无脚本入口被 `bash` 执行，非参数顺序）；② 删除 D1 的重复实现、改调既有 `archive_gate_check`；③ D3 补模式矩阵 + lightweight 出口（`archive_change` 要求 worktree 存在）；④ D4 的 AC 口径纠偏（`roadmap-feature` CRITICAL 判据与 `changes[]` 无关，实测不受影响）。其余 P1/P2 finding 的逐条处置见各提案「## 审稿记录」段。planner 未开第二轮（预算 1 轮/improvement）
+>
+> **依赖说明**: `fix-worktree-archive-path` 必须在 `fix-p3-verifier-gate` **之后**实施 —— 前者把归档交给 `archive_change`，后者的 `openspec_tracked=false` 分支补门若未落地，门会被 `archive_change` 的提前 `return 0` 绕过。其余三项相互独立
+>
+> **实施建议**: 三项 P1 均走 rdd-builder 完整流程（每项 > rdd-quick 阈值 per ADR-0047）。建议顺序：`fix-p3-verifier-gate` → `fix-worktree-archive-path` → `fix-phase3-cleanup-wiring` → `register-change-in-iteration` → `fix-flow-drift-batch-1`（前两项改同一段代码，先 gate 后路径；cleanup 项与归档路径无硬顺序，但合并验证更省）
+>
+> **重叠检查**: 与 `archive-iteration-sync` / `fix-archive-iteration-sync` / `harden-archive-iteration-sync` 不重叠 —— 本批只补「创建时注册」与「归档 sync 可达性」，不改 sync 本体；与 `post-archive-cleanup-hook` 不重叠 —— 本批只修「库被当脚本执行」与 source 静默，不改 cleanup 清单
 
 > **批次说明 (2026-11-16 rdd-planner, 第七批)**: 本批 1 项 rddf-layout-manifest 为 `.rddf/` 布局建立单一机读真源（消费方提问触发）：
 > 1. **`rddf-layout-manifest`** (P1) — `.rddf/` 的「有哪些条目、谁读谁写、是否入库」无单点真源：ADR-0026 已定义 `runtime-only`/`committed` 二分但无机器可执行形态；路径常量仅 `_lib/core/defaults.py:24-32` 的 2 条 DEFAULTS + `:67-71` 的 5 个模块常量；散文只覆盖 handoff 三文件与 `detectors/`/`actions/`；doctor 24 个 category 无布局类（`SKILL.md:4` 仍写「13 file categories」）。修复策略：新增 `_lib/core/rddf_layout.py` 单一清单（`path`/`kind`/`read_by`/`write_by`/`required_when`/`transient`/`class`/`severity`）+ 只读子命令 `rddf layout --json`（清单出口，带 `schema_version`/`tool_version`，无时间戳 ⇒ 字节确定）+ doctor `layout` category（诊断出口，三支判据，只扫一层，永不 CRITICAL）+ `docs/architecture/rddf-layout.md`（表格 + 新增条目三步 + 文件级一节，以代码为源）
