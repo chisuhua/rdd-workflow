@@ -11,7 +11,6 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [fix-phase3-cleanup-wiring](.rddf/improvements/fix-phase3-cleanup-wiring.md) | P1 | 2026-11-16 | rdd-planner |
 | [register-change-in-iteration](.rddf/improvements/register-change-in-iteration.md) | P2 | 2026-11-16 | rdd-planner |
 | [fix-flow-drift-batch-1](.rddf/improvements/fix-flow-drift-batch-1.md) | P2 | 2026-11-16 | rdd-planner |
 
@@ -281,6 +280,7 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-phase3-cleanup-wiring](.rddf/improvements/fix-phase3-cleanup-wiring.md) | P1 | 2026-11-16 | 已实施 |
 | [fix-worktree-archive-path](.rddf/improvements/fix-worktree-archive-path.md) | P1 | 2026-11-16 | 已实施 |
 | [fix-p3-verifier-gate](.rddf/improvements/fix-p3-verifier-gate.md) | P1 | 2026-11-16 | 已实施 |
 | [rddf-layout-manifest](.rddf/improvements/rddf-layout-manifest.md) | P1 | 2026-11-16 | 已实施 |
