@@ -25,7 +25,7 @@ for arg in "$@"; do
         --require-confirm) REQUIRE_CONFIRM="yes" ;;
     esac
 done
-export AUTO_APPROVE DISPATCH_QUICK REQUIRE_CONFIRM
+export AUTO_APPROVE DISPATCH_QUICK REQUIRE_CONFIRM REPO_ROOT
 
 if [ -z "$CHANGE_NAME" ]; then
     echo "phase0_approval.sh requires <change-name>" >&2
@@ -147,7 +147,12 @@ case "$choice" in
         IMPROVEMENT_FILE="$PROJECT_ROOT/.rddf/improvements/$CHANGE_NAME.md"
         CHANGE_DIR="$PROJECT_ROOT/openspec/changes/$CHANGE_NAME"
 
+        REGISTER_CHANGE=0
         if [ -f "$IMPROVEMENT_FILE" ]; then
+            # Only a change that actually got created may be registered — an
+            # orphan iteration entry for a non-existent change dir is exactly
+            # the phantom that store.set_deps_info warns about.
+            REGISTER_CHANGE=1
             # Create the change dir only when there is something to write:
             # an unconditional mkdir leaves an empty openspec/changes/<name>/
             # behind whenever the improvement is missing (test pollution).
@@ -191,6 +196,66 @@ write_builder_handoff(
 )
 print('builder-handoff v1.1: approval_status=approved written')
 " || echo "(builder-handoff write deferred; non-blocking)"
+
+        # Register the change in iteration.json.
+        #
+        # The archive-side sync (sync_iteration_after_archive /
+        # force_mark_archived) only UPDATES existing entries — nothing ever
+        # CREATED them, so a change was invisible to `rddf status` /
+        # `rddf feature` / deps until someone hand-edited the JSON.
+        # store.set_status creates the entry when it is missing and keeps the
+        # other fields of an existing one (idempotent).
+        #
+        # Non-blocking by design: a missing / unreadable / locked
+        # iteration.json must not fail the approval, and a MISSING file must
+        # not be created half-baked (the archive-side sync will pick the
+        # change up if it ever appears).
+        PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" \
+        REGISTER_CHANGE="$REGISTER_CHANGE" python3 - <<'PYEOF'
+import os, sys
+root = os.environ["PROJECT_ROOT"]
+name = os.environ["CHANGE_NAME"]
+sys.path.insert(0, os.environ["REPO_ROOT"])
+if os.environ.get("REGISTER_CHANGE", "0") != "1":
+    sys.exit(0)
+try:
+    from skills._lib.iteration import store
+except Exception as exc:
+    print(f"⚠️  phase0: iteration store unavailable ({exc}) — change not registered", file=sys.stderr)
+    sys.exit(0)
+
+iter_path = os.path.join(root, ".rddf", "state", "iteration.json")
+if not os.path.isfile(iter_path):
+    print("⚠️  phase0: iteration.json not found — change not registered", file=sys.stderr)
+    sys.exit(0)
+
+# Detect corruption BEFORE writing. store.load() does NOT raise on a corrupt
+# file: it backs it up and returns an empty document — writing into that would
+# overwrite the corrupt file with a single-entry document and silently drop
+# every other change from the status views. The read-only verbose reader
+# distinguishes missing / invalid JSON / schema-invalid without side effects.
+data, err = store._read_unlocked_verbose(iter_path)
+if err:
+    print(f"⚠️  phase0: iteration.json is invalid ({err}) — change not registered",
+          file=sys.stderr)
+    sys.exit(0)
+
+existing = next((c for c in data.get("changes", []) if c.get("name") == name), None)
+if existing is not None and existing.get("status") not in (None, "", "planned"):
+    # Never downgrade an entry that is already under way (in_worktree /
+    # review / completed / archived) — a re-approve must not resurrect it.
+    print(f"✅ already registered in iteration.json: {name} "
+          f"(status={existing.get('status')}) — left untouched")
+    sys.exit(0)
+
+try:
+    data = store.set_status(data, name, "proposed")
+    store.save(root, data)
+except Exception as exc:
+    print(f"⚠️  phase0: registering the change in iteration.json failed ({exc})", file=sys.stderr)
+    sys.exit(0)
+print(f"✅ registered in iteration.json: {name}")
+PYEOF
         exit 0
         ;;
     2)

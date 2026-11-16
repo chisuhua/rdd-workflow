@@ -83,9 +83,65 @@ teardown() {
 # phase0_approval behavior (4 tests)
 # ---------------------------------------------------------------------------
 
-@test "phase0: approve writes spec.md (D3 spec-delta per ADR-0025)" {
-    echo "1" | bash "$REPO_ROOT/skills/rdd-builder/scripts/phase0_approval.sh" "test-change"
-    [ -f "$REPO_ROOT/openspec/specs/test-change/spec.md" ]
+@test "phase0: approve writes the D3 spec-delta (per ADR-0025)" {
+    # Run in a temp project root: phase0 writes into $PROJECT_ROOT (proposal,
+    # spec-delta, builder handoff) and now also registers the change in
+    # iteration.json — running it against the repository itself would pollute
+    # the repo's .rddf/state/iteration.json.
+    local tmp_root="$BATS_TMPDIR/p0-root"
+    mkdir -p "$tmp_root/openspec/changes/test-change" "$tmp_root/.rddf/state" \
+             "$tmp_root/.rddf/improvements"
+    printf '# proposal\n' > "$tmp_root/openspec/changes/test-change/proposal.md"
+    # the delta is only generated when the improvement draft exists
+    cat > "$tmp_root/.rddf/improvements/test-change.md" <<'IMPROVEMENT'
+---
+name: test-change
+priority: P1
+status: pending
+---
+
+# test-change
+
+## 架构依据
+test fixture
+
+## 范围
+- In Scope: fixture
+
+## Why
+test fixture
+
+## What Changes
+test fixture
+
+## Acceptance
+- [ ] fixture acceptance item
+
+## Capabilities
+- MUST fixture
+
+## Impact
+none
+IMPROVEMENT
+    echo "1" | env PROJECT_ROOT="$tmp_root" \
+        bash "$REPO_ROOT/skills/rdd-builder/scripts/phase0_approval.sh" "test-change"
+    [ -f "$tmp_root/openspec/changes/test-change/specs/test-change/spec.md" ]
+}
+
+@test "phase0: running the phases suite leaves the repo's iteration.json untouched" {
+    # The suite runs phase0 against a temp root; the repository's own
+    # .rddf/state/iteration.json must not gain a "test-change" entry.
+    run python3 -c "
+import json, os
+p = '$REPO_ROOT/.rddf/state/iteration.json'
+if not os.path.isfile(p):
+    print('clean')          # no state file at all — nothing to pollute
+    raise SystemExit(0)
+d = json.load(open(p))
+names = [c.get('name') for c in d.get('changes', [])]
+assert 'test-change' not in names, names
+print('clean')"
+    [ "$status" -eq 0 ]
 }
 
 @test "phase0: invalid choice (6) exits non-zero" {
