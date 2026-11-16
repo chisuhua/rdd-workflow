@@ -44,11 +44,20 @@ NITS: 3
 
 **核实**：成立。`doctor_main.py:98-100` 的 `except Exception` 确实把 checker 异常转成 `Severity.CRITICAL`。
 
-**处置**：把 manifest import **移入 `run()` 体内**并 try/except 降级为一条 **WARNING**（`category="layout.unavailable"`）。checker 的其余逻辑不变。
+**处置**：把 manifest import 留在**模块级**、但用 `try/except` 包住并记录 `_MANIFEST_ERROR` 哨兵；`run()` 开头检查哨兵，若 manifest 不可用则返回一条 **WARNING**（`category="layout.unavailable"`）并 return。
 
-**回归测试**：`tests/unit/test_doctor_layout_checker.py::test_missing_manifest_degrades_to_warning` —— 用 `monkeypatch` 让 `_lib.core.rddf_layout` import 失败，断言返回的 finding **不是 CRITICAL** 且 category 为 `layout.unavailable`。
+> ⚠ **实现踩坑（已修）**：第一版把 import 移进 `run()` 体内（lazy import），结果模块级函数 `_match_entry()` 拿不到 `RDFF_LAYOUT` ⇒ `NameError` ⇒ 被聚合器转成 **CRITICAL** —— **恰好复现了 critic 指出的那个击穿**。改成模块级 try/except + 哨兵后，模块级函数仍能访问 `RDFF_LAYOUT`，import 失败也不再冒泡。
 
-> 注：原计划的 bats 用例（拷贝 `rdd-doctor/` 到临时目录）在本机**无法复现** —— 全局安装的 `site-packages/rdd-workflow.pth`（`install.sh --global` 生成）把包根永久加进 `sys.path`，`_lib` 恒可达。故降级测试改为精确的单测 mock。
+**回归测试**：`tests/unit/test_doctor_layout_checker.py::test_missing_manifest_degrades_to_warning` —— 用 `monkeypatch` 让 `_lib.core.rddf_layout` import 失败并 **reload checker 模块**（manifest 是模块级 import，不 reload 触发不了），断言返回的 finding **不是 CRITICAL** 且 category 为 `layout.unavailable`。另加 `test_manifest_is_available_in_this_checkout` 防止降级路径静默吞掉一个坏 import。
+
+**变异验证（回归网有效性）**：故意把 `layout_check.py` 改成「模块级裸 import + `RDFF_LAYOUT` 只在 `run()` 内 import」的形态（复现上面的 NameError），实测：
+- `rdff doctor --category layout` ⇒ 1 CRITICAL（checker raised NameError）
+- `bats tests/integration/test_doctor_layout.bats` ⇒ **6 个用例失败**（含「本仓 0 finding」与「永不 CRITICAL」）
+- `pytest tests/unit/test_doctor_layout_checker.py` ⇒ **2 个用例失败**
+
+⇒ 该不变式（checker 不得把内部异常升级成 CRITICAL）**有回归网守得住**，不是靠人工检查。恢复后全部通过。
+
+> 原计划的 bats 用例（拷贝 `rdd-doctor/` 到临时目录）在本机**无法复现** —— 全局安装的 `site-packages/rdd-workflow.pth`（`install.sh --global` 生成）把包根永久加进 `sys.path`，`_lib` 恒可达。故降级测试改为精确的单测 mock。
 
 ### SF-3 `docs/architecture/rddf-layout.md` 环境变量名写错
 

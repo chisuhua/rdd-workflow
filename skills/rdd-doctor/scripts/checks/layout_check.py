@@ -38,6 +38,20 @@ if str(_PROJECT_ROOT) not in sys.path:
 
 from doctor_render import Finding, Severity  # noqa: E402
 
+# The manifest is imported at module level, but a failure must NOT raise:
+# doctor_main.py's aggregator turns any checker exception into a CRITICAL
+# finding, which would break this category's "never CRITICAL" contract in
+# exactly the environment where the manifest is missing (a copy of
+# rdd-doctor/ without _lib/). Import failure is recorded and reported as a
+# WARNING by run() instead.
+try:
+    from _lib.core.rddf_layout import RDFF_LAYOUT  # noqa: E402
+
+    _MANIFEST_ERROR: Exception | None = None
+except Exception as exc:  # pragma: no cover - depends on deployment layout
+    RDFF_LAYOUT = ()
+    _MANIFEST_ERROR = exc
+
 _GLOB_CHARS = "*?["
 
 
@@ -80,21 +94,16 @@ def run(project_root: Path | None = None) -> List[Finding]:
         project_root = Path(os.environ.get("RDDF_PROJECT_ROOT", "."))
     findings: List[Finding] = []
 
-    # Import the manifest lazily and degrade to a finding of our own. A
-    # module-level import would raise during the checker's *import*, and
-    # doctor_main.py's aggregator turns any checker exception into a
-    # CRITICAL finding — which would break the "this category never emits
-    # CRITICAL" contract in exactly the environment where the manifest is
-    # missing (a copy of rdd-doctor/ without _lib/).
-    try:
-        from _lib.core.rddf_layout import RDFF_LAYOUT
-    except Exception as exc:  # pragma: no cover - depends on deployment layout
+    if _MANIFEST_ERROR is not None:
         return [Finding(
             severity=Severity.WARNING,
             category="layout.unavailable",
             file=str(project_root),
             line=None,
-            snippet=f"layout manifest unavailable: {type(exc).__name__}: {exc}",
+            snippet=(
+                "layout manifest unavailable: "
+                f"{type(_MANIFEST_ERROR).__name__}: {_MANIFEST_ERROR}"
+            ),
             fix_hint="run doctor from a checkout that contains _lib/core/rddf_layout.py",
         )]
     rddf = project_root / ".rddf"

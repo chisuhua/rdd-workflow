@@ -48,7 +48,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 - **手动触发 only** — 不接入任何 phase gate / 自动调用
 - **cat-N 独立于 openspec CLI** — `openspec` 缺失时降级为 checkbox-only，输出 INFO 而非 silent skip
 
-## 23 类检查概览
+## 检查概览
 
 | 类别 | 检查什么 | 涉及 `.rddf/roadmap/` ? |
 |------|---------|:---:|

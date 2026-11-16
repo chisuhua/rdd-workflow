@@ -146,9 +146,12 @@ case "$choice" in
         echo "approved"
         IMPROVEMENT_FILE="$PROJECT_ROOT/.rddf/improvements/$CHANGE_NAME.md"
         CHANGE_DIR="$PROJECT_ROOT/openspec/changes/$CHANGE_NAME"
-        mkdir -p "$CHANGE_DIR"
 
         if [ -f "$IMPROVEMENT_FILE" ]; then
+            # Create the change dir only when there is something to write:
+            # an unconditional mkdir leaves an empty openspec/changes/<name>/
+            # behind whenever the improvement is missing (test pollution).
+            mkdir -p "$CHANGE_DIR"
             CHANGE_NAME="$CHANGE_NAME" IMPROVEMENTS_PATH="$IMPROVEMENT_FILE" \
                 python3 "$SCRIPT_DIR/generate_full_proposal.py" \
                 > "$PROPOSAL_FILE"

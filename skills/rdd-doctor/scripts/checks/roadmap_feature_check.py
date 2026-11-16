@@ -6,7 +6,8 @@ Read-only diagnostic enforcing 6 invariants:
   1. Each .rddf/roadmap/features/*.md frontmatter has required fields
   2. Fragments with status=done/archived appear in .rddf/roadmap.md AUTO-INDEX
   3. iteration.json::feature_view.features includes all active feature ids
-     AND status matches fragment files
+     AND status matches fragment files (a feature whose changes are in
+     progress rolls up to `in_progress`, which is a valid `active` state)
   4. AGENTS.md AUTO sentinel block (if present) matches fragment list
   5. AGENTS.md AUTO sentinel block is present (not silently missing)
   6. AGENTS.md AUTO block status column matches fragment status
@@ -214,7 +215,9 @@ def _check_iteration_view(tmp_path: Path) -> List[Finding]:
                     "sync iteration.json via rddf feature or planner stage exit"
                 ),
             ))
-        elif feat.status == "active" and iter_status not in ("active", "ready", "proposed"):
+        elif feat.status == "active" and iter_status not in (
+            "active", "ready", "proposed", "in_progress"
+        ):
             findings.append(Finding(
                 severity=Severity.WARNING,
                 category="roadmap-feature.iteration-drift",

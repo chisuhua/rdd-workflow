@@ -33,11 +33,15 @@ setup() {
 }
 
 # -----------------------------------------------------------------------------
-# Test 1: SKILL.md "N 类检查概览" heading is the right number (currently 18)
+# Test 1: SKILL.md 检查概览 heading carries NO hardcoded category count
+# (a literal here drifts on every category addition — the row count is
+#  asserted against _CHECKERS in Test 3 instead).
 # -----------------------------------------------------------------------------
-@test "doctor SKILL.md: heading says '23 类检查概览'" {
-    run grep -nE "^[#]+ 23 类检查概览" "$SKILL_MD"
+@test "doctor SKILL.md: heading carries no hardcoded category count" {
+    run grep -nE "^#+ 检查概览" "$SKILL_MD"
     [ "$status" -eq 0 ]
+    run grep -nE "^#+ [0-9]+ 类检查概览" "$SKILL_MD"
+    [ "$status" -ne 0 ]
 }
 
 # -----------------------------------------------------------------------------
@@ -55,11 +59,19 @@ setup() {
 # -----------------------------------------------------------------------------
 # Test 3: SKILL.md table has exactly 18 data rows (| `category` | ...)
 # -----------------------------------------------------------------------------
-@test "doctor SKILL.md: 检查概览 table has exactly 23 category rows" {
-    # Extract the section between "## N 类检查概览" and the next "## "
-    table_rows=$(sed -n '/^## [0-9]\+ 类检查概览/,/^## /p' "$SKILL_MD" \
+@test "doctor SKILL.md: 检查概览 table row count matches _CHECKERS" {
+    # Do NOT hardcode the count: a literal here drifts every time a category is
+    # added (this test previously said 23 in its name and 24 in its assertion,
+    # while the manifest had already moved on).
+    table_rows=$(sed -n '/^## \([0-9]\+ \)\?检查概览/,/^## /p' "$SKILL_MD" \
         | grep -cE '^\| `\w+(-\w+)*` \|')
-    [ "$table_rows" -eq 24 ]
+    registered=$(python3 -c "
+import re
+text = open('$DOCTOR_MAIN').read()
+m = re.search(r'_CHECKERS[^=]*=\s*\{(.+?)\n\}', text, re.DOTALL)
+print(len(re.findall(r'^\s+\"[a-z0-9-]+\":', m.group(1), re.MULTILINE)))
+")
+    [ "$table_rows" -eq "$registered" ]
 }
 
 # -----------------------------------------------------------------------------
@@ -67,7 +79,7 @@ setup() {
 # -----------------------------------------------------------------------------
 @test "doctor SKILL.md: every documented category is in _CHECKERS" {
     # Extract category names from SKILL.md table cells
-    md_categories=$(sed -n '/^## [0-9]\+ 类检查概览/,/^## /p' "$SKILL_MD" \
+    md_categories=$(sed -n '/^## \([0-9]\+ \)\?检查概览/,/^## /p' "$SKILL_MD" \
         | grep -oE '^\| `\w+(-\w+)*` \|' \
         | sed -E 's/^\| `(\w+(-\w+)*)` \|$/\1/' \
         | sort -u)
@@ -100,7 +112,7 @@ print('\n'.join(sorted(set(keys))))
 # Test 5: every category wired in _CHECKERS is documented in SKILL.md
 # -----------------------------------------------------------------------------
 @test "doctor SKILL.md: every wired _CHECKERS category is documented" {
-    md_categories=$(sed -n '/^## [0-9]\+ 类检查概览/,/^## /p' "$SKILL_MD" \
+    md_categories=$(sed -n '/^## \([0-9]\+ \)\?检查概览/,/^## /p' "$SKILL_MD" \
         | grep -oE '^\| `\w+(-\w+)*` \|' \
         | sed -E 's/^\| `(\w+(-\w+)*)` \|$/\1/' \
         | sort -u)
