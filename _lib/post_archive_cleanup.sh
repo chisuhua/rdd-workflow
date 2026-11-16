@@ -75,7 +75,11 @@ post_archive_cleanup() {
   # Sync improvement-approved.md with archive/ tree. Idempotent + non-blocking.
   if [ -f "$project_root/_lib/state.sh" ]; then
     # shellcheck source=/dev/null
-    source "$project_root/_lib/state.sh" 2>/dev/null || true
+    if ! source "$project_root/_lib/state.sh"; then
+      echo "⚠️  post_archive_cleanup: failed to source _lib/state.sh — skipping proposal sync" >&2
+    fi
+  else
+    echo "⚠️  post_archive_cleanup: _lib/state.sh missing — skipping proposal sync" >&2
   fi
   if declare -f sweep_implemented_proposals > /dev/null 2>&1; then
     sweep_implemented_proposals "$project_root" || true
@@ -153,3 +157,12 @@ post_archive_cleanup() {
   # 阶段已 git rm + git add 完成,留给 caller amend。
   return 0
 }
+
+# Executed directly instead of sourced? Say so. Running this library with
+# `bash` used to be a silent no-op with exit 0 — that failure mode is how the
+# improvement-approved.md sync went missing (doctor proposal-section CRITICAL).
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  echo "❌ post_archive_cleanup.sh is a library, not a script." >&2
+  echo "   source it, then call: post_archive_cleanup <project_root> <change_name>" >&2
+  exit 2
+fi
