@@ -16,6 +16,7 @@ For **decisions** behind the design, see [`../adr/README.md`](../adr/README.md).
 | [v4-pipeline-data-flow.md](v4-pipeline-data-flow.md) | **NEW (v4.0.1)** Complete path topology + data flow timeline + `recommended_route` advisory signal pipeline (companion to workflow-phases.md) | 0048 |
 | [loop-engine.md](loop-engine.md) | 5 building blocks + loop/menu/hybrid modes | 0002, 0004 |
 | [state-and-events.md](state-and-events.md) | 3-layer state model | 0006, 0016 |
+| [rddf-layout.md](rddf-layout.md) | `.rddf/` 布局单一真源（机读清单 `RDFF_LAYOUT` + `rddf layout --json` + doctor `layout` category） | 0026 |
 | [gates-and-quality.md](gates-and-quality.md) | gate / tribunal / arch_quality_gate / change_alignment | 0007, 0008, 0018, 0019 |
 | [improvement-check-mechanisms.md](improvement-check-mechanisms.md) | Project-level (ADR-0014) vs workflow-level (ADR-0027) improvement checks, Oracle-reviewed gap analysis + 6-PR plan | 0014, 0027, 0029 |
 | [skills-and-handoff.md](skills-and-handoff.md) | SKILL.md frontmatter, discovery, handoff contracts | 0016 |
