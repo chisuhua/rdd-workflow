@@ -1,5 +1,6 @@
 ---
 优先级: P1
+priority: P1
 来源: 2026-11-16 opencode-config 侧提问「是否该有一份完整的 .rddf/ 目录与文件用法知识，供第三方项目与 e2e 测试床遵循」—
   核查发现产品仓无单点真源：路径常量只有 5 个模块常量 + 2 条 DEFAULTS 条目，散文仅覆盖 handoff 与两个插件目录，doctor 24 个
   category 里没有布局类；ADR-0026 已给出「runtime-only / committed artifacts」二分但未被工具执行
