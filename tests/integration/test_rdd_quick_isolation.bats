@@ -49,7 +49,12 @@ LOCKED_TASKS_WRITEBACK_SH="e9e0065de4f65fbeef763be3b3eb09626c99920744e6bb2585311
 # verdict lookup is now an explicit rejection instead of a silent pass, which is
 # the fix itself. rdd-quick callers can still bypass with the audited
 # SKIP_RDD_VERIFIER + RDDF_VERIFIER_BYPASS_REASON pair.
-LOCKED_ARCHIVE_SH="a841d6de20b368191f2bfac759eeb126152ae2685c4aa5db443c851fa69a2aba"
+# Note (2026-11-16, fix-worktree-archive-path): LOCKED_ARCHIVE_SH recaptured once
+# more. The change touches ONE line group: the tracked branch's gate call drops
+# its `>/dev/null` so a refused archive states why (the openspec_tracked=false
+# branch already behaved that way). rdd-quick still never reaches that call —
+# it archives through the false branch, which is the bypass path (ADR-0047).
+LOCKED_ARCHIVE_SH="70e3a387e333168a271f679dbe08be8c4beb6f97fd25cc1a66e934b1fd36515f"
 # Role block of rdd-planner/SKILL.md (from `role:` through closing `---`).
 # This is the structural-only hash that MUST be byte-identical after rdd-quick lands.
 # LOCKED_RDD_PLANNER_ROLE_BLOCK: role: ... --- block sha256, captured post-ADR-0048

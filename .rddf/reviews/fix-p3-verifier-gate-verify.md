@@ -70,7 +70,7 @@ AC-9 的**实质意图**（`run_verification.sh` 的 staging 语义不变）由�
 
 | # | 缺陷 | 证据 | 建议 |
 |---|---|---|---|
-| **F-A** | **门读 cache 的位置与 agent 写 cache 的位置不同源**：门读 `$tasks_root/.rddf/state/verifier/`，而 agent 的 canonical resolver 把 cache 写到主仓 ⇒ worktree 模式下「照默认跑一次 rdd-verify」必然被判 stale | 实测：cwd=worktree 时 `rdd_verify_cmd --stage` 写到 `/workspace/main/rdd-workflow/.rddf/state/verifier/`；门以 wt 为 tasks_root 时读 wt 侧 | 已在本 change 的 phase3 注释里写明契约（验证必须在 `$TASKS_ROOT` 内进行）；**根修**（门内解耦 tasks_root 与 cache root）留给 `fix-worktree-archive-path` 或新提案 |
+| **F-A** | **门读 cache 的位置与 agent 写 cache 的位置不同源**：门读 `$tasks_root/.rddf/state/verifier/`，而 agent 的 canonical resolver 把 cache 写到主仓 ⇒ worktree 模式下「照默认跑一次 rdd-verify」必然被判 stale | 实测：cwd=worktree 时 `rdd_verify_cmd --stage` 写到主仓的 `.rddf/state/verifier/`；门以 wt 为 tasks_root 时读 wt 侧 | 已在本 change 的 phase3 注释里写明契约（验证必须在 `$TASKS_ROOT` 内进行）；**根修**（门内解耦 tasks_root 与 cache root）留给 `fix-worktree-archive-path` 或新提案 |
 | **F-B** | `verifier_contract_check` 内部按 `_main_repo_root` 解析 cache（与 bash 的 `$tasks_root` 不同）⇒ worktree 模式下恒报「verification missing」，只靠 legacy fallback 降级为 WARNING | 实跑输出：`⚠️ verifier contract: verification missing: rdd-verifier not run` | 与 F-A 同源，一并处理 |
 | **F-C** | `phase1_5_deps.sh:55` 的 `task_count = 5` 是**硬编码**（不读 tasks.md）⇒ mode 判定不准 | 读源码 | 观察项 |
 | **F-D** | 测试污染两处：① `test_known_failures_baseline.bats` 直接写真实 `tests/KNOWN_FAILURES.txt`（setup 备份/teardown 还原，还原失效即留残值）；② `phase0: approve writes spec.md` 只断言 `openspec/specs/test-change/spec.md` **存在**，而该文件是历史残留 ⇒ 干净环境下必失败、主仓「通过」是污染凝视 | 实测：主仓存在该残留文件；clean worktree 缺失 ⇒ 用例失败 | 测试隔离缺陷（既有主题 `feat-fix-test-isolation-and-hygiene`），建议另立 |
