@@ -132,25 +132,22 @@ roadmap_ref:
 - **不承诺 `_lib.core.rddf_layout` 的 import 路径是稳定 API** —— 第三方通过 `rddf layout --json` 消费，不直接 import 产品内部模块。
 - **不改 `rddf init` 建 `.rddf/` 骨架** —— 本清单描述的是「已启用 rdd 的项目」；`.rddf/` 不存在时 layout/doctor 均静默。
 
-### Why
-
-「目录里有什么」是**可枚举事实**，它该有机器可读的真源。而 ADR-0026 已经把这个事实的**分类维度**定好了，缺的只是让它可执行 —— 所以本项是「把已有 ADR 落地为工具」，不是发明新分类。
-
-`read_by` / `write_by` 必须是可观测字段，而不是「owner」这种聚合判断：`wt/` 由 git 建、`issues/` 由 rdd 读写、`reviews/` 只由 agent 写、`config/` 由外部工具建且 rdd 不读 —— 这四条都能在代码里指到具体行；写成「判断」就等于放弃了校验。同理 `required_when` 不能是单布尔：`wt/` 在轻量模式下永不创建，无条件 required 会对这类项目误报。
-
-**为什么清单要独立出口（`rddf layout --json`）而不是复用 doctor 的 `--json`**：doctor 的 JSON 通道只承载 findings，装不下「清单本身」；且共享 renderer 无条件写 `timestamp`，无法满足「同仓连续两次输出字节一致」。两个出口各司其职：**清单（数据）走 `rddf layout --json`，诊断（判定）走 `rddf doctor --category layout`**，互不污染，也不需要改任何共享渲染器。此前「砍掉 `rddf layout` 子命令（YAGNI，当前无消费者）」的裁决被本轮推翻 —— 消费方就是本项的立意本身（第三方项目与 e2e 测试床需要机器可读的布局知识）。
-
 ## Why
 
 三类读者在同一个 `.rddf/` 上各有缺口，且都不是「文档写得不够长」能补的：
-
 1. **第三方项目**：首次使用 rdd 时手里没有任何布局依据（`rddf init` 不建 `.rddf/`），「哪些必须建、哪些按模式才需要」只能读代码反推。
 2. **消费方扩展点**：`.rddf/config/`、`reviews/` 这类条目 rdd 不读不写，但没有一处写明 ⇒ 外部项目无从判断自己加的文件会不会被覆盖或误读。
 3. **本仓自身**：布局演进时散文不会红、硬编码路径也不会红 ⇒ 漂移只能靠人发现。
 
 因此本项的形态是「**把 ADR-0026 已有的分类落成机器可执行的清单**」，而不是另立一套文档规范：分类维度复用 ADR-0026 的 `runtime-only` / `committed`；字段取**可观测事实**（`read_by` / `write_by` 指到具体 `file:line`，而非「owner」这类判断）；未登记条目靠 doctor 报出来，而不是靠文档提醒。
 
-出口分两个、互不重叠：`rddf layout --json` 是**清单视图**（给消费方与第三方 CI 读），doctor `layout` 是**诊断视图**（给项目自检，只读不写盘）。
+「目录里有什么」是**可枚举事实**，它该有机器可读的真源。而 ADR-0026 已经把这个事实的**分类维度**定好了，缺的只是让它可执行 —— 所以本项是「把已有 ADR 落地为工具」，不是发明新分类。
+
+`read_by` / `write_by` 必须是可观测字段，而不是「owner」这种聚合判断：`wt/` 由 git 建、`issues/` 由 rdd 读写、`reviews/` 只由 agent 写、`config/` 由外部工具建且 rdd 不读 —— 这四条都能在代码里指到具体行；写成「判断」就等于放弃了校验。同理 `required_when` 不能是单布尔：`wt/` 在轻量模式下永不创建，无条件 required 会对这类项目误报。
+
+**为什么清单要独立出口（`rddf layout --json`）而不是复用 doctor 的 `--json`**：doctor 的 JSON 通道只承载 findings，装不下「清单本身」；且共享 renderer 无条件写 `timestamp`，无法满足「同仓连续两次输出字节一致」。此前「砍掉 `rddf layout` 子命令（YAGNI，当前无消费者）」的裁决被本轮推翻 —— 消费方就是本项的立意本身（第三方项目与 e2e 测试床需要机器可读的布局知识）。
+
+出口分两个、互不重叠：`rddf layout --json` 是**清单视图**（给消费方与第三方 CI 读），doctor `layout` 是**诊断视图**（给项目自检，只读不写盘）；两者互不污染，也不需要改任何共享渲染器。
 
 ## What Changes
 
