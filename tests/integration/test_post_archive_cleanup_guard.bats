@@ -47,10 +47,27 @@ teardown() {
     [[ "$output" == *"post_archive_cleanup <project_root> <change_name>"* ]]
 }
 
-@test "cleanup: missing _lib/state.sh warns instead of swallowing the failure" {
-    rm -f "$TEST_TMP/_lib"        # drop the symlink ⇒ state.sh unavailable
-    run bash -c "source '$REPO_ROOT/_lib/post_archive_cleanup.sh'; post_archive_cleanup '$TEST_TMP' demo"
-    [[ "$output" == *"state.sh missing"* ]]
+@test "cleanup: warns when state.sh cannot be found anywhere" {
+    # Copy the library to a directory without state.sh so neither the project
+    # copy nor the self-discovery fallback can resolve it.
+    mkdir -p "$TEST_TMP/libonly"
+    cp "$REPO_ROOT/_lib/post_archive_cleanup.sh" "$TEST_TMP/libonly/"
+    rm -f "$TEST_TMP/_lib"
+    run bash -c "source '$TEST_TMP/libonly/post_archive_cleanup.sh'; post_archive_cleanup '$TEST_TMP' demo"
+    [[ "$output" == *"state.sh not found"* ]]
+}
+
+@test "cleanup: global-install shape (no project _lib) still syncs via self-discovery" {
+    # Simulates a user project: _lib/ is NOT under the project root, the
+    # library lives in the install tree. The sync must still work — silence
+    # here would be the pre-fix behaviour, a WARN on every archive would be noise.
+    mkdir -p "$TEST_TMP/install/_lib"
+    cp "$REPO_ROOT/_lib/post_archive_cleanup.sh" "$REPO_ROOT/_lib/state.sh" "$TEST_TMP/install/_lib/"
+    rm -f "$TEST_TMP/_lib"
+    run bash -c "source '$TEST_TMP/install/_lib/post_archive_cleanup.sh'; post_archive_cleanup '$TEST_TMP' demo"
+    grep -qE "\| \[demo\]\(\.rddf/improvements/demo\.md\) \| P1 \| [0-9-]+ \| 已实施 \|" \
+        "$TEST_TMP/improvement-approved.md"
+    [[ "$output" != *"state.sh not found"* ]]
 }
 
 @test "cleanup: the correct call syncs improvement-approved.md (e2e)" {
