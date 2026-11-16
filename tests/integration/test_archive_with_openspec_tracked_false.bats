@@ -160,6 +160,13 @@ EOF
 
     source "$REPO_ROOT/_lib/archive.sh"
 
+    # Bypass the archive gate — this test covers the git/merge behaviour of the
+    # false branch only. Gate-in-false-branch behaviour is covered by
+    # tests/integration/test_archive_gate_tracked_false.bats.
+    check_worktree_commits() { return 0; }
+    archive_gate_check() { return 0; }
+    export -f check_worktree_commits archive_gate_check
+
     run archive_change "$change_name"
     [ "$status" -eq 0 ]
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Phase 3: Archive with verifier retry loop.
-# Verifier exit codes 0/1/2/3/4 preserved per Oracle H4.
+# Phase 3: Archive, gated on the agent-produced verdict cache (ADR-0035).
+# Exit codes: 2 = usage, 3 = worktree/mode precondition, 7 = archive gate or
+# openspec archive failure.
 set -euo pipefail
 
 CHANGE_NAME="${1:-}"
@@ -21,76 +22,77 @@ fi
 
 echo "=== Phase 3: Archive for $CHANGE_NAME ==="
 
-# Pre-call rdd-verifier (per ADR-0035)
-VERIFIER_EXIT=0
-if [ -f "skills/rdd-verifier/scripts/verifier_run.sh" ]; then
-    bash skills/rdd-verifier/scripts/verifier_run.sh "$CHANGE_NAME" 2>/dev/null || VERIFIER_EXIT=$?
-    if [ "$VERIFIER_EXIT" -ne 0 ] && [ "$VERIFIER_EXIT" -ne 4 ]; then
-        echo "verifier failed with exit $VERIFIER_EXIT (not a 4-halt); proceeding with archive anyway"
-        VERIFIER_EXIT=0
+# --- Execution mode + tasks root -------------------------------------------
+# Resolve the rdd-workflow package root — the directory that CONTAINS `_lib/`.
+# It is NOT the project root: in a user project `_lib/` lives under the installed
+# package (~/.agents/skills/rdd-workflow or <project>/.opencode/skills/rdd-workflow).
+# Order mirrors phase2_execute.sh: the package owning this script wins (dev
+# checkout / symlinked global install), then project-local, then global.
+_resolve_pkg_root() {
+    local c here
+    here="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+    if [ -d "$here/_lib" ]; then printf '%s' "$here"; return 0; fi
+    for c in \
+        "$PROJECT_ROOT/.opencode/skills/rdd-workflow" \
+        "$HOME/.agents/skills/rdd-workflow" \
+        "$HOME/.agents/skills"
+    do
+        if [ -n "$c" ] && [ -d "$c/_lib" ]; then printf '%s' "$c"; return 0; fi
+    done
+    return 1
+}
+PKG_ROOT="$(_resolve_pkg_root || true)"
+
+# archive_gate_check uses $tasks_root to locate tasks.md, the verdict cache and
+# `git rev-parse HEAD`. A fresh `git worktree` carries neither openspec/ nor the
+# gitignored .rddf/state/, so pick whichever root actually has tasks.md.
+#
+# CONTRACT: the gate reads the verdict cache from
+# $TASKS_ROOT/.rddf/state/verifier/.ac-verdict-<change>.json and compares its
+# codebase_commit against `git -C $TASKS_ROOT rev-parse HEAD`. Verification must
+# therefore run in the SAME root as $TASKS_ROOT — in worktree mode that means
+# RDDF_PROJECT_ROOT=<worktree>, not the canonical (main-repo) state root the
+# resolver picks by default; otherwise the cache and the sha anchor come from
+# different roots and the gate reports "stale" even though nothing changed.
+EXEC_MODE=$(PKG_ROOT="$PKG_ROOT" PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" python3 -c "
+import os, sys
+if os.environ.get('PKG_ROOT'):
+    sys.path.insert(0, os.environ['PKG_ROOT'])
+from _lib.builder_handoff import read_builder_handoff
+print(read_builder_handoff(os.environ['PROJECT_ROOT'], os.environ['CHANGE_NAME']).get('execution_mode_decision', {}).get('mode', 'worktree'))
+" 2>/dev/null || echo "worktree")
+
+WT_PATH="$PROJECT_ROOT/.rddf/wt/$CHANGE_NAME"
+TASKS_ROOT="$PROJECT_ROOT"
+if [ "$EXEC_MODE" = "worktree" ]; then
+    [ -d "$WT_PATH" ] || { echo "worktree not found at $WT_PATH" >&2; exit 3; }
+    if [ -f "$WT_PATH/openspec/changes/$CHANGE_NAME/tasks.md" ]; then
+        TASKS_ROOT="$WT_PATH"
     fi
 fi
 
-# Route verifier verdict
-DECISION_JSON=$(python3 -c "
-import sys, json
-sys.path.insert(0, '$PROJECT_ROOT')
-from _lib.builder_retry import route_verifier_verdict
-d = route_verifier_verdict(verifier_exit_code=$VERIFIER_EXIT)
-print(json.dumps(d))
-")
-
-BACK_ROUTE=$(echo "$DECISION_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['should_back_route'])")
-HALTED=$(echo "$DECISION_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['halted'])")
-NEXT_PHASE=$(echo "$DECISION_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['next_phase'])")
-VKIND=$(echo "$DECISION_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['verifier_kind'])")
-
-if [ "$HALTED" = "True" ]; then
-    echo "verifier halted: verdict=$NEXT_PHASE ($VKIND)" >&2
-    python3 <<PYEOF
-import sys
-sys.path.insert(0, "$PROJECT_ROOT")
-from _lib.builder_handoff import update_builder_handoff
-# Merge, not overwrite: a full write resets approval_status to its
-# "pending" default and drops fields written by earlier phases.
-update_builder_handoff(
-    "$PROJECT_ROOT",
-    "$CHANGE_NAME",
-    current_phase="phase-3",
-    archive_status="failed",
-)
-PYEOF
-    exit 4
+# --- Archive gate (ADR-0035 / ADR-0045) ------------------------------------
+# Verification is produced by the executing agent via the rdd-verifier skill;
+# P3 only checks that a complete, non-stale verdict cache exists. The previous
+# implementation pre-called a verifier script that does not exist and then
+# treated its never-set exit code as "passed". The staging helper is no
+# substitute either: it only writes a context file, and its exit 0 means
+# "agent verification pending", not "verified".
+#
+# Failed-AC policy is deliberately the gate's, not P3's: a cache whose verdict
+# contains failed ACs only WARNS and archiving proceeds, unless STRICT_AC_GATE=yes
+# (then the gate blocks and P3 exits 7). Both states are pinned by tests.
+# shellcheck source=/dev/null
+source "$PKG_ROOT/_lib/archive.sh" 2>/dev/null || true
+if ! declare -f archive_gate_check >/dev/null 2>&1; then
+    echo "❌ archive_gate_check unavailable: failed to source $PKG_ROOT/_lib/archive.sh" >&2
+    exit 7
 fi
+archive_gate_check "$CHANGE_NAME" "$TASKS_ROOT" || exit 7
 
-if [ "$BACK_ROUTE" = "True" ]; then
-    echo "verifier back-routes to $NEXT_PHASE ($VKIND)"
-    python3 <<PYEOF
-import sys
-sys.path.insert(0, "$PROJECT_ROOT")
-from _lib.builder_handoff import increment_retry
-increment_retry(
-    project_root="$PROJECT_ROOT",
-    change_name="$CHANGE_NAME",
-    to_phase="$NEXT_PHASE",
-    verifier_kind="$VKIND",
-    verifier_exit_code=$VERIFIER_EXIT,
-)
-PYEOF
-    exit 4
-fi
-
-# Verifier passed → archive
-EXEC_MODE=$(python3 -c "
-import sys
-sys.path.insert(0, '$PROJECT_ROOT')
-from _lib.builder_handoff import read_builder_handoff
-print(read_builder_handoff('$PROJECT_ROOT', '$CHANGE_NAME').get('execution_mode_decision', {}).get('mode', 'worktree'))
-" 2>/dev/null || echo "worktree")
-
+# --- Archive ---------------------------------------------------------------
 if [ "$EXEC_MODE" = "worktree" ]; then
-    WT_PATH=".rddf/wt/$CHANGE_NAME"
-    cd "$WT_PATH" 2>/dev/null || { echo "worktree not found at $WT_PATH" >&2; exit 3; }
+    cd "$WT_PATH" || { echo "worktree not found at $WT_PATH" >&2; exit 3; }
 fi
 
 openspec archive "$CHANGE_NAME" --yes 2>/dev/null || {

@@ -607,6 +607,13 @@ archive_change() {
   if [ "$openspec_tracked" = "false" ] || [ "$openspec_tracked" = "False" ]; then
     echo "📦 openspec_tracked=false: 跳过 git merge/commit"
     switch_to_default_branch "$main_root" "$default_branch" || return 1
+    # Archive gate (ADR-0035) must run on this branch too: the tracked branch
+    # only reaches it at step 2.5, which sits below this early return.
+    # tasks_root = $main_root (not $wt_path): this branch exists precisely
+    # because openspec/ is untracked, so a fresh worktree carries neither
+    # openspec/changes/<name>/tasks.md nor the gitignored .rddf/state/verifier/.
+    # Output is NOT silenced — a rejected archive must say why and how to unblock.
+    archive_gate_check "$name" "$main_root" || return 3
     if ! openspec archive "$name" --yes; then
       echo "❌ openspec archive 失败"
       return 1
