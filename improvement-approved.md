@@ -11,6 +11,20 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
+| [rddf-layout-manifest](.rddf/improvements/rddf-layout-manifest.md) | P1 | 2026-11-16 | rdd-planner |
+
+> **批次说明 (2026-11-16 rdd-planner, 第七批)**: 本批 1 项 rddf-layout-manifest 为 `.rddf/` 布局建立单一机读真源（消费方提问触发）：
+> 1. **`rddf-layout-manifest`** (P1) — `.rddf/` 的「有哪些条目、谁读谁写、是否入库」无单点真源：ADR-0026 已定义 `runtime-only`/`committed` 二分但无机器可执行形态；路径常量仅 `_lib/core/defaults.py:24-32` 的 2 条 DEFAULTS + `:67-71` 的 5 个模块常量；散文只覆盖 handoff 三文件与 `detectors/`/`actions/`；doctor 24 个 category 无布局类（`SKILL.md:4` 仍写「13 file categories」）。修复策略：新增 `_lib/core/rddf_layout.py` 单一清单（`path`/`kind`/`read_by`/`write_by`/`required_when`/`transient`/`class`/`severity`）+ 只读子命令 `rddf layout --json`（清单出口，带 `schema_version`/`tool_version`，无时间戳 ⇒ 字节确定）+ doctor `layout` category（诊断出口，三支判据，只扫一层，永不 CRITICAL）+ `docs/architecture/rddf-layout.md`（表格 + 新增条目三步 + 文件级一节，以代码为源）
+>
+> **审稿记录**: metis 1 轮（`.rddf/reviews/rddf-layout-manifest-planner-review.md`，13 条 finding 全部采纳）+ build 侧证据核对 1 轮（`.rddf/reviews/rddf-layout-manifest-builder-review.md`，4 BLOCKER + 9 SHOULD_FIX 全部处置）。BLOCKER 处置要点：① 清单出口独立为 `rddf layout --json`，不改共享 `doctor_render.py`（其 `timestamp` 与 24 个 category 的 JSON 契约保持不变）；② 目录条目 ignore 判定改用 `<path>/.probe` 探针（目录含 tracked 文件时 `git check-ignore <dir>/` 假红）；③「文件级」一节改以代码为源，并本次一并修 `state-and-events.md` 的 v3 遗留 handoff 表
+>
+> **依赖说明**: 无。消费方（opencode-config 的 `workspace.json`）属外部工具私有，不进本清单
+>
+> **实施建议**: 走 rdd-builder P0-P3 完整流程（7 新增文件 + 7 改动文件 > rdd-quick 阈值 per ADR-0047）。轻量模式（无 worktree，直接 master commit）。`openspec/changes/<name>/proposal.md` 由 rdd-builder P0 生成
+>
+> **重叠检查**: 与 `add-skills-lib-api-doc`（P2，`skills/_lib/` API 文档化）不重叠 —— 本项只覆盖 `.rddf/` 布局面，不涉及 `skills/_lib/` helper 目录；与 `fix-skill-manifest-drift`（done）不重叠 —— 后者治 skill 清单漂移，本项治 `.rddf/` 布局漂移，机制同源但对象不同
+>
+> **立项期已知状态（非本项缺陷，rdd-builder P0 后自愈）**: `rddf doctor --category roadmap-feature` 报 1 条 CRITICAL —— `iteration.json feature_view missing active feature 'feat-rddf-layout-manifest'`。根因：`feature_view.features` 由 `iteration.json::changes[]` 按 `parent_feature` 派生（`skills/feature/scripts/feature_view.py:294-330`），而 `feat-rddf-layout-manifest` 名下尚无 change（change 由 rdd-builder P0 创建并注册）。feature fragment 的合法状态只有 `active`/`done`/`archived`（`_lib/roadmap_state.py:610,971`），无 `proposed` 可用 ⇒ 「active 且零 change」必然触发该 CRITICAL。**处置**：保持 `status: active`，待 rdd-builder P0 注册 change 后由 `rddf feature` 自动补齐。已记为待立项的 follow-up（checker 未容忍「active feature 尚无 change」这一过渡态）
 
 > **批次说明 (2026-09-28 rdd-planner, 第六批)**: 本批 1 项 consolidate-resolve-project-root-helpers 为 fix-skill-layer-resolution-bash (P3, 已 ship commit 1bcb8a0) 实施审计时识别的跨语言漂移风险:
 > 1. **`consolidate-resolve-project-root-helpers`** (P3) — bash + Python 双语言 helper 现为独立实现,无共享 contract → 行为可能漂移 (如 bash helper 未来支持 RDDF_PROJECT_ROOT override 而 Python 不知道)。修复策略: 单一 contract YAML 文件 (`skills/_lib/_resolve_project_root_contract.yaml`) 定义 4 个 invariant (env override / git probe / cwd fallback / function signature),双语言 helper 都从 contract 推导。比 codegen 更轻量 (不引入 build step),用约束 test (3 impl × 4 invariant = 12 cases) 确保未来修改不破坏 invariant
