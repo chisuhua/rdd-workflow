@@ -11,7 +11,6 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [fix-flow-drift-batch-1](.rddf/improvements/fix-flow-drift-batch-1.md) | P2 | 2026-11-16 | rdd-planner |
 
 > **批次说明 (2026-11-16 rdd-planner, 第八批)**: 本批 5 项为 `rddf-layout-manifest`（第七批，同日归档）验收/归档过程暴露的产品侧缺陷（原 9 条 follow-up，合并同类 + 撤回 1 条误报）：
 > 1. **`fix-p3-verifier-gate`** (P1) — `phase3_archive.sh:26-32` 检查不存在的 `verifier_run.sh` ⇒ 预调用恒跳过，`VERIFIER_EXIT` 初值 0 被当作「验收通过」；且 `run_verification.sh` 是 staging 脚本（`Exit 0 = agent 待验证`），改名也修不好。改为调用既有 `_lib/archive.sh:360-556 archive_gate_check`，并修 `openspec_tracked=false` 分支（`:612-620` 提前 `return 0`，早于 `:629` 的 gate ⇒ 本仓归档路径没有 AC 门）
@@ -279,6 +278,7 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-flow-drift-batch-1](.rddf/improvements/fix-flow-drift-batch-1.md) | P2 | 2026-11-16 | 已实施 |
 | [register-change-in-iteration](.rddf/improvements/register-change-in-iteration.md) | P2 | 2026-11-16 | 已实施 |
 | [fix-phase3-cleanup-wiring](.rddf/improvements/fix-phase3-cleanup-wiring.md) | P1 | 2026-11-16 | 已实施 |
 | [fix-worktree-archive-path](.rddf/improvements/fix-worktree-archive-path.md) | P1 | 2026-11-16 | 已实施 |
