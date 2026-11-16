@@ -633,7 +633,10 @@ archive_change() {
   # 2.5. Shared completion gate (also called by ship_archive.sh lightweight path).
   # Pass wt_path so the gate reads the up-to-date tasks.md from the worktree,
   # not the stale copy on the default branch.
-  archive_gate_check "$name" "$wt_path" >/dev/null || return 3
+  # Output is NOT silenced (like the openspec_tracked=false branch): a
+  # refused archive must say why and how to unblock — the caller
+  # (phase3 / rddf archive) surfaces it to the user.
+  archive_gate_check "$name" "$wt_path" || return 3
 
   # 3. Switch to default branch in main repo
   switch_to_default_branch "$main_root" "$default_branch" || return 1

@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
 # Phase 3: Archive, gated on the agent-produced verdict cache (ADR-0035).
-# Exit codes: 2 = usage, 3 = worktree/mode precondition, 7 = archive gate or
-# openspec archive failure.
+#
+# Exit codes (this script's own contract):
+#   2 = usage error
+#   3 = precondition failure — no worktree / branch without new commits /
+#       merge failed
+#   7 = the archive gate refused (missing, stale or incomplete verdict cache)
+#       OR the openspec archive command itself failed
+#
+# In worktree mode the archive is delegated to archive_change, whose own
+# returns are mapped: 0 → 0, 3 (gate refused) → 7, anything else → 3.
+# In lightweight mode P3 runs the gate and the openspec archive itself.
 set -euo pipefail
 
 CHANGE_NAME="${1:-}"
@@ -71,36 +80,69 @@ if [ "$EXEC_MODE" = "worktree" ]; then
     fi
 fi
 
-# --- Archive gate (ADR-0035 / ADR-0045) ------------------------------------
-# Verification is produced by the executing agent via the rdd-verifier skill;
-# P3 only checks that a complete, non-stale verdict cache exists. The previous
-# implementation pre-called a verifier script that does not exist and then
-# treated its never-set exit code as "passed". The staging helper is no
-# substitute either: it only writes a context file, and its exit 0 means
-# "agent verification pending", not "verified".
-#
-# Failed-AC policy is deliberately the gate's, not P3's: a cache whose verdict
-# contains failed ACs only WARNS and archiving proceeds, unless STRICT_AC_GATE=yes
-# (then the gate blocks and P3 exits 7). Both states are pinned by tests.
 # shellcheck source=/dev/null
 source "$PKG_ROOT/_lib/archive.sh" 2>/dev/null || true
-if ! declare -f archive_gate_check >/dev/null 2>&1; then
-    echo "❌ archive_gate_check unavailable: failed to source $PKG_ROOT/_lib/archive.sh" >&2
-    exit 7
-fi
-archive_gate_check "$CHANGE_NAME" "$TASKS_ROOT" || exit 7
 
-# --- Archive ---------------------------------------------------------------
+# --- Archive ----------------------------------------------------------------
+# Worktree mode: delegate to archive_change — the single implementation. It
+# owns the gate / merge / openspec archive / cleanup / iteration sync, and
+# (unlike the previous inline path) it archives in the MAIN repo, which is the
+# authoritative openspec/ when that directory is untracked
+# (git.openspec_tracked = false). Archiving inside the worktree wrote the
+# record into a throwaway copy that the worktree cleanup then deleted.
+#
+# The archive gate lives inside archive_change, so P3 must NOT run its own
+# gate here: the two would use different roots (archive_gate_check's
+# tasks_root vs archive_change's choice) and could disagree.
+#
+# CONTRACT — where the verdict cache must be stamped (the gate compares the
+# cache's codebase_commit with `git -C <gate root> rev-parse HEAD`, so cache
+# and sha anchor must come from the SAME root):
+#   openspec_tracked=true  → gate root = the worktree  ⇒ verify in the worktree
+#   openspec_tracked=false → gate root = the main repo  ⇒ verify in the main repo
+#                             (that branch exists precisely because openspec/ is
+#                              untracked, so the worktree has neither tasks.md
+#                              nor .rddf/state/verifier/)
+# In lightweight mode the gate root is $TASKS_ROOT (the root that holds
+# openspec/changes/<name>/tasks.md).
+#
+# Failed-AC policy is deliberately the gate's, not P3's: a cache whose verdict
+# contains failed ACs only WARNS and archiving proceeds, unless
+# STRICT_AC_GATE=yes (then the gate blocks and P3 exits 7). Both states are
+# pinned by tests.
+#
+# Return-code mapping (archive_change → phase3):
+#   0 → 0   archived
+#   3 → 7   the archive gate refused (missing / stale / incomplete verdict cache)
+#   1 → 3   precondition failure (no worktree, branch without new commits,
+#            merge failed, openspec archive failed)
 if [ "$EXEC_MODE" = "worktree" ]; then
-    cd "$WT_PATH" || { echo "worktree not found at $WT_PATH" >&2; exit 3; }
+    if ! declare -f archive_change >/dev/null 2>&1; then
+        echo "❌ archive_change unavailable: failed to source $PKG_ROOT/_lib/archive.sh" >&2
+        exit 7
+    fi
+    # archive_change runs `openspec archive` against the CALLER's cwd, so the
+    # project root has to be the cwd before delegating.
+    cd "$PROJECT_ROOT"
+    rc=0
+    archive_change "$CHANGE_NAME" || rc=$?
+    case "$rc" in
+        0) ;;
+        3) echo "❌ archive gate refused the archive for $CHANGE_NAME" >&2; exit 7 ;;
+        *) echo "❌ archive_change failed for $CHANGE_NAME (exit $rc)" >&2; exit 3 ;;
+    esac
+else
+    # lightweight mode: inline archive. archive_change cannot serve this mode —
+    # it requires an existing worktree (_lib/archive.sh:589-592).
+    # KNOWN GAP (documented in .rddf/improvements/fix-worktree-archive-path.md):
+    # this branch runs neither the archive_change cleanup nor its iteration
+    # sync; the gate below is the only pre-archive check.
+    archive_gate_check "$CHANGE_NAME" "$TASKS_ROOT" || exit 7
+    openspec archive "$CHANGE_NAME" --yes 2>/dev/null || {
+        echo "openspec archive FAIL for $CHANGE_NAME" >&2
+        exit 7
+    }
 fi
-
-openspec archive "$CHANGE_NAME" --yes 2>/dev/null || {
-    echo "openspec archive FAIL for $CHANGE_NAME" >&2
-    exit 7
-}
-
-bash _lib/post_archive_cleanup.sh "$CHANGE_NAME" "$PROJECT_ROOT" 2>/dev/null || echo "(cleanup script deferred)"
 
 python3 <<PYEOF
 import sys
