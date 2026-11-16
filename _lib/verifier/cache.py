@@ -213,11 +213,16 @@ _LEGACY_GLOBS = (
 )
 
 
-def migrate_legacy_state(project_root: Path) -> list[tuple[str, str]]:
+def migrate_legacy_state(
+    project_root: Path, dry_run: bool = False
+) -> list[tuple[str, str]]:
     """Move pre-consolidation verifier state files into `.rddf/state/verifier/`.
 
     Returns a list of `(action, filename)` tuples where action is one of
-    `moved` / `skipped` / `failed`.
+    `moved` / `skipped` / `failed` / `would-move`.
+
+    With `dry_run=True` nothing is written: the files that WOULD be moved are
+    reported as `would-move`. `--dry-run` must have no side effects.
 
     Conservative rules (mirroring the legacy `.verifier-loop.json` migration):
       - an existing destination is never overwritten (`skipped`);
@@ -243,6 +248,9 @@ def migrate_legacy_state(project_root: Path) -> list[tuple[str, str]]:
         dest = target_dir / src.name
         if dest.exists():
             results.append(("skipped", src.name))
+            continue
+        if dry_run:
+            results.append(("would-move", src.name))
             continue
         try:
             target_dir.mkdir(parents=True, exist_ok=True)

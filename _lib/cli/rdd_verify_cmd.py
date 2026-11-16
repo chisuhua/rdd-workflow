@@ -364,20 +364,26 @@ def validate_cache_for_archive(
     }
 
 
-def _migrate_legacy_state(project_root: Path) -> None:
+def _migrate_legacy_state(project_root: Path, dry_run: bool = False) -> None:
     """Move legacy verifier state files into `.rddf/state/verifier/` (best effort).
+
+    With `dry_run=True` nothing is moved — the files that would be moved are
+    only reported, because `--dry-run` must not change the disk.
 
     Never raises: a migration failure must not turn into a verification failure.
     """
     try:
         from _lib.verifier.cache import migrate_legacy_state
-        results = migrate_legacy_state(project_root)
+        results = migrate_legacy_state(project_root, dry_run=dry_run)
     except Exception as exc:  # noqa: BLE001 — housekeeping must not break verify
         print(f"⚠️  legacy verifier state migration skipped: {exc}", file=sys.stderr)
         return
     for action, name in results:
         if action == "moved":
             print(f"📦 moved legacy verifier state → .rddf/state/verifier/{name}")
+        elif action == "would-move":
+            print(f"[dry-run] would migrate legacy verifier state → "
+                  f".rddf/state/verifier/{name}")
         elif action == "skipped":
             print(f"📦 kept legacy verifier state (destination exists): {name}")
         else:
@@ -407,12 +413,19 @@ def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
     # (`.rddf/state/` root → `.rddf/state/verifier/`). Best effort: a failure
     # here is housekeeping, never a verification verdict (per
     # consolidate-verifier-state §2.2).
-    _migrate_legacy_state(project_root)
+    _migrate_legacy_state(project_root, dry_run=parsed.dry_run)
 
     if skip and not bypass_reason:
         print("❌ SKIP_RDD_VERIFIER=yes requires RDDF_VERIFIER_BYPASS_REASON (fail closed)",
               file=sys.stderr)
         return 3
+
+    # --stage WRITES a context file, so it cannot be combined with --dry-run
+    # (whose contract is "no side effects").
+    if parsed.stage and parsed.dry_run:
+        print("--dry-run and --stage are mutually exclusive: --stage writes a "
+              "verification context file", file=sys.stderr)
+        return 2
 
     # v2.0 --stage mode: write context file only (no batch orchestration).
     if parsed.stage:

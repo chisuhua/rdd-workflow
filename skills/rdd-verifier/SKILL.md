@@ -152,7 +152,7 @@ skill_use("rdd-verifier")
 **段头匹配**（两种都支持，中英文）：
 
 ```regex
-^##\s+(?:验收标准|Acceptance Criteria)\s*$
+^##\s+(?:验收标准|Acceptance Criteria|Acceptance)\s*$
 ```
 
 **段边界**：从匹配位置到下一个 `## ` 段头（或文件末尾）。
