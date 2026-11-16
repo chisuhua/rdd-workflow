@@ -114,6 +114,25 @@ _phase3() {
     [[ "$output" == *"未实现"* ]]
 }
 
+@test "phase3: refuses when cached verdict is incomplete (AC set mismatch)" {
+    # proposal declares AC-1..AC-2; cache only covers AC-1.
+    mkdir -p "$TEST_TMP/.rddf/state/verifier"
+    CACHE="$TEST_TMP/.rddf/state/verifier/.ac-verdict-demo.json" \
+    SHA="$(git -C "$TEST_TMP" rev-parse HEAD)" python3 - <<'PY'
+import json, os
+json.dump({
+    "schema_version": 2, "version": 2, "change": "demo",
+    "codebase_commit": os.environ["SHA"],
+    "verdict": [{"ac_id": "AC-1", "description": "a", "status": "pass",
+                 "confidence": 0.9, "evidence": [], "reasoning": "fixture"}],
+    "verification_state": "passed", "failed_acs": [],
+}, open(os.environ["CACHE"], "w"))
+PY
+    _phase3
+    [ "$status" -eq 7 ]
+    [[ "$output" == *"incomplete"* ]]
+}
+
 @test "phase3: cache with failed ACs only warns by default (archiving proceeds)" {
     _write_cache "$(git -C "$TEST_TMP" rev-parse HEAD)" fail
     _phase3
