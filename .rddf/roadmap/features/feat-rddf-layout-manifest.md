@@ -1,7 +1,7 @@
 ---
 id: feat-rddf-layout-manifest
 kind: feature
-status: active
+status: done
 phase_refs: [phase-4]
 主题: rddf 布局单一真源 —— .rddf/ 机读清单 + layout 子命令 + doctor layout category + 散文由清单派生
 ---
@@ -53,3 +53,10 @@ phase_refs: [phase-4]
 - [ ] `rdd-doctor/SKILL.md` description 不含固定 category 数目；usage 行 category 枚举与 `_CHECKERS` 实况一致；category 表含 `layout` 一行
 - [ ] 边界声明成文：`RDDF_STATE_DIR` 重定向不在契约内
 - [ ] 回归：`./test.sh --quick` 不新增失败；`git diff --stat` 不含「把现有路径引用改成读常量」的改动，且不含 `doctor_render.py`
+
+## 验收与归档
+
+- **验收**：18/18 AC pass（报告 `.rddf/reviews/rddf-layout-manifest-verify.md`，verdict cache `.rddf/state/verifier/.ac-verdict-rddf-layout-manifest.json`，`codebase_commit=d173f791`）
+- **critic 审稿**：APPROVE_WITH_CONDITIONS / mergeable: yes / 0 BLOCKER（报告 `.rddf/reviews/rddf-layout-manifest-arch-review.md`）
+- **归档**：`openspec/changes/archive/2026-11-16-rddf-layout-manifest`（+25 Requirements 合流进 `openspec/specs/rddf-layout-manifest/spec.md`）
+

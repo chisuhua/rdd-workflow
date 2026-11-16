@@ -11,7 +11,6 @@
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [rddf-layout-manifest](.rddf/improvements/rddf-layout-manifest.md) | P1 | 2026-11-16 | rdd-planner |
 
 > **批次说明 (2026-11-16 rdd-planner, 第七批)**: 本批 1 项 rddf-layout-manifest 为 `.rddf/` 布局建立单一机读真源（消费方提问触发）：
 > 1. **`rddf-layout-manifest`** (P1) — `.rddf/` 的「有哪些条目、谁读谁写、是否入库」无单点真源：ADR-0026 已定义 `runtime-only`/`committed` 二分但无机器可执行形态；路径常量仅 `_lib/core/defaults.py:24-32` 的 2 条 DEFAULTS + `:67-71` 的 5 个模块常量；散文只覆盖 handoff 三文件与 `detectors/`/`actions/`；doctor 24 个 category 无布局类（`SKILL.md:4` 仍写「13 file categories」）。修复策略：新增 `_lib/core/rddf_layout.py` 单一清单（`path`/`kind`/`read_by`/`write_by`/`required_when`/`transient`/`class`/`severity`）+ 只读子命令 `rddf layout --json`（清单出口，带 `schema_version`/`tool_version`，无时间戳 ⇒ 字节确定）+ doctor `layout` category（诊断出口，三支判据，只扫一层，永不 CRITICAL）+ `docs/architecture/rddf-layout.md`（表格 + 新增条目三步 + 文件级一节，以代码为源）
@@ -262,6 +261,7 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [rddf-layout-manifest](.rddf/improvements/rddf-layout-manifest.md) | P1 | 2026-11-16 | 已实施 |
 | [consolidate-resolve-project-root-helpers](.rddf/improvements/consolidate-resolve-project-root-helpers.md) | P3 | 2026-09-28 | 已实施 |
 | [fix-skill-layer-resolution-bash](.rddf/improvements/fix-skill-layer-resolution-bash.md) | P3 | 2026-09-28 | 已实施 |
 | [add-skill-layer-resolve-project-root-helper](.rddf/improvements/add-skill-layer-resolve-project-root-helper.md) | P2 | 2026-09-27 | 已实施 |
