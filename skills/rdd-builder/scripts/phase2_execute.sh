@@ -133,10 +133,12 @@ import os, sys
 root = os.environ.get('PKG_ROOT') or ''
 if root:
     sys.path.insert(0, root)
-from _lib.builder_handoff import write_builder_handoff
-write_builder_handoff(
-    project_root=os.environ['PROJECT_ROOT'],
-    change_name=os.environ['CHANGE_NAME'],
+from _lib.builder_handoff import update_builder_handoff
+# Merge, not overwrite: a full write resets approval_status to its "pending"
+# default (dropping P0's "approved") and any field written by another phase.
+update_builder_handoff(
+    os.environ['PROJECT_ROOT'],
+    os.environ['CHANGE_NAME'],
     current_phase="phase-2",
     execution_status="completed",
     worktree_path=os.environ['EXEC_DIR'],

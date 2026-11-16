@@ -35,7 +35,7 @@ python3 <<PYEOF
 import sys
 sys.path.insert(0, "$PROJECT_ROOT")
 from _lib.builder_deps import decide_execution_mode, analyze_deps, analyze_deps_with_strict_gate
-from _lib.builder_handoff import write_builder_handoff
+from _lib.builder_handoff import update_builder_handoff
 
 manual_deps = []
 meta_path = "openspec/changes/$CHANGE_NAME/roadmap-meta.yaml"
@@ -77,9 +77,11 @@ if not gate["passes"]:
     print(f"STRICT_DEPS_GATE FAIL: blockers={gate['failures']}")
     sys.exit(6)
 
-write_builder_handoff(
-    project_root="$PROJECT_ROOT",
-    change_name="$CHANGE_NAME",
+# Merge, not overwrite: a full write resets approval_status to its "pending"
+# default (dropping P0's "approved") and any field written by another phase.
+update_builder_handoff(
+    "$PROJECT_ROOT",
+    "$CHANGE_NAME",
     current_phase="phase-1.5",
     execution_mode_decision={
         "mode": decision["mode"],
