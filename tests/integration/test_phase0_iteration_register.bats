@@ -138,7 +138,6 @@ print('not registered')"
     [ "$status" -eq 0 ]
     [[ "$output" == *"invalid"* ]]
     [ "$(cat "$TEST_TMP/.rddf/state/iteration.json")" = "$BEFORE" ]
-    [ -z "$(ls "$TEST_TMP/.rddf/state/" | grep -c 'corrupt' | grep -v '^0$')" ] || true
     run bash -c "ls '$TEST_TMP/.rddf/state/' | grep -c corrupt || true"
     [ "$output" = "0" ]
 }
