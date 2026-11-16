@@ -37,3 +37,12 @@ teardown() {
     [ "$status" -eq 2 ]
     [[ "$output" == *"mutually exclusive"* ]]
 }
+
+@test "rdd-verify --stage (non dry-run) still migrates legacy state and stages" {
+    mkdir -p "$TEST_TMP/openspec/changes/probe"
+    printf '# demo\n\n## Acceptance\n\n- [ ] a\n' > "$TEST_TMP/openspec/changes/probe/proposal.md"
+    run env RDDF_PROJECT_ROOT="$TEST_TMP" python3 "$REPO_ROOT/_lib/cli/rdd_verify_cmd.py" --stage probe
+    [ "$status" -eq 0 ]
+    [ -f "$TEST_TMP/.rddf/state/verifier/.ac-verdict-probe.json" ]
+    [ -f "$TEST_TMP/.rddf/state/verifier/rdd-verify-context-probe.json" ]
+}

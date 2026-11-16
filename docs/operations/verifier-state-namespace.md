@@ -100,6 +100,7 @@ python3 -m pytest tests/unit/test_verifier_owns_block.py -q
 | `📦 moved legacy verifier state → .rddf/state/verifier/<file>` | 已搬迁 |
 | `📦 kept legacy verifier state (destination exists): <file>` | 目标已存在 ⇒ **不覆盖**（保守） |
 | `⚠️ failed to migrate legacy verifier state: <file>` | 单个文件失败 ⇒ **只告警**，不阻断验证 |
+| `[dry-run] would migrate legacy verifier state → .rddf/state/verifier/<file>` | `--dry-run` 下**只报告不搬迁**（dry-run 零副作用） |
 
 - **只搬不读**：读路径**只认新路径**（旧路径的 cache 不会被读到 ⇒ 会被当作「无 cache」⇒ 需重跑一次验证）。
   这是有意的：**不做双路 fallback** —— 否则 bash 归档门与 python reader 可能对「cache 是否存在」给出不同答案。

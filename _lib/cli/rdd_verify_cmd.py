@@ -413,19 +413,19 @@ def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
     # (`.rddf/state/` root → `.rddf/state/verifier/`). Best effort: a failure
     # here is housekeeping, never a verification verdict (per
     # consolidate-verifier-state §2.2).
-    _migrate_legacy_state(project_root, dry_run=parsed.dry_run)
-
-    if skip and not bypass_reason:
-        print("❌ SKIP_RDD_VERIFIER=yes requires RDDF_VERIFIER_BYPASS_REASON (fail closed)",
-              file=sys.stderr)
-        return 3
-
     # --stage WRITES a context file, so it cannot be combined with --dry-run
     # (whose contract is "no side effects").
     if parsed.stage and parsed.dry_run:
         print("--dry-run and --stage are mutually exclusive: --stage writes a "
               "verification context file", file=sys.stderr)
         return 2
+
+    _migrate_legacy_state(project_root, dry_run=parsed.dry_run)
+
+    if skip and not bypass_reason:
+        print("❌ SKIP_RDD_VERIFIER=yes requires RDDF_VERIFIER_BYPASS_REASON (fail closed)",
+              file=sys.stderr)
+        return 3
 
     # v2.0 --stage mode: write context file only (no batch orchestration).
     if parsed.stage:
