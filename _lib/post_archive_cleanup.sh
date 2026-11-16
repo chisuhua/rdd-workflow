@@ -73,9 +73,25 @@ post_archive_cleanup() {
   cd "$project_root" || { echo "❌ post_archive_cleanup: cannot cd to $project_root" >&2; return 1; }
 
   # Sync improvement-approved.md with archive/ tree. Idempotent + non-blocking.
+  # state.sh ships with this library, not with the project: in a user project
+  # `_lib/` lives in the install tree (~/.agents/skills/_lib or
+  # <project>/.opencode/skills/rdd-workflow/_lib). Prefer the project copy when
+  # present (dev checkout), otherwise fall back to this library's own directory
+  # — mirroring the _LIB_DIR self-discovery used by archive.sh.
+  local _cleanup_lib_dir _state_sh=""
+  _cleanup_lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
   if [ -f "$project_root/_lib/state.sh" ]; then
+    _state_sh="$project_root/_lib/state.sh"
+  elif [ -n "$_cleanup_lib_dir" ] && [ -f "$_cleanup_lib_dir/state.sh" ]; then
+    _state_sh="$_cleanup_lib_dir/state.sh"
+  fi
+  if [ -n "$_state_sh" ]; then
     # shellcheck source=/dev/null
-    source "$project_root/_lib/state.sh" 2>/dev/null || true
+    if ! source "$_state_sh"; then
+      echo "⚠️  post_archive_cleanup: failed to source $_state_sh — skipping proposal sync" >&2
+    fi
+  else
+    echo "⚠️  post_archive_cleanup: state.sh not found — skipping proposal sync" >&2
   fi
   if declare -f sweep_implemented_proposals > /dev/null 2>&1; then
     sweep_implemented_proposals "$project_root" || true
@@ -153,3 +169,12 @@ post_archive_cleanup() {
   # 阶段已 git rm + git add 完成,留给 caller amend。
   return 0
 }
+
+# Executed directly instead of sourced? Say so. Running this library with
+# `bash` used to be a silent no-op with exit 0 — that failure mode is how the
+# improvement-approved.md sync went missing (doctor proposal-section CRITICAL).
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  echo "❌ post_archive_cleanup.sh is a library, not a script." >&2
+  echo "   source it, then call: post_archive_cleanup <project_root> <change_name>" >&2
+  exit 2
+fi
