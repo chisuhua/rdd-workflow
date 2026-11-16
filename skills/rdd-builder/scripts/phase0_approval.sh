@@ -284,10 +284,12 @@ print(f'rdd-quick-context.json written: {out_path}')
         python3 -c "
 import sys
 sys.path.insert(0, '$REPO_ROOT')
-from _lib.builder_handoff import write_builder_handoff
-write_builder_handoff(
-    project_root='$PROJECT_ROOT',
-    change_name='$CHANGE_NAME',
+from _lib.builder_handoff import update_builder_handoff
+# Merge, not overwrite: the dispatch_quick_review written just above must
+# survive (a full write drops it along with every other phase's fields).
+update_builder_handoff(
+    '$PROJECT_ROOT',
+    '$CHANGE_NAME',
     current_phase='phase-0',
     approval_status='dispatched_to_quick',
     dispatch_quick_at='$NOW',

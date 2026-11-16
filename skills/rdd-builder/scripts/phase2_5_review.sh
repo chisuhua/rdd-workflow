@@ -40,10 +40,12 @@ esac
 python3 <<PYEOF
 import sys
 sys.path.insert(0, "$PROJECT_ROOT")
-from _lib.builder_handoff import write_builder_handoff
-write_builder_handoff(
-    project_root="$PROJECT_ROOT",
-    change_name="$CHANGE_NAME",
+from _lib.builder_handoff import update_builder_handoff
+# Merge, not overwrite: a full write resets approval_status to its
+# "pending" default and drops fields written by earlier phases.
+update_builder_handoff(
+    "$PROJECT_ROOT",
+    "$CHANGE_NAME",
     current_phase="phase-2.5",
     review_status="$REVIEW_STATUS",
 )
