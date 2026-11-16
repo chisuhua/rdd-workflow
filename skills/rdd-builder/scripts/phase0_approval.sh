@@ -25,7 +25,7 @@ for arg in "$@"; do
         --require-confirm) REQUIRE_CONFIRM="yes" ;;
     esac
 done
-export AUTO_APPROVE DISPATCH_QUICK REQUIRE_CONFIRM
+export AUTO_APPROVE DISPATCH_QUICK REQUIRE_CONFIRM REPO_ROOT
 
 if [ -z "$CHANGE_NAME" ]; then
     echo "phase0_approval.sh requires <change-name>" >&2
@@ -191,6 +191,44 @@ write_builder_handoff(
 )
 print('builder-handoff v1.1: approval_status=approved written')
 " || echo "(builder-handoff write deferred; non-blocking)"
+
+        # Register the change in iteration.json.
+        #
+        # The archive-side sync (sync_iteration_after_archive /
+        # force_mark_archived) only UPDATES existing entries — nothing ever
+        # CREATED them, so a change was invisible to `rddf status` /
+        # `rddf feature` / deps until someone hand-edited the JSON.
+        # store.set_status creates the entry when it is missing and keeps the
+        # other fields of an existing one (idempotent).
+        #
+        # Non-blocking by design: a missing / unreadable / locked
+        # iteration.json must not fail the approval, and a MISSING file must
+        # not be created half-baked (the archive-side sync will pick the
+        # change up if it ever appears).
+        PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" python3 - <<'PYEOF'
+import os, sys
+root = os.environ["PROJECT_ROOT"]
+name = os.environ["CHANGE_NAME"]
+sys.path.insert(0, os.environ.get("REPO_ROOT", "."))
+try:
+    from skills._lib.iteration import store
+except Exception as exc:
+    print(f"⚠️  phase0: iteration store unavailable ({exc}) — change not registered", file=sys.stderr)
+    sys.exit(0)
+
+iter_path = os.path.join(root, ".rddf", "state", "iteration.json")
+if not os.path.isfile(iter_path):
+    print("⚠️  phase0: iteration.json not found — change not registered", file=sys.stderr)
+    sys.exit(0)
+try:
+    data = store.load(root)
+    data = store.set_status(data, name, "proposed")
+    store.save(root, data)
+except Exception as exc:
+    print(f"⚠️  phase0: registering the change in iteration.json failed ({exc})", file=sys.stderr)
+    sys.exit(0)
+print(f"✅ registered in iteration.json: {name}")
+PYEOF
         exit 0
         ;;
     2)
