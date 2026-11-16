@@ -64,27 +64,55 @@ def _extract_scope_items(scope_md: str) -> tuple[list[str], list[str]]:
       - "**In Scope**:" / "- **In Scope**:" (optional leading dash)
       - items are "- " bullets following each header.
     Bullets appearing before any header default to in-scope.
+
+    Continuation lines that belong to a bullet (markdown tables, indented
+    sub-items, wrapped paragraphs) stay with that bullet instead of being
+    dropped. A table under a bullet is part of the item, not a separate
+    item — dropping it silently loses spec content (e.g. the field-definition
+    table and the judgement table of a layout-manifest improvement).
     """
     in_items: list[str] = []
     out_items: list[str] = []
     current: str | None = None  # "in" | "out" | None
-    for line in scope_md.splitlines():
-        stripped = line.strip()
+    pending: str | None = None  # bullet text, flushed when the next bullet starts
+    pending_scope: str | None = None
+
+    def flush() -> None:
+        nonlocal pending, pending_scope
+        if pending is not None:
+            (out_items if pending_scope == "out" else in_items).append(pending)
+        pending = None
+        pending_scope = None
+
+    for raw in scope_md.splitlines():
+        stripped = raw.strip()
         if not stripped:
             continue
         header = stripped[2:].strip() if stripped.startswith("- ") else stripped
         if header.startswith("**In Scope**") or header.lstrip("# ").strip().startswith("In Scope"):
+            flush()
             current = "in"
             continue
         if header.startswith("**Out of Scope**") or header.lstrip("# ").strip().startswith("Out of Scope"):
+            flush()
             current = "out"
             continue
         if stripped.startswith("- "):
-            item = stripped[2:].strip()
-            if current == "out":
-                out_items.append(item)
-            else:
-                in_items.append(item)
+            flush()
+            pending = stripped[2:].strip()
+            pending_scope = current
+            continue
+        if pending is None:
+            continue  # prose before the first bullet — not an item (unchanged)
+        if stripped.startswith("|"):
+            # Markdown table belonging to the current bullet. A table needs a
+            # blank line before it, otherwise it is parsed as paragraph text.
+            if not pending.endswith("\n\n"):
+                pending = pending.rstrip("\n") + "\n\n"
+            pending += raw.rstrip() + "\n"
+            continue
+        pending += "\n" + (raw.rstrip() if raw[:1] in (" ", "\t") else stripped)
+    flush()
     return in_items, out_items
 
 
@@ -144,7 +172,7 @@ def generate_full_proposal(change_name: str, improvements_md: str) -> str:
         confirm before writing to disk.
 
     Section title candidates (priority order — first match wins):
-      why         -> ["架构依据", "Why"]
+      why         -> ["架构依据", "Why"] (+ "Why" merged in when both exist)
       scope       -> ["范围", "What Changes", "Scope"]
       scenarios   -> ["关键场景", "Scenarios"]
       constraints -> ["技术约束", "Capabilities", "Constraints"]
@@ -154,9 +182,19 @@ def generate_full_proposal(change_name: str, improvements_md: str) -> str:
     use either 中文 section names (legacy guide-design era) or English names
     (current convention). We accept both, with Chinese taking priority to
     preserve the original ADR-0025 D2 mapping contract.
+
+    Per fix-proposal-generator-section-merge: when an improvement carries
+    BOTH "## Why" (5-段 convention) and "## 架构依据" (legacy convention),
+    neither is dropped — "## Why" comes first and "## 架构依据" follows as
+    the supporting evidence.
     """
     validate_improvements_head(improvements_md)
-    why = _extract_section(improvements_md, ["架构依据", "Why"])
+    why_head = _extract_section(improvements_md, ["Why"])
+    why_legacy = _extract_section(improvements_md, ["架构依据"])
+    if why_head and why_legacy and why_head != why_legacy:
+        why = f"{why_head}\n\n{why_legacy}"
+    else:
+        why = why_head or why_legacy
     scope = _extract_section(improvements_md, ["范围", "What Changes", "Scope"])
     scenarios = _extract_section(improvements_md, ["关键场景", "Scenarios"])
     constraints = _extract_section(improvements_md, ["技术约束", "Capabilities", "Constraints"])
@@ -180,9 +218,14 @@ def generate_full_proposal(change_name: str, improvements_md: str) -> str:
     capabilities_block = "\n".join(f"- {item}" for item in capabilities) if capabilities else "- (no items specified)"
 
     impact_section_text = _extract_section(improvements_md, ["影响", "Impact"])
-    if not impact and impact_section_text:
-        impact = [impact_section_text.strip()]
-    impact_block = "\n".join(f"- {item}" for item in impact) if impact else "- (no items specified)"
+    if impact:
+        impact_block = "\n".join(f"- {item}" for item in impact)
+    elif impact_section_text:
+        # Emit the section as-is: it is already a bullet list, so prefixing a
+        # single "- " would produce "- - item" (double dash).
+        impact_block = impact_section_text.strip()
+    else:
+        impact_block = "- (no items specified)"
 
     references = _extract_section(improvements_md, ["参考", "Reference", "References"])
     references_block = ""
@@ -211,22 +254,6 @@ def generate_full_proposal(change_name: str, improvements_md: str) -> str:
         f"{acceptance or '- [ ] (TBD — 验收标准 from .rddf/improvements 头部未提供)'}\n"
         f"{references_block}"
     )
-
-
-if __name__ == "__main__":
-    import os
-    import sys
-
-    improvements_path = os.environ.get("IMPROVEMENTS_PATH", "")
-    change_name = os.environ.get("CHANGE_NAME", "")
-    if not improvements_path or not os.path.exists(improvements_path):
-        print("ERROR: IMPROVEMENTS_PATH missing or file not found", file=sys.stderr)
-        sys.exit(2)
-    if not change_name:
-        print("ERROR: CHANGE_NAME not set", file=sys.stderr)
-        sys.exit(2)
-    text = open(improvements_path, encoding="utf-8").read()
-    print(generate_full_proposal(change_name, text))
 
 
 def generate_spec_delta(source_md: str, sub: str) -> str:
@@ -258,13 +285,19 @@ def generate_spec_delta(source_md: str, sub: str) -> str:
             lines.append(f"- **THEN** {text}")
             lines.append("")
 
-    # 2. 提取 ## Capabilities MUST/MUST NOT
+    # 2. 提取 ## Capabilities MUST/MUST NOT/SHOULD
     # 注: openspec v1.4 要求每个 Requirement 至少含 1 个 #### Scenario:
+    # 接受两种写法 —— `- MUST: x`（5 段格式，当前约定）与 `- **MUST**: x`
+    # （加粗变体）。旧正则只认加粗形式，会把 5 段格式的 capability 全部丢掉。
     cap_match = re.search(r"## Capabilities\s*\n(.*?)(?=\n## |\Z)", source_md, re.DOTALL | re.IGNORECASE)
     if cap_match:
-        for m in re.finditer(r"^\s*-\s*\*\*(MUST(?:\s+NOT)?)\*\*:\s*(.+?)$", cap_match.group(1), re.MULTILINE):
+        cap_re = re.compile(
+            r"^\s*-\s*(?:\*\*)?(MUST\s+NOT|MUST|SHOULD\s+NOT|SHOULD)(?:\*\*)?:\s*(.+?)$",
+            re.MULTILINE | re.IGNORECASE,
+        )
+        for m in cap_re.finditer(cap_match.group(1)):
             req_idx += 1
-            kind = m.group(1).strip()
+            kind = " ".join(m.group(1).split()).upper()
             text = m.group(2).strip()
             req_name = f"capability-{req_idx}"
             lines.append(f"### Requirement: {req_name}")
@@ -278,3 +311,24 @@ def generate_spec_delta(source_md: str, sub: str) -> str:
             lines.append("")
 
     return "\n".join(lines) + "\n"
+
+
+if __name__ == "__main__":
+    import os
+    import sys
+
+    improvements_path = os.environ.get("IMPROVEMENTS_PATH", "")
+    change_name = os.environ.get("CHANGE_NAME", "")
+    if not improvements_path or not os.path.exists(improvements_path):
+        print("ERROR: IMPROVEMENTS_PATH missing or file not found", file=sys.stderr)
+        sys.exit(2)
+    if not change_name:
+        print("ERROR: CHANGE_NAME not set", file=sys.stderr)
+        sys.exit(2)
+    text = open(improvements_path, encoding="utf-8").read()
+    if os.environ.get("OUTPUT_MODE") == "spec-delta":
+        # D3 delta output: openspec v1.4 change-local spec delta
+        # (## ADDED Requirements + Requirement + Scenario).
+        print(generate_spec_delta(text, change_name))
+    else:
+        print(generate_full_proposal(change_name, text))

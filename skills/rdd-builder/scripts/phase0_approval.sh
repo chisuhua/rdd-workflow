@@ -145,6 +145,8 @@ case "$choice" in
     1)
         echo "approved"
         IMPROVEMENT_FILE="$PROJECT_ROOT/.rddf/improvements/$CHANGE_NAME.md"
+        CHANGE_DIR="$PROJECT_ROOT/openspec/changes/$CHANGE_NAME"
+        mkdir -p "$CHANGE_DIR"
 
         if [ -f "$IMPROVEMENT_FILE" ]; then
             CHANGE_NAME="$CHANGE_NAME" IMPROVEMENTS_PATH="$IMPROVEMENT_FILE" \
@@ -155,24 +157,22 @@ case "$choice" in
             echo "⚠️  $IMPROVEMENT_FILE not found; leaving proposal.md as skeleton"
         fi
 
-        SPECS_DIR="$PROJECT_ROOT/openspec/specs/$CHANGE_NAME"
-        mkdir -p "$SPECS_DIR"
-        SPEC_FILE="$SPECS_DIR/spec.md"
-        if [ ! -f "$SPEC_FILE" ]; then
-            python3 <<PYEOF
-import sys
-from pathlib import Path
-specs_dir = Path("$SPECS_DIR")
-specs_dir.mkdir(parents=True, exist_ok=True)
-spec_md = specs_dir / "spec.md"
-if not spec_md.exists():
-    spec_md.write_text("""## ADDED Requirements
-
-### Requirement: $CHANGE_NAME
-Auto-derived from .rddf/improvements/$CHANGE_NAME.md per ADR-0025 D1/D2 + rdd-builder Phase 0 approve.
-""")
-print(f"D3 spec-delta written: {spec_md}")
-PYEOF
+        # D3 spec-delta: change-local delta at
+        # openspec/changes/<name>/specs/<name>/spec.md (per ADR-0025 D3).
+        # The main spec under openspec/specs/ is created at archive time — writing
+        # a placeholder here would add one more spec whose "## Purpose" is a TBD
+        # marker (openspec validate --strict fails those). The delta only emits
+        # "## ADDED Requirements", so validate_delta_targets has no main-spec
+        # target to resolve.
+        DELTA_DIR="$CHANGE_DIR/specs/$CHANGE_NAME"
+        DELTA_FILE="$DELTA_DIR/spec.md"
+        if [ ! -f "$DELTA_FILE" ] && [ -f "$IMPROVEMENT_FILE" ]; then
+            mkdir -p "$DELTA_DIR"
+            OUTPUT_MODE=spec-delta CHANGE_NAME="$CHANGE_NAME" \
+                IMPROVEMENTS_PATH="$IMPROVEMENT_FILE" \
+                python3 "$SCRIPT_DIR/generate_full_proposal.py" \
+                > "$DELTA_FILE"
+            echo "✅ D3 spec-delta written: $DELTA_FILE"
         fi
         # Write builder handoff approval_status=approved
         python3 -c "
