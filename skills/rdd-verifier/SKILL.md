@@ -149,10 +149,10 @@ skill_use("rdd-verifier")
 
 从 `openspec/changes/<change-name>/proposal.md` 提取 AC 列表。
 
-**段头匹配**（两种都支持，中英文）：
+**段头匹配**（三种写法：`验收标准` / `Acceptance Criteria` / `Acceptance`）：
 
 ```regex
-^##\s+(?:验收标准|Acceptance Criteria)\s*$
+^##\s+(?:验收标准|Acceptance Criteria|Acceptance)\s*$
 ```
 
 **段边界**：从匹配位置到下一个 `## ` 段头（或文件末尾）。

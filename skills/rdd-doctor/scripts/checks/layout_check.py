@@ -123,7 +123,11 @@ def run(project_root: Path | None = None) -> List[Finding]:
             file=str(rddf),
             line=None,
             snippet=f"required entry '{e.path}' is missing",
-            fix_hint=f"create .rddf/{e.path}/ — see docs/architecture/rddf-layout.md",
+            fix_hint=(
+                f"create .rddf/{e.path}/ — see docs/architecture/rddf-layout.md"
+                if e.kind == "dir"
+                else f"create .rddf/{e.path} — see docs/architecture/rddf-layout.md"
+            ),
         ))
 
     # ② unregistered top-level entries
