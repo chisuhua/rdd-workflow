@@ -56,10 +56,12 @@ fi
 python3 <<PYEOF
 import sys
 sys.path.insert(0, "$PROJECT_ROOT")
-from _lib.builder_handoff import write_builder_handoff
-write_builder_handoff(
-    project_root="$PROJECT_ROOT",
-    change_name="$CHANGE_NAME",
+from _lib.builder_handoff import update_builder_handoff
+# Merge, not overwrite: a full write resets approval_status to its "pending"
+# default (dropping P0's "approved") and any field written by a later phase.
+update_builder_handoff(
+    "$PROJECT_ROOT",
+    "$CHANGE_NAME",
     current_phase="phase-1",
     plan_quality_status="valid",
 )

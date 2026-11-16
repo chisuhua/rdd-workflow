@@ -241,10 +241,19 @@ def test_spec_delta_captures_bold_must_format():
     assert "The system MUST NOT 不得修改既有路径." in delta
 
 
-def test_spec_delta_captures_should():
-    """SHOULD entries are normative too — they become Requirements."""
+def test_spec_delta_excludes_should():
+    """SHOULD entries stay prose-only — the delta is a MUST-level contract.
+
+    openspec warns on a Requirement whose body lacks SHALL/MUST ("should
+    contain SHALL or MUST (RFC 2119 best practice)"), so SHOULD must not
+    become a Requirement. It stays in the proposal's Capabilities section.
+    """
     delta = generate_spec_delta(TABLE_IMPROVEMENT, "fix-table")
-    assert "The system SHOULD 文档页措辞与 ADR 一致." in delta
+    assert "The system SHOULD" not in delta
+    assert "文档页措辞与 ADR 一致" not in delta
+    # The SHOULD text is still present in the proposal (human-readable path).
+    proposal = generate_full_proposal("fix-table", TABLE_IMPROVEMENT)
+    assert "SHOULD: 文档页措辞与 ADR 一致" in proposal
 
 
 def test_spec_delta_keeps_acceptance_requirements():

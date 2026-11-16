@@ -285,14 +285,17 @@ def generate_spec_delta(source_md: str, sub: str) -> str:
             lines.append(f"- **THEN** {text}")
             lines.append("")
 
-    # 2. 提取 ## Capabilities MUST/MUST NOT/SHOULD
+    # 2. 提取 ## Capabilities MUST/MUST NOT
     # 注: openspec v1.4 要求每个 Requirement 至少含 1 个 #### Scenario:
     # 接受两种写法 —— `- MUST: x`（5 段格式，当前约定）与 `- **MUST**: x`
     # （加粗变体）。旧正则只认加粗形式，会把 5 段格式的 capability 全部丢掉。
+    # SHOULD / SHOULD NOT 不转 Requirement：spec delta 是规范性（MUST 级）契约，
+    # openspec 对不含 SHALL/MUST 的 Requirement 报 RFC 2119 warning。SHOULD 条目
+    # 保留在 proposal.md 的 Capabilities 段（人读 + 有 checker 断言）。
     cap_match = re.search(r"## Capabilities\s*\n(.*?)(?=\n## |\Z)", source_md, re.DOTALL | re.IGNORECASE)
     if cap_match:
         cap_re = re.compile(
-            r"^\s*-\s*(?:\*\*)?(MUST\s+NOT|MUST|SHOULD\s+NOT|SHOULD)(?:\*\*)?:\s*(.+?)$",
+            r"^\s*-\s*(?:\*\*)?(MUST\s+NOT|MUST)(?:\*\*)?:\s*(.+?)$",
             re.MULTILINE | re.IGNORECASE,
         )
         for m in cap_re.finditer(cap_match.group(1)):
