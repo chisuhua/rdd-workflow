@@ -40,7 +40,16 @@ LOCKED_TASKS_WRITEBACK_SH="e9e0065de4f65fbeef763be3b3eb09626c99920744e6bb2585311
 # cache — for it the gate's verdict lookup is a miss before and after the change.
 # Pre-consolidation caches are not orphaned: `rddf rdd-verify` moves legacy files
 # into the new namespace before the gate looks for them.
-LOCKED_ARCHIVE_SH="4b97ab3a52c02998a17eb80cd473521180bf8fb90a39a9f78bda58f995ec4ce4"
+# Note (2026-11-16): LOCKED_ARCHIVE_SH recaptured after fix-p3-verifier-gate.
+# The change touches ONE line group only: the `openspec_tracked=false` branch of
+# archive_change gains `archive_gate_check` before `openspec archive` (it used to
+# return 0 before reaching the gate at step 2.5). The rdd-quick zero-pollution
+# invariant is preserved: rdd-quick archives via the same false branch only when
+# openspec is untracked, and it is the bypass path (ADR-0047) — for it the gate's
+# verdict lookup is now an explicit rejection instead of a silent pass, which is
+# the fix itself. rdd-quick callers can still bypass with the audited
+# SKIP_RDD_VERIFIER + RDDF_VERIFIER_BYPASS_REASON pair.
+LOCKED_ARCHIVE_SH="a841d6de20b368191f2bfac759eeb126152ae2685c4aa5db443c851fa69a2aba"
 # Role block of rdd-planner/SKILL.md (from `role:` through closing `---`).
 # This is the structural-only hash that MUST be byte-identical after rdd-quick lands.
 # LOCKED_RDD_PLANNER_ROLE_BLOCK: role: ... --- block sha256, captured post-ADR-0048
