@@ -46,6 +46,14 @@ PKG_ROOT="$(_resolve_pkg_root || true)"
 # archive_gate_check uses $tasks_root to locate tasks.md, the verdict cache and
 # `git rev-parse HEAD`. A fresh `git worktree` carries neither openspec/ nor the
 # gitignored .rddf/state/, so pick whichever root actually has tasks.md.
+#
+# CONTRACT: the gate reads the verdict cache from
+# $TASKS_ROOT/.rddf/state/verifier/.ac-verdict-<change>.json and compares its
+# codebase_commit against `git -C $TASKS_ROOT rev-parse HEAD`. Verification must
+# therefore run in the SAME root as $TASKS_ROOT — in worktree mode that means
+# RDDF_PROJECT_ROOT=<worktree>, not the canonical (main-repo) state root the
+# resolver picks by default; otherwise the cache and the sha anchor come from
+# different roots and the gate reports "stale" even though nothing changed.
 EXEC_MODE=$(PKG_ROOT="$PKG_ROOT" PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" python3 -c "
 import os, sys
 if os.environ.get('PKG_ROOT'):
