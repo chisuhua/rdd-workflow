@@ -39,18 +39,24 @@
 - `objective-onboard-new-skill` — 新增 skill 的标准化 onboarding 流程 (status: active, priority: P1)
 
 <!-- AUTO-SPRINT-START -->
-## Current Sprint: sprint-2026-09
+## Current Sprint: sprint-2026-11
 
 | Project | Phase | Priority | Feedback | Proposal |
 |---------|-------|----------|----------|----------|
 | 流程定制层 | phase-3 | P1 | none | add-env-bootstrap-skill |
-| 流程定制层 | phase-3 | P2 | none | add-objective-evidence-v02-llm-synthesis |
+| 完整多会话支持 | phase-1 | P2 | needs-revision | add-guide-polling-loop-implementation |
 | 流程定制层 | phase-3 | P2 | none | add-objective-tracking |
+| 完整多会话支持 | phase-1 | P2 | none | add-stage-guide-e2e-cross-process-coverage |
+| 完整多会话支持 | phase-2 | P2 | resolved | complete-guide-orchestrator-flow |
 | 流程定制层 | phase-3 | P1 | none | fix-skill-post-install-discoverability |
 | rdd-workflow | phase-3 | P1 | none | rdd-builder-auto-pick-mode |
 | rdd-workflow | phase-3 | P2 | none | rdd-builder-phase0-llm-integration |
+| 多方对称与回归 | phase-4 | P1 | none | rddf-layout-manifest |
+| 完整多会话支持 | phase-3 | P2 | none | wave3-opencode-session-injection |
+| 完整多会话支持 | phase-3 | P2 | none | wave3-phase-heartbeat-progressing |
+| 完整多会话支持 | phase-3 | P2 | none | wave3-rddf-session-show-events |
 
-### Unmapped (243)
+### Unmapped (261)
 - RDDF-0001-fix-rddf-session-import-path
 - add-archive-post-commit-hook-and-force-flag
 - add-auto-rfc-from-approve
@@ -61,6 +67,7 @@
 - add-contract-lint-ci-gate
 - add-cross-repo-deps-orchestration
 - add-cross-repo-impact-detection
-- ... and 233 more
+- ... and 251 more
 
 <!-- AUTO-SPRINT-END -->
+

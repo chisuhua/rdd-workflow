@@ -47,3 +47,6 @@ openspec/
 # rdd-workflow: feedback appender + parallel phase race conditions create ephemeral lock files
 .rddf/improvements/*.lock
 .rddf/improvements/.feedback-counters.json
+# rdd-workflow: roadmap AUTO-SPRINT writer 的 fcntl 锁文件（_lib/roadmap_sprint.py:270
+# 用 Path(roadmap.md).with_suffix(".lock") ⇒ 每次 planner sync 都留下一个）
+.rddf/roadmap.lock
