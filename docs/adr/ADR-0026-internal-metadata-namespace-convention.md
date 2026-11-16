@@ -28,6 +28,8 @@
 | runtime-only | 临时状态，per-machine | `.rddf/state/`, `.rddf/wt/`, `.rddf/detectors/`, `.rddf/actions/` | gitignored |
 | committed artifacts | 跨机器共享的元数据 | `.rddf/plans/`, `.rddf/improvements/` | tracked (默认靠"不写进 gitignore"实现) |
 
+> **机器可执行形态**：本表的分类已落成可执行清单 —— 真源 `_lib/core/rddf_layout.py`，清单视图 `rddf layout --json`，诊断视图 `rddf doctor --category layout`。本 ADR 的决策本身不因该实现而改变。
+
 ### 已存在实例
 
 - **`.rddf/plans/`** (v2.0+) — TDD 5 步执行计划，git tracked

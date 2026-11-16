@@ -285,7 +285,7 @@ Expected: PASS (7 passed)
 
 ---
 
-### Task 3: `rdff layout --json` 清单出口
+### Task 3: `rddf layout --json` 清单出口
 
 **Files:**
 - Create: `_lib/cli/layout_cmd.py`
@@ -342,7 +342,7 @@ def test_layout_json_is_empty_when_rddf_absent(tmp_path):
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_layout_cmd.py -q`
-Expected: FAIL — `rdff` 不是已知子命令（exit != 0）
+Expected: FAIL — `rddf` 不是已知子命令（exit != 0）
 
 - [ ] **Step 3: Write minimal implementation**
 
@@ -702,7 +702,7 @@ Expected: FAIL — `state-and-events.md` 仍含 `guide-design` / `.plan-handoff.
 
 `docs/architecture/extension-points.md`：在 `:29-30` 那段后加一行链接，不重复展开目录说明。
 
-`docs/adr/ADR-0026-internal-metadata-namespace-convention.md`：在「路径分类规则」表格后加一句「机器可执行形态见 `rdff layout --json` 与 `rdff doctor --category layout`（清单源 `_lib/core/rddf_layout.py`）」—— **纯描述性补充，不改变该 ADR 的任何决策**。
+`docs/adr/ADR-0026-internal-metadata-namespace-convention.md`：在「路径分类规则」表格后加一句「机器可执行形态见 `rddf layout --json` 与 `rddf doctor --category layout`（清单源 `_lib/core/rddf_layout.py`）」—— **纯描述性补充，不改变该 ADR 的任何决策**。
 
 - [ ] **Step 4: Run test to verify it passes**
 

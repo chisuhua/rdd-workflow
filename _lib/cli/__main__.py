@@ -205,14 +205,20 @@ def main(argv: list[str] | None = None) -> int:
     project_root = resolve_project_root()
 
     # Worktree detection + info line (only when actually in a worktree).
+    # Goes to stderr: subcommands that emit machine-readable output on stdout
+    # (e.g. `rddf layout --json`) must keep stdout parseable.
     if _is_in_worktree():
-        print(f"ℹ️  running from worktree, reading state from {project_root}")
+        print(
+            f"ℹ️  running from worktree, reading state from {project_root}",
+            file=sys.stderr,
+        )
 
     # Non-rdd-workflow project detection.
     # setup deploys to arbitrary target directories; doctor has standalone
     # categories like ai-context-bootstrap — both must run outside a
-    # rdd-workflow project.
-    _NO_STATE_CHECK = {"setup", "doctor", "env-bootstrap"}
+    # rdd-workflow project. layout prints the product's declared .rddf/ layout,
+    # which is independent of any project state — it must run anywhere too.
+    _NO_STATE_CHECK = {"setup", "doctor", "env-bootstrap", "layout"}
     state_dir = os.path.join(project_root, ".rddf", "state")
     if subcommand not in _NO_STATE_CHECK and not os.path.isdir(state_dir):
         print(f"ℹ️  not a rdd-workflow project (no {state_dir})")

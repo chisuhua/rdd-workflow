@@ -29,6 +29,8 @@ Detectors and actions are pluggable units in the Loop engine. **Built-ins** live
 - Detector plugins → `.rddf/detectors/`
 - Action plugins → `.rddf/actions/`
 
+`.rddf/` 的布局（有哪些条目、谁读谁写、是否入库）见 [rddf-layout.md](rddf-layout.md) —— 真源是 `_lib/core/rddf_layout.py`。
+
 (These paths are defined in `_lib/core/defaults.py` as `DETECTOR_PLUGIN_DIR` and `ACTION_PLUGIN_DIR`. `_lib/plugins/` is a separate gate-plugin directory and is unrelated.)
 
 **Detector** — observes state, returns a signal (e.g. "tasks are stale", "config drifted").

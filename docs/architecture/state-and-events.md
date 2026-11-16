@@ -12,8 +12,8 @@ graph TB
     end
     subgraph Layer3[Layer 3 — Handoffs]
     H1[.arch-handoff.json]
-    H2[.design-handoff.json]
-    H3[.plan-handoff.json]
+    H2[.planner-handoff.json]
+    H3[.planner-feedback.json]
     end
     SV --> EL
     H1 --> SV
@@ -50,11 +50,15 @@ Querying 10k events is < 100 ms (linear scan over small payloads).
 
 | File | Written by | Read by | Schema version |
 |------|-----------|---------|----------------|
-| `.arch-handoff.json` | `guide-arch` (arch-done) | `guide-design`, `guide-plan` | v1 (ADR-0016) |
-| `.design-handoff.json` | `guide-design` (design-done) | `guide-plan` | v1 |
-| `.plan-handoff.json` | `guide-plan` (plan-done) | `guide-ship` | v1 + `execution_mode_decisions` (ADR-0024) |
+| `.arch-handoff.json` | `rdd-arch` (arch-done) | `rdd-planner`, `rdd-builder` | v1 (ADR-0016) |
+| `.planner-handoff.json` | `rdd-planner` (plan-done) | `rdd-builder` | v1.1 + `recommended_route` (ADR-0048) |
+| `.planner-feedback.json` | `rdd-builder` (feedback) | `rdd-planner`, `rdd-arch` | v1 (ADR-0042) |
 
 Each handoff file is JSON with a `version` field at the top. **Consumers reject version=0 payloads** (forces explicit schema migration).
+
+> **v4 命名说明**：v1~v3 的 `.design-handoff.json` / `.plan-handoff.json` 已废弃 —— v4 合并 design 与 plan 阶段后，handoff 改为 `.planner-handoff.json`（`_lib/builder_deps.py:42`）。旧文件名仅作 legacy 探测用途保留（`_lib/cli/guide_cmd.py:172-173`）。
+
+`.rddf/` 的**布局**（有哪些条目、谁读谁写、是否入库）见 [rddf-layout.md](rddf-layout.md) —— 真源是 `_lib/core/rddf_layout.py`。
 
 ADR-0016 also standardised the fields inside `.arch-handoff.json`: `adr_dir`, `roadmap_path`, `architecture_dir`, `adr_pattern`, `discovered`, `version`. These let downstream phases find ADR / roadmap / architecture directories without hardcoded paths.
 
@@ -84,7 +88,7 @@ Handoff files are the only layer that **must** be read by a different phase than
 |---------|----------|
 | State vector write fails (disk full) | Atomic temp-file + rename prevents partial writes; on rename failure, state stays at last-good value. |
 | Event log corruption (truncated) | Detect on read (line parse error), reset to last good offset, log warning. |
-| Handoff file missing on phase entry | Treat as phase-not-yet-completed; fall through to entry phase (e.g. `guide-plan` → `guide-arch`). |
+| Handoff file missing on phase entry | Treat as phase-not-yet-completed; fall through to entry phase (e.g. `rdd-planner` → `rdd-arch`). |
 | Handoff file version mismatch | Consumer rejects; user must re-run prior phase (or run `--force` to override — explicitly opt-in). |
 
 ## Cross-references
