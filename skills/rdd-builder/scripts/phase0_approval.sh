@@ -147,7 +147,12 @@ case "$choice" in
         IMPROVEMENT_FILE="$PROJECT_ROOT/.rddf/improvements/$CHANGE_NAME.md"
         CHANGE_DIR="$PROJECT_ROOT/openspec/changes/$CHANGE_NAME"
 
+        REGISTER_CHANGE=0
         if [ -f "$IMPROVEMENT_FILE" ]; then
+            # Only a change that actually got created may be registered — an
+            # orphan iteration entry for a non-existent change dir is exactly
+            # the phantom that store.set_deps_info warns about.
+            REGISTER_CHANGE=1
             # Create the change dir only when there is something to write:
             # an unconditional mkdir leaves an empty openspec/changes/<name>/
             # behind whenever the improvement is missing (test pollution).
@@ -205,11 +210,14 @@ print('builder-handoff v1.1: approval_status=approved written')
         # iteration.json must not fail the approval, and a MISSING file must
         # not be created half-baked (the archive-side sync will pick the
         # change up if it ever appears).
-        PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" python3 - <<'PYEOF'
+        PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" \
+        REGISTER_CHANGE="$REGISTER_CHANGE" python3 - <<'PYEOF'
 import os, sys
 root = os.environ["PROJECT_ROOT"]
 name = os.environ["CHANGE_NAME"]
-sys.path.insert(0, os.environ.get("REPO_ROOT", "."))
+sys.path.insert(0, os.environ["REPO_ROOT"])
+if os.environ.get("REGISTER_CHANGE", "0") != "1":
+    sys.exit(0)
 try:
     from skills._lib.iteration import store
 except Exception as exc:
@@ -220,8 +228,27 @@ iter_path = os.path.join(root, ".rddf", "state", "iteration.json")
 if not os.path.isfile(iter_path):
     print("⚠️  phase0: iteration.json not found — change not registered", file=sys.stderr)
     sys.exit(0)
+
+# Detect corruption BEFORE writing. store.load() does NOT raise on a corrupt
+# file: it backs it up and returns an empty document — writing into that would
+# overwrite the corrupt file with a single-entry document and silently drop
+# every other change from the status views. The read-only verbose reader
+# distinguishes missing / invalid JSON / schema-invalid without side effects.
+data, err = store._read_unlocked_verbose(iter_path)
+if err:
+    print(f"⚠️  phase0: iteration.json is invalid ({err}) — change not registered",
+          file=sys.stderr)
+    sys.exit(0)
+
+existing = next((c for c in data.get("changes", []) if c.get("name") == name), None)
+if existing is not None and existing.get("status") not in (None, "", "planned"):
+    # Never downgrade an entry that is already under way (in_worktree /
+    # review / completed / archived) — a re-approve must not resurrect it.
+    print(f"✅ already registered in iteration.json: {name} "
+          f"(status={existing.get('status')}) — left untouched")
+    sys.exit(0)
+
 try:
-    data = store.load(root)
     data = store.set_status(data, name, "proposed")
     store.save(root, data)
 except Exception as exc:
