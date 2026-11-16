@@ -115,13 +115,3 @@ def as_dicts() -> list[dict]:
             "severity": e.severity,
         })
     return out
-
-
-def covers(entry_path: str, target: str) -> bool:
-    """True when `entry_path` (relative to `.rddf/`) covers `target`.
-
-    Exact equality, or `target` starts with `entry_path + "/"`. The trailing
-    slash matters: without it `roadmap` would swallow `roadmap.md`.
-    """
-    rel = target[len(".rddf/"):] if target.startswith(".rddf/") else target
-    return rel == entry_path or rel.startswith(entry_path + "/")

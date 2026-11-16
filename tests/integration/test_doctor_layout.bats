@@ -113,3 +113,4 @@ missing = registered - listed
 assert not missing, f"usage 行漏列 category: {sorted(missing)}"
 PY
 }
+

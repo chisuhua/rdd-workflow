@@ -37,7 +37,6 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 from doctor_render import Finding, Severity  # noqa: E402
-from _lib.core.rddf_layout import RDFF_LAYOUT  # noqa: E402
 
 _GLOB_CHARS = "*?["
 
@@ -80,6 +79,24 @@ def run(project_root: Path | None = None) -> List[Finding]:
     if project_root is None:
         project_root = Path(os.environ.get("RDDF_PROJECT_ROOT", "."))
     findings: List[Finding] = []
+
+    # Import the manifest lazily and degrade to a finding of our own. A
+    # module-level import would raise during the checker's *import*, and
+    # doctor_main.py's aggregator turns any checker exception into a
+    # CRITICAL finding — which would break the "this category never emits
+    # CRITICAL" contract in exactly the environment where the manifest is
+    # missing (a copy of rdd-doctor/ without _lib/).
+    try:
+        from _lib.core.rddf_layout import RDFF_LAYOUT
+    except Exception as exc:  # pragma: no cover - depends on deployment layout
+        return [Finding(
+            severity=Severity.WARNING,
+            category="layout.unavailable",
+            file=str(project_root),
+            line=None,
+            snippet=f"layout manifest unavailable: {type(exc).__name__}: {exc}",
+            fix_hint="run doctor from a checkout that contains _lib/core/rddf_layout.py",
+        )]
     rddf = project_root / ".rddf"
     if not rddf.is_dir():
         # The project has not opted into rdd — nothing to diagnose.
@@ -92,7 +109,7 @@ def run(project_root: Path | None = None) -> List[Finding]:
         if e.required_when != "always" or e.path in present:
             continue
         findings.append(Finding(
-            severity=Severity.WARNING,
+            severity=Severity[e.severity],
             category="layout.missing-required",
             file=str(rddf),
             line=None,

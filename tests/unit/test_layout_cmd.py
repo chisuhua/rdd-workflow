@@ -58,3 +58,35 @@ def test_layout_json_entries_carry_the_contract_fields(tmp_path):
             "required_when", "transient", "class", "severity",
         }
         assert e["class"] in ("runtime-only", "committed")
+
+
+def test_layout_payload_is_not_shadowed_by_a_consumer_lib(tmp_path):
+    """A consumer project with its own `_lib/` package must not shadow the manifest.
+
+    `rddf.sh` puts the package root on PYTHONPATH, but `python3 -m` also puts
+    the cwd first — a consumer that ships a top-level `_lib/` package could
+    otherwise shadow the tool's own modules, and `rddf layout --json` would
+    report the consumer's code instead of the product's declared layout.
+    """
+    consumer = tmp_path / "_lib" / "core"
+    consumer.mkdir(parents=True)
+    (tmp_path / "_lib" / "__init__.py").write_text("")
+    (consumer / "__init__.py").write_text("")
+    (consumer / "rddf_layout.py").write_text(
+        "def as_dicts():\n    return [{'path': 'HIJACKED'}]\n"
+    )
+    code = (
+        "from _lib.cli.layout_cmd import cmd_layout;"
+        f"import sys; sys.path.insert(0, {str(tmp_path)!r});"
+        "cmd_layout([])"
+    )
+    env = {"PATH": "/usr/bin:/bin:/usr/local/bin", "HOME": str(tmp_path),
+           "PYTHONPATH": str(PROJECT_ROOT)}
+    res = subprocess.run(
+        [sys.executable, "-c", code], cwd=PROJECT_ROOT,
+        capture_output=True, text=True, env=env, timeout=60,
+    )
+    assert res.returncode == 0, res.stderr
+    payload = json.loads(res.stdout)
+    assert len(payload["entries"]) == 14
+    assert "HIJACKED" not in res.stdout

@@ -18,8 +18,18 @@ from rddf_layout import (  # noqa: E402
     ROLES,
     SEVERITIES,
     as_dicts,
-    covers,
 )
+
+
+def covers(entry_path: str, target: str) -> bool:
+    """True when `entry_path` (relative to `.rddf/`) covers `target`.
+
+    Assertion A's helper: exact equality, or `target` starts with
+    `entry_path + "/"`. The trailing slash matters — without it `roadmap`
+    would swallow `roadmap.md`.
+    """
+    rel = target[len(".rddf/"):] if target.startswith(".rddf/") else target
+    return rel == entry_path or rel.startswith(entry_path + "/")
 
 EXPECTED_FIELDS = {
     "path", "kind", "read_by", "write_by",

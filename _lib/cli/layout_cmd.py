@@ -13,32 +13,32 @@ produce byte-identical output and consumers may diff them.
 from __future__ import annotations
 
 import json
-import os
-import sys
 from pathlib import Path
 
-from skills._lib.cli import resolve_project_root  # noqa: E402
+# Import through the package's own path (the `skills._lib.cli` shim already
+# binds `_lib.cli` to this package). Deliberately NOT `sys.path.insert(0,
+# project_root)`: the consumer's project root may contain a `_lib/` package
+# of its own, and putting it first would shadow the tool's own modules —
+# `from _lib.core.rddf_layout import ...` would then resolve to the
+# consumer's code, and the payload would no longer be the product's
+# declared layout.
+from _lib.core.rddf_layout import as_dicts  # noqa: E402
 
 SCHEMA_VERSION = 1
 
 
 def cmd_layout(args: list[str]) -> int:
     """Handle ``rddf layout [--json]``."""
-    project_root = Path(os.environ.get("RDDF_PROJECT_ROOT") or resolve_project_root())
-    sys.path.insert(0, str(project_root))
-
-    from _lib.core.rddf_layout import as_dicts
-
     payload = {
         "schema_version": SCHEMA_VERSION,
-        "tool_version": _tool_version(project_root),
+        "tool_version": _tool_version(),
         "entries": as_dicts(),
     }
     print(json.dumps(payload, indent=2, ensure_ascii=False))
     return 0
 
 
-def _tool_version(project_root: Path) -> str:
+def _tool_version() -> str:
     """Version of the rdd-workflow package that owns this handler."""
     pkg = Path(__file__).resolve().parents[2] / "package.json"
     try:
