@@ -222,7 +222,7 @@
         "openspec_tracked": {
           "type": "boolean",
           "default": true,
-          "description": "If false, the archive skips git merge and commit_archive_moves — the archive never merges on your behalf: it refuses when the implementation branch is not merged into the default branch (ADR-0061) and the wave mode defaults to serial. It does NOT influence the execution mode (worktree vs lightweight), which is decided by the change's size and risk inputs (ADR-0036 AMENDED)."
+          "description": "If false, the archive skips git merge and commit_archive_moves — the archive never merges on your behalf: it refuses when the implementation branch is not merged into the default branch (ADR-0061) and the wave mode defaults to serial. It does NOT influence which execution mode runs the change (worktree isolation vs. the main repository), which is decided by the change's size and risk inputs (ADR-0036 AMENDED)."
         }
       }
     },
