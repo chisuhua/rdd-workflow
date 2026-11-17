@@ -23,7 +23,10 @@ For **decisions** behind the design, see [`../adr/README.md`](../adr/README.md).
 | [multi-session.md](multi-session.md) | rddf-session lifecycle + conflict resolver | 0010, 0017 |
 | [extension-points.md](extension-points.md) | How to add a skill / detector / action / CLI / ADR | 0021 |
 | [hub-and-spoke-federation.md](hub-and-spoke-federation.md) | **NEW (2026-09-30)** Multi-project collaboration: Hub Repo + Projects V2 + cross-repo RFC/MCP/contract/deps via `report-issue`+`watch-hub`+`sync-hub`+`cross-repo-protocol`+`spoke-system-prompt-injection`. Migrated from `multi-project-ai-collaborative-development-gap-analysis.md` (deleted per ADR-0058). | 0030, 0031, 0032, 0029, 0058 |
-| [historical-evolution.md](historical-evolution.md) | v1.0 → v2.0 → v2.1 timeline + per-refactor motivation | — |
+| [layer-0-progressive-context.md](layer-0-progressive-context.md) | Layer 0 渐进式上下文注入：按阶段注入最小必要背景，替代全量注入 | 0052 |
+| [guide-orchestrator-flow.md](guide-orchestrator-flow.md) | Guide-as-Orchestrator 会话与跨容器事件总线（唯一交互入口的最小用法流程） | 0055, 0056 |
+| [rdd-arch-rdd-planner-integration.md](rdd-arch-rdd-planner-integration.md) | rdd-arch ↔ rdd-planner 横向编排契约与双向反馈闭环 | 0038, 0042 |
+| [historical-evolution.md](historical-evolution.md) | v1.0 → v4.x timeline + per-refactor motivation | — |
 
 ## Update Convention
 
@@ -31,4 +34,8 @@ When you add a new skill, handoff file, or ADR, the corresponding `architecture/
 
 ## When This Doc Set Was Last Refreshed
 
-The doc set was last regenerated from live code as of v2.0.9+. See `historical-evolution.md` for the full version history.
+The doc set was last regenerated from live code as of **v4.0.0** (post ADR-0060). See `historical-evolution.md` for the full version history and `../adr/README.md` for the decision index.
+
+> **Self-check before touching this directory**: the Doc Map table above must list every `*.md` file in this
+> directory (count them with `ls docs/architecture/*.md | wc -l`), and every version / count written in these
+> docs must be derivable from `package.json`, `ls skills/`, or `ls docs/adr/` — hand-written versions rot silently.

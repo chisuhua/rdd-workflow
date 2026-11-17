@@ -60,7 +60,7 @@
 
 ## References
 
-- `docs/proposal-suggestions-format.md` — ADR 引用格式 `ADR-NNN §N.M`
-- `skills/propose.md` Phase 1a — `ls docs/adr/ADR-*.md` 扫描入口
-- `skills/deps.md` Step 1b — `adr_refs` 提取逻辑
+- `docs/improvement-suggestions-format.md` — 提案格式与引用约定（`ADR-NNN §N.M`）
+- `skills/propose/SKILL.md` Phase 1a — ADR 文件扫描入口（`docs/adr/ADR-*.md`）
+- `skills/deps/SKILL.md` Step 1b — `adr_refs` 提取逻辑
 - <其他相关 ADR / 文档链接>

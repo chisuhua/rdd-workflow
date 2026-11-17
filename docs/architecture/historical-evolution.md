@@ -28,6 +28,15 @@ v2.0.8 (2026-07-28)         v2.0.9 (2026-08-04)         v2.1.0 (2026-08-12)
 Global install support      Deps-driven execution mode   Continuous evolution
                             (ADR-0024)                  feedback loop
                                                         (ADR-0027)
+
+v3.0 (2026-08-26)           v4.0 (2026-09-04)           v4.0.1 (2026-09-09)
+─────────────────           ─────────────────           ─────────────────
+Five stages: arch /         Four stages:                 rdd-arch detached from
+design / plan / ship /      rdd-arch / rdd-planner /     roadmap; rdd-planner
+verify (ADR-0034 + 0035)    rdd-builder / rdd-verifier   owns roadmap alone;
++ package rename            (ADR-0043); guide-* skills   rdd-builder P0 may
+(ADR-0023)                  hard-removed (ADR-0044)      dispatch rdd-quick
+                                                        (ADR-0048)
 ```
 
 ## Pain Point → Solution Mappings
@@ -48,6 +57,9 @@ Global install support      Deps-driven execution mode   Continuous evolution
 | v2.1.0 | No structured feedback loop from third-party rdd-workflow users back to maintainers; evolution was driven by intuition, not evidence. | Continuous evolution feedback loop: detect → buffer → report → triage → close, with triple opt-in, dedup_hash for cross-machine stability, dual-mode archive close hook. | 0027 |
 | v2.1.x | Bash `trap ERR` could not capture failures from sub-scripts that didn't source `post_flow_wrap.sh`; agents didn't always comply with SKILL.md Phase Exit prose; SIGKILL/OOM left no signal at all. | New `rddf orchestrate` subcommand: Python supervisor that captures every phase subprocess with tempfile streams + sanitize, appends to JSONL trace, runs stale-trace sweep on entry to detect killed phases (B4 fix), single-writer rule to coexist with existing trap path. 4 SKILL.md files updated with 3-rule Phase Exit checklists. | spec 2026-08-12 |
 | v2.1.x | Orchestrator was opt-in via `RDDF_USE_ORCHESTRATOR=yes`; 4 phase entry scripts only sourced the wrapper but never actually called `orchestrator_run` or `orchestrator_finalize`. Trace directory accumulated 42 silent corruption files plus `abandoned` rddf-sessions because no signal ever fired. | Promote orchestrator to default-ON (`RDDF_USE_ORCHESTRATOR:-yes`); wire 4 entry scripts with grep-verifiable wrap + EXIT trap; new `rddf orchestrate show <phase>` subcommand for trace replay; 6 bats integration + 3 pytest regression tests + `check_wrap_grep.sh` guard. | spec 2026-08-13 |
+| v3.0 | AC verification was embedded in the inline archive gate, so failure classification and retry routing had no owner and no bounded loop. | Extract `rdd-verifier` as a fifth stage with bounded retry (max 3) + heuristic failure classification (ADR-0034); define the dual-track boundary against `archive_gate_check` (ADR-0035). | 0034, 0035 |
+| v4.0 | Five stages with duplicated responsibilities (design + plan + ship overlapped) forced ceremony on small changes and left `guide-*` shims alive alongside their replacements. | Merge design + plan + ship into `rdd-builder`'s 6-phase state machine and hard-remove the `guide-*` skills (ADR-0043 + ADR-0044); add `rdd-quick` as a bypass path (ADR-0047). | 0043, 0044, 0047 |
+| v4.0.1 | `rdd-arch` still owned the roadmap, so planning intent and architecture definition changed hands twice (arch → design → plan) with no single owner. | Detach `rdd-arch` from the roadmap; `rdd-planner` owns it alone; `rdd-builder` P0 may dispatch `rdd-quick` and `recommended_route` becomes required (ADR-0048). | 0048 |
 
 ## Architectural Constants
 
@@ -61,7 +73,7 @@ These have held since v2.0 and are unlikely to change without a major version bu
 
 ## What's Still Open
 
-Tracked under `../improvement-suggestions.md` and `../improvement-approved.md`:
+Tracked under [`../../improvement-suggestions.md`](../../improvement-suggestions.md) and [`../../improvement-approved.md`](../../improvement-approved.md):
 - v3.0+ candidate: declarative flow DSL (ADR-0011, 0012 — adopted but not implemented).
 - v3.0+ candidate: scheduled triggers (ADR-0009 — placeholder).
 - v2.1.x follow-up: ADR-0017 conflict-resolver 5th option "report upstream" (requires separate ADR to modify rddf-session).

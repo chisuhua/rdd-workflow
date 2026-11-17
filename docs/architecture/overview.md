@@ -2,10 +2,10 @@
 
 ## What rdd-workflow Is
 
-rdd-workflow is an **OpenSpec-compatible AI development workflow package**. It manages changes via a 5-stage lifecycle (`propose → plan → execute → status → archive`), wrapped in a **four-stage v4 architecture** (`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`, per ADR-0043), with a `rdd-quick` small-change bypass path (per ADR-0047). It runs on any OpenSpec-aware AI coding assistant (opencode, Claude Code, Cursor, Aider, etc.) via the Skill discovery mechanism, with no runtime dependency on a specific vendor.
+rdd-workflow is an **OpenSpec-compatible AI development workflow package**. It manages changes via the OpenSpec change lifecycle (`propose → plan → execute → status → archive` — these are OpenSpec CLI verbs, *not* rdd-workflow stages), wrapped in a **four-stage v4 architecture** (`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`, per ADR-0043), with a `rdd-quick` small-change bypass path (per ADR-0047). It runs on any OpenSpec-aware AI coding assistant (opencode, Claude Code, Cursor, Aider, etc.) via the Skill discovery mechanism, with no runtime dependency on a specific vendor.
 
 The package ships:
-- **5 stage skills** (`rdd-arch`, `rdd-planner`, `rdd-builder`, `rdd-verifier` + `rdd-quick` bypass, v4.0+ per ADR-0043) + **22 sub-skills** = 27 user-invocable skills total, each a `SKILL.md` with structured frontmatter.
+- **28 skills** in `skills/` — 5 stage skills (`rdd-arch`, `rdd-planner`, `rdd-builder`, `rdd-verifier` + the `rdd-quick` bypass, v4.0+ per ADR-0043) and 23 sub-skills, each a `SKILL.md` with structured frontmatter.
 - A **shared `_lib/`** of 60+ Python modules and bash helpers implementing state, gate, tribunal, session, loop engine, etc.
 - A **`rddf` CLI** (`rddf status`, `rddf session ...`, `rddf discover-ship-changes`, etc.) for scripting and dashboards.
 
@@ -67,29 +67,41 @@ graph TB
 
 | Skill | Stage | One-liner |
 |-------|-------|-----------|
-| `rdd-arch` | Stage 1 — arch | Define architecture: ADR creation, gap analysis, roadmap. |
-| `rdd-planner` | Stage 2 — planner | Roadmap + proposal authoring orchestrator (per ADR-0038/0042); v3.0 design+plan merged. |
-| `rdd-builder` | Stage 3 — builder | Approval + plan + execute + archive; 6-phase internal state machine (per ADR-0043). |
+| `rdd-arch` | Stage 1 — arch | Define architecture: ADR creation + theme doc composition (per ADR-0057). **Does not own roadmap** (per ADR-0048 — detached from roadmap). |
+| `rdd-planner` | Stage 2 — planner | Roadmap + proposal authoring orchestrator (per ADR-0038/0042); v3.0 design+plan merged; sole owner of roadmap + `.rddf/improvements/`. |
+| `rdd-builder` | Stage 3 — builder | Approval + plan + execute + archive; 6-phase internal state machine (per ADR-0043): P0 → P1 → P1.5 → P2 → P2.5 → P3. |
 | `rdd-verifier` | Stage 4 — verifier | Batch AC verification before archive; routes failures back to builder (per ADR-0034); v2.0 self-contained LLM verification (per ADR-0045). |
-| `rdd-quick` | Bypass (ADR-0047) | Small-change in-place execute; skips openspec change + worktree ceremony. |
+| `rdd-quick` | Bypass (ADR-0047, AMENDED per ADR-0048) | Small-change in-place execute; skips openspec change + worktree ceremony. Reached as **rdd-builder P0 option 5** (dispatch), not by user request alone. |
 
-### Sub-skills (called by phase guides)
+### Sub-skills (called by other skills)
+
+> "Called by" is derived from live `skill_use("…")` invocations in `skills/*/SKILL.md`.
 
 | Skill | One-liner | Called by |
 |-------|-----------|-----------|
 | `guide` | Recommender; scans project state, suggests next step. | (entry point) |
-| `add-improve` | Create an improvement proposal via brainstorming. | guide-design |
-| `propose` | Analyse doc/code gap, propose changes. | guide-plan |
-| `deps` | Compute change dependency graph + execution order. | guide-plan |
-| `feature` | View/manage feature groups (summary, graph, status, order). | (standalone) |
-| `execute` | Run the .rddf/plans/<name>.md plan in a worktree. | guide-ship |
-| `rdd-workflow-writing-plans` | Generate TDD 5-step plan for a change. | guide-ship |
-| `status` | View/change status; archive completed changes. | guide-ship |
-| `roadmap` | Init / edit / validate / advance the project roadmap. | guide-arch |
-| `rddf-session` | User-perspective workflow session mgmt. | (all phases) |
-| `rdd-env-check` | Health snapshot of openspec CLI, git, branch. | (all phases Phase 1) |
+| `add-improve` | Create an improvement proposal via brainstorming. | guide, rdd-planner |
+| `propose` | Legacy proposal skeleton creator for `openspec/changes/<name>/`. | guide |
+| `deps` | Compute change dependency graph + execution order. | guide |
+| `feature` | View/manage feature fragments (summary, graph, status, order). | guide |
+| `execute` | Run the `.rddf/plans/<name>.md` plan in a worktree. | status, rdd-workflow-writing-plans |
+| `rdd-workflow-writing-plans` | Generate TDD 5-step plan for a change. | execute |
+| `status` | View/change status; archive completed changes. | guide |
+| `roadmap` | Init / edit / validate / advance the project roadmap. | rdd-planner |
+| `rddf-session` | User-perspective workflow session mgmt. | guide |
+| `rdd-env-check` | Health snapshot of openspec CLI, git, branch (phase-internal script). | (phase-internal) |
 | `rdd-workflow-brainstorm` | Structured brainstorm for improvements. | add-improve |
 | `openspec-gate` | Pre-commit gate: warn if staged files aren't linked to a change. | (standalone) |
+| `contract-check` | Hub OpenAPI contract vs local implementation validator. | (standalone) |
+| `cross-repo-protocol` | Hub-Spoke federation MCP client (REST fallback). | (standalone) |
+| `report-issue` | Hub-Spoke RFC issue creator (phase-exit hook). | (standalone) |
+| `rdd-doctor` | Read-only diagnostic over workflow state files. | guide |
+| `rdd-env-bootstrap` | Environment bootstrap orchestrator for rdd-workflow projects. | rdd-planner |
+| `rdd-hub-bootstrap` | Hub repo bootstrap (dirs + Projects V2 board + CI templates). | (standalone) |
+| `rdd-session-bootstrap` | Cross-session continuity snapshot / paste-ready prompt builder. | (standalone) |
+| `spoke-system-prompt-injection` | Federation protocol injector for AI assistant configs. | (standalone) |
+| `sync-hub` | Pull Hub contract into `openspec/specs/<name>/spec.md`. | rdd-planner |
+| `watch-hub` | One-shot Hub issue status poll (cron / CI). | (standalone) |
 
 ### Core _lib/ modules
 
@@ -101,7 +113,7 @@ graph TB
 | `_lib/loop/tribunal.py` | Multi-agent cross-validation; weighted scoring + sanitization. |
 | `_lib/loop_engine.py` | Goal → Plan → Execute → Verify → Adapt orchestrator. |
 | `_lib/session.py` / `session_manager.py` | rddf-session lifecycle (ADR-0017). |
-| `_lib/arch_quality_gate.py` | 4 warning checks on architecture proposals. |
+| `_lib/arch_quality_gate.py` | 4 warning checks on architecture artefacts + opt-in ADR shape budget (`ARCH_SHAPE_CHECK=yes`, per ADR-0060). |
 | `_lib/change_alignment.py` | 3 warning checks on change-vs-architecture alignment. |
 | `_lib/validate_delta_targets.py` | Validates spec delta `## ADDED/MODIFIED/REMOVED` paths. |
 | `_lib/discover-arch-artifacts.sh` | ADR/roadmap/architecture dir discovery (ADR-0016). |
@@ -111,10 +123,15 @@ graph TB
 | Subcommand | One-liner |
 |------------|-----------|
 | `rddf status` | Concise project status (worktrees, active changes, sessions). |
-| `rddf session list/show/resume/abandon/archive-history` | rddf-session lifecycle. |
+| `rddf sessions show/current/gc` | Session lifecycle (CLI side). The user-facing session skill is `rddf-session`; the CLI subcommand is `sessions` (plural). |
 | `rddf discover-ship-changes` | List committed changes ready to ship. |
-| `rddf discover-arch-artifacts` | Re-scan ADR/roadmap/architecture dirs. |
-| `rddf env-check` | Print env snapshot (CLI / git / branch). |
+| `rddf layout --json` | Machine-readable `.rddf/` layout manifest (single source of truth: `_lib/core/rddf_layout.py`). |
+| `rddf doctor --category <cat>` | Read-only diagnostics over workflow state files. |
+| `rddf feedback add` | Single-writer feedback channel for `.rddf/improvements/*.md` (per ADR-0037). |
+| `rddf rdd-verify` | Run the AC verification protocol (per ADR-0034/0045). |
+| `rddf env-bootstrap` | Environment bootstrap / remediation for rdd-workflow projects. |
+
+> Full list: `rddf --help` (37 subcommands). The table above is a curated subset, not the authoritative index.
 
 ## Why Four Stages, Not Three or Five
 
@@ -141,7 +158,7 @@ See [loop-engine.md](loop-engine.md) for the building-block breakdown.
 These are the rules the project holds itself to. When a change seems to violate one, the burden is on the change author to justify it.
 
 1. **Self-contained.** A single skill (with its `scripts/` dir and `_lib/` deps) is enough to do its job. No implicit cross-vendor dependencies (no `~/.claude/...` paths, no hard reliance on a specific AI vendor).
-2. **Explicit contract.** Cross-skill data flows through versioned handoff files (`.rddf/state/.arch-handoff.json`, `.plan-handoff.json`, etc.) with declared schemas. No hidden state-passing via globals.
+2. **Explicit contract.** Cross-skill data flows through versioned handoff files (`.rddf/state/.arch-handoff.json`, `.rddf/state/.planner-handoff.json`, `.rddf/state/.planner-feedback.json`) with declared schemas. No hidden state-passing via globals.
 3. **Idempotent.** Re-running a phase is safe: state-vector writes are atomic, gates re-evaluate, plans re-generate deterministically from inputs.
 4. **Single source of truth.** Each fact lives in exactly one place: skill metadata is in `SKILL.md` frontmatter only; state is in `state_vector.py` only; handoffs are in their JSON files only.
 5. **No silent failure.** Every error path either surfaces a stderr message + non-zero exit code, or — for recoverable cases — emits a warning gate. Never swallow.

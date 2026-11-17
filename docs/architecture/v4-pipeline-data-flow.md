@@ -647,4 +647,4 @@ Every `skills/*/SKILL.md` and `skills/INSTALL.md` frontmatter `description:` fie
 
 Anti-routing judgments are centralized in `skills/guide/SKILL.md` — see "Anti-Routing Centralization (per ADR-0051)" section in that file. Per-skill descriptions no longer carry anti-trigger paragraphs (`**DO NOT use**` / `**Prefer ... instead**` / `**Legacy entry**`).
 
-See [ADR-0051](../../adr/ADR-0051-skill-description-convention.md) for the full 5 Decision specification.
+See [ADR-0051](../adr/ADR-0051-skill-description-convention.md) for the full 5 Decision specification.

@@ -3,7 +3,7 @@
 > **状态**: 待定
 > **日期**: 2026-08-25
 > **决策者**: rdd-workflow maintainers
-> **来源提案**: [.rddf/improvements/submodule-aware-project-root.md](../.rddf/improvements/submodule-aware-project-root.md)
+> **来源提案**: [.rddf/improvements/submodule-aware-project-root.md](../../.rddf/improvements/submodule-aware-project-root.md)
 
 ## Context
 
@@ -213,7 +213,7 @@ def resolve_project_root() -> str:
 
 ## 参考
 
-- 源提案: [.rddf/improvements/submodule-aware-project-root.md](../.rddf/improvements/submodule-aware-project-root.md)
+- 源提案: [.rddf/improvements/submodule-aware-project-root.md](../../.rddf/improvements/submodule-aware-project-root.md)
 - Git 文档: [`git rev-parse --show-superproject-working-tree`](https://git-scm.com/docs/git-rev-parse#Documentation/git-rev-parse.txt---show-superproject-working-tree)
 - 相关 ADR:
   - 暂无 — 本 ADR 是首个 submodule 主题决策

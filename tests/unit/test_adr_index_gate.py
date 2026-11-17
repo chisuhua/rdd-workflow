@@ -22,10 +22,6 @@ def _collect_adr_files() -> list[Path]:
     return [
         p for p in ADR_DIR.glob("ADR-*.md")
         if "template" not in p.name.lower()
-        # ADR-0001-x.md is a touch-test fixture referenced by
-        # docs/superpowers/plans/2026-08-07-guide-design-phase1-diagnostic.md;
-        # it has no real ADR content. (per fix-rebuild-adr-index-for-0049-0050)
-        and p.name != "ADR-0001-x.md"
     ]
 
 

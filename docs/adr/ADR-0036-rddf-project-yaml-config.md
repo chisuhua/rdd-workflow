@@ -3,7 +3,7 @@
 > **状态**: 已采纳 (2026-09-02)
 > **日期**: 2026-09-02
 > **决策者**: rdd-workflow maintainers
-> **关联**: [proposal rfc-rddf-project-yaml-config-i10](../proposal-approved.md) · [issue #10](https://github.com/chisuhua/rdd-workflow/issues/10)
+> **关联**: [proposal rfc-rddf-project-yaml-config-i10](../../.rddf/improvements/rfc-rddf-project-yaml-config-i10.md) · [issue #10](https://github.com/chisuhua/rdd-workflow/issues/10)
 
 ## Context
 

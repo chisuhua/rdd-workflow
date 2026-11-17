@@ -198,7 +198,7 @@ ADR-0021 (per-skill scripts/ 迁移) ─→ ADR-0022 (manual_deps)
 - [`../architecture/historical-evolution.md`](../architecture/historical-evolution.md) — 完整演进记录
 - `../ONBOARDING.md` — 项目上手
 - `../change-quality-guide.md` — change 质量等级
-- `../proposal-suggestions-format.md` / `../proposal-approved-format.md` — 提案格式
+- [`../improvement-suggestions-format.md`](../improvement-suggestions-format.md) / [`../improvement-approved-format.md`](../improvement-approved-format.md) — 提案格式
 
 ## 命名规范
 
@@ -245,7 +245,7 @@ ADR-NNN §N.M
 
 - `ADR-NNN` 是 ADR 编号
 - `§N.M` 是模板中的小节编号（如 `§3.2` 指第 3 节的 3.2 小节）
-- 消费者：`skills/propose.md` Phase 1a（扫描）、`skills/deps.md` Step 1b（提取 `adr_refs`）
+- 消费者：`skills/propose/SKILL.md` Phase 1a（扫描）、`skills/deps/SKILL.md` Step 1b（提取 `adr_refs`）
 
 ## 如何使用 ADR
 

@@ -269,6 +269,13 @@ git commit -m "fix(guide-design): exclude ADR templates from adr_count"
 
 - [ ] **Step 1: Add failing tests for recommendation branches**
 
+> ⚠️ **历史片段告警（2026-11-17 补注）**：本步骤的 `touch "$PROJECT_ROOT/docs/adr/ADR-0001-x.md"`
+> 曾把测试夹具写进**生产 ADR 目录** `docs/adr/`，导致伪 ADR 长期残留（`docs/adr/ADR-0001-x.md`
+> 已删除，配套的 6 处硬编码 skip 分支同步移除）。
+> **重跑时夹具必须落在临时目录**（如 `$(mktemp -d)/docs/adr/`），不得写入 `docs/adr/`。
+> 另注：本片段引用的 `skills/guide-design/scripts/design_preflight.sh` 已随 ADR-0044（Wave 3 hard
+> removal）删除，片段本身不可直接执行。
+
 Append:
 
 ```bash

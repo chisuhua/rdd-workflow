@@ -59,16 +59,12 @@ setup() {
 }
 
 @test "ADR-0000-template.md cites docs/improvement-suggestions-format.md" {
-  grep -qE 'docs/proposal-suggestions-format\.md' "$ADR_DIR/ADR-0000-template.md"
+  grep -qE 'docs/improvement-suggestions-format\.md' "$ADR_DIR/ADR-0000-template.md"
 }
 
 @test "every real ADR has a # ADR-NNNN: header" {
   for f in "$ADR_DIR"/ADR-[0-9][0-9][0-9][0-9]-*.md; do
     [ -f "$f" ] || continue
-    # Skip touch-test fixture ADR-0001-x.md (per fix-rebuild-adr-index-for-0049-0050):
-    # referenced by docs/superpowers/plans/2026-08-07-guide-design-phase1-diagnostic.md,
-    # has no real ADR content.
-    [ "$(basename "$f")" = "ADR-0001-x.md" ] && continue
     head -1 "$f" | grep -qE "^# ADR-[0-9]{4}:" || {
       echo "missing or malformed header in: $f" >&2
       return 1
@@ -79,7 +75,6 @@ setup() {
 @test "every real ADR has a ## 决策 or ## Decision section" {
   for f in "$ADR_DIR"/ADR-[0-9][0-9][0-9][0-9]-*.md; do
     [ -f "$f" ] || continue
-    [ "$(basename "$f")" = "ADR-0001-x.md" ] && continue
     if ! grep -qE '^## (决策|Decision|权衡|Trade[ -]off)' "$f"; then
       echo "missing Decision section in: $f" >&2
       return 1
@@ -90,7 +85,6 @@ setup() {
 @test "every real ADR has a ## Context section" {
   for f in "$ADR_DIR"/ADR-[0-9][0-9][0-9][0-9]-*.md; do
     [ -f "$f" ] || continue
-    [ "$(basename "$f")" = "ADR-0001-x.md" ] && continue
     grep -qE '^## (Context|问题|背景|Background)' "$f" || {
       echo "missing Context section in: $f" >&2
       return 1
@@ -101,7 +95,6 @@ setup() {
 @test "every real ADR has status and date fields" {
   for f in "$ADR_DIR"/ADR-[0-9][0-9][0-9][0-9]-*.md; do
     [ -f "$f" ] || continue
-    [ "$(basename "$f")" = "ADR-0001-x.md" ] && continue
     grep -qE '^>? ?\*\*(状态|Status)\*\*:' "$f" || {
       echo "missing status field in: $f" >&2
       return 1
