@@ -173,7 +173,18 @@ def strict_wrap(
 # answering "how exactly" is no longer a decision record. These budgets encode
 # that boundary. Measured 2026-10-27: recent ADRs reached 435-620 lines with
 # decision statements down to 22% of the body.
-_DEFAULT_ADR_LINE_LIMIT = 300
+#
+# CHANGED 2026-11-17 (per the ADR-0060 amendment): the budget was 300; it is
+# now 250 so the mechanical check matches the prose contract — the ADR template
+# ("正文目标 ≤ 250 行") and the opencode build-agent architect shape contract
+# ("正文 = 决策本身，目标 ≤ 250 行"). The count is the **whole-file physical line
+# count** (headings, table separator rows and blank lines included); the
+# template's "正文" wording excludes derivation/evidence, so the two numbers are
+# comparable only in the conservative direction.
+#
+# NOTE: `ARCH_FILE_SIZE_LIMIT` (see `_check_file_size`) is a *different* budget
+# whose default happens to be similar — do not conflate them.
+_DEFAULT_ADR_LINE_LIMIT = 250
 _DEFAULT_ADR_STATUS_MAX = 200
 
 # Section presence — bilingual, tolerant of numbered headings ("## 2. 决策").
@@ -184,13 +195,154 @@ _SHAPE_REQUIRED_SECTIONS = {
     "Alternatives": re.compile(r"^#{2,4}\s*(?:\d+[.)]\s*)?(?:备选方案|替代方案|alternatives)\b", re.MULTILINE | re.IGNORECASE),
 }
 
+# Verification chapter — h2 only, line-anchored, tolerant of a trailing note.
+#
+# An h3 like `### 验证 ADR-0048 + ADR-0049 零 regression` is a prose
+# sub-heading, NOT a verification chapter: counting it would let an ADR with no
+# forward-looking acceptance criteria pass (假阴性放行).
+_SHAPE_VERIFICATION_SECTION = re.compile(
+    r"^##\s*(?:\d+[.)]\s*)?(?:verification|验证)(?:[（(][^)）]*[)）])?\s*$",
+    re.MULTILINE | re.IGNORECASE,
+)
+
 # Process-log markers — governance ledger / review history that must not live
 # inside a decision document.
+#
+# The free-text family is kept verbatim: ADR-0060 explicitly accepted that
+# "a body mentioning BLOCKER counts as a process-log marker" as a known
+# heuristic limitation (warning level, opt-in).
 _PROCESS_LOG_PATTERNS = [
     re.compile(r"第\s*\d+\s*轮\s*(?:critic|对抗审稿|审稿|复审)"),
     re.compile(r"\b(?:BLOCKER|SHOULD_FIX|NITS?)\b"),
     re.compile(r"队列\s*#\d+|台账\s*Entry\s*#\d+"),
 ]
+
+# Heading-anchored markers — the two shapes this repo actually drifts into.
+# Anchored to the heading line so prose mentions are not double-counted.
+#   (a) process_log_heading  — process / version history
+#   (b) shape_sprawl_heading — the ADR grew into a how-to / test plan
+_SHAPE_PROCESS_LOG_HEADINGS = [
+    re.compile(r"^#{2,4}\s.*(?:修订日志|修订记录|变更日志|修订要点|changelog|revision log)", re.IGNORECASE),
+    re.compile(r"^#{2,4}\s.*(?:实施记录|实施状态|implementation status|post-hoc fix record|事后修复记录)", re.IGNORECASE),
+]
+_SHAPE_SPANGLY_HEADINGS = [
+    re.compile(r"^#{2,4}\s.*\b(?:implementation|test strategy|rollout)\b", re.IGNORECASE),
+    re.compile(r"^#{2,4}\s.*(?:测试策略|测试改动|实施步骤|实施计划|验收记录)", re.IGNORECASE),
+    # a change id in a heading is a change ledger, not a decision
+    re.compile(r"^#{2,4}\s.*\bfix-[a-z0-9][a-z0-9-]*", re.IGNORECASE),
+]
+
+# Column headers that carry the *reason*, not the *conclusion*. The
+# alternatives table must have at least one column that is neither the subject
+# column nor a reason column — otherwise the conclusion only lives in prose and
+# cannot be read mechanically.
+_ALTERNATIVES_REASON_COLUMNS = {
+    "理由", "原因", "说明", "备注", "优点", "缺点",
+    "reason", "rationale", "pros", "cons", "explanation",
+}
+
+
+@dataclass(frozen=True)
+class ShapeFinding:
+    """One shape-budget violation, in one ADR."""
+
+    signal: str
+    file: str
+    detail: str
+
+
+def _split_table_row(line: str) -> list[str]:
+    """Split a markdown table row on unescaped pipes."""
+    s = line.strip()
+    if s.startswith("|"):
+        s = s[1:]
+    if s.endswith("|") and not s.endswith("\\|"):
+        s = s[:-1]
+    cells: list[str] = []
+    buf: list[str] = []
+    i = 0
+    while i < len(s):
+        ch = s[i]
+        if ch == "\\" and i + 1 < len(s) and s[i + 1] == "|":
+            buf.append("|")
+            i += 2
+            continue
+        if ch == "|":
+            cells.append("".join(buf).strip())
+            buf = []
+            i += 1
+            continue
+        buf.append(ch)
+        i += 1
+    cells.append("".join(buf).strip())
+    return cells
+
+
+def _is_table_separator(cells: list[str]) -> bool:
+    return bool(cells) and all(re.fullmatch(r":?-{2,}:?", c) for c in cells)
+
+
+def _section_body(text: str, heading_re: re.Pattern) -> Optional[str]:
+    """Body of the first heading matching `heading_re`, up to the next heading of
+    the same or a higher level.
+
+    Reuses the *same* regex as the presence check, so the two cannot drift.
+    """
+    m = heading_re.search(text)
+    if not m:
+        return None
+    head = text[m.start():m.start() + 8]
+    level = max(2, len(head) - len(head.lstrip("#")))
+    start = m.end()
+    nxt = None
+    for m2 in re.finditer(r"^(#{2,4})\s", text[start:], re.MULTILINE):
+        if len(m2.group(1)) <= level:
+            nxt = start + m2.start()
+            break
+    return text[start:nxt] if nxt is not None else text[start:]
+
+
+def _verification_findings(text: str, name: str) -> list[ShapeFinding]:
+    """Verification chapter must exist AND carry at least one checkable criterion."""
+    body = _section_body(text, _SHAPE_VERIFICATION_SECTION)
+    if body is None:
+        return [ShapeFinding("missing_verification", name, "缺 Verification（前瞻验收判据）章节")]
+    if not re.search(r"^\s*[-*]\s*\[[ xX]\]", body, re.MULTILINE):
+        return [ShapeFinding("verification_section_empty", name, "Verification 章内无可勾选判据")]
+    return []
+
+
+def _alternatives_findings(text: str, name: str) -> list[ShapeFinding]:
+    """The alternatives table must exist, carry ≥3 rows, and expose a conclusion."""
+    body = _section_body(text, _SHAPE_REQUIRED_SECTIONS["Alternatives"])
+    if body is None:
+        return []  # a missing Alternatives chapter is reported by the section check
+    table: list[list[str]] = []
+    for line in body.splitlines():
+        if "|" in line:
+            cells = _split_table_row(line)
+            if len(cells) >= 2:
+                table.append(cells)
+                continue
+        if table:
+            break
+    if len(table) < 2:
+        return [ShapeFinding("alternatives_table_missing", name, "备选方案章内未找到对比表")]
+    header = table[0]
+    data = [row for row in table[1:] if not _is_table_separator(row)]
+    findings: list[ShapeFinding] = []
+    if len(data) < 3:
+        findings.append(ShapeFinding(
+            "alternatives_table_too_few_rows", name,
+            f"备选方案表只有 {len(data)} 行数据（要求 ≥3 行）",
+        ))
+    rest = [c.strip() for c in header[1:] if c.strip()]
+    if not any(c.lower() not in _ALTERNATIVES_REASON_COLUMNS for c in rest):
+        findings.append(ShapeFinding(
+            "alternatives_table_no_conclusion_column", name,
+            f"备选方案表缺『结论』列（表头: {' | '.join(header)}）",
+        ))
+    return findings
 
 
 def _iter_adr_files(project_root: str, paths: dict):
@@ -204,23 +356,17 @@ def _iter_adr_files(project_root: str, paths: dict):
         yield f
 
 
-def _check_adr_shape(ctx: dict) -> tuple[bool, Optional[str]]:
-    """Pass if ADRs stay within the decision-document shape budget.
+def adr_shape_findings(ctx: dict) -> list[ShapeFinding]:
+    """Structured shape-budget findings for the ADRs selected by `ctx`.
 
-    CHANGED 2026-10-28 — catches ADRs that grew into design specs / process
-    ledgers. Four signals per file:
+    This is the **single source of truth** for shape checking: the gate
+    (`_check_adr_shape`) and the standalone CLI
+    (`skills/rdd-arch/scripts/adr_shape_check.sh`) both consume it, so the two
+    cannot drift apart.
 
-      1. body longer than the line budget (default 300, `ARCH_ADR_LINE_LIMIT`)
-      2. a missing required section (Context / Decision / Consequences / Alternatives)
-      3. review-process log markers (审稿轮次 / BLOCKER 清单 / 队列号 / 台账 Entry)
-      4. a Status line carrying a long version history (`ARCH_ADR_STATUS_MAX`)
-
-    Scope: `ctx["adr_files"]` (explicit list of paths) restricts the check to
-    those files; otherwise every ADR in the ADR dir is scanned.
-
-    Warning level only. Opt-in for the aggregate report via
-    `ARCH_SHAPE_CHECK=yes` — existing ADRs are pre-existing debt and are not
-    retroactively blocked.
+    Scope: `ctx["adr_files"]` (an explicit list) restricts the scan; otherwise
+    every ADR in the ADR dir is scanned. An empty scan is reported as a finding
+    rather than silently passing.
     """
     project_root = ctx.get("project_root", ".")
     paths = _read_handoff(project_root)
@@ -234,7 +380,14 @@ def _check_adr_shape(ctx: dict) -> tuple[bool, Optional[str]]:
     else:
         files = list(_iter_adr_files(project_root, paths))
 
-    issues: list[str] = []
+    findings: list[ShapeFinding] = []
+    if not files:
+        findings.append(ShapeFinding(
+            "no_adr_files_scanned", "",
+            f"未扫描到任何 ADR（adr_dir={paths.get('adr_dir', '?')}）",
+        ))
+        return findings
+
     for f in files:
         try:
             text = f.read_text(encoding="utf-8", errors="replace")
@@ -244,27 +397,72 @@ def _check_adr_shape(ctx: dict) -> tuple[bool, Optional[str]]:
         name = f.name
 
         if len(lines) > line_limit:
-            issues.append(f"{name}: {len(lines)} lines > {line_limit}")
+            findings.append(ShapeFinding(
+                "line_budget", name, f"{len(lines)} 行 > {line_limit} 行"))
 
         missing = [
             sec for sec, pat in _SHAPE_REQUIRED_SECTIONS.items()
             if not pat.search(text)
         ]
         if missing:
-            issues.append(f"{name}: missing section(s) {', '.join(missing)}")
+            findings.append(ShapeFinding(
+                "missing_section", name, f"缺章节 {', '.join(missing)}"))
+
+        findings.extend(_verification_findings(text, name))
+        findings.extend(_alternatives_findings(text, name))
 
         log_hits = sum(len(pat.findall(text)) for pat in _PROCESS_LOG_PATTERNS)
         if log_hits:
-            issues.append(f"{name}: {log_hits} process-log marker(s) inside ADR body")
+            findings.append(ShapeFinding(
+                "process_log", name, f"{log_hits} 处过程日志标记"))
+
+        for line in lines:
+            stripped = line.strip()
+            if not stripped.startswith("#"):
+                continue
+            if any(p.search(stripped) for p in _SHAPE_PROCESS_LOG_HEADINGS):
+                findings.append(ShapeFinding(
+                    "process_log_heading", name, f"标题含过程/版本史: {stripped[:60]}"))
+            elif any(p.search(stripped) for p in _SHAPE_SPANGLY_HEADINGS):
+                findings.append(ShapeFinding(
+                    "shape_sprawl_heading", name, f"标题越界成实施细节: {stripped[:60]}"))
 
         for line in lines:
             stripped = line.strip()
             if stripped.startswith(">") and re.search(r"状态|status", stripped, re.IGNORECASE):
                 if len(stripped) > status_max:
-                    issues.append(f"{name}: Status line is {len(stripped)} chars (>{status_max})")
+                    findings.append(ShapeFinding(
+                        "status_line_too_long", name,
+                        f"Status 行 {len(stripped)} 字符 > {status_max}"))
                 break
 
-    if issues:
+    return findings
+
+
+def _check_adr_shape(ctx: dict) -> tuple[bool, Optional[str]]:
+    """Pass if ADRs stay within the decision-document shape budget.
+
+    Signals per file (all warning level, opt-in via `ARCH_SHAPE_CHECK=yes`):
+
+      1. body longer than the line budget (default 250, `ARCH_ADR_LINE_LIMIT`)
+      2. a missing required section (Context / Decision / Consequences / Alternatives)
+      3. a missing or empty Verification chapter
+      4. an alternatives table that is absent / under-populated / has no conclusion column
+      5. review-process log markers (审稿轮次 / BLOCKER 清单 / 队列号 / 台账 Entry)
+      6. heading-level process-log or how-to sprawl markers
+      7. a Status line carrying a long version history (`ARCH_ADR_STATUS_MAX`)
+
+    Scope: `ctx["adr_files"]` (explicit list of paths) restricts the check to
+    those files; otherwise every ADR in the ADR dir is scanned. An empty scan
+    is reported as a finding rather than silently passing.
+
+    Warning level only. Opt-in for the aggregate report via
+    `ARCH_SHAPE_CHECK=yes` — existing ADRs are pre-existing debt and are not
+    retroactively blocked.
+    """
+    findings = adr_shape_findings(ctx)
+    ctx["shape_findings"] = findings
+    if findings:
         return (False, "warning")
     return (True, None)
 
@@ -451,6 +649,13 @@ class ArchQualityReport:
                 report.passed = False
                 continue
             report.detail[name] = {"passed": passed, "severity": severity}
+            if name == "adr_shape":
+                findings = ctx.get("shape_findings") or []
+                if findings:
+                    report.detail[name]["findings"] = [
+                        {"signal": f.signal, "file": f.file, "detail": f.detail}
+                        for f in findings
+                    ]
             if not passed:
                 if severity == "warning":
                     report.warnings.append(name)

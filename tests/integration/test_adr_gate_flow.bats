@@ -85,6 +85,35 @@ SKILL_FILE="$REPO_ROOT/skills/rdd-arch/SKILL.md"
     for i in $(seq 1 320); do echo "- 推导行 $i"; done
   } > "$adr"
   run bash "$PROJECT_ROOT/skills/rdd-arch/scripts/adr_shape_check.sh" "$adr"
-  [ "$status" -eq 1 ]
+  # 默认：有发现但非 --strict ⇒ 退出 0（与脚本自述的退出码契约一致）
+  [ "$status" -eq 0 ]
   [[ "$output" =~ "行" ]]
+  [[ "$output" =~ "line_budget" ]]
+}
+
+@test "adr_shape_check: --strict makes findings fail the run" {
+  local adr="$BATS_TMPDIR/ADR-9998-big.md"
+  {
+    echo "# ADR-9998: big"
+    echo
+    echo "## Context"
+    echo
+    echo "bg"
+    for i in $(seq 1 320); do echo "- 推导行 $i"; done
+  } > "$adr"
+  run bash "$PROJECT_ROOT/skills/rdd-arch/scripts/adr_shape_check.sh" --strict "$adr"
+  [ "$status" -eq 1 ]
+}
+
+@test "adr_shape_check: bare invocation is a usage error (no silent full scan)" {
+  run bash "$PROJECT_ROOT/skills/rdd-arch/scripts/adr_shape_check.sh"
+  [ "$status" -eq 2 ]
+  [[ "$output" =~ "--all" ]]
+}
+
+@test "adr_shape_check: CLI has no hardcoded budget defaults (single source of truth)" {
+  run grep -nE '"[0-9]{3}"' "$PROJECT_ROOT/skills/rdd-arch/scripts/adr_shape_check.sh"
+  [ "$status" -ne 0 ]
+  run grep -c "for line in lines" "$PROJECT_ROOT/skills/rdd-arch/scripts/adr_shape_check.sh"
+  [ "$status" -ne 0 ]
 }

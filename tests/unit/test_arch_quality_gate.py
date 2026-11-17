@@ -13,6 +13,7 @@ CHANGED 2026-09-30 (per ADR-0057):
 from __future__ import annotations
 import json
 import os
+import re
 from pathlib import Path
 
 import pytest
@@ -22,6 +23,8 @@ from skills._lib.arch_quality_gate import (
     _check_adr_clarity,
     _check_handoff_actionable,
     _check_adr_shape,
+    adr_shape_findings,
+    _DEFAULT_ADR_LINE_LIMIT,
     strict_wrap,
     is_strict_mode,
     ArchQualityReport,
@@ -564,6 +567,7 @@ _WELL_FORMED_ADR = """# ADR-0007: 单模型双后端
 |---|---|---|
 | A 保留双模 | 拒绝 | 模态开关带来二义 |
 | B 单模双后端 | 接受 | 模型唯一 |
+| C 双模双后端 | 拒绝 | 差分门禁无法定义 |
 
 ## Consequences
 
@@ -671,3 +675,158 @@ def test_adr_shape_registered_in_report_when_opted_in(tmp_path, monkeypatch):
     _write_adr(tmp_path, "ADR-0016-thin.md", body)
     report = ArchQualityReport.verify(str(tmp_path))
     assert "adr_shape" in report.warnings
+
+
+# ---------- 6. ADR shape: same-source budget + new signals (added 2026-11-17) ----------
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+_TEMPLATE = _REPO_ROOT / "docs" / "adr" / "ADR-0000-template.md"
+_SHAPE_CLI = _REPO_ROOT / "skills" / "rdd-arch" / "scripts" / "adr_shape_check.sh"
+
+
+def _findings(tmp_path, name, body):
+    """Write one ADR and return its structured shape findings."""
+    _write_adr(tmp_path, name, body)
+    return adr_shape_findings({"project_root": str(tmp_path)})
+
+
+def _signals(findings):
+    return {f.signal for f in findings}
+
+
+def test_adr_shape_line_limit_matches_template_budget():
+    """同源断言：机械门预算必须等于 ADR 模板里的散文预算。
+
+    Without this, the two budgets drift apart silently (they did: template said
+    250, the machine default was 300).
+    """
+    text = _TEMPLATE.read_text(encoding="utf-8")
+    m = re.search(r"≤\s*(\d+)\s*行", text)
+    assert m, "ADR-0000-template.md no longer states a line budget"
+    assert int(m.group(1)) == _DEFAULT_ADR_LINE_LIMIT
+
+
+def test_adr_shape_missing_verification_section_is_reported(tmp_path):
+    body = _WELL_FORMED_ADR.replace("## Verification\n\n- [ ] **V-1** 差分门禁首跑为空 ⇒ 通过\n\n", "")
+    findings = _findings(tmp_path, "ADR-0020-noverif.md", body)
+    assert "missing_verification" in _signals(findings)
+
+
+def test_adr_shape_bilingual_verification_section_passes(tmp_path):
+    """`## 验证`（h2）是合法的 Verification 章节 —— 双语仓库不能只认英文。"""
+    body = _WELL_FORMED_ADR.replace(
+        "## Verification\n\n- [ ] **V-1** 差分门禁首跑为空 ⇒ 通过\n",
+        "## 验证\n\n- [ ] **V-1** 差分门禁首跑为空 ⇒ 通过\n",
+    )
+    findings = _findings(tmp_path, "ADR-0021-zh.md", body)
+    assert "missing_verification" not in _signals(findings)
+
+
+def test_adr_shape_h3_verification_prose_is_not_a_section(tmp_path):
+    """`### 验证 ADR-0048 + ADR-0049 零 regression` 是散文子标题，不是验收章。
+
+    它不能被当成 Verification 章节 —— 否则会「假阴性放行」一份没有验收章的 ADR。
+    """
+    body = _WELL_FORMED_ADR.replace(
+        "## Verification\n\n- [ ] **V-1** 差分门禁首跑为空 ⇒ 通过\n",
+        "### 验证 ADR-0048 + ADR-0049 零 regression\n\n实测通过。\n",
+    )
+    findings = _findings(tmp_path, "ADR-0022-h3.md", body)
+    assert "missing_verification" in _signals(findings)
+
+
+def test_adr_shape_verification_section_without_checkbox_is_reported(tmp_path):
+    body = _WELL_FORMED_ADR.replace(
+        "## Verification\n\n- [ ] **V-1** 差分门禁首跑为空 ⇒ 通过\n",
+        "## Verification\n\n待补充。\n",
+    )
+    findings = _findings(tmp_path, "ADR-0023-empty.md", body)
+    assert "verification_section_empty" in _signals(findings)
+
+
+def test_adr_shape_alternatives_table_missing_is_reported(tmp_path):
+    body = _WELL_FORMED_ADR.replace(
+        "| 备选 | 结论 | 理由 |\n|---|---|---|\n| A 保留双模 | 拒绝 | 模态开关带来二义 |\n"
+        "| B 单模双后端 | 接受 | 模型唯一 |\n| C 双模双后端 | 拒绝 | 差分门禁无法定义 |\n",
+        "",
+    )
+    findings = _findings(tmp_path, "ADR-0024-notable.md", body)
+    assert "alternatives_table_missing" in _signals(findings)
+
+
+def test_adr_shape_alternatives_table_too_few_rows_is_reported(tmp_path):
+    body = _WELL_FORMED_ADR.replace(
+        "| C 双模双后端 | 拒绝 | 差分门禁无法定义 |\n", ""
+    )
+    findings = _findings(tmp_path, "ADR-0025-fewrows.md", body)
+    assert "alternatives_table_too_few_rows" in _signals(findings)
+
+
+def test_adr_shape_alternatives_table_without_conclusion_column_is_reported(tmp_path):
+    """两列「备选 | 理由」把结论藏在正文措辞里 → 不可机读 ⇒ 缺结论列。"""
+    body = _WELL_FORMED_ADR.replace(
+        "| 备选 | 结论 | 理由 |\n|---|---|---|\n| A 保留双模 | 拒绝 | 模态开关带来二义 |\n"
+        "| B 单模双后端 | 接受 | 模型唯一 |\n| C 双模双后端 | 拒绝 | 差分门禁无法定义 |\n",
+        "| 备选 | 理由 |\n|---|---|\n| A 保留双模 | 模态开关带来二义 |\n"
+        "| B 单模双后端 | 模型唯一 |\n| C 双模双后端 | 差分门禁无法定义 |\n",
+    )
+    findings = _findings(tmp_path, "ADR-0026-noconcl.md", body)
+    assert "alternatives_table_no_conclusion_column" in _signals(findings)
+
+
+def test_adr_shape_alternatives_table_conclusion_synonyms_are_accepted(tmp_path):
+    """结论列用同义词（是否采用 / 决策 / 评估结果）也应当通过 —— 不能只认「结论」二字。"""
+    body = _WELL_FORMED_ADR.replace(
+        "| 备选 | 结论 | 理由 |\n|---|---|---|\n| A 保留双模 | 拒绝 | 模态开关带来二义 |\n"
+        "| B 单模双后端 | 接受 | 模型唯一 |\n| C 双模双后端 | 拒绝 | 差分门禁无法定义 |\n",
+        "| 方案 | 优点 | 缺点 | 是否采用 |\n|---|---|---|---|\n| A 保留双模 | x | y | 否 |\n"
+        "| B 单模双后端 | x | y | 是 |\n| C 双模双后端 | x | y | 否 |\n",
+    )
+    findings = _findings(tmp_path, "ADR-0027-synonym.md", body)
+    assert "alternatives_table_no_conclusion_column" not in _signals(findings)
+
+
+def test_adr_shape_process_log_headings_are_reported(tmp_path):
+    """本仓真实的漂移形态：过程/版本史 与 越界成 how-to 两类标题。"""
+    for heading, signal in [
+        ("## v3 修订日志（2026-09-24）", "process_log_heading"),
+        ("## Implementation Status", "process_log_heading"),
+        ("## Post-hoc Fix Record (2026-09-02)", "process_log_heading"),
+        ("## Implementation", "shape_sprawl_heading"),
+        ("## Test Strategy", "shape_sprawl_heading"),
+        ("### 测试改动 (~7 个文件)", "shape_sprawl_heading"),
+    ]:
+        body = _WELL_FORMED_ADR + f"\n{heading}\n\n细节。\n"
+        findings = _findings(tmp_path, f"ADR-0028-{signal}.md", body)
+        assert signal in _signals(findings), f"{heading} should raise {signal}"
+
+
+def test_adr_shape_prose_process_mention_is_not_a_heading_finding(tmp_path):
+    """散文里提到「修订日志」不是标题级信号（自由文本族由既有正则另行覆盖）。"""
+    body = _WELL_FORMED_ADR + "\n本 ADR 的前身有一段修订日志，此处仅作历史说明。\n"
+    findings = _findings(tmp_path, "ADR-0029-prose.md", body)
+    assert "process_log_heading" not in _signals(findings)
+
+
+def test_adr_shape_findings_api_returns_structured_findings(tmp_path):
+    body = _WELL_FORMED_ADR + "\n".join(f"- 推导行 {i}" for i in range(320))
+    findings = _findings(tmp_path, "ADR-0030-big.md", body)
+    assert findings, "expected findings for an oversized ADR"
+    for f in findings:
+        assert f.signal and f.file and f.detail
+        assert f.file == "ADR-0030-big.md"
+
+
+def test_adr_shape_reports_zero_files_scanned_instead_of_silent_pass(tmp_path):
+    """扫描 0 份 ADR 必须显式报告，不能静默通过（假绿）。"""
+    (tmp_path / "docs" / "adr").mkdir(parents=True)
+    findings = adr_shape_findings({"project_root": str(tmp_path)})
+    assert "no_adr_files_scanned" in _signals(findings)
+
+
+def test_adr_shape_cli_has_no_hardcoded_budget_defaults():
+    """CLI 必须引用 Python 单一真源，不得内联复制判定逻辑或硬编码默认值。"""
+    text = _SHAPE_CLI.read_text(encoding="utf-8")
+    assert not re.search(r'"[0-9]{3}"', text), "CLI hardcodes a numeric default"
+    assert "for line in lines" not in text, "CLI still duplicates the per-file scan loop"
+    assert "adr_shape_findings" in text, "CLI must consume the Python findings API"

@@ -86,7 +86,7 @@
 | [ADR-0057](ADR-0057-rdd-arch-simplify-delete-gap-analysis.md) | ADR-0057: rdd-arch 简化为 ADR + theme doc 双工件；删除 gap-analysis 协议 | 已采纳 | 2026-09-30 |
 | [ADR-0058](ADR-0058-gap-analysis-migration-to-theme-doc.md) | ADR-0058: gap-analysis 实例迁移到 theme doc（multi-project-ai-collaborative-development） | 已采纳 | 2026-09-30 |
 | [ADR-0059](ADR-0059-rddf-status-fallback-mode.md) | ADR-0059: `rddf status` 自动降级模式 (iteration.json 缺失/损坏 → openspec/changes/ fallback) | 待定 | 2026-10-19 |
-| [ADR-0060](ADR-0060-adr-shape-contract-and-gate-demotion.md) | ADR-0060: ADR 形态契约与门禁降级 —— 决策文档只回答「定什么 / 为什么 / 代价」 | 已采纳 | 2026-10-28 |
+| [ADR-0060](ADR-0060-adr-shape-contract-and-gate-demotion.md) | ADR-0060: ADR 形态契约与门禁降级 —— 决策文档只回答「定什么 / 为什么 / 代价」 | 已采纳 + AMENDED (2026-11-17) | 2026-10-28 |
 <!-- ADR_INDEX_END -->
 
 ## 架构演进
