@@ -153,6 +153,11 @@ EOF
         git add y.txt && git commit -q -m "change work"
     )
 
+    # The trunk gate (ADR-0061) refuses an archive whose implementation is
+    # still stranded on the branch → merge it first (this case now covers
+    # "already merged → archive proceeds"; the refusal case lives below).
+    git merge -q --no-ff "openspec/$change_name" -m "merge: change work"
+
     # Stub openspec CLI
     setup_openspec_stub
 
@@ -177,6 +182,51 @@ EOF
     # AC-2: stdout contains skip message + openspec archive was invoked
     [[ "$output" == *"📦 openspec_tracked=false: 跳过 git merge/commit"* ]]
     [[ "$output" == *"STUB_OPENSPEC_ARCHIVE_CALLED"* ]]
+}
+
+@test "archive: BEHAVIORAL openspec_tracked=false + UNMERGED branch → refused (ADR-0061)" {
+    local change_name="unmerged-test"
+
+    mkdir -p openspec/changes/$change_name
+    echo "# proposal" > openspec/changes/$change_name/proposal.md
+    cat > openspec/changes/$change_name/tasks.md <<'EOF'
+# Tasks
+- [x] task 1
+EOF
+    git add openspec/
+    git commit -q -m "seed change"
+
+    mkdir -p .rddf
+    cat > .rddf/project.yaml <<'EOF'
+git:
+  openspec_tracked: false
+EOF
+    git add .rddf/project.yaml
+    git commit -q -m "add project.yaml"
+
+    # The implementation lives on the branch and is NOT merged into main.
+    mkdir -p "$TEST_TMP/.rddf/wt"
+    git worktree add -q -b "openspec/$change_name" "$TEST_TMP/.rddf/wt/$change_name" main
+    (
+        cd "$TEST_TMP/.rddf/wt/$change_name"
+        echo "y" > y.txt
+        git add y.txt && git commit -q -m "change work"
+    )
+
+    setup_openspec_stub
+
+    source "$REPO_ROOT/_lib/archive.sh"
+    check_worktree_commits() { return 0; }
+    archive_gate_check() { return 0; }
+    export -f check_worktree_commits archive_gate_check
+
+    run archive_change "$change_name"
+    # Refused (exit 1) — and the message says what to do.
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"archive_premerge_check"* ]]
+    [[ "$output" == *"merge --no-ff"* ]]
+    # The archive did NOT run.
+    [[ "$output" != *"STUB_OPENSPEC_ARCHIVE_CALLED"* ]]
 }
 
 @test "archive: BEHAVIORAL openspec_tracked=true → archive commit produced" {
@@ -243,23 +293,28 @@ git:
 EOF
     git add .rddf/project.yaml && git commit -q -m "add project.yaml"
 
-    # Extract just the false-branch block (between `openspec_tracked.*false` if
-    # and the next `fi` that closes it) and assert it has no commit_archive_moves.
+    # Extract the whole false-branch block (from the `openspec_tracked.*false`
+    # test to `mark_iteration_archived`, the branch's last step) and assert it
+    # has no commit_archive_moves.
+    #
+    # HARDENED (fix-worktree-archive-branch-merge): the old guard stopped at
+    # the FIRST standalone `fi` — so once a nested `if` was inserted into the
+    # branch (the trunk gate does that), the guard's range shrank to a few
+    # lines while the test still PASSED. The endpoint is now the branch's last
+    # step, so the whole body is covered.
     run bash -c "
         awk '
-            /openspec_tracked.*false/ { in_block = 1; brace = 0; next }
+            /openspec_tracked.*false/ { in_block = 1; next }
             in_block {
                 print
-                # naive fi counter (works for our flat archive.sh structure)
-                if (\$0 ~ /^[[:space:]]*fi[[:space:]]*\$/) brace++
-                if (brace >= 1 && \$0 ~ /^[[:space:]]*fi[[:space:]]*\$/) {
-                    in_block = 0
-                    exit
-                }
+                if (\$0 ~ /mark_iteration_archived/) { in_block = 0; exit }
             }
         ' '$REPO_ROOT/_lib/archive.sh'
     "
     [ "$status" -eq 0 ]
-    # The false branch body must not mention commit_archive_moves
-    ! echo "$output" | grep -q "commit_archive_moves"
+    # The false branch body must not CALL commit_archive_moves (nor run
+    # `git merge`). Matching a CALL, not the word: the branch's comments
+    # legitimately mention both (they explain why they are absent), and a
+    # plain `grep "git merge"` also collides with `git merge-base`.
+    ! echo "$output" | grep -E "^[[:space:]]*(commit_archive_moves[[:space:]]|git[[:space:]]+merge[[:space:]])"
 }

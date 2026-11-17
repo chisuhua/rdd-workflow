@@ -260,13 +260,138 @@ merge_feature_branch() {
   }) || return 1
 }
 
+# archive_premerge_check <main_root> <branch> <default_branch> [wt_path]
+#   The "trunk gate" (ADR-0061): decide whether the implementation branch has
+#   landed in the default branch. The archive NEVER merges for you — it only
+#   decides, and refuses loudly when the code is not in the trunk.
+#
+#   Returns:
+#     0 = merged (or content-equivalent) → allow
+#     1 = not merged → actionable refusal
+#     2 = cannot decide → allow + explicit warning (never a false refusal)
+#
+#   Judgment order (each step's return value is documented in ADR-0061):
+#     (0) branch ref exists?  no  → 1 (fail closed, like verifier-lifecycle)
+#     (1) worktree dirty?    yes → 1 (uncommitted work dies with the worktree)
+#     (2) is-ancestor?       yes → 0
+#     (3) content-equivalent (patch-id via `git cherry`) → 0 + warning
+#     (4) not merged         → 1 (refuse: the commits are still on the branch)
+#     (5) otherwise          → 2 (cannot decide → allow + warning)
+#
+#   Opt-in: ARCHIVE_ALLOW_UNMERGED=yes + RDDF_ARCHIVE_UNMERGED_REASON (non-empty)
+#   covers every refusal state and leaves a bypass-audit record. It must NOT be
+#   combined with FORCE_BRANCH_DELETE=yes (that combination deletes the code).
+#   wt_path is optional: pass "" when there is no worktree (lightweight mode) —
+#   in that case the "dirty" check is skipped, because `git status` in the main
+#   repo sees unrelated changes and would misattribute them to this change.
+archive_premerge_check() {
+  local main_root="${1:-}" branch="${2:-}" default_branch="${3:-}" wt_path="${4:-}"
+  [[ -z "$main_root" || -z "$branch" ]] && return 2
+
+  local change_name="${branch#openspec/}"
+
+  # (0) Existence check — MUST run before (2)/(3): when the ref is missing,
+  # those commands "fail", which would be read as (4) "cannot decide".
+  if ! git -C "$main_root" rev-parse --verify --quiet "refs/heads/$branch" >/dev/null 2>&1; then
+    echo "❌ archive_premerge_check: 实现分支 '$branch' 不存在（可能已被上一次归档的 cleanup 删除）"
+    echo "   找回路径：git reflog 找到该分支的历史 tip → git branch '$branch' <sha>"
+    if _premerge_refuse "$branch" "$change_name" "$main_root"; then
+      return 0
+    fi
+    return 1
+  fi
+
+  # (1) Uncommitted work in the worktree — only when a real worktree is given.
+  if [ -n "$wt_path" ] && [ "$wt_path" != "/" ] && [ "$wt_path" != "$main_root" ]; then
+    local dirty
+    # --untracked-files=all: by default git collapses an untracked directory
+    # into a single `?? openspec/` entry, which cannot be excluded precisely.
+    dirty=$(git -C "$wt_path" status --porcelain --untracked-files=all 2>/dev/null \
+      | grep -vE "^(\?\? )?(openspec/changes/${change_name}/|\.rddf/plans/)" || true)
+    if [ -n "$dirty" ]; then
+      echo "❌ archive_premerge_check: worktree 内有未提交的改动（会随 worktree 清理丢失）"
+      echo "   先提交：git -C '$wt_path' add -A && git -C '$wt_path' commit -m '...'"
+      if _premerge_refuse "$branch" "$change_name" "$main_root"; then
+        return 0
+      fi
+      return 1
+    fi
+  fi
+
+  # (2) Already merged.
+  if git -C "$main_root" merge-base --is-ancestor "$branch" "$default_branch" 2>/dev/null; then
+    return 0
+  fi
+
+  # (3) Content-equivalent (patch-id level). NOT `git diff --quiet`: that
+  # compares two TREES, so any unrelated commit on the default branch makes
+  # them differ and a squash-merged change would be locked out forever.
+  local cherry
+  if ! cherry=$(git -C "$main_root" cherry "$default_branch" "$branch" 2>/dev/null) \
+     || [ -z "$cherry" ]; then
+    # (5) Cannot decide → allow + explicit warning.
+    echo "⚠️  archive_premerge_check: 无法判定 '$branch' 是否已合入 '$default_branch'（放行）"
+    return 2
+  fi
+  if ! printf '%s\n' "$cherry" | grep -q '^+'; then
+    echo "⚠️  archive_premerge_check: '$branch' 不是 '$default_branch' 的祖先，但内容已进主干（patch-id 等价）"
+    return 0
+  fi
+
+  # (4) NOT merged → refuse. The implementation's commits are still on the
+  # branch, and the worktree cleanup is about to delete them.
+  echo "❌ archive_premerge_check: '$branch' 尚未合入 '$default_branch'"
+  if _premerge_refuse "$branch" "$change_name" "$main_root"; then
+    return 0
+  fi
+  return 1
+}
+
+# _premerge_refuse <branch> <change_name> <main_root>
+#   Refusal path: honour the audited opt-in, otherwise refuse.
+#   Returns 0 when the opt-in applies (caller should then allow the archive).
+_premerge_refuse() {
+  local branch="${1:-}" change_name="${2:-}" main_root="${3:-}"
+  if [ "${ARCHIVE_ALLOW_UNMERGED:-no}" = "yes" ]; then
+    if [ -z "${RDDF_ARCHIVE_UNMERGED_REASON:-}" ]; then
+      echo "❌ archive_premerge_check: ARCHIVE_ALLOW_UNMERGED=yes 需要 RDDF_ARCHIVE_UNMERGED_REASON（不放行）"
+      return 1
+    fi
+    if [ "${FORCE_BRANCH_DELETE:-no}" = "yes" ]; then
+      echo "❌ archive_premerge_check: ARCHIVE_ALLOW_UNMERGED=yes 不得与 FORCE_BRANCH_DELETE=yes 同时生效"
+      echo "   （该组合 = 未合入的提交被永久删除）"
+      return 1
+    fi
+    echo "⏭️  archive_premerge_check: 已显式放行未合入的分支 '$branch'（reason: $RDDF_ARCHIVE_UNMERGED_REASON）"
+    if [ -f "$_LIB_DIR/bypass_audit.sh" ]; then
+      # shellcheck source=/dev/null
+      source "$_LIB_DIR/bypass_audit.sh"
+      # The audit lands in the repository being archived (same place as the
+      # other bypass records), not in whatever cwd the caller had.
+      RDDF_PROJECT_ROOT="$main_root" \
+        audit_bypass_log "ARCHIVE_ALLOW_UNMERGED" "$RDDF_ARCHIVE_UNMERGED_REASON" "$change_name" "archive-trunk-gate" || true
+    fi
+    return 0
+  fi
+  echo "   合入命令：git -C '$main_root' merge --no-ff '$branch'"
+  echo "   或显式放行：ARCHIVE_ALLOW_UNMERGED=yes + RDDF_ARCHIVE_UNMERGED_REASON='...'"
+  return 1
+}
+
 # cleanup_worktree_and_branch <name> <main_root> <wt_path> <branch>
 #   Remove the worktree at <wt_path> and delete the feature
 #   <branch> in <main_root>. Honors FORCE_BRANCH_DELETE=yes for the
 #   `git branch -D` fallback when -d fails (worktree branch not
 #   fully merged). Skips the worktree remove when <wt_path> is
-#   empty or "/". Returns 0 on success, 1 when -d fails and
-#   FORCE_BRANCH_DELETE is not 'yes'.
+#   empty or "/" — and also when it IS the main repo (the main
+#   worktree is listed by `git worktree list`, so a naive remove
+#   would target the repository itself).
+#
+#   Returns (ADR-0061): 0 = all clean / 1 = branch kept (not merged and
+#   FORCE_BRANCH_DELETE is not yes) / 2 = worktree residue left behind.
+#   The success message is printed ONLY when the removal really happened —
+#   it used to be printed unconditionally, i.e. the message could contradict
+#   the disk.
 #
 #   Origin: archive.sh step 7 — worktree remove plus branch -d
 #   (with FORCE_BRANCH_DELETE=yes -D fallback), originally inline
@@ -275,11 +400,24 @@ cleanup_worktree_and_branch() {
   local name="${1:-}" main_root="${2:-}" wt_path="${3:-}" branch="${4:-}"
   [[ -z "$main_root" || -z "$branch" ]] && return 1
 
-  if [ -n "$wt_path" ] && [ "$wt_path" != "/" ]; then
-    (cd "$main_root" && git worktree remove "$wt_path" 2>/dev/null) || {
+  local cleanup_result=0
+
+  if [ -n "$wt_path" ] && [ "$wt_path" != "/" ] && [ "$wt_path" != "$main_root" ]; then
+    if (cd "$main_root" && git worktree remove "$wt_path" 2>/dev/null); then
+      echo "✅ Worktree 已删除: $wt_path"
+    else
       echo "⚠️  worktree remove 失败: $wt_path"
-    }
-    echo "✅ Worktree 已删除: $wt_path"
+      # Three distinct failure states (ADR-0061):
+      #   (a) not registered as a worktree → orphan directory
+      #   (b) registered but remove failed → dirty tree / .nfs* placeholder
+      #   (c) branch ref missing → not an "unmerged" situation
+      if ! (cd "$main_root" && git worktree list --porcelain 2>/dev/null | grep -Fq "worktree $wt_path"); then
+        echo "   该目录未注册为 worktree（孤儿目录）⇒ 手工清理：rm -rf '$wt_path'（或 git worktree prune）"
+      else
+        echo "   已注册但删除失败（工作区脏 / .nfs* 占位）⇒ 强制删除：git worktree remove --force '$wt_path'"
+      fi
+      cleanup_result=2
+    fi
   fi
 
   if (cd "$main_root" && git branch -d "$branch" 2>/dev/null); then
@@ -291,9 +429,11 @@ cleanup_worktree_and_branch() {
       echo "⚠️  Branch 强制删除(因 FORCE_BRANCH_DELETE=yes)"
     else
       echo "❌ Branch 删除取消。设置 FORCE_BRANCH_DELETE=yes 重试"
-      return 1
+      # A kept branch does NOT overwrite a worktree residue (2 wins).
+      [ "$cleanup_result" -eq 2 ] || cleanup_result=1
     fi
   fi
+  return $cleanup_result
 }
 
 # verifier_contract_check <change_name> [project_root]
@@ -654,6 +794,13 @@ archive_change() {
   if [ "$openspec_tracked" = "false" ] || [ "$openspec_tracked" = "False" ]; then
     echo "📦 openspec_tracked=false: 跳过 git merge/commit"
     switch_to_default_branch "$main_root" "$default_branch" || return 1
+    # Trunk gate (ADR-0061): the archive does NOT merge for you, but it MUST
+    # not claim success while the implementation is still stranded on the
+    # branch. Runs BEFORE the AC gate: it is cheap, deterministic, and its
+    # guidance ("merge this branch") is the actionable one.
+    if ! archive_premerge_check "$main_root" "$branch" "$default_branch" "$wt_path"; then
+      return 1
+    fi
     # Archive gate (ADR-0035) must run on this branch too: the tracked branch
     # only reaches it at step 2.5, which sits below this early return.
     # tasks_root = $main_root (not $wt_path): this branch exists precisely
@@ -705,7 +852,12 @@ archive_change() {
   close_issues_for_change_hook "$name" "$main_root" || true
 
   # 7. Cleanup worktree + branch
-  cleanup_worktree_and_branch "$name" "$main_root" "$wt_path" "$branch" || return 1
+  # ADR-0061: the archive already succeeded — a failed cleanup (branch not
+  # merged / worktree residue) is reported but MUST NOT turn that into a
+  # failure, otherwise the message "archive failed" contradicts the archived
+  # record.
+  cleanup_worktree_and_branch "$name" "$main_root" "$wt_path" "$branch" || \
+    echo "⚠️  归档已完成，但 worktree/分支清理未完全成功（见上）"
 
   # 7.5 Auto-commit archive file moves (added by add-archive-auto-commit).
   # Tolerate failure (file moves remain in working tree for human review).

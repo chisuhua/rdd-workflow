@@ -8,7 +8,7 @@ priority: P1
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: draft
+状态: implemented (2026-11-17)
 
 生成时间: 2026-11-17
 roadmap_ref:
@@ -146,20 +146,20 @@ metis 指出的**成本权衡**（已写进「备选方案」）：只做「诚�
 
 ## Acceptance
 
-- [ ] 「lightweight」的定义被写成一份契约（**有 `openspec/<change>` 分支、无 worktree、在主仓该分支上实施** —— per ADR-0036 的 2026-11-17 修订：与 ADR-0024 / ADR-0036 Decision 表 / schema / `verifier-lifecycle` 五处既有文本一致；⚠ **原草稿写的「无独立分支、主仓当前分支实施」是把实现缺陷当成契约，已作废**）；`ship_execution_mode.sh` 的 `serial` 被改名为波次维度（不再与执行模式混用）
-- [ ] `compute_mode_inputs(project_root, change_name)` 存在于 `_lib/builder_deps.py`，内部全用绝对路径；`decide_execution_mode` 的签名与阈值不变
-- [ ] `task_count` 取 tasks.md 的 checkbox **total**（大小写不敏感）；**缺失或 0 ⇒ fail-closed（worktree）** 并在 notes/reason 写 `tasks=unknown`
-- [ ] 夹具断言（**改动前第一条必须是红的**）：`tasks.md` 2 条 + plan `Files:` 2 个 ⇒ `lightweight`；`tasks.md` 5 条 ⇒ `worktree`；`tasks.md` 只有段头（0 checkbox，取自 `## Task` vs `### Task` 的真实反例）⇒ `worktree`。⚠ **启用前置**：第 1 条（小改动 ⇒ lightweight）**只有在 `fix-lightweight-branch-and-archive` 落地后**才成立 —— 在它落地前，同一组输入必须判 **worktree** 并在 `reason` 里写明「lightweight 未落地（无实现分支 / 归档路径未补齐）」⇒ 夹具断言分两段验收（见下方「plan_drift 处置」）
-- [ ] `file_count` 来自 `.rddf/plans/<change>.md` 的 `**Files:**` 段（去重、剥行号、剥反引号）；plan 缺失 ⇒ `files=unknown` 且**该输入不参与判定**（不取默认值）
-- [ ] `risk_keywords` 改为读 `roadmap-meta.yaml` 的 `risk: normal|high`；**不做 proposal/tasks 文本扫描**；默认 `normal` 不触发 risk 规则
-- [ ] `reason` 只写实际输入值与不可得项；**不再出现常量 5**；handoff 里写入的 reason 与实际一致（对本批 change 重跑 P1.5 验证）
-- [ ] 冲突维度有最小实现（其它 change 的 `Files:` 交集非空 或 存在活跃 worktree ⇒ worktree）+ 夹具断言
-- [ ] `LEGACY_EXEC_MODE` 已删除或降为最低优先级（覆盖时 WARN 且保留计算 reason）+ 对应测试
-- [ ] **三方一致性**：**已由 architect 签批裁定**（ADR-0036 的 2026-11-17 修订，Status `已采纳 + AMENDED (2026-11-17)`，审稿报告 `.rddf/reviews/adr-0036-amendment-2026-11-17.md`）—— 选**退役/改写**（非「实现 false ⇒ lightweight」），理由与逐条处置见该 ADR 的修订节与审稿报告。⇒ 本项的落地动作 = 执行该修订已定的处置：`config_schema.json` 描述收窄为归档路径语义；`README.md:87/:100` 同步；退役清单 R1~R10 逐条处置（负向断言 / 退役僵尸变量 `RDDF_EXECUTION_MODE` / R4 正向重指向 / owner 与路径重指向）+ 全局残余面（204 处 / 47 份 spec）作为**独立 backlog** 立项（不冒充本项验收项）
-- [ ] 计数口径与 `fix-iteration-tasks-total` 共用同一标准，未新造第三套
-- [ ] 同名函数防护：`_lib/subagent_strategy.py:44` 的 `decide_execution_mode(task_type, quota_status)` 与 `_lib/builder_deps.py:16` 签名不同 ⇒ 加 `inspect.signature` 断言，或重命名 builder 版（唯一生产调用点仅 `phase1_5_deps.sh`）
-- [ ] 新增代码不落在 `skills/rdd-builder/scripts/phase*`（不打红「恰好 6 个 phase 脚本」断言）
-- [ ] `./test.sh --unit` + `./test.sh --full --regression` 全绿 + `bats tests/integration/test_rdd_builder_phases.bats` + `bats tests/integration/test_builder_deps*` 全绿
+- [x] 「lightweight」的定义被写成一份契约（**有 `openspec/<change>` 分支、无 worktree、在主仓该分支上实施** —— per ADR-0036 的 2026-11-17 修订：与 ADR-0024 / ADR-0036 Decision 表 / schema / `verifier-lifecycle` 五处既有文本一致；⚠ **原草稿写的「无独立分支、主仓当前分支实施」是把实现缺陷当成契约，已作废**）；`ship_execution_mode.sh` 的 `serial` 被改名为波次维度（不再与执行模式混用）
+- [x] `compute_mode_inputs(project_root, change_name)` 存在于 `_lib/builder_deps.py`，内部全用绝对路径；`decide_execution_mode` 的签名与阈值不变
+- [x] `task_count` 取 tasks.md 的 checkbox **total**（大小写不敏感）；**缺失或 0 ⇒ fail-closed（worktree）** 并在 notes/reason 写 `tasks=unknown`
+- [x] 夹具断言（**改动前第一条必须是红的**）：`tasks.md` 2 条 + plan `Files:` 2 个 ⇒ `lightweight`；`tasks.md` 5 条 ⇒ `worktree`；`tasks.md` 只有段头（0 checkbox，取自 `## Task` vs `### Task` 的真实反例）⇒ `worktree`。⚠ **启用前置**：第 1 条（小改动 ⇒ lightweight）**只有在 `fix-lightweight-branch-and-archive` 落地后**才成立 —— 在它落地前，同一组输入必须判 **worktree** 并在 `reason` 里写明「lightweight 未落地（无实现分支 / 归档路径未补齐）」⇒ 夹具断言分两段验收（见下方「plan_drift 处置」）
+- [x] `file_count` 来自 `.rddf/plans/<change>.md` 的 `**Files:**` 段（去重、剥行号、剥反引号）；plan 缺失 ⇒ `files=unknown` 且**该输入不参与判定**（不取默认值）
+- [x] `risk_keywords` 改为读 `roadmap-meta.yaml` 的 `risk: normal|high`；**不做 proposal/tasks 文本扫描**；默认 `normal` 不触发 risk 规则
+- [x] `reason` 只写实际输入值与不可得项；**不再出现常量 5**；handoff 里写入的 reason 与实际一致（对本批 change 重跑 P1.5 验证）
+- [x] 冲突维度有最小实现（其它 change 的 `Files:` 交集非空 或 存在活跃 worktree ⇒ worktree）+ 夹具断言
+- [x] `LEGACY_EXEC_MODE` 已删除或降为最低优先级（覆盖时 WARN 且保留计算 reason）+ 对应测试
+- [x] **三方一致性**：**已由 architect 签批裁定**（ADR-0036 的 2026-11-17 修订，Status `已采纳 + AMENDED (2026-11-17)`，审稿报告 `.rddf/reviews/adr-0036-amendment-2026-11-17.md`）—— 选**退役/改写**（非「实现 false ⇒ lightweight」），理由与逐条处置见该 ADR 的修订节与审稿报告。⇒ 本项的落地动作 = 执行该修订已定的处置：`config_schema.json` 描述收窄为归档路径语义；`README.md:87/:100` 同步；退役清单 R1~R10 逐条处置（负向断言 / 退役僵尸变量 `RDDF_EXECUTION_MODE` / R4 正向重指向 / owner 与路径重指向）+ 全局残余面（204 处 / 47 份 spec）作为**独立 backlog** 立项（不冒充本项验收项）
+- [x] 计数口径与 `fix-iteration-tasks-total` 共用同一标准，未新造第三套
+- [x] 同名函数防护：`_lib/subagent_strategy.py:44` 的 `decide_execution_mode(task_type, quota_status)` 与 `_lib/builder_deps.py:16` 签名不同 ⇒ 加 `inspect.signature` 断言，或重命名 builder 版（唯一生产调用点仅 `phase1_5_deps.sh`）
+- [x] 新增代码不落在 `skills/rdd-builder/scripts/phase*`（不打红「恰好 6 个 phase 脚本」断言）
+- [x] `./test.sh --unit` + `./test.sh --full --regression` 全绿 + `bats tests/integration/test_rdd_builder_phases.bats` + `bats tests/integration/test_builder_deps*` 全绿
 
 ## Capabilities
 
@@ -349,3 +349,62 @@ skill 的 normative 文本**。只退役一条会把病根留在原地。
 - 本项：AC #1 / #4 / #10 已按 architect 的签批结论修订；其余 AC 不变。**状态仍为 draft**（待实施）。
 - 新立项：`fix-lightweight-branch-and-archive`（5 段草稿，metis 1 轮审稿）。
 - 关联 architect 产物：`docs/adr/ADR-0036-rddf-project-yaml-config.md`（AMENDED）、`docs/adr/ADR-0061-archive-gate-refuses-unmerged-branch.md`（已采纳）。
+
+---
+
+## 实施记录（2026-11-17，builder）
+
+### 改动
+
+| AC | 落点 | 证据 |
+|---|---|---|
+| ① lightweight 定义 + `serial` → 波次维度 | `skills/rdd-builder/SKILL.md` 新增「执行模式契约」表；`docs/architecture/workflow-phases.md` 同表；`_lib/ship_execution_mode.sh::parse_wave_mode`（`parse_execution_mode` 保留为废弃别名）；注释纠偏（不再写「forces lightweight」） | grep 可查；既有 bats 全绿 |
+| ② `compute_mode_inputs` | `_lib/builder_deps.py`（绝对路径）；`decide_execution_mode` 签名与阈值**未变** | `test_builder_deps_mode_inputs.py` 的 `test_signature_is_unchanged` + `test_absolute_paths_only` |
+| ③ task_count = checkbox total / fail-closed | `compute_mode_inputs` 用 `_lib/tasks_count.py::count_tasks`（与 `fix-iteration-tasks-total` 同一标准）；缺失或 0 ⇒ `None` ⇒ worktree + `tasks=unknown` | 3 个单测（含 `## Task` vs `### Task` 的真实反例） |
+| ④ 夹具（两段验收） | 单测 + E2E 7/10 按 `LIGHTWEIGHT_EXECUTION_READY` 分叉断言 | 见下「挂起」 |
+| ⑤ file_count 来自 plan `**Files:**` | `_plan_files` 解析 Create/Modify/Test，剥反引号与行号，去重；plan 缺失 ⇒ `files=unknown` 且不参与判定 | 3 个单测 |
+| ⑥ risk 来自结构化声明 | `compute_mode_inputs` 读 `roadmap-meta.yaml` 的 `risk:`；`high` ⇒ 风险词表（`RISK_LEVEL_KEYWORDS`，词表本身未改）；**不做文本扫描** | 3 个单测 |
+| ⑦ reason 诚实 | 只写实际输入值 + 不可得项；**常量 5 已消失** | `test_reason_never_contains_a_constant_five` + 端到端 handoff 实测 |
+| ⑧ 冲突维度 | `compute_conflict`（其它 change 的 `Files:` 交集 / 活跃 worktree） | 4 个单测 |
+| ⑨ LEGACY_EXEC_MODE | 降为**最低优先级**：不再覆盖计算判定，只打印 WARN 并保留计算的 reason | phase1_5_deps.sh 的 WARN 分支 |
+| ⑩ 三方一致性 | `config_schema.json` 描述收窄为归档路径语义；`README.md:87/100` 同步；退役清单 **R1/R2/R3/R5/R6/R7/R8/R9/R10a** 逐条处置（R4 由 ADR-0061 主责；R10b 属允许清单的反漂移守卫）；全局残余面（204 处 / 47 份 spec）在 ADR-0036 的 backlog | 逐份 spec 处置见下 |
+| ⑪ 计数口径共用 | 用 `_lib/tasks_count.py::count_tasks`（未新造第三套） | import 可查 |
+| ⑫ 同名函数防护 | `test_no_same_name_function_with_a_different_signature`（`_lib/subagent_strategy.py` 的同名函数签名不同） | 单测 |
+| ⑬ 不新增 phase* 脚本 | 只改 `phase1_5_deps.sh` | `test_rdd_builder_phases.bats` 的「恰好 6 个」断言仍绿 |
+| ⑭ 全量门 | 见提交时的回归门结果 | — |
+
+### 挂起：lightweight 暂不启用（ADR-0036 V-G）
+
+`_lib/builder_deps.py` 新增 **fail-safe** 的能力标志：
+
+```python
+LIGHTWEIGHT_EXECUTION_READY = False   # ← fix-lightweight-branch-and-archive 落地时翻正
+```
+
+```python
+if not LIGHTWEIGHT_EXECUTION_READY:
+    return {"mode": "worktree",
+            "reason": "files=2<=2 AND tasks=3<=3, 但 lightweight 未落地（无实现分支 / 归档路径未补齐）"}
+```
+
+**为什么**：lightweight 今天产出「幽灵分支」⇒ change 过不了归档门（见
+`fix-lightweight-branch-and-archive`）。若现在就让小改动走 lightweight，本仓**所有小 change
+会立刻变成不可归档**。⇒ 诚实输出 = fail-closed 到 worktree + reason 写明原因。
+
+**为什么是 fail-safe**：忘了翻正 ⇒ 模式保持禁用（慢但正确）；反过来（源码探测自动启用）会在
+缺陷修好前静默放开一个不可归档的模式。
+
+⇒ AC ④ 的第 1 条夹具按两段验收（现在 ⇒ worktree + 原因；翻正后 ⇒ lightweight）。
+
+### 发现的既有问题（顺带修）
+
+`phase1_5_deps.sh` 的 python 块原来 `sys.path.insert(0, "$PROJECT_ROOT")` —— 用户项目里
+`_lib/` 不在项目根 ⇒ 导入失败。已按 phase2/phase3 同款加 `_resolve_pkg_root` ✓。
+另：该 heredoc **未加引号**（要插值 `$PROJECT_ROOT`/`$CHANGE_NAME`）⇒ 块内不能出现反引号
+（会被 bash 当命令执行）⇒ 已在注释里写明。
+
+### 全局残余面（不冒充本项验收项）
+
+`openspec/specs/**` 的 normative 段仍有 **204 处 / 47 份 spec** 的退役 stage 引用（多数是合法
+分类：历史枚举值 / 提案名 / 反漂移守卫自身 / 归档历史）。按 ADR-0036 修订的 V-C 口径，它**不属于
+本项验收范围**，已在该 ADR 的「后续待办」登记为独立 backlog 项（含实测口径与分类规则）。

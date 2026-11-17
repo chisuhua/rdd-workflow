@@ -84,7 +84,7 @@ adr:
   glob: "ADR-???.md"
 
 git:
-  openspec_tracked: false            # 强制轻量模式（无 worktree）
+  openspec_tracked: false            # 归档跳过 git merge/commit（不代劳合并；未合入则拒绝归档）
 
 verification:
   provider: hook                      # 外部 hook 替代 LLM 验证
@@ -97,7 +97,7 @@ verification:
 | 字段 | 作用 |
 |------|------|
 | `adr.pattern` | ADR 编号正则（默认 4 位） |
-| `git.openspec_tracked` | false → 强制轻量模式 + archive 不产生 git commit |
+| `git.openspec_tracked` | false → 归档不产生 git commit、不代劳 `git merge`（未合入则拒绝归档，ADR-0061）；**不影响**执行模式（worktree vs lightweight 由改动规模/风险决定） |
 | `verification.provider` | `hook` 调 `tools/verify_change.sh` 替代 LLM |
 
 详见 [ADR-0036](docs/adr/ADR-0036-rddf-project-yaml-config.md) 与 [proposal #10](https://github.com/chisuhua/rdd-workflow/issues/10)。

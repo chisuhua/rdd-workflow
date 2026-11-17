@@ -15,7 +15,7 @@
 set -euo pipefail
 
 # Default execution mode
-DEFAULT_MODE="serial"
+DEFAULT_WAVE_MODE="serial"
 
 # Print usage
 _print_usage() {
@@ -38,12 +38,18 @@ Subcommands:
 EOF
 }
 
-# parse_execution_mode -- determine execution mode from args + env + project.yaml
+# parse_wave_mode -- determine the WAVE mode from args + env + project.yaml
+#
+# NAMING (fix-execution-mode-decision, ADR-0036 AMENDED): "serial" vs
+# "parallel" is the WAVE dimension (how many changes run at once) — NOT the
+# execution mode (worktree vs lightweight, decided by the change's size and
+# risk inputs). The two used to share the word "execution mode"; the old
+# name stays as a deprecated alias so existing callers keep working.
 # Returns: "serial" | "parallel"
 # Precedence (per complete-project-yaml-config-gaps M3 + design.md Decision 5):
 #   CLI flag (--parallel/--serial) > project.yaml git.openspec_tracked >
 #   env var (RDD_SHIP_PARALLEL) > default (serial)
-parse_execution_mode() {
+parse_wave_mode() {
   local cli_mode=""
   local cli_max_concurrent=""
 
@@ -77,7 +83,11 @@ parse_execution_mode() {
     return 0
   fi
 
-  # Project.yaml git.openspec_tracked: false forces lightweight (serial)
+  # Project.yaml git.openspec_tracked: false ⇒ the WAVE mode defaults to
+  # serial: an untracked openspec/ means the concurrent units have no branch
+  # isolation credential, so serialising them is the conservative choice.
+  # (This is the WAVE dimension — it says nothing about the execution mode,
+  # which is decided by the change's size/risk inputs.)
   # Per i10 + complete-project-yaml-config-gaps M3
   local _project_root="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
   if [ -f "$_project_root/.rddf/project.yaml" ] && [ -f "$_project_root/_lib/project_config.sh" ]; then
@@ -102,7 +112,13 @@ parse_execution_mode() {
   fi
 
   # Default
-  echo "$DEFAULT_MODE"
+  echo "$DEFAULT_WAVE_MODE"
+}
+
+# parse_execution_mode -- DEPRECATED alias for parse_wave_mode.
+#   Kept so existing callers (and the spec's requirement text) keep working.
+parse_execution_mode() {
+  parse_wave_mode "$@"
 }
 
 # get_max_concurrent -- resolve max concurrent workers
@@ -163,14 +179,14 @@ print_serial_mode_warning() {
 }
 
 # Main entry point (when sourced)
-# Allows: source ship_execution_mode.sh && parse_execution_mode ...
+# Allows: source ship_execution_mode.sh && parse_wave_mode ...
 # Or:    bash ship_execution_mode.sh parse_execution_mode --parallel
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   # Script invoked directly
   subcmd="${1:-}"
   shift || true
   case "$subcmd" in
-    parse_execution_mode|parse)
+    parse_wave_mode|parse_execution_mode|parse)
       parse_execution_mode "$@"
       ;;
     execute_wave_serial|serial)

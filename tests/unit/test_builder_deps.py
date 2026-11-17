@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import pytest
 from _lib.builder_deps import (
+    LIGHTWEIGHT_EXECUTION_READY,
     decide_execution_mode,
     analyze_deps,
     analyze_deps_with_strict_gate,
@@ -15,9 +16,22 @@ from _lib.builder_deps import (
 
 class TestDecideExecutionMode:
     def test_decide_lightweight_small_change(self):
+        """The mode a small change gets.
+
+        ADR-0036 §Verification V-G: the `lightweight` execution mode is only
+        usable once it creates its `openspec/<change>` branch and its archive
+        path merges / cleans / syncs (both land with
+        `fix-lightweight-branch-and-archive`). Until then the honest answer is
+        `worktree` + a reason that says why — the thresholds are unchanged.
+        See tests/unit/test_builder_deps_mode_inputs.py for the full contract.
+        """
         result = decide_execution_mode(file_count=2, task_count=3, risk_keywords=[])
-        assert result["mode"] == "lightweight"
         assert "files=2<=2 AND tasks=3<=3" in result["reason"]
+        if LIGHTWEIGHT_EXECUTION_READY:
+            assert result["mode"] == "lightweight"
+        else:
+            assert result["mode"] == "worktree"
+            assert "lightweight 未落地" in result["reason"]
 
     def test_decide_worktree_too_many_files(self):
         result = decide_execution_mode(file_count=5, task_count=2, risk_keywords=[])

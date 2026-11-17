@@ -303,10 +303,20 @@ P0 (5-option approval) → P1 (plan) → P1.5 (deps + exec_mode) → P2 (execute
   - `openspec/changes/archive/<date>-<name>/` on P3 archive.
   - **NEW (v4.0.1)**: `.rddf/state/rdd-quick-context.json` (when option 5 dispatched).
 
+### Execution mode contract (ADR-0024 + ADR-0036 AMENDED)
+
+| mode | workspace | implementation branch |
+|---|---|---|
+| **worktree** | a dedicated worktree under `.rddf/wt/<name>/` | `openspec/<name>` |
+| **lightweight** | the **main repository** (no worktree) | **also `openspec/<name>`** (checked out in the main repo) |
+
+`lightweight` therefore HAS a branch and no worktree — the verifier's anchor is the branch tip, so a branchless "lightweight" change can never be archived. The mode is decided **only** by the change's inputs (`compute_mode_inputs` → `decide_execution_mode`): the tasks.md checkbox total, the plan's `**Files:**` count, and the structured `risk:` declaration; an unavailable input fails closed to `worktree`. `git.openspec_tracked` does **not** take part in the decision (archive path only), and `RDDF_EXECUTION_MODE` is retired.
+
 ### Hard gates (unchanged from v4.0)
 
 - `archive_gate_check`: worktree branch must have commits; lightweight mode must have ≥1 new commit.
-- Post-archive cleanup hook (idempotent).
+- **合入门** `archive_premerge_check` (per ADR-0061): the implementation branch must be merged into the default branch before the archive runs — the archive **never merges for you** (`git.openspec_tracked=false` skips `git merge` per spec), it **refuses** and hands over a copy-pasteable command; explicit opt-in `ARCHIVE_ALLOW_UNMERGED=yes` + `RDDF_ARCHIVE_UNMERGED_REASON` (audited; must not be combined with `FORCE_BRANCH_DELETE=yes`).
+- Post-archive cleanup hook (idempotent). A failed cleanup is a **warning**, not an archive failure — and the "worktree removed" message is printed only when the removal really happened.
 
 ### Sub-skills
 

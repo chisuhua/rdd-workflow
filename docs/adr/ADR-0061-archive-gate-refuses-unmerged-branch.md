@@ -51,7 +51,8 @@
    | ① | worktree 内有**未提交改动** | `1`（拒绝） | 噪声排除：系统自己复制进去的副本（`openspec/changes/<name>/`、`.rddf/plans/<name>.md`）**不算**未提交改动；其余未跟踪文件**算**。**优先级高于「已合入」** —— 改动没提交时谈合入没有意义 |
    | ② | `merge-base --is-ancestor <branch> <default>` 为真 | `0`（放行） | 已合入 |
    | ③ | **内容等价**：`git cherry <default> <branch>` 全部为 `-` | `0`（放行）+ 警告 | patch-id 级判据（squash-merge / rebase 的正确口径）。⚠ **不是** tip-to-tip 的 `git diff --quiet` —— 后者在默认分支有任何无关提交时就会判不等 |
-   | ④ | 其余（**非** git 仓库 / git 异常 / 判定命令失败） | `2`（放行 + 显式警告） | 不因环境异常制造假拒绝。⚠ 与 ⓪ 的区别：⓪ 是「分支确实不存在 ⇒ 拒绝」，④ 是「**无法判定** ⇒ 放行 + 警告」 |
+   | ④ | **未合入**（`git cherry` 显示 `+`） | `1`（拒绝） | 实现提交还在分支上，worktree 清理即将把它们删掉 ⇒ 拒绝并给出合入命令 |
+   | ⑤ | 其余（**非** git 仓库 / git 异常 / 判定命令失败） | `2`（放行 + 显式警告） | 不因环境异常制造假拒绝。⚠ 与 ⓪ 的区别：⓪ 是「分支确实不存在 ⇒ 拒绝」，⑤ 是「**无法判定** ⇒ 放行 + 警告」 |
 
    - ③ 的成立条件是**条件句**：仅当默认分支自 fork 起没有其它提交时，tip-to-tip 比较才等价 —— 因此文案必须写「提交非祖先但**内容**已进主干」，不得写成「squash/rebase 项目一律放行」。
    - **opt-in 的覆盖面是统一的**：决策 4 的 `ARCHIVE_ALLOW_UNMERGED=yes` + reason **覆盖本门的全部拒绝态**（含 ⓪ 的 ref 缺失、① 的 worktree dirty、未合入）⇒ 语义统一为「默认拒绝；显式 opt-in + 审计可放行」。
@@ -68,6 +69,20 @@
 7. **spec delta（两份）**：把「跳过 `commit_archive_moves`」与「feature 分支合并」解耦 —— 前者保留；后者改为「未合入时 SHALL 拒绝归档（可显式 opt-in）」；顺序 scenario 增加归档前的合入**判定**步骤（判定不是合并；归档仍不执行 `git merge`）。
    - 附带：`archive-auto-commit/spec.md` 的 lightweight MUST **不得**改成负向断言 —— 它今天仍然红（`phase3_archive.sh` 的 lightweight inline 分支确实没调 `commit_archive_moves`）⇒ 应**正向重指向**为「`rdd-builder` P3 lightweight 路径 MUST 调用 `commit_archive_moves`」。**该 delta 由本 ADR 主责**（ADR-0036 的 2026-11-17 修订只在 R4 行登记处置方向，不重复写 delta）。
 8. **文档**：`skills/rdd-builder/SKILL.md` 的 P3 段与 `docs/architecture/workflow-phases.md` 写明「archive 不代劳合并；`git.openspec_tracked=false` 的实现分支须先并入默认分支」，并显式区分「AC 归档门」与「合入门」。
+
+### 修订 2026-11-18（表格补正：补上「未合入」这一档）
+
+**触发**：实现阶段按本决策写 `archive_premerge_check` 时发现 —— 上表的 ④ 只写了「其余（无法判定）⇒
+放行」，**没有「未合入 ⇒ 拒绝」这一档** ⇒ 按表的字面读法，「未合入且内容不等价」会落到 ④ 的
+「无法判定 ⇒ 放行」⇒ **这道门永远不会拒绝**。
+
+⇒ 与本 ADR 的**决策正文**矛盾：决策 4 的 opt-in 覆盖面条款明写「覆盖本门的**全部拒绝态**（含 ⓪ 的
+ref 缺失、① 的 worktree dirty、**未合入**）」，且整份 ADR 的目的就是「未合入不得归档」⇒ 缺的只是
+**表格里的一行**，不是决策。
+
+**改动**：上表补上 ④「未合入（`git cherry` 显示 `+`）⇒ `1`（拒绝）」，原 ④ 顺延为 ⑤「无法判定 ⇒
+`2`（放行 + 警告）」；判定顺序相应为 ⓪ → ① → ② → ③ → ④ → ⑤。**决策未变**（未合入 ⇒ 拒绝），仅
+表格补正 —— 与决策 2 的 prose、决策 4 的覆盖面条款、V-4 一致。
 
 ### 影响范围
 

@@ -391,6 +391,49 @@ print('dispatch_quick_review written')
   - outcome=unverified → 回 P0 重新决策
   - outcome=escalated → 回 P0 重新决策 (失败升级契约 per ADR-0047 amendment)
 
+## 执行模式契约（per ADR-0024 + ADR-0036 AMENDED）
+
+两种模式的定义（**唯一契约**，别再各写各的）：
+
+| 模式 | 工作区 | 实现分支 |
+|---|---|---|
+| **worktree** | 独立 worktree（`.rddf/wt/<name>/`） | `openspec/<name>` |
+| **lightweight** | **主仓工作区**（不建 worktree） | **同样是 `openspec/<name>`**（在主仓上 checkout） |
+
+⇒ lightweight **有分支**（`openspec/<change>`）、**无 worktree** —— 这是 ADR-0024 / ADR-0036 /
+`config_schema.json` / `verifier-lifecycle` 四处一致的契约。验证锚点是分支 tip，所以「无分支」
+会让 change 不可归档。
+
+执行模式**只**由 P1.5 的三类输入决定（`_lib/builder_deps.py::compute_mode_inputs` →
+`decide_execution_mode`）：tasks.md 的 checkbox 总数、plan 的 `**Files:**` 路径数、
+`roadmap-meta.yaml` 的 `risk:` 结构化声明；任一输入不可得 ⇒ **fail-closed 到 worktree**。
+`git.openspec_tracked` **不参与**执行模式判定（它只管归档路径），`RDDF_EXECUTION_MODE` 已退役。
+
+> ⚠ 当前 `LIGHTWEIGHT_EXECUTION_READY = False`（`_lib/builder_deps.py`）：lightweight 的归档
+> 路径还在补齐（`fix-lightweight-branch-and-archive`）⇒ 小改动暂时判 worktree 并在 reason 里写明。
+
+## P3 归档门（per ADR-0061 / ADR-0035）
+
+P3 有**两道不同的门**，别混用：
+
+| 门 | 判什么 | 位置 |
+|---|---|---|
+| **合入门**（`archive_premerge_check`） | 实现分支**是否已进默认分支** | `_lib/archive.sh`（false 分支，`openspec archive` 之前） |
+| **AC 归档门**（`archive_gate_check`） | verdict cache 是否新鲜且完整 | `_lib/archive.sh`（AC 验证段） |
+
+**归档不代劳合并**：`git.openspec_tracked=false` 时，归档**不执行** `git merge`（守
+`complete-project-yaml-config-gaps` 的 `archive-openspec-tracked-skip-git` Requirement）
+—— 但**未合入就拒绝归档**，并给出一次到位的指引：
+
+- 分支有提交但未合入 ⇒ `git -C <main_root> merge --no-ff openspec/<name>`
+- worktree 内有未提交改动 ⇒ 先在 worktree 里 commit（改动会随 worktree 清理丢失）
+- 分支已不存在（通常被上一次归档的 cleanup 删了）⇒ 从 `git reflog` 找回
+
+显式放行：`ARCHIVE_ALLOW_UNMERGED=yes` + `RDDF_ARCHIVE_UNMERGED_REASON='...'`（留 bypass
+审计）；**不得**与 `FORCE_BRANCH_DELETE=yes` 同时生效（组合 = 未合入的提交被永久删除）。
+
+⇒ **谁来合并由人决定**：门负责判定并把话说清楚，归档负责不谎报成功。
+
 **Pause contract** (per spec §5.2):
 - HARD pause at P0 / P2.5 (用户必须显式选择,不能跳过)
 - SOFT pause at P1 / P1.5 / verifier back-route (`--no-pause` 可跳过)

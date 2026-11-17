@@ -244,11 +244,19 @@ print('all 5 exit codes + unknown covered')
     run python3 -c "
 import sys
 sys.path.insert(0, '$REPO_ROOT')
-from _lib.builder_deps import decide_execution_mode
+from _lib.builder_deps import decide_execution_mode, LIGHTWEIGHT_EXECUTION_READY
 
-# Small change → lightweight
+# Small change → lightweight (once the mode is usable). Until the lightweight
+# chain lands (it must create its branch and complete its archive path), the
+# decision reports worktree with a reason that says why — ADR-0036 V-G. The
+# THRESHOLDS are unchanged either way.
 m = decide_execution_mode(file_count=2, task_count=3, risk_keywords=[])
-assert m['mode'] == 'lightweight', m
+if LIGHTWEIGHT_EXECUTION_READY:
+    assert m['mode'] == 'lightweight', m
+else:
+    assert m['mode'] == 'worktree', m
+    assert 'lightweight 未落地' in m['reason']
+    assert 'files=2<=2 AND tasks=3<=3' in m['reason']
 
 # Large files → worktree
 m = decide_execution_mode(file_count=5, task_count=2, risk_keywords=[])
@@ -269,9 +277,13 @@ assert 'refactor' in m['reason']
 m = decide_execution_mode(file_count=1, task_count=1, risk_keywords=['migration'])
 assert m['mode'] == 'worktree'
 
-# No risk, small → lightweight
+# No risk, small → same as the first case (the thresholds are what matter)
 m = decide_execution_mode(file_count=1, task_count=1, risk_keywords=[])
-assert m['mode'] == 'lightweight'
+if LIGHTWEIGHT_EXECUTION_READY:
+    assert m['mode'] == 'lightweight'
+else:
+    assert m['mode'] == 'worktree'
+    assert 'files=1<=2 AND tasks=1<=3' in m['reason']
 
 print('ADR-0024 execution_mode matrix preserved')
 "

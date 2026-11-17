@@ -21,7 +21,10 @@ fi
 
 echo "=== Phase 1.5: Deps + Execution Mode Decision for $CHANGE_NAME ==="
 
-# Legacy plan-handoff fallback (per spec §3.4 + Oracle C2)
+# Legacy plan-handoff execution_mode (v3 residue). It has no writer in v4,
+# so it can only ever contradict the computed decision: it is read for the
+# WARNING below and NEVER overrides (lowest priority — see
+# fix-execution-mode-decision AC "LEGACY_EXEC_MODE").
 LEGACY_EXEC_MODE=""
 if [ -f ".rddf/state/.plan-handoff.json" ]; then
     LEGACY_EXEC_MODE=$(python3 -c "
@@ -31,43 +34,97 @@ print(data.get('execution_mode_decisions', {}).get('$CHANGE_NAME', {}).get('mode
 " 2>/dev/null || echo "")
 fi
 
-python3 <<PYEOF
+# Resolve the rdd-workflow package root — the directory that CONTAINS
+# `_lib/`. It is NOT the project root: in a user project `_lib/` lives under
+# the installed package. (Same order as phase2_execute.sh / phase3_archive.sh.)
+_resolve_pkg_root() {
+  local c here
+  here="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+  if [ -d "$here/_lib" ]; then
+    printf '%s' "$here"
+    return 0
+  fi
+  for c in \
+    "$PROJECT_ROOT/.opencode/skills/rdd-workflow" \
+    "$HOME/.agents/skills/rdd-workflow" \
+    "$HOME/.agents/skills"
+  do
+    if [ -n "$c" ] && [ -d "$c/_lib" ]; then
+      printf '%s' "$c"
+      return 0
+    fi
+  done
+  return 1
+}
+PKG_ROOT="$(_resolve_pkg_root || true)"
+
+PKG_ROOT="$PKG_ROOT" python3 <<PYEOF
+import os
 import sys
-sys.path.insert(0, "$PROJECT_ROOT")
-from _lib.builder_deps import decide_execution_mode, analyze_deps, analyze_deps_with_strict_gate
+PKG_ROOT = os.environ.get("PKG_ROOT") or ""
+if PKG_ROOT:
+    sys.path.insert(0, PKG_ROOT)
+sys.path.insert(0, os.path.abspath("$PROJECT_ROOT"))
+from _lib.builder_deps import (
+    decide_execution_mode, compute_mode_inputs, compute_conflict,
+    analyze_deps, analyze_deps_with_strict_gate,
+)
 from _lib.builder_handoff import update_builder_handoff
 
+PROJECT_ROOT = os.path.abspath("$PROJECT_ROOT")
+CHANGE_NAME = "$CHANGE_NAME"
+
 manual_deps = []
-meta_path = "openspec/changes/$CHANGE_NAME/roadmap-meta.yaml"
-import os
+meta_path = os.path.join(PROJECT_ROOT, "openspec", "changes", CHANGE_NAME, "roadmap-meta.yaml")
 if os.path.exists(meta_path):
     try:
         import yaml
-        with open(meta_path) as f:
+        with open(meta_path, encoding="utf-8") as f:
             meta = yaml.safe_load(f) or {}
         manual_deps = meta.get("manual_deps", []) or []
     except Exception:
         pass
 
-import glob
-files_changed = sum(1 for _ in glob.glob("openspec/changes/$CHANGE_NAME/**", recursive=True))
-task_count = 5
+# Real inputs, computed from absolute paths (the decision must not depend on
+# the cwd): tasks.md checkbox total, the plan's "**Files:**" paths and the
+# structured "risk:" declaration.
+#
+# NOTE: this heredoc is UNQUOTED on purpose (it interpolates $PROJECT_ROOT and
+# $CHANGE_NAME) — so backticks in the python block would be executed by bash.
+# Keep them out of this block.
+inputs = compute_mode_inputs(PROJECT_ROOT, CHANGE_NAME)
 
 decision = decide_execution_mode(
-    file_count=files_changed,
-    task_count=task_count,
-    risk_keywords=[],
+    file_count=inputs["file_count"],
+    task_count=inputs["task_count"],
+    risk_keywords=inputs["risk_keywords"],
 )
 
-# Override with legacy plan-handoff execution_mode if available
+# The reason states the ACTUAL input values and what was unavailable —
+# never a constant (fix-execution-mode-decision).
+notes = list(inputs["notes"])
+conflicts = compute_conflict(PROJECT_ROOT, CHANGE_NAME)
+if conflicts:
+    decision = {
+        "mode": "worktree",
+        "reason": (decision["reason"] or "no rule fired") + " AND conflict: " + "; ".join(conflicts),
+    }
+if notes:
+    decision["reason"] = decision["reason"] + " | " + "; ".join(notes)
+
+# Legacy plan-handoff execution_mode: LOWEST priority — it never overrides the
+# computed decision, it only warns (v4 has no writer for that field).
 legacy = "$LEGACY_EXEC_MODE"
 if legacy in ("worktree", "lightweight"):
-    decision["mode"] = legacy
-    decision["reason"] = "from legacy .plan-handoff.json fallback (Wave 1 compat)"
+    print(
+        "⚠️  legacy .plan-handoff.json execution_mode='%s' 已忽略"
+        "（v4 残留，无写入方）—— 保留计算得到的判定: %s" % (legacy, decision["mode"]),
+        file=sys.stderr,
+    )
 
 deps = analyze_deps(
-    change_name="$CHANGE_NAME",
-    proposal_path="openspec/changes/$CHANGE_NAME/proposal.md",
+    change_name=CHANGE_NAME,
+    proposal_path=os.path.join(PROJECT_ROOT, "openspec", "changes", CHANGE_NAME, "proposal.md"),
     manual_deps=manual_deps,
     cross_repo=False,
 )
@@ -80,8 +137,8 @@ if not gate["passes"]:
 # Merge, not overwrite: a full write resets approval_status to its "pending"
 # default (dropping P0's "approved") and any field written by another phase.
 update_builder_handoff(
-    "$PROJECT_ROOT",
-    "$CHANGE_NAME",
+    PROJECT_ROOT,
+    CHANGE_NAME,
     current_phase="phase-1.5",
     execution_mode_decision={
         "mode": decision["mode"],

@@ -67,7 +67,15 @@ LOCKED_TASKS_WRITEBACK_SH="e9e0065de4f65fbeef763be3b3eb09626c99920744e6bb2585311
 # rdd-quick zero-pollution invariant preserved: rdd-quick is the bypass path
 # (ADR-0047) — it never writes a verdict cache, so for it the lookup is a miss
 # (and then the audited bypass) before and after the change.
-LOCKED_ARCHIVE_SH="cd26dc0731049461fb9d314233f6d117a33d6fd60fa71b8ea2b2a4e8a36d9015"
+# Note (2026-11-17, fix-worktree-archive-branch-merge): LOCKED_ARCHIVE_SH
+# recaptured. The change touches the AC-verification block and the cleanup
+# helper of archive.sh: the freshness anchor is now the implementation branch
+# tip, the verdict cache is looked up in the gate root first and the canonical
+# state root second, a new `archive_premerge_check` (the "trunk gate") refuses
+# an archive whose implementation branch is not merged, and the cleanup helper
+# reports its three states instead of always printing success. rdd-quick still
+# never reaches those paths (it is the bypass path) ⇒ the invariant holds.
+LOCKED_ARCHIVE_SH="2c76d462df4dfbf09e966dc4823ff3e877babce955b10c0b83e05941d0e27db5"
 # Role block of rdd-planner/SKILL.md (from `role:` through closing `---`).
 # This is the structural-only hash that MUST be byte-identical after rdd-quick lands.
 # LOCKED_RDD_PLANNER_ROLE_BLOCK: role: ... --- block sha256, captured post-ADR-0048
