@@ -37,7 +37,9 @@ set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-BASELINE="$REPO_ROOT/tests/KNOWN_FAILURES.txt"
+# Env override so tests can drive this script against a temp file instead of
+# mutating the repo's real baseline (same contract as report_regression.sh).
+BASELINE="${KNOWN_FAILURES_BASELINE:-$REPO_ROOT/tests/KNOWN_FAILURES.txt}"
 TMP_DIR="$(mktemp -d -t rdd-refresh-known-failures-XXXXXX)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
