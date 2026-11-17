@@ -96,17 +96,88 @@
 
 第 3 轮起经**用户明确批准**（两次：批准第 3 轮、批准第 4 轮及后续复审直到 APPROVE）。每轮只验上一轮 BLOCKER 的闭合 + 本轮新增是否引入新架构级 BLOCKER，未做全量重审。
 
+**表格补正的复核轮（2026-11-18，新开一轮）**：
+
+| 轮次 | 角色 | 判定 | 说明 |
+|---|---|---|---|
+| 复核 1 | oracle | REJECT | 咨询轮（11 条 finding：3 高 / 5 中 / 3 低） |
+| 复核 1 | critic | **APPROVE_WITH_CONDITIONS** | 复审（**0 BLOCKER** + 5 SHOULD_FIX + 4 NITS，全部逐条处置） |
+
+⇒ 该轮属**新开的一轮**（表格补正是一个新的修订批次），预算独立于上表的 6 轮；用户对本轮**未单独批准**（依据：本变更仍在用户已批准的「直到 APPROVE 或出现新的架构级 BLOCKER」范围内，且本轮 0 BLOCKER）。
+
 ## 四、收口核对（ADR 完成的标志）
 
-- [x] 四要素齐备：元数据（Status/日期/决策者/关联/触发来源/审稿报告）、决策、选项对比表（5 行，含「结论」列）、独立「后果 / 代价」章、Verification（h2 级，V-1~V-13 可勾选）
-- [x] oracle + critic 双审完成；BLOCKER 全闭合并经复审确认（critic 第 6 轮 APPROVE）
-- [x] Status 已转正：`Proposed` → `已采纳 (2026-11-17)`
-- [x] 关联 change 已登记：`backlog: fix-worktree-archive-branch-merge`（`.rddf/improvements/fix-worktree-archive-branch-merge.md`，14 AC 与 V-1~V-13 映射）
+- [x] 四要素齐备：元数据（Status/日期/决策者/关联/触发来源/审稿报告）、决策、选项对比表（5 行，含「结论」列）、独立「后果 / 代价」章、Verification（h2 级，V-1~V-14 + V-1b 可勾选）
+- [x] oracle + critic 双审完成；BLOCKER 全闭合并经复审确认（critic 第 6 轮 APPROVE）；**表格补正的复核轮亦双审完成**（oracle REJECT → 逐条处置 → critic **APPROVE_WITH_CONDITIONS**，0 BLOCKER）
+- [x] Status 已转正：`Proposed` → `已采纳 (2026-11-17)`（**表格补正未改决策** ⇒ Status 行不动，per §审查配对 的判例）
+- [x] 关联 change 已登记：`backlog: fix-worktree-archive-branch-merge`（`.rddf/improvements/fix-worktree-archive-branch-merge.md`，16 AC 与 V-1~V-14 映射；lightweight 侧的收口方 = `fix-lightweight-branch-and-archive`）
 - [x] 审稿报告已落 `.rddf/reviews/adr-0061-unmerged-branch-2026-11-17.md`（本文件），且 ADR 头部有指针
 - [x] ADR 索引已重建（`_lib/adr_index_generator.py --write docs/adr/README.md`）
 
-## 五、留给实施阶段的提醒（不在本 ADR 范围）
+## 五、表格补正的复核（2026-11-18）
+
+**触发**：B 项实施时按本 ADR 写 `archive_premerge_check`，发现**决策 2 的判定表缺「未合入 ⇒ 拒绝」这一档** ⇒ 已补正（新增「### 修订 2026-11-18（表格补正）」节）⇒ 按 §收口核对 的要求回到 architect 复核。
+
+**复核方式**：oracle 咨询 1 轮（oracle 不可用时才降级为内置自检清单；本轮 oracle 可用）。**判定：REJECT**（11 条 finding，含 3 条高影响）。
+
+### oracle 的 finding 与逐条处置
+
+| # | finding | 影响 | 处置 |
+|---|---|---|---|
+| F-1 | **调用点把三态折叠成两态**：`if ! archive_premerge_check …; then return 1; fi` ⇒ 返回码 `2`（⑤ 无法判定 ⇒ 放行）被 `!` 折叠成**拒绝** —— 表 ⑤ / Consequences / 备选 C / 立项 AC 四处都写「放行」 | 高 | ✅ **ADR 侧**：新增 **V-14**（调用点按返回码消费：0 放行 / 1 拒绝 / 2 放行+警告；判据形态 = 一条端到端用例）。**实现侧**：属 implementation_gap，已登记到 ADR 的「后续待办 → 实施方补」，责任方 builder |
+| F-2 | **兜底 bullet 与新表矛盾**：「⓪①②**④** 之外的一切异常一律落到 **④**（放行 + 警告）」—— 补正后 ④ = 未合入 ⇒ 拒绝 ⇒ 异常被指向了**拒绝**档 | 高 | ✅ 已改：「⓪①②③**④** 之外的一切异常一律落到 **⑤**（放行 + 警告）」 |
+| F-3 | **跨文件涟漪**：两个 improvement 文件仍写「⓪/②/③/**④（无法判定）**四项原样复用」—— ④ 的所指已漂移成「未合入」，且**新 ④（未合入 ⇒ 拒绝）不在复用清单内** ⇒ 按字面读 lightweight 路径不会拒绝未合入分支 | 高 | ✅ **ADR 侧**：AC 映射表 + 「后续待办 → 立项同步（责任方：planner）」已把三处不一致逐条点名（① tip-to-tip vs patch-id；② 四项 → **五项**复用清单且 ④ 必须在其中；③ What Changes §1 需加「本 ADR 覆盖声明」）。**文件侧**：属 planner 的写集，由 planner 同步 |
+| F-4 | **V-1 未跟上新表**（仍写「④无法判定」） | 高 | ✅ V-1 已重写为 **⓪→①→②→③→④未合入→⑤无法判定**，括注编号同步；并新增 **V-1b**（把「未合入 ⇒ 拒绝」这条**核心命题**单列成条 —— 此前只隐含在表与 AC 映射里，正是当初漏掉一行的成因） |
+| F-5 | **决策 3 / V-5 的指引分叉与实现不符**：ref-missing 路径仍打合并命令（决策 3 明写「不给合并命令」）；dirty 路径未按「有提交 / 无提交」分叉 | 中 | ✅ **ADR 侧**：V-5 的四支改用 **(a)(b)(c)(d)** 编号（原 ①~④ 与表 ⓪~⑤ 撞车），并补 **(d) 的否定断言**（「输出含 `reflog` 且**不含** `merge --no-ff`」）。**实现侧**：ref-missing 路径仍打合并命令 ⇒ 已登记为 implementation_gap（同 F-1 的落点） |
+| F-6 | **④/⑤ 边界在表内不可判定**：① 非 git 仓库 —— ⓪ 必须先跑，其判定命令在非仓库里必失败 ⇒ 实际落进 ⓪ ⇒ **拒绝**且文案误导（「分支不存在，可能已被 cleanup 删除」）；② `git cherry` 空输出 —— ③ 的「全部为 `-`」在空输出下**空洞成立** | 中 | ✅ 表已写死：⓪ 行补「**前置**：先确认 `<main_root>` 是 git 仓库，非仓库归 ⑤」；③ 行补「**非空**且全部为 `-`（空输出 ⇒ ⑤）」；⑤ 行补「非 git 仓库 / git 异常 / `git cherry` 失败或**空输出**」并写明与 ⓪ 的区别；修订节新增「同时把三处灰区写死」段 |
+| F-7 | **修订节引用出处错**：「决策 4 的 opt-in 覆盖面条款」—— 该枚举实际在**决策 2 的 bullet**，决策 4 只是 opt-in 机制本身 | 中 | ✅ 修订节已改为「决策 2 的 opt-in 覆盖面 bullet」；决策 2 的 bullet 本身也把「未合入」补成「**④ 的**未合入」 |
+| F-8 | 编号撞车（表 ⓪~⑤ vs V-5 的 ①~④） | 低 | ✅ V-5 改 (a)(b)(c)(d)（见 F-5） |
+| F-9 | AC 映射表：V-13 无 AC 落点；V-1b 无落点 | 低 | ✅ 已补两行：V-13 → 「无对应 AC（仓内卫生：ADR 索引重建 + 索引门测试）」；V-1b → 挂到「未合入 ⇒ 拒绝」那条 AC |
+| F-10 | **V-12 未真正满足**：`docs/architecture/gates-and-quality.md` 通篇无「合入门 / archive 不代劳合并」字样（而 In Scope 点名了它） | 中 | ✅ **ADR 侧**：决策 8 的文档清单补上 `docs/architecture/gates-and-quality.md`（三处与 V-12 一致）。**实现侧**：该文件尚未写 ⇒ 已登记为 implementation_gap（builder 补） |
+| F-11 | **立项名漂移**（3 处）：lightweight 缺口的收口方仍写 `fix-execution-mode-decision`，而建分支 + 归档路径已拆到 `fix-lightweight-branch-and-archive` | 低 | ✅ 三处已改指新立项（In Scope 的 Out Scope、Consequences 的旁路清单、后续待办） |
+
+### oracle 对「是否需要 critic」的判断
+
+oracle 否定了「表格补正只需 oracle」的归类：**豁免条件的可数判据不满足** —— 本次**增删了表格行**且**必须动 Verification 章（V-1）**，两条都踩中 ⇒ 按 §审查配对 的判例「不满足豁免条件的 ADR 正文修订 ⇒ 默认按『决策相关』处理 ⇒ **oracle → critic**」（举证责任在修订者）⇒ **须补 critic（arch 档）1 轮**。⇒ 本轮已补（见下方「六之二」）。
+
+### oracle 对「补正是否改了决策」的判断
+
+**没有**。oracle 的论证：新增一档只会**收紧**、不会放宽 ⇒ 不可能把「本该放行的一类误改成拒绝」；③ 的 patch-id 口径未动；原 ④ 顺延为 ⑤，语义（放行+警告）未变、只变编号 ⇒ 是**新增一个拒绝档**，不是改写放行档 ⇒ 与决策正文、两份 spec delta、已实现代码、mutation 验证结论全部一致。
+
+### critic 复审（2026-11-18，arch 档 1 轮）—— **APPROVE_WITH_CONDITIONS**（`mergeable: yes`，0 BLOCKER）
+
+oracle 判定「须补 critic」（豁免条件的可数判据不满足：本次增删了**表格行**且必须动 **Verification 章**）⇒ 已按 §审查配对 补跑 1 轮 critic（arch）。
+
+**critic 的结论（3 条 focus）**：
+
+| focus | 判定 |
+|---|---|
+| 补正是否偷改已签批决策 | **没有** —— 补正前的 ⑤ 行原文已把「**非** git 仓库」列为 `2`（放行 + 警告）⇒「非 git 仓库 ⇒ ⑤」不是新放宽，而是**把既有枚举真正兑现**；⓪ 新增的只是**前置**（先判仓库），⓪ 的 fail-closed 语义（V-4「是 git 仓库但 ref 缺失 ⇒ 拒绝」）原样保留 ⇒ 不构成对 fail-closed 立场的放宽。新增 ④ 只会收紧不会放宽 |
+| ADR 内部是否自洽 | **是** —— 表 / 兜底 bullet / opt-in 覆盖面 / V-1 / V-1b / V-2 / V-5 / V-14 / AC 映射 / Consequences / 后续待办逐处核过，无残留矛盾；「契约 vs 实现」的落差由 **implementation gap** 承担（ADR 保留 normative 判据、差距登记在「后续待办 → 实施方补」）是正确分工，V-14 与该登记不冲突 |
+| 新增判据的可判定性 | **V-5(d) 可判定**（与 opt-in 路径不冲突：opt-in 生效时走「已显式放行」文案，不打合并命令）；**V-14 有缺口**（见 SHOULD_FIX #3） |
+
+**critic 的 5 条 SHOULD_FIX + 4 条 NITS —— 逐条处置**：
+
+| # | finding | 处置 |
+|---|---|---|
+| SHOULD_FIX 1 | `fix-lightweight-branch-and-archive.md:117/:154/:188` 仍写「四项原样复用」，而 ADR 的立项同步 todo 只点名了**一份**文件 | ✅ ADR 的「立项同步」已补**覆盖面**说明（两份文件的三处 + 复用清单必须为五项且含 ④）；文件侧归 planner |
+| SHOULD_FIX 2 | ⓪ 行「必须先于 ①②③」→「必须先于 ①~④」的措辞改动**未在修订节点名** | ✅ 修订节新增「同时点名的第二处措辞改动」段（说明它只是收紧顺序依赖、不改变任何一档的判定结果）；⓪ 行改写为「必须先于 **①~④**（即除 ⓪ 外的一切判定）」 |
+| SHOULD_FIX 3 | **V-14 的判据形态不可构造**（真实 `archive_change` 流程里 ⑤ 几乎到不了） | ✅ V-14 已改写为**调用点级 stub 形态**（stub `archive_premerge_check` 返回 `2` ⇒ 断言 `archive_change` 仍返回 0），并写明「为什么用 stub」（真实路径上 ⑤ 的三个不可达原因）；⑤ 本身的判定逻辑由直接调用用例覆盖 |
+| SHOULD_FIX 4 | 「实施方补」清单漏登 oracle F-5 的另一半（dirty 路径未按「有提交 / 无提交」分叉） | ✅ 已补为**第四条**（V-5(c) 的两步命令形态） |
+| SHOULD_FIX 5 | 立项名漂移未清干净：本审稿文件自身仍写旧立项名；被点名的另一份 improvement 四处仍指旧立项 | ✅ 本文件已改（`fix-lightweight-branch-and-archive`）；另一份 improvement 归 planner 的立项同步 todo |
+| NIT 1 | 「8 条 finding」计数漂移（实为 11） | ✅ 已改 |
+| NIT 2 | In Scope 未列实现新增的 `tests/integration/test_archive_trunk_gate.bats` | ✅ 已补 |
+| NIT 3 | V-4 括注「②③」应同步为新编号 | ✅ 已改为「①~④」 |
+| NIT 4 | V-1b 挂在「V-4 ~ V-6 + V-1b」行，易被误读 | ✅ 已**单列**一行并标注「V-1 家族，单列」 |
+| NIT 5 | spec scenario 未覆盖 ⑤（无法判定 ⇒ 放行 + 警告） | ✅ 已登记到「后续待办 → spec 侧（责任方：planner/builder）」；⚠ 本仓 `openspec/` 被 gitignore ⇒ 权威落点是本 ADR |
+
+**本轮结论**：critic **0 BLOCKER** + 5 SHOULD_FIX + 4 NITS ⇒ 按 §评审预算「无 BLOCKERS + 有 SHOULD_FIX ⇒ **记录后放行**」⇒ 本轮全部 finding 已逐条处置并记录，**ADR-0061 的表格补正收口**（主决策自 2026-11-17 签批起未变）。
+
+---
+
+## 六、留给实施阶段的提醒（不在本 ADR 范围）
 
 - `fix-worktree-archive-branch-merge` 的 AC「内容等价分支存在」写的是 tip-to-tip 的 `git diff --quiet` ⇒ **须由 planner 同步为 patch-id 口径**（ADR-0061 的 AC 映射表已标注覆盖关系）。
-- lightweight 路径的同类缺口归 `fix-execution-mode-decision` 收口（其执行模式语义由 ADR-0036 的 2026-11-17 修订钉死）。
+- **2026-11-18 复核新增的实现方补项**（三处 implementation_gap + 一处文档）：① 调用点把 ⑤ 折叠成拒绝（V-14）；② ref-missing 路径仍打合并命令（V-5 的 (d) 否定断言）；③ 非 git 仓库落进 ⓪（⑤ 行的前置约定）；④ `docs/architecture/gates-and-quality.md` 尚未写「合入门」（V-12）。⇒ 已在 ADR 的「后续待办 → 实施方补」逐条登记。
+- lightweight 路径的同类缺口归 `fix-lightweight-branch-and-archive` 收口（其执行模式语义由 ADR-0036 的 2026-11-17 修订钉死）。
 - false 路径既有的步骤省略（issue 关闭 / tasks 完成度门 / L2 采集 / tasks sidecar / `archive_commit_sha` 为空）**不在本决策范围**，已在 ADR 的 Consequences 如实记录。
