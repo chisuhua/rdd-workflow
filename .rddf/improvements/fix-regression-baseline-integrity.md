@@ -148,7 +148,7 @@ metis 指出草稿漏掉的一层：**「已知失败 0」会让人误以为「�
 - [x] 运行期守卫放在 `setup()` + `teardown()`（非独立用例）；断言对象是绝对路径 `$REPO_ROOT/tests/KNOWN_FAILURES.txt` 的 hash
 - [ ] 确定性复现测试：tmp 副本中途被替换成 fixture ⇒ 「已知失败 == tmp 当时仍失败的条目数」「新增失败 == 0」「真实文件 hash 不变」
 - [x] 仓库级卫生：`bats tests/integration/` 跑完后 `git status --porcelain tests/KNOWN_FAILURES.txt` 为空
-- [ ] `report_regression.sh` 打印解析后的 baseline 路径；baseline 缺失时的报错打印覆盖后的路径
+- [ ] `report_regression.sh` **在基线缺失时**的报错打印**覆盖后的路径**（已实现）；成功路径**不打印** baseline 路径 —— 与上一条「不设该变量时输出逐字节不变」冲突，已裁定以上一条为准（输出格式是既有消费者契约，诊断性打印不得改动默认输出）
 - [ ] `test_arch_env_check_extraction.bats` 的断言改为 `主题架构文档`（不再用已被同文件覆盖的 `工件发现 (ADR-0016)`），文件头注释同步，注释注明 ADR-0057 依据
 - [ ] `grep -rn '架构差距分析' tests/` 零命中
 - [ ] `tests/KNOWN_FAILURES.txt` 中「`run_arch_env_check_discovers_counts` → passes」的失效声明被修正
@@ -243,3 +243,12 @@ gap-analysis），但它**不在基线有效条目里** ⇒ 全量门若跑到�
 2. 「override 生效」用例只看「基线对比 vs recursive」，无判别力（真实基线存在时两条路径都走 baseline 分支）。
 
 ⇒ 凡新增守卫，必须做**变异验证**（造出它该抓的形态，确认真的会红），否则守卫本身可能就是第二个缺陷。
+
+### 立项核查（2026-11-17，planner）
+
+本项与另 5 项 P1 一并做了逐条事实核查（`file:line` 断言全部落到实际代码上验）：
+
+- ✅ 三个脚本的基线路径硬编码位置、两个测试文件的真实基线写入与 `rm -f`、30s 单文件超时机制、
+  `run_arch_env_check_discovers_counts` 的僵尸状态 —— **全部与立项描述一致**
+- ⚠️ **AC `:147` 与 AC `:140` 自相矛盾**（打印解析路径 vs 输出逐字节不变），已裁定保 `:140`
+- 📌 新发现（已写入上文「本轮新发现」）：同一 30s 超时还让慢文件整文件被跳过 ⇒ 僵尸断言在全量门里不可见
