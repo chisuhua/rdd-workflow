@@ -26,6 +26,7 @@ For **decisions** behind the design, see [`../adr/README.md`](../adr/README.md).
 | [layer-0-progressive-context.md](layer-0-progressive-context.md) | Layer 0 渐进式上下文注入：按阶段注入最小必要背景，替代全量注入 | 0052 |
 | [guide-orchestrator-flow.md](guide-orchestrator-flow.md) | Guide-as-Orchestrator 会话与跨容器事件总线（唯一交互入口的最小用法流程） | 0055, 0056 |
 | [rdd-arch-rdd-planner-integration.md](rdd-arch-rdd-planner-integration.md) | rdd-arch ↔ rdd-planner 横向编排契约与双向反馈闭环 | 0038, 0042 |
+| [agent-role-alignment.md](agent-role-alignment.md) | 两层角色体系对齐：opencode 治理角色层 vs rdd-workflow 阶段技能层 —— 命名消歧 / 工件归属判定 / verifier 双落点 / 派发模型浅述 / `.rddf/` 治理位置速查 / 不复述清单 | 0028, 0034, 0037 |
 | [historical-evolution.md](historical-evolution.md) | v1.0 → v4.x timeline + per-refactor motivation | — |
 
 ## Update Convention

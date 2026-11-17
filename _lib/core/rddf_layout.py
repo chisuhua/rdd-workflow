@@ -56,7 +56,12 @@ class LayoutEntry:
 
 RDFF_LAYOUT: tuple[LayoutEntry, ...] = (
     LayoutEntry(
-        "state", "dir", ("rdd",), ("rdd",), "always", False, "runtime-only", "WARNING",
+        # `state/` holds two families of files: rdd-written runtime state
+        # (state_vector, event log, handoffs, verifier namespace) and
+        # agent-written governance state (`.rddf/state/role.json`,
+        # `.rddf/state/pair.json` — the opencode build-agent role registry).
+        # The agent writes but does not read rdd's state internals.
+        "state", "dir", ("rdd",), ("rdd", "agent"), "always", False, "runtime-only", "WARNING",
     ),
     LayoutEntry(
         "wt", "dir", ("rdd",), ("git",), "worktree", False, "runtime-only", "WARNING",

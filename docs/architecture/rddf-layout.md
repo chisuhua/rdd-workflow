@@ -27,7 +27,7 @@ ADR-0026 定义了 `.rddf/` 的命名约定与两类存储（`runtime-only` / `c
 | `roadmap` | dir | rdd | agent | always | committed |
 | `roadmap.md` | file | rdd | agent | always | committed |
 | `skill-profiles` | dir | rdd | user | never | committed |
-| `state` | dir | rdd | rdd | always | runtime-only |
+| `state` | dir | rdd | rdd, agent | always | runtime-only |
 | `wt` | dir | rdd | git | worktree | runtime-only |
 
 字段含义：
@@ -45,13 +45,14 @@ ADR-0026 定义了 `.rddf/` 的命名约定与两类存储（`runtime-only` / `c
 ### 读法上的三个约定
 
 - **`external-tool` 条目**（如 `config/`）rdd **不读、不写、不校验内容**。它是消费方的私有目录，登记它只是为了声明边界：`reviews/` 同理，只由 agent 写，rdd 零引用。
+- **`state/` 是混写目录**。目录级条目只能声明「rdd 与 agent 都写」；**哪些文件归谁，见下方文件级的「治理状态（opencode 角色层）」表**。
 - **用户自建目录是被允许的**。doctor 对未登记的顶层条目报 **INFO**（不阻断）。第三方项目可以在 `.rddf/` 下放自己的东西 —— 但若希望它被工具识别，就要登记进 `RDFF_LAYOUT`。
 - **`wt/` 只在 worktree 模式要求存在**。轻量模式（直接在主仓实施）永不创建它。
 - **判据③判定的是 ignore 规则本身，与条目是否存在无关**。若项目的 `.gitignore` 用 `.rddf/*` 这类通配写法，尚未创建的目录也会被判为 class 不符 —— 这是 advisory WARNING，不阻断。
 
 ## 新增一个顶层条目的三步
 
-与 [ADR-0026](../../../adr/ADR-0026-internal-metadata-namespace-convention.md) 的「添加新 metadata 类别」指引一致：
+与 [ADR-0026](../adr/ADR-0026-internal-metadata-namespace-convention.md) 的「添加新 metadata 类别」指引一致：
 
 1. **路径**：必须是 `.rddf/<category>/`（dot-prefix 命名约定）。
 2. **类型决策**：评估是 `runtime-only`（临时状态、per-machine）还是 `committed`（跨机器共享的元数据）。
@@ -82,6 +83,19 @@ ADR-0026 定义了 `.rddf/` 的命名约定与两类存储（`runtime-only` / `c
 | `.arch-handoff.json` | `rdd-arch`（`_lib/adr_catalog.py:127`） | `rdd-planner` / `rdd-builder` |
 | `.planner-handoff.json` | `rdd-planner`（`_lib/builder_deps.py:42`） | `rdd-builder` |
 | `.planner-feedback.json` | `rdd-builder`（`_lib/builder_feedback_router.py:31`） | `rdd-planner` / `rdd-arch` |
+
+**治理状态（opencode 角色层）** —— 写在 `.rddf/state/` 与 `.rddf/reviews/`，**由消费方（opencode build agent）写，rdd-workflow 不读不写**：
+
+| 文件 | 写方 | 读方 | 说明 |
+|---|---|---|---|
+| `.rddf/state/role.json` | opencode 角色层 | opencode 角色层 | 治理身份状态（schema `role-v2`，含 `sessions` 分区）。**不是** rdd 的工件。 |
+| `.rddf/state/pair.json` | opencode 角色层 | opencode 角色层 | 派发登记（pair-v2）。`required_when=never` —— 未启用派发时不落盘。 |
+| `.rddf/reviews/*.md` | opencode 角色层 | opencode 角色层 | 验收报告（verifier 角色）与审稿报告（architect 角色）。**产品落点**。 |
+
+> 为什么单列一栏：`.rddf/state/` 是**目录级**清单条目（清单只管顶层，见 `tests/unit/test_rddf_layout.py`），
+> 而 `state/` 目录里同时住着两类文件 —— rdd 写的运行时状态（state vector / event log / handoff /
+> verifier 命名空间）与 agent 写的治理状态（上表）。目录级条目只能声明「两者都写」，
+> **逐文件归属以本表为准**。
 
 ## 边界
 

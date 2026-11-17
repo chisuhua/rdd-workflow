@@ -445,6 +445,18 @@ This log is read-only forensic record. `rdd-doctor --category plan-tdd` can chec
 
 All verifier state files are `.rddf/state/` gitignored, per AGENTS.md state file convention. The canonical audit log is `.rddf/state/verifier/<change>.audit.jsonl`.
 
+### 产物落点分两层（author declaration）
+
+| 层 | 落点 | 谁写 | 是否在本 skill 的 `role.boundaries.owns` |
+|---|---|---|---|
+| **记账落点** | `.rddf/state/verifier/**` | 本 skill（Step 5 持久化协议） | ✅ 是（上表 6 项） |
+| **产品落点** | `.rddf/reviews/<change>-verify.md` | **executing / auditing agent**（opencode build agent 的 verifier 角色层） | ❌ **否** |
+
+**为什么产品落点不在 `owns` 里**：`owns` 只声明**本 skill 实际产出**的工件（`openspec/specs/skill-role-model/spec.md`
+的 `skill-role-owns-generated-artifacts-only`；先例见 `design.md` —— builder 阶段的脚本不写它，
+故 owns 不认领，但正文必须声明作者）。rdd-workflow 的代码全仓**不读不写** `.rddf/reviews/`；
+验收报告由消费方的 verifier 角色层落盘。分层说明见 `docs/architecture/agent-role-alignment.md`。
+
 > **v2.0 变更**：`.rddf/state/verifier/.ac-verification.jsonl` 写入方从 `ac_verifier.py::append_audit_log` 改为本 skill 的 Step 5 协议。Schema 保持不变（向后兼容）。
 >
 > **路径收拢（consolidate-verifier-state）**：`.rddf/state/verifier/` 是 verifier 状态的**唯一命名空间**；此前直接躺在 `.rddf/state/` 根下的 4 类文件（verdict cache / 共享 audit log / halted audit / staged context）已迁入。`rddf rdd-verify` 启动时会自动把遗留文件搬进来（目标已存在则不覆盖）。

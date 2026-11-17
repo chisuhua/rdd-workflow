@@ -80,6 +80,25 @@ def test_covers_does_not_confuse_sibling_names():
     assert covers("roadmap.md", ".rddf/roadmap.md") is True
 
 
+def test_state_dir_is_written_by_rdd_and_agent():
+    """`.rddf/state/` holds both rdd-written state and agent-written governance state.
+
+    `.rddf/state/role.json` (the opencode build-agent role state, role-v2) and
+    `.rddf/state/pair.json` (the dispatch registry) are written by the agent
+    layer, not by rdd — the manifest must say so, otherwise it is not a
+    "read_by / write_by are observable facts" record.
+    """
+    entry = next(d for d in as_dicts() if d["path"] == "state")
+    assert "rdd" in entry["write_by"]
+    assert "agent" in entry["write_by"]
+
+
+def test_state_entry_keeps_agent_out_of_read_by():
+    """The agent writes governance state; it does not read rdd's state internals."""
+    entry = next(d for d in as_dicts() if d["path"] == "state")
+    assert "agent" not in entry["read_by"]
+
+
 def test_assertion_a_defaults_paths_are_covered():
     """defaults.DEFAULTS 的路径类条目 + 5 个模块常量都必须被清单覆盖。"""
     sys.path.insert(0, str(PROJECT_ROOT))

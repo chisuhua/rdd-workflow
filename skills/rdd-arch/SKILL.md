@@ -113,6 +113,8 @@ skill_use("rdd-arch")   # 无参数版本
 - **不写 `.rddf/state/.planner-feedback.json`** (per ADR-0042, 由 `rdd-planner` owns)
 - **不写 `.rddf/improvements/*.md`** (per ADR-0057, 由 `rdd-planner` owns)
 - **不写 migration 路线图**（per ADR-0057, 由 `rdd-planner` Phase 0 + `.rddf/roadmap/phases/*.md` 承担）
+- **不写 `.rddf/config/arch-docs.json`** —— 该文件是 **opencode build agent 的 architect 角色层**配置（决定该角色可写哪些架构文档目录），由消费方维护；rdd-workflow 全仓不读不写它，故 `role.boundaries.owns` **刻意不认领**
+- **不写 `.rddf/reviews/<adr>.md`** —— ADR 审稿报告（oracle → critic 评审结论的誊写件）由 **opencode architect 角色层**产出，是「角色层」而非「本 skill」的产物；本 skill 的产物只有下面三项。分层说明见 `docs/architecture/agent-role-alignment.md`
 
 **arch 端必须写的文件**：
 
