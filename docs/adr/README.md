@@ -62,7 +62,7 @@
 | [ADR-0033](ADR-0033-submodule-aware-project-root-resolution.md) | ADR-0033: Submodule-Aware Project Root Resolution | 待定 | 2026-08-25 |
 | [ADR-0034](ADR-0034-rdd-verifier-verify-phase-architecture.md) | ADR-0034: rdd-verifier 验证回环阶段架构 | 已采纳 (2026-08-26) | 2026-08-26 |
 | [ADR-0035](ADR-0035-verifier-archive-gate-boundary.md) | ADR-0035: rdd-verifier ↔ archive_gate_check 双轨设计边界 | 已采纳 | 2026-08-28 |
-| [ADR-0036](ADR-0036-rddf-project-yaml-config.md) | ADR-0036: .rddf/project.yaml 项目级配置源 | 已采纳 (2026-09-02) | 2026-09-02 |
+| [ADR-0036](ADR-0036-rddf-project-yaml-config.md) | ADR-0036: .rddf/project.yaml 项目级配置源 | 已采纳 (2026-09-02) + AMENDED (2026-11-17) | 2026-09-02 |
 | [ADR-0037](ADR-0037-feedback-contract.md) | ADR-0037: Feedback Contract for `.rddf/improvements/*.md` | 已采纳 (2026-09-03) | 2026-09-03 |
 | [ADR-0038](ADR-0038-rdd-planner-crosscutting.md) | ADR-0038: rdd-planner Horizontal Orchestrator (Stage 2) | 已采纳 + DOUBLE-AMENDED (per ADR-0042 2026-09-03; per ADR-0048 2026-09-09) | 2026-09-03 (original); 2026-09-03 (AMENDMENT #1); 2026-09-09 (AMENDMENT #2) |
 | [ADR-0039](ADR-0039-design-handoff-runtime-filter.md) | ADR-0039: design-handoff runtime filter over on-disk cleanup | 已采纳 (2026-09-01) | 2026-09-01 |
@@ -87,6 +87,7 @@
 | [ADR-0058](ADR-0058-gap-analysis-migration-to-theme-doc.md) | ADR-0058: gap-analysis 实例迁移到 theme doc（multi-project-ai-collaborative-development） | 已采纳 | 2026-09-30 |
 | [ADR-0059](ADR-0059-rddf-status-fallback-mode.md) | ADR-0059: `rddf status` 自动降级模式 (iteration.json 缺失/损坏 → openspec/changes/ fallback) | 待定 | 2026-10-19 |
 | [ADR-0060](ADR-0060-adr-shape-contract-and-gate-demotion.md) | ADR-0060: ADR 形态契约与门禁降级 —— 决策文档只回答「定什么 / 为什么 / 代价」 | 已采纳 + AMENDED (2026-11-17) | 2026-10-28 |
+| [ADR-0061](ADR-0061-archive-gate-refuses-unmerged-branch.md) | ADR-0061: 合入门 —— 归档不代劳合并，但未合入不得归档 | 已采纳 (2026-11-17) | 2026-11-17 |
 <!-- ADR_INDEX_END -->
 
 ## 架构演进
