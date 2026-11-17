@@ -210,6 +210,29 @@ ADR-NNNN-<slug>.md
 - `<slug>` 是 kebab-case 简短描述（建议 ≤ 50 字符）
 - 模板永远是 `ADR-0000-template.md`（不要给真实 ADR 分配 0000）
 
+## 索引维护（`## ADR 列表` 那张表）
+
+**只有一个生成器：`_lib/adr_index_generator.py`。** 重建表：
+
+```bash
+python3 _lib/adr_index_generator.py --write docs/adr/README.md
+```
+
+预览（输出到 stdout，不改文件）：
+
+```bash
+python3 _lib/adr_index_generator.py
+```
+
+它只重写 `ADR_INDEX_START` 与 `ADR_INDEX_END` 两个标记之间的内容，本页其余散文不受影响。
+新增或修改 ADR 后请重建，否则 `tests/unit/test_adr_index_gate.py` 的逐字节断言会红
+（那是**故意的** —— 索引与磁盘不一致正是它要拦的）。
+
+> ⚠ 不要写第二个生成器。历史上存在过 `_lib/sync_adr_index.py`：3 列（无日期）、状态一律落成
+> `待定`（它找 `## Status` 标题，本仓用的是 `> **状态**:`）、而且会删掉上面两个标记。
+> 误用它会**静默**破坏本页 —— 3 列表格渲染完全合法，脚本不报任何错。
+> 该文件已删除，`test_no_duplicate_adr_index_generator` 守卫它的回归。
+
 ## 状态生命周期
 
 | 状态 | 含义 |

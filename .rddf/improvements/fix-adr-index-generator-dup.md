@@ -7,7 +7,7 @@ priority: P1
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: draft
+状态: implemented (2026-11-17)
 
 生成时间: 2026-11-17
 roadmap_ref:
@@ -137,17 +137,17 @@ python3 skills/_lib/sync_adr_index.py
 
 ## Acceptance
 
-- [ ] `ls _lib/sync_adr_index.py skills/_lib/sync_adr_index.py` ⇒ 两者都不存在
-- [ ] `grep -rn "sync_adr_index" --include=*.py --include=*.sh --include=*.bats --include=*.md .` 的命中**仅**剩显式允许清单：`openspec/changes/archive/2026-07-24-auto-sync-adr-index/{proposal,design}.md`（历史 change，不改）+ 本次 commit message。其余零命中
-- [ ] `grep -rn "skills/_lib/sync_adr_index\|python3 skills/_lib" _lib/ skills/ docs/ --include=*.py --include=*.md` 零命中（误导命令已清）
-- [ ] `python3 -m pytest tests/unit/test_adr_index_gate.py tests/unit/test_adr_index_generator.py -q` 全绿
-- [ ] **回落守卫**：`python3 -c "import sys;sys.path.insert(0,'.');import _lib.adr_index_generator as m,pathlib;assert pathlib.Path(m.__file__).resolve().is_relative_to(pathlib.Path('.').resolve()), m.__file__"` ⇒ 通过。变异验证：`mv _lib/adr_index_generator.py /tmp/x` ⇒ 相关测试红（不是回落到全局副本变绿）
-- [ ] **标记计数**：`python3 -c "t=open('docs/adr/README.md').read();assert t.count('<!-- ADR_INDEX_START -->')==1 and t.count('<!-- ADR_INDEX_END -->')==1"`
-- [ ] **列数守卫**：`grep -c "^| ADR | 标题 | 状态 | 日期 |$" docs/adr/README.md` = 1；`grep -c "^| ADR | 标题 | 状态 |$" docs/adr/README.md` = 0。变异验证：把表头改成 3 列 ⇒ `test_readme_index_rows_have_status_and_date` 与列数守卫**都**要红（不停留在 continue 跳过）
-- [ ] **无 continue 洞**：`grep -c "if len(cells) < 4:" tests/unit/test_adr_index_gate.py` = 0；且该测试有「参与检查行数 == ADR 行数」的配套计数断言（变异验证：删掉索引块里的一行 ⇒ 红）
-- [ ] 逐字节相等仍有效：`python3 _lib/adr_index_generator.py > /tmp/idx.md` 与 README 索引块 `diff` 为空
-- [ ] `docs/adr/README.md` 含「索引维护」小节，写明唯一生成器与可执行命令
-- [ ] `bats tests/integration/test_adr_index.bats tests/integration/test_adr_directory.bats` 全绿
+- [x] `ls _lib/sync_adr_index.py skills/_lib/sync_adr_index.py` ⇒ 两者都不存在
+- [x] `grep -rn "sync_adr_index" --include=*.py --include=*.sh --include=*.bats --include=*.md .` 的命中**仅**剩显式允许清单：`openspec/changes/archive/2026-07-24-auto-sync-adr-index/{proposal,design}.md`（历史 change，不改）+ 本次 commit message。其余零命中
+- [x] `grep -rn "skills/_lib/sync_adr_index\|python3 skills/_lib" _lib/ skills/ docs/ --include=*.py --include=*.md` 零命中（误导命令已清）
+- [x] `python3 -m pytest tests/unit/test_adr_index_gate.py tests/unit/test_adr_index_generator.py -q` 全绿
+- [x] **回落守卫**：`python3 -c "import sys;sys.path.insert(0,'.');import _lib.adr_index_generator as m,pathlib;assert pathlib.Path(m.__file__).resolve().is_relative_to(pathlib.Path('.').resolve()), m.__file__"` ⇒ 通过。变异验证：`mv _lib/adr_index_generator.py /tmp/x` ⇒ 相关测试红（不是回落到全局副本变绿）
+- [x] **标记计数**：`python3 -c "t=open('docs/adr/README.md').read();assert t.count('<!-- ADR_INDEX_START -->')==1 and t.count('<!-- ADR_INDEX_END -->')==1"`
+- [x] **列数守卫**：`grep -c "^| ADR | 标题 | 状态 | 日期 |$" docs/adr/README.md` = 1；`grep -c "^| ADR | 标题 | 状态 |$" docs/adr/README.md` = 0。变异验证：把表头改成 3 列 ⇒ `test_readme_index_rows_have_status_and_date` 与列数守卫**都**要红（不停留在 continue 跳过）
+- [x] **无 continue 洞**：`grep -c "if len(cells) < 4:" tests/unit/test_adr_index_gate.py` = 0；且该测试有「参与检查行数 == ADR 行数」的配套计数断言（变异验证：删掉索引块里的一行 ⇒ 红）
+- [x] 逐字节相等仍有效：`python3 _lib/adr_index_generator.py > /tmp/idx.md` 与 README 索引块 `diff` 为空
+- [x] `docs/adr/README.md` 含「索引维护」小节，写明唯一生成器与可执行命令
+- [x] `bats tests/integration/test_adr_index.bats tests/integration/test_adr_directory.bats` 全绿
 
 ## Capabilities
 
@@ -175,3 +175,36 @@ python3 skills/_lib/sync_adr_index.py
 | 「AC #1『命中只剩历史说明类』无机读定义」 | ✅ 采纳：改为显式允许清单（`openspec/changes/archive/2026-07-24-auto-sync-adr-index/{proposal,design}.md`）+ 其余零命中 |
 | 「『为什么是 P1 而不是 P2』整段是说服性文字」 | ✅ 采纳：压成一段，删掉三条理由式列举 |
 | 「`skills._lib` 回落是通用缺陷（100+ 导入点），只有 `sync_adr_index` 当前踩中 —— 若要覆盖全部模块另立一条，不要在这条扩 scope」 | ✅ 采纳：Out of Scope 显式排除，AC 只验 `adr_index_generator` 一个模块的位置 |
+
+---
+
+## 实施记录（2026-11-17）
+
+**改动**：
+- `git rm _lib/sync_adr_index.py`（142 行）+ `git rm tests/unit/test_sync_adr_index.py`（62 行）
+- `tests/unit/test_adr_index_gate.py`：修 `continue` 洞 + 加 4 条守卫（行数配套计数 / 标记各 1 次 / 4 列表头 / 模块位置在仓内 / 无第二个生成器）
+- `_lib/adr_index_generator.py`：docstring 改为唯一生成器声明 + 可执行命令 + 历史警告；`main()` 加 `--write`（原地重写标记之间，无标记 exit 2），无参仍输出 stdout（向后兼容）
+- `docs/adr/README.md`：新增「索引维护」小节（唯一命令 + 警告 + 指向守卫）
+
+**为什么测试无需迁移**：`test_sync_adr_index.py` 的 3 个有价值断言已被
+`test_adr_index_generator.py` **全部覆盖且更严格**（4 列 vs 3 列、`is_template` 标记、
+`scan_adrs` 字段完整性）；`test_finds_all_adrs` 是僵尸（import 后从不调用被测函数）。
+⇒ 整个文件删除，无断言丢失。
+
+**变异验证（4 个，已全部还原）**：
+
+| 变异 | 结果 |
+|---|---|
+| 索引表头改 3 列 | `test_readme_index_header_is_four_columns` + 逐字节断言 红 |
+| 删掉 `ADR_INDEX_END` 标记 | 4 条断言 红（含新增的标记计数） |
+| 删掉索引里的一行 ADR | `test_readme_index_rows_have_status_and_date` 的**行数配套断言** 红（正是它堵住原来的 continue 洞） |
+| 把 `_lib/adr_index_generator.py` 移出仓库 | `ModuleNotFoundError`（**不**回落到全局副本）+ 位置断言 红 |
+
+**守卫抓到我自己的两处措辞**（说明守卫有效）：
+① README 的「索引维护」小节写了 `<!-- ADR_INDEX_START -->` 完整字面量 ⇒ 标记计数变 2；
+② 小节与 docstring 提到 `sync_adr_index` ⇒ 被「不得引用」守卫抓到。
+处置：字面量改为非注释形式；两处**负向引用**（警告不要重建）显式加入允许清单并注明理由。
+
+**验证**：`pytest tests/unit/test_adr_index_gate.py tests/unit/test_adr_index_generator.py
+test_doc_contracts.py test_docs_consistency.py` ⇒ 43 passed；
+`bats test_adr_index / test_adr_directory / test_adr_gate_flow` ⇒ 30 passed。

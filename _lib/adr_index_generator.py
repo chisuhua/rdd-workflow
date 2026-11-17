@@ -1,4 +1,23 @@
-"""ADR Index Generator — scans docs/adr/ADR-*.md, generates markdown table.
+"""ADR Index Generator — the ONLY generator for the docs/adr index table.
+
+Rebuild the index in place:
+
+    python3 _lib/adr_index_generator.py --write docs/adr/README.md
+
+Print it to stdout instead (to inspect or diff):
+
+    python3 _lib/adr_index_generator.py
+
+This module is the single source of truth for the index block. Do not add a
+second generator: a former `_lib/sync_adr_index.py` produced 3-column tables
+(no date), forced every status to "待定" (it looked for a `## Status` heading
+while this repo writes `> **状态**:`), and deleted the
+`<!-- ADR_INDEX_START/END -->` markers. Using it corrupted the README with no
+error — 3-column tables render perfectly. It is covered by
+`tests/unit/test_adr_index_gate.py::test_no_duplicate_adr_index_generator`.
+
+Only the text between the markers is rewritten; the surrounding prose in
+README.md is left untouched.
 
 Public API:
     scan_adrs(adr_dir) -> list[dict]
@@ -94,15 +113,48 @@ def render_table(adrs: list[dict], include_metadata: bool = True) -> str:
     return "\n".join(lines) + "\n"
 
 
-def main():
-    """CLI entry: regenerate docs/adr/README.md table."""
+_INDEX_BLOCK = re.compile(
+    r"(<!-- ADR_INDEX_START -->\n)(.*?)(\n<!-- ADR_INDEX_END -->)", re.DOTALL
+)
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI entry. Without --write, the table goes to stdout.
+
+    Exit codes: 0 = ok, 2 = --write target has no ADR_INDEX_START/END markers.
+    """
+    import argparse
     import sys
-    repo_root = Path(__file__).resolve().parents[1]
-    adrs = scan_adrs(repo_root / "docs" / "adr")
-    table = render_table(adrs)
-    sys.stdout.write(table)
-    sys.exit(0)
+
+    parser = argparse.ArgumentParser(description="Generate the docs/adr index table.")
+    parser.add_argument(
+        "--write",
+        metavar="README",
+        help="rewrite the <!-- ADR_INDEX_START -->...<!-- ADR_INDEX_END --> block in this file",
+    )
+    args = parser.parse_args(argv)
+
+    adr_dir = Path(__file__).resolve().parents[1] / "docs" / "adr"
+    table = render_table(scan_adrs(adr_dir))
+
+    if not args.write:
+        sys.stdout.write(table)
+        return 0
+
+    readme = Path(args.write)
+    text = readme.read_text(encoding="utf-8")
+    if not _INDEX_BLOCK.search(text):
+        sys.stderr.write(
+            f"ERR {readme}: ADR_INDEX_START / ADR_INDEX_END markers not found\n"
+        )
+        return 2
+    readme.write_text(
+        _INDEX_BLOCK.sub(lambda m: m.group(1) + table.rstrip("\n") + m.group(3), text),
+        encoding="utf-8",
+    )
+    sys.stderr.write(f"rewrote index block in {readme}\n")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
