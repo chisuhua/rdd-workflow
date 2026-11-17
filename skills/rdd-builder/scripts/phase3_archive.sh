@@ -52,17 +52,34 @@ _resolve_pkg_root() {
 }
 PKG_ROOT="$(_resolve_pkg_root || true)"
 
-# archive_gate_check uses $tasks_root to locate tasks.md, the verdict cache and
-# `git rev-parse HEAD`. A fresh `git worktree` carries neither openspec/ nor the
-# gitignored .rddf/state/, so pick whichever root actually has tasks.md.
+# archive_gate_check uses $tasks_root to locate tasks.md and the verdict cache.
+# A fresh `git worktree` carries neither openspec/ nor the gitignored
+# .rddf/state/, so pick whichever root actually has tasks.md.
 #
-# CONTRACT: the gate reads the verdict cache from
-# $TASKS_ROOT/.rddf/state/verifier/.ac-verdict-<change>.json and compares its
-# codebase_commit against `git -C $TASKS_ROOT rev-parse HEAD`. Verification must
-# therefore run in the SAME root as $TASKS_ROOT — in worktree mode that means
-# RDDF_PROJECT_ROOT=<worktree>, not the canonical (main-repo) state root the
-# resolver picks by default; otherwise the cache and the sha anchor come from
-# different roots and the gate reports "stale" even though nothing changed.
+# CONTRACT (fix-verifier-gate-cache-root) — two roots, one anchor:
+#
+#   gate root  = $TASKS_ROOT — the change's ARTIFACTS (tasks.md, proposal.md)
+#                and the CONTRACT root for the verdict cache.
+#   state root = the canonical project root — the project REGISTRY
+#                (.rddf/state/iteration.json; .rddf/state/ is gitignored, so a
+#                linked worktree never carries it) and where the batch CLI
+#                `rddf rdd-verify` writes its cache.
+#
+#   ANCHOR = the implementation branch tip:
+#     git -C $TASKS_ROOT rev-parse --verify --quiet openspec/<change>
+#   NOT `git rev-parse HEAD`. The branch tip is what the write side records
+#   (_lib/verifier/branch.py::resolve_implementation_commit) and it is
+#   ROOT-INDEPENDENT — the same SHA is visible from the main repo and from
+#   every linked worktree. HEAD was wrong twice over: the write side never
+#   recorded it, and in the openspec_tracked=false path the main repo has just
+#   been switched to the default branch, so HEAD != branch tip and a perfectly
+#   good cache was reported as stale.
+#
+#   DUAL-CACHE POLICY: the gate reads the gate root first and the state root
+#   second. Both sides holding a cache is reported and the gate root wins
+#   (never merged, never silently preferred). A cache on one side only is
+#   used, and which side it came from is reported — this is why the write
+#   side may stamp either root without breaking the gate.
 EXEC_MODE=$(PKG_ROOT="$PKG_ROOT" PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" python3 -c "
 import os, sys
 if os.environ.get('PKG_ROOT'):
@@ -95,9 +112,9 @@ source "$PKG_ROOT/_lib/archive.sh" 2>/dev/null || true
 # gate here: the two would use different roots (archive_gate_check's
 # tasks_root vs archive_change's choice) and could disagree.
 #
-# CONTRACT — where the verdict cache must be stamped (the gate compares the
-# cache's codebase_commit with `git -C <gate root> rev-parse HEAD`, so cache
-# and sha anchor must come from the SAME root):
+# CONTRACT — where the verdict cache is stamped. The gate compares the cache's
+# codebase_commit with the implementation BRANCH TIP (root-independent, so it
+# no longer depends on which root the gate reads from):
 #   openspec_tracked=true  → gate root = the worktree  ⇒ verify in the worktree
 #   openspec_tracked=false → gate root = the main repo  ⇒ verify in the main repo
 #                             (that branch exists precisely because openspec/ is
@@ -105,6 +122,9 @@ source "$PKG_ROOT/_lib/archive.sh" 2>/dev/null || true
 #                              nor .rddf/state/verifier/)
 # In lightweight mode the gate root is $TASKS_ROOT (the root that holds
 # openspec/changes/<name>/tasks.md).
+# The canonical state root is read as a fallback, so a cache stamped by the
+# batch CLI `rddf rdd-verify` (which always writes to the canonical root) is
+# found as well — see the CONTRACT block above.
 #
 # Failed-AC policy is deliberately the gate's, not P3's: a cache whose verdict
 # contains failed ACs only WARNS and archiving proceeds, unless

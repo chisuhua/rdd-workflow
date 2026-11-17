@@ -453,9 +453,50 @@ archive_gate_check() {
   if [ "${SKIP_AC_VERIFICATION:-no}" != "yes" ]; then
     local proposal_file="$tasks_root/openspec/changes/$change_name/proposal.md"
     if [ -f "$proposal_file" ]; then
-      local verdict_cache_file="$tasks_root/.rddf/state/verifier/.ac-verdict-${change_name}.json"
-      local current_sha
-      current_sha=$(git -C "$tasks_root" rev-parse HEAD 2>/dev/null || echo "unknown")
+      # --- Cache roots (fix-verifier-gate-cache-root) -------------------------
+      # Two roots, each with one job:
+      #   gate root  ($tasks_root) — the change's artifacts + the CONTRACT root
+      #                            for the verdict cache
+      #   state root (canonical)   — the project registry + the batch CLI's
+      #                            cache (rddf rdd-verify writes there)
+      # The gate root wins; the state root is the fallback. When BOTH hold a
+      # cache the gate root is used and the other side is reported (never
+      # merged, never silently preferred).
+      local state_root=""
+      state_root=$(cd "$tasks_root" 2>/dev/null && main_repo_root || true)
+      local cache_root="$tasks_root"
+      local verdict_cache_file="$cache_root/.rddf/state/verifier/.ac-verdict-${change_name}.json"
+      if [ -n "$state_root" ] && [ "$state_root" != "$cache_root" ]; then
+        local state_cache_file="$state_root/.rddf/state/verifier/.ac-verdict-${change_name}.json"
+        if [ -f "$verdict_cache_file" ] && [ -f "$state_cache_file" ]; then
+          echo "ℹ️  archive_gate_check: a verdict cache also exists in $state_root; using the gate root $cache_root (CONTRACT)"
+        elif [ ! -f "$verdict_cache_file" ] && [ -f "$state_cache_file" ]; then
+          cache_root="$state_root"
+          verdict_cache_file="$state_cache_file"
+          echo "ℹ️  archive_gate_check: verdict cache found in $cache_root (not the gate root $tasks_root)"
+        fi
+      fi
+
+      # --- Freshness anchor (fix-verifier-gate-cache-root) -------------------
+      # The anchor is the IMPLEMENTATION BRANCH TIP, not HEAD:
+      #   * it is what the write side records
+      #     (_lib/verifier/branch.py::resolve_implementation_commit), so the
+      #     reader and the writer agree;
+      #   * it is root-independent (the ref lives in the shared repository),
+      #     so the cache stays fresh whichever root it is read from;
+      #   * HEAD was WRONG in the openspec_tracked=false path, where the main
+      #     repo has just been switched to the default branch — a perfectly
+      #     good cache was reported as stale.
+      local current_sha=""
+      current_sha=$(git -C "$tasks_root" rev-parse --verify --quiet "openspec/$change_name" 2>/dev/null || echo "")
+      if [ -z "$current_sha" ] && [ -n "$state_root" ] && [ "$state_root" != "$tasks_root" ]; then
+        # The ref lives in the shared repository: both roots answer the same.
+        current_sha=$(git -C "$state_root" rev-parse --verify --quiet "openspec/$change_name" 2>/dev/null || echo "")
+      fi
+      [ -n "$current_sha" ] || current_sha="unknown"
+      if [ "$current_sha" = "unknown" ]; then
+        echo "⚠️  archive_gate_check: cannot resolve the implementation branch 'openspec/$change_name' from $tasks_root"
+      fi
 
       local cache_sha="" cache_has_fail="no"
       if [ -f "$verdict_cache_file" ]; then
@@ -479,15 +520,21 @@ print(sha + "|no" if not has_fail else sha + "|yes")
           # verifier-v2-hardening (oracle risk #1): fail closed on incomplete
           # verdict (length mismatch / unknown ac_id / duplicate). Calls the
           # Python helper via subprocess with env-var passing (Oracle C1).
-          local integrity_result main_root
-          # Resolve main repo root from this script's location (works in test
-          # fixtures where tasks_root is an unrelated tmp dir).
+          local integrity_result pkg_root
+          # Resolve the PACKAGE root (the directory that contains `_lib/`) from
+          # this script's location — works in test fixtures where tasks_root is
+          # an unrelated tmp dir. NOT the repository root: the two used to be
+          # called `main_root` each, which is how the two got confused.
           local script_dir
           script_dir="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
-          main_root="$(cd "$script_dir/.." && pwd)"
+          pkg_root="$(cd "$script_dir/.." && pwd)"
+          # The two roots are passed EXPLICITLY (fix-verifier-gate-cache-root):
+          # the proposal comes from the gate root, the cache from the root it
+          # was actually found in. One env var used to carry both.
           integrity_result=$(RDDF_PROJECT_ROOT="$tasks_root" \
             CHANGE_NAME_FOR_INTEGRITY="$change_name" \
-            python3 "$main_root/_lib/cli/rdd_verify_cmd.py" --validate-cache-for-archive 2>/dev/null || echo '{"complete":false,"problems":["helper invocation failed"]}')
+            python3 "$pkg_root/_lib/cli/rdd_verify_cmd.py" --validate-cache-for-archive \
+              --proposal-root "$tasks_root" --cache-root "$cache_root" 2>/dev/null || echo '{"complete":false,"problems":["helper invocation failed"]}')
           local incomplete
           incomplete=$(printf '%s' "$integrity_result" | python3 -c '
 import json, sys

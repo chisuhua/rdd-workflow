@@ -28,6 +28,10 @@ setup() {
     chmod +x bin/openspec
     git add -A
     git commit -q -m fixture
+    # Lightweight mode executes on the main repo's openspec/<change> BRANCH
+    # (skills/execute/SKILL.md § 工作模式); the freshness anchor is that
+    # branch's tip (openspec/specs/verifier-lifecycle/spec.md).
+    git checkout -q -b openspec/demo
 }
 
 teardown() {
@@ -71,8 +75,8 @@ _phase3() {
     [[ "$output" == *"rdd-verifier"* ]]
 }
 
-@test "phase3: archives when cache is complete and sha matches HEAD" {
-    _write_cache "$(git -C "$TEST_TMP" rev-parse HEAD)" pass
+@test "phase3: archives when cache is complete and sha matches the branch tip" {
+    _write_cache "$(git -C "$TEST_TMP" rev-parse openspec/demo)" pass
     _phase3
     [ "$status" -eq 0 ]
 }
@@ -108,7 +112,7 @@ _phase3() {
     # set -euo pipefail + grep -c returning 1 (no completed tasks) must still
     # surface the gate's own message, not abort the script silently.
     printf '## Tasks\n\n- [ ] task one\n' > openspec/changes/demo/tasks.md
-    _write_cache "$(git -C "$TEST_TMP" rev-parse HEAD)" pass
+    _write_cache "$(git -C "$TEST_TMP" rev-parse openspec/demo)" pass
     _phase3
     [ "$status" -eq 7 ]
     [[ "$output" == *"未实现"* ]]
@@ -118,7 +122,7 @@ _phase3() {
     # proposal declares AC-1..AC-2; cache only covers AC-1.
     mkdir -p "$TEST_TMP/.rddf/state/verifier"
     CACHE="$TEST_TMP/.rddf/state/verifier/.ac-verdict-demo.json" \
-    SHA="$(git -C "$TEST_TMP" rev-parse HEAD)" python3 - <<'PY'
+    SHA="$(git -C "$TEST_TMP" rev-parse openspec/demo)" python3 - <<'PY'
 import json, os
 json.dump({
     "schema_version": 2, "version": 2, "change": "demo",
@@ -134,14 +138,14 @@ PY
 }
 
 @test "phase3: cache with failed ACs only warns by default (archiving proceeds)" {
-    _write_cache "$(git -C "$TEST_TMP" rev-parse HEAD)" fail
+    _write_cache "$(git -C "$TEST_TMP" rev-parse openspec/demo)" fail
     _phase3
     [ "$status" -eq 0 ]
     [[ "$output" == *"failed ACs"* ]]
 }
 
 @test "phase3: cache with failed ACs blocks under STRICT_AC_GATE=yes" {
-    _write_cache "$(git -C "$TEST_TMP" rev-parse HEAD)" fail
+    _write_cache "$(git -C "$TEST_TMP" rev-parse openspec/demo)" fail
     _phase3 STRICT_AC_GATE=yes
     [ "$status" -eq 7 ]
     [[ "$output" == *"STRICT_AC_GATE"* ]]

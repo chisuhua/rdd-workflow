@@ -54,7 +54,20 @@ LOCKED_TASKS_WRITEBACK_SH="e9e0065de4f65fbeef763be3b3eb09626c99920744e6bb2585311
 # its `>/dev/null` so a refused archive states why (the openspec_tracked=false
 # branch already behaved that way). rdd-quick still never reaches that call —
 # it archives through the false branch, which is the bypass path (ADR-0047).
-LOCKED_ARCHIVE_SH="70e3a387e333168a271f679dbe08be8c4beb6f97fd25cc1a66e934b1fd36515f"
+# Note (2026-11-17, fix-verifier-gate-cache-root): LOCKED_ARCHIVE_SH recaptured.
+# The change touches the AC-verification block of archive_gate_check only:
+#   * the freshness anchor is now the implementation BRANCH TIP
+#     (`git rev-parse --verify --quiet openspec/<change>`) instead of HEAD —
+#     this is what openspec/specs/verifier-lifecycle/spec.md:98-100 already
+#     requires ("Arbitrary execution root HEAD SHALL NEVER be used as an
+#     archive authorization commit");
+#   * the verdict cache is looked up in the gate root first and the canonical
+#     state root second, and the integrity helper receives the two roots
+#     explicitly instead of through one env var.
+# rdd-quick zero-pollution invariant preserved: rdd-quick is the bypass path
+# (ADR-0047) — it never writes a verdict cache, so for it the lookup is a miss
+# (and then the audited bypass) before and after the change.
+LOCKED_ARCHIVE_SH="cd26dc0731049461fb9d314233f6d117a33d6fd60fa71b8ea2b2a4e8a36d9015"
 # Role block of rdd-planner/SKILL.md (from `role:` through closing `---`).
 # This is the structural-only hash that MUST be byte-identical after rdd-quick lands.
 # LOCKED_RDD_PLANNER_ROLE_BLOCK: role: ... --- block sha256, captured post-ADR-0048

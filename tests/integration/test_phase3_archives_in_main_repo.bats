@@ -36,11 +36,13 @@ setup() {
         git commit -q -m "feature work"
     )
     # The branch is merged before archiving (the workflow requirement: the
-    # code must reach the default branch BEFORE the verdict cache is stamped,
-    # because the false-branch gate binds the default branch's HEAD).
+    # code must reach the default branch BEFORE the verdict cache is stamped).
     git merge -q --no-ff openspec/demo -m "merge: feature work"
-    # Verdict cache stamped at the (post-merge) default-branch HEAD.
-    SHA="$(git rev-parse HEAD)" CACHE="$TEST_TMP/.rddf/state/verifier/.ac-verdict-demo.json" python3 - <<'PY'
+    # The cache is stamped with the IMPLEMENTATION BRANCH TIP — the anchor the
+    # gate compares against (openspec/specs/verifier-lifecycle/spec.md). It is
+    # root-independent, so the false branch (which switches the main repo to
+    # the default branch before running the gate) still sees a fresh cache.
+    SHA="$(git rev-parse openspec/demo)" CACHE="$TEST_TMP/.rddf/state/verifier/.ac-verdict-demo.json" python3 - <<'PY'
 import json, os
 json.dump({
     "schema_version": 2, "version": 2, "change": "demo",

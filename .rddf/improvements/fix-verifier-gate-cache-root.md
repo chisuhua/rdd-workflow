@@ -6,7 +6,7 @@ priority: P1
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: draft
+状态: implemented (2026-11-17)
 
 生成时间: 2026-11-17
 roadmap_ref:
@@ -95,20 +95,20 @@ metis 指出的第二层：同类问题（门与写端对根的约定不一致�
 
 ## Acceptance
 
-- [ ] 门内 python 段使用**调用方传入的根**（= tasks_root），不再自行 `_main_repo_root`；子模块场景下解析正确（复用 canonical `resolve_project_root`）
-- [ ] 锚点表达式统一为**分支 tip**（`git rev-parse --verify --quiet openspec/<name>`）：bash 段、写端代码路径、SKILL.md 文案、`phase3_archive.sh` CONTRACT 段**四处一致**
-- [ ] false 分支在 `switch_to_default_branch` 之后跑门时**不再**必然判 stale（回归用例覆盖）
-- [ ] `skills/rdd-verifier/SKILL.md` 的 `codebase_commit` 文案改为分支 tip（不再写 `<git rev-parse HEAD>`）
-- [ ] `archive.sh:488` 的 integrity helper 不再用一个 env 变量承担两个根（proposal 与 cache 各取自明确的根）；worktree 模式下**不出现** `cached verdict is incomplete` 误拒
-- [ ] `run_verification.sh` 的根解析改用 canonical resolver；SKILL.md 写明「cache 路径由 resolver 决定」
-- [ ] `phase3_archive.sh:55-66` 的 CONTRACT 段与新锚点表达式一致；双 cache 并存策略写进该段（以 CONTRACT 根为准，另一侧只 warn）
-- [ ] `skills/rdd-verifier/SKILL.md` 列出三张数据的落点契约表：cache 文件 / `iteration.json` 的 `verification` 字段 / `rdd-verify-context` 各在哪个根
-- [ ] 测试矩阵 2×2 有判别力：场景 A（cache 只在主仓）与场景 B（cache 只在 worktree）各自断言「读到哪一侧」；场景 C（锚点不符）仍判 stale
-- [ ] `tests/integration/test_archive_gate.bats:39-50` 的假绿灯被修（补 `proposal.md`），不再产生「没测到 AC 门却绿」的用例
-- [ ] bypass 顺序：`state/tasks` 根解析失败时，`SKIP_RDD_VERIFIER=yes` + `RDDF_VERIFIER_BYPASS_REASON` **仍能放行并留审计**（不因新代码提前 return 而被跳过）
-- [ ] `FEATURE_ARCHIVE_GATE=hard` 的行为不变（与根无关）
-- [ ] 命名收敛：`_lib/archive.sh:485-487` 的局部 `main_root` 改名为 `pkg_root`；未新造第三个根解析函数
-- [ ] `./test.sh --unit` + `bats tests/integration/test_archive_gate.bats` + `bats tests/integration/test_rdd_verifier*.bats` 全绿
+- [x] 门内 python 段使用**调用方传入的根**（= tasks_root），不再自行 `_main_repo_root`；子模块场景下解析正确（复用 canonical `resolve_project_root`）
+- [x] 锚点表达式统一为**分支 tip**（`git rev-parse --verify --quiet openspec/<name>`）：bash 段、写端代码路径、SKILL.md 文案、`phase3_archive.sh` CONTRACT 段**四处一致**
+- [x] false 分支在 `switch_to_default_branch` 之后跑门时**不再**必然判 stale（回归用例覆盖）
+- [x] `skills/rdd-verifier/SKILL.md` 的 `codebase_commit` 文案改为分支 tip（不再写 `<git rev-parse HEAD>`）
+- [x] `archive.sh:488` 的 integrity helper 不再用一个 env 变量承担两个根（proposal 与 cache 各取自明确的根）；worktree 模式下**不出现** `cached verdict is incomplete` 误拒
+- [x] `run_verification.sh` 的根解析改用 canonical resolver；SKILL.md 写明「cache 路径由 resolver 决定」
+- [x] `phase3_archive.sh:55-66` 的 CONTRACT 段与新锚点表达式一致；双 cache 并存策略写进该段（以 CONTRACT 根为准，另一侧只 warn）
+- [x] `skills/rdd-verifier/SKILL.md` 列出三张数据的落点契约表：cache 文件 / `iteration.json` 的 `verification` 字段 / `rdd-verify-context` 各在哪个根
+- [x] 测试矩阵 2×2 有判别力：场景 A（cache 只在主仓）与场景 B（cache 只在 worktree）各自断言「读到哪一侧」；场景 C（锚点不符）仍判 stale
+- [x] `tests/integration/test_archive_gate.bats:39-50` 的假绿灯被修（补 `proposal.md`），不再产生「没测到 AC 门却绿」的用例
+- [x] bypass 顺序：`state/tasks` 根解析失败时，`SKIP_RDD_VERIFIER=yes` + `RDDF_VERIFIER_BYPASS_REASON` **仍能放行并留审计**（不因新代码提前 return 而被跳过）
+- [x] `FEATURE_ARCHIVE_GATE=hard` 的行为不变（与根无关）
+- [x] 命名收敛：`_lib/archive.sh:485-487` 的局部 `main_root` 改名为 `pkg_root`；未新造第三个根解析函数
+- [x] `./test.sh --unit` + `bats tests/integration/test_archive_gate.bats` + `bats tests/integration/test_rdd_verifier*.bats` 全绿
 
 ## Capabilities
 
@@ -158,3 +158,127 @@ metis 1 轮（2026-11-17）。逐条处置：
 
 > 核查中的一次自我纠正：首次查的是 `_lib/verifier/run_verification.sh`（不存在），
 > 得出「AC 落点不存在」的错误结论；实际文件在 `skills/rdd-verifier/scripts/` 下。立项无误。
+
+---
+
+## 实施记录（2026-11-17）
+
+### 根因复盘
+
+三处各写各的约定（根 ×2 + 锚点 ×2），实测后果：
+
+| 参与方 | 旧根 | 旧锚点 |
+|---|---|---|
+| 门（bash 段）`archive.sh:456/458` | `$tasks_root` | `HEAD` |
+| 门（python 段）`archive_gate.py:113` | 自推导的 `_main_repo_root(cwd)` | 分支 tip |
+| 写端（代码路径）`branch.py:15` | 调用方传入 | 分支 tip |
+| 写端（文档路径）`SKILL.md:269` | agent 的 cwd | `HEAD` |
+| 写端（批量 CLI）`rdd_verify_cmd.py:39` | canonical resolver（主仓） | 分支 tip |
+
+⇒ 走 skill 流程时 cache 落在 worktree、python 段却去主仓找；从主仓批量跑
+`rddf rdd-verify` 时 cache 在主仓、bash 段却按 tasks_root 找 —— **两侧都可能
+互相看不见对方的 cache**，门于是报「没验证过」。
+
+### 关键发现：旧锚点其实**违反已签批 spec**
+
+`openspec/specs/verifier-lifecycle/spec.md:98-100`（已采纳的 capability spec）：
+
+> The verifier SHALL use the `openspec/<change>` branch tip as the implementation
+> commit. … **Archive gate SHALL compare against the same commit. Arbitrary
+> execution root HEAD SHALL NEVER be used as an archive authorization commit.**
+
+⇒ bash 段的 `git -C "$tasks_root" rev-parse HEAD` 是**spec 违规**，不是「另一套
+约定」。本项把它改回合规，而不是新立一套。
+
+### 改动
+
+**1. 两个根，各司其职（`_lib/verifier/archive_gate.py` + `_lib/archive.sh`）**
+
+| 根 | 装什么 | 谁读 |
+|---|---|---|
+| **gate root**（`$tasks_root`，调用方传入） | change 的 artifacts（tasks.md / proposal.md）+ verdict cache | bash 段 + python 段 |
+| **state root**（canonical project root，`resolve_project_root()`，ADR-0033 子模块安全） | 项目级 registry（`.rddf/state/iteration.json`，被 gitignore ⇒ 链接 worktree 永远没有）+ 批量 CLI 写的 cache | python 段（registry）/ 门（cache 兜底） |
+
+- python 段不再自行 `_main_repo_root`（它在子模块里指向 superproject 的
+  `.git/modules/<n>`，`.parent` 得到 `.git/modules` —— 错）；改用 canonical
+  `resolve_project_root`。
+- **双 cache 策略**：门根优先，state root 兜底；两侧都有 ⇒ 用门根并**报告**
+  另一侧（不合并、不静默优先）。写端落在哪一侧都不会让门失效 —— 这正是
+  「写端收敛到 canonical resolver」能成立的前提。
+
+**2. 锚点统一为分支 tip（四处一致）**
+
+- `_lib/archive.sh`：`git -C "$tasks_root" rev-parse --verify --quiet "openspec/$change_name"`
+  （门根解不出时回落到 state root；ref 在共享仓库里，两侧同值）。
+- `_lib/verifier/archive_gate.py::resolve_branch_tip`（本来就是分支 tip，未改语义）。
+- `skills/rdd-verifier/SKILL.md`：`codebase_commit` 文案 + Per-Change Flow 的
+  SHA 语义（`git rev-parse HEAD` → 分支 tip）。
+- `skills/rdd-builder/scripts/phase3_archive.sh`：两段 CONTRACT 同步。
+
+**3. integrity helper 拆根（`_lib/cli/rdd_verify_cmd.py`）**
+
+`validate_cache_for_archive(project_root, change_name, *, proposal_root=None,
+cache_root=None)`：proposal 取门根、cache 取**实际读到的那一侧**；bash 段改传
+显式参数 `--proposal-root` / `--cache-root`（env 变量保留为兜底）。
+
+**4. 命名收敛（`_lib/archive.sh`）**
+
+局部 `main_root`（其实是 **pkg 安装目录**）→ `pkg_root`；与 `main_repo_root()`
+（仓库根）不再同名。未新造第三个根解析函数。
+
+**5. 写端收敛（`skills/rdd-verifier/scripts/run_verification.sh`）**
+
+根解析：`RDDF_PROJECT_ROOT`（显式钉住）→ canonical project root（ADR-0033）
+→ `$PWD`；不再裸用 `--show-toplevel`。SKILL.md 新增「落点契约表」。
+
+### 测试
+
+**新增 2×2 矩阵**（`tests/integration/test_archive_gate_cache_root.bats`，8 例，真 worktree）：
+
+| 用例 | 断言 |
+|---|---|
+| A：cache 只在主仓 | READY + 输出点名主仓（读到哪一侧） |
+| B：cache 只在 worktree | READY + **无**兜底消息（用的是门根） |
+| C：锚点不符 | stale（freshness 未放宽） |
+| D：两侧都有 | 门根胜 + 报告另一侧 |
+| E：false 分支（门根=主仓，HEAD 已前移） | 分支 tip ⇒ 仍 fresh（**AC-3 的回归用例**） |
+| F：cache 记的是默认分支 HEAD | stale |
+| G：分支不存在 | fail closed（无 HEAD 兜底） |
+| H：锚点解不出 + SKIP_RDD_VERIFIER | 仍能放行并留审计（**AC-11**） |
+
+**变异验证**：把锚点改回 `HEAD` ⇒ E/F/G 变红；去掉 state root 兜底 ⇒ A/D 变红。
+
+**新增单测**（`tests/unit/test_verifier_gate_cache_root.py`，10 例）：门根优先 /
+state root 兜底 / 缺失两侧 / 锚点是分支 tip 而非 HEAD / registry 读 state root /
+integrity helper 两根独立。
+
+**修假绿灯**（`tests/integration/test_archive_gate.bats:39-50`）：该用例的伪
+worktree 没有 `proposal.md`，而 AC 门要求 proposal 存在 ⇒ **它根本没测到 AC
+门**。改为真 worktree + 真 cache，并断言输出含 "Reusing verifier verdict cache"。
+
+**适配分支 tip 锚点的既有 bats**（6 个文件）：它们用 `git rev-parse HEAD` 播种
+cache —— 那是 **spec 违规的旧锚点**。改为播种分支 tip 并（必要时）创建分支：
+`test_ac_verifier_archive_gate` / `test_archive_gate_no_ac_fallback` /
+`test_rdd_verifier_archive_compat` / `test_rdd_builder_phase3_archive`（轻量模式
+⇒ 在 `openspec/demo` 分支上执行，与 `skills/execute/SKILL.md` § 工作模式一致）/
+`test_phase3_archives_in_main_repo`（false 分支）。
+
+### 一次性代价
+
+锚点从 HEAD 改为分支 tip ⇒ **历史 cache 全部失效一次**（它们的
+`codebase_commit` 记的是 HEAD）⇒ 需重跑一次验证。这是 spec 要求的语义
+（HEAD 从来就不是合法的授权 commit），不是新引入的限制。
+
+### 全量门抓到的一项（sha256 锁）
+
+`tests/integration/test_rdd_quick_isolation.bats` 用 **sha256 锁**钉住
+`_lib/archive.sh` 等四个文件的字节内容（「rdd-quick 不得污染这些文件」）。
+本项合法改动了 `_lib/archive.sh` 的 AC 验证块 ⇒ 锁必须**重取基线**（与
+2026-09-11 / 2026-09-28 / 2026-11-14 / 2026-11-16 四次先例同处理），并在
+测试文件里写明为何 rdd-quick 的零污染不变式仍成立：rdd-quick 是 bypass 路径
+（ADR-0047），它从不写 verdict cache ⇒ 对它是「查不到 → 审计旁路」，改动前后一致。
+
+### 顺带发现（未修，已记录）
+
+`skills/rdd-verifier/scripts/run_verification.sh` 无生产调用方（只有 agent 按
+SKILL.md 调）—— 本项改的是它的**落点语义**，不改调用关系。

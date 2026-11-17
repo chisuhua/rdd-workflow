@@ -338,6 +338,9 @@ def aggregate_exit(states: list) -> int:
 def validate_cache_for_archive(
     project_root: Path,
     change_name: str,
+    *,
+    proposal_root: Optional[Path] = None,
+    cache_root: Optional[Path] = None,
 ) -> dict:
     """Validate cached verdict completeness for archive_gate_check.
 
@@ -347,12 +350,20 @@ def validate_cache_for_archive(
     archive_gate_check calls this via Python subprocess (env-var passing per
     Oracle C1 + AGENTS.md common-pitfall #18) to fail closed on incomplete
     cached verdicts. If complete=True, archive proceeds.
+
+    The two roots are SEPARATE parameters (fix-verifier-gate-cache-root): the
+    AC list comes from the proposal in the gate root, the cache is read from
+    the root it was actually found in. A single env var used to carry both,
+    which made the helper disagree with the bash gate about which cache was
+    being checked. Both default to `project_root` for backward compatibility.
     """
     from _lib.verifier.cache import read_verdict_cache
     from _lib.verifier.protocol import parse_acs, validate_verdict_completeness
-    proposal = project_root / "openspec" / "changes" / change_name / "proposal.md"
+    proposal_base = Path(proposal_root) if proposal_root else Path(project_root)
+    cache_base = Path(cache_root) if cache_root else Path(project_root)
+    proposal = proposal_base / "openspec" / "changes" / change_name / "proposal.md"
     acs = parse_acs(proposal) if proposal.is_file() else []
-    cached = read_verdict_cache(project_root, change_name)
+    cached = read_verdict_cache(cache_base, change_name)
     if cached is None:
         return {"complete": False, "problems": ["cache missing or unreadable"],
                 "schema_version": None}
@@ -540,7 +551,21 @@ if __name__ == "__main__":
     if "--validate-cache-for-archive" in sys.argv:
         proj_root = Path(os.environ.get("RDDF_PROJECT_ROOT", "."))
         change = os.environ.get("CHANGE_NAME_FOR_INTEGRITY", "")
-        result = validate_cache_for_archive(proj_root, change)
+        # Explicit roots (fix-verifier-gate-cache-root). The env var stays as
+        # the fallback so older callers keep working.
+        def _arg_root(flag: str) -> Optional[Path]:
+            if flag in sys.argv:
+                idx = sys.argv.index(flag)
+                if idx + 1 < len(sys.argv):
+                    return Path(sys.argv[idx + 1])
+            return None
+        proposal_root = _arg_root("--proposal-root")
+        cache_root = _arg_root("--cache-root")
+        result = validate_cache_for_archive(
+            proj_root, change,
+            proposal_root=proposal_root,
+            cache_root=cache_root,
+        )
         print(json.dumps(result, ensure_ascii=False))
         sys.exit(0 if result.get("complete") else 1)
     sys.exit(cmd_rdd_verify(sys.argv[1:]))

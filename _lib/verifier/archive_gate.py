@@ -1,9 +1,36 @@
 """Verifier contract enforcement for archive gate.
 
-Per fix-rdd-verifier-lifecycle-dashboard Tasks 11-14:
-- Consume iteration.verification.state, archive_ready, verdict_sha
-- Resolve canonical cache path via main_repo_root (no shell interpolation)
-- Return structured reason code for bash archive_gate_check to act on
+Root + anchor contract (fix-verifier-gate-cache-root)
+-----------------------------------------------------
+**Two roots, one job each** — the previous implementation mixed them up, so
+the bash gate and this module looked for the same cache in different places:
+
+  **gate root** — the caller's root (the ``tasks_root`` handed to
+  ``archive_gate_check``). Holds the change's ARTIFACTS (``tasks.md``,
+  ``proposal.md``) and, per the CONTRACT in
+  ``skills/rdd-builder/scripts/phase3_archive.sh``, the verdict cache.
+
+  **state root** — the canonical project root, resolved with the
+  submodule-aware ``resolve_project_root`` (ADR-0033). Holds the project-wide
+  REGISTRY (``.rddf/state/iteration.json``) and the batch verifier's own
+  state. ``.rddf/state/`` is gitignored, so a linked worktree never carries
+  it — the registry is only ever in the main repository.
+
+**One anchor, root-independent** — the implementation branch tip
+(``openspec/<change>``). The same SHA is visible from the main repository and
+from every linked worktree, so a verdict cache stamped with it stays fresh no
+matter which root the reader picks it up from. This is exactly what the write
+side records (``_lib/verifier/branch.py::resolve_implementation_commit``).
+The previous bash gate compared against ``HEAD``, which in the
+``openspec_tracked=false`` path had just been switched to the default branch
+— so a perfectly good cache was reported as stale.
+
+**Cache lookup** — the gate reads the verdict cache from the gate root and
+falls back to the state root (that is where the batch CLI ``rddf rdd-verify``
+writes it); whichever side it used is reported. It never reads two *paths*
+for the same root: a dual-path read would let the bash gate and this module
+disagree about whether a cache exists (see ``_lib/verifier/cache.py`` §
+one-shot migration).
 """
 from __future__ import annotations
 
@@ -18,38 +45,56 @@ from _lib.verifier.cache import (
 )
 
 
-def _project_root() -> Path:
-    return Path(os.environ.get("RDDF_PROJECT_ROOT")
-                or os.environ.get("PROJECT_ROOT")
-                or os.getcwd())
+def _caller_root() -> Path:
+    """The root the caller handed us (the gate root).
 
-
-def _main_repo_root(cwd: Path) -> Path:
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(cwd), "rev-parse", "--git-common-dir"],
-            capture_output=True, text=True, timeout=5,
-        )
-        if result.returncode != 0:
-            return cwd
-        common = result.stdout.strip()
-        common_path = Path(common)
-        if common_path.is_absolute():
-            return common_path.parent
-        return (cwd / common).resolve().parent
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
-        return cwd
-
-
-def _cache_path(main_root: Path, change_name: str) -> Path:
-    """Cache path for the archive gate.
-
-    The path expression lives in `cache.verdict_cache_path` (single definition
-    point); the ROOT is deliberately NOT unified with the caller's root —
-    the archive gate resolves the main repository root itself (worktree mode
-    keeps the cache in the main repo, not in the worktree).
+    ``RDDF_PROJECT_ROOT`` is what ``verifier_contract_check`` exports; it is
+    the gate root (= ``tasks_root``), NOT a repository root we derive.
     """
-    return verdict_cache_path(main_root, change_name)
+    env = os.environ.get("RDDF_PROJECT_ROOT") or os.environ.get("PROJECT_ROOT")
+    if env:
+        return Path(env)
+    return Path(os.getcwd())
+
+
+def _state_root(gate_root: Path) -> Path:
+    """Canonical project root for `gate_root` (submodule-aware, ADR-0033).
+
+    Replaces the previous hand-rolled ``--git-common-dir`` derivation, which
+    pointed at the superproject's ``.git/modules/<n>`` inside a submodule.
+    """
+    try:
+        from _lib.cli import resolve_project_root
+        return Path(resolve_project_root(str(gate_root)))
+    except Exception:  # noqa: BLE001 - resolution must never break the gate
+        return Path(gate_root)
+
+
+def _registry_root(gate_root: Path, state_root: Path) -> Path:
+    """Root that holds ``.rddf/state/iteration.json``.
+
+    ``.rddf/state/`` is gitignored, so a linked worktree never carries the
+    registry: it lives in the canonical state root. When the gate root does
+    hold one (lightweight mode, ``openspec_tracked=false``, or a test
+    fixture), the gate root wins — it is the project the caller is archiving.
+    """
+    if gate_root == state_root:
+        return gate_root
+    if (gate_root / ".rddf" / "state" / "iteration.json").is_file():
+        return gate_root
+    return state_root
+
+
+def _cache_path(root: Path, change_name: str) -> Path:
+    """Cache path for the archive gate — the root is supplied, never derived.
+
+    The path EXPRESSION lives in `cache.verdict_cache_path` (single definition
+    point, asserted by tests/unit/test_verifier_state_consolidation.py); this
+    wrapper only exists so the archive gate spells the root explicitly. That
+    is the whole point of fix-verifier-gate-cache-root: the caller decides
+    between the gate root and the canonical state root.
+    """
+    return verdict_cache_path(root, change_name)
 
 
 def load_iteration_doc(project_root: Path) -> dict:
@@ -71,6 +116,11 @@ def find_change_verification(project_root: Path, change_name: str) -> Optional[d
 
 
 def resolve_branch_tip(cwd: Path, change_name: str) -> Optional[str]:
+    """Implementation branch tip — the freshness anchor.
+
+    Root-independent: the ref lives in the shared repository, so the main
+    repo and every linked worktree resolve the same SHA.
+    """
     try:
         result = subprocess.run(
             ["git", "-C", str(cwd), "rev-parse", "--verify", "--quiet",
@@ -84,14 +134,65 @@ def resolve_branch_tip(cwd: Path, change_name: str) -> Optional[str]:
     return None
 
 
+def _resolve_anchor(gate_root: Path, state_root: Path, change_name: str) -> Optional[str]:
+    """Resolve the freshness anchor (implementation branch tip).
+
+    The ref lives in the shared repository, so both roots answer the same.
+    The gate root is tried first (it is the root the bash segment anchors on);
+    the state root is the fallback for the case where the gate root is not a
+    git working tree at all.
+    """
+    for root in _cache_roots(gate_root, state_root):
+        tip = resolve_branch_tip(root, change_name)
+        if tip is not None:
+            return tip
+    return None
+
+
+def find_verdict_cache(
+    gate_root: Path,
+    state_root: Path,
+    change_name: str,
+) -> tuple[Optional[dict], Optional[Path]]:
+    """Locate the verdict cache; return ``(cache_doc, root_it_was_found_in)``.
+
+    The gate root wins (that is the CONTRACT root); the canonical state root
+    is the fallback (that is where the batch CLI writes). ``(None, None)``
+    when neither side has a usable cache.
+    """
+    for root in _cache_roots(gate_root, state_root):
+        cache = read_verdict_cache(root, change_name)
+        if cache is not None:
+            return cache, root
+    return None, None
+
+
+def _cache_roots(gate_root: Path, state_root: Path) -> list[Path]:
+    """Candidate roots, gate root first, de-duplicated."""
+    roots: list[Path] = []
+    for root in (gate_root, state_root):
+        if root not in roots:
+            roots.append(root)
+    return roots
+
+
 def check_archive_readiness(
     project_root: Optional[Path] = None,
     change_name: str = "",
     *,
     force_bypass: bool = False,
     feature_archive_gate: str = "off",
+    state_root: Optional[Path] = None,
 ) -> dict:
     """Check whether a change is archive-ready.
+
+    Args:
+        project_root: the gate root (the caller's root). Defaults to
+            ``RDDF_PROJECT_ROOT`` / ``PROJECT_ROOT`` / cwd.
+        change_name: the OpenSpec change name.
+        force_bypass: reserved for callers that already bypassed the gate.
+        feature_archive_gate: ``"hard"`` blocks unconditionally.
+        state_root: override for the canonical state root (tests).
 
     Returns a dict:
         {
@@ -102,20 +203,25 @@ def check_archive_readiness(
           "archive_ready": bool,
           "cache_present": bool,
           "cache_failed": bool,
+          "cache_root": str|None,  # which root the cache was read from
         }
     """
-    cwd = project_root or _project_root()
+    gate_root = Path(project_root) if project_root else _caller_root()
     if feature_archive_gate == "hard" and not force_bypass:
         return {"ready": False, "reason": "feature_archive_gate=hard blocks archive",
                 "verification_state": None, "verdict_sha": None,
-                "archive_ready": False, "cache_present": False, "cache_failed": False}
+                "archive_ready": False, "cache_present": False, "cache_failed": False,
+                "cache_root": None}
 
-    main_root = _main_repo_root(cwd)
-    verification = find_change_verification(main_root, change_name)
+    resolved_state_root = Path(state_root) if state_root else _state_root(gate_root)
+    registry_root = _registry_root(gate_root, resolved_state_root)
+
+    verification = find_change_verification(registry_root, change_name)
     if verification is None:
         return {"ready": False, "reason": "verification missing: rdd-verifier not run",
                 "verification_state": None, "verdict_sha": None,
-                "archive_ready": False, "cache_present": False, "cache_failed": False}
+                "archive_ready": False, "cache_present": False, "cache_failed": False,
+                "cache_root": None}
 
     state = verification.get("state")
     archive_ready = bool(verification.get("archive_ready"))
@@ -126,51 +232,56 @@ def check_archive_readiness(
             return {"ready": False, "reason": "bypassed without reason",
                     "verification_state": state, "verdict_sha": verdict_sha,
                     "archive_ready": archive_ready, "cache_present": False,
-                    "cache_failed": False}
+                    "cache_failed": False, "cache_root": None}
         return {"ready": True, "reason": "",
                 "verification_state": state, "verdict_sha": verdict_sha,
-                "archive_ready": True, "cache_present": False, "cache_failed": False}
+                "archive_ready": True, "cache_present": False, "cache_failed": False,
+                "cache_root": None}
 
     if state != "passed":
         return {"ready": False, "reason": f"verification state is {state!r}",
                 "verification_state": state, "verdict_sha": verdict_sha,
-                "archive_ready": False, "cache_present": False, "cache_failed": False}
+                "archive_ready": False, "cache_present": False, "cache_failed": False,
+                "cache_root": None}
 
     if not archive_ready:
         return {"ready": False, "reason": "archive_ready=false",
                 "verification_state": state, "verdict_sha": verdict_sha,
-                "archive_ready": False, "cache_present": False, "cache_failed": False}
+                "archive_ready": False, "cache_present": False, "cache_failed": False,
+                "cache_root": None}
 
     if not verdict_sha:
         return {"ready": False, "reason": "verdict_sha missing",
                 "verification_state": state, "verdict_sha": None,
                 "archive_ready": archive_ready, "cache_present": False,
-                "cache_failed": False}
+                "cache_failed": False, "cache_root": None}
 
-    branch_tip = resolve_branch_tip(cwd, change_name)
+    branch_tip = _resolve_anchor(gate_root, resolved_state_root, change_name)
     if branch_tip is None:
         return {"ready": False, "reason": "openspec/<change> branch missing",
                 "verification_state": state, "verdict_sha": verdict_sha,
                 "archive_ready": archive_ready, "cache_present": False,
-                "cache_failed": False}
+                "cache_failed": False, "cache_root": None}
     if branch_tip != verdict_sha:
         return {"ready": False, "reason": "verdict_sha stale (branch moved)",
                 "verification_state": state, "verdict_sha": verdict_sha,
                 "archive_ready": archive_ready, "cache_present": False,
-                "cache_failed": False}
+                "cache_failed": False, "cache_root": None}
 
-    cache = read_verdict_cache(main_root, change_name)
-    cache_failed = cache is not None and cache_has_failed_ac(main_root, change_name)
+    cache, cache_root = find_verdict_cache(gate_root, resolved_state_root, change_name)
+    cache_failed = cache is not None and cache_has_failed_ac(cache_root, change_name)
     if cache_failed:
         return {"ready": False, "reason": "cache has failed AC",
                 "verification_state": state, "verdict_sha": verdict_sha,
                 "archive_ready": archive_ready, "cache_present": cache is not None,
-                "cache_failed": True}
+                "cache_failed": True,
+                "cache_root": str(cache_root) if cache_root else None}
 
     return {"ready": True, "reason": "",
             "verification_state": state, "verdict_sha": verdict_sha,
             "archive_ready": True, "cache_present": cache is not None,
-            "cache_failed": False}
+            "cache_failed": False,
+            "cache_root": str(cache_root) if cache_root else None}
 
 
 def write_structured_cache_fallback(

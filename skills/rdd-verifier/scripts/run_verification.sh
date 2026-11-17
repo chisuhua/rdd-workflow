@@ -25,7 +25,6 @@ CHANGE_NAME="${1:-}"
     exit 3
 }
 
-PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 
 # Resolve the CLI backend across install layouts:
@@ -46,6 +45,31 @@ if [ -z "$RESOLVED_CLI" ]; then
     echo "❌ rdd_verify_cmd.py not found (looked in repo layout and ~/.agents/skills)" >&2
     exit 3
 fi
+
+# --- Root resolution (fix-verifier-gate-cache-root) ------------------------
+# The verdict cache path is decided by the RESOLVER, never by a relative path
+# the caller happens to be standing on:
+#   1. RDDF_PROJECT_ROOT — an explicit pin (the CONTRACT's mechanism: pin it
+#      to the gate root and the cache lands next to the change's artifacts);
+#   2. the canonical project root (submodule-aware, ADR-0033) — the same
+#      answer the batch CLI `rddf rdd-verify` uses, so both write paths agree;
+#   3. $PWD as a last resort.
+# The archive gate reads the gate root first and the canonical root second,
+# so a cache written under either root is found (see
+# skills/rdd-builder/scripts/phase3_archive.sh § CONTRACT).
+PKG_ROOT="$(cd "$(dirname "$RESOLVED_CLI")/../.." && pwd)"
+PROJECT_ROOT="${RDDF_PROJECT_ROOT:-}"
+if [ -z "$PROJECT_ROOT" ]; then
+    PROJECT_ROOT=$(PKG_ROOT="$PKG_ROOT" python3 -c '
+import os, sys
+root = os.environ.get("PKG_ROOT")
+if root:
+    sys.path.insert(0, root)
+from _lib.cli import resolve_project_root
+print(resolve_project_root())
+' 2>/dev/null || echo "")
+fi
+[ -n "$PROJECT_ROOT" ] || PROJECT_ROOT="$(pwd)"
 
 set +e
 RDDF_PROJECT_ROOT="$PROJECT_ROOT" \

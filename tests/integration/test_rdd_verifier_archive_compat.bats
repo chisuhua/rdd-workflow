@@ -3,7 +3,8 @@
 # integration with archive_gate_check (per ADR-0034 §7.2, amended by ADR-0045)
 #
 # v2.0 semantics (ADR-0045): the ac-verifier subprocess fallback is removed.
-#   1. Cache hit (codebase_commit matches HEAD) → cache reused, no LLM call
+#   1. Cache hit (codebase_commit matches the openspec/<change> branch tip)
+#      → cache reused, no LLM call
 #   2. Cache stale (new commit after cache) → fail closed
 #   3. Cache missing → fail closed (run rdd-verify first, or audited bypass)
 #   4. SKIP_AC_VERIFICATION=yes → bypass entire AC step (existing behavior)
@@ -31,6 +32,9 @@ EOF
 - AC-1: A test criterion
 EOF
     git add . && git commit -q -m "init"
+    # The freshness anchor is the implementation branch tip (per
+    # openspec/specs/verifier-lifecycle/spec.md), never HEAD.
+    git branch openspec/test-change
 }
 
 teardown() {
@@ -44,9 +48,9 @@ _setup_skills_symlink() {
 
 @test "archive_gate_check: cache hit (matching SHA) reuses verdict without LLM call" {
     _setup_skills_symlink
-    SHA=$(git rev-parse HEAD)
+    SHA=$(git rev-parse openspec/test-change)
 
-    # Seed verdict cache at current commit with valid pass verdict
+    # Seed verdict cache at the implementation branch tip with valid pass verdict
     # (verifier-v2-hardening: schema_version=2 + evidence minItems=1 + reasoning required)
     mkdir -p .rddf/state/verifier
     cat > .rddf/state/verifier/.ac-verdict-test-change.json <<EOF
@@ -69,7 +73,7 @@ EOF
 
 @test "archive_gate_check: stale cache (different SHA) fails closed (no fallback)" {
     _setup_skills_symlink
-    OLD_SHA=$(git rev-parse HEAD)
+    OLD_SHA=$(git rev-parse openspec/test-change)
 
     # Seed cache with OLD SHA
     mkdir -p .rddf/state/verifier
@@ -77,9 +81,10 @@ EOF
 {"version":1,"change":"test-change","codebase_commit":"$OLD_SHA","verdict":[],"ran_at":"x","ran_by":"rdd-verifier"}
 EOF
 
-    # Create new commit to invalidate cache
+    # Create new commit to invalidate cache (the branch tip moves with it)
     echo "new" > new.txt
     git add new.txt && git commit -q -m "new"
+    git branch -f openspec/test-change HEAD
 
     source "$REPO_ROOT/_lib/archive.sh"
 
@@ -108,7 +113,7 @@ EOF
 
 @test "archive_gate_check: SKIP_AC_VERIFICATION=yes bypasses AC step" {
     _setup_skills_symlink
-    SHA=$(git rev-parse HEAD)
+    SHA=$(git rev-parse openspec/test-change)
     # Even with cache present, SKIP_AC_VERIFICATION bypasses
     mkdir -p .rddf/state/verifier
     cat > .rddf/state/verifier/.ac-verdict-test-change.json <<EOF
@@ -126,7 +131,7 @@ EOF
 
 @test "archive_gate_check: cache hit with STRICT_AC_GATE=yes + cached fail → blocks" {
     _setup_skills_symlink
-    SHA=$(git rev-parse HEAD)
+    SHA=$(git rev-parse openspec/test-change)
     # Seed cache with FAIL verdict (test scenario: AC failed in rdd-verifier run)
     mkdir -p .rddf/state/verifier
     cat > .rddf/state/verifier/.ac-verdict-test-change.json <<EOF

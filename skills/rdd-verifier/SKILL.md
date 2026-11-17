@@ -266,7 +266,7 @@ skill_use("rdd-verifier")
   "schema_version": 2,
   "version": 2,
   "change": "<change-name>",
-  "codebase_commit": "<git rev-parse HEAD>",
+  "codebase_commit": "<git rev-parse --verify --quiet openspec/<change-name>>",
   "verdict": [/* 上面的 verdict array */],
   "ran_at": "<ISO 8601 UTC>",
   "ran_by": "rdd-verifier",
@@ -277,7 +277,22 @@ skill_use("rdd-verifier")
 }
 ```
 
+**`codebase_commit` 必须写实现分支的 tip**（`git rev-parse --verify --quiet openspec/<change-name>`），
+**不是 `git rev-parse HEAD`**：
+
+- 分支 tip 与**根无关** —— 主仓与 worktree 解析出的 SHA 相同，所以同一份 cache
+  在任何根下读都是 fresh；
+- 写端代码路径（`_lib/verifier/branch.py::resolve_implementation_commit`）记的就是分支 tip，
+  写 HEAD 会让读端判 stale；
+- `openspec_tracked=false` 分支里主仓已被切到默认分支，此时 HEAD ≠ 分支 tip ⇒ 必然误判 stale。
+
 写入工具：`Read` + `Write`（先 Read 当前内容判断是否覆盖，再 Write 完整 JSON）。
+
+**cache 路径由 resolver 决定，不要在 worktree 里写相对路径**：用
+`bash skills/rdd-verifier/scripts/run_verification.sh <change>` 落 context，
+它按 `RDDF_PROJECT_ROOT` → canonical project root → `$PWD` 的顺序解析根；
+需要指定根时用 `RDDF_PROJECT_ROOT=<root>` 显式钉住。落点契约见下文
+「落点契约表（哪个根放什么）」。
 
 **追加 audit log**（路径 `.rddf/state/verifier/.ac-verification.jsonl`，append-only）：
 
@@ -323,11 +338,13 @@ Source: `iteration.json` filter `status in (in_worktree, completed)` and `tasks_
 
 For each change in queue:
 
-1. **`Bash: git rev-parse HEAD`** — 获取当前 commit SHA
+1. **`Bash: git rev-parse --verify --quiet openspec/<name>`** — 获取实现分支 tip
+   （锚点 = 分支 tip，**不是 HEAD**；理由见 Step 5）
 2. **`Read .rddf/state/verifier/.ac-verdict-<name>.json`** — 读 SHA cache
+   （路径由 resolver 决定，见「落点契约表」；不要用相对路径写进 worktree）
 3. **Cache freshness check**：
-   - cache SHA == HEAD SHA → 复用 verdict，**跳过 LLM 验证**
-   - cache SHA ≠ HEAD SHA → stale，重跑
+   - cache SHA == 分支 tip SHA → 复用 verdict，**跳过 LLM 验证**
+   - cache SHA ≠ 分支 tip SHA → stale，重跑
    - 无 cache → fresh run
 4. **Fresh LLM verification**（按 "LLM Verification Protocol"）：
    - `Read openspec/changes/<name>/proposal.md`
@@ -444,6 +461,23 @@ This log is read-only forensic record. `rdd-doctor --category plan-tdd` can chec
 | `.rddf/state/verifier/rdd-verify-context-<name>.json` | context schema v1 | Staged verification context (proposal path, AC list, cache/audit paths) |
 
 All verifier state files are `.rddf/state/` gitignored, per AGENTS.md state file convention. The canonical audit log is `.rddf/state/verifier/<change>.audit.jsonl`.
+
+### 落点契约表（哪个根放什么）
+
+> 契约源：`skills/rdd-builder/scripts/phase3_archive.sh` § CONTRACT（归档门侧）。
+> 本表是**写端**视角的同一份契约 —— 门与写端各写各的根，正是「门说没验证过、
+> 而验证明明做了」的根因（fix-verifier-gate-cache-root）。
+
+| 数据 | 落在哪个根 | 谁写 | 归档门怎么读 |
+|---|---|---|---|
+| **verdict cache** `.rddf/state/verifier/.ac-verdict-<name>.json` | **resolver 决定的根**：`RDDF_PROJECT_ROOT`（显式钉住）→ canonical project root → `$PWD` | 本 skill 的 Step 5 / `rddf rdd-verify` | **门根优先**（change 的 artifacts 所在根），**canonical 根兜底**；两侧都有时用门根并报告另一侧 |
+| **`iteration.json` 的 `verification` 字段** | **canonical project root**（`.rddf/state/` 被 gitignore ⇒ 链接 worktree 永远没有它） | `rddf rdd-verify`（`update_iteration_summary`） | canonical 根 |
+| **`rdd-verify-context-<name>.json`** | **resolver 决定的根**（与 verdict cache 同一套解析） | `run_verification.sh` / `rddf rdd-verify --stage` | —（写端自查用） |
+
+**锚点（三处一致）**：freshness 锚点是**实现分支 tip**
+`git rev-parse --verify --quiet openspec/<change>`。它与根无关 ⇒ 同一份 cache
+在任何根下读都是 fresh。写端（`branch.py`）、读端（`archive_gate.py` /
+`archive.sh`）、本文档都必须是这个表达式。
 
 ### 产物落点分两层（author declaration）
 

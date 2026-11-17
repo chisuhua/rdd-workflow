@@ -27,6 +27,10 @@ setup() {
 - AC-2: implement logout
 PROPOSAL
   git add . && git commit -q -m init
+  # The freshness anchor is the IMPLEMENTATION BRANCH TIP (per
+  # openspec/specs/verifier-lifecycle/spec.md § "Implementation commit SHALL
+  # be the openspec branch tip"), never the execution root's HEAD.
+  git branch openspec/test-change
 }
 
 teardown() {
@@ -43,7 +47,7 @@ teardown() {
 }
 
 @test "archive_gate_check passes when fresh cache has all-pass verdict" {
-  SHA=$(git rev-parse HEAD)
+  SHA=$(git rev-parse openspec/test-change)
   mkdir -p $TEST_TMP/.rddf/state/verifier
   cat > "$TEST_TMP/.rddf/state/verifier/.ac-verdict-test-change.json" <<EOF
 {"schema_version":2,"change":"test-change","codebase_commit":"$SHA","verdict":[
@@ -58,7 +62,7 @@ EOF
 }
 
 @test "archive_gate_check blocks on cached AC fail with STRICT_AC_GATE=yes" {
-  SHA=$(git rev-parse HEAD)
+  SHA=$(git rev-parse openspec/test-change)
   mkdir -p $TEST_TMP/.rddf/state/verifier
   cat > "$TEST_TMP/.rddf/state/verifier/.ac-verdict-test-change.json" <<EOF
 {"schema_version":2,"change":"test-change","codebase_commit":"$SHA","verdict":[

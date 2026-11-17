@@ -37,16 +37,45 @@ load ../test_helper
 }
 
 @test "archive-gate: reads tasks.md from explicit tasks_root (worktree path)" {
-    # Simulate worktree path: tasks live at <wt>/openspec/changes/<name>/tasks.md
-    # but the main repo openspec/changes/<name>/ doesn't exist.
-    WT="$BATS_TMPDIR/wt-gate"
+    # A REAL worktree. This case used to fake one with only a tasks.md: the AC
+    # gate in _lib/archive.sh only runs when proposal.md exists, so the case
+    # passed WITHOUT ever reaching the AC gate — a fake green light
+    # (fix-verifier-gate-cache-root).
     MAIN="$BATS_TMPDIR/main-gate"
-    mkdir -p "$WT/openspec/changes/worktree-change"
+    WT="$BATS_TMPDIR/wt-gate"
+    rm -rf "$MAIN" "$WT"
+    mkdir -p "$MAIN"
+    git -C "$MAIN" init -q -b main
+    git -C "$MAIN" config user.email t@t.invalid
+    git -C "$MAIN" config user.name tester
+    printf 'base\n' > "$MAIN/base.txt"
+    git -C "$MAIN" add -A
+    git -C "$MAIN" commit -q -m init
+    git -C "$MAIN" worktree add -q "$WT" -b openspec/worktree-change
+    # The change's artifacts live in the worktree; the main repo does NOT
+    # have openspec/changes/worktree-change.
+    mkdir -p "$WT/openspec/changes/worktree-change" "$WT/.rddf/state/verifier"
     printf -- '- [x] Done in worktree\n' > "$WT/openspec/changes/worktree-change/tasks.md"
-    # main repo does NOT have openspec/changes/worktree-change
+    printf -- '## Acceptance Criteria\n- AC-1: works\n' \
+        > "$WT/openspec/changes/worktree-change/proposal.md"
+    # The cache is stamped with the implementation BRANCH TIP (the anchor).
+    SHA="$(git -C "$WT" rev-parse openspec/worktree-change)"
+    CACHE="$WT/.rddf/state/verifier/.ac-verdict-worktree-change.json" SHA="$SHA" python3 - <<'PY'
+import json, os
+json.dump({
+    "schema_version": 2, "version": 2, "change": "worktree-change",
+    "codebase_commit": os.environ["SHA"],
+    "verdict": [{"ac_id": "AC-1", "status": "pass", "confidence": 0.95,
+                 "evidence": [{"tool": "Grep", "query": "x",
+                               "result_summary": "y"}], "reasoning": "ok"}],
+    "verification_state": "passed", "failed_acs": [],
+}, open(os.environ["CACHE"], "w"))
+PY
     source "$PROJECT_ROOT/_lib/archive.sh"
     run bash -c "source '$PROJECT_ROOT/_lib/archive.sh' && archive_gate_check 'worktree-change' '$WT'"
     [ "$status" -eq 0 ]
+    # The AC gate really ran this time.
+    [[ "$output" == *"Reusing verifier verdict cache"* ]]
 }
 
 @test "archive-gate: warns when change was previously archived (default WARN, exit 0)" {

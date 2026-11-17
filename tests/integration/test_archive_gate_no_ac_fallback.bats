@@ -21,15 +21,18 @@ setup() {
   printf '%s\n' "## 验收标准" "- AC-1: works" > openspec/changes/test-change/proposal.md
   git add . && git commit -q -m init
   ln -s "$REPO_ROOT/skills" "$TEST_TMP/skills"
+  # The anchor is the implementation branch tip, not HEAD (per
+  # openspec/specs/verifier-lifecycle/spec.md).
+  git branch openspec/test-change
 }
 
 teardown() {
   rm -rf "$TEST_TMP"
 }
 
-_seed_cache_at_head() {
+_seed_cache_at_branch_tip() {
   local sha
-  sha=$(git rev-parse HEAD)
+  sha=$(git rev-parse openspec/test-change)
   mkdir -p .rddf/state/verifier
   cat > .rddf/state/verifier/.ac-verdict-test-change.json <<EOF
 {"schema_version":2,"change":"test-change","codebase_commit":"$sha","verdict":[
@@ -39,7 +42,7 @@ EOF
 }
 
 @test "no-fallback: cache hit (matching SHA) → archive gate succeeds" {
-  _seed_cache_at_head
+  _seed_cache_at_branch_tip
   source "$REPO_ROOT/_lib/archive.sh"
   run archive_gate_check test-change "$TEST_TMP"
   [ "$status" -eq 0 ]
@@ -47,8 +50,10 @@ EOF
 }
 
 @test "no-fallback: stale cache → archive gate blocked with clear message" {
-  _seed_cache_at_head
+  _seed_cache_at_branch_tip
   echo "invalidate" > new.txt && git add new.txt && git commit -q -m new
+  # The implementation moved: the branch tip is what the anchor tracks.
+  git branch -f openspec/test-change HEAD
   source "$REPO_ROOT/_lib/archive.sh"
   run archive_gate_check test-change "$TEST_TMP"
   [ "$status" -eq 1 ]
