@@ -60,6 +60,23 @@ else
   bats_status=1
 fi
 
+# 1b. Surface timed-out files. collect_bats_failures.sh records them in its
+#     HANG_LOG when a file exceeds BATS_TIMEOUT (124), but its stdout goes to
+#     collect.log — so the report below would silently claim a complete run.
+#     A skipped file is an UNEVALUATED file: it can hide real failures. This is
+#     how `run_arch_env_check_discovers_counts` stayed red for weeks without the
+#     full gate noticing (test_arch_env_check_extraction.bats does two
+#     `cp -r "$REPO_ROOT"` and blows the 30s budget).
+# Extract the count from `   hung files: 3 (skipped; see /tmp/x.hangs)`.
+# NOTE: the line ends with ')', not with the number — an end-anchored pattern
+# (`grep -oE '[0-9]+$'`) silently yields nothing and the warning never fires.
+HUNG=$(sed -nE 's/^[[:space:]]*hung files: ([0-9]+).*/\1/p' "$TMP_DIR/collect.log" 2>/dev/null | head -1 || true)
+HUNG="${HUNG:-0}"
+if [ "${HUNG:-0}" -gt 0 ]; then
+  printf '⚠️  超时未评估: %s 个 bats 文件（未纳入本次失败统计，可能隐藏真实失败）\n' "$HUNG"
+  grep -E '^[[:space:]]*(hung|files)' "$TMP_DIR/collect.log" | sed 's/^/    /' || true
+fi
+
 # 2. Parse + diff via Python (handles '#' in test names, supports
 #    structured output for the report).
 BASELINE_PATH="$BASELINE" \

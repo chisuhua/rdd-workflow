@@ -4,6 +4,14 @@
 # was a single inline bash code block. Extracted to
 # _lib/arch_env_check.sh::run_arch_env_check().
 #
+# 2026-11-17: the "arch gap analysis" line this helper used to print was removed
+# per ADR-0057 (rdd-arch simplified to ADR + theme doc; the gap-analysis
+# artifact type was deleted). The corresponding assertion below now checks for
+# `主题架构文档` — the line the helper prints today. Keeping the old string made
+# this test red for weeks while KNOWN_FAILURES.txt claimed it passed (it was
+# also hidden from the full gate: this file does two `cp -r "$REPO_ROOT"` and
+# blows the 30s per-file timeout, so collect_bats_failures.sh skipped it).
+#
 # These tests lock the refactor in place:
 #   1. arch_env_check.sh exists with run_arch_env_check function.
 #   2. rdd-arch.md L92-L189 inline block removed.
@@ -60,7 +68,7 @@ REPLACED_RANGE="92,189p"
   output=$(bash -c "cd '$REPO_ROOT' && source skills/rdd-arch/scripts/arch_env_check.sh && run_arch_env_check" 2>&1) || true
   echo "$output" | grep -q '现有 ADR'
   echo "$output" | grep -q 'Roadmap'
-  echo "$output" | grep -q '架构差距分析'
+  echo "$output" | grep -q '主题架构文档'
   echo "$output" | grep -q '活动 changes'
 }
 

@@ -12,6 +12,14 @@
 #   --keep-comments    Preserve all existing comments verbatim (default: on)
 #   --help             Show this help and exit
 #
+# Env:
+#   RDDF_KNOWN_FAILURES_FILE  Override the baseline path (default
+#                             <repo>/tests/KNOWN_FAILURES.txt). The same name is
+#                             honoured by report_regression.sh and
+#                             skills/execute/scripts/run_regression_gate.sh, so
+#                             tests can drive all three against a temp baseline
+#                             instead of mutating the repo's real one.
+#
 # Selective refresh logic (vs. previous wholesale regeneration):
 #   1. Parse KNOWN_FAILURES.txt line-by-line:
 #      - Blank lines and lines starting with '#' are comments → PRESERVED
@@ -55,7 +63,7 @@ while [ $# -gt 0 ]; do
         --keep-comments) KEEP_COMMENTS=1; shift ;;
         --no-keep-comments) KEEP_COMMENTS=0; shift ;;
         -h|--help)
-            sed -n '2,30p' "$0"
+            sed -n '2,42p' "$0"
             exit 0
             ;;
         *)

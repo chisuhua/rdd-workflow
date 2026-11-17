@@ -124,6 +124,46 @@ EOF
   [ "$status" -eq 0 ]
 }
 
+@test "repro: temp-baseline content is what the report reads, repo file untouched" {
+  # Deterministic reproduction of the 2026-11-17 data-loss incident.
+  #
+  # Incident: test_known_failures_baseline.bats and test_execute_regression_gate.bats
+  # wrote the REAL baseline directly, relying on teardown() to restore it.
+  # collect_bats_failures.sh kills a file at 30s; both files run a full
+  # integration collection internally, so they blew the timeout, teardown never
+  # ran, and the real baseline was left holding one fixture line. Every run
+  # destroyed its own baseline => 已知失败: 0 / 新增失败: 11.
+  #
+  # This test pins the fix: the temp baseline holds an entry that the repo
+  # baseline does NOT, so
+  #   - if the report read the repo baseline  => 新增失败: 1
+  #   - if it read the temp baseline          => 新增失败: 0  (and 已知失败: 1)
+  # and the repo baseline must be byte-identical afterwards.
+  printf '%s\n' 'known failure: temp-only entry # temp' > "$ISOLATED_BASELINE"
+  write_fake_bats 'not ok 1 known failure: temp-only entry'
+
+  run env PATH="$TEST_BIN:$PATH" RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"已知失败: 1"* ]]
+  [[ "$output" == *"新增失败: 0"* ]]
+  cmp -s "$REPO_BASELINE_SNAPSHOT" "$BASELINE"
+}
+
+@test "repro: fixture written to a temp baseline never reaches the repo file" {
+  # The exact byte sequence that corrupted the real baseline.
+  local fixture='known failure: environment dependency # existing reason'
+  printf '%s\n' "$fixture" > "$ISOLATED_BASELINE"
+  write_fake_bats 'not ok 1 known failure: environment dependency'
+
+  run env PATH="$TEST_BIN:$PATH" RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
+
+  [ "$status" -eq 0 ]
+  # Repo baseline unchanged byte-for-byte, and still carries no fixture line.
+  cmp -s "$REPO_BASELINE_SNAPSHOT" "$BASELINE"
+  ! grep -qF "$fixture" "$BASELINE"
+}
+
 @test "guard: repo baseline carries no in-flight test fixture entries" {
   # Minimal shrink guard (per fix-regression-baseline-integrity AC).
   # The 2026-11-17 incident left tests/KNOWN_FAILURES.txt holding exactly one

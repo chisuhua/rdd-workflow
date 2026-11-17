@@ -79,7 +79,13 @@ phase0_approval.sh --auto-approve populates proposal.md with full 5-段 content 
 # Removed because they now pass (the gate was being bypassed by leaving them registered):
 #   - "INSTALL.md registers 26 skills ..." → count is now parsed and compared against disk
 #   - "doc_truth_sync: INSTALL.md description lists 26 skills ..." → same
-#   - "run_arch_env_check_discovers_counts" → passes (arch env-check output drift resolved)
+#   - "run_arch_env_check_discovers_counts" → did NOT actually pass: the helper
+#     stopped printing `架构差距分析` when ADR-0057 deleted the gap-analysis
+#     artifact type, but the assertion was never updated. It stayed red for
+#     weeks while this note claimed otherwise, and the full gate never saw it
+#     (test_arch_env_check_extraction.bats does two `cp -r "$REPO_ROOT"`, blows
+#     the 30s per-file timeout, and gets skipped). Fixed 2026-11-17: assertion
+#     now checks `主题架构文档`.
 #
 # NOTE: run `bash tests/scripts/refresh_known_failures.sh --dry-run` before using it —
 # its selective mode ABSORBS new failures into this file (which is how the skill-count

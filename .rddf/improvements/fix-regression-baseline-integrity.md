@@ -6,7 +6,7 @@ priority: P1
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: draft（部分已就地修复，见「实施状态」）
+状态: implemented (2026-11-17)
 
 生成时间: 2026-11-17
 roadmap_ref:
@@ -142,18 +142,18 @@ metis 指出草稿漏掉的一层：**「已知失败 0」会让人误以为「�
 ## Acceptance
 
 - [x] `report_regression.sh` / `refresh_known_failures.sh` / `run_regression_gate.sh` 三者都认 `RDDF_KNOWN_FAILURES_FILE`；不设该变量时**输出逐字节不变**（diff 为空，不只是「行为不变」）
-- [ ] `RDDF_KNOWN_FAILURES_FILE` 在仓库内**零冲突**（`grep -rn 'RDDF_KNOWN_FAILURES_FILE'` 在改动前零命中，实施后只出现在预期的位置）
-- [ ] 环境变量说明写在 `refresh_known_failures.sh` 头部第 2~30 行窗口内（`--help` 可见）+ `tests/README.md` + `report_regression.sh` 头注释
+- [x] `RDDF_KNOWN_FAILURES_FILE` 在仓库内**零冲突**（`grep -rn 'RDDF_KNOWN_FAILURES_FILE'` 在改动前零命中，实施后只出现在预期的位置）
+- [x] 环境变量说明写在 `refresh_known_failures.sh` 头部第 2~30 行窗口内（`--help` 可见）+ `tests/README.md` + `report_regression.sh` 头注释
 - [x] `test_known_failures_baseline.bats` 与 `test_execute_regression_gate.bats` **两个文件**都在临时副本上运行（文件内 `BASELINE` 重指副本 **且** 导出 env），不再 `printf >` / `rm -f` 真实基线
 - [x] 运行期守卫放在 `setup()` + `teardown()`（非独立用例）；断言对象是绝对路径 `$REPO_ROOT/tests/KNOWN_FAILURES.txt` 的 hash
-- [ ] 确定性复现测试：tmp 副本中途被替换成 fixture ⇒ 「已知失败 == tmp 当时仍失败的条目数」「新增失败 == 0」「真实文件 hash 不变」
+- [x] 确定性复现测试：tmp 副本中途被替换成 fixture ⇒ 「已知失败 == tmp 当时仍失败的条目数」「新增失败 == 0」「真实文件 hash 不变」
 - [x] 仓库级卫生：`bats tests/integration/` 跑完后 `git status --porcelain tests/KNOWN_FAILURES.txt` 为空
-- [ ] `report_regression.sh` **在基线缺失时**的报错打印**覆盖后的路径**（已实现）；成功路径**不打印** baseline 路径 —— 与上一条「不设该变量时输出逐字节不变」冲突，已裁定以上一条为准（输出格式是既有消费者契约，诊断性打印不得改动默认输出）
-- [ ] `test_arch_env_check_extraction.bats` 的断言改为 `主题架构文档`（不再用已被同文件覆盖的 `工件发现 (ADR-0016)`），文件头注释同步，注释注明 ADR-0057 依据
-- [ ] `grep -rn '架构差距分析' tests/` 零命中
-- [ ] `tests/KNOWN_FAILURES.txt` 中「`run_arch_env_check_discovers_counts` → passes」的失效声明被修正
+- [x] `report_regression.sh` **在基线缺失时**的报错打印**覆盖后的路径**（已实现）；成功路径**不打印** baseline 路径 —— 与上一条「不设该变量时输出逐字节不变」冲突，已裁定以上一条为准（输出格式是既有消费者契约，诊断性打印不得改动默认输出）
+- [x] `test_arch_env_check_extraction.bats` 的断言改为 `主题架构文档`（不再用已被同文件覆盖的 `工件发现 (ADR-0016)`），文件头注释同步，注释注明 ADR-0057 依据
+- [x] `grep -rn '架构差距分析' tests/` 零命中
+- [x] `tests/KNOWN_FAILURES.txt` 中「`run_arch_env_check_discovers_counts` → passes」的失效声明被修正
 - [x] 最小守卫：基线不得塌成只有一行 fixture 形态（shrink-only CI 盲点）
-- [ ] `./test.sh --unit` 全绿 + `bats tests/integration/test_known_failures_baseline.bats` + `bats tests/integration/test_execute_regression_gate.bats` + `bats tests/integration/test_regression_baseline_shrink_only.bats` + `bats tests/integration/test_arch_env_check_extraction.bats` 全绿
+- [x] `./test.sh --unit` 全绿 + `bats tests/integration/test_known_failures_baseline.bats` + `bats tests/integration/test_execute_regression_gate.bats` + `bats tests/integration/test_regression_baseline_shrink_only.bats` + `bats tests/integration/test_arch_env_check_extraction.bats` 全绿
 - [x] **本 change 内未对真实基线执行过 `refresh_known_failures.sh`**（归一化不一致，见 baseline `:84-88`）
 
 ## Capabilities
@@ -252,3 +252,30 @@ gap-analysis），但它**不在基线有效条目里** ⇒ 全量门若跑到�
   `run_arch_env_check_discovers_counts` 的僵尸状态 —— **全部与立项描述一致**
 - ⚠️ **AC `:147` 与 AC `:140` 自相矛盾**（打印解析路径 vs 输出逐字节不变），已裁定保 `:140`
 - 📌 新发现（已写入上文「本轮新发现」）：同一 30s 超时还让慢文件整文件被跳过 ⇒ 僵尸断言在全量门里不可见
+
+### 第二实施轮（2026-11-17，本轮补齐）
+
+| AC | 处置 |
+|---|---|
+| `:142` env 说明三处 | `refresh_known_failures.sh` 头部加 Env 段并把 `--help` 的 `sed` 窗口从 `2,30p` 扩到 `2,42p`（原来截断了「Selective refresh logic」段）；`tests/README.md` 加「Baseline path override」小节（三消费者对照表 + 事故说明） |
+| `:145` 确定性复现 | `test_known_failures_baseline.bats` 加 2 个用例：① temp 基线含一个仓库基线与都没有的条目 ⇒ 断言「已知失败: 1 / 新增失败: 0」+ `cmp` 仓库基线未变；② 逐字节写入事故 fixture ⇒ 断言仓库基线不变且不含该行 |
+| `:148` 过时断言 | `test_arch_env_check_extraction.bats:63` 改为 `主题架构文档`；文件头加 6 行说明（ADR-0057 删了 gap-analysis；该断言红了数周而基线注释谎称通过；且因两次 `cp -r "$REPO_ROOT"` 撞 30s 超时被全量门跳过） |
+| `:149` | `grep -rn '架构差距分析' tests/` ⇒ 零命中 |
+| `:150` | `KNOWN_FAILURES.txt:82` 的「→ passes」改为如实说明（未通过、为何、如何修） |
+| `:151` | 已裁定（保「输出逐字节不变」，成功路径不打印） |
+| 新发现：超时不可见 | `report_regression.sh` 新增 1b 段：从 `collect.log` 提取 `hung files: N` 并在报告首部打印 `⚠️ 超时未评估: N 个 bats 文件（可能隐藏真实失败）` |
+
+**两个自查发现并修掉的缺陷**：
+1. 首版 `HUNG` 提取用 `grep -oE '[0-9]+$'` —— 真实行以 `)` 结尾（`hung files: 1 (skipped; see …)`），
+   行尾不是数字 ⇒ 永远取空 ⇒ 警告永不触发。改为 `sed -nE 's/.*hung files: ([0-9]+).*/\1/p'`。
+   端到端验证：临时把 scope 指向一个含「慢文件 + 真失败文件」的目录，`BATS_TIMEOUT=1` 跑，
+   报告首行正确显示 `⚠️ 超时未评估: 1 个 bats 文件`。验完已还原。
+2. 我先前判断「超时被静默跳过」**不准确** —— `collect_bats_failures.sh` 本就有 `rc -eq 124`
+   分支和 `hung files` 计数；真问题是 `report_regression.sh` 把它的 stdout 重定向进
+   `collect.log`，回归报告不显示。AC 按修正后的事实写。
+
+**验证**：`pytest tests/unit/` ⇒ 3361 passed / 3 skipped；
+`bats test_known_failures_baseline + test_execute_regression_gate +
+test_regression_baseline_shrink_only + test_arch_env_check_extraction +
+test_report_regression_descriptions` ⇒ 33 ok / 0 not ok；
+`tests/KNOWN_FAILURES.txt` 87 → 93 行（**预期**：`:82` 的注释从 1 行扩为 6 行，无条目增删）。

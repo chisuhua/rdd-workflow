@@ -57,6 +57,33 @@ bash tests/scripts/refresh_known_failures.sh
 
 Review the resulting diff before committing. Remove a fixed test from the baseline by refreshing after confirming the test is green. CI runs the same report script after the recursive Bats step, so local and CI use one comparison implementation.
 
+#### Baseline path override (`RDDF_KNOWN_FAILURES_FILE`)
+
+All three consumers read the same env var, so a caller can point them at a temp
+file instead of the repo's real baseline:
+
+| Consumer | Role |
+|---|---|
+| `tests/scripts/report_regression.sh` | comparison (known / new / stale) |
+| `tests/scripts/refresh_known_failures.sh` | selective refresh |
+| `skills/execute/scripts/run_regression_gate.sh` | execute-phase gate (existence test + delegate) |
+
+```bash
+RDDF_KNOWN_FAILURES_FILE=/tmp/scratch-baseline.txt bash tests/scripts/report_regression.sh
+```
+
+**Tests must use it.** `tests/integration/test_known_failures_baseline.bats` and
+`test_execute_regression_gate.bats` write their fixtures to `$BATS_TEST_TMPDIR`
+and pass this var — they never touch `tests/KNOWN_FAILURES.txt`.
+
+> Why this exists: those tests used to `printf > $REPO_ROOT/tests/KNOWN_FAILURES.txt`
+> and restore it from `teardown()`. `collect_bats_failures.sh` kills a file at 30s,
+> and both files run a full integration collection internally, so they blew the
+> timeout, `teardown` never ran, and the real baseline was left holding a single
+> fixture line. Every regression run destroyed its own baseline — which is why the
+> gate once reported `已知失败: 0 / 新增失败: 11`. Tracked in
+> `.rddf/improvements/fix-regression-baseline-integrity.md`.
+
 ### Selective refresh (added 2026-10-08, per add-known-failures-selective-refresh)
 
 The refresh script now operates in **selective** mode by default — it preserves all comment lines verbatim, drops entries that no longer fail, and appends newly-discovered failures with `# reason required (added YYYY-MM-DD by refresh_known_failures.sh)` placeholders. After a refresh, **you must triage the placeholders**: replace each with a real reason (link to a follow-up issue/ADR, or note the doc-drift/script-drift root cause). Use `bash skills/rdd-doctor/scripts/doctor.sh --category baseline-freshness` to detect un-triaged placeholders.
