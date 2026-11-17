@@ -22,17 +22,20 @@
 # (per add-baseline-freshness-doctor 2026-10-08).
 #
 # Env:
-#   KNOWN_FAILURES_BASELINE  override the baseline path (default
-#                            `<repo>/tests/KNOWN_FAILURES.txt`). Exists so
-#                            tests can drive this script against a temp file
-#                            instead of mutating the repo's real baseline —
-#                            see tests/integration/test_known_failures_baseline.bats.
+#   RDDF_KNOWN_FAILURES_FILE  Override the baseline path (default
+#                             `<repo>/tests/KNOWN_FAILURES.txt`). Exists so
+#                             tests can drive this script against a temp file
+#                             instead of mutating the repo's real baseline —
+#                             see tests/integration/test_known_failures_baseline.bats.
+#                             The same name is honoured by
+#                             refresh_known_failures.sh and
+#                             skills/execute/scripts/run_regression_gate.sh.
 
 set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-BASELINE="${KNOWN_FAILURES_BASELINE:-$REPO_ROOT/tests/KNOWN_FAILURES.txt}"
+BASELINE="${RDDF_KNOWN_FAILURES_FILE:-$REPO_ROOT/tests/KNOWN_FAILURES.txt}"
 TMP_DIR="$(mktemp -d -t rdd-known-failures-XXXXXX)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 

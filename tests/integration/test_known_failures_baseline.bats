@@ -5,13 +5,29 @@ load ../test_helper
 
 REPORT="$REPO_ROOT/tests/scripts/report_regression.sh"
 REFRESH="$REPO_ROOT/tests/scripts/refresh_known_failures.sh"
+# The repo's REAL baseline. Used only as the snapshot/guard subject below —
+# never written by these tests (they drive the scripts against
+# $ISOLATED_BASELINE via RDDF_KNOWN_FAILURES_FILE). Keep this definition: the
+# teardown guard and the shrink guard both reference it, and an empty value
+# turns those guards into always-passing assertions.
+BASELINE="$REPO_ROOT/tests/KNOWN_FAILURES.txt"
 
 setup() {
   cd "$REPO_ROOT"
   TEST_BIN="$BATS_TEST_TMPDIR/bin"
   mkdir -p "$TEST_BIN"
+  # Fail loudly rather than silently degrade: an empty $BASELINE makes the
+  # snapshot/teardown guard and the shrink guard below always pass.
+  [ -n "$BASELINE" ] || {
+    echo "BASELINE is unset — baseline guards cannot judge" >&2
+    return 1
+  }
+  [ -f "$BASELINE" ] || {
+    echo "missing repo baseline: $BASELINE" >&2
+    return 1
+  }
   # Isolation: drive report_regression.sh / refresh_known_failures.sh against a
-  # TEMP baseline via KNOWN_FAILURES_BASELINE. Writing the repo's real
+  # TEMP baseline via RDDF_KNOWN_FAILURES_FILE. Writing the repo's real
   # tests/KNOWN_FAILURES.txt from a test is a data-loss path — a per-file
   # timeout (collect_bats_failures.sh uses 30s) kills the run before teardown,
   # leaving the real baseline truncated to whatever the in-flight test wrote.
@@ -50,7 +66,7 @@ EOF
   printf '%s\n' 'known failure: environment dependency # existing reason' > "$ISOLATED_BASELINE"
   write_fake_bats 'not ok 1 known failure: environment dependency'
 
-  run env PATH="$TEST_BIN:$PATH" KNOWN_FAILURES_BASELINE="$ISOLATED_BASELINE" bash "$REPORT"
+  run env PATH="$TEST_BIN:$PATH" RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"已知失败"* ]]
@@ -61,7 +77,7 @@ EOF
   printf '%s\n' 'known failure # existing reason' > "$ISOLATED_BASELINE"
   write_fake_bats $'not ok 1 known failure\nnot ok 2 newly introduced failure'
 
-  run env PATH="$TEST_BIN:$PATH" KNOWN_FAILURES_BASELINE="$ISOLATED_BASELINE" bash "$REPORT"
+  run env PATH="$TEST_BIN:$PATH" RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
 
   [ "$status" -ne 0 ]
   [[ "$output" == *"newly introduced failure"* ]]
@@ -72,7 +88,7 @@ EOF
   : > "$ISOLATED_BASELINE"
   write_fake_bats '1..0' 0
 
-  run env PATH="$TEST_BIN:$PATH" KNOWN_FAILURES_BASELINE="$ISOLATED_BASELINE" bash "$REPORT"
+  run env PATH="$TEST_BIN:$PATH" RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"0"* ]]
@@ -82,7 +98,7 @@ EOF
   printf '%s\n' 'known failure # preserve this reason' > "$ISOLATED_BASELINE"
   write_fake_bats $'not ok 1 known failure\nnot ok 2 newly observed failure'
 
-  run env PATH="$TEST_BIN:$PATH" KNOWN_FAILURES_BASELINE="$ISOLATED_BASELINE" bash "$REFRESH"
+  run env PATH="$TEST_BIN:$PATH" RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REFRESH"
 
   [ "$status" -eq 0 ]
   grep -Fq 'known failure # preserve this reason' "$ISOLATED_BASELINE"
@@ -93,7 +109,7 @@ EOF
   printf '%s\n' 'known failure # reason' > "$ISOLATED_BASELINE"
   write_fake_bats $'not ok 2 known failure\nnot ok 1 another failure'
 
-  run env PATH="$TEST_BIN:$PATH" KNOWN_FAILURES_BASELINE="$ISOLATED_BASELINE" bash "$REFRESH"
+  run env PATH="$TEST_BIN:$PATH" RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REFRESH"
 
   [ "$status" -eq 0 ]
   [ "$(grep -v '^#' "$ISOLATED_BASELINE" | sed '/^[[:space:]]*$/d' | sort | wc -l | tr -d ' ')" -eq 2 ]
@@ -106,4 +122,28 @@ EOF
   [ "$status" -eq 0 ]
   run grep -Ein 'known.*failure' "$REPO_ROOT/CHANGELOG.md"
   [ "$status" -eq 0 ]
+}
+
+@test "guard: repo baseline carries no in-flight test fixture entries" {
+  # Minimal shrink guard (per fix-regression-baseline-integrity AC).
+  # The 2026-11-17 incident left tests/KNOWN_FAILURES.txt holding exactly one
+  # line: `known failure: environment dependency # existing reason` — a fixture
+  # written by an in-flight test whose teardown never ran (30s per-file
+  # timeout). That state is indistinguishable from "one known failure here",
+  # so the gate reported 已知失败 0 / 新增失败 11 with no signal about the cause.
+  #
+  # The judgement is shape-based, not count-based: a real bats test name never
+  # begins with `known failure` (real entries look like
+  # `AGENTS.md: <case name> # <reason>`), so any such line is leaked fixture.
+  [ -n "$BASELINE" ] && [ -f "$BASELINE" ] || {
+    echo "guard cannot judge: BASELINE='$BASELINE'" >&2
+    return 1
+  }
+  local leaked
+  leaked=$(grep -E '^known failure' "$BASELINE" || true)
+  if [ -n "$leaked" ]; then
+    echo "in-flight test fixture leaked into the repo baseline:" >&2
+    printf '%s\n' "$leaked" >&2
+    return 1
+  fi
 }
