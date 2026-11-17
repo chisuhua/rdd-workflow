@@ -243,6 +243,6 @@ opencode 侧**已显式声明解耦**：`~/.config/opencode/docs/MULTI-AGENT-DES
 本仓有两个 ADR 索引生成器且格式分歧（`_lib/adr_index_generator.py` 4 列含日期 vs `_lib/sync_adr_index.py` 3 列且会删 `ADR_INDEX_START/END` 标记）；`tests/unit/test_sync_adr_index.py` 实际验的是全局安装副本而非仓内实现。
 
 **本轮实跑中额外发现并已修复的既有缺陷**（详见 `.rddf/reviews/adr-0060-amendment-2026-11-17.md` §六）：
-`tests/integration/test_known_failures_baseline.bats` 直接写仓库真实 `tests/KNOWN_FAILURES.txt`，而 `collect_bats_failures.sh` 的 30s 超时会杀掉进程、跳过 `teardown` ⇒ **回归门每次运行都会摧毁自己的基线**（87 行被截成 1 行），使全部既知失败被误报为「新增」。已通过 `KNOWN_FAILURES_BASELINE` env 覆盖 + 测试改用 tmp 基线 + `teardown` 守卫修复。
+`tests/integration/test_known_failures_baseline.bats` 与 `tests/integration/test_execute_regression_gate.bats` 都直接写仓库真实 `tests/KNOWN_FAILURES.txt`，而 `collect_bats_failures.sh` 的 30s 超时会杀掉进程、跳过 `teardown` ⇒ **回归门每次运行都会摧毁自己的基线**（87 行被截成 1 行），使全部既知失败被误报为「新增」。已通过 `RDDF_KNOWN_FAILURES_FILE` env 覆盖（三个脚本统一认）+ 两个测试改用 tmp 基线 + `teardown` 守卫 + shrink 守卫修复，并做了变异测试验证守卫非恒真。**剩余项已交接**给 `.rddf/improvements/fix-regression-baseline-integrity.md`（含缺陷二「僵尸断言红了 7 周而基线注释谎称通过」）。
 
 **最终验证**：`./test.sh --full --regression` ⇒ ✅ ALL PASSED（已知失败 11 / 新增失败 0 / 已修复 0，基线仍 87 行）；`pytest tests/unit/` 3361 passed / 3 skipped；`pytest tests/integration/` 201 passed；`docs/**` markdown 断链 0 处。
