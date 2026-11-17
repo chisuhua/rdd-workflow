@@ -19,8 +19,14 @@ from typing import List
 from doctor_render import Finding, Severity
 
 
-_CHECKBOX_PATTERN_OPEN = "- [ ]"
-_CHECKBOX_PATTERN_DONE = "- [x]"
+def _count_checkboxes(text: str):
+    """Canonical (done, total) via archive_sidecar.count_tasks.
+
+    The two `str.count` constants this replaces disagreed with every other
+    call site on uppercase `[X]` and on indented sub-tasks.
+    """
+    from skills._lib.tasks_count import count_tasks
+    return count_tasks(text)
 
 
 def _openspec_available() -> bool:
@@ -65,9 +71,8 @@ def run(project_root: Path | None = None) -> List[Finding]:
             ))
             continue
         text = tasks.read_text()
-        open_count = text.count(_CHECKBOX_PATTERN_OPEN)
-        done_count = text.count(_CHECKBOX_PATTERN_DONE)
-        total = open_count + done_count
+        done_count, total = _count_checkboxes(text)
+        open_count = total - done_count
         if total == 0:
             continue
         if open_count > 0:

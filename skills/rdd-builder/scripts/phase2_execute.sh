@@ -146,4 +146,25 @@ update_builder_handoff(
 )
 PYEOF
 
+# Record execution progress (fix-iteration-tasks-total): this is the only write
+# that makes a change verifier-eligible (`done == total > 0`). It is also the
+# last chance to record it — the archive sync only fills in what is missing.
+# Bookkeeping failure must not abort the phase.
+PKG_ROOT="$PKG_ROOT" PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" python3 - <<'PYEOF' || true
+import os, sys
+root = os.environ.get("PKG_ROOT") or ""
+if root:
+    sys.path.insert(0, root)
+# NOTE: import via the skills._lib shim. `_lib/iteration/store.py` imports
+# `skills._lib.iteration.schema`, so a direct `import _lib.iteration.X`
+# re-enters the package initialisation and raises a circular-import
+# ImportError (pre-existing; see the implementation record).
+from skills._lib.iteration.writer import record_tasks_snapshot
+msg = record_tasks_snapshot(
+    os.environ["PROJECT_ROOT"], os.environ["CHANGE_NAME"], phase="execute"
+)
+if msg:
+    print("  ⚠️  " + msg, file=sys.stderr)
+PYEOF
+
 exit 0

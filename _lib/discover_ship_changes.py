@@ -18,6 +18,8 @@ import json
 import subprocess
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+
+from _lib.tasks_count import count_tasks
 from typing import List, Optional
 
 
@@ -78,8 +80,10 @@ def _disk_candidates(project_root: Path) -> dict:
         tasks_md = entry / "tasks.md"
         if tasks_md.exists():
             text = tasks_md.read_text(encoding="utf-8")
-            cand.tasks_done = text.count("- [x]")
-            cand.tasks_total = text.count("- [ ]") + cand.tasks_done
+            # Canonical counter: the previous pair of `str.count` calls
+            # ignored uppercase `[X]` (so done under-counted) while still
+            # matching indented sub-tasks — one of five divergent rules.
+            cand.tasks_done, cand.tasks_total = count_tasks(text)
             proposal = (entry / "proposal.md").exists()
             design = (entry / "design.md").exists()
             cand.artifact_complete = proposal and design

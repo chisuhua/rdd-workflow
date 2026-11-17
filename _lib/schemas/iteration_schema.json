@@ -84,7 +84,7 @@
           "tasks_total": {
             "type": "integer",
             "minimum": 0,
-            "description": "Total number of tasks. Snapshot at plan generation; not auto-updated when tasks.md is edited."
+            "description": "Total number of tasks in tasks.md. Written by P1 (plan snapshot), re-written by P2 completion and by the archive sync — always from the same canonical counter as tasks_done (archive_sidecar.count_tasks), so done <= total. Read by the verifier eligibility rule (done == total > 0)."
           },
           "blocker": {
             "type": ["string", "null"],

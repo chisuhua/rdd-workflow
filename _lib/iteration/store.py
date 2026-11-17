@@ -683,13 +683,33 @@ def set_status(data: dict, name: str, status: str) -> dict:
     return add_or_update_change(data, name=name, status=status)
 
 
-def set_tasks_done(data: dict, name: str, done: int, total: Optional[int] = None) -> dict:
-    """Update tasks_done (and optionally tasks_total) for a change."""
+def set_tasks_done(
+    data: dict,
+    name: str,
+    done: int,
+    total: Optional[int] = None,
+    status: str = "in_worktree",
+) -> dict:
+    """Update tasks_done (and optionally tasks_total) for a change.
+
+    `status` defaults to ``in_worktree``: a change that has completed tasks is
+    by definition in flight, not still ``proposed`` (regression guard:
+    tests/unit/test_iteration.py::TestSetTasksDone::test_preserves_status_as_in_worktree).
+
+    Callers that must NOT move the status — notably the archive path, which
+    records ``archived`` — pass it explicitly. The archive flow itself uses
+    ``add_or_update_change`` directly, so this parameter exists for callers
+    that legitimately need a non-default status (fix-iteration-tasks-total).
+    """
     if done < 0:
         raise ValueError("tasks_done must be >= 0")
     if total is not None and total < 0:
         raise ValueError("tasks_total must be >= 0")
-    kwargs = {"name": name, "status": "in_worktree", "tasks_done": done}
+    if status not in _VALID_STATUSES:
+        raise ValueError(
+            f"invalid status {status!r}; must be one of {_VALID_STATUSES}"
+        )
+    kwargs = {"name": name, "status": status, "tasks_done": done}
     if total is not None:
         kwargs["tasks_total"] = total
     return add_or_update_change(data, **kwargs)

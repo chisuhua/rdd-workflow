@@ -8,14 +8,14 @@ derive tasks_done from the sidecar's [x] count.
 
 Public API (called from skills/_lib/archive.sh::archive_change):
   write_tasks_md_sidecar(change_dir)  — creates sidecar + skeleton
-  count_done_tasks(text)                — counts [x] markers
+  count_tasks(text)                     — counts (done, total) checkboxes
+  count_done_tasks(text)                — the `done` half of count_tasks
 
 Idempotent: re-running does not overwrite an existing sidecar.
 Graceful: if tasks.md doesn't exist, no sidecar is created.
 """
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 
@@ -26,13 +26,11 @@ _SKELETON_HEADER = (
 )
 
 
-def count_done_tasks(text: str) -> int:
-    """Count completed checkboxes ([x] or [X]) in a tasks.md string.
-
-    Case-insensitive per the existing convention in skills/_lib/iteration/post_archive.py
-    (count_done_tasks) and skills/_lib/iteration/store.py.
-    """
-    return len(re.findall(r"^\s*-\s*\[x\]\s", text, flags=re.MULTILINE | re.IGNORECASE))
+# The canonical counter lives in `_lib/tasks_count.py` (no package deps) so the
+# three call sites outside `_lib.iteration` can import it without triggering
+# this package's re-export shim. Re-exported here because the archive flow
+# historically imported it from this module.
+from _lib.tasks_count import count_done_tasks, count_tasks  # noqa: F401
 
 
 def write_tasks_md_sidecar(change_dir: str) -> bool:
@@ -61,4 +59,4 @@ def write_tasks_md_sidecar(change_dir: str) -> bool:
     return True
 
 
-__all__ = ["write_tasks_md_sidecar", "count_done_tasks"]
+__all__ = ["write_tasks_md_sidecar", "count_done_tasks", "count_tasks"]

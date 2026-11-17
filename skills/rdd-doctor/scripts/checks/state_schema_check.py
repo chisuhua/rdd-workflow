@@ -99,6 +99,50 @@ def _check_schema_version_metadata(project_root: Path) -> List[Finding]:
     return findings
 
 
+def _check_tasks_total_presence(project_root: Path) -> List[Finding]:
+    """Warn when an in-flight change records progress but no task total.
+
+    fix-iteration-tasks-total: `tasks_total` had no writer in v4, so entries
+    written before the fix carry `tasks_done` with no `tasks_total`. The
+    verifier's eligibility rule requires `done == total > 0`, so those entries
+    can never be verified — silently. WARNING, never CRITICAL: the fix is a
+    re-run (P2 or the archive sync), not a state repair.
+    """
+    findings: List[Finding] = []
+    iter_path = project_root / ".rddf" / "state" / "iteration.json"
+    if not iter_path.is_file():
+        return findings
+    try:
+        doc = json.loads(iter_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return findings  # schema check reports this elsewhere
+
+    for change in doc.get("changes", []):
+        status = change.get("status")
+        if status not in ("in_worktree", "completed"):
+            continue
+        done = change.get("tasks_done") or 0
+        total = change.get("tasks_total") or 0
+        if done > 0 and total == 0:
+            name = change.get("name") or "?"
+            findings.append(Finding(
+                severity=Severity.WARNING,
+                category="state",
+                file=str(iter_path),
+                line=None,
+                snippet=(
+                    f"change '{name}' records tasks_done={done} but no tasks_total "
+                    f"(status={status}) — it cannot satisfy done == total > 0"
+                ),
+                fix_hint=(
+                    f"re-run P2 for '{name}' "
+                    f"(bash skills/rdd-builder/scripts/phase2_execute.sh {name}) "
+                    "or let the archive sync fill tasks_total"
+                ),
+            ))
+    return findings
+
+
 def run(project_root: Path | None = None) -> List[Finding]:
     """Run cat-1 against project_root."""
     import os
@@ -110,6 +154,7 @@ def run(project_root: Path | None = None) -> List[Finding]:
         return []
 
     findings = _check_schema_version_metadata(project_root)
+    findings.extend(_check_tasks_total_presence(project_root))
 
     # v3 (feat-guide-orchestrator-session-event-bus): custom check for events.jsonl
     # (no formal JSON Schema — per-line JSON + last_seen_offset reference validation).

@@ -53,6 +53,28 @@ if [ ! -f "$TASKS_PATH" ]; then
     } > "$TASKS_PATH"
 fi
 
+# Record the plan-time task count (fix-iteration-tasks-total).
+# P1 writes `tasks_total` ONLY: a plan is not execution, so `proposed` must
+# not become `in_worktree` here (that transition belongs to P2).
+# Bookkeeping failure must not abort the phase.
+PKG_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/../../.." && pwd)"
+PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" PKG_ROOT="$PKG_ROOT" python3 - <<'PYEOF' || true
+import os, sys
+for root in (os.environ.get("PKG_ROOT") or "", os.environ.get("PROJECT_ROOT") or ""):
+    if root and root not in sys.path:
+        sys.path.insert(0, root)
+# NOTE: import via the skills._lib shim. `_lib/iteration/store.py` imports
+# `skills._lib.iteration.schema`, so a direct `import _lib.iteration.X`
+# re-enters the package initialisation and raises a circular-import
+# ImportError (pre-existing; see the implementation record).
+from skills._lib.iteration.writer import record_tasks_snapshot
+msg = record_tasks_snapshot(
+    os.environ["PROJECT_ROOT"], os.environ["CHANGE_NAME"], phase="plan"
+)
+if msg:
+    print("  ⚠️  " + msg, file=sys.stderr)
+PYEOF
+
 python3 <<PYEOF
 import sys
 sys.path.insert(0, "$PROJECT_ROOT")

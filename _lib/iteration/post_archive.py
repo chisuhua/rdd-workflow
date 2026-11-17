@@ -7,7 +7,8 @@ Extracted per fix-archive-iteration-sync (P0, 2026-08-05):
       - Sets status='archived' if not already
       - Sets archived_at (preserves existing if already set — idempotent)
       - Sets archive_commit_sha (preserves existing if already set — idempotent)
-      - Sets tasks_done (counted from archive tasks.md if present)
+      - Sets tasks_done AND tasks_total (both counted from the archive
+        tasks.md.archived-snapshot, falling back to tasks.md)
       - Sets plan_path (.rddf/plans/<name>.md)
 
     Returns:
@@ -27,10 +28,11 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 import sys
 from pathlib import Path
 from typing import Optional
+
+from _lib.iteration.archive_sidecar import count_tasks
 
 logger = logging.getLogger(__name__)
 
@@ -49,15 +51,15 @@ def _resolve_opencode_session_id() -> str:
 
 
 def count_done_tasks(tasks_path: str) -> int:
-    """Count `- [x]` markers in a tasks.md file (case-insensitive on 'x').
+    """Count `- [x]` markers in a tasks.md file.
 
     Returns:
         Number of completed tasks. Returns 0 if file is missing or unreadable.
 
-    Implementation:
-        Simple substring regex — tasks.md has a stable format with
-        `- [x] <task description>` per line. The full file is small
-        (typically < 100 lines), so re.findall is O(n) with negligible cost.
+    Delegates to the canonical counter (``archive_sidecar.count_tasks``) so
+    this file cannot drift from the other four call sites. The previous local
+    regex agreed with it in practice, but keeping a second copy is exactly how
+    `discover_ship_changes.py` ended up ignoring uppercase `[X]`.
     """
     p = Path(tasks_path)
     if not p.is_file():
@@ -67,35 +69,60 @@ def count_done_tasks(tasks_path: str) -> int:
     except (OSError, UnicodeDecodeError) as exc:
         logger.warning("count_done_tasks: cannot read %s: %s", tasks_path, exc)
         return 0
-    # Match "- [x]" or "- [X]" at the start of a list-item entry
-    return len(re.findall(r"^\s*-\s*\[x\]\s", text, flags=re.MULTILINE | re.IGNORECASE))
+    return count_tasks(text)[0]
+
+
+def count_tasks_file(tasks_path: str) -> Optional[tuple[int, int]]:
+    """Return ``(done, total)`` for a tasks.md file, or None if unreadable."""
+    p = Path(tasks_path)
+    if not p.is_file():
+        return None
+    try:
+        return count_tasks(p.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError) as exc:
+        logger.warning("count_tasks_file: cannot read %s: %s", tasks_path, exc)
+        return None
+
+
+# Preference order inside an archive dir. `write_tasks_md_sidecar()` replaces
+# tasks.md with a header-only skeleton at archive time, so the snapshot is the
+# only file that still holds checkboxes. Reading the skeleton yields (0, 0) —
+# which zeroes the record whenever the sync is replayed after archiving.
+_ARCHIVE_TASKS_CANDIDATES = ("tasks.md.archived-snapshot", "tasks.md")
 
 
 def _find_archive_tasks_md(project_root: str, change_name: str) -> Optional[str]:
-    """Locate the tasks.md in archive/, if it exists.
+    """Locate the authoritative tasks.md in archive/, if it exists.
 
-    Searches:
-      1. openspec/changes/archive/<*>-<name>/tasks.md (date-prefixed)
-      2. openspec/changes/archive/<name>/tasks.md (no date)
+    Searches (snapshot before live file — see _ARCHIVE_TASKS_CANDIDATES):
+      1. openspec/changes/archive/<*>-<name>/<candidate>
+      2. openspec/changes/archive/<name>/<candidate>
 
     Returns:
-        Path to tasks.md if found, else None.
+        Path to the tasks file if found, else None.
     """
     archive_dir = Path(project_root) / "openspec" / "changes" / "archive"
     if not archive_dir.is_dir():
         return None
 
+    def _pick(change_dir: Path) -> Optional[str]:
+        for name in _ARCHIVE_TASKS_CANDIDATES:
+            candidate = change_dir / name
+            if candidate.is_file():
+                return str(candidate)
+        return None
+
     # Date-prefixed pattern: 2026-08-05-<name>
-    for child in archive_dir.iterdir():
+    for child in sorted(archive_dir.iterdir()):
         if child.is_dir() and child.name.endswith(f"-{change_name}"):
-            tm = child / "tasks.md"
-            if tm.is_file():
-                return str(tm)
+            found = _pick(child)
+            if found:
+                return found
 
     # No prefix
-    direct = archive_dir / change_name / "tasks.md"
-    if direct.is_file():
-        return str(direct)
+    direct = archive_dir / change_name
+    if direct.is_dir():
+        return _pick(direct)
 
     return None
 
@@ -189,12 +216,19 @@ def sync_iteration_after_archive(
     if archive_commit_sha and "archive_commit_sha" not in existing:
         fields["archive_commit_sha"] = archive_commit_sha
 
-    # tasks_done: derive from archive tasks.md if present, preserve otherwise
-    if "tasks_done" not in existing:
-        tasks_md = _find_archive_tasks_md(project_root, change_name)
-        if tasks_md:
-            done = count_done_tasks(tasks_md)
+    # tasks_done / tasks_total: derive from the archive tasks file if present.
+    # Each has its OWN guard so an entry that already records `done` can still
+    # receive `total` — before fix-iteration-tasks-total only `done` was
+    # written here, which made `done == total` unreachable for archived
+    # entries and left the verifier's eligible set empty.
+    tasks_file = _find_archive_tasks_md(project_root, change_name)
+    counts = count_tasks_file(tasks_file) if tasks_file else None
+    if counts is not None:
+        done, total = counts
+        if "tasks_done" not in existing:
             fields["tasks_done"] = done
+        if "tasks_total" not in existing:
+            fields["tasks_total"] = total
 
     # plan_path: standard convention
     if "plan_path" not in existing:

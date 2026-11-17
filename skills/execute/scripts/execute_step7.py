@@ -16,6 +16,17 @@ import subprocess
 import sys
 
 
+def _count_tasks(text: str) -> tuple:
+    """Local indirection so the canonical counter is imported lazily.
+
+    This module is executed by a phase script that puts the *project* root on
+    sys.path; `_lib` may come from the package root instead. Resolving lazily
+    keeps the counter single-sourced without breaking either layout.
+    """
+    from skills._lib.tasks_count import count_tasks
+    return count_tasks(text)
+
+
 def run_step7_report(project_root: str, change_name: str) -> dict:
     """Generate Step 7 final report. Returns summary dict.
 
@@ -32,13 +43,10 @@ def run_step7_report(project_root: str, change_name: str) -> dict:
     total = 0
     if os.path.isfile(tasks_file):
         with open(tasks_file) as f:
-            content = f.read()
-        for line in content.split("\n"):
-            stripped = line.strip()
-            if stripped.startswith("- ["):
-                total += 1
-                if stripped.startswith("- [x]") or stripped.startswith("- [X]"):
-                    done += 1
+            # Canonical counter (archive_sidecar.count_tasks): the local loop
+            # this replaces ignored indented sub-tasks, so it under-counted
+            # `total` relative to every other call site.
+            done, total = _count_tasks(f.read())
 
     complete = (done == total) and total > 0
 

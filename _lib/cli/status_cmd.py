@@ -249,6 +249,11 @@ def cmd_status_detail(name: str, project_root: str) -> int:
             tasks_disp = f"archived (snapshot {tasks_done}/{tasks_total})"
         else:
             tasks_disp = f"{tasks_done}/{tasks_total}"
+    elif tasks_done > 0:
+        # Progress is known but the total is not: entries written before
+        # fix-iteration-tasks-total have `tasks_done` with no `tasks_total`.
+        # Showing "-" hid real progress; `4/-` says "4 done, total unknown".
+        tasks_disp = f"{tasks_done}/-"
     else:
         tasks_disp = "-"
 

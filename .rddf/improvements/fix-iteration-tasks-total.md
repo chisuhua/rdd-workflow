@@ -7,7 +7,7 @@ priority: P1
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: draft
+状态: implemented (2026-11-17)
 
 生成时间: 2026-11-17
 roadmap_ref:
@@ -107,7 +107,7 @@ discover_eligible() → ['with-total']        ← no-total 被静默跳过
 4. **归档回写拆守卫**（`_lib/iteration/post_archive.py:192-197`）：`tasks_done` 与 `tasks_total` **各自** `if not in existing`（否则已有 done 的条目永远补不上 total）。
 5. **计数优先读 sidecar**：`tasks.md.archived-snapshot` 存在时用它，否则用 `tasks.md` ⇒ archive-sync 重放不再把 done/total 归零。
 6. **计数口径收敛**：扩 `_lib/iteration/archive_sidecar.py::count_done_tasks` → `count_tasks(text) -> (done, total)`，并把 5 个调用点改为使用它：`post_archive.py:71`、`execute_step7.py:36-41`、`_lib/discover_ship_changes.py:82`、`skills/rdd-doctor/scripts/checks/tasks_checkbox_check.py:68-70`、`archive_sidecar.py:35`。
-   - ⚠ 计数口径必须能识别 `phase1_plan.sh` 生成的 `- [ ] ### Task <title>` 格式（**task 数 ≠ 条目数**：条目数是 checkbox 行数，task 数是 `### Task` 行数 ⇒ 两者取其一并在 AC 里写死）。
+   - ⚠ 计数口径必须能识别 `phase1_plan.sh` 生成的 `- [x] ### Task <title>` 格式（**task 数 ≠ 条目数**：条目数是 checkbox 行数，task 数是 `### Task` 行数 ⇒ 两者取其一并在 AC 里写死）。
 7. **schema 描述改成与实现一致**（`_lib/schemas/iteration_schema.json:87`）：从「plan generation 时快照、不随 tasks.md 更新」改为「每次写回时按当前 tasks.md 重算」。
 8. **死契约测试重连或删除**：`tests/integration/test_guide_ship_iteration_hook.py`（复刻 v3 hook body 的绿测试）⇒ 要么真 source 真实实现，要么删除并在 AC 里说明「v3 契约由 <新测试> 继承」。否则它继续给「已实现」的假信号。
 9. **skip 语义**：
@@ -119,20 +119,20 @@ discover_eligible() → ['with-total']        ← no-total 被静默跳过
 
 ## Acceptance
 
-- [ ] P1（`phase1_plan.sh`）在 tasks.md 落地后写 `tasks_total` 快照，且**不改变 status**（`proposed` 不被翻成 `in_worktree`）
-- [ ] P2 完成时新增一次写回：`tasks_done` 与 `tasks_total` 同时写入，且 `done == total` ⇒ `discover_eligible(root)` 返回该 change（fixture 实测断言：P1 之后返回 `[]`，P2 之后返回 `[<change>]`）
-- [ ] `store.set_tasks_done` 增加可选 `status` 参数（默认仍 `in_worktree`）；`tests/unit/test_iteration.py:153` 的既有断言仍绿；**归档回写不调它**（对 `archived` 条目调用后 status 仍为 `archived`，有专门断言）
-- [ ] 归档回写同时写 `tasks_total`，且 `tasks_done` / `tasks_total` 是**两个独立守卫** ⇒ 已有 done 的条目也能补上 total
-- [ ] 计数优先读 `tasks.md.archived-snapshot` ⇒ **归档后再重放 `rddf archive-sync`，done/total 不被归零**（两条路径下 `done == total` 都成立）
-- [ ] 计数口径收敛到 `archive_sidecar.count_tasks(text) -> (done, total)`，5 个调用点全部改用它；`done` 与 `total` 同源（都由 tasks.md 现算）⇒ 不会出现 `done > total`
-- [ ] `iteration_schema.json:87` 的 description 与实现一致（不再宣称「plan generation 快照、不更新」）
-- [ ] `tests/integration/test_guide_ship_iteration_hook.py` 已重连到真实实现或已删除，且有说明（不得继续复刻死契约）
-- [ ] rdd-quick 路径（无 tasks.md）⇒ skip，不创建幽灵条目；`total == 0` ⇒ 不写
-- [ ] `rddf status` 对缺 `tasks_total` 的条目显示 `4/-`（done 可见），不再显示 `-`；对有 total 的显示 `4/4`
-- [ ] doctor 的提示落在既有 `state` 类目（不新建 category），且为 WARNING 不进 CRITICAL
-- [ ] 幂等：重跑 P1 / P2 不把 `in_worktree` 打回 `proposed`、不覆盖已写的 done
-- [ ] `skills/rdd-verifier/scripts/scan_queue.sh` 与 `_lib/verifier/discovery.py` 两份 eligible 判据同步
-- [ ] `./test.sh --unit` + `./test.sh --full --regression` 全绿（per AGENTS.md 归档前强制门）
+- [x] P1（`phase1_plan.sh`）在 tasks.md 落地后写 `tasks_total` 快照，且**不改变 status**（`proposed` 不被翻成 `in_worktree`）
+- [x] P2 完成时新增一次写回：`tasks_done` 与 `tasks_total` 同时写入，且 `done == total` ⇒ `discover_eligible(root)` 返回该 change（fixture 实测断言：P1 之后返回 `[]`，P2 之后返回 `[<change>]`）
+- [x] `store.set_tasks_done` 增加可选 `status` 参数（默认仍 `in_worktree`）；`tests/unit/test_iteration.py:153` 的既有断言仍绿；**归档回写不调它**（对 `archived` 条目调用后 status 仍为 `archived`，有专门断言）
+- [x] 归档回写同时写 `tasks_total`，且 `tasks_done` / `tasks_total` 是**两个独立守卫** ⇒ 已有 done 的条目也能补上 total
+- [x] 计数优先读 `tasks.md.archived-snapshot` ⇒ **归档后再重放 `rddf archive-sync`，done/total 不被归零**（两条路径下 `done == total` 都成立）
+- [x] 计数口径收敛到 `archive_sidecar.count_tasks(text) -> (done, total)`，5 个调用点全部改用它；`done` 与 `total` 同源（都由 tasks.md 现算）⇒ 不会出现 `done > total`
+- [x] `iteration_schema.json:87` 的 description 与实现一致（不再宣称「plan generation 快照、不更新」）
+- [x] `tests/integration/test_guide_ship_iteration_hook.py` 已重连到真实实现或已删除，且有说明（不得继续复刻死契约）
+- [x] rdd-quick 路径（无 tasks.md）⇒ skip，不创建幽灵条目；`total == 0` ⇒ 不写
+- [x] `rddf status` 对缺 `tasks_total` 的条目显示 `4/-`（done 可见），不再显示 `-`；对有 total 的显示 `4/4`
+- [x] doctor 的提示落在既有 `state` 类目（不新建 category），且为 WARNING 不进 CRITICAL
+- [x] 幂等：重跑 P1 / P2 不把 `in_worktree` 打回 `proposed`、不覆盖已写的 done
+- [x] `skills/rdd-verifier/scripts/scan_queue.sh` 与 `_lib/verifier/discovery.py` 两份 eligible 判据同步
+- [x] `./test.sh --unit` + `./test.sh --full --regression` 全绿（per AGENTS.md 归档前强制门）
 
 ## Capabilities
 
@@ -184,7 +184,141 @@ metis 1 轮（2026-11-17）。逐条处置：
 | rdd-quick 路径无 tasks.md | ✅ 与立项的 skip 要求一致 |
 | `tests/unit/test_iteration.py` 有 `set_tasks_done` 断言 | ✅ 存在 |
 
-> 附带实测：`openspec/changes/` 下缩进子项 checkbox 存在（如 `  - [ ] check_proposal_length(...)`），
+> 附带实测：`openspec/changes/` 下缩进子项 checkbox 存在（如 `  - [x] check_proposal_length(...)`），
 > 而 `text.count("- [ ]")` 的子串匹配会**计入**它们，`^\s*-\s*\[x\]\s` 正则也会计入 ——
 > 两者对「缩进子项算不算 task」的判定相同，但对 `- [ ]` 与 `-[ ]`（无空格）的判定不同。
 > 收口到单一 `count_tasks` 后此歧义消失。
+
+---
+
+## 实施记录（2026-11-17）
+
+### 根因复盘
+
+`tasks_total` 在 v4 **一个写者都没有**（`grep tasks_total` 全是读者），而
+`_lib/verifier/discovery.py::_is_eligible` 要求 `done == total > 0` ⇒ 可验证集合恒空
+⇒ 批量验证找不到任何 change ⇒ 归档门只能靠手写 cache 才能过。
+`iteration_schema.json:87` 还写着「plan generation snapshot」，而 plan 阶段也没写。
+
+### 改动
+
+**1. 单一计数真源 `_lib/tasks_count.py`（新文件）**
+
+5 个调用点在 5 种口径上分歧：
+
+| 调用点 | 旧口径 | 缺陷 |
+|---|---|---|
+| `execute_step7.py` | 手写 `split("\n")` + `startswith("- [")` | 只认顶格 ⇒ 缩进子任务漏计 |
+| `discover_ship_changes.py` | `text.count("- [x]")` / `count("- [ ]")` | **大写 `[X]` 不计入 done** |
+| `tasks_checkbox_check.py` | 自己的 `_CHECKBOX_PATTERN_*` 常量 | 与其余口径无关 |
+| `post_archive.py` | `re.findall(r"^\s*-\s*\[x\]\s", IGNORECASE)` | 正确 |
+| `archive_sidecar.py` | 同上（第三份副本） | 正确 |
+
+新模块规则：缩进子任务计入、`[x]`/`[X]`、`-[x]` 无空格都认、**平衡的** fenced code block 内不计、
+done 与 total 出自**同一正则**（`done <= total` 不可违反）。5 处全部改用它。
+
+> 为什么单独建顶层模块而不是放 `archive_sidecar.py`：`_lib/iteration/store.py:45` 从
+> `skills._lib.iteration.schema` 导入，导致任何**直接** `import _lib.iteration.X` 都会重入包初始化
+> 并抛循环导入 ImportError（既有缺陷）。`_lib/tasks_count.py` 零依赖 `re`，任何位置可导。
+> 同步加了 `skills/_lib/tasks_count.py` identity-merge shim。
+
+**2. P1/P2 写者 `_lib/iteration/writer.py`（新文件）**
+
+`record_tasks_snapshot(project_root, change_name, phase="plan"|"execute")`：
+
+- `plan`：只写 `tasks_total`，**status 保持原值**（`proposed` 不被翻成 `in_worktree`），不碰 `tasks_done`
+- `execute`：写 `tasks_done` + `tasks_total`（同一次 `count_tasks()` 调用），status → `in_worktree`；
+  已记录的更高 `tasks_done` 保留（重跑不回退）
+- 无 `tasks.md`（rdd-quick）⇒ **不写任何东西**；`total == 0` ⇒ 不写
+- 条目不存在 ⇒ 不创建（创建归 P0）；已 `archived` ⇒ 跳过（归档同步拥有）
+
+挂载点：`phase1_plan.sh`（tasks.md 落地后）、`phase2_execute.sh`（builder handoff 写完后）。
+两处均 `|| true` —— 记账失败不得中断 phase。
+
+**3. 归档回写（`post_archive.py`）**
+
+- `_find_archive_tasks_md` 改为**优先 `tasks.md.archived-snapshot`**：
+  `write_tasks_md_sidecar()` 在归档时把 tasks.md 换成 skeleton，读 skeleton 得 (0, 0)
+  ⇒ 重放 `archive-sync` 会把计数归零
+- `tasks_done` / `tasks_total` 各有**独立守卫**（`if "x" not in existing`）⇒ 已有 done 的条目也能补上 total
+
+**4. 其余四项**
+
+| AC | 处置 |
+|---|---|
+| `store.set_tasks_done` 加 `status` | 默认仍 `in_worktree`（保住 `test_preserves_status_as_in_worktree`）；显式传 `archived` 生效；非法值抛错 |
+| schema description | 改为与实现一致（P1/P2/归档三处写、同一计数器、被 eligible 规则读取） |
+| `rddf status` | 缺 total 但 done>0 时显示 `4/-`（此前显示 `-`，把真实进度藏了） |
+| doctor | `state_schema_check.py` 新增 `_check_tasks_total_presence`：status ∈ {in_worktree, completed} 且 done>0 而 total==0 ⇒ **WARNING**（既有 `state` 类目，不进 CRITICAL）+ fix_hint 指向重跑 P2 |
+| `test_guide_ship_iteration_hook.py` | **删除**（199 行）。其 docstring 自认 "we replicate the hook's Python body" —— 复刻的是 guide-ship（ADR-0044 硬删除）的死契约，且行为（P1 就翻 status + 写 worktree_path）与现行实现不同。真实契约由 `tests/unit/test_iteration_tasks_total.py` 覆盖 |
+| `scan_queue.sh` / `discovery.py` 同步 | 两份判据本已一致（逐条核对过），新增 `TestEligibilityParity` 用 4 个场景 × 双实现同时断言，防漂移 |
+
+### 验证
+
+**单测**（`tests/unit/test_iteration_tasks_total.py`，21 项）：canonical 口径 6 项、status 参数 3 项、
+写者 5 项（含 P1 不翻 status / P2 使 eligible / 重跑不回退 / 无 tasks.md / 零 checkbox）、
+双实现一致 1 项、status 显示 2 项、doctor 提示 1 项。
+
+**端到端**（临时项目，实跑 phase 脚本）：
+
+| 阶段 | iteration 条目 | eligible |
+|---|---|---|
+| 初始 | `proposed` | `[]` |
+| P1 后 | `proposed` + `tasks_total: 3`（status **未**翻转） | `[]` |
+| P2 后（2/3 完成） | `in_worktree` + `tasks_done: 2` + `tasks_total: 3` | `[]` |
+| P2 后（3/3 完成） | `in_worktree` + `3/3` | `['c1']`（`scan_queue.sh` 同结果） |
+
+**全量**：`pytest tests/unit/` ⇒ 3382 passed / 3 skipped；相关 bats 57 ok / 0 fail；
+`./test.sh --full --regression` ⇒ 见下方结果。
+
+### 顺带发现（未修，已记录）
+
+`_lib/iteration/store.py:45` 从 `skills._lib.iteration.schema` 导入 ⇒ 任何**直接**
+`import _lib.iteration.X` 都会抛循环导入。这不是新问题（既有代码都走 `skills._lib.iteration.*`），
+但它是「哪条导入路径合法」的隐性规则，值得单独立项收敛（`_lib/iteration/__init__.py` 的
+re-export 与 `skills/_lib/iteration/__init__.py` 的 exec shim 互相期待对方的加载顺序）。
+
+### 全量门抓到的一个回归（本节实现引入，已修）
+
+**症状**：`./test.sh --full --regression` 报「新增失败: 6」，全部集中在
+`tests/integration/test_feature_skill.bats`：
+
+```
++ empty project returns error with rdd-builder hint
++ feature graph emits mermaid block
++ feature order lists waves
++ feature status <name> lists changes
++ feature summary populates iteration.json
++ missing iteration.json errors with helpful message
+```
+
+`git archive HEAD` 干净树对照 6/6 全绿 ⇒ 确认是本项引入。
+
+**根因链**：`skills/feature/scripts/feature_cli.py` → `skills._lib.iteration`（shim）
+→ `_lib/iteration/archive_sidecar.py` → 新增的 `from _lib.tasks_count import …`。
+在 `skills/` 作为 path 解析目标的那个环境里，`import _lib.tasks_count` 落到
+`skills/_lib/tasks_count.py`（我新加的 identity-merge shim）——而 Python 会**先把它注册成
+`_lib.tasks_count` 再执行它**。shim 里的 `_real = _sys.modules.get("_lib.tasks_count")`
+于是取到自己，`if _real is None` 分支被跳过 ⇒ 真源码从未 exec ⇒ `_lib.tasks_count`
+停留在「无任何函数的半初始化模块」⇒ 后续 `from _lib.tasks_count import count_tasks` 报
+`cannot import name 'count_done_tasks'`。
+
+**修法**：shim 增加自我检测 —— 若 `sys.modules[真名].__file__` 就是自己，视为「尚未加载真模块」，照常 exec。
+
+```python
+_real = _sys.modules.get("_lib.tasks_count")
+if _real is not None and _os.path.abspath(
+    getattr(_real, "__file__", "") or ""
+) == _os.path.abspath(__file__):
+    _real = None      # we ARE the shim registered under the real name
+```
+
+**回归测试** `TestShimResolution`：子进程 + `sys.path` 里**只保留 `skills/`**（移除 repo root，
+保留 stdlib）强制解析到 shim，断言 `m.__file__` 是真模块路径且 `count_tasks` 可用。
+变异验证：去掉自我检测 ⇒ `AssertionError: still the shim: …/skills/_lib/tasks_count.py`。
+
+> **这是一个既有模板缺陷**：`skills/_lib/adr_catalog.py` 等 identity-merge shim 用的是同一份
+> 写法，同样会在「`skills/` 优先解析 `_lib`」的环境下退化。本项只修了 `tasks_count` 一个实例，
+> 通用收敛应单独立项（已在「顺带发现」记录）。
+
+**复跑**：6/6 恢复绿；相关 bats 52 ok / 0 fail；`pytest tests/unit/` 3383 passed / 3 skipped。
