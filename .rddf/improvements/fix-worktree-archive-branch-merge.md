@@ -128,6 +128,8 @@ metis 提出的反向意见（采纳并已写进 What Changes）：**现状成�
 
 - [ ] **spec delta**：更新 `complete-project-yaml-config-gaps`（`openspec_tracked=false` 段，`:248`/`:253-254`）与 `archive-openspec-tracked-skip-commit`（顺序 scenario，`:34`/`:40-41`）两份 spec，把「跳过 commit_archive_moves」与「feature 分支合并」解耦；并由 architect 签批
 - [ ] `archive_premerge_check` 为**具名函数**、返回三态（0 已合入/内容等价、1 未合入、2 无法判定）；无法判定时**放行 + 警告**（不制造假拒绝）
+- [ ] **接口契约：支持「无 worktree」模式**（`wt_path` 为空）—— ①「worktree 内未提交改动」判据在 `wt_path` 为空时**跳过**（lightweight 路径没有 worktree；用主仓的 `git status --porcelain` 会把**别的 change 的脏文件**误判成本 change 的未提交改动 ⇒ 假拒绝，且指引文案会诱导用户把别人的改动 commit 进来）⇒ 轻量路径用「分支提交归属」判据代替（归 `fix-lightweight-branch-and-archive`）；⓪ref 缺失 / ②已合入 / ③内容等价（patch-id）/ ④无法判定**四项原样复用**
+- [ ] **内容等价用 patch-id 判据**（`git cherry <default> <branch>` 全为 `-`），不是 tip-to-tip 的 `git diff --quiet`（后者在默认分支有任何无关提交时就会判不等）—— per ADR-0061 的决策 2 ③（立项 AC 原文的 `git diff --quiet` 口径已被本 ADR 覆盖，须同步）
 - [ ] 内容等价分支存在：`is-ancestor` 为假但 `git diff --quiet <default> <branch>` 为真 ⇒ 放行 + 警告（squash-merge 项目不被永久锁死）
 - [ ] worktree 内有未提交改动 ⇒ 拒绝归档（改动不会随 worktree 清理丢失）
 - [ ] 未合入 ⇒ `archive_change` 返回 1 → `phase3_archive.sh` 退出 3 → `rddf archive` 退出 1，且 stderr 含「尚未合入」与可复制的合并命令

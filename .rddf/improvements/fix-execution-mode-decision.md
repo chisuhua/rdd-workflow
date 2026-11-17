@@ -146,16 +146,16 @@ metis 指出的**成本权衡**（已写进「备选方案」）：只做「诚�
 
 ## Acceptance
 
-- [ ] 「lightweight」的定义被写成一份契约（无 worktree、无独立分支、主仓当前分支实施）；`ship_execution_mode.sh` 的 `serial` 被改名为波次维度（不再与执行模式混用）
+- [ ] 「lightweight」的定义被写成一份契约（**有 `openspec/<change>` 分支、无 worktree、在主仓该分支上实施** —— per ADR-0036 的 2026-11-17 修订：与 ADR-0024 / ADR-0036 Decision 表 / schema / `verifier-lifecycle` 五处既有文本一致；⚠ **原草稿写的「无独立分支、主仓当前分支实施」是把实现缺陷当成契约，已作废**）；`ship_execution_mode.sh` 的 `serial` 被改名为波次维度（不再与执行模式混用）
 - [ ] `compute_mode_inputs(project_root, change_name)` 存在于 `_lib/builder_deps.py`，内部全用绝对路径；`decide_execution_mode` 的签名与阈值不变
 - [ ] `task_count` 取 tasks.md 的 checkbox **total**（大小写不敏感）；**缺失或 0 ⇒ fail-closed（worktree）** 并在 notes/reason 写 `tasks=unknown`
-- [ ] 夹具断言（**改动前第一条必须是红的**）：`tasks.md` 2 条 + plan `Files:` 2 个 ⇒ `lightweight`；`tasks.md` 5 条 ⇒ `worktree`；`tasks.md` 只有段头（0 checkbox，取自 `## Task` vs `### Task` 的真实反例）⇒ `worktree`
+- [ ] 夹具断言（**改动前第一条必须是红的**）：`tasks.md` 2 条 + plan `Files:` 2 个 ⇒ `lightweight`；`tasks.md` 5 条 ⇒ `worktree`；`tasks.md` 只有段头（0 checkbox，取自 `## Task` vs `### Task` 的真实反例）⇒ `worktree`。⚠ **启用前置**：第 1 条（小改动 ⇒ lightweight）**只有在 `fix-lightweight-branch-and-archive` 落地后**才成立 —— 在它落地前，同一组输入必须判 **worktree** 并在 `reason` 里写明「lightweight 未落地（无实现分支 / 归档路径未补齐）」⇒ 夹具断言分两段验收（见下方「plan_drift 处置」）
 - [ ] `file_count` 来自 `.rddf/plans/<change>.md` 的 `**Files:**` 段（去重、剥行号、剥反引号）；plan 缺失 ⇒ `files=unknown` 且**该输入不参与判定**（不取默认值）
 - [ ] `risk_keywords` 改为读 `roadmap-meta.yaml` 的 `risk: normal|high`；**不做 proposal/tasks 文本扫描**；默认 `normal` 不触发 risk 规则
 - [ ] `reason` 只写实际输入值与不可得项；**不再出现常量 5**；handoff 里写入的 reason 与实际一致（对本批 change 重跑 P1.5 验证）
 - [ ] 冲突维度有最小实现（其它 change 的 `Files:` 交集非空 或 存在活跃 worktree ⇒ worktree）+ 夹具断言
 - [ ] `LEGACY_EXEC_MODE` 已删除或降为最低优先级（覆盖时 WARN 且保留计算 reason）+ 对应测试
-- [ ] **三方一致性**：`config_schema.json:225`、P1.5 判定代码、`complete-project-yaml-config-gaps` 的 `guide-ship-phase-1-detect-lightweight` Requirement 三者一致；**由 architect 签批**；方案（实现 / retire）二选一并写进 ADR 或 spec delta
+- [ ] **三方一致性**：**已由 architect 签批裁定**（ADR-0036 的 2026-11-17 修订，Status `已采纳 + AMENDED (2026-11-17)`，审稿报告 `.rddf/reviews/adr-0036-amendment-2026-11-17.md`）—— 选**退役/改写**（非「实现 false ⇒ lightweight」），理由与逐条处置见该 ADR 的修订节与审稿报告。⇒ 本项的落地动作 = 执行该修订已定的处置：`config_schema.json` 描述收窄为归档路径语义；`README.md:87/:100` 同步；退役清单 R1~R10 逐条处置（负向断言 / 退役僵尸变量 `RDDF_EXECUTION_MODE` / R4 正向重指向 / owner 与路径重指向）+ 全局残余面（204 处 / 47 份 spec）作为**独立 backlog** 立项（不冒充本项验收项）
 - [ ] 计数口径与 `fix-iteration-tasks-total` 共用同一标准，未新造第三套
 - [ ] 同名函数防护：`_lib/subagent_strategy.py:44` 的 `decide_execution_mode(task_type, quota_status)` 与 `_lib/builder_deps.py:16` 签名不同 ⇒ 加 `inspect.signature` 断言，或重命名 builder 版（唯一生产调用点仅 `phase1_5_deps.sh`）
 - [ ] 新增代码不落在 `skills/rdd-builder/scripts/phase*`（不打红「恰好 6 个 phase 脚本」断言）
@@ -295,3 +295,57 @@ skill 的 normative 文本**。只退役一条会把病根留在原地。
    「lightweight 建分支 + 归档路径补齐（merge / cleanup / iteration sync）」的独立立项，
    或把该部分并入本项。**在它落地前，本项对「小改动」的诚实输出只能是
    fail-closed 到 worktree + reason 写明原因**。
+
+---
+
+## plan_drift 处置（2026-11-17，planner）
+
+**来源**：builder 实施前的 oracle 咨询（记录见本文件「实施前咨询」节）暴露了两个**计划层**问题，按角色矩阵归 `plan_drift` ⇒ 由 planner 修订本立项，不在 builder 侧硬改。
+
+### 问题 1：AC #1 的「lightweight」定义把实现缺陷当成了契约
+
+原 AC 写「无 worktree、**无独立分支**、主仓当前分支实施」，但**五处既有文本**都说「有分支」：
+
+| 出处 | 原文 |
+|---|---|
+| ADR-0024（Consequences） | 「小改动（≤2 文件，≤3 任务）直接在 **main repo 分支**工作，跳过 worktree 创建」 |
+| ADR-0036（Decision 表） | 「false → 强制轻量模式（**branch-only**）」 |
+| `_lib/schemas/config_schema.json` | 「force lightweight mode (**branch only**, no worktree)」 |
+| `complete-project-yaml-config-gaps`（spec） | 「proceed directly to lightweight **branch** execution」 |
+| `verifier-lifecycle`（已采纳 spec） | scenario「GIVEN lightweight is active AND the current branch is **not** `openspec/<change>` THEN fail closed」 |
+
+⇒ 真正的契约是「**有分支、无 worktree**」；实现做成了「无分支」⇒ **幽灵分支**（handoff 写下 `branch="openspec/<name>"` 却没有对应 ref）⇒ lightwight 的 change 今天过不了归档门（`branch.py` 取不到分支 ⇒ fail closed ⇒ 只能靠审计旁路）。
+
+⇒ **已修订**：AC #1 改为「有 `openspec/<change>` 分支、无 worktree」，并由 ADR-0036 的 2026-11-17 修订钉死（architect 签批）。
+
+### 问题 2：AC #4 的「小改动 ⇒ lightweight」在当前实现下不安全
+
+若按原 AC 让小改动走 lightweight ⇒ 本仓（本仓 `openspec_tracked: false` + P1.5 恒判 worktree）**所有小 change 会立刻变成不可归档**（幽灵分支 ⇒ 验证 fail closed ⇒ 只能走 `SKIP_RDD_VERIFIER` 审计旁路）。
+
+⇒ **已修订**：AC #4 的第 1 条夹具断言**分段验收**：
+
+| 阶段 | 条件 | `tasks.md` 2 条 + plan `Files:` 2 个 的判定 | `reason` |
+|---|---|---|---|
+| **现在** | `fix-lightweight-branch-and-archive` **未**落地 | `worktree` | 写明「lightweight 未落地（无实现分支 / 归档路径未补齐）」 |
+| **之后** | 该立项落地 | `lightweight` | 真实输入值 |
+
+⇒ 「诚实化」部分（AC #2/#3/#5/#6/#7/#8/#9/#12/#13）**不受此影响，可独立实施**；它们本来就是本项的首要意图（「P1.5 别再输出假话」）。
+
+### 依赖与顺序
+
+```
+① fix-lightweight-branch-and-archive（新立项，本轮创建）
+     └─ lightweight 建 openspec/<change> 分支 + 归档路径补齐（分支合入判定 / cleanup / iteration sync）
+② fix-execution-mode-decision（本项）
+     └─ 输入诚实化 + fail-closed（AC #2/#3/#5~#9/#12/#13）+ 三方一致性落地（AC #1/#10）
+③ fix-worktree-archive-branch-merge（ADR-0061 的实现）
+     └─ 合入门（worktree 路径）—— 与 ① 可并行（同改 _lib/archive.sh，建议串行落地）
+```
+
+⇒ **顺序约束**（architect 已写进 ADR-0036 的修订节）：② 的**语义部分**（spec 退役 + 描述修正）可先行；② 的**执行模式部分落地**（AC #4 第 1 条从「worktree」翻成「lightweight」）必须等 ①；而 ① 落地后本仓的执行模型才真正有 lightweight 可用。
+
+### 立项状态
+
+- 本项：AC #1 / #4 / #10 已按 architect 的签批结论修订；其余 AC 不变。**状态仍为 draft**（待实施）。
+- 新立项：`fix-lightweight-branch-and-archive`（5 段草稿，metis 1 轮审稿）。
+- 关联 architect 产物：`docs/adr/ADR-0036-rddf-project-yaml-config.md`（AMENDED）、`docs/adr/ADR-0061-archive-gate-refuses-unmerged-branch.md`（已采纳）。
