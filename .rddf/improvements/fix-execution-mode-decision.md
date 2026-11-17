@@ -221,3 +221,77 @@ metis 1 轮（2026-11-17）。逐条处置：
 | `config_schema.json` 承诺 `openspec_tracked=false ⇒ force lightweight` | ✅ `git.openspec_tracked` 的 description 原文 "If false, force lightweight mode (branch only, no worktree)"，而代码里无此实现 |
 
 ⇒ 立项诊断准确。**本项含「已签批 spec Requirement 的 retire-or-implement 决策」⇒ 实施前需 architect 签批**。
+
+## 实施前咨询（oracle，2026-11-17，builder 阶段）
+
+**结论：AC #1 的「lightweight」定义与本项 AC #4 都需 revise（plan_drift），不得按字面实施。**
+
+### 新发现（有代码证据，立项时未覆盖）
+
+**lightweight 模式今天不可归档 —— 它产出的是「幽灵分支」**：
+
+| 环节 | 事实 |
+|---|---|
+| `phase2_execute.sh:117-119` | lightweight 分支只有 `EXEC_DIR="$PROJECT_ROOT"`，**不建任何分支**（全仓唯一建分支点是 `:84` 的 `git worktree add -b`） |
+| `phase2_execute.sh:145` | 却把 `branch="openspec/<name>"` 写进 builder handoff —— **一个没有对应 ref 的声明** |
+| `_lib/verifier/branch.py:17-27` | 取不到分支 ⇒ 返回 None（fail closed） |
+| `rdd_verify_cmd.py:188-191` | ⇒ `halt_reason="openspec/<change> branch missing or detached"` |
+| `archive_gate.py:259-264` | ⇒ `openspec/<change> branch missing`，**归档被拒** |
+| 唯一出路 | `SKIP_RDD_VERIFIER=yes + RDDF_VERIFIER_BYPASS_REASON` ⇒ 每次 change 一条 bypass 审计（月度阈值 >3 WARNING / >6 CRITICAL） |
+
+⇒ 若按 AC #4 让「tasks 2 条 + plan Files 2 个」走 lightweight，**本仓的小 change
+将全部变成不可归档**（只能用审计旁路）⇒ 本项会把一个不可用的模式推给更多项目。
+
+### 三处独立文本都指向「lightweight = 有分支、无 worktree」
+
+- `_lib/schemas/config_schema.json:225`：`"force lightweight mode (**branch only**, no worktree)"`
+- `complete-project-yaml-config-gaps/spec.md:211-212`：`"…proceed directly to lightweight **branch** execution"`
+- `verifier-lifecycle/spec.md:120-125`（已采纳）：scenario「Lightweight current branch mismatch — GIVEN lightweight execution mode is active AND the current branch is not `openspec/<change>` THEN fail closed」⇒ **该 scenario 假定 lightweight 下当前分支就是 `openspec/<change>`**
+
+⇒ **AC #1 的「无 worktree、无独立分支」是错的**（它把实现缺陷写成了契约）。正确契约是
+「**有** `openspec/<change>` 分支、无 worktree」。修法：`phase2_execute.sh` 的 lightweight
+分支补 `git checkout -b openspec/<change>`（必要时 `git branch` + 记录），并给
+lightweight 归档路径补上「分支合入默认分支 + cleanup + iteration sync」——
+否则提交停在分支上（那正是 `fix-worktree-archive-branch-merge` 描述的同类缺陷）。
+
+### 另一处被立项漏掉的假陈述
+
+`_lib/ship_execution_mode.sh:80` 的注释「Project.yaml git.openspec_tracked: false
+**forces lightweight** (serial)」把两个维度粘在一句话里 —— 与 `config_schema.json:225`
+是同型假陈述。行为（false ⇒ serial 波次）可以保留（该开关与「并发单位是否有分支隔离
+凭据」事实相关），但**理由与措辞必须与 lightweight 解耦**。
+
+### 退役面比立项列的多（4 处，非 1 处）
+
+| 位置 | 内容 |
+|---|---|
+| `spec.md:202-217` | `guide-ship-phase-1-detect-lightweight`（立项已识别） |
+| `spec.md:123-142` | `rddf-execution-mode-env-not-read-by-parse` 的 scenario「`guide-ship` Phase 1 SHALL `export RDDF_EXECUTION_MODE=serial`」 |
+| `spec.md:299-302` | `zero-regression-backward-compat` 的 scenario「`guide-ship` Phase 1 SHALL proceed with normal worktree creation」 |
+| `openspec/specs/archive-auto-commit/spec.md:85-95` | 「`guide-ship.md` Phase 3 lightweight mode MUST also call helper」 |
+
+`skills/guide-ship/` 已被 v4 阶段合并硬删除（ADR-0043/0044/0048）⇒ 这些是**指向已删除
+skill 的 normative 文本**。只退役一条会把病根留在原地。
+
+**根因**：`skills/rdd-doctor/scripts/checks/v4_residue_check.py:46` 的扫描面是
+`_SCAN_ROOTS = ("_lib", "skills")` ⇒ `openspec/specs/` 完全不在扫描面 ⇒ 已删除路径能在
+已采纳 spec 里存活。建议把 `openspec/specs/`（**不含** `openspec/changes/archive/`）纳入
+扫描并加一条「已删除路径出现在 normative 文本中」的规则。
+
+### 工艺建议（oracle）
+
+- retire 的做法是「**保留 Requirement header + 改写为负向断言**」
+  （`git.openspec_tracked` SHALL NOT influence execution mode），**不是**真删：
+  真删后未来读者 grep 不到约束，会把空白重新解读成「按 schema 应该是 lightweight」，
+  同一个错误会以完全相同的方式复发。
+- ADR 侧按本仓惯例给 ADR-0036 打补丁（状态行 `+ AMENDED (日期)` + `## Post-hoc Fix
+  Record` 追加），**不改写原 Decision 9 正文**。
+- spec delta 与 ADR amendment 必须在同一个 change 里。
+
+### 需要 planner / architect 裁决的两点
+
+1. **AC #1 定义**：改为「有 `openspec/<change>` 分支、无 worktree」。
+2. **AC #4**：小 change 走 lightweight 的前提是 lightweight 可归档 ⇒ 需先立
+   「lightweight 建分支 + 归档路径补齐（merge / cleanup / iteration sync）」的独立立项，
+   或把该部分并入本项。**在它落地前，本项对「小改动」的诚实输出只能是
+   fail-closed 到 worktree + reason 写明原因**。
