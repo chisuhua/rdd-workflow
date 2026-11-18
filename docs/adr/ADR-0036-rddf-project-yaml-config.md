@@ -4,7 +4,7 @@
 > **日期**: 2026-09-02
 > **决策者**: rdd-workflow maintainers
 > **关联**: [proposal rfc-rddf-project-yaml-config-i10](../../.rddf/improvements/rfc-rddf-project-yaml-config-i10.md) · [issue #10](https://github.com/chisuhua/rdd-workflow/issues/10)
-> **审稿报告**: `.rddf/reviews/adr-0036-amendment-2026-11-17.md`（2026-11-17 修订的 oracle + critic 双审）
+> **审稿报告**: `.rddf/reviews/adr-0036-amendment-2026-11-17.md`（2026-11-17 修订的 oracle + critic 双审）· `.rddf/reviews/adr-0036-amendment-2026-11-18.md`（2026-11-18 事实追注的 oracle + critic 双审）
 
 ## Context
 
@@ -127,6 +127,46 @@ runtime_overrides > project.yaml > loop.yaml > env vars > .rddf.json > defaults
 - [ ] **backlog**：`README.md:129` 仍写「`rdd-builder::setup_execution_workspace` 通过 `$RDDF_EXECULATION_ROOT` …」（该函数全仓零命中）—— 文档漂移，**超出本次修订声明的 `README.md:87/:100` 范围**，只记不改。
 
 **验证判据**：见下方 `## Verification` 章（h2 级，前瞻方法，非实测日志）。
+
+### 修订 2026-11-18（事实追注：lightweight 已可归档 —— 决策未变）
+
+**本节只纠正事实前提，不改任何决策。** 上文（2026-11-17 修订）以「lightweight 不可用」为前提；该前提已由
+`fix-lightweight-branch-and-archive`（2026-11-18 实施并验收：实施记录见
+`.rddf/improvements/fix-lightweight-branch-and-archive.md`，取证见
+`.rddf/reviews/fix-lightweight-branch-and-archive-verify.md`）改变。
+
+**前提已失效的陈述**（原文一律保留作历史论证，读者以本节为准；位置列是当时的行号）：
+
+| # | 位置 | 原文要点 | 2026-11-18 的事实 |
+|---|---|---|---|
+| 1 | Decision §4 前置条件（`:93`） | 「**当前实现不建分支** ⇒ lightweight 的 change 无法通过验证锚点与归档门」 | P2 现建 `openspec/<change>`（起点 = 默认分支 tip，三档政策：建 / 复用 / fail-closed）；P3 走 9 步枚举式归档 |
+| 2 | 备选方案 A 行（`:103`） | 拒绝 A 的证据链末句「**lightweight 产出的 change 今天过不了归档门**」 | 证据链**两半均已消失**：① `phase3_archive.sh` 不再缺 cleanup / iteration 同步（九步齐全）；② 分支真的存在 ⇒ `_lib/verifier/branch.py` 能取到锚点 |
+| 3 | 备选方案 D 行（`:106`） | 「**等 lightweight 真正可归档后再评估**」 | 条件已满足 ⇒ D **可重新评估**（本次不评估，见下） |
+| 4 | Consequences（`:115`） | 「本仓（`openspec_tracked: false`）**此后全部 change 走 worktree 模式**」/「用开销换诚实」 | 不再由本 ADR 强制：`openspec_tracked` 仍**不驱动**执行模式，但执行模式判定已能按 ADR-0024 的输入正常输出 `lightweight` |
+| 5 | 修订 2026-11-17 · 决策 2「跨 ADR 的依赖」bullet（`:64`） | 「ADR-0061 的门**恰好只存在于 worktree 路径**（`archive_change`）」 | 门现在有两个调用点：lightweight 在 `phase3_archive.sh:236` 复用同一 `archive_premerge_check`（`wt_path` 传空）⇒ 该 bullet 的**结论**（撤销子句保住覆盖面）反而更强，但「只存在于 worktree」已不成立 |
+| 6 | 修订 2026-11-17 · 决策 2「依赖顺序与过渡态」bullet（`:65`） | 「**在 ADR-0061 落地之前**，本仓既没有 lightweight、也仍无任何合入判定」 | 该 bullet 是**过渡态**描述，条件已满足（ADR-0061 已采纳 + lightweight 已可归档）⇒ 读者不应再把它当作当前状态 |
+| 7 | `## Verification` 的 **V-G** 条目括注 | 「（ADR-0061 的门**只存在于 worktree 路径**）」 | 与第 5 行同一句失效断言，出现在**验收章**里（只读 Verification 章、不读本节的 reviewer 会读到它）⇒ 门的调用点现在有两个；V-G 的其余内容（两件事未落地前不得输出 lightweight）由本节「V-G 状态」段处理 |
+
+**V-G 状态**：V-G（`## Verification` 的 V-G 条目：「两件事都落地前不得输出 `lightweight`」）的前提**已满足**
+⇒ 义务**解除**。机器证据：`_lib/builder_deps.py::LIGHTWEIGHT_EXECUTION_READY = True`（回滚 = 改回
+`False`）。条目文本保留、**不加勾** —— 它是**过渡期闸门**而非持久验收项，`- [x]` 会把过渡义务误标成
+「已验收」，而该章自身声明是「前瞻方法，非实测日志」。
+
+**决策未变（逐条）**：
+
+1. `git.openspec_tracked` **仍不进入**执行模式维度（本 ADR 的核心决策）；`RDDF_EXECUTION_MODE` 仍退役；
+2. **备选 A 仍被拒绝** —— 拒绝理由独立于 lightweight 的可用性（依据见修订 2026-11-17 · 决策 2：机械
+   动机已被 v4 的 artifact 复制消除、该子句在实现上从未落地、继续保留等于让配置面承诺一件技术上已无
+   必要的事）：该开关的语义只属于**归档路径**与**波次并发维度**（后者即保留的「`false` ⇒ 波次默认
+   serial」子句），「三方一致性」的目标不是「让 `false` 驱动执行模式」；
+3. **备选 D 仍被拒绝（当前）** —— 拆分开关的技术前提虽已具备，但**本次不评估**：它是一个新决策，
+   需独立立项 + 双审；本节只登记「前提已具备」；
+4. **B / E 仍被拒绝**，**C（2026-11-17 的接受项）不变**。
+
+**范围（可数）**：本节是**增补** —— 不改 Decision 表、不改选项对比表任何一行、不改 `## Consequences`
+正文、不改 Status 行（避免元数据头膨胀）。要**改写**上表七处原文，须另立一次带双审的修订
+（**尚未立项**：立项与 AC 由 planner 承接）。`AC 映射` 句（`:109`）对 V-G 的转述不单列 —— 它不是
+事实断言，且已由「V-G 状态」段覆盖。
 
 ## Consequences
 
