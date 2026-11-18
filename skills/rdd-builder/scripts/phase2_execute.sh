@@ -97,7 +97,7 @@ BRANCH="openspec/$CHANGE_NAME"
 #     and `set -e` would abort P2.
 _carry_artifacts() {
     local _rel _src _dst
-    for _rel in "openspec/changes/$CHANGE_NAME" ".rddf/plans/$CHANGE_NAME.md"; do
+    for _rel in "openspec/changes/$CHANGE_NAME" ".rddf/plans/$CHANGE_NAME.md"; do  # isolation-ok: 相对片段，稍后分别与 $PROJECT_ROOT / $EXEC_DIR 拼接
         _src="$PROJECT_ROOT/$_rel"
         _dst="$EXEC_DIR/$_rel"
         [ -e "$_src" ] || continue
@@ -123,7 +123,7 @@ if [ "$EXEC_MODE" = "worktree" ]; then
     # stray `openspec/<change>` branch and a full-tree checkout it never
     # asked for, and the fake repo got nothing.
     cd "$PROJECT_ROOT" || { echo "❌ cannot cd to project root: $PROJECT_ROOT" >&2; exit 3; }
-    WT_PATH=".rddf/wt/$CHANGE_NAME"
+    WT_PATH="$PROJECT_ROOT/.rddf/wt/$CHANGE_NAME"
     if [ ! -d "$WT_PATH" ]; then
         git worktree add "$WT_PATH" -b "$BRANCH" 2>/dev/null || {
             echo "worktree creation failed at $WT_PATH (branch may already exist)" >&2
@@ -206,8 +206,15 @@ PYEOF
         # cannot be created must not silently degrade into "run in the main
         # repo", because the handoff would then claim a mode that the
         # execution does not use.
-        WT_PATH=".rddf/wt/$CHANGE_NAME"
+        WT_PATH="$PROJECT_ROOT/.rddf/wt/$CHANGE_NAME"
         if [ ! -d "$WT_PATH" ]; then
+            # `git worktree add` registers the worktree in the repository of the
+            # CURRENT directory. Anchoring the path is not enough: without this
+            # cd, the worktree would be created inside $PROJECT_ROOT but
+            # registered in the CALLER's repository (observed: a stray
+            # `openspec/<name>` branch + a prunable worktree entry left in the
+            # real repo by the phase-2 test).
+            cd "$PROJECT_ROOT" || { echo "❌ cannot cd to project root: $PROJECT_ROOT" >&2; exit 3; }
             git worktree add "$WT_PATH" -b "$BRANCH" 2>/dev/null || {
                 echo "❌ lightweight 退回 worktree 模式失败：无法在 '$WT_PATH' 创建 worktree（分支 '$BRANCH' 可能已被占用或指向其它提交）" >&2
                 echo "   $EXEC_MODE_REASON" >&2
@@ -238,10 +245,10 @@ _restore_head_on_abort() {
 trap '_abort_rc=$?; _restore_head_on_abort "$_abort_rc"' EXIT
 
 cd "$EXEC_DIR"
-if [ -f ".rddf/plans/$CHANGE_NAME.md" ]; then
+if [ -f "$EXEC_DIR/.rddf/plans/$CHANGE_NAME.md" ]; then
     echo "Phase 2 worktree setup complete (mode=$EXEC_MODE, dir=$EXEC_DIR)"
 else
-    echo "plan file missing at .rddf/plans/$CHANGE_NAME.md" >&2
+    echo "plan file missing at $EXEC_DIR/.rddf/plans/$CHANGE_NAME.md" >&2
     exit 3
 fi
 
