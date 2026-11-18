@@ -17,6 +17,17 @@ import re
 
 _HEAD_RE = re.compile(r"\*\*(阶段|分类|类型)\*\*:\s*([^|\n]+)")
 _SECTION_RE = re.compile(r"^## (.+)$", re.MULTILINE)
+# A list item inside the 范围 section: bullet ("- x") or ordered ("1. x" / "1) x").
+# The ordered form matters because the repo's improvements write In Scope that way —
+# without it a numbered list parses to zero items and the caller's fallback swallows
+# the whole section (Out of Scope included).
+_SCOPE_ITEM_RE = re.compile(r"^(?:-\s+|\d+[.)]\s+)(.*)$")
+# A scope block header, in every spelling that occurs in .rddf/improvements:
+# `**In Scope**:`, `- **Out Scope**:`, `### In Scope`, `### Out of Scope`,
+# `## Out Scope`. Decorations (bullet / heading marks / bold / colon) optional.
+_SCOPE_HEADER_RE = re.compile(
+    r"^[\s#*\-]*((?:out\s+of|out|in)\s+scope)[\s*:：]*$", re.IGNORECASE
+)
 
 
 def validate_improvements_head(md: str) -> dict[str, str]:
@@ -60,10 +71,17 @@ def _extract_section(md: str, title: str | list[str]) -> str:
 def _extract_scope_items(scope_md: str) -> tuple[list[str], list[str]]:
     """Split the 范围 section into (in_scope_items, out_scope_items).
 
-    Handles both sub-header styles:
-      - "**In Scope**:" / "- **In Scope**:" (optional leading dash)
-      - items are "- " bullets following each header.
-    Bullets appearing before any header default to in-scope.
+    Recognizes every scope-header spelling found in .rddf/improvements:
+    "**In Scope**:", "- **Out Scope**:", "### In Scope", "### Out of Scope".
+    Items may be bullets ("- x") or ordered ("1. x" / "1) x"); items appearing
+    before any header default to in-scope.
+
+    Nesting: the indent of the first item after a header is that header's base
+    level — items at that indent are siblings, deeper ones are attached to the
+    item above (openSpec spec `generator-scope-extraction`
+    § numbered-item-subitems-attached). Without the base level, one of the two
+    shapes in this repo collapses: `- **In Scope**:` + 2-space children would
+    fold every child into the header instead of emitting them as items.
 
     Continuation lines that belong to a bullet (markdown tables, indented
     sub-items, wrapped paragraphs) stay with that bullet instead of being
@@ -76,6 +94,13 @@ def _extract_scope_items(scope_md: str) -> tuple[list[str], list[str]]:
     current: str | None = None  # "in" | "out" | None
     pending: str | None = None  # bullet text, flushed when the next bullet starts
     pending_scope: str | None = None
+    # Indent of the FIRST item after a header. Items at that indent are
+    # siblings; deeper items attach to the item above them (openSpec spec
+    # `generator-scope-extraction` § numbered-item-subitems-attached). Both
+    # shapes occur in .rddf/improvements: `1. item` + `   - sub` (sub-items),
+    # and `- **In Scope**:` + `  - child` (the children ARE the items).
+    # Using a per-header base indent is what tells the two apart.
+    base_indent: int | None = None
 
     def flush() -> None:
         nonlocal pending, pending_scope
@@ -89,19 +114,28 @@ def _extract_scope_items(scope_md: str) -> tuple[list[str], list[str]]:
         if not stripped:
             continue
         header = stripped[2:].strip() if stripped.startswith("- ") else stripped
-        if header.startswith("**In Scope**") or header.lstrip("# ").strip().startswith("In Scope"):
+        header_match = _SCOPE_HEADER_RE.match(header)
+        if header_match:
             flush()
-            current = "in"
+            # "Out Scope" (no "of") is the spelling most .rddf/improvements use;
+            # only recognizing "Out of Scope" sent every out-of-scope item into
+            # the in-scope block (measured: many files parsed to out=0).
+            current = "out" if header_match.group(1).lower().startswith("out") else "in"
+            base_indent = None
             continue
-        if header.startswith("**Out of Scope**") or header.lstrip("# ").strip().startswith("Out of Scope"):
-            flush()
-            current = "out"
-            continue
-        if stripped.startswith("- "):
-            flush()
-            pending = stripped[2:].strip()
-            pending_scope = current
-            continue
+        item = _SCOPE_ITEM_RE.match(stripped)
+        if item:
+            expanded = raw.expandtabs(4)
+            indent = len(expanded) - len(expanded.lstrip(" "))
+            if base_indent is None:
+                base_indent = indent
+            if indent <= base_indent:
+                base_indent = indent  # dedent back to a shallower level: sibling
+                flush()
+                pending = item.group(1).strip()
+                pending_scope = current
+                continue
+            # deeper than the base level ⇒ sub-item, handled as a continuation
         if pending is None:
             continue  # prose before the first bullet — not an item (unchanged)
         if stripped.startswith("|"):

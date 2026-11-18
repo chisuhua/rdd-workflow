@@ -301,3 +301,133 @@ def test_cli_default_output_is_proposal(tmp_path):
     assert res.returncode == 0, res.stderr
     assert "## What Changes" in res.stdout
     assert "## ADDED Requirements" not in res.stdout
+
+
+# ---------------------------------------------------------------------------
+# Numbered In-Scope items (fix-proposal-scope-numbered-items)
+# ---------------------------------------------------------------------------
+
+NUMBERED_SCOPE_IMPROVEMENT = """# fix-numbered
+
+**优先级**: P2
+
+## Why
+
+Why text.
+
+## 范围
+
+**In Scope**：
+
+1. 第一条：改 A
+2. 第二条：改 B
+
+**Out of Scope**：
+
+- 不做 C
+- 不做 D
+
+## Capabilities
+
+- MUST: keep it
+
+## Impact
+
+- 新增 A
+
+## Acceptance
+
+- [ ] AC-1: ok
+"""
+
+
+def _scope_blocks(out: str) -> tuple[str, str]:
+    """Split the generated What-Changes section into its In/Out Scope blocks."""
+    what = out.split("## What Changes", 1)[1].split("## Capabilities", 1)[0]
+    in_block = what.split("**In Scope**:", 1)[1].split("**Out of Scope**:", 1)[0]
+    out_block = what.split("**Out of Scope**:", 1)[1]
+    return in_block, out_block
+
+
+def test_scope_numbered_items_are_split_into_in_scope():
+    """`1.` / `2.` items are In-Scope items — the repo's improvements use them.
+
+    Before the fix only "- " bullets counted as items, so a numbered In-Scope
+    list parsed to zero items and the fallback dumped the WHOLE 范围 section
+    (Out-of-Scope list included) into a single In-Scope item.
+    """
+    out = generate_full_proposal("fix-numbered", NUMBERED_SCOPE_IMPROVEMENT)
+    in_block, out_block = _scope_blocks(out)
+    assert "第一条：改 A" in in_block
+    assert "第二条：改 B" in in_block
+    assert "不做 C" not in in_block
+    assert "不做 C" in out_block
+
+
+def test_scope_out_of_scope_items_appear_exactly_once():
+    """Each Out-of-Scope item must be emitted once, not mirrored into In Scope."""
+    out = generate_full_proposal("fix-numbered", NUMBERED_SCOPE_IMPROVEMENT)
+    what = out.split("## What Changes", 1)[1].split("## Capabilities", 1)[0]
+    assert what.count("不做 C") == 1
+    assert what.count("不做 D") == 1
+
+
+SPEC_NUMBERED_SUBITEMS_SCOPE = """**In Scope**：
+
+1. **stdout/stderr 透传**:
+   - 主进程透传
+   - 后台异步
+2. 第二条
+
+**Out of Scope**：
+
+- 不做 C
+"""
+
+
+def test_scope_numbered_item_attaches_indented_subitems():
+    """openSpec spec `generator-scope-extraction` requires sub-items to attach.
+
+    Requirement `generate-proposal-numbered-item-subitems-attached`: an indented
+    `- sub-item` belongs to the numbered item above it, preserving the
+    `\\n   - sub-item` layout — it is NOT a sibling item.
+    """
+    from generate_full_proposal import _extract_scope_items
+
+    in_items, out_items = _extract_scope_items(SPEC_NUMBERED_SUBITEMS_SCOPE)
+
+    assert len(in_items) == 2, in_items
+    assert in_items[0] == "**stdout/stderr 透传**:\n   - 主进程透传\n   - 后台异步"
+    assert in_items[1] == "第二条"
+    assert out_items == ["不做 C"]
+
+
+HEADER_BULLET_WITH_NESTED_CHILDREN = """## 范围
+
+- **In Scope**:
+  - 子项 A
+  - 子项 B:
+    1. 孙项 1
+    2. 孙项 2
+- **Out Scope**:
+  - 不做 C
+"""
+
+
+def test_scope_bullet_header_nested_children_stay_separate_items():
+    """`- **In Scope**:` + 2-space children: the CHILDREN are the items.
+
+    This is the dominant shape in .rddf/improvements (291 files). The
+    sub-item rule must not fold them into the header bullet — that would
+    collapse a 20-item scope into a single blob (measured: 195 files would
+    degrade, several down to 1 item).
+    """
+    from generate_full_proposal import _extract_scope_items
+
+    in_items, out_items = _extract_scope_items(HEADER_BULLET_WITH_NESTED_CHILDREN)
+
+    assert len(in_items) == 2, in_items
+    assert in_items[0] == "子项 A"
+    assert in_items[1].startswith("子项 B:")
+    assert "1. 孙项 1" in in_items[1]
+    assert out_items == ["不做 C"]
