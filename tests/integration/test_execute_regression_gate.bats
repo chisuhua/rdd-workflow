@@ -44,6 +44,9 @@ write_fake_bats() {
   local exit_status="${2:-0}"
   cat > "$TEST_BIN/bats" <<EOF
 #!/usr/bin/env bash
+# collect_bats_failures.sh probes 'bats --version' to decide whether the
+# per-test timeout (BATS_TEST_TIMEOUT, bats >= 1.5.0) is available.
+if [ "\${1:-}" = "--version" ]; then echo "Bats 1.13.0"; exit 0; fi
 printf '%s\n' "$output"
 printf 'ARGS: %s\n' "\$*"
 exit $exit_status
@@ -55,7 +58,7 @@ EOF
   printf '%s\n' 'known failure: baseline fixture # existing reason' > "$ISOLATED_BASELINE"
   write_fake_bats 'not ok 1 known failure: baseline fixture'
 
-  run env PATH="$TEST_BIN:$PATH" RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$GATE"
+  run env PATH="$TEST_BIN:$PATH" RDDF_BATS_COLLECT_ACTIVE=0 RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$GATE"
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"baseline 对比"* ]]
@@ -80,7 +83,7 @@ EOF
   printf '%s\n' 'known failure: isolated fixture # existing reason' > "$ISOLATED_BASELINE"
   write_fake_bats 'not ok 1 known failure: isolated fixture'
 
-  run env PATH="$TEST_BIN:$PATH" RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$GATE"
+  run env PATH="$TEST_BIN:$PATH" RDDF_BATS_COLLECT_ACTIVE=0 RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$GATE"
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"baseline 对比"* ]]

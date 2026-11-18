@@ -26,6 +26,9 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq bats
+          # The regression gate needs bats >= 1.5.0 (BATS_TEST_TIMEOUT, used to
+          # attribute a stuck test by name instead of discarding the file).
+          bats --version
 
       - name: Assertion quality gate
         run: |
@@ -116,7 +119,36 @@ jobs:
           echo "✅ A-layer e2e smoke passed"
 
       - name: Incremental Bats regression gate
+        # Thresholds are stated here (not left implicit) so the CI mouth is
+        # auditable. Level 1 = per-file timeout; level 2 = per-test timeout
+        # (BATS_TIMEOUT_RETRY); BATS_RETRY_BUDGET caps the total retry time.
+        env:
+          BATS_TIMEOUT: '30'
+          BATS_TIMEOUT_RETRY: '120'
+          BATS_RETRY_BUDGET: '600'
         run: bash tests/scripts/report_regression.sh
+
+      - name: KNOWN_UNEVALUATED.txt shrink-only enforcement
+        run: |
+          set -e
+          BASELINE=$(git show origin/master:tests/KNOWN_UNEVALUATED.txt 2>/dev/null || git show HEAD~1:tests/KNOWN_UNEVALUATED.txt || true)
+          CURRENT=$(cat tests/KNOWN_UNEVALUATED.txt)
+          NEW_LINES=$(comm -13 <(printf '%s\n' "$BASELINE" | sed '/^[[:space:]]*$/d' | sort -u) \
+                          <(printf '%s\n' "$CURRENT" | sed '/^[[:space:]]*$/d' | sort -u) || true)
+          if [ -n "$NEW_LINES" ]; then
+            echo "❌ KNOWN_UNEVALUATED.txt grew (CI forbidden):"
+            echo "$NEW_LINES"
+            exit 1
+          fi
+          echo "✅ KNOWN_UNEVALUATED.txt did not grow"
+
+      - name: Regression-gate bypass must not be set in CI
+        run: |
+          if [ -n "${SKIP_UNEVALUATED_GATE:-}" ]; then
+            echo "::error title=regression-gate::SKIP_UNEVALUATED_GATE is set in CI — the unevaluated gate is permanently bypassed"
+            exit 1
+          fi
+          echo "✅ no regression-gate bypass"
 
       - name: KNOWN_FAILURES.txt shrink-only enforcement
         run: |

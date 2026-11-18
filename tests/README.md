@@ -108,18 +108,44 @@ bash tests/scripts/refresh_known_failures.sh \
 
 #### Helper: collect failures (bypasses bats-core 1.13.0 bug)
 
-`bats tests/ --recursive` triggers an infinite loop in bats-core 1.13.0 (`test_list_file.txt: No such file or directory` race). `tests/scripts/collect_bats_failures.sh` works around this by running each `.bats` file individually with a per-file timeout:
+`bats tests/ --recursive` triggers an infinite loop in bats-core 1.13.0 (`test_list_file.txt: No such file or directory` race). `tests/scripts/collect_bats_failures.sh` works around this by running each `.bats` file individually with a **two-level** timeout:
+
+- **level 1** — per-file timeout `BATS_TIMEOUT` (default 30s);
+- **level 2** — a file that hit level 1 is retried with a **per-test** timeout `BATS_TEST_TIMEOUT` (= `BATS_TIMEOUT_RETRY`, default 120s). bats kills the *one* stuck test; the other tests of that file are still evaluated. A file that still does not finish is **unevaluated** — it is recorded **by name** in `$OUTPUT.hangs` (with `kind=hang|slow`), so the regression gate can no longer hide it behind a footnote.
 
 ```bash
-# Default: 30s timeout per file, output to /tmp/bats-failures.txt
+# Default: 30s per-file timeout, output to /tmp/bats-failures.txt
 bash tests/scripts/collect_bats_failures.sh
 
 # Faster (but may miss failures in slow files)
 BATS_TIMEOUT=10 bash tests/scripts/collect_bats_failures.sh tests/integration/ /tmp/actual.txt
 
+# Give slow files more room before they are declared unevaluated
+BATS_TIMEOUT=30 BATS_TIMEOUT_RETRY=120 BATS_RETRY_BUDGET=600 \
+  bash tests/scripts/collect_bats_failures.sh tests/integration/ /tmp/actual.txt
+
 # Then feed into the refresh script
 bash tests/scripts/refresh_known_failures.sh --actual /tmp/actual.txt
 ```
+
+Env (the defaults live in `collect_bats_failures.sh` — `report_regression.sh` only passes them through):
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `BATS_TIMEOUT` | `30` | level-1 per-file timeout (seconds) |
+| `BATS_TIMEOUT_RETRY` | `120` | level-2 per-test timeout (seconds); must be ≥ `BATS_TIMEOUT` |
+| `BATS_RETRY_BUDGET` | `600` | total budget for level-2 retries (seconds) |
+| `RDDF_BATS_COLLECT_ACTIVE` | — | `1` ⇒ refuse to start (recursive collection) → exit 2 |
+
+Products:
+
+| File | Content |
+|---|---|
+| `$OUTPUT` | failure names (one per line, sorted, unique) |
+| `$OUTPUT.hangs` | unevaluated files: `<path> rc=124 elapsed=<Ns> last_tap=<n> kind=<hang\|slow>` |
+| `$OUTPUT.per-test-timeouts` | `<path> # <test name>` — tests killed by the per-test timeout |
+
+`report_regression.sh` turns the unevaluated files into a **gate dimension**: a file that is not listed in `tests/KNOWN_UNEVALUATED.txt` fails the gate (`SKIP_UNEVALUATED_GATE=yes` is an emergency bypass, audited in `.rddf/state/.bypass-audit.jsonl`).
 
 #### Identity-merge shim pattern
 

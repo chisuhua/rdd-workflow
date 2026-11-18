@@ -1,0 +1,16 @@
+# 未评估文件基线 —— 格式：<path> # <reason>
+#
+# 语义：回归门采集时，若某个 bats 文件在重试后仍未跑完，它就是「未评估」——
+#   它的失败**没有**进入失败集合，因此它可能藏着真实失败。
+#     - 该文件不在本清单内 ⇒ 门失败（exit 1）
+#     - 该文件在本清单内   ⇒ 打印但不失败
+#
+# 为什么用「按名字」而不是「按个数」：计数阈值不追踪身份 ⇒ 实际语义是
+# 「允许任意 N 个文件被隐藏」⇒ 不可审计，且与 KNOWN_FAILURES.txt 的既有哲学
+# （按名字 + reason + CI shrink-only）相悖。
+#
+# 本清单只减不增（CI shrink-only 断言，见 .github/workflows/test.yml）。
+# 紧急旁路：SKIP_UNEVALUATED_GATE=yes（CI 断言它未被设置；本地使用会写
+# .rddf/state/.bypass-audit.jsonl 审计）。
+#
+# —— 当前清单为空：两级超时（per-file → per-test）落地后，本仓的慢文件都能被评估。

@@ -30,6 +30,11 @@ run_regression_gate() {
     printf '%s\n' '🔍 全量回归门 (baseline 对比)...'
     (cd "$REPO_ROOT" && bash "$REPO_ROOT/tests/scripts/report_regression.sh")
   else
+    # Fallback path: no baseline ⇒ plain recursive bats. This path has NO
+    # "unevaluated" dimension at all — the baseline-aware gate is the only
+    # entry that can tell "0 new failures" from "N files were never
+    # evaluated" (tests/KNOWN_UNEVALUATED.txt). A caller that needs that
+    # guarantee must provide the baseline.
     printf '%s\n' '🔍 全量回归门 (bats tests/ --recursive)...'
     (cd "$REPO_ROOT" && bats tests/ --recursive)
   fi
