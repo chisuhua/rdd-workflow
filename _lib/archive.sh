@@ -1022,6 +1022,13 @@ archive_change() {
     # itself also short-circuits when openspec_tracked=false (see L795+).
     cleanup_worktree_and_branch "$name" "$main_root" "$wt_path" "$branch" || true
     mark_iteration_archived "$name" "$main_root" ""
+    # Post-archive cleanup must run on THIS branch too. Until now it only ran
+    # at step 9 of the tracked path, so in a tracked=false project (this repo)
+    # it never ran at all: `.rddf/plans/<name>.md` survived its own archive —
+    # the exact residue `post_archive_cleanup` was extended to remove.
+    # No commit here (this branch is expressly git-commit-free): the `git rm`
+    # shows up as a staged deletion for the next commit.
+    post_archive_cleanup "$main_root" "$name" || true
     return 0
   fi
 

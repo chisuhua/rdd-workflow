@@ -366,3 +366,50 @@ EOF
     # plain `grep "git merge"` also collides with `git merge-base`.
     ! echo "$output" | grep -E "^[[:space:]]*(commit_archive_moves[[:space:]]|git[[:space:]]+merge[[:space:]])"
 }
+@test "archive: BEHAVIORAL openspec_tracked=false → the change's plan file is removed" {
+    # Regression pin (2026-11-18): post_archive_cleanup ran only at step 9 of
+    # the TRACKED path. In a tracked=false project (this repo) the archive
+    # takes the early-return branch, so the plan file survived its own archive
+    # — the exact residue post_archive_cleanup had just been taught to remove.
+    local change_name="plan-cleanup-test"
+
+    mkdir -p openspec/changes/$change_name .rddf/plans
+    echo "# proposal" > openspec/changes/$change_name/proposal.md
+    cat > openspec/changes/$change_name/tasks.md <<'TASKS'
+# Tasks
+- [x] task 1
+TASKS
+    echo "# plan" > ".rddf/plans/$change_name.md"
+    git add openspec/ .rddf/plans/
+    git commit -q -m "seed change + plan"
+
+    mkdir -p .rddf
+    cat > .rddf/project.yaml <<'YAML'
+git:
+  openspec_tracked: false
+YAML
+    git add .rddf/project.yaml && git commit -q -m "add project.yaml"
+
+    mkdir -p "$TEST_TMP/.rddf/wt"
+    git worktree add -q -b "openspec/$change_name" "$TEST_TMP/.rddf/wt/$change_name" main
+    (
+        cd "$TEST_TMP/.rddf/wt/$change_name"
+        echo "y" > y.txt
+        git add y.txt && git commit -q -m "change work"
+    )
+    git merge -q --no-ff "openspec/$change_name" -m "merge: change work"
+
+    setup_openspec_stub
+    source "$REPO_ROOT/_lib/archive.sh"
+    check_worktree_commits() { return 0; }
+    archive_gate_check() { return 0; }
+    export -f check_worktree_commits archive_gate_check
+
+    [ -f ".rddf/plans/$change_name.md" ]
+    run archive_change "$change_name"
+    [ "$status" -eq 0 ]
+    # File gone, and the deletion is staged (tracked=false ⇒ no auto-commit)
+    [ ! -e ".rddf/plans/$change_name.md" ]
+    run git status --porcelain -- ".rddf/plans/$change_name.md"
+    [[ "$output" == *"D  .rddf/plans/$change_name.md"* ]]
+}
