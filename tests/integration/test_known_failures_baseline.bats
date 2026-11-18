@@ -56,6 +56,9 @@ write_fake_bats() {
   local exit_status="${2:-1}"
   cat > "$TEST_BIN/bats" <<EOF
 #!/usr/bin/env bash
+# collect_bats_failures.sh probes 'bats --version' to decide whether the
+# per-test timeout (BATS_TEST_TIMEOUT, bats >= 1.5.0) is available.
+if [ "\${1:-}" = "--version" ]; then echo "Bats 1.13.0"; exit 0; fi
 printf '%s\\n' "$output"
 exit $exit_status
 EOF
@@ -66,7 +69,7 @@ EOF
   printf '%s\n' 'known failure: environment dependency # existing reason' > "$ISOLATED_BASELINE"
   write_fake_bats 'not ok 1 known failure: environment dependency'
 
-  run env PATH="$TEST_BIN:$PATH" RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
+  run env PATH="$TEST_BIN:$PATH" RDDF_BATS_COLLECT_ACTIVE=0 RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"已知失败"* ]]
@@ -77,7 +80,7 @@ EOF
   printf '%s\n' 'known failure # existing reason' > "$ISOLATED_BASELINE"
   write_fake_bats $'not ok 1 known failure\nnot ok 2 newly introduced failure'
 
-  run env PATH="$TEST_BIN:$PATH" RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
+  run env PATH="$TEST_BIN:$PATH" RDDF_BATS_COLLECT_ACTIVE=0 RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
 
   [ "$status" -ne 0 ]
   [[ "$output" == *"newly introduced failure"* ]]
@@ -88,7 +91,7 @@ EOF
   : > "$ISOLATED_BASELINE"
   write_fake_bats '1..0' 0
 
-  run env PATH="$TEST_BIN:$PATH" RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
+  run env PATH="$TEST_BIN:$PATH" RDDF_BATS_COLLECT_ACTIVE=0 RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"0"* ]]
@@ -142,7 +145,7 @@ EOF
   printf '%s\n' 'known failure: temp-only entry # temp' > "$ISOLATED_BASELINE"
   write_fake_bats 'not ok 1 known failure: temp-only entry'
 
-  run env PATH="$TEST_BIN:$PATH" RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
+  run env PATH="$TEST_BIN:$PATH" RDDF_BATS_COLLECT_ACTIVE=0 RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"已知失败: 1"* ]]
@@ -156,7 +159,7 @@ EOF
   printf '%s\n' "$fixture" > "$ISOLATED_BASELINE"
   write_fake_bats 'not ok 1 known failure: environment dependency'
 
-  run env PATH="$TEST_BIN:$PATH" RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
+  run env PATH="$TEST_BIN:$PATH" RDDF_BATS_COLLECT_ACTIVE=0 RDDF_KNOWN_FAILURES_FILE="$ISOLATED_BASELINE" bash "$REPORT"
 
   [ "$status" -eq 0 ]
   # Repo baseline unchanged byte-for-byte, and still carries no fixture line.

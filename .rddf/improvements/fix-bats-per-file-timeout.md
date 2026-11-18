@@ -6,7 +6,7 @@ priority: P2
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: draft
+状态: implemented (2026-11-18)
 
 生成时间: 2026-11-18
 roadmap_ref:
@@ -224,54 +224,54 @@ fi
 
 ## Acceptance
 
-- [ ] **AC-A（端到端，慢文件里的失败会浮出来）**：在**已知慢文件** `tests/integration/test_known_failures_baseline.bats`
+- [x] **AC-A（端到端，慢文件里的失败会浮出来）**：在**已知慢文件** `tests/integration/test_known_failures_baseline.bats`
       里临时插入 `@test "zz-synthetic-red" { false; }` ⇒ 跑 `bash tests/scripts/report_regression.sh` ——
       **改动前**：报告中**不出现** `zz-synthetic-red`（该文件撞 30s 被跳过）；**改动后**：出现
       `新增失败: 1` 且明细含 `zz-synthetic-red`。（代价：一次 report 运行，1~3 分钟。**这是唯一能把
       「覆盖率不再静默收缩」变成可判定判据的 AC**。）
-- [ ] **AC-B（fail-open 防线）**：让 `collect_bats_failures.sh` 中途 `exit 1`（或 `kill -TERM` 掉它）⇒
+- [x] **AC-B（fail-open 防线）**：让 `collect_bats_failures.sh` 中途 `exit 1`（或 `kill -TERM` 掉它）⇒
       `report_regression.sh` 必须**失败**（非零），且输出**不含** `✅ 0 新增失败` ⇒ 断言
       `[[ "$output" != *"✅ 0 新增失败"* ]] && [ "$status" -ne 0 ]`
-- [ ] **AC-C（分母固定）**：`M` 在循环前由 glob 算出、独立于循环是否走完；`BATS_TIMEOUT=1` 跑一次 ⇒
+- [x] **AC-C（分母固定）**：`M` 在循环前由 glob 算出、独立于循环是否走完；`BATS_TIMEOUT=1` 跑一次 ⇒
       断言输出含 `评估 K/M`，其中 `M` 等于 `ls tests/integration/*.bats | wc -l`（测试内**动态计算**，
       不硬编码 —— 仓内有「断言硬编码」的教训）
-- [ ] **AC-D（scope 声明）**：报告须打印采集 scope（`tests/integration/*.bats`）并与全仓 `.bats` 总数区分
+- [x] **AC-D（scope 声明）**：报告须打印采集 scope（`tests/integration/*.bats`）并与全仓 `.bats` 总数区分
       ⇒ 断言输出含 `tests/integration/` 与「不在本门范围」字样
-- [ ] **AC-E（rc 分类）**：四个 fake-bats 夹具分别返回 `0` / `1`（带 `not ok`）/ `124` / `125` ⇒ 断言
+- [x] **AC-E（rc 分类）**：四个 fake-bats 夹具分别返回 `0` / `1`（带 `not ok`）/ `124` / `125` ⇒ 断言
       `0` ⇒ 无失败、`1` ⇒ 失败被采集、`124` ⇒ 进 hang 日志、`125` ⇒ **infra error `exit 2`**
-- [ ] **AC-F（env 穿透）**：`BATS_TIMEOUT_RETRY=5 bash tests/scripts/report_regression.sh` ⇒ 重试预算
+- [x] **AC-F（env 穿透）**：`BATS_TIMEOUT_RETRY=5 bash tests/scripts/report_regression.sh` ⇒ 重试预算
       真的变成 5（用 `BATS_TIMEOUT=1` + fake bats `sleep 2` 观测：穿透成功则该文件被评估而非判 hang）
-- [ ] **AC-G（时长不退化）**：同一棵树计时 bats 阶段 wall clock，改前/改后各一次 ⇒ 断言
+- [x] ⚠️ **deviation**（实测 1.27×，见实施记录「AC 逐条结论」）**AC-G（时长不退化）**：同一棵树计时 bats 阶段 wall clock，改前/改后各一次 ⇒ 断言
       `after ≤ before × 1.15`（实测值写进 change）⇒ 兜住 Impact 承认的 +24 分钟风险
-- [ ] **AC-H（no-orphan）**：一次含 124 的采集跑完后，`pgrep -f "bats .*\.bats"` 为空 ⇒ 证实/证伪「残留
+- [x] **AC-H（no-orphan）**：一次含 124 的采集跑完后，`pgrep -f "bats .*\.bats"` 为空 ⇒ 证实/证伪「残留
       进程正反馈」假设
-- [ ] **AC-I（CI 侧口径）**：`test.yml` 的 `report_regression.sh` step 显式设定阈值变量（或在文件内注释
+- [x] **AC-I（CI 侧口径）**：`test.yml` 的 `report_regression.sh` step 显式设定阈值变量（或在文件内注释
       声明「CI 用默认值，实测 CI 未评估 ≤ K」）；且 `run_regression_gate.sh` 的 **fallback 路径**
       （baseline 缺失 ⇒ `bats tests/ --recursive`）须说明「该路径无未评估概念」⇒ 否则「门的一个维度」
       只覆盖一半入口
-- [ ] **AC-J（命名基线的 shrink-only）**：CI 禁止 `tests/KNOWN_UNEVALUATED.txt` 增长（形如
+- [x] **AC-J（命名基线的 shrink-only）**：CI 禁止 `tests/KNOWN_UNEVALUATED.txt` 增长（形如
       `KNOWN_FAILURES.txt` 的既有断言）
-- [ ] **AC-K（per-test 归因）**：用一个「第一个 test `sleep 999`、第二个 test `false`」的 fake bats ⇒ 断言
+- [x] **AC-K（per-test 归因）**：用一个「第一个 test `sleep 999`、第二个 test `false`」的 fake bats ⇒ 断言
       ① per-test 超时把**卡住的 test 名**单独报出（落到独立的 `per-test timeouts` 段，**不进**失败集合）；
       ② **同一文件内的其余 test 仍被评估**（第二个 test 的 `not ok` 出现在输出里）
-- [ ] **AC-L（hang vs 慢可分辨）**：两个夹具 ——「无限 sleep 无任何输出」⇒ 判疑似真 hang（零 TAP 进展）；
+- [x] **AC-L（hang vs 慢可分辨）**：两个夹具 ——「无限 sleep 无任何输出」⇒ 判疑似真 hang（零 TAP 进展）；
       「先打 5 条 ok 再 sleep」⇒ 判慢文件（有 TAP 进展但未完成）
-- [ ] **AC-M（env 取值校验）**：`BATS_TIMEOUT=0` / `=-5` / `=abc` ⇒ **前置校验失败 ⇒ `exit 2`**（不得
+- [x] **AC-M（env 取值校验）**：`BATS_TIMEOUT=0` / `=-5` / `=abc` ⇒ **前置校验失败 ⇒ `exit 2`**（不得
       静默变成「不设限」或「当通过」）；`BATS_TIMEOUT_RETRY < BATS_TIMEOUT` ⇒ 同样 `exit 2`
-- [ ] **AC-N（并发/嵌套安全）**：两个 `collect_bats_failures.sh` 并发 ⇒ 失败集合**不互相截断**；
+- [x] **AC-N（并发/嵌套安全）**：两个 `collect_bats_failures.sh` 并发 ⇒ 失败集合**不互相截断**；
       `RDDF_BATS_COLLECT_ACTIVE=1` 时再启动 ⇒ 直接 `exit 2`（不递归采集）
-- [ ] **AC-O（重试语义）**：第一次的部分输出**不被合并**进失败集合（构造一个「先失败再超时」的夹具 ⇒
+- [x] **AC-O（重试语义）**：第一次的部分输出**不被合并**进失败集合（构造一个「先失败再超时」的夹具 ⇒
       断言失败集合里**没有**第一次的 test name）
-- [ ] 慢文件的用例可被观测且**不真的等 30s**：夹具用 `BATS_TIMEOUT=1` + fake bats ⇒ 该断言总耗时 < 5s
-- [ ] 真 hang 的文件仍进 `.hangs`，且**不被误判为失败**
-- [ ] 报告输出「评估了 N/M 个文件，未评估 K 个」
-- [ ] **未评估文件不在 `tests/KNOWN_UNEVALUATED.txt` 内 ⇒ 门失败**；在清单内 ⇒ 打印但不失败；
+- [x] 慢文件的用例可被观测且**不真的等 30s**：夹具用 `BATS_TIMEOUT=1` + fake bats ⇒ 该断言总耗时 < 5s
+- [x] 真 hang 的文件仍进 `.hangs`，且**不被误判为失败**
+- [x] 报告输出「评估了 N/M 个文件，未评估 K 个」
+- [x] **未评估文件不在 `tests/KNOWN_UNEVALUATED.txt` 内 ⇒ 门失败**；在清单内 ⇒ 打印但不失败；
       `SKIP_UNEVALUATED_GATE=yes` + reason ⇒ 放行**且留 bypass 审计记录**（落 `.rddf/state/.bypass-audit.jsonl`）
-- [ ] 阈值变量（`BATS_TIMEOUT` / `BATS_TIMEOUT_RETRY` / `BATS_RETRY_BUDGET`）可由环境变量覆盖，
+- [x] 阈值变量（`BATS_TIMEOUT` / `BATS_TIMEOUT_RETRY` / `BATS_RETRY_BUDGET`）可由环境变量覆盖，
       且**默认值只有一处**（collect），report 端**只透传**
-- [ ] `./test.sh --full --regression` ⇒ 报告形如「评估 M/M 个文件，未评估 0」；若有未评估，必须在
+- [x] `./test.sh --full --regression` ⇒ 报告形如「评估 M/M 个文件，未评估 0」；若有未评估，必须在
       `KNOWN_UNEVALUATED.txt` 里逐条有 reason，且该文件**未增长**
-- [ ] 被暴露的真实失败**在本 change 内修掉**（或走既定 exception 流程并记录）⇒ **不扩大**
+- [x] 被暴露的真实失败**在本 change 内修掉**（或走既定 exception 流程并记录）⇒ **不扩大**
       `KNOWN_FAILURES.txt`
 
 ## Capabilities
@@ -348,3 +348,64 @@ metis 还挖出**第三层意图**：超时不仅造成漏报，还造成**静�
 | 边界 10 | 大小写/分隔符变体（`Guide-Ship` / `guide_ship`） | ✅ **不适用**（本项不涉及 stage 名匹配）⇒ 明确记为不适用 |
 | 缺失判据 | 补 AC-A（端到端：慢文件里的失败会浮出来）/ AC-B（fail-open）/ AC-C（分母）/ AC-D（scope）/ AC-E（rc 分类）/ AC-F（env 穿透）/ AC-G（时长）/ AC-H（no-orphan）/ AC-I（CI 口径）/ AC-J（shrink-only）/ AC-K（per-test 归因）/ AC-L（hang vs 慢）/ AC-M（env 校验）/ AC-N（并发/嵌套）/ AC-O（重试语义） | ✅ **全部采纳**（共 15 条） |
 
+## 实施记录（2026-11-18）
+
+### 落地形态
+
+| 项 | 值 |
+|---|---|
+| 执行模式 | worktree（`.rddf/wt/fix-bats-per-file-timeout`，分支 `openspec/fix-bats-per-file-timeout`） |
+| 采集侧 | `tests/scripts/collect_bats_failures.sh` —— 两级超时（per-file → per-test）、rc 分类、env 校验、原子落盘、嵌套守卫、summary 契约 |
+| 报告侧 | `tests/scripts/report_regression.sh` —— 未评估维度（命名基线）、scope 声明、fail-open 防线、退出码 0/1/2 |
+| 新增 | `tests/KNOWN_UNEVALUATED.txt`（命名基线）、`tests/integration/test_regression_gate_evaluation.bats`（20 例） |
+| 适配 | `tests/integration/test_known_failures_baseline.bats`、`tests/integration/test_execute_regression_gate.bats`（fake bats 补 `--version`；嵌套采集显式退出递归保护） |
+| 修被暴露的失败 | `tests/integration/test_cross_repo_impact_detection.bats` —— `matches[0]` 改成「成员关系」断言（Hub 的 contracts/ 是共享状态） |
+| CI / 文档 | `.github/workflows/test.yml`（阈值显式化 + shrink-only + `SKIP_UNEVALUATED_GATE` 未设置断言 + bats 版本打印）、`tests/README.md`、`skills/execute/scripts/run_regression_gate.sh`（fallback 路径声明「无未评估概念」） |
+
+### AC 逐条结论
+
+| AC | 结论 | 证据 |
+|---|---|---|
+| AC-A 端到端：慢文件里的失败会浮出来 | ✅ | 临时插入 `@test "zz-synthetic-red" { false; }` 到 `test_known_failures_baseline.bats` ⇒ 报告输出 `新增失败: 1`、明细含 `zz-synthetic-red`、退出码 1（合成失败已撤除）。**另有一例真实发生**：旧采集把 `tests/integration/test_cross_repo_impact_detection.bats` 整文件跳过（撞 30s）⇒ 它当时真实存在的失败 `01_single_contract_match_returns_warning_and_report` 在旧结果里完全不可见；新采集 256/256 全评估 ⇒ 该失败浮出来并已修 |
+| AC-B fail-open 防线 | ✅ | 用例「report: collect summary 缺失 ⇒ exit 2」「report: collect 自身失败（infra error）⇒ exit 2」均断言输出不含 `✅ 0 新增失败` |
+| AC-C 分母固定 | ✅ | 用例断言 `evaluated: 3/3 files`；报告侧自己 glob 一次算 M，与 collect 的 M 不一致 ⇒ exit 2 |
+| AC-D scope 声明 | ✅ | 实测输出：`📊 评估 256/256 个文件（scope: tests/integration/*.bats；仓库另 27 个 .bats 不在本门范围）` |
+| AC-E rc 分类 | ✅ | 4 个 fake-bats 夹具：0 ⇒ 无失败；1 ⇒ 失败被采集；124 ⇒ 重试/未评估路径；125 ⇒ exit 2 |
+| AC-F env 穿透 | ✅ | 用例断言 fake bats 收到 `BATS_TEST_TIMEOUT=3`；report 端已删掉重复的 `BATS_TIMEOUT="${BATS_TIMEOUT:-30}"` 兜默认 |
+| AC-G 时长不退化 | ⚠️ **deviation（有据）** | 同一棵树、同一台机器、背靠背实测：**改前 340.8s → 改后 431.3s（1.27×）**，超过 AC 的 1.15× 界。多出的 ~90s 买到的是「1 个此前被整文件跳过的文件被真正评估」（并连带浮出它的真实失败）。增长有硬上界：`BATS_RETRY_BUDGET`（默认 600s）封顶 ⇒ 无论多少文件慢，重试总时长 ≤ +600s（≈ +10min），远小于 Impact 承认的最坏 +24min |
+| AC-H no-orphan | ✅ | 采集结束后 `ps -eo comm \| grep -c '^bats'` = 0（无残留 bats 进程） |
+| AC-I CI 侧口径 | ✅ | workflow 的回归门 step 显式设定 `BATS_TIMEOUT` / `BATS_TIMEOUT_RETRY` / `BATS_RETRY_BUDGET`；新增 step 断言 `SKIP_UNEVALUATED_GATE` 未设置；`run_regression_gate.sh` 的 fallback 路径已注明「该路径无未评估概念」 |
+| AC-J 命名基线 shrink-only | ✅ | workflow 新增 step（照抄 `KNOWN_FAILURES.txt` 的断言形态） |
+| AC-K per-test 归因 | ✅ | 用例断言：卡住的 test 进独立 per-test 段；同文件其余 test 的失败仍被采集；per-test 项**不进**失败集合 |
+| AC-L hang vs 慢可分辨 | ✅ | 用例断言 `kind=hang` + `last_tap=0` 与 `kind=slow` + `last_tap=2` |
+| AC-M env 取值校验 | ✅ | 用例断言 `BATS_TIMEOUT=0/-5/abc`、`BATS_TIMEOUT_RETRY < BATS_TIMEOUT`、`BATS_RETRY_BUDGET=0` ⇒ 全部 exit 2 |
+| AC-N 并发/嵌套安全 | ✅ | 用例断言：两次并发 collect 的失败集合不互相截断（50 条完整）；`RDDF_BATS_COLLECT_ACTIVE=1` ⇒ exit 2 |
+| AC-O 重试语义 | ✅ | 用例断言：一级的部分输出不进失败集合（`first-run failure` 不在输出里，二级的 `second-run failure` 在） |
+
+**无编号 AC**：报告输出「评估 N/M 个文件，未评估 K 个」✅；未评估文件不在基线内 ⇒ 门失败 ✅ / 在基线内 ⇒ 打印但不失败 ✅；`SKIP_UNEVALUATED_GATE=yes` + reason ⇒ 放行且写 `.rddf/state/.bypass-audit.jsonl` ✅；阈值变量可覆盖、默认值只有一处（collect）✅；`KNOWN_FAILURES.txt` **未扩大** ✅（被暴露的 1 个真实失败在本 change 内修掉）。
+
+### 实测数据（同一棵树、同一台机器、背靠背）
+
+| 运行 | wall clock | 评估 | 未评估 | 采集到的失败 |
+|---|---|---|---|---|
+| 改前（master 版 collect） | 340.8s（5m40.8s） | 255/256 | **1**（`test_cross_repo_impact_detection.bats` 被整文件跳过） | 11（全部是 baseline 已知失败） |
+| 改后（新 collect） | 431.3s（7m11.3s） | **256/256** | **0** | 24（= 11 已知 + 12 个本 change 新用例的递归守卫问题 + 1 个被暴露的真实失败；后 13 个已全部修掉 ⇒ 复跑回到 11） |
+
+### 变异测试（把实现改坏，看用例是否变红）
+
+| # | 变异 | 期望 | 结果 |
+|---|---|---|---|
+| M1 | 删掉 `BATS_TIMEOUT` 的 `>= 1` 校验 | env 校验用例红 | ✅ 红 |
+| M2 | 二级重试改成合并一级输出（而不是丢弃） | AC-O 用例红 | ✅ 红 |
+| M3 | per-test 超时的 `not ok` 不再排除出失败集合 | AC-K 用例红（进失败集合） | ✅ 红 |
+| M4 | 去掉 `RDDF_BATS_COLLECT_ACTIVE` 守卫 | AC-N 递归用例红 | ✅ 红 |
+| M5b | 「summary 缺失 ⇒ exit 2」与「分母不一致 ⇒ exit 2」两道防线一起去掉（回到旧行为） | AC-B 用例红且输出含 `✅ 0 新增失败` | ✅ 红 |
+| M5a | 只去掉「summary 缺失 ⇒ exit 2」这一道 | 用例仍绿 —— **但系统仍然 fail-closed**：`分母不一致` 那道防线兜住了（collect 报 0，报告侧 glob 出 1）⇒ 该用例无法区分是哪一道防线生效（纵深防御，不是逃逸） | 🟡 仍绿（已被另一道防线兜住） |
+
+⇒ 5 个真变异全部被捕获；M5a 是纵深防御的副作用（两道防线都在，任一道单独失效都不 fail-open）。
+
+### 本次不做 / 留给后续
+
+1. **Hub 仓的测试残留**：`chisuhua/rdd-hub` 的 `contracts/` 里堆着 30+ 个 `e2e-0010-<ts>.yaml`（不是本仓任何测试创建的，命名规则对不上）。它是 `test_cross_repo_impact_detection.bats` 变慢的根因，也是它慢到被跳过的原因。清理它是**外部仓库的破坏性操作** ⇒ 本次不动，已把断言改成不依赖「我们的契约排第一」。
+2. **`report_python_regression.sh`（Python 侧的门）没有「未评估」维度**：本项的 In Scope 只写了 bats 侧 ⇒ Python 侧的门仍无该维度，另案。
+3. **generate_full_proposal.py 的段映射失真**（P0 生成 proposal.md 时，`## What Changes` 被 `## 范围` 顶掉、In/Out Scope 解析不出条目）—— 本次是手工修正了生成的 proposal.md，未改生成器（避免影响其它 change 的产出）⇒ 工具缺陷另案。

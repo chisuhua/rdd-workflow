@@ -96,8 +96,12 @@ EOF
   [ "$status" -eq 0 ]
 
   [ -f "$TEST_DIR/report.json" ]
-  run jq -r '.matches[0].contract_name' "$TEST_DIR/report.json"
+  run jq -r '.matches[].contract_name' "$TEST_DIR/report.json"
   [ "$status" -eq 0 ]
+  # Membership, not position: the Hub's contracts/ directory is SHARED state
+  # and other contracts (e.g. leftovers from other runs) can match the same
+  # keyword. What this test owes is "our contract was detected", not "our
+  # contract happens to be first".
   [[ "$output" == *"e2e-detect-test.yaml"* ]]
 
   run jq -r '.suggested_stakeholders | length' "$TEST_DIR/report.json"
