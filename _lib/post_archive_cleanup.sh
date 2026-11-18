@@ -97,6 +97,28 @@ post_archive_cleanup() {
     sweep_implemented_proposals "$project_root" || true
   fi
 
+  # Remove the change's plan file. It is per-change scratch, and the archive is
+  # the last place that knows the change name — relying on "somebody already
+  # deleted it" kept 104 stale plans for archived changes on disk.
+  #
+  # History: `cleanup_plan_file()` used to live in
+  # skills/guide-ship/scripts/ship_archive.sh and disappeared with the v4 stage
+  # merge (ADR-0043 / ADR-0044 / ADR-0048). The whitelist below only ever saw a
+  # ` D` entry when something ELSE had deleted the file first, so the hook went
+  # silent for exactly the case it was written for.
+  local plan_rel=".rddf/plans/${change_name}.md"
+  if [ -n "$change_name" ] && [ -e "$project_root/$plan_rel" ]; then
+    if [ "$dry_run" = "yes" ]; then
+      printf '   would remove %s\n' "$plan_rel"
+    elif git -C "$project_root" ls-files --error-unmatch "$plan_rel" >/dev/null 2>&1; then
+      git -C "$project_root" rm -f -- "$plan_rel" 1>/dev/null
+      printf '🧹 removed plan file: %s\n' "$plan_rel"
+    else
+      rm -f -- "$project_root/$plan_rel"
+      printf '🧹 removed untracked plan file: %s\n' "$plan_rel"
+    fi
+  fi
+
   # Build maps of basename → paths matching each bucket
   local modified_to_add=()
   local deleted_to_rm=()

@@ -387,24 +387,21 @@ print(c['status'], c.get('archive_commit_sha') or '')
     [ "$sha" = "$(git rev-parse master)" ]
 }
 
-@test "P3 lightweight: runs post_archive_cleanup (residue plan file is removed)" {
+@test "P3 lightweight: removes the change's plan file (post_archive_cleanup)" {
     _handoff_lightweight
     _commit_impl_on_branch
     _write_cache "$(git rev-parse openspec/demo)"
-    # A tracked plan file whose deletion is exactly the residue the cleanup
-    # chain is supposed to sweep (`.rddf/plans/` is in its whitelist).
-    rm -f .rddf/plans/demo.md
-    run git status --porcelain -- .rddf/plans/demo.md
-    [[ "$output" == *" D"* ]]
+    # The plan file is TRACKED and still present — the archive itself must
+    # remove it (it used to rely on a caller having deleted it first, which
+    # nothing did after the v4 stage merge).
+    [ -f .rddf/plans/demo.md ]
+    git ls-files --error-unmatch .rddf/plans/demo.md >/dev/null
 
     _phase3
     [ "$status" -eq 0 ]
-    # post_archive_cleanup git rm's the deleted-tracked residue: the file is
-    # gone from the index (before the cleanup it was merely "deleted in the
-    # worktree", i.e. still tracked).
+    [ ! -e .rddf/plans/demo.md ]
     run git ls-files --error-unmatch .rddf/plans/demo.md
     [ "$status" -ne 0 ]
-    [ ! -e .rddf/plans/demo.md ]
 }
 
 @test "P3 lightweight: a failed branch cleanup only warns (archive still succeeds)" {

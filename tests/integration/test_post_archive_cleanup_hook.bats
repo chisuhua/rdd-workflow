@@ -146,3 +146,55 @@ make_modified() {
   run git status --porcelain
   [[ "$output" == *"D  .rddf/plans/fix-rddf-init-broken-layout.md"* ]]
 }
+
+# ── eager plan removal (2026-11-18) ─────────────────────────────────────────
+# The hook used to only stage deletions that SOMETHING ELSE had already made.
+# `cleanup_plan_file()` (the "something else") disappeared with the v4 stage
+# merge, so the hook went silent for exactly its own use case and 104 plans of
+# archived changes stayed on disk. It now removes the plan itself.
+
+@test "hook: an EXISTING tracked plan is removed and staged as a deletion" {
+  local p=".rddf/plans/live-change.md"
+  mkdir -p "$(dirname "$p")" && echo "plan" > "$p"
+  git add "$p" && git commit -q -m "add plan"
+  [ -f "$p" ]
+
+  run post_archive_cleanup "$PROJECT_ROOT" "live-change"
+  [ "$status" -eq 0 ]
+  [ ! -f "$p" ]
+  run git status --porcelain
+  [[ "$output" == *"D  .rddf/plans/live-change.md"* ]]
+}
+
+@test "hook: an existing UNTRACKED plan is removed too (no git noise)" {
+  local p=".rddf/plans/untracked-change.md"
+  mkdir -p "$(dirname "$p")" && echo "plan" > "$p"
+
+  run post_archive_cleanup "$PROJECT_ROOT" "untracked-change"
+  [ "$status" -eq 0 ]
+  [ ! -f "$p" ]
+  run git status --porcelain
+  [[ "$output" != *"untracked-change.md"* ]]
+}
+
+@test "hook: DRY_RUN reports the eager plan removal without deleting" {
+  local p=".rddf/plans/dry-change.md"
+  mkdir -p "$(dirname "$p")" && echo "plan" > "$p"
+  git add "$p" && git commit -q -m "add plan"
+
+  DRY_RUN_POST_ARCHIVE_CLEANUP=yes run post_archive_cleanup "$PROJECT_ROOT" "dry-change"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"would remove .rddf/plans/dry-change.md"* ]]
+  [ -f "$p" ]
+}
+
+@test "hook: another change's plan file is left alone" {
+  local mine=".rddf/plans/mine.md" other=".rddf/plans/other.md"
+  mkdir -p .rddf/plans
+  echo "a" > "$mine" && echo "b" > "$other"
+  git add .rddf/plans && git commit -q -m "add plans"
+
+  post_archive_cleanup "$PROJECT_ROOT" "mine"
+  [ ! -f "$mine" ]
+  [ -f "$other" ]
+}
