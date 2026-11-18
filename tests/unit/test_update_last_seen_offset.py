@@ -3,7 +3,6 @@ import json
 import os
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 import pytest
@@ -73,11 +72,18 @@ def test_concurrent_update_serializes(tmp_path):
     guard ensures whichever lands first does not get clobbered. Final
     last_seen_offset must be max(10, 314) == 314.
 
-    A small stagger (0.3s) ensures the first subprocess completes its
-    lock/unlock cycle before the second starts (LOCK_NB fail-fast means
-    the second would exit 1 if the first still held the lock). This is
-    not a race — the stagger simply schedules them sequentially; the
-    FileLock + monotonic guard provide the actual serialization guarantee.
+    Synchronization: the store's lock is LOCK_NB (fail-fast, non-blocking), so
+    a writer that arrives while the other holds the lock gets
+    "Could not acquire lock" and dies. The old version avoided that with a
+    fixed `time.sleep(0.3)` stagger — a TIMING ASSUMPTION: under load the
+    first subprocess had not finished its lock cycle yet, the second one lost
+    the race, and this test went red at random (observed: 1 of 3 runs failed
+    while the machine was busy, 8/8 passed when idle).
+
+    Now both writers are in flight at once and the CHILD retries on lock
+    contention (what a real caller does). The outcome no longer depends on
+    scheduling: whichever writer lands first, the monotonic guard keeps the
+    higher offset.
     """
     sessions_file = tmp_path / "sessions.json"
     sessions_file.write_text(json.dumps({"version": 1, "sessions": [], "updated_at": ""}))
@@ -91,11 +97,23 @@ def test_concurrent_update_serializes(tmp_path):
 
     repo_root = str(Path(__file__).resolve().parent.parent.parent)
     updater = (
-        "import sys\n"
+        "import sys, time\n"
         "sys.path.insert(0, {repo_root!r})\n"
         "from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator\n"
         "coord = RddfSessionCoordinator(sessions_file={sessions_file!r})\n"
-        "coord.update_last_seen_offset({sid!r}, {offset})\n"
+        "# The store lock is fail-fast (LOCK_NB): a concurrent writer is told\n"
+        "# 'Could not acquire lock'. Retry until it is free — a real caller\n"
+        "# does the same, and it keeps the test independent of scheduling.\n"
+        "for _ in range(200):\n"
+        "    try:\n"
+        "        coord.update_last_seen_offset({sid!r}, {offset})\n"
+        "        break\n"
+        "    except Exception as exc:\n"
+        "        if 'Could not acquire lock' not in str(exc):\n"
+        "            raise\n"
+        "        time.sleep(0.05)\n"
+        "else:\n"
+        "    raise SystemExit('could not acquire the sessions lock in time')\n"
     )
 
     def _spawn(offset):
@@ -108,12 +126,10 @@ def test_concurrent_update_serializes(tmp_path):
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
 
-    # Start with offset 10 first, then offset 314 after a brief delay.
-    # The explicit stagger is necessary because LOCK_NB does not block;
-    # the LOCK_NB + monotonic guard together produce the same outcome:
-    # whichever writes first wins, and the second cannot roll it back.
+    # Both writers are in flight at the same time — no sleep-based stagger.
+    # The lock + the monotonic guard decide the outcome: whichever writes
+    # first wins, and the second cannot roll it back.
     p_first = _spawn(10)
-    time.sleep(0.3)
     p_second = _spawn(314)
 
     for p in (p_first, p_second):

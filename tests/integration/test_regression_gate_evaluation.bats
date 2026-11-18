@@ -67,10 +67,17 @@ EOF
   export PATH="$BIN:$PATH"
 }
 
-# collect（默认 1s 超时 ⇒ 测试不等 30s）
+# collect（固定 1s 超时 ⇒ 测试不等 30s）
+#
+# The timeouts are FIXED, not inherited: `${BATS_TIMEOUT:-1}` would pick up an
+# ambient BATS_TIMEOUT from whoever runs the suite (e.g. 180 while the machine
+# is loaded) and turn this file into a 661s monster — the regression gate's
+# own per-file budget then gave up and reported the file "unevaluated", i.e.
+# the GATE turned red for a reason that had nothing to do with the code.
+# Cases that need a specific value pass it explicitly on the `run env` line.
 collect() {
   run env PATH="$PATH" RDDF_BATS_COLLECT_ACTIVE=0 FAKE_BATS_MODE="${FAKE_BATS_MODE:-clean}" \
-    BATS_TIMEOUT="${BATS_TIMEOUT:-1}" BATS_TIMEOUT_RETRY="${BATS_TIMEOUT_RETRY:-1}" \
+    BATS_TIMEOUT=1 BATS_TIMEOUT_RETRY=1 \
     bash "$COLLECT" "$FIXTURES/" "$OUT"
 }
 
