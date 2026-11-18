@@ -115,6 +115,14 @@ _carry_artifacts() {
 }
 
 if [ "$EXEC_MODE" = "worktree" ]; then
+    # The worktree lives INSIDE the project, not inside whatever directory the
+    # caller happened to be in. Without this, a caller whose cwd differs from
+    # $PROJECT_ROOT (the phase-2 test does exactly that: it drives the script
+    # against a throwaway repo while the cwd is the real repo) creates the
+    # worktree — and the branch — in the WRONG repository: the real one got a
+    # stray `openspec/<change>` branch and a full-tree checkout it never
+    # asked for, and the fake repo got nothing.
+    cd "$PROJECT_ROOT" || { echo "❌ cannot cd to project root: $PROJECT_ROOT" >&2; exit 3; }
     WT_PATH=".rddf/wt/$CHANGE_NAME"
     if [ ! -d "$WT_PATH" ]; then
         git worktree add "$WT_PATH" -b "$BRANCH" 2>/dev/null || {
