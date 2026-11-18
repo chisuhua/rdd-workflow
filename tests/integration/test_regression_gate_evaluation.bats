@@ -74,6 +74,22 @@ collect() {
     bash "$COLLECT" "$FIXTURES/" "$OUT"
 }
 
+# 最小「假仓」：真 report + 真 collect 脚本，但只面对 1 个 .bats 文件。
+# 报告侧绝大多数用例不需要「真实仓里那 256 个文件」—— 用真仓会让每个用例都跑一遍
+# 256 次 fake-bats 调用（本文件 20 个用例就变成分钟级，自己成了慢文件）。
+make_fake_repo() {
+  FAKE_REPO="$BATS_TEST_TMPDIR/fakerepo"
+  mkdir -p "$FAKE_REPO/tests/scripts" "$FAKE_REPO/tests/integration" "$FAKE_REPO/.rddf/state"
+  cp "$REPORT" "$FAKE_REPO/tests/scripts/report_regression.sh"
+  cp "$COLLECT" "$FAKE_REPO/tests/scripts/collect_bats_failures.sh"
+  : > "$FAKE_REPO/tests/KNOWN_FAILURES.txt"
+  : > "$FAKE_REPO/tests/KNOWN_UNEVALUATED.txt"
+  : > "$FAKE_REPO/tests/integration/a.bats"
+  # 报告侧的 bypass 审计用 <repo>/_lib/bypass_audit.sh ⇒ 假仓里也放一份
+  mkdir -p "$FAKE_REPO/_lib"
+  cp "$REPO_ROOT/_lib/bypass_audit.sh" "$FAKE_REPO/_lib/" 2>/dev/null || true
+}
+
 # ── env 取值校验（AC-M）──────────────────────────────────────────────────────
 
 @test "collect: BATS_TIMEOUT 非法取值 ⇒ exit 2（不得静默变成「不设限」）" {
@@ -205,49 +221,51 @@ collect() {
 # ── 报告侧：未评估维度（命名基线）+ scope 声明 + fail-open 防线 ──────────────
 
 @test "report: 未评估文件不在 KNOWN_UNEVALUATED.txt 内 ⇒ 门失败且不打印 ✅" {
-  # 报告脚本采集的是真实的 tests/integration/ ⇒ 只让其中一个文件挂住
-  # （FAKE_BATS_HANG_MATCH），其余文件由 fake bats 秒回。
-  run env PATH="$PATH" RDDF_BATS_COLLECT_ACTIVE=0 FAKE_BATS_HANG_MATCH="test_known_failures_baseline.bats" \
+  make_fake_repo
+  # 假仓里的 a.bats 挂住（FAKE_BATS_HANG_MATCH），KNOWN_UNEVALUATED.txt 是空的
+  # ⇒ 未评估文件不在命名基线内 ⇒ 门失败。
+  run env PATH="$PATH" RDDF_BATS_COLLECT_ACTIVE=0 FAKE_BATS_HANG_MATCH="a.bats" \
     BATS_TIMEOUT=1 BATS_TIMEOUT_RETRY=1 \
-    RDDF_KNOWN_FAILURES_FILE="$EMPTY_BASELINE" \
-    RDDF_UNEVALUATED_FILE="$BATS_TEST_TMPDIR/absent-unevaluated.txt" \
-    bash "$REPORT"
+    bash "$FAKE_REPO/tests/scripts/report_regression.sh"
   [ "$status" -ne 0 ]
   [[ "$output" != *"✅ 0 新增失败"* ]]
   [[ "$output" == *"未评估"* ]]
 }
 
 @test "report: 未评估文件在 KNOWN_UNEVALUATED.txt 内 ⇒ 打印但不失败" {
-  printf '%s\n' "tests/integration/test_known_failures_baseline.bats # known slow file" \
-    > "$BATS_TEST_TMPDIR/unevaluated.txt"
-  run env PATH="$PATH" RDDF_BATS_COLLECT_ACTIVE=0 FAKE_BATS_HANG_MATCH="test_known_failures_baseline.bats" \
+  make_fake_repo
+  printf '%s\n' "tests/integration/a.bats # known slow file" \
+    > "$FAKE_REPO/tests/KNOWN_UNEVALUATED.txt"
+  run env PATH="$PATH" RDDF_BATS_COLLECT_ACTIVE=0 FAKE_BATS_HANG_MATCH="a.bats" \
     BATS_TIMEOUT=1 BATS_TIMEOUT_RETRY=1 \
-    RDDF_KNOWN_FAILURES_FILE="$EMPTY_BASELINE" \
-    RDDF_UNEVALUATED_FILE="$BATS_TEST_TMPDIR/unevaluated.txt" \
-    bash "$REPORT"
+    bash "$FAKE_REPO/tests/scripts/report_regression.sh"
   [ "$status" -eq 0 ]
   [[ "$output" == *"未评估"* ]]
 }
 
 @test "report: SKIP_UNEVALUATED_GATE=yes ⇒ 放行但留下 bypass 审计记录" {
+  make_fake_repo
   AUDIT_ROOT="$BATS_TEST_TMPDIR/audit-root"
   mkdir -p "$AUDIT_ROOT/.rddf/state"
-  run env PATH="$PATH" RDDF_BATS_COLLECT_ACTIVE=0 FAKE_BATS_HANG_MATCH="test_known_failures_baseline.bats" \
+  run env PATH="$PATH" RDDF_BATS_COLLECT_ACTIVE=0 FAKE_BATS_HANG_MATCH="a.bats" \
     BATS_TIMEOUT=1 BATS_TIMEOUT_RETRY=1 \
     RDDF_PROJECT_ROOT="$AUDIT_ROOT" \
-    RDDF_KNOWN_FAILURES_FILE="$EMPTY_BASELINE" \
-    RDDF_UNEVALUATED_FILE="$BATS_TEST_TMPDIR/absent-unevaluated.txt" \
     SKIP_UNEVALUATED_GATE=yes RDDF_UNEVALUATED_BYPASS_REASON="test bypass" \
-    bash "$REPORT"
+    bash "$FAKE_REPO/tests/scripts/report_regression.sh"
   [ "$status" -eq 0 ]
   [[ "$output" == *"SKIP_UNEVALUATED_GATE"* ]]
   grep -q "SKIP_UNEVALUATED_GATE" "$AUDIT_ROOT/.rddf/state/.bypass-audit.jsonl"
 }
 
 @test "report: scope 声明（采集范围 + 仓内其它 .bats 不在本门范围）" {
-  run env PATH="$PATH" RDDF_BATS_COLLECT_ACTIVE=0 RDDF_KNOWN_FAILURES_FILE="$EMPTY_BASELINE" bash "$REPORT"
+  make_fake_repo
+  # 假仓另放一个不在 tests/integration/ 下的 .bats ⇒ 「不在本门范围」应当是 1
+  mkdir -p "$FAKE_REPO/tests/unit"
+  : > "$FAKE_REPO/tests/unit/smoke.bats"
+  run env PATH="$PATH" RDDF_BATS_COLLECT_ACTIVE=0 bash "$FAKE_REPO/tests/scripts/report_regression.sh"
   [[ "$output" == *"tests/integration/"* ]]
   [[ "$output" == *"不在本门范围"* ]]
+  [[ "$output" == *"另 1 个"* ]]
 }
 
 @test "report: collect summary 缺失 ⇒ exit 2（fail-open 防线）" {
@@ -271,9 +289,9 @@ EOF
 }
 
 @test "report: collect 自身失败（infra error）⇒ exit 2" {
-  : > "$FIXTURES/a.bats"
+  make_fake_repo
   run env PATH="$PATH" RDDF_BATS_COLLECT_ACTIVE=0 FAKE_BATS_MODE=infra125 \
-    RDDF_KNOWN_FAILURES_FILE="$EMPTY_BASELINE" bash "$REPORT"
+    bash "$FAKE_REPO/tests/scripts/report_regression.sh"
   [ "$status" -eq 2 ]
   [[ "$output" != *"✅ 0 新增失败"* ]]
 }
