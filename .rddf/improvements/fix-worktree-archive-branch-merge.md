@@ -6,7 +6,7 @@ priority: P1
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: implemented (2026-11-17)
+状态: in-progress (2026-11-17 实施 → 2026-11-18 architect 复核发现 4 条 implementation_gap，待补)
 
 生成时间: 2026-11-17
 roadmap_ref:
@@ -59,7 +59,7 @@ return 0                                                     # :628
 **实测（本批 5 项全部命中）**：P3 归档前必须手工 `git merge --no-ff openspec/<name>` 把 worktree 提交并回默认分支，否则该分支的提交永久搁浅，而归档**报告成功**。本批 5 项全部靠手工合并才没丢代码。
 
 **触发范围**：本仓 `git.openspec_tracked: false` 命中；而 `phase2_execute.sh` **不读** `openspec_tracked`（只在 `:7` 的注释里提到它）⇒ 本仓在 false 配置下仍建 worktree ⇒ 命中是必然，不是巧合。
-（注：schema 描述里「false ⇒ force lightweight mode (branch only, no worktree)」的**前半句也没有实现** —— 该半句归 `fix-execution-mode-decision` 收口，见该草案的「What Changes §3」。若它被实现，本缺陷的触发面自然消失；本项因此**不依赖**它，但两者应互为参照。）
+（注：schema 描述里「false ⇒ force lightweight mode (branch only, no worktree)」的**前半句也没有实现** —— 该半句已被 **ADR-0036 的 2026-11-17 修订裁定为退役**（该开关不再强制执行模式），并由 `fix-execution-mode-decision` 落地为「描述只描述归档路径语义」；而「lightweight 这个模式本身不可用」的缺口（不建分支 + 归档路径缺步）归 **`fix-lightweight-branch-and-archive`** 收口。本项因此**不依赖**两者，但需与它们互为参照。）
 
 ### 缺陷二：cleanup 失败仍打印「✅ Worktree 已删除」
 
@@ -84,7 +84,7 @@ echo "✅ Worktree 已删除: $wt_path"     # ← 在 if/else 之外，无条件
 ## 范围
 
 - **In Scope**：① 归档前新增**具名**检查函数 `archive_premerge_check`，未合入则拒绝归档（可显式 opt-in 覆盖）；② worktree 内**未提交**改动一并检查；③ cleanup 的返回契约与成功文案（dir/file 之外的第三态：worktree 残留）；④ **spec delta**（两份 spec）；⑤ 修改既有测试文件 + 新增用例；⑥ 归档流程文档写明「archive 不代劳合并」。
-- **Out Scope**：**不在 false 分支里新增 `git merge` / `commit_archive_moves`**（守 L248/L253）；不改 `merge_feature_branch`（tracked 路径的合并行为已正确）；不改 `FORCE_BRANCH_DELETE` 的语义（只管分支删除）；**不处理 lightweight 路径**（⚠ lightweigth 下 `phase2_execute.sh:117-119` **不建分支** ⇒ 「提交停在分支上」不成立，其真实缺口是 `phase3_archive.sh:135-145` 缺 `post_archive_cleanup` + `mark_iteration_archived` ⇒ 归 `fix-execution-mode-decision` 收口）；不删任何已存在的分支；不改 `openspec_tracked` 的**归档**语义。
+- **Out Scope**：**不在 false 分支里新增 `git merge` / `commit_archive_moves`**（守 L248/L253）；不改 `merge_feature_branch`（tracked 路径的合并行为已正确）；不改 `FORCE_BRANCH_DELETE` 的语义（只管分支删除）；**不处理 lightweight 路径**（⚠ lightweight 下 `phase2_execute.sh:117-119` **不建分支** ⇒ 「提交停在分支上」不成立，其真实缺口是 `phase3_archive.sh:135-145` 缺 `post_archive_cleanup` + `mark_iteration_archived` ⇒ 归 **`fix-lightweight-branch-and-archive`** 收口 —— 见该立项的分工：「轻量路径的建分支 + 归档路径补齐 + 提交归属检查」都在那边，本项只负责 **worktree 路径**的合入门）；不删任何已存在的分支；不改 `openspec_tracked` 的**归档**语义。
 
 ## Why
 
@@ -97,6 +97,17 @@ metis 提出的反向意见（采纳并已写进 What Changes）：**现状成�
 ## What Changes
 
 1. **具名检查函数 + 三态返回**（`_lib/archive.sh`，与 `merge_feature_branch` 同级风格）：
+
+   > ⚠ **本 ADR 覆盖声明（2026-11-17 architect 签批，ADR-0061）**：本小节写于 ADR 之前，
+   > 其**判定细节**已被 ADR-0061 取代 —— 实施方**以 ADR-0061 的决策 2 判定表为准**：
+   > ① 本小节 b. 的 **tip-to-tip `git diff --quiet`** ⇒ 改为 **patch-id 判据 `git cherry`**；
+   > ② 本小节 c./d. 的顺序（is-ancestor → 内容等价 → 无法判定 → dirty）⇒ 改为 ADR 的
+   > **⓪ref 存在性 → ①worktree dirty → ②已合入 → ③内容等价 → ④未合入 → ⑤无法判定**；
+   > ③ 本小节写的「`2` = 无法判定（**ref 缺失** / 非 git 仓库）⇒ 放行」⇒ 改为 ADR 的
+   > **⓪ ref 缺失 ⇒ 拒绝**（fail-closed，与 `verifier-lifecycle` 一致）；**非 git 仓库 ⇒ ⑤ 放行**；
+   > ④ 本小节没有「未合入 ⇒ 拒绝」这一档 ⇒ 由 ADR 的 ④ 补上。
+   > 下面保留原文仅作**草案留痕**，不作为实现依据。
+
    `archive_premerge_check <main_root> <branch> <default_branch> <wt_path>`
    - `0` = 已合入 **或** 内容等价（放行）；
    - `1` = 未合入（可操作拒绝）；
@@ -128,7 +139,7 @@ metis 提出的反向意见（采纳并已写进 What Changes）：**现状成�
 
 - [x] **spec delta**：更新 `complete-project-yaml-config-gaps`（`openspec_tracked=false` 段，`:248`/`:253-254`）与 `archive-openspec-tracked-skip-commit`（顺序 scenario，`:34`/`:40-41`）两份 spec，把「跳过 commit_archive_moves」与「feature 分支合并」解耦；并由 architect 签批
 - [x] `archive_premerge_check` 为**具名函数**、返回三态（0 已合入/内容等价、1 未合入、2 无法判定）；无法判定时**放行 + 警告**（不制造假拒绝）
-- [x] **接口契约：支持「无 worktree」模式**（`wt_path` 为空）—— ①「worktree 内未提交改动」判据在 `wt_path` 为空时**跳过**（lightweight 路径没有 worktree；用主仓的 `git status --porcelain` 会把**别的 change 的脏文件**误判成本 change 的未提交改动 ⇒ 假拒绝，且指引文案会诱导用户把别人的改动 commit 进来）⇒ 轻量路径用「分支提交归属」判据代替（归 `fix-lightweight-branch-and-archive`）；⓪ref 缺失 / ②已合入 / ③内容等价（patch-id）/ ④无法判定**四项原样复用**
+- [x] **接口契约：支持「无 worktree」模式**（`wt_path` 为空）—— ①「worktree 内未提交改动」判据在 `wt_path` 为空时**跳过**（lightweight 路径没有 worktree；用主仓的 `git status --porcelain` 会把**别的 change 的脏文件**误判成本 change 的未提交改动 ⇒ 假拒绝，且指引文案会诱导用户把别人的改动 commit 进来）⇒ 轻量路径用「分支提交归属」判据代替（归 `fix-lightweight-branch-and-archive`）；⓪ref 缺失 / ②已合入 / ③内容等价（patch-id）/ **④未合入 ⇒ 拒绝** / ⑤无法判定**五项原样复用**（⚠ 补正前的清单只列四项且把 ④ 当成「无法判定」—— 补正后 ④ = **未合入 ⇒ 拒绝**，⑤ = 无法判定 ⇒ 漏掉 ④ 会让 lightweight 路径**不拒绝未合入分支**）
 - [x] **内容等价用 patch-id 判据**（`git cherry <default> <branch>` 全为 `-`），不是 tip-to-tip 的 `git diff --quiet`（后者在默认分支有任何无关提交时就会判不等）—— per ADR-0061 的决策 2 ③（立项 AC 原文的 `git diff --quiet` 口径已被本 ADR 覆盖，须同步）
 - [x] 内容等价分支存在：`is-ancestor` 为假但 `git diff --quiet <default> <branch>` 为真 ⇒ 放行 + 警告（squash-merge 项目不被永久锁死）
 - [x] worktree 内有未提交改动 ⇒ 拒绝归档（改动不会随 worktree 清理丢失）
@@ -139,9 +150,21 @@ metis 提出的反向意见（采纳并已写进 What Changes）：**现状成�
 - [x] worktree 的三种失败态分别给出不同消息（未注册残留目录 / 已注册但 remove 失败 / 分支 ref 缺失）
 - [x] tracked 路径的 `cleanup … || return 1` 不再让「归档已成功」整体失败（返回码语义与 false 路径一致）
 - [x] **修改** `tests/integration/test_archive_with_openspec_tracked_false.bats`：原「未合入 ⇒ status 0」用例改为「已合入 ⇒ 0」，并新增「未合入 ⇒ 拒绝」用例
-- [x] 旁路清单成文并逐条标注是否受门保护：`phase3_archive.sh` 的 lightweight inline 分支（**不受**，归 `fix-execution-mode-decision`）、`phase0_approval.sh` 的 rdd-quick 直归档路径（**不受**）、手工 `openspec archive`（**不受**）
+- [x] 旁路清单成文并逐条标注是否受门保护：`phase3_archive.sh` 的 lightweight inline 分支（**不受**，归 `fix-lightweight-branch-and-archive`）、`phase0_approval.sh` 的 rdd-quick 直归档路径（**不受**）、手工 `openspec archive`（**不受**）
 - [x] 文档：`skills/rdd-builder/SKILL.md` P3 段 + `docs/architecture/workflow-phases.md` 写明「archive 不代劳合并」
 - [x] `./test.sh --unit` + `bats tests/integration/test_archive*.bats` + `bats tests/integration/test_post_archive*.bats` 全绿
+
+### 2026-11-18 architect 复核新增（ADR-0061 表格补正的涟漪 —— implementation_gap）
+
+> **来源**：ADR-0061 的判定表补正（新增 ④「未合入 ⇒ 拒绝」）后，architect 复核发现**实现的四处
+> 不满足已签批契约** + 一处文档缺口。ADR 的「后续待办 → 实施方补」已逐条登记（见
+> `docs/adr/ADR-0061-archive-gate-refuses-unmerged-branch.md`）；本节把它们转成**可执行的 AC**。
+
+- [ ] **调用点按返回码消费（V-14）**：`archive_change` 的 false 分支**不得**把三态折叠成两态 —— `0` ⇒ 放行；`1` ⇒ 拒绝（返回 1）；`2` ⇒ **放行 + 警告**。⇒ 判据形态（**调用点级 stub**）：stub `archive_premerge_check` 返回 `2` ⇒ 断言 `archive_change` **仍返回 0**。（⚠ 用 stub 而不是构造真实 ⑤：真实 `archive_change` 流程里 ⑤ 几乎不可达 —— 非 git 仓库 ⇒ `wt_path_for_branch` 先失败；默认分支不可解析 ⇒ `switch_to_default_branch` 先失败；`git cherry` 空输出 ⇒ 已被 `merge-base --is-ancestor` 抢先捕获。）
+- [ ] **⓪ 的路径不给合并命令（V-5(d)）**：分支 ref 缺失 ⇒ 输出**含** `git reflog` 找回路径、**不含** `merge --no-ff`（没有分支可合并）。⇒ 判据形态：一条**否定断言**（`[[ "$output" != *"merge --no-ff"* ]]`）。
+- [ ] **非 git 仓库归 ⑤（不落进 ⓪）**：`<main_root>` 不是 git 仓库 ⇒ 判定落在 ⑤（**放行 + 显式警告**），**不得**报「分支不存在（可能已被上一次归档的 cleanup 删除）」的误导文案。⇒ 判据形态：一条「非 git 目录 ⇒ 返回码 2 + 警告文案」的用例。
+- [ ] **dirty 路径按「分支有提交 / 无提交」分叉（V-5(c)）**：worktree dirty 时 —— 分支**有**提交 ⇒ 给**两步**命令（先 commit 到实现分支，再合并）；分支**无**提交 ⇒ 只给提交命令。⇒ 判据形态：两条用例分别断言命令条数。
+- [ ] **`docs/architecture/gates-and-quality.md` 写明「合入门」与「archive 不代劳合并」（V-12）**：该文件是 `docs/architecture/` 的**门清单**（现有条目：`gate.py` 的 plan-done / archive-done / ship-lightweight-mode 三个 gate、`arch_quality_gate.py`、tribunal）⇒ 须新增一条「**合入门**（`archive_premerge_check`）：实现分支未合入默认分支 ⇒ 拒绝归档（可显式 opt-in）；归档**不代劳合并**」并与「AC 归档门」区分。
 
 ## Capabilities
 
@@ -161,7 +184,8 @@ metis 提出的反向意见（采纳并已写进 What Changes）：**现状成�
 - **兼容性**：`archive_change` 的返回码集合不变（新增拒绝走既有的 1 ⇒ phase3 exit 3 的映射）；已归档 change 的目录结构不变；本仓（false）路径的**既有成功场景**行为不变（已合入 ⇒ 仍 0）。
 - **依赖**：
   - 本批第 2 项（`fix-worktree-archive-path`，已归档）已把 phase3 改为委托 `archive_change` ⇒ 本项的检查点落在它改过的那段代码上，两者不冲突；
-  - `fix-execution-mode-decision`（同批，未实施）负责「`openspec_tracked=false ⇒ lightweight`」的 schema 对齐 —— 若它落地，本项的触发面自然缩小；两者需互为参照，**lightweight 路径的同类缺口归它收口**。
+  - `fix-execution-mode-decision`（同批，**已实施 2026-11-17**）负责「`openspec_tracked` 只属归档路径 + 波次维度」的 schema / README / spec 退役对齐 —— 该开关**不再**强制执行模式 ⇒ 本项的触发面不受它影响；
+  - **`fix-lightweight-branch-and-archive`**（同批，draft）负责 **lightweight 路径**的建分支 + 归档路径补齐（含提交归属检查 + 合入判定复用）—— **lightweight 路径的同类缺口归它收口**，本项只负责 worktree 路径。
 
 ## 审稿记录
 
@@ -174,7 +198,7 @@ metis 1 轮（2026-11-17，planner 阶段 gap 分析）。逐条处置：
 - **采纳 P0-5（AC 重写为可判定）**：退出码表（archive_change 1 → phase3 3 → rddf archive 1）、断言对象改为「change 目录仍在 + stub 未被调用」（「无 archive 目录」不可判定）、既有测试文件列入**必须修改**、spec delta AC、旁路清单 AC。
 - **采纳 P1-1（worktree 未提交改动）**：原草案只看 commit 图 ⇒ agent 改了没 commit 时门会通过、随后 remove 失败、归档返回 0（用户问题只修一半）。已加 `status --porcelain` 检查 + AC。
 - **采纳 P1-2（opt-in 定义）**：原草案提到「显式 opt-in」却没定义变量名；且原 Impact 里「FORCE_BRANCH_DELETE 不受影响」是**假的**（它在门之后）。已定义 `ARCHIVE_ALLOW_UNMERGED=yes` + `RDDF_ARCHIVE_UNMERGED_REASON` + bypass 审计，并删除那句假声明。
-- **采纳 P1-3（lightweight 冲突）**：原草案 Out Scope 说「不处理 lightweight」，而同批另一条说「必要时覆盖到 lightweight」⇒ 互相打脸。已在本项 Out Scope 明确「lightweight 归 `fix-execution-mode-decision` 收口」并互相引用。
+- **采纳 P1-3（lightweight 冲突）**：原草案 Out Scope 说「不处理 lightweight」，而同批另一条说「必要时覆盖到 lightweight」⇒ 互相打脸。已在本项 Out Scope 明确「lightweight 归 **`fix-lightweight-branch-and-archive`** 收口」并互相引用。
 - **采纳 P1-4（三种 worktree 失败态）**：原草案把「孤儿目录」「remove 失败」「分支缺失」混为一谈。已拆成三条消息。
 - **采纳 P2-1（守卫改行为断言）**：既有 awk 守卫在插入内层 `if` 后会**退化且仍 PASS** ⇒ 已加「守卫必须加固」AC，并要求行为断言（stub 具名函数）；纯 `grep "git merge"` 会与 `merge-base` 字面冲突，明确不可用作守卫。
 - **采纳 P2-2（文档落点）**：已指定 `skills/rdd-builder/SKILL.md` P3 段（当前 `"merge"` 零命中）与 `docs/architecture/workflow-phases.md`。

@@ -114,7 +114,7 @@ roadmap_ref:
    - 验收断言：归档前断言「分支 tip 的父提交 = 默认分支 tip」（防止基点错位）。
 3. **归档路径补齐**（`phase3_archive.sh` 的 lightweight inline 分支）：
    - 顺序：`switch_to_default_branch`（**在拒绝之前不改用户的 HEAD** ⇒ 拒绝路径不得留下副作用）→ **提交归属检查** → **合入门判定** → `openspec archive` → **分支清理** → `mark_iteration_archived`（带真实 sha）→ `post_archive_cleanup`；
-   - **合入门判定**：**语义同源、判据按模式分叉** —— 复用 ADR-0061 的 `archive_premerge_check`，但**lightweight 下 `wt_path` 为空**，其 ①「worktree 内未提交改动」判据**不适用**（lightweight 没有 worktree；用主仓的 `git status --porcelain` 会把**别的 change 的脏文件**误判成本 change 的未提交改动 ⇒ 假拒绝，且其指引文案会诱导用户把别人的改动 commit 进来）⇒ lightweight 的对应判据是 §2 的**分支提交归属检查**；主仓的脏文件**只警告不拒绝**。⓪（ref 缺失）/②（已合入）/③（内容等价 patch-id）/④（无法判定）四项原样复用。
+   - **合入门判定**：**语义同源、判据按模式分叉** —— 复用 ADR-0061 的 `archive_premerge_check`，但**lightweight 下 `wt_path` 为空**，其 ①「worktree 内未提交改动」判据**不适用**（lightweight 没有 worktree；用主仓的 `git status --porcelain` 会把**别的 change 的脏文件**误判成本 change 的未提交改动 ⇒ 假拒绝，且其指引文案会诱导用户把别人的改动 commit 进来）⇒ lightweight 的对应判据是 §2 的**分支提交归属检查**；主仓的脏文件**只警告不拒绝**。⓪（ref 缺失）/②（已合入）/③（内容等价 patch-id）/**④（未合入 ⇒ 拒绝）**/⑤（无法判定）**五项原样复用**（⚠ 2026-11-18 ADR-0061 表格补正后：④ = **未合入 ⇒ 拒绝**，⑤ = 无法判定 ⇒ 补正前的「四项」清单把 ④ 当成「无法判定」，会漏掉「未合入 ⇒ 拒绝」这一档 ⇒ **lightweight 路径将不拒绝未合入分支**，而这正是本立项自己在 §Why 里点名的静默失败）。
    - **分支清理**：`wt_path` 传空（**不得对主仓执行 `git worktree remove`**）；未合入时 `git branch -d` 会失败 ⇒ 与 ADR-0061 一致：**只警告、归档仍成功**（返回码语义对齐）；`FORCE_BRANCH_DELETE` 的语义不变。
    - **`commit_archive_moves`**：lightweight × `openspec_tracked: true` ⇒ **必须调用**（`archive-auto-commit` 的 MUST，见 §范围 6）；lightweight × `false` ⇒ **必须不调用**。
    - **步骤清单（枚举）**：本项补的是「提交归属检查 / 合入门判定 / 分支清理 / `mark_iteration_archived`（带 sha）/ `post_archive_cleanup` / `commit_archive_moves`（条件）」。
@@ -151,7 +151,7 @@ roadmap_ref:
 - lightweight 从「走不完 P3 的模式」变成**一等可用模式**：小改动可以真的省掉 worktree 的开销（ADR-0024 的核心目标兑现）
 - 「幽灵分支」消失：handoff 声明的分支与真实 ref 一致 ⇒ 下游不再被假声明误导
 - **不会把「不可归档」换成「假归档」**：提交归属检查把「代码从未 commit」变成一道**显式拒绝**（与 worktree 路径的 `check_worktree_commits` 同语义）
-- 轻量路径与 worktree 路径**共用同一套合入判定语义**（⓪/②/③/④），而 dirty 判据按模式分叉（轻量路径用分支提交归属，不用主仓 dirty）
+- 轻量路径与 worktree 路径**共用同一套合入判定语义**（⓪/②/③/**④未合入⇒拒绝**/⑤无法判定，五项），而 dirty 判据按模式分叉（轻量路径用分支提交归属，不用主仓 dirty）
 - `iteration.json` 在轻量路径上也进入归档态（状态不再停在半路）
 - D 项的输入诚实化可以安全放开「小改动 ⇒ lightweight」（否则会把不可用模式推广给全部小 change）
 
@@ -185,7 +185,7 @@ metis 判定：主目标**不是**「lightweight 能归档」，而是「让 D �
 | # | metis finding | 处置 |
 |---|---|---|
 | P0-1 | **【最高危】execute 默认不 commit ⇒ 轻量分支是空壳 ref** ⇒ 验证锚点指向不含本次改动的提交（可能假通过）⇒ 合入门 ③ `git cherry` 判「内容等价」（两 tip 相同 ⇒ 等价恒真）⇒ 放行 ⇒ 归档把**未提交的实现文件**留在主干工作区 ⇒ **「不可归档」换成「假归档」**（ADR-0061 要消灭的静默失败原地复活） | ✅ **全部采纳** ⇒ 新增 What Changes §2「提交归属政策」+ 3 条 AC（零提交 ⇒ 拒绝 + 给 commit 命令；**不引入 auto-commit**（`git add -A` 会把别人的改动一起提交）；断言分支 tip 的父提交 = 默认分支 tip 防基点错位）⇒ Why 段加了这条更重的意图 |
-| P0-2 | 「复用 ADR-0061 的合入门」不可判定（该函数今天不存在）；且 `archive_premerge_check` 的 `wt_path` 在 lightweight 下**无正确取值** —— `git -C <main_root> status --porcelain` 看到**整个主仓** ⇒ 别的 change 的脏文件被误判为本 change 的未提交改动 ⇒ 假拒绝，且指引文案会诱导用户把**别人的改动** commit 进来 | ✅ **全部采纳** ⇒ What Changes §3 改为「**语义同源、判据按模式分叉**」：⓪/②/③/④ 原样复用，①（worktree dirty）在 lightweight 下**不适用**（`wt_path` 传空）⇒ 改用 §2 的分支提交归属检查；主仓 dirty **只警告不拒绝** ⇒ 新增 AC「dirty 语义分叉生效」；并把「`archive_premerge_check` 由 ③ 新建、本项是第二个调用点」写成显式依赖；「不新造第二套判定」加了限定 |
+| P0-2 | 「复用 ADR-0061 的合入门」不可判定（该函数今天不存在）；且 `archive_premerge_check` 的 `wt_path` 在 lightweight 下**无正确取值** —— `git -C <main_root> status --porcelain` 看到**整个主仓** ⇒ 别的 change 的脏文件被误判为本 change 的未提交改动 ⇒ 假拒绝，且指引文案会诱导用户把**别人的改动** commit 进来 | ✅ **全部采纳** ⇒ What Changes §3 改为「**语义同源、判据按模式分叉**」：⓪/②/③/**④（未合入 ⇒ 拒绝）**/⑤（无法判定）原样复用（⚠ 2026-11-18 补正：补正前写的是「⓪/②/③/④ 原样复用」，而当时 ④ = 「无法判定」；ADR-0061 的表格补正后 ④ 变成「未合入 ⇒ 拒绝」⇒ 复用清单必须含 ④，否则轻量路径不拒绝未合入分支），①（worktree dirty）在 lightweight 下**不适用**（`wt_path` 传空）⇒ 改用 §2 的分支提交归属检查；主仓 dirty **只警告不拒绝** ⇒ 新增 AC「dirty 语义分叉生效」；并把「`archive_premerge_check` 由 ③ 新建、本项是第二个调用点」写成显式依赖；「不新造第二套判定」加了限定 |
 | P0-3 | 「建分支」时点与起点二义（裸 `checkout -b` 的基点可能是上一个 change 的分支 / detached HEAD ⇒ 锚点、`merge-base`、`cherry` 全失真）；分支已存在的三档政策未写死 | ✅ **全部采纳** ⇒ What Changes §1 写死：P2 起始、显式起点 = 默认分支 tip；分支已存在三档（tip == 默认 tip ⇒ 复用 / tip != 默认 tip ⇒ fail-closed 退回 worktree / 不存在 ⇒ 创建）；`checkout` 失败且 worktree 也建不起来 ⇒ 退出码 3 + 明确文案 |
 | P0-4 | fail-closed 时 handoff 的 `reason` 落不到具体字段（顶层无 `reason`；`execution_mode_decision.reason` 存在但 mode 不改会留下「mode=lightweight / 实际 worktree」的矛盾） | ✅ **全部采纳** ⇒ 范围 §2 + What Changes §1 + AC「handoff 的 `execution_mode_decision.mode` 与 `reason` 与真实模式一致」 |
 | P0-5 | 「与 `fix-worktree-archive-path` 的 acceptance-8 做 MODIFIED 对齐」**流程上不成立**（已归档 change 的 proposal 是历史记录，不能 MODIFIED；能改的只有已采纳 spec 的 delta）；AC#9（`verifier-lifecycle` 场景「标注前提已成立」）是空操作且掩盖了一处 spec/实现漂移（该 scenario 今天**未实现**）；AC#11 不可由本项证伪 | ✅ **全部采纳** ⇒ 范围 §6 改为「对**已采纳** spec 写 delta」+「在审稿记录里登记推翻该 AC」；AC#9 改为「**不实现**该 scenario，只登记为独立缺口」（进「顺带发现」）；AC#11 改为「归 D 项，本项只登记不证伪」 |
