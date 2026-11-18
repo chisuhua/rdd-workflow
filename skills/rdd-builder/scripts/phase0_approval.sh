@@ -324,7 +324,7 @@ import json
 from pathlib import Path
 ctx = {
     'change_name': '$CHANGE_NAME',
-    'proposal_path': 'openspec/changes/$CHANGE_NAME/proposal.md',
+    'proposal_path': 'openspec/changes/$CHANGE_NAME/proposal.md',  # isolation-ok: 记录的是相对路径描述字段，本脚本不据此做 IO
     'from_builder': True,
     'dispatched_at': '$NOW',
     'expected_outcome': 'completed',

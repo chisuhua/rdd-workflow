@@ -21,13 +21,13 @@ fi
 
 echo "=== Phase 1: Plan Generation for $CHANGE_NAME ==="
 
-PROPOSAL_PATH="openspec/changes/$CHANGE_NAME/proposal.md"
+PROPOSAL_PATH="$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/proposal.md"
 if [ ! -f "$PROPOSAL_PATH" ]; then
     echo "proposal.md not found at $PROPOSAL_PATH" >&2
     exit 2
 fi
 
-PLAN_OUTPUT_DIR=".rddf/plans"
+PLAN_OUTPUT_DIR="$PROJECT_ROOT/.rddf/plans"
 mkdir -p "$PLAN_OUTPUT_DIR"
 PLAN_FILE="$PLAN_OUTPUT_DIR/$CHANGE_NAME.md"
 
@@ -42,7 +42,7 @@ if [ ! -f "$PLAN_FILE" ]; then
     exit 2
 fi
 
-TASKS_PATH="openspec/changes/$CHANGE_NAME/tasks.md"
+TASKS_PATH="$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/tasks.md"
 if [ ! -f "$TASKS_PATH" ]; then
     {
         echo "## Tasks"

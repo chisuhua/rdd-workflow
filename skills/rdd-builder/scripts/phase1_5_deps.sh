@@ -26,10 +26,10 @@ echo "=== Phase 1.5: Deps + Execution Mode Decision for $CHANGE_NAME ==="
 # WARNING below and NEVER overrides (lowest priority — see
 # fix-execution-mode-decision AC "LEGACY_EXEC_MODE").
 LEGACY_EXEC_MODE=""
-if [ -f ".rddf/state/.plan-handoff.json" ]; then
+if [ -f "$PROJECT_ROOT/.rddf/state/.plan-handoff.json" ]; then
     LEGACY_EXEC_MODE=$(python3 -c "
 import json
-data = json.load(open('.rddf/state/.plan-handoff.json'))
+data = json.load(open('$PROJECT_ROOT/.rddf/state/.plan-handoff.json'))
 print(data.get('execution_mode_decisions', {}).get('$CHANGE_NAME', {}).get('mode', ''))
 " 2>/dev/null || echo "")
 fi
