@@ -49,8 +49,40 @@ teardown() {
 }
 
 @test "phase3: no longer calls post_archive_cleanup itself (archive_change does)" {
-    run grep -c "post_archive_cleanup" "$REPO_ROOT/skills/rdd-builder/scripts/phase3_archive.sh"
+    # Scope: the WORKTREE branch. Delegation owns the cleanup there, so a
+    # second call would run it twice. The lightweight branch has no
+    # archive_change to delegate to and MUST run the full sequence itself
+    # (fix-lightweight-branch-and-archive) — the guard therefore stops at the
+    # branch's `else`.
+    run bash -c "
+        awk '
+            /if \[ \"\\\$EXEC_MODE\" = \"worktree\" \]; then/ { in_block = 1; next }
+            in_block && /^else[[:space:]]*\$/ { in_block = 0; exit }
+            in_block { print }
+        ' '$REPO_ROOT/skills/rdd-builder/scripts/phase3_archive.sh' | grep -c post_archive_cleanup || true
+    "
     [ "$output" -eq 0 ]
+}
+
+@test "phase3: lightweight branch runs the full enumerated archive sequence" {
+    # The lightweight path cannot delegate (archive_change needs a worktree),
+    # so every step must be spelled out. Missing any one of them is a silent
+    # failure: no merge judgment, a stale iteration.json, or a stranded
+    # branch.
+    local f="$REPO_ROOT/skills/rdd-builder/scripts/phase3_archive.sh"
+    for step in \
+        archive_gate_check \
+        switch_to_default_branch \
+        lightweight_commit_ownership_check \
+        archive_premerge_check \
+        merge_feature_branch \
+        cleanup_worktree_and_branch \
+        commit_archive_moves \
+        mark_iteration_archived \
+        post_archive_cleanup
+    do
+        grep -q "$step" "$f" || { echo "missing step: $step" >&2; return 1; }
+    done
 }
 
 @test "phase3: worktree mode delegates to archive_change" {

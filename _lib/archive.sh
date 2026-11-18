@@ -32,6 +32,15 @@
 #       Returns 0 on success, 1 when -d fails and FORCE_BRANCH_DELETE
 #       is not 'yes'.
 #
+#   - lightweight_branch_prepare <main_root> <branch> <default_branch>
+#       Make the implementation branch exist (starting at the default branch
+#       tip) and check the main repo out onto it. 0 = ready, 1 = fail closed
+#       (the branch exists but points elsewhere), 2 = environment error.
+#
+#   - lightweight_commit_ownership_check <main_root> <branch> <default_branch>
+#       Is the implementation committed to the branch? 0 = yes, 1 = no (with
+#       a copy-pasteable commit command).
+#
 #   - archive_change <name>
 #       Full archive flow: pre-check → merge (ff-only or no-ff) → verify
 #       → openspec archive → worktree/branch cleanup → auto-commit of
@@ -390,6 +399,143 @@ _branch_has_new_commits() {
     ''|*[!0-9]*) return 1 ;;
     *) [ "$n" -gt 0 ] ;;
   esac
+}
+
+# lightweight_branch_prepare <main_root> <branch> <default_branch>
+#   Make the implementation branch exist in <main_root>, starting at the
+#   default branch tip, and check the main repo out onto it.
+#
+#   Returns:
+#     0 = ready — the branch was created or reused, and the main repo is
+#         checked out on it. The base sha (the default branch tip at
+#         creation time) is printed as "base <sha>".
+#     1 = fail-closed — the branch exists but points at other commits. The
+#         caller MUST fall back to worktree mode and put the printed reason
+#         into execution_mode_decision.reason.
+#     2 = environment error — not a repository / the default branch is
+#         missing / the checkout failed. The caller MUST fall back to
+#         worktree mode as well.
+#
+#   Why the start point is EXPLICIT: a bare `git checkout -b` bases the
+#   branch on whatever HEAD happens to be — the previous change's branch, or
+#   a detached HEAD. Every later anchor (branch tip), merge-base and cherry
+#   computation would then be relative to the wrong base, and the
+#   "content-equivalent" judgment would compare two unrelated trees.
+#
+#   The three-tier policy for an EXISTING branch (deliberately explicit —
+#   an ambiguous policy here is what produced the ghost branch):
+#     ref missing                      → create it from the default tip
+#     ref exists, tip == default tip   → reuse it (a previous round created
+#                                        it but committed nothing)
+#     ref exists, tip != default tip   → fail closed (1)
+lightweight_branch_prepare() {
+  local main_root="${1:-}" branch="${2:-}" default_branch="${3:-}"
+  [[ -z "$main_root" || -z "$branch" || -z "$default_branch" ]] && {
+    echo "lightweight: 参数不完整（main_root / branch / default_branch）"
+    return 2
+  }
+
+  if ! git -C "$main_root" rev-parse --git-dir >/dev/null 2>&1; then
+    echo "lightweight: '$main_root' 不是 git 仓库"
+    return 2
+  fi
+
+  local default_tip
+  default_tip=$(git -C "$main_root" rev-parse --verify --quiet "refs/heads/$default_branch" 2>/dev/null || echo "")
+  if [ -z "$default_tip" ]; then
+    echo "lightweight: 默认分支 '$default_branch' 不存在"
+    return 2
+  fi
+
+  # Tier 1 — the ref does not exist: create it from the default tip.
+  if ! git -C "$main_root" rev-parse --verify --quiet "refs/heads/$branch" >/dev/null 2>&1; then
+    if ! git -C "$main_root" checkout -b "$branch" "$default_tip" >/dev/null 2>&1; then
+      echo "lightweight: 创建分支 '$branch'（起点 $default_tip）失败"
+      return 2
+    fi
+    echo "lightweight: 已创建分支 '$branch'（起点 $default_tip）"
+    echo "base $default_tip"
+    return 0
+  fi
+
+  # Tier 2 — the ref exists.
+  local branch_tip
+  branch_tip=$(git -C "$main_root" rev-parse --verify --quiet "refs/heads/$branch" 2>/dev/null || echo "")
+  if [ "$branch_tip" != "$default_tip" ]; then
+    echo "lightweight: 同名分支 '$branch' 已存在且指向其它提交（$branch_tip != $default_tip）"
+    return 1
+  fi
+
+  # Tier 3 — the ref exists at the default tip: reuse it.
+  if ! git -C "$main_root" checkout "$branch" >/dev/null 2>&1; then
+    echo "lightweight: 切换到 '$branch' 失败（分支可能已被其它 worktree 占用）"
+    return 2
+  fi
+  echo "lightweight: 复用分支 '$branch'（起点 $default_tip）"
+  echo "base $default_tip"
+  return 0
+}
+
+# lightweight_commit_ownership_check <main_root> <branch> <default_branch> [base_sha]
+#   Is the implementation actually COMMITTED to <branch>?
+#
+#   Same semantics as the worktree path's check_worktree_commits, but
+#   branch-based: the lightweight path has no worktree, and the main repo's
+#   dirty files may belong to ANOTHER change — `git status` there would be
+#   a false refusal, and its guidance would push the user to commit other
+#   people's work.
+#
+#   <base_sha> is the default branch tip recorded by P2 at branch creation
+#   (execution_mode_decision.branch_base_sha). It makes "was anything ever
+#   committed?" exact:
+#     branch tip == base     → nothing was committed → REFUSE (empty shell:
+#                              the verification anchor would point at a commit
+#                              that does not contain this change's work, and
+#                              the archive would report success with the
+#                              implementation still uncommitted)
+#     branch tip != base     → committed (and if it was merged manually, this
+#                              still holds — merging does not rewind the ref)
+#
+#   Without a recorded base (handoffs written before this landed) the
+#   commit count decides: `git rev-list --count <default>..<branch> > 0`.
+#
+#   No auto-commit: `git add -A` would sweep the agent's unrelated changes
+#   into the commit.
+lightweight_commit_ownership_check() {
+  local main_root="${1:-}" branch="${2:-}" default_branch="${3:-}" base_sha="${4:-}"
+  [[ -z "$main_root" || -z "$branch" || -z "$default_branch" ]] && return 1
+
+  local branch_tip
+  branch_tip=$(git -C "$main_root" rev-parse --verify --quiet "refs/heads/$branch" 2>/dev/null || echo "")
+  if [ -z "$branch_tip" ]; then
+    echo "❌ lightweight: 实现分支 '$branch' 不存在"
+    return 1
+  fi
+
+  local uncommitted=0
+  if [ -n "$base_sha" ]; then
+    [ "$branch_tip" = "$base_sha" ] && uncommitted=1
+  else
+    local n
+    n=$(git -C "$main_root" rev-list --count "$default_branch..$branch" 2>/dev/null || echo "")
+    case "$n" in
+      ''|*[!0-9]*)
+        echo "❌ lightweight: 无法判定 '$branch' 相对 '$default_branch' 的提交数"
+        return 1
+        ;;
+    esac
+    [ "$n" -gt 0 ] || uncommitted=1
+  fi
+
+  if [ "$uncommitted" -eq 0 ]; then
+    return 0
+  fi
+
+  echo "❌ lightweight: '$branch' 上没有相对 '$default_branch' 的新提交（实现尚未提交到该分支）"
+  echo "   提交命令（先切到实现分支，否则提交会落到默认分支上）："
+  echo "     git -C '$main_root' checkout '$branch' && git -C '$main_root' add -A && git -C '$main_root' commit -m 'feat(<change>): ...'"
+  echo "   （不会自动提交 —— 自动 add -A 会把其它改动一起提交）"
+  return 1
 }
 
 # _premerge_refuse <branch> <change_name> <main_root> [kind] [wt_path]

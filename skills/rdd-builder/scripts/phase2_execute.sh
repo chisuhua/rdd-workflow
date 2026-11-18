@@ -77,28 +77,26 @@ if [ -z "$EXEC_MODE" ]; then
 fi
 rm -f "$_EXEC_ERR"
 
-if [ "$EXEC_MODE" = "worktree" ]; then
-    WT_PATH=".rddf/wt/$CHANGE_NAME"
-    BRANCH="openspec/$CHANGE_NAME"
-    if [ ! -d "$WT_PATH" ]; then
-        git worktree add "$WT_PATH" -b "$BRANCH" 2>/dev/null || {
-            echo "worktree creation failed at $WT_PATH (branch may already exist)" >&2
-            WT_PATH="$PROJECT_ROOT"  # fallback to main repo
-        }
-    fi
-    EXEC_DIR="$WT_PATH"
-    # Carry the change's artifacts into the new worktree:
-    # `git worktree add` builds from HEAD, so files that were never
-    # committed are absent there. Without this, P2 fails with
-    # "plan file missing" for exactly the changes that are not committed yet.
-    #
-    # Two edge cases this must handle:
-    #   - dst already exists (the change WAS committed → worktree already
-    #     has it): copy the CONTENTS, not the directory itself — plain
-    #     `cp -R src dst` would create `dst/src` (a nested <name>/<name>/).
-    #   - src == dst (worktree creation fell back to the main repo):
-    #     `cp -R a a` fails with "cannot copy a directory into itself",
-    #     and `set -e` would abort P2.
+# Set by the lightweight branch preparation below; they carry the fail-closed
+# downgrade out into the handoff.
+EXEC_MODE_REASON=""
+BRANCH_BASE_SHA=""
+BRANCH="openspec/$CHANGE_NAME"
+
+# Carry the change's artifacts into the execution directory:
+# `git worktree add` builds from HEAD, so files that were never committed are
+# absent there. Without this, P2 fails with "plan file missing" for exactly the
+# changes that are not committed yet.
+#
+# Two edge cases this must handle:
+#   - dst already exists (the change WAS committed → worktree already has it):
+#     copy the CONTENTS, not the directory itself — plain `cp -R src dst` would
+#     create `dst/src` (a nested <name>/<name>/).
+#   - src == dst (lightweight mode, or a worktree creation that fell back to the
+#     main repo): `cp -R a a` fails with "cannot copy a directory into itself",
+#     and `set -e` would abort P2.
+_carry_artifacts() {
+    local _rel _src _dst
     for _rel in "openspec/changes/$CHANGE_NAME" ".rddf/plans/$CHANGE_NAME.md"; do
         _src="$PROJECT_ROOT/$_rel"
         _dst="$EXEC_DIR/$_rel"
@@ -114,9 +112,122 @@ if [ "$EXEC_MODE" = "worktree" ]; then
             cp -R "$_src" "$_dst"
         fi
     done
+}
+
+if [ "$EXEC_MODE" = "worktree" ]; then
+    WT_PATH=".rddf/wt/$CHANGE_NAME"
+    if [ ! -d "$WT_PATH" ]; then
+        git worktree add "$WT_PATH" -b "$BRANCH" 2>/dev/null || {
+            echo "worktree creation failed at $WT_PATH (branch may already exist)" >&2
+            WT_PATH="$PROJECT_ROOT"  # fallback to main repo
+        }
+    fi
+    EXEC_DIR="$WT_PATH"
+    _carry_artifacts
 else
-    EXEC_DIR="$PROJECT_ROOT"
+    # ── lightweight mode: the implementation branch must EXIST ──────────────
+    # Until now this mode declared `branch="openspec/<name>"` in the handoff
+    # without creating anything: a ghost branch. The verifier anchors on the
+    # branch tip, so a change without a real ref could never be archived
+    # (it only passed via an audited bypass).
+    #
+    # Policy (deliberately explicit — an ambiguous policy here is what
+    # produced the ghost branch):
+    #   ref missing                     → create it from the default tip
+    #   ref exists, tip == default tip  → reuse it
+    #   ref exists, tip != default tip  → fail closed → worktree mode
+    # A failure to prepare the branch downgrades the mode to `worktree`;
+    # the downgrade is written into the handoff's reason so the mode and the
+    # reason never contradict the reality.
+    BRANCH="openspec/$CHANGE_NAME"
+    DEFAULT_BRANCH=""
+    if [ -f "$PKG_ROOT/_lib/archive.sh" ]; then
+        # shellcheck source=/dev/null
+        source "$PKG_ROOT/_lib/archive.sh" 2>/dev/null || true
+    fi
+    if declare -f lightweight_branch_prepare >/dev/null 2>&1; then
+        DEFAULT_BRANCH=$(cd "$PROJECT_ROOT" && find_default_branch 2>/dev/null || echo "")
+        _prep_rc=0
+        _prep_out=$(lightweight_branch_prepare "$PROJECT_ROOT" "$BRANCH" "$DEFAULT_BRANCH" 2>&1) || _prep_rc=$?
+        _prep_reason=""
+        while IFS= read -r _line; do
+            case "$_line" in
+                "base "*)
+                    BRANCH_BASE_SHA="${_line#base }"
+                    ;;
+                "")
+                    ;;
+                *)
+                    if [ -z "$_prep_reason" ]; then
+                        _prep_reason="$_line"
+                    fi
+                    echo "  $_line"
+                    ;;
+            esac
+        done <<< "$_prep_out"
+        if [ "$_prep_rc" -ne 0 ]; then
+            # Fail closed: the mode must match what actually happens. Record
+            # the downgrade NOW — the worktree attempt below may fail, and an
+            # aborted P2 must not leave a handoff claiming "lightweight".
+            EXEC_MODE="worktree"
+            EXEC_MODE_REASON="lightweight 不可用：$_prep_reason"
+            PKG_ROOT="$PKG_ROOT" PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" \
+            EXEC_MODE_REASON="$EXEC_MODE_REASON" python3 - <<'PYEOF' || true
+import os, sys
+if os.environ.get('PKG_ROOT'):
+    sys.path.insert(0, os.environ['PKG_ROOT'])
+from _lib.builder_handoff import read_builder_handoff, update_builder_handoff
+existing = read_builder_handoff(os.environ['PROJECT_ROOT'], os.environ['CHANGE_NAME'])
+decision = dict(existing.get('execution_mode_decision') or {})
+decision['mode'] = 'worktree'
+decision['reason'] = os.environ['EXEC_MODE_REASON']
+update_builder_handoff(
+    os.environ['PROJECT_ROOT'], os.environ['CHANGE_NAME'],
+    execution_mode_decision=decision,
+)
+PYEOF
+        fi
+    else
+        EXEC_MODE="worktree"
+        EXEC_MODE_REASON="lightweight 不可用：找不到 _lib/archive.sh（无法建分支）"
+    fi
+    if [ "$EXEC_MODE" = "lightweight" ]; then
+        EXEC_DIR="$PROJECT_ROOT"
+    else
+        # Fall back to the worktree path — but STRICTLY: a worktree that
+        # cannot be created must not silently degrade into "run in the main
+        # repo", because the handoff would then claim a mode that the
+        # execution does not use.
+        WT_PATH=".rddf/wt/$CHANGE_NAME"
+        if [ ! -d "$WT_PATH" ]; then
+            git worktree add "$WT_PATH" -b "$BRANCH" 2>/dev/null || {
+                echo "❌ lightweight 退回 worktree 模式失败：无法在 '$WT_PATH' 创建 worktree（分支 '$BRANCH' 可能已被占用或指向其它提交）" >&2
+                echo "   $EXEC_MODE_REASON" >&2
+                echo "   请先删除或改名残留分支 '$BRANCH'，然后重跑 P2。" >&2
+                exit 3
+            }
+        fi
+        EXEC_DIR="$WT_PATH"
+        _carry_artifacts
+    fi
 fi
+
+# ── abort semantics ───────────────────────────────────────────────────────
+# In lightweight mode the MAIN repo's HEAD is parked on `openspec/<name>`.
+# If P2 then fails, the user's repo must not be left on that branch: the
+# next change would start from the wrong base. The branch itself may stay
+# (a leftover is reusable as long as its tip is the default tip — see
+# lightweight_branch_prepare's three-tier policy).
+_restore_head_on_abort() {
+    local rc="${1:-0}"
+    [ "$rc" -eq 0 ] && return 0
+    if [ "${EXEC_MODE:-}" = "lightweight" ] && [ -n "${DEFAULT_BRANCH:-}" ]; then
+        (cd "$PROJECT_ROOT" && git checkout "$DEFAULT_BRANCH" >/dev/null 2>&1) || true
+        echo "⚠️  P2 失败（exit $rc）→ 主仓 HEAD 已回到 '$DEFAULT_BRANCH'" >&2
+    fi
+    return 0
+}
+trap '_abort_rc=$?; _restore_head_on_abort "$_abort_rc"' EXIT
 
 cd "$EXEC_DIR"
 if [ -f ".rddf/plans/$CHANGE_NAME.md" ]; then
@@ -128,19 +239,39 @@ fi
 
 cd "$PROJECT_ROOT"
 
-PKG_ROOT="$PKG_ROOT" PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" EXEC_DIR="$EXEC_DIR" python3 <<'PYEOF'
+PKG_ROOT="$PKG_ROOT" PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" EXEC_DIR="$EXEC_DIR" \
+EXEC_MODE="$EXEC_MODE" EXEC_MODE_REASON="$EXEC_MODE_REASON" BRANCH_BASE_SHA="$BRANCH_BASE_SHA" \
+python3 <<'PYEOF'
 import os, sys
 root = os.environ.get('PKG_ROOT') or ''
 if root:
     sys.path.insert(0, root)
-from _lib.builder_handoff import update_builder_handoff
+from _lib.builder_handoff import read_builder_handoff, update_builder_handoff
 # Merge, not overwrite: a full write resets approval_status to its "pending"
 # default (dropping P0's "approved") and any field written by another phase.
+#
+# execution_mode_decision must describe the mode that ACTUALLY ran. When the
+# lightweight branch preparation failed closed, the mode was rewritten to
+# "worktree" — leaving the old "lightweight" in the handoff would be a
+# declaration that contradicts the execution (the ghost branch all over
+# again, one level up).
+existing = read_builder_handoff(
+    os.environ['PROJECT_ROOT'], os.environ['CHANGE_NAME']
+)
+decision = dict(existing.get('execution_mode_decision') or {})
+decision['mode'] = os.environ['EXEC_MODE']
+reason = os.environ.get('EXEC_MODE_REASON') or ''
+if reason:
+    decision['reason'] = reason
+base_sha = os.environ.get('BRANCH_BASE_SHA') or ''
+if base_sha:
+    decision['branch_base_sha'] = base_sha
 update_builder_handoff(
     os.environ['PROJECT_ROOT'],
     os.environ['CHANGE_NAME'],
     current_phase="phase-2",
     execution_status="completed",
+    execution_mode_decision=decision,
     worktree_path=os.environ['EXEC_DIR'],
     branch="openspec/%s" % os.environ['CHANGE_NAME'],
 )

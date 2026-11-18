@@ -47,8 +47,12 @@ decide → allow with a warning. The three return states are consumed separately
 Explicit opt-in: `ARCHIVE_ALLOW_UNMERGED=yes` + `RDDF_ARCHIVE_UNMERGED_REASON` (audited; it must not be
 combined with `FORCE_BRANCH_DELETE=yes` — that combination deletes the code).
 
-Bypass paths that this gate does **not** cover: `phase3_archive.sh`'s lightweight inline branch, the
-rdd-quick direct-archive path, and a manual `openspec archive`.
+Bypass paths that this gate does **not** cover: `phase0_approval.sh`'s rdd-quick direct-archive path,
+and a manual `openspec archive`. The lightweight inline path (`phase3_archive.sh`) is no longer a
+bypass: it carries its **own** commit-ownership check (`lightweight_commit_ownership_check`) plus the
+same `archive_premerge_check` — called with an empty `wt_path`, because there is no worktree and
+main-repo dirt may belong to another change. Its full sequence is enumerated in
+`docs/architecture/workflow-phases.md` (Hard gates).
 
 ## `tribunal.py` (ADR-0008)
 

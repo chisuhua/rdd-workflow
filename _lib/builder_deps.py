@@ -27,9 +27,16 @@ RISK_LEVEL_KEYWORDS = {"high": sorted(RISK_KEYWORDS)}
 #
 # Fail-safe by construction: if the flag is forgotten, the mode stays disabled
 # (slower, but correct) — the opposite of silently enabling a broken mode.
-# Owner: `fix-lightweight-branch-and-archive` flips it together with its
-# implementation (ADR-0036 §Verification V-G).
-LIGHTWEIGHT_EXECUTION_READY = False
+#
+# FLIPPED to True by `fix-lightweight-branch-and-archive` (ADR-0036 V-G):
+#   (a) skills/rdd-builder/scripts/phase2_execute.sh now creates the branch
+#       from the default tip (three-tier policy: create / reuse / fail closed);
+#   (b) skills/rdd-builder/scripts/phase3_archive.sh now runs the enumerated
+#       archive sequence (commit ownership → merge judgment → archive →
+#       branch cleanup → iteration sync → post-archive cleanup).
+# Turning it back to False is the rollback: small changes fall back to the
+# worktree path with a reason that says why.
+LIGHTWEIGHT_EXECUTION_READY = True
 
 
 def decide_execution_mode(file_count: int, task_count: int, risk_keywords: list) -> dict:

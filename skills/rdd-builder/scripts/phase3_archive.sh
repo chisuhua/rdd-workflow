@@ -4,13 +4,18 @@
 # Exit codes (this script's own contract):
 #   2 = usage error
 #   3 = precondition failure — no worktree / branch without new commits /
-#       merge failed
+#       merge failed / (lightweight) no commit on the branch, or the branch
+#       is not merged in a tracked=false project
 #   7 = the archive gate refused (missing, stale or incomplete verdict cache)
 #       OR the openspec archive command itself failed
 #
 # In worktree mode the archive is delegated to archive_change, whose own
 # returns are mapped: 0 → 0, 3 (gate refused) → 7, anything else → 3.
-# In lightweight mode P3 runs the gate and the openspec archive itself.
+# In lightweight mode P3 runs an ENUMERATED inline sequence (it cannot
+# delegate: archive_change requires a worktree) — AC gate → switch to the
+# default branch → commit-ownership check → merge judgment → openspec
+# archive → branch cleanup → archive-moves commit → iteration sync →
+# post-archive cleanup.
 set -euo pipefail
 
 CHANGE_NAME="${1:-}"
@@ -152,16 +157,124 @@ if [ "$EXEC_MODE" = "worktree" ]; then
         *) echo "❌ archive_change failed for $CHANGE_NAME (exit $rc)" >&2; exit 3 ;;
     esac
 else
-    # lightweight mode: inline archive. archive_change cannot serve this mode —
-    # it requires an existing worktree (_lib/archive.sh:589-592).
-    # KNOWN GAP (documented in .rddf/improvements/fix-worktree-archive-path.md):
-    # this branch runs neither the archive_change cleanup nor its iteration
-    # sync; the gate below is the only pre-archive check.
+    # ── lightweight mode: enumerated inline archive ─────────────────────────
+    # archive_change cannot serve this mode — it requires an existing worktree
+    # (_lib/archive.sh, the `wt_path` precondition).
+    #
+    # Until fix-lightweight-branch-and-archive this branch ran ONLY the AC
+    # gate: no merge-status check, no branch cleanup, no iteration sync, no
+    # post-archive cleanup. A change archived here left iteration.json stale
+    # (never reaching the `archived` state) and could archive an
+    # implementation that was still stranded unmerged on its branch.
+    #
+    # Step list (explicit; the omissions are deliberate — see ADR-0061's
+    # Consequences: issue close, tasks-completion gate, L2 collection and the
+    # tasks.md sidecar stay out of the lightweight path):
+    #   (a) AC archive gate          (b) switch to default branch
+    #   (c) commit-ownership check   (d) merge judgment / merge
+    #   (e) openspec archive         (f) branch cleanup
+    #   (g) commit archive moves     (h) iteration sync with the real sha
+    #   (i) post-archive cleanup
+    BRANCH="openspec/$CHANGE_NAME"
+    DEFAULT_BRANCH=$(cd "$PROJECT_ROOT" && find_default_branch 2>/dev/null || echo "")
+    if [ -z "$DEFAULT_BRANCH" ]; then
+        echo "❌ lightweight: 无法确定默认分支（归档中止）" >&2
+        exit 3
+    fi
+
+    OPENSPEC_TRACKED="true"
+    if [ -f "$PROJECT_ROOT/.rddf/project.yaml" ] && [ -f "$PROJECT_ROOT/_lib/project_config.sh" ]; then
+        # shellcheck source=/dev/null disable=SC1090
+        source "$PROJECT_ROOT/_lib/project_config.sh"
+        OPENSPEC_TRACKED=$(project_yaml_get "git.openspec_tracked" "true")
+    fi
+
+    # (a) AC archive gate — unchanged, and still first (cheap; a refusal must
+    #     not have mutated anything yet).
     archive_gate_check "$CHANGE_NAME" "$TASKS_ROOT" || exit 7
-    openspec archive "$CHANGE_NAME" --yes 2>/dev/null || {
+
+    # (b) Land on the default branch BEFORE the refusal checks. A refusal must
+    #     not leave the repo parked on the implementation branch: the contract
+    #     is "after a refusal, `git branch --show-current` is still the
+    #     default branch".
+    switch_to_default_branch "$PROJECT_ROOT" "$DEFAULT_BRANCH" || exit 3
+
+    # (c) Commit-ownership check — the lightweight counterpart of the worktree
+    #     path's check_worktree_commits. A branch with no commit of its own is
+    #     an empty shell: the verification anchor would then point at a commit
+    #     that does not contain this change's work ("archived successfully"
+    #     while the code was never committed).
+    #     The creation point recorded by P2 makes that exact — "branch tip ==
+    #     base" means nothing was committed, while a manually merged branch
+    #     (required when openspec_tracked=false) still has tip != base.
+    BRANCH_BASE_SHA=$(PKG_ROOT="$PKG_ROOT" PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" python3 -c "
+import os, sys
+if os.environ.get('PKG_ROOT'):
+    sys.path.insert(0, os.environ['PKG_ROOT'])
+from _lib.builder_handoff import read_builder_handoff
+print(read_builder_handoff(os.environ['PROJECT_ROOT'], os.environ['CHANGE_NAME'])
+      .get('execution_mode_decision', {}).get('branch_base_sha', '') or '')
+" 2>/dev/null || echo "")
+    lightweight_commit_ownership_check "$PROJECT_ROOT" "$BRANCH" "$DEFAULT_BRANCH" "$BRANCH_BASE_SHA" || exit 3
+
+    # (d) Merge-status judgment — same semantics as the worktree path, but the
+    #     dirty criterion does NOT apply: there is no worktree here, and the
+    #     main repo's dirty files may belong to another change. Judging by
+    #     them would refuse a perfectly good archive and the guidance would
+    #     push the user to commit somebody else's work. Main-repo dirt is
+    #     reported and never refuses.
+    if [ -n "$(git -C "$PROJECT_ROOT" status --porcelain --untracked-files=all 2>/dev/null)" ]; then
+        echo "⚠️  lightweight: 主仓存在未提交改动（不据此拒绝 —— 它们可能属于别的 change）"
+    fi
+    if [ "$OPENSPEC_TRACKED" = "false" ] || [ "$OPENSPEC_TRACKED" = "False" ]; then
+        # The spec forbids the archive to merge on this path, so an unmerged
+        # implementation is REFUSED instead of being archived and then
+        # silently left on a branch that is about to be deleted.
+        # Three states consumed separately (ADR-0061 V-14): 0 allow / 1 refuse
+        # / 2 allow + warning (the function printed it).
+        _premerge_rc=0
+        archive_premerge_check "$PROJECT_ROOT" "$BRANCH" "$DEFAULT_BRANCH" "" || _premerge_rc=$?
+        if [ "$_premerge_rc" -eq 1 ]; then
+            echo "❌ lightweight: '$BRANCH' 尚未合入 '$DEFAULT_BRANCH'，归档被拒绝" >&2
+            exit 3
+        fi
+    else
+        _before_merge=$(git -C "$PROJECT_ROOT" rev-parse HEAD 2>/dev/null || echo "")
+        merge_feature_branch "$PROJECT_ROOT" "$BRANCH" "$DEFAULT_BRANCH" "$CHANGE_NAME" || exit 3
+        _after_merge=$(git -C "$PROJECT_ROOT" rev-parse HEAD 2>/dev/null || echo "")
+        verify_merge_result "$_before_merge" "$_after_merge" "$CHANGE_NAME" || exit 3
+    fi
+
+    # (e) openspec archive
+    openspec archive "$CHANGE_NAME" --yes || {
         echo "openspec archive FAIL for $CHANGE_NAME" >&2
         exit 7
     }
+
+    # (f) Branch cleanup. wt_path is EMPTY on purpose: there is no worktree,
+    #     and the main repo must never be treated as one (`git worktree
+    #     remove` on the main repo would delete the checkout itself).
+    #     A failed cleanup only warns — the archive already succeeded, which
+    #     is the same return-code semantics as the worktree path.
+    cleanup_worktree_and_branch "$CHANGE_NAME" "$PROJECT_ROOT" "" "$BRANCH" || \
+        echo "⚠️  归档已完成，但分支清理未完全成功（见上）"
+
+    # (g) Commit the archive moves — ONLY when openspec/ is tracked. The
+    #     helper short-circuits on openspec_tracked=false as well; not calling
+    #     it at all is the caller-side half of that contract (2x2 matrix).
+    if [ "$OPENSPEC_TRACKED" != "false" ] && [ "$OPENSPEC_TRACKED" != "False" ]; then
+        commit_archive_moves "$CHANGE_NAME" "$PROJECT_ROOT" || true
+    fi
+
+    # (h) Iteration sync with the REAL sha (the default branch tip after the
+    #     merge and the archive commit) — not an empty string, which is what
+    #     the old lightweight path left behind by never calling this at all.
+    _archive_sha=$(git -C "$PROJECT_ROOT" rev-parse HEAD 2>/dev/null || echo "")
+    mark_iteration_archived "$CHANGE_NAME" "$PROJECT_ROOT" "$_archive_sha"
+
+    # (i) Post-archive cleanup (residual deleted tracked files + the
+    #     improvement-approved.md sync). Best effort.
+    post_archive_cleanup "$PROJECT_ROOT" "$CHANGE_NAME" || true
 fi
 
 python3 <<PYEOF

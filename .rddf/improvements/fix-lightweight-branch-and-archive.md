@@ -8,7 +8,7 @@ priority: P1
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: draft
+状态: implemented (2026-11-18)
 
 生成时间: 2026-11-17
 roadmap_ref:
@@ -129,22 +129,22 @@ roadmap_ref:
 
 ## Acceptance
 
-- [ ] lightweight 模式下 `openspec/<change>` 分支被创建，**起点为默认分支 tip**（断言：分支 tip 的父提交 == 默认分支 tip），且 P2 在该分支上执行（断言 `git branch --show-current`）
-- [ ] 分支已存在的三档政策可判定：tip == 默认分支 tip ⇒ 复用；tip != 默认分支 tip ⇒ **fail-closed 退回 worktree**（断言 handoff 的 `execution_mode_decision.mode == "worktree"` 且 `reason` 非空）；`checkout` 失败且 worktree 也建不起来 ⇒ 退出码 3 + 明确文案
-- [ ] **提交归属检查生效**：分支零提交 ⇒ 归档被拒 + stderr 含「在主仓上 commit 到 `openspec/<change>`」的命令；分支有提交 ⇒ 通过（断言 `git rev-list --count <default>..openspec/<change> > 0`）
-- [ ] handoff 的 `execution_mode_decision.mode` 与 `reason` 与**真实模式**一致（fail-closed 时 mode 被改写为 `worktree` 且 reason 写明原因）—— 断言读 handoff 的 `mode`/`reason`/`worktree_path` 三者自洽
-- [ ] lightweight 归档路径在 `openspec archive` **之前**跑合入门；未合入 ⇒ 拒绝 + stderr 含可复制的合并命令；**拒绝路径不得改变主仓 HEAD**（断言 `git branch --show-current` 仍为默认分支）
-- [ ] **dirty 语义分叉生效**：主仓存在**与本 change 无关**的未提交文件 ⇒ 归档**不得**因此被拒（只警告）；本 change 的实现未提交 ⇒ 由「提交归属检查」拒绝（不是由主仓 dirty 拒绝）
-- [ ] **2×2 矩阵**：lightweight×`openspec_tracked: true` ⇒ `commit_archive_moves` **被调用**；lightweight×`false` ⇒ **不被调用**；worktree 两格行为不变（stub 记录调用）
-- [ ] lightweight 归档后：实现分支**已合入**默认分支、**已删除**、`iteration.json` 进入 `archived` 态且 `archive_commit_sha` == 默认分支 tip（**非空**）
-- [ ] lightweight 归档路径调用 `post_archive_cleanup`；分支清理失败（未合入 / `git branch -d` 失败）⇒ **只警告、归档仍成功**（返回码语义与 worktree 路径一致）
-- [ ] `wt_path_for_branch == main_root` 时**不执行** `git worktree remove`（断言：无 worktree remove 调用 / 主仓目录完好）
-- [ ] abort 语义：P2 失败或放弃后主仓 HEAD 回到默认分支；残留分支可被后续复用但复用前校验 tip
-- [ ] **e2e**：注入 `mode=lightweight` 的 handoff fixture → P2 → 写 verdict cache（`codebase_commit` = 分支 tip）→ `rddf rdd-verify`（断言 `state=passed` / `archive_ready=true`）→ P3 → 断言 `archived`。⚠ 测试**必须注入 handoff fixture**（本仓 `phase1_5_deps.sh` 的 `task_count = 5` 硬编码与 `LEGACY_EXEC_MODE` 覆盖两条路都**当下**不产出 lightweight ⇒ 不能依赖「跑 P1.5 自然产出 lightweight」）
-- [ ] 两份已采纳 spec 的 delta 已写（`archive-openspec-tracked-skip-commit` 的步骤顺序；`archive-auto-commit` 的 helper 归属）；并在审稿记录里登记推翻 `fix-worktree-archive-path` 的 acceptance-8
-- [ ] **既有测试的预期破坏面已处理**：`test_phase3_archive_delegation.bats`（`openspec archive` 恰好 1 处的源码守卫）、`test_rdd_builder_phase3_archive.bats`（12 个 fixture 会经过新步骤）、`test_phase2_commit_gate.bats`（lightweight fixture）—— 逐条改或明确记录为预期变更
-- [ ] **反向守卫（归 D 项，本项只登记不证伪）**：本项落地前，D 项对「小改动」的判定必须仍为 `worktree`（ADR-0036 的 V-G）⇒ 本项**不**声称能证明这一点，只登记依赖
-- [ ] `./test.sh --unit` + `./test.sh --full --regression` 全绿 + `bats tests/integration/test_rdd_builder_phase3_archive.bats` + `bats tests/integration/test_lightweight_branch_and_archive.bats` 全绿
+- [x] lightweight 模式下 `openspec/<change>` 分支被创建，**起点为默认分支 tip**（断言：分支 tip 的父提交 == 默认分支 tip），且 P2 在该分支上执行（断言 `git branch --show-current`）
+- [x] 分支已存在的三档政策可判定：tip == 默认分支 tip ⇒ 复用；tip != 默认分支 tip ⇒ **fail-closed 退回 worktree**（断言 handoff 的 `execution_mode_decision.mode == "worktree"` 且 `reason` 非空）；`checkout` 失败且 worktree 也建不起来 ⇒ 退出码 3 + 明确文案
+- [x] **提交归属检查生效**：分支零提交 ⇒ 归档被拒 + stderr 含「在主仓上 commit 到 `openspec/<change>`」的命令；分支有提交 ⇒ 通过（断言 `git rev-list --count <default>..openspec/<change> > 0`）
+- [x] handoff 的 `execution_mode_decision.mode` 与 `reason` 与**真实模式**一致（fail-closed 时 mode 被改写为 `worktree` 且 reason 写明原因）—— 断言读 handoff 的 `mode`/`reason`/`worktree_path` 三者自洽
+- [x] lightweight 归档路径在 `openspec archive` **之前**跑合入门；未合入 ⇒ 拒绝 + stderr 含可复制的合并命令；**拒绝路径不得改变主仓 HEAD**（断言 `git branch --show-current` 仍为默认分支）
+- [x] **dirty 语义分叉生效**：主仓存在**与本 change 无关**的未提交文件 ⇒ 归档**不得**因此被拒（只警告）；本 change 的实现未提交 ⇒ 由「提交归属检查」拒绝（不是由主仓 dirty 拒绝）
+- [x] **2×2 矩阵**：lightweight×`openspec_tracked: true` ⇒ `commit_archive_moves` **被调用**；lightweight×`false` ⇒ **不被调用**；worktree 两格行为不变（stub 记录调用）
+- [x] lightweight 归档后：实现分支**已合入**默认分支、**已删除**、`iteration.json` 进入 `archived` 态且 `archive_commit_sha` == 默认分支 tip（**非空**）
+- [x] lightweight 归档路径调用 `post_archive_cleanup`；分支清理失败（未合入 / `git branch -d` 失败）⇒ **只警告、归档仍成功**（返回码语义与 worktree 路径一致）
+- [x] `wt_path_for_branch == main_root` 时**不执行** `git worktree remove`（断言：无 worktree remove 调用 / 主仓目录完好）
+- [x] abort 语义：P2 失败或放弃后主仓 HEAD 回到默认分支；残留分支可被后续复用但复用前校验 tip
+- [x] **e2e**：注入 `mode=lightweight` 的 handoff fixture → P2 → 写 verdict cache（`codebase_commit` = 分支 tip）→ `rddf rdd-verify`（断言 `state=passed` / `archive_ready=true`）→ P3 → 断言 `archived`。⚠ 测试**必须注入 handoff fixture**（本仓 `phase1_5_deps.sh` 的 `task_count = 5` 硬编码与 `LEGACY_EXEC_MODE` 覆盖两条路都**当下**不产出 lightweight ⇒ 不能依赖「跑 P1.5 自然产出 lightweight」）
+- [x] 两份已采纳 spec 的 delta 已写（`archive-openspec-tracked-skip-commit` 的步骤顺序；`archive-auto-commit` 的 helper 归属）；并在审稿记录里登记推翻 `fix-worktree-archive-path` 的 acceptance-8
+- [x] **既有测试的预期破坏面已处理**：`test_phase3_archive_delegation.bats`（`openspec archive` 恰好 1 处的源码守卫）、`test_rdd_builder_phase3_archive.bats`（12 个 fixture 会经过新步骤）、`test_phase2_commit_gate.bats`（lightweight fixture）—— 逐条改或明确记录为预期变更
+- [x] **反向守卫（归 D 项，本项只登记不证伪）**：本项落地前，D 项对「小改动」的判定必须仍为 `worktree`（ADR-0036 的 V-G）⇒ 本项**不**声称能证明这一点，只登记依赖
+- [x] `./test.sh --unit` + `./test.sh --full --regression` 全绿 + `bats tests/integration/test_rdd_builder_phase3_archive.bats` + `bats tests/integration/test_lightweight_branch_and_archive.bats` 全绿
 
 ## Capabilities
 
@@ -204,3 +204,73 @@ metis 判定：主目标**不是**「lightweight 能归档」，而是「让 D �
 | 边界 12 | detached HEAD / submodule / 非 git 仓库 / 带脏树切默认分支失败 ⇒ 需要明确文案与退出码 | ✅ 采纳（并入 P0-3 的「退出码 3 + 明确文案」） |
 | 隐含意图 | 「让 handoff 不再说假话」几乎没有价值（无人读该字段） | ✅ 采纳 ⇒ Capabilities 里的「下游不再被假声明误导」改为「**不留下与真实模式矛盾的声明**」，并把真正的主线（提交归属 + 合入判定）提到最前 |
 
+
+---
+
+## 实施记录（2026-11-18，builder）
+
+### 实现了什么
+
+| AC # | 落点 | 证据 |
+|---|---|---|
+| 1 | `phase2_execute.sh` 的 lightweight 分支：`lightweight_branch_prepare` 显式以 `git checkout -b "$branch" "$default_tip"` 建分支（**不用裸 `checkout -b`**） | bats「creates … at the default branch tip」+「the first implementation commit sits on the default tip」（断言 `openspec/demo^ == 默认 tip`）+「based on the DEFAULT tip even when HEAD is elsewhere」 |
+| 2 | 三档政策：`_lib/archive.sh::lightweight_branch_prepare` 返回 0/1/2（复用 / fail-closed / 环境错误）；`checkout` 失败与 worktree 建不起来 ⇒ `exit 3` + 明确文案（不再静默退回主仓） | bats「an existing branch at the default tip is reused」/「pointing elsewhere fails closed to worktree」/ helper 级三态用例 |
+| 3 | `lightweight_commit_ownership_check`（分支式，不用主仓 `git status`）；**判据用 P2 记录的 `branch_base_sha`**：`branch_tip == base` ⇒ 空壳 ⇒ 拒绝；无该字段时回退 `rev-list --count <default>..<branch> > 0` | bats「a branch with NO commit of its own is refused」+「an empty-shell branch created by P2 is refused (base sha path)」 |
+| 4 | handoff 的 `execution_mode_decision.mode/reason` **在降级当时**就写入（不是等成功路径），并把 `branch_base_sha` 一并记录 | bats「fails closed to worktree」断言 `mode == worktree` 且 `reason` 非空；「the base sha is recorded in the handoff」 |
+| 5 | `phase3_archive.sh` lightweight 段：AC 门 → `switch_to_default_branch` → 提交归属 → 合入判定 / merge → `openspec archive` → …；**拒绝路径 HEAD 停在默认分支** | bats「the refusal path leaves HEAD on the default branch」（夹具让 HEAD 先停在实现分支） |
+| 6 | dirty 分叉：主仓脏 ⇒ **只警告**（`⚠️ lightweight: 主仓存在未提交改动（不据此拒绝 …）`），合入门以 `wt_path=""` 调用 ⇒ 其 dirty 判据天然不适用 | bats「unrelated dirty files … do NOT refuse」+「2x2 tracked=false」 |
+| 7 | 2×2：lightweight×true ⇒ `commit_archive_moves` **被调用**（有 `archive(demo)` 提交）；lightweight×false ⇒ **不被调用**（断言输出中不出现该函数名 —— 行为断言看不出差异，因为 helper 内部也会短路） | bats「tracked=true: the archive-moves commit IS created」+「tracked=false: …」 |
+| 8 | 归档后：分支已合入、已删除、`iteration.json` 进入 `archived` 且 `archive_commit_sha == 默认分支 tip`（非空） | bats「merges the branch, deletes it, syncs iteration.json」（三断言 + sha 比对） |
+| 9 | `post_archive_cleanup` 已调用；分支清理失败**只警告**（返回码语义与 worktree 路径一致） | bats「runs post_archive_cleanup（residue plan file）」+「a failed branch cleanup only warns」 |
+| 10 | `wt_path == main_root` 不执行 `git worktree remove`（lightweight 传空 `wt_path`；helper 的三重守卫仍覆盖显式传主仓） | bats「the main repo is never treated as a worktree」（并已验证**去掉该守卫会被捕获**） |
+| 11 | abort 语义：P2 失败 ⇒ `EXIT` trap 把主仓 HEAD 切回默认分支（trap 只在 lightweight 且已知默认分支时生效） | bats「P2 abort: a failing P2 returns the main repo HEAD to the default branch」 |
+| 12 | e2e：注入 `mode=lightweight` 的 handoff → P2（真建分支）→ 在分支上提交 → `iteration.json` 登记为 eligible → 写 verdict cache（`codebase_commit` = 分支 tip）→ **真跑 `rddf rdd-verify`**（断言 `passed`）→ P3 → 断言 `archived` | bats「e2e lightweight: handoff → P2 → rdd-verify → P3 → archived」 |
+| 13 | spec delta：`archive-openspec-tracked-skip-commit` 新增「lightweight branch sequence」+「lightweight commit ownership」两个 scenario；`archive-auto-commit` 的 lightweight MUST 更新（条件式调用 + 2×2 两格） | bats 两条 spec delta 守卫；`openspec validate --all` 152 passed / 13 failed（**与基线一致，无新增失败**） |
+| 14 | 既有测试破坏面已逐条处置：`test_rdd_builder_phase3_archive.bats` 的夹具补一次分支提交（12 例恢复全绿）；`test_phase3_archive_delegation.bats` 的 `post_archive_cleanup` 守卫改为**只看 worktree 分支**（新增 awk 提取 + 一条「枚举序列完整性」用例）；`test_phase2_commit_gate.bats` 的 lightweight 夹具无需改（8 例全绿） | 三个文件分别 12 / 6 / 8 例全绿 |
+| 15 | 反向守卫（归 D 项，本项只登记不证伪）：见下「依赖登记」 | — |
+| 16 | `./test.sh --unit`（3413 passed）+ 全量回归门见下节 | — |
+
+### 依赖登记（AC #15 / 推翻 `fix-worktree-archive-path` 的 acceptance-8）
+
+- **acceptance-8 推翻登记**：`fix-worktree-archive-path` 的 AC-8 写「lightweight 模式行为不变」。本项**有意变更**该模式（建分支 + 归档路径补齐）⇒ 该 AC 在 v4 语义下不再成立，此处登记为**被本项推翻**（已归档 change 的 proposal 是历史记录，不做 MODIFIED）。
+- **反向守卫（归 `fix-execution-mode-decision`）**：本项**不声称**能证明「D 项落地前小改动仍判 worktree」——该断言属 D 项的 V-G，本项只登记依赖方向：**本项先落地 ⇒ D 项才可放开小改动**。
+- `LIGHTWEIGHT_EXECUTION_READY` 已翻正为 `True`（`_lib/builder_deps.py`，注释里写明回滚方式）；`skills/rdd-builder/SKILL.md` 与 `docs/architecture/workflow-phases.md` 同步。
+
+### 变异验证（判别力）—— 16/16 被捕获
+
+| 变异 | 结果 |
+|---|---|
+| P2 不建分支（幽灵分支回归） | 9 红 |
+| P2 fail-closed 不写 handoff（声明与事实矛盾） | 1 红 |
+| P2 起点改为裸 `checkout -b`（基点错位） | 1 红 |
+| 助手：空壳分支不再拒绝（`branch_base_sha` 路径） | 1 红 |
+| 助手：空壳分支不再拒绝（计数回退路径） | 2 红 |
+| P3 去掉提交归属检查 | 3 红 |
+| 助手：去掉主仓 worktree 守卫 | 1 红 |
+| P3 无条件调 `commit_archive_moves`（违反 2×2） | 1 红 |
+| P3 不调 `mark_iteration_archived` | 2 红 |
+| P3 `mark_iteration_archived` 传空 sha | 1 红 |
+| P3 不调 `post_archive_cleanup` | 1 红 |
+| P3 tracked=false 不做合入判定 | 1 红 |
+| P3 tracked=false 也执行 merge | 1 红 |
+| P3 拒绝路径不切回默认分支（HEAD 副作用） | 1 红 |
+| P2 不记录 `branch_base_sha` | 1 红 |
+| 能力开关回到 `False` | 1 红 |
+
+⇒ 全部捕获；四份文件还原后字节一致（md5 校验）。
+
+### 过程中修掉的两处测试自身缺陷（值得记）
+
+1. **shell 级 `!` 断言在 bats 里是空断言**：`! cmd` 位于测试体中段时，bash 的 `set -e` 对「取反的命令」豁免 ⇒ 断言失败也不会让测试变红。本文件里 3 处 `! …` 已改为 `run …; [ "$status" -ne 0 ]`。**该缺陷正是「变异逃逸」暴露出来的**（去掉 `post_archive_cleanup` 时测试仍绿）。
+2. **行为断言无法区分「没调用」与「调用但内部短路」**：`commit_archive_moves` 自身在 `openspec_tracked=false` 时短路 ⇒ 2×2 的「不被调用」只能靠**调用级**信号（helper 的自我播报）断言。
+
+### 仍未落地（不在本项范围）
+
+- **ADR-0036 的一处陈述已过期（需 architect 收口，builder 不改已签批 ADR 的正文）**：
+  `docs/adr/ADR-0036-rddf-project-yaml-config.md` 的备选方案表 A 行仍写「`phase3_archive.sh` 的
+  lightweight inline 分支**无 cleanup、无 iteration 同步**（文件自认 KNOWN GAP）⇒ lightweight 产出的
+  change 今天过不了归档门」—— 本项落地后该**事实陈述**不再成立（V-G 的前提也随之一并满足）。
+  该行属**历史决策论证**，是否追注（而非改写）由 architect 裁定。
+- `verifier-lifecycle` 的「lightweight current branch mismatch ⇒ fail closed」scenario 仍未实现（见「顺带发现」）。
+- spec 全局残余（204 处 / 47 份 spec）⇒ `fix-spec-residue-guard`（draft）。
+- 回归门「超时未评估」的覆盖率流失 ⇒ `fix-bats-per-file-timeout`（draft）。

@@ -312,10 +312,18 @@ P0 (5-option approval) → P1 (plan) → P1.5 (deps + exec_mode) → P2 (execute
 
 `lightweight` therefore HAS a branch and no worktree — the verifier's anchor is the branch tip, so a branchless "lightweight" change can never be archived. The mode is decided **only** by the change's inputs (`compute_mode_inputs` → `decide_execution_mode`): the tasks.md checkbox total, the plan's `**Files:**` count, and the structured `risk:` declaration; an unavailable input fails closed to `worktree`. `git.openspec_tracked` does **not** take part in the decision (archive path only), and `RDDF_EXECUTION_MODE` is retired.
 
-### Hard gates (unchanged from v4.0)
+`LIGHTWEIGHT_EXECUTION_READY` (`_lib/builder_deps.py`) is **True** since
+`fix-lightweight-branch-and-archive`: P2 creates the branch from the default branch tip
+(create / reuse / fail closed to `worktree` with the reason recorded in
+`execution_mode_decision.reason`) and P3 runs an enumerated inline archive sequence
+(see the gates below). Flipping the constant back to `False` is the rollback.
+
+### Hard gates (v4.0 + lightweight additions)
 
 - `archive_gate_check`: worktree branch must have commits; lightweight mode must have ≥1 new commit.
-- **合入门** `archive_premerge_check` (per ADR-0061): the implementation branch must be merged into the default branch before the archive runs — the archive **never merges for you** (`git.openspec_tracked=false` skips `git merge` per spec), it **refuses** and hands over a copy-pasteable command; explicit opt-in `ARCHIVE_ALLOW_UNMERGED=yes` + `RDDF_ARCHIVE_UNMERGED_REASON` (audited; must not be combined with `FORCE_BRANCH_DELETE=yes`).
+- **Commit ownership (lightweight)** `lightweight_commit_ownership_check`: the branch must carry a commit of its own — `branch tip != execution_mode_decision.branch_base_sha` (the creation point P2 records), falling back to `git rev-list --count <default>..openspec/<name> > 0` for handoffs without that field. An empty-shell branch is refused: the anchor would point at a commit that does not contain this change's work.
+- **合入门** `archive_premerge_check` (per ADR-0061): the implementation branch must be merged into the default branch before the archive runs — the archive **never merges for you** (`git.openspec_tracked=false` skips `git merge` per spec), it **refuses** and hands over a copy-pasteable command; explicit opt-in `ARCHIVE_ALLOW_UNMERGED=yes` + `RDDF_ARCHIVE_UNMERGED_REASON` (audited; must not be combined with `FORCE_BRANCH_DELETE=yes`). On the **lightweight** path the gate is called with an empty `wt_path` (no worktree exists) — its "uncommitted changes" criterion does not apply, and main-repo dirt is only warned about.
+- **Lightweight archive sequence** (enumerated; `archive_change` cannot serve it because it requires a worktree): AC gate → switch to the default branch → commit ownership → merge judgment (tracked=false) or merge (tracked=true) → `openspec archive` → branch cleanup (empty `wt_path`, so the main repo is never treated as a worktree) → `commit_archive_moves` (tracked only) → `mark_iteration_archived` with the real default-branch tip → `post_archive_cleanup`.
 - Post-archive cleanup hook (idempotent). A failed cleanup is a **warning**, not an archive failure — and the "worktree removed" message is printed only when the removal really happened.
 
 ### Sub-skills

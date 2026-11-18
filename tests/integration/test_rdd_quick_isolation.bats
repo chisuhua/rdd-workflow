@@ -84,7 +84,11 @@ LOCKED_TASKS_WRITEBACK_SH="e9e0065de4f65fbeef763be3b3eb09626c99920744e6bb2585311
 # an archive whose implementation branch is not merged, and the cleanup helper
 # reports its three states instead of always printing success. rdd-quick still
 # never reaches those paths (it is the bypass path) ⇒ the invariant holds.
-LOCKED_ARCHIVE_SH="e6c657c2e726d46fad8ade8884e5976872cd39fb0b39c7756617bf89a2523a9b"
+# Note (2026-11-18): recaptured again by fix-lightweight-branch-and-archive,
+# which adds the lightweight mode's branch helpers
+# (`lightweight_branch_prepare` / `lightweight_commit_ownership_check`) to the
+# same file. rdd-quick's own path is untouched.
+LOCKED_ARCHIVE_SH="8c464ca3e283b3d84df00de8ab1cdfc5b021e525dd1d367bb4271bf38db2e1ad"
 # Role block of rdd-planner/SKILL.md (from `role:` through closing `---`).
 # This is the structural-only hash that MUST be byte-identical after rdd-quick lands.
 # LOCKED_RDD_PLANNER_ROLE_BLOCK: role: ... --- block sha256, captured post-ADR-0048

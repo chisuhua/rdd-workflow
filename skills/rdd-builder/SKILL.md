@@ -409,8 +409,12 @@ print('dispatch_quick_review written')
 `roadmap-meta.yaml` 的 `risk:` 结构化声明；任一输入不可得 ⇒ **fail-closed 到 worktree**。
 `git.openspec_tracked` **不参与**执行模式判定（它只管归档路径），`RDDF_EXECUTION_MODE` 已退役。
 
-> ⚠ 当前 `LIGHTWEIGHT_EXECUTION_READY = False`（`_lib/builder_deps.py`）：lightweight 的归档
-> 路径还在补齐（`fix-lightweight-branch-and-archive`）⇒ 小改动暂时判 worktree 并在 reason 里写明。
+> ✅ `LIGHTWEIGHT_EXECUTION_READY = True`（`_lib/builder_deps.py`，由 `fix-lightweight-branch-and-archive`
+> 翻正）：P2 建 `openspec/<change>` 分支（起点 = 默认分支 tip；三档政策：不存在 ⇒ 建 / tip == 默认 tip ⇒
+> 复用 / tip != 默认 tip ⇒ fail-closed 退回 worktree 并把原因写进 `execution_mode_decision.reason`），
+> P3 走**枚举式 inline 归档**（提交归属检查 → 合入判定 → `openspec archive` → 分支清理 →
+> `mark_iteration_archived`（带真实 sha）→ `post_archive_cleanup`）。回滚 = 把该常量改回 `False`
+> （小改动退回 worktree 并在 `reason` 里说明原因）。
 
 ## P3 归档门（per ADR-0061 / ADR-0035）
 

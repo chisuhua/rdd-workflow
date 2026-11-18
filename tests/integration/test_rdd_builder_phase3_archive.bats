@@ -31,7 +31,15 @@ setup() {
     # Lightweight mode executes on the main repo's openspec/<change> BRANCH
     # (skills/execute/SKILL.md § 工作模式); the freshness anchor is that
     # branch's tip (openspec/specs/verifier-lifecycle/spec.md).
+    #
+    # The branch must carry a commit OF ITS OWN: P3's commit-ownership check
+    # (fix-lightweight-branch-and-archive) refuses an empty-shell branch,
+    # because the anchor would then point at a commit that does not contain
+    # this change's work.
     git checkout -q -b openspec/demo
+    echo "impl" > impl.txt
+    git add impl.txt
+    git commit -q -m "feat(demo): implementation"
 }
 
 teardown() {
