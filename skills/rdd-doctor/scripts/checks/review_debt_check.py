@@ -9,6 +9,21 @@ that function is phase-2.5-specific (requires change_name +
 execute_finished_at parameters for debt-file mtime check) and not a
 generic diagnostic. Re-uses `_TODO_PATTERN` constant instead.
 
+Scope (2026-11-18): the repo-wide scan used to flag the marker's own
+vocabulary and its test fixtures — 52 warnings in this repository, **all**
+by design (fixtures must contain unticketed markers for the detector tests
+to be meaningful; the checkers and templates contain the words themselves).
+A diagnostic that is 100% noise gets ignored, so three exclusions apply:
+
+  * `tests/**`           — fixtures and assertions legitimately carry bare
+                           markers; adding ticket ids would disable them.
+  * `_VOCABULARY_FILES`  — files that contain the vocabulary BY DESIGN
+                           (detector, ticket grammar, commit gate, templates).
+  * `<TODO>` placeholders — angle-bracketed placeholder syntax, not a
+                           leftover-work marker.
+
+A TODO added to production code is still reported (see the unit test).
+
 Severity: WARNING (action: add ticket id or remove marker).
 """
 from __future__ import annotations
@@ -32,9 +47,34 @@ _TICKETED_PATTERN = re.compile(
 _SCAN_EXTENSIONS = (".py", ".sh", ".bats")
 _SKIP_TOP_DIRS = (".rddf", "node_modules", "__pycache__", ".git")
 
+# Markers in tests/ are fixtures or assertions, never product debt.
+_SKIP_PATH_PREFIXES = ("tests/",)
+
+# Files that contain the marker vocabulary BY DESIGN. Each entry needs a
+# reason: this list is an accountability ledger, not a dumping ground.
+_VOCABULARY_FILES = {
+    "_lib/review_debt_checker.py": "defines _TODO_PATTERN",
+    "_lib/hook_whitelist.py": "parses ticket references (TODO(<ticket>))",
+    "_lib/gate.py": "commit gate that scans diffs for markers",
+    "skills/rdd-doctor/scripts/checks/review_debt_check.py": "this check itself",
+    "skills/roadmap/scripts/objective_add.sh": "objective template emits TODO placeholders",
+    "skills/add-improve/scripts/detect_cross_repo_impact.py": "template emits <!-- TODO: 由人类填写 -->",
+}
+
+# `<TODO>` / `<FIXME>` are placeholder syntax in document templates, not a
+# marker left in code.
+_PLACEHOLDER_PATTERN = re.compile(r"<(?:TODO|FIXME|HACK|WORKAROUND)>")
+
 
 def _is_ticketed(line: str) -> bool:
     return bool(_TICKETED_PATTERN.search(line))
+
+
+def _is_excluded(rel_path: str) -> bool:
+    return (
+        rel_path.startswith(_SKIP_PATH_PREFIXES)
+        or rel_path in _VOCABULARY_FILES
+    )
 
 
 def _scan_repo(project_root: Path) -> List[tuple[str, int, str]]:
@@ -45,6 +85,9 @@ def _scan_repo(project_root: Path) -> List[tuple[str, int, str]]:
             rel = source_file.relative_to(project_root)
             if rel.parts[0] in _SKIP_TOP_DIRS:
                 continue
+            rel_path = str(rel)
+            if _is_excluded(rel_path):
+                continue
             try:
                 text = source_file.read_text(encoding="utf-8", errors="replace")
             except OSError:
@@ -54,9 +97,11 @@ def _scan_repo(project_root: Path) -> List[tuple[str, int, str]]:
                     continue
                 if _is_ticketed(line):
                     continue
+                if _PLACEHOLDER_PATTERN.search(line):
+                    continue
                 m = _TODO_PATTERN.search(line)
                 marker = m.group(0) if m else "TODO"
-                findings.append((str(rel), line_no, marker))
+                findings.append((rel_path, line_no, marker))
     return findings
 
 

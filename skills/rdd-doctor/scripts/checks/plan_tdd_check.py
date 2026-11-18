@@ -8,11 +8,21 @@ Scope (per fix-test-isolation-and-hygiene): only plans that can still matter
 are reported. A plan is in scope when its change is not archived, or when the
 plan is recent (last commit younger than the historical threshold). When the
 plan's age cannot be determined it is checked — the conservative direction.
+
+Exception (2026-11-18): `openspec/changes/archive/<date>-<name>/` on disk is a
+POSITIVE signal that the change is archived — nothing will ever execute that
+plan again, so its TDD structure is history, not risk. Such a plan is out of
+scope regardless of recency. (Without this, every archived plan touched in the
+last 30 days kept warning: five of them did, all falsely.) The iteration.json
+status alone is NOT used for this: it is a gitignored runtime file that gets
+wiped, so "archived there" stays non-authoritative — matching the existing
+"age unknown ⇒ check" rule.
 """
 from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -33,6 +43,8 @@ _PLAN_DIR_REL = Path(".rddf") / "plans"
 _HISTORICAL_THRESHOLD_DAYS = 30
 _GIT_LOG_TIMEOUT_SECONDS = 30
 _GIT_TS_MARKER = "@@@"
+# `openspec archive` prefixes archived directories with the date.
+_ARCHIVE_DATE_PREFIX = re.compile(r"^\d{4}-\d{2}-\d{2}-")
 
 
 def _active_changes(project_root: Path) -> Set[str]:
@@ -119,8 +131,35 @@ def _git_last_commit_ts(project_root: Path) -> Dict[str, int] | None:
     return stamps
 
 
-def _is_in_scope(plan_file: Path, active: Set[str],
+def _archived_change_names(project_root: Path) -> Set[str]:
+    """Change names POSITIVELY known to be archived (archive dir on disk).
+
+    `openspec/changes/archive/<date>-<name>/` is created by `openspec archive`
+    and only deleted by hand, so its presence is authoritative: the plan can
+    never be consumed by `execute` again.
+
+    Deliberately does NOT read iteration.json — that file is gitignored runtime
+    state that gets wiped, so "archived there" must not silence a check (the
+    existing "age unknown ⇒ check" rule stays).
+    """
+    archived: Set[str] = set()
+    archive_dir = project_root / "openspec" / "changes" / "archive"
+    if not archive_dir.is_dir():
+        return archived
+    for entry in archive_dir.iterdir():
+        if not entry.is_dir():
+            continue
+        name = _ARCHIVE_DATE_PREFIX.sub("", entry.name)
+        if name:
+            archived.add(name)
+    return archived
+
+
+def _is_in_scope(plan_file: Path, active: Set[str], archived: Set[str],
                  stamps: Dict[str, int] | None, cutoff: float) -> bool:
+    if plan_file.stem in archived:
+        # Positively archived ⇒ the plan is history, never re-executed.
+        return False
     if plan_file.stem in active:
         return True
     if stamps is None:
@@ -140,12 +179,13 @@ def run(project_root: Path | None = None) -> List[Finding]:
         return []
 
     active = _active_changes(project_root)
+    archived = _archived_change_names(project_root) - active
     stamps = _git_last_commit_ts(project_root)
     cutoff = time.time() - _HISTORICAL_THRESHOLD_DAYS * 24 * 60 * 60
 
     findings: List[Finding] = []
     for plan_file in sorted(plans_dir.glob("*.md")):
-        if not _is_in_scope(plan_file, active, stamps, cutoff):
+        if not _is_in_scope(plan_file, active, archived, stamps, cutoff):
             continue
         text = plan_file.read_text()
         missing = [m for m in _STEP_MARKERS if m not in text]

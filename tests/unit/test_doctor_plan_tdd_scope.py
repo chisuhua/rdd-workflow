@@ -142,3 +142,50 @@ def test_missing_or_broken_state_is_not_fatal(tmp_path, monkeypatch):
     state.mkdir(parents=True)
     (state / "iteration.json").write_text("{ not json")
     assert run_check(tmp_path) == []                   # 损坏
+
+
+# ── archive 目录作为正向信号（2026-11-18）────────────────────────────────────
+# 动机：5 个 plan 属于已归档 change，却因「最近 30 天内被 touch 过」持续报 WARNING
+# ——全是假阳性。archive 目录是**盘上**的正向信号（迭代台账是 gitignored 运行时
+# 文件、会被抹掉，所以不用它），《execute》不可能再消费已归档 change 的 plan。
+
+def _make_archive_dir(root: Path, name: str, date: str = "2026-01-01") -> None:
+    d = root / "openspec" / "changes" / "archive" / f"{date}-{name}"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "tasks.md").write_text("## Tasks\n- [x] t\n")
+
+
+def test_plan_of_positively_archived_change_is_skipped_even_when_recent(
+        tmp_path, monkeypatch):
+    """archive 目录在盘上 ⇒ 不论 git age（这里甚至不是 git 仓库）都跳过。"""
+    from checks.plan_tdd_check import run as run_check
+
+    _write_plan(tmp_path, "done-change")
+    _make_archive_dir(tmp_path, "done-change")
+
+    monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
+    assert run_check(tmp_path) == []
+
+
+def test_archive_dir_does_not_silence_a_still_active_change(tmp_path, monkeypatch):
+    """冲突时以「活跃」为准：同名目录还在 openspec/changes/ 下 ⇒ 仍然检查。"""
+    from checks.plan_tdd_check import run as run_check
+
+    _write_plan(tmp_path, "both-change")
+    _make_archive_dir(tmp_path, "both-change")
+    (tmp_path / "openspec" / "changes" / "both-change").mkdir(parents=True)
+
+    monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
+    assert len(run_check(tmp_path)) == 1
+
+
+def test_archive_dir_without_date_prefix_is_recognised(tmp_path, monkeypatch):
+    """`openspec archive` 正常会加日期前缀，但手建目录也应当被识别。"""
+    from checks.plan_tdd_check import run as run_check
+
+    _write_plan(tmp_path, "nodate-change")
+    d = tmp_path / "openspec" / "changes" / "archive" / "nodate-change"
+    d.mkdir(parents=True)
+
+    monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
+    assert run_check(tmp_path) == []
