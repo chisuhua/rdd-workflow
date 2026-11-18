@@ -88,7 +88,14 @@ LOCKED_TASKS_WRITEBACK_SH="e9e0065de4f65fbeef763be3b3eb09626c99920744e6bb2585311
 # which adds the lightweight mode's branch helpers
 # (`lightweight_branch_prepare` / `lightweight_commit_ownership_check`) to the
 # same file. rdd-quick's own path is untouched.
-LOCKED_ARCHIVE_SH="8c464ca3e283b3d84df00de8ab1cdfc5b021e525dd1d367bb4271bf38db2e1ad"
+# Note (2026-11-18, fix-archive-cleanup-tracked-false): recaptured (8th time).
+# The change adds ONE call in `archive_change`: the `openspec_tracked: false`
+# early-return branch now runs `post_archive_cleanup "$main_root" "$name"`
+# (it previously ran only at step 9 of the tracked path, so in a tracked=false
+# project the cleanup never ran and `.rddf/plans/<name>.md` survived its own
+# archive). rdd-quick still never reaches `archive_change` at all (it is the
+# bypass path — it never archives), so the invariant holds.
+LOCKED_ARCHIVE_SH="420baf415b80b739da2e0d6abb229a92d13038350da0359690bd77d2dd93ae07"
 # Role block of rdd-planner/SKILL.md (from `role:` through closing `---`).
 # This is the structural-only hash that MUST be byte-identical after rdd-quick lands.
 # LOCKED_RDD_PLANNER_ROLE_BLOCK: role: ... --- block sha256, captured post-ADR-0048
