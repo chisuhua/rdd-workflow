@@ -165,7 +165,11 @@ def _check_changes_committed(ctx: dict) -> tuple[bool, Optional[str]]:
     active = sv.get_field("arch_side.current_change")
     if not active:
         return (True, None)
-    return (os.path.isfile(f"openspec/changes/{active}/proposal.md"), None)
+    # The artifact root is ctx["project_root"], not the process cwd: a gate that
+    # reads the wrong tree answers the wrong question (same reason the other
+    # checks in this file resolve through it).
+    project_root = ctx.get("project_root", ".")
+    return (os.path.isfile(os.path.join(project_root, "openspec", "changes", active, "proposal.md")), None)
 
 
 def _check_artifacts_complete(ctx: dict) -> tuple[bool, Optional[str]]:
@@ -175,8 +179,9 @@ def _check_artifacts_complete(ctx: dict) -> tuple[bool, Optional[str]]:
     active = sv.get_field("arch_side.current_change")
     if not active:
         return (True, None)
-    base = f"openspec/changes/{active}"
-    return (all(os.path.isfile(f"{base}/{a}") for a in ["proposal.md", "design.md", "tasks.md"]), None)
+    project_root = ctx.get("project_root", ".")
+    base = os.path.join(project_root, "openspec", "changes", active)
+    return (all(os.path.isfile(os.path.join(base, a)) for a in ["proposal.md", "design.md", "tasks.md"]), None)
 
 
 def _check_deps_analyzed(ctx: dict) -> tuple[bool, Optional[str]]:
@@ -194,7 +199,7 @@ def _check_deps_analyzed(ctx: dict) -> tuple[bool, Optional[str]]:
     Warning-level (not error): plan_done can transition without deps, but
     downstreams see a recorded warning so the gap is observable.
     """
-    deps_md = ".rddf/state/.deps-output.md"
+    deps_md = os.path.join(ctx.get("project_root", "."), ".rddf", "state", ".deps-output.md")
     if not os.path.isfile(deps_md):
         return (False, "warning")
     try:

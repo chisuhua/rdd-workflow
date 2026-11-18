@@ -1,5 +1,7 @@
 """Tests for GateMechanism — phase-transition gate with two severity levels."""
 import json
+from pathlib import Path
+
 import pytest
 from skills._lib.gate import GateMechanism, Check
 from skills._lib.core.state_vector import StateVector
@@ -375,3 +377,89 @@ def test_propose_quality_check_missing_state_file_reruns(state_path, log_path, t
     result = gate.verify_transition("plan_done", {"project_root": str(tmp_path)})
     assert result.passed is True
     assert "propose_quality_checks" in result.warnings
+
+
+# ── project_root anchoring for artifact checks (fix-path-anchoring-residue) ──
+#
+# These three checks are the only ones in gate.py that used bare cwd-relative
+# paths ("openspec/changes/...", ".rddf/state/.deps-output.md") while the other
+# checks in the same file already resolved through ctx["project_root"]. A gate
+# that reads the wrong tree answers the wrong question — plan_done would pass
+# an incomplete change whenever cwd != project_root.
+
+def _seed_artifacts(root, name="c1", artifacts=("proposal.md", "design.md", "tasks.md")):
+    change_dir = Path(root) / "openspec" / "changes" / name
+    change_dir.mkdir(parents=True, exist_ok=True)
+    for artifact in artifacts:
+        (change_dir / artifact).write_text("## Why\n\nx\n", encoding="utf-8")
+    return change_dir
+
+
+def _ctx_with_change(project_root, name="c1"):
+    sv = make_state()
+    sv.update_field("arch_side.current_change", name)
+    ctx = {"state_vector": sv}
+    if project_root is not None:
+        ctx["project_root"] = str(project_root)
+    return ctx
+
+
+def test_changes_committed_reads_project_root_not_cwd(tmp_path, monkeypatch):
+    """AC-1: proposal.md lives under project_root, cwd has nothing → still passes."""
+    from skills._lib import gate as gate_mod
+
+    fake = tmp_path / "fake"
+    _seed_artifacts(fake, "c1", ("proposal.md",))
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+
+    assert gate_mod._check_changes_committed(_ctx_with_change(fake)) == (True, None)
+
+
+def test_artifacts_complete_reads_project_root_not_cwd(tmp_path, monkeypatch):
+    """AC-1: all three artifacts under project_root, cwd has nothing → passes."""
+    from skills._lib import gate as gate_mod
+
+    fake = tmp_path / "fake"
+    _seed_artifacts(fake, "c1")
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+
+    assert gate_mod._check_artifacts_complete(_ctx_with_change(fake)) == (True, None)
+
+
+def test_deps_analyzed_reads_project_root_not_cwd(tmp_path, monkeypatch):
+    """AC-1: .deps-output.md under project_root is found; the openspec probe is
+    stubbed out so the assertion is about the FILE LOOKUP, not about openspec."""
+    from skills._lib import gate as gate_mod
+
+    fake = tmp_path / "fake"
+    deps_dir = fake / ".rddf" / "state"
+    deps_dir.mkdir(parents=True)
+    (deps_dir / ".deps-output.md").write_text("deps ok, long enough\n", encoding="utf-8")
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+    # openspec is not available in the sandbox: the check degrades to a warning.
+    monkeypatch.setattr(
+        gate_mod.subprocess, "run",
+        lambda *a, **kw: (_ for _ in ()).throw(FileNotFoundError("openspec")),
+    )
+
+    passed, severity = gate_mod._check_deps_analyzed(_ctx_with_change(fake))
+    assert passed is True
+    assert severity == "warning"
+
+
+def test_artifact_checks_default_to_cwd_when_project_root_absent(tmp_path, monkeypatch):
+    """AC-2: ctx without project_root keeps the historical "." semantics."""
+    from skills._lib import gate as gate_mod
+
+    _seed_artifacts(tmp_path, "c1")
+    monkeypatch.chdir(tmp_path)
+
+    ctx = _ctx_with_change(None)
+    assert gate_mod._check_changes_committed(ctx) == (True, None)
+    assert gate_mod._check_artifacts_complete(ctx) == (True, None)

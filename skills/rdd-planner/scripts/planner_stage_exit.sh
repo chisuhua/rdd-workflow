@@ -10,15 +10,16 @@ if [ -z "$CHANGE_NAME" ]; then
     exit 2
 fi
 
-if [ ! -d "openspec/changes/$CHANGE_NAME" ]; then
-    echo "openspec/changes/$CHANGE_NAME not found" >&2
+if [ ! -d "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME" ]; then
+    echo "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME not found" >&2
     exit 2
 fi
 
-PROPOSALS=$(python3 -c "
+PROPOSALS=$(PROJECT_ROOT="$PROJECT_ROOT" python3 -c "
 import json
+import os
 from pathlib import Path
-state = Path('.rddf/state/.planner-state.json')
+state = Path(os.environ['PROJECT_ROOT']) / '.rddf' / 'state' / '.planner-state.json'
 if state.exists():
     d = json.loads(state.read_text())
     print('\n'.join(d.get('active_projects', [])))
@@ -30,10 +31,11 @@ AWAITING="add-$CHANGE_NAME"
 
 # ADR-0048 §Decision 2: read recommended_route from planner-state.json (REQUIRED field).
 # Default "unknown" only if state missing; planner-done 双门控会拒绝 exit 如果仍为 unknown.
-RECOMMENDED=$(python3 -c "
+RECOMMENDED=$(PROJECT_ROOT="$PROJECT_ROOT" python3 -c "
 import json
+import os
 from pathlib import Path
-state = Path('.rddf/state/.planner-state.json')
+state = Path(os.environ['PROJECT_ROOT']) / '.rddf' / 'state' / '.planner-state.json'
 if state.exists():
     d = json.loads(state.read_text())
     print(d.get('recommended_route', 'unknown'))
@@ -54,8 +56,8 @@ export PROJECT_ROOT PROPOSALS_READY="$PROPOSALS" PROPOSALS_APPROVED_COUNT="$APPR
 # 双门控检查 (per ADR-0048 §Decision 2):
 #   门控1: .rddf/roadmap.md 必须存在
 #   门控2: recommended_route != "unknown"
-if [ ! -f ".rddf/roadmap.md" ] && [ ! -f "roadmap.md" ]; then
-    echo "planner-done 双门控失败: 门控1 - .rddf/roadmap.md 不存在" >&2
+if [ ! -f "$PROJECT_ROOT/.rddf/roadmap.md" ] && [ ! -f "$PROJECT_ROOT/roadmap.md" ]; then
+    echo "planner-done 双门控失败: 门控1 - $PROJECT_ROOT/.rddf/roadmap.md 不存在" >&2
     echo "  请先完成 rdd-planner Phase 0 roadmap-bootstrap 或 Phase 4 audit/sync" >&2
     exit 2
 fi

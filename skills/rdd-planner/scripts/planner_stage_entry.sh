@@ -10,15 +10,16 @@ if [ -z "$CHANGE_NAME" ]; then
     exit 2
 fi
 
-if [ ! -d "openspec/changes/$CHANGE_NAME" ]; then
-    echo "openspec/changes/$CHANGE_NAME not found" >&2
+if [ ! -d "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME" ]; then
+    echo "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME not found" >&2
     exit 2
 fi
 
-PROPOSALS=$(python3 -c "
+PROPOSALS=$(PROJECT_ROOT="$PROJECT_ROOT" python3 -c "
 import json
+import os
 from pathlib import Path
-state = Path('.rddf/state/.planner-state.json')
+state = Path(os.environ['PROJECT_ROOT']) / '.rddf' / 'state' / '.planner-state.json'
 if state.exists():
     d = json.loads(state.read_text())
     print('\n'.join(d.get('active_projects', [])))

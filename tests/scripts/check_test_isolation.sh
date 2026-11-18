@@ -25,7 +25,12 @@
 #
 # Env (added by fix-script-project-root-anchoring):
 #   RDDF_ISOLATION_SCAN_ROOTS — scan roots for check_no_unanchored_repo_paths
-#     (colon-separated directories; default skills/rdd-builder/scripts).
+#     (colon-separated directories). Default = the directories that have been
+#     zeroed: skills/rdd-builder/scripts + skills/rdd-planner/scripts +
+#     skills/roadmap/scripts. `_lib` is deliberately NOT included: measured
+#     100+ hits there, almost all message text / template strings rather than
+#     path usage, so including it could only be kept green by stacking
+#     exemptions (which would make the check a no-op).
 #   RDDF_ISOLATION_ONLY — run exactly one check; its exit code then reflects
 #     only that check. Needed because this repo has pre-existing violations in
 #     the other checks, so a test cannot assert "the whole gate is green".
@@ -150,12 +155,16 @@ check_no_assert_tautologies() {
 # `cp "openspec/x" "$PROJECT_ROOT/openspec/x"` 整行放行 ⇒ 门空转。
 #
 # Env:
-#   RDDF_ISOLATION_SCAN_ROOTS  扫描根（目录，冒号分隔）。默认 skills/rdd-builder/scripts
+#   RDDF_ISOLATION_SCAN_ROOTS  扫描根（目录，冒号分隔）。默认只含**已清零**的三个目录
+#                              （rdd-builder / rdd-planner / roadmap 的 scripts）。
+#                              `_lib` 刻意不在默认扫描根里：实测 100+ 命中里绝大多数是
+#                              消息文本 / 模板字符串（不是路径用法）⇒ 纳入后只能靠逐条
+#                              豁免维持绿色 ⇒ 门退化成豁免清单。
 #   RDDF_ISOLATION_ONLY        只跑这一个 check（退出码只反映它）—— 本仓的其它 check
 #                              已有历史违规，不隔离就断言不了本 check 自己的退出码
 check_no_unanchored_repo_paths() {
   local result
-  result="$(RDDF_ISOLATION_SCAN_ROOTS="${RDDF_ISOLATION_SCAN_ROOTS:-skills/rdd-builder/scripts}" \
+  result="$(RDDF_ISOLATION_SCAN_ROOTS="${RDDF_ISOLATION_SCAN_ROOTS:-skills/rdd-builder/scripts:skills/rdd-planner/scripts:skills/roadmap/scripts}" \
             python3 - <<'PYEOF'
 import os
 import re

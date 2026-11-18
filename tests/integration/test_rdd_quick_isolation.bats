@@ -95,7 +95,12 @@ LOCKED_TASKS_WRITEBACK_SH="e9e0065de4f65fbeef763be3b3eb09626c99920744e6bb2585311
 # project the cleanup never ran and `.rddf/plans/<name>.md` survived its own
 # archive). rdd-quick still never reaches `archive_change` at all (it is the
 # bypass path — it never archives), so the invariant holds.
-LOCKED_ARCHIVE_SH="420baf415b80b739da2e0d6abb229a92d13038350da0359690bd77d2dd93ae07"
+LOCKED_ARCHIVE_SH="91820f23df132cce8215eeaa91128c441ceff730ec890323fde8dc2eb38f1d35"
+# Note (2026-11-18, fix-path-anchoring-residue): recaptured (10th time). The only
+# change to _lib/archive.sh is the SKIP_RDD_VERIFIER bypass audit: it now pins
+# RDDF_PROJECT_ROOT to the canonical project root (${state_root:-$tasks_root})
+# instead of inheriting the caller's cwd. Gate DECISION LOGIC is untouched —
+# which is what this lock protects (rdd-quick must not alter the gate it bypasses).
 # Role block of rdd-planner/SKILL.md (from `role:` through closing `---`).
 # This is the structural-only hash that MUST be byte-identical after rdd-quick lands.
 # LOCKED_RDD_PLANNER_ROLE_BLOCK: role: ... --- block sha256, captured post-ADR-0048

@@ -18,11 +18,16 @@
 set -euo pipefail
 
 PROJECT_ROOT="${RDDF_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-FRAGMENTS_DIR=".rddf/roadmap"
-MAIN_DOC=".rddf/roadmap.md"
-ROOT_ROADMAP="roadmap.md"
-HANDOFF_FILE=".rddf/state/.arch-handoff.json"
-BACKUP_PREFIX=".rddf/.roadmap-migrate-backup"
+# Absolute on purpose: these are defined BEFORE `cd "$PROJECT_ROOT"` and used
+# after it, so relative values happen to work today. Spelling them absolute
+# removes the ordering dependency (and the `check_no_unanchored_repo_paths`
+# static gate cannot see statement order, so relative values there would have to
+# be exempted — an exemption that would hide a real regression later).
+FRAGMENTS_DIR="$PROJECT_ROOT/.rddf/roadmap"
+MAIN_DOC="$PROJECT_ROOT/.rddf/roadmap.md"
+ROOT_ROADMAP="$PROJECT_ROOT/roadmap.md"
+HANDOFF_FILE="$PROJECT_ROOT/.rddf/state/.arch-handoff.json"
+BACKUP_PREFIX="$PROJECT_ROOT/.rddf/.roadmap-migrate-backup"
 CHANGE_NAME="${CHANGE_NAME:-}"
 
 # Parse args
@@ -58,14 +63,14 @@ if [ -n "$ROLLBACK" ]; then
     fi
     # Restore tasks.md (current change)
     if [ -n "$CHANGE_NAME" ] && [ -f "$ROLLBACK/tasks.md" ]; then
-        cp "$ROLLBACK/tasks.md" "openspec/changes/$CHANGE_NAME/tasks.md" 2>/dev/null || true
+        cp "$ROLLBACK/tasks.md" "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/tasks.md" 2>/dev/null || true
     fi
     # Restore handoff
     if [ -f "$ROLLBACK/.arch-handoff.json" ] 2>/dev/null && [ -f "$HANDOFF_FILE" ]; then
         cp "$ROLLBACK/.arch-handoff.json" "$HANDOFF_FILE" 2>/dev/null || true
     fi
     # Remove new structure
-    rm -rf ".rddf/roadmap" ".rddf/roadmap.md" 2>/dev/null || true
+    rm -rf "$FRAGMENTS_DIR" "$MAIN_DOC" 2>/dev/null || true
     echo "✅ Rollback complete"
     exit 0
 fi
@@ -161,9 +166,9 @@ mkdir -p "$BACKUP_DIR" || { echo "❌ mkdir backup failed" >&2; exit 1; }
 cp "$ROOT_ROADMAP" "$BACKUP_DIR/roadmap.md" || { echo "❌ backup roadmap failed" >&2; exit 1; }
 
 CHANGE_TASKS=""
-if [ -n "$CHANGE_NAME" ] && [ -f "openspec/changes/$CHANGE_NAME/tasks.md" ]; then
-    cp "openspec/changes/$CHANGE_NAME/tasks.md" "$BACKUP_DIR/tasks.md" || true
-    CHANGE_TASKS="openspec/changes/$CHANGE_NAME/tasks.md"
+if [ -n "$CHANGE_NAME" ] && [ -f "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/tasks.md" ]; then
+    cp "$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/tasks.md" "$BACKUP_DIR/tasks.md" || true
+    CHANGE_TASKS="$PROJECT_ROOT/openspec/changes/$CHANGE_NAME/tasks.md"
 fi
 
 if [ -f "$HANDOFF_FILE" ]; then

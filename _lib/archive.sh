@@ -927,7 +927,17 @@ except Exception:
             echo "⏭️  archive_gate_check: verification bypassed (SKIP_RDD_VERIFIER=yes; reason: $RDDF_VERIFIER_BYPASS_REASON)"
             if [ -f "$_LIB_DIR/bypass_audit.sh" ]; then
               source "$_LIB_DIR/bypass_audit.sh"
-              audit_bypass_log "SKIP_RDD_VERIFIER" "$RDDF_VERIFIER_BYPASS_REASON" "$change_name" "verifier" || true
+              # The audit lands in the project being archived — its canonical
+              # root — not in whatever cwd the caller had. `rdd doctor
+              # --category bypass-audit` only counts
+              # <project root>/.rddf/state/.bypass-audit.jsonl, so an entry
+              # written to cwd is an audit nobody ever reads. `$state_root` is
+              # resolved above (the main repo); the gate root is the fallback
+              # when the main repo cannot be resolved. The sibling bypass
+              # (ARCHIVE_ALLOW_UNMERGED, above) pins `$main_root` for exactly
+              # the same reason — the two must not disagree.
+              RDDF_PROJECT_ROOT="${state_root:-$tasks_root}" \
+                audit_bypass_log "SKIP_RDD_VERIFIER" "$RDDF_VERIFIER_BYPASS_REASON" "$change_name" "verifier" || true
             fi
           else
             echo "❌ archive_gate_check: SKIP_RDD_VERIFIER=yes requires RDDF_VERIFIER_BYPASS_REASON (fail closed)"
