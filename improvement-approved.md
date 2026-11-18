@@ -252,6 +252,8 @@
 
 
 
+| [fix-script-project-root-anchoring](.rddf/improvements/fix-script-project-root-anchoring.md) | P2 | 2026-11-18 | guide-design |
+
 ## 已实施
 | [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | P1 | 2026-09-10 | 已实施 |
 | [changelog-usage-sync](.rddf/improvements/changelog-usage-sync.md) | P1 | 2026-09-10 | 已实施 |
