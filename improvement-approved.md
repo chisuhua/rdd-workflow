@@ -252,7 +252,6 @@
 
 
 
-| [fix-script-project-root-anchoring](.rddf/improvements/fix-script-project-root-anchoring.md) | P2 | 2026-11-18 | guide-design |
 
 ## 已实施
 | [adr-index-auto-sync](.rddf/improvements/adr-index-auto-sync.md) | P1 | 2026-09-10 | 已实施 |
@@ -280,6 +279,7 @@
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-script-project-root-anchoring](.rddf/improvements/fix-script-project-root-anchoring.md) | P2 | 2026-11-18 | 已实施 |
 | [fix-flow-drift-batch-1](.rddf/improvements/fix-flow-drift-batch-1.md) | P2 | 2026-11-16 | 已实施 |
 | [register-change-in-iteration](.rddf/improvements/register-change-in-iteration.md) | P2 | 2026-11-16 | 已实施 |
 | [fix-phase3-cleanup-wiring](.rddf/improvements/fix-phase3-cleanup-wiring.md) | P1 | 2026-11-16 | 已实施 |

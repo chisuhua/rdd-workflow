@@ -8,7 +8,7 @@ priority: P2
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: approved (2026-11-18)
+状态: implemented (2026-11-18)
 生成时间: 2026-11-18
 roadmap_ref:
   project_id: 编排能力完善
