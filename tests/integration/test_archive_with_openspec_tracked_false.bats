@@ -229,6 +229,54 @@ EOF
     [[ "$output" != *"STUB_OPENSPEC_ARCHIVE_CALLED"* ]]
 }
 
+@test "archive: BEHAVIORAL trunk gate state 2 (cannot decide) does NOT fail the archive (ADR-0061 V-14)" {
+    local change_name="state2-test"
+
+    mkdir -p openspec/changes/$change_name
+    echo "# proposal" > openspec/changes/$change_name/proposal.md
+    cat > openspec/changes/$change_name/tasks.md <<'EOF'
+# Tasks
+- [x] task 1
+EOF
+    git add openspec/
+    git commit -q -m "seed change"
+
+    mkdir -p .rddf
+    cat > .rddf/project.yaml <<'EOF'
+git:
+  openspec_tracked: false
+EOF
+    git add .rddf/project.yaml
+    git commit -q -m "add project.yaml"
+
+    mkdir -p "$TEST_TMP/.rddf/wt"
+    git worktree add -q -b "openspec/$change_name" "$TEST_TMP/.rddf/wt/$change_name" main
+    (
+        cd "$TEST_TMP/.rddf/wt/$change_name"
+        echo "y" > y.txt
+        git add y.txt && git commit -q -m "change work"
+    )
+    git merge -q --no-ff "openspec/$change_name" -m "merge: change work"
+
+    setup_openspec_stub
+
+    source "$REPO_ROOT/_lib/archive.sh"
+    check_worktree_commits() { return 0; }
+    archive_gate_check() { return 0; }
+    # Stub the trunk gate with its THIRD state: "cannot decide" → the
+    # contract says allow + warning (never a false refusal). The old call
+    # site used `if ! archive_premerge_check ...` which folded state 2 into
+    # a REFUSAL — the archive failed although the gate said "allow".
+    archive_premerge_check() { echo "⚠️  archive_premerge_check: 无法判定（放行）"; return 2; }
+    export -f check_worktree_commits archive_gate_check archive_premerge_check
+
+    run archive_change "$change_name"
+    # The archive proceeded: state 2 must NOT fail it.
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"无法判定"* ]]
+    [[ "$output" == *"STUB_OPENSPEC_ARCHIVE_CALLED"* ]]
+}
+
 @test "archive: BEHAVIORAL openspec_tracked=true → archive commit produced" {
     local change_name="true-mode-test"
 

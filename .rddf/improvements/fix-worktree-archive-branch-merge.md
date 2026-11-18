@@ -6,7 +6,7 @@ priority: P1
 阶段: phase-2
 分类: bugfix
 类型: bugfix
-状态: in-progress (2026-11-17 实施 → 2026-11-18 architect 复核发现 4 条 implementation_gap，待补)
+状态: implemented (2026-11-17 首轮 → 2026-11-18 architect 复核后补完 5 条 AC，复验通过)
 
 生成时间: 2026-11-17
 roadmap_ref:
@@ -160,11 +160,11 @@ metis 提出的反向意见（采纳并已写进 What Changes）：**现状成�
 > 不满足已签批契约** + 一处文档缺口。ADR 的「后续待办 → 实施方补」已逐条登记（见
 > `docs/adr/ADR-0061-archive-gate-refuses-unmerged-branch.md`）；本节把它们转成**可执行的 AC**。
 
-- [ ] **调用点按返回码消费（V-14）**：`archive_change` 的 false 分支**不得**把三态折叠成两态 —— `0` ⇒ 放行；`1` ⇒ 拒绝（返回 1）；`2` ⇒ **放行 + 警告**。⇒ 判据形态（**调用点级 stub**）：stub `archive_premerge_check` 返回 `2` ⇒ 断言 `archive_change` **仍返回 0**。（⚠ 用 stub 而不是构造真实 ⑤：真实 `archive_change` 流程里 ⑤ 几乎不可达 —— 非 git 仓库 ⇒ `wt_path_for_branch` 先失败；默认分支不可解析 ⇒ `switch_to_default_branch` 先失败；`git cherry` 空输出 ⇒ 已被 `merge-base --is-ancestor` 抢先捕获。）
-- [ ] **⓪ 的路径不给合并命令（V-5(d)）**：分支 ref 缺失 ⇒ 输出**含** `git reflog` 找回路径、**不含** `merge --no-ff`（没有分支可合并）。⇒ 判据形态：一条**否定断言**（`[[ "$output" != *"merge --no-ff"* ]]`）。
-- [ ] **非 git 仓库归 ⑤（不落进 ⓪）**：`<main_root>` 不是 git 仓库 ⇒ 判定落在 ⑤（**放行 + 显式警告**），**不得**报「分支不存在（可能已被上一次归档的 cleanup 删除）」的误导文案。⇒ 判据形态：一条「非 git 目录 ⇒ 返回码 2 + 警告文案」的用例。
-- [ ] **dirty 路径按「分支有提交 / 无提交」分叉（V-5(c)）**：worktree dirty 时 —— 分支**有**提交 ⇒ 给**两步**命令（先 commit 到实现分支，再合并）；分支**无**提交 ⇒ 只给提交命令。⇒ 判据形态：两条用例分别断言命令条数。
-- [ ] **`docs/architecture/gates-and-quality.md` 写明「合入门」与「archive 不代劳合并」（V-12）**：该文件是 `docs/architecture/` 的**门清单**（现有条目：`gate.py` 的 plan-done / archive-done / ship-lightweight-mode 三个 gate、`arch_quality_gate.py`、tribunal）⇒ 须新增一条「**合入门**（`archive_premerge_check`）：实现分支未合入默认分支 ⇒ 拒绝归档（可显式 opt-in）；归档**不代劳合并**」并与「AC 归档门」区分。
+- [x] **调用点按返回码消费（V-14）**：`archive_change` 的 false 分支**不得**把三态折叠成两态 —— `0` ⇒ 放行；`1` ⇒ 拒绝（返回 1）；`2` ⇒ **放行 + 警告**。⇒ 判据形态（**调用点级 stub**）：stub `archive_premerge_check` 返回 `2` ⇒ 断言 `archive_change` **仍返回 0**。（⚠ 用 stub 而不是构造真实 ⑤：真实 `archive_change` 流程里 ⑤ 几乎不可达 —— 非 git 仓库 ⇒ `wt_path_for_branch` 先失败；默认分支不可解析 ⇒ `switch_to_default_branch` 先失败；`git cherry` 空输出 ⇒ 已被 `merge-base --is-ancestor` 抢先捕获。）
+- [x] **⓪ 的路径不给合并命令（V-5(d)）**：分支 ref 缺失 ⇒ 输出**含** `git reflog` 找回路径、**不含** `merge --no-ff`（没有分支可合并）。⇒ 判据形态：一条**否定断言**（`[[ "$output" != *"merge --no-ff"* ]]`）。
+- [x] **非 git 仓库归 ⑤（不落进 ⓪）**：`<main_root>` 不是 git 仓库 ⇒ 判定落在 ⑤（**放行 + 显式警告**），**不得**报「分支不存在（可能已被上一次归档的 cleanup 删除）」的误导文案。⇒ 判据形态：一条「非 git 目录 ⇒ 返回码 2 + 警告文案」的用例。
+- [x] **dirty 路径按「分支有提交 / 无提交」分叉（V-5(c)）**：worktree dirty 时 —— 分支**有**提交 ⇒ 给**两步**命令（先 commit 到实现分支，再合并）；分支**无**提交 ⇒ 只给提交命令。⇒ 判据形态：两条用例分别断言命令条数。
+- [x] **`docs/architecture/gates-and-quality.md` 写明「合入门」与「archive 不代劳合并」（V-12）**：该文件是 `docs/architecture/` 的**门清单**（现有条目：`gate.py` 的 plan-done / archive-done / ship-lightweight-mode 三个 gate、`arch_quality_gate.py`、tribunal）⇒ 须新增一条「**合入门**（`archive_premerge_check`）：实现分支未合入默认分支 ⇒ 拒绝归档（可显式 opt-in）；归档**不代劳合并**」并与「AC 归档门」区分。
 
 ## Capabilities
 
@@ -268,3 +268,55 @@ ADR-0061 决策 2 的**判定表缺了「未合入」这一档** ⇒ 按表的�
 - false 路径既有的步骤省略（issue 关闭 / tasks 完成度门 / L2 / sidecar / `archive_commit_sha` 为空）
   ⇒ ADR-0061 的 Consequences 已如实记录，本项不修。
 - `openspec/specs/**` 的全局退役 stage 残余（204 处 / 47 份 spec）⇒ ADR-0036 修订的 backlog。
+
+---
+
+## 实施记录 · 第二轮（2026-11-18，architect 复核后的补完）
+
+### 背景
+
+2026-11-17 的实施把 ADR-0061 落地，但 **ADR 的判定表漏了一行**（缺「未合入 ⇒ 拒绝」这一档）⇒
+architect 复核时补正了表格，并顺带发现**实现的四处不满足已签批契约**（决策未变，是实现与契约的落差）：
+
+| 差距 | 违反的契约 | 本轮修法 |
+|---|---|---|
+| 调用点 `if ! archive_premerge_check …` ⇒ 返回码 `2`（⑤ 无法判定 ⇒ 放行）被折叠成**拒绝** | 表 ⑤ / Consequences / 备选 C / 立项 AC（**四处**都写「放行」）+ V-14 | 调用点改为按返回码**分别**消费：`0` ⇒ 放行 / `1` ⇒ 拒绝（return 1）/ `2` ⇒ **放行 + 警告**（警告由函数打印） |
+| ⓪（分支 ref 缺失）的路径仍打合并命令 | 决策 3 第四支 + V-5(d)（「没有分支可合并」） | `_premerge_refuse` 增加 `kind` 参数：`missing` / `dirty` **不打**合并命令；只有 `unmerged` 打 |
+| 非 git 仓库落进 ⓪ ⇒ 报「分支不存在（可能已被上一次归档的 cleanup 删除）」 | ⑤ 行的「非 git 仓库 ⇒ 放行 + 警告」+ ⓪ 的前置约定 | 新增 **⓪a 前置检查**：`git rev-parse --git-dir` 失败 ⇒ 归 ⑤（放行 + 警告），**不进** ⓪ |
+| dirty 路径恒给「先提交 + 合入命令」，未按「分支有提交 / 无提交」分叉 | 决策 3 第二支 + V-5(c) | 新增 `_branch_has_new_commits`：分支**有**提交 ⇒ 给**两步**（先 commit 再 merge）；**无**提交 ⇒ 只给 commit 命令（「该分支目前没有新提交 ⇒ 提交之后才谈得上合入」） |
+| `docs/architecture/gates-and-quality.md` 未写「合入门」 | V-12（点名三处；决策 8 原先只列两处） | 新增「The archive has TWO gates — do not confuse them」段（两道门的判什么 / 在哪 + 「The archive never merges for you」+ 判定顺序 + opt-in + **三条旁路路径不受保护**） |
+
+### 变更落点
+
+| 文件 | 改动 |
+|---|---|
+| `_lib/archive.sh` | `archive_premerge_check`（⓪a 前置 + 三态消费注释）、`_branch_has_new_commits`（新 helper）、`_premerge_refuse`（`kind` 参数 + 指引分叉）、`archive_change` 的 false 分支（按返回码消费） |
+| `tests/integration/test_archive_trunk_gate.bats` | +5 例（ref-missing 不打合并命令 / 非 git 仓库归 ⑤ / dirty 分叉 ×2 / 文档契约）⇒ **19 例** |
+| `tests/integration/test_archive_with_openspec_tracked_false.bats` | +1 例（**调用点级**：stub `archive_premerge_check` 返回 `2` ⇒ 断言 `archive_change` 仍返回 0）⇒ **8 例** |
+| `docs/architecture/gates-and-quality.md` | 新增「两道门」段 |
+| `tests/integration/test_rdd_quick_isolation.bats` | sha256 锁**第六次**重取（`_lib/archive.sh` 又变） |
+
+### 变异验证（判别力）
+
+| 变异 | 结果 |
+|---|---|
+| 调用点改回 `if ! …`（三态折叠） | **1 例红**（V-14 的调用点级用例） |
+| ⓪ 路径又打合并命令 | **2 例红**（ref-missing + dirty 无提交） |
+| 去掉 ⓪a 前置（非 git 落进 ⓪） | **1 例红** |
+| 去掉 dirty 分叉 | **1 例红** |
+
+⇒ 4 个变异全部被捕获；还原后 **27 例全绿**。
+
+### 连带同步（planner 侧，本轮之前已做）
+
+- `fix-lightweight-branch-and-archive.md` 与本文件的「复用清单」从「四项」改为**五项**
+  （⓪/②/③/**④未合入 ⇒ 拒绝**/⑤无法判定）—— 漏掉 ④ 会让 lightweight 路径**不拒绝未合入分支**；
+- 两份文件的立项名漂移（4 处）⇒ `fix-execution-mode-decision` → `fix-lightweight-branch-and-archive`；
+- 本文件 What Changes §1 加「**本 ADR 覆盖声明**」（草案的 tip-to-tip `git diff --quiet`、旧判定顺序、
+  「ref 缺失 ⇒ 放行」均已被 ADR-0061 取代）。
+
+### 仍未落地（不在本项范围）
+
+- **lightweight 路径的同类缺口** ⇒ `fix-lightweight-branch-and-archive`（draft）。
+- **spec 全局残余（204 处 / 47 份 spec）** ⇒ `fix-spec-residue-guard`（draft，守卫 + 台账）。
+- **回归门「超时未评估」的覆盖率流失** ⇒ `fix-bats-per-file-timeout`（draft）。

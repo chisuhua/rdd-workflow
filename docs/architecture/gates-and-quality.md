@@ -27,6 +27,29 @@ Use cases:
 
 Plugin extension: drop a Python module under `_lib/plugins/` that calls `register_gate_check()` (see `_lib/plugins/README.md` for the contract). Plugins are loaded by explicitly importing them before constructing the `GateMechanism`.
 
+### The archive has TWO gates — do not confuse them
+
+| Gate | What it decides | Where |
+|------|-----------------|-------|
+| **Trunk gate** (`archive_premerge_check`) | is the implementation branch **already merged into the default branch**? | `_lib/archive.sh` (the `openspec_tracked=false` branch, **before** `openspec archive`) |
+| **AC archive gate** (`archive_gate_check`) | is the verdict cache fresh and complete? | `_lib/archive.sh` (the AC-verification block) |
+
+**The archive never merges for you.** `git.openspec_tracked=false` skips `git merge` (per the
+`complete-project-yaml-config-gaps` spec's `archive-openspec-tracked-skip-git` requirement) — but an
+unmerged implementation is **refused**, with a copy-pasteable command, instead of being archived and then
+silently left on a branch that is about to be deleted.
+
+Judgment order (ADR-0061): branch ref missing → refuse; worktree dirty → refuse; already merged → allow;
+content-equivalent (patch-id via `git cherry`) → allow with a warning; **not merged → refuse**; cannot
+decide → allow with a warning. The three return states are consumed separately by the caller — state `2`
+(“cannot decide”) must **not** be folded into a refusal.
+
+Explicit opt-in: `ARCHIVE_ALLOW_UNMERGED=yes` + `RDDF_ARCHIVE_UNMERGED_REASON` (audited; it must not be
+combined with `FORCE_BRANCH_DELETE=yes` — that combination deletes the code).
+
+Bypass paths that this gate does **not** cover: `phase3_archive.sh`'s lightweight inline branch, the
+rdd-quick direct-archive path, and a manual `openspec archive`.
+
 ## `tribunal.py` (ADR-0008)
 
 Multi-agent cross-validation. Given an artefact (proposal, design.md, etc.), it runs N reviewer agents and aggregates weighted scores. Sensitive content (paths, env vars, secrets) is sanitised via `_lib/loop/sanitizer.py` (imported as `skills._lib.loop.sanitizer`) before review.

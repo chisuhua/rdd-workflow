@@ -271,12 +271,21 @@ merge_feature_branch() {
 #     2 = cannot decide → allow + explicit warning (never a false refusal)
 #
 #   Judgment order (each step's return value is documented in ADR-0061):
-#     (0) branch ref exists?  no  → 1 (fail closed, like verifier-lifecycle)
-#     (1) worktree dirty?    yes → 1 (uncommitted work dies with the worktree)
-#     (2) is-ancestor?       yes → 0
-#     (3) content-equivalent (patch-id via `git cherry`) → 0 + warning
-#     (4) not merged         → 1 (refuse: the commits are still on the branch)
-#     (5) otherwise          → 2 (cannot decide → allow + warning)
+#     (0a) is <main_root> a git repo? no → 2 (cannot decide → allow + warning)
+#     (0)  branch ref exists?  no  → 1 (fail closed, like verifier-lifecycle)
+#     (1)  worktree dirty?    yes → 1 (uncommitted work dies with the worktree)
+#     (2)  is-ancestor?       yes → 0
+#     (3)  content-equivalent (patch-id via `git cherry`) → 0 + warning
+#     (4)  not merged         → 1 (refuse: the commits are still on the branch)
+#     (5)  otherwise          → 2 (cannot decide → allow + warning)
+#
+#   (0a) is a PRECONDITION of (0): "the branch does not exist" and "this is
+#   not a repository" are different statements — a non-repository must not be
+#   reported as "the branch was deleted by the last archive's cleanup".
+#
+#   The CALLER must consume the three states separately: 0 → allow, 1 → refuse,
+#   2 → allow + warning. Folding them with `if ! cmd` turns state 2 into a
+#   refusal (ADR-0061 V-14).
 #
 #   Opt-in: ARCHIVE_ALLOW_UNMERGED=yes + RDDF_ARCHIVE_UNMERGED_REASON (non-empty)
 #   covers every refusal state and leaves a bypass-audit record. It must NOT be
@@ -290,12 +299,21 @@ archive_premerge_check() {
 
   local change_name="${branch#openspec/}"
 
+  # (0a) Precondition: is <main_root> a git repository at all? A
+  # non-repository is (5) "cannot decide" — it must NOT land in (0), whose
+  # message ("the branch does not exist, maybe the last archive deleted it")
+  # would be a different and misleading statement.
+  if ! git -C "$main_root" rev-parse --git-dir >/dev/null 2>&1; then
+    echo "⚠️  archive_premerge_check: '$main_root' 不是 git 仓库（无法判定是否已合入 → 放行）"
+    return 2
+  fi
+
   # (0) Existence check — MUST run before (2)/(3): when the ref is missing,
-  # those commands "fail", which would be read as (4) "cannot decide".
+  # those commands "fail", which would be read as (5) "cannot decide".
   if ! git -C "$main_root" rev-parse --verify --quiet "refs/heads/$branch" >/dev/null 2>&1; then
     echo "❌ archive_premerge_check: 实现分支 '$branch' 不存在（可能已被上一次归档的 cleanup 删除）"
     echo "   找回路径：git reflog 找到该分支的历史 tip → git branch '$branch' <sha>"
-    if _premerge_refuse "$branch" "$change_name" "$main_root"; then
+    if _premerge_refuse "$branch" "$change_name" "$main_root" "missing" "$wt_path"; then
       return 0
     fi
     return 1
@@ -310,8 +328,20 @@ archive_premerge_check() {
       | grep -vE "^(\?\? )?(openspec/changes/${change_name}/|\.rddf/plans/)" || true)
     if [ -n "$dirty" ]; then
       echo "❌ archive_premerge_check: worktree 内有未提交的改动（会随 worktree 清理丢失）"
-      echo "   先提交：git -C '$wt_path' add -A && git -C '$wt_path' commit -m '...'"
-      if _premerge_refuse "$branch" "$change_name" "$main_root"; then
+      if _branch_has_new_commits "$main_root" "$branch" "$default_branch"; then
+        # The branch already carries commits → two steps: commit the leftovers,
+        # then merge. Only the commit command would let the uncommitted part
+        # die with the worktree cleanup (the very failure this gate exists
+        # to prevent).
+        echo "   两步：① 先提交：git -C '$wt_path' add -A && git -C '$wt_path' commit -m '...'"
+        echo "        ② 再合入：git -C '$main_root' merge --no-ff '$branch'"
+      else
+        # No commits on the branch yet → nothing to merge; committing is the
+        # only action that can unblock the archive.
+        echo "   先提交：git -C '$wt_path' add -A && git -C '$wt_path' commit -m '...'"
+        echo "        （该分支目前没有新提交 ⇒ 提交之后才谈得上合入）"
+      fi
+      if _premerge_refuse "$branch" "$change_name" "$main_root" "dirty" "$wt_path"; then
         return 0
       fi
       return 1
@@ -341,17 +371,38 @@ archive_premerge_check() {
   # (4) NOT merged → refuse. The implementation's commits are still on the
   # branch, and the worktree cleanup is about to delete them.
   echo "❌ archive_premerge_check: '$branch' 尚未合入 '$default_branch'"
-  if _premerge_refuse "$branch" "$change_name" "$main_root"; then
+  if _premerge_refuse "$branch" "$change_name" "$main_root" "unmerged" "$wt_path"; then
     return 0
   fi
   return 1
 }
 
-# _premerge_refuse <branch> <change_name> <main_root>
+# _branch_has_new_commits <main_root> <branch> <default_branch>
+#   Does the implementation branch carry commits that the default branch does
+#   not have? Used to fork the dirty-worktree guidance (commit only vs commit
+#   + merge). "Cannot tell" is treated as "no" — the caller then gives the
+#   narrower (commit-only) advice, which never loses work.
+_branch_has_new_commits() {
+  local main_root="${1:-}" branch="${2:-}" default_branch="${3:-}"
+  local n
+  n=$(git -C "$main_root" rev-list --count "$default_branch..$branch" 2>/dev/null || echo "")
+  case "$n" in
+    ''|*[!0-9]*) return 1 ;;
+    *) [ "$n" -gt 0 ] ;;
+  esac
+}
+
+# _premerge_refuse <branch> <change_name> <main_root> [kind] [wt_path]
 #   Refusal path: honour the audited opt-in, otherwise refuse.
 #   Returns 0 when the opt-in applies (caller should then allow the archive).
+#
+#   kind selects the guidance:
+#     "unmerged" (default) → print the merge command
+#     "missing"           → NO merge command (there is no branch to merge)
+#     "dirty"             → NO merge command (the caller printed the
+#                           commit / commit+merge steps itself)
 _premerge_refuse() {
-  local branch="${1:-}" change_name="${2:-}" main_root="${3:-}"
+  local branch="${1:-}" change_name="${2:-}" main_root="${3:-}" kind="${4:-unmerged}" wt_path="${5:-}"
   if [ "${ARCHIVE_ALLOW_UNMERGED:-no}" = "yes" ]; then
     if [ -z "${RDDF_ARCHIVE_UNMERGED_REASON:-}" ]; then
       echo "❌ archive_premerge_check: ARCHIVE_ALLOW_UNMERGED=yes 需要 RDDF_ARCHIVE_UNMERGED_REASON（不放行）"
@@ -373,7 +424,9 @@ _premerge_refuse() {
     fi
     return 0
   fi
-  echo "   合入命令：git -C '$main_root' merge --no-ff '$branch'"
+  if [ "$kind" = "unmerged" ]; then
+    echo "   合入命令：git -C '$main_root' merge --no-ff '$branch'"
+  fi
   echo "   或显式放行：ARCHIVE_ALLOW_UNMERGED=yes + RDDF_ARCHIVE_UNMERGED_REASON='...'"
   return 1
 }
@@ -798,7 +851,12 @@ archive_change() {
     # not claim success while the implementation is still stranded on the
     # branch. Runs BEFORE the AC gate: it is cheap, deterministic, and its
     # guidance ("merge this branch") is the actionable one.
-    if ! archive_premerge_check "$main_root" "$branch" "$default_branch" "$wt_path"; then
+    # Consume the three states SEPARATELY (ADR-0061 V-14):
+    #   0 → allow, 1 → refuse, 2 → allow + warning (the function printed it).
+    # `if ! cmd` would fold state 2 into a refusal.
+    _premerge_rc=0
+    archive_premerge_check "$main_root" "$branch" "$default_branch" "$wt_path" || _premerge_rc=$?
+    if [ "$_premerge_rc" -eq 1 ]; then
       return 1
     fi
     # Archive gate (ADR-0035) must run on this branch too: the tracked branch

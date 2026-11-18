@@ -67,6 +67,15 @@ LOCKED_TASKS_WRITEBACK_SH="e9e0065de4f65fbeef763be3b3eb09626c99920744e6bb2585311
 # rdd-quick zero-pollution invariant preserved: rdd-quick is the bypass path
 # (ADR-0047) — it never writes a verdict cache, so for it the lookup is a miss
 # (and then the audited bypass) before and after the change.
+# Note (2026-11-18, fix-worktree-archive-branch-merge rework): LOCKED_ARCHIVE_SH
+# recaptured (6th time). The change closes four implementation gaps against
+# ADR-0061's signed-off contract: the call site now consumes the trunk gate's
+# THREE states separately (state 2 = "cannot decide" must not be folded into a
+# refusal), the ref-missing path no longer prints a merge command, a
+# non-repository is classified as "cannot decide" instead of "branch missing",
+# and the dirty-worktree guidance is forked by "the branch has commits or not".
+# rdd-quick still never reaches those paths (it is the bypass path) ⇒ the
+# invariant holds.
 # Note (2026-11-17, fix-worktree-archive-branch-merge): LOCKED_ARCHIVE_SH
 # recaptured. The change touches the AC-verification block and the cleanup
 # helper of archive.sh: the freshness anchor is now the implementation branch
@@ -75,7 +84,7 @@ LOCKED_TASKS_WRITEBACK_SH="e9e0065de4f65fbeef763be3b3eb09626c99920744e6bb2585311
 # an archive whose implementation branch is not merged, and the cleanup helper
 # reports its three states instead of always printing success. rdd-quick still
 # never reaches those paths (it is the bypass path) ⇒ the invariant holds.
-LOCKED_ARCHIVE_SH="2c76d462df4dfbf09e966dc4823ff3e877babce955b10c0b83e05941d0e27db5"
+LOCKED_ARCHIVE_SH="e6c657c2e726d46fad8ade8884e5976872cd39fb0b39c7756617bf89a2523a9b"
 # Role block of rdd-planner/SKILL.md (from `role:` through closing `---`).
 # This is the structural-only hash that MUST be byte-identical after rdd-quick lands.
 # LOCKED_RDD_PLANNER_ROLE_BLOCK: role: ... --- block sha256, captured post-ADR-0048

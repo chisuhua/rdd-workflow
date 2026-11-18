@@ -203,3 +203,58 @@ _commit_on_branch() {
     FORCE_BRANCH_DELETE=yes run cleanup_worktree_and_branch "demo" "$MAIN" "$WT" "openspec/demo"
     [[ "$output" == *"强制删除"* ]]
 }
+
+@test "trunk gate: the ref-missing path gives NO merge command (there is nothing to merge)" {
+    git -C "$MAIN" worktree remove --force "$WT" >/dev/null 2>&1 || true
+    git -C "$MAIN" branch -D openspec/demo >/dev/null 2>&1 || true
+
+    run archive_premerge_check "$MAIN" "openspec/demo" "main" ""
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"reflog"* ]]
+    # ADR-0061 decision 3 (fourth branch) + V-5(d): no merge command here.
+    [[ "$output" != *"merge --no-ff"* ]]
+}
+
+@test "trunk gate: a non-git directory is 'cannot decide' (2), not 'branch missing' (1)" {
+    local nogit="$TEST_TMP/not-a-repo"
+    mkdir -p "$nogit"
+
+    run archive_premerge_check "$nogit" "openspec/demo" "main" ""
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"不是 git 仓库"* ]]
+    # The misleading "the branch does not exist (deleted by the last archive)"
+    # message must NOT be used for a directory that is not a repository.
+    [[ "$output" != *"不存在"* ]]
+}
+
+@test "trunk gate: dirty worktree WITH commits on the branch → two-step guidance" {
+    _commit_on_branch "impl.py" "impl"
+    printf 'dirty\n' > "$WT/dirty.py"
+
+    run archive_premerge_check "$MAIN" "openspec/demo" "main" "$WT"
+    [ "$status" -eq 1 ]
+    # ADR-0061 decision 3 (third branch) + V-5(c): commit first, then merge.
+    [[ "$output" == *"两步"* ]]
+    [[ "$output" == *"commit -m"* ]]
+    [[ "$output" == *"merge --no-ff"* ]]
+}
+
+@test "trunk gate: dirty worktree with NO commits on the branch → commit-only guidance" {
+    # The branch carries no commit beyond main's tip → there is nothing to
+    # merge yet, so only the commit command can unblock the archive.
+    printf 'dirty\n' > "$WT/dirty.py"
+
+    run archive_premerge_check "$MAIN" "openspec/demo" "main" "$WT"
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"没有新提交"* ]]
+    [[ "$output" == *"commit -m"* ]]
+    [[ "$output" != *"merge --no-ff"* ]]
+}
+
+@test "docs: the gates catalogue names the trunk gate and 'the archive never merges'" {
+    DOC="$REPO_ROOT/docs/architecture/gates-and-quality.md"
+    [ -f "$DOC" ]
+    grep -q "archive_premerge_check" "$DOC"
+    grep -q "archive_gate_check" "$DOC"
+    grep -qi "never merges" "$DOC"
+}
