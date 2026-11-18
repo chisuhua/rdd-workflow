@@ -154,12 +154,20 @@ for f in "${files[@]}"; do
     if [ "$rc" -eq 124 ] && [ "$budget_left" -ge "$FILE_TIMEOUT" ]; then
         # Level 2: per-test timeout. bats kills the ONE stuck test; the other
         # tests of the same file still run and are still evaluated.
+        # The full FILE_TIMEOUT is reserved up front (the cap must be honoured
+        # even if the retry runs long); whatever it does not use is refunded
+        # afterwards, so the budget measures ACTUAL retry time rather than
+        # "number of retries × worst case".
         budget_left=$((budget_left - FILE_TIMEOUT))
+        retry_start=$(date +%s)
         if RETRY_LINE=$(timeout -k 5 "$FILE_TIMEOUT" env BATS_TEST_TIMEOUT="$RETRY_TIMEOUT" bats --tap "$f" 2>&1); then
             rc=0
         else
             rc=$?
         fi
+        retry_elapsed=$(( $(date +%s) - retry_start ))
+        [ "$retry_elapsed" -le "$FILE_TIMEOUT" ] || retry_elapsed="$FILE_TIMEOUT"
+        budget_left=$((budget_left + FILE_TIMEOUT - retry_elapsed))
         case "$rc" in
             125|126|127) die_infra "bats/timeout infrastructure failure on $f during the retry (rc=$rc)" ;;
         esac
