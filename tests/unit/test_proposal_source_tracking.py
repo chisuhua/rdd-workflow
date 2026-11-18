@@ -11,7 +11,6 @@ Covers the 5 scenarios:
   4. RDDF_PROPOSAL_SOURCE_SESSION unset -> field is None (graceful)
   5. add_or_update_change accepts the two new fields
 """
-import os
 import sys
 from pathlib import Path
 
@@ -43,18 +42,20 @@ def _build_change(name="add-proposal-source-tracking", **extra):
     )
 
 
-def test_new_proposal_writes_source_session_id_from_env():
+def test_new_proposal_writes_source_session_id_from_env(monkeypatch):
     """Scenario 1: env RDDF_PROPOSAL_SOURCE_SESSION -> source_session_id recorded."""
-    os.environ["RDDF_PROPOSAL_SOURCE_SESSION"] = "rds_abc123"
+    # monkeypatch.setenv: these two writes used to have NO cleanup at all — the
+    # env var leaked into every later test in the same process.
+    monkeypatch.setenv("RDDF_PROPOSAL_SOURCE_SESSION", "rds_abc123")
     src = proposal_source_fields()
     data = _build_change(**src)
     change = data["changes"][0]
     assert change["source_session_id"] == "rds_abc123"
 
 
-def test_audit_source_recorded():
+def test_audit_source_recorded(monkeypatch):
     """Scenario 2: env RDDF_PROPOSAL_AUDIT_SOURCE -> audit_source recorded."""
-    os.environ["RDDF_PROPOSAL_AUDIT_SOURCE"] = "2026-08-27-ship-audit"
+    monkeypatch.setenv("RDDF_PROPOSAL_AUDIT_SOURCE", "2026-08-27-ship-audit")
     src = proposal_source_fields()
     data = _build_change(**src)
     change = data["changes"][0]

@@ -65,18 +65,21 @@ def test_zero_anti_pattern_in_skill_scripts() -> None:
 
 
 def test_resolve_project_root_imported_in_skill_scripts() -> None:
-    """AC-SL-1: Each skill script imports resolve_project_root from _lib.cli.__main__."""
+    """AC-SL-1: Each skill script imports resolve_project_root.
+
+    After add-skill-layer-resolve-project-root-helper the scripts import it
+    from the skill-layer wrapper (skills._lib._python_resolve_project_root)
+    rather than directly from _lib.cli.__main__ — both are acceptable here.
+    The previous version of this test had an empty loop body and a no-op
+    assertion, so it verified nothing at all.
+    """
     missing = []
     for script_rel in SCRIPT_ENV_VAR:
         script = PROJECT_ROOT / script_rel
         text = script.read_text()
-        # After add-skill-layer-resolve-project-root-helper, scripts import from
-        # the skill-layer wrapper (skills._lib._python_resolve_project_root),
-        # not directly from _lib.cli.__main__. This test only checks the
-        # scripts are importable; import-path correctness is verified in
-        # test_skills_lib_python_resolve_project_root.py.
-    assert not missing or True, ""  # legacy assertion superseded; keep structure
-    # (intentionally no-op after add-skill-layer-resolve-project-root-helper ship)
+        if "import resolve_project_root" not in text:
+            missing.append(script_rel)
+    assert not missing, f"resolve_project_root not imported in: {missing}"
 
 
 # ---------------------------------------------------------------------------

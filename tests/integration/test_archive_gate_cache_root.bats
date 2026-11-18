@@ -183,8 +183,15 @@ _put_artifacts_in_main() {
     printf -- '## Acceptance Criteria\n- AC-1: works\n' \
         > "$WT/openspec/changes/no-branch-change/proposal.md"
 
+    # The bypass-audit log lands in ${RDDF_PROJECT_ROOT:-$PWD}, and
+    # verifier_contract_check UNSETS RDDF_PROJECT_ROOT on the way out ⇒ the
+    # effective root is the CWD. Run the gate from this test's fake worktree so
+    # the audit lands there and NOT in the real repo (before this, every run
+    # of this file added one entry to the repo's .rddf/state/.bypass-audit.jsonl
+    # — which is what tripped doctor's bypass-audit WARNING: SKIP_RDD_VERIFIER=9
+    # over a limit of 5).
     SKIP_RDD_VERIFIER=yes RDDF_VERIFIER_BYPASS_REASON="matrix fixture" \
-        run bash -c "source '$REPO_ROOT/_lib/archive.sh' && archive_gate_check 'no-branch-change' '$WT'"
+        run bash -c "cd '$WT' && source '$REPO_ROOT/_lib/archive.sh' && archive_gate_check 'no-branch-change' '$WT'"
     [ "$status" -eq 0 ]
     [[ "$output" == *"bypassed"* ]]
 }

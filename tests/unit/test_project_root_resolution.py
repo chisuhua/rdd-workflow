@@ -1,18 +1,17 @@
 """canonical resolver 的契约（per _resolve_project_root_contract.yaml）。"""
-import os
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
-def test_resolver_prefers_env_override():
+def test_resolver_prefers_env_override(monkeypatch):
     from skills._lib._python_resolve_project_root import resolve_project_root
 
-    os.environ["RDDF_PROJECT_ROOT"] = str(REPO_ROOT)
-    try:
-        assert resolve_project_root() == str(REPO_ROOT)
-    finally:
-        os.environ.pop("RDDF_PROJECT_ROOT", None)
+    # monkeypatch.setenv (not a raw environment write): pytest restores the
+    # environment afterwards, so a failing assert cannot leak RDDF_PROJECT_ROOT
+    # into the next test (per the test isolation gate).
+    monkeypatch.setenv("RDDF_PROJECT_ROOT", str(REPO_ROOT))
+    assert resolve_project_root() == str(REPO_ROOT)
 
 
 def test_shim_identity_merge():

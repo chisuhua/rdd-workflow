@@ -72,7 +72,6 @@ assert not os.path.exists(events_path), 'events.jsonl should not exist when no e
 @test "PR3: guide polling contract — active child from other owner triggers events read (AC-9)" {
     run env RDDF_ALLOW_CROSS_STAGE_PARALLEL=yes python3 -c "
 import sys, os
-os.environ['RDDF_ALLOW_CROSS_STAGE_PARALLEL'] = 'yes'
 sys.path.insert(0, '$TEST_TMPDIR')
 from skills.rddf_session.scripts.events_log import EventsLog
 from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator

@@ -116,8 +116,10 @@ def test_cmd_migrate_improvements_help(capsys):
     captured = capsys.readouterr()
     assert rc == 0
     assert "usage" in captured.out.lower() or "用法" in captured.out
-    # Must NOT mention specific file operations in help text
-    assert "git mv" not in captured.out.lower() or True  # informational only
+    # The help text DOES mention `git mv` on purpose: it explains when the
+    # command uses `git mv` (to preserve rename history) inside a git repo.
+    # The old assertion ("must NOT mention it") was wrong and had been
+    # neutralised with `or True` — i.e. it asserted nothing at all.
 
 
 def test_cmd_migrate_improvements_refuses_in_rdd_workflow_source(

@@ -87,7 +87,7 @@ def test_historic_debt_file_not_counted(fresh_project: Path) -> None:
     assert verdict.persisted is False
 
 
-def test_helper_uses_project_root_not_cwd(tmp_path: Path) -> None:
+def test_helper_uses_project_root_not_cwd(tmp_path: Path, monkeypatch) -> None:
     """Project root param must be honored even when cwd != project_root."""
     project = tmp_path / "myproject"
     project.mkdir()
@@ -96,15 +96,12 @@ def test_helper_uses_project_root_not_cwd(tmp_path: Path) -> None:
 
     other = tmp_path / "other-subdir"
     other.mkdir()
-    old_cwd = os.getcwd()
-    try:
-        os.chdir(other)
-        from skills._lib.review_debt_checker import check_review_debt_recorded
-        verdict = check_review_debt_recorded(
-            project_root=str(project),
-            change_name="add-foo",
-            execute_finished_at=datetime.now(timezone.utc),
-        )
-        assert verdict.found_count >= 1, "must find TODO regardless of cwd"
-    finally:
-        os.chdir(old_cwd)
+    # monkeypatch.chdir restores the cwd afterwards, even if the assert fails.
+    monkeypatch.chdir(other)
+    from skills._lib.review_debt_checker import check_review_debt_recorded
+    verdict = check_review_debt_recorded(
+        project_root=str(project),
+        change_name="add-foo",
+        execute_finished_at=datetime.now(timezone.utc),
+    )
+    assert verdict.found_count >= 1, "must find TODO regardless of cwd"

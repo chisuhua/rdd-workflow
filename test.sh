@@ -108,6 +108,17 @@ run_bats_smoke() {
   run_step "bats smoke" bats tests/smoke.bats "$@"
 }
 
+# Test isolation gate (anti-pollution) — the SAME script CI runs
+# (.github/workflows/test.yml, step "Test isolation gate (anti-pollution)").
+# It used to run ONLY in CI: ./test.sh never called it ⇒ a violation could
+# turn the CI gate red while the local full gate stayed green (that is
+# exactly how 9 pre-existing violations survived: see
+# .rddf/plans/quick-fix-test-isolation-gate-red.md).
+run_test_isolation_gate() {
+  run_step "test isolation gate (anti-pollution)" \
+    bash tests/scripts/check_test_isolation.sh
+}
+
 run_bats_recursive() {
   local bats_cmd
   if [ "$WITH_REGRESSION" = "1" ]; then
@@ -297,11 +308,13 @@ main() {
   case "$MODE" in
     quick)
       preflight bats python3
+      run_test_isolation_gate
       run_bats_smoke
       run_pytest_unit
       ;;
     full)
       preflight bats python3
+      run_test_isolation_gate
       run_bats_recursive   # includes tests/smoke.bats
       run_pytest_unit
       run_pytest_integration

@@ -220,7 +220,8 @@ def test_cross_day_independent_counter(tmp_path: Path):
     assert len(new_entries) == 1
     new_id = new_entries[0]["feedback_id"]
     assert new_id.startswith("pf-20260905-")
-    assert new_id != "pf-20260905-002" or True  # 20260905 prefix only
+    # The exact-id assertion below already covers "not pf-20260905-002"; the
+    # extra `or True` line asserted nothing.
     assert new_id == "pf-20260905-001"  # counter starts fresh for new day
 
 

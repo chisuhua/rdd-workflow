@@ -46,6 +46,15 @@ def fragments_dir(tmp_path):
         "---\nid: phase-1\nkind: phase\nstatus: active\nphase_refs: []\n主题: 基础\n---\n\n正文\n",
         encoding="utf-8",
     )
+    # A feature fragment too: the doctor requires all three AUTO-INDEX
+    # segments (Phases / Features / Objectives). With an EMPTY features/ dir
+    # the renderer emits no Features segment at all — the assertion below
+    # could only ever be satisfied by `or True`.
+    (base / "features" / "feat-alpha.md").write_text(
+        "---\nid: feat-alpha\nkind: feature\nstatus: active\nphase_refs: [phase-1]\n"
+        "主题: 示例特性\n---\n\n正文\n",
+        encoding="utf-8",
+    )
     return base
 
 
@@ -66,7 +75,7 @@ def test_render_index_emits_objectives_segment(fragments_dir, tmp_path):
     content = main_doc.read_text(encoding="utf-8")
     assert "### Objectives" in content
     assert "### Phases" in content
-    assert "### Features" in content or True  # no features in this fixture
+    assert "### Features" in content
 
 
 def test_render_index_objectives_segment_placeholder_when_empty(fragments_dir, tmp_path):

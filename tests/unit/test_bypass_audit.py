@@ -10,10 +10,8 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -26,12 +24,15 @@ from checks import bypass_audit_check  # type: ignore  # noqa: E402
 
 
 @pytest.fixture
-def tmp_project_root():
-    """Create temporary project root with .rddf/state dir."""
-    tmp = Path(tempfile.mkdtemp())
-    (tmp / ".rddf" / "state").mkdir(parents=True)
-    yield tmp
-    shutil.rmtree(tmp, ignore_errors=True)
+def tmp_project_root(tmp_path):
+    """Create temporary project root with .rddf/state dir.
+
+    Uses pytest's tmp_path (auto-cleaned) instead of a manual temp dir +
+    manual rmtree — the isolation gate bans the latter.
+    """
+    root = Path(tmp_path)
+    (root / ".rddf" / "state").mkdir(parents=True, exist_ok=True)
+    return root
 
 
 def run_bash_in_env(script_inline: str, env: dict) -> subprocess.CompletedProcess:

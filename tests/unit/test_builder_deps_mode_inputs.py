@@ -136,17 +136,15 @@ class TestComputeModeInputs:
         _change(tmp_path, "c1", "- [x] a\n")
         assert compute_mode_inputs(str(tmp_path), "c1")["risk_keywords"] == []
 
-    def test_absolute_paths_only(self, tmp_path):
+    def test_absolute_paths_only(self, tmp_path, monkeypatch):
         """The decision must not depend on the cwd."""
         _change(tmp_path, "c1", "- [x] a\n")
         _plan(tmp_path, "c1", ["src/a.py"])
-        import os
-        cwd = os.getcwd()
-        try:
-            os.chdir("/")
-            inputs = compute_mode_inputs(str(tmp_path), "c1")
-        finally:
-            os.chdir(cwd)
+        # monkeypatch.chdir restores the cwd afterwards, even if the assert
+        # below fails — a raw chdir + finally-restore leaks the cwd whenever
+        # the body raises (banned by the test isolation gate).
+        monkeypatch.chdir("/")
+        inputs = compute_mode_inputs(str(tmp_path), "c1")
         assert inputs["task_count"] == 1
         assert inputs["file_count"] == 1
 

@@ -118,17 +118,17 @@ def test_invariant_git_probe_returns_toplevel_when_in_repo(impl_name, resolve_fn
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("impl_name,resolve_fn", IMPLS)
-def test_invariant_cwd_fallback_returns_cwd_when_no_git(impl_name, resolve_fn):
+def test_invariant_cwd_fallback_returns_cwd_when_no_git(
+    impl_name, resolve_fn, monkeypatch
+):
     """Contract: env var unset AND cwd NOT in git repo → cwd as-is.
 
-    /tmp is not a git repo (typically). Use monkeypatch.chdir to control cwd.
+    /tmp is not a git repo (typically). monkeypatch.chdir controls the cwd and
+    restores it afterwards (a raw chdir leaks the cwd if the assert fails).
     """
     with mock.patch.dict(os.environ, {}, clear=False):
-        os.chdir("/tmp")  # not in git repo
-        try:
-            assert resolve_fn() == "/tmp"
-        finally:
-            os.chdir(PROJECT_ROOT)  # restore
+        monkeypatch.chdir("/tmp")  # not in git repo
+        assert resolve_fn() == "/tmp"
 
 
 # ---------------------------------------------------------------------------
