@@ -109,12 +109,14 @@ def test_guide_close_can_read_project_root_in_trap_context():
             export PYTHONPATH="{REPO_ROOT}:$PYTHONPATH"
             source "{GUIDE_ENTRY}"
             guide_entry --no-binding
-            sleep 60 &
-            WAIT_PID=$!
-            # Kill the sleep with SIGTERM; trap should fire and call guide_close
-            kill -TERM $WAIT_PID
-            wait $WAIT_PID || true
-            sleep 0.5
+            # SIGTERM to THIS shell: guide_entry installed
+            #   trap 'rddf_session_hook_guide_close' EXIT INT TERM
+            # so the TERM handler must close the stage_guide session.
+            # (The previous version SIGTERMed a `sleep 60` child and then
+            # `wait`ed for it. On a runner whose children inherit an IGNORED
+            # SIGTERM disposition the kill is a no-op, `wait` blocks for the
+            # full minute, and the failure surfaces as an opaque 30s timeout.)
+            kill -TERM $$
         """
         env = os.environ.copy()
         env["RDD_WORKFLOW_REPO"] = str(REPO_ROOT)
