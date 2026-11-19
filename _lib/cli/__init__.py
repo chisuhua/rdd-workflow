@@ -160,7 +160,10 @@ _SUBCOMMAND_DESCRIPTION: Dict[str, str] = {
     "report-issue": "Hub-Spoke [RFC] issue creator",
     "status": "Change status overview",
     "sessions": "Session management (read-only). Subcmds: show, current, gc",
-    "setup": "Bootstrap a new project with rdd-workflow",
+    # Sub-commands are surfaced in --help (the dispatcher synthesizes help from
+    # this string; it never reaches the handler's argparse tree) — same
+    # convention as "sessions" above.
+    "setup": "Bootstrap a new project with rdd-workflow. Subcmds: ai-context",
     "sync-hub": "Hub-Spoke contract pull",
     "validate": "Quality gate checks",
     "version": "Print rddf version",
