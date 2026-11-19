@@ -118,18 +118,38 @@ def test_guide_close_can_read_project_root_in_trap_context():
         """
         env = os.environ.copy()
         env["RDD_WORKFLOW_REPO"] = str(REPO_ROOT)
-        result = subprocess.run(
-            ["bash", "-c", script],
-            env=env,
-            capture_output=True,
-            text=True,
-            timeout=30,
+        # Output goes to FILES, not pipes: `capture_output=True` blocks until
+        # every holder of the pipe closes it, so any process that outlives the
+        # script keeps the test hanging until the timeout with no diagnostic.
+        # `bash -x` traces each command, so a real hang leaves a usable trail.
+        out_path = project_root / "scenario.stdout.log"
+        err_path = project_root / "scenario.stderr.log"
+        timed_out = False
+        with open(out_path, "w", encoding="utf-8") as out, \
+                open(err_path, "w", encoding="utf-8") as err:
+            try:
+                subprocess.run(
+                    ["bash", "-x", "-c", script],
+                    env=env,
+                    stdout=out,
+                    stderr=err,
+                    stdin=subprocess.DEVNULL,
+                    text=True,
+                    timeout=60,
+                )
+            except subprocess.TimeoutExpired:
+                timed_out = True
+        stdout = out_path.read_text(encoding="utf-8", errors="replace")
+        stderr = err_path.read_text(encoding="utf-8", errors="replace")
+        assert not timed_out, (
+            "guide_entry scenario hung (60s). Last traced commands: "
+            f"{stderr.strip().splitlines()[-8:]}\nstdout tail: {stdout[-500:]}"
         )
         # The trap should have run and marked session completed
         # Read sessions.json and check state
         sessions_file = project_root / ".rddf" / "state" / "sessions.json"
         assert sessions_file.exists(), (
-            f"sessions.json not created: stderr={result.stderr}"
+            f"sessions.json not created: stderr={stderr}"
         )
         import json
         sessions = json.loads(sessions_file.read_text()).get("sessions", [])
@@ -147,5 +167,5 @@ def test_guide_close_can_read_project_root_in_trap_context():
         assert terminal, (
             f"expected stage_guide session to be marked terminal after SIGTERM, "
             f"got states={[s.get('state') for s in stage_guide]}; "
-            f"stdout={result.stdout[-500:]}; stderr={result.stderr[-500:]}"
+            f"stdout={stdout[-500:]}; stderr={stderr[-500:]}"
         )
