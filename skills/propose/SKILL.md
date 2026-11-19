@@ -23,13 +23,26 @@ metadata:
 
 # OpenSpec 工作流 — Propose
 
-分析项目文档与代码之间的对齐情况，生成 propose 建议，用户选择后执行 openspec-propose 命令序列创建 artifacts。
+分析项目文档与代码之间的对齐情况，生成 propose 建议，用户选择后创建 change 骨架。
 
-**openspec-propose 命令序列**（等同于 Phase 4 的全部步骤）：
-1. `openspec new change "<name>"` — 创建 change 目录
-2. `openspec status --change "<name>" --json` — 获取所有 artifact 及其依赖关系
+## 三条路径怎么选（本 skill ≠ openspec 的 propose 命令）
+
+| 你要做什么 | 用哪个 | 产出 |
+|---|---|---|
+| 完整 change（proposal + specs + design + tasks），由 openspec 模板驱动 | openspec CLI 的 `propose` 命令（`openspec init` 按工具生成：OpenCode → `.opencode/commands/opsx-propose.md`，即 `/opsx-propose`；Claude → `/opsx:propose`） | CLI 按 schema 生成全部 artifacts |
+| 只建骨架 + roadmap / iteration 记账（legacy；`guide` 路由「新建 change」时走这条） | **本 skill**：`skill_use("propose")` | `proposal.md` 骨架 + `roadmap-meta.yaml` + `iteration.json(status=planned)` |
+| 从已批准的 improvement 立项（v4 canonical，ADR-0025） | `rdd-builder` P0（`generate_full_proposal.py`） | 完整 `proposal.md`（含 5 段内容） |
+
+三者不做同一件事，**不要混用**：本 skill 不调用 openspec 的 artifact 生成流程，只调用 `openspec new change` 建目录 + 写 CLI 契约要求的 `.openspec.yaml`。
+
+
+**openspec CLI 的 artifact 流程**（本 skill 只用到第 1 步；第 2–4 步是本 skill **未实现**的部分，见 Phase 4 的 `PRESERVED PSEUDO-CODE`）：
+1. `openspec new change "<name>"` — 创建 change 目录（**本 skill 调用这一条**，并合并它写的 `.openspec.yaml`）
+2. `openspec status --change "<name>" --json` — 获取所有 artifact 及其依赖（`artifacts[].requires`）
 3. 循环 `openspec instructions "<artifact>" --change "<name>" --json` — 获取每个 artifact 的模板、上下文、输出路径
 4. 按依赖顺序创建 artifact 文件（proposal.md → design.md → tasks.md 等）
+
+> ⚠️ 第 2–4 步若要做，等价于直接用上面那张表里的 CLI `propose` 命令 —— 本 skill 不会替你走完它们。
 
 `improvement-suggestions.md` 是提案索引文件（Markdown 表格格式，随 git 版本控制），索引到 <a href=".rddf/improvements/` 目录下的完整提案内容。每次扫描发现新建议时，创建 <a href=".rddf/improvements/<name>.md` 文件并更新索引。审查通过后添加到 `improvement-approved.md`。
 
