@@ -50,8 +50,18 @@ jobs:
       # suite was written against.
       - name: Install openspec CLI (unit-test prerequisite)
         run: |
-          npm install -g @fission-ai/openspec@1.14.3
-          openspec --version
+          # Install into a NON-global prefix outside /usr/local/bin: the product
+          # probes hardcoded fallbacks (/usr/local/bin, /opt/homebrew/bin, see
+          # _lib/env_checks.sh::_check_openspec), and two integration tests
+          # simulate a MISSING CLI by stripping PATH — a CLI at a fallback path
+          # makes that simulation a no-op (both tests flipped red on the runner).
+          PREFIX="${RUNNER_TEMP}/openspec-cli"
+          mkdir -p "$PREFIX"
+          cd "$PREFIX"
+          npm init -y >/dev/null
+          npm install --no-fund --no-audit @fission-ai/openspec@1.14.3 >/dev/null
+          echo "$PREFIX/node_modules/.bin" >> "$GITHUB_PATH"
+          "$PREFIX/node_modules/.bin/openspec" --version
 
       # Several unit tests build throwaway git repos and `git commit` in them.
       # They inherit the machine's global identity, which a fresh runner does
