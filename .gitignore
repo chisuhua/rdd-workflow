@@ -50,3 +50,7 @@ openspec/
 # rdd-workflow: roadmap AUTO-SPRINT writer 的 fcntl 锁文件（_lib/roadmap_sprint.py:270
 # 用 Path(roadmap.md).with_suffix(".lock") ⇒ 每次 planner sync 都留下一个）
 .rddf/roadmap.lock
+
+# 静态检查工具的本地缓存 (跑 ./test.sh --gates 会生成)
+.ruff_cache/
+.mypy_cache/

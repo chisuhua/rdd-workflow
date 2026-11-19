@@ -23,10 +23,23 @@ line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint]
-# Use ruff's default rule selection (subset of E + F that excludes style-only
-# checks like E501 line-length). This catches real bugs (unused imports,
-# ambiguous variable names, undefined names) without blocking CI on pre-existing
-# long-line cosmetics. See ruff defaults: `ruff check --isolated --show-settings`.
+# The rule selection is EXPLICIT — it used to be "whatever ruff's defaults
+# happen to be", which meant a ruff release silently changed what the gate
+# means (ruff 0.16+ added I/S/UP to its defaults ⇒ 36 new findings on the
+# shim layer ⇒ CI turned red on 2026-08-17 without anybody changing the code).
+#
+# E4/E7/E9/F = the subset this repo's comment always claimed it wanted:
+# real bugs (unused imports, undefined names, ambiguous names) without
+# blocking on style-only cosmetics like E501.
+#
+# DEFERRED (not selected here, tracked in
+# .rddf/improvements/fix-lint-deferred-findings.md):
+#   * I001 (25 findings) — import sorting; auto-fixing it in the
+#     identity-merge shim layer risks breaking the shim contract
+#     (sys.path / sys.modules must be set up BEFORE the import).
+#   * S102 (8 findings)  — exec(compile(...)) IS the shim mechanism.
+#   * UP035/UP006/UP007  — deprecated / non-PEP585 typing forms.
+select = ["E4", "E7", "E9", "F"]
 
 [tool.pytest.ini_options]
 markers = [

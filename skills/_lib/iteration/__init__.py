@@ -17,6 +17,7 @@ from __future__ import annotations
 import importlib.util
 import os
 import sys
+import json as _json
 from pathlib import Path
 from typing import Union
 
@@ -62,8 +63,6 @@ PathLike = Union[str, Path]
 
 
 # v7 schema helpers (added in commit 02fe62f harden-archive-iteration-sync)
-import json as _json
-
 def load_iteration_v6_compat(data: dict) -> dict:
     """Migrate v6 → v7 (add cross_repo_dependencies default)."""
     data = dict(data)

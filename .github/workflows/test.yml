@@ -16,11 +16,11 @@ jobs:
       - name: Install Python deps
         run: pip install -r requirements.txt -q
 
-      - name: Ruff lint check
-        run: ruff check skills/_lib/
+      - name: Ruff lint check (skills/_lib shims, E4/E7/E9/F)
+        run: python3 -m ruff check skills/_lib/
 
-      - name: Mypy strict type check (core/)
-        run: mypy --strict skills/_lib/core/
+      - name: Mypy strict type check (skills/_lib/core/ shim layer)
+        run: python3 -m mypy --strict skills/_lib/core/
 
       - name: Install bats
         run: |
@@ -78,37 +78,15 @@ jobs:
       - name: Python integration tests
         run: python3 -m pytest tests/integration/ -q --tb=short
 
+      # The category list lives in doctor_main.py (_GATES) — the local gate
+      # (./test.sh --gates) calls the same command, so the two cannot drift.
+      # Semantics unchanged: a category with CRITICAL findings (exit >= 2)
+      # fails the gate; warnings do not.
       - name: rdd-doctor structural gate (10 categories, fail-on-CRITICAL)
-        run: |
-          set +e
-          STRUCTURAL=(state plan-tdd roadmap-meta roadmap-refs roadmap-feature roadmap-md-integrity roadmap-phases objective-lifecycle objective-structure arch-audit)
-          FAILED=0
-          for cat in "${STRUCTURAL[@]}"; do
-            bash skills/rdd-doctor/scripts/doctor.sh --category "$cat" --quiet
-            rc=$?
-            if [ $rc -ge 2 ]; then
-              echo "::error title=rdd-doctor::${cat} CRITICAL (exit $rc)"
-              FAILED=$((FAILED+1))
-            fi
-          done
-          if [ $FAILED -gt 0 ]; then
-            echo "❌ rdd-doctor structural gate: $FAILED category failures"
-            exit 1
-          fi
-          echo "✅ rdd-doctor structural gate: all 10 categories pass"
+        run: bash skills/rdd-doctor/scripts/doctor.sh --gate structural
 
       - name: rdd-doctor advisory gate (4 categories, non-blocking)
-        run: |
-          set +e
-          ADVISORY=(bypass-audit migration-residue review-debt roadmap-backup)
-          for cat in "${ADVISORY[@]}"; do
-            bash skills/rdd-doctor/scripts/doctor.sh --category "$cat" --quiet
-            rc=$?
-            if [ $rc -ge 1 ]; then
-              echo "::warning title=rdd-doctor::${cat} advisory (exit $rc)"
-            fi
-          done
-          echo "✅ rdd-doctor advisory gate: warnings logged (non-blocking)"
+        run: bash skills/rdd-doctor/scripts/doctor.sh --gate advisory
 
       - name: Bats smoke (full recursive — v2.0.3)
         run: bats tests/ --recursive

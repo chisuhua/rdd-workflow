@@ -7,5 +7,12 @@ croniter>=2.0
 requests>=2.28
 
 # Linting & type checking (progressive CI gates)
-ruff>=0.1
-mypy>=1.8
+# BOTH are pinned to a range, and the range matches what CI installs:
+#   * the lint gate's MEANING lives in pyproject.toml ([tool.ruff.lint] select),
+#     not in the tool version — but an unpinned tool still means "the local
+#     gate and CI can disagree", which is exactly the disease this workstream
+#     is about (local green / CI red / nobody notices).
+#   * ./test.sh prints a WARNING (not a hard failure) when the installed
+#     version is outside the range, with the install hint.
+ruff>=0.15,<0.16
+mypy>=1.8,<3

@@ -53,6 +53,46 @@ _CHECKERS: dict[str, Union[str, Callable]] = {
 }
 
 
+# Gate definitions — the category list of each CI gate lives HERE, next to
+# _CHECKERS, so the CI workflow (.github/workflows/test.yml) and the local
+# gate (./test.sh) call ONE source instead of keeping two copies that drift.
+#
+# Semantics (identical to the workflow's previous inline loop):
+#   * a category whose exit code is >= 2 (CRITICAL) makes the whole gate fail;
+#   * a category with only warnings (exit 1) does NOT fail the gate;
+#   * the gate runs the categories IN-PROCESS, so a crash of the doctor itself
+#     is a non-zero exit instead of "every category returned 1 => green"
+#     (the inline loop had that fail-open hole).
+#   blocking=False  -> the gate only reports (never fails the build); that is
+#                      what the workflow's advisory step always did.
+_GATES: dict[str, dict] = {
+    "structural": {
+        "categories": [
+            "state",
+            "plan-tdd",
+            "roadmap-meta",
+            "roadmap-refs",
+            "roadmap-feature",
+            "roadmap-md-integrity",
+            "roadmap-phases",
+            "objective-lifecycle",
+            "objective-structure",
+            "arch-audit",
+        ],
+        "blocking": True,
+    },
+    "advisory": {
+        "categories": [
+            "bypass-audit",
+            "migration-residue",
+            "review-debt",
+            "roadmap-backup",
+        ],
+        "blocking": False,
+    },
+}
+
+
 def _resolve_check(name: str) -> Callable:
     """Lazy-resolve `checks.<module>.run` callable for the named category.
 
@@ -108,6 +148,78 @@ def aggregate_findings(category: str | None) -> Tuple[List[Finding], List[str]]:
     return findings, categories_checked
 
 
+def _run_one_category(name: str) -> tuple[int, List[Finding]]:
+    """Run one category, returning (exit_code, findings).
+
+    A checker exception becomes a CRITICAL finding (same as aggregate_findings),
+    so a broken checker fails the gate instead of passing it.
+    """
+    findings: List[Finding] = []
+    try:
+        run_fn = _resolve_check(name)
+        findings = list(run_fn(project_root=_PROJECT_ROOT))
+    except Exception as e:
+        findings = [Finding(
+            severity=Severity.CRITICAL,
+            category=name,
+            file="(checker)",
+            line=None,
+            snippet=f"checker raised {type(e).__name__}: {e}",
+            fix_hint="report bug; this is an internal doctor failure",
+        )]
+    return exit_code_for(findings), findings
+
+
+def run_gate(name: str) -> int:
+    """Run a named gate: one line per category + an aggregate exit code.
+
+    Output is deliberately NOT render_quiet (that prints a single "OK" line and
+    hides WHICH categories ran) — a gate log has to show every category it
+    checked, otherwise a typo in the list is invisible.
+    """
+    spec = _GATES[name]
+    categories: List[str] = list(spec["categories"])
+    blocking: bool = bool(spec["blocking"])
+    in_github = os.environ.get("GITHUB_ACTIONS") == "true"
+    failed: List[str] = []
+    warned: List[str] = []
+
+    for cat in categories:
+        rc, findings = _run_one_category(cat)
+        crit = sum(1 for f in findings if f.severity == Severity.CRITICAL)
+        warn = sum(1 for f in findings if f.severity == Severity.WARNING)
+        info = sum(1 for f in findings if f.severity == Severity.INFO)
+        if rc >= 2:
+            failed.append(cat)
+            mark = "❌"
+        elif rc == 1:
+            warned.append(cat)
+            mark = "⚠️"
+        else:
+            mark = "✅"
+        print(f"{mark} {cat} (critical={crit} warning={warn} info={info})")
+        if in_github:
+            if rc >= 2:
+                print(f"::error title=rdd-doctor::{cat} CRITICAL ({crit} critical finding(s))")
+                for f in findings:
+                    if f.severity == Severity.CRITICAL:
+                        print(f"::error title=rdd-doctor::{cat} {f.file}:{f.line or '-'} {f.snippet}")
+            elif rc == 1:
+                print(f"::warning title=rdd-doctor::{cat} advisory ({warn} warning(s))")
+
+    if failed and blocking:
+        print(f"❌ rdd-doctor {name} gate: {len(failed)} category failure(s): {', '.join(failed)}")
+        return 1
+    if failed:
+        # Non-blocking gate: report the criticals but never fail the build
+        # (the workflow's advisory step has always been advisory).
+        print(f"⚠️  rdd-doctor {name} gate (non-blocking): {len(failed)} category with critical findings: {', '.join(failed)}")
+        return 0
+    print(f"✅ rdd-doctor {name} gate: all {len(categories)} categories pass"
+          + (f" ({len(warned)} with warnings)" if warned else ""))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="rdd-doctor")
     parser.add_argument("--json", action="store_true", help="Write .rddf/state/.doctor-report.json")
@@ -115,12 +227,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--check", choices=list(_CHECKERS.keys()),
                         help="Alias for --category (e.g. --check orphan-gates)")
     parser.add_argument("--quiet", action="store_true", help="Single-line output, most severe only")
+    parser.add_argument("--gate", choices=sorted(_GATES.keys()),
+                        help="Run a named gate (see _GATES) and aggregate its exit code")
     parser.add_argument("--version", action="store_true")
     args = parser.parse_args(argv)
 
     if args.version:
         print("rdd-doctor 0.1.0")
         return 0
+
+    if args.gate:
+        return run_gate(args.gate)
 
     findings, categories_checked = aggregate_findings(category=args.check or args.category)
 
