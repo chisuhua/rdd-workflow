@@ -57,6 +57,8 @@ from skills._lib.state_reader import (
     read_sessions,
 )
 
+from _lib.dashboard.improvement_status import classify_improvement_status
+
 
 # ---------------------------------------------------------------------------
 # Dataclasses
@@ -492,14 +494,22 @@ def collect(project_root: str) -> DashboardData:
                 continue
             if name in archived_names:
                 continue
+            # An improvement whose leading 状态 marker says it is delivered
+            # (archived / completed / implemented) is NOT pending, even when no
+            # OpenSpec change was ever created for it (doc-only / mechanism
+            # work). Before this rule the section listed every such item as
+            # "待讨论" — the status column was hardcoded, never read.
+            terminal, label = classify_improvement_status(s.get("status") or "")
+            if terminal:
+                continue
             data.suggestions.append(
                 SuggestionEntry(
                     name=name,
-                    priority=s.get("优先级"),
-                    source=s.get("来源"),
-                    status="待讨论",
-                    phase=s.get("阶段"),
-                    category=s.get("分类"),
+                    priority=s.get("priority") or s.get("优先级"),
+                    source=s.get("source") or s.get("来源"),
+                    status=label,
+                    phase=s.get("phase") or s.get("阶段"),
+                    category=s.get("category") or s.get("分类"),
                     effort=s.get("effort"),
                 )
             )

@@ -62,6 +62,15 @@ _STATUS_ICON = {
     "archived":     "📦",
     "committed":    "💼",
     "unknown":      "?",
+    # Improvement lifecycle labels (see _lib/dashboard/improvement_status.py).
+    "已归档":         "📦",
+    "已完成":         "✅",
+    "已实施":         "✅",
+    "部分闭合":       "🔧",
+    "已立项":         "📋",
+    "未立项":         "📋",
+    "Draft":        "📋",
+    "待讨论":         "📋",
 }
 
 # Plain-mode equivalents (ASCII only, no emoji). Single character to
@@ -76,6 +85,15 @@ _STATUS_ICON_PLAIN = {
     "archived":     "-",
     "committed":    "$",
     "unknown":      "?",
+    # Improvement lifecycle labels (see _lib/dashboard/improvement_status.py).
+    "已归档":         "-",
+    "已完成":         "v",
+    "已实施":         "v",
+    "部分闭合":       "*",
+    "已立项":         "+",
+    "未立项":         "+",
+    "Draft":        "+",
+    "待讨论":         "+",
 }
 
 _VERIFICATION_ICON = {
@@ -311,6 +329,18 @@ def _content_line(text: str, width: int) -> str:
     return _BOX_V + " " + text.ljust(inner) + " " + _BOX_V
 
 
+def _ellipsis(text: str, width: int) -> str:
+    """Truncate ``text`` to ``width`` chars, marking the cut with an ellipsis.
+
+    A silent cut (``text[:width]``) makes long names indistinguishable in the
+    table — two rows can end up showing the same prefix. The ellipsis keeps
+    the row recognisable ("cut") instead of pretending it is complete.
+    """
+    if len(text) <= width:
+        return text
+    return text[: width - 1] + "…"
+
+
 def _section_workflow_terminal(data: DashboardData, width: int) -> list[str]:
     lines: list[str] = []
     lines.append(_content_line("1. Workflow Phase", width))
@@ -543,7 +573,7 @@ def _section_pending_terminal(data: DashboardData, width: int) -> list[str]:
         )
         lines.append(
             _content_line(
-                f"  {'NAME':<30} {'PRI':<6} {'STATUS':<18} {'PHASE':<10}",
+                f"  {'NAME':<40} {'PRI':<6} {'STATUS':<12} {'PHASE':<8}",
                 width,
             )
         )
@@ -553,10 +583,10 @@ def _section_pending_terminal(data: DashboardData, width: int) -> list[str]:
             )
             lines.append(
                 _content_line(
-                    f"  {s.name[:30]:<30} "
+                    f"  {_ellipsis(s.name, 40):<40} "
                     f"{s.priority or '-':<6} "
-                    f"{status_col:<18} "
-                    f"{s.phase or '-':<10}",
+                    f"{status_col:<12} "
+                    f"{s.phase or '-':<8}",
                     width,
                 )
             )
@@ -885,7 +915,7 @@ def _p_section_pending(data: DashboardData, width: int) -> str:
         )
         out.append(
             _p_line(
-                f"  {'NAME':<30} {'PRI':<6} {'STATUS':<18} {'PHASE':<10}",
+                f"  {'NAME':<40} {'PRI':<6} {'STATUS':<12} {'PHASE':<8}",
                 width,
             )
         )
@@ -895,10 +925,10 @@ def _p_section_pending(data: DashboardData, width: int) -> str:
             )
             out.append(
                 _p_line(
-                    f"  {s.name[:30]:<30} "
+                    f"  {_ellipsis(s.name, 40):<40} "
                     f"{s.priority or '-':<6} "
-                    f"{status_col:<18} "
-                    f"{s.phase or '-':<10}",
+                    f"{status_col:<12} "
+                    f"{s.phase or '-':<8}",
                     width,
                 )
             )

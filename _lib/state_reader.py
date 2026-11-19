@@ -22,6 +22,10 @@ Design contract
 - **Standard library only**: no new external dependencies.
   ``iteration.store`` is an internal module already required by the
   project (pulls in ``jsonschema`` which is already a declared dep).
+  The single exception is ``_parse_improvement_meta``, which *optionally*
+  uses PyYAML (already a declared dep, and the same parser
+  ``_lib/planner_attach.py`` uses for the very same files); when PyYAML is
+  unavailable it falls back to the legacy inline-meta parser.
 
 Consumed by
 -----------
@@ -288,16 +292,72 @@ def list_change_dirs(project_root: str) -> list[str]:
     return sorted(names)
 
 
-def read_improvement_entries(project_root: str) -> list[dict]:
-    """Read all improvement files from .rddf/improvements/ directory.
-    
-    Returns list of dicts with keys: name, priority, source, phase, category, type.
+def _parse_improvement_meta(content: str) -> dict:
+    """Parse the metadata block of an improvement file.
+
+    Two formats are supported (first match wins):
+
+    1. **YAML front matter** — the current convention (per the ``add-improve``
+       skill template): a ``---`` delimited block of ``key: value`` pairs.
+    2. **Legacy inline meta** — older files carry ``**key**: value`` pairs on
+       the 3rd / 4th line of the file.
+
+    Returns a dict of raw metadata (empty when nothing is found). Never raises.
     """
     import re
+
+    if content.startswith("---\n"):
+        end = content.find("\n---", 4)
+        if end != -1:
+            meta: dict = {}
+            try:
+                import yaml
+            except ImportError:  # pragma: no cover - PyYAML is a declared dep
+                yaml = None  # type: ignore[assignment]
+            if yaml is not None:
+                try:
+                    parsed = yaml.safe_load(content[4:end])
+                except Exception:  # noqa: BLE001 - malformed front matter
+                    parsed = None
+                if isinstance(parsed, dict):
+                    for key, value in parsed.items():
+                        meta[str(key)] = value
+                    return meta
+
+    meta = {}
+    lines = content.split("\n")
+    for idx in (2, 3):
+        if len(lines) <= idx:
+            continue
+        for match in re.finditer(r"\*\*(\S+)\*\*:\s*([^|]+)", lines[idx]):
+            meta[match.group(1)] = match.group(2).strip()
+    return meta
+
+
+def _first_str(meta: dict, *keys: str) -> str:
+    """Return the first non-empty string value among ``keys`` (else "")."""
+    for key in keys:
+        value = meta.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def read_improvement_entries(project_root: str) -> list[dict]:
+    """Read all improvement files from .rddf/improvements/ directory.
+
+    Returns list of dicts with keys: name, priority, source, phase, category,
+    type, status — plus every raw front-matter key verbatim.
+
+    ``priority`` / ``phase`` / ``category`` / ``source`` / ``effort`` /
+    ``status`` are normalized from either the English key (``priority``) or
+    its Chinese alias (``优先级``), so callers do not need to know which
+    convention a given project uses.
+    """
     imp_dir = os.path.join(project_root, ".rddf/improvements")
     if not os.path.isdir(imp_dir):
         return []
-    
+
     entries: list[dict] = []
     for fname in sorted(os.listdir(imp_dir)):
         if not fname.endswith('.md'):
@@ -307,19 +367,20 @@ def read_improvement_entries(project_root: str) -> list[dict]:
         try:
             with open(fpath, encoding="utf-8") as f:
                 content = f.read()
-            lines = content.split('\n')
-            meta_line = lines[2] if len(lines) > 2 else ''
-            for match in re.finditer(r'\*\*(\S+)\*\*:\s*([^|]+)', meta_line):
-                key = match.group(1)
-                val = match.group(2).strip()
-                entry[key] = val
-            if len(lines) > 3:
-                line2 = lines[3]
-                for match in re.finditer(r'\*\*(\S+)\*\*:\s*([^|]+)', line2):
-                    key = match.group(1)
-                    val = match.group(2).strip()
-                    entry[key] = val
         except (OSError, UnicodeDecodeError):
             continue
+        meta = _parse_improvement_meta(content)
+        for key, value in meta.items():
+            if key == "name":
+                # The file name is the canonical key (archive dirs are matched
+                # against it) ⇒ front-matter "name" must not override it.
+                continue
+            entry[key] = value
+        entry["priority"] = _first_str(meta, "priority", "优先级")
+        entry["phase"] = _first_str(meta, "phase", "阶段")
+        entry["category"] = _first_str(meta, "category", "分类")
+        entry["source"] = _first_str(meta, "source", "来源")
+        entry["effort"] = _first_str(meta, "effort", "工作量")
+        entry["status"] = _first_str(meta, "status", "状态")
         entries.append(entry)
     return entries

@@ -12,6 +12,26 @@ in 4 SKILL.md (rdd-arch/planner/builder/verifier/quick). Closes 5 P0 findings fr
 
 ## [Unreleased]
 
+### fix-dashboard-improvement-status（2026-11-20）
+
+修复 `rddf dashboard` §7 Pending 段的 improvement 读取 —— 之前该段**把每个 improvement 都显示成「待讨论」**
+（status 字段被硬编码，从不读文件），且**读不出任何元数据**（解析器只认 2026 之前的 `**key**: value`
+内联格式，且只看第 3/4 行）⇒ `priority` / `phase` / `category` / `effort` 四列恒为 `-`，名字被静默截到
+30 字符。
+
+- **`_lib/dashboard/improvement_status.py`（新）**：`classify_improvement_status(raw)` —— 纯函数，由 `状态`
+  的**前导标记**判定「已交付（terminal）」并给出短标签；只看前导标记 ⇒ 尾部叙述里提到的残留项不会把已交付
+  项翻回 pending；部分闭合（`已闭合`）保持可见。
+- **`_lib/state_reader.py`**：`read_improvement_entries` 支持 **YAML front matter**（`add-improve` skill 的
+  现行格式；PyYAML 可选，缺失时回落内联解析），并归一 `priority` / `phase` / `category` / `source` /
+  `effort` / `status`（中英别名都认），旧内联格式保持兼容。
+- **`_lib/dashboard/__init__.py`**：Pending 段改用真实 status；**已交付的 improvement 不再列入**。
+- **`_lib/dashboard/renderer.py`**：NAME 列 30 → 40 并加省略号（此前静默截断）；新增中文状态标签图标。
+- **测试**：`tests/unit/test_dashboard_improvement_status.py`（20 例）。
+
+⚠️ 数据侧配套（仓库自身）：front matter 里未加引号的 `状态` 值内含 ` #`（如 `Entry #101`）时，YAML 会
+把它当注释起始而**静默截断**值 ⇒ 被本工具读到的状态只剩半句。修法是给值加引号。
+
 ### session-lesson-mining（2026-11-19）
 
 新增技能：**从真实会话历史挖教训 → 固化成 `rdd-workflow-e2e` 的机械判据**。起因是 2026-11-19
