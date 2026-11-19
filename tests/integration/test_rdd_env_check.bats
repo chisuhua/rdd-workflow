@@ -112,9 +112,18 @@ EOF
   rm -rf "$tmpdir"
 }
 
+# Hide the openspec CLI wherever it actually lives. A hardcoded `PATH=/usr/bin:/bin`
+# only works on a dev machine: `npm install -g` lands the CLI in /usr/local/bin on a
+# runner, so it stayed visible and the "missing CLI" simulation silently became a no-op.
+path_without_openspec() {
+  local dir
+  dir=$(dirname "$(command -v openspec 2>/dev/null || echo /nonexistent)")
+  printf '%s' "$PATH" | tr ':' '\n' | grep -vx "$dir" | paste -sd:
+}
+
 @test "rdd_env_check: openspec missing blocks with non-zero + repair guidance" {
   rm -f "$REPO_ROOT/.rddf/state/.env-cache.json"
-  run bash -c "cd '$REPO_ROOT' && export PATH=/usr/bin:/bin && source '$ENV_CHECK' && _run_env_check_cached"
+  run bash -c "cd '$REPO_ROOT' && export PATH='$(path_without_openspec)' && source '$ENV_CHECK' && _run_env_check_cached"
   # cache 不存在 + openspec 缺失 → 阻断, 退出非 0
   [ "$status" -ne 0 ]
   echo "$output" | grep -q 'openspec'

@@ -65,7 +65,12 @@ load ../test_helper
   echo "x" > README.md && git add . && git commit -q -m "init"
   git worktree add -b openspec/test-change .rddf/wt/test-change HEAD >/dev/null 2>&1
   # Simulate the BROKEN inline version exactly as it appears in status.md
-  inline_result=$(git worktree list 2>/dev/null | awk -v br='\[openspec/test-change\]' '$3 == br {print $1; exit}')
+  # NOTE: the escaped pattern is written with DOUBLE backslashes on purpose.
+  # mawk keeps `\[` as a literal backslash (pattern never matches ⇒ the bug),
+  # gawk reports "escape sequence \[ treated as plain [" and strips it ⇒ the
+  # pattern DOES match ⇒ this regression assertion flipped on a machine whose
+  # awk is gawk (CI). `\\[` normalises both dialects to a literal backslash.
+  inline_result=$(git worktree list 2>/dev/null | awk -v br='\\[openspec/test-change\\]' '$3 == br {print $1; exit}')
   rm -rf "$TEST_REPO"
   [ -z "$inline_result" ]
 }

@@ -120,9 +120,13 @@ teardown_file() {
 }
 
 @test "run_arch_env_check_fails_when_openspec_missing" {
-  # Mock PATH to exclude openspec
-  local output
-  output=$(PATH=/usr/bin:/bin bash -c "cd '$MIN_REPO' && source skills/rdd-arch/scripts/arch_env_check.sh && run_arch_env_check" 2>&1) || true
+  # Exclude openspec from PATH wherever it is installed (on a runner `npm install -g`
+  # puts it in /usr/local/bin, so `PATH=/usr/bin:/bin` no longer hides it).
+  local output openspec_dir
+  openspec_dir=$(dirname "$(command -v openspec 2>/dev/null || echo /nonexistent)")
+  local clean_path
+  clean_path=$(printf '%s' "$PATH" | tr ':' '\n' | grep -vx "$openspec_dir" | paste -sd:)
+  output=$(PATH="$clean_path" bash -c "cd '$MIN_REPO' && source skills/rdd-arch/scripts/arch_env_check.sh && run_arch_env_check" 2>&1) || true
   echo "$output" | grep -q 'openspec CLI 未找到'
 }
 
