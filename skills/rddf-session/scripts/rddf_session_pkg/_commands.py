@@ -92,9 +92,6 @@ class RddfSessionCommands:
             if os.environ.get("RDDF_ALLOW_CROSS_STAGE_PARALLEL", "").lower() not in ("yes", "true", "1"):
                 for existing in data["sessions"]:
                     if existing["state"] == "active" and existing["kind"] != kind:
-                        # v3 exemption: stage_guide is bidirectional with any kind
-                        if existing["kind"] == "stage_guide" or kind == "stage_guide":
-                            continue
                         # v4 exemption: stage_builder/verify/quick can mix with each other
                         if existing["kind"] in _V4_NEW_KINDS and kind in _V4_NEW_KINDS:
                             continue

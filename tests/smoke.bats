@@ -24,7 +24,6 @@ load test_helper
 
 @test "v4.x baseline skills still present (regression)" {
   [ -f "skills/INSTALL.md" ]
-  [ -f "skills/guide/SKILL.md" ]
   [ -f "skills/rdd-arch/SKILL.md" ]
   [ -f "skills/rdd-planner/SKILL.md" ]
   [ -f "skills/rdd-builder/SKILL.md" ]

@@ -1,6 +1,6 @@
 # ADR-0056: Guide Session 作为唯一交互入口的最小用法流程
 
-> **状态**: 已采纳
+> **状态**: 已采纳。**Superseded by ADR-0063（2026-11-19）**
 > **日期**: 2026-09-24
 > **决策者**: sisyphus (受用户委托起草)
 > **依据**: ADR-0017 (rddf-session), ADR-0043 (v4 stage-merge), ADR-0048 (rdd-builder auto-pick), ADR-0055 (Guide-as-Orchestrator Session + Cross-Container Event Bus), ADR-0054 (Objective tracking)

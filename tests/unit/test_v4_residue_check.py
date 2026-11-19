@@ -73,6 +73,21 @@ def test_r2_run_idiom_is_flagged(tmp_path):
     assert len(r2) == 1, findings
 
 
+def test_r2_or_idiom_is_flagged(tmp_path):
+    """`(Run rdd-arch or guide-plan to start.)` 这类 idiom 也必须报。
+
+    scan-state.sh:669 的真实形态 —— `\brun guide-` 要求 run 紧跟 guide，漏掉了 `or guide-`。
+    """
+    src = tmp_path / "skills" / "demo" / "scripts"
+    src.mkdir(parents=True)
+    (src / "demo.py").write_text(
+        'MSG = "No orphaned sessions found. Run rdd-arch or guide-plan to start."\n',
+        encoding="utf-8")
+    findings = v4_residue_check.run(tmp_path)
+    r2 = [f for f in findings if "R2" in f.snippet]
+    assert len(r2) == 1, findings
+
+
 def test_r2_comment_and_docstring_are_exempt(tmp_path):
     """注释与 docstring 里的历史名是考古信息，不得报。"""
     src = tmp_path / "skills" / "demo" / "scripts"

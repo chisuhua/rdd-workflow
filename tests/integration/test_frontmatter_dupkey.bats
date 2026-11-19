@@ -12,8 +12,8 @@ assert_no_dup_version() {
   [ "$n" -le 1 ] || { echo "FAIL: $f has $n version keys (want <=1)"; return 1; }
 }
 
-@test "guide.md frontmatter has at most one version key" {
-  assert_no_dup_version skills/guide/SKILL.md
+@test "rdd-arch.md frontmatter has at most one version key" {
+  assert_no_dup_version skills/rdd-arch/SKILL.md
 }
 
 @test "status.md frontmatter has at most one version key" {
@@ -75,10 +75,10 @@ except Exception:
   fi
 }
 
-@test "guide.md metadata.version matches skill_field semver pattern" {
+@test "rdd-arch.md metadata.version matches skill_field semver pattern" {
   run python3 -c "
 import yaml,sys
-d=yaml.safe_load(open('skills/guide/SKILL.md').read().split('---',2)[1])
+d=yaml.safe_load(open('skills/rdd-arch/SKILL.md').read().split('---',2)[1])
 v=d.get('metadata',{}).get('version','')
 import re
 sys.exit(0 if re.match(r'^\d+\.\d+(\.\d+)?$', str(v)) else 2)

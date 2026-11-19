@@ -92,20 +92,6 @@ EOF
 }
 
 # ---------------------------------------------------------------------------
-# Task 2 tests: guide_entry.sh wires detect_approved_inconsistency
-# ---------------------------------------------------------------------------
-
-@test "approved_inconsistency: guide_entry.sh calls detect_approved_inconsistency" {
-    run grep -F "detect_approved_inconsistency" "$REPO_ROOT/skills/guide/scripts/guide_entry.sh"
-    [ "$status" -eq 0 ]
-}
-
-@test "approved_inconsistency: guide_entry.sh sources state.sh" {
-    run grep -E "source.*state\.sh" "$REPO_ROOT/skills/guide/scripts/guide_entry.sh"
-    [ "$status" -eq 0 ]
-}
-
-# ---------------------------------------------------------------------------
 # Task 3 tests: e2e smoke regression
 # ---------------------------------------------------------------------------
 

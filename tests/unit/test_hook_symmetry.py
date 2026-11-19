@@ -13,10 +13,10 @@ def test_hook_function_count():
         capture_output=True, text=True, cwd=str(Path(__file__).resolve().parents[2])
     )
     
-    # Should have: entry, close, heartbeat, attach, detach, guide_entry, guide_close (7)
-    # plus poll_events (added by add-guide-polling-loop-implementation) = 8 hooks
+    # entry, close, heartbeat, attach, detach = 5 hooks.
+    # guide_entry / guide_close / poll_events were retired with ADR-0063.
     count = int(result.stdout.strip())
-    assert count == 8, f"Expected 8 hooks, found {count}"
+    assert count == 5, f"Expected 5 hooks, found {count}"
 
 
 def test_attach_detach_symmetry():

@@ -170,6 +170,6 @@ description 不引导 agent 走 deprecated / legacy 入口(如 propose 子技能
 
 - `skills/rdd-builder/SKILL.md` L3-15 — 本 ADR 起草日已应用的 v3 描述样本
 - `skills/rdd-builder/SKILL.md` L36+ — `role.boundaries` SSOT
-- `skills/guide/SKILL.md` — 反触发 SSOT 候选位置
+- `skills/guide/SKILL.md` — 反触发 SSOT 候选位置（**2026-11-19 归档**；载体迁移到 ADR-0062 收敛后的单一推荐实现，`rddf guide` 为入口 —— 见 ADR-0063 Decision 8）
 - Oracle review session `ses_f5bf53e0bffemcDQZvdcZQmweW` — 2026-09-15 rdd-builder description 审查
 - `docs/adr/README.md` — ADR 索引(本 ADR 起草后,索引末尾追加 ADR-0051 行)

@@ -8,9 +8,7 @@ set -e
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SCRIPTS=(
-    "$REPO_ROOT/skills/guide-arch/scripts/arch_env_check.sh"
-    "$REPO_ROOT/skills/guide-plan/scripts/plan_intake.sh"
-    "$REPO_ROOT/skills/guide-ship/scripts/ship_env_check.sh"
+    "$REPO_ROOT/skills/rdd-arch/scripts/arch_env_check.sh"
     "$REPO_ROOT/skills/execute/scripts/select_worktree.sh"
 )
 

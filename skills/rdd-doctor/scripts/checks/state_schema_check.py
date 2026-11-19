@@ -260,20 +260,15 @@ def run(project_root: Path | None = None) -> List[Finding]:
 
 
 def _check_events_jsonl(events_file: Path, state_dir: Path) -> List[Finding]:
-    """Validate events.jsonl workflow event bus (v3 per feat-guide-orchestrator-session-event-bus).
+    """Validate events.jsonl workflow event bus.
 
-    Two assertions per AC-12:
-    1. Each line is valid JSON.
-    2. stage_guide.goal.last_seen_offset references a valid line index (0-based).
+    One assertion: each line is valid JSON.
 
-    v3 line numbers are 0-based (events_log.py read_since contract). A
-    last_seen_offset >= total_lines means the next read returns empty until
-    new events arrive; if last_seen_offset > total_lines by a large margin,
-    it's likely a stale reference after archive_events that wasn't reset.
+    The stage_guide ``goal.last_seen_offset`` reference check was retired
+    with ADR-0063 (Guide-as-Orchestrator 退役); the event bus itself is
+    retained because it serves every stage, not only stage_guide.
     """
     findings: List[Finding] = []
-    # Parse all lines; track total line count and per-line parse success.
-    valid_lines = 0
     bad_line_nos: List[int] = []
     with open(events_file) as f:
         for line_no, raw in enumerate(f, 0):  # 0-based line numbering
@@ -282,10 +277,8 @@ def _check_events_jsonl(events_file: Path, state_dir: Path) -> List[Finding]:
                 continue
             try:
                 json.loads(line)
-                valid_lines += 1
-            except json.JSONDecodeError as e:
+            except json.JSONDecodeError:
                 bad_line_nos.append(line_no)
-    # Malformed line findings (per-line JSON check).
     for line_no in bad_line_nos:
         findings.append(Finding(
             severity=Severity.CRITICAL,
@@ -295,41 +288,5 @@ def _check_events_jsonl(events_file: Path, state_dir: Path) -> List[Finding]:
             snippet=f"invalid JSON in events.jsonl line {line_no + 1}",
             fix_hint="re-run hooks.sh to rewrite events, or restore from archive",
         ))
-
-    # stage_guide.goal.last_seen_offset reference check (AC-12 assertion #2).
-    sessions_file = state_dir / "sessions.json"
-    if not sessions_file.is_file():
-        return findings
-    try:
-        sessions_data = json.loads(sessions_file.read_text())
-    except json.JSONDecodeError:
-        # Session file malformed — already reported by the main loop; skip here.
-        return findings
-    for session in sessions_data.get("sessions", []):
-        if session.get("kind") != "stage_guide":
-            continue
-        goal = session.get("goal", {})
-        offset = goal.get("last_seen_offset")
-        if not isinstance(offset, int):
-            continue
-        # last_seen_offset is 0-based line index (events_log.py read_since contract).
-        # If offset > total valid lines, the next read returns [] until new events arrive.
-        # This is allowed (will re-read on next event) — only flag if massively out of range.
-        if offset > valid_lines + 1000:
-            findings.append(Finding(
-                severity=Severity.WARNING,
-                category="state",
-                file=str(sessions_file),
-                line=None,
-                snippet=(
-                    f"stage_guide session {session.get('session_id')} has "
-                    f"goal.last_seen_offset={offset} which is far beyond events.jsonl "
-                    f"line count ({valid_lines}); possible stale reference after "
-                    f"archive_events (see ADR-0055 §Metis B4 — last_seen_offset should reset to 0 on archive)"
-                ),
-                fix_hint=(
-                    "re-emit guide session or manually update goal.last_seen_offset "
-                    "to a valid line index (0-based) or 0 for fresh re-read"
-                ),
-            ))
     return findings
+

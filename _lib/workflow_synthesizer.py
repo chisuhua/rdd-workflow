@@ -30,39 +30,18 @@ Consumes (read-only)
 - ``skills/_lib/state_reader.py`` (existing data layer)
 - ``git worktree list --porcelain`` (read-only subprocess)
 
-Decision tree (priority ladder, mirrors scan-state.sh::scan_state)
--------------------------------------------------------------------
-Priority order (highest first):
-    1.  arch-handoff missing                     -> rdd-arch (high)
-    2.  arch-handoff present, adr_count < 1      -> rdd-arch (high, recover)
-    3.  arch done, planner-handoff missing       -> rdd-planner (high)
-    4.  planner-handoff present, 0 active change -> rdd-builder (high, 变更生成)
-    5.  planner-handoff present, active change   -> rdd-builder (high)
-    6.  worktree with incomplete tasks           -> rdd-builder (medium)
-    7.  detached openspec worktrees              -> rdd-builder (medium)
-    8.  worktree tasks all completed             -> rdd-builder (medium, archive)
-    9.  committed change in HEAD, no worktree    -> rdd-builder (medium)
-    10. no roadmap.md                            -> rdd-builder (low)
-    11. no openspec/changes/                     -> rdd-builder (low)
-    12. improvement-approved.md has approved entries -> rdd-builder (high)
-    13. default                                  -> rdd-builder (low)
+Stage recommendation
+---------------------
+The priority ladder is NOT implemented here. It lives in
+``skills._lib.recommender.scan_state`` (ADR-0062) and is shared with the
+``rddf guide`` CLI; the retired bash copy went away with ``skills/guide/``
+(ADR-0063). This module consumes it and adds the render-facing parts:
+phase status, menu options, sessions, and child progress.
 
-The v4 planner handoff (``.planner-handoff.json``) is the authoritative
-planner-stage marker. The v3 handoff files are consulted ONLY as a
-read-only legacy fallback (never written by v4 stages) — see
-``_decision_tree`` for the marker-kind dispatch. Active-change detection
-comes from the filesystem — ``planner-handoff-v1`` defines no
-``active_changes`` field, so reading it always yielded 0.
-
-Paths 10-13 are implicitly unreachable because earlier paths catch all
-those states first. The enumeration is preserved for parity with
-scan-state.sh documentation but the actual decision tree short-circuits
-at paths 1-9.
-
-Confidence levels:
-    - ``high``: paths 1-5 (handoff-based, deterministic)
-    - ``medium``: paths 6-9 (worktree/git-based)
-    - ``low``: paths 10-13 (fallback) + never-raises fallback
+Confidence levels come from that ladder:
+    - ``high``: handoff-based (deterministic)
+    - ``medium``: worktree/git-based
+    - ``low``: the never-raises fallback below
 """
 from __future__ import annotations
 
@@ -71,7 +50,7 @@ import subprocess
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
-from skills._lib import state_reader
+from skills._lib import recommender, state_reader
 
 
 # ---------------------------------------------------------------------------
@@ -241,7 +220,6 @@ def synthesize(project_root: str) -> WorkflowRecommendation:
     try:
         arch_handoff = state_reader.read_arch_handoff(project_root)
         design_handoff = state_reader.read_design_handoff(project_root)
-        plan_handoff = state_reader.read_plan_handoff(project_root)
         planner_handoff = state_reader.read_planner_handoff(project_root)
         iteration = state_reader.read_iteration(project_root)
         sessions = state_reader.read_sessions(project_root)
@@ -259,14 +237,7 @@ def synthesize(project_root: str) -> WorkflowRecommendation:
         active_children = _active_stage_x_children(sessions)
         child_progress = _read_events_for_children(project_root, active_children)
 
-        suggested, reason, confidence = _decision_tree(
-            project_root,
-            arch_handoff,
-            design_handoff,
-            planner_handoff,
-            plan_handoff,
-            iteration,
-        )
+        suggested, reason, confidence = recommender.scan_state(project_root)
 
         wt_issues = _detect_working_tree_issues(project_root)
         options = _build_all_options(
@@ -569,8 +540,13 @@ def _read_events_for_children(
 # ---------------------------------------------------------------------------
 
 
-def _count_active_changes(iteration: Optional[dict]) -> int:
-    """Count non-archived changes in iteration.json (FS_ACTIVE_COUNT)."""
+def _count_active_changes_in_iteration(iteration: Optional[dict]) -> int:
+    """Count non-archived changes in iteration.json (FS_ACTIVE_COUNT).
+
+    NOTE: this counts the iteration.json ledger, NOT the filesystem.
+    The shared ladder (``_lib/recommender.py``) counts change directories
+    on disk — the two must not be confused (ADR-0062).
+    """
     if not iteration or not isinstance(iteration, dict):
         return 0
     changes = iteration.get("changes")
@@ -631,7 +607,7 @@ def _build_all_options(
     # the ship option below (both with id="rdd-builder" and
     # action="rdd-builder", only the label/description differed). The ship
     # option is the canonical builder entry.
-    _fs_active_count = _count_active_changes(iteration)
+    _fs_active_count = _count_active_changes_in_iteration(iteration)
     stage_options = [
         ("rdd-arch", "架构定义", "setup -> ADR -> roadmap -> arch-done"),
         # NOT "提案创建": per ADR-0025, rdd-planner does NOT own
@@ -740,228 +716,6 @@ def _build_all_options(
         ))
 
     return tuple(options)
-
-
-# ---------------------------------------------------------------------------
-# Worktree + git state helpers
-# ---------------------------------------------------------------------------
-
-
-def _list_worktrees(project_root: str) -> list:
-    """List git worktrees (delegates to state_reader).
-
-    Returns a list of dicts with keys ``path``, ``branch``,
-    ``is_openspec``. Empty list on any error. Never raises.
-    """
-    return state_reader.list_worktrees()
-
-
-def _worktree_has_incomplete_tasks(wt_path: str) -> bool:
-    """Check if a worktree has any openspec change tasks.md with ``- [ ]``.
-
-    Scans ``<wt_path>/openspec/changes/<name>/tasks.md`` for lines
-    starting with ``- [ ]`` (incomplete task marker). Returns
-    ``True`` on first match. Returns ``False`` when no tasks.md
-    files exist or all tasks are complete. Never raises.
-    """
-    changes_dir = os.path.join(wt_path, "openspec", "changes")
-    try:
-        entries = os.listdir(changes_dir)
-    except (FileNotFoundError, OSError):
-        return False
-    for name in entries:
-        if name == "archive":
-            continue
-        tasks_path = os.path.join(changes_dir, name, "tasks.md")
-        if not os.path.isfile(tasks_path):
-            continue
-        try:
-            with open(tasks_path, "r", encoding="utf-8") as f:
-                content = f.read()
-        except (FileNotFoundError, OSError):
-            continue
-        # Match both "\n- [ ]" (mid-file) and "- [ ]" at file start
-        if "\n- [ ]" in content or content.startswith("- [ ]"):
-            return True
-    return False
-
-
-def _committed_change_in_head(project_root: str) -> bool:
-    """Check if HEAD has a committed change (any ``.openspec.yaml``).
-
-    Iterates ``openspec/changes/<name>/.openspec.yaml`` and uses
-    ``git show HEAD:<path>`` to verify the file is committed. Returns
-    ``True`` on first match. Returns ``False`` when no changes dir,
-    no committed changes, or git errors. Never raises.
-    """
-    changes_dir = os.path.join(project_root, "openspec", "changes")
-    try:
-        entries = os.listdir(changes_dir)
-    except (FileNotFoundError, OSError):
-        return False
-    for name in entries:
-        if name == "archive":
-            continue
-        try:
-            result = subprocess.run(
-                ["git", "show", f"HEAD:openspec/changes/{name}/.openspec.yaml"],
-                capture_output=True,
-                cwd=project_root,
-                timeout=5,
-            )
-            if result.returncode == 0:
-                return True
-        except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
-            continue
-    return False
-
-
-# ---------------------------------------------------------------------------
-# Decision tree
-# ---------------------------------------------------------------------------
-
-
-def _count_active_changes_on_disk(project_root: str) -> int:
-    """Number of non-archived change directories on disk.
-
-    Active-change detection source of truth: ``planner-handoff-v1`` defines
-    no ``active_changes`` field, so reading it always yielded 0 and made
-    every v4 project look like a leftover. The filesystem cannot lie.
-    """
-    changes_dir = os.path.join(project_root, "openspec", "changes")
-    if not os.path.isdir(changes_dir):
-        return 0
-    try:
-        entries = os.listdir(changes_dir)
-    except OSError:
-        return 0
-    count = 0
-    for name in entries:
-        if name == "archive":
-            continue
-        if os.path.isdir(os.path.join(changes_dir, name)):
-            count += 1
-    return count
-
-
-def _decision_tree(
-    project_root: str,
-    arch_h: Optional[dict],
-    design_h: Optional[dict],
-    planner_h: Optional[dict],
-    v3_plan_h: Optional[dict],
-    iteration: Optional[dict],
-) -> Tuple[str, str, str]:
-    """Priority decision tree.
-
-    Returns a ``(suggested_action, reason, confidence)`` tuple.
-    See module docstring for the full priority table.
-
-    ``design_h`` and ``v3_plan_h`` are the v3 handoffs: kept in the
-    signature for call compatibility. They are consulted ONLY as a legacy
-    fallback when the v4 planner handoff (``.planner-handoff.json``) is
-    absent — v3 projects keep their original behaviour.
-
-    Paths 10-13 (no roadmap, no openspec/changes, pending proposal,
-    default) are implicitly unreachable because earlier paths catch all
-    those states first. The enumeration is preserved for parity with
-    scan-state.sh documentation.
-    """
-    # Path 1: arch-handoff missing -> rdd-arch
-    if arch_h is None:
-        return ("rdd-arch", "无 arch-handoff -> 进入架构定义", "high")
-
-    # Path 2: arch-handoff exists but ADR count < 1 -> rdd-arch (recover)
-    adr_count = arch_h.get("adr_count", 0) if isinstance(arch_h, dict) else 0
-    if not isinstance(adr_count, int) or adr_count < 1:
-        return (
-            "rdd-arch",
-            "arch-done 未完成 (ADR 数量不足 -> 回到 adr-create 阶段)",
-            "high",
-        )
-
-    # Effective planner marker: v4 wins; v3 handoffs are a legacy fallback.
-    # A corrupt v4 file reads as None (state_reader returns None on invalid
-    # JSON) and therefore never counts as "planner complete".
-    marker_kind: Optional[str] = None
-    if planner_h is not None:
-        marker_kind = "v4-planner"
-    elif v3_plan_h is not None:
-        marker_kind = "v3-plan"
-    elif design_h is not None:
-        marker_kind = "v3-design"
-
-    # Path 3: arch done, no planner marker -> rdd-planner
-    # (v4 四阶段: arch → planner → builder → verifier)
-    if marker_kind is None:
-        return (
-            "rdd-planner",
-            "arch-done 已完成 -> 进入 planner 阶段（.planner-handoff.json 尚未生成）",
-            "high",
-        )
-
-    # Path 3b: v3 design-handoff only -> 变更生成 (v3 semantics)
-    if marker_kind == "v3-design":
-        return ("rdd-builder", "design-done 已完成 -> 进入变更生成", "high")
-
-    active_count = 0
-    if marker_kind == "v3-plan":
-        # v3 semantics: the handoff carries an `active_changes` count
-        active_count = (
-            v3_plan_h.get("active_changes", 0) if isinstance(v3_plan_h, dict) else 0
-        )
-        if not isinstance(active_count, int):
-            active_count = 0
-        if active_count == 0:
-            return (
-                "rdd-builder",
-                "plan-handoff 残留 (无活跃 change -> 进入 ship 清理/归档)",
-                "high",
-            )
-    else:
-        # v4 semantics: planner-handoff-v1 defines no `active_changes` field,
-        # so the filesystem is the only reliable source.
-        fs_active = _count_active_changes_on_disk(project_root)
-        if fs_active == 0:
-            return (
-                "rdd-builder",
-                "planner-handoff 已完成 -> 进入变更生成",
-                "high",
-            )
-
-    # Paths 7-9: worktree + git state (only reached when the planner stage
-    # is done; we still check worktree state because the handoff may be stale).
-    worktrees = _list_worktrees(project_root)
-    openspec_wts = [w for w in worktrees if w.get("is_openspec")]
-
-    # Path 7: worktree with incomplete tasks -> rdd-builder
-    for wt in openspec_wts:
-        wt_path = wt.get("path")
-        if wt_path and _worktree_has_incomplete_tasks(wt_path):
-            return (
-                "rdd-builder",
-                "worktree 存在,任务未完成 -> 继续执行",
-                "medium",
-            )
-
-    # Path 8 / 9: detached openspec worktrees (with or without complete tasks)
-    if openspec_wts:
-        return (
-            "rdd-builder",
-            f"{len(openspec_wts)} 个 worktree 在跑（可能在分离终端）",
-            "medium",
-        )
-
-    # Path 10: committed change in HEAD, no worktree -> rdd-builder
-    if _committed_change_in_head(project_root):
-        return ("rdd-builder", "有已 commit 的 change 待建 worktree", "medium")
-
-    # Path 5: planner stage done -> rdd-builder
-    # NOTE: unlike the bash ladder, this function does NOT cross-validate
-    # the handoff against the filesystem for v3 projects — that check only
-    # ever existed in scan-state.sh, and adding it here would change the
-    # v3 recommendation.
-    return ("rdd-builder", "变更生成已完成 -> 进入变更执行", "high")
 
 
 # ---------------------------------------------------------------------------
@@ -1101,9 +855,8 @@ def _fallback_recommendation() -> WorkflowRecommendation:
     """Build the never-raises fallback recommendation.
 
     Used when ``synthesize()`` catches an unexpected exception. The
-    fallback always points to ``guide-ship`` with ``confidence="low"``
-    so the recommender still produces output (and ``scan-state.sh``
-    fallback in ``guide.md`` will further refine it).
+    fallback points to ``rdd-builder`` with ``confidence="low"`` so the
+    recommender still produces output.
     """
     return WorkflowRecommendation(
         suggested_action="rdd-builder",
@@ -1121,8 +874,8 @@ def _fallback_recommendation() -> WorkflowRecommendation:
         all_options=(
             MenuOption("rdd-builder", "rdd-builder", "继续工作流", "rdd-builder", "recommended"),
             MenuOption("rdd-arch", "架构定义", "setup → ADR → roadmap → arch-done", "rdd-arch", "stages"),
-            MenuOption("rdd-builder", "设计阶段", "提案创建 / 审查 / 批准 / design-done", "rdd-builder", "stages"),
-            MenuOption("rdd-builder", "变更生成", "scan → propose → deps → plan-done", "rdd-builder", "stages"),
+            MenuOption("rdd-planner", "规划阶段", "improvement 草稿创建 / 审查 / 批准 / planner-done", "rdd-planner", "stages"),
+            MenuOption("rdd-verifier", "验收阶段", "AC 验证 / 失败回环 / archive gate", "rdd-verifier", "stages"),
             MenuOption("add-improve", "add-improve", "创建新改进提案 — .rddf/improvements/<name>.md + 注册索引", "add-improve", "utilities"),
         ),
         wt_issues=(),

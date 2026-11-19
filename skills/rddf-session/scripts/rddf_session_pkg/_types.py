@@ -24,7 +24,8 @@ LOCK_TIMEOUT_SECONDS = 5.0
 # v2.1: Accept both naming conventions for better UX
 # - stage_arch / stage_design / stage_plan / stage_ship (internal canonical)
 # - rdd-arch / guide-design / guide-plan / guide-ship (user-friendly, matches skill names)
-# v3 (feat-guide-orchestrator-session-event-bus): add stage_guide + guide-orchestrator (Oracle B2 belt-and-suspenders)
+# v3 (feat-guide-orchestrator-session-event-bus): add stage_guide + guide-orchestrator
+#   RETIRED by ADR-0063 — values kept as legacy so pre-2026-11-19 sessions.json validates.
 # v4 (complete-guide-orchestrator-flow Step A.1 / D6): add stage_builder/verify/quick
 #   + rdd-builder/verifier/quick aliases to fix root cause of empty events.jsonl
 #   (SKILL.md passes these names but kind-enum rejected silently).

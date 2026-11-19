@@ -124,7 +124,7 @@ bats tests/integration/test_global_install_external_project.bats   # 11/11 pass
 - 有活跃 worktree **或** 多个 change → 🔀 **worktree 模式** (创建隔离 worktree)
 
 `guide-spec` 已在 v2.0 移除（原为 60 行别名，内部按序调用 `rdd-arch` → `guide-plan`）。请直接使用 v4 四阶段流程：`rdd-arch` → `rdd-planner` → `rdd-builder` → `rdd-verifier`（或 `rdd-quick` 旁路）。
-`guide` 是无状态推荐器, 扫描项目状态推荐下一步, 不写文件, 不调 openspec CLI.
+`rddf guide` 是无状态推荐器, 扫描项目状态推荐下一步, 不写文件, 不调 openspec CLI。`skills/guide/` 已于 2026-11-19 归档到 `docs/legacy/`（ADR-0063）。
 
 ## 关键目录
 
@@ -133,6 +133,7 @@ _lib/                          # ⭐ 真实实现层 (commit c3a90fe "flatten pa
   state.sh / worktree.sh / archive.sh / status_helpers.sh / discover-arch-artifacts.sh / env_checks.sh / parallel_throttle.sh / resolve_skill_name.sh / sessions_count.sh / ship_execution_mode.sh / ship_parallel.sh / skill_root.sh / wave_scheduler_hooks.sh / discover_ship_changes.sh / discover_roadmap_fragments.sh / post_archive_cleanup.sh / check_project_setup.sh / orchestrator_entry.sh / post_flow_wrap.sh  # bash 工具 (~19 files)
   cli/                         # 28 个 `rddf` 子命令 (ac_verify/archive/cleanup/contract_check/dashboard/deps/discover_ship_changes/doctor/feature/guide/init/issue/iteration_strict/l2_trend/migrate_improvements/monitor/orchestrate/rdd_hub_bootstrap/report_issue/roadmap/sessions/status/sync_hub/validate/version/watch_hub/archive_sync 等)
   gate.py / roadmap_state.py / config.py / session.py / session_base.py / session_manager.py / session_stats.py  # 跨切核心模块 (会话 + 状态)
+  recommender.py           # ⭐ 阶段推荐阶梯的唯一实现 (ADR-0062) — `rddf guide` 与 `rddf monitor` 共用
   arch_quality_gate.py / change_alignment.py / dependency_scheduler.py / event_context.py / rate_limiter.py / roadmap_sprint.py / trigger_engine.py / trigger_registry.py / triggers.py / validate_delta_targets.py / validate_report.py  # 其余顶层模块
   adr_catalog.py / cleanup_plan_handoff.py / contract_diff.py / cross_repo_audit.py / cross_repo_deps.py / cross_repo_deps_cache.py / cross_repo_gate.py / cross_repo_state.py / gh_hub_client.py / hub_issue.py  # P1-1a 迁移的 10 个跨 repo 模块
   core/                        # 运行时内核 (6 .py): event_log, event_types, state_vector, defaults, lock, atomic_write
@@ -143,7 +144,6 @@ _lib/                          # ⭐ 真实实现层 (commit c3a90fe "flatten pa
   loop_engine.py               # v2.0 Loop 引擎入口（向后兼容 shim 实际实现在 _lib/loop_engine.py）
 skills/                        # Markdown skills (28 SKILL.md + INSTALL.md) + per-skill scripts/
   INSTALL.md                   # 第一入口 (v1.1.0)
-  guide/SKILL.md               # 推荐器
   rdd-arch/SKILL.md          # arch 阶段 (v2.0.8 Phase 2 重组)
   rdd-planner/SKILL.md (was guide-design)        # design 阶段 (v2.1 新增)
   rdd-builder/SKILL.md (was guide-plan)          # plan 阶段

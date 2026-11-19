@@ -1,10 +1,15 @@
-"""Tests for sessions schema v3 + _VALID_KINDS dual-add + stage_guide exemption.
+"""Tests for sessions schema v3 + _VALID_KINDS dual-add.
 
-Per feat-guide-orchestrator-session-event-bus (ADR-0055 v3, Oracle + Metis revised).
+Per feat-guide-orchestrator-session-event-bus (ADR-0055 v3). The stage_guide
+cross-stage exemption was retired by ADR-0063; the kind values themselves are
+kept as legacy so pre-2026-11-19 sessions.json still validates.
 """
 from __future__ import annotations
 
+import pytest
+
 from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
+from skills.rddf_session.scripts.rddf_session_pkg._types import ConflictError
 from skills.rddf_session.scripts.rddf_session_pkg._types import (
     HEARTBEAT_TIMEOUT_BY_KIND,
     _KIND_ALIAS,
@@ -47,24 +52,22 @@ def test_stage_guide_create_session_succeeds(tmp_path):
     assert session.goal.get("last_seen_offset") == 0
 
 
-def test_stage_guide_allows_parallel_stage_arch(tmp_path):
-    """Oracle B1: stage_guide + stage_arch can coexist (bidirectional)."""
+def test_stage_guide_no_longer_exempt_from_stage_conflict(tmp_path):
+    """ADR-0063 retired the stage_guide cross-stage exemption: a legacy
+    stage_guide session now blocks a new stage_arch like any other kind."""
     sessions_file = tmp_path / "sessions.json"
     coord = RddfSessionCoordinator(sessions_file=str(sessions_file))
-    sid_guide = coord.create_session(
+    coord.create_session(
         kind="stage_guide",
         owner_opencode_session_id="ses_A",
         goal={"intent": "guide-orchestrator", "last_seen_offset": 0},
     )
-    sid_arch = coord.create_session(
-        kind="stage_arch",
-        owner_opencode_session_id="ses_B",
-        goal={"intent": "guide-arch"},
-    )
-    assert sid_guide != sid_arch
-    sessions = coord.list_sessions()
-    kinds = {s.kind for s in sessions}
-    assert {"stage_guide", "stage_arch"}.issubset(kinds)
+    with pytest.raises(ConflictError):
+        coord.create_session(
+            kind="stage_arch",
+            owner_opencode_session_id="ses_B",
+            goal={"intent": "guide-arch"},
+        )
 
 
 def test_stage_guide_extended_timeout():

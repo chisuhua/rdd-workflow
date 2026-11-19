@@ -304,15 +304,15 @@ class TestCrossOwnerAggregation:
         # Window B runs builder
         proc_b = _run_hook("stage_builder", "rdd-builder", owner="owner_B_window2")
         assert proc_b.returncode == 0
-        # Window A (guide owner_A) — no active child itself, but wants to see B
-        proc_a = _run_hook("stage_guide", "guide-orchestrator", owner="owner_A_window1")
+        # Window A (verify owner_A) — no active child itself, but wants to see B
+        proc_a = _run_hook("stage_verify", "rdd-verifier", owner="owner_A_window1")
         assert proc_a.returncode == 0
 
         rec = synthesize(str(tmp_project))
         # Both children visible (not filtered by owner)
         kinds = {cp.kind for cp in rec.child_progress}
         assert "stage_builder" in kinds
-        assert "stage_guide" in kinds
+        assert "stage_verify" in kinds
 
 
 # --- Writer/reader roundtrip (catches format drift) ---

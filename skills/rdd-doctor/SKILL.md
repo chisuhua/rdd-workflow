@@ -23,7 +23,7 @@ metadata:
 ## 调用
 
 ```bash
-bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,roadmap-meta,proposal-table,proposal-section,tasks-checkbox,migration-residue,orphan-gates,roadmap-refs,roadmap-feature,roadmap-md-integrity,roadmap-phases,docs-consistency,ai-context-bootstrap,gitignore,bypass-audit,improvement-frontmatter-consistency,objective-lifecycle,objective-structure,arch-audit,review-debt,roadmap-backup,baseline-freshness,v4-residue,layout}] [--quiet] [--help] [--version]
+bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,roadmap-meta,proposal-table,proposal-section,tasks-checkbox,migration-residue,roadmap-refs,roadmap-feature,roadmap-md-integrity,roadmap-phases,docs-consistency,ai-context-bootstrap,gitignore,bypass-audit,improvement-frontmatter-consistency,objective-lifecycle,objective-structure,arch-audit,review-debt,roadmap-backup,baseline-freshness,v4-residue,layout}] [--quiet] [--help] [--version]
 ```
 
 ## 何时该跑
@@ -59,7 +59,6 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 | `proposal-section` | `openspec/changes/*/proposal.md` 段头（## Why / ## Capabilities / ## Acceptance）完整性 |  |
 | `tasks-checkbox` | `openspec/changes/*/tasks.md` checkbox 计数（独立于 openspec CLI） |  |
 | `migration-residue` | `AGENTS.md` / `README.md` / `USAGE.md` / `docs/proposal-*-format.md` 里的 stale `improvements/X` 引用和 `.rddf/.rddf/improvements/X` 双前缀 bug（WARNING）。`Fix:` 行直接给出 `rddf migrate-improvements --include-docs [--allow-source-repo]` 完整命令 |  |
-| `orphan-gates` | 孤立 gate（被某 change 引用但无对应 task，或孤立 requirement）|  |
 | `roadmap-refs` | `.rddf/roadmap/` + `.rddf/roadmap.md` 的 R1/R2/R3 cross-ref 完整性（feature.phase_refs 指向存在的 phase 等）| ✅ |
 | `roadmap-feature` | `.rddf/roadmap/features/*.md` frontmatter 必需字段 + done/archived 状态 fragment 是否落入 `.rddf/roadmap.md` AUTO-INDEX Features 段 | ✅ |
 | `roadmap-md-integrity` | `.rddf/roadmap.md` `## Phase Skeleton` 表 schema + AUTO-INDEX 三段齐全 + ADR 链接有效 + AUTO-SPRINT drift | ✅ |

@@ -46,36 +46,3 @@ assert len(malformed) == 0, f"expected 0 malformed-events findings, got {len(fin
 '
     [ "$status" -eq 0 ]
 }
-
-@test "PR4: rdd-doctor reports last_seen_offset out of range (AC-12)" {
-    cat > "$TEST_TMPDIR/.rddf/state/sessions.json" <<'EOF'
-{
-  "version": 3,
-  "sessions": [
-    {
-      "session_id": "rds_guide",
-      "kind": "stage_guide",
-      "owner_opencode_session_id": "ses_A",
-      "goal": {"intent": "guide-orchestrator", "last_seen_offset": 9999},
-      "state": "active",
-      "started_at": "2026-09-23T00:00:00+00:00",
-      "last_heartbeat": "2026-09-23T00:00:00+00:00"
-    }
-  ]
-}
-EOF
-    cat > "$TEST_TMPDIR/.rddf/state/events.jsonl" <<'EOF'
-{"event_id":"e1","ts":"2026-09-23T00:00:00+00:00","event_type":"phase_started","severity":"info","message":"e1","context":{}}
-{"event_id":"e2","ts":"2026-09-23T00:00:01+00:00","event_type":"phase_completed","severity":"info","message":"e2","context":{}}
-EOF
-
-    run env RDDF_PROJECT_ROOT="$TEST_TMPDIR" REPO_ROOT="$(git rev-parse --show-toplevel)" python3 -c '
-import sys, os
-sys.path.insert(0, os.environ["REPO_ROOT"] + "/skills/rdd-doctor/scripts")
-from checks.state_schema_check import run
-findings = run()
-offset_findings = [f for f in findings if "last_seen_offset" in (f.snippet or "")]
-assert len(offset_findings) >= 1, f"expected ≥1 offset finding, got {len(findings)} findings: {[(f.severity.value, f.file, f.snippet) for f in findings]}"
-'
-    [ "$status" -eq 0 ]
-}

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import subprocess
-from pathlib import Path
 
 import pytest
 
@@ -208,3 +207,31 @@ def test_cmd_guide_works_outside_git_repo(tmp_path, monkeypatch, capsys):
     assert rc == 0
     # Should recommend guide-arch (no roadmap)
     assert "rdd-arch" in captured.out
+
+
+def test_cmd_guide_does_not_raise_when_ladder_fails(git_repo, monkeypatch, capsys):
+    """A failure inside the shared ladder MUST NOT propagate — `rddf guide`
+    keeps its non-fatal contract (it emits a recommendation based on
+    whatever state it could read)."""
+    def boom(_):
+        raise RuntimeError("forced")
+
+    monkeypatch.setattr(guide_cmd, "scan_state", boom)
+    rc = guide_cmd.cmd_guide([])
+    captured = capsys.readouterr()
+    assert rc == 0
+    assert "💡 建议" in captured.out
+
+
+def test_cmd_guide_fallback_text_is_distinguishable(git_repo, monkeypatch, capsys):
+    """The CLI's fallback wording must differ from the synthesizer's
+    ``fallback: synthesizer error`` — otherwise a consumer cannot tell
+    "the ladder failed" from "the ladder said rdd-builder"."""
+    def boom(_):
+        raise RuntimeError("forced")
+
+    monkeypatch.setattr(guide_cmd, "scan_state", boom)
+    guide_cmd.cmd_guide([])
+    captured = capsys.readouterr()
+    assert "fallback: synthesizer error" not in captured.out
+    assert "rdd-builder" in captured.out

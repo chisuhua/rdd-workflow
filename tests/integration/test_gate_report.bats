@@ -10,16 +10,6 @@ load ../test_helper
 
 # Removal verification -------------------------------------------------
 
-@test "v2.0.3: phase-gate-report removed from guide.md" {
-  [ -f "skills/guide/SKILL.md" ]
-  ! grep -q "phase-gate-report" skills/guide/SKILL.md
-}
-
-@test "v2.0.3: phase-gate-report removed from scan-state.sh" {
-  [ -f "skills/guide/scripts/scan-state.sh" ]
-  ! grep -q "phase-gate-report" skills/guide/scripts/scan-state.sh
-}
-
 @test "v2.0.3: phase-gate-report removed from roadmap.md" {
   [ -f "skills/roadmap/SKILL.md" ]
   ! grep -q "phase-gate-report" skills/roadmap/SKILL.md

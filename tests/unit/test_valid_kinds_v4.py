@@ -3,7 +3,7 @@
 Locks down the 8-case behavioral matrix for:
 - 3 new kinds (stage_builder, stage_verify, stage_quick)
 - Cross-stage singleton exemption semantics:
-  * stage_guide bidirectional exempt (v3 preserved)
+  * stage_guide bidirectional exempt: RETIRED by ADR-0063 (no longer exempt)
   * stage_builder/verify/quick can mix with each other (v4)
   * arch/design/plan/ship singleton among themselves (preserved)
   * arch/design/plan/ship still blocks builder/verify/quick (preserved)
@@ -96,24 +96,12 @@ class TestCrossStageMatrix:
         with pytest.raises(ConflictError, match="stage_arch"):
             _create(coord, "stage_builder", owner="B")
 
-    def test_case2_arch_and_guide_coexist(self, tmp_project):
-        _, _, coord = tmp_project
-        sid_a = _create(coord, "stage_arch", owner="A")
-        sid_g = _create(coord, "stage_guide", owner="B")
-        assert sid_a != sid_g
-
     def test_case3_arch_blocks_design(self, tmp_project):
         """arch/design/plan/ship remain mutually exclusive among themselves."""
         _, _, coord = tmp_project
         _create(coord, "stage_arch", owner="A")
         with pytest.raises(ConflictError, match="stage_arch"):
             _create(coord, "stage_design", owner="B")
-
-    def test_case4_guide_and_builder_coexist(self, tmp_project):
-        _, _, coord = tmp_project
-        sid_g = _create(coord, "stage_guide", owner="G")
-        sid_b = _create(coord, "stage_builder", owner="B")
-        assert sid_g != sid_b
 
     def test_case5_builder_and_verify_coexist(self, tmp_project):
         _, _, coord = tmp_project
@@ -127,22 +115,6 @@ class TestCrossStageMatrix:
         _create(coord, "stage_arch", owner="A")
         with pytest.raises(ConflictError, match="stage_arch"):
             _create(coord, "stage_builder", owner="B")
-
-    def test_case7_guide_and_quick_coexist(self, tmp_project):
-        _, _, coord = tmp_project
-        sid_g = _create(coord, "stage_guide", owner="G")
-        sid_q = _create(coord, "stage_quick", owner="Q")
-        assert sid_g != sid_q
-
-    def test_case8_all_four_guide_family_kinds_coexist(self, tmp_project):
-        _, _, coord = tmp_project
-        sids = [
-            _create(coord, "stage_guide", owner="G1"),
-            _create(coord, "stage_builder", owner="B1"),
-            _create(coord, "stage_verify", owner="V1"),
-            _create(coord, "stage_quick", owner="Q1"),
-        ]
-        assert len(set(sids)) == 4  # all distinct
 
 
 # --- Alias resolution ---
@@ -196,7 +168,7 @@ class TestParentKindMap:
         pairs = _read_parent_kind_map_from_sh()
         assert pairs.get("stage_verify") == "stage_builder"
 
-    def test_stage_quick_parent(self):
-        """Quick is a child of guide (transient child of orchestrator)."""
+    def test_stage_quick_has_no_parent(self):
+        """Quick is a standalone bypass — its guide parent was retired (ADR-0063)."""
         pairs = _read_parent_kind_map_from_sh()
-        assert pairs.get("stage_quick") == "stage_guide"
+        assert "stage_quick" not in pairs

@@ -32,7 +32,6 @@ _CHECKERS: dict[str, Union[str, Callable]] = {
     "proposal-section": "checks.proposal_section_check.run",
     "tasks-checkbox": "checks.tasks_checkbox_check.run",
     "migration-residue": "checks.migration_residue_check.run",
-    "orphan-gates": "checks.orphan_gates_check.run",
     "roadmap-refs": "checks.roadmap_refs_check.run",
     "roadmap-feature": "checks.roadmap_feature_check.run",
     "roadmap-md-integrity": "checks.roadmap_md_integrity_check.run",
@@ -87,6 +86,7 @@ _GATES: dict[str, dict] = {
             "migration-residue",
             "review-debt",
             "roadmap-backup",
+            "v4-residue",
         ],
         "blocking": False,
     },
@@ -225,7 +225,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help="Write .rddf/state/.doctor-report.json")
     parser.add_argument("--category", choices=list(_CHECKERS.keys()), help="Run only this category")
     parser.add_argument("--check", choices=list(_CHECKERS.keys()),
-                        help="Alias for --category (e.g. --check orphan-gates)")
+                        help="Alias for --category (e.g. --check v4-residue)")
     parser.add_argument("--quiet", action="store_true", help="Single-line output, most severe only")
     parser.add_argument("--gate", choices=sorted(_GATES.keys()),
                         help="Run a named gate (see _GATES) and aggregate its exit code")

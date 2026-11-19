@@ -17,15 +17,6 @@
       "root": "skills/rddf-session"
     },
     {
-      "root": "skills/guide-arch"
-    },
-    {
-      "root": "skills/guide-plan"
-    },
-    {
-      "root": "skills/guide-ship"
-    },
-    {
       "root": "skills/rdd-workflow-writing-plans"
     },
     {
@@ -45,9 +36,6 @@
     },
     {
       "root": "skills/roadmap"
-    },
-    {
-      "root": "skills/guide"
     }
   ]
 }

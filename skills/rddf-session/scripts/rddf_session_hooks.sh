@@ -299,7 +299,7 @@ coord.check_heartbeat_timeouts()
 
 parent_id = None
 # v3 (feat-guide-orchestrator-session-event-bus): add stage_arch -> stage_guide
-parent_kind_map = {"stage_arch": "stage_guide", "stage_design": "stage_arch", "stage_plan": "stage_design", "stage_ship": "stage_plan", "stage_builder": "stage_design", "stage_verify": "stage_builder", "stage_quick": "stage_guide"}
+parent_kind_map = {"stage_design": "stage_arch", "stage_plan": "stage_design", "stage_ship": "stage_plan", "stage_builder": "stage_design", "stage_verify": "stage_builder"}
 parent_kind = parent_kind_map.get(kind)
 if parent_kind:
     # v3: owner-scoped + state-filtered parent lookup (Metis B3 fix)
@@ -433,101 +433,6 @@ PYEOF
 
   # Auto-archive best-effort (P1: add-rddf-session-auto-archive-on-entry)
   _rddf_auto_archive_if_needed "$sessions_file" 2>/dev/null || true
-}
-
-# v3 (feat-guide-orchestrator-session-event-bus): guide_entry/close hooks.
-# guide_entry creates a long-lived stage_guide session (goal.last_seen_offset=0).
-# guide_close marks it completed on user exit.
-# Both gated by RDDF_GUIDE_SESSION_ENABLED (rollback path).
-rddf_session_hook_guide_entry() {
-  PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  _rddf_resolve_owner
-  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-${RDDF_OWNER:-}}"
-  OPENCODE_SESSION_ID_FROM="${OPENCODE_SESSION_ID_FROM:-${RDDF_OWNER_FROM:-shell-pid}}"
-  export OPENCODE_SESSION_ID_FROM
-
-  if [ "${RDDF_GUIDE_SESSION_ENABLED:-yes}" != "yes" ]; then
-    echo "rddf-session guide-entry: skipped (RDDF_GUIDE_SESSION_ENABLED=${RDDF_GUIDE_SESSION_ENABLED:-})"
-    return 0
-  fi
-
-  local sessions_file="${PROJECT_ROOT}/.rddf/state/sessions.json"
-
-  PROJECT_ROOT="$PROJECT_ROOT" \
-  OPENCODE_SESSION_ID="$OPENCODE_SESSION_ID" \
-  python3 <<'PYEOF'
-import os, sys
-sys.path.insert(0, os.environ["PROJECT_ROOT"])
-from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator, ConflictError
-
-project_root = os.environ["PROJECT_ROOT"]
-opencode_sid = os.environ["OPENCODE_SESSION_ID"]
-sessions_file = os.path.join(project_root, ".rddf", "state", "sessions.json")
-os.makedirs(os.path.dirname(sessions_file), exist_ok=True)
-coord = RddfSessionCoordinator(sessions_file=sessions_file)
-
-try:
-    sid = coord.create_session(
-        kind="stage_guide",
-        owner_opencode_session_id=opencode_sid,
-        goal={
-            "intent": "guide-orchestrator",
-            "subject": "guide main entry",
-            "expected_outcome": "long-running observer",
-            "last_seen_offset": 0,
-        },
-        parent_session_id=None,
-    )
-    print(f"rddf-session guide-entry: {sid} (stage_guide, owner={opencode_sid})")
-except ConflictError as e:
-    print(f"rddf-session guide-entry CONFLICT: {e}")
-    sys.exit(2)
-except Exception as e:
-    print(f"rddf-session guide-entry skipped: {e}")
-PYEOF
-}
-
-rddf_session_hook_guide_close() {
-  PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  RDDF_RESOLVE_OWNER_FROM_TRAP=yes _rddf_resolve_owner
-  OPENCODE_SESSION_ID="${OPENCODE_SESSION_ID:-${RDDF_OWNER:-}}"
-  OPENCODE_SESSION_ID_FROM="${OPENCODE_SESSION_ID_FROM:-${RDDF_OWNER_FROM:-shell-pid}}"
-  export OPENCODE_SESSION_ID_FROM
-
-  if [ "${RDDF_GUIDE_SESSION_ENABLED:-yes}" != "yes" ]; then
-    echo "rddf-session guide-close: skipped (RDDF_GUIDE_SESSION_ENABLED=${RDDF_GUIDE_SESSION_ENABLED:-})"
-    return 0
-  fi
-
-  local sessions_file="${PROJECT_ROOT}/.rddf/state/sessions.json"
-  if [ ! -f "$sessions_file" ]; then
-    echo "rddf-session guide-close: sessions.json not found, skipping"
-    return 0
-  fi
-
-  PROJECT_ROOT="$PROJECT_ROOT" \
-  OPENCODE_SESSION_ID="$OPENCODE_SESSION_ID" \
-  python3 <<'PYEOF'
-import os, sys
-sys.path.insert(0, os.environ["PROJECT_ROOT"])
-from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
-
-project_root = os.environ["PROJECT_ROOT"]
-opencode_sid = os.environ["OPENCODE_SESSION_ID"]
-sessions_file = os.path.join(project_root, ".rddf", "state", "sessions.json")
-
-coord = RddfSessionCoordinator(sessions_file=sessions_file)
-try:
-    sessions = coord.list_sessions(kind="stage_guide", owner_opencode_session_id=opencode_sid, state="active")
-    if not sessions:
-        print(f"rddf-session guide-close: no active stage_guide session for {opencode_sid}, skipping")
-        sys.exit(0)
-    sid = sessions[0].session_id
-    coord.update_session_status(sid, "completed", end_reason="guide-exit")
-    print(f"rddf-session guide-close: {sid} -> completed (guide-exit)")
-except Exception as e:
-    print(f"rddf-session guide-close skipped: {e}")
-PYEOF
 }
 
 # rddf_session_hook_heartbeat <kind> [change_name]
@@ -745,64 +650,3 @@ PYEOF
   fi
 }
 
-# rddf_session_hook_poll_events — Read events.jsonl since last_seen_offset,
-# render child progress to stdout, advance last_seen_offset.
-# Best-effort: hook errors never block guide_entry.
-# Idempotent: no-op when no active stage_guide session or events.jsonl missing.
-rddf_session_hook_poll_events() {
-  local project_root="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  _rddf_resolve_owner
-  local owner="${OPENCODE_SESSION_ID:-${RDDF_OWNER:-}}"
-  local sessions_file="$project_root/.rddf/state/sessions.json"
-  local events_file="$project_root/.rddf/state/events.jsonl"
-
-  [[ -z "$owner" ]] && return 0
-  [[ -f "$events_file" ]] || return 0
-
-  # 1. Find this owner's active stage_guide session + current offset
-  local guide_sid current_offset
-  guide_sid=$(PYTHONPATH="$project_root" python3 -c "
-import sys
-sys.path.insert(0, '$project_root')
-from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
-coord = RddfSessionCoordinator(sessions_file='$sessions_file')
-sess = coord.find_current_binding('$owner')
-if sess and sess.kind == 'stage_guide':
-    print(sess.session_id, sess.goal.get('last_seen_offset', 0))
-" 2>/dev/null) || return 0
-
-  [[ -z "$guide_sid" ]] && return 0
-  read -r guide_sid current_offset <<< "$guide_sid"
-
-  # 2. Read events since last_seen_offset
-  local events_output
-  events_output=$(PYTHONPATH="$project_root" python3 -c "
-import sys
-sys.path.insert(0, '$project_root')
-from skills.rddf_session.scripts.events_log import EventsLog
-events = EventsLog('$events_file').read_since(offset=$current_offset)
-print(len(events))
-for e in events[-10:]:
-    print(f\"  {e['ts'][:16]} [{e['event_type']}] {e.get('message', '')[:60]}\")
-" 2>/dev/null) || return 0
-
-  local new_count
-  new_count=$(echo "$events_output" | head -1)
-
-  # 3. Render child progress (AC-4)
-  if [[ "$new_count" -gt 0 ]]; then
-    echo "📊 Child Sessions:"
-    echo "$events_output" | tail -n +2
-  fi
-
-  # 4. Advance last_seen_offset (AC-5)
-  if [[ "$new_count" -gt 0 ]]; then
-    PYTHONPATH="$project_root" python3 -c "
-import sys
-sys.path.insert(0, '$project_root')
-from skills.rddf_session.scripts.rddf_session import RddfSessionCoordinator
-coord = RddfSessionCoordinator(sessions_file='$sessions_file')
-coord.update_last_seen_offset('$guide_sid', $current_offset + $new_count)
-" 2>/dev/null || true
-  fi
-}

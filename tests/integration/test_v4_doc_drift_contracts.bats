@@ -297,21 +297,7 @@ setup() {
 }
 
 # -----------------------------------------------------------------------------
-# fix-doc-drift-followup-3 Bonus Test 17: AC-1 — skills/guide/SKILL.md
-# recommender has no active skill_use("guide-*") invocations.
-# Corresponds to: AC-1 of fix-doc-drift-followup-3.
-# Audit 2026-09-09: 30+ stale invocations sent agents to Wave-3-deleted skills.
-# Numbering note: this is "Test 16" in the change proposal; the parent change's
-# Bonus Test 16 (skills/INSTALL.md) was added earlier in this file, so we use 17.
-# -----------------------------------------------------------------------------
-@test "doc_drift_v4: skills/guide/SKILL.md has no active skill_use(\"guide-*\") invocations (AC-1 follow-up)" {
-  hits=$(grep -nE 'skill_use\("(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)"\)' skills/guide/SKILL.md 2>/dev/null || true)
-  if [ -n "$hits" ]; then
-    echo "AC-1 follow-up violation: live skill_use(\"guide-*\") in skills/guide/SKILL.md:"
-    echo "$hits" | head -5
-    return 1
-  fi
-}
+
 
 # -----------------------------------------------------------------------------
 # fix-doc-drift-followup-3 Bonus Test 18: AC-2 — 9 sub-skill SKILL.md files

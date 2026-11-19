@@ -51,6 +51,7 @@ _R2_PATTERN = re.compile(
     r'|--phase\s+guide-'             # --phase guide-…
     r'|\bfor guide-'                  # for guide-…
     r'|\brun guide-'                  # "run guide-plan first"
+    r'|\bor guide-'                   # "Run rdd-arch or guide-plan to start."
 )
 
 # R3

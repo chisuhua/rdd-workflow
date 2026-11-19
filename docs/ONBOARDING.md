@@ -38,7 +38,6 @@ rdd-workflow/
 ├── .github/workflows/test.yml        # CI 流水线
 ├── skills/
 │   ├── INSTALL.md                    # 安装程序（第一入口）
-│   ├── guide.md                      # 推荐器入口
 │   ├── rdd-arch/SKILL.md             # Stage 1 — Arch 状态机
 │   ├── rdd-planner/SKILL.md          # Stage 2 — Planner 状态机
 │   ├── rdd-builder/SKILL.md          # Stage 3 — Builder 状态机
@@ -86,7 +85,6 @@ rdd-workflow/
 **关键文件：**
 | 文件 | 说明 |
 |---|---|
-| `skills/guide.md` | 推荐器入口 — 扫描状态、推荐下一步 |
 | `skills/rdd-arch/SKILL.md` | Stage 1 — Arch 端（5 阶段：setup → adr-create → architecture → roadmap → arch-done） |
 | `skills/rdd-planner/SKILL.md` | Stage 2 — Planner 端（路线图 + 提案治理：preflight → review → approve/reject/defer → design-done，per ADR-0038/0042） |
 | `skills/rdd-builder/SKILL.md` | Stage 3 — Builder 端（6-phase 内部状态机 P0→P3：approval → plan → deps → execute → review → archive，per ADR-0043 stage-merge） |
@@ -95,7 +93,7 @@ rdd-workflow/
 
 **状态机调用链：**
 ```
-guide.md (推荐器)
+rddf guide (推荐器)
   ├── rdd-arch/SKILL.md → roadmap.md (Stage 1 Arch 阶段完成 → arch-done)
   │     └── [transitions_to]
   ├── rdd-planner/SKILL.md → add-improve.md, approve_proposal.sh (Stage 2 Planner 阶段完成 → design-done)
@@ -188,7 +186,7 @@ v2.0 引入的核心自动化机制。`loop_engine.py` 实现了自适应的闭�
 
 ### 推荐器系统
 
-`guide.md` 作为入口推荐器，根据项目当前状态智能推荐下一步：
+`rddf guide` 作为入口推荐器，根据项目当前状态智能推荐下一步：
 
 ```
 💡 Recommended: skill_use("rdd-planner")
@@ -222,7 +220,7 @@ skill_use("rdd-workflow-writing-plans")
 | **2** | USAGE.md — 完整使用指南与核心概念 | `USAGE.md` |
 | **2.5** | **Roadmap 内容组织(roadmap 概念入门)** — Phase/Sub-phase/Feature/Theme/Sprint 5 维模型 + 主文档 sentinel 区域 + 唯一写入方矩阵 | `docs/architecture/roadmap-organization.md` |
 | **3** | INSTALL.md + install.sh — 技能如何进入项目 | `INSTALL.md`, `install.sh`, `package.json` |
-| **4** | guide.md — 工作流推荐器 | `guide.md` |
+| **4** | 工作流推荐器 | `rddf guide` |
 | **5** | 四阶段状态机总览 | `skills/rdd-arch/SKILL.md`, `skills/rdd-planner/SKILL.md`, `skills/rdd-builder/SKILL.md`, `skills/rdd-verifier/SKILL.md`, `skills/rdd-quick/SKILL.md` |
 | **6** | Arch 与 Planner 子技能 | `propose.md`, `roadmap.md`, `deps.md` |
 | **7** | Builder 端子技能 + 计划生成 | `execute.md`, `status.md`, `rdd-workflow-writing-plans.md` |
@@ -319,7 +317,7 @@ roadmap.md                          — 版本路线图
 
 ### 工作流状态机层（v4.0+ 四阶段 + rdd-quick 旁路）
 ```
-skills/guide.md                       — 推荐器入口
+rddf guide                            — 推荐器入口
 skills/rdd-arch/SKILL.md              — Stage 1 Arch 状态机（v2.0+; Stage 3 rename per ADR-0042）
 skills/rdd-planner/SKILL.md           — Stage 2 Planner 状态机（v4.0+ per ADR-0038/0042）
 skills/rdd-builder/SKILL.md           — Stage 3 Builder 状态机（v4.0+ per ADR-0043 stage-merge）

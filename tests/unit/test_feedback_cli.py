@@ -50,6 +50,23 @@ def test_cli_add_with_ref_change(tmp_path, capsys):
     assert "**ref_change**: my-change" in text
 
 
+def test_cli_add_with_v4_source(tmp_path, capsys):
+    """v4 source value (`rdd-builder`) is accepted alongside the legacy `guide-*` names."""
+    _make_project(tmp_path)
+    improvement = tmp_path / ".rddf" / "improvements" / "improve.md"
+    improvement.write_text("---\nname: improve\n---\n")
+    rc = cmd_feedback([
+        "add", "improve",
+        "--from", "rdd-builder",
+        "--kind", "needs-revision",
+        "--body", "v4 source",
+        "--project-root", str(tmp_path),
+    ])
+    captured = capsys.readouterr()
+    assert rc == 0, f"stderr={captured.err}"
+    assert "feedback-" in captured.out
+
+
 def test_cli_add_invalid_source(tmp_path):
     """Invalid --from returns non-zero exit code (argparse validates at parse time)."""
     _make_project(tmp_path)

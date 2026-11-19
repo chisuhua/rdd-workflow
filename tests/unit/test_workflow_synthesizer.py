@@ -2,12 +2,17 @@
 
 Covers:
 - Dataclass shape (frozen, fields)
-- All 14 decision paths (parametrized + individual)
 - Phase status summary (4 phases with correct detail strings)
 - unblocked_changes filtering and sorting
 - rddf-session active_session / orphaned_sessions
 - Never-raises contract (corrupt JSON, missing state dir, exceptions)
 - Determinism (sorted outputs)
+
+The stage-recommendation ladder itself is NOT tested here — it lives in
+``_lib/recommender.py`` since ADR-0062 and is covered by
+``tests/unit/test_recommender.py``. This module covers what the synthesizer
+adds on top of it: phase status, menu options, sessions, child progress,
+and the never-raises fallback.
 """
 import dataclasses
 import json
@@ -174,207 +179,21 @@ class TestDataclassShape:
 # ---------------------------------------------------------------------------
 # Path 1: arch-handoff missing -> guide-arch
 # ---------------------------------------------------------------------------
-
-
-class TestPathArchMissing:
-    def test_arch_missing_recommends_guide_arch(self, project_root):
-        """Path 1: no .arch-handoff.json -> guide-arch, confidence=high."""
-        r = synthesize(project_root)
-        assert r.suggested_action == "rdd-arch"
-        assert r.confidence == "high"
-        assert "arch" in r.reason.lower() or "架构" in r.reason
-
-    def test_arch_missing_when_state_dir_empty(self, tmp_path):
-        """Path 1 also fires when .rddf/state/ exists but is empty."""
-        (tmp_path / ".rddf" / "state").mkdir(parents=True)
-        r = synthesize(str(tmp_path))
-        assert r.suggested_action == "rdd-arch"
-        assert r.confidence == "high"
-
-
-# ---------------------------------------------------------------------------
 # Path 2: arch-handoff exists, adr_count < 1 -> guide-arch (recover)
-# ---------------------------------------------------------------------------
-
-
-class TestPathArchIncomplete:
-    def test_adr_count_zero_recommends_guide_arch(self, project_root):
-        """Path 2: arch-handoff exists but adr_count=0 -> guide-arch."""
-        _write_arch_handoff(project_root, adr_count=0)
-        r = synthesize(project_root)
-        assert r.suggested_action == "rdd-arch"
-        assert r.confidence == "high"
-
-    def test_adr_count_missing_recommends_guide_arch(self, project_root):
-        """Path 2: arch-handoff exists but adr_count field missing -> guide-arch."""
-        path = Path(project_root) / ".rddf" / "state" / ".arch-handoff.json"
-        path.write_text(json.dumps({"version": 1, "arch_complete_at": "x"}))
-        r = synthesize(project_root)
-        assert r.suggested_action == "rdd-arch"
-
-
 # ---------------------------------------------------------------------------
 # Path 3: arch done, design-handoff missing -> guide-design
 # ---------------------------------------------------------------------------
-
-
-class TestPathArchDoneDesignMissing:
-    def test_arch_done_design_missing_recommends_rdd_planner(self, project_root):
-        """Path 3: arch-handoff ok, no planner-handoff -> rdd-planner (v4)."""
-        _write_arch_handoff(project_root, adr_count=5)
-        r = synthesize(project_root)
-        assert r.suggested_action == "rdd-planner"
-        assert r.confidence == "high"
-
-
-# ---------------------------------------------------------------------------
 # Path 4: arch done, design done, plan-handoff missing -> guide-plan
-# ---------------------------------------------------------------------------
-
-
-class TestPathArchDoneDesignDonePlanMissing:
-    def test_arch_done_plan_missing_recommends_guide_plan(self, project_root):
-        """Path 4: arch-handoff + design-handoff ok, no plan-handoff -> guide-plan."""
-        _write_arch_handoff(project_root, adr_count=5)
-        _write_design_handoff(project_root, proposals_reviewed=3)
-        r = synthesize(project_root)
-        assert r.suggested_action == "rdd-builder"
-        assert r.confidence == "high"
-
-
 # ---------------------------------------------------------------------------
 # Path 5: plan-handoff exists, active_changes=0 -> guide-ship (cleanup)
 # ---------------------------------------------------------------------------
-
-
-class TestPathPlanHandoffZeroActive:
-    def test_plan_handoff_zero_active_recommends_guide_ship_cleanup(
-        self, project_root
-    ):
-        """Path 5: plan-handoff exists, active_changes=0 -> guide-ship."""
-        _write_arch_handoff(project_root, adr_count=5)
-        _write_design_handoff(project_root, proposals_reviewed=3)
-        _write_plan_handoff(project_root, active_changes=0)
-        r = synthesize(project_root)
-        assert r.suggested_action == "rdd-builder"
-        assert r.confidence == "high"
-
-
-# ---------------------------------------------------------------------------
 # Path 6: plan-handoff exists, active_changes>0 -> guide-ship
-# ---------------------------------------------------------------------------
-
-
-class TestPathPlanHandoffActiveChanges:
-    def test_plan_handoff_active_changes_recommends_guide_ship(
-        self, project_root, monkeypatch
-    ):
-        """Path 6: plan-handoff exists, active_changes>0, no worktree -> guide-ship."""
-        _write_arch_handoff(project_root, adr_count=5)
-        _write_design_handoff(project_root, proposals_reviewed=3)
-        _write_plan_handoff(project_root, active_changes=3)
-        # Mock no worktrees, no committed change -> path 6 default
-        from skills._lib import workflow_synthesizer as ws
-        monkeypatch.setattr(ws, "_list_worktrees", lambda pr: [])
-        monkeypatch.setattr(ws, "_committed_change_in_head", lambda pr: False)
-        r = synthesize(project_root)
-        assert r.suggested_action == "rdd-builder"
-        assert r.confidence == "high"
-
-
 # ---------------------------------------------------------------------------
 # Path 7: worktree with incomplete tasks -> guide-ship
 # ---------------------------------------------------------------------------
-
-
-class TestPathWorktreeInProgress:
-    def test_worktree_incomplete_tasks_recommends_guide_ship(
-        self, project_root, monkeypatch
-    ):
-        """Path 7: worktree has incomplete tasks -> guide-ship (medium)."""
-        _write_arch_handoff(project_root, adr_count=5)
-        _write_design_handoff(project_root, proposals_reviewed=3)
-        _write_plan_handoff(project_root, active_changes=1)
-        from skills._lib import workflow_synthesizer as ws
-        monkeypatch.setattr(ws, "_list_worktrees", lambda pr: [
-            {
-                "path": "/fake/wt",
-                "branch": "refs/heads/openspec/c1",
-                "is_openspec": True,
-            }
-        ])
-        monkeypatch.setattr(ws, "_worktree_has_incomplete_tasks", lambda wt: True)
-        r = synthesize(project_root)
-        assert r.suggested_action == "rdd-builder"
-        assert r.confidence == "medium"
-
-
-# ---------------------------------------------------------------------------
 # Path 8: detached openspec worktrees -> guide-ship
 # ---------------------------------------------------------------------------
-
-
-class TestPathDetachedWorktrees:
-    def test_detached_worktrees_recommends_guide_ship(
-        self, project_root, monkeypatch
-    ):
-        """Path 8: detached openspec worktrees -> guide-ship (medium)."""
-        _write_arch_handoff(project_root, adr_count=5)
-        _write_design_handoff(project_root, proposals_reviewed=3)
-        _write_plan_handoff(project_root, active_changes=1)
-        from skills._lib import workflow_synthesizer as ws
-        monkeypatch.setattr(ws, "_list_worktrees", lambda pr: [
-            {
-                "path": "/fake/wt1",
-                "branch": "refs/heads/openspec/c1",
-                "is_openspec": True,
-            }
-        ])
-        monkeypatch.setattr(ws, "_worktree_has_incomplete_tasks", lambda wt: False)
-        r = synthesize(project_root)
-        assert r.suggested_action == "rdd-builder"
-        assert r.confidence == "medium"
-        assert "worktree" in r.reason or "分离" in r.reason
-
-    def test_multiple_detached_worktrees_count_in_reason(
-        self, project_root, monkeypatch
-    ):
-        """Path 8: reason string MUST include the worktree count."""
-        _write_arch_handoff(project_root, adr_count=5)
-        _write_design_handoff(project_root, proposals_reviewed=3)
-        _write_plan_handoff(project_root, active_changes=1)
-        from skills._lib import workflow_synthesizer as ws
-        monkeypatch.setattr(ws, "_list_worktrees", lambda pr: [
-            {"path": "/wt1", "branch": "refs/heads/openspec/a", "is_openspec": True},
-            {"path": "/wt2", "branch": "refs/heads/openspec/b", "is_openspec": True},
-            {"path": "/wt3", "branch": "refs/heads/openspec/c", "is_openspec": True},
-        ])
-        monkeypatch.setattr(ws, "_worktree_has_incomplete_tasks", lambda wt: False)
-        r = synthesize(project_root)
-        assert "3" in r.reason
-
-
-# ---------------------------------------------------------------------------
 # Path 10: committed change in HEAD, no worktree -> guide-ship
-# ---------------------------------------------------------------------------
-
-
-class TestPathCommittedChangeInHead:
-    def test_committed_change_recommends_guide_ship(
-        self, project_root, monkeypatch
-    ):
-        """Path 10: committed change in HEAD, no worktree -> guide-ship (medium)."""
-        _write_arch_handoff(project_root, adr_count=5)
-        _write_design_handoff(project_root, proposals_reviewed=3)
-        _write_plan_handoff(project_root, active_changes=1)
-        from skills._lib import workflow_synthesizer as ws
-        monkeypatch.setattr(ws, "_list_worktrees", lambda pr: [])
-        monkeypatch.setattr(ws, "_committed_change_in_head", lambda pr: True)
-        r = synthesize(project_root)
-        assert r.suggested_action == "rdd-builder"
-        assert r.confidence == "medium"
-
-
 # ---------------------------------------------------------------------------
 # Phase status summary (4 phases)
 # ---------------------------------------------------------------------------
@@ -701,146 +520,52 @@ class TestNeverRaises:
         phases = [ps.phase for ps in r.phase_status]
         assert phases == ["arch", "design", "plan", "ship"]
 
-
-# ---------------------------------------------------------------------------
-# Worktree helper: _worktree_has_incomplete_tasks
-# ---------------------------------------------------------------------------
-
-
-class TestWorktreeHasIncompleteTasks:
-    def test_incomplete_tasks_detected(self, tmp_path):
-        """_worktree_has_incomplete_tasks MUST return True when tasks.md has `- [ ]`."""
-        from skills._lib.workflow_synthesizer import _worktree_has_incomplete_tasks
-        wt = tmp_path / "wt"
-        changes_dir = wt / "openspec" / "changes" / "c1"
-        changes_dir.mkdir(parents=True)
-        (changes_dir / "tasks.md").write_text(
-            "# Tasks\n\n- [x] done task\n- [ ] incomplete task\n"
-        )
-        assert _worktree_has_incomplete_tasks(str(wt)) is True
-
-    def test_all_complete_tasks_returns_false(self, tmp_path):
-        """_worktree_has_incomplete_tasks MUST return False when all tasks done."""
-        from skills._lib.workflow_synthesizer import _worktree_has_incomplete_tasks
-        wt = tmp_path / "wt"
-        changes_dir = wt / "openspec" / "changes" / "c1"
-        changes_dir.mkdir(parents=True)
-        (changes_dir / "tasks.md").write_text(
-            "# Tasks\n\n- [x] done task\n- [x] another done\n"
-        )
-        assert _worktree_has_incomplete_tasks(str(wt)) is False
-
-    def test_no_tasks_md_returns_false(self, tmp_path):
-        """_worktree_has_incomplete_tasks MUST return False when no tasks.md."""
-        from skills._lib.workflow_synthesizer import _worktree_has_incomplete_tasks
-        wt = tmp_path / "wt"
-        changes_dir = wt / "openspec" / "changes" / "c1"
-        changes_dir.mkdir(parents=True)
-        # No tasks.md created
-        assert _worktree_has_incomplete_tasks(str(wt)) is False
-
-    def test_no_changes_dir_returns_false(self, tmp_path):
-        """_worktree_has_incomplete_tasks MUST return False when no changes dir."""
-        from skills._lib.workflow_synthesizer import _worktree_has_incomplete_tasks
-        wt = tmp_path / "wt"
-        # No openspec/changes/ dir created
-        assert _worktree_has_incomplete_tasks(str(wt)) is False
-
-    def test_incomplete_task_at_file_start(self, tmp_path):
-        """_worktree_has_incomplete_tasks MUST detect `- [ ]` at file start."""
-        from skills._lib.workflow_synthesizer import _worktree_has_incomplete_tasks
-        wt = tmp_path / "wt"
-        changes_dir = wt / "openspec" / "changes" / "c1"
-        changes_dir.mkdir(parents=True)
-        (changes_dir / "tasks.md").write_text("- [ ] first task incomplete\n")
-        assert _worktree_has_incomplete_tasks(str(wt)) is True
-
-    def test_skips_archive_dir(self, tmp_path):
-        """_worktree_has_incomplete_tasks MUST skip archive/ subdirectory."""
-        from skills._lib.workflow_synthesizer import _worktree_has_incomplete_tasks
-        wt = tmp_path / "wt"
-        archive_dir = wt / "openspec" / "changes" / "archive" / "old-change"
-        archive_dir.mkdir(parents=True)
-        (archive_dir / "tasks.md").write_text("- [ ] incomplete in archive\n")
-        assert _worktree_has_incomplete_tasks(str(wt)) is False
-
-
-# ---------------------------------------------------------------------------
-# Parametrized decision tree coverage (all 13 paths)
-# ---------------------------------------------------------------------------
-
-
-class TestDecisionTreeAllPaths:
-    """Parametrized coverage of all decision paths."""
-
-    @pytest.mark.parametrize(
-        "scenario,arch_adr_count,has_design_handoff,has_plan_handoff,"
-        "plan_active_changes,has_worktree,worktree_incomplete,"
-        "has_committed_change,expected_action,expected_confidence",
-        [
-            # Path 1: no arch-handoff
-            ("p1-no-arch", None, False, False, 0, False, False, False, "rdd-arch", "high"),
-            # Path 2: arch-handoff exists, adr_count < 1
-            ("p2-adr-zero", 0, False, False, 0, False, False, False, "rdd-arch", "high"),
-            # Path 3: arch done, no design-handoff
-            ("p3-no-design", 5, False, False, 0, False, False, False, "rdd-planner", "high"),
-            # Path 4: arch + design done, no plan-handoff
-            ("p4-no-plan", 5, True, False, 0, False, False, False, "rdd-builder", "high"),
-            # Path 5: plan-handoff exists, 0 active
-            ("p5-plan-zero", 5, True, True, 0, False, False, False, "rdd-builder", "high"),
-            # Path 6: plan-handoff, active>0, no worktree
-            ("p6-plan-active", 5, True, True, 1, False, False, False, "rdd-builder", "high"),
-            # Path 7: worktree with incomplete tasks
-            ("p7-wt-incomplete", 5, True, True, 1, True, True, False, "rdd-builder", "medium"),
-            # Path 8: detached worktrees (no incomplete)
-            ("p8-detached-wt", 5, True, True, 1, True, False, False, "rdd-builder", "medium"),
-            # Path 10: committed change, no worktree
-            ("p10-committed", 5, True, True, 1, False, False, True, "rdd-builder", "medium"),
-        ],
-    )
-    def test_decision_path(
-        self, project_root, monkeypatch, scenario, arch_adr_count,
-        has_design_handoff, has_plan_handoff, plan_active_changes,
-        has_worktree, worktree_incomplete, has_committed_change,
-        expected_action, expected_confidence,
-    ):
+    def test_ladder_failure_falls_back_without_raising(self, project_root, monkeypatch):
+        """A failure inside the shared ladder MUST surface as the fallback
+        recommendation, not an exception (never-raises contract)."""
         from skills._lib import workflow_synthesizer as ws
 
-        if arch_adr_count is not None:
-            _write_arch_handoff(project_root, adr_count=arch_adr_count)
-        if has_design_handoff:
-            _write_design_handoff(project_root, proposals_reviewed=3)
-        if has_plan_handoff:
-            _write_plan_handoff(
-                project_root, active_changes=plan_active_changes
-            )
+        def boom(_):
+            raise RuntimeError("forced")
 
-        if has_worktree:
-            monkeypatch.setattr(ws, "_list_worktrees", lambda pr: [
-                {
-                    "path": "/fake/wt",
-                    "branch": "refs/heads/openspec/c1",
-                    "is_openspec": True,
-                }
-            ])
-        else:
-            monkeypatch.setattr(ws, "_list_worktrees", lambda pr: [])
-        monkeypatch.setattr(
-            ws, "_worktree_has_incomplete_tasks", lambda wt: worktree_incomplete
-        )
-        monkeypatch.setattr(
-            ws, "_committed_change_in_head", lambda pr: has_committed_change
-        )
-
+        monkeypatch.setattr(ws.recommender, "scan_state", boom)
         r = synthesize(project_root)
-        assert r.suggested_action == expected_action, (
-            f"scenario={scenario}: expected {expected_action}, "
-            f"got {r.suggested_action} (reason={r.reason})"
-        )
-        assert r.confidence == expected_confidence, (
-            f"scenario={scenario}: expected confidence {expected_confidence}, "
-            f"got {r.confidence}"
-        )
+        assert r.suggested_action == "rdd-builder"
+        assert r.confidence == "low"
+        assert r.reason == "fallback: synthesizer error"
+
+
+# ---------------------------------------------------------------------------
+# Fallback menu: v4 stage labels (ADR-0062 AC-7)
+# ---------------------------------------------------------------------------
+
+
+class TestFallbackMenu:
+    def test_fallback_menu_has_no_duplicate_builder_ids(self):
+        """The fallback menu used to mount three different stage labels on
+        ``id="rdd-builder"`` (「设计阶段」「变更生成」— v3 concepts). Each
+        option MUST have a distinct id."""
+        from skills._lib.workflow_synthesizer import _fallback_recommendation
+
+        options = _fallback_recommendation().all_options
+        ids = [o.id for o in options]
+        assert len(ids) == len(set(ids)), f"duplicate option ids: {ids}"
+
+    def test_fallback_menu_carries_v4_stage_ids(self):
+        """The fallback menu MUST offer the v4 stages, not v3 names."""
+        from skills._lib.workflow_synthesizer import _fallback_recommendation
+
+        ids = {o.id for o in _fallback_recommendation().all_options}
+        assert {"rdd-arch", "rdd-planner", "rdd-builder"} <= ids
+
+    def test_fallback_menu_has_no_v3_concept_labels(self):
+        """「设计阶段」「变更生成」are v3 stage names — they must not survive
+        as labels on a v4 option."""
+        from skills._lib.workflow_synthesizer import _fallback_recommendation
+
+        labels = {o.label for o in _fallback_recommendation().all_options}
+        assert "设计阶段" not in labels
+        assert "变更生成" not in labels
 
 
 # ---------------------------------------------------------------------------

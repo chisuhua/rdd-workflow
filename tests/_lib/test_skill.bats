@@ -14,10 +14,10 @@ load_lib skill
 
 # All assertions use real skill files in the worktree's skills/ dir.
 
-@test "skill_field returns top-level name for guide.md" {
-  run skill_field skills/guide/SKILL.md name
+@test "skill_field returns top-level name for rdd-arch.md" {
+  run skill_field skills/rdd-arch/SKILL.md name
   [ "$status" -eq 0 ]
-  [ "$output" = "guide" ]
+  [ "$output" = "rdd-arch" ]
 }
 
 @test "skill_field returns alias for INSTALL.md" {
@@ -32,8 +32,8 @@ load_lib skill
   [[ "$output" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]
 }
 
-@test "skill_meta_field returns user-invocable=true for guide.md" {
-  run skill_meta_field skills/guide/SKILL.md user-invocable
+@test "skill_meta_field returns user-invocable=true for rdd-arch.md" {
+  run skill_meta_field skills/rdd-arch/SKILL.md user-invocable
   [ "$status" -eq 0 ]
   [ "$output" = "true" ]
 }

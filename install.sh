@@ -128,6 +128,20 @@ install_global_symlinks() {
         COUNT=$((COUNT + 1))
     done
 
+    # 清理已退役 skill 的 broken symlink（目标不存在）。
+    # install.sh 只对现存 skill 做 ln -sf，从不清理已移除项 —— 归档 skills/guide
+    # 后 ~/.agents/skills/guide 会变成 -L 真、-e 假的 broken symlink（ADR-0063）。
+    local CLEANED=0
+    for dst in "$AGENTS_DIR"/*; do
+        if [ -L "$dst" ] && [ ! -e "$dst" ]; then
+            rm -f "$dst"
+            CLEANED=$((CLEANED + 1))
+        fi
+    done
+    if [ "$CLEANED" -gt 0 ]; then
+        echo "cleaned $CLEANED broken symlink(s) under $AGENTS_DIR"
+    fi
+
     # Symlink _lib (shared library — not a skill, but required by all skills'
     # bash code blocks and scripts via resolve_rdd_lib_dir()). Without this,
     # globally-installed skills fail outside the rdd-workflow repo.

@@ -77,7 +77,6 @@ setup() {
     [[ "$output" == *"proposal-section"* ]]
     [[ "$output" == *"tasks-checkbox"* ]]
     [[ "$output" == *"migration-residue"* ]]
-    [[ "$output" == *"orphan-gates"* ]]
     [[ "$output" == *"roadmap-refs"* ]]
     [[ "$output" == *"roadmap-feature"* ]]
     [[ "$output" == *"docs-consistency"* ]]

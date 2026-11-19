@@ -14,7 +14,7 @@ Design notes:
   does not exist in real projects per Metis B4 fact check).
 - seen_by is intentionally NOT in event rows (no per-owner state in file).
   Per-owner state lives in sessions.json goal.last_seen_offset.
-- archive_events(sessions_file=...) resets all active stage_guide
+- archive_events(sessions_file=...) (legacy `sessions_file` param is now a no-op)
   goal.last_seen_offset to 0 to avoid stale-line-number references
   (Metis B4). sessions_file is optional for backward compatibility.
 """
@@ -143,7 +143,7 @@ class EventsLog:
             severity: info | warn | error
             message: human-readable summary
             session_id: rds_xxx (or null)
-            kind: stage_arch | stage_design | stage_plan | stage_ship | stage_guide
+            kind: stage_arch | stage_design | stage_plan | stage_ship
             parent_session_id: rds_yyy or None
             owner_opencode_session_id: ses_xxx or None
         """
@@ -275,9 +275,8 @@ def archive_events(
     """Move oldest rows beyond `keep` from events.jsonl to events.archive.jsonl.
 
     Standalone function (not method) for use from CLI / hooks without instantiating.
-    If ``sessions_file`` is provided, also reset all active stage_guide sessions'
-    ``goal.last_seen_offset`` to 0 after archive (per Metis B4 — line numbers
-    shift after archive, so per-owner offsets become stale references).
+    ``sessions_file`` is accepted for backward compatibility but no longer
+    used (the stage_guide per-owner offset reset was retired with ADR-0063).
     """
     p = Path(path)
     if not p.exists():
@@ -308,50 +307,6 @@ def archive_events(
     except (OSError, IOError) as e:
         raise EventsLogError(f"Could not archive events: {e}") from e
 
-    if sessions_file and archived_count > 0:
-        _reset_stage_guide_offsets(sessions_file)
     return archived_count
 
 
-def _reset_stage_guide_offsets(sessions_file: str) -> int:
-    """Reset all active stage_guide sessions' goal.last_seen_offset to 0.
-
-    Called from archive_events() after archive to prevent stale line-number
-    references. Returns the number of sessions reset. Tolerates missing or
-    malformed sessions_file (best-effort).
-    """
-    import json as _json
-    p = Path(sessions_file)
-    if not p.exists():
-        return 0
-    try:
-        data = _json.loads(p.read_text(encoding="utf-8"))
-    except (_json.JSONDecodeError, OSError):
-        return 0
-    sessions = data.get("sessions", [])
-    if not isinstance(sessions, list):
-        return 0
-    reset_count = 0
-    for s in sessions:
-        if not isinstance(s, dict):
-            continue
-        if s.get("kind") != "stage_guide":
-            continue
-        if s.get("state") != "active":
-            continue
-        goal = s.get("goal")
-        if not isinstance(goal, dict):
-            continue
-        if "last_seen_offset" not in goal:
-            continue
-        if goal["last_seen_offset"] == 0:
-            continue
-        goal["last_seen_offset"] = 0
-        reset_count += 1
-    if reset_count == 0:
-        return 0
-    try:
-        p.write_text(_json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-    except OSError:
-        return 0
-    return reset_count

@@ -192,7 +192,7 @@ print(_lib.__file__)
   # This catches 'install.sh --global partially failed' regressions.
   [ -d "${HOME}/.agents/skills" ] || skip "global skills dir missing"
   # Per ADR-0044 (Wave 3 hard removal): guide-arch removed. Replaced by rdd-arch.
-  expected_skills=(add-improve deps execute feature guide rdd-arch rdd-planner rdd-builder rdd-verifier rdd-quick \
+  expected_skills=(add-improve deps execute feature rdd-arch rdd-planner rdd-builder rdd-verifier rdd-quick \
     propose rdd-env-check rdd-doctor \
     rdd-workflow-brainstorm rdd-workflow-writing-plans rddf-session roadmap status)
   for s in "${expected_skills[@]}"; do
@@ -347,8 +347,6 @@ TRACEDATA
 
   local scripts=(
     "${HOME}/.agents/skills/rdd-arch/scripts/arch_env_check.sh"
-    "${HOME}/.agents/skills/guide-plan/scripts/plan_intake.sh"
-    "${HOME}/.agents/skills/guide-ship/scripts/ship_env_check.sh"
     "${HOME}/.agents/skills/execute/scripts/select_worktree.sh"
   )
 

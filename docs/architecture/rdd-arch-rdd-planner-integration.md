@@ -77,9 +77,9 @@ Owner: rdd-arch。Schema: `_lib/schemas/arch_handoff_schema.json` v2（per ADR-0
 - 顶层 `additionalProperties: true` — 未来字段可平滑扩展
 
 **消费者** (per ADR-0016):
-- guide-plan intake (via `read_arch_handoff`)
+- rdd-planner intake (via `read_arch_handoff`)
 - detectors.py / actions.py
-- scan-state.sh
+- `_lib/recommender.py`（阶段推荐阶梯的唯一实现，per ADR-0062）
 - propose / roadmap
 - gate.py
 
@@ -343,9 +343,9 @@ rddf arch status
 
 `.arch-handoff.json` v2 顶层 `additionalProperties: true`，所有 v1 consumer 仍能消费：
 - `state_reader.read_arch_handoff()` — 透传所有字段
-- `guide-plan/scripts/plan_intake.sh` — jq 提取 `adr_dir/roadmap_path/adr_pattern/adr_regex/version` 全部成功
+- `rdd-planner/scripts/planner_stage_entry.sh` — jq 提取 `adr_dir/roadmap_path/adr_pattern/adr_regex/version` 全部成功
 - `detectors.py` / `actions.py` — 通过 `state_reader` 间接消费
-- `scan-state.sh` — 推荐字符串更新（Stage 3 Change 1 已修复）
+- `_lib/recommender.py` — 阶段推荐阶梯读取 `adr_count` / `roadmap_path`（per ADR-0062）
 
 测试: `tests/unit/test_arch_handoff_v2_schema.py` 锁定 v1/v2 双向兼容（6 tests）。
 

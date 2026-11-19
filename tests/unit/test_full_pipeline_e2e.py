@@ -12,7 +12,7 @@ This test exercises the end-to-end hook pipeline (Step A.1+A.2 fix verified):
 4. Verify events.jsonl has ≥ 20 rows with correct structure
 
 Also covers AC-G5 (multi-window visibility): 2 different owners create
-stage_builder + stage_guide; verify both sessions + events visible in
+stage_builder + stage_verify; verify both sessions + events visible in
 synthesizer child_progress.
 """
 from __future__ import annotations
@@ -185,14 +185,14 @@ class TestAC_G5_MultiWindow:
     """Two windows (guide in A, builder in B) → monitor Panel 5 sees both.
 
     Per ADR-0056 decision 6 AC-G5 (rewritten in Step A.6):
-    "Automated e2e fixture: 2 个 owner 跑 guide + rdd-builder, 30s 后
-    last_seen_offset 推进 ≥1 且 guide output 含 builder 进度"
+    "Automated e2e fixture: 2 个 owner 跑 verify + rdd-builder，
+    child_progress 对两个 owner 都可见（跨 owner 可见性）"
     """
 
     def test_two_owners_visible_in_workflow_synthesizer(self, tmp_project):
         """Window A (guide owner_A) + Window B (builder owner_B).
         Synthesizer's child_progress shows both (cross-owner visibility)."""
-        proc_a = _run_hook_entry("stage_guide", "guide-orchestrator", owner="owner_A_window1")
+        proc_a = _run_hook_entry("stage_verify", "rdd-verifier", owner="owner_A_window1")
         proc_b = _run_hook_entry("stage_builder", "rdd-builder", owner="owner_B_window2")
         assert proc_a.returncode == 0
         assert proc_b.returncode == 0
@@ -201,12 +201,12 @@ class TestAC_G5_MultiWindow:
         from _lib.workflow_synthesizer import synthesize
         rec = synthesize(str(tmp_project))
         kinds = {cp.kind for cp in rec.child_progress}
-        assert "stage_guide" in kinds, f"guide missing from {kinds}"
+        assert "stage_verify" in kinds, f"verify missing from {kinds}"
         assert "stage_builder" in kinds, f"builder missing from {kinds}"
 
     def test_two_owners_visible_in_monitor_panel(self, tmp_project):
         """monitor --watch output should contain both owners' stages."""
-        _run_hook_entry("stage_guide", "guide-orchestrator", owner="owner_A")
+        _run_hook_entry("stage_verify", "rdd-verifier", owner="owner_A")
         _run_hook_entry("stage_builder", "rdd-builder", owner="owner_B")
 
         # Render monitor and capture
@@ -219,7 +219,7 @@ class TestAC_G5_MultiWindow:
         output = buf.getvalue()
 
         # Panel 5 should contain both
-        assert "stage_guide" in output, f"guide not in monitor output:\n{output}"
+        assert "stage_verify" in output, f"verify not in monitor output:\n{output}"
         assert "stage_builder" in output, f"builder not in monitor output:\n{output}"
 
 
