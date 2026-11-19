@@ -74,11 +74,12 @@ NOT_MIRRORED=(
   # 测试套件的环境依赖（CI runner 是白板机器），本地开发机本来就有
   "Install openspec CLI (unit-test prerequisite)"
   "Configure git identity (temp-repo fixtures commit)"
-  "Make repo importable for subprocesses (parity with install.sh .pth)"
+  # 这两步给 runner 装出「开发机形状」：跑安装脚本 + 一条 import 兜底
+  "Install rdd-workflow globally (dev-machine parity)"
+  "Make repo importable for subprocesses (belt-and-braces for the .pth)"
   # CI 把 bats 分成两半：integration/ 走 baseline 门（KNOWN_FAILURES 里有已接受的失败），
   # 其余裸跑。本地 --bats 是一次性裸跑全部 ⇒ 两者不是同一条命令。
   "Bats smoke (non-integration scope; integration runs under the baseline gate)"
-  "Put repo CLI on PATH (bats suites call rddf)"
   "Arch quality gate (strict mode)"
   "Change alignment gate (strict mode)"
   "Spec validation gate (baseline + delta targets)"

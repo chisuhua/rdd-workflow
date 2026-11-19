@@ -61,23 +61,25 @@ jobs:
           git config --global user.email "ci@rdd-workflow.invalid"
           git config --global user.name "rdd-workflow CI"
 
-      # The bats suites call `rddf` directly (373 files). Locally it is on PATH
-      # because install.sh --global symlinks it into ~/.local/bin; a runner has
-      # no global install. `skills/cli/rddf.sh` is self-anchoring (it derives
-      # PACKAGE_DIR from its own path and exports PYTHONPATH), so putting that
-      # directory on PATH is enough — no install step needed.
-      # Parity with a dev machine: install.sh --global writes a site-packages
-      # `.pth` that puts the repo root on every interpreter's sys.path, so
-      # `python3 -m skills.x` / `-m _lib.x` work from any cwd. A runner has no
-      # such .pth ⇒ every bats fixture that shells out from a temp repo fails
-      # with ModuleNotFoundError. One job-wide PYTHONPATH replaces the .pth.
-      - name: Make repo importable for subprocesses (parity with install.sh .pth)
-        run: echo "PYTHONPATH=${GITHUB_WORKSPACE}" >> "$GITHUB_ENV"
-
-      - name: Put repo CLI on PATH (bats suites call rddf)
+      # The product's scripts bootstrap by sourcing `$HOME/.agents/skills/_lib/*.sh`
+      # and by calling `rddf` (e.g. select_worktree.sh falls back to the global
+      # copy). That is the documented INSTALLED shape; a bare runner has none of
+      # it, and 17 integration tests fail with `orchestrator_run: command not
+      # found` / `rddf: not found`. Running the installer is the only faithful
+      # parity with a dev machine (symlinks + ~/.local/bin/rddf + site .pth).
+      - name: Install rdd-workflow globally (dev-machine parity)
         run: |
-          echo "${GITHUB_WORKSPACE}/skills/cli" >> "$GITHUB_PATH"
-          command -v rddf || true
+          bash install.sh --global
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          test -x "$HOME/.local/bin/rddf"
+          test -d "$HOME/.agents/skills/_lib"
+
+      # Belt-and-braces for the import half: the installer writes a .pth, but
+      # user-site can be disabled on a runner and the failure mode
+      # (ModuleNotFoundError in every fixture subprocess) is expensive to
+      # rediscover. One job-wide PYTHONPATH makes it unconditional.
+      - name: Make repo importable for subprocesses (belt-and-braces for the .pth)
+        run: echo "PYTHONPATH=${GITHUB_WORKSPACE}" >> "$GITHUB_ENV"
 
       - name: Test isolation gate (anti-pollution)
         run: |
