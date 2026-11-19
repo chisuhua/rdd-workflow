@@ -16,14 +16,14 @@
 |---|---|---|
 | AC-1 | **pass** | `test ! -d skills/guide` ⇒ 不存在；`docs/legacy/skills/guide/SKILL.md` ⇒ 存在；`grep -q '考古保留' docs/legacy/README.md` ⇒ 命中 |
 | AC-2 | **pass** | `package.json::skills[]` ⇒ 28 项，`'guide' in skills[]` 为 False；`pyrightconfig.json` 无 `skills/guide` 匹配 |
-| AC-3 | **pass** | `.rddf/state/.cross-repo-evidence.json` ⇒ `status="verified"`，3 个 item 全部 `observed=0`（`rdd-skills-no-guide` / `d7-revised` / `rdd-skills-available`）。**独立复跑**：`rdd-skills.sh --json` 的 `available[]` 28 项不含 `guide` |
+| AC-3 | **pass** | `.rddf/state/.cross-repo-evidence.json` ⇒ `status="verified"`，3 个 item 全部 `observed=0`（`rdd-skills-no-guide` / `d7-revised` / `rdd-skills-available`）。**独立复跑**：`rdd-skills.sh --json` 的 `available[]` 28 项不含 `guide`；`grep -c 'guide. skill 不删' ~/.config/opencode/.rddf/state/adr-front-agent-redesign.md` ⇒ 0；`grep -c 'front 吸收'` ⇒ 1（D7 的职责划分保留）。治理面改动已由 architect 实施并提交（opencode 仓 `82adaa6`，本地已提交、尚未 push；oracle + critic 双审通过） |
 | AC-4 | **pass** | `recommender.scan_state('.')` ⇒ `('rdd-builder', '变更生成已完成 → 进入变更执行', 'high')` |
 | AC-5 | **pass** | `grep -rn 'stage_guide' skills/rddf-session/scripts/ _lib/` 的命中项经逐条核对，**全部**为 legacy enum 保留（`_types.py:32/41/55` 的 `_VALID_KINDS` / `_KIND_ALIAS` / `HEARTBEAT_TIMEOUT_BY_KIND`，`sessions_schema.json:14/47/48/69`）或文档字符串；**非注释、非 legacy 的代码路径命中 0**。与 `iteration_schema.json` / `verifier_loop_schema.json` 的既有政策一致 |
 | AC-6 | **pass** | **实测**（非代码存在性推断）：fixture（`events.jsonl` 含 3 条 `phase_started`/`phase_completed`，`sessions.json` 一条 active `stage_builder`）下 `synthesize()` ⇒ `child_progress` 非空，含 `kind=stage_builder started=2 completed=1 detail='stage_builder 完成 1/2'` —— 含「完成」计数，不含 `child progress unavailable`。另：`grep -c 'phase_started' rddf_session_hooks.sh` ⇒ 2（hook 仍写事件）；`_read_events_for_children` 可导入 |
 | AC-7 | **pass** | `bash tests/scripts/report_regression.sh` ⇒ **0 新增失败 / 11 已知失败 / 未评估 0**（评估 248/248 文件） |
 | AC-8 | **pass** | `grep -c 'guide-orchestrator-flow' docs/architecture/README.md` ⇒ 0；`docs/legacy/guide-orchestrator-flow.md` 存在 |
 | AC-9 | **pass** | ADR-0055 / ADR-0056 各含 1 处 `Superseded by ADR-0063`；ADR-0051 References 含 `ADR-0063` |
-| AC-10 | **pass** | **跨仓人工验证**：`grep -c 'guide. skill 不删' ~/.config/opencode/.rddf/state/adr-front-agent-redesign.md` ⇒ 0；`grep -c 'front 吸收'` ⇒ 1（D7 的职责划分保留）。治理面改动已由 architect 实施并提交（opencode 仓 `82adaa6`，oracle + critic 双审通过） |
+| AC-10 | **pass** | `grep -c 'skill_use("guide")' skills/INSTALL.md` ⇒ **0**；`grep -c 'guide/SKILL.md' AGENTS.md` ⇒ **0**；`grep -c 'skills/guide.md' docs/ONBOARDING.md` ⇒ **0**（用户可见文档已不再引导 `skill_use("guide")`） |
 | AC-11 | **pass** | `install.sh:131-143` 含 broken symlink 清理（`-L` 真且 `-e` 假才删）；`docs/migration/v3-to-v4.md` 含 `rm -f ~/.agents/skills/guide` |
 | AC-12 | **pass** | C 阶段全量门 `/tmp/opencode/c-full.log` ⇒ `✅ ALL PASSED`；B 阶段全量门（含 C 的全部改动 + B 的改动）`/tmp/opencode/b-full.log` ⇒ `rc=0` / `✅ ALL PASSED`（bats 回归门 0 新增失败；pytest unit 3433 passed；pytest integration 196 passed） |
 
@@ -51,3 +51,14 @@
 2. **schema enum 保留是有意为之**：按 metis 修订后的政策，`sessions_schema.json` 保留 `stage_guide` / `guide-orchestrator` / `last_seen_offset` 的枚举值（与 `iteration_schema.json` / `verifier_loop_schema.json` 一致）—— 收窄会让全局安装用户的存量 `sessions.json` 立刻校验失败。
 3. **治理面先行已满足**：ADR-0063 Decision 5 要求「治理面未合入前本仓不 archive」。治理面 5 处改动已于 2026-11-19 由 architect 角色实施（opencode 仓 `82adaa6`），oracle 判 `治理面判定: PASS-WITH-NOTES`、critic 判 `APPROVE_WITH_CONDITIONS`（BLOCKER 0，2 条 SHOULD_FIX 已闭合）。审稿报告见 `.rddf/reviews/adr-0063-cross-repo-governance-review.md`。
 4. **本仓的 archive 门已满足**：`openspec archive` 对本 change 无阻塞项；`iteration.json` 中本 change 为 `in_worktree`，归档后由 `rddf archive-sync` 转为 `archived`。
+
+## 勘误（2026-11-19，ADR 指针回填审查发现）
+
+oracle 在复核 ADR-0063 的 AC 映射回填时发现本报告的**编号错位**，已修正：
+
+| 项 | 原写法（错） | 修正后 |
+|---|---|---|
+| AC-10 行 | 写的是「跨仓 D7 已修订」 | proposal 的 AC-10 实为「用户可见文档去 guide 引用（INSTALL / AGENTS / ONBOARDING）」—— 已按 proposal 口径重写，并补上该判据的取证（0 / 0 / 0）。跨仓 D7 归 AC-3 的证据项（工件含 `d7-revised` item） |
+| proposal AC-3 的 item 计数 | proposal 字面写「含 rdd-skills.sh 与 D7 两个 item」，而证据工件实为 **3** 个（多 `rdd-skills-available`，直接跑 `rdd-skills.sh --json`） | proposal 已归档不改；工件为准（3 个 item 全部 `observed=0`） |
+
+**根因**：本报告与 ADR-0063 的 AC 映射均按「我实施时的记忆」编号，而非回读 proposal 的 AC 原文 —— 两者恰好把 AC-3 与 AC-10 互换。后续任何 AC 编号引用应**回读 proposal 原文**，不凭记忆。

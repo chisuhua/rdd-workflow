@@ -89,7 +89,7 @@
 | [ADR-0060](ADR-0060-adr-shape-contract-and-gate-demotion.md) | ADR-0060: ADR 形态契约与门禁降级 —— 决策文档只回答「定什么 / 为什么 / 代价」 | 已采纳 + AMENDED (2026-11-17) | 2026-10-28 |
 | [ADR-0061](ADR-0061-archive-gate-refuses-unmerged-branch.md) | ADR-0061: 合入门 —— 归档不代劳合并，但未合入不得归档 | 已采纳 (2026-11-17) | 2026-11-17 |
 | [ADR-0062](ADR-0062-recommender-single-implementation.md) | ADR-0062: 推荐器决策树收敛到单一实现 | 已采纳（2026-11-19，oracle + critic 双审通过） | 2026-11-19 |
-| [ADR-0063](ADR-0063-retire-guide-orchestrator.md) | ADR-0063: 退役 Guide-as-Orchestrator（取代 ADR-0055 / ADR-0056） | 已采纳（2026-11-19，oracle + critic 双审通过；**执行前置**：跨仓 D7 + `rddf-skills.sh` 修订须先于本仓 archive） | 2026-11-19 |
+| [ADR-0063](ADR-0063-retire-guide-orchestrator.md) | ADR-0063: 退役 Guide-as-Orchestrator（取代 ADR-0055 / ADR-0056） | 已采纳（2026-11-19，oracle + critic 双审通过；**执行前置已于 2026-11-19 满足** —— 跨仓 D7 + `rddf-skills.sh` 修订已合入 opencode 仓 commit `82adaa6`） | 2026-11-19 |
 <!-- ADR_INDEX_END -->
 
 ## 架构演进

@@ -1,13 +1,13 @@
 # ADR-0063: 退役 Guide-as-Orchestrator（取代 ADR-0055 / ADR-0056）
 
-> **Status**: 已采纳（2026-11-19，oracle + critic 双审通过；**执行前置**：跨仓 D7 + `rddf-skills.sh` 修订须先于本仓 archive）
+> **Status**: 已采纳（2026-11-19，oracle + critic 双审通过；**执行前置已于 2026-11-19 满足** —— 跨仓 D7 + `rddf-skills.sh` 修订已合入 opencode 仓 commit `82adaa6`）
 > **Date**: 2026-11-19
 > **Author**: architect
 > **Parent**: 取代 ADR-0055（**仅**其决策 1/3/4/5，以及决策 2/6 中 stage_guide 专属的 per-owner `last_seen_offset` 游标部分）、ADR-0056（Guide Session 作为唯一交互入口的最小用法流程）。**events 总线本体不在此列** —— `events.jsonl` / `phase_*` 事件 / `rddf monitor` 与 `child_progress` 消费保留（见 Decision 7）
-> **关联 change**: `backlog: retire-guide-orchestrator`（待 planner 立项）
-> **AC 映射**: 待 change 立项后回填
-> **审稿报告**: `.rddf/reviews/adr-0063.md`（收口时誊写）
-> **跨仓关联**: `~/.config/opencode/.rddf/state/adr-front-agent-redesign.md` D7（「`guide` skill 不删」）需同源修订
+> **关联 change**: `openspec/changes/archive/2026-11-19-retire-guide-orchestrator/`（已归档 2026-11-19；验收报告 `.rddf/reviews/retire-guide-orchestrator-verify.md`）
+> **AC 映射**: 见该 change 的 `proposal.md` `## Acceptance` 段 AC-1 ~ AC-12 —— AC-1 归档 / AC-2 契约面 / AC-3 跨仓证据工件（`status=="verified"`）/ AC-4 `rddf guide` 可用 / AC-5 stage_guide 代码路径退役（schema enum 保留）/ AC-6 events 总线未退化 / AC-7 测试无新增失败 / AC-8 架构快照归档 / AC-9 ADR 状态标注 / AC-10 用户可见文档去 guide 引用（INSTALL / AGENTS / ONBOARDING）/ AC-11 安装器与 migration / AC-12 全量门。**跨仓 D7 修订属 AC-3 的证据项**（工件含 `d7-revised` item），不另占编号
+> **审稿报告**: `.rddf/reviews/adr-0063.md`（本篇收口）；跨仓治理面改动另见 `.rddf/reviews/adr-0063-cross-repo-governance-review.md`
+> **跨仓关联**: `~/.config/opencode/.rddf/state/adr-front-agent-redesign.md` D7 ——「`guide` skill 予以保留」条款已于 2026-11-19 作废（opencode 仓 commit `82adaa6`，**本地已提交、尚未 push**；元数据头「被取代条款（2026-11-19）」第 ⑤ 条）
 
 ## 背景与问题
 

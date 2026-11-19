@@ -4,8 +4,8 @@
 > **Date**: 2026-11-19
 > **Author**: architect
 > **Parent**: (none)
-> **关联 change**: `backlog: consolidate-recommender-implementation`（待 planner 立项）
-> **AC 映射**: 待 change 立项后回填
+> **关联 change**: `openspec/changes/archive/2026-11-19-consolidate-recommender-implementation/`（已归档 2026-11-19；验收报告 `.rddf/reviews/consolidate-recommender-implementation-verify.md`）
+> **AC 映射**: 见该 change 的 `proposal.md` `## Acceptance` 段 AC-1 ~ AC-9 —— AC-1 单一决策阶梯（Python 侧旧入口名 0 命中 + bash 侧已随 ADR-0063 归档）/ AC-2 结构断言（能返回 ≥3 个 stage 字面量的函数恰有 1 个）/ AC-3 消费者可导入 / AC-4 两消费者 (action, reason) 一致 / AC-5 confidence 与菜单只对 synthesizer 断言 / AC-6 异常注入不抛栈且 fallback 可区分 / AC-7 fallback 菜单 v4 标签 / AC-8 proposal 列的 3 个测试文件全绿（验收实跑 4 个，含新增的结构断言文件）/ AC-9 全量门。**注**：本仓 `openspec/` 不随 git 分发，故此处保留判据摘要索引 —— proposal 的 AC 变更时须同步本行
 > **审稿报告**: `.rddf/reviews/adr-0062.md`（收口时誊写）
 > **Amends**: ADR-0044（其「deferred follow-up」清单中被本 ADR 收口的部分）
 
