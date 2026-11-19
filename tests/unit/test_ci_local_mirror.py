@@ -42,7 +42,9 @@ MIRRORED_COMMANDS = [
     "check_test_isolation.sh",
     "pytest tests/unit/",
     "pytest tests/integration/",
-    "bats tests/",
+    # NOTE: `bats tests/` is NOT mirrored — CI splits it (integration/ under the
+    # baseline gate, the rest raw) because the baseline legitimately carries
+    # accepted failures.
     "report_regression.sh",
     "--e2e-smoke",
 ]

@@ -64,13 +64,29 @@ copy_minimal_repo() {
   cp "$REPO_ROOT/openspec/config.yaml" "$dest/openspec/" 2>/dev/null || true
 }
 
+# Fixture path is DERIVED, not passed through a variable set in setup_file:
+# a `setup_file`-scoped variable is not reliably visible to the test bodies in
+# every bats invocation, and when it is empty the failure surfaces as the
+# useless `cd: null directory` (seen on a bare CI runner). `BATS_FILE_TMPDIR`
+# itself is not guaranteed either, hence the BATS_TMPDIR fallback.
+fixture_repo() {
+  printf '%s/arch-env-check-repo' "${BATS_FILE_TMPDIR:-${BATS_TMPDIR:-/tmp}}"
+}
+
 setup_file() {
-  MIN_REPO="$BATS_FILE_TMPDIR/repo"
-  copy_minimal_repo "$MIN_REPO"
+  copy_minimal_repo "$(fixture_repo)"
+}
+
+setup() {
+  MIN_REPO="$(fixture_repo)"
+  if [ ! -d "$MIN_REPO" ]; then
+    echo "fixture missing: $MIN_REPO (BATS_FILE_TMPDIR='${BATS_FILE_TMPDIR:-}', BATS_TMPDIR='${BATS_TMPDIR:-}')" >&2
+    return 1
+  fi
 }
 
 teardown_file() {
-  rm -rf "$BATS_FILE_TMPDIR"
+  rm -rf "$(fixture_repo)"
 }
 
 @test "arch_env_check_helper_exists" {
