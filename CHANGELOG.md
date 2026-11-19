@@ -12,6 +12,31 @@ in 4 SKILL.md (rdd-arch/planner/builder/verifier/quick). Closes 5 P0 findings fr
 
 ## [Unreleased]
 
+### session-lesson-mining（2026-11-19）
+
+新增技能：**从真实会话历史挖教训 → 固化成 `rdd-workflow-e2e` 的机械判据**。起因是 2026-11-19
+的收口会话 —— 实现层没出错，出错的 7 类全在记录/判据层（AC 标「逐字」但字面量不存在、勾了 AC
+却无证据指针、勘误不可复核、观察报告 pending 与已确认并存、「门槛已到」无取数指针、混装 commit
+当归因证据、判据自匹配/空转导致假绿）。
+
+- **`scripts/session_export.py`**：opencode 会话库（sqlite）→ 归一化 JSONL；同时支持 V2
+  （`session_v2` / `session_message`）与 V1（`session` / `message` / `part`）两套 schema；
+  `--list` / `--session` / `--last` / `--since` / `--max-text`。
+- **`scripts/mine_lessons.py`**：7 个检测器（`tool_error` / `failure_signature` /
+  `test_failure` / `retry_loop` / `user_correction` / `self_correction` / `guard_selfhit`），
+  按「同类证据」聚合后给**定位**（会话 + seq），不聚合时一次 red-green 循环就能灌进几百条同类。
+- **判别力自测**：`scripts/selftest.sh` + `tests/integration/test_session_lesson_mining.bats`
+  —— 7 个检测器各须被夹具触发、干净会话零误报、导出器保留 user 正文/exit 码/中段内容。
+  接线进 CI 是刻意的：只躺在磁盘上的自测就是「入库但无人执行」的第四态。
+- **实跑验证**（在产生过错的那次会话上，`/home/ubuntu/.config/opencode` 2026-11-19）：
+  导出 **6024 行**（含 136 条 user 消息）→ 候选 **1718 条 → 78 类**；抽检命中
+  `printf: 'H': invalid format character`、`Permission denied: shell`、`FileNotFoundError`、
+  「**又踩了同一个坑**：bun 非 TTY 把失败行写 stderr」「我漏了一个 requirement」。
+- **验证过程修掉两个导出器 bug**：① V2 的 user 正文在 `data.text`（初版只遍历 `content[]`
+  ⇒ 纠正类检测器恒为 0）；② `--max-text 0` 反而走进截断分支，产出「截断 -359 字」并丢头。
+- **不改产品行为**：只新增只读脚本与文档；`package.json::skills[]` 与 INSTALL / README / AGENTS
+  的技能计数同步（28 → 29），由既有 `test_doc_contracts` 守住。
+
 ### verifier-owns-block-guard（2026-11-15）
 
 把 `rdd-verifier` skill 的 `owns:` 清单与「**真正写这些文件的代码**」绑定 —— 收拢后清单虽已是

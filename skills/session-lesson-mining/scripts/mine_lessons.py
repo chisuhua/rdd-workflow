@@ -177,7 +177,12 @@ def aggregate(hits, top: int, min_count: int):
     out = defaultdict(lambda: {"count": 0, "first": None, "last": None, "whys": Counter(), "evidence": ""})
     for det, rows in hits.items():
         for c in rows:
-            key = re.sub(r"\s+", " ", c["evidence"]).strip()[:120]
+            # 纠正类天然一次性（每条措辞都不同）⇒ 按 marker 聚合；其余按证据文本聚合
+            key = (
+                c["why"]
+                if det in ("user_correction", "self_correction", "guard_selfhit")
+                else re.sub(r"\s+", " ", c["evidence"]).strip()[:120]
+            )
             cls = out[(det, key)]
             cls["count"] += 1
             cls["whys"][c["why"]] += 1

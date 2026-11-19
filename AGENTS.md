@@ -95,7 +95,7 @@ archive change (`rdd-builder` P3)
 - 文档化的双层 bootstrap 模式 (`source ... || source $HOME/.agents/skills/...`)
 - Python `_lib` 模块通过 `.pth` 发现
 - bash `source ~/.agents/skills/_lib/state.sh` 加载运行时 helper
-- 28 个子技能 symlink 完整性
+- 29 个子技能 symlink 完整性
 
 测试在 `$BATS_TMPDIR` 创建独立的 git 仓库, **不**修改源 repo 的 `.rddf/` (其他 bats 测试依赖 stale state, 删除会级联失败)。
 

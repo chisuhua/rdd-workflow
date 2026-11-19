@@ -123,10 +123,13 @@ def _out_text(content) -> str:
 
 
 def _clip(s: str, n: int) -> str:
+    """n <= 0 ⇒ 不截断（挖掘时用 0：失败行可能出现在输出中段）。"""
     if s is None:
         return ""
     s = str(s)
-    return s if len(s) <= n else s[:n] + f"…(+{len(s) - n})"
+    if n <= 0 or len(s) <= n:
+        return s
+    return s[:n] + f"…(+{len(s) - n})"
 
 
 def _clip_tool(s: str, n: int, tail: int = 800) -> str:
@@ -134,9 +137,10 @@ def _clip_tool(s: str, n: int, tail: int = 800) -> str:
     if s is None:
         return ""
     s = str(s)
-    if len(s) <= n:
+    if n <= 0 or len(s) <= n:
         return s
-    return s[:n] + f"\n…(截断 {len(s) - n - tail} 字)…\n" + s[-tail:]
+    kept_tail = min(tail, max(len(s) - n, 0))
+    return s[:n] + f"\n…(截断 {len(s) - n - kept_tail} 字)…\n" + (s[-kept_tail:] if kept_tail else "")
 
 
 def export_v2(con, sessions: list[str], max_text: int, include_reasoning: bool):
