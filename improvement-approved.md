@@ -277,6 +277,16 @@
 | [fix-adr-0027-cli-optin-gate](.rddf/improvements/fix-adr-0027-cli-optin-gate.md) | P0 | 2026-08-24 | 已实施 |
 | [add-cli-coverage-rdd-doctor-roadmap-rdd-hub](.rddf/improvements/add-cli-coverage-rdd-doctor-roadmap-rdd-hub.md) | P1 | 2026-08-20 | 已实施 |
 | [add-hierarchical-roadmap-structure](.rddf/improvements/add-hierarchical-roadmap-structure.md) | P1 | 2026-08-20 | 已实施 |
+> **状态订正 (2026-11-19)**: `fix-generator-scope-extraction` 的「完成时间 2026-08-15」指的是归档 change
+> `2026-08-14-fix-generator-scope-extraction` 合流的时间，**不是**需求全部兑现的时间。核对结论：AC 1.3/1.4
+> （空段 fallback、Capabilities/Impact 拆分）在 2026-08-14 确实兑现；**AC 1.1/1.2（`## 范围` 段的 numbered
+> 列表与子项归并）直到 2026-11-19（commit `68623a4`）才真正兑现** —— 2026-08-14 的实现把 numbered 支持加到了
+> `_extract_bullet_items`（技术约束段）而不是 spec/task 指名的 `_extract_scope_items`（范围段），而当次新增的
+> 6 个用例也断言的是同一个错误函数 ⇒ 门一直绿、需求一直未满足；那批用例还在 2026-09-06 被删除。
+> 已合并的 spec `generator-scope-extraction` 的 Requirement 1/2 从 2026-08-15 到 2026-11-19 一直是未满足状态。
+> 逐条核对、根因与残留偏差见该 improvement 文件末尾的「实施状态核对（2026-11-19 补记）」段。
+> 顺带记下一个系统性缺口：本仓没有「spec Requirement ⇒ 代码兑现」的交叉检查，这类假绿只能靠人记。
+
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
 | [fix-script-project-root-anchoring](.rddf/improvements/fix-script-project-root-anchoring.md) | P2 | 2026-11-18 | 已实施 |
@@ -418,7 +428,7 @@
 | [harden-archive-iteration-sync](.rddf/improvements/harden-archive-iteration-sync.md) | P1 | 2026-08-17 | 已实施 |
 | [add-contract-lint-ci-gate](.rddf/improvements/add-contract-lint-ci-gate.md) | P1 | 2026-08-16 | 已实施 |
 | [add-cross-repo-state-schemas](.rddf/improvements/add-cross-repo-state-schemas.md) | P1 | 2026-08-16 | 已实施 |
-| [fix-generator-scope-extraction](.rddf/improvements/fix-generator-scope-extraction.md) | P1 | 2026-08-15 | 已实施 |
+| [fix-generator-scope-extraction](.rddf/improvements/fix-generator-scope-extraction.md) | P1 | 2026-08-15 | 已实施（范围段 2026-11-19 补齐） |
 | [complete-third-party-replay-and-upstream-reporting](.rddf/improvements/complete-third-party-replay-and-upstream-reporting.md) | P0 | 2026-08-13 | 已实施 |
 | [sync-changelog-unreleased](.rddf/improvements/sync-changelog-unreleased.md) | P1 | 2026-08-13 | 已实施 |
 | [add-roadmap-proposal-guidance](.rddf/improvements/add-roadmap-proposal-guidance.md) | P1 | 2026-08-13 | 已实施 |

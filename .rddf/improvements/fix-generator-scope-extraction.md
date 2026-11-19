@@ -110,3 +110,61 @@
 5. **行数约束**：`generate_full_proposal.py` 增量 ≤50 行（最小侵入）。
 
 6. **向后兼容**：现有 improvements 文件（138 个）`generate_full_proposal()` 输出的 `## What Changes` 段 In Scope 项数 ≥ 原始 improvements 的 In Scope 项数（对用 `- ` bullet 的文件行为不变）。
+
+## 实施状态核对（2026-11-19 补记）
+
+⚠️ 本节是**事实订正**，不改变本提案的任何决策。目的是让「这个提案到底什么时候兑现的」有个准确答案 ——
+索引里写「2026-08-15 已实施」，但**范围段（`## 范围`）的 numbered/子项支持直到 2026-11-19 才真正存在**。
+
+### 逐条验收标准的实际结论
+
+| 验收标准 | 2026-08-14（`c2e315c`） | 2026-11-19（`68623a4`） |
+|---|---|---|
+| 1.1 H3 + numbered items ⇒ 正确分类 In/Out Scope | **未兑现** | 已兑现 |
+| 1.2 numbered items + 缩进子项 ⇒ 子项并入父项 | **未兑现** | 已兑现 |
+| 1.3 缺 Out Scope 段 ⇒ 输出 `(no items specified)` | 已兑现 | 保持 |
+| 1.4 Capabilities 与 Impact 段内容不重复 | 已兑现 | 保持 |
+
+### 根因：实现落在了**另一个函数**里
+
+`c2e315c`（2026-08-14，commit message 写着 "support numbered lists … in generate_full_proposal"）
+把 numbered 前缀匹配与子项归并加到了 **`_extract_bullet_items`**（服务于「技术约束 → Capabilities/Impact」），
+而本提案的验收标准、归档 change `2026-08-14-fix-generator-scope-extraction` 的 task 第 1/2 条、
+以及已合并的 spec `generator-scope-extraction` 的 Requirement 1/2，指名的都是
+**`_extract_scope_items`**（服务于「`## 范围` → In/Out Scope」）。
+
+⇒ **需求没被验证过，所以也没被发现没实现**：
+- `c2e315c` 新增的 6 个用例（`tests/unit/test_generate_full_proposal_scope.py`）import 的也是
+  `_extract_bullet_items` —— 测的是同一条已经能过的路径；
+- 其中 `test_empty_section_fallback` 断言的是**当前行为**（`result == []`，注释里写着
+  "Current behavior returns empty list, not explicit marker"），也不是需求本身；
+- 该测试文件在 2026-09-06（`93c5ecd` 修 pytest 收集）被**删除** ⇒ 连这层假覆盖都没了。
+
+⇒ 结果就是：门一直绿，spec 的 Requirement 1/2 从 2026-08-15 到 2026-11-19 **一直是未满足状态**，
+而 `## What Changes` 的 In Scope 会被整个 `## 范围` 段顶掉、Out of Scope 被输出两遍
+（这正是 `fix-script-project-root-anchoring` 立项时手工修过、并在「本次不做」里记为「另案」的现象）。
+
+### 2026-11-19 的补齐（commit `68623a4`）
+
+`_extract_scope_items` 一个函数内三处改动：编号条目识别（`_SCOPE_ITEM_RE`）、子项归并
+（按 header 之后首个条目的缩进定 base 层级）、header 拼写归一化（`- **Out Scope**:` 之前不被识别，
+导致 175/291 个 improvement 的越界条目全部落进 In Scope）。
+
+- 回归测试：`tests/unit/test_generate_full_proposal.py` +4 例（编号分段 / Out of Scope 只出现一次 /
+  spec 原样的子项归并 / `- **In Scope**:`+2 空格孩子的兼容回归）。
+- 语料复核（291 个 improvement）：**0 处内容丢失**；in 项数变少 5 个（子项并入父项）、
+  变多 18 个（编号条目被认出）、不变 268 个；out 项数变多 175 个。
+- 反向变异：条目正则退回只认 `- ` ⇒ 新增用例红。
+
+### 仍然残留的一处偏差（未修，记录在案）
+
+已合并 spec 的 Requirement 4 写的是「`Capabilities` contains **only** `MUST` items」，而实现的
+`_split_capabilities_impact` 是「除 `MUST NOT` 外全进 Capabilities」（`SHOULD` / 无前缀条目也进
+Capabilities）。改成严格只收 MUST 会让 SHOULD 类约束**从 proposal 里消失**，属于另一个取舍 ⇒ 未动。
+
+### 顺带记下的系统性缺口
+
+本仓**没有「spec Requirement ⇒ 代码兑现」的检查**（`openspec validate` 只查结构）。这次的假绿
+之所以能活 3 个月，就是因为「归档 change 的 task 勾了 `[x]`」与「spec Requirement 被满足」之间
+没有任何交叉验证。现在这两条 Requirement 由 `tests/unit/test_generate_full_proposal.py` 的 4 个
+用例直接钉住（断言的是 spec 的 Scenario 原文），缺口从「靠人记」变成「靠测试」。
