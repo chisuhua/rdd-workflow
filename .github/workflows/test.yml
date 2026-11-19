@@ -61,6 +61,16 @@ jobs:
           git config --global user.email "ci@rdd-workflow.invalid"
           git config --global user.name "rdd-workflow CI"
 
+      # The bats suites call `rddf` directly (373 files). Locally it is on PATH
+      # because install.sh --global symlinks it into ~/.local/bin; a runner has
+      # no global install. `skills/cli/rddf.sh` is self-anchoring (it derives
+      # PACKAGE_DIR from its own path and exports PYTHONPATH), so putting that
+      # directory on PATH is enough — no install step needed.
+      - name: Put repo CLI on PATH (bats suites call rddf)
+        run: |
+          echo "${GITHUB_WORKSPACE}/skills/cli" >> "$GITHUB_PATH"
+          command -v rddf || true
+
       - name: Test isolation gate (anti-pollution)
         run: |
           bash tests/scripts/check_test_isolation.sh

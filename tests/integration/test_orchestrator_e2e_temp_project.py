@@ -12,6 +12,8 @@ from textwrap import dedent
 
 import pytest
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
 
 @pytest.fixture
 def temp_project(tmp_path):
@@ -68,6 +70,13 @@ def test_orchestrator_subprocess_in_temp_project(temp_project):
     trace_dir = temp_project / ".rddf" / "state" / "trace"
     
     env = os.environ.copy()
+    # The subprocess runs `-m skills._lib.cli` with cwd=<temp project>, so the
+    # repo package is importable only if the repo root is on PYTHONPATH. On a
+    # dev machine a site-packages .pth (rdd-workflow.pth) hides this; on a bare
+    # runner it is `ModuleNotFoundError: No module named 'skills'`.
+    env["PYTHONPATH"] = os.pathsep.join(
+        p for p in (str(REPO_ROOT), env.get("PYTHONPATH")) if p
+    )
     env.update({
         "RDDF_USE_ORCHESTRATOR": "yes",
         "RDDF_PHASE": "test-phase",
@@ -105,6 +114,13 @@ def test_stale_trace_sweep_in_temp_project(temp_project):
     issues_dir.mkdir()
     
     env = os.environ.copy()
+    # The subprocess runs `-m skills._lib.cli` with cwd=<temp project>, so the
+    # repo package is importable only if the repo root is on PYTHONPATH. On a
+    # dev machine a site-packages .pth (rdd-workflow.pth) hides this; on a bare
+    # runner it is `ModuleNotFoundError: No module named 'skills'`.
+    env["PYTHONPATH"] = os.pathsep.join(
+        p for p in (str(REPO_ROOT), env.get("PYTHONPATH")) if p
+    )
     env.update({
         "RDDF_USE_ORCHESTRATOR": "yes",
         "RDDF_PHASE": "test-phase",
@@ -154,6 +170,13 @@ def test_finalize_closes_trace_in_temp_project(temp_project):
     trace_dir = temp_project / ".rddf" / "state" / "trace"
     
     env = os.environ.copy()
+    # The subprocess runs `-m skills._lib.cli` with cwd=<temp project>, so the
+    # repo package is importable only if the repo root is on PYTHONPATH. On a
+    # dev machine a site-packages .pth (rdd-workflow.pth) hides this; on a bare
+    # runner it is `ModuleNotFoundError: No module named 'skills'`.
+    env["PYTHONPATH"] = os.pathsep.join(
+        p for p in (str(REPO_ROOT), env.get("PYTHONPATH")) if p
+    )
     env.update({
         "RDDF_USE_ORCHESTRATOR": "yes",
         "RDDF_PHASE": "test-phase",

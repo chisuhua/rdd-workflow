@@ -74,6 +74,7 @@ NOT_MIRRORED=(
   # 测试套件的环境依赖（CI runner 是白板机器），本地开发机本来就有
   "Install openspec CLI (unit-test prerequisite)"
   "Configure git identity (temp-repo fixtures commit)"
+  "Put repo CLI on PATH (bats suites call rddf)"
   "Arch quality gate (strict mode)"
   "Change alignment gate (strict mode)"
   "Spec validation gate (baseline + delta targets)"
