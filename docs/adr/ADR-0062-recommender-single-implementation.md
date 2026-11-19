@@ -91,12 +91,14 @@
 
 ## Verification
 
-- [ ] **V-1** 全仓 `grep -rn 'def _scan_state\|def _decision_tree\|def .*decision_tree' _lib/ skills/` ⇒ 命中 **1** 处；且 bash 侧 `grep -c 'RECOMMEND=' skills/guide/scripts/scan-state.sh` ⇒ 0（或该文件不存在 = ADR-0063 已落地）
-- [ ] **V-2** `python3 -c "from skills._lib.cli.guide_cmd import cmd_guide"` 与 `python3 -c "from skills._lib.workflow_synthesizer import synthesize"` 均可导入（消费者未被破坏）
-- [ ] **V-3** 状态矩阵下 `rddf guide` 与 `synthesize()` 的 **RECOMMEND / REASON / CONFIDENCE / 菜单项集合**完全一致。矩阵至少覆盖：`test_stage_consumers_agreement.py::V4_STATES` 的 4 态 + **无 `.arch-handoff.json`** + v3-design + corrupt-planner-handoff + non-object handoff（后 4 个是现测试未覆盖、且三份实现当前分歧的点）
-- [ ] **V-4** `python3 -m pytest tests/unit/test_stage_consumers_agreement.py tests/unit/test_cli_guide.py tests/unit/test_workflow_synthesizer.py -q` ⇒ 全绿
-- [ ] **V-5** 注入异常使共享模块抛错时，`synthesize()` 仍返回 `confidence="low"` 的 fallback，且 `cmd_guide` 不抛栈（never-raises / non-fatal 契约不破）
-- [ ] **V-6** `skills/guide/scripts/guide_entry.sh` 中不再存在内联决策阶梯：`grep -c 'RECOMMEND=' skills/guide/scripts/guide_entry.sh` ⇒ 0（若该脚本随 ADR-0063 归档则本项由「文件不存在」满足）
+> 实施与验收已于 2026-11-19 完成（change `openspec/changes/archive/2026-11-19-consolidate-recommender-implementation/`，报告 `.rddf/reviews/consolidate-recommender-implementation-verify.md`）。下列判据逐条取证通过。
+
+- [x] **V-1** 全仓 `grep -rn 'def _scan_state\|def _decision_tree\|def .*decision_tree' _lib/ skills/` ⇒ 命中 **0** 处（单一实现后两个旧入口名均已消失；「恰有一处决策阶梯」由 V-1 的实质 —— AST 结构断言 —— 承接，见 `tests/unit/test_recommender.py::TestSingleImplementationStructure`）；bash 侧 `grep -c 'RECOMMEND=' skills/guide/scripts/scan-state.sh` ⇒ 0（该文件已随 ADR-0063 归档）
+- [x] **V-2** `python3 -c "from skills._lib.cli.guide_cmd import cmd_guide"` 与 `python3 -c "from skills._lib.workflow_synthesizer import synthesize"` 均可导入（消费者未被破坏）
+- [x] **V-3** 状态矩阵下 `rddf guide` 与 `synthesize()` 的 **RECOMMEND / REASON** 完全一致（8 态，0 mismatch；含 `V4_STATES` 的 4 态 + **无 `.arch-handoff.json`** + v3-design + corrupt-planner-handoff + non-object handoff —— 后 4 个是原测试未覆盖、且三份实现当前分歧的点）。**CONFIDENCE 与菜单项集合只对 synthesizer 侧断言** —— `rddf guide` 的 stdout 格式本就不含这两项（判据字面表述与 CLI 可观测面的差异，见 proposal AC-5）
+- [x] **V-4** `python3 -m pytest tests/unit/test_stage_consumers_agreement.py tests/unit/test_cli_guide.py tests/unit/test_workflow_synthesizer.py -q` ⇒ 全绿
+- [x] **V-5** 注入异常使共享模块抛错时，`synthesize()` 仍返回 `confidence="low"` 的 fallback，且 `cmd_guide` 不抛栈（never-raises / non-fatal 契约不破）；两者 fallback 文案可区分（`fallback: synthesizer error` vs `状态扫描失败`）
+- [x] **V-6** `skills/guide/scripts/guide_entry.sh` 中不再存在内联决策阶梯：该脚本已随 ADR-0063 归档到 `docs/legacy/skills/guide/scripts/guide_entry.sh`（判据的「文件不存在」分支满足）
 
 ## References
 

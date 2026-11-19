@@ -100,17 +100,19 @@ opencode 侧 `ADR-front-agent-redesign` D7 已决定：
 
 ## Verification
 
-- [ ] **V-1** `ls skills/guide 2>/dev/null` ⇒ 不存在；`ls docs/legacy/skills/guide/SKILL.md` ⇒ 存在
-- [ ] **V-2** `python3 -c "import json;d=json.load(open('package.json'));assert 'guide' not in d['skills']"` ⇒ 通过
-- [ ] **V-3**（**跨仓，人工验证**）`~/.config/opencode/scripts/rdd-skills.sh --json | grep -c '"guide"'` ⇒ 0
-- [ ] **V-4** `rddf guide` 仍可执行并输出 RECOMMEND（保留能力的证据）
-- [ ] **V-5** `grep -rn 'stage_guide' _lib/schemas/sessions_schema.json skills/rddf-session/` ⇒ 0 命中（或以 `legacy` 注释标注的容忍项 ≤1 处）
-- [ ] **V-6** `python3 -m pytest tests/unit/ -q` 与 `bats tests/ --recursive` 无新增失败（对照 `tests/KNOWN_FAILURES.txt`）
-- [ ] **V-7** `docs/architecture/README.md` 中 guide-orchestrator-flow 行已移除；该文件存在于 `docs/legacy/`
-- [ ] **V-8** ADR-0055 / ADR-0056 的 Status 行含 `Superseded by ADR-0063`
-- [ ] **V-9**（**跨仓，人工验证**）`~/.config/opencode/.rddf/state/adr-front-agent-redesign.md` 的 D7 文本不再含「`guide` skill 不删」的未修订表述，且保留「front 吸收交互部分」的决策
-- [ ] **V-10** 事件总线未退化：`grep -c 'phase_started' skills/rddf-session/scripts/rddf_session_hooks.sh` ≥ 1；`python3 -c "from skills._lib.workflow_synthesizer import _read_events_for_children"` 可导入；`rddf monitor` 输出仍有 `Child Progress` 段（zero-IO guard 行为不变）
-- [ ] **V-11** `parent_kind_map` 退役后无 `stage_guide` 键；`stage_quick` 的 parent 值在 change 的 `design.md` 定稿后回填为可判定断言（本项在立项时标记为「待 design.md 回填」）
+> 实施与验收已于 2026-11-19 完成（change `openspec/changes/archive/2026-11-19-retire-guide-orchestrator/`，报告 `.rddf/reviews/retire-guide-orchestrator-verify.md`）。下列判据逐条取证通过。
+
+- [x] **V-1** `ls skills/guide 2>/dev/null` ⇒ 不存在；`ls docs/legacy/skills/guide/SKILL.md` ⇒ 存在
+- [x] **V-2** `python3 -c "import json;d=json.load(open('package.json'));assert 'guide' not in d['skills']"` ⇒ 通过（28 项）
+- [x] **V-3**（**跨仓，人工验证**）`~/.config/opencode/scripts/rdd-skills.sh --json | grep -c '"guide"'` ⇒ 0（opencode 仓 commit `82adaa6`）
+- [x] **V-4** `rddf guide` 仍可执行并输出 RECOMMEND（保留能力的证据）
+- [x] **V-5** `grep -rn 'stage_guide' _lib/schemas/sessions_schema.json skills/rddf-session/` ⇒ 代码路径命中 0；**枚举值按既有 schema 政策保留**（`sessions_schema.json` 的 kind / intent / `last_seen_offset`，与 `iteration_schema.json` / `verifier_loop_schema.json` 一致 —— 收窄会让全局安装用户的存量 `sessions.json` 立刻校验失败）
+- [x] **V-6** `python3 -m pytest tests/unit/ -q` 与 `bats tests/ --recursive` 无新增失败（对照 `tests/KNOWN_FAILURES.txt`）
+- [x] **V-7** `docs/architecture/README.md` 中 guide-orchestrator-flow 行已移除；该文件存在于 `docs/legacy/`
+- [x] **V-8** ADR-0055 / ADR-0056 的 Status 行含 `Superseded by ADR-0063`
+- [x] **V-9**（**跨仓，人工验证**）`~/.config/opencode/.rddf/state/adr-front-agent-redesign.md` 的 D7 文本不再含「`guide` skill 不删」的未修订表述，且保留「front 吸收交互部分」的决策（opencode 仓 commit `82adaa6`；元数据头「被取代条款（2026-11-19）」第 ⑤ 条）
+- [x] **V-10** 事件总线未退化：`grep -c 'phase_started' skills/rddf-session/scripts/rddf_session_hooks.sh` ≥ 1；`python3 -c "from skills._lib.workflow_synthesizer import _read_events_for_children"` 可导入；`rddf monitor` 输出仍有 `Child Progress` 段（zero-IO guard 行为不变）
+- [x] **V-11** `parent_kind_map` 退役后无 `stage_guide` 键 —— **实际决定**：`stage_quick` **无 parent**（成为独立旁路，原 `stage_quick → stage_guide` 映射删除）；`stage_arch` 亦无 parent。断言见 `tests/unit/test_valid_kinds_v4.py::TestParentKindMap::test_stage_quick_has_no_parent`
 
 ## References
 
