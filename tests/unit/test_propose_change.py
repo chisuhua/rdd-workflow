@@ -172,6 +172,64 @@ class TestCreateSkeletonChange:
         match = next(c for c in loaded["changes"] if c["name"] == "c1")
         assert match.get("parent_feature") is None
 
+    # ── openspec CLI contract (P0: the skill must not fake CLI metadata) ──
+
+    def test_openspec_metadata_has_schema_and_no_name_key(self, tmp_path):
+        """`.openspec.yaml` must keep the CLI's `schema` key.
+
+        Dropping it (the old code wrote only `name:`) makes `openspec status`,
+        `validate`, `instructions` and `archive` fail with
+        "Invalid metadata: schema: expected string, received undefined".
+        `name` is not a recognized key either (validate warns about it).
+        """
+        result = pc.create_skeleton_change(str(tmp_path), "c1", "phase-1", "general", "P2")
+        assert result is True
+        metadata = (tmp_path / "openspec" / "changes" / "c1" / ".openspec.yaml").read_text()
+        assert "schema:" in metadata
+        assert "name:" not in metadata
+
+    def test_degrades_when_openspec_cli_missing(self, tmp_path, monkeypatch):
+        """No openspec CLI ⇒ write the skeleton by hand instead of crashing.
+
+        AGENTS.md: "openspec CLI 不可用 → 手写 ... 不因缺 CLI 停下". The old code
+        let FileNotFoundError escape and killed the whole phase.
+        """
+
+        def _missing(*args, **kwargs):
+            raise FileNotFoundError(2, "No such file or directory", "openspec")
+
+        monkeypatch.setattr("subprocess.run", _missing)
+        result = pc.create_skeleton_change(str(tmp_path), "c1", "phase-1", "general", "P2")
+        assert result is True
+        assert (tmp_path / "openspec" / "changes" / "c1" / "proposal.md").exists()
+        metadata = (tmp_path / "openspec" / "changes" / "c1" / ".openspec.yaml").read_text()
+        assert "schema:" in metadata
+
+    def test_cli_failure_is_surfaced_and_skeleton_still_written(self, tmp_path, monkeypatch, capsys):
+        """Non-zero rc is reported (not swallowed) and the skeleton is still usable."""
+        import subprocess
+
+        def _failing(*args, **kwargs):
+            return subprocess.CompletedProcess(
+                args=args[0] if args else [], returncode=1, stdout="", stderr="boom: already exists"
+            )
+
+        monkeypatch.setattr("subprocess.run", _failing)
+        result = pc.create_skeleton_change(str(tmp_path), "c1", "phase-1", "general", "P2")
+        assert result is True
+        assert "boom: already exists" in capsys.readouterr().err
+        assert (tmp_path / "openspec" / "changes" / "c1" / "proposal.md").exists()
+
+    def test_doc_only_merges_skip_specs_and_keeps_schema(self, tmp_path):
+        """doc-only ⇒ `skip_specs: true` is ADDED next to the CLI's `schema`."""
+        imp = tmp_path / ".rddf" / "improvements"
+        imp.mkdir(parents=True)
+        (imp / "c1.md").write_text("# c1\n\n**类型**: doc-only\n")
+        pc.create_skeleton_change(str(tmp_path), "c1", "phase-1", "general", "P2")
+        metadata = (tmp_path / "openspec" / "changes" / "c1" / ".openspec.yaml").read_text()
+        assert "schema:" in metadata
+        assert "skip_specs: true" in metadata
+
 
 class TestUpdateRoadmapMeta:
     """update_roadmap_meta encapsulates lines 617-686 of propose.md:

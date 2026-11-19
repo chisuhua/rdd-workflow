@@ -62,6 +62,70 @@ def set_suggestion_status(
         return False
 
 
+def _detect_default_schema(project_root: str) -> str:
+    """Read ``openspec/config.yaml``'s ``defaultSchema``, default ``spec-driven``.
+
+    Used only when the openspec CLI did not create ``.openspec.yaml`` for us
+    (CLI missing / failed), so the file we write still satisfies the CLI's
+    metadata contract (``schema`` is a REQUIRED string — omitting it makes
+    ``openspec status`` / ``validate`` / ``instructions`` / ``archive`` fail).
+    """
+    config_path = os.path.join(project_root, "openspec", "config.yaml")
+    try:
+        with open(config_path, encoding="utf-8") as f:
+            for line in f:
+                m = re.match(r"\s*defaultSchema:\s*(\S+)", line)
+                if m:
+                    return m.group(1).strip("'\"")
+    except OSError:
+        pass
+    return "spec-driven"
+
+
+def _ensure_openspec_metadata(
+    change_dir: str, project_root: str, skip_specs: bool
+) -> None:
+    """Create or MERGE ``.openspec.yaml`` instead of overwriting it.
+
+    ``openspec new change`` writes ``{schema, created}`` and every CLI command
+    that reads change metadata requires ``schema``. The previous implementation
+    overwrote the file with ``name: <change>`` — ``name`` is not even a known
+    key, and losing ``schema`` made ``openspec status --change`` error out on
+    every skeleton this skill produced.
+
+    Merging keeps the CLI's keys intact and only adds the one marker the CLI
+    cannot infer (``skip_specs`` for doc-only/test-only changes).
+    """
+    path = os.path.join(change_dir, ".openspec.yaml")
+    lines: list[str] = []
+    try:
+        with open(path, encoding="utf-8") as f:
+            lines = f.read().splitlines()
+    except OSError:
+        lines = []
+
+    if not any(re.match(r"\s*schema:\s*\S", ln) for ln in lines):
+        # CLI absent/failed (or file missing): write a minimal VALID metadata.
+        prefix = [f"schema: {_detect_default_schema(project_root)}"]
+        if not any(re.match(r"\s*created:\s*\S", ln) for ln in lines):
+            from datetime import date
+
+            prefix.append(f"created: {date.today().isoformat()}")
+        lines = prefix + lines
+        # Drop a legacy `name:` key written by older versions: the CLI ignores it
+        # and warns about unrecognized keys on validate.
+        lines = [ln for ln in lines if not re.match(r"\s*name:\s*", ln)]
+
+    if skip_specs and not any(re.match(r"\s*skip_specs:\s*", ln) for ln in lines):
+        lines.append("skip_specs: true")
+
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines).rstrip("\n") + "\n")
+    except OSError as e:
+        print(f"⚠️  写入 .openspec.yaml 失败: {e}", file=sys.stderr)
+
+
 def create_skeleton_change(
     project_root: str,
     name: str,
@@ -81,8 +145,7 @@ def create_skeleton_change(
         if deprecated:
             sys.stdout.write(render_suggestion_block(deprecated))
             sys.stdout.flush()
-    except Exception:  # noqa: BLE001 — never block propose on deprecation scan
-        pass
+    except Exception as e:  # noqa: BLE001 — never block propose on deprecation scan
         print(f"⚠️  deprecation scan failed: {e}", file=sys.stderr)
     """Create minimal skeleton artifacts for a change (propose.md lines 486-551).
 
@@ -92,8 +155,13 @@ def create_skeleton_change(
     - iteration.json (status=planned) - graceful skip on ImportError
 
     Returns True on full success, False if proposal/yaml write failed.
-    Matches original inline behavior exactly, including:
-    - openspec new change call (best-effort, swallows errors)
+    Matches original inline behavior, except for the openspec CLI contract:
+    - ``openspec new change`` runs BEFORE the directory is created (the CLI
+      refuses an existing directory) and its exit code / stderr is surfaced;
+    - a missing/failing CLI degrades to writing the skeleton by hand instead of
+      raising ``FileNotFoundError``;
+    - ``.openspec.yaml`` is merged, never overwritten (dropping ``schema``
+      breaks ``openspec status`` / ``validate`` / ``archive``).
     - All output strings ("📦 Skeleton mode:", "  ✅ iteration.json updated:",
       "⚠️  iteration.json update failed (non-fatal):")
 
@@ -123,14 +191,49 @@ def create_skeleton_change(
         )
         return False
 
-    os.makedirs(change_dir, exist_ok=True)
+    # Delegate creation to the openspec CLI: it owns the change directory and
+    # writes the `.openspec.yaml` metadata (schema/created) that every other CLI
+    # command reads. It MUST run BEFORE the directory exists — `openspec new
+    # change` refuses a pre-existing directory ("already exists"), and the old
+    # code pre-created it, so the CLI never actually ran and its failure was
+    # swallowed (capture_output, no rc check).
+    try:
+        proc = subprocess.run(
+            ["openspec", "new", "change", name],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        # Doc'd degradation (AGENTS.md): no CLI ⇒ write the skeleton by hand
+        # rather than crashing. `_ensure_openspec_metadata` below fills in a
+        # valid `schema` so the change is still readable by the CLI later.
+        print(
+            "⚠️  openspec CLI 未找到，改为手写骨架"
+            "（metadata 仍按 CLI 契约写 schema，事后可被 openspec 读取）",
+            file=sys.stderr,
+        )
+    except OSError as e:
+        print(f"⚠️  openspec new change 调用失败: {e}", file=sys.stderr)
+    else:
+        if proc.returncode == 0:
+            if "no OpenSpec root was found" in (proc.stdout or ""):
+                print(
+                    "⚠️  当前项目没有 openspec 根，CLI 已自动创建 openspec/。"
+                    "建议运行 `openspec init` 完成初始化",
+                    file=sys.stderr,
+                )
+        else:
+            detail = (proc.stderr or proc.stdout or "").strip().splitlines()
+            first = detail[0] if detail else "(no output)"
+            print(
+                f"⚠️  openspec new change 失败 (rc={proc.returncode}): {first}",
+                file=sys.stderr,
+            )
 
-    # openspec new change (best-effort, matches original)
-    subprocess.run(
-        ["openspec", "new", "change", name],
-        cwd=project_root,
-        capture_output=True,
-    )
+    # The CLI creates the directory; create it ourselves when it could not run
+    # (missing/failing CLI) so the artifacts below still get written.
+    os.makedirs(change_dir, exist_ok=True)
 
     # Extract change_type from .rddf/improvements head (D6 — feature/test-only/doc-only/refactor)
     ct = "feature"
@@ -186,15 +289,10 @@ def create_skeleton_change(
     except OSError:
         return False
 
-    # Write .openspec.yaml with optional skip_specs (v1.7.0+)
-    openspec_yaml_path = os.path.join(change_dir, ".openspec.yaml")
-    try:
-        with open(openspec_yaml_path, "w") as f:
-            f.write(f"name: {name}\n")
-            if skip_specs:
-                f.write("skip_specs: true\n")
-    except OSError:
-        pass
+    # .openspec.yaml: MERGE into the file the CLI wrote (schema/created), only
+    # adding the skip_specs marker the CLI cannot infer. Overwriting it dropped
+    # `schema`, which made `openspec status`/`validate` error on every skeleton.
+    _ensure_openspec_metadata(change_dir, project_root, skip_specs)
 
     # Write minimal roadmap-meta.yaml
     yaml_path = os.path.join(change_dir, "roadmap-meta.yaml")

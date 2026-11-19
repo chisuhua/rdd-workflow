@@ -50,8 +50,10 @@ PROPOSE_MD="$REPO_ROOT/skills/propose/SKILL.md"
 @test "propose.md uses 'for name in \$THIS_SESSION_CREATED' for git add (P0-3)" {
   # The fix uses a for-loop iterating over the array, NOT a dangerous glob
   grep -qE 'for name in "\$\{THIS_SESSION_CREATED\[@\]\}"' "$PROPOSE_MD"
-  # And it adds each name's artifacts individually (proposal.md, roadmap-meta.yaml, etc.)
-  grep -qE 'git add "openspec/changes/\$name/' "$PROPOSE_MD"
+  # And it adds each name's artifacts individually — per-file relative path, so
+  # the same loop can also skip .gitignore'd paths (git.openspec_tracked=false).
+  grep -qF 'rel="openspec/changes/$name/$f"' "$PROPOSE_MD"
+  grep -qF 'git -C "$PROJECT_ROOT" add "$rel"' "$PROPOSE_MD"
 }
 
 @test "propose.md git commit does NOT use awk-piped dirname list (P0-3)" {
@@ -119,8 +121,20 @@ PROPOSE_MD="$REPO_ROOT/skills/propose/SKILL.md"
 }
 
 @test "propose.md auto-commit triggers only when array is non-empty (P0-3)" {
-  # The new gate: `if [ ${#THIS_SESSION_CREATED[@]} -gt 0 ]`
-  grep -qE 'if \[ \$\{#THIS_SESSION_CREATED\[@\]\} -gt 0 \]' "$PROPOSE_MD"
+  # The gate is an early-out on the empty array (P0-4 restructured it from
+  # `if [-gt 0]` to `if [-eq 0] ... elif` so the openspec_tracked / nothing-staged
+  # cases can report truthfully instead of printing a false "✅ 已提交").
+  grep -qE 'if \[ \$\{#THIS_SESSION_CREATED\[@\]\} -eq 0 \]' "$PROPOSE_MD"
+}
+
+@test "propose.md auto-commit honours git.openspec_tracked (P0-4)" {
+  # `openspec/` is gitignored when git.openspec_tracked=false (this repo): every
+  # `git add openspec/...` is refused, so an unconditional commit reports success
+  # for a no-op. The block must (a) read the config, (b) skip-ignore paths, and
+  # (c) avoid committing an empty index.
+  grep -qF 'openspec_tracked' "$PROPOSE_MD"
+  grep -qF 'check-ignore' "$PROPOSE_MD"
+  grep -qF 'diff --cached --quiet' "$PROPOSE_MD"
 }
 
 @test "runtime: PROJECT_ROOT env var unset still lets JSON parsing succeed" {

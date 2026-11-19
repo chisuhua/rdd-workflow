@@ -624,36 +624,61 @@ Propose 创建完成后，自动检测未提交的 artifacts 并执行提交：
 # P0-3: 仅精确添加本次会话实际创建的 change（不再使用 `git add openspec/changes/*/` 通配符）
 #       - 危险点：`*/` 会把 archive/、其它未相关 change 一并加入暂存区
 #       - 新方案：依赖 Phase 4 中 THIS_SESSION_CREATED 数组（按 name 逐个 git add）
-if [ ${#THIS_SESSION_CREATED[@]} -gt 0 ]; then
+# P0-4: 提交必须**如实报告**，且尊重 git.openspec_tracked：
+#       - `openspec/` 在 gitignore 里时 `git add` 会被拒（rc=1）⇒ 不能打印「✅ 已提交」
+#       - 空暂存区 `git commit` 也是 rc=1 ⇒ 先判 `git diff --cached --quiet`
+OPENSPEC_TRACKED=$(PROJECT_ROOT="$PROJECT_ROOT" python3 - <<'PY'
+import os, re
+p = os.path.join(os.environ["PROJECT_ROOT"], ".rddf", "project.yaml")
+val = "true"
+try:
+    for line in open(p, encoding="utf-8"):
+        m = re.match(r"\s*openspec_tracked:\s*(\S+)", line)
+        if m:
+            val = m.group(1).strip("'\"")
+except OSError:
+    pass
+print(val)
+PY
+)
+
+if [ ${#THIS_SESSION_CREATED[@]} -eq 0 ]; then
+    echo "✅ 本次未创建任何 change，无需提交"
+elif [ "$OPENSPEC_TRACKED" = "false" ]; then
+    echo "ℹ️  git.openspec_tracked=false ⇒ openspec/ 不入库，跳过提交（骨架已创建: ${THIS_SESSION_CREATED[*]}）"
+else
     echo "📦 提交本次创建的 ${#THIS_SESSION_CREATED[@]} 个 changes..."
+    STAGED=0
 
     # 逐个精确 git add（避免把 archive/ 或其它无关 change 误加进来）
     for name in "${THIS_SESSION_CREATED[@]}"; do
-        # Only commit artifacts that exist (skeleton changes have fewer files)
-        if [ -f "$PROJECT_ROOT/openspec/changes/$name/proposal.md" ]; then
-            git add "openspec/changes/$name/proposal.md"
-        fi
-        if [ -f "$PROJECT_ROOT/openspec/changes/$name/roadmap-meta.yaml" ]; then
-            git add "openspec/changes/$name/roadmap-meta.yaml"
-        fi
-        if [ -f "$PROJECT_ROOT/openspec/changes/$name/.openspec.yaml" ]; then
-            git add "openspec/changes/$name/.openspec.yaml"
-        fi
-        if [ -f "$PROJECT_ROOT/openspec/changes/$name/design.md" ]; then
-            git add "openspec/changes/$name/design.md"
-        fi
-        if [ -f "$PROJECT_ROOT/openspec/changes/$name/tasks.md" ]; then
-            git add "openspec/changes/$name/tasks.md"
-        fi
+        for f in proposal.md roadmap-meta.yaml .openspec.yaml design.md tasks.md; do
+            rel="openspec/changes/$name/$f"
+            [ -f "$PROJECT_ROOT/$rel" ] || continue
+            if git -C "$PROJECT_ROOT" check-ignore -q "$rel"; then
+                echo "  ⏭️  被 .gitignore 忽略: $rel"
+                continue
+            fi
+            git -C "$PROJECT_ROOT" add "$rel" || { echo "❌ git add 失败: $rel"; exit 1; }
+            STAGED=1
+        done
     done
-    git add improvement-suggestions.md
 
-    # 提交信息使用数组中实际创建的名称
-    git commit -m "feat: propose ${THIS_SESSION_CREATED[*]}"
+    if [ -f "$PROJECT_ROOT/improvement-suggestions.md" ] \
+       && ! git -C "$PROJECT_ROOT" check-ignore -q improvement-suggestions.md; then
+        git -C "$PROJECT_ROOT" add improvement-suggestions.md || { echo "❌ git add 失败: improvement-suggestions.md"; exit 1; }
+        STAGED=1
+    fi
 
-    echo "✅ 已提交: ${THIS_SESSION_CREATED[*]}"
-else
-    echo "✅ 本次未创建任何 change，无需提交"
+    if [ "$STAGED" -eq 0 ]; then
+        echo "⚠️  没有可提交的产物（不存在或被 .gitignore 忽略），跳过提交"
+    elif git -C "$PROJECT_ROOT" diff --cached --quiet; then
+        echo "ℹ️  暂存区无变化，跳过提交"
+    else
+        git -C "$PROJECT_ROOT" commit -m "feat: propose ${THIS_SESSION_CREATED[*]}" \
+            || { echo "❌ 提交失败（见上方 git 输出）"; exit 1; }
+        echo "✅ 已提交: ${THIS_SESSION_CREATED[*]}"
+    fi
 fi
 ```
 
