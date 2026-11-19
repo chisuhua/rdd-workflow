@@ -226,3 +226,39 @@ git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +06381c0…
 
 **仍未解释**：`test_guide_close_can_read_project_root_in_trap_context` 在 CI 报 30s 超时；
 本地（含白板克隆 + CI 环境变量）1.2s 通过，无法复现 ⇒ 列入观察项（若下次 CI 复现则单独排查）。
+
+## 11. 第五轮（2026-11-19 深夜）：CI 从「永远红」到全绿
+
+**结果**：run 44488400155（commit `aa50449a`）⇒ **conclusion: success，28 个 step 全 OK** ——
+本仓 CI 自 2026-08 以来第一次真正通过（此前三个月一直是红的，且每次都在前几步就挂）。
+
+逐层打通的过程（每层都是「测试假设了开发机上由 `install.sh --global` 造成的形状」）：
+
+| 层 | step | 失败 | 根因 | 修法 |
+|---|---|---|---|---|
+| 1 | Python unit tests | 33 | openspec CLI 未装 / 无 git 身份 / 只清 1 个 CI marker / `openspec/` 被 gitignore / `skills._lib.X` 只靠全局 `.pth` 解析 | CI 装 CLI + 配 git 身份；测试侧清全量 marker、缺文件 skip；`skills/_lib.__path__` 补仓根 `_lib` |
+| 2 | Python integration | 3 | `python3 -m skills._lib.cli` 在临时仓 cwd 下跑，仓根不在 sys.path | 三处 env 补 `PYTHONPATH` |
+| 3 | Bats smoke | 134 | 113 × `No module named 'skills'/'_lib'`；其余是「裸跑 vs baseline 策略」冲突 + 夹具变量不传递 | job 级 `PYTHONPATH`；bats smoke 收窄为 integration/ 之外；夹具路径改为派生 |
+| 4 | Bats smoke（暴露的潜伏缺陷） | 1 | `rddf setup --help` 不列 `ai-context`（dispatcher 的 `_handle_help()` 绕过 handler 的 argparse） | 按 `sessions` 的既有写法把子命令写进描述 |
+| 5 | Regression gate | 17 | 产品脚本按「已安装」形状 bootstrap（`$HOME/.agents/skills/_lib/*`、`rddf`） | CI 跑 `install.sh --global`（1s）+ `~/.local/bin` 上 PATH |
+| 6 | Regression gate | 3 | gawk vs mawk 对 `awk -v br='\['` 的处理不同；`PATH=/usr/bin:/bin` 藏不住 `/usr/local/bin` 的 CLI | 双反斜杠；按真实目录剔除 PATH |
+| 7 | Regression gate | 2 | `_check_openspec` 的**硬编码兜底路径**（`/usr/local/bin/openspec`）让「缺 CLI」模拟失效 | CI 把 CLI 装到 `${RUNNER_TEMP}` 的非全局 prefix |
+
+**关键判断（值得记住的两条）**：
+
+1. **CI 的裸 `bats tests/ --recursive` 与本仓的 baseline 策略互斥**：`KNOWN_FAILURES.txt` 有 11 条
+   **已接受**的失败（doc-drift / script-drift，各有跟踪项），裸跑把它们当错误 ⇒ 这个 step
+   **永远不可能绿**。仓库的正规门是 baseline-aware 的 `report_regression.sh`（「新增失败必须修、
+   已知失败可放行」是 AGENTS.md 的明文政策）。⇒ 裸跑 step 收窄为 integration/ 之外的范围。
+2. **「本地绿 CI 红」的最后一块不是门，而是环境形状**：产品脚本里 `source "$HOME/.agents/skills/_lib/*"`
+   这类兜底是**给已安装用户**写的；CI 必须真的安装（`install.sh --global`），否则测的不是产品，
+   而是「没装产品的机器」。
+
+**仍未做 / 遗留**：
+- 11 条 `KNOWN_FAILURES`（doc-drift / script-drift）本身没修 —— 它们各有跟踪 improvement，
+  不在本批范围；本批只保证「不再被裸跑误判」。
+- `tests/e2e/agent/**`（9 个文件）需要 `RDDF_AGENT_E2E=1`，nightly 工作流负责。
+- `_lib/cli/__init__.py::_handle_help()` 绕过各 handler 的 argparse 树，属结构性设计债
+  （与 KNOWN_FAILURES 的 `rddf env-bootstrap --help shows 5 flags` 同源），本次只按既有惯例
+  补了 `setup` 一处，未改机制。
+- `create_skeleton_change` 在缺 CLI 时直接崩溃（文档说可降级）—— 另案。

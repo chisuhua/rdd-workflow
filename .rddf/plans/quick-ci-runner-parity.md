@@ -38,15 +38,15 @@ integration/ 交给 baseline-aware 的回归门。
   已接受失败（被裸跑当真错）。
 - [x] **Step 3: minimal fix** —— job 级 `PYTHONPATH`；`skills/cli` 上 PATH；
   bats smoke 收窄为非 integration 范围（`find` 派生）；夹具 fixture 路径改为派生。
-- [x] **Step 4: verify passes** —— 待 CI 实测（见 AC-6）。
+- [x] **Step 4: verify passes** —— CI run 44488400155 28 个 step 全 OK。
 
 ## Acceptance
 
 - [x] AC-1: `Python unit tests` 在 CI 转绿（run 44476608214 step 14 success）
 - [x] AC-2: `Python integration tests` 在 CI 转绿（run 44477550479 step 16 success）
 - [x] AC-3: doctor structural/advisory 在 CI 转绿（同上 step 17/18 success）
-- [ ] AC-4: `Bats smoke`（非 integration 范围）在 CI 转绿
-- [ ] AC-5: baseline 回归门 + e2e smoke + 两个 shrink-only 在 CI 转绿
+- [x] AC-4: `Bats smoke`（非 integration 范围）在 CI 转绿
+- [x] AC-5: baseline 回归门 + e2e smoke + 两个 shrink-only 在 CI 转绿（run 44488400155 全绿）
 - [x] AC-6: 本地：非 integration 的 14 个 bats 文件全绿（6s）；`test_arch_env_check_extraction.bats` 13/13；
   `test_ci_local_mirror.py` 11 passed
 
