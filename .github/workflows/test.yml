@@ -6,7 +6,15 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth: 0 — the two shrink-only gates below compare the current
+      # baseline files against git history (`HEAD~1:`, `origin/master:`). With
+      # the default depth=1 checkout, origin/master points at the pushed commit
+      # itself (a self-comparison that can never fail) and HEAD~1 does not
+      # exist at all on pull_request merge refs (empty baseline ⇒ every line
+      # counts as "new" ⇒ the gate fails on every PR).
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,12 +38,11 @@ jobs:
           # attribute a stuck test by name instead of discarding the file).
           bats --version
 
-      - name: Assertion quality gate
-        run: |
-          result=$(grep -rn "assert.*or True\|assert True" tests/ || true)
-          if [ -n "$result" ]; then echo "❌ Tautologies:"; echo "$result"; exit 1; fi
-          echo "✅ No tautological assertions"
-
+      # There is no standalone "Assertion quality gate" step any more: its grep
+      # ("assert.*or True\|assert True") matched its own pattern text inside
+      # tests/scripts/check_test_isolation.sh, so it could never pass. The same
+      # check now lives only in that script's check #4, which excludes itself —
+      # and the script is what the local gate (./test.sh --gates) also runs.
       - name: Test isolation gate (anti-pollution)
         run: |
           bash tests/scripts/check_test_isolation.sh
@@ -106,10 +113,15 @@ jobs:
           BATS_RETRY_BUDGET: '600'
         run: bash tests/scripts/report_regression.sh
 
+      # Baseline resolution order matters: on a push to master the pushed
+      # commit IS origin/master, so comparing against it would be a
+      # self-comparison that can never fail. HEAD~1 is the previous tip (push
+      # to master) or the base branch tip (pull_request merge ref) — take it
+      # first and keep origin/master as the fallback (e.g. shallow-ish clones).
       - name: KNOWN_UNEVALUATED.txt shrink-only enforcement
         run: |
           set -e
-          BASELINE=$(git show origin/master:tests/KNOWN_UNEVALUATED.txt 2>/dev/null || git show HEAD~1:tests/KNOWN_UNEVALUATED.txt || true)
+          BASELINE=$(git show HEAD~1:tests/KNOWN_UNEVALUATED.txt 2>/dev/null || git show origin/master:tests/KNOWN_UNEVALUATED.txt || true)
           CURRENT=$(cat tests/KNOWN_UNEVALUATED.txt)
           NEW_LINES=$(comm -13 <(printf '%s\n' "$BASELINE" | sed '/^[[:space:]]*$/d' | sort -u) \
                           <(printf '%s\n' "$CURRENT" | sed '/^[[:space:]]*$/d' | sort -u) || true)
@@ -131,7 +143,7 @@ jobs:
       - name: KNOWN_FAILURES.txt shrink-only enforcement
         run: |
           set -e
-          BASELINE=$(git show origin/master:tests/KNOWN_FAILURES.txt 2>/dev/null || git show HEAD~1:tests/KNOWN_FAILURES.txt)
+          BASELINE=$(git show HEAD~1:tests/KNOWN_FAILURES.txt 2>/dev/null || git show origin/master:tests/KNOWN_FAILURES.txt)
           # Reuse report_regression.sh L27-34 sed strip rules
           BASELINE_STRIPPED=$(echo "$BASELINE" | sed -E 's/[[:space:]]+# (pre-existing|historical)[^[:alnum:]].*$//' | sed '/^[[:space:]]*$/d' | sort -u)
           CURRENT_STRIPPED=$(sed -E 's/[[:space:]]+# (pre-existing|historical)[^[:alnum:]].*$//' tests/KNOWN_FAILURES.txt | sed '/^[[:space:]]*$/d' | sort -u)

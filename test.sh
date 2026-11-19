@@ -27,8 +27,7 @@
 #   127 = 缺少依赖 (bats / python3)
 #
 # 本地门覆盖 CI 的哪几道（口径必须与 .github/workflows/test.yml 一致）:
-#   ✅ 断言质量门 + 测试隔离门  → tests/scripts/check_test_isolation.sh
-#                                   (CI 的 "Assertion quality gate" 是它的 check #4)
+#   ✅ 测试隔离门（含 check #4 断言质量检查）→ tests/scripts/check_test_isolation.sh
 #   ✅ Ruff lint check           → python3 -m ruff check skills/_lib/
 #   ✅ Mypy strict type check    → python3 -m mypy --strict skills/_lib/core/
 #   ✅ rdd-doctor structural gate→ doctor.sh --gate structural (10 categories)
@@ -72,11 +71,13 @@ setup_colors() {
 NOT_MIRRORED=(
   "Install Python deps"
   "Install bats"
-  "Assertion quality gate"            # 已被 check_test_isolation.sh 的 check #4 覆盖
   "Arch quality gate (strict mode)"
   "Change alignment gate (strict mode)"
   "Spec validation gate (baseline + delta targets)"
   "rdd-doctor advisory gate (4 categories, non-blocking)"
+  # 逻辑由 tests/integration/test_regression_baseline_shrink_only.bats 镜像；
+  # 基线取法依赖 git 历史（HEAD~1 / origin/master），本地工作树没有 CI 的
+  # 「这次 push 之前」语义 ⇒ 镜像它只会制造假红/假绿。
   "KNOWN_UNEVALUATED.txt shrink-only enforcement"
   "KNOWN_FAILURES.txt shrink-only enforcement"
   "Regression-gate bypass must not be set in CI"
@@ -355,7 +356,7 @@ Single file:
   --help, -h                此帮助
 
 本地门覆盖 CI 的哪几道（口径与 .github/workflows/test.yml 一致）:
-  ✅ 断言质量门 + 测试隔离门 → tests/scripts/check_test_isolation.sh
+  ✅ 测试隔离门（含 check #4 断言质量检查）→ tests/scripts/check_test_isolation.sh
   ✅ Ruff lint check          → python3 -m ruff check skills/_lib/
   ✅ Mypy strict type check   → python3 -m mypy --strict skills/_lib/core/
   ✅ rdd-doctor structural    → doctor.sh --gate structural

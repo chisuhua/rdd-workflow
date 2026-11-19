@@ -73,6 +73,8 @@
    默认 `fetch-depth: 1` ⇒ 两个 ref 都不存在 ⇒ 基线为空 ⇒ 当前文件所有行都被判「新增」⇒ exit 1。
    **与本次改动无关**，修它要改 checkout 深度 ⇒ 另案。⇒ commit message 写「让 Ruff step 转绿」，
    不写「让 CI 转绿」。
+   ⚠ **2026-11-19 晚订正**：本条「基线为空 ⇒ 全部判新增 ⇒ 红」的推断被实测**证伪**（push 到 master 时
+   `origin/master` == 被推的提交本身 ⇒ 自比较、假绿）。真实行为与修法见 §9。
 
 ## 5. 验证（证据）
 
@@ -120,7 +122,7 @@
 | Change alignment gate (strict mode) | 同上 |
 | Spec validation gate (baseline + delta targets) | 依赖 CI 里 `openspec/changes/` 的存在与基线文件 |
 | rdd-doctor advisory gate | 非阻断的告警门，本地门只镜像阻断型的 structural |
-| KNOWN_UNEVALUATED / KNOWN_FAILURES shrink-only | 依赖 CI 的 `origin/master` 基线（浅克隆里取不到 ⇒ 见 §4.3） |
+| KNOWN_UNEVALUATED / KNOWN_FAILURES shrink-only | 逻辑由 `tests/integration/test_regression_baseline_shrink_only.bats` 镜像；基线取法依赖 git 历史（`HEAD~1`），本地工作树没有 CI 的「这次 push 之前」语义（见 §9） |
 | Regression-gate bypass must not be set in CI | CI 专属断言（本地没有 CI 环境可被污染） |
 
 ## 8. 最终结论
@@ -130,10 +132,69 @@
 镜像契约被破坏时契约测试变红；全量门 ALL PASSED。
 
 **两个「已知红」不在本批范围**（已在 §4 与 commit message 写明，不要被误读成「CI 已全绿」）：
-CI 的两个 shrink-only step（浅克隆取不到基线）；lint/type 门的覆盖漏洞
+CI 的两个 shrink-only step（⚠ 该判断已被 §9 订正：它们不是红，而是**假绿**）；lint/type 门的覆盖漏洞
 （ruff 只查 shim 层、mypy 只查 0-def shim ⇒ mypy 门近乎空转）。
 
 **下一步建议**（按优先级）：
 1. push 后观察一次 CI —— Ruff step 应转绿；shrink-only 两步仍红（预期内）。
 2. 决定是否修 shrink-only（给 checkout 加 `fetch-depth: 0`）——这是让 CI **真正**全绿的最后一块。
 3. 另案处理 lint 覆盖漏洞与 debt 工件里的 37 个发现。
+
+## 9. 第三轮（2026-11-19 晚）：让 CI 真正转绿
+
+`06381c0` 推送后 CI 仍在 22s 红 —— **失败点从 Ruff 换成了 Assertion quality gate**。
+
+### 9.1 第三层红：断言质量门在自匹配
+
+CI 那个 step 是裸 grep：
+
+```bash
+result=$(grep -rn "assert.*or True\|assert True" tests/ || true)
+```
+
+而 `tests/scripts/check_test_isolation.sh` 自己的 check #4 **就写着这个模式**（第 135/140 行）。
+该脚本内部有自排除（`grep -v "^${SELF_SCRIPT}:"`），CI 的裸 grep **没有** ⇒ 自 2026-08-10
+（`a3340b5` 引入 check #4 起）这个 step **永不可能通过**——它一直在匹配自己。
+（此前三个月它被更早的 Ruff 红挡在门外，所以没人见过它红。）
+
+**处置**：删掉该 CI step，保留 `check_test_isolation.sh` 的 check #4 作为**唯一**实现
+（同一判据不留两份拷贝；脚本自排除，且本地门 `./test.sh --gates` 跑的就是它）。
+`check_test_isolation.sh` 头注释里「mirrors the line-30 pattern of test.yml」的过期指向一并修正。
+`test.sh` 的 `NOT_MIRRORED` 相应删掉该条目（反向契约测试要求台账项必须真实存在）。
+
+### 9.2 shrink-only 两个 step 的真相（上一轮的判断是错的）
+
+实测 CI 日志（run 44456236815）里 actions/checkout 的 fetch 原文：
+
+```
+git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +06381c0…:refs/remotes/origin/master
+```
+
+⇒ **push 到 master 时 `origin/master` == 被推的提交本身**。于是：
+
+| 场景 | 旧行为 | 说明 |
+|---|---|---|
+| push 到 master | **假绿**（基线 == 当前文件，自比较） | 不拦任何增长 —— 真正的失败模式不是「红」而是「不设防」 |
+| pull_request | 红（基线取不到） | `HEAD~1` 在 depth=1 下不存在；两个 ref 都缺 ⇒ UNEVALUATED 全判新增 / FAILURES 的 `git show` 直接失败。但**从未跑到**（前面 step 先红），属推断 |
+
+**修法（两点，顺序是关键）**：
+1. `actions/checkout@v4` 加 `fetch-depth: 0`（本仓 55MB，代价可接受）；
+2. 基线取法改为 **`HEAD~1` 在前、`origin/master` 兜底** —— 若保持原顺序，
+   master push 上仍是自比较（`origin/master` == HEAD），改了深度也白改。
+   `HEAD~1` 在 push 时是上一个 tip、在 PR merge ref 上是 base tip，两种事件下都正确。
+
+**证据**（完整历史克隆内跑 step 原文）：
+- 基线真实存在：UNEVALUATED 16 行 / FAILURES 83 行（旧口径下这两个数字是「当前文件自己的行数」）；
+- 注入增长（`test_brand_new::test_case` / 假 `fake_slow.bats` 各一行）⇒ **两个 step 都红**，恢复后绿；
+- `./test.sh --gates` 4 道门全绿；`test_regression_baseline_shrink_only.bats` 4/4；
+  `test_regression_gate_evaluation.bats`+`test_known_failures_baseline.bats` 全绿（workflow 断言未被破坏）；
+  `test_rdd_workflow_e2e_coop.bats` 3/3（`--e2e-smoke` 仍在）。
+
+### 9.3 仍未做（诚实边界）
+
+- **多提交 push 只覆盖最后一个提交**：用 `HEAD~1` 而非 `${{ github.event.before }}`。
+  后者才是「push 前 tip」的准确语义，但 `pull_request` 事件下该字段的取值不稳，本次不引入。
+- **lint/type 覆盖漏洞**不变（ruff 只查 shim 层、mypy 只查 0-def shim）⇒ 另案，见
+  `.rddf/improvements/fix-lint-deferred-findings.md` 的 Out of Scope。
+- “CI 全绿”只在本次改动 push 后由实际 run 确认；本报告只给本地等价证据
+  （本提交的本地证据：`--gates` 4 道门全绿 + 全量门 未评估 0 / 新增失败 0）。

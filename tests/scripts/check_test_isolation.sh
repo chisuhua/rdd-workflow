@@ -9,7 +9,10 @@
 # subsequent test's monkeypatch.chdir() failed with FileNotFoundError.
 #
 # This script greps for known-polluting patterns and fails CI on detection.
-# It mirrors the "Assertion quality gate" pattern (line 30 of test.yml).
+# Check #4 (tautological assertions) used to be a separate "Assertion quality
+# gate" grep step in test.yml; that step matched its own pattern text in this
+# file and could never pass, so it was removed — this check is now the only
+# copy, and it excludes itself when scanning.
 #
 # Usage:
 #   bash tests/scripts/check_test_isolation.sh

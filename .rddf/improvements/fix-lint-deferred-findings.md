@@ -42,6 +42,14 @@
   （`pyrightconfig.json` 的 `include` 含 `_lib`，但 pyright 不在 CI 里跑 ⇒ 另一处死配置）。
   同理 `mypy --strict skills/_lib/core/` 只看到 0-def shim ⇒ **mypy 门目前近乎空转**。
   这两条覆盖漏洞单独立项，不在本提案偷偷扩大 CI 范围。
+- **覆盖漏洞的实测规模（2026-11-19 测量，供立项估时）**：
+  - `python3 -m ruff check _lib/`（当前口径 `select = ["E4","E7","E9","F"]`）⇒ **84 errors**
+    （其中 61 可 `--fix`，另 7 个要 `--unsafe-fixes`）—— 真实实现层从未被 lint 过，不是「几乎干净」。
+  - `python3 -m mypy --strict _lib/core/` ⇒ **4 errors / 2 files**（`_lib/core/state_vector.py:21`
+    引用 `skills._lib.core.lock` 的 `FileLock` / `LockTimeout`，而那一层是 0-def shim ⇒
+    真实实现 `_lib/core/lock.py` 有这些符号，`skills/_lib/core/lock.py` 的合并 shim 没有）。
+    ⇒ 这 4 个错误本身就是**shim 分层造成的假阳性**，扩覆盖前必须先决定「mypy 查哪一层」。
+  - `pyrightconfig.json` 的 `include` 含 `_lib`，但 pyright 不在 CI 里跑 ⇒ 另一处死配置。
 - **不改 `pyproject.toml` 里 `[[tool.mypy.overrides]] module = "_lib.core.*"`** —— 该 override 指向的是
   真实实现 `_lib/core/*`，而 CI 的 mypy 命令查的是 `skills/_lib/core/` ⇒ override 与被查路径对不上；
   是死配置还是有意为之需要单独判断（连带 `pyrightconfig.json` 里 `skills/guide-arch` / `skills/guide-plan`

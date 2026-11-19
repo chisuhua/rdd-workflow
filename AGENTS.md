@@ -62,7 +62,7 @@ bash tests/scripts/report_regression.sh
 
 **退出码**: `0`=全绿 / `1`=有失败 / `2`=参数错 / `127`=缺依赖. 详见 `./test.sh --help`.
 
-CI 在 `.github/workflows/test.yml`, 按序执行: 安装 deps → **断言质量门控** → Python unit → Python integration → bats smoke → bats static 子集 → bats git-worktree 子集.
+CI 在 `.github/workflows/test.yml`, 按序执行: 安装 deps → ruff → mypy strict → **测试隔离门（含断言质量检查）** → Python unit → Python integration → doctor structural/advisory → bats recursive → e2e smoke → 增量回归门 → 两个 shrink-only 断言.
 
 > **重要**: `npm test` 只跑 bats, **不会**捕获 Python 测试失败. 改完 Python 后必须手动 `pytest tests/` 或 `./test.sh --python`/`--unit`/`--integration`.
 
