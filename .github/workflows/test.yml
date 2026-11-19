@@ -43,6 +43,24 @@ jobs:
       # tests/scripts/check_test_isolation.sh, so it could never pass. The same
       # check now lives only in that script's check #4, which excludes itself —
       # and the script is what the local gate (./test.sh --gates) also runs.
+      # Unit tests exercise `create_skeleton_change`, which shells out to the
+      # openspec CLI. Without it the tests crash with FileNotFoundError — the
+      # CLI is a test-suite prerequisite, not an app dependency (it is not in
+      # requirements.txt), so it is installed here, pinned to the version the
+      # suite was written against.
+      - name: Install openspec CLI (unit-test prerequisite)
+        run: |
+          npm install -g @fission-ai/openspec@1.14.3
+          openspec --version
+
+      # Several unit tests build throwaway git repos and `git commit` in them.
+      # They inherit the machine's global identity, which a fresh runner does
+      # not have (`git commit` exits 128 without it).
+      - name: Configure git identity (temp-repo fixtures commit)
+        run: |
+          git config --global user.email "ci@rdd-workflow.invalid"
+          git config --global user.name "rdd-workflow CI"
+
       - name: Test isolation gate (anti-pollution)
         run: |
           bash tests/scripts/check_test_isolation.sh

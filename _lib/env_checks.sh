@@ -14,7 +14,7 @@ _check_openspec() {
   done
   if [ -z "${_OPENSPEC_PATH:-}" ]; then
     echo "❌ openspec CLI 未找到"
-    echo "   请安装: npm install -g openspec-cli"
+    echo "   请安装: npm install -g @fission-ai/openspec"
     return 1
   fi
   _OPENSPEC_VER="$("$_OPENSPEC_PATH" --version 2>/dev/null || echo "?")"

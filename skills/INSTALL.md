@@ -105,7 +105,7 @@ else
   echo "请选择安装方式："
   echo ""
   echo "  方式 1 - npm 全局安装（推荐）："
-  echo "    npm install -g openspec-cli"
+  echo "    npm install -g @fission-ai/openspec"
   echo ""
   echo "  方式 2 - npx 临时运行："
   echo "    npx openspec <command>"

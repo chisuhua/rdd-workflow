@@ -21,6 +21,19 @@ def _read(rel: str) -> str:
     return (REPO_ROOT / rel).read_text()
 
 
+# `openspec/` is gitignored in this repo (change + spec artifacts are local, see
+# .gitignore) ⇒ a fresh checkout — CI in particular — has no
+# openspec/specs/general/spec.md. The contract is still worth checking where the
+# file exists (a maintainer's worktree), so these tests SKIP instead of failing
+# on a file the repo deliberately does not carry.
+_GENERAL_SPEC = REPO_ROOT / "openspec" / "specs" / "general" / "spec.md"
+requires_general_spec = pytest.mark.skipif(
+    not _GENERAL_SPEC.is_file(),
+    reason="openspec/ is gitignored (local-only artifacts): no specs/general/spec.md here",
+)
+
+
+@requires_general_spec
 def test_general_spec_phase_count_matches_usaged() -> None:
     spec = _read("openspec/specs/general/spec.md")
     assert "7 numbered subphases" in spec or "7 编号子阶段" in spec
@@ -29,6 +42,7 @@ def test_general_spec_phase_count_matches_usaged() -> None:
     )
 
 
+@requires_general_spec
 def test_general_spec_no_active_guide_spec_reference() -> None:
     """guide-spec is allowed in legacy notes (e.g. 'removed in v2.0') but MUST NOT
     be prescribed as an active consumer in any Requirement body.
@@ -47,6 +61,7 @@ def test_general_spec_no_active_guide_spec_reference() -> None:
         )
 
 
+@requires_general_spec
 def test_general_spec_consumers_drop_guide_spec_add_arch_plan() -> None:
     spec = _read("openspec/specs/general/spec.md")
     assert "guide-arch" in spec
@@ -129,6 +144,7 @@ def test_install_sub_skill_table_count_matches_disk() -> None:
     )
 
 
+@requires_general_spec
 def test_state_file_paths_in_general_spec_use_canonical_paths() -> None:
     spec = _read("openspec/specs/general/spec.md")
     for tail in (".arch-handoff.json", ".plan-handoff.json",

@@ -198,3 +198,31 @@ git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +06381c0…
   `.rddf/improvements/fix-lint-deferred-findings.md` 的 Out of Scope。
 - “CI 全绿”只在本次改动 push 后由实际 run 确认；本报告只给本地等价证据
   （本提交的本地证据：`--gates` 4 道门全绿 + 全量门 未评估 0 / 新增失败 0）。
+
+## 10. 第四轮（2026-11-19 晚）：CI 第一次跑到「Python unit tests」，暴露 33 个环境依赖
+
+前三轮把 step 2–11 打通后，CI **第一次**走到 `Python unit tests`：**33 failed / 3410 passed**。
+逐条归因，**没有一条是产品逻辑错**，全是「测试假设了开发机才有的东西」：
+
+| # | 根因 | 受影响 | 修法 |
+|---|---|---|---|
+| 1 | `openspec` CLI 未装：`create_skeleton_change` 直接 `subprocess.run(["openspec", …])` ⇒ `FileNotFoundError`；`tasks_checkbox` 因此多打一条 INFO「skipped cross-check」，被 `assert findings == []` 当成失败 | 16 | CI 新增「Install openspec CLI」（`@fission-ai/openspec@1.14.3`，与本地一致） |
+| 2 | runner 是白板机器，没有 git 身份：临时仓 `git commit` exit 128 | 4 | CI 新增 `git config --global user.email/user.name` |
+| 3 | `is_ci_environment()` 认 **6 个** marker（`CI`/`GITHUB_ACTIONS`/…），GitHub Actions 同时设 `CI` 与 `GITHUB_ACTIONS`；测试只清 `CI` ⇒ 断言「非 CI 行为」时实际仍在 CI | 6 | 测试侧加 `_clear_ci_markers()`，6 个用例统一清全量 marker |
+| 4 | `openspec/` 被 gitignore（本地工件）⇒ CI 永远没有 `openspec/specs/general/spec.md`，而 4 个契约测试直读它 | 4 | `requires_general_spec` skipif（有文件时照查，无文件时 skip 并写明原因） |
+| 5 | `skills._lib.X` 对**无 shim 的模块**只靠机器级全局安装解析：`skills/_lib/__init__.py` 的 `__path__` 只有 `skills/_lib/` + `~/.agents/skills/_lib`（本机是指向本仓 `_lib` 的符号链接）⇒ 68 个模块在 CI 上 `ModuleNotFoundError`；monitor 的**子进程**（不加载 conftest）因此拿不到 child progress | 1（+ 潜在面） | `__path__` 补上仓根 `_lib`（**shim 目录仍排第一** ⇒ 身份合并语义不变，`test_p1_1_identity_merge.py` 12 passed） |
+
+**验证**：
+- 白板克隆（无 `openspec/`、`HOME` 无 gitconfig、`CI=true GITHUB_ACTIONS=true`）：
+  首轮 11 failed（缺 openspec CLI 的那 16 个用例在本机 PATH 上有 CLI ⇒ 不暴露）；
+  修正后 **21 failed**，且全部落在「openspec CLI 依赖（17）+ git 身份（4）」这两类 —— 正是 CI 两个新步骤覆盖的；
+  补上 git 身份后 `test_planner_feedback_branch.py` 6 passed；补上 CLI（本机有）后 `test_propose_change*` / `tasks_checkbox` 全绿。
+- 本机工作树：`pytest tests/unit/` ⇒ **3443 passed, 3 skipped**；`./test.sh --gates` 4 道门全绿；
+  `test_ci_local_mirror.py` 12 passed（两个新 CI 步骤已登记进 `NOT_MIRRORED`）。
+
+**顺带修正的事实错**：`skills/INSTALL.md` 与 `_lib/env_checks.sh` 让用户
+`npm install -g openspec-cli` —— 该包在 npm 上**不存在**（`npm view openspec-cli` ⇒ not in the registry）。
+实际包名 `@fission-ai/openspec`，两处提示改为正确名字（历史文档不改）。
+
+**仍未解释**：`test_guide_close_can_read_project_root_in_trap_context` 在 CI 报 30s 超时；
+本地（含白板克隆 + CI 环境变量）1.2s 通过，无法复现 ⇒ 列入观察项（若下次 CI 复现则单独排查）。

@@ -276,6 +276,19 @@ def test_report_flow_bug_returns_none_for_env_error(tmp_path):
     assert file_path is None
 
 
+# ── CI marker hygiene ───────────────────────────────────────────────────
+# Production gates L2 submission on SIX CI markers (issue_reporter._CI_MARKERS).
+# GitHub Actions sets `CI=true` *and* `GITHUB_ACTIONS=true`, so a test that only
+# clears `CI` asserts non-CI behavior while the code still sees CI — it passes on
+# a laptop and fails only on the runner.
+_CI_MARKERS = ("CI", "GITHUB_ACTIONS", "JENKINS_URL", "BUILDKITE", "CIRCLECI", "GITLAB_CI")
+
+
+def _clear_ci_markers(monkeypatch) -> None:
+    for marker in _CI_MARKERS:
+        monkeypatch.delenv(marker, raising=False)
+
+
 # ── _should_auto_submit three-gate logic (ADR-0027 design gap fix) ───
 
 
@@ -293,6 +306,7 @@ def test_should_auto_submit_requires_both_enabled_and_auto_submit(monkeypatch):
     monkeypatch.delenv("RDDF_REPORT_ENABLED", raising=False)
     monkeypatch.delenv("RDDF_REPORT_AUTO_SUBMIT", raising=False)
     monkeypatch.delenv("RDDF_REPORT_SUBMIT_CATEGORIES", raising=False)
+    _clear_ci_markers(monkeypatch)
     from post_flow_analysis import _should_auto_submit
     monkeypatch.setenv("RDDF_REPORT_ENABLED", "yes")
     assert _should_auto_submit("phase-crash") is False
@@ -305,6 +319,7 @@ def test_should_auto_submit_per_category_filter(monkeypatch):
     monkeypatch.setenv("RDDF_REPORT_ENABLED", "yes")
     monkeypatch.setenv("RDDF_REPORT_AUTO_SUBMIT", "yes")
     monkeypatch.setenv("RDDF_REPORT_SUBMIT_CATEGORIES", "flow-bug,gate-failure")
+    _clear_ci_markers(monkeypatch)
     from post_flow_analysis import _should_auto_submit
     assert _should_auto_submit("flow-bug") is True
     assert _should_auto_submit("gate-failure") is True
@@ -319,7 +334,7 @@ def test_should_auto_submit_disabled_in_ci_environment(monkeypatch):
     monkeypatch.setenv("CI", "true")
     from post_flow_analysis import _should_auto_submit
     assert _should_auto_submit("phase-crash") is False
-    monkeypatch.delenv("CI")
+    _clear_ci_markers(monkeypatch)
     assert _should_auto_submit("phase-crash") is True
 
 
@@ -328,7 +343,7 @@ def test_report_flow_bug_auto_submits_when_enabled(tmp_path, monkeypatch):
     monkeypatch.setenv("RDDF_REPORT_ENABLED", "yes")
     monkeypatch.setenv("RDDF_REPORT_AUTO_SUBMIT", "yes")
     monkeypatch.setenv("RDDF_REPORT_GH_REPO", "owner/repo")
-    monkeypatch.setenv("CI", "")  # ensure not CI
+    _clear_ci_markers(monkeypatch)  # not CI (all 6 markers)
 
     fake_proc = mock.Mock(returncode=0, stdout="https://github.com/owner/repo/issues/42", stderr="")
     with mock.patch("subprocess.run", return_value=fake_proc) as m:
@@ -412,7 +427,7 @@ def test_report_flow_bug_uses_config_gh_repo_when_available(tmp_path, monkeypatc
     """When config dict has reporting.gh_repo, it is used for gh submission (not env var)."""
     monkeypatch.setenv("RDDF_REPORT_ENABLED", "yes")
     monkeypatch.setenv("RDDF_REPORT_AUTO_SUBMIT", "yes")
-    monkeypatch.setenv("CI", "")
+    _clear_ci_markers(monkeypatch)
     monkeypatch.setenv("RDDF_REPORT_GH_REPO", "env-owner/env-repo")
 
     fake_proc = mock.Mock(returncode=0, stdout="https://github.com/config-owner/config-repo/issues/99", stderr="")
@@ -440,7 +455,7 @@ def test_report_flow_bug_falls_back_to_env_when_config_has_no_gh_repo(tmp_path, 
     """When config dict has no reporting.gh_repo, env var RDDF_REPORT_GH_REPO is used."""
     monkeypatch.setenv("RDDF_REPORT_ENABLED", "yes")
     monkeypatch.setenv("RDDF_REPORT_AUTO_SUBMIT", "yes")
-    monkeypatch.setenv("CI", "")
+    _clear_ci_markers(monkeypatch)
     monkeypatch.setenv("RDDF_REPORT_GH_REPO", "env-owner/env-repo")
 
     fake_proc = mock.Mock(returncode=0, stdout="https://github.com/env-owner/env-repo/issues/77", stderr="")
