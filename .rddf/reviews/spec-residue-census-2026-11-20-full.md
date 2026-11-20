@@ -23,7 +23,7 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 ## 基线（选定口径）
 
 - 扫描 spec 文件：**165** 份
-- 命中实例：**333** 处（其中未被豁免 **191** 处）
+- 命中实例：**333** 处（其中未被豁免 **102** 处）
 - 命中块：**181** 块
 - 命中 spec：**46** 份
 - `stale allow`（过期豁免）：**0** 处
@@ -61,38 +61,6 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 | openspec/specs/cross-repo-federation/spec.md | 119 | Design Gate Integration | guide-design | unclassified | unset |  |  |  |
 | openspec/specs/dashboard-verification-status/spec.md | 50 | Verification status schema SHALL be explicit and versioned | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/dashboard-verification-status/spec.md | 50 | Verification status schema SHALL be explicit and versioned | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 8 | user-facing-docs-reflect-v4-four-stage | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 8 | user-facing-docs-reflect-v4-four-stage | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 8 | user-facing-docs-reflect-v4-four-stage | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 8 | user-facing-docs-reflect-v4-four-stage | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 8 | user-facing-docs-reflect-v4-four-stage | guide-spec | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 37 | user-facing-docs-reflect-v4-four-stage | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 37 | user-facing-docs-reflect-v4-four-stage | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 41 | architectural-docs-no-deprecated-guide-star-skill-names | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 41 | architectural-docs-no-deprecated-guide-star-skill-names | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 41 | architectural-docs-no-deprecated-guide-star-skill-names | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 41 | architectural-docs-no-deprecated-guide-star-skill-names | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 41 | architectural-docs-no-deprecated-guide-star-skill-names | guide-spec | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 47 | architectural-docs-no-deprecated-guide-star-skill-names | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 47 | architectural-docs-no-deprecated-guide-star-skill-names | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 47 | architectural-docs-no-deprecated-guide-star-skill-names | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 47 | architectural-docs-no-deprecated-guide-star-skill-names | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 61 | architectural-docs-no-deprecated-guide-star-skill-names | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 62 | architectural-docs-no-deprecated-guide-star-skill-names | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 62 | architectural-docs-no-deprecated-guide-star-skill-names | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 71 | architectural-docs-no-deprecated-guide-star-skill-names | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 75 | architectural-docs-no-deprecated-guide-star-skill-names | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 89 | rdd-arch-skill-md-rename-history-bug-fixed | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 91 | rdd-arch-skill-md-rename-history-bug-fixed | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 94 | rdd-arch-skill-md-rename-history-bug-fixed | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 112 | rdd-arch-skill-md-describes-v4-four-stage | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 112 | rdd-arch-skill-md-describes-v4-four-stage | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 112 | rdd-arch-skill-md-describes-v4-four-stage | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 129 | skills-directory-has-5-rdd-stage-skills-and-0-guide-star-skill-subdirs | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 129 | skills-directory-has-5-rdd-stage-skills-and-0-guide-star-skill-subdirs | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 129 | skills-directory-has-5-rdd-stage-skills-and-0-guide-star-skill-subdirs | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 129 | skills-directory-has-5-rdd-stage-skills-and-0-guide-star-skill-subdirs | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/doc-architecture-v4-sync/spec.md | 129 | skills-directory-has-5-rdd-stage-skills-and-0-guide-star-skill-subdirs | guide-spec | unclassified | unset |  |  |  |
 | openspec/specs/doc-truth-sync/spec.md | 85 | install-usage-readme-metadata-sync | guide-arch | unclassified | unset |  |  |  |
 | openspec/specs/doc-truth-sync/spec.md | 85 | install-usage-readme-metadata-sync | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/doc-truth-sync/spec.md | 133 | doc-contract-tests-required | guide-spec | unclassified | unset |  |  |  |
@@ -104,34 +72,6 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 | openspec/specs/doc-truth-sync/spec.md | 243 | doc-surfaces-share-truth-source | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/doc-truth-sync/spec.md | 246 | doc-surfaces-share-truth-source | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/doc-truth-sync/spec.md | 247 | doc-surfaces-share-truth-source | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 14 | docs-ONBOARDING-md-reflects-v4 | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 14 | docs-ONBOARDING-md-reflects-v4 | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 14 | docs-ONBOARDING-md-reflects-v4 | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 14 | docs-ONBOARDING-md-reflects-v4 | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 14 | docs-ONBOARDING-md-reflects-v4 | guide-spec | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 20 | docs-ONBOARDING-md-reflects-v4 | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 22 | docs-ONBOARDING-md-reflects-v4 | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 24 | docs-ONBOARDING-md-reflects-v4 | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 25 | docs-ONBOARDING-md-reflects-v4 | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 42 | docs-architecture-improvement-check-mechanisms-no-dead-links | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 46 | docs-architecture-improvement-check-mechanisms-no-dead-links | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 52 | skills-INSTALL-md-no-guide-star-skill-references | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 52 | skills-INSTALL-md-no-guide-star-skill-references | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 52 | skills-INSTALL-md-no-guide-star-skill-references | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 56 | skills-INSTALL-md-no-guide-star-skill-references | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 56 | skills-INSTALL-md-no-guide-star-skill-references | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 56 | skills-INSTALL-md-no-guide-star-skill-references | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 67 | docs-architecture-skills-and-handoff-no-deleted-path-examples | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 73 | docs-architecture-skills-and-handoff-no-deleted-path-examples | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 85 | doc-contract-test-extended-to-all-architecture-docs | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 91 | doc-contract-test-extended-to-all-architecture-docs | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 91 | doc-contract-test-extended-to-all-architecture-docs | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 91 | doc-contract-test-extended-to-all-architecture-docs | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 91 | doc-contract-test-extended-to-all-architecture-docs | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 91 | doc-contract-test-extended-to-all-architecture-docs | guide-spec | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 97 | doc-contract-test-extended-to-all-architecture-docs | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 97 | doc-contract-test-extended-to-all-architecture-docs | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/docs-v4-sync-scope-followup/spec.md | 97 | doc-contract-test-extended-to-all-architecture-docs | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 127 | general-docs-match-code | guide-arch | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 145 | general-docs-match-code | guide-arch | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 146 | general-docs-match-code | guide-plan | unclassified | unset |  |  |  |
@@ -171,22 +111,6 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 | openspec/specs/release-management/spec.md | 9 | beta-version-published | guide-arch | unclassified | unset |  |  |  |
 | openspec/specs/release-management/spec.md | 9 | beta-version-published | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/release-management/spec.md | 9 | beta-version-published | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 6 | ac-verifier skill deletion | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 7 | ac-verifier skill deletion | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 7 | ac-verifier skill deletion | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 11 | ac-verifier skill deletion | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 12 | ac-verifier skill deletion | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 51 | ac-verifier test file removal | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 69 | ac-verifier test file removal | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 72 | top-level docs cleanup | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 74 | top-level docs cleanup | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 76 | top-level docs cleanup | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 78 | top-level docs cleanup | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 80 | top-level docs cleanup | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 83 | top-level docs cleanup | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 85 | top-level docs cleanup | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 97 | ADR historical reference | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/remove-ac-verifier-completely/spec.md | 101 | ADR historical reference | ac-verifier | unclassified | unset |  |  |  |
 | openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 26 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 28 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 31 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
@@ -216,19 +140,6 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 | openspec/specs/third-party-feedback-loop/spec.md | 33 | Phase traces are replayable from any project subdirectory | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/third-party-feedback-loop/spec.md | 39 | Phase traces are replayable from any project subdirectory | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/v4-planner-scope-correction/spec.md | 136 | sh-broken-removed-or-repointed | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/v4-residue-contract/spec.md | 41 | route-schema-enums-preserve-legacy-values | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/v4-residue-contract/spec.md | 83 | user-facing-text-references-existing-skills | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/v4-residue-contract/spec.md | 88 | user-facing-text-references-existing-skills | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/v4-residue-contract/spec.md | 88 | user-facing-text-references-existing-skills | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/v4-residue-contract/spec.md | 88 | user-facing-text-references-existing-skills | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/v4-residue-contract/spec.md | 88 | user-facing-text-references-existing-skills | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/v4-residue-contract/spec.md | 93 | user-facing-text-references-existing-skills | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/v4-residue-contract/spec.md | 113 | v4-residue-doctor-category | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/v4-residue-contract/spec.md | 119 | v4-residue-doctor-category | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/v4-residue-contract/spec.md | 133 | v4-residue-scan-exclusions | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/v4-residue-contract/spec.md | 139 | v4-residue-scan-exclusions | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/v4-residue-contract/spec.md | 145 | v4-residue-scan-exclusions | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/v4-residue-contract/spec.md | 151 | v4-residue-scan-exclusions | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/verifier-archive-gate/spec.md | 10 | ADR-0035 documents verifier/archive dual-track boundary | ac-verifier | unclassified | unset |  |  |  |
 | openspec/specs/verifier-archive-gate/spec.md | 31 | STRICT_AC_GATE escalation token | ac-verifier | unclassified | unset |  |  |  |
 | openspec/specs/verifier-lifecycle/spec.md | 166 | Verification failures SHALL route back to plan or ship | guide-plan | unclassified | unset |  |  |  |
@@ -236,12 +147,12 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 
 ## 合计
 
-- `disposition=unset`：**191** 条命中记录（Phase 1 的待办量）
-- 已登记豁免（标注）：**142** 处
+- `disposition=unset`：**102** 条命中记录（Phase 1 的待办量）
+- 已登记豁免（标注）：**231** 处
 - 命中 token 分布：
-  - `guide-arch`: 24
-  - `guide-design`: 24
-  - `guide-plan`: 45
-  - `guide-ship`: 39
-  - `guide-spec`: 11
-  - `ac-verifier`: 48
+  - `guide-arch`: 10
+  - `guide-design`: 10
+  - `guide-plan`: 28
+  - `guide-ship`: 21
+  - `guide-spec`: 6
+  - `ac-verifier`: 27

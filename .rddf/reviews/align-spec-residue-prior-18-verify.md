@@ -44,6 +44,31 @@
 
 > 另修 **`_block_end` 的块边界**：Requirement 块应**包含**其下 Scenario（首版在第一个 `#### Scenario:` 处就截断 ⇒ 2 行漏标）。
 
+## ⚠️ 事后发现的判据缺陷（AC-6 过窄）
+
+本报告的 AC-6 原本只数 `openspec validate --strict` 输出里的 **`MUST include at least one Scenario`**
+这一种 issue ⇒ **漏掉了另一种** issue：`REQUIREMENT_TOO_LONG`（`requirements[N]: very long (>500 characters)`）。
+
+**实测后果**：标注行（`<!-- v4-residue:allow=... -->`，约 33 字符）落在 Requirement 正文里 ⇒
+被 openspec 的 `extractRequirementBody` 计入正文长度 ⇒ 三个原本 457/437/473 字符的 Requirement
+越过 500 阈值：
+
+| spec | Requirement | 正文（去标注） | 正文（含标注） |
+|---|---|---|---|
+| `roadmap-feature-fragment` | `guide-arch Phase 4 menu integration` | 457 | 526 |
+| `three-phase-skills` | `guide-arch-skill` | 437 | 505 |
+| `workflow-design-phase` | `plan Phase Design-done Gate (hard switch)` | 473 | 541 |
+
+（另有 **25 处** `very long` 是**既有**的 —— 去掉标注后仍超 500。）
+
+**性质**：这是**标注机制固有的副作用**，不是内容回归 —— HTML 注释渲染不可见、不改变任何 MUST/SHOULD 语义；
+`REQUIREMENT_TOO_LONG` 是 advisory WARNING（`openspec validate --all` 的 ERROR 数仍为 11）。
+**已记录，不返工**：见 `skills/rdd-doctor/SKILL.md` 的 R4 段（机制副作用说明）。
+
+**判据修正（后续批次适用）**：验证「标注不改变 issue」必须按 **issue 类型 + 目标**做**多重集比对**，
+不能只数一种 issue —— 否则判据被平凡满足。`annotate-spec-residue-guard-batch3` 已按此口径执行
+（`stdout`/`stderr` 分开存档 + 逐字节 `diff`）。
+
 ## 遗留清扫
 
 - 本次范围内（T5.10）：无 TODO / 半截改写；**0 个 `stale allow`**；台账无 `unset`。

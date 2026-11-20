@@ -108,6 +108,13 @@ SHALL accept `guide-ship` for legacy state files.
 **`checked 0` ≠ clean**：`openspec/specs/` 不存在（干净 clone、或本仓 `openspec/` 被 gitignore）时
 报 INFO「checked 0」，**不报**「无残留」。
 
+⚠️ **标注的已知副作用**：标注行（约 33 字符）落在 Requirement 正文里 ⇒ 被 openspec 的
+`extractRequirementBody` 计入正文长度 ⇒ 临界长度的 Requirement（约 467–500 字符）加标注后会新增
+一条 advisory WARNING `requirements[N]: very long (>500 characters)`。
+这是**机制固有代价**（HTML 注释渲染不可见、不改语义；`validate --all` 的 ERROR 数不受影响），
+**不是内容回归**。⇒ 验证「标注未改变校验结果」时必须按 **issue 类型 + 目标做多重集比对**，
+不能只数一种 issue（只数一种会让判据被平凡满足）。
+
 **清理清单**：`.rddf/reviews/spec-residue-census-*-full.md`（机器生成，`disposition=unset` 的行归零
 = 清理完成的判据）。生成器：`python3 skills/rdd-doctor/scripts/gen_spec_residue_census.py --out <path>`。
 
