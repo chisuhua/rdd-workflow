@@ -258,3 +258,38 @@ metis 的核心判断：**真正要交付的不是被清理后的 spec 文本，
 | P2-18 | **两种未覆盖的处置形态**：整份 capability 退役（`three-phase-skills`）；Requirement 标题即旧名（6 份以上） | ✅ 采纳 ⇒ 移入「Phase 1（另立项）」，并写明改标题的 RENAMED 代价 |
 | 隐含意图 | 「没有普查（census）」才是 ADR-0036 反复少算退役面的根本原因 —— 普查产物比守卫脚本更接近真实需要 | ✅ 采纳 ⇒ 普查台账升为**本项的主交付物之一**（清理清单 + 签批台账 + 可复算基线 + 证据 四合一） |
 
+
+### 实施处置记录（2026-11-20，change `fix-spec-residue-guard`）
+
+实施时对本草案做了 **2 处偏离**（均经 critic 第 2 轮确认，治理面见 change 的 `proposal.md`
+「与草案的偏离」段）。写回此处的原因：**Phase 1 的立项输入就是本草案** —— 不回写会让已被否定的设计
+原样复活。
+
+| # | 草案原文 | 实施选择 | 依据 |
+|---|---|---|---|
+| D1 | 台账落 `.rddf/audits/spec-residue-census-2026-11-18.md`（见「范围 §4」与 P2-17） | 落 **`.rddf/reviews/spec-residue-census-2026-11-20-full.md`** | `_lib/core/rddf_layout.py::RDFF_LAYOUT` 未登记 `audits` ⇒ `layout_check.py:142` 会报「未登记顶层条目」；登记它必须同步 `docs/architecture/agent-role-alignment.md`（**architect 管辖面**）⇒ 超出 change scope。`reviews` 已登记（`read_by=agent` / `write_by=agent` / `committed`），且第一批 / 第二批台账已在彼处 |
+| D2 | 台账 = 「清理清单 + **签批台账** + 可复算基线 + 证据」**四合一**（隐含「合并既有 disposition」） | 台账 = 「清理清单 + 可复算基线 + 证据」；**不做跨台账合并** | 合并键不可靠（实测三条，见下）。「签批台账」职责由第一批 / 第二批台账继续承担 |
+
+**D2 的实测障碍**（决定了「合并」不可做）：
+
+| 障碍 | 实测 |
+|---|---|
+| batch1 的 `matched_token` 是**上下文片段**而非裸 token | `skill_use("guide-spec"` / `skills/guide-arch/scripts/arch_proposal_review.sh` ⇒ 与机器产出的裸 token 精确匹配**全落空** |
+| batch1 的 `requirement_title` **被截断**（58 字符） | `:37` 止于 `...when orp`，真实标题以 `...when orphans exist` 结尾 |
+| batch2 **同键多行** | 37 行只有 **21 个唯一键**，最多 **6 行同键** ⇒ 继承必然歧义 |
+| 行号**必然漂移** | 两份台账的 `line` 自认是 T0 快照行号；插入注记后下移 ⇒ 以 line 为键下一批即失效 |
+
+⇒ 结论：**宁可承认台账不承载历史签批**，也不造一个「看起来合并了、其实随机取一行」的假台账。
+
+**D2 的连带影响（Phase 1 必读）**：机器不合并 ⇒ Phase 1 必须**从两份旧台账逐行重新对齐**，
+且 **`allow=history` 不是这 18 份的统一处置**：
+
+| 旧台账 `disposition` | 正确处置 |
+|---|---|
+| `RETIRED` | Requirement 保留原文（「保留原文与 Scenario 作为历史记录」）⇒ `allow=history` |
+| `PARTIAL` | **退役子句** ⇒ `history`；**仍生效的子句**若含旧名 ⇒ **真实 delta**（不得豁免） |
+| `REPOINT` | 路径已替换 ⇒ 当前 0 命中 |
+| `KEEP` | 取旧台账 `category` 列的 code（`enum` / `guard` / `proposal-name` / `rename-history`） |
+
+> ⚠️ 把 18 份统一写成 `allow=history` 会把 `RETIRED` / `PARTIAL` 行里的**真实残留**一并豁免 ——
+> 与本项要打的「假通过」是同一种形态。

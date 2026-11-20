@@ -72,10 +72,44 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 | `objective-structure` | `.rddf/roadmap/objectives/*.md` 结构 / frontmatter 必需字段 | ✅ |
 | `arch-audit` | rdd-arch 产物健康度：gap-analysis structural_ok（per ADR-0046 §5）+ completeness（draft/partial/complete）+ ADR inventory（count / latest / superseded / status 漂移）+ `.arch-handoff.json` sanity。advisory only，不阻断任何 gate。设计动机：把 `check_arch_done_gate.sh` 内嵌的 advisory 检查外提为可独立 query 的 doctor category |  |
 | `review-debt` | `.py / .sh / .bats` 源文件中 unticketed TODO/FIXME/HACK 标记（无 ticket id 参考，薄封装 `_lib.review_debt_checker._TODO_PATTERN`）|  |
-| `v4-residue` | 契约面上残留的 v3 skill 名：R1 路由型 enum 无法表达 v4 路由（CRITICAL）、R2 活代码字符串字面量指向 `guide-*`（WARNING，注释与 docstring 豁免）、R3 SKILL.md frontmatter `name:`（CRITICAL） |  |
+| `v4-residue` | 契约面上残留的 v3 skill 名：R1 路由型 enum 无法表达 v4 路由（CRITICAL）、R2 活代码字符串字面量指向 `guide-*`（WARNING，注释与 docstring 豁免）、R3 SKILL.md frontmatter `name:`（CRITICAL）、**R4 `openspec/specs/*/spec.md` 的 normative 段**（WARNING，受 `doctor.v4_residue.scan_specs` 开关控制，默认 `false`；`checked 0` ≠ clean）。R4 详解见下方「R4 —— spec 面残留」 |  |
 | `layout` | `.rddf/` 布局单一真源校验（per ADR-0026）：必需条目缺失 → WARNING、未登记顶层条目 → INFO、`class` 与 `.gitignore` 实况不符 → WARNING。advisory only —— 本 category 永不产生 CRITICAL，且只扫 `.rddf/` 一层（不递归进 `.rddf/wt/`）| |
 | `roadmap-backup` | `.rddf/roadmap/.backup/<timestamp>/` 子目录完整性 + staleness（>90 天）+ 多备份建议合并 |  |
 | `baseline-freshness` | `tests/KNOWN_FAILURES.txt` 最近 refresh 注释日期 + 占位符 reasons（>30 天 → WARNING，>90 天 → CRITICAL）。来源是 refresh 注释日期，不用文件 mtime（git checkout / atomic-rename 不可靠） |  |
+
+### R4 —— spec 面残留（`openspec/specs/*/spec.md`）
+
+已采纳的 capability spec 里若仍以**已删除的 stage**（`guide-arch` / `guide-design` / `guide-plan` /
+`guide-ship` / `guide-spec` / `ac-verifier`）为主体，按规范施工的人会去实现一个不存在的流程，
+而没有任何检查会报错 —— R4 就是补这一层。
+
+**开关**：`.rddf/project.yaml` 的 `doctor.v4_residue.scan_specs`（**默认 `false`**）。
+`v4-residue` 属 advisory gate ⇒ R4 的 WARNING **不会**拖红 CI。
+
+**口径（冻结常量）**：扫描根恰为 `openspec/specs/*/spec.md`（非递归，**不扫** `openspec/changes/**`）；
+normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正文 / 正文内 fenced code block；
+**不含** `## Purpose` 等散文段。命中按**块**归类。
+
+**合法引用要显式标注**（**禁止文件级 allowlist**）：在被豁免行的**下一行**独占写
+
+```markdown
+SHALL accept `guide-ship` for legacy state files.
+<!-- v4-residue:allow=enum -->
+```
+
+`code` 只能取五类之一：`enum`（该枚举值今天仍存在于 schema）/ `proposal-name`（提案名）/
+`guard`（反漂移守卫自身）/ `history`（归档历史，如 RETIRED 注记保留的原文）/
+`rename-history`（重命名说明）。写错 code ⇒ 标注**不生效**并报 `invalid allow code`。
+
+- 标注**与命中同行无效**（命中照报）—— 标注须独占一行，紧跟命中行。
+- 标注的前一行已无命中 ⇒ 报 `stale allow`（豁免清单会自己过期，不会腐化成第二个假通过）。
+- 「把旧名说成现存物」（`the existing ...`）且**无标注** ⇒ WARNING 并提示措辞；**有标注** ⇒ 按标注豁免。
+
+**`checked 0` ≠ clean**：`openspec/specs/` 不存在（干净 clone、或本仓 `openspec/` 被 gitignore）时
+报 INFO「checked 0」，**不报**「无残留」。
+
+**清理清单**：`.rddf/reviews/spec-residue-census-*-full.md`（机器生成，`disposition=unset` 的行归零
+= 清理完成的判据）。生成器：`python3 skills/rdd-doctor/scripts/gen_spec_residue_census.py --out <path>`。
 
 ### `.rddf/roadmap/` 文档诊断速查
 

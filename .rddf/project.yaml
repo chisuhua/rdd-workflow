@@ -1,2 +1,9 @@
 git:
   openspec_tracked: false
+
+# doctor 配置（per fix-spec-residue-guard）
+# scan_specs 默认 false；本仓显式打开 —— 46 份 spec / 192 块残留是**清理待办**，
+# 让它在 doctor 里可见（v4-residue 属 advisory gate ⇒ WARNING 不拖红 CI）。
+doctor:
+  v4_residue:
+    scan_specs: true

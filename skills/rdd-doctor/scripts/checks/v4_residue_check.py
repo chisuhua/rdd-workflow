@@ -14,6 +14,12 @@ v3 → v4 重命名（ADR-0043 / ADR-0044）覆盖了主路径，但契约面容
   / `for guide-*` → WARNING。用 `ast` 只取字面量，**注释与 docstring 豁免**。
 - **R3** `skills/*/SKILL.md` frontmatter 的 `name:` 为 `guide-*` → CRITICAL
   （该 skill 不存在）。
+- **R4** `openspec/specs/*/spec.md` 的 **normative 段**里出现已退役 stage 名
+  → WARNING（判据与口径见 `spec_residue_scan` 模块的 docstring）。**开关控制**：
+  `.rddf/project.yaml` 的 `doctor.v4_residue.scan_specs`（默认 `false`）——
+  scan 面首版只报 WARNING，且 `v4-residue` 属 advisory gate ⇒ 不拖红 CI。
+  `files_scanned == 0` 时**不得**报「无残留」，改报 INFO「checked 0」——
+  干净 clone 上 `openspec/` 不存在，静默通过就是假通过。
 """
 from __future__ import annotations
 
@@ -25,6 +31,8 @@ from pathlib import Path
 from typing import List
 
 from doctor_render import Finding, Severity
+
+from spec_residue_scan import scan_specs
 
 
 CATEGORY = "v4-residue"
@@ -218,6 +226,114 @@ def _check_skill_frontmatter(root: Path) -> List[Finding]:
     return findings
 
 
+_SPEC_SCAN_SWITCH = ("doctor", "v4_residue", "scan_specs")
+#: Where the machine census lives — the fix hint points humans at the backlog list.
+_CENSUS_HINT = ".rddf/reviews/spec-residue-census-*-full.md"
+
+
+def _spec_scan_enabled(project_root: Path) -> bool:
+    """Read ``doctor.v4_residue.scan_specs`` from project.yaml (default False)."""
+    yaml_file = project_root / ".rddf" / "project.yaml"
+    if not yaml_file.is_file():
+        return False
+    try:
+        import yaml
+
+        cfg = yaml.safe_load(yaml_file.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return False
+    node = cfg
+    for key in _SPEC_SCAN_SWITCH:
+        node = node.get(key) if isinstance(node, dict) else None
+        if node is None:
+            return False
+    return node is True or str(node).lower() == "true"
+
+
+def _check_specs(root: Path) -> List[Finding]:
+    """R4 — retired stage names inside adopted capability specs."""
+    if not _spec_scan_enabled(root):
+        return []
+
+    result = scan_specs(root)
+    findings: List[Finding] = []
+    inline_lines = {f"{f}:{ln}" for f, ln in result.ignored_inline}
+
+    if not result.checked_anything:
+        findings.append(Finding(
+            severity=Severity.INFO,
+            category=CATEGORY,
+            file="openspec/specs",
+            line=None,
+            snippet=("R4 checked 0 —— 未扫描任何 spec 文件（openspec/specs/ 不存在或为空）；"
+                     "这不等于 clean"),
+            fix_hint=("在本仓 `.rddf/project.yaml` 里开启 doctor.v4_residue.scan_specs "
+                      "只对存在 openspec/specs/ 的项目有意义"),
+        ))
+        return findings
+
+    blocks = result.blocks()
+    findings.append(Finding(
+        severity=Severity.INFO,
+        category=CATEGORY,
+        file="openspec/specs",
+        line=None,
+        snippet=(f"R4 checked {result.files_scanned} spec file(s); "
+                 f"{len(blocks)} block(s) with retired-stage residue"),
+        fix_hint=f"逐份处置清单见 {_CENSUS_HINT}",
+    ))
+
+    grouped: dict = {}
+    for hit in result.hits:
+        if hit.category:
+            continue                      # explicitly exempted
+        grouped.setdefault((hit.file, hit.block_line), []).append(hit)
+
+    for (rel, block_line), hits in sorted(grouped.items()):
+        tokens = sorted({h.matched_token for h in hits})
+        weak = any(h.weak_wording for h in hits)
+        title = hits[0].requirement_title or "(no requirement)"
+        note = "；措辞把旧名说成现存物" if weak else ""
+        inline = [h.line for h in hits if f"{rel}:{h.line}" in inline_lines]
+        if inline:
+            note += f"；L{inline[0]} 的 allow 标注与命中同行 ⇒ 已忽略（标注须独占一行并紧跟命中行）"
+        findings.append(Finding(
+            severity=Severity.WARNING,
+            category=CATEGORY,
+            file=rel,
+            line=block_line,
+            snippet=(f"R4 [req:{title}] {len(hits)} 处已退役 stage 名："
+                     f"{', '.join(tokens)}{note}"),
+            fix_hint=("改指现存落点，或加 `<!-- v4-residue:allow=<enum|proposal-name|"
+                      "guard|history|rename-history> -->`（独占一行、紧跟命中行）"),
+        ))
+
+    for rel, line, code in result.invalid_annotations:
+        findings.append(Finding(
+            severity=Severity.WARNING,
+            category=CATEGORY,
+            file=rel,
+            line=line,
+            snippet=(f"R4 invalid allow code `{code}` —— 合法取值仅 "
+                     "enum / proposal-name / guard / history / rename-history；"
+                     "该标注**不生效**"),
+            fix_hint="改成五类之一，或删除该标注（拼错不得静默豁免）",
+        ))
+
+    for stale in result.stale_allows:
+        findings.append(Finding(
+            severity=Severity.WARNING,
+            category=CATEGORY,
+            file=stale.file,
+            line=stale.line,
+            snippet=(f"R4 stale allow —— `{stale.code}` 标注的前一行已无退役 stage 名；"
+                     "豁免已过期，请删除该标注"),
+            fix_hint="删除过期标注，或确认上一行的命中是否被改指后漏删标注",
+        ))
+
+    return findings
+
+
 def run(project_root: Path | None = None) -> List[Finding]:
     """Run the v4-residue contract check against project_root."""
     if project_root is None:
@@ -227,4 +343,5 @@ def run(project_root: Path | None = None) -> List[Finding]:
     findings.extend(_check_route_enums(root))
     findings.extend(_check_string_literals(root))
     findings.extend(_check_skill_frontmatter(root))
+    findings.extend(_check_specs(root))
     return findings

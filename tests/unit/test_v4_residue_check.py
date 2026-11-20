@@ -140,3 +140,279 @@ def test_repo_itself_has_no_critical(tmp_path):
     """AC-14：本仓当前态不得被本守卫判 CRITICAL。"""
     critical = [f for f in v4_residue_check.run(REPO_ROOT) if f.severity.value == "CRITICAL"]
     assert critical == [], critical
+
+
+# ---------- R4: openspec/specs normative surface ----------
+#
+# 口径（冻结）：扫描根 = openspec/specs/*/spec.md（非递归）；normative =
+# `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正文 / 正文内 fenced code
+# block；不含 `## Purpose` 等散文段。豁免只能靠行内标注，禁止文件级 allowlist。
+
+
+_REQUIRES_SPECS = pytest.mark.skipif(
+    not (REPO_ROOT / "openspec" / "specs").is_dir(),
+    reason="openspec/ is gitignored: no specs tree in this checkout",
+)
+
+
+def _enable_scan(project_root: Path) -> None:
+    (project_root / ".rddf").mkdir(parents=True, exist_ok=True)
+    (project_root / ".rddf" / "project.yaml").write_text(
+        "doctor:\n  v4_residue:\n    scan_specs: true\n", encoding="utf-8")
+
+
+def _spec(project_root: Path, name: str, body: str) -> Path:
+    d = project_root / "openspec" / "specs" / name
+    d.mkdir(parents=True, exist_ok=True)
+    path = d / "spec.md"
+    path.write_text(body, encoding="utf-8")
+    return path
+
+
+def _r4(findings):
+    return [f for f in findings if "R4" in f.snippet]
+
+
+def test_r4_switch_defaults_off(tmp_path):
+    """AC-13：开关缺省 false ⇒ 一次 spec 扫描都不做（下游项目不受影响）。"""
+    _spec(tmp_path, "demo", "### Requirement: r\nSHALL call `guide-ship`.\n")
+    assert _r4(v4_residue_check.run(tmp_path)) == []
+
+
+def test_r4_switch_on_reports_spec_residue(tmp_path):
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo", "### Requirement: r\nSHALL call `guide-ship`.\n")
+    r4 = _r4(v4_residue_check.run(tmp_path))
+    warns = [f for f in r4 if f.severity.value == "WARNING"]
+    assert len(warns) == 1, r4
+    assert warns[0].file == "openspec/specs/demo/spec.md"
+
+
+def test_r4_scan_root_excludes_openspec_changes(tmp_path):
+    """AC-1：扫描根恰为 openspec/specs/<cap>/spec.md —— changes/ 下同内容不得报。"""
+    _enable_scan(tmp_path)
+    archived = tmp_path / "openspec" / "changes" / "archive" / "x"
+    archived.mkdir(parents=True)
+    (archived / "spec.md").write_text("### Requirement: r\nSHALL call `guide-ship`.\n",
+                                      encoding="utf-8")
+    assert [f for f in _r4(v4_residue_check.run(tmp_path))
+            if f.severity.value == "WARNING"] == []
+
+    _spec(tmp_path, "demo", "### Requirement: r\nSHALL call `guide-ship`.\n")
+    assert len([f for f in _r4(v4_residue_check.run(tmp_path))
+                if f.severity.value == "WARNING"]) == 1
+
+
+def test_r4_purpose_prose_is_not_normative(tmp_path):
+    """口径：`## Purpose` 里的旧名是历史叙述，不报。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo",
+          "# demo\n\n## Purpose\nUsed to be guide-ship. Kept for the record.\n")
+    assert [f for f in _r4(v4_residue_check.run(tmp_path))
+            if f.severity.value == "WARNING"] == []
+
+
+def test_r4_fenced_code_block_is_normative(tmp_path):
+    """代码块里的 route 枚举会被读者照抄 ⇒ 算 normative。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo",
+          "### Requirement: route enum\n\n```json\n{\"route\": \"guide-ship\"}\n```\n")
+    assert len([f for f in _r4(v4_residue_check.run(tmp_path))
+                if f.severity.value == "WARNING"]) == 1
+
+
+def test_r4_code_block_switch_off_drops_it(tmp_path):
+    """AC-2：口径常量可复算 —— code_block_in=False 时同一 fixture 不报。"""
+    from spec_residue_scan import scan_specs
+    _spec(tmp_path, "demo",
+          "### Requirement: route enum\n\n```json\n{\"route\": \"guide-ship\"}\n```\n")
+    assert scan_specs(tmp_path).hits
+    assert scan_specs(tmp_path, code_block_in=False).hits == []
+
+
+def test_r4_requirement_title_is_matched(tmp_path):
+    """口径：Requirement 标题行本身也计入（`### Requirement: fill-in-guide-plan`）。"""
+    from spec_residue_scan import scan_specs
+    _spec(tmp_path, "demo", "### Requirement: fill-phase-in-guide-plan\n\nbody\n")
+    assert scan_specs(tmp_path).hits
+    assert scan_specs(tmp_path, title_in=False).hits == []
+
+
+@pytest.mark.parametrize("code", ["enum", "proposal-name", "guard", "history", "rename-history"])
+def test_r4_each_allow_code_exempts(tmp_path, code):
+    """AC-3 正例：五类合法引用各一条 ⇒ 不报。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo",
+          "### Requirement: r\nSHALL accept `guide-ship`.\n"
+          f"<!-- v4-residue:allow={code} -->\n")
+    assert [f for f in _r4(v4_residue_check.run(tmp_path))
+            if f.severity.value == "WARNING"] == []
+
+
+@pytest.mark.parametrize("code", ["enum", "proposal-name", "guard", "history", "rename-history"])
+def test_r4_without_annotation_is_reported(tmp_path, code):
+    """AC-3 反例：同一行内容去掉标注 ⇒ 必报。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo", "### Requirement: r\nSHALL accept `guide-ship`.\n")
+    assert len([f for f in _r4(v4_residue_check.run(tmp_path))
+                if f.severity.value == "WARNING"]) == 1
+
+
+def test_r4_invalid_allow_code_does_not_exempt(tmp_path):
+    """拼错的 code 不得静默豁免（否则一个 typo 永久关掉守卫）。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo",
+          "### Requirement: r\nSHALL accept `guide-ship`.\n"
+          "<!-- v4-residue:allow=historyy -->\n")
+    r4 = _r4(v4_residue_check.run(tmp_path))
+    assert any("invalid allow code" in f.snippet for f in r4), r4
+    assert any(f.severity.value == "WARNING" and "1 处已退役" in f.snippet for f in r4), r4
+
+
+def test_r4_stale_allow_is_reported(tmp_path):
+    """AC-4：标注的前一行已无命中 ⇒ 报 stale allow（白名单不腐化的唯一保障）。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo",
+          "### Requirement: r\nNothing to see here.\n"
+          "<!-- v4-residue:allow=guard -->\n")
+    r4 = _r4(v4_residue_check.run(tmp_path))
+    assert [f for f in r4 if "stale allow" in f.snippet], r4
+
+
+def test_r4_mixed_same_spec_only_exempts_annotated_line(tmp_path):
+    """AC-5：同一 spec 内合法引用与真实残留并存 ⇒ 只豁免前者（禁止文件级 allowlist）。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo",
+          "### Requirement: a\nSHALL accept `guide-ship`.\n"
+          "<!-- v4-residue:allow=enum -->\n\n"
+          "### Requirement: b\nSHALL call `guide-plan` at once.\n")
+    warns = [f for f in _r4(v4_residue_check.run(tmp_path))
+             if f.severity.value == "WARNING"]
+    assert len(warns) == 1, warns
+    assert "guide-plan" in warns[0].snippet
+
+
+def test_r4_annotation_at_file_head_does_not_exempt_whole_file(tmp_path):
+    """文件头一条标注不得豁免全文（这是文件级 allowlist 的最短路径）。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo",
+          "<!-- v4-residue:allow=history -->\n\n"
+          "### Requirement: a\nSHALL call `guide-ship`.\n")
+    warns = [f for f in _r4(v4_residue_check.run(tmp_path))
+             if f.severity.value == "WARNING" and "1 处已退役" in f.snippet]
+    assert len(warns) == 1, warns
+
+
+def test_r4_inline_annotation_on_hit_line_is_ignored(tmp_path):
+    """AC-18(a)：标注与命中同行 ⇒ 不豁免，且提示原因。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo",
+          "### Requirement: r\nSHALL call `guide-arch` now. "
+          "<!-- v4-residue:allow=guard -->\n")
+    warns = [f for f in _r4(v4_residue_check.run(tmp_path))
+             if f.severity.value == "WARNING"]
+    assert len(warns) == 1, warns
+    assert "已忽略" in warns[0].snippet
+
+
+def test_r4_adjacent_hit_lines_each_annotated(tmp_path):
+    """AC-18(b)：命中行紧邻时，逐行插入标注 ⇒ 两行都豁免、无 stale 误报。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo",
+          "### Requirement: r\n"
+          "SHALL call `guide-ship`.\n"
+          "<!-- v4-residue:allow=history -->\n"
+          "AND `guide-plan`.\n"
+          "<!-- v4-residue:allow=history -->\n")
+    r4 = [f for f in _r4(v4_residue_check.run(tmp_path))
+          if f.severity.value == "WARNING"]
+    assert r4 == [], r4
+
+
+def test_r4_weak_wording_warns_without_annotation(tmp_path):
+    """AC-6：把旧名说成现存物（`the existing`）⇒ WARNING，不豁免。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo",
+          "### Requirement: r\n"
+          "SHALL include `guide-arch` in addition to the existing `guide-plan`.\n")
+    warns = [f for f in _r4(v4_residue_check.run(tmp_path))
+             if f.severity.value == "WARNING"]
+    assert len(warns) == 1, warns
+    assert "措辞" in warns[0].snippet
+
+
+def test_r4_annotation_wins_over_weak_wording(tmp_path):
+    """AC-6 优先级：显式标注优先于措辞启发式。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo",
+          "### Requirement: r\n"
+          "SHALL include `guide-arch` in addition to the existing `guide-plan`.\n"
+          "<!-- v4-residue:allow=guard -->\n")
+    assert [f for f in _r4(v4_residue_check.run(tmp_path))
+            if f.severity.value == "WARNING"] == []
+
+
+def test_r4_missing_openspec_does_not_raise(tmp_path):
+    """AC-11：没有 openspec/ 的项目 ⇒ 不 raise。"""
+    _enable_scan(tmp_path)
+    assert v4_residue_check.run(tmp_path) != []   # only the INFO summary
+    assert all(f.severity.value == "INFO" for f in v4_residue_check.run(tmp_path))
+
+
+def test_r4_checked_zero_is_not_clean(tmp_path):
+    """AC-12：checked 0 ⇒ INFO 明示「不等于 clean」，不得报「无残留」。"""
+    _enable_scan(tmp_path)
+    r4 = _r4(v4_residue_check.run(tmp_path))
+    assert len(r4) == 1, r4
+    assert r4[0].severity.value == "INFO"
+    assert "checked 0" in r4[0].snippet
+    assert "不等于 clean" in r4[0].snippet
+
+
+def test_r4_summary_reports_files_scanned(tmp_path):
+    """AC-12：有 spec 时报告输出扫描文件数。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "a", "### Requirement: a\nSHALL call `guide-ship`.\n")
+    _spec(tmp_path, "b", "### Requirement: b\nclean.\n")
+    r4 = _r4(v4_residue_check.run(tmp_path))
+    summary = [f for f in r4 if "checked" in f.snippet]
+    assert summary and "checked 2 spec file(s)" in summary[0].snippet, r4
+
+
+def test_r4_mutation_inject_then_remove(tmp_path):
+    """AC-10：注入一处新残留 ⇒ 报出；撤掉 ⇒ 不报。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo", "### Requirement: r\nclean.\n")
+    assert [f for f in _r4(v4_residue_check.run(tmp_path))
+            if f.severity.value == "WARNING"] == []
+
+    _spec(tmp_path, "demo", "### Requirement: r\nSHALL call `guide-spec`.\n")
+    assert len([f for f in _r4(v4_residue_check.run(tmp_path))
+                if f.severity.value == "WARNING"]) == 1
+
+    _spec(tmp_path, "demo", "### Requirement: r\nclean.\n")
+    assert [f for f in _r4(v4_residue_check.run(tmp_path))
+            if f.severity.value == "WARNING"] == []
+
+
+def test_r4_token_word_boundary(tmp_path):
+    """`guide-plan-quick-finish` 是**提案名**，不是 stage ⇒ 不得前缀命中。"""
+    from spec_residue_scan import scan_specs
+    _spec(tmp_path, "demo",
+          "### Requirement: r\nSHALL reference the `guide-plan-quick-finish` proposal.\n")
+    assert scan_specs(tmp_path).hits == []
+
+
+@_REQUIRES_SPECS
+def test_r4_repo_residue_constant():
+    """AC-9：本仓当前态 = 350 处 / 192 块 / 46 份 / 165 文件（2026-11-20 基线）。
+
+    ⚠️ Phase 1 首个改动必须在同一提交更新该常数（补标注必然让数字下降），
+    否则它会在下一次运行时被读成 regression。
+    """
+    from spec_residue_scan import scan_specs
+    result = scan_specs(REPO_ROOT)
+    assert result.files_scanned == 165, result.files_scanned
+    assert len(result.blocks()) == 192, len(result.blocks())
+    assert len({h.file for h in result.hits}) == 46
+    assert len(result.hits) == 350, len(result.hits)
