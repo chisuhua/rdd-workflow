@@ -1,6 +1,8 @@
 # ADR-0059: `rddf status` 自动降级模式 (iteration.json 缺失/损坏 → openspec/changes/ fallback)
 
-> **状态**: 待定
+> **状态**: 已被取代（2026-11-20，change `rddf-status-based-on-improvements`）
+> **取代说明**: 本 ADR 的方案（Mode F `--autodetect`：iteration.json 缺失/损坏时降级扫描 `openspec/changes/`）**从未实施**（`status_cmd.py` 无 `--autodetect`/`--fallback`/`--source`）。后续 change 采用了更彻底的方案：`rddf status` 的数据源整体换成改进提案真源（`.rddf/improvements/*.md` + `improvement-approved.md` + `openspec/changes/archive/`），并**补上了**本 ADR 想要的 openspec/changes 磁盘视图（Mode A 的 active change 段）⇒ `rddf status` 不再有 iteration.json 依赖。
+> **契约迁移**: 本 ADR §「当前实现」表格是仓里唯一记录 `rddf status` 各 Mode exit code 契约的地方。本 ADR 被取代后该表随之失效 ⇒ 契约迁至 `openspec/changes/rddf-status-based-on-improvements/proposal.md` §7（含「Mode A 在 iteration.json 损坏时 exit code 1 → 0」这一破坏性变更的显式标注）。
 > **日期**: 2026-10-19
 > **决策者**: rdd-workflow maintainer
 > **关联 ADR**: ADR-0001 (propose-plan-execute 状态机), ADR-0025 (move-proposal-creation-to-design), ADR-0028 (role-model-per-phase)

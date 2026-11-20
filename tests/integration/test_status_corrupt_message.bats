@@ -1,12 +1,17 @@
 load ../test_helper
 
-# Integration test for fix-rddf-status-corrupt-message +
-# v3/v4 → v5 in-memory migration in read path.
+# `rddf status` no longer reads `.rddf/state/iteration.json`
+# (change `rddf-status-based-on-improvements`).
 #
-# Verifies the `rddf status` and `rddf status <name>` commands
-#   1. differentiate missing from corrupt iteration.json
-#   2. auto-migrate v3/v4 → v5 transparently (older version ≠ corrupt)
-#   3. never write .corrupt.<ts> backup on read (read-only contract)
+# The former contract verified how status *reported* missing/corrupt/v4
+# iteration.json. That whole surface is gone: iteration.json is procedural
+# state, not the truth source for what status reports. These tests pin the
+# replacement contract:
+#
+#   1. status works regardless of iteration.json's state (missing /
+#      invalid JSON / schema-invalid / old version)
+#   2. `status <name>` derives its detail from disk
+#   3. the command remains read-only (it must not touch iteration.json)
 
 setup() {
     BATS_TEST_TMPDIR="$(mktemp -d)"
@@ -20,162 +25,113 @@ setup() {
     git commit --allow-empty -q -m "init"
 
     export RDDF_PROJECT_ROOT="$BATS_TEST_TMPDIR"
+
+    # One improvement proposal (the truth source status reports on).
+    mkdir -p .rddf/improvements
+    cat > .rddf/improvements/sample-proposal.md <<'EOF'
+---
+优先级: P1
+状态: 待讨论
+阶段: phase-2
+---
+
+# sample-proposal
+EOF
+
+    # One active change on disk.
+    mkdir -p openspec/changes/disk-change
+    cat > openspec/changes/disk-change/tasks.md <<'EOF'
+- [x] first task
+- [ ] second task
+EOF
 }
 
 teardown() {
     [ -n "$BATS_TEST_TMPDIR" ] && rm -rf "$BATS_TEST_TMPDIR"
 }
 
-# Per-change items in v4/v5/v6/v7 schema allow additionalProperties: true
-# (per-change metadata is permissive). So per-change `updated_at` is NOT a
-# corruption signal. To trigger schema-validation failure, the root-level
-# object must violate additionalProperties: false (any unknown root key),
-# miss a required field, or have version outside the [3..7] enum.
-# Here we use the simplest reproducer: an unknown root-level key.
-_write_corrupt_v5_with_illegal_root_field() {
+_write_iteration() {
     mkdir -p .rddf/state
-    cat > .rddf/state/iteration.json <<'EOF'
-{
-  "version": 5,
-  "updated_at": "2026-08-01T00:00:00+00:00",
-  "current_phase": "default",
-  "changes": [
-    {
-      "name": "test-change",
-      "status": "proposed",
-      "added_at": "2026-08-01T00:00:00+00:00"
-    }
-  ],
-  "illegal_root_field": "this root key is not in the schema's properties allowlist"
-}
+    cat > .rddf/state/iteration.json <<EOF
+$1
 EOF
 }
 
-@test "status: schema-invalid iteration.json → 'fails schema validation' message" {
-    _write_corrupt_v5_with_illegal_root_field
-
-    run env PYTHONPATH="$REPO_ROOT" python3 -m skills._lib.cli status
-    [ "$status" -eq 1 ]
-    [[ "$output" == *"fails schema validation"* ]]
-    [[ "$output" == *"restore from a iteration.json.corrupt."* ]]
+@test "status: works with no iteration.json at all" {
+    [ ! -e .rddf/state/iteration.json ]
+    run rddf status
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Improvement proposals"* ]]
+    [[ "$output" == *"sample-proposal"* ]]
+    [[ "$output" == *"disk-change"* ]]
+    [[ "$output" != *"not found"* ]]
 }
 
-@test "status: corrupt output must NOT contain 'skill_use(\"propose\"' hint" {
-    _write_corrupt_v5_with_illegal_root_field
-
-    run env PYTHONPATH="$REPO_ROOT" python3 -m skills._lib.cli status
-    [ "$status" -eq 1 ]
-    # The misleading 'propose' hint must NOT appear (it would wipe data)
-    [[ ! "$output" == *"propose"* ]] || [[ ! "$output" == *"propose, \"<change-name>\""* ]]
+@test "status: invalid JSON iteration.json does not break status" {
+    _write_iteration '{not valid json'
+    run rddf status
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"sample-proposal"* ]]
+    [[ "$output" != *"invalid JSON"* ]]
+    [[ "$output" != *"fails schema validation"* ]]
 }
 
-@test "status <name>: corrupt iteration.json → exit 1, corrupt message" {
-    _write_corrupt_v5_with_illegal_root_field
-
-    run env PYTHONPATH="$REPO_ROOT" python3 -m skills._lib.cli status my-change
-    [ "$status" -eq 1 ]
-    [[ "$output" == *"fails schema validation"* ]]
+@test "status: schema-invalid iteration.json does not break status" {
+    _write_iteration '{"version": 5, "illegal_root_field": "not allowed"}'
+    run rddf status
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"sample-proposal"* ]]
+    [[ "$output" != *"fails schema validation"* ]]
 }
 
-@test "status: invalid JSON → 'invalid JSON' message" {
-    mkdir -p .rddf/state
-    echo '{"version": 5, "changes": [],}' > .rddf/state/iteration.json  # trailing comma
-
-    run env PYTHONPATH="$REPO_ROOT" python3 -m skills._lib.cli status
-    [ "$status" -eq 1 ]
-    [[ "$output" == *"invalid JSON"* ]]
-    [[ ! "$output" == *"propose"* ]]
+@test "status: old-version iteration.json is irrelevant to status" {
+    _write_iteration '{"version": 4, "updated_at": "2026-08-01T00:00:00+00:00", "current_phase": "default", "changes": []}'
+    run rddf status
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"sample-proposal"* ]]
 }
 
-@test "status: missing iteration.json → 'not found' message (regression)" {
-    # .rddf/state/ exists but iteration.json does NOT (regression lock)
-    mkdir -p .rddf/state
-    # No iteration.json file created
-    run env PYTHONPATH="$REPO_ROOT" python3 -m skills._lib.cli status
-    [ "$status" -eq 0 ]  # Mode A returns 0 for missing
+@test "status <name>: corrupt iteration.json still yields the disk-derived detail" {
+    _write_iteration '{not valid json'
+    run rddf status disk-change
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Change: disk-change"* ]]
+    [[ "$output" == *"Tasks: 1/2"* ]]
+    [[ "$output" != *"fails schema validation"* ]]
+}
+
+@test "status <name>: unknown change exits 1 even when iteration.json lists it" {
+    _write_iteration '{"version": 5, "updated_at": "2026-08-01T00:00:00+00:00", "current_phase": "default", "changes": [{"name": "ghost", "status": "proposed", "added_at": "2026-08-01T00:00:00+00:00"}]}'
+    run rddf status ghost
+    [ "$status" -eq 1 ]
     [[ "$output" == *"not found"* ]]
-    [[ "$output" == *"propose"* ]]  # Missing case SHOULD suggest propose
 }
 
-@test "status: no .corrupt.<ts> backup written on corrupt read (read-only contract)" {
-    _write_corrupt_v5_with_illegal_root_field
-
-    # Redirect both stdout and stderr to avoid bats noise on non-zero exit
-    env PYTHONPATH="$REPO_ROOT" python3 -m skills._lib.cli status >/dev/null 2>&1 || true
-
-    # No backup files should be created by the read-only path
-    backups=$(find .rddf/state -name "*.corrupt.*" 2>/dev/null | wc -l)
-    [ "$backups" -eq 0 ]
-}
-
-# v4 → v5 auto-migration: a v4 file (previously valid schema) is
-# not corrupt. The read path migrates it in-memory to v5 and reports
-# the change normally. Without the migration, v4 files would surface
-# the misleading "5 was expected" / "fails schema validation" error.
-@test "status: v4 iteration.json is auto-migrated to v5 and renders normally" {
-    mkdir -p .rddf/state
-    cat > .rddf/state/iteration.json <<'EOF'
-{
-  "version": 4,
-  "updated_at": "2026-08-01T00:00:00+00:00",
-  "current_phase": "default",
-  "changes": [
-    {
-      "name": "v4-change",
-      "status": "proposed",
-      "added_at": "2026-08-01T00:00:00+00:00"
-    }
-  ]
-}
-EOF
-
-    run env PYTHONPATH="$REPO_ROOT" python3 -m skills._lib.cli status
+@test "status: read-only contract — iteration.json is not touched" {
+    _write_iteration '{not valid json'
+    before=$(sha256sum .rddf/state/iteration.json | awk '{print $1}')
+    before_listing=$(ls .rddf/state/)
+    run rddf status
     [ "$status" -eq 0 ]
-    [[ ! "$output" == *"fails schema validation"* ]]
-    [[ ! "$output" == *"not found"* ]]
-    [[ "$output" == *"v4-change"* ]]
-    # Mode A header is the success indicator
-    [[ "$output" == *"Change status overview"* ]]
+    after=$(sha256sum .rddf/state/iteration.json | awk '{print $1}')
+    after_listing=$(ls .rddf/state/)
+    [ "$before" = "$after" ]
+    [ "$before_listing" = "$after_listing" ]
+    # No .corrupt.<ts> backup may be created by a read.
+    run bash -c 'ls .rddf/state/*.corrupt.* 2>/dev/null | wc -l'
+    [ "$output" -eq 0 ]
 }
 
-@test "status <name>: v4 iteration.json is auto-migrated → single-change detail works" {
-    mkdir -p .rddf/state
-    cat > .rddf/state/iteration.json <<'EOF'
-{
-  "version": 4,
-  "updated_at": "2026-08-01T00:00:00+00:00",
-  "current_phase": "default",
-  "changes": [
-    {
-      "name": "my-v4-change",
-      "status": "proposed",
-      "added_at": "2026-08-01T00:00:00+00:00"
-    }
-  ]
+@test "status --iteration is rejected (Mode E removed)" {
+    run rddf status --iteration
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"unknown flag"* ]]
 }
-EOF
 
-    run env PYTHONPATH="$REPO_ROOT" python3 -m skills._lib.cli status my-v4-change
+@test "status: improvement collector surfaces unreadable files" {
+    # A file whose front-matter cannot be parsed must not blank the table.
+    printf 'not a front-matter at all\n' > .rddf/improvements/broken.md
+    run rddf status
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Change: my-v4-change"* ]]
-    [[ "$output" == *"Status: 📋 proposed"* ]]
-    [[ ! "$output" == *"fails schema validation"* ]]
-}
-
-@test "status: v4 file is read non-destructively (on-disk version stays at 4)" {
-    mkdir -p .rddf/state
-    cat > .rddf/state/iteration.json <<'EOF'
-{
-  "version": 4,
-  "updated_at": "2026-08-01T00:00:00+00:00",
-  "current_phase": "default",
-  "changes": []
-}
-EOF
-
-    env PYTHONPATH="$REPO_ROOT" python3 -m skills._lib.cli status >/dev/null 2>&1 || true
-
-    # Migration is in-memory only; on-disk file is unchanged
-    on_disk_version=$(python3 -c "import json; print(json.load(open('.rddf/state/iteration.json'))['version'])")
-    [ "$on_disk_version" -eq 4 ]
+    [[ "$output" == *"sample-proposal"* ]]
 }

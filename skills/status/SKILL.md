@@ -22,6 +22,14 @@ metadata:
 
 提供四种工作模式：状态概览、检测与修复、归档完成、路线图状态。
 
+> ⚠️ **与 `rddf status` CLI 的分工**（2026-11-20，change `rddf-status-based-on-improvements`）：
+> 本 skill 的 5 个 Mode 是**AI 工作流层**的独立实现（走 `openspec` CLI + 本 skill 的
+> helper 脚本），**不是** `rddf status` CLI 的文档。CLI 侧已改造：`rddf status` 的默认
+> 视图改为**改进提案状态 + active change 两段（磁盘推导）**，不再读
+> `.rddf/state/iteration.json`，且 `--iteration` flag 已移除（iteration 视图请用
+> `rddf iteration`）。本 skill 的 Mode E 仍通过 `iteration.render.print_view`
+> 渲染 iteration 视图 —— 两者互不影响。
+
 ## 工作流位置
 
 ```

@@ -225,7 +225,7 @@ install_global_symlinks() {
     echo "    skill_use(\"rdd-verifier\") # Stage 4: batch AC verification"
     echo ""
     echo "  CLI 工具:"
-    echo "    rddf status         # 查看工作流状态"
+    echo "    rddf status         # 查看改进提案状态 + active change"
     echo "    rddf sessions       # 管理 session"
     echo "    rddf rdd-verify     # 批量验证 ship-done changes"
     echo ""

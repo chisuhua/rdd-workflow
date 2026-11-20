@@ -462,57 +462,13 @@ def collect(project_root: str) -> DashboardData:
         data.roadmap_phase = data.arch.current_phase
 
     # ---- Section 7: Pending (.rddf/improvements/ + improvement-approved.md + archive bypass) ----
+    # Shared implementation: `collect_pending()` is the single reader of the
+    # improvement truth source. `rddf status` Mode A consumes the same
+    # function (see _lib/cli/status_cmd.py), so the two views cannot drift.
     try:
-        from skills._lib.parse_approved import parse_approved_proposals_detailed
-
-        approved_rows = parse_approved_proposals_detailed(
-            os.path.join(project_root, "improvement-approved.md")
-        )
-        approved = {row.name for row in approved_rows}
-        for row in approved_rows:
-            data.approved_proposals.append(
-                ApprovedProposalEntry(
-                    name=row.name,
-                    priority=row.priority,
-                    date=row.date,
-                    section=row.section,
-                )
-            )
-
-        improvement_entries = read_improvement_entries(project_root)
-        archived_names = set()
-        archive_dir = os.path.join(project_root, "openspec/changes/archive")
-        if os.path.isdir(archive_dir):
-            for entry in os.listdir(archive_dir):
-                m = re.match(r"\d{4}-\d{2}-\d{2}-(.+)", entry)
-                if m:
-                    archived_names.add(m.group(1))
-
-        for s in improvement_entries:
-            name = s.get("name", "?")
-            if name in approved:
-                continue
-            if name in archived_names:
-                continue
-            # An improvement whose leading 状态 marker says it is delivered
-            # (archived / completed / implemented) is NOT pending, even when no
-            # OpenSpec change was ever created for it (doc-only / mechanism
-            # work). Before this rule the section listed every such item as
-            # "待讨论" — the status column was hardcoded, never read.
-            terminal, label = classify_improvement_status(s.get("status") or "")
-            if terminal:
-                continue
-            data.suggestions.append(
-                SuggestionEntry(
-                    name=name,
-                    priority=s.get("priority") or s.get("优先级"),
-                    source=s.get("source") or s.get("来源"),
-                    status=label,
-                    phase=s.get("phase") or s.get("阶段"),
-                    category=s.get("category") or s.get("分类"),
-                    effort=s.get("effort"),
-                )
-            )
+        snapshot = collect_pending(project_root)
+        data.suggestions.extend(snapshot.suggestions)
+        data.approved_proposals.extend(snapshot.approved_proposals)
         data.pending_suggestions = len(data.suggestions)
     except Exception:
         pass
@@ -608,10 +564,123 @@ __all__ = [
     "SuggestionEntry",
     "ApprovedProposalEntry",
     "DashboardData",
+    "PendingSnapshot",
     # public API
     "collect",
+    "collect_pending",
     # NOTE: ``render`` is intentionally NOT re-exported here to keep the
     # data-collection layer decoupled from the rendering layer. Callers
     # that want to render should
     # ``from skills._lib.dashboard.renderer import render``.
 ]
+
+
+# ---------------------------------------------------------------------------
+# Shared "改进提案状态" collector (single implementation)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class PendingSnapshot:
+    """改进提案状态的采集结果（纯磁盘读）。
+
+    Attributes:
+        suggestions: 非终态、未 approved、未归档的改进提案（待办池）。
+        approved_proposals: ``improvement-approved.md`` 中的已批准提案。
+        errors: 读不动 / 格式损坏的 improvement 文件（逐条降级，不炸全表）。
+    """
+
+    suggestions: list[SuggestionEntry] = field(default_factory=list)
+    approved_proposals: list[ApprovedProposalEntry] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+
+
+def _archived_change_names(project_root: str) -> set[str]:
+    """Names of changes already archived under ``openspec/changes/archive/``."""
+    archive_dir = os.path.join(project_root, "openspec", "changes", "archive")
+    names: set[str] = set()
+    if not os.path.isdir(archive_dir):
+        return names
+    try:
+        entries = os.listdir(archive_dir)
+    except OSError:
+        return names
+    for entry in entries:
+        m = re.match(r"\d{4}-\d{2}-\d{2}-(.+)", entry)
+        if m:
+            names.add(m.group(1))
+    return names
+
+
+def collect_pending(project_root: str) -> PendingSnapshot:
+    """收集改进提案状态（纯磁盘读，**无 iteration.json 依赖**）。
+
+    数据源：
+      - ``.rddf/improvements/*.md`` 的 front-matter（``状态`` / ``优先级`` /
+        ``阶段`` / ``分类``，中英别名由 ``read_improvement_entries`` 归一）
+      - ``improvement-approved.md``（已批准提案）
+      - ``openspec/changes/archive/<date>-<name>/``（已归档 ⇒ 不再是待办）
+
+    与 dashboard Section 7 的原实现等价，差异有二：
+      1. **逐条容错**：单个 improvement 文件的 front-matter 损坏（例如
+         ``状态`` 解析成非字符串）只降级该行并记入 ``errors``，不再让
+         ``except Exception: pass`` 把整张表静默变空。
+      2. **显式错误面**：``errors`` 非空时调用方应提示用户（status 是首屏
+         默认命令，静默比 dashboard 危险）。
+    """
+    snap = PendingSnapshot()
+
+    try:
+        from skills._lib.parse_approved import parse_approved_proposals_detailed
+
+        approved_rows = parse_approved_proposals_detailed(
+            os.path.join(project_root, "improvement-approved.md")
+        )
+    except Exception:
+        approved_rows = []
+    approved = {row.name for row in approved_rows}
+    for row in approved_rows:
+        snap.approved_proposals.append(
+            ApprovedProposalEntry(
+                name=row.name,
+                priority=row.priority,
+                date=row.date,
+                section=row.section,
+            )
+        )
+
+    try:
+        improvement_entries = read_improvement_entries(project_root)
+    except Exception as exc:
+        snap.errors.append(f"read_improvement_entries failed: {exc}")
+        improvement_entries = []
+
+    archived_names = _archived_change_names(project_root)
+
+    for entry in improvement_entries:
+        name = entry.get("name", "?")
+        if name in approved or name in archived_names:
+            continue
+        try:
+            terminal, label = classify_improvement_status(entry.get("status") or "")
+        except Exception as exc:
+            # Per-entry degradation: a single malformed front-matter must
+            # not blank the whole table (the old `except Exception: pass`
+            # around the whole section did exactly that).
+            snap.errors.append(f"{name}: {exc}")
+            continue
+        if terminal:
+            continue
+        snap.suggestions.append(
+            SuggestionEntry(
+                name=name,
+                priority=entry.get("priority") or entry.get("优先级"),
+                source=entry.get("source") or entry.get("来源"),
+                status=label,
+                phase=entry.get("phase") or entry.get("阶段"),
+                category=entry.get("category") or entry.get("分类"),
+                effort=entry.get("effort"),
+            )
+        )
+
+    return snap

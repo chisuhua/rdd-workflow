@@ -30,10 +30,10 @@
 #
 # Rollback contract (per fix-archive-on-main-flow §关键场景):
 #   If the helper returns a warning string, the script still prints
-#   "⚠️  iteration.json sync failed — run 'rddf status --check-archive-sync' later"
+#   "⚠️  iteration.json sync failed — run 'rddf archive-sync' later"
 #   and exits 0. The archive mv is NOT rolled back. This matches the
 #   proposal's "fail open" guidance: archive is the primary success criterion,
-#   iteration.json drift is recoverable via `rddf status --check-archive-sync`.
+#   iteration.json drift is recoverable via `rddf archive-sync`.
 #
 # Idempotency:
 #   If the archive dir already exists, the script refuses to proceed. This
@@ -154,7 +154,7 @@ PYEOF
 )
 
 if [[ "$SYNC_RESULT" == "WARN:"* || "$SYNC_RESULT" == *"WARN:"* ]]; then
-  echo "⚠️  iteration.json sync failed — run 'rddf status --check-archive-sync' later" >&2
+  echo "⚠️  iteration.json sync failed — run 'rddf archive-sync' later" >&2
   echo "   archive mv at $ARCHIVE_DIR is preserved; iteration drift is recoverable" >&2
   echo "   helper said: $SYNC_RESULT" >&2
   # Non-blocking per proposal §关键场景: archive success > iteration drift.

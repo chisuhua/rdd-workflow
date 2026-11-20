@@ -26,7 +26,23 @@ if state.exists():
 " 2>/dev/null || true)
 FEATURES=$(rddf roadmap list-features 2>/dev/null | grep -oE 'feat-[a-zA-Z0-9-]+' | head -10 || true)
 CURRENT_SPRINT="sprint-$(date -u +%Y-%m)"
-APPROVED=$(rddf status --json 2>/dev/null | python3 -c "import sys, json; d=json.load(sys.stdin); print(sum(1 for c in d.get('changes', []) if c.get('status')=='approved'))" 2>/dev/null || echo "0")
+# Count approved items from the improvement truth source
+# (improvement-approved.md) via the shared collector. The previous
+# `rddf status --json` pipeline never worked: that flag does not exist,
+# so the command always failed and `|| echo "0"` swallowed it =>
+# APPROVED was permanently 0.
+APPROVED=$(PROJECT_ROOT="$PROJECT_ROOT" python3 - <<'PYEOF' 2>/dev/null || echo "0"
+import os, sys
+root = os.environ.get("PROJECT_ROOT", ".")
+sys.path.insert(0, root)
+try:
+    from skills._lib.dashboard import collect_pending
+    snapshot = collect_pending(root)
+    print(sum(1 for r in snapshot.approved_proposals if r.section == "approved"))
+except Exception:
+    print(0)
+PYEOF
+)
 
 ACTIVE_OBJECTIVES_JSON=$(PROJECT_ROOT="$PROJECT_ROOT" python3 - <<'PYEOF' 2>/dev/null || echo "[]"
 import os, sys

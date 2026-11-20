@@ -342,30 +342,34 @@ class TestEligibilityParity:
 
 
 class TestStatusDisplay:
-    def test_partial_progress_shows_done_with_unknown_total(self, tmp_path, capsys):
-        """`-` hid a recorded 4 done; `4/-` says what is known."""
+    """`rddf status` counts tasks.md checkboxes on disk.
+
+    The former `4/-` branch (tasks_done recorded, tasks_total missing) was
+    an iteration.json artifact — it cannot occur when counting checkboxes
+    (a checkbox is either present or not), so that case is gone by
+    construction. The `-` fallback now covers "tasks.md missing / no
+    checkboxes".
+    """
+
+    def test_tasks_total_absent_renders_dash(self, tmp_path, capsys):
         from _lib.cli.status_cmd import cmd_status_detail
 
-        doc = it_store.create_empty()
-        doc = it_store.add_or_update_change(doc, name="old", status="in_worktree")
-        doc["changes"][0]["tasks_done"] = 4          # no tasks_total at all
-        state = tmp_path / ".rddf" / "state"
-        state.mkdir(parents=True, exist_ok=True)
-        (state / "iteration.json").write_text(json.dumps(doc), encoding="utf-8")
+        change = tmp_path / "openspec" / "changes" / "old"
+        change.mkdir(parents=True)
+        (change / "tasks.md").write_text("no checkboxes here\n", encoding="utf-8")
 
         assert cmd_status_detail("old", str(tmp_path)) == 0
         out = capsys.readouterr().out
-        assert "4/-" in out, out
+        assert "Tasks: -" in out, out
 
     def test_full_total_still_renders_as_ratio(self, tmp_path, capsys):
         from _lib.cli.status_cmd import cmd_status_detail
 
-        doc = it_store.create_empty()
-        doc = it_store.add_or_update_change(doc, name="c1", status="in_worktree")
-        doc = it_store.set_tasks_done(doc, "c1", done=4, total=4)
-        state = tmp_path / ".rddf" / "state"
-        state.mkdir(parents=True, exist_ok=True)
-        (state / "iteration.json").write_text(json.dumps(doc), encoding="utf-8")
+        change = tmp_path / "openspec" / "changes" / "c1"
+        change.mkdir(parents=True)
+        (change / "tasks.md").write_text(
+            "- [x] a\n- [x] b\n- [x] c\n- [x] d\n", encoding="utf-8"
+        )
 
         assert cmd_status_detail("c1", str(tmp_path)) == 0
         assert "4/4" in capsys.readouterr().out

@@ -33,7 +33,7 @@ bash ~/.agents/skills/rdd-workflow/install.sh --global
 - **28 个子技能** symlink 到 `~/.agents/skills/` → OpenCode 在任何项目下自动发现
 - **Python 依赖** 自动安装（`pip install --user -r requirements.txt`）
 - **`_lib` Python 路径** 写入 `.pth` 文件 → 任何项目 `from _lib.xxx import yyy`（`from skills._lib.xxx import yyy` 仍通过向后兼容 shim 工作）
-- **`rddf` CLI** 创建到 `~/.local/bin/rddf` → 终端直接 `rddf status`
+- **`rddf` CLI** 创建到 `~/.local/bin/rddf` → 终端直接 `rddf status`（改进提案状态 + active change 概览，均从磁盘推导）
 
 > 全局安装后**不需要**在每个项目执行 `skill_use("INSTALL")`。技能即时生效。
 
@@ -468,7 +468,7 @@ rdd-workflow/
 全局安装后，在任何第三方项目（非 rdd-workflow 仓库）下可直接使用：
 
 ```bash
-# 查看工作流状态
+# 查看改进提案状态 + active change 概览（磁盘推导，不依赖 iteration.json）
 rddf status
 
 # Replay trace：从项目子目录恢复并查看

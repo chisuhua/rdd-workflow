@@ -121,7 +121,7 @@ graph TB
 
 | Subcommand | One-liner |
 |------------|-----------|
-| `rddf status` | Concise project status (worktrees, active changes, sessions). |
+| `rddf status` | 改进提案状态 + active change 概览（磁盘推导；不读 iteration.json）。 |
 | `rddf sessions show/current/gc` | Session lifecycle (CLI side). The user-facing session skill is `rddf-session`; the CLI subcommand is `sessions` (plural). |
 | `rddf discover-ship-changes` | List committed changes ready to ship. |
 | `rddf layout --json` | Machine-readable `.rddf/` layout manifest (single source of truth: `_lib/core/rddf_layout.py`). |

@@ -30,6 +30,12 @@ _TERMINAL_MARKERS: tuple[tuple[str, str], ...] = (
     ("已归档", "已归档"),
     ("已完成", "已完成"),
     ("已实施", "已实施"),
+    # Voided / superseded proposals are terminal too: they must NOT stay in
+    # the Pending pool (a proposal whose plan was replaced by a more
+    # thorough one is not work to be done).
+    ("已作废", "已作废"),
+    ("作废", "已作废"),
+    ("superseded", "已作废"),
     ("archived", "已归档"),
 )
 

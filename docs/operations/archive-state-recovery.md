@@ -2,10 +2,10 @@
 
 ## 症状
 
-当 `iteration.json` 与 `openspec/changes/archive/` 实际状态不一致时,`rddf status` 会显示不一致的视图:
+当 `iteration.json` 与 `openspec/changes/archive/` 实际状态不一致时,`rddf iteration` 会报告不一致的视图:
 
 ```bash
-$ rddf status
+$ rddf iteration
 📋 planned  harden-archive-iteration-sync   # 但 openspec/changes/archive/2026-08-16-harden-archive-iteration-sync/ 已存在
 ```
 
@@ -18,7 +18,7 @@ $ rddf status
 
 2. **验证**:
    ```bash
-   rddf status | grep harden-archive-iteration-sync
+   rddf iteration | grep harden-archive-iteration-sync
    # 应显示 📦 archived
    ```
 
@@ -41,7 +41,7 @@ FORCE_ITERATION_BACKFILL=no bash skills/guide-ship/scripts/ship_archive.sh
 ```bash
 # 一行命令: 检测 stale planned + 已存在 archive dir 的 change
 comm -12 \
-  <(rddf status --json | jq -r '.changes[] | select(.status=="planned") | .name' | sort) \
+  <(rddf iteration --json | jq -r '.changes[] | select(.status=="planned") | .name' | sort) \
   <(ls openspec/changes/archive/ | sed 's/^[0-9-]*//' | sort -u) | \
   while read -r name; do [ -d "openspec/changes/archive"/*-"$name" ] && echo "STALE: $name"; done
 ```

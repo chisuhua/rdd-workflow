@@ -64,11 +64,17 @@ def test_builder_phase_archived_is_dash(tmp_path):
 
 
 def test_status_overview_renders_builder_column(tmp_path, capsys, monkeypatch):
+    """Mode A's active-changes table is derived from disk, not iteration.json.
+
+    (rddf-status-based-on-improvements: `rddf status` no longer reads
+    iteration.json; the active-changes table comes from openspec/changes/.)
+    """
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
-    _write_iteration(tmp_path, [
-        {"name": "add-x", "status": "in_worktree", "tasks_done": 3, "tasks_total": 5},
-        {"name": "old-x", "status": "archived", "tasks_done": 1, "tasks_total": 1},
-    ])
+    active = tmp_path / "openspec" / "changes" / "add-x"
+    active.mkdir(parents=True)
+    (active / "tasks.md").write_text("- [x] t1\n- [ ] t2\n", encoding="utf-8")
+    archived = tmp_path / "openspec" / "changes" / "archive" / "2026-01-01-old-x"
+    archived.mkdir(parents=True)
     _write_builder_state(tmp_path, "add-x", {"current_phase": "phase-2"})
     _write_builder_state(tmp_path, "old-x", {"current_phase": "phase-3"})
 
@@ -77,6 +83,8 @@ def test_status_overview_renders_builder_column(tmp_path, capsys, monkeypatch):
     assert rc == 0
     assert "BUILDER" in out
     assert "phase-2" in out
-    # archived row must not show phase-3
-    archived_line = next(l for l in out.splitlines() if l.startswith("old-x"))
-    assert "phase-3" not in archived_line
+    # the tasks counter comes from tasks.md on disk
+    assert "1/2" in out
+    # archived changes are not part of the active-changes table at all
+    assert "old-x" not in out
+    assert "phase-3" not in out

@@ -967,7 +967,7 @@ on-main 模式在 `mv` 之后会调用 `sync_iteration_after_archive`（`skills/
 幂等保证：
 - `archived_at` 已存在时**不覆盖**（防止 race condition 双调用）
 - `archive_commit_sha` 已存在时不覆盖
-- helper 失败（非零返回）时脚本 print warning 但**不滚回** archive mv——archive 成功是首要目标，iteration 漂移可后续 `rddf status --check-archive-sync` 修复
+- helper 失败（非零返回）时脚本 print warning 但**不滚回** archive mv——archive 成功是首要目标，iteration 漂移可后续 `rddf archive-sync` 修复
 
 ### 推荐用法
 
@@ -999,7 +999,7 @@ tools/archive_on_main.sh my-change --confirm-main --archive-commit-sha $(git rev
 
 # 4. 失败回滚
 mv openspec/changes/archive/2026-08-05-my-change openspec/changes/my-change
-# 然后用 rddf status --check-archive-sync 修正 iteration.json
+# 然后用 rddf archive-sync 修正 iteration.json
 ```
 
 **⚠️ 警告**：本旁路是 archive-on-main 流程的 OFF-HAPPY-PATH。标准 ship 流程见 `guide-ship/SKILL.md` Phase 3（worktree 模式）。批量 archive / 自动化场景请用标准流程。

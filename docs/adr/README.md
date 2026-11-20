@@ -85,7 +85,7 @@
 | [ADR-0056](ADR-0056-guide-orchestrator-minimal-usage-flow.md) | ADR-0056: Guide Session 作为唯一交互入口的最小用法流程 | 已采纳。**Superseded by ADR-0063（2026-11-19）** | 2026-09-24 |
 | [ADR-0057](ADR-0057-rdd-arch-simplify-delete-gap-analysis.md) | ADR-0057: rdd-arch 简化为 ADR + theme doc 双工件；删除 gap-analysis 协议 | 已采纳 | 2026-09-30 |
 | [ADR-0058](ADR-0058-gap-analysis-migration-to-theme-doc.md) | ADR-0058: gap-analysis 实例迁移到 theme doc（multi-project-ai-collaborative-development） | 已采纳 | 2026-09-30 |
-| [ADR-0059](ADR-0059-rddf-status-fallback-mode.md) | ADR-0059: `rddf status` 自动降级模式 (iteration.json 缺失/损坏 → openspec/changes/ fallback) | 待定 | 2026-10-19 |
+| [ADR-0059](ADR-0059-rddf-status-fallback-mode.md) | ADR-0059: `rddf status` 自动降级模式 (iteration.json 缺失/损坏 → openspec/changes/ fallback) | 已被取代（2026-11-20，change `rddf-status-based-on-improvements`） | 2026-10-19 |
 | [ADR-0060](ADR-0060-adr-shape-contract-and-gate-demotion.md) | ADR-0060: ADR 形态契约与门禁降级 —— 决策文档只回答「定什么 / 为什么 / 代价」 | 已采纳 + AMENDED (2026-11-17) | 2026-10-28 |
 | [ADR-0061](ADR-0061-archive-gate-refuses-unmerged-branch.md) | ADR-0061: 合入门 —— 归档不代劳合并，但未合入不得归档 | 已采纳 (2026-11-17) | 2026-11-17 |
 | [ADR-0062](ADR-0062-recommender-single-implementation.md) | ADR-0062: 推荐器决策树收敛到单一实现 | 已采纳（2026-11-19，oracle + critic 双审通过） | 2026-11-19 |

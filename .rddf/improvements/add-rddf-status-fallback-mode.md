@@ -4,6 +4,7 @@
 阶段: phase-3
 分类: cli-tooling
 类型: improvement
+状态: 作废
 主题: rddf status 自动降级模式 (iteration.json 缺失 → openspec fallback)
 ---
 **优先级**: P1 | **来源**: 2026-10-19 CppTLM 项目使用反馈 | **阶段**: phase-3 | **分类**: cli-tooling | **类型**: improvement

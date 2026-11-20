@@ -158,7 +158,7 @@ _SUBCOMMAND_DESCRIPTION: Dict[str, str] = {
     "rdd-hub-bootstrap": "Hub repo (rdd-hub) bootstrap: dir + Projects V2 board + CI",
     "orchestrate": "Phase subprocess orchestrator (subprocess/finalize)",
     "report-issue": "Hub-Spoke [RFC] issue creator",
-    "status": "Change status overview",
+    "status": "Improvement proposals + active changes (disk-derived)",
     "sessions": "Session management (read-only). Subcmds: show, current, gc",
     # Sub-commands are surfaced in --help (the dispatcher synthesizes help from
     # this string; it never reaches the handler's argparse tree) — same
