@@ -96,7 +96,7 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 
 ```
 # 推荐器入口（不知道调谁时用）
-用户: skill_use("guide")
+用户: rddf guide
 
 # Arch 端（创建新 change：setup → adr-create → architecture → roadmap-define → arch-done）
 用户: skill_use("rdd-arch")
@@ -115,12 +115,11 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 
 ### 完整 skill 列表
 
-`skills/` 目录当前包含 **27 个 per-skill 子目录**（v4 stage-merge 后从 13 → 26 per ADR-0043；v4.0+ 增加 rdd-env-bootstrap per ADR-0053 → 27；详见上方"完整 skill 列表"表格）+ 顶层 `INSTALL.md`（安装入口）+ `loop_engine.py`（Loop 引擎入口，向后兼容 shim）。**v4.0.0 起** `package.json::skills[]` 已**完整发布全部 27 个**与磁盘无差异。
+`skills/` 目录当前包含 **26 个 per-skill 子目录**（详见上方"完整 skill 列表"表格）+ 顶层 `INSTALL.md`（安装入口）+ `loop_engine.py`（Loop 引擎入口，向后兼容 shim）。`package.json::skills[]` 已完整发布全部 26 个，与磁盘无差异。技能数量随版本演进的增删见 `docs/migration/v3-to-v4.md`。
 
 | Skill | 用途 | 触发方式 |
 |-------|------|---------|
 | `INSTALL` | 首次安装（将技能复制到项目的 `.opencode/skills/`） | 用户显式调用 |
-| `guide` | 推荐器入口（扫描状态，建议调 rdd-arch / rdd-planner / rdd-builder / rdd-verifier） | `skill_use("guide")` |
 | `rdd-arch` | 架构定义阶段（5 子阶段：`setup → adr-create → architecture → roadmap-define → arch-done`） | `skill_use("rdd-arch")` |
 | `rdd-planner` | 设计阶段（preflight → review → approve/reject/defer → design-done，v2.1+ 提案管理 + 内容审查） | `skill_use("rdd-planner")` |
 | `rdd-builder` | **Builder 端状态机（ADR-0043 stage-merge 整合 plan+ship+design）**：`plan → verification → execute → review → archive → cleanup`，含轻量/worktree 自动检测 | `skill_use("rdd-builder")` |
@@ -425,7 +424,7 @@ i. 其他输入
 
 2. 实施结果会写入 tasks.md
 
-3. 完成后，在此 session 运行 guide-ship 查看最新进度
+3. 完成后，在此 session 运行 `rdd-builder` 查看最新进度
 
 当前状态：fix-ns-pollution 🔓 等待分离执行（worktree）
 ```
@@ -442,7 +441,7 @@ i. 其他输入
 
 2. 实施结果会写入 tasks.md
 
-3. 完成后，在此 session 运行 guide-ship 查看最新进度
+3. 完成后，在此 session 运行 `rdd-builder` 查看最新进度
 
 当前状态：fix-ns-pollution 🔓 等待分离执行（轻量分支）
 ```
@@ -471,7 +470,7 @@ Execute 阶段是**监控模式**——读取 `tasks.md` 进度、显示所有 w
 
 | 入口点 | 触发条件 |
 |--------|---------|
-| **工作流状态恢复** | 新 session 调用 `guide-ship`，检测到已有 worktree 或轻量分支 |
+| **工作流状态恢复** | 新 session 调用 `rdd-builder`，检测到已有 worktree 或轻量分支 |
 | **Plan 返回前** | 工作区（轻量分支或 worktree）就绪后选择执行模式前（Phase 1.5） |
 | **Execute 菜单** | 任何时候可刷新或返回 Plan |
 

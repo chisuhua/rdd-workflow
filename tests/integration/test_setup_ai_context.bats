@@ -68,7 +68,10 @@ teardown() {
 @test "setup ai-context: 5 structure segments present" {
   python3 -m _lib.cli setup ai-context --yes --target "$TMPDIR"
   grep -q "rdd-workflow" "$TMPDIR/AGENTS.md"
-  grep -q "skill_use.*guide" "$TMPDIR/AGENTS.md"
+  # 2026-11-20 (fix-v4-doc-drift-live-invocations): the `guide` recommender
+  # skill was archived (ADR-0063); the template's entry point is now the
+  # `rddf guide` CLI, so assert the CLI form instead of `skill_use("guide")`.
+  grep -qF "rddf guide" "$TMPDIR/AGENTS.md"
   grep -q "rdd-arch" "$TMPDIR/AGENTS.md"
   grep -q "rdd-planner" "$TMPDIR/AGENTS.md"
   grep -q "rdd-builder" "$TMPDIR/AGENTS.md"

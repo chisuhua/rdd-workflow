@@ -110,7 +110,7 @@ rdd-workflow-brainstorm 的设计获得批准后：
 1. **审查提案** — 检查 `.rddf/improvements/<name>.md` 内容是否完整准确(YAML frontmatter + 7 段)
 2. **attach 到 phase**:`rddf planner attach <name> --project-id "<Theme 列字符串>" --phase <phase-id>`(per `_lib/planner_attach.py` L136 校验)
 3. **批准流程** — 运行 `rdd-planner` 审查该提案
-4. **跳转到 guide** — `skill_use("guide")` 查看当前项目状态
+4. **查看项目状态** — 运行 `rddf guide`（推荐器 CLI）
 
 ## 输出示例
 

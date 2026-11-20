@@ -78,3 +78,37 @@ print("✅ all package.json skills[] entries map to disk")
 PY
   [ "$status" -eq 0 ]
 }
+
+# Prose count-phrase guard (2026-11-20, fix-v4-doc-drift-live-invocations):
+# USAGE.md and skills/INSTALL.md both claimed 27 sub-skills while disk had 26.
+# Pin the *sentinel phrases* rather than scanning for a bare "N 个" — the
+# dated version-history line in INSTALL.md must not be flagged when the skill
+# set changes in a future release.
+@test "skill consistency: prose skill counts in USAGE.md / INSTALL.md match disk" {
+  run python3 - <<'PY'
+import json, re
+from pathlib import Path
+
+disk = sorted(p.parent.name for p in Path("skills").glob("*/SKILL.md"))
+pkg = json.loads(Path("package.json").read_text())
+declared = sorted(s.strip() for s in pkg.get("skills", []))
+expected = len(disk)
+if len(declared) != expected:
+    raise SystemExit(f"package.json count {len(declared)} != disk {expected}")
+
+sentinels = [
+    ("USAGE.md", r"(\d+)\s*个 per-skill 子目录"),
+    ("skills/INSTALL.md", r"当前\s*(\d+)\s*个"),
+]
+for rel, pattern in sentinels:
+    text = Path(rel).read_text()
+    m = re.search(pattern, text)
+    if not m:
+        raise SystemExit(f"{rel}: sentinel phrase not found ({pattern})")
+    got = int(m.group(1))
+    if got != expected:
+        raise SystemExit(f"{rel}: prose count {got} != disk {expected}")
+    print(f"✅ {rel}: {got} == disk {expected}")
+PY
+  [ "$status" -eq 0 ]
+}

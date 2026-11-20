@@ -4,7 +4,7 @@
 
 本项目已安装 **rdd-workflow**（OpenSpec 工作流技能包），用于管理系统化的变更生命周期。
 
-**推荐入口**：告诉我"使用 guide 流程"或直接调用 `skill_use("guide")` 获得当前状态推荐。
+**推荐入口**：告诉我"下一步做什么"或直接运行 `rddf guide` 获得当前状态推荐。
 
 **核心流程**（4 阶段架构）：
 1. `skill_use("rdd-arch")` — 架构定义（ADR + roadmap）

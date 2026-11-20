@@ -33,7 +33,7 @@ Hub-Spoke 联邦的**上行通道**:将本地工作流异常以 `[RFC]` issue �
 
 ```bash
 # 自动 (phase-exit hooks)
-rddf report-issue --category=flow-bug --phase guide-ship --exit-code 1 "auto-detected anomaly"
+rddf report-issue --category=flow-bug --phase rdd-builder --exit-code 1 "auto-detected anomaly"
 
 # 手动 (用户主动上报)
 RDDF_REPORT_GH_REPO=org/rdd-hub rddf report-issue \

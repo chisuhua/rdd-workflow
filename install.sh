@@ -6,8 +6,8 @@
 #   bash install.sh --global           # 全局安装到 ~/.agents/skills/ + Python deps + rddf CLI
 #
 # 全局安装后,OpenCode 在任何项目下自动发现 rdd-workflow 技能:
-#   skill_use("guide")
-#   skill_use("guide-arch")
+#   skill_use("rdd-arch")
+#   skill_use("rdd-planner")
 #   ...
 
 set -euo pipefail

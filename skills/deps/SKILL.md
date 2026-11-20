@@ -374,12 +374,11 @@ proposal.md 摘要:
 
 ```python
 # 实现：调用子代理读取每个 change 的 artifacts，返回语义级依赖分析
-# subagent_type="general-purpose"：读+推理混合任务（不限于只读 explore）
+# agent="general"：读+推理混合任务（不限于只读 explore）
 # 失败时返回非零 → 见 Step 3f 降级路径
-task(
-    subagent_type="general-purpose",
-    run_in_background=false,
-    load_skills=[],
+subagent(
+    agent="general",
+    description="语义级依赖分析",
     prompt=f"""
         为以下 {CANDIDATES_COUNT} 个 OpenSpec change 做语义级依赖分析。
         每个 change 含 3 个 artifacts（必读）:

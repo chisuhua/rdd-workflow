@@ -35,7 +35,7 @@ try:
     for r in recs:
         print(f"  - {r.name}: {r.reason} (wave={r.wave}, source={r.source})")
     print("")
-    print("   运行 'skill_use(\"guide-plan\")' 填充 (wave=fill) 或 'skill_use(\"guide-ship\")' 执行 (wave=ship)")
+    print("   运行 'skill_use(\"rdd-builder\")' 填充 (wave=fill) 或执行 (wave=ship)")
 except Exception as e:
     print(f"⚠️ wave_scheduler_post_archive failed: {e}", file=sys.stderr)
     sys.exit(0)  # Never block archive on hook failure
@@ -69,7 +69,7 @@ try:
     for r in recs:
         print(f"  - {r.name}: {r.reason} (wave={r.wave}, source={r.source})")
     print("")
-    print("   可推进的 changes 如上 (wave=fill -> guide-plan, wave=ship -> guide-ship)")
+    print("   可推进的 changes 如上 (wave=fill / wave=ship 均走 rdd-builder)")
 except Exception as e:
     print(f"⚠️ wave_scheduler_entry_check failed: {e}", file=sys.stderr)
     sys.exit(0)

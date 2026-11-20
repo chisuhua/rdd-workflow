@@ -24,14 +24,17 @@ load ../test_helper
   ! grep -q "workflow-progress\.md" USAGE.md
 }
 
-@test "USAGE.md example shows new entry points (guide / rdd-arch / rdd-planner / rdd-builder / rdd-verifier)" {
+@test "USAGE.md example shows new entry points (rddf guide / rdd-arch / rdd-planner / rdd-builder / rdd-verifier)" {
   # v4 stage-merge (ADR-0043) renamed guide-arch→rdd-arch, guide-plan→rdd-planner
   # (with rdd-builder integrating plan+ship+design per ADR-0025), guide-ship→
   # rdd-builder, and added rdd-verifier (5th phase per ADR-0034).
+  # 2026-11-20 (fix-v4-doc-drift-live-invocations): the `guide` recommender
+  # skill was archived (ADR-0063) — its entry point is now the `rddf guide`
+  # CLI, so this asserts the CLI form instead of `skill_use("guide")`.
   [ -f "USAGE.md" ]
   grep -qE 'skill_use\("rdd-arch"\)' USAGE.md
   grep -qE 'skill_use\("rdd-planner"\)' USAGE.md
   grep -qE 'skill_use\("rdd-builder"\)' USAGE.md
   grep -qE 'skill_use\("rdd-verifier"\)' USAGE.md
-  grep -qE 'skill_use\("guide"\)' USAGE.md
+  grep -qF 'rddf guide' USAGE.md
 }

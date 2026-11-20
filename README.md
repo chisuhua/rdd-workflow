@@ -58,7 +58,7 @@ bash install.sh /path/to/project
 
 1. **安装到项目**：执行 `skill_use("INSTALL")` 将技能复制到项目目录
 2. **使用子技能**：
-   - `skill_use("guide")` - 推荐器入口(扫描状态,建议调 arch、planner、builder 或 verifier)
+   - `rddf guide` - 推荐器入口(扫描状态,建议调 arch、planner、builder 或 verifier)
    - `skill_use("rdd-arch")` - Arch 端状态机(setup → adr → roadmap → arch-done)
    - `skill_use("rdd-planner")` - Planner 端状态机(proposal authoring → review → approve/reject/defer → design-done, per ADR-0038/0042)
    - `skill_use("rdd-builder")` - Builder 端状态机(6-phase 内部 P0→P3: approval → plan → deps → execute → review → archive, per ADR-0043 stage-merge)

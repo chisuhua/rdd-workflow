@@ -356,5 +356,5 @@ and the forbidden list is mirrored in `tests/integration/test_rdd_quick.bats`.
 - `docs/adr/ADR-0047-rdd-quick-bypass-path.md` — decision record (AMENDED per ADR-0048)
 - `docs/adr/ADR-0048-v4-stage-merge-revision.md` — v4 stage-merge revision (D1 立场反转)
 - `.rddf/improvements/add-rdd-quick-skill.md` — design rationale
-- `.rddf/improvements/guide-ship-quick-finish.md` — coexistence boundary (different scenario)
+- `openspec/changes/archive/2026-07-29-guide-ship-quick-finish/` — coexistence boundary (different scenario)（历史 change 已归档）
 - `_lib/quick_history.py` + `_lib/schemas/quick_history_schema.json` — audit log data layer

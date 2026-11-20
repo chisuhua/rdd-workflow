@@ -195,7 +195,7 @@ cat > "$ROADMAP_FILE" << 'EOF'
 | core-impl | 核心实现 | 基础类和核心功能实现 | P1 |  |
 | core-test | 核心测试 | 单元测试和集成测试 | P1 |  |
 
-> **预期改进方向** (v2.2 新增): 可选第 5 列,内容为 `主题1；主题2` 分号分隔。guide-design 进入时会读取此列计算覆盖率。空 cell 表示该分类无主题约束 (向后兼容)。
+> **预期改进方向** (v2.2 新增): 可选第 5 列,内容为 `主题1；主题2` 分号分隔。`rdd-planner` 进入时会读取此列计算覆盖率。（v3 时期名称为 `guide-design`。）空 cell 表示该分类无主题约束 (向后兼容)。
 > 
 > **主题状态词汇**:
 > - `未覆盖` — roadmap 定义但无 proposal 匹配 (计入分母)
@@ -356,7 +356,7 @@ init_state(os.environ["STATE_FILE"])
   - core-test: 核心测试
 
 下一步:
-  skill_use("guide")  # 进入工作流向导
+  rddf guide  # 进入工作流向导
 ```
 
 ---

@@ -15,7 +15,7 @@ version: "4.0"
 author: sisyphus
 ---
 
-> v4.0.0 (2026-09-04): 四阶段架构（rdd-arch → rdd-planner → rdd-builder → rdd-verifier），27 个子技能（含 `rdd-env-bootstrap`，per ADR-0053）
+> v4.0.0 (2026-09-04): 四阶段架构（rdd-arch → rdd-planner → rdd-builder → rdd-verifier）；子技能集合见下方表格（当前 26 个，`rdd-env-bootstrap` 随后于 2026-09-22 加入，per ADR-0053）
 
 # RDD Workflow 安装程序
 

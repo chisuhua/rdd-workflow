@@ -34,7 +34,7 @@ metadata:
 skill_use("rdd-workflow-writing-plans")   # 无参数,依赖 git context 获取 CHANGE_NAME / WT_PATH
 ```
 
-## 输入上下文(由 guide-ship 自动注入)
+## 输入上下文(由 rdd-builder P1 注入)
 
 调用方应在 cd 到 worktree 后调用本技能,以下变量可由 git 自动推导:
 - `CHANGE_NAME`: 当前 OpenSpec change 名称

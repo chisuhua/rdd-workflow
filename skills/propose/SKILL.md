@@ -51,7 +51,7 @@ metadata:
 ```
 本技能：扫描文档/代码 → 读取 roadmap → 合并现有建议 → 分类验证 → 用户选择 → 串行创建 propose → 更新 improvement-suggestions.md
                                                                                                                   ↓
-guide-ship.worktree: COMMIT GATE → 创建 worktree → 生成 Prometheus 计划
+rdd-builder.worktree: COMMIT GATE → 创建 worktree → 生成 Prometheus 计划
 ```
 
 **Roadmap 驱动特性**：
@@ -481,7 +481,7 @@ for arg in "$@"; do
 done
 SKELETON_MODE="${SKELETON_MODE:-false}"
 
-# --- batch-create mode (guide-plan-noninteractive change) ---
+# --- batch-create mode (per archived change guide-plan-noninteractive) ---
 # When --batch-create is set, create skeleton changes for ALL pending
 # entries in improvement-approved.md without user interaction.
 # Enables AI orchestrators to auto-create all approved proposals.
@@ -570,7 +570,7 @@ THIS_SESSION_CREATED+=("<name>")
 #
 # For now, `openspec new change` creates the minimal artifacts (proposal.md, roadmap-meta.yaml).
 # Additional artifacts (design.md, tasks.md, specs/*.md) are created manually or via
-# guide-ship's plan generation phase.
+# rdd-builder's plan generation phase.
 #
 # TODO(v3.1): Implement full artifact creation loop when openspec CLI adds artifact support.
 #
