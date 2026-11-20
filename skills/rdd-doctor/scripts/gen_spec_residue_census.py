@@ -211,12 +211,16 @@ def build_census(project_root: Path) -> str:
     out.append("| 第一批（13 份 / 34 处） | `" + PRIOR_LEDGERS[0] + "` | 见该文件 |")
     out.append("| 第二批（5 份 / 37 处） | `" + PRIOR_LEDGERS[1] + "` | 见该文件 |")
     out.append("")
-    out.append(f"这 {len(PRIOR_SPECS)} 份当前仍有 **{prior_lines}** 个命中行（{len(prior_rows)} 条实例），"
-               "在本台账里以 `disposition=unset` 出现 ——")
-    out.append("机器无法知道人工签批发生过，**Phase 1 必须逐行重新对齐**并由标注消除它们。")
-    out.append("")
-    out.append("⚠️ **不得**把这 18 份统一标 `allow=history`：`RETIRED` 的保留原文才是 history；")
-    out.append("`PARTIAL` 的仍生效子句若含旧名 ⇒ **真实 delta**；`KEEP` 取旧台账 `category` 对应的 code。")
+    if prior_rows:
+        out.append(f"这 {len(PRIOR_SPECS)} 份当前仍有 **{prior_lines}** 个命中行（{len(prior_rows)} 条实例），"
+                   "在本台账里以 `disposition=unset` 出现 ——")
+        out.append("机器无法知道人工签批发生过，**Phase 1 必须逐行重新对齐**并由标注消除它们。")
+        out.append("")
+        out.append("⚠️ **不得**把这 18 份统一标 `allow=history`：`RETIRED` 的保留原文才是 history；")
+        out.append("`PARTIAL` 的仍生效子句若含旧名 ⇒ **真实 delta**；`KEEP` 取旧台账 `category` 对应的 code。")
+    else:
+        out.append(f"这 {len(PRIOR_SPECS)} 份已**全部处置完毕**（0 个命中行）—— 逐行判定与标注见")
+        out.append("`.rddf/reviews/spec-residue-align-18-2026-11-20.md`（change `align-spec-residue-prior-18`）。")
     out.append("")
     out.append("## 残留清单")
     out.append("")

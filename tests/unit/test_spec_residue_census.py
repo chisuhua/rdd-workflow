@@ -82,12 +82,19 @@ def test_rows_sorted_deterministically(tmp_path):
 
 
 def test_header_points_at_prior_ledgers(tmp_path):
-    """AC-17：头部写明第一批 / 第二批台账指针 + 不得统一 allow=history 的警告。"""
+    """AC-17：头部写明第一批 / 第二批台账指针。
+
+    两种形态都covered：仍有未处置行 ⇒ 带「不得统一 allow=history」的警告；
+    已全部处置 ⇒ 指向 align-18 的逐行判定台账。
+    """
     _spec(tmp_path, "demo", "### Requirement: r\nSHALL call `guide-ship`.\n")
     text = gen.build_census(tmp_path)
     for ledger in gen.PRIOR_LEDGERS:
         assert ledger in text, ledger
-    assert "不得" in text and "allow=history" in text
+    if "disposition=unset` 出现" in text:
+        assert "不得" in text and "allow=history" in text
+    else:
+        assert "全部处置完毕" in text and "spec-residue-align-18" in text
 
 
 def test_prior_ledgers_and_batch_ledgers_untouched(tmp_path):

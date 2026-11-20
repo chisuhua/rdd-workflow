@@ -405,14 +405,25 @@ def test_r4_token_word_boundary(tmp_path):
 
 @_REQUIRES_SPECS
 def test_r4_repo_residue_constant():
-    """AC-9：本仓当前态 = 350 处 / 192 块 / 46 份 / 165 文件（2026-11-20 基线）。
+    """AC-9：本仓的已知残留基线。
 
-    ⚠️ Phase 1 首个改动必须在同一提交更新该常数（补标注必然让数字下降），
-    否则它会在下一次运行时被读成 regression。
+    两个口径分开断言（否则「补标注」与「真清理」无法区分）：
+      - **未豁免**（= 台账待办，Phase 1 的判据）：191 处 / 111 块 / 31 份
+      - 含已豁免（机器看到的总量）：333 处 / 181 块 / 46 份
+
+    历史：2026-11-20 首次冻结 350 / 192 / 46（0 豁免）；
+    `align-spec-residue-prior-18` 把 18 份已签批 spec 的 120 行落成标注/改指后降到这里。
+    ⚠️ Phase 1 的每个改动都必须在同一提交更新这些常数，否则它会在下次运行时被读成 regression。
     """
     from spec_residue_scan import scan_specs
     result = scan_specs(REPO_ROOT)
     assert result.files_scanned == 165, result.files_scanned
-    assert len(result.blocks()) == 192, len(result.blocks())
+
+    unexempted = [h for h in result.hits if not h.category]
+    assert len(unexempted) == 191, len(unexempted)
+    assert len({(h.file, h.block_line) for h in unexempted}) == 111
+    assert len({h.file for h in unexempted}) == 31
+
+    assert len(result.hits) == 333, len(result.hits)
+    assert len(result.blocks()) == 181, len(result.blocks())
     assert len({h.file for h in result.hits}) == 46
-    assert len(result.hits) == 350, len(result.hits)
