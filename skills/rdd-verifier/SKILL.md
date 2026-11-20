@@ -19,8 +19,8 @@ metadata:
   evolved-from: "rdd-verifier skill v1.0 (2026-08-26); self-contained LLM verification per deprecate-ac-verifier"
   user-invocable: true
   deprecated-relation:
-    deprecates: "skills/ac-verifier/SKILL.md"
-    replacement: "This skill — ac-verifier is a deprecated thin wrapper"
+    replaces: "skills/ac-verifier/SKILL.md"
+    replacement: "This skill — ac-verifier was fully removed 2026-09-07 (remove-ac-verifier-completely)"
 role:
   title: "Verifier (验证治理者)"
   perspective: "5th phase state machine — guards archive by enforcing AC pass, classifies failures heuristically, routes loops back to plan/ship. High human involvement (AI classification + user confirm + failure routing decisions)."
@@ -35,7 +35,7 @@ role:
     not_owns:
       - "openspec/changes/<name>/"
       - "docs/adr/ADR-*.md"
-      - "skills/ac-verifier/"  # deprecated, do not invoke
+      - "skills/ac-verifier/"  # removed 2026-09-07, do not invoke
     human_involvement: "high"
 ---
 
@@ -84,13 +84,13 @@ trap 'rddf_session_hook_close stage_verify verifier-done rdd-verifier' EXIT INT 
 - 所有状态文件 schema（`.rddf/state/verifier/` 下的 `*.json`、`*.audit.jsonl`、`.ac-verdict-*.json`、`.ac-verification.jsonl`、`.ac-verifier-blocked.jsonl`、`rdd-verify-context-*.json`）
 - 退出码 0/1/2/4 语义不变
 
-**Deprecated**：`skills/ac-verifier/SKILL.md` 标记 deprecated，所有调用方（包括 `_lib/archive.sh` 和 `rddf ac-verify` CLI）将自动重定向到本 skill 的实现。
+**Removed**：`skills/ac-verifier/` 已于 2026-09-07 **完全删除**（提交 `50785534`，`remove-ac-verifier-completely`）。`rddf ac-verify` 现为 removed stub —— 任何参数都 `exit 4` + 打印迁移提示，**不是自动重定向**；请直接用 `rddf rdd-verify`。
 
 **职责边界**：
 
 - **角色定义**：见 frontmatter `role:` 字段（ADR-0028）
 - **拥有**：`role.boundaries.owns` 列出的状态文件
-- **不拥有**：`openspec/changes/*/`（不修改提案本身）、`docs/adr/ADR-*.md`（不写 ADR）、`skills/ac-verifier/`（已废弃，不要触碰）
+- **不拥有**：`openspec/changes/*/`（不修改提案本身）、`docs/adr/ADR-*.md`（不写 ADR）、`skills/ac-verifier/`（2026-09-07 已删除，不要触碰）
 - **人工介入程度**：`high`（与 `rdd-arch` 同档）
 
 ---
@@ -105,7 +105,7 @@ rddf rdd-verify [--dry-run] [--max-changes N] [--loop]
 skill_use("rdd-verifier")
 ```
 
-**注意**：`rddf ac-verify` 已废弃，会自动重定向到 `rddf rdd-verify <change-name>`。直接调用 `skill_use("ac-verifier", "<change>")` 也已废弃。
+**注意**：`rddf ac-verify` 已**移除**（`exit 4` + 迁移提示，非重定向），请用 `rddf rdd-verify <change-name>`。`skill_use("ac-verifier", ...)` 同样已不可用（该 skill 目录已删除）。
 
 ---
 
@@ -511,7 +511,7 @@ All verifier state files are `.rddf/state/` gitignored, per AGENTS.md state file
 | 调 `bash skills/ac-verifier/scripts/ac_verifier.sh <name>` | 调 `bash skills/rdd-verifier/scripts/route_loop.sh <name> gap` 等高层 helper |
 | 读 `Exit 3 = ac-verifier internal error` | 读 `Exit 3 = LLM verification error` |
 
-**向后兼容窗口**：ac-verifier CLI 在 v2.0 仍可用（thin shim），但仅 1-2 个版本周期。**新代码请直接用 rdd-verifier**。
+**向后兼容窗口已结束**：ac-verifier CLI 的 1-2 个版本周期已过，2026-09-07 起**完全移除**（无 shim，`rddf ac-verify` 仅保留 friendly-error stub）。请直接用 rdd-verifier。
 
 ---
 
@@ -524,4 +524,4 @@ All verifier state files are `.rddf/state/` gitignored, per AGENTS.md state file
 - `_lib/verifier/`: heuristic classification + SHA cache + loop state modules（保留）
 - `skills/rdd-verifier/scripts/`: 4 bash orchestration helpers（保留 + run_verification.sh 改为内联 LLM 协议）
 - `_lib/cli/rdd_verify_cmd.py`: `rddf rdd-verify` CLI backend
-- **Deprecated**: `skills/ac-verifier/SKILL.md`（v1.0 实现，已废弃）
+- **Removed**: `skills/ac-verifier/`（v1.0 实现，2026-09-07 完全删除）

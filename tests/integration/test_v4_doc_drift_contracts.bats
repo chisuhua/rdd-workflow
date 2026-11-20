@@ -263,11 +263,32 @@ setup() {
 # Oracle review 2026-09-09: extends Test 12 to all docs/architecture/ files
 # (parent change only checked 3 files; this catches drift in unchanged files).
 # Excludes rdd-arch-rdd-planner-integration.md shim-doc mentions via grep -v.
+# 2026-11-20 (arch-docs-drift-sync): the exemption list now also covers the
+# newer wording 「已移除 / retired / hard removal / removed」 — a compatibility
+# matrix row saying "no compat shim, removed per ADR-0044" is a lineage note,
+# not a live reference. Exemptions apply to prose and tables ONLY: fenced code
+# blocks are executable examples, so the next test hard-zeroes them.
 # -----------------------------------------------------------------------------
 @test "doc_drift_v4: ALL docs/architecture/*.md have no live guide-* skill references (AC-3 follow-up)" {
-  hits=$(grep -rnE 'skill_use\(\"(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)\"\)|\*\*?Entry skill\*\*?: \`(guide-arch|guide-design|guide-plan|guide-ship)\`|skills/(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)/' docs/architecture/ 2>/dev/null | grep -v 'shim\|DEPRECATED\|compat' || true)
+  hits=$(grep -rnE 'skill_use\(\"(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)\"\)|\*\*?Entry skill\*\*?: \`(guide-arch|guide-design|guide-plan|guide-ship)\`|skills/(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)/' docs/architecture/ 2>/dev/null | grep -vE 'shim|DEPRECATED|deprecated|compat|已移除|已废弃|retired|hard removal|removed' || true)
   if [ -n "$hits" ]; then
     echo "AC-3 follow-up violation (live guide-* in docs/architecture/):"
+    echo "$hits" | head -10
+    return 1
+  fi
+}
+
+# -----------------------------------------------------------------------------
+# Test 14b: fenced code blocks in docs/architecture/*.md must not invoke a
+# retired skill. A code block is an executable example — if it says
+# `skill_use("guide-*")`, a reader will copy it and fail. Lineage notes never
+# live inside code fences, so this test tolerates zero occurrences (the
+# prose/table exemption above does not apply here).
+# -----------------------------------------------------------------------------
+@test "doc_drift_v4: docs/architecture/*.md fenced code blocks invoke no retired skill" {
+  hits=$(perl -0777 -ne 'while (/```.*?\n(.*?)\n```/gs) { my $b = $1; while ($b =~ /\bskill_use\(["\x27](guide[a-z-]*)["\x27]/g) { print "$ARGV: skill_use(\"$1\")\n" } }' docs/architecture/*.md 2>/dev/null || true)
+  if [ -n "$hits" ]; then
+    echo "AC-3b violation (retired skill invoked in a fenced code block):"
     echo "$hits" | head -10
     return 1
   fi
