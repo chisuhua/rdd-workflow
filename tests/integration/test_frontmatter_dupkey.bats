@@ -16,9 +16,6 @@ assert_no_dup_version() {
   assert_no_dup_version skills/rdd-arch/SKILL.md
 }
 
-@test "status.md frontmatter has at most one version key" {
-  assert_no_dup_version skills/status/SKILL.md
-}
 
 # Cover the remaining 11 skills — pre-fix, deps/execute/feature/guide-arch/
 # guide-plan/guide-ship/propose/rddf-session/roadmap/rdd-workflow-writing-plans

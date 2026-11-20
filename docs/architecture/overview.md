@@ -85,7 +85,6 @@ graph TB
 | `deps` | Compute change dependency graph + execution order. | guide |
 | `feature` | View/manage feature fragments (summary, graph, status, order). | guide |
 | `rdd-workflow-writing-plans` | Generate TDD 5-step plan for a change. | rdd-builder |
-| `status` | View/change status; archive completed changes. | guide |
 | `roadmap` | Init / edit / validate / advance the project roadmap. | rdd-planner |
 | `rddf-session` | User-perspective workflow session mgmt. | guide |
 | `rdd-env-check` | Health snapshot of openspec CLI, git, branch (phase-internal script). | (phase-internal) |

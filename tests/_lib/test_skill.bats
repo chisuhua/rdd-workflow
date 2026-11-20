@@ -54,10 +54,6 @@ load_lib skill
   [ "${#lines[@]}" -ge 12 ]
 }
 
-@test "skill_has_section returns 0 for status.md '模式 A'" {
-  run skill_has_section skills/status/SKILL.md "模式 A"
-  [ "$status" -eq 0 ]
-}
 
 @test "skill_field exits non-zero for nonexistent file" {
   run skill_field /nonexistent/path/skill.md name

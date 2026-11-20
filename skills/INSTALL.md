@@ -1,7 +1,7 @@
 ---
 name: INSTALL
 description: |
-  First-entry install skill (v4.0+). Copies 全部 27 个子技能 to project via symlink or copy.
+  First-entry install skill (v4.0+). Copies 全部 26 个子技能 to project via symlink or copy.
 
   Invoke when BOTH:
     1. Project has no rdd-workflow + user wants install
@@ -19,7 +19,7 @@ author: sisyphus
 
 # RDD Workflow 安装程序
 
-本技能将 RDD Workflow 的 27 个子技能安装到当前项目目录。
+本技能将 RDD Workflow 的 26 个子技能安装到当前项目目录。
 
 ## 包含的子技能
 
@@ -32,7 +32,6 @@ author: sisyphus
 | `rdd-builder` | v4 Stage 3: 6-phase 状态机（P0/P1/P1.5/P2/P2.5/P3）+ verifier 重试环 |
 | `rdd-verifier` | v4 Stage 4: 批量 AC 验证（per ADR-0034） |
 | `propose` | 变更提案生成（被 rdd-builder Phase 1 调用） |
-| `status` | 状态查看和归档（被 rdd-builder Phase 3 调用或独立使用） |
 | `feature` | Feature 管理视图（summary/graph/status/order） |
 | `rddf-session` | 跨 OpenCode session 恢复（ADR-0017） |
 | `roadmap` | 路线图管理（被 rdd-arch 调用） |
@@ -70,7 +69,7 @@ bash install.sh --global
 ```
 
 执行后：
-- 27 个子技能 symlink 到 `~/.agents/skills/` → **所有项目**的 OpenCode 自动发现（具体清单见 `package.json::skills[]`，与磁盘同步）
+- 26 个子技能 symlink 到 `~/.agents/skills/` → **所有项目**的 OpenCode 自动发现（具体清单见 `package.json::skills[]`，与磁盘同步）
 - Python 依赖自动安装 (`pip install --user -r requirements.txt`)
 - `_lib/` 路径写入 Python `.pth` 文件 → 任何项目 `from skills._lib.xxx import yyy` 可用
 - `rddf` CLI 命令创建到 `~/.local/bin/rddf` → 终端直接运行 `rddf status`

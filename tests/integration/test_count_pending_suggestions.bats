@@ -21,10 +21,6 @@ load ../test_helper
   ! grep -qE "sum\(1 for e in entries.*e\.get\('status'\) == '待创建'\)" "$REPO_ROOT/skills/propose/SKILL.md"
 }
 
-@test "status.md no longer inlines count pending proposals algorithm" {
-  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
-  ! grep -qE "sum\(1 for e in entries.*e\.get\(.status.\) == .待创建" "$REPO_ROOT/skills/status/SKILL.md"
-}
 
 @test "rdd-planner.md no longer inlines count pending proposals algorithm" {
   [ -f "$REPO_ROOT/skills/rdd-planner/SKILL.md" ]

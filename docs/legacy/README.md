@@ -17,4 +17,6 @@
 | `rddf-legacy-v2.0.7.sh` | v2.0.7 | Python `rddf` CLI 替代 |
 | `skills/guide/` | 2026-11-19 | ADR-0063（退役 Guide-as-Orchestrator） |
 | `skills/execute/` | 2026-11-20 | 退役 v2 遗留 plan 执行器子技能（ADR-0043 四阶段已定义；JSONL 会话数据 0 次使用） |
+| `skills/status/` | 2026-11-20 | 退役 v2 菜单式状态/归档 skill（零真实使用；CLI `rddf status` 已在 `rddf-status-based-on-improvements` 中完全解耦） |
+| `status_helpers.sh` | 2026-11-20 | `skills/status` 的唯一消费者退役 ⇒ 整体归档（`detect_sync_issues` / `repair_sync_state` 零外部调用） |
 | `guide-orchestrator-flow.md` | 2026-11-19 | ADR-0063 |

@@ -197,11 +197,6 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 # === 7. 执行契约保留(.rddf/plans/<name>.md) ===
 
 
-@test "status.md still references .rddf/plans/<name>.md for progress tracking" {
-    local f="$REPO_ROOT_ORIGIN/skills/status/SKILL.md"
-    grep -qE '\.rddf/plans/' "$f"
-    grep -qE '\- \[x\]' "$f"
-}
 
 @test "SKIP_PROMETHEUS_PLANNING=yes escape hatch still works in actions.py" {
     local f="$REPO_ROOT_ORIGIN/_lib/loop/actions.py"

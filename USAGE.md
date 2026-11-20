@@ -129,7 +129,6 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 | `propose` | 扫描 ADR/代码生成建议列表（`improvement-suggestions.md`） | `rdd-builder` 内部 / 单独使用 |
 | `roadmap` | 路线图管理（phase/category 结构 + AUTO-SPRINT sentinel，v2.0.1） | `rdd-arch` 内部 / 单独使用 |
 | `deps` | 依赖分析（含 subagent Step 3，结构化输出 `deps-analysis.json`，v2.0.1） | `rdd-builder` 内部 / 单独使用 |
-| `status` | 状态查看（tasks.md 进度 + iteration.json） | `rdd-builder` 内部 / 单独使用 |
 | `rddf-session` | **跨 OpenCode session 恢复**（ADR-0017）— 5 子命令：list / resume / abandon / heartbeat / status | `skill_use("rddf-session", "<sub>")` |
 | `rdd-workflow-writing-plans` | 实施计划生成器（TDD 5 步结构，自包含，零外部依赖） | `rdd-builder` Phase 1 内部 |
 

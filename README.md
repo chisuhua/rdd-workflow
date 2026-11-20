@@ -67,7 +67,6 @@ bash install.sh /path/to/project
    - `skill_use("rdd-quick")` - **快速执行路径**(per ADR-0047)：绕过 openspec change 与 worktree，就地执行小改动并 Oracle 验证
    - `skill_use("feature")` - feature 管理(summary/graph/status/order)
    - `skill_use("propose")` - 子技能(被 rdd-builder 调用)
-   - `skill_use("status")` - 子技能(被 rdd-builder 调用或独立使用)
    - `skill_use("rdd-workflow-writing-plans")` - 实施计划生成器(被 rdd-builder 调用,v2.0 自包含 TDD 5 步结构)
 
 ## 项目级配置 (`.rddf/project.yaml`)
@@ -427,7 +426,6 @@ rdd-workflow/
     ├── propose/SKILL.md                 # 子技能(被 rdd-builder 调用)
     ├── roadmap/SKILL.md                 # 子技能(被 rdd-arch 调用)
     ├── deps/SKILL.md                    # 子技能(被 rdd-builder 调用)
-    ├── status/SKILL.md                  # 子技能(被 rdd-builder 调用或独立使用)
     ├── add-improve/SKILL.md             # 提案创建入口(被 rdd-builder 调用)
     ├── rdd-workflow-writing-plans/SKILL.md  # 实施计划生成器(v2.0 自包含)
     ├── rdd-workflow-brainstorm/SKILL.md # 提案头脑风暴 helper

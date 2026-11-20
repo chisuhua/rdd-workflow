@@ -130,7 +130,7 @@ bats tests/integration/test_global_install_external_project.bats   # 11/11 pass
 
 ```
 _lib/                          # ⭐ 真实实现层 (commit c3a90fe "flatten package layout")
-  state.sh / worktree.sh / archive.sh / status_helpers.sh / discover-arch-artifacts.sh / env_checks.sh / parallel_throttle.sh / resolve_skill_name.sh / sessions_count.sh / ship_execution_mode.sh / ship_parallel.sh / skill_root.sh / wave_scheduler_hooks.sh / discover_ship_changes.sh / discover_roadmap_fragments.sh / post_archive_cleanup.sh / check_project_setup.sh / orchestrator_entry.sh / post_flow_wrap.sh  # bash 工具 (~19 files)
+  state.sh / worktree.sh / archive.sh / discover-arch-artifacts.sh / env_checks.sh / parallel_throttle.sh / resolve_skill_name.sh / sessions_count.sh / ship_execution_mode.sh / ship_parallel.sh / skill_root.sh / wave_scheduler_hooks.sh / discover_ship_changes.sh / discover_roadmap_fragments.sh / post_archive_cleanup.sh / check_project_setup.sh / orchestrator_entry.sh / post_flow_wrap.sh  # bash 工具 (~18 files)
   cli/                         # 28 个 `rddf` 子命令 (ac_verify/archive/cleanup/contract_check/dashboard/deps/discover_ship_changes/doctor/feature/guide/init/issue/iteration_strict/l2_trend/migrate_improvements/monitor/orchestrate/rdd_hub_bootstrap/report_issue/roadmap/sessions/status/sync_hub/validate/version/watch_hub/archive_sync 等)
   gate.py / roadmap_state.py / config.py / session.py / session_base.py / session_manager.py / session_stats.py  # 跨切核心模块 (会话 + 状态)
   recommender.py           # ⭐ 阶段推荐阶梯的唯一实现 (ADR-0062) — `rddf guide` 与 `rddf monitor` 共用
@@ -142,13 +142,13 @@ _lib/                          # ⭐ 真实实现层 (commit c3a90fe "flatten pa
   schedulers/                  # 调度器 (4 .py): cron_scheduler, fs_watcher, git_hook, webhook_receiver
   schemas/                     # JSON schema (19 files): arch_handoff, config, deps_analysis, design_handoff, feature_view, iteration, plan_handoff, sessions, state_vector, trigger 等
   loop_engine.py               # v2.0 Loop 引擎入口（向后兼容 shim 实际实现在 _lib/loop_engine.py）
-skills/                        # Markdown skills (27 SKILL.md + INSTALL.md) + per-skill scripts/
+skills/                        # Markdown skills (26 SKILL.md + INSTALL.md) + per-skill scripts/
   INSTALL.md                   # 第一入口 (v1.1.0)
   rdd-arch/SKILL.md          # arch 阶段 (v2.0.8 Phase 2 重组)
   rdd-planner/SKILL.md (was guide-design)        # design 阶段 (v2.1 新增)
   rdd-builder/SKILL.md (was guide-plan)          # plan 阶段
   rdd-builder/SKILL.md (was guide-ship)          # ship 阶段 (v2.0)
-  propose/SKILL.md / status/SKILL.md / roadmap/SKILL.md / deps/SKILL.md / feature/SKILL.md / rddf-session/SKILL.md  # 子技能
+  propose/SKILL.md / roadmap/SKILL.md / deps/SKILL.md / feature/SKILL.md / rddf-session/SKILL.md  # 子技能
   rdd-workflow-writing-plans/SKILL.md  # 内置 TDD 5 步 plan 生成器
   loop_engine.py               # v2.0 Loop 引擎入口（向后兼容 shim）
   _lib/                        # ⭐ shim 层 (post-c3a90fe flatten layout, 2026-08-25 P1-1b identity-merge)
@@ -161,7 +161,6 @@ skills/                        # Markdown skills (27 SKILL.md + INSTALL.md) + pe
   deps/scripts/                # deps 辅助脚本 (deps_output, deps_render_report 等)
   propose/scripts/             # propose 辅助脚本 (propose_change 等)
   feature/scripts/             # feature 辅助脚本 (feature_summary, feature_graph 等)
-  status/scripts/              # status 辅助脚本 (status_render_mode_a 等)
 tests/
   test_helper.bash            # load_lib 解析器 + 断言辅助
   conftest.py                 # 把项目根加进 sys.path (P1-1b: `skills._lib` 路由到 `_lib` + 10 个身份合并 shim)

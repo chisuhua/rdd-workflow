@@ -194,7 +194,7 @@ print(_lib.__file__)
   # Per ADR-0044 (Wave 3 hard removal): guide-arch removed. Replaced by rdd-arch.
   expected_skills=(add-improve deps feature rdd-arch rdd-planner rdd-builder rdd-verifier rdd-quick \
     propose rdd-env-check rdd-doctor \
-    rdd-workflow-brainstorm rdd-workflow-writing-plans rddf-session roadmap status)
+    rdd-workflow-brainstorm rdd-workflow-writing-plans rddf-session roadmap)
   for s in "${expected_skills[@]}"; do
     link="${HOME}/.agents/skills/$s"
     [ -L "$link" ] || { echo "missing symlink: $link" >&2; return 1; }

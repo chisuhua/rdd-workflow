@@ -301,12 +301,12 @@ setup() {
 
 
 # -----------------------------------------------------------------------------
-# fix-doc-drift-followup-3 Bonus Test 18: AC-2 — 8 sub-skill SKILL.md files
+# fix-doc-drift-followup-3 Bonus Test 18: AC-2 — 7 sub-skill SKILL.md files
 # have no active skill_use("guide-*") invocations.
 # Corresponds to: AC-2 of fix-doc-drift-followup-3.
 # -----------------------------------------------------------------------------
-@test "doc_drift_v4: 8 sub-skill SKILL.md files have no live skill_use(\"guide-*\") invocations (AC-2 follow-up)" {
-  for f in skills/status/SKILL.md skills/deps/SKILL.md \
+@test "doc_drift_v4: 7 sub-skill SKILL.md files have no live skill_use(\"guide-*\") invocations (AC-2 follow-up)" {
+  for f in skills/deps/SKILL.md \
            skills/add-improve/SKILL.md skills/feature/SKILL.md skills/sync-hub/SKILL.md \
            skills/rddf-session/SKILL.md skills/openspec-gate/SKILL.md skills/rdd-env-check/SKILL.md; do
     hits=$(grep -nE 'skill_use\("(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)"\)' "$f" 2>/dev/null || true)

@@ -22,16 +22,8 @@
 
 load ../test_helper
 
-@test "status.md no longer defines wt_path_for_branch_inline (P3-3c)" {
-  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
-  ! grep -q 'wt_path_for_branch_inline()' "$REPO_ROOT/skills/status/SKILL.md"
-}
 
 
-@test "status.md invokes wt_path_for_branch from _lib/worktree.sh" {
-  [ -f "$REPO_ROOT/skills/status/SKILL.md" ]
-  grep -qE '_lib/worktree\.sh|source.*worktree\.sh|wt_path_for_branch' "$REPO_ROOT/skills/status/SKILL.md"
-}
 
 
 @test "_lib/worktree.sh::wt_path_for_branch returns correct path (was broken in inline version)" {
