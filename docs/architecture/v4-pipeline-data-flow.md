@@ -16,7 +16,7 @@ For the role model, role.boundaries.owns lists, and sub-skill catalog, see [work
 ```mermaid
 flowchart TD
     User([User / AI agent])
-    Guide[guide<br/>状态扫描推荐器<br/>无状态]
+    Guide[rddf guide CLI<br/>状态扫描推荐器<br/>无状态<br/>ADR-0062]
 
     subgraph Stage1["Stage 1: arch (slim per ADR-0048)"]
         ArchSkill[rdd-arch SKILL<br/>Phase 1-5<br/>单门控 arch-done]
@@ -42,7 +42,7 @@ flowchart TD
     end
 
     %% User -> Guide
-    User -->|skill_use guide| Guide
+    User -->|rddf guide| Guide
 
     %% Guide -> any stage
     Guide -->|⭐ 1 rdd-arch| ArchSkill
@@ -464,7 +464,7 @@ This section walks through the **happy path** end-to-end, step by step. All file
             .rddf/state/builder/change.json::dispatch_quick_outcome = <outcome>
 ```
 
-#### Entry Mode (b) — direct from guide (旁路, fallback per ADR-0047 D1)
+#### Entry Mode (b) — direct invocation (旁路, fallback per ADR-0047 D1)
 
 ```
 [Step 4b.1] User: skill_use("rdd-quick") directly (no builder P0)
@@ -580,8 +580,8 @@ rdd-quick P1 (mode a, reads planner-handoff.json::recommended_route)
 
 | Transition | Trigger | Mechanism | File(s) read | File(s) written |
 |------------|---------|-----------|--------------|------------------|
-| User → Guide | `skill_use("guide")` | bash + json output | `.rddf/state/*.json`, `openspec/changes/`, `roadmap.md` | (none — read-only) |
-| Guide → rdd-arch | `skill_use("rdd-arch")` | user choice | project state | rddf-session entry |
+| User → rddf guide | `rddf guide` | Python CLI + json output (ADR-0062) | `.rddf/state/*.json`, `openspec/changes/`, `roadmap.md` | (none — read-only) |
+| rddf guide → rdd-arch | `skill_use("rdd-arch")` | user choice | project state | rddf-session entry |
 | rdd-arch (Phase 1-5) | internal phases | bash menu | existing `docs/adr/` | `docs/adr/ADR-*.md` |
 | rdd-arch → rdd-planner | arch-done gate pass | `write_arch_handoff.sh` | `docs/adr/ADR-*.md` (gate check) | `.rddf/state/.arch-handoff.json` |
 | rdd-planner (Phase 0) | entry to planner | bash detection | `.rddf/roadmap.md` exists? | (none, or `roadmap.md` if init) |
@@ -645,6 +645,6 @@ Every `skills/*/SKILL.md` and `skills/INSTALL.md` frontmatter `description:` fie
 4. **No deprecated-path guidance**: does not direct to legacy fallback paths
 5. **Enforcement**: `tests/integration/test_skill_description_convention.bats` — 3 assertions (≤200 tokens / no anti-trigger / references `role.boundaries`)
 
-Anti-routing judgments are centralized in `skills/guide/SKILL.md` — see "Anti-Routing Centralization (per ADR-0051)" section in that file. Per-skill descriptions no longer carry anti-trigger paragraphs (`**DO NOT use**` / `**Prefer ... instead**` / `**Legacy entry**`).
+Anti-routing judgments are centralized in the single recommender implementation — the `rddf guide` CLI (`_lib/recommender.py` + `_lib/cli/guide_cmd.py`). The SSOT carrier migrated there when `skills/guide/` was archived (per ADR-0063 Decision 8), so ADR-0051 Decision 2's semantics are preserved rather than rewritten. Per-skill descriptions do not carry anti-trigger paragraphs (`**DO NOT use**` / `**Prefer ... instead**` / `**Legacy entry**`).
 
 See [ADR-0051](../adr/ADR-0051-skill-description-convention.md) for the full 5 Decision specification.

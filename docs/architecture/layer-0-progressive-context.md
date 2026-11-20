@@ -11,7 +11,7 @@ graph TD
     subgraph "Layer 0: 协议块（~400 tokens）"
         L0["AI 配置文件中 30 行的 rdd-workflow 核心用法段落"]
         L0 --> L0_1["身份声明：本项目已安装 rdd-workflow"]
-        L0 --> L0_2["推荐入口：skill_use('guide')"]
+        L0 --> L0_2["推荐入口：rddf guide CLI（ADR-0062）"]
         L0 --> L0_3["核心流程：4 阶段架构"]
         L0 --> L0_4["旁路规则：rdd-quick 条件"]
         L0 --> L0_5["自助诊断：rddf doctor"]

@@ -1,6 +1,6 @@
 # Skills and Handoff Protocol
 
-A **skill** is a `SKILL.md` file with YAML frontmatter that an AI coding assistant can discover and invoke. rdd-workflow ships 17 user-invocable skills plus the shared `_lib/` runtime.
+A **skill** is a `SKILL.md` file with YAML frontmatter that an AI coding assistant can discover and invoke. rdd-workflow ships 26 skills (19 of them `user-invocable: true`) plus the shared `_lib/` runtime.
 
 ## SKILL.md Frontmatter Spec
 
@@ -80,12 +80,9 @@ Top-level fields:
 }
 ```
 
-**Path A contract**: `changes_pre_created` lists every change that `guide-design` approval directly wrote to `openspec/changes/<name>/{proposal.md, .openspec.yaml, roadmap-meta.yaml}`. `guide-plan` intake exports this as `CHANGES_PRE_CREATED` bash array and consumes it via:
-- `is_design_pre_created <name>` — skip `propose --create` for pre-created changes (Phase 2).
-- `get_design_pre_created_label <name>` — emit `🆕 design-pre-created` badge in the approved-list display.
-- `get_fill_artifacts_for <name>` — narrow Phase 2.5 fill to `design tasks specs` for pre-created changes (NEVER overwrite the complete `proposal.md` that design wrote).
+**Path A contract (retired 2026-11-20)**: `changes_pre_created` used to list every change that `guide-design` approval directly wrote to `openspec/changes/<name>/{proposal.md, .openspec.yaml, roadmap-meta.yaml}`, with `guide-plan` intake exporting it as a `CHANGES_PRE_CREATED` bash array and consuming it via `is_design_pre_created` / `get_design_pre_created_label` / `get_fill_artifacts_for`. All three consumer functions and `plan_intake.sh` were removed with ADR-0043 / ADR-0044; the field survives only as a historical schema contract (`_lib/schemas/design_handoff_schema.json`), with **no live consumer**.
 
-**Versioning policy** (v2.0.6+, `move-proposal-creation-to-design`): v2 schema requires `changes_pre_created` as a non-empty string array. v1 payloads are still accepted by `plan_intake.sh` as backward-compat (empty array), but new handoffs MUST be v2.
+**Versioning policy** (v2.0.6+, `move-proposal-creation-to-design`): v2 schema requires `changes_pre_created` as a non-empty string array; v1 payloads remain valid input (empty array) for any v1 reader still in the field.
 
 ### `.plan-handoff.json` (v1, ADR-0024)
 
@@ -101,7 +98,7 @@ Top-level fields:
 }
 ```
 
-`execution_mode_decisions` is the field `guide-ship` reads to decide between worktree and lightweight mode (see [workflow-phases.md](workflow-phases.md)).
+`execution_mode_decisions` is the field `rdd-builder` P1.5 reads to decide between worktree and lightweight mode (`skills/rdd-builder/scripts/phase1_5_deps.sh`, see [workflow-phases.md](workflow-phases.md)).
 
 ## Schema Files
 

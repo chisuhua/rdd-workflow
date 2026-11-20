@@ -20,7 +20,7 @@ graph LR
     B -->|builder state| V[verifier<br/>rdd-verifier<br/>batch AC check]
     V -->|all pass| ARC[(archived<br/>openspec/changes/archive/)]
     V -.->|fail → bounded retry<br/>max 3 iterations| B
-    Q([rdd-quick<br/>bypass path]) -.->|entry (a) from-builder P0<br/>entry (b) direct guide| ARC
+    Q([rdd-quick<br/>bypass path]) -.->|entry (a) from-builder P0<br/>entry (b) direct invocation| ARC
 
     classDef archFill fill:#fef3c7,stroke:#d97706
     classDef plannerFill fill:#dbeafe,stroke:#2563eb
@@ -41,7 +41,7 @@ Each stage:
 
 `rdd-quick` is a parallel **bypass path** for small, well-scoped changes (per ADR-0047 + ADR-0048 amendment). After ADR-0048, it has **two entry modes**:
 - **(a) from rdd-builder P0 选项 5** (主路径): reads `.planner-handoff.json::recommended_route` as the primary advisory signal
-- **(b) from `guide` recommender** (旁路): self-triage fallback per original ADR-0047 D1
+- **(b) from `rddf guide` CLI** (旁路): self-triage fallback per original ADR-0047 D1
 
 ## Stage 1 — `arch` (slim per ADR-0048)
 
@@ -328,7 +328,7 @@ P0 (5-option approval) → P1 (plan) → P1.5 (deps + exec_mode) → P2 (execute
 
 ### Sub-skills
 
-`rdd-workflow-writing-plans` (P1), `status` (archive, P3), `feature` (per-feature view), `rddf-session` (binding).
+`rdd-workflow-writing-plans` (P1), `feature` (per-feature view), `rddf-session` (binding). Archive is the `rddf archive` CLI (the `status` skill was retired 2026-11-20).
 
 ## Stage 4 — `verifier` (per ADR-0034 + ADR-0045)
 
@@ -379,7 +379,7 @@ When invoked this way:
 - `complex` → mandatory Metis + Oracle + user confirm (per ADR-0047)
 - `unknown` → fallback to original 5-signal heuristic
 
-**Entry Mode (b) — direct from `guide` recommender (旁路, fallback)**:
+**Entry Mode (b) — direct invocation (旁路, fallback)**:
 
 ```bash
 skill_use("rdd-quick")
@@ -427,7 +427,7 @@ The P4 escalation recommendation **changed from** `skill_use("rdd-planner")` (pr
 
 ## Why This Order
 
-Each stage **consumes a contract** the previous stage wrote. A stage cannot start until its predecessor wrote the handoff file (or it falls through to the entry skill to bootstrap the missing stage). This is why a fresh project starts with `guide` (the recommender), which inspects which handoff files exist and routes the user to the earliest missing stage.
+Each stage **consumes a contract** the previous stage wrote. A stage cannot start until its predecessor wrote the handoff file (or it falls through to the entry skill to bootstrap the missing stage). This is why a fresh project starts with `rddf guide` (the recommender CLI), which inspects which handoff files exist and routes the user to the earliest missing stage.
 
 The `rdd-quick` bypass deliberately skips the stage chain — it has its own entry contracts (mode a: rdd-quick-context.json; mode b: P0 plan file) and its own audit log (`.quick-history.jsonl`), distinct from the main 4-stage pipeline.
 
@@ -442,7 +442,7 @@ The `rdd-quick` bypass deliberately skips the stage chain — it has its own ent
 | **rdd-planner Phase 5 gate** | single (state_revision bump) | **dual** (roadmap exists + recommended_route) |
 | **recommended_route field** | optional, dead field | **required** (planner-state + planner-handoff schemas v1.1) |
 | **rdd-builder P0** | 4-option (approve/reject/defer/revise) | **5-option** (+ dispatch-quick) |
-| **rdd-quick entry** | guide only (self-triage) | **guide + builder P0 选项 5** (with planner advisory) |
+| **rdd-quick entry** | `rddf guide` CLI only (self-triage) | **rddf guide + builder P0 选项 5** (with planner advisory) |
 | **rdd-quick upgrade** | → rdd-planner (loop risk) | **→ rdd-builder P0** (no loop) |
 | **rdd-quick-context.json** | does not exist | **NEW** (builder→quick handoff) |
 

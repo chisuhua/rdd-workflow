@@ -334,10 +334,10 @@ rddf arch status
 |---|---|---|
 | `rddf arch` | `rdd-arch` | — |
 | `skill_use("rdd-arch")` | `rdd-arch` | — |
-| `skill_use("guide-arch")` | — | shim: 打印 DEPRECATED warning, 转发到 `rdd-arch`（保留至 v5.x + 2 minor release） |
+| `skill_use("guide-arch")` | — | **已移除，无 compat shim**（ADR-0044 Wave 3 hard removal；`skills/guide-arch/` 已不存在，调用会失败） |
 | `rddf planner` | `rdd-planner` | — |
 | `rddf planner feedback --clear` | — | 不支持（旧 v2.x `--clear` 语义模糊，已被 `--acknowledge/--resolve/--dismiss` 三命令取代） |
-| `report-issue --phase guide-arch` | — | shim: 内部映射到 `rdd-arch` |
+| `report-issue --phase guide-arch` | — | **已移除**；`--phase` 现为自由文本 metadata（`_lib/cli/report_issue_cmd.py:44`），请用 `--phase rdd-arch` |
 
 ## 8. 消费者兼容（contract v2）
 

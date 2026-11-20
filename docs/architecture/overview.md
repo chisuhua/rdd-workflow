@@ -5,7 +5,7 @@
 rdd-workflow is an **OpenSpec-compatible AI development workflow package**. It manages changes via the OpenSpec change lifecycle (`propose → plan → execute → status → archive` — these are OpenSpec CLI verbs, *not* rdd-workflow stages), wrapped in a **four-stage v4 architecture** (`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`, per ADR-0043), with a `rdd-quick` small-change bypass path (per ADR-0047). It runs on any OpenSpec-aware AI coding assistant (opencode, Claude Code, Cursor, Aider, etc.) via the Skill discovery mechanism, with no runtime dependency on a specific vendor.
 
 The package ships:
-- **27 skills** in `skills/` — 5 stage skills (`rdd-arch`, `rdd-planner`, `rdd-builder`, `rdd-verifier` + the `rdd-quick` bypass, v4.0+ per ADR-0043) and 22 sub-skills, each a `SKILL.md` with structured frontmatter.
+- **26 skills** in `skills/` — 5 stage skills (`rdd-arch`, `rdd-planner`, `rdd-builder`, `rdd-verifier` + the `rdd-quick` bypass, v4.0+ per ADR-0043) and 21 sub-skills, each a `SKILL.md` with structured frontmatter.
 - A **shared `_lib/`** of 60+ Python modules and bash helpers implementing state, gate, tribunal, session, loop engine, etc.
 - A **`rddf` CLI** (`rddf status`, `rddf session ...`, `rddf discover-ship-changes`, etc.) for scripting and dashboards.
 
@@ -75,30 +75,31 @@ graph TB
 
 ### Sub-skills (called by other skills)
 
-> "Called by" is derived from live `skill_use("…")` invocations in `skills/*/SKILL.md`.
+> "Called by" is derived from live orchestration references in `skills/*/SKILL.md` — three mechanisms: `skill_use("…")` calls, prose load directives (`加载 <skill> 技能`), and sourced hooks (`source ../<skill>/scripts/*.sh`).
+> The recommender entry point is the **`rddf guide` CLI** (ADR-0062 收敛为单一 Python 实现；`skills/guide/` 于 ADR-0063 归档) — it is no longer a skill.
 
 | Skill | One-liner | Called by |
 |-------|-----------|-----------|
-| `guide` | Recommender; scans project state, suggests next step. | (entry point) |
-| `add-improve` | Create an improvement proposal via brainstorming. | guide, rdd-planner |
-| `propose` | Legacy proposal skeleton creator for `openspec/changes/<name>/`. | guide |
-| `deps` | Compute change dependency graph + execution order. | guide |
-| `feature` | View/manage feature fragments (summary, graph, status, order). | guide |
-| `rdd-workflow-writing-plans` | Generate TDD 5-step plan for a change. | rdd-builder |
+| `add-improve` | Create an improvement proposal via brainstorming. | rdd-planner |
+| `propose` | Legacy proposal skeleton creator for `openspec/changes/<name>/`. | (none) |
+| `deps` | Compute change dependency graph + execution order. | (none) |
+| `feature` | View/manage feature fragments (summary, graph, status, order). | (none) |
+| `rdd-workflow-writing-plans` | Generate TDD 5-step plan for a change. | (none — plan file is produced by rdd-builder P1) |
 | `roadmap` | Init / edit / validate / advance the project roadmap. | rdd-planner |
-| `rddf-session` | User-perspective workflow session mgmt. | guide |
+| `rddf-session` | User-perspective workflow session mgmt. | rdd-arch, rdd-builder, rdd-planner, rdd-quick, rdd-verifier (sourced hooks) |
 | `rdd-env-check` | Health snapshot of openspec CLI, git, branch (phase-internal script). | (phase-internal) |
 | `rdd-workflow-brainstorm` | Structured brainstorm for improvements. | add-improve |
 | `openspec-gate` | Pre-commit gate: warn if staged files aren't linked to a change. | (standalone) |
 | `contract-check` | Hub OpenAPI contract vs local implementation validator. | (standalone) |
 | `cross-repo-protocol` | Hub-Spoke federation MCP client (REST fallback). | (standalone) |
 | `report-issue` | Hub-Spoke RFC issue creator (phase-exit hook). | (standalone) |
-| `rdd-doctor` | Read-only diagnostic over workflow state files. | guide |
-| `rdd-env-bootstrap` | Environment bootstrap orchestrator for rdd-workflow projects. | rdd-planner |
+| `rdd-doctor` | Read-only diagnostic over workflow state files. | (none — invoked as a CLI diagnostic) |
+| `rdd-env-bootstrap` | Environment bootstrap orchestrator for rdd-workflow projects. | (none) |
 | `rdd-hub-bootstrap` | Hub repo bootstrap (dirs + Projects V2 board + CI templates). | (standalone) |
 | `rdd-session-bootstrap` | Cross-session continuity snapshot / paste-ready prompt builder. | (standalone) |
+| `session-lesson-mining` | Mine real session history for lessons → mechanical e2e criteria. | (standalone) |
 | `spoke-system-prompt-injection` | Federation protocol injector for AI assistant configs. | (standalone) |
-| `sync-hub` | Pull Hub contract into `openspec/specs/<name>/spec.md`. | rdd-planner |
+| `sync-hub` | Pull Hub contract into `openspec/specs/<name>/spec.md`. | (none) |
 | `watch-hub` | One-shot Hub issue status poll (cron / CI). | (standalone) |
 
 ### Core _lib/ modules

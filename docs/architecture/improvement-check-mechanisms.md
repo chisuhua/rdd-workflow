@@ -13,11 +13,11 @@
 | 维度 | **项目级检查** (ADR-0014) | **工作流级检查** (ADR-0027) |
 |------|------------------------|--------------------------|
 | **检查对象** | **第三方项目代码本身**——当前 change 执行过程中产生的新债务 | **rdd-workflow 自身** —— flow-bug、gate-failure、phase-crash |
-| **触发时机** | `guide-ship` Phase 2.5 review(execute 后,archive 前) | 任意 phase 异常退出(Script 平面 trap + Agent 平面 `rddf report-issue`) |
+| **触发时机** | `rdd-builder` P2.5 review(execute 后,archive 前) | 任意 phase 异常退出(Script 平面 trap + Agent 平面 `rddf report-issue`) |
 | **数据源** | `git diff` 中的 TODO/FIXME/HACK、测试失败、架构漂移 | 进程 exit code、stderr traceback、gate raise、agent 观察 |
 | **落地位置** | `.rddf/improvements/<name>.md`(类型=`debt`) + 追加 tasks.md | `.rddf/issues/<category>-<8char-hash>.md`(L1) → 三重 opt-in → GitHub issue (L2) |
-| **消费者** | 用户本人 + 下一次 `guide-arch` / `guide-plan` 时被 deps 重新分析 | `guide-design` Phase 2 选项 3 "从 GitHub issue 创建提案"(ADR-0029) + 上游 rdd-workflow 维护者 |
-| **回流路径** | tasks.md / 新 change(走 `propose → plan → ship`) | guide-design 选项 3 → proposal → ADR/proposal.md → archive 时 close issue (ADR-0027 §6) |
+| **消费者** | 用户本人 + 下一次 `rdd-arch` / `rdd-builder` 时被 deps 重新分析 | `add-improve --from-issue`(ADR-0029) + 上游 rdd-workflow 维护者 |
+| **回流路径** | tasks.md / 新 change(走 `propose → plan → ship`) | `add-improve --from-issue` → proposal → ADR/proposal.md → archive 时 close issue (ADR-0027 §6) |
 | **是否上报** | ❌ **不上报**,仅本地写入 | ✅ **可上报**(默认 opt-out,三重 opt-in) |
 
 **一句话总结**:
@@ -30,13 +30,13 @@
 
 ### 设计要点
 
-在 `guide-ship` Phase 2 (execute) 与 Phase 3 (archive) 之间插入 review 阶段,收集三类债务:
+在 `rdd-builder` P2 (execute) 与 P3 (archive) 之间插入 review 阶段,收集三类债务:
 
 | 债务类型 | 处理 | deps 重跑? |
 |---------|------|-----------|
 | 范围内债务(测试覆盖不全等) | 追加 `tasks.md` | ❌ 不需要 |
 | 旁效应债务(独立的代码遗留问题) | 创建新 change + 写入 `.rddf/improvements/*.md` (`type=debt`) | ⚠️ 按文件冲突决定 |
-| 架构漂移(偏离 ADR 目标) | 回注 `guide-arch` → 生成差距分析 | ❌ |
+| 架构漂移(偏离 ADR 目标) | 回注 `rdd-arch` → 生成差距分析 | ❌ |
 
 ### 实施状态:**已落地**
 
@@ -102,7 +102,7 @@ def _check_review_debt_recorded(ctx: dict) -> tuple[bool, Optional[str]]:
 | Bash trap wrapper | [`_lib/post_flow_wrap.sh`](../../_lib/post_flow_wrap.sh) | 115 | ✅ |
 | 三段式 classifier | [`_lib/post_flow_analysis.py`](../../_lib/post_flow_analysis.py) | 531 | ✅ |
 | Python orchestrator(单写者规则) | [`_lib/orchestrator_entry.sh`](../../_lib/orchestrator_entry.sh) | 106 | ✅ |
-| 4 phase entry 脚本 source orchestrator | `skills/guide-{arch,plan,design,ship}/scripts/*env_check.sh` | — | ✅ |
+| 4 phase entry 脚本 source orchestrator | `skills/rdd-arch/scripts/arch_env_check.sh`（v4 仅 arch 保留 env_check；`guide-{plan,design,ship}` 已随 ADR-0043/0044 合并或移除） | — | ✅ |
 
 #### 第 2 环 Buffer(本地 issue 文件)
 
@@ -125,9 +125,9 @@ def _check_review_debt_recorded(ctx: dict) -> tuple[bool, Optional[str]]:
 | 组件 | 状态 |
 |------|------|
 | 原 ADR-0027 §5 设计: `guide-design` Phase 2 选项 4 "📨 triage 上游 issue" | ❌ **未实现** |
-| 实际方案: **ADR-0029** `add-improve --from-issue` + `guide-design` 选项 3 "🐙 从 GitHub issue 创建提案" | ✅ **功能等价替代** |
+| 实际方案: **ADR-0029** `add-improve --from-issue`（v4 直调；原 `guide-design` 选项 3 入口已随 ADR-0044 移除） | ✅ **功能等价替代** |
 
-**说明**: 原始 ADR-0027 §5 的 "triage 选项 4" 设计被 ADR-0029 (Issue-Driven Proposal Creation) 取代。后者把 triage 流程拆为两步:用户先在 `guide-design` 选项 3 选择目标 issue → 触发 `add-improve --from-issue` 走完整 brainstorm → 生成 proposal。功能等价但路径不同。**建议**: 在 ADR-0027 §5 文末加 supersession 注:"§5 Triage 设计由 ADR-0029 替代。"
+**说明**: 原始 ADR-0027 §5 的 "triage 选项 4" 设计被 ADR-0029 (Issue-Driven Proposal Creation) 取代。后者把 triage 流程拆为两步:用户直接调用 `add-improve --from-issue` 指定目标 issue（v4 无菜单入口 —— 原 `guide-design` 选项 3 已随 ADR-0044 移除）→ 走完整 brainstorm → 生成 proposal。功能等价但路径不同。**建议**: 在 ADR-0027 §5 文末加 supersession 注:"§5 Triage 设计由 ADR-0029 替代。"
 
 #### 第 5 环 Close(archive 时自动关闭)
 
@@ -338,7 +338,7 @@ if not parsed.no_submit:
 | rdd-doctor 不触发 reporter | ✅ doctor_cmd.py 无 issue_reporter 引用,test_doctor_no_issue_write.py 存在 |
 | orchestrator race condition | ✅ 无竞态(trap 默认 defer + `\|\| true` + `"$@"` fallback) |
 | `RDDF_USE_ORCHESTRATOR=no` 逃生舱 | ✅ 有测试(`test_orchestrator_default_on.bats` T4 + `test_env_var_toggle.bats`) |
-| `phase.review_validation` state handoff | ✅ 抽样路径未发现 gap(debt 通过文件流转 `.rddf/improvements/` + `improvement-suggestions.md` 给 guide-design,与 ADR-0025 一致) |
+| `phase.review_validation` state handoff | ✅ 抽样路径未发现 gap(debt 通过文件流转 `.rddf/improvements/` + `improvement-suggestions.md` 给 `rdd-planner`,与 ADR-0025 一致) |
 
 ### 5.5 修订后的优先级
 
