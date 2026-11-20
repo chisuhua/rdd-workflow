@@ -25,11 +25,11 @@ setup() {
 @test "install_lib: install.sh copies _lib/*.sh (bash helpers)" {
   # Regression: prior to this fix, install.sh and INSTALL.md only copied
   # *.py and *.json from _lib/. This silently broke runtime bash helpers
-  # like archive.sh, worktree.sh, state.sh, scan-state.sh,
-  # discover-arch-artifacts.sh, status_helpers.sh — all of which are
+  # like archive.sh, worktree.sh, state.sh,
+  # discover-arch-artifacts.sh — all of which are
   # sourced by skills/*.md via `source ... _lib/<name>.sh`. After a
   # fresh `skill_use("INSTALL")`, downstream projects had no _lib/*.sh
-  # files, so every `source` call in status.md / guide-ship.md failed
+  # files, so every `source` call in the affected skill docs failed
   # with "No such file or directory".
   #
   # This test asserts the install script's find filter now includes *.sh.
@@ -45,7 +45,7 @@ setup() {
 @test "install_lib: source repo has _lib/*.sh files to distribute (retains shared)" {
   # Phase 2: 46 single-skill helpers moved to per-skill scripts/.
   # _lib/ retains ~45 shared files (.sh + .py), including state.sh, worktree.sh,
-  # archive.sh, discover-arch-artifacts.sh, status_helpers.sh.
+  # archive.sh, discover-arch-artifacts.sh.
   local n
   n=$(find skills/_lib -maxdepth 1 -name '*.sh' | wc -l)
   [ "$n" -ge 4 ] || {

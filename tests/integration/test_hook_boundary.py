@@ -6,7 +6,7 @@ broke on paths containing single quotes (e.g. `/home/o'reilly/project`)
 and was an injection vector for change names with shell metacharacters.
 
 These tests run the actual hook command from each modified skill
-(propose, guide-ship, execute, archive, deps, status) with pathological
+(propose, archive) with pathological
 inputs to verify the os.environ pattern survives them.
 
 Strategy: extract the python3 -c block from each .md file, substitute

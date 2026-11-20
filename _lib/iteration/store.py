@@ -220,7 +220,7 @@ def _merge_by_name(existing: dict, incoming: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 def create_empty(current_phase: str = _DEFAULT_PHASE) -> dict:
-    """Return a fresh empty iteration state. Useful for `skill_use("status", "iteration", "init")`."""
+    """Return a fresh empty iteration state (the base document for iteration.json)."""
     return {
         "version": 6,
         "updated_at": _now_iso(),

@@ -204,7 +204,7 @@ rm -f ~/.agents/skills/guide
 
 ## 2026-11-20 后续：`skills/execute/` 归档
 
-`execute` plan 执行器子技能已归档到 `docs/legacy/skills/execute/`。它自 v2 时代起就**没有编排入口**（`rdd-builder` 正文无 P2 章节，全仓唯一的活编排点在 `skills/status/SKILL.md`），且近 40 天真实会话 **0 次调用**。v4 四阶段（ADR-0043）已把「执行 plan」的主体定为**执行该 change 的 agent 本身**；`rdd-builder` 的 P2（`phase2_execute.sh`）只负责选定工作区并写入 `builder_handoff`。
+`execute` plan 执行器子技能已归档到 `docs/legacy/skills/execute/`。它自 v2 时代起就**没有编排入口**（`rdd-builder` 正文无 P2 章节，全仓唯一的活编排点在 `skills/status/SKILL.md` —— 该编排点随后也于同日退役，见下节），且近 40 天真实会话 **0 次调用**。v4 四阶段（ADR-0043）已把「执行 plan」的主体定为**执行该 change 的 agent 本身**；`rdd-builder` 的 P2（`phase2_execute.sh`）只负责选定工作区并写入 `builder_handoff`。
 
 全局安装用户需要清理残留 symlink（`install.sh` 只对现存 skill 做 `ln -sf`，不会自动清理已移除项）：
 
@@ -213,3 +213,15 @@ rm -f ~/.agents/skills/execute
 ```
 
 `skills/execute/scripts/` 下的辅助脚本（`select_worktree.sh` / `tasks_writeback.sh` / `execute_step7.*` / `run_regression_gate.sh`）随之归档；工作区准备与进度快照改由 `skills/rdd-builder/scripts/phase2_execute.sh` 承担。
+
+## 2026-11-20 后续：`skills/status/` 归档
+
+`status` 菜单式状态/归档子技能已归档到 `docs/legacy/skills/status/`（同型先例：`guide` 见 ADR-0063、`execute` 见上节）。它的 5 个 Mode 在 v4 已被 CLI 完全覆盖 —— `rddf status`（Mode A/B/D/E）、`rddf archive`（Mode C）、`rddf roadmap`、`rddf iteration`；且近 40 天真实会话 **0 次调用**。
+
+全局安装用户需要清理残留 symlink：
+
+```bash
+rm -f ~/.agents/skills/status
+```
+
+`status_helpers.sh`（`detect_sync_issues` / `repair_sync_state`）随之归档 —— 其唯一消费者就是本 skill。

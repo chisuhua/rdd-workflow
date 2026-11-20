@@ -237,12 +237,15 @@ setup() {
 # `skill_use("guide-ship")` / `skill_use("guide-plan")` / `skill_use("execute")`
 # invocations that would
 # fail for users reading the docs. This test enforces the invariant.
+# 2026-11-20 (fix-status-retirement-residue): `status` joined the banned
+# list — that skill was retired on the same day (archived to
+# docs/legacy/skills/status/).
 # -----------------------------------------------------------------------------
-@test "doc_drift_v4: README.md + USAGE.md have no live guide-*/execute skill invocations (AC-11)" {
+@test "doc_drift_v4: README.md + USAGE.md have no live guide-*/execute/status skill invocations (AC-11)" {
   # Look for skill_use("guide-*") invocations inside code blocks (live commands).
   # Use perl with multi-line mode to handle markdown ``` blocks.
   for file in README.md USAGE.md; do
-    hits=$(perl -0777 -ne 'while (/```.*?\n(.*?)\n```/gs) { my $block = $1; while ($block =~ /\bskill_use\(["\x27](guide-arch|guide-design|guide-plan|guide-ship|guide-spec|execute)["\x27]\)/g) { print "AC-11 violation: live skill_use(\"$1\") in code block of $ARGV\n"; } }' "$file" 2>/dev/null)
+    hits=$(perl -0777 -ne 'while (/```.*?\n(.*?)\n```/gs) { my $block = $1; while ($block =~ /\bskill_use\(["\x27](guide-arch|guide-design|guide-plan|guide-ship|guide-spec|execute|status)["\x27]\)/g) { print "AC-11 violation: live skill_use(\"$1\") in code block of $ARGV\n"; } }' "$file" 2>/dev/null)
     if [ -n "$hits" ]; then
       echo "$hits"
       return 1

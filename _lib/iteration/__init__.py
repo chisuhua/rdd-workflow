@@ -18,7 +18,8 @@ Design choices:
   human-paced, not loop-paced, and (b) the source-of-truth files
   (tasks.md, deps-output.md, openspec status) are unaffected.
 - No checksum: lost writes are recoverable by re-running the hook
-  (e.g. ``skill_use("status", "iteration", "refresh")``).
+  (e.g. re-running the hook that writes iteration.json, such as the
+  propose change hook).
 - Schema-validated on load (catches corruption early) but not on
   every write (would slow propose hook). Schema lives at
   ``schemas/iteration_schema.json``.

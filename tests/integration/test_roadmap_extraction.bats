@@ -1,12 +1,11 @@
 #!/usr/bin/env bats
 # tests/integration/test_roadmap_extraction.bats
 # Roadmap extraction regression: the Python heredocs in roadmap.md were
-# moved to _lib/roadmap_state.py (mirrors P1-14 archive.sh +
-# status_helpers.sh patterns).
+# moved to _lib/roadmap_state.py (mirrors P1-14 archive.sh patterns).
 #
 # Extraction targets (all Python heredocs → roadmap_state.py):
 #   init Step 4 → init_state()
-#   status Step 1+2 → render_status_view()
+#   status Step 1+2 → render_status_view()   (历史: status skill 已于 2026-11-20 退役)
 #   edit 添加新阶段 → add_phase()
 #   validate → validate_change()
 #   advance → advance_phase() + update_roadmap_marker()

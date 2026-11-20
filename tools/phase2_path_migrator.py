@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Phase 2 path migrator — single-skill helper move.
 
-Migrates 46 single-skill helpers from skills/_lib/ to skills/<skill>/scripts/.
+Migrates the per-skill helper set from skills/_lib/ to skills/<skill>/scripts/.
 Handles 4 refactor patterns with per-skill type awareness, dry-run support, and
 prose-scope control (per ADR-0021 Decision 1+3).
+
+Historical one-shot migration tool (ADR-0021): the tables below are a snapshot
+of the migration-time layout, not a live inventory of the current tree.
 
 Patterns handled:
   source_sh  — bash `source` lines (incl. readlink, _SCRIPT_DIR, $SCRIPT_DIR, $(dirname...))
@@ -15,9 +18,9 @@ Patterns handled:
   manual     — logged but not changed (readlink, feature.md fallback)
 
 Usage:
-    tools/phase2_path_migrator.py --dry-run [--skill guide-ship]
-    tools/phase2_path_migrator.py --apply [--skill guide-ship]
-    tools/phase2_path_migrator.py --audit [--skill guide-ship]
+    tools/phase2_path_migrator.py --dry-run [--skill propose]
+    tools/phase2_path_migrator.py --apply [--skill propose]
+    tools/phase2_path_migrator.py --audit [--skill propose]
     tools/phase2_path_migrator.py --list-skills
 
 Exit codes:
@@ -40,22 +43,6 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Skills and the files they own (single-skill helpers from proposal table)
 SINGLE_SKILL_FILES: dict[str, list[str]] = {
-    "guide": ["scan-state.sh"],
-    "guide-arch": [
-        "arch_env_check.sh", "arch_gap_analysis.sh", "arch_done_gate.sh",
-        "arch_quality_report.sh", "write_arch_handoff.sh",
-        "write_arch_handoff.py", "write_arch_handoff_env.py",
-    ],
-    "guide-plan": [
-        "plan_intake.sh", "plan_queue_overview.sh", "plan_feature_progress.sh",
-        "plan_deps_candidates.sh", "plan_deps_candidates.py",
-        "plan_deps_candidates_env.py",
-        "plan_done_gate.sh", "plan_done_gate.py", "plan_done_gate_env.py",
-    ],
-    "guide-ship": [
-        "ship_case_handler.sh", "ship_plan.sh", "ship_monitor.sh",
-        "ship_review.sh", "ship_archive.sh", "post_archive_fill.sh",
-    ],
     "propose": [
         "propose_change.sh", "propose_change.py", "validate_baseline.py",
     ],
@@ -63,7 +50,6 @@ SINGLE_SKILL_FILES: dict[str, list[str]] = {
         "feature_summary.sh", "feature_graph.sh", "feature_status.sh",
         "feature_order.sh", "feature_cli.py", "feature_view.py",
     ],
-    "status": ["status_render_mode_a.sh"],
     "deps": ["deps_render_report.sh", "deps_iteration_sync.sh", "deps_output.py"],
     # N3 decision: rddf_session + hooks.sh both move to rddf-session (per ADR-0021 Decision 2)
     "rddf-session": [
@@ -74,8 +60,7 @@ SINGLE_SKILL_FILES: dict[str, list[str]] = {
 # Files that STAY in _lib/ (cross-skill shared)
 SHARED_IN_LIB = {
     "state.sh", "state_vector.py", "state_vector_schema.json",
-    "worktree.sh", "archive.sh", "discover-arch-artifacts.sh",
-    "status_helpers.sh", "iteration.py",
+    "worktree.sh", "archive.sh", "discover-arch-artifacts.sh", "iteration.py",
     "gate.py", "tribunal.py", "sanitizer.py",
     "memory.py", "session_manager.py", "agents.py",
     "detectors.py", "actions.py", "event_log.py", "event_types.py",
