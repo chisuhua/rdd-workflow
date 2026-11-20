@@ -2,7 +2,7 @@
 
 Why this lives outside the `iteration` package: five call sites needed the
 same (done, total) pair, and three of them (`skills/execute/scripts/
-execute_step7.py`, `_lib/discover_ship_changes.py`, `skills/rdd-doctor/...
+execute_step7.py` （该技能已于 2026-11-20 归档到 `docs/legacy/`，见 change `retire-execute-skill`）, `_lib/discover_ship_changes.py`, `skills/rdd-doctor/...
 /tasks_checkbox_check.py`) sit outside `_lib.iteration`. Importing
 `_lib.iteration.archive_sidecar` from there triggers the package's own
 re-export shim and deadlocks against `_lib/iteration/store.py` (circular

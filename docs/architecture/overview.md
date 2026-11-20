@@ -5,7 +5,7 @@
 rdd-workflow is an **OpenSpec-compatible AI development workflow package**. It manages changes via the OpenSpec change lifecycle (`propose → plan → execute → status → archive` — these are OpenSpec CLI verbs, *not* rdd-workflow stages), wrapped in a **four-stage v4 architecture** (`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`, per ADR-0043), with a `rdd-quick` small-change bypass path (per ADR-0047). It runs on any OpenSpec-aware AI coding assistant (opencode, Claude Code, Cursor, Aider, etc.) via the Skill discovery mechanism, with no runtime dependency on a specific vendor.
 
 The package ships:
-- **28 skills** in `skills/` — 5 stage skills (`rdd-arch`, `rdd-planner`, `rdd-builder`, `rdd-verifier` + the `rdd-quick` bypass, v4.0+ per ADR-0043) and 23 sub-skills, each a `SKILL.md` with structured frontmatter.
+- **27 skills** in `skills/` — 5 stage skills (`rdd-arch`, `rdd-planner`, `rdd-builder`, `rdd-verifier` + the `rdd-quick` bypass, v4.0+ per ADR-0043) and 22 sub-skills, each a `SKILL.md` with structured frontmatter.
 - A **shared `_lib/`** of 60+ Python modules and bash helpers implementing state, gate, tribunal, session, loop engine, etc.
 - A **`rddf` CLI** (`rddf status`, `rddf session ...`, `rddf discover-ship-changes`, etc.) for scripting and dashboards.
 
@@ -84,8 +84,7 @@ graph TB
 | `propose` | Legacy proposal skeleton creator for `openspec/changes/<name>/`. | guide |
 | `deps` | Compute change dependency graph + execution order. | guide |
 | `feature` | View/manage feature fragments (summary, graph, status, order). | guide |
-| `execute` | Run the `.rddf/plans/<name>.md` plan in a worktree. | status, rdd-workflow-writing-plans |
-| `rdd-workflow-writing-plans` | Generate TDD 5-step plan for a change. | execute |
+| `rdd-workflow-writing-plans` | Generate TDD 5-step plan for a change. | rdd-builder |
 | `status` | View/change status; archive completed changes. | guide |
 | `roadmap` | Init / edit / validate / advance the project roadmap. | rdd-planner |
 | `rddf-session` | User-perspective workflow session mgmt. | guide |

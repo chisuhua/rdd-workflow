@@ -327,7 +327,6 @@ skills/INSTALL.md                     — 安装程序文档
 skills/propose.md                     — 变更提议
 skills/roadmap.md                     — 路线图管理
 skills/deps.md                        — 依赖分析
-skills/execute.md                     — 变更执行
 skills/status.md                      — 状态检查
 skills/rdd-workflow-writing-plans.md  — 计划生成（自包含，TDD 5 步结构）
 ```

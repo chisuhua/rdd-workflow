@@ -201,3 +201,15 @@ rm -f ~/.agents/skills/guide
 ```
 
 `rddf-session guide-entry` / `guide-close` 子命令随之移除；`RDDF_GUIDE_SESSION_ENABLED` 环境变量不再生效。
+
+## 2026-11-20 后续：`skills/execute/` 归档
+
+`execute` plan 执行器子技能已归档到 `docs/legacy/skills/execute/`。它自 v2 时代起就**没有编排入口**（`rdd-builder` 正文无 P2 章节，全仓唯一的活编排点在 `skills/status/SKILL.md`），且近 40 天真实会话 **0 次调用**。v4 四阶段（ADR-0043）已把「执行 plan」的主体定为**执行该 change 的 agent 本身**；`rdd-builder` 的 P2（`phase2_execute.sh`）只负责选定工作区并写入 `builder_handoff`。
+
+全局安装用户需要清理残留 symlink（`install.sh` 只对现存 skill 做 `ln -sf`，不会自动清理已移除项）：
+
+```bash
+rm -f ~/.agents/skills/execute
+```
+
+`skills/execute/scripts/` 下的辅助脚本（`select_worktree.sh` / `tasks_writeback.sh` / `execute_step7.*` / `run_regression_gate.sh`）随之归档；工作区准备与进度快照改由 `skills/rdd-builder/scripts/phase2_execute.sh` 承担。

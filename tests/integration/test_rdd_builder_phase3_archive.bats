@@ -29,7 +29,8 @@ setup() {
     git add -A
     git commit -q -m fixture
     # Lightweight mode executes on the main repo's openspec/<change> BRANCH
-    # (skills/execute/SKILL.md § 工作模式); the freshness anchor is that
+    # (skills/rdd-builder/scripts/phase2_execute.sh § 执行模式契约); the
+    # freshness anchor is that
     # branch's tip (openspec/specs/verifier-lifecycle/spec.md).
     #
     # The branch must carry a commit OF ITS OWN: P3's commit-ownership check

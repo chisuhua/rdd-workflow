@@ -29,9 +29,6 @@
       "root": "skills/deps"
     },
     {
-      "root": "skills/execute"
-    },
-    {
       "root": "skills/status"
     },
     {

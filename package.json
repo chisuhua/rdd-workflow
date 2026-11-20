@@ -34,7 +34,6 @@
     "contract-check",
     "cross-repo-protocol",
     "deps",
-    "execute",
     "feature",
     "openspec-gate",
     "propose",

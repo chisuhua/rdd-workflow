@@ -328,7 +328,7 @@ P0 (5-option approval) → P1 (plan) → P1.5 (deps + exec_mode) → P2 (execute
 
 ### Sub-skills
 
-`rdd-workflow-writing-plans` (P1), `execute` (P2), `status` (archive, P3), `feature` (per-feature view), `rddf-session` (binding).
+`rdd-workflow-writing-plans` (P1), `status` (archive, P3), `feature` (per-feature view), `rddf-session` (binding).
 
 ## Stage 4 — `verifier` (per ADR-0034 + ADR-0045)
 

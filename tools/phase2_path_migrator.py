@@ -59,12 +59,6 @@ SINGLE_SKILL_FILES: dict[str, list[str]] = {
     "propose": [
         "propose_change.sh", "propose_change.py", "validate_baseline.py",
     ],
-    "execute": [
-        "select_worktree.sh", "update_roadmap_progress.sh",
-        "update_roadmap_progress.py", "update_roadmap_progress_env.py",
-        "execute_step7.sh", "execute_step7.py", "execute_step7_env.py",
-        "tasks_writeback.sh",
-    ],
     "feature": [
         "feature_summary.sh", "feature_graph.sh", "feature_status.sh",
         "feature_order.sh", "feature_cli.py", "feature_view.py",

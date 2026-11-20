@@ -21,10 +21,6 @@ setup() {
 }
 
 
-@test "worktree-context: execute SKILL.md has Worktree Context Rule" {
-  run grep -c "Worktree Context Rule" "$BATS_TEST_DIRNAME/../../skills/execute/SKILL.md"
-  [ "$output" -ge 1 ]
-}
 
 @test "worktree-context: 1-change flow keeps cd count < threshold" {
   # Simulated agent command stream for one change across phases.

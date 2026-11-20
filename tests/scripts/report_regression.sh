@@ -31,8 +31,8 @@
 #                             instead of mutating the repo's real baseline —
 #                             see tests/integration/test_known_failures_baseline.bats.
 #                             The same name is honoured by
-#                             refresh_known_failures.sh and
-#                             skills/execute/scripts/run_regression_gate.sh.
+#                             refresh_known_failures.sh, so both scripts
+#                             can drive the same temp baseline.
 #   RDDF_UNEVALUATED_FILE     Override the unevaluated baseline path (default
 #                             `<repo>/tests/KNOWN_UNEVALUATED.txt`).
 #   BATS_TIMEOUT / BATS_TIMEOUT_RETRY / BATS_RETRY_BUDGET

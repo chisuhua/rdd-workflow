@@ -130,7 +130,8 @@ EOF
 @test "repro: temp-baseline content is what the report reads, repo file untouched" {
   # Deterministic reproduction of the 2026-11-17 data-loss incident.
   #
-  # Incident: test_known_failures_baseline.bats and test_execute_regression_gate.bats
+  # Incident: test_known_failures_baseline.bats and
+  # test_execute_regression_gate.bats (该测试已于 2026-11-20 随 execute 技能归档而删除)
   # wrote the REAL baseline directly, relying on teardown() to restore it.
   # collect_bats_failures.sh kills a file at 30s; both files run a full
   # integration collection internally, so they blew the timeout, teardown never

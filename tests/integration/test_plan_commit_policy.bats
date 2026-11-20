@@ -8,7 +8,6 @@ load ../test_helper
 
 setup() {
   wp="$REPO_ROOT/skills/rdd-workflow-writing-plans/SKILL.md"
-  ex="$REPO_ROOT/skills/execute/SKILL.md"
 }
 
 @test "plan_commit_policy: writing-plans template step 5 defers commit" {
@@ -26,10 +25,3 @@ setup() {
   [[ "$block" != *"git add"* ]]
 }
 
-@test "plan_commit_policy: execute skill step 5 defers commit" {
-  # The execute skill instructions must contain the defer wording.
-  grep -qE 'Step 5.*Defer commit|execute 阶段不.*commit|archive 阶段.*提交' "$ex"
-  # The five lines following "Step 5" must not contain a commit command.
-  run grep -A 5 "Step 5" "$ex"
-  [[ "$output" != *"git commit"* ]]
-}

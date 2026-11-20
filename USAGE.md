@@ -62,14 +62,14 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 | 文件 | 位置 | 用途 | 写入方 |
 |------|------|------|--------|
 | `improvement-suggestions.md` | 项目根目录 | 扫描出的建议列表（JSON 数组格式），随 git 版本控制 | `propose` / `roadmap` / `status` / `rdd-arch` / `rdd-planner` |
-| `openspec/changes/<name>/tasks.md` | change 目录 | Builder 阶段任务清单（权威进度来源） | `execute` / `rdd-builder` |
+| `openspec/changes/<name>/tasks.md` | change 目录 | Builder 阶段任务清单（权威进度来源） | `rdd-builder` |
 | `docs/adr/ADR-*.md` | ADR 目录 | 架构决策记录（propose 扫描 + 引用源） | 用户手工编写（待 propose 扫描拾取） |
 | `.rddf/plans/<name>.md` | worktree 内或主仓库（轻量模式） | TDD 5 步结构计划文件（builder P1 产物，git tracked） | `rdd-workflow-writing-plans` / `rdd-builder` |
 | `.rddf/state/.arch-handoff.json` | `.rddf/state/`（gitignored） | arch → planner 阶段交接状态（arch_complete_at / arch_artifacts / adr_dir / roadmap_path / discovered）+ ADR-0016 发现契约 v1 | `rdd-arch`（arch-done 写入）/ `rdd-planner`（intake 读取+fallback defaults） |
 | `.rddf/state/.planner-handoff.json` | `.rddf/state/`（gitignored） | planner → builder 阶段交接状态（per ADR-0043） | `rdd-planner`（design-done 写入）/ `rdd-builder`（入口读取） |
 | `.rddf/state/.plan-handoff.json` | `.rddf/state/`（gitignored） | builder → verifier 阶段交接状态（plan_complete_at / committed_changes / archive_started_at） | `rdd-builder`（plan-done 写入）/ `rdd-verifier`（scan_queue 读取） |
 | `.rddf/state/sessions.json` | `.rddf/state/`（gitignored） | **rddf-session 生命周期**（ADR-0017）— 跨 OpenCode session 工作流恢复（stage_arch / stage_planner / stage_builder / stage_verifier + heartbeat + 4 选项冲突处理） | `rdd-arch` / `rdd-planner` / `rdd-builder` / `rdd-verifier` 入口 + `rddf-session` 技能 5 子命令 |
-| `.rddf/state/iteration.json` | `.rddf/state/`（gitignored） | **当前 sprint 视图**（v2.0.1）— change 状态机：proposed → planned → in_worktree → completed → archived；multi-hook 写入 | `propose` / `rdd-builder` / `execute` / `deps` / `archive` hooks（集中由 `skills/_lib/iteration.py` 管理） |
+| `.rddf/state/iteration.json` | `.rddf/state/`（gitignored） | **当前 sprint 视图**（v2.0.1）— change 状态机：proposed → planned → in_worktree → completed → archived；multi-hook 写入 | `propose` / `rdd-builder` / `deps` / `archive` hooks（集中由 `skills/_lib/iteration.py` 管理） |
 | `.rddf/state/deps-analysis.json` | `.rddf/state/`（gitignored） | **结构化** deps 输出（v2.0.1）— 依赖图 + 执行顺序 JSON（schema 见 `skills/_lib/schemas/deps_analysis_schema.json`） | `deps` Step 5b 优先写；Step 6 markdown-fallback 时也写 |
 | `.rddf/state/.deps-candidates.json` | `.rddf/state/`（gitignored） | deps 阶段候选 change 列表（机器可读） | `rdd-planner`（deps 阶段）/ `review-phase` 自动增量 |
 | `.rddf/state/.deps-output.md` | `.rddf/state/`（gitignored） | deps 阶段依赖图 + 推荐执行顺序（人类可读报告；旧 `.rddf/state/deps-output.md` 仅作兼容引用） | `deps` Step 5 / `rdd-planner`（deps 阶段） |
@@ -129,7 +129,6 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 | `propose` | 扫描 ADR/代码生成建议列表（`improvement-suggestions.md`） | `rdd-builder` 内部 / 单独使用 |
 | `roadmap` | 路线图管理（phase/category 结构 + AUTO-SPRINT sentinel，v2.0.1） | `rdd-arch` 内部 / 单独使用 |
 | `deps` | 依赖分析（含 subagent Step 3，结构化输出 `deps-analysis.json`，v2.0.1） | `rdd-builder` 内部 / 单独使用 |
-| `execute` | 在 worktree（或轻量模式当前分支）内执行任务，写 `tasks.md` 进度 | `rdd-builder` 内部 / worktree 内单独使用 |
 | `status` | 状态查看（tasks.md 进度 + iteration.json） | `rdd-builder` 内部 / 单独使用 |
 | `rddf-session` | **跨 OpenCode session 恢复**（ADR-0017）— 5 子命令：list / resume / abandon / heartbeat / status | `skill_use("rddf-session", "<sub>")` |
 | `rdd-workflow-writing-plans` | 实施计划生成器（TDD 5 步结构，自包含，零外部依赖） | `rdd-builder` Phase 1 内部 |
@@ -423,9 +422,9 @@ i. 其他输入
 
 1. 在新终端中执行：
    cd "$PROJECT_ROOT/.rddf/wt/fix-ns-pollution"
-   skill_use("execute")
+   按 .rddf/plans/<change>.md 的 TDD 5 步实施（agent 承担）
 
-2. execute 结果会自动写入 tasks.md
+2. 实施结果会写入 tasks.md
 
 3. 完成后，在此 session 运行 guide-ship 查看最新进度
 
@@ -440,9 +439,9 @@ i. 其他输入
 1. 在新终端中执行：
    cd "$PROJECT_ROOT"
    git checkout openspec/fix-ns-pollution
-   skill_use("execute")
+   按 .rddf/plans/<change>.md 的 TDD 5 步实施（agent 承担）
 
-2. execute 结果会自动写入 tasks.md
+2. 实施结果会写入 tasks.md
 
 3. 完成后，在此 session 运行 guide-ship 查看最新进度
 
@@ -736,7 +735,7 @@ skill_use("rdd-builder")
 
 ```
 cd "$PROJECT_ROOT/.rddf/wt/fix-ns-pollution"
-skill_use("execute")
+按 .rddf/plans/<change>.md 的 TDD 5 步实施（agent 承担）
 → 阻塞执行所有任务
 → 更新 tasks.md
 → 返回
@@ -746,7 +745,7 @@ skill_use("execute")
 
 ```
 cd "$PROJECT_ROOT/.rddf/wt/add-stream-pipes"
-skill_use("execute")
+按 .rddf/plans/<change>.md 的 TDD 5 步实施（agent 承担）
 → 阻塞执行所有任务
 → 更新 tasks.md
 → 返回
@@ -756,7 +755,7 @@ skill_use("execute")
 > ```
 > cd "$PROJECT_ROOT"
 > git checkout openspec/<name>
-> skill_use("execute")
+> 按 .rddf/plans/<change>.md 的 TDD 5 步实施（agent 承担）
 > ```
 
 **回到 Terminal A**：
@@ -918,7 +917,7 @@ ADR 状态字段遵循 `docs/adr/README.md` 的五状态生命周期：
 | tasks.md 不同步 | tasks.md 进度与 state 不一致 | Guide 入口时自动从 tasks.md 同步 |
 | worktree 分支冲突 | `git worktree add` 失败 | 提供 `git worktree list` 查看现有 |
 | 未 plan 就 status | `.rddf/plans/<name>.md` 不存在 | 提示先执行 plan |
-| execute 不在工作区内 | `git branch --show-current` 非 `openspec/<name>`（轻量模式）/ 不在 `.rddf/wt/<name>`（worktree 模式） | 提示先 `cd` 到正确工作区（worktree 模式：`cd "$PROJECT_ROOT/.rddf/wt/<name>"`；轻量模式：`cd "$PROJECT_ROOT" && git checkout openspec/<name>`）或使用分离执行 |
+| 实施阶段不在工作区内 | `git branch --show-current` 非 `openspec/<name>`（轻量模式）/ 不在 `.rddf/wt/<name>`（worktree 模式） | 提示先 `cd` 到正确工作区（worktree 模式：`cd "$PROJECT_ROOT/.rddf/wt/<name>"`；轻量模式：`cd "$PROJECT_ROOT" && git checkout openspec/<name>`）或使用分离执行 |
 | rdd-workflow-writing-plans 生成失败 | `.rddf/plans/<name>.md` 未生成 | 检查 worktree 内 skills 是否完整安装；手动触发 `skill_use("rdd-workflow-writing-plans")` |
 | bats-core 缺失 | `bats --version` 失败 | 提示安装 bats-core 1.10+ |
 | ADR 引用格式错误 | `grep -E "ADR-[0-9]+ §[0-9]+" proposal.md` 无匹配 | 提示按 ADR-NNN §N.M 格式补充 |
@@ -930,11 +929,11 @@ ADR 状态字段遵循 `docs/adr/README.md` 的五状态生命周期：
 1. **COMMIT GATE**：工作区创建前必须 commit（worktree 模式：`git worktree add` 看不到 artifacts；轻量模式：`git checkout openspec/<name>` 需要 artifacts 在 HEAD 上）
 2. **Branch 检查**：`git branch --show-current` 必须是 default branch（master/main/develop，由 `find_default_branch()` 动态检测）才能创建工作区
 3. **不同步处理**：用 `awk index()` 直接修改 `tasks.md`，不重新 run plan（会覆盖 `.rddf/plans/`）
-4. **Execute 主要写 `tasks.md`**：execute 不做 `git commit` / `git push`；它会把每个 Task 的进度写回 `tasks.md`，并经由 `skills/_lib/iteration.py` 触发 `iteration.json` 的状态变更（derived view hook）。`.rddf/state/deps-analysis.json` **不是** execute 产物——它只在 `guide-plan` deps 阶段 / Review 自动增量时被写入。
+4. **实施阶段主要写 `tasks.md`**：实施阶段不做 `git commit` / `git push`；它会把每个 Task 的进度写回 `tasks.md`，并经由 `skills/_lib/iteration.py` 触发 `iteration.json` 的状态变更（derived view hook）。`.rddf/state/deps-analysis.json` **不是**实施阶段的产物——它只在 `guide-plan` deps 阶段 / Review 自动增量时被写入。
 5. **任何时候可返回 Plan**：Execute 菜单有「返回 Plan 阶段」选项，可添加更多工作区（worktree 或轻量分支）
 6. **ADR 是契约**：`docs/adr/ADR-*.md` 一旦 `已采纳`，必须由 `propose` 阶段的扫描器拾取并转化为 change
 7. **Skill metadata 只读**：所有 skill 文件的 `name`/`version`/`compatibility`/`metadata` 前置字段不可修改
-8. **execute 阶段不 commit/push**：plan 中明确 `Executor stops after the summary report`，commit 留到 archive 阶段
+8. **实施阶段不 commit/push**：plan 中明确 `Executor stops after the summary report`，commit 留到 archive 阶段
 
 ## On-main Mode Caveats
 

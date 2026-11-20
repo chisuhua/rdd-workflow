@@ -4,8 +4,8 @@ description: |
   Stage 3 of v4 architecture (rdd-arch → rdd-planner → rdd-builder → rdd-verifier).
   6-phase state machine: P0 (5-option approval gate, auto-decision per
   ADR-0049) → P1 (plan gen) → P1.5 (deps + execution_mode) →
-  P2 (worktree + 编排 execute 子技能) → P2.5 (review) →
-  P3 (archive + verifier retry loop).
+  P2 (worktree/branch prep — the agent implements the plan itself) →
+  P2.5 (review) → P3 (archive + verifier retry loop).
 
   Invoke when BOTH canonical preconditions hold:
     1. .rddf/improvements/<change>.md exists (5-segment draft)

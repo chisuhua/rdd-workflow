@@ -57,7 +57,7 @@ skill_use("rdd-workflow-writing-plans")   # 无参数,依赖 git context 获取 
 ```markdown
 # <Change Name> Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use skill_use("execute") to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Implement this plan task-by-task, following the TDD 5-step structure below. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** [一句话描述这个变更构建什么]
 
@@ -173,7 +173,7 @@ Expected: PASS
 
 ## 执行交接(可选)
 
-写完 plan 后,如果直接由当前 AI 助手执行,可以继续。否则交接给 skill_use("execute")。
+写完 plan 后,如果直接由当前 AI 助手执行,可以继续。否则交接给执行该 change 的 agent。
 
 **执行选项**:
 
@@ -181,15 +181,15 @@ Expected: PASS
    - 直接按 plan 步骤执行 task-by-task
    - 每个 task 完成后用 sed 更新 openspec/changes/<name>/tasks.md 的 `- [x]`
 
-2. **skill_use("execute") 技能**(推荐用于复杂 plan):
+2. **执行该 change 的 agent**(推荐用于复杂 plan):
    - 加载本 plan 文件
-   - 按 Task 顺序执行
-   - 每个 Task 完成后 commit
+   - 按 Task 顺序逐个实施（每个 Task 走完整 TDD 5 步）
+   - commit 留待 archive 阶段统一提交
    - 全部完成后通过 status.md 检查进度
 
-## 与 execute.md 的契约
+## 与消费者的契约
 
-生成的 `.rddf/plans/<name>.md` 必须满足:
+消费者 = **执行该 change 的 agent**。生成的 `.rddf/plans/<name>.md` 必须满足:
 
 - **路径**: `.rddf/plans/<CHANGE_NAME>.md`(强制)
 - **Task 数量**: 至少 1 个 `### Task N:`
@@ -197,7 +197,7 @@ Expected: PASS
 - **Header**: Goal / Architecture / Tech Stack 必备
 - **Files 行**: 每个 Task 必须有 `**Files:**` 列出 Create/Modify/Test 路径
 
-下游 `execute.md` 通过 `grep -c '^### Task'` 和 `grep -c '^- \[ \]'` 验证,**不需要**深入解析每个 Step 内容。
+下游 agent 通过 `grep -c '^### Task'` 和 `grep -c '^- \[ \]'` 验证,**不需要**深入解析每个 Step 内容。
 
 ## 变更历史
 

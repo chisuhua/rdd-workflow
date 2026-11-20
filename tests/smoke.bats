@@ -29,7 +29,6 @@ load test_helper
   [ -f "skills/rdd-builder/SKILL.md" ]
   [ -f "skills/rdd-verifier/SKILL.md" ]
   [ -f "skills/propose/SKILL.md" ]
-  [ -f "skills/execute/SKILL.md" ]
   [ -f "skills/status/SKILL.md" ]
   [ -f "skills/roadmap/SKILL.md" ]
   [ -f "skills/deps/SKILL.md" ]

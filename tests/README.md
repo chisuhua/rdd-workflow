@@ -66,14 +66,13 @@ file instead of the repo's real baseline:
 |---|---|
 | `tests/scripts/report_regression.sh` | comparison (known / new / stale) |
 | `tests/scripts/refresh_known_failures.sh` | selective refresh |
-| `skills/execute/scripts/run_regression_gate.sh` | execute-phase gate (existence test + delegate) |
 
 ```bash
 RDDF_KNOWN_FAILURES_FILE=/tmp/scratch-baseline.txt bash tests/scripts/report_regression.sh
 ```
 
 **Tests must use it.** `tests/integration/test_known_failures_baseline.bats` and
-`test_execute_regression_gate.bats` write their fixtures to `$BATS_TEST_TMPDIR`
+write their fixtures to `$BATS_TEST_TMPDIR`
 and pass this var — they never touch `tests/KNOWN_FAILURES.txt`.
 
 > Why this exists: those tests used to `printf > $REPO_ROOT/tests/KNOWN_FAILURES.txt`
@@ -221,12 +220,11 @@ metadata drift between `package.json`, `skills/<name>/SKILL.md`, and `smoke.bats
 | feature          | `tests/integration/test_feature_skill.bats`                |
 | rddf-session     | `tests/integration/test_rddf_session_{current,status,auto_archive,owner_stability,hook_required,sub_phase,workflow_group}.bats` + `test_rddf_session_*.py` |
 | propose          | `tests/integration/test_propose_skill.bats`                |
-| execute          | `tests/integration/test_execute_skill.bats`                |
 | status           | `tests/integration/test_status_skill.bats`                 |
 | roadmap          | `tests/integration/test_roadmap_skill.bats`                |
 | deps             | `tests/integration/test_deps_skill.bats`                   |
 | rdd-doctor       | `tests/integration/test_rdd_doctor.bats` (+ `tests/smoke.bats` registration) |
-| rdd-workflow-writing-plans | (locked by TDD discipline in `test_execute_skill.bats`) |
+| rdd-workflow-writing-plans | (TDD discipline asserted in its own SKILL.md) |
 | (cross-skill)    | `tests/integration/test_skill_metadata_consistency.bats`   |
 | (helper)         | `tests/_lib/test_skill.bats` (8 cases for `skill.bash`)    |
 

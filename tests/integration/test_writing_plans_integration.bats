@@ -55,20 +55,6 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
     grep -q 'TODO' "$f"
 }
 
-@test "execute.md has TDD 5-step discipline integrated (merged from executing-plans)" {
-    local f="$REPO_ROOT_ORIGIN/skills/execute/SKILL.md"
-    # TDD 5 步结构
-    grep -q 'Write the failing test' "$f"
-    grep -q 'Run test to verify it fails' "$f"
-    grep -q 'Write minimal implementation' "$f"
-    grep -q 'Run test to verify it passes' "$f"
-    # Review 机制
-    grep -q 'Review checklist' "$f"
-    grep -q 'Spec 覆盖' "$f"
-    grep -q '占位符扫描' "$f"
-    # Stop 条件
-    grep -q '立即停止' "$f"
-}
 
 # === 2. prometheus-planning.md 已彻底删除 ===
 
@@ -210,11 +196,6 @@ REPO_ROOT_ORIGIN="${REPO_ROOT}"
 
 # === 7. 执行契约保留(.rddf/plans/<name>.md) ===
 
-@test "execute.md still references .rddf/plans/<name>.md as contract path" {
-    local f="$REPO_ROOT_ORIGIN/skills/execute/SKILL.md"
-    grep -qE '\.rddf/plans/' "$f"
-    grep -qE '\.rddf/plans/[$]CHANGE_NAME' "$f"
-}
 
 @test "status.md still references .rddf/plans/<name>.md for progress tracking" {
     local f="$REPO_ROOT_ORIGIN/skills/status/SKILL.md"

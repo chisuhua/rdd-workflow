@@ -234,14 +234,15 @@ setup() {
 # in README.md + USAGE.md (both modified by this change).
 # Corresponds to: AC-11
 # Oracle review 2026-09-09: USAGE.md L328/708/709/724/765 had 5 active
-# `skill_use("guide-ship")` / `skill_use("guide-plan")` invocations that would
+# `skill_use("guide-ship")` / `skill_use("guide-plan")` / `skill_use("execute")`
+# invocations that would
 # fail for users reading the docs. This test enforces the invariant.
 # -----------------------------------------------------------------------------
-@test "doc_drift_v4: README.md + USAGE.md have no live guide-* skill invocations (AC-11)" {
+@test "doc_drift_v4: README.md + USAGE.md have no live guide-*/execute skill invocations (AC-11)" {
   # Look for skill_use("guide-*") invocations inside code blocks (live commands).
   # Use perl with multi-line mode to handle markdown ``` blocks.
   for file in README.md USAGE.md; do
-    hits=$(perl -0777 -ne 'while (/```.*?\n(.*?)\n```/gs) { my $block = $1; while ($block =~ /\bskill_use\(["\x27](guide-arch|guide-design|guide-plan|guide-ship|guide-spec)["\x27]\)/g) { print "AC-11 violation: live skill_use(\"$1\") in code block of $ARGV\n"; } }' "$file" 2>/dev/null)
+    hits=$(perl -0777 -ne 'while (/```.*?\n(.*?)\n```/gs) { my $block = $1; while ($block =~ /\bskill_use\(["\x27](guide-arch|guide-design|guide-plan|guide-ship|guide-spec|execute)["\x27]\)/g) { print "AC-11 violation: live skill_use(\"$1\") in code block of $ARGV\n"; } }' "$file" 2>/dev/null)
     if [ -n "$hits" ]; then
       echo "$hits"
       return 1
@@ -300,12 +301,12 @@ setup() {
 
 
 # -----------------------------------------------------------------------------
-# fix-doc-drift-followup-3 Bonus Test 18: AC-2 — 9 sub-skill SKILL.md files
+# fix-doc-drift-followup-3 Bonus Test 18: AC-2 — 8 sub-skill SKILL.md files
 # have no active skill_use("guide-*") invocations.
 # Corresponds to: AC-2 of fix-doc-drift-followup-3.
 # -----------------------------------------------------------------------------
-@test "doc_drift_v4: 9 sub-skill SKILL.md files have no live skill_use(\"guide-*\") invocations (AC-2 follow-up)" {
-  for f in skills/execute/SKILL.md skills/status/SKILL.md skills/deps/SKILL.md \
+@test "doc_drift_v4: 8 sub-skill SKILL.md files have no live skill_use(\"guide-*\") invocations (AC-2 follow-up)" {
+  for f in skills/status/SKILL.md skills/deps/SKILL.md \
            skills/add-improve/SKILL.md skills/feature/SKILL.md skills/sync-hub/SKILL.md \
            skills/rddf-session/SKILL.md skills/openspec-gate/SKILL.md skills/rdd-env-check/SKILL.md; do
     hits=$(grep -nE 'skill_use\("(guide-arch|guide-design|guide-plan|guide-ship|guide-spec)"\)' "$f" 2>/dev/null || true)

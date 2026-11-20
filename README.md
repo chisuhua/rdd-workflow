@@ -30,7 +30,7 @@ bash ~/.agents/skills/rdd-workflow/install.sh --global
 ```
 
 安装后：
-- **29 个子技能** symlink 到 `~/.agents/skills/` → OpenCode 在任何项目下自动发现
+- **28 个子技能** symlink 到 `~/.agents/skills/` → OpenCode 在任何项目下自动发现
 - **Python 依赖** 自动安装（`pip install --user -r requirements.txt`）
 - **`_lib` Python 路径** 写入 `.pth` 文件 → 任何项目 `from _lib.xxx import yyy`（`from skills._lib.xxx import yyy` 仍通过向后兼容 shim 工作）
 - **`rddf` CLI** 创建到 `~/.local/bin/rddf` → 终端直接 `rddf status`
@@ -67,7 +67,6 @@ bash install.sh /path/to/project
    - `skill_use("rdd-quick")` - **快速执行路径**(per ADR-0047)：绕过 openspec change 与 worktree，就地执行小改动并 Oracle 验证
    - `skill_use("feature")` - feature 管理(summary/graph/status/order)
    - `skill_use("propose")` - 子技能(被 rdd-builder 调用)
-   - `skill_use("execute")` - 子技能(被 rdd-builder 调用)
    - `skill_use("status")` - 子技能(被 rdd-builder 调用或独立使用)
    - `skill_use("rdd-workflow-writing-plans")` - 实施计划生成器(被 rdd-builder 调用,v2.0 自包含 TDD 5 步结构)
 
@@ -119,16 +118,18 @@ verification:
 > **v2.1 历史**（已废弃于 v3.0+）: 提案管理原在 `rdd-arch` Phase 5.5，已迁移到 `rdd-planner` 阶段（per ADR-0025）。
 > `guide-spec` 别名已在 v2.0 移除。请直接使用 v4 四阶段流程：`rdd-arch` → `rdd-planner` → `rdd-builder` → `rdd-verifier`（或 `rdd-quick` 旁路）。
 
-### Guide-Ship 执行契约 (v2.0.7+)
+### 执行契约 (v2.0.7+)
 
-`tasks.md` 是 OpenSpec 的范围与完成清单;`.rddf/plans/<change>.md` 是 **唯一** 可执行实现契约;`execute` 消费 plan 并把进度回写到 `tasks.md`;`rdd-builder` 不直接执行 `tasks.md`。
+`tasks.md` 是 OpenSpec 的范围与完成清单;`.rddf/plans/<change>.md` 是 **唯一** 可执行实现契约,由**执行该 change 的 agent** 按 plan 实施并把进度回写到 `tasks.md`(`phase2_execute.sh` 负责工作区准备与进度快照)。
 
 详细契约见 [`docs/superpowers/specs/2026-08-05-rdd-builder-execution-contract.md`](docs/superpowers/specs/2026-08-05-rdd-builder-execution-contract.md)。要点:
 
 - `rdd-builder` Phase 1 通过 `rddf discover-ship-changes` 统一发现候选,单 change 自动选择;多 change 显示菜单。
-- `rdd-builder::setup_execution_workspace` 通过 `$RDDF_EXECUTION_ROOT` 把选定工作区交给 `execute`,`execute` 不再自行探测。
+- `rdd-builder` 的 P2(`phase2_execute.sh`) 负责选定工作区(worktree 或 lightweight 分支)并写入 `builder_handoff`;**执行主体是 agent 本身**,不再有独立的 plan 执行器子技能。
 - `SKIP_PROMETHEUS_PLANNING=yes` 必须配 `QUICK_FINISH_DETECTED=yes` 才能跳过 plan 生成(否则 fail closed)。
 - `archive_gate_check` 在 worktree 和 lightweight 两种模式都生效;lightweight 模式 0 新提交是硬阻断;`archive_change` 路径调用 `check_worktree_commits` 作为 worktree merge 前置 gate。
+
+> ⚠️ 本小节其余条目待重写（backlog：`setup_execution_workspace` 已无实现、`SKIP_PROMETHEUS_PLANNING` / `QUICK_FINISH_DETECTED` 属 v2 时代开关、上方链接 `docs/superpowers/specs/2026-08-05-rdd-builder-execution-contract.md` 的目标不存在）。本 change（retire-execute-skill）只对齐 execute 相关分句，整节重写另立 change。
 
 ### 推荐器升级
 
@@ -424,7 +425,6 @@ rdd-workflow/
     ├── feature/SKILL.md                 # feature 管理 (v2.0+)
     ├── rddf-session/SKILL.md            # 跨 OpenCode session 恢复 (ADR-0017)
     ├── propose/SKILL.md                 # 子技能(被 rdd-builder 调用)
-    ├── execute/SKILL.md                 # 子技能(被 rdd-builder 调用, TDD 5 步)
     ├── roadmap/SKILL.md                 # 子技能(被 rdd-arch 调用)
     ├── deps/SKILL.md                    # 子技能(被 rdd-builder 调用)
     ├── status/SKILL.md                  # 子技能(被 rdd-builder 调用或独立使用)
@@ -539,7 +539,6 @@ cp -r ~/.agents/skills/rdd-workflow/skills /path/to/project/.opencode/skills/rdd
 v2.0 重构后,实施计划生成器**完全自包含**于 rdd-workflow,**无任何外部 skill 依赖**:
 
 - ✅ `rdd-workflow-writing-plans` — 内置 TDD 5 步结构 plan 生成器(fork 自 superpowers/writing-plans,适配 OpenSpec change 上下文)
-- ✅ `execute` — 内置 plan 执行器,强制 TDD 5 步纪律(整合原 rdd-workflow/executing-plans)
 
 **调用流程**(`rdd-builder` Phase 1):
 
@@ -561,7 +560,7 @@ skill_use("rdd-workflow-writing-plans")  # 直接调用内置 skill
 
 **跳过后备** (不推荐,仅紧急时使用):
 ```bash
-export SKIP_PROMETHEUS_PLANNING=yes  # 跳过计划生成,execute.md 阶段将无详细计划
+export SKIP_PROMETHEUS_PLANNING=yes  # 跳过计划生成,rdd-builder P1 阶段将无详细计划
 ```
 
 **架构变更说明** (v1.0 → v2.0):

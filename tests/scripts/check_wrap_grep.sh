@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Spec 2026-08-13 §6 grep regression guard.
-# Verifies that all 4 phase entry scripts wrap every direct binary
+# Verifies that the phase entry scripts wrap every direct binary
 # invocation via orchestrator_run, and install an EXIT trap for
 # orchestrator_finalize. Exits 0 on pass, 1 on violation.
 
@@ -9,7 +9,6 @@ set -e
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SCRIPTS=(
     "$REPO_ROOT/skills/rdd-arch/scripts/arch_env_check.sh"
-    "$REPO_ROOT/skills/execute/scripts/select_worktree.sh"
 )
 
 # Positive list of binaries that should be wrapped via orchestrator_run.
@@ -43,4 +42,4 @@ if [ "$violations" -gt 0 ]; then
     echo "$violations violation(s). See spec 2026-08-13 §6."
     exit 1
 fi
-echo "OK: all 4 entry scripts pass grep rule + EXIT trap check."
+echo "OK: all entry scripts pass grep rule + EXIT trap check."

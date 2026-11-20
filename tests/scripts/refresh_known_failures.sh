@@ -15,9 +15,8 @@
 # Env:
 #   RDDF_KNOWN_FAILURES_FILE  Override the baseline path (default
 #                             <repo>/tests/KNOWN_FAILURES.txt). The same name is
-#                             honoured by report_regression.sh and
-#                             skills/execute/scripts/run_regression_gate.sh, so
-#                             tests can drive all three against a temp baseline
+#                             honoured by report_regression.sh, so both
+#                             scripts can drive it against a temp baseline
 #                             instead of mutating the repo's real one.
 #
 # Selective refresh logic (vs. previous wholesale regeneration):

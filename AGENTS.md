@@ -95,7 +95,7 @@ archive change (`rdd-builder` P3)
 - 文档化的双层 bootstrap 模式 (`source ... || source $HOME/.agents/skills/...`)
 - Python `_lib` 模块通过 `.pth` 发现
 - bash `source ~/.agents/skills/_lib/state.sh` 加载运行时 helper
-- 29 个子技能 symlink 完整性
+- 28 个子技能 symlink 完整性
 
 测试在 `$BATS_TMPDIR` 创建独立的 git 仓库, **不**修改源 repo 的 `.rddf/` (其他 bats 测试依赖 stale state, 删除会级联失败)。
 
@@ -142,13 +142,13 @@ _lib/                          # ⭐ 真实实现层 (commit c3a90fe "flatten pa
   schedulers/                  # 调度器 (4 .py): cron_scheduler, fs_watcher, git_hook, webhook_receiver
   schemas/                     # JSON schema (19 files): arch_handoff, config, deps_analysis, design_handoff, feature_view, iteration, plan_handoff, sessions, state_vector, trigger 等
   loop_engine.py               # v2.0 Loop 引擎入口（向后兼容 shim 实际实现在 _lib/loop_engine.py）
-skills/                        # Markdown skills (28 SKILL.md + INSTALL.md) + per-skill scripts/
+skills/                        # Markdown skills (27 SKILL.md + INSTALL.md) + per-skill scripts/
   INSTALL.md                   # 第一入口 (v1.1.0)
   rdd-arch/SKILL.md          # arch 阶段 (v2.0.8 Phase 2 重组)
   rdd-planner/SKILL.md (was guide-design)        # design 阶段 (v2.1 新增)
   rdd-builder/SKILL.md (was guide-plan)          # plan 阶段
   rdd-builder/SKILL.md (was guide-ship)          # ship 阶段 (v2.0)
-  propose/SKILL.md / execute/SKILL.md / status/SKILL.md / roadmap/SKILL.md / deps/SKILL.md / feature/SKILL.md / rddf-session/SKILL.md  # 子技能
+  propose/SKILL.md / status/SKILL.md / roadmap/SKILL.md / deps/SKILL.md / feature/SKILL.md / rddf-session/SKILL.md  # 子技能
   rdd-workflow-writing-plans/SKILL.md  # 内置 TDD 5 步 plan 生成器
   loop_engine.py               # v2.0 Loop 引擎入口（向后兼容 shim）
   _lib/                        # ⭐ shim 层 (post-c3a90fe flatten layout, 2026-08-25 P1-1b identity-merge)
@@ -158,7 +158,6 @@ skills/                        # Markdown skills (28 SKILL.md + INSTALL.md) + pe
   rdd-arch/scripts/          # arch 阶段辅助脚本 (arch_env_check, write_arch_handoff, arch_gap_analysis 等)
   rdd-builder/scripts/          # plan 阶段辅助脚本 (plan_intake, plan_done_gate, plan_deps_candidates 等)
   rdd-builder/scripts/          # ship 阶段辅助脚本 (ship_plan, ship_review, ship_archive, ship_monitor 等)
-  execute/scripts/             # execute 辅助脚本 (select_worktree, tasks_writeback, execute_step7 等)
   deps/scripts/                # deps 辅助脚本 (deps_output, deps_render_report 等)
   propose/scripts/             # propose 辅助脚本 (propose_change 等)
   feature/scripts/             # feature 辅助脚本 (feature_summary, feature_graph 等)

@@ -268,7 +268,7 @@ Worktree: .rddf/wt/<name>
   修复: sed -i 's/- \[ \] 任务描述/- [x] 任务描述/' tasks.md
 
 建议:
-  - skill_use("execute") 继续执行
+  - 继续按 plan 实施剩余 Work Unit
   - 或修复同步后归档
 ```
 

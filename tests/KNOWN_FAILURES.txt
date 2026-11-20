@@ -19,7 +19,8 @@
 # sync-package-skills-to-disk (archived 2026-08-27), leaving only __pycache__ residue.
 # Their 21 baseline entries were removed accordingly.
 # Note (2026-09-08): v3 "COMMIT GATE before worktree creation" @test removed from
-# test_execute_worktree_context_rule.bats — v4 execute runs inside an existing
+# test_execute_worktree_context_rule.bats (该测试已于 2026-11-20 随 execute 技能
+# 归档而删除) — v4 execute runs inside an existing
 # worktree (set up by rdd-builder P2), so the "before worktree creation" constraint
 # no longer applies. Worktree commit semantics are now enforced by archive.sh's
 # check_worktree_commits gate. Baseline entry removed accordingly.

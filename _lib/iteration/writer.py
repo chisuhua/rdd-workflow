@@ -1,7 +1,8 @@
 """Single writer for the tasks_done / tasks_total pair (fix-iteration-tasks-total).
 
 Before this module the pair had asymmetric writers: ``tasks_done`` was written
-by ``skills/execute/scripts/execute_step7.py`` and by the archive sync, while
+by ``skills/execute/scripts/execute_step7.py`` （该技能已于 2026-11-20 归档到 `docs/legacy/`，见 change `retire-execute-skill`） and by the archive
+sync, while
 ``tasks_total`` had **no writer at all**. ``_lib/verifier/discovery.py::
 _is_eligible`` requires ``done == total > 0``, so the eligible set was
 permanently empty and batch verification silently found nothing — the archive

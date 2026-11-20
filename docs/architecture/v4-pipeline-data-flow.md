@@ -363,9 +363,9 @@ This section walks through the **happy path** end-to-end, step by step. All file
 [Step 3.8] P2 worktree + execute:
           - bash phase2_execute.sh change-foo
           - COMMIT GATE: artifacts (proposal.md, tasks.md, plan.md) committed
-          - select_worktree.sh (worktree mode) OR direct commit (lightweight)
-          - execute TDD 5-step from .rddf/plans/change-foo.md
-          - writeback tasks.md checkboxes via execute/scripts/tasks_writeback.sh
+          - git worktree add (worktree mode) OR direct commit (lightweight)
+          - the agent executes the TDD 5-step plan from .rddf/plans/change-foo.md
+          - writeback tasks.md checkboxes via phase2_execute.sh (record_tasks_snapshot)
           - exit 3 if COMMIT GATE fails
 
 [Step 3.9] P2.5 review (HARD pause, 4-option):
