@@ -15,17 +15,17 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 
 | `code_block_in` × `title_in` | 命中处数 | 命中块数 | 命中 spec 份数 |
 |---|---|---|---|
-| `True` × `True` ← 选定（冻结） | 319 | 170 | 44 |
-| `True` × `False` | 296 | 169 | 44 |
-| `False` × `True` | 317 | 169 | 43 |
-| `False` × `False` | 294 | 168 | 43 |
+| `True` × `True` ← 选定（冻结） | 307 | 161 | 42 |
+| `True` × `False` | 287 | 160 | 42 |
+| `False` × `True` | 305 | 160 | 41 |
+| `False` × `False` | 285 | 159 | 41 |
 
 ## 基线（选定口径）
 
 - 扫描 spec 文件：**165** 份
-- 命中实例：**319** 处（其中未被豁免 **16** 处）
-- 命中块：**170** 块
-- 命中 spec：**44** 份
+- 命中实例：**307** 处（其中未被豁免 **4** 处）
+- 命中块：**161** 块
+- 命中 spec：**42** 份
 - `stale allow`（过期豁免）：**0** 处
 
 ## 既有签批（不由本台账合并）
@@ -46,18 +46,6 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 | openspec/specs/general/spec.md | 145 | general-docs-match-code | guide-arch | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 146 | general-docs-match-code | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 147 | general-docs-match-code | guide-spec | unclassified | unset |  |  |  |
-| openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 26 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 28 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 31 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/skeleton-planning/spec.md | 11 | planned-status-lifecycle | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/skeleton-planning/spec.md | 22 | planned-status-lifecycle | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/skeleton-planning/spec.md | 23 | planned-status-lifecycle | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/spec-validation-gates/spec.md | 149 | guide-plan.md plan-done gate MUST validate all active changes | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/spec-validation-gates/spec.md | 151 | guide-plan.md plan-done gate MUST validate all active changes | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/spec-validation-gates/spec.md | 158 | guide-plan.md plan-done gate MUST validate all active changes | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/spec-validation-gates/spec.md | 167 | guide-plan.md plan-done gate MUST validate all active changes | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/state-management/spec.md | 65 | iteration-json-planned-status | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/state-management/spec.md | 73 | iteration-json-planned-status | guide-plan | unclassified | unset |  |  |  |
 
 ## 围栏式豁免清单
 
@@ -71,10 +59,9 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 
 ## 合计
 
-- `disposition=unset`：**16** 条命中记录（Phase 1 的待办量）
+- `disposition=unset`：**4** 条命中记录（Phase 1 的待办量）
 - 已登记豁免（标注）：**303** 处
 - 命中 token 分布：
   - `guide-arch`: 2
-  - `guide-plan`: 7
-  - `guide-ship`: 6
+  - `guide-plan`: 1
   - `guide-spec`: 1
