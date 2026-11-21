@@ -403,19 +403,148 @@ def test_r4_token_word_boundary(tmp_path):
     assert scan_specs(tmp_path).hits == []
 
 
+# ---------- R4: fence position (annotation after the closing fence) ----------
+#
+# 围栏内的命中没有可用的行位置：标注插围栏内污染读者照抄的示例，放围栏后则
+# 前一行是结束符、无 token ⇒ stale。第二个位置 = 紧跟**围栏结束行**，豁免整块。
+# 四个限制：局部性 / code 限 enum+guard / 台账清单可见 / 逐行 disposition。
+
+
+def _fence_spec(body_fence: str, annotation: str = "enum") -> str:
+    return (
+        "### Requirement: route enum\n\n"
+        "```json\n"
+        f"{body_fence}\n"
+        "```\n"
+        f"<!-- v4-residue:allow={annotation} -->\n"
+    )
+
+
+def test_r4_fence_annotation_exempts_whole_block(tmp_path):
+    """AC-1：紧跟围栏结束行 ⇒ 豁免该围栏内**全部**行（含一行多 token）。"""
+    from spec_residue_scan import scan_specs
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo", _fence_spec('{"route": "guide-ship|guide-plan"}'))
+
+    result = scan_specs(tmp_path)
+    assert [h for h in result.hits if not h.category] == []
+    assert {h.category for h in result.hits} == {"enum"}
+    assert len(result.hits) == 2
+    assert len(result.fence_allows) == 1
+    fa = result.fence_allows[0]
+    assert (fa.open_line, fa.close_line, fa.code) == (3, 5, "enum")
+    assert fa.tokens == ("guide-plan", "guide-ship")
+
+    assert [f for f in _r4(v4_residue_check.run(tmp_path))
+            if f.severity.value == "WARNING"] == []
+
+
+@pytest.mark.parametrize("code", ["history", "proposal-name", "rename-history"])
+def test_r4_fence_annotation_rejects_non_enum_guard_codes(tmp_path, code):
+    """AC-2：围栏式标注只允许 enum / guard —— 其它合法 code 在**这个位置**不生效。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo", _fence_spec('{"route": "guide-ship"}', annotation=code))
+    r4 = [f for f in _r4(v4_residue_check.run(tmp_path))
+          if f.severity.value == "WARNING"]
+    assert any("fence-position allow code" in f.snippet for f in r4), r4
+    assert any("1 处已退役" in f.snippet for f in r4), r4   # 命中仍报
+
+
+def test_r4_unclosed_fence_hits_still_reported(tmp_path):
+    """AC-3(a)：未闭合围栏内的命中**仍被报告**（正文不得被静默逐出扫描）。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo",
+          '### Requirement: r\n\n```json\n{"route": "guide-ship"}\n')
+    warns = [f for f in _r4(v4_residue_check.run(tmp_path))
+             if f.severity.value == "WARNING"]
+    assert len(warns) == 1, warns
+    assert "guide-ship" in warns[0].snippet
+
+
+def test_r4_unclosed_fence_annotation_is_in_fence(tmp_path):
+    """AC-3(b)：未闭合围栏内没有「结束行」可跟 ⇒ 标注不生效，且报 in_fence。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo",
+          '### Requirement: r\n\n```json\n{"route": "guide-ship"}\n'
+          "<!-- v4-residue:allow=enum -->\n")
+    r4 = [f for f in _r4(v4_residue_check.run(tmp_path))
+          if f.severity.value == "WARNING"]
+    assert any("围栏内" in f.snippet for f in r4), r4
+    assert any("1 处已退役" in f.snippet for f in r4), r4
+
+
+def test_r4_fence_annotation_without_token_is_stale(tmp_path):
+    """AC-4：围栏式标注但围栏内无 token ⇒ stale allow（白名单不腐化）。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo", _fence_spec('{"route": "clean"}'))
+    r4 = _r4(v4_residue_check.run(tmp_path))
+    assert [f for f in r4 if "stale allow" in f.snippet], r4
+
+
+def test_r4_annotation_inside_fence_is_not_metadata(tmp_path):
+    """AC-5：围栏**内**的标注不生效（标注是元数据，不能藏在示例里）且报 in_fence。"""
+    _enable_scan(tmp_path)
+    _spec(tmp_path, "demo",
+          "### Requirement: r\n\n```json\n"
+          '{"route": "guide-ship"}\n'
+          "<!-- v4-residue:allow=enum -->\n"
+          "```\n")
+    r4 = [f for f in _r4(v4_residue_check.run(tmp_path))
+          if f.severity.value == "WARNING"]
+    assert any("围栏内" in f.snippet for f in r4), r4
+    assert any("1 处已退役" in f.snippet for f in r4), r4
+
+
+def test_r4_split_blocks_shares_fence_predicate(tmp_path):
+    """SF-6 性质测试：`in_code` 并集 == `_scan_fences().in_fence`（单一真源）。
+
+    两者若各自配对围栏，`block_kind='code'` 与豁免范围就可能错位 —— 那正是
+    fail-open 的方向（豁免了不该豁免的行，或漏报了该报的）。
+    """
+    from spec_residue_scan import _scan_fences, _split_blocks
+
+    text = (
+        "### Requirement: a\n"
+        "body\n"
+        "```json\n"
+        '{"x": 1}\n'
+        "```\n"
+        "more body\n"
+        "#### Scenario: s\n"
+        "```\n"
+        "code\n"
+        "```\n"
+    )
+    closed, in_fence = _scan_fences(text.splitlines())
+    assert closed == {5: (3, 5), 10: (8, 10)}
+    blocks = _split_blocks(text, in_fence)
+    union = frozenset().union(*(b.in_code for b in blocks))
+    assert union == in_fence
+
+    # 未闭合围栏：正文仍在 in_fence 里 ⇒ 仍进入 block.lines（不再被静默丢弃）
+    text2 = '### Requirement: b\n```json\n{"y": 2}\n'
+    closed2, in_fence2 = _scan_fences(text2.splitlines())
+    assert closed2 == {}
+    assert in_fence2 == frozenset({3})
+    blocks2 = _split_blocks(text2, in_fence2)
+    assert [ln for b in blocks2 for ln, _ in b.lines] == [3]
+
+
 @_REQUIRES_SPECS
 def test_r4_repo_residue_constant():
     """AC-9：本仓的已知残留基线。
 
     两个口径分开断言（否则「补标注」与「真清理」无法区分）：
-      - **未豁免**（= 台账待办，Phase 1 的判据）：44 处 / 36 块 / 16 份
+      - **未豁免**（= 台账待办，Phase 1 的判据）：42 处 / 35 块 / 15 份
       - 含已豁免（机器看到的总量）：325 处 / 176 块 / 46 份（标注**不消除**命中，只标记豁免）
 
     历史：2026-11-20 首次冻结 350 / 192 / 46（0 豁免）；
     `align-spec-residue-prior-18` 把 18 份已签批 spec 的 120 行落成标注/改指（350→191/111/31）；
     `annotate-spec-residue-guard-batch3` 把 4 份 guard spec 的 52 行标成 guard/rename-history（→102/69/27）；
     `annotate-spec-residue-guard-batch4` 把 3 份的 31 行落成标注/改指/注记（→66/49/24）；
-    `annotate-spec-residue-guard-batch5` 把 10 份的 13 行落成纯标注（→44/36/16；豁免 259→281）。
+    `annotate-spec-residue-guard-batch5` 把 10 份的 13 行落成纯标注（→44/36/16；豁免 259→281）；
+    `extend-spec-residue-fence-annotation` 加围栏式豁免并用它标掉 dashboard 的 2 处（→42/35/15；
+    豁免 281→283；含已豁免不变）。
     ⚠️ Phase 1 的每个改动都必须在同一提交更新这些常数，否则它会在下次运行时被读成 regression。
     """
     from spec_residue_scan import scan_specs
@@ -423,10 +552,15 @@ def test_r4_repo_residue_constant():
     assert result.files_scanned == 165, result.files_scanned
 
     unexempted = [h for h in result.hits if not h.category]
-    assert len(unexempted) == 44, len(unexempted)
-    assert len({(h.file, h.block_line) for h in unexempted}) == 36
-    assert len({h.file for h in unexempted}) == 16
+    assert len(unexempted) == 42, len(unexempted)
+    assert len({(h.file, h.block_line) for h in unexempted}) == 35
+    assert len({h.file for h in unexempted}) == 15
 
     assert len(result.hits) == 325, len(result.hits)
     assert len(result.blocks()) == 176, len(result.blocks())
     assert len({h.file for h in result.hits}) == 46
+
+    # 围栏式豁免的可见性护栏（AC-12）：它必须留下可审计记录，不能只存在于注释里。
+    assert [f.code for f in result.fence_allows] == ["enum"], result.fence_allows
+    assert not result.fence_rejected, result.fence_rejected
+    assert not result.in_fence_annotations, result.in_fence_annotations

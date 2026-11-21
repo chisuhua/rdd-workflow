@@ -136,6 +136,33 @@ def test_checked_zero_is_called_out(tmp_path):
     assert "不等于 clean" in text
 
 
+def _fence_section(text: str) -> str:
+    return text.split("## 围栏式豁免清单", 1)[1].split("\n## ", 1)[0]
+
+
+def test_fence_allow_listed_in_audit_section(tmp_path):
+    """围栏式豁免必须进「围栏式豁免清单」—— 它与被豁免文本物理分离，不留记录就不可审计。"""
+    _spec(tmp_path, "demo",
+          "### Requirement: r\n\n```json\n"
+          '{"route": "guide-ship|guide-plan"}\n'
+          "```\n"
+          "<!-- v4-residue:allow=enum -->\n")
+    text = gen.build_census(tmp_path)
+    assert _rows(text) == []                       # 已豁免 ⇒ 不是待办
+    section = _fence_section(text)
+    assert "`openspec/specs/demo/spec.md`" in section, section
+    assert "`enum`" in section, section
+    assert "guide-plan, guide-ship" in section, section
+
+
+def test_fence_allow_section_says_none_when_empty(tmp_path):
+    """没有围栏式豁免时该段也必须存在并明说「无」—— 空段与「没实现」无法区分。"""
+    _spec(tmp_path, "demo", "### Requirement: r\nSHALL call `guide-ship`.\n")
+    text = gen.build_census(tmp_path)
+    assert "## 围栏式豁免清单" in text
+    assert "全仓没有任何围栏式豁免" in _fence_section(text)
+
+
 def test_cli_writes_file(tmp_path, capsys):
     _spec(tmp_path, "demo", "### Requirement: r\nSHALL call `guide-ship`.\n")
     out = tmp_path / "out.md"

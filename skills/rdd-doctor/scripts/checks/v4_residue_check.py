@@ -305,7 +305,8 @@ def _check_specs(root: Path) -> List[Finding]:
             snippet=(f"R4 [req:{title}] {len(hits)} 处已退役 stage 名："
                      f"{', '.join(tokens)}{note}"),
             fix_hint=("改指现存落点，或加 `<!-- v4-residue:allow=<enum|proposal-name|"
-                      "guard|history|rename-history> -->`（独占一行、紧跟命中行）"),
+                      "guard|history|rename-history> -->`（独占一行、紧跟命中行）；"
+                      "代码块内的命中则把标注放在**围栏结束行之后**、code 限 enum/guard"),
         ))
 
     for rel, line, code in result.invalid_annotations:
@@ -318,6 +319,28 @@ def _check_specs(root: Path) -> List[Finding]:
                      "enum / proposal-name / guard / history / rename-history；"
                      "该标注**不生效**"),
             fix_hint="改成五类之一，或删除该标注（拼错不得静默豁免）",
+        ))
+
+    for rel, line, code in result.fence_rejected:
+        findings.append(Finding(
+            severity=Severity.WARNING,
+            category=CATEGORY,
+            file=rel,
+            line=line,
+            snippet=(f"R4 fence-position allow code `{code}` 不生效 —— "
+                     "紧跟围栏结束行的标注仅允许 enum / guard；该标注**不生效**"),
+            fix_hint=("改成 enum（该值仍在某个 schema 的 enum 里）或 guard（反漂移断言/夹具）；"
+                      "历史叙述不该出现在代码块里 ⇒ 若真是历史，改用文本处置"),
+        ))
+
+    for rel, line in result.in_fence_annotations:
+        findings.append(Finding(
+            severity=Severity.WARNING,
+            category=CATEGORY,
+            file=rel,
+            line=line,
+            snippet=("R4 allow 标注落在**围栏内** ⇒ 不生效（标注是元数据，不能藏在示例里）"),
+            fix_hint="把标注移到围栏**结束行之后**（code 限 enum/guard），或删掉它",
         ))
 
     for stale in result.stale_allows:

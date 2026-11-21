@@ -90,20 +90,48 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正文 / 正文内 fenced code block；
 **不含** `## Purpose` 等散文段。命中按**块**归类。
 
-**合法引用要显式标注**（**禁止文件级 allowlist**）：在被豁免行的**下一行**独占写
+**合法引用要显式标注**（**禁止文件级 allowlist**）。标注是**独占一行**的 HTML 注释，
+有两个位置：
+
+**位置一 —— 行位置**（默认）：标注紧跟**命中行**，豁免该行的全部退役 token。
 
 ```markdown
 SHALL accept `guide-ship` for legacy state files.
 <!-- v4-residue:allow=enum -->
 ```
 
+**位置二 —— 围栏位置**：标注紧跟 fenced code block 的**结束行**（` ``` `），豁免该围栏内**全部**行。
+
+````markdown
+```json
+"route": "archive-ready|guide-ship|guide-plan|halted|null",
+```
+<!-- v4-residue:allow=enum -->
+````
+
+围栏内的命中没有可用的行位置：标注插围栏**内**会污染读者照抄的示例，放围栏**后**则前一行是
+结束符、无 token ⇒ 报 `stale allow`。围栏位置有**四个限制**：
+
+1. **局部性** —— 必须紧跟围栏**结束行**（与「标注在内容之后」同向）；
+2. **`code` 限 `enum` / `guard`** —— 围栏是读者照抄的规范性示例，能合法保留旧名的只有
+   ① 该值仍在某个 schema 的 enum 里 ② 反漂移断言 / 夹具。其它 code（`history` 等）⇒
+   **不生效**并报 `fence-position allow code`；
+3. **可见性** —— 每条围栏式豁免都进普查台账的「围栏式豁免清单」（file / 围栏行范围 / code / tokens）。
+   它与被豁免的文本物理分离，且台账不列已豁免行 ⇒ 没有这份清单，它就只存在于一个没人读的注释里；
+4. **逐行 disposition** —— 人工台账仍逐行记理由。
+
+**未闭合围栏**（EOF 前无结束行）没有可跟的结束行 ⇒ 不构成围栏位置（fail-closed）；其正文仍被扫描。
+**围栏内的标注不是元数据**（是示例内容）⇒ 不豁免任何东西，并报 `in_fence`。
+
 `code` 只能取五类之一：`enum`（该枚举值今天仍存在于 schema）/ `proposal-name`（提案名）/
 `guard`（反漂移守卫自身）/ `history`（归档历史，如 RETIRED 注记保留的原文）/
 `rename-history`（重命名说明）。写错 code ⇒ 标注**不生效**并报 `invalid allow code`。
 
 - 标注**与命中同行无效**（命中照报）—— 标注须独占一行，紧跟命中行。
-- 标注的前一行已无命中 ⇒ 报 `stale allow`（豁免清单会自己过期，不会腐化成第二个假通过）。
+- 标注的**豁免范围**已无命中 ⇒ 报 `stale allow`（豁免清单会自己过期，不会腐化成第二个假通过）。
 - 「把旧名说成现存物」（`the existing ...`）且**无标注** ⇒ WARNING 并提示措辞；**有标注** ⇒ 按标注豁免。
+- `## Purpose` 等**非 normative** 段里的围栏也可带围栏式标注，但它豁免不到任何被扫描的行，
+  也不报 stale（围栏里确实有 token）—— 与行位置作用在非规范行上的语义一致。
 
 **`checked 0` ≠ clean**：`openspec/specs/` 不存在（干净 clone、或本仓 `openspec/` 被 gitignore）时
 报 INFO「checked 0」，**不报**「无残留」。

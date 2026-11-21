@@ -23,7 +23,7 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 ## 基线（选定口径）
 
 - 扫描 spec 文件：**165** 份
-- 命中实例：**325** 处（其中未被豁免 **44** 处）
+- 命中实例：**325** 处（其中未被豁免 **42** 处）
 - 命中块：**176** 块
 - 命中 spec：**46** 份
 - `stale allow`（过期豁免）：**0** 处
@@ -47,8 +47,6 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 | openspec/specs/complete-project-yaml-config-gaps/spec.md | 298 | zero-regression-backward-compat | ac-verifier | unclassified | unset |  |  |  |
 | openspec/specs/cross-repo-deps/spec.md | 126 | Hub dependency issue creation | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/cross-repo-federation/spec.md | 119 | Design Gate Integration | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/dashboard-verification-status/spec.md | 50 | Verification status schema SHALL be explicit and versioned | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/dashboard-verification-status/spec.md | 50 | Verification status schema SHALL be explicit and versioned | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 127 | general-docs-match-code | guide-arch | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 145 | general-docs-match-code | guide-arch | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 146 | general-docs-match-code | guide-plan | unclassified | unset |  |  |  |
@@ -87,14 +85,24 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 | openspec/specs/third-party-feedback-loop/spec.md | 33 | Phase traces are replayable from any project subdirectory | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/third-party-feedback-loop/spec.md | 39 | Phase traces are replayable from any project subdirectory | guide-plan | unclassified | unset |  |  |  |
 
+## 围栏式豁免清单
+
+> 紧跟围栏**结束行**的 `allow` 标注会豁免该围栏内**全部**行 —— 它与被豁免的文本
+> 物理分离（中间隔着围栏），且本台账不列已豁免行 ⇒ 若不留这份清单，
+> 它就只存在于一个没人读的注释里。`tokens` 列供人工核对「code 声明是否成立」。
+
+| file | 围栏行范围 | code | tokens |
+|---|---|---|---|
+| openspec/specs/dashboard-verification-status/spec.md | 45–57 | `enum` | guide-plan, guide-ship |
+
 ## 合计
 
-- `disposition=unset`：**44** 条命中记录（Phase 1 的待办量）
-- 已登记豁免（标注）：**281** 处
+- `disposition=unset`：**42** 条命中记录（Phase 1 的待办量）
+- 已登记豁免（标注）：**283** 处
 - 命中 token 分布：
   - `guide-arch`: 6
   - `guide-design`: 6
-  - `guide-plan`: 20
-  - `guide-ship`: 8
+  - `guide-plan`: 19
+  - `guide-ship`: 7
   - `guide-spec`: 1
   - `ac-verifier`: 3

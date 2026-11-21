@@ -232,6 +232,22 @@ def build_census(project_root: Path) -> str:
     else:
         out.append("（无 —— `disposition=unset` 的行已归零）")
     out.append("")
+    out.append("## 围栏式豁免清单")
+    out.append("")
+    if result.fence_allows:
+        out.append("> 紧跟围栏**结束行**的 `allow` 标注会豁免该围栏内**全部**行 —— 它与被豁免的文本")
+        out.append("> 物理分离（中间隔着围栏），且本台账不列已豁免行 ⇒ 若不留这份清单，")
+        out.append("> 它就只存在于一个没人读的注释里。`tokens` 列供人工核对「code 声明是否成立」。")
+        out.append("")
+        out.append("| file | 围栏行范围 | code | tokens |")
+        out.append("|---|---|---|---|")
+        for fa in result.fence_allows:
+            out.append("| `%s` | %d–%d | `%s` | %s |"
+                       % (fa.file, fa.open_line, fa.close_line, fa.code,
+                          _cell(", ".join(fa.tokens) or "（无）")))
+    else:
+        out.append("（无 —— 全仓没有任何围栏式豁免）")
+    out.append("")
     out.append("## 合计")
     out.append("")
     out.append(f"- `disposition=unset`：**{unset_rows}** 条命中记录（Phase 1 的待办量）")

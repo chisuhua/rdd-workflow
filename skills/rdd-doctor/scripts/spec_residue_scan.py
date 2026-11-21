@@ -59,23 +59,64 @@ corpus: naive ``\\bguide-plan\\b`` over-counts by 47 occurrences.
 
 A retired name in a normative block may be legitimate.  Five categories:
 ``enum`` / ``proposal-name`` / ``guard`` / ``history`` / ``rename-history``.
-Declare it with a **standalone line immediately after** the hit line::
+Declare it with a **standalone line** — there are two placements.
+
+**Line position** (default) — the annotation follows the **hit line** and exempts
+every retired token on it::
 
     The route enum SHALL accept `guide-ship` for legacy state files.
     <!-- v4-residue:allow=enum -->
 
-An annotation exempts **every retired token on the preceding line**.  Granularity
-is therefore *line*, not *file* — a spec may mix legitimate and real residue as
-long as they sit on different lines.  (Measured 2026-11-20: 46 of 259 hit lines
-carry ≥2 distinct tokens, but zero lines need *different* dispositions, so the
-line granularity loses nothing on the current corpus.  If that ever changes,
-split the line.)
+Granularity is therefore *line*, not *file* — a spec may mix legitimate and real
+residue as long as they sit on different lines.  (Measured 2026-11-20: 46 of 259
+hit lines carry ≥2 distinct tokens, but zero lines need *different*
+dispositions, so line granularity loses nothing on the current corpus.  If that
+ever changes, split the line.)
+
+**Fence position** — the annotation follows a fenced block's **closing** ` ``` `
+and exempts **every line inside that fence**::
+
+    ```json
+    "route": "archive-ready|guide-ship|guide-plan|halted|null",
+    ```
+    <!-- v4-residue:allow=enum -->
+
+A hit inside a fence has no line position that works: an annotation *inside* the
+fence corrupts the example a reader copies, and one *after* the fence targets the
+closing ` ``` ` (no token ⇒ stale allow).  Four restrictions:
+
+1. **Locality** — the annotation must follow the closing fence line directly
+   (same "annotation comes after the content" direction as line position).
+2. **Code limited to** :data:`FENCE_ALLOW_CODES` (``enum`` / ``guard``) — a fence
+   is a normative example a reader copies, so the only legitimate retired names
+   there are (a) an enum value that still exists in a schema, (b) an anti-drift
+   assertion / fixture.  Any other code ⇒ the annotation does **not** exempt and
+   is reported as ``fence_rejected``.
+3. **Visibility** — every fence exemption lands in the census ledger's
+   「围栏式豁免清单」 section (file, fence line range, code, tokens).  An
+   annotation that blesses text out of sight must stay auditable.
+4. **Row-by-row disposition** — the human ledger still records one judgement per
+   hit line; the machine census simply does not list exempted rows.
+
+**Unclosed fence** (open ` ``` ` with no closing one before EOF) yields no fence
+position at all: there is no closing line to follow, so nothing is exempted
+(fail-closed).  Its body is still *example content* — see the next paragraph.
+
+**An annotation inside a fence is not metadata.**  It is example content, so it
+exempts nothing and is reported as ``in_fence``.  An annotation that silently
+does nothing is the one failure mode this scanner refuses to keep quiet about —
+``stale`` / ``invalid`` / ``ignored_inline`` all speak up, and so does this.
+
+**Corner**: a fence outside a normative block (e.g. inside ``## Purpose``) can
+carry a fence-position annotation, but it exempts nothing (those lines are not
+scanned) and is not stale either (the fence does contain tokens) — the same
+semantics line position has on a non-normative line.
 
 An annotation on the **same line** as the hit is ignored — it would be invisible
 when the hit line is long, and a trailing comment is too easy to leave behind
 after the token is deleted.  The hit is still reported, and the fix hint says so.
 
-**Stale allow**: an annotation whose preceding line has no retired token is
+**Stale allow**: an annotation whose exempted range carries no retired token is
 reported.  Without that, exemption lists only ever grow and eventually become a
 second false pass.
 
@@ -89,7 +130,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 #: Retired stage names (ADR-0043 / ADR-0044 / ADR-0048) + the removed verifier.
 RETIRED_TOKENS: Tuple[str, ...] = (
@@ -116,6 +157,11 @@ ALLOW_CODES = frozenset({
     "history",         # ④ 归档历史（RETIRED 注记保留的原文）
     "rename-history",  # ⑤ 重命名说明
 })
+
+#: 围栏式豁免允许的 code 子集（见模块 docstring 的限制条件 2）。
+#: 围栏内是「读者照抄的规范性示例」⇒ 只有「有外部可验证指称」的两类能成立：
+#: ``enum``（该值仍在某个 schema 的 enum 里）/ ``guard``（反漂移断言 / 夹具）。
+FENCE_ALLOW_CODES = frozenset({"enum", "guard"})
 
 ALLOW_RE = re.compile(r"<!--\s*v4-residue:allow=([a-z-]+)\s*-->")
 
@@ -144,11 +190,29 @@ class Hit:
 
 @dataclass(frozen=True)
 class StaleAllow:
-    """An ``allow`` annotation whose exempted line carries no retired token."""
+    """An ``allow`` annotation whose exempted range carries no retired token."""
 
     file: str
     line: int
     code: str
+
+
+@dataclass(frozen=True)
+class FenceAllow:
+    """One **fence-position** exemption — the auditable record of it.
+
+    A line-position annotation sits next to the text it blesses, so a reviewer
+    sees both at once.  A fence-position annotation sits after the closing fence
+    and can bless lines that are off-screen, and the census does not list
+    exempted rows ⇒ without this record the exemption would exist only in a
+    comment nobody reads (module docstring, restriction 3).
+    """
+
+    file: str
+    open_line: int
+    close_line: int
+    code: str
+    tokens: Tuple[str, ...]   # distinct retired tokens inside the fence
 
 
 @dataclass
@@ -163,6 +227,17 @@ class ScanResult:
     #: ``(file, line, bad_code)`` for annotations with a code outside
     #: :data:`ALLOW_CODES`.  A typo must **not** silently exempt.
     invalid_annotations: List[Tuple[str, int, str]] = field(default_factory=list)
+    #: ``(file, ann_line, bad_code)`` for fence-position annotations whose code
+    #: is outside :data:`FENCE_ALLOW_CODES`.  A valid code in the wrong position
+    #: must not exempt either — hence a separate list from
+    #: :attr:`invalid_annotations` (different fix: change the code, not the
+    #: position).
+    fence_rejected: List[Tuple[str, int, str]] = field(default_factory=list)
+    #: ``(file, ann_line)`` for annotations that sit **inside** a fence.  They are
+    #: example content, not metadata ⇒ they exempt nothing and are reported.
+    in_fence_annotations: List[Tuple[str, int]] = field(default_factory=list)
+    #: Every fence-position exemption, for the census ledger's audit section.
+    fence_allows: List[FenceAllow] = field(default_factory=list)
 
     @property
     def checked_anything(self) -> bool:
@@ -195,16 +270,54 @@ def _iter_spec_files(specs_root: Path):
             yield spec
 
 
-def _split_blocks(text: str) -> List[_Block]:
+def _scan_fences(lines: List[str]) -> Tuple[Dict[int, Tuple[int, int]], frozenset]:
+    """Fence pairing — the **single source of truth** for what is inside a fence.
+
+    Returns ``(closed, in_fence)``:
+
+    * ``closed`` maps a **closing** fence line to ``(open_line, close_line)``.
+      An unclosed fence at EOF yields no entry — with no closing line there is
+      nothing a fence-position annotation could follow, so nothing is exempted
+      (fail-closed).
+    * ``in_fence`` is every line strictly inside a fence, **including the body of
+      an unclosed one** — that is still example content, so an annotation there
+      is not metadata.
+
+    :func:`_split_blocks` consumes ``in_fence`` rather than pairing fences again,
+    so the ``block_kind='code'`` labelling and the exemption range can never
+    drift apart.
+    """
+    closed: Dict[int, Tuple[int, int]] = {}
+    inside: set = set()
+    open_line: Optional[int] = None
+    for lineno, line in enumerate(lines, 1):
+        if line.strip().startswith(_FENCE):
+            if open_line is None:
+                open_line = lineno
+            else:
+                closed[lineno] = (open_line, lineno)
+                open_line = None
+            continue
+        if open_line is not None:
+            inside.add(lineno)
+    return closed, frozenset(inside)
+
+
+def _split_blocks(text: str, in_fence: frozenset = frozenset()) -> List[_Block]:
     """Group a spec into Requirement / Scenario blocks (normative scope only).
 
     ``## Purpose`` / ``# Title`` / prose outside a Requirement terminate the
     current block — they are deliberately *not* normative.
+
+    Args:
+        text: spec file content.
+        in_fence: line numbers that live inside a fenced block, as returned by
+            :func:`_scan_fences`.  Fence bodies are kept as block content and
+            flagged via :attr:`_Block.in_code`, so ``code_block_in=False`` can
+            filter them out later.
     """
     blocks: List[_Block] = []
     cur: Optional[_Block] = None
-    in_fence = False
-    fence_buf: List[Tuple[int, str]] = []
 
     def flush() -> None:
         nonlocal cur
@@ -216,20 +329,11 @@ def _split_blocks(text: str) -> List[_Block]:
         stripped = line.strip()
 
         if stripped.startswith(_FENCE):
-            if not in_fence:
-                in_fence = True
-                fence_buf = []
-            else:
-                in_fence = False
-                if cur is not None:
-                    # The fence belongs to the enclosing block.  Record every
-                    # line so `code_block_in=False` can filter them out later.
-                    cur.lines.extend(fence_buf)
-                    cur.in_code = cur.in_code | {n for n, _ in fence_buf}
-                fence_buf = []
-            continue
-        if in_fence:
-            fence_buf.append((lineno, line))
+            continue             # fence delimiters are never content
+        if lineno in in_fence:
+            if cur is not None:
+                cur.lines.append((lineno, line))
+                cur.in_code = cur.in_code | {lineno}
             continue
 
         if stripped.startswith("#"):
@@ -255,19 +359,28 @@ def _split_blocks(text: str) -> List[_Block]:
     return blocks
 
 
-def _allow_annotations(lines: List[str]) -> List[Tuple[int, str]]:
+def _allow_annotations(lines: List[str],
+                       in_fence: frozenset = frozenset()) -> List[Tuple[int, str]]:
     """``(lineno, code)`` for every **valid** standalone annotation line."""
     out: List[Tuple[int, str]] = []
-    for lineno, code in _raw_annotations(lines):
+    for lineno, code in _raw_annotations(lines, in_fence):
         if code in ALLOW_CODES:
             out.append((lineno, code))
     return out
 
 
-def _raw_annotations(lines: List[str]) -> List[Tuple[int, str]]:
-    """``(lineno, code)`` for every standalone annotation, valid or not."""
+def _raw_annotations(lines: List[str],
+                     in_fence: frozenset = frozenset()) -> List[Tuple[int, str]]:
+    """``(lineno, code)`` for every standalone annotation, valid or not.
+
+    Lines inside a fence are skipped: an annotation there is example content,
+    not metadata (see module docstring).  Those are reported separately by
+    :func:`_in_fence_annotations` — skipping must not mean going silent.
+    """
     out: List[Tuple[int, str]] = []
     for lineno, line in enumerate(lines, 1):
+        if lineno in in_fence:
+            continue
         stripped = line.strip()
         if not (stripped.startswith("<!--") and stripped.endswith("-->")):
             continue
@@ -277,12 +390,22 @@ def _raw_annotations(lines: List[str]) -> List[Tuple[int, str]]:
     return out
 
 
-def _inline_annotations(lines: List[str]) -> List[int]:
+def _inline_annotations(lines: List[str],
+                        in_fence: frozenset = frozenset()) -> List[int]:
     """Line numbers whose annotation is NOT standalone (ignored, not an exemption)."""
-    standalone = {n for n, _ in _raw_annotations(lines)}
+    standalone = {n for n, _ in _raw_annotations(lines, in_fence)}
     return [
         lineno for lineno, line in enumerate(lines, 1)
-        if ALLOW_RE.search(line) and lineno not in standalone
+        if lineno not in in_fence
+        and ALLOW_RE.search(line) and lineno not in standalone
+    ]
+
+
+def _in_fence_annotations(lines: List[str], in_fence: frozenset) -> List[int]:
+    """Line numbers whose annotation sits **inside** a fence (exempts nothing)."""
+    return [
+        lineno for lineno, line in enumerate(lines, 1)
+        if lineno in in_fence and ALLOW_RE.search(line)
     ]
 
 
@@ -321,6 +444,9 @@ def scan_specs(
     stale: List[StaleAllow] = []
     ignored: List[Tuple[str, int]] = []
     invalid: List[Tuple[str, int, str]] = []
+    fence_rejected: List[Tuple[str, int, str]] = []
+    in_fence_ann: List[Tuple[str, int]] = []
+    fence_allows: List[FenceAllow] = []
     scanned = 0
 
     for spec in _iter_spec_files(specs_root):
@@ -329,22 +455,34 @@ def scan_specs(
         raw_lines = text.splitlines()
         rel = spec.relative_to(root).as_posix()
 
-        annotations = dict(_allow_annotations(raw_lines))
-        inline_only = set(_inline_annotations(raw_lines))
+        fences, in_fence = _scan_fences(raw_lines)
+
+        annotations = dict(_allow_annotations(raw_lines, in_fence))
+        inline_only = set(_inline_annotations(raw_lines, in_fence))
         ignored.extend((rel, ln) for ln in sorted(inline_only))
+        in_fence_ann.extend((rel, ln) for ln in _in_fence_annotations(raw_lines, in_fence))
         invalid.extend(
-            (rel, ln, code) for ln, code in _raw_annotations(raw_lines)
+            (rel, ln, code) for ln, code in _raw_annotations(raw_lines, in_fence)
             if code not in ALLOW_CODES
         )
 
-        # Exemption table: hit line -> allow code (annotation on the NEXT line)
+        # Exemption table: hit line -> allow code.  Two placements:
+        #   line position  → the annotation's preceding line
+        #   fence position → every line inside the fence it follows
         exempted: dict = {}
-        for ann_line, code in annotations.items():
+        for ann_line, code in sorted(annotations.items()):
             target = ann_line - 1
-            if 1 <= target <= len(raw_lines):
+            if target in fences:
+                if code not in FENCE_ALLOW_CODES:
+                    fence_rejected.append((rel, ann_line, code))
+                    continue
+                open_line, close_line = fences[target]
+                for lineno in range(open_line + 1, close_line):
+                    exempted.setdefault(lineno, code)
+            elif 1 <= target <= len(raw_lines):
                 exempted.setdefault(target, code)
 
-        blocks = _split_blocks(text)
+        blocks = _split_blocks(text, in_fence)
         req_title = _title_stack(blocks)
 
         hit_lines: set = set()
@@ -378,15 +516,46 @@ def scan_specs(
                         ),
                     ))
 
+        # Every fence exemption becomes an auditable record (docstring restriction 3).
+        for ann_line, code in sorted(annotations.items()):
+            target = ann_line - 1
+            if target not in fences or code not in FENCE_ALLOW_CODES:
+                continue
+            open_line, close_line = fences[target]
+            tokens = tuple(sorted({
+                m.group(1)
+                for lineno in range(open_line + 1, close_line)
+                for m in TOKEN_RE.finditer(raw_lines[lineno - 1])
+            }))
+            fence_allows.append(FenceAllow(
+                file=rel,
+                open_line=open_line,
+                close_line=close_line,
+                code=code,
+                tokens=tokens,
+            ))
+
         # `annotations` keys were computed before we knew the hit lines; a line
         # may legitimately carry a token excluded by `title_in`/`code_block_in`,
-        # so recompute "does the exempted line have any token at all".
+        # so recompute "does the exempted range have any token at all".
+        # A rejected fence annotation is already reported — a stale note on top
+        # would be noise (the hits stay visible as unexempted either way).
+        rejected = {ln for f, ln, _ in fence_rejected if f == rel}
         for ann_line, code in annotations.items():
+            if ann_line in rejected:
+                continue
             target = ann_line - 1
-            has_token = (
-                1 <= target <= len(raw_lines)
-                and TOKEN_RE.search(raw_lines[target - 1]) is not None
-            )
+            if target in fences:
+                open_line, close_line = fences[target]
+                has_token = any(
+                    TOKEN_RE.search(raw_lines[lineno - 1]) is not None
+                    for lineno in range(open_line + 1, close_line)
+                )
+            else:
+                has_token = (
+                    1 <= target <= len(raw_lines)
+                    and TOKEN_RE.search(raw_lines[target - 1]) is not None
+                )
             if not has_token:
                 stale.append(StaleAllow(file=rel, line=ann_line, code=code))
 
@@ -394,17 +563,25 @@ def scan_specs(
     stale.sort(key=lambda s: (s.file, s.line))
     ignored.sort()
     invalid.sort()
+    fence_rejected.sort()
+    in_fence_ann.sort()
+    fence_allows.sort(key=lambda f: (f.file, f.open_line))
     return ScanResult(
         files_scanned=scanned,
         hits=hits,
         stale_allows=stale,
         ignored_inline=ignored,
         invalid_annotations=invalid,
+        fence_rejected=fence_rejected,
+        in_fence_annotations=in_fence_ann,
+        fence_allows=fence_allows,
     )
 
 
 __all__ = [
     "ALLOW_CODES",
+    "FENCE_ALLOW_CODES",
+    "FenceAllow",
     "Hit",
     "RETIRED_TOKENS",
     "ScanResult",
