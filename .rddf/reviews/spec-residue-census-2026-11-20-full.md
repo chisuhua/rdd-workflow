@@ -15,16 +15,16 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 
 | `code_block_in` × `title_in` | 命中处数 | 命中块数 | 命中 spec 份数 |
 |---|---|---|---|
-| `True` × `True` ← 选定（冻结） | 333 | 181 | 46 |
-| `True` × `False` | 310 | 180 | 46 |
-| `False` × `True` | 331 | 180 | 45 |
-| `False` × `False` | 308 | 179 | 45 |
+| `True` × `True` ← 选定（冻结） | 325 | 176 | 46 |
+| `True` × `False` | 302 | 175 | 46 |
+| `False` × `True` | 323 | 175 | 45 |
+| `False` × `False` | 300 | 174 | 45 |
 
 ## 基线（选定口径）
 
 - 扫描 spec 文件：**165** 份
-- 命中实例：**333** 处（其中未被豁免 **102** 处）
-- 命中块：**181** 块
+- 命中实例：**325** 处（其中未被豁免 **66** 处）
+- 命中块：**176** 块
 - 命中 spec：**46** 份
 - `stale allow`（过期豁免）：**0** 处
 
@@ -43,16 +43,6 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 | file | line | requirement_title | matched_token | category | disposition | owner | signoff | date |
 |---|---|---|---|---|---|---|---|---|
 | openspec/specs/archive-auto-commit/spec.md | 93 | `rdd-builder` P3 lightweight mode MUST also call helper | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/archive-gate-verification/spec.md | 10 | Archive SHALL remain owned by the builder stage | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/archive-gate-verification/spec.md | 70 | Gate precedence SHALL be deterministic across skip, strict, bypass, and feature options | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/archive-gate-verification/spec.md | 99 | Gate precedence SHALL be deterministic across skip, strict, bypass, and feature options | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/archive-gate-verification/spec.md | 101 | Gate precedence SHALL be deterministic across skip, strict, bypass, and feature options | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/archive-gate-verification/spec.md | 109 | Direct archive fallback SHALL write structured verdict to the canonical cache | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/archive-gate-verification/spec.md | 109 | Direct archive fallback SHALL write structured verdict to the canonical cache | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/archive-gate-verification/spec.md | 114 | Direct archive fallback SHALL write structured verdict to the canonical cache | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/archive-gate-verification/spec.md | 115 | Direct archive fallback SHALL write structured verdict to the canonical cache | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/archive-gate-verification/spec.md | 126 | Direct archive fallback SHALL write structured verdict to the canonical cache | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/archive-gate-verification/spec.md | 127 | Direct archive fallback SHALL write structured verdict to the canonical cache | ac-verifier | unclassified | unset |  |  |  |
 | openspec/specs/complete-project-yaml-config-gaps/spec.md | 70 | verifier-explicit-runner-override | ac-verifier | unclassified | unset |  |  |  |
 | openspec/specs/complete-project-yaml-config-gaps/spec.md | 179 | verifier-hook-provider-routing | ac-verifier | unclassified | unset |  |  |  |
 | openspec/specs/complete-project-yaml-config-gaps/spec.md | 203 | guide-ship-phase-1-detect-lightweight | guide-ship | unclassified | unset |  |  |  |
@@ -61,36 +51,10 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 | openspec/specs/cross-repo-federation/spec.md | 119 | Design Gate Integration | guide-design | unclassified | unset |  |  |  |
 | openspec/specs/dashboard-verification-status/spec.md | 50 | Verification status schema SHALL be explicit and versioned | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/dashboard-verification-status/spec.md | 50 | Verification status schema SHALL be explicit and versioned | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/doc-truth-sync/spec.md | 85 | install-usage-readme-metadata-sync | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/doc-truth-sync/spec.md | 85 | install-usage-readme-metadata-sync | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/doc-truth-sync/spec.md | 133 | doc-contract-tests-required | guide-spec | unclassified | unset |  |  |  |
-| openspec/specs/doc-truth-sync/spec.md | 133 | doc-contract-tests-required | guide-spec | unclassified | unset |  |  |  |
-| openspec/specs/doc-truth-sync/spec.md | 134 | doc-contract-tests-required | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/doc-truth-sync/spec.md | 134 | doc-contract-tests-required | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/doc-truth-sync/spec.md | 205 | doc-contract-tests-required | guide-spec | unclassified | unset |  |  |  |
-| openspec/specs/doc-truth-sync/spec.md | 208 | doc-contract-tests-required | guide-spec | unclassified | unset |  |  |  |
-| openspec/specs/doc-truth-sync/spec.md | 243 | doc-surfaces-share-truth-source | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/doc-truth-sync/spec.md | 246 | doc-surfaces-share-truth-source | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/doc-truth-sync/spec.md | 247 | doc-surfaces-share-truth-source | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 127 | general-docs-match-code | guide-arch | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 145 | general-docs-match-code | guide-arch | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 146 | general-docs-match-code | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 147 | general-docs-match-code | guide-spec | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 10 | rdd-verifier SHALL self-contain its LLM verification protocol | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 19 | rdd-verifier SHALL self-contain its LLM verification protocol | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 56 | rdd-verifier verdict reasoning SHALL embed heuristic classifier keywords | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 63 | rdd-verifier verdict reasoning SHALL embed heuristic classifier keywords | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 98 | archive_gate_check SHALL NOT shell out to ac-verifier | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 100 | archive_gate_check SHALL NOT shell out to ac-verifier | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 146 | ac-verifier SHALL be marked deprecated | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 148 | ac-verifier SHALL be marked deprecated | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 148 | ac-verifier SHALL be marked deprecated | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 150 | ac-verifier SHALL be marked deprecated | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 152 | ac-verifier SHALL be marked deprecated | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 166 | deprecation period SHALL be at least one release cycle | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 170 | deprecation period SHALL be at least one release cycle | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 177 | deprecation period SHALL be at least one release cycle | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/inline-ac-verifier-into-rdd-verifier/spec.md | 179 | deprecation period SHALL be at least one release cycle | ac-verifier | unclassified | unset |  |  |  |
 | openspec/specs/migration-docs/spec.md | 9 | migration-guide-content | guide-spec | unclassified | unset |  |  |  |
 | openspec/specs/migration-docs/spec.md | 33 | usage-doc-update | guide-arch | unclassified | unset |  |  |  |
 | openspec/specs/migration-docs/spec.md | 33 | usage-doc-update | guide-plan | unclassified | unset |  |  |  |
@@ -147,12 +111,12 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 
 ## 合计
 
-- `disposition=unset`：**102** 条命中记录（Phase 1 的待办量）
-- 已登记豁免（标注）：**231** 处
+- `disposition=unset`：**66** 条命中记录（Phase 1 的待办量）
+- 已登记豁免（标注）：**259** 处
 - 命中 token 分布：
-  - `guide-arch`: 10
+  - `guide-arch`: 8
   - `guide-design`: 10
-  - `guide-plan`: 28
-  - `guide-ship`: 21
-  - `guide-spec`: 6
-  - `ac-verifier`: 27
+  - `guide-plan`: 25
+  - `guide-ship`: 16
+  - `guide-spec`: 2
+  - `ac-verifier`: 5
