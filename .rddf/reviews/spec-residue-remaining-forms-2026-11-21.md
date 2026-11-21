@@ -14,9 +14,9 @@
 | 批 7a | 9 块 / 11 行 | G | `RETIRED` 注记 + `allow=history` 标注 | ✅ 已完成 |
 | 批 7b-1 | 9 行 / 6 份 | G | 围栏式 `RETIRED` 注记 + `allow=history`（**very long 零增量**） | ✅ 已完成 |
 | 批 7b-2 | 12 行 / 4 份 | G + 移交 | **rewrite**（重写判据正文 + Scenario + 删被反证的 `acceptance-3`） | ✅ 已完成 |
-| 专项 | 4 | — | 测试锁定 + 断言漂移 | ⏳ 待办 |
+| 专项（`general`） | 4 行 / 2 块 | 测试锁定 + 断言漂移 | **rewrite**（重写判据 + 同步文档 + 同步测试） | ✅ 已完成（`rewrite-spec-residue-general-final`） |
 
-**当前剩余**：4 处 / 4 行 / 1 份（**只剩 `general/spec.md` 的专项**）。
+**当前剩余**：**0 处 / 0 行 / 0 份** —— ✅ **Phase 1 收口**（专项 `general` 已完成）。
 
 ## 批 7b-2 —— 12 行 / 4 份（rewrite）—— ✅ 已完成（2026-11-21）
 
@@ -63,20 +63,32 @@
 
 **教训**：改指的前提是「新落点在 v4 真实存在且行为等价」。仅凭「路径存在」或「句子形态像改指」不构成理由 —— 必须指到**行为载体**的 `file:line`。
 
-## 专项（4 行，不可动）
+## 专项（4 行 / 2 块）—— ✅ 已完成（2026-11-22，`rewrite-spec-residue-general-final`）
 
-| spec | 行 | 理由 |
-|---|---|---|
-| `general` | 127 | **断言已漂移（今天为假）**：`general/spec.md:127-128` 断言 ADR-0001 的 Decision 「spec-side 5 phases (setup/adr-create/architecture/roadmap-define/arch-done per `guide-arch`) + ship-side 7 numbered subphases」；实测 ADR-0001 实际写的是 `guide-spec.md` 的 **5 phase (setup/roadmap/propose/deps/spec-done)** 与 ship 端 **「5 阶段 + 1 退出」** ⇒ 两处 phase 名单都对不上 ⇒ 这是**失效断言**，**不能**按 `history` 豁免（豁免一条假断言 = 给假通过发通行证）⇒ 需文本处置或批 7 的 RETIRED 注记形态 |
-| `general` | 145 | **三方锁定**：`tests/unit/test_doc_contracts.py:67-68` 断言 `"guide-arch" in spec` 且 `"guide-plan" in spec`（子串锁）⇒ 改指就红测；且它描述的 `docs/improvement-suggestions-format.md` **本身仍是 v3 名**（实测 `:9` 仍写 `guide-design` / `guide-plan`）⇒ 需专项（改测试 → 改文档 → 改 spec 三方联动） |
-| `general` | 146 | 同上 |
-| `general` | 147 | 同上（`:147` 的 `guide-spec` 是**阴性**断言「SHALL NOT list」，不受 `:46-59` 的 active-reference 正则约束 ⇒ 不构成额外锁定） |
+> 原判「不可动」——因为 `:145-146` 被 `tests/unit/test_doc_contracts.py:67-68` 的**子串断言**锁定
+> （必须含 `guide-arch` / `guide-plan`），且 `:127-128` 对 ADR-0001 的断言**已漂移**。
+> ⇒ 实际处置 = **三方联动**（改 spec 判据 → 改文档 `docs/improvement-suggestions-format.md` →
+> 改测试断言），外加 2 处紧邻的同类假断言（硬编码 `disk count (13)` / `skills/propose.md` 不存在）。
+>
+> 处置结果：A 组重写为「已替代 ADR 必须在 ADR 索引里同样标注」；
+> B 组重写为「消费者清单只列磁盘上存在的 skill」+ 具名 4 个当前消费者；
+> C 组删掉硬编码计数；D 组改指到 `skills/propose/scripts/propose_quality_check.py:53`。
+> critic 第 1 轮 = **APPROVE_WITH_CONDITIONS**（0 BLOCKER）⇒ 直接实施。
+
+| spec | 行 | 原判定 | 实际处置 |
+|---|---|---|---|
+| `general` | 127 | **断言已漂移（今天为假）**：`general/spec.md:127-128` 断言 ADR-0001 的 Decision 「spec-side 5 phases (setup/adr-create/architecture/roadmap-define/arch-done per `guide-arch`) + ship-side 7 numbered subphases」；实测 ADR-0001 实际写的是 `guide-spec.md` 的 **5 phase (setup/roadmap/propose/deps/spec-done)** 与 ship 端 **「5 阶段 + 1 退出」** ⇒ 两处 phase 名单都对不上 ⇒ 这是**失效断言**，**不能**按 `history` 豁免（豁免一条假断言 = 给假通过发通行证）⇒ 需文本处置或批 7 的 RETIRED 注记形态 | rewrite（判据 + 文档 + 测试） |
+| `general` | 145 | **三方锁定**：`tests/unit/test_doc_contracts.py:67-68` 断言 `"guide-arch" in spec` 且 `"guide-plan" in spec`（子串锁）⇒ 改指就红测；且它描述的 `docs/improvement-suggestions-format.md` **本身仍是 v3 名**（实测 `:9` 仍写 `guide-design` / `guide-plan`）⇒ 需专项（改测试 → 改文档 → 改 spec 三方联动） | rewrite（判据 + 文档 + 测试） |
+| `general` | 146 | 同上 | rewrite（判据 + 文档 + 测试） |
+| `general` | 147 | 同上（`:147` 的 `guide-spec` 是**阴性**断言「SHALL NOT list」，不受 `:46-59` 的 active-reference 正则约束 ⇒ 不构成额外锁定） | rewrite（判据 + 文档 + 测试） |
 
 ## 记 tail（范围外）
 
-1. **`general/spec.md`（4 行）** —— `:145-146` 被 `tests/unit/test_doc_contracts.py:67-68` 的子串断言锁定；`:127-128` 对 ADR-0001 的断言**已漂移**（实测 ADR-0001 写的是 `guide-spec` 的 5 phase + ship 端「5 阶段 + 1 退出」）⇒ 需「改测试 → 改文档 → 改 spec」三方联动专项。
-2. **delta 形态垃圾结构** —— 9 份 spec 首行是 `## ADDED Requirements`（未合并的 change delta 被误归档为 capability spec）；`post-flow-analysis` / `rfc-rddf-*` 的 Requirement 名是自动生成的（`fix-adr-0027-cli-optin-gate` / `acceptance-3`）⇒ 需专项重写，不是残留名问题。
-3. **`dashboard-verification-status` 围栏示例与 schema 脱节** —— 缺 `rdd-builder` / `pending-agent`，含 enum 外的 `null` ⇒ 文本修正专项（围栏式标注只豁免旧名，不修脱节）。
-4. **围栏式 `enum` 的 schema 机检交叉校验** —— backlog（会让扫描器耦合 `_lib/schemas/`，破坏「能在任何有 `openspec/specs` 的项目上独立跑」的设计）。
-5. **`spec_residue_scan.py:488` 的 `hit_lines` 是死变量** —— 改前就存在（只 `add` 从不读），本次未删（改动最小化边界）。
+1. **`general/spec.md` 的 `general-docs-match-code` 其余假断言**（未被残留扫描器命中，故不在 Phase 1 判据内）：`:102-103` `ls skills/*.md | wc -l`（skills 已目录化 ⇒ 应为 `skills/*/SKILL.md`，实测 26）；`:110-114` `skills/status.md` L68-70（**文件不存在**，现为 `rddf status` CLI）；`:118-121` 同样是 `skills/*.md` 过时 glob；`:165-173`「`package.json::scripts.test` SHALL contain exactly `bats tests/`」（**与实现相反** —— 现为 `test:bats` + `test:python`，见 `tests/unit/test_doc_contracts.py:178-196`）；`:156-163` `tests/README.md` Layout 段未核验。
+2. **`docs/improvement-approved-format.md:3` 头部仍是旧机制描述** —— 「`guide-design` 批准后直接落盘…`guide-plan` intake…`.design-handoff.json` v2」（与 `rewrite-spec-residue-general-final` 同主题、已知为假）⇒ 独立立项。
+3. **B 组判据单向性硬化**（critic SHOULD_FIX-3）—— 「consumer list SHALL name only skills that have `skills/<name>/SKILL.md`」**不排斥**「存在但不消费」的 skill、也**不要求完备**⇒ 下一个改名周期会复 drift ⇒ 硬化方向：守卫改为「文档清单 == 代码级消费方检测结果」的封闭判据。
+4. **delta 形态垃圾结构** —— 9 份 spec 首行是 `## ADDED Requirements`（未合并的 change delta 被误归档为 capability spec）；`post-flow-analysis` / `rfc-rddf-*` 的 Requirement 名是自动生成的（`fix-adr-0027-cli-optin-gate` / `acceptance-3`）⇒ 需专项重写，不是残留名问题。
+5. **`dashboard-verification-status` 围栏示例与 schema 脱节** —— 缺 `rdd-builder` / `pending-agent`，含 enum 外的 `null` ⇒ 文本修正专项（围栏式标注只豁免旧名，不修脱节）。
+6. **围栏式 `enum` 的 schema 机检交叉校验** —— backlog（会让扫描器耦合 `_lib/schemas/`，破坏「能在任何有 `openspec/specs` 的项目上独立跑」的设计）。
+7. **`spec_residue_scan.py:488` 的 `hit_lines` 是死变量** —— 改前就存在（只 `add` 从不读），本次未删（改动最小化边界）。
 

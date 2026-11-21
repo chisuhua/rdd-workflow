@@ -15,17 +15,17 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 
 | `code_block_in` × `title_in` | 命中处数 | 命中块数 | 命中 spec 份数 |
 |---|---|---|---|
-| `True` × `True` ← 选定（冻结） | 307 | 161 | 42 |
-| `True` × `False` | 287 | 160 | 42 |
-| `False` × `True` | 305 | 160 | 41 |
-| `False` × `False` | 285 | 159 | 41 |
+| `True` × `True` ← 选定（冻结） | 303 | 159 | 41 |
+| `True` × `False` | 283 | 158 | 41 |
+| `False` × `True` | 301 | 158 | 40 |
+| `False` × `False` | 281 | 157 | 40 |
 
 ## 基线（选定口径）
 
 - 扫描 spec 文件：**165** 份
-- 命中实例：**307** 处（其中未被豁免 **4** 处）
-- 命中块：**161** 块
-- 命中 spec：**42** 份
+- 命中实例：**303** 处（其中未被豁免 **0** 处）
+- 命中块：**159** 块
+- 命中 spec：**41** 份
 - `stale allow`（过期豁免）：**0** 处
 
 ## 既有签批（不由本台账合并）
@@ -40,12 +40,7 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 
 ## 残留清单
 
-| file | line | requirement_title | matched_token | category | disposition | owner | signoff | date |
-|---|---|---|---|---|---|---|---|---|
-| openspec/specs/general/spec.md | 127 | general-docs-match-code | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/general/spec.md | 145 | general-docs-match-code | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/general/spec.md | 146 | general-docs-match-code | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/general/spec.md | 147 | general-docs-match-code | guide-spec | unclassified | unset |  |  |  |
+（无 —— `disposition=unset` 的行已归零）
 
 ## 围栏式豁免清单
 
@@ -59,9 +54,6 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 
 ## 合计
 
-- `disposition=unset`：**4** 条命中记录（Phase 1 的待办量）
+- `disposition=unset`：**0** 条命中记录（Phase 1 的待办量）
 - 已登记豁免（标注）：**303** 处
 - 命中 token 分布：
-  - `guide-arch`: 2
-  - `guide-plan`: 1
-  - `guide-spec`: 1

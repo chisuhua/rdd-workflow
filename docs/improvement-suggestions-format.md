@@ -6,7 +6,7 @@
 
 This document is the single source of truth for how the
 `improvement-suggestions.md` file is structured, read, and written by the
-rdd-workflow skills (`guide-design`, `guide-plan`, `propose`, `dashboard`).
+rdd-workflow skills (`rdd-planner`, `rdd-builder`, `propose`, `add-improve`).
 
 ---
 
@@ -21,7 +21,7 @@ the full proposal content — that lives in `.rddf/improvements/<name>.md`.
 ```markdown
 # 提案池（待设计审查）
 
-> design 阶段输入。`guide-design` 逐个审查（approve/reject/defer），批准后**直接落盘** `openspec/changes/<name>/proposal.md` 并添加一行到 `improvement-approved.md`。
+> design 阶段输入。`rdd-planner` 逐个审查（approve/reject/defer），批准后添加一行到 `improvement-approved.md`；`openspec/changes/<name>/proposal.md` 由 `rdd-builder` P0 从 improvement 草稿落盘。
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
@@ -89,7 +89,7 @@ and ensures a single source of truth for each proposal's details.
 ### 1. Proposal creation
 
 Proposals are created as individual `.rddf/improvements/<name>.md` files (manually
-or by `guide-arch` gap analysis). Each file contains the full 5-section
+or by `add-improve`). Each file contains the full 5-section
 proposal content.
 
 ### 2. Index update
@@ -97,20 +97,21 @@ proposal content.
 When a new proposal is added to the pool, `improvement-suggestions.md` is updated
 with a new table row linking to the improvement file.
 
-### 3. Review flow (`guide-design` Phase 3)
+### 3. Review flow (`rdd-planner`)
 
-1. `guide-design` reads `improvement-suggestions.md` via `list_improvements()`.
+1. `rdd-planner` reads `improvement-suggestions.md` and the `.rddf/improvements/*.md` drafts (via `read_improvement_entries()`).
 2. For each entry, it follows the link to `.rddf/improvements/<name>.md` to display
    the full content for review.
-3. Approved proposals are added to `improvement-approved.md` AND design approval
-   directly creates `openspec/changes/<name>/{proposal.md, .openspec.yaml,
-   roadmap-meta.yaml}` (Path A — move-proposal-creation-to-design).
+3. Approved proposals are added to `improvement-approved.md`; the change itself is
+   created later — `rdd-builder` P0 materializes
+   `openspec/changes/<name>/proposal.md` from the improvement draft
+   (Path A — move-proposal-creation-to-design).
 4. Rejected proposals remain in `.rddf/improvements/` but never appear in the
    approved index.
 
-### 4. Consumption flow (`guide-plan` propose)
+### 4. Consumption flow (`rdd-builder` P0 intake)
 
-1. `guide-plan` reads `improvement-approved.md` via `list_approved()`.
+1. `rdd-builder` P0 receives the approved set via `.rddf/state/.planner-handoff.json`.
 2. For each approved entry, it follows the link to `.rddf/improvements/<name>.md`.
 3. It creates an OpenSpec change using the 5-section content.
 
@@ -122,7 +123,7 @@ with a new table row linking to the improvement file.
 
 | Function                          | Description                                                |
 |-----------------------------------|------------------------------------------------------------|
-| `list_improvements <project_root>` | Parse suggestions table. Returns `name\|priority\|source` lines. |
+| `list_improvements <project_root>` | List `.rddf/improvements/*.md`. Returns `name\|priority\|source\|status` lines. |
 
 ### Python (`skills/_lib/state_reader.py`)
 
@@ -156,18 +157,20 @@ and storing content in individual files.
 
 ## Consumers
 
-All skills that touch `improvement-suggestions.md` MUST read it as a Markdown
-table and follow the links to `.rddf/improvements/*.md`:
+All skills that touch `improvement-suggestions.md` **or the linked
+`.rddf/improvements/*.md` drafts** MUST read the index as a Markdown table and
+follow the links to `.rddf/improvements/*.md`:
 
 | Skill             | Where the format matters                                       |
 |-------------------|----------------------------------------------------------------|
-| `guide-design.md` | Phase 3 (review proposals, approve/reject/defer); also writes `improvement-approved.md` and `openspec/changes/<name>/proposal.md` on approval |
-| `guide-plan.md`   | Phase 0 intake (read `improvement-approved.md` and `.design-handoff.json`'s `changes_pre_created` to identify pre-created changes) |
-| `propose.md`      | Legacy direct-create fallback for projects not yet migrated to Path A (Phase 4d lookup of phase/category from improvement file) |
-| `dashboard`       | Pending section (count unapproved proposals)                   |
+| `rdd-planner`     | Proposal pool governance (review / approve / reject / defer); also writes `improvement-approved.md` |
+| `rdd-builder`     | Phase 0 intake (read `.rddf/state/.planner-handoff.json` and each `.rddf/improvements/<name>.md` draft) |
+| `propose`         | Legacy direct-create fallback for projects not yet migrated to Path A (Phase 4d lookup of phase/category from improvement file) |
+| `add-improve`     | Creates the improvement draft and registers it in `improvement-suggestions.md` |
 
-The helper in `skills/_lib/state.sh::list_improvements()` centralizes the
-parsing logic so consumers don't re-implement regex extraction.
+The helper in `skills/_lib/state.sh::list_improvements()` lists
+`.rddf/improvements/*.md` with parsed metadata so consumers don't re-implement
+the extraction logic.
 
 ---
 
@@ -175,7 +178,7 @@ parsing logic so consumers don't re-implement regex extraction.
 
 ### v2 Schema Example (populate-state.json)
 
-`populate-state.json` v2 schema is used by `guide-arch` Phase 6 internal Roadmap Sync step to track incremental roadmap regeneration state. Defined in `_lib/schemas/populate_state_schema.json` (version const=2).
+`populate-state.json` v2 schema is **owned** by `rdd-planner` per ADR-0048 (since v4 `rdd-arch` no longer writes it) to track incremental roadmap regeneration state. Defined in `_lib/schemas/populate_state_schema.json` (version const=2).
 
 ```json
 {

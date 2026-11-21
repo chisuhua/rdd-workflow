@@ -62,10 +62,70 @@ def test_general_spec_no_active_guide_spec_reference() -> None:
 
 
 @requires_general_spec
-def test_general_spec_consumers_drop_guide_spec_add_arch_plan() -> None:
+def test_general_spec_names_current_improvement_consumers() -> None:
+    """The consumer list in general/spec.md must name **current** skills.
+
+    Retired stage names are guarded by the spec-residue scanner
+    (skills/rdd-doctor/scripts/spec_residue_scan.py); this test pins the
+    positive side so the list cannot be emptied out either.
+    """
     spec = _read("openspec/specs/general/spec.md")
-    assert "guide-arch" in spec
-    assert "guide-plan" in spec
+    for name in ("rdd-planner", "rdd-builder", "propose", "add-improve"):
+        assert name in spec, f"general/spec.md missing current consumer '{name}'"
+
+
+def _improvement_consumer_skills(doc: str) -> list[str]:
+    """Parse the first column of the `## Consumers` table.
+
+    Returns the skill names listed there (backticks and a trailing `.md`
+    suffix are stripped so the result can be compared against
+    `skills/<name>/SKILL.md`).
+    """
+    names: list[str] = []
+    in_section = False
+    for raw in doc.splitlines():
+        line = raw.strip()
+        if line.startswith("## "):
+            in_section = line.strip("# ").strip().lower() == "consumers"
+            continue
+        if not in_section or not line.startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        first = cells[0].strip("`").removesuffix(".md")
+        if not first or set(first) <= set("-—"):
+            continue
+        if first.lower() == "skill":
+            continue
+        names.append(first)
+    return names
+
+
+def test_improvement_suggestions_format_consumer_list_current() -> None:
+    """docs/improvement-suggestions-format.md consumer list = existing skills only."""
+    doc = _read("docs/improvement-suggestions-format.md")
+    names = _improvement_consumer_skills(doc)
+    assert names, "no consumer table parsed from the '## Consumers' section"
+    for name in names:
+        assert (REPO_ROOT / "skills" / name / "SKILL.md").is_file(), (
+            f"consumer '{name}' has no skills/{name}/SKILL.md on disk"
+        )
+    for expected in ("rdd-planner", "rdd-builder", "propose", "add-improve"):
+        assert expected in names, f"consumer list missing '{expected}' (got {names})"
+
+
+def test_improvement_suggestions_format_no_retired_stage_names() -> None:
+    """The format doc must not reference retired stage names any more."""
+    doc = _read("docs/improvement-suggestions-format.md")
+    for retired in ("guide-spec", "guide-arch", "guide-plan", "guide-ship", "guide-design"):
+        assert retired not in doc, f"doc still references retired stage '{retired}'"
+
+
+def test_superseded_adr_0001_marked_in_index() -> None:
+    """A superseded ADR must be marked as such in the ADR and in the index."""
+    adr = _read("docs/adr/ADR-0001-propose-plan-execute-state-machine.md")
+    assert "已替代为 ADR-0002 + ADR-0003" in adr
+    readme = _read("docs/adr/README.md")
+    assert "已替代为 ADR-0002 + ADR-0003" in readme
 
 
 def _count_skill_files(include_top_level: bool = False) -> int:
