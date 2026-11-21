@@ -535,7 +535,7 @@ def test_r4_repo_residue_constant():
     """AC-9：本仓的已知残留基线。
 
     两个口径分开断言（否则「补标注」「改指」「真清理」无法区分）：
-      - **未豁免**（= 台账待办，Phase 1 的判据）：25 处 / 20 块 / 10 份
+      - **未豁免**（= 台账待办，Phase 1 的判据）：16 处 / 11 块 / 5 份
       - 含已豁免（机器看到的总量）：319 处 / 170 块 / 44 份
 
     ⚠️ 三种处置对这两个口径的影响**不同**：
@@ -552,7 +552,9 @@ def test_r4_repo_residue_constant():
     豁免 281→283；含已豁免不变）；
     `repoint-spec-residue-batch6` 把 3 份的 6 行**改指**（→36/29/12；含已豁免 325→319/176→170/46→44）；
     `annotate-spec-residue-dead-blocks-batch7a` 把 3 份的 11 行落成 **RETIRED 注记 + allow=history**
-    （→25/20/10；含已豁免不变；豁免 283→294）。
+    （→25/20/10；含已豁免不变；豁免 283→294）；
+    `annotate-spec-residue-dead-blocks-batch7b1` 把 6 份的 9 行落成**围栏式**注记 + allow=history
+    （→16/11/5；含已豁免不变；豁免 294→303；围栏形态**不新增 very long**）。
     ⚠️ Phase 1 的每个改动都必须在同一提交更新这些常数，否则它会在下次运行时被读成 regression。
     """
     from spec_residue_scan import scan_specs
@@ -560,9 +562,9 @@ def test_r4_repo_residue_constant():
     assert result.files_scanned == 165, result.files_scanned
 
     unexempted = [h for h in result.hits if not h.category]
-    assert len(unexempted) == 25, len(unexempted)
-    assert len({(h.file, h.block_line) for h in unexempted}) == 20
-    assert len({h.file for h in unexempted}) == 10
+    assert len(unexempted) == 16, len(unexempted)
+    assert len({(h.file, h.block_line) for h in unexempted}) == 11
+    assert len({h.file for h in unexempted}) == 5
 
     assert len(result.hits) == 319, len(result.hits)
     assert len(result.blocks()) == 170, len(result.blocks())

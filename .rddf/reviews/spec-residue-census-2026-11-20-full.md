@@ -23,7 +23,7 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 ## 基线（选定口径）
 
 - 扫描 spec 文件：**165** 份
-- 命中实例：**319** 处（其中未被豁免 **25** 处）
+- 命中实例：**319** 处（其中未被豁免 **16** 处）
 - 命中块：**170** 块
 - 命中 spec：**44** 份
 - `stale allow`（过期豁免）：**0** 处
@@ -42,25 +42,16 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 
 | file | line | requirement_title | matched_token | category | disposition | owner | signoff | date |
 |---|---|---|---|---|---|---|---|---|
-| openspec/specs/cross-repo-deps/spec.md | 126 | Hub dependency issue creation | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/cross-repo-federation/spec.md | 119 | Design Gate Integration | guide-design | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 127 | general-docs-match-code | guide-arch | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 145 | general-docs-match-code | guide-arch | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 146 | general-docs-match-code | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 147 | general-docs-match-code | guide-spec | unclassified | unset |  |  |  |
-| openspec/specs/plan-done-quality-gate/spec.md | 8 | run_plan_checks 在 plan_done_gate 正常执行路径中被调用 | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/plan-done-quality-gate/spec.md | 12 | run_plan_checks 在 plan_done_gate 正常执行路径中被调用 | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 26 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 28 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 31 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/roadmap-hierarchy/spec.md | 149 | plan-done gate 集成 fragment 校验 | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/roadmap-proposal-guidance/spec.md | 148 | rdd-doctor 不感知主题覆盖率字段 | guide-design | unclassified | unset |  |  |  |
 | openspec/specs/skeleton-planning/spec.md | 11 | planned-status-lifecycle | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/skeleton-planning/spec.md | 22 | planned-status-lifecycle | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/skeleton-planning/spec.md | 23 | planned-status-lifecycle | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/skeleton-planning/spec.md | 43 | skeleton-minimal-artifacts | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/skeleton-planning/spec.md | 47 | skeleton-minimal-artifacts | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/skeleton-planning/spec.md | 83 | proposal-suggestions-skeleton-status | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/spec-validation-gates/spec.md | 149 | guide-plan.md plan-done gate MUST validate all active changes | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/spec-validation-gates/spec.md | 151 | guide-plan.md plan-done gate MUST validate all active changes | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/spec-validation-gates/spec.md | 158 | guide-plan.md plan-done gate MUST validate all active changes | guide-plan | unclassified | unset |  |  |  |
@@ -80,11 +71,10 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 
 ## 合计
 
-- `disposition=unset`：**25** 条命中记录（Phase 1 的待办量）
-- 已登记豁免（标注）：**294** 处
+- `disposition=unset`：**16** 条命中记录（Phase 1 的待办量）
+- 已登记豁免（标注）：**303** 处
 - 命中 token 分布：
   - `guide-arch`: 2
-  - `guide-design`: 2
-  - `guide-plan`: 14
+  - `guide-plan`: 7
   - `guide-ship`: 6
   - `guide-spec`: 1
