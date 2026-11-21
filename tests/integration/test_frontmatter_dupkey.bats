@@ -22,9 +22,11 @@ assert_no_dup_version() {
 # all had duplicate `version:` keys under metadata: (10 files total).
 # This test was previously missing for those skills, letting the bug
 # silently drift into npm-published skills.
-@test "all 13 skills: frontmatter metadata has at most one version key" {
+@test "all skills: frontmatter metadata has at most one version key" {
   local failures=()
-  for f in skills/*.md; do
+  local files=(skills/*/SKILL.md)
+  [ -e "${files[0]}" ] || { echo "FAIL: no skills/*/SKILL.md found"; return 1; }
+  for f in "${files[@]}"; do
     local n
     n=$(awk '/^metadata:/{m=1;next} m && /^---$/{exit} m && /^[[:space:]]+version:/{print}' "$f" | wc -l)
     if [ "$n" -gt 1 ]; then
@@ -37,18 +39,20 @@ assert_no_dup_version() {
   fi
 }
 
-@test "all 13 skills: version is at most X.Y[.Z] and present in frontmatter" {
+@test "all skills: version is at most X.Y[.Z] and present in frontmatter" {
   # Use PyYAML (last-write-wins) for the value, since downstream consumers
   # (Python tooling) typically use yaml.safe_load which picks the LAST
   # version key — if duplicate existed, the wrong value would resolve.
   # After the duplicate-version fix, both first-write and last-write
   # resolve to the same value, so this test asserts that.
   #
-  # INSTALL.md is a special case: its `version:` lives at the top level
-  # (not nested under metadata:). All 12 other skills use metadata.version.
-  # We accept either form by checking both.
+  # `skills/<name>/SKILL.md` skills use metadata.version; the top-level
+  # `version:` fallback is kept for skills that declare it at the root.
+  # (skills/INSTALL.md is the installer, not a sub-skill — out of scope.)
   local failures=()
-  for f in skills/*.md; do
+  local files=(skills/*/SKILL.md)
+  [ -e "${files[0]}" ] || { echo "FAIL: no skills/*/SKILL.md found"; return 1; }
+  for f in "${files[@]}"; do
     local v
     v=$(awk '/^---$/{c++; if(c==2) exit} c>=1 {print}' "$f" | python3 -c "
 import sys, yaml

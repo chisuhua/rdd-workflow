@@ -84,7 +84,11 @@
 
 ## 记 tail（范围外）
 
-1. **`general/spec.md` 的 `general-status-guide-skill-revision` Requirement 整体失效** —— 正文仍写「`skills/guide.md` 和 `skills/status.md` SHALL accurately reflect the codebase state」，而这两个文件**都不存在**（`guide` 已归档到 `docs/legacy/` per ADR-0063，`status` 现为 `rddf status` CLI）⇒ 需专项重写（不在残留扫描器判据内）。
+1. ✅ **已处置（2026-11-22，`retire-general-status-guide-requirement`）** —— `general/spec.md` 的 `general-status-guide-skill-revision` Requirement（88 行 / 14 条 Scenario）**整条退役**（主体 `skills/guide.md` 与 `skills/status.md` 都已归档到 `docs/legacy/skills/`，`skills/_lib/scan-state.sh` 不存在，Scenario 11 点名的 12 个 bats 有 11 个不存在）。连带修正 `general-harden-doc-consistency` 里点名同一批已归档文件的死判据（Group B），并修复 `test_frontmatter_dupkey.bats` 的 glob 塌陷（覆盖 1 → 26）。台账：`.rddf/reviews/retire-general-status-guide-2026-11-22.md`。
+   - **退役暴露的两条实现缺口**（原 spec 要求、successor 侧未实现）：
+     - **`rddf status` 缺 `review` 状态渲染** —— `_lib/cli/status_cmd.py:58-65` 的 `_STATUS_ICON` 无 `review` 键，磁盘推导 `:111-117` 只产 planned/in_worktree/committed 三态。
+     - **`rddf archive` 缺交互确认门** —— `_lib/archive.sh:1025` 无条件 `openspec archive "$name" --yes`，原 Mode C 的「确认先于 archive + `-y` 旁路」语义丢失，且无测试锁。
+     - ⇒ 两条均属 `implementation_gap`（不是文档缺口），独立立项评估。
 2. **`doc-truth-sync/spec.md` 的其余 path 形态漂移** —— `:50` `skills/loop.md`（不存在）、`:51` `skills/_lib/session_v20.py`（不存在）、`:156` `skills/foo.md`（skills 已目录化）。
 3. **`docs/improvement-approved-format.md:3` 头部仍是旧机制描述** —— 「`guide-design` 批准后直接落盘…`guide-plan` intake…`.design-handoff.json` v2」（与 `rewrite-spec-residue-general-final` 同主题、已知为假）⇒ 独立立项。
 4. **B 组判据单向性硬化**（critic SHOULD_FIX-3）—— 「consumer list SHALL name only skills that have `skills/<name>/SKILL.md`」**不排斥**「存在但不消费」的 skill、也**不要求完备**⇒ 下一个改名周期会复 drift ⇒ 硬化方向：守卫改为「文档清单 == 代码级消费方检测结果」的封闭判据。
