@@ -408,13 +408,14 @@ def test_r4_repo_residue_constant():
     """AC-9：本仓的已知残留基线。
 
     两个口径分开断言（否则「补标注」与「真清理」无法区分）：
-      - **未豁免**（= 台账待办，Phase 1 的判据）：66 处 / 49 块 / 24 份
-      - 含已豁免（机器看到的总量）：325 处 / 176 块 / 46 份
+      - **未豁免**（= 台账待办，Phase 1 的判据）：44 处 / 36 块 / 16 份
+      - 含已豁免（机器看到的总量）：325 处 / 176 块 / 46 份（标注**不消除**命中，只标记豁免）
 
     历史：2026-11-20 首次冻结 350 / 192 / 46（0 豁免）；
     `align-spec-residue-prior-18` 把 18 份已签批 spec 的 120 行落成标注/改指（350→191/111/31）；
     `annotate-spec-residue-guard-batch3` 把 4 份 guard spec 的 52 行标成 guard/rename-history（→102/69/27）；
-    `annotate-spec-residue-guard-batch4` 把 3 份的 31 行落成标注/改指/注记（→66/49/24）。
+    `annotate-spec-residue-guard-batch4` 把 3 份的 31 行落成标注/改指/注记（→66/49/24）；
+    `annotate-spec-residue-guard-batch5` 把 10 份的 13 行落成纯标注（→44/36/16；豁免 259→281）。
     ⚠️ Phase 1 的每个改动都必须在同一提交更新这些常数，否则它会在下次运行时被读成 regression。
     """
     from spec_residue_scan import scan_specs
@@ -422,9 +423,9 @@ def test_r4_repo_residue_constant():
     assert result.files_scanned == 165, result.files_scanned
 
     unexempted = [h for h in result.hits if not h.category]
-    assert len(unexempted) == 66, len(unexempted)
-    assert len({(h.file, h.block_line) for h in unexempted}) == 49
-    assert len({h.file for h in unexempted}) == 24
+    assert len(unexempted) == 44, len(unexempted)
+    assert len({(h.file, h.block_line) for h in unexempted}) == 36
+    assert len({h.file for h in unexempted}) == 16
 
     assert len(result.hits) == 325, len(result.hits)
     assert len(result.blocks()) == 176, len(result.blocks())

@@ -23,7 +23,7 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 ## 基线（选定口径）
 
 - 扫描 spec 文件：**165** 份
-- 命中实例：**325** 处（其中未被豁免 **66** 处）
+- 命中实例：**325** 处（其中未被豁免 **44** 处）
 - 命中块：**176** 块
 - 命中 spec：**46** 份
 - `stale allow`（过期豁免）：**0** 处
@@ -42,11 +42,9 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 
 | file | line | requirement_title | matched_token | category | disposition | owner | signoff | date |
 |---|---|---|---|---|---|---|---|---|
-| openspec/specs/archive-auto-commit/spec.md | 93 | `rdd-builder` P3 lightweight mode MUST also call helper | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/complete-project-yaml-config-gaps/spec.md | 70 | verifier-explicit-runner-override | ac-verifier | unclassified | unset |  |  |  |
 | openspec/specs/complete-project-yaml-config-gaps/spec.md | 179 | verifier-hook-provider-routing | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/complete-project-yaml-config-gaps/spec.md | 203 | guide-ship-phase-1-detect-lightweight | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/complete-project-yaml-config-gaps/spec.md | 297 | zero-regression-backward-compat | ac-verifier | unclassified | unset |  |  |  |
+| openspec/specs/complete-project-yaml-config-gaps/spec.md | 298 | zero-regression-backward-compat | ac-verifier | unclassified | unset |  |  |  |
 | openspec/specs/cross-repo-deps/spec.md | 126 | Hub dependency issue creation | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/cross-repo-federation/spec.md | 119 | Design Gate Integration | guide-design | unclassified | unset |  |  |  |
 | openspec/specs/dashboard-verification-status/spec.md | 50 | Verification status schema SHALL be explicit and versioned | guide-plan | unclassified | unset |  |  |  |
@@ -55,26 +53,12 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 | openspec/specs/general/spec.md | 145 | general-docs-match-code | guide-arch | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 146 | general-docs-match-code | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 147 | general-docs-match-code | guide-spec | unclassified | unset |  |  |  |
-| openspec/specs/migration-docs/spec.md | 9 | migration-guide-content | guide-spec | unclassified | unset |  |  |  |
-| openspec/specs/migration-docs/spec.md | 33 | usage-doc-update | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/migration-docs/spec.md | 33 | usage-doc-update | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/migration-docs/spec.md | 33 | usage-doc-update | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/openspec-version-degradation/spec.md | 8 | CLI 版本检测与降级 | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/openspec-version-degradation/spec.md | 13 | CLI 版本检测与降级 | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/openspec-version-degradation/spec.md | 19 | CLI 版本检测与降级 | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/plan-done-quality-gate/spec.md | 8 | run_plan_checks 在 plan_done_gate 正常执行路径中被调用 | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/plan-done-quality-gate/spec.md | 12 | run_plan_checks 在 plan_done_gate 正常执行路径中被调用 | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/post-flow-analysis/spec.md | 10 | fix-adr-0027-cli-optin-gate | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/propose-changes/spec.md | 37 | parent-feature-name-validation | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/rddf-layout-manifest/spec.md | 118 | acceptance-13 | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/rddf-layout-manifest/spec.md | 118 | acceptance-13 | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/rddf-layout-manifest/spec.md | 118 | acceptance-13 | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/rddf-layout-manifest/spec.md | 123 | acceptance-13 | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/rddf-layout-manifest/spec.md | 123 | acceptance-13 | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/rddf-layout-manifest/spec.md | 123 | acceptance-13 | guide-ship | unclassified | unset |  |  |  |
-| openspec/specs/release-management/spec.md | 9 | beta-version-published | guide-arch | unclassified | unset |  |  |  |
-| openspec/specs/release-management/spec.md | 9 | beta-version-published | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/release-management/spec.md | 9 | beta-version-published | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 26 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 28 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 31 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
@@ -98,25 +82,19 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 | openspec/specs/spec-validation-gates/spec.md | 151 | guide-plan.md plan-done gate MUST validate all active changes | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/spec-validation-gates/spec.md | 158 | guide-plan.md plan-done gate MUST validate all active changes | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/spec-validation-gates/spec.md | 167 | guide-plan.md plan-done gate MUST validate all active changes | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/spec-validation-gates/spec.md | 183 | rdd-builder P3 archive pre-flight MUST call validate_delta_targets.py | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/state-management/spec.md | 65 | iteration-json-planned-status | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/state-management/spec.md | 73 | iteration-json-planned-status | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/third-party-feedback-loop/spec.md | 33 | Phase traces are replayable from any project subdirectory | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/third-party-feedback-loop/spec.md | 39 | Phase traces are replayable from any project subdirectory | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/v4-planner-scope-correction/spec.md | 136 | sh-broken-removed-or-repointed | guide-design | unclassified | unset |  |  |  |
-| openspec/specs/verifier-archive-gate/spec.md | 10 | ADR-0035 documents verifier/archive dual-track boundary | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/verifier-archive-gate/spec.md | 31 | STRICT_AC_GATE escalation token | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/verifier-lifecycle/spec.md | 166 | Verification failures SHALL route back to plan or ship | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/verifier-lifecycle/spec.md | 166 | Verification failures SHALL route back to plan or ship | guide-ship | unclassified | unset |  |  |  |
 
 ## 合计
 
-- `disposition=unset`：**66** 条命中记录（Phase 1 的待办量）
-- 已登记豁免（标注）：**259** 处
+- `disposition=unset`：**44** 条命中记录（Phase 1 的待办量）
+- 已登记豁免（标注）：**281** 处
 - 命中 token 分布：
-  - `guide-arch`: 8
-  - `guide-design`: 10
-  - `guide-plan`: 25
-  - `guide-ship`: 16
-  - `guide-spec`: 2
-  - `ac-verifier`: 5
+  - `guide-arch`: 6
+  - `guide-design`: 6
+  - `guide-plan`: 20
+  - `guide-ship`: 8
+  - `guide-spec`: 1
+  - `ac-verifier`: 3
