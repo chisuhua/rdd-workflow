@@ -15,17 +15,17 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 
 | `code_block_in` × `title_in` | 命中处数 | 命中块数 | 命中 spec 份数 |
 |---|---|---|---|
-| `True` × `True` ← 选定（冻结） | 325 | 176 | 46 |
-| `True` × `False` | 302 | 175 | 46 |
-| `False` × `True` | 323 | 175 | 45 |
-| `False` × `False` | 300 | 174 | 45 |
+| `True` × `True` ← 选定（冻结） | 319 | 170 | 44 |
+| `True` × `False` | 296 | 169 | 44 |
+| `False` × `True` | 317 | 169 | 43 |
+| `False` × `False` | 294 | 168 | 43 |
 
 ## 基线（选定口径）
 
 - 扫描 spec 文件：**165** 份
-- 命中实例：**325** 处（其中未被豁免 **42** 处）
-- 命中块：**176** 块
-- 命中 spec：**46** 份
+- 命中实例：**319** 处（其中未被豁免 **36** 处）
+- 命中块：**170** 块
+- 命中 spec：**44** 份
 - `stale allow`（过期豁免）：**0** 处
 
 ## 既有签批（不由本台账合并）
@@ -42,9 +42,6 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 
 | file | line | requirement_title | matched_token | category | disposition | owner | signoff | date |
 |---|---|---|---|---|---|---|---|---|
-| openspec/specs/complete-project-yaml-config-gaps/spec.md | 70 | verifier-explicit-runner-override | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/complete-project-yaml-config-gaps/spec.md | 179 | verifier-hook-provider-routing | ac-verifier | unclassified | unset |  |  |  |
-| openspec/specs/complete-project-yaml-config-gaps/spec.md | 298 | zero-regression-backward-compat | ac-verifier | unclassified | unset |  |  |  |
 | openspec/specs/cross-repo-deps/spec.md | 126 | Hub dependency issue creation | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/cross-repo-federation/spec.md | 119 | Design Gate Integration | guide-design | unclassified | unset |  |  |  |
 | openspec/specs/general/spec.md | 127 | general-docs-match-code | guide-arch | unclassified | unset |  |  |  |
@@ -56,7 +53,6 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 | openspec/specs/openspec-version-degradation/spec.md | 19 | CLI 版本检测与降级 | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/plan-done-quality-gate/spec.md | 8 | run_plan_checks 在 plan_done_gate 正常执行路径中被调用 | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/plan-done-quality-gate/spec.md | 12 | run_plan_checks 在 plan_done_gate 正常执行路径中被调用 | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/post-flow-analysis/spec.md | 10 | fix-adr-0027-cli-optin-gate | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 26 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 28 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
 | openspec/specs/rfc-rddf-project-yaml-config-i10/spec.md | 31 | acceptance-3 | guide-ship | unclassified | unset |  |  |  |
@@ -82,8 +78,6 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 | openspec/specs/spec-validation-gates/spec.md | 167 | guide-plan.md plan-done gate MUST validate all active changes | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/state-management/spec.md | 65 | iteration-json-planned-status | guide-plan | unclassified | unset |  |  |  |
 | openspec/specs/state-management/spec.md | 73 | iteration-json-planned-status | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/third-party-feedback-loop/spec.md | 33 | Phase traces are replayable from any project subdirectory | guide-plan | unclassified | unset |  |  |  |
-| openspec/specs/third-party-feedback-loop/spec.md | 39 | Phase traces are replayable from any project subdirectory | guide-plan | unclassified | unset |  |  |  |
 
 ## 围栏式豁免清单
 
@@ -93,16 +87,15 @@ normative 段 = `### Requirement:` 标题+正文 / `#### Scenario:` 标题+正�
 
 | file | 围栏行范围 | code | tokens |
 |---|---|---|---|
-| openspec/specs/dashboard-verification-status/spec.md | 45–57 | `enum` | guide-plan, guide-ship |
+| `openspec/specs/dashboard-verification-status/spec.md` | 45–57 | `enum` | guide-plan, guide-ship |
 
 ## 合计
 
-- `disposition=unset`：**42** 条命中记录（Phase 1 的待办量）
+- `disposition=unset`：**36** 条命中记录（Phase 1 的待办量）
 - 已登记豁免（标注）：**283** 处
 - 命中 token 分布：
   - `guide-arch`: 6
   - `guide-design`: 6
-  - `guide-plan`: 19
-  - `guide-ship`: 7
+  - `guide-plan`: 17
+  - `guide-ship`: 6
   - `guide-spec`: 1
-  - `ac-verifier`: 3

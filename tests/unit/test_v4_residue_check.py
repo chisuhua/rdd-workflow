@@ -534,9 +534,14 @@ def test_r4_split_blocks_shares_fence_predicate(tmp_path):
 def test_r4_repo_residue_constant():
     """AC-9：本仓的已知残留基线。
 
-    两个口径分开断言（否则「补标注」与「真清理」无法区分）：
-      - **未豁免**（= 台账待办，Phase 1 的判据）：42 处 / 35 块 / 15 份
-      - 含已豁免（机器看到的总量）：325 处 / 176 块 / 46 份（标注**不消除**命中，只标记豁免）
+    两个口径分开断言（否则「补标注」「改指」「真清理」无法区分）：
+      - **未豁免**（= 台账待办，Phase 1 的判据）：36 处 / 29 块 / 12 份
+      - 含已豁免（机器看到的总量）：319 处 / 170 块 / 44 份
+
+    ⚠️ 三种处置对这两个口径的影响**不同**：
+      - **标注**（`allow`）：未豁免 −N，含已豁免**不变**（token 还在，只是被标记）；
+      - **改指**（换掉 token）：未豁免 −N，含已豁免**也 −N**（token 真的消失）；
+      - 纯清理（删行）：两者都 −N。
 
     历史：2026-11-20 首次冻结 350 / 192 / 46（0 豁免）；
     `align-spec-residue-prior-18` 把 18 份已签批 spec 的 120 行落成标注/改指（350→191/111/31）；
@@ -544,7 +549,8 @@ def test_r4_repo_residue_constant():
     `annotate-spec-residue-guard-batch4` 把 3 份的 31 行落成标注/改指/注记（→66/49/24）；
     `annotate-spec-residue-guard-batch5` 把 10 份的 13 行落成纯标注（→44/36/16；豁免 259→281）；
     `extend-spec-residue-fence-annotation` 加围栏式豁免并用它标掉 dashboard 的 2 处（→42/35/15；
-    豁免 281→283；含已豁免不变）。
+    豁免 281→283；含已豁免不变）；
+    `repoint-spec-residue-batch6` 把 3 份的 6 行**改指**（→36/29/12；含已豁免 325→319/176→170/46→44）。
     ⚠️ Phase 1 的每个改动都必须在同一提交更新这些常数，否则它会在下次运行时被读成 regression。
     """
     from spec_residue_scan import scan_specs
@@ -552,13 +558,13 @@ def test_r4_repo_residue_constant():
     assert result.files_scanned == 165, result.files_scanned
 
     unexempted = [h for h in result.hits if not h.category]
-    assert len(unexempted) == 42, len(unexempted)
-    assert len({(h.file, h.block_line) for h in unexempted}) == 35
-    assert len({h.file for h in unexempted}) == 15
+    assert len(unexempted) == 36, len(unexempted)
+    assert len({(h.file, h.block_line) for h in unexempted}) == 29
+    assert len({h.file for h in unexempted}) == 12
 
-    assert len(result.hits) == 325, len(result.hits)
-    assert len(result.blocks()) == 176, len(result.blocks())
-    assert len({h.file for h in result.hits}) == 46
+    assert len(result.hits) == 319, len(result.hits)
+    assert len(result.blocks()) == 170, len(result.blocks())
+    assert len({h.file for h in result.hits}) == 44
 
     # 围栏式豁免的可见性护栏（AC-12）：它必须留下可审计记录，不能只存在于注释里。
     assert [f.code for f in result.fence_allows] == ["enum"], result.fence_allows
