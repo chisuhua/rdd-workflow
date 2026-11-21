@@ -46,12 +46,12 @@ BATS_TIMEOUT=120 BATS_TIMEOUT_RETRY=240 ./test.sh --full --regression
 ./test.sh <file.bats|file.py>            # 单文件入口 (绕过 mode)
 
 # 单独跑某类 (绕过 test.sh, 用于调试)
-npm test                                # = bats tests/ --recursive (全量 bats, 不跑 pytest)
+npm test                                # = bats tests/ --recursive + pytest unit/integration (bats + pytest 都跑)
 bats tests/smoke.bats                   # 快速冒烟 (7 个 smoke cases)
 bats tests/_lib/test_skill.bats         # skill.bash parser (8 cases)
 bats tests/integration/test_global_install_external_project.bats  # 全局安装测试 (11 cases)
 
-# Python (npm test 不会跑, 必须显式调用)
+# Python (npm test 也会跑; 这里是单独跑的入口)
 python3 -m pytest tests/unit/ -q --tb=short          # 57 个 unit 文件
 python3 -m pytest tests/integration/ -q --tb=short   # 10 个 Python integration (.py)
 pip install -r requirements.txt                      # PyYAML, jsonschema, pytest
@@ -64,7 +64,7 @@ bash tests/scripts/report_regression.sh
 
 CI 在 `.github/workflows/test.yml`, 按序执行: 安装 deps → ruff → mypy strict → **测试隔离门（含断言质量检查）** → Python unit → Python integration → doctor structural/advisory → bats recursive → e2e smoke → 增量回归门 → 两个 shrink-only 断言.
 
-> **重要**: `npm test` 只跑 bats, **不会**捕获 Python 测试失败. 改完 Python 后必须手动 `pytest tests/` 或 `./test.sh --python`/`--unit`/`--integration`.
+> **重要**: `npm test` = **bats + pytest 都跑**（v3.0 起; 见 `package.json::scripts.test`）。但它是**裸跑** —— 无本地门（隔离 / ruff / mypy / doctor），也**不做** KNOWN_FAILURES baseline 对比 ⇒ 已知失败会直接报出来。交付前用 `./test.sh --full --regression`.
 
 ### Archive 前全量回归门（MANDATORY）
 
@@ -95,7 +95,7 @@ archive change (`rdd-builder` P3)
 - 文档化的双层 bootstrap 模式 (`source ... || source $HOME/.agents/skills/...`)
 - Python `_lib` 模块通过 `.pth` 发现
 - bash `source ~/.agents/skills/_lib/state.sh` 加载运行时 helper
-- 28 个子技能 symlink 完整性
+- 26 个子技能 symlink 完整性
 
 测试在 `$BATS_TMPDIR` 创建独立的 git 仓库, **不**修改源 repo 的 `.rddf/` (其他 bats 测试依赖 stale state, 删除会级联失败)。
 

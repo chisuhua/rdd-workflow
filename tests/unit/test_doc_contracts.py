@@ -128,6 +128,75 @@ def test_superseded_adr_0001_marked_in_index() -> None:
     assert "已替代为 ADR-0002 + ADR-0003" in readme
 
 
+def _skills_markdown_files() -> list[Path]:
+    return sorted((REPO_ROOT / "skills").rglob("*.md"))
+
+
+def test_skill_instruction_files_have_no_hardcoded_project_path() -> None:
+    """The instruction surface (skills/**/*.md) must not name a concrete project.
+
+    Generic placeholders (``/path/to/<repo>``, ``<project-root>``,
+    ``~/.config/opencode``, ``${PROJECT_ROOT}``) are allowed.
+    """
+    forbidden = (
+        re.compile(r"/path/to/CppHDL"),
+        re.compile(r"/workspace/project/"),
+        re.compile(r"/home/[^/\s]+/\.config/"),
+    )
+    for path in _skills_markdown_files():
+        text = path.read_text()
+        for pattern in forbidden:
+            assert not pattern.search(text), (
+                f"{path.relative_to(REPO_ROOT)} hardcodes a concrete path ({pattern.pattern})"
+            )
+
+
+def test_docs_do_not_claim_npm_test_skips_python() -> None:
+    """`npm test` runs bats AND pytest (v3.0+) — the docs must not claim otherwise."""
+    stale_phrases = (
+        "不跑 Python",
+        "不会跑 pytest",
+        "不会自动跑",
+        "仅覆盖 shell 测试",
+        "只跑 bats",
+        "不会**捕获 Python 测试失败",
+    )
+    for rel in ("USAGE.md", "AGENTS.md"):
+        text = _read(rel)
+        for lineno, line in enumerate(text.splitlines(), 1):
+            if "npm test" not in line:
+                continue
+            for phrase in stale_phrases:
+                assert phrase not in line, (
+                    f"{rel}:{lineno} claims npm test skips Python ({phrase!r}): {line.strip()}"
+                )
+        assert "bats + pytest" in text, f"{rel} does not state that npm test runs pytest"
+
+
+def test_tests_readme_layout_lists_every_top_level_entry() -> None:
+    """tests/README.md Layout must list every top-level dir + the root test files."""
+    readme = _read("tests/README.md")
+    layout = readme.split("## Layout", 1)[1].split("```", 2)[1]
+    for name in sorted(
+        p.name + ("/" if p.is_dir() else "")
+        for p in (REPO_ROOT / "tests").iterdir()
+        if p.name != "__pycache__"
+    ):
+        assert name in layout, f"tests/README.md Layout does not list '{name}'"
+    assert "deps-subagent.bash" in layout
+
+
+def test_skill_count_in_narrative_docs_matches_disk() -> None:
+    """Sub-skill counts in README.md / AGENTS.md must equal the canonical disk count."""
+    disk = _count_skill_files()
+    for rel in ("README.md", "AGENTS.md"):
+        text = _read(rel)
+        counts = [int(n) for n in re.findall(r"(\d+)\s*个子技能", text)]
+        assert counts, f"{rel} states no sub-skill count"
+        for n in counts:
+            assert n == disk, f"{rel} claims {n} sub-skills, disk has {disk}"
+
+
 def _count_skill_files(include_top_level: bool = False) -> int:
     """Count canonical sub-skill SKILL.md files.
 

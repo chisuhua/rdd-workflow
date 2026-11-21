@@ -9,21 +9,29 @@ tests/
 ├── README.md          # this file
 ├── test_helper.bash   # common setup/teardown + assertion helpers (load_lib resolver)
 ├── smoke.bats         # basic infrastructure sanity checks (7 cases)
+├── conftest.py        # puts the repo root on sys.path for pytest
+├── KNOWN_FAILURES.txt         # bats regression baseline (accepted known failures)
+├── KNOWN_PYTHON_FAILURES.txt  # pytest regression baseline (accepted known failures)
+├── KNOWN_UNEVALUATED.txt      # files not yet evaluated by the regression gate
 ├── _lib/              # bash helpers + per-helper unit tests
 │   ├── skill.bash              # shared frontmatter/metadata/commands/section parsers
 │   ├── deps-subagent.bash      # deps subagent step-3 validation
 │   ├── test_skill.bats         # unit tests for skill.bash (8 cases)
 │   └── test_worktree.bats      # unit tests for skills/_lib/worktree.sh
-└── integration/       # cross-component / CLI integration tests
-    ├── test_<issue-id>.bats    # regression locks for P0/P1/P2/P3 fixes
-    ├── test_*_skill.bats       # structural / metadata coverage per skill
-    ├── test_*_subagent.bats    # subagent integration tests
-    ├── scan_state.bats         # guide recommender routing (rdd-* v4 names)
-    ├── test_rdd_arch_cli.bats  # rdd-arch CLI surface
-    ├── test_rdd_builder_phases.bats  # rdd-builder phase state machine
-    ├── test_rdd_verifier_*.bats      # rdd-verifier (9 files)
-    ├── test_rddf_session_*.bats/.py  # rddf-session lifecycle & concurrency
-    └── test_skill_metadata_consistency.bats  # package.json ↔ skills/ ↔ smoke.bats agreement
+├── unit/              # Python unit tests (pytest)
+├── integration/       # cross-component / CLI integration tests
+│   ├── test_<issue-id>.bats    # regression locks for P0/P1/P2/P3 fixes
+│   ├── test_*_skill.bats       # structural / metadata coverage per skill
+│   ├── test_*_subagent.bats    # subagent integration tests
+│   ├── scan_state.bats         # guide recommender routing (rdd-* v4 names)
+│   ├── test_rdd_arch_cli.bats  # rdd-arch CLI surface
+│   ├── test_rdd_builder_phases.bats  # rdd-builder phase state machine
+│   ├── test_rdd_verifier_*.bats      # rdd-verifier (9 files)
+│   ├── test_rddf_session_*.bats/.py  # rddf-session lifecycle & concurrency
+│   └── test_skill_metadata_consistency.bats  # package.json ↔ skills/ ↔ smoke.bats agreement
+├── e2e/               # end-to-end agent scenarios (agent/ + script/ layers)
+├── fixtures/          # static fixtures consumed by integration / e2e tests
+└── scripts/           # helper scripts (regression baseline, isolation gate, ...)
 ```
 
 ## Running

@@ -174,8 +174,8 @@ custom_sections = [
 
 ```bash
 # v0100 byte-equal 验证 (partially, PoC v0.1 阶段)
-diff <(cd /workspace/project/ChipForge && bash tools/v0100-bootstrap.sh 2>/dev/null) \
-     <(cd /workspace/project/ChipForge && bash tools/v0100-bootstrap.sh 2>/dev/null)
+diff <(cd <project-root> && bash tools/v0100-bootstrap.sh 2>/dev/null) \
+     <(cd <project-root> && bash tools/v0100-bootstrap.sh 2>/dev/null)
 
 # rdd-workflow-e2e 零配置验证 (已 pass)
 cd <rdd-workflow-e2e-repo> && bash <rdd-workflow-repo>/skills/rdd-session-bootstrap/rdd-session-bootstrap.sh

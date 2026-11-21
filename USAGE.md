@@ -822,17 +822,17 @@ tests/
 
 ### 运行测试
 
-> ⚠️ **`npm test` 陷阱**：`npm test` 只跑 `bats tests/`，**不会**捕获 Python 测试失败。改完任何 Python 代码后必须显式 `pytest tests/`，CI 才会捕获。
+> ⚠️ **`npm test` 说明**：`npm test` = `npm run test:bats && npm run test:python` ⇒ **bats + pytest 都跑**（v3.0 起）。但它是**裸跑**：无本地门（隔离 / ruff / mypy / doctor），也**不做** KNOWN_FAILURES baseline 对比 ⇒ 已知失败会直接报出来。要带门的完整验证用 `./test.sh --full --regression`。
 >
 > ⚠️ **`rdd-arch` 首次因 `.gitignore` 失败**：运行检查器打印的 `fix_command` 后重新执行。
 
 ```bash
-# === bats（npm test 等价命令，仅覆盖 shell 测试）===
-npm test                                # 等价于 bats tests/，不跑 Python
+# === bats（npm test 会跑 bats + pytest）===
+npm test                                # bats tests/ --recursive + pytest unit/integration
 bats tests/smoke.bats                   # 快速冒烟（7 个 smoke cases）
 bats tests/_lib/test_skill.bats         # skill.bash parser（8 cases）
 
-# === Python（必须显式调用，npm test 不会自动跑）===
+# === Python（npm test 也会跑；这里是单独跑的入口）===
 python3 -m pytest tests/unit/ -q --tb=short         # Python 单元测试
 python3 -m pytest tests/integration/ -q --tb=short  # Python 集成测试
 python3 -m pytest tests/ -q --tb=short              # 一把跑全部 Python 测试

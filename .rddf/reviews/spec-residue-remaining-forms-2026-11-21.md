@@ -84,11 +84,12 @@
 
 ## 记 tail（范围外）
 
-1. **`general/spec.md` 的 `general-docs-match-code` 其余假断言**（未被残留扫描器命中，故不在 Phase 1 判据内）：`:102-103` `ls skills/*.md | wc -l`（skills 已目录化 ⇒ 应为 `skills/*/SKILL.md`，实测 26）；`:110-114` `skills/status.md` L68-70（**文件不存在**，现为 `rddf status` CLI）；`:118-121` 同样是 `skills/*.md` 过时 glob；`:165-173`「`package.json::scripts.test` SHALL contain exactly `bats tests/`」（**与实现相反** —— 现为 `test:bats` + `test:python`，见 `tests/unit/test_doc_contracts.py:178-196`）；`:156-163` `tests/README.md` Layout 段未核验。
-2. **`docs/improvement-approved-format.md:3` 头部仍是旧机制描述** —— 「`guide-design` 批准后直接落盘…`guide-plan` intake…`.design-handoff.json` v2」（与 `rewrite-spec-residue-general-final` 同主题、已知为假）⇒ 独立立项。
-3. **B 组判据单向性硬化**（critic SHOULD_FIX-3）—— 「consumer list SHALL name only skills that have `skills/<name>/SKILL.md`」**不排斥**「存在但不消费」的 skill、也**不要求完备**⇒ 下一个改名周期会复 drift ⇒ 硬化方向：守卫改为「文档清单 == 代码级消费方检测结果」的封闭判据。
-4. **delta 形态垃圾结构** —— 9 份 spec 首行是 `## ADDED Requirements`（未合并的 change delta 被误归档为 capability spec）；`post-flow-analysis` / `rfc-rddf-*` 的 Requirement 名是自动生成的（`fix-adr-0027-cli-optin-gate` / `acceptance-3`）⇒ 需专项重写，不是残留名问题。
-5. **`dashboard-verification-status` 围栏示例与 schema 脱节** —— 缺 `rdd-builder` / `pending-agent`，含 enum 外的 `null` ⇒ 文本修正专项（围栏式标注只豁免旧名，不修脱节）。
-6. **围栏式 `enum` 的 schema 机检交叉校验** —— backlog（会让扫描器耦合 `_lib/schemas/`，破坏「能在任何有 `openspec/specs` 的项目上独立跑」的设计）。
-7. **`spec_residue_scan.py:488` 的 `hit_lines` 是死变量** —— 改前就存在（只 `add` 从不读），本次未删（改动最小化边界）。
+1. **`general/spec.md` 的 `general-status-guide-skill-revision` Requirement 整体失效** —— 正文仍写「`skills/guide.md` 和 `skills/status.md` SHALL accurately reflect the codebase state」，而这两个文件**都不存在**（`guide` 已归档到 `docs/legacy/` per ADR-0063，`status` 现为 `rddf status` CLI）⇒ 需专项重写（不在残留扫描器判据内）。
+2. **`doc-truth-sync/spec.md` 的其余 path 形态漂移** —— `:50` `skills/loop.md`（不存在）、`:51` `skills/_lib/session_v20.py`（不存在）、`:156` `skills/foo.md`（skills 已目录化）。
+3. **`docs/improvement-approved-format.md:3` 头部仍是旧机制描述** —— 「`guide-design` 批准后直接落盘…`guide-plan` intake…`.design-handoff.json` v2」（与 `rewrite-spec-residue-general-final` 同主题、已知为假）⇒ 独立立项。
+4. **B 组判据单向性硬化**（critic SHOULD_FIX-3）—— 「consumer list SHALL name only skills that have `skills/<name>/SKILL.md`」**不排斥**「存在但不消费」的 skill、也**不要求完备**⇒ 下一个改名周期会复 drift ⇒ 硬化方向：守卫改为「文档清单 == 代码级消费方检测结果」的封闭判据。
+5. **delta 形态垃圾结构** —— 9 份 spec 首行是 `## ADDED Requirements`（未合并的 change delta 被误归档为 capability spec）；`post-flow-analysis` / `rfc-rddf-*` 的 Requirement 名是自动生成的（`fix-adr-0027-cli-optin-gate` / `acceptance-3`）⇒ 需专项重写，不是残留名问题。
+6. **`dashboard-verification-status` 围栏示例与 schema 脱节** —— 缺 `rdd-builder` / `pending-agent`，含 enum 外的 `null` ⇒ 文本修正专项（围栏式标注只豁免旧名，不修脱节）。
+7. **围栏式 `enum` 的 schema 机检交叉校验** —— backlog（会让扫描器耦合 `_lib/schemas/`，破坏「能在任何有 `openspec/specs` 的项目上独立跑」的设计）。
+8. **`spec_residue_scan.py:488` 的 `hit_lines` 是死变量** —— 改前就存在（只 `add` 从不读），本次未删（改动最小化边界）。
 
