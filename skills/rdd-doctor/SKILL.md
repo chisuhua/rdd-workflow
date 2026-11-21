@@ -143,6 +143,31 @@ SHALL accept `guide-ship` for legacy state files.
 **不是内容回归**。⇒ 验证「标注未改变校验结果」时必须按 **issue 类型 + 目标做多重集比对**，
 不能只数一种 issue（只数一种会让判据被平凡满足）。
 
+⚠️⚠️ **比对必须用 `--json`**：`openspec validate` 的**文本输出不显示** `requirements[N]` 这类 issue
+—— 只有 `--json` 才报。⇒ 用文本输出做「逐字节相同」比对**看不到** `very long` 增量
+（这是 2026-11-21 之前批 3 / 4 / 5 的验收判据的真实缺口：实测那些批次合计引入了 **25 条**
+从未被验证覆盖的 `very long`）。
+
+```bash
+openspec validate --all --json | jq '.items[].issues[] | select(.message | test("very long"))'
+```
+
+**常驻守卫**：`tests/unit/test_spec_requirement_length.py` 冻结了 `very long` 清单
+（当前 62 条 / 38 spec）与「注入造成的增量」（当前 25 条 / 13 spec）⇒
+任何批次让 Requirement 跨过 500 ⇒ 守卫红 ⇒ 必须在同一提交里更新冻结值并说明
+「新增的 very long 是否可接受」。
+
+⚠️ **执法点是本地，不是 CI**：本仓 `openspec/` 整树被 `.gitignore:45` 排除 ⇒ CI 的 fresh checkout
+里**没有** `openspec/specs/` ⇒ 守卫在 CI 上恒 `skip`（这是**预期**：CI 上没有可校验的 spec，
+让它 fail 只会让 CI 恒红）。⇒ 守卫在**本地执行批次时**生效。
+
+⚠️ **归因漂移边界**：若新增的 `very long` 来自**新形态**的注记（守卫的剥除规则不认得），
+断言 B 不会红（增量被算进 baseline 侧）⇒ 只更新冻结清单就能转绿，而「注入 / 存量」的归因会静默腐化。
+⇒ **规则**：断言 A 红且增量疑似来自新注记形态时，**必须同步扩展守卫的剥除规则**，
+**不得只改冻结值**。
+
+台账：`.rddf/reviews/spec-very-long-baseline-2026-11-21.md`。
+
 **清理清单**：`.rddf/reviews/spec-residue-census-*-full.md`（机器生成，`disposition=unset` 的行归零
 = 清理完成的判据）。生成器：`python3 skills/rdd-doctor/scripts/gen_spec_residue_census.py --out <path>`。
 
