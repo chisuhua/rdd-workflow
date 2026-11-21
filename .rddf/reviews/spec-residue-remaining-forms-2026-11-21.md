@@ -2,7 +2,7 @@
 
 > **定位**：`fix-spec-residue-guard` 的 Phase 1 批次地图。
 > 本台账是**逐行形态判定 + 实现事实证据**，不是机器普查台账（后者见 `spec-residue-census-2026-11-20-full.md`）。
-> `line` 列是**改前**行号；批 6 已改指的行按改前行号记录。
+> `line` 列是**截至批 7a 后的当前行号**（后续批次插入会漂移 ⇒ 动手前用 scanner 重取）。
 
 ## 进度
 
@@ -11,12 +11,15 @@
 | 批 5 | 13 | A / B / D | 纯标注（`history` 9 / `guard` 4） | ✅ 已完成（`1e914476`） |
 | 围栏式机制 | 1 | C | 新增围栏位置豁免 + 用它标掉 | ✅ 已完成（`172ecd91`） |
 | 批 6 | 6 + 1 配套 | E / F | 文本改指 | ✅ 已完成 |
-| 批 7 | 32 | G（18 原 + 14 移交） | `annotate` 31 / `rewrite` 1 | ⏳ 待办 |
+| 批 7a | 9 块 / 11 行 | G | `RETIRED` 注记 + `allow=history` 标注 | ✅ 已完成 |
+| 批 7b | 21 行 | G + 移交 | `annotate` 14 / **改指** 6 / `rewrite` 1 | ⏳ 待办 |
 | 专项 | 4 | — | 测试锁定 + 断言漂移 | ⏳ 待办 |
 
-**当前剩余**：36 处 / 36 行 / 12 份（其中批 7 = 32 行，专项 = 4 行）。
+**当前剩余**：25 处 / 25 行 / 10 份（其中批 7b = 21 行，专项 = 4 行）。
 
-## 批 7 —— 32 行 / 11 份（`annotate` 31 / `rewrite` 1）
+## 批 7b —— 21 行 / 9 份
+
+> ⚠️ **动手前必须重新全仓核实每一行的「已死 / 仍活」断言**（含 `.github/workflows/*.yml` 与 `skills/*/SKILL.md` 的 bash 流程）—— 批 7a 的三轮 critic 连续三次抓到我这类断言错误：① 落点证据指向了 WAVE 判定而非轻量模式判定；② 「文件不存在」只查了 `_lib/` 根目录；③ 「无生产调用方」漏了 CI 的 `.yml`。本表的下述断言均**未经**同口径复核。
 
 > **为什么不能改指**：改指会让「已死的判据」看起来正常，比残留更危险 —— 读者会照着实现一个不存在的流程。（批 6 的 `rfc-rddf` 三行就是实例：我原判「机械改指」，critic 查出落点证据是事实错误。）
 
@@ -25,37 +28,26 @@
 | `state-management` | 65 | `rewrite` | guide-plan | **半死 → rewrite 候选**：status→`proposed` 由 **P0 approval**（`phase0_approval.sh:252`）；P1 明确不改 status。单改本行会与其 Scenario（L72-75「fill 创建 design.md 和 tasks.md」半死）**自相矛盾** ⇒ 需 Requirement + Scenario 成对改写 |
 | `cross-repo-deps` | 126 | `annotate` | guide-plan | **PARTIAL**：WHEN 半活（`STRICT_DEPS_GATE` 在 `phase1_5_deps.sh:134`，exit 6 在 `builder_cmd.py:66`）；THEN 全死（`rddf hub` 仅 retry-failed；`create_hub_issue` 零生产调用方；`[Dependency]` label 0 生产命中）⇒ 改指会保留死 THEN |
 | `cross-repo-federation` | 119 | `annotate` | guide-design | **已死**：`rdd-planner` 不检查 hub pending（`cross_repo_state` 只被 `report_issue_rfc.py` 写、`watch_hub.py` 读） |
-| `openspec-version-degradation` | 8 | `annotate` | guide-plan | **已死**：`OPENSPEC_DAG_AVAILABLE` 与 DAG 版本检测在 `_lib/`+`skills/` 全仓 **0 命中**；「guide-plan intake」的实现 `plan_intake.sh` 已不存在（批 2 台账已证）⇒ Requirement 整体失效 |
-| `openspec-version-degradation` | 13 | `annotate` | guide-plan | 同上（Scenario） |
-| `openspec-version-degradation` | 19 | `annotate` | guide-plan | 同上（Scenario） |
-| `plan-done-quality-gate` | 8 | `annotate` | guide-plan | **已死**：v3 的 `plan_done_gate` 路径不存在（`plan_done_gate.sh` 不存在；仅 `_lib/cross_repo_gate.py:5,9` 的**注释**提到它）；`run_plan_checks`（`skills/propose/scripts/propose_quality_check.py:234`）在 v4 **无调用方** ⇒ 「在 plan-done 正常路径中被调用」不成立 |
-| `plan-done-quality-gate` | 12 | `annotate` | guide-plan | 同上（Scenario） |
+| `plan-done-quality-gate` | 8 | `repoint` | guide-plan | **已注册未接线（不是已死）**：`run_plan_checks`（`skills/propose/scripts/propose_quality_check.py:234-243`）的函数体就是 `return run_all_checks(name, project_root)`；`run_all_checks` 被 `_lib/gate.py:39` 导入，并在 **v4 plan_done 门注册表**（`:388-394`）中以 `propose_quality_checks` 检查项活跃注册（默认 warning 级、`STRICT_PROPOSE_GATE` 升级），`tests/unit/test_gate.py:295` 有活断言 ⇒ 机制活着，只是未接进 rdd-builder 主流 ⇒ **属改指（批 6 形态），不是注记** |
+| `plan-done-quality-gate` | 12 | `repoint` | guide-plan | 同上（Scenario） |
 | `rfc-rddf-project-yaml-config-i10` | 26 | `annotate` | guide-ship | **机制不存在**：轻量模式判定是 `_lib/builder_deps.py::decide_execution_mode(file_count, task_count, risk_keywords)`（`:42-75`），**无 `openspec_tracked` 输入**；`ship_execution_mode.sh:97` 读该字段是 **WAVE 串并行**判定（注释明写「it says nothing about the execution mode」）。姐妹 Requirement `complete-project-yaml-config-gaps:198-207` 已按 ADR-0036 AMENDED retire 同一机制 ⇒ 按同款形态处置 |
 | `rfc-rddf-project-yaml-config-i10` | 28 | `annotate` | guide-ship | 同上（Scenario 标题） |
 | `rfc-rddf-project-yaml-config-i10` | 31 | `annotate` | guide-ship | 同上（Scenario 正文） |
 | `roadmap-hierarchy` | 149 | `annotate` | guide-plan | **已死（且已被覆盖）**：`plan_done_gate.sh` 不存在；Scenario 写 `.plan-handoff.json`（ADR-0044 Wave 3 RETIRE）；「rdd-doctor 的 roadmap-refs 检查调用 `validate_fragment_refs`」**已逐字存在于同 spec 相邻 Requirement**（L130-145）⇒ 改指 = 重复 |
-| `roadmap-incremental` | 8 | `annotate` | guide-arch | **已死**：`guide-arch` Phase 5/6 在 v4 不存在（`skills/rdd-arch/SKILL.md` 只有 Phase 1 setup / 2 adr-create / 3 arch validation / 4 arch-done(Exit)）；Roadmap Sync 步骤已**完全删除**（`skills/rdd-arch/SKILL.md:553` per ADR-0048：`.populate-state.json` 改由 `rdd-planner` 维护）；`roadmap_incremental_update.sh` 不存在 |
-| `roadmap-incremental` | 11 | `annotate` | guide-arch | 同上（Scenario） |
-| `roadmap-incremental` | 132 | `annotate` | guide-arch | **已死**：`populate-roadmap-from-arch` skill 不存在（实测 `skills/populate-roadmap-from-arch` 不存在） |
-| `roadmap-incremental` | 137 | `annotate` | guide-arch | 同上（Scenario） |
-| `roadmap-proposal-guidance` | 69 | `annotate` | guide-design | **已死**：`guide-design` 的「Phase 1 preflight 显示 roadmap 主题覆盖率」在 v4 无对应物（`skills/rdd-planner/SKILL.md` 只有 Phase 0 roadmap-bootstrap / Phase 1 setup，无 preflight / 无主题覆盖率） |
-| `roadmap-proposal-guidance` | 71 | `annotate` | guide-design | 同上（正文） |
-| `roadmap-proposal-guidance` | 103 | `annotate` | guide-design | **已死**：「Phase 2 菜单新增按路线图主题创建提案」在 v4 无对应物（rdd-planner 无该菜单） |
-| `roadmap-proposal-guidance` | 105 | `annotate` | guide-design | 同上（正文） |
-| `roadmap-proposal-guidance` | 142 | `annotate` | guide-design | **半死**：前半「rdd-doctor SHALL NOT 将 `**主题**:` 纳入 schema 校验」仍活；后半「coverage 显示 SHALL 仅在 `guide-design` Phase 1 preflight 中出现」随该 preflight 一起失效 ⇒ 按 PARTIAL 处理（退役子句注记 + 仍生效子句保留） |
+| `roadmap-proposal-guidance` | 148 | `annotate` | guide-design | **半死**：前半「rdd-doctor SHALL NOT 将 `**主题**:` 纳入 schema 校验」仍活；后半「coverage 显示 SHALL 仅在 `guide-design` Phase 1 preflight 中出现」随该 preflight 一起失效 ⇒ 按 PARTIAL 处理（退役子句注记 + 仍生效子句保留） |
 | `skeleton-planning` | 11 | `annotate` | guide-ship | **机制已变**：v4 可执行性 = `artifact_complete`（proposal and design，`_lib/discover_ship_changes.py:87-89,212-213`），**与 status 无关**；skeleton 恰因缺 design 而不可执行 ⇒ 结论偶然为真，但句子的 status 逻辑在 v4 反转 |
 | `skeleton-planning` | 22 | `annotate` | guide-ship | 同上（Scenario 标题） |
 | `skeleton-planning` | 23 | `annotate` | guide-ship | 同上（Scenario 正文） |
 | `skeleton-planning` | 43 | `annotate` | guide-plan | **半死**：`skills/rdd-builder/scripts/phase1_plan.sh` 全文无 skeleton 分支 |
 | `skeleton-planning` | 47 | `annotate` | guide-plan | **已死**：同文件无任何 `warn` 逻辑 |
 | `skeleton-planning` | 83 | `annotate` | guide-plan | **已死**：P1 只生成 `tasks.md`；`design.md` 在 rdd-builder scripts **0 命中**（`skills/rdd-builder/SKILL.md:53` 明写由执行 agent 撰写） |
-| `spec-validation-gates` | 149 | `annotate` | guide-plan | **已死**：v3 的 `skills/guide-plan.md` Phase 4 plan-done 门不存在；其写的 `.plan-handoff.json` 已随 ADR-0044 Wave 3 RETIRE（`docs/schemas/README.md:51`）；`validate_baseline.py` **不存在**（只剩 `validate_delta_targets.py`）⇒ Requirement 整体失效。（同 spec 的下一个 Requirement 已被 re-point 到 `rdd-builder` P3 archive pre-flight ⇒ 本条是漏网） |
-| `spec-validation-gates` | 151 | `annotate` | guide-plan | 同上（正文） |
-| `spec-validation-gates` | 158 | `annotate` | guide-plan | 同上（Scenario） |
-| `spec-validation-gates` | 167 | `annotate` | guide-plan | 同上（Scenario） |
+| `spec-validation-gates` | 149 | `repoint` | guide-plan | **判据今天仍为真（不是已死）**：`.github/workflows/test.yml:113-127` 的 CI job「Spec validation gate (baseline + delta targets)」对**每个** active change 跑 `skills/propose/scripts/validate_baseline.py` + `skills/_lib/validate_delta_targets.py`，任一失败 ⇒ `exit 1`（阻断）；`skills/propose/SKILL.md:552-558` 的活 bash 流程也对每个新 change 调 `validate_baseline.py`。⇒ Requirement 的核心判据（对每个 active change 跑两个校验器、失败即阻断）今天仍成立，只是 actor 从 v3 plan-done 门换成 CI 的 spec validation gate ⇒ **属改指（批 6 形态），不是注记** |
+| `spec-validation-gates` | 151 | `repoint` | guide-plan | 同上（Requirement 正文） |
+| `spec-validation-gates` | 158 | `repoint` | guide-plan | 同上（Scenario） |
+| `spec-validation-gates` | 167 | `repoint` | guide-plan | 同上（Scenario） |
 | `state-management` | 73 | `annotate` | guide-plan | **已死**：P1 不生成 `design.md`（同 skeleton-planning:83） |
 
-合计：`annotate` 31 行 / `rewrite` 1 行
+合计 21 行（`annotate` 14 / `rewrite` 1 / 需改指 6）
 
 ## 批 6 的两次收缩（记录在案）
 
@@ -65,6 +57,19 @@
 |---|---|---|
 | 一（20→9） | 11 行 | 机制已变 / 已死（见上表证据列） |
 | 二（9→6） | `rfc-rddf` 3 行 | 我原声明的落点「轻量模式判定在 `ship_execution_mode.sh:97`」**是事实错误** —— 那是 WAVE 串并行判定，注释明写「it says nothing about the execution mode」 |
+
+### 两种注记形态并存（批 7a 确立首选）
+
+| 形态 | NOTE 含退役名？ | 标注位置 | 采用者 |
+|---|---|---|---|
+| 批 5 先例（`complete-project-yaml-config-gaps:203`） | 是（`guide-ship/SKILL.md`） | NOTE **之后**（NOTE 自我豁免） | 历史形态 |
+| **批 7a（本批）** | **否**（用「v3 design 阶段」等描述） | **命中行之后**（allow 落在被豁免行正下方） | ✅ **首选** |
+
+批 7a 形态更优：allow 落在被豁免的命中行正下方，NOTE 不含旧名因而不需要「自我介绍后再自我豁免」的绕圈；且**追溯性不丢** —— 零原文改动保留了含旧名的命中行原文，读者 grep 旧名仍命中原文。
+
+### ⚠️ 既有判据缺口（批 7a 实测发现）
+
+`openspec validate` 的**文本输出不显示** `requirements[N]` 这类 issue —— 只有 `--json` 才报。⇒ 批 3/4/5 的「validate 逐字节相同」判据**没有覆盖** `very long` 增量（批 5 在 `skills/rdd-doctor/SKILL.md` 记录过这个副作用，但验证口径漏了它）。⇒ 后续批次一律用 `--json` 比对 issue 多重集（`durationMs` 每次变 ⇒ 只比 issue）。
 
 **教训**：改指的前提是「新落点在 v4 真实存在且行为等价」。仅凭「路径存在」或「句子形态像改指」不构成理由 —— 必须指到**行为载体**的 `file:line`。
 
