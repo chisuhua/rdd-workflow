@@ -578,14 +578,111 @@ def scan_specs(
     )
 
 
+# ---------------------------------------------------------------------------
+# Placeholder Requirement detection (retire-placeholder-spec-requirements)
+#
+# A *placeholder* Requirement is the auto-generated body `openspec archive`
+# writes when a change is filed as a capability spec:
+#
+#     The system SHALL provide <X> functionality.
+#     - **WHEN** user invokes the feature
+#     - **THEN** system implements <X> correctly
+#
+# It asserts nothing (true for any implementation, including "the feature does
+# not exist") ⇒ it is a **zero-information contract** that makes
+# `openspec validate` report "spec is valid" and creates the illusion of
+# coverage.  Both patterns are checked **independently** (SF-2: a half-written
+# placeholder must be caught too, not only the two-line generator output).
+#
+# This is a **separate** entry point from :func:`scan_specs` on purpose: the
+# retired-token census has frozen constants (`test_v4_residue_check.py`),
+# and adding a new finding kind there would silently move them.
+# ---------------------------------------------------------------------------
+
+PLACEHOLDER_REQUIREMENT_PATTERNS: Tuple[Tuple[str, "re.Pattern[str]"], ...] = (
+    (
+        "placeholder-requirement-text",
+        # The capability name is a kebab-case identifier (e.g. "add-skill-bats-tests").
+        # Requiring that shape keeps legitimate prose such as
+        # "The system SHALL provide comprehensive test coverage for X functionality."
+        # out of the net.
+        re.compile(
+            r"^The system SHALL provide [a-z0-9][a-z0-9-]* functionality\.$",
+            re.MULTILINE,
+        ),
+    ),
+    (
+        "placeholder-scenario-body",
+        re.compile(
+            r"^- \*\*WHEN\*\* user invokes the (?:feature|change)\s*$\n"
+            r"^- \*\*THEN\*\* system implements .* correctly\s*$",
+            re.MULTILINE,
+        ),
+    ),
+)
+
+
+@dataclass(frozen=True)
+class PlaceholderHit:
+    """One placeholder Requirement occurrence."""
+
+    file: str
+    line: int
+    kind: str
+
+
+@dataclass
+class PlaceholderResult:
+    files_scanned: int
+    hits: List[PlaceholderHit] = field(default_factory=list)
+
+    @property
+    def checked_anything(self) -> bool:
+        """False on a clone without ``openspec/specs`` — NOT the same as clean."""
+        return self.files_scanned > 0
+
+
+def scan_placeholder_requirements(specs_root: Path) -> PlaceholderResult:
+    """Find auto-generated placeholder Requirement bodies under ``specs_root``.
+
+    Args:
+        specs_root: the ``openspec/specs`` directory.
+
+    Returns:
+        :class:`PlaceholderResult`.  ``files_scanned == 0`` means *nothing was
+        checked* — callers must not render that as "clean".
+    """
+    hits: List[PlaceholderHit] = []
+    scanned = 0
+    for spec in _iter_spec_files(specs_root):
+        scanned += 1
+        text = spec.read_text(encoding="utf-8")
+        rel = str(spec)
+        for kind, pattern in PLACEHOLDER_REQUIREMENT_PATTERNS:
+            for m in pattern.finditer(text):
+                hits.append(
+                    PlaceholderHit(
+                        file=rel,
+                        line=text.count("\n", 0, m.start()) + 1,
+                        kind=kind,
+                    )
+                )
+    return PlaceholderResult(files_scanned=scanned, hits=hits)
+
+
+
 __all__ = [
     "ALLOW_CODES",
     "FENCE_ALLOW_CODES",
     "FenceAllow",
     "Hit",
+    "PLACEHOLDER_REQUIREMENT_PATTERNS",
+    "PlaceholderHit",
+    "PlaceholderResult",
     "RETIRED_TOKENS",
     "ScanResult",
     "StaleAllow",
     "TOKEN_RE",
+    "scan_placeholder_requirements",
     "scan_specs",
 ]

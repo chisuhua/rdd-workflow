@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from pathlib import Path
 
 import pytest
@@ -518,6 +519,44 @@ def test_docs_do_not_hardcode_directory_composition_counts() -> None:
                     f"{rel}:{lineno} hardcodes a drift-prone count ({claim!r}): "
                     f"{line.strip()[:120]}"
                 )
+
+
+# ---------------------------------------------------------------------------
+# retire-placeholder-spec-requirements — placeholder Requirement 守卫
+#
+# `openspec archive` 写出的 capability spec 若只有自动生成的正文
+# （"The system SHALL provide X functionality." + "WHEN user invokes the feature
+# / THEN system implements X correctly"），它对任何实现都恒真 ⇒ 零契约，
+# 却让 `openspec validate` 报 "spec is valid"，制造「已覆盖」的错觉。
+#
+# 判据实现放在**已跟踪**的 `skills/rdd-doctor/scripts/spec_residue_scan.py`
+# （与残留扫描同处一个模块，为将来 `git.openspec_tracked=true` 时零改动），
+# 本文件只做 pytest 包装。
+# ---------------------------------------------------------------------------
+
+_SPECS_DIR = REPO_ROOT / "openspec" / "specs"
+requires_specs_dir = pytest.mark.skipif(
+    not _SPECS_DIR.is_dir(),
+    reason="openspec/ is gitignored (local-only artifacts): no openspec/specs/ here",
+)
+
+
+@requires_specs_dir
+def test_no_spec_contains_placeholder_requirement_body() -> None:
+    """`openspec/specs/**` 不得含自动生成的 placeholder Requirement 体。"""
+    sys.path.insert(0, str(REPO_ROOT / "skills" / "rdd-doctor" / "scripts"))
+    try:
+        from spec_residue_scan import scan_placeholder_requirements
+    finally:
+        sys.path.pop(0)
+
+    result = scan_placeholder_requirements(_SPECS_DIR)
+    assert result.checked_anything, "no spec scanned — cannot claim clean"
+    offenders = [f"{h.file}:{h.line} ({h.kind})" for h in result.hits]
+    assert not offenders, (
+        "placeholder Requirement bodies remain (zero-information contracts):\n  "
+        + "\n  ".join(offenders)
+    )
 
 
 def test_migration_guide_fictional_cli_refs_carry_planned_marker() -> None:
