@@ -89,7 +89,7 @@
 | 3 份的 `acceptance-N` Requirement 名 | 27 | **0** |
 | 3 份的恒真 WHEN | 27 | **0** |
 | 3 份的 Requirement 数 | 27 | **19**（6 + 6 + 7） |
-| `acceptance-N` 类的剩余条数（全仓） | 218 | **191** |
+| `acceptance-N` 类的剩余条数（全仓） | 218 | **182**（第 1 批 −9、本批 −27）|
 | `openspec validate <3 份>` | 各 1 条 Purpose WARNING | **无 WARNING** |
 | `openspec validate --all --json` issue（**准确基线**） | 220 | **217**（新增 0；消失 3 条 Purpose WARNING） |
 | `very long` | 62 | **62** |
