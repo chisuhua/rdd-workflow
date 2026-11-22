@@ -81,6 +81,9 @@ teardown() {
         bash "$REPO_ROOT/skills/rdd-builder/scripts/phase3_archive.sh" demo
     [ "$status" -eq 0 ]
     [ ! -d "$TEST_TMP/.rddf/wt/demo" ]
+    # the change's openspec/<name> branch must be gone as well
+    run git -C "$TEST_TMP" rev-parse --verify --quiet refs/heads/openspec/demo
+    [ "$status" -ne 0 ]
 }
 
 @test "phase3: the builder handoff records archive_status=archived" {

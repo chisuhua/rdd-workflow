@@ -101,6 +101,10 @@
      - **分流判据**（试点验证过）：机制的**机制是否还在** + 有**逐条可机判的守卫** ⇒ 改写；**元断言**（「别退化」）/ **相对断言**（「无新增 finding」）⇒ 退役；机制在但**无守卫** ⇒ 先补守卫（试点就补了一个：幂等用例 seed + 断言 `archived_at`/`archive_commit_sha` 不变），补不了才收窄契约。
      - **退役不丢内容**：原文永远在 `openspec/changes/archive/<date>-<name>/proposal.md` 的 `## Acceptance` 段。
      - **工作量基线**（试点实测）：每份 spec 边际成本 **≈30–45 min** ⇒ 剩余 11 份 **≈6–9 h**，可拆 11 批每批 1 份。
+   - ✅ **第 2 批已完成（2026-11-23，`rewrite-acceptance-form-batch-2`）** —— 3 份 / 27 条 AC ⇒ **19 条契约 + 8 条退役**：`fix-flow-drift-batch-1`（8→6）· `fix-worktree-archive-path`（10→6）· `fix-p3-verifier-gate`（9→7）。清单 `compliant` 1 → **4** 份、`pending` 11 → **8** 份。台账：`.rddf/reviews/rewrite-acceptance-form-batch-2-2026-11-23.md`。
+     - **新发现的两类退役理由**（试点没有的）：① **已被推翻** —— `fix-worktree-archive-path` 的 AC-8 被 `fix-lightweight-branch-and-archive` **有意变更**（推翻登记在 `.rddf/improvements/fix-lightweight-branch-and-archive.md:233-235`）；新行为已落在 `archive-openspec-tracked-skip-commit/spec.md` 与 `archive-auto-commit/spec.md` ⇒ 退役不丢信息。② **没有流程级守卫** —— `archive_path` 字段**全仓无守卫**，且 untracked 路径 `_lib/archive.sh:1034` 传**空 sha** ⇒ 退役。
+     - **补 2 处守卫**（critic SF-1/SF-2 指出的「无守卫子句」）：优先**补守卫**而不是削契约（行为是真的、守卫是缺的）；补之前先确认断言**非空转**。
+     - **两条方法论教训**：③ 守卫引用要核对**夹具是什么**（`test_rdd_builder_phase3_archive.bats` 的夹具是 lightweight 模式，拿它当 untracked 路径的守卫是引错了）；④ **mock 型 e2e 不算行为守卫**（全仓唯一断言「归档后 spec 存在」的 `test_rdd_builder_e2e.bats:89` 由 `scenarios/b_e9.json:12` 直接铺文件）。
      - **防回归形态**：tracked 清单 `tests/unit/spec_form_compliant.json`（`compliant` / `pending` / `class_total`）+ 守卫 `tests/unit/test_spec_requirement_form.py`。**清单级**判据（并集 == 已知全集 / 只增不减）在 **CI 上有牙齿**；**形态级**判据（无语义名 / 恒真 WHEN）需 `openspec/specs/` ⇒ **CI 上 skip**（`openspec/` gitignore 的必然结果）。
 6. **`dashboard-verification-status` 围栏示例与 schema 脱节** —— 缺 `rdd-builder` / `pending-agent`，含 enum 外的 `null` ⇒ 文本修正专项（围栏式标注只豁免旧名，不修脱节）。
 7. **围栏式 `enum` 的 schema 机检交叉校验** —— backlog（会让扫描器耦合 `_lib/schemas/`，破坏「能在任何有 `openspec/specs` 的项目上独立跑」的设计）。

@@ -82,6 +82,10 @@ _phase3() {
     [ "$status" -eq 7 ]
     [[ "$output" == *"no valid verdict cache"* ]]
     [[ "$output" == *"rdd-verifier"* ]]
+    # the message SHALL list the three ways out
+    [[ "$output" == *"rddf rdd-verify"* ]]
+    [[ "$output" == *"SKIP_RDD_VERIFIER"* ]]
+    [[ "$output" == *".ac-verdict-demo.json"* ]]
 }
 
 @test "phase3: archives when cache is complete and sha matches the branch tip" {
