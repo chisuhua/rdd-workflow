@@ -71,7 +71,7 @@ def _active_changes(project_root: Path) -> Set[str]:
             for change in changes:
                 if not isinstance(change, dict):
                     continue
-                if change.get("status") == "archived":
+                if change.get("status") in ("archived", "archived_partial"):
                     continue
                 name = change.get("name")
                 if isinstance(name, str) and name:

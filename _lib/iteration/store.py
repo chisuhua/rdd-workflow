@@ -430,7 +430,10 @@ def list_active(data: dict) -> list[dict]:
 
 def list_archived(data: dict) -> list[dict]:
     """Return archived changes (most recent first by archived_at)."""
-    archived = [c for c in data.get("changes", []) if c.get("status") == "archived"]
+    archived = [
+        c for c in data.get("changes", [])
+        if c.get("status") in ("archived", "archived_partial")
+    ]
     archived.sort(
         key=lambda c: c.get("archived_at") or "",
         reverse=True,
@@ -600,7 +603,10 @@ def feature_progress(data: dict) -> dict[str, tuple[int, int]]:
     out: dict[str, tuple[int, int]] = {}
     for feature, changes in list_feature_groups(data).items():
         total = len(changes)
-        done = sum(1 for c in changes if c.get("status") == "archived")
+        done = sum(
+            1 for c in changes
+            if c.get("status") in ("archived", "archived_partial")
+        )
         out[feature] = (done, total)
     return out
 

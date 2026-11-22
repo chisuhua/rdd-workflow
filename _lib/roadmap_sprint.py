@@ -112,7 +112,10 @@ def render_sprint_table(data: dict) -> str:
     """
     changes = data.get("changes", [])
     active = [c for c in changes if c.get("status") in ("proposed", "in_worktree", "completed")]
-    archived = [c for c in changes if c.get("status") == "archived"]
+    archived = [
+        c for c in changes
+        if c.get("status") in ("archived", "archived_partial")
+    ]
     phase = data.get("current_phase", "default")
     latest_deps = _latest_deps_at(active)
     staleness = _format_staleness(latest_deps)

@@ -110,7 +110,7 @@ def _iteration_candidates(project_root: Path) -> dict:
     out: dict = {}
     for entry in data.get("changes", []) or []:
         status = entry.get("status")
-        if status == "archived":
+        if status in ("archived", "archived_partial"):
             continue
         name = entry.get("name")
         if not name:

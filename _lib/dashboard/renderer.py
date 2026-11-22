@@ -60,6 +60,7 @@ _STATUS_ICON = {
     "completed":    "✅",
     "done":         "✔",
     "archived":     "📦",
+    "archived_partial": "📦",
     "committed":    "💼",
     "unknown":      "?",
     # Improvement lifecycle labels (see _lib/dashboard/improvement_status.py).
@@ -83,6 +84,7 @@ _STATUS_ICON_PLAIN = {
     "completed":    "v",
     "done":         "v",
     "archived":     "-",
+    "archived_partial": "-",
     "committed":    "$",
     "unknown":      "?",
     # Improvement lifecycle labels (see _lib/dashboard/improvement_status.py).
@@ -452,8 +454,14 @@ def _section_changes_terminal(data: DashboardData, width: int) -> list[str]:
                 width,
             )
         )
-        active_changes = [c for c in data.changes if c.status != "archived"]
-        archived_changes = [c for c in data.changes if c.status == "archived"]
+        active_changes = [
+            c for c in data.changes
+            if c.status not in ("archived", "archived_partial")
+        ]
+        archived_changes = [
+            c for c in data.changes
+            if c.status in ("archived", "archived_partial")
+        ]
         archived_changes.sort(
             key=lambda c: (c.archived_at or "", c.added_at or ""),
             reverse=True,
@@ -803,8 +811,14 @@ def _p_section_changes(data: DashboardData, width: int) -> str:
                 width,
             )
         )
-        active_changes = [c for c in data.changes if c.status != "archived"]
-        archived_changes = [c for c in data.changes if c.status == "archived"]
+        active_changes = [
+            c for c in data.changes
+            if c.status not in ("archived", "archived_partial")
+        ]
+        archived_changes = [
+            c for c in data.changes
+            if c.status in ("archived", "archived_partial")
+        ]
         archived_changes.sort(
             key=lambda c: (c.archived_at or "", c.added_at or ""),
             reverse=True,

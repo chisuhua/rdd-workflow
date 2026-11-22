@@ -63,7 +63,9 @@ def print_view(project_root: str, show_planned: bool = True) -> int:
         1 for c in data.get("changes", []) if c.get("status") in ("proposed", "in_worktree", "completed")
     )
     archived_count = sum(
-        1 for c in data.get("changes", []) if c.get("status") == "archived"
+        1
+        for c in data.get("changes", [])
+        if c.get("status") in ("archived", "archived_partial")
     )
     print(f"   活跃: {active_count} | 已归档: {archived_count}")
     print()

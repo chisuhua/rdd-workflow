@@ -315,7 +315,11 @@ def update_iteration_feature_view(project_root):
             "status": rollup_status(ch_records),
             "change_names": ch_names,
             "change_count": len(ch_names),
-            "archived_count": sum(1 for c in ch_records if c.get("status") == "archived"),
+            "archived_count": sum(
+                1
+                for c in ch_records
+                if c.get("status") in ("archived", "archived_partial")
+            ),
             "rollup_basis": _compute_rollup_basis(ch_names, all_changes),
             "depends_on": [],
             "blocks": [],

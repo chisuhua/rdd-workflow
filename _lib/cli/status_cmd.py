@@ -50,7 +50,14 @@ from _lib.builder_handoff import read_builder_handoff  # noqa: E402  (per fix-33
 from _lib.tasks_count import count_tasks  # noqa: E402
 
 # Status -> emoji icon (single source of truth for Mode A/B rendering).
-# Kept in sync with ``dashboard/renderer.py::_STATUS_ICON``; duplicated
+# This table serves the **disk-derived** vocabulary
+# (``planned`` / ``in_worktree`` / ``committed`` / ``archived`` /
+# ``unknown``) — ``rddf status`` does NOT read ``iteration.json``
+# (see the module docstring).  ``dashboard/renderer.py::_STATUS_ICON``
+# serves the **iteration.json** vocabulary (the schema enum) instead —
+# the two tables are deliberately NOT the same set (``committed`` lives
+# only here; ``proposed`` / ``review`` only there).  The overlap is
+# locked by ``tests/unit/test_iteration_status_coverage.py``.
 # here so this module has zero cross-package dependencies beyond
 # state_reader (which is already read-only and cheap).
 # Only the keys status_cmd actually renders (the disk-derived status set).

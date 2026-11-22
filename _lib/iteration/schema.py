@@ -38,7 +38,15 @@ SCHEMA_PATH = os.path.join(
 )
 
 _DEFAULT_PHASE = "default"
-_VALID_STATUSES = ("planned", "proposed", "in_worktree", "review", "completed", "archived")
+_VALID_STATUSES = (
+    "planned",
+    "proposed",
+    "in_worktree",
+    "review",
+    "completed",
+    "archived",
+    "archived_partial",
+)
 # Statuses that block a dependent planned change from being filled.
 # A planned change's blocker must be in one of these statuses to count as
 # "still blocking". When a blocker transitions out (e.g. to archived), the

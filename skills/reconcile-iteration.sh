@@ -107,7 +107,7 @@ for c in data.get("changes", []):
     name = c.get("name")
     if name not in archived_names:
         continue
-    if c.get("status") == "archived":
+    if c.get("status") in ("archived", "archived_partial"):
         unchanged.append(name)
         continue
     old_status = c.get("status")
@@ -144,7 +144,7 @@ echo "📊 reconcile report:"
 echo "  archive changes scanned: ${#ARCHIVED[@]}"
 echo "  iteration.json updated: $(jq -r --arg n "${ARCHIVED[*]}" '
     (.changes // []) | map(select(.name as $x | ($n | split(" ") | index($x)))) |
-    map(select(.status=="archived")) | length
+    map(select(.status=="archived" or .status=="archived_partial")) | length
   ' "$ITERATION_FILE")"
 echo "  backup: $BACKUP_FILE"
 echo ""

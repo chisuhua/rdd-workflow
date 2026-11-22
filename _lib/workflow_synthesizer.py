@@ -309,7 +309,8 @@ def _build_phase_status(
         if isinstance(changes, list):
             archived = [
                 c for c in changes
-                if isinstance(c, dict) and c.get("status") == "archived"
+                if isinstance(c, dict)
+                and c.get("status") in ("archived", "archived_partial")
             ]
             ship_detail = f"changes={len(changes)}, archived={len(archived)}"
 
@@ -554,7 +555,8 @@ def _count_active_changes_in_iteration(iteration: Optional[dict]) -> int:
         return 0
     return sum(
         1 for c in changes
-        if isinstance(c, dict) and c.get("status") != "archived"
+        if isinstance(c, dict)
+        and c.get("status") not in ("archived", "archived_partial")
     )
 
 
