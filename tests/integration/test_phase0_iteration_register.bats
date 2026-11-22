@@ -86,6 +86,13 @@ from skills._lib.iteration import store
 d = store.load(root)
 d = store.set_tasks_done(d, "demo", 3, 5)
 d = store.set_status(d, "demo", "in_worktree")
+# archived_at / archive_commit_sha are archive-side fields.  Seed them so the
+# re-approve path is proven NOT to reset them (the spec asserts this).
+d = store.add_or_update_change(
+    d, name="demo", status="in_worktree",
+    archived_at="2026-01-02T03:04:05+00:00",
+    archive_commit_sha="deadbeefcafe",
+)
 store.save(root, d)
 PY
     run env PROJECT_ROOT="$TEST_TMP" REPO_ROOT="$REPO_ROOT" \
@@ -102,6 +109,9 @@ c = entries[0]
 assert c.get('tasks_done') == 3, c
 assert c.get('tasks_total') == 5, c
 assert c.get('added_at'), c
+# archive-side fields must survive a re-approve
+assert c.get('archived_at') == '2026-01-02T03:04:05+00:00', c
+assert c.get('archive_commit_sha') == 'deadbeefcafe', c
 print('idempotent')"
     [[ "$output" == *"idempotent"* ]]
 }
