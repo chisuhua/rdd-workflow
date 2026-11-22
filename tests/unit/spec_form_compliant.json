@@ -5,17 +5,17 @@
   "compliant": [
     "fix-flow-drift-batch-1",
     "fix-p3-verifier-gate",
+    "fix-phase3-cleanup-wiring",
+    "fix-script-project-root-anchoring",
     "fix-worktree-archive-path",
-    "register-change-in-iteration"
+    "register-change-in-iteration",
+    "rfc-rddf-project-yaml-config-i10"
   ],
   "pending": [
     "env-bootstrap",
     "fix-bats-per-file-timeout",
-    "fix-phase3-cleanup-wiring",
-    "fix-script-project-root-anchoring",
     "fix-skill-post-install-discoverability",
     "objective-tracking",
-    "rddf-layout-manifest",
-    "rfc-rddf-project-yaml-config-i10"
+    "rddf-layout-manifest"
   ]
 }

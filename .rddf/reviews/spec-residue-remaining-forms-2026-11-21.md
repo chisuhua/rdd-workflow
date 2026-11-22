@@ -105,6 +105,10 @@
      - **新发现的两类退役理由**（试点没有的）：① **已被推翻** —— `fix-worktree-archive-path` 的 AC-8 被 `fix-lightweight-branch-and-archive` **有意变更**（推翻登记在 `.rddf/improvements/fix-lightweight-branch-and-archive.md:233-235`）；新行为已落在 `archive-openspec-tracked-skip-commit/spec.md` 与 `archive-auto-commit/spec.md` ⇒ 退役不丢信息。② **没有流程级守卫** —— `archive_path` 字段**全仓无守卫**，且 untracked 路径 `_lib/archive.sh:1034` 传**空 sha** ⇒ 退役。
      - **补 2 处守卫**（critic SF-1/SF-2 指出的「无守卫子句」）：优先**补守卫**而不是削契约（行为是真的、守卫是缺的）；补之前先确认断言**非空转**。
      - **两条方法论教训**：③ 守卫引用要核对**夹具是什么**（`test_rdd_builder_phase3_archive.bats` 的夹具是 lightweight 模式，拿它当 untracked 路径的守卫是引错了）；④ **mock 型 e2e 不算行为守卫**（全仓唯一断言「归档后 spec 存在」的 `test_rdd_builder_e2e.bats:89` 由 `scenarios/b_e9.json:12` 直接铺文件）。
+   - ✅ **第 3 批已完成（2026-11-23，`rewrite-acceptance-form-batch-3`）** —— 3 份 / 34 条 AC ⇒ **15 条契约 + 19 条退役**：`fix-phase3-cleanup-wiring`（7→5）· `fix-script-project-root-anchoring`（13→7）· `rfc-rddf-project-yaml-config-i10`（14→3）。清单 `compliant` 4 → **7** 份、`pending` 8 → **5** 份。台账：`.rddf/reviews/rewrite-acceptance-form-batch-3-2026-11-23.md`。
+     - ⚠️ **两条新的方法论教训**（本批特有）：
+       ⑤ **不能照抄归档 AC 的措辞 —— 它描述的是过去**。归档 AC 说「`git.openspec_tracked: false` 时强制轻量模式」，我改写成「强制 serial 且**不可覆盖**」⇒ **与实现相反**（实现优先级 CLI flag > project.yaml > env）⇒ 而且**我自己引的守卫就在反证它**（`CLI flag --parallel wins over project.yaml`）。⇒ 改写必须**实读实现 + 守卫**。
+       ⑥ **「spec 里没有」有两种成因，处置相反**：**归档工件缺陷**（AC-G2：14 条 AC ⇒ 13 条 delta，生成时整丢）⇒ **补回**；**已签批删除**（`acceptance-3`：batch7b2 §D 有意删除，理由是判据被 v4 反证 + 正确判据已在 `complete-project-yaml-config-gaps`）⇒ **不补回**。⇒ 判据要看**归档 delta 与 live spec 的差异记录**，不能只看「有没有守卫」。
      - **防回归形态**：tracked 清单 `tests/unit/spec_form_compliant.json`（`compliant` / `pending` / `class_total`）+ 守卫 `tests/unit/test_spec_requirement_form.py`。**清单级**判据（并集 == 已知全集 / 只增不减）在 **CI 上有牙齿**；**形态级**判据（无语义名 / 恒真 WHEN）需 `openspec/specs/` ⇒ **CI 上 skip**（`openspec/` gitignore 的必然结果）。
 6. **`dashboard-verification-status` 围栏示例与 schema 脱节** —— 缺 `rdd-builder` / `pending-agent`，含 enum 外的 `null` ⇒ 文本修正专项（围栏式标注只豁免旧名，不修脱节）。
 7. **围栏式 `enum` 的 schema 机检交叉校验** —— backlog（会让扫描器耦合 `_lib/schemas/`，破坏「能在任何有 `openspec/specs` 的项目上独立跑」的设计）。
