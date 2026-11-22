@@ -89,10 +89,12 @@
      - **`rddf status` 缺 `review` 状态渲染** —— `_lib/cli/status_cmd.py:58-65` 的 `_STATUS_ICON` 无 `review` 键，磁盘推导 `:111-117` 只产 planned/in_worktree/committed 三态。
      - **`rddf archive` 缺交互确认门** —— `_lib/archive.sh:1025` 无条件 `openspec archive "$name" --yes`，原 Mode C 的「确认先于 archive + `-y` 旁路」语义丢失，且无测试锁。
      - ⇒ 两条均属 `implementation_gap`（不是文档缺口），独立立项评估。
-2. **`doc-truth-sync/spec.md` 的其余 path 形态漂移** —— `:50` `skills/loop.md`（不存在）、`:51` `skills/_lib/session_v20.py`（不存在）、`:156` `skills/foo.md`（skills 已目录化）。
+2. ✅ **已处置（2026-11-22，`fix-doc-truth-sync-false-assertions`）** —— `doc-truth-sync/spec.md` 的 path 形态漂移已随该批一并清理：该 spec 当时共有 **12 组**假断言（不止这 3 处 path）—— 包括 **D5 与实现相反**（说「npm test 只跑 bats」而实现是 bats+pytest 都跑，**与上一批改过的 `general/spec.md` 直接矛盾**）、ADR 计数「19」（实际 64）、`docs/v2-api-summary.md` / `docs/v2-api-reference.md` / `docs/v2-loop-engine.md` **不存在**、`openspec/specs/` 「15 个目录」（实际 165）、D7 要求 README flag 重复 ADR-0013（真实守卫查的是磁盘）、D3/D1 Scenario 前提已过时。⇒ 全部改判据或退役，并新增 4 个守卫锁住。台账：`.rddf/reviews/doc-truth-sync-false-assertions-2026-11-22.md`。
+   - **该批遗留（记 tail）**：`doc-truth-sync` 的 **Requirement 主题划分** —— 「历史路径映射」判据挂在 `migration-guide-no-fictional-cli` 名下，主题错位（critic 第 2 轮 NIT-1）。拆分需再动 `very long` 冻结清单 + 重新过审（该批 critic 预算已满 2 轮）⇒ 独立立项。
 3. **`docs/improvement-approved-format.md:3` 头部仍是旧机制描述** —— 「`guide-design` 批准后直接落盘…`guide-plan` intake…`.design-handoff.json` v2」（与 `rewrite-spec-residue-general-final` 同主题、已知为假）⇒ 独立立项。
 4. **B 组判据单向性硬化**（critic SHOULD_FIX-3）—— 「consumer list SHALL name only skills that have `skills/<name>/SKILL.md`」**不排斥**「存在但不消费」的 skill、也**不要求完备**⇒ 下一个改名周期会复 drift ⇒ 硬化方向：守卫改为「文档清单 == 代码级消费方检测结果」的封闭判据。
 5. **delta 形态垃圾结构** —— 9 份 spec 首行是 `## ADDED Requirements`（未合并的 change delta 被误归档为 capability spec）；`post-flow-analysis` / `rfc-rddf-*` 的 Requirement 名是自动生成的（`fix-adr-0027-cli-optin-gate` / `acceptance-3`）⇒ 需专项重写，不是残留名问题。
+   - **其中的 placeholder Requirement（零信息量）**：5 个 —— `general/spec.md` 3 个（`general-add-skill-bats-tests` / `general-implement-deps-subagent-analysis` / `general-init-adr-directory`）+ `sync-agents-md-five-stage/spec.md` 1 个 + `sync-package-skills-to-disk/spec.md` 1 个。正文均为自动生成模板句（「The system SHALL provide X functionality.」/「WHEN user invokes the feature / THEN system implements X correctly」）⇒ 独立立项退役。
 6. **`dashboard-verification-status` 围栏示例与 schema 脱节** —— 缺 `rdd-builder` / `pending-agent`，含 enum 外的 `null` ⇒ 文本修正专项（围栏式标注只豁免旧名，不修脱节）。
 7. **围栏式 `enum` 的 schema 机检交叉校验** —— backlog（会让扫描器耦合 `_lib/schemas/`，破坏「能在任何有 `openspec/specs` 的项目上独立跑」的设计）。
 8. **`spec_residue_scan.py:488` 的 `hit_lines` 是死变量** —— 改前就存在（只 `add` 从不读），本次未删（改动最小化边界）。

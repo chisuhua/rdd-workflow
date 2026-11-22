@@ -102,7 +102,10 @@ FROZEN_VERY_LONG: dict[str, list[str]] = {
     'design-proposal-creation': ['requirements[0]'],
     'diagnose-changes': ['requirements[1]'],
     'doc-architecture-v4-sync': ['requirements[0]'],
-    'doc-truth-sync': ['requirements[6]', 'requirements[7]'],
+    # 2026-11-22（fix-doc-truth-sync-false-assertions）：退役 `v2-api-ref-path-corrections`
+    # 后，后续 Requirement 的**序号整体前移 1**。`very long` 的仍是同两条
+    # （doc-contract-tests-required / doc-surfaces-share-truth-source），总数 62 / 38 spec 不变。
+    'doc-truth-sync': ['requirements[5]', 'requirements[6]'],
     'external-testbed-coop': ['requirements[0]'],
     'fix-33-handlers-project-root-anti-pattern': ['requirements[0]'],
     'fix-skill-layer-project-root-anti-pattern': ['requirements[0]'],

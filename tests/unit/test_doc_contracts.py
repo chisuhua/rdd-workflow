@@ -384,3 +384,153 @@ def test_disk_count_matches_package_json() -> None:
     assert len(declared) == disk, (
         f"package.json has {len(declared)} entries, disk has {disk}"
     )
+
+
+# ---------------------------------------------------------------------------
+# fix-doc-truth-sync-false-assertions — 组 C 守卫（4 个）
+#
+# 背景（上一批教训）：判据 surface 必须覆盖同类文本。上一批修了
+# `general/spec.md` + 7 份文档，却漏了 `doc-truth-sync/spec.md` 本身 ⇒ 两个 spec
+# 互相矛盾（一个说 npm test 跑 bats+pytest，另一个说只跑 bats）。
+# 本组守卫把「同类文本」全部纳入射程。
+# ---------------------------------------------------------------------------
+
+_DOC_TRUTH_SPEC = REPO_ROOT / "openspec" / "specs" / "doc-truth-sync" / "spec.md"
+requires_doc_truth_spec = pytest.mark.skipif(
+    not _DOC_TRUTH_SPEC.is_file(),
+    reason="openspec/ is gitignored (local-only artifacts): no specs/doc-truth-sync/spec.md here",
+)
+
+_MIGRATION_GUIDE = REPO_ROOT / "docs" / "migration" / "v1-to-v2.md"
+
+
+@requires_doc_truth_spec
+def test_doc_truth_sync_spec_npm_test_assertion_matches_package_json() -> None:
+    """`doc-truth-sync/spec.md` 的 D5 必须与 `package.json::scripts.test` 同向。
+
+    实现侧（v3.0+）：`npm test` = `npm run test:bats && npm run test:python`
+    ⇒ bats 与 pytest **都跑**。spec 不得再要求「只跑 bats」。
+    """
+    pkg = json.loads(_read("package.json"))
+    script = pkg["scripts"]["test"]
+    assert "test:bats" in script and "test:python" in script, (
+        f"package.json::scripts.test no longer runs both suites: {script!r}"
+    )
+
+    spec = _DOC_TRUTH_SPEC.read_text()
+    forbidden = (
+        "exactly `bats tests/`",
+        "MUST only run bats",
+        "npm test MUST only run bats",
+        "to be a separate, explicit invocation",
+        "no longer\n  contains exactly",
+    )
+    for phrase in forbidden:
+        assert phrase not in spec, (
+            f"doc-truth-sync/spec.md still asserts npm test runs bats only ({phrase!r})"
+        )
+    assert "npm test` composition drift" in spec, (
+        "doc-truth-sync/spec.md lost the D5 drift-class bullet"
+    )
+
+
+def test_readme_skills_tree_entries_match_disk() -> None:
+    """README.md 的 `skills/` 树必须与 disk 双向一致（禁 dangling + 禁遗漏）。
+
+    条目抽取规则：只取 `skills/` 子树内形如 `├── X` / `└── X` 的条目。
+    含 `<` `>` 的占位模式（如 `<skill>/scripts/`）不参与 dangling 判定。
+    """
+    readme = _read("README.md")
+    lines = readme.splitlines()
+    start = next(
+        i for i, line in enumerate(lines) if line.rstrip().endswith("└── skills/")
+    )
+    entries: list[str] = []
+    for line in lines[start:]:
+        if line.strip().startswith("```"):
+            break
+        m = re.match(r"\s*[├└]── (.+?)(?:\s+#.*)?$", line)
+        if not m:
+            continue
+        entry = m.group(1).strip()
+        if entry.startswith("skills/") or entry.startswith("<"):
+            continue
+        entries.append(entry)
+
+    assert entries, "README.md skills tree yielded no entries"
+    for entry in entries:
+        assert (REPO_ROOT / "skills" / entry).exists(), (
+            f"README.md skills tree lists {entry!r}, which does not exist on disk"
+        )
+
+    on_disk = {p.parent.name for p in (REPO_ROOT / "skills").glob("*/SKILL.md")}
+    listed = {e.replace("/SKILL.md", "") for e in entries if e.endswith("/SKILL.md")}
+    missing = sorted(on_disk - listed)
+    assert not missing, f"README.md skills tree omits on-disk skills: {missing}"
+
+
+# 目录构成计数 / 测试规模计数 —— 会随每次新增文件漂移的硬编码数字。
+# 豁免：skill 计数（已由 test_skill_count_in_narrative_docs_matches_disk 动态锁定）。
+_COUNT_CLAIM = re.compile(
+    r"(?<![\w.-])\d+(?:\s*(?:个|files|\.py|\.sh|schema|cases|scenarios|tests|用例|模块|条|主题文件"
+    r"|CLI|subcommands?|子命令|commands?))"
+    r"|\d+/\d+\s*pass"
+)
+_COUNT_CLAIM_EXEMPT = (
+    "26 个子技能",   # skill 计数 —— 由既有动态守卫锁定
+    "26 SKILL.md",   # 同上
+)
+
+
+def _auto_generated_lines(text: str) -> set[int]:
+    """AGENTS.md 的 AUTO 段由 `rddf roadmap --update-agent-md` 生成 ⇒ 不可手改。"""
+    out: set[int] = set()
+    inside = False
+    for lineno, line in enumerate(text.splitlines(), 1):
+        if "AUTO:" in line and "start" in line:
+            inside = True
+        if "AUTO:" in line and "end" in line:
+            inside = False
+            continue
+        if inside:
+            out.add(lineno)
+    return out
+
+
+def test_docs_do_not_hardcode_directory_composition_counts() -> None:
+    """README.md / AGENTS.md 不得硬编码会随新增文件漂移的构成计数。
+
+    判据来源：这些数字每次加文件/加测试都会失真（实测已修正 20+ 处），
+    且没有任何守卫覆盖 ⇒ 按 truth-source hierarchy（L4 跟随 L2），文档里
+    的计数快照属于被禁的漂移类。
+    """
+    for rel in ("README.md", "AGENTS.md"):
+        text = _read(rel)
+        auto = _auto_generated_lines(text) if rel == "AGENTS.md" else set()
+        for lineno, line in enumerate(text.splitlines(), 1):
+            if lineno in auto:
+                continue
+            for m in _COUNT_CLAIM.finditer(line):
+                claim = m.group(0).strip()
+                if any(ex in line for ex in _COUNT_CLAIM_EXEMPT):
+                    continue
+                assert not claim, (
+                    f"{rel}:{lineno} hardcodes a drift-prone count ({claim!r}): "
+                    f"{line.strip()[:120]}"
+                )
+
+
+def test_migration_guide_fictional_cli_refs_carry_planned_marker() -> None:
+    """迁移指南里每处虚构 CLI 引用必须带「规划中」标记。
+
+    旧判据「零引用」与它自身的 AND 子句（「或明确的 planned for v2.1 标记」）
+    矛盾 —— 实测 6 处引用全部是带标记的历史记录。
+    """
+    markers = ("规划中", "planned", "未实现")
+    for lineno, line in enumerate(_MIGRATION_GUIDE.read_text().splitlines(), 1):
+        if not re.search(r"rdd-workflow (migrate|sync|report)", line):
+            continue
+        assert any(m in line for m in markers), (
+            f"docs/migration/v1-to-v2.md:{lineno} mentions a fictional CLI "
+            f"without a planned marker: {line.strip()[:120]}"
+        )

@@ -47,13 +47,13 @@ BATS_TIMEOUT=120 BATS_TIMEOUT_RETRY=240 ./test.sh --full --regression
 
 # 单独跑某类 (绕过 test.sh, 用于调试)
 npm test                                # = bats tests/ --recursive + pytest unit/integration (bats + pytest 都跑)
-bats tests/smoke.bats                   # 快速冒烟 (7 个 smoke cases)
-bats tests/_lib/test_skill.bats         # skill.bash parser (8 cases)
-bats tests/integration/test_global_install_external_project.bats  # 全局安装测试 (11 cases)
+bats tests/smoke.bats                   # 快速冒烟 (smoke cases)
+bats tests/_lib/test_skill.bats         # skill.bash parser (cases)
+bats tests/integration/test_global_install_external_project.bats  # 全局安装测试 (cases)
 
 # Python (npm test 也会跑; 这里是单独跑的入口)
-python3 -m pytest tests/unit/ -q --tb=short          # 57 个 unit 文件
-python3 -m pytest tests/integration/ -q --tb=short   # 10 个 Python integration (.py)
+python3 -m pytest tests/unit/ -q --tb=short          # unit 测试
+python3 -m pytest tests/integration/ -q --tb=short   # integration 测试 (.py)
 pip install -r requirements.txt                      # PyYAML, jsonschema, pytest
 
 # 对比 baseline (CI 等价; ./test.sh --bats --regression 已包含)
@@ -89,7 +89,7 @@ archive change (`rdd-builder` P3)
 
 ### 全局安装测试（`tests/integration/test_global_install_external_project.bats`）
 
-模拟第三方项目使用全局安装（`~/.agents/skills/`）的能力。**19 个用例**覆盖:
+模拟第三方项目使用全局安装（`~/.agents/skills/`）的能力。覆盖:
 - `rddf` CLI: `--help`、非 rdd-workflow 项目友好退出、读取外部 `package.json`
 - 解析器 fallback: `resolve_rdd_skill_dir` / `resolve_rdd_lib_dir` 都回退到 `~/.agents/skills/`
 - 文档化的双层 bootstrap 模式 (`source ... || source $HOME/.agents/skills/...`)
@@ -100,7 +100,7 @@ archive change (`rdd-builder` P3)
 测试在 `$BATS_TMPDIR` 创建独立的 git 仓库, **不**修改源 repo 的 `.rddf/` (其他 bats 测试依赖 stale state, 删除会级联失败)。
 
 ```bash
-bats tests/integration/test_global_install_external_project.bats   # 11/11 pass
+bats tests/integration/test_global_install_external_project.bats   # 全绿
 ```
 
 **Skip-not-fail 策略**: 全局安装缺失时 (`~/.agents/skills/_lib/skill_root.sh` 不存在) 自动 skip, 适合 CI 在 `install.sh --global` 未执行的环境跑。
@@ -130,17 +130,17 @@ bats tests/integration/test_global_install_external_project.bats   # 11/11 pass
 
 ```
 _lib/                          # ⭐ 真实实现层 (commit c3a90fe "flatten package layout")
-  state.sh / worktree.sh / archive.sh / discover-arch-artifacts.sh / env_checks.sh / parallel_throttle.sh / resolve_skill_name.sh / sessions_count.sh / ship_execution_mode.sh / ship_parallel.sh / skill_root.sh / wave_scheduler_hooks.sh / discover_ship_changes.sh / discover_roadmap_fragments.sh / post_archive_cleanup.sh / check_project_setup.sh / orchestrator_entry.sh / post_flow_wrap.sh  # bash 工具 (~18 files)
-  cli/                         # 28 个 `rddf` 子命令 (ac_verify/archive/cleanup/contract_check/dashboard/deps/discover_ship_changes/doctor/feature/guide/init/issue/iteration_strict/l2_trend/migrate_improvements/monitor/orchestrate/rdd_hub_bootstrap/report_issue/roadmap/sessions/status/sync_hub/validate/version/watch_hub/archive_sync 等)
+  state.sh / worktree.sh / archive.sh / discover-arch-artifacts.sh / env_checks.sh / parallel_throttle.sh / resolve_skill_name.sh / sessions_count.sh / ship_execution_mode.sh / ship_parallel.sh / skill_root.sh / wave_scheduler_hooks.sh / discover_ship_changes.sh / discover_roadmap_fragments.sh / post_archive_cleanup.sh / check_project_setup.sh / orchestrator_entry.sh / post_flow_wrap.sh  # bash 工具
+  cli/                         # `rddf` 子命令实现 (ac_verify/archive/cleanup/contract_check/dashboard/deps/discover_ship_changes/doctor/feature/guide/init/issue/iteration_strict/l2_trend/migrate_improvements/monitor/orchestrate/rdd_hub_bootstrap/report_issue/roadmap/sessions/status/sync_hub/validate/version/watch_hub/archive_sync 等)
   gate.py / roadmap_state.py / config.py / session.py / session_base.py / session_manager.py / session_stats.py  # 跨切核心模块 (会话 + 状态)
   recommender.py           # ⭐ 阶段推荐阶梯的唯一实现 (ADR-0062) — `rddf guide` 与 `rddf monitor` 共用
   arch_quality_gate.py / change_alignment.py / dependency_scheduler.py / event_context.py / rate_limiter.py / roadmap_sprint.py / trigger_engine.py / trigger_registry.py / triggers.py / validate_delta_targets.py / validate_report.py  # 其余顶层模块
-  adr_catalog.py / cleanup_plan_handoff.py / contract_diff.py / cross_repo_audit.py / cross_repo_deps.py / cross_repo_deps_cache.py / cross_repo_gate.py / cross_repo_state.py / gh_hub_client.py / hub_issue.py  # P1-1a 迁移的 10 个跨 repo 模块
-  core/                        # 运行时内核 (6 .py): event_log, event_types, state_vector, defaults, lock, atomic_write
-  loop/                        # v2.0 loop 引擎 (15 .py): actions, agents, design_phase, detectors, event_queue, flow_customizer, flowchart, human_nodes, interaction_modes, loop_state, memory, plugin_loader, sanitizer, step_pipeline, tribunal
+  adr_catalog.py / cleanup_plan_handoff.py / contract_diff.py / cross_repo_audit.py / cross_repo_deps.py / cross_repo_deps_cache.py / cross_repo_gate.py / cross_repo_state.py / gh_hub_client.py / hub_issue.py  # P1-1a 迁移的跨 repo 模块
+  core/                        # 运行时内核: event_log, event_types, state_vector, defaults, lock, atomic_write
+  loop/                        # v2.0 loop 引擎: actions, agents, design_phase, detectors, event_queue, flow_customizer, flowchart, human_nodes, interaction_modes, loop_state, memory, plugin_loader, sanitizer, step_pipeline, tribunal
   iteration/                   # iteration 视图管理 (render, schema, store, repair, l2, archive_sidecar, post_archive)
-  schedulers/                  # 调度器 (4 .py): cron_scheduler, fs_watcher, git_hook, webhook_receiver
-  schemas/                     # JSON schema (19 files): arch_handoff, config, deps_analysis, design_handoff, feature_view, iteration, plan_handoff, sessions, state_vector, trigger 等
+  schedulers/                  # 调度器: cron_scheduler, fs_watcher, git_hook, webhook_receiver
+  schemas/                     # JSON schema: arch_handoff, config, deps_analysis, design_handoff, feature_view, iteration, plan_handoff, sessions, state_vector, trigger 等
   loop_engine.py               # v2.0 Loop 引擎入口（向后兼容 shim 实际实现在 _lib/loop_engine.py）
 skills/                        # Markdown skills (26 SKILL.md + INSTALL.md) + per-skill scripts/
   INSTALL.md                   # 第一入口 (v1.1.0)
@@ -152,9 +152,9 @@ skills/                        # Markdown skills (26 SKILL.md + INSTALL.md) + pe
   rdd-workflow-writing-plans/SKILL.md  # 内置 TDD 5 步 plan 生成器
   loop_engine.py               # v2.0 Loop 引擎入口（向后兼容 shim）
   _lib/                        # ⭐ shim 层 (post-c3a90fe flatten layout, 2026-08-25 P1-1b identity-merge)
-    *.sh (15 个)               # 13 行 shim: 本地 `${_PARENT_DIR}/_lib/X.sh` 优先,降级到 `~/.agents/skills/_lib/X.sh`
+    *.sh                        # shim: 本地 `${_PARENT_DIR}/_lib/X.sh` 优先,降级到 `~/.agents/skills/_lib/X.sh`
     core/loop/schedulers/...   # 4 行 __init__.py path-widening shim (向后兼容历史 import)
-    adr_catalog.py ... hub_issue.py  # 10 个 P1-1a 迁移模块的 identity-merge shim (做 `sys.modules[__name__] = _lib.X`)
+    adr_catalog.py ... hub_issue.py  # P1-1a 迁移模块的 identity-merge shim (做 `sys.modules[__name__] = _lib.X`)
   rdd-arch/scripts/          # arch 阶段辅助脚本 (arch_env_check, write_arch_handoff, arch_gap_analysis 等)
   rdd-builder/scripts/          # plan 阶段辅助脚本 (plan_intake, plan_done_gate, plan_deps_candidates 等)
   rdd-builder/scripts/          # ship 阶段辅助脚本 (ship_plan, ship_review, ship_archive, ship_monitor 等)
@@ -163,16 +163,16 @@ skills/                        # Markdown skills (26 SKILL.md + INSTALL.md) + pe
   feature/scripts/             # feature 辅助脚本 (feature_summary, feature_graph 等)
 tests/
   test_helper.bash            # load_lib 解析器 + 断言辅助
-  conftest.py                 # 把项目根加进 sys.path (P1-1b: `skills._lib` 路由到 `_lib` + 10 个身份合并 shim)
+  conftest.py                 # 把项目根加进 sys.path (P1-1b: `skills._lib` 路由到 `_lib` + 身份合并 shim)
   smoke.bats                  # 基础设施冒烟 (v2.0.3 起: 动态 glob + v1.x regression, 覆盖全部 skill)
-  unit/                       # 210 个 Python 单元测试文件 (~2017 测试函数, 含 P1-1b 新增 test_p1_1_identity_merge)
-  integration/                # 281 bats + 15 py 集成测试 (~1789 bats 测试用例)
+  unit/                       # Python 单元测试文件 (含 P1-1b 新增 test_p1_1_identity_merge)
+  integration/                # bats + py 集成测试
   _lib/                       # bash helpers (skill.bash, deps-subagent.bash 等)
-docs/adr/                     # ADR-0000 模板 + ADR-0001~0053 (53 个 ADR 编号, 54 个实体文件含 ADR-0000 模板; v2.0.2 重编号 ADR-0013 → ADR-0020; v2.0.8+ 持续追加, 截至 2026-09-22)
+docs/adr/                     # ADR 目录（ADR-0000 模板 + ADR-0001 起；编号与数量以 disk 为准；v2.0.2 重编号 ADR-0013 → ADR-0020）
                              # 关键 ADR: ADR-0003 三阶段架构 / ADR-0010 多会话管理 / ADR-0016 arch 发现契约 / ADR-0017 rddf-session / ADR-0018 arch 质量门 / ADR-0019 change-arch-alignment / ADR-0022 manual_deps 字段 / ADR-0023 v3 rename spec-workflow→rdd-workflow / ADR-0024 deps-driven execution mode / ADR-0025 design 阶段独立化 / ADR-0027 continuous evolution / ADR-0028 role-model / ADR-0029 issue-driven / ADR-0030 hub-spoke / ADR-0031 cross-repo human-in-loop / ADR-0033 submodule-aware / ADR-0034 rdd-verifier / ADR-0035 verifier-archive-gate 边界 / ADR-0036 project.yaml 配置 / ADR-0037 feedback contract / ADR-0042 rdd-arch↔rdd-planner 双向反馈 / ADR-0043 v4 stage-merge / ADR-0044 Wave 3 hard removal / ADR-0045 inline-ac-verifier-into-rdd-verifier / ADR-0046 arch-analyzer protocol subset / ADR-0047 rdd-quick bypass / ADR-0048 v4 stage-merge revision / ADR-0049 rdd-builder P0 LLM integration / ADR-0050 rdd-builder/rdd-quick auto-pick mode / ADR-0051 skill description convention / ADR-0052 Layer 0 progressive context / ADR-0053 rdd-env-bootstrap orchestrator
 docs/change-quality-guide.md  # change 质量等级指南 (Bronze/Silver/Gold); 阈值与 Plan B `propose_quality_check.py` 对齐, 反模式以 ADR-0019 为准
-docs/architecture/            # 当前架构快照 (10 主题文件: overview/workflow-phases/skills-and-handoff/v4-pipeline-data-flow 等)
-docs/schemas/                 # JSON Schema 文档化层 (README 索引 29 个 `_lib/schemas/` schema; cross-repo-schemas.md 跨 repo 协议补充)
+docs/architecture/            # 当前架构快照 (overview/workflow-phases/skills-and-handoff/v4-pipeline-data-flow 等)
+docs/schemas/                 # JSON Schema 文档化层 (README 索引 `_lib/schemas/` schema; cross-repo-schemas.md 跨 repo 协议补充)
 docs/migration/               # 版本迁移指南 (v1-to-v2 / v2-to-v3 / v3-to-v4)
 docs/superpowers/             # 设计 spec (specs/) + 实施 plan (plans/), v4 stage-merge 主 spec 在此
 docs/audit/                   # 历史审计报告 (2026-06-05 workflow-audit, 2026-07-14 debt-fix-compliance, 2026-09-28 rdd-quick-dual-review)
@@ -180,7 +180,7 @@ docs/operations/              # 运维指南 (archive-state-recovery / verifier-
 docs/legacy/                  # 考古 shim 保留 (rddf-legacy-v2.0.7.sh — v2.0.7 之前的 bash rddf CLI 实现, 已被 Python 实现替代, 保留作考古参考 per "respect user data")
 openspec/                     # OpenSpec CLI 数据 (随项目走)
   changes/                    # active changes + archive/
-  specs/                      # 已采纳的 capability specs (28 个)
+  specs/                      # 已采纳的 capability specs
 ```
 
 ## D3 design-pre-created 协同 (v2.2+)

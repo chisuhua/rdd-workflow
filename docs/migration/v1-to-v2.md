@@ -27,6 +27,10 @@ ls -la .rddf/state/ .openspec/ improvement-suggestions.md
 |------|------|------|
 | `skill_use("guide-spec")` | → `guide-arch` → `guide-plan` (自动) | 无需更改代码 |
 | `skill_use("guide-ship")` | 不变 | 保持不变 |
+
+> ⚠️ **本表记录的是 v1.x → v2.0 当时**的映射。今天这些 skill 的实际位置见下方
+> 「技能文件变更」小节的「当前路径（v4.0+）」列（`guide-ship`/`execute`/`status`
+> 已分别合并或归档）。
 | 双阶段 spec/ship | 三阶段 arch/plan/ship | 职责更清晰 |
 
 ---
@@ -72,6 +76,9 @@ rdd-workflow v2.0 是一次**重大架构升级**，从状态机驱动升级到 
 | `skill_use("propose")` | 保持不变 | 长期支持 |
 | `skill_use("execute")` | 保持不变 | 长期支持 |
 | `skill_use("status")` | 保持不变 | 长期支持 |
+
+> ⚠️ **本表记录的是 v1.x → v2.0 当时**的映射。`execute` 与 `status` 已归档到
+> `docs/legacy/skills/`（ADR-0063），`status` 的能力改由 `rddf status` CLI 承载。
 
 ### 🟡 兼容但变化
 
@@ -393,30 +400,30 @@ ls -la improvement-suggestions.md   # 应该仍然存在（同步层维护）
 
 ### 新增技能文件
 
-| 文件 | 说明 | 必须 |
-|------|------|------|
-| `skills/guide-arch.md` | 架构定义阶段 | ✅ 是 |
-| `skills/guide-plan.md` | 变更生成阶段（原 guide-spec） | ✅ 是 |
-| `skills/loop_engine.py` | Loop 引擎入口 | ✅ 是 |
-| `skills/_lib/state_vector.py` | 状态向量操作 | ✅ 是 |
-| `skills/_lib/event_log.py` | 事件流操作 | ✅ 是 |
-| `skills/_lib/session.py` | 轻量级会话协调器 | ✅ 是 |
+| 文件（v2.0 时期） | 说明 | 必须 | 当前路径（v4.0+） |
+|------|------|------|------|
+| `skills/guide-arch.md` | 架构定义阶段 | ✅ 是 | `skills/rdd-arch/SKILL.md` |
+| `skills/guide-plan.md` | 变更生成阶段（原 guide-spec） | ✅ 是 | `skills/rdd-builder/SKILL.md` |
+| `skills/loop_engine.py` | Loop 引擎入口 | ✅ 是 | `skills/loop_engine.py`（向后兼容 shim，未变） |
+| `skills/_lib/state_vector.py` | 状态向量操作 | ✅ 是 | `_lib/core/state_vector.py` |
+| `skills/_lib/event_log.py` | 事件流操作 | ✅ 是 | `_lib/core/event_log.py` |
+| `skills/_lib/session.py` | 轻量级会话协调器 | ✅ 是 | `_lib/session.py` |
 
 ### 保留技能文件
 
-| 文件 | 说明 | 变更 |
-|------|------|------|
-| `skills/guide-ship.md` | 变更执行阶段 | 🟡 小调整 |
-| `skills/propose.md` | 生成 proposal | ✅ 无变化 |
-| `skills/execute.md` | 执行 work units | ✅ 无变化 |
-| `skills/status.md` | 查看状态 | 🟡 增加状态向量查询 |
-| `skills/roadmap.md` | roadmap 管理 | ✅ 无变化 |
+| 文件（v2.0 时期） | 说明 | 变更 | 当前路径（v4.0+） |
+|------|------|------|------|
+| `skills/guide-ship.md` | 变更执行阶段 | 🟡 小调整 | `skills/rdd-builder/SKILL.md`（ship = builder P2，ADR-0043） |
+| `skills/propose.md` | 生成 proposal | ✅ 无变化 | `skills/propose/SKILL.md` |
+| `skills/execute.md` | 执行 work units | ✅ 无变化 | 已归档 `docs/legacy/skills/execute`（ADR-0063） |
+| `skills/status.md` | 查看状态 | 🟡 增加状态向量查询 | 已归档 `docs/legacy/skills/status`（ADR-0063）；能力改由 `rddf status` CLI 承载 |
+| `skills/roadmap.md` | roadmap 管理 | ✅ 无变化 | `skills/roadmap/SKILL.md` |
 
 ### 弃用技能文件
 
-| 文件 | 替代 | 弃用时间 |
-|------|------|---------|
-| `skills/guide-spec.md` | `guide-arch.md` + `guide-plan.md` | v3.0 移除 |
+| 文件 | 替代（v2.0 时期） | 弃用时间 | 当前路径（v4.0+） |
+|------|------|---------|------|
+| `skills/guide-spec.md` | `guide-arch.md` + `guide-plan.md` | v3.0 移除 | `skills/rdd-arch/SKILL.md` + `skills/rdd-builder/SKILL.md`（ADR-0042 rename + ADR-0043 merge） |
 
 ---
 
@@ -435,7 +442,7 @@ skill_use("guide-spec")
 **v2.0 方式**（推荐）:
 ```bash
 # 方式 1: 传统菜单（向后兼容）
-skill_use("guide-plan")
+skill_use("rdd-builder")   # v1.x 的 "guide-plan" 已于 v4.0 rename/merge（ADR-0042/0043）
 
 # 方式 2: Loop 模式
 skill_use("loop", {
@@ -554,7 +561,7 @@ skill_use("guide-spec")  # 首次调用时自动完成迁移
 > 旧文件迁移不再需要。如未来需要 v2 → v3 迁移,写一个新的 `v2_to_v3.py` 而非复用 v1.x 代码。
 >
 > **遗留演示**（历史参考,代码已删除）:
-> CLI `rdd-workflow sync` 规划中，v2.1 实现。当前状态数据存储于 Python 库层（`skills/_lib/sync_state.py`），在内存中维护双向一致性。下方命令展示的是 v2.0 完整设计演示。
+> CLI `rdd-workflow sync` 规划中，v2.1 实现。**当时**（v2.0 过渡期）状态数据存储于 Python 库层（`skills/_lib/sync_state.py`，已删除），在内存中维护双向一致性。下方命令展示的是 v2.0 完整设计演示。
 
 **解决** (v2.0.3 当前):
 ```bash
@@ -594,7 +601,7 @@ cat .rddf.json | jq '.'  # 应该是有效 JSON
 tail .rddf/state/event-log.jsonl | jq '.type'  # 查看最后的事件类型
 
 # 5. 回退到菜单模式
-skill_use("guide-plan")  # 使用 v1.x 兼容模式
+skill_use("rdd-builder")   # v1.x 的 "guide-plan" 已于 v4.0 rename/merge（ADR-0042/0043）  # 使用 v1.x 兼容模式
 ```
 
 ### 问题 4: 门控检查失败
@@ -670,10 +677,10 @@ npm install rdd-workflow@1.x
 
 迁移完成后，建议：
 
-1. **阅读 Loop 引擎指南**: [v2-loop-engine-guide.md](v2-loop-engine-guide.md)
-2. **查看配置 Schema**: [v2-config-schema.md](v2-config-schema.md)
-3. **尝试 loop 模式**: `skill_use("loop", {goal: "complete all changes"})`
-4. **查看 ADR 总结**: [v2-adr-summary.md](v2-adr-summary.md)
+1. **阅读 Loop 引擎指南**: [architecture/loop-engine.md](../architecture/loop-engine.md)
+2. **查看配置 Schema**: [schemas/README.md](../schemas/README.md)
+3. **了解 loop 模式**: 见 [architecture/loop-engine.md](../architecture/loop-engine.md)（`loop` skill 已不存在）
+4. **查看 ADR 总结**: [adr/README.md](../adr/README.md)
 
 ---
 

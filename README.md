@@ -145,21 +145,21 @@ verification:
 
 ### 测试基础设施
 
-- **57 个 Python 单元测试**：覆盖状态向量、事件日志、门控机制、Loop 引擎等
-- **10 个 Python 集成测试**：覆盖 Loop 流程、门控切换、阶段切换
+- **Python 单元测试**（`tests/unit/`）：覆盖状态向量、事件日志、门控机制、Loop 引擎等
+- **Python 集成测试**（`tests/integration/`）：覆盖 Loop 流程、门控切换、阶段切换
 - **测试框架**：pytest (Python) + bats (shell)
-- **A 层 e2e smoke** (CI 必跑)：10 cases 验证 phase 脚本非交互入口（`./test.sh --e2e-smoke`）
-- **C 层 e2e agent** (nightly 必跑)：53 cases 验证 prose UX 真跑通 5 skill (`./test.sh --e2e-agent`)
-- **外部 E2E 测试床**：[chisuhua/rdd-workflow-e2e](https://github.com/chisuhua/rdd-workflow-e2e) — 以第三方项目视角安装 `rdd-workflow`，验证 `arch → planner → builder → archive` 全工作流与 36 个 `rddf` 子命令。Nightly cron 在最新 `master` 上自动跑（无需 GitHub App）。本地入口：`./test.sh --external-e2e`（auto-clone 到 `$RDD_E2E_DIR` 默认 `<user_data_dir>/rdd-workflow-e2e`，已存在则复用）。
+- **A 层 e2e smoke** (CI 必跑)：验证 phase 脚本非交互入口（`./test.sh --e2e-smoke`）
+- **C 层 e2e agent** (nightly 必跑)：验证 prose UX 真跑通各 skill (`./test.sh --e2e-agent`)
+- **外部 E2E 测试床**：[chisuhua/rdd-workflow-e2e](https://github.com/chisuhua/rdd-workflow-e2e) — 以第三方项目视角安装 `rdd-workflow`，验证 `arch → planner → builder → archive` 全工作流与 `rddf` 子命令面。Nightly cron 在最新 `master` 上自动跑（无需 GitHub App）。本地入口：`./test.sh --external-e2e`（auto-clone 到 `$RDD_E2E_DIR` 默认 `<user_data_dir>/rdd-workflow-e2e`，已存在则复用）。
 
 #### 分层 e2e 策略
 
 | 层 | 入口 | 触发 | 必须绿 | 覆盖 |
 |----|------|------|--------|------|
 | A (脚本调用) | `./test.sh --e2e-smoke` | PR/push | ✅ | phase 脚本 + scaffold + isolation 契约 |
-| C (agent 模拟) | `./test.sh --e2e-agent` | nightly | ⚠️ skip-on-missing-credentials | prose UX 5 skill (44 scenarios) |
-| 外部 testbed | `./test.sh --external-e2e` | 手动 / nightly 第三方 cron | ✅ | 多 stage 全流程 + 36 rddf CLI |
-| 外部 testbed | `rdd-workflow-e2e` nightly | 第三方 cron | ✅ | 多 stage 全流程 + 36 rddf CLI |
+| C (agent 模拟) | `./test.sh --e2e-agent` | nightly | ⚠️ skip-on-missing-credentials | prose UX 多 skill 多场景 |
+| 外部 testbed | `./test.sh --external-e2e` | 手动 / nightly 第三方 cron | ✅ | 多 stage 全流程 + rddf CLI 面 |
+| 外部 testbed | `rdd-workflow-e2e` nightly | 第三方 cron | ✅ | 多 stage 全流程 + rddf CLI 面 |
 
 **A 层** (CI 必跑，`tests/e2e/script/`)：跳过 prose 解释层，直接调 `phase*.sh` 验证机械正确性、退出码、文件落盘。
 
@@ -170,11 +170,11 @@ verification:
 
 **外部 testbed** (`chisuhua/rdd-workflow-e2e`)：第三方项目视角，多 stage 全流程集成。本仓 C 层独占 prose UX 覆盖，外部 testbed 独占全 stage 集成。详见 [docs/superpowers/specs/2026-09-08-e2e-test-plan-design.md](docs/superpowers/specs/2026-09-08-e2e-test-plan-design.md) 与协同契约（`docs/superpowers/specs/2026-09-08-rdd-workflow-e2e-coop-contract.md`）。
 
-完整 e2e 计划：1 主策略 spec + 5 scenario spec（per skill）+ 4 plan docs（Phase 1-4），均落 `docs/superpowers/`。
+完整 e2e 计划：主策略 spec + 各 skill 的 scenario spec + Phase plan docs，均落 `docs/superpowers/`。
 
 ### 跨项目协同 (ADR-0030)
 
-rdd-workflow 支持 Hub-and-Spoke 联邦架构。3 个新命令启用双向协同通道:
+rdd-workflow 支持 Hub-and-Spoke 联邦架构。以下命令启用双向协同通道:
 
 #### 上行:`rddf report-issue --category=rfc`
 
@@ -337,7 +337,7 @@ contract-lint:
 rddf deps cross-repo --spokes org/foo,org/bar,org/baz
 ```
 
-输出包含 4 个 section:依赖图(Mermaid)、每个 change 的 `cross_repo_dependencies` 列表、推荐执行顺序(按 wave 分组)、冲突检测。
+输出包含以下 section:依赖图(Mermaid)、每个 change 的 `cross_repo_dependencies` 列表、推荐执行顺序(按 wave 分组)、冲突检测。
 
 ```mermaid
 graph TD
@@ -403,7 +403,7 @@ rddf roadmap snapshot-objective bypass-audit-hub-governance
 rddf roadmap archive-objective bypass-audit-hub-governance
 ```
 
-7 subcommands (`*-objective`) + 2 doctor categories (`objective-lifecycle` + `objective-structure`). Only `rdd-planner` writes objective files (per ADR-0028 role boundary). Decision rule: feature fragment for derived cross-phase aggregation (free, auto, zero maintenance); objective for cross-sprint target narrative + sprint-review ledger (manual, planner revision). See `docs/adr/ADR-0054-objective-tracking.md` + AGENTS.md "Objective 工件" section.
+objective 子命令（`*-objective`）+ doctor categories（`objective-lifecycle` + `objective-structure`）. Only `rdd-planner` writes objective files (per ADR-0028 role boundary). Decision rule: feature fragment for derived cross-phase aggregation (free, auto, zero maintenance); objective for cross-sprint target narrative + sprint-review ledger (manual, planner revision). See `docs/adr/ADR-0054-objective-tracking.md` + AGENTS.md "Objective 工件" section.
 
 ## 目录结构
 
@@ -415,7 +415,6 @@ rdd-workflow/
 ├── install.sh           # 手动安装脚本
 └── skills/
     ├── INSTALL.md                       # 安装程序（第一入口）
-    ├── guide/SKILL.md                   # 推荐器入口
     ├── rdd-arch/SKILL.md              # Arch 阶段状态机(v2.0+; Stage 3 rename per ADR-0042)
     ├── rdd-planner/SKILL.md           # Planner 阶段状态机(v4.0+, 路线图 + 提案治理, per ADR-0038/0042)
     ├── rdd-builder/SKILL.md           # Builder 阶段状态机(v4.0+, 6-phase P0-P3 整合 approval+plan+execute+archive per ADR-0043)
@@ -431,7 +430,7 @@ rdd-workflow/
     ├── rdd-workflow-brainstorm/SKILL.md # 提案头脑风暴 helper
     ├── rdd-env-check/SKILL.md           # 独立环境健康检查(各 phase 首屏)
     ├── rdd-env-bootstrap/SKILL.md       # 环境编排器 (4 phases: detect→diagnose→suggest→guided-fix, per ADR-0053)
-    ├── rdd-doctor/SKILL.md              # 手动只读诊断(5 类结构化文件)
+    ├── rdd-doctor/SKILL.md              # 手动只读诊断(结构化文件)
     ├── rdd-hub-bootstrap/SKILL.md       # Hub 仓库引导式初始化
     ├── openspec-gate/SKILL.md           # staged 文件→active change 关联守卫
     ├── contract-check/SKILL.md          # Spoke vs Hub OpenAPI 一致性校验
@@ -440,9 +439,11 @@ rdd-workflow/
     ├── report-issue/SKILL.md            # Hub-Spoke 上行 [RFC] issue 命令
     ├── sync-hub/SKILL.md                # Hub-Spoke 下行 contract 拉取
     ├── watch-hub/SKILL.md               # Hub-Spoke 一次性轮询
+    ├── rdd-session-bootstrap/SKILL.md    # 通用 session-bootstrap（跨项目 profile 适配）
+    ├── session-lesson-mining/SKILL.md    # 从真实会话历史挖掘可机判教训
     ├── loop_engine.py                   # v2.0 Loop 引擎入口(向后兼容 shim)
     ├── <skill>/scripts/                 # per-skill 辅助脚本
-    └── _lib/                            # 共享辅助函数库(19 .sh + 100 .py + 20 schema)
+    └── _lib/                            # 共享辅助函数库（sh + py + 子模块；构成以 disk 为准）
 ```
 
 ## 工作原理
@@ -564,7 +565,7 @@ export SKIP_PROMETHEUS_PLANNING=yes  # 跳过计划生成,rdd-builder P1 阶段�
 **架构变更说明** (v1.0 → v2.0):
 - **v1.1 (已废弃)**: 解决了 P0-6 缺陷:`prometheus-start-work` 不再是隐式黑盒依赖
 - **v1.2 (已废弃)**: skills 隔离 + 路径独占 + 混合 TDD
-- **v1.3 (已废弃)**: standalone 模式 + 跨 7 个 AI 工具路径探测
+- **v1.3 (已废弃)**: standalone 模式 + 跨 AI 工具路径探测
 - **v2.0 (当前)**: 完全自包含 — 删除所有间接层,直接调用内置 skill
 
 ## Skill 版本语义
