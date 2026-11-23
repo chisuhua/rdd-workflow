@@ -184,13 +184,52 @@
 
 ### 3.4 ✅ CHANGELOG 未落后
 
-`docs/CHANGELOG.md:13` 最新条 = **v2.66（2026-11-23）**，与 HEAD 提交逐字对应。
+`docs/CHANGELOG.md` 最新条 = **v2.67（2026-11-23）**「治理面路径清单配置化」（覆盖 v1.1 – v2.67，74 个版本）。
 
 ### 3.5 跨仓指针的固有限制
 
-`docs/architecture/agent-role-alignment.md:21` 声明「本页关于 opencode 侧的描述对应 `prompts/build.md` 的 **2026-11-17** 状态」。opencode 侧已到 **v2.66（2026-11-23）**，中间 v2.64/2.65/2.66 三轮改动（v2.66 改的正是 `build.md:454` 那行）。
+`docs/architecture/agent-role-alignment.md:21` 声明「本页关于 opencode 侧的描述对应 `prompts/build.md` 的 **2026-11-17** 状态」。opencode 侧已到 **v2.67（2026-11-23）**，中间 v2.64–v2.67 四轮改动（v2.66 改的正是 `build.md:454` 那行）。
 
 该文档**已自我声明不是真源**（`:5-6`「本页不是真源…与代码/契约不一致时以真源为准」）且**只保留不随实现漂移的部分**（命名/归属判定/双落点）⇒ 影响可控。但本仓**无法机检**这 6 处指针。
+
+### 3.6 ✅ 本轮已处置（#11–20，2026-11-23，`architect` 角色）
+
+**审查链**：`metis`（意图检查点的歧义枚举）→ `oracle`（治理面审查域，**PASS-WITH-NOTES**）→ `critic`（`arch` 档，**APPROVE_WITH_CONDITIONS**，0 BLOCKER）。
+**审稿报告**：`.rddf/reviews/governance-p1-docs-2026-11-23.md`（含逐条处置、oracle 采纳/驳回理由、未闭环项）。
+
+| # | 台账原判 | 处置 |
+|---|---|---|
+| 11 | MAD `:61` 「11 个」 | ✅ → **12 个** + 计数口径行 |
+| 12 | MAD `:153` 「7 个」 | ✅ → **8 个** + 计数口径行（改为指针，枚举只在 §1.1 一处） |
+| 13 | MAD `:382` 枚举漏 plan-worker | ✅ → **12 个** + 补 `plan-worker` |
+| 14 | MAD `:49` 「3 provider / 12 model」 | ✅ → **5 / 13** + 口径（符号链接目标 + 换目标需同步） |
+| 15 | §3.1 委派矩阵缺 `plan-worker` 列 | ✅ 新增 11 列矩阵 + 各行填值（build ✅ / plan ✅ / front ❌ / 其余 ❌）+ 旁注。**填法按「权限语义」**（oracle 判定 `build → plan-worker = ✅`；metis 建议的 ❌ 被驳回，理由是矩阵自称「只回答允许调谁」且守卫 AC4 断言可派者集合 == `{build, plan}`） |
+| — | `build.md:454` architect 行漏 `.rddf/reviews` | ⚠️ **部分**：表内单元格**不可改**（回滚清单整表 pin，见下），改由**表尾逐字投影**覆盖 |
+| — | `build.md:457` verifier 行漏 `.rddf/state/verifier` | ⚠️ **同上** |
+| 16 | `build.md:411` 悬空 `§4.2` | ✅ → 「上方『工件归属规则』的裁决」 |
+| 16b | `build.md:455` 悬空 `§4.4` | ⚠️ **表内不可改** ⇒ 表尾声明给出映射（「`§4.4` = 本表 `builder` 行」） |
+| 17 | SO `:30` 悬空「链路分档」 | ✅ → 「模型选择策略」（**不带编号** —— 该文件有守卫禁止 `§x.y`） |
+| 18 | SO `:172` 「38 份」 | ✅ **删裸计数**（改「该目录持续累积」；裸数字必然再漂） |
+| 19 | SO `:174` v2.12–v2.19 | ✅ → 双锚点（起于 v1.1 / 首版沉淀于 v2.19 / 本行撰写时最新 v2.67 快照） |
+| 20 | SO `:1` 日期 2026-11-13 | ✅ → 「最后更新：2026-11-23」（全文唯一日期锚，无内部不一致风险） |
+
+**执行约束（新发现，改变了方案）**：`prompts/build.md` 的角色列表表被
+`.rddf/rollback/governance-paths-config.json::edits[13].find` **整表 pin**（2914 字符）
+⇒ 改任何单元格 ⇒ `rollback-manifests.test.ts` 判漂移；而 `.rddf/rollback/**` **不在
+`architect.allow`** 内 ⇒ 表内一个字都不能改。折中 = **表尾新增「6 角色机器层写集逐字投影」块**
+（不改表内 ⇒ 不触发 pin；信息仍可独立核实）。
+
+**本轮顺带修掉的台账自身错误**：§3.4/§3.5 原写「v2.66」⇒ 实为 **v2.67**（v2.67 是本轮之前刚落的）。
+
+**验证**：`bun test tests/` **1133 pass / 1 skip / 0 fail**（32 文件 / 1134 测试）；矩阵与角色表列数一致性自查通过；`grep '链路分档'` **0 命中**。
+
+**未闭环 / follow-up（记 backlog）**：
+1. 三处表内未闭环项（architect 行 / verifier 行 / `:455` 的 `§4.4`）—— 需先窄化回滚清单的 `find`
+2. 五角色**写集机读块化**（`delegate-core.ts` 渲染函数 + 守卫精确比对）
+3. 矩阵填法归一化（`plan → context-builder` 格，或拆「权限列 / 流程列」）
+4. **清单外同型矛盾**（critic 已确认成立，本轮只报不修）：
+   - MAD 的 ASCII 图「general 不能被任何 agent 调」 vs 矩阵 `build → general = ✅` / `plan → general = ✅✅（优先）`
+   - **`librarian.subagent = "deny"` vs `prompts/librarian.md:24` 要求用 `subagent` 委派 explore vs 矩阵 `librarian → explore = ✅✅` —— 三者互斥**（最严重：librarian 的 prompt 要求的动作在机器层被拒）
 
 ## 四、遗留 P0（本回合已清）
 
