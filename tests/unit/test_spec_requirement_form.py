@@ -59,6 +59,16 @@ ACCEPTANCE_FORM_SPECS = (
 #: 判据 ① —— 无语义的 Requirement 名（AC 序号）。
 _MEANINGLESS_REQUIREMENT = re.compile(r"^### Requirement: acceptance-\d+\s*$", re.MULTILINE)
 
+#: 判据 ① 的**全仓版** —— `acceptance-N` 与 `capability-N` 是同一形态退化族的两种命名
+#: （自动生成的序号名 + 恒真 WHEN + `is enforced` 结尾）。
+#:
+#: 见 `.rddf/reviews/rewrite-acceptance-form-batch-4-2026-11-23.md` 的教训 ⑦：
+#: 「**按「形态类」计数，不要按「文件名模式」计数**」—— 只治理 `acceptance-N`
+#: 会整类漏掉 `capability-N`（第 4 批实漏 7 条，直到收口前自查才发现）。
+_DEGRADED_REQUIREMENT_NAME = re.compile(
+    r"^### Requirement: (?:acceptance|capability)-\d+\s*$", re.MULTILINE
+)
+
 #: 判据 ② —— 恒真的 Scenario WHEN（对任何 change / feature 都成立）。
 _TAUTOLOGICAL_WHEN = re.compile(
     r"^- \*\*WHEN\*\* the (?:change|feature|it) is applied\s*$", re.MULTILINE
@@ -180,3 +190,34 @@ def test_pending_specs_still_declare_the_acceptance_form() -> None:
     assert not offenders, (
         "pending list is stale:\n  " + "\n  ".join(offenders)
     )
+
+
+@requires_specs_dir
+def test_no_spec_anywhere_uses_a_degraded_requirement_form() -> None:
+    """**全仓**扫描 —— 不依赖清单。
+
+    上面那些判据都是**清单级**的：`compliant` / `pending` 只覆盖 `ACCEPTANCE_FORM_SPECS`
+    那个**有界集合**（12 份）⇒ 第 13 份退化 spec 不咬，CI 上更没有牙齿
+    （`openspec/` 整树 gitignore ⇒ 内容级判据在 CI 上 skip）。
+
+    本判据扫 `openspec/specs/**` 的**每一份** spec ⇒ 任何新引入的退化形态立刻红
+    （本地）。它同时覆盖两种命名：
+
+    - `acceptance-N`（AC 序号名）
+    - `capability-N`（**同一退化族的另一种命名** —— 见上面的教训 ⑦ 注释）
+    """
+    offenders = []
+    for spec in sorted(SPECS_DIR.glob("*/spec.md")):
+        text = spec.read_text(encoding="utf-8")
+        rel = spec.relative_to(REPO_ROOT)
+        for pattern in (_DEGRADED_REQUIREMENT_NAME, _TAUTOLOGICAL_WHEN):
+            for m in pattern.finditer(text):
+                line = text[: m.start()].count("\n") + 1
+                offenders.append(f"{rel}:{line}: {m.group(0).strip()}")
+    assert not offenders, (
+        "degraded Requirement form found under openspec/specs/:\n  "
+        + "\n  ".join(offenders)
+        + "\n\nFix: give the Requirement a semantic name and make its WHEN "
+        "discriminating (see .rddf/reviews/rewrite-acceptance-form-batch-5-2026-11-23.md)."
+    )
+

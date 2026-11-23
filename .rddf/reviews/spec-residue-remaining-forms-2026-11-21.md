@@ -116,6 +116,9 @@
        ⑧ **判「无守卫」前必须先查文件名，不能只 grep 内容**。本批我把 AC-23 判成「`test_layer0_sentinel_order.bats` 文件不存在」⇒ **实际存在**（2026-09-21，3 个用例）⇒ 按判据 ⑥ 应**改写**而非退役 ⇒ critic 第 2 轮 BLOCKER-1。这与第 1 轮的 BLOCKER-1/2 是**同一缺陷类**（误判守卫存在性 ⇒ 错误退役 ⇒ 丢契约）。⇒ 「无守卫」的判定要**先列文件、再列用例名**。
        ⑨ **spec 断言不得强于守卫**（全称量化 vs 单实例）。本批我写「**a** read-only artefact SHALL list no rdd writer」—— 守卫只钉 `reviews` 一个，而 manifest 里 `write_by` 不含 rdd 的有 **9** 个 ⇒ 若 `config` 明天混入 rdd writer，全部守卫仍绿而 spec 已违约。⇒ 处置：**扩守卫**（新增 `test_non_rdd_entries_name_their_actual_writer` 逐条钉住 9 个条目）+ spec 措辞与之等强。
      - ⚠️ **一条工程约束**：改写若让 stage token **真的消失**，必须**同提交**更新冻结常量 `tests/unit/test_v4_residue_check.py::test_r4_repo_residue_constant`（303/159/41 → **297/157/40**；该测试 docstring 明写此规则）。本批漏改 ⇒ pytest 红 1 条。
+   - ✅ **防回潮守卫已补（2026-11-23，形态系列收口后）** —— `tests/unit/test_spec_requirement_form.py` 新增 `test_no_spec_anywhere_uses_a_degraded_requirement_form`：**不依赖清单**，扫 `openspec/specs/**` 的**每一份** spec ⇒ 第 13 份退化 spec 不再漏（此前 `compliant`/`pending` 只覆盖 `ACCEPTANCE_FORM_SPECS` 那个**有界集合** 12 份）。覆盖两种命名：`acceptance-N` 与 `capability-N`（**同一退化族的另一种命名** —— 教训 ⑦）。
+     - **负向验证**：注入探针 spec（`acceptance-99` / 改 `capability-99` / 恒真 WHEN）⇒ 三种形态**逐一变红**并报出 `file:line`；删除探针后复跑绿、无残留。
+     - ⚠️ **CI 上仍 skip**（`openspec/` 整树 gitignore ⇒ `git ls-files openspec/` = 0 ⇒ checkout 无 `openspec/specs/`）⇒ 与既有 3 个内容级判据同款：**本地牙齿，CI 无牙齿**。这是 `openspec/` 不跟踪这一既有立场的必然结果，不是本守卫的设计缺陷。
    - ✅ **第 5 批已完成（2026-11-23，`rewrite-acceptance-form-batch-5`）—— `acceptance-N` / `capability-N` 形态系列 12/12 全部收口** —— 最后 2 份 / **77 条 AC** ⇒ **24 条契约（覆盖 35 条 AC，其中 16 组被合并）+ 42 条退役**：`env-bootstrap`（44→12）· `objective-tracking`（33→12）。清单 `compliant` 10 → **12** 份、`pending` 2 → **0** 份。台账：`.rddf/reviews/rewrite-acceptance-form-batch-5-2026-11-23.md`。
      - ✅ **收口判据（AC-10）**：**全仓** `acceptance-N` = **0** · `capability-N` = **0** · 恒真 WHEN = **0**（165 份 spec / **747** 条 Requirement）。
      - ⚠️ **两条新的方法论教训**（本批特有）：
