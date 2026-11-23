@@ -80,9 +80,9 @@ ADR-0026 定义了 `.rddf/` 的命名约定与两类存储（`runtime-only` / `c
 
 | 文件 | 写方 | 读方 |
 |---|---|---|
-| `.arch-handoff.json` | `rdd-arch`（`_lib/adr_catalog.py:127`） | `rdd-planner` / `rdd-builder` |
-| `.planner-handoff.json` | `rdd-planner`（`_lib/builder_deps.py:42`） | `rdd-builder` |
-| `.planner-feedback.json` | `rdd-builder`（`_lib/builder_feedback_router.py:31`） | `rdd-planner` / `rdd-arch` |
+| `.arch-handoff.json` | `rdd-arch`（`skills/rdd-arch/scripts/write_arch_handoff.py:194`） | `rdd-planner` / `rdd-builder` |
+| `.planner-handoff.json` | `rdd-planner`（`_lib/planner_handoff.py:77`） | `rdd-builder`（`_lib/builder_deps.py:234`） |
+| `.planner-feedback.json` | `rdd-builder`（`_lib/builder_feedback_router.py:48`） | `rdd-planner` / `rdd-arch` |
 
 **治理状态（opencode 角色层）** —— 写在 `.rddf/state/` 与 `.rddf/reviews/`，**由消费方（opencode build agent）写，rdd-workflow 不读不写**：
 

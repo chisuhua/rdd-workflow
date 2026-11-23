@@ -4,7 +4,7 @@
 
 The Loop engine (ADR-0004) is the runtime that turns a **goal** into a sequence of **plan → execute → verify → adapt** cycles, with optional human-in-the-loop checkpoints. It is the difference between "the AI does whatever the menu says" (v1.x) and "the AI works toward a goal until it can verify completion" (v2.0).
 
-The engine is implemented in `_lib/loop_engine.py` (entry-point shim) backed by the `_lib/loop/` package (16 modules: `loop_state`, `agents`, `actions`, `detectors`, `tribunal`, `gate`, `human_nodes`, `event_queue`, `interaction_modes`, `flow_customizer`, `step_pipeline`, `plugin_loader`, `sanitizer`, `memory`, `flowchart`, `design_phase`).
+The engine is implemented in `_lib/loop_engine.py` (entry-point shim) backed by the `_lib/loop/` package (16 modules — 15 functional + `__init__.py`: `loop_state`, `agents`, `actions`, `detectors`, `tribunal`, `human_nodes`, `event_queue`, `interaction_modes`, `flow_customizer`, `step_pipeline`, `plugin_loader`, `sanitizer`, `memory`, `flowchart`, `design_phase`). The gate module lives **outside** the package: `_lib/gate.py`.
 
 ## Five Building Blocks
 
@@ -23,7 +23,7 @@ graph LR
 | **Goal** | The user-declared objective (e.g. "ship change `fix-foo`"). Backs `state_vector.goal`. | `loop_state.py` |
 | **Plan** | Decomposes goal into ordered steps; reads/writes `.rddf/plans/<name>.md`. | `agents.py`, `step_pipeline.py` |
 | **Execute** | Runs each step; emits events to `event_log`. | `actions.py`, `agents.py` |
-| **Verify** | Runs gates (gate.py) and optionally tribunal (tribunal.py). | `gate.py`, `tribunal.py` |
+| **Verify** | Runs gates (`_lib/gate.py`) and optionally tribunal (`_lib/loop/tribunal.py`). | `_lib/gate.py`, `tribunal.py` |
 | **Adapt** | On verify-fail: re-plan or escalate to a human node. | `human_nodes.py`, `interaction_modes.py` |
 
 ## Interaction Modes (ADR-0002)

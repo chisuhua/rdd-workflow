@@ -155,22 +155,26 @@ This section walks through the **happy path** end-to-end, step by step. All file
 - `docs/architecture/*-gap-analysis.md` (optional)
 - `.rddf/state/.arch-handoff.json` (schema v3)
 
-**Handoff output** (`.arch-handoff.json` v3):
+**Handoff output** (`.arch-handoff.json` v3，实际 writer 输出形状):
 ```json
 {
-  "schema": "arch-handoff-v3",
-  "version": 3,
-  "owner": "rdd-arch",
+  "arch_complete_at": "2026-08-15T16:40:59+00:00",
+  "adr_count": 31,
+  "completed_adr_ids": ["0001", "0002"],
+  "current_phase": "v2.0 (已完成)",
+  "plan_started_at": null,
   "adr_dir": "docs/adr",
-  "adr_pattern": "ADR-*.md",
   "architecture_dir": "docs/architecture",
+  "adr_pattern": "ADR-*.md",
   "discovered": {
-    "adr_files": ["ADR-0001", "ADR-0002", ...],
-    "gap_analyses": [...]
+    "adr_dir": {"found": true, "created": false, "candidates_tried": 1},
+    "architecture_dir": {"found": true, "created": false, "candidates_tried": 1}
   },
-  "arch_complete_revision": 12
+  "version": 3
 }
 ```
+（无 `schema` / `owner` 字段；`adr_regex` 可选。逐字段定义见
+[skills-and-handoff.md](skills-and-handoff.md#arch-handoffjson-v3-adr-0016--adr-0042)。）
 
 **NOT written by rdd-arch (per ADR-0048 §Decision 1)**:
 - ❌ `roadmap.md`
@@ -570,7 +574,7 @@ rdd-quick P1 (mode a, reads planner-handoff.json::recommended_route)
 ```
 
 **Data integrity contract**:
-- `recommended_route` is excluded from `_lib/planner_state.py` `_SEMANTIC_HASH_EXCLUDE` (advisory recompute alone does NOT bump `state_revision`)
+- `recommended_route` is excluded from `_lib/planner_state.py:56` `_SEMANTIC_HASH_EXCLUDE` (advisory recompute alone does NOT bump `state_revision`)
 - `recommended_route` is excluded from `.planner-state.json` content checksums
 - `recommended_route` change does NOT trigger `_lib/roadmap_sprint.update_roadmap` re-render (AUTO-SPRINT block unchanged)
 

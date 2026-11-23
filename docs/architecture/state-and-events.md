@@ -50,13 +50,13 @@ Querying 10k events is < 100 ms (linear scan over small payloads).
 
 | File | Written by | Read by | Schema version |
 |------|-----------|---------|----------------|
-| `.arch-handoff.json` | `rdd-arch` (arch-done) | `rdd-planner`, `rdd-builder` | v1 (ADR-0016) |
-| `.planner-handoff.json` | `rdd-planner` (plan-done) | `rdd-builder` | v1.1 + `recommended_route` (ADR-0048) |
-| `.planner-feedback.json` | `rdd-builder` (feedback) | `rdd-planner`, `rdd-arch` | v1 (ADR-0042) |
+| `.arch-handoff.json` | `rdd-arch` (arch-done) | `rdd-planner`, `rdd-builder` | v3（schema `enum: [1,2,3]`，ADR-0016 + ADR-0042） |
+| `.planner-handoff.json` | `rdd-planner` (plan-done) | `rdd-builder` | `planner-handoff-v1` + `recommended_route` (ADR-0048) |
+| `.planner-feedback.json` | `rdd-builder` (feedback) | `rdd-planner`, `rdd-arch` | `planner-feedback-v1` (ADR-0042) |
 
 Each handoff file is JSON with a `version` field at the top. **Consumers reject version=0 payloads** (forces explicit schema migration).
 
-> **v4 命名说明**：v1~v3 的 `.design-handoff.json` / `.plan-handoff.json` 已废弃 —— v4 合并 design 与 plan 阶段后，handoff 改为 `.planner-handoff.json`（`_lib/builder_deps.py:42`）。旧文件名仅作 legacy 探测用途保留（`_lib/cli/guide_cmd.py:172-173`）。
+> **v4 命名说明**：v1~v3 的 `.design-handoff.json` / `.plan-handoff.json` 已废弃 —— v4 合并 design 与 plan 阶段后，handoff 改为 `.planner-handoff.json`（写方 `_lib/planner_handoff.py:77`，读方 `_lib/builder_deps.py:223,234`）。旧文件名仅作 legacy 探测用途保留（`_lib/cli/guide_cmd.py:68-73`；`_lib/recommender.py:133-162` 回退时打「legacy v3 handoff detected」）。
 
 `.rddf/` 的**布局**（有哪些条目、谁读谁写、是否入库）见 [rddf-layout.md](rddf-layout.md) —— 真源是 `_lib/core/rddf_layout.py`。
 

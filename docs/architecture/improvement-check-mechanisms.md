@@ -44,41 +44,53 @@
 |------|------|------|------|
 | SKILL.md Phase 2.5 文档 | [`skills/rdd-builder/SKILL.md`](../../skills/rdd-builder/SKILL.md) (Phase 2.5 section) | ~89 行 | ✅ |
 | 已提取 helper(`handle_review_action` 重命名至 `phase2_5_review.sh`) | [`skills/rdd-builder/scripts/phase2_5_review.sh`](../../skills/rdd-builder/scripts/phase2_5_review.sh) | ~175 行 | ✅ |
-| Gate 检查 `review_debt_recorded` (warning 级) | [`_lib/gate.py:341-370`](../../_lib/gate.py) | 30 行 | ✅ |
-| 实际 issue 记录已存在(8 个 `.rddf/improvements/*.md` 含 `**类型**: debt`) | `.rddf/improvements/` | — | ✅ |
+| Gate 检查 `review_debt_recorded` (warning 级) | [`_lib/review_debt_checker.py:62`](../../_lib/review_debt_checker.py)（`_lib/gate.py:333` 的同名函数已标 `@deprecated`，不再是活实现） | 158 行 | ✅ |
+| 实际 issue 记录已存在(7 个 `.rddf/improvements/*.md` 含 `**类型**: debt`) | `.rddf/improvements/` | — | ✅ |
 
-### Gate 实现细节(`_lib/gate.py:341`)
+### Gate 实现细节(`_lib/review_debt_checker.py:62`)
 
 ```python
-def _check_review_debt_recorded(ctx: dict) -> tuple[bool, Optional[str]]:
-    # 扫描 git diff 中的新增 TODO/FIXME/HACK
-    result = subprocess.run(
-        ["git", "diff", "HEAD", "--", "*.cpp", "*.h", "*.py", "*.ts"],  # ⚠️ 语言范围有限
-        ...
+def check_review_debt_recorded(
+    project_root: str,
+    change_name: str,
+    execute_finished_at: datetime,
+) -> ReviewDebtVerdict:
+    """Check whether new TODOs in supported languages have a corresponding
+    debt file. Runs BEFORE the worktree commit (Phase 2.5).
+    """
+    # 扫描 SUPPORTED_LANG_EXTENSIONS（18 种扩展名）里的 TODO/FIXME/HACK/WORKAROUND
+    for ext in SUPPORTED_LANG_EXTENSIONS:
+        for source_file in project_root_path.glob(f"*{ext}"):
+            ...
+            if _TODO_PATTERN.search(line):
+                new_todos.append((str(rel_path), line_no))
+
+    # 债务文件：命名约定 + mtime 必须晚于 execute 结束时刻
+    debt_candidates = [
+        improvements_dir / f"cleanup-{change_name}-debt.md",
+        improvements_dir / f"{change_name}-debt.md",
+    ]
+    persisted = any(
+        debt.is_file()
+        and datetime.fromtimestamp(debt.stat().st_mtime, tz=timezone.utc) > execute_finished_at
+        for debt in debt_candidates
     )
-    new_todos = [line for line in result.stdout.split('\n')
-                 if line.startswith('+') and any(t in line for t in ('TODO', 'FIXME', 'HACK'))]
-    if not new_todos:
-        return (True, None)  # 没有债务 → 通过
-    # 若有债务,要求 .rddf/improvements/ 中存在 debt 类型条目
-    ...
-    return (True, None) if debt_names else (False, "warning")
 ```
 
-### 已知局限(ADR-0014 未补完的事项)
+> ⚠️ 与旧 `_lib/gate.py` 版的**行为差异**：活实现扫描**整棵树**（`glob` 而非 `git diff`）——
+> 「新增 TODO」变成「树内任意 TODO」，命中面更大；债务记录的收敛靠命名约定 + mtime。
 
-1. **语言范围有限**(`_lib/gate.py:347`)
-   - 仅扫描 `.cpp/.h/.py/.ts`,不覆盖 `.go/.rs/.java/.rb/.sh`
-   - **影响**: 用户的 Go/Rust/Java 项目债务永远不报警
-   - **建议**: 扩展 glob pattern 或读取项目语言检测配置
+### 已知局限(ADR-0014 未补完的事项 —— 截至 2026-11-23 的状态)
 
-2. **Gate 逻辑过于宽松**(`_lib/gate.py:368`)
-   - 只要 `.rddf/improvements/*.md` 中存在 `**类型**: debt` 就通过,不论 debt 与当前 change 的债务是否匹配
-   - **影响**: 用户可用历史 debt 文件掩盖当前债务
-   - **建议**: Gate 应检查 debt 文件名包含 `<current_change_name>` 或文件 mtime 在 execute 时间之后
-
-3. **架构漂移(选项 3)未真正实现**(SKILL.md:451 仅占位)
-   - `rdd-arch/scripts/arch_env_check.sh` 等未调用 drift detector
+1. ~~**语言范围有限**~~ —— **已修复**（活实现 `_lib/review_debt_checker.py:29-33`）
+   - 旧版只扫 `.cpp/.h/.py/.ts`；现覆盖 **18 种扩展名**（含 `.go/.rs/.java/.rb/.sh/.swift/.kt` 等）
+   - 旧版限制 `git diff HEAD` 只看**改动文件**；现用 `glob` 扫**整棵树**（`.rddf/` 除外）
+2. ~~**Gate 逻辑过于宽松**~~ —— **已修复**（活实现 `_lib/review_debt_checker.py:123-142`）
+   - 旧版只要 `.rddf/improvements/*.md` 中存在 `**类型**: debt` 就通过，历史债务可掩盖当前债务
+   - 现要求债务文件名匹配 `cleanup-<change>-debt.md` / `<change>-debt.md` **且** mtime 晚于 execute 结束时刻
+3. **架构漂移(选项 3)未真正实现**（`skills/rdd-builder/SKILL.md` 的 Phase 2 ADR-drift 段落只描述了**反馈路由通道**，
+   未见真正的 drift detector）
+   - `rdd-arch/scripts/arch_env_check.sh` 未调用 drift detector
    - **影响**: 选项 3 选中后实际不生成 drift-analysis.md
    - **建议**: 关联 `.rddf/improvements/structural-drift-detector.md` P0 提案
 
@@ -241,31 +253,53 @@ Oracle 用 9m32s 重新审视所有相关代码(16+ 文件、4 个 ADR、9 个�
 
 ### 5.3 Oracle 新增的 8 个 gap(按严重度排序)
 
-#### G1(P1-top)— Close 环整体死代码
+#### G1(P1-top)— Close 环整体死代码（**结论已过时，见本节复核**）
 
-**事实**: `openspec archive <name>` 把 `openspec/changes/<name>/` **移动**到 `openspec/changes/archive/<name>/`。但 `archive.sh:422` 先 archive,`:428` 才调 `close_issues_for_change_hook`,而 `close_issues.py:133` 读的是 PRE-move 路径 → 永远找不到 `roadmap-meta.yaml` → 恒 no-op。
+> ⚠️ **本节结论已过时（2026-11-23 复核）** —— 原文判定「恒 no-op」**不再成立**：
+> `_load_issue_refs` 已实现「先查 active 路径、fallback 到 post-archive 路径」
+> （`_lib/close_issues.py:129-175`）。**但调用顺序的脆弱性与测试盲区仍在**（见下）。
 
-**代码证据**:
+**原始事实（已部分失效）**: `openspec archive <name>` 把 `openspec/changes/<name>/` **移动**到
+`openspec/changes/archive/<date>-<name>/`。hook 在 archive **之后**调用 ⇒ 它读到的必然是
+**post-archive** 布局，只能靠 fallback 命中。
+
+**代码证据（行号已订正）**:
 ```bash
-# _lib/archive.sh:422-428
-if ! openspec archive "$name" --yes; then     # ← 移动发生在此
+# _lib/archive.sh:1063-1073 —— archive_change() 的 tracked 主路径
+if ! openspec archive "$name" --yes; then     # ← 移动发生在此（:1067）
     ...
 fi
-close_issues_for_change_hook "$name" "$main_root" || true  # ← hook 在后
+close_issues_for_change_hook "$name" "$main_root" || true  # ← hook 在后（:1073）
 ```
+
+⚠️ 另有 **`openspec_tracked=false` 早退分支**（`:1025` archive → `:1033` cleanup → `:1042` `return 0`）
+**根本不调用该 hook** ⇒ 本仓（`git.openspec_tracked: false`）归档时 close 环完全不执行。
 
 ```python
-# _lib/close_issues.py:129-144
-def _load_issue_refs(change_name, project_root):
-    meta_path = Path(project_root) / "openspec/changes" / change_name / "roadmap-meta.yaml"
-    # ↑ 永远是 archive/ 不存在的旧路径
+# _lib/close_issues.py:145-156
+base = Path(project_root) / "openspec" / "changes"
+candidates = [base / change_name / "roadmap-meta.yaml"]   # active 优先
+archive_base = base / "archive"
+if archive_base.is_dir():
+    for child in archive_base.iterdir():
+        if child.is_dir() and child.name.endswith(f"-{change_name}"):
+            candidates.append(child / "roadmap-meta.yaml")  # post-archive fallback（:156）
 ```
 
-**测试盲区**: `tests/integration/test_archive_close_dual_mode.bats:26` 用**行号断言固化错误顺序**;单元测试用 `tmp_path` fixture,从不走真实 post-archive 布局。
+⚠️ fallback 匹配的是 **`archive/<date>-<name>/`**（按后缀），不是原文写的 `changes/archive/<name>/`。
+
+**测试盲区**: 锁定该顺序的 `tests/integration/test_archive_close_dual_mode.bats` **已被删除**
+（commit `da6fec83`「drop obsolete guide-* tests」—— 它测的 lightweight 分支依赖已移除的
+`skills/guide-ship/`（该 skill 目录在 v4 已移除），整文件被删）⇒ **worktree 分支的调用顺序现在没有任何测试守护**。
+代码顺序目前仍正确（`_lib/archive.sh:1067` `openspec archive` → `:1073` hook → `:1080` cleanup），
+但下次重构可静默破坏。单元测试用 `tmp_path` fixture，从不走真实 post-archive 布局。
 
 **修复方向**:
-- A(推荐): `_load_issue_refs` 先查 `changes/<name>/`,fallback 到 `changes/archive/<name>/`(无需改 archive 主流程)
+- ~~A(推荐): `_load_issue_refs` 先查 `changes/<name>/`,fallback 到 `changes/archive/<name>/`~~ —— **已实现**（`_lib/close_issues.py:145-156`）
 - B: archive 前快照 refs 到 state 文件
+- **C（残留，建议优先）**: 把 `close_issues_for_change_hook` 提到 `openspec archive` **之前**调用，
+  或在 `openspec_tracked=false` 早退分支也调用它 —— 现在两条路径的覆盖不一致
+- **D（残留）**: 补回锁定调用顺序的集成测试（`test_archive_close_dual_mode.bats` 已删）
 
 #### G2(P1)— 本地 issue 文件永不被标记关闭,retention 死亡
 
@@ -307,7 +341,7 @@ if not parsed.no_submit:
 #### G6(P2)— ADR 承诺的配套工件缺失
 
 **事实**:
-- `_lib/schemas/issue_reporter_schema.json` 不存在(schemas/ 目录 17 个文件中无) — **已由 PR-6 删除承诺**（改依赖 `config_schema.json` 的 reporting namespace）
+- `_lib/schemas/issue_reporter_schema.json` 不存在(schemas/ 目录 34 个文件中无) — **已由 PR-6 删除承诺**（改依赖 `config_schema.json` 的 reporting namespace）
 - `.rddf/state/.issue-reporter.json` 全库无写入点 — **已由 PR-6 删除承诺**
 - `.rddf/state/.reporting-config.json` 缓存未实现 — **已由 PR-6 删除承诺**
 - ADR-0027 §3 的一次性 banner 未实现 — **已由 PR-6 删除承诺**
@@ -321,7 +355,7 @@ if not parsed.no_submit:
 
 #### G7(P3)— 文档/名称小错
 
-- `tests/integration/test_feedback_loop.bats` **不存在**,实际是 `test_archive_close_dual_mode.bats`
+- `tests/integration/test_feedback_loop.bats` **不存在**；文中原写的「实际是 `test_archive_close_dual_mode.bats`」**也已过时** —— 该文件同样在 `da6fec83` 被删除；`rddf feedback` CLI 的现役集成测试是 `tests/integration/test_feedback_cmd.bats`
 - ADR-0027 写 `normalize_for_hash` 在 `issue_reporter.py`,实际在 `_lib/issue_dedup.py`(实现更合理,属 ADR 文本漂移)
 
 #### G8(P2)— category taxonomy 微漂移

@@ -50,7 +50,7 @@ rdd-hub/
 |------|-----------|---------|
 | **RFC 起草** | 本地 `rdd-planner` 起草 proposal；`rddf report-issue --category=rfc` 上报 Hub | Hub 自动创建 Issue（per [ADR-0030](../adr/ADR-0030-hub-and-spoke-federation.md)） |
 | **多方审查** | Spoke 仓库 stakeholders Review PR；`rddf watch-hub` 监听 Hub Issue 状态 | Hub Projects V2 自动汇总 `Review-Progress` 字段 |
-| **人类兜底** | Spoke 端 `approve_proposal.sh` 在 `category=cross-repo` 时**硬阻断 AI 自动批准**（per [ADR-0031](../adr/ADR-0031-human-in-loop-cross-repo.md)） | Hub 端 `STRICT_HUB_APPROVAL=no` 需 PR 审计 |
+| **人类兜底** | ⚠️ **门禁实现缺失** —— ADR-0031 的硬阻断原实现在 `skills/guide-design/scripts/approve_proposal.sh`，该脚本**已移除**（v4 stage-merge / ADR-0043）；`RDDF_REQUIRE_HUB_APPROVAL` 在 `_lib/` / `skills/` / `tests/` 中**零实现**，ADR-0031 声称的 `tests/integration/test_strict_human_approval.bats`（9 cases）也不存在 ⇒ 跨项目提案目前**没有**「阻断 AI 自动批准」这道门 | Hub 端 `STRICT_HUB_APPROVAL=no` 需 PR 审计 |
 | **契约同步** | `rddf sync-hub` 拉取 Hub 最新 `contracts/` 到本地 `openspec/` | Hub 端 `contract-lint.yml` 检测 `contracts/` 变更，自动通知 Spoke |
 | **跨项目依赖** | `rddf deps cross-repo` 扫描各 Spoke `iteration.json` 生成跨仓库依赖图 | Hub 端创建 `[Dependency]` Issue 指派给上游 Spoke（per `add-cross-repo-deps-orchestration`） |
 
@@ -69,7 +69,7 @@ rdd-hub/
 | Hub Issue 监听（`watch-hub --once`） | `skills/watch-hub/scripts/` | `add-rdd-hub-cross-repo-federation` |
 | Hub 契约拉取（`sync-hub --contract`） | `skills/sync-hub/scripts/` | `add-rdd-hub-cross-repo-federation` |
 | 跨项目 MCP 协议（Hub-Spoke 标准化交互） | `skills/cross-repo-protocol/SKILL.md` | `add-mcp-cross-repo-protocol`（已批准 2026-08-15） |
-| 人类兜底（`category=cross-repo` 硬阻断 AI 批准） | `skills/rdd-builder/scripts/approve_proposal.sh` | `add-strict-human-approval-for-cross-repo-changes`（已批准 2026-08-15）|
+| 人类兜底（`category=cross-repo` 硬阻断 AI 批准） | ⚠️ **实现已移除**（v4 stage-merge / ADR-0043；原 `skills/guide-design/scripts/approve_proposal.sh`；`RDDF_REQUIRE_HUB_APPROVAL` 零实现、集成测试不存在） | `add-strict-human-approval-for-cross-repo-changes`（已批准 2026-08-15；**门禁待裁决：重实现 / 退役**，per [ADR-0031](../adr/ADR-0031-human-in-loop-cross-repo.md)）|
 | 跨项目依赖编排（`deps cross-repo`） | `_lib/cross_repo_deps.py` | `add-cross-repo-deps-orchestration`（**已 complete**）|
 | 契约 lint CI/CD（`contract-check`） | `skills/contract-check/scripts/` | `add-contract-lint-ci-gate`（**已 complete**）|
 | Spoke AI 系统提示词注入 | `skills/spoke-system-prompt-injection/scripts/deploy.sh` | `add-spoke-system-prompt-injection`（已批准 2026-08-15）|

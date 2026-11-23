@@ -16,7 +16,7 @@ Stage 3 之后，`rdd-arch` 与 `rdd-planner` 通过**两个独立状态文件**
                                        │ (FileLock + atomic_write_json)
                                        ▼
                 ┌────────────────────────────────────────┐
-                │  .rddf/state/.arch-handoff.json (v2)    │
+                │  .rddf/state/.arch-handoff.json (v3)    │
                 │  owner: rdd-arch                       │
                 └────────────────────────────────────────┘
                                        │ read by rdd-planner (adhoc)
@@ -339,15 +339,22 @@ rddf arch status
 | `rddf planner feedback --clear` | — | 不支持（旧 v2.x `--clear` 语义模糊，已被 `--acknowledge/--resolve/--dismiss` 三命令取代） |
 | `report-issue --phase guide-arch` | — | **已移除**；`--phase` 现为自由文本 metadata（`_lib/cli/report_issue_cmd.py:44`），请用 `--phase rdd-arch` |
 
-## 8. 消费者兼容（contract v2）
+## 8. 消费者兼容（contract v3）
 
-`.arch-handoff.json` v2 顶层 `additionalProperties: true`，所有 v1 consumer 仍能消费：
-- `state_reader.read_arch_handoff()` — 透传所有字段
-- `rdd-planner/scripts/planner_stage_entry.sh` — jq 提取 `adr_dir/roadmap_path/adr_pattern/adr_regex/version` 全部成功
-- `detectors.py` / `actions.py` — 通过 `state_reader` 间接消费
-- `_lib/recommender.py` — 阶段推荐阶梯读取 `adr_count` / `roadmap_path`（per ADR-0062）
+`.arch-handoff.json` 顶层 `additionalProperties: true`，所有老 consumer 仍能消费（缺字段走默认值）：
+- `state_reader.read_arch_handoff()`（`_lib/state_reader.py:68`）— 透传所有字段
+- `_lib/arch_quality_gate.py:87-88` / `_lib/gate.py:119-120` — 读 `adr_dir` / `roadmap_path`，
+  **缺省回落** `_DEFAULT_ADR_DIR` / `_DEFAULT_ROADMAP_PATH`
+- `_lib/adr_catalog.py:133` — 读 `adr_regex`（v2 起可选，缺失即 `None`）
+- `_lib/recommender.py:178,248` — 读 `adr_count`（per ADR-0062）与 `roadmap_path`
+  （`arch.get("roadmap_path") or "roadmap.md"` 回落）
+- `detectors.py:184` / `actions.py:350` — 经 `_read_arch_handoff_paths()` 间接消费
 
-测试: `tests/unit/test_arch_handoff_v2_schema.py` 锁定 v1/v2 双向兼容（6 tests）。
+⚠️ **v3 writer 不写 `roadmap_path` / `owner` / `schema` 字段**（见 `write_arch_handoff.py:164-187`）
+⇒ 依赖这三个字段的消费者**必须**走回落路径。
+
+测试: `tests/unit/test_arch_handoff_v2_schema.py` 锁定 v1/v2 双向兼容（6 tests），
+另有 `test_arch_handoff_schema.py` / `test_arch_handoff_schema_v2.py` / `test_arch_handoff_revision.py`。
 
 ## 9. References
 

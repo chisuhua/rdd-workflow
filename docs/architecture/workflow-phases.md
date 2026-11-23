@@ -76,7 +76,7 @@ The removed roadmap check is now enforced at **planner-done gate** instead (Phas
 - **Outputs**:
   - New / updated ADRs in `docs/adr/`.
   - Optional gap analysis in `docs/architecture/*-gap-analysis.md`.
-  - `.rddf/state/.arch-handoff.json` (ADR-0016 v2 schema, no roadmap fields per ADR-0043).
+  - `.rddf/state/.arch-handoff.json` (ADR-0016 v3 schema, no roadmap fields per ADR-0043).
 - **Human load**: high. ADR creation is a deliberate authoring task; arch-done is a hard human gate.
 
 ### Sub-skills
@@ -133,7 +133,7 @@ Computed by `_lib/planner_sync.py::_compute_recommended_route` heuristic:
 - **complex**: any priority∈{P0,P1} OR touching `_lib/core/`/`_lib/schemas/` OR breaking-change/public-interface keyword
 - **unknown**: empty active_projects OR mixed signals (heuristic cannot decide)
 
-Excluded from `state_revision` semantic hash (advisory recompute alone must not bump revision). Excluded from `_lib/planner_handoff.py` FileLock TODO (see KNOWN LIMITATION).
+Excluded from `state_revision` semantic hash (advisory recompute alone must not bump revision). Excluded from `_lib/planner_state.py:56` `_SEMANTIC_HASH_EXCLUDE` FileLock TODO (see KNOWN LIMITATION).
 
 ### Inputs / Outputs
 
