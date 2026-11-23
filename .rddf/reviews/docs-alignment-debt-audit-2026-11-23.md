@@ -223,13 +223,20 @@
 
 **验证**：`bun test tests/` **1133 pass / 1 skip / 0 fail**（32 文件 / 1134 测试）；矩阵与角色表列数一致性自查通过；`grep '链路分档'` **0 命中**。
 
-**未闭环 / follow-up（记 backlog）**：
-1. 三处表内未闭环项（architect 行 / verifier 行 / `:455` 的 `§4.4`）—— 需先窄化回滚清单的 `find`
-2. 五角色**写集机读块化**（`delegate-core.ts` 渲染函数 + 守卫精确比对）
-3. 矩阵填法归一化（`plan → context-builder` 格，或拆「权限列 / 流程列」）
-4. **清单外同型矛盾**（critic 已确认成立，本轮只报不修）：
-   - MAD 的 ASCII 图「general 不能被任何 agent 调」 vs 矩阵 `build → general = ✅` / `plan → general = ✅✅（优先）`
-   - **`librarian.subagent = "deny"` vs `prompts/librarian.md:24` 要求用 `subagent` 委派 explore vs 矩阵 `librarian → explore = ✅✅` —— 三者互斥**（最严重：librarian 的 prompt 要求的动作在机器层被拒）
+**未闭环 / follow-up** —— ✅ **已于 2026-11-23 全部立项**（`planner` 角色，落 `~/.config/opencode/.rddf/improvements/`，
+opencode 仓 commit `5b3b051`）：
+
+| # | 内容 | 立项文件（`~/.config/opencode/.rddf/improvements/`） | 优先 | 依赖 |
+|---|---|---|---|---|
+| 1 | 三处表内未闭环项 —— 根因是回滚清单 `find` 整表 pin | `rollback-manifest-find-narrowing.md` | **P1** | — （**C 的硬前置**） |
+| 2 | 五角色**写集机读块化**（`delegate-core.ts` 渲染 + 守卫比对） | `role-write-set-machine-block.md` | P2 | **依赖 #1** |
+| 3 | 矩阵填法归一化（拆「权限 / 流程」两轴） | `delegation-matrix-fill-semantics.md` | P2 | **依赖 #4** |
+| 4 | **`librarian` 三向矛盾**（config `deny` / prompt 要求委派 / 矩阵 `✅✅`）—— **清单外最严重** | `librarian-delegate-contradiction.md` | **P1** | — |
+| — | MAD ASCII 图「general 不能被任何 agent 调」的矛盾 | 已并入 #3（`delegation-matrix-fill-semantics.md`） | P2 | — |
+
+> **metis 审**：4 份同批 1 轮（2026-11-23）。主要修订：AC 全部改**闭集字面**（删「一致」人判词）·
+> B 的 9 清单普查从 P1 剥离 · C 删除「汇总块」退让并缩范围 · D 的机制落点写死 `tests/` 且位置解析也闭集化。
+> **优先级依据**：#4 是唯一「agent 按 prompt 行动必然失败」的项；#1 不阻断流程但**硬阻塞 #2**。
 
 ## 四、遗留 P0（本回合已清）
 

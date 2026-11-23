@@ -119,13 +119,20 @@ oracle 未预见：`prompts/build.md` 的角色列表表被
 | `grep '链路分档' docs/ prompts/` | **0 命中** |
 | 计数复核（`opencode.jsonc.opencode-go`） | providers **5** / models **13** / agents **12** / subagent **8** ✅ |
 
-## 六、follow-up（记 backlog，本轮不做）
+## 六、follow-up —— ✅ 已全部立项（2026-11-23）
 
-1. **五角色写集机读块化**（`delegate-core.ts` 加 5 个渲染函数 + `config-guards.test.ts` 精确比对
-   + build.md 散文指向块）—— 与 SF-3/NIT-4 同批。
-2. **回滚清单 `find` 窄化**（`governance-paths-config.json::edits[13]` 从整表 → 机制特有片段）。
-3. **矩阵填法归一化**（`plan → context-builder` 格，或把矩阵拆成「权限列 / 流程列」）。
-4. **清单外同型矛盾**（本轮只报不修，critic 已确认成立）：
-   - MAD `as is`: ASCII 图「general 不能被任何 agent 调」 vs 矩阵 `build → general = ✅` / `plan → general = ✅✅（优先）`
-   - `librarian.subagent = "deny"` vs `prompts/librarian.md:24` 要求用 `subagent` 委派 explore vs 矩阵 `librarian → explore = ✅✅`
-     ⇒ **三者互斥**（这一条最严重：librarian 的 prompt 要求的动作在机器层被拒）
+落点：`~/.config/opencode/.rddf/improvements/`（4 份 5 段草稿，opencode 仓 commit `5b3b051`）。
+
+| 原 follow-up | 立项文件 | 优先 | 依赖 |
+|---|---|---|---|
+| 2. 回滚清单 `find` 窄化（SF-3 根因） | `rollback-manifest-find-narrowing.md` | **P1** | — （C 的硬前置） |
+| 1. 五角色写集机读块化（NIT-4 同批） | `role-write-set-machine-block.md` | P2 | 依赖上一行 |
+| 3. 矩阵填法归一化（SF-2） | `delegation-matrix-fill-semantics.md` | P2 | 依赖「librarian」那条 |
+| 4. 清单外同型矛盾 —— **`librarian` 三向互斥**（最严重） | `librarian-delegate-contradiction.md` | **P1** | — |
+| 4. 清单外同型矛盾 —— ASCII 图「general 不能被任何 agent 调」 | 并入 `delegation-matrix-fill-semantics.md` | P2 | — |
+
+**metis 审**：4 份同批 1 轮（2026-11-23）。据其建议的主要修订见各草稿头部的
+`> planner 审查：**metis 1 轮**` 行（要点：AC 改闭集字面 · B 的普查剥离出 P1 ·
+C 删「汇总块」退让并缩范围 · D 的落点写死 `tests/` + 位置解析闭集化）。
+
+⇒ **本节原列的 4 条 follow-up 已全部有归属，无静默遗留。**
