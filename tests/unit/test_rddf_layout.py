@@ -73,6 +73,29 @@ def test_read_only_artifact_has_no_rddf_writer():
     assert "rdd" not in entry["read_by"]
 
 
+def test_non_rdd_entries_name_their_actual_writer():
+    """Every entry the rdd does not write must name its real owner.
+
+    `read_by` / `write_by` are meant to be observable facts, not guesses —
+    so this pins **all** of them, not one sample.  The single-entry test above
+    (`reviews`) would still pass if e.g. `config` started claiming `rdd` as a
+    writer, which would make the manifest a guess instead of a record.
+    """
+    expected = {
+        "actions": ["user"],
+        "config": ["external-tool"],
+        "detectors": ["user"],
+        "project.yaml": ["user"],
+        "reviews": ["agent"],
+        "roadmap": ["agent"],
+        "roadmap.md": ["agent"],
+        "skill-profiles": ["user"],
+        "wt": ["git"],
+    }
+    got = {d["path"]: d["write_by"] for d in as_dicts() if "rdd" not in d["write_by"]}
+    assert got == expected, got
+
+
 def test_covers_does_not_confuse_sibling_names():
     """`roadmap` must not swallow `roadmap.md`."""
     assert covers("roadmap", ".rddf/roadmap.md") is False

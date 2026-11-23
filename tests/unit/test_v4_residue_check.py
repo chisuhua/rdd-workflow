@@ -536,7 +536,7 @@ def test_r4_repo_residue_constant():
 
     两个口径分开断言（否则「补标注」「改指」「真清理」无法区分）：
       - **未豁免**（= 台账待办，Phase 1 的判据）：**0 处 / 0 块 / 0 份**（Phase 1 已收口）
-      - 含已豁免（机器看到的总量）：303 处 / 159 块 / 41 份
+      - 含已豁免（机器看到的总量）：297 处 / 157 块 / 40 份
 
     ⚠️ 三种处置对这两个口径的影响**不同**：
       - **标注**（`allow`）：未豁免 −N，含已豁免**不变**（token 还在，只是被标记）；
@@ -562,6 +562,12 @@ def test_r4_repo_residue_constant():
     的判据（+ 2 处紧邻的假断言修正 + 1 份文档 + 1 个测试文件同步）
     （→**0/0/0** —— Phase 1 收口；含已豁免 307→**303**/161→**159**/42→**41**；
     豁免 303 不变）。
+    `rewrite-acceptance-form-batch-4` 把 `rddf-layout-manifest` 等 3 份 spec 的 `acceptance-N` /
+    `capability-N` 形态 Requirement **重写**为语义名 —— 其中 2 块 / 6 处 stage token
+    （`guide-arch` 一类，出现在 `docs/architecture/state-and-events.md` 的旧 AC 正文里）
+    随改写**真的消失**
+    （未豁免 **0/0/0** 不变；含已豁免 303→**297**/159→**157**/41→**40**；
+    围栏式豁免 `fence_allows` 仍恰为 `["enum"]`）。
     ⚠️ Phase 1 的每个改动都必须在同一提交更新这些常数，否则它会在下次运行时被读成 regression。
     """
     from spec_residue_scan import scan_specs
@@ -573,9 +579,9 @@ def test_r4_repo_residue_constant():
     assert len({(h.file, h.block_line) for h in unexempted}) == 0
     assert len({h.file for h in unexempted}) == 0
 
-    assert len(result.hits) == 303, len(result.hits)
-    assert len(result.blocks()) == 159, len(result.blocks())
-    assert len({h.file for h in result.hits}) == 41
+    assert len(result.hits) == 297, len(result.hits)
+    assert len(result.blocks()) == 157, len(result.blocks())
+    assert len({h.file for h in result.hits}) == 40
 
     # 围栏式豁免的可见性护栏（AC-12）：它必须留下可审计记录，不能只存在于注释里。
     assert [f.code for f in result.fence_allows] == ["enum"], result.fence_allows

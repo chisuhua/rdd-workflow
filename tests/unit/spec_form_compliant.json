@@ -3,19 +3,19 @@
   "note": "Tracks which `openspec/specs/*/spec.md` have been rewritten out of the auto-generated `acceptance-N` form (requirement name without semantics / tautological WHEN / truncated body). The `acceptance-N` class is a BOUNDED, known set — the union below must always cover it exactly, so dropping an entry without promoting it to `compliant` fails the guard (a tracked file => visible in CI, unlike the spec-content checks which skip because `openspec/` is gitignored).",
   "class_total": 12,
   "compliant": [
+    "fix-bats-per-file-timeout",
     "fix-flow-drift-batch-1",
     "fix-p3-verifier-gate",
     "fix-phase3-cleanup-wiring",
     "fix-script-project-root-anchoring",
+    "fix-skill-post-install-discoverability",
     "fix-worktree-archive-path",
+    "rddf-layout-manifest",
     "register-change-in-iteration",
     "rfc-rddf-project-yaml-config-i10"
   ],
   "pending": [
     "env-bootstrap",
-    "fix-bats-per-file-timeout",
-    "fix-skill-post-install-discoverability",
-    "objective-tracking",
-    "rddf-layout-manifest"
+    "objective-tracking"
   ]
 }
