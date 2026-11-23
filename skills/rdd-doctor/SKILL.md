@@ -23,7 +23,7 @@ metadata:
 ## 调用
 
 ```bash
-bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,roadmap-meta,proposal-table,proposal-section,tasks-checkbox,migration-residue,roadmap-refs,roadmap-feature,roadmap-md-integrity,roadmap-phases,docs-consistency,ai-context-bootstrap,gitignore,bypass-audit,improvement-frontmatter-consistency,objective-lifecycle,objective-structure,arch-audit,review-debt,roadmap-backup,baseline-freshness,v4-residue,layout}] [--quiet] [--help] [--version]
+bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,roadmap-meta,proposal-table,proposal-section,tasks-checkbox,migration-residue,roadmap-refs,roadmap-feature,roadmap-md-integrity,roadmap-phases,docs-consistency,ai-context-bootstrap,gitignore,bypass-audit,improvement-frontmatter-consistency,objective-lifecycle,objective-structure,arch-audit,review-debt,roadmap-backup,baseline-freshness,v4-residue,layout,openspec-quota}] [--quiet] [--help] [--version]
 ```
 
 ## 何时该跑
@@ -75,6 +75,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 | `v4-residue` | 契约面上残留的 v3 skill 名：R1 路由型 enum 无法表达 v4 路由（CRITICAL）、R2 活代码字符串字面量指向 `guide-*`（WARNING，注释与 docstring 豁免）、R3 SKILL.md frontmatter `name:`（CRITICAL）、**R4 `openspec/specs/*/spec.md` 的 normative 段**（WARNING，受 `doctor.v4_residue.scan_specs` 开关控制，默认 `false`；`checked 0` ≠ clean）。R4 详解见下方「R4 —— spec 面残留」 |  |
 | `layout` | `.rddf/` 布局单一真源校验（per ADR-0026）：必需条目缺失 → WARNING、未登记顶层条目 → INFO、`class` 与 `.gitignore` 实况不符 → WARNING。advisory only —— 本 category 永不产生 CRITICAL，且只扫 `.rddf/` 一层（不递归进 `.rddf/wt/`）| |
 | `roadmap-backup` | `.rddf/roadmap/.backup/<timestamp>/` 子目录完整性 + staleness（>90 天）+ 多备份建议合并 |  |
+| `openspec-quota` | `openspec/changes/` 开放目录数 vs 项目自设上限（`.rddf/project.yaml` 的 `openspec.proposed_limit`；缺省/0 = 不限）。未配置 ⇒ 0 findings；超限 ⇒ **CRITICAL**（`file=.rddf/project.yaml`）；配置值不可用（YAML/类型/bool/负数/层级错）⇒ **WARNING**（不静默当 0）。advisory gate（opt-in 项目自己把 `rddf openspec quota` 接进 CI）|  |
 | `baseline-freshness` | `tests/KNOWN_FAILURES.txt` 最近 refresh 注释日期 + 占位符 reasons（>30 天 → WARNING，>90 天 → CRITICAL）。来源是 refresh 注释日期，不用文件 mtime（git checkout / atomic-rename 不可靠） |  |
 
 ### R4 —— spec 面残留（`openspec/specs/*/spec.md`）

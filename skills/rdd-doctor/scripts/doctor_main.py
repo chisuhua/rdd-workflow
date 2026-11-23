@@ -49,6 +49,7 @@ _CHECKERS: dict[str, Union[str, Callable]] = {
     "baseline-freshness": "checks.baseline_freshness_check.run",
     "v4-residue": "checks.v4_residue_check.run",
     "layout": "checks.layout_check.run",
+    "openspec-quota": "checks.openspec_quota_check.run",
 }
 
 
@@ -87,6 +88,7 @@ _GATES: dict[str, dict] = {
             "review-debt",
             "roadmap-backup",
             "v4-residue",
+            "openspec-quota",
         ],
         "blocking": False,
     },

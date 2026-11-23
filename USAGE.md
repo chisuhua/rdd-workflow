@@ -86,6 +86,19 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 | 🔓 分离执行 | 在新终端执行，不阻塞 |
 | ✅ 完成 | 所有任务完成 |
 
+### OpenSpec change 配额（可选，opt-in）
+
+项目可在 `.rddf/project.yaml` 给「同时开着的 change 数」设上限（ADR-0036 配置 seam）：
+
+```yaml
+openspec:
+  proposed_limit: 3    # 缺省或 0 = 不限（unlimited）
+```
+
+- `rddf openspec quota [--json] [--limit N]` —— 判定入口；exit `0` 未超限 / `1` 超限 / `2` 配置或用法错
+- `rddf doctor --category openspec-quota` —— 同一实现的诊断视图（超限 **CRITICAL**，挂在 advisory gate，不阻断第三方仓）
+- 计数 = `openspec/changes/` 非 `archive/` 子目录数（与 `rddf status` 同源）
+
 ---
 
 ## 快速开始
