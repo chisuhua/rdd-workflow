@@ -4,7 +4,7 @@
 > 从 oracle / critic 输出誊写。**落点说明**：审稿报告的既有惯例是
 > `~/.config/opencode/.rddf/reviews/<topic>.md`，但该路径**不在** `architect.allow`
 > （= `.rddf/config/arch-docs.json` · `.rddf/config/governance-paths.json` · `.rddf/reviews`，
-> 相对 **cwd** 解析；cwd 是本仓 `/workspace/main/rdd-workflow`）内 ⇒ 本报告落在
+> 相对 **cwd** 解析；cwd 是本仓根目录）内 ⇒ 本报告落在
 > **本仓的 `.rddf/reviews/`**（跨仓审计台账的同一落点）。**这是已知偏差，不是惯例变更。**
 
 ## 元数据
