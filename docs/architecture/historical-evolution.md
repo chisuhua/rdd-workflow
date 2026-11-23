@@ -73,7 +73,7 @@ These have held since v2.0 and are unlikely to change without a major version bu
 
 ## What's Still Open
 
-Tracked under [`../../improvement-suggestions.md`](../../improvement-suggestions.md) and [`../../improvement-approved.md`](../../improvement-approved.md):
+Tracked under [`../../.rddf/improvement-suggestions.md`](../../.rddf/improvement-suggestions.md) and [`../../.rddf/improvement-approved.md`](../../.rddf/improvement-approved.md):
 - v3.0+ candidate: declarative flow DSL (ADR-0011, 0012 — adopted but not implemented).
 - v3.0+ candidate: scheduled triggers (ADR-0009 — placeholder).
 - v2.1.x follow-up: ADR-0017 conflict-resolver 5th option "report upstream" (requires separate ADR to modify rddf-session).

@@ -79,6 +79,16 @@ RDFF_LAYOUT: tuple[LayoutEntry, ...] = (
         "improvements", "dir", ("rdd",), ("rdd", "agent"), "always", False, "committed", "WARNING",
     ),
     LayoutEntry(
+        # Proposal index files (ADR-0026: internal metadata under `.rddf/`).
+        # `never` + INFO because projects created before the move keep them at
+        # the project root — a missing `.rddf/` copy is not drift (see
+        # `_lib/core/rddf_paths.py` for the read/write resolution rule).
+        "improvement-approved.md", "file", ("rdd",), ("rdd", "agent"), "never", False, "committed", "INFO",
+    ),
+    LayoutEntry(
+        "improvement-suggestions.md", "file", ("rdd",), ("rdd", "agent"), "never", False, "committed", "INFO",
+    ),
+    LayoutEntry(
         "plans", "dir", ("rdd",), ("rdd", "agent"), "always", False, "committed", "WARNING",
     ),
     LayoutEntry(

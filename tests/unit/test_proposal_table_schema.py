@@ -10,12 +10,17 @@ This test locks the 4-column invariant.
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
 
 import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
+
+from _lib.core.rddf_paths import approved_file  # noqa: E402
+
 ROW_PATTERN = re.compile(r"^\|\s*\[([^\]]+)\]\(([^)]+)\)\s*\|")
 
 
@@ -25,7 +30,7 @@ def _count_columns(line: str) -> int:
 
 def test_proposal_approved_data_rows_have_four_columns() -> None:
     """Every linked data row in improvement-approved.md must have 4 columns."""
-    path = REPO_ROOT / "improvement-approved.md"
+    path = Path(approved_file(str(REPO_ROOT)))
     if not path.is_file():
         pytest.skip("improvement-approved.md not found")
     text = path.read_text()
@@ -50,7 +55,7 @@ def test_proposal_approved_data_rows_have_four_columns() -> None:
 
 def test_proposal_approved_status_column_populated() -> None:
     """The 4th column (status) must be non-empty for every linked row."""
-    path = REPO_ROOT / "improvement-approved.md"
+    path = Path(approved_file(str(REPO_ROOT)))
     if not path.is_file():
         pytest.skip("improvement-approved.md not found")
     text = path.read_text()

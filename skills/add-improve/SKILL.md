@@ -37,7 +37,7 @@ add-improve
 
 确认项目根目录存在以下文件/目录，如缺失则提示创建：
 - <a href=".rddf/improvements/` 目录
-- `improvement-suggestions.md`（或自动创建索引模版）
+- `improvement-suggestions.md` —— 位于 `.rddf/`（旧项目在项目根目录，`_lib/core/rddf_paths.py` 解析）；缺失则自动创建索引模版
 
 ## 使用方式
 
@@ -160,7 +160,7 @@ type: feature
 ### `improvement-suggestions.md` 新增行
 
 ```
-| [fix-login-timeout](.rddf/improvements/fix-login-timeout.md) | P1 | 用户反馈 | 2026-XX-XX |
+| [fix-login-timeout](improvements/fix-login-timeout.md) | P1 | 用户反馈 | 2026-XX-XX |
 ```
 
 ## 错误处理
@@ -168,7 +168,7 @@ type: feature
 | 情况 | 处理方式 |
 |------|----------|
 | <a href=".rddf/improvements/` 目录不存在 | 自动创建 |
-| `improvement-suggestions.md` 不存在 | 创建带标准表头的索引文件 |
+| `improvement-suggestions.md` 不存在 | 在 `.rddf/` 下创建带标准表头的索引文件（行内链接用 `improvements/<name>.md`） |
 | 提案名称已存在 | 提示用户并用不同的名称、或者确认覆盖 |
 | 用户中途放弃 | 不创建任何文件，保持项目状态不变 |
 

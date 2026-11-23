@@ -13,6 +13,8 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+from skills._lib.core import rddf_paths
+
 
 def set_suggestion_status(
     project_root: str, name: str, new_status: str
@@ -24,7 +26,7 @@ def set_suggestion_status(
     Returns True if updated, False if file missing or name not found.
     """
     import re
-    path = os.path.join(project_root, "improvement-approved.md")
+    path = rddf_paths.approved_file(project_root)
     if not os.path.exists(path):
         return False
     
@@ -396,7 +398,7 @@ def update_roadmap_meta(
         return False
 
     # Lookup phase/category from improvement-suggestions.md (matches lines 622-658)
-    suggestions_path = os.path.join(project_root, "improvement-suggestions.md")
+    suggestions_path = rddf_paths.suggestions_file(project_root)
     lookup_phase = current_phase
     lookup_category = change_category
     try:
@@ -596,7 +598,7 @@ def batch_create_pending(project_root: str) -> list[str]:
     """
     from skills._lib.parse_approved import parse_approved_proposals
 
-    approved_file = os.path.join(project_root, "improvement-approved.md")
+    approved_file = rddf_paths.approved_file(project_root)
     rows = [(name, "") for name in parse_approved_proposals(approved_file)]
     created = []
     skipped = []

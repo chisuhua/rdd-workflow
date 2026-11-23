@@ -179,11 +179,13 @@ digraph rdd_brainstorm {
 
 ### 6. 注册到 `improvement-suggestions.md`
 
-在 `improvement-suggestions.md` 的 Markdown 表格中追加一行：
+在 `improvement-suggestions.md`（`.rddf/` 下；旧项目在项目根目录）的 Markdown 表格中追加一行：
 
 ```
-| [<name>](.rddf/improvements/<name>.md) | <优先级> | <来源> | <添加时间 YYYY-MM-DD> |
+| [<name>](improvements/<name>.md) | <优先级> | <来源> | <添加时间 YYYY-MM-DD> |
 ```
+
+> 行内链接相对于索引文件：索引在 `.rddf/` 时用 `improvements/<name>.md`；索引在项目根目录时用 `.rddf/improvements/<name>.md`。解析规则见 `_lib/core/rddf_paths.py`。
 
 用当前 UTC 日期作为添加时间。插入位置在表格末尾（`| 提案 | ... |` 表头后面任意位置均可）。
 

@@ -45,7 +45,10 @@ _WHITELIST_DELETED_PATTERNS=(
 _WHITELIST_MODIFIED_PATTERNS=(
   "improvement-approved.md"
   "improvement-suggestions.md"
+  ".rddf/improvement-approved.md"
+  ".rddf/improvement-suggestions.md"
   "roadmap.md"
+  ".rddf/roadmap.md"
 )
 
 # Check if a relative path matches any glob-style prefix in patterns.

@@ -3,6 +3,8 @@
 import sys
 import os
 
+from skills._lib.core import rddf_paths
+
 
 def update_proposal_status(change_name: str, project_root: str) -> bool:
     """Mark a proposal as completed in improvement-approved.md.
@@ -10,7 +12,8 @@ def update_proposal_status(change_name: str, project_root: str) -> bool:
     Moves the entry from the '## 已批准提案' table to '## 已实施' table.
     """
     import re
-    path = os.path.join(project_root, "improvement-approved.md")
+    path = rddf_paths.approved_file(project_root)
+    link_prefix = rddf_paths.link_prefix(path)
     if not os.path.exists(path):
         return False
     
@@ -52,14 +55,14 @@ def update_proposal_status(change_name: str, project_root: str) -> bool:
                 j += 1
             # Insert completed row at position j
             from datetime import date
-            completed_row = f"| [{change_name}](.rddf/improvements/{change_name}.md) | {priority} | {date.today().isoformat()} |\n"
+            completed_row = f"| [{change_name}]({link_prefix}{change_name}.md) | {priority} | {date.today().isoformat()} |\n"
             result.insert(j, completed_row)
             inserted = True
             # 不再 break —— 后续行（表头、分隔线、旧条目）继续被 append
     
     if not inserted:
         from datetime import date
-        result.append(f"| [{change_name}](.rddf/improvements/{change_name}.md) | {priority} | {date.today().isoformat()} |\n")
+        result.append(f"| [{change_name}]({link_prefix}{change_name}.md) | {priority} | {date.today().isoformat()} |\n")
     
     with open(path, "w") as f:
         f.writelines(result)

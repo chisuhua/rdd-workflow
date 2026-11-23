@@ -632,9 +632,10 @@ def collect_pending(project_root: str) -> PendingSnapshot:
 
     try:
         from skills._lib.parse_approved import parse_approved_proposals_detailed
+        from skills._lib.core import rddf_paths
 
         approved_rows = parse_approved_proposals_detailed(
-            os.path.join(project_root, "improvement-approved.md")
+            rddf_paths.approved_file(project_root)
         )
     except Exception:
         approved_rows = []

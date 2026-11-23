@@ -41,8 +41,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if ! git diff --quiet -- .rddf/improvements/ improvement-suggestions.md; then
-            git add .rddf/improvements/ improvement-suggestions.md
+          if ! git diff --quiet -- .rddf/improvements/ .rddf/improvement-suggestions.md; then
+            git add .rddf/improvements/ .rddf/improvement-suggestions.md
             git commit -m "chore(proposals): auto-generate proposal scaffolds from auto-reported issues"
             git pull --rebase --autostash origin master
             git push

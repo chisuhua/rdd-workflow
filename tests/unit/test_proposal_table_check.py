@@ -93,3 +93,28 @@ def test_legacy_top_level_improvements_link_reports_warning(tmp_path: Path):
         f"expected at least 2 non-canonical warnings (1 per file), got "
         f"{len(legacy_findings)}: {[f.snippet for f in findings]}"
     )
+
+def test_rddf_hosted_index_accepts_relative_improvement_links(tmp_path: Path):
+    """Index inside `.rddf/` uses links relative to itself: `improvements/<name>.md`."""
+    (tmp_path / ".rddf/improvements").mkdir(parents=True)
+    (tmp_path / ".rddf/improvements" / "foo.md").write_text("# foo\n")
+    (tmp_path / ".rddf/improvement-suggestions.md").write_text(
+        "| 提案 | 优先级 | 来源 | 添加时间 | 状态 |\n"
+        "|------|--------|------|----------|------|\n"
+        "| [foo](improvements/foo.md) | P1 | src | 2026-08-07 | 待审 |\n"
+    )
+    assert run_check(project_root=tmp_path) == []
+
+
+def test_rddf_hosted_index_rejects_root_relative_prefix(tmp_path: Path):
+    """`.rddf/improvements/<name>.md` from inside `.rddf/` resolves to a broken
+    nested path — that is the non-canonical form for this location."""
+    (tmp_path / ".rddf/improvements").mkdir(parents=True)
+    (tmp_path / ".rddf/improvements" / "foo.md").write_text("# foo\n")
+    (tmp_path / ".rddf/improvement-approved.md").write_text(
+        "| 提案 | 优先级 | 批准时间 | 批准者 |\n"
+        "|------|--------|----------|--------|\n"
+        "| [foo](.rddf/improvements/foo.md) | P1 | 2026-08-07 | arch |\n"
+    )
+    findings = run_check(project_root=tmp_path)
+    assert any("non-canonical" in f.snippet for f in findings), findings

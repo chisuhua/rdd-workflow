@@ -12,6 +12,33 @@
 #   - tests/integration/test_json_safety.bats  (safe_python_json)
 #   - tests/integration/test_suggestions_format.bats  (read_suggestions / write_suggestions)
 
+# rddf_index_file <project_root> <name>
+#   Resolve an index file (improvement-suggestions.md / improvement-approved.md):
+#   `.rddf/<name>` when present, else the legacy `<root>/<name>`, else the
+#   canonical `.rddf/<name>`. Bash mirror of `_lib/core/rddf_paths.py` (the
+#   single source of truth) — keep the precedence identical.
+rddf_index_file() {
+  local project_root="$1" name="$2"
+  if [ -f "$project_root/.rddf/$name" ]; then
+    echo "$project_root/.rddf/$name"
+  elif [ -f "$project_root/$name" ]; then
+    echo "$project_root/$name"
+  else
+    echo "$project_root/.rddf/$name"
+  fi
+}
+
+# rddf_improvement_link_prefix <index_file>
+#   Markdown link prefix for rows written into <index_file>: `improvements/`
+#   for an index inside `.rddf/`, `.rddf/improvements/` for a legacy root-hosted
+#   index. Mirror of `rddf_paths.link_prefix`.
+rddf_improvement_link_prefix() {
+  case "$(dirname "$1")" in
+    .rddf|*/.rddf) echo "improvements/" ;;
+    *) echo ".rddf/improvements/" ;;
+  esac
+}
+
 # safe_python_json <json_file> <key>
 # Reads a key from a JSON file. Returns "unknown" on any failure
 # (missing file, malformed JSON, missing key).
@@ -73,7 +100,7 @@ except Exception:
 count_pending_suggestions() {
   local project_root="${1:-.}"
   local imp_dir="$project_root/.rddf/improvements"
-  local approved_file="$project_root/improvement-approved.md"
+  local approved_file="$(rddf_index_file "$project_root" improvement-approved.md)"
   
   if [ ! -d "$imp_dir" ]; then
     echo 0
@@ -94,7 +121,7 @@ try:
     approved = set()
     if os.path.isfile(approved_file):
         with open(approved_file) as f:
-            approved = set(re.findall(r'\|\s*\[([^\]]+)\]\(.rddf/improvements/', f.read()))
+            approved = set(re.findall(r'\|\s*\[([^\]]+)\]\((?:\.rddf/)?improvements/', f.read()))
     
     print(len(all_improvements - approved))
 except Exception:
@@ -130,7 +157,7 @@ list_improvements() {
 # Returns newline-separated "name|priority|time|approver" entries.
 list_approved() {
   local project_root="${1:-.}"
-  local approved_file="$project_root/improvement-approved.md"
+  local approved_file="$(rddf_index_file "$project_root" improvement-approved.md)"
   if [ ! -f "$approved_file" ]; then
     echo ""
     return
@@ -157,7 +184,7 @@ append_approved() {
   local project_root="$1"
   local name="$2"
   local priority="$3"
-  local approved_file="$project_root/improvement-approved.md"
+  local approved_file="$(rddf_index_file "$project_root" improvement-approved.md)"
   local timestamp=$(date -u +%Y-%m-%d)
   
   if [ ! -f "$approved_file" ]; then
@@ -172,7 +199,9 @@ append_approved() {
   fi
   
   # Insert before the ## 已实施 section
-  local new_row="| [$name](.rddf/improvements/$name.md) | $priority | $timestamp | guide-design |"
+  local link_prefix
+  link_prefix="$(rddf_improvement_link_prefix "$approved_file")"
+  local new_row="| [$name](${link_prefix}$name.md) | $priority | $timestamp | guide-design |"
   
   if grep -q '## 已实施' "$approved_file"; then
     # Insert before ## 已实施
@@ -202,14 +231,15 @@ with open(sys.argv[1], 'w') as f:
 mark_approved_completed() {
   local project_root="$1"
   local name="$2"
-  local approved_file="$project_root/improvement-approved.md"
+  local approved_file="$(rddf_index_file "$project_root" improvement-approved.md)"
   local timestamp=$(date -u +%Y-%m-%d)
 
   if [ ! -f "$approved_file" ]; then
     return 1
   fi
 
-  APPROVED_FILE="$approved_file" CHANGE_NAME="$name" CHANGE_TS="$timestamp" PROJECT_ROOT="$project_root" \
+  APPROVED_FILE="$approved_file" LINK_PREFIX="$(rddf_improvement_link_prefix "$approved_file")" \
+  CHANGE_NAME="$name" CHANGE_TS="$timestamp" PROJECT_ROOT="$project_root" \
   python3 << 'PYEOF'
 import os, re, sys
 
@@ -253,7 +283,7 @@ if approved_idx is None:
         matches = glob.glob(pattern)
         if matches:
             priority = 'P1'
-            completed_row = f'| [{name}](.rddf/improvements/{name}.md) | {priority} | {ts} | 已实施 |\n'
+            completed_row = f'| [{name}]({os.environ["LINK_PREFIX"]}{name}.md) | {priority} | {ts} | 已实施 |\n'
             inserted = False
             for i, line in enumerate(lines):
                 if line.startswith('## 已实施'):
@@ -306,7 +336,7 @@ if already_in_completed:
         f.writelines(lines)
     sys.exit(0)
 
-completed_row = f'| [{name}](.rddf/improvements/{name}.md) | {priority} | {ts} | 已实施 |\n'
+completed_row = f'| [{name}]({os.environ["LINK_PREFIX"]}{name}.md) | {priority} | {ts} | 已实施 |\n'
 inserted = False
 for i, line in enumerate(lines):
     if line.startswith('## 已实施'):
@@ -347,7 +377,7 @@ sync_suggestions() {
   local status="${3:-approved}"
   local timestamp="${4:-$(date -u +%Y-%m-%d)}"
   
-  local suggestions_file="$project_root/improvement-suggestions.md"
+  local suggestions_file="$(rddf_index_file "$project_root" improvement-suggestions.md)"
   [ ! -f "$suggestions_file" ] && return 0
   
   REMOVE_ROW=false
@@ -369,7 +399,7 @@ with open(suggestions_file) as f:
 new_lines = []
 removed = False
 for line in lines:
-    if re.search(r"\[" + re.escape(name) + r"\]\(.rddf/improvements/", line):
+    if re.search(r"\[" + re.escape(name) + r"\]\((?:\.rddf/)?improvements/", line):
         if remove_row:
             removed = True
             continue  # skip this line entirely
@@ -402,7 +432,7 @@ if removed:
 # Idempotent: safe to run repeatedly.
 sweep_implemented_proposals() {
   local project_root="$1"
-  local approved_file="$project_root/improvement-approved.md"
+  local approved_file="$(rddf_index_file "$project_root" improvement-approved.md)"
 
   if [ ! -f "$approved_file" ]; then
     return 0
@@ -434,7 +464,7 @@ with open(sys.argv[1]) as f:
     content = f.read()
 # Only scan entries before ## 已实施
 section = re.split(r'## 已实施', content)[0]
-for m in re.finditer(r'\|\s*\[([^\]]+)\]\(.rddf/improvements/([^)]+)\)\s*\|', section):
+for m in re.finditer(r'\|\s*\[([^\]]+)\]\((?:\.rddf/)?improvements/([^)]+)\)\s*\|', section):
     print(f\"{m.group(1)}|{m.group(2)}\")
 " "$approved_file" 2>/dev/null)
 
@@ -452,8 +482,8 @@ for m in re.finditer(r'\|\s*\[([^\]]+)\]\(.rddf/improvements/([^)]+)\)\s*\|', se
 #   suggestions table still shows "pending review". Idempotent.
 sweep_stale_suggestions() {
   local project_root="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-  local suggestions_file="$project_root/improvement-suggestions.md"
-  local approved_file="$project_root/improvement-approved.md"
+  local suggestions_file="$(rddf_index_file "$project_root" improvement-suggestions.md)"
+  local approved_file="$(rddf_index_file "$project_root" improvement-approved.md)"
 
   [ ! -f "$suggestions_file" ] && return 0
   [ ! -f "$approved_file" ] && return 0
@@ -469,7 +499,7 @@ with open(approved_file) as f:
 
 # Collect all names in improvement-approved.md (both approved and completed sections)
 approved_names = set()
-for m in re.finditer(r"\[([^\]]+)\]\(.rddf/improvements/([^)]+)\)", approved_content):
+for m in re.finditer(r"\[([^\]]+)\]\((?:\.rddf/)?improvements/([^)]+)\)", approved_content):
     approved_names.add(m.group(1))
 
 if not approved_names:
@@ -482,7 +512,7 @@ new_lines = []
 removed = 0
 for line in lines:
     # Check if this line contains a suggestion that is now in approved
-    m = re.search(r"\[([^\]]+)\]\(.rddf/improvements/", line)
+    m = re.search(r"\[([^\]]+)\]\((?:\.rddf/)?improvements/", line)
     if m and m.group(1) in approved_names:
         removed += 1
         continue
@@ -507,9 +537,11 @@ check_dirty_key_files() {
   local dirty_files=""
 
   for f in "improvement-suggestions.md" "improvement-approved.md"; do
-    if [ -f "$project_root/$f" ] && \
-       git -C "$project_root" diff --name-only -- "$f" 2>/dev/null | grep -q "^$f$"; then
-      dirty_files="$dirty_files $f"
+    local path rel
+    path="$(rddf_index_file "$project_root" "$f")"
+    rel="${path#"$project_root"/}"
+    if git -C "$project_root" diff --name-only -- "$rel" 2>/dev/null | grep -qx -- "$rel"; then
+      dirty_files="$dirty_files $rel"
     fi
   done
 
@@ -529,8 +561,8 @@ check_dirty_key_files() {
 # avoid bash string-interpolation injection.
 detect_approved_inconsistency() {
     local project_root="${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-    local suggestions_file="$project_root/improvement-suggestions.md"
-    local approved_file="$project_root/improvement-approved.md"
+    local suggestions_file="$(rddf_index_file "$project_root" improvement-suggestions.md)"
+    local approved_file="$(rddf_index_file "$project_root" improvement-approved.md)"
 
     [ ! -f "$suggestions_file" ] && return 0
 
@@ -545,7 +577,7 @@ try:
         suggestions = f.read()
 
     sug_entries = set()
-    for m in re.finditer(r"\|\s*\[([^\]]+)\]\(.rddf/improvements/[^)]+\)\s*\|\s*\S+\s*\|\s*\S+\s*\|\s*(\S+)", suggestions):
+    for m in re.finditer(r"\|\s*\[([^\]]+)\]\((?:\.rddf/)?improvements/[^)]+\)\s*\|\s*\S+\s*\|\s*\S+\s*\|\s*(\S+)", suggestions):
         name = m.group(1).strip()
         status = m.group(2).strip()
         if status in ("completed", "已完成"):
@@ -558,7 +590,7 @@ try:
     if os.path.isfile(approved_file):
         with open(approved_file) as f:
             content = f.read()
-        approved_names = set(re.findall(r"\|\s*\[([^\]]+)\]\(.rddf/improvements/", content))
+        approved_names = set(re.findall(r"\|\s*\[([^\]]+)\]\((?:\.rddf/)?improvements/", content))
 
     missing = sug_entries - approved_names
     if missing:

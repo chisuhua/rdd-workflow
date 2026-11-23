@@ -23,6 +23,12 @@ import shutil
 import subprocess
 import sys
 
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from _lib.core import rddf_paths  # noqa: E402
+
 EXPECTED_SECTIONS = [
     "架构依据",
     "范围",
@@ -78,29 +84,42 @@ def build_md_content(entry: dict) -> str:
     return "\n".join(lines)
 
 
+def _git_head_suggestions(project_root: str) -> str | None:
+    """Raw ``git show HEAD:<index>`` text, trying both legal index locations."""
+    for path in rddf_paths.candidates(project_root, rddf_paths.SUGGESTIONS_NAME):
+        rel = os.path.relpath(path, project_root)
+        try:
+            result = subprocess.run(
+                ["git", "show", f"HEAD:{rel}"],
+                capture_output=True,
+                text=True,
+                cwd=project_root,
+                timeout=30,
+            )
+        except subprocess.SubprocessError:
+            continue
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout
+    return None
+
+
 def get_old_json(project_root: str) -> list[dict]:
     """Retrieve the old JSON content from git HEAD.
 
     Falls back to reading improvement-suggestions.md directly if it still
     contains valid JSON (pre-rewrite state).
     """
-    try:
-        result = subprocess.run(
-            ["git", "show", "HEAD:improvement-suggestions.md"],
-            capture_output=True,
-            text=True,
-            cwd=project_root,
-            timeout=30,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            data = json.loads(result.stdout.strip())
+    head = _git_head_suggestions(project_root)
+    if head is not None:
+        try:
+            data = json.loads(head.strip())
             if isinstance(data, list):
                 return data
-    except (subprocess.SubprocessError, json.JSONDecodeError):
-        pass
+        except json.JSONDecodeError:
+            pass
 
     # Fallback: try reading the file directly (in case git show failed)
-    ps_path = os.path.join(project_root, "improvement-suggestions.md")
+    ps_path = rddf_paths.suggestions_file(project_root)
     try:
         with open(ps_path, "r", encoding="utf-8") as f:
             content = f.read().strip()
@@ -134,27 +153,20 @@ def main() -> int:
     # Step 2: Backup old JSON
     bak_path = os.path.join(project_root, "improvement-suggestions.json.bak")
     # Write the raw JSON from git to the backup file
-    try:
-        result = subprocess.run(
-            ["git", "show", "HEAD:improvement-suggestions.md"],
-            capture_output=True,
-            text=True,
-            cwd=project_root,
-            timeout=30,
-        )
-        if result.returncode == 0:
-            with open(bak_path, "w", encoding="utf-8") as f:
-                # Pretty-print the JSON for readability
-                try:
-                    parsed = json.loads(result.stdout)
-                    json.dump(parsed, f, ensure_ascii=False, indent=2)
-                    f.write("\n")
-                except json.JSONDecodeError:
-                    f.write(result.stdout)
-            print(f"✅ Backup written to {bak_path}")
-    except subprocess.SubprocessError:
+    head = _git_head_suggestions(project_root)
+    if head is not None:
+        with open(bak_path, "w", encoding="utf-8") as f:
+            # Pretty-print the JSON for readability
+            try:
+                parsed = json.loads(head)
+                json.dump(parsed, f, ensure_ascii=False, indent=2)
+                f.write("\n")
+            except json.JSONDecodeError:
+                f.write(head)
+        print(f"✅ Backup written to {bak_path}")
+    else:
         # Fallback: backup from the file itself if it's still JSON
-        ps_path = os.path.join(project_root, "improvement-suggestions.md")
+        ps_path = rddf_paths.suggestions_file(project_root)
         try:
             with open(ps_path, "r", encoding="utf-8") as f:
                 content = f.read()

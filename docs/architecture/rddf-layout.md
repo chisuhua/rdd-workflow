@@ -19,6 +19,8 @@ ADR-0026 定义了 `.rddf/` 的命名约定与两类存储（`runtime-only` / `c
 | `actions` | dir | rdd | user | never | runtime-only |
 | `config` | dir | external-tool | external-tool | never | committed |
 | `detectors` | dir | rdd | user | never | runtime-only |
+| `improvement-approved.md` | file | rdd | rdd, agent | never | committed |
+| `improvement-suggestions.md` | file | rdd | rdd, agent | never | committed |
 | `improvements` | dir | rdd | rdd, agent | always | committed |
 | `issues` | dir | rdd | rdd | never | runtime-only |
 | `plans` | dir | rdd | rdd, agent | always | committed |
@@ -42,12 +44,14 @@ ADR-0026 定义了 `.rddf/` 的命名约定与两类存储（`runtime-only` / `c
 | `class` | `runtime-only` \| `committed` | 直接取自 ADR-0026；`gitignored` 由它派生 |
 | `severity` | `WARNING` \| `INFO` | 该条目「缺失」类判据的定档 |
 
-### 读法上的三个约定
+### 读法上的约定
 
 - **`external-tool` 条目**（如 `config/`）rdd **不读、不写、不校验内容**。它是消费方的私有目录，登记它只是为了声明边界：`reviews/` 同理，只由 agent 写，rdd 零引用。
 - **`state/` 是混写目录**。目录级条目只能声明「rdd 与 agent 都写」；**哪些文件归谁，见下方文件级的「治理状态（opencode 角色层）」表**。
 - **用户自建目录是被允许的**。doctor 对未登记的顶层条目报 **INFO**（不阻断）。第三方项目可以在 `.rddf/` 下放自己的东西 —— 但若希望它被工具识别，就要登记进 `RDFF_LAYOUT`。
 - **`wt/` 只在 worktree 模式要求存在**。轻量模式（直接在主仓实施）永不创建它。
+- **两个提案索引文件（`improvement-approved.md` / `improvement-suggestions.md`）在旧项目里位于仓库根目录**。`required_when=never` 因此是**有意为之**：缺 `.rddf/` 副本不算漂移。读写解析规则见 `_lib/core/rddf_paths.py`（`.rddf/` 优先，根目录兼容）。
+
 - **判据③判定的是 ignore 规则本身，与条目是否存在无关**。若项目的 `.gitignore` 用 `.rddf/*` 这类通配写法，尚未创建的目录也会被判为 class 不符 —— 这是 advisory WARNING，不阻断。
 
 ## 新增一个顶层条目的三步

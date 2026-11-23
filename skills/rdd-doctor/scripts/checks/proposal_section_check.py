@@ -18,9 +18,10 @@ from pathlib import Path
 from typing import List
 
 from doctor_render import Finding, Severity
+from index_files import resolve_index_file
 
 
-_NAME_PATTERN = re.compile(r"\|\s*\[([^\]]+)\]\(\s*\.rddf/improvements/[^)]+\)")
+_NAME_PATTERN = re.compile(r"\|\s*\[([^\]]+)\]\(\s*(?:\.rddf/)?improvements/[^)]+\)")
 _ARCHIVE_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}-(.+)$")
 
 
@@ -65,7 +66,7 @@ def run(project_root: Path | None = None) -> List[Finding]:
         project_root = Path(os.environ.get("RDDF_PROJECT_ROOT", "."))
     findings: List[Finding] = []
 
-    approved_path = project_root / "improvement-approved.md"
+    approved_path = resolve_index_file(project_root, "improvement-approved.md")
     if not approved_path.is_file():
         return findings
 

@@ -33,6 +33,7 @@ import subprocess
 import sys
 from pathlib import Path
 from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
+from skills._lib.core import rddf_paths  # noqa: E402
 
 
 _MARKDOWN_LINK_FILES = ("improvement-approved.md", "improvement-suggestions.md")
@@ -46,6 +47,7 @@ _DOC_LINK_FILES = (
 _ITERATION_STATE_FILE = ".rddf/state/iteration.json"
 _LINK_REGEX = re.compile(r"\]\(improvements/([^)\s]+)\)")
 _DOUBLE_PREFIX_REGEX = re.compile(r"\]\(\.rddf/\.rddf/improvements/([^)\s]+)\)")
+_ABS_PREFIX_REGEX = re.compile(r"\]\(\.rddf/improvements/([^)\s]+)\)")
 
 
 def _link_replacement(match: re.Match) -> str:
@@ -170,21 +172,37 @@ def _move_files(src_dir: Path, dest_dir: Path, use_git: bool, dry_run: bool) -> 
 
 
 def _rewrite_markdown_links(proj_root: Path, dry_run: bool) -> dict[str, int]:
-    """Rewrite ``(improvements/X)`` to ``(.rddf/improvements/X)`` in link files.
+    """Rewrite improvement links in the two index files to their canonical form.
 
-    Only the substring ``](improvements/`` is rewritten - link text and
-    surrounding context are untouched. Non-matching lines (e.g. plain text
-    mentioning "improvements" without the link syntax) are left alone.
+    The form depends on where the index file lives (``_lib/core/rddf_paths.py``):
+
+    - index inside ``.rddf/`` → ``](improvements/X)`` (relative to the file)
+    - index at the project root → ``](.rddf/improvements/X)`` (legacy layout)
 
     Returns a mapping of filename -> number of links rewritten.
     """
     counts: dict[str, int] = {}
     for name in _MARKDOWN_LINK_FILES:
-        path = proj_root / name
+        path = Path(rddf_paths.resolve(str(proj_root), name))
         if not path.is_file():
             continue
         original = path.read_text()
-        new, n = _LINK_REGEX.subn(_link_replacement, original)
+        if rddf_paths.is_rddf_hosted(str(path)):
+            new, n = _DOUBLE_PREFIX_REGEX.subn(
+                lambda m: "](improvements/" + m.group(1) + ")", original
+            )
+            new, n_abs = _ABS_PREFIX_REGEX.subn(
+                lambda m: "](improvements/" + m.group(1) + ")", new
+            )
+            n += n_abs
+        else:
+            new, n = _DOUBLE_PREFIX_REGEX.subn(
+                lambda m: "](.rddf/improvements/" + m.group(1) + ")", original
+            )
+            new, n_single = _LINK_REGEX.subn(
+                lambda m: "](.rddf/improvements/" + m.group(1) + ")", new
+            )
+            n += n_single
         if n == 0:
             continue
         counts[name] = n

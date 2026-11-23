@@ -107,7 +107,12 @@ LOCKED_ARCHIVE_SH="91820f23df132cce8215eeaa91128c441ceff730ec890323fde8dc2eb38f1
 # baseline was recaptured after the planner-bootstrap code changes landed.
 # Note (2026-09-28): recaptured to current value after 8cd4376 objective-aware
 # planning + 21ff800 AUTO sentinel unify. Additive owns list changes only.
-LOCKED_RDD_PLANNER_ROLE_BLOCK="c033ec89c974c6fec9bfe5bd83a836efbd4a9d3c250b51522c8427b1083e4a92"
+# Note (2026-11-23): recaptured after the two proposal index files moved into
+# `.rddf/` (ADR-0026 namespace) — the owns entries now name the canonical
+# `.rddf/improvement-{suggestions,approved}.md` paths instead of the project-root
+# copies. Owns-list path correction only: no not_owns change, no rdd-quick
+# execution semantics touched, so the zero-pollution invariant still holds.
+LOCKED_RDD_PLANNER_ROLE_BLOCK="b70c01e44b88a21db86708fc637326665c9cf7dca7a0a6603c2c8ec29688dba9"
 
 
 

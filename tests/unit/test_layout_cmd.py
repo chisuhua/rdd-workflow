@@ -88,5 +88,8 @@ def test_layout_payload_is_not_shadowed_by_a_consumer_lib(tmp_path):
     )
     assert res.returncode == 0, res.stderr
     payload = json.loads(res.stdout)
-    assert len(payload["entries"]) == 14
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from _lib.core.rddf_layout import as_dicts
+
+    assert len(payload["entries"]) == len(as_dicts())
     assert "HIJACKED" not in res.stdout

@@ -5,8 +5,12 @@ Searches .rddf/improvements/*.md, improvement-suggestions.md, and improvement-ap
 for existing proposals that match a given error signature/fingerprint.
 """
 
-import os, json, re
+import os
+import json
+import re
 from pathlib import Path
+
+from _lib.core import rddf_paths
 
 STOP_WORDS = {"the", "a", "an", "is", "at", "on", "in", "of", "to", "for",
               "and", "or", "not", "with", "from", "by", "as", "be", "was", "are"}
@@ -19,8 +23,8 @@ class DedupMatcher:
                  approved_file=None, project_root=None):
         root = project_root or self._find_project_root()
         self.improvements_dir = improvements_dir or os.path.join(root, ".rddf/improvements")
-        self.suggestions_file = suggestions_file or os.path.join(root, "improvement-suggestions.md")
-        self.approved_file = approved_file or os.path.join(root, "improvement-approved.md")
+        self.suggestions_file = suggestions_file or rddf_paths.suggestions_file(root)
+        self.approved_file = approved_file or rddf_paths.approved_file(root)
 
     @staticmethod
     def _find_project_root():
@@ -90,7 +94,7 @@ class DedupMatcher:
                 content = f.read()
             if self._fuzzy_match(keywords, content):
                 # Extract proposal names from markdown table links
-                matches = re.findall(r'\[([^\]]+)\]\(.rddf/improvements/', content)
+                matches = re.findall(r'\[([^\]]+)\]\((?:\.rddf/)?improvements/', content)
                 for name in matches:
                     if any(kw in name.lower() for kw in keywords):
                         return {"matched_name": name, "source": "approved",

@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from _lib.core.rddf_paths import approved_file
 from _lib.parse_approved import parse_approved_proposals
 
 
@@ -60,9 +61,10 @@ def test_both_sections_dedup_keep_order(tmp_path: Path) -> None:
 
 
 def test_real_repo_proposal_approved(tmp_path: Path) -> None:
-    # Sanity check against the actual improvement-approved.md at repo root.
+    # Sanity check against the actual improvement-approved.md (canonical
+    # location per _lib/core/rddf_paths.py; legacy project-root copy still works).
     repo_root = Path(__file__).resolve().parents[2]
-    target = repo_root / "improvement-approved.md"
+    target = Path(approved_file(str(repo_root)))
     if not target.exists():
         pytest.skip("improvement-approved.md not present in this checkout")
     names = parse_approved_proposals(str(target))
@@ -90,3 +92,12 @@ def test_cli_guard_prints_one_name_per_line(tmp_path: Path) -> None:
         capture_output=True, text=True, check=True,
     )
     assert out.stdout.splitlines() == ["gamma", "delta"]
+
+def test_rddf_hosted_relative_links_are_parsed(tmp_path: Path) -> None:
+    """An index inside `.rddf/` links relatively: `improvements/<name>.md`."""
+    p = _write(
+        tmp_path,
+        "## 已实施\n\n"
+        "| [alpha](improvements/alpha.md) | P1 | 2026-08-01 | arch |\n",
+    )
+    assert parse_approved_proposals(str(p)) == ["alpha"]

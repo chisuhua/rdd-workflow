@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import List
 
 from doctor_render import Finding, Severity
+from index_files import resolve_index_file
 
 
 _FILES = ["improvement-suggestions.md", "improvement-approved.md"]
@@ -35,9 +36,10 @@ def run(project_root: Path | None = None) -> List[Finding]:
     findings: List[Finding] = []
 
     for fname in _FILES:
-        path = project_root / fname
+        path = resolve_index_file(project_root, fname)
         if not path.is_file():
             continue
+        canonical_dir = (project_root / ".rddf" / "improvements").resolve()
         expected_cols = _EXPECTED_COLUMNS[fname]
         lines = path.read_text().splitlines()
         line_no = 0
@@ -64,24 +66,37 @@ def run(project_root: Path | None = None) -> List[Finding]:
                     snippet=f"row has {cols} columns, expected {expected_cols}",
                     fix_hint="add/remove columns to match expected schema",
                 ))
-            if link_target.startswith(".rddf/improvements/"):
-                if not (project_root / link_target).is_file():
-                    findings.append(Finding(
-                        severity=Severity.WARNING,
-                        category="proposal-table",
-                        file=fname,
-                        line=line_no,
-                        snippet=f"broken link to {link_target}",
-                        fix_hint="verify the .rddf/improvements file exists or remove this row",
-                    ))
-            elif link_target.startswith("improvements/") or "/" not in link_target:
+            resolved = (path.parent / link_target).resolve()
+            if not _is_under(resolved, canonical_dir):
                 findings.append(Finding(
                     severity=Severity.WARNING,
                     category="proposal-table",
                     file=fname,
                     line=line_no,
-                    snippet=f"non-canonical link to {link_target} (use .rddf/improvements/<name>.md)",
-                    fix_hint="migrate file to .rddf/improvements/ and update link to canonical prefix",
+                    snippet=(
+                        f"non-canonical link to {link_target} "
+                        "(use improvements/<name>.md inside .rddf/, "
+                        ".rddf/improvements/<name>.md from the project root)"
+                    ),
+                    fix_hint="point the link at .rddf/improvements/<name>.md",
+                ))
+            elif not resolved.is_file():
+                findings.append(Finding(
+                    severity=Severity.WARNING,
+                    category="proposal-table",
+                    file=fname,
+                    line=line_no,
+                    snippet=f"broken link to {link_target}",
+                    fix_hint="verify the .rddf/improvements file exists or remove this row",
                 ))
 
     return findings
+
+
+def _is_under(path: Path, parent: Path) -> bool:
+    """True when `path` is `parent` or a descendant of it."""
+    try:
+        path.relative_to(parent)
+    except ValueError:
+        return False
+    return True

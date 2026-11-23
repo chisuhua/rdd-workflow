@@ -24,6 +24,8 @@ import sys
 from pathlib import Path
 from typing import Optional, Tuple
 
+from _lib.core import rddf_paths
+
 
 def _read_json(path: Path) -> Optional[dict]:
     """Read a JSON file, returning None on missing/invalid.
@@ -256,7 +258,7 @@ def scan_state(project_root: str) -> Tuple[str, str, str]:
 
     # 9-10. improvement-suggestions.md (current format: Markdown table)
     improvements_dir = Path(project_root) / ".rddf/improvements"
-    approved_path = Path(project_root) / "improvement-approved.md"
+    approved_path = Path(rddf_paths.approved_file(str(project_root)))
 
     pending = False
     if improvements_dir.is_dir():
@@ -266,7 +268,7 @@ def scan_state(project_root: str) -> Tuple[str, str, str]:
             try:
                 content = approved_path.read_text()
                 approved = set(
-                    re.findall(r"\|\s*\[([^\]]+)\]\(.rddf/improvements/", content)
+                    re.findall(r"\|\s*\[([^\]]+)\]\((?:\.rddf/)?improvements/", content)
                 )
             except OSError:
                 pass

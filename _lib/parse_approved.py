@@ -4,7 +4,8 @@ Reads BOTH the `## 已批准提案` and `## 已实施` sections and returns
 approved proposal names, deduplicated, in file-appearance order.
 
 Design choice: full-file regex matching of the row pattern
-`| [name](.rddf/improvements/<file>.md) | ... |`. The `已批准提案` section holds
+`| [name](improvements/<file>.md) | ... |` (a legacy root-hosted index uses
+the `.rddf/improvements/<file>.md` form instead). The `已批准提案` section holds
 approved-but-not-implemented entries; `已实施` holds approved-and-implemented
 entries. Historical proposals were archived directly after approval, so
 `已批准提案` is often empty in practice — parsers that only read the region
@@ -29,10 +30,12 @@ import sys
 from pathlib import Path
 from typing import NamedTuple, Optional
 
-# Match a markdown table row like `| [name](.rddf/improvements/<file>.md) | ...`.
-# Only used inside improvement-approved.md (and similar tables), so the
-# <a href=".rddf/improvements/` anchor is enough to avoid false positives in body prose.
-_ROW_RE = re.compile(r"\|\s*\[([^\]]+)\]\(\s*.rddf/improvements/[^)]+\)")
+# Match a markdown table row like `| [name](improvements/<file>.md) | ... |`.
+# Two link forms are legal, one per index-file location: `.rddf/improvements/`
+# for a legacy root-hosted index, `improvements/` for an index hosted inside
+# `.rddf/` (see `_lib/core/rddf_paths.py`). Only used inside the index tables,
+# so the `improvements/` anchor is enough to avoid false positives in prose.
+_ROW_RE = re.compile(r"\|\s*\[([^\]]+)\]\(\s*(?:\.rddf/)?improvements/[^)]+\)")
 
 _SECTION_RE = re.compile(r"^##\s+(.+?)\s*$")
 

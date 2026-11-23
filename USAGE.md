@@ -61,7 +61,7 @@ rddf-workflow 从 v2.2 起**submodule-aware**（ADR-0033）。在 git submodule 
 
 | 文件 | 位置 | 用途 | 写入方 |
 |------|------|------|--------|
-| `improvement-suggestions.md` | 项目根目录 | 扫描出的建议列表（JSON 数组格式），随 git 版本控制 | `propose` / `roadmap` / `status` / `rdd-arch` / `rdd-planner` |
+| `improvement-suggestions.md` | `.rddf/`（旧项目兼容：项目根目录） | 提案索引表（Markdown 表格，链接到 `.rddf/improvements/<name>.md`），随 git 版本控制 | `propose` / `roadmap` / `status` / `rdd-arch` / `rdd-planner` |
 | `openspec/changes/<name>/tasks.md` | change 目录 | Builder 阶段任务清单（权威进度来源） | `rdd-builder` |
 | `docs/adr/ADR-*.md` | ADR 目录 | 架构决策记录（propose 扫描 + 引用源） | 用户手工编写（待 propose 扫描拾取） |
 | `.rddf/plans/<name>.md` | worktree 内或主仓库（轻量模式） | TDD 5 步结构计划文件（builder P1 产物，git tracked） | `rdd-workflow-writing-plans` / `rdd-builder` |

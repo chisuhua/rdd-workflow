@@ -155,9 +155,10 @@ if [ -d "$PROJECT_ROOT/.rddf/improvements" ]; then
     
     # 如果已存在对应的 change 目录，从 improvement-suggestions.md 移除索引
     if [ -d "$PROJECT_ROOT/openspec/changes/$name" ]; then
-      # 从索引中移除（如果存在）
-      if [ -f "$PROJECT_ROOT/improvement-suggestions.md" ]; then
-        sed -i "/\[$name\](.rddf/improvements\/$name.md)/d" "$PROJECT_ROOT/improvement-suggestions.md"
+      # 从索引中移除（如果存在）；rddf_index_file 来自 _lib/state.sh
+      suggestions_file="$(rddf_index_file "$PROJECT_ROOT" improvement-suggestions.md)"
+      if [ -f "$suggestions_file" ]; then
+        sed -i -E "/\[$name\](\.rddf/)?improvements\/$name\.md\)/d" "$suggestions_file"
         echo "  已从索引移除: $name (change 已存在)"
       fi
     fi
@@ -513,10 +514,11 @@ if [ "$SKELETON_MODE" = "true" ]; then
     # Example: PARENT_FEATURE="feature-rddf" propose_create_change ...
     propose_create_change <name> --skeleton "$CURRENT_PHASE" "$CHANGE_CATEGORY" "$PRIORITY"
     # Update improvement-suggestions.md: status "待创建" → "skeleton"
-    if [ -f "$PROJECT_ROOT/improvement-suggestions.md" ]; then
-        PROJECT_ROOT="$PROJECT_ROOT" NAME="<name>" NEW_STATUS="skeleton" python3 <<PYEOF
+    SUGGESTIONS_FILE="$(rddf_index_file "$PROJECT_ROOT" improvement-suggestions.md)"
+    if [ -f "$SUGGESTIONS_FILE" ]; then
+        SUGGESTIONS_FILE="$SUGGESTIONS_FILE" NAME="<name>" NEW_STATUS="skeleton" python3 <<PYEOF
 import os, json
-p = os.path.join(os.environ.get("PROJECT_ROOT", "."), "improvement-suggestions.md")
+p = os.environ["SUGGESTIONS_FILE"]
 target = os.environ.get("NAME", "")
 new_status = os.environ.get("NEW_STATUS", "skeleton")
 try:
@@ -640,6 +642,9 @@ Propose 创建完成后，自动检测未提交的 artifacts 并执行提交：
 # P0-4: 提交必须**如实报告**，且尊重 git.openspec_tracked：
 #       - `openspec/` 在 gitignore 里时 `git add` 会被拒（rc=1）⇒ 不能打印「✅ 已提交」
 #       - 空暂存区 `git commit` 也是 rc=1 ⇒ 先判 `git diff --cached --quiet`
+# 索引文件位置解析（.rddf/ 优先，旧项目在项目根目录）—— rddf_index_file 来自 _lib/state.sh
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "$(resolve_rdd_lib_dir)/state.sh"
 OPENSPEC_TRACKED=$(PROJECT_ROOT="$PROJECT_ROOT" python3 - <<'PY'
 import os, re
 p = os.path.join(os.environ["PROJECT_ROOT"], ".rddf", "project.yaml")
@@ -677,9 +682,12 @@ else
         done
     done
 
-    if [ -f "$PROJECT_ROOT/improvement-suggestions.md" ] \
-       && ! git -C "$PROJECT_ROOT" check-ignore -q improvement-suggestions.md; then
-        git -C "$PROJECT_ROOT" add improvement-suggestions.md || { echo "❌ git add 失败: improvement-suggestions.md"; exit 1; }
+    # 索引文件可能位于 .rddf/ 或项目根目录（旧项目）—— 由 rddf_index_file 解析
+    SUGGESTIONS_REL="$(rddf_index_file "$PROJECT_ROOT" improvement-suggestions.md)"
+    SUGGESTIONS_REL="${SUGGESTIONS_REL#"$PROJECT_ROOT"/}"
+    if [ -f "$PROJECT_ROOT/$SUGGESTIONS_REL" ] \
+       && ! git -C "$PROJECT_ROOT" check-ignore -q "$SUGGESTIONS_REL"; then
+        git -C "$PROJECT_ROOT" add "$SUGGESTIONS_REL" || { echo "❌ git add 失败: $SUGGESTIONS_REL"; exit 1; }
         STAGED=1
     fi
 
@@ -718,13 +726,13 @@ fi
 **5d. Phase 5 后自动检查剩余建议（循环机制）**
 
 ```bash
-# 检查是否还有剩余建议
-if [ -f "improvement-suggestions.md" ]; then
+# 检查是否还有剩余建议（索引文件位置由 rddf_index_file 解析：.rddf/ 优先，旧项目在项目根目录）
+source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
+source "$(resolve_rdd_lib_dir)/state.sh"
+if [ -f "$(rddf_index_file "$PROJECT_ROOT" improvement-suggestions.md)" ]; then
     # P1-7: 文件格式已规范化为 JSON 列表
     #       用 json.load 解析后筛选 status == "待创建" 的条目
     #       旧实现的 grep 在 JSON 字符串中会误匹配 description 字段里的"待创建"字面量
-    source "${PROJECT_ROOT:-/nonexistent}/.opencode/_lib/skill_root.sh" 2>/dev/null || source "$HOME/.agents/skills/_lib/skill_root.sh"
-    source "$(resolve_rdd_lib_dir)/state.sh"
     REMAINING=$(count_pending_suggestions "$PROJECT_ROOT")
     REMAINING=${REMAINING:-0}
     if [ "$REMAINING" -gt 0 ]; then

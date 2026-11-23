@@ -31,13 +31,14 @@ from typing import Any, Dict, List, Optional
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _SCRIPTS_DIR = _REPO_ROOT / "skills" / "add-improve" / "scripts"
-if str(_SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS_DIR))
+for _p in (str(_REPO_ROOT), str(_SCRIPTS_DIR)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 from from_issue import check_dedup, write_scaffold  # noqa: E402  (sys.path must be set first)
+from _lib.core import rddf_paths  # noqa: E402
 
 _STATE_SUBPATH = Path(".rddf") / "state" / ".issue-auto-handler.json"
-_SUGGESTIONS_NAME = "improvement-suggestions.md"
 
 _DEFAULT_LABEL = "auto-reported"
 _DEFAULT_DAILY_MAX = 10
@@ -110,10 +111,10 @@ def _is_issue_already_handled(issue_num: int, project_root: Path) -> bool:
 
 def _register_suggestion(project_root: Path, proposal_name: str, issue_num: int, gh_repo: str) -> None:
     """Append a row to improvement-suggestions.md if not already present."""
-    suggestions_file = project_root / _SUGGESTIONS_NAME
+    suggestions_file = Path(rddf_paths.suggestions_file(str(project_root)))
     if not suggestions_file.is_file():
         return
-    link = f"[{proposal_name}](.rddf/improvements/{proposal_name}.md)"
+    link = f"[{proposal_name}]({rddf_paths.link_prefix(str(suggestions_file))}{proposal_name}.md)"
     if link in suggestions_file.read_text(encoding="utf-8"):
         return
     row = (

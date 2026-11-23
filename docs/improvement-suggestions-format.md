@@ -10,6 +10,21 @@ rdd-workflow skills (`rdd-planner`, `rdd-builder`, `propose`, `add-improve`).
 
 ---
 
+## Location
+
+Canonical path: **`.rddf/improvement-suggestions.md`** (ADR-0026 — internal
+metadata lives under `.rddf/`). Projects created before the move keep the file
+at the project root; both locations are read, and writers use whichever copy
+already exists (falling back to `.rddf/`). The single implementation of that
+rule is `_lib/core/rddf_paths.py`; the bash mirror is
+`_lib/state.sh::rddf_index_file`.
+
+Because the index lives inside `.rddf/`, its table links are **relative to the
+index file**: `improvements/<name>.md`. A legacy root-hosted index uses
+`.rddf/improvements/<name>.md`. Parsers accept both forms.
+
+---
+
 ## Container format: Markdown table (index only)
 
 The file **MUST** contain a Markdown table that **only stores links** to
@@ -25,15 +40,15 @@ the full proposal content — that lives in `.rddf/improvements/<name>.md`.
 
 | 提案 | 优先级 | 来源 | 添加时间 | 状态 |
 |------|--------|------|----------|------|
-| [fix-silent-exception](.rddf/improvements/fix-silent-exception.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 | 待讨论 |
-| [add-config-validation](.rddf/improvements/add-config-validation.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 | 待讨论 |
+| [fix-silent-exception](improvements/fix-silent-exception.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 | 待讨论 |
+| [add-config-validation](improvements/add-config-validation.md) | P0 | Oracle 审查 2026-07-19 | 2026-07-19 | 待讨论 |
 ```
 
 ### Table columns
 
 | Column     | Format                              | Description                                                |
 |------------|-------------------------------------|------------------------------------------------------------|
-| 提案       | `[name](.rddf/improvements/name.md)`      | Markdown link to the improvement file. The link text is the proposal name (kebab-case). |
+| 提案       | `[name](improvements/name.md)`      | Markdown link to the improvement file, relative to the index file. The link text is the proposal name (kebab-case). A legacy root-hosted index uses `.rddf/improvements/name.md`. |
 | 优先级     | `P0` / `P1` / `P2`                 | Priority level, copied from the improvement file metadata. |
 | 来源       | Free-form string                    | Where the proposal came from (e.g. `Oracle 审查`, `复盘改进`). |
 | 添加时间   | `YYYY-MM-DD`                        | UTC date when the proposal was added to the pool.          |

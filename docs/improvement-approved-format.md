@@ -8,6 +8,21 @@ rdd-workflow skills (`guide-design`, `guide-plan`, `propose`, `archive`).
 
 ---
 
+## Location
+
+Canonical path: **`.rddf/improvement-approved.md`** (ADR-0026 — internal
+metadata lives under `.rddf/`). Projects created before the move keep the file
+at the project root; both locations are read, and writers use whichever copy
+already exists (falling back to `.rddf/`). The single implementation of that
+rule is `_lib/core/rddf_paths.py`; the bash mirror is
+`_lib/state.sh::rddf_index_file`.
+
+Because the index lives inside `.rddf/`, its table links are **relative to the
+index file**: `improvements/<name>.md`. A legacy root-hosted index uses
+`.rddf/improvements/<name>.md`. Parsers accept both forms.
+
+---
+
 ## Container format: Markdown with two table sections
 
 The file **MUST** contain two Markdown table sections, each preceded by
@@ -27,14 +42,14 @@ a `## ` header:
 
 | 提案 | 优先级 | 批准时间 | 批准者 |
 |------|--------|----------|--------|
-| [fix-silent-exception](.rddf/improvements/fix-silent-exception.md) | P0 | 2026-07-23 | guide-design |
-| [add-config-validation](.rddf/improvements/add-config-validation.md) | P0 | 2026-07-23 | guide-arch |
+| [fix-silent-exception](improvements/fix-silent-exception.md) | P0 | 2026-07-23 | guide-design |
+| [add-config-validation](improvements/add-config-validation.md) | P0 | 2026-07-23 | guide-arch |
 
 ## 已实施
 
 | 提案 | 优先级 | 完成时间 |
 |------|--------|----------|
-| [remove-ci-redundant-bats](.rddf/improvements/remove-ci-redundant-bats.md) | P1 | 2026-07-20 |
+| [remove-ci-redundant-bats](improvements/remove-ci-redundant-bats.md) | P1 | 2026-07-20 |
 ```
 
 ### Section: `## 已批准提案`
@@ -43,7 +58,7 @@ Table columns:
 
 | Column     | Format                              | Description                                                |
 |------------|-------------------------------------|------------------------------------------------------------|
-| 提案       | `[name](.rddf/improvements/name.md)`      | Markdown link to the improvement file. The link text is the proposal name (kebab-case). |
+| 提案       | `[name](improvements/name.md)`      | Markdown link to the improvement file. The link text is the proposal name (kebab-case). |
 | 优先级     | `P0` / `P1` / `P2`                 | Priority level, copied from the improvement file metadata. |
 | 批准时间   | `YYYY-MM-DD`                        | UTC date when `guide-design` approved the proposal.        |
 | 批准者     | Free-form string (e.g. `guide-design`) | Who/what approved the proposal.                            |
@@ -54,7 +69,7 @@ Table columns:
 
 | Column     | Format                              | Description                                                |
 |------------|-------------------------------------|------------------------------------------------------------|
-| 提案       | `[name](.rddf/improvements/name.md)`      | Same link format as the approved section.                  |
+| 提案       | `[name](improvements/name.md)`      | Same link format as the approved section.                  |
 | 优先级     | `P0` / `P1` / `P2`                 | Priority level (preserved from approved section).          |
 | 完成时间   | `YYYY-MM-DD`                        | UTC date when the change was archived.                     |
 | 状态       | `已实施` (literal)                  | Fixed completion status. Originally 3 columns, expanded to 4 in v2.2 to align with the `## 已批准提案` schema (consistent 4-col layout) and to silence `rdd-doctor` `proposal-table` false positives. |
