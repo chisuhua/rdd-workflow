@@ -116,6 +116,11 @@
        ⑧ **判「无守卫」前必须先查文件名，不能只 grep 内容**。本批我把 AC-23 判成「`test_layer0_sentinel_order.bats` 文件不存在」⇒ **实际存在**（2026-09-21，3 个用例）⇒ 按判据 ⑥ 应**改写**而非退役 ⇒ critic 第 2 轮 BLOCKER-1。这与第 1 轮的 BLOCKER-1/2 是**同一缺陷类**（误判守卫存在性 ⇒ 错误退役 ⇒ 丢契约）。⇒ 「无守卫」的判定要**先列文件、再列用例名**。
        ⑨ **spec 断言不得强于守卫**（全称量化 vs 单实例）。本批我写「**a** read-only artefact SHALL list no rdd writer」—— 守卫只钉 `reviews` 一个，而 manifest 里 `write_by` 不含 rdd 的有 **9** 个 ⇒ 若 `config` 明天混入 rdd writer，全部守卫仍绿而 spec 已违约。⇒ 处置：**扩守卫**（新增 `test_non_rdd_entries_name_their_actual_writer` 逐条钉住 9 个条目）+ spec 措辞与之等强。
      - ⚠️ **一条工程约束**：改写若让 stage token **真的消失**，必须**同提交**更新冻结常量 `tests/unit/test_v4_residue_check.py::test_r4_repo_residue_constant`（303/159/41 → **297/157/40**；该测试 docstring 明写此规则）。本批漏改 ⇒ pytest 红 1 条。
+   - ✅ **第 5 批已完成（2026-11-23，`rewrite-acceptance-form-batch-5`）—— `acceptance-N` / `capability-N` 形态系列 12/12 全部收口** —— 最后 2 份 / **77 条 AC** ⇒ **24 条契约（覆盖 35 条 AC，其中 16 组被合并）+ 42 条退役**：`env-bootstrap`（44→12）· `objective-tracking`（33→12）。清单 `compliant` 10 → **12** 份、`pending` 2 → **0** 份。台账：`.rddf/reviews/rewrite-acceptance-form-batch-5-2026-11-23.md`。
+     - ✅ **收口判据（AC-10）**：**全仓** `acceptance-N` = **0** · `capability-N` = **0** · 恒真 WHEN = **0**（165 份 spec / **747** 条 Requirement）。
+     - ⚠️ **两条新的方法论教训**（本批特有）：
+       ⑨ **spec 断言不得强于守卫 —— 否定断言尤其危险**。本批 R5 写了「SHALL **NOT** fail with an "not initialized" error」，而守卫只断言 exit 3 + 输出**在场**（「not a rdd-workflow project」），**不**断言那个字符串**缺席** ⇒ 措辞偏强 ⇒ 已删除该 Scenario。⇒ 「NOT fail with X」需要守卫断言 X **缺席**；「NOT contain X」需要守卫断言 X 不在输出里。
+       ⑩ **退役理由必须可核实 —— 写「无守卫」要说清是「机制不存在」还是「机制存在但 tests/ 没断言」**。本批 critic 抓到我在两条台账里写「全仓 grep `fix-decisions` 0 处」/「全仓 grep 无命中」，实际前者命中 **8 个文件**、后者 `skills/rdd-planner/SKILL.md:144` 字面就写着「### 何时建 feature vs objective」⇒ **退役决定成立，但理由是错的**。⇒ 措辞不能夸张。
 6. **`dashboard-verification-status` 围栏示例与 schema 脱节** —— 缺 `rdd-builder` / `pending-agent`，含 enum 外的 `null` ⇒ 文本修正专项（围栏式标注只豁免旧名，不修脱节）。
 7. **围栏式 `enum` 的 schema 机检交叉校验** —— backlog（会让扫描器耦合 `_lib/schemas/`，破坏「能在任何有 `openspec/specs` 的项目上独立跑」的设计）。
 8. **`spec_residue_scan.py:488` 的 `hit_lines` 是死变量** —— 改前就存在（只 `add` 从不读），本次未删（改动最小化边界）。
