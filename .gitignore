@@ -41,8 +41,12 @@ pnpm-lock.yaml
 # .rddf/roadmap/.backup/ 是 populate-roadmap-from-arch 的 backup 目录
 .rddf/roadmap/.backup/
 
-# rdd-workflow: git.openspec_tracked=false — keep openspec/ out of git
-openspec/
+# rdd-workflow: git.openspec_tracked=false — keep the *archive* out of git.
+# ADR-0036 (2026-11-17 修订) 把该开关限定为「归档路径」维度 ⇒ 只排除 openspec/changes/，
+# openspec/specs/ + config.yaml 是可跟踪的契约面（CI 上 openspec validate 需要它们）。
+openspec/changes/
+# 归档生成的 schema 副本：CLI 有内建 defaultSchema，无需入库（避免与上游 schema 漂移）。
+openspec/schemas/
 
 # rdd-workflow: feedback appender + parallel phase race conditions create ephemeral lock files
 .rddf/improvements/*.lock

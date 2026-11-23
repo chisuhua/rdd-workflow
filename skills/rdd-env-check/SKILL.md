@@ -49,14 +49,17 @@ _run_env_full_check     # 强制全量检查 (写 cache + 输出 10 字段 JSON)
 
 全量检查 (`_run_env_full_check`) 额外跑 `_check_gitignore`（非阻塞, 不影响 15 字段 cache 契约）:
 
-| `.rddf/project.yaml` `git.openspec_tracked` | `.gitignore` 含 `openspec/` | 行为 |
+| `.rddf/project.yaml` `git.openspec_tracked` | `.gitignore` 排除项 | 行为 |
 |---|---|---|
-| `false` | 缺失 | ⚠️ warn "gitignore guard missing"（`git add -A` 会把 openspec/ 重新拉进 git） |
-| `false` | 有 | ✅ 静默 (`_GITIGNORE_PROTECTED=yes`) |
-| `true`/缺省 | 有 | ⚠️ 反向不一致（commit_archive_moves 会 git add 被 ignore 的路径 → 空 commit） |
-| 缺省 | 缺失 | 静默（传统 tracked 项目） |
+| `false` | 两种都缺 | ⚠️ warn "gitignore guard missing"（`git add -A` 会把归档重新拉进 git） |
+| `false` | 有 `openspec/`（整树）或 `openspec/changes/`（只挡归档路径） | ✅ 静默 (`_GITIGNORE_PROTECTED=yes`)；后者若 `openspec/specs/` 存在却未入库 ⇒ 额外一条非阻塞 hint |
+| `true`/缺省 | 任一存在 | ⚠️ 反向不一致（commit_archive_moves 会 git add 被 ignore 的路径 → 空 commit） |
+| 缺省 | 都缺 | 静默（传统 tracked 项目） |
 
-Auto-fix (opt-in): `RDDF_ENV_FIX_GITIGNORE=yes` → 幂等追加 `openspec/` 到 `.gitignore`（仅 false+缺失场景）。默认只报告不改文件。
+两种形态都合法：`git.openspec_tracked` 只管**归档路径**维度（ADR-0036 2026-11-17 修订），所以
+`openspec/changes/` 单独排除即可让 `openspec/specs/` 入库（方案 B）。
+
+Auto-fix (opt-in): `RDDF_ENV_FIX_GITIGNORE=yes` → 幂等追加 `openspec/changes/` 到 `.gitignore`（仅 false+两种形态都缺的场景；已有任一条目时不追加）。默认只报告不改文件。
 
 ## 边界
 

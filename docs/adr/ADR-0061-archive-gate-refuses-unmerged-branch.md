@@ -154,7 +154,7 @@ worktree 的改动无从谈起）⇒ 统一为「⓪ 先于其余全部判定」
 - [ ] **实施方补（2026-11-18 复核发现）**：本 ADR 的契约已明确，但 2026-11-17 的实现有四处未满足 —— ① **调用点把三态折叠成两态**（`if ! archive_premerge_check …` ⇒ `2`（⑤ 放行+警告）被折叠成**拒绝**，与 V-14 冲突）；② **⓪ 的路径仍打合并命令**（决策 3 明写 ref 不存在时**不给**合并命令，V-5(d) 的否定断言要求「不含 `merge --no-ff`」）；③ **非 git 仓库落进 ⓪**（应归 ⑤，却报「分支不存在（已被 cleanup 删除）」的误导文案）；④ **dirty 路径未按「分支有提交 / 无提交」分叉**（实现恒打「先提交」+「合入命令」，未实现决策 3 的第二支与 V-5(c) 的两步命令形态）。⇒ 四处均为 implementation_gap，责任方：builder（按 V-14 / V-5(c)(d) / ⑤ 行的口径修）。
 - [ ] **不在本决策范围**：`v4_residue_check` 的扫描面不含 `openspec/specs/` ⇒ 「已删除路径出现在 normative 文本中」无法被机器发现（随 ADR-0036 修订项一并提出）。
 - [ ] **不在本决策范围**：false 路径的步骤省略与空 `archive_commit_sha`（见 Consequences）。
-- [ ] **spec 侧（责任方：planner/builder）**：`complete-project-yaml-config-gaps` 的 `openspec_tracked=false` scenario 只规定了「已合入（或内容等价）⇒ 执行 `openspec archive`」，**未覆盖 ⑤（无法判定 ⇒ 放行 + 警告）** —— 与本 ADR 的 V-14（⑤ 的放行语义在调用点 normative 化）之间存在「沉默」而非「冲突」⇒ 建议补一句，避免 ⑤ 长期处于无契约状态。⚠ 本仓 `openspec/` 被 gitignore ⇒ 该 spec 文本**不入版本库**，权威落点是本 ADR。
+- [ ] **spec 侧（责任方：planner/builder）**：`complete-project-yaml-config-gaps` 的 `openspec_tracked=false` scenario 只规定了「已合入（或内容等价）⇒ 执行 `openspec archive`」，**未覆盖 ⑤（无法判定 ⇒ 放行 + 警告）** —— 与本 ADR 的 V-14（⑤ 的放行语义在调用点 normative 化）之间存在「沉默」而非「冲突」⇒ 建议补一句，避免 ⑤ 长期处于无契约状态。⚠ 本仓 `openspec/changes/` 被 gitignore（`openspec/specs/` 自 2026-11-23 起已入库）⇒ 该 spec 的 **delta 文本不入版本库**，权威落点是本 ADR。
 
 ## Verification
 

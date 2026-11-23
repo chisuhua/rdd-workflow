@@ -219,6 +219,33 @@ run_mypy_gate() {
     python3 -m mypy --strict skills/_lib/core/
 }
 
+# `openspec validate --all` 门 —— 镜像 CI 的「Spec contract validation gate」。
+# 依赖 openspec CLI（**可选**依赖）与 openspec/specs/（已入库）。
+# 两者任一缺失 ⇒ skip 并打印提示，不判红 —— 与 tests/unit/test_spec_requirement_form.py
+# 的 `requires_specs_dir` 同思路：条件不满足不是失败。
+# 严格口径与 CI 一致：ERROR 必须为 0；WARNING 放行（`## Purpose` 占位属已知 tail）。
+run_openspec_validate_gate() {
+  if ! command -v openspec >/dev/null 2>&1; then
+    echo "${YELLOW}⏭️  openspec validate --all: skipped (openspec CLI not installed)${NC}"
+    echo "   安装: npm install -g @fission-ai/openspec   # CI 固定 1.14.3"
+    return 0
+  fi
+  if [ ! -d openspec/specs ]; then
+    echo "${YELLOW}⏭️  openspec validate --all: skipped (openspec/specs/ absent)${NC}"
+    return 0
+  fi
+  run_step "openspec validate --all (0 ERROR)" \
+    bash -c '
+      OUT="$(openspec validate --all 2>&1)" || true
+      ERRORS="$(printf "%s\n" "$OUT" | grep -c "\[ERROR\]")" || true
+      printf "%s\n" "$OUT" | tail -1
+      if [ "${ERRORS:-0}" -ne 0 ]; then
+        printf "%s\n" "$OUT" | grep "\[ERROR\]"
+        exit 1
+      fi
+    '
+}
+
 # doctor 的门落在「被归档的那个仓」而不是调用方的 cwd —— 显式钉住项目根。
 # ⚠ 这道门镜像 CI，但 findings 依赖**本地工作状态**（.rddf/ 下的本地状态），
 #   所以「本地红、CI 绿」在这道门上不一定是 flake。
@@ -236,6 +263,7 @@ run_local_gates() {
   run_ruff_gate
   run_mypy_gate
   run_doctor_structural_gate
+  run_openspec_validate_gate
 }
 
 run_bats_recursive() {

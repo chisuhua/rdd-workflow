@@ -47,6 +47,7 @@ MIRRORED_COMMANDS = [
     # accepted failures.
     "report_regression.sh",
     "--e2e-smoke",
+    "openspec validate --all",
 ]
 
 

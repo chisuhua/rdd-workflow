@@ -65,7 +65,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 | `roadmap-phases` | `.rddf/roadmap/phases/*.md` frontmatter 必需字段 + AUTO-INDEX Phases 段同步 + main doc 一致性 | ✅ |
 | `docs-consistency` | `package.json` skills 列表 ↔ `skills/` 目录 ↔ `smoke.bats` 注册项 三方一致 |  |
 | `ai-context-bootstrap` | AI 上下文层（AGENTS.md / HANDOFF.md / docs/）的层级 + 链接 sanity |  |
-| `gitignore` | `.rddf/project.yaml` `git.openspec_tracked` × `.gitignore` `openspec/` 一致性（add-gitignore-hard-protection）：false+缺失 → WARNING（建议追加 + 混合状态提示 `git rm -r --cached`）；true+有 → 反向不一致 WARNING |  |
+| `gitignore` | `.rddf/project.yaml` `git.openspec_tracked` × `.gitignore` 排除项一致性（add-gitignore-hard-protection）。两种合法形态：`openspec/`（整树）或 `openspec/changes/`（只挡归档路径，per ADR-0036 修订）。false+两种都缺 → WARNING（建议追加 + 混合状态提示 `git rm -r --cached`）；true+任一存在 → 反向不一致 WARNING；只挡归档路径但 `openspec/specs/` 未入库 → INFO（保护依赖它被跟踪） |  |
 | `bypass-audit` | `.rddf/state/.bypass-audit.jsonl` 旁路使用统计（per `bypass-audit-mechanism` P2 改进）；ARCHIVE_ON_MAIN > 3/月 → WARNING，> 6/月 → CRITICAL |  |
 | `improvement-frontmatter-consistency` | `.rddf/improvements/*.md` frontmatter 必需字段 + 与 `improvement-suggestions.md` 表格行数一致 |  |
 | `objective-lifecycle` | `.rddf/roadmap/objectives/*.md` 生命周期（active → deferred → completed → archived）；`review_by` 超期 → WARNING（per ADR-0054 + add-objective-tracking）| ✅ |

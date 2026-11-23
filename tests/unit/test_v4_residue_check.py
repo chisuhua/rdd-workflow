@@ -568,11 +568,16 @@ def test_r4_repo_residue_constant():
     随改写**真的消失**
     （未豁免 **0/0/0** 不变；含已豁免 303→**297**/159→**157**/41→**40**；
     围栏式豁免 `fence_allows` 仍恰为 `["enum"]`）。
+    `delete-empty-archived-spec-shells` 删掉 6 份**归档 delta 生成失败的 4 行空壳**
+    （`add-guide-polling-loop-implementation` / `add-stage-guide-e2e-cross-process-coverage` /
+    `complete-guide-orchestrator-flow` / 3 份 `wave3-*`）—— 它们只有一句占位 Requirement、
+    无归档 delta、主题被其它 spec 覆盖
+    （spec 文件数 165→**159**；hits/blocks/files **不变**，因空壳不含任何 stage token）。
     ⚠️ Phase 1 的每个改动都必须在同一提交更新这些常数，否则它会在下次运行时被读成 regression。
     """
     from spec_residue_scan import scan_specs
     result = scan_specs(REPO_ROOT)
-    assert result.files_scanned == 165, result.files_scanned
+    assert result.files_scanned == 159, result.files_scanned
 
     unexempted = [h for h in result.hits if not h.category]
     assert len(unexempted) == 0, len(unexempted)

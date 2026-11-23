@@ -127,6 +127,22 @@ jobs:
           fi
           echo "✅ All active changes pass spec validation"
 
+      # `openspec/specs/` 是 tracked 的（`.gitignore` 只排除 openspec/changes/ 与
+      # openspec/schemas/）⇒ 本门在 CI 上真的能跑，不再是空跑。
+      # 严格口径：**ERROR 必须为 0**；WARNING 放行（136 份 `## Purpose` 占位属已知 tail）。
+      - name: Spec contract validation gate (openspec validate --all)
+        run: |
+          OUT="$(openspec validate --all 2>&1)" || true
+          ERRORS="$(printf '%s\n' "$OUT" | grep -c '\[ERROR\]')" || true
+          printf '%s\n' "$OUT" | tail -1
+          echo "ERROR count: ${ERRORS:-0}"
+          if [ "${ERRORS:-0}" -ne 0 ]; then
+            echo "❌ openspec validate --all reported ${ERRORS} ERROR(s):"
+            printf '%s\n' "$OUT" | grep '\[ERROR\]'
+            exit 1
+          fi
+          echo "✅ openspec validate --all: 0 ERROR"
+
       - name: Python unit tests
         run: python3 -m pytest tests/unit/ -q --tb=short
 

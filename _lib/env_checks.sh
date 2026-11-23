@@ -71,15 +71,21 @@ _check_gh() {
 
 # .gitignore 硬防护一致性检测 (add-gitignore-hard-protection).
 # 设置 _GITIGNORE_PROTECTED: yes/no/n-a.
+#
+# ⚠ 语义（ADR-0036 修订 2026-11-17）：`git.openspec_tracked` 只管**归档路径**维度
+#   （`openspec/changes/`），不表示「整个 openspec/ 都不跟踪」。因此 false 下有两种
+#   合法形态：
+#     (a) `openspec/`         —— 整树不跟踪（更严格：specs 也不入库）
+#     (b) `openspec/changes/` —— 只挡归档路径，`openspec/specs/` 可跟踪（方案 B）
 # 规则:
-#   git.openspec_tracked=false + .gitignore 缺 openspec/ → warn (缺硬防护,
-#     任何 git add -A 会把 openspec/ 重新拉进 git)
-#   git.openspec_tracked=false + .gitignore 有 openspec/ → 静默通过
-#   git.openspec_tracked=true/缺省 + .gitignore 有 openspec/ → 反向不一致
+#   tracked=false + 两种形态都缺 → warn (缺硬防护, 任何 git add -A 会把归档重新拉进 git)
+#   tracked=false + 任一形态存在 → 静默通过
+#   tracked=true/缺省 + 任一形态存在 → 反向不一致
 #     (rdd-workflow commit_archive_moves 会 git add 被 ignore 的路径 → 空 commit)
 #   缺省 + 无 ignore → 静默 (传统 tracked 项目)
 # 非阻塞: 仅 warning, 不影响 phase 入口. 不触碰 15 字段 cache 契约.
-# Auto-fix (opt-in): RDDF_ENV_FIX_GITIGNORE=yes 且 false+缺失 → 幂等追加 openspec/.
+# Auto-fix (opt-in): RDDF_ENV_FIX_GITIGNORE=yes 且 false+两种形态都缺 → 幂等追加
+#   `openspec/changes/`（精确表达「只管归档路径」，不再整树 ignore specs）。
 _check_gitignore() {
   _GITIGNORE_PROTECTED="n/a"
   local project_root
@@ -93,36 +99,44 @@ _check_gitignore() {
   fi
 
   local gitignore_file="$project_root/.gitignore"
-  local has_entry="no"
-  if [ -f "$gitignore_file" ] && grep -qxE '[[:space:]]*openspec/[[:space:]]*' "$gitignore_file" 2>/dev/null; then
-    has_entry="yes"
+  local has_whole="no"
+  local has_changes="no"
+  if [ -f "$gitignore_file" ]; then
+    grep -qxE '[[:space:]]*openspec/[[:space:]]*' "$gitignore_file" 2>/dev/null && has_whole="yes"
+    grep -qxE '[[:space:]]*openspec/changes/?[[:space:]]*' "$gitignore_file" 2>/dev/null && has_changes="yes"
   fi
 
   case "$tracked" in
     false|False)
-      if [ "$has_entry" = "yes" ]; then
+      if [ "$has_whole" = "yes" ] || [ "$has_changes" = "yes" ]; then
         _GITIGNORE_PROTECTED="yes"
+        # 方案 B 的失效模式：只挡了归档路径，但 specs 从未 git add ⇒ 保护落空
+        # （fresh checkout 里没有 openspec/specs/ ⇒ CI 的 validate 门静默 skip）。
+        # 非阻塞 hint：不改变 PROTECTED 结论，只提示补齐。
+        if [ "$has_whole" = "no" ] && [ -d "$project_root/openspec/specs" ] \
+           && [ "$(git ls-files openspec/specs/ 2>/dev/null | head -1)" = "" ]; then
+          echo "ℹ️  openspec/specs/ 存在但未入库 —— 方案 B 的保护依赖它被跟踪："
+          echo "   git add openspec/specs/ openspec/config.yaml"
+        fi
         return 0
       fi
       _GITIGNORE_PROTECTED="no"
-      echo "⚠️  gitignore guard missing: openspec/ not in .gitignore (git.openspec_tracked=false)"
-      echo "   修复: echo 'openspec/' >> .gitignore"
-      if [ "$(git ls-files openspec/ 2>/dev/null | head -1)" != "" ]; then
-        echo "   混合状态 (openspec/ 有历史 tracked 文件): 一次性切换 git rm -r --cached openspec/"
+      echo "⚠️  gitignore guard missing: neither 'openspec/' nor 'openspec/changes/' in .gitignore (git.openspec_tracked=false)"
+      echo "   修复: echo 'openspec/changes/' >> .gitignore   # 只挡归档路径; 或用 'openspec/' 整树排除"
+      if [ "$(git ls-files openspec/changes/ 2>/dev/null | head -1)" != "" ]; then
+        echo "   混合状态 (openspec/changes/ 有历史 tracked 文件): 一次性切换 git rm -r --cached openspec/changes/"
       fi
       if [ "${RDDF_ENV_FIX_GITIGNORE:-no}" = "yes" ]; then
-        if [ ! -f "$gitignore_file" ] || ! grep -qxF 'openspec/' "$gitignore_file"; then
-          printf '\n# rdd-workflow: git.openspec_tracked=false — keep openspec/ out of git\nopenspec/\n' >> "$gitignore_file"
-          echo "✅ 已追加 openspec/ 到 .gitignore (RDDF_ENV_FIX_GITIGNORE=yes)"
-        fi
+        printf '\n# rdd-workflow: git.openspec_tracked=false — keep the archive out of git\nopenspec/changes/\n' >> "$gitignore_file"
+        echo "✅ 已追加 openspec/changes/ 到 .gitignore (RDDF_ENV_FIX_GITIGNORE=yes)"
       fi
       ;;
     *)
-      if [ "$has_entry" = "yes" ]; then
+      if [ "$has_whole" = "yes" ] || [ "$has_changes" = "yes" ]; then
         _GITIGNORE_PROTECTED="no"
-        echo "⚠️  反向不一致: .gitignore 忽略 openspec/ 但 git.openspec_tracked 未设 false —"
+        echo "⚠️  反向不一致: .gitignore 忽略 openspec/（或 openspec/changes/）但 git.openspec_tracked 未设 false —"
         echo "   rdd-workflow 的 commit_archive_moves 会 git add 被 ignore 的路径 (空 commit/no-op)。"
-        echo "   修复: 二选一 — 设 .rddf/project.yaml git.openspec_tracked: false, 或从 .gitignore 移除 openspec/"
+        echo "   修复: 二选一 — 设 .rddf/project.yaml git.openspec_tracked: false, 或从 .gitignore 移除该条目"
       else
         _GITIGNORE_PROTECTED="n/a"
       fi
