@@ -27,6 +27,7 @@ CHANGED 2026-09-30 (per ADR-0057):
 """
 from __future__ import annotations
 
+import datetime
 import json
 import os
 import re
@@ -438,6 +439,166 @@ def adr_shape_findings(ctx: dict) -> list[ShapeFinding]:
 
     return findings
 
+
+class ShapeBaselineError(RuntimeError):
+    """The shape baseline is missing, malformed, empty, or asked to grow.
+
+    Raised for all three ratchet guards, so a caller can map one exception to
+    the "baseline unusable" exit code instead of guessing.
+    """
+
+
+# ---------- shape baseline: freeze the backlog, gate the increment ----------
+#
+# The shape check reports 160+ findings on this repo and 89% of them are one
+# signal - a missing Verification chapter - which ADR-0060 forbids retroactively
+# fixing (writing forward-looking criteria after the fact fabricates evidence).
+# A gate that can never go green gets switched off, and a warning nobody reads
+# is a curtain, not a gate.
+#
+# So the baseline changes the goal from "clear the backlog" to "freeze the
+# increment": pre-existing findings live in a committed per-file x per-signal
+# ledger, and the gate only reports debt that is *not* in it. No judging
+# criterion (signal set / budgets / severity) moves.
+#
+# Three guards, all load-bearing - this ledger is blank-able data, the same
+# failure mode that bit `tests/KNOWN_FAILURES.txt`:
+#   1. non-empty        - an empty ledger cannot tell old debt from new
+#   2. ratchet          - the ledger may only shrink; growth must be fixed
+#   3. single write path - `write_shape_baseline` is the only writer
+_SHAPE_BASELINE_NAME = ".adr-shape-baseline.json"
+
+
+def shape_baseline_path(project_root: str) -> Path:
+    """Path of the ledger: next to the ADRs it describes."""
+    paths = _read_handoff(project_root)
+    return Path(project_root) / paths["adr_dir"] / _SHAPE_BASELINE_NAME
+
+
+def _baseline_counts(baseline: dict) -> dict[tuple[str, str], int]:
+    """Flatten the ledger to {(file, signal): count}."""
+    counts: dict[tuple[str, str], int] = {}
+    for name, per_file in baseline.items():
+        for signal, entry in per_file.items():
+            counts[(name, signal)] = int(entry.get("count", 1))
+    return counts
+
+
+def read_shape_baseline(project_root: str, *, require_non_empty: bool = True) -> dict:
+    """Read the frozen ledger.
+
+    Guard 1 lives here: with require_non_empty=True (the default) a missing,
+    malformed or empty ledger raises instead of returning {} - an empty ledger
+    would make every finding look "pre-existing" and turn the gate green.
+    Pass require_non_empty=False to ask "is there a ledger at all?" (used by
+    the writer, where absence means "first run, create it").
+    """
+    path = shape_baseline_path(project_root)
+    if not path.is_file():
+        if require_non_empty:
+            raise ShapeBaselineError(
+                f"基线文件不存在：{path}（先跑 --write-baseline 生成）"
+            )
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ShapeBaselineError(f"基线文件不可解析：{path}（{exc}）") from exc
+    if not isinstance(data, dict):
+        raise ShapeBaselineError(f"基线结构非法：{path} 顶层必须是 dict")
+    for name, per_file in data.items():
+        if not isinstance(per_file, dict):
+            raise ShapeBaselineError(f"基线结构非法：{path} 的 {name} 必须是 dict")
+        for signal, entry in per_file.items():
+            if not isinstance(entry, dict) or not isinstance(entry.get("count", 1), int):
+                raise ShapeBaselineError(
+                    f"基线结构非法：{path} 的 {name} -> {signal} 必须是含 count 的 dict"
+                )
+    if require_non_empty and not data:
+        raise ShapeBaselineError(
+            f"基线为空：{path} —— 空账本无法区分存量与新增，形态门不得据此放行"
+        )
+    return data
+
+
+def diff_shape_findings(findings: list[ShapeFinding], baseline: dict) -> list[ShapeFinding]:
+    """Findings not covered by the ledger, i.e. **new** shape debt.
+
+    Matched per (file, signal) by **count**, not by detail text: an ADR that
+    grows from 300 to 340 lines still owes exactly one over-budget finding, so
+    rewording the detail must not read as new debt (that would make every edit
+    red and the gate useless).
+
+    Raises ShapeBaselineError when there are findings but no ledger to compare
+    against - see guard 1. No findings needs no ledger: nothing to gate.
+    """
+    if not findings:
+        return []
+    if not baseline:
+        raise ShapeBaselineError(
+            "基线为空/缺失：无法区分存量与新增（先跑 --write-baseline）"
+        )
+    allowed = _baseline_counts(baseline)
+    seen: dict[tuple[str, str], int] = {}
+    new: list[ShapeFinding] = []
+    for f in findings:
+        key = (f.file, f.signal)
+        seen[key] = seen.get(key, 0) + 1
+        if seen[key] > allowed.get(key, 0):
+            new.append(f)
+    return new
+
+
+def write_shape_baseline(
+    project_root: str,
+    findings: list[ShapeFinding],
+    *,
+    recorded_at: str = "",
+) -> dict:
+    """Rewrite the ledger from the current findings - **the only write path**.
+
+    Guards 2 and 3: growth is refused (fix the ADR instead of recording the
+    debt), and nothing else in this module opens the ledger for writing. The
+    refusal happens before the file is touched, so a rejected write leaves the
+    ledger byte-identical.
+
+    A missing ledger is allowed (first run creates it); after that the ledger
+    can only shrink. Deliberate manual edits are reviewed in the diff - that is
+    the escape hatch, and it is meant to be visible.
+
+    Returns the payload written.
+    """
+    path = shape_baseline_path(project_root)
+    stamp = recorded_at or datetime.date.today().isoformat()
+    payload: dict[str, dict[str, dict]] = {}
+    for f in findings:
+        entry = payload.setdefault(f.file, {}).setdefault(
+            f.signal, {"count": 0, "detail": f.detail, "recorded_at": stamp}
+        )
+        entry["count"] += 1
+
+    existing = read_shape_baseline(project_root, require_non_empty=False)
+    if existing:
+        allowed = _baseline_counts(existing)
+        growth = [
+            f"{name} -> {signal}（{allowed.get((name, signal), 0)} -> {count}）"
+            for (name, signal), count in _baseline_counts(payload).items()
+            if count > allowed.get((name, signal), 0)
+        ]
+        if growth:
+            raise ShapeBaselineError(
+                "ratchet 拒绝增长：基线只允许缩小，新增形态债必须先修 ADR"
+                "（不是记进基线）：" + "；".join(growth[:5])
+            )
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(tmp, path)
+    return payload
 
 def _check_adr_shape(ctx: dict) -> tuple[bool, Optional[str]]:
     """Pass if ADRs stay within the decision-document shape budget.

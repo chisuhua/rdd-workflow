@@ -103,6 +103,18 @@ jobs:
           python3 -m pytest tests/unit/test_arch_quality_gate.py -q --tb=short
           echo "✅ Arch quality gate tests passed under STRICT mode"
 
+      # ADR 形态门 —— **增量模式**（per fix-adr-shape-debt-convergence）。
+      # 存量 163 项形态债已冻结进 docs/adr/.adr-shape-baseline.json（56 项
+      # missing_verification 按 ADR-0060 不追溯，永远清不完），故本 step 只拦
+      # **新增**债务：新写的 ADR 必须形态干净，存量不阻断。
+      # 基线缺失 / 非法 / 为空 ⇒ exit 2（宁可红，不假绿 —— 空账本分不清存量与新增）。
+      - name: ADR shape gate (incremental, frozen baseline)
+        env:
+          ARCH_SHAPE_CHECK: 'yes'
+        run: |
+          bash skills/rdd-arch/scripts/adr_shape_check.sh --all --diff-baseline
+          echo "✅ No new ADR shape debt (frozen baseline respected)"
+
       - name: Change alignment gate (strict mode)
         env:
           STRICT_CHANGE_GATE: 'yes'

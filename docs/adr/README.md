@@ -81,7 +81,7 @@
 | [ADR-0052](ADR-0052-layer-0-progressive-context.md) | ADR-0052: Layer 0 渐进式上下文注入架构 | 已采纳 | 2026-09-21 |
 | [ADR-0053](ADR-0053-rdd-env-bootstrap-orchestrator.md) | ADR-0053: rdd-env-bootstrap 编排层 | 已采纳 | 2026-09-22 |
 | [ADR-0054](ADR-0054-objective-tracking.md) | ADR-0054: Objective 跟踪工件 (cross-sprint complex targets) | 已采纳 | 2026-09-22 |
-| [ADR-0055](ADR-0055-guide-orchestrator-session-event-bus.md) | ADR-0055: Guide-as-Orchestrator Session + Cross-Container Event Bus | 已采纳 + 已实施（v4.1 release，PR 1-4 / commit f5eb49c / bf6a7fc / 89117dc）。**Superseded by ADR-0063（2026-11-19）**：仅决策 1/3/4/5 与决策 2/6 的 stage_guide 专属 per-owner 游标部分；events 总线本体保留 | 2026-09-22 |
+| [ADR-0055](ADR-0055-guide-orchestrator-session-event-bus.md) | ADR-0055: Guide-as-Orchestrator Session + Cross-Container Event Bus | 已采纳 + 已实施（v4.1 release，PR 1-4）。**Superseded by ADR-0063（2026-11-19）**：仅决策 1/3/4/5 与决策 2/6 的 stage_guide 专属 per-owner 游标部分；events 总线本体保留 | 2026-09-22 |
 | [ADR-0056](ADR-0056-guide-orchestrator-minimal-usage-flow.md) | ADR-0056: Guide Session 作为唯一交互入口的最小用法流程 | 已采纳。**Superseded by ADR-0063（2026-11-19）** | 2026-09-24 |
 | [ADR-0057](ADR-0057-rdd-arch-simplify-delete-gap-analysis.md) | ADR-0057: rdd-arch 简化为 ADR + theme doc 双工件；删除 gap-analysis 协议 | 已采纳 | 2026-09-30 |
 | [ADR-0058](ADR-0058-gap-analysis-migration-to-theme-doc.md) | ADR-0058: gap-analysis 实例迁移到 theme doc（multi-project-ai-collaborative-development） | 已采纳 | 2026-09-30 |

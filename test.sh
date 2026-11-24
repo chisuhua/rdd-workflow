@@ -254,6 +254,15 @@ run_doctor_structural_gate() {
     env RDDF_PROJECT_ROOT="$(pwd)" bash skills/rdd-doctor/scripts/doctor.sh --gate structural
 }
 
+# ADR 形态门 —— 镜像 CI 的「ADR shape gate (incremental, frozen baseline)」。
+# 跑的是**增量模式**：存量 163 项形态债冻结在 docs/adr/.adr-shape-baseline.json，
+# 只拦新增（per fix-adr-shape-debt-convergence）。基线缺失/为空 ⇒ exit 2 ⇒ 本地红，
+# 这是刻意的 fail-closed：空账本分不清存量与新增。
+run_adr_shape_gate() {
+  run_step "ADR shape gate (incremental, frozen baseline)" \
+    env ARCH_SHAPE_CHECK=yes bash skills/rdd-arch/scripts/adr_shape_check.sh --all --diff-baseline
+}
+
 # 本地门：4 道静态门，一次跑完（~10-20s）。这是「本地绿 ⇒ 可以推」的最小集。
 run_local_gates() {
   if _local_gates_bypass; then
@@ -263,6 +272,7 @@ run_local_gates() {
   run_ruff_gate
   run_mypy_gate
   run_doctor_structural_gate
+  run_adr_shape_gate
   run_openspec_validate_gate
 }
 
@@ -397,6 +407,7 @@ Single file:
   ✅ Ruff lint check          → python3 -m ruff check skills/_lib/
   ✅ Mypy strict type check   → python3 -m mypy --strict skills/_lib/core/
   ✅ rdd-doctor structural    → doctor.sh --gate structural
+  ✅ ADR shape (incremental)  → adr_shape_check.sh --all --diff-baseline（存量冻结，只拦新增）
   ❌ 故意不镜像的 CI step 见 test.sh 里的 NOT_MIRRORED（tests/unit/test_ci_local_mirror.py 守住）
 
 Escape hatch: SKIP_LOCAL_GATES=1 跳过本地门（会写 bypass 审计，不是静默跳过）

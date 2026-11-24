@@ -39,6 +39,7 @@ MIRRORED_COMMANDS = [
     "ruff check skills/_lib/",
     "mypy --strict skills/_lib/core/",
     "--gate structural",
+    "adr_shape_check.sh --all --diff-baseline",
     "check_test_isolation.sh",
     "pytest tests/unit/",
     "pytest tests/integration/",
