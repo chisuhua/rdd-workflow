@@ -178,3 +178,16 @@ AGENTS.md: 归档流程 cross-references check_worktree_commits
 处置：**仅记录**（范围外不顺手改）。需要时另案 —— 口径二选一：改测试期望为 canonical root，或让 resolver 在 worktree 内返回 worktree root；后者会改动 ADR-0033 / canonical 语义，需走架构评审。
 影响面：worktree 模式下的全量门不可能全绿；本 change 的归档门证据因此取 **主仓（CI 等价环境）** 的一次全绿运行。
 
+
+### 归档产物的形态问题（2026-11-24 归档后，由下一轮全量门发现）
+
+本次归档把 D3 spec-delta 落成 `openspec/specs/fix-agents-md-worktree-commit-flow/spec.md`，其形态是
+`### Requirement: acceptance-N` + `- **WHEN** the change is applied` —— 恰是
+`tests/unit/test_spec_requirement_form.py` 明令禁止的**退化 Requirement 形态**（判据①无语义名 / 判据②恒真 WHEN）。
+
+- **已处置**：该 spec 已重写为合规形态（语义化 Requirement + 可区分 WHEN + 真 `## Purpose`），并同步了 R4 文件数常量。
+- **根因未修**：在 `generate_spec_delta()`（rdd-planner 侧）—— 每一条经 D3 delta 归档的 change 都会撞上。
+- **流程盲区**：仓库规则是「archive **前**跑全量门」，但归档动作本身生成 tracked 契约面工件 ⇒ 门看不见自己刚造的产物。
+
+⇒ 两项均**另案立项**，本 change 不越界修改（详见 `add-skills-lib-api-doc` 的 §实施记录「实施期发现的仓库级缺陷」）。
+
