@@ -4,7 +4,7 @@
 阶段: v5.x
 分类: governance
 类型: process
-状态: 已实施（V-1..V-8 已验证通过；A-0 / A-1 已回填 —— ADR-0060 元数据块补 `> **关联 change**: backlog: adr-0060-shape-contract-implementation` 指针，审稿报告落 `.rddf/reviews/adr-0060-backfill-2026-11-24.md`（oracle APPROVE + critic APPROVE / 0 BLOCKER）；A-2「doctor 缺『关联 change 缺失』检查」另案立项）
+状态: 已实施（V-1..V-8 已验证通过；A-0 / A-1 已回填 —— ADR-0060 元数据块补「关联 change」指针，指向 backlog adr-0060-shape-contract-implementation；审稿报告 .rddf/reviews/adr-0060-backfill-2026-11-24.md，oracle APPROVE + critic APPROVE / 0 BLOCKER；A-2「doctor 缺『关联 change 缺失』检查」另案立项）
 ---
 
 **优先级**: P2 | **来源**: 2026-11-05 归档收尾审查 — ADR-0060 已采纳并实施（commit 4b5a971），但未走 openspec change 流程，architect 产出形态契约要求的「关联 change」指针缺失
