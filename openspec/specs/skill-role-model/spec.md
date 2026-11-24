@@ -132,11 +132,11 @@ This requirement specifies the per-skill evaluation only. The following are expl
 
 For each phase skill, `role.boundaries.owns` MUST exactly match the file paths listed in the SKILL.md's "职责边界" section's "拥有" bullet (verified by manual review at PR time).
 
-#### Scenario: rdd-arch owns ADR + roadmap
+#### Scenario: rdd-arch owns ADR + theme doc
 
 - GIVEN the `rdd-arch` SKILL.md
 - WHEN checking `role.boundaries.owns`
-- THEN it contains `docs/adr/ADR-*.md` and `roadmap.md` (matching the existing "职责边界" section)
+- THEN it contains `docs/adr/ADR-*.md`, `docs/architecture/*.md` and `.rddf/state/.arch-handoff.json` (matching the existing "职责边界" section)
 
 ### Requirement: skill-role-human-involvement-level
 
