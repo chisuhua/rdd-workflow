@@ -4,6 +4,7 @@
 阶段: v5.x
 分类: docs
 类型: documentation
+状态: 待立项（AC 7 条全未勾；AGENTS.md 仍缺 Worktree Commit Flow 段，KNOWN_FAILURES 5 条同根因基线失败仍在）
 ---
 
 **优先级**: P1 | **来源**: 2026-11-05 归档收尾审查 — KNOWN_FAILURES 11 条基线失败中 6 条同根因（AGENTS.md 缺 "Worktree Commit Flow" 段），标注的跟踪项 `feat-doc-drift-cleanup` 不存在

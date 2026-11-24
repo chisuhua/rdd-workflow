@@ -52,11 +52,13 @@ _OPEN_MARKERS: tuple[tuple[str, str], ...] = (
     ("draft", "Draft"),
     ("规划输入", "规划输入"),
     ("backlog", "未立项"),
-    # "待审查" (awaiting review) and "已推迟" (deferred) are distinct from
-    # "待讨论": the proposal has a decision attached, it is just not the
-    # next thing to do. Without them both collapse into the empty-status
-    # fallback label "待讨论".
+    # "待审查" (awaiting review), "待回填" (awaiting a backfill) and
+    # "已推迟" (deferred) are distinct from "待讨论": the proposal has a
+    # decision or a concrete pending action attached, it is just not the
+    # next thing to do. Without them all three collapse into the
+    # empty-status fallback label "待讨论".
     ("待审查", "待审查"),
+    ("待回填", "待回填"),
     ("已推迟", "已推迟"),
 )
 

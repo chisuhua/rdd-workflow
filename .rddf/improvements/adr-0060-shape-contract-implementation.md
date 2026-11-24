@@ -4,6 +4,7 @@
 阶段: v5.x
 分类: governance
 类型: process
+状态: 待回填（V-1..V-8 已验证通过；A-0 / A-1 / A-2 三项登记待办仍未勾）
 ---
 
 **优先级**: P2 | **来源**: 2026-11-05 归档收尾审查 — ADR-0060 已采纳并实施（commit 4b5a971），但未走 openspec change 流程，architect 产出形态契约要求的「关联 change」指针缺失

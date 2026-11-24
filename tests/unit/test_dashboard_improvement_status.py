@@ -148,11 +148,12 @@ def test_english_delivered_markers_are_terminal(raw, expected_label):
     "raw,expected_label",
     [
         ("待审查", "待审查"),
+        ("待回填", "待回填"),
         ("已推迟 (2026-08-14)", "已推迟"),
     ],
 )
 def test_review_and_deferred_markers_are_open(raw, expected_label):
-    """「待审查」/「已推迟」 are pending — but they are not 「待讨论」."""
+    """「待审查」/「待回填」/「已推迟」 are pending — but they are not 「待讨论」."""
     _, classify, _ = _load()
     terminal, label = classify(raw)
     assert terminal is False

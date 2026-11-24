@@ -15,6 +15,7 @@
 分类: documentation
 类型: documentation
 主题: 跨项目 CLI 契约一致性
+状态: 待审查（源：.rddf/improvement-suggestions.md 状态列）
 依赖: >-
   skills/_lib/__init__.py (existing shim layer), fix-skill-layer 系列 4 shipped commits,
   consolidate-resolve-project-root-helpers (proposal)

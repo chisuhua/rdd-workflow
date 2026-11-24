@@ -5,6 +5,7 @@
 分类: governance
 类型: improvement
 主题: Roadmap 自动刷新 hook（git post-commit 触发 sentinel 更新）
+状态: 已推迟（正文「Deferral 理由」段：v4.x 优先级低，v5 按触发条件重新评估）
 ---
 **优先级**: P3 | **来源**: 2026-09-29 fix-roadmap-phase-objective-parser 修复后续
 **阶段**: phase-2 | **分类**: governance | **类型**: improvement

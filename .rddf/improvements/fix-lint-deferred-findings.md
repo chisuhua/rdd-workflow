@@ -5,6 +5,7 @@
 分类: core-impl
 类型: debt
 主题: 静态检查口径
+状态: 已推迟（37 个 lint 发现不在当前 ruff 口径 select 内；owner 见 pyproject.toml 的 DEFERRED 注释）
 ---
 
 ## 架构依据

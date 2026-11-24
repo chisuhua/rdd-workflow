@@ -1,6 +1,7 @@
 ---
 issue_ref: 11
 gh_repo: chisuhua/rdd-workflow
+状态: draft（上游 issue #11 的自动生成稿；In/Out Scope 与 AC 待 brainstorm 确认）
 ---
 # experimental-reflect-test-reflect-plan-plan-plan-done-general-error-i11
 
