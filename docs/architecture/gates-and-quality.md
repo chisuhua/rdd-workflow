@@ -54,6 +54,38 @@ same `archive_premerge_check` — called with an empty `wt_path`, because there 
 main-repo dirt may belong to another change. Its full sequence is enumerated in
 `docs/architecture/workflow-phases.md` (Hard gates).
 
+## ADR-0035 双轨边界与 ADR-0060 形态门（增量模式）
+
+**ADR-0035 —— verifier 与 archive-gate 的双轨边界**：验收与归档是两道**不同**的门，各读各的工件：
+
+| 轨 | 判据 | 工件 | 真源 |
+|---|---|---|---|
+| verifier | AC 是否逐条满足 | `.rddf/state/verifier/.ac-verdict-<change>.json`（判决缓存） | `_lib/verifier/` |
+| archive gate | 判决缓存是否**新鲜且完整** | 同一份缓存 | `_lib/archive.sh::archive_gate_check` |
+
+边界（写清楚就不容易互相顶替）：
+
+- verifier 判「实现对不对」；archive gate **不重判 AC**，只判缓存可用（缺失 / 过期 / 不完整 ⇒ 拒绝归档）。
+- 缓存的**唯一写入口**是 verifier；archive gate 只读。
+- 缓存锚点是**实现分支 tip**，不是 `HEAD` —— 在 `openspec_tracked=false` 的仓里 HEAD 已被切回默认分支，
+  用 HEAD 当锚点会把一份好缓存误判成过期。
+
+**ADR-0060 —— ADR 形态门（增量模式）**：形态门判 ADR 是否越出「决策文档」边界（行数预算、必备章节、
+Verification 章、备选方案表、过程日志、Status 行长度）。它原本是「永远 opt-in」的警告：本仓 163 项存量形态债里
+有 56 项是事后补不了的 `missing_verification`（ADR-0060 的「不追溯」），所以清存量这条路走不通。
+
+现在它是**增量门**（`fix-adr-shape-debt-convergence`）：
+
+| 概念 | 落点 |
+|---|---|
+| 冻结账本（per-file × per-signal） | `docs/adr/.adr-shape-baseline.json`（163 项存量） |
+| 增量判定 | `adr_shape_check.sh --all --diff-baseline` —— 只报基线外的新增 |
+| ratchet | 基线**只降不升**：新增债务先修 ADR，不能记进账本 |
+| CI | `.github/workflows/test.yml` 的「ADR shape gate」step（无 `if:`，实际执行） |
+| 本地门 | `./test.sh --gates` 跑同一条命令（镜像门 `test_ci_local_mirror.py` 守住） |
+
+判据本身**一条没放宽**（信号集 / 250 行预算 / 200 字符 Status 预算都不动）—— 增量的是**账本**，不是判据。
+
 ## `tribunal.py` (ADR-0008)
 
 Multi-agent cross-validation. Given an artefact (proposal, design.md, etc.), it runs N reviewer agents and aggregates weighted scores. Sensitive content (paths, env vars, secrets) is sanitised via `_lib/loop/sanitizer.py` (imported as `skills._lib.loop.sanitizer`) before review.

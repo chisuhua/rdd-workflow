@@ -34,7 +34,7 @@ role:
 
 # rdd-env-bootstrap Skill
 
-> Per [ADR-0053](../adr/ADR-0053-rdd-env-bootstrap-orchestrator.md) — 4-phase environment orchestrator that fills the orchestration gap left after Layer 0→3 progressive context architecture (ADR-0052).
+> Per ADR-0053 — 4-phase environment orchestrator that fills the orchestration gap left after Layer 0→3 progressive context architecture (ADR-0052).
 
 ## Entry / Exit Contract
 
@@ -103,7 +103,7 @@ For each `[auto-fixable]` finding:
 
 ## Session Binding
 
-Per [ADR-0017](../adr/ADR-0017-rddf-session-binding.md), skill entry SHOULD bind to a rddf-session via `owner_opencode_session_id`. Binding failure friendly-degrades (proceeds without binding). See `skills/rddf-session/SKILL.md` for the binding contract.
+Per ADR-0017, skill entry SHOULD bind to a rddf-session via `owner_opencode_session_id`. Binding failure friendly-degrades (proceeds without binding). See `skills/rddf-session/SKILL.md` for the binding contract.
 
 ## Environment Variables
 
@@ -117,7 +117,7 @@ Per [ADR-0017](../adr/ADR-0017-rddf-session-binding.md), skill entry SHOULD bind
 - `references/fix-decisions.md` — auto-fix whitelist + risk levels
 - `skills/rdd-env-check/` — phase-internal quick check (different scope, ≤200ms)
 - `skills/rdd-doctor/` — read-only diagnostic (delegated target)
-- [`../adr/ADR-0053-rdd-env-bootstrap-orchestrator.md`](../adr/ADR-0053-rdd-env-bootstrap-orchestrator.md) — decision record
-- [`../adr/ADR-0052-layer-0-progressive-context.md`](../adr/ADR-0052-layer-0-progressive-context.md) — predecessor architecture
+- `../adr/ADR-0053-rdd-env-bootstrap-orchestrator.md` — decision record
+- `../adr/ADR-0052-layer-0-progressive-context.md` — predecessor architecture
 - `skills/rddf-session/SKILL.md` — session binding contract
 - `.rddf/improvements/add-env-bootstrap-skill.md` — design rationale

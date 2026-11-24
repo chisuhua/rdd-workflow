@@ -189,7 +189,7 @@ A:
 - [AGENTS.md](../../AGENTS.md) §关键约定 (项目地图)
 - [README.md](../../README.md) §v4.0+ 当前架构
 - [USAGE.md](../../USAGE.md) §四阶段架构表
-- [spec 2026-09-04-rdd-workflow-v4-architecture-stage-merge.md](../../superpowers/specs/2026-09-04-rdd-workflow-v4-architecture-stage-merge.md) (设计稿)
+- [spec 2026-09-04-rdd-workflow-v4-architecture-stage-merge.md](../superpowers/specs/2026-09-04-rdd-workflow-v4-architecture-stage-merge.md) (设计稿)
 ## 2026-11-19 后续：`skills/guide/` 归档（ADR-0063）
 
 `guide` 推荐器 skill 已归档到 `docs/legacy/skills/guide/`，`stage_guide` 长会话类型退役（从未被真实使用的 Guide-as-Orchestrator 架构）。推荐能力保留在 `rddf guide` CLI，events 总线保留。

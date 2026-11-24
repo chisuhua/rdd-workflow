@@ -254,6 +254,18 @@ run_doctor_structural_gate() {
     env RDDF_PROJECT_ROOT="$(pwd)" bash skills/rdd-doctor/scripts/doctor.sh --gate structural
 }
 
+# 文档漂移门 —— 镜像 CI 的「Markdown drift gate (links / ADR refs / versions)」。
+# 断链 / ADR 交叉引用 / 版本与计数派生三类断言。2026-11-17 修了 10 处断链，
+# 但发现工具留在 /tmp —— 工具入库后这类漂移不必再等人工审查。
+run_md_links_gate() {
+  run_step "markdown drift gate (links / ADR refs / versions / stage names / ADR index)" \
+    bash -c 'python3 tests/scripts/check_md_links.py --all && \
+             python3 tests/scripts/check_md_links.py --adr-refs docs/architecture && \
+             python3 tests/scripts/check_md_links.py --versions docs/architecture && \
+             python3 tests/scripts/check_md_links.py --guide-names docs/architecture && \
+             python3 _lib/adr_index_generator.py --check'
+}
+
 # ADR 形态门 —— 镜像 CI 的「ADR shape gate (incremental, frozen baseline)」。
 # 跑的是**增量模式**：存量 163 项形态债冻结在 docs/adr/.adr-shape-baseline.json，
 # 只拦新增（per fix-adr-shape-debt-convergence）。基线缺失/为空 ⇒ exit 2 ⇒ 本地红，
@@ -272,6 +284,7 @@ run_local_gates() {
   run_ruff_gate
   run_mypy_gate
   run_doctor_structural_gate
+  run_md_links_gate
   run_adr_shape_gate
   run_openspec_validate_gate
 }
@@ -407,6 +420,7 @@ Single file:
   ✅ Ruff lint check          → python3 -m ruff check skills/_lib/
   ✅ Mypy strict type check   → python3 -m mypy --strict skills/_lib/core/
   ✅ rdd-doctor structural    → doctor.sh --gate structural
+  ✅ Markdown drift          → check_md_links.py --all / --adr-refs / --versions
   ✅ ADR shape (incremental)  → adr_shape_check.sh --all --diff-baseline（存量冻结，只拦新增）
   ❌ 故意不镜像的 CI step 见 test.sh 里的 NOT_MIRRORED（tests/unit/test_ci_local_mirror.py 守住）
 

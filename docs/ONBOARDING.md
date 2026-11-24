@@ -3,7 +3,7 @@
 > 生成时间: 2026-09-09（v4.0+ 四阶段架构同步 + rdd-quick 旁路注册）
 > 当前版本: **v4.0+ (2026-09-04)**，已演进为**四阶段架构**（rdd-arch → rdd-planner → rdd-builder → rdd-verifier，per ADR-0043）+ `rdd-quick` 旁路（per ADR-0047）。
 > 本 onboarding 文档核心描述已对齐到 v4.0+ 四阶段架构；v2.0/v3.0 章节作为历史快照保留。
-> 当前权威架构说明见 [README.md](../../README.md) §"v4.0+ 当前架构"、[USAGE.md](../../USAGE.md) §"四阶段架构"、[docs/architecture/workflow-phases.md](../architecture/workflow-phases.md)。
+> 当前权威架构说明见 [README.md](../README.md) §"v4.0+ 当前架构"、[USAGE.md](../USAGE.md) §"四阶段架构"、[docs/architecture/workflow-phases.md](architecture/workflow-phases.md)。
 
 ---
 
@@ -22,7 +22,7 @@
 
 rdd-workflow 是一个 **AI 助手工作流技能包**，提供给 Claude Code / OpenCode 等 AI 编程助手使用。它定义了从**变更提议**到**执行归档**的完整生命周期管理流程。
 
-项目已演进到 **v4.0+**，当前采用**四阶段架构**（`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`，per ADR-0043）+ `rdd-quick` 旁路（per ADR-0047）。v2.0 三阶段（Arch → Plan → Ship）见 [ADR-0003](../adr/ADR-0003-three-phase-architecture.md)，v2.1 扩展为四阶段（+ design）见 [ADR-0025](../adr/ADR-0025-design-proposal-creation.md)，v3.0 扩展为五阶段（+ verify）见 [ADR-0034](../adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)，v4.0+ 合并为四阶段（per ADR-0043 + ADR-0044 删除 guide-* skills）。
+项目已演进到 **v4.0+**，当前采用**四阶段架构**（`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`，per ADR-0043）+ `rdd-quick` 旁路（per ADR-0047）。v2.0 三阶段（Arch → Plan → Ship）见 [ADR-0003](adr/ADR-0003-three-phase-architecture.md)，v2.1 扩展为四阶段（+ design）见 [ADR-0025](adr/ADR-0025-design-proposal-creation.md)，v3.0 扩展为五阶段（+ verify）见 [ADR-0034](adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)，v4.0+ 合并为四阶段（per ADR-0043 + ADR-0044 删除 guide-* skills）。
 
 ---
 
@@ -370,7 +370,7 @@ skills/_lib/trigger_engine.py         — 触发引擎
 新增 `<name>/SKILL.md` 目录到 `skills/` 目录，然后在 `package.json` 的 `skills` 数组中注册。如果新技能需要被状态机调用，更新对应的 stage skill SKILL.md（如 `rdd-arch/SKILL.md` 或 `rdd-planner/SKILL.md`）添加引用。
 
 ### Q: 如何处理 v1.x 到 v2.0+ 的迁移？
-v2.0 三阶段架构 arch → plan → ship（per [ADR-0003](../adr/ADR-0003-three-phase-architecture.md)），v2.1 扩展为四阶段 + design（per [ADR-0025](../adr/ADR-0025-design-proposal-creation.md)），v3.0 扩展为五阶段 + verify（per [ADR-0034](../adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)），**v4.0+ 合并为四阶段**（`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`，per ADR-0043）+ **rdd-quick 旁路**（per ADR-0047）。原 `guide-spec` 已被 `rdd-arch` + `rdd-planner` 替代（`guide-spec` 是 60 行别名，v2.0 已删除；`guide-arch`/`guide-design`/`guide-plan`/`guide-ship` 四个 skill 在 v4.0 Wave 3 硬移除，per ADR-0044）。详细迁移指南见 `docs/migration/v3-to-v4.md`。
+v2.0 三阶段架构 arch → plan → ship（per [ADR-0003](adr/ADR-0003-three-phase-architecture.md)），v2.1 扩展为四阶段 + design（per [ADR-0025](adr/ADR-0025-design-proposal-creation.md)），v3.0 扩展为五阶段 + verify（per [ADR-0034](adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)），**v4.0+ 合并为四阶段**（`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`，per ADR-0043）+ **rdd-quick 旁路**（per ADR-0047）。原 `guide-spec` 已被 `rdd-arch` + `rdd-planner` 替代（`guide-spec` 是 60 行别名，v2.0 已删除；`guide-arch`/`guide-design`/`guide-plan`/`guide-ship` 四个 skill 在 v4.0 Wave 3 硬移除，per ADR-0044）。详细迁移指南见 `docs/migration/v3-to-v4.md`。
 
 ### Q: 测试策略是什么？
 - **Python 测试**（pytest）：覆盖状态向量、事件日志、门控机制、Loop 引擎、rdd-verifier 自包含验证协议

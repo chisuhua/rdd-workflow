@@ -1,6 +1,6 @@
 # Auto-Fix Decision Table (Phase 4)
 
-Per [ADR-0053 §Decision D3](../adr/ADR-0053-rdd-env-bootstrap-orchestrator.md), the auto-fix whitelist is **fixed** to only two categories. Any finding outside this whitelist is **never** auto-executable — the user must explicitly review and confirm.
+Per ADR-0053 §Decision D3, the auto-fix whitelist is **fixed** to only two categories. Any finding outside this whitelist is **never** auto-executable — the user must explicitly review and confirm.
 
 ## Whitelist
 

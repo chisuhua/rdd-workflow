@@ -130,9 +130,10 @@ opencode 可以把一个工程会话**派发**出去做一类工作。本仓能�
 - opencode 侧角色矩阵、审查配对、治理面文件作用域 → `~/.config/opencode/prompts/build.md`
 - 角色模型的演进史 → `historical-evolution.md`
 
-> **已知陈旧点**：`openspec/specs/skill-role-model/spec.md` 正文仍用 v3 的 `guide-arch` / `guide-design` / `guide-plan` / `guide-ship`
-> 命名，v4 对应 `rdd-arch` / `rdd-planner` / `rdd-builder` / `rdd-verifier`（`rdd-quick` 是旁路）。
-> 按 spec 里的 `guide-*` grep 会 0 命中 —— 读的时候做一次名字替换。
+> **命名同步状态**：`openspec/specs/skill-role-model/spec.md` 已于 2026-11-24 同步到 v4 命名
+> （`rdd-arch` / `rdd-planner` / `rdd-builder` / `rdd-verifier`，`rdd-quick` 是旁路）—— 按 spec 里的
+> `guide-*` grep 现在只命中 **2 处带 `v4-residue:allow=rename-history` 豁免标记的历史注记**（记的是旧名，
+> 不是活调用）。读的时候不需要做名字替换。
 
 ## 过期信号
 

@@ -6,7 +6,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "_lib"))
 
-from adr_index_generator import scan_adrs, extract_metadata, render_table
+from adr_index_generator import scan_adrs, extract_metadata, render_table, check_readme
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -119,3 +119,32 @@ class TestStatusClassification:
             classes[path.name] = md["status_class"]
         assert set(classes.values()) <= STATUS_CLASSES
         assert {"accepted", "superseded", "amended", "proposed", "draft"} <= set(classes.values())
+
+# ---------- --check mode (fix-doc-drift-residual P2-1) ----------
+
+class TestCheckReadme:
+    def test_repo_readme_is_consistent(self):
+        """真实 README 必须通过 --check（索引块 / ADR 引用 / 计数）。"""
+        assert check_readme(ADR_DIR / "README.md") == []
+
+    def test_a_wrong_prose_count_is_caught(self, tmp_path):
+        """变异验证：把散文段的计数改错 ⇒ 必须报出来。"""
+        readme = tmp_path / "README.md"
+        readme.write_text(
+            (ADR_DIR / "README.md").read_text(encoding="utf-8")
+            + "\n当前共有 999 ADRs。\n",
+            encoding="utf-8",
+        )
+        findings = check_readme(readme)
+        assert any("stale count" in f for f in findings), findings
+
+    def test_an_unknown_adr_reference_is_caught(self, tmp_path):
+        """变异验证：引用不存在的 ADR ⇒ 必须报出来。"""
+        readme = tmp_path / "README.md"
+        readme.write_text(
+            (ADR_DIR / "README.md").read_text(encoding="utf-8")
+            + "\n见 ADR-9999-does-not-exist.md\n",
+            encoding="utf-8",
+        )
+        findings = check_readme(readme)
+        assert any("unknown ADR reference ADR-9999" in f for f in findings), findings

@@ -152,6 +152,55 @@ _INDEX_BLOCK = re.compile(
 )
 
 
+def check_readme(readme: Path) -> list[str]:
+    """Read-only drift check for the ADR index README.
+
+    Asserts what is **derivable**, and refuses to assert what is not:
+
+    - the generated index block matches the generator output (the block is
+      rewritten by this module; a hand-edit inside it is drift)
+    - every ADR-NNNN the README mentions exists
+    - prose count claims ("N ADRs", "N skills") equal the measured counts
+
+    Deliberately NOT asserted: which ADRs the prose status table covers, and
+    the "last synced" date. The coverage of that table is a judgement about
+    implementation status, not a derivation — asserting it would force a false
+    claim (a newer date would say "synced" about ADRs the table does not list).
+    """
+    text = readme.read_text(encoding="utf-8")
+    findings: list[str] = []
+
+    table = render_table(scan_adrs(readme.parent))
+    m = _INDEX_BLOCK.search(text)
+    if not m:
+        findings.append("ADR_INDEX_START / ADR_INDEX_END markers not found")
+    elif m.group(2).strip() != table.strip():
+        findings.append(
+            "index block differs from the generator output — run "
+            "`python3 _lib/adr_index_generator.py --write docs/adr/README.md`"
+        )
+
+    known = {
+        p.name.split("-")[1]
+        for p in (readme.parent).glob("ADR-*.md")
+        if re.match(r"ADR-\d{4}-", p.name)
+    }
+    for lineno, line in enumerate(text.splitlines(), 1):
+        for ref in re.findall(r"\bADR-(\d{4})\b", line):
+            if ref not in known:
+                findings.append(f"line {lineno}: unknown ADR reference ADR-{ref}")
+
+    adr_count = len([
+        p for p in (readme.parent).glob("ADR-*.md")
+        if not p.name.endswith("-0000-template.md")
+    ])
+    for lineno, line in enumerate(text.splitlines(), 1):
+        for m2 in re.finditer(r"(?<![\w-])(\d+)\s+(ADRs?|skills)(?![\w-])", line):
+            n = int(m2.group(1))
+            if m2.group(2).lower().startswith("adr") and n != adr_count:
+                findings.append(f"line {lineno}: stale count {m2.group(0)} (actual {adr_count})")
+    return findings
+
 def main(argv: list[str] | None = None) -> int:
     """CLI entry. Without --write, the table goes to stdout.
 
@@ -166,10 +215,25 @@ def main(argv: list[str] | None = None) -> int:
         metavar="README",
         help="rewrite the <!-- ADR_INDEX_START -->...<!-- ADR_INDEX_END --> block in this file",
     )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="read-only drift check of the README (index block / ADR refs / counts)",
+    )
     args = parser.parse_args(argv)
 
     adr_dir = Path(__file__).resolve().parents[1] / "docs" / "adr"
     table = render_table(scan_adrs(adr_dir))
+
+    if args.check:
+        readme = Path(args.write) if args.write else adr_dir / "README.md"
+        findings = check_readme(readme)
+        for f in findings:
+            print(f"ERR {readme}: {f}")
+        if findings:
+            return 1
+        print(f"OK {readme}: index block, ADR refs and counts are consistent")
+        return 0
 
     if not args.write:
         sys.stdout.write(table)

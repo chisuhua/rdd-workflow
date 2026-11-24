@@ -82,6 +82,23 @@ If you collapse them, you lose either speed (vector = query speed), history (log
 
 Handoff files are the only layer that **must** be read by a different phase than the one that wrote it — they exist to break the implicit coupling of "phase N needs to know what phase N-1 decided".
 
+## 治理状态层（opencode 角色层）—— 不属于本文档的三层
+
+上面三层是 **rdd-workflow 自己的**运行时状态。还有一层**不属于它**：opencode 侧的治理状态，写在同一个
+`.rddf/state/` 目录下，但**由 opencode 的角色层读写，rdd-workflow 不读不写**：
+
+| 文件 | 是什么 | 谁写 |
+|---|---|---|
+| `.rddf/state/role.json` | 治理身份（schema `role-v2`，含 `sessions` 分区） | opencode 角色层 |
+| `.rddf/state/pair.json` | 派发登记（pair-v2，`required_when=never`） | opencode 角色层 |
+| `.rddf/reviews/*.md` | 验收报告（verifier 角色）/ 审稿报告（architect 角色） | opencode 角色层 |
+
+**字段级清单不在这里**（避免再造一份会过期的副本）—— 文件级布局见
+[`rddf-layout.md`](rddf-layout.md) 的「文件级」节；角色层分工见
+[`agent-role-alignment.md`](agent-role-alignment.md)。
+
+混放的风险不是「谁覆盖谁」，而是**读错**：把 `role.json` 当成 rdd 的工件去写，会破坏 opencode 的身份链与租约。
+
 ## Failure Modes
 
 | Failure | Recovery |
