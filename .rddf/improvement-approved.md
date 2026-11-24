@@ -289,6 +289,7 @@
 
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-spec-v3-naming-sync](improvements/fix-spec-v3-naming-sync.md) | P2 | 2026-11-24 | 已实施 |
 | [add-skills-lib-api-doc](improvements/add-skills-lib-api-doc.md) | P2 | 2026-11-24 | 已实施 |
 | [fix-agents-md-worktree-commit-flow](improvements/fix-agents-md-worktree-commit-flow.md) | P1 | 2026-11-24 | 已实施 |
 | [fix-bats-per-file-timeout](improvements/fix-bats-per-file-timeout.md) | P2 | 2026-11-18 | 已实施 |

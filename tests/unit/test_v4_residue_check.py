@@ -578,11 +578,13 @@ def test_r4_repo_residue_constant():
     （spec 文件数 159→**160**；hits/blocks/files **不变**，因新 spec 不含 stage token）。
     `add-skills-lib-api-doc` 归档新增 1 份 spec（`add-skills-lib-api-doc`）—— 同样是 `acceptance-N` 形态，
     已重写为语义名 + 可区分 WHEN（spec 文件数 160→**161**；hits/blocks/files **不变**）。
+    `fix-spec-v3-naming-sync` 归档新增 1 份 spec（`fix-spec-v3-naming-sync`）—— 第三次同形，
+    已重写（spec 文件数 161→**162**；hits/blocks/files **不变**）。
     ⚠️ Phase 1 的每个改动都必须在同一提交更新这些常数，否则它会在下次运行时被读成 regression。
     """
     from spec_residue_scan import scan_specs
     result = scan_specs(REPO_ROOT)
-    assert result.files_scanned == 161, result.files_scanned
+    assert result.files_scanned == 162, result.files_scanned
 
     unexempted = [h for h in result.hits if not h.category]
     assert len(unexempted) == 0, len(unexempted)
