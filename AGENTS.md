@@ -87,6 +87,24 @@ archive change (`rdd-builder` P3)
 
 **实现状态**: 此规则已通过 [`add-full-regression-gate`](.rddf/improvements/add-full-regression-gate.md) 提案（`improvement-approved.md` P0, 2026-07-28）正式批准。当前 `rdd-builder`（v4.0+；v2.x~v3.x 时期为 `guide-ship`）的 `archive_gate_check()`（`_lib/archive.sh`）只检查 `tasks.md` 完成度，**未自动化强制回归门**。在 `rdd-builder` 实施该提案之前，本节作为 agent 的硬性行为约束。
 
+### Worktree Commit Flow
+
+每个 change 在 worktree 内执行时：
+
+1. **Phase 2 execute**：修改文件 + 运行测试 + 更新 plan checkboxes（`-[ ]` → `-[x]`）。
+   - execute 阶段不逐任务 commit；Phase 2 全部 task 通过后，在 worktree 内做聚合 commit（worktree-internal commit），详见 Worktree Commit Flow
+   - `feat(<scope>): <description>` for new features
+   - `fix(<scope>): <description>` for bug fixes
+   - `test(<scope>): <description>` for test changes
+   - `chore(<scope>): <description>` for tooling changes
+   - `docs(<scope>): <description>` for documentation changes
+
+2. **Phase 3 archive**：由 `archive_change_for_mode` 自动 merge → openspec archive → cleanup worktree/branch。
+
+### 归档流程
+
+归档前由 `check_worktree_commits` 强制 worktree 分支相对默认分支有新 commit，否则拒绝归档（per ADR-0061）。
+
 ### 全局安装测试（`tests/integration/test_global_install_external_project.bats`）
 
 模拟第三方项目使用全局安装（`~/.agents/skills/`）的能力。覆盖:
