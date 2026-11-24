@@ -6,6 +6,7 @@
 类型: fix
 主题: 完整多会话支持
 依赖: feat-guide-orchestrator-session-event-bus (shipped), add-stage-guide-e2e-cross-process-coverage (in progress)
+状态: '✅ 已实施 (2026-09-24, commit 05194566 "fix(guide-close): export PROJECT_ROOT + add trap-context owner fallback" — `rddf_session_hooks.sh` 第 5 层 owner fallback 落地)'
 ---
 **优先级**: P1 | **来源**: 2026-09-23 AC-6a deterministic fail
 **阶段**: v4.1 follow-up | **分类**: bug-fix

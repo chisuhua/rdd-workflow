@@ -111,6 +111,68 @@ def test_mode_b_omits_phase_and_blocker(tmp_path, capsys, monkeypatch):
 
 
 # --------------------------------------------------------------------------
+# AC-7: disk-derived status vocabulary
+# --------------------------------------------------------------------------
+
+def _make_change(root: Path, name: str, tasks: str) -> Path:
+    change = root / "openspec" / "changes" / name
+    change.mkdir(parents=True, exist_ok=True)
+    (change / "tasks.md").write_text(tasks, encoding="utf-8")
+    return change
+
+
+def test_finished_change_is_completed_not_planned(tmp_path):
+    """All tasks checked ⇒ `completed`.
+
+    The git probe for `committed` cannot fire in repos where `openspec/` is
+    gitignored (this repo sets `git.openspec_tracked: false`), so without
+    this branch every finished change was reported as `planned`.
+    """
+    from _lib.cli.status_cmd import _disk_change_status
+
+    _make_change(tmp_path, "done-change", "- [x] a\n- [x] b\n")
+    assert _disk_change_status(str(tmp_path), "done-change") == "completed"
+
+
+def test_partially_done_change_is_planned(tmp_path):
+    from _lib.cli.status_cmd import _disk_change_status
+
+    _make_change(tmp_path, "half-change", "- [x] a\n- [ ] b\n")
+    assert _disk_change_status(str(tmp_path), "half-change") == "planned"
+
+
+def test_change_without_tasks_is_planned(tmp_path):
+    from _lib.cli.status_cmd import _disk_change_status
+
+    (tmp_path / "openspec" / "changes" / "skeleton").mkdir(parents=True)
+    assert _disk_change_status(str(tmp_path), "skeleton") == "planned"
+
+
+def test_committed_probe_reads_plan_handoff(tmp_path):
+    """`committed` is also derived from the plan-done record (git-independent)."""
+    from _lib.cli.status_cmd import _disk_change_status
+
+    _make_change(tmp_path, "landed-change", "- [x] a\n")
+    state = tmp_path / ".rddf" / "state"
+    state.mkdir(parents=True, exist_ok=True)
+    (state / ".plan-handoff.json").write_text(
+        '{"committed_changes": ["landed-change"]}', encoding="utf-8"
+    )
+    assert _disk_change_status(str(tmp_path), "landed-change") == "committed"
+
+
+def test_committed_probe_survives_corrupt_plan_handoff(tmp_path):
+    from _lib.cli.status_cmd import _disk_change_status
+
+    _make_change(tmp_path, "landed-change", "- [x] a\n")
+    state = tmp_path / ".rddf" / "state"
+    state.mkdir(parents=True, exist_ok=True)
+    (state / ".plan-handoff.json").write_text("{not json", encoding="utf-8")
+    # Falls back to the tasks-based verdict, never raises.
+    assert _disk_change_status(str(tmp_path), "landed-change") == "completed"
+
+
+# --------------------------------------------------------------------------
 # AC-5: Mode E removed
 # --------------------------------------------------------------------------
 

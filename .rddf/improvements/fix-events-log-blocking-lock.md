@@ -6,6 +6,7 @@
 类型: fix
 主题: 完整多会话支持
 依赖: feat-guide-orchestrator-session-event-bus (shipped), add-stage-guide-e2e-cross-process-coverage (in progress)
+状态: '✅ 已实施 (2026-09-23, commit 7086e470 "fix(rddf-session): events_log lock contention now serializes with 10s timeout" — `events_log.py::_acquire_lock_with_timeout` 落地 LOCK_EX 重试，替代原 LOCK_EX|LOCK_NB)'
 ---
 **优先级**: P0 | **来源**: 2026-09-23 cross-process e2e testing
 **阶段**: v4.1 follow-up | **分类**: bug-fix

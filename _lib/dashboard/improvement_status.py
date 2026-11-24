@@ -30,6 +30,11 @@ _TERMINAL_MARKERS: tuple[tuple[str, str], ...] = (
     ("已归档", "已归档"),
     ("已完成", "已完成"),
     ("已实施", "已实施"),
+    # English markers. The 2026-11-17/18 batch writes `状态: implemented
+    # (2026-11-17)`; without these the item was classified non-terminal and
+    # rendered as pending with a truncated label ("implemented (202").
+    ("implemented", "已实施"),
+    ("completed", "已完成"),
     # Voided / superseded proposals are terminal too: they must NOT stay in
     # the Pending pool (a proposal whose plan was replaced by a more
     # thorough one is not work to be done).
@@ -47,6 +52,12 @@ _OPEN_MARKERS: tuple[tuple[str, str], ...] = (
     ("draft", "Draft"),
     ("规划输入", "规划输入"),
     ("backlog", "未立项"),
+    # "待审查" (awaiting review) and "已推迟" (deferred) are distinct from
+    # "待讨论": the proposal has a decision attached, it is just not the
+    # next thing to do. Without them both collapse into the empty-status
+    # fallback label "待讨论".
+    ("待审查", "待审查"),
+    ("已推迟", "已推迟"),
 )
 
 # Partially closed ⇒ stays visible (a human decision is still owed).

@@ -1,6 +1,7 @@
 ---
 优先级: P2
-来源: 2026-09-28 多次 fix-skill-layer 系列实施审计 (fix-33-handlers-project-root-anti-pattern
+来源: >-
+  2026-09-28 多次 fix-skill-layer 系列实施审计 (fix-33-handlers-project-root-anti-pattern
   commit ab5ded7 + fix-skill-layer-project-root-anti-pattern commit c217cde +
   add-skill-layer-resolve-project-root-helper commit 281423d + fix-skill-layer-resolution-bash
   commit 1bcb8a0) — skill layer 自包含约定修复后,**3 层 helper 架构 (bash + Python
@@ -14,7 +15,8 @@
 分类: documentation
 类型: documentation
 主题: 跨项目 CLI 契约一致性
-依赖: skills/_lib/__init__.py (existing shim layer), fix-skill-layer 系列 4 shipped commits,
+依赖: >-
+  skills/_lib/__init__.py (existing shim layer), fix-skill-layer 系列 4 shipped commits,
   consolidate-resolve-project-root-helpers (proposal)
 ---
 

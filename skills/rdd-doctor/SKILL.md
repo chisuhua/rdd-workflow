@@ -67,7 +67,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 | `ai-context-bootstrap` | AI 上下文层（AGENTS.md / HANDOFF.md / docs/）的层级 + 链接 sanity |  |
 | `gitignore` | `.rddf/project.yaml` `git.openspec_tracked` × `.gitignore` 排除项一致性（add-gitignore-hard-protection）。两种合法形态：`openspec/`（整树）或 `openspec/changes/`（只挡归档路径，per ADR-0036 修订）。false+两种都缺 → WARNING（建议追加 + 混合状态提示 `git rm -r --cached`）；true+任一存在 → 反向不一致 WARNING；只挡归档路径但 `openspec/specs/` 未入库 → INFO（保护依赖它被跟踪） |  |
 | `bypass-audit` | `.rddf/state/.bypass-audit.jsonl` 旁路使用统计（per `bypass-audit-mechanism` P2 改进）；ARCHIVE_ON_MAIN > 3/月 → WARNING，> 6/月 → CRITICAL |  |
-| `improvement-frontmatter-consistency` | `.rddf/improvements/*.md` frontmatter 必需字段 + 与 `improvement-suggestions.md` 表格行数一致 |  |
+| `improvement-frontmatter-consistency` | `.rddf/improvements/*.md` frontmatter 分隔符存在 + **YAML 可解析**。不可解析（多行 plain scalar 里含 `: `）⇒ 该文件的 priority / phase / category / status 全部丢失，`rddf status` 渲染成「待讨论」+ 空列 |  |
 | `objective-lifecycle` | `.rddf/roadmap/objectives/*.md` 生命周期（active → deferred → completed → archived）；`review_by` 超期 → WARNING（per ADR-0054 + add-objective-tracking）| ✅ |
 | `objective-structure` | `.rddf/roadmap/objectives/*.md` 结构 / frontmatter 必需字段 | ✅ |
 | `arch-audit` | rdd-arch 产物健康度：gap-analysis structural_ok（per ADR-0046 §5）+ completeness（draft/partial/complete）+ ADR inventory（count / latest / superseded / status 漂移）+ `.arch-handoff.json` sanity。advisory only，不阻断任何 gate。设计动机：把 `check_arch_done_gate.sh` 内嵌的 advisory 检查外提为可独立 query 的 doctor category |  |

@@ -289,15 +289,26 @@
 
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-bats-per-file-timeout](improvements/fix-bats-per-file-timeout.md) | P2 | 2026-11-18 | 已实施 |
+| [bypass-audit-mechanism](improvements/bypass-audit-mechanism.md) | P2 | 2026-09-11 | 已实施 |
 | [fix-script-project-root-anchoring](improvements/fix-script-project-root-anchoring.md) | P2 | 2026-11-18 | 已实施 |
+| [fix-lightweight-branch-and-archive](improvements/fix-lightweight-branch-and-archive.md) | P1 | 2026-11-18 | 已实施 |
+| [fix-worktree-archive-branch-merge](improvements/fix-worktree-archive-branch-merge.md) | P1 | 2026-11-18 | 已实施 |
+| [fix-adr-index-generator-dup](improvements/fix-adr-index-generator-dup.md) | P1 | 2026-11-17 | 已实施 |
+| [fix-execution-mode-decision](improvements/fix-execution-mode-decision.md) | P1 | 2026-11-17 | 已实施 |
+| [fix-iteration-tasks-total](improvements/fix-iteration-tasks-total.md) | P1 | 2026-11-17 | 已实施 |
+| [fix-regression-baseline-integrity](improvements/fix-regression-baseline-integrity.md) | P1 | 2026-11-17 | 已实施 |
+| [fix-verifier-gate-cache-root](improvements/fix-verifier-gate-cache-root.md) | P1 | 2026-11-17 | 已实施 |
 | [fix-flow-drift-batch-1](improvements/fix-flow-drift-batch-1.md) | P2 | 2026-11-16 | 已实施 |
 | [register-change-in-iteration](improvements/register-change-in-iteration.md) | P2 | 2026-11-16 | 已实施 |
 | [fix-phase3-cleanup-wiring](improvements/fix-phase3-cleanup-wiring.md) | P1 | 2026-11-16 | 已实施 |
 | [fix-worktree-archive-path](improvements/fix-worktree-archive-path.md) | P1 | 2026-11-16 | 已实施 |
 | [fix-p3-verifier-gate](improvements/fix-p3-verifier-gate.md) | P1 | 2026-11-16 | 已实施 |
 | [rddf-layout-manifest](improvements/rddf-layout-manifest.md) | P1 | 2026-11-16 | 已实施 |
+| [fix-rdd-doctor-hardcoded-paths-and-skills-md-drift](improvements/fix-rdd-doctor-hardcoded-paths-and-skills-md-drift.md) | P1 | 2026-10-07 | 已实施 |
 | [consolidate-resolve-project-root-helpers](improvements/consolidate-resolve-project-root-helpers.md) | P3 | 2026-09-28 | 已实施 |
 | [fix-skill-layer-resolution-bash](improvements/fix-skill-layer-resolution-bash.md) | P3 | 2026-09-28 | 已实施 |
+| [v2.1-fix-rdd-quick-archive-verifier-gaps](improvements/v2.1-fix-rdd-quick-archive-verifier-gaps.md) | P0 | 2026-09-28 | 已实施 |
 | [add-skill-layer-resolve-project-root-helper](improvements/add-skill-layer-resolve-project-root-helper.md) | P2 | 2026-09-27 | 已实施 |
 | [fix-skill-layer-project-root-anti-pattern](improvements/fix-skill-layer-project-root-anti-pattern.md) | P2 | 2026-09-26 | 已实施 |
 | [fix-33-handlers-project-root-anti-pattern](improvements/fix-33-handlers-project-root-anti-pattern.md) | P2 | 2026-09-26 | 已实施 |
@@ -306,6 +317,8 @@
 | [wave3-rddf-session-show-events](improvements/wave3-rddf-session-show-events.md) | P2 | 2026-09-24 | 已实施 |
 | [wave3-phase-heartbeat-progressing](improvements/wave3-phase-heartbeat-progressing.md) | P2 | 2026-09-24 | 已实施 |
 | [wave3-opencode-session-injection](improvements/wave3-opencode-session-injection.md) | P1 | 2026-09-24 | 已实施 |
+| [fix-guide-close-owner-resolution](improvements/fix-guide-close-owner-resolution.md) | P1 | 2026-09-24 | 已实施 |
+| [fix-events-log-blocking-lock](improvements/fix-events-log-blocking-lock.md) | P0 | 2026-09-23 | 已实施 |
 | [add-objective-tracking](improvements/add-objective-tracking.md) | P1 | 2026-09-22 | 已实施 |
 | [phase-1-general-20260829063800-2](improvements/phase-1-general-20260829063800-2.md) | P1 | 2026-09-22 | 已实施 |
 | [add-feature-fragment-command](improvements/add-feature-fragment-command.md) | P1 | 2026-09-22 | 已实施 |

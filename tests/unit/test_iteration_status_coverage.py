@@ -45,12 +45,15 @@ ITERATION_STATUS_ENUM = tuple(
     ["properties"]["changes"]["items"]["properties"]["status"]["enum"]
 )
 
-#: disk-derived 域的真源 —— `_disk_change_status()` 的 3 个返回值
-#: （``in_worktree`` / ``committed`` / ``planned``）+ ``status_cmd.py`` 里硬编码的
+#: disk-derived 域的真源 —— `_disk_change_status()` 的返回值
+#: （``in_worktree`` / ``committed`` / ``completed`` / ``planned``）+ ``status_cmd.py`` 里硬编码的
 #: ``archived`` + ``.get(status, "?")`` 的兜底 ``unknown``。
 #:
-#: ``completed`` 与 ``unknown`` 是**防御键**：当前渲染路径产不出它们
-#: （status 不读 iteration.json），但删掉会让将来的这些状态渲染成 ``?``。
+#: ``unknown`` 是**防御键**：当前渲染路径产不出它（status 不读 iteration.json），
+#: 但删掉会让将来的这个状态渲染成 ``?``。
+#: ``completed`` 由「tasks.md 全勾」推出（``_tasks_complete``）—— 在
+#: ``openspec/`` 被 gitignore 的仓里 ``committed`` 探针永远命中不了，
+#: 没有这一条则已完成的 change 会被报成 ``planned``。
 DISK_DERIVED_STATUSES = {
     "planned",
     "in_worktree",

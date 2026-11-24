@@ -49,6 +49,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import subprocess
 from typing import Optional
 
@@ -58,6 +59,11 @@ logger = logging.getLogger(__name__)
 
 # State directory relative to project root (gitignored, main repo only).
 _STATE_DIR = os.path.join(".rddf", "state")
+
+#: Top-level ``key: value`` line of a front-matter block (naive-scan
+#: fallback for blocks that are not valid YAML). The key may not start with
+#: whitespace, ``:``, ``-`` (list item) or ``#`` (comment).
+_FM_KEY_RE = re.compile(r"^(?![-#])([^\s:][^:]*):[ \t]*(.*)$")
 
 
 def _state_path(project_root: str, filename: str) -> str:
@@ -292,37 +298,88 @@ def list_change_dirs(project_root: str) -> list[str]:
     return sorted(names)
 
 
-def _parse_improvement_meta(content: str) -> dict:
+def _scan_meta_lines(block: str) -> dict[str, str]:
+    """Naive ``key: value`` scan of a front-matter block.
+
+    Used **only** as a fallback when the block is not valid YAML (e.g. a
+    multi-line plain scalar that contains a ``:``). It recovers the top-level
+    keys — indented continuation lines are appended to the previous key's
+    value — so one malformed scalar does not cost the whole metadata set.
+    """
+    out: dict[str, str] = {}
+    last_key: str | None = None
+    for line in block.split("\n"):
+        if not line.strip():
+            continue
+        if line[:1] in (" ", "\t"):
+            # Indented ⇒ continuation of the previous key's value.
+            if last_key is not None:
+                merged = f"{out[last_key]} {line.strip()}".strip()
+                out[last_key] = merged
+            continue
+        match = _FM_KEY_RE.match(line)
+        if not match:
+            last_key = None
+            continue
+        key = match.group(1).strip()
+        value = match.group(2).strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        out[key] = value
+        last_key = key
+    return out
+
+
+def _parse_improvement_meta(
+    content: str, errors: list[str] | None = None
+) -> dict[str, object]:
     """Parse the metadata block of an improvement file.
 
-    Two formats are supported (first match wins):
+    Three formats are supported (first match wins):
 
     1. **YAML front matter** — the current convention (per the ``add-improve``
        skill template): a ``---`` delimited block of ``key: value`` pairs.
-    2. **Legacy inline meta** — older files carry ``**key**: value`` pairs on
+    2. **Naive front-matter scan** — the block exists but is **not valid
+       YAML** (a multi-line plain scalar containing ``:`` breaks the parse).
+       The top-level keys are recovered line-by-line instead of the whole
+       block being dropped; the failure is appended to ``errors`` when a
+       list is supplied.
+    3. **Legacy inline meta** — older files carry ``**key**: value`` pairs on
        the 3rd / 4th line of the file.
 
     Returns a dict of raw metadata (empty when nothing is found). Never raises.
     """
-    import re
-
     if content.startswith("---\n"):
         end = content.find("\n---", 4)
         if end != -1:
-            meta: dict = {}
+            meta: dict[str, object] = {}
             try:
                 import yaml
             except ImportError:  # pragma: no cover - PyYAML is a declared dep
                 yaml = None  # type: ignore[assignment]
             if yaml is not None:
+                parsed = None
+                yaml_error: Exception | None = None
                 try:
                     parsed = yaml.safe_load(content[4:end])
-                except Exception:  # noqa: BLE001 - malformed front matter
-                    parsed = None
+                except Exception as exc:  # noqa: BLE001 - malformed front matter
+                    yaml_error = exc
                 if isinstance(parsed, dict):
                     for key, value in parsed.items():
                         meta[str(key)] = value
                     return meta
+                if yaml_error is not None:
+                    if errors is not None:
+                        # Collapse the multi-line PyYAML message into one line
+                        # (the CLI prints errors as single bullets).
+                        errors.append(
+                            "invalid YAML front matter: "
+                            + " ".join(str(yaml_error).split())
+                        )
+                    fallback = _scan_meta_lines(content[4:end])
+                    if fallback:
+                        meta.update(fallback)
+                        return meta
 
     meta = {}
     lines = content.split("\n")
@@ -369,7 +426,8 @@ def read_improvement_entries(project_root: str) -> list[dict]:
                 content = f.read()
         except (OSError, UnicodeDecodeError):
             continue
-        meta = _parse_improvement_meta(content)
+        meta_errors: list[str] = []
+        meta = _parse_improvement_meta(content, errors=meta_errors)
         for key, value in meta.items():
             if key == "name":
                 # The file name is the canonical key (archive dirs are matched
@@ -382,5 +440,10 @@ def read_improvement_entries(project_root: str) -> list[dict]:
         entry["source"] = _first_str(meta, "source", "来源")
         entry["effort"] = _first_str(meta, "effort", "工作量")
         entry["status"] = _first_str(meta, "status", "状态")
+        if meta_errors:
+            # Surfaced (not swallowed): a broken front matter silently costs
+            # the whole metadata set (priority / phase / status), so callers
+            # must be able to report it. See ``collect_pending().errors``.
+            entry["meta_parse_error"] = "; ".join(meta_errors)
         entries.append(entry)
     return entries

@@ -5,6 +5,7 @@
 分类: doc-fix, bug-fix, code-quality
 类型: bug
 特性: doc-drift-cleanup
+状态: '✅ 已实施 (2026-10-07, commit f5f57dd1 "fix(rdd-doctor): sync SKILL.md table (8→18) + fix _PROJECT_ROOT 4→5 level + replace hardcoded paths" — 守卫见 `tests/unit/test_no_hardcoded_workspace_paths.py`)'
 ---
 **优先级**: P1 | **来源**: 用户调研 + rdd-doctor 自身 16 项 bats 集成测试失败根因分析（2026-10-07）
 **阶段**: v2.2 | **分类**: doc-fix + bug-fix + code-quality

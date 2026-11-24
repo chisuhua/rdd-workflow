@@ -115,6 +115,51 @@ def test_empty_status_falls_back_to_pending_label():
 
 
 # --------------------------------------------------------------------------
+# English terminal markers (the 2026-11-17/18 batch writes `状态: implemented`)
+# --------------------------------------------------------------------------
+
+@pytest.mark.parametrize(
+    "raw,expected_label",
+    [
+        ("implemented (2026-11-17)", "已实施"),
+        ("Implemented (2026-11-17)", "已实施"),
+        ("implemented", "已实施"),
+        (
+            "implemented (2026-11-17 首轮 → 2026-11-18 architect 复核后补完 5 条 AC，复验通过)",
+            "已实施",
+        ),
+        ("completed", "已完成"),
+        ("Completed (2026-11-17)", "已完成"),
+    ],
+)
+def test_english_delivered_markers_are_terminal(raw, expected_label):
+    """The English vocabulary is the same contract as the Chinese one.
+
+    Without it a delivered item stayed in the Pending pool with a truncated
+    label ("implemented (202").
+    """
+    _, classify, _ = _load()
+    terminal, label = classify(raw)
+    assert terminal is True
+    assert label == expected_label
+
+
+@pytest.mark.parametrize(
+    "raw,expected_label",
+    [
+        ("待审查", "待审查"),
+        ("已推迟 (2026-08-14)", "已推迟"),
+    ],
+)
+def test_review_and_deferred_markers_are_open(raw, expected_label):
+    """「待审查」/「已推迟」 are pending — but they are not 「待讨论」."""
+    _, classify, _ = _load()
+    terminal, label = classify(raw)
+    assert terminal is False
+    assert label == expected_label
+
+
+# --------------------------------------------------------------------------
 # state_reader
 # --------------------------------------------------------------------------
 
@@ -197,6 +242,66 @@ def test_read_improvement_entries_without_metadata(tmp_path):
     assert entry["name"] == "bare"
     assert entry["status"] == ""
     assert entry["priority"] == ""
+
+
+def test_read_improvement_entries_recovers_broken_yaml_front_matter(tmp_path):
+    """A front matter that does not PARSE must not cost the whole metadata set.
+
+    A multi-line plain scalar whose continuation line contains ``: `` makes
+    PyYAML raise ScannerError; the old behaviour dropped priority / phase /
+    category / status entirely (the row rendered as "待讨论" with "-" for
+    every column).
+    """
+    _, _, read_entries = _load()
+    project = _make_project(
+        tmp_path,
+        {
+            "broken-imp": (
+                "---\n"
+                "优先级: P2\n"
+                "来源: 2026-09-28 多次审计 (commit ab5ded7)\n"
+                "  入口未正式文档化。新 skill 作者不知道:\n"
+                "  - 有哪些模块可用\n"
+                "阶段: v4.1 follow-up\n"
+                "分类: documentation\n"
+                "---\n\n"
+                "# broken-imp\n"
+            )
+        },
+    )
+    entries = read_entries(project)
+    assert len(entries) == 1
+    entry = entries[0]
+    assert entry["priority"] == "P2"
+    assert entry["phase"] == "v4.1 follow-up"
+    assert entry["category"] == "documentation"
+    # the breakage is reported, not swallowed
+    assert "invalid YAML front matter" in entry.get("meta_parse_error", "")
+
+
+def test_pending_reports_broken_front_matter(tmp_path):
+    """A broken front matter must show up in the errors channel."""
+    sys.path.insert(0, PROJECT_ROOT)
+    from _lib.dashboard import collect_pending
+
+    project = _make_project(
+        tmp_path,
+        {
+            "broken-imp": (
+                "---\n"
+                "优先级: P2\n"
+                "来源: text\n"
+                "  trailing colon:\n"
+                "阶段: v4\n"
+                "---\n\n"
+                "# broken-imp\n"
+            )
+        },
+    )
+    snap = collect_pending(project)
+    assert [s.name for s in snap.suggestions] == ["broken-imp"]
+    assert snap.suggestions[0].priority == "P2"
+    assert any("broken-imp" in err for err in snap.errors)
 
 
 # --------------------------------------------------------------------------

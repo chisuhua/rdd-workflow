@@ -1,6 +1,7 @@
 ---
 优先级: P3
-来源: 2026-09-28 fix-skill-layer-resolution-bash (shipped commit 1bcb8a0) 实施审计 — bash + Python
+来源: >-
+  2026-09-28 fix-skill-layer-resolution-bash (shipped commit 1bcb8a0) 实施审计 — bash + Python
   现在各有独立 helper (bash `_resolve_project_root` + Python
   `skills._lib._python_resolve_project_root.resolve_project_root`),但两语言之间
   没有共享 contract → 行为可能漂移 (如 bash helper 未来支持 RDDF_PROJECT_ROOT
@@ -11,7 +12,8 @@
 分类: refactor
 类型: refactor
 主题: 跨项目 CLI 契约一致性
-依赖: skills/_lib/orchestrator_entry.sh::_resolve_project_root (shipped),
+依赖: >-
+  skills/_lib/orchestrator_entry.sh::_resolve_project_root (shipped),
   skills/_lib/_python_resolve_project_root.py::resolve_project_root (shipped commit 281423d),
   ADR-0033 (submodule-aware git probe)
 ---

@@ -1,18 +1,20 @@
 ---
 优先级: P3
-来源: 2026-09-27 add-skill-layer-resolve-project-root-helper (shipped commit 281423d) 实施审计
+来源: >-
+  2026-09-27 add-skill-layer-resolve-project-root-helper (shipped commit 281423d) 实施审计
   — 该 proposal 修了 Python side skill layer leaky abstraction。但 **bash side 仍有
   ad-hoc project_root detection**:
   - skills/_lib/orchestrator_entry.sh:33 已有 bash helper `_resolve_project_root()` (single source of truth)
   - 2 bash scripts 正确用 helper: select_worktree.sh:16, arch_env_check.sh:21
   - **1 bash script 手动重新实现**:`skills/rdd-arch/scripts/roadmap_incremental_update.sh:25-33`
-    显式检查 RDDF_PROJECT_ROOT + git probe fallback,与 bash helper 重复
+  显式检查 RDDF_PROJECT_ROOT + git probe fallback,与 bash helper 重复
   - 56 bash scripts 使用 `${VAR:-default}` pattern (但用于其他 env vars,非 project_root)
 阶段: v4.1 follow-up
 分类: refactor
 类型: refactor
 主题: 跨项目 CLI 契约一致性
-依赖: skills/_lib/orchestrator_entry.sh::_resolve_project_root (bash ref impl, existing),
+依赖: >-
+  skills/_lib/orchestrator_entry.sh::_resolve_project_root (bash ref impl, existing),
   add-skill-layer-resolve-project-root-helper (shipped commit 281423d)
 ---
 

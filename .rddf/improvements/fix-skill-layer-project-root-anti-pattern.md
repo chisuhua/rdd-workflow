@@ -1,6 +1,7 @@
 ---
 优先级: P2
-来源: 2026-09-26 fix-33-handlers-project-root-anti-pattern (shipped commit ab5ded7) 实施审计
+来源: >-
+  2026-09-26 fix-33-handlers-project-root-anti-pattern (shipped commit ab5ded7) 实施审计
   — 该 proposal 修了 26 个 `_lib/cli/*.py` handler,但未触及 `skills/*/scripts/*.py` skill layer。
   精确扫描:5 个 skill scripts 仍用 `os.getcwd()` 作为 project_root fallback:
   - `skills/propose/scripts/propose_quality_check.py` (用 `PROJECT_ROOT` env var)
@@ -13,7 +14,8 @@
 分类: refactor
 类型: refactor
 主题: 跨项目 CLI 契约一致性
-依赖: fix-33-handlers-project-root-anti-pattern (shipped commit ab5ded7), ADR-0033
+依赖: >-
+  fix-33-handlers-project-root-anti-pattern (shipped commit ab5ded7), ADR-0033
   submodule-aware project_root resolution
 ---
 

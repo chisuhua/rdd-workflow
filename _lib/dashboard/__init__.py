@@ -470,6 +470,11 @@ def collect(project_root: str) -> DashboardData:
         data.suggestions.extend(snapshot.suggestions)
         data.approved_proposals.extend(snapshot.approved_proposals)
         data.pending_suggestions = len(data.suggestions)
+        # Surface metadata problems (e.g. an improvement whose front matter
+        # does not parse ⇒ priority / phase / status all lost) as divergence
+        # warnings instead of letting them vanish.
+        for err in snapshot.errors:
+            data.divergence_warnings.append(f"improvement metadata problem: {err}")
     except Exception:
         pass
 
@@ -660,6 +665,13 @@ def collect_pending(project_root: str) -> PendingSnapshot:
 
     for entry in improvement_entries:
         name = entry.get("name", "?")
+        # A broken front matter costs the whole metadata set (priority /
+        # phase / status) ⇒ report it even when the entry is filtered out of
+        # the pending pool (approved / archived / terminal), otherwise the
+        # damage stays invisible.
+        meta_error = entry.get("meta_parse_error")
+        if meta_error:
+            snap.errors.append(f"{name}: {meta_error}")
         if name in approved or name in archived_names:
             continue
         try:

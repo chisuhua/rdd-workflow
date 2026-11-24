@@ -226,13 +226,16 @@ with open(sys.argv[1], 'w') as f:
   sync_suggestions "$project_root" "$name" "approved"
 }
 
-# mark_approved_completed <project_root> <name>
+# mark_approved_completed <project_root> <name> [completed_date]
 # Updates improvement-approved.md: moves entry from "已批准提案" to "已实施" table.
+# Optional 3rd arg: the completion date (YYYY-MM-DD). Defaults to today — the
+# archive path has no better source, while the terminal-status path knows the
+# real completion date from the improvement's own "状态" field.
 mark_approved_completed() {
   local project_root="$1"
   local name="$2"
   local approved_file="$(rddf_index_file "$project_root" improvement-approved.md)"
-  local timestamp=$(date -u +%Y-%m-%d)
+  local timestamp="${3:-$(date -u +%Y-%m-%d)}"
 
   if [ ! -f "$approved_file" ]; then
     return 1
@@ -425,10 +428,82 @@ if removed:
 '
 }
 
+# register_implemented_proposal <project_root> <name> <priority> <date>
+#   Appends a row to the "## 已实施" section of improvement-approved.md.
+#   Used for proposals that were implemented but never went through the
+#   approval flow (rdd-quick / in-place execution, per ADR-0047) — they
+#   have no openspec change, hence no archive dir to match against.
+#   Idempotent: a name already present in the file is left untouched.
+#   Returns 0 when a row was added, 1 when the name was already registered.
+register_implemented_proposal() {
+  local project_root="$1"
+  local name="$2"
+  local priority="${3:-P1}"
+  local date="${4:-}"
+  local approved_file="$(rddf_index_file "$project_root" improvement-approved.md)"
+
+  if [ ! -f "$approved_file" ]; then
+    return 1
+  fi
+  if [ -z "$date" ]; then
+    date="$(date -u +%Y-%m-%d)"
+  fi
+
+  APPROVED_FILE="$approved_file" LINK_PREFIX="$(rddf_improvement_link_prefix "$approved_file")" \
+  CHANGE_NAME="$name" CHANGE_PRI="$priority" CHANGE_DATE="$date" \
+  python3 << 'PYEOF'
+import os, sys
+
+approved_file = os.environ["APPROVED_FILE"]
+name = os.environ["CHANGE_NAME"]
+pri = os.environ["CHANGE_PRI"]
+date = os.environ["CHANGE_DATE"]
+
+with open(approved_file) as f:
+    lines = f.readlines()
+
+for line in lines:
+    if f'[{name}]' in line and line.strip().startswith('|'):
+        sys.exit(1)   # already registered
+
+row = f'| [{name}]({os.environ["LINK_PREFIX"]}{name}.md) | {pri} | {date} | 已实施 |\n'
+
+# Insert into the first table block of the "## 已实施" section (newest first).
+sec = next((i for i, line in enumerate(lines) if line.startswith('## 已实施')), None)
+if sec is None:
+    print(f'⚠️ register_implemented_proposal: no "## 已实施" section in {approved_file}',
+          file=sys.stderr)
+    sys.exit(1)
+
+insert_at = None
+for i in range(sec + 1, len(lines)):
+    if lines[i].startswith('|---'):
+        insert_at = i + 1
+        break
+if insert_at is None:
+    insert_at = sec + 1
+
+lines.insert(insert_at, row)
+with open(approved_file, 'w') as f:
+    f.writelines(lines)
+PYEOF
+}
+
 # sweep_implemented_proposals <project_root>
-# Scans improvement-approved.md pending table against openspec/changes/archive/.
-# For each pending entry with a matching archive dir (suffix match),
-# calls mark_approved_completed to move it to the "已实施" section.
+# Retires improvement proposals through **two independent paths**:
+#
+#   1. **archive match** — a row in improvement-approved.md's pending table
+#      whose name has a matching `openspec/changes/archive/<date>-<name>/`
+#      directory ⇒ moved to the "已实施" section (mark_approved_completed).
+#   2. **terminal status** — an improvement file whose front matter `状态`
+#      says it is delivered, but which never went through the approval flow
+#      and therefore has no archive dir (rdd-quick / in-place execution per
+#      ADR-0047) ⇒ moved (if it sits in the pending table) or registered
+#      directly in the "已实施" section.
+#
+# Path 2 exists because path 1 can never fire for those proposals: without
+# an openspec change there is no archive directory to match.
+#
 # Idempotent: safe to run repeatedly.
 sweep_implemented_proposals() {
   local project_root="$1"
@@ -439,26 +514,25 @@ sweep_implemented_proposals() {
   fi
 
   local archive_dir="$project_root/openspec/changes/archive"
-  if [ ! -d "$archive_dir" ]; then
-    return 0
-  fi
 
   echo "🔍 扫描已实现提案 (sweep_implemented_proposals)..."
   local moved=0
 
-  # Parse pending proposals from improvement-approved.md (before ## 已实施)
-  # Extract [name](.rddf/improvements/name.md) entries, check archive dir
-  while IFS='|' read -r name rest; do
-    [ -z "$name" ] && continue
-    # Trim whitespace
-    name=$(echo "$name" | xargs)
-    # Check for matching archive dir: archive/*-<name>
-    if ls -d "$archive_dir/"*-"$name" 2>/dev/null | grep -q .; then
-      mark_approved_completed "$project_root" "$name"
-      echo "  ✅ $name — 已归档，标记为已实施"
-      moved=$((moved + 1))
-    fi
-  done < <(python3 -c "
+  # --- Path 1: pending row + matching archive dir ---------------------
+  if [ -d "$archive_dir" ]; then
+    # Parse pending proposals from improvement-approved.md (before ## 已实施)
+    # Extract [name](.rddf/improvements/name.md) entries, check archive dir
+    while IFS='|' read -r name rest; do
+      [ -z "$name" ] && continue
+      # Trim whitespace
+      name=$(echo "$name" | xargs)
+      # Check for matching archive dir: archive/*-<name>
+      if ls -d "$archive_dir/"*-"$name" 2>/dev/null | grep -q .; then
+        mark_approved_completed "$project_root" "$name"
+        echo "  ✅ $name — 已归档，标记为已实施"
+        moved=$((moved + 1))
+      fi
+    done < <(python3 -c "
 import sys, re
 with open(sys.argv[1]) as f:
     content = f.read()
@@ -467,9 +541,114 @@ section = re.split(r'## 已实施', content)[0]
 for m in re.finditer(r'\|\s*\[([^\]]+)\]\((?:\.rddf/)?improvements/([^)]+)\)\s*\|', section):
     print(f\"{m.group(1)}|{m.group(2)}\")
 " "$approved_file" 2>/dev/null)
+  fi
+
+  # --- Path 2: 状态已标终态、但从未进入 approved 索引的提案 -------------
+  local lib_dir
+  lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  local registered=0
+  while IFS='|' read -r name priority date action; do
+    [ -z "$name" ] && continue
+    case "$action" in
+      move)
+        mark_approved_completed "$project_root" "$name" "$date"
+        echo "  ✅ $name — 状态已标终态，从已批准移入已实施（${date:-日期未知}）"
+        moved=$((moved + 1))
+        ;;
+      add)
+        if register_implemented_proposal "$project_root" "$name" "$priority" "$date"; then
+          echo "  ✅ $name — 状态已标终态，登记为已实施（${date:-日期未知}）"
+          moved=$((moved + 1))
+          registered=$((registered + 1))
+        fi
+        ;;
+    esac
+  done < <(
+    PROJECT_ROOT="$project_root" APPROVED_FILE="$approved_file" LIB_DIR="$lib_dir" \
+    python3 << 'PYEOF' 2>/dev/null
+import importlib.util
+import os
+import re
+import sys
+from pathlib import Path
+
+root = Path(os.environ["PROJECT_ROOT"])
+approved = Path(os.environ["APPROVED_FILE"])
+lib_dir = Path(os.environ["LIB_DIR"])
+
+# --- classifier, loaded by file path (no package side effects) ---------
+status_mod = lib_dir / "dashboard" / "improvement_status.py"
+if not status_mod.is_file():
+    sys.exit(0)
+spec = importlib.util.spec_from_file_location("_improvement_status", status_mod)
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+classify = mod.classify_improvement_status
+
+try:
+    import yaml
+except ImportError:
+    sys.exit(0)
+
+try:
+    text = approved.read_text(encoding="utf-8")
+except Exception:
+    text = ""
+
+ROW_RE = re.compile(r"\|\s*\[([^\]]+)\]\([^)]+\.md\)")
+if "## 已实施" in text:
+    pending_text, implemented_text = text.split("## 已实施", 1)
+else:
+    pending_text, implemented_text = text, ""
+pending_names = {m.group(1) for m in ROW_RE.finditer(pending_text)}
+implemented_names = {m.group(1) for m in ROW_RE.finditer(implemented_text)}
+
+DATE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})")
+imp_dir = root / ".rddf" / "improvements"
+if not imp_dir.is_dir():
+    sys.exit(0)
+
+for f in sorted(imp_dir.glob("*.md")):
+    try:
+        content = f.read_text(encoding="utf-8")
+    except Exception:
+        continue
+    if not content.startswith("---\n"):
+        continue
+    end = content.find("\n---", 4)
+    if end == -1:
+        continue
+    try:
+        meta = yaml.safe_load(content[4:end])
+    except Exception:
+        continue
+    if not isinstance(meta, dict):
+        continue
+    raw = meta.get("状态") or meta.get("status") or ""
+    if not isinstance(raw, str) or not raw.strip():
+        continue
+    try:
+        terminal, label = classify(raw)
+    except Exception:
+        continue
+    # 已作废 = voided, not implemented ⇒ not a retirement.
+    if not terminal or label == "已作废":
+        continue
+    name = f.stem
+    if name in implemented_names:
+        continue
+    action = "move" if name in pending_names else "add"
+    priority = meta.get("优先级") or meta.get("priority") or "P1"
+    if not isinstance(priority, str) or not priority.strip():
+        priority = "P1"
+    dates = DATE_RE.findall(raw)
+    date = dates[-1] if dates else ""
+    print(f"{name}|{priority}|{date}|{action}")
+PYEOF
+  )
 
   if [ "$moved" -gt 0 ]; then
-    echo "  🎯 共标记 $moved 个提案为已实施"
+    echo "  🎯 共标记 $moved 个提案为已实施（登记 $registered 个）"
   else
     echo "  无已归档但未标记的提案"
   fi

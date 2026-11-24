@@ -1,6 +1,7 @@
 ---
 优先级: P1
-来源: 2026-09-25 rdd-verifier re-verify audit of rdd-workflow-e2e (PR #1 merge) — CI 报
+来源: >-
+  2026-09-25 rdd-verifier re-verify audit of rdd-workflow-e2e (PR #1 merge) — CI 报
   `test 6 (archive/cleanup/build --help)` 新增失败,实际暴露 2 个主仓 CLI handler 的 `--help`
   处理 bug:`rddf contract-check --help` 返回 EXIT=2 (argparse 自动 exit 被自定义 store_true 覆盖),
   `rddf archive-sync --help` 把 `--help` 当 change name 查找 iteration.json (EXIT=1)

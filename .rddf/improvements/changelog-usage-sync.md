@@ -4,7 +4,7 @@
 阶段: default
 分类: docs
 类型: improvement
-状态: ✅ 已实施 (2026-08-28, commit d887610 "feat(usage-sync): CHANGELOG [Unreleased] ↔ USAGE banner sync check"; per feat-fix-archive-gaps-v2 phase-2 推进)
+状态: '✅ 已实施 (2026-08-28, commit d887610 "feat(usage-sync): CHANGELOG [Unreleased] ↔ USAGE banner sync check"; per feat-fix-archive-gaps-v2 phase-2 推进)'
 ---
 **优先级**: P1 (↑ from P2, 2026-08-28 per feat-fix-archive-gaps-v2) | **来源**: 2026-08-26 文档与代码一致性审计
 **阶段**: default | **分类**: docs
