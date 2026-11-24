@@ -5,17 +5,19 @@ Define the repository-level contract for documenting the worktree commit flow, f
 
 ## Requirements
 
-### Requirement: AGENTS.md MUST document the worktree commit flow
+### Requirement: AGENTS.md MUST state the Phase 2 commit boundary
 
-`AGENTS.md` MUST carry an H3 section titled `Worktree Commit Flow` that states three things: the Phase 2 execute boundary (tasks are not committed individually; a single aggregate worktree-internal commit is made once all Phase 2 tasks pass), the conventional commit types accepted in that commit, and the Phase 3 archive boundary (the branch is merged, the change archived, and the worktree cleaned up).
-
-The section MUST NOT hardcode drift-prone composition counts (for example a count of files or modules), because any such count is invalidated the moment files are added or removed.
+`AGENTS.md` MUST carry an H3 section titled `Worktree Commit Flow` that states the Phase 2 execute boundary: tasks are not committed individually, and a single aggregate worktree-internal commit is made once all Phase 2 tasks pass. The section MUST also state the Phase 3 archive boundary, where the branch is merged, the change archived and the worktree cleaned up.
 
 #### Scenario: The aggregate-commit rule is stated with a discriminating boundary
 
 - **WHEN** `AGENTS.md` is searched for the literal text `execute 阶段不逐任务 commit`
 - **THEN** the matching line MUST itself contain `worktree-internal commit`
 - **AND** the two lines following it MUST cross-reference the `Worktree Commit Flow` section
+
+### Requirement: AGENTS.md MUST list the conventional commit types
+
+The `Worktree Commit Flow` section MUST contain one list entry per conventional commit type, each written as a backtick-wrapped `<type>(<scope>):` prefix. The section MUST NOT hardcode drift-prone composition counts (for example a count of files or modules), because any such count is invalidated the moment files are added or removed.
 
 #### Scenario: The commit types are listed in the documented form
 
