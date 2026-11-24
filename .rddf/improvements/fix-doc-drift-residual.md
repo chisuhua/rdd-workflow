@@ -6,7 +6,7 @@ priority: P2
 阶段: phase-2
 分类: tech-debt
 类型: tech-debt
-状态: draft（2026-11-24 已按磁盘实测重算基线 —— P1-5 / P1-6 / P2-1 / P2-3 / critic#3 五项仍未动；P2-2 口径修正为「声明必须可派生」，实测结论是**版本侧本来就没有漂移**（v4.0.1 是 ADR-0048 的 workflow 版本，与 package.json 的 4.0.0 是不同概念；v4.0.2 标注 planned；阶段 0.0.5 是 SKILL.md 真实存在的阶段版本）—— 原口径会造出假矛盾；guide-* 口径修正为「非历史上下文命中 = 0」，实测 15 行命中中 14 行带历史标记、1 行是 step 5 遗留的陈旧断言；本轮新增一项 —— agent-role-alignment.md 的陈旧断言）
+状态: 已实施（2026-11-24 立项 → 归档为 2026-11-24-fix-doc-drift-residual；13 条 AC 全 pass，verdict 缓存 .rddf/state/verifier/.ac-verdict-fix-doc-drift-residual.json；交付物：断链检查器 tests/scripts/check_md_links.py + 29 处真断链修复 + ADR 索引 --check + 四处文档补齐）
 
 生成时间: 2026-11-17
 roadmap_ref:
