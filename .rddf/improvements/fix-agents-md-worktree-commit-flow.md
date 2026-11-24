@@ -1,13 +1,13 @@
 ---
 优先级: P1
-来源: 2026-11-05 归档收尾审查 — tests/KNOWN_FAILURES.txt 的 11 条基线失败中有 6 条同根因（AGENTS.md 缺 "Worktree Commit Flow" 段），且这 6 条标注的跟踪项 feat-doc-drift-cleanup 在 .rddf/roadmap/features/ 下不存在，缺陷当前无任何活跃归属
+来源: 2026-11-05 归档收尾审查 — tests/KNOWN_FAILURES.txt 的 10 条基线失败中有 6 条同根因（AGENTS.md 缺 "Worktree Commit Flow" 段），且其中 4 条标注的跟踪项 feat-doc-drift-cleanup 在 .rddf/roadmap/features/ 下不存在，缺陷当前无任何活跃归属
 阶段: v5.x
 分类: docs
 类型: documentation
-状态: 待立项（AC 7 条全未勾；AGENTS.md 仍缺 Worktree Commit Flow 段，KNOWN_FAILURES 5 条同根因基线失败仍在）
+状态: 已实施并验收（2026-11-24 立项 → 归档为 2026-11-24-fix-agents-md-worktree-commit-flow；10/10 AC pass；KNOWN_FAILURES 基线 10 → 4）
 ---
 
-**优先级**: P1 | **来源**: 2026-11-05 归档收尾审查 — KNOWN_FAILURES 11 条基线失败中 6 条同根因（AGENTS.md 缺 "Worktree Commit Flow" 段），标注的跟踪项 `feat-doc-drift-cleanup` 不存在
+**优先级**: P1 | **来源**: 2026-11-05 归档收尾审查 — KNOWN_FAILURES 10 条基线失败中 6 条同根因（AGENTS.md 缺 "Worktree Commit Flow" 段），其中 4 条标注的跟踪项 `feat-doc-drift-cleanup` 不存在
 **阶段**: v5.x | **分类**: docs | **类型**: documentation
 
 > **范围定位**：本提案**只改文档 + 刷新基线**，不改任何代码路径。断言来源是既有的 `tests/integration/test_worktree_archive_workflow_docs.bats`（6 个用例，自 `worktree-archive-workflow` change 起就存在），本提案让实现追上早已写好的断言。
@@ -16,7 +16,7 @@
 
 ### 现象
 
-`tests/KNOWN_FAILURES.txt` 现有 **11 条**基线失败，其中 **6 条**指向同一个缺口：
+`tests/KNOWN_FAILURES.txt` 现有 **10 条**基线失败，其中 **6 条**指向同一个缺口：
 
 ```
 AGENTS.md: Worktree Commit Flow section exists
@@ -27,13 +27,15 @@ AGENTS.md: trap #6 cross-references Worktree Commit Flow
 AGENTS.md: 归档流程 cross-references check_worktree_commits
 ```
 
-这 6 条的 `# 备注` 都写着 `tracked in feat-doc-drift-cleanup` / `fix in feat-doc-drift-cleanup` —— 但 `.rddf/roadmap/features/` 下**没有** `feat-doc-drift-cleanup` 这个 fragment（当前 8 个 fragment 已全部 `done`，无一对应）。即：**缺陷存在，归属丢失**。
+这 6 条里**有 4 条**的 `# 备注` 写着 `tracked in feat-doc-drift-cleanup` / `fix in feat-doc-drift-cleanup` —— 但 `.rddf/roadmap/features/` 下**没有** `feat-doc-drift-cleanup` 这个 fragment（当前 9 个 fragment 已全部 `done`，无一对应）。即：**缺陷存在，归属丢失**。
 
-> **「归属丢失」的准确表述**：该 fragment 名是 **2026-10-08 那次 selective refresh 登记基线时手写的占位**（`KNOWN_FAILURES.txt` L60 记 `kept=1, removed=9, added=20`），**从未被创建** —— 不是后来被删。因此读者去 `.rddf/roadmap/features/` 里找「被误删的 fragment」是找不到的。
+> **「归属丢失」的准确表述**：该 fragment 名是 **2026-10-08 那次 selective refresh 登记基线时手写的占位**（`KNOWN_FAILURES.txt` L61 记 `kept=1, removed=9, added=20`），**从未被创建** —— 不是后来被删。因此读者去 `.rddf/roadmap/features/` 里找「被误删的 fragment」是找不到的。
 >
-> 同样的占位出现在**另外 2 条** SKILL.md description 失败的备注里（同样指向 `feat-doc-drift-cleanup`）—— 即 11 条里有 **8 条**挂着这个虚构跟踪项，剩余 3 条各自指向另一个 TBD 占位（`feat-rdd-env-bootstrap-help-audit` / `feat-rdd-builder-idempotency-audit` / `feat-rdd-builder-5-segment-rewrite`）。**基线登记环节允许虚构跟踪项**，这与文件尾注揭露的 skill-count drift 隐身是同一模式。
+> 同样的占位还出现在**另外 1 条** SKILL.md description 失败的备注里（同样指向 `feat-doc-drift-cleanup`）—— 即 10 条里有 **5 条**挂着这个虚构跟踪项（4 条属上列 AGENTS.md 族、1 条是 SKILL.md description），剩余 5 条中另有 2 条（`trap #6` 的两条）属 AGENTS.md 族但**没写**跟踪项，其余 3 条各自指向另一个 TBD 占位（`feat-rdd-env-bootstrap-help-audit` / `feat-rdd-builder-idempotency-audit` / `feat-rdd-builder-5-segment-rewrite`）。**基线登记环节允许虚构跟踪项**，这与文件尾注揭露的 skill-count drift 隐身是同一模式。
 
 ### 缺口是怎么形成的
+
+> **架构依据**：`ADR-0061`（archive gate refuses unmerged branch）确立了「归档前 worktree 分支必须相对默认分支有新 commit」这条硬门禁（`_lib/archive.sh::check_worktree_commits`）。AGENTS.md 是这条门禁的**人类可读面** —— 本提案补的就是这半边（门禁在代码里，约定却不在文档里）。
 
 `worktree-archive-workflow` change 落地时，约定被写进了**提案文档**（`.rddf/improvements/worktree-archive-workflow.md` §Worktree Commit Flow），内容是完整的：
 
@@ -45,13 +47,13 @@ AGENTS.md: 归档流程 cross-references check_worktree_commits
 
 ### 为什么现在值得修
 
-1. **归属丢失**：6 条失败挂着不存在的 fragment，既不在 roadmap 视野里，也不在任何 improvement 的 Acceptance 里 —— 不会被任何人推进。
+1. **归属丢失**：4 条失败挂着不存在的 fragment，既不在 roadmap 视野里，也不在任何 improvement 的 Acceptance 里 —— 不会被任何人推进。
 2. **文档说的是相反的话**：AGENTS.md 现有的 trap 规则写「execute 阶段不逐任务 commit」，而 `_lib/archive.sh::archive_change` 通过 `check_worktree_commits` 要求 worktree 分支**必须有 commit**。新用户/agent 读 AGENTS.md 会直接撞上「execute 不 commit 但 archive 需要 commits」的矛盾 —— 这正是原提案要消除的那个矛盾。
-3. **杠杆最高**：11 条已知失败里 6 条归零，基线一次性瘦身过半。
+3. **杠杆最高**：10 条已知失败里 6 条归零，基线一次性瘦身过半。
 
 ### 不在本提案范围
 
-另外 5 条已知失败（2 条 SKILL.md description 漂移、1 条 `rddf env-bootstrap --help` flags、1 条 `mark_approved_completed` 幂等、1 条 `phase0_approval.sh --auto-approve` 5 段）各有独立根因，且其中 3 条的跟踪项同样是 TBD 占位（`feat-rdd-env-bootstrap-help-audit` / `feat-rdd-builder-idempotency-audit` / `feat-rdd-builder-5-segment-rewrite`）。**本提案不碰它们** —— 一文档一决策，另案处理。
+另外 4 条已知失败（1 条 SKILL.md description 漂移、1 条 `rddf env-bootstrap --help` flags、1 条 `mark_approved_completed` 幂等、1 条 `phase0_approval.sh --auto-approve` 5 段）各有独立根因，且其中 3 条的跟踪项同样是 TBD 占位（`feat-rdd-env-bootstrap-help-audit` / `feat-rdd-builder-idempotency-audit` / `feat-rdd-builder-5-segment-rewrite`）。**本提案不碰它们** —— 一文档一决策，另案处理。
 
 ## What Changes
 
@@ -101,29 +103,36 @@ AGENTS.md: 归档流程 cross-references check_worktree_commits
 
    > **位置约束**：两个新段加在 AGENTS.md **正文区**，**不得**插入 `<!-- AUTO: feature fragments start -->` 或 `<!-- AUTO: objectives start -->` 哨兵段内部 —— 哨兵段由 `rddf roadmap --update-agent-md` 重写，插入其中会被下次更新静默抹掉。建议 `### 归档流程` 紧邻现有的 `### Archive 前全量回归门（MANDATORY）` 段。
 
-4. **刷新 `tests/KNOWN_FAILURES.txt`**：6 条转绿后移除对应基线条目，基线 11 → 5。
+4. **刷新 `tests/KNOWN_FAILURES.txt`**：6 条转绿后移除对应基线条目，基线 10 → 4。
 
    > **执行顺序（不可颠倒）**：
    > 1. 先跑 `bash tests/scripts/report_regression.sh` 确认 **新增失败 = 0**；
-   > 2. 再跑 `bash tests/scripts/refresh_known_failures.sh --dry-run`，核对 diff 期望 `removed=6, added=0`（summary 行 `kept=5`）；
+   > 2. 再跑 `bash tests/scripts/refresh_known_failures.sh --dry-run`，核对 diff 期望 `removed=6, added=0`（summary 行 `kept=4`）；
    > 3. 核对通过后才实跑 refresh。
    >
    > **为什么顺序重要**：selective refresh 会把**实施窗口内的任何新失败**一并吸收进基线（它收集的是当前全部失败，减去仍在基线中的部分）。先 refresh 后跑回归，被吸收的新失败就从「新增失败」里消失了 —— 基线会把新回归洗白，**新增失败 = 0** 就失去意义。
 
-**不改**：任何 `.sh` / `.py` / `.bats` 文件；`_lib/archive.sh`；`rdd-builder/SKILL.md`；其余 5 条已知失败条目。
+**不改**：任何 `.sh` / `.py` / `.bats` 文件；`_lib/archive.sh`；`rdd-builder/SKILL.md`；其余 4 条已知失败条目。
+
+**Out of Scope**:
+- 任何 `.sh` / `.py` / `.bats` 文件 —— 本提案**只改 `AGENTS.md` + `tests/KNOWN_FAILURES.txt`**
+- `_lib/archive.sh::check_worktree_commits`（**不**加 commit type 白名单校验 —— AGENTS.md 承诺 5 种 type 不构成实现约束）
+- `rdd-builder/SKILL.md` / `skills/rdd-arch/SKILL.md` 等任何 SKILL.md
+- 其余 4 条已知失败条目（1 条 SKILL.md description 漂移 / 1 条 `rddf env-bootstrap --help` flags / 1 条 `mark_approved_completed` 幂等 / 1 条 `phase0_approval.sh --auto-approve` 5 段）—— 各自独立根因，另案处理
+- `.rddf/roadmap/features/` 的 fragment 补登 —— `feat-doc-drift-cleanup` 是**从未创建**的虚构跟踪项，本提案通过移除这 6 条基线条目**消除**该虚构引用，而不是补建一个 fragment
 
 ## Acceptance
 
-- [ ] `bats tests/integration/test_worktree_archive_workflow_docs.bats` ⇒ 6/6 通过
-- [ ] `grep -c "^### Worktree Commit Flow" AGENTS.md` ≥ 1
-- [ ] `grep -cE "^   - \`[a-z]+\(<scope>\):" AGENTS.md` ≥ 5
-- [ ] `grep -A 8 "^### 归档流程" AGENTS.md` 含 `check_worktree_commits`
-- [ ] `grep "execute 阶段不逐任务 commit" AGENTS.md` 的**匹配行本身**含 `worktree-internal commit` 或 `worktree 内做 1 个聚合 commit`
-- [ ] `bash tests/scripts/report_regression.sh` ⇒ **新增失败 = 0**（**先于** refresh 执行，见 What Changes 4）
-- [ ] `bash tests/scripts/refresh_known_failures.sh --dry-run` 的 diff 期望 `removed=6, added=0`（summary `kept=5`）；核对通过后实跑 refresh
-- [ ] `git diff tests/KNOWN_FAILURES.txt` **仅**含 6 条 AGENTS.md 条目的移除与一条 summary 注释，**无非注释新增行**（防止 refresh 把别的新失败吸收进来）
-- [ ] `tests/KNOWN_FAILURES.txt` 条目数 11 → 5，且剩余 5 条与本提案无关
-- [ ] `rddf doctor --category docs-consistency` 无新增 finding（新段内**不得**写「per ADR-00XX」这类未经核对的 ADR 引用 —— `docs_consistency` 会扫 AGENTS.md 的 ADR 编号引用并对磁盘缺失报 WARNING）
+- [x] `bats tests/integration/test_worktree_archive_workflow_docs.bats` ⇒ 6/6 通过
+- [x] `grep -c "^### Worktree Commit Flow" AGENTS.md` ≥ 1
+- [x] `grep -cE "^   - \`[a-z]+\(<scope>\):" AGENTS.md` ≥ 5
+- [x] `grep -A 8 "^### 归档流程" AGENTS.md` 含 `check_worktree_commits`
+- [x] `grep "execute 阶段不逐任务 commit" AGENTS.md` 的**匹配行本身**含 `worktree-internal commit` 或 `worktree 内做 1 个聚合 commit`
+- [x] `bash tests/scripts/report_regression.sh` ⇒ **新增失败 = 0**（**先于** refresh 执行，见 What Changes 4）
+- [x] `bash tests/scripts/refresh_known_failures.sh --dry-run` 的 diff 期望 `removed=6, added=0`（summary `kept=4`）；核对通过后实跑 refresh
+- [x] `git diff tests/KNOWN_FAILURES.txt` **仅**含 6 条 AGENTS.md 条目的移除与一条 summary 注释，**无非注释新增行**（防止 refresh 把别的新失败吸收进来）
+- [x] `tests/KNOWN_FAILURES.txt` 条目数 10 → 4，且剩余 4 条与本提案无关
+- [x] `rddf doctor --category docs-consistency` 无新增 finding（新段内**不得**写「per ADR-00XX」这类未经核对的 ADR 引用 —— `docs_consistency` 会扫 AGENTS.md 的 ADR 编号引用并对磁盘缺失报 WARNING）
 
 ## Capabilities
 
@@ -136,6 +145,36 @@ AGENTS.md: 归档流程 cross-references check_worktree_commits
 | 运行时 | 无（纯文档） |
 | 对外契约 | 无 |
 | 测试 | 不改测试；`test_worktree_archive_workflow_docs.bats` 由红转绿 |
-| 基线 | `KNOWN_FAILURES.txt` 11 → 5（收紧基线是**收益**：后续新增失败更容易被看见） |
+| 基线 | `KNOWN_FAILURES.txt` 10 → 4（收紧基线是**收益**：后续新增失败更容易被看见） |
 | 回滚 | 还原 AGENTS.md 两段 + 恢复 6 条基线条目，无副作用 |
-| 后续 | 其余 5 条已知失败的归属丢失问题仍在（本提案明确不碰），需要时按同样方式逐条补 improvement |
+| 后续 | 其余 4 条已知失败的归属丢失问题仍在（本提案明确不碰），需要时按同样方式逐条补 improvement |
+
+## 实施记录
+
+**2026-11-24 · 立项 → 实现 → 归档（全绿）**
+
+| 项 | 内容 |
+|---|---|
+| change | `2026-11-24-fix-agents-md-worktree-commit-flow`（`openspec/changes/archive/`） |
+| 实现分支 | `openspec/fix-agents-md-worktree-commit-flow` → commit `4e503ed5`（已合入 master，合并 commit `merge(change): ...`） |
+| 改动文件 | `AGENTS.md`（+18 行：两段）、`tests/KNOWN_FAILURES.txt`（10 → 4 条）、`.rddf/plans/fix-agents-md-worktree-commit-flow.md`（TDD 计划） |
+| 代码改动 | **零**（未改任何 `.sh` / `.py` / `.bats`） |
+| 验收 | 10/10 AC pass（verdict cache 锚点 = 分支 tip `4e503ed5`） |
+| 门禁 | 主仓 `./test.sh --full --regression` **ALL PASSED**（bats 新增失败 0 / 未评估 0 / pytest unit 3641 passed 0 failed / integration 192 passed / validate 160 passed 0 failed） |
+| spec delta | `openspec/specs/fix-agents-md-worktree-commit-flow/spec.md`（+10 requirements） |
+
+### 实施期发现的两件事
+
+**① 本改动一度引入真回归（已修）**：AGENTS.md 初稿写「做 **1 个** 聚合 commit」，触发 `tests/unit/test_doc_contracts.py::test_docs_do_not_hardcode_directory_composition_counts` —— 该守卫禁止文档硬编码「N 个 / N 条」这类会随文件增删漂移的构成计数。改为「做**聚合** commit」后既满足 bats 断言 4（匹配行仍含 `worktree-internal commit`），也满足漂移计数守卫。
+
+**② worktree 模式下的 6 个 pytest 失败 —— 先验问题，非本 change 引入（仅记录，不在本 change 修）**：
+在 worktree 内跑 pytest unit 时，`tests/unit/test_resolve_project_root_contract_python.py`（5 个）与 `tests/unit/test_skills_lib_python_resolve_project_root.py`（1 个）失败：测试常量 `PROJECT_ROOT = Path(__file__).resolve().parents[2]` 期望 **git toplevel**（= worktree 根），而 `resolve_project_root` 按 `consolidate-resolve-project-root-helpers` 的 **canonical normalization** 返回**主仓根**（= `/workspace/main/rdd-workflow`）—— 两者口径不同。
+
+**基线对照**（证明与本 change 无关）：
+- 主仓跑同一批测试 → **24 passed**；
+- master 的 detached worktree（`030c09e0`，不含本 change 任何改动）跑同一批 → **同样 6 个失败**，一模一样。
+
+⇒ 归因：**仓库既有**的「canonical normalization vs 契约测试旧口径」冲突，与 AGENTS.md / KNOWN_FAILURES 改动无因果关系。
+处置：**仅记录**（范围外不顺手改）。需要时另案 —— 口径二选一：改测试期望为 canonical root，或让 resolver 在 worktree 内返回 worktree root；后者会改动 ADR-0033 / canonical 语义，需走架构评审。
+影响面：worktree 模式下的全量门不可能全绿；本 change 的归档门证据因此取 **主仓（CI 等价环境）** 的一次全绿运行。
+
