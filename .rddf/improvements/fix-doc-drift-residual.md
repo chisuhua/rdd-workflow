@@ -6,7 +6,7 @@ priority: P2
 阶段: phase-2
 分类: tech-debt
 类型: tech-debt
-状态: draft
+状态: draft（2026-11-24 已按磁盘实测重算基线 —— P1-5 / P1-6 / P2-1 / P2-3 / critic#3 五项仍未动；P2-2 口径修正为「声明必须可派生」，实测结论是**版本侧本来就没有漂移**（v4.0.1 是 ADR-0048 的 workflow 版本，与 package.json 的 4.0.0 是不同概念；v4.0.2 标注 planned；阶段 0.0.5 是 SKILL.md 真实存在的阶段版本）—— 原口径会造出假矛盾；guide-* 口径修正为「非历史上下文命中 = 0」，实测 15 行命中中 14 行带历史标记、1 行是 step 5 遗留的陈旧断言；本轮新增一项 —— agent-role-alignment.md 的陈旧断言）
 
 生成时间: 2026-11-17
 roadmap_ref:
@@ -28,14 +28,15 @@ roadmap_ref:
 **某条事实只以散文形式存在于某个文件里，没有任何断言能发现它过期**。所以它们各自过期、各自沉默，
 直到一次人工审查才发现。
 
-| 项 | 事实 | 当前状态（实测） | 为什么沉默 |
-|---|---|---|---|
-| P1-5 | ADR-0035 双轨边界 + ADR-0060 形态门 | `grep -c "verifier\|ARCH_SHAPE_CHECK\|ADR-0035\|ADR-0060" docs/architecture/gates-and-quality.md` = **0** | 无人断言该文件应提及验收/形态门 |
-| P1-6 | 治理状态层（`role.json` / `pair.json`） | `grep -c "role.json\|pair.json" docs/architecture/state-and-events.md` = **0** | `rddf-layout.md` 有，但没人要求 state 主题文档也提 |
-| P2-1 | ADR README 散文段（顶部实施状态表 / 主题分类 / 架构演进 / 上次同步） | 生成器只重写 `<!-- ADR_INDEX_START/END -->` 之间的表格 | 散文段无生成器覆盖 |
-| P2-2 | 手写版本号与计数 | 本轮手工修正了 `overview.md` 的 skill 计数与 `README` 的版本行 | 靠人读、靠人改 |
-| P2-3 | 断链检查 | **仓库内无任何 markdown 链接检查器**（本轮用的是临时脚本 `/tmp/opencode/linkcheck.py`） | 没有任何断言检查链接 |
-| critic#3 | verifier 双落点在 `rddf-layout.md` 有一份副本 | `agent-role-alignment.md`（声明层）+ `rddf-layout.md`（速查副本） | 改一处不同步另一处不会红 |
+| 项 | 事实 | 当前状态（2026-11-24 实测） | 相比 2026-11-17 | 为什么沉默 |
+|---|---|---|---|---|
+| P1-5 | ADR-0035 双轨边界 + ADR-0060 形态门 | `gates-and-quality.md` 里 `verifier` / `ARCH_SHAPE_CHECK` / `ADR-0035` / `ADR-0060` **各 0 命中** | 未变，但**要写的内容变了**：形态门现已是「基线冻结 + 增量 + CI step」（`fix-adr-shape-debt-convergence` 已归档），不再是 2026-11-17 时的 opt-in-only | 无人断言该文件应提及验收/形态门 |
+| P1-6 | 治理状态层（`role.json` / `pair.json`） | `state-and-events.md` 里 `role.json` / `pair.json` **0 命中** | 未变 | `rddf-layout.md` 有，但没人要求 state 主题文档也提 |
+| P2-1 | ADR README 散文段 | 生成器只重写 `<!-- ADR_INDEX_START/END -->` 之间的表格；散文段实测存在 **3 块**（顶部「v3.0+ ADR 实施状态」表 / `## 架构演进` / `## 主题分类`）+ 顶部标题里 1 处同步日期（2026-08-28） | **口径修正**：原写「4 段」实为 3 块 + 1 处日期 | 散文段无生成器覆盖 |
+| P2-2 | 手写版本号与计数 | 计数侧**已修好**（`overview.md:8` 的「26 skills」== `ls skills/*/SKILL.md` = 26 ✓）；**版本侧经派生检查亦无漂移** —— `v4.0.1` 是 ADR-0048 引入的 workflow 版本（与 `package.json` 的 4.0.0 是**不同概念**）；`v4.0.2` 标注 (planned)；`阶段 0.0.5` 是 `skills/rdd-builder/SKILL.md` 里真实存在的阶段版本 | **口径修正**：从「数所有 N.N.N」改为「声明必须**可派生**」（package 版本 == package.json；workflow 版本须属已定义集合或标注 planned；阶段版本须存在于某个 SKILL.md；计数 == 实测） | 靠人读、靠人改 |
+| P2-3 | 断链检查 | **仓库内无任何 markdown 链接检查器**（`tests/scripts/check_md_links.py` 与 `test_md_links.bats` **均不存在**） | 未变 | 没有任何断言检查链接 |
+| critic#3 | verifier 双落点副本 | `记账落点` 只在 `agent-role-alignment.md`（声明层）+ `skills/rdd-verifier/SKILL.md`（作者声明，Out of Scope 不动）；但 `rddf-layout.md:72-81` 仍有 **verifier 命名空间文件清单副本**，`:97` 仍声明 `.rddf/reviews/*` = 产品落点 | 未变（措辞已变） | 改一处不同步另一处不会红 |
+| **本轮新增** | step 5 造成的陈旧散文 | `docs/architecture/agent-role-alignment.md:133` 仍断言「`openspec/specs/skill-role-model/spec.md` 正文仍用 v3 的 guide-* 命名 … grep 会 0 命中」—— step 5 已把该 spec 改成 v4 命名，现在 grep 有 **2 处合法豁免命中**（`v4-residue:allow=rename-history`）⇒ 该段落已成**陈旧断言** | **新发现**（由 step 5 的整改产生） | 散文里的「已知陈旧点」没有人负责回收 |
 
 ### 为什么先修守卫、再补内容（顺序不能反）
 
@@ -103,24 +104,32 @@ roadmap_ref:
 - [ ] `python3 tests/scripts/check_md_links.py --all` ⇒ exit 0；**扫描 0 个文件或 0 个链接 ⇒ exit 1**（不是 exit 0）
 - [ ] 覆盖目录清单显式化：脚本内有 `SCAN_ROOTS` 列表，含 `docs/`、`skills/`、`openspec/specs/` 与仓库根 `*.md`；且有文件数下限断言（`--all` 时扫到的 `.md` 数 ≥ 硬下限）
 - [ ] 变异验证：把某个链接的 `../` 改错 ⇒ exit 1 且报出该文件与行号
-- [ ] `bats tests/integration/test_md_links.bats` 全绿，且该 bats 在 CI 中**实际执行**（`skip` 不算通过）
+- [ ] `bats tests/integration/test_md_links.bats` 全绿，且该 bats 在 CI 中**实际执行**（`skip` 不算通过）⇒ 同步进 `test.sh` 本地门 + `test_ci_local_mirror.py` 的 `MIRRORED_COMMANDS`
 - [ ] 交叉引用守卫：`docs/architecture/*.md` 里引用的 `ADR-NNNN` 编号在 `docs/adr/` 中存在（变异验证：写一个不存在的 ADR-9999 ⇒ 红）
+- [ ] **版本/计数派生守卫**（口径按 2026-11-24 实测修正）：
+      - 「package 版本」声明（`docs/architecture/README.md` 的 “last regenerated … as of vX.Y.Z”）必须 == `package.json` 的 `version`（现值 **4.0.0**）
+      - 「workflow 版本」引用（`v4.0.1` 等）**不与 package 版本比较**（两者是不同概念：v4.0.1 由 ADR-0048 引入，package 是 4.0.0）—— 未定义的版本串判红，但**标注 planned 的前瞻版本豁免**（`v4.0.2 (planned)` 是未发布的未来版本，不是漂移）
+      - 「阶段版本」（`阶段 0.0.z`）必须**存在于某个 `skills/*/SKILL.md`**（派生检查）—— `阶段 0.0.5` 真实存在（`rdd-builder/SKILL.md:158`），不是 typo
+      - 「当前计数」声明（`overview.md:8` 与 `skills-and-handoff.md:3` 的 “26 skills”）必须 == `ls skills/*/SKILL.md` 的实测值；**代码块里的示例输出不算**（`rdd-arch-rdd-planner-integration.md` 的 “41 ADRs” 是示例输出，不判红）
+      - `python3 tests/scripts/check_md_links.py --versions` 输出上述三类的清单与判定（可复核）
 
 **内容补齐（守卫就位后变绿）**
 
-- [ ] `grep -c "ADR-0035" docs/architecture/gates-and-quality.md` ≥ 1 **且** `grep -c "ARCH_SHAPE_CHECK" docs/architecture/gates-and-quality.md` ≥ 1
+- [ ] `gates-and-quality.md` 含 ADR-0035 的 verifier / archive-gate 双轨边界**且** ADR-0060 的形态门 —— 后者必须写**增量模式现状**（基线文件 `docs/adr/.adr-shape-baseline.json` + `--diff-baseline` + CI step），不能只留 2026-11-17 时的 “opt-in only” 旧说法（该形态门已由 `fix-adr-shape-debt-convergence` 归档改掉）
 - [ ] `grep -c "role.json" docs/architecture/state-and-events.md` ≥ 1 **且** `grep -c "pair.json" docs/architecture/state-and-events.md` ≥ 1
 - [ ] `state-and-events.md` 的治理状态层为指针式：该文件中出现 `rddf-layout.md` 的引用，且**不含** `role.json` / `pair.json` 的完整字段表（避免再造副本）
-- [ ] `python3 _lib/adr_index_generator.py --check` ⇒ exit 0；把一个散文段的计数改错 ⇒ exit 1（变异验证）
-- [ ] 手写版本号：`python3 tests/scripts/check_md_links.py --versions`（或 `rddf docs --check`）列出 `docs/architecture/*.md` 内所有 `N.N.N` 形态的版本串及其来源；残留项必须为 0 或逐项标注「派生自 package.json」
-- [ ] `grep -c "guide-arch\|guide-design\|guide-plan\|guide-ship" docs/architecture/*.md` = 0（裸提及也算）
-- [ ] 双落点收敛：`grep -rn "记账落点" docs/ skills/` 中，完整表格只在 `agent-role-alignment.md`；`rddf-layout.md` 的对应表述 ≤ 2 行且含指向 `agent-role-alignment.md#verifier-双落点` 的链接
-- [ ] **信息不丢失**：`agent-role-alignment.md` 的双落点节必须同时含 `记账落点`、`产品落点`、`为什么产品落点不在 owns 里` 三段语义（变异验证：删掉其中任一段 ⇒ 红；不是删掉表格某一行就红）
+- [ ] `python3 _lib/adr_index_generator.py --check` ⇒ exit 0；把一个散文段的计数改错 ⇒ exit 1（变异验证）；**`--check` 不改变默认输出**（不带 `--check` 时 stdout 与现状逐字节相同）
+- [ ] guide-* 守卫（口径按 2026-11-24 实测修正）：`docs/architecture/**` 里 `guide-arch|guide-design|guide-plan|guide-ship` 的**非历史上下文**命中 = 0。历史上下文 = 同行含「已移除 / 已删除 / 原 / formerly / 不再 / v3 迁移」等标记，或文件属历史档（`historical-evolution.md`）。实测 15 行命中中 **14 行属历史上下文**，剩 1 行是 `agent-role-alignment.md:133` 的**陈旧断言** ⇒ 该断言须回收（改成「spec 已用 v4 命名，剩余 2 处为带 `v4-residue:allow=rename-history` 豁免标记的历史注记」）
+- [ ] **原 AC「guide-* 命中 = 0」作废**：那会逼人改写历史记述（= 篡改历史）；本项只禁止**非历史上下文**的裸提及
+- [ ] 双落点收敛：`rddf-layout.md` 的 verifier 段（当前 `:72-81` 的文件清单 + `:97` 的产品落点声明）压成 ≤ 2 行指针，含指向 `agent-role-alignment.md` 双落点节的链接
+- [ ] **信息不丢失**：`agent-role-alignment.md` 的双落点节必须同时含 `记账落点`、`产品落点`、`为什么产品落点不在任何 skill 的 owns 里` 三段语义（变异验证：删掉其中任一段 ⇒ 红；不是删掉表格某一行就红）
 
 **边界**
 
 - [ ] 本项**不修改** `_lib/**` 的既有行为：`git diff --stat _lib/` 只允许 `adr_index_generator.py`（新增 `--check` 分支）出现在变更列表，且该分支不改变默认输出
-- [ ] `git diff --stat skills/*/SKILL.md` 为空（作者声明保持原样）
+- [ ] **`skills/rdd-verifier/SKILL.md` 零改动**（作者声明保持原样）；其余 SKILL.md 只允许**修断链**，不改内容表述
+      （2026-11-24 实测：5 个 SKILL.md 的 ADR 链接前缀深度写错，属真断链，已修）
+- [ ] **不改历史**：`historical-evolution.md` 的历史记述（版本号、guide-* 旧称）留在原处 —— “消除漂移” ≠ “篡改历史”
 
 ## 实施纪律（非验收项）
 

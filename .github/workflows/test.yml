@@ -103,6 +103,18 @@ jobs:
           python3 -m pytest tests/unit/test_arch_quality_gate.py -q --tb=short
           echo "✅ Arch quality gate tests passed under STRICT mode"
 
+      # 文档漂移门（断链 / ADR 交叉引用 / 版本与计数派生）—— 镜像本地门。
+      # 2026-11-17 的审查修了 10 处断链，但**发现工具留在 /tmp**，下一轮只能靠人工重找；
+      # 工具入库后，这类漂移在提交前被拦。
+      - name: Markdown drift gate (links / ADR refs / versions)
+        run: |
+          python3 tests/scripts/check_md_links.py --all
+          python3 tests/scripts/check_md_links.py --adr-refs docs/architecture
+          python3 tests/scripts/check_md_links.py --versions docs/architecture
+          python3 tests/scripts/check_md_links.py --guide-names docs/architecture
+          python3 _lib/adr_index_generator.py --check
+          echo "✅ No markdown drift (links / ADR refs / versions / old stage names / ADR index)"
+
       # ADR 形态门 —— **增量模式**（per fix-adr-shape-debt-convergence）。
       # 存量 163 项形态债已冻结进 docs/adr/.adr-shape-baseline.json（56 项
       # missing_verification 按 ADR-0060 不追溯，永远清不完），故本 step 只拦

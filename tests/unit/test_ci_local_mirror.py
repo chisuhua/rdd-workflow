@@ -40,6 +40,8 @@ MIRRORED_COMMANDS = [
     "mypy --strict skills/_lib/core/",
     "--gate structural",
     "adr_shape_check.sh --all --diff-baseline",
+    "tests/scripts/check_md_links.py --all",
+    "_lib/adr_index_generator.py --check",
     "check_test_isolation.sh",
     "pytest tests/unit/",
     "pytest tests/integration/",

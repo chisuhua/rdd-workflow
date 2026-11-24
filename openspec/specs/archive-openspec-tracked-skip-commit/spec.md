@@ -31,7 +31,7 @@ The `_lib/archive.sh::commit_archive_moves(name, main_root)` function SHALL hono
 
 ### Requirement: archive-openspec-tracked-false-branch-cleanup
 
-The `_lib/archive.sh::archive_change()` `openspec_tracked=false` branch SHALL NOT call `commit_archive_moves`. After `openspec archive --yes` and `cleanup_worktree_and_branch`, the branch SHALL proceed directly to `mark_iteration_archived` (and any other side-effect-free bookkeeping). This closes the spec-implementation gap in [ADR-0036](docs/adr/ADR-0036-rddf-project-yaml-config.md) M3.
+The `_lib/archive.sh::archive_change()` `openspec_tracked=false` branch SHALL NOT call `commit_archive_moves`. After `openspec archive --yes` and `cleanup_worktree_and_branch`, the branch SHALL proceed directly to `mark_iteration_archived` (and any other side-effect-free bookkeeping). This closes the spec-implementation gap in [ADR-0036](../../../docs/adr/ADR-0036-rddf-project-yaml-config.md) M3.
 
 #### Scenario: false branch sequence (post-fix)
 

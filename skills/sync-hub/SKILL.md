@@ -59,4 +59,4 @@ rddf sync-hub --contract auth-v2.yaml --dry-run
 - Hub 网络故障 → 使用本地 cache + emit warning (non-blocking)
 - Auth 失败 → fail-closed (不静默)
 
-详见 [ADR-0030-hub-and-spoke-federation.md](docs/adr/ADR-0030-hub-and-spoke-federation.md) §Hub-Spoke 协议 + [ADR-0018-arch-quality-gate.md](docs/adr/ADR-0018-arch-quality-gate.md) §contract-check 集成。
+详见 ADR-0030-hub-and-spoke-federation.md §Hub-Spoke 协议 + ADR-0018-arch-quality-gate.md §contract-check 集成。

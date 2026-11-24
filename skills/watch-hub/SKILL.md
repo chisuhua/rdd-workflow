@@ -55,4 +55,4 @@ rddf watch-hub --once --dry-run
 - 每次 poll 追加到 `.rddf/state/.cross-repo-audit.jsonl` (decision=poll)
 - Hub state 变化时 (open → approved) 才记录 decision=approve
 
-详见 [ADR-0030-hub-and-spoke-federation.md](docs/adr/ADR-0030-hub-and-spoke-federation.md) §Hub-Spoke 协议 + [ADR-0017-rddf-session.md](docs/adr/ADR-0017-rddf-session.md) §workflow group 跨会话。
+详见 ADR-0030-hub-and-spoke-federation.md §Hub-Spoke 协议 + ADR-0017-rddf-session.md §workflow group 跨会话。

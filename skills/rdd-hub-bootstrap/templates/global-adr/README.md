@@ -17,4 +17,4 @@
 
 ## 模板
 
-参考 [`docs/adr/ADR-0000-template.md`](../../docs/adr/ADR-0000-template.md)
+参考 [`docs/adr/ADR-0000-template.md`](../../../../docs/adr/ADR-0000-template.md)

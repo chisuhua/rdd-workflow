@@ -121,14 +121,14 @@ verification:
 
 `tasks.md` 是 OpenSpec 的范围与完成清单;`.rddf/plans/<change>.md` 是 **唯一** 可执行实现契约,由**执行该 change 的 agent** 按 plan 实施并把进度回写到 `tasks.md`(`phase2_execute.sh` 负责工作区准备与进度快照)。
 
-详细契约见 [`docs/superpowers/specs/2026-08-05-rdd-builder-execution-contract.md`](docs/superpowers/specs/2026-08-05-rdd-builder-execution-contract.md)。要点:
+详细契约见 [`docs/superpowers/specs/2026-08-05-guide-ship-execution-contract.md`](docs/superpowers/specs/2026-08-05-guide-ship-execution-contract.md)。要点:
 
 - `rdd-builder` Phase 1 通过 `rddf discover-ship-changes` 统一发现候选,单 change 自动选择;多 change 显示菜单。
 - `rdd-builder` 的 P2(`phase2_execute.sh`) 负责选定工作区(worktree 或 lightweight 分支)并写入 `builder_handoff`;**执行主体是 agent 本身**,不再有独立的 plan 执行器子技能。
 - `SKIP_PROMETHEUS_PLANNING=yes` 必须配 `QUICK_FINISH_DETECTED=yes` 才能跳过 plan 生成(否则 fail closed)。
 - `archive_gate_check` 在 worktree 和 lightweight 两种模式都生效;lightweight 模式 0 新提交是硬阻断;`archive_change` 路径调用 `check_worktree_commits` 作为 worktree merge 前置 gate。
 
-> ⚠️ 本小节其余条目待重写（backlog：`setup_execution_workspace` 已无实现、`SKIP_PROMETHEUS_PLANNING` / `QUICK_FINISH_DETECTED` 属 v2 时代开关、上方链接 `docs/superpowers/specs/2026-08-05-rdd-builder-execution-contract.md` 的目标不存在）。本 change（retire-execute-skill）只对齐 execute 相关分句，整节重写另立 change。
+> ⚠️ 本小节其余条目待重写（backlog：`setup_execution_workspace` 已无实现、`SKIP_PROMETHEUS_PLANNING` / `QUICK_FINISH_DETECTED` 属 v2 时代开关、上方链接 `docs/superpowers/specs/2026-08-05-guide-ship-execution-contract.md` 的目标不存在）。本 change（retire-execute-skill）只对齐 execute 相关分句，整节重写另立 change。
 
 ### 推荐器升级
 

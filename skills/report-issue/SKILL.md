@@ -62,4 +62,4 @@ rddf report-issue --no-submit --category=rfc --title "..." --body "..."
 - 每次上报追加到 `.rddf/state/.cross-repo-audit.jsonl` (decision=approve/reject/bypass)
 - 失败时自动记录 Hub state (open/closed/error) + labels (rfc/cross-repo/...)
 
-详见 [ADR-0030-hub-and-spoke-federation.md](docs/adr/ADR-0030-hub-and-spoke-federation.md) §Hub-Spoke 协议 + [ADR-0027-continuous-evolution.md](docs/adr/ADR-0027-continuous-evolution.md) §L2 上报契约。
+详见 ADR-0030-hub-and-spoke-federation.md §Hub-Spoke 协议 + ADR-0027-continuous-evolution.md §L2 上报契约。

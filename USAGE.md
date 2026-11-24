@@ -28,7 +28,7 @@
 | **verifier 端** (`rdd-verifier`) | `discover → batch-verify → classify → route`（第四阶段，per ADR-0034，bounded retry 最多 3 次，v2.0 自包含 LLM 验证 per ADR-0045） | `.rddf/state/verifier/<change>.json`（loop state + 分类历史）、`.rddf/state/verifier/.ac-verdict-<name>.json`（SHA-fingerprint verdict cache）、`.rddf/state/verifier/<change>.audit.jsonl`（append-only audit log）、失败分类（implementation_gap / proposal_drift）+ 回 builder/planner 路由决策 |
 | **quick 旁路** (`rdd-quick`) | P0-P4 prose 状态机：plan gen → complexity triage → in-place execute → AC verify → complete/retry/escalate（v4.0+ per ADR-0047，绕过 openspec change + worktree） | `.rddf/plans/quick-<name>.md`、`.rddf/state/.quick-history.jsonl`（11 字段原子追加审计日志） |
 
-详细架构决策见 [ADR-0003（奠基：三阶段 arch → plan → ship）](./docs/adr/ADR-0003-three-phase-architecture.md)、[ADR-0025（设计阶段独立化）](./docs/adr/ADR-0025-design-proposal-creation.md)、[ADR-0034（第五阶段 verify 架构，v3.0 时期）](./docs/adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)、[ADR-0043（v4 stage-merge：plan+ship+design 三合一进 rdd-builder）](./docs/adr/ADR-0043-v4-stage-merge.md)、[ADR-0044（Wave 3 硬移除 guide-*）](./docs/adr/ADR-0044-v4-stage-merge-wave3-hard-removal.md)、[ADR-0047（rdd-quick 旁路）](./docs/adr/ADR-0047-rdd-quick-bypass-path.md)。
+详细架构决策见 [ADR-0003（奠基：三阶段 arch → plan → ship）](./docs/adr/ADR-0003-three-phase-architecture.md)、[ADR-0025（设计阶段独立化）](./docs/adr/ADR-0025-design-proposal-creation.md)、[ADR-0034（第五阶段 verify 架构，v3.0 时期）](./docs/adr/ADR-0034-rdd-verifier-verify-phase-architecture.md)、[ADR-0043（v4 stage-merge：plan+ship+design 三合一进 rdd-builder）](docs/adr/ADR-0043-rdd-workflow-v4-stage-merge.md)、[ADR-0044（Wave 3 硬移除 guide-*）](./docs/adr/ADR-0044-v4-stage-merge-wave3-hard-removal.md)、[ADR-0047（rdd-quick 旁路）](./docs/adr/ADR-0047-rdd-quick-bypass-path.md)。
 
 ### Ship 端两种执行模式（worktree 选择）
 
@@ -294,7 +294,7 @@ i. 手动输入 change 名称
 
 **ADR 引用约定**：
 - `proposal.md` 必须用 `ADR-NNN §N.M` 格式引用 ADR 章节
-- 详见 [docs/adr/README.md](./docs/adr/README.md#引用格式)
+- 详见 [docs/adr/README.md](./docs/adr/README.md#引用-adr-的格式)
 - 模板见 [docs/adr/ADR-0000-template.md](./docs/adr/ADR-0000-template.md)
 
 **创建后重新进入此阶段**——可以连续创建多个 change，然后选选项 4 完成。

@@ -44,7 +44,7 @@ role:
 
 # rdd-workflow 工作流 — Arch-Side Guide
 
-本技能是 rdd-workflow 工作流 v4.0+ 的 **arch 端状态机**：负责在生成 OpenSpec change artifacts 之前的**架构定义**工作——环境检测、ADR 文档管理、主题架构文档同步。arch 阶段是**四阶段架构**（`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`，per [ADR-0043](../adr/ADR-0043-rdd-workflow-v4-stage-merge.md)）的第一阶段，专为高人工介入、低频执行的架构治理工作而设计。
+本技能是 rdd-workflow 工作流 v4.0+ 的 **arch 端状态机**：负责在生成 OpenSpec change artifacts 之前的**架构定义**工作——环境检测、ADR 文档管理、主题架构文档同步。arch 阶段是**四阶段架构**（`rdd-arch → rdd-planner → rdd-builder → rdd-verifier`，per ADR-0043）的第一阶段，专为高人工介入、低频执行的架构治理工作而设计。
 
 > **演进历史**：v2.0 三阶段架构（arch → plan → ship，per ADR-0003）→ v2.1 扩展为四阶段（+ design，per ADR-0025）→ v3.0+ 扩展为 5-stage（+ verify，per ADR-0034）→ v4.0+ 合并为四阶段（per ADR-0043）。v4.x 简化 rdd-arch 工件集（per ADR-0057）：从 ADR + theme doc + gap-analysis 三类精简到 ADR + theme doc 两类。
 

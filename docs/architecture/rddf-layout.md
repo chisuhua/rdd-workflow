@@ -69,17 +69,7 @@ ADR-0026 定义了 `.rddf/` 的命名约定与两类存储（`runtime-only` / `c
 
 `.rddf/` 顶层之外的**文件**不在清单条目里（清单只管顶层），但同样有明确的读写方。下表**以代码为源**：
 
-**verifier 状态命名空间**（`_lib/verifier/state_paths.py:34-41` 的 `SKILL_OWNS_PATHS`）：
-
-| 文件 | 说明 |
-|---|---|
-| `.rddf/state/verifier/<name>.json` | 每 change 的 verifier 状态 |
-| `.rddf/state/verifier/<name>.audit.jsonl` | 审计日志 |
-| `.rddf/state/verifier/.ac-verdict-*.json` | AC 判决缓存（归档门输入） |
-| `.rddf/state/verifier/.ac-verification.jsonl` | 验证事件流 |
-| `.rddf/state/verifier/.ac-verifier-blocked.jsonl` | 受阻记录流 |
-| `.rddf/state/verifier/rdd-verify-context-<name>.json` | 分阶段上下文 |
-
+**verifier 状态命名空间**（`.rddf/state/verifier/**`）—— 落点判定见 [agent-role-alignment.md 的「verifier 双落点」节](agent-role-alignment.md#verifier-双落点)（文件清单真源：`_lib/verifier/state_paths.py` 的 `SKILL_OWNS_PATHS`）。
 **跨阶段 handoff**（写在 `.rddf/state/`）：
 
 | 文件 | 写方 | 读方 |
@@ -94,7 +84,7 @@ ADR-0026 定义了 `.rddf/` 的命名约定与两类存储（`runtime-only` / `c
 |---|---|---|---|
 | `.rddf/state/role.json` | opencode 角色层 | opencode 角色层 | 治理身份状态（schema `role-v2`，含 `sessions` 分区）。**不是** rdd 的工件。 |
 | `.rddf/state/pair.json` | opencode 角色层 | opencode 角色层 | 派发登记（pair-v2）。`required_when=never` —— 未启用派发时不落盘。 |
-| `.rddf/reviews/*.md` | opencode 角色层 | opencode 角色层 | 验收报告（verifier 角色）与审稿报告（architect 角色）。**产品落点**。 |
+| `.rddf/reviews/*.md` | opencode 角色层 | opencode 角色层 | 验收报告（verifier 角色）与审稿报告（architect 角色）。落点判定见 [agent-role-alignment.md 的「verifier 双落点」节](agent-role-alignment.md#verifier-双落点)。 |
 
 > 为什么单列一栏：`.rddf/state/` 是**目录级**清单条目（清单只管顶层，见 `tests/unit/test_rddf_layout.py`），
 > 而 `state/` 目录里同时住着两类文件 —— rdd 写的运行时状态（state vector / event log / handoff /
