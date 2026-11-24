@@ -5,7 +5,8 @@
 > **决策者**: rdd-workflow maintainer
 > **关联 ADR**: ADR-0016（arch artifact discovery contract）, ADR-0018（arch quality gate）, ADR-0057（ADR + theme doc 双工件模型）
 > **触发来源**: 2026-10-27 对 CppHDL / ChipForge / CppTLM 三个项目近期 ADR 的形态审查（opencode 侧 `architect` 角色约束评审）
-> **审稿报告**: [.rddf/reviews/adr-0060-amendment-2026-11-17.md](../../.rddf/reviews/adr-0060-amendment-2026-11-17.md)（oracle + critic 双审，2026-11-17 修订）
+> **关联 change**: backlog: adr-0060-shape-contract-implementation（登记载体 `.rddf/improvements/adr-0060-shape-contract-implementation.md`）
+> **审稿报告**: [.rddf/reviews/adr-0060-amendment-2026-11-17.md](../../.rddf/reviews/adr-0060-amendment-2026-11-17.md)（oracle + critic 双审，2026-11-17 修订）；本次「关联 change」回填的审稿见 `.rddf/reviews/adr-0060-backfill-2026-11-24.md`
 
 ## Context
 
