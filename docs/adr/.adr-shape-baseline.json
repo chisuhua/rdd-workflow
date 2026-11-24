@@ -1,0 +1,911 @@
+{
+  "ADR-0001-propose-plan-execute-state-machine.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0002-goal-driven-interaction-modes.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "line_budget": {
+      "count": 1,
+      "detail": "313 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0003-three-phase-architecture.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "line_budget": {
+      "count": 1,
+      "detail": "276 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0004-loop-engine-core-design.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "line_budget": {
+      "count": 1,
+      "detail": "472 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0005-human-in-loop-nodes.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "line_budget": {
+      "count": 1,
+      "detail": "355 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0006-state-vector-event-log.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "line_budget": {
+      "count": 1,
+      "detail": "742 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0007-gate-mechanism.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "line_budget": {
+      "count": 1,
+      "detail": "315 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0008-tribunal-committee.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "line_budget": {
+      "count": 1,
+      "detail": "359 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0009-scheduled-triggers.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Consequences, Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0010-multi-session-management.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "line_budget": {
+      "count": 1,
+      "detail": "547 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 1,
+      "detail": "标题越界成实施细节: ## 实施计划",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0011-phase-step-pipeline-model.md": {
+    "alternatives_table_missing": {
+      "count": 1,
+      "detail": "备选方案章内未找到对比表",
+      "recorded_at": "2026-11-24"
+    },
+    "line_budget": {
+      "count": 1,
+      "detail": "459 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0012-flow-customization-layer.md": {
+    "alternatives_table_missing": {
+      "count": 1,
+      "detail": "备选方案章内未找到对比表",
+      "recorded_at": "2026-11-24"
+    },
+    "line_budget": {
+      "count": 1,
+      "detail": "628 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0013-extract-scan-state.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0014-review-phase-and-debt-reflow.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0015-integrate-openspec-validate-as-plan-critic.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "process_log_heading": {
+      "count": 1,
+      "detail": "标题含过程/版本史: ### 修订记录",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0016-arch-artifact-discovery-contract.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "line_budget": {
+      "count": 1,
+      "detail": "290 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0017-rddf-session.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 1,
+      "detail": "标题越界成实施细节: ## Implementation",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0018-arch-quality-gate.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 1,
+      "detail": "标题越界成实施细节: ## Implementation",
+      "recorded_at": "2026-11-24"
+    },
+    "verification_section_empty": {
+      "count": 1,
+      "detail": "Verification 章内无可勾选判据",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0019-change-arch-alignment.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "line_budget": {
+      "count": 1,
+      "detail": "279 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 2,
+      "detail": "标题越界成实施细节: ## Implementation Notes (Post-Oracle Review 2026-07-10)",
+      "recorded_at": "2026-11-24"
+    },
+    "verification_section_empty": {
+      "count": 1,
+      "detail": "Verification 章内无可勾选判据",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0020-incremental-skeleton-planning.md": {
+    "alternatives_table_missing": {
+      "count": 1,
+      "detail": "备选方案章内未找到对比表",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "process_log_heading": {
+      "count": 1,
+      "detail": "标题含过程/版本史: ## Implementation Status",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0021-phase2-per-skill-helper-migration.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0022-manual-deps-field.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0023-v3-rename-spec-workflow-to-rdd-workflow.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "process_log_heading": {
+      "count": 1,
+      "detail": "标题含过程/版本史: ## 实施记录",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0024-deps-driven-execution-mode.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0025-design-proposal-creation.md": {
+    "alternatives_table_missing": {
+      "count": 1,
+      "detail": "备选方案章内未找到对比表",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 1,
+      "detail": "标题越界成实施细节: ### Restore action (2026-09-09, fix-v4-rdd-planner-scope-ove",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0026-internal-metadata-namespace-convention.md": {
+    "alternatives_table_missing": {
+      "count": 1,
+      "detail": "备选方案章内未找到对比表",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0027-continuous-evolution-feedback-loop.md": {
+    "line_budget": {
+      "count": 1,
+      "detail": "675 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0028-role-model-per-phase.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Context, Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0029-issue-driven-proposal-creation.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0030-hub-and-spoke-federation.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0031-human-in-loop-cross-repo.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0032-hub-federation-deepening.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Consequences, Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0033-submodule-aware-project-root-resolution.md": {
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0034-rdd-verifier-verify-phase-architecture.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Context, Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "process_log_heading": {
+      "count": 2,
+      "detail": "标题含过程/版本史: ### 修订要点（fix-rdd-verifier-lifecycle-dashboard, 2026-08-26）",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0035-verifier-archive-gate-boundary.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Decision, Consequences, Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0036-rddf-project-yaml-config.md": {
+    "line_budget": {
+      "count": 1,
+      "detail": "282 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "process_log_heading": {
+      "count": 1,
+      "detail": "标题含过程/版本史: ## Post-hoc Fix Record (2026-09-02)",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 1,
+      "detail": "标题越界成实施细节: ## Implementation",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0037-feedback-contract.md": {
+    "alternatives_table_missing": {
+      "count": 1,
+      "detail": "备选方案章内未找到对比表",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 1,
+      "detail": "标题越界成实施细节: ## Implementation",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0038-rdd-planner-crosscutting.md": {
+    "alternatives_table_missing": {
+      "count": 1,
+      "detail": "备选方案章内未找到对比表",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0039-design-handoff-runtime-filter.md": {
+    "alternatives_table_missing": {
+      "count": 1,
+      "detail": "备选方案章内未找到对比表",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 1,
+      "detail": "标题越界成实施细节: ## Implementation",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0040-session-metrics.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0041-planner-sprint-lifecycle-and-history.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0042-rdd-arch-rdd-planner-bidirectional-feedback.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 1,
+      "detail": "标题越界成实施细节: ## Implementation",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0043-rdd-workflow-v4-stage-merge.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 1,
+      "detail": "标题越界成实施细节: ## Implementation",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0044-v4-stage-merge-wave3-hard-removal.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 1,
+      "detail": "标题越界成实施细节: ## Implementation",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0045-inline-ac-verifier-into-rdd-verifier.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0046-arch-analyzer-protocol-subset.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0047-rdd-quick-bypass-path.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0048-v4-stage-merge-revision.md": {
+    "line_budget": {
+      "count": 1,
+      "detail": "320 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 3,
+      "detail": "标题越界成实施细节: ## Implementation",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0049-rdd-builder-phase0-llm-integration.md": {
+    "alternatives_table_missing": {
+      "count": 1,
+      "detail": "备选方案章内未找到对比表",
+      "recorded_at": "2026-11-24"
+    },
+    "line_budget": {
+      "count": 1,
+      "detail": "315 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Consequences",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 2,
+      "detail": "标题越界成实施细节: ## Test Strategy",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0050-rdd-builder-auto-pick-mode.md": {
+    "alternatives_table_missing": {
+      "count": 1,
+      "detail": "备选方案章内未找到对比表",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Consequences",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 1,
+      "detail": "标题越界成实施细节: ## Test Strategy",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0051-skill-description-convention.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0052-layer-0-progressive-context.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0053-rdd-env-bootstrap-orchestrator.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Context, Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0054-objective-tracking.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Context, Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "process_log_heading": {
+      "count": 1,
+      "detail": "标题含过程/版本史: ## Implementation Status",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0055-guide-orchestrator-session-event-bus.md": {
+    "line_budget": {
+      "count": 1,
+      "detail": "453 行 > 250 行",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    },
+    "process_log_heading": {
+      "count": 2,
+      "detail": "标题含过程/版本史: ## v2 修订日志",
+      "recorded_at": "2026-11-24"
+    },
+    "shape_sprawl_heading": {
+      "count": 1,
+      "detail": "标题越界成实施细节: ## Implementation Plan",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0056-guide-orchestrator-minimal-usage-flow.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Alternatives",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0057-rdd-arch-simplify-delete-gap-analysis.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0058-gap-analysis-migration-to-theme-doc.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0059-rddf-status-fallback-mode.md": {
+    "alternatives_table_no_conclusion_column": {
+      "count": 1,
+      "detail": "备选方案表缺『结论』列（表头: 备选 | 理由）",
+      "recorded_at": "2026-11-24"
+    },
+    "missing_verification": {
+      "count": 1,
+      "detail": "缺 Verification（前瞻验收判据）章节",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0060-adr-shape-contract-and-gate-demotion.md": {
+    "process_log": {
+      "count": 1,
+      "detail": "4 处过程日志标记",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0062-recommender-single-implementation.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Context, Alternatives",
+      "recorded_at": "2026-11-24"
+    }
+  },
+  "ADR-0063-retire-guide-orchestrator.md": {
+    "missing_section": {
+      "count": 1,
+      "detail": "缺章节 Context, Alternatives",
+      "recorded_at": "2026-11-24"
+    }
+  }
+}

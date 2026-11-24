@@ -14,16 +14,21 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
 
 from skills._lib.arch_quality_gate import (
+    ShapeBaselineError,
     _check_arch_alignment,
     _check_adr_clarity,
     _check_handoff_actionable,
     _check_adr_shape,
     adr_shape_findings,
+    diff_shape_findings,
+    read_shape_baseline,
+    write_shape_baseline,
     _DEFAULT_ADR_LINE_LIMIT,
     strict_wrap,
     is_strict_mode,
@@ -830,3 +835,200 @@ def test_adr_shape_cli_has_no_hardcoded_budget_defaults():
     assert not re.search(r'"[0-9]{3}"', text), "CLI hardcodes a numeric default"
     assert "for line in lines" not in text, "CLI still duplicates the per-file scan loop"
     assert "adr_shape_findings" in text, "CLI must consume the Python findings API"
+
+# ---------- 7. shape baseline: freeze existing debt, gate the increment (2026-11-24) ----------
+# Per `fix-adr-shape-debt-convergence`: 存量 findings 冻结进 per-file × per-signal 基线，
+# 形态门从「永远 opt-in」变成「可用的增量门」—— 判据（信号集 / 预算 / severity）一条不放宽。
+
+_BASELINE_REL = Path("docs") / "adr" / ".adr-shape-baseline.json"
+
+
+def _run_shape_cli(tmp_path, *args):
+    """Run the shape CLI against `tmp_path` as the project root.
+
+    `PROJECT_ROOT` is what the script keys on; `PYTHONPATH` keeps the repo
+    importable (the temp project has no `skills/` tree).
+    """
+    env = dict(os.environ)
+    env["PROJECT_ROOT"] = str(tmp_path)
+    env["PYTHONPATH"] = str(_REPO_ROOT)
+    return subprocess.run(
+        ["bash", str(_SHAPE_CLI), *args],
+        capture_output=True, text=True, env=env, cwd=str(tmp_path),
+    )
+
+
+def _write_baseline(tmp_path, payload):
+    path = tmp_path / _BASELINE_REL
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+def _oversized_adr(extra=320):
+    return _WELL_FORMED_ADR + "\n".join(f"- 推导行 {i}" for i in range(extra)) + "\n"
+
+
+def _frozen_from(findings):
+    """Mirror write_shape_baseline's payload shape, for hand-built fixtures."""
+    payload: dict = {}
+    for f in findings:
+        sig = payload.setdefault(f.file, {}).setdefault(
+            f.signal, {"count": 0, "detail": f.detail, "recorded_at": "2026-01-01"}
+        )
+        sig["count"] += 1
+    return payload
+
+
+def test_shape_baseline_is_per_file_per_signal(tmp_path):
+    """基线是 per-file × per-signal 结构，不是标量总数（标量在 ADR 增删后无意义）。"""
+    _write_adr(tmp_path, "ADR-0040-big.md", _oversized_adr())
+    write_shape_baseline(str(tmp_path), adr_shape_findings({"project_root": str(tmp_path)}))
+    payload = json.loads((tmp_path / _BASELINE_REL).read_text(encoding="utf-8"))
+    assert isinstance(payload, dict) and payload
+    for per_file in payload.values():
+        assert isinstance(per_file, dict)
+        for entry in per_file.values():
+            assert isinstance(entry, dict)
+            assert entry["count"] >= 1
+            assert entry["recorded_at"]
+
+
+def test_shape_baseline_empty_is_a_hard_error(tmp_path):
+    """空基线 ⇒ 增量模式 exit 2（不得静默全绿：无法区分存量与新增）。"""
+    _write_adr(tmp_path, "ADR-0041-big.md", _oversized_adr())
+    _write_baseline(tmp_path, {})
+    with pytest.raises(ShapeBaselineError):
+        diff_shape_findings(
+            adr_shape_findings({"project_root": str(tmp_path)}),
+            read_shape_baseline(str(tmp_path), require_non_empty=False),
+        )
+    result = _run_shape_cli(tmp_path, "--all", "--diff-baseline")
+    assert result.returncode == 2, result.stdout + result.stderr
+
+
+def test_shape_baseline_missing_is_a_hard_error(tmp_path):
+    """基线缺失 + 有 findings 同样 exit 2（不是「全绿」）。"""
+    _write_adr(tmp_path, "ADR-0042-big.md", _oversized_adr())
+    result = _run_shape_cli(tmp_path, "--all", "--diff-baseline")
+    assert result.returncode == 2, result.stdout + result.stderr
+
+
+def test_shape_diff_reports_only_the_new_finding(tmp_path):
+    """存量冻结后，只报新增的那一条（存量折叠成计数）。"""
+    _write_adr(tmp_path, "ADR-0043-big.md", _oversized_adr())
+    frozen = _frozen_from(adr_shape_findings({"project_root": str(tmp_path)}))
+    _write_baseline(tmp_path, frozen)
+
+    clean = _run_shape_cli(tmp_path, "--all", "--diff-baseline")
+    assert clean.returncode == 0, clean.stdout + clean.stderr
+
+    # 加一节过程日志标题 ⇒ 恰好新增 1 条 process_log_heading
+    _write_adr(tmp_path, "ADR-0043-big.md", _oversized_adr() + "\n## v9 修订日志\n\n细节。\n")
+    new = diff_shape_findings(
+        adr_shape_findings({"project_root": str(tmp_path)}),
+        read_shape_baseline(str(tmp_path)),
+    )
+    assert [f.signal for f in new] == ["process_log_heading"]
+
+    dirty = _run_shape_cli(tmp_path, "--all", "--diff-baseline")
+    assert dirty.returncode == 1, dirty.stdout + dirty.stderr
+    assert "process_log_heading" in dirty.stdout
+    assert "line_budget" not in dirty.stdout, "存量 line_budget 不该被报成新增"
+
+
+def test_shape_diff_ignores_detail_wording_changes(tmp_path):
+    """形状不变、detail 文案变（行数 320→340）不是新增债务 —— 否则每次编辑都报红。"""
+    _write_adr(tmp_path, "ADR-0044-big.md", _oversized_adr(320))
+    _write_baseline(tmp_path, _frozen_from(
+        adr_shape_findings({"project_root": str(tmp_path)})
+    ))
+    _write_adr(tmp_path, "ADR-0044-big.md", _oversized_adr(340))
+    new = diff_shape_findings(
+        adr_shape_findings({"project_root": str(tmp_path)}),
+        read_shape_baseline(str(tmp_path)),
+    )
+    assert new == []
+
+
+def test_shape_write_baseline_refuses_growth(tmp_path):
+    """ratchet：新结果含基线外 finding 时拒绝写入（只降不升），且文件不被改动。"""
+    _write_adr(tmp_path, "ADR-0045-big.md", _oversized_adr())
+    path = write_shape_baseline(
+        str(tmp_path), adr_shape_findings({"project_root": str(tmp_path)})
+    )
+    baseline_file = tmp_path / _BASELINE_REL
+    before = baseline_file.read_text(encoding="utf-8")
+
+    _write_adr(tmp_path, "ADR-0045-big.md", _oversized_adr() + "\n## 实施记录\n\n细节。\n")
+    with pytest.raises(ShapeBaselineError):
+        write_shape_baseline(str(tmp_path), adr_shape_findings({"project_root": str(tmp_path)}))
+    assert baseline_file.read_text(encoding="utf-8") == before
+
+    result = _run_shape_cli(tmp_path, "--all", "--write-baseline")
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert baseline_file.read_text(encoding="utf-8") == before
+    assert path  # payload returned on success only
+
+
+def test_shape_write_baseline_shrinks_the_ledger(tmp_path):
+    """修掉 finding 后允许重写（ratchet 只降不升）。"""
+    _write_adr(tmp_path, "ADR-0046-big.md", _oversized_adr())
+    write_shape_baseline(str(tmp_path), adr_shape_findings({"project_root": str(tmp_path)}))
+    _write_adr(tmp_path, "ADR-0046-big.md", _WELL_FORMED_ADR)
+    result = _run_shape_cli(tmp_path, "--all", "--write-baseline")
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads((tmp_path / _BASELINE_REL).read_text(encoding="utf-8"))
+    assert payload == {}
+
+
+def test_shape_read_only_modes_never_touch_the_baseline(tmp_path):
+    """单一写路径：只有 --write-baseline 能写基线，其它入口一律只读。"""
+    _write_adr(tmp_path, "ADR-0047-big.md", _oversized_adr())
+    write_shape_baseline(str(tmp_path), adr_shape_findings({"project_root": str(tmp_path)}))
+    baseline_file = tmp_path / _BASELINE_REL
+    before = baseline_file.read_text(encoding="utf-8")
+
+    for args in (["--all"], ["--all", "--summary"], ["--all", "--diff-baseline"],
+                 ["--all", "--baseline"]):
+        _run_shape_cli(tmp_path, *args)
+        assert baseline_file.read_text(encoding="utf-8") == before, args
+
+
+def test_shape_baseline_listing_shows_frozen_debt(tmp_path):
+    """--baseline 只读地列出冻结账本，exit 0。"""
+    _write_adr(tmp_path, "ADR-0048-big.md", _oversized_adr())
+    write_shape_baseline(str(tmp_path), adr_shape_findings({"project_root": str(tmp_path)}))
+    result = _run_shape_cli(tmp_path, "--all", "--baseline")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "ADR-0048-big.md" in result.stdout
+    assert "line_budget" in result.stdout
+
+def test_shape_diff_reports_only_the_excess_of_a_repeated_signal(tmp_path):
+    """同文件同信号多条：基线 1 条、现在 2 条 ⇒ 只报超出的那 1 条（不是 2 条）。"""
+    body = _WELL_FORMED_ADR + "\n## 实施记录\n\n细节。\n"
+    _write_adr(tmp_path, "ADR-0049-rep.md", body)
+    _write_baseline(tmp_path, _frozen_from(
+        adr_shape_findings({"project_root": str(tmp_path)})
+    ))
+    _write_adr(tmp_path, "ADR-0049-rep.md", body + "\n## 测试策略\n\n细节。\n")
+    new = diff_shape_findings(
+        adr_shape_findings({"project_root": str(tmp_path)}),
+        read_shape_baseline(str(tmp_path)),
+    )
+    assert len(new) == 1, [f"{f.signal}:{f.detail}" for f in new]
+
+
+def test_shape_diff_accepts_a_new_but_clean_adr(tmp_path):
+    """新增一份**干净**的 ADR 不算新增债务（基线无需为它建条目）。"""
+    _write_adr(tmp_path, "ADR-0050-old.md", _oversized_adr())
+    _write_baseline(tmp_path, _frozen_from(
+        adr_shape_findings({"project_root": str(tmp_path)})
+    ))
+    _write_adr(tmp_path, "ADR-0051-fresh.md", _WELL_FORMED_ADR)
+    assert diff_shape_findings(
+        adr_shape_findings({"project_root": str(tmp_path)}),
+        read_shape_baseline(str(tmp_path)),
+    ) == []
+    result = _run_shape_cli(tmp_path, "--all", "--diff-baseline")
+    assert result.returncode == 0, result.stdout + result.stderr

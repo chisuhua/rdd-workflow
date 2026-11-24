@@ -1,4 +1,5 @@
 """Unit tests for _lib/adr_index_generator.py"""
+import re
 from pathlib import Path
 import sys
 import pytest
@@ -66,3 +67,55 @@ class TestRenderTable:
         adrs = scan_adrs(ADR_DIR)
         table = render_table(adrs)
         assert "[ADR-0000]" not in table
+
+# ---------- status_class / status_raw (fix-adr-shape-debt-convergence T4) ----------
+# Status 行是自由文本（本仓有十几种写法），机器消费不了。分类在**生成器侧**完成，
+# **不改任何 ADR 的 Status 行**。
+
+STATUS_CLASSES = {"draft", "proposed", "accepted", "amended", "superseded", "rejected"}
+
+
+def _meta_for(tmp_path, status_line):
+    path = tmp_path / "ADR-0100-probe.md"
+    path.write_text(f"# ADR-0100: probe\n\n> **状态**: {status_line}\n\n## Context\n", encoding="utf-8")
+    return extract_metadata(path)
+
+
+class TestStatusClassification:
+    def test_status_raw_is_the_verbatim_value(self):
+        """status_raw 与 Status 行原文逐字符相等（分类不得丢信息）。"""
+        path = ADR_DIR / "ADR-0060-adr-shape-contract-and-gate-demotion.md"
+        text = path.read_text(encoding="utf-8")
+        raw = re.search(r"^>\s*\*\*状态\*\*:\s*(.+?)\s*$", text, re.M).group(1)
+        md = extract_metadata(path)
+        assert md["status_raw"] == raw
+        assert md["status"] == md["status_raw"]  # 旧键语义不变（下游 render 不破）
+
+    @pytest.mark.parametrize("line,expected", [
+        ("已替代为 ADR-0063", "superseded"),
+        ("已被取代", "superseded"),
+        ("已采纳。**Superseded by ADR-0063（2026-11-19）**", "superseded"),
+        ("已拒绝", "rejected"),
+        ("已采纳 + AMENDED (2026-11-17)", "amended"),
+        ("已采纳 + DOUBLE-AMENDED", "amended"),
+        ("已采纳 + 已实施（v4.1 release）", "accepted"),
+        ("✅ 已采纳", "accepted"),
+        ("待采纳", "proposed"),
+        ("待定", "draft"),
+    ])
+    def test_status_class_precedence(self, tmp_path, line, expected):
+        """优先级：superseded > rejected > amended > accepted > proposed > draft。"""
+        assert _meta_for(tmp_path, line)["status_class"] == expected
+
+    def test_status_class_covers_whole_corpus_within_six_values(self):
+        """全语料分类后取值集 ≤ 6，且真覆盖到实际存在的形态（不是全落 fallback）。"""
+        classes = {}
+        for path in ADR_DIR.glob("ADR-*.md"):
+            if "template" in path.name.lower():
+                continue
+            md = extract_metadata(path)
+            assert md is not None, path.name
+            assert md.get("status_class") in STATUS_CLASSES, f"{path.name}: {md.get('status_class')}"
+            classes[path.name] = md["status_class"]
+        assert set(classes.values()) <= STATUS_CLASSES
+        assert {"accepted", "superseded", "amended", "proposed", "draft"} <= set(classes.values())

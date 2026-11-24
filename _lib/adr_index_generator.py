@@ -62,12 +62,44 @@ def _extract_title(path: Path) -> str:
     return ""
 
 
+# ---------- status classification (per fix-adr-shape-debt-convergence T4) ----------
+#
+# ADR Status lines are free text (this repo has a dozen spellings), so nothing
+# downstream can consume them. Classification happens **here**, on read - no
+# ADR's Status line is rewritten to fit the enum.
+#
+# Precedence is load-bearing: "已采纳 + AMENDED" is both, and "已采纳。Superseded
+# by ADR-0063" is superseded. The widest-scope verdict wins.
+_STATUS_CLASS_RULES: list[tuple[str, re.Pattern]] = [
+    ("superseded", re.compile(r"已替代|已被取代|supersede", re.IGNORECASE)),
+    ("rejected", re.compile(r"已拒绝|拒绝采纳|rejected", re.IGNORECASE)),
+    ("amended", re.compile(r"amend", re.IGNORECASE)),
+    ("accepted", re.compile(r"已采纳|已接受|accepted|adopted|已实施", re.IGNORECASE)),
+    ("proposed", re.compile(r"待采纳|提议|proposed|待批准", re.IGNORECASE)),
+    # "draft" is the fallback: 待定 / 草案 / 模板 / unknown all mean "not decided yet"
+]
+
+
+def classify_status(raw: str) -> str:
+    """Map a free-text Status value onto one of six classes.
+
+    Classes: draft | proposed | accepted | amended | superseded | rejected.
+    Unrecognised text falls back to "draft" - never to a decided state, because
+    claiming a decision that the document does not state is the worse error.
+    """
+    for name, pattern in _STATUS_CLASS_RULES:
+        if pattern.search(raw or ""):
+            return name
+    return "draft"
+
 def extract_metadata(adr_path: Path) -> dict | None:
     """Extract status / date / decider from > 引用块 in ADR file.
 
     Returns:
-        dict with keys: status, date, decider, is_template (bool)
-        None if file has no metadata block (e.g. broken ADR).
+        dict with keys: status, status_raw, status_class, date, decider,
+        is_template (bool). `status` and `status_raw` are the same verbatim
+        text (kept for compatibility); `status_class` is one of the six
+        shapes-dashboard classes. None if the file has no metadata block.
     """
     text = adr_path.read_text(encoding="utf-8")
     matches = _META_PATTERN.findall(text)
@@ -77,6 +109,8 @@ def extract_metadata(adr_path: Path) -> dict | None:
     for key, value in matches:
         if key in ("状态", "Status"):
             metadata["status"] = value.strip()
+            metadata["status_raw"] = value.strip()
+            metadata["status_class"] = classify_status(value)
         elif key in ("日期", "Date"):
             metadata["date"] = value.strip()
         elif key in ("决策者", "Decider", "Decided by"):
