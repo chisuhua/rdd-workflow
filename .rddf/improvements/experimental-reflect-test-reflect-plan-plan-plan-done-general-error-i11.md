@@ -1,9 +1,18 @@
 ---
 issue_ref: 11
 gh_repo: chisuhua/rdd-workflow
-状态: draft（上游 issue #11 的自动生成稿；In/Out Scope 与 AC 待 brainstorm 确认）
+状态: 已作废（2026-11-24 关闭：上游 issue #11 自述为 "EXPERIMENTAL DEMO — NOT a real failure"，是 ReflectEngine → gh issue create 的端到端冒烟产物，不对应任何真实复发缺陷；按其 Verify closed 指示「关闭而非修复」）
 ---
 # experimental-reflect-test-reflect-plan-plan-plan-done-general-error-i11
+
+> **已作废（2026-11-24，builder）**：本文件是 `ReflectEngine.draft_issue()` → `gh issue create`
+> 集成链路的**冒烟产物**，不是待办工作项。上游 issue #11 正文自述
+> 「**⚠️ EXPERIMENTAL DEMO — NOT a real failure** … does NOT correspond to a real recurring
+> failure … This issue should be **closed (not fixed)** once the integration smoke test passes」，
+> 且其「Errors Detected」两条均为 `synthetic gate_fail` 注入。
+>
+> ⇒ **不走 brainstorm、不立项、不实施**。正文以下内容原样保留作为该冒烟链路的证据。
+> 若该链路后续需要真实端到端验证，另立一条 improvement（不复用本文件）。
 
 **优先级**: TBD | **来源**: from-issue (chisuhua/rdd-workflow#11)
 **issue_ref**: 11
