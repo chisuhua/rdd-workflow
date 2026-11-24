@@ -6,7 +6,7 @@ priority: P2
 阶段: phase-2
 分类: tech-debt
 类型: tech-debt
-状态: draft
+状态: 待立项（2026-11-24 已按磁盘实测重算基线数字：63 份 ADR / 163 findings / missing_verification 56；本项为多 commit 重实施，立项后分批推进）
 
 生成时间: 2026-11-17
 roadmap_ref:
@@ -21,35 +21,38 @@ roadmap_ref:
 
 ## 架构依据
 
-### 现状（2026-11-17 实测，`adr_shape_check.sh --all`）
+### 现状（2026-11-24 实测，`adr_shape_check.sh --all`）
 
-语料 60 份正式 ADR（不含 `ADR-0000-template.md`），162 项 findings，9 个信号：
+语料 **63** 份正式 ADR（不含 `ADR-0000-template.md`），**163** 项 findings 分布在 62 个文件，9 个信号：
 
 | 信号 | 计数 | 性质 |
 |---|---|---|
-| `missing_verification` | 57 | 存量债（事后无法补，见下） |
+| `missing_verification` | 56 | 存量债（事后无法补，见下） |
+| `missing_section` | 25 | 机械可修 |
 | `alternatives_table_no_conclusion_column` | 24 | 机械可修 |
-| `missing_section` | 24 | 机械可修 |
 | `shape_sprawl_heading` | 19 | 需逐份判断 |
-| `line_budget`（250 口径） | 16 | 机械可修（拆分/外移） |
+| `line_budget`（250 口径） | 17 | 机械可修（拆分/外移） |
 | `alternatives_table_missing` | 10 | 与 `missing_section` 互斥（见边界） |
 | `process_log_heading` | 9 | 需逐份判断 |
 | `verification_section_empty` | 2 | 机械可修 |
 | `process_log` | 1 | 已知假阳性（ADR-0060 自身，Consequences 已声明可接受） |
+
+> 该表随语料漂移，**不是判据**：判据只有「基线冻结 + 增量只报新 finding」。
+> 立项时若数字已变，以 `adr_shape_check.sh --all` 的实测为准，不要拿本表当断言。
 
 ### 为什么不能靠「豁免」解决（本项的核心判断）
 
 一个自然的想法是：形态门读 Status，对 `已替代为 …` 的 ADR 豁免 `missing_verification`。
 
 实测否掉了它：**全仓 Status 含「已替代」的只有 2 份真实 ADR**（`ADR-0001`、`ADR-0046`，
-另 1 命中是模板）。豁免写完 ⇒ 57 降到 55，噪音照旧；CI 一开仍会红。
+另 1 命中是模板）。豁免写完 ⇒ 56 降到 54，噪音照旧；CI 一开仍会红。
 
 进一步，改门的判定逻辑等于修改 ADR-0060 `## Decision` 的「一律检查」与「Out Scope 不追溯」两句，
 需要一份新 ADR 走 `rdd-arch` —— 为 2 份 ADR 的收益开一条契约变更，不成比例。
 
 ### 真正的杠杆：区分「存量」与「新增」，而不是消灭存量
 
-`missing_verification` 的 57 份**不该被补**：Verification 章的定义是前瞻验收判据
+`missing_verification` 的 56 份**不该被补**：Verification 章的定义是前瞻验收判据
 （「如何观察 ⇒ 通过条件」），对已经实现固化的 ADR 事后补写，等于伪造当时不存在的判据 ——
 而且 ADR-0060 的 Out Scope 已明写「既有 ADR 的存量改写（不追溯）」。
 
@@ -78,11 +81,11 @@ roadmap_ref:
 
 ## Why
 
-形态门现在给出 162 项输出，其中 57 项是「预期内、不追溯」的同一种债。后果有两层：
+形态门现在给出 163 项输出，其中 56 项是「预期内、不追溯」的同一种债。后果有两层：
 
-1. **信噪比**：92.9% 的 ADR 都报同一项时，人不再逐条看 ⇒ 真正的新问题被淹没（信号习惯化死亡）。
+1. **信噪比**：56/63（89%）的 ADR 都报同一项时，人不再逐条看 ⇒ 真正的新问题被淹没（信号习惯化死亡）。
 2. **门装成门帘**：ADR-0060 后续待办要求「等存量清零后再启用 `ARCH_SHAPE_CHECK`」，而存量永远不会清零
-   （57 份不能补）⇒ 形态门永远 opt-in，等于没有门。
+   （56 份不能补）⇒ 形态门永远 opt-in，等于没有门。
 
 本项把「清零」改成「冻结增量」，两件事同时解决，且不改任何判据。
 
@@ -99,7 +102,7 @@ roadmap_ref:
    - **单一写路径**：只有 `--write-baseline` 能写它，其余路径只读
 4. **存量收敛（可分批推进，非本项完成前提）**：机械可修类（备选表结论列 24 / 缺章节 24 / 超行数 16）
    按批修改后 `--write-baseline` 把条目从基线移除 ⇒ 基线逐批缩小，债务显式可见。
-   `missing_verification` 的 57 项**永远留在基线里直到对应 ADR 被替代**，这是预期行为，不是失败。
+   `missing_verification` 的 56 项**永远留在基线里直到对应 ADR 被替代**，这是预期行为，不是失败。
 5. **状态可机读（P2-5）**：`_lib/adr_index_generator.py` 的 `extract_metadata` 增两个键 ——
    `status_class`（枚举：`draft` / `proposed` / `accepted` / `amended` / `superseded` / `rejected`）
    与 `status_raw`（原文不动）。**不修改任何 ADR 的 Status 行**（40 份的自由文本保持原样，
@@ -114,7 +117,7 @@ roadmap_ref:
 - [ ] **增量模式有效**：`--diff-baseline` 在当前语料上 exit 0；人为在某个 ADR 里加一节 `## v9 修订日志` ⇒ exit 1 且只报这一条
 - [ ] **新增 ADR 必洁**：新建一份缺 Verification 的 ADR ⇒ `--diff-baseline` exit 1（它不在基线里）
 - [ ] **判据未被放宽**：`git diff` 对 `_lib/arch_quality_gate.py` 的改动**不含**信号集 / 预算 / severity 的修改（只有基线读写与 Status 解析分类）
-- [ ] `status_class`：对 60 份 ADR 运行分类，取值集 ≤ 6 个；`status_raw` 与原文逐字符相等（不丢信息）
+- [ ] `status_class`：对全部 63 份正式 ADR 运行分类，取值集 ≤ 6 个；`status_raw` 与原文逐字符相等（不丢信息）
 - [ ] `grep -cE "commit|@[0-9a-f]{7}" docs/adr/ADR-0055-*.md` 在 Status 行内为 0（该行可用 `python3 -c` 精确取 Status 行再匹配，不用 `grep -c` 数全文）
 - [ ] CI：`ARCH_SHAPE_CHECK=yes` 在 `.github/workflows/` 可见，且该 step 在 PR 中**实际执行**（`skip` 不算通过）
 - [ ] `pytest tests/unit/test_arch_quality_gate.py -q` 全绿，且新增用例覆盖：① 基线非空 ② 增量只报新 finding ③ `--write-baseline` 拒绝新增条目
@@ -145,7 +148,7 @@ roadmap_ref:
 
 | finding | 处置 |
 |---|---|
-| 「Path A 收益只有 2 项（已替代的 ADR 仅 2 份）」⇒ 57 → 55，CI 一开就红 | ✅ **采纳，方案作废**。改为「增量门 + 冻结清单」，判据一条不放宽 ⇒ 无需 ADR-0061 |
+| 「Path A 收益只有 2 项（已替代的 ADR 仅 2 份）」⇒ 57 → 55，CI 一开就红（数字为 2026-11-17 当时值；2026-11-24 重测为 56 → 54） | ✅ **采纳，方案作废**。改为「增量门 + 冻结清单」，判据一条不放宽 ⇒ 无需 ADR-0061 |
 | 「改门的判定逻辑等于改 ADR-0060 的两句决策 ⇒ 须走 rdd-arch」 | ✅ 采纳：重写后本项**不触碰** `adr_shape_findings` 的信号集/预算 |
 | AC「总数 ≤ 豁免后基线」是自反命题（基线定义为自己） | ✅ 采纳：删除该 AC，改为三条可判定命题（非空 / 单调 / 增量只报新 finding） |
 | AC「`missing_verification` 降到 X，实施首日填值」= 事后自证 | ✅ 采纳：改为「新增 ADR 必洁 + 存量永留基线」 |
