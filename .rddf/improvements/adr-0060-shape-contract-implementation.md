@@ -4,7 +4,7 @@
 阶段: v5.x
 分类: governance
 类型: process
-状态: 待回填（V-1..V-8 已验证通过；A-0 / A-1 / A-2 三项登记待办仍未勾）
+状态: 已实施（V-1..V-8 已验证通过；A-0 / A-1 已回填 —— ADR-0060 元数据块补 `> **关联 change**: backlog: adr-0060-shape-contract-implementation` 指针，审稿报告落 `.rddf/reviews/adr-0060-backfill-2026-11-24.md`（oracle APPROVE + critic APPROVE / 0 BLOCKER）；A-2「doctor 缺『关联 change 缺失』检查」另案立项）
 ---
 
 **优先级**: P2 | **来源**: 2026-11-05 归档收尾审查 — ADR-0060 已采纳并实施（commit 4b5a971），但未走 openspec change 流程，architect 产出形态契约要求的「关联 change」指针缺失
@@ -86,8 +86,8 @@ ADR-0060 的**决策内容**不动。本提案不重新评审、不改判、不�
 
 ### 本提案待办
 
-- [ ] **A-0** 本文件同时含 ADR-0060 的路径指针与实现 commit `4b5a971` 的指针（双向可溯）
-- [ ] **A-1** ADR-0060 元数据块含 `> **关联 change**: backlog: adr-0060-shape-contract-implementation`（**architect 回填**）
+- [x] **A-0** 本文件同时含 ADR-0060 的路径指针与实现 commit `4b5a971` 的指针（双向可溯）
+- [x] **A-1** ADR-0060 元数据块含 `> **关联 change**: backlog: adr-0060-shape-contract-implementation`（**architect 回填**）
 
   > **不阻塞归档**：按 build.md「architect 产出形态契约」的跨角色收口条款，A-1 属跨角色收口项，不要求在本回合完成 —— builder 在 P3 archive gate 看到 A-1 未勾时**不得因此卡住**；由 architect 在任意后续回合回填并补勾。
 
