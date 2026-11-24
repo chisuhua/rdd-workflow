@@ -573,11 +573,14 @@ def test_r4_repo_residue_constant():
     `complete-guide-orchestrator-flow` / 3 份 `wave3-*`）—— 它们只有一句占位 Requirement、
     无归档 delta、主题被其它 spec 覆盖
     （spec 文件数 165→**159**；hits/blocks/files **不变**，因空壳不含任何 stage token）。
+    `fix-agents-md-worktree-commit-flow` 归档新增 1 份 spec（`fix-agents-md-worktree-commit-flow`）
+    —— 其 `acceptance-N` 形态同时违反「退化 Requirement 形态」守卫，已重写为语义名 + 可区分 WHEN
+    （spec 文件数 159→**160**；hits/blocks/files **不变**，因新 spec 不含 stage token）。
     ⚠️ Phase 1 的每个改动都必须在同一提交更新这些常数，否则它会在下次运行时被读成 regression。
     """
     from spec_residue_scan import scan_specs
     result = scan_specs(REPO_ROOT)
-    assert result.files_scanned == 159, result.files_scanned
+    assert result.files_scanned == 160, result.files_scanned
 
     unexempted = [h for h in result.hits if not h.category]
     assert len(unexempted) == 0, len(unexempted)

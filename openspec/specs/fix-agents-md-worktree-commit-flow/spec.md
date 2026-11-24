@@ -1,96 +1,52 @@
 # fix-agents-md-worktree-commit-flow Specification
 
 ## Purpose
-TBD - created by archiving change fix-agents-md-worktree-commit-flow. Update Purpose after archive.
+Define the repository-level contract for documenting the worktree commit flow, for making the archive gate discoverable from the narrative docs, and for keeping the known-failure baseline in sync with assertions that have turned green.
 
 ## Requirements
 
-### Requirement: acceptance-1
+### Requirement: AGENTS.md MUST document the worktree commit flow
 
-The system SHALL `bats tests/integration/test_worktree_archive_workflow_docs.bats` ⇒ 6/6 通过.
+`AGENTS.md` MUST carry an H3 section titled `Worktree Commit Flow` that states three things: the Phase 2 execute boundary (tasks are not committed individually; a single aggregate worktree-internal commit is made once all Phase 2 tasks pass), the conventional commit types accepted in that commit, and the Phase 3 archive boundary (the branch is merged, the change archived, and the worktree cleaned up).
 
-#### Scenario: `bats tests/integration/test_worktree_archive_workflow_docs.
+The section MUST NOT hardcode drift-prone composition counts (for example a count of files or modules), because any such count is invalidated the moment files are added or removed.
 
-- **WHEN** the change is applied
-- **THEN** `bats tests/integration/test_worktree_archive_workflow_docs.bats` ⇒ 6/6 通过
+#### Scenario: The aggregate-commit rule is stated with a discriminating boundary
 
-### Requirement: acceptance-2
+- **WHEN** `AGENTS.md` is searched for the literal text `execute 阶段不逐任务 commit`
+- **THEN** the matching line MUST itself contain `worktree-internal commit`
+- **AND** the two lines following it MUST cross-reference the `Worktree Commit Flow` section
 
-The system SHALL `grep -c "^### Worktree Commit Flow" AGENTS.md` ≥ 1.
+#### Scenario: The commit types are listed in the documented form
 
-#### Scenario: `grep -c "^### Worktree Commit Flow" AGENTS.md` ≥ 1
+- **WHEN** `AGENTS.md` is searched for the H3 heading `Worktree Commit Flow`
+- **THEN** the section MUST contain one list entry per conventional commit type, each written as a backtick-wrapped `<type>(<scope>):` prefix
 
-- **WHEN** the change is applied
-- **THEN** `grep -c "^### Worktree Commit Flow" AGENTS.md` ≥ 1
+### Requirement: The archive gate MUST be discoverable from the narrative docs
 
-### Requirement: acceptance-3
+`AGENTS.md` MUST carry an H3 section titled `归档流程` whose body, within eight lines of the heading, names `check_worktree_commits` — the function that refuses to archive a worktree branch that carries no new commit relative to the default branch.
 
-The system SHALL `grep -cE "^   - \`[a-z]+\(<scope>\):" AGENTS.md` ≥ 5.
+Every ADR identifier referenced by these sections MUST resolve to a file that exists under `docs/adr/`; a dangling identifier makes the reference a lie that no assertion would catch.
 
-#### Scenario: `grep -cE "^   - \`[a-z]+\(<scope>\):" AGENTS.md` ≥ 5
+#### Scenario: The archive-gate section names the gate function
 
-- **WHEN** the change is applied
-- **THEN** `grep -cE "^   - \`[a-z]+\(<scope>\):" AGENTS.md` ≥ 5
+- **WHEN** `AGENTS.md` is searched for the H3 heading `归档流程` and the following eight lines are inspected
+- **THEN** those lines MUST contain `check_worktree_commits`
 
-### Requirement: acceptance-4
+### Requirement: The known-failure baseline MUST track assertions that turned green
 
-The system SHALL `grep -A 8 "^### 归档流程" AGENTS.md` 含 `check_worktree_commits`.
+`tests/KNOWN_FAILURES.txt` MUST be refreshed whenever previously registered assertions turn green. The refresh MUST be selective: it removes only the entries whose test no longer fails, and MUST NOT absorb newly failing tests into the baseline.
 
-#### Scenario: `grep -A 8 "^### 归档流程" AGENTS.md` 含 `check_worktree_commits`
+The regression comparison MUST be executed BEFORE the refresh. Refreshing first would launder any regression introduced inside the implementation window, because the refresh would then list it as a known failure.
 
-- **WHEN** the change is applied
-- **THEN** `grep -A 8 "^### 归档流程" AGENTS.md` 含 `check_worktree_commits`
+#### Scenario: The baseline shrinks without absorbing new failures
 
-### Requirement: acceptance-5
+- **WHEN** the regression comparison reports zero new failures and six previously registered entries no longer fail
+- **THEN** the refreshed baseline MUST contain four entries
+- **AND** the diff against the previous baseline MUST contain only removals plus a summary comment, with no added line that is not a comment
 
-The system SHALL `grep "execute 阶段不逐任务 commit" AGENTS.md` 的**匹配行本身**含 `worktree-internal commit` 或 `worktree 内做 1 个聚合 commit`.
+#### Scenario: The comparison precedes the refresh
 
-#### Scenario: `grep "execute 阶段不逐任务 commit" AGENTS.md` 的**匹配行本身**含 `worktr
+- **WHEN** the known-failure baseline is refreshed
+- **THEN** the regression comparison result MUST have been obtained before the refresh ran
 
-- **WHEN** the change is applied
-- **THEN** `grep "execute 阶段不逐任务 commit" AGENTS.md` 的**匹配行本身**含 `worktree-internal commit` 或 `worktree 内做 1 个聚合 commit`
-
-### Requirement: acceptance-6
-
-The system SHALL `bash tests/scripts/report_regression.sh` ⇒ **新增失败 = 0**（**先于** refresh 执行，见 What Changes 4）.
-
-#### Scenario: `bash tests/scripts/report_regression.sh` ⇒ **新增失败 = 0**（**先
-
-- **WHEN** the change is applied
-- **THEN** `bash tests/scripts/report_regression.sh` ⇒ **新增失败 = 0**（**先于** refresh 执行，见 What Changes 4）
-
-### Requirement: acceptance-7
-
-The system SHALL `bash tests/scripts/refresh_known_failures.sh --dry-run` 的 diff 期望 `removed=6, added=0`（summary `kept=4`）；核对通过后实跑 refresh.
-
-#### Scenario: `bash tests/scripts/refresh_known_failures.sh --dry-run` 的 d
-
-- **WHEN** the change is applied
-- **THEN** `bash tests/scripts/refresh_known_failures.sh --dry-run` 的 diff 期望 `removed=6, added=0`（summary `kept=4`）；核对通过后实跑 refresh
-
-### Requirement: acceptance-8
-
-The system SHALL `git diff tests/KNOWN_FAILURES.txt` **仅**含 6 条 AGENTS.md 条目的移除与一条 summary 注释，**无非注释新增行**（防止 refresh 把别的新失败吸收进来）.
-
-#### Scenario: `git diff tests/KNOWN_FAILURES.txt` **仅**含 6 条 AGENTS.md 条目的
-
-- **WHEN** the change is applied
-- **THEN** `git diff tests/KNOWN_FAILURES.txt` **仅**含 6 条 AGENTS.md 条目的移除与一条 summary 注释，**无非注释新增行**（防止 refresh 把别的新失败吸收进来）
-
-### Requirement: acceptance-9
-
-The system SHALL `tests/KNOWN_FAILURES.txt` 条目数 10 → 4，且剩余 4 条与本提案无关.
-
-#### Scenario: `tests/KNOWN_FAILURES.txt` 条目数 10 → 4，且剩余 4 条与本提案无关
-
-- **WHEN** the change is applied
-- **THEN** `tests/KNOWN_FAILURES.txt` 条目数 10 → 4，且剩余 4 条与本提案无关
-
-### Requirement: acceptance-10
-
-The system SHALL `rddf doctor --category docs-consistency` 无新增 finding（新段内**不得**写「per ADR-00XX」这类未经核对的 ADR 引用 —— `docs_consistency` 会扫 AGENTS.md 的 ADR 编号引用并对磁盘缺失报 WARNING）.
-
-#### Scenario: `rddf doctor --category docs-consistency` 无新增 finding（新段内**不
-
-- **WHEN** the change is applied
-- **THEN** `rddf doctor --category docs-consistency` 无新增 finding（新段内**不得**写「per ADR-00XX」这类未经核对的 ADR 引用 —— `docs_consistency` 会扫 AGENTS.md 的 ADR 编号引用并对磁盘缺失报 WARNING）
