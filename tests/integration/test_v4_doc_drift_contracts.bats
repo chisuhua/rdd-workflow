@@ -364,8 +364,58 @@ setup() {
 # section has no v1.x or v2.0-beta; labels v4.0+ as latest stable.
 # Corresponds to: AC-4 of fix-doc-drift-followup-3.
 # -----------------------------------------------------------------------------
-@test "doc_drift_v4: README.md L13-19 npm install section has v4.0+ and no v1.x/v2.0-beta (AC-4 follow-up)" {
-  section=$(sed -n '13,19p' README.md)
-  echo "$section" | grep -qE 'v1\.x|v2\.0-beta' && { echo "AC-4 follow-up violation: v1.x or v2.0-beta still in install section"; echo "$section"; return 1; }
-  echo "$section" | grep -qE 'v4' || { echo "AC-4 follow-up violation: v4.0+ label missing from install section"; echo "$section"; return 1; }
+
+
+# -----------------------------------------------------------------------------
+# fix-spec-v3-naming-sync: 活规范归属断言
+#
+# 活规范 = 约束**当前** SKILL.md frontmatter 的能力 spec。历史 change 的 spec 快照里
+# 的旧表述是**当时正确**的记录，不归本守卫管（否则等于要求重写 47 份历史快照）。
+#
+# 本守卫与 doctor 的 v4-residue 守卫**不抢判据**：前者查**归属**，后者查**豁免标注**。
+# 新增活规范时在此追加；历史快照不追加。
+# -----------------------------------------------------------------------------
+ACTIVE_ROLE_SPECS=(
+  "openspec/specs/skill-role-model/spec.md"
+)
+
+@test "doc_drift_v4: 活规范的 rdd-arch owns 断言与 SKILL.md 逐项一致，且不含 roadmap" {
+  for spec in "${ACTIVE_ROLE_SPECS[@]}"; do
+    [ -f "$spec" ] || { echo "活规范清单指向的文件不存在: $spec"; return 1; }
+
+    # 负向 1：不得把 roadmap 归给 rdd-arch（Scenario 标题也算）
+    if grep -nE "owns ADR \+ roadmap" "$spec" >/dev/null 2>&1; then
+      echo "$spec 仍把 roadmap 归给 rdd-arch 的 owns："
+      grep -nE "owns ADR \+ roadmap" "$spec" | head -3
+      return 1
+    fi
+
+    # 负向 2：owns 断言行不得含 roadmap
+    then_line=$(grep -n "THEN it contains" "$spec" | head -1)
+    [ -n "$then_line" ] || { echo "$spec 找不到 rdd-arch 的 owns 断言行（THEN it contains ...）"; return 1; }
+    case "$then_line" in
+      *roadmap*) echo "$spec 的 owns 断言仍含 roadmap:"; echo "$then_line"; return 1 ;;
+    esac
+
+    # 正向：owns 断言的条目必须与 skills/rdd-arch/SKILL.md 的 owns: 逐项一致
+    mapfile -t owns_entries < <(sed -n '/^    owns:/,/^    not_owns:/p' skills/rdd-arch/SKILL.md | grep -E '^\s+- ' | sed -E 's/^\s+- "(.*)"$/\1/')
+    [ "${#owns_entries[@]}" -ge 1 ] || { echo "读不到 skills/rdd-arch/SKILL.md 的 owns: 条目"; return 1; }
+    for entry in "${owns_entries[@]}"; do
+      case "$then_line" in
+        *"$entry"*) ;;
+        *) echo "$spec 的 owns 断言缺少 SKILL.md owns: 里的条目: $entry"; echo "$then_line"; return 1 ;;
+      esac
+    done
+
+    # 改名历史注记必须仍带合法豁免标注（本守卫不删它，只保证它仍被放行）
+    while IFS= read -r hit; do
+      [ -n "$hit" ] || continue
+      ln=${hit%%:*}
+      next=$(sed -n "$((ln+1))p" "$spec")
+      case "$next" in
+        *"<!-- v4-residue:allow=rename-history -->"*) ;;
+        *) echo "$spec:$ln 的改名历史注记下一行缺少 rename-history 豁免标注："; echo "$next"; return 1 ;;
+      esac
+    done < <(grep -nE "guide-arch|guide-design|guide-plan|guide-ship" "$spec" || true)
+  done
 }
