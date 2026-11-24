@@ -60,12 +60,6 @@
 
 # === 2026-10-08 refresh summary (selective): kept=1, removed=9, added=20 ===
 # Newly added failures as of 2026-10-08:
-AGENTS.md: Worktree Commit Flow lists 5 conventional commit types # doc-drift: AGENTS.md missing Worktree Commit Flow section; v2.0.7 worktree convention never documented (tracked in feat-doc-drift-cleanup)
-AGENTS.md: Worktree Commit Flow mentions execute and archive phases # doc-drift: AGENTS.md missing Worktree Commit Flow section (same root cause as 5-commit-types; fix in feat-doc-drift-cleanup)
-AGENTS.md: Worktree Commit Flow section exists # doc-drift: AGENTS.md missing Worktree Commit Flow section entirely (header + 4 subsections); feat-doc-drift-cleanup
-AGENTS.md: trap #6 cross-references Worktree Commit Flow # doc-drift: AGENTS.md trap #6 needs cross-ref to Worktree Commit Flow once section exists (depends on first 3 entries)
-AGENTS.md: trap #6 updated to mention worktree-internal commit # doc-drift: AGENTS.md trap #6 needs worktree-internal commit mention (depends on Worktree Commit Flow section)
-AGENTS.md: 归档流程 cross-references check_worktree_commits # doc-drift: AGENTS.md 归档流程 section needs cross-ref to check_worktree_commits (same feat-doc-drift-cleanup)
 env-bootstrap: rddf env-bootstrap --help shows 5 flags # test-vs-script-drift: rddf env-bootstrap --help renders fewer than 5 flags; check if --check-only/--auto-fix are dropped by _handle_help() interception (track in feat-rdd-env-bootstrap-help-audit)
 every SKILL.md description references role.boundaries # doc-drift: at least one skills/*/SKILL.md frontmatter description missing role.boundaries reference per ADR-0051; feat-doc-drift-cleanup
 mark-approved-completed: idempotent call preserves original completion date # script-drift: mark_approved_completed.sh overwrites completion date on second call (loses idempotency contract); tracked in feat-rdd-builder-idempotency-audit (TBD)
@@ -91,3 +85,5 @@ phase0_approval.sh --auto-approve populates proposal.md with full 5-段 content 
 # its selective mode ABSORBS new failures into this file (which is how the skill-count
 # drift stayed invisible), and its failure-name normalisation does not match
 # report_regression.sh, so a blind refresh can inject duplicate entries.
+
+# === 2026-11-24 refresh summary (selective): kept=4, removed=6, added=0 ===
