@@ -4,13 +4,15 @@
 阶段: phase-3
 分类: cli-tooling
 类型: improvement
-状态: 待审查
+状态: 已合并
 主题: spec delta 生成器 —— 形态退化（acceptance-N / 恒真 WHEN）前移到生成时 + 语义轴（ADDED → MODIFIED）
 ---
 
 **优先级**: P0 | **来源**: 2026-11-26 CppTLM 立项会话实测 | **阶段**: phase-3 | **分类**: cli-tooling | **类型**: improvement
 
 ## metis 结论（2026-11-27 · 本轮 1 轮覆盖 9 份草稿 · 载体=头部段）
+
+> ⚠ **本稿已合并**（2026-11-27）⇒ 本单元并入 `fix-proposal-generator-output-fidelity`（轴 2（delta 形态/语义）），与另一轴合成**一个** openspec change（同文件 `generate_full_proposal.py`）⇒ 本稿**不再单独立项**；原文与结论全部保留，仅作历史留痕。
 
 - **`<1.7.0` 分支在 CI 不会自然触发**（本仓 pin `openspec-cli >= 1.7.0`）⇒ 必须用**版本 mock / 分支注入**测，否则该分支腐烂；版本比较须语义化（`1.14.3 > 1.7.0`）。
 - **AC3 的 fixture 来源未定**（本仓活规范是临时构造）⇒ 用测试内建 fixture。
