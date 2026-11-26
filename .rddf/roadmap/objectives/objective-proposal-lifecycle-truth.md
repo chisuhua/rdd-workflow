@@ -157,3 +157,4 @@ U7 (声明生成+可观测) ─→ U8 (baseline, 需 ADR SU) ──→ [声明�
 | Sprint | kind | 内容 | Decision/调整 | 原因 |
 |--------|------|------|---------------|------|
 | sprint-2026-11-27 | go-decision | objective 创建（9 单元 · TDD 三段判据入库）+ 9 份 improvement 草稿 + 提案池登记 | 立项走 oracle→critic 双审；RW-3 走方案 B（disk 化）；OC-1c 走 baseline | 2026-11-26 两次真实会话暴露 7 处「静默失效」，且 3 处已在 backlog 里以「另案」记录却从未立项（本次一并补载体） |
+| sprint-2026-11-27 | go-decision | **W1 起 change**：`fix-proposal-generator-output-fidelity`（U1+U2 合批）立项完成（P0 approve → P1 plan/tasks → P1.5 deps，mode=worktree · 0 blockers）⇒ 15 条 AC · 6 Task ×(5 步+变异第 6 步) | 用户裁决：RW-3=B / OC-1c=baseline / 治理面合并交付 | metis 复核合并稿给出 3 blocker + 10 项 high/medium ⇒ 合并稿整体重写（AC 真重排 + 4 项 design 裁决载体 + 半成品防护 + golden snapshot 判据） |
