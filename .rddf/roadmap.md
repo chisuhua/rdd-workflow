@@ -37,6 +37,7 @@
 ### Objectives
 - `objective-bypass-audit-hub-governance` — 统一 bypass audit + hub federation governance (status: deferred, priority: P2)
 - `objective-onboard-new-skill` — 新增 skill 的标准化 onboarding 流程 (status: active, priority: P1)
+- `objective-proposal-lifecycle-truth` — 提案产物与状态面的可信性 —— 立项产物一次成型 + 状态/队列不再静默失效 (status: active, priority: P0)
 
 <!-- AUTO-SPRINT-START -->
 ## Current Sprint: sprint-2026-11
