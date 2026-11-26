@@ -16,6 +16,8 @@
 - **白名单若是文件清单 ⇒ 判别力为零**（实施者把新差异加进白名单即过）⇒ 白名单必须是「**修复形态枚举**」（纯表格 / 带注解标题），且白名单变更需单独审查。
 - 快照入库后每新增一份 improvement 即过期 ⇒ 需漂移检出（快照头字段）。
 - 已改：AC4 增「清空白名单 ⇒ 必须红」的判别力行；快照自带头；全文去掉写死份数。
+- **跨仓验证（2026-11-27，本仓实跑）**：新草稿自带 `## metis 结论` 段 ⇒ 生成器**容忍**额外段（oracle 登记② 跨仓项已验证通过）；
+  同一实跑暴露兜底把 `### 关键场景` 整段吞进 In Scope ⇒ **该缺陷在本仓新草稿上同样复现**（可作 fixture 起点）。
 
 
 **主题**: proposal 生成器的「范围节」解析 —— 纯表格形态被逗号兜底切碎 + Out 段整段重复
@@ -55,7 +57,7 @@ CppTLM 的 improvement `cep-ssp-cp-q1b-landing.md` 用**表格**写 In Scope（6
 - 不改 `_extract_bullet_items`（技术约束 → Capabilities/Impact 的路径，已由 `fix-generator-scope-extraction` 覆盖）；
 - 不改 `## What Changes` 的段落模板结构（除 In/Out Scope 块）；
 - 不改 `_split_capabilities_impact`（`SHOULD` 混入 Capabilities 的既有偏差，`fix-generator-scope-extraction` 已登记为「未修」）；
-- 不动既有 295 份 improvement 的**内容**（只读回归语料）。
+- 不动既有 improvement 的**内容**（只读回归语料）。
 
 ## 关键场景
 
@@ -103,5 +105,5 @@ CppTLM 的 improvement `cep-ssp-cp-q1b-landing.md` 用**表格**写 In Scope（6
 |---|---|
 | `skills/rdd-builder/scripts/generate_full_proposal.py` | 三处解析逻辑（header 正则 / item 解析 / 兜底删除） |
 | `tests/unit/` | 新增 2 个测试文件 + 语料基线快照 |
-| 既有 improvement（295 份） | 只读语料；输出差异逐份登记 |
+| 既有 improvement（**动态计数**） | 只读语料；输出差异逐份登记 |
 | ADR / 契约 | 无（生成器内部行为修正，不改 D2 段映射契约） |
