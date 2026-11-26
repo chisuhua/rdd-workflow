@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-11-26T21:46:53.004473+00:00",
+  "generated_at": "2026-11-26T22:00:22.583590+00:00",
   "corpus_count": 305,
   "shape_labels": {
     "table_row": 1714,
     "bullet": 10875,
     "numbered": 956,
-    "other": 13568
+    "other": 13569
   },
   "items": {
     "RDDF-0001-fix-rddf-session-import-path": {
@@ -1579,9 +1579,9 @@
         "table_row": 25,
         "bullet": 66,
         "numbered": 16,
-        "other": 139
+        "other": 140
       },
-      "sha256": "a6737b0955a2dbe246608e8673ded9285092ce01cbc394e1cddfb5b85044d0a6"
+      "sha256": "92d7ca5af555948fde43c54ad5b80d36c5767af25463ce5ca8f52989491d20d2"
     },
     "fix-proposal-generator-table-scope": {
       "labels": {
