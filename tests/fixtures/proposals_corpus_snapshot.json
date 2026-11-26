@@ -1,0 +1,2757 @@
+{
+  "generated_at": "2026-11-26T21:46:53.004473+00:00",
+  "corpus_count": 305,
+  "shape_labels": {
+    "table_row": 1714,
+    "bullet": 10875,
+    "numbered": 956,
+    "other": 13568
+  },
+  "items": {
+    "RDDF-0001-fix-rddf-session-import-path": {
+      "labels": {
+        "table_row": 14,
+        "bullet": 13,
+        "numbered": 4,
+        "other": 170
+      },
+      "sha256": "e58ed68ca53636a76f89477cdfb4f42329520afd5b408e3d4fec6f269d133436"
+    },
+    "add-archive-post-commit-hook-and-force-flag": {
+      "labels": {
+        "table_row": 7,
+        "bullet": 107,
+        "numbered": 0,
+        "other": 48
+      },
+      "sha256": "2f346703350ff0961cfba7e912013bfcf92f50122206ec62bdf99c86cd1a77d7"
+    },
+    "add-auto-rfc-from-approve": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 16,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "6f84bc4d10fac097a37d3f3b010156126865a577036c3718e6e0d6f08f1f6bfd"
+    },
+    "add-brainstorm-hardgate-enforcement": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 34,
+        "numbered": 0,
+        "other": 29
+      },
+      "sha256": "4f4f4ec143236bc1a63cbe9ffad1236bd244b3c0eaa570094d05abab2bdb25b3"
+    },
+    "add-change-content-review": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 43,
+        "numbered": 5,
+        "other": 15
+      },
+      "sha256": "e8daedef22b7c2ebead830efac080145cc7c680535e0154dc6ec4658f97c949b"
+    },
+    "add-cli-coverage-rdd-doctor-roadmap-rdd-hub": {
+      "labels": {
+        "table_row": 46,
+        "bullet": 29,
+        "numbered": 0,
+        "other": 95
+      },
+      "sha256": "1027b370111ad1d2023ce7a92d21d8b25d7ac09180bfc9b8ac90db331c9e1cb5"
+    },
+    "add-commit-gate-baseline-known-failures": {
+      "labels": {
+        "table_row": 6,
+        "bullet": 34,
+        "numbered": 5,
+        "other": 39
+      },
+      "sha256": "3b393647a0538135f4d4197998479afecfee1848ebcf1ca081824b9cdc788338"
+    },
+    "add-commit-gate-declaration-bootstrap": {
+      "labels": {
+        "table_row": 6,
+        "bullet": 33,
+        "numbered": 5,
+        "other": 39
+      },
+      "sha256": "02308f605d9fd2950cf324039b6a2f301d3fa72ee696567a4f7daea30b5d7c4a"
+    },
+    "add-config-validation": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 21,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "838988b0d8e24871f38f6835d5f8dd900fbb05a78e8ddfbce5bd615fcb85886e"
+    },
+    "add-contract-lint-ci-gate": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 29,
+        "numbered": 7,
+        "other": 80
+      },
+      "sha256": "550a04f75cc2b35c1e7d04c545a170093b342d04862fec58d3eac3e09905a9dd"
+    },
+    "add-cross-repo-deps-orchestration": {
+      "labels": {
+        "table_row": 4,
+        "bullet": 45,
+        "numbered": 4,
+        "other": 67
+      },
+      "sha256": "4740288a5f1e1ae123e9b68c44cc422a8fb8d198cc41227f69bc4a77ad1e871e"
+    },
+    "add-cross-repo-impact-detection": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "65647e9431dabff4cbb7732b16538d084d6fafb15915682068907f259df05ad7"
+    },
+    "add-cross-repo-state-schemas": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 26,
+        "numbered": 10,
+        "other": 66
+      },
+      "sha256": "982b3a301a1df75f85cc12944940f7a7d1da5425e85d12e1828f79a76db7a086"
+    },
+    "add-deferral-registration-guard": {
+      "labels": {
+        "table_row": 5,
+        "bullet": 30,
+        "numbered": 4,
+        "other": 38
+      },
+      "sha256": "a1ada155c0feeef56ed43dfe14444f952dd32482c74942cea3174d16537aca81"
+    },
+    "add-e2e-test-plan-phase1": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 24,
+        "numbered": 0,
+        "other": 19
+      },
+      "sha256": "e59ce650c7a24498f18327573ebe868ce82ca4a56986c87b64ac34467227320a"
+    },
+    "add-e2e-test-plan-phase2": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 9,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "c12ee2a7a3f04b3f6864067a89e8c5ff15c446377b3b862fe27c5f2f75b70ce1"
+    },
+    "add-e2e-test-plan-phase3": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 5,
+        "numbered": 0,
+        "other": 16
+      },
+      "sha256": "c51c8d56414e67e08a2d54cc92a9ae9f3f8ee08c66993adebfbdba111c3d739c"
+    },
+    "add-e2e-test-plan-phase4": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 3,
+        "numbered": 0,
+        "other": 14
+      },
+      "sha256": "d43dc84197d8bd3b4febb601d37464696ca255601daad7c1d25ce6a9d3b4149b"
+    },
+    "add-e2e-test-plan-phase5": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 3,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "8216d17942dcc1f67ebce8da1fdcb7d187b2812f5dd2711e3526371b271f8854"
+    },
+    "add-e2e-test-skip-on-missing-hub-auth": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 87,
+        "numbered": 5,
+        "other": 53
+      },
+      "sha256": "6b9a3dc27d1dbafcfb4deff3f2de76191d64a3451fc7f8aaca71ec98f5e0f4da"
+    },
+    "add-env-bootstrap-skill": {
+      "labels": {
+        "table_row": 29,
+        "bullet": 133,
+        "numbered": 11,
+        "other": 167
+      },
+      "sha256": "32f017654bc47703fc9cf5dec47217767a340258b4a485944b2d40a282e76d62"
+    },
+    "add-env-cache-arch-discovery": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 58,
+        "numbered": 3,
+        "other": 23
+      },
+      "sha256": "07c0706586a4d54ac19e2f6c79b041a69cb345f12706c2a686966f7f6e4c0240"
+    },
+    "add-feature-fragment-command": {
+      "labels": {
+        "table_row": 17,
+        "bullet": 43,
+        "numbered": 0,
+        "other": 61
+      },
+      "sha256": "2421e7e2e2ffa4dd33425a6c5e72373f8134ae19886786ca11faa46ade547a52"
+    },
+    "add-file-size-quality-gate": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 6,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "3dd12d09619135473fb9982bd5d097c6760719af812b2f018a910cef2867ebc4"
+    },
+    "add-full-regression-gate": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 43,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "ef501c8b45d9f43134de34156e25683900975269acfd7683315e1a0a2bb91620"
+    },
+    "add-guide-polling-loop-implementation": {
+      "labels": {
+        "table_row": 14,
+        "bullet": 79,
+        "numbered": 4,
+        "other": 229
+      },
+      "sha256": "03168e52e13629f52bc5ef42b7221243f80facf7205236f15f80fc03cc704543"
+    },
+    "add-heartbeat-config": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 10,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "5a9e04b90a15d6485f89b3cbc0751c91280ffaed2eabb9526a6ab102931c90f0"
+    },
+    "add-hierarchical-roadmap-structure": {
+      "labels": {
+        "table_row": 14,
+        "bullet": 161,
+        "numbered": 2,
+        "other": 57
+      },
+      "sha256": "c549f36401023d295695574250b53e86d1d4941b3e71ba55dc8199a641df433d"
+    },
+    "add-known-failures-baseline": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 31,
+        "numbered": 0,
+        "other": 23
+      },
+      "sha256": "9faddfc10cc0470b81dd3d1b4bc552f9c1d315fb0f440f23e3d7016d92083000"
+    },
+    "add-mcp-cross-repo-protocol": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 19,
+        "numbered": 9,
+        "other": 49
+      },
+      "sha256": "56f9e495883a548359421857c58529978f2ea8e5828058d866d45e1c9ec94242"
+    },
+    "add-objective-tracking": {
+      "labels": {
+        "table_row": 27,
+        "bullet": 101,
+        "numbered": 7,
+        "other": 98
+      },
+      "sha256": "fcc7b5cf8fa9396217e8bc9d9c65f0c8db4998618508dfd3fb30315d2a2b3919"
+    },
+    "add-openspec-gate": {
+      "labels": {
+        "table_row": 5,
+        "bullet": 83,
+        "numbered": 0,
+        "other": 29
+      },
+      "sha256": "bea1a1c22682a5096ccbf2ec893325df677a0d79bebff7706815b335c7f23137"
+    },
+    "add-parent-feature-param": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 29,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "fb57bba2c8cc749fb9a71251f034e6bce4f254cb047c95e82fc0126f9425f230"
+    },
+    "add-phase-role-model": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 77,
+        "numbered": 6,
+        "other": 36
+      },
+      "sha256": "980d545b12bf3ba15e1af9f7a787f35146f0cbb38cd283627a5551326be97fa5"
+    },
+    "add-plan-done-reflect-hook": {
+      "labels": {
+        "table_row": 33,
+        "bullet": 33,
+        "numbered": 9,
+        "other": 40
+      },
+      "sha256": "df1e362b08682bd2a9b21e0c97c17b11f8cf8acdcb850d0efda856a51e241613"
+    },
+    "add-plugin-loader-tests": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 14,
+        "numbered": 0,
+        "other": 16
+      },
+      "sha256": "e4738f83f7fdd6555edf033a53ab13f393e56940a1997177c830058afc21d656"
+    },
+    "add-pre-commit-proposal-quality-check": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 41,
+        "numbered": 0,
+        "other": 29
+      },
+      "sha256": "a554cb5024d1006e68ad525dedfaf4abe980c1166f72d7b38129c87360d80bc0"
+    },
+    "add-progressive-linting": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 16
+      },
+      "sha256": "b1c3a2d79e7f6e8ee309f7a087490ada0d255f221e856ea1467816f2eb4d615c"
+    },
+    "add-proposal-defer-support": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 26,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "0f20a88e80064309dedf77aa06e230efa436b2ac04e95c82d9ab714b07155d72"
+    },
+    "add-proposal-deps-and-features": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 38,
+        "numbered": 4,
+        "other": 17
+      },
+      "sha256": "3435bb6a11a2fad34106631db6316dd1518b6492732b03d974a77e85ca061eb3"
+    },
+    "add-proposal-how-leakage-warning": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 40,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "054790bea007bb68b4506da2156fcb1da76ec43c435ed1de822756b0ade4a21a"
+    },
+    "add-proposal-source-tracking": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 47,
+        "numbered": 0,
+        "other": 30
+      },
+      "sha256": "30a0cb5abcc28f3a99eeeef93d3929a5fafafba7fdb36908c8ef90e30b317a12"
+    },
+    "add-propose-content-review": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 32,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "ac4b5db316648104a41080b0db85ddea6ae4cc6336adafbef2d6511e57157876"
+    },
+    "add-rdd-doctor-skill": {
+      "labels": {
+        "table_row": 29,
+        "bullet": 87,
+        "numbered": 32,
+        "other": 56
+      },
+      "sha256": "73f94adb245467f6388c91ab5a30b41be104b90a44a6e6f69ca6fa69ae3631c3"
+    },
+    "add-rdd-hub-bootstrap": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 43,
+        "numbered": 5,
+        "other": 59
+      },
+      "sha256": "cbf486dd85578b3bd8f73f8c3abc192dcdc5057e8b6d077c370b2390a8156593"
+    },
+    "add-rdd-hub-cross-repo-federation": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 19,
+        "numbered": 7,
+        "other": 53
+      },
+      "sha256": "5f936f4aa5ccade6e79d8fa22d2c22a3dfb95d24ac6de6964a478ed8df8ed984"
+    },
+    "add-rdd-quick-skill": {
+      "labels": {
+        "table_row": 20,
+        "bullet": 156,
+        "numbered": 5,
+        "other": 105
+      },
+      "sha256": "9b30062d7ed5b37b0a14947466c18bba2cea0d4dc49ff5bf9daf3fe6e8577006"
+    },
+    "add-rddf-concurrency-tests": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 9,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "fc17242d840af0c488693b3ce9ec9e9222ecdf9c37a4a03e65adf08ce561f176"
+    },
+    "add-rddf-session-auto-archive-on-entry": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 26,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "e0a1e30de5330c9fecd113303cc380aef972c1b51f14eb12b3bd1d5ce1034c5f"
+    },
+    "add-rddf-session-status-cmd": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 26,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "ee0bdbec56a11cc7830b5a3920df84cc2e4184c1b0fca51dbad962e6702f5610"
+    },
+    "add-rddf-session-sub-phase-heartbeat": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 28,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "4834ace43a3401a2af4a8de946398f00a6f2e92cfbccd22277ff0ab82c082bc2"
+    },
+    "add-rddf-session-workflow-group": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 23,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "3d1c00035f188095ffa99f13905c280014078f63bc0f1765998c19f4fc76955a"
+    },
+    "add-rddf-status-fallback-mode": {
+      "labels": {
+        "table_row": 8,
+        "bullet": 69,
+        "numbered": 18,
+        "other": 54
+      },
+      "sha256": "fd472476a1ff63368af1a70531a486e6f85bdf4570aa0f41d60a715ea42a9c1d"
+    },
+    "add-regression-gate-timeout-protection": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 94,
+        "numbered": 0,
+        "other": 51
+      },
+      "sha256": "2d13c1bffbc93670544c31d3c30bee321e6bf8c03c1af0c79577283f8b57ea7e"
+    },
+    "add-rfc-draft-template": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 14,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "2bbb36a2fc3b96876bf7c873adff6f41d158ccb67496faab7b9c394e238fec9b"
+    },
+    "add-rfc-interview-flow": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 16,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "76c3373b519a53115cf948d95639d131b593fecada59d7b9c1529e283521b942"
+    },
+    "add-roadmap-phases-and-md-integrity-category": {
+      "labels": {
+        "table_row": 56,
+        "bullet": 68,
+        "numbered": 0,
+        "other": 122
+      },
+      "sha256": "8a509b1be0f49fb267963e8fe9dcc2db59f3cdad7ae05bc808f53531b2b632cb"
+    },
+    "add-roadmap-proposal-guidance": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 132,
+        "numbered": 8,
+        "other": 54
+      },
+      "sha256": "84cc464b65b4b4648a5dd519952cc5bec52be1664f8fdb876278d087060b3efc"
+    },
+    "add-scope-bootstrap-agent": {
+      "labels": {
+        "table_row": 28,
+        "bullet": 54,
+        "numbered": 0,
+        "other": 54
+      },
+      "sha256": "cb1f3349615b1fdb50d8f538bff91a70b4f5f9f83b4c0f3e08cb954bbfc6422a"
+    },
+    "add-session-metrics-collection": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 115,
+        "numbered": 0,
+        "other": 61
+      },
+      "sha256": "d073aedf14f02b64ce7f88c0669cb0595e566f1b92932a44385b864404541c81"
+    },
+    "add-session-progress-view": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 7,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "62f52a3de45acc0d25b57b81a4f60b31c8f06bd82a67da472f668a74ac26fd58"
+    },
+    "add-skill-layer-resolve-project-root-helper": {
+      "labels": {
+        "table_row": 12,
+        "bullet": 51,
+        "numbered": 3,
+        "other": 123
+      },
+      "sha256": "61fe8e78177b847f150b62e0807c4d3cde3c4083f2b5e88fdf47e441f337922b"
+    },
+    "add-skill-registration-checklist": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 30,
+        "numbered": 0,
+        "other": 23
+      },
+      "sha256": "78bcab78c4d2afbc4c4a8f43478fac880daee798d4b5d976782ef064758ff312"
+    },
+    "add-skills-lib-api-doc": {
+      "labels": {
+        "table_row": 50,
+        "bullet": 51,
+        "numbered": 6,
+        "other": 121
+      },
+      "sha256": "608237c2fbaa734f3c37b4b90b2d0d8a445efd3389e53325d5c3629fa2920aa1"
+    },
+    "add-spoke-system-prompt-injection": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 49,
+        "numbered": 5,
+        "other": 57
+      },
+      "sha256": "70ef48af33b0ca1cba7c41b373b69798dddf6aed7d1e94d5cf5cdd5d652c30ea"
+    },
+    "add-stage-guide-e2e-cross-process-coverage": {
+      "labels": {
+        "table_row": 13,
+        "bullet": 40,
+        "numbered": 0,
+        "other": 63
+      },
+      "sha256": "e923296a93a7d092e7b7264cfe029204f348b5bce3f6d5c61304d2d763580732"
+    },
+    "add-strict-human-approval-for-cross-repo-changes": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 22,
+        "numbered": 8,
+        "other": 64
+      },
+      "sha256": "eb5c87fc35e7f49e512e4cd7254c3cfdcb359145b3cf55857b6726bf3c1d3ddc"
+    },
+    "add-workflow-reflect-engine": {
+      "labels": {
+        "table_row": 30,
+        "bullet": 25,
+        "numbered": 0,
+        "other": 44
+      },
+      "sha256": "2f2350ff8b5d0a54df7b0c0471a5eebdb3782c5918e2791db5d0b5103aebe563"
+    },
+    "add-workflow-synthesizer": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 13,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "fd48410503522b0caacdfcedf9ca233bae723f272a2be4d9bd0d09025165cea8"
+    },
+    "adr-0048-v4-stage-merge-revision": {
+      "labels": {
+        "table_row": 7,
+        "bullet": 104,
+        "numbered": 7,
+        "other": 45
+      },
+      "sha256": "dc4370a440a475041a7656d77b260699ad68c412076b3494ee16d74132d5dba5"
+    },
+    "adr-0060-shape-contract-implementation": {
+      "labels": {
+        "table_row": 14,
+        "bullet": 13,
+        "numbered": 8,
+        "other": 42
+      },
+      "sha256": "e26b1534985b4a2600c38d662b6ebbe8e1f8a962f41ecd5832beb30974e397d4"
+    },
+    "adr-create-interactive-drafting": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 48,
+        "numbered": 0,
+        "other": 16
+      },
+      "sha256": "7cecc599edf098256eb3e15727c38c3e9c38d11c52257b24f3af88ecc3aa3ef3"
+    },
+    "adr-creation-architecture-gate": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 36,
+        "numbered": 5,
+        "other": 15
+      },
+      "sha256": "6a336ee1d0ed963039679f4979cb48b77d306ace7d88dc7ba901691793629e48"
+    },
+    "adr-index-auto-sync": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 24,
+        "numbered": 3,
+        "other": 92
+      },
+      "sha256": "97afc65abaff79b424ef7ad2ddd910fce4730bc8382c7fa9c13de0e21fa43088"
+    },
+    "agent-completion-contract": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 12,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "10596b67046b3d65430921436291d8cfef97280ad302c912bf5547dce14a5fa2"
+    },
+    "apply-adr-0051-skill-description-convention-bulk-rewrite": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 85,
+        "numbered": 3,
+        "other": 33
+      },
+      "sha256": "f3569ce4c0fd58f1f355443b63f6bf16b63323bc73980694cc0288859f2bbfd3"
+    },
+    "archive-cleanup-plan-files-extension": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 37,
+        "numbered": 0,
+        "other": 16
+      },
+      "sha256": "da07b134d0087d45605a89861566821ea513699f10325507791c8e62ed8c1065"
+    },
+    "archive-cleanup-plan-files": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 25,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "f9600e37393bf402f280723fa2b4c3134e12b112c099fd25236fa362c77d9a30"
+    },
+    "archive-cleanup-plan-handoff": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 25,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "65de3a1943834211a0967ebe27fea3c9007f26ccf0665012133b5e3a8f7aa9c6"
+    },
+    "archive-cleanup-working-tree": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 16,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "bc3297bb13445b62490e0e0d1787bde6f1f0c45a3af96124b21a60da3237304b"
+    },
+    "archive-gate-incomplete-tasks": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "b080860e616ac769a341d0c197bc7e5c55e8a282f729710944f53b000af1eb4e"
+    },
+    "archive-history-keep-semantics": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 17,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "5f73b1e5ce7ec6b5134e1a4622d01f11e22173a95342172f2c5557873f2460d6"
+    },
+    "archive-iteration-sync": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 10,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "b70787c7c954316d9d0a9137a3234b5a5df4e2878fe70c053906d49272e6ab55"
+    },
+    "archive-update-proposal-status": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 10,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "d924a43e492bde83122ea75d253f040794686d2d294b4e8e1177c46fee6fd9da"
+    },
+    "audit-attach-detach-calls": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 8,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "505dc3fd16a49b734bd1a7974a8e4238905b78764ea94c47a8da6ba0e8f187dd"
+    },
+    "auto-archive-iteration-and-commit": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 36,
+        "numbered": 0,
+        "other": 29
+      },
+      "sha256": "2ddeab2bbb14db6e61619cfee22458b65a2414dd2e9ac07c9d099bf71c7d78e5"
+    },
+    "auto-skip-archived-proposals": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 19,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "86104d345bf13c0925c7d77a55a1223a0179cbcbea0acb3d70cd4e6b41e853a8"
+    },
+    "auto-sync-adr-index": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 6,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "b6501eec1cff8e3e3a7241fa25f01ab84b2831c3530811872e08c612f3b526fe"
+    },
+    "auto-wave-scheduler": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 12,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "42445438199cf15d4eb7a778266c10ed2719020d5d299707891a5e3f84c38384"
+    },
+    "backfill-proposal-approved-col4": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 27,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "00625936791a58216c0ff277fe5f19780881161b6a1e4a5edbbb6e2804ad09ce"
+    },
+    "bypass-audit-mechanism": {
+      "labels": {
+        "table_row": 5,
+        "bullet": 24,
+        "numbered": 3,
+        "other": 112
+      },
+      "sha256": "c2fbce5fbb1aa84831878d98b4355f2c89c77d510db333cb771f47e196c5f34d"
+    },
+    "changelog-usage-sync": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 17,
+        "numbered": 0,
+        "other": 110
+      },
+      "sha256": "0f3053efa7c4e47f7f08534c4aa88a094e107881f082f45c238fb18870252fae"
+    },
+    "check-project-setup": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 57,
+        "numbered": 0,
+        "other": 49
+      },
+      "sha256": "623d4b5d169ffd505d5a8437474517c15fd675353b6f380d466127a372bc44be"
+    },
+    "clean-adr-0027-section-5-supersede": {
+      "labels": {
+        "table_row": 6,
+        "bullet": 38,
+        "numbered": 10,
+        "other": 57
+      },
+      "sha256": "543234dc06aaca2eaa5440ccc3e39366d70425fdfcaa8da4731bde2da95dc766"
+    },
+    "clean-stale-plan-handoff-on-ship-done": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 62,
+        "numbered": 0,
+        "other": 70
+      },
+      "sha256": "d0f19aab3fe4ad150acc7661a88cdfbed5e1400be681707e7cc5d101cc1b7600"
+    },
+    "cleanup-guide-star-residue": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 20,
+        "numbered": 7,
+        "other": 17
+      },
+      "sha256": "0b46eaf5c25ba88ca1a52e953db2327b2494e5c4e109c188f309dec1805aa25e"
+    },
+    "collect-l2-violation-count-on-archive": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 31,
+        "numbered": 0,
+        "other": 32
+      },
+      "sha256": "505ac9ed30ebff4ee9be4294ecc5bbb23725f76343ef3595661b9de9a28d7db0"
+    },
+    "complete-add-contract-lint-ci-gate": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 30,
+        "numbered": 3,
+        "other": 15
+      },
+      "sha256": "89eda8381e328dd98e1ca9fff99b95c3a47b255c9e0b3ddbc152242d7bdc8557"
+    },
+    "complete-add-cross-repo-deps-orchestration": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 29,
+        "numbered": 2,
+        "other": 15
+      },
+      "sha256": "3c540e44542f85ff0783f951d48e4fd635b4941f034df2bea201dba8c22cdf14"
+    },
+    "complete-guide-orchestrator-flow": {
+      "labels": {
+        "table_row": 21,
+        "bullet": 67,
+        "numbered": 4,
+        "other": 175
+      },
+      "sha256": "3b7868b313112b19a707ee3e47cafecac8e260c84815976ccd47f0467fdb03b0"
+    },
+    "complete-project-yaml-config-gaps": {
+      "labels": {
+        "table_row": 15,
+        "bullet": 54,
+        "numbered": 0,
+        "other": 59
+      },
+      "sha256": "02bd361ce6180deed788210641bf22221a325de938ff923d40c264ef665cc809"
+    },
+    "complete-third-party-replay-and-upstream-reporting": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 51,
+        "numbered": 18,
+        "other": 21
+      },
+      "sha256": "7de8235d9daef1a7bec980d053314a2c8311b1d3c88b619c61c8d7a6c8e9c95d"
+    },
+    "consolidate-recommender-implementation": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 24,
+        "numbered": 5,
+        "other": 18
+      },
+      "sha256": "ce2221fa5decd6fd14f5c2871bbe9bb96a5bd539d2d85e809b57cf5961373d04"
+    },
+    "consolidate-resolve-project-root-helpers": {
+      "labels": {
+        "table_row": 13,
+        "bullet": 44,
+        "numbered": 3,
+        "other": 132
+      },
+      "sha256": "215807fdde5fc4d739f13f94e7e1423dc0fd12a64d5d3be7a53df711abe2d2d8"
+    },
+    "deps-driven-execution-mode": {
+      "labels": {
+        "table_row": 24,
+        "bullet": 26,
+        "numbered": 15,
+        "other": 372
+      },
+      "sha256": "9f829258661a7f81431921d1e74a8a8dabe78725ac73d58e7091b2f2c415086b"
+    },
+    "design-approve-batch-tool": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 35,
+        "numbered": 0,
+        "other": 22
+      },
+      "sha256": "52a741bb75ad0f4a41622bc78f91cd5efc12912fa31d0d28fc3a4863db89e3b1"
+    },
+    "detect-suggestions-approved-inconsistency": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 19,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "93311b2254023d5620f36790452b66846e44ee80a80265efff120b9e3e1c74f7"
+    },
+    "developer-experience-observability": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 26,
+        "numbered": 0,
+        "other": 52
+      },
+      "sha256": "c9d33ad5fb685295fdbfc2ddee74f4e34735c3aa6ae6ac66fdf417e5ee320f87"
+    },
+    "enforce-hook-symmetry": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 6,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "0c5669060d277c123dd3bfa4734fdc7b630c350ff85ea827c46b8a1fb081def0"
+    },
+    "enforce-plan-tdd-5step-new": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 30,
+        "numbered": 5,
+        "other": 15
+      },
+      "sha256": "f3dd80cc04e10f0b6ddcf4eda19db26261514812136e930f38c84bd3f093585f"
+    },
+    "enforce-tasks-completion-before-archive": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 36,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "040b025b469bdc24667c7620299bd37c97915f1e6f0d5758e729dda1c1caf1b6"
+    },
+    "execute-gate-unified-regression": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 15,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "8bd583a577dea4c15ce2a37d0fdddf03653a4319aa10191a7f6ac7f347ba8198"
+    },
+    "experimental-reflect-test-reflect-plan-plan-plan-done-general-error-i11": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 7,
+        "numbered": 2,
+        "other": 50
+      },
+      "sha256": "cc923c8aca86df07bf8bc8eee20cde6cb9a64a73c65b6c703d272ec8fe81fd04"
+    },
+    "extend-populate-roadmap-with-code-verification": {
+      "labels": {
+        "table_row": 16,
+        "bullet": 58,
+        "numbered": 13,
+        "other": 152
+      },
+      "sha256": "97d3fb5bbb1f5087d6a6448e32a44efad418bcd019b5a2e95edf81e89872adaf"
+    },
+    "extract-rdd-env-check-from-guide-arch": {
+      "labels": {
+        "table_row": 9,
+        "bullet": 32,
+        "numbered": 0,
+        "other": 58
+      },
+      "sha256": "c7e7bee4145bba4febed75bc7360fc7741ea8eb27d943102710750c1a575f664"
+    },
+    "feat-guide-orchestrator-session-event-bus": {
+      "labels": {
+        "table_row": 5,
+        "bullet": 58,
+        "numbered": 0,
+        "other": 37
+      },
+      "sha256": "cb821ca6c693c07ca2437471166cb1c9d308802bf671be8ade0e592977d27d1f"
+    },
+    "feat-roadmap-discovery-completion": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 44,
+        "numbered": 0,
+        "other": 31
+      },
+      "sha256": "f1cb0375d7ce70194075c43cb01e2e6ec5093a9425706d0c8e3d09329c17821a"
+    },
+    "filter-guide-ship-when-no-changes": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "1933ff265bbab8350051e89210d8e1f9f03a608525ae7ea0fa3e07076e78857c"
+    },
+    "fix-33-handlers-project-root-anti-pattern": {
+      "labels": {
+        "table_row": 13,
+        "bullet": 43,
+        "numbered": 5,
+        "other": 94
+      },
+      "sha256": "a6df365ce643939bb5d9d38acb427dcdbbac76c057f2967248fbf75f8a4059c8"
+    },
+    "fix-add-improve-initial-prompt-ux": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 39,
+        "numbered": 3,
+        "other": 15
+      },
+      "sha256": "139584df3bb0ca0cdfaee3b11771eb1a76d315bfcff344d11aed68154714b036"
+    },
+    "fix-adr-0027-cli-optin-gate": {
+      "labels": {
+        "table_row": 7,
+        "bullet": 38,
+        "numbered": 16,
+        "other": 87
+      },
+      "sha256": "e7b3d2ae41f0d3ead3c8ac926c0cdf654d93c0b2a3e93da768a22b118f7dd862"
+    },
+    "fix-adr-0027-close-hook-dead-code": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 41,
+        "numbered": 9,
+        "other": 88
+      },
+      "sha256": "ce0d7bee55d546c57ef690786d407ba56c9f3bc3f5a378f88be9b443c7294a1e"
+    },
+    "fix-adr-0027-issue-file-frontmatter": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 57,
+        "numbered": 8,
+        "other": 76
+      },
+      "sha256": "b2d154b5600e481e5c7e5760824349cd34f4354b0a32bb8a35c21523afe6820b"
+    },
+    "fix-adr-0031-safety-gate-substantiation": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 27,
+        "numbered": 12,
+        "other": 72
+      },
+      "sha256": "e2bc9eb0e06daff15b96d9a41642310828e71cca6d5ad77ce1e1a9e6a907034d"
+    },
+    "fix-adr-index-generator-dup": {
+      "labels": {
+        "table_row": 21,
+        "bullet": 39,
+        "numbered": 6,
+        "other": 94
+      },
+      "sha256": "c56c0b7f3f99597f9c06eaf271c2d783dcc362c20160e057ea8a68dd5e3d9338"
+    },
+    "fix-adr-shape-debt-convergence": {
+      "labels": {
+        "table_row": 22,
+        "bullet": 33,
+        "numbered": 11,
+        "other": 57
+      },
+      "sha256": "e70d3d2ef7df370ce5beee17cf4c337025e582698d84fc3c594847094bc9d1c4"
+    },
+    "fix-agents-md-worktree-commit-flow": {
+      "labels": {
+        "table_row": 21,
+        "bullet": 30,
+        "numbered": 9,
+        "other": 76
+      },
+      "sha256": "b2d5168dc19157a60022cbc98d2f72a31dce37b768d1a8f68145373b0a1f5a27"
+    },
+    "fix-append-approved-output": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 14,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "f492ad7bb9de9234a088b9889c996e579f25515d5fb3d1b98309c27f97cedac2"
+    },
+    "fix-arch-env-check-adr-count-bug": {
+      "labels": {
+        "table_row": 5,
+        "bullet": 22,
+        "numbered": 0,
+        "other": 28
+      },
+      "sha256": "fbf353714d36978305a557f9faad64c0138a6c9a0def21023f59731984e2f89f"
+    },
+    "fix-arch-handoff-stale-detection": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "53184ae40c04de58fe2e3c9923fb7f885dd50161ea3ca536fccd44435a21cb1e"
+    },
+    "fix-archive-iteration-sync": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 28,
+        "numbered": 0,
+        "other": 28
+      },
+      "sha256": "8aa69331b3a5331e89f944e1ee24e22a7f7722ec7c75e573dd9416170d9d6043"
+    },
+    "fix-archive-on-main-flow": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 27,
+        "numbered": 4,
+        "other": 27
+      },
+      "sha256": "5b4adfee57d4843ca161302ae2f7bc83d7f7929f73f31fd2d362dab53815e10e"
+    },
+    "fix-attach-detach-symmetry": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 9,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "42c259a4afeda37713d4a94f1b8ff34ae8fe4717003119ce4b5092aad70c0bc9"
+    },
+    "fix-bats-per-file-timeout": {
+      "labels": {
+        "table_row": 78,
+        "bullet": 72,
+        "numbered": 16,
+        "other": 183
+      },
+      "sha256": "c025daf1d7d8a635ea9efac0d7c23821e3b56de1c6287b2fecbb5f0bed516a08"
+    },
+    "fix-bootstrap-fallback-paths": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 22,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "ef95e70857ebbd671c58bc4701f582fa14c0f6fa38f2e1d858b34af901352314"
+    },
+    "fix-builder-handoff-p2-lifecycle-truth": {
+      "labels": {
+        "table_row": 6,
+        "bullet": 30,
+        "numbered": 5,
+        "other": 44
+      },
+      "sha256": "30b065f5b52709852a319c60fdab276db03abd0feca1f9d7f01fc81bdc0d6e9a"
+    },
+    "fix-cli-all-subcommands-dynamic-sync": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 82,
+        "numbered": 3,
+        "other": 50
+      },
+      "sha256": "708377d0059e73cffceaf0010fffe8a7292dc7ed19a792566c30e1ea7eb1b9ae"
+    },
+    "fix-cli-routing-cross-repo-commands": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 30,
+        "numbered": 10,
+        "other": 67
+      },
+      "sha256": "b1840ec4292ad2130a4d354172a4a324ac3e2f9b1f7b82a0c17e7e767e3dbc14"
+    },
+    "fix-cmd-help-handling": {
+      "labels": {
+        "table_row": 10,
+        "bullet": 23,
+        "numbered": 3,
+        "other": 110
+      },
+      "sha256": "1b35d1fe48365adcde7961e6478cd2f5d894fe12ceff0370160468acb62046e9"
+    },
+    "fix-deps-render-empty-candidates": {
+      "labels": {
+        "table_row": 5,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 24
+      },
+      "sha256": "6e7dd55fcb65da6f43bfcb83bd67eac7b485bb689fd0986eca4d00b225c1c49b"
+    },
+    "fix-deps-render-report-multi-candidate": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 23,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "2c359d988870bb836ce90bfde664b970ca7194a873cca0e47a5b51d8ae7a7d81"
+    },
+    "fix-design-done-gate-status-prefix-match": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 87,
+        "numbered": 0,
+        "other": 74
+      },
+      "sha256": "9a0f9d63a92f2274c73b8a9311a9e891e68ddee6711deeadefeb91a2a31a945e"
+    },
+    "fix-design-preflight-roadmap-format": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 22,
+        "numbered": 0,
+        "other": 27
+      },
+      "sha256": "050bd06b0930c69fa1ad0396c3c204cfd2d3ee6e09f51c2bcdd5a41dc1c52f50"
+    },
+    "fix-design-proposal-review-approved-parsing": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 53,
+        "numbered": 0,
+        "other": 66
+      },
+      "sha256": "43517e5fc9d5bf52bda16d2b9586ac7bc8eddb052712d951dc1d8317d23aa4a1"
+    },
+    "fix-discover-ship-changes-needs-planning-fallback": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 41,
+        "numbered": 0,
+        "other": 52
+      },
+      "sha256": "fb9bebc1418d9aedb02847956c818c43ac7dd33e2a1fd2dfab25051972b5778c"
+    },
+    "fix-disk-count-semantic-conflict": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 26,
+        "numbered": 0,
+        "other": 27
+      },
+      "sha256": "fc3086518c308a4a8b5cc48bca6bc87b6dca48a69e5b14d5cb20b4e56566a135"
+    },
+    "fix-doc-drift-followup-3": {
+      "labels": {
+        "table_row": 38,
+        "bullet": 49,
+        "numbered": 5,
+        "other": 101
+      },
+      "sha256": "52f95641fbdd1208d9a3962d1d1dff18a60575d26f4872ac060858b075799cb3"
+    },
+    "fix-doc-drift-residual": {
+      "labels": {
+        "table_row": 19,
+        "bullet": 43,
+        "numbered": 7,
+        "other": 63
+      },
+      "sha256": "2bb33ed345e812cda9453a4a6aae3ddf8c4859cfb8fc3b4c90138322bc6784d7"
+    },
+    "fix-doc-truth-sync": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 15,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "91a1cac23a49d31652d2ab55506eff3f40418bcb1603e1062bf57b2c61909eca"
+    },
+    "fix-events-log-blocking-lock": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 33,
+        "numbered": 3,
+        "other": 69
+      },
+      "sha256": "cd8fcc7fcbe33b5c5e6382fbfbe1185b40fedd39a6fa3a2dd2ccee4ef5ba2a5f"
+    },
+    "fix-execute-change-name-persistence": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 28,
+        "numbered": 0,
+        "other": 23
+      },
+      "sha256": "dd43897203f33fe7e61efcb376e42ca8d8f842c8343b6ccbe9293016fece5543"
+    },
+    "fix-execution-mode-decision": {
+      "labels": {
+        "table_row": 58,
+        "bullet": 66,
+        "numbered": 10,
+        "other": 174
+      },
+      "sha256": "a0eed585d63a55f4857d5a850eb4b4f41f70aaa9fd6b4a54a16f973a1334e41a"
+    },
+    "fix-feature-decision-design-phase": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 34,
+        "numbered": 0,
+        "other": 16
+      },
+      "sha256": "e12b2d40e2ed06760dac20ec5540080508ab6a1da375e9615fd09fb084db5c37"
+    },
+    "fix-flow-drift-batch-1": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 26,
+        "numbered": 7,
+        "other": 71
+      },
+      "sha256": "aa936cf5372a4d6c08b12b1d148c4f775c85906cc77746e50eac28d74c6369e9"
+    },
+    "fix-generator-scope-extraction": {
+      "labels": {
+        "table_row": 5,
+        "bullet": 39,
+        "numbered": 14,
+        "other": 67
+      },
+      "sha256": "b6feac3a0ac6bb41255103d0a7697c039bbf07498b6e0f3c8653ff9b82f61c56"
+    },
+    "fix-guide-close-owner-resolution": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 33,
+        "numbered": 3,
+        "other": 139
+      },
+      "sha256": "e5d1c89e7d3197404cbbe5c8b8ce2d31e04d3b06228245d1023953be8859a132"
+    },
+    "fix-guide-ship-archive-bats": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 6,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "5daa9c309a0e07f047f79cb3381c1de23177d27c13c28f369976fc9429e0f636"
+    },
+    "fix-iteration-archive-sync": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 28,
+        "numbered": 0,
+        "other": 27
+      },
+      "sha256": "a18eb957d06f2d373218e45b628d7bf506c45e6626a69403ecf072b60c616e9f"
+    },
+    "fix-iteration-tasks-total": {
+      "labels": {
+        "table_row": 34,
+        "bullet": 57,
+        "numbered": 14,
+        "other": 142
+      },
+      "sha256": "30252f44e2cba08b9e3f74ac1b09b424bf77ef985d684c0fa12ec3dd0d6c0fb5"
+    },
+    "fix-lightweight-branch-and-archive": {
+      "labels": {
+        "table_row": 66,
+        "bullet": 78,
+        "numbered": 16,
+        "other": 64
+      },
+      "sha256": "cc21caa9cc85b81db55c851406b4a2d186110ea7b5e89274af2d7ca1944d0306"
+    },
+    "fix-lint-deferred-findings": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 15,
+        "numbered": 9,
+        "other": 43
+      },
+      "sha256": "4b3804b441b5f688f049caad98fa6c252da43727d1133c6fe342b6a268912ddf"
+    },
+    "fix-lsp-dash-bridge": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 8,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "a790832f8fdc16e96b7510ed3851dbb2044f79d5f4d3102298e01a61e196dfbe"
+    },
+    "fix-mark-approved-completed-date-drift": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 22,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "0a6892d4d4ccc9a09766dafb76abdabcd73e1dfd5e1552f68aed93b3692a4573"
+    },
+    "fix-mark-approved-completed": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "73e56776f15c347db5f7238e3d1e1257eb4b0e4dbf0c7b260e631e78b7c6574b"
+    },
+    "fix-orphan-hub-gates-wiring": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 29,
+        "numbered": 7,
+        "other": 59
+      },
+      "sha256": "140cb79b8864f076d61140dda76a0b8158bae6464ebf0f1b7d8db9f8382e4c94"
+    },
+    "fix-p3-verifier-gate": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 33,
+        "numbered": 7,
+        "other": 66
+      },
+      "sha256": "b7e33f7666897a9801d6bdb693abce1b201ab90e38975a67f03e2ae8bc2cf156"
+    },
+    "fix-parametrize-planner-feedback-id-date": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 26,
+        "numbered": 0,
+        "other": 21
+      },
+      "sha256": "5d0e6f451a3324f4812cbda28707efb3eb46aa5211af88f164c784ac08aedb24"
+    },
+    "fix-phase3-cleanup-wiring": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 24,
+        "numbered": 3,
+        "other": 74
+      },
+      "sha256": "12c2512ed035e601da6df99dd4ce9c53045bbd369b7506abc4c88e076f0a1d7f"
+    },
+    "fix-plan-deps-candidates-import-guard": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "46c6bca23d5b4344a72a5d3888cd10ce95855c41cc991e7bc954bc66940e9856"
+    },
+    "fix-plan-done-gate-zero-stale-count": {
+      "labels": {
+        "table_row": 4,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 22
+      },
+      "sha256": "e2c1dad793e75c6c266ac80589ec182908be5fa736e3dbdee63d4122c26d2081"
+    },
+    "fix-plan-intake-stale-pre-created-changes": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 140,
+        "numbered": 0,
+        "other": 58
+      },
+      "sha256": "2f0d41530271661d26ca19eeef697111960c9556a5d2612fe6289e7b574c23d1"
+    },
+    "fix-post-flow-classifier-ordering": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 45,
+        "numbered": 4,
+        "other": 62
+      },
+      "sha256": "b38d8bddf2f25882fda4720b2cf0470f003a11f7737c7411dec672c7141d4c66"
+    },
+    "fix-proposal-ac-section-mapping": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 27,
+        "numbered": 0,
+        "other": 27
+      },
+      "sha256": "e873c792da0bf137495ed68850dcb6bc09638d3b1de84887fe9c946e2c328ff8"
+    },
+    "fix-proposal-approved-missing-after-archive": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 26,
+        "numbered": 4,
+        "other": 31
+      },
+      "sha256": "d45377644849e0269be055c1fd452424244b329f145d4fe788fa335c735a98e8"
+    },
+    "fix-proposal-generator-output-fidelity": {
+      "labels": {
+        "table_row": 25,
+        "bullet": 66,
+        "numbered": 16,
+        "other": 139
+      },
+      "sha256": "a6737b0955a2dbe246608e8673ded9285092ce01cbc394e1cddfb5b85044d0a6"
+    },
+    "fix-proposal-generator-table-scope": {
+      "labels": {
+        "table_row": 5,
+        "bullet": 30,
+        "numbered": 5,
+        "other": 44
+      },
+      "sha256": "991c26fccf1465c9ec5a7ef5552a4fe96ecde89071280246caac5e73dd91129b"
+    },
+    "fix-rdd-doctor-hardcoded-paths-and-skills-md-drift": {
+      "labels": {
+        "table_row": 73,
+        "bullet": 33,
+        "numbered": 0,
+        "other": 114
+      },
+      "sha256": "a697ddbf318ff7f7dac3adeb8d05376a97e6fd2f37a2c1529ca82dd14e6145e3"
+    },
+    "fix-rddf-init-broken-layout": {
+      "labels": {
+        "table_row": 22,
+        "bullet": 32,
+        "numbered": 15,
+        "other": 64
+      },
+      "sha256": "793ba71224949dd1ed26b51ab5167f55f506115a8c5c80f0c68aa6a87030710e"
+    },
+    "fix-rddf-schema-validation": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 11,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "e54a119cdd07f40ae889722c8a0191c740b0f1eafaac2a156258c8df869b0944"
+    },
+    "fix-rddf-session-lifecycle-binding": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 27,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "0bc4e6434d70fb5e9a926ddea38bf6788a5b7ed5e03a7995f42c288482884884"
+    },
+    "fix-rddf-session-owner-cross-call": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 22,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "043ac1573db45879bce5b87007ba6ccd70a19dba0d6eaa3d33ba3ab1cda4b7dc"
+    },
+    "fix-rddf-session-owner-stability": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 36,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "dc73082a98cb9da21e2493e5c773fbfd4e109862e00c052740feab596df30158"
+    },
+    "fix-rddf-status-corrupt-message": {
+      "labels": {
+        "table_row": 4,
+        "bullet": 61,
+        "numbered": 15,
+        "other": 65
+      },
+      "sha256": "852239dd30e4b59de570c8f73556d20b73c627d8fab1fb2cf3ae0bef2a7b84a8"
+    },
+    "fix-rddf-status-terminal-markers": {
+      "labels": {
+        "table_row": 6,
+        "bullet": 29,
+        "numbered": 7,
+        "other": 39
+      },
+      "sha256": "5746b755c917be6903aed2a56fb28b575b60693a76cf65a0515cac0b717f0715"
+    },
+    "fix-rebuild-adr-index-for-0049-0050": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 30,
+        "numbered": 0,
+        "other": 22
+      },
+      "sha256": "c1c2aa032270ef891bcef016d1889d63547c9eee670bd8bdad6bde98596b71c0"
+    },
+    "fix-regression-baseline-integrity": {
+      "labels": {
+        "table_row": 28,
+        "bullet": 52,
+        "numbered": 14,
+        "other": 118
+      },
+      "sha256": "b62278bcc69fa0860e3f93ef44ee640a47688510d73447579d6dff0550be0e0b"
+    },
+    "fix-remove-stale-filled-at-regression-test": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 28,
+        "numbered": 0,
+        "other": 28
+      },
+      "sha256": "489d5f55e2a2cdee8cc1e211c3d3e49c1e38bcefd7d87b8a30800cd1a3a6e236"
+    },
+    "fix-report-regression-sed-double-hash-strip": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 98,
+        "numbered": 0,
+        "other": 49
+      },
+      "sha256": "ef30697f17e1dcbc98f2d3a56e17d76cf6542da9c5a660d5a44741d693322ac3"
+    },
+    "fix-review-debt-recorded-gate": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 49,
+        "numbered": 6,
+        "other": 89
+      },
+      "sha256": "9d80c400e9da0502e6e779ee03ded09161a64a8967acd02853d5d8e60567715f"
+    },
+    "fix-scan-state-bats": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 7,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "9b73918f64b6a98a754b97931e935415982984668c8dd853feca2e73c77cb3d3"
+    },
+    "fix-scan-state-binding": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 12,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "0bcf5cf9a78c5e82fc90307f2932837c8219d661ff69576450d5b10095ec70cb"
+    },
+    "fix-scan-state-integer-comparison": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 17,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "91ab82096ffb0f68fb6704b1d85ecdb0e41159a538f0c147b4a5c74c1c97e1e3"
+    },
+    "fix-scanner-fallback-and-orphan-archival": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 44,
+        "numbered": 14,
+        "other": 25
+      },
+      "sha256": "e25d3d11c5c8bc3e22218d5b9683a91761b2956a5ed25cd52e11cb682327865e"
+    },
+    "fix-schema-version-field": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 30,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "e942c615bf0f969b16fdabc5db9ea27de6d8c69b54619338cbc779a43437c087"
+    },
+    "fix-script-project-root-anchoring": {
+      "labels": {
+        "table_row": 72,
+        "bullet": 31,
+        "numbered": 9,
+        "other": 176
+      },
+      "sha256": "f6ab83e8f8cb6c8dc2c6d1de40b235f8719ab68a9dceb71921ba4528e962c059"
+    },
+    "fix-ship-archive-resolve-lib-path": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 23,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "2530af648fdade59136d4811a26d84a1f7b0ed3dcf3e5a8650fca0b602700770"
+    },
+    "fix-ship-lightweight-wt-path-pollution": {
+      "labels": {
+        "table_row": 5,
+        "bullet": 17,
+        "numbered": 0,
+        "other": 22
+      },
+      "sha256": "5e92ad515e1527e73fb999d681b84a8c344aa9b04317b45d76e01121650acedd"
+    },
+    "fix-ship-plan-skill-use-fallback": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 24,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "96b8109244c5baf88617a99e959ebf3ebbfe79a066b69252a6dbda0bae885674"
+    },
+    "fix-ship-plan-untracked-gate": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 26,
+        "numbered": 0,
+        "other": 27
+      },
+      "sha256": "08ed55024bb4be0de3936b0515ffa7a3bde67ae747a07b504b5b4cd0fd8fab37"
+    },
+    "fix-silent-exception": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 20,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "d19a51d68d249cddc5426f623826d233df6f819ebe8dc3cf31a1fd4db0aab9dd"
+    },
+    "fix-skill-layer-project-root-anti-pattern": {
+      "labels": {
+        "table_row": 11,
+        "bullet": 45,
+        "numbered": 0,
+        "other": 86
+      },
+      "sha256": "b9f8e49a5191371834fe6648e66176ef4bdad3ce025848dfd847ee63fed28164"
+    },
+    "fix-skill-layer-resolution-bash": {
+      "labels": {
+        "table_row": 9,
+        "bullet": 35,
+        "numbered": 0,
+        "other": 124
+      },
+      "sha256": "c6e21279ccdb888e39b4ec85032023ae653602833751af500d0f9e1182787634"
+    },
+    "fix-skill-post-install-discoverability": {
+      "labels": {
+        "table_row": 37,
+        "bullet": 90,
+        "numbered": 35,
+        "other": 138
+      },
+      "sha256": "9038bf9dca5338d5611e57126aeb4d02eb306018c19482046c4fe311c851c0a7"
+    },
+    "fix-skill-tool-cache": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 15,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "219da5e944133767c0883bc7cee8c2d46e064d104931a905d1e9df19b1c2d169"
+    },
+    "fix-spec-delta-generator-shape-and-semantics": {
+      "labels": {
+        "table_row": 7,
+        "bullet": 31,
+        "numbered": 5,
+        "other": 59
+      },
+      "sha256": "579570cc965c8c387ab832f23b07069da67346d6b74412ad67f333e96b97521c"
+    },
+    "fix-spec-residue-guard": {
+      "labels": {
+        "table_row": 47,
+        "bullet": 57,
+        "numbered": 11,
+        "other": 127
+      },
+      "sha256": "a57a51aed0a809e7ddc64ffb50cce1bce33386b43ce6f46aeccf1dababa1f6e3"
+    },
+    "fix-spec-v3-naming-sync": {
+      "labels": {
+        "table_row": 24,
+        "bullet": 29,
+        "numbered": 2,
+        "other": 88
+      },
+      "sha256": "e618d6696442761215dca586ad59a540e64b8a2f954d0ad340ba0b1f8c357f28"
+    },
+    "fix-specs-auto-generate-in-design-precreated": {
+      "labels": {
+        "table_row": 7,
+        "bullet": 118,
+        "numbered": 0,
+        "other": 53
+      },
+      "sha256": "5de5d6ce2b231e20fae4e53c976a79038084eee4eb658f88b07e417f4d229156"
+    },
+    "fix-stale-suggestions-warning": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 14,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "734f8e8f857d4f435c3520470523f877fe50b96d5fee16987efa179b6914c289"
+    },
+    "fix-tasks-md-archive-residue": {
+      "labels": {
+        "table_row": 6,
+        "bullet": 30,
+        "numbered": 3,
+        "other": 26
+      },
+      "sha256": "b19d7ddd1d12cffc9d4a049312aed9e9304c4903e796b73f7be0d7e6ee3767f4"
+    },
+    "fix-test-infrastructure-and-skill-registration": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 25,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "e060fca09322ced302518589aa78f43e8cc5f4b57a9a56f044466f3cca76b227"
+    },
+    "fix-update-doctor-main-category-count": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 28,
+        "numbered": 0,
+        "other": 37
+      },
+      "sha256": "9543307b34f62a9b7b8f8e00c1487f1aea2329428b6d527cf4924bc7a7fb1d3d"
+    },
+    "fix-update-proposal-status-data-loss": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 23,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "a65e0d7252e9b8ada7c1ffc26a678736476eaef7492b19a66bf287c7ab24392c"
+    },
+    "fix-v4-rdd-planner-scope-over-assignment": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 78,
+        "numbered": 11,
+        "other": 100
+      },
+      "sha256": "de1e11d506fd2ed8fd585161abd9ea6853de86729aeae3b763aa922e2d758391"
+    },
+    "fix-verifier-discovery-disk-derive": {
+      "labels": {
+        "table_row": 6,
+        "bullet": 29,
+        "numbered": 4,
+        "other": 41
+      },
+      "sha256": "d64f4d25342454b9bf81a9f6988370b6c3855eb6357fb9ab8510c5de48845258"
+    },
+    "fix-verifier-gate-cache-root": {
+      "labels": {
+        "table_row": 33,
+        "bullet": 59,
+        "numbered": 11,
+        "other": 110
+      },
+      "sha256": "fe3e3ca6862ff526982fbe0cd718fa2762ab0bc6deab0f3dc8db25df6955627c"
+    },
+    "fix-worktree-archive-branch-merge": {
+      "labels": {
+        "table_row": 45,
+        "bullet": 80,
+        "numbered": 9,
+        "other": 114
+      },
+      "sha256": "7d0a964440e1f783a3295a77aef207a1b7cb63342194927e14ae1a501bb05d56"
+    },
+    "fix-worktree-archive-path": {
+      "labels": {
+        "table_row": 9,
+        "bullet": 30,
+        "numbered": 5,
+        "other": 83
+      },
+      "sha256": "f4fe085fb1ac4b102b6860a88179c9c342c20386629b7ef54e51f4ccc436876a"
+    },
+    "fix-wt-scanner-strip-bug-and-untracked-coverage": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 62,
+        "numbered": 15,
+        "other": 85
+      },
+      "sha256": "b77a650db6a1c9a0670ddd9ac64cfffde65c0e2245ce37dfd17bbbe379659415"
+    },
+    "guide-cross-validate": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 10,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "0fbe0669d4697ffdbb24fc9cd5fdaa15e9cb9773b910ae887ae8859240978fc1"
+    },
+    "guide-plan-fallback-direct-create": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 22,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "e983fc5cd147c0dec52907b9c790551c599c314480aa9c4275b577b79aafda1c"
+    },
+    "guide-plan-noninteractive": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 12,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "f418b1fcdaa13e886e317595c02330b1a937e175e3cf233b1cc1e3eff8b6ad42"
+    },
+    "guide-ship-default-serial-execution": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 56,
+        "numbered": 0,
+        "other": 20
+      },
+      "sha256": "21bd302ffcb2b798c635f8cef935eb9fbab3b9b794d48f67fed5060dfc4a54f1"
+    },
+    "guide-ship-quick-finish": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 22,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "39c1f9d6c052ff152158b691b835956eb41d00734fc67346c933937e035ec142"
+    },
+    "harden-archive-iteration-sync": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 41,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "d8d53dbb97eecba43b3b4ea1005c457b7699a16bf0256876efa399dcc05147e1"
+    },
+    "harden-plan-intake-bootstrap-and-design-gate-tests": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 54,
+        "numbered": 12,
+        "other": 22
+      },
+      "sha256": "28c3ffda668fa46575945200bf568278828ac9315af08b9a58729aa6b2f89ce1"
+    },
+    "improve-change-splitting-strategy": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 21,
+        "numbered": 3,
+        "other": 25
+      },
+      "sha256": "b25aa1dcc8904492627e382671a752c4a458c03bd5eda7c1fc251f746b06189c"
+    },
+    "improve-commit-scope-discipline": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 27,
+        "numbered": 0,
+        "other": 26
+      },
+      "sha256": "cdccb526d3d1125d01a057960dab4debbb71433db728fd9aa8c159f7d9980d0f"
+    },
+    "improve-execution-mode-per-change": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 23,
+        "numbered": 0,
+        "other": 31
+      },
+      "sha256": "3f5b1ba8b532d6f9a3f515acd448b9fc2eaab1f308a99a1f2585c1661dfdd70d"
+    },
+    "improve-from-roadmap-naming-flexibility": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 35,
+        "numbered": 0,
+        "other": 32
+      },
+      "sha256": "ec9eb139cec8eda0193e7d1d2ac104c8aa2e62bd26d1bbca7958df35665dc2db"
+    },
+    "improve-openspec-test-change-support": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 9,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "3f29255b9e646abd120d9c7a5d386611808763916baf8e9701b2fb15fb7e588e"
+    },
+    "improve-roadmap-feature-discovery": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 41,
+        "numbered": 0,
+        "other": 35
+      },
+      "sha256": "e55b48da408cc03217b533bf3f4b9ac8fa5eba242383bb5b39c30fb7afd93b5a"
+    },
+    "improve-ship-done-cleanup-orphan-sessions": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 44,
+        "numbered": 15,
+        "other": 32
+      },
+      "sha256": "60794bd6fffbf2bdd09c04aeb9ac9fc65509fd1c005173d6483a9148273cf957"
+    },
+    "improve-worktree-build-hint": {
+      "labels": {
+        "table_row": 4,
+        "bullet": 21,
+        "numbered": 3,
+        "other": 29
+      },
+      "sha256": "76267231e404e6b70d244322a98293692536767229620b0514e793fbfd1984ca"
+    },
+    "issue-driven-proposal-creation": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 94,
+        "numbered": 4,
+        "other": 45
+      },
+      "sha256": "b03d04d558344384c9f4e3855dca0b2b1173e201c05749c92844088a491ae0d3"
+    },
+    "migrate-improvements-to-rddf-namespace": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 81,
+        "numbered": 0,
+        "other": 25
+      },
+      "sha256": "537d967a339cdc1fcd24db2226c59c94b95e3c28109a885fed5d172ba0f4dcf0"
+    },
+    "move-populate-roadmap-into-guide-arch": {
+      "labels": {
+        "table_row": 61,
+        "bullet": 127,
+        "numbered": 8,
+        "other": 51
+      },
+      "sha256": "ad7c024b9b99e48bd7631cbe9d3fb6c6e93beb1dc4f5e659d9d83bc7db287cc1"
+    },
+    "move-proposal-creation-to-design": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 47,
+        "numbered": 6,
+        "other": 17
+      },
+      "sha256": "29881186963e6e71366fa8d1966eac9674222d3f08beeefdf73bc403f8f06ceb"
+    },
+    "parallel-oracle-review": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "f19c066ccda79d5ea84526aad5a87541f0bc12d6962e14a9763f3189fe5f5964"
+    },
+    "parallel-wave-execution": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 7,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "c792d411e63831f999ded66467e63140242c34fef742640d58ef5eef866cded6"
+    },
+    "phase-1-general-20260829063800-2": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 20,
+        "numbered": 0,
+        "other": 27
+      },
+      "sha256": "a4c6be105a680b7c04f54bc988da5519f571365f57ea7ef54ee74db961a135bf"
+    },
+    "phase-1-general-20260829063800": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 20,
+        "numbered": 0,
+        "other": 26
+      },
+      "sha256": "086480266ac2e2ac5746445c47bc8fcff97d04434e4f216591bf84d642d4581c"
+    },
+    "phase-1-general-20260829063814": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 16,
+        "numbered": 0,
+        "other": 26
+      },
+      "sha256": "e502e2555ab873a3f1fcf9b3a41da86bbc991272747b4f1db8c4de7d2394446f"
+    },
+    "phase-2-general-20260829063801-2": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 26
+      },
+      "sha256": "f6e4ced5bdcaa7a68853318a5afdcf1f07d3d9583fc538e052fa26b75d71235a"
+    },
+    "phase-2-general-20260829063801": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 28
+      },
+      "sha256": "8121f33ee2318e9fb73f94efcd5d2c7d4376d9833aa61f053e881ccc9b83ed38"
+    },
+    "phase-2-general-20260829063814": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 19,
+        "numbered": 0,
+        "other": 27
+      },
+      "sha256": "0adff097be26c14bf12f9750059beb00ae16d232c2d320ea33e06e51332a4ee9"
+    },
+    "phase-3-general-20260829063801": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 27
+      },
+      "sha256": "1d20a5f6766618860fe7d8147431a71d605861a8c4b02ddccaf61755d8c9f94a"
+    },
+    "phase-3-general-20260829063814": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 28
+      },
+      "sha256": "be69ddd62bdd55612acf8cf444c268be515d3a27576690c763857a9dc9a9dd0b"
+    },
+    "phase-4-general-20260829063814": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 20,
+        "numbered": 0,
+        "other": 28
+      },
+      "sha256": "6f38a030bf50de3a78a603f591aaac19be1411ee98ba0a3e27e2c71021cf523a"
+    },
+    "plan-batch-fill-tool": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 34,
+        "numbered": 0,
+        "other": 22
+      },
+      "sha256": "c6598dba54ed7677f6dc6ea239af212446960e2d9c0da51d804c1cce7978860e"
+    },
+    "plan-execute-commit-policy-consistency": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 15,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "5daff19c839ee746d8fafd361ac17c9f72c34c82b70a9340b6c74f66653daff5"
+    },
+    "plan-quality-and-validation": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 27,
+        "numbered": 0,
+        "other": 39
+      },
+      "sha256": "16dfb53311046280b2f0df607ce0bdfca7cb84a52790c7277a01ee16c2286745"
+    },
+    "post-archive-cleanup-hook": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 41,
+        "numbered": 3,
+        "other": 29
+      },
+      "sha256": "5ffc3972e95fff85f8fbab7136a38a1f9d52e6c6011a8302bb04379f7cb65113"
+    },
+    "pre-checkout-warning": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 14,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "16149c5742e96a08ccf8b2282f493cfaf45148f896d9917f39268e25f3ae2adb"
+    },
+    "preserve-orchestrator-command-stdout": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 27,
+        "numbered": 15,
+        "other": 20
+      },
+      "sha256": "3fa368b6a5fb33e77c2545af13671fb3bf686fc8000e4cffbaba471c02f07bae"
+    },
+    "preship-dirty-check": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 11,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "bef5927dd26dc9b4e1a82d5e2be8988eda5ce448edf3762d824fc1011b45a047"
+    },
+    "prompt-worktree-cleanup-before-stage": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 22,
+        "numbered": 2,
+        "other": 19
+      },
+      "sha256": "af282db9ca79172313110b78f9931530e27132b7e80ea0d12182844fd6a5dc87"
+    },
+    "proposal-approval-pipeline": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 35,
+        "numbered": 0,
+        "other": 13
+      },
+      "sha256": "db5b4b7107cb1c04ad3f2f9dd92a4ccdba49726b43bf050137bde30f3a9b1528"
+    },
+    "propose-quality-autohook": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 21,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "126e673310245a95cc00bed7fd21d3052b169d472bb87cbcfa5f73fbed2bf714"
+    },
+    "python-failures-baseline": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 17,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "f65b2ad56e9c241243c89417498b3339c663c77347b6e5a2d302ac37850f669e"
+    },
+    "rdd-builder-auto-pick-mode": {
+      "labels": {
+        "table_row": 8,
+        "bullet": 7,
+        "numbered": 13,
+        "other": 22
+      },
+      "sha256": "a383afb2869916f0fb1e15b8cb8c824768ad138205facbaa37696af37dabc6f2"
+    },
+    "rdd-builder-phase0-llm-integration": {
+      "labels": {
+        "table_row": 12,
+        "bullet": 54,
+        "numbered": 23,
+        "other": 60
+      },
+      "sha256": "102feb5909be8461bc431c9118c0755ffb570e9062cba899912adfc07f37433e"
+    },
+    "rdd-doctor-docs-consistency": {
+      "labels": {
+        "table_row": 7,
+        "bullet": 21,
+        "numbered": 6,
+        "other": 189
+      },
+      "sha256": "976966e5119f2ea0a212250d148f5ddf2f2e58ef7acc7fe79eaae481daff5eb0"
+    },
+    "rddf-iteration-strict-schema": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 27,
+        "numbered": 5,
+        "other": 26
+      },
+      "sha256": "677e42b9243b952cfe68c9165b780928ff1f7647fc45414ae1bc9a9819f1a0ac"
+    },
+    "rddf-layout-manifest": {
+      "labels": {
+        "table_row": 58,
+        "bullet": 64,
+        "numbered": 11,
+        "other": 55
+      },
+      "sha256": "3bec538ad0fbaaaa801b70d5fa00fc97774271d6f6898c6980ccb84cc3d44b0d"
+    },
+    "rddf-sessions-gc": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 12,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "ed8d40fd02e490a395ecf44b5e946193309ac13ce01220028b1c1864a3dbe51d"
+    },
+    "reconcile-iteration-after-archive": {
+      "labels": {
+        "table_row": 4,
+        "bullet": 16,
+        "numbered": 0,
+        "other": 27
+      },
+      "sha256": "a7c34e65867fcad4dc9bfeb56f4e2360cffa69c8bc2a53419107690cdf191a8f"
+    },
+    "reduce-archive-commit-noise": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 87,
+        "numbered": 5,
+        "other": 49
+      },
+      "sha256": "13c607c0e193341d9f133a4364f4018feed3ab5c56f998485febf787e3d4276b"
+    },
+    "reduce-rdd-workflow-tool-call-friction": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 26,
+        "numbered": 0,
+        "other": 30
+      },
+      "sha256": "9ee07e3e403bb140f06e0a0ad3d082feef4dd4a8bf23eb7f7c1219677d591718"
+    },
+    "refine-plan-openspec-integration": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 36,
+        "numbered": 5,
+        "other": 17
+      },
+      "sha256": "2c4bf9a8c6bad59ede177cbc8b8d4441cfea9fe565e827c50656100cd3e41b69"
+    },
+    "register-change-in-iteration": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 31,
+        "numbered": 5,
+        "other": 72
+      },
+      "sha256": "a874c21dea19f8a00b7a24e520d2c30816d0502e9fc0d5a9d62ae64f94cbbc5d"
+    },
+    "relocate-loop-engine": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 15,
+        "numbered": 0,
+        "other": 16
+      },
+      "sha256": "5a2ac5a0a1930dac16817099b773526ecb9d29caa953a1b6819a6d19995c3947"
+    },
+    "remove-ci-redundant-bats": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 16,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "b0f04a2e69e4b0888d2e22d73d10b8a36f0b3206987fa3273382fd89694e5e4a"
+    },
+    "retire-guide-orchestrator": {
+      "labels": {
+        "table_row": 5,
+        "bullet": 31,
+        "numbered": 9,
+        "other": 19
+      },
+      "sha256": "8f9602791b697046207526891f5edcb3fa3416e96a9dc6f7a1ef87d80a02dc8b"
+    },
+    "rfc-rddf-project-yaml-config-i10": {
+      "labels": {
+        "table_row": 6,
+        "bullet": 57,
+        "numbered": 4,
+        "other": 41
+      },
+      "sha256": "fce5110f795af7e27bdb3f1333ab63c6e472e69eaf60efe9e8205223005c9d39"
+    },
+    "ship-delete-branch-safety": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 18,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "090e3a56e5d1257c6f2c97e437a1009b4b7f0e302cabbda1b2f23ac64c90ac75"
+    },
+    "ship-incomplete-archive-change-fallback": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 21,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "d6710cf508a18b89d641b4f31da366c5106a6c012525db797ce6a1a37c9738d7"
+    },
+    "skill-name-auto-resolve": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 11,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "bcefcac5c562064d6acf7c5fc8a97fe9dc69143c739fe9af986edded146b5377"
+    },
+    "split-iteration-module": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 20,
+        "numbered": 0,
+        "other": 16
+      },
+      "sha256": "265f998f01a77ba7cefd9c77fc101585c5afac24eb69ad79be650b6268b20a0d"
+    },
+    "split-rddf-god-class": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 11,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "f32197875b2932092e2e039aefa1660a6a6fdb7d9f643de2100b9e87d2f6d13d"
+    },
+    "subagent-orchestrator-execution-strategy": {
+      "labels": {
+        "table_row": 6,
+        "bullet": 15,
+        "numbered": 3,
+        "other": 31
+      },
+      "sha256": "b70fe567babee784d88ab2bbb25a75233b4016d8ae333a2b2e843a3d6de07ba2"
+    },
+    "submodule-aware-project-root": {
+      "labels": {
+        "table_row": 20,
+        "bullet": 123,
+        "numbered": 12,
+        "other": 72
+      },
+      "sha256": "9a37f292dd316d1a6e07d230b4b60eb64182d62a826328880afd759f2e694e46"
+    },
+    "sync-agents-md-five-stage": {
+      "labels": {
+        "table_row": 5,
+        "bullet": 23,
+        "numbered": 0,
+        "other": 37
+      },
+      "sha256": "a368002027da05b8178da83d4b3b6d7c3c49ab7b3ec74f51125aca8ed4d963bf"
+    },
+    "sync-approved-to-suggestions": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 16,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "1afa844fceae0a2571ca5c29b7fe892523fc51c7ac1b5c09fe7de9e9ac4c250c"
+    },
+    "sync-changelog-unreleased": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 43,
+        "numbered": 3,
+        "other": 26
+      },
+      "sha256": "4ac4a3f06aa69914d588858fcc0fbf270818e6924bd7c0febbaf0e10bffe4f07"
+    },
+    "sync-package-skills-to-disk": {
+      "labels": {
+        "table_row": 12,
+        "bullet": 25,
+        "numbered": 3,
+        "other": 63
+      },
+      "sha256": "45d17da08114cad581181c52eef7029f33601960db305707dcaa2ba79aa5dac3"
+    },
+    "task-parallel-throttle": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 11,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "5a787f336008fa4b5d9f5b2afed29dc8e9fe66d6c392a034045254ddc47be6d7"
+    },
+    "test-isolation-from-repo-state": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 15,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "02fcf53d1f86d47df37dc0e004f49cfdaf01277382b2a9a914d6bb99981b60ba"
+    },
+    "unify-session-kind-naming": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 8,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "390f4d62e8051b832f112a1a5e35dc9efe4e173be97a8101ab7fbcbee7b5b7a2"
+    },
+    "unify-test-entry-points": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 6,
+        "numbered": 0,
+        "other": 18
+      },
+      "sha256": "086e85e762203855d3d184b18fa862128a78fe980aeefbec800482790669f50b"
+    },
+    "update-adr-index": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 11,
+        "numbered": 0,
+        "other": 17
+      },
+      "sha256": "efed68d90cbba0eedf52f2e0273923c0696cbb2977f7fdeacb17a80abac934bf"
+    },
+    "update-agents-module-map": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 14,
+        "numbered": 0,
+        "other": 16
+      },
+      "sha256": "48595d14f947b87a31c67c2bf5443a782c1894d759369311e085b732c35d8eed"
+    },
+    "update-guide-plan-format": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 19,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "5623e6e9d3b0087e1d27700ca146a7a1755e3f1b858b45cdff4d5439ff5c34c4"
+    },
+    "v2.1-fix-rdd-quick-archive-verifier-gaps": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 71,
+        "numbered": 2,
+        "other": 61
+      },
+      "sha256": "5f8ff2fbe06fd084691aeb052b347ed11b521ea44aee6ac3b62d2032c7ca0b78"
+    },
+    "v5-roadmap-auto-refresh-hook": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 25,
+        "numbered": 3,
+        "other": 25
+      },
+      "sha256": "b87b1ee9a943e920ec24dc2106aa0997b917c71cb654a34f8a6331754f412a17"
+    },
+    "validate-feature-name": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 34,
+        "numbered": 0,
+        "other": 14
+      },
+      "sha256": "d8c88ac012b64a5008b64f1db4acf9e20a220ff7648d68ff6ee2f17814d383ed"
+    },
+    "verifier-archive-gate-clarification": {
+      "labels": {
+        "table_row": 5,
+        "bullet": 32,
+        "numbered": 6,
+        "other": 49
+      },
+      "sha256": "2e4fb8398d4b1c8a8982e8e5befc997cbdd733809e572b6cf4eabd949886e167"
+    },
+    "verifier-re-verify-archived-flag": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 32,
+        "numbered": 0,
+        "other": 22
+      },
+      "sha256": "b90bb9cdc7d81a17186bd27f66cf2b474348d2246a4d0b0e49cc7d16a2b5c5c1"
+    },
+    "wave3-opencode-session-injection": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 39,
+        "numbered": 0,
+        "other": 46
+      },
+      "sha256": "1472bb3f41e5181040ad89f54e7327d0595a8a65bc6e3b71882f504ba3c6e36b"
+    },
+    "wave3-phase-heartbeat-progressing": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 41,
+        "numbered": 0,
+        "other": 44
+      },
+      "sha256": "53bb12845d082137574696b8273e306e21840e6a8909e3ea4a5146ae79a0dd26"
+    },
+    "wave3-rddf-session-show-events": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 36,
+        "numbered": 2,
+        "other": 62
+      },
+      "sha256": "88fcca98a65b30b18817267d1f2d2315fa72c033241ae8f631860cc62c45902c"
+    },
+    "wire-design-content-review-gate": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 36,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "43b021a1c7254c2882ac5abb9e630e5b981163a7fba51d8f46de233081ec9398"
+    },
+    "wire-plan-done-quality-gates": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 29,
+        "numbered": 0,
+        "other": 15
+      },
+      "sha256": "310b1a81152f47a67c10a47cd74ac036b150c61f96233146ee51c421854b318f"
+    },
+    "worktree-archive-workflow": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 24,
+        "numbered": 3,
+        "other": 29
+      },
+      "sha256": "c0bdb108ac5b7016f3bd74bab9e5a32a577f229575a90d572b1f30bc4c7d3b10"
+    },
+    "worktree-context-persistence": {
+      "labels": {
+        "table_row": 0,
+        "bullet": 28,
+        "numbered": 0,
+        "other": 31
+      },
+      "sha256": "f279ebb07117706e160d812483a1d20b9a86b7ea45c08ef14e95fe89714f4dc2"
+    }
+  }
+}

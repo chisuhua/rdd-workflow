@@ -56,22 +56,14 @@ ACCEPTANCE_FORM_SPECS = (
     "rfc-rddf-project-yaml-config-i10",
 )
 
-#: 判据 ① —— 无语义的 Requirement 名（AC 序号）。
-_MEANINGLESS_REQUIREMENT = re.compile(r"^### Requirement: acceptance-\d+\s*$", re.MULTILINE)
-
-#: 判据 ① 的**全仓版** —— `acceptance-N` 与 `capability-N` 是同一形态退化族的两种命名
-#: （自动生成的序号名 + 恒真 WHEN + `is enforced` 结尾）。
-#:
-#: 见 `.rddf/reviews/rewrite-acceptance-form-batch-4-2026-11-23.md` 的教训 ⑦：
-#: 「**按「形态类」计数，不要按「文件名模式」计数**」—— 只治理 `acceptance-N`
-#: 会整类漏掉 `capability-N`（第 4 批实漏 7 条，直到收口前自查才发现）。
-_DEGRADED_REQUIREMENT_NAME = re.compile(
-    r"^### Requirement: (?:acceptance|capability)-\d+\s*$", re.MULTILINE
-)
-
-#: 判据 ② —— 恒真的 Scenario WHEN（对任何 change / feature 都成立）。
-_TAUTOLOGICAL_WHEN = re.compile(
-    r"^- \*\*WHEN\*\* the (?:change|feature|it) is applied\s*$", re.MULTILINE
+# 判据 ①②③ 的**单一真源**在 `_lib/spec_requirement_form.py`（2026-11-27 上移）：
+# 生成器（`generate_full_proposal.generate_spec_delta()`）在产出前必须引用**同一份**判据，
+# 否则「守卫改 A、生成器仍按 B 判」⇒ 退化形态持续流入归档期（每次归档手工重写）。
+# ⇒ 本文件只**引用**判据，不再自己定义（AC10：两处实现 = 漂移）。
+from _lib.spec_requirement_form import (  # noqa: E402
+    DEGRADED_REQUIREMENT_NAME as _DEGRADED_REQUIREMENT_NAME,
+    MEANINGLESS_REQUIREMENT as _MEANINGLESS_REQUIREMENT,
+    TAUTOLOGICAL_WHEN as _TAUTOLOGICAL_WHEN,
 )
 
 requires_specs_dir = pytest.mark.skipif(
@@ -221,3 +213,16 @@ def test_no_spec_anywhere_uses_a_degraded_requirement_form() -> None:
         "discriminating (see .rddf/reviews/rewrite-acceptance-form-batch-5-2026-11-23.md)."
     )
 
+
+
+def test_generator_and_guard_share_one_predicate_source() -> None:
+    """单一真源（AC10）：守卫与生成器引用**同一份**判据 ⇒ 复制第二份即红。
+
+    背景：生成器仍在产出被本守卫拒绝的形态（`acceptance-N` / 恒真 WHEN）⇒ 生成器必须
+    能引用同一份判据；两处各写一份 ⇒ 必然漂移（本守卫改 A、生成器仍按 B 判）。
+    """
+    from _lib import spec_requirement_form as shared
+
+    assert _DEGRADED_REQUIREMENT_NAME.pattern == shared.DEGRADED_REQUIREMENT_NAME.pattern
+    assert _TAUTOLOGICAL_WHEN.pattern == shared.TAUTOLOGICAL_WHEN.pattern
+    assert _MEANINGLESS_REQUIREMENT.pattern == shared.MEANINGLESS_REQUIREMENT.pattern

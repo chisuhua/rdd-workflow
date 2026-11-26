@@ -12,7 +12,20 @@ D2 mapping:
 Output is a draft only; the caller (guide-design SKILL.md D1) must show it
 to the user for confirmation before any disk write.
 """
+import os
 import re
+import sys
+from pathlib import Path
+
+# 形态判据的**单一真源**（2026-11-27）：生成器与仓库的形态守卫必须引用同一份判据，
+# 否则「守卫改 A、生成器仍按 B 判」⇒ 退化形态持续流入归档期（AC10）。
+# ⚠ 仓库根 = 本脚本上溯 3 层（skills/rdd-builder/scripts → 仓库根）；全局安装布局同理。
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from _lib.openspec_version import native_scenario_conservation_available  # noqa: E402
+from _lib.spec_requirement_form import describe_degradation  # noqa: E402
 
 
 _HEAD_RE = re.compile(r"\*\*(阶段|分类|类型)\*\*:\s*([^|\n]+)")
@@ -25,9 +38,20 @@ _SCOPE_ITEM_RE = re.compile(r"^(?:-\s+|\d+[.)]\s+)(.*)$")
 # A scope block header, in every spelling that occurs in .rddf/improvements:
 # `**In Scope**:`, `- **Out Scope**:`, `### In Scope`, `### Out of Scope`,
 # `## Out Scope`. Decorations (bullet / heading marks / bold / colon) optional.
+#: ⚠ **尾部注解容忍**（2026-11-27）：本仓的 improvement 写成 `**In Scope（6 项 · contract 面）**`
+#: ⇒ 旧正则（尾部只允许空白/冒号）**认不出它是标题** ⇒ 其后的条目无处归属（表格范围节会解析成 0 条）。
+#: 注解形态：圆括号 / 方括号 / 圆括号中文式，可含任意非换行文本；其后允许残留的 `**` 与冒号。
 _SCOPE_HEADER_RE = re.compile(
-    r"^[\s#*\-]*((?:out\s+of|out|in)\s+scope)[\s*:：]*$", re.IGNORECASE
+    r"^[\s#*\-]*((?:out\s+of|out|in)\s+scope)"
+    r"(?:[\s（(\[【][^\n]*?)?"
+    r"[\s*]*[\s*:：]*$",
+    re.IGNORECASE,
 )
+
+#: markdown 表格行（以 `|` 开头且以 `|` 结尾）。
+_TABLE_ROW_RE = re.compile(r"^\|.*\|$")
+#: markdown 表格的**对齐行**（`|---|---|` / `|:--:|---|`）—— 不是数据行。
+_TABLE_ALIGN_RE = re.compile(r"^\|[\s:|-]+\|$")
 
 
 def validate_improvements_head(md: str) -> dict[str, str]:
@@ -49,14 +73,27 @@ def validate_improvements_head(md: str) -> dict[str, str]:
     return head
 
 
-def _extract_section(md: str, title: str | list[str]) -> str:
+def _extract_section(
+    md: str, title: str | list[str], *, warn_ambiguous: bool = False
+) -> str:
     """Extract content under '## <title>' up to next '## '. Returns '' if missing.
 
     `title` may be a single string or a list of candidates. When a list is
     given, the first matching title wins (priority order). This handles
     `## 验收` vs `## 验收标准` style variants in `.rddf/improvements/*.md`.
+
+    `warn_ambiguous=True` ⇒ 多个候选**同时命中**时写一行 stderr（点名歧义 + 取了谁）。
+    ⚠ 只对**范围节**开启：`架构依据` + `Why` 的双命中是**有意的合并**（见
+    `generate_full_proposal()` 的 why_head/why_legacy 合并），不是歧义。
     """
     titles = [title] if isinstance(title, str) else list(title)
+    if warn_ambiguous:
+        hits = [c for c in titles if re.search(rf"^## {re.escape(c)}\s*$", md, re.M)]
+        if len(hits) > 1:
+            print(
+                f"⚠️  proposal: 范围节候选歧义（{hits}）⇒ 取候选序靠前者（{titles[0]}）",
+                file=sys.stderr,
+            )
     for t in titles:
         pattern = re.compile(
             rf"^## {re.escape(t)}\s*$(.*?)(?=^## |\Z)",
@@ -66,6 +103,24 @@ def _extract_section(md: str, title: str | list[str]) -> str:
         if m:
             return m.group(1).strip()
     return ""
+
+
+def _is_table_data_row(stripped: str) -> bool:
+    """是否为 markdown 表格的**数据行**（排除对齐行）。"""
+    if not _TABLE_ROW_RE.match(stripped):
+        return False
+    return not _TABLE_ALIGN_RE.match(stripped)
+
+
+def _table_row_to_item(stripped: str) -> str:
+    """表格数据行 → 单条 item（**去掉 `|`**，各列以 ` — ` 连接，不折行）。
+
+    为什么不保留 `|`：条目会被再拼进 proposal 的 bullet 列表，保留 `|` 会让下游把这一行
+    误读成新的表格行（并再次触发逗号/表格切分类缺陷）。为什么不丢列：逐列丢弃会丢信息
+    （如「改动 | 落点」两列都需要）。
+    """
+    cells = [c.strip() for c in stripped.strip().strip("|").split("|")]
+    return " — ".join(c for c in cells if c)
 
 
 def _extract_scope_items(scope_md: str) -> tuple[list[str], list[str]]:
@@ -109,6 +164,22 @@ def _extract_scope_items(scope_md: str) -> tuple[list[str], list[str]]:
         pending = None
         pending_scope = None
 
+    # 纯表格节（该节至今**没有任何** bullet/编号条目）⇒ 表格行**各自成条目**；
+    # 一旦本节出现过 bullet/编号条目 ⇒ 其后的表格**归该条目**（沿既有 spec
+    # `generator-scope-extraction`「bullet 下的表格归该 bullet」的语义，不改）。
+    seen_item_in_section = False
+    table_rows: list[str] = []  # 当前表格块缓冲（纯表格模式）
+
+    def flush_table_block() -> None:
+        """把缓冲的表格行转成条目（每行一条）。"""
+        nonlocal table_rows
+        for row in table_rows:
+            text = _table_row_to_item(row)
+            if not text:
+                continue
+            (out_items if current == "out" else in_items).append(text)
+        table_rows = []
+
     for raw in scope_md.splitlines():
         stripped = raw.strip()
         if not stripped:
@@ -117,11 +188,23 @@ def _extract_scope_items(scope_md: str) -> tuple[list[str], list[str]]:
         header_match = _SCOPE_HEADER_RE.match(header)
         if header_match:
             flush()
+            flush_table_block()
             # "Out Scope" (no "of") is the spelling most .rddf/improvements use;
             # only recognizing "Out of Scope" sent every out-of-scope item into
             # the in-scope block (measured: many files parsed to out=0).
             current = "out" if header_match.group(1).lower().startswith("out") else "in"
             base_indent = None
+            seen_item_in_section = False
+            continue
+        if _is_table_data_row(stripped) and not seen_item_in_section:
+            # 纯表格节 ⇒ 数据行各自成条目（表格头行紧跟的对齐行 ⇒ 头行不是数据行）
+            if _TABLE_ALIGN_RE.match(stripped):
+                continue
+            table_rows.append(stripped)
+            continue
+        if _TABLE_ALIGN_RE.match(stripped) and table_rows:
+            # 对齐行 ⇒ 它的上一行是**表头** ⇒ 丢弃表头（不是数据行）
+            table_rows.pop(0)
             continue
         item = _SCOPE_ITEM_RE.match(stripped)
         if item:
@@ -132,11 +215,14 @@ def _extract_scope_items(scope_md: str) -> tuple[list[str], list[str]]:
             if indent <= base_indent:
                 base_indent = indent  # dedent back to a shallower level: sibling
                 flush()
+                flush_table_block()
                 pending = item.group(1).strip()
                 pending_scope = current
+                seen_item_in_section = True
                 continue
             # deeper than the base level ⇒ sub-item, handled as a continuation
         if pending is None:
+            flush_table_block()
             continue  # prose before the first bullet — not an item (unchanged)
         if stripped.startswith("|"):
             # Markdown table belonging to the current bullet. A table needs a
@@ -147,7 +233,36 @@ def _extract_scope_items(scope_md: str) -> tuple[list[str], list[str]]:
             continue
         pending += "\n" + (raw.rstrip() if raw[:1] in (" ", "\t") else stripped)
     flush()
+    flush_table_block()
     return in_items, out_items
+
+
+def shape_labels(text: str) -> dict[str, int]:
+    """按**行首形态**统计行数（table_row / bullet / numbered / other）。
+
+    为什么按「行首形态」而不是按文件名：语料回归的差异必须能被**机判**归类
+    （「本次修复改变了哪一类形态」），否则「差异白名单」只能靠人眼分类
+    ⇒ 白名单可被同 PR 修改 ⇒ 判别力为零。
+
+    - ``table_row``：markdown 表格数据行（排除对齐行）
+    - ``bullet``：``- `` 开头的条目
+    - ``numbered``：``1. `` / ``1) `` 开头的条目
+    - ``other``：其余非空行
+    """
+    counts = {"table_row": 0, "bullet": 0, "numbered": 0, "other": 0}
+    for line in text.splitlines():
+        s = line.strip()
+        if not s:
+            continue
+        if _is_table_data_row(s):
+            counts["table_row"] += 1
+        elif re.match(r"^-\s+", s):
+            counts["bullet"] += 1
+        elif re.match(r"^\d+[.)]\s+", s):
+            counts["numbered"] += 1
+        else:
+            counts["other"] += 1
+    return counts
 
 
 def _extract_bullet_items(section_md: str) -> list[str]:
@@ -229,18 +344,24 @@ def generate_full_proposal(change_name: str, improvements_md: str) -> str:
         why = f"{why_head}\n\n{why_legacy}"
     else:
         why = why_head or why_legacy
-    scope = _extract_section(improvements_md, ["范围", "What Changes", "Scope"])
+    scope = _extract_section(
+        improvements_md, ["范围", "What Changes", "Scope"], warn_ambiguous=True
+    )
     scenarios = _extract_section(improvements_md, ["关键场景", "Scenarios"])
     constraints = _extract_section(improvements_md, ["技术约束", "Capabilities", "Constraints"])
     acceptance = _extract_section(improvements_md, ["验收", "验收标准", "Acceptance"])
 
     in_scope_items, out_scope_items = _extract_scope_items(scope)
     if not in_scope_items and scope:
-        cleaned = re.sub(r"^\s*(In|Out)\s+Scope\s*:\s*", "", scope.strip(), flags=re.IGNORECASE | re.MULTILINE)
-        if "," in cleaned:
-            in_scope_items = [s.strip().rstrip(".") for s in cleaned.split(",") if s.strip()]
-        else:
-            in_scope_items = [cleaned.rstrip(".")] if cleaned else []
+        # ⚠ **不再按逗号切分**（2026-11-27）：逗号兜底会把**多行文本**（含 markdown 表格）
+        # 切碎 —— 实测（2026-11-26 CppTLM）：表格第 2 行的 `x.hh:43-53,56,79-89,106-113`
+        # 被切成 4 个条目、**Out of Scope 整段重复两遍**。
+        # ⇒ 解析不出条目时**保留原文** + 一行 stderr 诊断（不猜）。
+        in_scope_items = [scope.strip()]
+        print(
+            "⚠️  proposal: 范围节未解析出条目 ⇒ 保留原文（不再按逗号切分）",
+            file=sys.stderr,
+        )
     in_scope_block = "\n".join(f"- {item}" for item in in_scope_items) if in_scope_items else "- (no items specified)"
     if scenarios:
         in_scope_block += "\n\n### 关键场景\n\n" + scenarios
@@ -290,64 +411,176 @@ def generate_full_proposal(change_name: str, improvements_md: str) -> str:
     )
 
 
-def generate_spec_delta(source_md: str, sub: str) -> str:
-    """D3 mapping: 从源 .rddf/improvements markdown 生成 openspec v1.4 spec.md。
+# ── 载体（design D-1：粗体头行，与 ADR-0025 D6 的「头部」一致）────────────
+#: 粗体头行：`**<键>**: <值>`（与 `_HEAD_RE` 同一形态族，但键不限枚举）。
+_HEAD_FIELD_ANY_RE = re.compile(
+    r"^\*\*(?P<key>[^*]+)\*\*\s*[:：]\s*(?P<value>.+?)\s*$", re.MULTILINE
+)
+#: 多条语义要求之间的分隔符（`;;` —— 避免逗号歧义：逗号切分正是本 change 修掉的缺陷）。
+_SEMANTIC_SEP = ";;"
 
-    映射规则 (D2 → D3):
-    - ## Acceptance 每个 - [ ] checkbox → ### Requirement + #### Scenario
-    - ## Capabilities 每条 MUST/MUST NOT → ### Requirement
-    - 顶部统一加 ## ADDED Requirements 段头 (openspec v1.4 强制)
-    - 默认 <sub> 名由调用方传入
+
+def _project_root() -> Path:
+    """项目根：优先 `PROJECT_ROOT` 环境变量（`phase0_approval.sh` 传入）⇒ 回退 cwd。"""
+    env = os.environ.get("PROJECT_ROOT")
+    return Path(env) if env else Path.cwd()
+
+
+def _head_field(text: str, key: str) -> str | None:
+    """读粗体头行（`**delta**: ...` / `**语义要求**: ...`）；找不到 ⇒ None。"""
+    for m in _HEAD_FIELD_ANY_RE.finditer(text):
+        if m.group("key").strip() == key:
+            return m.group("value").strip()
+    return None
+
+
+def delta_target_capability(text: str) -> str | None:
+    """`**delta**: modified <capability>` ⇒ `<capability>`；未声明 ⇒ None。
+
+    调用方（`phase0_approval.sh`）用它决定 delta 的落点目录（`specs/<capability>/`）。
     """
-    lines = ["## ADDED Requirements", ""]
-    req_idx = 0
+    raw = _head_field(text, "delta")
+    if not raw:
+        return None
+    m = re.match(r"^(?:modified|added)\s+(.+)$", raw.strip(), re.IGNORECASE)
+    return m.group(1).strip() if m else None
 
-    # 1. 提取 ## Acceptance checkboxes
-    acc_match = re.search(r"## Acceptance\s*\n(.*?)(?=\n## |\Z)", source_md, re.DOTALL | re.IGNORECASE)
-    if acc_match:
-        for m in re.finditer(r"^\s*-\s*\[[ xX]?\]\s*(.+?)$", acc_match.group(1), re.MULTILINE):
-            req_idx += 1
-            text = m.group(1).strip()
-            req_name = f"acceptance-{req_idx}"
-            lines.append(f"### Requirement: {req_name}")
-            lines.append("")
-            lines.append(f"The system SHALL {text}.")
-            lines.append("")
-            lines.append(f"#### Scenario: {text[:60]}")
-            lines.append("")
-            lines.append("- **WHEN** the change is applied")
-            lines.append(f"- **THEN** {text}")
-            lines.append("")
 
-    # 2. 提取 ## Capabilities MUST/MUST NOT
-    # 注: openspec v1.4 要求每个 Requirement 至少含 1 个 #### Scenario:
-    # 接受两种写法 —— `- MUST: x`（5 段格式，当前约定）与 `- **MUST**: x`
-    # （加粗变体）。旧正则只认加粗形式，会把 5 段格式的 capability 全部丢掉。
-    # SHOULD / SHOULD NOT 不转 Requirement：spec delta 是规范性（MUST 级）契约，
-    # openspec 对不含 SHALL/MUST 的 Requirement 报 RFC 2119 warning。SHOULD 条目
-    # 保留在 proposal.md 的 Capabilities 段（人读 + 有 checker 断言）。
-    cap_match = re.search(r"## Capabilities\s*\n(.*?)(?=\n## |\Z)", source_md, re.DOTALL | re.IGNORECASE)
-    if cap_match:
-        cap_re = re.compile(
-            r"^\s*-\s*(?:\*\*)?(MUST\s+NOT|MUST)(?:\*\*)?:\s*(.+?)$",
-            re.MULTILINE | re.IGNORECASE,
+def _semantic_requirements(text: str) -> list[dict[str, str]]:
+    """解析 `**语义要求**` 头行 ⇒ `[{requirement, body, scenario, when, then}]`。
+
+    形态：`<requirement> | <body> | <scenario> | <WHEN> | <THEN>`，多条以 `;;` 分隔。
+    解析不出（缺载体 / 字段不足）⇒ [] ⇒ 调用方**拒绝生成**并指名缺什么（不猜、不退化）。
+    """
+    raw = _head_field(text, "语义要求")
+    if not raw:
+        return []
+    out: list[dict[str, str]] = []
+    for chunk in raw.split(_SEMANTIC_SEP):
+        parts = [p.strip() for p in chunk.split("|")]
+        if len(parts) < 5 or not all(parts[:5]):
+            continue
+        out.append(
+            dict(
+                zip(
+                    ("requirement", "body", "scenario", "when", "then"),
+                    parts[:5],
+                )
+            )
         )
-        for m in cap_re.finditer(cap_match.group(1)):
-            req_idx += 1
-            kind = " ".join(m.group(1).split()).upper()
-            text = m.group(2).strip()
-            req_name = f"capability-{req_idx}"
-            lines.append(f"### Requirement: {req_name}")
-            lines.append("")
-            lines.append(f"The system {kind} {text}.")
-            lines.append("")
-            lines.append(f"#### Scenario: enforces {text[:50]}")
-            lines.append("")
-            lines.append("- **WHEN** the change is applied")
-            lines.append(f"- **THEN** {text} is enforced")
-            lines.append("")
+    return out
 
-    return "\n".join(lines) + "\n"
+
+def _main_spec_block(capability: str, requirement: str) -> str | None:
+    """从 main spec 复制 requirement 块（**含全部既有 Scenario**）；找不到 ⇒ None。"""
+    path = _project_root() / "openspec" / "specs" / capability / "spec.md"
+    if not path.is_file():
+        return None
+    text = path.read_text(encoding="utf-8")
+    m = re.search(
+        rf"^### Requirement: {re.escape(requirement)}\s*$(.*?)(?=^### Requirement:|^## |\Z)",
+        text,
+        re.MULTILINE | re.DOTALL,
+    )
+    return m.group(0).strip() if m else None
+
+
+def _compose_modified(main_block: str, req: dict[str, str]) -> str:
+    """MODIFIED 块 = **作者的新正文** + **既有全部 Scenario** + **新增 Scenario**。
+
+    ⚠ 既有 Scenario **一个都不能丢**：openspec 的 `specs-apply.js` 在归档时会比较
+    「main spec 的场景名集合」与「delta 块的场景名集合」，缺一个就 abort
+    （1.7.0+ 自带该检查；<1.7.0 由本仓的本地预检兜底）。
+    """
+    lines = main_block.split("\n")
+    header = lines[0]
+    rest = lines[1:]
+    scen_idx = next(
+        (i for i, line in enumerate(rest) if line.startswith("#### Scenario:")), len(rest)
+    )
+    scenarios = [line for line in rest[scen_idx:] if line.strip()]
+    out = [header, "", req["body"], ""]
+    if scenarios:
+        out += scenarios
+        out += [""]
+    out += [
+        f"#### Scenario: {req['scenario']}",
+        "",
+        f"- **WHEN** {req['when']}",
+        f"- **THEN** {req['then']}",
+        "",
+    ]
+    return "\n".join(out).rstrip()
+
+
+def generate_spec_delta(source_md: str, sub: str) -> str:
+    """生成 change-local spec delta（形态守卫 + 载体 + MODIFIED 语义）。
+
+    载体（design D-1，**粗体头行**，与 ADR-0025 D6 的「头部」一致）::
+
+        **delta**: modified <capability>
+        **语义要求**: <requirement> | <body> | <scenario> | <WHEN> | <THEN>
+
+    - **缺 `**语义要求**`** ⇒ 拒绝生成（指名缺什么）—— 绝不回退到 `acceptance-N` + 恒真 WHEN；
+    - `**delta**: modified <cap>` ⇒ 输出 `## MODIFIED Requirements`，块内**逐字保留** main spec
+      的既有 Scenario，并追加作者的新场景；
+    - 否则 ⇒ `## ADDED Requirements`；
+    - 产出后过**形态守卫**（与仓库守卫同一份判据）⇒ 命中退化形态即拒绝生成。
+    """
+    reqs = _semantic_requirements(source_md)
+    if not reqs:
+        raise ValueError(
+            "缺少 **语义要求** 载体"
+            "（`**语义要求**: <requirement> | <body> | <scenario> | <WHEN> | <THEN>`，"
+            "多条以 ;; 分隔）⇒ 无法生成非退化 delta ⇒ 拒绝生成"
+            "（不会产出 acceptance-N / capability-N / 恒真 WHEN）"
+        )
+
+    delta_field = _head_field(source_md, "delta")
+    target = delta_target_capability(source_md)
+    is_modified = bool(delta_field and target and delta_field.strip().lower().startswith("modified"))
+
+    lines: list[str] = []
+    if is_modified:
+        assert target is not None  # for type-checkers
+        lines += ["## MODIFIED Requirements", ""]
+        for req in reqs:
+            block = _main_spec_block(target, req["requirement"])
+            if block is None:
+                raise ValueError(
+                    f"MODIFIED 目标 requirement 不存在：{target} :: {req['requirement']}"
+                    " ⇒ 拒绝生成（MODIFIED 必须逐字保留既有 Scenario）"
+                )
+            lines.append(_compose_modified(block, req))
+            lines.append("")
+    else:
+        lines += ["## ADDED Requirements", ""]
+        for req in reqs:
+            lines += [
+                f"### Requirement: {req['requirement']}",
+                "",
+                req["body"],
+                "",
+                f"#### Scenario: {req['scenario']}",
+                "",
+                f"- **WHEN** {req['when']}",
+                f"- **THEN** {req['then']}",
+                "",
+            ]
+
+    out = "\n".join(lines).rstrip() + "\n"
+
+    problems = describe_degradation(out)
+    if problems:
+        raise ValueError("delta 形态退化 ⇒ 拒绝生成：" + "；".join(problems))
+
+    if not native_scenario_conservation_available():
+        print(
+            "⚠️  delta: 本机 openspec < 1.7.0（无原生「MODIFIED 须含既有 Scenario」检查）"
+            " ⇒ 本地预检是唯一守卫",
+            file=sys.stderr,
+        )
+    return out
 
 
 if __name__ == "__main__":
@@ -365,7 +598,10 @@ if __name__ == "__main__":
     text = open(improvements_path, encoding="utf-8").read()
     if os.environ.get("OUTPUT_MODE") == "spec-delta":
         # D3 delta output: openspec v1.4 change-local spec delta
-        # (## ADDED Requirements + Requirement + Scenario).
+        # (## MODIFIED / ## ADDED Requirements + Requirement + Scenario).
         print(generate_spec_delta(text, change_name))
+    elif os.environ.get("OUTPUT_MODE") == "target-capability":
+        # 只打印 delta 的目标 capability（`specs/<capability>/` 的落点决策用；空 = 未声明）。
+        print(delta_target_capability(text) or "")
     else:
         print(generate_full_proposal(change_name, text))

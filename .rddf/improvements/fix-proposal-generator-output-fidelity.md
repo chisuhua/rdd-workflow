@@ -172,8 +172,9 @@ CppTLM 会话里 agent 只能手工整段重写为 `## MODIFIED Requirements` + 
   - `delta` 目标声明：候选 = **YAML frontmatter** 或 **粗体头行**（`**delta**: modified <cap>`）。
     ⚠ 约束：生成器**纯 stdlib** ⇒ 选 frontmatter 就必须自己写最小解析器（禁引入 PyYAML）；
     D6 时代的「头部」= **粗体头行**（`_HEAD_RE` 已认）⇒ 与 D6 对齐的默认候选是**粗体头行**；
-  - 语义要求载体：候选 = improvement **新增可选段**（如 `## 语义要求`）或 **AC 行内命名约定**；
-    无论哪种，**缺载体时生成器必须拒绝并指名缺什么**（不得静默产出 `acceptance-N`）；
+  - 语义要求载体：**粗体头行**（D-1 已落定，纯 stdlib；形态
+    `**语义要求**: requirement | body | scenario | WHEN | THEN`，多条以 `;;` 分隔）；
+    **缺载体 / 缺字段时生成器必须拒绝并指名缺什么**（不得静默产出 `acceptance-N`）；
   - 判据形态固定：**两种裁决都要有可机判的 AC**（AC7 / AC8 / AC9 写成「依裁决取值」的形式，不预设答案）。
 - 判据单一真源：形态三条正则抽到共享模块（如 `_lib/spec_requirement_form.py`），生成器与
   `tests/unit/test_spec_requirement_form.py` **同源导入**；禁在生成器内另写一份（两处实现 ⇒ 漂移）；

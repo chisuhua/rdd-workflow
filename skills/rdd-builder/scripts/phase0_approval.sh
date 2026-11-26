@@ -157,30 +157,51 @@ case "$choice" in
             # an unconditional mkdir leaves an empty openspec/changes/<name>/
             # behind whenever the improvement is missing (test pollution).
             mkdir -p "$CHANGE_DIR"
+
+            # ⚠ **delta 先于 proposal 生成**（2026-11-27）：delta 的形态守卫会在**退化形态**时
+            # 拒绝生成 ⇒ 若先写 proposal 再写 delta，守卫拒绝时会留下「有 proposal、无 delta」
+            # 的半成品态（AC14）。先跑 delta ⇒ 拒绝时两个产物都不落盘。
+            #
+            # ⚠ **临时文件 + 成功后 mv**（AC14）：`> "$FILE"` 的**重定向先于 python 执行**
+            # ⇒ 生成失败时留下**零长度文件** ⇒ 幂等检查 `[ ! -f "$FILE" ]` 为假
+            # ⇒ 后续重试**永久静默跳过**该产物的生成。
+            #
+            # D3 spec-delta 的落点目录：声明了 `**delta**: modified <capability>` ⇒
+            # `specs/<capability>/`（design D-3；openspec 的 delta 以 capability 为单位）；
+            # 未声明 ⇒ 保持历史形态 `specs/<change-name>/`（**新旧并存**，既有 change 不迁）。
+            TARGET_CAP=""
+            if [ -f "$IMPROVEMENT_FILE" ]; then
+                TARGET_CAP=$(OUTPUT_MODE=target-capability CHANGE_NAME="$CHANGE_NAME" \
+                    IMPROVEMENTS_PATH="$IMPROVEMENT_FILE" \
+                    python3 "$SCRIPT_DIR/generate_full_proposal.py" 2>/dev/null || true)
+            fi
+            DELTA_DIR="$CHANGE_DIR/specs/${TARGET_CAP:-$CHANGE_NAME}"
+            DELTA_FILE="$DELTA_DIR/spec.md"
+            if [ ! -f "$DELTA_FILE" ] && [ -f "$IMPROVEMENT_FILE" ]; then
+                mkdir -p "$DELTA_DIR"
+                DELTA_TMP="$DELTA_FILE.tmp"
+                if ! OUTPUT_MODE=spec-delta CHANGE_NAME="$CHANGE_NAME" \
+                     IMPROVEMENTS_PATH="$IMPROVEMENT_FILE" PROJECT_ROOT="$PROJECT_ROOT" \
+                     python3 "$SCRIPT_DIR/generate_full_proposal.py" > "$DELTA_TMP"; then
+                    rm -f "$DELTA_TMP"
+                    echo "❌ delta 生成失败 ⇒ 已清理临时文件（不留空文件、不留半成品、可重试）" >&2
+                    exit 1
+                fi
+                mv "$DELTA_TMP" "$DELTA_FILE"
+                echo "✅ D3 spec-delta written: $DELTA_FILE"
+            fi
+
             CHANGE_NAME="$CHANGE_NAME" IMPROVEMENTS_PATH="$IMPROVEMENT_FILE" \
-                python3 "$SCRIPT_DIR/generate_full_proposal.py" \
-                > "$PROPOSAL_FILE"
+                PROJECT_ROOT="$PROJECT_ROOT" \
+                python3 "$SCRIPT_DIR/generate_full_proposal.py" > "$PROPOSAL_FILE.tmp" || {
+                rm -f "$PROPOSAL_FILE.tmp"
+                echo "❌ proposal 生成失败 ⇒ 已清理临时文件（不留半成品、可重试）" >&2
+                exit 1
+            }
+            mv "$PROPOSAL_FILE.tmp" "$PROPOSAL_FILE"
             echo "✅ proposal.md populated from improvement 5-段 content"
         else
             echo "⚠️  $IMPROVEMENT_FILE not found; leaving proposal.md as skeleton"
-        fi
-
-        # D3 spec-delta: change-local delta at
-        # openspec/changes/<name>/specs/<name>/spec.md (per ADR-0025 D3).
-        # The main spec under openspec/specs/ is created at archive time — writing
-        # a placeholder here would add one more spec whose "## Purpose" is a TBD
-        # marker (openspec validate --strict fails those). The delta only emits
-        # "## ADDED Requirements", so validate_delta_targets has no main-spec
-        # target to resolve.
-        DELTA_DIR="$CHANGE_DIR/specs/$CHANGE_NAME"
-        DELTA_FILE="$DELTA_DIR/spec.md"
-        if [ ! -f "$DELTA_FILE" ] && [ -f "$IMPROVEMENT_FILE" ]; then
-            mkdir -p "$DELTA_DIR"
-            OUTPUT_MODE=spec-delta CHANGE_NAME="$CHANGE_NAME" \
-                IMPROVEMENTS_PATH="$IMPROVEMENT_FILE" \
-                python3 "$SCRIPT_DIR/generate_full_proposal.py" \
-                > "$DELTA_FILE"
-            echo "✅ D3 spec-delta written: $DELTA_FILE"
         fi
         # Write builder handoff approval_status=approved
         python3 -c "
