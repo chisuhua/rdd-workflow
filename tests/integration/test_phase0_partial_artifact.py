@@ -49,8 +49,10 @@ def _run_phase0(root: pathlib.Path) -> subprocess.CompletedProcess:
 
 
 def test_delta_refusal_leaves_no_partial_artifacts(tmp_path: pathlib.Path) -> None:
-    # 无 **语义要求** 载体 ⇒ 形态守卫必然拒绝
-    root = _make_project(tmp_path, "## Acceptance\n\n- [ ] 一条验收\n")
+    # **声明了 delta 但无 语义要求** ⇒ 形态守卫必然拒绝（opt-in：不声明则不生成，不算失败）
+    root = _make_project(
+        tmp_path, "**delta**: added probe-capability\n\n## Acceptance\n\n- [ ] 一条验收\n"
+    )
     first = _run_phase0(root)
     assert first.returncode != 0, first.stdout + first.stderr
 
@@ -105,3 +107,14 @@ def test_cross_axis_produces_both_artifacts(tmp_path: pathlib.Path) -> None:
     dtext = delta.read_text(encoding="utf-8")
     assert dtext.splitlines()[0] == "## MODIFIED Requirements", dtext[:200]   # 轴 2
     assert "#### Scenario: bullet-only file produces same item count" in dtext
+
+
+def test_undeclared_delta_is_skipped_not_failed(tmp_path: pathlib.Path) -> None:
+    """opt-in：未声明 `**delta**` ⇒ P0 成功、**不生成** delta（存量 improvement 的工作流不变）。"""
+    root = _make_project(tmp_path, "## Acceptance\n\n- [ ] 一条验收\n")
+    proc = _run_phase0(root)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "未声明" in (proc.stdout + proc.stderr)
+    change_dir = root / "openspec" / "changes" / "probe"
+    assert not list(change_dir.rglob("spec.md")), "未声明 delta ⇒ 不应生成任何 delta"
+    assert (change_dir / "proposal.md").is_file()

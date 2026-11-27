@@ -180,15 +180,25 @@ case "$choice" in
             if [ ! -f "$DELTA_FILE" ] && [ -f "$IMPROVEMENT_FILE" ]; then
                 mkdir -p "$DELTA_DIR"
                 DELTA_TMP="$DELTA_FILE.tmp"
-                if ! OUTPUT_MODE=spec-delta CHANGE_NAME="$CHANGE_NAME" \
-                     IMPROVEMENTS_PATH="$IMPROVEMENT_FILE" PROJECT_ROOT="$PROJECT_ROOT" \
-                     python3 "$SCRIPT_DIR/generate_full_proposal.py" > "$DELTA_TMP"; then
-                    rm -f "$DELTA_TMP"
+                DELTA_ERR="$(mktemp)"
+                DELTA_RC=0
+                OUTPUT_MODE=spec-delta CHANGE_NAME="$CHANGE_NAME" \
+                    IMPROVEMENTS_PATH="$IMPROVEMENT_FILE" PROJECT_ROOT="$PROJECT_ROOT" \
+                    python3 "$SCRIPT_DIR/generate_full_proposal.py" > "$DELTA_TMP" 2>"$DELTA_ERR" || DELTA_RC=$?
+                if [ "$DELTA_RC" -eq 3 ]; then
+                    # **未声明 delta**（opt-in）⇒ 跳过，不算失败：没有 delta 就没有退化 delta。
+                    rm -f "$DELTA_TMP" "$DELTA_ERR"
+                    echo "ℹ️  未声明 **delta** ⇒ 不生成 spec delta（如需 delta 请提供 **delta** + **语义要求**）"
+                elif [ "$DELTA_RC" -ne 0 ]; then
+                    cat "$DELTA_ERR" >&2
+                    rm -f "$DELTA_TMP" "$DELTA_ERR"
                     echo "❌ delta 生成失败 ⇒ 已清理临时文件（不留空文件、不留半成品、可重试）" >&2
                     exit 1
+                else
+                    rm -f "$DELTA_ERR"
+                    mv "$DELTA_TMP" "$DELTA_FILE"
+                    echo "✅ D3 spec-delta written: $DELTA_FILE"
                 fi
-                mv "$DELTA_TMP" "$DELTA_FILE"
-                echo "✅ D3 spec-delta written: $DELTA_FILE"
             fi
 
             CHANGE_NAME="$CHANGE_NAME" IMPROVEMENTS_PATH="$IMPROVEMENT_FILE" \

@@ -30,8 +30,8 @@ _TARGET_REQ = "generate-proposal-backward-compatible"
 _EXISTING_SCENARIO = "bullet-only file produces same item count"
 
 
-def _md(capability: str | None, requirement: str) -> str:
-    head = f"**delta**: modified {capability}\n" if capability else ""
+def _md(capability: str | None, requirement: str, mode: str = "modified") -> str:
+    head = f"**delta**: {mode} {capability}\n" if capability else ""
     return (
         f"{head}**语义要求**: {requirement} | 系统 SHALL 以 golden snapshot 断言语料回归"
         " | 语料快照随语料增长刷新 | 语料新增 improvement 时 | 快照被同 PR 刷新\n\n"
@@ -63,9 +63,17 @@ def test_unknown_capability_is_refused() -> None:
     assert "no-such-capability" in str(exc.value), str(exc.value)
 
 
-def test_added_mode_when_no_delta_field() -> None:
-    out = gen_fp.generate_spec_delta(_md(None, "family-domain-has-four-values"), "probe")
+def test_added_mode_when_declared_as_added() -> None:
+    out = gen_fp.generate_spec_delta(
+        _md("probe-capability", "family-domain-has-four-values", mode="added"), "probe"
+    )
     assert out.splitlines()[0] == "## ADDED Requirements", out[:200]
+
+
+def test_no_declaration_is_skip() -> None:
+    """opt-in：未声明 ⇒ DeltaNotRequested（不是失败）。"""
+    with pytest.raises(gen_fp.DeltaNotRequested):
+        gen_fp.generate_spec_delta(_md(None, "family-domain-has-four-values"), "probe")
 
 
 def test_version_comparison_is_semantic_not_lexicographic() -> None:

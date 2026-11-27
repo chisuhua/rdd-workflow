@@ -10,13 +10,14 @@ setup() {
     git -C "$FAKE_ROOT" init -q -b main
     git -C "$FAKE_ROOT" config user.email "e2e@test.local"
     git -C "$FAKE_ROOT" config user.name "e2e"
-    # The D3 delta is generated FROM the improvement's 5 sections; without one
-    # there is nothing to derive, and approving writes no delta (it must not
-    # write a placeholder — see test below).
+    # D3 delta 是 **opt-in**（2026-11-27）：improvement 声明 `**delta**` + `**语义要求**`
+    # 才生成；未声明 ⇒ 不生成（也就不会产出 `acceptance-N` + 恒真 WHEN 的退化 delta）。
     cat > "$FAKE_ROOT/.rddf/improvements/test-change.md" <<'IMP'
 # test-change
 
 **优先级**: P2 | **阶段**: phase-4 | **分类**: governance | **类型**: improvement
+**delta**: added test-change
+**语义要求**: test-change-does-the-thing | The change SHALL do the thing | the thing is requested | a change is approved | the thing is done
 
 ## Capabilities
 

@@ -411,6 +411,16 @@ def generate_full_proposal(change_name: str, improvements_md: str) -> str:
     )
 
 
+class DeltaNotRequested(Exception):
+    """improvement **未声明** `**delta**` ⇒ **不生成 delta**（P0 跳过，不算失败）。
+
+    为什么是「opt-in」而不是「总是生成」：旧行为（总是生成）正是退化形态的来源 ——
+    没有载体时只能产出 `acceptance-N` + 恒真 WHEN。改为「声明了才生成」：
+    - 不声明 ⇒ 不产出 delta（**没有产物就没有退化产物**），存量 300+ improvement 不受影响；
+    - 声明了但载体缺/不足 ⇒ **拒绝生成**（exit ≠ 0，指名缺什么）。
+    """
+
+
 # ── 载体（design D-1：粗体头行，与 ADR-0025 D6 的「头部」一致）────────────
 #: 粗体头行：`**<键>**: <值>`（与 `_HEAD_RE` 同一形态族，但键不限枚举）。
 _HEAD_FIELD_ANY_RE = re.compile(
@@ -527,6 +537,13 @@ def generate_spec_delta(source_md: str, sub: str) -> str:
     - 否则 ⇒ `## ADDED Requirements`；
     - 产出后过**形态守卫**（与仓库守卫同一份判据）⇒ 命中退化形态即拒绝生成。
     """
+    delta_field = _head_field(source_md, "delta")
+    if not delta_field:
+        raise DeltaNotRequested(
+            "improvement 未声明 **delta** ⇒ 不生成 spec delta"
+            "（如需 delta，请提供 `**delta**: added|modified <capability>` 与 `**语义要求**`）"
+        )
+
     reqs = _semantic_requirements(source_md)
     if not reqs:
         raise ValueError(
@@ -536,7 +553,6 @@ def generate_spec_delta(source_md: str, sub: str) -> str:
             "（不会产出 acceptance-N / capability-N / 恒真 WHEN）"
         )
 
-    delta_field = _head_field(source_md, "delta")
     target = delta_target_capability(source_md)
     is_modified = bool(delta_field and target and delta_field.strip().lower().startswith("modified"))
 
@@ -599,7 +615,12 @@ if __name__ == "__main__":
     if os.environ.get("OUTPUT_MODE") == "spec-delta":
         # D3 delta output: openspec v1.4 change-local spec delta
         # (## MODIFIED / ## ADDED Requirements + Requirement + Scenario).
-        print(generate_spec_delta(text, change_name))
+        # `exit 3 + SKIP:` = **未声明 delta**（调用方据此跳过，不算失败）。
+        try:
+            print(generate_spec_delta(text, change_name))
+        except DeltaNotRequested as exc:
+            print(f"SKIP: {exc}", file=sys.stderr)
+            sys.exit(3)
     elif os.environ.get("OUTPUT_MODE") == "target-capability":
         # 只打印 delta 的目标 capability（`specs/<capability>/` 的落点决策用；空 = 未声明）。
         print(delta_target_capability(text) or "")

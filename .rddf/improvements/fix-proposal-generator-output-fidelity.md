@@ -92,6 +92,9 @@ CppTLM 会话里 agent 只能手工整段重写为 `## MODIFIED Requirements` + 
 
 **轴 2（U2）**：
 
+- **opt-in（design D-10，实施期发现）**：improvement **未声明** `**delta**` ⇒ **不生成 delta**（不算失败）——
+  否则「总是生成、无载体即拒绝」会让存量 300+ 无载体的 improvement 的 P0 **全部被拒**（实测 18 个 bats 用例红）；
+  而旧行为（总是生成）正是退化形态的来源 ⇒ 正确契约是「**声明了才生成**」。
 - **轴 A（形态）**：生成器在产出 delta 前**自检**形态 —— 出现 `acceptance-N` / `capability-N` 需求名或恒真 WHEN ⇒
   **拒绝生成并报错**（exit ≠ 0），要求 improvement 提供**可转写的语义需求**；
   判据**抽共享模块**（`tests/unit/test_spec_requirement_form.py` 的三条正则）⇒ 生成器与测试**同源**，禁复制第二份；
@@ -258,7 +261,7 @@ CppTLM 会话里 agent 只能手工整段重写为 `## MODIFIED Requirements` + 
 
 **轴 2（U2）**：
 
-- MUST: 形态退化（无语义 Requirement 名 / 恒真 WHEN）在**生成时**被拒绝，不再流入归档期手工重写。
+- MUST: delta 为 **opt-in**（未声明不生成、不算失败）；声明后形态退化（无语义 Requirement 名 / 恒真 WHEN）在**生成时**被拒绝。
 - MUST: 声明 `delta: modified <capability>` 的 change 生成 `## MODIFIED Requirements`，且**保留既有全部 Scenario**。
 - MUST: 形态判据与守卫测试**同源**（单一实现）。
 - MUST: delta 拒绝生成时**不留空文件、不留半成品**，且重试可再生成。

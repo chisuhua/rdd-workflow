@@ -25,6 +25,7 @@ _spec.loader.exec_module(gen_fp)
 
 def _md(requirement: str, when: str, then: str = "该要求成立") -> str:
     return (
+        "**delta**: added probe-capability\n"
         "**语义要求**: "
         f"{requirement} | 系统 SHALL 满足该要求 | 场景一 | {when} | {then}\n\n"
         "## Acceptance\n\n- [ ] 一条验收\n"
@@ -59,7 +60,18 @@ def test_wellformed_semantic_requirement_is_accepted() -> None:
 
 
 def test_missing_carrier_is_refused_with_named_diagnostic() -> None:
-    md = "## Acceptance\n\n- [ ] 一条验收\n"
+    # **声明了 delta 但没有语义要求** ⇒ 拒绝并指名缺什么（opt-in 之前提是「声明了才生成」）
+    md = "**delta**: added probe-capability\n\n## Acceptance\n\n- [ ] 一条验收\n"
     with pytest.raises(ValueError) as exc:
         gen_fp.generate_spec_delta(md, "probe")
     assert "语义要求" in str(exc.value), str(exc.value)
+
+
+def test_no_delta_declaration_is_skip_not_failure() -> None:
+    """**opt-in**：未声明 `**delta**` ⇒ 抛 `DeltaNotRequested`（调用方跳过，不算失败）。
+
+    存量 300+ improvement 没有载体 ⇒ 旧行为「总是生成」正是退化形态的来源；
+    改为「声明了才生成」⇒ 没有 delta 就没有退化 delta，且存量工作流不受影响。
+    """
+    with pytest.raises(gen_fp.DeltaNotRequested):
+        gen_fp.generate_spec_delta(_md("x", "y").replace("**delta**: added probe-capability\n", ""), "probe")

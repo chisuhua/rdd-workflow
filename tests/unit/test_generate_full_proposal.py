@@ -235,6 +235,7 @@ def test_impact_section_has_no_double_dash():
 
 
 CARRIER = (
+    "**delta**: added fix-table\n"
     "**语义要求**: layout-manifest-is-single-source"
     " | 系统 SHALL 以 `_lib/core/rddf_layout.py` 作为唯一清单"
     " | 清单被读取 | 维护者读取清单 | 字段与取值域来自单一来源\n\n"
@@ -288,8 +289,12 @@ def test_spec_delta_refuses_acceptance_only_improvement():
     import pytest
 
     with pytest.raises(ValueError) as exc:
-        generate_spec_delta(TABLE_IMPROVEMENT, "fix-table")
+        generate_spec_delta("**delta**: added fix-table\n\n" + TABLE_IMPROVEMENT, "fix-table")
     assert "语义要求" in str(exc.value)
+    # 未声明 delta ⇒ **不生成**（opt-in），不是失败
+    with pytest.raises(Exception) as skip_exc:
+        generate_spec_delta(TABLE_IMPROVEMENT, "fix-table")
+    assert skip_exc.type.__name__ == "DeltaNotRequested"
 
 
 def test_cli_output_mode_spec_delta(tmp_path):
