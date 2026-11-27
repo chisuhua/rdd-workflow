@@ -330,6 +330,30 @@ def _scan_meta_lines(block: str) -> dict[str, str]:
     return out
 
 
+def _front_matter_error(content: str, exc: Exception) -> str:
+    """Describe a broken YAML front matter with a field-level location.
+
+    PyYAML's message names a line/column *inside the parsed block* but never
+    shows the offending text — the reader is left guessing which field broke.
+    We therefore append the file line number and its content.
+
+    Line arithmetic: the block starts at file line 1 (``---``) and the parsed
+    slice starts at file line 2 ⇒ a 0-based block line ``n`` is file line
+    ``n + 2``.
+    """
+    message = " ".join(str(exc).split())
+    mark = getattr(exc, "problem_mark", None)
+    if mark is None:
+        return "invalid YAML front matter: " + message
+    lines = content.split("\n")
+    file_line = int(getattr(mark, "line", 0)) + 2
+    source = lines[file_line - 1].strip() if 0 < file_line <= len(lines) else ""
+    if not source:
+        return "invalid YAML front matter: " + message
+    return (f"invalid YAML front matter: {message} "
+            f"(front-matter line {file_line}: {source[:80]})")
+
+
 def _parse_improvement_meta(
     content: str, errors: list[str] | None = None
 ) -> dict[str, object]:
@@ -371,11 +395,9 @@ def _parse_improvement_meta(
                 if yaml_error is not None:
                     if errors is not None:
                         # Collapse the multi-line PyYAML message into one line
-                        # (the CLI prints errors as single bullets).
-                        errors.append(
-                            "invalid YAML front matter: "
-                            + " ".join(str(yaml_error).split())
-                        )
+                        # (the CLI prints errors as single bullets) and point at
+                        # the offending line (field-level location).
+                        errors.append(_front_matter_error(content, yaml_error))
                     fallback = _scan_meta_lines(content[4:end])
                     if fallback:
                         meta.update(fallback)

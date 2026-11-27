@@ -24,12 +24,24 @@ import re
 
 # Leading markers that mean "delivered" ⇒ terminal (must not be listed pending).
 # Order matters: the more specific marker must come first.
-_TERMINAL_MARKERS: tuple[tuple[str, str], ...] = (
+#
+#: **Single definition point** for the terminal vocabulary (AC5): the
+#: ``rddf status --help`` text renders THIS table, so a second copy would be
+#: a drift surface. Keep it in sync with the project registry's whitelist
+#: (§6.8 完成态 token) — the registry writes 已落地 / 已拆分 / 已取代, and the
+#: tool must judge them delivered too.
+TERMINAL_MARKERS: tuple[tuple[str, str], ...] = (
     ("已完成并归档", "已归档"),
     ("已实施并验收", "已完成"),
     ("已归档", "已归档"),
     ("已完成", "已完成"),
     ("已实施", "已实施"),
+    # Registry completion tokens (fix-rddf-status-terminal-markers):
+    # a delivered proposal is not work to be done, whichever wording the
+    # registry used for it.
+    ("已落地", "已落地"),
+    ("已拆分", "已作废"),
+    ("已取代", "已作废"),
     # English markers. The 2026-11-17/18 batch writes `状态: implemented
     # (2026-11-17)`; without these the item was classified non-terminal and
     # rendered as pending with a truncated label ("implemented (202").
@@ -101,7 +113,7 @@ def classify_improvement_status(raw: str) -> tuple[bool, str]:
         return False, "待讨论"
 
     lowered = marker.lower()
-    for needle, label in _TERMINAL_MARKERS:
+    for needle, label in TERMINAL_MARKERS:
         if lowered.startswith(needle.lower()):
             return True, label
     for needle, label in _OPEN_MARKERS:
