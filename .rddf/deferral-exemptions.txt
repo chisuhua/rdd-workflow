@@ -1,0 +1,40 @@
+# deferral 豁免清单（存量噪音一次性登记）
+#
+# 每行一个相对路径（相对仓库根）。清单里的文件**不**产生 deferral-registration finding。
+# 条目不再命中时 doctor 会提示「可清理」—— 请删除对应行（清单不静默腐坏）。
+#
+# 来源：2026-11-27 `add-deferral-registration-guard` 落地时登记存量（78 处未登记 / 33 个文件）。
+# 新写的 deferral **不在**本清单里 —— 必须带登记目标。
+.rddf/improvements/add-commit-gate-baseline-known-failures.md
+.rddf/improvements/add-commit-gate-declaration-bootstrap.md
+.rddf/improvements/add-deferral-registration-guard.md
+.rddf/improvements/add-skills-lib-api-doc.md
+.rddf/improvements/adr-0060-shape-contract-implementation.md
+.rddf/improvements/experimental-reflect-test-reflect-plan-plan-plan-done-general-error-i11.md
+.rddf/improvements/fix-adr-index-generator-dup.md
+.rddf/improvements/fix-agents-md-worktree-commit-flow.md
+.rddf/improvements/fix-bats-per-file-timeout.md
+.rddf/improvements/fix-generator-scope-extraction.md
+.rddf/improvements/fix-proposal-generator-output-fidelity.md
+.rddf/improvements/fix-proposal-generator-table-scope.md
+.rddf/improvements/fix-script-project-root-anchoring.md
+.rddf/improvements/fix-spec-delta-generator-shape-and-semantics.md
+.rddf/improvements/fix-spec-residue-guard.md
+.rddf/improvements/fix-spec-v3-naming-sync.md
+.rddf/improvements/fix-verifier-gate-cache-root.md
+.rddf/improvements/fix-worktree-archive-path.md
+.rddf/improvements/rddf-layout-manifest.md
+.rddf/reviews/adr-0036-amendment-2026-11-18.md
+.rddf/reviews/adr-0060-backfill-2026-11-24.md
+.rddf/reviews/annotate-spec-residue-guard-batch5-verify.md
+.rddf/reviews/fix-builder-handoff-p2-lifecycle-truth-verify.md
+.rddf/reviews/fix-p3-verifier-gate-verify.md
+.rddf/reviews/fix-proposal-generator-output-fidelity-verify.md
+.rddf/reviews/fix-rddf-status-terminal-markers-verify.md
+.rddf/reviews/fix-script-project-root-anchoring-verify.md
+.rddf/reviews/fix-spec-residue-guard-verify.md
+.rddf/reviews/fix-status-issue-list-truncation-verify.md
+.rddf/reviews/fix-verifier-discovery-disk-derive-verify.md
+.rddf/reviews/openspec-tracked-specs-2026-11-23.md
+.rddf/reviews/spec-residue-annotate-batch5-2026-11-21.md
+.rddf/reviews/test-sh-local-gate-review.md

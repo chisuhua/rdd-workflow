@@ -23,7 +23,7 @@ metadata:
 ## 调用
 
 ```bash
-bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,roadmap-meta,proposal-table,proposal-section,tasks-checkbox,migration-residue,roadmap-refs,roadmap-feature,roadmap-md-integrity,roadmap-phases,docs-consistency,ai-context-bootstrap,gitignore,bypass-audit,improvement-frontmatter-consistency,objective-lifecycle,objective-structure,arch-audit,review-debt,roadmap-backup,baseline-freshness,v4-residue,layout,openspec-quota}] [--quiet] [--help] [--version]
+bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,roadmap-meta,proposal-table,proposal-section,tasks-checkbox,migration-residue,roadmap-refs,roadmap-feature,roadmap-md-integrity,roadmap-phases,docs-consistency,ai-context-bootstrap,gitignore,bypass-audit,improvement-frontmatter-consistency,objective-lifecycle,objective-structure,arch-audit,review-debt,roadmap-backup,baseline-freshness,v4-residue,layout,openspec-quota,deferral-registration}] [--quiet] [--help] [--version]
 ```
 
 ## 何时该跑
@@ -76,6 +76,7 @@ bash skills/rdd-doctor/scripts/doctor.sh [--json] [--category {state,plan-tdd,ro
 | `layout` | `.rddf/` 布局单一真源校验（per ADR-0026）：必需条目缺失 → WARNING、未登记顶层条目 → INFO、`class` 与 `.gitignore` 实况不符 → WARNING。advisory only —— 本 category 永不产生 CRITICAL，且只扫 `.rddf/` 一层（不递归进 `.rddf/wt/`）| |
 | `roadmap-backup` | `.rddf/roadmap/.backup/<timestamp>/` 子目录完整性 + staleness（>90 天）+ 多备份建议合并 |  |
 | `openspec-quota` | `openspec/changes/` 开放目录数 vs 项目自设上限（`.rddf/project.yaml` 的 `openspec.proposed_limit`；缺省/0 = 不限）。未配置 ⇒ 0 findings；超限 ⇒ **CRITICAL**（`file=.rddf/project.yaml`）；配置值不可用（YAML/类型/bool/负数/层级错）⇒ **WARNING**（不静默当 0）。advisory gate（opt-in 项目自己把 `rddf openspec quota` 接进 CI）|  |
+| `deferral-registration` | 文档里的 deferral 措辞（`另案` / `另立` / `另行立项` / `后续另案`）是否带**登记目标**（`另案（已登记：<slug>）` 或 `另案（backlog：<主题>）`）。无目标 ⇒ **WARNING**（file + line）；豁免清单 `.rddf/deferral-exemptions.txt` 里的条目不再命中 ⇒ 「可清理」提示（清单不静默腐坏）。只扫 `.rddf/improvements/**` + `.rddf/reviews/**`（代码注释归 `review-debt`）| |
 | `baseline-freshness` | `tests/KNOWN_FAILURES.txt` 最近 refresh 注释日期 + 占位符 reasons（>30 天 → WARNING，>90 天 → CRITICAL）。来源是 refresh 注释日期，不用文件 mtime（git checkout / atomic-rename 不可靠） |  |
 
 ### R4 —— spec 面残留（`openspec/specs/*/spec.md`）
