@@ -148,8 +148,8 @@ U7 (声明生成+可观测) ─→ U8 (baseline, 需 ADR SU) ──→ [声明�
 - [ ] **U7** commit-gate 声明生成入口 + 未声明可观测（跨仓 ⇒ 拆两个 change：治理仓机制面 / rdd-workflow 引导）
 - [x] **U3** verifier 批量分流 disk 化（写回侧落点 = 不创建半成品 iteration.json，记账本 = verdict cache + 审计日志）—— **W2 已归档**
 - [x] **U4** rddf status 终态词表 + 陈旧状态可见性 —— **W2 已归档**
-- [ ] **U5** P2 生命周期真实性（**先裁决消费方**，无消费方则降级 noted）
-- [ ] **U6** deferral 登记载体（约定先行 ⇒ 第一交付物可独立收口）
+- [x] **U5** P2 生命周期真实性 —— **W4 已归档**（消费方裁决 = P2.5 review；setup 写 running、归档才写 completed）
+- [x] **U6** deferral 登记载体 —— **W4 已归档**（约定 + doctor category + 豁免清单入库）
 - [ ] **U8** baseline / known_failures（**前置**：治理仓 ADR Status Update 已 Accepted）
 - [ ] **U9** worktree 构建提示（降级形态，独立可做）
 - [x] **U10** status 视图不得截断 issue 列表（U4 上线后第一次真实使用即暴露：标题报 6、只列 5）—— **W3 已归档**
@@ -164,3 +164,5 @@ U7 (声明生成+可观测) ─→ U8 (baseline, 需 ADR SU) ──→ [声明�
 | sprint-2026-11-27 | go-decision | **W2 归档**：U3 `2026-11-27-fix-verifier-discovery-disk-derive`（7/7 AC · spec 合流 `verifier-lifecycle` ~2）+ U4 `2026-11-27-fix-rddf-status-terminal-markers`（7/7 AC · spec 合流 `proposal-lifecycle-sync` ~1）均已归档 | 实施期决策：U3 的 disk 推导与 `rddf status` Mode A **共用一个实现**（`_lib/change_status.py`，对象身份断言）；`scan_queue.sh` 删除第二份判据改为薄委派；U4 的终态词表提为公开常量 + `rddf status --help` 从常量渲染 | 遗留（登记，不静默）：`iteration.json` 的 tasks_done 仍不刷新（U5）；worktree 模式 6 个 project-root 失败（另案）；既有 improvement 的陈旧状态行**不回填**（只读面，项目侧自修） |
 | sprint-2026-11-27 | go-decision | **W3 = U10 立项**：`fix-status-issue-list-truncation`（U4 归档后第一次真实使用即暴露的截断缺陷）⇒ planner 批准 + P0 生成 proposal/delta（新 capability `status-issue-visibility`）+ design D-1~D-5 + 5 Task × 5 步 plan | 用户裁决：起 W3 = U10 | 根因在**消费侧**（`errors[:5]` 硬截断 ⇒ 标题报 6、只列 5）⇒ 与 U4 修的是同一类「静默失效」；设计取「全量列出 + 阈值 20 后**明示**未展开数」而非「无限列出」 |
 | sprint-2026-11-27 | go-decision | **W3 归档**：`2026-11-27-fix-status-issue-list-truncation`（7/7 AC pass · 新建 capability `status-issue-visibility` +1 requirement） | 实施期决策：状态摘要清洗函数 `clean_status_snippet` 与分类器**同模块同源**（对象身份可断言）；requirement 正文压到 479 字 ⇒ 不增长 very-long 债 | 遗留（登记，不静默）：CppTLM 侧 6 条已归档但状态行陈旧的 improvement 未回填（工具只指路，项目侧自修）；阈值 20 为工程取舍（已由测试钉住） |
+| sprint-2026-11-27 | go-decision | **W4 = U5 + U6 立项**（独立两个 change）⇒ 各自 P0 + design + plan/tasks（mode=worktree） | 用户裁决：起 W4 | U5 的**消费方**在 design 阶段裁决 = **P2.5 review（合并决策点）**—— archive gate / status / dashboard 均已另有真源，不重复；U6 走「约定先行 ⇒ 扫描 ⇒ 接线」三步 |
+| sprint-2026-11-27 | go-decision | **W4 归档**：U5 `2026-11-27-fix-builder-handoff-p2-lifecycle-truth`（7/7 AC · 新 capability `builder-lifecycle-truth`）与 U6 `2026-11-27-add-deferral-registration-guard`（7/7 AC · 新 capability `deferral-registration`）均已归档 | 实施期决策：① U5 的真相源 = disk 的 tasks.md（`implementation_state()` 单一计算点），handoff 只贡献「声明」⇒ 真源不增；② U6 的豁免清单**按文件粒度**入库（78 处未登记 / 33 个文件），本仓 doctor 零噪音 | 遗留（登记，不静默）：存量 78 处未登记 deferral 只登记豁免、不回改（项目侧自修）；`iteration.json` 的 tasks_done 仍不刷新；worktree 模式 6 个 project-root 失败 |
