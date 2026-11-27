@@ -114,6 +114,41 @@ _carry_artifacts() {
     done
 }
 
+
+# --- P2 前置检查（只读）----------------------------------------------------
+# `git worktree add` builds the worktree from HEAD ⇒ whatever the MAIN repo
+# gained after the recorded baseline — or never committed — is invisible inside
+# it. Measured 2026-11-26: an authorization ledger entry committed in the main
+# repo after P2 had to be merged into the worktree by hand.
+#
+# This check only REPORTS (commit sha + file list). It never commits and never
+# merges — automating that is out of scope (and risky).
+_p2_prereq_check() {
+    local dirty base ahead
+    dirty="$(git -C "$PROJECT_ROOT" status --porcelain --untracked-files=no 2>/dev/null || true)"
+    if [ -n "$dirty" ]; then
+        echo "⚠️  P2 前置检查：主仓有未提交的 tracked 改动 ⇒ worktree 从 HEAD 建，看不到它们" >&2
+        printf '%s\n' "$dirty" | head -10 | sed 's/^/     /' >&2
+        echo "   ⇒ 先把授权类产物（如台账 Entry）commit，再建 worktree" >&2
+    fi
+    base="$(PKG_ROOT="$PKG_ROOT" PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" python3 -c "
+import os, sys
+sys.path.insert(0, os.environ.get('PKG_ROOT') or '')
+from _lib.builder_handoff import read_builder_handoff
+handoff = read_builder_handoff(os.environ['PROJECT_ROOT'], os.environ['CHANGE_NAME'])
+print((handoff.get('execution_mode_decision') or {}).get('branch_base_sha') or '')
+" 2>/dev/null || true)"
+    if [ -n "$base" ]; then
+        ahead="$(git -C "$PROJECT_ROOT" rev-list --count "$base"..HEAD 2>/dev/null || echo 0)"
+        if [ "$ahead" != "0" ]; then
+            echo "⚠️  P2 前置检查：主仓 HEAD 领先上次 P2 基线 $base（$ahead 个 commit）" >&2
+            echo "   这些产物在 worktree 里不可见（worktree 从该基线建）：" >&2
+            git -C "$PROJECT_ROOT" diff --name-only "$base"..HEAD 2>/dev/null \
+                | head -20 | sed 's/^/     /' >&2
+        fi
+    fi
+}
+
 if [ "$EXEC_MODE" = "worktree" ]; then
     # The worktree lives INSIDE the project, not inside whatever directory the
     # caller happened to be in. Without this, a caller whose cwd differs from
@@ -125,6 +160,7 @@ if [ "$EXEC_MODE" = "worktree" ]; then
     cd "$PROJECT_ROOT" || { echo "❌ cannot cd to project root: $PROJECT_ROOT" >&2; exit 3; }
     WT_PATH="$PROJECT_ROOT/.rddf/wt/$CHANGE_NAME"
     if [ ! -d "$WT_PATH" ]; then
+        _p2_prereq_check
         git worktree add "$WT_PATH" -b "$BRANCH" 2>/dev/null || {
             echo "worktree creation failed at $WT_PATH (branch may already exist)" >&2
             WT_PATH="$PROJECT_ROOT"  # fallback to main repo
@@ -285,7 +321,14 @@ update_builder_handoff(
     os.environ['PROJECT_ROOT'],
     os.environ['CHANGE_NAME'],
     current_phase="phase-2",
-    execution_status="completed",
+    # The setup step only PREPARES the worktree — the implementation has not
+    # started. Writing "completed" here made every reader (a resumed session,
+    # a board, any consumer of the handoff) believe the implementation was
+    # done (measured 2026-11-26: 5 files changed, 0 tasks checked, handoff
+    # said "completed"). "running" is the truth at this point; "completed" is
+    # written by Phase 3, when the tasks are actually checked and the change
+    # is archived.
+    execution_status="running",
     execution_mode_decision=decision,
     worktree_path=os.environ['EXEC_DIR'],
     branch="openspec/%s" % os.environ['CHANGE_NAME'],

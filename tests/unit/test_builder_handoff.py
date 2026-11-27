@@ -27,7 +27,7 @@ class TestWriteBasicRoundtrip:
             deps_status={"blockers": [], "manual_deps": ["other"], "cross_repo_pending": []},
             worktree_path=".rddf/wt/test-change",
             branch="openspec/test-change",
-            execution_status="in-progress",
+            execution_status="running",
             review_status="pending",
             archive_status="pending",
             verifier_report_path=".rddf/state/verifier/.ac-verdict-test-change.json",
@@ -44,7 +44,7 @@ class TestWriteBasicRoundtrip:
         assert result["deps_status"] == {"blockers": [], "manual_deps": ["other"], "cross_repo_pending": []}
         assert result["worktree_path"] == ".rddf/wt/test-change"
         assert result["branch"] == "openspec/test-change"
-        assert result["execution_status"] == "in-progress"
+        assert result["execution_status"] == "running"
         assert result["review_status"] == "pending"
         assert result["archive_status"] == "pending"
         assert result["retry_count"] == 0

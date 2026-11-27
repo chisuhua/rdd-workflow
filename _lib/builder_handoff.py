@@ -4,6 +4,7 @@ Per-change layout prevents global-file serial-write regression (per ADR-0034 §2
 """
 import json
 import os
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -176,6 +177,62 @@ def _validate_dispatch_quick_review(review) -> None:
 
     if "reviewed_at" not in review:
         review["reviewed_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+
+@dataclass(frozen=True)
+class ImplementationState:
+    """The implementation's TRUE state (disk) vs what the handoff CLAIMS.
+
+    ``tasks_done`` / ``tasks_total`` are counted from ``tasks.md`` on disk —
+    the same counter ``rddf status`` and the verifier queue use. The handoff
+    only carries a *claim* (``execution_status``), which may be a legacy
+    setup-time value.
+
+    ``inconsistent`` is the case that matters: the handoff says ``completed``
+    while tasks are not all checked (the old setup step wrote exactly that).
+    It is reported, never trusted.
+    """
+
+    tasks_done: int
+    tasks_total: int
+    handoff_status: str
+    claimed_complete: bool
+    actually_complete: bool
+    inconsistent: bool
+
+
+def implementation_state(project_root: str, change_name: str) -> ImplementationState:
+    """Compute the implementation state of a change (truth from disk).
+
+    - truth = the task counter on disk (``openspec/changes/<name>/tasks.md``);
+    - the handoff contributes only its *claim* (``execution_status``);
+    - a legacy handoff (written by the old setup step) claims ``completed``
+      with nothing implemented ⇒ ``inconsistent=True`` ⇒ callers must not
+      read it as "done".
+
+    Never raises: a missing handoff or tasks file yields zeros.
+    """
+    from _lib.tasks_count import count_tasks
+
+    tasks_path = Path(project_root) / "openspec" / "changes" / change_name / "tasks.md"
+    done = total = 0
+    try:
+        done, total = count_tasks(tasks_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError):
+        pass
+    handoff = read_builder_handoff(project_root, change_name)
+    status = str(handoff.get("execution_status") or "")
+    claimed = status == "completed"
+    actually = total > 0 and done == total
+    return ImplementationState(
+        tasks_done=done,
+        tasks_total=total,
+        handoff_status=status,
+        claimed_complete=claimed,
+        actually_complete=actually,
+        inconsistent=claimed and not actually,
+    )
 
 
 def read_builder_handoff(project_root: str, change_name: str) -> dict:

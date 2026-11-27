@@ -285,6 +285,10 @@ update_builder_handoff(
     "$PROJECT_ROOT",
     "$CHANGE_NAME",
     current_phase="phase-3",
+    # Only here is "completed" true: the tasks are checked, the change is
+    # verified and archived (Phase 2's setup used to write it — see
+    # fix-builder-handoff-p2-lifecycle-truth).
+    execution_status="completed",
     archive_status="archived",
 )
 PYEOF
