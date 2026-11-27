@@ -47,7 +47,7 @@
 - Create: `_lib/spec_requirement_form.py`
 - Modify: `tests/unit/test_spec_requirement_form.py`（改为 import 共享判据，**断言内容不变**）
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 在 `tests/unit/test_spec_requirement_form.py` 末尾追加：
 
@@ -64,12 +64,12 @@ def test_generator_and_guard_share_one_predicate_source() -> None:
     assert guard._MEANINGLESS_REQUIREMENT.pattern == shared.MEANINGLESS_REQUIREMENT.pattern
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_spec_requirement_form.py -q`
 Expected: FAIL —— `ModuleNotFoundError: No module named '_lib.spec_requirement_form'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 创建 `_lib/spec_requirement_form.py`：
 
@@ -133,12 +133,12 @@ from _lib.spec_requirement_form import (
 )
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_spec_requirement_form.py -q`
 Expected: PASS（既有断言 + 新增「单一真源」断言）
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 按仓库约定，execute 阶段不逐任务 commit；所有变更在 archive 阶段统一提交。
 
@@ -150,7 +150,7 @@ Expected: PASS（既有断言 + 新增「单一真源」断言）
 - Modify: `skills/rdd-builder/scripts/generate_full_proposal.py:28-30`（header 正则）、`:112-150`（item 解析）
 - Test: `tests/unit/test_generate_full_proposal_scope_table.py`（新建）
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 新建 `tests/unit/test_generate_full_proposal_scope_table.py`：
 
@@ -241,12 +241,12 @@ def test_out_scope_appears_once() -> None:
     assert out_items == ["不做 `d`"]
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_generate_full_proposal_scope_table.py -q`
 Expected: FAIL —— 纯表格节返回 0 条（或被逗号兜底切成碎片）；带括号注解的 header 被当成条目。
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ① header 正则允许尾部括号/方括号注解：
 
@@ -289,14 +289,14 @@ _TABLE_ALIGN_RE = re.compile(r"^\|[\s:|-]+\|$")
         print("⚠️  proposal: 范围节未解析出条目 ⇒ 保留原文（不再按逗号切分）", file=sys.stderr)
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_generate_full_proposal_scope_table.py -q`
 Expected: PASS（4 个用例全绿）
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
-- [ ] **Step 6: 变异验证（AC5 · 判别力）** —— 把 `_extract_scope_items` 的表格识别退回「只认 bullet」
+- [x] **Step 6: 变异验证（AC5 · 判别力）** —— 把 `_extract_scope_items` 的表格识别退回「只认 bullet」
   ⇒ **本轴 AC1** 的纯表格用例**必须红**（证明它真的在测表格解析，而不是恒绿）
 
 ---
@@ -307,7 +307,7 @@ Expected: PASS（4 个用例全绿）
 - Modify: `skills/rdd-builder/scripts/generate_full_proposal.py:238-243`（兜底）、`:232-235`（`_extract_section` 候选序）
 - Test: `tests/unit/test_generate_full_proposal_scope_table.py`（追加 2 个用例）
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 追加：
 
@@ -341,12 +341,12 @@ def test_both_sections_present_prefers_range(capsys) -> None:
     assert "歧义" in capsys.readouterr().err
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_generate_full_proposal_scope_table.py -q`
 Expected: FAIL —— 逗号兜底把表格切碎；并存时无「歧义」提示。
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 - 兜底段替换为「保留原文 + stderr」（见 Task 2 ③）；
 - `_extract_section` 的候选序显式固定为 `("范围", "What Changes", "Scope")`，并在**命中多个候选**时写 stderr：
@@ -357,12 +357,12 @@ Expected: FAIL —— 逗号兜底把表格切碎；并存时无「歧义」提�
         print(f"⚠️  proposal: 范围节候选歧义（{hits}）⇒ 取候选序靠前者", file=sys.stderr)
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_generate_full_proposal_scope_table.py -q`
 Expected: PASS（6 个用例全绿）
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 ---
 
@@ -372,7 +372,7 @@ Expected: PASS（6 个用例全绿）
 - Create: `tests/unit/test_generate_full_proposal_corpus.py`、`tests/fixtures/proposals_corpus_snapshot.json`
 - Modify: `skills/rdd-builder/scripts/generate_full_proposal.py`（仅在需要暴露「逐行形态标签」时加一个**公开**辅助函数）
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 新建 `tests/unit/test_generate_full_proposal_corpus.py`：
 
@@ -415,12 +415,12 @@ def test_generated_output_matches_golden_snapshot() -> None:
         assert out == expected, f"{path.stem} 的生成结果与 golden snapshot 不一致"
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_generate_full_proposal_corpus.py -q`
 Expected: FAIL —— 快照文件不存在（`FileNotFoundError`）。
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ① 在生成器暴露形态标签函数（供快照生成与测试共用）：
 
@@ -478,14 +478,14 @@ print(f"snapshot refreshed: {len(improve)} improvements")
 
 Run: `python3 tests/fixtures/refresh_proposals_corpus_snapshot.py`
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_generate_full_proposal_corpus.py -q`
 Expected: PASS（2 个用例全绿）
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
-- [ ] **Step 6: 变异验证（AC4 · 判别力）** —— 把形态标签分类器改坏（如把 `table_row` 归成 `other`）
+- [x] **Step 6: 变异验证（AC4 · 判别力）** —— 把形态标签分类器改坏（如把 `table_row` 归成 `other`）
   ⇒ 语料用例**必须红**（证明形态标签表参与判别，而不是摆设）
 
 ---
@@ -497,7 +497,7 @@ Expected: PASS（2 个用例全绿）
 - Modify: `skills/rdd-builder/scripts/generate_full_proposal.py`（`generate_spec_delta()` + 载体解析）
 - Test: `tests/unit/test_spec_delta_generator_shape.py`、`tests/unit/test_spec_delta_generator_modified.py`（新建）
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 新建 `tests/unit/test_spec_delta_generator_shape.py`：
 
@@ -553,12 +553,12 @@ def test_legacy_version_branch_guards_scenarios(monkeypatch) -> None:
     ...
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_spec_delta_generator_shape.py tests/unit/test_spec_delta_generator_modified.py -q`
 Expected: FAIL —— 当前 `generate_spec_delta()` 照常产出 `acceptance-N` + 恒真 WHEN，且无载体解析。
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ① `_lib/openspec_version.py`（语义化）：
 
@@ -623,14 +623,14 @@ def _semantic_requirements(text: str) -> list[tuple[str, str]]:
 
 ③ 版本分流：`>= (1,7,0)` ⇒ 走原生语义（本地预检只做目标存在性）；`< (1,7,0)` ⇒ 自实现 `missing == ∅`。
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_spec_delta_generator_shape.py tests/unit/test_spec_delta_generator_modified.py -q`
 Expected: PASS
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
-- [ ] **Step 6: 变异验证（AC12 / AC13 · 判别力）** —— ① 把共享模块的 `acceptance-N` 正则退回不匹配 ⇒ **AC7** 必须红；
+- [x] **Step 6: 变异验证（AC12 / AC13 · 判别力）** —— ① 把共享模块的 `acceptance-N` 正则退回不匹配 ⇒ **AC7** 必须红；
   ② 把版本比较退化为**字符串比较**（`1.14.3` 会被判成 `< 1.7.0`）⇒ 版本分支用例必须红
 
 ---
@@ -641,7 +641,7 @@ Expected: PASS
 - Modify: `skills/rdd-builder/scripts/phase0_approval.sh:160-183`、`skills/rdd-builder/SKILL.md`
 - Test: `tests/integration/test_phase0_partial_artifact.bats`（新建）、`tests/unit/test_rdd_builder_skill_contract.py`（新建）
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 新建 `tests/unit/test_rdd_builder_skill_contract.py`：
 
@@ -675,12 +675,12 @@ def test_skill_documents_delta_contract() -> None:
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_rdd_builder_skill_contract.py -q` 与 `bats tests/integration/test_phase0_partial_artifact.bats`
 Expected: FAIL —— SKILL.md 无 delta 契约段；P0 拒绝后留下空 delta 文件。
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ① `phase0_approval.sh`：写入改「临时文件 + 成功后 `mv`」：
 
@@ -700,11 +700,11 @@ Expected: FAIL —— SKILL.md 无 delta 契约段；P0 拒绝后留下空 delta
 
 ② `skills/rdd-builder/SKILL.md` 增「delta 契约」段（三锚点：载体 = **粗体头行** / MODIFIED **保留既有 Scenario** / 版本口径 **1.7.0** 分流）。
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_rdd_builder_skill_contract.py -q` 与 `bats tests/integration/test_phase0_partial_artifact.bats`
 Expected: PASS
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 按仓库约定，execute 阶段不逐任务 commit；所有变更在 archive 阶段统一提交。

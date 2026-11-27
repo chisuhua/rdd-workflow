@@ -16,6 +16,11 @@ sys.path.insert(0, str(PROJECT_ROOT / "skills" / "rdd-builder" / "scripts"))
 from generate_full_proposal import generate_full_proposal, generate_spec_delta  # noqa: E402
 
 
+# ⚠ **范围节用 bullet 形态**（2026-11-27 变更）：旧 fixture 写 `In Scope: A, B, C.`（逗号一行）
+# ⇒ 依赖**逗号兜底**才能拆成 3 条；该兜底已被移除（逗号切分会把多行文本/表格切碎 ——
+# 实测 2026-11-26 CppTLM），解析不出条目时改为**保留原文 + stderr**。
+# ⇒ 本 fixture 改用 bullet（本仓约定的规范形态）；旧行为的契约由
+# `test_legacy_comma_scope_is_preserved_verbatim` 单独锁定。
 SAMPLE_IMPROVEMENT = """# fix-sample
 
 **优先级**: P1 | **来源**: 测试
@@ -26,7 +31,11 @@ The user wants to fix X.
 
 ## 范围
 
-In Scope: A, B, C.
+**In Scope**:
+
+- A
+- B
+- C
 
 ## Capabilities
 
@@ -225,41 +234,67 @@ def test_impact_section_has_no_double_dash():
     assert "- **新增**：`_lib/core/rddf_layout.py`" in out
 
 
-def test_spec_delta_captures_plain_must_format():
-    """`- MUST: x` (5-段 convention) must become a capability Requirement."""
-    src = TABLE_IMPROVEMENT
-    delta = generate_spec_delta(src, "fix-table")
-    assert re.search(r"^### Requirement: capability-\d+$", delta, re.MULTILINE)
-    assert "The system MUST 清单是唯一声明点." in delta
+CARRIER = (
+    "**delta**: added fix-table\n"
+    "**语义要求**: layout-manifest-is-single-source"
+    " | 系统 SHALL 以 `_lib/core/rddf_layout.py` 作为唯一清单"
+    " | 清单被读取 | 维护者读取清单 | 字段与取值域来自单一来源\n\n"
+)
 
 
-def test_spec_delta_captures_bold_must_format():
-    """`- **MUST**: x` (bold variant) keeps working."""
-    src = "## Capabilities\n\n- **MUST**: 清单是唯一声明点\n- **MUST NOT**: 不得修改既有路径\n"
+def test_spec_delta_uses_carrier_body_not_capabilities():
+    """载体的 **body** 进 delta（`Capabilities` 段不再机械转 Requirement）。
+
+    旧行为（2026-11-27 前）：`## Capabilities` 的每个 MUST 条目 → `capability-N` Requirement
+    ⇒ 需求名无语义 + 恒真 WHEN（正是本 change 要消灭的退化形态）。
+    """
+    src = CARRIER + TABLE_IMPROVEMENT
     delta = generate_spec_delta(src, "fix-table")
-    assert "The system MUST 清单是唯一声明点." in delta
-    assert "The system MUST NOT 不得修改既有路径." in delta
+    assert "### Requirement: layout-manifest-is-single-source" in delta
+    assert "系统 SHALL 以 `_lib/core/rddf_layout.py` 作为唯一清单" in delta
+    assert not re.search(r"^### Requirement: capability-\d+$", delta, re.MULTILINE)
+
+
+def test_spec_delta_carrier_drives_bold_and_plain_alike():
+    """载体与 `Capabilities` 的粗体/非粗体写法**无关** ⇒ 只认载体（写法不再影响 delta 形态）。"""
+    src = (
+        "## Capabilities\n\n- **MUST**: 清单是唯一声明点\n- **MUST NOT**: 不得修改既有路径\n\n"
+        + CARRIER
+    )
+    delta = generate_spec_delta(src, "fix-table")
+    assert "### Requirement: layout-manifest-is-single-source" in delta
+    # MUST NOT 是约束（去 proposal 的 Capabilities/Impact），不因粗体写法而进 delta
+    assert "不得修改既有路径" not in delta
 
 
 def test_spec_delta_excludes_should():
-    """SHOULD entries stay prose-only — the delta is a MUST-level contract.
+    """SHOULD 条目**永不**变成 Requirement（delta 只认载体）。
 
-    openspec warns on a Requirement whose body lacks SHALL/MUST ("should
-    contain SHALL or MUST (RFC 2119 best practice)"), so SHOULD must not
-    become a Requirement. It stays in the proposal's Capabilities section.
+    openspec 对缺 SHALL/MUST 的 Requirement 会报 RFC 2119 warning ⇒ SHOULD 不进 delta；
+    它只作为散文留在 proposal 的 Capabilities 段（人读路径）。
     """
-    delta = generate_spec_delta(TABLE_IMPROVEMENT, "fix-table")
-    assert "The system SHOULD" not in delta
+    delta = generate_spec_delta(CARRIER + TABLE_IMPROVEMENT, "fix-table")
     assert "文档页措辞与 ADR 一致" not in delta
-    # The SHOULD text is still present in the proposal (human-readable path).
+    assert "SHOULD" not in delta
     proposal = generate_full_proposal("fix-table", TABLE_IMPROVEMENT)
     assert "SHOULD: 文档页措辞与 ADR 一致" in proposal
 
 
-def test_spec_delta_keeps_acceptance_requirements():
-    delta = generate_spec_delta(TABLE_IMPROVEMENT, "fix-table")
-    assert "### Requirement: acceptance-1" in delta
-    assert "The system SHALL 清单导出 RDFF_LAYOUT." in delta
+def test_spec_delta_refuses_acceptance_only_improvement():
+    """AC 复选框**不再**变成 `acceptance-N` Requirement ⇒ 无载体时**拒绝生成**。
+
+    这是 2026-11-27 的**契约变更**：AC → 序号 Requirement 正是退化形态的来源
+    （需求名无语义 + 恒真 WHEN）⇒ 现在要求作者提供 `**语义要求**` 载体。
+    """
+    import pytest
+
+    with pytest.raises(ValueError) as exc:
+        generate_spec_delta("**delta**: added fix-table\n\n" + TABLE_IMPROVEMENT, "fix-table")
+    assert "语义要求" in str(exc.value)
+    # 未声明 delta ⇒ **不生成**（opt-in），不是失败
+    with pytest.raises(Exception) as skip_exc:
+        generate_spec_delta(TABLE_IMPROVEMENT, "fix-table")
+    assert skip_exc.type.__name__ == "DeltaNotRequested"
 
 
 def test_cli_output_mode_spec_delta(tmp_path):
@@ -269,7 +304,7 @@ def test_cli_output_mode_spec_delta(tmp_path):
 
     script = PROJECT_ROOT / "skills" / "rdd-builder" / "scripts" / "generate_full_proposal.py"
     imp = tmp_path / "improvement.md"
-    imp.write_text(TABLE_IMPROVEMENT, encoding="utf-8")
+    imp.write_text(CARRIER + TABLE_IMPROVEMENT, encoding="utf-8")
     env = dict(os.environ)
     env.update({
         "IMPROVEMENTS_PATH": str(imp),
@@ -281,7 +316,7 @@ def test_cli_output_mode_spec_delta(tmp_path):
     )
     assert res.returncode == 0, res.stderr
     assert res.stdout.startswith("## ADDED Requirements")
-    assert "### Requirement: acceptance-1" in res.stdout
+    assert "### Requirement: layout-manifest-is-single-source" in res.stdout
     assert "## What Changes" not in res.stdout
 
 
@@ -431,3 +466,14 @@ def test_scope_bullet_header_nested_children_stay_separate_items():
     assert in_items[1].startswith("子项 B:")
     assert "1. 孙项 1" in in_items[1]
     assert out_items == ["不做 C"]
+
+
+def test_legacy_comma_scope_is_preserved_verbatim(capsys):
+    """逗号一行的 legacy 范围节 ⇒ **保留原文**（不再按逗号切分成多条）。
+
+    这是 2026-11-27 的**契约变更**：旧行为（逗号切分）会把多行文本与 markdown 表格切碎。
+    """
+    legacy = "# fix-legacy\n\n## 范围\n\nIn Scope: A, B, C.\n"
+    out = generate_full_proposal("fix-legacy", legacy)
+    assert "In Scope: A, B, C." in out
+    assert "保留原文" in capsys.readouterr().err

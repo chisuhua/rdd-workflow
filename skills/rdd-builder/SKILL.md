@@ -391,6 +391,39 @@ print('dispatch_quick_review written')
   - outcome=unverified → 回 P0 重新决策
   - outcome=escalated → 回 P0 重新决策 (失败升级契约 per ADR-0047 amendment)
 
+## D3 spec-delta 契约（2026-11-27 · change `fix-proposal-generator-output-fidelity` 落地）
+
+P0 approve 时由 `generate_full_proposal.py` 生成 change-local delta。契约三条（**缺一即退化**）：
+
+### ① 载体 = **粗体头行**（与 ADR-0025 D6 的「头部」一致；纯 stdlib，不引入 YAML 解析）
+
+```markdown
+**delta**: modified <capability>
+**语义要求**: <requirement> | <body> | <scenario> | <WHEN> | <THEN>
+```
+
+- 多条语义要求以 `;;` 分隔（**不用逗号** —— 逗号切分正是本 change 修掉的缺陷）；
+- **缺 `**语义要求**` ⇒ 生成器拒绝生成并指名缺什么**（绝不回退到 `acceptance-N` / `capability-N`
+  需求名或 `- **WHEN** the change is applied` 这类恒真场景）。
+
+### ② `**delta**: modified <capability>` ⇒ `## MODIFIED Requirements` + **保留既有 Scenario**
+
+- 落点目录 `openspec/changes/<name>/specs/<capability>/spec.md`（**按 capability 分目录**；
+  未声明 `delta` 时保持历史形态 `specs/<change-name>/` ⇒ **新旧并存**，既有 change 不迁）；
+- delta 块内**必须逐字保留** main spec 该 requirement 的**全部既有 Scenario**，再追加作者的新场景；
+  缺一个 ⇒ 归档时 openspec 直接 abort。
+
+### ③ 版本口径：**1.7.0** 分流（**语义化**比较，禁字符串比较）
+
+- `openspec >= 1.7.0` ⇒ 自带「MODIFIED 须含既有 Scenario」检查 ⇒ 生成侧复用其语义 + 本地预检；
+- `openspec < 1.7.0` ⇒ 无原生检查 ⇒ **本地预检是唯一守卫**（生成时打印告警，不静默）。
+- 版本探测走 `_lib/openspec_version.py`（`RDDF_OPENSPEC_VERSION` 可覆盖，供测试/离线环境）。
+
+### 半成品防护
+
+delta 与 proposal 一律「**写临时文件 + 成功后 `mv`**」；生成失败 ⇒ 删临时文件 + 非零退出
+⇒ 不留空文件、不留半成品、**重试可再生成**（`> "$FILE"` 会留下零长度文件 ⇒ 幂等检查被永久骗过）。
+
 ## 执行模式契约（per ADR-0024 + ADR-0036 AMENDED）
 
 两种模式的定义（**唯一契约**，别再各写各的）：
