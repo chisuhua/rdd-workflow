@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: cli-tooling
 类型: improvement
-状态: 待审查
+状态: 已批准·待立项（planner 2026-11-27 · 独立 change · 7 条 AC 含 TDD 三段）
 主题: rddf status 的终态词表与陈旧状态可见性 —— 「已落地」不再算 pending + 陈旧状态行不再隐身
 ---
 
@@ -35,6 +35,11 @@
 
 **注意（事实核对）**：「19 / 13」是当次实测值，**不作为本提案的固定数字**（实施时以实测为准）；
 可复现的稳定事实是「`已落地` 不在终态词表」与「先过滤后判状态」这两处机制。
+
+## delta 载体（P0 生成输入）
+
+**delta**: modified proposal-lifecycle-sync
+**语义要求**: Dashboard pending filter MUST skip archived changes | The dashboard pending pool SHALL classify each improvement's lifecycle status from its leading marker using a single definition point, and that vocabulary MUST treat the registry's completion tokens — including `已落地`, `已拆分` and `已取代` — as terminal. Archived and approved names SHALL be removed from the pending pool only AFTER classification, and an archived-or-approved entry whose recorded status is not terminal MUST be reported as a stale-status diagnostic rather than disappearing from every view. | Archived improvement with a stale status is reported, not hidden | an improvement has an archived copy, its `状态` is not terminal, and the dashboard snapshot is collected | the name is absent from the pending pool and appears in the snapshot's stale-status diagnostics
 
 ## 范围
 

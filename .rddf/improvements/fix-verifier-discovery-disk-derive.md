@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: cli-tooling
 类型: improvement
-状态: 待审查
+状态: 已批准·待立项（planner 2026-11-27 · 独立 change · 7 条 AC 含 TDD 三段）
 主题: verifier 批量分流队列改为 disk 推导 —— 不再依赖 iteration.json（与「iteration 是流程记账」的既决方向同向）
 ---
 
@@ -36,6 +36,11 @@
 
 ⇒ 本提案走 **方案 B（disk 化）**：把批量队列的推导源改为 disk，与 `rddf status` Mode A **同源同法**
 ⇒ 真源数量**减少**（verifier 队列不再依赖 iteration），不制造第三个真源。
+
+## delta 载体（P0 生成输入）
+
+**delta**: modified verifier-lifecycle
+**语义要求**: Verifier queue SHALL discover implemented task-complete non-archived changes | The verifier queue SHALL be derived from disk — each `openspec/changes/<name>/tasks.md` task counter plus that change's on-disk status — and MUST NOT consult `iteration.json`. A change is eligible when it is not archived, its disk status is `in_worktree` or `completed`, and its tasks are all checked with a non-zero total. Because `iteration.json` is procedural bookkeeping, a missing file MUST NOT empty the queue and a stale entry MUST NOT override disk; the derivation SHALL share one implementation with `rddf status` Mode A instead of keeping a second copy. | A task-complete change without iteration.json is queued | no `.rddf/state/iteration.json` exists, one change's tasks.md is 100% checked, and the batch verifier queue is scanned | that change is returned as a verification candidate ;; rddf rdd-verify SHALL execute real batch verification | `rddf rdd-verify` SHALL perform AC verification for each eligible change per the self-contained agent protocol (ADR-0045) unless a current valid verdict cache exists. It SHALL persist the verdict, classify failed acceptance criteria, and return a non-success exit code when any change fails, errors, or reaches the retry limit. An empty queue MUST be a successful no-op only when the queue is genuinely empty, and the reason for the emptiness MUST be reported on stderr as a named cause instead of a silent empty list. | An empty queue reports a diagnosable reason | no active change has complete tasks and `rddf rdd-verify --dry-run` runs | it exits 0 with an empty queue and stderr names the cause (no active change / no task-complete change)
 
 ## 范围
 
