@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-11-27T01:22:51.453584+00:00",
+  "generated_at": "2026-11-27T01:27:10.909227+00:00",
   "corpus_count": 305,
   "shape_labels": {
     "table_row": 1714,
-    "bullet": 10875,
+    "bullet": 10876,
     "numbered": 956,
-    "other": 13569
+    "other": 13571
   },
   "items": {
     "RDDF-0001-fix-rddf-session-import-path": {
@@ -1577,11 +1577,11 @@
     "fix-proposal-generator-output-fidelity": {
       "labels": {
         "table_row": 25,
-        "bullet": 66,
+        "bullet": 67,
         "numbered": 16,
-        "other": 140
+        "other": 142
       },
-      "sha256": "92d7ca5af555948fde43c54ad5b80d36c5767af25463ce5ca8f52989491d20d2"
+      "sha256": "f9d15836e1597d39ed254decbe0acf54aa96cc15a4b479552540a91911d1791d"
     },
     "fix-proposal-generator-table-scope": {
       "labels": {
