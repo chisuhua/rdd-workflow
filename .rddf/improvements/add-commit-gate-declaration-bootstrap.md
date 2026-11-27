@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: quality-gate
 类型: improvement
-状态: 待审查
+状态: 已批准·待立项（planner 2026-11-27 · W6=U7a 独立 change（rdd-workflow 半边）· 8 条 AC 含 2 条变异腿）
 主题: commit-gate 声明的生成入口 + 未声明时的可观测性（检测 ≠ 拦截）
 ---
 
@@ -34,6 +34,23 @@
 **本提案只做两件低风险的事**（**不改 D3 决策**）：
 ① **生成入口**：让使用方仓能一键生成合法声明；
 ② **可观测性**：未声明时留下痕迹（检测 ≠ 拦截），照 ADR D9②「事实性补登」先例。
+
+## 范围裁决（2026-11-27 · 拆两仓两 change）
+
+本提案原文跨两仓（治理仓机制面 + rdd-workflow 引导）⇒ 按 objective §9.4b「跨仓治理机制」轴**拆开**：
+
+| 半边 | 内容 | 归属 | 状态 |
+|---|---|---|---|
+| **本 change（U7a）** | ①**声明生成入口**（一条命令生成合法且非平凡的 `.rddf/commit-gate.json`）②**doctor 的三面检测**（空壳 / 未 tracked / 未声明） | **rdd-workflow**（builder） | **本次立项** |
+| **另案（U7b）** | **未声明时的留痕**（检测 ≠ 拦截，照 ADR D9② 先例）—— 改 `plugins/commit-gate.ts` 接线 + 治理面登记 | 治理仓（architect 轨 + oracle→critic） | **原 AC4 移出**，在该 change 立项时带走 |
+
+⚠ **metis 预算**：本稿已过 metis 1 轮（2026-11-27，9 份草稿批量，结论见头部段）。本次修订**只缩小范围**
+（AC4 移出、AC6 的跨仓口径随之收敛为「本仓一侧」），**不新增任何判据** ⇒ 不另起 metis 轮。
+
+## delta 载体（P0 生成输入）
+
+**delta**: added commit-gate-declaration-bootstrap
+**语义要求**: A project SHALL be able to generate a non-trivial commit-gate declaration | `rddf commit-gate init` SHALL write `.rddf/commit-gate.json` whose `verify_commands` are argv arrays pointing at entry points that **already exist** in the repository; when no such entry point is found it SHALL refuse and explain (never guess), the result SHALL be non-trivial (a single `true` / `echo` / `:` / `exit 0` command is not a declaration), and the command SHALL NOT `git add` or commit anything on the caller's behalf. | A project with a test entry point gets a declaration | a repository has `./test.sh` and no declaration, and `rddf commit-gate init` runs | `.rddf/commit-gate.json` is written with a `verify_commands` entry pointing at `./test.sh`, and nothing is staged or committed ;; rdd doctor SHALL report unusable commit-gate declarations | `rddf doctor --category commit-gate` SHALL report a WARNING for each of three faces: a declaration that is a **shell** (a single `true` / `echo` / `:` / `exit 0` command), a declaration that is **not git-tracked** (so a worktree has no gate), and a repository with **no declaration at all** (the gate is silently absent). Shell and untracked declarations SHALL name the file; a missing declaration SHALL name the expected path. | A shell declaration is reported | `.rddf/commit-gate.json` declares a single `true` command and `rddf doctor --category commit-gate` runs | a WARNING names the file and calls the declaration a shell
 
 ## 范围
 
@@ -75,18 +92,20 @@
 
 ## 验收标准
 
-- [ ] **AC1（红→绿）** 新增 `tests/integration/test_commit_gate_bootstrap.bats`：临时项目根内跑生成入口
-      ⇒ `.rddf/commit-gate.json` 存在且 `verify_commands` 每条 argv 均指向**仓内存在的文件** ⇒ 修复前红 ⇒ 修复后绿；
-- [ ] **AC2（红→绿）** 同文件用例：空壳声明（`[["true"]]`）⇒ doctor 报 WARNING ⇒ 修复前红 ⇒ 修复后绿；
-- [ ] **AC3（红→绿）** 同文件用例：声明**未 git-tracked** ⇒ doctor 提示 ⇒ 修复前红 ⇒ 修复后绿；
-- [ ] **AC4（红→绿）** 新增 `tests/unit/test_commit_gate_undeclared_observability.ts`（治理仓侧用例，走 bash 驱动）：
-      未声明仓 commit ⇒ 留下痕迹且**不被拦截** ⇒ 修复前红（无痕迹）⇒ 修复后绿；
-- [ ] **AC5（非平凡枚举）** 断言「空壳声明」的**枚举判据**：`verify_commands` 仅 1 条且其命令为
-      `true` / `echo` / `:` / `exit 0` ⇒ 判为空壳（禁「之类」的模糊表述）；
-- [ ] **AC6（跨仓口径）** 断言本 change 的**测试分属两仓**：治理仓侧用例在治理仓的 `bun test tests/` 跑，
-      rdd-workflow 侧用例在本仓 `./test.sh` 跑 ⇒ **两仓各跑各的**（写进 change 的 tasks.md，禁只写一侧）；
-- [ ] **AC7（变异）** 把生成入口的「非平凡检测」关掉 ⇒ AC2 必须红（判别力证明）；
-- [ ] **AC8（门）** `./test.sh --gates` 与 `./test.sh --unit` 全绿（治理仓侧另跑 `bun test tests/`）。
+> **范围**：只判本仓（rdd-workflow）半边。**「未声明留痕」= 另案 U7b（治理仓）**，本 change 不判。
+
+- [ ] **AC1（红→绿 · 生成入口）** 新增 `tests/integration/test_commit_gate_bootstrap.bats`：临时项目根（有 `./test.sh`、
+      无声明）跑生成入口 ⇒ `.rddf/commit-gate.json` 存在，且 `verify_commands` 每条 argv 的**可执行/目标文件**在仓内**确实存在**
+      ⇒ 修复前红（无该入口）⇒ 修复后绿；
+- [ ] **AC2（红→绿 · 不猜）** 同文件：临时项目根**没有任何**可推导的验证入口 ⇒ **不生成**文件 + 给出「找不到入口」提示（含怎么手工写）⇒ 修复前红；
+- [ ] **AC3（红→绿 · 空壳检测）** `tests/unit/test_commit_gate_doctor.py`（或复用既有 doctor 测试）：声明为单条
+      `true` / `echo` / `:` / `exit 0` ⇒ doctor **WARNING**（点名文件 + 「空壳」）⇒ 修复前红；
+- [ ] **AC4（红→绿 · 未 tracked 检测）** 同上：声明存在但**未 git-tracked** ⇒ doctor **WARNING**（「worktree 内无门禁」）⇒ 修复前红；
+- [ ] **AC5（红→绿 · 未声明检测）** 同上：**完全没有**声明 ⇒ doctor **WARNING**（点名期望路径，说「门禁静默不存在」）⇒ 修复前红；
+- [ ] **AC6（非平凡枚举，禁模糊）** 断言空壳判据是**枚举**：`verify_commands` 仅 1 条且其命令 ∈
+      `{true, echo, :, exit 0}` ⇒ 判空壳（禁「之类」的表述；`--help` 里与代码里同一份枚举）；
+- [ ] **AC7（变异）** 把「非平凡检测」关掉 ⇒ AC3 必须红；把「未 tracked」检查关掉 ⇒ AC4 必须红（判别力证明）；
+- [ ] **AC8（门）** `./test.sh --gates` 与 `./test.sh --unit` 全绿；`openspec validate <change> --strict` ⇒ valid。
 
 ## Capabilities
 
