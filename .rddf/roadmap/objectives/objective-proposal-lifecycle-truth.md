@@ -151,7 +151,7 @@ U7 (声明生成+可观测) ─→ U8 (baseline, 需 ADR SU) ──→ [声明�
 - [x] **U5** P2 生命周期真实性 —— **W4 已归档**（消费方裁决 = P2.5 review；setup 写 running、归档才写 completed）
 - [x] **U6** deferral 登记载体 —— **W4 已归档**（约定 + doctor category + 豁免清单入库）
 - [ ] **U8** baseline / known_failures（**前置**：治理仓 ADR Status Update 已 Accepted）
-- [ ] **U9** worktree 构建提示（降级形态，独立可做）—— **W5**
+- [x] **U9** worktree 构建提示（降级形态，独立可做）—— **W5 已归档**
 - [x] **U10** status 视图不得截断 issue 列表（U4 上线后第一次真实使用即暴露：标题报 6、只列 5）—— **W3 已归档**
 
 ## 11. 跟踪台账（append-only）
@@ -166,3 +166,5 @@ U7 (声明生成+可观测) ─→ U8 (baseline, 需 ADR SU) ──→ [声明�
 | sprint-2026-11-27 | go-decision | **W3 归档**：`2026-11-27-fix-status-issue-list-truncation`（7/7 AC pass · 新建 capability `status-issue-visibility` +1 requirement） | 实施期决策：状态摘要清洗函数 `clean_status_snippet` 与分类器**同模块同源**（对象身份可断言）；requirement 正文压到 479 字 ⇒ 不增长 very-long 债 | 遗留（登记，不静默）：CppTLM 侧 6 条已归档但状态行陈旧的 improvement 未回填（工具只指路，项目侧自修）；阈值 20 为工程取舍（已由测试钉住） |
 | sprint-2026-11-27 | go-decision | **W4 = U5 + U6 立项**（独立两个 change）⇒ 各自 P0 + design + plan/tasks（mode=worktree） | 用户裁决：起 W4 | U5 的**消费方**在 design 阶段裁决 = **P2.5 review（合并决策点）**—— archive gate / status / dashboard 均已另有真源，不重复；U6 走「约定先行 ⇒ 扫描 ⇒ 接线」三步 |
 | sprint-2026-11-27 | go-decision | **W4 归档**：U5 `2026-11-27-fix-builder-handoff-p2-lifecycle-truth`（7/7 AC · 新 capability `builder-lifecycle-truth`）与 U6 `2026-11-27-add-deferral-registration-guard`（7/7 AC · 新 capability `deferral-registration`）均已归档 | 实施期决策：① U5 的真相源 = disk 的 tasks.md（`implementation_state()` 单一计算点），handoff 只贡献「声明」⇒ 真源不增；② U6 的豁免清单**按文件粒度**入库（78 处未登记 / 33 个文件），本仓 doctor 零噪音 | 遗留（登记，不静默）：存量 78 处未登记 deferral 只登记豁免、不回改（项目侧自修）；`iteration.json` 的 tasks_done 仍不刷新；worktree 模式 6 个 project-root 失败 |
+| sprint-2026-11-27 | go-decision | **W5 起 change**：U9（`improve-worktree-build-hint`）立项完成（P0 → design D-1~D-5 → plan/tasks 4 Task × 5 步 → P1.5 worktree）⇒ 5 条 AC | 用户裁决：起 W5 | objective §9.4 的批次表把 W5 定为「U8（治理仓，ADR SU）+ U9（rdd-workflow）」；本次先起 U9（自包含、无前置），U8 需治理仓 SU（architect 轨） |
+| sprint-2026-11-27 | go-decision | **W5 归档**：U9 `2026-11-27-improve-worktree-build-hint`（5/5 AC pass · 新建 capability `worktree-build-hint`）已归档 | 实施期决策：提示只**引用**项目侧加速手段（ccache / 复用 build 目录）而**不检测** ⇒ 已用 ccache 的项目也会看到这行（可忽略）；lightweight 模式不提示（主仓即工作区，属噪音） | 遗留（登记，不静默）：**不实现**任何构建缓存机制（项目侧决策）；`iteration.json` 的 tasks_done 不刷新；worktree 模式 6 个 project-root 失败 |
