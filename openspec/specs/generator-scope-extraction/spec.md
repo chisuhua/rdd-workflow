@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change fix-generator-scope-extraction. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: generate-proposal-supports-numbered-scope-items
 
 The `generate_full_proposal._extract_scope_items()` function MUST recognize numbered list items (`1. `, `2. `, `3. `, `1) `, `2) `) as scope items, in addition to the existing `- ` bullet items.
@@ -40,6 +42,8 @@ The `_extract_scope_items()` function MUST attach indented sub-items (e.g., `   
 
 When a scope section (`In Scope` or `Out Scope`) is completely missing from the improvements input, the generated `proposal.md` MUST emit `- (no items specified)` for the missing section instead of `- (TBD)`.
 
+When a scope section is **present but yields no parseable items** (e.g. it is written as a markdown table that the parser cannot interpret), the generated `proposal.md` MUST **preserve the original text verbatim** and MUST write a diagnostic line to stderr — it MUST NOT guess items by splitting the text on commas.
+
 #### Scenario: missing Out Scope section
 
 - GIVEN an improvements file with `### In Scope` items but no `### Out Scope` section
@@ -51,6 +55,14 @@ When a scope section (`In Scope` or `Out Scope`) is completely missing from the 
 - GIVEN an improvements file with `### Out Scope` items but no `### In Scope` section
 - WHEN `generate_full_proposal()` builds the proposal draft
 - THEN `In Scope` block contains `- (no items specified)`
+
+#### Scenario: unparseable scope section is preserved verbatim
+
+- GIVEN an improvements file whose scope section yields no parseable items
+- WHEN `generate_full_proposal()` builds the proposal draft
+- THEN the corresponding scope block contains the original section text **unchanged**
+- AND a diagnostic line naming the affected section is written to stderr
+- AND the draft contains no comma-split fragments
 
 ### Requirement: generate-proposal-capabilities-impact-distinct
 
@@ -66,7 +78,9 @@ The `Capabilities` and `Impact` sections in the generated `proposal.md` MUST con
 
 ### Requirement: generate-proposal-backward-compatible
 
-Existing improvements files (138+ files) using `- ` bullet items MUST continue to produce `## What Changes` with `In Scope` items count >= original improvements' `In Scope` items count.
+Existing improvements files (bullet-based scope items) MUST continue to produce `## What Changes` with `In Scope` items count >= original improvements' `In Scope` items count.
+
+The corpus-wide regression check MUST be expressed as a **golden snapshot** (expected output stored in the repository) rather than a difference allow-list: an allow-list of file names can be edited in the same pull request as the change and therefore carries no discriminating power. The snapshot MUST record its generation timestamp and the **dynamic** corpus count (never a hard-coded file count), and MUST be refreshed in the same pull request whenever the corpus grows.
 
 #### Scenario: bullet-only file produces same item count
 
@@ -74,3 +88,55 @@ Existing improvements files (138+ files) using `- ` bullet items MUST continue t
 - WHEN `generate_full_proposal()` builds the proposal draft
 - THEN the `In Scope` block contains exactly 5 items
 
+#### Scenario: corpus snapshot carries dynamic metadata
+
+- GIVEN the stored corpus snapshot for the proposals corpus
+- WHEN the snapshot metadata is inspected
+- THEN it records a generation timestamp and the corpus item count measured at generation time
+- AND the recorded count is not a hard-coded constant
+
+### Requirement: generate-proposal-table-scope-items
+
+The `generate_full_proposal._extract_scope_items()` function MUST recognise markdown table rows as scope items, subject to an explicit attribution rule: a table in a scope section that contains **no** bullet or numbered item yields **one item per table row** (alignment rows excluded), whereas a table that appears **under an existing bullet or numbered item** remains attached to that item.
+
+#### Scenario: table-only scope section yields one item per row
+
+- GIVEN an improvements file whose `In Scope` section contains only a markdown table with 3 data rows
+- WHEN `_extract_scope_items()` extracts the scope section
+- THEN `in_scope_items` contains exactly 3 items, one per data row
+- AND no item contains a `|` character or an embedded line break
+
+#### Scenario: table under a bullet stays attached to that bullet
+
+- GIVEN an improvements file whose scope section contains a bullet item followed by an indented markdown table
+- WHEN `_extract_scope_items()` extracts the scope section
+- THEN the table rows remain part of the preceding bullet item
+- AND no additional standalone items are produced
+
+### Requirement: generate-proposal-scope-header-annotation
+
+The scope-header matcher MUST recognise scope headers that carry a trailing annotation (for example `**In Scope（6 项 · contract 面）**`), and MUST NOT treat such a header line as a scope item.
+
+#### Scenario: annotated scope header is not an item
+
+- GIVEN an improvements file whose scope section starts with `**In Scope（6 项 · contract 面）**`
+- WHEN `_extract_scope_items()` extracts the scope section
+- THEN the annotated header is recognised as a header
+- AND the header line does NOT appear among the extracted items
+
+### Requirement: generate-proposal-section-precedence
+
+When an improvements file contains both a `范围` section and a `What Changes` section, the generator MUST use the section that comes first in the documented candidate order (`范围` → `What Changes` → `Scope`) and MUST write a diagnostic line to stderr naming the ambiguity.
+
+#### Scenario: both scope sections present
+
+- GIVEN an improvements file containing both `## 范围` and `## What Changes` sections
+- WHEN `generate_full_proposal()` builds the proposal draft
+- THEN the `## 范围` content is used (candidate order)
+- AND a diagnostic line naming the ambiguity is written to stderr
+
+#### Scenario: only the English section present
+
+- GIVEN an improvements file containing only a `## What Changes` section
+- WHEN `generate_full_proposal()` builds the proposal draft
+- THEN the `## What Changes` content is used

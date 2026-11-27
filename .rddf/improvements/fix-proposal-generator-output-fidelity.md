@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: cli-tooling
 类型: improvement
-状态: 已批准·待立项
+状态: 已归档（2026-11-27 · change `2026-11-27-fix-proposal-generator-output-fidelity` · 15/15 AC pass · 验收报告 `.rddf/reviews/fix-proposal-generator-output-fidelity-verify.md`）
 主题: 生成器输出保真 —— proposal 范围节解析（纯表格 / 带注解标题 / 去逗号兜底）+ spec delta 的形态守卫与 MODIFIED 语义
 ---
 

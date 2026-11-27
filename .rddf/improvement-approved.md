@@ -289,6 +289,7 @@
 
 | 提案 | 优先级 | 完成时间 | 状态 |
 |------|--------|----------|------|
+| [fix-doc-drift-residual](improvements/fix-doc-drift-residual.md) | P2 | 2026-11-24 | 已实施 |
 | [adr-0060-shape-contract-implementation](improvements/adr-0060-shape-contract-implementation.md) | P2 | 2026-11-24 | 已实施 |
 | [fix-spec-v3-naming-sync](improvements/fix-spec-v3-naming-sync.md) | P2 | 2026-11-24 | 已实施 |
 | [add-skills-lib-api-doc](improvements/add-skills-lib-api-doc.md) | P2 | 2026-11-24 | 已实施 |
