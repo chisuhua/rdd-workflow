@@ -218,7 +218,9 @@ def main(argv: list[str] | None = None) -> int:
     # categories like ai-context-bootstrap — both must run outside a
     # rdd-workflow project. layout prints the product's declared .rddf/ layout,
     # which is independent of any project state — it must run anywhere too.
-    _NO_STATE_CHECK = {"setup", "doctor", "env-bootstrap", "layout", "status", "openspec"}
+    # `commit-gate` 也在此列：它的目标仓**正是**「还没 .rddf 的仓」（生成声明是第一步）。
+    _NO_STATE_CHECK = {"setup", "doctor", "env-bootstrap", "layout", "status", "openspec",
+                       "commit-gate"}
     state_dir = os.path.join(project_root, ".rddf", "state")
     if subcommand not in _NO_STATE_CHECK and not os.path.isdir(state_dir):
         print(f"ℹ️  not a rdd-workflow project (no {state_dir})")
