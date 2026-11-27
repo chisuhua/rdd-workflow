@@ -50,6 +50,7 @@ _CHECKERS: dict[str, Union[str, Callable]] = {
     "v4-residue": "checks.v4_residue_check.run",
     "layout": "checks.layout_check.run",
     "openspec-quota": "checks.openspec_quota_check.run",
+    "deferral-registration": "checks.deferral_registration_check.run",
 }
 
 
@@ -89,6 +90,7 @@ _GATES: dict[str, dict] = {
             "roadmap-backup",
             "v4-residue",
             "openspec-quota",
+            "deferral-registration",
         ],
         "blocking": False,
     },

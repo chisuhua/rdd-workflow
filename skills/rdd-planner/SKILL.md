@@ -45,6 +45,22 @@ role:
 
 > 📖 **术语澄清**: 本 skill 管理的是 **improvement**(改进提案,`.rddf/improvements/<name>.md` 5 段草稿)和 `improvement-suggestions.md` / `improvement-approved.md` 两个索引文件;**不创建 openspec proposal**。openspec proposal 由 rdd-builder P0 创建。详见 [AGENTS.md 关键术语对照表](../../AGENTS.md)。
 
+
+## deferral 登记约定（收口时必读）
+
+若本次收口以「另案 / 另立 / 另行立项 / 后续另案」推迟某个缺陷，**必须紧跟登记目标**：
+
+- `另案（已登记：<improvement-slug>）` —— 欠账已是一个 improvement；
+- `另案（backlog：<主题>）` —— 欠账是一条 backlog 占位。
+
+没有目标的「另案」**不算立项**，并会被
+`rddf doctor --category deferral-registration` 报出（WARNING）。
+
+措辞清单与格式的**单一真源**是 `_lib/deferral_registration.py`，展开见
+[`docs/architecture/deferral-registration.md`](../../docs/architecture/deferral-registration.md)
+—— 本文不复制清单（复制即漂移）。
+
+
 ## Stage 1 Hook（强制前置步骤, per add-guide-polling-loop-implementation AC-7）
 
 进入 Planner 阶段前必须调用 hooks，写 `phase_started` 到 `events.jsonl` 让 guide session 可观察：
