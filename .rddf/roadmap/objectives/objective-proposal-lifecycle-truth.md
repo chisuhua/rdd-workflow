@@ -152,7 +152,7 @@ U7 (声明生成+可观测) ─→ U8 (baseline, 需 ADR SU) ──→ [声明�
 - [ ] **U6** deferral 登记载体（约定先行 ⇒ 第一交付物可独立收口）
 - [ ] **U8** baseline / known_failures（**前置**：治理仓 ADR Status Update 已 Accepted）
 - [ ] **U9** worktree 构建提示（降级形态，独立可做）
-- [ ] **U10** status 视图不得截断 issue 列表（U4 上线后第一次真实使用即暴露：标题报 6、只列 5）—— **W3**
+- [x] **U10** status 视图不得截断 issue 列表（U4 上线后第一次真实使用即暴露：标题报 6、只列 5）—— **W3 已归档**
 
 ## 11. 跟踪台账（append-only）
 | Sprint | kind | 内容 | Decision/调整 | 原因 |
@@ -162,3 +162,5 @@ U7 (声明生成+可观测) ─→ U8 (baseline, 需 ADR SU) ──→ [声明�
 | sprint-2026-11-27 | go-decision | **W1 归档**：`fix-proposal-generator-output-fidelity`（U1+U2）已归档 （`2026-11-27-fix-proposal-generator-output-fidelity` · 15/15 AC pass · spec 合流：`generator-scope-extraction` +3/~2、新建 `spec-delta-generator-fidelity` +6）| 实施期发现并修正两处契约缺口：① delta 改 **opt-in**（原「总是生成、无载体即拒绝」会把存量 300+ 无载体 improvement 的 P0 全拒，实测 18 个 bats 红）；② 归档后两条 requirement 缩短以避免 very-long 债增长 | 遗留（登记，不静默）：worktree 模式 6 个 project-root 测试失败（另案）、`iteration.json` 的 tasks_done 实现后未刷新（U5 同类）、`validate_delta_targets` 的 archive 侧接线未做 |
 | sprint-2026-11-27 | go-decision | **W2 起 change**：U3（`fix-verifier-discovery-disk-derive`）与 U4（`fix-rddf-status-terminal-markers`）**独立立项**（代码面不相交）⇒ 各自 P0 approve + P1 plan/tasks + P1.5 deps（mode=worktree · 0 blockers）⇒ 各 7 条 AC | 用户裁决：两个 change 都走 merge | 写回侧落点在 design D-1 落定（不创建半成品 `iteration.json`）；U4 的 stale 告警落点钉死 = `snap.errors`（metis 裁决） |
 | sprint-2026-11-27 | go-decision | **W2 归档**：U3 `2026-11-27-fix-verifier-discovery-disk-derive`（7/7 AC · spec 合流 `verifier-lifecycle` ~2）+ U4 `2026-11-27-fix-rddf-status-terminal-markers`（7/7 AC · spec 合流 `proposal-lifecycle-sync` ~1）均已归档 | 实施期决策：U3 的 disk 推导与 `rddf status` Mode A **共用一个实现**（`_lib/change_status.py`，对象身份断言）；`scan_queue.sh` 删除第二份判据改为薄委派；U4 的终态词表提为公开常量 + `rddf status --help` 从常量渲染 | 遗留（登记，不静默）：`iteration.json` 的 tasks_done 仍不刷新（U5）；worktree 模式 6 个 project-root 失败（另案）；既有 improvement 的陈旧状态行**不回填**（只读面，项目侧自修） |
+| sprint-2026-11-27 | go-decision | **W3 = U10 立项**：`fix-status-issue-list-truncation`（U4 归档后第一次真实使用即暴露的截断缺陷）⇒ planner 批准 + P0 生成 proposal/delta（新 capability `status-issue-visibility`）+ design D-1~D-5 + 5 Task × 5 步 plan | 用户裁决：起 W3 = U10 | 根因在**消费侧**（`errors[:5]` 硬截断 ⇒ 标题报 6、只列 5）⇒ 与 U4 修的是同一类「静默失效」；设计取「全量列出 + 阈值 20 后**明示**未展开数」而非「无限列出」 |
+| sprint-2026-11-27 | go-decision | **W3 归档**：`2026-11-27-fix-status-issue-list-truncation`（7/7 AC pass · 新建 capability `status-issue-visibility` +1 requirement） | 实施期决策：状态摘要清洗函数 `clean_status_snippet` 与分类器**同模块同源**（对象身份可断言）；requirement 正文压到 479 字 ⇒ 不增长 very-long 债 | 遗留（登记，不静默）：CppTLM 侧 6 条已归档但状态行陈旧的 improvement 未回填（工具只指路，项目侧自修）；阈值 20 为工程取舍（已由测试钉住） |
