@@ -449,6 +449,19 @@ delta 与 proposal 一律「**写临时文件 + 成功后 `mv`**」；生成失�
 > `mark_iteration_archived`（带真实 sha）→ `post_archive_cleanup`）。回滚 = 把该常量改回 `False`
 > （小改动退回 worktree 并在 `reason` 里说明原因）。
 
+## P2 前置清单（per fix-builder-handoff-p2-lifecycle-truth · 2026-11-27）
+
+P2 建 worktree **之前**必须过这三关（前两关由 `phase2_execute.sh` **只读**检查并报出）：
+
+| # | 事项 | 为什么 | 谁检查 |
+|---|---|---|---|
+| 1 | **主仓有未提交的 tracked 改动** ⇒ 先 commit | `git worktree add` 从 HEAD 建 ⇒ 未提交的内容在 worktree 里**不存在** | `phase2_execute.sh::_p2_prereq_check` |
+| 2 | **主仓 HEAD 领先上次 P2 基线**（`execution_mode_decision.branch_base_sha`）⇒ 报出 commit sha + 文件清单 | 同上：主仓新 commit 的产物（如授权台账 Entry）在 worktree 里**看不见** | 同上 |
+| 3 | **carry 覆盖清单** = `openspec/changes/<name>` + `.rddf/plans/<name>.md` | 只有这两条路径会被搬进 worktree；其它路径不会 | `_carry_artifacts` |
+
+⇒ 检查**只报不自动做**：不自动 commit、不自动 merge（自动化同步的风险高，见该 change 的
+Out of Scope）。看到提示 ⇒ 先在主仓 commit 授权类产物，再重跑 P2。
+
 ## P3 归档门（per ADR-0061 / ADR-0035）
 
 P3 有**两道不同的门**，别混用：

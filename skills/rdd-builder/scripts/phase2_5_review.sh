@@ -21,6 +21,30 @@ fi
 
 echo "=== Phase 2.5: Review for $CHANGE_NAME ==="
 
+# --- Implementation truth before the decision -------------------------------
+# This is the ONLY place in the flow that reads the handoff to decide whether
+# to merge (per fix-builder-handoff-p2-lifecycle-truth D-1). It therefore has
+# to show the implementation's REAL state — the task counter on disk — and
+# flag a handoff that claims "completed" while tasks are unchecked (the
+# legacy setup-time value).
+PKG_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/../../.." && pwd)"
+PKG_ROOT="$PKG_ROOT" PROJECT_ROOT="$PROJECT_ROOT" CHANGE_NAME="$CHANGE_NAME" python3 - <<'PYEOF'
+import os
+import sys
+
+sys.path.insert(0, os.environ["PKG_ROOT"])
+from _lib.builder_handoff import implementation_state
+
+state = implementation_state(os.environ["PROJECT_ROOT"], os.environ["CHANGE_NAME"])
+done, total = state.tasks_done, state.tasks_total
+mark = "已完成" if state.actually_complete else "未完成"
+print(f"实现状态：tasks {done}/{total}（{mark}）   handoff execution_status="
+      f"{state.handoff_status or '-'}")
+if state.inconsistent:
+    print("⚠️  不一致：handoff 声称 completed，但 tasks 未全勾"
+          "（存量 setup 语义或写入方未修）⇒ 以 tasks 为准", file=sys.stderr)
+PYEOF
+
 # HARD pause: 4-option prompt (per spec §5.2, cannot bypass via --no-pause)
 echo "1) merge  2) revise  3) abandon  4) archive"
 if [ "${AUTO_APPROVE:-0}" = "1" ]; then
