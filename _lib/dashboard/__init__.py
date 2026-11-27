@@ -672,8 +672,10 @@ def collect_pending(project_root: str) -> PendingSnapshot:
         meta_error = entry.get("meta_parse_error")
         if meta_error:
             snap.errors.append(f"{name}: {meta_error}")
-        if name in approved or name in archived_names:
-            continue
+        # Classification FIRST, filtering SECOND (fix-rddf-status-terminal-markers):
+        # the old order dropped archived / approved names before their status
+        # was ever looked at ⇒ a stale status line vanished from every view
+        # (not pending, not an error, nowhere).
         try:
             terminal, label = classify_improvement_status(entry.get("status") or "")
         except Exception as exc:
@@ -683,6 +685,17 @@ def collect_pending(project_root: str) -> PendingSnapshot:
             snap.errors.append(f"{name}: {exc}")
             continue
         if terminal:
+            # Delivered ⇒ not pending, and NOT stale (its status agrees with
+            # the archive / approval ledger).
+            continue
+        if name in approved or name in archived_names:
+            # Archived / approved but the recorded status is not terminal ⇒
+            # the status line is stale. Report it instead of hiding it
+            # (read-only: the fix belongs to the project side).
+            snap.errors.append(
+                f"{name}: stale status — 已归档/已批准，但状态行仍是"
+                f"「{(entry.get('status') or '').strip()[:40]}」（非终态）"
+            )
             continue
         snap.suggestions.append(
             SuggestionEntry(

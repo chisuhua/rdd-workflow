@@ -361,8 +361,12 @@ def _mode_a(project_root: str) -> int:
 
     if snapshot.errors:
         print()
-        print(f"⚠️ {len(snapshot.errors)} improvement file(s) with metadata problems "
-              f"(unreadable or invalid front matter)")
+        # Two classes land here: metadata problems (unreadable / invalid front
+        # matter) and stale status lines (archived or approved, but the
+        # recorded status is not terminal) — the header must not mislabel the
+        # second one.
+        print(f"⚠️ {len(snapshot.errors)} improvement issue(s) "
+              f"(unreadable / invalid front matter / stale status lines)")
         for err in snapshot.errors[:5]:
             print(f"   - {err}")
 
@@ -410,6 +414,19 @@ def _print_help() -> None:
     print("  --roadmap     Mode D: roadmap status (phases + per-category counts)")
     print()
     print("iteration.json linting: rddf iteration")
+    print()
+    # The vocabulary is rendered from the ONE definition point
+    # (`_lib/dashboard/improvement_status.py`) — never hand-copied, so the
+    # documentation cannot drift away from the classifier.
+    try:
+        from _lib.dashboard.improvement_status import TERMINAL_MARKERS
+
+        markers = " / ".join(marker for marker, _label in TERMINAL_MARKERS)
+    except Exception:  # pragma: no cover - import guard only
+        markers = "(unavailable)"
+    print("改进提案终态词表（判为已交付 ⇒ 不进待办；单一真源 = "
+          "_lib/dashboard/improvement_status.py）:")
+    print(f"  {markers}")
 
 
 __all__ = ["cmd_status", "cmd_status_detail", "cmd_roadmap"]
