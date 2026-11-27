@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: developer-experience
 类型: improvement
-状态: 已批准·待立项（planner 2026-11-27 · W5 = U9 · 独立 change · 5 条 AC 含判别力腿）
+状态: 已归档（2026-11-27 · change `2026-11-27-improve-worktree-build-hint` · 5/5 AC pass · 验收报告 `.rddf/reviews/improve-worktree-build-hint-verify.md`）
 主题: worktree 内的构建提示 —— 「build 目录缺失」时输出一行可机判的提示，不在 rdd-workflow 造缓存机制
 ---
 
