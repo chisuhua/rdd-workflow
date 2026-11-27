@@ -143,11 +143,11 @@ U7 (声明生成+可观测) ─→ U8 (baseline, 需 ADR SU) ──→ [声明�
 ```
 
 ## 10. next_sprint_candidates
-- [ ] **U2** delta 形态守卫 + MODIFIED 语义（与 U1 合批；含 openspec 版本口径裁决）
-- [ ] **U1** 范围节解析（纯表格 + 带注解标题）—— 与 U2 同文件 ⇒ 同 change
+- [x] **U2** delta 形态守卫 + MODIFIED 语义（与 U1 合批；含 openspec 版本口径裁决）—— **W1 已归档**
+- [x] **U1** 范围节解析（纯表格 + 带注解标题）—— 与 U2 同文件 ⇒ 同 change —— **W1 已归档**
 - [ ] **U7** commit-gate 声明生成入口 + 未声明可观测（跨仓 ⇒ 拆两个 change：治理仓机制面 / rdd-workflow 引导）
-- [ ] **U3** verifier 批量分流 disk 化（须先回答写回侧落点）
-- [ ] **U4** rddf status 终态词表 + 陈旧状态可见性（可与 U3 并行）
+- [x] **U3** verifier 批量分流 disk 化（写回侧落点 = 不创建半成品 iteration.json，记账本 = verdict cache + 审计日志）—— **W2 已归档**
+- [x] **U4** rddf status 终态词表 + 陈旧状态可见性 —— **W2 已归档**
 - [ ] **U5** P2 生命周期真实性（**先裁决消费方**，无消费方则降级 noted）
 - [ ] **U6** deferral 登记载体（约定先行 ⇒ 第一交付物可独立收口）
 - [ ] **U8** baseline / known_failures（**前置**：治理仓 ADR Status Update 已 Accepted）
@@ -159,3 +159,5 @@ U7 (声明生成+可观测) ─→ U8 (baseline, 需 ADR SU) ──→ [声明�
 | sprint-2026-11-27 | go-decision | objective 创建（9 单元 · TDD 三段判据入库）+ 9 份 improvement 草稿 + 提案池登记 | 立项走 oracle→critic 双审；RW-3 走方案 B（disk 化）；OC-1c 走 baseline | 2026-11-26 两次真实会话暴露 7 处「静默失效」，且 3 处已在 backlog 里以「另案」记录却从未立项（本次一并补载体） |
 | sprint-2026-11-27 | go-decision | **W1 起 change**：`fix-proposal-generator-output-fidelity`（U1+U2 合批）立项完成（P0 approve → P1 plan/tasks → P1.5 deps，mode=worktree · 0 blockers）⇒ 15 条 AC · 6 Task ×(5 步+变异第 6 步) | 用户裁决：RW-3=B / OC-1c=baseline / 治理面合并交付 | metis 复核合并稿给出 3 blocker + 10 项 high/medium ⇒ 合并稿整体重写（AC 真重排 + 4 项 design 裁决载体 + 半成品防护 + golden snapshot 判据） |
 | sprint-2026-11-27 | go-decision | **W1 归档**：`fix-proposal-generator-output-fidelity`（U1+U2）已归档 （`2026-11-27-fix-proposal-generator-output-fidelity` · 15/15 AC pass · spec 合流：`generator-scope-extraction` +3/~2、新建 `spec-delta-generator-fidelity` +6）| 实施期发现并修正两处契约缺口：① delta 改 **opt-in**（原「总是生成、无载体即拒绝」会把存量 300+ 无载体 improvement 的 P0 全拒，实测 18 个 bats 红）；② 归档后两条 requirement 缩短以避免 very-long 债增长 | 遗留（登记，不静默）：worktree 模式 6 个 project-root 测试失败（另案）、`iteration.json` 的 tasks_done 实现后未刷新（U5 同类）、`validate_delta_targets` 的 archive 侧接线未做 |
+| sprint-2026-11-27 | go-decision | **W2 起 change**：U3（`fix-verifier-discovery-disk-derive`）与 U4（`fix-rddf-status-terminal-markers`）**独立立项**（代码面不相交）⇒ 各自 P0 approve + P1 plan/tasks + P1.5 deps（mode=worktree · 0 blockers）⇒ 各 7 条 AC | 用户裁决：两个 change 都走 merge | 写回侧落点在 design D-1 落定（不创建半成品 `iteration.json`）；U4 的 stale 告警落点钉死 = `snap.errors`（metis 裁决） |
+| sprint-2026-11-27 | go-decision | **W2 归档**：U3 `2026-11-27-fix-verifier-discovery-disk-derive`（7/7 AC · spec 合流 `verifier-lifecycle` ~2）+ U4 `2026-11-27-fix-rddf-status-terminal-markers`（7/7 AC · spec 合流 `proposal-lifecycle-sync` ~1）均已归档 | 实施期决策：U3 的 disk 推导与 `rddf status` Mode A **共用一个实现**（`_lib/change_status.py`，对象身份断言）；`scan_queue.sh` 删除第二份判据改为薄委派；U4 的终态词表提为公开常量 + `rddf status --help` 从常量渲染 | 遗留（登记，不静默）：`iteration.json` 的 tasks_done 仍不刷新（U5）；worktree 模式 6 个 project-root 失败（另案）；既有 improvement 的陈旧状态行**不回填**（只读面，项目侧自修） |
