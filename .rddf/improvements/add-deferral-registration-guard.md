@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: quality-gate
 类型: improvement
-状态: 待审查
+状态: 已批准·待立项（planner 2026-11-27 · W4 = U6 · 独立 change · 约定先行 + doctor category · 7 条 AC 含 TDD 三段）
 主题: 「另案立项」的登记载体 —— deferral 必须写清目标 slug 或 backlog 占位，否则不算立项
 ---
 
@@ -31,6 +31,11 @@ rdd-workflow 里「本次不做 / 另案立项」是**高频**的合法收口方
 - `fix-bats-per-file-timeout.md:411` 同样以「工具缺陷另案」收口 ⇒ 同一缺陷在 2026-11-26 第 2 次出现。
 
 ⇒ **「另案」没有登记载体 = 缺陷没有欠账条目** ⇒ 复发不可见、优先级不可排。
+
+## delta 载体（P0 生成输入）
+
+**delta**: added deferral-registration
+**语义要求**: Deferral statements SHALL carry a registration target | Every deferral statement in improvement or review documents (`另案` / `另立` / `另行立项` / `后续另案`) SHALL immediately name a registration target: `另案（已登记：<improvement-slug>）` or `另案（backlog：<topic>）`. `rddf doctor` SHALL report one warning naming the file and the line when a deferral carries no target, and SHALL stay silent for registered deferrals and for the recorded exemption list. | An unregistered deferral is reported | an improvement document contains a deferral statement without a registration target | `rddf doctor` runs | it reports one warning naming the file and the line
 
 ## 范围
 

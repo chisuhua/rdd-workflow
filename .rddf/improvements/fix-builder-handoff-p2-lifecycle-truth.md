@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: cli-tooling
 类型: improvement
-状态: 待审查
+状态: 已批准·待立项（planner 2026-11-27 · W4 = U5 · 独立 change · 消费方已裁决 = P2.5 review · 7 条 AC 含 TDD 三段）
 主题: P2 生命周期真实性 —— setup 完成 ≠ 实现完成 + worktree 与主仓分叉的可检出性
 ---
 
@@ -35,6 +35,11 @@
 `openspec/changes/<name>` 与 `.rddf/plans/<name>.md`；`git worktree add` 从 **HEAD** 建 ⇒ **P2 之后**主仓才 commit 的产物
 （如授权台账 Entry）不在 worktree 内。CppTLM 会话实测：台账 Entry #556 在主仓 commit 后，需 agent 手工
 `git -C $WT merge --ff-only` 才能让 worktree 看见。
+
+## delta 载体（P0 生成输入）
+
+**delta**: added builder-lifecycle-truth
+**语义要求**: Builder handoff SHALL distinguish setup from completion | `execution_status` SHALL reflect the real implementation state, never the setup step: Phase 2 setup writes `running` (never `completed`), and `completed` is written only when the change is archived. The Phase 2.5 review — the merge decision point — SHALL display the implementation's true progress (checked tasks over total) and SHALL report an inconsistency when the handoff claims `completed` while tasks remain unchecked. Legacy handoffs written under the old setup semantics SHALL stay readable and SHALL be interpreted without crashing. | A setup-only handoff does not claim completion | Phase 2 setup finished while no task is checked yet | the handoff records `running` instead of `completed`, and the Phase 2.5 review shows the unchecked task count
 
 ## 范围
 

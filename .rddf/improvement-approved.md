@@ -555,6 +555,8 @@
 | [fix-verifier-discovery-disk-derive](improvements/fix-verifier-discovery-disk-derive.md) | P1 | 2026-11-27 | 已批准（planner 2026-11-27；U3 独立立项 —— 与 U4 代码面不相交，不合并；7 条 AC 含 TDD 三段；写回侧落点留 design.md 裁决） |
 | [fix-rddf-status-terminal-markers](improvements/fix-rddf-status-terminal-markers.md) | P1 | 2026-11-27 | 已批准（planner 2026-11-27；U4 独立立项；7 条 AC 含 TDD 三段；stale 告警落点已钉 = snap.errors） |
 | [fix-status-issue-list-truncation](improvements/fix-status-issue-list-truncation.md) | P1 | 2026-11-27 | 已批准（planner 2026-11-27；W3=U10 独立立项 —— U4 上线后第一次真实使用即暴露的截断缺陷；7 条 AC 含 TDD 三段；新 capability `status-issue-visibility`） |
+| [fix-builder-handoff-p2-lifecycle-truth](improvements/fix-builder-handoff-p2-lifecycle-truth.md) | P1 | 2026-11-27 | 已批准（planner 2026-11-27；W4=U5 独立立项 —— 消费方裁决 = **P2.5 review（合并决策点）**；写侧不再写假值；新 capability `builder-lifecycle-truth`） |
+| [add-deferral-registration-guard](improvements/add-deferral-registration-guard.md) | P1 | 2026-11-27 | 已批准（planner 2026-11-27；W4=U6 独立立项 —— 约定先行（可 grep 锚点）+ doctor category `deferral-registration`；新 capability `deferral-registration`） |
 
 > **附注 (verifier-v2-hardening Phase 7 / oracle Q3)**: 跨阶段外部-LLM/hook 耦合审计建议（advisory, 不实施）：
 > 1. **审计 `propose_quality_check.py`** —— 检查是否埋了外部 LLM/hook 假设，按 ADR-0045 模式内联（如有）
