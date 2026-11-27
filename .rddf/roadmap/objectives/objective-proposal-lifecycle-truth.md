@@ -152,6 +152,7 @@ U7 (声明生成+可观测) ─→ U8 (baseline, 需 ADR SU) ──→ [声明�
 - [ ] **U6** deferral 登记载体（约定先行 ⇒ 第一交付物可独立收口）
 - [ ] **U8** baseline / known_failures（**前置**：治理仓 ADR Status Update 已 Accepted）
 - [ ] **U9** worktree 构建提示（降级形态，独立可做）
+- [ ] **U10** status 视图不得截断 issue 列表（U4 上线后第一次真实使用即暴露：标题报 6、只列 5）—— **W3**
 
 ## 11. 跟踪台账（append-only）
 | Sprint | kind | 内容 | Decision/调整 | 原因 |
