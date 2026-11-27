@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: quality-gate
 类型: improvement
-状态: 待审查
+状态: 已批准（planner 2026-11-27）· **SU 前置已满足**（治理仓 `ADR-commit-verification-gate` Status Update **Accepted** 2026-11-27，判据见 D10 + Verification V20–V25）· **实现载体迁到治理仓**（§9.4 归属仓 = 治理仓；本稿的 AC 需按「治理仓 bun test + rdd-workflow 巡检载体」两仓重排后方可立项）
 主题: commit-gate 声明支持 baseline / known_failures —— 有存量红的仓也能声明门禁
 ---
 
@@ -76,6 +76,21 @@
 - baseline 与 `tests/KNOWN_FAILURES.txt` **形态对齐**（不发明第二套语义）；
 - 零回归：无 baseline 时行为**逐字节等价**；
 - 不引入「按时间窗口忽略失败」这类不可判定的机制。
+
+## SU 落地后的口径订正（2026-11-27 · planner）
+
+治理仓 ADR 的 **Status Update 已 Accepted**（D10 + V20–V25）⇒ 本提案的前置**已满足**。
+实现按 SU 的口径分两层，**不得**再合并成一件事：
+
+| 层 | 归属仓 | 交付 | 判据载体 |
+|---|---|---|---|
+| ① commit 路径的命中判定 | **治理仓** | `lib/commit-gate.ts` 读 `known_failures` ⇒ 命中放行 / 未命中仍拒；`match` 特异性守卫；运行时留痕 | 治理仓 `bun test tests/`（**不**在 rdd-workflow） |
+| ② 巡检层（防腐坏 + 可清理提示） | 治理仓 doctor **或** 使用方仓 CI（**载体自选但必须存在**） | 集合比对；缺席 ⇒ `known_failures` 字段无效 ⇒ 退回硬门 | 同上 |
+| ③ 声明内容守卫（**防增**） | **治理仓** | D9① 形态扩展到 `known_failures` 字段：逐项相等断言，改清单 ⇒ 守卫红 | 同上 |
+| ④ D9⑰ 登记 + 回滚清单同批 | **治理仓** | D9⑰（ADR 表（真源）+ 三处载体同批）+ `.rddf/rollback/commit-gate.json` 同批更新（SU D10⑥） | 同上 |
+| ⑤ 使用方仓的巡检载体 | rdd-workflow（**可选**） | doctor category（形态对齐 `tests/KNOWN_FAILURES.txt` 的集合比对） | 本仓 `./test.sh` |
+
+⚠ **「baseline 不能增」不由 ⊆ 断言交付**（同一次提交里「制造新失败 + 登记对应条目」仍能通过 ⊆）⇒ 由 ③ 承担。
 
 ## 验收标准
 

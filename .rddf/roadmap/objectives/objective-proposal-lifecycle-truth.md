@@ -150,7 +150,7 @@ U7 (声明生成+可观测) ─→ U8 (baseline, 需 ADR SU) ──→ [声明�
 - [x] **U4** rddf status 终态词表 + 陈旧状态可见性 —— **W2 已归档**
 - [x] **U5** P2 生命周期真实性 —— **W4 已归档**（消费方裁决 = P2.5 review；setup 写 running、归档才写 completed）
 - [x] **U6** deferral 登记载体 —— **W4 已归档**（约定 + doctor category + 豁免清单入库）
-- [ ] **U8** baseline / known_failures（**前置**：治理仓 ADR Status Update 已 Accepted）
+- [x] **U8** baseline / known_failures —— **判据已定**（治理仓 SU `Accepted` 2026-11-27，D10 + V20–V25）；**实现另案**（治理仓，AC 需按两仓重排）
 - [x] **U9** worktree 构建提示（降级形态，独立可做）—— **W5 已归档**
 - [x] **U10** status 视图不得截断 issue 列表（U4 上线后第一次真实使用即暴露：标题报 6、只列 5）—— **W3 已归档**
 
@@ -168,3 +168,4 @@ U7 (声明生成+可观测) ─→ U8 (baseline, 需 ADR SU) ──→ [声明�
 | sprint-2026-11-27 | go-decision | **W4 归档**：U5 `2026-11-27-fix-builder-handoff-p2-lifecycle-truth`（7/7 AC · 新 capability `builder-lifecycle-truth`）与 U6 `2026-11-27-add-deferral-registration-guard`（7/7 AC · 新 capability `deferral-registration`）均已归档 | 实施期决策：① U5 的真相源 = disk 的 tasks.md（`implementation_state()` 单一计算点），handoff 只贡献「声明」⇒ 真源不增；② U6 的豁免清单**按文件粒度**入库（78 处未登记 / 33 个文件），本仓 doctor 零噪音 | 遗留（登记，不静默）：存量 78 处未登记 deferral 只登记豁免、不回改（项目侧自修）；`iteration.json` 的 tasks_done 仍不刷新；worktree 模式 6 个 project-root 失败 |
 | sprint-2026-11-27 | go-decision | **W5 起 change**：U9（`improve-worktree-build-hint`）立项完成（P0 → design D-1~D-5 → plan/tasks 4 Task × 5 步 → P1.5 worktree）⇒ 5 条 AC | 用户裁决：起 W5 | objective §9.4 的批次表把 W5 定为「U8（治理仓，ADR SU）+ U9（rdd-workflow）」；本次先起 U9（自包含、无前置），U8 需治理仓 SU（architect 轨） |
 | sprint-2026-11-27 | go-decision | **W5 归档**：U9 `2026-11-27-improve-worktree-build-hint`（5/5 AC pass · 新建 capability `worktree-build-hint`）已归档 | 实施期决策：提示只**引用**项目侧加速手段（ccache / 复用 build 目录）而**不检测** ⇒ 已用 ccache 的项目也会看到这行（可忽略）；lightweight 模式不提示（主仓即工作区，属噪音） | 遗留（登记，不静默）：**不实现**任何构建缓存机制（项目侧决策）；`iteration.json` 的 tasks_done 不刷新；worktree 模式 6 个 project-root 失败 |
+| sprint-2026-11-27 | go-decision | **W5 = U8 的 Status Update（治理仓 · architect 轨）**：起草 `ADR-commit-verification-gate` 的 **D10**（失败可被 baseline 显式容忍 · `known_failures`）⇒ oracle（治理面）**BLOCK**（6 条全采纳）→ critic（arch）**REJECT**（2 BLOCKER：C1 fail-closed 无 commit 路径执行者 / C2 ⊆ 交付不了「不能增」）→ 复审 **APPROVE_WITH_CONDITIONS**（0 BLOCKER）⇒ **Status: Accepted（SU 2026-11-27）** | 用户裁决：等 oracle/critic 结论后继续推进 SU 收口 | 两个 BLOCKER 的要害都是「**声称没有执行者**」：① 「巡检缺席 ⇒ 字段无效」的 fail-closed 必须钉在 **commit 路径**（巡检守卫须为独立条目 + 不得被 baseline 绑定 + 载体 git-tracked + 判定在 commit 时）；② 「baseline 不能增」不能由 ⊆ 断言交付（同提交内「制造新失败 + 登记条目」仍满足 ⊆）⇒ **显式指派**给声明内容守卫（D9① 形态扩展到 `known_failures` 字段） | 遗留（登记，不静默）：① **D9⑰ 未进 D9 表** —— 守卫硬断言「恰 16 项」且要求四面覆盖，而 AC 面载体属实现另案 ⇒ 改为 D10③′ 段内登记 + **V25** 钉住义务；② 治理仓的 SU 提交被**并行会话的在途改动**打回门禁（`bun test tests/` 红在 plan-topics 回滚清单，非本 SU 引起）⇒ 待其清单同步后提交；③ 实现另案（治理仓）须携带 D9⑰ 四面登记 + 巡检存在性/绑定守卫 + `match` 特异性守卫 + 声明内容守卫扩展 + 回滚清单同批（D10⑥） |
