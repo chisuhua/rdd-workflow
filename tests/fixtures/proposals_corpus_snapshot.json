@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-11-27T06:23:48.114633+00:00",
+  "generated_at": "2026-11-27T07:15:31.500762+00:00",
   "corpus_count": 306,
   "shape_labels": {
     "table_row": 1720,
     "bullet": 10907,
     "numbered": 962,
-    "other": 13629
+    "other": 13632
   },
   "items": {
     "RDDF-0001-fix-rddf-session-import-path": {
@@ -2119,7 +2119,7 @@
         "table_row": 4,
         "bullet": 21,
         "numbered": 3,
-        "other": 29
+        "other": 32
       },
       "sha256": "76267231e404e6b70d244322a98293692536767229620b0514e793fbfd1984ca"
     },

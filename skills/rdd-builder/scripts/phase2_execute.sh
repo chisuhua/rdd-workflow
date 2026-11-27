@@ -263,6 +263,23 @@ PYEOF
     fi
 fi
 
+# ── build-directory hint ───────────────────────────────────────────────────
+# A fresh worktree has no `build/` directory ⇒ the first full build can take
+# many minutes (measured 2026-11-26: 19 minutes on a CMake project with large
+# TUs) and the session burned 7 `sleep` polls waiting for it.
+#
+# ONE fixed-text line on stderr (stdout carries P2's structured output). The
+# detection is read-only — no build is triggered, no cache is created, and the
+# execution is not changed in any way. Projects that already use ccache (or
+# reuse the main repo's build dir) simply ignore the line: the text only
+# REFERENCES those options, it never detects them.
+#
+# Lightweight mode is excluded on purpose: there the "worktree" IS the main
+# repo, where an existing `build/` is the normal case and the hint is noise.
+if [ "$EXEC_MODE" = "worktree" ] && [ ! -d "$EXEC_DIR/build" ]; then
+    echo "⚠️  worktree 内无 build/ 目录 ⇒ 首次构建可能较慢（建议后台任务 + 等完成通知，勿 sleep 轮询）" >&2
+fi
+
 # ── abort semantics ───────────────────────────────────────────────────────
 # In lightweight mode the MAIN repo's HEAD is parked on `openspec/<name>`.
 # If P2 then fails, the user's repo must not be left on that branch: the
