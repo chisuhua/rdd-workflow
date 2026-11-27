@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: quality-gate
 类型: improvement
-状态: 已批准·待立项（planner 2026-11-27 · W4 = U6 · 独立 change · 约定先行 + doctor category · 7 条 AC 含 TDD 三段）
+状态: 已归档（2026-11-27 · change `2026-11-27-add-deferral-registration-guard` · 7/7 AC pass · 验收报告 `.rddf/reviews/add-deferral-registration-guard-verify.md`）
 主题: 「另案立项」的登记载体 —— deferral 必须写清目标 slug 或 backlog 占位，否则不算立项
 ---
 

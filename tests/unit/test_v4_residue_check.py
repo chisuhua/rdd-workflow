@@ -591,8 +591,10 @@ def test_r4_repo_residue_constant():
     # 2026-11-27：`fix-status-issue-list-truncation` 归档新建 capability
     # `status-issue-visibility` ⇒ spec 文件数 164 → 165；
     # 同日 `fix-builder-handoff-p2-lifecycle-truth` 归档新建 capability
-    # `builder-lifecycle-truth` ⇒ 165 → 166（hits/blocks 不变）。
-    assert result.files_scanned == 166, result.files_scanned
+    # `builder-lifecycle-truth` ⇒ 165 → 166；
+    # 同日 `add-deferral-registration-guard` 归档新建 capability
+    # `deferral-registration` ⇒ 166 → 167（hits/blocks 不变）。
+    assert result.files_scanned == 167, result.files_scanned
 
     unexempted = [h for h in result.hits if not h.category]
     assert len(unexempted) == 0, len(unexempted)
