@@ -44,7 +44,7 @@ U4（`fix-rddf-status-terminal-markers`，已归档）把「已归档/已批准�
 ## delta 载体（P0 生成输入）
 
 **delta**: added status-issue-visibility
-**语义要求**: Status issue lists SHALL NOT be silently truncated | `rddf status` SHALL list every improvement issue it reports: the count in the heading SHALL equal the number of listed entries, and any entry not shown SHALL be announced by an explicit remainder line naming the count and pointing at the full view (`rddf dashboard`). Status snippets SHALL be trimmed at a safe boundary and end with an ellipsis, so markdown emphasis or quotes are never cut in half. Snippet cleaning SHALL reuse the classifier's existing markdown stripping — one implementation, no second copy. | Six reported issues are all listed | six improvements carry stale status lines and `rddf status` runs | the heading states six issues, six issue lines are printed, and no remainder line appears
+**语义要求**: Status issue lists SHALL NOT be silently truncated | `rddf status` SHALL list every improvement issue it reports: the heading count SHALL equal the number of listed entries, and any entry not shown SHALL be announced by an explicit remainder line naming the count and pointing at the full view (`rddf dashboard`). Status snippets SHALL be trimmed at a safe boundary and end with an ellipsis, so markdown emphasis or quotes are never cut in half. Snippet cleaning SHALL reuse the classifier's markdown stripping — one implementation. | Six reported issues are all listed | six improvements carry stale status lines and `rddf status` runs | the heading states six issues, six issue lines are printed, and no remainder line appears
 
 ## 范围
 

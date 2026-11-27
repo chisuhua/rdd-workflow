@@ -94,6 +94,31 @@ def _leading_marker(text: str) -> str:
     return _LEADING_SYMBOL_RE.sub("", stripped, count=1).lstrip()
 
 
+def clean_status_snippet(raw: str, limit: int = 40) -> str:
+    """Clean a status line for display and trim it at a SAFE boundary.
+
+    - markdown emphasis / quotes / backticks are stripped (reuse of
+      :func:`_strip_markup` — the classifier's own cleaner, no second copy);
+    - whitespace is collapsed;
+    - an over-long line is cut to ``limit`` characters and the marker the cut
+      left open (``「`` without its ``」``, ``**`` without its pair) is dropped,
+      so the reader never sees half a quote; the result ends with ``…``.
+
+    Lives next to the classifier on purpose: status *snippets* and status
+    *classification* are two views of the same field and must not drift apart
+    (asserted by object identity in
+    ``tests/unit/test_status_issue_list_not_truncated.py``).
+    """
+    text = " ".join(_strip_markup(raw or "").split())
+    if len(text) <= limit:
+        return text
+    clipped = text[:limit]
+    for opening, closing in (("「", "」"), ("**", "**")):
+        if clipped.count(opening) > clipped.count(closing):
+            clipped = clipped.rsplit(opening, 1)[0]
+    return clipped.rstrip() + "…"
+
+
 def classify_improvement_status(raw: str) -> tuple[bool, str]:
     """Classify a raw ``状态`` value.
 
