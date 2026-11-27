@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-11-27T03:18:39.187185+00:00",
-  "corpus_count": 305,
+  "generated_at": "2026-11-27T04:09:41.088838+00:00",
+  "corpus_count": 306,
   "shape_labels": {
-    "table_row": 1714,
-    "bullet": 10876,
-    "numbered": 956,
-    "other": 13577
+    "table_row": 1720,
+    "bullet": 10907,
+    "numbered": 962,
+    "other": 13623
   },
   "items": {
     "RDDF-0001-fix-rddf-session-import-path": {
@@ -1888,6 +1888,15 @@
         "other": 15
       },
       "sha256": "734f8e8f857d4f435c3520470523f877fe50b96d5fee16987efa179b6914c289"
+    },
+    "fix-status-issue-list-truncation": {
+      "labels": {
+        "table_row": 6,
+        "bullet": 31,
+        "numbered": 6,
+        "other": 46
+      },
+      "sha256": "46677b39c22dcb69256232d96cc83e669650bb87d3201f6d246342cd768ab8ac"
     },
     "fix-tasks-md-archive-residue": {
       "labels": {

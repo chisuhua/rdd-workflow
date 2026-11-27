@@ -82,6 +82,11 @@ _PHASE_STATUS_ICON = {
 
 _USAGE = "usage: rddf status [<name>|--roadmap]"
 
+#: How many improvement issues the status view lists before it switches to an
+#: explicit remainder line. Pinned by a test — a silently smaller limit would
+#: hide issues again (the defect this change removes).
+STATUS_ISSUE_LIST_LIMIT = 20
+
 
 def _disk_change_status(project_root: str, name: str) -> str:
     """Thin alias — the rules live in :func:`_lib.change_status.derive_status`.
@@ -365,10 +370,25 @@ def _mode_a(project_root: str) -> int:
         # matter) and stale status lines (archived or approved, but the
         # recorded status is not terminal) — the header must not mislabel the
         # second one.
-        print(f"⚠️ {len(snapshot.errors)} improvement issue(s) "
-              f"(unreadable / invalid front matter / stale status lines)")
-        for err in snapshot.errors[:5]:
+        #
+        # The list is NOT silently truncated (fix-status-issue-list-truncation):
+        # the old `[:5]` printed the true count in the heading but only five
+        # entries, so the sixth issue was invisible — the very failure class
+        # this view exists to expose. Beyond the limit the remainder is
+        # announced explicitly (and the heading says so).
+        shown = snapshot.errors[:STATUS_ISSUE_LIST_LIMIT]
+        rest = len(snapshot.errors) - len(shown)
+        if rest:
+            print(f"⚠️ {len(snapshot.errors)} improvement issue(s) "
+                  f"(unreadable / invalid front matter / stale status lines) "
+                  f"— 列出前 {len(shown)}，其余 {rest} 条见 `rddf dashboard`")
+        else:
+            print(f"⚠️ {len(snapshot.errors)} improvement issue(s) "
+                  f"(unreadable / invalid front matter / stale status lines)")
+        for err in shown:
             print(f"   - {err}")
+        if rest:
+            print(f"   … 还有 {rest} 条未展开（见 `rddf dashboard` 看全量）")
 
     # ---- Section 2: active changes (disk-derived) ----
     print()

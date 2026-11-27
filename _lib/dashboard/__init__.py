@@ -57,7 +57,10 @@ from skills._lib.state_reader import (
     read_sessions,
 )
 
-from _lib.dashboard.improvement_status import classify_improvement_status
+from _lib.dashboard.improvement_status import (
+    classify_improvement_status,
+    clean_status_snippet,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -694,7 +697,7 @@ def collect_pending(project_root: str) -> PendingSnapshot:
             # (read-only: the fix belongs to the project side).
             snap.errors.append(
                 f"{name}: stale status — 已归档/已批准，但状态行仍是"
-                f"「{(entry.get('status') or '').strip()[:40]}」（非终态）"
+                f"「{clean_status_snippet(entry.get('status') or '', 40)}」（非终态）"
             )
             continue
         snap.suggestions.append(
