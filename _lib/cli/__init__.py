@@ -112,6 +112,7 @@ _ROUTES: Dict[str, str] = {
     "status": "skills._lib.cli.status_cmd:cmd_status",
     "sessions": "skills._lib.cli.sessions_cmd:cmd_sessions",
     "setup": "skills._lib.cli.setup_cmd:cmd_setup",
+    "commit-gate": "skills._lib.cli.commit_gate_cmd:cmd_commit_gate",
     "sync-hub": "skills._lib.cli.sync_hub_cmd:cmd_sync_hub",
     "validate": "skills._lib.cli.validate_cmd:cmd_validate",
     "version": "skills._lib.cli.version_cmd:cmd_version",
@@ -166,6 +167,7 @@ _SUBCOMMAND_DESCRIPTION: Dict[str, str] = {
     # this string; it never reaches the handler's argparse tree) — same
     # convention as "sessions" above.
     "setup": "Bootstrap a new project with rdd-workflow. Subcmds: ai-context",
+    "commit-gate": "Generate <project>/.rddf/commit-gate.json from an existing verify entry",
     "sync-hub": "Hub-Spoke contract pull",
     "validate": "Quality gate checks",
     "version": "Print rddf version",
