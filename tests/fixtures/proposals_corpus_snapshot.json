@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-11-27T07:15:31.500762+00:00",
+  "generated_at": "2026-11-27T07:44:36.459425+00:00",
   "corpus_count": 306,
   "shape_labels": {
-    "table_row": 1720,
+    "table_row": 1726,
     "bullet": 10907,
     "numbered": 962,
-    "other": 13632
+    "other": 13637
   },
   "items": {
     "RDDF-0001-fix-rddf-session-import-path": {
@@ -64,10 +64,10 @@
     },
     "add-commit-gate-baseline-known-failures": {
       "labels": {
-        "table_row": 6,
+        "table_row": 12,
         "bullet": 34,
         "numbered": 5,
-        "other": 39
+        "other": 44
       },
       "sha256": "3b393647a0538135f4d4197998479afecfee1848ebcf1ca081824b9cdc788338"
     },
