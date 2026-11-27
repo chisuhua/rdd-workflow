@@ -151,7 +151,7 @@ U7 (声明生成+可观测) ─→ U8 (baseline, 需 ADR SU) ──→ [声明�
 - [x] **U5** P2 生命周期真实性 —— **W4 已归档**（消费方裁决 = P2.5 review；setup 写 running、归档才写 completed）
 - [x] **U6** deferral 登记载体 —— **W4 已归档**（约定 + doctor category + 豁免清单入库）
 - [ ] **U8** baseline / known_failures（**前置**：治理仓 ADR Status Update 已 Accepted）
-- [ ] **U9** worktree 构建提示（降级形态，独立可做）
+- [ ] **U9** worktree 构建提示（降级形态，独立可做）—— **W5**
 - [x] **U10** status 视图不得截断 issue 列表（U4 上线后第一次真实使用即暴露：标题报 6、只列 5）—— **W3 已归档**
 
 ## 11. 跟踪台账（append-only）

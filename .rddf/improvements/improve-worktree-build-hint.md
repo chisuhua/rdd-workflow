@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: developer-experience
 类型: improvement
-状态: 待审查
+状态: 已批准·待立项（planner 2026-11-27 · W5 = U9 · 独立 change · 5 条 AC 含判别力腿）
 主题: worktree 内的构建提示 —— 「build 目录缺失」时输出一行可机判的提示，不在 rdd-workflow 造缓存机制
 ---
 
@@ -27,6 +27,11 @@
 因此本提案**不做缓存机制**（oracle 建议 13：在 rdd-workflow 造缓存 = 过度设计），只做**可机判的一行提示**：
 worktree 内无 `build/` 目录时，P2 提示「本 worktree 无构建缓存 ⇒ 首次构建耗时可能较长（建议后台任务 + 等完成通知，勿 sleep 轮询）」，
 并在**项目侧**给出加速建议的**引用**（ccache / 复用主仓 build 目录 / 只构建目标 target）——**由项目自己决定**。
+
+## delta 载体（P0 生成输入）
+
+**delta**: added worktree-build-hint
+**语义要求**: Worktree creation SHALL announce a missing build directory | When Phase 2 creates a worktree that has no `build/` directory, it SHALL print one fixed-text hint line on stderr telling the agent that the first build may be slow and that it should run the build as a background task instead of polling with sleep. The hint SHALL NOT appear when a `build/` directory exists, the detection SHALL be read-only, and no execution behaviour SHALL change. | A worktree without a build directory gets the hint | Phase 2 created a worktree whose directory has no `build/` | the Phase 2 output is inspected | stderr contains the fixed hint line and stdout does not
 
 ## 范围
 
