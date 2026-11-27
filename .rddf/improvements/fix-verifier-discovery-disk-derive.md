@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: cli-tooling
 类型: improvement
-状态: 已批准·待立项（planner 2026-11-27 · 独立 change · 7 条 AC 含 TDD 三段）
+状态: 已归档（2026-11-27 · change `2026-11-27-fix-verifier-discovery-disk-derive` · 7/7 AC pass · 验收报告 `.rddf/reviews/fix-verifier-discovery-disk-derive-verify.md`）
 主题: verifier 批量分流队列改为 disk 推导 —— 不再依赖 iteration.json（与「iteration 是流程记账」的既决方向同向）
 ---
 

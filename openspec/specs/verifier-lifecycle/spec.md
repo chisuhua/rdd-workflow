@@ -2,10 +2,12 @@
 
 ## Purpose
 TBD - created by archiving change fix-rdd-verifier-lifecycle-dashboard. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Verifier queue SHALL discover implemented task-complete non-archived changes
 
-The verifier queue SHALL use the canonical iteration lifecycle and SHALL NOT depend on `ship-done` as a per-change status. A change is eligible when it is non-archived, has a supported implementation lifecycle status, and all tracked tasks are complete. The queue SHALL exclude changes whose implementation is incomplete and changes already archived.
+The verifier queue SHALL be derived from disk — the `openspec/changes/<name>/tasks.md` counter plus the change's on-disk status — and MUST NOT consult `iteration.json`. A change is eligible when it is not archived, its disk status is `in_worktree` or `completed`, and its tasks are all checked with a non-zero total. A missing or stale `iteration.json` MUST NOT empty the queue or override disk; the derivation SHALL share one implementation with `rddf status` Mode A.
 
 #### Scenario: Completed in-worktree change is queued
 - **GIVEN** a change has status `in_worktree`
@@ -13,21 +15,24 @@ The verifier queue SHALL use the canonical iteration lifecycle and SHALL NOT dep
 - **AND** its verification result is missing or stale for the current branch commit
 - **WHEN** the verifier queue is scanned
 - **THEN** the change is returned as a verification candidate
-
 #### Scenario: Incomplete implementation is excluded
 - **GIVEN** a change has status `in_worktree`
 - **AND** `tasks_done` is less than `tasks_total`
 - **WHEN** the verifier queue is scanned
 - **THEN** the change is not returned
-
 #### Scenario: Archived change is excluded
 - **GIVEN** a change has status `archived`
 - **WHEN** the verifier queue is scanned
 - **THEN** the change is not returned even if old verification metadata exists
 
+#### Scenario: A task-complete change without iteration.json is queued
+
+- **WHEN** no `.rddf/state/iteration.json` exists, one change's tasks.md is 100% checked, and the batch verifier queue is scanned
+- **THEN** that change is returned as a verification candidate
+
 ### Requirement: rddf rdd-verify SHALL execute real batch verification
 
-The `rddf rdd-verify` command SHALL perform AC verification for each eligible change — via the self-contained agent LLM protocol (per ADR-0045: stage context, agent verifies per `skills/rdd-verifier/SKILL.md` § LLM Verification Protocol, verdict cache write-back) — unless a current valid verdict cache exists. It SHALL persist the verdict and verification state, classify failed acceptance criteria, and return a non-success exit code when any change fails, errors, or reaches the retry limit. An empty queue SHALL be a successful no-op only when the queue is genuinely empty.
+`rddf rdd-verify` SHALL perform AC verification for each eligible change per the self-contained agent protocol (ADR-0045) unless a current valid verdict cache exists. It SHALL persist the verdict, classify failed acceptance criteria, and return a non-success exit code when any change fails, errors, or reaches the retry limit. An empty queue MUST be a successful no-op only when the queue is genuinely empty, and the reason for the emptiness MUST be reported on stderr as a named cause instead of a silent empty list.
 
 #### Scenario: Eligible change is verified
 - **GIVEN** the queue contains one eligible change
@@ -36,7 +41,6 @@ The `rddf rdd-verify` command SHALL perform AC verification for each eligible ch
 - **THEN** it stages the agent verification context and records `pending` state (per ADR-0045; the agent performs the LLM verification per the SKILL.md protocol)
 - **AND** writes a verdict cache bound to the implementation commit
 - **AND** writes verification state for the change
-
 #### Scenario: Batch contains one failure
 - **GIVEN** a batch contains multiple eligible changes
 - **AND** one change has a failed acceptance criterion
@@ -44,12 +48,16 @@ The `rddf rdd-verify` command SHALL perform AC verification for each eligible ch
 - **THEN** successful changes retain `passed` verification state
 - **AND** the failed change receives `failed` or `halted` state with a route
 - **AND** the command exits non-zero
-
 #### Scenario: Empty queue is a successful no-op
 - **GIVEN** no non-archived change is implemented and task-complete
 - **WHEN** `rddf rdd-verify` runs
 - **THEN** it reports an empty queue
 - **AND** exits zero without claiming that any change was verified
+
+#### Scenario: An empty queue reports a diagnosable reason
+
+- **WHEN** no active change has complete tasks and `rddf rdd-verify --dry-run` runs
+- **THEN** it exits 0 with an empty queue and stderr names the cause (no active change / no task-complete change)
 
 ### Requirement: Batch exit code SHALL aggregate per-change outcomes
 
@@ -182,4 +190,3 @@ A failed acceptance criterion SHALL be classified as `implementation_gap` or `pr
 - **THEN** verification state becomes `halted`
 - **AND** archive readiness is false
 - **AND** an audit record identifies the change, commit, route history, and halt reason
-
