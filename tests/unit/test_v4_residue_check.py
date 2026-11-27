@@ -586,7 +586,9 @@ def test_r4_repo_residue_constant():
     """
     from spec_residue_scan import scan_specs
     result = scan_specs(REPO_ROOT)
-    assert result.files_scanned == 163, result.files_scanned
+    # 2026-11-27：`fix-proposal-generator-output-fidelity` 归档新建 capability
+    # `spec-delta-generator-fidelity` ⇒ spec 文件数 163 → 164（hits/blocks 不变）。
+    assert result.files_scanned == 164, result.files_scanned
 
     unexempted = [h for h in result.hits if not h.category]
     assert len(unexempted) == 0, len(unexempted)

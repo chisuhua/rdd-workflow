@@ -157,6 +157,9 @@ FROZEN_INJECTED_VL: dict[str, list[str]] = {
     'worktree-context-persistence': ['requirements[0]', 'requirements[2]'],
 }
 
+#: 2026-11-27：`fix-proposal-generator-output-fidelity` 归档（spec 合流）**未**增长 very-long 债
+#: —— 归档时把 `generator-scope-extraction` 的两条 requirement 缩短到阈值内（细节移入场景）
+#: ⇒ 总数保持 62。
 FROZEN_TOTAL = 62
 FROZEN_INJECTED_TOTAL = 25
 

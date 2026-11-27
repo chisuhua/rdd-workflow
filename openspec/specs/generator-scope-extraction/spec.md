@@ -40,9 +40,7 @@ The `_extract_scope_items()` function MUST attach indented sub-items (e.g., `   
 
 ### Requirement: generate-proposal-empty-section-fallback
 
-When a scope section (`In Scope` or `Out Scope`) is completely missing from the improvements input, the generated `proposal.md` MUST emit `- (no items specified)` for the missing section instead of `- (TBD)`.
-
-When a scope section is **present but yields no parseable items** (e.g. it is written as a markdown table that the parser cannot interpret), the generated `proposal.md` MUST **preserve the original text verbatim** and MUST write a diagnostic line to stderr — it MUST NOT guess items by splitting the text on commas.
+A missing scope section (`In Scope` / `Out Scope`) MUST render as `- (no items specified)`, never as `- (TBD)`. A scope section that is present but yields no parseable items MUST be preserved verbatim with a stderr diagnostic — never guessed by splitting on commas.
 
 #### Scenario: missing Out Scope section
 
@@ -78,9 +76,7 @@ The `Capabilities` and `Impact` sections in the generated `proposal.md` MUST con
 
 ### Requirement: generate-proposal-backward-compatible
 
-Existing improvements files (bullet-based scope items) MUST continue to produce `## What Changes` with `In Scope` items count >= original improvements' `In Scope` items count.
-
-The corpus-wide regression check MUST be expressed as a **golden snapshot** (expected output stored in the repository) rather than a difference allow-list: an allow-list of file names can be edited in the same pull request as the change and therefore carries no discriminating power. The snapshot MUST record its generation timestamp and the **dynamic** corpus count (never a hard-coded file count), and MUST be refreshed in the same pull request whenever the corpus grows.
+Bullet-based improvements MUST keep producing at least as many `In Scope` items as before. Corpus regression MUST be asserted by a checked-in **golden snapshot** (never a difference allow-list of file names) that carries its generation timestamp and a **dynamic** corpus count, and is refreshed in the same pull request whenever the corpus grows.
 
 #### Scenario: bullet-only file produces same item count
 
