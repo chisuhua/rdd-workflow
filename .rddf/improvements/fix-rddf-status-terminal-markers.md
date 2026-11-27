@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: cli-tooling
 类型: improvement
-状态: 已批准·待立项（planner 2026-11-27 · 独立 change · 7 条 AC 含 TDD 三段）
+状态: 已归档（2026-11-27 · change `2026-11-27-fix-rddf-status-terminal-markers` · 7/7 AC pass · 验收报告 `.rddf/reviews/fix-rddf-status-terminal-markers-verify.md`）
 主题: rddf status 的终态词表与陈旧状态可见性 —— 「已落地」不再算 pending + 陈旧状态行不再隐身
 ---
 
