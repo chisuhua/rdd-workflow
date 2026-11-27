@@ -97,9 +97,23 @@ def test_shell_commands_are_the_enumeration():
 
 
 def test_help_text_renders_the_same_enumeration(capsys):
+    """函数面（`cmd_commit_gate(["--help"])`）也必须是同一份枚举。"""
     from _lib.cli.commit_gate_cmd import cmd_commit_gate
 
     assert cmd_commit_gate(["--help"]) == 0
     out = capsys.readouterr().out
     for cmd in SHELL_COMMANDS:
         assert cmd in out, cmd
+
+
+def test_registry_help_renders_the_same_enumeration():
+    """**用户面**（`rddf commit-gate --help` 走注册表的 help 条目）也必须是同一份枚举。
+
+    ⚠ 这是归档后补的判据：只测函数面会让「用户看到的 --help」漏掉枚举 ⇒ 假绿。
+    """
+    from _lib.cli import _SUBCOMMAND_DESCRIPTION, list_commands
+
+    assert "commit-gate" in list_commands()
+    text = _SUBCOMMAND_DESCRIPTION["commit-gate"]
+    for cmd in SHELL_COMMANDS:
+        assert cmd in text, (cmd, text)

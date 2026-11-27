@@ -53,3 +53,11 @@ worktree 下实现经 `--git-common-dir` 解析到主仓、测试期望 worktree
 ## 已用轮次
 
 **1 / 3**（`RDDF_VERIFIER_MAX_LOOPS=3`）。失败项：**0**。
+
+## 归档后补正（2026-11-28 · 归档 commit `db5786ec` 之后）
+
+| 项 | 发现 | 处置 |
+|---|---|---|
+| **AC6 的用户面假绿** | AC6 原来只测**函数面**（`cmd_commit_gate(["--help"])` ⇒ 我自己的 `_print_help`，含枚举）；但**用户实际执行的** `rddf commit-gate --help` 走**注册表**的 `_SUBCOMMAND_DESCRIPTION["commit-gate"]`（一行描述，**没有枚举**）⇒ 「`--help` 文案里的枚举 == `SHELL_COMMANDS`」这条**在用户面上不成立** | ✅ 已补：help 条目改为**从常量渲染**（`f"... Shell 判据（同源枚举）: {shell_commands_display()}"`）+ 新增用例 `test_registry_help_renders_the_same_enumeration`（直接断言 `_SUBCOMMAND_DESCRIPTION["commit-gate"]` 含全部枚举）；实测 `rddf commit-gate --help` 现输出 `Shell 判据（同源枚举）: true / echo / : / exit 0` |
+
+⇒ **教训**：判据必须打**用户面**（真实 CLI 入口 / 真实文件），不能只打函数面 —— 函数面绿 ≠ 用户看到的东西对。

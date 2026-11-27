@@ -37,6 +37,8 @@ import sys
 import types
 from typing import Callable, Dict
 
+from _lib.commit_gate_declaration import shell_commands_display as _shell_commands_display
+
 # ---------------------------------------------------------------------------
 # Dash-bridge: register sys.modules aliases for dash-named skill packages.
 #
@@ -167,7 +169,9 @@ _SUBCOMMAND_DESCRIPTION: Dict[str, str] = {
     # this string; it never reaches the handler's argparse tree) — same
     # convention as "sessions" above.
     "setup": "Bootstrap a new project with rdd-workflow. Subcmds: ai-context",
-    "commit-gate": "Generate <project>/.rddf/commit-gate.json from an existing verify entry",
+    # ⚠ 空壳枚举**从常量渲染**（与生成器 / doctor 同源）—— 用户面的 `--help` 也必须是同一份枚举
+    "commit-gate": "Generate <project>/.rddf/commit-gate.json from an existing verify entry. "
+                   f"Shell 判据（同源枚举）: {_shell_commands_display()}",
     "sync-hub": "Hub-Spoke contract pull",
     "validate": "Quality gate checks",
     "version": "Print rddf version",
