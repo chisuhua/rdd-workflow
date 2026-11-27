@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: cli-tooling
 类型: improvement
-状态: 已批准·待立项（planner 2026-11-27 · W4 = U5 · 独立 change · 消费方已裁决 = P2.5 review · 7 条 AC 含 TDD 三段）
+状态: 已归档（2026-11-27 · change `2026-11-27-fix-builder-handoff-p2-lifecycle-truth` · 7/7 AC pass · 验收报告 `.rddf/reviews/fix-builder-handoff-p2-lifecycle-truth-verify.md`）
 主题: P2 生命周期真实性 —— setup 完成 ≠ 实现完成 + worktree 与主仓分叉的可检出性
 ---
 
