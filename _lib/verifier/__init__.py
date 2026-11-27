@@ -19,7 +19,9 @@ from _lib.verifier.loop_state import (  # noqa: F401
     load_loop_state, save_loop_state, init_loop_state, append_classification,
 )
 from _lib.verifier.branch import resolve_implementation_commit  # noqa: F401
-from _lib.verifier.discovery import discover_eligible  # noqa: F401
+from _lib.verifier.discovery import (  # noqa: F401
+    discover_eligible, discover_eligible_detailed, DiscoveryResult,
+)
 from _lib.verifier.audit import write_event, read_events  # noqa: F401
 from _lib.verifier.archive_gate import (  # noqa: F401
     check_archive_readiness,
@@ -34,6 +36,8 @@ __all__ = [
     "load_loop_state", "save_loop_state", "init_loop_state", "append_classification",
     "resolve_implementation_commit",
     "discover_eligible",
+    "discover_eligible_detailed",
+    "DiscoveryResult",
     "write_event", "read_events",
     "check_archive_readiness",
     "write_structured_cache_fallback",

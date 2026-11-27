@@ -36,6 +36,19 @@ def _setup_state(tmp_path: Path, changes: list) -> None:
     (state_dir / "iteration.json").write_text(json.dumps(doc))
 
 
+def _mk_disk_change(tmp_path: Path, name: str, *, done: bool = True) -> None:
+    """Create the on-disk change the batch queue now derives from.
+
+    The queue used to read `iteration.json`; it now derives from
+    `openspec/changes/<name>/tasks.md` + the disk status, so every batch-level
+    fixture needs the real directory.
+    """
+    d = tmp_path / "openspec" / "changes" / name
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "tasks.md").write_text("- [x] a\n" if done else "- [ ] a\n",
+                                encoding="utf-8")
+
+
 def _commit_branch(tmp_path: Path, name: str) -> str:
     _init_repo(tmp_path)
     (tmp_path / "f").write_text("x")
@@ -83,6 +96,7 @@ def test_skip_with_reason_writes_bypassed_state(tmp_path, monkeypatch):
     change = {"name": "ch-x", "status": "in_worktree",
               "tasks_done": 2, "tasks_total": 2}
     _setup_state(tmp_path, [change])
+    _mk_disk_change(tmp_path, "ch-x")
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("RDDF_PROJECT_ROOT", raising=False)
     monkeypatch.setenv("SKIP_RDD_VERIFIER", "yes")
@@ -470,6 +484,7 @@ def test_cmd_rdd_verify_stage_context_runner_when_no_provider(tmp_path, monkeypa
         {"name": "ch-y", "phase": "v2.1", "status": "in_worktree",
          "implementation_ref": "openspec/ch-y", "tasks_done": 1, "tasks_total": 1},
     ])
+    _mk_disk_change(tmp_path, "ch-y")
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
     # Inject a runner to capture which one is selected
     captured = {}
@@ -499,6 +514,7 @@ def test_explicit_runner_overrides_provider_hook(tmp_path, monkeypatch):
         {"name": "ch-z", "phase": "v2.1", "status": "in_worktree",
          "implementation_ref": "openspec/ch-z", "tasks_done": 1, "tasks_total": 1},
     ])
+    _mk_disk_change(tmp_path, "ch-z")
     monkeypatch.setenv("RDDF_PROJECT_ROOT", str(tmp_path))
 
     # Pass explicit mock runner — should win over hook detection
@@ -512,3 +528,33 @@ def test_explicit_runner_overrides_provider_hook(tmp_path, monkeypatch):
     # mock_runner was invoked; _hook_runner was NOT
     assert len(mock_calls) == 1
     assert mock_calls[0][0] == "ch-z"
+
+
+# ============================================================================
+# Write-back side: never create a half-made iteration.json (per change
+# `register-change-in-iteration` archived AC: missing file ⇒ no creation).
+# ============================================================================
+
+
+def test_update_iteration_summary_does_not_create_iteration_json(tmp_path):
+    update_iteration_summary(tmp_path, "ch-x", {
+        "state": "passed",
+        "verdict_sha": None,
+        "checked_at": "2026-11-27T00:00:00Z",
+        "route": "archive-ready",
+        "loop_count": 0,
+        "failed_acs": [],
+        "archive_ready": True,
+    })
+    assert not (tmp_path / ".rddf" / "state" / "iteration.json").exists()
+
+
+def test_update_iteration_summary_skips_missing_entry(tmp_path):
+    _setup_state(tmp_path, [{"name": "other", "status": "in_worktree",
+                             "tasks_done": 1, "tasks_total": 1}])
+    state_file = tmp_path / ".rddf" / "state" / "iteration.json"
+    before = state_file.read_bytes()
+
+    update_iteration_summary(tmp_path, "ch-missing", {"state": "passed"})
+
+    assert state_file.read_bytes() == before

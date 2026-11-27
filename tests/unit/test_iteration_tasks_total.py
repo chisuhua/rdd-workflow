@@ -27,6 +27,7 @@ CHANGED 2026-11-17: added by fix-iteration-tasks-total.
 from __future__ import annotations
 
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -300,45 +301,64 @@ class TestWriters:
 
 
 # ---------------------------------------------------------------------------
-# 5. the two eligibility implementations must agree, and the viewers must show
-#    partial progress instead of hiding it
+# 5. the queue has ONE implementation (bash delegates to python), and the
+#    viewers must show partial progress instead of hiding it
 # ---------------------------------------------------------------------------
 
 class TestEligibilityParity:
     def test_scan_queue_sh_and_discovery_py_agree(self, tmp_path):
-        """Two implementations encode the same rule (`done == total > 0`).
+        """`scan_queue.sh` and `discover_eligible` must agree — always.
 
-        scan_queue.sh is bash+inline-python; discovery.py is the library. They
-        were written independently, so nothing stopped them from drifting.
+        CHANGED 2026-11-27 (fix-verifier-discovery-disk-derive): the queue is
+        **disk-derived**. `scan_queue.sh` no longer keeps its own copy of the
+        rules; it delegates to `discover_eligible`. The fixture therefore
+        creates the on-disk change (and, for the archived case, the archive
+        directory) while `iteration.json` is deliberately written with a
+        *stale* status to prove it is not a source of truth anymore.
         """
         import subprocess
 
-        def entry(status, done, total):
-            doc = it_store.create_empty()
-            doc = it_store.add_or_update_change(
-                doc, name="c1", status=status,
+        from _lib.verifier.discovery import discover_eligible
+
+        def write_tasks(done: int, total: int, *, archived: bool = False) -> None:
+            if archived:
+                d = tmp_path / "openspec" / "changes" / "archive" / "2026-01-01-c1"
+            else:
+                d = tmp_path / "openspec" / "changes" / "c1"
+            d.mkdir(parents=True, exist_ok=True)
+            d.joinpath("tasks.md").write_text(
+                "".join(f"- [{'x' if i < done else ' '}] t{i}\n" for i in range(total)),
+                encoding="utf-8",
             )
+
+        def stale_iteration(status: str, done: int, total: int) -> None:
+            doc = it_store.create_empty()
+            doc = it_store.add_or_update_change(doc, name="c1", status=status)
             doc = it_store.set_tasks_done(doc, "c1", done=done, total=total, status=status)
             it_store.save(str(tmp_path), doc)
 
-        from _lib.verifier.discovery import discover_eligible
-
         cases = [
-            ("in_worktree", 3, 3, ["c1"]),
-            ("in_worktree", 3, 4, []),
-            ("proposed", 0, 3, []),
-            ("archived", 3, 3, []),
+            # (iteration 里的陈旧记录, 磁盘 tasks done/total, 归档?, 期望)
+            ("proposed", 3, 3, False, ["c1"]),      # 磁盘全勾 ⇒ 入队（iteration 陈旧无所谓）
+            ("in_worktree", 2, 3, False, []),       # 磁盘未全勾 ⇒ 不入队
+            ("in_worktree", 0, 3, False, []),
+            ("in_worktree", 3, 3, True, []),        # 归档 ⇒ 不在扫描面
         ]
-        for status, done, total, expected in cases:
-            entry(status, done, total)
+        for status, done, total, archived, expected in cases:
+            write_tasks(done, total, archived=archived)
+            stale_iteration(status, done, total)
             py = discover_eligible(tmp_path)
             sh = subprocess.run(
                 ["bash", str(REPO_ROOT / "skills/rdd-verifier/scripts/scan_queue.sh")],
                 capture_output=True, text=True,
                 env={**__import__("os").environ, "PROJECT_ROOT": str(tmp_path)},
             ).stdout.split()
-            assert py == expected, (status, done, total, py)
-            assert sh == expected, (status, done, total, sh)
+            assert py == expected, (status, done, total, archived, py)
+            assert sh == expected, (status, done, total, archived, sh)
+            # 下一轮用例换形态 ⇒ 清掉上一轮的磁盘产物
+            for stale in ("c1", "archive"):
+                shutil.rmtree(tmp_path / "openspec" / "changes" / stale,
+                              ignore_errors=True)
 
 
 class TestStatusDisplay:

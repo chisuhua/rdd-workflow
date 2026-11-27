@@ -92,7 +92,27 @@ def test_is_eligible_proposed():
     assert _is_eligible(change) is False
 
 
-def test_discover_from_iteration(tmp_path):
+def test_discover_consistent_iteration_matches_disk(tmp_path):
+    """iteration.json agreeing with disk ⇒ the same answer as disk alone.
+
+    CHANGED 2026-11-27 (fix-verifier-discovery-disk-derive): the queue is
+    disk-derived, so the fixture has to carry the real change directories.
+    The iteration entries are kept (and consistent) to pin that a *consistent*
+    iteration.json changes nothing.
+    """
+    def mk(name: str, tasks: str) -> None:
+        d = tmp_path / "openspec" / "changes" / name
+        d.mkdir(parents=True)
+        (d / "tasks.md").write_text(tasks, encoding="utf-8")
+
+    mk("a", "- [x] a\n- [x] b\n- [x] c\n")
+    mk("b", "- [x] a\n- [ ] b\n- [ ] c\n")
+    mk("c", "- [x] a\n- [x] b\n")
+    archived = tmp_path / "openspec" / "changes" / "archive" / "2026-01-01-d"
+    archived.mkdir(parents=True)
+    (archived / "tasks.md").write_text("- [x] a\n", encoding="utf-8")
+    mk("e", "- [ ] a\n")
+
     state_dir = tmp_path / ".rddf" / "state"
     state_dir.mkdir(parents=True)
     state = {
@@ -102,7 +122,7 @@ def test_discover_from_iteration(tmp_path):
             {"name": "b", "status": "in_worktree", "tasks_done": 1, "tasks_total": 3},
             {"name": "c", "status": "completed", "tasks_done": 2, "tasks_total": 2},
             {"name": "d", "status": "archived", "tasks_done": 1, "tasks_total": 1},
-            {"name": "e", "status": "proposed", "tasks_done": 0, "tasks_total": 0},
+            {"name": "e", "status": "proposed", "tasks_done": 0, "tasks_total": 1},
         ],
     }
     (state_dir / "iteration.json").write_text(json.dumps(state))

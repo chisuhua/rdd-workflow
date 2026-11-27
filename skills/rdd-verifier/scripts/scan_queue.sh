@@ -1,31 +1,27 @@
 #!/usr/bin/env bash
-# scan_queue.sh — List implemented, task-complete changes from iteration.json
+# scan_queue.sh — List implemented, task-complete changes (disk-derived).
+#
+# Thin wrapper: the rules live in `_lib/verifier/discovery.py::discover_eligible`
+# (single source, shared with `rddf rdd-verify` batch mode). This file used to
+# carry its own inline copy reading `iteration.json` — two implementations of
+# one rule is how they drift.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# The dir that CONTAINS `_lib/` — not the project root.
+PKG_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-STATE_FILE="$PROJECT_ROOT/.rddf/state/iteration.json"
 MAX_CHANGES="${RDDF_VERIFIER_MAX_CHANGES:-10}"
 
-[ -f "$STATE_FILE" ] || exit 0
-
-STATE_FILE="$STATE_FILE" MAX_CHANGES="$MAX_CHANGES" python3 - <<'PY'
-import json
+PKG_ROOT="$PKG_ROOT" PROJECT_ROOT="$PROJECT_ROOT" MAX_CHANGES="$MAX_CHANGES" python3 - <<'PY'
 import os
+import sys
+from pathlib import Path
 
-try:
-    doc = json.loads(open(os.environ["STATE_FILE"], encoding="utf-8").read())
-except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-    raise SystemExit(0)
+sys.path.insert(0, os.environ["PKG_ROOT"])
+from _lib.verifier.discovery import discover_eligible  # noqa: E402
 
-eligible = []
-for change in doc.get("changes", []):
-    status = change.get("status")
-    total = change.get("tasks_total") or 0
-    done = change.get("tasks_done") or 0
-    if status in {"in_worktree", "completed"} and total > 0 and done == total:
-        name = change.get("name")
-        if name:
-            eligible.append(name)
-
-print(" ".join(eligible[:max(0, int(os.environ["MAX_CHANGES"]))]))
+names = discover_eligible(Path(os.environ["PROJECT_ROOT"]))
+limit = max(0, int(os.environ.get("MAX_CHANGES") or 10))
+print(" ".join(names[:limit]))
 PY
