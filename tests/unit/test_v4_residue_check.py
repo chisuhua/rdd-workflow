@@ -588,7 +588,9 @@ def test_r4_repo_residue_constant():
     result = scan_specs(REPO_ROOT)
     # 2026-11-27：`fix-proposal-generator-output-fidelity` 归档新建 capability
     # `spec-delta-generator-fidelity` ⇒ spec 文件数 163 → 164（hits/blocks 不变）。
-    assert result.files_scanned == 164, result.files_scanned
+    # 2026-11-27：`fix-status-issue-list-truncation` 归档新建 capability
+    # `status-issue-visibility` ⇒ spec 文件数 164 → 165（hits/blocks 不变）。
+    assert result.files_scanned == 165, result.files_scanned
 
     unexempted = [h for h in result.hits if not h.category]
     assert len(unexempted) == 0, len(unexempted)

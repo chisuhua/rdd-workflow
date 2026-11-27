@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: cli-tooling
 类型: improvement
-状态: 已批准·待立项（planner 2026-11-27 · W3 = U10 · 独立 change · 7 条 AC 含 TDD 三段）
+状态: 已归档（2026-11-27 · change `2026-11-27-fix-status-issue-list-truncation` · 7/7 AC pass · 验收报告 `.rddf/reviews/fix-status-issue-list-truncation-verify.md`）
 主题: status 视图不得截断 issue 列表 —— 陈旧/破损信号必须逐条可见（+ 状态摘要不再硬切在引号中间）
 ---
 
