@@ -595,8 +595,10 @@ def test_r4_repo_residue_constant():
     # 同日 `add-deferral-registration-guard` 归档新建 capability
     # `deferral-registration` ⇒ 166 → 167；
     # 同日 `improve-worktree-build-hint` 归档新建 capability
-    # `worktree-build-hint` ⇒ 167 → 168（hits/blocks 不变）。
-    assert result.files_scanned == 168, result.files_scanned
+    # `worktree-build-hint` ⇒ 167 → 168；
+    # 同日 `add-commit-gate-declaration-bootstrap` 归档新建 capability
+    # `commit-gate-declaration-bootstrap` ⇒ 168 → 169（hits/blocks 不变）。
+    assert result.files_scanned == 169, result.files_scanned
 
     unexempted = [h for h in result.hits if not h.category]
     assert len(unexempted) == 0, len(unexempted)

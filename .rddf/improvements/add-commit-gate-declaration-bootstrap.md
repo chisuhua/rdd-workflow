@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: quality-gate
 类型: improvement
-状态: 已批准·待立项（planner 2026-11-27 · W6=U7a 独立 change（rdd-workflow 半边）· 8 条 AC 含 2 条变异腿）
+状态: 已归档（2026-11-27 · change `2026-11-27-add-commit-gate-declaration-bootstrap` · 8/8 AC pass · 验收报告 `.rddf/reviews/add-commit-gate-declaration-bootstrap-verify.md`；「未声明留痕」= U7b 治理仓另案）
 主题: commit-gate 声明的生成入口 + 未声明时的可观测性（检测 ≠ 拦截）
 ---
 
