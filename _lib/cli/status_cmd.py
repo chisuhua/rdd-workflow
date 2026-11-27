@@ -41,14 +41,13 @@ The project root is injected by ``cli.__main__`` via the
 """
 from __future__ import annotations
 
-import json
 import os
-import subprocess
 import sys
 
 from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-handlers)
 from _lib.builder_handoff import read_builder_handoff  # noqa: E402  (per fix-33-handlers)
 from _lib.tasks_count import count_tasks  # noqa: E402
+from _lib.change_status import derive_status as _derive  # noqa: E402
 
 # Status -> emoji icon (single source of truth for Mode A/B rendering).
 # This table serves the **disk-derived** vocabulary
@@ -84,105 +83,14 @@ _PHASE_STATUS_ICON = {
 _USAGE = "usage: rddf status [<name>|--roadmap]"
 
 
-def _has_worktree(project_root: str, name: str) -> bool:
-    """True when a git worktree exists on branch ``openspec/<name>``."""
-    try:
-        out = subprocess.check_output(
-            ["git", "worktree", "list"], cwd=project_root
-        ).decode()
-    except Exception:
-        return False
-    for line in out.splitlines():
-        parts = line.split()
-        if not parts:
-            continue
-        branch = parts[-1].strip("[]")
-        if branch == f"openspec/{name}":
-            return True
-    return False
-
-
-def _has_committed(project_root: str, name: str) -> bool:
-    """True when the change has already been committed (landed).
-
-    Two independent probes, in order:
-
-    1. **git** — the change directory is present in ``HEAD``. This can only
-       say something when ``openspec/`` is **tracked**: repos configured with
-       ``git.openspec_tracked: false`` (this repo — the whole
-       ``openspec/changes/`` tree is gitignored, ADR-0036) can never
-       satisfy it, so the ``committed`` status used to be unreachable there.
-    2. **plan-done record** — ``.rddf/state/.plan-handoff.json`` lists the
-       change in ``committed_changes``. That is the disk-side record of
-       "committed" and is independent of git tracking.
-    """
-    try:
-        rc = subprocess.run(
-            ["git", "show", f"HEAD:openspec/changes/{name}/.openspec.yaml"],
-            cwd=project_root,
-            capture_output=True,
-        ).returncode
-        if rc == 0:
-            return True
-    except Exception:
-        pass
-    return name in _plan_committed_changes(project_root)
-
-
-def _plan_committed_changes(project_root: str) -> set[str]:
-    """``committed_changes`` from ``.rddf/state/.plan-handoff.json``.
-
-    Empty set when the file is missing, unreadable, not a mapping, or the
-    key is absent — the probe must never raise.
-    """
-    path = os.path.join(project_root, ".rddf", "state", ".plan-handoff.json")
-    try:
-        with open(path, encoding="utf-8") as fh:
-            data = json.load(fh)
-    except (OSError, UnicodeDecodeError, ValueError):
-        return set()
-    if not isinstance(data, dict):
-        return set()
-    changes = data.get("committed_changes")
-    if not isinstance(changes, list):
-        return set()
-    return {c for c in changes if isinstance(c, str)}
-
-
-def _tasks_complete(project_root: str, name: str) -> bool:
-    """True when the change has a ``tasks.md`` and every task is checked."""
-    path = os.path.join(project_root, "openspec", "changes", name, "tasks.md")
-    try:
-        with open(path, encoding="utf-8") as fh:
-            done, total = count_tasks(fh.read())
-    except (OSError, UnicodeDecodeError):
-        return False
-    return total > 0 and done == total
-
-
 def _disk_change_status(project_root: str, name: str) -> str:
-    """Derive a change's status from disk (same rules as the archived
-    ``status`` skill's ``render_status_mode_a.sh``, now under
-    ``docs/legacy/skills/status/scripts/``).
+    """Thin alias — the rules live in :func:`_lib.change_status.derive_status`.
 
-    Rules, in order:
-
-    1. a git worktree on branch ``openspec/<name>`` ⇒ ``in_worktree``
-    2. the change is committed ⇒ ``committed``
-    3. the change's ``tasks.md`` is 100% checked ⇒ ``completed``
-    4. otherwise ⇒ ``planned``
-
-    ⚠ Rule 3 exists because rule 2 is unreachable in repos where
-    ``openspec/`` is gitignored — without it every finished change was
-    reported as ``planned``.
+    Mode A/B and the verifier queue MUST share one implementation (the queue
+    used to keep its own copy of these rules); keeping this name only spares
+    the call sites a rename.
     """
-    if _has_worktree(project_root, name):
-        return "in_worktree"
-    if _has_committed(project_root, name):
-        return "committed"
-    if _tasks_complete(project_root, name):
-        return "completed"
-    return "planned"
+    return _derive(project_root, name)
 
 
 def _tasks_disp(project_root: str, name: str) -> str:

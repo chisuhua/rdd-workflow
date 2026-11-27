@@ -28,7 +28,7 @@ if __package__ in (None, ""):
 from _lib.verifier.audit import write_event
 from _lib.verifier.branch import resolve_implementation_commit
 from _lib.verifier.cache import verdict_cache, read_verdict_cache, is_cache_fresh
-from _lib.verifier.discovery import discover_eligible
+from _lib.verifier.discovery import discover_eligible_detailed
 from _lib.verifier.hook_runner import run_verification_hook
 from _lib.verifier.loop_state import (
     init_loop_state, save_loop_state, load_loop_state,
@@ -121,12 +121,31 @@ def _save_iteration_doc(project_root: Path, doc: dict) -> None:
 
 def update_iteration_summary(project_root: Path, change_name: str,
                               verification: dict) -> None:
+    """Attach the verification summary to an EXISTING iteration entry.
+
+    ``iteration.json`` is procedural bookkeeping and must never be *created*
+    here — change ``register-change-in-iteration`` archived an AC that says a
+    missing file stays missing (its own P0 path only warns). Writing one from
+    the verifier would produce exactly the half-made document that AC forbids,
+    with zero entries in it.
+
+    The durable record of a batch run is the verdict cache plus the audit log
+    (``.ac-verification.jsonl``), both written by the loop itself — so skipping
+    the write-back loses no state, it only skips a redundant mirror.
+    """
+    state_file = Path(project_root) / ".rddf" / "state" / "iteration.json"
+    if not state_file.is_file():
+        print(f"ℹ️  iteration.json 缺失 ⇒ 跳过 verification 回写（记账见 "
+              f".rddf/state/verifier/）；change={change_name}", file=sys.stderr)
+        return
     doc = _load_iteration_doc(project_root)
     for ch in doc.get("changes", []):
         if ch.get("name") == change_name:
             ch["verification"] = verification
-            break
-    _save_iteration_doc(project_root, doc)
+            _save_iteration_doc(project_root, doc)
+            return
+    print(f"ℹ️  iteration.json 无 '{change_name}' 条目 ⇒ 跳过 verification 回写",
+          file=sys.stderr)
 
 
 def _stage_context_runner(change_name: str, project_root: Path) -> dict:
@@ -472,7 +491,12 @@ def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
             print(f"  - {entry['name']} (archived {entry['archive_date']})")
         return 0
 
-    queue = discover_eligible(project_root)
+    discovery = discover_eligible_detailed(project_root)
+    # Non-fatal remarks (e.g. "iteration.json disagrees with disk") go to
+    # stderr so they never pollute the machine-readable stdout view.
+    for notice in discovery.notices:
+        print(f"⚠️  {notice}", file=sys.stderr)
+    queue = discovery.eligible
     max_changes = (parsed.max_changes
                    if parsed.max_changes is not None
                    else int(os.environ.get("RDDF_VERIFIER_MAX_CHANGES", "10")))
@@ -480,6 +504,10 @@ def cmd_rdd_verify(args: list, runner: Optional[Callable] = None) -> int:
 
     if not queue:
         print("No eligible changes to verify (empty queue).")
+        # An empty queue must be diagnosable — a silent `[]` is exactly what
+        # hid the batch path for projects without iteration.json.
+        for reason in discovery.reasons:
+            print(f"   ↳ {reason}", file=sys.stderr)
         return 0
 
     if parsed.dry_run:
