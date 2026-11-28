@@ -89,8 +89,13 @@ def _makefile_has_test_target(path: Path) -> bool:
     return re.search(r"^test\s*:", text, re.MULTILINE) is not None
 
 
-def detect_script_entries(project_root: str | Path) -> list[str]:
-    """仓内**存在**的脚本类入口（可读提示）；空列表 ⇒ 仓里没有脚本类入口。"""
+def detect_unresolved_entries(project_root: str | Path) -> list[str]:
+    """仓内**存在、但无法自动推导**的入口（可读提示）；空列表 ⇒ 什么入口都没探到。
+
+    两类都算「需要显式 argv」：
+    - 脚本类入口（`test.sh` / `npm test` / `make test`）—— 裸调用是否执行验证不可判定；
+    - 工具链类入口（pytest / go / cargo）—— 证据文件在，但仓内**没有测试件**（零测试时 rc=0/5）。
+    """
     root = Path(project_root)
     found: list[str] = []
     for entry in SCRIPT_ENTRY_EVIDENCE:
@@ -102,6 +107,12 @@ def detect_script_entries(project_root: str | Path) -> list[str]:
         if entry.get("requires_make_test_target") and not _makefile_has_test_target(evidence):
             continue
         found.append(entry["hint"])
+    for candidate in CANDIDATES:
+        if not (root / candidate["requires"]).is_file():
+            continue
+        tool = candidate.get("tool")
+        if tool and not _has_test_files(root, tool):
+            found.append(f"{' '.join(candidate['argv'])}（未找到 {tool} 测试件）")
     return found
 
 
@@ -171,7 +182,7 @@ __all__ = [
     "CANDIDATES",
     "TEST_FILE_GLOBS",
     "SCRIPT_ENTRY_EVIDENCE",
-    "detect_script_entries",
+    "detect_unresolved_entries",
     "DECLARATION_REL",
     "SHELL_COMMANDS",
     "declaration_path",

@@ -83,3 +83,12 @@ _run_init() {
   run python3 -c "import json;print(json.load(open('.rddf/commit-gate.json'))['verify_commands'])"
   [[ "$output" == *"pytest"* ]]
 }
+
+@test "commit-gate init: 工具链证据在但无测试件 ⇒ rc=3（AC3）" {
+  printf 'module x\n' > go.mod
+  run _run_init
+  [ "$status" -eq 3 ]
+  [ ! -f .rddf/commit-gate.json ]
+  [[ "$output" == *"需要显式 argv"* ]]
+  [[ "$output" == *"未找到 go 测试件"* ]]
+}

@@ -25,7 +25,7 @@ from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-hand
 from _lib.commit_gate_declaration import (  # noqa: E402
     declaration_path,
     derive_verify_commands,
-    detect_script_entries,
+    detect_unresolved_entries,
     is_shell_declaration,
     manual_template,
     read_declaration,
@@ -113,13 +113,14 @@ def cmd_commit_gate(args: list[str]) -> int:
 
     verify_commands = derive_verify_commands(project_root)
     if verify_commands is None:
-        script_entries = detect_script_entries(project_root)
-        if script_entries:
-            print(f"❌ 脚本类入口{_REFUSAL_KEY} ⇒ 拒绝生成", file=sys.stderr)
-            print("   探测到：" + " / ".join(script_entries), file=sys.stderr)
+        unresolved = detect_unresolved_entries(project_root)
+        if unresolved:
+            print(f"❌ 入口{_REFUSAL_KEY} ⇒ 拒绝生成", file=sys.stderr)
+            print("   探测到：" + " / ".join(unresolved), file=sys.stderr)
             print(
-                "   裸调用这些入口是否真的执行验证**无法静态判定**"
-                "（实测：裸 `./test.sh` 只打印 help 并 exit 0 ⇒ 恒绿声明）",
+                "   无法自动推导的原因：脚本类入口裸调用是否真的执行验证不可静态判定"
+                "（实测：裸 `./test.sh` 只打印 help 并 exit 0 ⇒ 恒绿声明）；"
+                "工具链类入口在仓内没有测试件时同样等于「验证没有意义」（go/cargo 零测试 rc=0、pytest 零收集 rc=5）",
                 file=sys.stderr,
             )
             print(manual_template(), file=sys.stderr)
