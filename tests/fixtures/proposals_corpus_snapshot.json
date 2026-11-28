@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-11-28T14:51:17.457420+00:00",
-  "corpus_count": 308,
+  "generated_at": "2026-11-28T16:34:31.162801+00:00",
+  "corpus_count": 310,
   "shape_labels": {
-    "table_row": 1754,
-    "bullet": 10978,
-    "numbered": 971,
-    "other": 13744
+    "table_row": 1763,
+    "bullet": 11007,
+    "numbered": 976,
+    "other": 13823
   },
   "items": {
     "RDDF-0001-fix-rddf-session-import-path": {
@@ -1970,6 +1970,15 @@
       },
       "sha256": "d64f4d25342454b9bf81a9f6988370b6c3855eb6357fb9ab8510c5de48845258"
     },
+    "fix-verifier-discovery-stale-assertions": {
+      "labels": {
+        "table_row": 5,
+        "bullet": 13,
+        "numbered": 2,
+        "other": 41
+      },
+      "sha256": "b87c840dc32d73b9e1b8675d9f52c1b915a17e14e9339021ad956693cf1abf75"
+    },
     "fix-verifier-gate-cache-root": {
       "labels": {
         "table_row": 33,
@@ -1996,6 +2005,15 @@
         "other": 83
       },
       "sha256": "f4fe085fb1ac4b102b6860a88179c9c342c20386629b7ef54e51f4ccc436876a"
+    },
+    "fix-worktree-commit-gate-deadlock": {
+      "labels": {
+        "table_row": 4,
+        "bullet": 16,
+        "numbered": 3,
+        "other": 38
+      },
+      "sha256": "be6c1d13e1a7d9436e0b1fb5a86011a339b562bf8c87b4700d33ab5ebd988756"
     },
     "fix-wt-scanner-strip-bug-and-untracked-coverage": {
       "labels": {
