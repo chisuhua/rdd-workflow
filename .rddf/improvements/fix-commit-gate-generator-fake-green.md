@@ -30,7 +30,7 @@ U7a（`add-commit-gate-declaration-bootstrap`，已归档）给使用方仓加�
 `rddf commit-gate init`，其判据是**「仓内存在可推导的验证入口」**
 （`_lib/commit_gate_declaration.py::CANDIDATES`，顺序即优先级，只取第一个命中者）。
 
-实测（2026-11-28，本仓 `/workspace/main/rdd-workflow`）：
+实测（2026-11-28，本仓 `rdd-workflow`）：
 
 | 步骤 | 实测 |
 |---|---|
@@ -63,7 +63,7 @@ U7a（`add-commit-gate-declaration-bootstrap`，已归档）给使用方仓加�
 ## delta 载体（P0 生成输入）
 
 **delta**: modified commit-gate-declaration-bootstrap
-**语义要求**: A generated commit-gate declaration MUST NOT be vacuously green | `rddf commit-gate init` SHALL NOT auto-derive a `verify_commands` entry from a **script-type** entry point (`./test.sh`, `package.json::scripts.test`, `Makefile::test:`) because whether such an entry verifies anything when invoked without arguments is not statically decidable; such an entry SHALL be taken only from an explicit source, namely a valid existing `.rddf/commit-gate.json` whose `verify_commands` are not shell declarations, and without one the command SHALL refuse. **Toolchain-type** entries (pytest / go / cargo) SHALL remain derivable but only when the repository contains test files per each tool's convention. Refusal SHALL exit non-zero with a dedicated code distinct from "no derivable entry point", SHALL NOT write or modify the declaration, SHALL NOT stage or commit anything, and SHALL print a copy-pasteable explicit-argv template. | A script entry point is no longer auto-derived | a repository has a `test.sh` whose argument-less run prints help and exits 0, carries no declaration, and `rddf commit-gate init` runs | the command exits with the dedicated refusal code, `.rddf/commit-gate.json` is not written, and the output contains the explicit-argv template ;; An existing valid declaration is kept | the repository already declares `[["./test.sh","--verify"]]` and `rddf commit-gate init --force` runs | the declaration keeps that argv verbatim and the output states that it was not re-derived
+**语义要求**: A project SHALL be able to generate a non-trivial commit-gate declaration | `rddf commit-gate init` SHALL NOT auto-derive a `verify_commands` entry from a script-type entry point (`./test.sh`, `package.json::scripts.test`, `Makefile::test:`) because whether such an entry verifies anything when invoked without arguments is not statically decidable; such an entry SHALL be taken only from an explicit source (a valid existing `.rddf/commit-gate.json` whose `verify_commands` are not shell declarations), and without one the command SHALL refuse. Toolchain-type entries (pytest / go / cargo) SHALL remain derivable but only when the repository contains test files per each tool's convention. Refusal SHALL exit with a dedicated code distinct from "no derivable entry point", SHALL NOT write or modify the declaration, SHALL NOT stage or commit anything, and SHALL print a copy-pasteable explicit-argv template. An existing valid declaration SHALL be reused verbatim by `--force` with a notice that it was not re-derived. | A project with a test entry point gets a declaration | a repository has a `test.sh` whose argument-less run prints help and exits 0, carries no declaration, and `rddf commit-gate init` runs | the command exits with the dedicated refusal code, `.rddf/commit-gate.json` is not written, and the output contains the explicit-argv template
 
 ## 范围
 

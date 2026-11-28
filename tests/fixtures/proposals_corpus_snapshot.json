@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-28T13:41:39.660929+00:00",
+  "generated_at": "2026-11-28T14:51:17.457420+00:00",
   "corpus_count": 308,
   "shape_labels": {
     "table_row": 1754,
@@ -1275,7 +1275,7 @@
         "numbered": 6,
         "other": 67
       },
-      "sha256": "1a610a435e76f9a0e2022899aec8595a605a3fd84205a0fff2ef46e89cccd902"
+      "sha256": "87683595eee8371877d1be44c8f7bc6d398a9cdd9b5fc464b0574d427df650d7"
     },
     "fix-deps-render-empty-candidates": {
       "labels": {
