@@ -559,6 +559,7 @@
 | [add-deferral-registration-guard](improvements/add-deferral-registration-guard.md) | P1 | 2026-11-27 | 已批准（planner 2026-11-27；W4=U6 独立立项 —— 约定先行（可 grep 锚点）+ doctor category `deferral-registration`；新 capability `deferral-registration`） |
 | [improve-worktree-build-hint](improvements/improve-worktree-build-hint.md) | P2 | 2026-11-27 | 已批准（planner 2026-11-27；W5=U9 独立立项 —— worktree 无 build 目录时一行可机判提示；新 capability `worktree-build-hint`） |
 | [add-commit-gate-declaration-bootstrap](improvements/add-commit-gate-declaration-bootstrap.md) | P0 | 2026-11-27 | 已批准（planner 2026-11-27；W6=U7a —— **拆两仓两 change**：本 change 只做 rdd-workflow 半边（生成入口 + doctor 三面检测）；「未声明留痕」移出为 U7b（治理仓 architect 轨）；新 capability `commit-gate-declaration-bootstrap`） |
+| [fix-commit-gate-generator-fake-green](improvements/fix-commit-gate-generator-fake-green.md) | P1 | 2026-11-28 | 已批准（planner 2026-11-28；U7a 的缺陷补正 —— 生成器把「入口存在」当「验证会执行」⇒ 恒绿声明；改为**减法**：脚本类入口（`test.sh` / `package.json::scripts.test` / `Makefile::test:`）不再自动推导 + 工具链类（pytest/go/cargo）加测试件前置 + 显式来源只认既有合法声明 + 拒绝契约 rc=3；**改既有 capability `commit-gate-declaration-bootstrap`（MODIFIED，须替代其「写 ./test.sh」Scenario）**；metis 1 轮 P0 6 / P1 4 全采纳） |
 
 > **附注 (verifier-v2-hardening Phase 7 / oracle Q3)**: 跨阶段外部-LLM/hook 耦合审计建议（advisory, 不实施）：
 > 1. **审计 `propose_quality_check.py`** —— 检查是否埋了外部 LLM/hook 假设，按 ADR-0045 模式内联（如有）

@@ -4,7 +4,7 @@
 阶段: phase-3
 分类: quality-gate
 类型: fix
-状态: 待审查
+状态: 已批准（planner 2026-11-28）· 实现载体 = 本仓 rdd-workflow 生成器侧 · delta = modified commit-gate-declaration-bootstrap（spec 侧须以 MODIFIED 替代既有 Scenario）· 批准依据 = metis 1 轮全采纳（P0 6 / P1 4）+ 本仓实测 commit 554c821a
 主题: 生成器把「入口存在」当成「验证会执行」—— 恒绿（假绿）声明必须不可生成
 ---
 
