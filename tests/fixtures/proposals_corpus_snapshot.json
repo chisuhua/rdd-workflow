@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-11-27T15:41:29.788980+00:00",
-  "corpus_count": 306,
+  "generated_at": "2026-11-28T13:41:39.660929+00:00",
+  "corpus_count": 308,
   "shape_labels": {
-    "table_row": 1729,
-    "bullet": 10907,
-    "numbered": 962,
-    "other": 13646
+    "table_row": 1754,
+    "bullet": 10978,
+    "numbered": 971,
+    "other": 13744
   },
   "items": {
     "RDDF-0001-fix-rddf-session-import-path": {
@@ -1258,6 +1258,24 @@
         "other": 110
       },
       "sha256": "1b35d1fe48365adcde7961e6478cd2f5d894fe12ceff0370160468acb62046e9"
+    },
+    "fix-commit-gate-existing-vacuous-declarations": {
+      "labels": {
+        "table_row": 4,
+        "bullet": 19,
+        "numbered": 3,
+        "other": 31
+      },
+      "sha256": "898fd540ee840c438a73745944d4c3da58c51aa5c851d7645882aa3c0efddea9"
+    },
+    "fix-commit-gate-generator-fake-green": {
+      "labels": {
+        "table_row": 21,
+        "bullet": 52,
+        "numbered": 6,
+        "other": 67
+      },
+      "sha256": "1a610a435e76f9a0e2022899aec8595a605a3fd84205a0fff2ef46e89cccd902"
     },
     "fix-deps-render-empty-candidates": {
       "labels": {
