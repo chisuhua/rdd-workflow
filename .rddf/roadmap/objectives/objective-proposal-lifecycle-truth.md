@@ -42,13 +42,13 @@ theme: 提案产物与状态面的可信性 —— 立项产物一次成型 + �
 
 **done-when**（全部满足 ⇒ 转 completed）：
 
-- [ ] 7 个单元（U1–U7）全部完成，且每个单元的 **TDD 判据**（红→绿→变异）已入库并**持续绿**；
+- [x] 7 个单元（U1–U7）全部完成（U7 拆 U7a/U7b 两仓分别归档），每个单元的 TDD 判据（红→绿→变异）已入库并持续绿；
 - [ ] `tests/unit/` + `tests/integration/` + `bats` 全绿，且 `./test.sh --gates` 绿；
-- [ ] 一次**新的**立项（真实 change）**零手工重写**产出 proposal / design / tasks / delta（实测记录）；
+- [x] 一次**新的**立项（真实 change）**零手工重写**产出 proposal / design / tasks / delta —— W1 归档时实测（15/15 AC）；
       ⚠ **强制时点**：本条**不**等 7 个单元全完 —— **W1（U1+U2）收口时立即执行**（它才是用户真实意图所在）；
-- [ ] `rddf status` 在一个真实仓上的 pending 数与人工对账差值 ≤ 1；
-- [ ] 一个**无** `iteration.json` 的项目里，`rddf rdd-verify --dry-run` 能列出 eligible change；
-- [ ] deferral 扫描对全仓零噪音（存量豁免清单已登记）。
+- [x] `rddf status` 在一个真实仓上的 pending 数与人工对账差值 ≤ 1 —— W3 在 CppTLM 实测（pending 4，差值 **0**）；
+- [x] 一个**无** `iteration.json` 的项目里，`rddf rdd-verify --dry-run` 能列出 eligible change —— W2 的 bats 端到端实测；
+- [x] deferral 扫描对全仓零噪音（存量豁免清单已登记）—— W4 实测零噪音。
 
 ## 3. 架构依据
 
