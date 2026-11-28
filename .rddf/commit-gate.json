@@ -1,0 +1,13 @@
+{
+  "verify_commands": [
+    [
+      "./test.sh",
+      "--gates"
+    ],
+    [
+      "./test.sh",
+      "--quick"
+    ]
+  ],
+  "timeout_ms": 900000
+}

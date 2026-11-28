@@ -12,6 +12,21 @@ in 4 SKILL.md (rdd-arch/planner/builder/verifier/quick). Closes 5 P0 findings fr
 
 ## [Unreleased]
 
+### 本仓启用 commit-gate 门禁（2026-11-28）
+
+本仓此前**未声明** `.rddf/commit-gate.json` ⇒ 门禁三判据（暂存非空 / 写集内 / 验证命令全绿）
+**一条都没跑**，`git commit` 只过了命令形态识别（ADR-commit-verification-gate D3:60 的明文决策，
+非 bug；`rddf doctor --category commit-gate` 一直报 WARNING「declaration missing」）。
+
+- **声明**：`.rddf/commit-gate.json`（已 tracked）⇒ `verify_commands` =
+  `./test.sh --gates`（4 道静态门：隔离 / ruff / mypy strict / doctor structural + markdown 漂移 +
+  ADR 形态 + openspec validate）+ `./test.sh --quick`（隔离 / ruff / smoke bats / pytest unit），
+  `timeout_ms` = 900000。
+- ⚠ **生成器的输出在本仓是「假绿」**：`rddf commit-gate init` 按候选表第一条推出
+  `[["./test.sh"]]`，而**裸 `./test.sh` 只打印 help 并 exit 0** ⇒ 门禁恒绿却什么都没验。
+  故生成后**改为显式模式参数**（`--gates` / `--quick`），两条命令均实测全绿。
+  （生成器侧「入口需要模式参数」的判别力缺口记为遗留项，本次不扩范围。）
+
 ### fix-dashboard-improvement-status（2026-11-20）
 
 修复 `rddf dashboard` §7 Pending 段的 improvement 读取 —— 之前该段**把每个 improvement 都显示成「待讨论」**
