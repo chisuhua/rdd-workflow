@@ -1,8 +1,8 @@
 ---
 id: objective-proposal-lifecycle-truth
-status: active
+status: completed
 created: 2026-11-27
-last_revised: 2026-11-27
+last_revised: 2026-11-28
 review_by: 2026-12-27
 owner: rdd-planner
 priority: P0
