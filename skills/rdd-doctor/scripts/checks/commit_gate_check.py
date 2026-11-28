@@ -70,7 +70,9 @@ def run(project_root: Path | str | None = None) -> List[Finding]:
                 snippet="declaration missing",
                 fix_hint=(
                     "未声明 ⇒ 门禁三判据不设门禁（ADR D3 明文决策）⇒ 该仓的 commit 没有跑过任何验证命令。"
-                    " 启用：rddf commit-gate init（生成后须 git add）"
+                    " 启用两条路：工具链类仓（pytest / go / cargo）直接 `rddf commit-gate init`；"
+                    "脚本类入口（test.sh / npm test / make test）须**手写** `.rddf/commit-gate.json` 给出显式 argv"
+                    "（init 会以 rc=3 拒绝并打印模板）；生成/手写后都须 `git add`"
                 ),
             )
         ]

@@ -406,12 +406,15 @@ P0 approve 时由 `generate_full_proposal.py` 生成 change-local delta。契约
 - **缺 `**语义要求**` ⇒ 生成器拒绝生成并指名缺什么**（绝不回退到 `acceptance-N` / `capability-N`
   需求名或 `- **WHEN** the change is applied` 这类恒真场景）。
 
-### ② `**delta**: modified <capability>` ⇒ `## MODIFIED Requirements` + **保留既有 Scenario**
+### ② `**delta**: modified <capability>` ⇒ `## MODIFIED Requirements` + **按场景名保留**
 
 - 落点目录 `openspec/changes/<name>/specs/<capability>/spec.md`（**按 capability 分目录**；
   未声明 `delta` 时保持历史形态 `specs/<change-name>/` ⇒ **新旧并存**，既有 change 不迁）；
-- delta 块内**必须逐字保留** main spec 该 requirement 的**全部既有 Scenario**，再追加作者的新场景；
-  缺一个 ⇒ 归档时 openspec 直接 abort。
+- delta 块内**按场景名**保留 main spec 该 requirement 的**全部既有 Scenario**：作者场景名**命中** ⇒
+  用作者版本**替换**该条正文；未命中的既有场景**逐字保留**；作者新场景追加。缺一个场景名 ⇒
+  归档时 openspec 直接 abort（1.7.0+ 原生检查；更早版本由生成器内的本地守恒守卫兜底）。
+- ⚠ 实测依据（openspec 1.14.3）：守恒检查**按场景名键控**，不按正文 —— 「同名改写正文」合法；
+  「逐字复制 + 同名追加」会留下两条同名且 THEN 矛盾的场景，而 `openspec validate` 仍报 valid。
 
 ### ③ 版本口径：**1.7.0** 分流（**语义化**比较，禁字符串比较）
 

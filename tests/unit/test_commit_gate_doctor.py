@@ -37,6 +37,14 @@ def test_missing_declaration_is_reported(tmp_path):
     assert "rddf commit-gate init" in findings[0].fix_hint
 
 
+def test_fix_hint_offers_both_paths(tmp_path):
+    """脚本类仓走 init 会 rc=3 ⇒ 提示必须同时给「init 生成 / 手写声明」两条路。"""
+    hint = run(tmp_path)[0].fix_hint
+    assert "rddf commit-gate init" in hint
+    assert "手写" in hint
+    assert "rc=3" in hint
+
+
 def test_shell_declaration_is_reported(tmp_path):
     _write_decl(tmp_path, {"verify_commands": [["true"]]})
     findings = run(tmp_path)

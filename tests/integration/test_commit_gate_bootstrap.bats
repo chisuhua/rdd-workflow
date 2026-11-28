@@ -25,13 +25,16 @@ _run_init() {
   RDDF_PROJECT_ROOT="$TEST_REPO" bash "$REPO_ROOT/rddf" commit-gate init "$@"
 }
 
-@test "commit-gate init: test.sh 存在 ⇒ 生成 [[./test.sh]] 且不代 add" {
-  printf '#!/bin/sh\necho ok\n' > test.sh && chmod +x test.sh
+@test "commit-gate init: 工具链类入口 ⇒ 生成 且不代 add" {
+  # ⚠ 脚本类入口（test.sh 等）**不再自动推导**（见 test_commit_gate_bootstrap_noop.bats）；
+  # 本用例改用工具链类入口，保住「生成成功」这一侧的契约。
+  printf '[project]\nname="x"\n' > pyproject.toml
+  mkdir -p tests && : > tests/test_x.py
   run _run_init
   [ "$status" -eq 0 ]
   [ -f .rddf/commit-gate.json ]
   run python3 -c "import json;print(json.load(open('.rddf/commit-gate.json'))['verify_commands'])"
-  [[ "$output" == *"'./test.sh'"* ]]
+  [[ "$output" == *"pytest"* ]]
   # 不代 add：暂存区必须为空
   run git diff --cached --name-only
   [ -z "$output" ]
@@ -47,17 +50,21 @@ _run_init() {
 }
 
 @test "commit-gate init: --dry-run 只打印不写盘" {
-  printf '#!/bin/sh\necho ok\n' > test.sh && chmod +x test.sh
+  printf '[project]\nname="x"\n' > pyproject.toml
+  mkdir -p tests && : > tests/test_x.py
   run _run_init --dry-run
   [ "$status" -eq 0 ]
   [[ "$output" == *"[dry-run]"* ]]
   [ ! -f .rddf/commit-gate.json ]
 }
 
-@test "commit-gate init: 已有声明 ⇒ 不覆盖；--force 才覆盖" {
+@test "commit-gate init: 已有声明 ⇒ 不覆盖；--force + shell 声明 ⇒ 按工具链重生成" {
+  # ⚠ `--force` 语义已改：既有合法声明 = **显式来源** ⇒ 沿用不改文件（见 noop.bats）；
+  # 只有既有声明是 **shell**（不作数）时才重新推导。
   mkdir -p .rddf
   echo '{"verify_commands":[["echo"]]}' > .rddf/commit-gate.json
-  printf '#!/bin/sh\necho ok\n' > test.sh && chmod +x test.sh
+  printf '[project]\nname="x"\n' > pyproject.toml
+  mkdir -p tests && : > tests/test_x.py
   run _run_init
   [ "$status" -eq 0 ]
   [[ "$output" == *"声明已存在，未覆盖"* ]]
@@ -66,7 +73,7 @@ _run_init() {
   run _run_init --force
   [ "$status" -eq 0 ]
   run python3 -c "import json;print(json.load(open('.rddf/commit-gate.json'))['verify_commands'])"
-  [[ "$output" == *"'./test.sh'"* ]]
+  [[ "$output" == *"pytest"* ]]
 }
 
 @test "commit-gate init: 命名的入口文件必须真实存在（package.json 无 scripts.test ⇒ 不算命中）" {

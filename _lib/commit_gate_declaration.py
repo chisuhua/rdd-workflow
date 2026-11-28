@@ -23,16 +23,36 @@ DECLARATION_REL = ".rddf/commit-gate.json"
 SHELL_COMMANDS: tuple[str, ...] = ("true", "echo", ":", "exit 0")
 
 #: 推导候选表（**顺序即优先级**；只取第一个命中者 —— 声明越短越不易腐坏）。
+#:
+#: ⚠ **脚本类入口故意缺席**（`test.sh` / `package.json::scripts.test` / `Makefile::test:`）：
+#: 裸调用是否真的执行验证**不可静态判定**（实测：本仓裸 `./test.sh` rc=0 / 40 行 help / 0 用例；
+#: `"test": "echo ok"`、`test:\n\t@echo no tests` 同理）⇒ 只能来自**显式来源**
+#: （既有合法声明），否则生成器拒绝（rc=3）。
+#:
+#: 工具链类保留推导，但要求仓内**确有测试件**（零测试件时 go/cargo 的 rc=0、pytest 的 rc=5
+#: 都等于「验证没有意义」）。
 CANDIDATES: tuple[dict, ...] = (
-    {"requires": "test.sh", "argv": ["./test.sh"]},
-    {"requires": "package.json", "requires_test_script": True, "argv": ["npm", "test"]},
-    {"requires": "Makefile", "requires_make_test_target": True, "argv": ["make", "test"]},
-    {"requires": "pyproject.toml", "argv": ["python3", "-m", "pytest"]},
-    {"requires": "pytest.ini", "argv": ["python3", "-m", "pytest"]},
-    {"requires": "setup.cfg", "argv": ["python3", "-m", "pytest"]},
-    {"requires": "go.mod", "argv": ["go", "test", "./..."]},
-    {"requires": "Cargo.toml", "argv": ["cargo", "test"]},
+    {"requires": "pyproject.toml", "argv": ["python3", "-m", "pytest"], "tool": "pytest"},
+    {"requires": "pytest.ini", "argv": ["python3", "-m", "pytest"], "tool": "pytest"},
+    {"requires": "setup.cfg", "argv": ["python3", "-m", "pytest"], "tool": "pytest"},
+    {"requires": "go.mod", "argv": ["go", "test", "./..."], "tool": "go"},
+    {"requires": "Cargo.toml", "argv": ["cargo", "test"], "tool": "cargo"},
 )
+
+#: **脚本类入口**的探测证据（用于把「仓里有脚本入口」与「什么都没有」区分开：
+#: 前者 ⇒ 需要显式 argv（生成器 rc=3），后者 ⇒ 找不到入口（rc=1））。
+SCRIPT_ENTRY_EVIDENCE: tuple[dict, ...] = (
+    {"requires": "test.sh", "hint": "./test.sh"},
+    {"requires": "package.json", "requires_test_script": True, "hint": "npm test"},
+    {"requires": "Makefile", "requires_make_test_target": True, "hint": "make test"},
+)
+
+#: 各工具链的**测试件形态**（枚举，禁「之类」）。cargo 额外要求文件内含 `#[test]`。
+TEST_FILE_GLOBS: dict[str, tuple[str, ...]] = {
+    "pytest": ("**/test_*.py", "**/*_test.py"),
+    "go": ("**/*_test.go",),
+    "cargo": ("tests/**/*.rs", "src/**/*.rs"),
+}
 
 
 def _normalize(argv: list[str]) -> str:
@@ -69,6 +89,36 @@ def _makefile_has_test_target(path: Path) -> bool:
     return re.search(r"^test\s*:", text, re.MULTILINE) is not None
 
 
+def detect_script_entries(project_root: str | Path) -> list[str]:
+    """仓内**存在**的脚本类入口（可读提示）；空列表 ⇒ 仓里没有脚本类入口。"""
+    root = Path(project_root)
+    found: list[str] = []
+    for entry in SCRIPT_ENTRY_EVIDENCE:
+        evidence = root / entry["requires"]
+        if not evidence.is_file():
+            continue
+        if entry.get("requires_test_script") and not _package_has_test_script(evidence):
+            continue
+        if entry.get("requires_make_test_target") and not _makefile_has_test_target(evidence):
+            continue
+        found.append(entry["hint"])
+    return found
+
+
+def _has_test_files(root: Path, tool: str) -> bool:
+    """仓内是否存在该工具链的测试件（静态判定；读不了 ⇒ 视为不存在，不抛栈）。"""
+    for pattern in TEST_FILE_GLOBS.get(tool, ()):
+        for path in root.glob(pattern):
+            if tool != "cargo":
+                return True
+            try:
+                if "#[test]" in path.read_text(encoding="utf-8"):
+                    return True
+            except (OSError, UnicodeDecodeError):
+                continue
+    return False
+
+
 def derive_verify_commands(project_root: str | Path) -> list[list[str]] | None:
     """从仓内**既有**入口推导 `verify_commands`；一个都不命中 ⇒ `None`（**不猜**）。"""
     root = Path(project_root)
@@ -76,9 +126,8 @@ def derive_verify_commands(project_root: str | Path) -> list[list[str]] | None:
         evidence = root / candidate["requires"]
         if not evidence.is_file():
             continue
-        if candidate.get("requires_test_script") and not _package_has_test_script(evidence):
-            continue
-        if candidate.get("requires_make_test_target") and not _makefile_has_test_target(evidence):
+        tool = candidate.get("tool")
+        if tool and not _has_test_files(root, tool):
             continue
         return [list(candidate["argv"])]
     return None
@@ -120,6 +169,9 @@ def shell_commands_display() -> str:
 
 __all__ = [
     "CANDIDATES",
+    "TEST_FILE_GLOBS",
+    "SCRIPT_ENTRY_EVIDENCE",
+    "detect_script_entries",
     "DECLARATION_REL",
     "SHELL_COMMANDS",
     "declaration_path",

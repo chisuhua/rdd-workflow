@@ -51,6 +51,44 @@ def test_modified_target_is_emitted() -> None:
     assert "#### Scenario: 语料快照随语料增长刷新" in out, out
 
 
+def test_same_title_scenario_is_replaced_not_duplicated() -> None:
+    """作者场景名**命中**既有场景名 ⇒ 用作者版本**替换**该条（不留两条同名）。
+
+    实测依据（openspec 1.14.3）：守恒检查按**场景名**键控 ⇒ 同名改写正文是合法替代；
+    旧实现逐字复制 + 追加 ⇒ 归档后 spec 出现两条同名且 THEN 矛盾的场景（openspec 不报）。
+    """
+    md = (
+        "**delta**: modified generator-scope-extraction\n"
+        "**语义要求**: generate-proposal-backward-compatible | 系统 SHALL 拒绝空转入口"
+        f" | {_EXISTING_SCENARIO} | 语料新增 improvement 时 | 生成器拒绝并给模板\n"
+    )
+    out = gen_fp.generate_spec_delta(md, "probe")
+    assert out.count(f"#### Scenario: {_EXISTING_SCENARIO}") == 1, out
+    assert "- **THEN** 生成器拒绝并给模板" in out, out
+
+
+def test_conservation_guard_refuses_dropped_scenario() -> None:
+    """既有场景名不在输出里 ⇒ 拒绝（openspec <1.7.0 时这是唯一守卫）。"""
+    main = (
+        "### Requirement: R\n\nbody\n\n"
+        "#### Scenario: keep me\n\n- **WHEN** a\n- **THEN** b"
+    )
+    out_block = (
+        "### Requirement: R\n\nnb\n\n"
+        "#### Scenario: another\n\n- **WHEN** a\n- **THEN** b"
+    )
+    with pytest.raises(ValueError) as exc:
+        gen_fp.assert_scenarios_conserved(main, out_block)
+    assert "keep me" in str(exc.value), str(exc.value)
+
+
+def test_skill_doc_states_title_keyed_conservation() -> None:
+    """D3 契约措辞必须是「按场景名保留」（比 openspec 真实判据更严的「逐字」已废止）。"""
+    text = (_ROOT / "skills/rdd-builder/SKILL.md").read_text(encoding="utf-8")
+    assert "按场景名" in text, "D3 措辞未更新为按场景名保留"
+    assert "必须逐字保留" not in text, "旧的「必须逐字保留」措辞仍在"
+
+
 def test_missing_target_requirement_is_refused() -> None:
     with pytest.raises(ValueError) as exc:
         gen_fp.generate_spec_delta(_md("generator-scope-extraction", "no-such-requirement"), "probe")

@@ -25,7 +25,10 @@ in 4 SKILL.md (rdd-arch/planner/builder/verifier/quick). Closes 5 P0 findings fr
 - ⚠ **生成器的输出在本仓是「假绿」**：`rddf commit-gate init` 按候选表第一条推出
   `[["./test.sh"]]`，而**裸 `./test.sh` 只打印 help 并 exit 0** ⇒ 门禁恒绿却什么都没验。
   故生成后**改为显式模式参数**（`--gates` / `--quick`），两条命令均实测全绿。
-  （生成器侧「入口需要模式参数」的判别力缺口记为遗留项，本次不扩范围。）
+- **生成器侧已修**（change `fix-commit-gate-generator-fake-green`）：脚本类入口
+  （`test.sh` / `npm test` / `make test`）**不再自动推导**；工具链类（pytest / go / cargo）
+  要求仓内确有测试件；拒绝以 **rc=3** + `需要显式 argv` + 可复制的模板；`--force` 时既有合法声明
+  即**显式来源**（沿用不改文件）。同批修正 spec delta 的「按场景名替代」与 doctor 的 fix_hint 文案。
 
 ### fix-dashboard-improvement-status（2026-11-20）
 

@@ -495,31 +495,65 @@ def _main_spec_block(capability: str, requirement: str) -> str | None:
     return m.group(0).strip() if m else None
 
 
-def _compose_modified(main_block: str, req: dict[str, str]) -> str:
-    """MODIFIED 块 = **作者的新正文** + **既有全部 Scenario** + **新增 Scenario**。
-
-    ⚠ 既有 Scenario **一个都不能丢**：openspec 的 `specs-apply.js` 在归档时会比较
-    「main spec 的场景名集合」与「delta 块的场景名集合」，缺一个就 abort
-    （1.7.0+ 自带该检查；<1.7.0 由本仓的本地预检兜底）。
-    """
-    lines = main_block.split("\n")
-    header = lines[0]
-    rest = lines[1:]
+def _split_scenarios(block: str) -> tuple[str, list[tuple[str, str]]]:
+    """requirement 头 + [(场景名, 场景块)]；场景块保留原有非空行（空行丢弃，与旧行为一致）。"""
+    lines = block.split("\n")
     scen_idx = next(
-        (i for i, line in enumerate(rest) if line.startswith("#### Scenario:")), len(rest)
+        (i for i, line in enumerate(lines) if line.startswith("#### Scenario:")), len(lines)
     )
-    scenarios = [line for line in rest[scen_idx:] if line.strip()]
+    header = "\n".join(lines[:scen_idx]).rstrip()
+    groups: list[list[str]] = []
+    for line in lines[scen_idx:]:
+        if not line.strip():
+            continue
+        if line.startswith("#### Scenario:"):
+            groups.append([line[len("#### Scenario:"):].strip(), line])
+        elif groups:
+            groups[-1][1] = groups[-1][1] + "\n" + line
+    return header, [(name, body.rstrip()) for name, body in groups]
+
+
+def assert_scenarios_conserved(main_block: str, out_block: str) -> None:
+    """既有场景名集合 ⊆ 输出场景名集合；否则拒绝（**不依赖 openspec 版本**）。
+
+    openspec ≥1.7.0 在归档时自带同一判据；<1.7.0 **没有** ⇒ 本函数是唯一守卫。
+    允许「按场景名替代」之后，守恒不再由「逐字复制」免费得到，必须显式检查。
+    """
+    _, existing = _split_scenarios(main_block)
+    _, produced = _split_scenarios(out_block)
+    produced_names = {name for name, _ in produced}
+    missing = [name for name, _ in existing if name not in produced_names]
+    if missing:
+        raise ValueError(
+            "MODIFIED 丢掉了既有 Scenario：" + " / ".join(missing)
+            + " ⇒ 拒绝生成（本地守恒守卫）"
+        )
+
+
+def _compose_modified(main_block: str, req: dict[str, str]) -> str:
+    """MODIFIED 块 = **作者的新正文** + **按场景名**保留/替代的既有 Scenario + 新增 Scenario。
+
+    实测（openspec 1.14.3）：守恒检查按**场景名**键控 ⇒ 作者场景名命中既有场景名时，
+    用作者版本**替换**该条正文是合法替代；删掉场景名会被 abort；逐字复制 + 追加会留下
+    **两条同名且 THEN 矛盾**的场景（validate 仍报 valid ⇒ 静默自相矛盾）。
+    """
+    header, existing = _split_scenarios(main_block)
+    author_name = req["scenario"].strip()
+    author_block = (
+        f"#### Scenario: {author_name}\n\n"
+        f"- **WHEN** {req['when']}\n"
+        f"- **THEN** {req['then']}"
+    )
     out = [header, "", req["body"], ""]
-    if scenarios:
-        out += scenarios
-        out += [""]
-    out += [
-        f"#### Scenario: {req['scenario']}",
-        "",
-        f"- **WHEN** {req['when']}",
-        f"- **THEN** {req['then']}",
-        "",
-    ]
+    matched = False
+    for name, body in existing:
+        if name == author_name:
+            out += [author_block, ""]
+            matched = True
+        else:
+            out += [body, ""]
+    if not matched:
+        out += [author_block, ""]
     return "\n".join(out).rstrip()
 
 
@@ -532,8 +566,8 @@ def generate_spec_delta(source_md: str, sub: str) -> str:
         **语义要求**: <requirement> | <body> | <scenario> | <WHEN> | <THEN>
 
     - **缺 `**语义要求**`** ⇒ 拒绝生成（指名缺什么）—— 绝不回退到 `acceptance-N` + 恒真 WHEN；
-    - `**delta**: modified <cap>` ⇒ 输出 `## MODIFIED Requirements`，块内**逐字保留** main spec
-      的既有 Scenario，并追加作者的新场景；
+    - `**delta**: modified <cap>` ⇒ 输出 `## MODIFIED Requirements`，块内**按场景名**保留 main spec
+      的既有 Scenario（同名 ⇒ 用作者版本替换正文），并追加作者的新场景；
     - 否则 ⇒ `## ADDED Requirements`；
     - 产出后过**形态守卫**（与仓库守卫同一份判据）⇒ 命中退化形态即拒绝生成。
     """
@@ -565,9 +599,11 @@ def generate_spec_delta(source_md: str, sub: str) -> str:
             if block is None:
                 raise ValueError(
                     f"MODIFIED 目标 requirement 不存在：{target} :: {req['requirement']}"
-                    " ⇒ 拒绝生成（MODIFIED 必须逐字保留既有 Scenario）"
+                    " ⇒ 拒绝生成（MODIFIED 必须保留既有场景名）"
                 )
-            lines.append(_compose_modified(block, req))
+            composed = _compose_modified(block, req)
+            assert_scenarios_conserved(block, composed)
+            lines.append(composed)
             lines.append("")
     else:
         lines += ["## ADDED Requirements", ""]
