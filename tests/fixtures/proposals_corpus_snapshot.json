@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-11-28T16:34:31.162801+00:00",
-  "corpus_count": 310,
+  "generated_at": "2026-11-28T17:31:45.421869+00:00",
+  "corpus_count": 311,
   "shape_labels": {
-    "table_row": 1763,
-    "bullet": 11007,
-    "numbered": 976,
-    "other": 13823
+    "table_row": 1767,
+    "bullet": 11023,
+    "numbered": 982,
+    "other": 13852
   },
   "items": {
     "RDDF-0001-fix-rddf-session-import-path": {
@@ -2005,6 +2005,15 @@
         "other": 83
       },
       "sha256": "f4fe085fb1ac4b102b6860a88179c9c342c20386629b7ef54e51f4ccc436876a"
+    },
+    "fix-worktree-change-artifact-drift": {
+      "labels": {
+        "table_row": 4,
+        "bullet": 16,
+        "numbered": 6,
+        "other": 29
+      },
+      "sha256": "9ae3f4eaf8087511b44725069b4fcf69bc34522352d624428944a91dc0b90731"
     },
     "fix-worktree-commit-gate-deadlock": {
       "labels": {

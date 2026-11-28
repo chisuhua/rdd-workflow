@@ -7,12 +7,22 @@ TBD - created by archiving change add-commit-gate-declaration-bootstrap. Update 
 
 ### Requirement: A project SHALL be able to generate a non-trivial commit-gate declaration
 
-`rddf commit-gate init` SHALL write `.rddf/commit-gate.json` whose `verify_commands` are argv arrays pointing at entry points that **already exist** in the repository; when no such entry point is found it SHALL refuse and explain (never guess), the result SHALL be non-trivial (a single `true` / `echo` / `:` / `exit 0` command is not a declaration), and the command SHALL NOT `git add` or commit anything on the caller's behalf.
+`rddf commit-gate init` SHALL only auto-derive verification commands that are statically known to run tests, and SHALL refuse — with a copy-pasteable explicit-argv template and a dedicated exit code — when it cannot; a refusal MUST NOT write, stage or commit anything.
 
 #### Scenario: A project with a test entry point gets a declaration
 
-- **WHEN** a repository has `./test.sh` and no declaration, and `rddf commit-gate init` runs
-- **THEN** `.rddf/commit-gate.json` is written with a `verify_commands` entry pointing at `./test.sh`, and nothing is staged or committed
+- **WHEN** a repository has a `test.sh` whose argument-less run prints help and exits 0, carries no declaration, and `rddf commit-gate init` runs
+- **THEN** the command exits with the dedicated refusal code, `.rddf/commit-gate.json` is not written, and the output contains the explicit-argv template
+
+#### Scenario: A toolchain entry point without test files is refused
+
+- **WHEN** a repository has `go.mod` / `Cargo.toml` / `pyproject.toml` but no test files for that tool
+- **THEN** the command refuses with the same dedicated exit code and does not write a declaration
+
+#### Scenario: An existing valid declaration is reused
+
+- **WHEN** `.rddf/commit-gate.json` already declares a non-shell `verify_commands` and `rddf commit-gate init --force` runs
+- **THEN** the declaration keeps that argv verbatim and the output states that it was not re-derived
 
 ### Requirement: rdd doctor SHALL report unusable commit-gate declarations
 
