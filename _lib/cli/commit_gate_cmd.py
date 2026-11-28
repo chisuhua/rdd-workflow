@@ -25,27 +25,50 @@ from skills._lib.cli import resolve_project_root  # noqa: E402  (per fix-33-hand
 from _lib.commit_gate_declaration import (  # noqa: E402
     declaration_path,
     derive_verify_commands,
+    detect_unresolved_entries,
+    is_shell_declaration,
     manual_template,
     read_declaration,
     render_declaration,
     shell_commands_display,
 )
+from _lib.core.atomic_write import atomic_write_text  # noqa: E402
 
 _USAGE = "usage: rddf commit-gate init [--dry-run] [--force]"
+
+#: 拒绝退出码：**与**「找不到可推导入口」的 1 区分**（调用方 / CI 需要分辨两种失败）。
+_REFUSAL_RC = 3
+#: 拒绝时 stderr 的固定关键字（脚本据此匹配，别再解析散文）。
+_REFUSAL_KEY = "需要显式 argv"
 
 
 def _print_help() -> None:
     print(_USAGE)
     print()
     print("Generate <project>/.rddf/commit-gate.json from an EXISTING verification entry")
-    print("point (test.sh / npm test / make test / pytest / go test / cargo test).")
+    print("point (pytest / go test / cargo test).")
+    print()
+    print("⚠ 脚本类入口（test.sh / npm test / make test）**不自动推导**：裸调用是否真的执行验证")
+    print("  无法静态判定 ⇒ 需在声明里写明显式 argv（本命令会 rc=3 拒绝并打印模板）。")
+    print("  `--force` 时若既有声明合法，则**沿用**它的 verify_commands（不重新推导、不改文件）。")
     print()
     print("options:")
     print("  --dry-run   print the declaration instead of writing it")
-    print("  --force     overwrite an existing declaration")
+    print("  --force     re-derive (or reuse an existing valid declaration)")
+    print()
+    print("exit codes: 0=写好/沿用, 1=找不到可推导入口, 2=参数错, 3=脚本类入口需要显式 argv")
     print()
     print(f"⚠ 空壳判据：verify_commands 仅 1 条且命令 ∈ {shell_commands_display()} ⇒ 视为空壳（doctor 会报警）")
     print("⚠ 声明必须 git-tracked（否则 worktree 内无门禁，ADR-commit-verification-gate D3）")
+
+
+def _explicit_source(project_root: Path) -> list[list[str]] | None:
+    """既有**合法且非 shell** 声明即显式来源；否则 None（shell 声明不算）。"""
+    decl = read_declaration(project_root)
+    cmds = decl.get("verify_commands") if isinstance(decl, dict) else None
+    if not cmds or is_shell_declaration(cmds):
+        return None
+    return cmds
 
 
 def cmd_commit_gate(args: list[str]) -> int:
@@ -79,8 +102,29 @@ def cmd_commit_gate(args: list[str]) -> int:
             print("   ⚠ 但该文件**解析失败** ⇒ 建议 `--force` 重新生成，或手工修复")
         return 0
 
+    reused: list[list[str]] | None = None
+    if target.is_file() and force:
+        reused = _explicit_source(project_root)
+    if reused is not None:
+        # 既有合法声明就是**显式来源** ⇒ 沿用（不改文件、不丢 timeout_ms / known_failures）
+        print(f"ℹ️  沿用既有声明的 verify_commands（未重新推导）：{target}")
+        print(f"   verify_commands = {reused}")
+        return 0
+
     verify_commands = derive_verify_commands(project_root)
     if verify_commands is None:
+        unresolved = detect_unresolved_entries(project_root)
+        if unresolved:
+            print(f"❌ 入口{_REFUSAL_KEY} ⇒ 拒绝生成", file=sys.stderr)
+            print("   探测到：" + " / ".join(unresolved), file=sys.stderr)
+            print(
+                "   无法自动推导的原因：脚本类入口裸调用是否真的执行验证不可静态判定"
+                "（实测：裸 `./test.sh` 只打印 help 并 exit 0 ⇒ 恒绿声明）；"
+                "工具链类入口在仓内没有测试件时同样等于「验证没有意义」（go/cargo 零测试 rc=0、pytest 零收集 rc=5）",
+                file=sys.stderr,
+            )
+            print(manual_template(), file=sys.stderr)
+            return _REFUSAL_RC
         print("❌ 找不到可推导的验证入口 ⇒ **不生成**声明（不猜命令）", file=sys.stderr)
         print("   已探测：" + " / ".join(c["requires"] for c in _candidate_names()), file=sys.stderr)
         print(manual_template(), file=sys.stderr)
@@ -92,8 +136,7 @@ def cmd_commit_gate(args: list[str]) -> int:
         print(rendered, end="")
         return 0
 
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(rendered, encoding="utf-8")
+    atomic_write_text(target, rendered)
     print(f"✅ 已生成 {target}")
     print(f"   verify_commands = {verify_commands}")
     print("   下一步：git add .rddf/commit-gate.json（声明必须 tracked 才生效 —— 本命令不代 add）")

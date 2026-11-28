@@ -30,34 +30,55 @@ def _touch(root: Path, name: str, content: str = "") -> None:
 # ── 推导（候选表 + 仓内证据；只取第一个命中）───────────────────────────────
 
 
-def test_test_sh_wins(tmp_path):
-    _touch(tmp_path, "test.sh", "#!/bin/sh\n")
+def test_script_entry_points_are_not_auto_derived(tmp_path):
+    """脚本类入口**不推导**：裸调用是否执行验证不可静态判定。
+
+    实测（本仓）：裸 `./test.sh` → rc=0 / 40 行 help / 0 个用例 ⇒ 生成的声明恒绿。
+    同型：`"test": "echo ok"`、`test:\n\t@echo no tests`。
+    """
+    _touch(tmp_path, "test.sh", "#!/bin/sh\nprint_help\n")
+    assert derive_verify_commands(tmp_path) is None
+    (tmp_path / "test.sh").unlink()
+
+    _touch(tmp_path, "package.json", json.dumps({"scripts": {"test": "echo ok"}}))
+    assert derive_verify_commands(tmp_path) is None
+    (tmp_path / "package.json").unlink()
+
+    _touch(tmp_path, "Makefile", "test:\n\t@echo no tests\n")
+    assert derive_verify_commands(tmp_path) is None
+
+
+def test_pytest_needs_test_files(tmp_path):
+    """零测试件 ⇒ pytest 收集为空（rc=5）⇒ 不推导；有测试件 ⇒ 推导。"""
+    _touch(tmp_path, "pyproject.toml", "")
+    assert derive_verify_commands(tmp_path) is None
+    _touch(tmp_path, "tests/test_core.py", "")
+    assert derive_verify_commands(tmp_path) == [["python3", "-m", "pytest"]]
+
+
+def test_go_needs_test_files(tmp_path):
+    """零测试件 ⇒ `go test ./...` 输出 `no test files` 且 rc=0（恒绿）⇒ 不推导。"""
     _touch(tmp_path, "go.mod", "module x\n")
-    assert derive_verify_commands(tmp_path) == [["./test.sh"]]
-
-
-def test_package_json_needs_test_script(tmp_path):
-    _touch(tmp_path, "package.json", json.dumps({"scripts": {"build": "x"}}))
     assert derive_verify_commands(tmp_path) is None
-    _touch(tmp_path, "package.json", json.dumps({"scripts": {"test": "vitest"}}))
-    assert derive_verify_commands(tmp_path) == [["npm", "test"]]
+    _touch(tmp_path, "pkg/a_test.go", "")
+    assert derive_verify_commands(tmp_path) == [["go", "test", "./..."]]
 
 
-def test_makefile_needs_test_target(tmp_path):
-    _touch(tmp_path, "Makefile", "build:\n\techo build\n")
+def test_cargo_needs_test_files(tmp_path):
+    """零测试 ⇒ `cargo test` 报 `0 passed` 且 rc=0（恒绿）⇒ 不推导。"""
+    _touch(tmp_path, "Cargo.toml", "")
     assert derive_verify_commands(tmp_path) is None
-    _touch(tmp_path, "Makefile", "test:\n\techo test\n")
-    assert derive_verify_commands(tmp_path) == [["make", "test"]]
+    _touch(tmp_path, "tests/it.rs", "#[test]\nfn t() {}\n")
+    assert derive_verify_commands(tmp_path) == [["cargo", "test"]]
 
 
 @pytest.mark.parametrize("evidence,expected", [
     ("pyproject.toml", ["python3", "-m", "pytest"]),
     ("pytest.ini", ["python3", "-m", "pytest"]),
-    ("go.mod", ["go", "test", "./..."]),
-    ("Cargo.toml", ["cargo", "test"]),
 ])
 def test_single_file_candidates(tmp_path, evidence, expected):
     _touch(tmp_path, evidence, "")
+    _touch(tmp_path, "tests/test_x.py", "")
     assert derive_verify_commands(tmp_path) == [expected]
 
 

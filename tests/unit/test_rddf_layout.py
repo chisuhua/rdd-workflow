@@ -83,7 +83,9 @@ def test_non_rdd_entries_name_their_actual_writer():
     """
     expected = {
         "actions": ["user"],
+        "commit-gate.json": ["user"],
         "config": ["external-tool"],
+        "deferral-exemptions.txt": ["agent"],
         "detectors": ["user"],
         "project.yaml": ["user"],
         "reviews": ["agent"],

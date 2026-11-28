@@ -110,6 +110,16 @@ RDFF_LAYOUT: tuple[LayoutEntry, ...] = (
         "skill-profiles", "dir", ("rdd",), ("user",), "never", False, "committed", "INFO",
     ),
     LayoutEntry(
+        # commit-gate 门禁声明（ADR-commit-verification-gate D3）：仓级**committed** 配置。
+        # `never` + INFO：未声明的仓不设门禁（D3 明文决策）⇒ 缺失不是 drift。
+        "commit-gate.json", "file", ("external-tool",), ("user",), "never", False, "committed", "INFO",
+    ),
+    LayoutEntry(
+        # deferral 豁免清单（add-deferral-registration-guard）：doctor 的 deferral-registration
+        # category 读它。`never` + INFO：没有豁免的仓不需要该文件。
+        "deferral-exemptions.txt", "file", ("rdd",), ("agent",), "never", False, "committed", "INFO",
+    ),
+    LayoutEntry(
         ".roadmap-migrate-backup-*", "dir", ("rdd",), ("rdd",), "never", True, "runtime-only", "INFO",
     ),
 )

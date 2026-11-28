@@ -38,7 +38,7 @@
 - Modify: `skills/rdd-builder/scripts/generate_full_proposal.py:498-523`
 - Test: `tests/unit/test_spec_delta_generator_modified.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 def test_same_title_scenario_is_replaced_not_duplicated() -> None:
@@ -53,12 +53,12 @@ def test_same_title_scenario_is_replaced_not_duplicated() -> None:
     assert "- **THEN** 生成器拒绝并给模板" in out, out
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_spec_delta_generator_modified.py::test_same_title_scenario_is_replaced_not_duplicated -v`
 Expected: FAIL —— `assert 2 == 1`（目前输出两条同名场景）
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 def _split_scenarios(block: str) -> tuple[str, list[tuple[str, str]]]:
@@ -90,12 +90,12 @@ def _compose_modified(main_block: str, req: dict[str, str]) -> str:
 
 （`existing` 里未命中的场景体原样保留；命中则整块替换；作者新场景才追加。）
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_spec_delta_generator_modified.py -v`
 Expected: PASS（含既有 4 例仍绿）
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 按仓库约定，execute 阶段不逐任务 commit；所有变更将在 archive 阶段统一提交（`COMMIT_IN_EXECUTE=yes` 可逐任务提交，不推荐）。
 
@@ -107,7 +107,7 @@ Expected: PASS（含既有 4 例仍绿）
 - Modify: `skills/rdd-builder/scripts/generate_full_proposal.py`（新增 `assert_scenarios_conserved`，在 `_compose_modified` 之后调用）
 - Test: `tests/unit/test_spec_delta_generator_modified.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 def test_conservation_guard_refuses_dropped_scenario() -> None:
@@ -119,12 +119,12 @@ def test_conservation_guard_refuses_dropped_scenario() -> None:
     assert "keep me" in str(exc.value), str(exc.value)
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_spec_delta_generator_modified.py::test_conservation_guard_refuses_dropped_scenario -v`
 Expected: FAIL —— `AttributeError: module has no attribute 'assert_scenarios_conserved'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 def assert_scenarios_conserved(main_block: str, out_block: str) -> None:
@@ -139,12 +139,12 @@ def assert_scenarios_conserved(main_block: str, out_block: str) -> None:
 
 并在 `generate_spec_delta()` 的 modified 分支里 `assert_scenarios_conserved(block, composed)` 之后才 append。
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_spec_delta_generator_modified.py -v`
 Expected: PASS
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 同 Task 1。
 
@@ -156,7 +156,7 @@ Expected: PASS
 - Modify: `_lib/commit_gate_declaration.py:26-35`（`CANDIDATES`）与 `:72-84`（`derive_verify_commands`）
 - Test: `tests/unit/test_commit_gate_declaration.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 def test_script_entry_points_are_not_auto_derived(tmp_path):
@@ -171,12 +171,12 @@ def test_script_entry_points_are_not_auto_derived(tmp_path):
     assert derive_verify_commands(tmp_path) is None
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_commit_gate_declaration.py::test_script_entry_points_are_not_auto_derived -v`
 Expected: FAIL —— `assert [['./test.sh']] is None`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 CANDIDATES: tuple[dict, ...] = (
@@ -191,12 +191,12 @@ CANDIDATES: tuple[dict, ...] = (
 )
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_commit_gate_declaration.py -v`
 Expected: PASS
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 同 Task 1。
 
@@ -208,7 +208,7 @@ Expected: PASS
 - Modify: `_lib/commit_gate_declaration.py`（新增 `_has_test_files`，`derive_verify_commands` 调用）
 - Test: `tests/unit/test_commit_gate_declaration.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 @pytest.mark.parametrize("evidence,tool_file,expected", [
@@ -223,12 +223,12 @@ def test_toolchain_needs_test_files(tmp_path, evidence, tool_file, expected):
     assert derive_verify_commands(tmp_path) == [expected]     # 有测试件 ⇒ 推导
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_commit_gate_declaration.py::test_toolchain_needs_test_files -v`
 Expected: FAIL —— 零测试件时仍返回 argv
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 _TEST_FILE_GLOBS = {
@@ -254,12 +254,12 @@ def _has_test_files(root: Path, tool: str) -> bool:
 
 `derive_verify_commands` 在命中候选后追加：`if candidate.get("tool") and not _has_test_files(root, candidate["tool"]): continue`。
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_commit_gate_declaration.py -v`
 Expected: PASS
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 同 Task 1。
 
@@ -271,7 +271,7 @@ Expected: PASS
 - Modify: `_lib/cli/commit_gate_cmd.py:51-100`
 - Test: `tests/integration/test_commit_gate_bootstrap.bats`（改写 3 例）、`tests/integration/test_commit_gate_bootstrap_noop.bats`（新增）
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```bash
 @test "commit-gate init: 空转脚本入口 ⇒ rc=3 + 不写文件 + 给显式 argv 模板" {
@@ -306,12 +306,12 @@ Expected: PASS
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `bats tests/integration/test_commit_gate_bootstrap_noop.bats`
 Expected: FAIL —— 现状 rc=0 且写出 `[["./test.sh"]]`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 _REFUSAL_RC = 3
@@ -347,12 +347,12 @@ if verify_commands is None:
 
 `--force` + 既有非法声明（shell）⇒ 也走 `derive_verify_commands`，其结果在本仓为 None ⇒ rc=3（不覆盖文件）。
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `bats tests/integration/test_commit_gate_bootstrap_noop.bats tests/integration/test_commit_gate_bootstrap.bats`
 Expected: PASS（bootstrap 的 3 例已按新契约改写）
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 同 Task 1。
 
@@ -363,7 +363,7 @@ Expected: PASS（bootstrap 的 3 例已按新契约改写）
 **Files:**
 - Modify: `skills/rdd-doctor/scripts/checks/commit_gate_check.py:71-74`、`skills/rdd-doctor/SKILL.md`（commit-gate 行）、`CHANGELOG.md`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 def test_fix_hint_offers_both_paths():
@@ -373,12 +373,12 @@ def test_fix_hint_offers_both_paths():
     assert "rddf commit-gate init" in hint and "手写" in hint
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_commit_gate_doctor.py -k fix_hint -v`
 Expected: FAIL（现文案只有 init 一条路）
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 fix_hint=(
@@ -390,12 +390,12 @@ fix_hint=(
 
 同时 `skills/rdd-doctor/SKILL.md` 的 commit-gate 行、「修法分别给…」一句按同口径改写；`CHANGELOG.md` 的「生成器假绿」段改为指向本 change。
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_commit_gate_doctor.py -v`
 Expected: PASS
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 同 Task 1。
 
@@ -406,7 +406,7 @@ Expected: PASS
 **Files:**
 - Modify: `skills/rdd-builder/SKILL.md`（D3 spec-delta 契约 ②）、`skills/rdd-builder/scripts/generate_full_proposal.py`（docstring）
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 def test_skill_doc_states_title_keyed_conservation():
@@ -414,12 +414,12 @@ def test_skill_doc_states_title_keyed_conservation():
     assert "按场景名" in text and "逐字保留全部既有 Scenario" not in text, "D3 措辞未更新"
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_spec_delta_generator_modified.py::test_skill_doc_states_title_keyed_conservation -v`
 Expected: FAIL
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 把该段 ② 改为：
 
@@ -431,12 +431,12 @@ Expected: FAIL
   更早版本由生成器内的本地守恒守卫兜底）。
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m pytest tests/unit/test_spec_delta_generator_modified.py -v`
 Expected: PASS
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 同 Task 1。
 
@@ -447,7 +447,7 @@ Expected: PASS
 **Files:**
 - Modify: `openspec/changes/fix-commit-gate-generator-fake-green/specs/commit-gate-declaration-bootstrap/spec.md`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```bash
 @test "本 change 的 delta 只保留一条同名场景（不是 D 形态）" {
@@ -459,12 +459,12 @@ Expected: PASS
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: 手工 `grep -c '^#### Scenario: A project with a test entry point gets a declaration' <delta>`
 Expected: `2`（D 形态：旧场景 + 同名新场景）
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```bash
 OUTPUT_MODE=spec-delta CHANGE_NAME=fix-commit-gate-generator-fake-green \
@@ -476,12 +476,12 @@ OUTPUT_MODE=spec-delta CHANGE_NAME=fix-commit-gate-generator-fake-green \
 openspec validate --strict fix-commit-gate-generator-fake-green
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: 同上 grep ⇒ `1`；`openspec validate --strict` ⇒ valid。
 Expected: PASS
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 同 Task 1。
 
@@ -492,7 +492,7 @@ Expected: PASS
 **Files:**
 - Modify: `tests/fixtures/proposals_corpus_snapshot.json`（若语料指纹变化则刷新）
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```bash
 ./test.sh --full --regression 2>&1 | tail -20
@@ -500,22 +500,22 @@ Expected: PASS
 
 Expected: 全绿或仅 `tests/KNOWN_FAILURES.txt` 已登记的已知失败。
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m pytest tests/unit/test_generate_full_proposal_corpus.py -q`
 Expected: 若 improvement 正文变化 ⇒ FAIL「快照缺 …」
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```bash
 python3 tests/fixtures/refresh_proposals_corpus_snapshot.py
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `./test.sh --full --regression`
 Expected: ✅ 全绿（或仅 baseline 已知失败）；`openspec validate --all --strict` 0 ERROR。
 
-- [ ] **Step 5: Defer commit**
+- [x] **Step 5: Defer commit**
 
 全部 task 完成后由 P3 归档流程统一提交（本仓 `commit-gate` 会在 commit 时跑 `--gates` + `--quick`）。
